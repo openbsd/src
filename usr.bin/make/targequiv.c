@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.10 2023/09/04 11:35:11 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.11 2024/06/18 02:11:04 millert Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -109,7 +109,7 @@ add_to_equiv_list(struct ohash *equiv, GNode *gn)
 }
 
 static void
-build_equivalence()
+build_equivalence(void)
 {
 	unsigned int i;
 	GNode *gn;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.26 2023/09/04 11:35:11 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.27 2024/06/18 02:11:03 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -122,7 +122,7 @@ Punt(const char *fmt, ...)
  *	The program exits
  */
 void
-Finish()
+Finish(void)
 {
 	Job_Wait();
 	print_errors();

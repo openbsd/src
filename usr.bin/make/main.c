@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.132 2023/09/04 11:35:11 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.133 2024/06/18 02:11:03 millert Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ record_option(int c, const char *arg)
 }
 
 void
-set_notparallel()
+set_notparallel(void)
 {
 	compatMake = true;
 }
@@ -465,7 +465,7 @@ add_dirpath(Lst l, const char *n)
  * run-time.
  */
 static char *
-figure_out_MACHINE()
+figure_out_MACHINE(void)
 {
 	char *r = getenv("MACHINE");
 	if (r == NULL) {
@@ -479,7 +479,7 @@ figure_out_MACHINE()
 }
 
 static char *
-figure_out_MACHINE_ARCH()
+figure_out_MACHINE_ARCH(void)
 {
 	char *r = getenv("MACHINE_ARCH");
 	if (r == NULL) {
@@ -492,7 +492,7 @@ figure_out_MACHINE_ARCH()
 	return r;
 }
 static char *
-figure_out_MACHINE_CPU()
+figure_out_MACHINE_CPU(void)
 {
 	char *r = getenv("MACHINE_CPU");
 	if (r == NULL) {
@@ -510,7 +510,7 @@ figure_out_MACHINE_CPU()
 }
 
 static char *
-figure_out_CURDIR()
+figure_out_CURDIR(void)
 {
 	char *dir, *cwd;
 	struct stat sa, sb;
@@ -577,7 +577,7 @@ setup_CURDIR_OBJDIR(struct dirs *d)
  * <directory>:<directory>:<directory>...
  */
 static void
-setup_VPATH()
+setup_VPATH(void)
 {
 	if (Var_Value("VPATH") != NULL) {
 		char *vpath;
@@ -936,7 +936,7 @@ found:		Var_Set("MAKEFILE", fname);
  *	exit with usage message
  */
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage: make [-BeiknpqrSst] [-C directory] [-D variable] [-d flags] [-f mk]\n\

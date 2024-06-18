@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.30 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.31 2024/06/18 02:11:03 millert Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -90,7 +90,7 @@
 #endif
 
 static void
-fatal_overflow()
+fatal_overflow(void)
 {
 	fprintf(stderr, "buffer size overflow\n");
 	exit(2);

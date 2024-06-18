@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsevar.c,v 1.17 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.18 2024/06/18 02:11:03 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include "parsevar.h"
 
 static const char *find_op1(const char *);
-static const char *find_op2(const char *);
 static bool parse_variable_assignment(const char *, int);
 
 static const char *
@@ -50,18 +49,6 @@ find_op1(const char *p)
 		if (p[strspn(p, "?:!+")] == '=')
 			break;
 		if (p[0] == ':' && p[1] == 's' && p[2] == 'h')
-			break;
-	}
-	return p;
-}
-
-static const char *
-find_op2(const char *p)
-{
-	for(;; p++) {
-		if (ISSPACE(*p) || *p == '$' || *p == '\0')
-			break;
-		if (p[strspn(p, "?:!+")] == '=')
 			break;
 	}
 	return p;

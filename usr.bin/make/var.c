@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.106 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.107 2024/06/18 02:11:04 millert Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1365,7 +1365,7 @@ Var_SubstVar(Buffer buf,	/* To store result */
  ***/
 
 static void
-set_magic_shell_variable()
+set_magic_shell_variable(void)
 {
 	const char *name = "SHELL";
 	const char *ename = NULL;
@@ -1380,7 +1380,7 @@ set_magic_shell_variable()
 }
 
 static void
-set_magic_name_list_variable()
+set_magic_name_list_variable(void)
 {
 	const char *name = VARNAME_LIST;
 	const char *ename = NULL;

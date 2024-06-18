@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.94 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.95 2024/06/18 02:11:03 millert Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -247,12 +247,12 @@ CompatMake(void *gnp,	/* The node to make */
 }
 
 void
-Compat_Init()
+Compat_Init(void)
 {
 }
 
 void
-Compat_Update(GNode *gn)
+Compat_Update(GNode *gn UNUSED)
 {
 }
 

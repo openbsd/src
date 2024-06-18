@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.165 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.166 2024/06/18 02:11:03 millert Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ quick_summary(int signo)
 }
 
 static void
-internal_print_errors()
+internal_print_errors(void)
 {
 	Job *j, *k, *jnext;
 	int dying;
@@ -375,7 +375,7 @@ notice_signal(int sig)
 }
 
 void
-Sigset_Init()
+Sigset_Init(void)
 {
 	sigemptyset(&emptyset);
 	sigprocmask(SIG_BLOCK, &emptyset, &origset);
@@ -664,7 +664,7 @@ may_continue_job(Job *job)
 }
 
 static void
-may_continue_heldback_jobs()
+may_continue_heldback_jobs(void)
 {
 	while (!no_new_jobs) {
 		if (heldJobs != NULL) {
@@ -775,7 +775,7 @@ reap_jobs(void)
 }
 
 void 
-reset_signal_mask()
+reset_signal_mask(void)
 {
 	sigprocmask(SIG_SETMASK, &origset, NULL);
 }
@@ -811,7 +811,7 @@ handle_running_jobs(void)
 }
 
 void
-loop_handle_running_jobs()
+loop_handle_running_jobs(void)
 {
 	while (runningJobs != NULL)
 		handle_running_jobs();

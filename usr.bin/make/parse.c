@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.136 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.137 2024/06/18 02:11:03 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ static struct {
 #undef P
 
 static void
-create_special_nodes()
+create_special_nodes(void)
 {
 	unsigned int i;
 
@@ -690,7 +690,7 @@ parse_do_targets(Lst paths, unsigned int *op, const char *line)
 }
 
 static void
-dump_targets()
+dump_targets(void)
 {
 	size_t i;
 	for (i = 0; i < gtargets.n; i++)
@@ -1436,6 +1436,7 @@ build_target_group(struct growableArray *targets, struct ohash *t)
 	LstNode ln;
 	bool seen_target = false;
 	unsigned int i;
+	GNode *gn, *gn2;
 
 	/* may be 0 if wildcard expansion resulted in zero match */
 	if (targets->n <= 1)
@@ -1465,7 +1466,6 @@ build_target_group(struct growableArray *targets, struct ohash *t)
 	if (seen_target)
 		return;
 
-	GNode *gn, *gn2;
 	/* targets may already participate in groupling lists, 
 	 * so rebuild the circular list "from scratch"
 	 */
@@ -1488,7 +1488,7 @@ build_target_group(struct growableArray *targets, struct ohash *t)
 }
 
 static void
-reset_target_hash()
+reset_target_hash(void)
 {
 	if (htargets_setup)
 		ohash_delete(&htargets);
@@ -1497,7 +1497,7 @@ reset_target_hash()
 }
 
 void
-Parse_End()
+Parse_End(void)
 {
 	if (htargets_setup)
 		ohash_delete(&htargets);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.87 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: targ.c,v 1.88 2024/06/18 02:11:03 millert Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ status_to_string(GNode *gn)
 }
 
 struct ohash *
-targets_hash()
+targets_hash(void)
 {
 	return &targets;
 }

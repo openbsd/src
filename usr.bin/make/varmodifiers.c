@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.49 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.50 2024/06/18 02:11:04 millert Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ static struct modifier {
 ;
 
 void
-VarModifiers_Init()
+VarModifiers_Init(void)
 {
 	choose_mod['M'] = &match_mod;
 	choose_mod['N'] = &nomatch_mod;

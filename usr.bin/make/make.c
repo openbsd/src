@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.84 2023/09/04 11:35:11 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.85 2024/06/18 02:11:03 millert Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -118,13 +118,13 @@ static bool randomize_queue;
 long random_delay = 0;
 
 bool
-nothing_left_to_build()
+nothing_left_to_build(void)
 {
 	return Array_IsEmpty(&to_build);
 }
 
 static void
-random_setup()
+random_setup(void)
 {
 	randomize_queue = Var_Definedi("RANDOM_ORDER", NULL);
 
@@ -503,7 +503,7 @@ add_targets_to_make(Lst todo)
 }
 
 void
-Make_Init()
+Make_Init(void)
 {
 	/* wild guess at initial sizes */
 	Array_Init(&to_build, 500);
