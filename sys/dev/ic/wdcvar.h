@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.58 2024/05/29 00:48:15 jsg Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.59 2024/06/18 12:37:29 jsg Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -286,9 +286,6 @@ void  wdccommandext(struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
 void  wdccommandshort(struct channel_softc *, int, int);
 void  wdctimeout(void *arg);
 void  wdc_do_reset(struct channel_softc *);
-
-int   wdc_addref(struct channel_softc *);
-void  wdc_delref(struct channel_softc *);
 
 /*
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write

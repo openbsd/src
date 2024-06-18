@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.94 2023/12/11 22:12:53 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.95 2024/06/18 12:37:29 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -297,7 +297,6 @@ void pmap_pinit_pd_pae(pmap_t);
 void pmap_zero_phys_pae(paddr_t);
 int pmap_zero_page_uncached_pae(paddr_t);
 void pmap_copy_page_pae(struct vm_page *, struct vm_page *);
-void pae_copy_phys(paddr_t, paddr_t, int, int);
 
 #define	pmap_pte_set		(*pmap_pte_set_p)
 #define	pmap_pte_setbits	(*pmap_pte_setbits_p)

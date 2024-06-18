@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.191 2024/06/09 21:15:29 jca Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.192 2024/06/18 12:37:29 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -458,7 +458,6 @@ void k1x_setperf(int);
 #endif
 
 /* npx.c */
-void	npxdrop(struct proc *);
 void	npxsave_proc(struct proc *, int);
 void	npxsave_cpu(struct cpu_info *, int);
 

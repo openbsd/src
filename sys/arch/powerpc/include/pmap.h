@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.65 2023/12/11 22:12:53 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.66 2024/06/18 12:37:29 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -138,7 +138,6 @@ void pmap_enable_mmu();
 int pmap_clear_attrs(struct vm_page *, unsigned int);
 int pmap_test_attrs(struct vm_page *, unsigned int);
 
-void pmap_pinit(struct pmap *);
 void pmap_release(struct pmap *);
 
 #ifdef ALTIVEC

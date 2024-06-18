@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.89 2024/04/02 08:39:17 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.90 2024/06/18 12:37:29 jsg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -363,10 +363,6 @@ void		uvm_map_init(void);
 boolean_t	uvm_map_lookup_entry(struct vm_map *, vaddr_t, vm_map_entry_t *);
 boolean_t	uvm_map_is_stack_remappable(struct vm_map *, vaddr_t, vsize_t, int);
 int		uvm_map_remap_as_stack(struct proc *, vaddr_t, vsize_t);
-int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
-		    vm_map_entry_t, int);
-int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
-		    vaddr_t *);
 void		uvm_map_setup(struct vm_map *, pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
