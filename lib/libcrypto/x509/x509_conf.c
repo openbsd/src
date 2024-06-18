@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.9 2024/06/18 05:32:38 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.10 2024/06/18 05:34:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -212,8 +212,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	}
 	if ((ext_oct = ASN1_OCTET_STRING_new()) == NULL)
 		goto merr;
-	ext_oct->data = ext_der;
-	ext_oct->length = ext_len;
+	ASN1_STRING_set0(ext_oct, ext_der, ext_len);
 	ext_der = NULL;
 	ext_len = 0;
 
