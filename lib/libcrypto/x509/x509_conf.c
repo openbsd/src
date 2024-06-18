@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.6 2024/06/18 05:19:01 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.7 2024/06/18 05:22:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -194,7 +194,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	X509_EXTENSION *ext;
 
 	/* Convert internal representation to DER */
-	if (method->it) {
+	if (method->it != NULL) {
 		ext_der = NULL;
 		ext_len = ASN1_item_i2d(ext_struc, &ext_der, method->it);
 		if (ext_len < 0)
@@ -202,18 +202,18 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	} else {
 		unsigned char *p;
 		ext_len = method->i2d(ext_struc, NULL);
-		if (!(ext_der = malloc(ext_len)))
+		if ((ext_der = malloc(ext_len)) == NULL)
 			goto merr;
 		p = ext_der;
 		method->i2d(ext_struc, &p);
 	}
-	if (!(ext_oct = ASN1_OCTET_STRING_new()))
+	if ((ext_oct = ASN1_OCTET_STRING_new()) == NULL)
 		goto merr;
 	ext_oct->data = ext_der;
 	ext_oct->length = ext_len;
 
 	ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
-	if (!ext)
+	if (ext == NULL)
 		goto merr;
 	ASN1_OCTET_STRING_free(ext_oct);
 
