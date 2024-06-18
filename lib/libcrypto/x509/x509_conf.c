@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.16 2024/06/18 09:41:33 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.17 2024/06/18 09:47:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -314,14 +314,14 @@ v3_generic_extension(const char *name, const char *value, int crit, int gen_type
 		goto err;
 	}
 
-	if (!(oct = ASN1_OCTET_STRING_new())) {
+	if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
 		X509V3error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	oct->data = ext_der;
-	oct->length = ext_len;
+	ASN1_STRING_set0(oct, ext_der, ext_len);
 	ext_der = NULL;
+	ext_len = 0;
 
 	ext = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);
 
