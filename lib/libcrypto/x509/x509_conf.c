@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.14 2024/06/18 05:56:37 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.15 2024/06/18 09:35:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -284,7 +284,7 @@ v3_check_generic(const char **value)
 
 /* Create a generic extension: for now just handle DER type */
 static X509_EXTENSION *
-v3_generic_extension(const char *ext, const char *value, int crit, int gen_type,
+v3_generic_extension(const char *name, const char *value, int crit, int gen_type,
     X509V3_CTX *ctx)
 {
 	unsigned char *ext_der = NULL;
@@ -293,9 +293,9 @@ v3_generic_extension(const char *ext, const char *value, int crit, int gen_type,
 	ASN1_OCTET_STRING *oct = NULL;
 	X509_EXTENSION *extension = NULL;
 
-	if (!(obj = OBJ_txt2obj(ext, 0))) {
+	if ((obj = OBJ_txt2obj(name, 0)) == NULL) {
 		X509V3error(X509V3_R_EXTENSION_NAME_ERROR);
-		ERR_asprintf_error_data("name=%s", ext);
+		ERR_asprintf_error_data("name=%s", name);
 		goto err;
 	}
 
