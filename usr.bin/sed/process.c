@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.35 2022/01/12 15:13:36 martijn Exp $	*/
+/*	$OpenBSD: process.c,v 1.36 2024/06/18 00:32:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -90,7 +90,7 @@ process(void)
 	size_t len, oldpsl;
 	char *p;
 
-	for (linenum = 0; mf_fgets(&PS, REPLACE);) {
+	for (linenum = 0; mf_getline(&PS, REPLACE);) {
 		pd = 0;
 top:
 		cp = prog;
@@ -164,14 +164,14 @@ redirect:
 				if (!nflag && !pd)
 					OUT();
 				flush_appends();
-				if (!mf_fgets(&PS, REPLACE))
+				if (!mf_getline(&PS, REPLACE))
 					exit(0);
 				pd = 0;
 				break;
 			case 'N':
 				flush_appends();
 				cspace(&PS, "\n", 1, 0);
-				if (!mf_fgets(&PS, 0))
+				if (!mf_getline(&PS, 0))
 					exit(0);
 				break;
 			case 'p':

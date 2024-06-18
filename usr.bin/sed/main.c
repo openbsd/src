@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2023/02/08 08:18:11 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2024/06/18 00:32:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -209,11 +209,11 @@ main(int argc, char *argv[])
 }
 
 /*
- * Like fgets, but go through the chain of compilation units chaining them
+ * Like getline, but go through the chain of compilation units chaining them
  * together.  Empty strings and files are ignored.
  */
 char *
-cu_fgets(char **outbuf, size_t *outsize)
+cu_getline(char **outbuf, size_t *outsize)
 {
 	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
 	static FILE *f;		/* Current open file */
@@ -328,11 +328,11 @@ finish_file(void)
 }
 
 /*
- * Like fgets, but go through the list of files chaining them together.
+ * Like getline, but go through the list of files chaining them together.
  * Set len to the length of the line.
  */
 int
-mf_fgets(SPACE *sp, enum e_spflag spflag)
+mf_getline(SPACE *sp, enum e_spflag spflag)
 {
 	struct stat sb;
 	size_t len;
