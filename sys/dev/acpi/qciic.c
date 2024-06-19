@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic.c,v 1.5 2022/11/06 15:36:13 patrick Exp $	*/
+/*	$OpenBSD: qciic.c,v 1.6 2024/06/19 21:27:22 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -107,6 +107,7 @@ int	qciic_acpi_found_ihidev(struct qciic_softc *,
 const char *qciic_hids[] = {
 	"QCOM0610",
 	"QCOM0811",
+	"QCOM0C10",
 	NULL
 };
 
