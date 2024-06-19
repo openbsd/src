@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.61 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.62 2024/06/19 13:27:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -52,7 +52,6 @@ extern	caddr_t start, end;
 extern	int ndumpmem;
 extern  struct dumpmem dumpmem[];
 extern	bios_memmap_t *bios_memmap;
-extern	struct hibernate_state *hibernate_state;
 
 /*
  * Hibernate always uses non-PAE page tables during resume, so

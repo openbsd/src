@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.51 2024/06/05 04:58:05 mglocker Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.52 2024/06/19 13:27:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -61,7 +61,6 @@ extern	caddr_t start, end;
 extern	int mem_cluster_cnt;
 extern  phys_ram_seg_t mem_clusters[];
 extern	bios_memmap_t *bios_memmap;
-extern	struct hibernate_state *hibernate_state;
 
 /*
  * amd64 MD Hibernate functions
