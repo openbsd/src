@@ -2044,7 +2044,7 @@ static ssize_t smu_v13_0_6_get_gpu_metrics(struct smu_context *smu, void **table
 static void smu_v13_0_6_restore_pci_config(struct smu_context *smu)
 {
 	STUB();
-#if notyet
+#ifdef notyet
 	struct amdgpu_device *adev = smu->adev;
 	int i;
 
