@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.51 2024/06/18 14:57:59 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.52 2024/06/19 05:22:33 otto Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -191,7 +191,7 @@ if [[ -e /var/db/installed.BUILDINFO && -e BUILDINFO ]]; then
 	installed_build_ts=$(cut -f3 -d' ' /var/db/installed.BUILDINFO)
 	build_ts=$(cut -f3 -d' ' BUILDINFO)
 	if (( $build_ts < $installed_build_ts )) && ! $FORCE; then
-		echo "New snapshot is older than installed snapshot. Use -f to force upgrade."
+		echo "Downloaded snapshot is older than installed snapshot. Use -f to force downgrade."
 		exit 1
 	fi
 fi
