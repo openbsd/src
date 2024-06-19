@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2024/06/06 15:15:44 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.14 2024/06/19 07:42:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1034,27 +1034,9 @@ state_transition(struct dhcp6leased_iface *iface, enum if_state new_state)
 
 	switch (new_state) {
 	case IF_DOWN:
-#if 0
-XXXX
-		if (iface->requested_ip.s_addr == INADDR_ANY) {
-			/* nothing to do until iface comes up */
-			iface->timo.tv_sec = -1;
-			break;
-		}
-		if (old_state == IF_DOWN) {
-			/* nameservers already withdrawn when if went down */
-			deconfigure_interfaces(iface);
-			/* nothing more to do until iface comes back */
-			iface->timo.tv_sec = -1;
-		} else {
-			clock_gettime(CLOCK_MONOTONIC, &now);
-			timespecsub(&now, &iface->request_time, &res);
-			iface->timo.tv_sec = iface->lease_time - res.tv_sec;
-			if (iface->timo.tv_sec < 0)
-				iface->timo.tv_sec = 0; /* deconfigure now */
-		}
-#endif
-		/* nothing to do until iface comes up */
+		/*
+		 * Nothing to do until iface comes up. IP addresses will expire.
+		 */
 		iface->timo.tv_sec = -1;
 		break;
 	case IF_INIT:

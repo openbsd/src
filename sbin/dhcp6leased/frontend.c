@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.11 2024/06/05 16:14:12 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.12 2024/06/19 07:42:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -69,7 +69,6 @@ struct iface {
 
 __dead void	 frontend_shutdown(void);
 void		 frontend_sig_handler(int, short, void *);
-void		 rtsock_update_iface(struct if_msghdr *, struct sockaddr_dl *);
 void		 frontend_startup(void);
 void		 update_iface(uint32_t);
 void		 route_receive(int, short, void *);
@@ -596,72 +595,12 @@ update_iface(uint32_t if_index)
 }
 
 void
-rtsock_update_iface(struct if_msghdr *ifm, struct sockaddr_dl *sdl)
-{
-#if 0
-XXX
-	struct iface		*iface;
-	struct imsg_ifinfo	 ifinfo;
-	uint32_t		 if_index;
-	int			 flags;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
-
-	if_index = ifm->ifm_index;
-
-	flags = ifm->ifm_flags;
-
-	iface = get_iface_by_id(if_index);
-	if_name = if_indextoname(if_index, ifnamebuf);
-
-	if (if_name == NULL) {
-		if (iface != NULL) {
-			log_debug("interface with idx %d removed", if_index);
-			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
-			    &if_index, sizeof(if_index));
-			remove_iface(if_index);
-		}
-		return;
-	}
-
-	memset(&ifinfo, 0, sizeof(ifinfo));
-	ifinfo.if_index = if_index;
-	ifinfo.link_state = ifm->ifm_data.ifi_link_state;
-	ifinfo.rdomain = ifm->ifm_tableid;
-	ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
-	    (IFF_UP | IFF_RUNNING);
-
-	if (iface == NULL) {
-		if ((iface = calloc(1, sizeof(*iface))) == NULL)
-			fatal("calloc");
-		iface->udpsock = -1;
-		LIST_INSERT_HEAD(&interfaces, iface, entries);
-		frontend_imsg_compose_main(IMSG_OPEN_UDPSOCK, 0,
-		    &if_index, sizeof(if_index));
-	} else {
-		if (iface->ifinfo.rdomain != ifinfo.rdomain &&
-		    iface->udpsock != -1) {
-			close(iface->udpsock);
-			iface->udpsock = -1;
-		}
-	}
-
-	if (memcmp(&iface->ifinfo, &ifinfo, sizeof(iface->ifinfo)) != 0) {
-		memcpy(&iface->ifinfo, &ifinfo, sizeof(iface->ifinfo));
-		frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &iface->ifinfo,
-		    sizeof(iface->ifinfo));
-	}
-#endif
-}
-
-void
 frontend_startup(void)
 {
 	if (!event_initialized(&ev_route))
 		fatalx("%s: did not receive a route socket from the main "
 		    "process", __func__);
 
-	if (pledge("stdio unix recvfd", NULL) == -1)
-		fatal("pledge");
 	event_add(&ev_route, NULL);
 }
 
@@ -707,16 +646,13 @@ route_receive(int fd, short events, void *arg)
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
-	struct sockaddr_dl		*sdl = NULL;
 	struct if_announcemsghdr	*ifan;
 	uint32_t			 if_index;
 
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
-		if (rtm->rtm_addrs & RTA_IFP && rti_info[RTAX_IFP]->sa_family
-		    == AF_LINK)
-			sdl = (struct sockaddr_dl *)rti_info[RTAX_IFP];
-		rtsock_update_iface((struct if_msghdr *)rtm, sdl);
+		if_index = ((struct if_msghdr *)rtm)->ifm_index;
+		update_iface(if_index);
 		break;
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
