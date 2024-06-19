@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.56 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: agintc.c,v 1.57 2024/06/19 22:10:45 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -312,6 +312,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t		 pmr, oldpmr;
 	uint32_t		 ctrl, bits;
 	uint32_t		 affinity;
+	uint64_t		 redist_stride;
 	int			 i, nbits, nintr;
 	int			 offset, nredist;
 #ifdef MULTIPROCESSOR
@@ -434,15 +435,20 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* find the redistributors. */
 	offset = 0;
+	redist_stride = OF_getpropint64(faa->fa_node, "redistributor-stride", 0);
 	for (nredist = 0; ; nredist++) {
-		int32_t sz = (64 * 1024 * 2);
 		uint64_t typer;
+		int32_t sz;
 
 		typer = bus_space_read_8(sc->sc_iot, sc->sc_redist_base,
 		    offset + GICR_TYPER);
 
-		if (typer & GICR_TYPER_VLPIS)
-			sz += (64 * 1024 * 2);
+		if (redist_stride == 0) {
+			sz = (64 * 1024 * 2);
+			if (typer & GICR_TYPER_VLPIS)
+				sz += (64 * 1024 * 2);
+		} else
+			sz = redist_stride;
 
 #ifdef DEBUG_AGINTC
 		printf("probing redistributor %d %x\n", nredist, offset);
@@ -466,14 +472,18 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	/* submap and configure the redistributors. */
 	offset = 0;
 	for (nredist = 0; nredist < sc->sc_num_redist; nredist++) {
-		int32_t sz = (64 * 1024 * 2);
 		uint64_t typer;
+		int32_t sz;
 
 		typer = bus_space_read_8(sc->sc_iot, sc->sc_redist_base,
 		    offset + GICR_TYPER);
 
-		if (typer & GICR_TYPER_VLPIS)
-			sz += (64 * 1024 * 2);
+		if (redist_stride == 0) {
+			sz = (64 * 1024 * 2);
+			if (typer & GICR_TYPER_VLPIS)
+				sz += (64 * 1024 * 2);
+		} else
+			sz = redist_stride;
 
 		affinity = bus_space_read_8(sc->sc_iot,
 		    sc->sc_redist_base, offset + GICR_TYPER) >> 32;
