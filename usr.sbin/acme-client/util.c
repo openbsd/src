@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.13 2022/12/28 21:30:15 jmc Exp $ */
+/*	$Id: util.c,v 1.14 2024/06/19 13:13:25 claudio Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,7 +21,6 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,8 +29,6 @@
 #include <unistd.h>
 
 #include "extern.h"
-
-static	volatile sig_atomic_t sig;
 
 static	const char *const comps[COMP__MAX] = {
 	"netproc", /* COMP_NET */
@@ -70,14 +67,6 @@ static	const char *const comms[COMM__MAX] = {
 	"revoke-check", /* COMM_REVOKE_CHECK */
 	"revoke-response", /* COMM_REVOKE_RESP */
 };
-
-static void
-sigpipe(int code)
-{
-
-	(void)code;
-	sig = 1;
-}
 
 /*
  * This will read a long-sized operation.
@@ -169,20 +158,14 @@ readbuf(int fd, enum comm comm, size_t *sz)
 int
 writeop(int fd, enum comm comm, long op)
 {
-	void	(*sigfp)(int);
 	ssize_t	 ssz;
 	int	 er;
-
-	sigfp = signal(SIGPIPE, sigpipe);
 
 	if ((ssz = write(fd, &op, sizeof(long))) == -1) {
 		if ((er = errno) != EPIPE)
 			warn("write: %s", comms[comm]);
-		signal(SIGPIPE, sigfp);
 		return er == EPIPE ? 0 : -1;
 	}
-
-	signal(SIGPIPE, sigfp);
 
 	if ((size_t)ssz != sizeof(long)) {
 		warnx("short write: %s", comms[comm]);
@@ -201,21 +184,16 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 {
 	ssize_t	 ssz;
 	int	 er, rc = -1;
-	void	(*sigfp)(int);
 
 	/*
 	 * First, try to write the length.
 	 * If the other end of the pipe has closed, we allow the short
 	 * write to propagate as a return value of zero.
-	 * To detect this, catch SIGPIPE.
 	 */
-
-	sigfp = signal(SIGPIPE, sigpipe);
 
 	if ((ssz = write(fd, &sz, sizeof(size_t))) == -1) {
 		if ((er = errno) != EPIPE)
 			warn("write: %s length", comms[comm]);
-		signal(SIGPIPE, sigfp);
 		return er == EPIPE ? 0 : -1;
 	}
 
@@ -233,7 +211,6 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 	else
 		rc = 1;
 
-	signal(SIGPIPE, sigfp);
 	return rc;
 }
 
