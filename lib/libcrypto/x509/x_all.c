@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.31 2024/03/27 01:22:30 tb Exp $ */
+/* $OpenBSD: x_all.c,v 1.32 2024/06/19 08:00:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -401,24 +401,24 @@ X509_verify(X509 *a, EVP_PKEY *r)
 {
 	if (X509_ALGOR_cmp(a->sig_alg, a->cert_info->signature))
 		return 0;
-	return (ASN1_item_verify(&X509_CINF_it, a->sig_alg,
-	    a->signature, a->cert_info, r));
+	return ASN1_item_verify(&X509_CINF_it, a->sig_alg,
+	    a->signature, a->cert_info, r);
 }
 LCRYPTO_ALIAS(X509_verify);
 
 int
 X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
-	return (ASN1_item_verify(&X509_REQ_INFO_it,
-	    a->sig_alg, a->signature, a->req_info, r));
+	return ASN1_item_verify(&X509_REQ_INFO_it,
+	    a->sig_alg, a->signature, a->req_info, r);
 }
 LCRYPTO_ALIAS(X509_REQ_verify);
 
 int
 NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 {
-	return (ASN1_item_verify(&NETSCAPE_SPKAC_it,
-	    a->sig_algor, a->signature, a->spkac, r));
+	return ASN1_item_verify(&NETSCAPE_SPKAC_it,
+	    a->sig_algor, a->signature, a->spkac, r);
 }
 LCRYPTO_ALIAS(NETSCAPE_SPKI_verify);
 
@@ -426,9 +426,9 @@ int
 X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
 	x->cert_info->enc.modified = 1;
-	return (ASN1_item_sign(&X509_CINF_it,
+	return ASN1_item_sign(&X509_CINF_it,
 	    x->cert_info->signature, x->sig_alg, x->signature,
-	    x->cert_info, pkey, md));
+	    x->cert_info, pkey, md);
 }
 LCRYPTO_ALIAS(X509_sign);
 
@@ -445,8 +445,8 @@ LCRYPTO_ALIAS(X509_sign_ctx);
 int
 X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-	return (ASN1_item_sign(&X509_REQ_INFO_it,
-	    x->sig_alg, NULL, x->signature, x->req_info, pkey, md));
+	return ASN1_item_sign(&X509_REQ_INFO_it,
+	    x->sig_alg, NULL, x->signature, x->req_info, pkey, md);
 }
 LCRYPTO_ALIAS(X509_REQ_sign);
 
@@ -462,8 +462,8 @@ int
 X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
 	x->crl->enc.modified = 1;
-	return(ASN1_item_sign(&X509_CRL_INFO_it, x->crl->sig_alg,
-	    x->sig_alg, x->signature, x->crl, pkey, md));
+	return ASN1_item_sign(&X509_CRL_INFO_it, x->crl->sig_alg,
+	    x->sig_alg, x->signature, x->crl, pkey, md);
 }
 LCRYPTO_ALIAS(X509_CRL_sign);
 
@@ -479,8 +479,8 @@ LCRYPTO_ALIAS(X509_CRL_sign_ctx);
 int
 NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-	return (ASN1_item_sign(&NETSCAPE_SPKAC_it,
-	    x->sig_algor, NULL, x->signature, x->spkac, pkey, md));
+	return ASN1_item_sign(&NETSCAPE_SPKAC_it,
+	    x->sig_algor, NULL, x->signature, x->spkac, pkey, md);
 }
 LCRYPTO_ALIAS(NETSCAPE_SPKI_sign);
 
@@ -500,8 +500,7 @@ int
 X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
     unsigned int *len)
 {
-	return (ASN1_item_digest(&X509_it, type, (char *)data,
-	    md, len));
+	return ASN1_item_digest(&X509_it, type, (void *)data, md, len);
 }
 LCRYPTO_ALIAS(X509_digest);
 
@@ -509,8 +508,7 @@ int
 X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
     unsigned int *len)
 {
-	return (ASN1_item_digest(&X509_CRL_it, type, (char *)data,
-	    md, len));
+	return ASN1_item_digest(&X509_CRL_it, type, (void *)data, md, len);
 }
 LCRYPTO_ALIAS(X509_CRL_digest);
 
@@ -518,8 +516,7 @@ int
 X509_REQ_digest(const X509_REQ *data, const EVP_MD *type, unsigned char *md,
     unsigned int *len)
 {
-	return (ASN1_item_digest(&X509_REQ_it, type, (char *)data,
-	    md, len));
+	return ASN1_item_digest(&X509_REQ_it, type, (void *)data, md, len);
 }
 LCRYPTO_ALIAS(X509_REQ_digest);
 
@@ -527,8 +524,7 @@ int
 X509_NAME_digest(const X509_NAME *data, const EVP_MD *type, unsigned char *md,
     unsigned int *len)
 {
-	return (ASN1_item_digest(&X509_NAME_it, type, (char *)data,
-	    md, len));
+	return ASN1_item_digest(&X509_NAME_it, type, (void *)data, md, len);
 }
 LCRYPTO_ALIAS(X509_NAME_digest);
 
