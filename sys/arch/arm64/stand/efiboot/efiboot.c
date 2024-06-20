@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.52 2024/06/17 09:36:04 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.53 2024/06/20 21:52:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1135,8 +1135,6 @@ efi_fdt(void)
 	return fdt_override ? fdt_override : fdt_sys;
 }
 
-#define EXTRA_DT_SPACE	(32 * 1024)
-
 int
 fdt_load_override(char *file)
 {
@@ -1164,7 +1162,8 @@ fdt_load_override(char *file)
 		printf("cannot open %s\n", path);
 		return 0;
 	}
-	dt_size = sb.st_size + EXTRA_DT_SPACE;
+	dt_size = sb.st_size;
+retry:
 	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(dt_size),
 	    PAGE_SIZE, EfiLoaderData, &addr) != EFI_SUCCESS) {
 		printf("cannot allocate memory for %s\n", path);
@@ -1180,6 +1179,12 @@ fdt_load_override(char *file)
 		sz = dt_size;
 		status = dt_fixup->Fixup(dt_fixup, (void *)addr, &sz,
 		    EFI_DT_APPLY_FIXUPS | EFI_DT_RESERVE_MEMORY);
+		if (status == EFI_BUFFER_TOO_SMALL) {
+			BS->FreePages(addr, EFI_SIZE_TO_PAGES(dt_size));
+			lseek(fd, 0, SEEK_SET);
+			dt_size = sz;
+			goto retry;
+		}
 		if (status != EFI_SUCCESS)
 			panic("DT fixup failed: 0x%lx", status);
 	}
