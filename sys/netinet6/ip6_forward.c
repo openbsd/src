@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.118 2024/06/07 18:24:16 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.119 2024/06/20 19:25:42 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
  */
 
 void
-ip6_forward(struct mbuf *m, struct route *ro, int srcrt)
+ip6_forward(struct mbuf *m, struct route *ro, int flags)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct route iproute;
@@ -248,8 +248,8 @@ reroute:
 		m_freem(m);
 		goto freecopy;
 	}
-	if (rt->rt_ifidx == m->m_pkthdr.ph_ifidx && !srcrt &&
-	    ip6_sendredirects &&
+	if (rt->rt_ifidx == m->m_pkthdr.ph_ifidx &&
+	    ip6_sendredirects && !ISSET(flags, IPV6_REDIRECT) &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor(&ro->ro_dstsin6, ifp)) {
@@ -305,7 +305,7 @@ reroute:
 	} else if (m->m_pkthdr.pf.flags & PF_TAG_REROUTE) {
 		/* tag as generated to skip over pf_test on rerun */
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
-		srcrt = 1;
+		SET(flags, IPV6_REDIRECT);
 		if (ro == &iproute)
 			rtfree(ro->ro_rt);
 		ro = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.252 2024/04/21 17:32:10 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.253 2024/06/20 19:25:42 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1240,8 +1240,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	if (ifp == NULL)
 		return;
 
-	/* XXX if we are router, we don't update route by icmp6 redirect */
-	if (ip6_forwarding)
+	/* if we are router, we don't update route by icmp6 redirect */
+	if (ip6_forwarding != 0)
 		goto freeit;
 	if (!(ifp->if_xflags & IFXF_AUTOCONF6))
 		goto freeit;
@@ -1442,7 +1442,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	icmp6_errcount(ND_REDIRECT, 0);
 
 	/* if we are not router, we don't send icmp6 redirect */
-	if (!ip6_forwarding)
+	if (ip6_forwarding == 0)
 		goto fail;
 
 	/* sanity check */

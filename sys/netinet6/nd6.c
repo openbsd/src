@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.280 2023/05/13 16:27:59 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.281 2024/06/20 19:25:42 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -671,7 +671,7 @@ nd6_free(struct rtentry *rt)
 
 	ifp = if_get(rt->rt_ifidx);
 
-	if (!ip6_forwarding) {
+	if (ip6_forwarding == 0) {
 		if (ln->ln_router) {
 			/*
 			 * rt6_flush must be called whether or not the neighbor

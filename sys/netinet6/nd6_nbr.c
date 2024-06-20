@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.151 2023/07/30 12:52:03 krw Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.152 2024/06/20 19:25:42 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	struct ifaddr *ifa = NULL;
 	int lladdrlen = 0;
 	int anycast = 0, proxy = 0, tentative = 0;
-	int router = ip6_forwarding;
+	int i_am_router = (ip6_forwarding != 0);
 	int tlladdr;
 	struct nd_opts ndopts;
 	struct sockaddr_dl *proxydl = NULL;
@@ -244,7 +244,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			if (ifa) {
 				proxy = 1;
 				proxydl = satosdl(rt->rt_gateway);
-				router = 0;	/* XXX */
+				i_am_router = 0;	/* XXX */
 			}
 		}
 		if (rt)
@@ -317,7 +317,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		saddr6.s6_addr16[1] = htons(ifp->if_index);
 		nd6_na_output(ifp, &saddr6, &taddr6,
 		    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
-		    (router ? ND_NA_FLAG_ROUTER : 0),
+		    (i_am_router ? ND_NA_FLAG_ROUTER : 0),
 		    tlladdr, sdltosa(proxydl));
 		goto freeit;
 	}
@@ -327,7 +327,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 	nd6_na_output(ifp, &saddr6, &taddr6,
 	    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
-	    (router ? ND_NA_FLAG_ROUTER : 0) | ND_NA_FLAG_SOLICITED,
+	    (i_am_router ? ND_NA_FLAG_ROUTER : 0) | ND_NA_FLAG_SOLICITED,
 	    tlladdr, sdltosa(proxydl));
  freeit:
 	m_freem(m);
@@ -559,6 +559,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	int is_override;
 	char *lladdr = NULL;
 	int lladdrlen = 0;
+	int i_am_router = (ip6_forwarding != 0);
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ifa6;
 	struct llinfo_nd6 *ln;
@@ -684,7 +685,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 * If we are a router, we may create new stale cache entries upon
 	 * receiving Unsolicited Neighbor Advertisements.
 	 */
-	if (rt == NULL && ip6_forwarding == 1) {
+	if (rt == NULL && i_am_router) {
 		rt = nd6_lookup(&taddr6, 1, ifp, ifp->if_rdomain);
 		if (rt == NULL || lladdr == NULL ||
 		    ((sdl = satosdl(rt->rt_gateway)) == NULL))
@@ -837,7 +838,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		}
 
 		if (ln->ln_router && !is_router) {
-			if (!ip6_forwarding) {
+			if (!i_am_router) {
 				/*
 				 * The neighbor may be used
 				 * as a next hop for some destinations

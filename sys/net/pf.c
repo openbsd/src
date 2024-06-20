@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1197 2024/06/07 18:24:16 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1198 2024/06/20 19:25:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7974,12 +7974,15 @@ done:
 			break;
 		case AF_INET6:
 			if (pd.dir == PF_IN) {
+				int flags;
+
 				if (ip6_forwarding == 0) {
 					ip6stat_inc(ip6s_cantforward);
 					action = PF_DROP;
 					break;
 				}
-				ip6_forward(pd.m, NULL, 1);
+				flags = IPV6_FORWARDING | IPV6_REDIRECT;
+				ip6_forward(pd.m, NULL, flags);
 			} else
 				ip6_output(pd.m, NULL, NULL, 0, NULL, NULL);
 			break;

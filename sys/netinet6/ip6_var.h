@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.117 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.118 2024/06/20 19:25:42 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -265,10 +265,11 @@ ip6stat_add(enum ip6stat_counters c, uint64_t v)
 	counters_add(ip6counters, c, v);
 }
 
-/* flags passed to ip6_output as last parameter */
-#define	IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
-#define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
-#define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
+/* flags passed to ip6_output or ip6_forward as last parameter */
+#define IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
+#define IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
+#define IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
+#define IPV6_REDIRECT		0x08	/* redirected by pf */
 
 extern int ip6_mtudisc_timeout;		/* mtu discovery */
 extern struct rttimer_queue icmp6_mtudisc_timeout_q;
