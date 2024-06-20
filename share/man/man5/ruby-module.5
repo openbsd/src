@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.46 2023/12/27 23:46:42 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.47 2024/06/20 22:43:16 jeremy Exp $
 .\"
 .\" Copyright (c) 2011-2015, 2023 Jeremy Evans <jeremy@openbsd.org>
 .\" Copyright (c) 2008, 2011 Marc Espie <espie@openbsd.org>
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 27 2023 $
+.Dd $Mdocdate: June 20 2024 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -75,11 +75,11 @@ to use the
 .Ev FLAVOR Ns \-
 instead of ruby\- as the package prefix.
 .Pp
-The ports system defaults to using Ruby 3.2 if the version of Ruby is not
+The ports system defaults to using Ruby 3.3 if the version of Ruby is not
 specified.
 To specify a version for a gem port, use a specific
 .Ev FLAVOR ,
-such as ruby33 to use Ruby 3.3.
+such as ruby32 to use Ruby 3.2.
 To specify the Ruby version to use for a non Ruby-gem port, set
 .Ev MODRUBY_REV
 to 3.1, 3.2, or 3.3.
