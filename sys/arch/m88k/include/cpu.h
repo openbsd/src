@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.79 2024/06/09 21:15:29 jca Exp $ */
+/*	$OpenBSD: cpu.h,v 1.80 2024/06/20 10:46:11 aoyama Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -64,6 +64,7 @@
 #include <sys/queue.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 #if defined(MULTIPROCESSOR)
 #if !defined(MAX_CPUS) || MAX_CPUS > 4
@@ -171,6 +172,8 @@ struct cpu_info {
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#define	__HAVE_UVM_PERCPU
+	struct uvm_pmr_cache ci_uvm;		/* [o] page cache */
 #endif
 #ifdef DIAGNOSTIC
 	int	ci_mutex_level;
