@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.106 2024/06/12 04:24:59 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.107 2024/06/20 20:15:02 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2024 $
+.Dd $Mdocdate: June 20 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -42,8 +42,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility queries the RPKI repository system with
-a built-in HTTPS client and
+utility queries the
+.Em Resource Public Key Infrastructure Pq RPKI
+repository system with a built-in HTTPS client and
 .Xr openrsync 1
 to fetch all X.509 certificates, manifests, and revocation lists under a given
 .Em Trust Anchor .
@@ -367,7 +368,7 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T Signed Object Template for the Resource Public Key Infrastructure (RPKI)
+.%T Signed Object Template for the RPKI
 .%R RFC 6488
 .Re
 .Pp
@@ -412,6 +413,11 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
+.%T A Profile for RPKI Signed Checklists (RSCs)
+.%R RFC 9323
+.Re
+.Pp
+.Rs
 .%T A Profile for Route Origin Authorizations (ROAs)
 .%R RFC 9582
 .Re
@@ -425,11 +431,6 @@ agreement regarding ARIN service restrictions.
 .%T RPKI Signed Object for Trust Anchor Key
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-signed-tal
 .%D Oct, 2022
-.Re
-.Pp
-.Rs
-.%T A Profile for RPKI Signed Checklists (RSCs)
-.%R RFC 9323
 .Re
 .Pp
 .Rs
@@ -465,6 +466,12 @@ agreement regarding ARIN service restrictions.
 .Rs
 .%T Same-Origin Policy for RRDP
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rrdp-same-origin
+.%D June, 2024
+.Re
+.Pp
+.Rs
+.%T Tiebreaking RPKI Trust Anchors
+.%U https://datatracker.ietf.org/doc/html/draft-spaghetti-sidrops-rpki-ta-tiebreaker
 .%D June, 2024
 .Re
 .Sh HISTORY
