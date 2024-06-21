@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.36 2024/04/22 13:30:22 bluhm Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.37 2024/06/21 12:51:29 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -321,6 +321,7 @@ struct pf_pdesc {
 
 struct pf_anchor_stackframe {
 	struct pf_ruleset	*sf_rs;
+	struct pf_rule		*sf_anchor;
 	union {
 		struct pf_rule			*u_r;
 		struct pf_anchor_stackframe	*u_stack_top;

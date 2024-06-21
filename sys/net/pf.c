@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1198 2024/06/20 19:25:42 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1199 2024/06/21 12:51:29 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3666,8 +3666,8 @@ pf_anchor_stack_top(void)
 }
 
 int
-pf_anchor_stack_push(struct pf_ruleset *rs, struct pf_rule *r,
-    struct pf_anchor *child, int jump_target)
+pf_anchor_stack_push(struct pf_ruleset *rs, struct pf_rule *anchor,
+    struct pf_rule *r, struct pf_anchor *child, int jump_target)
 {
 	struct pf_anchor_stackframe *stack;
 	struct pf_anchor_stackframe *top_sf = pf_anchor_stack_top();
@@ -3677,6 +3677,7 @@ pf_anchor_stack_push(struct pf_ruleset *rs, struct pf_rule *r,
 		return (-1);
 
 	top_sf->sf_rs = rs;
+	top_sf->sf_anchor = anchor;
 	top_sf->sf_r = r;
 	top_sf->sf_child = child;
 	top_sf->sf_jump_target = jump_target;
@@ -3693,8 +3694,8 @@ pf_anchor_stack_push(struct pf_ruleset *rs, struct pf_rule *r,
 }
 
 int
-pf_anchor_stack_pop(struct pf_ruleset **rs, struct pf_rule **r,
-    struct pf_anchor **child, int *jump_target)
+pf_anchor_stack_pop(struct pf_ruleset **rs, struct pf_rule **anchor,
+    struct pf_rule **r, struct pf_anchor **child, int *jump_target)
 {
 	struct pf_anchor_stackframe *top_sf = pf_anchor_stack_top();
 	struct pf_anchor_stackframe *stack;
@@ -3710,6 +3711,7 @@ pf_anchor_stack_pop(struct pf_ruleset **rs, struct pf_rule **r,
 			    __func__);
 
 		*rs = top_sf->sf_rs;
+		*anchor = top_sf->sf_anchor;
 		*r = top_sf->sf_r;
 		*child = top_sf->sf_child;
 		*jump_target = top_sf->sf_jump_target;
@@ -4306,25 +4308,27 @@ enter_ruleset:
 			if (r->quick)
 				return (PF_TEST_QUICK);
 		} else {
-			ctx->a = r;
 			ctx->aruleset = &r->anchor->ruleset;
 			if (r->anchor_wildcard) {
 				RB_FOREACH(child, pf_anchor_node,
 				    &r->anchor->children) {
-					if (pf_anchor_stack_push(ruleset, r,
-					    child, PF_NEXT_CHILD) != 0)
+					if (pf_anchor_stack_push(ruleset,
+					    ctx->a, r, child,
+					    PF_NEXT_CHILD) != 0)
 						return (PF_TEST_FAIL);
 
+					ctx->a = r;
 					ruleset = &child->ruleset;
 					goto enter_ruleset;
 next_child:
 					continue;	/* with RB_FOREACH() */
 				}
 			} else {
-				if (pf_anchor_stack_push(ruleset, r, child,
-				    PF_NEXT_RULE) != 0)
+				if (pf_anchor_stack_push(ruleset, ctx->a,
+				    r, child, PF_NEXT_RULE) != 0)
 					return (PF_TEST_FAIL);
 
+				ctx->a = r;
 				ruleset = &r->anchor->ruleset;
 				child = NULL;
 				goto enter_ruleset;
@@ -4335,7 +4339,9 @@ next_rule:
 		r = TAILQ_NEXT(r, entries);
 	}
 
-	if (pf_anchor_stack_pop(&ruleset, &r, &child, &target) == 0) {
+	if (pf_anchor_stack_pop(&ruleset, &ctx->a, &r, &child,
+	    &target) == 0) {
+
 		/* stop if any rule matched within quick anchors. */
 		if (r->quick == PF_TEST_QUICK && *ctx->am == r)
 			return (PF_TEST_QUICK);
