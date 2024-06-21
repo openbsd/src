@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.119 2024/06/11 15:44:55 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.120 2024/06/21 01:52:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -103,6 +103,7 @@
 #define CPU_PART_X_GENE		0x000
 
 /* Qualcomm */
+#define CPU_PART_ORYON		0x001
 #define CPU_PART_KRYO400_GOLD	0x804
 #define CPU_PART_KRYO400_SILVER	0x805
 
@@ -194,6 +195,7 @@ struct cpu_cores cpu_cores_amcc[] = {
 struct cpu_cores cpu_cores_qcom[] = {
 	{ CPU_PART_KRYO400_GOLD, "Kryo 400 Gold" },
 	{ CPU_PART_KRYO400_SILVER, "Kryo 400 Silver" },
+	{ CPU_PART_ORYON, "Oryon" },
 	{ 0, NULL },
 };
 
