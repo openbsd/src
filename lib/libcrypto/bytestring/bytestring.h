@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.4 2022/11/09 19:05:42 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.5 2024/06/22 15:32:51 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -458,6 +458,13 @@ int CBB_add_u16_length_prefixed(CBB *cbb, CBB *out_contents);
  * big-endian length. It returns one on success or zero on error.
  */
 int CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents);
+
+/*
+ * CBB_add_u32_length_prefixed sets |*out_contents| to a new child of |cbb|.
+ * The data written to |*out_contents| will be prefixed in |cbb| with a 32-bit,
+ * big-endian length. It returns one on success or zero on error.
+ */
+int CBB_add_u32_length_prefixed(CBB *cbb, CBB *out_contents);
 
 /*
  * CBB_add_asn sets |*out_contents| to a |CBB| into which the contents of an

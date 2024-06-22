@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.5 2024/05/25 15:12:47 tb Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.6 2024/06/22 15:32:51 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -326,6 +326,12 @@ int
 CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents)
 {
 	return cbb_add_length_prefixed(cbb, out_contents, 3);
+}
+
+int
+CBB_add_u32_length_prefixed(CBB *cbb, CBB *out_contents)
+{
+	return cbb_add_length_prefixed(cbb, out_contents, 4);
 }
 
 int
