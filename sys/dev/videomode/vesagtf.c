@@ -657,7 +657,7 @@ vesagtf_mode(unsigned x, unsigned y, unsigned refresh, struct videomode *vmp)
 
 #ifndef _KERNEL
 void
-print_xf86_mode (struct videomode *vmp)
+print_xf86_mode(struct videomode *vmp)
 {
 	float	vf, hf;
 
@@ -678,7 +678,7 @@ print_xf86_mode (struct videomode *vmp)
 }
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
 	struct videomode m;
 

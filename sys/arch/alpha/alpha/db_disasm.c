@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.25 2019/11/07 14:44:52 mpi Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.26 2024/06/22 10:22:29 jsg Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -805,7 +805,7 @@ static int regnum[3];		/* which regs used in this inst */
 static const char *register_name(int);
 
 static const char *
-register_name (ireg)
+register_name(ireg)
 	int ireg;
 {
 	int	i;

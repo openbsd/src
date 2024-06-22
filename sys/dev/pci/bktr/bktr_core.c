@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.43 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.44 2024/06/22 10:22:29 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -2367,7 +2367,7 @@ dump_bt848( bktr_ptr_t bktr )
 #define BKTR_TEST_RISC_STATUS_BIT3 (1U << 31)
 
 static bool_t
-notclipped (bktr_reg_t * bktr, int x, int width) {
+notclipped(bktr_reg_t * bktr, int x, int width) {
     int i;
     bktr_clip_t * clip_node;
     bktr->clip_start = -1;

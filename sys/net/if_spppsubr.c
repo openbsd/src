@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.193 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.194 2024/06/22 10:22:29 jsg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -1496,7 +1496,7 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 }
 
 void
-sppp_increasing_timeout (const struct cp *cp, struct sppp *sp)
+sppp_increasing_timeout(const struct cp *cp, struct sppp *sp)
 {
 	int timo;
 

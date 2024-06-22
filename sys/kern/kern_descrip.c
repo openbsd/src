@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.207 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.208 2024/06/22 10:22:29 jsg Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ filedesc_init(void)
 }
 
 static __inline int
-find_next_zero (u_int *bitmap, int want, u_int bits)
+find_next_zero(u_int *bitmap, int want, u_int bits)
 {
 	int i, off, maxoff;
 	u_int sub;

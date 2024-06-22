@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.49 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.50 2024/06/22 10:22:29 jsg Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -917,7 +917,7 @@ ex_get_media(struct ex_softc *sc)
 }
 
 int
-ex_ifmedia_upd (struct ifnet *ifp)
+ex_ifmedia_upd(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 

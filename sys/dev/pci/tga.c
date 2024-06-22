@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.43 2022/07/15 17:57:26 kettenis Exp $ */
+/* $OpenBSD: tga.c,v 1.44 2024/06/22 10:22:29 jsg Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -549,7 +549,7 @@ tgaattach(parent, self, aux)
 }
 
 void 
-tga_config_interrupts (d)
+tga_config_interrupts(d)
 	struct device *d;
 {
 	struct tga_softc *sc = (struct tga_softc *)d;
@@ -1435,7 +1435,7 @@ tga_eraserows(c, row, num, attr)
 }
 
 int
-tga_erasecols (c, row, col, num, attr)
+tga_erasecols(c, row, col, num, attr)
 	void *c;
 	int row, col, num;
 	uint32_t attr;

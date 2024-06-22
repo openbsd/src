@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.121 2024/05/26 10:01:01 jsg Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.122 2024/06/22 10:22:29 jsg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -409,7 +409,7 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 }
 
 int
-wdc_atapi_ioctl (struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
+wdc_atapi_ioctl(struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
 {
 	struct atapiscsi_softc *as = sc_link->bus->sb_adapter_softc;
 	struct channel_softc *chp = as->chp;

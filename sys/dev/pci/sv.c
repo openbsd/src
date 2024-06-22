@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.44 2024/05/24 06:02:58 jsg Exp $ */
+/*      $OpenBSD: sv.c,v 1.45 2024/06/22 10:22:29 jsg Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -170,19 +170,19 @@ static __inline__ void sv_write_indirect(struct sv_softc *, u_int8_t, u_int8_t )
 static void sv_init_mixer(struct sv_softc *);
 
 static __inline__ void
-sv_write (struct sv_softc *sc, u_int8_t reg, u_int8_t val)
+sv_write(struct sv_softc *sc, u_int8_t reg, u_int8_t val)
 {
   bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val);
 }
 
 static __inline__ u_int8_t
-sv_read (struct sv_softc *sc, u_int8_t reg)
+sv_read(struct sv_softc *sc, u_int8_t reg)
 {
   return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg));
 }
 
 static __inline__ u_int8_t
-sv_read_indirect (struct sv_softc *sc, u_int8_t reg)
+sv_read_indirect(struct sv_softc *sc, u_int8_t reg)
 {
     u_int8_t iaddr = 0;
 
@@ -196,7 +196,7 @@ sv_read_indirect (struct sv_softc *sc, u_int8_t reg)
 }
 
 static __inline__ void
-sv_write_indirect (struct sv_softc *sc, u_int8_t reg, u_int8_t val)
+sv_write_indirect(struct sv_softc *sc, u_int8_t reg, u_int8_t val)
 {
     u_int8_t iaddr = 0;
 #ifdef DIAGNOSTIC
