@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.103 2024/01/17 22:22:25 kurt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.104 2024/06/22 12:26:17 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -675,9 +675,9 @@ typedef struct {
 
 struct elfcore_procinfo {
 	/* Version 1 fields start here. */
-	uint32_t	cpi_version;	/* netbsd_elfcore_procinfo version */
+	uint32_t	cpi_version;	/* elfcore_procinfo version */
 #define ELFCORE_PROCINFO_VERSION	1
-	uint32_t	cpi_cpisize;	/* sizeof(netbsd_elfcore_procinfo) */
+	uint32_t	cpi_cpisize;	/* sizeof(elfcore_procinfo) */
 	uint32_t	cpi_signo;	/* killing signal */
 	uint32_t	cpi_sigcode;	/* signal code */
 	uint32_t	cpi_sigpend;	/* pending signals */
