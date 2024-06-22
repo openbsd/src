@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.21 2024/04/17 21:55:43 tb Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.22 2024/06/22 16:33:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -690,32 +690,43 @@ BN_hex2bn(BIGNUM **bnp, const char *s)
 LCRYPTO_ALIAS(BN_hex2bn);
 
 int
-BN_bn2mpi(const BIGNUM *a, unsigned char *d)
+BN_bn2mpi(const BIGNUM *bn, unsigned char *d)
 {
-	int bits;
-	int num = 0;
-	int ext = 0;
-	long l;
+	uint8_t *out_bin;
+	size_t out_len, out_bin_len;
+	int bits, bytes;
+	int extend;
+	CBB cbb, cbb_bin;
 
-	bits = BN_num_bits(a);
-	num = (bits + 7) / 8;
-	if (bits > 0) {
-		ext = ((bits & 0x07) == 0);
-	}
+	bits = BN_num_bits(bn);
+	bytes = (bits + 7) / 8;
+	extend = (bits != 0) && (bits % 8 == 0);
+	out_bin_len = extend + bytes;
+	out_len = 4 + out_bin_len;
+
 	if (d == NULL)
-		return (num + 4 + ext);
+		return out_len;
 
-	l = num + ext;
-	d[0] = (unsigned char)(l >> 24) & 0xff;
-	d[1] = (unsigned char)(l >> 16) & 0xff;
-	d[2] = (unsigned char)(l >> 8) & 0xff;
-	d[3] = (unsigned char)(l) & 0xff;
-	if (ext)
-		d[4] = 0;
-	num = BN_bn2bin(a, &(d[4 + ext]));
-	if (a->neg)
+	if (!CBB_init_fixed(&cbb, d, out_len))
+		goto err;
+	if (!CBB_add_u32_length_prefixed(&cbb, &cbb_bin))
+		goto err;
+	if (!CBB_add_space(&cbb_bin, &out_bin, out_bin_len))
+		goto err;
+	if (BN_bn2binpad(bn, out_bin, out_bin_len) != out_bin_len)
+		goto err;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		goto err;
+
+	if (bn->neg)
 		d[4] |= 0x80;
-	return (num + 4 + ext);
+
+	return out_len;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return -1;
 }
 LCRYPTO_ALIAS(BN_bn2mpi);
 
