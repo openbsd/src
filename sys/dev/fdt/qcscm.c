@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.5 2023/07/22 22:48:35 patrick Exp $ */
+/* $OpenBSD: qcscm.c,v 1.6 2024/06/23 22:04:53 patrick Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -204,14 +204,25 @@ qcscm_smc_exec(uint64_t *in, uint64_t *out)
 	    "ldp x2, x3, [%0, #16]\n"
 	    "ldp x4, x5, [%0, #32]\n"
 	    "ldp x6, x7, [%0, #48]\n"
+	    "ldp x8, x9, [%0, #64]\n"
+	    "ldp x10, x11, [%0, #80]\n"
+	    "ldp x12, x13, [%0, #96]\n"
+	    "ldp x14, x15, [%0, #112]\n"
+	    "ldp x16, x17, [%0, #128]\n"
 	    "smc #0\n"
 	    "stp x0, x1, [%1, #0]\n"
 	    "stp x2, x3, [%1, #16]\n"
 	    "stp x4, x5, [%1, #32]\n"
-	    "stp x6, x7, [%1, #48]\n" ::
+	    "stp x6, x7, [%1, #48]\n"
+	    "stp x8, x9, [%1, #64]\n"
+	    "stp x10, x11, [%1, #80]\n"
+	    "stp x12, x13, [%1, #96]\n"
+	    "stp x14, x15, [%1, #112]\n"
+	    "stp x16, x17, [%1, #128]\n" ::
 	    "r" (in), "r" (out) :
-	    "x0", "x1", "x2", "x3",
-	    "x4", "x5", "x6", "x7",
+	    "x0", "x1", "x2", "x3", "x4", "x5",
+	    "x6", "x7", "x8", "x9", "x10", "x11",
+	    "x12", "x13", "x14", "x15", "x16", "x17",
 	    "memory");
 }
 
@@ -219,7 +230,7 @@ int
 qcscm_smc_call(struct qcscm_softc *sc, uint8_t owner, uint8_t svc, uint8_t cmd,
     uint32_t arginfo, uint64_t *args, int arglen, uint64_t *res)
 {
-	uint64_t smcreq[8] = { 0 }, smcres[8] = { 0 };
+	uint64_t smcreq[18] = { 0 }, smcres[18] = { 0 };
 	uint64_t *smcextreq;
 	int i;
 
