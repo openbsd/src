@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.32 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: string.h,v 1.33 2024/06/23 07:08:26 otto Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/_null.h>
-#include <machine/_types.h>
+#include <sys/_types.h>
 
 /*
  * POSIX mandates that certain string functions not present in ISO C
@@ -128,7 +128,7 @@ size_t	 strlcat(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 size_t	 strlcpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
-void	 strmode(int, char *);
+void	 strmode(__mode_t, char *);
 char	*strsep(char **, const char *);
 int	 timingsafe_bcmp(const void *, const void *, size_t);
 int	 timingsafe_memcmp(const void *, const void *, size_t);
