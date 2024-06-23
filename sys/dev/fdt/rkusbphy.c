@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkusbphy.c,v 1.4 2023/09/29 17:30:35 kettenis Exp $ */
+/*	$OpenBSD: rkusbphy.c,v 1.5 2024/06/23 10:18:11 kettenis Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -90,6 +90,38 @@ static const struct rkusbphy_chip rkusbphy_rk3568[] = {
 	},
 };
 
+static const struct rkusbphy_regs rkusbphy_rk3588_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0x0000,	0,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0x000c,	11,	0x1,	0x0 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0x0008,	2,	0x1,	0x0 },
+	},
+};
+
+static const struct rkusbphy_chip rkusbphy_rk3588[] = {
+	{
+		.c_base_addr = 0x0000,
+		.c_regs = &rkusbphy_rk3588_regs,
+	},
+	{
+		.c_base_addr = 0x4000,
+		.c_regs = &rkusbphy_rk3588_regs,
+	},
+	{
+		.c_base_addr = 0x8000,
+		.c_regs = &rkusbphy_rk3588_regs,
+	},
+	{
+		.c_base_addr = 0xc000,
+		.c_regs = &rkusbphy_rk3588_regs,
+	},
+};
+
 /*
  * driver stuff
  */
@@ -159,6 +191,7 @@ struct rkusbphy_id {
 
 static const struct rkusbphy_id rkusbphy_ids[] = {
 	RKUSBPHY_ID("rockchip,rk3568-usb2phy", rkusbphy_rk3568),
+	RKUSBPHY_ID("rockchip,rk3588-usb2phy", rkusbphy_rk3588),
 };
 
 static const struct rkusbphy_id *
@@ -213,7 +246,10 @@ rkusbphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 
 	grfph = OF_getpropint(sc->sc_node, "rockchip,usbgrf", 0);
-	sc->sc_grf = regmap_byphandle(grfph);
+	if (grfph)
+		sc->sc_grf = regmap_byphandle(grfph);
+	else
+		sc->sc_grf = regmap_bynode(OF_parent(faa->fa_node));
 	if (sc->sc_grf == NULL) {
 		printf("%s: rockchip,usbgrf 0x%x not found\n", DEVNAME(sc),
 		    grfph);
@@ -267,10 +303,8 @@ rkusbphy_register(struct rkusbphy_softc *sc, struct phy_device *pd,
 	int node;
 
 	node = OF_getnodebyname(sc->sc_node, pc->pc_name);
-	if (node == 0) {
-		printf("%s: cannot find %s\n", DEVNAME(sc), pc->pc_name);
+	if (node == 0)
 		return;
-	}
 
 	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
 	    strcmp(status, "disabled") == 0)
