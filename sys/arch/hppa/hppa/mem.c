@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2024/06/23 22:08:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -427,5 +427,5 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
                 return 0;
         }
 
-	return (EOPNOTSUPP);
+	return (ENOTTY);
 }

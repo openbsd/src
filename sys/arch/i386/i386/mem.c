@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.56 2023/03/08 04:43:07 guenther Exp $ */
+/*	$OpenBSD: mem.c,v 1.57 2024/06/23 22:08:37 kettenis Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -260,7 +260,7 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		return mem_ioctl(dev, cmd, data, flags, p);
 	}
 #endif
-	return (ENODEV);
+	return (ENOTTY);
 }
 
 #ifdef MTRR

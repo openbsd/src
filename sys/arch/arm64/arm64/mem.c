@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2018/05/04 15:45:11 visa Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2024/06/23 22:08:37 kettenis Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -253,5 +253,5 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
                 return 0;
         }
 
-	return (EOPNOTSUPP);
+	return (ENOTTY);
 }

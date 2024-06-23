@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2020/06/27 21:22:30 kettenis Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2024/06/23 22:08:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,5 +197,5 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
                 return 0;
         }
 
-	return (ENODEV);
+	return (ENOTTY);
 }

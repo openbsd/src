@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2021/05/19 20:35:02 deraadt Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2024/06/23 22:08:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -249,5 +249,5 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		return 0;
 	}
 
-	return (EOPNOTSUPP);
+	return (ENOTTY);
 }

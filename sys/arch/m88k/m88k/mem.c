@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2017/12/14 03:30:43 guenther Exp $ */
+/*	$OpenBSD: mem.c,v 1.7 2024/06/23 22:08:37 kettenis Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,5 +172,5 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
                 return 0;
         }
 
-	return (EOPNOTSUPP);
+	return (ENOTTY);
 }
