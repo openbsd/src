@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.58 2024/02/04 13:08:29 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.59 2024/06/23 07:50:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2330,7 +2330,6 @@ certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	if (sk_CONF_VALUE_num(sk) == 0) {
 		BIO_printf(bio_err, "no name/value pairs found in %s\n",
 		    infile);
-		CONF_free(parms);
 		goto err;
 	}
 	/*
