@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.16 2023/10/09 22:05:27 patrick Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.17 2024/06/23 15:37:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -402,7 +402,8 @@ static int gic_version;
 static uint64_t gicc_base;
 static uint64_t gicd_base;
 static uint64_t gicr_base;
-static uint32_t gicr_size;
+static uint64_t gicr_size;
+static uint64_t gicr_stride;
 
 void
 efi_acpi_madt_gicc(struct acpi_madt_gicc *gicc)
@@ -436,6 +437,30 @@ efi_acpi_madt_gicc(struct acpi_madt_gicc *gicc)
 
 	/* Stash GIC information. */
 	gicc_base = gicc->base_address;
+
+	/*
+	 * The redistributor base address may be specified per-CPU.
+	 * In that case we will need to reconstruct the base, size and
+	 * stride to use for the redistributor registers.
+	 */
+	if (gicc->gicr_base_address > 0) {
+		if (gicr_base > 0) {
+			uint32_t size;
+
+			if (gicc->gicr_base_address < gicr_base)
+				size = gicr_base - gicc->gicr_base_address;
+			else
+				size = gicc->gicr_base_address - gicr_base;
+			if (gicr_stride == 0 || size < gicr_stride)
+				gicr_stride = size;
+			if (gicr_size == 0 || size > gicr_size)
+				gicr_size = size;
+			gicr_base = MIN(gicr_base, gicc->gicr_base_address);
+		} else {
+			gicr_base = gicc->gicr_base_address;
+			gicr_size = 0x20000;
+		}
+	}
 }
 
 void
@@ -579,7 +604,7 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 		reg[0] = htobe64(gicd_base);
 		reg[1] = htobe64(0x10000);
 		reg[2] = htobe64(gicr_base);
-		reg[3] = htobe64(gicr_size);
+		reg[3] = htobe64(gicr_size + gicr_stride);
 		break;
 	default:
 		return;
@@ -589,6 +614,11 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 	node = fdt_find_node("/interrupt-controller");
 	fdt_node_set_string_property(node, "compatible", compat);
 	fdt_node_set_property(node, "reg", reg, sizeof(reg));
+	if (gicr_stride > 0) {
+		uint64_t stride = htobe64(gicr_stride);
+		fdt_node_add_property(node, "redistributor-stride",
+		    &stride, sizeof(stride));
+	}
 	fdt_node_set_string_property(node, "status", "okay");
 }
 
