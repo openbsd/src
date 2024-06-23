@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.120 2024/06/21 01:52:17 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.121 2024/06/23 10:17:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1174,6 +1174,8 @@ cpu_init(void)
 	if (ID_AA64MMFR1_PAN(id_aa64mmfr1) >= ID_AA64MMFR1_PAN_IMPL) {
 		sctlr = READ_SPECIALREG(sctlr_el1);
 		sctlr &= ~SCTLR_SPAN;
+		if (ID_AA64MMFR1_PAN(id_aa64mmfr1) >= ID_AA64MMFR1_PAN_EPAN)
+			sctlr |= SCTLR_EPAN;
 		WRITE_SPECIALREG(sctlr_el1, sctlr);
 	}
 
