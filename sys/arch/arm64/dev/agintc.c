@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.57 2024/06/19 22:10:45 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.58 2024/06/23 21:58:34 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1516,6 +1516,7 @@ agintc_send_ipi(struct cpu_info *ci, int id)
 #define  GITS_BASER_PGSZ_4K	(0ULL << 8)
 #define  GITS_BASER_PGSZ_16K	(1ULL << 8)
 #define  GITS_BASER_PGSZ_64K	(2ULL << 8)
+#define  GITS_BASER_SZ_MASK	(0xffULL)
 #define  GITS_BASER_PA_MASK	0x7ffffffff000ULL
 #define GITS_TRANSLATER		0x10040
 
@@ -1572,6 +1573,7 @@ struct agintc_msi_softc {
 	uint16_t			sc_cmdidx;
 
 	int				sc_devbits;
+	uint32_t			sc_deviceid_max;
 	struct agintc_dmamem		*sc_dtt;
 	size_t				sc_dtt_pgsz;
 	uint8_t				sc_dte_sz;
@@ -1702,6 +1704,13 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dte_sz = GITS_BASER_TTE_SZ(baser) + 1;
 		size = (1ULL << sc->sc_devbits) * sc->sc_dte_sz;
 		size = roundup(size, sc->sc_dtt_pgsz);
+
+		/* Clamp down to maximum configurable num pages */
+		if (size / sc->sc_dtt_pgsz > GITS_BASER_SZ_MASK + 1)
+			size = (GITS_BASER_SZ_MASK + 1) * sc->sc_dtt_pgsz;
+
+		/* Calculate max deviceid based off configured size */
+		sc->sc_deviceid_max = (size / sc->sc_dte_sz) - 1;
 
 		/* Allocate table. */
 		sc->sc_dtt = agintc_dmamem_alloc(sc->sc_dmat,
@@ -1857,6 +1866,9 @@ agintc_msi_create_device(struct agintc_msi_softc *sc, uint32_t deviceid)
 {
 	struct agintc_msi_device *md;
 	struct gits_cmd cmd;
+
+	if (deviceid > sc->sc_deviceid_max)
+		return NULL;
 
 	md = malloc(sizeof(*md), M_DEVBUF, M_ZERO | M_WAITOK);
 	md->md_deviceid = deviceid;
