@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2022/12/05 14:43:06 tb Exp $
+#	$OpenBSD: Makefile,v 1.5 2024/06/23 13:53:21 tb Exp $
 
 RUST_OPENSSL_TESTS =	/usr/local/share/rust-openssl-tests
 CARGO =			/usr/local/bin/cargo
@@ -20,7 +20,7 @@ ${_WORKSPACE_COOKIE}:
 	cp ${.CURDIR}/Cargo.toml ${.OBJDIR}/
 . endif
 	mkdir -p .cargo
-	cp ${.CURDIR}/config .cargo/
+	cp ${.CURDIR}/config.toml .cargo/
 	cd ${.OBJDIR} && ln -sf ${WORKSPACE_LINKS:S,^,${RUST_OPENSSL_TESTS}/,} .
 	touch $@
 
