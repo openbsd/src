@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.10 2024/06/20 22:03:02 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.11 2024/06/23 13:11:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1011,6 +1011,7 @@ fdt_load_override(char *file)
 		return 0;
 	}
 	dt_size = sb.st_size;
+retry:
 	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(dt_size),
 	    PAGE_SIZE, &addr) != EFI_SUCCESS) {
 		printf("cannot allocate memory for %s\n", path);
