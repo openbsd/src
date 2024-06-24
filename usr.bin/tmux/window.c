@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.290 2024/04/10 07:15:21 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.291 2024/06/24 08:30:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -936,6 +936,9 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->sy = sy;
 
 	wp->pipe_fd = -1;
+
+	wp->control_bg = -1;
+	wp->control_fg = -1;
 
 	colour_palette_init(&wp->palette);
 	colour_palette_from_option(&wp->palette, wp->options);
