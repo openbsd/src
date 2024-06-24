@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_err.c,v 1.14 2023/07/07 13:40:44 beck Exp $ */
+/* $OpenBSD: pem_err.c,v 1.15 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_PEM,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_PEM,0,reason)
 
-static ERR_STRING_DATA PEM_str_functs[] = {
+static const ERR_STRING_DATA PEM_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA PEM_str_reasons[] = {
+static const ERR_STRING_DATA PEM_str_reasons[] = {
 	{ERR_REASON(PEM_R_BAD_BASE64_DECODE)     , "bad base64 decode"},
 	{ERR_REASON(PEM_R_BAD_DECRYPT)           , "bad decrypt"},
 	{ERR_REASON(PEM_R_BAD_END_LINE)          , "bad end line"},
@@ -109,8 +111,8 @@ ERR_load_PEM_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(PEM_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, PEM_str_functs);
-		ERR_load_strings(0, PEM_str_reasons);
+		ERR_load_const_strings(PEM_str_functs);
+		ERR_load_const_strings(PEM_str_reasons);
 	}
 #endif
 }

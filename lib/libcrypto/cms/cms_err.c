@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_err.c,v 1.14 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_err.c,v 1.15 2024/06/24 06:43:22 tb Exp $ */
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -11,17 +11,19 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_CMS,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_CMS,0,reason)
 
-static ERR_STRING_DATA CMS_str_functs[] = {
+static const ERR_STRING_DATA CMS_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA CMS_str_reasons[] = {
+static const ERR_STRING_DATA CMS_str_reasons[] = {
 	{ERR_PACK(ERR_LIB_CMS, 0, CMS_R_ADD_SIGNER_ERROR), "add signer error"},
 	{ERR_PACK(ERR_LIB_CMS, 0, CMS_R_CERTIFICATE_ALREADY_PRESENT),
 	"certificate already present"},
@@ -155,8 +157,8 @@ ERR_load_CMS_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(CMS_str_functs[0].error) == NULL) {
-		ERR_load_strings(ERR_LIB_CMS, CMS_str_functs);
-		ERR_load_strings(ERR_LIB_CMS, CMS_str_reasons);
+		ERR_load_const_strings(CMS_str_functs);
+		ERR_load_const_strings(CMS_str_reasons);
 	}
 #endif
 	return 1;

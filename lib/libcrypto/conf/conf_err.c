@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_err.c,v 1.16 2024/04/09 13:56:30 beck Exp $ */
+/* $OpenBSD: conf_err.c,v 1.17 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_CONF,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_CONF,0,reason)
 
-static ERR_STRING_DATA CONF_str_functs[]= {
+static const ERR_STRING_DATA CONF_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA CONF_str_reasons[]= {
+static const ERR_STRING_DATA CONF_str_reasons[] = {
 	{ERR_REASON(CONF_R_ERROR_LOADING_DSO)    , "error loading dso"},
 	{ERR_REASON(CONF_R_LIST_CANNOT_BE_NULL)  , "list cannot be null"},
 	{ERR_REASON(CONF_R_MISSING_CLOSE_SQUARE_BRACKET), "missing close square bracket"},
@@ -98,8 +100,8 @@ ERR_load_CONF_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(CONF_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, CONF_str_functs);
-		ERR_load_strings(0, CONF_str_reasons);
+		ERR_load_const_strings(CONF_str_functs);
+		ERR_load_const_strings(CONF_str_reasons);
 	}
 #endif
 }

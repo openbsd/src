@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.22 2023/05/14 17:20:26 tb Exp $ */
+/* $OpenBSD: x509_err.c,v 1.23 2024/06/24 06:43:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -61,17 +61,19 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_X509,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_X509,0,reason)
 
-static ERR_STRING_DATA X509_str_functs[] = {
+static const ERR_STRING_DATA X509_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA X509_str_reasons[] = {
+static const ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_BAD_X509_FILETYPE)    , "bad x509 filetype"},
 	{ERR_REASON(X509_R_BASE64_DECODE_ERROR)  , "base64 decode error"},
 	{ERR_REASON(X509_R_CANT_CHECK_DH_KEY)    , "cant check dh key"},
@@ -108,12 +110,12 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_X509V3,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_X509V3,0,reason)
 
-static ERR_STRING_DATA X509V3_str_functs[] = {
+static const ERR_STRING_DATA X509V3_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA X509V3_str_reasons[] = {
+static const ERR_STRING_DATA X509V3_str_reasons[] = {
 	{ERR_REASON(X509V3_R_BAD_IP_ADDRESS)     , "bad ip address"},
 	{ERR_REASON(X509V3_R_BAD_OBJECT)         , "bad object"},
 	{ERR_REASON(X509V3_R_BN_DEC2BN_ERROR)    , "bn dec2bn error"},
@@ -192,8 +194,8 @@ ERR_load_X509_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(X509_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, X509_str_functs);
-		ERR_load_strings(0, X509_str_reasons);
+		ERR_load_const_strings(X509_str_functs);
+		ERR_load_const_strings(X509_str_reasons);
 	}
 #endif
 }
@@ -205,8 +207,8 @@ ERR_load_X509V3_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(X509V3_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, X509V3_str_functs);
-		ERR_load_strings(0, X509V3_str_reasons);
+		ERR_load_const_strings(X509V3_str_functs);
+		ERR_load_const_strings(X509V3_str_reasons);
 	}
 #endif
 }

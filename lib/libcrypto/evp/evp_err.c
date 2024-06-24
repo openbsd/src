@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.33 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: evp_err.c,v 1.34 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_EVP,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_EVP,0,reason)
 
-static ERR_STRING_DATA EVP_str_functs[] = {
+static const ERR_STRING_DATA EVP_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA EVP_str_reasons[] = {
+static const ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_AES_IV_SETUP_FAILED)   , "aes iv setup failed"},
 	{ERR_REASON(EVP_R_AES_KEY_SETUP_FAILED)  , "aes key setup failed"},
 	{ERR_REASON(EVP_R_ASN1_LIB)              , "asn1 lib"},
@@ -159,8 +161,8 @@ ERR_load_EVP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(EVP_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, EVP_str_functs);
-		ERR_load_strings(0, EVP_str_reasons);
+		ERR_load_const_strings(EVP_str_functs);
+		ERR_load_const_strings(EVP_str_reasons);
 	}
 #endif
 }

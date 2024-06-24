@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdf_err.c,v 1.9 2022/07/12 14:42:49 kn Exp $ */
+/*	$OpenBSD: kdf_err.c,v 1.10 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -56,16 +56,18 @@
 #include <openssl/err.h>
 #include <openssl/kdf.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
-static ERR_STRING_DATA KDF_str_functs[] = {
+static const ERR_STRING_DATA KDF_str_functs[] = {
 	{ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_CTRL_STR, 0), "pkey_hkdf_ctrl_str"},
 	{ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_DERIVE, 0), "pkey_hkdf_derive"},
 	{ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_INIT, 0), "pkey_hkdf_init"},
 	{0, NULL},
 };
 
-static ERR_STRING_DATA KDF_str_reasons[] = {
+static const ERR_STRING_DATA KDF_str_reasons[] = {
 	{ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_KEY), "missing key"},
 	{ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_MESSAGE_DIGEST),
 	 "missing message digest"},
@@ -81,8 +83,8 @@ ERR_load_KDF_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(KDF_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, KDF_str_functs);
-		ERR_load_strings(0, KDF_str_reasons);
+		ERR_load_const_strings(KDF_str_functs);
+		ERR_load_const_strings(KDF_str_reasons);
 	}
 #endif
 	return 1;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7err.c,v 1.15 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: pkcs7err.c,v 1.16 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/pkcs7.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_PKCS7,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_PKCS7,0,reason)
 
-static ERR_STRING_DATA PKCS7_str_functs[]= {
+static const ERR_STRING_DATA PKCS7_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA PKCS7_str_reasons[]= {
+static const ERR_STRING_DATA PKCS7_str_reasons[] = {
 	{ERR_REASON(PKCS7_R_CERTIFICATE_VERIFY_ERROR), "certificate verify error"},
 	{ERR_REASON(PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER), "cipher has no object identifier"},
 	{ERR_REASON(PKCS7_R_CIPHER_NOT_INITIALIZED), "cipher not initialized"},
@@ -135,8 +137,8 @@ ERR_load_PKCS7_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(PKCS7_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, PKCS7_str_functs);
-		ERR_load_strings(0, PKCS7_str_reasons);
+		ERR_load_const_strings(PKCS7_str_functs);
+		ERR_load_const_strings(PKCS7_str_reasons);
 	}
 #endif
 }

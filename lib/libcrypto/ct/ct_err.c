@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_err.c,v 1.7 2022/07/12 14:42:48 kn Exp $ */
+/*	$OpenBSD: ct_err.c,v 1.8 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -56,9 +56,11 @@
 #include <openssl/ct.h>
 #include <openssl/err.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
-static ERR_STRING_DATA CT_str_functs[] = {
+static const ERR_STRING_DATA CT_str_functs[] = {
 	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_NEW, 0), "CTLOG_new"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_NEW_FROM_BASE64, 0),
 	 "CTLOG_new_from_base64"},
@@ -101,7 +103,7 @@ static ERR_STRING_DATA CT_str_functs[] = {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA CT_str_reasons[] = {
+static const ERR_STRING_DATA CT_str_reasons[] = {
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_BASE64_DECODE_ERROR),
 	 "base64 decode error"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_INVALID_LOG_ID_LENGTH),
@@ -140,8 +142,8 @@ int
 ERR_load_CT_strings(void)
 {
 	if (ERR_func_error_string(CT_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, CT_str_functs);
-		ERR_load_strings(0, CT_str_reasons);
+		ERR_load_const_strings(CT_str_functs);
+		ERR_load_const_strings(CT_str_reasons);
 	}
 	return 1;
 }

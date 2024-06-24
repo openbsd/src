@@ -1,4 +1,4 @@
-/* $OpenBSD: pk12err.c,v 1.14 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: pk12err.c,v 1.15 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_PKCS12,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_PKCS12,0,reason)
 
-static ERR_STRING_DATA PKCS12_str_functs[]= {
+static const ERR_STRING_DATA PKCS12_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA PKCS12_str_reasons[]= {
+static const ERR_STRING_DATA PKCS12_str_reasons[] = {
 	{ERR_REASON(PKCS12_R_CANT_PACK_STRUCTURE), "cant pack structure"},
 	{ERR_REASON(PKCS12_R_CONTENT_TYPE_NOT_DATA), "content type not data"},
 	{ERR_REASON(PKCS12_R_DECODE_ERROR)       , "decode error"},
@@ -103,8 +105,8 @@ ERR_load_PKCS12_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(PKCS12_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, PKCS12_str_functs);
-		ERR_load_strings(0, PKCS12_str_reasons);
+		ERR_load_const_strings(PKCS12_str_functs);
+		ERR_load_const_strings(PKCS12_str_reasons);
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_err.c,v 1.19 2024/05/19 08:26:03 tb Exp $ */
+/* $OpenBSD: ec_err.c,v 1.20 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/ec.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_EC,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_EC,0,reason)
 
-static ERR_STRING_DATA EC_str_functs[] = {
+static const ERR_STRING_DATA EC_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA EC_str_reasons[] = {
+static const ERR_STRING_DATA EC_str_reasons[] = {
 	{ERR_REASON(EC_R_ASN1_ERROR), "asn1 error"},
 	{ERR_REASON(EC_R_ASN1_UNKNOWN_FIELD), "asn1 unknown field"},
 	{ERR_REASON(EC_R_BAD_SIGNATURE), "bad signature"},
@@ -140,10 +142,9 @@ void
 ERR_load_EC_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-
 	if (ERR_func_error_string(EC_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, EC_str_functs);
-		ERR_load_strings(0, EC_str_reasons);
+		ERR_load_const_strings(EC_str_functs);
+		ERR_load_const_strings(EC_str_reasons);
 	}
 #endif
 }

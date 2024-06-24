@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_err.c,v 1.21 2024/05/19 08:22:40 tb Exp $ */
+/* $OpenBSD: dh_err.c,v 1.22 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -57,20 +57,22 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/err.h>
 #include <openssl/dh.h>
+#include <openssl/err.h>
+
+#include "err_local.h"
 
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_DH,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_DH,0,reason)
 
-static ERR_STRING_DATA DH_str_functs[] = {
+static const ERR_STRING_DATA DH_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA DH_str_reasons[] = {
+static const ERR_STRING_DATA DH_str_reasons[] = {
 	{ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
 	{ERR_REASON(DH_R_BN_DECODE_ERROR)        ,"bn decode error"},
 	{ERR_REASON(DH_R_BN_ERROR)               ,"bn error"},
@@ -104,8 +106,8 @@ ERR_load_DH_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(DH_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, DH_str_functs);
-		ERR_load_strings(0, DH_str_reasons);
+		ERR_load_const_strings(DH_str_functs);
+		ERR_load_const_strings(DH_str_reasons);
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.60 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: err.c,v 1.61 2024/06/24 06:43:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,9 +244,9 @@ struct st_ERR_FNS {
 	/* Works on the "error_hash" string table */
 	LHASH_OF(ERR_STRING_DATA) *(*cb_err_get)(int create);
 	void (*cb_err_del)(void);
-	ERR_STRING_DATA *(*cb_err_get_item)(const ERR_STRING_DATA *);
-	ERR_STRING_DATA *(*cb_err_set_item)(ERR_STRING_DATA *);
-	ERR_STRING_DATA *(*cb_err_del_item)(ERR_STRING_DATA *);
+	const ERR_STRING_DATA *(*cb_err_get_item)(const ERR_STRING_DATA *);
+	const ERR_STRING_DATA *(*cb_err_set_item)(const ERR_STRING_DATA *);
+	const ERR_STRING_DATA *(*cb_err_del_item)(const ERR_STRING_DATA *);
 	/* Works on the "thread_hash" error-state table */
 	LHASH_OF(ERR_STATE) *(*cb_thread_get)(int create);
 	void (*cb_thread_release)(LHASH_OF(ERR_STATE) **hash);
@@ -260,9 +260,9 @@ struct st_ERR_FNS {
 /* Predeclarations of the "err_defaults" functions */
 static LHASH_OF(ERR_STRING_DATA) *int_err_get(int create);
 static void int_err_del(void);
-static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
-static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *);
-static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *);
+static const ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
+static const ERR_STRING_DATA *int_err_set_item(const ERR_STRING_DATA *);
+static const ERR_STRING_DATA *int_err_del_item(const ERR_STRING_DATA *);
 static LHASH_OF(ERR_STATE) *int_thread_get(int create);
 static void int_thread_release(LHASH_OF(ERR_STATE) **hash);
 static ERR_STATE *int_thread_get_item(const ERR_STATE *);
@@ -369,7 +369,7 @@ int_err_del(void)
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 }
 
-static ERR_STRING_DATA *
+static const ERR_STRING_DATA *
 int_err_get_item(const ERR_STRING_DATA *d)
 {
 	ERR_STRING_DATA *p;
@@ -387,10 +387,10 @@ int_err_get_item(const ERR_STRING_DATA *d)
 	return p;
 }
 
-static ERR_STRING_DATA *
-int_err_set_item(ERR_STRING_DATA *d)
+static const ERR_STRING_DATA *
+int_err_set_item(const ERR_STRING_DATA *d)
 {
-	ERR_STRING_DATA *p;
+	const ERR_STRING_DATA *p;
 	LHASH_OF(ERR_STRING_DATA) *hash;
 
 	err_fns_check();
@@ -399,14 +399,14 @@ int_err_set_item(ERR_STRING_DATA *d)
 		return NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	p = lh_ERR_STRING_DATA_insert(hash, d);
+	p = lh_ERR_STRING_DATA_insert(hash, (void *)d);
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
 	return p;
 }
 
-static ERR_STRING_DATA *
-int_err_del_item(ERR_STRING_DATA *d)
+static const ERR_STRING_DATA *
+int_err_del_item(const ERR_STRING_DATA *d)
 {
 	ERR_STRING_DATA *p;
 	LHASH_OF(ERR_STRING_DATA) *hash;
@@ -693,6 +693,16 @@ ERR_load_strings(int lib, ERR_STRING_DATA *str)
 LCRYPTO_ALIAS(ERR_load_strings);
 
 void
+ERR_load_const_strings(const ERR_STRING_DATA *str)
+{
+	ERR_load_ERR_strings();
+	while (str->error) {
+		ERRFN(err_set_item)(str);
+		str++;
+	}
+}
+
+void
 ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
 	/* Prayer and clean living lets you ignore errors, OpenSSL style */
@@ -964,7 +974,8 @@ LCRYPTO_ALIAS(ERR_error_string);
 const char *
 ERR_lib_error_string(unsigned long e)
 {
-	ERR_STRING_DATA d, *p;
+	const ERR_STRING_DATA *p;
+	ERR_STRING_DATA d;
 	unsigned long l;
 
 	if (!OPENSSL_init_crypto(0, NULL))
@@ -981,7 +992,8 @@ LCRYPTO_ALIAS(ERR_lib_error_string);
 const char *
 ERR_func_error_string(unsigned long e)
 {
-	ERR_STRING_DATA d, *p;
+	const ERR_STRING_DATA *p;
+	ERR_STRING_DATA d;
 	unsigned long l, f;
 
 	err_fns_check();
@@ -996,7 +1008,8 @@ LCRYPTO_ALIAS(ERR_func_error_string);
 const char *
 ERR_reason_error_string(unsigned long e)
 {
-	ERR_STRING_DATA d, *p = NULL;
+	const ERR_STRING_DATA *p = NULL;
+	ERR_STRING_DATA d;
 	unsigned long l, r;
 
 	err_fns_check();

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_err.c,v 1.17 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_err.c,v 1.18 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_BN,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_BN,0,reason)
 
-static ERR_STRING_DATA BN_str_functs[]= {
+static const ERR_STRING_DATA BN_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA BN_str_reasons[]= {
+static const ERR_STRING_DATA BN_str_reasons[] = {
 	{ERR_REASON(BN_R_ARG2_LT_ARG3)           , "arg2 lt arg3"},
 	{ERR_REASON(BN_R_BAD_RECIPROCAL)         , "bad reciprocal"},
 	{ERR_REASON(BN_R_BIGNUM_TOO_LONG)        , "bignum too long"},
@@ -100,8 +102,8 @@ ERR_load_BN_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(BN_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, BN_str_functs);
-		ERR_load_strings(0, BN_str_reasons);
+		ERR_load_const_strings(BN_str_functs);
+		ERR_load_const_strings(BN_str_reasons);
 	}
 #endif
 }

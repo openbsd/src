@@ -1,4 +1,4 @@
-/* $OpenBSD: buf_err.c,v 1.13 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: buf_err.c,v 1.14 2024/06/24 06:43:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -60,17 +60,19 @@
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 
+#include "err_local.h"
+
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_BUF,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_BUF,0,reason)
 
-static ERR_STRING_DATA BUF_str_functs[] = {
+static const ERR_STRING_DATA BUF_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA BUF_str_reasons[] = {
+static const ERR_STRING_DATA BUF_str_reasons[] = {
 	{0, NULL}
 };
 
@@ -81,8 +83,8 @@ ERR_load_BUF_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(BUF_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, BUF_str_functs);
-		ERR_load_strings(0, BUF_str_reasons);
+		ERR_load_const_strings(BUF_str_functs);
+		ERR_load_const_strings(BUF_str_reasons);
 	}
 #endif
 }

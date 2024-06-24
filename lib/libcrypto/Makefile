@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.195 2024/05/24 19:16:53 tb Exp $
+# $OpenBSD: Makefile,v 1.196 2024/06/24 06:43:22 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -36,6 +36,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/dh
 CFLAGS+= -I${LCRYPTO_SRC}/dsa
 CFLAGS+= -I${LCRYPTO_SRC}/ec
 CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
+CFLAGS+= -I${LCRYPTO_SRC}/err
 CFLAGS+= -I${LCRYPTO_SRC}/evp
 CFLAGS+= -I${LCRYPTO_SRC}/hidden
 CFLAGS+= -I${LCRYPTO_SRC}/hmac
