@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.17 2024/06/18 09:47:03 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.18 2024/06/24 06:32:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -198,32 +198,32 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int nid, int crit,
 		ext_der = NULL;
 		ext_len = ASN1_item_i2d(ext_struct, &ext_der, method->it);
 		if (ext_len < 0)
-			goto merr;
+			goto err;
 	} else {
 		unsigned char *p;
 
 		if ((ext_len = method->i2d(ext_struct, NULL)) <= 0)
-			goto merr;
+			goto err;
 		if ((ext_der = calloc(1, ext_len)) == NULL)
-			goto merr;
+			goto err;
 		p = ext_der;
 		if (method->i2d(ext_struct, &p) != ext_len)
-			goto merr;
+			goto err;
 	}
 	if ((ext_oct = ASN1_OCTET_STRING_new()) == NULL)
-		goto merr;
+		goto err;
 	ASN1_STRING_set0(ext_oct, ext_der, ext_len);
 	ext_der = NULL;
 	ext_len = 0;
 
 	ext = X509_EXTENSION_create_by_NID(NULL, nid, crit, ext_oct);
 	if (ext == NULL)
-		goto merr;
+		goto err;
 	ASN1_OCTET_STRING_free(ext_oct);
 
 	return ext;
 
- merr:
+ err:
 	free(ext_der);
 	ASN1_OCTET_STRING_free(ext_oct);
 	X509V3error(ERR_R_MALLOC_FAILURE);
