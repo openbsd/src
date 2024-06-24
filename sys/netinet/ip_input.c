@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.395 2024/06/07 18:24:16 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.396 2024/06/24 12:19:19 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1532,11 +1532,17 @@ const u_char inetctlerrmap[PRC_NCMDS] = {
 void
 ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 {
-	struct mbuf mfake, *mcopy;
 	struct ip *ip = mtod(m, struct ip *);
 	struct route iproute;
 	struct rtentry *rt;
-	int error = 0, type = 0, code = 0, destmtu = 0, fake = 0, len;
+	u_int rtableid = m->m_pkthdr.ph_rtableid;
+	u_int8_t loopcnt = m->m_pkthdr.ph_loopcnt;
+	u_int icmp_len;
+	char icmp_buf[68];
+	CTASSERT(sizeof(icmp_buf) <= MHLEN);
+	u_short mflags, pfflags;
+	struct mbuf *mcopy;
+	int error = 0, type = 0, code = 0, destmtu = 0;
 	u_int32_t dest;
 
 	dest = 0;
@@ -1554,7 +1560,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 		ro = &iproute;
 		ro->ro_rt = NULL;
 	}
-	rt = route_mpath(ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
+	rt = route_mpath(ro, &ip->ip_dst, &ip->ip_src, rtableid);
 	if (rt == NULL) {
 		ipstat_inc(ips_noroute);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
@@ -1562,24 +1568,14 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 	}
 
 	/*
-	 * Save at most 68 bytes of the packet in case
-	 * we need to generate an ICMP message to the src.
-	 * The data is saved in the mbuf on the stack that
-	 * acts as a temporary storage not intended to be
-	 * passed down the IP stack or to the mfree.
+	 * Save at most 68 bytes of the packet in case we need to generate
+	 * an ICMP message to the src.  The data is saved on the stack.
+	 * A new mbuf is only allocated when ICMP is actually created.
 	 */
-	memset(&mfake.m_hdr, 0, sizeof(mfake.m_hdr));
-	mfake.m_type = m->m_type;
-	if (m_dup_pkthdr(&mfake, m, M_DONTWAIT) == 0) {
-		mfake.m_data = mfake.m_pktdat;
-		len = min(ntohs(ip->ip_len), 68);
-		m_copydata(m, 0, len, mfake.m_pktdat);
-		mfake.m_pkthdr.len = mfake.m_len = len;
-#if NPF > 0
-		pf_pkt_addr_changed(&mfake);
-#endif	/* NPF > 0 */
-		fake = 1;
-	}
+	icmp_len = min(sizeof(icmp_buf), ntohs(ip->ip_len));
+	mflags = m->m_flags;
+	pfflags = m->m_pkthdr.pf.flags;
+	m_copydata(m, 0, icmp_len, icmp_buf);
 
 	ip->ip_ttl -= IPTTLDEC;
 
@@ -1597,7 +1593,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ip_sendredirects && !ISSET(flags, IP_REDIRECT) &&
-	    !arpproxy(satosin(rt_key(rt))->sin_addr, m->m_pkthdr.ph_rtableid)) {
+	    !arpproxy(satosin(rt_key(rt))->sin_addr, rtableid)) {
 		if ((ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_netmask) ==
 		    ifatoia(rt->rt_ifa)->ia_net) {
 		    if (rt->rt_flags & RTF_GATEWAY)
@@ -1621,9 +1617,6 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 		else
 			goto done;
 	}
-	if (!fake)
-		goto done;
-
 	switch (error) {
 	case 0:				/* forwarded, but need redirect */
 		/* type, code set above */
@@ -1674,15 +1667,22 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 		code = ICMP_UNREACH_HOST;
 		break;
 	}
-	mcopy = m_copym(&mfake, 0, len, M_DONTWAIT);
-	if (mcopy != NULL)
-		icmp_error(mcopy, type, code, dest, destmtu);
+
+	mcopy = m_gethdr(M_DONTWAIT, MT_DATA);
+	if (mcopy == NULL)
+		goto done;
+	mcopy->m_len = mcopy->m_pkthdr.len = icmp_len;
+	mcopy->m_flags |= (mflags & M_COPYFLAGS);
+	mcopy->m_pkthdr.ph_rtableid = rtableid;
+	mcopy->m_pkthdr.ph_ifidx = ifp->if_index;
+	mcopy->m_pkthdr.ph_loopcnt = loopcnt;
+	mcopy->m_pkthdr.pf.flags |= (pfflags & PF_TAG_GENERATED);
+	memcpy(mcopy->m_data, icmp_buf, icmp_len);
+	icmp_error(mcopy, type, code, dest, destmtu);
 
  done:
 	if (ro == &iproute)
 		rtfree(ro->ro_rt);
-	if (fake)
-		m_tag_delete_chain(&mfake);
 }
 
 int
