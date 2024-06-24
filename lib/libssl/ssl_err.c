@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.48 2024/06/24 06:49:45 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.49 2024/06/24 06:50:07 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_SSL,0,reason)
 
 /* See SSL_state_func_code below */
-static ERR_STRING_DATA SSL_str_functs[]= {
+static ERR_STRING_DATA SSL_str_functs[] = {
 	{ERR_FUNC(1),  "CONNECT_CW_FLUSH"},
 	{ERR_FUNC(2),  "CONNECT_CW_CLNT_HELLO"},
 	{ERR_FUNC(3),  "CONNECT_CW_CLNT_HELLO"},
