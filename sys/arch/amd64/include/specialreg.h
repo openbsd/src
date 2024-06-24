@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.112 2024/05/11 19:21:47 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.113 2024/06/24 21:22:14 bluhm Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -394,6 +394,47 @@
     ("\20" "\04INVLPGB" "\015IBPB" "\017IBRS" "\020STIBP" "\021IBRS_ALL" \
      "\022STIBP_ALL" "\023IBRS_PREF" "\024IBRS_SM" "\031SSBD" "\032VIRTSSBD" \
      "\033SSBDNR" )
+
+/*
+ * AMD CPUID function 0x8000001F EAX bits
+ */
+#define CPUIDEAX_SME		(1ULL << 0)  /* SME */
+#define CPUIDEAX_SEV		(1ULL << 1)  /* SEV */
+#define CPUIDEAX_PFLUSH_MSR	(1ULL << 2)  /* Page Flush MSR */
+#define CPUIDEAX_SEVES		(1ULL << 3)  /* SEV-ES */
+#define CPUIDEAX_SEVSNP		(1ULL << 4)  /* SEV-SNP */
+#define CPUIDEAX_VMPL		(1ULL << 5)  /* VM Permission Levels */
+#define CPUIDEAX_RMPQUERY	(1ULL << 6)  /* RMPQUERY */
+#define CPUIDEAX_VMPLSSS	(1ULL << 7)  /* VMPL Supservisor Shadow Stack */
+#define CPUIDEAX_SECTSC		(1ULL << 8)  /* Secure TSC */
+#define CPUIDEAX_TSCAUXVIRT	(1ULL << 9)  /* TSC Aux Virtualization */
+#define CPUIDEAX_HWECACHECOH	(1ULL << 10) /* Coherency Across Enc. Domains */
+#define CPUIDEAX_64BITHOST	(1ULL << 11) /* SEV guest requires 64bit host */
+#define CPUIDEAX_RESTINJ	(1ULL << 12) /* Restricted Injection */
+#define CPUIDEAX_ALTINJ		(1ULL << 13) /* Alternate Injection */
+#define CPUIDEAX_DBGSTSW	(1ULL << 14) /* Full debug state swap */
+#define CPUIDEAX_IBSDISALLOW	(1ULL << 15) /* Disallowing IBS use by host */
+#define CPUIDEAX_VTE		(1ULL << 16) /* Virt. Transparent Encryption */
+#define CPUIDEAX_VMGEXITPARAM	(1ULL << 17) /* VMGEXIT Parameter */
+#define CPUIDEAX_VTOMMSR	(1ULL << 18) /* Virtual TOM MSR */
+#define CPUIDEAX_IBSVIRT	(1ULL << 19) /* IBS Virtualization for SEV-ES */
+#define CPUIDEAX_VMSARPROT	(1ULL << 24) /* VMSA Register Protection */
+#define CPUIDEAX_SMTPROT	(1ULL << 25) /* SMT Protection */
+#define CPUIDEAX_SVSMPAGEMSR	(1ULL << 28) /* SVSM Communication Page MSR */
+#define CPUIDEAX_NVSMSR		(1ULL << 29) /* NestedVirtSnpMsr */
+#define CPUID_AMDSEV_EAX_BITS \
+    ("\20" "\01SME" "\02SEV" "\03PFLUSH_MSR" "\04SEVES" "\05SEVSNP" "\06VMPL" \
+     "\07RMPQUERY" "\010VMPLSSS" "\011SECTSC" "\012TSCAUXVIRT" \
+     "\013HWECACHECOH" "\014REQ64BITHOST" "\015RESTINJ" "\016ALTINJ" \
+     "\017DBGSTSW" "\020IBSDISALLOW" "\021VTE" "\022VMGEXITPARAM" \
+     "\023VTOMMSR" "\024IBSVIRT" "\031VMSARPROT" "\032SMTPROT" \
+     "\035SVSMPAGEMSR" "\036NVSMSR" )
+
+/* Number of encrypted guests */
+#define CPUID_AMDSEV_ECX_BITS ("\20")
+
+/* Minimum ASID for SEV enabled, SEV-ES disabled guest. */
+#define CPUID_AMDSEV_EDX_BITS ("\20")
 
 #define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
@@ -1546,6 +1587,13 @@
 #define SVM_INTERCEPT_CR13_WRITE_POST	(1UL << 29)
 #define SVM_INTERCEPT_CR14_WRITE_POST	(1UL << 30)
 #define SVM_INTERCEPT_CR15_WRITE_POST	(1UL << 31)
+
+/*
+ * SME and SEV
+ */
+#define CPUID_AMD_SEV_CAP		0x8000001F
+#define AMD_SME_CAP			(1UL << 0)
+#define AMD_SEV_CAP			(1UL << 1)
 
 /*
  * PAT
