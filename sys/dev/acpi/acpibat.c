@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.70 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpibat.c,v 1.71 2024/06/24 15:56:07 mglocker Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -525,6 +525,12 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 	case 0x00:	/* Poll sensors */
 	case 0x80:	/* _BST changed */
 		acpibat_getbst(sc);
+		/*
+		 * On some machines the Power Source Device doesn't get
+		 * notified when the AC adapter is plugged or unplugged,
+		 * but the battery does get notified.
+		 */
+		aml_notify_dev(ACPI_DEV_AC, 0x80);
 		break;
 	case 0x81:	/* _BIF/_BIX changed */
 		acpibat_getbix(sc);
