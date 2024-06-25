@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.160 2024/02/03 17:39:17 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.161 2024/06/25 14:10:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,6 +163,7 @@
 #include <openssl/x509.h>
 
 #include "bytestring.h"
+#include "crypto_internal.h"
 #include "dtls_local.h"
 #include "ssl_local.h"
 #include "ssl_sigalgs.h"
@@ -1621,98 +1622,104 @@ ssl3_send_certificate_request(SSL *s)
 static int
 ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 {
-	unsigned char fakekey[SSL_MAX_MASTER_KEY_LENGTH];
-	unsigned char *pms = NULL;
-	unsigned char *p;
+	uint8_t fakepms[SSL_MAX_MASTER_KEY_LENGTH];
+	uint8_t *pms = NULL;
 	size_t pms_len = 0;
+	size_t pad_len;
 	EVP_PKEY *pkey = NULL;
 	RSA *rsa = NULL;
 	CBS enc_pms;
 	int decrypt_len;
-	int al = -1;
+	uint8_t mask;
+	size_t i;
+	int valid = 1;
+	int ret = 0;
 
-	arc4random_buf(fakekey, sizeof(fakekey));
+	/*
+	 * Handle key exchange in the form of an RSA-Encrypted Premaster Secret
+	 * Message. See RFC 5246, section 7.4.7.1.
+	 */
 
-	fakekey[0] = s->s3->hs.peer_legacy_version >> 8;
-	fakekey[1] = s->s3->hs.peer_legacy_version & 0xff;
+	arc4random_buf(fakepms, sizeof(fakepms));
+
+	fakepms[0] = s->s3->hs.peer_legacy_version >> 8;
+	fakepms[1] = s->s3->hs.peer_legacy_version & 0xff;
 
 	pkey = s->cert->pkeys[SSL_PKEY_RSA].privatekey;
 	if (pkey == NULL || (rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
-		al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_MISSING_RSA_CERTIFICATE);
-		goto fatal_err;
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+		goto err;
 	}
 
+	/*
+	 * The minimum size of an encrypted premaster secret is 11 bytes of
+	 * padding (00 02 <8 or more non-zero bytes> 00) (RFC 8017, section
+	 * 9.2) and 48 bytes of premaster secret (RFC 5246, section 7.4.7.1).
+	 * This means an RSA key size of at least 472 bits.
+	 */
 	pms_len = RSA_size(rsa);
-	if (pms_len < SSL_MAX_MASTER_KEY_LENGTH)
-		goto err;
-	if ((pms = malloc(pms_len)) == NULL)
-		goto err;
-	p = pms;
-
-	if (!CBS_get_u16_length_prefixed(cbs, &enc_pms))
-		goto decode_err;
-	if (CBS_len(cbs) != 0 || CBS_len(&enc_pms) != RSA_size(rsa)) {
-		SSLerror(s, SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
+	if (pms_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
+		SSLerror(s, SSL_R_DECRYPTION_FAILED);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECRYPT_ERROR);
 		goto err;
 	}
+	pad_len = pms_len - SSL_MAX_MASTER_KEY_LENGTH;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &enc_pms)) {
+		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		goto err;
+	}
+	if (CBS_len(&enc_pms) != pms_len || CBS_len(cbs) != 0) {
+		SSLerror(s, SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		goto err;
+	}
+
+	if ((pms = calloc(1, pms_len)) == NULL)
+		goto err;
 
 	decrypt_len = RSA_private_decrypt(CBS_len(&enc_pms), CBS_data(&enc_pms),
-	    pms, rsa, RSA_PKCS1_PADDING);
+	    pms, rsa, RSA_NO_PADDING);
 
-	ERR_clear_error();
-
-	if (decrypt_len != SSL_MAX_MASTER_KEY_LENGTH) {
-		al = SSL_AD_DECODE_ERROR;
-		/* SSLerror(s, SSL_R_BAD_RSA_DECRYPT); */
+	if (decrypt_len != pms_len) {
+		SSLerror(s, SSL_R_DECRYPTION_FAILED);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECRYPT_ERROR);
+		goto err;
 	}
 
-	if ((al == -1) && !((pms[0] == (s->s3->hs.peer_legacy_version >> 8)) &&
-	    (pms[1] == (s->s3->hs.peer_legacy_version & 0xff)))) {
-		/*
-		 * The premaster secret must contain the same version number
-		 * as the ClientHello to detect version rollback attacks
-		 * (strangely, the protocol does not offer such protection for
-		 * DH ciphersuites).
-		 *
-		 * The Klima-Pokorny-Rosa extension of Bleichenbacher's attack
-		 * (http://eprint.iacr.org/2003/052/) exploits the version
-		 * number check as a "bad version oracle" -- an alert would
-		 * reveal that the plaintext corresponding to some ciphertext
-		 * made up by the adversary is properly formatted except that
-		 * the version number is wrong. To avoid such attacks, we should
-		 * treat this just like any other decryption error.
-		 */
-		al = SSL_AD_DECODE_ERROR;
-		/* SSLerror(s, SSL_R_BAD_PROTOCOL_VERSION_NUMBER); */
-	}
+	/*
+	 * All processing from here on needs to avoid leaking any information
+	 * about the decrypted content, in order to prevent oracle attacks and
+	 * minimise timing attacks.
+	 */
 
-	if (al != -1) {
-		/*
-		 * Some decryption failure -- use random value instead
-		 * as countermeasure against Bleichenbacher's attack
-		 * on PKCS #1 v1.5 RSA padding (see RFC 2246,
-		 * section 7.4.7.1).
-		 */
-		p = fakekey;
-	}
+	/* Check padding - 00 02 <8 or more non-zero bytes> 00 */
+	valid &= crypto_ct_eq_u8(pms[0], 0x00);
+	valid &= crypto_ct_eq_u8(pms[1], 0x02);
+	for (i = 2; i < pad_len - 1; i++)
+		valid &= crypto_ct_ne_u8(pms[i], 0x00);
+	valid &= crypto_ct_eq_u8(pms[pad_len - 1], 0x00);
 
-	if (!tls12_derive_master_secret(s, p, SSL_MAX_MASTER_KEY_LENGTH))
+	/* Ensure client version in premaster secret matches ClientHello version. */
+	valid &= crypto_ct_eq_u8(pms[pad_len + 0], s->s3->hs.peer_legacy_version >> 8);
+	valid &= crypto_ct_eq_u8(pms[pad_len + 1], s->s3->hs.peer_legacy_version & 0xff);
+
+	/* Use the premaster secret if padding is correct, if not use the fake. */
+	mask = crypto_ct_eq_mask_u8(valid, 1);
+	for (i = 0; i < SSL_MAX_MASTER_KEY_LENGTH; i++)
+		pms[i] = (pms[pad_len + i] & mask) | (fakepms[i] & ~mask);
+
+	if (!tls12_derive_master_secret(s, pms, SSL_MAX_MASTER_KEY_LENGTH))
 		goto err;
 
-	freezero(pms, pms_len);
+	ret = 1;
 
-	return 1;
-
- decode_err:
-	al = SSL_AD_DECODE_ERROR;
-	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
- fatal_err:
-	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
 	freezero(pms, pms_len);
 
-	return 0;
+	return ret;
 }
 
 static int

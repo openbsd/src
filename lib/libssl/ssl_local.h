@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.16 2024/05/19 07:12:50 jsg Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.17 2024/06/25 14:10:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,8 +167,10 @@
 
 __BEGIN_HIDDEN_DECLS
 
+#ifndef CTASSERT
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]   \
 			    __attribute__((__unused__))
+#endif
 
 #ifndef LIBRESSL_HAS_DTLS1_2
 #define LIBRESSL_HAS_DTLS1_2
