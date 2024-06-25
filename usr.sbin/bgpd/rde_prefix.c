@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.50 2023/07/12 14:45:43 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.51 2024/06/25 13:21:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -567,6 +567,9 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 		goto fail;
 	}
 
+	/* keep 2 bytes reserved in the withdraw case for IPv4 encoding */
+	if (withdraw && ibuf_left(buf) < ibuf_size(tmp) + 2)
+		goto fail;
 	if (ibuf_add_buf(buf, tmp) == -1)
 		goto fail;
 	ibuf_free(tmp);
