@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.150 2024/06/06 16:13:12 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.151 2024/06/25 05:46:48 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2427,7 +2427,7 @@ tlsext_randomize_build_order(SSL *s)
 	s->tlsext_build_order[N_TLS_EXTENSIONS - 1] = psk_ext;
 
 	/* Fisher-Yates shuffle with PSK fixed. */
-	for (idx = 0; idx < psk_idx; idx++) {
+	for (idx = 0; idx < N_TLS_EXTENSIONS - 1; idx++) {
 		new_idx = arc4random_uniform(idx + 1);
 		s->tlsext_build_order[idx] = s->tlsext_build_order[new_idx];
 		s->tlsext_build_order[new_idx] = &tls_extensions[idx];
