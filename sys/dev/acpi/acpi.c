@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.431 2024/06/11 17:35:26 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.432 2024/06/25 11:57:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2115,6 +2115,11 @@ acpi_interrupt(void *arg)
 				if (!(en & sts & (1L << jdx)))
 					continue;
 
+				if (cpu_suspended) {
+					cpu_suspended = 0;
+					sc->sc_wakegpe = idx + jdx;
+				}
+
 				/* Signal this GPE */
 				gpe = idx + jdx;
 				sc->gpe_table[gpe].active = 1;
@@ -2149,8 +2154,10 @@ acpi_interrupt(void *arg)
 			    ACPI_PM1_PWRBTN_STS);
 			sts &= ~ACPI_PM1_PWRBTN_STS;
 
-			if (cpu_suspended)
+			if (cpu_suspended) {
 				cpu_suspended = 0;
+				sc->sc_wakegpe = -1;
+			}
 
 			acpi_addtask(sc, acpi_pbtn_task, sc, 0);
 		}
@@ -2161,6 +2168,11 @@ acpi_interrupt(void *arg)
 			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 			    ACPI_PM1_SLPBTN_STS);
 			sts &= ~ACPI_PM1_SLPBTN_STS;
+
+			if (cpu_suspended) {
+				cpu_suspended = 0;
+				sc->sc_wakegpe = -2;
+			}
 
 			acpi_addtask(sc, acpi_sbtn_task, sc, 0);
 		}

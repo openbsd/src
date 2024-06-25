@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.21 2024/05/29 12:21:33 kettenis Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.22 2024/06/25 11:57:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -146,6 +146,19 @@ int
 suspend_finish(void *v)
 {
 	struct acpi_softc *sc = v;
+
+	printf("wakeup event: ");
+	switch (sc->sc_wakegpe) {
+	case -1:
+		printf("PWRBTN\n");
+		break;
+	case -2:
+		printf("SLPTN\n");
+		break;
+	default:
+		printf("GPE 0x%x\n", sc->sc_wakegpe);
+		break;
+	}
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
