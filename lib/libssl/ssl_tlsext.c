@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.152 2024/06/26 03:39:49 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.153 2024/06/26 03:41:10 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2410,7 +2410,7 @@ int
 tlsext_randomize_build_order(SSL *s)
 {
 	const struct tls_extension *psk_ext;
-	size_t idx, new_idx, psk_idx;
+	size_t idx, new_idx;
 	size_t alpn_idx = 0, sni_idx = 0;
 
 	free(s->tlsext_build_order);
@@ -2423,7 +2423,7 @@ tlsext_randomize_build_order(SSL *s)
 
 	/* RFC 8446, section 4.2 - PSK MUST be the last extension in the CH. */
 	if ((psk_ext = tls_extension_find(TLSEXT_TYPE_pre_shared_key,
-	    &psk_idx)) == NULL)
+	    NULL)) == NULL)
 		return 0;
 	s->tlsext_build_order[N_TLS_EXTENSIONS - 1] = psk_ext;
 
