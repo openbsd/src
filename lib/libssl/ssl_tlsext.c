@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.151 2024/06/25 05:46:48 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.152 2024/06/26 03:39:49 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2368,7 +2368,8 @@ tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
 
 	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
 		if (tls_extensions[i].type == type) {
-			*tls_extensions_idx = i;
+			if (tls_extensions_idx != NULL)
+				*tls_extensions_idx = i;
 			return &tls_extensions[i];
 		}
 	}
