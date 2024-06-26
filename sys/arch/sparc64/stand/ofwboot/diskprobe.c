@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.7 2023/06/01 17:24:56 krw Exp $ */
+/*	$OpenBSD: diskprobe.c,v 1.8 2024/06/26 01:40:49 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -103,7 +103,8 @@ bad:
 }
 
 #ifdef BOOT_DEBUG
-void dump_node(int node)
+void
+dump_node(int node)
 {
 	char buf[32];
 

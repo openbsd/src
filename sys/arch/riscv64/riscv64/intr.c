@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2022/07/27 20:26:17 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -621,8 +621,9 @@ riscv_do_pending_intr(int pcpl)
 	intr_restore(sie);
 }
 
-void riscv_set_intr_func(int (*raise)(int), int (*lower)(int),
-    void (*x)(int), void (*setipl)(int))
+void
+riscv_set_intr_func(int (*raise)(int), int (*lower)(int), void (*x)(int),
+    void (*setipl)(int))
 {
 	riscv_intr_func.raise		= raise;
 	riscv_intr_func.lower		= lower;
@@ -630,7 +631,8 @@ void riscv_set_intr_func(int (*raise)(int), int (*lower)(int),
 	riscv_intr_func.setipl		= setipl;
 }
 
-void riscv_set_intr_handler(void (*intr_handle)(void *))
+void
+riscv_set_intr_handler(void (*intr_handle)(void *))
 {
 	riscv_intr_dispatch		= intr_handle;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.268 2024/05/14 08:26:13 jsg Exp $ */
+/* $OpenBSD: dsdt.c,v 1.269 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -251,7 +251,8 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_COPYOBJECT,	"CopyObject",	"tS",	},
 };
 
-int aml_pc(uint8_t *src)
+int
+aml_pc(uint8_t *src)
 {
 	return src - aml_root.start;
 }
@@ -1668,7 +1669,8 @@ aml_foreachpkg(struct aml_value *pkg, int start,
  */
 int aml_fixup_node(struct aml_node *, void *);
 
-int aml_fixup_node(struct aml_node *node, void *arg)
+int
+aml_fixup_node(struct aml_node *node, void *arg)
 {
 	struct aml_value *val = arg;
 	int i;

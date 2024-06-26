@@ -223,12 +223,14 @@ struct iommu_softc {
 	paddr_t			evt_tblp;
 };
 
-static inline int iommu_bad(struct iommu_softc *sc)
+static inline int
+iommu_bad(struct iommu_softc *sc)
 {
 	return (sc->flags & IOMMU_FLAGS_BAD);
 }
 
-static inline int iommu_enabled(struct iommu_softc *sc)
+static inline int
+iommu_enabled(struct iommu_softc *sc)
 {
 	if (sc->dte) {
 		return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.126 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.127 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -302,7 +302,8 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 	return (0);
 }
 
-static inline int nfssvc_checknam(struct mbuf *nam)
+static inline int
+nfssvc_checknam(struct mbuf *nam)
 {
 	struct sockaddr_in *sin;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.27 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.28 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -8370,7 +8370,8 @@ vmm_decode_perf_status_value(uint64_t val)
 	DPRINTF("(pstate ratio = 0x%llx)\n", (val & 0xffff));
 }
 
-void vmm_decode_perf_ctl_value(uint64_t val)
+void
+vmm_decode_perf_ctl_value(uint64_t val)
 {
 	DPRINTF("(%s ", (val & PERF_CTL_TURBO) ? "TURBO" : "turbo");
 	DPRINTF("pstate req = 0x%llx)\n", (val & 0xfffF));

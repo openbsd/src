@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.50 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.51 2024/06/26 01:40:49 jsg Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -3502,7 +3502,8 @@ _bnxt_hwrm_set_async_event_bit(struct hwrm_func_drv_rgtr_input *req, int bit)
 	req->async_event_fwd[bit/32] |= (1 << (bit % 32));
 }
 
-int bnxt_hwrm_func_rgtr_async_events(struct bnxt_softc *softc)
+int
+bnxt_hwrm_func_rgtr_async_events(struct bnxt_softc *softc)
 {
 	struct hwrm_func_drv_rgtr_input req = {0};
 	int events[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.151 2023/12/14 14:04:57 claudio Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.152 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -54,7 +54,8 @@ static
 #ifndef SMALL_KERNEL
 __inline__
 #endif
-long BUCKETINDX(size_t sz)
+long
+BUCKETINDX(size_t sz)
 {
 	long b, d;
 

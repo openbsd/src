@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2022/07/07 00:56:47 daniel Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -112,7 +112,8 @@ machdep(void)
 	}
 }
 
-int check_skip_conf(void)
+int
+check_skip_conf(void)
 {
 	/* Return non-zero (skip boot.conf) if Control "shift" key down */
 #ifndef EFIBOOT

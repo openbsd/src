@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.18 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.19 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -663,7 +663,8 @@ softintr_disestablish(void *arg)
 }
 
 /* Schedule a software interrupt. */
-void softintr_schedule(void *arg)
+void
+softintr_schedule(void *arg)
 {
 	struct sh_soft_intrhand *sih = arg;
 	struct sh_soft_intr *si = sih->sih_intrhead;

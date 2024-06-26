@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.37 2024/05/17 16:37:10 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.38 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -162,8 +162,8 @@ struct virtio_ops virtio_pci_ops = {
 	virtio_pci_poll_intr,
 };
 
-static inline
-uint64_t _cread(struct virtio_pci_softc *sc, unsigned off, unsigned size)
+static inline uint64_t
+_cread(struct virtio_pci_softc *sc, unsigned off, unsigned size)
 {
 	uint64_t val;
 	switch (size) {

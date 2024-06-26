@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.38 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.39 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -150,7 +150,8 @@ const struct scsi_adapter vioblk_switch = {
 	vioblk_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
-int vioblk_match(struct device *parent, void *match, void *aux)
+int
+vioblk_match(struct device *parent, void *match, void *aux)
 {
 	struct virtio_softc *va = aux;
 	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BLOCK)

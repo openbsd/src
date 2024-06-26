@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.72 2024/05/17 20:11:58 miod Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.73 2024/06/26 01:40:49 jsg Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1622,7 +1622,8 @@ wsmouse_set_mode(struct device *sc, int mode)
 	return (-1);
 }
 
-struct wsmousehw *wsmouse_get_hw(struct device *sc)
+struct wsmousehw *
+wsmouse_get_hw(struct device *sc)
 {
 	return &((struct wsmouse_softc *) sc)->sc_input.hw;
 }

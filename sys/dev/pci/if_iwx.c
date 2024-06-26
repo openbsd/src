@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.186 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.187 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -597,7 +597,8 @@ iwx_ctxt_info_alloc_dma(struct iwx_softc *sc,
 	return 0;
 }
 
-void iwx_ctxt_info_free_paging(struct iwx_softc *sc)
+void
+iwx_ctxt_info_free_paging(struct iwx_softc *sc)
 {
 	struct iwx_self_init_dram *dram = &sc->init_dram;
 	int i;

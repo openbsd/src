@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.5 2021/10/24 17:52:28 mpi Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.6 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -132,8 +132,8 @@ omusbtll_attach(struct device *parent, struct device *self, void *args)
 	omusbtll_init(0x3);
 }
 
-
-void omusbtll_init(uint32_t channel_mask)
+void
+omusbtll_init(uint32_t channel_mask)
 {
 	int i;
 	uint32_t val;

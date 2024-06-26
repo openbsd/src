@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.65 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.66 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -581,7 +581,8 @@ db_get_itlb_data(int entry), db_get_itlb_tag(int entry);
 void db_print_itlb_entry(int entry, int i, int endc);
 void db_print_dtlb_entry(int entry, int i, int endc);
 
-extern __inline__ unsigned long db_get_dtlb_data(int entry)
+extern __inline__ unsigned long
+db_get_dtlb_data(int entry)
 {
 	unsigned long r;
 	__asm__ volatile("ldxa [%1] %2,%0"
@@ -589,7 +590,9 @@ extern __inline__ unsigned long db_get_dtlb_data(int entry)
 		: "r" (entry <<3), "i" (ASI_DMMU_TLB_DATA));
 	return r;
 }
-extern __inline__ unsigned long db_get_dtlb_tag(int entry)
+
+extern __inline__ unsigned long
+db_get_dtlb_tag(int entry)
 {
 	unsigned long r;
 	__asm__ volatile("ldxa [%1] %2,%0"
@@ -597,7 +600,9 @@ extern __inline__ unsigned long db_get_dtlb_tag(int entry)
 		: "r" (entry <<3), "i" (ASI_DMMU_TLB_TAG));
 	return r;
 }
-extern __inline__ unsigned long db_get_itlb_data(int entry)
+
+extern __inline__ unsigned long
+db_get_itlb_data(int entry)
 {
 	unsigned long r;
 	__asm__ volatile("ldxa [%1] %2,%0"
@@ -605,7 +610,9 @@ extern __inline__ unsigned long db_get_itlb_data(int entry)
 		: "r" (entry <<3), "i" (ASI_IMMU_TLB_DATA));
 	return r;
 }
-extern __inline__ unsigned long db_get_itlb_tag(int entry)
+
+extern __inline__ unsigned long
+db_get_itlb_tag(int entry)
 {
 	unsigned long r;
 	__asm__ volatile("ldxa [%1] %2,%0"
@@ -614,7 +621,8 @@ extern __inline__ unsigned long db_get_itlb_tag(int entry)
 	return r;
 }
 
-void db_print_dtlb_entry(int entry, int i, int endc)
+void
+db_print_dtlb_entry(int entry, int i, int endc)
 {
 	unsigned long tag, data;
 	tag = db_get_dtlb_tag(entry);
@@ -622,7 +630,8 @@ void db_print_dtlb_entry(int entry, int i, int endc)
 	db_printf("%2d:%16.16lx %16.16lx%c", i, tag, data, endc);
 }
 
-void db_print_itlb_entry(int entry, int i, int endc)
+void
+db_print_itlb_entry(int entry, int i, int endc)
 {
 	unsigned long tag, data;
 	tag = db_get_itlb_tag(entry);

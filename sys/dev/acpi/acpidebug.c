@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.34 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.35 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -289,7 +289,8 @@ db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		db_printf("Not a valid value\n");
 }
 
-void db_disprint(void *arg, const char *fmt, ...)
+void
+db_disprint(void *arg, const char *fmt, ...)
 {
 	va_list ap;
 

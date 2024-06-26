@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.25 2024/05/27 04:58:43 jsg Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.26 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -85,7 +85,8 @@ static const struct mii_phydesc xmphys[] = {
 	  NULL },
 };
 
-int xmphy_probe(struct device *parent, void *match, void *aux)
+int
+xmphy_probe(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 

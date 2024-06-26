@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.19 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.20 2024/06/26 01:40:49 jsg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -45,8 +45,8 @@
 #define	DPRINTF(stmt) do { } while (0)
 #endif
 
-static inline
-u_int br_dest(vaddr_t addr, u_int inst)
+static inline u_int
+br_dest(vaddr_t addr, u_int inst)
 {
 	inst = (inst & 0x03ffffff) << 2;
 	/* check if sign extension is needed */

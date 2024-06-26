@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_model.h,v 1.8 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: octeon_model.h,v 1.9 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -63,7 +63,8 @@
 /*
  *  get chip id
  */
-static inline uint32_t octeon_get_chipid(void)
+static inline uint32_t
+octeon_get_chipid(void)
 {
         uint32_t tmp;
 

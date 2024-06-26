@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.65 2024/03/17 00:06:43 patrick Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.66 2024/06/26 01:40:49 jsg Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -443,7 +443,8 @@ eephy_status(struct mii_softc *sc)
 }
 
 #ifdef __HAVE_FDT
-void eephy_fdt_reg_init(struct mii_softc *sc)
+void
+eephy_fdt_reg_init(struct mii_softc *sc)
 {
 	uint32_t *prop, opage;
 	int i, len;

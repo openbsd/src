@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.10 2014/03/29 18:09:29 guenther Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.11 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -43,7 +43,8 @@
 /*
  * Set the PSR.
  */
-static __inline__ void set_psr(u_int psr)
+static __inline__ void
+set_psr(u_int psr)
 {
 	__asm__ volatile ("stcr %0, %%cr1" :: "r" (psr));
 	flush_pipeline();
@@ -52,7 +53,8 @@ static __inline__ void set_psr(u_int psr)
 /*
  * Get the PSR.
  */
-static __inline__ u_int get_psr(void)
+static __inline__ u_int
+get_psr(void)
 {
 	u_int psr;
 	__asm__ volatile ("ldcr %0, %%cr1" : "=r" (psr));
@@ -62,13 +64,15 @@ static __inline__ u_int get_psr(void)
 /*
  * Provide access from C code to the assembly instruction ff1
  */
-static __inline__ u_int ff1(u_int val)
+static __inline__ u_int
+ff1(u_int val)
 {
 	__asm__ volatile ("ff1 %0, %0" : "=r" (val) : "0" (val));
 	return (val);
 }
 
-static __inline__ u_int get_cpu_pid(void)
+static __inline__ u_int
+get_cpu_pid(void)
 {
 	u_int pid;
 	__asm__ volatile ("ldcr %0, %%cr0" : "=r" (pid));

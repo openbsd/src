@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.14 2024/04/29 12:42:06 jsg Exp $ */
+/* $OpenBSD: intc.c,v 1.15 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -418,7 +418,8 @@ intc_tst(void *a)
 }
 
 void intc_test(void);
-void intc_test(void)
+void
+intc_test(void)
 {
 	void * ih;
 	printf("about to register handler\n");

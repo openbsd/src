@@ -1,4 +1,4 @@
-/* $OpenBSD: xp.c,v 1.3 2017/09/08 05:36:52 deraadt Exp $ */
+/* $OpenBSD: xp.c,v 1.4 2024/06/26 01:40:49 jsg Exp $ */
 /* $NetBSD: xp.c,v 1.1 2016/12/03 17:38:02 tsutsui Exp $ */
 
 /*-
@@ -105,7 +105,8 @@ static bool xp_matched;
 #define ON		1
 #define OFF		0
 
-static uint8_t put_pio0c(uint8_t bit, uint8_t set)
+static uint8_t
+put_pio0c(uint8_t bit, uint8_t set)
 {
 	volatile uint8_t * const pio0 = (uint8_t *)PIO_ADDR;
 

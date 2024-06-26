@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.57 2023/04/28 01:24:14 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.58 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -857,7 +857,8 @@ rtwn_ra_init(struct rtwn_softc *sc)
 /*
  * Initialize rate adaptation in firmware.
  */
-int rtwn_r92c_ra_init(struct rtwn_softc *sc, u_int8_t mode, u_int32_t rates,
+int
+rtwn_r92c_ra_init(struct rtwn_softc *sc, u_int8_t mode, u_int32_t rates,
     int maxrate, uint32_t basicrates, int maxbasicrate)
 {
 	struct r92c_fw_cmd_macid_cfg cmd;

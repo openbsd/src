@@ -1,4 +1,4 @@
-/*	$OpenBSD: iosf.c,v 1.1 2023/04/23 00:20:26 dlg Exp $ */
+/*	$OpenBSD: iosf.c,v 1.2 2024/06/26 01:40:49 jsg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -253,7 +253,8 @@ iosf_mbi_punit_release(void)
 	rw_exit_write(&iosf_lock);
 }
 
-void iosf_mbi_assert_punit_acquired(void)
+void
+iosf_mbi_assert_punit_acquired(void)
 {
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.40 2024/06/10 19:26:17 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.41 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -524,7 +524,8 @@ vio_put_lladdr(struct arpcom *ac, struct virtio_softc *vsc)
 	}
 }
 
-static int vio_needs_reset(struct vio_softc *sc)
+static int
+vio_needs_reset(struct vio_softc *sc)
 {
 	if (virtio_get_status(sc->sc_virtio) &
 	    VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET) {

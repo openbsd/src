@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.262 2022/04/16 19:19:58 naddy Exp $	*/
+/*	$OpenBSD: ami.c,v 1.263 2024/06/26 01:40:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2277,7 +2277,8 @@ bail:
 	return (error);
 }
 
-int ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
+int
+ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
 {
 	int error = 0;
 	u_int8_t func, ret;

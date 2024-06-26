@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.120 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.121 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -2134,7 +2134,8 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 /*
  * Determine (non)existence of physical page
  */
-int pmap_pa_exists(paddr_t pa)
+int
+pmap_pa_exists(paddr_t pa)
 {
 	struct mem_region *mp;
 

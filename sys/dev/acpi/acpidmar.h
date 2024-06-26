@@ -230,12 +230,15 @@
 #define IQA_QS_32K	7	/* 32768 */
 
 /* Read-Modify-Write helpers */
-static inline void iommu_rmw32(void *ov, uint32_t mask, uint32_t shift, uint32_t nv)
+static inline void
+iommu_rmw32(void *ov, uint32_t mask, uint32_t shift, uint32_t nv)
 {
 	*(uint32_t *)ov &= ~(mask << shift);
 	*(uint32_t *)ov |= (nv & mask) << shift;
 }
-static inline void iommu_rmw64(void *ov, uint32_t mask, uint32_t shift, uint64_t nv)
+
+static inline void
+iommu_rmw64(void *ov, uint32_t mask, uint32_t shift, uint64_t nv)
 {
 	*(uint64_t *)ov &= ~(mask << shift);
 	*(uint64_t *)ov |= (nv & mask) << shift;

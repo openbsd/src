@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.35 2019/06/29 15:41:21 deraadt Exp $	*/
+/*	$OpenBSD: psl.h,v 1.36 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -250,21 +250,22 @@ void splassert_check(int, const char *);
  * GCC pseudo-functions for manipulating privileged registers
  */
 static inline u_int64_t getpstate(void);
-static inline
-u_int64_t getpstate(void)
+static inline u_int64_t
+getpstate(void)
 {
 	return (sparc_rdpr(pstate));
 }
 
 static inline void setpstate(u_int64_t);
-static inline void setpstate(u_int64_t newpstate)
+static inline void
+setpstate(u_int64_t newpstate)
 {
 	sparc_wrpr(pstate, newpstate, 0);
 }
 
 static inline int getcwp(void);
-static inline
-int getcwp(void)
+static inline int
+getcwp(void)
 {
 	return (sparc_rdpr(cwp));
 }
@@ -277,8 +278,8 @@ setcwp(u_int64_t newcwp)
 }
 
 static inline u_int64_t getver(void);
-static inline
-u_int64_t getver(void)
+static inline u_int64_t
+getver(void)
 {
 	return (sparc_rdpr(ver));
 }

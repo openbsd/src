@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.294 2024/06/07 16:53:35 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.295 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1294,7 +1294,8 @@ set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
 	sd->sd_hibase = (u_int64_t)base >> 24;
 }
 
-void cpu_init_idt(void)
+void
+cpu_init_idt(void)
 {
 	struct region_descriptor region;
 

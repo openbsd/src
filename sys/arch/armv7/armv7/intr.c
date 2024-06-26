@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.21 2022/07/27 20:26:17 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.22 2024/06/26 01:40:49 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -72,16 +72,21 @@ arm_dflt_intr(void *frame)
 }
 
 
-void *arm_intr_establish(int irqno, int level, int (*func)(void *),
+void *
+arm_intr_establish(int irqno, int level, int (*func)(void *),
     void *cookie, char *name)
 {
 	return arm_intr_func.intr_establish(irqno, level, NULL, func, cookie, name);
 }
-void arm_intr_disestablish(void *cookie)
+
+void
+arm_intr_disestablish(void *cookie)
 {
 	arm_intr_func.intr_disestablish(cookie);
 }
-const char *arm_intr_string(void *cookie)
+
+const char *
+arm_intr_string(void *cookie)
 {
 	return arm_intr_func.intr_string(cookie);
 }
@@ -657,13 +662,15 @@ arm_dflt_setipl(int newcpl)
 	ci->ci_cpl = newcpl;
 }
 
-void *arm_dflt_intr_establish(int irqno, int level, struct cpu_info *ci,
+void *
+arm_dflt_intr_establish(int irqno, int level, struct cpu_info *ci,
     int (*func)(void *), void *cookie, char *name)
 {
 	panic("arm_dflt_intr_establish called");
 }
 
-void arm_dflt_intr_disestablish(void *cookie)
+void
+arm_dflt_intr_disestablish(void *cookie)
 {
 	panic("arm_dflt_intr_disestablish called");
 }
@@ -721,7 +728,8 @@ arm_do_pending_intr(int pcpl)
 	restore_interrupts(oldirqstate);
 }
 
-void arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
+void
+arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
     void (*x)(int), void (*setipl)(int),
 	void *(*intr_establish)(int irqno, int level, struct cpu_info *ci,
 	    int (*func)(void *), void *cookie, char *name),

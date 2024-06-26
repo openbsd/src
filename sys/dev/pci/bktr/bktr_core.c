@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.44 2024/06/22 10:22:29 jsg Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.45 2024/06/26 01:40:49 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -3504,7 +3504,8 @@ set_fps( bktr_ptr_t bktr, u_short fps )
  *   as one would expect.
  */
 
-static u_int pixfmt_swap_flags( int pixfmt )
+static u_int
+pixfmt_swap_flags( int pixfmt )
 {
 	const struct meteor_pixfmt *pf = &pixfmt_table[ pixfmt ].public;
 	u_int		      swapf = 0;
@@ -3541,7 +3542,8 @@ static u_int pixfmt_swap_flags( int pixfmt )
  *   our pixfmt_table indices.
  */
 
-static int oformat_meteor_to_bt( u_int format )
+static int
+oformat_meteor_to_bt( u_int format )
 {
 	int    i;
         const struct meteor_pixfmt *pf1, *pf2;

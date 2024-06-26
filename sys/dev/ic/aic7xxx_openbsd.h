@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.32 2024/05/29 00:48:15 jsg Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.33 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -209,20 +209,20 @@ static __inline uint32_t ahc_get_sense_bufsize(struct ahc_softc *,
     struct scb *);
 static __inline void ahc_freeze_scb(struct scb *);
 
-static __inline
-void ahc_set_transaction_status(struct scb *scb, uint32_t status)
+static __inline void
+ahc_set_transaction_status(struct scb *scb, uint32_t status)
 {
 	scb->xs->error = status;
 }
 
-static __inline
-void ahc_set_scsi_status(struct scb *scb, uint32_t status)
+static __inline void
+ahc_set_scsi_status(struct scb *scb, uint32_t status)
 {
 	scb->xs->status = status;
 }
 
-static __inline
-uint32_t ahc_get_transaction_status(struct scb *scb)
+static __inline uint32_t
+ahc_get_transaction_status(struct scb *scb)
 {
 	if (scb->xs->flags & ITSDONE)
 		return CAM_REQ_CMP;
@@ -230,49 +230,49 @@ uint32_t ahc_get_transaction_status(struct scb *scb)
 		return scb->xs->error;
 }
 
-static __inline
-uint32_t ahc_get_scsi_status(struct scb *scb)
+static __inline uint32_t
+ahc_get_scsi_status(struct scb *scb)
 {
 	return (scb->xs->status);
 }
 
-static __inline
-void ahc_set_transaction_tag(struct scb *scb, int enabled, u_int type)
+static __inline void
+ahc_set_transaction_tag(struct scb *scb, int enabled, u_int type)
 {
 }
 
-static __inline
-u_long ahc_get_transfer_length(struct scb *scb)
+static __inline u_long
+ahc_get_transfer_length(struct scb *scb)
 {
 	return (scb->xs->datalen);
 }
 
-static __inline
-int ahc_get_transfer_dir(struct scb *scb)
+static __inline int
+ahc_get_transfer_dir(struct scb *scb)
 {
 	return (scb->xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT));
 }
 
-static __inline
-void ahc_set_residual(struct scb *scb, u_long resid)
+static __inline void
+ahc_set_residual(struct scb *scb, u_long resid)
 {
 	scb->xs->resid = resid;
 }
 
-static __inline
-void ahc_set_sense_residual(struct scb *scb, u_long resid)
+static __inline void
+ahc_set_sense_residual(struct scb *scb, u_long resid)
 {
 	scb->xs->resid = resid;
 }
 
-static __inline
-u_long ahc_get_residual(struct scb *scb)
+static __inline u_long
+ahc_get_residual(struct scb *scb)
 {
 	return (scb->xs->resid);
 }
 
-static __inline
-int ahc_perform_autosense(struct scb *scb)
+static __inline int
+ahc_perform_autosense(struct scb *scb)
 {
 	/* Return true for OpenBSD */
 	return (1);

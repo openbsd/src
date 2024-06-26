@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.31 2024/03/30 01:13:56 jsg Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.32 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -676,23 +676,23 @@ STNC_GEN(u_int, sta);
 
 
 static inline void asi_set(int);
-static inline
-void asi_set(int asi)
+static inline void
+asi_set(int asi)
 {
 	sparc_wr(asi, asi, 0);
 }
 
 static inline u_int8_t asi_get(void);
-static inline
-u_int8_t asi_get(void)
+static inline u_int8_t
+asi_get(void)
 {
 	return sparc_rd(asi);
 }
 
 /* flush address from instruction cache */
 static inline void flush(void *);
-static inline
-void flush(void *p)
+static inline void
+flush(void *p)
 {
 	__asm volatile("flush %0"
 	    : : "r" (p)

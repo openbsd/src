@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.83 2022/07/14 11:03:15 mvs Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.84 2024/06/26 01:40:49 jsg Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -188,7 +188,8 @@ struct mbuf_queue pppoediscinq = MBUF_QUEUE_INITIALIZER(
 struct mbuf_queue pppoeinq = MBUF_QUEUE_INITIALIZER(
 	IFQ_MAXLEN, IPL_SOFTNET);
 
-void pppoeintr(void)
+void
+pppoeintr(void)
 {
 	struct mbuf_list ml;
 	struct mbuf *m;

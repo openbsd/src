@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess_isapnp.c,v 1.8 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: ess_isapnp.c,v 1.9 2024/06/26 01:40:49 jsg Exp $	*/
 /*	$NetBSD: ess_isa.c,v 1.4 1999/03/18 20:57:11 mycroft Exp $	*/
 
 /*-
@@ -63,7 +63,8 @@ ess_isapnp_probe(struct device *parent, void *match, void *aux)
 	return 1;
 }
 
-void ess_isapnp_attach(struct device *parent, struct device *self, void *aux)
+void
+ess_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ess_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
