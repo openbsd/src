@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.29 2024/05/13 11:41:52 krw Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.30 2024/06/26 21:41:30 asou Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -32,7 +32,6 @@ struct nvme_dmamem {
 #define NVME_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
 
 struct nvme_softc;
-struct nvme_queue;
 
 struct nvme_ccb {
 	SIMPLEQ_ENTRY(nvme_ccb)	ccb_entry;
