@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.206 2024/05/03 17:43:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.207 2024/06/26 12:23:36 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -761,25 +761,21 @@ unp_detach(struct unpcb *unp)
 
 	unp->unp_vnode = NULL;
 
-	/*
-	 * Enforce `i_lock' -> `solock()' lock order.
-	 */
-	sounlock(so);
-
 	rw_enter_write(&unp_gc_lock);
 	LIST_REMOVE(unp, unp_link);
 	rw_exit_write(&unp_gc_lock);
 
 	if (vp != NULL) {
+		/* Enforce `i_lock' -> solock() lock order. */
+		sounlock(so);
 		VOP_LOCK(vp, LK_EXCLUSIVE);
 		vp->v_socket = NULL;
 
 		KERNEL_LOCK();
 		vput(vp);
 		KERNEL_UNLOCK();
+		solock(so);
 	}
-
-	solock(so);
 
 	if (unp->unp_conn != NULL) {
 		/*
