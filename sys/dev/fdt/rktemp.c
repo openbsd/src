@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.13 2024/06/12 09:06:15 kettenis Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.14 2024/06/27 09:40:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -55,6 +55,8 @@
 /* RK3588 */
 #define TSADC_V3_AUTO_SRC		0x000c
 #define  TSADC_V3_AUTO_SRC_CH(ch)	(1 << (ch))
+#define TSADC_V3_HT_INT_EN		0x0014
+#define  TSADC_V3_HT_INT_EN_CH(ch)	(1 << (ch))
 #define TSADC_V3_GPIO_EN		0x0018
 #define  TSADC_V3_GPIO_EN_CH(ch)	(1 << (ch))
 #define TSADC_V3_CRU_EN			0x001c
@@ -62,6 +64,7 @@
 #define TSADC_V3_HLT_INT_PD		0x0024
 #define  TSADC_V3_HT_INT_STATUS(ch)	(1 << (ch))
 #define TSADC_V3_DATA(ch)		(0x002c + (ch) * 4)
+#define TSADC_V3_COMP_INT(ch)		(0x006c + (ch) * 4)
 #define TSADC_V3_COMP_SHUT(ch)		(0x010c + (ch) * 4)
 #define TSADC_V3_HIGHT_INT_DEBOUNCE	0x014c
 #define TSADC_V3_HIGHT_TSHUT_DEBOUNCE	0x0150
@@ -266,6 +269,7 @@ struct rktemp_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_node;
+	void			*sc_ih;
 
 	bus_size_t		sc_data0;
 
@@ -290,12 +294,14 @@ struct cfdriver rktemp_cd = {
 	NULL, "rktemp", DV_DULL
 };
 
+int	rktemp_intr(void *);
 void	rktemp_rk3568_init(struct rktemp_softc *);
 int32_t rktemp_calc_code(struct rktemp_softc *, int32_t);
 int32_t rktemp_calc_temp(struct rktemp_softc *, int32_t);
 int	rktemp_valid(struct rktemp_softc *, int32_t);
 void	rktemp_refresh_sensors(void *);
 int32_t	rktemp_get_temperature(void *, uint32_t *);
+int	rktemp_set_limit(void *, uint32_t *, uint32_t);
 
 int
 rktemp_match(struct device *parent, void *match, void *aux)
@@ -333,6 +339,15 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		return;
+	}
+
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc")) {
+		sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_SOFTCLOCK,
+		    rktemp_intr, sc, sc->sc_dev.dv_xname);
+		if (sc->sc_ih == NULL) {
+			printf(": can't establish interrupt\n");
+			return;
+		}
 	}
 
 	printf("\n");
@@ -515,7 +530,32 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ts.ts_node = sc->sc_node;
 	sc->sc_ts.ts_cookie = sc;
 	sc->sc_ts.ts_get_temperature = rktemp_get_temperature;
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-tsadc"))
+		sc->sc_ts.ts_set_limit = rktemp_set_limit;
 	thermal_sensor_register(&sc->sc_ts);
+}
+
+int
+rktemp_intr(void *arg)
+{
+	struct rktemp_softc *sc = arg;
+	uint32_t stat, ch;
+
+	stat = HREAD4(sc, TSADC_V3_HLT_INT_PD);
+	stat &= HREAD4(sc, TSADC_V3_HT_INT_EN);
+	for (ch = 0; ch < sc->sc_nsensors; ch++) {
+		if (stat & TSADC_V3_HT_INT_STATUS(ch))
+			thermal_sensor_update(&sc->sc_ts, &ch);
+	}
+
+	/*
+	 * Disable and clear the active interrupts.  The thermal zone
+	 * code will set a new limit when necessary.
+	 */
+	HWRITE4(sc, TSADC_V3_HT_INT_EN, stat << 16);
+	HWRITE4(sc, TSADC_V3_HLT_INT_PD, stat);
+
+	return 1;
 }
 
 void
@@ -647,15 +687,35 @@ int32_t
 rktemp_get_temperature(void *cookie, uint32_t *cells)
 {
 	struct rktemp_softc *sc = cookie;
-	uint32_t idx = cells[0];
+	uint32_t ch = cells[0];
 	int32_t code;
 
-	if (idx >= sc->sc_nsensors)
+	if (ch >= sc->sc_nsensors)
 		return THERMAL_SENSOR_MAX;
 
-	code = HREAD4(sc, sc->sc_data0 + (idx * 4));
+	code = HREAD4(sc, sc->sc_data0 + (ch * 4));
 	if (rktemp_valid(sc, code))
 		return rktemp_calc_temp(sc, code);
 	else
 		return THERMAL_SENSOR_MAX;
+}
+
+int
+rktemp_set_limit(void *cookie, uint32_t *cells, uint32_t temp)
+{
+	struct rktemp_softc *sc = cookie;
+	uint32_t ch = cells[0];
+
+	if (ch >= sc->sc_nsensors)
+		return ENXIO;
+
+	/* Set limit for this sensor. */
+	HWRITE4(sc, TSADC_V3_COMP_INT(ch), rktemp_calc_code(sc, temp));
+
+	/* Clear and enable the corresponding interrupt. */
+	HWRITE4(sc, TSADC_V3_HLT_INT_PD, TSADC_V3_HT_INT_STATUS(ch));
+	HWRITE4(sc, TSADC_V3_HT_INT_EN, TSADC_V3_HT_INT_EN_CH(ch) << 16 |
+	    TSADC_V3_HT_INT_EN_CH(ch));
+
+	return 0;
 }
