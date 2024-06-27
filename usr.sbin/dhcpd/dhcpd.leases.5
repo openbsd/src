@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.13 2015/07/27 18:48:04 sobrado Exp $
+.\"	$OpenBSD: dhcpd.leases.5,v 1.14 2024/06/27 16:39:31 florian Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: June 27 2024 $
 .Dt DHCPD.LEASES 5
 .Os
 .Sh NAME
@@ -52,12 +52,6 @@ recorded at the end of the lease file.
 So if more than one declaration appears for a given lease,
 the last one in the file is the current one.
 .Sh FORMAT
-Lease descriptions are stored in a format that is parsed by the same
-recursive descent parser used to read the
-.Xr dhcpd.conf 5
-and
-.Xr dhclient.conf 5
-files.
 Currently, the only declaration that is used in the
 .Nm
 file is the

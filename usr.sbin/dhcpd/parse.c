@@ -1,6 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.28 2022/01/16 21:20:25 naddy Exp $	*/
-
-/* Common parser code for dhcpd and dhclient. */
+/*	$OpenBSD: parse.c,v 1.29 2024/06/27 16:39:31 florian Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.

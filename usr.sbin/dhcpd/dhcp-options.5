@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.34 2023/11/23 16:30:12 florian Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.35 2024/06/27 16:39:31 florian Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: November 23 2023 $
+.Dd $Mdocdate: June 27 2024 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -48,9 +48,7 @@ The Dynamic Host Configuration protocol allows the client to receive
 from the DHCP server describing the network configuration and various
 services that are available on the network.
 When configuring
-.Xr dhcpd 8
-or
-.Xr dhclient 8 ,
+.Xr dhcpd 8 ,
 options must often be declared.
 The syntax for declaring options, and the names and formats of the options
 that can be declared, are documented here.
@@ -290,15 +288,6 @@ The
 .Ic domain-search
 option specifies a list of the domain names that should be
 used during DNS name resolution.
-.Pp
-When
-.Xr dhclient 8
-constructs
-.Xr resolv.conf 5 ,
-it will use this list of domains in preference to any information
-provided by the
-.Ic domain-name
-option.
 .It Ic option extensions-path Ar string ;
 A string to specify a file, retrievable via TFTP, which contains information
 which can be interpreted in the same way as the 64-octet vendor-extension
@@ -554,8 +543,6 @@ option.
 Note that this option is obsolete and should be replaced by the
 .Ic classless-static-routes
 option.
-.Xr dhclient 8
-ignores this option.
 .It Ic option streettalk-directory-assistance-server Ar ip-address Oo , Ar ip-address ... Oc ;
 The StreetTalk Directory Assistance (STDA) server option specifies a
 list of STDA servers available to the client.
@@ -655,11 +642,11 @@ System Display Manager and are available to the client.
 Addresses should be listed in order of preference.
 .El
 .Sh SEE ALSO
-.Xr dhclient.conf 5 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhcpd.leases 5 ,
-.Xr dhclient 8 ,
-.Xr dhcpd 8
+.Xr dhcpleased.conf 5 ,
+.Xr dhcpd 8,
+.Xr dhcpleased 8
 .Sh STANDARDS
 .Rs
 .%A R. Droms
