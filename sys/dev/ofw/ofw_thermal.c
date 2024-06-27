@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.8 2023/11/23 00:47:13 dlg Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.9 2024/06/27 09:37:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -158,6 +158,23 @@ thermal_get_temperature_cells(uint32_t *cells)
 		return ts->ts_get_temperature(ts->ts_cookie, &cells[1]);
 
 	return THERMAL_SENSOR_MAX;
+}
+
+int
+thermal_set_limit_cells(uint32_t *cells, uint32_t temp)
+{
+	struct thermal_sensor *ts;
+	uint32_t phandle = cells[0];
+
+	LIST_FOREACH(ts, &thermal_sensors, ts_list) {
+		if (ts->ts_phandle == phandle)
+			break;
+	}
+
+	if (ts && ts->ts_set_limit)
+		return ts->ts_set_limit(ts->ts_cookie, &cells[1], temp);
+
+	return ENXIO;
 }
 
 void
@@ -352,7 +369,11 @@ out:
 		polling_delay = tz->tz_polling_delay_passive;
 	else
 		polling_delay = tz->tz_polling_delay;
-	timeout_add_msec(&tz->tz_poll_to, polling_delay);
+
+	if (polling_delay > 0)
+		timeout_add_msec(&tz->tz_poll_to, polling_delay);
+	else
+		thermal_set_limit_cells(tz->tz_sensors, tp->tp_temperature);
 }
 
 static int
@@ -497,14 +518,14 @@ thermal_zone_init(int node)
 		cm++;
 	}
 
-	/* Start polling if we are requested to do so. */
-	if (tz->tz_polling_delay > 0)
-		timeout_add_msec(&tz->tz_poll_to, tz->tz_polling_delay);
 	LIST_INSERT_HEAD(&thermal_zones, tz, tz_list);
 
 #if NKSTAT > 0
 	thermal_zone_kstat_attach(tz);
 #endif
+
+	/* Poll once to get things going. */
+	thermal_zone_poll(tz);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.h,v 1.2 2020/01/23 23:10:04 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.h,v 1.3 2024/06/27 09:37:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -23,6 +23,7 @@ struct thermal_sensor {
 	void	*ts_cookie;
 
 	int32_t	(*ts_get_temperature)(void *, uint32_t *);
+	int	(*ts_set_limit)(void *, uint32_t *, uint32_t);
 
 	LIST_ENTRY(thermal_sensor) ts_list;
 	uint32_t ts_phandle;
