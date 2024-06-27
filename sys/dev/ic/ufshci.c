@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.38 2024/06/15 18:26:25 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.39 2024/06/27 21:35:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -133,6 +133,9 @@ ufshci_intr(void *arg)
 	if (status == 0)
 		return handled;
 
+	/* ACK interrupt */
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_IS, status);
+
 	if (status & UFSHCI_REG_IS_UCCS) {
 		DPRINTF(3, "%s: UCCS interrupt\n", __func__);
 		handled = 1;
@@ -162,9 +165,6 @@ ufshci_intr(void *arg)
 		printf("%s: UNKNOWN interrupt, status=0x%08x\n",
 		    sc->sc_dev.dv_xname, status);
 	}
-
-	/* ACK interrupt */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_IS, status);
 
 	return handled;
 }
