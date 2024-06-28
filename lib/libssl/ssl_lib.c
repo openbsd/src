@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.323 2024/04/15 16:00:05 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.324 2024/06/28 14:46:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1785,45 +1785,70 @@ LSSL_ALIAS(SSL_get_servername_type);
  * It returns either:
  * OPENSSL_NPN_NEGOTIATED if a common protocol was found, or
  * OPENSSL_NPN_NO_OVERLAP if the fallback case was reached.
+ *
+ * XXX - the out argument points into server_list or client list and should
+ * therefore really be const. We can't fix that without breaking the callers.
  */
 int
 SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
-    const unsigned char *server, unsigned int server_len,
-    const unsigned char *client, unsigned int client_len)
+    const unsigned char *server_list, unsigned int server_list_len,
+    const unsigned char *client_list, unsigned int client_list_len)
 {
-	unsigned int		 i, j;
-	const unsigned char	*result;
-	int			 status = OPENSSL_NPN_UNSUPPORTED;
+	CBS client, client_proto, server, server_proto;
+
+	*out = NULL;
+	*outlen = 0;
+
+	/* First check that the client list is well-formed. */
+	CBS_init(&client, client_list, client_list_len);
+	if (!tlsext_alpn_check_format(&client))
+		goto err;
 
 	/*
-	 * For each protocol in server preference order,
-	 * see if we support it.
+	 * Use first client protocol as fallback. This is one way of doing NPN's
+	 * "opportunistic" protocol selection (see security considerations in
+	 * draft-agl-tls-nextprotoneg-04), and it is the documented behavior of
+	 * this API. For ALPN it's the callback's responsibility to fail on
+	 * OPENSSL_NPN_NO_OVERLAP.
 	 */
-	for (i = 0; i < server_len; ) {
-		for (j = 0; j < client_len; ) {
-			if (server[i] == client[j] &&
-			    memcmp(&server[i + 1],
-			    &client[j + 1], server[i]) == 0) {
-				/* We found a match */
-				result = &server[i];
-				status = OPENSSL_NPN_NEGOTIATED;
-				goto found;
+
+	if (!CBS_get_u8_length_prefixed(&client, &client_proto))
+		goto err;
+
+	*out = (unsigned char *)CBS_data(&client_proto);
+	*outlen = CBS_len(&client_proto);
+
+	/* Now check that the server list is well-formed. */
+	CBS_init(&server, server_list, server_list_len);
+	if (!tlsext_alpn_check_format(&server))
+		goto err;
+
+	/*
+	 * Walk the server list and select the first protocol that appears in
+	 * the client list.
+	 */
+	while (CBS_len(&server) > 0) {
+		if (!CBS_get_u8_length_prefixed(&server, &server_proto))
+			goto err;
+
+		CBS_init(&client, client_list, client_list_len);
+
+		while (CBS_len(&client) > 0) {
+			if (!CBS_get_u8_length_prefixed(&client, &client_proto))
+				goto err;
+
+			if (CBS_mem_equal(&client_proto,
+			    CBS_data(&server_proto), CBS_len(&server_proto))) {
+				*out = (unsigned char *)CBS_data(&server_proto);
+				*outlen = CBS_len(&server_proto);
+
+				return OPENSSL_NPN_NEGOTIATED;
 			}
-			j += client[j];
-			j++;
 		}
-		i += server[i];
-		i++;
 	}
 
-	/* There's no overlap between our protocols and the server's list. */
-	result = client;
-	status = OPENSSL_NPN_NO_OVERLAP;
-
- found:
-	*out = (unsigned char *) result + 1;
-	*outlen = result[0];
-	return (status);
+ err:
+	return OPENSSL_NPN_NO_OVERLAP;
 }
 LSSL_ALIAS(SSL_select_next_proto);
 
