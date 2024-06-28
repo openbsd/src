@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.41 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.42 2024/06/28 14:46:31 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -419,7 +419,7 @@ vio_alloc_mem(struct vio_softc *sc)
 	 */
 	allocsize = sizeof(struct virtio_net_hdr) * txqsize;
 
-	if (vsc->sc_nvqs == 3) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
 		allocsize += sizeof(struct virtio_net_ctrl_cmd) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_status) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_rx) * 1;
@@ -436,7 +436,7 @@ vio_alloc_mem(struct vio_softc *sc)
 	kva = sc->sc_dma_kva;
 	sc->sc_tx_hdrs = (struct virtio_net_hdr*)(kva + offset);
 	offset += sizeof(struct virtio_net_hdr) * txqsize;
-	if (vsc->sc_nvqs == 3) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
 		sc->sc_ctrl_cmd = (void*)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_cmd);
 		sc->sc_ctrl_status = (void*)(kva + offset);
@@ -529,7 +529,7 @@ vio_needs_reset(struct vio_softc *sc)
 {
 	if (virtio_get_status(sc->sc_virtio) &
 	    VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET) {
-		printf("%s: device needs reset", sc->sc_dev.dv_xname);
+		printf("%s: device needs reset\n", sc->sc_dev.dv_xname);
 		vio_ctrl_wakeup(sc, RESET);
 		return 1;
 	}
@@ -604,8 +604,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		virtio_postpone_intr_far(&sc->sc_vq[VQTX]);
 	else
 		virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ) &&
-	    virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_RX)) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
 		if (virtio_alloc_vq(vsc, &sc->sc_vq[VQCTL], 2, NBPG, 1,
 		    "control") == 0) {
 			sc->sc_vq[VQCTL].vq_done = vio_ctrleof;
@@ -760,7 +759,7 @@ vio_stop(struct ifnet *ifp, int disable)
 	/* only way to stop I/O and DMA is resetting... */
 	virtio_reset(vsc);
 	vio_rxeof(sc);
-	if (vsc->sc_nvqs >= 3)
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		vio_ctrl_wakeup(sc, RESET);
 	vio_tx_drain(sc);
 	if (disable)
@@ -769,10 +768,10 @@ vio_stop(struct ifnet *ifp, int disable)
 	virtio_reinit_start(vsc);
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQRX]);
 	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
-	if (vsc->sc_nvqs >= 3)
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		virtio_start_vq_intr(vsc, &sc->sc_vq[VQCTL]);
 	virtio_reinit_end(vsc);
-	if (vsc->sc_nvqs >= 3)
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		vio_ctrl_wakeup(sc, FREE);
 }
 
@@ -959,7 +958,7 @@ vio_dump(struct vio_softc *sc)
 	printf("rx tick active: %d\n", !timeout_triggered(&sc->sc_rxtick));
 	printf("RX virtqueue:\n");
 	virtio_vq_dump(&vsc->sc_vqs[VQRX]);
-	if (vsc->sc_nvqs == 3) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
 		printf("CTL virtqueue:\n");
 		virtio_vq_dump(&vsc->sc_vqs[VQCTL]);
 		printf("ctrl_inuse: %d\n", sc->sc_ctrl_inuse);
@@ -1530,7 +1529,7 @@ vio_wait_ctrl_done(struct vio_softc *sc)
 		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viodone",
 		    VIRTIO_NET_CTRL_TIMEOUT);
 		if (r == EWOULDBLOCK) {
-			printf("%s: ctrl queue timeout", sc->sc_dev.dv_xname);
+			printf("%s: ctrl queue timeout\n", sc->sc_dev.dv_xname);
 			vio_ctrl_wakeup(sc, RESET);
 			return ENXIO;
 		}
@@ -1648,7 +1647,7 @@ vio_iff(struct vio_softc *sc)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (vsc->sc_nvqs < 3) {
+	if (!virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_RX)) {
 		/* no ctrl vq; always promisc */
 		ifp->if_flags |= IFF_ALLMULTI | IFF_PROMISC;
 		return;
@@ -1681,9 +1680,6 @@ vio_iff(struct vio_softc *sc)
 	sc->sc_ctrl_mac_tbl_uc->nentries = 1;
 
 	sc->sc_ctrl_mac_tbl_mc->nentries = rxfilter ? nentries : 0;
-
-	if (vsc->sc_nvqs < 3)
-		return;
 
 	r = vio_set_rx_filter(sc);
 	if (r == EIO)
