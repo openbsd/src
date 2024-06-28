@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.105 2023/07/06 07:45:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.106 2024/06/28 21:36:05 bluhm Exp $
 
 SUBDIR+= accept access
 SUBDIR+= bind
@@ -22,7 +22,7 @@ SUBDIR+= setuid
 .endif
 SUBDIR+= signal sosplice stackjmp stackpivot syscall_segment
 SUBDIR+= sysvmsg sysvsem sysvshm
-SUBDIR+= unalign unfdpass unixsockets unveil unveil-unmount
+SUBDIR+= unalign unfdpass unixsockets unp-write-closed unveil unveil-unmount
 SUBDIR+= wait
 SUBDIR+= xonly
 
