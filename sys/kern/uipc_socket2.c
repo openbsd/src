@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.155 2024/05/17 19:11:14 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.156 2024/06/28 21:30:24 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -160,8 +160,6 @@ void
 soisdisconnected(struct socket *so)
 {
 	soassertlocked(so);
-	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
-	so->so_state |= SS_ISDISCONNECTED;
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
@@ -170,6 +168,9 @@ soisdisconnected(struct socket *so)
 	mtx_enter(&so->so_snd.sb_mtx);
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
 	mtx_leave(&so->so_snd.sb_mtx);
+
+	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
+	so->so_state |= SS_ISDISCONNECTED;
 
 	wakeup(&so->so_timeo);
 	sowwakeup(so);

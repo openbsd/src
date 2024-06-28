@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.105 2024/05/03 17:43:09 mvs Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.106 2024/06/28 21:30:24 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -174,10 +174,16 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
+		/*
+		 * Should take both solock() and `sb_mtx' mutex for
+		 * SS_CANTSENDMORE flag modifications.
+		 */
+		solock(wso);
 		mtx_enter(&wso->so_snd.sb_mtx);
 		wso->so_snd.sb_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
 		mtx_leave(&wso->so_snd.sb_mtx);
+		sounlock(wso);
 	} else {
 		rso = fip->fi_readsock;
 		wso = fip->fi_writesock;
@@ -185,9 +191,11 @@ fifo_open(void *v)
 	if (ap->a_mode & FREAD) {
 		fip->fi_readers++;
 		if (fip->fi_readers == 1) {
+			solock(wso);
 			mtx_enter(&wso->so_snd.sb_mtx);
 			wso->so_snd.sb_state &= ~SS_CANTSENDMORE;
 			mtx_leave(&wso->so_snd.sb_mtx);
+			sounlock(wso);
 			if (fip->fi_writers > 0)
 				wakeup(&fip->fi_writers);
 		}

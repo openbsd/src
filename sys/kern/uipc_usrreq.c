@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.207 2024/06/26 12:23:36 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.208 2024/06/28 21:30:24 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -513,6 +513,14 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto out;
 	}
 
+	/*
+	 * We hold both solock() and `sb_mtx' mutex while modifying
+	 * SS_CANTSENDMORE flag. solock() is enough to check it.
+	 */
+	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
+		error = EPIPE;
+		goto dispose;
+	}
 	if (unp->unp_conn == NULL) {
 		error = ENOTCONN;
 		goto dispose;
@@ -531,12 +539,6 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	 */
 	mtx_enter(&so2->so_rcv.sb_mtx);
 	mtx_enter(&so->so_snd.sb_mtx);
-	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
-		mtx_leave(&so->so_snd.sb_mtx);
-		mtx_leave(&so2->so_rcv.sb_mtx);
-		error = EPIPE;
-		goto dispose;
-	}
 	if (control) {
 		if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
 			control = NULL;
