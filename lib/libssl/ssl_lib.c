@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.324 2024/06/28 14:46:19 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.325 2024/06/29 07:34:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1786,7 +1786,7 @@ LSSL_ALIAS(SSL_get_servername_type);
  * OPENSSL_NPN_NEGOTIATED if a common protocol was found, or
  * OPENSSL_NPN_NO_OVERLAP if the fallback case was reached.
  *
- * XXX - the out argument points into server_list or client list and should
+ * XXX - the out argument points into server_list or client_list and should
  * therefore really be const. We can't fix that without breaking the callers.
  */
 int
