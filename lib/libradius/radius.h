@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.h,v 1.6 2024/06/29 07:19:18 yasuoka Exp $ */
+/*	$OpenBSD: radius.h,v 1.7 2024/06/29 11:50:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -45,10 +45,10 @@
 
 #define RADIUS_CODE_DISCONNECT_REQUEST        40
 #define RADIUS_CODE_DISCONNECT_ACK            41
-#define RADIUS_CODE_DISCONNECT_NACK           42
+#define RADIUS_CODE_DISCONNECT_NAK            42
 #define RADIUS_CODE_COA_REQUEST               43
 #define RADIUS_CODE_COA_ACK                   44
-#define RADIUS_CODE_COA_NACK                  45
+#define RADIUS_CODE_COA_NAK                   45
 
 /* RADIUS attributes */
 #define RADIUS_TYPE_USER_NAME                  1
