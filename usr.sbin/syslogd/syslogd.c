@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.280 2024/01/06 19:34:54 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.281 2024/06/29 11:29:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1582,7 +1582,6 @@ void
 udp_resolvecb(int fd, short event, void *arg)
 {
 	struct filed		*f = arg;
-	struct timeval		 to;
 
 	if (loghost_resolve(f) != 0) {
 		loghost_retry(f);
