@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.h,v 1.4 2024/02/25 06:22:45 yasuoka Exp $ */
+/*	$OpenBSD: radius.h,v 1.5 2024/06/29 00:53:56 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -31,6 +31,7 @@
 
 #define RADIUS_DEFAULT_PORT		1812
 #define RADIUS_ACCT_DEFAULT_PORT	1813
+#define RADIUS_DAE_DEFAULT_PORT		3799
 
 /* RADIUS codes */
 #define RADIUS_CODE_ACCESS_REQUEST             1
@@ -42,6 +43,12 @@
 #define RADIUS_CODE_STATUS_SERVER             12
 #define RADIUS_CODE_STATUS_CLIENT             13
 
+#define RADIUS_CODE_DISCONNECT_REQUEST        40
+#define RADIUS_CODE_DISCONNECT_ACK            41
+#define RADIUS_CODE_DISCONNECT_NACK           42
+#define RADIUS_CODE_COA_REQUEST               43
+#define RADIUS_CODE_COA_ACK                   44
+#define RADIUS_CODE_COA_NACK                  45
 
 /* RADIUS attributes */
 #define RADIUS_TYPE_USER_NAME                  1
