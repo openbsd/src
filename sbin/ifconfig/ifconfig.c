@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.473 2024/06/09 16:25:27 jan Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.474 2024/06/29 12:09:51 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3209,10 +3209,6 @@ print_tunnel(const struct if_laddrreq *req)
 		printf(":%s", psrcport);
 
 	if (req->dstaddr.ss_family != AF_UNSPEC) {
-		in_port_t dstport = 0;
-		const struct sockaddr_in *sin;
-		const struct sockaddr_in6 *sin6;
-
 		if (getnameinfo((struct sockaddr *)&req->dstaddr,
 		    req->dstaddr.ss_len, pdstaddr, sizeof(pdstaddr),
 		    pdstport, sizeof(pdstport), niflag) != 0)
