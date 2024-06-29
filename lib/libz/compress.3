@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.28 2024/05/28 13:42:06 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.29 2024/06/29 16:10:08 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: May 28 2024 $
+.Dd $Mdocdate: June 29 2024 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -1148,7 +1148,7 @@ The degree of string matching from most to none is:
 .Dv Z_FILTERED ,
 .Dv Z_RLE ,
 then
-.Dv Z_HUFFMAN .
+.Dv Z_HUFFMAN_ONLY .
 The
 .Fa strategy
 parameter affects the compression ratio but never the correctness of the
