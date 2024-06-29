@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.163 2024/05/18 05:20:22 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.164 2024/06/29 11:32:35 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1499,9 +1499,6 @@ ktrpledge(struct ktr_pledge *pledge, size_t len)
 static void
 ktrpinsyscall(struct ktr_pinsyscall *pinsyscall, size_t len)
 {
-	const char *name = "";
-	int i;
-
 	if (len < sizeof(struct ktr_pinsyscall))
 		errx(1, "invalid ktr pinsyscall length %zu", len);
 
