@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.129 2024/06/29 23:37:50 jsg Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.130 2024/06/29 23:56:07 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -299,16 +299,6 @@ extern struct acpi_softc *acpi_softc;
 #define GPE_NONE	0x00
 #define GPE_LEVEL	0x01
 #define GPE_EDGE	0x02
-
-struct acpi_table {
-	int	offset;
-	size_t	size;
-	void	*table;
-};
-
-#define	ACPI_IOC_GETFACS	_IOR('A', 0, struct acpi_facs)
-#define	ACPI_IOC_GETTABLE	_IOWR('A', 1, struct acpi_table)
-#define ACPI_IOC_SETSLEEPSTATE	_IOW('A', 2, int)
 
 #if defined(_KERNEL)
 
