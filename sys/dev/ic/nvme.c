@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.117 2024/06/04 20:31:35 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.118 2024/06/30 12:03:17 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1799,7 +1799,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		page_bus_phys = page_phys;
 		htolem64(&isqe->entry.prp[1], page_bus_phys +
 		    offsetof(struct nvme_hibernate_page, prpl));
-		for (i = 1; i < (size / my->sc->sc_mps); i++) {
+		for (i = 1; i < howmany(size, my->sc->sc_mps); i++) {
 			htolem64(&my->prpl[i - 1], data_bus_phys +
 			    (i * my->sc->sc_mps));
 		}
