@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.130 2024/06/29 23:56:07 jsg Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.131 2024/06/30 00:29:36 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -152,12 +152,6 @@ typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
 #define ACPI_SST_WAKING		2
 #define ACPI_SST_SLEEPING	3
 #define ACPI_SST_SLEEP_CONTEXT	4
-
-struct acpi_parsestate {
-	uint8_t			*start;
-	uint8_t			*end;
-	uint8_t			*pos;
-};
 
 struct acpi_reg_map {
 	bus_space_handle_t	ioh;
