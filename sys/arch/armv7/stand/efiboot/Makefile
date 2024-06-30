@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2023/09/06 01:47:37 jsg Exp $
+#	$OpenBSD: Makefile,v 1.21 2024/06/30 18:17:09 deraadt Exp $
 
 NOMAN=		#
 
@@ -45,7 +45,7 @@ CPPFLAGS+=	-nostdinc
 CPPFLAGS+=	-I${S} -I. -I${.CURDIR}
 CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/arm
 CPPFLAGS+=	-D_STANDALONE -DBOOT_STTY
-CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
+CPPFLAGS+=	-DSMALL -DSLOW -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-DNEEDS_HEAP_H
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin

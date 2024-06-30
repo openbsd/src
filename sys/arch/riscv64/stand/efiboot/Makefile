@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2024/03/26 22:26:04 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.8 2024/06/30 18:17:10 deraadt Exp $
 
 NOMAN=		#
 
@@ -47,7 +47,7 @@ CPPFLAGS+=	-nostdinc
 CPPFLAGS+=	-I${S} -I. -I${.CURDIR}
 CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/riscv64
 CPPFLAGS+=	-D_STANDALONE -DBOOT_STTY
-CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
+CPPFLAGS+=	-DSMALL -DSLOW -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-DNEEDS_HEAP_H -DFWRANDOM
 CPPFLAGS+=	-march=rv64gc --target=riscv64 -mno-relax
 COPTS+=		-Wno-attributes -Wno-format

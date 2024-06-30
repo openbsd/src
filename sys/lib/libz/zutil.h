@@ -24,7 +24,6 @@
 #include <sys/systm.h>
 
 #define MY_ZCALLOC
-#define NOBYFOUR
 
 typedef long ptrdiff_t;
 #else
