@@ -643,18 +643,18 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
 #endif
                 ((BITS(8) << 8) + (hold >> 8)) % 31) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"incorrect header check";
+                strm->msg = (z_const char *)"incorrect header check";
 #endif
                 state->mode = BAD;
                 break;
             }
             if (BITS(4) != Z_DEFLATED) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"unknown compression method";
+                strm->msg = (z_const char *)"unknown compression method";
 #endif
                 state->mode = BAD;
                 break;
@@ -665,9 +665,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 state->wbits = len;
             if (len > 15 || len > state->wbits) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid window size";
+                strm->msg = (z_const char *)"invalid window size";
 #endif
                 state->mode = BAD;
                 break;
@@ -685,18 +685,18 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
             state->flags = (int)(hold);
             if ((state->flags & 0xff) != Z_DEFLATED) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"unknown compression method";
+                strm->msg = (z_const char *)"unknown compression method";
 #endif
                 state->mode = BAD;
                 break;
             }
             if (state->flags & 0xe000) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"unknown header flags set";
+                strm->msg = (z_const char *)"unknown header flags set";
 #endif
                 state->mode = BAD;
                 break;
@@ -814,9 +814,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 NEEDBITS(16);
                 if ((state->wrap & 4) && hold != (state->check & 0xffff)) {
 #ifdef SMALL
-                    strm->msg = "error";
+                    strm->msg = (z_const char *)"error";
 #else
-                    strm->msg = (char *)"header crc mismatch";
+                    strm->msg = (z_const char *)"header crc mismatch";
 #endif
                     state->mode = BAD;
                     break;
@@ -880,9 +880,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 break;
             case 3:
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid block type";
+                strm->msg = (z_const char *)"invalid block type";
 #endif
                 state->mode = BAD;
             }
@@ -893,9 +893,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
             NEEDBITS(32);
             if ((hold & 0xffff) != ((hold >> 16) ^ 0xffff)) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid stored block lengths";
+                strm->msg = (z_const char *)"invalid stored block lengths";
 #endif
                 state->mode = BAD;
                 break;
@@ -938,9 +938,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
 #ifndef PKZIP_BUG_WORKAROUND
             if (state->nlen > 286 || state->ndist > 30) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"too many length or distance symbols";
+                strm->msg = (z_const char *)"too many length or distance symbols";
 #endif
                 state->mode = BAD;
                 break;
@@ -965,9 +965,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                                 &(state->lenbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid code lengths set";
+                strm->msg = (z_const char *)"invalid code lengths set";
 #endif
                 state->mode = BAD;
                 break;
@@ -993,9 +993,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                         DROPBITS(here.bits);
                         if (state->have == 0) {
 #ifdef SMALL
-                            strm->msg = "error";
+                            strm->msg = (z_const char *)"error";
 #else
-                            strm->msg = (char *)"invalid bit length repeat";
+                            strm->msg = (z_const char *)"invalid bit length repeat";
 #endif
                             state->mode = BAD;
                             break;
@@ -1020,9 +1020,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                     }
                     if (state->have + copy > state->nlen + state->ndist) {
 #ifdef SMALL
-                        strm->msg = "error";
+                        strm->msg = (z_const char *)"error";
 #else
-                        strm->msg = (char *)"invalid bit length repeat";
+                        strm->msg = (z_const char *)"invalid bit length repeat";
 #endif
                         state->mode = BAD;
                         break;
@@ -1038,9 +1038,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
             /* check for end-of-block code (better have one) */
             if (state->lens[256] == 0) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid code -- missing end-of-block";
+                strm->msg = (z_const char *)"invalid code -- missing end-of-block";
 #endif
                 state->mode = BAD;
                 break;
@@ -1056,9 +1056,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                                 &(state->lenbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid literal/lengths set";
+                strm->msg = (z_const char *)"invalid literal/lengths set";
 #endif
                 state->mode = BAD;
                 break;
@@ -1069,9 +1069,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                             &(state->next), &(state->distbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid distances set";
+                strm->msg = (z_const char *)"invalid distances set";
 #endif
                 state->mode = BAD;
                 break;
@@ -1129,9 +1129,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
             }
             if (here.op & 64) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid literal/length code";
+                strm->msg = (z_const char *)"invalid literal/length code";
 #endif
                 state->mode = BAD;
                 break;
@@ -1171,9 +1171,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
             state->back += here.bits;
             if (here.op & 64) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid distance code";
+                strm->msg = (z_const char *)"invalid distance code";
 #endif
                 state->mode = BAD;
                 break;
@@ -1192,9 +1192,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
 #ifdef INFLATE_STRICT
             if (state->offset > state->dmax) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid distance too far back";
+                strm->msg = (z_const char *)"invalid distance too far back";
 #endif
                 state->mode = BAD;
                 break;
@@ -1211,9 +1211,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 if (copy > state->whave) {
                     if (state->sane) {
 #ifdef SMALL
-                        strm->msg = "error";
+                        strm->msg = (z_const char *)"error";
 #else
-                        strm->msg = (char *)"invalid distance too far back";
+                        strm->msg = (z_const char *)"invalid distance too far back";
 #endif
                         state->mode = BAD;
                         break;
@@ -1274,9 +1274,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
 #endif
                      ZSWAP32(hold)) != state->check) {
 #ifdef SMALL
-                    strm->msg = "error";
+                    strm->msg = (z_const char *)"error";
 #else
-                    strm->msg = (char *)"incorrect data check";
+                    strm->msg = (z_const char *)"incorrect data check";
 #endif
                     state->mode = BAD;
                     break;
@@ -1292,9 +1292,9 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 NEEDBITS(32);
                 if ((state->wrap & 4) && hold != (state->total & 0xffffffff)) {
 #ifdef SMALL
-                    strm->msg = "error";
+                    strm->msg = (z_const char *)"error";
 #else
-                    strm->msg = (char *)"incorrect length check";
+                    strm->msg = (z_const char *)"incorrect length check";
 #endif
                     state->mode = BAD;
                     break;

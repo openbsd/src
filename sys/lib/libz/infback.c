@@ -305,9 +305,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                 break;
             case 3:
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid block type";
+                strm->msg = (z_const char *)"invalid block type";
 #endif
                 state->mode = BAD;
             }
@@ -320,9 +320,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             NEEDBITS(32);
             if ((hold & 0xffff) != ((hold >> 16) ^ 0xffff)) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid stored block lengths";
+                strm->msg = (z_const char *)"invalid stored block lengths";
 #endif
                 state->mode = BAD;
                 break;
@@ -362,9 +362,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
 #ifndef PKZIP_BUG_WORKAROUND
             if (state->nlen > 286 || state->ndist > 30) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"too many length or distance symbols";
+                strm->msg = (z_const char *)"too many length or distance symbols";
 #endif
                 state->mode = BAD;
                 break;
@@ -388,9 +388,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                                 &(state->lenbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid code lengths set";
+                strm->msg = (z_const char *)"invalid code lengths set";
 #endif
                 state->mode = BAD;
                 break;
@@ -415,9 +415,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                         DROPBITS(here.bits);
                         if (state->have == 0) {
 #ifdef SMALL
-                            strm->msg = "error";
+                            strm->msg = (z_const char *)"error";
 #else
-                            strm->msg = (char *)"invalid bit length repeat";
+                            strm->msg = (z_const char *)"invalid bit length repeat";
 #endif
                             state->mode = BAD;
                             break;
@@ -442,9 +442,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                     }
                     if (state->have + copy > state->nlen + state->ndist) {
 #ifdef SMALL
-                        strm->msg = "error";
+                        strm->msg = (z_const char *)"error";
 #else
-                        strm->msg = (char *)"invalid bit length repeat";
+                        strm->msg = (z_const char *)"invalid bit length repeat";
 #endif
                         state->mode = BAD;
                         break;
@@ -460,9 +460,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             /* check for end-of-block code (better have one) */
             if (state->lens[256] == 0) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid code -- missing end-of-block";
+                strm->msg = (z_const char *)"invalid code -- missing end-of-block";
 #endif
                 state->mode = BAD;
                 break;
@@ -478,9 +478,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                                 &(state->lenbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid literal/lengths set";
+                strm->msg = (z_const char *)"invalid literal/lengths set";
 #endif
                 state->mode = BAD;
                 break;
@@ -491,9 +491,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
                             &(state->next), &(state->distbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid distances set";
+                strm->msg = (z_const char *)"invalid distances set";
 #endif
                 state->mode = BAD;
                 break;
@@ -556,9 +556,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             /* invalid code */
             if (here.op & 64) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid literal/length code";
+                strm->msg = (z_const char *)"invalid literal/length code";
 #endif
                 state->mode = BAD;
                 break;
@@ -592,9 +592,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             DROPBITS(here.bits);
             if (here.op & 64) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid distance code";
+                strm->msg = (z_const char *)"invalid distance code";
 #endif
                 state->mode = BAD;
                 break;
@@ -611,9 +611,9 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             if (state->offset > state->wsize - (state->whave < state->wsize ?
                                                 left : 0)) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
-                strm->msg = (char *)"invalid distance too far back";
+                strm->msg = (z_const char *)"invalid distance too far back";
 #endif
                 state->mode = BAD;
                 break;
