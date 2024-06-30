@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash_local.h,v 1.1 2024/03/02 11:11:11 tb Exp $ */
+/* $OpenBSD: lhash_local.h,v 1.2 2024/06/30 14:13:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,20 +84,6 @@ struct lhash_st {
 	unsigned long up_load; /* load times 256 */
 	unsigned long down_load; /* load times 256 */
 	unsigned long num_items;
-
-	unsigned long num_expands;
-	unsigned long num_expand_reallocs;
-	unsigned long num_contracts;
-	unsigned long num_contract_reallocs;
-	unsigned long num_hash_calls;
-	unsigned long num_comp_calls;
-	unsigned long num_insert;
-	unsigned long num_replace;
-	unsigned long num_delete;
-	unsigned long num_no_delete;
-	unsigned long num_retrieve;
-	unsigned long num_retrieve_miss;
-	unsigned long num_hash_comps;
 
 	int error;
 } /* _LHASH */;

@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.26 2024/06/22 16:38:31 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.27 2024/06/30 14:13:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,6 @@ expand(_LHASH *lh)
 	unsigned long hash, nni;
 
 	lh->num_nodes++;
-	lh->num_expands++;
 	p = (int)lh->p++;
 	n1 = &(lh->b[p]);
 	n2 = &(lh->b[p + (int)lh->pmax]);
@@ -92,7 +91,6 @@ expand(_LHASH *lh)
 		hash = np->hash;
 #else
 		hash = lh->hash(np->data);
-		lh->num_hash_calls++;
 #endif
 		if ((hash % nni) != p) { /* move it */
 			*n1 = (*n1)->next;
@@ -117,7 +115,6 @@ expand(_LHASH *lh)
 			n[i] = NULL;			  /* 02/03/92 eay */
 		lh->pmax = lh->num_alloc_nodes;
 		lh->num_alloc_nodes = j;
-		lh->num_expand_reallocs++;
 		lh->p = 0;
 		lh->b = n;
 	}
@@ -137,7 +134,6 @@ contract(_LHASH *lh)
 			lh->error++;
 			return;
 		}
-		lh->num_contract_reallocs++;
 		lh->num_alloc_nodes /= 2;
 		lh->pmax /= 2;
 		lh->p = lh->pmax - 1;
@@ -146,7 +142,6 @@ contract(_LHASH *lh)
 		lh->p--;
 
 	lh->num_nodes--;
-	lh->num_contracts++;
 
 	n1 = lh->b[(int)lh->p];
 	if (n1 == NULL)
@@ -166,7 +161,6 @@ getrn(_LHASH *lh, const void *data, unsigned long *rhash)
 	LHASH_COMP_FN_TYPE cf;
 
 	hash = (*(lh->hash))(data);
-	lh->num_hash_calls++;
 	*rhash = hash;
 
 	nn = hash % lh->pmax;
@@ -177,13 +171,11 @@ getrn(_LHASH *lh, const void *data, unsigned long *rhash)
 	ret = &(lh->b[(int)nn]);
 	for (n1 = *ret; n1 != NULL; n1 = n1->next) {
 #ifndef OPENSSL_NO_HASH_COMP
-		lh->num_hash_comps++;
 		if (n1->hash != hash) {
 			ret = &(n1->next);
 			continue;
 		}
 #endif
-		lh->num_comp_calls++;
 		if (cf(n1->data, data) == 0)
 			break;
 		ret = &(n1->next);
@@ -268,14 +260,12 @@ lh_insert(_LHASH *lh, void *data)
 #endif
 		*rn = nn;
 		ret = NULL;
-		lh->num_insert++;
 		lh->num_items++;
 	}
 	else /* replace same key */
 	{
 		ret = (*rn)->data;
 		(*rn)->data = data;
-		lh->num_replace++;
 	}
 	return (ret);
 }
@@ -292,14 +282,12 @@ lh_delete(_LHASH *lh, const void *data)
 	rn = getrn(lh, data, &hash);
 
 	if (*rn == NULL) {
-		lh->num_no_delete++;
 		return (NULL);
 	} else {
 		nn= *rn;
 		*rn = nn->next;
 		ret = nn->data;
 		free(nn);
-		lh->num_delete++;
 	}
 
 	lh->num_items--;
@@ -322,11 +310,9 @@ lh_retrieve(_LHASH *lh, const void *data)
 	rn = getrn(lh, data, &hash);
 
 	if (*rn == NULL) {
-		lh->num_retrieve_miss++;
 		return (NULL);
 	} else {
 		ret = (*rn)->data;
-		lh->num_retrieve++;
 	}
 	return (ret);
 }
