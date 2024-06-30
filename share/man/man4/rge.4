@@ -1,6 +1,6 @@
-.\" $OpenBSD: rge.4,v 1.6 2021/09/08 20:33:42 jmc Exp $
+.\" $OpenBSD: rge.4,v 1.7 2024/06/30 08:13:02 kevlo Exp $
 .\"
-.\" Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
+.\" Copyright (c) 2019, 2020, 2024 Kevin Lo <kevlo@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,22 +14,24 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 8 2021 $
+.Dd $Mdocdate: June 30 2024 $
 .Dt RGE 4
 .Os
 .Sh NAME
 .Nm rge
-.Nd Realtek 8125/8125B PCI Express 10/100/1Gb/2.5Gb Ethernet device
+.Nd Realtek 8125/8125B/8126 PCI Express 10/100/1Gb/2.5Gb/5Gb Ethernet device
 .Sh SYNOPSIS
 .Cd "rge* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI Express 2.5Gb Ethernet adapters based
-on the Realtek RTL8125 and RTL8125B Ethernet controllers,
+driver provides support for NICs based on the
+Realtek RTL8125, RTL8125B and RTL8126 PCI Express Ethernet controllers,
 including the following:
 .Pp
 .Bl -bullet -offset indent -compact
+.It
+IOCrest IO-PCE8126-GLAN Adapter (5000baseT)
 .It
 Realtek 8125/8125B 2.5GbE Adapter (2500baseT)
 .It
@@ -37,6 +39,11 @@ Rivet Networks Killer E3000 Adapter (2500baseT)
 .It
 TP-LINK TL-NG421 Adapter (2500baseT)
 .El
+.Pp
+NICs based on the 8125 and 8125B are capable of 10, 100, 1000 and
+2500Mbps operation.
+NICs based on the 8126 are capable of 10, 100, 1000, 2500 and
+5000Mbps operation.
 .Pp
 The
 .Nm

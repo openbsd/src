@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_rge.c,v 1.26 2024/05/24 06:02:56 jsg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.27 2024/06/30 08:13:02 kevlo Exp $	*/
 
 /*
- * Copyright (c) 2019, 2020, 2023 Kevin Lo <kevlo@openbsd.org>
+ * Copyright (c) 2019, 2020, 2023, 2024
+ *	Kevin Lo <kevlo@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -88,6 +89,7 @@ void		rge_ephy_config(struct rge_softc *);
 void		rge_ephy_config_mac_cfg3(struct rge_softc *);
 void		rge_ephy_config_mac_cfg5(struct rge_softc *);
 int		rge_phy_config(struct rge_softc *);
+void		rge_phy_config_mac_cfg2_8126(struct rge_softc *);
 void		rge_phy_config_mac_cfg3(struct rge_softc *);
 void		rge_phy_config_mac_cfg5(struct rge_softc *);
 void		rge_phy_config_mcu(struct rge_softc *, uint16_t);
@@ -136,6 +138,8 @@ static const struct {
 	RTL8125_MAC_CFG3_MCU
 }, rtl8125_mac_cfg5_mcu[] = {
 	RTL8125_MAC_CFG5_MCU
+}, rtl8126_mac_cfg2_mcu[] = {
+	RTL8126_MAC_CFG2_MCU
 };
 
 const struct cfattach rge_ca = {
@@ -148,7 +152,8 @@ struct cfdriver rge_cd = {
 
 const struct pci_matchid rge_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000 },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8125 }
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8125 },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8126 }
 };
 
 int
@@ -238,6 +243,9 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case 0x64100000:
 		sc->rge_type = MAC_CFG5;
+		break;
+	case 0x64900000:
+		sc->rge_type = MAC_CFG2_8126;
 		break;
 	default:
 		printf(": unknown version 0x%08x\n", hwrev);
@@ -626,7 +634,7 @@ rge_init(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
 	struct rge_queues *q = sc->sc_queues;
-	uint32_t val;
+	uint32_t rxconf, val;
 	int i, num_miti;
 
 	rge_stop(ifp);
@@ -649,7 +657,6 @@ rge_init(struct ifnet *ifp)
 	rge_disable_aspm_clkreq(sc);
 	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER,
 	    RGE_JUMBO_MTU + ETHER_HDR_LEN + 32);
-	RGE_CLRBIT_1(sc, RGE_CFG3, RGE_CFG3_RDY_TO_L23);
 
 	/* Load the addresses of the RX and TX lists into the chip. */
 	RGE_WRITE_4(sc, RGE_RXDESC_ADDR_LO,
@@ -662,15 +669,24 @@ rge_init(struct ifnet *ifp)
 	    RGE_ADDR_HI(q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr));
 
 	/* Set the initial RX and TX configurations. */
-	RGE_WRITE_4(sc, RGE_RXCFG,
-	    (sc->rge_type == MAC_CFG3) ? RGE_RXCFG_CONFIG :
-	    RGE_RXCFG_CONFIG_8125B);
+	if (sc->rge_type == MAC_CFG3)
+		rxconf = RGE_RXCFG_CONFIG;
+	else if (sc->rge_type == MAC_CFG5)
+		rxconf = RGE_RXCFG_CONFIG_8125B;
+	else
+		rxconf = RGE_RXCFG_CONFIG_8126;
+	RGE_WRITE_4(sc, RGE_RXCFG, rxconf);
 	RGE_WRITE_4(sc, RGE_TXCFG, RGE_TXCFG_CONFIG);
 
 	val = rge_read_csi(sc, 0x70c) & ~0xff000000;
 	rge_write_csi(sc, 0x70c, val | 0x27000000);
 
-	RGE_WRITE_2(sc, 0x0382, 0x221b);
+	if (sc->rge_type == MAC_CFG2_8126) {
+		/* Disable L1 timeout. */
+		val = rge_read_csi(sc, 0x890) & ~0x00000001;
+		rge_write_csi(sc, 0x890, val);
+	} else
+		RGE_WRITE_2(sc, 0x0382, 0x221b);
 
 	RGE_WRITE_1(sc, RGE_RSS_CTRL, 0);
 
@@ -684,18 +700,23 @@ rge_init(struct ifnet *ifp)
 
 	RGE_MAC_SETBIT(sc, 0xeb58, 0x0001);
 
+	if (sc->rge_type == MAC_CFG2_8126)
+		RGE_CLRBIT_1(sc, 0xd8, 0x02);
+
 	val = rge_read_mac_ocp(sc, 0xe614) & ~0x0700;
 	if (sc->rge_type == MAC_CFG3)
 		rge_write_mac_ocp(sc, 0xe614, val | 0x0300);
-	else
+	else if (sc->rge_type == MAC_CFG5)
 		rge_write_mac_ocp(sc, 0xe614, val | 0x0200);
+	else
+		rge_write_mac_ocp(sc, 0xe614, val | 0x0400);
 
 	val = rge_read_mac_ocp(sc, 0xe63e) & ~0x0c00;
 	rge_write_mac_ocp(sc, 0xe63e, val |
 	    ((fls(sc->sc_nqueues) - 1) & 0x03) << 10);
 
 	RGE_MAC_CLRBIT(sc, 0xe63e, 0x0030);
-	if (sc->rge_type == MAC_CFG3)
+	if (sc->rge_type != MAC_CFG5)
 		RGE_MAC_SETBIT(sc, 0xe63e, 0x0020);
 
 	RGE_MAC_CLRBIT(sc, 0xc0b4, 0x0001);
@@ -734,7 +755,10 @@ rge_init(struct ifnet *ifp)
 	/* Disable EEE plus. */
 	RGE_MAC_CLRBIT(sc, 0xe080, 0x0002);
 
-	RGE_MAC_CLRBIT(sc, 0xea1c, 0x0004);
+	if (sc->rge_type == MAC_CFG2_8126)
+		RGE_MAC_CLRBIT(sc, 0xea1c, 0x0304);
+	else
+		RGE_MAC_CLRBIT(sc, 0xea1c, 0x0004);
 
 	RGE_MAC_SETBIT(sc, 0xeb54, 0x0001);
 	DELAY(1);
@@ -742,8 +766,8 @@ rge_init(struct ifnet *ifp)
 
 	RGE_CLRBIT_2(sc, 0x1880, 0x0030);
 
-	/* Config interrupt type for RTL8125B. */
-	if (sc->rge_type == MAC_CFG5)
+	/* Config interrupt type for RTL8125B/RTL8126. */
+	if (sc->rge_type != MAC_CFG3)
 		RGE_CLRBIT_1(sc, RGE_INT_CFG0, RGE_INT_CFG0_EN);
 
 	/* Clear timer interrupts. */
@@ -879,26 +903,31 @@ rge_ifmedia_upd(struct ifnet *ifp)
 	/* Disable Gigabit Lite. */
 	RGE_PHY_CLRBIT(sc, 0xa428, 0x0200);
 	RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0001);
+	if (sc->rge_type == MAC_CFG2_8126)
+		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0002);
 
 	val = rge_read_phy_ocp(sc, 0xa5d4);
 	val &= ~RGE_ADV_2500TFDX;
+	if (sc->rge_type == MAC_CFG2_8126)
+		val &= ~RGE_ADV_5000TFDX;
 
-	anar = gig = 0;
+	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
+	gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
+
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 	case IFM_AUTO:
-		anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
-		gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
-		val |= RGE_ADV_2500TFDX;
+		val |= (sc->rge_type != MAC_CFG2_8126) ?
+		    RGE_ADV_2500TFDX : (RGE_ADV_2500TFDX | RGE_ADV_5000TFDX);
+		break;
+	case IFM_5000_T:
+		val |= RGE_ADV_5000TFDX;
+		ifp->if_baudrate = IF_Gbps(5);
 		break;
 	case IFM_2500_T:
-		anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
-		gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 		val |= RGE_ADV_2500TFDX;
 		ifp->if_baudrate = IF_Mbps(2500);
 		break;
 	case IFM_1000_T:
-		anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
-		gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 		ifp->if_baudrate = IF_Gbps(1);
 		break;
 	case IFM_100_TX:
@@ -947,7 +976,7 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 		status = RGE_READ_2(sc, RGE_PHYSTAT);
 		if ((status & RGE_PHYSTAT_FDX) ||
-		    (status & RGE_PHYSTAT_2500MBPS))
+		    (status & (RGE_PHYSTAT_2500MBPS | RGE_PHYSTAT_5000MBPS)))
 			ifmr->ifm_active |= IFM_FDX;
 		else
 			ifmr->ifm_active |= IFM_HDX;
@@ -960,6 +989,8 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_1000_T;
 		else if (status & RGE_PHYSTAT_2500MBPS)
 			ifmr->ifm_active |= IFM_2500_T;
+		else if (status & RGE_PHYSTAT_5000MBPS)
+			ifmr->ifm_active |= IFM_5000_T;
 	}
 }
 
@@ -1394,10 +1425,12 @@ rge_reset(struct rge_softc *sc)
 	DELAY(2000);
 
 	RGE_SETBIT_1(sc, RGE_CMD, RGE_CMD_STOPREQ);
-	for (i = 0; i < 20; i++) {
-		DELAY(10);
-		if (!(RGE_READ_1(sc, RGE_CMD) & RGE_CMD_STOPREQ))
-			break;
+	if (sc->rge_type != MAC_CFG2_8126) {
+		for (i = 0; i < 20; i++) {
+			DELAY(10);
+			if (!(RGE_READ_1(sc, RGE_CMD) & RGE_CMD_STOPREQ))
+				break;
+		}
 	}
 
 	for (i = 0; i < 3000; i++) {
@@ -1522,7 +1555,7 @@ rge_ephy_config(struct rge_softc *sc)
 		rge_ephy_config_mac_cfg5(sc);
 		break;
 	default:
-		break;	/* Can't happen. */
+		break;	/* Nothing to do. */
 	}
 }
 
@@ -1576,7 +1609,10 @@ rge_phy_config(struct rge_softc *sc)
 	rge_write_phy(sc, 0, MII_100T2CR,
 	    rge_read_phy(sc, 0, MII_100T2CR) &
 	    ~(GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX));
-	RGE_PHY_CLRBIT(sc, 0xa5d4, RGE_ADV_2500TFDX);
+	if (sc->rge_type == MAC_CFG2_8126)
+		RGE_PHY_CLRBIT(sc, 0xa5d4, RGE_ADV_2500TFDX | RGE_ADV_5000TFDX);
+	else
+		RGE_PHY_CLRBIT(sc, 0xa5d4, RGE_ADV_2500TFDX);
 	rge_write_phy(sc, 0, MII_BMCR, BMCR_RESET | BMCR_AUTOEN |
 	    BMCR_STARTNEG);
 	for (i = 0; i < 2500; i++) {
@@ -1594,6 +1630,9 @@ rge_phy_config(struct rge_softc *sc)
 	sc->rge_mcodever = rge_read_phy_ocp(sc, 0xa438);
 
 	switch (sc->rge_type) {
+	case MAC_CFG2_8126:
+		rge_phy_config_mac_cfg2_8126(sc);
+		break;
 	case MAC_CFG3:
 		rge_phy_config_mac_cfg3(sc);
 		break;
@@ -1611,21 +1650,303 @@ rge_phy_config(struct rge_softc *sc)
 	if (sc->rge_type == MAC_CFG3) {
 		RGE_MAC_CLRBIT(sc, 0xeb62, 0x0006);
 		RGE_PHY_CLRBIT(sc, 0xa432, 0x0010);
-	}
+	} else if (sc->rge_type == MAC_CFG5)
+		RGE_PHY_SETBIT(sc, 0xa432, 0x0010);
+
 	RGE_PHY_CLRBIT(sc, 0xa5d0, 0x0006);
 	RGE_PHY_CLRBIT(sc, 0xa6d4, 0x0001);
+	if (sc->rge_type == MAC_CFG2_8126)
+		RGE_PHY_CLRBIT(sc, 0xa6d4, 0x0002);
 	RGE_PHY_CLRBIT(sc, 0xa6d8, 0x0010);
 	RGE_PHY_CLRBIT(sc, 0xa428, 0x0080);
 	RGE_PHY_CLRBIT(sc, 0xa4a2, 0x0200);
 
-	/* Advanced EEE. */
-	rge_patch_phy_mcu(sc, 1);
+	/* Disable advanced EEE. */
 	RGE_MAC_CLRBIT(sc, 0xe052, 0x0001);
 	RGE_PHY_CLRBIT(sc, 0xa442, 0x3000);
 	RGE_PHY_CLRBIT(sc, 0xa430, 0x8000);
-	rge_patch_phy_mcu(sc, 0);
 
 	return (0);
+}
+
+void
+rge_phy_config_mac_cfg2_8126(struct rge_softc *sc)
+{
+	uint16_t val;
+	int i;
+	static const uint16_t mac_cfg2_a438_value[] =
+	    { 0x0044, 0x00a8, 0x00d6, 0x00ec, 0x00f6, 0x00fc, 0x00fe,
+	      0x00fe, 0x00bc, 0x0058, 0x002a, 0x003f, 0x3f02, 0x023c,
+	      0x3b0a, 0x1c00, 0x0000, 0x0000, 0x0000, 0x0000 };
+
+	static const uint16_t mac_cfg2_b87e_value[] =
+	    { 0x03ed, 0x03ff, 0x0009, 0x03fe, 0x000b, 0x0021, 0x03f7,
+	      0x03b8, 0x03e0, 0x0049, 0x0049, 0x03e0, 0x03b8, 0x03f7,
+	      0x0021, 0x000b, 0x03fe, 0x0009, 0x03ff, 0x03ed, 0x000e,
+	      0x03fe, 0x03ed, 0x0006, 0x001a, 0x03f1, 0x03d8, 0x0023,
+	      0x0054, 0x0322, 0x00dd, 0x03ab, 0x03dc, 0x0027, 0x000e,
+	      0x03e5, 0x03f9, 0x0012, 0x0001, 0x03f1 };
+
+	rge_phy_config_mcu(sc, RGE_MAC_CFG2_8126_MCODE_VER);
+
+	RGE_PHY_SETBIT(sc, 0xa442, 0x0800);
+	rge_write_phy_ocp(sc, 0xa436, 0x80bf);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0xed00);
+	rge_write_phy_ocp(sc, 0xa436, 0x80cd);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0x1000);
+	rge_write_phy_ocp(sc, 0xa436, 0x80d1);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0xc800);
+	rge_write_phy_ocp(sc, 0xa436, 0x80d4);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0xc800);
+	rge_write_phy_ocp(sc, 0xa436, 0x80e1);
+	rge_write_phy_ocp(sc, 0xa438, 0x10cc);
+	rge_write_phy_ocp(sc, 0xa436, 0x80e5);
+	rge_write_phy_ocp(sc, 0xa438, 0x4f0c);
+	rge_write_phy_ocp(sc, 0xa436, 0x8387);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0x4700);
+	val = rge_read_phy_ocp(sc, 0xa80c) & ~0x00c0;
+	rge_write_phy_ocp(sc, 0xa80c, val | 0x0080);
+	RGE_PHY_CLRBIT(sc, 0xac90, 0x0010);
+	RGE_PHY_CLRBIT(sc, 0xad2c, 0x8000);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8321);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x1100);
+	RGE_PHY_SETBIT(sc, 0xacf8, 0x000c);
+	rge_write_phy_ocp(sc, 0xa436, 0x8183);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0x5900);
+	RGE_PHY_SETBIT(sc, 0xad94, 0x0020);
+	RGE_PHY_CLRBIT(sc, 0xa654, 0x0800);
+	RGE_PHY_SETBIT(sc, 0xb648, 0x4000);
+	rge_write_phy_ocp(sc, 0xb87c, 0x839e);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x2f00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83f2);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0800);
+	RGE_PHY_SETBIT(sc, 0xada0, 0x0002);
+	rge_write_phy_ocp(sc, 0xb87c, 0x80f3);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x9900);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8126);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0xc100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x893a);
+	rge_write_phy_ocp(sc, 0xb87e, 0x8080);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8647);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0xe600);
+	rge_write_phy_ocp(sc, 0xb87c, 0x862c);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x1200);
+	rge_write_phy_ocp(sc, 0xb87c, 0x864a);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0xe600);
+	rge_write_phy_ocp(sc, 0xb87c, 0x80a0);
+	rge_write_phy_ocp(sc, 0xb87e, 0xbcbc);
+	rge_write_phy_ocp(sc, 0xb87c, 0x805e);
+	rge_write_phy_ocp(sc, 0xb87e, 0xbcbc);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8056);
+	rge_write_phy_ocp(sc, 0xb87e, 0x3077);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8058);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x5a00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8098);
+	rge_write_phy_ocp(sc, 0xb87e, 0x3077);
+	rge_write_phy_ocp(sc, 0xb87c, 0x809a);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x5a00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8052);
+	rge_write_phy_ocp(sc, 0xb87e, 0x3733);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8094);
+	rge_write_phy_ocp(sc, 0xb87e, 0x3733);
+	rge_write_phy_ocp(sc, 0xb87c, 0x807f);
+	rge_write_phy_ocp(sc, 0xb87e, 0x7c75);
+	rge_write_phy_ocp(sc, 0xb87c, 0x803d);
+	rge_write_phy_ocp(sc, 0xb87e, 0x7c75);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8036);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x3000);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8078);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x3000);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8031);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x3300);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8073);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x3300);
+	val = rge_read_phy_ocp(sc, 0xae06) & ~0xfc00;
+	rge_write_phy_ocp(sc, 0xae06, val | 0x7c00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x89D1);
+	rge_write_phy_ocp(sc, 0xb87e, 0x0004);
+	rge_write_phy_ocp(sc, 0xa436, 0x8fbd);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0x0a00);
+	rge_write_phy_ocp(sc, 0xa436, 0x8fbe);
+	rge_write_phy_ocp(sc, 0xa438, 0x0d09);
+	rge_write_phy_ocp(sc, 0xb87c, 0x89cd);
+	rge_write_phy_ocp(sc, 0xb87e, 0x0f0f);
+	rge_write_phy_ocp(sc, 0xb87c, 0x89cf);
+	rge_write_phy_ocp(sc, 0xb87e, 0x0f0f);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83a4);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6600);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83a6);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6601);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83c0);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6600);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83c2);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6601);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8414);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6600);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8416);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6601);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83f8);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6600);
+	rge_write_phy_ocp(sc, 0xb87c, 0x83fa);
+	rge_write_phy_ocp(sc, 0xb87e, 0x6601);
+
+	rge_patch_phy_mcu(sc, 1);
+	val = rge_read_phy_ocp(sc, 0xbd96) & ~0x1f00;
+	rge_write_phy_ocp(sc, 0xbd96, val | 0x1000);
+	val = rge_read_phy_ocp(sc, 0xbf1c) & ~0x0007;
+	rge_write_phy_ocp(sc, 0xbf1c, val | 0x0007);
+	RGE_PHY_CLRBIT(sc, 0xbfbe, 0x8000);
+	val = rge_read_phy_ocp(sc, 0xbf40) & ~0x0380;
+	rge_write_phy_ocp(sc, 0xbf40, val | 0x0280);
+	val = rge_read_phy_ocp(sc, 0xbf90) & ~0x0080;
+	rge_write_phy_ocp(sc, 0xbf90, val | 0x0060);
+	val = rge_read_phy_ocp(sc, 0xbf90) & ~0x0010;
+	rge_write_phy_ocp(sc, 0xbf90, val | 0x000c);
+	rge_patch_phy_mcu(sc, 0);
+
+	rge_write_phy_ocp(sc, 0xa436, 0x843b);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0x2000);
+	rge_write_phy_ocp(sc, 0xa436, 0x843d);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xa438, val | 0x2000);
+	RGE_PHY_CLRBIT(sc, 0xb516, 0x007f);
+	RGE_PHY_CLRBIT(sc, 0xbf80, 0x0030);
+
+	rge_write_phy_ocp(sc, 0xa436, 0x8188);
+	for (i = 0; i < 11; i++)
+		rge_write_phy_ocp(sc, 0xa438, mac_cfg2_a438_value[i]);
+
+	rge_write_phy_ocp(sc, 0xb87c, 0x8015);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0800);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8ffd);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8fff);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x7f00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8ffb);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8fe9);
+	rge_write_phy_ocp(sc, 0xb87e, 0x0002);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8fef);
+	rge_write_phy_ocp(sc, 0xb87e, 0x00a5);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8ff1);
+	rge_write_phy_ocp(sc, 0xb87e, 0x0106);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8fe1);
+	rge_write_phy_ocp(sc, 0xb87e, 0x0102);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8fe3);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0400);
+	RGE_PHY_SETBIT(sc, 0xa654, 0x0800);
+	RGE_PHY_CLRBIT(sc, 0xa654, 0x0003);
+	rge_write_phy_ocp(sc, 0xac3a, 0x5851);
+	val = rge_read_phy_ocp(sc, 0xac3c) & ~0xd000;
+	rge_write_phy_ocp(sc, 0xac3c, val | 0x2000);
+	val = rge_read_phy_ocp(sc, 0xac42) & ~0x0200;
+	rge_write_phy_ocp(sc, 0xac42, val | 0x01c0);
+	RGE_PHY_CLRBIT(sc, 0xac3e, 0xe000);
+	RGE_PHY_CLRBIT(sc, 0xac42, 0x0038);
+	val = rge_read_phy_ocp(sc, 0xac42) & ~0x0002;
+	rge_write_phy_ocp(sc, 0xac42, val | 0x0005);
+	rge_write_phy_ocp(sc, 0xac1a, 0x00db);
+	rge_write_phy_ocp(sc, 0xade4, 0x01b5);
+	RGE_PHY_CLRBIT(sc, 0xad9c, 0x0c00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x814b);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x1100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x814d);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x1100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x814f);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0b00);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8142);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8144);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8150);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8118);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0700);
+	rge_write_phy_ocp(sc, 0xb87c, 0x811a);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0700);
+	rge_write_phy_ocp(sc, 0xb87c, 0x811c);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0500);
+	rge_write_phy_ocp(sc, 0xb87c, 0x810f);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8111);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	rge_write_phy_ocp(sc, 0xb87c, 0x811d);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0100);
+	RGE_PHY_SETBIT(sc, 0xac36, 0x1000);
+	RGE_PHY_CLRBIT(sc, 0xad1c, 0x0100);
+	val = rge_read_phy_ocp(sc, 0xade8) & ~0xffc0;
+	rge_write_phy_ocp(sc, 0xade8, val | 0x1400);
+	rge_write_phy_ocp(sc, 0xb87c, 0x864b);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x9d00);
+
+	rge_write_phy_ocp(sc, 0xa436, 0x8f97);
+	for (; i < nitems(mac_cfg2_a438_value); i++)
+		rge_write_phy_ocp(sc, 0xa438, mac_cfg2_a438_value[i]);
+
+	RGE_PHY_SETBIT(sc, 0xad9c, 0x0020);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8122);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0c00);
+
+	rge_write_phy_ocp(sc, 0xb87c, 0x82c8);
+	for (i = 0; i < 20; i++)
+		rge_write_phy_ocp(sc, 0xb87e, mac_cfg2_b87e_value[i]);
+
+	rge_write_phy_ocp(sc, 0xb87c, 0x80ef);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0x0c00);
+
+	rge_write_phy_ocp(sc, 0xb87c, 0x82a0);
+	for (; i < nitems(mac_cfg2_b87e_value); i++)
+		rge_write_phy_ocp(sc, 0xb87e, mac_cfg2_b87e_value[i]);
+
+	rge_write_phy_ocp(sc, 0xa436, 0x8018);
+	RGE_PHY_SETBIT(sc, 0xa438, 0x2000);
+	rge_write_phy_ocp(sc, 0xb87c, 0x8fe4);
+	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
+	rge_write_phy_ocp(sc, 0xb87e, val | 0);
+	val = rge_read_phy_ocp(sc, 0xb54c) & ~0xffc0;
+	rge_write_phy_ocp(sc, 0xb54c, val | 0x3700);
 }
 
 void
@@ -1784,6 +2105,12 @@ rge_phy_config_mcu(struct rge_softc *sc, uint16_t mcode_version)
 				    rtl8125_mac_cfg5_mcu[i].reg,
 				    rtl8125_mac_cfg5_mcu[i].val);
 			}
+		} else if (sc->rge_type == MAC_CFG2_8126) {
+			for (i = 0; i < nitems(rtl8126_mac_cfg2_mcu); i++) {
+				rge_write_phy_ocp(sc,
+				    rtl8126_mac_cfg2_mcu[i].reg,
+				    rtl8126_mac_cfg2_mcu[i].val);
+			}
 		}
 
 		rge_patch_phy_mcu(sc, 0);
@@ -1881,7 +2208,8 @@ rge_hw_init(struct rge_softc *sc)
 	}
 
 	/* Disable PHY power saving. */
-	rge_disable_phy_ocp_pwrsave(sc);
+	if (sc->rge_type == MAC_CFG3)
+		rge_disable_phy_ocp_pwrsave(sc);
 
 	/* Set PCIe uncorrectable error status. */
 	rge_write_csi(sc, 0x108,
@@ -1951,6 +2279,12 @@ rge_add_media_types(struct rge_softc *sc)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_2500_T, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_2500_T | IFM_FDX, 0, NULL);
+
+	if (sc->rge_type == MAC_CFG2_8126) {
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_5000_T, 0, NULL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_5000_T | IFM_FDX,
+		    0, NULL);
+	}
 }
 
 void
@@ -1972,7 +2306,10 @@ void
 rge_disable_aspm_clkreq(struct rge_softc *sc)
 {
 	RGE_SETBIT_1(sc, RGE_EECMD, RGE_EECMD_WRITECFG);
-	RGE_CLRBIT_1(sc, RGE_CFG2, RGE_CFG2_CLKREQ_EN);
+	if (sc->rge_type == MAC_CFG2_8126)
+		RGE_CLRBIT_1(sc, RGE_INT_CFG0, 0x08);
+	else
+		RGE_CLRBIT_1(sc, RGE_CFG2, RGE_CFG2_CLKREQ_EN);
 	RGE_CLRBIT_1(sc, RGE_CFG5, RGE_CFG5_PME_STS);
 	RGE_CLRBIT_1(sc, RGE_EECMD, RGE_EECMD_WRITECFG);
 }
