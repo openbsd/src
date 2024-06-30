@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.111 2024/06/03 10:05:18 florian Exp $
+#	$OpenBSD: Makefile,v 1.112 2024/06/30 17:30:54 deraadt Exp $
 
-SUBDIR=	atactl badsect bioctl clri dhclient dhcp6leased dhcpleased \
+SUBDIR=	atactl badsect bioctl clri dhcp6leased dhcpleased \
 	disklabel dmesg dump dumpfs fdisk fsck fsck_ext2fs fsck_ffs  \
 	fsck_msdos fsdb fsirand growfs ifconfig iked init ipsecctl  \
 	isakmpd kbd ldattach mknod mount \

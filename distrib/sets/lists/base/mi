@@ -54,7 +54,6 @@
 ./etc/examples/acme-client.conf
 ./etc/examples/bgpd.conf
 ./etc/examples/chio.conf
-./etc/examples/dhclient.conf
 ./etc/examples/dhcpd.conf
 ./etc/examples/doas.conf
 ./etc/examples/dvmrpd.conf
@@ -349,7 +348,6 @@
 ./sbin/bioctl
 ./sbin/chown
 ./sbin/clri
-./sbin/dhclient
 ./sbin/dhcp6leased
 ./sbin/dhcpleased
 ./sbin/disklabel
