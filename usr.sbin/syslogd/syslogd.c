@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.281 2024/06/29 11:29:55 jsg Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.282 2024/07/01 12:06:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -314,6 +314,7 @@ int	 reserve_accept4(int, int, struct event *,
 void	 tcp_acceptcb(int, short, void *);
 void	 tls_acceptcb(int, short, void *);
 void	 acceptcb(int, short, void *, int);
+void	 tls_handshakecb(struct bufferevent *, void *);
 int	 octet_counting(struct evbuffer *, char **, int);
 int	 non_transparent_framing(struct evbuffer *, char **);
 void	 tcp_readcb(struct bufferevent *, void *);
@@ -1188,6 +1189,7 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 			close(fd);
 			return;
 		}
+		p->p_bufev->readcb = tls_handshakecb;
 		buffertls_set(&p->p_buftls, p->p_bufev, p->p_ctx, fd);
 		buffertls_accept(&p->p_buftls, fd);
 		log_debug("tcp accept callback: tls context success");
@@ -1207,6 +1209,17 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 
 	log_info(LOG_DEBUG, "%s logger \"%s\" accepted",
 	    p->p_ctx ? "tls" : "tcp", peername);
+}
+
+void
+tls_handshakecb(struct bufferevent *bufev, void *arg)
+{
+	struct peer *p = arg;
+
+	log_debug("Completed tls handshake");
+
+	bufev->readcb = tcp_readcb;
+	tcp_readcb(bufev, p);
 }
 
 /*
