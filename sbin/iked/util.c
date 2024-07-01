@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2024/02/03 00:38:08 jsg Exp $	*/
+/*	$OpenBSD: util.c,v 1.45 2024/07/01 14:15:15 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -644,16 +644,16 @@ prefixlen2mask6(uint8_t prefixlen, uint32_t *mask)
 const char *
 print_addr(void *addr)
 {
-	static char	 sbuf[IKED_CYCLE_BUFFERS][NI_MAXHOST + 7];
+	static char	 sbuf[IKED_CYCLE_BUFFERS][NI_MAXHOST + 9];
 	static int	 idx;
 	struct sockaddr	*sa = addr;
-	char		*buf;
-	size_t		 len;
+	char		*buf, *hbuf;
+	size_t		 len, hlen;
 	char		 pbuf[7];
 	in_port_t	 port;
 
-	buf = sbuf[idx];
-	len = sizeof(sbuf[idx]);
+	hbuf = buf = sbuf[idx];
+	hlen = len = sizeof(sbuf[idx]);
 	if (++idx >= IKED_CYCLE_BUFFERS)
 		idx = 0;
 
@@ -662,13 +662,21 @@ print_addr(void *addr)
 		return (buf);
 	}
 
+	if ((port = socket_getport(sa)) != 0 && sa->sa_family == AF_INET6) {
+		/* surround [] */
+		*(hbuf++) = '[';
+		hlen--;
+	}
+
 	if (getnameinfo(sa, sa->sa_len,
-	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
+	    hbuf, hlen, NULL, 0, NI_NUMERICHOST) != 0) {
 		strlcpy(buf, "unknown", len);
 		return (buf);
 	}
 
-	if ((port = socket_getport(sa)) != 0) {
+	if (port != 0) {
+		if (sa->sa_family == AF_INET6)
+			(void)strlcat(buf, "]", len);
 		snprintf(pbuf, sizeof(pbuf), ":%d", port);
 		(void)strlcat(buf, pbuf, len);
 	}
