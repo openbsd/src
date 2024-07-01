@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.9 2024/07/01 03:32:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.10 2024/07/01 05:20:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -106,6 +106,7 @@ struct radiusd {
 	TAILQ_HEAD(,radiusd_authentication)	 authen;
 	TAILQ_HEAD(,radiusd_client)		 client;
 	TAILQ_HEAD(,radius_query)		 query;
+	int					 error;
 };
 
 struct radius_query {

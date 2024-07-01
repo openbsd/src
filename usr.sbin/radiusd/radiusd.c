@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.41 2024/07/01 05:18:16 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.42 2024/07/01 05:20:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -193,10 +193,16 @@ main(int argc, char *argv[])
 	if (event_loop(0) < 0)
 		radiusd_stop(radiusd);
 
+	if (radiusd->error != 0)
+		log_warnx("exiting on error");
+
 	radiusd_free(radiusd);
 	event_base_free(NULL);
 
-	exit(EXIT_SUCCESS);
+	if (radiusd->error != 0)
+		exit(EXIT_FAILURE);
+	else
+		exit(EXIT_SUCCESS);
 }
 
 static int
@@ -263,6 +269,7 @@ radiusd_start(struct radiusd *radiusd)
 
 	return (0);
 on_error:
+	radiusd->error++;
 	radiusd_stop(radiusd);
 
 	return (-1);
@@ -703,7 +710,7 @@ radiusd_on_sigchld(int fd, short evmask, void *ctx)
 	struct radiusd		*radiusd = ctx;
 	struct radiusd_module	*module;
 	pid_t			 pid;
-	int			 status;
+	int			 status, ndeath = 0;
 
 	log_debug("Received SIGCHLD");
 	while ((pid = wait3(&status, WNOHANG, NULL)) != 0) {
@@ -719,6 +726,7 @@ radiusd_on_sigchld(int fd, short evmask, void *ctx)
 					log_warnx("module `%s'(pid=%d) exited "
 					    "by signal %d", module->name,
 					    (int)pid, WTERMSIG(status));
+				ndeath++;
 				break;
 			}
 		}
@@ -732,6 +740,10 @@ radiusd_on_sigchld(int fd, short evmask, void *ctx)
 				    "by signal %d", (int)pid,
 				    WTERMSIG(status));
 		}
+	}
+	if (ndeath > 0) {
+		radiusd->error++;
+		event_loopbreak();
 	}
 }
 
