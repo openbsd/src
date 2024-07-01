@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.9 2024/06/27 09:37:07 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.10 2024/07/01 14:13:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -306,12 +306,12 @@ thermal_zone_poll(void *arg)
 	int32_t temp, delta;
 	int i;
 
+	tp = tz->tz_trips;
 	temp = thermal_get_temperature_cells(tz->tz_sensors);
 	if (temp == THERMAL_SENSOR_MAX)
 		goto out;
 
 	newtp = NULL;
-	tp = tz->tz_trips;
 	for (i = 0; i < tz->tz_ntrips; i++) {
 		if (temp < tp->tp_temperature && tp != tz->tz_tp)
 			break;
@@ -372,7 +372,7 @@ out:
 
 	if (polling_delay > 0)
 		timeout_add_msec(&tz->tz_poll_to, polling_delay);
-	else
+	else if (tp)
 		thermal_set_limit_cells(tz->tz_sensors, tp->tp_temperature);
 }
 
