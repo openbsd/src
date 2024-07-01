@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.36 2024/02/14 02:44:58 jsg Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.37 2024/07/01 03:27:31 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1306,6 +1306,11 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 	    }
 	case IMSG_RADIUSD_MODULE_ACCSREQ_ABORTED:
 	    {
+		if (datalen < (ssize_t)sizeof(u_int)) {
+			log_warnx("Received ACCSREQ_ABORTED message, but "
+			    "length is wrong");
+			break;
+		}
 		q_id = *((u_int *)imsg->data);
 		q = radiusd_find_query(module->radiusd, q_id);
 		if (q == NULL) {
