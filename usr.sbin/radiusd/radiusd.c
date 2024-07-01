@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.40 2024/07/01 03:48:57 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.41 2024/07/01 05:18:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -204,7 +204,7 @@ radiusd_start(struct radiusd *radiusd)
 {
 	struct radiusd_listen	*l;
 	struct radiusd_module	*module;
-	int			 s;
+	int			 s, on;
 	char			 hbuf[NI_MAXHOST];
 
 	TAILQ_FOREACH(l, &radiusd->listen, next) {
@@ -220,6 +220,12 @@ radiusd_start(struct radiusd *radiusd)
 			    hbuf, (int)htons(l->addr.ipv4.sin_port));
 			goto on_error;
 		}
+
+		on = 1;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))
+		    == -1)
+			log_warn("%s: setsockopt(,,SO_REUSEADDR) failed: %m",
+			    __func__);
 		if (bind(s, (struct sockaddr *)&l->addr, l->addr.ipv4.sin_len)
 		    != 0) {
 			log_warn("Listen %s port %d is failed: bind()",
