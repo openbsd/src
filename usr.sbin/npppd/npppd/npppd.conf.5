@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.33 2024/07/01 07:09:07 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.34 2024/07/01 14:56:19 jmc Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -507,20 +507,18 @@ This option can be used multiple times.
 .It Ic dns-servers Ar primary-server-address Op Ar secondary-server-address
 Specify the DNS servers' IP addresses.
 When this option is not specified and the authenticated realm
-.Pq eq. the RADIUS server
-specifies the DNS server addresses,
+.Pq the RADIUS server
+specifies the DNS servers' addresses,
 they are used as the default.
-To stop using them any case,
-configure
+To stop using them, set this option to
 .Qq 0.0.0.0 .
 .It Ic nbns-servers Ar primary-server-address Op Ar secondary-server-address
 Specify the NetBIOS name servers' IP addresses.
 When this option is not specified and the authenticated realm
-.Pq eq. the RADIUS server
-specifies the NetBIOS server addresses,
+.Pq the RADIUS server
+specifies the NetBIOS servers' addresses,
 they are used as the default.
-To stop using them any case,
-configure
+To stop using them, set this option to
 .Qq 0.0.0.0 .
 .It Ic allow-user-selected-address Ar yes | no
 Specify whether
