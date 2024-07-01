@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.42 2024/07/01 05:20:01 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.43 2024/07/01 23:53:30 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -70,8 +70,7 @@ static int		 radiusd_access_response_fixup (struct radius_query *);
 
 static void		 radiusd_module_reset_ev_handler(
 			    struct radiusd_module *);
-static int		 radiusd_module_imsg_read(struct radiusd_module *,
-			    bool);
+static int		 radiusd_module_imsg_read(struct radiusd_module *);
 static void		 radiusd_module_imsg(struct radiusd_module *,
 			    struct imsg *);
 
@@ -1109,9 +1108,8 @@ radiusd_module_on_imsg_io(int fd, short evmask, void *ctx)
 	if (evmask & EV_WRITE)
 		module->writeready = true;
 
-	if (evmask & EV_READ || module->ibuf.r.wpos > IMSG_HEADER_SIZE) {
-		if (radiusd_module_imsg_read(module,
-		    (evmask & EV_READ)? true : false) == -1)
+	if (evmask & EV_READ) {
+		if (radiusd_module_imsg_read(module) == -1)
 			goto on_error;
 	}
 
@@ -1148,8 +1146,7 @@ radiusd_module_reset_ev_handler(struct radiusd_module *module)
 			evmask |= EV_WRITE;
 		else
 			tvp = &tv;	/* fire immediately */
-	} else if (module->ibuf.r.wpos > IMSG_HEADER_SIZE)
-		tvp = &tv;		/* fire immediately */
+	}
 
 	/* module stopped and no event handler is set */
 	if (evmask & EV_WRITE && tvp == NULL && module->stopped) {
@@ -1168,22 +1165,20 @@ radiusd_module_reset_ev_handler(struct radiusd_module *module)
 }
 
 static int
-radiusd_module_imsg_read(struct radiusd_module *module, bool doread)
+radiusd_module_imsg_read(struct radiusd_module *module)
 {
 	int		 n;
 	struct imsg	 imsg;
 
-	if (doread) {
-		if ((n = imsg_read(&module->ibuf)) == -1 || n == 0) {
-			if (n == -1 && errno == EAGAIN)
-				return (0);
-			if (n == -1)
-				log_warn("Receiving a message from module `%s' "
-				    "failed: imsg_read", module->name);
-			/* else closed */
-			radiusd_module_close(module);
-			return (-1);
-		}
+	if ((n = imsg_read(&module->ibuf)) == -1 || n == 0) {
+		if (n == -1 && errno == EAGAIN)
+			return (0);
+		if (n == -1)
+			log_warn("Receiving a message from module `%s' "
+			    "failed: imsg_read", module->name);
+		/* else closed */
+		radiusd_module_close(module);
+		return (-1);
 	}
 	for (;;) {
 		if ((n = imsg_get(&module->ibuf, &imsg)) == -1) {
