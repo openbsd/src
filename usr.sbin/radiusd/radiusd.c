@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.39 2024/07/01 03:31:29 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.40 2024/07/01 03:48:57 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -33,6 +33,7 @@
 #include <imsg.h>
 #include <md5.h>
 #include <netdb.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -89,6 +90,7 @@ static void		 radiusd_module_request_decoration(
 			    struct radiusd_module *, struct radius_query *);
 static void		 radiusd_module_response_decoration(
 			    struct radiusd_module *, struct radius_query *);
+static void		 close_stdio(void);
 static int		 imsg_compose_radius_packet(struct imsgbuf *,
 			    uint32_t, u_int, RADIUS_PACKET *);
 
@@ -144,6 +146,9 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&radiusd->listen);
 	TAILQ_INIT(&radiusd->query);
 
+	if (!noaction && debug == 0)
+		daemon(0, 1);	/* pend closing stdio files */
+
 	if (parse_config(conffile, radiusd) != 0)
 		errx(EXIT_FAILURE, "config error");
 	log_init(debug);
@@ -153,7 +158,8 @@ main(int argc, char *argv[])
 	}
 
 	if (debug == 0)
-		daemon(0, 0);
+		close_stdio(); /* close stdio files now */
+
 	event_init();
 
 	if ((pw = getpwnam(RADIUSD_USER)) == NULL)
@@ -1617,4 +1623,18 @@ imsg_compose_radius_packet(struct imsgbuf *ibuf, uint32_t type, u_int q_id,
 		off += siz;
 	}
 	return (0);
+}
+
+static void
+close_stdio(void)
+{
+	int	fd;
+
+	if ((fd = open(_PATH_DEVNULL, O_RDWR)) != -1) {
+		dup2(fd, STDIN_FILENO);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+		if (fd > STDERR_FILENO)
+			close(fd);
+	}
 }
