@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2023/09/08 05:56:22 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2024/07/01 03:13:42 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -363,7 +363,6 @@ authopt		: AUTHENTICATE_BY STRING {
 			}
 			free_str_l(&$2);
 		}
-		|
 		;
 str_l		: str_l strnum {
 			int	  i;
