@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.20 2024/02/09 07:41:32 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.21 2024/07/01 03:17:00 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -613,8 +613,7 @@ module_radius_req_reset_msgauth(struct module_radius_req *req)
 	if (radius_has_attr(req->q_pkt, RADIUS_TYPE_MESSAGE_AUTHENTICATOR))
 		radius_del_attr_all(req->q_pkt,
 		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR);
-	radius_put_message_authenticator(req->q_pkt,
-	    req->module->secret);
+	radius_put_message_authenticator(req->q_pkt, req->module->secret);
 }
 
 static void
