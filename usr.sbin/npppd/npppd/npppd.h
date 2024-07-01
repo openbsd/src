@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.19 2017/08/12 11:20:34 goda Exp $ */
+/*	$OpenBSD: npppd.h,v 1.20 2024/07/01 07:09:07 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -174,7 +174,9 @@ struct ipcpconf {
 	TAILQ_ENTRY(ipcpconf)              entry;
 	char                               name[NPPPD_GENERIC_NAME_LEN];
 	bool                               dns_use_resolver;
+	bool                               dns_configured;
 	struct in_addr                     dns_servers[2];
+	bool                               nbns_configured;
 	struct in_addr                     nbns_servers[2];
 	bool                               allow_user_select;
 	struct in_addr_range              *dynamic_pool;

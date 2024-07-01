@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.31 2024/02/26 10:42:05 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.32 2024/07/01 07:09:07 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.31 2024/02/26 10:42:05 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.32 2024/07/01 07:09:07 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -1060,65 +1060,6 @@ ppp_log(npppd_ppp *_this, int prio, const char *fmt, ...)
 
 	return status;
 }
-
-#ifdef USE_NPPPD_RADIUS
-#define UCHAR_BUFSIZ 255
-/**
- * Process the Framed-IP-Address attribute and the Framed-IP-Netmask
- * attribute of given RADIUS packet.
- */
-void
-ppp_process_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
-{
-	struct in_addr ip4;
-
-	if (radius_get_ipv4_attr(pkt, RADIUS_TYPE_FRAMED_IP_ADDRESS, &ip4)
-	    == 0)
-		_this->realm_framed_ip_address = ip4;
-
-	_this->realm_framed_ip_netmask.s_addr = 0xffffffffL;
-	if (radius_get_ipv4_attr(pkt, RADIUS_TYPE_FRAMED_IP_NETMASK, &ip4)
-	    == 0)
-		_this->realm_framed_ip_netmask = ip4;
-}
-
-/**
- * Set RADIUS attributes for RADIUS authentication request.
- * Return 0 on success.
- */
-int
-ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
-    radius_req_setting *rad_setting, RADIUS_PACKET *radpkt)
-{
-	/* RFC 2865 "5.4 NAS-IP-Address" or RFC3162 "2.1. NAS-IPv6-Address" */
-	if (radius_prepare_nas_address(rad_setting, radpkt) != 0)
-		goto fail;
-
-	/* RFC 2865  5.32. NAS-Identifier */
-	if (radius_put_string_attr(radpkt, RADIUS_TYPE_NAS_IDENTIFIER, "npppd")
-	    != 0)
-		goto fail;
-
-	/* RFC 2865 "5.6. Service-Type" */
-	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_SERVICE_TYPE,
-	    RADIUS_SERVICE_TYPE_FRAMED) != 0)
-		goto fail;
-
-	/* RFC 2865 "5.7. Framed-Protocol" */
-	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_FRAMED_PROTOCOL,
-	    RADIUS_FRAMED_PROTOCOL_PPP) != 0)
-		goto fail;
-
-	if (_this->calling_number[0] != '\0') {
-		if (radius_put_string_attr(radpkt,
-		    RADIUS_TYPE_CALLING_STATION_ID, _this->calling_number) != 0)
-			return 1;
-	}
-	return 0;
-fail:
-	return 1;
-}
-#endif
 
 #ifdef USE_NPPPD_PIPEX
 /** The callback function on network is available for pipex */

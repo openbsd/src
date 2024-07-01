@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.24 2022/12/28 21:30:17 jmc Exp $ */
+/*	$OpenBSD: ppp.h,v 1.25 2024/07/01 07:09:07 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -779,7 +779,7 @@ u_char       *ppp_packetbuf (npppd_ppp *, int);
 int          ppp_log (npppd_ppp *, int, const char *, ...) __printflike(3,4);
 void         ppp_reset_idle_timeout(npppd_ppp *);
 #ifdef USE_NPPPD_RADIUS
-void        ppp_process_radius_framed_ip (npppd_ppp *, RADIUS_PACKET *);
+void        ppp_process_radius_attrs (npppd_ppp *, RADIUS_PACKET *);
 int         ppp_set_radius_attrs_for_authreq (npppd_ppp *, radius_req_setting *, RADIUS_PACKET *);
 #endif
 struct tunnconf *ppp_get_tunnconf(npppd_ppp *);

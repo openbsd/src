@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.10 2024/02/26 10:42:05 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.11 2024/07/01 07:09:07 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/syslog.h>
 #include <netinet/in.h>
 #include <net/if_dl.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <stdint.h>
@@ -73,9 +74,11 @@ static void npppd_ppp_radius_acct_reqcb(void *, RADIUS_PACKET *, int, RADIUS_REQ
  * the given RADIUS packet and set them as the fields of ppp context.
  */ 
 void
-ppp_proccess_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
+ppp_process_radius_attrs(npppd_ppp *_this, RADIUS_PACKET *pkt)
 {
-	struct in_addr ip4;
+	struct in_addr	 ip4;
+	int		 got_pri, got_sec;
+	char		 buf0[40], buf1[40];
 	
 	if (radius_get_ipv4_attr(pkt, RADIUS_TYPE_FRAMED_IP_ADDRESS, &ip4)
 	    == 0)
@@ -87,6 +90,53 @@ ppp_proccess_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
 	    == 0)
 		_this->realm_framed_ip_netmask = ip4;
 #endif
+
+	if (!ppp_ipcp(_this)->dns_configured) {
+		got_pri = got_sec = 0;
+		if (radius_get_vs_ipv4_attr(pkt, RADIUS_VENDOR_MICROSOFT,
+		    RADIUS_VTYPE_MS_PRIMARY_DNS_SERVER, &ip4) == 0) {
+			got_pri = 1;
+			_this->ipcp.dns_pri = ip4;
+		}
+		if (radius_get_vs_ipv4_attr(pkt, RADIUS_VENDOR_MICROSOFT,
+		    RADIUS_VTYPE_MS_SECONDARY_DNS_SERVER, &ip4) == 0) {
+			got_sec = 1;
+			_this->ipcp.dns_sec = ip4;
+		}
+		if (got_pri || got_sec)
+			ppp_log(_this, LOG_INFO, "DNS server address%s "
+			    "(%s%s%s) %s configured by RADIUS server",
+			    ((got_pri + got_sec) > 1)? "es" : "",
+			    (got_pri)? inet_ntop(AF_INET, &_this->ipcp.dns_pri,
+			    buf0, sizeof(buf0)) : "",
+			    (got_pri != 0 && got_sec != 0)? "," : "",
+			    (got_sec)? inet_ntop(AF_INET, &_this->ipcp.dns_sec,
+			    buf1, sizeof(buf1)) : "",
+			    ((got_pri + got_sec) > 1)? "are" : "is");
+	}
+	if (!ppp_ipcp(_this)->nbns_configured) {
+		got_pri = got_sec = 0;
+		if (radius_get_vs_ipv4_attr(pkt, RADIUS_VENDOR_MICROSOFT,
+		    RADIUS_VTYPE_MS_PRIMARY_NBNS_SERVER, &ip4) == 0) {
+			got_pri = 1;
+			_this->ipcp.nbns_pri = ip4;
+		}
+		if (radius_get_vs_ipv4_attr(pkt, RADIUS_VENDOR_MICROSOFT,
+		    RADIUS_VTYPE_MS_SECONDARY_NBNS_SERVER, &ip4) == 0) {
+			got_sec = 1;
+			_this->ipcp.nbns_sec = ip4;
+		}
+		if (got_pri || got_sec)
+			ppp_log(_this, LOG_INFO, "NBNS server address%s "
+			    "(%s%s%s) %s configured by RADIUS server",
+			    ((got_pri + got_sec) > 1)? "es" : "",
+			    (got_pri)? inet_ntop(AF_INET, &_this->ipcp.nbns_pri,
+			    buf0, sizeof(buf0)) : "",
+			    (got_pri != 0 && got_sec != 0)? "," : "",
+			    (got_sec)? inet_ntop(AF_INET, &_this->ipcp.nbns_sec,
+			    buf1, sizeof(buf1)) : "",
+			    ((got_pri + got_sec) > 1)? "are" : "is");
+	}
 }
 
 /***********************************************************************
@@ -478,5 +528,37 @@ l2tp_put_tunnel_attributes(RADIUS_PACKET *radpkt, void *call0)
 	return 0;
 fail:
 #endif
+	return 1;
+}
+
+/**
+ * Set RADIUS attributes for RADIUS authentication request.
+ * Return 0 on success.
+ */
+int
+ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
+    radius_req_setting *rad_setting, RADIUS_PACKET *radpkt)
+{
+	/* RFC 2865 "5.4 NAS-IP-Address" or RFC3162 "2.1. NAS-IPv6-Address" */
+	if (radius_prepare_nas_address(rad_setting, radpkt) != 0)
+		goto fail;
+
+	/* RFC 2865 "5.6. Service-Type" */
+	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_SERVICE_TYPE,
+	    RADIUS_SERVICE_TYPE_FRAMED) != 0)
+		goto fail;
+
+	/* RFC 2865 "5.7. Framed-Protocol" */
+	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_FRAMED_PROTOCOL,
+	    RADIUS_FRAMED_PROTOCOL_PPP) != 0)
+		goto fail;
+
+	if (_this->calling_number[0] != '\0') {
+		if (radius_put_string_attr(radpkt,
+		    RADIUS_TYPE_CALLING_STATION_ID, _this->calling_number) != 0)
+			return 1;
+	}
+	return 0;
+fail:
 	return 1;
 }

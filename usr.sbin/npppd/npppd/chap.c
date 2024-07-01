@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.18 2024/02/26 08:47:28 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.19 2024/07/01 07:09:07 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.18 2024/02/26 08:47:28 yasuoka Exp $ */
+/* $Id: chap.c,v 1.19 2024/07/01 07:09:07 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -914,7 +914,7 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 		break;
 	    }
 	}
-	ppp_process_radius_framed_ip(_this->ppp, pkt);
+	ppp_process_radius_attrs(_this->ppp, pkt);
 
 	return;
 auth_failed:

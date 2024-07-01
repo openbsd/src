@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.32 2023/03/02 17:09:53 jmc Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.33 2024/07/01 07:09:07 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: July 1 2024 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -506,8 +506,22 @@ The default is
 This option can be used multiple times.
 .It Ic dns-servers Ar primary-server-address Op Ar secondary-server-address
 Specify the DNS servers' IP addresses.
+When this option is not specified and the authenticated realm
+.Pq eq. the RADIUS server
+specifies the DNS server addresses,
+they are used as the default.
+To stop using them any case,
+configure
+.Qq 0.0.0.0 .
 .It Ic nbns-servers Ar primary-server-address Op Ar secondary-server-address
 Specify the NetBIOS name servers' IP addresses.
+When this option is not specified and the authenticated realm
+.Pq eq. the RADIUS server
+specifies the NetBIOS server addresses,
+they are used as the default.
+To stop using them any case,
+configure
+.Qq 0.0.0.0 .
 .It Ic allow-user-selected-address Ar yes | no
 Specify whether
 .Xr npppd 8

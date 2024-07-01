@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2023/04/19 13:33:37 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2024/07/01 07:09:07 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -818,19 +818,23 @@ ipcpopt		: POOL_ADDRESS STRING ipcppooltype {
 		}
 		| DNS_SERVERS in4_addr in4_addr {
 			curr_ipcpconf->dns_use_resolver  = false;
+			curr_ipcpconf->dns_configured  = true;
 			curr_ipcpconf->dns_servers[0] = $2;
 			curr_ipcpconf->dns_servers[1] = $3;
 		}
 		| DNS_SERVERS in4_addr {
 			curr_ipcpconf->dns_use_resolver  = false;
+			curr_ipcpconf->dns_configured  = true;
 			curr_ipcpconf->dns_servers[0] = $2;
 			curr_ipcpconf->dns_servers[1].s_addr = 0;
 		}
 		| NBNS_SERVERS in4_addr in4_addr {
+			curr_ipcpconf->nbns_configured  = true;
 			curr_ipcpconf->nbns_servers[0] = $2;
 			curr_ipcpconf->nbns_servers[1] = $3;
 		}
 		| NBNS_SERVERS in4_addr {
+			curr_ipcpconf->nbns_configured  = true;
 			curr_ipcpconf->nbns_servers[0] = $2;
 			curr_ipcpconf->nbns_servers[1].s_addr = 0;
 		}
