@@ -1,4 +1,4 @@
-.\"	$OpenBSD: times.3,v 1.16 2022/09/11 06:38:10 jmc Exp $
+.\"	$OpenBSD: times.3,v 1.17 2024/07/01 00:05:43 jsg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: July 1 2024 $
 .Dt TIMES 3
 .Os
 .Sh NAME
@@ -142,11 +142,3 @@ A
 .Fn times
 function first appeared in
 .At v3 .
-The tms structure first appeared in
-.Bx 4.0
-and was changed to use
-.Vt clock_t
-instead of
-.Vt time_t
-for its members in
-.Bx 4.3 Net/2 .
