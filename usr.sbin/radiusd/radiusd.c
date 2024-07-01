@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.37 2024/07/01 03:27:31 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.38 2024/07/01 03:29:21 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -144,9 +144,9 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&radiusd->listen);
 	TAILQ_INIT(&radiusd->query);
 
-	log_init(debug);
 	if (parse_config(conffile, radiusd) != 0)
 		errx(EXIT_FAILURE, "config error");
+	log_init(debug);
 	if (noaction) {
 		fprintf(stderr, "configuration OK\n");
 		exit(EXIT_SUCCESS);
