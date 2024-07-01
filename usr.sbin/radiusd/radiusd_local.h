@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.8 2024/07/01 03:31:29 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.9 2024/07/01 03:32:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -91,7 +91,6 @@ struct radiusd_module_ref {
 
 struct radiusd_authentication {
 	char					**username;
-	char					 *secret;
 	struct radiusd_module_ref		 *auth;
 	TAILQ_HEAD(,radiusd_module_ref)		  deco;
 	TAILQ_ENTRY(radiusd_authentication)	  next;
