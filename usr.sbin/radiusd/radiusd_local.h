@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.7 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.8 2024/07/01 03:31:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -85,6 +85,7 @@ struct radiusd_module {
 
 struct radiusd_module_ref {
 	struct radiusd_module		*module;
+	unsigned int			 type;
 	TAILQ_ENTRY(radiusd_module_ref)	 next;
 };
 

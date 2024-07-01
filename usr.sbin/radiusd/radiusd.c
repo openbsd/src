@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.38 2024/07/01 03:29:21 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.39 2024/07/01 03:31:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1275,6 +1275,14 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 			module->radpktoff = 0;
 			switch (imsg->hdr.type) {
 			case IMSG_RADIUSD_MODULE_REQDECO_DONE:
+				if (q->deco == NULL || q->deco->type !=
+				    IMSG_RADIUSD_MODULE_REQDECO) {
+					log_warnx("q=%u received %s "
+					    "but not requested", q->id, typestr);
+					if (radpkt != NULL)
+						radius_delete_packet(radpkt);
+					break;
+				}
 				if (radpkt != NULL) {
 					radius_delete_packet(q->req);
 					q->req = radpkt;
@@ -1283,7 +1291,7 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 				break;
 			case IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER:
 				if (radpkt == NULL) {
-					log_warn("q=%u wrong pkt from module",
+					log_warnx("q=%u wrong pkt from module",
 					    q->id);
 					radiusd_access_request_aborted(q);
 					break;
@@ -1292,6 +1300,14 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 				radiusd_access_request_answer(q);
 				break;
 			case IMSG_RADIUSD_MODULE_RESDECO_DONE:
+				if (q->deco == NULL || q->deco->type !=
+				    IMSG_RADIUSD_MODULE_RESDECO) {
+					log_warnx("q=%u received %s but not "
+					    "requested", q->id, typestr);
+					if (radpkt != NULL)
+						radius_delete_packet(radpkt);
+					break;
+				}
 				if (radpkt != NULL) {
 					radius_delete_packet(q->res);
 					radius_set_request_packet(radpkt,
@@ -1536,6 +1552,8 @@ radiusd_module_request_decoration(struct radiusd_module *module,
 		radiusd_access_request_aborted(q);
 		return;
 	}
+	RADIUSD_ASSERT(q->deco != NULL);
+	q->deco->type = IMSG_RADIUSD_MODULE_REQDECO;
 	radiusd_module_reset_ev_handler(module);
 }
 
@@ -1563,6 +1581,8 @@ radiusd_module_response_decoration(struct radiusd_module *module,
 		radiusd_access_request_aborted(q);
 		return;
 	}
+	RADIUSD_ASSERT(q->deco != NULL);
+	q->deco->type = IMSG_RADIUSD_MODULE_RESDECO;
 	radiusd_module_reset_ev_handler(module);
 }
 
