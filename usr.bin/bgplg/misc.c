@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2017/12/18 09:12:49 job Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2024/07/01 18:43:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -79,10 +79,13 @@ lg_help(struct cmd *cmds, char **argv)
 void
 lg_sig_alarm(int sig)
 {
+	int save_errno = errno;
+
 	if (child != -1) {
 		/* Forcibly kill the child, no excuse... */
 		kill(child, SIGKILL);
 	}
+	errno = save_errno;
 }
 
 int
