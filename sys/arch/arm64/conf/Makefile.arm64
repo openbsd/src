@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.47 2023/09/06 01:47:36 jsg Exp $
+#	$OpenBSD: Makefile.arm64,v 1.48 2024/07/02 10:25:16 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -60,6 +60,7 @@ CMACHFLAGS=	-march=armv8-a+nofp+nosimd \
 		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 		-ffixed-x18
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
+CMACHFLAGS+=	-moutline-atomics
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector

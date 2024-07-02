@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.121 2024/06/23 10:17:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.122 2024/07/02 10:25:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -244,6 +244,7 @@ uint64_t cpu_id_aa64isar2;
 uint64_t cpu_id_aa64pfr0;
 uint64_t cpu_id_aa64pfr1;
 
+int arm64_has_lse;
 #ifdef CRYPTO
 int arm64_has_aes;
 #endif
@@ -714,6 +715,7 @@ cpu_identify(struct cpu_info *ci)
 	if (ID_AA64ISAR0_ATOMIC(id) >= ID_AA64ISAR0_ATOMIC_IMPL) {
 		printf("%sAtomic", sep);
 		sep = ",";
+		arm64_has_lse = 1;
 	}
 
 	if (ID_AA64ISAR0_CRC32(id) >= ID_AA64ISAR0_CRC32_BASE) {
