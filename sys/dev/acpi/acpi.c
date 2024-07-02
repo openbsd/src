@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.432 2024/06/25 11:57:10 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.433 2024/07/02 08:27:04 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2203,6 +2203,7 @@ acpi_add_device(struct aml_node *node, void *arg)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	int proc_id = -1;
+	int64_t sta;
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_node = node;
@@ -2233,6 +2234,10 @@ acpi_add_device(struct aml_node *node, void *arg)
 		aaa.aaa_name = "acpicpu";
 		break;
 	case AML_OBJTYPE_THERMZONE:
+		sta = acpi_getsta(sc, node);
+		if ((sta & STA_PRESENT) == 0)
+			return 0;
+
 		aaa.aaa_name = "acpitz";
 		break;
 	case AML_OBJTYPE_POWERRSRC:
