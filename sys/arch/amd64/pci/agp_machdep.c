@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.15 2024/07/02 04:10:25 jsg Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.16 2024/07/02 04:29:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -44,19 +44,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/cpufunc.h>
-#include <machine/pmap.h>
 
 void
 agp_flush_cache(void)
 {
 	wbinvd();
-}
-
-void
-agp_flush_cache_range(vaddr_t va, vsize_t sz)
-{
-	pmap_flush_cache(va, sz);
 }
