@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.122 2024/07/02 10:25:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.123 2024/07/02 19:59:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -2005,7 +2005,7 @@ cpu_psci_init(struct cpu_info *ci)
 	 */
 
 	len = OF_getproplen(node, "domain-idle-states");
-	if (len < sizeof(uint32_t))
+	if (len < (int)sizeof(uint32_t))
 		return;
 
 	states = malloc(len, M_TEMP, M_WAITOK);
