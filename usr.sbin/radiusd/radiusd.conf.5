@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.19 2024/07/01 03:22:06 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.20 2024/07/02 00:00:12 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 1 2024 $
+.Dd $Mdocdate: July 2 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -57,40 +57,46 @@ This option cannot be omitted.
 Specify if message authentication is required.
 The default is to require message authentication.
 .El
-.It Ic module load Ar name path
-Load a module
-from
-.Ar path
-and name it with the given
-.Ar name .
-The following modules are available:
-.Bl -column "/usr/libexec/radiusd/radiusd_bsdauthXXX"
-.It Sy "Path" Ta Sy "Description"
-.It Pa /usr/libexec/radiusd/radiusd_bsdauth Ta Do bsdauth Dc module
-.It Pa /usr/libexec/radiusd/radiusd_radius Ta Do radius Dc module
-.It Pa /usr/libexec/radiusd/radiusd_standard Ta Do standard Dc module
-.El
+.It Ic module Ar name Oo Ar path Oc Op Brq ...
+Load a module.
+Specify one of the predefined names for
+.Ar name ,
+or specify
+.Ar name
+and
+.Ar path .
+When multiple modules of the same path are loaded with different names,
+each module can have configurations respectively and work independently.
+.Pp
+The following module are predefined:
 .Bl -tag -width Ds
 .It Do bsdauth Dc module
 The
 .Dq bsdauth
-module provides authentication from the local system's
+module
+provides authentication from the local system's
 .Xr authenticate 3
-interface,
-known as
-.Dq bsd auth .
-It only supports PAP, password based authentication.
+interface.
+See
+.Xr radiusd_bsdauth 8 .
 .It Do radius Dc module
 The
 .Dq radius
 module provides authentication from upstream RADIUS servers.
+See
+.Xr radiusd_radius 8 .
 .It Do standard Dc module
 The
 .Dq standard
-module provides standard decorations for Access-Request messages or its
-response messages.
+module provides standard decorations for RADIUS messages.
+See
+.Xr radiusd_standard 8 .
 .El
-.It Ic module set Ar module key value ...
+.Pp
+It is optionally followed by a block of options enclosed in curly brackets.
+The following option can be used in the block:
+.Bl -tag -width Ds
+.It Ic set Ar key value ...
 Configure the module specific configurations by
 .Ar key
 and
@@ -98,90 +104,18 @@ and
 for the module specified by
 .Ar module .
 Notice that
-.Ar module ,
 .Ar key ,
 and
 .Ar value
-must be quoted to be distinguished from the reserved word.
-.Pp
-The
-.Dq bsdauth
-module supports the following configuration key and value:
-.Bl -tag -width Ds -offset indent
-.It Ic restrict-group Ar group ...
-Restrict login only if the user is a member of the specified groups.
+must be quoted to be distinguished from the reserved word if needed.
 .El
-.Pp
-The
-.Dq radius
-module supports the following configuration key and value:
-.Bl -tag -width Ds -offset indent
-.It Ic server Ar address Ns Op : Ns Ar port
-Specify the upstream server's address and port.
-If
-.Ar port
-is omitted, 1812 is used.
-This configuration can be specified multiple times.
-.It Ic secret Ar secret
-Specify the shared secret with the servers.
-This configuration cannot be omitted.
-.It Ic max-tries Ar number
-Specify the maximum number of retransmissions for a server.
-.Xr radiusd 8
-will retransmit 2, 6, 14, 22, and 30 seconds after the first transmission
-and subsequent retransmissions will occur every 8 seconds.
-If the number of retransmissions per server reaches this value,
-the current server is marked as
-.Dq fail ,
-and the next server is used for subsequent requests.
-The default value is 3.
-.It Ic max-failovers Ar number
-If a positive number is specified,
-.Xr radiusd 8
-will failover to the next server
-when the current server is marked
-.Dq fail .
-This key and value specifies the maximum number of failovers.
-The default value is 0.
-.It Ic request-timeout Ar sec
-Specify the request timeout in seconds.
-If this value is specified,
-.Ar max-tries
-and
-.Ar max-failover
-will not be used.
-.El
-.Pp
-The
-.Dq standard
-module supports the following configuration key and value:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Ic strip-atmark-realm Ar true | false
-Remove the realm part which starts with @
-.Pq atmark
-from the User-Name attribute of the Access-Request.
-.Pp
-.It Ic strip-nt-domain Ar true | false
-Remove NT domain which ends with \\
-.Pq backslash
-from the User-Name attribute of the Access-Request.
-.Pp
-.It Cm remove-request-attribute Oo Ar vendor Oc Ar type
-.It Cm remove-response-attribute Oo Ar vendor Oc Ar type
-Remove all the specified attributes from request or response
-messages of Access-Request.
-Specify
-.Ar type
-of the attribute in a decimal number.
-To specify a vendor attribute,
-specify the Vendor-Id
-in a decimal number for
-.Ar vendor .
-.El
-.It Ic authenticate Ar username-pattern ... Brq ...
+.It Ic authenticate Ar username-pattern ... Ic by Ar auth Oo Ic decorated-by \
+Ar deco ...  Oc
 Specify an authentication configuration for the users specified by
-.Ar username-pattern .
+.Ar username-pattern.
+The users matched by the pattern is authenticated by the module
+specified by
+.Ar auth .
 Use shell globbing rules for the pattern;
 multiple patterns can be specified by separating with space characters.
 When multiple
@@ -191,28 +125,19 @@ lines are specified, the first
 setting whose
 .Ar username-pattern
 matches an authenticating user is used.
-It is followed by a block of options enclosed in curly brackets:
-.Bl -tag -width Ds
-.It Ic authenticate-by Ar module
-Specify the module name.
-.It Ic decorate-by Ar module
-Specify the module name.
-.El
+.Pp
+Optionally decoration modules can be specified by
+.Ar deco .
+The specified modules decorate the RADIUS messages in the configured order.
 .El
 .Sh FILES
-.Bl -tag -width "/usr/libexec/radiusd/radiusd_bsdauth" -compact
+.Bl -tag -width "/etc/examples/radiusd.conf" -compact
 .It Pa /etc/radiusd.conf
 Default
 .Xr radiusd 8
 configuration file.
 .It Pa /etc/examples/radiusd.conf
 Example configuration file.
-.It Pa /usr/libexec/radiusd/radiusd_bsdauth
-.Dq bsdauth
-module executable.
-.It Pa /usr/libexec/radiusd/radiusd_radius
-.Dq radius
-module executable.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -220,31 +145,32 @@ listen on 0.0.0.0
 listen on ::
 
 client 127.0.0.1/32 {
-	secret "secret"
-	msgauth-required no
+    secret "secret"
+    msgauth-required no
 }
 client 192.168.0.0/24 {
-	secret "secret"
+    secret "secret"
 }
 
-module load bsdauth "/usr/libexec/radiusd/radiusd_bsdauth"
-module set bsdauth restrict-group operator
-
-module load radius "/usr/libexec/radiusd/radiusd_radius"
-module set radius secret "testing123"
-module set radius server "127.0.0.1"
-
-module load strip-realm "/usr/libexec/radiusd/radiusd_standard"
-module set strip-realm strip-atmark-realm true
-
-authenticate *@local {
-	authenticate-by bsdauth
-	decorate-by strip-realm
+module bsdauth {
+    set restrict-group operator
 }
-authenticate * {
-	authenticate-by radius
+
+module radius {
+    set secret "testing123"
+    set server "127.0.0.1"
 }
+
+module strip-realm "/usr/libexec/radiusd/radiusd_standard" {
+    set strip-atmark-realm true
+}
+
+authenticate *@local by bsdauth decorate-by strip-realm
+
+authenticate * by radius
 .Ed
 .Sh SEE ALSO
-.Xr authenticate 3 ,
-.Xr radiusd 8
+.Xr radiusd 8 ,
+.Xr radiusd_bsdauth 8 ,
+.Xr radiusd_radius 8 ,
+.Xr radiusd_standard 8

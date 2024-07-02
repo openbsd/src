@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2024/07/01 03:13:42 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2024/07/02 00:00:12 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,14 +37,17 @@
 #include "log.h"
 
 static struct	 radiusd *conf;
-static struct	 radiusd_authentication authen;
-static struct	 radiusd_client client;
+static struct	 radiusd_authentication  authen;
+static struct	 radiusd_module		*conf_module = NULL;
+static struct	 radiusd_client		 client;
 
-static struct	 radiusd_module *find_module (const char *);
-static void	 free_str_l (void *);
-static struct	 radiusd_module_ref *create_module_ref (const char *);
-static void	 radiusd_authentication_init (struct radiusd_authentication *);
-static void	 radiusd_client_init (struct radiusd_client *);
+static struct	 radiusd_module *find_module(const char *);
+static void	 free_str_l(void *);
+static struct	 radiusd_module_ref *create_module_ref(const char *);
+static void	 radiusd_authentication_init(struct radiusd_authentication *);
+static void	 radiusd_client_init(struct radiusd_client *);
+static const char
+		*default_module_path(const char *);
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -89,17 +92,18 @@ typedef struct {
 %}
 
 %token	INCLUDE LISTEN ON PORT CLIENT SECRET LOAD MODULE MSGAUTH_REQUIRED
-%token	AUTHENTICATE AUTHENTICATE_BY DECORATE_BY SET
+%token	AUTHENTICATE AUTHENTICATE_BY BY DECORATE_BY SET
 %token	ERROR YES NO
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		optport
 %type	<v.listen>		listen_addr
-%type	<v.str_l>		str_l
+%type	<v.str_l>		str_l optdeco
 %type	<v.prefix>		prefix
 %type	<v.yesno>		yesno
 %type	<v.string>		strnum
 %type	<v.string>		key
+%type	<v.string>		optstring
 %%
 
 grammar		: /* empty */
@@ -265,7 +269,45 @@ prefix		: STRING '/' NUMBER {
 			freeaddrinfo(res);
 		}
 		;
-module		: MODULE LOAD STRING STRING {
+module		: MODULE STRING optstring {
+			const char *path = $3;
+			if (path == NULL && (path = default_module_path($2))
+			    == NULL) {
+				yyerror("default path for `%s' is unknown.",
+				    $2);
+				free($2);
+				free($3);
+				YYERROR;
+			}
+			conf_module = radiusd_module_load(conf, path, $2);
+			free($2);
+			free($3);
+			if (conf_module == NULL)
+				YYERROR;
+			TAILQ_INSERT_TAIL(&conf->module, conf_module, next);
+			conf_module = NULL;
+		}
+		| MODULE STRING optstring {
+			const char *path = $3;
+			if (path == NULL && (path = default_module_path($2))
+			    == NULL) {
+				yyerror("default path for `%s' is unknown.",
+				    $2);
+				free($2);
+				free($3);
+				YYERROR;
+			}
+			conf_module = radiusd_module_load(conf, path, $2);
+			free($2);
+			free($3);
+			if (conf_module == NULL)
+				YYERROR;
+		} '{' moduleopts '}' {
+			TAILQ_INSERT_TAIL(&conf->module, conf_module, next);
+			conf_module = NULL;
+		}
+		/* following syntaxes are for backward compatilities */
+		| MODULE LOAD STRING STRING {
 			struct radiusd_module *module;
 			if ((module = radiusd_module_load(conf, $4, $3))
 			    == NULL) {
@@ -303,32 +345,102 @@ setstrerr:
 		}
 		;
 
+moduleopts	: moduleopts '\n' moduleopt
+		| moduleopt
+		;
+moduleopt	: /* empty */
+		| SET key str_l {
+			if ($2[0] == '_') {
+				yyerror("setting `%s' is not allowed", $2);
+				free($2);
+				free_str_l(&$3);
+				YYERROR;
+			}
+			if (radiusd_module_set(conf_module, $2, $3.c, $3.v)) {
+				yyerror("syntax error by module `%s'",
+				    conf_module->name);
+				free($2);
+				free_str_l(&$3);
+				YYERROR;
+			}
+			free($2);
+			free_str_l(&$3);
+		}
+		;
+
 key		: STRING
 		| SECRET { $$ = strdup("secret"); }
 		;
 
-authenticate	: AUTHENTICATE {
+authenticate	: AUTHENTICATE str_l BY STRING optdeco {
+			int				 i;
+			struct radiusd_authentication	*auth;
+			struct radiusd_module_ref	*modref, *modreft;
+
+			if ((auth = calloc(1,
+			    sizeof(struct radiusd_authentication))) == NULL) {
+				yyerror("Out of memory: %s", strerror(errno));
+				goto authenticate_error;
+			}
+			modref = create_module_ref($4);
+			if ((auth->auth = create_module_ref($4)) == NULL)
+				goto authenticate_error;
+			auth->username = $2.v;
+			TAILQ_INIT(&auth->deco);
+			for (i = 0; i < $5.c; i++) {
+				if ((modref = create_module_ref($5.v[i]))
+				    == NULL)
+					goto authenticate_error;
+				TAILQ_INSERT_TAIL(&auth->deco, modref, next);
+			}
+			TAILQ_INSERT_TAIL(&conf->authen, auth, next);
+			auth = NULL;
+ authenticate_error:
+			if (auth != NULL) {
+				free(auth->auth);
+				TAILQ_FOREACH_SAFE(modref, &auth->deco, next,
+				    modreft) {
+					TAILQ_REMOVE(&auth->deco, modref, next);
+					free(modref);
+				}
+				free_str_l(&$2);
+			}
+			free(auth);
+			free($4);
+			free_str_l(&$5);
+		}
+		/* the followings are for backward compatibilities */
+		| AUTHENTICATE str_l optnl '{' {
 			radiusd_authentication_init(&authen);
-		} str_l optnl '{' authopts '}' {
-			struct radiusd_authentication *a;
+			authen.username = $2.v;
+		} authopts '}' {
+			int				 i;
+			struct radiusd_authentication	*a;
 
 			if (authen.auth == NULL) {
-				free_str_l(&$3);
 				yyerror("no authentication module specified");
+				for (i = 0; authen.username[i] != NULL; i++)
+					free(authen.username[i]);
+				free(authen.username);
 				YYERROR;
 			}
 			if ((a = calloc(1,
 			    sizeof(struct radiusd_authentication))) == NULL) {
-				free_str_l(&$3);
+				for (i = 0; authen.username[i] != NULL; i++)
+					free(authen.username[i]);
+				free(authen.username);
 				goto outofmemory;
 			}
 			a->auth = authen.auth;
 			authen.auth = NULL;
 			a->deco = authen.deco;
-			a->username = $3.v;
-
+			a->username = authen.username;
 			TAILQ_INSERT_TAIL(&conf->authen, a, next);
 		}
+		;
+
+optdeco		: { $$.c = 0; $$.v = NULL; }
+		| DECORATE_BY str_l { $$ = $2; }
 		;
 
 authopts	: authopts '\n' authopt
@@ -396,6 +508,9 @@ strnum		: STRING	{ $$ = $1; }
 optnl		:
 		| '\n'
 		;
+optstring	: { $$ = NULL; }
+		| STRING { $$ = $1; }
+		;
 yesno		: YES { $$ = true; }
 		| NO  { $$ = false; }
 		;
@@ -435,6 +550,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "authenticate",		AUTHENTICATE},
 		{ "authenticate-by",		AUTHENTICATE_BY},
+		{ "by",				BY},
 		{ "client",			CLIENT},
 		{ "decorate-by",		DECORATE_BY},
 		{ "include",			INCLUDE},
@@ -723,7 +839,6 @@ parse_config(const char *filename, struct radiusd *radiusd)
 {
 	int				 errors = 0;
 	struct radiusd_listen		*l;
-	struct radiusd_module_ref	*m, *mt;
 
 	conf = radiusd;
 	radiusd_conf_init(conf);
@@ -757,10 +872,8 @@ parse_config(const char *filename, struct radiusd *radiusd)
 		l->sock = -1;
 	}
 	radiusd_authentication_init(&authen);
-	TAILQ_FOREACH_SAFE(m, &authen.deco, next, mt) {
-		TAILQ_REMOVE(&authen.deco, m, next);
-		free(m);
-	}
+	if (conf_module != NULL)
+		radiusd_module_unload(conf_module);
 out:
 	conf = NULL;
 	return (errors ? -1 : 0);
@@ -825,4 +938,25 @@ radiusd_client_init(struct radiusd_client *clnt)
 {
 	memset(clnt, 0, sizeof(struct radiusd_client));
 	clnt->msgauth_required = true;
+}
+
+static const char *
+default_module_path(const char *name)
+{
+	unsigned i;
+	struct {
+		const char *name;
+		const char *path;
+	} module_paths[] = {
+		{ "bsdauth",	"/usr/libexec/radiusd/radiusd_bsdauth" },
+		{ "radius",	"/usr/libexec/radiusd/radiusd_radius" },
+		{ "standard",	"/usr/libexec/radiusd/radiusd_standard" }
+	};
+
+	for (i = 0; i < nitems(module_paths); i++) {
+		if (strcmp(name, module_paths[i].name) == 0)
+			return (module_paths[i].path);
+	}
+
+	return (NULL);
 }
