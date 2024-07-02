@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.396 2024/06/24 12:19:19 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.397 2024/07/02 18:33:47 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -465,8 +465,14 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		SET(flags, IP_REDIRECT);
 #endif
 
-	if (ip_forwarding != 0)
+	switch (ip_forwarding) {
+	case 2:
+		SET(flags, IP_FORWARDING_IPSEC);
+		/* FALLTHROUGH */
+	case 1:
 		SET(flags, IP_FORWARDING);
+		break;
+	}
 	if (ip_directedbcast)
 		SET(flags, IP_ALLOWBROADCAST);
 
@@ -529,7 +535,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 			 * ip_output().)
 			 */
 			KERNEL_LOCK();
-			error = ip_mforward(m, ifp);
+			error = ip_mforward(m, ifp, flags);
 			KERNEL_UNLOCK();
 			if (error) {
 				ipstat_inc(ips_cantforward);

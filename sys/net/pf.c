@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1199 2024/06/21 12:51:29 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1200 2024/07/02 18:33:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7958,20 +7958,26 @@ done:
 	case PF_AFRT:
 		if (pf_translate_af(&pd)) {
 			action = PF_DROP;
-			break;
+			goto out;
 		}
 		pd.m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		switch (pd.naf) {
 		case AF_INET:
 			if (pd.dir == PF_IN) {
-				int flags;
+				int flags = IP_REDIRECT;
 
-				if (ip_forwarding == 0) {
+				switch (ip_forwarding) {
+				case 2:
+					SET(flags, IP_FORWARDING_IPSEC);
+					/* FALLTHROUGH */
+				case 1:
+					SET(flags, IP_FORWARDING);
+					break;
+				default:
 					ipstat_inc(ips_cantforward);
 					action = PF_DROP;
-					break;
+					goto out;
 				}
-				flags = IP_FORWARDING | IP_REDIRECT;
 				if (ip_directedbcast)
 					SET(flags, IP_ALLOWBROADCAST);
 				ip_forward(pd.m, ifp, NULL, flags);
@@ -7985,7 +7991,7 @@ done:
 				if (ip6_forwarding == 0) {
 					ip6stat_inc(ip6s_cantforward);
 					action = PF_DROP;
-					break;
+					goto out;
 				}
 				flags = IPV6_FORWARDING | IPV6_REDIRECT;
 				ip6_forward(pd.m, NULL, flags);
@@ -7993,10 +7999,8 @@ done:
 				ip6_output(pd.m, NULL, NULL, 0, NULL, NULL);
 			break;
 		}
-		if (action != PF_DROP) {
-			pd.m = NULL;
-			action = PF_PASS;
-		}
+		pd.m = NULL;
+		action = PF_PASS;
 		break;
 #endif /* INET6 */
 	case PF_DROP:
@@ -8036,6 +8040,7 @@ done:
 			st->if_index_out = ifp->if_index;
 	}
 
+ out:
 	*m0 = pd.m;
 
 	pf_state_unref(st);
