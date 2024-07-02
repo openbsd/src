@@ -2614,6 +2614,9 @@
 ./usr/share/man/man8/rad.8
 ./usr/share/man/man8/radiusctl.8
 ./usr/share/man/man8/radiusd.8
+./usr/share/man/man8/radiusd_bsdauth.8
+./usr/share/man/man8/radiusd_radius.8
+./usr/share/man/man8/radiusd_standard.8
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
 ./usr/share/man/man8/rc.8
