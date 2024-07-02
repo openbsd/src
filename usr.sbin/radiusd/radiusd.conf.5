@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.22 2024/07/02 00:35:56 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.23 2024/07/02 06:01:22 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -43,7 +43,7 @@ and a
 .Ar port
 to listen on.
 When
-.Ar accouting
+.Ar accounting
 is specified,
 it is used for waiting for RADIUS accounting messages.
 The default port number is 1812 for authentication and 1813 for accounting.
@@ -72,7 +72,7 @@ and
 When multiple modules of the same path are loaded with different names,
 each module can have configurations respectively and work independently.
 .Pp
-The following module are predefined:
+The following modules are predefined:
 .Bl -tag -width Ds
 .It Do bsdauth Dc module
 The
@@ -108,7 +108,7 @@ and
 for the module specified by
 .Ar module .
 Notice that
-.Ar key ,
+.Ar key
 and
 .Ar value
 must be quoted to be distinguished from the reserved word if needed.
@@ -116,8 +116,8 @@ must be quoted to be distinguished from the reserved word if needed.
 .It Ic authenticate Ar username-pattern ... Ic by Ar auth Oo Ic decorated-by \
 Ar deco ...  Oc
 Specify an authentication configuration for the users specified by
-.Ar username-pattern.
-The users matched by the pattern is authenticated by the module
+.Ar username-pattern .
+The users matched by the pattern are authenticated by the module
 specified by
 .Ar auth .
 Use shell globbing rules for the pattern;
