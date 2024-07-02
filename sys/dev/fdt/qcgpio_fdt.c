@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.3 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.4 2024/07/02 19:43:52 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -100,7 +100,8 @@ qcgpio_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm");
+	return (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm") ||
+	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-tlmm"));
 }
 
 void
@@ -116,7 +117,10 @@ qcgpio_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_npins = 230;
+	if (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-tlmm"))
+		sc->sc_npins = 230;
+	else
+		sc->sc_npins = 239;
 	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
