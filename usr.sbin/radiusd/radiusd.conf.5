@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.21 2024/07/02 00:33:51 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.22 2024/07/02 00:35:56 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -35,8 +35,7 @@ Keywords may be specified multiple times within the configuration file.
 The configuration options are as follows:
 .Bl -tag -width Ds
 .It Xo
-.Ic listen on Oo Ic accounting Oc Ar address
-.Ic port Ar port
+.Ic listen on Ar address Oo Ic accounting Oc Ic port Ar port
 .Xc
 Specify an
 .Ar address
