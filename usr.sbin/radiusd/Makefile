@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 2023/09/08 05:56:22 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.3 2024/07/02 16:18:11 deraadt Exp $
+
 SUBDIR=		radiusd
 SUBDIR+=	radiusd_bsdauth
 SUBDIR+=	radiusd_radius

@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 2024/07/02 00:00:12 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.4 2024/07/02 16:18:11 deraadt Exp $
+
 PROG=		radiusd_radius
 BINDIR=		/usr/libexec/radiusd
 SRCS=		radiusd_radius.c radiusd_module.c util.c imsg_subr.c log.c

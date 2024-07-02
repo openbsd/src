@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2017/02/21 05:17:48 yasuoka Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2024/07/02 16:18:11 deraadt Exp $
+
 .PATH:		${.CURDIR}/..
 CFLAGS+=	-I${.CURDIR}/..
 CFLAGS+=	-Wall -Wextra -Wshadow -Wno-unused-parameter
