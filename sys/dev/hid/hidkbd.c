@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.12 2024/01/03 21:41:44 tobhe Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.13 2024/07/02 05:50:02 gkoehler Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -141,9 +141,26 @@ static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 60, 127 },	/* F3 -> audio mute */
 	{ 61, 129 },	/* F4 -> audio lower */
 	{ 62, 128 },	/* F5 -> audio raise */
+	{ 63, 83 },	/* F6 -> num lock */
 	{ 65, 234 },	/* F8 -> backlight toggle */
 	{ 66, 236 },	/* F9 -> backlight lower */
 	{ 67, 235 },	/* F10 -> backlight raise */
+	{ 39, 84 },	/* keypad divide */
+	{ 19, 85 },	/* keypad multiply */
+	{ 51, 86 },	/* keypad substract */
+	{ 56, 87 },	/* keypad add */
+	{ 13, 89 },	/* keypad 1 */
+	{ 14, 90 },	/* keypad 2 */
+	{ 15, 91 },	/* keypad 3 */
+	{ 24, 92 },	/* keypad 4 */
+	{ 12, 93 },	/* keypad 5 */
+	{ 18, 94 },	/* keypad 6 */
+	{ 36, 95 },	/* keypad 7 */
+	{ 37, 96 },	/* keypad 8 */
+	{ 38, 97 },	/* keypad 9 */
+	{ 16, 98 },	/* keypad 0 */
+	{ 55, 99 },	/* keypad decimal */
+	{ 45, 103 },	/* keypad equal */
 #else
 	{ 63, 102 },	/* F6 -> sleep */
 	{ 67, 127 },	/* F10 -> audio mute */
