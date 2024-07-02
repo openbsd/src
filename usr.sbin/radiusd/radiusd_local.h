@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.10 2024/07/01 05:20:01 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.11 2024/07/02 00:33:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -44,6 +44,7 @@ struct radiusd_listen {
 	struct radiusd				*radiusd;
 	struct event				 ev;
 	int					 sock;
+	int					 accounting;
 	union {
 		struct sockaddr_in		 ipv4;
 		struct sockaddr_in6		 ipv6;
@@ -96,6 +97,15 @@ struct radiusd_authentication {
 	TAILQ_ENTRY(radiusd_authentication)	  next;
 };
 
+struct radiusd_accounting {
+	char					**username;
+	char					 *secret;
+	struct radiusd_module_ref		 *acct;
+	int					  quick;
+	TAILQ_HEAD(,radiusd_module_ref)		  deco;
+	TAILQ_ENTRY(radiusd_accounting)		  next;
+};
+
 struct radiusd {
 	struct radiusd_listen_head		 listen;
 	struct event				 ev_sigterm;
@@ -104,6 +114,7 @@ struct radiusd {
 	struct event				 ev_sigchld;
 	TAILQ_HEAD(,radiusd_module)		 module;
 	TAILQ_HEAD(,radiusd_authentication)	 authen;
+	TAILQ_HEAD(,radiusd_accounting)		 account;
 	TAILQ_HEAD(,radiusd_client)		 client;
 	TAILQ_HEAD(,radius_query)		 query;
 	int					 error;
@@ -151,6 +162,9 @@ struct radius_query {
 #define	MODULE_DO_ACCSREQ(_m)					\
 	((_m)->fd >= 0 &&					\
 	    ((_m)->capabilities & RADIUSD_MODULE_CAP_ACCSREQ) != 0)
+#define	MODULE_DO_ACCTREQ(_m)					\
+	((_m)->fd >= 0 &&					\
+	    ((_m)->capabilities & RADIUSD_MODULE_CAP_ACCTREQ) != 0)
 #define	MODULE_DO_REQDECO(_m)					\
 	((_m)->fd >= 0 &&					\
 	    ((_m)->capabilities & RADIUSD_MODULE_CAP_REQDECO) != 0)

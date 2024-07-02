@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.16 2024/02/09 07:41:32 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.17 2024/07/02 00:33:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -50,6 +50,8 @@ static void	(*module_request_decoration) (void *, u_int, const u_char *,
 		    size_t) = NULL;
 static void	(*module_response_decoration) (void *, u_int, const u_char *,
 		    size_t, const u_char *, size_t) = NULL;
+static void	(*module_accounting_request) (void *, u_int, const u_char *,
+		    size_t) = NULL;
 
 struct module_base {
 	void			*ctx;
@@ -98,6 +100,7 @@ module_create(int sock, void *ctx, struct module_handlers *handler)
 	module_config_set = handler->config_set;
 	module_request_decoration = handler->request_decoration;
 	module_response_decoration = handler->response_decoration;
+	module_accounting_request = handler->accounting_request;
 	module_start_module = handler->start;
 	module_stop_module = handler->stop;
 
@@ -156,6 +159,8 @@ module_load(struct module_base *base)
 		load.cap |= RADIUSD_MODULE_CAP_REQDECO;
 	if (module_response_decoration != NULL)
 		load.cap |= RADIUSD_MODULE_CAP_RESDECO;
+	if (module_accounting_request != NULL)
+		load.cap |= RADIUSD_MODULE_CAP_ACCTREQ;
 	imsg_compose(&base->ibuf, IMSG_RADIUSD_MODULE_LOAD, 0, 0, -1, &load,
 	    sizeof(load));
 	imsg_flush(&base->ibuf);
@@ -447,6 +452,7 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 	case IMSG_RADIUSD_MODULE_REQDECO:
 	case IMSG_RADIUSD_MODULE_RESDECO0_REQ:
 	case IMSG_RADIUSD_MODULE_RESDECO:
+	case IMSG_RADIUSD_MODULE_ACCTREQ:
 	    {
 		struct radiusd_module_radpkt_arg	*accessreq;
 		int					 chunklen;
@@ -459,6 +465,13 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 				break;
 			}
 			typestr = "ACCSREQ";
+		} else if (imsg->hdr.type == IMSG_RADIUSD_MODULE_ACCTREQ) {
+			if (module_accounting_request == NULL) {
+				syslog(LOG_ERR, "Received ACCTREQ message, but "
+				    "module doesn't support");
+				break;
+			}
+			typestr = "ACCTREQ";
 		} else if (imsg->hdr.type == IMSG_RADIUSD_MODULE_REQDECO) {
 			if (module_request_decoration == NULL) {
 				syslog(LOG_ERR, "Received REQDECO message, but "
@@ -539,14 +552,16 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 			}
 			memcpy(base->radpkt2, base->radpkt, base->radpktoff);
 			base->radpkt2len = base->radpktoff;
-		} else {
+		} else if (imsg->hdr.type == IMSG_RADIUSD_MODULE_RESDECO) {
 			module_response_decoration(base->ctx, accessreq->q_id,
 			    base->radpkt2, base->radpkt2len, base->radpkt,
 			    base->radpktoff);
 			base->radpkt2len = 0;
-		}
+		} else
+			module_accounting_request(base->ctx, accessreq->q_id,
+			    base->radpkt, base->radpktoff);
 		base->radpktoff = 0;
-accsreq_out:
+ accsreq_out:
 		break;
 	    }
 	}

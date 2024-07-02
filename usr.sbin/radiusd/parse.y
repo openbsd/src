@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2024/07/02 00:00:12 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2024/07/02 00:33:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,15 +92,15 @@ typedef struct {
 %}
 
 %token	INCLUDE LISTEN ON PORT CLIENT SECRET LOAD MODULE MSGAUTH_REQUIRED
-%token	AUTHENTICATE AUTHENTICATE_BY BY DECORATE_BY SET
-%token	ERROR YES NO
+%token	ACCOUNT ACCOUNTING AUTHENTICATE AUTHENTICATE_BY BY DECORATE_BY QUICK
+%token	SET TO ERROR YES NO
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.number>		optport
+%type	<v.number>		optport optacct
 %type	<v.listen>		listen_addr
 %type	<v.str_l>		str_l optdeco
 %type	<v.prefix>		prefix
-%type	<v.yesno>		yesno
+%type	<v.yesno>		yesno optquick
 %type	<v.string>		strnum
 %type	<v.string>		key
 %type	<v.string>		optstring
@@ -113,6 +113,7 @@ grammar		: /* empty */
 		| grammar client '\n'
 		| grammar module '\n'
 		| grammar authenticate '\n'
+		| grammar account '\n'
 		| grammar error '\n'
 		;
 
@@ -143,7 +144,7 @@ outofmemory:
 			*n = $3;
 			TAILQ_INSERT_TAIL(&conf->listen, n, next);
 		}
-listen_addr	: STRING optport {
+listen_addr	: STRING optacct optport {
 			int		 gai_errno;
 			struct addrinfo hints, *res;
 
@@ -164,11 +165,22 @@ listen_addr	: STRING optport {
 			free($1);
 			$$.stype = res->ai_socktype;
 			$$.sproto = res->ai_protocol;
+			$$.accounting = $2;
 			memcpy(&$$.addr, res->ai_addr, res->ai_addrlen);
-			$$.addr.ipv4.sin_port = ($2 == 0)?
-			    htons(RADIUS_DEFAULT_PORT) : htons($2);
+			if ($3 != 0)
+				$$.addr.ipv4.sin_port = htons($3);
+			else if ($2)
+				$$.addr.ipv4.sin_port =
+				    htons(RADIUS_ACCT_DEFAULT_PORT);
+			else
+				$$.addr.ipv4.sin_port =
+				    htons(RADIUS_DEFAULT_PORT);
+
 			freeaddrinfo(res);
 		}
+optacct		: ACCOUNTING { $$ = 1; }
+		| { $$ = 0; }
+		;
 optport		: { $$ = 0; }
 		| PORT NUMBER	{ $$ = $2; }
 		;
@@ -476,6 +488,52 @@ authopt		: AUTHENTICATE_BY STRING {
 			free_str_l(&$2);
 		}
 		;
+
+account		: ACCOUNT optquick str_l TO STRING optdeco {
+			int				 i, error = 1;
+			struct radiusd_accounting	*acct;
+			struct radiusd_module_ref	*modref, *modreft;
+
+			if ((acct = calloc(1,
+			    sizeof(struct radiusd_authentication))) == NULL) {
+				yyerror("Out of memory: %s", strerror(errno));
+				goto account_error;
+			}
+			if ((acct->acct = create_module_ref($5)) == NULL)
+				goto account_error;
+			acct->username = $3.v;
+			acct->quick = $2;
+			TAILQ_INIT(&acct->deco);
+			for (i = 0; i < $6.c; i++) {
+				if ((modref = create_module_ref($6.v[i]))
+				    == NULL)
+					goto account_error;
+				TAILQ_INSERT_TAIL(&acct->deco, modref, next);
+			}
+			TAILQ_INSERT_TAIL(&conf->account, acct, next);
+			acct = NULL;
+			error = 0;
+ account_error:
+			if (acct != NULL) {
+				free(acct->acct);
+				TAILQ_FOREACH_SAFE(modref, &acct->deco, next,
+				    modreft) {
+					TAILQ_REMOVE(&acct->deco, modref, next);
+					free(modref);
+				}
+				free_str_l(&$3);
+			}
+			free(acct);
+			free($5);
+			free_str_l(&$6);
+			if (error > 0)
+				YYERROR;
+		}
+		;
+
+optquick	: { $$ = 0; }
+		| QUICK { $$ = 1; }
+
 str_l		: str_l strnum {
 			int	  i;
 			char	**v;
@@ -548,6 +606,8 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "account",			ACCOUNT},
+		{ "accounting",			ACCOUNTING},
 		{ "authenticate",		AUTHENTICATE},
 		{ "authenticate-by",		AUTHENTICATE_BY},
 		{ "by",				BY},
@@ -561,8 +621,10 @@ lookup(char *s)
 		{ "no",				NO},
 		{ "on",				ON},
 		{ "port",			PORT},
+		{ "quick",			QUICK},
 		{ "secret",			SECRET},
 		{ "set",			SET},
+		{ "to",				TO},
 		{ "yes",			YES},
 	};
 	const struct keywords	*p;

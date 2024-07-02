@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.43 2024/07/01 23:53:30 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.44 2024/07/02 00:33:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -63,7 +63,11 @@ static void		 radiusd_on_sighup(int, short, void *);
 static void		 radiusd_on_sigchld(int, short, void *);
 static void		 raidus_query_access_request(struct radius_query *);
 static void		 radius_query_access_response(struct radius_query *);
+static void		 raidus_query_accounting_request(
+			    struct radiusd_accounting *, struct radius_query *);
+static void		 radius_query_accounting_response(struct radius_query *);
 static const char	*radius_code_string(int);
+static const char	*radius_acct_status_type_string(uint32_t);
 static int		 radiusd_access_response_fixup (struct radius_query *);
 
 
@@ -89,9 +93,11 @@ static void		 radiusd_module_request_decoration(
 			    struct radiusd_module *, struct radius_query *);
 static void		 radiusd_module_response_decoration(
 			    struct radiusd_module *, struct radius_query *);
-static void		 close_stdio(void);
+static void		 radiusd_module_account_request(struct radiusd_module *,
+			    struct radius_query *);
 static int		 imsg_compose_radius_packet(struct imsgbuf *,
 			    uint32_t, u_int, RADIUS_PACKET *);
+static void		 close_stdio(void);
 
 static u_int		 radius_query_id_seq = 0;
 int			 debug = 0;
@@ -405,8 +411,10 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 	static char			 username[256];
 	char				 peerstr[NI_MAXHOST + NI_MAXSERV + 30];
 	struct radiusd_authentication	*authen;
+	struct radiusd_accounting	*accounting;
 	struct radiusd_client		*client;
 	struct radius_query		*q = NULL;
+	uint32_t			 acct_status;
 #define in(_x)	(((struct sockaddr_in  *)_x)->sin_addr)
 #define in6(_x)	(((struct sockaddr_in6 *)_x)->sin6_addr)
 
@@ -439,9 +447,19 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 		goto on_error;
 	}
 
+	/* Check the request authenticator if accounting */
+	if ((req_code == RADIUS_CODE_ACCOUNTING_REQUEST ||
+	    listn->accounting) && radius_check_accounting_request_authenticator(
+	    packet, client->secret) != 0) {
+		log_warnx("Received %s(code=%d) from %s id=%d: bad request "
+		    "authenticator", radius_code_string(req_code), req_code,
+		    peerstr, req_id);
+		goto on_error;
+	}
+
 	/* Check the client's Message-Authenticator */
-	if (client->msgauth_required && !radius_has_attr(packet,
-	    RADIUS_TYPE_MESSAGE_AUTHENTICATOR)) {
+	if (client->msgauth_required && !listn->accounting &&
+	    !radius_has_attr(packet, RADIUS_TYPE_MESSAGE_AUTHENTICATOR)) {
 		log_warnx("Received %s(code=%d) from %s id=%d: no message "
 		    "authenticator", radius_code_string(req_code), req_code,
 		    peerstr, req_id);
@@ -503,6 +521,13 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 
 	switch (req_code) {
 	case RADIUS_CODE_ACCESS_REQUEST:
+		if (listn->accounting) {
+			log_info("Received %s(code=%d) from %s id=%d: "
+			    "ignored because the port is for authentication",
+			    radius_code_string(req_code), req_code, peerstr,
+			    req_id);
+			break;
+		}
 		/*
 		 * Find a matching `authenticate' entry
 		 */
@@ -539,6 +564,47 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 
 		raidus_query_access_request(q);
 		return;
+	case RADIUS_CODE_ACCOUNTING_REQUEST:
+		if (!listn->accounting) {
+			log_info("Received %s(code=%d) from %s id=%d: "
+			    "ignored because the port is for accounting",
+			    radius_code_string(req_code), req_code, peerstr,
+			    req_id);
+			break;
+		}
+		if (radius_get_uint32_attr(q->req, RADIUS_TYPE_ACCT_STATUS_TYPE,
+		    &acct_status) != 0)
+			acct_status = 0;
+		/*
+		 * Find a matching `accounting' entry
+		 */
+		TAILQ_FOREACH(accounting, &listn->radiusd->account, next) {
+			if (acct_status == RADIUS_ACCT_STATUS_TYPE_ACCT_ON ||
+			    acct_status == RADIUS_ACCT_STATUS_TYPE_ACCT_OFF) {
+				raidus_query_accounting_request(accounting, q);
+				continue;
+			}
+			for (i = 0; accounting->username[i] != NULL; i++) {
+				if (fnmatch(accounting->username[i], username,
+				    0) == 0)
+					break;
+			}
+			if (accounting->username[i] == NULL)
+				continue;
+			raidus_query_accounting_request(accounting, q);
+			if (accounting->quick)
+				break;
+		}
+		/* pass NULL to hadnle this self without module */
+		raidus_query_accounting_request(NULL, q);
+
+		if ((q->res = radius_new_response_packet(
+		    RADIUS_CODE_ACCOUNTING_RESPONSE, q->req)) == NULL)
+			log_warn("%s: radius_new_response_packet() failed",
+			    __func__);
+		else
+			radius_query_accounting_response(q);
+		break;
 	default:
 		log_info("Received %s(code=%d) from %s id=%d: %s is not "
 		    "supported in this implementation", radius_code_string(
@@ -627,6 +693,53 @@ on_error:
 	radiusd_access_request_aborted(q);
 }
 
+static void
+raidus_query_accounting_request(struct radiusd_accounting *accounting,
+    struct radius_query *q)
+{
+	int		 req_code;
+	uint32_t	 acct_status;
+	char		 buf0[NI_MAXHOST + NI_MAXSERV + 30];
+
+	if (accounting != NULL) {
+		/* handle by the module */
+		if (MODULE_DO_ACCTREQ(accounting->acct->module))
+			radiusd_module_account_request(accounting->acct->module,
+			    q);
+		return;
+	}
+	req_code = radius_get_code(q->req);
+	if (radius_get_uint32_attr(q->req, RADIUS_TYPE_ACCT_STATUS_TYPE,
+	    &acct_status) != 0)
+		acct_status = 0;
+	log_info("Received %s(code=%d) type=%s(%lu) from %s id=%d username=%s "
+	    "q=%u", radius_code_string(req_code), req_code,
+	    radius_acct_status_type_string(acct_status), (unsigned long)
+	    acct_status, addrport_tostring((struct sockaddr *)&q->clientaddr,
+	    q->clientaddrlen, buf0, sizeof(buf0)), q->req_id, q->username,
+	    q->id);
+}
+
+static void
+radius_query_accounting_response(struct radius_query *q)
+{
+	int		 sz, res_id, res_code;
+	char		 buf[NI_MAXHOST + NI_MAXSERV + 30];
+
+	radius_set_response_authenticator(q->res, q->client->secret);
+	res_id = radius_get_id(q->res);
+	res_code = radius_get_code(q->res);
+
+	log_info("Sending %s(code=%d) to %s id=%u q=%u",
+	    radius_code_string(res_code), res_code,
+	    addrport_tostring((struct sockaddr *)&q->clientaddr,
+		    q->clientaddrlen, buf, sizeof(buf)), res_id, q->id);
+
+	if ((sz = sendto(q->listen->sock, radius_get_data(q->res),
+	    radius_get_length(q->res), 0,
+	    (struct sockaddr *)&q->clientaddr, q->clientaddrlen)) <= 0)
+		log_warn("Sending a RADIUS response failed");
+}
 /***********************************************************************
  * Callback functions from the modules
  ***********************************************************************/
@@ -772,6 +885,29 @@ radius_code_string(int code)
 	return ("Unknown");
 }
 
+static const char *
+radius_acct_status_type_string(uint32_t type)
+{
+	int			i;
+	struct _typestrings {
+		uint32_t	 type;
+		const char	*string;
+	} typestrings[] = {
+	    { RADIUS_ACCT_STATUS_TYPE_START,		"Start" },
+	    { RADIUS_ACCT_STATUS_TYPE_STOP,		"Stop" },
+	    { RADIUS_ACCT_STATUS_TYPE_INTERIM_UPDATE,	"Interim-Update" },
+	    { RADIUS_ACCT_STATUS_TYPE_ACCT_ON,		"Accounting-On" },
+	    { RADIUS_ACCT_STATUS_TYPE_ACCT_OFF,		"Accounting-Off" },
+	    { -1,					NULL }
+	};
+
+	for (i = 0; typestrings[i].string != NULL; i++)
+		if (typestrings[i].type == type)
+			return (typestrings[i].string);
+
+	return ("Unknown");
+}
+
 void
 radiusd_conf_init(struct radiusd *conf)
 {
@@ -779,6 +915,7 @@ radiusd_conf_init(struct radiusd *conf)
 	TAILQ_INIT(&conf->listen);
 	TAILQ_INIT(&conf->module);
 	TAILQ_INIT(&conf->authen);
+	TAILQ_INIT(&conf->account);
 	TAILQ_INIT(&conf->client);
 
 	return;
@@ -1603,6 +1740,29 @@ radiusd_module_response_decoration(struct radiusd_module *module,
 	RADIUSD_ASSERT(q->deco != NULL);
 	q->deco->type = IMSG_RADIUSD_MODULE_RESDECO;
 	radiusd_module_reset_ev_handler(module);
+}
+
+static void
+radiusd_module_account_request(struct radiusd_module *module,
+    struct radius_query *q)
+{
+	RADIUS_PACKET				*radpkt;
+
+	if ((radpkt = radius_convert_packet(radius_get_data(q->req),
+	    radius_get_length(q->req))) == NULL) {
+		log_warn("q=%u Could not send ACCSREQ to `%s'", q->id,
+		    module->name);
+		radiusd_access_request_aborted(q);
+		return;
+	}
+	if (imsg_compose_radius_packet(&module->ibuf,
+	    IMSG_RADIUSD_MODULE_ACCTREQ, q->id, radpkt) == -1) {
+		log_warn("q=%u Could not send ACCTREQ to `%s'", q->id,
+		    module->name);
+		radiusd_access_request_aborted(q);
+	}
+	radiusd_module_reset_ev_handler(module);
+	radius_delete_packet(radpkt);
 }
 
 static int

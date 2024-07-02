@@ -20,6 +20,7 @@
 #include "radiusd.h"
 
 struct module_ctx;
+struct imsg;
 
 struct module_handlers {
 	/* Should send IMSG_OK or IMSG_NG */
@@ -42,6 +43,11 @@ struct module_handlers {
 
 	void (*response_decoration)(void *ctx, u_int query_id,
 	    const u_char *req, size_t reqlen, const u_char *res, size_t reslen);
+
+	void (*accounting_request)(void *ctx, u_int query_id, const u_char *pkt,
+	    size_t pktlen);
+
+	void (*dispatch_control)(void *ctx, struct imsg *);
 };
 
 #define SYNTAX_ASSERT(_cond, _msg)				\
@@ -77,6 +83,10 @@ int			 module_reqdeco_done(struct module_base *, u_int,
 			    const u_char *, size_t);
 int			 module_resdeco_done(struct module_base *, u_int,
 			    const u_char *, size_t);
+int			 module_imsg_compose(struct module_base *, uint32_t,
+			    uint32_t, pid_t, int, const void *, size_t);
+int			 module_imsg_composev(struct module_base *, uint32_t,
+			    uint32_t, pid_t, int, const struct iovec *, int);
 
 __END_DECLS
 

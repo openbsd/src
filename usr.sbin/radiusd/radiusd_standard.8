@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_standard.8,v 1.1 2024/07/02 00:00:12 yasuoka Exp $
+.\"	$OpenBSD: radiusd_standard.8,v 1.2 2024/07/02 00:33:51 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2024 Internet Initiative Japan Inc.
@@ -28,7 +28,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility processes files ...
+utility is executed by
+.Xr radiusd 8
+as a module to provide various standard functionalities.
+It can be configured as a module for decoration which modifies request and
+response RADIUS messages.
+Also it can be configured as an accounting module that logs accounting
+information through
+.Xr syslog 3 .
 .Sh CONFIGURATIONS
 The
 .Nm
