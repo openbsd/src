@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.48 2024/05/31 16:10:42 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.49 2024/07/02 17:41:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -777,8 +777,9 @@ merge_ra_interface(char *if_name, char *conf_name, struct ifaddrs *ifap)
 			link_state =
 			    ((struct if_data*)ifa->ifa_data)->ifi_link_state;
 			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			if (sdl->sdl_type == IFT_ETHER &&
-			    sdl->sdl_alen == ETHER_ADDR_LEN) {
+			if (sdl != NULL && (sdl->sdl_type == IFT_ETHER ||
+			    sdl->sdl_type == IFT_CARP) && sdl->sdl_alen ==
+			    ETHER_ADDR_LEN) {
 				has_hw_addr = 1;
 				memcpy(&hw_addr, LLADDR(sdl), ETHER_ADDR_LEN);
 			}
