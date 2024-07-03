@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.86 2024/05/29 10:34:07 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.87 2024/07/03 08:39:43 job Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -263,7 +263,7 @@ log_aspath_error(int error)
 
 	switch (error) {
 	case AS_ERR_LEN:
-		return "inconsitent lenght";
+		return "inconsistent length";
 	case AS_ERR_TYPE:
 		return "unknown segment type";
 	case AS_ERR_BAD:
