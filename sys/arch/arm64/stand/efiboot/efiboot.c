@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.54 2024/07/03 20:12:30 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.55 2024/07/03 22:29:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1114,6 +1114,8 @@ struct smbios_dtb {
 	const char *prod;
 	const char *dtb;
 } smbios_dtb[] = {
+	{ "ASUS", "ASUS Vivobook S 15 S5507",
+	  "qcom/x1e80100-asus-vivobook-s15.dtb" },
 	{ "LENOVO", "21BX",
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
 	{ "LENOVO", "21BY",
