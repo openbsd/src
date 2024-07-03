@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.23 2024/07/02 06:01:22 jmc Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.24 2024/07/03 06:09:13 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2024 $
+.Dd $Mdocdate: July 3 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -188,6 +188,8 @@ module radius {
     set secret "testing123"
     set server "127.0.0.1"
 }
+
+module standard
 
 module strip-realm "/usr/libexec/radiusd/radiusd_standard" {
     set strip-atmark-realm true
