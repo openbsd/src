@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.14 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.15 2024/07/03 01:36:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -187,32 +187,6 @@ __mp_release_all(struct __mp_lock *mpl)
 	__asm volatile("sync" ::: "memory");
 	mpl->mpl_count = 0;
 	hppa_intr_enable(s);
-
-	return (rv);
-}
-
-int
-__mp_release_all_but_one(struct __mp_lock *mpl)
-{
-	int rv = mpl->mpl_count - 2;
-#ifdef WITNESS
-	int i;
-#endif
-
-#ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_release_all_but_one(%p): lock not held - "
-		    "%p != %p\n", mpl, mpl->mpl_cpu, curcpu());
-		db_enter();
-	}
-#endif
-
-#ifdef WITNESS
-	for (i = 0; i < rv; i++)
-		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
-#endif
-
-	mpl->mpl_count = 2;
 
 	return (rv);
 }
