@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.89 2024/04/29 13:01:54 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.90 2024/07/03 21:04:04 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -1170,6 +1170,10 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 {
 	u_long startpa, pa, endpa;
 	vaddr_t va;
+	int cache = PMAP_CACHE_DEV_NGNRNE;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		cache = PMAP_CACHE_CI;
 
 	va = virtual_avail;	/* steal memory from virtual avail. */
 
@@ -1179,8 +1183,7 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE,
-		    PMAP_CACHE_DEV_NGNRNE);
+		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, cache);
 
 	virtual_avail = va;
 

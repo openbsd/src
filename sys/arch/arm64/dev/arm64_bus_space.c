@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_bus_space.c,v 1.8 2021/02/16 12:33:22 kettenis Exp $ */
+/*	$OpenBSD: arm64_bus_space.c,v 1.9 2024/07/03 21:04:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -195,6 +195,8 @@ generic_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		cache = PMAP_CACHE_WB;
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		cache = PMAP_CACHE_CI;
 	if (flags & BUS_SPACE_MAP_POSTED)
 		cache = PMAP_CACHE_DEV_NGNRE;
 
