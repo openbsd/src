@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.58 2024/06/23 21:58:34 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.59 2024/07/03 22:37:00 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1704,6 +1704,13 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dte_sz = GITS_BASER_TTE_SZ(baser) + 1;
 		size = (1ULL << sc->sc_devbits) * sc->sc_dte_sz;
 		size = roundup(size, sc->sc_dtt_pgsz);
+
+		/* FIXME: For now, skip registering MSI controller */
+		if (size / sc->sc_dtt_pgsz > GITS_BASER_SZ_MASK + 1) {
+			printf(": cannot support %u devbits on %lu pgsz\n",
+			    sc->sc_devbits, sc->sc_dtt_pgsz);
+			return;
+		}
 
 		/* Clamp down to maximum configurable num pages */
 		if (size / sc->sc_dtt_pgsz > GITS_BASER_SZ_MASK + 1)
