@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.53 2024/06/20 21:52:08 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.54 2024/07/03 20:12:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1109,10 +1109,24 @@ mdrandom(char *buf, size_t buflen)
 
 #define FW_PATH "/etc/firmware/dtb/"
 
+struct smbios_dtb {
+	const char *vendor;
+	const char *prod;
+	const char *dtb;
+} smbios_dtb[] = {
+	{ "LENOVO", "21BX",
+	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
+	{ "LENOVO", "21BY",
+	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
+};
+
 void *
 efi_fdt(void)
 {
 	extern char *hw_vendor, *hw_prod;
+	size_t vendorlen, prodlen;
+	char dtb[256];
+	int i;
 
 	/* 'mach dtb' has precedence */
 	if (fdt_override != NULL)
@@ -1122,11 +1136,14 @@ efi_fdt(void)
 	if (hw_vendor == NULL || hw_prod == NULL)
 		return fdt_sys;
 
-	if (strcmp(hw_vendor, "LENOVO") == 0) {
-		if (strncmp(hw_prod, "21BX", 4) == 0 ||
-		    strncmp(hw_prod, "21BY", 4) == 0) {
-			fdt_load_override(FW_PATH
-			    "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb");
+	for (i = 0; i < nitems(smbios_dtb); i++) {
+		vendorlen = strlen(smbios_dtb[i].vendor);
+		prodlen = strlen(smbios_dtb[i].prod);
+		if (strncmp(hw_vendor, smbios_dtb[i].vendor, vendorlen) == 0 &&
+		    strncmp(hw_prod, smbios_dtb[i].prod, prodlen) == 0) {
+			snprintf(dtb, sizeof(dtb), "%s%s", FW_PATH,
+			    smbios_dtb[i].dtb);
+			fdt_load_override(dtb);
 			/* TODO: find a better mechanism */
 			cnset(ttydev("fb0"));
 		}
