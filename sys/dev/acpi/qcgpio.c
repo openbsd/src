@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.9 2023/04/11 04:45:11 mglocker Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.10 2024/07/04 18:35:36 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -93,11 +93,13 @@ struct cfdriver qcgpio_cd = {
 const char *qcgpio_hids[] = {
 	"QCOM060C",
 	"QCOM080D",
+	"QCOM0C0C",
 	NULL
 };
 
 int	qcgpio_sc7180_pin_map(int, bus_size_t *);
 int	qcgpio_sc8280xp_pin_map(int, bus_size_t *);
+int	qcgpio_x1e80100_pin_map(int, bus_size_t *);
 
 int	qcgpio_read_pin(void *, int);
 void	qcgpio_write_pin(void *, int, int);
@@ -142,6 +144,9 @@ qcgpio_acpi_attach(struct device *parent, struct device *self, void *aux)
 	} else if (strcmp(aaa->aaa_dev, "QCOM060C") == 0) {
 		sc->sc_npins = 228;
 		sc->sc_pin_map = qcgpio_sc8280xp_pin_map;
+	} else if (strcmp(aaa->aaa_dev, "QCOM0C0C") == 0) {
+		sc->sc_npins = 239;
+		sc->sc_pin_map = qcgpio_x1e80100_pin_map;
 	}
 	KASSERT(sc->sc_npins != 0);
 
@@ -218,6 +223,22 @@ qcgpio_sc8280xp_pin_map(int pin, bus_size_t *off)
 		return 104;
 	case 0x380:
 		return 182;
+	default:
+		return -1;
+	}
+}
+
+int
+qcgpio_x1e80100_pin_map(int pin, bus_size_t *off)
+{
+	switch (pin) {
+	case 3:
+	case 51:
+		return pin;
+	case 0x180:
+		return 67;
+	case 0x3c0:
+		return 3;
 	default:
 		return -1;
 	}
