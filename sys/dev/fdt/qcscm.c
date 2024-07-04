@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.6 2024/06/23 22:04:53 patrick Exp $ */
+/* $OpenBSD: qcscm.c,v 1.7 2024/07/04 20:11:46 kettenis Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -744,8 +744,6 @@ qcscm_uefi_rtc_set(uint32_t off)
 		return 0;
 
 	rtcinfo[0] = off;
-	rtcinfo[1] = 0x10000;
-	rtcinfo[2] = 0;
 
 	if (qcscm_uefi_set_variable(sc, u"RTCInfo", sizeof(u"RTCInfo"),
 	    &qcscm_uefi_rtcinfo_guid, EFI_VARIABLE_NON_VOLATILE |
