@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.35 2024/06/07 06:04:43 jsg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.36 2024/07/04 04:52:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -288,30 +288,6 @@ uvm_addr_destroy(struct uvm_addr_state *uaddr)
 {
 	if (uaddr)
 		(*uaddr->uaddr_functions->uaddr_destroy)(uaddr);
-}
-
-/*
- * Move address forward to satisfy align, offset.
- */
-vaddr_t
-uvm_addr_align(vaddr_t addr, vaddr_t align, vaddr_t offset)
-{
-	vaddr_t result = (addr & ~(align - 1)) + offset;
-	if (result < addr)
-		result += align;
-	return result;
-}
-
-/*
- * Move address backwards to satisfy align, offset.
- */
-vaddr_t
-uvm_addr_align_back(vaddr_t addr, vaddr_t align, vaddr_t offset)
-{
-	vaddr_t result = (addr & ~(align - 1)) + offset;
-	if (result > addr)
-		result -= align;
-	return result;
 }
 
 /*

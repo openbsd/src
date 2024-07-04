@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.h,v 1.7 2017/01/17 17:19:21 stefan Exp $	*/
+/*	$OpenBSD: uvm_addr.h,v 1.8 2024/07/04 04:52:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -75,8 +75,6 @@ struct uvm_addr_functions {
 
 void			 uvm_addr_init(void);
 void			 uvm_addr_destroy(struct uvm_addr_state *);
-vaddr_t			 uvm_addr_align(vaddr_t, vaddr_t, vaddr_t);
-vaddr_t			 uvm_addr_align_back(vaddr_t, vaddr_t, vaddr_t);
 int			 uvm_addr_linsearch(struct vm_map *,
 			    struct uvm_addr_state *, struct vm_map_entry **,
 			    vaddr_t *addr_out, vaddr_t, vsize_t,
