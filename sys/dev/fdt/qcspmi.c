@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcspmi.c,v 1.4 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: qcspmi.c,v 1.5 2024/07/04 21:54:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -34,14 +34,16 @@
 #define  SPMI_VERSION_V2_MIN		0x20010000
 #define  SPMI_VERSION_V3_MIN		0x30000000
 #define  SPMI_VERSION_V5_MIN		0x50000000
-#define SPMI_ARB_APID_MAP(x)	(0x900 + (x) * 0x4)
+#define  SPMI_VERSION_V7_MIN		0x70000000
+#define SPMI_ARB_APID_MAP(sc, x)	((sc)->sc_arb_apid_map + (x) * 0x4)
 #define  SPMI_ARB_APID_MAP_PPID_MASK	0xfff
 #define  SPMI_ARB_APID_MAP_PPID_SHIFT	8
 #define  SPMI_ARB_APID_MAP_IRQ_OWNER	(1 << 14)
 
 /* Channel registers. */
-#define SPMI_CHAN_OFF(x)	(0x10000 * (x))
-#define SPMI_OBSV_OFF(x, y)	(0x10000 * (x) + 0x80 * (y))
+#define SPMI_CHAN_OFF(sc, x)	((sc)->sc_chan_stride * (x))
+#define SPMI_OBSV_OFF(sc, x, y)	\
+	((sc)->sc_obsv_ee_stride * (x) + (sc)->sc_obsv_apid_stride * (y))
 #define SPMI_COMMAND		0x00
 #define  SPMI_COMMAND_OP_EXT_WRITEL	(0 << 27)
 #define  SPMI_COMMAND_OP_EXT_READL	(1 << 27)
@@ -75,14 +77,15 @@
 #define SPMI_IRQ_CLEAR		0x108
 
 /* Intr registers */
-#define SPMI_OWNER_ACC_STATUS(x, y)	(0x10000 * (x) + 0x4 * (y))
+#define SPMI_OWNER_ACC_STATUS(sc, x, y)	\
+	((sc)->sc_chan_stride * (x) + 0x4 * (y))
 
 /* Config registers */
-#define SPMI_OWNERSHIP_TABLE(x)	(0x700 + (x) * 0x4)
+#define SPMI_OWNERSHIP_TABLE(sc, x)	((sc)->sc_ownership_table + (x) * 0x4)
 #define  SPMI_OWNERSHIP_TABLE_OWNER(x)	((x) & 0x7)
 
 /* Misc */
-#define SPMI_MAX_PERIPH		512
+#define SPMI_MAX_PERIPH		1024
 #define SPMI_MAX_PPID		4096
 #define SPMI_PPID_TO_APID_VALID	(1U << 15)
 #define SPMI_PPID_TO_APID_MASK	(0x7fff)
@@ -144,6 +147,12 @@ struct qcspmi_softc {
 
 	struct qcspmi_apid	sc_apid[SPMI_MAX_PERIPH];
 	uint16_t		sc_ppid_to_apid[SPMI_MAX_PPID];
+	uint16_t		sc_max_periph;
+	bus_size_t		sc_chan_stride;
+	bus_size_t		sc_obsv_ee_stride;
+	bus_size_t		sc_obsv_apid_stride;
+	bus_size_t		sc_arb_apid_map;
+	bus_size_t		sc_ownership_table;
 
 	struct spmi_controller	sc_tag;
 	struct interrupt_controller sc_ic;
@@ -180,7 +189,8 @@ qcspmi_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "qcom,spmi-pmic-arb");
+	return OF_is_compatible(faa->fa_node, "qcom,spmi-pmic-arb") ||
+	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-spmi-pmic-arb");
 }
 
 void
@@ -190,15 +200,14 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 	struct qcspmi_softc *sc = (struct qcspmi_softc *)self;
 	struct qcspmi_apid *apid, *last_apid;
 	uint32_t val, ppid, irq_own;
-	struct spmi_attach_args sa;
-	char name[32];
-	uint32_t reg[2];
-	int i, j, node;
+	struct fdt_reg *spmi_reg;
+	int spmi_nreg;
+	int i, j, node, spmi;
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 
-	for (i = 0; i < nitems(qcspmi_regs); i++) {
+	for (i = QCSPMI_REG_CORE; i < QCSPMI_REG_INTR; i++) {
 		j = OF_getindex(faa->fa_node, qcspmi_regs[i], "reg-names");
 		if (j < 0 || j >= faa->fa_nreg) {
 			printf(": no %s registers\n", qcspmi_regs[i]);
@@ -212,12 +221,68 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	/* Support only version 5 for now */
+	spmi = OF_getnodebyname(faa->fa_node, "spmi");
+	if (spmi) {
+		/* Multiple busses; only support the first. */
+		uint32_t reg[8];
+
+		if (OF_getpropintarray(spmi, "reg", reg,
+		    sizeof(reg)) != sizeof(reg)) {
+			printf(": no spmi registers\n");
+			return;
+		}
+
+		spmi_reg = faa->fa_reg;
+		spmi_reg[0].addr = ((uint64_t)reg[0] << 32) | reg[1];
+		spmi_reg[0].size = ((uint64_t)reg[2] << 32) | reg[3];
+		spmi_reg[1].addr = ((uint64_t)reg[4] << 32) | reg[5];
+		spmi_reg[1].size = ((uint64_t)reg[6] << 32) | reg[7];
+		spmi_nreg = 2;
+	} else {
+		/* Single bus. */
+		spmi = faa->fa_node;
+		spmi_reg = faa->fa_reg;
+		spmi_nreg = faa->fa_nreg;
+	}
+
+	for (i = QCSPMI_REG_INTR; i < QCSPMI_REG_MAX; i++) {
+		j = OF_getindex(spmi, qcspmi_regs[i], "reg-names");
+		if (j < 0 || j >= spmi_nreg) {
+			printf(": no %s registers\n", qcspmi_regs[i]);
+			return;
+		}
+
+		if (bus_space_map(sc->sc_iot, spmi_reg[j].addr,
+		    spmi_reg[j].size, 0, &sc->sc_ioh[i])) {
+			printf(": can't map %s registers\n", qcspmi_regs[i]);
+			return;
+		}
+	}
+
+	/* Support only version 5 and 7 for now */
 	val = HREAD4(sc, QCSPMI_REG_CORE, SPMI_VERSION);
 	if (val < SPMI_VERSION_V5_MIN) {
 		printf(": unsupported version 0x%08x\n", val);
 		return;
 	}
+
+	if (val < SPMI_VERSION_V7_MIN) {
+		sc->sc_max_periph = 512;
+		sc->sc_chan_stride = 0x10000;
+		sc->sc_obsv_ee_stride = 0x10000;
+		sc->sc_obsv_apid_stride = 0x00080;
+		sc->sc_arb_apid_map = 0x00900;
+		sc->sc_ownership_table = 0x00700;
+	} else {
+		sc->sc_max_periph = 1024;
+		sc->sc_chan_stride = 0x01000;
+		sc->sc_obsv_ee_stride = 0x08000;
+		sc->sc_obsv_apid_stride = 0x00020;
+		sc->sc_arb_apid_map = 0x02000;
+		sc->sc_ownership_table = 0x00000;
+	}
+
+	KASSERT(sc->sc_max_periph <= SPMI_MAX_PERIPH);
 
 	sc->sc_ee = OF_getpropint(sc->sc_node, "qcom,ee", 0);
 	if (sc->sc_ee > 5) {
@@ -227,7 +292,7 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->sc_intrq);
 
-	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_BIO, qcspmi_intr,
+	sc->sc_ih = fdt_intr_establish(spmi, IPL_BIO, qcspmi_intr,
 	    sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
@@ -236,14 +301,14 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	for (i = 0; i < SPMI_MAX_PERIPH; i++) {
-		val = HREAD4(sc, QCSPMI_REG_CORE, SPMI_ARB_APID_MAP(i));
+	for (i = 0; i < sc->sc_max_periph; i++) {
+		val = HREAD4(sc, QCSPMI_REG_CORE, SPMI_ARB_APID_MAP(sc, i));
 		if (!val)
 			continue;
 		ppid = (val >> SPMI_ARB_APID_MAP_PPID_SHIFT) &
 		    SPMI_ARB_APID_MAP_PPID_MASK;
 		irq_own = val & SPMI_ARB_APID_MAP_IRQ_OWNER;
-		val = HREAD4(sc, QCSPMI_REG_CNFG, SPMI_OWNERSHIP_TABLE(i));
+		val = HREAD4(sc, QCSPMI_REG_CNFG, SPMI_OWNERSHIP_TABLE(sc, i));
 		apid = &sc->sc_apid[i];
 		apid->write_ee = SPMI_OWNERSHIP_TABLE_OWNER(val);
 		apid->irq_ee = 0xff;
@@ -265,7 +330,7 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag.sc_cmd_read = qcspmi_cmd_read;
 	sc->sc_tag.sc_cmd_write = qcspmi_cmd_write;
 
-	sc->sc_ic.ic_node = faa->fa_node;
+	sc->sc_ic.ic_node = spmi;
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish = qcspmi_intr_establish;
 	sc->sc_ic.ic_disestablish = qcspmi_intr_disestablish;
@@ -274,7 +339,11 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_barrier = qcspmi_intr_barrier;
 	fdt_intr_register(&sc->sc_ic);
 
-	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+	for (node = OF_child(spmi); node; node = OF_peer(node)) {
+		struct spmi_attach_args sa;
+		uint32_t reg[2];
+		char name[32];
+
 		if (OF_getpropintarray(node, "reg", reg,
 		    sizeof(reg)) != sizeof(reg))
 			continue;
@@ -330,13 +399,13 @@ qcspmi_cmd_read(void *cookie, uint8_t sid, uint8_t cmd, uint16_t addr,
 	apid = sc->sc_ppid_to_apid[ppid] & SPMI_PPID_TO_APID_MASK;
 
 	HWRITE4(sc, QCSPMI_REG_OBSRVR,
-	    SPMI_OBSV_OFF(sc->sc_ee, apid) + SPMI_COMMAND,
+	    SPMI_OBSV_OFF(sc, sc->sc_ee, apid) + SPMI_COMMAND,
 	    SPMI_COMMAND_OP_EXT_READL | SPMI_COMMAND_ADDR(addr) |
 	    SPMI_COMMAND_LEN(bc));
 
 	for (i = 1000; i > 0; i--) {
 		reg = HREAD4(sc, QCSPMI_REG_OBSRVR,
-		    SPMI_OBSV_OFF(sc->sc_ee, apid) + SPMI_STATUS);
+		    SPMI_OBSV_OFF(sc, sc->sc_ee, apid) + SPMI_STATUS);
 		if (reg & SPMI_STATUS_DONE)
 			break;
 	}
@@ -350,14 +419,14 @@ qcspmi_cmd_read(void *cookie, uint8_t sid, uint8_t cmd, uint16_t addr,
 
 	if (len > 0) {
 		reg = HREAD4(sc, QCSPMI_REG_OBSRVR,
-		    SPMI_OBSV_OFF(sc->sc_ee, apid) + SPMI_RDATA0);
+		    SPMI_OBSV_OFF(sc, sc->sc_ee, apid) + SPMI_RDATA0);
 		memcpy(cbuf, &reg, MIN(len, 4));
 		cbuf += MIN(len, 4);
 		len -= MIN(len, 4);
 	}
 	if (len > 0) {
 		reg = HREAD4(sc, QCSPMI_REG_OBSRVR,
-		    SPMI_OBSV_OFF(sc->sc_ee, apid) + SPMI_RDATA1);
+		    SPMI_OBSV_OFF(sc, sc->sc_ee, apid) + SPMI_RDATA1);
 		memcpy(cbuf, &reg, MIN(len, 4));
 		cbuf += MIN(len, 4);
 		len -= MIN(len, 4);
@@ -394,25 +463,25 @@ qcspmi_cmd_write(void *cookie, uint8_t sid, uint8_t cmd, uint16_t addr,
 
 	if (len > 0) {
 		memcpy(&reg, cbuf, MIN(len, 4));
-		HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(apid) +
+		HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, apid) +
 		    SPMI_WDATA0, reg);
 		cbuf += MIN(len, 4);
 		len -= MIN(len, 4);
 	}
 	if (len > 0) {
 		memcpy(&reg, cbuf, MIN(len, 4));
-		HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(apid) +
+		HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, apid) +
 		    SPMI_WDATA1, reg);
 		cbuf += MIN(len, 4);
 		len -= MIN(len, 4);
 	}
 
-	HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(apid) + SPMI_COMMAND,
+	HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, apid) + SPMI_COMMAND,
 	    SPMI_COMMAND_OP_EXT_WRITEL | SPMI_COMMAND_ADDR(addr) |
 	    SPMI_COMMAND_LEN(bc));
 
 	for (i = 1000; i > 0; i--) {
-		reg = HREAD4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(apid) +
+		reg = HREAD4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, apid) +
 		    SPMI_STATUS);
 		if (reg & SPMI_STATUS_DONE)
 			break;
@@ -492,7 +561,7 @@ qcspmi_intr_establish(void *cookie, int *cells, int ipl,
 	if (error)
 		printf("%s: cannot write irq setting\n", sc->sc_dev.dv_xname);
 
-	HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(ih->ih_apid) +
+	HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, ih->ih_apid) +
 	    SPMI_IRQ_CLEAR, (1U << ih->ih_pin));
 	qcspmi_intr_enable(ih);
 
@@ -522,7 +591,7 @@ qcspmi_intr_enable(void *cookie)
 	uint8_t reg[2];
 	int error;
 
-	HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(ih->ih_apid) +
+	HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, ih->ih_apid) +
 	    SPMI_ACC_ENABLE, SPMI_ACC_ENABLE_BIT);
 
 	error = spmi_cmd_read(&sc->sc_tag, ih->ih_sid, SPMI_CMD_EXT_READL,
@@ -576,22 +645,22 @@ qcspmi_intr(void *arg)
 
 	TAILQ_FOREACH(ih, &sc->sc_intrq, ih_q) {
 		status = HREAD4(sc, QCSPMI_REG_INTR,
-		    SPMI_OWNER_ACC_STATUS(sc->sc_ee, ih->ih_apid / 32));
+		    SPMI_OWNER_ACC_STATUS(sc, sc->sc_ee, ih->ih_apid / 32));
 		if (!(status & (1U << (ih->ih_apid % 32))))
 			continue;
 		status = HREAD4(sc, QCSPMI_REG_CHNLS,
-		    SPMI_CHAN_OFF(ih->ih_apid) + SPMI_ACC_ENABLE);
+		    SPMI_CHAN_OFF(sc, ih->ih_apid) + SPMI_ACC_ENABLE);
 		if (!(status & SPMI_ACC_ENABLE_BIT))
 			continue;
 		status = HREAD4(sc, QCSPMI_REG_CHNLS,
-		    SPMI_CHAN_OFF(ih->ih_apid) + SPMI_IRQ_STATUS);
+		    SPMI_CHAN_OFF(sc, ih->ih_apid) + SPMI_IRQ_STATUS);
 		if (!(status & (1U << ih->ih_pin)))
 			continue;
 
 		ih->ih_func(ih->ih_arg);
 		handled = 1;
 
-		HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(ih->ih_apid) +
+		HWRITE4(sc, QCSPMI_REG_CHNLS, SPMI_CHAN_OFF(sc, ih->ih_apid) +
 		    SPMI_IRQ_CLEAR, (1U << ih->ih_pin));
 		reg = 1U << ih->ih_pin;
 		error = spmi_cmd_write(&sc->sc_tag, ih->ih_sid,
