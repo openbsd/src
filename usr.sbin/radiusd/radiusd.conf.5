@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.25 2024/07/04 05:23:24 jmc Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.26 2024/07/04 13:09:25 sobrado Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -117,7 +117,7 @@ must be quoted to be distinguished from the reserved word if needed.
 .Ic authenticate
 .Ar username-pattern ...
 .Ic by Ar auth
-.Op Ic decorated-by Ar deco ...
+.Op Ic decorate-by Ar deco ...
 .Xc
 Specify an authentication configuration for the users specified by
 .Ar username-pattern .
@@ -142,7 +142,7 @@ The specified modules decorate the RADIUS messages in the configured order.
 .Op Ic quick
 .Ar username-pattern ...
 .Ic to Ar module
-.Op Ic decorated by Ar deco ...
+.Op Ic decorate-by Ar deco ...
 .Xc
 Specify an accounting configuration for the users specified by
 .Ar username-pattern .
