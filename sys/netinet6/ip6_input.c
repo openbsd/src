@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.263 2024/06/20 19:25:42 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.264 2024/07/04 12:50:08 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -416,8 +416,14 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		SET(flags, IPV6_REDIRECT);
 #endif
 
-	if (ip6_forwarding != 0)
+	switch (ip6_forwarding) {
+	case 2:
+		SET(flags, IPV6_FORWARDING_IPSEC);
+		/* FALLTHROUGH */
+	case 1:
 		SET(flags, IPV6_FORWARDING);
+		break;
+	}
 
 	/*
 	 * Without embedded scope ID we cannot find link-local
@@ -491,7 +497,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 			 * must be discarded, else it may be accepted below.
 			 */
 			KERNEL_LOCK();
-			error = ip6_mforward(ip6, ifp, m);
+			error = ip6_mforward(ip6, ifp, m, flags);
 			KERNEL_UNLOCK();
 			if (error) {
 				ip6stat_inc(ip6s_cantforward);
@@ -1442,7 +1448,7 @@ const struct sysctl_bounded_args ipv6ctl_vars[] = {
 #ifdef MROUTING
 	{ IPV6CTL_MRTPROTO, &ip6_mrtproto, SYSCTL_INT_READONLY },
 #endif
-	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 1 },
+	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 2 },
 	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
 	{ IPV6CTL_DEFHLIM, &ip6_defhlim, 0, 255 },
 	{ IPV6CTL_MAXFRAGPACKETS, &ip6_maxfragpackets, 0, 1000 },

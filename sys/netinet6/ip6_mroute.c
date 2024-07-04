@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.142 2024/06/07 08:37:59 jsg Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.143 2024/07/04 12:50:08 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -122,8 +122,8 @@ int mcast6_debug = 1;
 	do { } while (0)
 #endif
 
-int ip6_mdq(struct mbuf *, struct ifnet *, struct rtentry *);
-void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *);
+int ip6_mdq(struct mbuf *, struct ifnet *, struct rtentry *, int);
+void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *, int);
 
 /*
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
@@ -853,7 +853,7 @@ socket6_send(struct socket *so, struct mbuf *mm, struct sockaddr_in6 *src)
  * discard it.
  */
 int
-ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
+ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 {
 	struct rtentry *rt;
 	struct mif6 *mifp;
@@ -902,7 +902,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 
 	/* Entry exists, so forward if necessary */
 	if (rt) {
-		return (ip6_mdq(m, ifp, rt));
+		return (ip6_mdq(m, ifp, rt, flags));
 	} else {
 		/*
 		 * If we don't have a route for packet's origin,
@@ -997,7 +997,7 @@ mf6c_expire_route(struct rtentry *rt, u_int rtableid)
  * Packet forwarding routine once entry in the cache is made
  */
 int
-ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt)
+ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct mif6 *m6, *mifp = (struct mif6 *)ifp->if_mcast6;
@@ -1085,7 +1085,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt)
 		m6->m6_pkt_out++;
 		m6->m6_bytes_out += plen;
 
-		phyint_send6(ifn, ip6, m);
+		phyint_send6(ifn, ip6, m, flags);
 		if_put(ifn);
 	} while ((rt = rtable_iterate(rt)) != NULL);
 
@@ -1093,7 +1093,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt)
 }
 
 void
-phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m)
+phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m, int flags)
 {
 	struct mbuf *mb_copy;
 	struct sockaddr_in6 *dst6, sin6;
@@ -1126,8 +1126,8 @@ phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m)
 		/* XXX: ip6_output will override ip6->ip6_hlim */
 		im6o.im6o_hlim = ip6->ip6_hlim;
 		im6o.im6o_loop = 1;
-		error = ip6_output(mb_copy, NULL, NULL, IPV6_FORWARDING, &im6o,
-		    NULL);
+		error = ip6_output(mb_copy, NULL, NULL, flags | IPV6_FORWARDING,
+		    &im6o, NULL);
 		return;
 	}
 
