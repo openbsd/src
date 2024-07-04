@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.24 2024/07/03 06:09:13 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.25 2024/07/04 05:23:24 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 3 2024 $
+.Dd $Mdocdate: July 4 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -113,8 +113,12 @@ and
 .Ar value
 must be quoted to be distinguished from the reserved word if needed.
 .El
-.It Ic authenticate Ar username-pattern ... Ic by Ar auth Oo Ic decorated-by \
-Ar deco ...  Oc
+.It Xo
+.Ic authenticate
+.Ar username-pattern ...
+.Ic by Ar auth
+.Op Ic decorated-by Ar deco ...
+.Xc
 Specify an authentication configuration for the users specified by
 .Ar username-pattern .
 The users matched by the pattern are authenticated by the module
@@ -133,8 +137,13 @@ matches an authenticating user is used.
 Optionally decoration modules can be specified by
 .Ar deco .
 The specified modules decorate the RADIUS messages in the configured order.
-.It Ic account Oo Ic quick Oc Ar username-pattern ... Ic to Ar module \
-Oo Ic decoratd by Ar deco ... Oc
+.It Xo
+.Ic account
+.Op Ic quick
+.Ar username-pattern ...
+.Ic to Ar module
+.Op Ic decorated by Ar deco ...
+.Xc
 Specify an accounting configuration for the users specified by
 .Ar username-pattern .
 The accounting messages for the users matched by the pattern are handled
@@ -144,13 +153,11 @@ Use shell globbing rules for the patterns;
 multiple patterns can be determined by separating them with space characters.
 When multiple
 .Ic account
-lines are selected,
-all account settings whose
-.Ar username-pattern
-matches an accounting users are used.
-until the user matches the setting with the
-.Ar quick
-option.
+configurations are specified,
+all matches are used;
+if the user matches a pattern with the
+.Ic quick
+option, then processing stops after that configuration.
 .Pp
 Optionally decoration modules can be specified by
 .Ar deco .
