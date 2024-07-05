@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.6 2024/02/03 10:37:25 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.7 2024/07/05 22:53:57 patrick Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -32,7 +32,7 @@ pci_intr_enable_msivec(struct pci_attach_args *pa, int num_vec)
 	pcireg_t reg;
 	int mmc, mme, off;
 
-	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	if ((pa->pa_flags & PCI_FLAGS_MSIVEC_ENABLED) == 0 ||
 	    pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
 		return 1;
 
