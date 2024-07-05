@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.54 2024/07/02 19:44:37 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.55 2024/07/05 22:52:25 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1504,6 +1504,9 @@ int
 dwpcie_sc8280xp_init(struct dwpcie_softc *sc)
 {
 	sc->sc_num_viewport = 8;
+
+	if (OF_getproplen(sc->sc_node, "msi-map") <= 0)
+		return dwpcie_msi_init(sc);
 
 	return 0;
 }
