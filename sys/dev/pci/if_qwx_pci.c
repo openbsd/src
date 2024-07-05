@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.20 2024/06/11 10:06:35 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.21 2024/07/05 21:24:13 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -4130,9 +4130,11 @@ qwx_pci_intr(void *arg)
 				ret = 1;
 		}
 
-		for (i = 0; i < nitems(sc->ext_irq_grp); i++) {
-			if (qwx_dp_service_srng(sc, i))
-				ret = 1;
+		if (test_bit(QWX_FLAG_EXT_IRQ_ENABLED, sc->sc_flags)) {
+			for (i = 0; i < nitems(sc->ext_irq_grp); i++) {
+				if (qwx_dp_service_srng(sc, i))
+					ret = 1;
+			}
 		}
 	}
 
