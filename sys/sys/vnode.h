@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.170 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.171 2024/07/05 05:42:08 jsg Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -642,7 +642,6 @@ void	vn_initialize_syncerd(void);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 
 /* misc */
-int	vn_isdisk(struct vnode *, int *);
 int 	getvnode(struct proc *, int, struct file **);
 
 /* uvm */

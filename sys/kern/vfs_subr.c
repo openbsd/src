@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.319 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.320 2024/07/05 05:42:08 jsg Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2223,18 +2223,6 @@ reassignbuf(struct buf *bp)
 		}
 	}
 	bufinsvn(bp, listheadp);
-}
-
-/*
- * Check if vnode represents a disk device
- */
-int
-vn_isdisk(struct vnode *vp, int *errp)
-{
-	if (vp->v_type != VBLK && vp->v_type != VCHR)
-		return (0);
-
-	return (1);
 }
 
 #ifdef DDB
