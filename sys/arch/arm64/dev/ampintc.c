@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.31 2023/09/22 01:10:43 jsg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.32 2024/07/06 10:39:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -185,7 +185,6 @@ void		*ampintc_intr_establish_fdt(void *, int *, int,
 		    struct cpu_info *, int (*)(void *), void *, char *);
 void		 ampintc_intr_disestablish(void *);
 void		 ampintc_irq_handler(void *);
-const char	*ampintc_intr_string(void *);
 uint32_t	 ampintc_iack(void);
 void		 ampintc_eoi(uint32_t);
 void		 ampintc_set_priority(int, int);
@@ -895,16 +894,6 @@ ampintc_intr_disestablish(void *cookie)
 	intr_restore(psw);
 
 	free(ih, M_DEVBUF, sizeof(*ih));
-}
-
-const char *
-ampintc_intr_string(void *cookie)
-{
-	struct intrhand *ih = (struct intrhand *)cookie;
-	static char irqstr[1 + sizeof("ampintc irq ") + 4];
-
-	snprintf(irqstr, sizeof irqstr, "ampintc irq %d", ih->ih_irq);
-	return irqstr;
 }
 
 /*
