@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.42 2023/05/06 23:06:27 millert Exp $
+.\" $OpenBSD: crontab.5,v 1.43 2024/07/06 15:33:17 jmc Exp $
 .\"
-.Dd $Mdocdate: May 6 2023 $
+.Dd $Mdocdate: July 6 2024 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -122,11 +122,11 @@ The command may be one or more fields long.
 The allowed values for the fields are:
 .Bl -column "day-of-month" "allowed values" -offset indent
 .It Sy field Ta Sy allowed values
-.It Ar minute Ta * or 0\(en59
-.It Ar hour Ta * or 0\(en23
-.It Ar day-of-month Ta * or 1\(en31
-.It Ar month Ta * or 1\(en12 or a name (see below)
-.It Ar day-of-week Ta * or 0\(en7 or a name (0 or 7 is Sunday)
+.It Ar minute Ta *, ~, or 0\(en59
+.It Ar hour Ta *, ~, or 0\(en23
+.It Ar day-of-month Ta *, ~, or 1\(en31
+.It Ar month Ta *, ~, 1\(en12, or a name (see below)
+.It Ar day-of-week Ta *, ~, 0\(en7, or a name (0 or 7 is Sunday)
 .It Ar user Ta a valid username
 .It Op Ar flags Ta runtime flags, denoted with '-'
 .It Ar command Ta text
@@ -147,15 +147,22 @@ For example,
 .Ar hour
 entry specifies execution at hours 8, 9, 10 and 11.
 .Pp
-A random value (within the legal range) may be obtained by using the
+A random value for a field may be obtained using the
 .Ql ~
-character in a field.
-The interval of the random value may be specified explicitly, for example
+character.
+A value is generated every time the tab is loaded.
+On its own,
+it denotes a random value appropriate for the field.
+It can also be used in a range to make the interval more specific.
+If either of the numbers in a range are omitted,
+the appropriate limit (low or high) for that field will be used.
+For example, both
 .Dq 0~30
-will result in a random value between 0 and 30 inclusive.
-If either (or both) of the numbers on either side of the
-.Ql ~
-are omitted, the appropriate limit (low or high) for the field will be used.
+and
+.Dq ~30
+in the
+.Ar minute
+field would result in a random value between 0 and 30.
 .Pp
 Step values can be used in conjunction with ranges.
 Following a range with
