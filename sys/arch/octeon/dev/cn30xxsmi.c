@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.12 2024/05/20 23:13:33 jsg Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.13 2024/07/06 06:15:17 landry Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -197,6 +197,10 @@ cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
 			reg = nutm25_phys[port];
 			break;
 		case BOARD_UBIQUITI_E100:
+			/* XXX Skip the switch port on ERPoe-5.
+			 * XXX There is no driver for it. */
+			if (port > 1 && octeon_boot_info->board_rev_major == 1)
+				return ENOENT;
 		case BOARD_UBIQUITI_E120:
 			if (port > 2)
 				return ENOENT;
