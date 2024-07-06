@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.200 2024/05/14 06:26:05 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.201 2024/07/06 09:53:25 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -88,7 +88,6 @@ int nfs_mkdir(void *);
 int nfs_mknod(void *);
 int nfs_mknodrpc(struct vnode *, struct vnode **, struct componentname *,
 	struct vattr *);
-int nfs_null(struct vnode *, struct ucred *, struct proc *);
 int nfs_open(void *);
 int nfs_pathconf(void *);
 int nfs_print(void *);
@@ -268,22 +267,6 @@ nfs_cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	}
 
 	cache_enter(dvp, vp, cnp);
-}
-
-/*
- * nfs null call from vfs.
- */
-int
-nfs_null(struct vnode *vp, struct ucred *cred, struct proc *procp)
-{
-	struct nfsm_info	 info;
-	int			 error = 0;
-
-	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(0);
-	info.nmi_errorp = &error;
-	error = nfs_request(vp, NFSPROC_NULL, &info);
-	m_freem(info.nmi_mrep);
-	return (error);
 }
 
 /*
