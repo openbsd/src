@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.55 2024/07/03 22:29:37 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.56 2024/07/07 09:38:44 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1120,6 +1120,8 @@ struct smbios_dtb {
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
 	{ "LENOVO", "21BY",
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
+	{ "LENOVO", "83ED",
+	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
 };
 
 void *
