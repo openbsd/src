@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.40 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.41 2024/07/07 01:39:06 jsg Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@ int ufs_getlbns(struct vnode *, daddr_t, struct indir *, int *);
 
 /* ufs_ihash.c */
 void ufs_ihashinit(void);
-struct vnode *ufs_ihashlookup(dev_t, ufsino_t);
 struct vnode *ufs_ihashget(dev_t, ufsino_t);
 int ufs_ihashins(struct inode *);
 void ufs_ihashrem(struct inode *);
