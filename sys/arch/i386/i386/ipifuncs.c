@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.36 2024/05/22 05:51:49 jsg Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.37 2024/07/07 03:03:09 jsg Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -135,12 +135,6 @@ void
 i386_ipi_wbinvd(struct cpu_info *ci)
 {
 	wbinvd();
-}
-
-void
-i386_spurious(void)
-{
-	printf("spurious intr\n");
 }
 
 void

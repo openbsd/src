@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.15 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.16 2024/07/07 03:03:09 jsg Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@ i82489_writereg(int reg, u_int32_t val)
  * was delivered.. "Oh, sorry, i caught you at a bad time".
  * Low-order 4 bits must be all ones.
  */
-extern void i386_spurious(void);
 extern void Xintrspurious(void);
 #define LAPIC_SPURIOUS_VECTOR		0xef
 
