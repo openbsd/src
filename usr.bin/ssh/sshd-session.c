@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd-session.c,v 1.4 2024/06/26 23:16:52 deraadt Exp $ */
+/* $OpenBSD: sshd-session.c,v 1.5 2024/07/08 03:04:34 djm Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -765,7 +765,6 @@ check_ip_options(struct ssh *ssh)
 		fatal("Connection from %.100s port %d with IP opts: %.800s",
 		    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), text);
 	}
-	return;
 }
 
 /* Set the routing domain for this process */
