@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.145 2024/06/24 21:22:14 bluhm Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.146 2024/07/08 14:46:47 mpi Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ cpu_hz_update_sensor(void *args)
 		ci->ci_hz_sensor.value = val;
 	}
 
-	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
+	sched_unpeg_curproc();
 }
 #endif
 

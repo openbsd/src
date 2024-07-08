@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.16 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.17 2024/07/08 14:46:47 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -163,7 +163,7 @@ smr_grace_wait(void)
 		sched_peg_curproc(ci);
 		KASSERT(ci->ci_schedstate.spc_smrgp == smrgp);
 	}
-	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
+	sched_unpeg_curproc();
 #endif /* MULTIPROCESSOR */
 }
 

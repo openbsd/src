@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.2 2022/01/31 05:09:17 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.3 2024/07/08 14:46:47 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -593,7 +593,7 @@ kstat_cpu_enter(void *p)
 void
 kstat_cpu_leave(void *p)
 {
-	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
+	sched_unpeg_curproc();
 }
 
 void

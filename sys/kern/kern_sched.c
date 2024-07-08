@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.97 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.98 2024/07/08 14:46:47 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -646,6 +646,16 @@ sched_peg_curproc(struct cpu_info *ci)
 	SCHED_UNLOCK();
 }
 
+void
+sched_unpeg_curproc(void)
+{
+	struct proc *p = curproc;
+
+	KASSERT(ISSET(p->p_flag, P_CPUPEG));
+
+	atomic_clearbits_int(&p->p_flag, P_CPUPEG);
+}
+
 #ifdef MULTIPROCESSOR
 
 void
@@ -712,7 +722,7 @@ sched_barrier_task(void *arg)
 
 	sched_peg_curproc(ci);
 	cond_signal(&sb->cond);
-	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
+	sched_unpeg_curproc();
 }
 
 void
