@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.99 2024/06/10 12:44:06 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.100 2024/07/08 16:11:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -482,6 +482,7 @@ x509_pubkey_get_ski(X509_PUBKEY *pubkey, const char *fn)
 		return NULL;
 	}
 
+	/* XXX - should allow other keys as well. */
 	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption) {
 		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
 		    fn, nid2str(nid), LN_rsaEncryption);
