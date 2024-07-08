@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.2 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.3 2024/07/08 17:10:18 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -137,5 +137,11 @@ LCRYPTO_USED(RSA_meth_set_sign);
 LCRYPTO_USED(RSA_meth_get_verify);
 LCRYPTO_USED(RSA_meth_set_verify);
 LCRYPTO_USED(ERR_load_RSA_strings);
+#if defined(LIBRESSL_NAMESPACE)
+extern LCRYPTO_USED(RSAPublicKey_it);
+extern LCRYPTO_USED(RSAPrivateKey_it);
+extern LCRYPTO_USED(RSA_PSS_PARAMS_it);
+extern LCRYPTO_USED(RSA_OAEP_PARAMS_it);
+#endif
 
 #endif /* _LIBCRYPTO_RSA_H */

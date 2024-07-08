@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.17 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.18 2024/07/08 17:10:18 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -165,6 +165,7 @@ const ASN1_ITEM RSAPrivateKey_it = {
 	.size = sizeof(RSA),
 	.sname = "RSA",
 };
+LCRYPTO_ALIAS(RSAPrivateKey_it);
 
 
 static const ASN1_AUX RSAPublicKey_aux = {
@@ -201,6 +202,7 @@ const ASN1_ITEM RSAPublicKey_it = {
 	.size = sizeof(RSA),
 	.sname = "RSA",
 };
+LCRYPTO_ALIAS(RSAPublicKey_it);
 
 static int
 rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
@@ -262,6 +264,7 @@ const ASN1_ITEM RSA_PSS_PARAMS_it = {
 	.size = sizeof(RSA_PSS_PARAMS),
 	.sname = "RSA_PSS_PARAMS",
 };
+LCRYPTO_ALIAS(RSA_PSS_PARAMS_it);
 
 RSA_PSS_PARAMS *
 d2i_RSA_PSS_PARAMS(RSA_PSS_PARAMS **a, const unsigned char **in, long len)
@@ -345,6 +348,7 @@ const ASN1_ITEM RSA_OAEP_PARAMS_it = {
 	.size = sizeof(RSA_OAEP_PARAMS),
 	.sname = "RSA_OAEP_PARAMS",
 };
+LCRYPTO_ALIAS(RSA_OAEP_PARAMS_it);
 
 
 RSA_OAEP_PARAMS *

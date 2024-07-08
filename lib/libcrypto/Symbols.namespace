@@ -3327,3 +3327,11 @@ _libre_CBIGNUM_it
 _libre_BIGNUM_it
 _libre_LONG_it
 _libre_ZLONG_it
+_libre_RSAPublicKey_it
+_libre_RSAPrivateKey_it
+_libre_RSA_PSS_PARAMS_it
+_libre_RSA_OAEP_PARAMS_it
+_libre_RSAPublicKey_it
+_libre_RSAPrivateKey_it
+_libre_RSA_PSS_PARAMS_it
+_libre_RSA_OAEP_PARAMS_it
