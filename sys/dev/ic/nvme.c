@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.118 2024/06/30 12:03:17 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.119 2024/07/08 16:07:36 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1538,7 +1538,7 @@ nvme_q_free(struct nvme_softc *sc, struct nvme_queue *q)
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_POSTWRITE);
 
-	if (sc->sc_ops->op_q_alloc != NULL)
+	if (sc->sc_ops->op_q_free != NULL)
 		sc->sc_ops->op_q_free(sc, q);
 
 	nvme_dmamem_free(sc, q->q_cq_dmamem);
