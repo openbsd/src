@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.156 2024/05/07 21:00:18 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.157 2024/07/08 06:00:09 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: May 7 2024 $
+.Dd $Mdocdate: July 8 2024 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -338,7 +338,6 @@ into a nested structure.
 .Op Fl revoke Ar file
 .Op Fl selfsign
 .Op Fl sigopt Ar nm:v
-.Op Fl spkac Ar file
 .Op Fl ss_cert Ar file
 .Op Fl startdate Ar date
 .Op Fl status Ar serial
@@ -469,9 +468,7 @@ Don't output the text form of a certificate to the output file.
 The output file to output certificates to.
 The default is standard output.
 The certificate details will also be printed out to this file in
-PEM format, except that
-.Fl spkac
-outputs DER format.
+PEM format.
 .It Fl outdir Ar directory
 The
 .Ar directory
@@ -514,8 +511,7 @@ certificate requests were signed with, given with
 .Fl keyfile .
 Certificate requests signed with a different key are ignored.
 If
-.Fl gencrl ,
-.Fl spkac ,
+.Fl gencrl
 or
 .Fl ss_cert
 are given,
@@ -532,20 +528,6 @@ signed with the self-signed certificate.
 .It Fl sigopt Ar nm:v
 Pass options to the signature algorithm during sign or certify operations.
 The names and values of these options are algorithm-specific.
-.It Fl spkac Ar file
-A file containing a single Netscape signed public key and challenge,
-and additional field values to be signed by the CA.
-This will usually come from the
-KEYGEN tag in an HTML form to create a new private key.
-It is, however, possible to create SPKACs using the
-.Nm spkac
-utility.
-.Pp
-The file should contain the variable SPKAC set to the value of
-the SPKAC and also the required DN components as name value pairs.
-If it's necessary to include the same component twice,
-then it can be preceded by a number and a
-.Sq \&. .
 .It Fl ss_cert Ar file
 A single self-signed certificate to be signed by the CA.
 .It Fl startdate Ar date
@@ -5402,68 +5384,6 @@ bytes from the alignment provided by
 .Xr malloc 3 .
 .Ar number
 should be between 0 and 16.
-.El
-.Tg spkac
-.Sh SPKAC
-.Bl -hang -width "openssl spkac"
-.It Nm openssl spkac
-.Bk -words
-.Op Fl challenge Ar string
-.Op Fl in Ar file
-.Op Fl key Ar keyfile
-.Op Fl noout
-.Op Fl out Ar file
-.Op Fl passin Ar arg
-.Op Fl pubkey
-.Op Fl spkac Ar spkacname
-.Op Fl spksect Ar section
-.Op Fl verify
-.Ek
-.El
-.Pp
-The
-.Nm spkac
-command processes signed public key and challenge (SPKAC) files.
-It can print out their contents, verify the signature,
-and produce its own SPKACs from a supplied private key.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl challenge Ar string
-The challenge string, if an SPKAC is being created.
-.It Fl in Ar file
-The input file to read from,
-or standard input if not specified.
-Ignored if the
-.Fl key
-option is used.
-.It Fl key Ar keyfile
-Create an SPKAC file using the private key in
-.Ar keyfile .
-The
-.Fl in , noout , spksect ,
-and
-.Fl verify
-options are ignored, if present.
-.It Fl noout
-Do not output the text version of the SPKAC.
-.It Fl out Ar file
-The output file to write to,
-or standard output if not specified.
-.It Fl passin Ar arg
-The key password source.
-.It Fl pubkey
-Output the public key of an SPKAC.
-.It Fl spkac Ar spkacname
-An alternative name for the variable containing the SPKAC.
-The default is "SPKAC".
-This option affects both generated and input SPKAC files.
-.It Fl spksect Ar section
-An alternative name for the
-.Ar section
-containing the SPKAC.
-.It Fl verify
-Verify the digital signature on the supplied SPKAC.
 .El
 .Tg ts
 .Sh TS
