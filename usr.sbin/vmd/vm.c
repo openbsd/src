@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.101 2024/06/20 15:33:44 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.102 2024/07/08 17:33:45 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1809,7 +1809,6 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 #endif /* MMIO_NOTYET */
 	switch (ve->vee.vee_fault_type) {
 	case VEE_FAULT_HANDLED:
-		log_debug("%s: fault already handled", __func__);
 		break;
 
 #if MMIO_NOTYET
