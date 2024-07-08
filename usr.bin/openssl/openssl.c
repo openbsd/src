@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.36 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: openssl.c,v 1.37 2024/07/08 05:59:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,7 +184,6 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_SPEED
 	{ FUNC_TYPE_GENERAL, "speed", speed_main },
 #endif
-	{ FUNC_TYPE_GENERAL, "spkac", spkac_main },
 	{ FUNC_TYPE_GENERAL, "ts", ts_main },
 	{ FUNC_TYPE_GENERAL, "verify", verify_main },
 	{ FUNC_TYPE_GENERAL, "version", version_main },

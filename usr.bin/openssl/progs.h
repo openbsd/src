@@ -1,4 +1,4 @@
-/* $OpenBSD: progs.h,v 1.10 2024/05/18 08:47:13 jsg Exp $ */
+/* $OpenBSD: progs.h,v 1.11 2024/07/08 05:59:10 tb Exp $ */
 /* Public domain */
 
 int asn1parse_main(int argc, char **argv);
@@ -40,7 +40,6 @@ int s_time_main(int argc, char **argv);
 int sess_id_main(int argc, char **argv);
 int smime_main(int argc, char **argv);
 int speed_main(int argc, char **argv);
-int spkac_main(int argc, char **argv);
 int ts_main(int argc, char **argv);
 int verify_main(int argc, char **argv);
 int version_main(int argc, char **argv);
