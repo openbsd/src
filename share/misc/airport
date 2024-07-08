@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.93 2024/01/11 07:59:43 deraadt Exp $
+#	$OpenBSD: airport,v 1.94 2024/07/08 14:15:33 op Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1725,6 +1725,7 @@ TRV:Trivandrum, India
 TRZ:Civil, Tiruchirapally, India
 TSA:Sung Shan, Taipei, Taiwan
 TSE:Astana, Kazakhstan
+TSF:Antonio Canova, Treviso, Italy
 TSP:Tehachapi, California, USA
 TSR:Timisoara, Romania
 TSS:East 34Th Street Heliport, New York, New York, USA
