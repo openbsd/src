@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.42 2023/12/25 22:02:59 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.43 2024/07/08 14:52:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,6 +73,7 @@ const ASN1_ITEM ASN1_BIT_STRING_it = {
 	.utype = V_ASN1_BIT_STRING,
 	.sname = "ASN1_BIT_STRING",
 };
+LCRYPTO_ALIAS(ASN1_BIT_STRING_it);
 
 ASN1_BIT_STRING *
 ASN1_BIT_STRING_new(void)

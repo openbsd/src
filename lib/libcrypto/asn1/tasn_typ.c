@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.18 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.19 2024/07/08 14:52:31 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -66,6 +66,7 @@ const ASN1_ITEM ASN1_NULL_it = {
 	.utype = V_ASN1_NULL,
 	.sname = "ASN1_NULL",
 };
+LCRYPTO_ALIAS(ASN1_NULL_it);
 
 ASN1_NULL *
 d2i_ASN1_NULL(ASN1_NULL **a, const unsigned char **in, long len)
@@ -102,6 +103,7 @@ const ASN1_ITEM ASN1_UTF8STRING_it = {
 	.utype = V_ASN1_UTF8STRING,
 	.sname = "ASN1_UTF8STRING",
 };
+LCRYPTO_ALIAS(ASN1_UTF8STRING_it);
 
 ASN1_UTF8STRING *
 d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a, const unsigned char **in, long len)
@@ -138,6 +140,7 @@ const ASN1_ITEM ASN1_PRINTABLESTRING_it = {
 	.utype = V_ASN1_PRINTABLESTRING,
 	.sname = "ASN1_PRINTABLESTRING",
 };
+LCRYPTO_ALIAS(ASN1_PRINTABLESTRING_it);
 
 ASN1_PRINTABLESTRING *
 d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a, const unsigned char **in,
@@ -175,6 +178,7 @@ const ASN1_ITEM ASN1_T61STRING_it = {
 	.utype = V_ASN1_T61STRING,
 	.sname = "ASN1_T61STRING",
 };
+LCRYPTO_ALIAS(ASN1_T61STRING_it);
 
 ASN1_T61STRING *
 d2i_ASN1_T61STRING(ASN1_T61STRING **a, const unsigned char **in, long len)
@@ -211,6 +215,7 @@ const ASN1_ITEM ASN1_IA5STRING_it = {
 	.utype = V_ASN1_IA5STRING,
 	.sname = "ASN1_IA5STRING",
 };
+LCRYPTO_ALIAS(ASN1_IA5STRING_it);
 
 ASN1_IA5STRING *
 d2i_ASN1_IA5STRING(ASN1_IA5STRING **a, const unsigned char **in, long len)
@@ -247,6 +252,7 @@ const ASN1_ITEM ASN1_GENERALSTRING_it = {
 	.utype = V_ASN1_GENERALSTRING,
 	.sname = "ASN1_GENERALSTRING",
 };
+LCRYPTO_ALIAS(ASN1_GENERALSTRING_it);
 
 ASN1_GENERALSTRING *
 d2i_ASN1_GENERALSTRING(ASN1_GENERALSTRING **a, const unsigned char **in,
@@ -284,6 +290,7 @@ const ASN1_ITEM ASN1_UTCTIME_it = {
 	.utype = V_ASN1_UTCTIME,
 	.sname = "ASN1_UTCTIME",
 };
+LCRYPTO_ALIAS(ASN1_UTCTIME_it);
 
 ASN1_UTCTIME *
 d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, const unsigned char **in, long len)
@@ -320,6 +327,7 @@ const ASN1_ITEM ASN1_GENERALIZEDTIME_it = {
 	.utype = V_ASN1_GENERALIZEDTIME,
 	.sname = "ASN1_GENERALIZEDTIME",
 };
+LCRYPTO_ALIAS(ASN1_GENERALIZEDTIME_it);
 
 ASN1_GENERALIZEDTIME *
 d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a, const unsigned char **in,
@@ -357,6 +365,7 @@ const ASN1_ITEM ASN1_VISIBLESTRING_it = {
 	.utype = V_ASN1_VISIBLESTRING,
 	.sname = "ASN1_VISIBLESTRING",
 };
+LCRYPTO_ALIAS(ASN1_VISIBLESTRING_it);
 
 ASN1_VISIBLESTRING *
 d2i_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING **a, const unsigned char **in,
@@ -394,6 +403,7 @@ const ASN1_ITEM ASN1_UNIVERSALSTRING_it = {
 	.utype = V_ASN1_UNIVERSALSTRING,
 	.sname = "ASN1_UNIVERSALSTRING",
 };
+LCRYPTO_ALIAS(ASN1_UNIVERSALSTRING_it);
 
 ASN1_UNIVERSALSTRING *
 d2i_ASN1_UNIVERSALSTRING(ASN1_UNIVERSALSTRING **a, const unsigned char **in,
@@ -431,6 +441,7 @@ const ASN1_ITEM ASN1_BMPSTRING_it = {
 	.utype = V_ASN1_BMPSTRING,
 	.sname = "ASN1_BMPSTRING",
 };
+LCRYPTO_ALIAS(ASN1_BMPSTRING_it);
 
 ASN1_BMPSTRING *
 d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, const unsigned char **in, long len)
@@ -466,6 +477,7 @@ const ASN1_ITEM ASN1_ANY_it = {
 	.utype = V_ASN1_ANY,
 	.sname = "ASN1_ANY",
 };
+LCRYPTO_ALIAS(ASN1_ANY_it);
 
 
 /* Just swallow an ASN1_SEQUENCE in an ASN1_STRING */
@@ -489,6 +501,7 @@ const ASN1_ITEM ASN1_PRINTABLE_it = {
 	.size = sizeof(ASN1_STRING),
 	.sname = "ASN1_PRINTABLE",
 };
+LCRYPTO_ALIAS(ASN1_PRINTABLE_it);
 
 ASN1_STRING *
 d2i_ASN1_PRINTABLE(ASN1_STRING **a, const unsigned char **in, long len)
@@ -529,6 +542,7 @@ const ASN1_ITEM DISPLAYTEXT_it = {
 	.size = sizeof(ASN1_STRING),
 	.sname = "DISPLAYTEXT",
 };
+LCRYPTO_ALIAS(DISPLAYTEXT_it);
 
 ASN1_STRING *
 d2i_DISPLAYTEXT(ASN1_STRING **a, const unsigned char **in, long len)
@@ -569,6 +583,7 @@ const ASN1_ITEM DIRECTORYSTRING_it = {
 	.size = sizeof(ASN1_STRING),
 	.sname = "DIRECTORYSTRING",
 };
+LCRYPTO_ALIAS(DIRECTORYSTRING_it);
 
 ASN1_STRING *
 d2i_DIRECTORYSTRING(ASN1_STRING **a, const unsigned char **in, long len)
@@ -670,6 +685,7 @@ const ASN1_ITEM ASN1_SEQUENCE_ANY_it = {
 	.size = 0,
 	.sname = "ASN1_SEQUENCE_ANY",
 };
+LCRYPTO_ALIAS(ASN1_SEQUENCE_ANY_it);
 
 static const ASN1_TEMPLATE ASN1_SET_ANY_item_tt = {
 	.flags = ASN1_TFLG_SET_OF,
@@ -688,6 +704,7 @@ const ASN1_ITEM ASN1_SET_ANY_it = {
 	.size = 0,
 	.sname = "ASN1_SET_ANY",
 };
+LCRYPTO_ALIAS(ASN1_SET_ANY_it);
 
 
 ASN1_SEQUENCE_ANY *

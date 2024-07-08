@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.37 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_time.c,v 1.38 2024/07/08 14:52:31 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -78,6 +78,7 @@ const ASN1_ITEM ASN1_TIME_it = {
 	.size = sizeof(ASN1_STRING),
 	.sname = "ASN1_TIME",
 };
+LCRYPTO_ALIAS(ASN1_TIME_it);
 
 ASN1_TIME *
 ASN1_TIME_new(void)

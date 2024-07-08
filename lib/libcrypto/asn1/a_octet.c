@@ -1,4 +1,4 @@
-/* $OpenBSD: a_octet.c,v 1.12 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_octet.c,v 1.13 2024/07/08 14:52:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@ const ASN1_ITEM ASN1_OCTET_STRING_it = {
 	.utype = V_ASN1_OCTET_STRING,
 	.sname = "ASN1_OCTET_STRING",
 };
+LCRYPTO_ALIAS(ASN1_OCTET_STRING_it);
 
 ASN1_OCTET_STRING *
 ASN1_OCTET_STRING_new(void)

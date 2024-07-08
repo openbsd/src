@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.54 2024/05/29 16:14:38 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.55 2024/07/08 14:52:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,6 +73,7 @@ const ASN1_ITEM ASN1_OBJECT_it = {
 	.utype = V_ASN1_OBJECT,
 	.sname = "ASN1_OBJECT",
 };
+LCRYPTO_ALIAS(ASN1_OBJECT_it);
 
 ASN1_OBJECT *
 ASN1_OBJECT_new(void)

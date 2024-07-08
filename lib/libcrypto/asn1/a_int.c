@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.47 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_int.c,v 1.48 2024/07/08 14:52:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,6 +73,7 @@ const ASN1_ITEM ASN1_INTEGER_it = {
 	.utype = V_ASN1_INTEGER,
 	.sname = "ASN1_INTEGER",
 };
+LCRYPTO_ALIAS(ASN1_INTEGER_it);
 
 ASN1_INTEGER *
 ASN1_INTEGER_new(void)
