@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.118 2024/07/08 14:32:44 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.119 2024/07/08 14:47:42 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -128,7 +128,7 @@ rcconf_edit_end()
 	sort -u -o ${_TMP_RCCONF} ${_TMP_RCCONF} || \
 		rcctl_err "cannot modify ${_TMP_RCCONF}"
 	if ! cmp -s ${_TMP_RCCONF} /etc/rc.conf.local; then
-		cat ${_TMP_RCCONF} >/etc/rc.conf.local || \
+		install -F -m0644 -o0 -g0 ${_TMP_RCCONF} /etc/rc.conf.local ||
 			rcctl_err "cannot write to /etc/rc.conf.local"
 	fi
 	if [ ! -s /etc/rc.conf.local ]; then
