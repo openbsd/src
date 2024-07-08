@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_asn.c,v 1.11 2023/07/08 10:44:00 beck Exp $ */
+/* $OpenBSD: ocsp_asn.c,v 1.12 2024/07/08 14:53:11 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -94,6 +94,7 @@ const ASN1_ITEM OCSP_SIGNATURE_it = {
 	.size = sizeof(OCSP_SIGNATURE),
 	.sname = "OCSP_SIGNATURE",
 };
+LCRYPTO_ALIAS(OCSP_SIGNATURE_it);
 
 
 OCSP_SIGNATURE *
@@ -165,6 +166,7 @@ const ASN1_ITEM OCSP_CERTID_it = {
 	.size = sizeof(OCSP_CERTID),
 	.sname = "OCSP_CERTID",
 };
+LCRYPTO_ALIAS(OCSP_CERTID_it);
 
 
 OCSP_CERTID *
@@ -222,6 +224,7 @@ const ASN1_ITEM OCSP_ONEREQ_it = {
 	.size = sizeof(OCSP_ONEREQ),
 	.sname = "OCSP_ONEREQ",
 };
+LCRYPTO_ALIAS(OCSP_ONEREQ_it);
 
 
 OCSP_ONEREQ *
@@ -293,6 +296,7 @@ const ASN1_ITEM OCSP_REQINFO_it = {
 	.size = sizeof(OCSP_REQINFO),
 	.sname = "OCSP_REQINFO",
 };
+LCRYPTO_ALIAS(OCSP_REQINFO_it);
 
 
 OCSP_REQINFO *
@@ -350,6 +354,7 @@ const ASN1_ITEM OCSP_REQUEST_it = {
 	.size = sizeof(OCSP_REQUEST),
 	.sname = "OCSP_REQUEST",
 };
+LCRYPTO_ALIAS(OCSP_REQUEST_it);
 
 OCSP_REQUEST *
 d2i_OCSP_REQUEST(OCSP_REQUEST **a, const unsigned char **in, long len)
@@ -422,6 +427,7 @@ const ASN1_ITEM OCSP_RESPBYTES_it = {
 	.size = sizeof(OCSP_RESPBYTES),
 	.sname = "OCSP_RESPBYTES",
 };
+LCRYPTO_ALIAS(OCSP_RESPBYTES_it);
 
 
 OCSP_RESPBYTES *
@@ -479,6 +485,7 @@ const ASN1_ITEM OCSP_RESPONSE_it = {
 	.size = sizeof(OCSP_RESPONSE),
 	.sname = "OCSP_RESPONSE",
 };
+LCRYPTO_ALIAS(OCSP_RESPONSE_it);
 
 
 OCSP_RESPONSE *
@@ -550,6 +557,7 @@ const ASN1_ITEM OCSP_RESPID_it = {
 	.size = sizeof(OCSP_RESPID),
 	.sname = "OCSP_RESPID",
 };
+LCRYPTO_ALIAS(OCSP_RESPID_it);
 
 
 OCSP_RESPID *
@@ -607,6 +615,7 @@ const ASN1_ITEM OCSP_REVOKEDINFO_it = {
 	.size = sizeof(OCSP_REVOKEDINFO),
 	.sname = "OCSP_REVOKEDINFO",
 };
+LCRYPTO_ALIAS(OCSP_REVOKEDINFO_it);
 
 
 OCSP_REVOKEDINFO *
@@ -671,6 +680,7 @@ const ASN1_ITEM OCSP_CERTSTATUS_it = {
 	.size = sizeof(OCSP_CERTSTATUS),
 	.sname = "OCSP_CERTSTATUS",
 };
+LCRYPTO_ALIAS(OCSP_CERTSTATUS_it);
 
 
 OCSP_CERTSTATUS *
@@ -749,6 +759,7 @@ const ASN1_ITEM OCSP_SINGLERESP_it = {
 	.size = sizeof(OCSP_SINGLERESP),
 	.sname = "OCSP_SINGLERESP",
 };
+LCRYPTO_ALIAS(OCSP_SINGLERESP_it);
 
 
 OCSP_SINGLERESP *
@@ -827,6 +838,7 @@ const ASN1_ITEM OCSP_RESPDATA_it = {
 	.size = sizeof(OCSP_RESPDATA),
 	.sname = "OCSP_RESPDATA",
 };
+LCRYPTO_ALIAS(OCSP_RESPDATA_it);
 
 
 OCSP_RESPDATA *
@@ -898,6 +910,7 @@ const ASN1_ITEM OCSP_BASICRESP_it = {
 	.size = sizeof(OCSP_BASICRESP),
 	.sname = "OCSP_BASICRESP",
 };
+LCRYPTO_ALIAS(OCSP_BASICRESP_it);
 
 
 OCSP_BASICRESP *
@@ -962,6 +975,7 @@ const ASN1_ITEM OCSP_CRLID_it = {
 	.size = sizeof(OCSP_CRLID),
 	.sname = "OCSP_CRLID",
 };
+LCRYPTO_ALIAS(OCSP_CRLID_it);
 
 
 OCSP_CRLID *
@@ -1019,6 +1033,7 @@ const ASN1_ITEM OCSP_SERVICELOC_it = {
 	.size = sizeof(OCSP_SERVICELOC),
 	.sname = "OCSP_SERVICELOC",
 };
+LCRYPTO_ALIAS(OCSP_SERVICELOC_it);
 
 
 OCSP_SERVICELOC *
