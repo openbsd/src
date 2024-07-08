@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.93 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.94 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -344,7 +344,6 @@ mi_switch(void)
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct proc *p = curproc;
 	struct proc *nextproc;
-	struct process *pr = p->p_p;
 	struct timespec ts;
 	int oldipl;
 #ifdef MULTIPROCESSOR
@@ -382,9 +381,9 @@ mi_switch(void)
 	} else {
 		timespecsub(&ts, &spc->spc_runtime, &ts);
 	}
-
-	/* add the time counts for this thread to the process's total */
-	tuagg_locked(pr, p, &ts);
+	tu_enter(&p->p_tu);
+	timespecadd(&p->p_tu.tu_runtime, &ts, &p->p_tu.tu_runtime);
+	tu_leave(&p->p_tu);
 
 	/* Stop any optional clock interrupts. */
 	if (ISSET(spc->spc_schedflags, SPCF_ITIMER)) {

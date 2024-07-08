@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.361 2024/05/20 10:32:20 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.362 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -87,14 +87,19 @@ struct	pgrp {
 
 /*
  * time usage: accumulated times in ticks
- * Once a second, each thread's immediate counts (p_[usi]ticks) are
- * accumulated into these.
+ * Each thread is immediatly accumulated here. For processes only the
+ * time of exited threads is accumulated and to get the proper process
+ * time usage tuagg_get_process() needs to be called.
+ * Accounting of threads is done lockless by curproc using the tu_gen
+ * generation counter. Code should use tu_enter() and tu_leave() for this.
+ * The process ps_tu structure is locked by the ps_mtx.
  */
 struct tusage {
-	struct	timespec tu_runtime;	/* Realtime. */
+	uint64_t	tu_gen;		/* generation counter */
 	uint64_t	tu_uticks;	/* Statclock hits in user mode. */
 	uint64_t	tu_sticks;	/* Statclock hits in system mode. */
 	uint64_t	tu_iticks;	/* Statclock hits processing intr. */
+	struct	timespec tu_runtime;	/* Realtime. */
 };
 
 /*
@@ -197,7 +202,7 @@ struct process {
 	struct	ptrace_state *ps_ptstat;/* Ptrace state */
 
 	struct	rusage *ps_ru;		/* sum of stats for dead threads. */
-	struct	tusage ps_tu;		/* accumulated times. */
+	struct	tusage ps_tu;		/* [m] accumul times of dead threads. */
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
 	struct	itimerspec ps_timer[3];	/* [m] ITIMER_REAL timer */
 					/* [T] ITIMER_{VIRTUAL,PROF} timers */
@@ -360,13 +365,10 @@ struct proc {
 	const char *p_wmesg;		/* [S] Reason for sleep. */
 	fixpt_t	p_pctcpu;		/* [S] %cpu for this thread */
 	u_int	p_slptime;		/* [S] Time since last blocked. */
-	u_int	p_uticks;		/* Statclock hits in user mode. */
-	u_int	p_sticks;		/* Statclock hits in system mode. */
-	u_int	p_iticks;		/* Statclock hits processing intr. */
 	struct	cpu_info * volatile p_cpu; /* [S] CPU we're running on. */
 
 	struct	rusage p_ru;		/* Statistics */
-	struct	tusage p_tu;		/* accumulated times. */
+	struct	tusage p_tu;		/* [o] accumulated times. */
 
 	struct	plimit	*p_limit;	/* [l] read ref. of p_p->ps_limit */
 	struct	kcov_dev *p_kd;		/* kcov device handle */
@@ -633,6 +635,20 @@ void cpuset_intersection(struct cpuset *t, struct cpuset *, struct cpuset *);
 void cpuset_complement(struct cpuset *, struct cpuset *, struct cpuset *);
 int cpuset_cardinality(struct cpuset *);
 struct cpu_info *cpuset_first(struct cpuset *);
+
+static inline void
+tu_enter(struct tusage *tu)
+{
+	++tu->tu_gen; /* make the generation number odd */
+	membar_producer();
+}
+
+static inline void
+tu_leave(struct tusage *tu)
+{
+	membar_producer();
+	++tu->tu_gen; /* make the generation number even again */
+}
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

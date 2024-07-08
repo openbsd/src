@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.167 2023/10/17 00:04:02 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.168 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/ktrace.h>
+#include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/stdint.h>
 #include <sys/pledge.h>
@@ -112,6 +113,7 @@ settime(const struct timespec *ts)
 int
 clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 {
+	struct tusage tu;
 	struct proc *q;
 	int error = 0;
 
@@ -128,13 +130,15 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 		break;
 	case CLOCK_PROCESS_CPUTIME_ID:
 		nanouptime(tp);
+		tuagg_get_process(&tu, p->p_p);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
-		timespecadd(tp, &p->p_p->ps_tu.tu_runtime, tp);
+		timespecadd(tp, &tu.tu_runtime, tp);
 		break;
 	case CLOCK_THREAD_CPUTIME_ID:
 		nanouptime(tp);
+		tuagg_get_proc(&tu, p);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
-		timespecadd(tp, &p->p_tu.tu_runtime, tp);
+		timespecadd(tp, &tu.tu_runtime, tp);
 		break;
 	default:
 		/* check for clock from pthread_getcpuclockid() */

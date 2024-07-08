@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.223 2024/07/08 09:15:05 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.224 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 {
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
-	struct timespec ts;
+	struct timespec ts, pts;
 
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
@@ -167,6 +167,19 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		if (--pr->ps_singlecnt == 0)
 			wakeup(&pr->ps_singlecnt);
 	}
+
+	/* proc is off ps_threads list so update accounting of process now */
+	nanouptime(&ts);
+	if (timespeccmp(&ts, &curcpu()->ci_schedstate.spc_runtime, <))
+		timespecclear(&pts);
+	else
+		timespecsub(&ts, &curcpu()->ci_schedstate.spc_runtime, &pts);
+	tu_enter(&p->p_tu);
+	timespecadd(&p->p_tu.tu_runtime, &pts, &p->p_tu.tu_runtime);
+	tu_leave(&p->p_tu);
+	/* adjust spc_runtime to not double account the runtime from above */
+	curcpu()->ci_schedstate.spc_runtime = ts;
+	tuagg_add_process(p->p_p, p);
 
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
@@ -323,14 +336,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 
 	/* add thread's accumulated rusage into the process's total */
 	ruadd(rup, &p->p_ru);
-	nanouptime(&ts);
-	if (timespeccmp(&ts, &curcpu()->ci_schedstate.spc_runtime, <))
-		timespecclear(&ts);
-	else
-		timespecsub(&ts, &curcpu()->ci_schedstate.spc_runtime, &ts);
-	SCHED_LOCK();
-	tuagg_locked(pr, p, &ts);
-	SCHED_UNLOCK();
 
 	/*
 	 * clear %cpu usage during swap
@@ -340,7 +345,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	if ((p->p_flag & P_THREAD) == 0) {
 		/*
 		 * Final thread has died, so add on our children's rusage
-		 * and calculate the total times
+		 * and calculate the total times.
 		 */
 		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		ruadd(rup, &pr->ps_cru);
@@ -358,7 +363,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		}
 	}
 
-	/* just a thread? detach it from its process */
+	/* just a thread? check if last one standing. */
 	if (p->p_flag & P_THREAD) {
 		/* scheduler_wait_hook(pr->ps_mainproc, p); XXX */
 		mtx_enter(&pr->ps_mtx);
@@ -407,6 +412,11 @@ struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 void
 exit2(struct proc *p)
 {
+	/* account the remainder of time spent in exit1() */
+	mtx_enter(&p->p_p->ps_mtx);
+	tuagg_add_process(p->p_p, p);
+	mtx_leave(&p->p_p->ps_mtx);
+
 	mtx_enter(&deadproc_mutex);
 	LIST_INSERT_HEAD(&deadproc, p, p_hash);
 	mtx_leave(&deadproc_mutex);

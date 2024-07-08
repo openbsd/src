@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.427 2024/04/12 16:07:09 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.428 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1773,14 +1773,18 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	struct tty *tp;
 	struct vmspace *vm = pr->ps_vmspace;
 	struct timespec booted, st, ut, utc;
+	struct tusage tu;
 	int isthread;
 
 	isthread = p != NULL;
-	if (!isthread)
+	if (!isthread) {
 		p = pr->ps_mainproc;		/* XXX */
+		tuagg_get_process(&tu, pr);
+	} else
+		tuagg_get_proc(&tu, p);
 
 	FILL_KPROC(ki, strlcpy, p, pr, pr->ps_ucred, pr->ps_pgrp,
-	    p, pr, s, vm, pr->ps_limit, pr->ps_sigacts, isthread,
+	    p, pr, s, vm, pr->ps_limit, pr->ps_sigacts, &tu, isthread,
 	    show_pointers);
 
 	/* stuff that's too painful to generalize into the macros */
@@ -1803,7 +1807,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	if ((pr->ps_flags & PS_ZOMBIE) == 0) {
 		if ((pr->ps_flags & PS_EMBRYO) == 0 && vm != NULL)
 			ki->p_vm_rssize = vm_resident_count(vm);
-		calctsru(isthread ? &p->p_tu : &pr->ps_tu, &ut, &st, NULL);
+		calctsru(&tu, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
 		ki->p_uutime_usec = ut.tv_nsec/1000;
 		ki->p_ustime_sec = st.tv_sec;

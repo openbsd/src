@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.31 2023/10/17 00:04:02 cheloha Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.32 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -66,9 +66,10 @@ void	 addupc_intr(struct proc *, u_long, u_long);
 void	 addupc_task(struct proc *, u_long, u_int);
 struct clockrequest;
 void	 profclock(struct clockrequest *, void *, void *);
-void	 tuagg_locked(struct process *, struct proc *, const struct timespec *);
-void	 tuagg(struct process *, struct proc *);
+void	 tuagg_add_process(struct process *, struct proc *);
 struct tusage;
+void	 tuagg_get_proc(struct tusage *, struct proc *);
+void	 tuagg_get_process(struct tusage *, struct process *);
 void	 calctsru(struct tusage *, struct timespec *, struct timespec *,
 	    struct timespec *);
 void	 calcru(struct tusage *, struct timeval *, struct timeval *,
@@ -108,5 +109,6 @@ rlim_t	 lim_cur_proc(struct proc *, int);
 
 void	 ruadd(struct rusage *, struct rusage *);
 void	 rucheck(void *);
+
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

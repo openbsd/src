@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.176 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: tty.c,v 1.177 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2152,6 +2152,7 @@ ttyinfo(struct tty *tp)
 {
 	struct process *pr, *pickpr;
 	struct proc *p, *pick;
+	struct tusage tu;
 	struct timespec utime, stime;
 	int tmp;
 
@@ -2214,7 +2215,8 @@ update_pickpr:
 		    pickpr->ps_vmspace != NULL)
 			rss = vm_resident_count(pickpr->ps_vmspace);
 
-		calctsru(&pickpr->ps_tu, &utime, &stime, NULL);
+		tuagg_get_process(&tu, pickpr);
+		calctsru(&tu, &utime, &stime, NULL);
 
 		/* Round up and print user time. */
 		utime.tv_nsec += 5000000;

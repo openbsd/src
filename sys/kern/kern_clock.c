@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.123 2024/02/12 22:07:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.124 2024/07/08 13:17:11 claudio Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -281,7 +281,9 @@ statclock(struct clockrequest *cr, void *cf, void *arg)
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
 		 */
-		p->p_uticks += count;
+		tu_enter(&p->p_tu);
+		p->p_tu.tu_uticks += count;
+		tu_leave(&p->p_tu);
 		if (pr->ps_nice > NZERO)
 			spc->spc_cp_time[CP_NICE] += count;
 		else
@@ -301,12 +303,17 @@ statclock(struct clockrequest *cr, void *cf, void *arg)
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
 		if (CLKF_INTR(frame)) {
-			if (p != NULL)
-				p->p_iticks += count;
+			if (p != NULL) {
+				tu_enter(&p->p_tu);
+				p->p_tu.tu_iticks += count;
+				tu_leave(&p->p_tu);
+			}
 			spc->spc_cp_time[spc->spc_spinning ?
 			    CP_SPIN : CP_INTR] += count;
 		} else if (p != NULL && p != spc->spc_idleproc) {
-			p->p_sticks += count;
+			tu_enter(&p->p_tu);
+			p->p_tu.tu_sticks += count;
+			tu_leave(&p->p_tu);
 			spc->spc_cp_time[spc->spc_spinning ?
 			    CP_SPIN : CP_SYS] += count;
 		} else

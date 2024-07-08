@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.255 2024/04/02 08:39:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.256 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -699,6 +699,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* reset CPU time usage for the thread, but not the process */
 	timespecclear(&p->p_tu.tu_runtime);
 	p->p_tu.tu_uticks = p->p_tu.tu_sticks = p->p_tu.tu_iticks = 0;
+	p->p_tu.tu_gen = 0;
 
 	memset(p->p_name, 0, sizeof p->p_name);
 

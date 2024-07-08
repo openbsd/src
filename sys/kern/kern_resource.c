@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.84 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.85 2024/07/08 13:17:12 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ struct plimit	*lim_copy(struct plimit *);
 struct plimit	*lim_write_begin(void);
 void		 lim_write_commit(struct plimit *);
 
-void	tuagg_sub(struct tusage *, struct proc *, const struct timespec *);
+void	tuagg_sumup(struct tusage *, const struct tusage *);
 
 /*
  * Patchable maximum data and stack limits.
@@ -368,36 +368,80 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+/* Add the counts from *from to *tu, ensuring a consistent read of *from. */ 
 void
-tuagg_sub(struct tusage *tup, struct proc *p, const struct timespec *ts)
+tuagg_sumup(struct tusage *tu, const struct tusage *from)
 {
-	if (ts != NULL)
-		timespecadd(&tup->tu_runtime, ts, &tup->tu_runtime);
-	tup->tu_uticks += p->p_uticks;
-	tup->tu_sticks += p->p_sticks;
-	tup->tu_iticks += p->p_iticks;
+	struct tusage	tmp;
+	uint64_t	enter, leave;
+
+	enter = from->tu_gen;
+	for (;;) {
+		/* the generation number is odd during an update */
+		while (enter & 1) {
+			CPU_BUSY_CYCLE();
+			enter = from->tu_gen;
+		}
+
+		membar_consumer();
+		tmp = *from;
+		membar_consumer();
+		leave = from->tu_gen;
+
+		if (enter == leave)
+			break;
+		enter = leave;
+	}
+
+	tu->tu_uticks += tmp.tu_uticks;
+	tu->tu_sticks += tmp.tu_sticks;
+	tu->tu_iticks += tmp.tu_iticks;
+	timespecadd(&tu->tu_runtime, &tmp.tu_runtime, &tu->tu_runtime);
+}
+
+void
+tuagg_get_proc(struct tusage *tu, struct proc *p)
+{
+	memset(tu, 0, sizeof(*tu));
+	tuagg_sumup(tu, &p->p_tu);
+}
+
+void
+tuagg_get_process(struct tusage *tu, struct process *pr)
+{
+	struct proc *q;
+
+	memset(tu, 0, sizeof(*tu));
+
+	mtx_enter(&pr->ps_mtx);
+	tuagg_sumup(tu, &pr->ps_tu);
+	/* add on all living threads */
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link)
+		tuagg_sumup(tu, &q->p_tu);
+	mtx_leave(&pr->ps_mtx);
 }
 
 /*
- * Aggregate a single thread's immediate time counts into the running
- * totals for the thread and process
+ * Update the process ps_tu usage with the values from proc p while
+ * doing so the times for proc p are reset.
+ * This requires that p is either curproc or SDEAD and that the
+ * IPL is higher than IPL_STATCLOCK. ps_mtx uses IPL_HIGH so
+ * this should always be the case.
  */
 void
-tuagg_locked(struct process *pr, struct proc *p, const struct timespec *ts)
+tuagg_add_process(struct process *pr, struct proc *p)
 {
-	tuagg_sub(&pr->ps_tu, p, ts);
-	tuagg_sub(&p->p_tu, p, ts);
-	p->p_uticks = 0;
-	p->p_sticks = 0;
-	p->p_iticks = 0;
-}
+	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
+	splassert(IPL_STATCLOCK);
+	KASSERT(curproc == p || p->p_stat == SDEAD);
 
-void
-tuagg(struct process *pr, struct proc *p)
-{
-	SCHED_LOCK();
-	tuagg_locked(pr, p, NULL);
-	SCHED_UNLOCK();
+	tu_enter(&pr->ps_tu);
+	tuagg_sumup(&pr->ps_tu, &p->p_tu);
+	tu_leave(&pr->ps_tu);
+
+	/* Now reset CPU time usage for the thread. */
+	timespecclear(&p->p_tu.tu_runtime);
+	p->p_tu.tu_uticks = p->p_tu.tu_sticks = p->p_tu.tu_iticks = 0;
 }
 
 /*
@@ -474,6 +518,7 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
+	struct tusage tu = { 0 };
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -484,14 +529,15 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 			*rup = *pr->ps_ru;
 		else
 			memset(rup, 0, sizeof(*rup));
+		tuagg_sumup(&tu, &pr->ps_tu);
 
 		/* add on all living threads */
 		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 			ruadd(rup, &q->p_ru);
-			tuagg(pr, q);
+			tuagg_sumup(&tu, &q->p_tu);
 		}
 
-		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
+		calcru(&tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		break;
 
 	case RUSAGE_THREAD:

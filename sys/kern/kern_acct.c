@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.48 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.49 2024/07/08 13:17:11 claudio Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -169,6 +169,7 @@ acct_process(struct proc *p)
 	struct acct acct;
 	struct process *pr = p->p_p;
 	struct rusage *r;
+	struct tusage tu;
 	struct timespec booted, elapsed, realstart, st, tmp, uptime, ut;
 	int t;
 	struct vnode *vp;
@@ -196,7 +197,8 @@ acct_process(struct proc *p)
 	memcpy(acct.ac_comm, pr->ps_comm, sizeof acct.ac_comm);
 
 	/* (2) The amount of user and system time that was used */
-	calctsru(&pr->ps_tu, &ut, &st, NULL);
+	tuagg_get_process(&tu, pr);
+	calctsru(&tu, &ut, &st, NULL);
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_nsec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_nsec);
 
@@ -231,7 +233,7 @@ acct_process(struct proc *p)
 	else
 		acct.ac_tty = -1;
 
-	/* (8) The boolean flags that tell how process terminated or misbehaved. */
+	/* (8) The flags that tell how process terminated or misbehaved. */
 	acct.ac_flag = pr->ps_acflag;
 
 	/* Extensions */
