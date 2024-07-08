@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.59 2024/06/23 07:50:52 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.60 2024/07/08 05:56:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,12 +135,6 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey,
     char *enddate, long days, int batch, char *ext_sect, CONF *conf,
     int verbose, unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy);
-static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
-    X509 *x509, const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
-    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
-    unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, char *ext_sect, CONF *conf, int verbose,
-    unsigned long certopt, unsigned long nameopt, int default_op, int ext_copy);
 static int write_new_certificate(BIO *bp, X509 *x, int output_der,
     int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
@@ -202,7 +196,6 @@ static struct {
 	char *section;
 	int selfsign;
 	STACK_OF(OPENSSL_STRING) *sigopts;
-	char *spkac_file;
 	char *ss_cert_file;
 	char *startdate;
 	char *subj;
@@ -285,14 +278,6 @@ ca_opt_sigopt(char *arg)
 		return (1);
 	if (!sk_OPENSSL_STRING_push(cfg.sigopts, arg))
 		return (1);
-	return (0);
-}
-
-static int
-ca_opt_spkac(char *arg)
-{
-	cfg.spkac_file = arg;
-	cfg.req = 1;
 	return (0);
 }
 
@@ -552,13 +537,6 @@ static const struct option ca_options[] = {
 		.opt.argfunc = ca_opt_sigopt,
 	},
 	{
-		.name = "spkac",
-		.argname = "file",
-		.desc = "File contains DN and signed public key and challenge",
-		.type = OPTION_ARG_FUNC,
-		.opt.argfunc = ca_opt_spkac,
-	},
-	{
 		.name = "ss_cert",
 		.argname = "file",
 		.desc = "File contains a self signed certificate to sign",
@@ -621,7 +599,7 @@ ca_usage(void)
 	    "    [-md alg] [-multivalue-rdn] [-name section]\n"
 	    "    [-noemailDN] [-notext] [-out file] [-outdir directory]\n"
 	    "    [-passin arg] [-policy name] [-preserveDN] [-revoke file]\n"
-	    "    [-selfsign] [-sigopt nm:v] [-spkac file] [-ss_cert file]\n"
+	    "    [-selfsign] [-sigopt nm:v] [-ss_cert file]\n"
 	    "    [-startdate date] [-status serial] [-subj arg] [-updatedb]\n"
 	    "    [-utf8] [-verbose]\n\n");
 	options_usage(ca_options);
@@ -824,8 +802,7 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	/* we need a certificate */
-	if (!cfg.selfsign || cfg.spkac_file != NULL ||
-	    cfg.ss_cert_file != NULL || cfg.gencrl) {
+	if (!cfg.selfsign || cfg.ss_cert_file != NULL || cfg.gencrl) {
 		if ((cfg.certfile == NULL) &&
 		    ((cfg.certfile = NCONF_get_string(conf,
 		    cfg.section, ENV_CERTIFICATE)) == NULL)) {
@@ -1162,34 +1139,6 @@ ca_main(int argc, char **argv)
 		if ((cert_sk = sk_X509_new_null()) == NULL) {
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
-		}
-		if (cfg.spkac_file != NULL) {
-			total++;
-			j = certify_spkac(&x, cfg.spkac_file, pkey, x509,
-			    dgst, cfg.sigopts, attribs, db, serial,
-			    cfg.subj, cfg.chtype,
-			    cfg.multirdn, cfg.email_dn,
-			    cfg.startdate, cfg.enddate,
-			    cfg.days, cfg.extensions, conf,
-			    cfg.verbose, certopt, nameopt, default_op,
-			    ext_copy);
-			if (j < 0)
-				goto err;
-			if (j > 0) {
-				total_done++;
-				BIO_printf(bio_err, "\n");
-				if (!BN_add_word(serial, 1))
-					goto err;
-				if (!sk_X509_push(cert_sk, x)) {
-					BIO_printf(bio_err,
-					    "Memory allocation failure\n");
-					goto err;
-				}
-				if (cfg.outfile != NULL) {
-					output_der = 1;
-					cfg.batch = 1;
-				}
-			}
 		}
 		if (cfg.ss_cert_file != NULL) {
 			total++;
@@ -2292,139 +2241,6 @@ write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 	}
 
 	return PEM_write_bio_X509(bp, x);
-}
-
-static int
-certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
-    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
-    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
-    unsigned long chtype, int multirdn, int email_dn, char *startdate,
-    char *enddate, long days, char *ext_sect, CONF *lconf, int verbose,
-    unsigned long certopt, unsigned long nameopt, int default_op, int ext_copy)
-{
-	STACK_OF(CONF_VALUE) *sk = NULL;
-	LHASH_OF(CONF_VALUE) *parms = NULL;
-	X509_REQ *req = NULL;
-	CONF_VALUE *cv = NULL;
-	NETSCAPE_SPKI *spki = NULL;
-	char *type, *buf;
-	EVP_PKEY *pktmp = NULL;
-	X509_NAME *n = NULL;
-	int ok = -1, i, j;
-	long errline;
-	int nid;
-
-	/*
-	 * Load input file into a hash table.  (This is just an easy
-	 * way to read and parse the file, then put it into a convenient
-	 * STACK format).
-	 */
-	parms = CONF_load(NULL, infile, &errline);
-	if (parms == NULL) {
-		BIO_printf(bio_err, "error on line %ld of %s\n",
-		    errline, infile);
-		ERR_print_errors(bio_err);
-		goto err;
-	}
-	sk = CONF_get_section(parms, "default");
-	if (sk_CONF_VALUE_num(sk) == 0) {
-		BIO_printf(bio_err, "no name/value pairs found in %s\n",
-		    infile);
-		goto err;
-	}
-	/*
-	 * Now create a dummy X509 request structure.  We don't actually
-	 * have an X509 request, but we have many of the components
-	 * (a public key, various DN components).  The idea is that we
-	 * put these components into the right X509 request structure
-	 * and we can use the same code as if you had a real X509 request.
-	 */
-	req = X509_REQ_new();
-	if (req == NULL) {
-		ERR_print_errors(bio_err);
-		goto err;
-	}
-	/*
-	 * Build up the subject name set.
-	 */
-	n = X509_REQ_get_subject_name(req);
-
-	for (i = 0;; i++) {
-		if (sk_CONF_VALUE_num(sk) <= i)
-			break;
-
-		cv = sk_CONF_VALUE_value(sk, i);
-		type = cv->name;
-		/*
-		 * Skip past any leading X. X: X, etc to allow for multiple
-		 * instances
-		 */
-		for (buf = cv->name; *buf; buf++) {
-			if ((*buf == ':') || (*buf == ',') || (*buf == '.')) {
-				buf++;
-				if (*buf)
-					type = buf;
-				break;
-			}
-		}
-
-		buf = cv->value;
-		if ((nid = OBJ_txt2nid(type)) == NID_undef) {
-			if (strcmp(type, "SPKAC") == 0) {
-				spki = NETSCAPE_SPKI_b64_decode(cv->value, -1);
-				if (spki == NULL) {
-					BIO_printf(bio_err,
-					    "unable to load Netscape SPKAC structure\n");
-					ERR_print_errors(bio_err);
-					goto err;
-				}
-			}
-			continue;
-		}
-		if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
-		    (unsigned char *)buf, -1, -1, 0))
-			goto err;
-	}
-	if (spki == NULL) {
-		BIO_printf(bio_err,
-		    "Netscape SPKAC structure not found in %s\n", infile);
-		goto err;
-	}
-	/*
-	 * Now extract the key from the SPKI structure.
-	 */
-
-	BIO_printf(bio_err,
-	    "Check that the SPKAC request matches the signature\n");
-
-	if ((pktmp = NETSCAPE_SPKI_get_pubkey(spki)) == NULL) {
-		BIO_printf(bio_err, "error unpacking SPKAC public key\n");
-		goto err;
-	}
-	j = NETSCAPE_SPKI_verify(spki, pktmp);
-	if (j <= 0) {
-		BIO_printf(bio_err,
-		    "signature verification failed on SPKAC public key\n");
-		goto err;
-	}
-	BIO_printf(bio_err, "Signature ok\n");
-
-	if (!X509_REQ_set_pubkey(req, pktmp)) {
-		EVP_PKEY_free(pktmp);
-		goto err;
-	}
-	EVP_PKEY_free(pktmp);
-	ok = do_body(xret, pkey, x509, dgst, sigopts, policy, db, serial,
-	    subj, chtype, multirdn, email_dn, startdate, enddate, days, 1,
-	    verbose, req, ext_sect, lconf, certopt, nameopt, default_op,
-	    ext_copy, 0);
-
- err:
-	X509_REQ_free(req);
-	CONF_free(parms);
-	NETSCAPE_SPKI_free(spki);
-
-	return (ok);
 }
 
 static int
