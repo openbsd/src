@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.38 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.39 2024/07/08 13:18:26 claudio Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
 		FILL_KPROC(&kp, do_copy_str, &proc, &process,
 		    &ucred, &pgrp, process.ps_mainproc, pr, &sess,
-		    vmp, limp, sap, 0, 1);
+		    vmp, limp, sap, &process.ps_tu, 0, 1);
 
 		/* stuff that's too painful to generalize */
 		kp.p_ppid = parent_pid;
@@ -388,7 +388,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 			}
 			FILL_KPROC(&kp, do_copy_str, &proc, &process,
 			    &ucred, &pgrp, p, pr, &sess, vmp, limp, sap,
-			    1, 1);
+			    &proc.p_tu, 1, 1);
 
 			/* see above */
 			kp.p_ppid = parent_pid;
