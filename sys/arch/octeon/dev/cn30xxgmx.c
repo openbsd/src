@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.54 2024/05/20 23:13:33 jsg Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.55 2024/07/08 08:07:45 landry Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -991,7 +991,8 @@ cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *sc)
 		baudrate = IF_Gbps(1);
 		break;
 	default:
-		baudrate = 0/* XXX */;
+		/* Assume 1Gbps for now */
+		baudrate = IF_Gbps(1); /* XXX */
 		break;
 	}
 	ifp->if_baudrate = baudrate;
@@ -1202,7 +1203,7 @@ cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *sc)
 		SET(prt_cfg, PRTN_CFG_SPEED);
 		break;
 	default:
-		/* NOT REACHED! */
+		/* THEORETICALLY NOT REACHED! */
 		/* Following configuration is default value of system.
 		*/
 		tx_clk = 1;
