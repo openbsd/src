@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_crld.c,v 1.5 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_crld.c,v 1.6 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -417,6 +417,7 @@ const ASN1_ITEM DIST_POINT_NAME_it = {
 	.size = sizeof(DIST_POINT_NAME),
 	.sname = "DIST_POINT_NAME",
 };
+LCRYPTO_ALIAS(DIST_POINT_NAME_it);
 
 
 
@@ -482,6 +483,7 @@ const ASN1_ITEM DIST_POINT_it = {
 	.size = sizeof(DIST_POINT),
 	.sname = "DIST_POINT",
 };
+LCRYPTO_ALIAS(DIST_POINT_it);
 
 
 DIST_POINT *
@@ -530,6 +532,7 @@ const ASN1_ITEM CRL_DIST_POINTS_it = {
 	.size = 0,
 	.sname = "CRL_DIST_POINTS",
 };
+LCRYPTO_ALIAS(CRL_DIST_POINTS_it);
 
 
 CRL_DIST_POINTS *
@@ -615,6 +618,7 @@ const ASN1_ITEM ISSUING_DIST_POINT_it = {
 	.size = sizeof(ISSUING_DIST_POINT),
 	.sname = "ISSUING_DIST_POINT",
 };
+LCRYPTO_ALIAS(ISSUING_DIST_POINT_it);
 
 
 ISSUING_DIST_POINT *

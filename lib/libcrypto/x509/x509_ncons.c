@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.9 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.10 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -131,6 +131,7 @@ const ASN1_ITEM GENERAL_SUBTREE_it = {
 	.size = sizeof(GENERAL_SUBTREE),
 	.sname = "GENERAL_SUBTREE",
 };
+LCRYPTO_ALIAS(GENERAL_SUBTREE_it);
 
 static const ASN1_TEMPLATE NAME_CONSTRAINTS_seq_tt[] = {
 	{
@@ -158,6 +159,7 @@ const ASN1_ITEM NAME_CONSTRAINTS_it = {
 	.size = sizeof(NAME_CONSTRAINTS),
 	.sname = "NAME_CONSTRAINTS",
 };
+LCRYPTO_ALIAS(NAME_CONSTRAINTS_it);
 
 
 GENERAL_SUBTREE *

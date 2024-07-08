@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.7 2024/03/02 10:40:05 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.8 2024/07/08 14:47:44 beck Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -252,5 +252,39 @@ LCRYPTO_USED(X509v3_addr_validate_path);
 LCRYPTO_USED(X509v3_asid_validate_resource_set);
 LCRYPTO_USED(X509v3_addr_validate_resource_set);
 LCRYPTO_USED(ERR_load_X509V3_strings);
+extern LCRYPTO_USED(BASIC_CONSTRAINTS_it);
+extern LCRYPTO_USED(AUTHORITY_KEYID_it);
+extern LCRYPTO_USED(PKEY_USAGE_PERIOD_it);
+extern LCRYPTO_USED(GENERAL_NAME_it);
+extern LCRYPTO_USED(GENERAL_NAMES_it);
+extern LCRYPTO_USED(OTHERNAME_it);
+extern LCRYPTO_USED(EDIPARTYNAME_it);
+extern LCRYPTO_USED(EXTENDED_KEY_USAGE_it);
+extern LCRYPTO_USED(CERTIFICATEPOLICIES_it);
+extern LCRYPTO_USED(POLICYINFO_it);
+extern LCRYPTO_USED(POLICYQUALINFO_it);
+extern LCRYPTO_USED(USERNOTICE_it);
+extern LCRYPTO_USED(NOTICEREF_it);
+extern LCRYPTO_USED(CRL_DIST_POINTS_it);
+extern LCRYPTO_USED(DIST_POINT_it);
+extern LCRYPTO_USED(DIST_POINT_NAME_it);
+extern LCRYPTO_USED(DIST_POINT_it);
+extern LCRYPTO_USED(ISSUING_DIST_POINT_it);
+extern LCRYPTO_USED(ACCESS_DESCRIPTION_it);
+extern LCRYPTO_USED(AUTHORITY_INFO_ACCESS_it);
+extern LCRYPTO_USED(POLICY_MAPPING_it);
+extern LCRYPTO_USED(POLICY_MAPPINGS_it);
+extern LCRYPTO_USED(GENERAL_SUBTREE_it);
+extern LCRYPTO_USED(NAME_CONSTRAINTS_it);
+extern LCRYPTO_USED(POLICY_CONSTRAINTS_it);
+extern LCRYPTO_USED(ASRange_it);
+extern LCRYPTO_USED(ASIdOrRange_it);
+extern LCRYPTO_USED(ASIdentifierChoice_it);
+extern LCRYPTO_USED(ASIdentifiers_it);
+extern LCRYPTO_USED(IPAddressRange_it);
+extern LCRYPTO_USED(IPAddressOrRange_it);
+extern LCRYPTO_USED(IPAddressChoice_it);
+extern LCRYPTO_USED(IPAddressFamily_it);
+
 
 #endif /* _LIBCRYPTO_X509V3_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pmaps.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_pmaps.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -112,6 +112,7 @@ const ASN1_ITEM POLICY_MAPPING_it = {
 	.size = sizeof(POLICY_MAPPING),
 	.sname = "POLICY_MAPPING",
 };
+LCRYPTO_ALIAS(POLICY_MAPPING_it);
 
 static const ASN1_TEMPLATE POLICY_MAPPINGS_item_tt = {
 	.flags = ASN1_TFLG_SEQUENCE_OF,
@@ -130,6 +131,7 @@ const ASN1_ITEM POLICY_MAPPINGS_it = {
 	.size = 0,
 	.sname = "POLICY_MAPPINGS",
 };
+LCRYPTO_ALIAS(POLICY_MAPPINGS_it);
 
 
 POLICY_MAPPING *

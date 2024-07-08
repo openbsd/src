@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.43 2024/02/20 14:58:16 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.44 2024/07/08 14:47:44 beck Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -102,6 +102,7 @@ const ASN1_ITEM ASRange_it = {
 	.size = sizeof(ASRange),
 	.sname = "ASRange",
 };
+LCRYPTO_ALIAS(ASRange_it);
 
 static const ASN1_TEMPLATE ASIdOrRange_ch_tt[] = {
 	{
@@ -129,6 +130,7 @@ const ASN1_ITEM ASIdOrRange_it = {
 	.size = sizeof(ASIdOrRange),
 	.sname = "ASIdOrRange",
 };
+LCRYPTO_ALIAS(ASIdOrRange_it);
 
 static const ASN1_TEMPLATE ASIdentifierChoice_ch_tt[] = {
 	{
@@ -156,6 +158,7 @@ const ASN1_ITEM ASIdentifierChoice_it = {
 	.size = sizeof(ASIdentifierChoice),
 	.sname = "ASIdentifierChoice",
 };
+LCRYPTO_ALIAS(ASIdentifierChoice_it);
 
 static const ASN1_TEMPLATE ASIdentifiers_seq_tt[] = {
 	{
@@ -183,6 +186,7 @@ const ASN1_ITEM ASIdentifiers_it = {
 	.size = sizeof(ASIdentifiers),
 	.sname = "ASIdentifiers",
 };
+LCRYPTO_ALIAS(ASIdentifiers_it);
 
 ASRange *
 d2i_ASRange(ASRange **a, const unsigned char **in, long len)

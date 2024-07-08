@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_extku.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_extku.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -120,6 +120,7 @@ const ASN1_ITEM EXTENDED_KEY_USAGE_it = {
 	.size = 0,
 	.sname = "EXTENDED_KEY_USAGE",
 };
+LCRYPTO_ALIAS(EXTENDED_KEY_USAGE_it);
 
 
 EXTENDED_KEY_USAGE *

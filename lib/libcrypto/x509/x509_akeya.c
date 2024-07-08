@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_akeya.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_akeya.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -96,6 +96,7 @@ const ASN1_ITEM AUTHORITY_KEYID_it = {
 	.size = sizeof(AUTHORITY_KEYID),
 	.sname = "AUTHORITY_KEYID",
 };
+LCRYPTO_ALIAS(AUTHORITY_KEYID_it);
 
 
 AUTHORITY_KEYID *

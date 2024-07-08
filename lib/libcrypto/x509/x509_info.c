@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_info.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_info.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -131,6 +131,7 @@ const ASN1_ITEM ACCESS_DESCRIPTION_it = {
 	.size = sizeof(ACCESS_DESCRIPTION),
 	.sname = "ACCESS_DESCRIPTION",
 };
+LCRYPTO_ALIAS(ACCESS_DESCRIPTION_it);
 
 
 ACCESS_DESCRIPTION *
@@ -179,6 +180,7 @@ const ASN1_ITEM AUTHORITY_INFO_ACCESS_it = {
 	.size = 0,
 	.sname = "AUTHORITY_INFO_ACCESS",
 };
+LCRYPTO_ALIAS(AUTHORITY_INFO_ACCESS_it);
 
 
 AUTHORITY_INFO_ACCESS *

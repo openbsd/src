@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.11 2023/04/26 20:54:21 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.12 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -116,6 +116,7 @@ const ASN1_ITEM CERTIFICATEPOLICIES_it = {
 	.size = 0,
 	.sname = "CERTIFICATEPOLICIES",
 };
+LCRYPTO_ALIAS(CERTIFICATEPOLICIES_it);
 
 
 CERTIFICATEPOLICIES *
@@ -173,6 +174,7 @@ const ASN1_ITEM POLICYINFO_it = {
 	.size = sizeof(POLICYINFO),
 	.sname = "POLICYINFO",
 };
+LCRYPTO_ALIAS(POLICYINFO_it);
 
 
 POLICYINFO *
@@ -270,6 +272,7 @@ const ASN1_ITEM POLICYQUALINFO_it = {
 	.size = sizeof(POLICYQUALINFO),
 	.sname = "POLICYQUALINFO",
 };
+LCRYPTO_ALIAS(POLICYQUALINFO_it);
 
 
 POLICYQUALINFO *
@@ -327,6 +330,7 @@ const ASN1_ITEM USERNOTICE_it = {
 	.size = sizeof(USERNOTICE),
 	.sname = "USERNOTICE",
 };
+LCRYPTO_ALIAS(USERNOTICE_it);
 
 
 USERNOTICE *
@@ -384,6 +388,7 @@ const ASN1_ITEM NOTICEREF_it = {
 	.size = sizeof(NOTICEREF),
 	.sname = "NOTICEREF",
 };
+LCRYPTO_ALIAS(NOTICEREF_it);
 
 
 NOTICEREF *

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pku.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_pku.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -108,6 +108,7 @@ const ASN1_ITEM PKEY_USAGE_PERIOD_it = {
 	.size = sizeof(PKEY_USAGE_PERIOD),
 	.sname = "PKEY_USAGE_PERIOD",
 };
+LCRYPTO_ALIAS(PKEY_USAGE_PERIOD_it);
 
 
 PKEY_USAGE_PERIOD *
