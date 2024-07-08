@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.24 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.25 2024/07/08 14:48:49 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -113,6 +113,7 @@ const ASN1_ITEM PKCS8_PRIV_KEY_INFO_it = {
 	.size = sizeof(PKCS8_PRIV_KEY_INFO),
 	.sname = "PKCS8_PRIV_KEY_INFO",
 };
+LCRYPTO_ALIAS(PKCS8_PRIV_KEY_INFO_it);
 
 
 PKCS8_PRIV_KEY_INFO *

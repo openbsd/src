@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.36 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.37 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,6 +111,7 @@ const ASN1_ITEM X509_PUBKEY_it = {
 	.size = sizeof(X509_PUBKEY),
 	.sname = "X509_PUBKEY",
 };
+LCRYPTO_ALIAS(X509_PUBKEY_it);
 
 X509_PUBKEY *
 d2i_X509_PUBKEY(X509_PUBKEY **a, const unsigned char **in, long len)

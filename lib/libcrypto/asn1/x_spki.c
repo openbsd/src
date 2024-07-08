@@ -1,4 +1,4 @@
-/* $OpenBSD: x_spki.c,v 1.14 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_spki.c,v 1.15 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,6 +86,7 @@ const ASN1_ITEM NETSCAPE_SPKAC_it = {
 	.size = sizeof(NETSCAPE_SPKAC),
 	.sname = "NETSCAPE_SPKAC",
 };
+LCRYPTO_ALIAS(NETSCAPE_SPKAC_it);
 
 
 NETSCAPE_SPKAC *
@@ -150,6 +151,7 @@ const ASN1_ITEM NETSCAPE_SPKI_it = {
 	.size = sizeof(NETSCAPE_SPKI),
 	.sname = "NETSCAPE_SPKI",
 };
+LCRYPTO_ALIAS(NETSCAPE_SPKI_it);
 
 
 NETSCAPE_SPKI *

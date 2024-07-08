@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.22 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.23 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,6 +90,7 @@ const ASN1_ITEM X509_ATTRIBUTE_it = {
 	.size = sizeof(X509_ATTRIBUTE),
 	.sname = "X509_ATTRIBUTE",
 };
+LCRYPTO_ALIAS(X509_ATTRIBUTE_it);
 
 
 X509_ATTRIBUTE *

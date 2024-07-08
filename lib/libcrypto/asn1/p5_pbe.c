@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.27 2024/03/28 00:44:26 tb Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.28 2024/07/08 14:48:49 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -89,6 +89,7 @@ const ASN1_ITEM PBEPARAM_it = {
 	.size = sizeof(PBEPARAM),
 	.sname = "PBEPARAM",
 };
+LCRYPTO_ALIAS(PBEPARAM_it);
 
 
 PBEPARAM *

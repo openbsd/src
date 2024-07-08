@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.40 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_algor.c,v 1.41 2024/07/08 14:48:49 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -86,6 +86,7 @@ const ASN1_ITEM X509_ALGOR_it = {
 	.size = sizeof(X509_ALGOR),
 	.sname = "X509_ALGOR",
 };
+LCRYPTO_ALIAS(X509_ALGOR_it);
 
 static const ASN1_TEMPLATE X509_ALGORS_item_tt = {
 	.flags = ASN1_TFLG_SEQUENCE_OF,
@@ -104,6 +105,7 @@ const ASN1_ITEM X509_ALGORS_it = {
 	.size = 0,
 	.sname = "X509_ALGORS",
 };
+LCRYPTO_ALIAS(X509_ALGORS_it);
 
 X509_ALGOR *
 d2i_X509_ALGOR(X509_ALGOR **a, const unsigned char **in, long len)

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.43 2024/04/15 15:52:01 tb Exp $ */
+/* $OpenBSD: x_name.c,v 1.44 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,6 +109,7 @@ const ASN1_ITEM X509_NAME_ENTRY_it = {
 	.size = sizeof(X509_NAME_ENTRY),
 	.sname = "X509_NAME_ENTRY",
 };
+LCRYPTO_ALIAS(X509_NAME_ENTRY_it);
 
 
 X509_NAME_ENTRY *
@@ -212,6 +213,7 @@ const ASN1_ITEM X509_NAME_it = {
 	.size = 0,
 	.sname = "X509_NAME",
 };
+LCRYPTO_ALIAS(X509_NAME_it);
 
 X509_NAME *
 d2i_X509_NAME(X509_NAME **a, const unsigned char **in, long len)

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.38 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_x509.c,v 1.39 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,6 +141,7 @@ const ASN1_ITEM X509_CINF_it = {
 	.size = sizeof(X509_CINF),
 	.sname = "X509_CINF",
 };
+LCRYPTO_ALIAS(X509_CINF_it);
 
 
 X509_CINF *
@@ -256,6 +257,7 @@ const ASN1_ITEM X509_it = {
 	.size = sizeof(X509),
 	.sname = "X509",
 };
+LCRYPTO_ALIAS(X509_it);
 
 
 X509 *

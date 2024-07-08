@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.44 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_crl.c,v 1.45 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,6 +99,7 @@ const ASN1_ITEM X509_REVOKED_it = {
 	.size = sizeof(X509_REVOKED),
 	.sname = "X509_REVOKED",
 };
+LCRYPTO_ALIAS(X509_REVOKED_it);
 
 /* The X509_CRL_INFO structure needs a bit of customisation.
  * Since we cache the original encoding the signature wont be affected by
@@ -179,6 +180,7 @@ const ASN1_ITEM X509_CRL_INFO_it = {
 	.size = sizeof(X509_CRL_INFO),
 	.sname = "X509_CRL_INFO",
 };
+LCRYPTO_ALIAS(X509_CRL_INFO_it);
 
 /* Set CRL entry issuer according to CRL certificate issuer extension.
  * Check for unhandled critical CRL entry extensions.
@@ -412,6 +414,7 @@ const ASN1_ITEM X509_CRL_it = {
 	.size = sizeof(X509_CRL),
 	.sname = "X509_CRL",
 };
+LCRYPTO_ALIAS(X509_CRL_it);
 
 
 X509_REVOKED *

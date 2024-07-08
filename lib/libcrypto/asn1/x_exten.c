@@ -1,4 +1,4 @@
-/* $OpenBSD: x_exten.c,v 1.21 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_exten.c,v 1.22 2024/07/08 14:48:49 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -90,6 +90,7 @@ const ASN1_ITEM X509_EXTENSION_it = {
 	.size = sizeof(X509_EXTENSION),
 	.sname = "X509_EXTENSION",
 };
+LCRYPTO_ALIAS(X509_EXTENSION_it);
 
 static const ASN1_TEMPLATE X509_EXTENSIONS_item_tt = {
 	.flags = ASN1_TFLG_SEQUENCE_OF,
@@ -108,6 +109,7 @@ const ASN1_ITEM X509_EXTENSIONS_it = {
 	.size = 0,
 	.sname = "X509_EXTENSIONS",
 };
+LCRYPTO_ALIAS(X509_EXTENSIONS_it);
 
 
 X509_EXTENSION *

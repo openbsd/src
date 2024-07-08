@@ -1,4 +1,4 @@
-/* $OpenBSD: x_val.c,v 1.14 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_val.c,v 1.15 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,6 +82,7 @@ const ASN1_ITEM X509_VAL_it = {
 	.size = sizeof(X509_VAL),
 	.sname = "X509_VAL",
 };
+LCRYPTO_ALIAS(X509_VAL_it);
 
 
 X509_VAL *

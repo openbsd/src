@@ -1,4 +1,4 @@
-/* $OpenBSD: x_sig.c,v 1.17 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_sig.c,v 1.18 2024/07/08 14:48:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,6 +84,7 @@ const ASN1_ITEM X509_SIG_it = {
 	.size = sizeof(X509_SIG),
 	.sname = "X509_SIG",
 };
+LCRYPTO_ALIAS(X509_SIG_it);
 
 
 X509_SIG *

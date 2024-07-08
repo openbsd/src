@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.5 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x509.h,v 1.6 2024/07/08 14:48:49 beck Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -463,5 +463,26 @@ LCRYPTO_USED(PKCS8_pkey_get0_attrs);
 LCRYPTO_USED(PKCS8_pkey_add1_attr_by_NID);
 LCRYPTO_USED(X509_PUBKEY_set0_param);
 LCRYPTO_USED(X509_PUBKEY_get0_param);
+extern LCRYPTO_USED(X509_ALGOR_it);
+extern LCRYPTO_USED(X509_ALGORS_it);
+extern LCRYPTO_USED(X509_VAL_it);
+extern LCRYPTO_USED(X509_PUBKEY_it);
+extern LCRYPTO_USED(X509_SIG_it);
+extern LCRYPTO_USED(X509_REQ_INFO_it);
+extern LCRYPTO_USED(X509_REQ_it);
+extern LCRYPTO_USED(X509_ATTRIBUTE_it);
+extern LCRYPTO_USED(X509_EXTENSION_it);
+extern LCRYPTO_USED(X509_EXTENSIONS_it);
+extern LCRYPTO_USED(X509_NAME_ENTRY_it);
+extern LCRYPTO_USED(X509_NAME_it);
+extern LCRYPTO_USED(X509_CINF_it);
+extern LCRYPTO_USED(X509_it);
+extern LCRYPTO_USED(X509_REVOKED_it);
+extern LCRYPTO_USED(X509_CRL_INFO_it);
+extern LCRYPTO_USED(X509_CRL_it);
+extern LCRYPTO_USED(NETSCAPE_SPKI_it);
+extern LCRYPTO_USED(NETSCAPE_SPKAC_it);
+extern LCRYPTO_USED(PBEPARAM_it);
+extern LCRYPTO_USED(PKCS8_PRIV_KEY_INFO_it);
 
 #endif /* _LIBCRYPTO_X509_H */
