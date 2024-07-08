@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.2 2024/07/08 14:53:11 beck Exp $ */
+/* $OpenBSD: ocsp.h,v 1.3 2024/07/08 17:01:54 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -186,6 +186,7 @@ LCRYPTO_USED(OCSP_REQUEST_print);
 LCRYPTO_USED(OCSP_RESPONSE_print);
 LCRYPTO_USED(OCSP_basic_verify);
 LCRYPTO_USED(ERR_load_OCSP_strings);
+#if defined(LIBRESSL_NAMESPACE)
 extern LCRYPTO_USED(OCSP_RESPID_it);
 extern LCRYPTO_USED(OCSP_SINGLERESP_it);
 extern LCRYPTO_USED(OCSP_CERTSTATUS_it);
@@ -202,5 +203,6 @@ extern LCRYPTO_USED(OCSP_SIGNATURE_it);
 extern LCRYPTO_USED(OCSP_REQINFO_it);
 extern LCRYPTO_USED(OCSP_CRLID_it);
 extern LCRYPTO_USED(OCSP_SERVICELOC_it);
+#endif
 
 #endif /* _LIBCRYPTO_OCSP_H */

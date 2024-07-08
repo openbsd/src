@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.6 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: x509.h,v 1.7 2024/07/08 17:01:54 beck Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -463,6 +463,7 @@ LCRYPTO_USED(PKCS8_pkey_get0_attrs);
 LCRYPTO_USED(PKCS8_pkey_add1_attr_by_NID);
 LCRYPTO_USED(X509_PUBKEY_set0_param);
 LCRYPTO_USED(X509_PUBKEY_get0_param);
+#if defined(LIBRESSL_NAMESPACE)
 extern LCRYPTO_USED(X509_ALGOR_it);
 extern LCRYPTO_USED(X509_ALGORS_it);
 extern LCRYPTO_USED(X509_VAL_it);
@@ -484,5 +485,6 @@ extern LCRYPTO_USED(NETSCAPE_SPKI_it);
 extern LCRYPTO_USED(NETSCAPE_SPKAC_it);
 extern LCRYPTO_USED(PBEPARAM_it);
 extern LCRYPTO_USED(PKCS8_PRIV_KEY_INFO_it);
+#endif
 
 #endif /* _LIBCRYPTO_X509_H */

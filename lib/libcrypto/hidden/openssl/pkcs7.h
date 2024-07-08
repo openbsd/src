@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.4 2024/07/08 16:23:27 beck Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.5 2024/07/08 17:01:54 beck Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -125,6 +125,7 @@ LCRYPTO_USED(SMIME_write_PKCS7);
 LCRYPTO_USED(SMIME_read_PKCS7);
 LCRYPTO_USED(BIO_new_PKCS7);
 LCRYPTO_USED(ERR_load_PKCS7_strings);
+#if defined(LIBRESSL_NAMESPACE)
 extern LCRYPTO_USED(PKCS7_ISSUER_AND_SERIAL_it);
 extern LCRYPTO_USED(PKCS7_SIGNER_INFO_it);
 extern LCRYPTO_USED(PKCS7_RECIP_INFO_it);
@@ -137,6 +138,6 @@ extern LCRYPTO_USED(PKCS7_ENCRYPT_it);
 extern LCRYPTO_USED(PKCS7_it);
 extern LCRYPTO_USED(PKCS7_ATTR_SIGN_it);
 extern LCRYPTO_USED(PKCS7_ATTR_VERIFY_it);
-
+#endif
 
 #endif /* _LIBCRYPTO_PKCS7_H */

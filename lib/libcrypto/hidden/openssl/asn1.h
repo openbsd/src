@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.14 2024/07/08 14:52:31 beck Exp $ */
+/* $OpenBSD: asn1.h,v 1.15 2024/07/08 17:01:54 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -233,6 +233,7 @@ LCRYPTO_USED(SMIME_text);
 LCRYPTO_USED(ERR_load_ASN1_strings);
 LCRYPTO_UNUSED(ASN1_UTCTIME_cmp_time_t);
 LCRYPTO_UNUSED(ASN1_dup);
+#if defined(LIBRESSL_NAMESPACE)
 extern LCRYPTO_USED(ASN1_SEQUENCE_ANY_it);
 extern LCRYPTO_USED(ASN1_SET_ANY_it);
 extern LCRYPTO_USED(ASN1_ANY_it);
@@ -256,5 +257,6 @@ extern LCRYPTO_USED(ASN1_GENERALSTRING_it);
 extern LCRYPTO_USED(ASN1_UTCTIME_it);
 extern LCRYPTO_USED(ASN1_GENERALIZEDTIME_it);
 extern LCRYPTO_USED(ASN1_TIME_it);
+#endif
 
 #endif /* _LIBCRYPTO_ASN1_H */

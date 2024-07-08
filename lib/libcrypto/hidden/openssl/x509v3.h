@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.8 2024/07/08 14:47:44 beck Exp $ */
+/* $OpenBSD: x509v3.h,v 1.9 2024/07/08 17:01:54 beck Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -252,6 +252,7 @@ LCRYPTO_USED(X509v3_addr_validate_path);
 LCRYPTO_USED(X509v3_asid_validate_resource_set);
 LCRYPTO_USED(X509v3_addr_validate_resource_set);
 LCRYPTO_USED(ERR_load_X509V3_strings);
+#if defined(LIBRESSL_NAMESPACE)
 extern LCRYPTO_USED(BASIC_CONSTRAINTS_it);
 extern LCRYPTO_USED(AUTHORITY_KEYID_it);
 extern LCRYPTO_USED(PKEY_USAGE_PERIOD_it);
@@ -285,6 +286,6 @@ extern LCRYPTO_USED(IPAddressRange_it);
 extern LCRYPTO_USED(IPAddressOrRange_it);
 extern LCRYPTO_USED(IPAddressChoice_it);
 extern LCRYPTO_USED(IPAddressFamily_it);
-
+#endif
 
 #endif /* _LIBCRYPTO_X509V3_H */
