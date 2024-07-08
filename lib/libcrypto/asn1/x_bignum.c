@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.14 2024/05/17 02:47:21 tb Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.15 2024/07/08 16:24:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -99,6 +99,7 @@ const ASN1_ITEM BIGNUM_it = {
         .size = 0,
         .sname = "BIGNUM",
 };
+LCRYPTO_ALIAS(BIGNUM_it);
 
 const ASN1_ITEM CBIGNUM_it = {
         .itype = ASN1_ITYPE_PRIMITIVE,
@@ -109,6 +110,7 @@ const ASN1_ITEM CBIGNUM_it = {
         .size = 0,
         .sname = "BIGNUM",
 };
+LCRYPTO_ALIAS(CBIGNUM_it);
 
 static int
 bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)

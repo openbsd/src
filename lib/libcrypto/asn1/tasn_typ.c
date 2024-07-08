@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.19 2024/07/08 14:52:31 beck Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.20 2024/07/08 16:24:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -487,6 +487,7 @@ const ASN1_ITEM ASN1_SEQUENCE_it = {
 	.utype = V_ASN1_SEQUENCE,
 	.sname = "ASN1_SEQUENCE",
 };
+LCRYPTO_ALIAS(ASN1_SEQUENCE_it);
 
 
 /* Multistring types */

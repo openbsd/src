@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.23 2023/07/28 10:00:10 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.24 2024/07/08 16:24:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -885,10 +885,7 @@ extern const ASN1_ITEM ASN1_SEQUENCE_it;
 extern const ASN1_ITEM BIGNUM_it;
 extern const ASN1_ITEM LONG_it;
 extern const ASN1_ITEM ZLONG_it;
-
-#ifndef LIBRESSL_INTERNAL
 extern const ASN1_ITEM CBIGNUM_it;
-#endif
 
 DECLARE_STACK_OF(ASN1_VALUE)
 

@@ -3322,3 +3322,8 @@ _libre_PKCS7_ENCRYPT_it
 _libre_PKCS7_it
 _libre_PKCS7_ATTR_SIGN_it
 _libre_PKCS7_ATTR_VERIFY_it
+_libre_ASN1_SEQUENCE_it
+_libre_CBIGNUM_it
+_libre_BIGNUM_it
+_libre_LONG_it
+_libre_ZLONG_it
