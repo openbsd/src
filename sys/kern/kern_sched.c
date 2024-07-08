@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.98 2024/07/08 14:46:47 mpi Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.99 2024/07/08 16:15:42 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -650,8 +650,6 @@ void
 sched_unpeg_curproc(void)
 {
 	struct proc *p = curproc;
-
-	KASSERT(ISSET(p->p_flag, P_CPUPEG));
 
 	atomic_clearbits_int(&p->p_flag, P_CPUPEG);
 }
