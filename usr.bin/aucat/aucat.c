@@ -147,13 +147,18 @@ static void *
 allocbuf(int nfr, int nch, int bps)
 {
 	size_t fsize;
+	void *ptr;
 
 	if (nch < 0 || nch > NCHAN_MAX || bps < 0 || bps > 4) {
 		log_puts("allocbuf: bogus channels or bytes per sample count\n");
 		panic();
 	}
 	fsize = nch * bps;
-	return reallocarray(NULL, nfr, fsize);
+
+	ptr = reallocarray(NULL, nfr, fsize);
+	if (ptr == NULL)
+		err(1, "reallocarray");
+	return ptr;
 }
 
 static void
