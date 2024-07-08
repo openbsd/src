@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.32 2024/04/15 15:49:37 tb Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.33 2024/07/08 17:11:05 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -239,6 +239,7 @@ const ASN1_ITEM DSAPrivateKey_it = {
 	.size = sizeof(DSA),
 	.sname = "DSA",
 };
+LCRYPTO_ALIAS(DSAPrivateKey_it);
 
 
 DSA *
@@ -297,6 +298,7 @@ const ASN1_ITEM DSAparams_it = {
 	.size = sizeof(DSA),
 	.sname = "DSA",
 };
+LCRYPTO_ALIAS(DSAparams_it);
 
 
 DSA *
@@ -390,6 +392,7 @@ const ASN1_ITEM DSAPublicKey_it = {
 	.size = sizeof(DSA),
 	.sname = "DSA",
 };
+LCRYPTO_ALIAS(DSAPublicKey_it);
 
 DSA *
 d2i_DSAPublicKey(DSA **a, const unsigned char **in, long len)
