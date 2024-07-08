@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.149 2024/07/08 15:31:11 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.150 2024/07/08 15:31:58 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -615,7 +615,8 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (strstr(cert->mft, cert->repo) != cert->mft) {
+	if (strstr(cert->mft, cert->repo) != cert->mft ||
+	    cert->mft + strlen(cert->repo) != mftfilename) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "conflicting URIs for caRepository and rpkiManifest", fn);
 		goto out;
