@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.30 2024/07/09 17:01:40 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.31 2024/07/09 17:04:50 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -119,14 +119,13 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_TLS_SECRET:
 		if (p1 < 0)
 			return 0;
-		if (kctx->secret != NULL)
-			freezero(kctx->secret, kctx->secret_len);
+
+		freezero(kctx->secret, kctx->secret_len);
+		kctx->secret = NULL;
+		kctx->secret_len = 0;
 
 		explicit_bzero(kctx->seed, kctx->seed_len);
 		kctx->seed_len = 0;
-
-		kctx->secret = NULL;
-		kctx->secret_len = 0;
 
 		if (p1 == 0 || p2 == NULL)
 			return 0;
