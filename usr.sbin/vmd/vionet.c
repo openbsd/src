@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.14 2024/02/22 02:38:53 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.15 2024/07/09 18:49:05 jan Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -839,9 +839,11 @@ vionet_tx(struct virtio_dev *dev)
 		if (vionet->local) {
 			dhcpsz = dhcp_request(dev, iov->iov_base, iov->iov_len,
 			    &dhcppkt);
-			if (dhcpsz > 0)
+			if (dhcpsz > 0) {
 				log_debug("%s: detected dhcp request of %zu bytes",
-			    	    __func__, dhcpsz);
+				    __func__, dhcpsz);
+				goto drop;
+			}
 		}
 
 		/* Write our packet to the tap(4). */
