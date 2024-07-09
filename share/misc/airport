@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.94 2024/07/08 14:15:33 op Exp $
+#	$OpenBSD: airport,v 1.95 2024/07/09 03:21:47 jsg Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -115,7 +115,7 @@ ASP:Alice Springs, Alice Springs, Northern Territory, Australia
 ASU:Silvio Pettirossi, Asuncion, Paraguay
 ASW:Aswan International, Aswan, Egypt
 ATC:Arthurs Town, Bahamas
-ATH:Athens Eleftherios Venizelos Internationa, Athens, Greece
+ATH:Athens Eleftherios Venizelos International, Athens, Greece
 ATL:Atlanta William B. Hartsfield International, Georgia, USA
 ATW:Outagamie County Regional, Appleton, Wisconsin, USA
 ATY:Watertown Regional, South Dakota, USA
@@ -344,7 +344,7 @@ CLD:Carlsbad/Palomar, California, USA
 CLE:Cleveland-Hopkins International, Ohio, USA
 CLJ:Cluj, Cluj, Romania
 CLL:College Station, Texas, USA
-CLM:Wm Fairchild Internatinal, Port Angeles, Washington, USA
+CLM:Wm Fairchild International, Port Angeles, Washington, USA
 CLO:Alfonso Bonilla Aragon, Cali, Colombia
 CLQ:Colima, Colima, Mexico
 CLT:Charlotte/Douglas International, North Carolina, USA
@@ -1102,7 +1102,7 @@ MHK:Manhattan Municipal, Kansas, USA
 MHQ:Mariehamn, Aland Island, Finland
 MHT:Manchester, New Hampshire, USA
 MIA:Miami International, Florida, USA
-MID:Merida Internationl, Merida, Yucatan, Mexico
+MID:Merida International, Merida, Yucatan, Mexico
 MIE:Delaware County, Muncie, Indiana, USA
 MIL:All Airports around Milano, Italy
 MIR:Skanes, Monastir, Tunisia
@@ -1136,7 +1136,7 @@ MNI:Montserrat, Leeward Islands
 MNL:Ninoy Aquino International, Manila, Philippines
 MNM:Twin County, Menominee, Michigan, USA
 MOB:Mobile Municipal/Bates Field, Alabama, USA
-MOD:Harry Sham Feild, Modesto, California, USA
+MOD:Harry Sham Field, Modesto, California, USA
 MOL:Aro, Molde, Norway
 MOT:Minot, North Dakota, USA
 MOW:All Airports around Moscow, Russia
@@ -1195,7 +1195,7 @@ NAS:Nassau, Bahamas
 NAT:Agusto Severo, Natal, Rio Grande Do Norte, Brazil
 NAV:Nevsehir Kapadokya Airport, Nevsehir, Turkey
 NAY:Beijing, China
-NBO:Jomo Kenyatta Internatonal, Nairobi, Kenya
+NBO:Jomo Kenyatta International, Nairobi, Kenya
 NCA:North Caicos, Turks And Caicos Islands
 NCE:Cote D'azur, Nice, France
 NCL:Newcastle International, England, United Kingdom
