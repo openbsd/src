@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.21 2024/07/09 16:52:34 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.22 2024/07/09 16:53:33 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -100,6 +100,7 @@ static void
 pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
+
 	freezero(kctx->secret, kctx->secret_len);
 	explicit_bzero(kctx->seed, kctx->seed_len);
 	free(kctx);
@@ -109,6 +110,7 @@ static int
 pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
+
 	switch (type) {
 	case EVP_PKEY_CTRL_TLS_MD:
 		kctx->md = p2;
@@ -191,6 +193,7 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     size_t *keylen)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
+
 	if (kctx->md == NULL) {
 		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
 		return 0;
@@ -304,13 +307,16 @@ tls1_prf_P_hash(const EVP_MD *md,
 			break;
 		}
 	}
+
 	ret = 1;
+
  err:
 	EVP_PKEY_free(mac_key);
 	EVP_MD_CTX_free(ctx);
 	EVP_MD_CTX_free(ctx_tmp);
 	EVP_MD_CTX_free(ctx_init);
 	explicit_bzero(A1, sizeof(A1));
+
 	return ret;
 }
 
