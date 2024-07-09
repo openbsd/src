@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.33 2024/07/09 17:29:51 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.34 2024/07/09 17:35:55 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -294,8 +294,7 @@ tls1_prf_alg(const EVP_MD *md,
 }
 
 static int
-pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-    size_t *keylen)
+pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
 
@@ -312,8 +311,7 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 		return 0;
 	}
 	return tls1_prf_alg(kctx->md, kctx->secret, kctx->secret_len,
-	    kctx->seed, kctx->seed_len,
-	    key, *keylen);
+	    kctx->seed, kctx->seed_len, key, *key_len);
 }
 
 const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
