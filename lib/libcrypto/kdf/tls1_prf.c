@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.15 2024/07/09 16:46:33 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.16 2024/07/09 16:47:36 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -74,15 +74,10 @@ static int tls1_prf_alg(const EVP_MD *md,
 
 #define TLS1_PRF_MAXBUF 1024
 
-/* TLS KDF pkey context structure */
-
 typedef struct {
-    /* Digest to use for PRF */
 	const EVP_MD *md;
-    /* Secret value to use for PRF */
 	unsigned char *sec;
 	size_t seclen;
-    /* Buffer of concatenated seed data */
 	unsigned char seed[TLS1_PRF_MAXBUF];
 	size_t seedlen;
 } TLS1_PRF_PKEY_CTX;
