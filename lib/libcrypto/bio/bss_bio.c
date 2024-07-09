@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.28 2023/07/28 10:13:50 tb Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.29 2024/07/09 06:14:59 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -617,6 +617,7 @@ BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1, BIO **bio2_p, size_t writebuf2)
 	*bio2_p = bio2;
 	return ret;
 }
+LCRYPTO_ALIAS(BIO_new_bio_pair);
 
 size_t
 BIO_ctrl_get_write_guarantee(BIO *bio)

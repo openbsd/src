@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.53 2024/03/27 01:22:30 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.54 2024/07/09 06:14:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -851,6 +851,7 @@ BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, argl, argp,
 	    new_func, dup_func, free_func);
 }
+LCRYPTO_ALIAS(BIO_get_ex_new_index);
 
 int
 BIO_set_ex_data(BIO *bio, int idx, void *data)
