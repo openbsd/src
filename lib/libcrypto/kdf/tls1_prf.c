@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.25 2024/07/09 16:58:13 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.26 2024/07/09 16:59:07 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -261,12 +261,15 @@ tls1_prf_P_hash(const EVP_MD *md,
 	if ((chunk = EVP_MD_size(md)) < 0)
 		goto err;
 
-	ctx = EVP_MD_CTX_new();
-	ctx_tmp = EVP_MD_CTX_new();
-	ctx_init = EVP_MD_CTX_new();
-	if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
+	if ((ctx_tmp = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if ((ctx_init = EVP_MD_CTX_new()) == NULL)
+		goto err;
+
 	EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+
 	mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, secret,
 	    sec_len);
 	if (mac_key == NULL)
