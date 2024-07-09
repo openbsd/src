@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.22 2024/07/09 16:53:33 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.23 2024/07/09 16:54:13 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -70,7 +70,7 @@
 static int tls1_prf_alg(const EVP_MD *md,
     const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len,
-    unsigned char *out, size_t olen);
+    unsigned char *out, size_t out_len);
 
 #define TLS1_PRF_MAXBUF 1024
 
@@ -249,7 +249,7 @@ static int
 tls1_prf_P_hash(const EVP_MD *md,
     const unsigned char *secret, size_t sec_len,
     const unsigned char *seed, size_t seed_len,
-    unsigned char *out, size_t olen)
+    unsigned char *out, size_t out_len)
 {
 	int chunk;
 	EVP_MD_CTX *ctx = NULL, *ctx_tmp = NULL, *ctx_init = NULL;
@@ -286,24 +286,24 @@ tls1_prf_P_hash(const EVP_MD *md,
 			goto err;
 		if (!EVP_DigestSignUpdate(ctx, A1, A1_len))
 			goto err;
-		if (olen > (size_t)chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
+		if (out_len > (size_t)chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
 			goto err;
 		if (seed && !EVP_DigestSignUpdate(ctx, seed, seed_len))
 			goto err;
 
-		if (olen > (size_t)chunk) {
+		if (out_len > (size_t)chunk) {
 			size_t mac_len;
 			if (!EVP_DigestSignFinal(ctx, out, &mac_len))
 				goto err;
 			out += mac_len;
-			olen -= mac_len;
+			out_len -= mac_len;
 	    /* calc the next A1 value */
 			if (!EVP_DigestSignFinal(ctx_tmp, A1, &A1_len))
 				goto err;
 		} else {                /* last one */
 			if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
 				goto err;
-			memcpy(out, A1, olen);
+			memcpy(out, A1, out_len);
 			break;
 		}
 	}
@@ -324,7 +324,7 @@ static int
 tls1_prf_alg(const EVP_MD *md,
     const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len,
-    unsigned char *out, size_t olen)
+    unsigned char *out, size_t out_len)
 {
 
 	if (EVP_MD_type(md) == NID_md5_sha1) {
@@ -332,24 +332,24 @@ tls1_prf_alg(const EVP_MD *md,
 		unsigned char *tmp;
 		if (!tls1_prf_P_hash(EVP_md5(),
 		    secret, secret_len/2 + (secret_len & 1),
-		    seed, seed_len, out, olen))
+		    seed, seed_len, out, out_len))
 			return 0;
 
-		if ((tmp = calloc(1, olen)) == NULL) {
+		if ((tmp = calloc(1, out_len)) == NULL) {
 			KDFerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		if (!tls1_prf_P_hash(EVP_sha1(), secret + secret_len/2,
-		    secret_len/2 + (secret_len & 1), seed, seed_len, tmp, olen)) {
-			freezero(tmp, olen);
+		    secret_len/2 + (secret_len & 1), seed, seed_len, tmp, out_len)) {
+			freezero(tmp, out_len);
 			return 0;
 		}
-		for (i = 0; i < olen; i++)
+		for (i = 0; i < out_len; i++)
 			out[i] ^= tmp[i];
-		freezero(tmp, olen);
+		freezero(tmp, out_len);
 		return 1;
 	}
-	if (!tls1_prf_P_hash(md, secret, secret_len, seed, seed_len, out, olen))
+	if (!tls1_prf_P_hash(md, secret, secret_len, seed, seed_len, out, out_len))
 		return 0;
 
 	return 1;
