@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.18 2024/07/09 16:50:07 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.19 2024/07/09 16:51:01 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -68,7 +68,7 @@
 #include "evp_local.h"
 
 static int tls1_prf_alg(const EVP_MD *md,
-    const unsigned char *secret, size_t slen,
+    const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t olen);
 
@@ -316,7 +316,7 @@ tls1_prf_P_hash(const EVP_MD *md,
 
 static int
 tls1_prf_alg(const EVP_MD *md,
-    const unsigned char *secret, size_t slen,
+    const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t olen)
 {
@@ -324,7 +324,8 @@ tls1_prf_alg(const EVP_MD *md,
 	if (EVP_MD_type(md) == NID_md5_sha1) {
 		size_t i;
 		unsigned char *tmp;
-		if (!tls1_prf_P_hash(EVP_md5(), secret, slen/2 + (slen & 1),
+		if (!tls1_prf_P_hash(EVP_md5(),
+		    secret, secret_len/2 + (secret_len & 1),
 		    seed, seed_len, out, olen))
 			return 0;
 
@@ -332,8 +333,8 @@ tls1_prf_alg(const EVP_MD *md,
 			KDFerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
-		if (!tls1_prf_P_hash(EVP_sha1(), secret + slen/2,
-		    slen/2 + (slen & 1), seed, seed_len, tmp, olen)) {
+		if (!tls1_prf_P_hash(EVP_sha1(), secret + secret_len/2,
+		    secret_len/2 + (secret_len & 1), seed, seed_len, tmp, olen)) {
 			freezero(tmp, olen);
 			return 0;
 		}
@@ -342,7 +343,7 @@ tls1_prf_alg(const EVP_MD *md,
 		freezero(tmp, olen);
 		return 1;
 	}
-	if (!tls1_prf_P_hash(md, secret, slen, seed, seed_len, out, olen))
+	if (!tls1_prf_P_hash(md, secret, secret_len, seed, seed_len, out, olen))
 		return 0;
 
 	return 1;
