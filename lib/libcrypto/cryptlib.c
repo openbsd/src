@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.51 2024/04/21 13:41:14 tb Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.52 2024/07/09 07:16:44 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -281,6 +281,7 @@ struct CRYPTO_dynlock_value *
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(CRYPTO_get_dynlock_create_callback);
 
 void
 (*CRYPTO_get_dynlock_lock_callback(void))(int mode,

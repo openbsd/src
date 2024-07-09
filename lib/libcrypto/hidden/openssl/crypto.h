@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.7 2024/04/10 14:51:02 beck Exp $ */
+/* $OpenBSD: crypto.h,v 1.8 2024/07/09 07:16:44 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -69,6 +69,7 @@ LCRYPTO_UNUSED(CRYPTO_set_dynlock_lock_callback);
 LCRYPTO_UNUSED(CRYPTO_set_dynlock_destroy_callback);
 LCRYPTO_UNUSED(CRYPTO_get_dynlock_lock_callback);
 LCRYPTO_UNUSED(CRYPTO_get_dynlock_destroy_callback);
+LCRYPTO_UNUSED(CRYPTO_get_dynlock_create_callback);
 LCRYPTO_UNUSED(CRYPTO_malloc);
 LCRYPTO_UNUSED(CRYPTO_strdup);
 LCRYPTO_UNUSED(CRYPTO_free);

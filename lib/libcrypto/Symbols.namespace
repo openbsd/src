@@ -3346,6 +3346,7 @@ _libre_X509_STORE_set_check_issued
 _libre_lh_error
 _libre_DES_check_key
 _libre_DES_rw_mode
+_libre_CRYPTO_get_dynlock_create_callback
 _libre_RSAPublicKey_it
 _libre_RSAPrivateKey_it
 _libre_RSA_PSS_PARAMS_it
