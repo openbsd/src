@@ -257,7 +257,7 @@ static int tls1_prf_alg(const EVP_MD *md,
                          seed, seed_len, out, olen))
             return 0;
 
-        if ((tmp = OPENSSL_malloc(olen)) == NULL) {
+        if ((tmp = malloc(olen)) == NULL) {
             KDFerror(ERR_R_MALLOC_FAILURE);
             return 0;
         }
