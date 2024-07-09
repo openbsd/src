@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.20 2024/07/09 16:51:50 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.21 2024/07/09 16:52:34 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -79,7 +79,7 @@ struct tls1_prf_ctx {
 	unsigned char *secret;
 	size_t secret_len;
 	unsigned char seed[TLS1_PRF_MAXBUF];
-	size_t seedlen;
+	size_t seed_len;
 };
 
 static int
@@ -101,7 +101,7 @@ pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
 	freezero(kctx->secret, kctx->secret_len);
-	explicit_bzero(kctx->seed, kctx->seedlen);
+	explicit_bzero(kctx->seed, kctx->seed_len);
 	free(kctx);
 }
 
@@ -120,8 +120,8 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (kctx->secret != NULL)
 			freezero(kctx->secret, kctx->secret_len);
 
-		explicit_bzero(kctx->seed, kctx->seedlen);
-		kctx->seedlen = 0;
+		explicit_bzero(kctx->seed, kctx->seed_len);
+		kctx->seed_len = 0;
 
 		kctx->secret = NULL;
 		kctx->secret_len = 0;
@@ -139,10 +139,10 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_TLS_SEED:
 		if (p1 == 0 || p2 == NULL)
 			return 1;
-		if (p1 < 0 || p1 > (int)(TLS1_PRF_MAXBUF - kctx->seedlen))
+		if (p1 < 0 || p1 > (int)(TLS1_PRF_MAXBUF - kctx->seed_len))
 			return 0;
-		memcpy(kctx->seed + kctx->seedlen, p2, p1);
-		kctx->seedlen += p1;
+		memcpy(kctx->seed + kctx->seed_len, p2, p1);
+		kctx->seed_len += p1;
 		return 1;
 
 	default:
@@ -199,12 +199,12 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 		KDFerror(KDF_R_MISSING_SECRET);
 		return 0;
 	}
-	if (kctx->seedlen == 0) {
+	if (kctx->seed_len == 0) {
 		KDFerror(KDF_R_MISSING_SEED);
 		return 0;
 	}
 	return tls1_prf_alg(kctx->md, kctx->secret, kctx->secret_len,
-	    kctx->seed, kctx->seedlen,
+	    kctx->seed, kctx->seed_len,
 	    key, *keylen);
 }
 
