@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.31 2024/07/09 17:04:50 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.32 2024/07/09 17:05:46 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -66,11 +66,6 @@
 #include <openssl/kdf.h>
 
 #include "evp_local.h"
-
-static int tls1_prf_alg(const EVP_MD *md,
-    const unsigned char *secret, size_t secret_len,
-    const unsigned char *seed, size_t seed_len,
-    unsigned char *out, size_t out_len);
 
 #define TLS1_PRF_MAXBUF 1024
 
@@ -188,63 +183,6 @@ pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
 }
 
 static int
-pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-    size_t *keylen)
-{
-	struct tls1_prf_ctx *kctx = ctx->data;
-
-	if (kctx->md == NULL) {
-		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
-		return 0;
-	}
-	if (kctx->secret == NULL) {
-		KDFerror(KDF_R_MISSING_SECRET);
-		return 0;
-	}
-	if (kctx->seed_len == 0) {
-		KDFerror(KDF_R_MISSING_SEED);
-		return 0;
-	}
-	return tls1_prf_alg(kctx->md, kctx->secret, kctx->secret_len,
-	    kctx->seed, kctx->seed_len,
-	    key, *keylen);
-}
-
-const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
-	.pkey_id = EVP_PKEY_TLS1_PRF,
-	.flags = 0,
-
-	.init = pkey_tls1_prf_init,
-	.copy = NULL,
-	.cleanup = pkey_tls1_prf_cleanup,
-
-	.paramgen = NULL,
-
-	.keygen = NULL,
-
-	.sign_init = NULL,
-	.sign = NULL,
-
-	.verify_init = NULL,
-	.verify = NULL,
-
-	.verify_recover = NULL,
-
-	.signctx_init = NULL,
-	.signctx = NULL,
-
-	.encrypt = NULL,
-
-	.decrypt = NULL,
-
-	.derive_init = NULL,
-	.derive = pkey_tls1_prf_derive,
-
-	.ctrl = pkey_tls1_prf_ctrl,
-	.ctrl_str = pkey_tls1_prf_ctrl_str,
-};
-
-static int
 tls1_prf_P_hash(const EVP_MD *md,
     const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len,
@@ -355,3 +293,60 @@ tls1_prf_alg(const EVP_MD *md,
 
 	return 1;
 }
+
+static int
+pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
+    size_t *keylen)
+{
+	struct tls1_prf_ctx *kctx = ctx->data;
+
+	if (kctx->md == NULL) {
+		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
+		return 0;
+	}
+	if (kctx->secret == NULL) {
+		KDFerror(KDF_R_MISSING_SECRET);
+		return 0;
+	}
+	if (kctx->seed_len == 0) {
+		KDFerror(KDF_R_MISSING_SEED);
+		return 0;
+	}
+	return tls1_prf_alg(kctx->md, kctx->secret, kctx->secret_len,
+	    kctx->seed, kctx->seed_len,
+	    key, *keylen);
+}
+
+const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
+	.pkey_id = EVP_PKEY_TLS1_PRF,
+	.flags = 0,
+
+	.init = pkey_tls1_prf_init,
+	.copy = NULL,
+	.cleanup = pkey_tls1_prf_cleanup,
+
+	.paramgen = NULL,
+
+	.keygen = NULL,
+
+	.sign_init = NULL,
+	.sign = NULL,
+
+	.verify_init = NULL,
+	.verify = NULL,
+
+	.verify_recover = NULL,
+
+	.signctx_init = NULL,
+	.signctx = NULL,
+
+	.encrypt = NULL,
+
+	.decrypt = NULL,
+
+	.derive_init = NULL,
+	.derive = pkey_tls1_prf_derive,
+
+	.ctrl = pkey_tls1_prf_ctrl,
+	.ctrl_str = pkey_tls1_prf_ctrl_str,
+};
