@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdf.h,v 1.8 2022/07/12 14:42:49 kn Exp $ */
+/*	$OpenBSD: kdf.h,v 1.9 2024/07/09 16:20:17 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -59,6 +59,10 @@
 extern "C" {
 #endif
 
+# define EVP_PKEY_CTRL_TLS_MD                   (EVP_PKEY_ALG_CTRL + 0)
+# define EVP_PKEY_CTRL_TLS_SECRET               (EVP_PKEY_ALG_CTRL + 1)
+# define EVP_PKEY_CTRL_TLS_SEED                 (EVP_PKEY_ALG_CTRL + 2)
+
 # define EVP_PKEY_CTRL_HKDF_MD                  (EVP_PKEY_ALG_CTRL + 3)
 # define EVP_PKEY_CTRL_HKDF_SALT                (EVP_PKEY_ALG_CTRL + 4)
 # define EVP_PKEY_CTRL_HKDF_KEY                 (EVP_PKEY_ALG_CTRL + 5)
@@ -68,6 +72,20 @@ extern "C" {
 # define EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND 0
 # define EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY       1
 # define EVP_PKEY_HKDEF_MODE_EXPAND_ONLY        2
+
+
+# define EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_TLS_MD, 0, (void *)(md))
+
+# define EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, seclen) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_TLS_SECRET, seclen, (void *)(sec))
+
+# define EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed, seedlen) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_TLS_SEED, seedlen, (void *)(seed))
+
 
 # define EVP_PKEY_CTX_set_hkdf_md(pctx, md) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
@@ -97,13 +115,21 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_PKEY_HKDF_CTRL_STR                         103
 # define KDF_F_PKEY_HKDF_DERIVE                           102
 # define KDF_F_PKEY_HKDF_INIT                             108
+# define KDF_F_PKEY_TLS1_PRF_CTRL_STR                     100
+# define KDF_F_PKEY_TLS1_PRF_DERIVE                       101
+# define KDF_F_PKEY_TLS1_PRF_INIT                         110
+# define KDF_F_TLS1_PRF_ALG                               111
 
 /*
  * KDF reason codes.
  */
+# define KDF_R_INVALID_DIGEST                             100
 # define KDF_R_MISSING_KEY                                104
 # define KDF_R_MISSING_MESSAGE_DIGEST                     105
+# define KDF_R_MISSING_SECRET                             107
+# define KDF_R_MISSING_SEED                               106
 # define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
+# define KDF_R_VALUE_MISSING                              102
 
 # ifdef  __cplusplus
 }
