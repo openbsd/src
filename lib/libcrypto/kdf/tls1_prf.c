@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.38 2024/07/09 17:56:41 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.39 2024/07/09 17:58:36 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -308,6 +308,7 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len)
 		KDFerror(KDF_R_MISSING_SEED);
 		return 0;
 	}
+
 	return tls1_prf_alg(kctx->md, kctx->secret, kctx->secret_len,
 	    kctx->seed, kctx->seed_len, key, *key_len);
 }
