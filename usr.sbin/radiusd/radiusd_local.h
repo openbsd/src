@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.11 2024/07/02 00:33:51 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.12 2024/07/09 17:26:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -16,6 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef RADIUSD_LOCAL_H
+#define RADIUSD_LOCAL_H 1
+
 #include <sys/socket.h>		/* for struct sockaddr_storage */
 #include <sys/queue.h>		/* for TAILQ_* */
 #include <netinet/in.h>		/* for struct sockaddr_in* */
@@ -30,6 +33,7 @@
 #define	MODULE_IO_TIMEOUT	2000
 
 #define	CONFFILE			"/etc/radiusd.conf"
+
 struct radius_query;	/* forward declaration */
 
 struct radiusd_addr {
@@ -136,6 +140,16 @@ struct radius_query {
 	TAILQ_ENTRY(radius_query)	 next;
 	struct radiusd_module_ref	*deco;
 };
+
+struct imsgev {
+	struct imsgbuf		 ibuf;
+	void			(*handler)(int, short, void *);
+	struct event		 ev;
+	short			 events;
+};
+
+extern struct radiusd *radiusd_s;
+
 #ifndef nitems
 #define nitems(_x)    (sizeof((_x)) / sizeof((_x)[0]))
 #endif
@@ -182,9 +196,20 @@ void			 radiusd_module_unload(struct radiusd_module *);
 
 void		 radiusd_access_request_answer(struct radius_query *);
 void		 radiusd_access_request_aborted(struct radius_query *);
+int		 radiusd_imsg_compose_module(struct radiusd *, const char *,
+		    uint32_t, uint32_t, pid_t, int, void *, size_t);
 void		 radius_attr_hide(const char *, const char *, const u_char *,
 		    u_char *, int);
 void		 radius_attr_unhide(const char *, const char *, const u_char *,
 		    u_char *, int);
 
-int radiusd_module_set(struct radiusd_module *, const char *, int, char * const *);
+int		 radiusd_module_set(struct radiusd_module *, const char *, int,
+		    char * const *);
+
+void		 imsg_event_add(struct imsgev *);
+int		 imsg_compose_event(struct imsgev *, uint32_t, uint32_t, pid_t,
+		    int, void *, size_t);
+int		 imsg_composev_event (struct imsgev *, uint32_t, uint32_t,
+		    pid_t, int, struct iovec *, int);
+
+#endif

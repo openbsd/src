@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.27 2024/07/04 13:14:26 sobrado Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.28 2024/07/09 17:26:14 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2024 $
+.Dd $Mdocdate: July 9 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -83,6 +83,13 @@ provides authentication from the local system's
 interface.
 See
 .Xr radiusd_bsdauth 8 .
+.It Do ipcp Dc module
+The
+.Dq ipcp
+module provides IP configuration and manages IP address pool.
+Also provides session-timeout and disconnection feature.
+See
+.Xr radiusd_ipcp 8 .
 .It Do radius Dc module
 The
 .Dq radius
@@ -211,5 +218,6 @@ account * to standard
 .Sh SEE ALSO
 .Xr radiusd 8 ,
 .Xr radiusd_bsdauth 8 ,
+.Xr radiusd_ipcp 8 ,
 .Xr radiusd_radius 8 ,
 .Xr radiusd_standard 8

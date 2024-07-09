@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2020/02/24 07:07:11 dlg Exp $	*/
+/*	$OpenBSD: parser.h,v 1.3 2024/07/09 17:26:14 yasuoka Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.h 1.9 */
 /*
@@ -20,9 +20,16 @@
 #ifndef _RADIUSCTL_PARSER_H
 #define _RADIUSCTL_PARSER_H
 
+#include <sys/types.h>
+#include <sys/time.h>
+
 enum actions {
 	NONE,
-	TEST
+	TEST,
+	IPCP_SHOW,
+	IPCP_DUMP,
+	IPCP_MONITOR,
+	IPCP_DISCONNECT
 };
 
 enum auth_method {
@@ -43,6 +50,8 @@ enum auth_method {
 #define TEST_MAXWAIT_MAX	60
 #define TEST_MAXWAIT_DEFAULT	8
 
+#define FLAGS_JSON		0x01
+
 struct parse_result {
 	enum actions		 action;
 	const char		*hostname;
@@ -59,6 +68,9 @@ struct parse_result {
 	struct timeval		 interval;
 	/* overall process wait time for a reply */
 	struct timeval		 maxwait;
+
+	unsigned		 flags;
+	unsigned		 session_seq;
 };
 
 struct parse_result	*parse(int, char *[]);

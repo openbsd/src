@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.8 2020/02/24 07:07:11 dlg Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.9 2024/07/09 17:26:14 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -15,33 +15,73 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
+#include <sys/cdefs.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <sys/un.h>
 #include <netinet/in.h>
-
 #include <arpa/inet.h>
-#include <errno.h>
+
 #include <err.h>
+#include <errno.h>
+#include <event.h>
+#include <imsg.h>
+#include <inttypes.h>
 #include <md5.h>
 #include <netdb.h>
+#include <radius.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
+#include <time.h>
 #include <unistd.h>
 
-#include <radius.h>
-
-#include <event.h>
-
 #include "parser.h"
+#include "radiusd.h"
+#include "radiusd_ipcp.h"
 #include "chap_ms.h"
+#include "json.h"
 
+#ifndef MAXIMUM
+#define MAXIMUM(_a, _b)	(((_a) > (_b))? (_a) : (_b))
+#endif
 
-static int		 radius_test (struct parse_result *);
-static void		 radius_dump (FILE *, RADIUS_PACKET *, bool,
+static int		 radius_test(struct parse_result *);
+static void		 radius_dump(FILE *, RADIUS_PACKET *, bool,
 			    const char *);
-static const char	*radius_code_str (int code);
+
+static int		 ipcp_handle_imsg(struct parse_result *, struct imsg *,
+			    int);
+static void		 ipcp_handle_show(struct radiusd_ipcp_db_dump *,
+			    size_t, int);
+static void		 ipcp_handle_dumps(struct radiusd_ipcp_db_dump *,
+			    size_t, int);
+static void		 ipcp_handle_dump(struct radiusd_ipcp_db_dump *,
+			    size_t, int);
+static void		 ipcp_handle_dump0(struct radiusd_ipcp_db_dump *,
+			    size_t, struct timespec *, struct timespec *,
+			    struct timespec *, int);
+static void		 ipcp_handle_stat(struct radiusd_ipcp_statistics *);
+static void		 ipcp_handle_jsons(struct radiusd_ipcp_db_dump *,
+			    size_t, int);
+static void		 ipcp_handle_json(struct radiusd_ipcp_db_dump *,
+			    size_t, struct radiusd_ipcp_statistics *, int);
+static void		 ipcp_handle_json0(struct radiusd_ipcp_db_dump *,
+			    size_t, struct timespec *, struct timespec *,
+			    struct timespec *, int);
+
+static const char	*radius_code_str(int code);
 static const char	*hexstr(const u_char *, int, char *, int);
+static const char	*sockaddr_str(struct sockaddr *, char *, size_t);
+static const char	*time_long_str(struct timespec *, char *, size_t);
+static const char	*time_short_str(struct timespec *, struct timespec *,
+			    char *, size_t);
+static const char	*humanize_seconds(long, char *, size_t);
 
 static void
 usage(void)
@@ -54,9 +94,15 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int			 ch;
-	struct parse_result	*result;
-	int			 ecode = EXIT_SUCCESS;
+	int			 ch, sock, done = 0;
+	ssize_t			 n;
+	struct parse_result	*res;
+	struct sockaddr_un	 sun;
+	struct imsgbuf		 ibuf;
+	struct imsg		 imsg;
+	struct iovec		 iov[5];
+	int			 niov = 0, cnt = 0;
+	char			 module_name[RADIUSD_MODULE_NAME_LEN + 1];
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
@@ -67,22 +113,112 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((result = parse(argc, argv)) == NULL)
-		return (EXIT_FAILURE);
+	if (unveil(RADIUSD_SOCK, "rw") == -1)
+		err(EX_OSERR, "unveil");
+	if (pledge("stdio unix rpath dns inet", NULL) == -1)
+		err(EX_OSERR, "pledge");
 
-	switch (result->action) {
+	res = parse(argc, argv);
+	if (res == NULL)
+		exit(EX_USAGE);
+
+	switch (res->action) {
+	default:
+		break;
 	case NONE:
+		exit(EXIT_SUCCESS);
 		break;
 	case TEST:
 		if (pledge("stdio dns inet", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
-		ecode = radius_test(result);
+		exit(radius_test(res));
 		break;
 	}
 
-	return (ecode);
+	if (pledge("stdio unix rpath", NULL) == -1)
+		err(EX_OSERR, "pledge");
+
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	sun.sun_len = sizeof(sun);
+	strlcpy(sun.sun_path, RADIUSD_SOCK, sizeof(sun.sun_path));
+
+	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+		err(EX_OSERR, "socket");
+	if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+		err(EX_OSERR, "connect");
+	imsg_init(&ibuf, sock);
+
+	res = parse(argc, argv);
+	if (res == NULL)
+		exit(EX_USAGE);
+
+	switch (res->action) {
+	case TEST:
+	case NONE:
+		abort();
+		break;
+	case IPCP_SHOW:
+	case IPCP_DUMP:
+	case IPCP_MONITOR:
+		memset(module_name, 0, sizeof(module_name));
+		strlcpy(module_name, "ipcp",
+		    sizeof(module_name));
+		iov[niov].iov_base = module_name;
+		iov[niov++].iov_len = RADIUSD_MODULE_NAME_LEN;
+		imsg_composev(&ibuf, (res->action == IPCP_MONITOR)?
+		    IMSG_RADIUSD_MODULE_IPCP_MONITOR :
+		    IMSG_RADIUSD_MODULE_IPCP_DUMP, 0, 0, -1, iov, niov);
+		break;
+	case IPCP_DISCONNECT:
+		memset(module_name, 0, sizeof(module_name));
+		strlcpy(module_name, "ipcp",
+		    sizeof(module_name));
+		iov[niov].iov_base = module_name;
+		iov[niov++].iov_len = RADIUSD_MODULE_NAME_LEN;
+		iov[niov].iov_base = &res->session_seq;
+		iov[niov++].iov_len = sizeof(res->session_seq);
+		imsg_composev(&ibuf, IMSG_RADIUSD_MODULE_IPCP_DISCONNECT, 0, 0,
+		    -1, iov, niov);
+		done = 1;
+		break;
+	}
+	while (ibuf.w.queued) {
+		if (msgbuf_write(&ibuf.w) <= 0 && errno != EAGAIN)
+			err(1, "ibuf_ctl: msgbuf_write error");
+	}
+	while (!done) {
+		if (((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN) || n == 0)
+			break;
+		for (;;) {
+			if ((n = imsg_get(&ibuf, &imsg)) <= 0) {
+				if (n != 0)
+					done = 1;
+				break;
+			}
+			switch (res->action) {
+			case IPCP_SHOW:
+			case IPCP_DUMP:
+			case IPCP_MONITOR:
+				done = ipcp_handle_imsg(res, &imsg, cnt++);
+				break;
+			default:
+				break;
+			}
+			imsg_free(&imsg);
+			if (done)
+				break;
+
+		}
+	}
+	close(sock);
+
+	exit(EXIT_SUCCESS);
 }
 
+/***********************************************************************
+ * "test"
+ ***********************************************************************/
 struct radius_test {
 	const struct parse_result	*res;
 	int				 ecode;
@@ -239,7 +375,7 @@ radius_test(struct parse_result *res)
 	test.res = res;
 	test.sock = sock;
 	test.reqpkt = reqpkt;
-	
+
 	event_set(&test.ev_recv, sock, EV_READ|EV_PERSIST,
 	    radius_test_recv, &test);
 
@@ -443,7 +579,6 @@ radius_dump(FILE *out, RADIUS_PACKET *pkt, bool resp, const char *secret)
 		fprintf(out, "    MS-MPPE-Encryption-Policy = 0x%08x\n",
 		    ntohl(*(u_long *)buf));
 
-
 	memset(buf, 0, sizeof(buf));
 	len = sizeof(buf);
 	if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
@@ -476,7 +611,315 @@ radius_dump(FILE *out, RADIUS_PACKET *pkt, bool resp, const char *secret)
 
 }
 
-static const char *
+/***********************************************************************
+ * ipcp
+ ***********************************************************************/
+int
+ipcp_handle_imsg(struct parse_result *res, struct imsg *imsg, int cnt)
+{
+	ssize_t				 datalen;
+	struct radiusd_ipcp_db_dump	*dump;
+	struct radiusd_ipcp_statistics	*stat;
+	int				 done = 0;
+
+	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
+	switch (imsg->hdr.type) {
+	case IMSG_NG:
+		if (datalen > 0 && *((char *)imsg->data + datalen - 1) == '\0')
+			fprintf(stderr, "error: %s\n", (char *)imsg->data);
+		else
+			fprintf(stderr, "error\n");
+		exit(EXIT_FAILURE);
+	case IMSG_RADIUSD_MODULE_IPCP_DUMP:
+		if ((size_t)datalen < sizeof(struct
+		    radiusd_ipcp_db_dump))
+			errx(1, "received a message which size is invalid");
+		dump = imsg->data;
+		if (res->action == IPCP_SHOW)
+			ipcp_handle_show(dump, datalen, (cnt++ == 0)? 1 : 0);
+		else {
+			if (res->flags & FLAGS_JSON)
+				ipcp_handle_jsons(dump, datalen,
+				    (cnt++ == 0)? 1 : 0);
+			else
+				ipcp_handle_dumps(dump, datalen,
+				    (cnt++ == 0)? 1 : 0);
+		}
+		if (dump->islast &&
+		    (res->action == IPCP_SHOW || res->action == IPCP_DUMP))
+			done = 1;
+		break;
+	case IMSG_RADIUSD_MODULE_IPCP_START:
+		if ((size_t)datalen < offsetof(struct
+		    radiusd_ipcp_db_dump, records[1]))
+			errx(1, "received a message which size is invalid");
+		dump = imsg->data;
+		if (res->flags & FLAGS_JSON)
+			ipcp_handle_json(dump, datalen, NULL, 0);
+		else {
+			printf("Start\n");
+			ipcp_handle_dump(dump, datalen, 0);
+		}
+		break;
+	case IMSG_RADIUSD_MODULE_IPCP_STOP:
+		if ((size_t)datalen < offsetof(
+		    struct radiusd_ipcp_db_dump,
+		    records[1]) +
+		    sizeof(struct
+		    radiusd_ipcp_statistics))
+			errx(1, "received a message which size is invalid");
+		dump = imsg->data;
+		stat = (struct radiusd_ipcp_statistics *)
+		    ((char *)imsg->data + offsetof(
+			struct radiusd_ipcp_db_dump, records[1]));
+		if (res->flags & FLAGS_JSON)
+			ipcp_handle_json(dump, datalen, stat, 0);
+		else {
+			printf("Stop\n");
+			ipcp_handle_dump(dump, datalen, 0);
+			ipcp_handle_stat(stat);
+		}
+		break;
+	}
+
+	return (done);
+}
+
+static void
+ipcp_handle_show(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz, int first)
+{
+	int		 i, width;
+	uint32_t	 maxseq = 999;
+	char		 buf0[128], buf1[NI_MAXHOST + NI_MAXSERV + 4], buf2[80];
+	struct timespec	 upt, now, dif, start;
+
+	clock_gettime(CLOCK_BOOTTIME, &upt);
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecsub(&now, &upt, &upt);
+
+	for (i = 0; ; i++) {
+		if (offsetof(struct radiusd_ipcp_db_dump, records[i])
+		    >= dumpsiz)
+			break;
+		maxseq = MAXIMUM(maxseq, dump->records[i].rec.seq);
+	}
+	for (width = 0; maxseq != 0; maxseq /= 10, width++)
+		;
+
+	for (i = 0; ; i++) {
+		if (offsetof(struct radiusd_ipcp_db_dump, records[i])
+		    >= dumpsiz)
+			break;
+		if (i == 0 && first)
+			printf("%-*s Assigned        Username               "
+			    "Start    Tunnel From\n"
+			    "%.*s --------------- ---------------------- "
+			    "-------- %.*s\n", width, "Seq", width,
+			    "----------", 28 - width,
+			    "-------------------------");
+		timespecadd(&upt, &dump->records[i].rec.start, &start);
+		timespecsub(&now, &start, &dif);
+		printf("%*d %-15s %-22s %-8s %s\n",
+		    width, dump->records[i].rec.seq,
+		    inet_ntop(dump->records[i].af, &dump->records[i].addr,
+		    buf0, sizeof(buf0)), dump->records[i].rec.username,
+		    time_short_str(&start, &dif, buf2, sizeof(buf2)),
+		    sockaddr_str(
+		    (struct sockaddr *)&dump->records[i].rec.tun_client, buf1,
+		    sizeof(buf1)));
+	}
+}
+static void
+ipcp_handle_dump(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz, int idx)
+{
+	struct timespec	 upt, now, dif, start, timeout;
+
+	clock_gettime(CLOCK_BOOTTIME, &upt);
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecsub(&now, &upt, &upt);
+
+	timespecadd(&upt, &dump->records[idx].rec.start, &start);
+	timespecsub(&now, &start, &dif);
+
+	if (dump->records[idx].rec.start.tv_sec == 0)
+		ipcp_handle_dump0(dump, dumpsiz, &dif, &start, NULL, idx);
+	else {
+		timespecadd(&upt, &dump->records[idx].rec.timeout, &timeout);
+		ipcp_handle_dump0(dump, dumpsiz, &dif, &start, &timeout, idx);
+	}
+}
+
+static void
+ipcp_handle_dump0(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz,
+    struct timespec *dif, struct timespec *start, struct timespec *timeout,
+    int idx)
+{
+	char		 buf0[128], buf1[NI_MAXHOST + NI_MAXSERV + 4], buf2[80];
+
+	printf(
+	    "    Sequence Number     : %u\n"
+	    "    Session Id          : %s\n"
+	    "    Username            : %s\n"
+	    "    Auth Method         : %s\n"
+	    "    Assigned IP Address : %s\n"
+	    "    Start Time          : %s\n"
+	    "    Elapsed Time        : %lld second%s%s\n",
+	    dump->records[idx].rec.seq, dump->records[idx].rec.session_id,
+	    dump->records[idx].rec.username, dump->records[idx].rec.auth_method,
+	    inet_ntop(dump->records[idx].af, &dump->records[idx].addr, buf0,
+	    sizeof(buf0)), time_long_str(start, buf1, sizeof(buf1)),
+	    (long long)dif->tv_sec, (dif->tv_sec == 0)? "" : "s",
+	    humanize_seconds(dif->tv_sec, buf2, sizeof(buf2)));
+	if (timeout != NULL)
+		printf("    Timeout             : %s\n",
+		    time_long_str(timeout, buf0, sizeof(buf0)));
+	printf(
+	    "    NAS Identifier      : %s\n"
+	    "    Tunnel Type         : %s\n"
+	    "    Tunnel From         : %s\n",
+	    dump->records[idx].rec.nas_id, dump->records[idx].rec.tun_type,
+	    sockaddr_str((struct sockaddr *)
+		&dump->records[idx].rec.tun_client, buf1, sizeof(buf1)));
+}
+
+void
+ipcp_handle_stat(struct radiusd_ipcp_statistics *stat)
+{
+	printf(
+	    "    Terminate Cause     : %s\n"
+	    "    Input Packets       : %"PRIu32"\n"
+	    "    Output Packets      : %"PRIu32"\n"
+	    "    Input Bytes         : %"PRIu64"\n"
+	    "    Output Bytes        : %"PRIu64"\n",
+	    stat->cause, stat->ipackets, stat->opackets, stat->ibytes,
+	    stat->obytes);
+}
+
+static void
+ipcp_handle_jsons(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz, int first)
+{
+	int		 i;
+	struct timespec	 upt, now, dif, start, timeout;
+
+	clock_gettime(CLOCK_BOOTTIME, &upt);
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecsub(&now, &upt, &upt);
+
+	for (i = 0; ; i++) {
+		if (offsetof(struct radiusd_ipcp_db_dump, records[i])
+		    >= dumpsiz)
+			break;
+		timespecadd(&upt, &dump->records[i].rec.start, &start);
+		timespecsub(&now, &start, &dif);
+		json_do_start(stdout);
+		json_do_string("action", "start");
+		if (dump->records[i].rec.timeout.tv_sec == 0)
+			ipcp_handle_json0(dump, dumpsiz, &dif, &start, NULL, i);
+		else {
+			timespecadd(&upt, &dump->records[i].rec.timeout,
+			    &timeout);
+			ipcp_handle_json0(dump, dumpsiz, &dif, &start, &timeout,
+			    i);
+		}
+		json_do_finish();
+	}
+	fflush(stdout);
+}
+
+static void
+ipcp_handle_json(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz,
+    struct radiusd_ipcp_statistics *stat, int idx)
+{
+	struct timespec	 upt, now, dif, start, timeout;
+
+	json_do_start(stdout);
+	clock_gettime(CLOCK_BOOTTIME, &upt);
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecsub(&now, &upt, &upt);
+	timespecadd(&upt, &dump->records[idx].rec.start, &start);
+	timespecsub(&now, &start, &dif);
+
+	if (stat == NULL)
+		json_do_string("action", "start");
+	else
+		json_do_string("action", "stop");
+	if (dump->records[idx].rec.timeout.tv_sec == 0)
+		ipcp_handle_json0(dump, dumpsiz, &dif, &start, NULL, idx);
+	else {
+		timespecadd(&upt, &dump->records[idx].rec.timeout, &timeout);
+		ipcp_handle_json0(dump, dumpsiz, &dif, &start, &timeout, idx);
+	}
+	if (stat != NULL) {
+		json_do_string("terminate-cause", stat->cause);
+		json_do_uint("input-packets", stat->ipackets);
+		json_do_uint("output-packets", stat->opackets);
+		json_do_uint("input-bytes", stat->ibytes);
+		json_do_uint("output-bytes", stat->obytes);
+	}
+	json_do_finish();
+	fflush(stdout);
+}
+
+static void
+ipcp_handle_json0(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz,
+    struct timespec *dif, struct timespec *start, struct timespec *timeout,
+    int idx)
+{
+	char		 buf[128];
+
+	json_do_uint("sequence-number", dump->records[idx].rec.seq);
+	json_do_string("session-id", dump->records[idx].rec.session_id);
+	json_do_string("username", dump->records[idx].rec.username);
+	json_do_string("auth-method", dump->records[idx].rec.auth_method);
+	json_do_string("assigned-ip-address", inet_ntop(dump->records[idx].af,
+	    &dump->records[idx].addr, buf, sizeof(buf)));
+	json_do_uint("start", start->tv_sec);
+	json_do_uint("elapsed", dif->tv_sec);
+	if (timeout != NULL)
+		json_do_uint("timeout", timeout->tv_sec);
+	json_do_string("nas-identifier", dump->records[idx].rec.nas_id);
+	json_do_string("tunnel-type", dump->records[idx].rec.tun_type);
+	json_do_string("tunnel-from",
+	    sockaddr_str((struct sockaddr *)&dump->records[idx].rec.tun_client,
+	    buf, sizeof(buf)));
+}
+
+static void
+ipcp_handle_dumps(struct radiusd_ipcp_db_dump *dump, size_t dumpsiz, int first)
+{
+	static int	 cnt = 0;
+	int		 i;
+	struct timespec	 upt, now, dif, start, timeout;
+
+	clock_gettime(CLOCK_BOOTTIME, &upt);
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecsub(&now, &upt, &upt);
+
+	if (first)
+		cnt = 0;
+	for (i = 0; ; i++, cnt++) {
+		if (offsetof(struct radiusd_ipcp_db_dump, records[i])
+		    >= dumpsiz)
+			break;
+		timespecadd(&upt, &dump->records[i].rec.start, &start);
+		timespecsub(&now, &start, &dif);
+		printf("#%d\n", cnt + 1);
+		if (dump->records[i].rec.timeout.tv_sec == 0)
+			ipcp_handle_dump0(dump, dumpsiz, &dif, &start, NULL, i);
+		else {
+			timespecadd(&upt, &dump->records[i].rec.timeout,
+			    &timeout);
+			ipcp_handle_dump0(dump, dumpsiz, &dif, &start,
+			    &timeout, i);
+		}
+	}
+}
+
+
+/***********************************************************************
+ * Miscellaneous functions
+ ***********************************************************************/
+const char *
 radius_code_str(int code)
 {
 	int i;
@@ -522,4 +965,91 @@ hexstr(const u_char *data, int len, char *str, int strsiz)
 	str[off++] = '\0';
 
 	return (str);
+}
+
+const char *
+sockaddr_str(struct sockaddr *sa, char *buf, size_t bufsiz)
+{
+	int	noport, ret;
+	char	hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+	if (ntohs(((struct sockaddr_in *)sa)->sin_port) == 0) {
+		noport = 1;
+		ret = getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+		    NI_NUMERICHOST);
+	} else {
+		noport = 0;
+		ret = getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
+		    sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+	}
+	if (ret != 0)
+		return "";
+	if (noport)
+		strlcpy(buf, hbuf, bufsiz);
+	else if (sa->sa_family == AF_INET6)
+		snprintf(buf, bufsiz, "[%s]:%s", hbuf, sbuf);
+	else
+		snprintf(buf, bufsiz, "%s:%s", hbuf, sbuf);
+
+	return (buf);
+}
+
+const char *
+time_long_str(struct timespec *tim, char *buf, size_t bufsiz)
+{
+	struct tm	 tm;
+
+	localtime_r(&tim->tv_sec, &tm);
+	strftime(buf, bufsiz, "%F %T", &tm);
+
+	return (buf);
+}
+
+const char *
+time_short_str(struct timespec *tim, struct timespec *dif, char *buf,
+    size_t bufsiz)
+{
+	struct tm	 tm;
+
+	localtime_r(&tim->tv_sec, &tm);
+	if (dif->tv_sec < 12 * 60 * 60)
+		strftime(buf, bufsiz, "%l:%M%p", &tm);
+	else if (dif->tv_sec < 7 * 24 * 60 * 60)
+		strftime(buf, bufsiz, "%e%b%y", &tm);
+	else
+		strftime(buf, bufsiz, "%m/%d", &tm);
+
+	return (buf);
+}
+
+const char *
+humanize_seconds(long seconds, char *buf, size_t bufsiz)
+{
+	char	 fbuf[80];
+	int	 hour, min;
+
+	hour = seconds / 3600;
+	min = (seconds % 3600) / 60;
+
+	if (bufsiz == 0)
+		return NULL;
+	buf[0] = '\0';
+	if (hour != 0 || min != 0) {
+		strlcat(buf, " (", bufsiz);
+		if (hour != 0) {
+			snprintf(fbuf, sizeof(fbuf), "%d hour%s", hour,
+			    (hour == 1)? "" : "s");
+			strlcat(buf, fbuf, bufsiz);
+		}
+		if (hour != 0 && min != 0)
+			strlcat(buf, " and ", bufsiz);
+		if (min != 0) {
+			snprintf(fbuf, sizeof(fbuf), "%d minute%s", min,
+			    (min == 1)? "" : "s");
+			strlcat(buf, fbuf, bufsiz);
+		}
+		strlcat(buf, ")", bufsiz);
+	}
+
+	return (buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2020/02/24 07:07:11 dlg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2024/07/09 17:26:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
+#include <limits.h>
 
 #include "parser.h"
 
@@ -40,6 +42,8 @@ enum token_type {
 	TRIES,
 	INTERVAL,
 	MAXWAIT,
+	FLAGS,
+	SESSION_SEQ,
 	ENDTOKEN
 };
 
@@ -67,9 +71,13 @@ static const struct token t_nas_port[];
 static const struct token t_tries[];
 static const struct token t_interval[];
 static const struct token t_maxwait[];
+static const struct token t_ipcp[];
+static const struct token t_ipcp_flags[];
+static const struct token t_ipcp_session_seq[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"test",		TEST,		t_test },
+	{ KEYWORD,	"ipcp",		NONE,		t_ipcp },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
@@ -135,6 +143,24 @@ static const struct token t_maxwait[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
+static const struct token t_ipcp[] = {
+	{ KEYWORD,	"show",		IPCP_SHOW,	NULL },
+	{ KEYWORD,	"dump",		IPCP_DUMP,	t_ipcp_flags },
+	{ KEYWORD,	"monitor",	IPCP_MONITOR,	t_ipcp_flags },
+	{ KEYWORD,	"disconnect",	IPCP_DISCONNECT,t_ipcp_session_seq },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_ipcp_flags[] = {
+	{ NOTOKEN,	"",		NONE,		NULL },
+	{ FLAGS,	"-json",	FLAGS_JSON,	NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_ipcp_session_seq[] = {
+	{ SESSION_SEQ,	"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
 
 static const struct token	*match_token(char *, const struct token []);
 static void			 show_valid_args(const struct token []);
@@ -182,6 +208,10 @@ match_token(char *word, const struct token table[])
 	const struct token	*t = NULL;
 	long long		 num;
 	const char		*errstr;
+	size_t			 wordlen = 0;
+
+	if (word != NULL)
+		wordlen = strlen(word);
 
 	for (i = 0; table[i].type != ENDTOKEN; i++) {
 		switch (table[i].type) {
@@ -193,7 +223,7 @@ match_token(char *word, const struct token table[])
 			break;
 		case KEYWORD:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    strlen(word)) == 0) {
+			    wordlen) == 0) {
 				match++;
 				t = &table[i];
 				if (t->value)
@@ -317,7 +347,24 @@ match_token(char *word, const struct token table[])
 			res.maxwait.tv_sec = num;
 			t = &table[i];
 			break;
-
+		case FLAGS:
+			if (word != NULL && wordlen >= 2 &&
+			    strncmp(word, table[i].keyword, wordlen) == 0) {
+				match++;
+				t = &table[i];
+				if (t->value)
+					res.flags |= t->value;
+			}
+			break;
+		case SESSION_SEQ:
+			if (word == NULL)
+				break;
+			match++;
+			res.session_seq = strtonum(word, 1, UINT_MAX, &errstr);
+			if (errstr != NULL)
+				printf("invalid argument: %s is %s for "
+				"\"session-id\"", word, errstr);
+			t = &table[i];
 		case ENDTOKEN:
 			break;
 		}
@@ -382,6 +429,12 @@ show_valid_args(const struct token table[])
 		case MAXWAIT:
 			fprintf(stderr, "  <maxwait (%u-%u)>\n",
 			    TEST_MAXWAIT_MIN, TEST_MAXWAIT_MAX);
+			break;
+		case FLAGS:
+			fprintf(stderr, "  %s\n", table[i].keyword);
+			break;
+		case SESSION_SEQ:
+			fprintf(stderr, "  <sequence number>\n");
 			break;
 		case ENDTOKEN:
 			break;

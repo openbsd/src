@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.h,v 1.7 2024/07/02 00:33:51 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.h,v 1.8 2024/07/09 17:26:14 yasuoka Exp $	*/
 
 #ifndef	RADIUSD_H
 #define	RADIUSD_H 1
@@ -23,6 +23,7 @@
 
 #define	RADIUSD_MODULE_NAME_LEN		32
 #define	RADIUSD_SECRET_MAX		128
+#define	RADIUSD_SOCK			"/var/run/radiusd.sock"
 #define	RADIUSD_USER			"_radiusd"
 
 enum imsg_type {
@@ -46,7 +47,10 @@ enum imsg_type {
 	IMSG_RADIUSD_MODULE_RESDECO,
 	IMSG_RADIUSD_MODULE_RESDECO_DONE,
 	IMSG_RADIUSD_MODULE_ACCTREQ,
+	IMSG_RADIUSD_MODULE_CTRL_BIND,		/* request by module */
+	IMSG_RADIUSD_MODULE_CTRL_UNBIND,	/* notice by control */
 	IMSG_RADIUSD_MODULE_STOP,
+	IMSG_RADIUSD_MODULE_MIN = 10000
 };
 
 /* Module sends LOAD when it becomes ready */
@@ -57,6 +61,7 @@ struct radiusd_module_load_arg {
 #define RADIUSD_MODULE_CAP_REQDECO	0x04
 #define RADIUSD_MODULE_CAP_RESDECO	0x08
 #define RADIUSD_MODULE_CAP_ACCTREQ	0x10
+#define RADIUSD_MODULE_CAP_CONTROL	0x20
 };
 
 struct radiusd_module_object {

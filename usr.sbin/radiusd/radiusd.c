@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.44 2024/07/02 00:33:51 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.45 2024/07/09 17:26:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -50,6 +50,7 @@
 #include "log.h"
 #include "util.h"
 #include "imsg_subr.h"
+#include "control.h"
 
 static int		 radiusd_start(struct radiusd *);
 static void		 radiusd_stop(struct radiusd *);
@@ -101,6 +102,7 @@ static void		 close_stdio(void);
 
 static u_int		 radius_query_id_seq = 0;
 int			 debug = 0;
+struct radiusd		*radiusd_s = NULL;
 
 static __dead void
 usage(void)
@@ -148,6 +150,7 @@ main(int argc, char *argv[])
 
 	if ((radiusd = calloc(1, sizeof(*radiusd))) == NULL)
 		err(1, "calloc");
+	radiusd_s = radiusd;
 	TAILQ_INIT(&radiusd->listen);
 	TAILQ_INIT(&radiusd->query);
 
@@ -164,6 +167,9 @@ main(int argc, char *argv[])
 
 	if (debug == 0)
 		close_stdio(); /* close stdio files now */
+
+	if (control_init(RADIUSD_SOCK) == -1)
+		exit(EXIT_FAILURE);
 
 	event_init();
 
@@ -191,15 +197,21 @@ main(int argc, char *argv[])
 
 	if (radiusd_start(radiusd) != 0)
 		errx(EXIT_FAILURE, "start failed");
+	if (control_listen() == -1)
+		exit(EXIT_FAILURE);
 
 	if (pledge("stdio inet", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
-	if (event_loop(0) < 0)
-		radiusd_stop(radiusd);
+	event_loop(0);
 
 	if (radiusd->error != 0)
 		log_warnx("exiting on error");
+
+	radiusd_stop(radiusd);
+	control_cleanup();
+
+	event_loop(0);
 
 	radiusd_free(radiusd);
 	event_base_free(NULL);
@@ -275,7 +287,7 @@ radiusd_start(struct radiusd *radiusd)
 	return (0);
 on_error:
 	radiusd->error++;
-	radiusd_stop(radiusd);
+	event_loopbreak();
 
 	return (-1);
 }
@@ -795,19 +807,15 @@ radiusd_access_request_aborted(struct radius_query *q)
 static void
 radiusd_on_sigterm(int fd, short evmask, void *ctx)
 {
-	struct radiusd	*radiusd = ctx;
-
 	log_info("Received SIGTERM");
-	radiusd_stop(radiusd);
+	event_loopbreak();
 }
 
 static void
 radiusd_on_sigint(int fd, short evmask, void *ctx)
 {
-	struct radiusd	*radiusd = ctx;
-
 	log_info("Received SIGINT");
-	radiusd_stop(radiusd);
+	event_loopbreak();
 }
 
 static void
@@ -1061,6 +1069,29 @@ radiusd_find_query(struct radiusd *radiusd, u_int q_id)
 			return (q);
 	}
 	return (NULL);
+}
+
+int
+radiusd_imsg_compose_module(struct radiusd *radiusd, const char *module_name,
+    uint32_t type, uint32_t id, pid_t pid, int fd, void *data, size_t datalen)
+{
+	struct radiusd_module	*module;
+
+	TAILQ_FOREACH(module, &radiusd_s->module, next) {
+		if (strcmp(module->name, module_name) == 0)
+			break;
+	}
+	if (module == NULL ||
+	    (module->capabilities & RADIUSD_MODULE_CAP_CONTROL) == 0 ||
+	    module->fd < 0)
+		return (-1);
+
+	if (imsg_compose(&module->ibuf, type, id, pid, fd, data,
+	    datalen) == -1)
+		return (-1);
+	radiusd_module_reset_ev_handler(module);
+
+	return (0);
 }
 
 /***********************************************************************
@@ -1493,9 +1524,15 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 		radiusd_access_request_aborted(q);
 		break;
 	    }
+	case IMSG_RADIUSD_MODULE_CTRL_BIND:
+		control_conn_bind(imsg->hdr.peerid, module->name);
+		break;
 	default:
-		RADIUSD_DBG(("Unhandled imsg type=%d from %s", imsg->hdr.type,
-		    module->name));
+		if (imsg->hdr.peerid != 0)
+			control_imsg_relay(imsg);
+		else
+			RADIUSD_DBG(("Unhandled imsg type=%d from %s",
+			    imsg->hdr.type, module->name));
 	}
 }
 
@@ -1810,4 +1847,45 @@ close_stdio(void)
 		if (fd > STDERR_FILENO)
 			close(fd);
 	}
+}
+
+/***********************************************************************
+ * imsg_event
+ ***********************************************************************/
+struct iovec;
+
+void
+imsg_event_add(struct imsgev *iev)
+{
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
+
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+	event_add(&iev->ev, NULL);
+}
+
+int
+imsg_compose_event(struct imsgev *iev, uint32_t type, uint32_t peerid,
+    pid_t pid, int fd, void *data, size_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
+	    pid, fd, data, datalen)) != -1)
+		imsg_event_add(iev);
+	return (ret);
+}
+
+int
+imsg_composev_event(struct imsgev *iev, uint32_t type, uint32_t peerid,
+    pid_t pid, int fd, struct iovec *iov, int niov)
+{
+	int	ret;
+
+	if ((ret = imsg_composev(&iev->ibuf, type, peerid,
+	    pid, fd, iov, niov)) != -1)
+		imsg_event_add(iev);
+	return (ret);
 }

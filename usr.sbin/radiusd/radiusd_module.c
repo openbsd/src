@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.17 2024/07/02 00:33:51 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.18 2024/07/09 17:26:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -52,6 +52,7 @@ static void	(*module_response_decoration) (void *, u_int, const u_char *,
 		    size_t, const u_char *, size_t) = NULL;
 static void	(*module_accounting_request) (void *, u_int, const u_char *,
 		    size_t) = NULL;
+static void	(*module_dispatch_control) (void *, struct imsg *) = NULL;
 
 struct module_base {
 	void			*ctx;
@@ -103,6 +104,7 @@ module_create(int sock, void *ctx, struct module_handlers *handler)
 	module_accounting_request = handler->accounting_request;
 	module_start_module = handler->start;
 	module_stop_module = handler->stop;
+	module_dispatch_control = handler->dispatch_control;
 
 	return (base);
 }
@@ -161,6 +163,8 @@ module_load(struct module_base *base)
 		load.cap |= RADIUSD_MODULE_CAP_RESDECO;
 	if (module_accounting_request != NULL)
 		load.cap |= RADIUSD_MODULE_CAP_ACCTREQ;
+	if (module_dispatch_control != NULL)
+		load.cap |= RADIUSD_MODULE_CAP_CONTROL;
 	imsg_compose(&base->ibuf, IMSG_RADIUSD_MODULE_LOAD, 0, 0, -1, &load,
 	    sizeof(load));
 	imsg_flush(&base->ibuf);
@@ -564,6 +568,20 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
  accsreq_out:
 		break;
 	    }
+	case IMSG_RADIUSD_MODULE_CTRL_UNBIND:
+		goto forward_msg;
+		break;
+	default:
+		if (imsg->hdr.type >= IMSG_RADIUSD_MODULE_MIN) {
+ forward_msg:
+			if (module_dispatch_control == NULL) {
+				const char msg[] =
+				    "the module doesn't handle any controls";
+				imsg_compose(&base->ibuf, IMSG_NG,
+				    imsg->hdr.peerid, 0, -1, msg, sizeof(msg));
+			} else
+				module_dispatch_control(base->ctx, imsg);
+		}
 	}
 
 	return (0);
@@ -637,4 +655,30 @@ module_reset_event(struct module_base *base)
 	if (event_add(&base->ev, tvp) == -1)
 		syslog(LOG_ERR, "event_add() failed in %s()", __func__);
 #endif
+}
+
+int
+module_imsg_compose(struct module_base *base, uint32_t type, uint32_t id,
+    pid_t pid, int fd, const void *data, size_t datalen)
+{
+	int	 ret;
+
+	if ((ret = imsg_compose(&base->ibuf, type, id, pid, fd, data, datalen))
+	    != -1)
+		module_reset_event(base);
+
+	return (ret);
+}
+
+int
+module_imsg_composev(struct module_base *base, uint32_t type, uint32_t id,
+    pid_t pid, int fd, const struct iovec *iov, int iovcnt)
+{
+	int	 ret;
+
+	if ((ret = imsg_composev(&base->ibuf, type, id, pid, fd, iov, iovcnt))
+	    != -1)
+		module_reset_event(base);
+
+	return (ret);
 }
