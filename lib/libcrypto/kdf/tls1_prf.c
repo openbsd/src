@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.34 2024/07/09 17:35:55 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.35 2024/07/09 17:44:18 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -265,23 +265,25 @@ tls1_prf_alg(const EVP_MD *md,
     unsigned char *out, size_t out_len)
 {
 	unsigned char *tmp;
+	size_t half_len;
 	size_t i;
 
 	if (EVP_MD_type(md) != NID_md5_sha1)
 		return tls1_prf_P_hash(md, secret, secret_len, seed, seed_len,
 		    out, out_len);
 
-	if (!tls1_prf_P_hash(EVP_md5(),
-	    secret, secret_len / 2 + (secret_len & 1),
-	    seed, seed_len, out, out_len))
+	half_len = secret_len - secret_len / 2;
+	if (!tls1_prf_P_hash(EVP_md5(), secret, half_len, seed, seed_len,
+	    out, out_len))
 		return 0;
 
 	if ((tmp = calloc(1, out_len)) == NULL) {
 		KDFerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!tls1_prf_P_hash(EVP_sha1(), secret + secret_len / 2,
-	    secret_len / 2 + (secret_len & 1), seed, seed_len, tmp, out_len)) {
+	secret += secret_len - half_len;
+	if (!tls1_prf_P_hash(EVP_sha1(), secret, half_len, seed, seed_len,
+	    tmp, out_len)) {
 		freezero(tmp, out_len);
 		return 0;
 	}
