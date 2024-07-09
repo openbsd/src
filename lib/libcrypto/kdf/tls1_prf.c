@@ -38,7 +38,7 @@ static int pkey_tls1_prf_init(EVP_PKEY_CTX *ctx)
     TLS1_PRF_PKEY_CTX *kctx;
 
     if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL) {
-        KDFerr(KDF_F_PKEY_TLS1_PRF_INIT, ERR_R_MALLOC_FAILURE);
+        KDFerror(ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ctx->data = kctx;
@@ -94,7 +94,7 @@ static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
                                   const char *type, const char *value)
 {
     if (value == NULL) {
-        KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_VALUE_MISSING);
+        KDFerror(KDF_R_VALUE_MISSING);
         return 0;
     }
     if (strcmp(type, "md") == 0) {
@@ -102,7 +102,7 @@ static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
 
         const EVP_MD *md = EVP_get_digestbyname(value);
         if (md == NULL) {
-            KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_INVALID_DIGEST);
+            KDFerror(KDF_R_INVALID_DIGEST);
             return 0;
         }
         kctx->md = md;
@@ -117,7 +117,7 @@ static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
     if (strcmp(type, "hexseed") == 0)
         return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
 
-    KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_UNKNOWN_PARAMETER_TYPE);
+    KDFerror(KDF_R_UNKNOWN_PARAMETER_TYPE);
     return -2;
 }
 
@@ -126,15 +126,15 @@ static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 {
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
     if (kctx->md == NULL) {
-        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
+        KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
     if (kctx->sec == NULL) {
-        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_SECRET);
+        KDFerror(KDF_R_MISSING_SECRET);
         return 0;
     }
     if (kctx->seedlen == 0) {
-        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_SEED);
+        KDFerror(KDF_R_MISSING_SEED);
         return 0;
     }
     return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
@@ -258,7 +258,7 @@ static int tls1_prf_alg(const EVP_MD *md,
             return 0;
 
         if ((tmp = OPENSSL_malloc(olen)) == NULL) {
-            KDFerr(KDF_F_TLS1_PRF_ALG, ERR_R_MALLOC_FAILURE);
+            KDFerror(ERR_R_MALLOC_FAILURE);
             return 0;
         }
         if (!tls1_prf_P_hash(EVP_sha1(), sec + slen/2, slen/2 + (slen & 1),
