@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.330 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.331 2024/07/09 09:22:50 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1065,6 +1065,73 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 
 	switch (p->p_stat) {
 
+	case SSTOP:
+		/*
+		 * If traced process is already stopped,
+		 * then no further action is necessary.
+		 */
+		if (pr->ps_flags & PS_TRACED)
+			goto out;
+
+		/*
+		 * Kill signal always sets processes running.
+		 */
+		if (signum == SIGKILL) {
+			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
+			goto runfast;
+		}
+
+		if (prop & SA_CONT) {
+			/*
+			 * If SIGCONT is default (or ignored), we continue the
+			 * process but don't leave the signal in p_siglist, as
+			 * it has no further action.  If SIGCONT is held, we
+			 * continue the process and leave the signal in
+			 * p_siglist.  If the process catches SIGCONT, let it
+			 * handle the signal itself.  If it isn't waiting on
+			 * an event, then it goes back to run state.
+			 * Otherwise, process goes back to sleep state.
+			 */
+			atomic_setbits_int(&p->p_flag, P_CONTINUED);
+			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
+			wakeparent = 1;
+			if (action == SIG_DFL)
+				mask = 0;
+			if (action == SIG_CATCH)
+				goto runfast;
+			if (p->p_wchan == NULL)
+				goto run;
+			atomic_clearbits_int(&p->p_flag, P_WSLEEP);
+			p->p_stat = SSLEEP;
+			goto out;
+		}
+
+		/*
+		 * Defer further processing for signals which are held,
+		 * except that stopped processes must be continued by SIGCONT.
+		 */
+		if (action == SIG_HOLD)
+			goto out;
+
+		if (prop & SA_STOP) {
+			/*
+			 * Already stopped, don't need to stop again.
+			 * (If we did the shell could get confused.)
+			 */
+			mask = 0;
+			goto out;
+		}
+
+		/*
+		 * If process is sleeping interruptibly, then simulate a
+		 * wakeup so that when it is continued, it will be made
+		 * runnable and can look at the signal.  But don't make
+		 * the process runnable, leave it stopped.
+		 */
+		if (p->p_flag & P_SINTR)
+			unsleep(p);
+		goto out;
+
 	case SSLEEP:
 		/*
 		 * If process is sleeping uninterruptibly
@@ -1142,73 +1209,6 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 */
 		goto runfast;
 		/* NOTREACHED */
-
-	case SSTOP:
-		/*
-		 * If traced process is already stopped,
-		 * then no further action is necessary.
-		 */
-		if (pr->ps_flags & PS_TRACED)
-			goto out;
-
-		/*
-		 * Kill signal always sets processes running.
-		 */
-		if (signum == SIGKILL) {
-			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
-			goto runfast;
-		}
-
-		if (prop & SA_CONT) {
-			/*
-			 * If SIGCONT is default (or ignored), we continue the
-			 * process but don't leave the signal in p_siglist, as
-			 * it has no further action.  If SIGCONT is held, we
-			 * continue the process and leave the signal in
-			 * p_siglist.  If the process catches SIGCONT, let it
-			 * handle the signal itself.  If it isn't waiting on
-			 * an event, then it goes back to run state.
-			 * Otherwise, process goes back to sleep state.
-			 */
-			atomic_setbits_int(&p->p_flag, P_CONTINUED);
-			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
-			wakeparent = 1;
-			if (action == SIG_DFL)
-				mask = 0;
-			if (action == SIG_CATCH)
-				goto runfast;
-			if (p->p_wchan == NULL)
-				goto run;
-			atomic_clearbits_int(&p->p_flag, P_WSLEEP);
-			p->p_stat = SSLEEP;
-			goto out;
-		}
-
-		/*
-		 * Defer further processing for signals which are held,
-		 * except that stopped processes must be continued by SIGCONT.
-		 */
-		if (action == SIG_HOLD)
-			goto out;
-
-		if (prop & SA_STOP) {
-			/*
-			 * Already stopped, don't need to stop again.
-			 * (If we did the shell could get confused.)
-			 */
-			mask = 0;
-			goto out;
-		}
-
-		/*
-		 * If process is sleeping interruptibly, then simulate a
-		 * wakeup so that when it is continued, it will be made
-		 * runnable and can look at the signal.  But don't make
-		 * the process runnable, leave it stopped.
-		 */
-		if (p->p_flag & P_SINTR)
-			unsleep(p);
-		goto out;
 
 	case SONPROC:
 		if (action == SIG_HOLD)
@@ -2160,8 +2160,12 @@ single_thread_set(struct proc *p, int flags)
 		SCHED_LOCK();
 		atomic_setbits_int(&q->p_flag, P_SUSPSINGLE);
 		switch (q->p_stat) {
-		case SIDL:
-		case SDEAD:
+		case SSTOP:
+			if (mode == SINGLE_EXIT) {
+				unsleep(q);
+				setrunnable(q);
+			} else
+				--pr->ps_singlecnt;
 			break;
 		case SSLEEP:
 			/* if it's not interruptible, then just have to wait */
@@ -2177,17 +2181,12 @@ single_thread_set(struct proc *p, int flags)
 				setrunnable(q);
 			}
 			break;
-		case SSTOP:
-			if (mode == SINGLE_EXIT) {
-				unsleep(q);
-				setrunnable(q);
-			} else
-				--pr->ps_singlecnt;
-			break;
 		case SONPROC:
 			signotify(q);
-			/* FALLTHROUGH */
+			break;
 		case SRUN:
+		case SIDL:
+		case SDEAD:
 			break;
 		}
 		SCHED_UNLOCK();
