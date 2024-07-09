@@ -1404,6 +1404,8 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 1 3 6 1 4 1 11129 2 4 4	: ct_precert_signer		: CT Precertificate Signer
 1 3 6 1 4 1 11129 2 4 5	: ct_cert_scts			: CT Certificate SCTs
 
+# NID for TLS1 PRF
+                            : TLS1-PRF          : tls1-prf
 # NID for HKDF
                             : HKDF              : hkdf
 
