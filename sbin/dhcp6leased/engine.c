@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.14 2024/06/19 07:42:44 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.15 2024/07/09 13:27:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -136,8 +136,6 @@ void			 configure_interfaces(struct dhcp6leased_iface *);
 void			 deconfigure_interfaces(struct dhcp6leased_iface *);
 void			 send_reconfigure_interface(struct iface_pd_conf *,
 			     struct prefix *, enum reconfigure_action);
-void			 parse_lease_xxx(struct dhcp6leased_iface *,
-			     struct imsg_ifinfo *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 const char		*dhcp_message_type2str(uint8_t);
 const char		*dhcp_option_type2str(uint16_t);
