@@ -50,7 +50,7 @@ static void pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
     freezero(kctx->sec, kctx->seclen);
-    OPENSSL_cleanse(kctx->seed, kctx->seedlen);
+    explicit_bzero(kctx->seed, kctx->seedlen);
     OPENSSL_free(kctx);
 }
 
@@ -67,7 +67,7 @@ static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return 0;
         if (kctx->sec != NULL)
             freezero(kctx->sec, kctx->seclen);
-        OPENSSL_cleanse(kctx->seed, kctx->seedlen);
+        explicit_bzero(kctx->seed, kctx->seedlen);
         kctx->seedlen = 0;
         kctx->sec = OPENSSL_memdup(p2, p1);
         if (kctx->sec == NULL)
@@ -240,7 +240,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     EVP_MD_CTX_free(ctx);
     EVP_MD_CTX_free(ctx_tmp);
     EVP_MD_CTX_free(ctx_init);
-    OPENSSL_cleanse(A1, sizeof(A1));
+    explicit_bzero(A1, sizeof(A1));
     return ret;
 }
 
