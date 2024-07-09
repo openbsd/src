@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.38 2024/05/18 06:45:00 jsg Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.39 2024/07/09 15:51:11 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -108,7 +108,7 @@ void	 get_info_vm(uint32_t, const char *, enum actions, unsigned int);
 int	 add_info(struct imsg *, int *);
 const char
 	*vm_state(unsigned int);
-void	 print_vm_info(struct vmop_info_result *, size_t);
+int	 print_vm_info(struct vmop_info_result *, size_t);
 void	 terminate_all(struct vmop_info_result *, size_t, unsigned int);
 __dead void
 	 vm_console(struct vmop_info_result *, size_t);
