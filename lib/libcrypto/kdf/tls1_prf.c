@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.23 2024/07/09 16:54:13 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.24 2024/07/09 16:57:27 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -326,31 +326,31 @@ tls1_prf_alg(const EVP_MD *md,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t out_len)
 {
+	unsigned char *tmp;
+	size_t i;
 
-	if (EVP_MD_type(md) == NID_md5_sha1) {
-		size_t i;
-		unsigned char *tmp;
-		if (!tls1_prf_P_hash(EVP_md5(),
-		    secret, secret_len/2 + (secret_len & 1),
-		    seed, seed_len, out, out_len))
-			return 0;
+	if (EVP_MD_type(md) != NID_md5_sha1)
+		return tls1_prf_P_hash(md, secret, secret_len, seed, seed_len,
+		    out, out_len);
 
-		if ((tmp = calloc(1, out_len)) == NULL) {
-			KDFerror(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		if (!tls1_prf_P_hash(EVP_sha1(), secret + secret_len/2,
-		    secret_len/2 + (secret_len & 1), seed, seed_len, tmp, out_len)) {
-			freezero(tmp, out_len);
-			return 0;
-		}
-		for (i = 0; i < out_len; i++)
-			out[i] ^= tmp[i];
-		freezero(tmp, out_len);
-		return 1;
-	}
-	if (!tls1_prf_P_hash(md, secret, secret_len, seed, seed_len, out, out_len))
+	if (!tls1_prf_P_hash(EVP_md5(),
+	    secret, secret_len/2 + (secret_len & 1),
+	    seed, seed_len, out, out_len))
 		return 0;
+
+	if ((tmp = calloc(1, out_len)) == NULL) {
+		KDFerror(ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	if (!tls1_prf_P_hash(EVP_sha1(), secret + secret_len/2,
+	    secret_len/2 + (secret_len & 1), seed, seed_len, tmp, out_len)) {
+		freezero(tmp, out_len);
+		return 0;
+	}
+	for (i = 0; i < out_len; i++)
+		out[i] ^= tmp[i];
+
+	freezero(tmp, out_len);
 
 	return 1;
 }
