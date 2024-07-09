@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.91 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: btrace.c,v 1.92 2024/07/09 16:08:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -421,7 +421,7 @@ rules_do(int fd)
 		ssize_t rlen;
 		size_t i;
 
-		rlen = read(fd, devtbuf, sizeof(devtbuf) - 1);
+		rlen = read(fd, devtbuf, sizeof(devtbuf));
 		if (rlen == -1) {
 			if (errno == EINTR && quit_pending) {
 				printf("\n");
