@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.40 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.41 2024/07/09 17:02:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -80,6 +80,7 @@ extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
+extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD x25519_pkey_meth;
 
 static const EVP_PKEY_METHOD *pkey_methods[] = {
@@ -92,6 +93,7 @@ static const EVP_PKEY_METHOD *pkey_methods[] = {
 	&hmac_pkey_meth,
 	&rsa_pkey_meth,
 	&rsa_pss_pkey_meth,
+	&tls1_prf_pkey_meth,
 	&x25519_pkey_meth,
 };
 
