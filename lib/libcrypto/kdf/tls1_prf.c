@@ -51,7 +51,7 @@ static void pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
     freezero(kctx->sec, kctx->seclen);
     explicit_bzero(kctx->seed, kctx->seedlen);
-    OPENSSL_free(kctx);
+    free(kctx);
 }
 
 static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
