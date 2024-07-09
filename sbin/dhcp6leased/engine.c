@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.15 2024/07/09 13:27:18 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.16 2024/07/09 16:15:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -977,8 +977,15 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			    ntohl(iaprefix.vltime), inet_ntop(AF_INET6,
 			    &iaprefix.prefix, ntopbuf, INET6_ADDRSTRLEN),
 			    iaprefix.prefix_len);
+
 			if (ntohl(iaprefix.vltime) < ntohl(iaprefix.pltime)) {
 				log_warnx("%s: vltime < pltime, ignoring IA_PD",
+				    __func__);
+				break;
+			}
+
+			if (ntohl(iaprefix.vltime) == 0) {
+				log_debug("%s: vltime == 0, ignoring IA_PD",
 				    __func__);
 				break;
 			}
@@ -988,7 +995,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			prefix->vltime = ntohl(iaprefix.vltime);
 			prefix->pltime = ntohl(iaprefix.pltime);
 
-			/* make sure prefix is mask correctly */
+			/* make sure prefix is masked correctly */
 			memset(&mask, 0, sizeof(mask));
 			in6_prefixlen2mask(&mask, prefix->prefix_len);
 			for (i = 0; i < 16; i++)
