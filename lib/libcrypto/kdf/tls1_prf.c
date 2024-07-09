@@ -7,11 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdlib.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/kdf.h>
+#include <string.h>
+
+#include <openssl/err.h>
 #include <openssl/evp.h>
-#include "crypto/evp.h"
+#include <openssl/kdf.h>
+
+#include "evp_local.h"
 
 static int tls1_prf_alg(const EVP_MD *md,
                         const unsigned char *sec, size_t slen,
