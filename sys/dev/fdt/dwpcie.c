@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.55 2024/07/05 22:52:25 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.56 2024/07/09 08:47:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,9 +60,9 @@
 
 #define PCIE_MSI_ADDR_LO	0x820
 #define PCIE_MSI_ADDR_HI	0x824
-#define PCIE_MSI_INTR0_ENABLE	0x828
-#define PCIE_MSI_INTR0_MASK	0x82c
-#define PCIE_MSI_INTR0_STATUS	0x830
+#define PCIE_MSI_INTR_ENABLE(x)	(0x828 + (x) * 12)
+#define PCIE_MSI_INTR_MASK(x)	(0x82c + (x) * 12)
+#define PCIE_MSI_INTR_STATUS(x)	(0x830 + (x) * 12)
 
 #define MISC_CONTROL_1		0x8bc
 #define  MISC_CONTROL_1_DBI_RO_WR_EN	(1 << 0)
@@ -215,7 +215,7 @@ struct dwpcie_intx {
 	TAILQ_ENTRY(dwpcie_intx) di_next;
 };
 
-#define DWPCIE_NUM_MSI		32
+#define DWPCIE_MAX_MSI		64
 
 struct dwpcie_msi {
 	int			(*dm_func)(void *);
@@ -223,6 +223,7 @@ struct dwpcie_msi {
 	int			dm_ipl;
 	int			dm_flags;
 	int			dm_vec;
+	int			dm_nvec;
 	struct evcount		dm_count;
 	char			*dm_name;
 };
@@ -280,8 +281,11 @@ struct dwpcie_softc {
 	struct interrupt_controller sc_ic;
 	TAILQ_HEAD(,dwpcie_intx) sc_intx[4];
 
+	void			*sc_msi_ih[2];
 	uint64_t		sc_msi_addr;
-	struct dwpcie_msi	sc_msi[DWPCIE_NUM_MSI];
+	uint64_t		sc_msi_mask;
+	struct dwpcie_msi	sc_msi[DWPCIE_MAX_MSI];
+	int			sc_num_msi;
 };
 
 struct dwpcie_intr_handle {
@@ -727,12 +731,20 @@ dwpcie_attach_deferred(struct device *self)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
+
 	if (OF_is_compatible(sc->sc_node, "baikal,bm1000-pcie") ||
 	    OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie") ||
 	    OF_getproplen(sc->sc_node, "msi-map") > 0 ||
 	    sc->sc_msi_addr)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
-	if (OF_getproplen(sc->sc_node, "msi-map") > 0)
+
+	/*
+	 * Only support mutiple MSI vectors if we have enough MSI
+	 * interrupts (or are using an external interrupt controller
+	 * that hopefully suppors plenty of MSI interripts).
+	 */
+	if (OF_getproplen(sc->sc_node, "msi-map") > 0 ||
+	    sc->sc_num_msi > 32)
 		pba.pba_flags |= PCI_FLAGS_MSIVEC_ENABLED;
 
 	pci_dopm = 1;
@@ -786,23 +798,22 @@ dwpcie_link_config(struct dwpcie_softc *sc)
 }
 
 int
-dwpcie_msi_intr(void *arg)
+dwpcie_msi_intr(struct dwpcie_softc *sc, int idx)
 {
-	struct dwpcie_softc *sc = arg;
 	struct dwpcie_msi *dm;
 	uint32_t status;
 	int vec, s;
 
-	status = HREAD4(sc, PCIE_MSI_INTR0_STATUS);
+	status = HREAD4(sc, PCIE_MSI_INTR_STATUS(idx));
 	if (status == 0)
 		return 0;
 
-	HWRITE4(sc, PCIE_MSI_INTR0_STATUS, status);
+	HWRITE4(sc, PCIE_MSI_INTR_STATUS(idx), status);
 	while (status) {
 		vec = ffs(status) - 1;
 		status &= ~(1U << vec);
 
-		dm = &sc->sc_msi[vec];
+		dm = &sc->sc_msi[idx * 32 + vec];
 		if (dm->dm_func == NULL)
 			continue;
 
@@ -820,12 +831,25 @@ dwpcie_msi_intr(void *arg)
 }
 
 int
+dwpcie_msi0_intr(void *arg)
+{
+	return dwpcie_msi_intr(arg, 0);
+}
+
+int
+dwpcie_msi1_intr(void *arg)
+{
+	return dwpcie_msi_intr(arg, 1);
+}
+
+int
 dwpcie_msi_init(struct dwpcie_softc *sc)
 {
 	bus_dma_segment_t seg;
 	bus_dmamap_t map;
 	uint64_t addr;
 	int error, rseg;
+	int idx;
 
 	/*
 	 * Allocate some DMA memory such that we have a "safe" target
@@ -861,19 +885,46 @@ dwpcie_msi_init(struct dwpcie_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, map);
 	bus_dmamap_destroy(sc->sc_dmat, map);
 
-	/* Enable, mask and clear all MSIs. */
-	HWRITE4(sc, PCIE_MSI_INTR0_ENABLE, 0xffffffff);
-	HWRITE4(sc, PCIE_MSI_INTR0_MASK, 0xffffffff);
-	HWRITE4(sc, PCIE_MSI_INTR0_STATUS, 0xffffffff);
+	/*
+	 * See if the device tree indicates that the hardware supports
+	 * more than 32 vectors.  Some hardware supports more than 64,
+	 * but 64 is good enough for now.
+	 */
+	idx = OF_getindex(sc->sc_node, "msi1", "interrupt-names");
+	if (idx == -1)
+		sc->sc_num_msi = 32;
+	else
+		sc->sc_num_msi = 64;
+	KASSERT(sc->sc_num_msi <= DWPCIE_MAX_MSI);
 
-	KASSERT(sc->sc_ih == NULL);
-	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_BIO | IPL_MPSAFE,
-	    dwpcie_msi_intr, sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
+	/* Enable, mask and clear all MSIs. */
+	for (idx = 0; idx < sc->sc_num_msi / 32; idx++) {
+		HWRITE4(sc, PCIE_MSI_INTR_ENABLE(idx), 0xffffffff);
+		HWRITE4(sc, PCIE_MSI_INTR_MASK(idx), 0xffffffff);
+		HWRITE4(sc, PCIE_MSI_INTR_STATUS(idx), 0xffffffff);
+	}
+
+	idx = OF_getindex(sc->sc_node, "msi0", "interrupt-names");
+	if (idx == -1)
+		idx = 0;
+
+	sc->sc_msi_ih[0] = fdt_intr_establish_idx(sc->sc_node, idx,
+	    IPL_BIO | IPL_MPSAFE, dwpcie_msi0_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_msi_ih[0] == NULL) {
 		bus_dmamem_free(sc->sc_dmat, &seg, 1);
 		return EINVAL;
 	}
 
+	idx = OF_getindex(sc->sc_node, "msi1", "interrupt-names");
+	if (idx == -1)
+		goto finish;
+
+	sc->sc_msi_ih[1] = fdt_intr_establish_idx(sc->sc_node, idx,
+	    IPL_BIO | IPL_MPSAFE, dwpcie_msi1_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_msi_ih[1] == NULL)
+		sc->sc_num_msi = 32;
+
+finish:
 	/*
 	 * Hold on to the DMA memory such that nobody can use it to
 	 * actually do DMA transfers.
@@ -1781,31 +1832,81 @@ dwpcie_intr_string(void *v, pci_intr_handle_t ih)
 }
 
 struct dwpcie_msi *
-dwpcie_msi_establish(struct dwpcie_softc *sc, int level,
-    int (*func)(void *), void *arg, char *name)
+dwpcie_msi_establish(struct dwpcie_softc *sc, pci_intr_handle_t *ihp,
+    int level, int (*func)(void *), void *arg, char *name)
 {
+	pci_chipset_tag_t pc = ihp->ih_pc;
+	pcitag_t tag = ihp->ih_tag;
 	struct dwpcie_msi *dm;
-	int vec;
+	uint64_t msi_mask;
+	int vec = ihp->ih_intrpin;
+	int base, mme, nvec, off;
+	pcireg_t reg;
 
-	for (vec = 0; vec < DWPCIE_NUM_MSI; vec++) {
-		dm = &sc->sc_msi[vec];
-		if (dm->dm_func == NULL)
-			break;
+	if (ihp->ih_type == PCI_MSI) {
+		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+			panic("%s: no msi capability", __func__);
+
+		reg = pci_conf_read(ihp->ih_pc, ihp->ih_tag, off);
+		mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+		if (vec >= (1 << mme))
+			return NULL;
+		if (reg & PCI_MSI_MC_C64)
+			base = pci_conf_read(pc, tag, off + PCI_MSI_MD64);
+		else
+			base = pci_conf_read(pc, tag, off + PCI_MSI_MD32);
+	} else {
+		mme = 0;
+		base = 0;
 	}
-	if (vec == DWPCIE_NUM_MSI)
+
+	if (vec == 0) {
+		/*
+		 * Pre-allocate all the requested vectors.  Remember
+		 * the number of requested vectors such that we can
+		 * deallocate them in one go.
+		 */
+		msi_mask = (1ULL << (1 << mme)) - 1;
+		while (vec <= sc->sc_num_msi - (1 << mme)) {
+			if ((sc->sc_msi_mask & (msi_mask << vec)) == 0) {
+				sc->sc_msi_mask |= (msi_mask << vec);
+				break;
+			}
+			vec += (1 << mme);
+		}
+		base = vec;
+		nvec = (1 << mme);
+	} else {
+		KASSERT(ihp->ih_type == PCI_MSI);
+		vec += base;
+		nvec = 0;
+	}
+
+	if (vec >= sc->sc_num_msi)
 		return NULL;
+
+	if (ihp->ih_type == PCI_MSI) {
+		if (reg & PCI_MSI_MC_C64)
+			pci_conf_write(pc, tag, off + PCI_MSI_MD64, base);
+		else
+			pci_conf_write(pc, tag, off + PCI_MSI_MD32, base);
+	}
+
+	dm = &sc->sc_msi[vec];
+	KASSERT(dm->dm_func == NULL);
 
 	dm->dm_func = func;
 	dm->dm_arg = arg;
 	dm->dm_ipl = level & IPL_IRQMASK;
 	dm->dm_flags = level & IPL_FLAGMASK;
 	dm->dm_vec = vec;
+	dm->dm_nvec = nvec;
 	dm->dm_name = name;
 	if (name != NULL)
 		evcount_attach(&dm->dm_count, name, &dm->dm_vec);
 
 	/* Unmask the MSI. */
-	HCLR4(sc, PCIE_MSI_INTR0_MASK, (1U << vec));
+	HCLR4(sc, PCIE_MSI_INTR_MASK(vec / 32), (1U << (vec % 32)));
 
 	return dm;
 }
@@ -1813,12 +1914,21 @@ dwpcie_msi_establish(struct dwpcie_softc *sc, int level,
 void
 dwpcie_msi_disestablish(struct dwpcie_softc *sc, struct dwpcie_msi *dm)
 {
+	uint64_t msi_mask = (1ULL << dm->dm_nvec) - 1;
+
 	/* Mask the MSI. */
-	HSET4(sc, PCIE_MSI_INTR0_MASK, (1U << dm->dm_vec));
+	HSET4(sc, PCIE_MSI_INTR_MASK(dm->dm_vec / 32),
+	    (1U << (dm->dm_vec % 32)));
 
 	if (dm->dm_name)
 		evcount_detach(&dm->dm_count);
 	dm->dm_func = NULL;
+
+	/*
+	 * Unallocate all allocated vetcors if this is the first
+	 * vector for the device.
+	 */
+	sc->sc_msi_mask &= ~(msi_mask << dm->dm_vec);
 }
 
 void *
@@ -1839,9 +1949,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		uint64_t addr, data;
 
 		if (sc->sc_msi_addr) {
-			if (ih.ih_type == PCI_MSI && ih.ih_intrpin > 0)
-				return NULL;
-			dm = dwpcie_msi_establish(sc, level, func, arg, name);
+			dm = dwpcie_msi_establish(sc, &ih, level, func, arg, name);
 			if (dm == NULL)
 				return NULL;
 			addr = sc->sc_msi_addr;
