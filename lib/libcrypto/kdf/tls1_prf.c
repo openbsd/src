@@ -37,7 +37,7 @@ static int pkey_tls1_prf_init(EVP_PKEY_CTX *ctx)
 {
     TLS1_PRF_PKEY_CTX *kctx;
 
-    if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL) {
+    if ((kctx = calloc(1, sizeof(*kctx))) == NULL) {
         KDFerror(ERR_R_MALLOC_FAILURE);
         return 0;
     }
