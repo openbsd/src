@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.26 2024/07/09 16:59:07 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.27 2024/07/09 16:59:50 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -247,7 +247,7 @@ const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
 
 static int
 tls1_prf_P_hash(const EVP_MD *md,
-    const unsigned char *secret, size_t sec_len,
+    const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t out_len)
 {
@@ -271,7 +271,7 @@ tls1_prf_P_hash(const EVP_MD *md,
 	EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 
 	mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, secret,
-	    sec_len);
+	    secret_len);
 	if (mac_key == NULL)
 		goto err;
 	if (!EVP_DigestSignInit(ctx_init, NULL, md, NULL, mac_key))
