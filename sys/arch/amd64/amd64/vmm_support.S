@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.27 2024/04/01 05:11:49 guenther Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.28 2024/07/09 11:15:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -57,6 +57,7 @@ vmm_dispatch_intr:
 	pushq   %rax
 	cli
 	callq	*%rdi
+	movq	$0,-8(%rsp)
 	ret
 	lfence
 
