@@ -1,4 +1,4 @@
-/* $OpenBSD: enc_read.c,v 1.19 2024/05/24 19:16:53 tb Exp $ */
+/* $OpenBSD: enc_read.c,v 1.20 2024/07/09 07:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,7 @@
  */
 
 int DES_rw_mode = DES_PCBC_MODE;
+LCRYPTO_ALIAS(DES_rw_mode);
 
 int
 DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,

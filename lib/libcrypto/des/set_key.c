@@ -1,4 +1,4 @@
-/* $OpenBSD: set_key.c,v 1.27 2024/03/29 01:47:29 joshua Exp $ */
+/* $OpenBSD: set_key.c,v 1.28 2024/07/09 07:16:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,7 @@
 #include "des_local.h"
 
 int DES_check_key = 0;	/* defaults to false */
+LCRYPTO_ALIAS(DES_check_key);
 
 static const unsigned char odd_parity[256] = {
 	1,  1,  2,  2,  4,  4,  7,  7,  8,  8, 11, 11, 13, 13, 14, 14,
