@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.19 2024/07/09 16:51:01 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.20 2024/07/09 16:51:50 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -77,7 +77,7 @@ static int tls1_prf_alg(const EVP_MD *md,
 struct tls1_prf_ctx {
 	const EVP_MD *md;
 	unsigned char *secret;
-	size_t seclen;
+	size_t secret_len;
 	unsigned char seed[TLS1_PRF_MAXBUF];
 	size_t seedlen;
 };
@@ -100,7 +100,7 @@ static void
 pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
-	freezero(kctx->secret, kctx->seclen);
+	freezero(kctx->secret, kctx->secret_len);
 	explicit_bzero(kctx->seed, kctx->seedlen);
 	free(kctx);
 }
@@ -118,13 +118,13 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (p1 < 0)
 			return 0;
 		if (kctx->secret != NULL)
-			freezero(kctx->secret, kctx->seclen);
+			freezero(kctx->secret, kctx->secret_len);
 
 		explicit_bzero(kctx->seed, kctx->seedlen);
 		kctx->seedlen = 0;
 
 		kctx->secret = NULL;
-		kctx->seclen = 0;
+		kctx->secret_len = 0;
 
 		if (p1 == 0 || p2 == NULL)
 			return 0;
@@ -132,7 +132,7 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if ((kctx->secret = calloc(1, p1)) == NULL)
 			return 0;
 		memcpy(kctx->secret, p2, p1);
-		kctx->seclen = p1;
+		kctx->secret_len = p1;
 
 		return 1;
 
@@ -203,7 +203,7 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 		KDFerror(KDF_R_MISSING_SEED);
 		return 0;
 	}
-	return tls1_prf_alg(kctx->md, kctx->secret, kctx->seclen,
+	return tls1_prf_alg(kctx->md, kctx->secret, kctx->secret_len,
 	    kctx->seed, kctx->seedlen,
 	    key, *keylen);
 }
