@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.24 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.25 2024/07/09 01:21:19 jsg Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /*
@@ -410,8 +410,8 @@ struct finst db_Esca[] = {
 /*1*/	{ "fimul",  LONG,  0,		0 },
 /*2*/	{ "ficom",  LONG,  0,		0 },
 /*3*/	{ "ficomp", LONG,  0,		0 },
-/*4*/	{ "fisub",  LONG,  op1(X),	0 },
-/*5*/	{ "fisubr", LONG,  0,		0 },
+/*4*/	{ "fisub",  LONG,  0,		0 },
+/*5*/	{ "fisubr", LONG,  op1(X),	db_Esca5 },
 /*6*/	{ "fidiv",  LONG,  0,		0 },
 /*7*/	{ "fidivr", LONG,  0,		0 }
 };
