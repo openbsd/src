@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.14 2024/07/09 16:45:33 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.15 2024/07/09 16:46:33 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -68,9 +68,9 @@
 #include "evp_local.h"
 
 static int tls1_prf_alg(const EVP_MD *md,
-                        const unsigned char *sec, size_t slen,
-                        const unsigned char *seed, size_t seed_len,
-                        unsigned char *out, size_t olen);
+    const unsigned char *sec, size_t slen,
+    const unsigned char *seed, size_t seed_len,
+    unsigned char *out, size_t olen);
 
 #define TLS1_PRF_MAXBUF 1024
 
@@ -78,267 +78,277 @@ static int tls1_prf_alg(const EVP_MD *md,
 
 typedef struct {
     /* Digest to use for PRF */
-    const EVP_MD *md;
+	const EVP_MD *md;
     /* Secret value to use for PRF */
-    unsigned char *sec;
-    size_t seclen;
+	unsigned char *sec;
+	size_t seclen;
     /* Buffer of concatenated seed data */
-    unsigned char seed[TLS1_PRF_MAXBUF];
-    size_t seedlen;
+	unsigned char seed[TLS1_PRF_MAXBUF];
+	size_t seedlen;
 } TLS1_PRF_PKEY_CTX;
 
-static int pkey_tls1_prf_init(EVP_PKEY_CTX *ctx)
+static int
+pkey_tls1_prf_init(EVP_PKEY_CTX *ctx)
 {
-    TLS1_PRF_PKEY_CTX *kctx;
+	TLS1_PRF_PKEY_CTX *kctx;
 
-    if ((kctx = calloc(1, sizeof(*kctx))) == NULL) {
-        KDFerror(ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    ctx->data = kctx;
+	if ((kctx = calloc(1, sizeof(*kctx))) == NULL) {
+		KDFerror(ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	ctx->data = kctx;
 
-    return 1;
+	return 1;
 }
 
-static void pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
+static void
+pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
-    TLS1_PRF_PKEY_CTX *kctx = ctx->data;
-    freezero(kctx->sec, kctx->seclen);
-    explicit_bzero(kctx->seed, kctx->seedlen);
-    free(kctx);
+	TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	freezero(kctx->sec, kctx->seclen);
+	explicit_bzero(kctx->seed, kctx->seedlen);
+	free(kctx);
 }
 
-static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int
+pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    TLS1_PRF_PKEY_CTX *kctx = ctx->data;
-    switch (type) {
-    case EVP_PKEY_CTRL_TLS_MD:
-        kctx->md = p2;
-        return 1;
+	TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	switch (type) {
+	case EVP_PKEY_CTRL_TLS_MD:
+		kctx->md = p2;
+		return 1;
 
-    case EVP_PKEY_CTRL_TLS_SECRET:
-        if (p1 < 0)
-            return 0;
-        if (kctx->sec != NULL)
-            freezero(kctx->sec, kctx->seclen);
+	case EVP_PKEY_CTRL_TLS_SECRET:
+		if (p1 < 0)
+			return 0;
+		if (kctx->sec != NULL)
+			freezero(kctx->sec, kctx->seclen);
 
-        explicit_bzero(kctx->seed, kctx->seedlen);
-        kctx->seedlen = 0;
+		explicit_bzero(kctx->seed, kctx->seedlen);
+		kctx->seedlen = 0;
 
-        kctx->sec = NULL;
-        kctx->seclen = 0;
+		kctx->sec = NULL;
+		kctx->seclen = 0;
 
-        if (p1 == 0 || p2 == NULL)
-            return 0;
+		if (p1 == 0 || p2 == NULL)
+			return 0;
 
-        if ((kctx->sec = calloc(1, p1)) == NULL)
-            return 0;
-        memcpy(kctx->sec, p2, p1);
-        kctx->seclen  = p1;
+		if ((kctx->sec = calloc(1, p1)) == NULL)
+			return 0;
+		memcpy(kctx->sec, p2, p1);
+		kctx->seclen = p1;
 
-        return 1;
+		return 1;
 
-    case EVP_PKEY_CTRL_TLS_SEED:
-        if (p1 == 0 || p2 == NULL)
-            return 1;
-        if (p1 < 0 || p1 > (int)(TLS1_PRF_MAXBUF - kctx->seedlen))
-            return 0;
-        memcpy(kctx->seed + kctx->seedlen, p2, p1);
-        kctx->seedlen += p1;
-        return 1;
+	case EVP_PKEY_CTRL_TLS_SEED:
+		if (p1 == 0 || p2 == NULL)
+			return 1;
+		if (p1 < 0 || p1 > (int)(TLS1_PRF_MAXBUF - kctx->seedlen))
+			return 0;
+		memcpy(kctx->seed + kctx->seedlen, p2, p1);
+		kctx->seedlen += p1;
+		return 1;
 
-    default:
-        return -2;
-
-    }
+	default:
+		return -2;
+	}
 }
 
-static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
-                                  const char *type, const char *value)
+static int
+pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
+    const char *type, const char *value)
 {
-    if (value == NULL) {
-        KDFerror(KDF_R_VALUE_MISSING);
-        return 0;
-    }
-    if (strcmp(type, "md") == 0) {
-        TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	if (value == NULL) {
+		KDFerror(KDF_R_VALUE_MISSING);
+		return 0;
+	}
+	if (strcmp(type, "md") == 0) {
+		TLS1_PRF_PKEY_CTX *kctx = ctx->data;
 
-        const EVP_MD *md = EVP_get_digestbyname(value);
-        if (md == NULL) {
-            KDFerror(KDF_R_INVALID_DIGEST);
-            return 0;
-        }
-        kctx->md = md;
-        return 1;
-    }
-    if (strcmp(type, "secret") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
-    if (strcmp(type, "hexsecret") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
-    if (strcmp(type, "seed") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
-    if (strcmp(type, "hexseed") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
+		const EVP_MD *md = EVP_get_digestbyname(value);
+		if (md == NULL) {
+			KDFerror(KDF_R_INVALID_DIGEST);
+			return 0;
+		}
+		kctx->md = md;
+		return 1;
+	}
+	if (strcmp(type, "secret") == 0)
+		return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET,
+		    value);
+	if (strcmp(type, "hexsecret") == 0)
+		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET,
+		    value);
+	if (strcmp(type, "seed") == 0)
+		return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED,
+		    value);
+	if (strcmp(type, "hexseed") == 0)
+		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED,
+		    value);
 
-    KDFerror(KDF_R_UNKNOWN_PARAMETER_TYPE);
-    return -2;
+	KDFerror(KDF_R_UNKNOWN_PARAMETER_TYPE);
+	return -2;
 }
 
-static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-                                size_t *keylen)
+static int
+pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
+    size_t *keylen)
 {
-    TLS1_PRF_PKEY_CTX *kctx = ctx->data;
-    if (kctx->md == NULL) {
-        KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
-        return 0;
-    }
-    if (kctx->sec == NULL) {
-        KDFerror(KDF_R_MISSING_SECRET);
-        return 0;
-    }
-    if (kctx->seedlen == 0) {
-        KDFerror(KDF_R_MISSING_SEED);
-        return 0;
-    }
-    return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
-                        kctx->seed, kctx->seedlen,
-                        key, *keylen);
+	TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	if (kctx->md == NULL) {
+		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
+		return 0;
+	}
+	if (kctx->sec == NULL) {
+		KDFerror(KDF_R_MISSING_SECRET);
+		return 0;
+	}
+	if (kctx->seedlen == 0) {
+		KDFerror(KDF_R_MISSING_SEED);
+		return 0;
+	}
+	return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
+	    kctx->seed, kctx->seedlen,
+	    key, *keylen);
 }
 
 const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
-    .pkey_id = EVP_PKEY_TLS1_PRF,
-    .flags = 0,
+	.pkey_id = EVP_PKEY_TLS1_PRF,
+	.flags = 0,
 
-    .init = pkey_tls1_prf_init,
-    .copy = NULL,
-    .cleanup = pkey_tls1_prf_cleanup,
+	.init = pkey_tls1_prf_init,
+	.copy = NULL,
+	.cleanup = pkey_tls1_prf_cleanup,
 
-    .paramgen = NULL,
+	.paramgen = NULL,
 
-    .keygen = NULL,
+	.keygen = NULL,
 
-    .sign_init = NULL,
-    .sign = NULL,
+	.sign_init = NULL,
+	.sign = NULL,
 
-    .verify_init = NULL,
-    .verify = NULL,
+	.verify_init = NULL,
+	.verify = NULL,
 
-    .verify_recover = NULL,
+	.verify_recover = NULL,
 
-    .signctx_init = NULL,
-    .signctx = NULL,
+	.signctx_init = NULL,
+	.signctx = NULL,
 
-    .encrypt = NULL,
+	.encrypt = NULL,
 
-    .decrypt = NULL,
+	.decrypt = NULL,
 
-    .derive_init = NULL,
-    .derive = pkey_tls1_prf_derive,
+	.derive_init = NULL,
+	.derive = pkey_tls1_prf_derive,
 
-    .ctrl = pkey_tls1_prf_ctrl,
-    .ctrl_str = pkey_tls1_prf_ctrl_str,
+	.ctrl = pkey_tls1_prf_ctrl,
+	.ctrl_str = pkey_tls1_prf_ctrl_str,
 };
 
-static int tls1_prf_P_hash(const EVP_MD *md,
-                           const unsigned char *sec, size_t sec_len,
-                           const unsigned char *seed, size_t seed_len,
-                           unsigned char *out, size_t olen)
+static int
+tls1_prf_P_hash(const EVP_MD *md,
+    const unsigned char *sec, size_t sec_len,
+    const unsigned char *seed, size_t seed_len,
+    unsigned char *out, size_t olen)
 {
-    int chunk;
-    EVP_MD_CTX *ctx = NULL, *ctx_tmp = NULL, *ctx_init = NULL;
-    EVP_PKEY *mac_key = NULL;
-    unsigned char A1[EVP_MAX_MD_SIZE];
-    size_t A1_len;
-    int ret = 0;
+	int chunk;
+	EVP_MD_CTX *ctx = NULL, *ctx_tmp = NULL, *ctx_init = NULL;
+	EVP_PKEY *mac_key = NULL;
+	unsigned char A1[EVP_MAX_MD_SIZE];
+	size_t A1_len;
+	int ret = 0;
 
-    if ((chunk = EVP_MD_size(md)) < 0)
-        goto err;
+	if ((chunk = EVP_MD_size(md)) < 0)
+		goto err;
 
-    ctx = EVP_MD_CTX_new();
-    ctx_tmp = EVP_MD_CTX_new();
-    ctx_init = EVP_MD_CTX_new();
-    if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
-        goto err;
-    EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-    mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, sec, sec_len);
-    if (mac_key == NULL)
-        goto err;
-    if (!EVP_DigestSignInit(ctx_init, NULL, md, NULL, mac_key))
-        goto err;
-    if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
-        goto err;
-    if (seed != NULL && !EVP_DigestSignUpdate(ctx, seed, seed_len))
-        goto err;
-    if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
-        goto err;
+	ctx = EVP_MD_CTX_new();
+	ctx_tmp = EVP_MD_CTX_new();
+	ctx_init = EVP_MD_CTX_new();
+	if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
+		goto err;
+	EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+	mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, sec,
+	    sec_len);
+	if (mac_key == NULL)
+		goto err;
+	if (!EVP_DigestSignInit(ctx_init, NULL, md, NULL, mac_key))
+		goto err;
+	if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
+		goto err;
+	if (seed != NULL && !EVP_DigestSignUpdate(ctx, seed, seed_len))
+		goto err;
+	if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
+		goto err;
 
-    for (;;) {
-        /* Reinit mac contexts */
-        if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
-            goto err;
-        if (!EVP_DigestSignUpdate(ctx, A1, A1_len))
-            goto err;
-        if (olen > (size_t)chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
-            goto err;
-        if (seed && !EVP_DigestSignUpdate(ctx, seed, seed_len))
-            goto err;
+	for (;;) {
+	/* Reinit mac contexts */
+		if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
+			goto err;
+		if (!EVP_DigestSignUpdate(ctx, A1, A1_len))
+			goto err;
+		if (olen > (size_t)chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
+			goto err;
+		if (seed && !EVP_DigestSignUpdate(ctx, seed, seed_len))
+			goto err;
 
-        if (olen > (size_t)chunk) {
-            size_t mac_len;
-            if (!EVP_DigestSignFinal(ctx, out, &mac_len))
-                goto err;
-            out += mac_len;
-            olen -= mac_len;
-            /* calc the next A1 value */
-            if (!EVP_DigestSignFinal(ctx_tmp, A1, &A1_len))
-                goto err;
-        } else {                /* last one */
-
-            if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
-                goto err;
-            memcpy(out, A1, olen);
-            break;
-        }
-    }
-    ret = 1;
+		if (olen > (size_t)chunk) {
+			size_t mac_len;
+			if (!EVP_DigestSignFinal(ctx, out, &mac_len))
+				goto err;
+			out += mac_len;
+			olen -= mac_len;
+	    /* calc the next A1 value */
+			if (!EVP_DigestSignFinal(ctx_tmp, A1, &A1_len))
+				goto err;
+		} else {                /* last one */
+			if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
+				goto err;
+			memcpy(out, A1, olen);
+			break;
+		}
+	}
+	ret = 1;
  err:
-    EVP_PKEY_free(mac_key);
-    EVP_MD_CTX_free(ctx);
-    EVP_MD_CTX_free(ctx_tmp);
-    EVP_MD_CTX_free(ctx_init);
-    explicit_bzero(A1, sizeof(A1));
-    return ret;
+	EVP_PKEY_free(mac_key);
+	EVP_MD_CTX_free(ctx);
+	EVP_MD_CTX_free(ctx_tmp);
+	EVP_MD_CTX_free(ctx_init);
+	explicit_bzero(A1, sizeof(A1));
+	return ret;
 }
 
-static int tls1_prf_alg(const EVP_MD *md,
-                        const unsigned char *sec, size_t slen,
-                        const unsigned char *seed, size_t seed_len,
-                        unsigned char *out, size_t olen)
+static int
+tls1_prf_alg(const EVP_MD *md,
+    const unsigned char *sec, size_t slen,
+    const unsigned char *seed, size_t seed_len,
+    unsigned char *out, size_t olen)
 {
 
-    if (EVP_MD_type(md) == NID_md5_sha1) {
-        size_t i;
-        unsigned char *tmp;
-        if (!tls1_prf_P_hash(EVP_md5(), sec, slen/2 + (slen & 1),
-                         seed, seed_len, out, olen))
-            return 0;
+	if (EVP_MD_type(md) == NID_md5_sha1) {
+		size_t i;
+		unsigned char *tmp;
+		if (!tls1_prf_P_hash(EVP_md5(), sec, slen/2 + (slen & 1),
+		    seed, seed_len, out, olen))
+			return 0;
 
-        if ((tmp = calloc(1, olen)) == NULL) {
-            KDFerror(ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        if (!tls1_prf_P_hash(EVP_sha1(), sec + slen/2, slen/2 + (slen & 1),
-                         seed, seed_len, tmp, olen)) {
-            freezero(tmp, olen);
-            return 0;
-        }
-        for (i = 0; i < olen; i++)
-            out[i] ^= tmp[i];
-        freezero(tmp, olen);
-        return 1;
-    }
-    if (!tls1_prf_P_hash(md, sec, slen, seed, seed_len, out, olen))
-        return 0;
+		if ((tmp = calloc(1, olen)) == NULL) {
+			KDFerror(ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+		if (!tls1_prf_P_hash(EVP_sha1(), sec + slen/2,
+		    slen/2 + (slen & 1), seed, seed_len, tmp, olen)) {
+			freezero(tmp, olen);
+			return 0;
+		}
+		for (i = 0; i < olen; i++)
+			out[i] ^= tmp[i];
+		freezero(tmp, olen);
+		return 1;
+	}
+	if (!tls1_prf_P_hash(md, sec, slen, seed, seed_len, out, olen))
+		return 0;
 
-    return 1;
+	return 1;
 }
