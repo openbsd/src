@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.85 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.86 2024/07/09 15:20:15 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -432,7 +432,6 @@ void
 tuagg_add_process(struct process *pr, struct proc *p)
 {
 	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
-	splassert(IPL_STATCLOCK);
 	KASSERT(curproc == p || p->p_stat == SDEAD);
 
 	tu_enter(&pr->ps_tu);
