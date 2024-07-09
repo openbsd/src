@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.197 2024/07/09 07:39:21 beck Exp $
+# $OpenBSD: Makefile,v 1.198 2024/07/09 09:39:14 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -745,18 +745,11 @@ includes: prereq
 	    echo $$j; \
 	    eval "$$j"; \
 	done;
-.ifdef NAMESPACE
 ${VERSION_SCRIPT}: ${SYMBOL_LIST} ${SYMBOL_NAMESPACE}
 	{ printf '{\n\tglobal:\n'; \
 	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_NAMESPACE}; \
 	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
 	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
-.else
-${VERSION_SCRIPT}: ${SYMBOL_LIST}
-	{ printf '{\n\tglobal:\n'; \
-	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
-	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
-.endif
 
 # generated
 CFLAGS+= -I${.OBJDIR}

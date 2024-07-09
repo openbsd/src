@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.82 2024/06/25 14:10:45 jsing Exp $
+# $OpenBSD: Makefile,v 1.83 2024/07/09 09:39:14 beck Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -16,9 +16,9 @@ CFLAGS+= -Wall -Wundef
 CFLAGS+= -Werror -Wshadow
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL
-.ifdef NAMESPACE
+
 CFLAGS+= -DLIBRESSL_NAMESPACE
-.endif
+
 .ifdef TLS1_3_DEBUG
 CFLAGS+= -DTLS13_DEBUG
 .endif
