@@ -1856,10 +1856,6 @@ _libre_idea_cbc_encrypt
 _libre_idea_cfb64_encrypt
 _libre_idea_ofb64_encrypt
 _libre_idea_encrypt
-_libre_OCSP_RESPID_new
-_libre_OCSP_RESPID_free
-_libre_d2i_OCSP_RESPID
-_libre_i2d_OCSP_RESPID
 _libre_OCSP_CERTID_dup
 _libre_OCSP_sendreq_bio
 _libre_OCSP_sendreq_new
@@ -3231,7 +3227,6 @@ _libre_POLICYQUALINFO_it
 _libre_USERNOTICE_it
 _libre_NOTICEREF_it
 _libre_CRL_DIST_POINTS_it
-_libre_DIST_POINT_it
 _libre_DIST_POINT_NAME_it
 _libre_DIST_POINT_it
 _libre_ISSUING_DIST_POINT_it
@@ -3294,7 +3289,6 @@ _libre_ASN1_GENERALSTRING_it
 _libre_ASN1_UTCTIME_it
 _libre_ASN1_GENERALIZEDTIME_it
 _libre_ASN1_TIME_it
-_libre_OCSP_RESPID_it
 _libre_OCSP_SINGLERESP_it
 _libre_OCSP_CERTSTATUS_it
 _libre_OCSP_REVOKEDINFO_it
