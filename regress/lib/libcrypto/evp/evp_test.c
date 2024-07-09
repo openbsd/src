@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.18 2024/03/24 14:00:11 jca Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.19 2024/07/09 17:09:23 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/objects.h>
 #include <openssl/ossl_typ.h>
 
@@ -759,6 +760,99 @@ evp_get_digestbyname_test(void)
 	return failure;
 }
 
+static void
+hexdump(const unsigned char *buf, int len)
+{
+	int i;
+
+	if (len <= 0) {
+		fprintf(stderr, "<negative length %d>\n", len);
+		return;
+	}
+
+	for (i = 1; i <= len; i++)
+		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+
+	fprintf(stderr, "\n");
+}
+
+static int
+kdf_compare_bytes(const char *label, const unsigned char *d1, int len1,
+    const unsigned char *d2, int len2)
+{
+	if (len1 != len2) {
+		fprintf(stderr, "FAIL: %s - byte lengths differ "
+		    "(%d != %d)\n", label, len1, len2);
+		fprintf(stderr, "Got:\n");
+		hexdump(d1, len1);
+		fprintf(stderr, "Want:\n");
+		hexdump(d2, len2);
+		return 0;
+	}
+	if (memcmp(d1, d2, len1) != 0) {
+		fprintf(stderr, "FAIL: %s - bytes differ\n", label);
+		fprintf(stderr, "Got:\n");
+		hexdump(d1, len1);
+		fprintf(stderr, "Want:\n");
+		hexdump(d2, len2);
+		return 0;
+	}
+	return 1;
+}
+
+static int
+evp_kdf_tls1_prf(void)
+{
+	EVP_PKEY_CTX *pctx;
+	unsigned char got[16];
+	size_t got_len = sizeof(got);
+	unsigned char want[16] = {
+		0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
+		0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc,
+	};
+	int failed = 1;
+
+	if ((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL)) == NULL) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_new_id\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_derive_init(pctx) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_derive_init\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_set_tls1_prf_md(pctx, EVP_sha256()) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_set1_tls1_prf_md\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, "secret", 6) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_set1_tls1_prf_secret\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, "seed", 4) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_set1_tls1_prf_seed\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_derive(pctx, got, &got_len) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_derive\n");
+		goto err;
+	}
+
+	if (!kdf_compare_bytes("kdf test", got, got_len, want, sizeof(want)))
+		goto err;
+
+	failed = 0;
+
+ err:
+	EVP_PKEY_CTX_free(pctx);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -772,6 +866,7 @@ main(int argc, char **argv)
 	failed |= obj_name_do_all_test();
 	failed |= evp_get_cipherbyname_test();
 	failed |= evp_get_digestbyname_test();
+	failed |= evp_kdf_tls1_prf();
 
 	OPENSSL_cleanup();
 
