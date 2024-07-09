@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.13 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.14 2024/07/09 16:04:15 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -954,7 +954,7 @@ iavf_media_status(struct ifnet *ifp, struct ifmediareq *ifm)
 {
 	struct iavf_softc *sc = ifp->if_softc;
 
-	NET_ASSERT_LOCKED();
+	KERNEL_ASSERT_LOCKED();
 
 	ifm->ifm_status = sc->sc_media_status;
 	ifm->ifm_active = sc->sc_media_active;
