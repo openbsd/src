@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.32 2024/07/09 17:05:46 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.33 2024/07/09 17:29:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -97,8 +97,7 @@ pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 	struct tls1_prf_ctx *kctx = ctx->data;
 
 	freezero(kctx->secret, kctx->secret_len);
-	explicit_bzero(kctx->seed, kctx->seed_len);
-	free(kctx);
+	freezero(kctx, sizeof(*kctx));
 }
 
 static int
