@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.99 2024/07/08 16:15:42 mpi Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.100 2024/07/09 08:44:36 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -261,8 +261,9 @@ sched_toidle(void)
 	idle->p_stat = SRUN;
 
 	uvmexp.swtch++;
-	TRACEPOINT(sched, off__cpu, idle->p_tid + THREAD_PID_OFFSET,
-	    idle->p_p->ps_pid);
+	if (curproc != NULL)
+		TRACEPOINT(sched, off__cpu, idle->p_tid + THREAD_PID_OFFSET,
+		    idle->p_p->ps_pid);
 	cpu_switchto(NULL, idle);
 	panic("cpu_switchto returned");
 }
