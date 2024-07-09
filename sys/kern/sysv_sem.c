@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.63 2022/09/28 13:21:13 mbuhl Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.64 2024/07/09 04:42:48 jsg Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		sops = mallocarray(nsops, sizeof(struct sembuf), M_SEM, M_WAITOK);
 	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(struct sembuf));
 	if (error != 0) {
-		DPRINTF(("error = %d from copyin(%p, %p, %u)\n", error,
+		DPRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
 		    SCARG(uap, sops), &sops, nsops * sizeof(struct sembuf)));
 		goto done2;
 	}
@@ -593,7 +593,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 
 			semptr = &semaptr->sem_base[sopptr->sem_num];
 
-			DPRINTF(("semop:  semaptr=%x, sem_base=%x, semptr=%x, sem[%d]=%d : op=%d, flag=%s\n",
+			DPRINTF(("semop:  semaptr=%p, sem_base=%p, semptr=%p, sem[%d]=%d : op=%d, flag=%s\n",
 			    semaptr, semaptr->sem_base, semptr,
 			    sopptr->sem_num, semptr->semval, sopptr->sem_op,
 			    (sopptr->sem_flg & IPC_NOWAIT) ? "nowait" : "wait"));
@@ -634,7 +634,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		/*
 		 * No ... rollback anything that we've already done
 		 */
-		DPRINTF(("semop:  rollback 0 through %d\n", i - 1));
+		DPRINTF(("semop:  rollback 0 through %zu\n", i - 1));
 		for (j = 0; j < i; j++)
 			semaptr->sem_base[sops[j].sem_num].semval -=
 			    sops[j].sem_op;
