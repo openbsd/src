@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.61 2024/06/24 06:43:22 tb Exp $ */
+/* $OpenBSD: err.c,v 1.62 2024/07/09 07:17:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1149,6 +1149,7 @@ ERR_add_error_vdata(int num, va_list args)
 	else
 		ERR_set_error_data(errbuf, ERR_TXT_MALLOCED|ERR_TXT_STRING);
 }
+LCRYPTO_ALIAS(ERR_add_error_vdata);
 
 void
 ERR_add_error_data(int num, ...)
@@ -1158,6 +1159,7 @@ ERR_add_error_data(int num, ...)
 	ERR_add_error_vdata(num, args);
 	va_end(args);
 }
+LCRYPTO_ALIAS(ERR_add_error_data);
 
 int
 ERR_set_mark(void)
