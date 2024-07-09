@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.36 2024/07/09 07:51:09 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.37 2024/07/09 11:21:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,7 +150,7 @@
 #include "./testrsa.h"
 
 #define BUFSIZE	(1024*8+64)
-volatile sig_atomic_t run = 0;
+volatile sig_atomic_t run;
 
 static int mr = 0;
 static int usertime = 1;
