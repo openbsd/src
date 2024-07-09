@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.35 2024/07/09 17:44:18 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.36 2024/07/09 17:46:32 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -259,10 +259,8 @@ tls1_prf_P_hash(const EVP_MD *md,
 }
 
 static int
-tls1_prf_alg(const EVP_MD *md,
-    const unsigned char *secret, size_t secret_len,
-    const unsigned char *seed, size_t seed_len,
-    unsigned char *out, size_t out_len)
+tls1_prf_alg(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
+    const unsigned char *seed, size_t seed_len, unsigned char *out, size_t out_len)
 {
 	unsigned char *tmp;
 	size_t half_len;
