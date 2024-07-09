@@ -71,12 +71,21 @@ static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return 0;
         if (kctx->sec != NULL)
             freezero(kctx->sec, kctx->seclen);
+
         explicit_bzero(kctx->seed, kctx->seedlen);
         kctx->seedlen = 0;
-        kctx->sec = OPENSSL_memdup(p2, p1);
-        if (kctx->sec == NULL)
+
+        kctx->sec = NULL;
+        kctx->seclen = 0;
+
+        if (p1 == 0 || p2 == NULL)
             return 0;
+
+        if ((kctx->sec = calloc(1, p1)) == NULL)
+            return 0;
+        memcpy(kctx->sec, p2, p1);
         kctx->seclen  = p1;
+
         return 1;
 
     case EVP_PKEY_CTRL_TLS_SEED:
