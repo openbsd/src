@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.196 2024/06/24 06:43:22 tb Exp $
+# $OpenBSD: Makefile,v 1.197 2024/07/09 07:39:21 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -19,9 +19,9 @@ CFLAGS+= -Wall -Wundef
 CFLAGS+= -Werror -Wshadow
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL
-.ifdef NAMESPACE
+
 CFLAGS+= -DLIBRESSL_NAMESPACE -DLIBRESSL_CRYPTO_NAMESPACE
-.endif
+
 CFLAGS+= -DHAVE_FUNOPEN
 
 CFLAGS+= -I${LCRYPTO_SRC}
