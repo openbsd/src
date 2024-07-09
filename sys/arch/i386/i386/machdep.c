@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.672 2024/06/07 16:53:35 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.673 2024/07/09 07:28:12 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1119,7 +1119,7 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		/*
 		 * C3 Nehemiah & later: fall through.
 		 */
-	
+
 	case 10: /* C7-M Type A */
 	case 13: /* C7-M Type D */
 	case 15: /* Nano */
@@ -1768,7 +1768,7 @@ identifycpu(struct cpu_info *ci)
 		 * with eax 0x01
 		 */
 
-		cpuid(0x01, regs); 
+		cpuid(0x01, regs);
 		ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
 	}
 
@@ -2282,7 +2282,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
-	default: 
+	default:
 		/* no FSB on modern Intel processors */
 		break;
 	}
@@ -3189,7 +3189,7 @@ init386(paddr_t first_avail)
 	if (bios_memmap == NULL)
 		panic("no BIOS memory map supplied");
 #endif
- 
+
 	/*
 	 * account all the memory passed in the map from /boot
 	 * calculate avail_end and count the physmem.
