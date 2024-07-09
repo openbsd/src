@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.120 2024/07/04 12:50:08 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.121 2024/07/09 09:33:13 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -89,8 +89,16 @@ ip6_forward(struct mbuf *m, struct route *ro, int flags)
 	struct rtentry *rt;
 	struct sockaddr *dst;
 	struct ifnet *ifp = NULL;
-	int error = 0, type = 0, code = 0, destmtu = 0;
+	u_int rtableid = m->m_pkthdr.ph_rtableid;
+	u_int ifidx = m->m_pkthdr.ph_ifidx;
+	u_int8_t loopcnt = m->m_pkthdr.ph_loopcnt;
+	u_int icmp_len;
+	char icmp_buf[MHLEN];
+	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct tcphdr) +
+	    MAX_TCPOPTLEN <= sizeof(icmp_buf));
+	u_short mflags, pfflags;
 	struct mbuf *mcopy;
+	int error = 0, type = 0, code = 0, destmtu = 0;
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
 #endif /* IPSEC */
@@ -117,9 +125,7 @@ ip6_forward(struct mbuf *m, struct route *ro, int flags)
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on interface %u\n",
-			    src6, dst6,
-			    ip6->ip6_nxt,
-			    m->m_pkthdr.ph_ifidx);
+			    src6, dst6, ip6->ip6_nxt, ifidx);
 		}
 		m_freem(m);
 		goto done;
@@ -137,12 +143,21 @@ ip6_forward(struct mbuf *m, struct route *ro, int flags)
 	 * size of IPv6 + ICMPv6 headers) bytes of the packet in case
 	 * we need to generate an ICMP6 message to the src.
 	 * Thanks to M_EXT, in most cases copy will not occur.
+	 * For small packets copy original onto stack instead of mbuf.
 	 *
 	 * It is important to save it before IPsec processing as IPsec
 	 * processing may modify the mbuf.
 	 */
-	mcopy = m_copym(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN),
-	    M_NOWAIT);
+	icmp_len = min(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN);
+	if (icmp_len <= sizeof(icmp_buf)) {
+		mflags = m->m_flags;
+		pfflags = m->m_pkthdr.pf.flags;
+		m_copydata(m, 0, icmp_len, icmp_buf);
+		mcopy = NULL;
+	} else {
+		mcopy = m_copym(m, 0, icmp_len, M_NOWAIT);
+		icmp_len = 0;
+	}
 
 #if NPF > 0
 reroute:
@@ -174,12 +189,10 @@ reroute:
 	    m->m_pkthdr.ph_rtableid);
 	if (rt == NULL) {
 		ip6stat_inc(ip6s_noroute);
-		if (mcopy != NULL) {
-			icmp6_error(mcopy, ICMP6_DST_UNREACH,
-				    ICMP6_DST_UNREACH_NOROUTE, 0);
-		}
+		type = ICMP6_DST_UNREACH;
+		code = ICMP6_DST_UNREACH_NOROUTE;
 		m_freem(m);
-		goto done;
+		goto icmperror;
 	}
 	dst = &ro->ro_dstsa;
 
@@ -190,7 +203,7 @@ reroute:
 	 * unreachable error with Code 2 (beyond scope of source address).
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
-	if (in6_addr2scopeid(m->m_pkthdr.ph_ifidx, &ip6->ip6_src) !=
+	if (in6_addr2scopeid(ifidx, &ip6->ip6_src) !=
 	    in6_addr2scopeid(rt->rt_ifidx, &ip6->ip6_src)) {
 		time_t uptime;
 
@@ -205,15 +218,12 @@ reroute:
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "src %s, dst %s, nxt %d, rcvif %u, outif %u\n",
-			    src6, dst6,
-			    ip6->ip6_nxt,
-			    m->m_pkthdr.ph_ifidx, rt->rt_ifidx);
+			    src6, dst6, ip6->ip6_nxt, ifidx, rt->rt_ifidx);
 		}
-		if (mcopy != NULL)
-			icmp6_error(mcopy, ICMP6_DST_UNREACH,
-				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
+		type = ICMP6_DST_UNREACH;
+		code = ICMP6_DST_UNREACH_BEYONDSCOPE;
 		m_freem(m);
-		goto done;
+		goto icmperror;
 	}
 
 #ifdef IPSEC
@@ -248,7 +258,7 @@ reroute:
 		m_freem(m);
 		goto freecopy;
 	}
-	if (rt->rt_ifidx == m->m_pkthdr.ph_ifidx &&
+	if (rt->rt_ifidx == ifidx &&
 	    ip6_sendredirects && !ISSET(flags, IPV6_REDIRECT) &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
@@ -268,11 +278,10 @@ reroute:
 			 * type/code is based on suggestion by Rich Draves.
 			 * not sure if it is the best pick.
 			 */
-			if (mcopy != NULL)
-				icmp6_error(mcopy, ICMP6_DST_UNREACH,
-				    ICMP6_DST_UNREACH_ADDR, 0);
+			type = ICMP6_DST_UNREACH;
+			code = ICMP6_DST_UNREACH_ADDR;
 			m_freem(m);
-			goto done;
+			goto icmperror;
 		}
 		type = ND_REDIRECT;
 	}
@@ -332,27 +341,41 @@ reroute:
 	if (error || m == NULL)
 		goto senderr;
 
-	if (mcopy != NULL)
-		icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+	type = ICMP6_PACKET_TOO_BIG;
+	destmtu = ifp->if_mtu;
 	m_freem(m);
-	goto done;
+	goto icmperror;
 
 senderr:
-	if (mcopy == NULL)
+	if (mcopy == NULL && icmp_len == 0)
 		goto done;
 
 	switch (error) {
 	case 0:
 		if (type == ND_REDIRECT) {
-			icmp6_redirect_output(mcopy, rt);
-			ip6stat_inc(ip6s_redirectsent);
+			if (icmp_len != 0) {
+				mcopy = m_gethdr(M_DONTWAIT, MT_DATA);
+				if (mcopy == NULL)
+					goto done;
+				mcopy->m_len = mcopy->m_pkthdr.len = icmp_len;
+				mcopy->m_flags |= (mflags & M_COPYFLAGS);
+				mcopy->m_pkthdr.ph_rtableid = rtableid;
+				mcopy->m_pkthdr.ph_ifidx = ifidx;
+				mcopy->m_pkthdr.ph_loopcnt = loopcnt;
+				mcopy->m_pkthdr.pf.flags |=
+				    (pfflags & PF_TAG_GENERATED);
+				memcpy(mcopy->m_data, icmp_buf, icmp_len);
+			}
+			if (mcopy != NULL) {
+				icmp6_redirect_output(mcopy, rt);
+				ip6stat_inc(ip6s_redirectsent);
+			}
 			goto done;
 		}
 		goto freecopy;
 
 	case EMSGSIZE:
 		type = ICMP6_PACKET_TOO_BIG;
-		code = 0;
 		if (rt != NULL) {
 			if (rt->rt_mtu) {
 				destmtu = rt->rt_mtu;
@@ -390,7 +413,21 @@ senderr:
 		code = ICMP6_DST_UNREACH_ADDR;
 		break;
 	}
-	icmp6_error(mcopy, type, code, destmtu);
+ icmperror:
+	if (icmp_len != 0) {
+		mcopy = m_gethdr(M_DONTWAIT, MT_DATA);
+		if (mcopy == NULL)
+			goto done;
+		mcopy->m_len = mcopy->m_pkthdr.len = icmp_len;
+		mcopy->m_flags |= (mflags & M_COPYFLAGS);
+		mcopy->m_pkthdr.ph_rtableid = rtableid;
+		mcopy->m_pkthdr.ph_ifidx = ifidx;
+		mcopy->m_pkthdr.ph_loopcnt = loopcnt;
+		mcopy->m_pkthdr.pf.flags |= (pfflags & PF_TAG_GENERATED);
+		memcpy(mcopy->m_data, icmp_buf, icmp_len);
+	}
+	if (mcopy != NULL)
+		icmp6_error(mcopy, type, code, destmtu);
 	goto done;
 
  freecopy:
