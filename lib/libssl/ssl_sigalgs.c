@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.49 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.50 2024/07/09 13:43:57 beck Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -337,7 +337,6 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 			return sigalg;
 	}
 
-	SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
 	return NULL;
 }
 
