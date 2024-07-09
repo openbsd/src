@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.16 2024/07/09 16:47:36 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.17 2024/07/09 16:48:39 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -74,18 +74,18 @@ static int tls1_prf_alg(const EVP_MD *md,
 
 #define TLS1_PRF_MAXBUF 1024
 
-typedef struct {
+struct tls1_prf_ctx {
 	const EVP_MD *md;
 	unsigned char *sec;
 	size_t seclen;
 	unsigned char seed[TLS1_PRF_MAXBUF];
 	size_t seedlen;
-} TLS1_PRF_PKEY_CTX;
+};
 
 static int
 pkey_tls1_prf_init(EVP_PKEY_CTX *ctx)
 {
-	TLS1_PRF_PKEY_CTX *kctx;
+	struct tls1_prf_ctx *kctx;
 
 	if ((kctx = calloc(1, sizeof(*kctx))) == NULL) {
 		KDFerror(ERR_R_MALLOC_FAILURE);
@@ -99,7 +99,7 @@ pkey_tls1_prf_init(EVP_PKEY_CTX *ctx)
 static void
 pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
-	TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	struct tls1_prf_ctx *kctx = ctx->data;
 	freezero(kctx->sec, kctx->seclen);
 	explicit_bzero(kctx->seed, kctx->seedlen);
 	free(kctx);
@@ -108,7 +108,7 @@ pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 static int
 pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-	TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	struct tls1_prf_ctx *kctx = ctx->data;
 	switch (type) {
 	case EVP_PKEY_CTRL_TLS_MD:
 		kctx->md = p2;
@@ -159,7 +159,7 @@ pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
 		return 0;
 	}
 	if (strcmp(type, "md") == 0) {
-		TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+		struct tls1_prf_ctx *kctx = ctx->data;
 
 		const EVP_MD *md = EVP_get_digestbyname(value);
 		if (md == NULL) {
@@ -190,7 +190,7 @@ static int
 pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     size_t *keylen)
 {
-	TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+	struct tls1_prf_ctx *kctx = ctx->data;
 	if (kctx->md == NULL) {
 		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
 		return 0;
