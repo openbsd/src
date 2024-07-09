@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.17 2024/07/09 16:48:39 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.18 2024/07/09 16:50:07 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -68,7 +68,7 @@
 #include "evp_local.h"
 
 static int tls1_prf_alg(const EVP_MD *md,
-    const unsigned char *sec, size_t slen,
+    const unsigned char *secret, size_t slen,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t olen);
 
@@ -76,7 +76,7 @@ static int tls1_prf_alg(const EVP_MD *md,
 
 struct tls1_prf_ctx {
 	const EVP_MD *md;
-	unsigned char *sec;
+	unsigned char *secret;
 	size_t seclen;
 	unsigned char seed[TLS1_PRF_MAXBUF];
 	size_t seedlen;
@@ -100,7 +100,7 @@ static void
 pkey_tls1_prf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	struct tls1_prf_ctx *kctx = ctx->data;
-	freezero(kctx->sec, kctx->seclen);
+	freezero(kctx->secret, kctx->seclen);
 	explicit_bzero(kctx->seed, kctx->seedlen);
 	free(kctx);
 }
@@ -117,21 +117,21 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_TLS_SECRET:
 		if (p1 < 0)
 			return 0;
-		if (kctx->sec != NULL)
-			freezero(kctx->sec, kctx->seclen);
+		if (kctx->secret != NULL)
+			freezero(kctx->secret, kctx->seclen);
 
 		explicit_bzero(kctx->seed, kctx->seedlen);
 		kctx->seedlen = 0;
 
-		kctx->sec = NULL;
+		kctx->secret = NULL;
 		kctx->seclen = 0;
 
 		if (p1 == 0 || p2 == NULL)
 			return 0;
 
-		if ((kctx->sec = calloc(1, p1)) == NULL)
+		if ((kctx->secret = calloc(1, p1)) == NULL)
 			return 0;
-		memcpy(kctx->sec, p2, p1);
+		memcpy(kctx->secret, p2, p1);
 		kctx->seclen = p1;
 
 		return 1;
@@ -195,7 +195,7 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
 		return 0;
 	}
-	if (kctx->sec == NULL) {
+	if (kctx->secret == NULL) {
 		KDFerror(KDF_R_MISSING_SECRET);
 		return 0;
 	}
@@ -203,7 +203,7 @@ pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 		KDFerror(KDF_R_MISSING_SEED);
 		return 0;
 	}
-	return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
+	return tls1_prf_alg(kctx->md, kctx->secret, kctx->seclen,
 	    kctx->seed, kctx->seedlen,
 	    key, *keylen);
 }
@@ -244,7 +244,7 @@ const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
 
 static int
 tls1_prf_P_hash(const EVP_MD *md,
-    const unsigned char *sec, size_t sec_len,
+    const unsigned char *secret, size_t sec_len,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t olen)
 {
@@ -264,7 +264,7 @@ tls1_prf_P_hash(const EVP_MD *md,
 	if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
 		goto err;
 	EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, sec,
+	mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, secret,
 	    sec_len);
 	if (mac_key == NULL)
 		goto err;
@@ -316,7 +316,7 @@ tls1_prf_P_hash(const EVP_MD *md,
 
 static int
 tls1_prf_alg(const EVP_MD *md,
-    const unsigned char *sec, size_t slen,
+    const unsigned char *secret, size_t slen,
     const unsigned char *seed, size_t seed_len,
     unsigned char *out, size_t olen)
 {
@@ -324,7 +324,7 @@ tls1_prf_alg(const EVP_MD *md,
 	if (EVP_MD_type(md) == NID_md5_sha1) {
 		size_t i;
 		unsigned char *tmp;
-		if (!tls1_prf_P_hash(EVP_md5(), sec, slen/2 + (slen & 1),
+		if (!tls1_prf_P_hash(EVP_md5(), secret, slen/2 + (slen & 1),
 		    seed, seed_len, out, olen))
 			return 0;
 
@@ -332,7 +332,7 @@ tls1_prf_alg(const EVP_MD *md,
 			KDFerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
-		if (!tls1_prf_P_hash(EVP_sha1(), sec + slen/2,
+		if (!tls1_prf_P_hash(EVP_sha1(), secret + slen/2,
 		    slen/2 + (slen & 1), seed, seed_len, tmp, olen)) {
 			freezero(tmp, olen);
 			return 0;
@@ -342,7 +342,7 @@ tls1_prf_alg(const EVP_MD *md,
 		freezero(tmp, olen);
 		return 1;
 	}
-	if (!tls1_prf_P_hash(md, sec, slen, seed, seed_len, out, olen))
+	if (!tls1_prf_P_hash(md, secret, slen, seed, seed_len, out, olen))
 		return 0;
 
 	return 1;
