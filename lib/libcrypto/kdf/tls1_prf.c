@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.37 2024/07/09 17:47:20 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.38 2024/07/09 17:56:41 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -258,9 +258,10 @@ static int
 tls1_prf_alg(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
     const unsigned char *seed, size_t seed_len, unsigned char *out, size_t out_len)
 {
-	unsigned char *tmp;
+	unsigned char *tmp = NULL;
 	size_t half_len;
 	size_t i;
+	int ret = 0;
 
 	if (EVP_MD_type(md) != NID_md5_sha1)
 		return tls1_prf_P_hash(md, secret, secret_len, seed, seed_len,
@@ -269,24 +270,25 @@ tls1_prf_alg(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
 	half_len = secret_len - secret_len / 2;
 	if (!tls1_prf_P_hash(EVP_md5(), secret, half_len, seed, seed_len,
 	    out, out_len))
-		return 0;
+		goto err;
 
 	if ((tmp = calloc(1, out_len)) == NULL) {
 		KDFerror(ERR_R_MALLOC_FAILURE);
-		return 0;
+		goto err;
 	}
 	secret += secret_len - half_len;
 	if (!tls1_prf_P_hash(EVP_sha1(), secret, half_len, seed, seed_len,
-	    tmp, out_len)) {
-		freezero(tmp, out_len);
-		return 0;
-	}
+	    tmp, out_len))
+		goto err;
 	for (i = 0; i < out_len; i++)
 		out[i] ^= tmp[i];
 
+	ret = 1;
+
+ err:
 	freezero(tmp, out_len);
 
-	return 1;
+	return ret;
 }
 
 static int
