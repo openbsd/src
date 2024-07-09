@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.29 2024/07/09 17:00:59 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.30 2024/07/09 17:01:40 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -291,7 +291,7 @@ tls1_prf_P_hash(const EVP_MD *md,
 			goto err;
 		if (out_len > (size_t)chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
 			goto err;
-		if (seed && !EVP_DigestSignUpdate(ctx, seed, seed_len))
+		if (seed != NULL && !EVP_DigestSignUpdate(ctx, seed, seed_len))
 			goto err;
 
 		if (out_len > (size_t)chunk) {
