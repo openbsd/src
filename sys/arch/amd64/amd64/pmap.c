@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.168 2024/06/03 20:53:00 dv Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.169 2024/07/09 19:11:06 bluhm Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -235,6 +235,11 @@ pt_entry_t pg_g_kern = 0;
 /* pg_xo: XO PTE bits, set to PKU key1 (if cpu supports PKU) */
 pt_entry_t pg_xo;
 
+/* pg_crypt, pg_frame, pg_lgframe: will be derived from CPUID */
+pt_entry_t pg_crypt = 0;
+pt_entry_t pg_frame = PG_FRAME;
+pt_entry_t pg_lgframe = PG_LGFRAME;
+
 /*
  * pmap_pg_wc: if our processor supports PAT then we set this
  * to be the pte bits for Write Combining. Else we fall back to
@@ -465,7 +470,7 @@ pmap_find_pte_direct(struct pmap *pm, vaddr_t va, pt_entry_t **pd, int *offs)
 		if ((pde & (PG_PS|PG_V)) != PG_V)
 			return (lev - 1);
 
-		pdpa = ((*pd)[*offs] & PG_FRAME);
+		pdpa = ((*pd)[*offs] & pg_frame);
 		/* 4096/8 == 512 == 2^9 entries per level */
 		shift -= 9;
 		mask >>= 9;
@@ -498,7 +503,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	npte = (pa & PMAP_PA_MASK) | ((prot & PROT_WRITE) ? PG_RW : PG_RO) |
 	    ((pa & PMAP_NOCACHE) ? PG_N : 0) |
-	    ((pa & PMAP_WC) ? pmap_pg_wc : 0) | PG_V;
+	    ((pa & PMAP_WC) ? pmap_pg_wc : 0) | PG_V |
+	    ((pa & PMAP_NOCRYPT) ? 0 : pg_crypt);
 
 	/* special 1:1 mappings in the first 2MB must not be global */
 	if (va >= (vaddr_t)NBPD_L2)
@@ -513,7 +519,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("%s: PG_PS", __func__);
 #endif
 	if (pmap_valid_entry(opte)) {
-		if (pa & PMAP_NOCACHE && (opte & PG_N) == 0)
+		if ((pa & PMAP_NOCACHE && (opte & PG_N) == 0) ||
+		    (pa & PMAP_NOCRYPT))
 			wbinvd_on_all_cpus();
 		/* This shouldn't happen */
 		pmap_tlb_shootpage(pmap_kernel(), va, 1);
@@ -582,7 +589,8 @@ pmap_set_pml4_early(paddr_t pa)
 	vaddr_t va;
 
 	pml4e = (pt_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
-	pml4e[PDIR_SLOT_EARLY] = (pd_entry_t)early_pte_pages | PG_V | PG_RW;
+	pml4e[PDIR_SLOT_EARLY] = (pd_entry_t)early_pte_pages | PG_V | PG_RW |
+	    pg_crypt;
 
 	off = pa & PAGE_MASK_L2;
 	curpa = pa & L2_FRAME;
@@ -590,15 +598,16 @@ pmap_set_pml4_early(paddr_t pa)
 	pte = (pt_entry_t *)PMAP_DIRECT_MAP(early_pte_pages);
 	memset(pte, 0, 3 * NBPG);
 
-	pte[0] = (early_pte_pages + NBPG) | PG_V | PG_RW;
-	pte[1] = (early_pte_pages + 2 * NBPG) | PG_V | PG_RW;
+	pte[0] = (early_pte_pages + NBPG) | PG_V | PG_RW | pg_crypt;
+	pte[1] = (early_pte_pages + 2 * NBPG) | PG_V | PG_RW | pg_crypt;
 
 	pte = (pt_entry_t *)PMAP_DIRECT_MAP(early_pte_pages + NBPG);
 	for (i = 0; i < 2; i++) {
 		/* 2 early pages of mappings */
 		for (j = 0; j < 512; j++) {
 			/* j[0..511] : 2MB mappings per page */
-			pte[(i * 512) + j] = curpa | PG_V | PG_RW | PG_PS;
+			pte[(i * 512) + j] = curpa | PG_V | PG_RW | PG_PS |
+			    pg_crypt;
 			curpa += (2 * 1024 * 1024);
 		}
 	}
@@ -777,7 +786,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	if (ndmpdp > 512)
 		ndmpdp = 512;			/* At most 512GB */
 
-	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & PG_FRAME;
+	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & pg_frame;
 
 	dmpd = first_avail; first_avail += ndmpdp * PAGE_SIZE;
 
@@ -790,7 +799,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 
 		*((pd_entry_t *)va) = ((paddr_t)i << L2_SHIFT);
 		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | pg_g_kern | PG_U |
-		    PG_M | pg_nx;
+		    PG_M | pg_nx | pg_crypt;
 	}
 
 	for (i = NDML2_ENTRIES; i < ndmpdp; i++) {
@@ -801,11 +810,12 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 		va = PMAP_DIRECT_MAP(pdp);
 
 		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
-		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M | pg_nx;
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M | pg_nx |
+		    pg_crypt;
 	}
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_V | PG_KW | PG_U |
-	    PG_M | pg_nx;
+	    PG_M | pg_nx | pg_crypt;
 
 	/* Map any remaining physical memory > 512GB */
 	for (curslot = 1 ; curslot < NUM_L4_SLOT_DIRECT ; curslot++) {
@@ -818,7 +828,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 			dmpd = first_avail; first_avail += PAGE_SIZE;
 			pml3 = (pt_entry_t *)PMAP_DIRECT_MAP(dmpd);
 			kpm->pm_pdir[PDIR_SLOT_DIRECT + curslot] = dmpd |
-			    PG_KW | PG_V | PG_U | PG_M | pg_nx;
+			    PG_KW | PG_V | PG_U | PG_M | pg_nx | pg_crypt;
 
 			/* Calculate full 1GB pages in this 512GB region */
 			p = ((max_pa - start_cur) >> L3_SHIFT);
@@ -839,7 +849,8 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 				dmpd = first_avail; first_avail += PAGE_SIZE;
 				pml2 = (pt_entry_t *)PMAP_DIRECT_MAP(dmpd);
 				pml3[i] = dmpd |
-				    PG_RW | PG_V | PG_U | PG_M | pg_nx;
+				    PG_RW | PG_V | PG_U | PG_M | pg_nx |
+				    pg_crypt;
 
 				cur_pa = start_cur + (i << L3_SHIFT);
 				j = 0;
@@ -849,7 +860,8 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 					    (uint64_t)i * NBPD_L3 +
 					    (uint64_t)j * NBPD_L2;
 					pml2[j] |= PG_RW | PG_V | pg_g_kern |
-					    PG_U | PG_M | pg_nx | PG_PS;
+					    PG_U | PG_M | pg_nx | PG_PS |
+					    pg_crypt;
 					cur_pa += NBPD_L2;
 					j++;
 				}
@@ -949,14 +961,14 @@ pmap_randomize(void)
 	proc0.p_addr->u_pcb.pcb_cr3 = pml4pa;
 
 	/* Fixup recursive PTE PML4E slot. We are only changing the PA */
-	pml4va[PDIR_SLOT_PTE] = pml4pa | (pml4va[PDIR_SLOT_PTE] & ~PG_FRAME);
+	pml4va[PDIR_SLOT_PTE] = pml4pa | (pml4va[PDIR_SLOT_PTE] & ~pg_frame);
 
 	for (i = 0; i < NPDPG; i++) {
 		/* PTE slot already handled earlier */
 		if (i == PDIR_SLOT_PTE)
 			continue;
 
-		if (pml4va[i] & PG_FRAME)
+		if (pml4va[i] & pg_frame)
 			pmap_randomize_level(&pml4va[i], 3);
 	}
 
@@ -985,11 +997,11 @@ pmap_randomize_level(pd_entry_t *pde, int level)
 		panic("%s: cannot allocate page for L%d page directory",
 		    __func__, level);
 
-	old_pd_pa = *pde & PG_FRAME;
+	old_pd_pa = *pde & pg_frame;
 	old_pd_va = PMAP_DIRECT_MAP(old_pd_pa);
 	pmap_extract(pmap_kernel(), (vaddr_t)new_pd_va, &new_pd_pa);
 	memcpy(new_pd_va, (void *)old_pd_va, PAGE_SIZE);
-	*pde = new_pd_pa | (*pde & ~PG_FRAME);
+	*pde = new_pd_pa | (*pde & ~pg_frame);
 
 	tlbflush();
 	memset((void *)old_pd_va, 0, PAGE_SIZE);
@@ -1003,7 +1015,7 @@ pmap_randomize_level(pd_entry_t *pde, int level)
 	}
 
 	for (i = 0; i < NPDPG; i++)
-		if (new_pd_va[i] & PG_FRAME)
+		if (new_pd_va[i] & pg_frame)
 			pmap_randomize_level(&new_pd_va[i], level - 1);
 }
 
@@ -1023,7 +1035,8 @@ pmap_prealloc_lowmem_ptps(paddr_t first_avail)
 	for (;;) {
 		newp = first_avail; first_avail += PAGE_SIZE;
 		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
-		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
+		pdes[pl_i(0, level)] =
+		    (newp & pg_frame) | PG_V | PG_RW | pg_crypt;
 		level--;
 		if (level <= 1)
 			break;
@@ -1203,7 +1216,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 		pva = normal_pdes[i - 2];
 
 		if (pmap_valid_entry(pva[index])) {
-			ppa = pva[index] & PG_FRAME;
+			ppa = pva[index] & pg_frame;
 			ptp = NULL;
 			continue;
 		}
@@ -1219,7 +1232,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 		ptp->wire_count = 1;
 		pmap->pm_ptphint[i - 2] = ptp;
 		pa = VM_PAGE_TO_PHYS(ptp);
-		pva[index] = (pd_entry_t) (pa | PG_u | PG_RW | PG_V);
+		pva[index] = (pd_entry_t) (pa | PG_u | PG_RW | PG_V | pg_crypt);
 
 		/*
 		 * Meltdown Special case - if we are adding a new PML4e for
@@ -1292,7 +1305,7 @@ pmap_pdp_ctor(pd_entry_t *pdir)
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
 	/* put in recursive PDE to map the PTEs */
-	pdir[PDIR_SLOT_PTE] = pdirpa | PG_V | PG_KW | pg_nx;
+	pdir[PDIR_SLOT_PTE] = pdirpa | PG_V | PG_KW | pg_nx | pg_crypt;
 
 	npde = nkptp[PTP_LEVELS - 1];
 
@@ -1359,7 +1372,7 @@ pmap_create(void)
 	pmap->pm_pdir = pool_get(&pmap_pdp_pool, PR_WAITOK);
 	pmap_pdp_ctor(pmap->pm_pdir);
 
-	pmap->pm_pdirpa = pmap->pm_pdir[PDIR_SLOT_PTE] & PG_FRAME;
+	pmap->pm_pdirpa = pmap->pm_pdir[PDIR_SLOT_PTE] & pg_frame;
 
 	/*
 	 * Intel CPUs need a special page table to be used during usermode
@@ -1557,12 +1570,12 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 	if (__predict_true(level == 0 && pmap_valid_entry(pte))) {
 		if (pap != NULL)
-			*pap = (pte & PG_FRAME) | (va & PAGE_MASK);
+			*pap = (pte & pg_frame) | (va & PAGE_MASK);
 		return 1;
 	}
 	if (level == 1 && (pte & (PG_PS|PG_V)) == (PG_PS|PG_V)) {
 		if (pap != NULL)
-			*pap = (pte & PG_LGFRAME) | (va & PAGE_MASK_L2);
+			*pap = (pte & pg_lgframe) | (va & PAGE_MASK_L2);
 		return 1;
 	}
 
@@ -1661,7 +1674,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		if (ptp != NULL)
 			ptp->wire_count--;		/* dropping a PTE */
 
-		pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
+		pg = PHYS_TO_VM_PAGE(opte & pg_frame);
 
 		/*
 		 * if we are not on a pv list we are done.
@@ -1728,7 +1741,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	if (ptp != NULL)
 		ptp->wire_count--;		/* dropping a PTE */
 
-	pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
+	pg = PHYS_TO_VM_PAGE(opte & pg_frame);
 
 	/*
 	 * if we are not on a pv list we are done.
@@ -1808,7 +1821,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		if (pmap_pdes_valid(sva, &pde)) {
 
 			/* PA of the PTP */
-			ptppa = pde & PG_FRAME;
+			ptppa = pde & pg_frame;
 
 			/* get PTP if non-kernel mapping */
 
@@ -1876,7 +1889,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			continue;
 
 		/* PA of the PTP */
-		ptppa = pde & PG_FRAME;
+		ptppa = pde & pg_frame;
 
 		/* get PTP if non-kernel mapping */
 		if (pmap == pmap_kernel()) {
@@ -1974,12 +1987,12 @@ pmap_page_remove(struct vm_page *pg)
 
 #ifdef DIAGNOSTIC
 		if (pve->pv_ptp != NULL && pmap_pdes_valid(pve->pv_va, &pde) &&
-		   (pde & PG_FRAME) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
+		   (pde & pg_frame) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 			printf("%s: pg=%p: va=%lx, pv_ptp=%p\n", __func__,
 			       pg, pve->pv_va, pve->pv_ptp);
 			printf("%s: PTP's phys addr: "
 			       "actual=%lx, recorded=%lx\n", __func__,
-			       (unsigned long)(pde & PG_FRAME),
+			       (unsigned long)(pde & pg_frame),
 				VM_PAGE_TO_PHYS(pve->pv_ptp));
 			panic("%s: mapped managed page has "
 			      "invalid pv_ptp field", __func__);
@@ -2140,8 +2153,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	shootself = (scr3 == 0);
 
 	/* should be ok, but just in case ... */
-	sva &= PG_FRAME;
-	eva &= PG_FRAME;
+	sva &= pg_frame;
+	eva &= pg_frame;
 
 	if (!(prot & PROT_READ))
 		set |= pg_xo;
@@ -2314,7 +2327,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
 			panic("%s: can't locate PDPT page", __func__);
 
-		pd[l4idx] = (npa | PG_RW | PG_V);
+		pd[l4idx] = (npa | PG_RW | PG_V | pg_crypt);
 
 		DPRINTF("%s: allocated new PDPT page at phys 0x%llx, "
 		    "setting PML4e[%lld] = 0x%llx\n", __func__,
@@ -2338,7 +2351,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
 			panic("%s: can't locate PD page", __func__);
 
-		pd[l3idx] = (npa | PG_RW | PG_V);
+		pd[l3idx] = (npa | PG_RW | PG_V | pg_crypt);
 
 		DPRINTF("%s: allocated new PD page at phys 0x%llx, "
 		    "setting PDPTe[%lld] = 0x%llx\n", __func__,
@@ -2362,7 +2375,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
 			panic("%s: can't locate PT page", __func__);
 
-		pd[l2idx] = (npa | PG_RW | PG_V);
+		pd[l2idx] = (npa | PG_RW | PG_V | pg_crypt);
 
 		DPRINTF("%s: allocated new PT page at phys 0x%llx, "
 		    "setting PDE[%lld] = 0x%llx\n", __func__,
@@ -2378,7 +2391,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	    "0x%llx was 0x%llx\n", __func__, (uint64_t)npa, (uint64_t)pd,
 	    (uint64_t)prot, (uint64_t)pd[l1idx]);
 
-	pd[l1idx] = pa | protection_codes[prot] | PG_V | PG_W;
+	pd[l1idx] = pa | protection_codes[prot] | PG_V | PG_W | pg_crypt;
 
 	/*
 	 * Look up the corresponding U+K entry.  If we're installing the
@@ -2387,7 +2400,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 */
 	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
 	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs]))) {
-		if (((pd[l1idx] ^ ptes[offs]) & PG_FRAME) == 0) {
+		if (((pd[l1idx] ^ ptes[offs]) & pg_frame) == 0) {
 			pd[l1idx] |= PG_G | (ptes[offs] & (PG_N | PG_WT));
 			ptes[offs] |= PG_G;
 		} else {
@@ -2701,6 +2714,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pv_entry *pve, *opve = NULL;
 	int ptpdelta, wireddelta, resdelta;
 	int wired = (flags & PMAP_WIRED) != 0;
+	int crypt = (flags & PMAP_NOCRYPT) == 0;
 	int nocache = (pa & PMAP_NOCACHE) != 0;
 	int wc = (pa & PMAP_WC) != 0;
 	int error, shootself;
@@ -2778,7 +2792,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * want to map?
 		 */
 
-		if ((opte & PG_FRAME) == pa) {
+		if ((opte & pg_frame) == pa) {
 
 			/* if this is on the PVLIST, sync R/M bit */
 			if (opte & PG_PVLIST) {
@@ -2813,7 +2827,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 */
 
 		if (opte & PG_PVLIST) {
-			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
+			pg = PHYS_TO_VM_PAGE(opte & pg_frame);
 #ifdef DIAGNOSTIC
 			if (pg == NULL)
 				panic("%s: PG_PVLIST mapping with unmanaged "
@@ -2887,6 +2901,8 @@ enter_now:
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pg_g_kern;
+	if (crypt)
+		npte |= pg_crypt;
 
 	/*
 	 * If the old entry wasn't valid, we can just update it and
@@ -2998,7 +3014,7 @@ pmap_alloc_level(vaddr_t kva, int lvl, long *needed_ptps)
 
 		for (i = index; i <= endindex; i++) {
 			pmap_get_physpage(va, level - 1, &pa);
-			pdep[i] = pa | PG_RW | PG_V | pg_nx;
+			pdep[i] = pa | PG_RW | PG_V | pg_nx | pg_crypt;
 			nkptp[level - 1]++;
 			va += nbpd[level - 1];
 		}
