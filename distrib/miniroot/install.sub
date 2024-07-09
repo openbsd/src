@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1265 2024/06/15 15:05:15 florian Exp $
+#	$OpenBSD: install.sub,v 1.1266 2024/07/09 14:47:21 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2675,10 +2675,9 @@ start_cgiinfo() {
 #
 # In addition,
 #
-# 1) delete 'softdep' options (no soft updates in ramdisk kernels),
-# 2) mount non-ffs filesystems read only,
-# 3) prepend '/mnt' to all mount points,
-# 4) delete any trailing '/' from the mount point (e.g. root),
+# 1) mount non-ffs filesystems read only,
+# 2) prepend '/mnt' to all mount points,
+# 3) delete any trailing '/' from the mount point (e.g. root),
 #
 # If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
@@ -2691,10 +2690,6 @@ munge_fstab() {
 			! -f /sbin/mount_$_fstype ||
 			$_opt == *noauto* ||
 			$_opt == *xx* ]] && continue
-
-		# Remove any softdep options, as soft updates are not
-		# available in the ramdisk kernels.
-		_opt=$(echo $_opt | sed 's/softdep//')
 
 		# Change read-only ffs to read-write since we'll potentially
 		# write to these filesystems.
