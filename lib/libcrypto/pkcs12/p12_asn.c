@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_asn.c,v 1.15 2024/03/02 10:15:16 tb Exp $ */
+/* $OpenBSD: p12_asn.c,v 1.16 2024/07/09 06:13:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -98,6 +98,7 @@ const ASN1_ITEM PKCS12_it = {
 	.size = sizeof(PKCS12),
 	.sname = "PKCS12",
 };
+LCRYPTO_ALIAS(PKCS12_it);
 
 
 PKCS12 *
@@ -413,6 +414,7 @@ const ASN1_ITEM PKCS12_SAFEBAG_it = {
 	.size = sizeof(PKCS12_SAFEBAG),
 	.sname = "PKCS12_SAFEBAG",
 };
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_it);
 
 
 PKCS12_SAFEBAG *

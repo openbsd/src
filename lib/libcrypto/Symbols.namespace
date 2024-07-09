@@ -3336,6 +3336,8 @@ _libre_DSAPrivateKey_it
 _libre_DSAparams_it
 _libre_CMS_ContentInfo_it
 _libre_CMS_ReceiptRequest_it
+_libre_PKCS12_it
+_libre_PKCS12_SAFEBAG_it
 _libre_RSAPublicKey_it
 _libre_RSAPrivateKey_it
 _libre_RSA_PSS_PARAMS_it
