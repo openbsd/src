@@ -201,8 +201,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     size_t A1_len;
     int ret = 0;
 
-    chunk = EVP_MD_size(md);
-    if (!ossl_assert(chunk > 0))
+    if ((chunk = EVP_MD_size(md)) < 0)
         goto err;
 
     ctx = EVP_MD_CTX_new();
