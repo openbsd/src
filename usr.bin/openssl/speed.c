@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.35 2024/07/01 18:52:22 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.36 2024/07/09 07:51:09 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -718,13 +718,11 @@ speed_main(int argc, char **argv)
 			rsa_doit[R_RSA_1024] = 1;
 			rsa_doit[R_RSA_2048] = 1;
 			rsa_doit[R_RSA_4096] = 1;
-		} else
-		if (strcmp(*argv, "dsa") == 0) {
+		} else if (strcmp(*argv, "dsa") == 0) {
 			dsa_doit[R_DSA_512] = 1;
 			dsa_doit[R_DSA_1024] = 1;
 			dsa_doit[R_DSA_2048] = 1;
-		} else
-		if (strcmp(*argv, "ecdsap160") == 0)
+		} else if (strcmp(*argv, "ecdsap160") == 0)
 			ecdsa_doit[R_EC_P160] = 2;
 		else if (strcmp(*argv, "ecdsap192") == 0)
 			ecdsa_doit[R_EC_P192] = 2;
@@ -739,8 +737,7 @@ speed_main(int argc, char **argv)
 		else if (strcmp(*argv, "ecdsa") == 0) {
 			for (i = 0; i < EC_NUM; i++)
 				ecdsa_doit[i] = 1;
-		} else
-		if (strcmp(*argv, "ecdhp160") == 0)
+		} else if (strcmp(*argv, "ecdhp160") == 0)
 			ecdh_doit[R_EC_P160] = 2;
 		else if (strcmp(*argv, "ecdhp192") == 0)
 			ecdh_doit[R_EC_P192] = 2;
@@ -755,8 +752,7 @@ speed_main(int argc, char **argv)
 		else if (strcmp(*argv, "ecdh") == 0) {
 			for (i = 0; i < EC_NUM; i++)
 				ecdh_doit[i] = 1;
-		} else
-		{
+		} else {
 			BIO_printf(bio_err, "Error: bad option or value\n");
 			BIO_printf(bio_err, "\n");
 			BIO_printf(bio_err, "Available values:\n");
@@ -2041,8 +2037,7 @@ do_multi(int multi)
 					rsa_results[k][1] = 1 / (1 / rsa_results[k][1] + 1 / d);
 				else
 					rsa_results[k][1] = d;
-			}
-			else if (!strncmp(buf, "+F3:", 4)) {
+			} else if (!strncmp(buf, "+F3:", 4)) {
 				int k;
 				double d;
 
@@ -2062,8 +2057,7 @@ do_multi(int multi)
 					dsa_results[k][1] = 1 / (1 / dsa_results[k][1] + 1 / d);
 				else
 					dsa_results[k][1] = d;
-			}
-			else if (!strncmp(buf, "+F4:", 4)) {
+			} else if (!strncmp(buf, "+F4:", 4)) {
 				int k;
 				double d;
 
@@ -2083,9 +2077,7 @@ do_multi(int multi)
 					ecdsa_results[k][1] = 1 / (1 / ecdsa_results[k][1] + 1 / d);
 				else
 					ecdsa_results[k][1] = d;
-			}
-
-			else if (!strncmp(buf, "+F5:", 4)) {
+			} else if (!strncmp(buf, "+F5:", 4)) {
 				int k;
 				double d;
 
@@ -2100,9 +2092,7 @@ do_multi(int multi)
 				else
 					ecdh_results[k][0] = d;
 
-			}
-
-			else if (!strncmp(buf, "+H:", 3)) {
+			} else if (!strncmp(buf, "+H:", 3)) {
 			} else
 				fprintf(stderr, "Unknown type '%s' from child %d\n", buf, n);
 		}
