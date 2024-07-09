@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.44 2023/03/28 14:47:28 op Exp $	*/
+/*	$OpenBSD: region.c,v 1.45 2024/07/09 14:46:17 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -27,14 +27,13 @@
 
 #define TIMEOUT 10000
 
-static char leftover[BUFSIZ];
-
 static	int	getregion(struct region *);
-static	int	iomux(int, char * const, int, struct buffer *);
-static	int	preadin(int, struct buffer *);
+static	int	iomux(int, char * const, int);
+static	int	preadin(int);
 static	void	pwriteout(int, char **, int *);
 static	int	setsize(struct region *, RSIZE);
-static	int	shellcmdoutput(char * const, char * const, int);
+static	int	shellcmdoutput(char * const, char * const, int,
+		    struct buffer *);
 
 /*
  * Kill the region.  Ask "getregion" to figure out the bounds of the region.
@@ -413,12 +412,9 @@ int
 piperegion(int f, int n)
 {
 	struct region region;
+	struct buffer *bp = NULL;
 	int len;
 	char *cmd, cmdbuf[NFILEN], *text;
-
-	/* C-u M-| is not supported yet */
-	if (n > 1)
-		return (ABORT);
 
 	if (curwp->w_markp == NULL) {
 		dobeep();
@@ -443,7 +439,14 @@ piperegion(int f, int n)
 
 	region_get_data(&region, text, len);
 
-	return shellcmdoutput(cmd, text, len);
+	if (n > 1) {
+		bp = curbp;
+		undo_boundary_enable(FFRAND, 0);
+		killregion(FFRAND, 1);
+		kdelete();
+	}
+
+	return (shellcmdoutput(cmd, text, len, bp));
 }
 
 /*
@@ -452,32 +455,50 @@ piperegion(int f, int n)
 int
 shellcommand(int f, int n)
 {
+	struct buffer *bp = NULL;
 	char *cmd, cmdbuf[NFILEN];
 
 	if (n > 1)
-		return (ABORT);
+		bp = curbp;
 
 	if ((cmd = eread("Shell command: ", cmdbuf, sizeof(cmdbuf),
 	    EFNEW | EFCR)) == NULL || (cmd[0] == '\0'))
 		return (ABORT);
 
-	return shellcmdoutput(cmd, NULL, 0);
+	return (shellcmdoutput(cmd, NULL, 0, bp));
 }
 
 int
-shellcmdoutput(char* const cmd, char* const text, int len)
+shellcmdoutput(char* const cmd, char* const text, int len,
+    struct buffer *bp)
 {
-	struct buffer *bp;
+	struct mgwin *wp;
+	struct line *tlp;
 	char	*argv[] = {NULL, "-c", cmd, NULL};
 	char	*shellp;
-	int	 ret;
+	int	 tbo, ret, special = 0;
 
-	bp = bfind("*Shell Command Output*", TRUE);
-	bp->b_flag |= BFREADONLY;
-	if (bclear(bp) != TRUE) {
-		free(text);
+	if (bp == NULL) {
+		special = 1;
+		bp = bfind("*Shell Command Output*", TRUE);
+		bp->b_flag &= ~BFREADONLY;	/* disable read-only */
+		wp = popbuf(bp, WNONE);
+		if (wp == NULL || bclear(bp) != TRUE) {
+			free(text);
+			return (FALSE);
+		}
+		curbp = bp;
+		curwp = wp;
+	}
+
+	if (bp->b_flag & BFREADONLY) {
+		dobeep();
+		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
+
+	tlp = curwp->w_dotp;			/* save current position */
+	tbo = curwp->w_doto;
 
 	if ((shellp = getenv("SHELL")) == NULL)
 		shellp = _PATH_BSHELL;
@@ -488,14 +509,21 @@ shellcmdoutput(char* const cmd, char* const text, int len)
 		argv[0] = shellp;
 
 	ret = pipeio(shellp, argv, text, len, bp);
-
 	if (ret == TRUE) {
 		eerase();
-		if (lforw(bp->b_headp) == bp->b_headp)
+		if (special && lforw(bp->b_headp) == bp->b_headp)
 			addline(bp, "(Shell command succeeded with no output)");
 	}
 
 	free(text);
+
+	if (special) {
+		bp->b_flag |= BFREADONLY;	/* restore read-only */
+		gotobob(0, 0);
+	} else {
+		curwp->w_dotp = tlp;		/* return to old position */
+		curwp->w_doto = tbo;
+	}
 	return (ret);
 }
 
@@ -540,7 +568,11 @@ pipeio(const char* const path, char* const argv[], char* const text, int len,
 	default:
 		/* Parent process */
 		close(s[1]);
-		ret = iomux(s[0], text, len, outbp);
+
+		undo_boundary_enable(FFRAND, 0);
+		ret = iomux(s[0], text, len);
+		undo_boundary_enable(FFRAND, 1);
+
 		waitpid(pid, NULL, 0); /* Collect child to prevent zombies */
 
 		return (ret);
@@ -553,7 +585,7 @@ pipeio(const char* const path, char* const argv[], char* const text, int len,
  * Poll on the fd for both read and write readiness.
  */
 int
-iomux(int fd, char* const text, int len, struct buffer *outbp)
+iomux(int fd, char* const text, int len)
 {
 	struct pollfd pfd[1];
 	int nfds;
@@ -578,20 +610,13 @@ iomux(int fd, char* const text, int len, struct buffer *outbp)
 		if (pfd[0].revents & POLLOUT && len > 0)
 			pwriteout(fd, &textcopy, &len);
 		else if (pfd[0].revents & POLLIN)
-			if (preadin(fd, outbp) == FALSE)
+			if (preadin(fd) == FALSE)
 				break;
 		if (len == 0 && pfd[0].events & POLLOUT)
 			pfd[0].events = POLLIN;
 	}
 	close(fd);
 
-	/* In case if last line doesn't have a '\n' add the leftover
-	 * characters to buffer.
-	 */
-	if (leftover[0] != '\0') {
-		addline(outbp, leftover);
-		leftover[0] = '\0';
-	}
 	if (nfds == 0) {
 		dobeep();
 		ewprintf("poll timed out");
@@ -601,7 +626,7 @@ iomux(int fd, char* const text, int len, struct buffer *outbp)
 		ewprintf("poll error");
 		return (FALSE);
 	}
-	return (popbuftop(outbp, WNONE));
+	return (TRUE);
 }
 
 /*
@@ -630,42 +655,17 @@ pwriteout(int fd, char **text, int *len)
 }
 
 /*
- * Read some data from socket fd, break on '\n' and add
- * to buffer. If couldn't break on newline hold leftover
- * characters and append in next iteration.
+ * Read some data from socket fd and add to buffer.
  */
 int
-preadin(int fd, struct buffer *bp)
+preadin(int fd)
 {
-	int len;
-	char buf[BUFSIZ], *p, *q;
+	char buf[BUFSIZ];
+	ssize_t len;
 
-	if ((len = read(fd, buf, BUFSIZ - 1)) <= 0)
+	if ((len = read(fd, buf, BUFSIZ)) <= 0)
 		return (FALSE);
 
-	buf[len] = '\0';
-	p = q = buf;
-	if (leftover[0] != '\0' && ((q = strchr(p, *bp->b_nlchr)) != NULL)) {
-		*q++ = '\0';
-		if (strlcat(leftover, p, sizeof(leftover)) >=
-		    sizeof(leftover)) {
-			dobeep();
-			ewprintf("line too long");
-			return (FALSE);
-		}
-		addline(bp, leftover);
-		leftover[0] = '\0';
-		p = q;
-	}
-	while ((q = strchr(p, *bp->b_nlchr)) != NULL) {
-		*q++ = '\0';
-		addline(bp, p);
-		p = q;
-	}
-	if (strlcpy(leftover, p, sizeof(leftover)) >= sizeof(leftover)) {
-		dobeep();
-		ewprintf("line too long");
-		return (FALSE);
-	}
+	region_put_data(buf, len);
 	return (TRUE);
 }
