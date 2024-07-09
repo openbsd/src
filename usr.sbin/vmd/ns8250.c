@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.38 2023/10/25 12:44:28 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.39 2024/07/09 09:31:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,8 +19,7 @@
 #include <sys/ttycom.h>
 
 #include <dev/ic/comreg.h>
-
-#include <machine/vmmvar.h>
+#include <dev/vmm/vmm.h>
 
 #include <errno.h>
 #include <event.h>

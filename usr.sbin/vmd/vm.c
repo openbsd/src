@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.102 2024/07/08 17:33:45 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.103 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -31,11 +31,11 @@
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 #include <dev/pci/pcireg.h>
+#include <dev/vmm/vmm.h>
 
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/specialreg.h>
-#include <machine/vmmvar.h>
 
 #include <net/if.h>
 

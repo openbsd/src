@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.27 2023/10/25 12:44:28 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.28 2024/07/09 09:31:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,8 +19,7 @@
 
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isareg.h>
-
-#include <machine/vmmvar.h>
+#include <dev/vmm/vmm.h>
 
 #include <event.h>
 #include <stddef.h>

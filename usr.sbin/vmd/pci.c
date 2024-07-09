@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.31 2023/02/06 20:33:34 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.32 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -21,7 +21,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pv/virtioreg.h>
-#include <machine/vmmvar.h>
+#include <dev/vmm/vmm.h>
 
 #include <string.h>
 #include <unistd.h>

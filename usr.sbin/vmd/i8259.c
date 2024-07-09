@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.22 2023/09/01 19:42:26 dv Exp $ */
+/* $OpenBSD: i8259.c,v 1.23 2024/07/09 09:31:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -20,8 +20,7 @@
 #include <sys/types.h>
 
 #include <dev/isa/isareg.h>
-
-#include <machine/vmmvar.h>
+#include <dev/vmm/vmm.h>
 
 #include <unistd.h>
 #include <pthread.h>

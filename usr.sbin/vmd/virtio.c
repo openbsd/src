@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.113 2024/02/20 21:40:37 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.114 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -20,13 +20,13 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include <machine/vmmvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pv/virtioreg.h>
 #include <dev/pci/virtio_pcireg.h>
 #include <dev/pv/vioblkreg.h>
 #include <dev/pv/vioscsireg.h>
+#include <dev/vmm/vmm.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

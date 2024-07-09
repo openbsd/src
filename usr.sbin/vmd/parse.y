@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.69 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -28,7 +28,7 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 
-#include <machine/vmmvar.h>
+#include <dev/vmm/vmm.h>
 
 #include <arpa/inet.h>
 #include <net/if.h>

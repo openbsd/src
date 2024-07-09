@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmio.h,v 1.1 2022/11/10 11:46:39 dv Exp $	*/
+/*	$OpenBSD: mmio.h,v 1.2 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -20,7 +20,6 @@
 #define _MMIO_H_
 
 #include <sys/types.h>
-#include <machine/vmmvar.h>
 
 /* Code segment bits  */
 #define CS_L		(1 << 13)

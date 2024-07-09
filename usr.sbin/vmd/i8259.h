@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.h,v 1.6 2024/05/18 06:45:00 jsg Exp $ */
+/* $OpenBSD: i8259.h,v 1.7 2024/07/09 09:31:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -16,8 +16,6 @@
  */
 
 #include <sys/types.h>
-
-#include <machine/vmmvar.h>
 
 #define MASTER			0
 #define SLAVE			1

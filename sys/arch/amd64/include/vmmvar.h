@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.101 2024/04/29 14:47:05 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.102 2024/07/09 09:31:37 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -22,14 +22,6 @@
 #define _MACHINE_VMMVAR_H_
 
 #define VMM_HV_SIGNATURE 	"OpenBSDVMM58"
-
-#define VMM_MAX_MEM_RANGES	16
-#define VMM_MAX_DISKS_PER_VM	4
-#define VMM_MAX_NAME_LEN	64
-#define VMM_MAX_VCPUS		512
-#define VMM_MAX_VCPUS_PER_VM	64
-#define VMM_MAX_VM_MEM_SIZE	128L * 1024 * 1024 * 1024
-#define VMM_MAX_NICS_PER_VM	4
 
 #define VMM_PCI_MMIO_BAR_BASE	0xF0000000ULL
 #define VMM_PCI_MMIO_BAR_END	0xFFDFFFFFULL		/* 2 MiB below 4 GiB */
@@ -472,21 +464,6 @@ struct vm_exit {
 
 	struct vcpu_reg_state		vrs;
 	int				cpl;
-};
-
-struct vm_run_params {
-	/* Input parameters to VMM_IOC_RUN */
-	uint32_t	vrp_vm_id;
-	uint32_t	vrp_vcpu_id;
-	struct vcpu_inject_event	vrp_inject;
-	uint8_t		vrp_intr_pending;	/* Additional intrs pending? */
-
-	/* Input/output parameter to VMM_IOC_RUN */
-	struct vm_exit	*vrp_exit;		/* updated exit data */
-
-	/* Output parameter from VMM_IOC_RUN */
-	uint16_t	vrp_exit_reason;	/* exit reason */
-	uint8_t		vrp_irqready;		/* ready for IRQ on entry */
 };
 
 struct vm_intr_params {
@@ -961,7 +938,6 @@ int	vcpu_init(struct vcpu *);
 void	vcpu_deinit(struct vcpu *);
 int	vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int	vm_rwregs(struct vm_rwregs_params *, int);
-int	vm_run(struct vm_run_params *);
 int	vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.125 2024/02/20 21:40:37 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.126 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -20,8 +20,6 @@
 #include <sys/queue.h>
 #include <sys/un.h>
 #include <sys/socket.h>
-
-#include <machine/vmmvar.h>
 
 #include <dev/vmm/vmm.h>
 

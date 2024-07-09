@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.39 2024/02/09 14:35:47 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.40 2024/07/09 09:31:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,8 +19,7 @@
 #include <sys/types.h>
 
 #include <dev/ic/i8253reg.h>
-
-#include <machine/vmmvar.h>
+#include <dev/vmm/vmm.h>
 
 #include <event.h>
 #include <string.h>

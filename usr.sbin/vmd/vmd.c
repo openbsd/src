@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.157 2024/05/18 06:45:00 jsg Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.158 2024/07/09 09:31:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -40,8 +40,8 @@
 #include <ctype.h>
 #include <grp.h>
 
+#include <dev/vmm/vmm.h>
 #include <machine/specialreg.h>
-#include <machine/vmmvar.h>
 
 #include "proc.h"
 #include "atomicio.h"
