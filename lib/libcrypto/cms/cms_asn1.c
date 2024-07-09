@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.23 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.24 2024/07/09 06:12:45 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -1390,6 +1390,7 @@ const ASN1_ITEM CMS_ContentInfo_it = {
 	.size = sizeof(CMS_ContentInfo),
 	.sname = "CMS_ContentInfo",
 };
+LCRYPTO_ALIAS(CMS_ContentInfo_it);
 
 /* Specials for signed attributes */
 
@@ -1501,6 +1502,7 @@ const ASN1_ITEM CMS_ReceiptRequest_it = {
 	.size = sizeof(CMS_ReceiptRequest),
 	.sname = "CMS_ReceiptRequest",
 };
+LCRYPTO_ALIAS(CMS_ReceiptRequest_it);
 
 static const ASN1_TEMPLATE CMS_Receipt_seq_tt[] = {
 	{

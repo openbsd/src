@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.3 2024/03/30 01:53:05 joshua Exp $ */
+/* $OpenBSD: cms.h,v 1.4 2024/07/09 06:12:45 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -153,5 +153,9 @@ LCRYPTO_USED(CMS_RecipientInfo_kari_get0_ctx);
 LCRYPTO_USED(CMS_RecipientInfo_kari_decrypt);
 LCRYPTO_USED(CMS_SharedInfo_encode);
 LCRYPTO_USED(ERR_load_CMS_strings);
+#if defined(LIBRESSL_NAMESPACE)
+extern LCRYPTO_USED(CMS_ContentInfo_it);
+extern LCRYPTO_USED(CMS_ReceiptRequest_it);
+#endif
 
 #endif /* _LIBCRYPTO_CMS_H */
