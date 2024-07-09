@@ -156,33 +156,37 @@ static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 }
 
 const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
-    EVP_PKEY_TLS1_PRF,
-    0,
-    pkey_tls1_prf_init,
-    0,
-    pkey_tls1_prf_cleanup,
+    .pkey_id = EVP_PKEY_TLS1_PRF,
+    .flags = 0,
 
-    0, 0,
-    0, 0,
+    .init = pkey_tls1_prf_init,
+    .copy = NULL,
+    .cleanup = pkey_tls1_prf_cleanup,
 
-    0,
-    0,
+    .paramgen = NULL,
 
-    0,
-    0,
+    .keygen = NULL,
 
-    0, 0,
+    .sign_init = NULL,
+    .sign = NULL,
 
-    0, 0, 0, 0,
+    .verify_init = NULL,
+    .verify = NULL,
 
-    0, 0,
+    .verify_recover = NULL,
 
-    0, 0,
+    .signctx_init = NULL,
+    .signctx = NULL,
 
-    0,
-    pkey_tls1_prf_derive,
-    pkey_tls1_prf_ctrl,
-    pkey_tls1_prf_ctrl_str
+    .encrypt = NULL,
+
+    .decrypt = NULL,
+
+    .derive_init = NULL,
+    .derive = pkey_tls1_prf_derive,
+
+    .ctrl = pkey_tls1_prf_ctrl,
+    .ctrl_str = pkey_tls1_prf_ctrl_str,
 };
 
 static int tls1_prf_P_hash(const EVP_MD *md,
