@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.36 2024/07/09 17:46:32 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.37 2024/07/09 17:47:20 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -165,17 +165,13 @@ pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
 		return 1;
 	}
 	if (strcmp(type, "secret") == 0)
-		return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET,
-		    value);
+		return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
 	if (strcmp(type, "hexsecret") == 0)
-		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET,
-		    value);
+		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
 	if (strcmp(type, "seed") == 0)
-		return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED,
-		    value);
+		return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
 	if (strcmp(type, "hexseed") == 0)
-		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED,
-		    value);
+		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
 
 	KDFerror(KDF_R_UNKNOWN_PARAMETER_TYPE);
 	return -2;
