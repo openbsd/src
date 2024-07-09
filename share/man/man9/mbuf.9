@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.125 2023/07/04 03:56:07 jsg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.126 2024/07/09 18:56:54 jan Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 4 2023 $
+.Dd $Mdocdate: July 9 2024 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -155,14 +155,14 @@
 #define mtod(m,t)       ((t)((m)->m_data))
 
 struct m_hdr {
-        struct  mbuf *mh_next;
-        struct  mbuf *mh_nextpkt;
-        caddr_t mh_data;
-        u_int   mh_len;
-        short   mh_type;
-        u_short mh_flags;
+	struct mbuf		*mh_next;
+	struct mbuf		*mh_nextpkt;
+	caddr_t			 mh_data;
+	u_int			 mh_len;
+	short			 mh_type;
+	u_short			 mh_flags;
 #ifndef __LP64__
-        u_int   mh_pad;
+	u_int			 mh_pad;
 #endif
 };
 
@@ -171,48 +171,50 @@ struct pkthdr {
 	SLIST_HEAD(, m_tag)	 ph_tags;
 	int64_t			 ph_timestamp;
 	int			 len;
+	u_int			 ph_rtableid;
+	u_int			 ph_ifidx;
 	u_int16_t		 ph_tagsset;
 	u_int16_t		 ph_flowid;
 	u_int16_t		 csum_flags;
 	u_int16_t		 ether_vtag;
-	u_int			 ph_rtableid;
-	u_int			 ph_ifidx;
+	u_int16_t		 ph_mss;
 	u_int8_t		 ph_loopcnt;
+	u_int8_t		 ph_family;
 	struct pkthdr_pf	 pf;
 };
 
 struct pkthdr_pf {
-	struct pf_state_key *statekey;
-	struct inpcb *inp;
-	u_int32_t qid;
-	u_int16_t tag;
-	u_int8_t  flags;
-	u_int8_t  routed;
-	u_int8_t  prio;
-	u_int8_t  pad[3];
+	struct pf_state_key	*statekey;
+	struct inpcb		*inp;
+	u_int32_t		 qid;
+	u_int16_t		 tag;
+	u_int8_t		 flags;
+	u_int8_t		 routed;
+	u_int8_t		 prio;
+	u_int8_t		 pad[3];
 };
 
 struct mbuf_ext {
-	caddr_t ext_buf;
-	void	*ext_arg;
-	u_int	ext_free_fn;
-	u_int   ext_size;
-	struct mbuf *ext_nextref;
-	struct mbuf *ext_prevref;
+	caddr_t			 ext_buf;
+	void			*ext_arg;
+	u_int			 ext_free_fn;
+	u_int			 ext_size;
+	struct mbuf		*ext_nextref;
+	struct mbuf		*ext_prevref;
 };
 
 struct mbuf {
-        struct  m_hdr m_hdr;
-        union {
-                struct {
-                        struct  pkthdr MH_pkthdr;
-                        union {
-                                struct  mbuf_ext MH_ext;
-                                char    MH_databuf[MHLEN];
-                        } MH_dat;
-                } MH;
-                char    M_databuf[MLEN];
-        } M_dat;
+	struct m_hdr m_hdr;
+	union {
+		struct {
+			struct pkthdr MH_pkthdr;
+			union {
+				struct mbuf_ext	MH_ext;
+				char		MH_databuf[MHLEN];
+			} MH_dat;
+		} MH;
+		char M_databuf[MLEN];
+	} M_dat;
 };
 
 #define m_next          m_hdr.mh_next
@@ -382,6 +384,16 @@ ICMP/ICMPv6 checksum verified.
 ICMP/ICMPv6 checksum bad.
 .It Dv M_IPV6_DF_OUT
 Do not fragment IPv6 on output.
+.It M_TIMESTAMP
+.Fa m_pkthdr.ph_timestamp
+is valid.
+.It M_FLOWID
+.Fa m_pkthdr.ph_flowid
+is valid.
+.It M_TCP_TSO
+TCP Segmentation Offload needed and
+.Fa m_pkthdr.ph_mss
+is valid.
 .El
 .Pp
 The
