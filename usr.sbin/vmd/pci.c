@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.32 2024/07/09 09:31:37 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.33 2024/07/10 09:27:33 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -28,12 +28,12 @@
 
 #include "vmd.h"
 #include "pci.h"
-#include "vmm.h"
 #include "i8259.h"
 #include "atomicio.h"
 
 struct pci pci;
 
+extern struct vmd_vm current_vm;
 extern char *__progname;
 
 /* PIC IRQs, assigned to devices in order */
@@ -86,7 +86,9 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_MMIO;
 		pci.pci_devices[id].pd_barsize[bar_ct] = VM_PCI_MMIO_BAR_SIZE;
 		pci.pci_devices[id].pd_bar_ct++;
-	} else if (type == PCI_MAPREG_TYPE_IO) {
+	}
+#ifdef __amd64__
+	else if (type == PCI_MAPREG_TYPE_IO) {
 		if (pci.pci_next_io_bar >= VM_PCI_IO_BAR_END)
 			return (1);
 
@@ -102,6 +104,7 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 		pci.pci_devices[id].pd_barsize[bar_ct] = VM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_bar_ct++;
 	}
+#endif /* __amd64__ */
 
 	return (0);
 }
@@ -195,7 +198,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		pci.pci_next_pic_irq++;
 		DPRINTF("assigned irq %d to pci dev %d",
 		    pci.pci_devices[*id].pd_irq, *id);
-		pic_set_elcr(pci.pci_devices[*id].pd_irq, 1);
+		intr_toggle_el(&current_vm, pci.pci_devices[*id].pd_irq, 1);
 	}
 
 	pci.pci_dev_ct ++;
@@ -216,7 +219,10 @@ pci_init(void)
 
 	memset(&pci, 0, sizeof(pci));
 	pci.pci_next_mmio_bar = VMM_PCI_MMIO_BAR_BASE;
+
+#ifdef __amd64__
 	pci.pci_next_io_bar = VM_PCI_IO_BAR_BASE;
+#endif /* __amd64__ */
 
 	if (pci_add_device(&id, PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_HOST,
@@ -226,6 +232,7 @@ pci_init(void)
 	}
 }
 
+#ifdef __amd64__
 void
 pci_handle_address_reg(struct vm_run_params *vrp)
 {
@@ -415,6 +422,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		}
 	}
 }
+#endif /* __amd64__ */
 
 int
 pci_dump(int fd)

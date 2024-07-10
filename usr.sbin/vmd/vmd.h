@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.126 2024/07/09 09:31:37 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.127 2024/07/10 09:27:33 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -42,6 +42,9 @@
 #define ISSET(_v, _m)		((_v) & (_m))
 
 #define nitems(_a)      (sizeof((_a)) / sizeof((_a)[0]))
+
+#define MB(x)	(x * 1024UL * 1024UL)
+#define GB(x)	(x * 1024UL * 1024UL * 1024UL)
 
 #define VMD_USER		"_vmd"
 #define VMD_CONF		"/etc/vm.conf"
@@ -492,21 +495,51 @@ int	 opentap(char *);
 int	 fd_hasdata(int);
 int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 
-/* vm.c */
+/* {mach}_vm.c (md interface) */
+void	 create_memory_map(struct vm_create_params *);
+int	 load_firmware(struct vmd_vm *, struct vcpu_reg_state *);
+void	 init_emulated_hw(struct vmop_create_params *, int,
+    int[][VM_MAX_BASE_PER_DISK], int *);
+void	 restore_emulated_hw(struct vm_create_params *vcp, int, int *,
+    int[][VM_MAX_BASE_PER_DISK], int);
+int	 vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
+void	 pause_vm_md(struct vmd_vm *);
+void	 unpause_vm_md(struct vmd_vm *);
+int	 dump_devs(int);
+int	 dump_send_header(int);
+void	*hvaddr_mem(paddr_t, size_t);
+int	 write_mem(paddr_t, const void *, size_t);
+int	 read_mem(paddr_t, void *, size_t);
+int	 intr_ack(struct vmd_vm *);
+int	 intr_pending(struct vmd_vm *);
+void	 intr_toggle_el(struct vmd_vm *, int, int);
+void	 vcpu_assert_irq(uint32_t, uint32_t, int);
+void	 vcpu_deassert_irq(uint32_t, uint32_t, int);
+int	 vcpu_exit(struct vm_run_params *);
+uint8_t	 vcpu_exit_pci(struct vm_run_params *);
+
+#ifdef __amd64__
+/* x86 io functions in x86_vm.c */
+void	 set_return_data(struct vm_exit *, uint32_t);
+void	 get_input_data(struct vm_exit *, uint32_t *);
+#endif /* __amd64 __ */
+
+/* vm.c (mi functions) */
+void	 vcpu_halt(uint32_t);
+void	 vcpu_unhalt(uint32_t);
+void	 vcpu_signal_run(uint32_t);
+int 	 vcpu_intr(uint32_t, uint32_t, uint8_t);
 void	 vm_main(int, int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);
-int	 read_mem(paddr_t, void *buf, size_t);
-int	 start_vm(struct vmd_vm *, int);
-__dead void vm_shutdown(unsigned int);
+int	 vmd_check_vmh(struct vm_dump_header *);
 void	 vm_pipe_init(struct vm_dev_pipe *, void (*)(int, short, void *));
 void	 vm_pipe_init2(struct vm_dev_pipe *, void (*)(int, short, void *),
 	    void *);
 void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
-int	 write_mem(paddr_t, const void *buf, size_t);
-void*	 hvaddr_mem(paddr_t, size_t);
 int	 remap_guest_mem(struct vmd_vm *, int);
+__dead void vm_shutdown(unsigned int);
 
 /* config.c */
 int	 config_init(struct vmd *);

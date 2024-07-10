@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2019/01/18 01:24:07 pd Exp $
+#	$OpenBSD: Makefile,v 1.7 2024/07/10 09:27:33 dv Exp $
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "arm64"
 
 .PATH:	${.CURDIR}/../vmd
 

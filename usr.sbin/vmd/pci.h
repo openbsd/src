@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.10 2023/02/06 20:33:34 dv Exp $	*/
+/*	$OpenBSD: pci.h,v 1.11 2024/07/10 09:27:33 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -93,9 +93,6 @@ struct pci {
 };
 
 int pci_find_first_device(uint16_t);
-void pci_handle_address_reg(struct vm_run_params *);
-void pci_handle_data_reg(struct vm_run_params *);
-uint8_t pci_handle_io(struct vm_run_params *);
 void pci_init(void);
 int pci_add_device(uint8_t *, uint16_t, uint16_t, uint8_t, uint8_t, uint16_t,
     uint16_t, uint8_t, pci_cs_fn_t);
@@ -104,5 +101,11 @@ int pci_set_bar_fn(uint8_t, uint8_t, void *, void *);
 uint8_t pci_get_dev_irq(uint8_t);
 int pci_dump(int);
 int pci_restore(int);
+
+#ifdef __amd64__
+void pci_handle_address_reg(struct vm_run_params *);
+void pci_handle_data_reg(struct vm_run_params *);
+uint8_t pci_handle_io(struct vm_run_params *);
+#endif /* __amd64__ */
 
 #endif /* _PCI_H_ */

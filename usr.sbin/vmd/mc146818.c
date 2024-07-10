@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.28 2024/07/09 09:31:37 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.29 2024/07/10 09:27:33 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -31,7 +31,6 @@
 #include "mc146818.h"
 #include "virtio.h"
 #include "vmd.h"
-#include "vmm.h"
 
 #define MC_RATE_MASK 0xf
 
@@ -148,7 +147,7 @@ rtc_fireper(int fd, short type, void *arg)
 {
 	rtc.regs[MC_REGC] |= MC_REGC_PF;
 
-	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 8);
+	vcpu_assert_irq((ptrdiff_t)arg, 0, 8);
 
 	evtimer_add(&rtc.per, &rtc.per_tv);
 }

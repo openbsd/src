@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.114 2024/07/09 09:31:37 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.115 2024/07/10 09:27:33 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -47,7 +47,6 @@
 #include "vioscsi.h"
 #include "virtio.h"
 #include "vmd.h"
-#include "vmm.h"
 
 extern struct vmd *env;
 extern char *__progname;
@@ -274,7 +273,7 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = viornd.cfg.isr_status;
 			viornd.cfg.isr_status = 0;
-			vcpu_deassert_pic_irq(viornd.vm_id, 0, viornd.irq);
+			vcpu_deassert_irq(viornd.vm_id, 0, viornd.irq);
 			break;
 		}
 	}
@@ -310,7 +309,7 @@ vmmci_ctl(unsigned int cmd)
 
 		/* Trigger interrupt */
 		vmmci.cfg.isr_status = VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
-		vcpu_assert_pic_irq(vmmci.vm_id, 0, vmmci.irq);
+		vcpu_assert_irq(vmmci.vm_id, 0, vmmci.irq);
 
 		/* Add ACK timeout */
 		tv.tv_sec = VMMCI_TIMEOUT;
@@ -322,7 +321,7 @@ vmmci_ctl(unsigned int cmd)
 			vmmci.cmd = cmd;
 
 			vmmci.cfg.isr_status = VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
-			vcpu_assert_pic_irq(vmmci.vm_id, 0, vmmci.irq);
+			vcpu_assert_irq(vmmci.vm_id, 0, vmmci.irq);
 		} else {
 			log_debug("%s: RTC sync skipped (guest does not "
 			    "support RTC sync)\n", __func__);
@@ -468,7 +467,7 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = vmmci.cfg.isr_status;
 			vmmci.cfg.isr_status = 0;
-			vcpu_deassert_pic_irq(vmmci.vm_id, 0, vmmci.irq);
+			vcpu_deassert_irq(vmmci.vm_id, 0, vmmci.irq);
 			break;
 		}
 	}
@@ -1586,9 +1585,9 @@ handle_dev_msg(struct viodev_msg *msg, struct virtio_dev *gdev)
 	switch (msg->type) {
 	case VIODEV_MSG_KICK:
 		if (msg->state == INTR_STATE_ASSERT)
-			vcpu_assert_pic_irq(vm_id, msg->vcpu, irq);
+			vcpu_assert_irq(vm_id, msg->vcpu, irq);
 		else if (msg->state == INTR_STATE_DEASSERT)
-			vcpu_deassert_pic_irq(vm_id, msg->vcpu, irq);
+			vcpu_deassert_irq(vm_id, msg->vcpu, irq);
 		break;
 	case VIODEV_MSG_READY:
 		log_debug("%s: device reports ready", __func__);
@@ -1702,9 +1701,9 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			 * device performs a register read.
 			 */
 			if (msg.state == INTR_STATE_ASSERT)
-				vcpu_assert_pic_irq(dev->vm_id, msg.vcpu, msg.irq);
+				vcpu_assert_irq(dev->vm_id, msg.vcpu, msg.irq);
 			else if (msg.state == INTR_STATE_DEASSERT)
-				vcpu_deassert_pic_irq(dev->vm_id, msg.vcpu, msg.irq);
+				vcpu_deassert_irq(dev->vm_id, msg.vcpu, msg.irq);
 		} else {
 			log_warnx("%s: expected IO_READ, got %d", __func__,
 			    msg.type);
@@ -1716,7 +1715,7 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 }
 
 void
-virtio_assert_pic_irq(struct virtio_dev *dev, int vcpu)
+virtio_assert_irq(struct virtio_dev *dev, int vcpu)
 {
 	struct viodev_msg msg;
 	int ret;
@@ -1734,7 +1733,7 @@ virtio_assert_pic_irq(struct virtio_dev *dev, int vcpu)
 }
 
 void
-virtio_deassert_pic_irq(struct virtio_dev *dev, int vcpu)
+virtio_deassert_irq(struct virtio_dev *dev, int vcpu)
 {
 	struct viodev_msg msg;
 	int ret;

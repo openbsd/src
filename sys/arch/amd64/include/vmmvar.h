@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.102 2024/07/09 09:31:37 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.103 2024/07/10 09:27:32 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -88,14 +88,14 @@
 #define VMX_EXIT_XSAVES				63
 #define VMX_EXIT_XRSTORS			64
 
+#define VM_EXIT_TERMINATED			0xFFFE
+#define VM_EXIT_NONE				0xFFFF
+
 /*
  * VMX: Misc defines
  */
 #define VMX_MAX_CR3_TARGETS			256
 #define VMX_VMCS_PA_CLEAR			0xFFFFFFFFFFFFFFFFUL
-
-#define VM_EXIT_TERMINATED			0xFFFE
-#define VM_EXIT_NONE				0xFFFF
 
 /*
  * SVM: Intercept codes (exit reasons)
@@ -471,20 +471,6 @@ struct vm_intr_params {
 	uint32_t		vip_vm_id;
 	uint32_t		vip_vcpu_id;
 	uint16_t		vip_intr;
-};
-
-#define VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA 0x1	/* read/write pvclock gpa */
-#define VM_RWVMPARAMS_PVCLOCK_VERSION	 0x2	/* read/write pvclock version */
-#define VM_RWVMPARAMS_ALL	(VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA | \
-    VM_RWVMPARAMS_PVCLOCK_VERSION)
-
-struct vm_rwvmparams_params {
-	/* Input parameters to VMM_IOC_READVMPARAMS/VMM_IOC_WRITEVMPARAMS */
-	uint32_t		vpp_vm_id;
-	uint32_t		vpp_vcpu_id;
-	uint32_t		vpp_mask;
-	paddr_t			vpp_pvclock_system_gpa;
-	uint32_t		vpp_pvclock_version;
 };
 
 #define VM_RWREGS_GPRS	0x1	/* read/write GPRs */
@@ -936,7 +922,6 @@ int	vm_impl_init(struct vm *, struct proc *);
 void	vm_impl_deinit(struct vm *);
 int	vcpu_init(struct vcpu *);
 void	vcpu_deinit(struct vcpu *);
-int	vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int	vm_rwregs(struct vm_rwregs_params *, int);
 int	vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 
