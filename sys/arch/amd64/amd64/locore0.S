@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.23 2024/05/12 16:49:38 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.24 2024/07/10 12:36:13 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -314,17 +314,21 @@ cont:
 	NDML3_ENTRIES + NDML2_ENTRIES + 3) * NBPG)
 
 #define fillkpt \
-1:	movl	%eax,(%ebx)	;	/* store phys addr */ \
-	movl	$0,4(%ebx)	;	/* upper 32 bits 0 */ \
-	addl	$8,%ebx		;	/* next pte/pde */ \
-	addl	$NBPG,%eax	;	/* next phys page */ \
-	loop	1b		;	/* till finished */
+	pushl	%ebp				;	/* save */ \
+	movl	RELOC((pg_crypt + 4)), %ebp	;	/* C bit? */ \
+1:	movl	%eax,(%ebx)			;	/* store phys addr */ \
+	movl	%ebp,4(%ebx)			;	/* upper 32 bits */ \
+	addl	$8,%ebx				;	/* next pte/pde */ \
+	addl	$NBPG,%eax			;	/* next phys page */ \
+	loop	1b				;	/* till finished */ \
+	popl	%ebp				;	/* restore */
 
 
 #define fillkpt_nx \
 	pushl	%ebp				;	/* save */ \
-1:	movl	%eax,(%ebx)			;	/* store phys addr */ \
 	movl	RELOC((pg_nx + 4)), %ebp	;	/* NX bit? */ \
+	orl	RELOC((pg_crypt + 4)), %ebp	;	/* C bit? */ \
+1:	movl	%eax,(%ebx)			;	/* store phys addr */ \
 	movl	%ebp,4(%ebx)			;	/* upper 32 bits */ \
 	addl	$8,%ebx				;	/* next pte/pde */ \
 	addl	$NBPG,%eax			;	/* next phys page */ \
@@ -510,6 +514,7 @@ store_pte:
 	movl	%eax, (%ebx)
 	pushl	%ebp
 	movl	RELOC((pg_nx + 4)), %ebp
+	orl	RELOC((pg_crypt + 4)), %ebp
 	movl	%ebp, 4(%ebx)
 	popl	%ebp
 	addl	$8, %ebx
@@ -535,6 +540,7 @@ store_pte:
 	movl	%eax,(%ebx)
 	pushl	%ebp
 	movl	RELOC((pg_nx + 4)), %ebp
+	orl	RELOC((pg_crypt + 4)), %ebp
 	movl	%ebp, 4(%ebx)
 	popl	%ebp
 
