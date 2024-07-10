@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.39 2024/07/09 17:58:36 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.40 2024/07/10 06:53:27 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -146,8 +146,7 @@ pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 }
 
 static int
-pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
-    const char *type, const char *value)
+pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
 	if (value == NULL) {
 		KDFerror(KDF_R_VALUE_MISSING);
@@ -178,10 +177,8 @@ pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
 }
 
 static int
-tls1_prf_P_hash(const EVP_MD *md,
-    const unsigned char *secret, size_t secret_len,
-    const unsigned char *seed, size_t seed_len,
-    unsigned char *out, size_t out_len)
+tls1_prf_P_hash(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
+    const unsigned char *seed, size_t seed_len, unsigned char *out, size_t out_len)
 {
 	int chunk;
 	EVP_MD_CTX *ctx = NULL, *ctx_tmp = NULL, *ctx_init = NULL;
