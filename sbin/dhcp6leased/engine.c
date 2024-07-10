@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2024/07/10 12:44:46 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.20 2024/07/10 12:52:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -127,7 +127,7 @@ struct dhcp6leased_iface	*get_dhcp6leased_iface_by_id(uint32_t);
 void			 remove_dhcp6leased_iface(uint32_t);
 void			 parse_dhcp(struct dhcp6leased_iface *,
 			     struct imsg_dhcp *);
-void			 parse_ia_pd_options(uint8_t *, size_t, struct prefix *);
+int			 parse_ia_pd_options(uint8_t *, size_t, struct prefix *);
 void			 state_transition(struct dhcp6leased_iface *, enum
 			     if_state);
 void			 iface_timeout(int, short, void *);
@@ -812,11 +812,19 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 			log_debug("%s: IA_PD, IAID: %08x, T1: %u, T2: %u",
 			    __func__, ntohl(iapd.iaid), ntohl(iapd.t1),
 			    ntohl(iapd.t2));
-			if (ntohl(iapd.iaid) < iface_conf->ia_count)
-				parse_ia_pd_options(p +
+			if (ntohl(iapd.iaid) < iface_conf->ia_count) {
+				int status_code;
+				status_code = parse_ia_pd_options(p +
 				    sizeof(struct dhcp_iapd), opt_hdr.len -
 				    sizeof(struct dhcp_iapd),
 				    &iface->new_pds[ntohl(iapd.iaid)]);
+
+				if (status_code != DHCP_STATUS_SUCCESS &&
+				    iface->state == IF_RENEWING) {
+					state_transition(iface, IF_REBINDING);
+					goto out;
+				}
+			}
 			break;
 		case DHO_RAPID_COMMIT:
 			if (opt_hdr.len != 0) {
@@ -932,7 +940,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	return;
 }
 
-void
+int
 parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 {
 	struct dhcp_option_hdr	 opt_hdr;
@@ -953,7 +961,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			    dhcp_option_type2str(opt_hdr.code), opt_hdr.len);
 		if (len < opt_hdr.len) {
 			log_warnx("%s: malformed packet, ignoring", __func__);
-			return;
+			return DHCP_STATUS_UNSPECFAIL;
 		}
 
 		switch (opt_hdr.code) {
@@ -961,7 +969,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			if (len < sizeof(struct dhcp_iaprefix)) {
 				log_warnx("%s: malformed packet, ignoring",
 				    __func__);
-				return;
+				return DHCP_STATUS_UNSPECFAIL;
 			}
 
 			memcpy(&iaprefix, p, sizeof(struct dhcp_iaprefix));
@@ -996,15 +1004,11 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 
 			break;
 		case DHO_STATUS_CODE:
-			/*
-			 * XXX handle STATUS_CODE if not success
-			 * STATUS_CODE can also appear in other parts of
-			 * the packet.
-			 */
+			/* XXX STATUS_CODE can also appear outside of options */
 			if (len < 2) {
 				log_warnx("%s: malformed packet, ignoring",
 				    __func__);
-				return;
+				return DHCP_STATUS_UNSPECFAIL;
 			}
 			memcpy(&status_code, p, sizeof(uint16_t));
 			status_code = ntohs(status_code);
@@ -1024,6 +1028,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 		p += opt_hdr.len;
 		len -= opt_hdr.len;
 	}
+	return status_code;
 }
 
 /* XXX check valid transitions */
