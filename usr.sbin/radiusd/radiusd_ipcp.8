@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_ipcp.8,v 1.2 2024/07/09 17:34:10 yasuoka Exp $
+.\"	$OpenBSD: radiusd_ipcp.8,v 1.3 2024/07/10 05:39:25 jmc Exp $
 .\"
 .\" Copyright (c) 2024 Internet Initiative Japan Inc.
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: July 9 2024 $
+.Dd $Mdocdate: July 10 2024 $
 .Dt RADIUSD_IPCP 8
 .Os
 .Sh NAME
@@ -30,21 +30,20 @@ The
 module is executed by
 .Xr radiusd 8
 as a module to provide IP configuration through RADIUS Access-Accept messages
-and manages IP address pool through RADIUS accounting messages.
+and manages the IP address pool through RADIUS accounting messages.
 The internal sessions can be shown or monitored by
 .Xr radiusctl 8 .
-Also
 .Nm
-provides session timeouts and disconnects requested by
+also provides session timeouts and disconnects requested by
 .Xr radiusctl 8
 through the Dynamic Authorization Extension
-.Po DAE, RFC 5176 Pc .
+.Pq DAE, RFC 5176 .
 .Sh CONFIGURATIONS
 To use the
 .Nm
 module,
-it should be configure as a decoration module of the authentication
-and as an accouting module.
+it should be configured as a decoration module of the authentication
+and as an accounting module.
 .Bd -literal -offset indent
 authenticate * by (any auth module) decorate-by ipcp
 account      * to ipcp
@@ -52,27 +51,24 @@ account      * to ipcp
 .Pp
 The
 .Nm
-module supports the following configuration key and value:
-.Pp
+module supports the following configuration keys and values:
 .Bl -tag -width Ds
 .It Ic address pool Ar address-space ...
 Specify the IP address spaces that is pooled.
 The
 .Ar address-space
-can be specified by a address range
+can be specified by an address range
 .Pq e.g. 192.168.1.1-192.168.1.199
-or a address mask
+or an address mask
 .Pq e.g. 192.168.1.0/24 .
 The pooled addresses are used for dynamic assignment.
 .It Ic address static Ar address-space ...
 Specify the IP address spaces that is pooled for static assignment.
 The
 .Ar address-space
-is the same syntax of
+is the same syntax as
 .Ic address pool ,
-see the description for
-.Ic address pool
-for detail.
+above.
 .It Ic name-server Ar primary-address Op Ar secondary-address
 Specify the DNS servers' IP addresses.
 .It Ic netbios-server Ar primary-address Op Ar secondary-address
@@ -109,12 +105,12 @@ the server is selected only for the session which NAS-Identifier is
 matched the specified value.
 The default port number is 3799.
 .It Ic max-sessions Ar number
-Specify the maxinum number of sessions.
+Specify the maximum number of sessions.
 .Sq 0
 means no limit.
 The default value is 0.
 .It Ic user-max-sessions Ar number
-Specify the maxinum number of sessions per a user.
+Specify the maximum number of sessions per a user.
 .Sq 0
 means no limit.
 The default value is 0.
@@ -125,13 +121,19 @@ session after Access-Accept.
 preserves the assigned IP address for that period.
 The default value is 60 seconds.
 .El
+.Sh FILES
+.Bl -tag -width "/usr/libexec/radiusd/radiusd_ipcp" -compact
+.It Pa /usr/libexec/radiusd/radiusd_ipcp
+.Dq ipcp
+module executable.
+.El
 .Sh EXAMPLES
-An example which
+An example with
 .Nm
-works with
-.Xr npppd 8 .
+working with
+.Xr npppd 8 :
 .Pp
-.Pa /etc/radiusd.conf:
+.Pa /etc/radiusd.conf :
 .Bd -literal -offset indent
 listen on 127.0.0.1
 listen on 127.0.0.1 accounting
@@ -157,7 +159,7 @@ authenticate * by radius decorate-by ipcp
 account      * to ipcp
 .Ed
 .Pp
-.Pa /etc/npppd/npppd.conf:
+.Pa /etc/npppd/npppd.conf :
 .Bd -literal -offset indent
 tunnel L2TP protocol l2tp {
     listen on 192.0.2.51
@@ -176,18 +178,12 @@ authentication RADIUS type radius {
 }
 bind tunnel from L2TP authenticated by RADIUS to pppac0
 .Ed
-.Sh FILES
-.Bl -tag -width "/usr/libexec/radiusd/radiusd_ipcp" -compact
-.It Pa /usr/libexec/radiusd/radiusd_ipcp
-.Dq ipcp
-module executable.
-.El
 .Sh SEE ALSO
-.Xr radiusctl 8 ,
 .Xr authenticate 3 ,
-.Xr radiusd 8 ,
 .Xr radiusd.conf 5 ,
-.Xr npppd 8
+.Xr npppd 8 ,
+.Xr radiusctl 8 ,
+.Xr radiusd 8
 .Sh HISTORY
 The
 .Nm
