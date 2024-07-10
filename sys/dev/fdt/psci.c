@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.16 2024/04/13 14:20:48 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.17 2024/07/10 11:01:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -36,27 +36,6 @@ extern void (*powerdownfn)(void);
 #define SMCCC_ARCH_WORKAROUND_1	0x80008000
 #define SMCCC_ARCH_WORKAROUND_2	0x80007fff
 #define SMCCC_ARCH_WORKAROUND_3	0x80003fff
-
-#define PSCI_VERSION		0x84000000
-#ifdef __LP64__
-#define CPU_SUSPEND		0xc4000001
-#else
-#define CPU_SUSPEND		0x84000001
-#endif
-#define CPU_OFF			0x84000002
-#ifdef __LP64__
-#define CPU_ON			0xc4000003
-#else
-#define CPU_ON			0x84000003
-#endif
-#define SYSTEM_OFF		0x84000008
-#define SYSTEM_RESET		0x84000009
-#define PSCI_FEATURES		0x8400000a
-#ifdef __LP64__
-#define SYSTEM_SUSPEND		0xc400000e
-#else
-#define SYSTEM_SUSPEND		0x8400000e
-#endif
 
 struct psci_softc {
 	struct device	 sc_dev;

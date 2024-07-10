@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.123 2024/07/02 19:59:54 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.124 2024/07/10 11:01:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -275,6 +275,7 @@ struct cfdriver cpu_cd = {
 
 void	cpu_opp_init(struct cpu_info *, uint32_t);
 void	cpu_psci_init(struct cpu_info *);
+void	cpu_psci_idle_cycle(void);
 
 void	cpu_flush_bp_noop(void);
 void	cpu_flush_bp_psci(void);
@@ -1956,6 +1957,51 @@ cpu_psci_init(struct cpu_info *ci)
 	int idx, len, node;
 
 	/*
+	 * Find the shallowest (for now) idle state for this CPU.
+	 * This should be the first one that is listed.  We'll use it
+	 * in the idle loop.
+	 */
+
+	len = OF_getproplen(ci->ci_node, "cpu-idle-states");
+	if (len < (int)sizeof(uint32_t))
+		return;
+
+	states = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(ci->ci_node, "cpu-idle-states", states, len);
+	node = OF_getnodebyphandle(states[0]);
+	free(states, M_TEMP, len);
+	if (node) {
+		uint32_t entry, exit, residency, param;
+		int32_t features;
+
+		param = OF_getpropint(node, "arm,psci-suspend-param", 0);
+		entry = OF_getpropint(node, "entry-latency-us", 0);
+		exit = OF_getpropint(node, "exit-latency-us", 0);
+		residency = OF_getpropint(node, "min-residency-us", 0);
+		ci->ci_psci_idle_latency += entry + exit + 2 * residency;
+
+		/* Skip states that stop the local timer. */
+		if (OF_getpropbool(node, "local-timer-stop"))
+			ci->ci_psci_idle_param = 0;
+
+		/* Skip powerdown states. */
+		features = psci_features(CPU_SUSPEND);
+		if (features == PSCI_NOT_SUPPORTED ||
+		    (features & PSCI_FEATURE_POWER_STATE_EXT) == 0) {
+			if (param & PSCI_POWER_STATE_POWERDOWN)
+				param = 0;
+		} else {
+			if (param & PSCI_POWER_STATE_EXT_POWERDOWN)
+				param = 0;
+		}
+
+		if (param) {
+			ci->ci_psci_idle_param = param;
+			cpu_idle_cycle_fcn = cpu_psci_idle_cycle;
+		}
+	}
+
+	/*
 	 * Hunt for the deepest idle state for this CPU.  This is
 	 * fairly complicated as it requires traversing quite a few
 	 * nodes in the device tree.  The first step is to look up the
@@ -2050,6 +2096,30 @@ cpu_psci_init(struct cpu_info *ci)
 
 	ci->ci_psci_suspend_param =
 		OF_getpropint(node, "arm,psci-suspend-param", 0);
+}
+
+void
+cpu_psci_idle_cycle(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct timeval start, stop;
+	u_long itime;
+
+	microuptime(&start);
+
+	if (ci->ci_prev_sleep > ci->ci_psci_idle_latency)
+		psci_cpu_suspend(ci->ci_psci_idle_param, 0, 0);
+	else
+		cpu_wfi();
+
+	microuptime(&stop);
+	timersub(&stop, &start, &stop);
+	itime = stop.tv_sec * 1000000 + stop.tv_usec;
+
+	ci->ci_last_itime = itime;
+	itime >>= 1;
+	ci->ci_prev_sleep = (ci->ci_prev_sleep + (ci->ci_prev_sleep >> 1)
+	    + itime) >> 1;
 }
 
 #if NKSTAT > 0

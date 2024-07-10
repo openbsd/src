@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.47 2024/05/01 12:54:27 mpi Exp $ */
+/* $OpenBSD: cpu.h,v 1.48 2024/07/10 11:01:24 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -146,6 +146,8 @@ struct cpu_info {
 	uint64_t		ci_ttbr1;
 	vaddr_t			ci_el1_stkend;
 
+	uint32_t		ci_psci_idle_latency;
+	uint32_t		ci_psci_idle_param;
 	uint32_t		ci_psci_suspend_param;
 
 	struct opp_table	*ci_opp_table;
