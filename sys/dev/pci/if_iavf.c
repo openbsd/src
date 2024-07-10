@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.14 2024/07/09 16:04:15 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.15 2024/07/10 08:48:20 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2393,11 +2393,15 @@ iavf_atq_done(struct iavf_softc *sc)
 	unsigned int cons;
 	unsigned int prod;
 
+	mtx_enter(&sc->sc_atq_mtx);
+
 	prod = sc->sc_atq_prod;
 	cons = sc->sc_atq_cons;
 
-	if (prod == cons)
+	if (prod == cons) {
+		mtx_leave(&sc->sc_atq_mtx);
 		return;
+	}
 
 	atq = IAVF_DMA_KVA(&sc->sc_atq);
 
@@ -2421,6 +2425,8 @@ iavf_atq_done(struct iavf_softc *sc)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	sc->sc_atq_cons = cons;
+
+	mtx_leave(&sc->sc_atq_mtx);
 }
 
 static int
@@ -2428,6 +2434,8 @@ iavf_atq_post(struct iavf_softc *sc, struct iavf_aq_desc *iaq)
 {
 	struct iavf_aq_desc *atq, *slot;
 	unsigned int prod;
+
+	mtx_enter(&sc->sc_atq_mtx);
 
 	atq = IAVF_DMA_KVA(&sc->sc_atq);
 	prod = sc->sc_atq_prod;
@@ -2446,6 +2454,9 @@ iavf_atq_post(struct iavf_softc *sc, struct iavf_aq_desc *iaq)
 	prod &= IAVF_AQ_MASK;
 	sc->sc_atq_prod = prod;
 	iavf_wr(sc, sc->sc_aq_regs->atq_tail, prod);
+
+	mtx_leave(&sc->sc_atq_mtx);
+
 	return (prod);
 }
 
