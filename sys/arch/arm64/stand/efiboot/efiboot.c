@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.56 2024/07/07 09:38:44 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.57 2024/07/10 18:46:42 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -588,7 +588,8 @@ efi_dma_constraint(void)
 	    fdt_node_is_compatible(node, "rockchip,rk3588") ||
 	    fdt_node_is_compatible(node, "rockchip,rk3588s"))
 		dma_constraint[1] = htobe64(0xffffffff);
-	if (fdt_node_is_compatible(node, "lenovo,thinkpad-x13s"))
+	if (fdt_node_is_compatible(node, "qcom,sc8280xp") ||
+	    fdt_node_is_compatible(node, "qcom,x1e80100"))
 		dma_constraint[1] = htobe64(0xffffffff);
 
 	/* Pass DMA constraint. */
