@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.199 2024/07/09 16:41:44 tb Exp $
+# $OpenBSD: Makefile,v 1.200 2024/07/10 13:30:14 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -53,7 +53,6 @@ CFLAGS+= -I${LCRYPTO_SRC}/x509
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
-SYMBOL_NAMESPACE=	${.CURDIR}/Symbols.namespace
 
 .if (${MACHINE_CPU} == "amd64") || (${MACHINE_CPU} == "i386")
 SYMBOL_LIST+=	${.CURDIR}/arch/${MACHINE_CPU}/Symbols.list
@@ -746,9 +745,9 @@ includes: prereq
 	    echo $$j; \
 	    eval "$$j"; \
 	done;
-${VERSION_SCRIPT}: ${SYMBOL_LIST} ${SYMBOL_NAMESPACE}
+${VERSION_SCRIPT}: ${SYMBOL_LIST}
 	{ printf '{\n\tglobal:\n'; \
-	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_NAMESPACE}; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		_libre_/' ${SYMBOL_LIST}; \
 	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
 	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
 
