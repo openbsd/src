@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.138 2024/07/09 14:51:37 op Exp $
+.\"	$OpenBSD: mg.1,v 1.139 2024/07/10 05:19:02 jmc Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: July 9 2024 $
+.Dd $Mdocdate: July 10 2024 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -938,11 +938,11 @@ Set the tab width for the current buffer, or the default for new buffers
 if called with a prefix argument or from the startup file.
 .It Ic shell-command
 Execute external command from mini-buffer.
-With an universal argument it inserts the command output into the current
+With a universal argument it inserts the command output into the current
 buffer.
 .It Ic shell-command-on-region
 Provide the text in region to the shell command as input.
-With an universal argument it replaces the region with the command
+With a universal argument it replaces the region with the command
 output.
 .It Ic shrink-window
 Shrink current window by one line.
