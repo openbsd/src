@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.16 2024/07/10 09:14:50 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.17 2024/07/10 09:50:28 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2565,15 +2565,15 @@ iavf_config_irq_map(struct iavf_softc *sc)
 	iavf_aq_dva(&iaq, IAVF_DMA_DVA(&sc->sc_scratch));
 
 	map = IAVF_DMA_KVA(&sc->sc_scratch);
-	map->num_vectors = letoh16(1);
+	map->num_vectors = htole16(1);
 
 	vec = map->vecmap;
-	vec[0].vsi_id = letoh16(sc->sc_vsi_id);
+	vec[0].vsi_id = htole16(sc->sc_vsi_id);
 	vec[0].vector_id = 0;
-	vec[0].rxq_map = letoh16(iavf_allqueues(sc));
-	vec[0].txq_map = letoh16(iavf_allqueues(sc));
-	vec[0].rxitr_idx = IAVF_NOITR;
-	vec[0].txitr_idx = IAVF_NOITR;
+	vec[0].rxq_map = htole16(iavf_allqueues(sc));
+	vec[0].txq_map = htole16(iavf_allqueues(sc));
+	vec[0].rxitr_idx = htole16(IAVF_NOITR);
+	vec[0].txitr_idx = htole16(IAVF_NOITR);
 
 	bus_dmamap_sync(sc->sc_dmat, IAVF_DMA_MAP(&sc->sc_scratch), 0, IAVF_DMA_LEN(&sc->sc_scratch),
 	    BUS_DMASYNC_PREREAD);
