@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.11 2024/04/15 16:49:13 tb Exp $
+# $OpenBSD: symbols.awk,v 1.12 2024/07/10 13:11:22 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -32,6 +32,8 @@ BEGIN {
 
 	# Undefine aliases, so we don't accidentally leave them in Symbols.list.
 	printf("#ifdef %s\n#undef %s\n#endif\n", $0, $0)
+
+	printf("static typeof(%s) *_libre_%s;\n", $0, $0);
 }
 
 END {
@@ -41,12 +43,16 @@ END {
 	printf("\tstruct {\n")
 	printf("\t\tconst char *const name;\n")
 	printf("\t\tconst void *addr;\n")
+	printf("\t\tconst void *libre_addr;\n")
 	printf("\t} symbols[] = {\n")
 
 	for (symbol in symbols) {
 		printf("\t\t{\n")
 		printf("\t\t\t.name = \"%s\",\n", symbol)
 		printf("\t\t\t.addr = &%s,\n", symbol)
+		printf("#if defined(USE_LIBRESSL_NAMESPACE)\n")
+		printf("\t\t\t.libre_addr = &_libre_%s,\n", symbol)
+		printf("#endif\n")
 		printf("\t\t},\n")
 	}
 

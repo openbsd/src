@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2023/06/22 19:23:27 tb Exp $
+#	$OpenBSD: Makefile,v 1.5 2024/07/10 13:11:22 tb Exp $
 
 TESTS = \
 	symbols
@@ -22,7 +22,7 @@ LDADD=		-lcrypto
 DPADD=		${LIBCRYPTO}
 LDFLAGS+=	-lcrypto
 LDFLAGS+=	-Wl,--no-allow-shlib-undefined
-CFLAGS+=	-Wno-deprecated-declarations
+CFLAGS+=	-Wno-deprecated-declarations -DUSE_LIBRESSL_NAMESPACE
 
 CLEANFILES+= include_headers.c symbols.c symbols.c.tmp
 
