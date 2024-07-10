@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1.1.1 2022/09/01 14:20:33 martijn Exp $	*/
+/*	$OpenBSD: pf.c,v 1.2 2024/07/10 20:33:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -210,11 +210,11 @@ pfi_get(struct pfr_buffer *b, const char *filter)
 	bzero(b, sizeof(struct pfr_buffer));
 	b->pfrb_type = PFRB_IFACES;
 	for (;;) {
-		pfr_buf_grow(b, b->pfrb_size);
+		pfr_buf_grow(b, 0);
 		b->pfrb_size = b->pfrb_msize;
 		if (pfi_get_ifaces(filter, b->pfrb_caddr, &(b->pfrb_size)))
 			return (1);
-		if (b->pfrb_size <= b->pfrb_msize)
+		if (b->pfrb_size < b->pfrb_msize)
 			break;
 	}
 
