@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.129 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.130 2024/07/10 13:29:23 krw Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -739,6 +739,11 @@ mount_print(struct mount *mp)
 			flags &= ~MNT_NODEV;
 			comma = ",";
 		}
+		if (flags & MNT_NOPERM) {
+			(void)printf("%snoperm", comma);
+			flags &= ~MNT_NOPERM;
+			comma = ",";
+		}
 		if (flags & MNT_ASYNC) {
 			(void)printf("%sasync", comma);
 			flags &= ~MNT_ASYNC;
@@ -810,6 +815,16 @@ mount_print(struct mount *mp)
 			flags &= ~MNT_FORCE;
 			comma = ",";
 		}
+		if (flags & MNT_STALLED) {
+			(void)printf("%sstalled", comma);
+			flags &= ~MNT_STALLED;
+			comma = ",";
+		}
+		if (flags & MNT_SWAPPABLE) {
+			(void)printf("%sswappable", comma);
+			flags &= ~MNT_SWAPPABLE;
+			comma = ",";
+		}
 		if (flags & MNT_WANTRDWR) {
 			(void)printf("%swantrdwr", comma);
 			flags &= ~MNT_WANTRDWR;
@@ -818,6 +833,11 @@ mount_print(struct mount *mp)
 		if (flags & MNT_SOFTDEP) {
 			(void)printf("%ssoftdep", comma);
 			flags &= ~MNT_SOFTDEP;
+			comma = ",";
+		}
+		if (flags & MNT_DOOMED) {
+			(void)printf("%sdoomed", comma);
+			flags &= ~MNT_DOOMED;
 			comma = ",";
 		}
 		if (flags)
