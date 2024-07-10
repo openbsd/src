@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.1 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.2 2024/07/10 18:59:10 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -190,6 +190,7 @@ static void	 ipcp_schedule_timer(struct module_ipcp *);
 static void	 ipcp_dae_send_disconnect_request(struct assigned_ipv4 *);
 static void	 ipcp_dae_request_on_timeout(int, short, void *);
 static void	 ipcp_dae_on_event(int, short, void *);
+static void	 ipcp_dae_reset_request(struct assigned_ipv4 *);
 static struct ipcp_address
 		*parse_address_range(const char *);
 static const char
@@ -625,7 +626,9 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 			else {
 				log_info("Disconnect id=%u requested",
 				    assign->seq);
-				ipcp_dae_send_disconnect_request(assign);
+				if (assign->dae_ntry == 0)
+					ipcp_dae_send_disconnect_request(
+					    assign);
 			}
 		}
 		break;
@@ -1222,18 +1225,7 @@ ipcp_ipv4_release(struct module_ipcp *self, struct assigned_ipv4 *assign)
 		TAILQ_REMOVE(&assign->user->ipv4s, assign, next);
 		RB_REMOVE(assigned_ipv4_tree, &self->ipv4s, assign);
 		self->nsessions--;
-		if (assign->dae != NULL) {
-			if (assign->dae_ntry > 0) {
-				TAILQ_REMOVE(&assign->dae->reqs, assign,
-				    dae_next);
-				if (evtimer_pending(&assign->dae_evtimer, NULL))
-					evtimer_del(&assign->dae_evtimer);
-			}
-		}
-		if (assign->dae_reqpkt != NULL)
-			radius_delete_packet(assign->dae_reqpkt);
-		if (evtimer_pending(&assign->dae_evtimer, NULL))
-			evtimer_del(&assign->dae_evtimer);
+		ipcp_dae_reset_request(assign);
 		free(assign);
 	}
 }
@@ -1505,37 +1497,34 @@ ipcp_dae_send_disconnect_request(struct assigned_ipv4 *assign)
 	if (assign->dae == NULL)
 		return;		/* DAE is not configured */
 
-	if (assign->dae_ntry == 0)
-
-	if (assign->dae_reqpkt != NULL) {
-		radius_delete_packet(assign->dae_reqpkt);
-		assign->dae_reqpkt = NULL;
+	if (assign->dae_reqpkt == NULL) {
+		if ((reqpkt = radius_new_request_packet(
+		    RADIUS_CODE_DISCONNECT_REQUEST)) == NULL) {
+			log_warn("%s: radius_new_request_packet(): %m",
+			    __func__);
+			return;
+		}
+		radius_put_string_attr(reqpkt, RADIUS_TYPE_ACCT_SESSION_ID,
+		    assign->session_id);
+		radius_set_accounting_request_authenticator(reqpkt,
+		    assign->dae->secret);
+		assign->dae_reqpkt = reqpkt;
 	}
 
-	reqpkt = radius_new_request_packet(RADIUS_CODE_DISCONNECT_REQUEST);
-
-	radius_put_string_attr(reqpkt, RADIUS_TYPE_ACCT_SESSION_ID,
-	    assign->session_id);
-
-	radius_set_accounting_request_authenticator(reqpkt,
-	    assign->dae->secret);
-
-	if (radius_send(assign->dae->sock, reqpkt, 0) < 0)
-		log_warn("%s: sendto: %m", __func__);
-
-	if (assign->dae_ntry == 0)
+	if (assign->dae_ntry == 0) {
 		log_info("Sending Disconnect-Request seq=%u to %s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &assign->dae->nas_addr, buf, sizeof(buf)));
+		TAILQ_INSERT_TAIL(&assign->dae->reqs, assign, dae_next);
+	}
 
-	assign->dae_reqpkt = reqpkt;
-	tv.tv_sec = dae_request_timeouts[assign->dae_ntry];
+	if (radius_send(assign->dae->sock, assign->dae_reqpkt, 0) < 0)
+		log_warn("%s: sendto: %m", __func__);
+
+	tv.tv_sec = dae_request_timeouts[assign->dae_ntry++];
 	tv.tv_usec = 0;
 	evtimer_set(&assign->dae_evtimer, ipcp_dae_request_on_timeout, assign);
 	evtimer_add(&assign->dae_evtimer, &tv);
-
-	if (assign->dae_ntry++ == 0)
-		TAILQ_INSERT_TAIL(&assign->dae->reqs, assign, dae_next);
 }
 
 void
@@ -1544,11 +1533,12 @@ ipcp_dae_request_on_timeout(int fd, short ev, void *ctx)
 	struct assigned_ipv4	*assign = ctx;
 	char			 buf[80];
 
-	if (assign->dae_ntry >= (int)nitems(dae_request_timeouts))
+	if (assign->dae_ntry >= (int)nitems(dae_request_timeouts)) {
 		log_warnx("No answer for Disconnect-Request seq=%u from %s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &assign->dae->nas_addr, buf, sizeof(buf)));
-	else
+		ipcp_dae_reset_request(assign);
+	} else
 		ipcp_dae_send_disconnect_request(assign);
 }
 
@@ -1561,7 +1551,7 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 	uint32_t		 u32;
 	struct assigned_ipv4	*assign;
 	char			 buf[80], causestr[80];
-	const char		*cause;
+	const char		*cause = "";
 
 	if ((ev & EV_READ) == 0)
 		return;
@@ -1581,7 +1571,7 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 		log_warnx("Received RADIUS packet from %s has unknown id=%d",
 		    print_addr((struct sockaddr *)&dae->nas_addr, buf,
 		    sizeof(buf)), radius_get_id(radres));
-		return;
+		goto out;
 	}
 
 	radius_set_request_packet(radres, assign->dae_reqpkt);
@@ -1590,7 +1580,7 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 		    "authenticator", assign->seq, print_addr(
 			(struct sockaddr *)&dae->nas_addr, buf,
 		    sizeof(buf)));
-		return;
+		goto out;
 	}
 	causestr[0] = '\0';
 	if (radius_get_uint32_attr(radres, RADIUS_TYPE_ERROR_CAUSE, &u32) == 0){
@@ -1600,6 +1590,7 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 			    u32, cause);
 		else
 			snprintf(causestr, sizeof(causestr), " cause=%u", u32);
+		cause = causestr;
 	}
 
 	code = radius_get_code(radres);
@@ -1608,13 +1599,11 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 		log_info("Received Disconnect-ACK for seq=%u from %s%s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &dae->nas_addr, buf, sizeof(buf)), cause);
-		evtimer_del(&assign->dae_evtimer);
 		break;
 	case RADIUS_CODE_DISCONNECT_NAK:
 		log_warnx("Received Disconnect-NAK for seq=%u from %s%s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &dae->nas_addr, buf, sizeof(buf)), cause);
-		evtimer_del(&assign->dae_evtimer);
 		break;
 	default:
 		log_warn("Received unknown code=%d for id=%u from %s",
@@ -1622,6 +1611,25 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 		    &dae->nas_addr, buf, sizeof(buf)));
 		break;
 	}
+	ipcp_dae_reset_request(assign);
+ out:
+	if (radres != NULL)
+		radius_delete_packet(radres);
+}
+
+void
+ipcp_dae_reset_request(struct assigned_ipv4 *assign)
+{
+	if (assign->dae != NULL) {
+		if (assign->dae_ntry > 0)
+			TAILQ_REMOVE(&assign->dae->reqs, assign, dae_next);
+	}
+	if (assign->dae_reqpkt != NULL)
+		radius_delete_packet(assign->dae_reqpkt);
+	assign->dae_reqpkt = NULL;
+	if (evtimer_pending(&assign->dae_evtimer, NULL))
+		evtimer_del(&assign->dae_evtimer);
+	assign->dae_ntry = 0;
 }
 
 /***********************************************************************
