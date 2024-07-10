@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.28 2024/07/09 17:26:14 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.29 2024/07/10 05:40:08 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2024 $
+.Dd $Mdocdate: July 10 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -86,8 +86,8 @@ See
 .It Do ipcp Dc module
 The
 .Dq ipcp
-module provides IP configuration and manages IP address pool.
-Also provides session-timeout and disconnection feature.
+module provides IP configuration and manages the IP address pool.
+It also provides session-timeout and disconnection feature.
 See
 .Xr radiusd_ipcp 8 .
 .It Do radius Dc module
