@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.5 2024/07/09 09:31:37 dv Exp $ */
+/* $OpenBSD: vmm.h,v 1.6 2024/07/10 10:41:19 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -106,6 +106,20 @@ struct vm_run_params {
 	/* Output parameter from VMM_IOC_RUN */
 	uint16_t	vrp_exit_reason;	/* exit reason */
 	uint8_t		vrp_irqready;		/* ready for IRQ on entry */
+};
+
+#define VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA 0x1	/* read/write pvclock gpa */
+#define VM_RWVMPARAMS_PVCLOCK_VERSION	 0x2	/* read/write pvclock version */
+#define VM_RWVMPARAMS_ALL	(VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA | \
+    VM_RWVMPARAMS_PVCLOCK_VERSION)
+
+struct vm_rwvmparams_params {
+	/* Input parameters to VMM_IOC_READVMPARAMS/VMM_IOC_WRITEVMPARAMS */
+	uint32_t		vpp_vm_id;
+	uint32_t		vpp_vcpu_id;
+	uint32_t		vpp_mask;
+	paddr_t			vpp_pvclock_system_gpa;
+	uint32_t		vpp_pvclock_version;
 };
 
 /* IOCTL definitions */
@@ -225,6 +239,7 @@ void vm_teardown(struct vm **);
 int vm_get_info(struct vm_info_params *);
 int vm_terminate(struct vm_terminate_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
+int vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int vcpu_must_stop(struct vcpu *);
 int vm_share_mem(struct vm_sharemem_params *, struct proc *);
 int vm_run(struct vm_run_params *);
