@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.365 2024/05/18 05:20:22 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.366 2024/07/10 09:12:11 krw Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -697,10 +697,6 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			}
 
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-#if notyet
-			if (mp->mnt_flag & MNT_SOFTDEP)
-				sp->f_eflags = STATFS_SOFTUPD;
-#endif
 			error = (copyout_statfs(sp, sfsp, p));
 			if (error) {
 				vfs_unbusy(mp);
