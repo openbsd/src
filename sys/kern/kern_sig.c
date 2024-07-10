@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.331 2024/07/09 09:22:50 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.332 2024/07/10 12:28:46 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1078,7 +1078,12 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 */
 		if (signum == SIGKILL) {
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
-			goto runfast;
+			/* Raise priority to at least PUSER. */
+			if (p->p_usrpri > PUSER)
+				p->p_usrpri = PUSER;
+			unsleep(p);
+			setrunnable(p);
+			goto out;
 		}
 
 		if (prop & SA_CONT) {
@@ -1097,10 +1102,19 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			wakeparent = 1;
 			if (action == SIG_DFL)
 				mask = 0;
-			if (action == SIG_CATCH)
-				goto runfast;
-			if (p->p_wchan == NULL)
-				goto run;
+			if (action == SIG_CATCH) {
+				/* Raise priority to at least PUSER. */
+				if (p->p_usrpri > PUSER)
+					p->p_usrpri = PUSER;
+				unsleep(p);
+				setrunnable(p);
+				goto out;
+			}
+			if (p->p_wchan == NULL) {
+				unsleep(p);
+				setrunnable(p);
+				goto out;
+			}
 			atomic_clearbits_int(&p->p_flag, P_WSLEEP);
 			p->p_stat = SSLEEP;
 			goto out;
@@ -1146,8 +1160,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * so it can discover the signal in cursig() and stop
 		 * for the parent.
 		 */
-		if (pr->ps_flags & PS_TRACED)
-			goto run;
+		if (pr->ps_flags & PS_TRACED) {
+			unsleep(p);
+			setrunnable(p);
+			goto out;
+		}
 
 		/*
 		 * Recheck sigmask before waking up the process,
@@ -1206,8 +1223,13 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		/*
 		 * All other (caught or default) signals
 		 * cause the process to run.
+		 * Raise priority to at least PUSER.
 		 */
-		goto runfast;
+		if (p->p_usrpri > PUSER)
+			p->p_usrpri = PUSER;
+		unsleep(p);
+		setrunnable(p);
+		goto out;
 		/* NOTREACHED */
 
 	case SONPROC:
@@ -1229,15 +1251,6 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	}
 	/* NOTREACHED */
 
-runfast:
-	/*
-	 * Raise priority to at least PUSER.
-	 */
-	if (p->p_usrpri > PUSER)
-		p->p_usrpri = PUSER;
-run:
-	unsleep(p);
-	setrunnable(p);
 out:
 	/* finally adjust siglist */
 	if (mask)
