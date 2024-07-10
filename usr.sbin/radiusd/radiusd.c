@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.45 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.46 2024/07/10 16:30:43 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 {
 	extern char		*__progname;
 	const char		*conffile = CONFFILE;
-	int			 ch;
+	int			 ch, error;
 	struct radiusd		*radiusd;
 	bool			 noaction = false;
 	struct passwd		*pw;
@@ -213,10 +213,11 @@ main(int argc, char *argv[])
 
 	event_loop(0);
 
+	error = radiusd->error;
 	radiusd_free(radiusd);
 	event_base_free(NULL);
 
-	if (radiusd->error != 0)
+	if (error != 0)
 		exit(EXIT_FAILURE);
 	else
 		exit(EXIT_SUCCESS);
@@ -339,6 +340,7 @@ radiusd_free(struct radiusd *radiusd)
 	struct radiusd_module		*module, *modulet;
 	struct radiusd_module_ref	*modref, *modreft;
 	struct radiusd_authentication	*authen, *authent;
+	struct radiusd_accounting	*acct, *acctt;
 
 	TAILQ_FOREACH_SAFE(authen, &radiusd->authen, next, authent) {
 		TAILQ_REMOVE(&radiusd->authen, authen, next);
@@ -351,6 +353,19 @@ radiusd_free(struct radiusd *radiusd)
 			free(authen->username[i]);
 		free(authen->username);
 		free(authen);
+	}
+	TAILQ_FOREACH_SAFE(acct, &radiusd->account, next, acctt) {
+		TAILQ_REMOVE(&radiusd->account, acct, next);
+		free(acct->secret);
+		free(acct->acct);
+		TAILQ_FOREACH_SAFE(modref, &acct->deco, next, modreft) {
+			TAILQ_REMOVE(&acct->deco, modref, next);
+			free(modref);
+		}
+		for (i = 0; acct->username[i] != NULL; i++)
+			free(acct->username[i]);
+		free(acct->username);
+		free(acct);
 	}
 	TAILQ_FOREACH_SAFE(module, &radiusd->module, next, modulet) {
 		TAILQ_REMOVE(&radiusd->module, module, next);

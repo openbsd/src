@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2024/07/10 16:30:43 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -394,7 +394,6 @@ authenticate	: AUTHENTICATE str_l BY STRING optdeco {
 				yyerror("Out of memory: %s", strerror(errno));
 				goto authenticate_error;
 			}
-			modref = create_module_ref($4);
 			if ((auth->auth = create_module_ref($4)) == NULL)
 				goto authenticate_error;
 			auth->username = $2.v;
@@ -495,7 +494,7 @@ account		: ACCOUNT optquick str_l TO STRING optdeco {
 			struct radiusd_module_ref	*modref, *modreft;
 
 			if ((acct = calloc(1,
-			    sizeof(struct radiusd_authentication))) == NULL) {
+			    sizeof(struct radiusd_accounting))) == NULL) {
 				yyerror("Out of memory: %s", strerror(errno));
 				goto account_error;
 			}
