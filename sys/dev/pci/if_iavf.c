@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.15 2024/07/10 08:48:20 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.16 2024/07/10 09:14:50 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1115,7 +1115,7 @@ iavf_config_hena(struct iavf_softc *sc)
 	iaq.iaq_flags = htole16(IAVF_AQ_BUF | IAVF_AQ_RD);
 	iaq.iaq_opcode = htole16(IAVF_AQ_OP_SEND_TO_PF);
 	iaq.iaq_vc_opcode = htole32(IAVF_VC_OP_SET_RSS_HENA);
-	iaq.iaq_datalen = htole32(sizeof(*caps));
+	iaq.iaq_datalen = htole16(sizeof(*caps));
 	iavf_aq_dva(&iaq, IAVF_DMA_DVA(&sc->sc_scratch));
 
 	caps = IAVF_DMA_KVA(&sc->sc_scratch);
