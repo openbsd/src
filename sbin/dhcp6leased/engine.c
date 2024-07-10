@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.17 2024/07/09 16:24:57 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.18 2024/07/10 10:30:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1009,8 +1009,13 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 			}
 			memcpy(&status_code, p, sizeof(uint16_t));
 			status_code = ntohs(status_code);
-			visbuf = calloc(4, len - 2);
-			strvisx(visbuf, p + 2, len - 2, VIS_SAFE);
+			/* must be at least 4 * srclen + 1 long */
+			visbuf = calloc(4, opt_hdr.len - 2 + 1);
+			if (visbuf == NULL) {
+				log_warn("%s", __func__);
+				break;
+			}
+			strvisx(visbuf, p + 2, opt_hdr.len - 2, VIS_SAFE);
 			log_debug("%s: %s - %s", __func__,
 			    dhcp_status2str(status_code), visbuf);
 			break;
