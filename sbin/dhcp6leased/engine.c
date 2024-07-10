@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2024/07/10 10:30:46 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.19 2024/07/10 12:44:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -139,10 +139,9 @@ int			 prefixcmp(struct prefix *, struct prefix *, int);
 void			 send_reconfigure_interface(struct iface_pd_conf *,
 			     struct prefix *, enum reconfigure_action);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
-const char		*dhcp_message_type2str(uint8_t);
-const char		*dhcp_option_type2str(uint16_t);
+const char		*dhcp_option_type2str(int);
 const char		*dhcp_duid2str(int, uint8_t *);
-const char		*dhcp_status2str(uint8_t);
+const char		*dhcp_status2str(int);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
 
 struct dhcp6leased_conf	*engine_conf;
@@ -1421,7 +1420,7 @@ send_reconfigure_interface(struct iface_pd_conf *pd_conf, struct prefix *pd,
 }
 
 const char *
-dhcp_message_type2str(uint8_t type)
+dhcp_message_type2str(int type)
 {
 	static char buf[sizeof("Unknown [255]")];
 
@@ -1453,13 +1452,13 @@ dhcp_message_type2str(uint8_t type)
 	case DHCPRELAYREPL:
 		return "DHCPRELAYREPL";
 	default:
-		snprintf(buf, sizeof(buf), "Unknown [%u]", type);
+		snprintf(buf, sizeof(buf), "Unknown [%u]", type & 0xff);
 		return buf;
 	}
 }
 
 const char *
-dhcp_option_type2str(uint16_t code)
+dhcp_option_type2str(int code)
 {
 	static char buf[sizeof("Unknown [65535]")];
 	switch (code) {
@@ -1486,7 +1485,7 @@ dhcp_option_type2str(uint16_t code)
 	case DHO_INF_MAX_RT:
 		return "DHO_INF_MAX_RT";
 	default:
-		snprintf(buf, sizeof(buf), "Unknown [%u]", code);
+		snprintf(buf, sizeof(buf), "Unknown [%u]", code &0xffff);
 		return buf;
 	}
 }
@@ -1510,7 +1509,7 @@ dhcp_duid2str(int len, uint8_t *p)
 }
 
 const char*
-dhcp_status2str(uint8_t status)
+dhcp_status2str(int status)
 {
 	static char buf[sizeof("Unknown [255]")];
 
@@ -1530,7 +1529,7 @@ dhcp_status2str(uint8_t status)
 	case DHCP_STATUS_NOPREFIXAVAIL:
 		return "NoPrefixAvail";
 	default:
-		snprintf(buf, sizeof(buf), "Unknown [%u]", status);
+		snprintf(buf, sizeof(buf), "Unknown [%u]", status & 0xff);
 		return buf;
     }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.8 2024/06/06 15:15:44 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.9 2024/07/10 12:44:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -260,7 +260,7 @@ void			 merge_config(struct dhcp6leased_conf *, struct
 const char		*sin6_to_str(struct sockaddr_in6 *);
 
 /* engine.c */
-const char		*dhcp_message_type2str(uint8_t);
+const char		*dhcp_message_type2str(int);
 
 /* frontend.c */
 struct iface_conf	*find_iface_conf(struct iface_conf_head *, char *);
