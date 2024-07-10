@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.287 2024/05/12 11:50:36 tb Exp $
+# $OpenBSD: Makefile,v 1.288 2024/07/10 08:51:28 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -176,6 +176,7 @@ MAN=	\
 	EVP_PKEY_CTX_get_operation.3 \
 	EVP_PKEY_CTX_new.3 \
 	EVP_PKEY_CTX_set_hkdf_md.3 \
+	EVP_PKEY_CTX_set_tls1_prf_md.3 \
 	EVP_PKEY_add1_attr.3 \
 	EVP_PKEY_asn1_get_count.3 \
 	EVP_PKEY_asn1_new.3 \
