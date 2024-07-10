@@ -1,4 +1,4 @@
-/*	$OpenBSD: t9.2,v 1.3 2024/07/10 09:20:33 krw Exp $	*/
+/*	$OpenBSD: t9.2,v 1.4 2024/07/10 09:24:03 krw Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -591,10 +591,6 @@ sys_statfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-#if notyet
-	if (mp->mnt_flag & MNT_SOFTDEP)
-		sp->f_eflags = STATFS_SOFTUPD;
-#endif
 	/* Don't let non-root see filesystem id (for NFS security) */
 	if (suser(p->p_ucred, &p->p_acflag)) {
 		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
@@ -633,10 +629,6 @@ sys_fstatfs(p, v, retval)
 	if (error)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-#if notyet
-	if (mp->mnt_flag & MNT_SOFTDEP)
-		sp->f_eflags = STATFS_SOFTUPD;
-#endif
 	/* Don't let non-root see filesystem id (for NFS security) */
 	if (suser(p->p_ucred, &p->p_acflag)) {
 		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
@@ -689,10 +681,6 @@ sys_getfsstat(p, v, retval)
 			}
 
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-#if notyet
-			if (mp->mnt_flag & MNT_SOFTDEP)
-				sp->f_eflags = STATFS_SOFTUPD;
-#endif
 			if (suser(p->p_ucred, &p->p_acflag)) {
 				bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
 				sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
