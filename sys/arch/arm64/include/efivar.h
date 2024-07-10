@@ -1,4 +1,4 @@
-/*	$OpenBSD: efivar.h,v 1.1 2023/01/14 12:11:11 kettenis Exp $	*/
+/*	$OpenBSD: efivar.h,v 1.2 2024/07/10 10:53:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,11 @@ struct efi_softc {
 
 	struct todr_chip_handle sc_todr;
 };
+
+
+extern EFI_GET_VARIABLE efi_get_variable;
+extern EFI_SET_VARIABLE efi_set_variable;
+extern EFI_GET_NEXT_VARIABLE_NAME efi_get_next_variable_name;
 
 void	efi_enter(struct efi_softc *);
 void	efi_leave(struct efi_softc *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.7 2024/07/04 20:11:46 kettenis Exp $ */
+/* $OpenBSD: qcscm.c,v 1.8 2024/07/10 10:53:55 kettenis Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,10 +33,13 @@
 #include <machine/fdt.h>
 
 #include <dev/efi/efi.h>
+#include <machine/efivar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
+
+#include "efi.h"
 
 /* #define QCSCM_DEBUG */
 
@@ -142,6 +145,12 @@ EFI_STATUS qcscm_uefi_set_variable(struct qcscm_softc *, CHAR16 *,
 EFI_STATUS qcscm_uefi_get_next_variable(struct qcscm_softc *,
 	    CHAR16 *, int *, EFI_GUID *);
 
+EFI_STATUS qcscm_efi_get_variable(CHAR16 *, EFI_GUID *, UINT32 *,
+	    UINTN *, VOID *);
+EFI_STATUS qcscm_efi_set_variable(CHAR16 *, EFI_GUID *, UINT32,
+	    UINTN, VOID *);
+EFI_STATUS qcscm_efi_get_next_variable_name(UINTN *, CHAR16 *, EFI_GUID *);
+
 #ifdef QCSCM_DEBUG
 void	qcscm_uefi_dump_variables(struct qcscm_softc *);
 void	qcscm_uefi_dump_variable(struct qcscm_softc *, CHAR16 *, int,
@@ -187,6 +196,12 @@ qcscm_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	qcscm_sc = sc;
+
+#if NEFI > 0
+	efi_get_variable = qcscm_efi_get_variable;
+	efi_set_variable = qcscm_efi_set_variable;
+	efi_get_next_variable_name = qcscm_efi_get_next_variable_name;
+#endif
 
 #ifdef QCSCM_DEBUG
 	qcscm_uefi_dump_variables(sc);
@@ -418,7 +433,7 @@ qcscm_uefi_get_variable(struct qcscm_softc *sc,
 
 	resp = QCSCM_DMA_KVA(qdm) + respoff;
 	if (resp->command_id != QCTEE_UEFI_GET_VARIABLE ||
-	    resp->length < sizeof(*resp) || resp->length > respsize) {
+	    resp->length < sizeof(*resp)) {
 		qcscm_dmamem_free(sc, qdm);
 		return QCTEE_UEFI_DEVICE_ERROR;
 	}
@@ -433,7 +448,8 @@ qcscm_uefi_get_variable(struct qcscm_softc *sc,
 		return ret;
 	}
 
-	if (resp->data_offset + resp->data_size > resp->length) {
+	if (resp->length > respsize ||
+	    resp->data_offset + resp->data_size > resp->length) {
 		qcscm_dmamem_free(sc, qdm);
 		return QCTEE_UEFI_DEVICE_ERROR;
 	}
@@ -641,7 +657,71 @@ qcscm_uefi_get_next_variable(struct qcscm_softc *sc,
 	return QCTEE_UEFI_SUCCESS;
 }
 
+#if NEFI > 0
+
+EFI_STATUS
+qcscm_efi_get_variable(CHAR16 *name, EFI_GUID *guid, UINT32 *attributes,
+   UINTN *data_size, VOID *data)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	EFI_STATUS status;
+	int name_size;
+	int size;
+
+	name_size = 0;
+	while (name[name_size])
+		name_size++;
+	name_size++;
+
+	size = *data_size;
+	status = qcscm_uefi_get_variable(sc, name, name_size * 2, guid,
+	    attributes, data, &size);
+	*data_size = size;
+
+	/* Convert 32-bit status code to 64-bit. */
+	return ((status & 0xf0000000) << 32 | (status & 0x0fffffff));
+}
+
+EFI_STATUS
+qcscm_efi_set_variable(CHAR16 *name, EFI_GUID *guid, UINT32 attributes,
+    UINTN data_size, VOID *data)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	EFI_STATUS status;
+	int name_size;
+
+	name_size = 0;
+	while (name[name_size])
+		name_size++;
+	name_size++;
+
+	status = qcscm_uefi_set_variable(sc, name, name_size * 2, guid,
+	    attributes, data, data_size);
+
+	/* Convert 32-bit status code to 64-bit. */
+	return ((status & 0xf0000000) << 32 | (status & 0x0fffffff));
+}
+
+EFI_STATUS
+qcscm_efi_get_next_variable_name(UINTN *name_size, CHAR16 *name,
+    EFI_GUID *guid)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	EFI_STATUS status;
+	int size;
+
+	size = *name_size;
+	status = qcscm_uefi_get_next_variable(sc, name, &size, guid);
+	*name_size = size;
+
+	/* Convert 32-bit status code to 64-bit. */
+	return ((status & 0xf0000000) << 32 | (status & 0x0fffffff));
+}
+
+#endif
+
 #ifdef QCSCM_DEBUG
+
 void
 qcscm_uefi_dump_variables(struct qcscm_softc *sc)
 {
@@ -699,6 +779,7 @@ qcscm_uefi_dump_variable(struct qcscm_softc *sc, CHAR16 *name, int namesize,
 		printf("%02x", data[i]);
 	printf("\n");
 }
+
 #endif
 
 int

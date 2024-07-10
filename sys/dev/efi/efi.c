@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.1 2023/01/14 12:11:11 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.2 2024/07/10 10:53:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 3mdeb <contact@3mdeb.com>
  *
@@ -32,6 +32,10 @@ int	efiioc_var_get(struct efi_softc *sc, void *);
 int	efiioc_var_next(struct efi_softc *sc, void *);
 int	efiioc_var_set(struct efi_softc *sc, void *);
 int	efi_adapt_error(EFI_STATUS);
+
+EFI_GET_VARIABLE efi_get_variable;
+EFI_SET_VARIABLE efi_set_variable;
+EFI_GET_NEXT_VARIABLE_NAME efi_get_next_variable_name;
 
 int
 efiopen(dev_t dev, int flag, int mode, struct proc *p)
@@ -142,13 +146,18 @@ efiioc_var_get(struct efi_softc *sc, void *data)
 		goto leave;
 	}
 
-	if (efi_enter_check(sc)) {
-		error = ENOSYS;
-		goto leave;
+	if (efi_get_variable) {
+		status = efi_get_variable(name, (EFI_GUID *)&ioc->vendor,
+					&ioc->attrib, &ioc->datasize, value);
+	} else {
+		if (efi_enter_check(sc)) {
+			error = ENOSYS;
+			goto leave;
+		}
+		status = sc->sc_rs->GetVariable(name, (EFI_GUID *)&ioc->vendor,
+		    &ioc->attrib, &ioc->datasize, value);
+		efi_leave(sc);
 	}
-	status = sc->sc_rs->GetVariable(name, (EFI_GUID *)&ioc->vendor,
-	    &ioc->attrib, &ioc->datasize, value);
-	efi_leave(sc);
 
 	if (status == EFI_BUFFER_TOO_SMALL) {
 		/*
@@ -183,13 +192,18 @@ efiioc_var_next(struct efi_softc *sc, void *data)
 	if (error)
 		goto leave;
 
-	if (efi_enter_check(sc)) {
-		error = ENOSYS;
-		goto leave;
+	if (efi_get_next_variable_name) {
+		status = efi_get_next_variable_name(&ioc->namesize,
+		    name, (EFI_GUID *)&ioc->vendor);
+	} else {
+		if (efi_enter_check(sc)) {
+			error = ENOSYS;
+			goto leave;
+		}
+		status = sc->sc_rs->GetNextVariableName(&ioc->namesize,
+		    name, (EFI_GUID *)&ioc->vendor);
+		efi_leave(sc);
 	}
-	status = sc->sc_rs->GetNextVariableName(&ioc->namesize,
-	    name, (EFI_GUID *)&ioc->vendor);
-	efi_leave(sc);
 
 	if (status == EFI_BUFFER_TOO_SMALL) {
 		/*
@@ -242,13 +256,18 @@ efiioc_var_set(struct efi_softc *sc, void *data)
 		goto leave;
 	}
 
-	if (efi_enter_check(sc)) {
-		error = ENOSYS;
-		goto leave;
+	if (efi_set_variable) {
+		status = efi_set_variable(name, (EFI_GUID *)&ioc->vendor,
+		    ioc->attrib, ioc->datasize, value);
+	} else {
+		if (efi_enter_check(sc)) {
+			error = ENOSYS;
+			goto leave;
+		}
+		status = sc->sc_rs->SetVariable(name, (EFI_GUID *)&ioc->vendor,
+		    ioc->attrib, ioc->datasize, value);
+		efi_leave(sc);
 	}
-	status = sc->sc_rs->SetVariable(name, (EFI_GUID *)&ioc->vendor,
-	    ioc->attrib, ioc->datasize, value);
-	efi_leave(sc);
 
 	error = efi_adapt_error(status);
 
