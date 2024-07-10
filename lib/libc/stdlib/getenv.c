@@ -1,4 +1,4 @@
-/*	$OpenBSD: getenv.c,v 1.12 2016/03/13 18:34:21 guenther Exp $ */
+/*	$OpenBSD: getenv.c,v 1.13 2024/07/10 14:17:58 jca Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,8 +39,6 @@
  *	Sets offset to be the offset of the name/value combination in the
  *	environmental array, for use by putenv(3), setenv(3) and unsetenv(3).
  *	Explicitly removes '=' in argument name.
- *
- *	This routine *should* be a static; don't use it.
  */
 char *
 __findenv(const char *name, int len, int *offset)
