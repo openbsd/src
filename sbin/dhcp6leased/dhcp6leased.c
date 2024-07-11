@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.11 2024/06/05 16:15:47 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.12 2024/07/11 10:38:57 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -913,6 +913,9 @@ write_lease_file(struct imsg_lease_info *imsg_lease_info)
 	rem = sizeof(lease_buf);
 
 	for (i = 0; i < iface_conf->ia_count; i++) {
+		if (imsg_lease_info->pds[i].prefix_len == 0)
+			continue;
+
 		len = snprintf(p, rem, "%s%d %s %d\n", LEASE_IA_PD_PREFIX,
 		    i, inet_ntop(AF_INET6, &imsg_lease_info->pds[i].prefix,
 		    ntopbuf, INET6_ADDRSTRLEN),

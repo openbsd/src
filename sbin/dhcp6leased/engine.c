@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.22 2024/07/11 10:37:47 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.23 2024/07/11 10:38:57 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1294,11 +1294,6 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 		return;
 	}
 
-	memset(&imsg_lease_info, 0, sizeof(imsg_lease_info));
-	imsg_lease_info.if_index = iface->if_index;
-	memcpy(imsg_lease_info.pds, iface->new_pds, sizeof(iface->new_pds));
-	engine_imsg_compose_main(IMSG_WRITE_LEASE, 0, &imsg_lease_info,
-	    sizeof(imsg_lease_info));
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
 		struct prefix	*pd = &iface->new_pds[ia_conf->id];
@@ -1327,6 +1322,12 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 
 	memcpy(iface->pds, iface->new_pds, sizeof(iface->pds));
 	memset(iface->new_pds, 0, sizeof(iface->new_pds));
+
+	memset(&imsg_lease_info, 0, sizeof(imsg_lease_info));
+	imsg_lease_info.if_index = iface->if_index;
+	memcpy(imsg_lease_info.pds, iface->pds, sizeof(iface->pds));
+	engine_imsg_compose_main(IMSG_WRITE_LEASE, 0, &imsg_lease_info,
+	    sizeof(imsg_lease_info));
 }
 
 void
