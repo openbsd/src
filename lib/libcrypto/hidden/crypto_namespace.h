@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_namespace.h,v 1.3 2024/03/30 10:09:43 tb Exp $	*/
+/*	$OpenBSD: crypto_namespace.h,v 1.4 2024/07/11 21:31:52 miod Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -31,7 +31,11 @@
 				typeof(x) x asm("_lcry_"#x)
 #  define LCRYPTO_USED(x)	__attribute__((visibility("hidden")))	\
 				typeof(x) x asm("_lcry_"#x)
+#  if defined(__hppa__)
+#  define LCRYPTO_ALIAS1(pre,x)	asm("! .global "#pre#x" ! .set "#pre#x", _lcry_"#x)
+#else
 #  define LCRYPTO_ALIAS1(pre,x)	asm(".global "#pre#x"; "#pre#x" = _lcry_"#x)
+#endif
 #  define LCRYPTO_ALIAS(x)	LCRYPTO_ALIAS1(,x); LCRYPTO_ALIAS1(_libre_,x)
 #else
 #  define LCRYPTO_UNUSED(x)	typeof(x) x __attribute__((deprecated))
