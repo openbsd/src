@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.13 2024/07/11 10:48:51 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.14 2024/07/11 13:38:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -549,6 +549,9 @@ update_iface(uint32_t if_index)
 		return;
 
 	if ((flags = get_flags(if_name)) == -1)
+		return;
+
+	if (find_iface_conf(&frontend_conf->iface_list, if_name) == NULL)
 		return;
 
 	memset(&ifinfo, 0, sizeof(ifinfo));
