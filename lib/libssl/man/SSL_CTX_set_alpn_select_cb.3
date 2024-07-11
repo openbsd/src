@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.9 2024/06/28 14:48:43 tb Exp $
+.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.10 2024/07/11 13:50:44 tb Exp $
 .\"	OpenSSL 87b81496 Apr 19 12:38:27 2017 -0400
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 28 2024 $
+.Dd $Mdocdate: July 11 2024 $
 .Dt SSL_CTX_SET_ALPN_SELECT_CB 3
 .Os
 .Sh NAME
@@ -85,10 +85,10 @@
 .Fo SSL_select_next_proto
 .Fa "unsigned char **out"
 .Fa "unsigned char *outlen"
-.Fa "const unsigned char *server"
-.Fa "unsigned int server_len"
-.Fa "const unsigned char *client"
-.Fa "unsigned int client_len"
+.Fa "const unsigned char *peer_list"
+.Fa "unsigned int peer_list_len"
+.Fa "const unsigned char *supported_list"
+.Fa "unsigned int supported_list_len"
 .Fc
 .Ft void
 .Fo SSL_get0_alpn_selected
@@ -149,7 +149,6 @@ parameter is the pointer set via
 .Pp
 .Fn SSL_select_next_proto
 is a helper function used to select protocols.
-It implements the standard protocol selection.
 It is expected that this function is called from the application
 callback
 .Fa cb .
@@ -163,32 +162,30 @@ should ignore
 and fail by returning
 .Dv SSL_TLSEXT_ERR_ALERT_FATAL .
 The protocol data in
-.Fa server ,
-.Fa server_len
+.Fa peer_list ,
+.Fa peer_list_len
 and
-.Fa client ,
-.Fa client_len
-must be in the protocol-list format described below.
+.Fa supported_list ,
+.Fa supported_list_len
+must be two non-empty lists, validly encoded
+in the protocol-list format described below.
 The first item in the
-.Fa server ,
-.Fa server_len
-list that matches an item in the
-.Fa client ,
-.Fa client_len
-list is selected, and returned in
+.Fa peer_list
+that matches an item in the
+.Fa supported_list
+is selected, and returned in
 .Fa out ,
 .Fa outlen .
 The
 .Fa out
 value will point into either
-.Fa server
+.Fa peer_list
 or
-.Fa client ,
+.Fa supported_list ,
 so it must not be modified and
 should be copied immediately.
 If no match is found, the first item in
-.Fa client ,
-.Fa client_len
+.Fa supported_list
 is returned in
 .Fa out ,
 .Fa outlen .
@@ -213,17 +210,13 @@ of non-empty, 8-bit length-prefixed byte strings.
 The length-prefix byte is not included in the length.
 Each string is limited to 255 bytes.
 A byte-string length of 0 is invalid.
-A truncated byte-string is invalid.
 The length of the vector is not in the vector itself, but in a separate
 variable.
 .Pp
 For example:
 .Bd -literal
-unsigned char vector[] = {
-	6, 's', 'p', 'd', 'y', '/', '1',
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1'
-};
-unsigned int length = sizeof(vector);
+const unsigned char *vector = "\e6" "spdy/1" "\e8" "http/1.1";
+unsigned int length = strlen(vector);
 .Ed
 .Pp
 The ALPN callback is executed after the servername callback; as that
@@ -249,8 +242,8 @@ A match was found and is returned in
 .It OPENSSL_NPN_NO_OVERLAP
 No match was found.
 The first item in
-.Fa client ,
-.Fa client_len
+.Fa supported_list ,
+.Fa supported_list_len
 is returned in
 .Fa out ,
 .Fa outlen .
@@ -273,6 +266,16 @@ configured for this connection.
 .Xr ssl 3 ,
 .Xr SSL_CTX_set_tlsext_servername_arg 3 ,
 .Xr SSL_CTX_set_tlsext_servername_callback 3
+.Sh STANDARDS
+.Rs
+.%T TLS Application-Layer Protocol Negotiation Extension
+.%R RFC 7301
+.Re
+.Pp
+.Rs
+.%T TLS Next Protocol Negotiation Extension
+.%U https://datatracker.ietf.org/doc/html/draft-agl-tls-nextprotoneg
+.Re
 .Sh HISTORY
 .Fn SSL_select_next_proto
 first appeared in OpenSSL 1.0.1 and has been available since
@@ -285,3 +288,18 @@ and
 .Fn SSL_get0_alpn_selected
 first appeared in OpenSSL 1.0.2 and have been available since
 .Ox 5.7 .
+.Sh CAVEATS
+The fallback to the first supported protocol in
+.Fn SSL_select_next_proto
+comes from the opportunistic fallback mechanism in the NPN extension.
+This behavior does not make sense for ALPN,
+where missing protocol overlap should result in a handshake failure.
+To avoid accidental selection of a protocol that the server does not
+support, it is recommended to pass the locally configured protocols
+as second pair of protocols in the ALPN callback.
+.Sh BUGS
+The
+.Fa out
+argument of
+.Fn SSL_select_next_proto
+should have been const.
