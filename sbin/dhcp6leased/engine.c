@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.20 2024/07/10 12:52:51 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.21 2024/07/11 09:39:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -947,7 +947,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 	struct dhcp_iaprefix	 iaprefix;
 	struct in6_addr		 mask;
 	int			 i;
-	uint16_t		 status_code;
+	uint16_t		 status_code = DHCP_STATUS_SUCCESS;
 	char			 ntopbuf[INET6_ADDRSTRLEN], *visbuf;
 
 	while (len >= sizeof(struct dhcp_option_hdr)) {
