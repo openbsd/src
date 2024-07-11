@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_ipcp.8,v 1.3 2024/07/10 05:39:25 jmc Exp $
+.\"	$OpenBSD: radiusd_ipcp.8,v 1.4 2024/07/11 14:14:56 yasuoka Exp $
 .\"
 .\" Copyright (c) 2024 Internet Initiative Japan Inc.
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: July 10 2024 $
+.Dd $Mdocdate: July 11 2024 $
 .Dt RADIUSD_IPCP 8
 .Os
 .Sh NAME
@@ -152,7 +152,8 @@ module ipcp {
     set name-server       192.168.0.4
     set max-sessions      128
     set user-max-sessions 2
-    #set dae server        127.0.0.1 "SECRET3"
+    set dae server        127.0.0.1 "SECRET3"
+    set session-timeout   radius
 }
 
 authenticate * by radius decorate-by ipcp
@@ -177,6 +178,9 @@ authentication RADIUS type radius {
     }
 }
 bind tunnel from L2TP authenticated by RADIUS to pppac0
+
+radius dae listen on 127.0.0.1
+radius dae client 127.0.0.1 secret "SECRET3"
 .Ed
 .Sh SEE ALSO
 .Xr authenticate 3 ,
