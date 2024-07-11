@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_config.c,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd_config.c,v 1.15 2024/07/11 14:05:59 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: npppd_config.c,v 1.15 2024/07/11 14:05:59 yasuoka Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -130,6 +130,9 @@ npppd_modules_reload(npppd *_this)
 #endif
 #ifdef USE_NPPPD_PPPOE
 	rval |= pppoed_reload(&_this->pppoed, &_this->conf.pppoe_confs);
+#endif
+#ifdef USE_NPPPD_RADIUS
+	npppd_radius_dae_init(_this);
 #endif
 
 	return rval;

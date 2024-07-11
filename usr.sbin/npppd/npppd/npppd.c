@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.53 2022/07/01 09:57:24 mvs Exp $ */
+/*	$OpenBSD: npppd.c,v 1.54 2024/07/11 14:05:59 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.53 2022/07/01 09:57:24 mvs Exp $
+ * $Id: npppd.c,v 1.54 2024/07/11 14:05:59 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -101,7 +101,6 @@ static void         npppd_timer(int, short, void *);
 static void         npppd_auth_finalizer_periodic(npppd *);
 static int          rd2slist_walk (struct radish *, void *);
 static int          rd2slist (struct radish_head *, slist *);
-static slist       *npppd_get_ppp_by_user (npppd *, const char *);
 static int          npppd_get_all_users (npppd *, slist *);
 static struct ipcpstat
                    *npppd_get_ipcp_stat(struct ipcpstat_head *, const char *);
@@ -255,6 +254,7 @@ npppd_init(npppd *_this, const char *config_file)
 	_this->pid = getpid();
 	slist_init(&_this->realms);
 	npppd_conf_init(&_this->conf);
+	TAILQ_INIT(&_this->raddae_listens);
 
 	log_printf(LOG_NOTICE, "Starting npppd pid=%u version=%s",
 	    _this->pid, VERSION);
@@ -444,6 +444,10 @@ npppd_stop(npppd *_this)
 
 	_this->finalizing = 1;
 	npppd_reset_timer(_this);
+
+#ifdef USE_NPPPD_RADIUS
+	npppd_radius_dae_fini(_this);
+#endif
 }
 
 static void
@@ -763,7 +767,7 @@ npppd_get_ppp_by_ip(npppd *_this, struct in_addr ipaddr)
  * @return	{@link slist} that contains the {@link npppd_ppp} instances.
  * NULL may be returned if no instance has been found.
  */
-static slist *
+slist *
 npppd_get_ppp_by_user(npppd *_this, const char *username)
 {
 	hash_link *hl;

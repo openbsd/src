@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.11 2024/07/01 07:09:07 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.12 2024/07/11 14:05:59 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -45,18 +45,22 @@
 #include <string.h>
 #include <stdbool.h>
 #include <radius.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <event.h>
 
 #include "radius_req.h"
 #include "npppd_local.h"
 #include "npppd_radius.h"
+#include "net_utils.h"
 
 #ifdef NPPPD_RADIUS_DEBUG
 #define NPPPD_RADIUS_DBG(x) 	ppp_log x
 #define NPPPD_RADIUS_ASSERT(x)	ASSERT(x)
 #else
-#define NPPPD_RADIUS_DBG(x) 
+#define NPPPD_RADIUS_DBG(x)
 #define NPPPD_RADIUS_ASSERT(x)
 #endif
 
@@ -72,7 +76,7 @@ static void npppd_ppp_radius_acct_reqcb(void *, RADIUS_PACKET *, int, RADIUS_REQ
 /**
  * Retribute Framed-IP-Address and Framed-IP-Netmask attribute of from 
  * the given RADIUS packet and set them as the fields of ppp context.
- */ 
+ */
 void
 ppp_process_radius_attrs(npppd_ppp *_this, RADIUS_PACKET *pkt)
 {
@@ -269,7 +273,7 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 	    /* npppd has no physical / virtual ports in design. */
 
 	/* RFC 2865  5.32. NAS-Identifier */
-	ATTR_STR(RADIUS_TYPE_NAS_IDENTIFIER, "npppd");
+	ATTR_STR(RADIUS_TYPE_NAS_IDENTIFIER, pppd->conf.nas_id);
 
 	/* RFC 2865 5.31. Calling-Station-Id */
 	if (ppp->calling_number[0] != '\0')
@@ -398,7 +402,7 @@ radius_acct_on(npppd *pppd, radius_req_setting *rad_setting)
 	/* RFC 2866  5.1. Acct-Status-Type */
 	ATTR_INT32(RADIUS_TYPE_ACCT_STATUS_TYPE, RADIUS_ACCT_STATUS_TYPE_ACCT_ON);
 	/* RFC 2865  5.32. NAS-Identifier */
-	ATTR_STR(RADIUS_TYPE_NAS_IDENTIFIER, "npppd");
+	ATTR_STR(RADIUS_TYPE_NAS_IDENTIFIER, pppd->conf.nas_id);
 
 	/* Send the request */
 	radius_request(radctx, radpkt);
@@ -561,4 +565,306 @@ ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
 	return 0;
 fail:
 	return 1;
+}
+
+/***********************************************************************
+ * Dynamic Authorization Extensions for RADIUS
+ ***********************************************************************/
+static int	npppd_radius_dae_listen_start(struct npppd_radius_dae_listen *);
+static void	npppd_radius_dae_on_event(int, short, void *);
+static void	npppd_radius_dae_listen_stop(struct npppd_radius_dae_listen *);
+
+void
+npppd_radius_dae_init(npppd *_this)
+{
+	struct npppd_radius_dae_listens	 listens;
+	struct npppd_radius_dae_listen	*listen, *listent;
+	struct radlistenconf		*listenconf;
+
+	TAILQ_INIT(&listens);
+
+	TAILQ_FOREACH(listenconf, &_this->conf.raddaelistenconfs, entry) {
+		TAILQ_FOREACH_SAFE(listen, &_this->raddae_listens, entry,
+		    listent) {
+			if ((listen->addr.sin4.sin_family == AF_INET &&
+			    listenconf->addr.sin4.sin_family == AF_INET &&
+			    memcmp(&listen->addr.sin4, &listenconf->addr.sin4,
+			    sizeof(struct sockaddr_in)) == 0) ||
+			    (listen->addr.sin6.sin6_family == AF_INET6 &&
+			    listenconf->addr.sin6.sin6_family == AF_INET6 &&
+			    memcmp(&listen->addr.sin6, &listenconf->addr.sin6,
+			    sizeof(struct sockaddr_in6)) == 0))
+				break;
+		}
+		if (listen != NULL)
+			/* keep using this */
+			TAILQ_REMOVE(&_this->raddae_listens, listen, entry);
+		else {
+			if ((listen = calloc(1, sizeof(*listen))) == NULL) {
+				log_printf(LOG_ERR, "%s: calloc failed: %m",
+				    __func__);
+				goto fail;
+			}
+			listen->pppd = _this;
+			listen->sock = -1;
+			if (listenconf->addr.sin4.sin_family == AF_INET)
+				listen->addr.sin4 = listenconf->addr.sin4;
+			else
+				listen->addr.sin6 = listenconf->addr.sin6;
+		}
+		TAILQ_INSERT_TAIL(&listens, listen, entry);
+	}
+
+	/* listen on the new addresses */
+	TAILQ_FOREACH(listen, &listens, entry) {
+		if (listen->sock == -1)
+			npppd_radius_dae_listen_start(listen);
+	}
+
+	/* stop listening on the old addresses */
+	TAILQ_FOREACH_SAFE(listen, &_this->raddae_listens, entry, listent) {
+		TAILQ_REMOVE(&_this->raddae_listens, listen, entry);
+		npppd_radius_dae_listen_stop(listen);
+		free(listen);
+	}
+ fail:
+	TAILQ_CONCAT(&_this->raddae_listens, &listens, entry);
+
+	return;
+}
+
+void
+npppd_radius_dae_fini(npppd *_this)
+{
+	struct npppd_radius_dae_listen *listen, *listent;
+
+	TAILQ_FOREACH_SAFE(listen, &_this->raddae_listens, entry, listent) {
+		TAILQ_REMOVE(&_this->raddae_listens, listen, entry);
+		npppd_radius_dae_listen_stop(listen);
+		free(listen);
+	}
+}
+
+int
+npppd_radius_dae_listen_start(struct npppd_radius_dae_listen *listen)
+{
+	char	 buf[80];
+	int	 sock = -1, on = 1;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		log_printf(LOG_ERR, "%s: socket(): %m", __func__);
+		goto on_error;
+	}
+	on = 1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
+		log_printf(LOG_WARNING, "%s: setsockopt(,,SO_REUSEADDR): %m",
+		    __func__);
+		goto on_error;
+	}
+	if (bind(sock, (struct sockaddr *)&listen->addr,
+	    listen->addr.sin4.sin_len) == -1) {
+		log_printf(LOG_ERR, "%s: bind(): %m", __func__);
+		goto on_error;
+	}
+
+	listen->sock = sock;
+	event_set(&listen->evsock, listen->sock, EV_READ | EV_PERSIST,
+	    npppd_radius_dae_on_event, listen);
+	event_add(&listen->evsock, NULL);
+	log_printf(LOG_INFO, "radius Listening %s/udp (DAE)",
+	    addrport_tostring((struct sockaddr *)&listen->addr,
+	    listen->addr.sin4.sin_len, buf, sizeof(buf)));
+
+	return (0);
+ on_error:
+	if (sock >= 0)
+		close(sock);
+
+	return (-1);
+}
+
+void
+npppd_radius_dae_on_event(int fd, short ev, void *ctx)
+{
+	char				 buf[80], attr[256], username[256];
+	char				*endp;
+	const char			*reason, *nakcause = NULL;
+	struct npppd_radius_dae_listen	*listen = ctx;
+	struct radclientconf		*client;
+	npppd				*_this = listen->pppd;
+	RADIUS_PACKET			*req = NULL, *res = NULL;
+	struct sockaddr_storage		 ss;
+	socklen_t			 sslen;
+	unsigned long long		 ppp_id;
+	int				 code, n = 0;
+	uint32_t			 cause = 0;
+	struct in_addr			 ina;
+	slist				*users;
+	npppd_ppp			*ppp;
+
+	reason = "disconnect requested";
+	sslen = sizeof(ss);
+	req = radius_recvfrom(listen->sock, 0, (struct sockaddr *)&ss, &sslen);
+	if (req == NULL) {
+		log_printf(LOG_WARNING, "%s: receiving a RADIUS message "
+		    "failed: %m", __func__);
+		return;
+	}
+	TAILQ_FOREACH(client, &_this->conf.raddaeclientconfs, entry) {
+		if (ss.ss_family == AF_INET &&
+		    ((struct sockaddr_in *)&ss)->sin_addr.s_addr ==
+		    client->addr.sin4.sin_addr.s_addr)
+			break;
+		else if (ss.ss_family == AF_INET6 &&
+		    IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6 *)&ss)->sin6_addr,
+		    &client->addr.sin6.sin6_addr))
+			break;
+	}
+
+	if (client == NULL) {
+		log_printf(LOG_WARNING, "radius received a RADIUS message from "
+		    "%s: unknown client", addrport_tostring(
+		    (struct sockaddr *)&ss, ss.ss_len, buf, sizeof(buf)));
+		goto out;
+	}
+
+	if (radius_check_accounting_request_authenticator(req,
+	    client->secret) != 0) {
+		log_printf(LOG_WARNING, "radius received an invalid RADIUS "
+		    "message from %s: bad response authenticator",
+		    addrport_tostring(
+		    (struct sockaddr *)&ss, ss.ss_len, buf, sizeof(buf)));
+		goto out;
+	}
+	if ((code = radius_get_code(req)) != RADIUS_CODE_DISCONNECT_REQUEST) {
+		/* Code other than Disconnect-Request is not supported */
+		if (code == RADIUS_CODE_COA_REQUEST) {
+			log_printf(LOG_INFO, "received CoA-Request from %s",
+			    addrport_tostring(
+			    (struct sockaddr *)&ss, ss.ss_len, buf,
+			    sizeof(buf)));
+			code = RADIUS_CODE_COA_NAK;
+			cause = RADIUS_ERROR_CAUSE_ADMINISTRATIVELY_PROHIBITED;
+			goto send;
+		}
+		log_printf(LOG_WARNING, "radius received an invalid RADIUS "
+		    "message from %s: unknown code %d",
+		    addrport_tostring((struct sockaddr *)&ss, ss.ss_len, buf,
+		    sizeof(buf)), code);
+		goto out;
+	}
+
+	log_printf(LOG_INFO, "radius received Disconnect-Request from %s",
+	    addrport_tostring((struct sockaddr *)&ss, ss.ss_len, buf,
+	    sizeof(buf)));
+
+	if (radius_get_string_attr(req, RADIUS_TYPE_NAS_IDENTIFIER, attr,
+	    sizeof(attr)) == 0 && strcmp(attr, _this->conf.nas_id) != 0) {
+		cause = RADIUS_ERROR_CAUSE_NAS_IDENTIFICATION_MISMATCH;
+		nakcause = "NAS Identification is mimatch";
+		goto search_done;
+	}
+
+	/* prepare User-Name attribute */
+	memset(&username, 0, sizeof(username));
+	radius_get_string_attr(req, RADIUS_TYPE_USER_NAME, username,
+	    sizeof(username));
+
+	cause = RADIUS_ERROR_CAUSE_SESSION_NOT_FOUND;
+	/* Our Session-Id is represented in "%08X%08x" (boot_id, ppp_id) */
+	snprintf(buf, sizeof(buf), "%08X", _this->boot_id);
+	if (radius_get_string_attr(req, RADIUS_TYPE_ACCT_SESSION_ID, attr,
+	    sizeof(attr)) == 0) {
+		ppp = NULL;
+		/* the client is to disconnect a session */
+		if (strlen(attr) != 16 || strncmp(buf, attr, 8) != 0) {
+			cause = RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE;
+			nakcause = "Session-Id is wrong";
+			goto search_done;
+		}
+		ppp_id = strtoull(attr + 8, &endp, 16);
+		if (*endp != '\0' || errno == ERANGE || ppp_id == ULLONG_MAX) {
+			cause = RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE;
+			nakcause = "Session-Id is invalid";
+			goto search_done;
+		}
+		if ((ppp = npppd_get_ppp_by_id(_this, ppp_id)) == NULL)
+			goto search_done;
+		if (username[0] != '\0' &&
+		    strcmp(username, ppp->username) != 0) {
+			/* specified User-Name attribute is mismatched */
+			cause = RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE;
+			nakcause = "User-Name is mismatched";
+			goto search_done;
+		}
+		ppp_stop(ppp, reason);
+		n++;
+	} else if (username[0] != '\0') {
+		users = npppd_get_ppp_by_user(_this, username);
+		if (users == NULL)
+			goto search_done;
+		memset(&ina, 0, sizeof(ina));
+		radius_get_uint32_attr(req, RADIUS_TYPE_FRAMED_IP_ADDRESS,
+		    &ina.s_addr);
+		slist_itr_first(users);
+		while ((ppp = slist_itr_next(users)) != NULL) {
+			if (ntohl(ina.s_addr) != 0 &&
+			    ina.s_addr != ppp->ppp_framed_ip_address.s_addr)
+				continue;
+			ppp_stop(ppp, reason);
+			n++;
+		}
+	} else if (radius_get_uint32_attr(req, RADIUS_TYPE_FRAMED_IP_ADDRESS,
+	    &ina.s_addr) == 0) {
+		ppp = npppd_get_ppp_by_ip(_this, ina);
+		if (ppp != NULL) {
+			ppp_stop(ppp, reason);
+			n++;
+		}
+	}
+ search_done:
+	if (n > 0)
+		code = RADIUS_CODE_DISCONNECT_ACK;
+	else {
+		if (nakcause == NULL)
+			nakcause = "session not found";
+		code = RADIUS_CODE_DISCONNECT_NAK;
+	}
+ send:
+	res = radius_new_response_packet(code, req);
+	if (res == NULL) {
+		log_printf(LOG_WARNING, "%s: radius_new_response_packet: %m",
+		    __func__);
+		goto out;
+	}
+	if (cause != 0)
+		radius_put_uint32_attr(res, RADIUS_TYPE_ERROR_CAUSE, cause);
+	radius_set_response_authenticator(res, client->secret);
+	if (radius_sendto(listen->sock, res, 0, (struct sockaddr *)&ss, sslen)
+	    == -1)
+		log_printf(LOG_WARNING, "%s: sendto(): %m", __func__);
+	log_printf(LOG_INFO, "radius send %s to %s%s%s",
+	    (code == RADIUS_CODE_DISCONNECT_ACK)? "Disconnect-ACK" :
+	    (code == RADIUS_CODE_DISCONNECT_NAK)? "Disconnect-NAK" : "CoA-NAK",
+	    addrport_tostring((struct sockaddr *)&ss, ss.ss_len, buf,
+	    sizeof(buf)), (nakcause)? ": " : "", (nakcause)? nakcause : "");
+ out:
+	radius_delete_packet(req);
+	if (res != NULL)
+		radius_delete_packet(res);
+}
+
+void
+npppd_radius_dae_listen_stop(struct npppd_radius_dae_listen *listen)
+{
+	char	 buf[80];
+
+	if (listen->sock >= 0) {
+		log_printf(LOG_INFO, "radius Shutdown %s/udp (DAE)",
+		    addrport_tostring((struct sockaddr *)&listen->addr,
+		    listen->addr.sin4.sin_len, buf, sizeof(buf)));
+		event_del(&listen->evsock);
+		close(listen->sock);
+		listen->sock = -1;
+	}
 }

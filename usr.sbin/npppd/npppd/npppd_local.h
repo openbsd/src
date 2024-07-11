@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.18 2024/02/26 08:29:37 yasuoka Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.19 2024/07/11 14:05:59 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -72,6 +72,10 @@
 #include "addr_range.h"
 #include "npppd_pool.h"
 #include "npppd_ctl.h"
+
+#ifdef	USE_NPPPD_RADIUS
+#include "npppd_radius.h"
+#endif
 
 /** structure of pool */
 struct _npppd_pool {
@@ -168,6 +172,10 @@ struct _npppd {
 	struct ipcpstat_head ipcpstats;
 
 	struct control_sock  ctl_sock;
+
+#ifdef	USE_NPPPD_RADIUS
+	struct npppd_radius_dae_listens	raddae_listens;
+#endif
 
 	u_int /** whether finalizing or not */
 	    finalizing:1,
