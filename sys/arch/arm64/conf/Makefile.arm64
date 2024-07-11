@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.48 2024/07/02 10:25:16 kettenis Exp $
+#	$OpenBSD: Makefile.arm64,v 1.49 2024/07/11 12:07:40 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -56,7 +56,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	-march=armv8-a+nofp+nosimd \
+CMACHFLAGS=	-march=armv8-a+nofp+nosimd+rng \
 		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 		-ffixed-x18
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}

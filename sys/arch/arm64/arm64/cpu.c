@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.124 2024/07/10 11:01:24 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.125 2024/07/11 12:07:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -245,6 +245,7 @@ uint64_t cpu_id_aa64pfr0;
 uint64_t cpu_id_aa64pfr1;
 
 int arm64_has_lse;
+int arm64_has_rng;
 #ifdef CRYPTO
 int arm64_has_aes;
 #endif
@@ -273,6 +274,9 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
+struct timeout cpu_rng_to;
+void	cpu_rng(void *);
+
 void	cpu_opp_init(struct cpu_info *, uint32_t);
 void	cpu_psci_init(struct cpu_info *);
 void	cpu_psci_idle_cycle(void);
@@ -285,6 +289,25 @@ void	cpu_serror_apple(void);
 void	cpu_kstat_attach(struct cpu_info *ci);
 void	cpu_opp_kstat_attach(struct cpu_info *ci);
 #endif
+
+void
+cpu_rng(void *arg)
+{
+	struct timeout *to = arg;
+	uint64_t rndr;
+	int ret;
+
+	ret = __builtin_arm_rndrrs(&rndr);
+	if (ret)
+		ret = __builtin_arm_rndr(&rndr);
+	if (ret == 0) {
+		enqueue_randomness(rndr & 0xffffffff);
+		enqueue_randomness(rndr >> 32);
+	}
+
+	if (to)
+		timeout_add_msec(to, 1000);
+}
 
 /*
  * Enable mitigation for Spectre-V2 branch target injection
@@ -667,6 +690,7 @@ cpu_identify(struct cpu_info *ci)
 	if (ID_AA64ISAR0_RNDR(id) >= ID_AA64ISAR0_RNDR_IMPL) {
 		printf("%sRNDR", sep);
 		sep = ",";
+		arm64_has_rng = 1;
 	}
 
 	if (ID_AA64ISAR0_TLB(id) >= ID_AA64ISAR0_TLB_IOS) {
@@ -1139,6 +1163,11 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		}
 
 		cpu_init();
+
+		if (arm64_has_rng) {
+			timeout_set(&cpu_rng_to, cpu_rng, &cpu_rng_to);
+			cpu_rng(&cpu_rng_to);
+		}
 #ifdef MULTIPROCESSOR
 	}
 #endif
