@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.2 2024/07/10 18:59:10 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.3 2024/07/11 13:29:08 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -1060,7 +1060,7 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 				    assign->session_timeout;
 		}
 		assign->nas_ipv4 = nas_ipv4;
-		assign->nas_ipv4 = nas_ipv4;
+		assign->nas_ipv6 = nas_ipv6;
 		strlcpy(assign->nas_id, nas_id, sizeof(assign->nas_id));
 
 		if (radius_get_string_attr(radpkt, RADIUS_TYPE_ACCT_SESSION_ID,
@@ -1506,6 +1506,22 @@ ipcp_dae_send_disconnect_request(struct assigned_ipv4 *assign)
 		}
 		radius_put_string_attr(reqpkt, RADIUS_TYPE_ACCT_SESSION_ID,
 		    assign->session_id);
+		/*
+		 * RFC 5176 Section 3, "either the User-Name or
+		 * Chargeable-User-Identity attribute SHOULD be present in
+		 * Disconnect-Request and CoA-Request packets."
+		 */
+		radius_put_string_attr(reqpkt, RADIUS_TYPE_USER_NAME,
+		    assign->user->name);
+		if (assign->nas_id[0] != '\0')
+			radius_put_string_attr(reqpkt,
+			    RADIUS_TYPE_NAS_IDENTIFIER, assign->nas_id);
+		if (ntohl(assign->nas_ipv4.s_addr) != 0)
+			radius_put_ipv4_attr(reqpkt,
+			    RADIUS_TYPE_NAS_IP_ADDRESS, assign->nas_ipv4);
+		if (!IN6_IS_ADDR_UNSPECIFIED(&assign->nas_ipv6))
+			radius_put_ipv6_attr(reqpkt,
+			    RADIUS_TYPE_NAS_IPV6_ADDRESS, &assign->nas_ipv6);
 		radius_set_accounting_request_authenticator(reqpkt,
 		    assign->dae->secret);
 		assign->dae_reqpkt = reqpkt;
