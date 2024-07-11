@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.325 2024/06/29 07:34:12 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.326 2024/07/11 13:48:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1791,56 +1791,58 @@ LSSL_ALIAS(SSL_get_servername_type);
  */
 int
 SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
-    const unsigned char *server_list, unsigned int server_list_len,
-    const unsigned char *client_list, unsigned int client_list_len)
+    const unsigned char *peer_list, unsigned int peer_list_len,
+    const unsigned char *supported_list, unsigned int supported_list_len)
 {
-	CBS client, client_proto, server, server_proto;
+	CBS peer, peer_proto, supported, supported_proto;
 
 	*out = NULL;
 	*outlen = 0;
 
-	/* First check that the client list is well-formed. */
-	CBS_init(&client, client_list, client_list_len);
-	if (!tlsext_alpn_check_format(&client))
+	/* First check that the supported list is well-formed. */
+	CBS_init(&supported, supported_list, supported_list_len);
+	if (!tlsext_alpn_check_format(&supported))
 		goto err;
 
 	/*
-	 * Use first client protocol as fallback. This is one way of doing NPN's
-	 * "opportunistic" protocol selection (see security considerations in
-	 * draft-agl-tls-nextprotoneg-04), and it is the documented behavior of
-	 * this API. For ALPN it's the callback's responsibility to fail on
+	 * Use first supported protocol as fallback. This is one way of doing
+	 * NPN's "opportunistic" protocol selection (see security considerations
+	 * in draft-agl-tls-nextprotoneg-04), and it is the documented behavior
+	 * of this API. For ALPN it's the callback's responsibility to fail on
 	 * OPENSSL_NPN_NO_OVERLAP.
 	 */
 
-	if (!CBS_get_u8_length_prefixed(&client, &client_proto))
+	if (!CBS_get_u8_length_prefixed(&supported, &supported_proto))
 		goto err;
 
-	*out = (unsigned char *)CBS_data(&client_proto);
-	*outlen = CBS_len(&client_proto);
+	*out = (unsigned char *)CBS_data(&supported_proto);
+	*outlen = CBS_len(&supported_proto);
 
-	/* Now check that the server list is well-formed. */
-	CBS_init(&server, server_list, server_list_len);
-	if (!tlsext_alpn_check_format(&server))
+	/* Now check that the peer list is well-formed. */
+	CBS_init(&peer, peer_list, peer_list_len);
+	if (!tlsext_alpn_check_format(&peer))
 		goto err;
 
 	/*
-	 * Walk the server list and select the first protocol that appears in
-	 * the client list.
+	 * Walk the peer list and select the first protocol that appears in
+	 * the supported list. Thus we honor peer preference rather than local
+	 * preference contrary to a SHOULD in RFC 7301, section 3.2.
 	 */
-	while (CBS_len(&server) > 0) {
-		if (!CBS_get_u8_length_prefixed(&server, &server_proto))
+	while (CBS_len(&peer) > 0) {
+		if (!CBS_get_u8_length_prefixed(&peer, &peer_proto))
 			goto err;
 
-		CBS_init(&client, client_list, client_list_len);
+		CBS_init(&supported, supported_list, supported_list_len);
 
-		while (CBS_len(&client) > 0) {
-			if (!CBS_get_u8_length_prefixed(&client, &client_proto))
+		while (CBS_len(&supported) > 0) {
+			if (!CBS_get_u8_length_prefixed(&supported,
+			    &supported_proto))
 				goto err;
 
-			if (CBS_mem_equal(&client_proto,
-			    CBS_data(&server_proto), CBS_len(&server_proto))) {
-				*out = (unsigned char *)CBS_data(&server_proto);
-				*outlen = CBS_len(&server_proto);
+			if (CBS_mem_equal(&supported_proto,
+			    CBS_data(&peer_proto), CBS_len(&peer_proto))) {
+				*out = (unsigned char *)CBS_data(&peer_proto);
+				*outlen = CBS_len(&peer_proto);
 
 				return OPENSSL_NPN_NEGOTIATED;
 			}
