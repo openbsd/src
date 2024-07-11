@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.23 2024/07/11 10:38:57 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.24 2024/07/11 10:48:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1279,8 +1279,9 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 	struct iface_ia_conf	*ia_conf;
 	struct iface_pd_conf	*pd_conf;
 	struct imsg_lease_info	 imsg_lease_info;
+	uint32_t	 	 i;
+	char		 	 ntopbuf[INET6_ADDRSTRLEN];
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
-
 
 	if ((if_name = if_indextoname(iface->if_index, ifnamebuf)) == NULL) {
 		log_debug("%s: unknown interface %d", __func__,
@@ -1294,6 +1295,14 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 		return;
 	}
 
+	for (i = 0; i < iface_conf->ia_count; i++) {
+		struct prefix	*pd = &iface->new_pds[i];
+
+		log_info("prefix delegation #%d %s/%d received on %s from "
+		    "server %s", i, inet_ntop(AF_INET6, &pd->prefix, ntopbuf,
+		    INET6_ADDRSTRLEN), pd->prefix_len, if_name,
+		    dhcp_duid2str(iface->serverid_len, iface->serverid));
+	}
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
 		struct prefix	*pd = &iface->new_pds[ia_conf->id];
@@ -1304,10 +1313,9 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 	}
 
 	if (prefixcmp(iface->pds, iface->new_pds, iface_conf->ia_count) != 0) {
-		uint32_t	 i;
-		char		 ntopbuf[INET6_ADDRSTRLEN];
-
-		log_warnx("IA_PDs changed");
+		log_info("Prefix delegations on %s from server %s changed",
+		    if_name, dhcp_duid2str(iface->serverid_len,
+		    iface->serverid));
 		for (i = 0; i < iface_conf->ia_count; i++) {
 			log_debug("%s: iface->pds [%d]: %s/%d", __func__, i,
 			    inet_ntop(AF_INET6, &iface->pds[i].prefix, ntopbuf,
@@ -1336,6 +1344,8 @@ deconfigure_interfaces(struct dhcp6leased_iface *iface)
 	struct iface_conf	*iface_conf;
 	struct iface_ia_conf	*ia_conf;
 	struct iface_pd_conf	*pd_conf;
+	uint32_t	 	 i;
+	char		 	 ntopbuf[INET6_ADDRSTRLEN];
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 
@@ -1349,6 +1359,15 @@ deconfigure_interfaces(struct dhcp6leased_iface *iface)
 		log_debug("%s: no interface configuration for %d", __func__,
 		    iface->if_index);
 		return;
+	}
+
+	for (i = 0; i < iface_conf->ia_count; i++) {
+		struct prefix *pd = &iface->pds[i];
+
+		log_info("Prefix delegation #%d %s/%d expired on %s from "
+		    "server %s", i, inet_ntop(AF_INET6, &pd->prefix, ntopbuf,
+		    INET6_ADDRSTRLEN), pd->prefix_len, if_name,
+		    dhcp_duid2str(iface->serverid_len, iface->serverid));
 	}
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {

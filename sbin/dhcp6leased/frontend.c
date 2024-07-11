@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.12 2024/06/19 07:42:44 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.13 2024/07/11 10:48:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -873,8 +873,8 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 void
 send_packet(uint8_t message_type, struct iface *iface)
 {
-	ssize_t			 pkt_len;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
+	ssize_t	 pkt_len;
+	char	 ifnamebuf[IF_NAMESIZE], *if_name, *message_name;
 
 	if (!event_initialized(&iface->udpev)) {
 		iface->send_solicit = 1;
@@ -887,7 +887,26 @@ send_packet(uint8_t message_type, struct iface *iface)
 	    == NULL)
 		return; /* iface went away, nothing to do */
 
-	log_debug("%s on %s", dhcp_message_type2str(message_type), if_name);
+	switch (message_type) {
+	case DHCPSOLICIT:
+		message_name = "Soliciting";
+		break;
+	case DHCPREQUEST:
+		message_name = "Requesting";
+		break;
+	case DHCPRENEW:
+		message_name = "Renewing";
+		break;
+	case DHCPREBIND:
+		message_name = "Rebinding";
+		break;
+	default:
+		message_name = NULL;
+		break;
+	}
+
+	if (message_name)
+		log_info("%s lease on %s", message_name, if_name);
 
 	pkt_len = build_packet(message_type, iface, if_name);
 
