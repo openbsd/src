@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.428 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.429 2024/07/11 14:11:55 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -1005,19 +1006,39 @@ int
 sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
     int *valp, int minimum, int maximum)
 {
-	int val = *valp;
+	int oldval, newval;
 	int error;
 
 	/* read only */
-	if (newp == NULL || minimum > maximum)
-		return (sysctl_rdint(oldp, oldlenp, newp, val));
+	if (newp != NULL && minimum > maximum)
+		return (EPERM);
 
-	if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)))
-		return (error);
-	/* outside limits */
-	if (val < minimum || maximum < val)
+	if (oldp != NULL && *oldlenp < sizeof(int))
+		return (ENOMEM);
+	if (newp != NULL && newlen != sizeof(int))
 		return (EINVAL);
-	*valp = val;
+	*oldlenp = sizeof(int);
+
+	/* copyin() may sleep, call it first */
+	if (newp != NULL) {
+		if ((error = copyin(newp, &newval, sizeof(int))))
+			return (error);
+		/* outside limits */
+		if (newval < minimum || maximum < newval)
+			return (EINVAL);
+	}
+	if (oldp != NULL) {
+		if (newp != NULL)
+			oldval = atomic_swap_uint(valp, newval);
+		else
+			oldval = atomic_load_int(valp);
+		if ((error = copyout(&oldval, oldp, sizeof(int)))) {
+			/* new value has been set although user gets error */
+			return (error);
+		}
+	} else if (newp != NULL)
+		atomic_store_int(valp, newval);
+
 	return (0);
 }
 
