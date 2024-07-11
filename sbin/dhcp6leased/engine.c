@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.21 2024/07/11 09:39:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.22 2024/07/11 10:37:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1357,6 +1357,7 @@ deconfigure_interfaces(struct dhcp6leased_iface *iface)
 			send_reconfigure_interface(pd_conf, pd, DECONFIGURE);
 		}
 	}
+	memset(iface->pds, 0, sizeof(iface->pds));
 }
 
 int
