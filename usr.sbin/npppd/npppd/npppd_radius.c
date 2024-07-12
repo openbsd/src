@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.12 2024/07/11 14:05:59 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.13 2024/07/12 15:54:11 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -739,12 +739,9 @@ npppd_radius_dae_on_event(int fd, short ev, void *ctx)
 	if ((code = radius_get_code(req)) != RADIUS_CODE_DISCONNECT_REQUEST) {
 		/* Code other than Disconnect-Request is not supported */
 		if (code == RADIUS_CODE_COA_REQUEST) {
-			log_printf(LOG_INFO, "received CoA-Request from %s",
-			    addrport_tostring(
-			    (struct sockaddr *)&ss, ss.ss_len, buf,
-			    sizeof(buf)));
 			code = RADIUS_CODE_COA_NAK;
 			cause = RADIUS_ERROR_CAUSE_ADMINISTRATIVELY_PROHIBITED;
+			nakcause = "Coa-Request is not supported";
 			goto send;
 		}
 		log_printf(LOG_WARNING, "radius received an invalid RADIUS "
@@ -761,16 +758,15 @@ npppd_radius_dae_on_event(int fd, short ev, void *ctx)
 	if (radius_get_string_attr(req, RADIUS_TYPE_NAS_IDENTIFIER, attr,
 	    sizeof(attr)) == 0 && strcmp(attr, _this->conf.nas_id) != 0) {
 		cause = RADIUS_ERROR_CAUSE_NAS_IDENTIFICATION_MISMATCH;
-		nakcause = "NAS Identification is mimatch";
+		nakcause = "NAS Identifier is not matched";
 		goto search_done;
 	}
 
 	/* prepare User-Name attribute */
-	memset(&username, 0, sizeof(username));
+	memset(username, 0, sizeof(username));
 	radius_get_string_attr(req, RADIUS_TYPE_USER_NAME, username,
 	    sizeof(username));
 
-	cause = RADIUS_ERROR_CAUSE_SESSION_NOT_FOUND;
 	/* Our Session-Id is represented in "%08X%08x" (boot_id, ppp_id) */
 	snprintf(buf, sizeof(buf), "%08X", _this->boot_id);
 	if (radius_get_string_attr(req, RADIUS_TYPE_ACCT_SESSION_ID, attr,
@@ -794,7 +790,7 @@ npppd_radius_dae_on_event(int fd, short ev, void *ctx)
 		    strcmp(username, ppp->username) != 0) {
 			/* specified User-Name attribute is mismatched */
 			cause = RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE;
-			nakcause = "User-Name is mismatched";
+			nakcause = "User-Name is not matched";
 			goto search_done;
 		}
 		ppp_stop(ppp, reason);
@@ -828,6 +824,8 @@ npppd_radius_dae_on_event(int fd, short ev, void *ctx)
 	else {
 		if (nakcause == NULL)
 			nakcause = "session not found";
+		if (cause == 0)
+			cause = RADIUS_ERROR_CAUSE_SESSION_NOT_FOUND;
 		code = RADIUS_CODE_DISCONNECT_NAK;
 	}
  send:
