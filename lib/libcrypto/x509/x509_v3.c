@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.33 2024/07/12 08:46:45 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.34 2024/07/12 08:58:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,42 +145,41 @@ LCRYPTO_ALIAS(X509v3_delete_ext);
 STACK_OF(X509_EXTENSION) *
 X509v3_add_ext(STACK_OF(X509_EXTENSION) **x, X509_EXTENSION *ext, int loc)
 {
-	X509_EXTENSION *new_ext = NULL;
-	int n;
 	STACK_OF(X509_EXTENSION) *sk = NULL;
+	X509_EXTENSION *new_ext = NULL;
 
+	/*
+	 * XXX - Nonsense from the poorly reviewed OpenSSL c755c5fd8ba (2005).
+	 * This check should have been joined with the next check, i.e., if no
+	 * stack was passed in, a new one should be created and returned.
+	 */
 	if (x == NULL) {
 		X509error(ERR_R_PASSED_NULL_PARAMETER);
-		goto err2;
+		goto err;
 	}
 
-	if (*x == NULL) {
-		if ((sk = sk_X509_EXTENSION_new_null()) == NULL)
-			goto err;
-	} else
-		sk= *x;
-
-	n = sk_X509_EXTENSION_num(sk);
-	if (loc > n)
-		loc = n;
-	else if (loc < 0)
-		loc = n;
+	if ((sk = *x) == NULL)
+		sk = sk_X509_EXTENSION_new_null();
+	if (sk == NULL) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	if ((new_ext = X509_EXTENSION_dup(ext)) == NULL)
-		goto err2;
+		goto err;
 	if (!sk_X509_EXTENSION_insert(sk, new_ext, loc))
 		goto err;
-	if (*x == NULL)
-		*x = sk;
+	new_ext = NULL;
+
+	*x = sk;
+
 	return sk;
 
  err:
-	X509error(ERR_R_MALLOC_FAILURE);
- err2:
-	if (new_ext != NULL)
-		X509_EXTENSION_free(new_ext);
-	if (sk != NULL && x != NULL && sk != *x)
-		sk_X509_EXTENSION_free(sk);
+	X509_EXTENSION_free(new_ext);
+	if (x != NULL && sk != *x)
+		sk_X509_EXTENSION_pop_free(sk, X509_EXTENSION_free);
+
 	return NULL;
 }
 LCRYPTO_ALIAS(X509v3_add_ext);
