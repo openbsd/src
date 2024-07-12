@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.184 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.185 2024/07/12 19:50:35 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -108,9 +108,6 @@ struct cpumem *rip6counters;
 const struct pr_usrreqs rip6_usrreqs = {
 	.pru_attach	= rip6_attach,
 	.pru_detach	= rip6_detach,
-	.pru_lock	= rip6_lock,
-	.pru_unlock	= rip6_unlock,
-	.pru_locked	= rip6_locked,
 	.pru_bind	= rip6_bind,
 	.pru_connect	= rip6_connect,
 	.pru_disconnect	= rip6_disconnect,
@@ -642,32 +639,6 @@ rip6_detach(struct socket *so)
 	in_pcbdetach(inp);
 
 	return (0);
-}
-
-void
-rip6_lock(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	NET_ASSERT_LOCKED();
-	mtx_enter(&inp->inp_mtx);
-}
-
-void
-rip6_unlock(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	NET_ASSERT_LOCKED();
-	mtx_leave(&inp->inp_mtx);
-}
-
-int
-rip6_locked(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	return mtx_owned(&inp->inp_mtx);
 }
 
 int

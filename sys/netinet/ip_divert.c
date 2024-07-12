@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.95 2024/03/05 09:45:13 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.96 2024/07/12 19:50:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -65,9 +65,6 @@ const struct sysctl_bounded_args divertctl_vars[] = {
 const struct pr_usrreqs divert_usrreqs = {
 	.pru_attach	= divert_attach,
 	.pru_detach	= divert_detach,
-	.pru_lock	= divert_lock,
-	.pru_unlock	= divert_unlock,
-	.pru_locked	= divert_locked,
 	.pru_bind	= divert_bind,
 	.pru_shutdown	= divert_shutdown,
 	.pru_send	= divert_send,
@@ -294,32 +291,6 @@ divert_detach(struct socket *so)
 
 	in_pcbdetach(inp);
 	return (0);
-}
-
-void
-divert_lock(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	NET_ASSERT_LOCKED();
-	mtx_enter(&inp->inp_mtx);
-}
-
-void
-divert_unlock(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	NET_ASSERT_LOCKED();
-	mtx_leave(&inp->inp_mtx);
-}
-
-int
-divert_locked(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	return mtx_owned(&inp->inp_mtx);
 }
 
 int

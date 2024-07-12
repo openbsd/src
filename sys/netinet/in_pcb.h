@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.157 2024/04/19 10:13:58 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.158 2024/07/12 19:50:35 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
  *	N	net lock
  *	t	inpt_mtx		pcb table mutex
  *	y	inpt_notify		pcb table rwlock for notify
- *	p	inpcb_mtx		pcb mutex
  *	L	pf_inp_mtx		link pf to inp mutex
  *	s	so_lock			socket rwlock
  */
@@ -94,8 +93,8 @@
  * needed, so that socket layer input have a consistent view at these
  * values.
  *
- * In soconnect() and sosend() pcb mutex cannot be used.  They eventually
- * can call IP output which takes pf lock which is a sleeping lock.
+ * In soconnect() and sosend() a per pcb mutex cannot be used.  They
+ * eventually call IP output which takes pf lock which is a sleeping lock.
  * Also connect(2) does a route lookup for source selection.  There
  * route resolve happens, which creates a route, which sends a route
  * message, which needs route lock, which is a rw-lock.
@@ -106,15 +105,9 @@
  *
  * So there are three locks.  Table mutex is for writing inp_[lf]addr/port
  * and lookup, socket rw-lock to separate sockets in system calls, and
- * pcb mutex to protect socket receive buffer.  Changing inp_[lf]addr/port
- * takes both per socket rw-lock and global table mutex.  Protocol
- * input only reads inp_[lf]addr/port during lookup and is safe.  System
- * call only reads when holding socket rw-lock and is safe.  The socket
- * layer needs pcb mutex only in soreceive().
- *
- * Function pru_lock() grabs the pcb mutex and its existence indicates
- * that a protocol is MP safe.  Otherwise the exclusive net lock is
- * used.
+ * socket buffer mutex to protect socket receive buffer.  Changing
+ * inp_[lf]addr/port takes both per socket rw-lock and global table mutex.
+ * Protocol input only reads inp_[lf]addr/port during lookup and is safe.
  */
 
 struct pf_state_key;
@@ -149,7 +142,6 @@ struct inpcb {
 	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
 	struct    route inp_route;	/* cached route */
 	struct    refcnt inp_refcnt;	/* refcount PCB, delay memory free */
-	struct	  mutex inp_mtx;	/* protect PCB and socket members */
 	int	  inp_flags;		/* generic IP/datagram flags */
 	union {				/* Header prototype. */
 		struct ip hu_ip;
