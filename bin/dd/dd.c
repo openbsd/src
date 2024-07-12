@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.28 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.29 2024/07/12 14:30:27 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -74,10 +74,10 @@ main(int argc, char *argv[])
 	jcl(argv);
 	setup();
 
-	(void)signal(SIGINFO, summaryx);
-	(void)signal(SIGINT, terminate);
+	(void)signal(SIGINFO, sig_summary);
+	(void)signal(SIGINT, sig_terminate);
 
-	atexit(summary);
+	atexit(exit_summary);
 
 	if (cpy_cnt != (size_t)-1) {
 		while (files_cnt--)
@@ -265,7 +265,7 @@ dd_in(void)
 			if (!(ddflags & C_NOERROR))
 				err(1, "%s", in.name);
 			warn("%s", in.name);
-			summary();
+			sig_summary(0);
 
 			/*
 			 * If it's not a tape drive or a pipe, seek past the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: position.c,v 1.11 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: position.c,v 1.12 2024/07/12 14:30:27 deraadt Exp $	*/
 /*	$NetBSD: position.c,v 1.4 1995/03/21 09:04:12 cgd Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ pos_in(void)
 			if (!warned) {
 				warn("%s", in.name);
 				warned = 1;
-				summary();
+				sig_summary(0);
 			}
 			continue;
 		}

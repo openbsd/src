@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.24 2024/07/12 07:22:44 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.25 2024/07/12 14:30:27 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -45,9 +45,11 @@
 #include "dd.h"
 #include "extern.h"
 
+/* SIGINFO handler */
 void
-summary(void)
+sig_summary(int notused)
 {
+	int save_errno = errno;
 	struct timespec elapsed, now;
 	double nanosecs;
 
@@ -79,20 +81,20 @@ summary(void)
 		    (long long)elapsed.tv_sec, elapsed.tv_nsec / 1000000,
 		    ((double)st.bytes * 1000000000) / nanosecs);
 	}
-}
-
-void
-summaryx(int notused)
-{
-	int save_errno = errno;
-
-	summary();	/* XXX signal race, dprintf floating point */
 	errno = save_errno;
 }
 
+/* SIGINT handler */
 void
-terminate(int signo)
+sig_terminate(int signo)
 {
-	summary();	/* XXX signal race, dprintf floating point */
+	sig_summary(0);
 	_exit(128 + signo);
+}
+
+/* atexit variation to summarize */
+void
+exit_summary(void)
+{
+	sig_summary(0);
 }

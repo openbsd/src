@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2014/03/27 15:32:13 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2024/07/12 14:30:27 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
@@ -44,9 +44,9 @@ void def_close(void);
 void jcl(char **);
 void pos_in(void);
 void pos_out(void);
-void summary(void);
-void summaryx(int);
-void terminate(int);
+void exit_summary(void);
+void sig_summary(int);
+void sig_terminate(int);
 void unblock(void);
 void unblock_close(void);
 
