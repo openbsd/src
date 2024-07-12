@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_namespace.h,v 1.2 2023/02/16 08:38:17 tb Exp $	*/
+/*	$OpenBSD: ssl_namespace.h,v 1.3 2024/07/12 05:26:34 miod Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -27,7 +27,11 @@
 #define LSSL_UNUSED(x)		typeof(x) x __attribute__((deprecated))
 #define LSSL_USED(x)		__attribute__((visibility("hidden")))	\
 				typeof(x) x asm("_lssl_"#x)
+#if defined(__hppa__)
+#define LSSL_ALIAS(x)		asm("! .global "#x" ! .set "#x", _lssl_"#x)
+#else
 #define LSSL_ALIAS(x)		asm(".global "#x"; "#x" = _lssl_"#x)
+#endif
 #else
 #define LSSL_UNUSED(x)
 #define LSSL_USED(x)
