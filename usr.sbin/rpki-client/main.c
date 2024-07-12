@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.260 2024/06/08 13:31:38 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.261 2024/07/12 08:54:48 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -577,7 +577,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	time_t		 mtime;
 	unsigned int	 id;
 	int		 talid;
-	int		 c;
+	int		 ok = 1;
 
 	/*
 	 * For most of these, we first read whether there's any content
@@ -611,8 +611,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		tal_free(tal);
 		break;
 	case RTYPE_CER:
-		io_read_buf(b, &c, sizeof(c));
-		if (c == 0) {
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok == 0) {
 			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
@@ -633,8 +633,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		cert_free(cert);
 		break;
 	case RTYPE_MFT:
-		io_read_buf(b, &c, sizeof(c));
-		if (c == 0) {
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok == 0) {
 			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
@@ -647,8 +647,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		entity_queue++;
 		break;
 	case RTYPE_ROA:
-		io_read_buf(b, &c, sizeof(c));
-		if (c == 0) {
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok == 0) {
 			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
@@ -662,8 +662,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_GBR:
 		break;
 	case RTYPE_ASPA:
-		io_read_buf(b, &c, sizeof(c));
-		if (c == 0) {
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok == 0) {
 			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
@@ -675,8 +675,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		aspa_free(aspa);
 		break;
 	case RTYPE_SPL:
-		io_read_buf(b, &c, sizeof(c));
-		if (c == 0) {
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok == 0) {
 			if (experimental)
 				repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
