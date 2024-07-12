@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.76 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.77 2024/07/12 08:33:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -125,6 +125,10 @@ struct bwfm_pci_softc {
 	bus_space_tag_t		 sc_reg_iot;
 	bus_space_handle_t	 sc_reg_ioh;
 	bus_size_t		 sc_reg_ios;
+
+	bus_space_tag_t		 sc_pcie_iot;
+	bus_space_handle_t	 sc_pcie_ioh;
+	bus_size_t		 sc_pcie_ios;
 
 	bus_space_tag_t		 sc_tcm_iot;
 	bus_space_handle_t	 sc_tcm_ioh;
@@ -371,6 +375,10 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bar1;
 	}
 
+	sc->sc_pcie_iot = sc->sc_reg_iot;
+	bus_space_subregion(sc->sc_reg_iot, sc->sc_reg_ioh, 0x2000,
+	    sc->sc_reg_ios - 0x2000, &sc->sc_pcie_ioh);
+
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_id = pa->pa_id;
@@ -450,11 +458,11 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 #endif
 
 	bwfm_pci_select_core(sc, BWFM_AGENT_CORE_PCIE2);
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+	bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 	    BWFM_PCI_PCIE2REG_CONFIGADDR, 0x4e0);
-	reg = bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+	reg = bus_space_read_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 	    BWFM_PCI_PCIE2REG_CONFIGDATA);
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+	bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 	    BWFM_PCI_PCIE2REG_CONFIGDATA, reg);
 
 	switch (bwfm->sc_chip.ch_chip) {
@@ -1430,10 +1438,10 @@ bwfm_pci_ring_bell(struct bwfm_pci_softc *sc,
     struct bwfm_pci_msgring *ring)
 {
 	if (sc->sc_shared_flags & BWFM_SHARED_INFO_SHARED_DAR)
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_0, 1);
 	else
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_H2D_MAILBOX_0, 1);
 }
 
@@ -1881,13 +1889,13 @@ bwfm_pci_buscore_reset(struct bwfm_softc *bwfm)
 		};
 
 		for (i = 0; i < nitems(cfg_offset); i++) {
-			bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+			bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 			    BWFM_PCI_PCIE2REG_CONFIGADDR, cfg_offset[i]);
-			reg = bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+			reg = bus_space_read_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 			    BWFM_PCI_PCIE2REG_CONFIGDATA);
 			DPRINTFN(3, ("%s: config offset 0x%04x, value 0x%04x\n",
 			    DEVNAME(sc), cfg_offset[i], reg));
-			bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+			bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 			    BWFM_PCI_PCIE2REG_CONFIGDATA, reg);
 		}
 	}
@@ -2381,11 +2389,11 @@ void
 bwfm_pci_intr_enable(struct bwfm_pci_softc *sc)
 {
 	if (sc->sc_pcireg64)
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB);
 	else
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_MAILBOXMASK,
 		    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
 		    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1 |
@@ -2396,10 +2404,10 @@ void
 bwfm_pci_intr_disable(struct bwfm_pci_softc *sc)
 {
 	if (sc->sc_pcireg64)
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK, 0);
 	else
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_MAILBOXMASK, 0);
 }
 
@@ -2407,10 +2415,10 @@ uint32_t
 bwfm_pci_intr_status(struct bwfm_pci_softc *sc)
 {
 	if (sc->sc_pcireg64)
-		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		return bus_space_read_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXINT);
 	else
-		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		return bus_space_read_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_MAILBOXINT);
 }
 
@@ -2418,10 +2426,10 @@ void
 bwfm_pci_intr_ack(struct bwfm_pci_softc *sc, uint32_t status)
 {
 	if (sc->sc_pcireg64)
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXINT, status);
 	else
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_MAILBOXINT, status);
 }
 
@@ -2429,10 +2437,10 @@ uint32_t
 bwfm_pci_intmask(struct bwfm_pci_softc *sc)
 {
 	if (sc->sc_pcireg64)
-		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		return bus_space_read_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_INTMASK);
 	else
-		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		return bus_space_read_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_INTMASK);
 }
 
@@ -2443,10 +2451,10 @@ bwfm_pci_hostready(struct bwfm_pci_softc *sc)
 		return;
 
 	if (sc->sc_shared_flags & BWFM_SHARED_INFO_SHARED_DAR)
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_1, 1);
 	else
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		bus_space_write_4(sc->sc_pcie_iot, sc->sc_pcie_ioh,
 		    BWFM_PCI_PCIE2REG_H2D_MAILBOX_1, 1);
 }
 
