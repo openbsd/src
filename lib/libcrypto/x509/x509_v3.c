@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.32 2024/07/12 08:44:16 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.33 2024/07/12 08:46:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,9 +131,6 @@ LCRYPTO_ALIAS(X509v3_get_ext_by_critical);
 X509_EXTENSION *
 X509v3_get_ext(const STACK_OF(X509_EXTENSION) *sk, int loc)
 {
-	if (sk == NULL || sk_X509_EXTENSION_num(sk) <= loc || loc < 0)
-		return NULL;
-
 	return sk_X509_EXTENSION_value(sk, loc);
 }
 LCRYPTO_ALIAS(X509v3_get_ext);
@@ -141,9 +138,6 @@ LCRYPTO_ALIAS(X509v3_get_ext);
 X509_EXTENSION *
 X509v3_delete_ext(STACK_OF(X509_EXTENSION) *sk, int loc)
 {
-	if (sk == NULL || sk_X509_EXTENSION_num(sk) <= loc || loc < 0)
-		return NULL;
-
 	return sk_X509_EXTENSION_delete(sk, loc);
 }
 LCRYPTO_ALIAS(X509v3_delete_ext);
