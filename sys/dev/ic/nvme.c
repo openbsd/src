@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.119 2024/07/08 16:07:36 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.120 2024/07/12 14:53:09 dv Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -78,7 +78,7 @@ void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
 struct nvme_queue *
 	nvme_q_alloc(struct nvme_softc *, u_int16_t, u_int, u_int);
 int	nvme_q_create(struct nvme_softc *, struct nvme_queue *);
-int	nvme_q_reset(struct nvme_softc *, struct nvme_queue *);
+void	nvme_q_reset(struct nvme_softc *, struct nvme_queue *);
 int	nvme_q_delete(struct nvme_softc *, struct nvme_queue *);
 void	nvme_q_submit(struct nvme_softc *,
 	    struct nvme_queue *, struct nvme_ccb *,
@@ -436,33 +436,22 @@ nvme_resume(struct nvme_softc *sc)
 		return (1);
 	}
 
-	if (nvme_q_reset(sc, sc->sc_admin_q) != 0) {
-		printf("%s: unable to reset admin queue\n", DEVNAME(sc));
-		return (1);
-	}
+	nvme_q_reset(sc, sc->sc_admin_q);
 
 	if (nvme_enable(sc) != 0) {
 		printf("%s: unable to enable controller\n", DEVNAME(sc));
 		return (1);
 	}
 
-	sc->sc_q = nvme_q_alloc(sc, NVME_IO_Q, 128, sc->sc_dstrd);
-	if (sc->sc_q == NULL) {
-		printf("%s: unable to allocate io q\n", DEVNAME(sc));
-		goto disable;
-	}
-
 	if (nvme_q_create(sc, sc->sc_q) != 0) {
 		printf("%s: unable to create io q\n", DEVNAME(sc));
-		goto free_q;
+		goto disable;
 	}
 
 	nvme_write4(sc, NVME_INTMC, 1);
 
 	return (0);
 
-free_q:
-	nvme_q_free(sc, sc->sc_q);
 disable:
 	nvme_disable(sc);
 
@@ -1357,7 +1346,7 @@ nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
 	if (rv != 0)
 		goto fail;
 
-	nvme_q_free(sc, q);
+	nvme_q_reset(sc, q);
 
 fail:
 	scsi_io_put(&sc->sc_iopool, ccb);
@@ -1516,7 +1505,7 @@ free:
 	return (NULL);
 }
 
-int
+void
 nvme_q_reset(struct nvme_softc *sc, struct nvme_queue *q)
 {
 	memset(NVME_DMA_KVA(q->q_sq_dmamem), 0, NVME_DMA_LEN(q->q_sq_dmamem));
@@ -1528,8 +1517,6 @@ nvme_q_reset(struct nvme_softc *sc, struct nvme_queue *q)
 
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_PREWRITE);
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
-
-	return (0);
 }
 
 void
