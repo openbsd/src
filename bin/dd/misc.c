@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.23 2018/04/07 18:52:39 cheloha Exp $	*/
+/*	$OpenBSD: misc.c,v 1.24 2024/07/12 07:22:44 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -86,13 +86,13 @@ summaryx(int notused)
 {
 	int save_errno = errno;
 
-	summary();
+	summary();	/* XXX signal race, dprintf floating point */
 	errno = save_errno;
 }
 
 void
 terminate(int signo)
 {
-	summary();
+	summary();	/* XXX signal race, dprintf floating point */
 	_exit(128 + signo);
 }
