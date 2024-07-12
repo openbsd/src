@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.36 2024/07/12 09:31:28 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.37 2024/07/12 09:33:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,9 +239,7 @@ X509_EXTENSION_set_object(X509_EXTENSION *ext, const ASN1_OBJECT *obj)
 		return 0;
 
 	ASN1_OBJECT_free(ext->object);
-	ext->object = OBJ_dup(obj);
-
-	return ext->object != NULL;
+	return (ext->object = OBJ_dup(obj)) != NULL;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_set_object);
 
