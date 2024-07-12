@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.38 2024/07/12 09:35:54 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.39 2024/07/12 09:42:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,10 +109,10 @@ X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 LCRYPTO_ALIAS(X509v3_get_ext_by_OBJ);
 
 int
-X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
+X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int critical,
     int lastpos)
 {
-	crit = (crit != 0);
+	critical = (critical != 0);
 
 	if (++lastpos < 0)
 		lastpos = 0;
@@ -120,7 +120,7 @@ X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
 	for (; lastpos < X509v3_get_ext_count(sk); lastpos++) {
 		const X509_EXTENSION *ext = X509v3_get_ext(sk, lastpos);
 
-		if (X509_EXTENSION_get_critical(ext) == crit)
+		if (X509_EXTENSION_get_critical(ext) == critical)
 			return lastpos;
 	}
 
@@ -185,7 +185,7 @@ X509v3_add_ext(STACK_OF(X509_EXTENSION) **x, X509_EXTENSION *ext, int loc)
 LCRYPTO_ALIAS(X509v3_add_ext);
 
 X509_EXTENSION *
-X509_EXTENSION_create_by_NID(X509_EXTENSION **ext, int nid, int crit,
+X509_EXTENSION_create_by_NID(X509_EXTENSION **ext, int nid, int critical,
     ASN1_OCTET_STRING *data)
 {
 	const ASN1_OBJECT *obj;
@@ -195,13 +195,13 @@ X509_EXTENSION_create_by_NID(X509_EXTENSION **ext, int nid, int crit,
 		return NULL;
 	}
 
-	return X509_EXTENSION_create_by_OBJ(ext, obj, crit, data);
+	return X509_EXTENSION_create_by_OBJ(ext, obj, critical, data);
 }
 LCRYPTO_ALIAS(X509_EXTENSION_create_by_NID);
 
 X509_EXTENSION *
 X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ext, const ASN1_OBJECT *obj,
-    int crit, ASN1_OCTET_STRING *data)
+    int critical, ASN1_OCTET_STRING *data)
 {
 	X509_EXTENSION *ret;
 
@@ -214,7 +214,7 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ext, const ASN1_OBJECT *obj,
 
 	if (!X509_EXTENSION_set_object(ret, obj))
 		goto err;
-	if (!X509_EXTENSION_set_critical(ret, crit))
+	if (!X509_EXTENSION_set_critical(ret, critical))
 		goto err;
 	if (!X509_EXTENSION_set_data(ret, data))
 		goto err;
@@ -244,12 +244,12 @@ X509_EXTENSION_set_object(X509_EXTENSION *ext, const ASN1_OBJECT *obj)
 LCRYPTO_ALIAS(X509_EXTENSION_set_object);
 
 int
-X509_EXTENSION_set_critical(X509_EXTENSION *ext, int crit)
+X509_EXTENSION_set_critical(X509_EXTENSION *ext, int critical)
 {
 	if (ext == NULL)
 		return 0;
 
-	ext->critical = crit ? 0xFF : -1;
+	ext->critical = critical ? 0xFF : -1;
 
 	return 1;
 }
