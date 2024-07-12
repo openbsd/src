@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.56 2024/07/12 15:53:51 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.57 2024/07/12 18:15:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -67,6 +67,23 @@
 #include "x509_local.h"
 
 static int
+trust_if_self_signed(const X509 *x)
+{
+	/* Extensions already cached in X509_check_trust(). */
+	if ((x->ex_flags & EXFLAG_SS) != 0)
+		return X509_TRUST_TRUSTED;
+
+	return X509_TRUST_UNTRUSTED;
+}
+
+static int
+trust_was_set(const X509 *x)
+{
+	return x->aux != NULL && (x->aux->trust != NULL ||
+	    x->aux->reject != NULL);
+}
+
+static int
 obj_trust(int id, const X509 *x)
 {
 	const X509_CERT_AUX *aux;
@@ -94,33 +111,31 @@ obj_trust(int id, const X509 *x)
 }
 
 static int
-trust_if_self_signed(const X509 *x)
+nid_from_trust_id(int trust_id)
 {
-	/* Extensions already cached in X509_check_trust(). */
-	if ((x->ex_flags & EXFLAG_SS) != 0)
-		return X509_TRUST_TRUSTED;
+	OPENSSL_assert(trust_id == 0 ||
+	    (trust_id >= X509_TRUST_MIN && trust_id <= X509_TRUST_MAX));
 
-	return X509_TRUST_UNTRUSTED;
-}
-
-static int
-trust_1oidany(int nid, const X509 *x)
-{
-	/* Inspect the certificate's trust settings if there are any. */
-	if (x->aux != NULL && (x->aux->trust != NULL || x->aux->reject != NULL))
-		return obj_trust(nid, x);
-
-	/* For compatibility we return trusted if the cert is self signed. */
-	return trust_if_self_signed(x);
-}
-
-static int
-trust_1oid(int nid, const X509 *x)
-{
-	if (x->aux != NULL)
-		return obj_trust(nid, x);
-
-	return X509_TRUST_UNTRUSTED;
+	switch (trust_id) {
+	case X509_TRUST_COMPAT:
+		return NID_undef;
+	case X509_TRUST_SSL_CLIENT:
+		return NID_client_auth;
+	case X509_TRUST_SSL_SERVER:
+		return NID_server_auth;
+	case X509_TRUST_EMAIL:
+		return NID_email_protect;
+	case X509_TRUST_OBJECT_SIGN:
+		return NID_code_sign;
+	case X509_TRUST_OCSP_SIGN:
+		return NID_OCSP_sign;
+	case X509_TRUST_OCSP_REQUEST:
+		return NID_ad_OCSP;
+	case X509_TRUST_TSA:
+		return NID_time_stamp;
+	default:
+		return NID_undef;
+	}
 }
 
 int
@@ -128,40 +143,36 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 {
 	int rv;
 
-	if (trust_id == -1)
-		return 1;
-
 	/* Call early so the trust handlers don't need to modify the certs. */
 	if (!x509v3_cache_extensions(x))
 		return X509_TRUST_UNTRUSTED;
 
+	/*
+	 * XXX make X509_TRUST_ACCEPT_ALL a real boy once it does not
+	 * need to have the same -1 value as X509_TRUST_DEFAULT
+	 */
+	if (trust_id == X509_TRUST_ACCEPT_ALL)
+		return 1;
+
 	switch (trust_id) {
-	case 0: /*
-		 * The default behaviour: If the certificate has EKU any, or it
-		 * is self-signed, it is trusted. Otherwise it is untrusted.
-		 */
+	case X509_TRUST_COMPAT:
+		return trust_if_self_signed(x);
+	case X509_TRUST_EMAIL:
+	case X509_TRUST_OBJECT_SIGN:
+	case X509_TRUST_SSL_SERVER:
+	case X509_TRUST_SSL_CLIENT:
+	case X509_TRUST_TSA:
+		if (trust_was_set(x))
+			return obj_trust(nid_from_trust_id(trust_id), x);
+		return trust_if_self_signed(x);
+	case X509_TRUST_OCSP_SIGN:
+	case X509_TRUST_OCSP_REQUEST:
+		return obj_trust(nid_from_trust_id(trust_id), x);
+	default:
 		rv = obj_trust(NID_anyExtendedKeyUsage, x);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
 		return trust_if_self_signed(x);
-	case X509_TRUST_COMPAT:
-		return trust_if_self_signed(x);
-	case X509_TRUST_SSL_CLIENT:
-		return trust_1oidany(NID_client_auth, x);
-	case X509_TRUST_SSL_SERVER:
-		return trust_1oidany(NID_server_auth, x);
-	case X509_TRUST_EMAIL:
-		return trust_1oidany(NID_email_protect, x);
-	case X509_TRUST_OBJECT_SIGN:
-		return trust_1oidany(NID_code_sign, x);
-	case X509_TRUST_OCSP_SIGN:
-		return trust_1oid(NID_OCSP_sign, x);
-	case X509_TRUST_OCSP_REQUEST:
-		return trust_1oid(NID_ad_OCSP, x);
-	case X509_TRUST_TSA:
-		return trust_1oidany(NID_time_stamp, x);
-	default:
-		return obj_trust(trust_id, x);
 	}
 }
 LCRYPTO_ALIAS(X509_check_trust);

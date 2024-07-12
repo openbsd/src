@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.42 2024/05/15 18:10:03 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.43 2024/07/12 18:15:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -150,7 +150,7 @@ static const X509_PURPOSE xstandard[] = {
 	},
 	{
 		.purpose = X509_PURPOSE_ANY,
-		.trust = X509_TRUST_DEFAULT,
+		.trust = X509_TRUST_ACCEPT_ALL,
 		.check_purpose = no_check,
 		.name = "Any Purpose",
 		.sname = "any",

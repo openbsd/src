@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.23 2023/07/08 10:44:00 beck Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.24 2024/07/12 18:15:10 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -168,8 +168,8 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 			goto end;
 
 		x = sk_X509_value(chain, sk_X509_num(chain) - 1);
-		if (X509_check_trust(x, NID_OCSP_sign, 0) !=
-			X509_TRUST_TRUSTED) {
+		if (X509_check_trust(x, X509_TRUST_OCSP_SIGN, 0) !=
+		    X509_TRUST_TRUSTED) {
 			OCSPerror(OCSP_R_ROOT_CA_NOT_TRUSTED);
 			goto end;
 		}
