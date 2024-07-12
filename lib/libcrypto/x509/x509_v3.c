@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.35 2024/07/12 09:25:43 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.36 2024/07/12 09:31:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -205,13 +205,12 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ext, const ASN1_OBJECT *obj,
 {
 	X509_EXTENSION *ret;
 
-	if (ext == NULL || *ext == NULL) {
-		if ((ret = X509_EXTENSION_new()) == NULL) {
-			X509error(ERR_R_MALLOC_FAILURE);
-			return NULL;
-		}
-	} else
-		ret= *ext;
+	if (ext == NULL || (ret = *ext) == NULL)
+		ret = X509_EXTENSION_new();
+	if (ret == NULL) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	if (!X509_EXTENSION_set_object(ret, obj))
 		goto err;
@@ -220,13 +219,15 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ext, const ASN1_OBJECT *obj,
 	if (!X509_EXTENSION_set_data(ret, data))
 		goto err;
 
-	if (ext != NULL && *ext == NULL)
+	if (ext != NULL)
 		*ext = ret;
+
 	return ret;
 
  err:
 	if (ext == NULL || ret != *ext)
 		X509_EXTENSION_free(ret);
+
 	return NULL;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_create_by_OBJ);
