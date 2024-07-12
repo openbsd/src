@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldcp.c,v 1.1 2024/01/22 18:54:01 kettenis Exp $	*/
+/*	$OpenBSD: apldcp.c,v 1.2 2024/07/12 10:01:28 tobhe Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/pool.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -103,13 +104,18 @@ apldcp_activate(struct device *self, int act)
 
 #include <arm64/dev/rtkit.h>
 
-struct apple_rtkit_ep {
-	struct apple_rtkit *rtk;
-	uint8_t ep;
-
+struct apple_rtkit_task {
+	struct apple_rtkit_ep *rtkep;
 	struct task task;
 	uint64_t msg;
 };
+
+struct apple_rtkit_ep {
+	struct apple_rtkit *rtk;
+	uint8_t ep;
+};
+
+static struct pool rtktask_pool;
 
 struct apple_rtkit {
 	struct rtkit_state *state;
@@ -170,10 +176,12 @@ apple_rtkit_logmap(void *cookie, bus_addr_t addr)
 void
 apple_rtkit_do_recv(void *arg)
 {
-	struct apple_rtkit_ep *rtkep = arg;
+	struct apple_rtkit_task *rtktask = arg;
+	struct apple_rtkit_ep *rtkep = rtktask->rtkep;
 	struct apple_rtkit *rtk = rtkep->rtk;
 
-	rtk->ops->recv_message(rtk->cookie, rtkep->ep, rtkep->msg);
+	rtk->ops->recv_message(rtk->cookie, rtkep->ep, rtktask->msg);
+	pool_put(&rtktask_pool, rtktask);
 }
 
 void
@@ -181,9 +189,15 @@ apple_rtkit_recv(void *cookie, uint64_t msg)
 {
 	struct apple_rtkit_ep *rtkep = cookie;
 	struct apple_rtkit *rtk = rtkep->rtk;
+	struct apple_rtkit_task *rtktask;
 
-	rtkep->msg = msg;
-	task_add(rtk->tq, &rtkep->task);
+	rtktask = pool_get(&rtktask_pool, PR_NOWAIT | PR_ZERO);
+	KASSERT(rtktask != NULL);
+
+	rtktask->rtkep = rtkep;
+	rtktask->msg = msg;
+	task_set(&rtktask->task, apple_rtkit_do_recv, rtktask);
+	task_add(rtk->tq, &rtktask->task);
 }
 
 int
@@ -195,8 +209,6 @@ apple_rtkit_start_ep(struct apple_rtkit *rtk, uint8_t ep)
 	rtkep = &rtk->ep[ep];
 	rtkep->rtk = rtk;
 	rtkep->ep = ep;
-	task_set(&rtkep->task, apple_rtkit_do_recv, rtkep);
-
 	error = rtkit_start_endpoint(rtk->state, ep, apple_rtkit_recv, rtkep);
 	return -error;
 }
@@ -238,6 +250,9 @@ devm_apple_rtkit_init(struct device *dev, void *cookie,
 		free(rtk, M_DEVBUF, sizeof(*rtk));
 		return ERR_PTR(ENOMEM);
 	}
+
+	pool_init(&rtktask_pool, sizeof(struct apple_rtkit_task), 0, IPL_TTY,
+	    0, "apldcp_rtkit", NULL);
 
 	rk = malloc(sizeof(*rk), M_DEVBUF, M_WAITOK | M_ZERO);
 	rk->rk_cookie = rtk;
