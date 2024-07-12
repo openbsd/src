@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.3 2024/07/11 13:29:08 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.4 2024/07/12 15:54:52 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -624,7 +624,7 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 				log_warnx("Disconnect seq=%u requested, but "
 				    "DAE is not configured", assign->seq);
 			else {
-				log_info("Disconnect id=%u requested",
+				log_info("Disconnect seq=%u requested",
 				    assign->seq);
 				if (assign->dae_ntry == 0)
 					ipcp_dae_send_disconnect_request(
