@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.150 2024/04/30 17:05:20 miod Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.151 2024/07/12 17:20:18 mvs Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -374,7 +374,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	mtx_leave(&so->so_rcv.sb_mtx);
+	mtx_enter(&so->so_snd.sb_mtx);
 	so->so_snd.sb_flags |= SB_NOINTR;
+	mtx_leave(&so->so_snd.sb_mtx);
 	sounlock(so);
 
 	m_freem(mopt);

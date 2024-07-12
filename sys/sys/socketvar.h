@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.131 2024/05/17 19:11:14 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.132 2024/07/12 17:20:18 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ sb_notify(struct socket *so, struct sockbuf *sb)
  */
 
 static inline long
-sbspace(struct socket *so, struct sockbuf *sb)
+sbspace_locked(struct socket *so, struct sockbuf *sb)
 {
 	if (sb->sb_flags & SB_MTXLOCK)
 		sbmtxassertlocked(so, sb);
@@ -245,6 +245,18 @@ sbspace(struct socket *so, struct sockbuf *sb)
 		soassertlocked_readonly(so);
 
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
+}
+
+static inline long
+sbspace(struct socket *so, struct sockbuf *sb)
+{
+	long ret;
+
+	sb_mtx_lock(sb);
+	ret = sbspace_locked(so, sb);
+	sb_mtx_unlock(sb);
+	
+	return ret;
 }
 
 /* do we have to send all at once on a socket? */
