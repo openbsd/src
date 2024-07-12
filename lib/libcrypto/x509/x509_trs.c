@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.55 2024/03/26 22:43:42 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.56 2024/07/12 15:53:51 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -94,7 +94,7 @@ obj_trust(int id, const X509 *x)
 }
 
 static int
-trust_compat(int nid, const X509 *x)
+trust_if_self_signed(const X509 *x)
 {
 	/* Extensions already cached in X509_check_trust(). */
 	if ((x->ex_flags & EXFLAG_SS) != 0)
@@ -111,7 +111,7 @@ trust_1oidany(int nid, const X509 *x)
 		return obj_trust(nid, x);
 
 	/* For compatibility we return trusted if the cert is self signed. */
-	return trust_compat(NID_undef, x);
+	return trust_if_self_signed(x);
 }
 
 static int
@@ -136,22 +136,16 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 		return X509_TRUST_UNTRUSTED;
 
 	switch (trust_id) {
-	case 0:
-		/*
-		 * XXX beck/jsing This enables self signed certs to be trusted
-		 * for an unspecified id/trust flag value (this is NOT the
-		 * X509_TRUST_DEFAULT), which was the longstanding openssl
-		 * behaviour. boringssl does not have this behaviour.
-		 *
-		 * This should be revisited, but changing the default
-		 * "not default" may break things.
+	case 0: /*
+		 * The default behaviour: If the certificate has EKU any, or it
+		 * is self-signed, it is trusted. Otherwise it is untrusted.
 		 */
 		rv = obj_trust(NID_anyExtendedKeyUsage, x);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
-		return trust_compat(NID_undef, x);
+		return trust_if_self_signed(x);
 	case X509_TRUST_COMPAT:
-		return trust_compat(NID_undef, x);
+		return trust_if_self_signed(x);
 	case X509_TRUST_SSL_CLIENT:
 		return trust_1oidany(NID_client_auth, x);
 	case X509_TRUST_SSL_SERVER:
