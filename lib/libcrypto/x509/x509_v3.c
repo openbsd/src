@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.41 2024/07/12 09:53:30 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.42 2024/07/12 09:55:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,36 +69,36 @@
 #include "x509_local.h"
 
 int
-X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *sk)
+X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *exts)
 {
-	if (sk == NULL)
+	if (exts == NULL)
 		return 0;
 
-	return sk_X509_EXTENSION_num(sk);
+	return sk_X509_EXTENSION_num(exts);
 }
 LCRYPTO_ALIAS(X509v3_get_ext_count);
 
 int
-X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *sk, int nid, int lastpos)
+X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *exts, int nid, int lastpos)
 {
 	const ASN1_OBJECT *obj;
 
 	if ((obj = OBJ_nid2obj(nid)) == NULL)
 		return -2;
 
-	return X509v3_get_ext_by_OBJ(sk, obj, lastpos);
+	return X509v3_get_ext_by_OBJ(exts, obj, lastpos);
 }
 LCRYPTO_ALIAS(X509v3_get_ext_by_NID);
 
 int
-X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
+X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *exts,
     const ASN1_OBJECT *obj, int lastpos)
 {
 	if (++lastpos < 0)
 		lastpos = 0;
 
-	for (; lastpos < X509v3_get_ext_count(sk); lastpos++) {
-		const X509_EXTENSION *ext = X509v3_get_ext(sk, lastpos);
+	for (; lastpos < X509v3_get_ext_count(exts); lastpos++) {
+		const X509_EXTENSION *ext = X509v3_get_ext(exts, lastpos);
 
 		if (OBJ_cmp(ext->object, obj) == 0)
 			return lastpos;
@@ -109,7 +109,7 @@ X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 LCRYPTO_ALIAS(X509v3_get_ext_by_OBJ);
 
 int
-X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int critical,
+X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *exts, int critical,
     int lastpos)
 {
 	critical = (critical != 0);
@@ -117,8 +117,8 @@ X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int critical,
 	if (++lastpos < 0)
 		lastpos = 0;
 
-	for (; lastpos < X509v3_get_ext_count(sk); lastpos++) {
-		const X509_EXTENSION *ext = X509v3_get_ext(sk, lastpos);
+	for (; lastpos < X509v3_get_ext_count(exts); lastpos++) {
+		const X509_EXTENSION *ext = X509v3_get_ext(exts, lastpos);
 
 		if (X509_EXTENSION_get_critical(ext) == critical)
 			return lastpos;
@@ -129,16 +129,16 @@ X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int critical,
 LCRYPTO_ALIAS(X509v3_get_ext_by_critical);
 
 X509_EXTENSION *
-X509v3_get_ext(const STACK_OF(X509_EXTENSION) *sk, int loc)
+X509v3_get_ext(const STACK_OF(X509_EXTENSION) *exts, int loc)
 {
-	return sk_X509_EXTENSION_value(sk, loc);
+	return sk_X509_EXTENSION_value(exts, loc);
 }
 LCRYPTO_ALIAS(X509v3_get_ext);
 
 X509_EXTENSION *
-X509v3_delete_ext(STACK_OF(X509_EXTENSION) *sk, int loc)
+X509v3_delete_ext(STACK_OF(X509_EXTENSION) *exts, int loc)
 {
-	return sk_X509_EXTENSION_delete(sk, loc);
+	return sk_X509_EXTENSION_delete(exts, loc);
 }
 LCRYPTO_ALIAS(X509v3_delete_ext);
 
