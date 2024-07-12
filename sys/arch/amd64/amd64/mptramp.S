@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.22 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.23 2024/07/12 13:10:58 deraadt Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -233,6 +233,7 @@ GENTRY(cpu_spinup_finish)
 	movl	$CR0_DEFAULT,%eax
 	movq	%rax,%cr0
 	call	cpu_hatch
+	movq	$0,-8(%rsp)
 END(cpu_spinup_finish)
 	/* NOTREACHED */
 
