@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.34 2024/07/12 08:58:59 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.35 2024/07/12 09:25:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,18 +188,14 @@ X509_EXTENSION *
 X509_EXTENSION_create_by_NID(X509_EXTENSION **ext, int nid, int crit,
     ASN1_OCTET_STRING *data)
 {
-	ASN1_OBJECT *obj;
-	X509_EXTENSION *ret;
+	const ASN1_OBJECT *obj;
 
-	obj = OBJ_nid2obj(nid);
-	if (obj == NULL) {
+	if ((obj = OBJ_nid2obj(nid)) == NULL) {
 		X509error(X509_R_UNKNOWN_NID);
 		return NULL;
 	}
-	ret = X509_EXTENSION_create_by_OBJ(ext, obj, crit, data);
-	if (ret == NULL)
-		ASN1_OBJECT_free(obj);
-	return ret;
+
+	return X509_EXTENSION_create_by_OBJ(ext, obj, crit, data);
 }
 LCRYPTO_ALIAS(X509_EXTENSION_create_by_NID);
 
