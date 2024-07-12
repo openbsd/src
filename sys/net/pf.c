@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1201 2024/07/04 12:50:08 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1202 2024/07/12 09:25:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7966,7 +7966,7 @@ done:
 			if (pd.dir == PF_IN) {
 				int flags = IP_REDIRECT;
 
-				switch (ip_forwarding) {
+				switch (atomic_load_int(&ip_forwarding)) {
 				case 2:
 					SET(flags, IP_FORWARDING_IPSEC);
 					/* FALLTHROUGH */
