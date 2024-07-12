@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.224 2024/06/08 13:30:35 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.225 2024/07/12 09:27:32 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -831,7 +831,8 @@ void		 proc_http(char *, int) __attribute__((noreturn));
 void		 proc_rrdp(int) __attribute__((noreturn));
 
 /* Repository handling */
-int		 filepath_add(struct filepath_tree *, char *, int, time_t);
+int		 filepath_add(struct filepath_tree *, char *, int, time_t, int);
+int		 filepath_valid(struct filepath_tree *, char *, int);
 void		 rrdp_clear(unsigned int);
 void		 rrdp_session_save(unsigned int, struct rrdp_session *);
 void		 rrdp_session_free(struct rrdp_session *);

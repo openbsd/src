@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.60 2024/06/07 08:22:53 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.61 2024/07/12 09:27:32 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -133,7 +133,8 @@ RB_PROTOTYPE(filepath_tree, filepath, entry, filepathcmp);
  * Functions to lookup which files have been accessed during computation.
  */
 int
-filepath_add(struct filepath_tree *tree, char *file, int id, time_t mtime)
+filepath_add(struct filepath_tree *tree, char *file, int id, time_t mtime,
+    int ok)
 {
 	struct filepath *fp, *rfp;
 
@@ -154,7 +155,8 @@ filepath_add(struct filepath_tree *tree, char *file, int id, time_t mtime)
 			return 0;
 		fp = rfp;
 	}
-	fp->talmask |= (1 << id);
+	if (ok)
+		fp->talmask |= (1 << id);
 
 	return 1;
 }
@@ -177,6 +179,19 @@ static int
 filepath_exists(struct filepath_tree *tree, char *file)
 {
 	return filepath_find(tree, file) != NULL;
+}
+
+/*
+ * Returns true if file exists and the id bit is set and ok flag is true.
+ */
+int
+filepath_valid(struct filepath_tree *tree, char *file, int id)
+{
+	struct filepath *fp;
+
+	if ((fp = filepath_find(tree, file)) == NULL)
+		return 0;
+	return (fp->talmask & (1 << id)) != 0;
 }
 
 /*
@@ -922,7 +937,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 
 	/* write new content or mark uri as deleted. */
 	if (pt == PUB_DEL) {
-		filepath_add(&rr->deleted, uri, 0, 0);
+		filepath_add(&rr->deleted, uri, 0, 0, 1);
 	} else {
 		fp = filepath_find(&rr->deleted, uri);
 		if (fp != NULL) {
@@ -1630,7 +1645,7 @@ repo_cleanup_rrdp(struct filepath_tree *tree)
 static void
 repo_move_valid(struct filepath_tree *tree)
 {
-	struct filepath *fp, *nfp;
+	struct filepath *fp, *nfp, *ofp;
 	size_t rsyncsz = strlen(".rsync/");
 	size_t rrdpsz = strlen(".rrdp/");
 	size_t tasz = strlen(".ta/");
@@ -1677,20 +1692,33 @@ repo_move_valid(struct filepath_tree *tree)
 		if (repo_mkpath(AT_FDCWD, fn) == -1)
 			continue;
 
-		if (rename(fp->file, fn) == -1) {
-			warn("rename %s", fp->file);
-			continue;
-		}
-
 		/* switch filepath node to new path */
 		RB_REMOVE(filepath_tree, tree, fp);
 		base = fp->file;
 		if ((fp->file = strdup(fn)) == NULL)
 			err(1, NULL);
+
+ again:
+		if ((ofp = RB_INSERT(filepath_tree, tree, fp)) != NULL) {
+			if (ofp->talmask == 0) {
+				/* conflicting path is not valid, drop it */
+				filepath_put(tree, ofp);
+				goto again;
+			}
+			if (fp->talmask != 0) {
+				warnx("%s: file already present in "
+				    "validated cache", fp->file);
+			}
+			free(fp->file);
+			free(fp);
+			free(base);
+			continue;
+		}
+
+		if (rename(base, fp->file) == -1)
+			warn("rename to %s", fp->file);
+
 		free(base);
-		if (RB_INSERT(filepath_tree, tree, fp) != NULL)
-			errx(1, "%s: both possibilities of file present",
-			    fp->file);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.261 2024/07/12 08:54:48 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.262 2024/07/12 09:27:32 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -595,7 +595,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	if (filemode)
 		goto done;
 
-	if (filepath_add(&fpt, file, talid, mtime) == 0) {
+	if (filepath_valid(&fpt, file, talid)) {
 		warnx("%s: File already visited", file);
 		goto done;
 	}
@@ -696,6 +696,9 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		warnx("%s: unknown entity type %d", file, type);
 		break;
 	}
+
+	if (filepath_add(&fpt, file, talid, mtime, ok) == 0)
+		errx(1, "%s: File already in tree", file);
 
 done:
 	free(file);
