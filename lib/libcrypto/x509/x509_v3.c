@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.40 2024/07/12 09:47:49 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.41 2024/07/12 09:53:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -185,7 +185,7 @@ X509v3_add_ext(STACK_OF(X509_EXTENSION) **out_exts, X509_EXTENSION *ext, int loc
 LCRYPTO_ALIAS(X509v3_add_ext);
 
 X509_EXTENSION *
-X509_EXTENSION_create_by_NID(X509_EXTENSION **ext, int nid, int critical,
+X509_EXTENSION_create_by_NID(X509_EXTENSION **out_ext, int nid, int critical,
     ASN1_OCTET_STRING *data)
 {
 	const ASN1_OBJECT *obj;
@@ -195,38 +195,38 @@ X509_EXTENSION_create_by_NID(X509_EXTENSION **ext, int nid, int critical,
 		return NULL;
 	}
 
-	return X509_EXTENSION_create_by_OBJ(ext, obj, critical, data);
+	return X509_EXTENSION_create_by_OBJ(out_ext, obj, critical, data);
 }
 LCRYPTO_ALIAS(X509_EXTENSION_create_by_NID);
 
 X509_EXTENSION *
-X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ext, const ASN1_OBJECT *obj,
+X509_EXTENSION_create_by_OBJ(X509_EXTENSION **out_ext, const ASN1_OBJECT *obj,
     int critical, ASN1_OCTET_STRING *data)
 {
-	X509_EXTENSION *ret;
+	X509_EXTENSION *ext;
 
-	if (ext == NULL || (ret = *ext) == NULL)
-		ret = X509_EXTENSION_new();
-	if (ret == NULL) {
+	if (out_ext == NULL || (ext = *out_ext) == NULL)
+		ext = X509_EXTENSION_new();
+	if (ext == NULL) {
 		X509error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!X509_EXTENSION_set_object(ret, obj))
+	if (!X509_EXTENSION_set_object(ext, obj))
 		goto err;
-	if (!X509_EXTENSION_set_critical(ret, critical))
+	if (!X509_EXTENSION_set_critical(ext, critical))
 		goto err;
-	if (!X509_EXTENSION_set_data(ret, data))
+	if (!X509_EXTENSION_set_data(ext, data))
 		goto err;
 
-	if (ext != NULL)
-		*ext = ret;
+	if (out_ext != NULL)
+		*out_ext = ext;
 
-	return ret;
+	return ext;
 
  err:
-	if (ext == NULL || ret != *ext)
-		X509_EXTENSION_free(ret);
+	if (out_ext == NULL || ext != *out_ext)
+		X509_EXTENSION_free(ext);
 
 	return NULL;
 }
