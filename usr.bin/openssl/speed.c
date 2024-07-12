@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.37 2024/07/09 11:21:44 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.38 2024/07/12 07:15:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,10 +193,6 @@ static void sig_done(int sig);
 static void
 sig_done(int sig)
 {
-	int save_errno = errno;
-
-	signal(SIGALRM, sig_done);
-	errno = save_errno;
 	run = 0;
 }
 
@@ -436,6 +432,7 @@ speed_main(int argc, char **argv)
 	int decrypt = 0;
 	int multi = 0;
 	const char *errstr = NULL;
+	struct sigaction sa;
 
 	if (pledge("stdio proc", NULL) == -1) {
 		perror("pledge");
@@ -935,7 +932,12 @@ speed_main(int argc, char **argv)
 	memset(rsa_c, 0, sizeof(rsa_c));
 #define COND(c)	(run && count<0x7fffffff)
 #define COUNT(d) (count)
-	signal(SIGALRM, sig_done);
+
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sig_done;
+	sigaction(SIGALRM, &sa, NULL);
 
 #ifndef OPENSSL_NO_MD4
 	if (doit[D_MD4]) {
