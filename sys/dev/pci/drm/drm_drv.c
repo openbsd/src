@@ -47,6 +47,7 @@
 #include <linux/pseudo_fs.h>
 #include <linux/slab.h>
 #include <linux/srcu.h>
+#include <linux/suspend.h>
 
 #include <drm/drm_accel.h>
 #include <drm/drm_cache.h>
@@ -1548,10 +1549,19 @@ drm_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
+#ifdef CONFIG_ACPI
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S3)
+			pm_suspend_target_state = PM_SUSPEND_MEM;
+		else
+			pm_suspend_target_state = PM_SUSPEND_TO_IDLE;
+#else
+		pm_suspend_target_state = PM_SUSPEND_TO_IDLE;
+#endif
 		drm_quiesce(dev);
 		break;
 	case DVACT_WAKEUP:
 		drm_wakeup(dev);
+		pm_suspend_target_state = PM_SUSPEND_ON;
 		break;
 	}
 

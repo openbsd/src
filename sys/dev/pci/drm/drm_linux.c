@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.114 2024/06/13 18:05:54 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.115 2024/07/13 15:38:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -51,6 +51,7 @@
 #include <linux/kthread.h>
 #include <linux/processor.h>
 #include <linux/sync_file.h>
+#include <linux/suspend.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_connector.h>
@@ -1345,6 +1346,8 @@ vga_put(struct pci_dev *pdev, int rsrc)
 
 #endif
 
+suspend_state_t pm_suspend_target_state;
+
 /*
  * ACPI types and interfaces.
  */
@@ -1359,6 +1362,8 @@ vga_put(struct pci_dev *pdev, int rsrc)
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
+
+struct acpi_fadt acpi_gbl_FADT;
 
 acpi_status
 acpi_get_table(const char *sig, int instance,
@@ -2851,6 +2856,13 @@ drm_linux_init(void)
 
 	kmap_atomic_va =
 	    (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
+
+#if NACPI > 0
+	if (acpi_softc) {
+		memcpy(&acpi_gbl_FADT, acpi_softc->sc_fadt,
+		    sizeof(acpi_gbl_FADT));
+	}
+#endif
 }
 
 void

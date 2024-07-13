@@ -93,5 +93,6 @@
 #endif
 
 #if defined(SUSPEND) || defined(HIBERNATE)
+#define CONFIG_SUSPEND				1
 #define CONFIG_PM_SLEEP				1
 #endif
