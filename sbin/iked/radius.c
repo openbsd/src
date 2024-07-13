@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.5 2024/07/13 14:08:53 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.6 2024/07/13 14:19:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -445,7 +445,7 @@ iked_radius_request_send(struct iked *env, void *ctx)
 		    RADIUS_TYPE_NAS_IPV6_ADDRESS, &server->rs_nas_ipv6);
 	/* Identifier */
 	radius_put_string_attr(req->rr_reqpkt, RADIUS_TYPE_NAS_IDENTIFIER,
-	    "OpenIKED");
+	    IKED_NAS_ID);
 
 	if (req->rr_accounting) {
 		if (req->rr_ntry == 0 && req->rr_nfailover == 0)
@@ -792,8 +792,8 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 	socklen_t		 sslen;
 	struct iked_radclient	*client;
 	struct iked_sa		*sa = NULL;
-	char			 attr[256], *endp, *reason;
-	const char		*cp;
+	char			 attr[256], username[256];
+	char			*endp, *reason, *nakcause = NULL;
 	int			 code, n = 0;
 	uint64_t		 ispi = 0;
 	uint32_t		 u32, cause = 0;
@@ -829,10 +829,9 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 	if ((code = radius_get_code(req)) != RADIUS_CODE_DISCONNECT_REQUEST) {
 		/* Code other than Disconnect-Request is not supported */
 		if (code == RADIUS_CODE_COA_REQUEST) {
-			log_info("received CoA-Request from %s",
-			    print_addr(&ss));
 			code = RADIUS_CODE_COA_NAK;
 			cause = RADIUS_ERROR_CAUSE_ADMINISTRATIVELY_PROHIBITED;
+			nakcause = "Coa-Request is not supprted";
 			goto send;
 		}
 		log_warnx("%s: received an invalid RADIUS message "
@@ -843,36 +842,59 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 
 	log_info("received Disconnect-Request from %s", print_addr(&ss));
 
+	if (radius_get_string_attr(req, RADIUS_TYPE_NAS_IDENTIFIER, attr,
+	    sizeof(attr)) == 0 && strcmp(attr, IKED_NAS_ID) != 0) {
+		cause = RADIUS_ERROR_CAUSE_NAS_IDENTIFICATION_MISMATCH;
+		nakcause = "NAS-Identifier is not matched";
+		goto search_done;
+	}
+
+	/* prepare User-Name attribute */
+	memset(username, 0, sizeof(username));
+	radius_get_string_attr(req, RADIUS_TYPE_USER_NAME, username,
+	    sizeof(username));
+
 	if (radius_get_string_attr(req, RADIUS_TYPE_ACCT_SESSION_ID, attr,
 	    sizeof(attr)) == 0) {
+		/* the client is to disconnect a session */
 		ispi = strtoull(attr, &endp, 16);
-		if (attr[0] != '\0' && *endp == '\0' && errno != ERANGE &&
-		    ispi != ULLONG_MAX) {
-			RB_FOREACH(sa, iked_sas, &env->sc_sas) {
-				if (sa->sa_hdr.sh_ispi == ispi) {
-					ikev2_ike_sa_setreason(sa, reason);
-					ikev2_ike_sa_delete(env, sa);
-					n++;
-				}
-			}
+		if (attr[0] == '\0' || *endp != '\0' || errno == ERANGE ||
+		    ispi == ULLONG_MAX) {
+			cause = RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE;
+			nakcause = "Session-Id is wrong";
+			goto search_done;
+
 		}
-	}
-	if (radius_get_string_attr(req, RADIUS_TYPE_USER_NAME, attr,
-	    sizeof(attr)) == 0) {
+		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+			if (sa->sa_hdr.sh_ispi == ispi)
+				break;
+		}
+		if (sa == NULL)
+			goto search_done;
+		if (username[0] != '\0' && (sa->sa_eapid == NULL ||
+		    strcmp(username, sa->sa_eapid) != 0)) {
+			/* specified User-Name attribute is mismatched */
+			cause = RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE;
+			nakcause = "User-Name is not matched";
+			goto search_done;
+		}
+		ikev2_ike_sa_setreason(sa, reason);
+		ikev2_ike_sa_delete(env, sa);
+		n++;
+	} else if (username[0] != '\0') {
 		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
 			if (sa->sa_eapid != NULL &&
-			    strcmp(sa->sa_eapid, attr) == 0) {
+			    strcmp(sa->sa_eapid, username) == 0) {
 				ikev2_ike_sa_setreason(sa, reason);
 				ikev2_ike_sa_delete(env, sa);
 				n++;
 			}
 		}
-	}
-	if (radius_get_uint32_attr(req, RADIUS_TYPE_FRAMED_IP_ADDRESS, &u32)
-	     == 0) {
-		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
-			addr4 = sa->sa_addrpool;
-			if (addr4 != NULL) {
+	} else if (radius_get_uint32_attr(req, RADIUS_TYPE_FRAMED_IP_ADDRESS,
+	    &u32) == 0) {
+		addr4 = sa->sa_addrpool;
+		if (addr4 != NULL) {
+			RB_FOREACH(sa, iked_sas, &env->sc_sas) {
 				if (u32 == ((struct sockaddr_in *)&addr4->addr)
 				    ->sin_addr.s_addr) {
 					ikev2_ike_sa_setreason(sa, reason);
@@ -882,34 +904,15 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 			}
 		}
 	}
-	if (radius_get_string_attr(req, RADIUS_TYPE_CALLED_STATION_ID, attr,
-	    sizeof(attr)) != 0) {
-		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
-			cp = print_addr(&sa->sa_local.addr);
-			if (strcmp(cp, attr) == 0) {
-				ikev2_ike_sa_setreason(sa, reason);
-				ikev2_ike_sa_delete(env, sa);
-				n++;
-			}
-		}
-	}
-	if (radius_get_string_attr(req, RADIUS_TYPE_CALLING_STATION_ID, attr,
-	    sizeof(attr)) != 0) {
-		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
-			cp = print_addr(&sa->sa_peer.addr);
-			if (strcmp(cp, attr) == 0) {
-				ikev2_ike_sa_setreason(sa, reason);
-				ikev2_ike_sa_delete(env, sa);
-				n++;
-			}
-		}
-	}
-
+ search_done:
 	if (n > 0)
 		code = RADIUS_CODE_DISCONNECT_ACK;
 	else {
-		code = RADIUS_CODE_DISCONNECT_ACK;
-		cause = RADIUS_ERROR_CAUSE_SESSION_NOT_FOUND;
+		if (nakcause == NULL)
+			nakcause = "session not found";
+		if (cause == 0)
+			cause = RADIUS_ERROR_CAUSE_SESSION_NOT_FOUND;
+		code = RADIUS_CODE_DISCONNECT_NAK;
 	}
  send:
 	res = radius_new_response_packet(code, req);
@@ -917,16 +920,16 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 		log_warn("%s: radius_new_response_packet", __func__);
 		goto out;
 	}
-	radius_set_response_authenticator(res, client->rc_secret);
 	if (cause != 0)
 		radius_put_uint32_attr(res, RADIUS_TYPE_ERROR_CAUSE, cause);
+	radius_set_response_authenticator(res, client->rc_secret);
 	if (radius_sendto(dae->rd_sock, res, 0, (struct sockaddr *)&ss, sslen)
 	    == -1)
 		log_warn("%s: sendto", __func__);
-	log_info("send %s for %s",
+	log_info("send %s for %s%s%s",
 	    (code == RADIUS_CODE_DISCONNECT_ACK)? "Disconnect-ACK" :
 	    (code == RADIUS_CODE_DISCONNECT_NAK)? "Disconnect-NAK" : "CoA-NAK",
-	    print_addr(&ss));
+	    print_addr(&ss), (nakcause)? ": " : "", (nakcause)? nakcause : "");
  out:
 	radius_delete_packet(req);
 	if (res != NULL)
