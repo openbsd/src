@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.49 2024/06/24 06:50:07 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.50 2024/07/13 17:42:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_SSL,0,reason)
 
 /* See SSL_state_func_code below */
-static ERR_STRING_DATA SSL_str_functs[] = {
+static const ERR_STRING_DATA SSL_str_functs[] = {
 	{ERR_FUNC(1),  "CONNECT_CW_FLUSH"},
 	{ERR_FUNC(2),  "CONNECT_CW_CLNT_HELLO"},
 	{ERR_FUNC(3),  "CONNECT_CW_CLNT_HELLO"},
@@ -153,7 +153,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA SSL_str_reasons[]= {
+static const ERR_STRING_DATA SSL_str_reasons[] = {
 	{ERR_REASON(SSL_R_APP_DATA_IN_HANDSHAKE) , "app data in handshake"},
 	{ERR_REASON(SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT), "attempt to reuse session in different context"},
 	{ERR_REASON(SSL_R_BAD_ALERT_RECORD)      , "bad alert record"},
@@ -476,8 +476,8 @@ ERR_load_SSL_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(SSL_str_functs[0].error) == NULL) {
-		ERR_load_strings(0, SSL_str_functs);
-		ERR_load_strings(0, SSL_str_reasons);
+		ERR_load_strings(0, (ERR_STRING_DATA *)SSL_str_functs);
+		ERR_load_strings(0, (ERR_STRING_DATA *)SSL_str_reasons);
 	}
 #endif
 }
