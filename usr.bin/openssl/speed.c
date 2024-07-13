@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.38 2024/07/12 07:15:28 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.39 2024/07/13 16:43:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -431,8 +431,8 @@ speed_main(int argc, char **argv)
 	const EVP_MD *evp_md = NULL;
 	int decrypt = 0;
 	int multi = 0;
-	const char *errstr = NULL;
 	struct sigaction sa;
+	const char *errstr = NULL;
 
 	if (pledge("stdio proc", NULL) == -1) {
 		perror("pledge");
