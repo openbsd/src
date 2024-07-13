@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.46 2024/07/12 08:15:19 beck Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.47 2024/07/13 14:37:56 beck Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -63,7 +63,6 @@ ufs_inactive(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	mode_t mode;
-	int recycle_vnode = 0;
 	int error = 0;
 #ifdef DIAGNOSTIC
 	extern int prtactive;
@@ -75,17 +74,10 @@ ufs_inactive(void *v)
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
-	if (ip->i_din1 == NULL || DIP(ip, mode) == 0) {
-		recycle_vnode = 1;
-		vdoom(vp);
+	if (ip->i_din1 == NULL || DIP(ip, mode) == 0)
 		goto out;
-	}
 
 	if (DIP(ip, nlink) <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		/* lock this vnode and promise to vclean it */
-		recycle_vnode = 1;
-		vdoom(vp);
-
 		if (getinoquota(ip) == 0)
 			(void)ufs_quota_free_inode(ip, NOCRED);
 
@@ -109,7 +101,7 @@ out:
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (recycle_vnode)
+	if (ip->i_din1 == NULL || DIP(ip, mode) == 0)
 		vrecycle(vp, ap->a_p);
 
 	return (error);

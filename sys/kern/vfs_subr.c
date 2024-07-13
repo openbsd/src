@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.321 2024/07/12 08:15:19 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.322 2024/07/13 14:37:55 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -627,26 +627,6 @@ loop:
 }
 
 /*
- * Indicate that this vnode will be recycled by the caller and prevent any other
- * access to the vnode via vget() until it is cleaned. Callers must ensure
- * vclean() is called on this vnode. vclean() will permit the vnode to be passed
- * in with the VXLOCK flag set if VDOOMED is set.
- */
-void
-vdoom(struct vnode *vp)
-{
-	mtx_enter(&vnode_mtx);
-	KASSERT(vp->v_usecount == 0);
-	if (vp->v_lflag & VXLOCK)
-		panic("vdoom: vnode already locked!");
-	vp->v_lflag |= VXLOCK;
-	if (vp->v_lflag & VDOOMED)
-		panic("vdoom: vnode already doomed!");
-	vp->v_lflag |= VDOOMED;
-	mtx_leave(&vnode_mtx);
-}
-
-/*
  * Grab a particular vnode from the free list, increment its
  * reference count and lock it. If the vnode lock bit is set,
  * the vnode is being eliminated in vgone. In that case, we
@@ -1049,10 +1029,8 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 */
 	mtx_enter(&vnode_mtx);
 	if (vp->v_lflag & VXLOCK)
-		if (!(vp->v_lflag & VDOOMED))
-		    panic("vclean: deadlock");
+		panic("vclean: deadlock");
 	vp->v_lflag |= VXLOCK;
-	vp->v_lflag &= ~VDOOMED;
 
 	if (vp->v_lockcount > 0) {
 		/*
@@ -1179,7 +1157,7 @@ vgonel(struct vnode *vp, struct proc *p)
 	 * wait until it is done and return.
 	 */
 	mtx_enter(&vnode_mtx);
-	if (!(vp->v_lflag & VDOOMED) && vp->v_flag & VXLOCK) { 
+	if (vp->v_lflag & VXLOCK) {
 		vp->v_lflag |= VXWANT;
 		msleep_nsec(vp, &vnode_mtx, PINOD, "vgone", INFSLP);
 		mtx_leave(&vnode_mtx);
@@ -1350,8 +1328,6 @@ vprint(char *label, struct vnode *vp)
 		strlcat(buf, "|VBIOONSYNCLIST", sizeof buf);
 	if (vp->v_flag & VALIASED)
 		strlcat(buf, "|VALIASED", sizeof buf);
-	if (vp->v_flag & VDOOMED)
-		strlcat(buf, "|VDOOMED", sizeof buf);
 	if (buf[0] != '\0')
 		printf(" flags (%s)", &buf[1]);
 	if (vp->v_data == NULL) {

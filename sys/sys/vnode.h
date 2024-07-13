@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.172 2024/07/12 08:15:19 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.173 2024/07/13 14:37:55 beck Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -146,7 +146,6 @@ struct vnode {
 #define	VCLONED		0x0400	/* vnode was cloned */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VLARVAL		0x1000	/* vnode data not yet set up by higher level */
-#define	VDOOMED		0x2000	/* hold vnode with VXLOCK to be cleaned */
 #define	VLOCKSWORK	0x4000	/* FS supports locking discipline */
 #define	VCLONE		0x8000	/* vnode is a clone */
 
@@ -587,7 +586,6 @@ int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
 int	vnoperm(struct vnode *);
 void	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);
-void	vdoom(struct vnode *);
 int	vcount(struct vnode *);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 void	vflushbuf(struct vnode *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.67 2024/07/12 08:15:19 beck Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.68 2024/07/13 14:37:56 beck Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -105,28 +105,20 @@ ext2fs_inactive(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct timespec ts;
-	int recycle_vnode = 0;
 	int error = 0;
 #ifdef DIAGNOSTIC
 	extern int prtactive;
 
-	if (prtactive && vp->v_usecount != 0) 
+	if (prtactive && vp->v_usecount != 0)
 		vprint("ext2fs_inactive: pushing active", vp);
 #endif
 
 	/* Get rid of inodes related to stale file handles. */
-	if (ip->i_e2din == NULL || ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime) {
-		recycle_vnode = 1;
-		vdoom(vp);
+	if (ip->i_e2din == NULL || ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime)
 		goto out;
-	}
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		/* lock this vnode and promise to vclean it */
-		recycle_vnode = 1;
-		vdoom(vp);
-
 		if (ext2fs_size(ip) != 0) {
 			error = ext2fs_truncate(ip, (off_t)0, 0, NOCRED);
 		}
@@ -144,7 +136,7 @@ out:
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (recycle_vnode)
+	if (ip->i_e2din == NULL || ip->i_e2fs_dtime != 0)
 		vrecycle(vp, ap->a_p);
 	return (error);
 }
