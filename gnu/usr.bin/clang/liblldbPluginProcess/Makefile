@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2024/07/13 07:25:38 asou Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
@@ -124,6 +124,13 @@ SRCS+=	MinidumpTypes.cpp \
 SRCS+=	ScriptedProcess.cpp \
 	ScriptedThread.cpp
 
+# Process/OpenBSDKernel
+SRCS+=	ProcessOpenBSDKernel.cpp \
+	RegisterContextOpenBSDKernel_arm64.cpp \
+	RegisterContextOpenBSDKernel_i386.cpp \
+	RegisterContextOpenBSDKernel_x86_64.cpp \
+	ThreadOpenBSDKernel.cpp
+
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/OpenBSD
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/POSIX
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/gdb-remote
@@ -132,6 +139,7 @@ SRCS+=	ScriptedProcess.cpp \
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/mach-core
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/minidump
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/scripted
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/OpenBSDKernel
 
 install:
 	@# Nothing here so far ...

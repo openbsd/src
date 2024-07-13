@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.17 2024/07/13 07:25:38 asou Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	Driver.cpp \
 	Platform.cpp \
 	Version.cpp
 
-LDADD+=		-lcurses -ledit -lpanel
+LDADD+=		-lcurses -ledit -lpanel -lkvm
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
