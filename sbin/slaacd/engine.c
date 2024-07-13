@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.90 2024/06/03 17:58:33 deraadt Exp $	*/
+/*	$OpenBSD: engine.c,v 1.91 2024/07/13 16:06:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -968,7 +968,6 @@ iface_state_transition(struct slaacd_iface *iface, enum if_state new_state)
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal;
 	struct rdns_proposal	*rdns_proposal;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	iface->state = new_state;
 
@@ -1025,10 +1024,13 @@ iface_state_transition(struct slaacd_iface *iface, enum if_state new_state)
 		break;
 	}
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
-	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
-	    "?" : if_name, if_state_name(old_state), if_state_name(new_state),
-	    iface->timo.tv_sec);
+	if (log_getverbose()) {
+		char	 ifnamebuf[IF_NAMESIZE], *if_name;
+		if_name = if_indextoname(iface->if_index, ifnamebuf);
+		log_debug("%s[%s] %s -> %s, timo: %lld", __func__,
+		    if_name == NULL ? "?" : if_name, if_state_name(old_state),
+		    if_state_name(new_state), iface->timo.tv_sec);
+	}
 
 	if (iface->timo.tv_sec == -1) {
 		if (evtimer_pending(&iface->timer, NULL))
@@ -1043,7 +1045,6 @@ void addr_proposal_state_transition(struct address_proposal *addr_proposal,
 	enum proposal_state	 old_state = addr_proposal->state;
 	struct slaacd_iface	*iface;
 	uint32_t		 lifetime;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	addr_proposal->state = new_state;
 
@@ -1103,11 +1104,14 @@ void addr_proposal_state_transition(struct address_proposal *addr_proposal,
 		break;
 	}
 
-	if_name = if_indextoname(addr_proposal->if_index, ifnamebuf);
-	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
-	    "?" : if_name, proposal_state_name(old_state),
-	    proposal_state_name(new_state),
-	    addr_proposal->timo.tv_sec);
+	if (log_getverbose()) {
+		char	 ifnamebuf[IF_NAMESIZE], *if_name;
+		if_name = if_indextoname(addr_proposal->if_index, ifnamebuf);
+		log_debug("%s[%s] %s -> %s, timo: %lld", __func__,
+		    if_name == NULL ? "?" : if_name,
+		    proposal_state_name(old_state),
+		    proposal_state_name(new_state), addr_proposal->timo.tv_sec);
+	}
 
 	if (addr_proposal->timo.tv_sec == -1) {
 		if (evtimer_pending(&addr_proposal->timer, NULL))
@@ -1122,7 +1126,6 @@ void dfr_proposal_state_transition(struct dfr_proposal *dfr_proposal,
 	enum proposal_state	 old_state = dfr_proposal->state;
 	struct slaacd_iface	*iface;
 	uint32_t		 lifetime;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	dfr_proposal->state = new_state;
 
@@ -1176,11 +1179,15 @@ void dfr_proposal_state_transition(struct dfr_proposal *dfr_proposal,
 		break;
 	}
 
-	if_name = if_indextoname(dfr_proposal->if_index, ifnamebuf);
-	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
-	    "?" : if_name, proposal_state_name(old_state),
-	    proposal_state_name(new_state),
-	    dfr_proposal->timo.tv_sec);
+	if (log_getverbose()) {
+		char	 ifnamebuf[IF_NAMESIZE], *if_name;
+
+		if_name = if_indextoname(dfr_proposal->if_index, ifnamebuf);
+		log_debug("%s[%s] %s -> %s, timo: %lld", __func__,
+		    if_name == NULL ? "?" : if_name,
+		    proposal_state_name(old_state),
+		    proposal_state_name(new_state), dfr_proposal->timo.tv_sec);
+	}
 
 	if (dfr_proposal->timo.tv_sec == -1) {
 		if (evtimer_pending(&dfr_proposal->timer, NULL))
@@ -1196,7 +1203,6 @@ void rdns_proposal_state_transition(struct rdns_proposal *rdns_proposal,
 	enum proposal_state	 old_state = rdns_proposal->state;
 	struct slaacd_iface	*iface;
 	uint32_t		 lifetime;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	rdns_proposal->state = new_state;
 
@@ -1250,11 +1256,15 @@ void rdns_proposal_state_transition(struct rdns_proposal *rdns_proposal,
 		break;
 	}
 
-	if_name = if_indextoname(rdns_proposal->if_index, ifnamebuf);
-	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
-	    "?" : if_name, proposal_state_name(old_state),
-	    proposal_state_name(new_state),
-	    rdns_proposal->timo.tv_sec);
+	if (log_getverbose()) {
+		char	 ifnamebuf[IF_NAMESIZE], *if_name;
+
+		if_name = if_indextoname(rdns_proposal->if_index, ifnamebuf);
+		log_debug("%s[%s] %s -> %s, timo: %lld", __func__,
+		    if_name == NULL ? "?" : if_name,
+		    proposal_state_name(old_state),
+		    proposal_state_name(new_state), rdns_proposal->timo.tv_sec);
+	}
 
 	if (rdns_proposal->timo.tv_sec == -1) {
 		if (evtimer_pending(&rdns_proposal->timer, NULL))
