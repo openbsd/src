@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.54 2024/02/15 20:10:45 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.55 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -42,6 +42,7 @@
 #define IKED_PUBKEY		"local.pub"
 
 #define IKED_VENDOR_ID		"OpenIKED-"
+#define IKED_NAS_ID		"OpenIKED"
 
 #define IKED_OCSP_RESPCERT	"ocsp/responder.crt"
 
@@ -112,6 +113,12 @@ enum imsg_type {
 	IMSG_CFG_POLICY,
 	IMSG_CFG_FLOW,
 	IMSG_CFG_USER,
+	IMSG_CFG_RADAUTH,
+	IMSG_CFG_RADACCT,
+	IMSG_CFG_RADSERVER,
+	IMSG_CFG_RADCFGMAP,
+	IMSG_CFG_RADDAE,
+	IMSG_CFG_RADDAECLIENT,
 	IMSG_CERTREQ,
 	IMSG_CERT,
 	IMSG_CERTVALID,
@@ -150,6 +157,7 @@ enum flushmode {
 	RESET_POLICY,
 	RESET_SA,
 	RESET_USER,
+	RESET_RADIUS,
 };
 
 #ifndef nitems

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.98 2024/02/03 00:54:14 jsg Exp $	*/
+/*	$OpenBSD: policy.c,v 1.99 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -60,6 +60,11 @@ policy_init(struct iked *env)
 {
 	TAILQ_INIT(&env->sc_policies);
 	TAILQ_INIT(&env->sc_ocsp);
+	TAILQ_INIT(&env->sc_radauthservers);
+	TAILQ_INIT(&env->sc_radacctservers);
+	TAILQ_INIT(&env->sc_radcfgmaps);
+	TAILQ_INIT(&env->sc_raddaes);
+	TAILQ_INIT(&env->sc_raddaeclients);
 	RB_INIT(&env->sc_users);
 	RB_INIT(&env->sc_sas);
 	RB_INIT(&env->sc_dstid_sas);

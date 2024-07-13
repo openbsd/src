@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.135 2024/04/02 19:58:28 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.136 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2104,6 +2104,15 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 
 		if (eap_parse(env, sa, msg, eap, msg->msg_response) == -1)
 			return (-1);
+		if (msg->msg_parent->msg_eapmsg != NULL) {
+			log_info("%s: duplicate EAP in payload", __func__);
+			return (-1);
+		}
+		if ((msg->msg_parent->msg_eapmsg = ibuf_new(eap, eap_len))
+		    == NULL) {
+			log_debug("%s: failed to save eap", __func__);
+			return (-1);
+		}
 		msg->msg_parent->msg_eap.eam_found = 1;
 	}
 

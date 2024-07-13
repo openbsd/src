@@ -1,18 +1,18 @@
-# $OpenBSD: Makefile,v 1.22 2021/05/28 18:01:39 tobhe Exp $
+# $OpenBSD: Makefile,v 1.23 2024/07/13 12:22:46 yasuoka Exp $
 
 PROG=		iked
 SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
 		eap.c iked.c ikev2.c ikev2_msg.c ikev2_pld.c \
 		log.c ocsp.c pfkey.c policy.c print.c proc.c timer.c util.c \
-		imsg_util.c smult_curve25519_ref.c vroute.c
+		imsg_util.c radius.c smult_curve25519_ref.c vroute.c
 SRCS+=		eap_map.c ikev2_map.c
 SRCS+=		crypto_hash.c sntrup761.c
 SRCS+=		parse.y
 MAN=		iked.conf.5 iked.8
 #NOMAN=		yes
 
-LDADD=		-lutil -levent -lcrypto
-DPADD=		${LIBUTIL} ${LIBEVENT} ${LIBCRYPTO}
+LDADD=		-lutil -levent -lcrypto -lradius
+DPADD=		${LIBUTIL} ${LIBEVENT} ${LIBCRYPTO} ${LIBRADIUS}
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations

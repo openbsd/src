@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.101 2024/03/02 16:16:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.102 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -203,6 +203,7 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		ibuf_free(msg->msg_cookie);
 		ibuf_free(msg->msg_cookie2);
 		ibuf_free(msg->msg_del_buf);
+		ibuf_free(msg->msg_eapmsg);
 		free(msg->msg_eap.eam_user);
 		free(msg->msg_cp_addr);
 		free(msg->msg_cp_addr6);
@@ -219,6 +220,7 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		msg->msg_cookie = NULL;
 		msg->msg_cookie2 = NULL;
 		msg->msg_del_buf = NULL;
+		msg->msg_eapmsg = NULL;
 		msg->msg_eap.eam_user = NULL;
 		msg->msg_cp_addr = NULL;
 		msg->msg_cp_addr6 = NULL;

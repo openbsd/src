@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.230 2024/03/02 16:16:07 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.231 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 #include <sys/queue.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <limits.h>
 #include <imsg.h>
@@ -217,8 +218,8 @@ struct iked_static_id {
 
 struct iked_auth {
 	uint8_t		auth_method;
-	uint8_t		auth_eap;			/* optional EAP */
 	uint8_t		auth_length;			/* zero if EAP */
+	uint16_t	auth_eap;			/* optional EAP */
 	uint8_t		auth_data[IKED_PSK_SIZE];
 };
 
@@ -403,6 +404,15 @@ struct iked_ipcomp {
 	uint8_t				 ic_transform;	/* transform */
 };
 
+struct iked_sastats {
+	uint64_t			 sas_ipackets;
+	uint64_t			 sas_opackets;
+	uint64_t			 sas_ibytes;
+	uint64_t			 sas_obytes;
+	uint64_t			 sas_idrops;
+	uint64_t			 sas_odrops;
+};
+
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	uint32_t			 sa_msgid;	/* Last request rcvd */
@@ -485,6 +495,7 @@ struct iked_sa {
 	struct iked_proposals		 sa_proposals;	/* SA proposals */
 	struct iked_childsas		 sa_childsas;	/* IPsec Child SAs */
 	struct iked_saflows		 sa_flows;	/* IPsec flows */
+	struct iked_sastats		 sa_stats;
 
 	struct iked_sa			*sa_nexti;	/* initiated IKE SA */
 	struct iked_sa			*sa_previ;	/* matching back pointer */
@@ -533,6 +544,11 @@ struct iked_sa {
 	RB_ENTRY(iked_sa)		 sa_addrpool6_entry;	/* pool entries */
 	time_t				 sa_last_recvd;
 #define IKED_IKE_SA_LAST_RECVD_TIMEOUT	 300		/* 5 minutes */
+	struct timespec			 sa_starttime;
+
+	struct iked_radserver_req	*sa_radreq;
+	struct iked_addr		*sa_rad_addr;	/* requested address */
+	struct iked_addr		*sa_rad_addr6;	/* requested address */
 };
 RB_HEAD(iked_sas, iked_sa);
 RB_HEAD(iked_dstid_sas, iked_sa);
@@ -648,6 +664,7 @@ struct iked_message {
 	uint8_t			 msg_transform;
 	uint16_t		 msg_flags;
 	struct eap_msg		 msg_eap;
+	struct ibuf		*msg_eapmsg;
 	size_t			 msg_del_spisize;
 	size_t			 msg_del_cnt;
 	struct ibuf		*msg_del_buf;
@@ -701,6 +718,72 @@ struct iked_user {
 	RB_ENTRY(iked_user)	 usr_entry;
 };
 RB_HEAD(iked_users, iked_user);
+
+struct iked_radserver_req;
+
+struct iked_radserver {
+	int				 rs_sock;
+	int				 rs_accounting;
+	struct event			 rs_ev;
+	struct iked			*rs_env;
+	struct sockaddr_storage		 rs_sockaddr;
+	TAILQ_ENTRY(iked_radserver)	 rs_entry;
+	struct in_addr			 rs_nas_ipv4;
+	struct in6_addr			 rs_nas_ipv6;
+	unsigned int			 rs_reqseq;
+	TAILQ_HEAD(, iked_radserver_req) rs_reqs;
+	char				 rs_secret[];
+};
+TAILQ_HEAD(iked_radservers, iked_radserver);
+
+struct iked_raddae {
+	int				 rd_sock;
+	struct event			 rd_ev;
+	struct iked			*rd_env;
+	struct sockaddr_storage		 rd_sockaddr;
+	TAILQ_ENTRY(iked_raddae)	 rd_entry;
+};
+TAILQ_HEAD(iked_raddaes, iked_raddae);
+
+struct iked_radclient {
+	struct iked			*rc_env;
+	struct sockaddr_storage		 rc_sockaddr;
+	TAILQ_ENTRY(iked_radclient)	 rc_entry;
+	char				 rc_secret[];
+};
+TAILQ_HEAD(iked_radclients , iked_radclient);
+
+struct iked_radopts {
+	int				 max_tries;
+	int				 max_failovers;
+};
+
+struct iked_radcfgmap {
+	uint16_t			 cfg_type;
+	uint32_t			 vendor_id;
+	uint8_t				 attr_type;
+	TAILQ_ENTRY(iked_radcfgmap)	 entry;
+};
+TAILQ_HEAD(iked_radcfgmaps, iked_radcfgmap);
+
+extern const struct iked_radcfgmap radius_cfgmaps[];
+
+struct iked_radserver_req {
+	struct iked_radserver		*rr_server;
+	struct iked_sa			*rr_sa;
+	struct iked_timer		 rr_timer;
+	int				 rr_reqid;
+	int				 rr_accounting;
+	struct timespec			 rr_accttime;
+	void				*rr_reqpkt;
+	struct ibuf			*rr_state;
+	char				*rr_user;
+	int				 rr_ntry;
+	int				 rr_nfailover;
+	struct iked_cfg			 rr_cfg[IKED_CFG_MAX];
+	unsigned int			 rr_ncfg;
+	TAILQ_ENTRY(iked_radserver_req)	 rr_entry;
+};
 
 struct privsep_pipes {
 	int				*pp_pipes[PROC_MAX];
@@ -810,6 +893,14 @@ struct iked {
 	struct iked_activesas		 sc_activesas;
 	struct iked_flows		 sc_activeflows;
 	struct iked_users		 sc_users;
+	struct iked_radopts		 sc_radauth;
+	struct iked_radopts		 sc_radacct;
+	int				 sc_radaccton;
+	struct iked_radservers		 sc_radauthservers;
+	struct iked_radservers		 sc_radacctservers;
+	struct iked_radcfgmaps		 sc_radcfgmaps;
+	struct iked_raddaes		 sc_raddaes;
+	struct iked_radclients		 sc_raddaeclients;
 
 	struct iked_stats		 sc_stats;
 
@@ -941,6 +1032,20 @@ int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
 int	 config_setstatic(struct iked *);
 int	 config_getstatic(struct iked *, struct imsg *);
+int	 config_setradauth(struct iked *);
+int	 config_getradauth(struct iked *, struct imsg *);
+int	 config_setradacct(struct iked *);
+int	 config_getradacct(struct iked *, struct imsg *);
+int	 config_setradserver(struct iked *, struct sockaddr *, socklen_t,
+	    char *, int);
+int	 config_getradserver(struct iked *, struct imsg *);
+int	 config_setradcfgmap(struct iked *, int, uint32_t, uint8_t);
+int	 config_getradcfgmap(struct iked *, struct imsg *);
+int	 config_setraddae(struct iked *, struct sockaddr *, socklen_t);
+int	 config_getraddae(struct iked *, struct imsg *);
+int	 config_setradclient(struct iked *, struct sockaddr *, socklen_t,
+	    char *);
+int	 config_getradclient(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);
@@ -1156,6 +1261,17 @@ int	 eap_mschap_challenge(struct iked *, struct iked_sa *, int, int,
 	    uint8_t *, size_t);
 int	 eap_mschap_success(struct iked *, struct iked_sa *, int);
 int	 eap_challenge_request(struct iked *, struct iked_sa *, int);
+
+/* radius.c */
+int	 iked_radius_request(struct iked *, struct iked_sa *,
+	    struct iked_message *);
+void	 iked_radius_request_free(struct iked *, struct iked_radserver_req *);
+void	 iked_radius_on_event(int, short, void *);
+void	 iked_radius_acct_on(struct iked *);
+void	 iked_radius_acct_off(struct iked *);
+void	 iked_radius_acct_start(struct iked *, struct iked_sa *);
+void	 iked_radius_acct_stop(struct iked *, struct iked_sa *);
+void	 iked_radius_dae_on_event(int, short, void *);
 
 /* pfkey.c */
 int	 pfkey_couple(struct iked *, struct iked_sas *, int);

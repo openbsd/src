@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.146 2024/04/25 14:24:54 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.147 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -38,9 +38,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <netdb.h>
+#include <radius.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,6 +110,8 @@ static char		*ocsp_url = NULL;
 static long		 ocsp_tolerate = 0;
 static long		 ocsp_maxage = -1;
 static int		 cert_partial_chain = 0;
+static struct iked_radopts
+			 radauth, radacct;
 
 struct iked_transform ikev2_default_ike_transforms[] = {
 	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },
@@ -394,6 +399,8 @@ static int		 expand_flows(struct iked_policy *, int, struct ipsec_addr_wrap *,
 			    struct ipsec_addr_wrap *);
 static struct ipsec_addr_wrap *
 			 expand_keyword(struct ipsec_addr_wrap *);
+struct iked_radserver *
+			 create_radserver(const char *, u_short, const char *);
 
 struct ipsec_transforms *ipsec_transforms;
 struct ipsec_filters *ipsec_filters;
@@ -407,6 +414,7 @@ typedef struct {
 		uint8_t			 ikemode;
 		uint8_t			 dir;
 		uint8_t			 satype;
+		uint8_t			 accounting;
 		char			*string;
 		uint16_t		 port;
 		struct ipsec_hosts	*hosts;
@@ -427,6 +435,10 @@ typedef struct {
 		struct ipsec_transforms	*transforms;
 		struct ipsec_filters	*filters;
 		struct ipsec_mode	*mode;
+		struct {
+			uint32_t	 vendorid;
+			uint8_t		 attrtype;
+		} radattr;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -446,6 +458,8 @@ typedef struct {
 %token	TOLERATE MAXAGE DYNAMIC
 %token	CERTPARTIALCHAIN
 %token	REQUEST IFACE
+%token	RADIUS ACCOUNTING SERVER SECRET MAX_TRIES MAX_FAILOVERS
+%token	CLIENT DAE LISTEN ON
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -453,7 +467,7 @@ typedef struct {
 %type	<v.proto>		proto proto_list protoval
 %type	<v.hosts>		hosts hosts_list
 %type	<v.port>		port
-%type	<v.number>		portval af rdomain
+%type	<v.number>		portval af rdomain hexdecnumber
 %type	<v.peers>		peers
 %type	<v.anyhost>		anyhost
 %type	<v.host>		host host_spec
@@ -470,6 +484,8 @@ typedef struct {
 %type	<v.string>		name iface
 %type	<v.cfg>			cfg ikecfg ikecfgvals
 %type	<v.string>		transform_esn
+%type	<v.accounting>		accounting
+%type	<v.radattr>		radattr
 %%
 
 grammar		: /* empty */
@@ -478,6 +494,7 @@ grammar		: /* empty */
 		| grammar set '\n'
 		| grammar user '\n'
 		| grammar ikev2rule '\n'
+		| grammar radius '\n'
 		| grammar varset '\n'
 		| grammar otherrule skipline '\n'
 		| grammar error '\n'		{ file->errors++; }
@@ -1039,6 +1056,11 @@ ikeauth		: /* empty */			{
 			$$.auth_eap = 0;
 			explicit_bzero(&$2, sizeof($2));
 		}
+		| EAP RADIUS			{
+			$$.auth_method = IKEV2_AUTH_SIG_ANY;
+			$$.auth_eap = EAP_TYPE_RADIUS;
+			$$.auth_length = 0;
+		}
 		| EAP STRING			{
 			unsigned int i;
 
@@ -1046,7 +1068,11 @@ ikeauth		: /* empty */			{
 				if ($2[i] == '-')
 					$2[i] = '_';
 
-			if (strcasecmp("mschap_v2", $2) != 0) {
+			if (strcasecmp("mschap_v2", $2) == 0)
+				$$.auth_eap = EAP_TYPE_MSCHAP_V2;
+			else if (strcasecmp("radius", $2) == 0)
+				$$.auth_eap = EAP_TYPE_RADIUS;
+			else {
 				yyerror("unsupported EAP method: %s", $2);
 				free($2);
 				YYERROR;
@@ -1054,7 +1080,6 @@ ikeauth		: /* empty */			{
 			free($2);
 
 			$$.auth_method = IKEV2_AUTH_SIG_ANY;
-			$$.auth_eap = EAP_TYPE_MSCHAP_V2;
 			$$.auth_length = 0;
 		}
 		| STRING			{
@@ -1245,6 +1270,202 @@ string		: string STRING
 		| STRING
 		;
 
+radius		: RADIUS accounting SERVER STRING port SECRET STRING
+		{
+			int		 ret, gai_err;
+			struct addrinfo	 hints, *ai;
+			u_short		 port;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_socktype = SOCK_DGRAM;
+			hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+			if ((gai_err = getaddrinfo($4, NULL, &hints, &ai))
+			    != 0) {
+				yyerror("could not parse the address: %s: %s",
+				    $4, gai_strerror(gai_err));
+				free($4);
+				explicit_bzero($7, strlen($7));
+				free($7);
+				YYERROR;
+			}
+			port = $5;
+			if (port == 0)
+				port = htons((!$2)? RADIUS_DEFAULT_PORT :
+				    RADIUS_ACCT_DEFAULT_PORT);
+			socket_af(ai->ai_addr, port);
+			if ((ret = config_setradserver(env, ai->ai_addr,
+			    ai->ai_addrlen, $7, $2)) != 0) {
+				yyerror("could not set radius server");
+				free($4);
+				explicit_bzero($7, strlen($7));
+				free($7);
+				YYERROR;
+			}
+			explicit_bzero($7, strlen($7));
+			freeaddrinfo(ai);
+			free($4);
+			free($7);
+		}
+		| RADIUS accounting MAX_TRIES NUMBER {
+			if ($4 <= 0) {
+				yyerror("max-tries must a positive value");
+				YYERROR;
+			}
+			if ($2)
+				radacct.max_tries = $4;
+			else
+				radauth.max_tries = $4;
+		}
+		| RADIUS accounting MAX_FAILOVERS NUMBER {
+			if ($4 < 0) {
+				yyerror("max-failovers must be 0 or a "
+				    "positive value");
+				YYERROR;
+			}
+			if ($2)
+				radacct.max_failovers = $4;
+			else
+				radauth.max_failovers = $4;
+		}
+		| RADIUS CONFIG af STRING radattr {
+			const struct ipsec_xf	*xf;
+			int			 af, cfgtype;
+
+			af = $3;
+			if (af == AF_UNSPEC)
+				af = AF_INET;
+			if (strcmp($4, "none") == 0)
+				cfgtype = 0;
+			else {
+				if ((xf = parse_xf($4, af, cpxfs)) == NULL ||
+				    xf->id == IKEV2_CFG_INTERNAL_IP4_SUBNET ||
+				    xf->id == IKEV2_CFG_INTERNAL_IP6_SUBNET) {
+					yyerror("not a valid ikecfg option");
+					free($4);
+					YYERROR;
+				}
+				cfgtype = xf->id;
+			}
+			free($4);
+			config_setradcfgmap(env, cfgtype, $5.vendorid,
+			    $5.attrtype);
+		}
+		| RADIUS DAE LISTEN ON STRING port {
+			int		 ret, gai_err;
+			struct addrinfo	 hints, *ai;
+			u_short		 port;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_socktype = SOCK_DGRAM;
+			hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+			if ((gai_err = getaddrinfo($5, NULL, &hints, &ai))
+			    != 0) {
+				yyerror("could not parse the address: %s: %s",
+				    $5, gai_strerror(gai_err));
+				free($5);
+				YYERROR;
+			}
+			port = $6;
+			if (port == 0)
+				port = htons(RADIUS_DAE_DEFAULT_PORT);
+			socket_af(ai->ai_addr, port);
+			if ((ret = config_setraddae(env, ai->ai_addr,
+			    ai->ai_addrlen)) != 0) {
+				yyerror("could not set radius server");
+				free($5);
+				YYERROR;
+			}
+			freeaddrinfo(ai);
+			free($5);
+		}
+		| RADIUS DAE CLIENT STRING SECRET STRING {
+			int		 gai_err;
+			struct addrinfo	 hints, *ai;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_socktype = SOCK_DGRAM;
+			hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+			if ((gai_err = getaddrinfo($4, NULL, &hints, &ai))
+			    != 0) {
+				yyerror("could not parse the address: %s: %s",
+				    $4, gai_strerror(gai_err));
+				free($4);
+				explicit_bzero($6, strlen($6));
+				free($6);
+				YYERROR;
+			}
+			config_setradclient(env, ai->ai_addr, ai->ai_addrlen,
+			    $6);
+			free($4);
+			explicit_bzero($6, strlen($6));
+			free($6);
+			freeaddrinfo(ai);
+		}
+		;
+
+radattr		: hexdecnumber hexdecnumber {
+			if ($1 < 0 || 0xffffffL < $1) {
+				yyerror("vendor-id must be in 0-0xffffff");
+				YYERROR;
+			}
+			if ($2 < 0 || 256 <= $2) {
+				yyerror("attribute type must be in 0-255");
+				YYERROR;
+			}
+			$$.vendorid = $1;
+			$$.attrtype = $2;
+		}
+		| hexdecnumber {
+			if ($1 < 0 || 256 <= $1) {
+				yyerror("attribute type must be in 0-255");
+				YYERROR;
+			}
+			$$.vendorid = 0;
+			$$.attrtype = $1;
+		}
+
+hexdecnumber	: STRING {
+			const char	*errstr;
+			char		*ep;
+			uintmax_t	 ul;
+
+			if ($1[0] == '0' && $1[1] == 'x' && isxdigit($1[2])) {
+				ul = strtoumax($1 + 2, &ep, 16);
+				if (*ep != '\0') {
+					yyerror("`%s' is not a number", $1);
+					free($1);
+					YYERROR;
+				}
+				if (ul == UINTMAX_MAX || ul > UINT64_MAX) {
+					yyerror("`%s' is out-of-range", $1);
+					free($1);
+					YYERROR;
+				}
+				$$ = ul;
+			} else {
+				$$ = strtonum($1, 0, UINT64_MAX, &errstr);
+				if (errstr != NULL) {
+					yyerror("`%s' is %s", $1, errstr);
+					free($1);
+					YYERROR;
+				}
+			}
+			free($1);
+		}
+		| NUMBER
+		;
+
+accounting	: {
+			$$ = 0;
+		}
+		| ACCOUNTING {
+			$$ = 1;
+		}
+		;
+
 varset		: STRING '=' string
 		{
 			char *s = $1;
@@ -1336,6 +1557,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "accounting",		ACCOUNTING },
 		{ "active",		ACTIVE },
 		{ "ah",			AH },
 		{ "any",		ANY },
@@ -1343,8 +1565,10 @@ lookup(char *s)
 		{ "bytes",		BYTES },
 		{ "cert_partial_chain",	CERTPARTIALCHAIN },
 		{ "childsa",		CHILDSA },
+		{ "client",		CLIENT },
 		{ "config",		CONFIG },
 		{ "couple",		COUPLE },
+		{ "dae",		DAE },
 		{ "decouple",		DECOUPLE },
 		{ "default",		DEFAULT },
 		{ "dpd_check_interval",	DPD_CHECK_INTERVAL },
@@ -1370,7 +1594,10 @@ lookup(char *s)
 		{ "inet6",		INET6 },
 		{ "ipcomp",		IPCOMP },
 		{ "lifetime",		LIFETIME },
+		{ "listen",		LISTEN },
 		{ "local",		LOCAL },
+		{ "max-failovers",	MAX_FAILOVERS},
+		{ "max-tries",		MAX_TRIES },
 		{ "maxage",		MAXAGE },
 		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
@@ -1381,6 +1608,7 @@ lookup(char *s)
 		{ "nostickyaddress",	NOSTICKYADDRESS },
 		{ "novendorid",		NOVENDORID },
 		{ "ocsp",		OCSP },
+		{ "on",			ON },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
 		{ "port",		PORT },
@@ -1388,9 +1616,12 @@ lookup(char *s)
 		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
+		{ "radius",		RADIUS },
 		{ "rdomain",		RDOMAIN },
 		{ "request",		REQUEST },
 		{ "sa",			SA },
+		{ "secret",		SECRET },
+		{ "server",		SERVER },
 		{ "set",		SET },
 		{ "skip",		SKIP },
 		{ "srcid",		SRCID },
@@ -1792,6 +2023,10 @@ parse_config(const char *filename, struct iked *x_env)
 	dpd_interval = IKED_IKE_SA_ALIVE_TIMEOUT;
 	decouple = passive = 0;
 	ocsp_url = NULL;
+	radauth.max_tries = 3;
+	radauth.max_failovers = 0;
+	radacct.max_tries = 3;
+	radacct.max_failovers = 0;
 
 	if (env->sc_opts & IKED_OPT_PASSIVE)
 		passive = 1;
@@ -1812,6 +2047,8 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_ocsp_maxage = ocsp_maxage;
 	env->sc_cert_partial_chain = cert_partial_chain;
 	env->sc_vendorid = vendorid;
+	env->sc_radauth = radauth;
+	env->sc_radacct = radacct;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.386 2024/03/21 22:08:49 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.387 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <err.h>
 #include <event.h>
+#include <time.h>
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -284,6 +285,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			timer_add(env, &env->sc_inittmr,
 			    IKED_INITIATOR_INITIAL);
 		}
+		iked_radius_acct_on(env);
 		return (0);
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
@@ -295,6 +297,18 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (config_getflow(env, imsg));
 	case IMSG_CFG_USER:
 		return (config_getuser(env, imsg));
+	case IMSG_CFG_RADAUTH:
+		return (config_getradauth(env, imsg));
+	case IMSG_CFG_RADACCT:
+		return (config_getradacct(env, imsg));
+	case IMSG_CFG_RADSERVER:
+		return (config_getradserver(env, imsg));
+	case IMSG_CFG_RADCFGMAP:
+		return (config_getradcfgmap(env, imsg));
+	case IMSG_CFG_RADDAE:
+		return (config_getraddae(env, imsg));
+	case IMSG_CFG_RADDAECLIENT:
+		return (config_getradclient(env, imsg));
 	case IMSG_COMPILE:
 		return (config_getcompile(env));
 	case IMSG_CTL_STATIC:
@@ -1782,6 +1796,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
+		iked_radius_acct_start(env, sa);
 		/* Delete exchange timeout. */
 		timer_del(env, &sa->sa_timer);
 		ikev2_enable_timer(env, sa);
@@ -2456,7 +2471,7 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 	struct ikev2_cp		*cp;
 	struct ikev2_cfg	*cfg;
 	struct iked_cfg		*ikecfg;
-	unsigned int		 i;
+	unsigned int		 i, rad_ncfg = 0;
 	uint32_t		 mask4;
 	size_t			 len;
 	struct sockaddr_in	*in4;
@@ -2479,8 +2494,15 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 		return (-1);
 	}
 
-	for (i = 0; i < pol->pol_ncfg; i++) {
-		ikecfg = &pol->pol_cfg[i];
+	if (sa->sa_radreq != NULL)
+		rad_ncfg = sa->sa_radreq->rr_ncfg;
+
+	for (i = 0; i < pol->pol_ncfg + rad_ncfg; i++) {
+		if (i < pol->pol_ncfg)
+			ikecfg = &pol->pol_cfg[i];
+		else
+			ikecfg = &sa->sa_radreq->rr_cfg[i - pol->pol_ncfg];
+
 		if (ikecfg->cfg_action != cp->cp_type)
 			continue;
 		/* only return one address in case of multiple pools */
@@ -3857,6 +3879,8 @@ ikev2_resp_ike_eap(struct iked *env, struct iked_sa *sa,
 	switch (sa->sa_policy->pol_auth.auth_eap) {
 	case EAP_TYPE_MSCHAP_V2:
 		return ikev2_resp_ike_eap_mschap(env, sa, msg);
+	case EAP_TYPE_RADIUS:
+		return iked_radius_request(env, sa, msg);
 	}
 	return -1;
 }
@@ -4012,6 +4036,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
+		iked_radius_acct_start(env, sa);
 		/* Delete exchange timeout. */
 		timer_del(env, &sa->sa_timer);
 		ikev2_enable_timer(env, sa);
@@ -4746,10 +4771,10 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		nsa->sa_tag = sa->sa_tag;
 		sa->sa_tag = NULL;
 	}
-	if (sa->sa_eapid) {
-		nsa->sa_eapid = sa->sa_eapid;
-		sa->sa_eapid = NULL;
-	}
+	/* sa_eapid needs to be set on both for radius accounting */
+	if (sa->sa_eapid)
+		nsa->sa_eapid = strdup(sa->sa_eapid);
+
 	log_info("%srekeyed as new IKESA %s (enc %s%s%s group %s prf %s)",
 	    SPI_SA(sa, NULL), print_spi(nsa->sa_hdr.sh_ispi, 8),
 	    print_xf(nsa->sa_encr->encr_id, cipher_keylength(nsa->sa_encr) -
@@ -4760,6 +4785,8 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	    print_xf(nsa->sa_dhgroup->id, 0, groupxfs),
 	    print_xf(nsa->sa_prf->hash_id, hash_keylength(sa->sa_prf), prfxfs));
 	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
+	clock_gettime(CLOCK_MONOTONIC, &nsa->sa_starttime);
+	iked_radius_acct_start(env, nsa);
 	ikev2_enable_timer(env, nsa);
 
 	ikestat_inc(env, ikes_sa_rekeyed);
@@ -7028,6 +7055,7 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 	const char		*errstr = NULL;
 	int			 ret, pass, passes;
 	size_t			 i;
+	struct sockaddr_in	*in4;
 
 	switch (family) {
 	case AF_INET:
@@ -7045,8 +7073,23 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 		return (0);
 	/* default if no pool configured */
 	ret = 0;
+
+	/* handle the special addresses from RADIUS */
+	if (sa->sa_rad_addr != NULL) {
+		in4 = (struct sockaddr_in *)&sa->sa_rad_addr->addr;
+		/* 0xFFFFFFFF allows the user to select an address (RFC 2865) */
+		if (in4->sin_addr.s_addr == htonl(0xFFFFFFFF))
+			;/* this is  default behavior if the user selects */
+		/* 0xFFFFFFFE indicated the NAS should select (RFC 2865) */
+		else if (in4->sin_addr.s_addr == htonl(0xFFFFFFFE)) {
+			free(sa->sa_cp_addr);
+			sa->sa_cp_addr = NULL;
+		}
+	}
+
 	/* two passes if client requests from specific pool */
-	passes = (sa->sa_cp_addr != NULL || sa->sa_cp_addr6 != NULL) ? 2 : 1;
+	passes = (sa->sa_cp_addr != NULL || sa->sa_cp_addr6 != NULL ||
+	    sa->sa_rad_addr != NULL || sa->sa_rad_addr6 != NULL) ? 2 : 1;
 	for (pass = 0; pass < passes; pass++) {
 		/* loop over all address pool configs (addr_net) */
 		for (i = 0; i < pol->pol_ncfg; i++) {
@@ -7062,13 +7105,16 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 					return (0);
 			}
 		}
-		if (sa->sa_cp_addr != NULL) {
+		if (family == AF_INET) {
 			free(sa->sa_cp_addr);
 			sa->sa_cp_addr = NULL;
-		}
-		if (sa->sa_cp_addr6 != NULL) {
+			free(sa->sa_rad_addr);
+			sa->sa_rad_addr = NULL;
+		} else {
 			free(sa->sa_cp_addr6);
 			sa->sa_cp_addr6 = NULL;
+			free(sa->sa_rad_addr6);
+			sa->sa_rad_addr6 = NULL;
 		}
 	}
 
@@ -7088,7 +7134,7 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 	char			 idstr[IKED_ID_SIZE];
 	struct iked_addr	 addr;
 	uint32_t		 mask, host, lower, upper, start, nhost;
-	int			 requested = 0;
+	int			 requested = 0, rad_requested = 0;
 
 	/*
 	 * failure: pool configured, but not requested.
@@ -7165,8 +7211,14 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 	case AF_INET:
 		cfg4 = (struct sockaddr_in *)&ikecfg->cfg.address.addr;
 		mask = prefixlen2mask(ikecfg->cfg.address.addr_mask);
-		if (sa->sa_cp_addr != NULL) {
-			memcpy(&addr, sa->sa_cp_addr, sizeof(addr));
+		if (sa->sa_cp_addr != NULL || sa->sa_rad_addr != NULL) {
+			if (sa->sa_rad_addr != NULL) {
+				rad_requested = 1;
+				memcpy(&addr, sa->sa_rad_addr, sizeof(addr));
+			} else {
+				requested = 1;
+				memcpy(&addr, sa->sa_cp_addr, sizeof(addr));
+			}
 			key.sa_addrpool = &addr;
 			in4 = (struct sockaddr_in *)&addr.addr;
 			if ((in4->sin_addr.s_addr & mask) !=
@@ -7179,10 +7231,16 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 				*errstr = "requested addr in use";
 				return (-1);
 			}
-			sa->sa_addrpool = sa->sa_cp_addr;
-			sa->sa_cp_addr = NULL;
+			if (sa->sa_rad_addr != NULL) {
+				sa->sa_addrpool = sa->sa_rad_addr;
+				sa->sa_rad_addr = NULL;
+			} else {
+				sa->sa_addrpool = sa->sa_cp_addr;
+				sa->sa_cp_addr = NULL;
+			}
+			free(sa->sa_cp_addr);
+			free(sa->sa_rad_addr);
 			RB_INSERT(iked_addrpool, &env->sc_addrpool, sa);
-			requested = 1;
 			goto done;
 		}
 		in4 = (struct sockaddr_in *)&addr.addr;
@@ -7194,7 +7252,7 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 	case AF_INET6:
 		cfg6 = (struct sockaddr_in6 *)&ikecfg->cfg.address.addr;
 		in6 = (struct sockaddr_in6 *)&addr.addr;
-		if (sa->sa_cp_addr6 != NULL) {
+		if (sa->sa_cp_addr6 != NULL || sa->sa_rad_addr6 != NULL) {
 			/* XXX not yet supported */
 		}
 		in6->sin6_family = AF_INET6;
@@ -7280,9 +7338,10 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
  done:
 	if (ikev2_print_id(IKESA_DSTID(sa), idstr, sizeof(idstr)) == -1)
 		bzero(idstr, sizeof(idstr));
-	log_info("%sassigned address %s to %s%s", SPI_SA(sa, NULL),
+	log_info("%sassigned address %s to %s%s%s", SPI_SA(sa, NULL),
 	    print_addr(&addr.addr),
-	    idstr, requested ? " (requested by peer)" : "");
+	    idstr, requested ? " (requested by peer)" : "",
+	    rad_requested? "(requested by RADIUS)" : "");
 	return (0);
 }
 
@@ -7627,6 +7686,8 @@ void
 ikev2_log_established(struct iked_sa *sa)
 {
 	char dstid[IKED_ID_SIZE], srcid[IKED_ID_SIZE];
+
+	clock_gettime(CLOCK_MONOTONIC, &sa->sa_starttime);
 
 	if (ikev2_print_id(IKESA_DSTID(sa), dstid, sizeof(dstid)) == -1)
 		bzero(dstid, sizeof(dstid));

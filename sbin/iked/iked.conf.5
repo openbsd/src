@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.96 2024/04/13 12:11:08 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.97 2024/07/13 12:22:46 yasuoka Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2024 $
+.Dd $Mdocdate: July 13 2024 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -648,11 +648,18 @@ for more information.
 .Bl -tag -width $domain -compact -offset indent
 .It Ic eap Ar type
 Use EAP to authenticate the initiator.
-The only supported EAP
-.Ar type
-is currently
-.Ar MSCHAP-V2 .
+Currently
+.Ar MSCHAP-V2
+or
+.Ar RADIUS
+is supported for EAP
+.Ar type .
 The responder will use RSA public key authentication.
+To use RADIUS for EAP,
+at least one RADIUS server should be configured.
+See
+.Sx RADIUS
+section for the RADIUS support.
 .It Ic ecdsa256
 Use ECDSA with a 256-bit elliptic curve key and SHA2-256 for authentication.
 .It Ic ecdsa384
@@ -779,6 +786,118 @@ for filtering and monitoring.
 The traffic will be blocked if the specified
 .Ar interface
 does not exist.
+.El
+.Sh RADIUS CONFIGURATION
+.Pp
+The configuration options for RADIUS are as follows:
+.Bl -tag -width xxxx
+.It Ic radius config Oo Ar af Oc Ar option Oo Ar vendor Oc Ar attr
+When the RADIUS authentication succeeded,
+.Xr iked 8
+uses the RADIUS attributes contained the response from the RADIUS server to
+construct IKEv2 configuration payloads (CP).
+This configuration option defines a mapping from a RADIUS attribute to an IKE
+CP with the following parameters:
+.Pp
+.Bl -tag -width "vendor attr" -compact
+.It Op Ar af
+Specify either
+.Ar inet
+or
+.Ar inet6
+for the address family of the IKE CP option.
+.It Ar option
+Specify an IKE CP option.
+Choose from
+.Sx AUTOMATIC KEYING POLICIES
+config options
+.Po
+.Ic address ,
+.Ic netmask ,
+.Ic name-server ,
+.Ic netbios-server ,
+.Ic dhcp-server ,
+and
+.Ic access-server
+.Pc ,
+or use
+.Ic none
+to disable the existing or default mapping.
+.It Ar attr
+For a standard RADIUS attribute,
+specify its Attribute-Type for
+.Ar attr .
+.It Ar vendor Ar attr
+For a vendor specific RADIUS attribute,
+specify its Vendor-ID for
+.Ar vendor
+and the Attribute-Type for
+.Ar attr .
+.El
+.Pp
+By default,
+.Xr iked 8
+uses the following attributes for the options:
+.Bl -column "inet6 netbios-server" "Vendor" "Type" "MS-Secondary-NBNS-Server" \
+-offset "XX"
+.It Em "Option" Ta Em "Vendor" Ta Em "Type" Ta Em "Attribute Name"
+.It Li "inet address" Ta "" Ta "8" Ta "Framed-IP-Address"
+.It Li "inet netmask" Ta "" Ta "9" Ta "Framed-IP-Netmask"
+.It Li "inet name-server" Ta "0x137" Ta "28" Ta "MS-Primary-DNS-Server"
+.It Li "inet name-server" Ta "0x137" Ta "29" Ta "MS-Secondary-DNS-Server"
+.It Li "inet netbios-server" Ta "0x137" Ta "30" Ta "MS-Primary-NBNS-Server"
+.It Li "inet netbios-server" Ta "0x137" Ta "31" Ta "MS-Secondary-NBNS-Server"
+.El
+.It Ic radius Oo Ic accounting Oc Ic server Ar address Oo port Ar number Oc \
+secret Ar secret
+Specify the RADIUS server's IP address and the shared secret with the server.
+For a RADIUS accounting server,
+specify optional
+.Ic accounting
+keyword.
+Optionally specify the port number,
+otherwise the default port number,
+1812 for authentication or
+1813 for accounting,
+is used as the default.
+.It Ic radius Oo Ic accounting Oc Ic max-tries Ar number
+Specify the maximum number of retransmissions for a server.
+.Xr iked 8
+will retransmit 2, 6, 14, 22, 30 seconds after the first transmission
+and subsequent retransmissions will occur every 8 seconds.
+If the number of retransmissions per server reaches this value,
+the current server is marked as failed,
+and the next server is used for subsequent requests.
+For RADIUS accounting requests,
+specify optional
+.Ic accounting
+keyword.
+The default value is 3.
+.It Ic radius Oo Ic accounting Oc Ic max-failovers Ar number
+If a positive number is specified,
+.Xr iked 8
+will failover to the next server when the current server is marked
+.Dq fail .
+This key and value specifies the maximum number of failovers.
+For RADIUS accounting requests,
+specify optional
+.Ic accounting
+keyword.
+The default value is 0.
+.It Ic radius dae listen on Ar address Oo port Ar number Oc
+Specify the local
+.Ar address
+.Xr iked 8
+should listen on for the Dynamic Authorization Extensions
+.Po DAE, RFC 5176 Pc requests,
+Optionally specify a port
+.Ar number,
+the default port number is 3799.
+.It Ic radius dae client Ar address Ic secret Ar secret
+Specify
+.Ar address
+for a DAE client and
+.Ar secret .
 .El
 .Sh PACKET FILTERING
 IPsec traffic appears unencrypted on the

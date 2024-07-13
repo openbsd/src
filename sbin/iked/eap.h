@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.h,v 1.6 2020/09/16 21:37:35 tobhe Exp $	*/
+/*	$OpenBSD: eap.h,v 1.7 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -93,6 +93,7 @@ extern struct iked_constmap eap_code_map[];
 #define EAP_TYPE_PWD		52	/* RFC-harkins-emu-eap-pwd-12.txt */
 #define EAP_TYPE_EXPANDED_TYPE	254	/* RFC3748 */
 #define EAP_TYPE_EXPERIMENTAL	255	/* RFC3748 */
+#define EAP_TYPE_RADIUS		10001	/* internal use for EAP RADIUS */
 
 extern struct iked_constmap eap_type_map[];
 

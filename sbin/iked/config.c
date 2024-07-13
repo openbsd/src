@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.97 2024/02/15 19:11:00 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.98 2024/07/13 12:22:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -123,6 +123,8 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	sa_configure_iface(env, sa, 0);
 	sa_free_flows(env, &sa->sa_flows);
 
+	iked_radius_acct_stop(env, sa);
+
 	if (sa->sa_addrpool) {
 		(void)RB_REMOVE(iked_addrpool, &env->sc_addrpool, sa);
 		free(sa->sa_addrpool);
@@ -186,6 +188,10 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	if (sa->sa_state == IKEV2_STATE_ESTABLISHED)
 		ikestat_dec(env, ikes_sa_established_current);
 	ikestat_inc(env, ikes_sa_removed);
+
+	free(sa->sa_rad_addr);
+	free(sa->sa_rad_addr6);
+	iked_radius_request_free(env, sa->sa_radreq);
 
 	free(sa);
 }
@@ -588,6 +594,48 @@ config_doreset(struct iked *env, unsigned int mode)
 		while ((usr = RB_MIN(iked_users, &env->sc_users))) {
 			RB_REMOVE(iked_users, &env->sc_users, usr);
 			free(usr);
+		}
+	}
+
+	if (mode == RESET_ALL || mode == RESET_RADIUS) {
+		struct iked_radserver_req	*req;
+		struct iked_radserver		*rad, *radt;
+		struct iked_radcfgmap		*cfg, *cfgt;
+		struct iked_raddae		*dae, *daet;
+		struct iked_radclient		*client, *clientt;
+
+		TAILQ_FOREACH_SAFE(rad, &env->sc_radauthservers, rs_entry,
+		    radt) {
+			close(rad->rs_sock);
+			event_del(&rad->rs_ev);
+			TAILQ_REMOVE(&env->sc_radauthservers, rad, rs_entry);
+			while ((req = TAILQ_FIRST(&rad->rs_reqs)) != NULL)
+				iked_radius_request_free(env, req);
+			freezero(rad, sizeof(*rad));
+		}
+		TAILQ_FOREACH_SAFE(rad, &env->sc_radacctservers, rs_entry,
+		    radt) {
+			close(rad->rs_sock);
+			event_del(&rad->rs_ev);
+			TAILQ_REMOVE(&env->sc_radacctservers, rad, rs_entry);
+			while ((req = TAILQ_FIRST(&rad->rs_reqs)) != NULL)
+				iked_radius_request_free(env, req);
+			freezero(rad, sizeof(*rad));
+		}
+		TAILQ_FOREACH_SAFE(cfg, &env->sc_radcfgmaps, entry, cfgt) {
+			TAILQ_REMOVE(&env->sc_radcfgmaps, cfg, entry);
+			free(cfg);
+		}
+		TAILQ_FOREACH_SAFE(dae, &env->sc_raddaes, rd_entry, daet) {
+			close(dae->rd_sock);
+			event_del(&dae->rd_ev);
+			TAILQ_REMOVE(&env->sc_raddaes, dae, rd_entry);
+			free(dae);
+		}
+		TAILQ_FOREACH_SAFE(client, &env->sc_raddaeclients, rc_entry,
+		    clientt) {
+			TAILQ_REMOVE(&env->sc_raddaeclients, client, rc_entry);
+			free(client);
 		}
 	}
 
@@ -1089,6 +1137,285 @@ config_getkey(struct iked *env, struct imsg *imsg)
 
 	explicit_bzero(imsg->data, len);
 	ca_getkey(&env->sc_ps, &id, imsg->hdr.type);
+
+	return (0);
+}
+
+int
+config_setradauth(struct iked *env)
+{
+	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CFG_RADAUTH,
+	    &env->sc_radauth, sizeof(env->sc_radauth));
+	return (0);
+}
+
+int
+config_getradauth(struct iked *env, struct imsg *imsg)
+{
+	if (IMSG_DATA_SIZE(imsg) < sizeof(struct iked_radopts))
+		fatalx("%s: invalid radauth message", __func__);
+
+	memcpy(&env->sc_radauth, imsg->data, sizeof(struct iked_radopts));
+
+	return (0);
+}
+
+int
+config_setradacct(struct iked *env)
+{
+	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CFG_RADACCT,
+	    &env->sc_radacct, sizeof(env->sc_radacct));
+	return (0);
+}
+
+int
+config_getradacct(struct iked *env, struct imsg *imsg)
+{
+	if (IMSG_DATA_SIZE(imsg) < sizeof(struct iked_radopts))
+		fatalx("%s: invalid radacct message", __func__);
+
+	memcpy(&env->sc_radacct, imsg->data, sizeof(struct iked_radopts));
+
+	return (0);
+}
+
+int
+config_setradserver(struct iked *env, struct sockaddr *sa, socklen_t salen,
+    char *secret, int isaccounting)
+{
+	int			 sock = -1;
+	struct iovec		 iov[2];
+	struct iked_radserver	 server;
+
+	if (env->sc_opts & IKED_OPT_NOACTION)
+		return (0);
+	memset(&server, 0, sizeof(server));
+	memcpy(&server.rs_sockaddr, sa, salen);
+	server.rs_accounting = isaccounting;
+	if ((sock = socket(sa->sa_family, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		log_warn("%s: socket() failed", __func__);
+		goto error;
+	}
+	if (connect(sock, sa, salen) == -1) {
+		log_warn("%s: connect() failed", __func__);
+		goto error;
+	}
+	iov[0].iov_base = &server;
+	iov[0].iov_len = offsetof(struct iked_radserver, rs_secret[0]);
+	iov[1].iov_base = secret;
+	iov[1].iov_len = strlen(secret) + 1;
+
+	proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1, IMSG_CFG_RADSERVER, -1,
+	    sock, iov, 2);
+
+	return (0);
+ error:
+	if (sock >= 0)
+		close(sock);
+	return (-1);
+}
+
+int
+config_getradserver(struct iked *env, struct imsg *imsg)
+{
+	size_t			 len;
+	struct iked_radserver	*server;
+
+	len = IMSG_DATA_SIZE(imsg);
+	if (len <= sizeof(*server))
+		fatalx("%s: invalid IMSG_CFG_RADSERVER message", __func__);
+
+	if ((server = calloc(1, len)) == NULL) {
+		log_warn("%s: calloc() failed", __func__);
+		return (-1);
+	}
+	memcpy(server, imsg->data, len);
+	explicit_bzero(imsg->data, len);
+	TAILQ_INIT(&server->rs_reqs);
+	server->rs_sock = imsg_get_fd(imsg);
+	server->rs_env = env;
+
+	if (!server->rs_accounting)
+		TAILQ_INSERT_TAIL(&env->sc_radauthservers, server, rs_entry);
+	else
+		TAILQ_INSERT_TAIL(&env->sc_radacctservers, server, rs_entry);
+	event_set(&server->rs_ev, server->rs_sock, EV_READ | EV_PERSIST,
+	    iked_radius_on_event, server);
+	event_add(&server->rs_ev, NULL);
+
+	return (0);
+}
+
+int
+config_setradcfgmap(struct iked *env, int cfg_type, uint32_t vendor_id,
+    uint8_t attr_type)
+{
+	struct iked_radcfgmap cfgmap;
+
+	if (env->sc_opts & IKED_OPT_NOACTION)
+		return (0);
+	memset(&cfgmap, 0, sizeof(cfgmap));
+	cfgmap.cfg_type = cfg_type;
+	cfgmap.vendor_id = vendor_id;
+	cfgmap.attr_type = attr_type;
+
+	proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1, IMSG_CFG_RADCFGMAP, -1,
+	    -1, &cfgmap, sizeof(cfgmap));
+
+	return (0);
+}
+
+int
+config_getradcfgmap(struct iked *env, struct imsg *imsg)
+{
+	int			 i;
+	size_t			 len;
+	struct iked_radcfgmap	*cfgmap, *cfgmap0;
+	struct iked_radcfgmaps	 cfgmaps = TAILQ_HEAD_INITIALIZER(cfgmaps);
+
+	len = IMSG_DATA_SIZE(imsg);
+	if (len < sizeof(*cfgmap))
+		fatalx("%s: invalid IMSG_CFG_RADCFGMAP message", __func__);
+
+	if (TAILQ_EMPTY(&env->sc_radcfgmaps)) {
+		/* no customized config map yet */
+		for (i = 0; radius_cfgmaps[i].cfg_type != 0; i++) {
+			if ((cfgmap = calloc(1, len)) == NULL) {
+				while ((cfgmap = TAILQ_FIRST(&cfgmaps))
+				    != NULL) {
+					TAILQ_REMOVE(&cfgmaps, cfgmap, entry);
+					free(cfgmap);
+				}
+				return (-1);
+			}
+			*cfgmap = radius_cfgmaps[i];
+			TAILQ_INSERT_TAIL(&cfgmaps, cfgmap, entry);
+		}
+		TAILQ_CONCAT(&env->sc_radcfgmaps, &cfgmaps, entry);
+	}
+
+	cfgmap0 = (struct iked_radcfgmap *)imsg->data;
+	TAILQ_FOREACH(cfgmap, &env->sc_radcfgmaps, entry) {
+		if (cfgmap->vendor_id == cfgmap0->vendor_id &&
+		    cfgmap->attr_type == cfgmap0->attr_type) {
+			/* override existing config map */
+			cfgmap->cfg_type = cfgmap0->cfg_type;
+			break;
+		}
+	}
+	if (cfgmap == NULL) {
+		if ((cfgmap = calloc(1, len)) == NULL) {
+			log_warn("%s: calloc() failed", __func__);
+			return (-1);
+		}
+		memcpy(cfgmap, imsg->data, len);
+		TAILQ_INSERT_TAIL(&env->sc_radcfgmaps, cfgmap, entry);
+	}
+	return (0);
+}
+
+int
+config_setraddae(struct iked *env, struct sockaddr *sa, socklen_t salen)
+{
+	int			 sock, on;
+	struct iked_raddae	 dae;
+
+	if (env->sc_opts & IKED_OPT_NOACTION)
+		return (0);
+	memset(&dae, 0, sizeof(dae));
+	memcpy(&dae.rd_sockaddr, sa, salen);
+	if ((sock = socket(sa->sa_family, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		log_warn("%s: socket() failed", __func__);
+		goto error;
+	}
+	on = 1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1)
+		log_warn("%s: setsockopt(,,SO_REUSEADDR) failed", __func__);
+	/* REUSEPORT is needed because the old sockets may not be closed yet */
+	on = 1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on)) == -1)
+		log_warn("%s: setsockopt(,,SO_REUSEPORT) failed", __func__);
+	if (bind(sock, sa, salen) == -1) {
+		log_warn("%s: bind() failed", __func__);
+		goto error;
+	}
+
+	proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1, IMSG_CFG_RADDAE, -1,
+	    sock, &dae, sizeof(dae));
+
+	return (0);
+ error:
+	if (sock >= 0)
+		close(sock);
+	return (-1);
+}
+
+int
+config_getraddae(struct iked *env, struct imsg *imsg)
+{
+	struct iked_raddae	*dae;
+
+	if (IMSG_DATA_SIZE(imsg) < sizeof(*dae))
+		fatalx("%s: invalid IMSG_CFG_RADDAE message", __func__);
+
+	if ((dae = calloc(1, sizeof(*dae))) == NULL) {
+		log_warn("%s: calloc() failed", __func__);
+		return (-1);
+	}
+	memcpy(dae, imsg->data, sizeof(*dae));
+	dae->rd_sock = imsg_get_fd(imsg);
+	dae->rd_env = env;
+
+	event_set(&dae->rd_ev, dae->rd_sock, EV_READ | EV_PERSIST,
+	    iked_radius_dae_on_event, dae);
+	event_add(&dae->rd_ev, NULL);
+
+	TAILQ_INSERT_TAIL(&env->sc_raddaes, dae, rd_entry);
+
+	return (0);
+}
+
+int
+config_setradclient(struct iked *env, struct sockaddr *sa, socklen_t salen,
+    char *secret)
+{
+	struct iovec		 iov[2];
+	struct iked_radclient	 client;
+
+	if (salen > sizeof(client.rc_sockaddr))
+		fatal("%s: invalid salen", __func__);
+
+	memcpy(&client.rc_sockaddr, sa, salen);
+
+	iov[0].iov_base = &client;
+	iov[0].iov_len = offsetof(struct iked_radclient, rc_secret[0]);
+	iov[1].iov_base = secret;
+	iov[1].iov_len = strlen(secret);
+
+	proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1, IMSG_CFG_RADDAECLIENT,
+	    -1, -1, iov, 2);
+
+	return (0);
+}
+
+int
+config_getradclient(struct iked *env, struct imsg *imsg)
+{
+	struct iked_radclient	*client;
+	u_int			 len;
+
+	len = IMSG_DATA_SIZE(imsg);
+
+	if (len < sizeof(*client))
+		fatalx("%s: invalid IMSG_CFG_RADDAE message", __func__);
+
+	if ((client = calloc(1, len + 1)) == NULL) {
+		log_warn("%s: calloc() failed", __func__);
+		return (-1);
+	}
+	memcpy(client, imsg->data, len);
+
+	TAILQ_INSERT_TAIL(&env->sc_raddaeclients, client, rc_entry);
 
 	return (0);
 }
