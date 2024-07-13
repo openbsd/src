@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.6 2024/07/13 14:19:09 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.7 2024/07/13 14:28:27 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -892,9 +892,9 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 		}
 	} else if (radius_get_uint32_attr(req, RADIUS_TYPE_FRAMED_IP_ADDRESS,
 	    &u32) == 0) {
-		addr4 = sa->sa_addrpool;
-		if (addr4 != NULL) {
-			RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+			addr4 = sa->sa_addrpool;
+			if (addr4 != NULL) {
 				if (u32 == ((struct sockaddr_in *)&addr4->addr)
 				    ->sin_addr.s_addr) {
 					ikev2_ike_sa_setreason(sa, reason);
