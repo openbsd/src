@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.83 2024/07/09 09:39:14 beck Exp $
+# $OpenBSD: Makefile,v 1.84 2024/07/13 18:33:18 tb Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -89,7 +89,7 @@ SRCS= \
 	tls_key_share.c \
 	tls_lib.c
 
-HDRS=	dtls1.h srtp.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
+HDRS=	dtls1.h srtp.h ssl.h ssl3.h tls1.h
 
 .PATH:	${.CURDIR}
 
