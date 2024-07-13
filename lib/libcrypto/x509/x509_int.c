@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_int.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_int.c,v 1.2 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,7 +60,7 @@
 
 #include <openssl/x509v3.h>
 
-const X509V3_EXT_METHOD v3_crl_num = {
+static const X509V3_EXT_METHOD x509v3_ext_crl_number = {
 	.ext_nid = NID_crl_number,
 	.ext_flags = 0,
 	.it = &ASN1_INTEGER_it,
@@ -77,7 +77,13 @@ const X509V3_EXT_METHOD v3_crl_num = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_delta_crl = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_crl_number(void)
+{
+	return &x509v3_ext_crl_number;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_delta_crl = {
 	.ext_nid = NID_delta_crl,
 	.ext_flags = 0,
 	.it = &ASN1_INTEGER_it,
@@ -94,17 +100,37 @@ const X509V3_EXT_METHOD v3_delta_crl = {
 	.usr_data = NULL,
 };
 
+const X509V3_EXT_METHOD *
+x509v3_ext_method_delta_crl(void)
+{
+	return &x509v3_ext_delta_crl;
+}
+
 static void *
 s2i_asn1_int(X509V3_EXT_METHOD *meth, X509V3_CTX *ctx, char *value)
 {
 	return s2i_ASN1_INTEGER(meth, value);
 }
 
-const X509V3_EXT_METHOD v3_inhibit_anyp = {
-	NID_inhibit_any_policy, 0, &ASN1_INTEGER_it,
-	0, 0, 0, 0,
-	(X509V3_EXT_I2S)i2s_ASN1_INTEGER,
-	(X509V3_EXT_S2I)s2i_asn1_int,
-	0, 0, 0, 0,
-	NULL
+static const X509V3_EXT_METHOD x509v3_ext_inhibit_any_policy = {
+	.ext_nid = NID_inhibit_any_policy,
+	.ext_flags = 0,
+	.it = &ASN1_INTEGER_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_INTEGER,
+	.s2i = (X509V3_EXT_S2I)s2i_asn1_int,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_inhibit_any_policy(void)
+{
+	return &x509v3_ext_inhibit_any_policy;
+}

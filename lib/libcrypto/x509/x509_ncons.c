@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.10 2024/07/08 14:47:44 beck Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.11 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -81,7 +81,7 @@ static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 
-const X509V3_EXT_METHOD v3_name_constraints = {
+static const X509V3_EXT_METHOD x509v3_ext_name_constraints = {
 	.ext_nid = NID_name_constraints,
 	.ext_flags = 0,
 	.it = &NAME_CONSTRAINTS_it,
@@ -97,6 +97,12 @@ const X509V3_EXT_METHOD v3_name_constraints = {
 	.r2i = NULL,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_name_constraints(void)
+{
+	return &x509v3_ext_name_constraints;
+}
 
 static const ASN1_TEMPLATE GENERAL_SUBTREE_seq_tt[] = {
 	{

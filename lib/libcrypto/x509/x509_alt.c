@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.16 2023/08/30 00:49:32 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.17 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -74,56 +74,74 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 
-const X509V3_EXT_METHOD v3_alt[] = {
-	{
-		.ext_nid = NID_subject_alt_name,
-		.ext_flags = 0,
-		.it = &GENERAL_NAMES_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = NULL,
-		.s2i = NULL,
-		.i2v = (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-		.v2i = (X509V3_EXT_V2I)v2i_subject_alt,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_issuer_alt_name,
-		.ext_flags = 0,
-		.it = &GENERAL_NAMES_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = NULL,
-		.s2i = NULL,
-		.i2v = (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-		.v2i = (X509V3_EXT_V2I)v2i_issuer_alt,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_certificate_issuer,
-		.ext_flags = 0,
-		.it = &GENERAL_NAMES_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = NULL,
-		.s2i = NULL,
-		.i2v = (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
+static const X509V3_EXT_METHOD x509v3_ext_subject_alt_name = {
+	.ext_nid = NID_subject_alt_name,
+	.ext_flags = 0,
+	.it = &GENERAL_NAMES_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
+	.v2i = (X509V3_EXT_V2I)v2i_subject_alt,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_subject_alt_name(void)
+{
+	return &x509v3_ext_subject_alt_name;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_issuer_alt_name = {
+	.ext_nid = NID_issuer_alt_name,
+	.ext_flags = 0,
+	.it = &GENERAL_NAMES_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
+	.v2i = (X509V3_EXT_V2I)v2i_issuer_alt,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_issuer_alt_name(void)
+{
+	return &x509v3_ext_issuer_alt_name;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_certificate_issuer = {
+	.ext_nid = NID_certificate_issuer,
+	.ext_flags = 0,
+	.it = &GENERAL_NAMES_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_certificate_issuer(void)
+{
+	return &x509v3_ext_certificate_issuer;
+}
 
 STACK_OF(CONF_VALUE) *
 i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, GENERAL_NAMES *gens,

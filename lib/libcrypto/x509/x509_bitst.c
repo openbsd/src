@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_bitst.c,v 1.5 2024/06/18 08:29:40 tb Exp $ */
+/* $OpenBSD: x509_bitst.c,v 1.6 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -102,7 +102,7 @@ static BIT_STRING_BITNAME crl_reasons[] = {
 	{-1, NULL, NULL}
 };
 
-const X509V3_EXT_METHOD v3_nscert = {
+static const X509V3_EXT_METHOD x509v3_ext_netscape_cert_type = {
 	.ext_nid = NID_netscape_cert_type,
 	.ext_flags = 0,
 	.it = &ASN1_BIT_STRING_it,
@@ -119,7 +119,13 @@ const X509V3_EXT_METHOD v3_nscert = {
 	.usr_data = ns_cert_type_table,
 };
 
-const X509V3_EXT_METHOD v3_key_usage = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_cert_type(void)
+{
+	return &x509v3_ext_netscape_cert_type;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_key_usage = {
 	.ext_nid = NID_key_usage,
 	.ext_flags = 0,
 	.it = &ASN1_BIT_STRING_it,
@@ -136,7 +142,13 @@ const X509V3_EXT_METHOD v3_key_usage = {
 	.usr_data = key_usage_type_table,
 };
 
-const X509V3_EXT_METHOD v3_crl_reason = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_key_usage(void)
+{
+	return &x509v3_ext_key_usage;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_crl_reason = {
 	.ext_nid = NID_crl_reason,
 	.ext_flags = 0,
 	.it = &ASN1_ENUMERATED_it,
@@ -152,6 +164,12 @@ const X509V3_EXT_METHOD v3_crl_reason = {
 	.r2i = NULL,
 	.usr_data = crl_reasons,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_crl_reason(void)
+{
+	return &x509v3_ext_crl_reason;
+}
 
 STACK_OF(CONF_VALUE) *
 i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits,

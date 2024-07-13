@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.12 2024/07/08 14:47:44 beck Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.13 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -82,7 +82,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     STACK_OF(CONF_VALUE) *unot, int ia5org);
 static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
 
-const X509V3_EXT_METHOD v3_cpols = {
+static const X509V3_EXT_METHOD x509v3_ext_certificate_policies = {
 	.ext_nid = NID_certificate_policies,
 	.ext_flags = 0,
 	.it = &CERTIFICATEPOLICIES_it,
@@ -98,6 +98,12 @@ const X509V3_EXT_METHOD v3_cpols = {
 	.r2i = (X509V3_EXT_R2I)r2i_certpol,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_certificate_policies(void)
+{
+	return &x509v3_ext_certificate_policies;
+}
 
 static const ASN1_TEMPLATE CERTIFICATEPOLICIES_item_tt = {
 	.flags = ASN1_TFLG_SEQUENCE_OF,

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ia5.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_ia5.c,v 1.2 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,136 +68,166 @@ static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
 static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, char *str);
 
-const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
-	{
-		.ext_nid = NID_netscape_base_url,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_netscape_revocation_url,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_netscape_ca_revocation_url,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_netscape_renewal_url,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_netscape_ca_policy_url,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_netscape_ssl_server_name,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = NID_netscape_comment,
-		.ext_flags = 0,
-		.it = &ASN1_IA5STRING_it,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
-		.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
-	{
-		.ext_nid = -1,
-		.ext_flags = 0,
-		.it = NULL,
-		.ext_new = NULL,
-		.ext_free = NULL,
-		.d2i = NULL,
-		.i2d = NULL,
-		.i2s = NULL,
-		.s2i = NULL,
-		.i2v = NULL,
-		.v2i = NULL,
-		.i2r = NULL,
-		.r2i = NULL,
-		.usr_data = NULL,
-	},
+static const X509V3_EXT_METHOD x509v3_ext_netscape_base_url = {
+	.ext_nid = NID_netscape_base_url,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_base_url(void)
+{
+	return &x509v3_ext_netscape_base_url;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_netscape_revocation_url = {
+	.ext_nid = NID_netscape_revocation_url,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_revocation_url(void)
+{
+	return &x509v3_ext_netscape_revocation_url;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_netscape_ca_revocation_url = {
+	.ext_nid = NID_netscape_ca_revocation_url,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_ca_revocation_url(void)
+{
+	return &x509v3_ext_netscape_ca_revocation_url;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_netscape_renewal_url = {
+	.ext_nid = NID_netscape_renewal_url,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_renewal_url(void)
+{
+	return &x509v3_ext_netscape_renewal_url;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_netscape_ca_policy_url = {
+	.ext_nid = NID_netscape_ca_policy_url,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_ca_policy_url(void)
+{
+	return &x509v3_ext_netscape_ca_policy_url;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_netscape_ssl_server_name = {
+	.ext_nid = NID_netscape_ssl_server_name,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_ssl_server_name(void)
+{
+	return &x509v3_ext_netscape_ssl_server_name;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_netscape_comment = {
+	.ext_nid = NID_netscape_comment,
+	.ext_flags = 0,
+	.it = &ASN1_IA5STRING_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_IA5STRING,
+	.s2i = (X509V3_EXT_S2I)s2i_ASN1_IA5STRING,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
+};
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_netscape_comment(void)
+{
+	return &x509v3_ext_netscape_comment;
+}
 
 static char *
 i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)

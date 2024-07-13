@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.92 2024/07/08 14:47:44 beck Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.93 2024/07/13 15:08:58 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1714,7 +1714,7 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 /*
  * OpenSSL dispatch
  */
-const X509V3_EXT_METHOD v3_addr = {
+static const X509V3_EXT_METHOD x509v3_ext_sbgp_ipAddrBlock = {
 	.ext_nid = NID_sbgp_ipAddrBlock,
 	.ext_flags = 0,
 	.it = &IPAddrBlocks_it,
@@ -1730,6 +1730,12 @@ const X509V3_EXT_METHOD v3_addr = {
 	.r2i = NULL,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_sbgp_ipAddrBlock(void)
+{
+	return &x509v3_ext_sbgp_ipAddrBlock;
+}
 
 /*
  * Figure out whether extension uses inheritance.

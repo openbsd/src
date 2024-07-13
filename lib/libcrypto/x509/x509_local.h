@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.25 2024/07/12 18:15:10 beck Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.26 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -417,6 +417,49 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
 int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
+
+const X509V3_EXT_METHOD *x509v3_ext_method_authority_key_identifier(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_basic_constraints(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_certificate_issuer(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_certificate_policies(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_crl_distribution_points(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_crl_number(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_crl_reason(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_ct_cert_scts(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_ct_precert_poison(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_ct_precert_scts(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_delta_crl(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_ext_key_usage(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_freshest_crl(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_hold_instruction_code(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_CrlID(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_Nonce(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_acceptableResponses(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_archiveCutoff(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_id_pkix_OCSP_serviceLocator(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_info_access(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_inhibit_any_policy(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_invalidity_date(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_issuer_alt_name(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_issuing_distribution_point(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_key_usage(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_name_constraints(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_base_url(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_ca_policy_url(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_ca_revocation_url(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_cert_type(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_comment(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_renewal_url(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_revocation_url(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_netscape_ssl_server_name(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_policy_constraints(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_policy_mappings(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_private_key_usage_period(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_sbgp_ipAddrBlock(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_sbgp_autonomousSysNum(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_sinfo_access(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_subject_alt_name(void);
+const X509V3_EXT_METHOD *x509v3_ext_method_subject_key_identifier(void);
 
 __END_HIDDEN_DECLS
 

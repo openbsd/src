@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pcons.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
+/* $OpenBSD: x509_pcons.c,v 1.5 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -71,7 +71,7 @@ i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *bcons,
 static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
 
-const X509V3_EXT_METHOD v3_policy_constraints = {
+static const X509V3_EXT_METHOD x509v3_ext_policy_constraints = {
 	.ext_nid = NID_policy_constraints,
 	.ext_flags = 0,
 	.it = &POLICY_CONSTRAINTS_it,
@@ -87,6 +87,12 @@ const X509V3_EXT_METHOD v3_policy_constraints = {
 	.r2i = NULL,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_policy_constraints(void)
+{
+	return &x509v3_ext_policy_constraints;
+}
 
 static const ASN1_TEMPLATE POLICY_CONSTRAINTS_seq_tt[] = {
 	{

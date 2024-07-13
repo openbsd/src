@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.44 2024/07/08 14:47:44 beck Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.45 2024/07/13 15:08:58 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -946,7 +946,7 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 /*
  * OpenSSL dispatch.
  */
-const X509V3_EXT_METHOD v3_asid = {
+static const X509V3_EXT_METHOD x509v3_ext_sbgp_autonomousSysNum = {
 	.ext_nid = NID_sbgp_autonomousSysNum,
 	.ext_flags = 0,
 	.it = &ASIdentifiers_it,
@@ -962,6 +962,12 @@ const X509V3_EXT_METHOD v3_asid = {
 	.r2i = NULL,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_sbgp_autonomousSysNum(void)
+{
+	return &x509v3_ext_sbgp_autonomousSysNum;
+}
 
 /*
  * Figure out whether extension uses inheritance.

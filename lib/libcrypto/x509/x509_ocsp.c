@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ocsp.c,v 1.2 2022/01/07 09:45:52 tb Exp $ */
+/* $OpenBSD: x509_ocsp.c,v 1.3 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -95,7 +95,7 @@ static void *s2i_ocsp_nocheck(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
     BIO *bp, int ind);
 
-const X509V3_EXT_METHOD v3_ocsp_crlid = {
+static const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_CrlID = {
 	.ext_nid = NID_id_pkix_OCSP_CrlID,
 	.ext_flags = 0,
 	.it = &OCSP_CRLID_it,
@@ -112,7 +112,13 @@ const X509V3_EXT_METHOD v3_ocsp_crlid = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_ocsp_acutoff = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_id_pkix_OCSP_CrlID(void)
+{
+	return &x509v3_ext_id_pkix_OCSP_CrlID;
+}
+
+const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_archiveCutoff = {
 	.ext_nid = NID_id_pkix_OCSP_archiveCutoff,
 	.ext_flags = 0,
 	.it = &ASN1_GENERALIZEDTIME_it,
@@ -129,7 +135,13 @@ const X509V3_EXT_METHOD v3_ocsp_acutoff = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_crl_invdate = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_id_pkix_OCSP_archiveCutoff(void)
+{
+	return &x509v3_ext_id_pkix_OCSP_archiveCutoff;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_invalidity_date = {
 	.ext_nid = NID_invalidity_date,
 	.ext_flags = 0,
 	.it = &ASN1_GENERALIZEDTIME_it,
@@ -146,7 +158,13 @@ const X509V3_EXT_METHOD v3_crl_invdate = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_crl_hold = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_invalidity_date(void)
+{
+	return &x509v3_ext_invalidity_date;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_hold_instruction_code = {
 	.ext_nid = NID_hold_instruction_code,
 	.ext_flags = 0,
 	.it = &ASN1_OBJECT_it,
@@ -163,7 +181,13 @@ const X509V3_EXT_METHOD v3_crl_hold = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_ocsp_nonce = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_hold_instruction_code(void)
+{
+	return &x509v3_ext_hold_instruction_code;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_Nonce = {
 	.ext_nid = NID_id_pkix_OCSP_Nonce,
 	.ext_flags = 0,
 	.it = NULL,
@@ -180,7 +204,13 @@ const X509V3_EXT_METHOD v3_ocsp_nonce = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_ocsp_nocheck = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_id_pkix_OCSP_Nonce(void)
+{
+	return &x509v3_ext_id_pkix_OCSP_Nonce;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_noCheck = {
 	.ext_nid = NID_id_pkix_OCSP_noCheck,
 	.ext_flags = 0,
 	.it = &ASN1_NULL_it,
@@ -197,7 +227,13 @@ const X509V3_EXT_METHOD v3_ocsp_nocheck = {
 	.usr_data = NULL,
 };
 
-const X509V3_EXT_METHOD v3_ocsp_serviceloc = {
+const X509V3_EXT_METHOD *
+x509v3_ext_method_id_pkix_OCSP_noCheck(void)
+{
+	return &x509v3_ext_id_pkix_OCSP_noCheck;
+}
+
+static const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_serviceLocator = {
 	.ext_nid = NID_id_pkix_OCSP_serviceLocator,
 	.ext_flags = 0,
 	.it = &OCSP_SERVICELOC_it,
@@ -213,6 +249,12 @@ const X509V3_EXT_METHOD v3_ocsp_serviceloc = {
 	.r2i = NULL,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_id_pkix_OCSP_serviceLocator(void)
+{
+	return &x509v3_ext_id_pkix_OCSP_serviceLocator;
+}
 
 static int
 i2r_ocsp_crlid(const X509V3_EXT_METHOD *method, void *in, BIO *bp, int ind)

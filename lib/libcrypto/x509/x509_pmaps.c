@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pmaps.c,v 1.4 2024/07/08 14:47:44 beck Exp $ */
+/* $OpenBSD: x509_pmaps.c,v 1.5 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -69,7 +69,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
 static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(
     const X509V3_EXT_METHOD *method, void *pmps, STACK_OF(CONF_VALUE) *extlist);
 
-const X509V3_EXT_METHOD v3_policy_mappings = {
+static const X509V3_EXT_METHOD x509v3_ext_policy_mappings = {
 	.ext_nid = NID_policy_mappings,
 	.ext_flags = 0,
 	.it = &POLICY_MAPPINGS_it,
@@ -85,6 +85,12 @@ const X509V3_EXT_METHOD v3_policy_mappings = {
 	.r2i = NULL,
 	.usr_data = NULL,
 };
+
+const X509V3_EXT_METHOD *
+x509v3_ext_method_policy_mappings(void)
+{
+	return &x509v3_ext_policy_mappings;
+}
 
 static const ASN1_TEMPLATE POLICY_MAPPING_seq_tt[] = {
 	{

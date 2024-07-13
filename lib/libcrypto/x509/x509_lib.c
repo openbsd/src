@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.23 2024/06/17 05:38:08 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.24 2024/07/13 15:08:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,89 +65,104 @@
 
 #include "x509_local.h"
 
-extern const X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
-extern const X509V3_EXT_METHOD v3_pkey_usage_period, v3_info, v3_sinfo;
-extern const X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
-extern const X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
-extern const X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld, v3_freshest_crl;
-extern const X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
-extern const X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
-extern const X509V3_EXT_METHOD v3_crl_hold;
-extern const X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
-extern const X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
-extern const X509V3_EXT_METHOD v3_addr, v3_asid;
-extern const X509V3_EXT_METHOD v3_ct_scts[3];
-
-static const X509V3_EXT_METHOD *standard_exts[] = {
-	&v3_nscert,
-	&v3_ns_ia5_list[0],
-	&v3_ns_ia5_list[1],
-	&v3_ns_ia5_list[2],
-	&v3_ns_ia5_list[3],
-	&v3_ns_ia5_list[4],
-	&v3_ns_ia5_list[5],
-	&v3_ns_ia5_list[6],
-	&v3_skey_id,
-	&v3_key_usage,
-	&v3_pkey_usage_period,
-	&v3_alt[0],
-	&v3_alt[1],
-	&v3_bcons,
-	&v3_crl_num,
-	&v3_cpols,
-	&v3_akey_id,
-	&v3_crld,
-	&v3_ext_ku,
-	&v3_delta_crl,
-	&v3_crl_reason,
-#ifndef OPENSSL_NO_OCSP
-	&v3_crl_invdate,
-#endif
-	&v3_info,
-#ifndef OPENSSL_NO_RFC3779
-	&v3_addr,
-	&v3_asid,
-#endif
-#ifndef OPENSSL_NO_OCSP
-	&v3_ocsp_nonce,
-	&v3_ocsp_crlid,
-	&v3_ocsp_accresp,
-	&v3_ocsp_nocheck,
-	&v3_ocsp_acutoff,
-	&v3_ocsp_serviceloc,
-#endif
-	&v3_sinfo,
-	&v3_policy_constraints,
-#ifndef OPENSSL_NO_OCSP
-	&v3_crl_hold,
-#endif
-	&v3_name_constraints,
-	&v3_policy_mappings,
-	&v3_inhibit_anyp,
-	&v3_idp,
-	&v3_alt[2],
-	&v3_freshest_crl,
-#ifndef OPENSSL_NO_CT
-	&v3_ct_scts[0],
-	&v3_ct_scts[1],
-	&v3_ct_scts[2],
-#endif
-};
-
-#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts) / sizeof(standard_exts[0]))
-
 const X509V3_EXT_METHOD *
 X509V3_EXT_get_nid(int nid)
 {
-	size_t i;
-
-	for (i = 0; i < STANDARD_EXTENSION_COUNT; i++) {
-		if (standard_exts[i]->ext_nid == nid)
-			return standard_exts[i];
+	switch (nid) {
+	case NID_authority_key_identifier:
+		return x509v3_ext_method_authority_key_identifier();
+	case NID_basic_constraints:
+		return x509v3_ext_method_basic_constraints();
+	case NID_certificate_issuer:
+		return x509v3_ext_method_certificate_issuer();
+	case NID_certificate_policies:
+		return x509v3_ext_method_certificate_policies();
+	case NID_crl_distribution_points:
+		return x509v3_ext_method_crl_distribution_points();
+	case NID_crl_number:
+		return x509v3_ext_method_crl_number();
+	case NID_crl_reason:
+		return x509v3_ext_method_crl_reason();
+#ifndef OPENSSL_NO_CT
+	case NID_ct_cert_scts:
+		return x509v3_ext_method_ct_cert_scts();
+	case NID_ct_precert_poison:
+		return x509v3_ext_method_ct_precert_poison();
+	case NID_ct_precert_scts:
+		return x509v3_ext_method_ct_precert_scts();
+#endif
+	case NID_delta_crl:
+		return x509v3_ext_method_delta_crl();
+	case NID_ext_key_usage:
+		return x509v3_ext_method_ext_key_usage();
+	case NID_freshest_crl:
+		return x509v3_ext_method_freshest_crl();
+#ifndef OPENSSL_NO_OCSP
+	case NID_hold_instruction_code:
+		return x509v3_ext_method_hold_instruction_code();
+	case NID_id_pkix_OCSP_CrlID:
+		return x509v3_ext_method_id_pkix_OCSP_CrlID();
+	case NID_id_pkix_OCSP_Nonce:
+		return x509v3_ext_method_id_pkix_OCSP_Nonce();
+	case NID_id_pkix_OCSP_acceptableResponses:
+		return x509v3_ext_method_id_pkix_OCSP_acceptableResponses();
+	case NID_id_pkix_OCSP_archiveCutoff:
+		return x509v3_ext_method_id_pkix_OCSP_archiveCutoff();
+	case NID_id_pkix_OCSP_serviceLocator:
+		return x509v3_ext_method_id_pkix_OCSP_serviceLocator();
+#endif
+	case NID_info_access:
+		return x509v3_ext_method_info_access();
+	case NID_inhibit_any_policy:
+		return x509v3_ext_method_inhibit_any_policy();
+	case NID_invalidity_date:
+		return x509v3_ext_method_invalidity_date();
+	case NID_issuer_alt_name:
+		return x509v3_ext_method_issuer_alt_name();
+	case NID_issuing_distribution_point:
+		return x509v3_ext_method_issuing_distribution_point();
+	case NID_key_usage:
+		return x509v3_ext_method_key_usage();
+	case NID_name_constraints:
+		return x509v3_ext_method_name_constraints();
+	case NID_netscape_base_url:
+		return x509v3_ext_method_netscape_base_url();
+	case NID_netscape_ca_policy_url:
+		return x509v3_ext_method_netscape_ca_policy_url();
+	case NID_netscape_ca_revocation_url:
+		return x509v3_ext_method_netscape_ca_revocation_url();
+	case NID_netscape_cert_type:
+		return x509v3_ext_method_netscape_cert_type();
+	case NID_netscape_comment:
+		return x509v3_ext_method_netscape_comment();
+	case NID_netscape_renewal_url:
+		return x509v3_ext_method_netscape_renewal_url();
+	case NID_netscape_revocation_url:
+		return x509v3_ext_method_netscape_revocation_url();
+	case NID_netscape_ssl_server_name:
+		return x509v3_ext_method_netscape_ssl_server_name();
+	case NID_policy_constraints:
+		return x509v3_ext_method_policy_constraints();
+	case NID_policy_mappings:
+		return x509v3_ext_method_policy_mappings();
+	case NID_private_key_usage_period:
+		return x509v3_ext_method_private_key_usage_period();
+#ifndef OPENSSL_NO_RFC3779
+	case NID_sbgp_ipAddrBlock:
+		return x509v3_ext_method_sbgp_ipAddrBlock();
+	case NID_sbgp_autonomousSysNum:
+		return x509v3_ext_method_sbgp_autonomousSysNum();
+#endif
+	case NID_sinfo_access:
+		return x509v3_ext_method_sinfo_access();
+	case NID_subject_alt_name:
+		return x509v3_ext_method_subject_alt_name();
+	case NID_subject_key_identifier:
+		return x509v3_ext_method_subject_key_identifier();
+	default:
+		return NULL;
 	}
-
-	return NULL;
-}
+};
 LCRYPTO_ALIAS(X509V3_EXT_get_nid);
 
 const X509V3_EXT_METHOD *
