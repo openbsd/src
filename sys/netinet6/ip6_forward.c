@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.122 2024/07/13 09:34:26 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.123 2024/07/13 10:09:40 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -45,6 +45,9 @@
 #include <net/if_var.h>
 #include <net/if_enc.h>
 #include <net/route.h>
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
@@ -53,20 +56,15 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
-
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
-
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#include <netinet/udp.h>
 #endif
-#include <netinet/tcp.h>
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
 
 /*
  * Forward a packet.  If some error occurs return the sender
