@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2024/07/10 16:30:43 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2024/07/13 13:06:47 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,7 +135,7 @@ include		: INCLUDE STRING		{
 listen		: LISTEN ON listen_addr {
 			struct radiusd_listen *n;
 
-			if ((n = malloc(sizeof(struct radiusd_listen)))
+			if ((n = calloc(1, sizeof(struct radiusd_listen)))
 			    == NULL) {
 outofmemory:
 				yyerror("Out of memory: %s", strerror(errno));
@@ -917,7 +917,7 @@ parse_config(const char *filename, struct radiusd *radiusd)
 	popfile();
 
 	if (TAILQ_EMPTY(&conf->listen)) {
-		if ((l = malloc(sizeof(struct radiusd_listen))) == NULL) {
+		if ((l = calloc(1, sizeof(struct radiusd_listen))) == NULL) {
 			log_warn("Out of memory");
 			return (-1);
 		}

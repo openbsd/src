@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.46 2024/07/10 16:30:43 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.47 2024/07/13 13:06:47 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -475,9 +475,9 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 	}
 
 	/* Check the request authenticator if accounting */
-	if ((req_code == RADIUS_CODE_ACCOUNTING_REQUEST ||
-	    listn->accounting) && radius_check_accounting_request_authenticator(
-	    packet, client->secret) != 0) {
+	if (req_code == RADIUS_CODE_ACCOUNTING_REQUEST &&
+	    radius_check_accounting_request_authenticator(packet,
+	    client->secret) != 0) {
 		log_warnx("Received %s(code=%d) from %s id=%d: bad request "
 		    "authenticator", radius_code_string(req_code), req_code,
 		    peerstr, req_id);
