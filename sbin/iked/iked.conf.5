@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.97 2024/07/13 12:22:46 yasuoka Exp $
+.\" $OpenBSD: iked.conf.5,v 1.98 2024/07/13 12:58:51 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -652,14 +652,14 @@ Currently
 .Ar MSCHAP-V2
 or
 .Ar RADIUS
-is supported for EAP
+is supported for the EAP
 .Ar type .
 The responder will use RSA public key authentication.
 To use RADIUS for EAP,
 at least one RADIUS server should be configured.
-See
+See the
 .Sx RADIUS
-section for the RADIUS support.
+section for RADIUS support.
 .It Ic ecdsa256
 Use ECDSA with a 256-bit elliptic curve key and SHA2-256 for authentication.
 .It Ic ecdsa384
@@ -788,13 +788,12 @@ The traffic will be blocked if the specified
 does not exist.
 .El
 .Sh RADIUS CONFIGURATION
-.Pp
 The configuration options for RADIUS are as follows:
 .Bl -tag -width xxxx
 .It Ic radius config Oo Ar af Oc Ar option Oo Ar vendor Oc Ar attr
-When the RADIUS authentication succeeded,
+Once RADIUS authentication has succeeded,
 .Xr iked 8
-uses the RADIUS attributes contained the response from the RADIUS server to
+uses the RADIUS attributes containing the response from the RADIUS server to
 construct IKEv2 configuration payloads (CP).
 This configuration option defines a mapping from a RADIUS attribute to an IKE
 CP with the following parameters:
@@ -802,9 +801,9 @@ CP with the following parameters:
 .Bl -tag -width "vendor attr" -compact
 .It Op Ar af
 Specify either
-.Ar inet
+.Cm inet
 or
-.Ar inet6
+.Cm inet6
 for the address family of the IKE CP option.
 .It Ar option
 Specify an IKE CP option.
@@ -812,16 +811,16 @@ Choose from
 .Sx AUTOMATIC KEYING POLICIES
 config options
 .Po
-.Ic address ,
-.Ic netmask ,
-.Ic name-server ,
-.Ic netbios-server ,
-.Ic dhcp-server ,
+.Cm address ,
+.Cm netmask ,
+.Cm name-server ,
+.Cm netbios-server ,
+.Cm dhcp-server ,
 and
-.Ic access-server
-.Pc ,
+.Cm access-server
+.Pc
 or use
-.Ic none
+.Cm none
 to disable the existing or default mapping.
 .It Ar attr
 For a standard RADIUS attribute,
@@ -852,8 +851,8 @@ uses the following attributes for the options:
 secret Ar secret
 Specify the RADIUS server's IP address and the shared secret with the server.
 For a RADIUS accounting server,
-specify optional
-.Ic accounting
+use the
+.Cm accounting
 keyword.
 Optionally specify the port number,
 otherwise the default port number,
@@ -869,8 +868,8 @@ If the number of retransmissions per server reaches this value,
 the current server is marked as failed,
 and the next server is used for subsequent requests.
 For RADIUS accounting requests,
-specify optional
-.Ic accounting
+use the
+.Cm accounting
 keyword.
 The default value is 3.
 .It Ic radius Oo Ic accounting Oc Ic max-failovers Ar number
@@ -880,8 +879,8 @@ will failover to the next server when the current server is marked
 .Dq fail .
 This key and value specifies the maximum number of failovers.
 For RADIUS accounting requests,
-specify optional
-.Ic accounting
+use the
+.Cm accounting
 keyword.
 The default value is 0.
 .It Ic radius dae listen on Ar address Oo port Ar number Oc
@@ -889,12 +888,13 @@ Specify the local
 .Ar address
 .Xr iked 8
 should listen on for the Dynamic Authorization Extensions
-.Po DAE, RFC 5176 Pc requests,
+.Pq DAE, RFC 5176
+requests.
 Optionally specify a port
-.Ar number,
+.Ar number ;
 the default port number is 3799.
 .It Ic radius dae client Ar address Ic secret Ar secret
-Specify
+Specify an
 .Ar address
 for a DAE client and
 .Ar secret .
