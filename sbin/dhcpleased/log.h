@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2024/06/03 17:58:33 deraadt Exp $ */
+/*	$OpenBSD: log.h,v 1.5 2024/07/14 08:45:05 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,7 @@ __dead void fatalx(const char *, ...)
 #define log_init(x...)		do {} while (0)
 #define log_procinit(x...)	do {} while (0)
 #define log_setverbose(x...)	do {} while (0)
-#define log_getverbose(x...)	(0)
+#define log_getverbose()	(0)
 #define log_warn(x...)		do {} while (0)
 #define log_warnx(x...)		do {} while (0)
 #define log_info(x...)		do {} while (0)
