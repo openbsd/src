@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.29 2024/07/10 05:40:08 jmc Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.30 2024/07/14 16:09:23 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2024 $
+.Dd $Mdocdate: July 14 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -74,15 +74,21 @@ each module can have configurations respectively and work independently.
 .Pp
 The following modules are predefined:
 .Bl -tag -width Ds
+.Nd provides conversion from EAP-MSCHAPv2 to MS-CHAPv2
 .It Do bsdauth Dc module
 The
 .Dq bsdauth
-module
-provides authentication from the local system's
+module provides authentication from the local system's
 .Xr authenticate 3
 interface.
 See
 .Xr radiusd_bsdauth 8 .
+.It Do eap2mschap Dc module
+The
+.Dq eap2mschap
+module provides conversion from EAP-MSCHAPv2 to MS-CHAPv2.
+See
+.Xr radiusd_eap2mschap 8 .
 .It Do ipcp Dc module
 The
 .Dq ipcp
@@ -218,6 +224,7 @@ account * to standard
 .Sh SEE ALSO
 .Xr radiusd 8 ,
 .Xr radiusd_bsdauth 8 ,
+.Xr radiusd_eap2mschap 8 ,
 .Xr radiusd_ipcp 8 ,
 .Xr radiusd_radius 8 ,
 .Xr radiusd_standard 8
