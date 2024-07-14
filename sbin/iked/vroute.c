@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.19 2023/06/13 12:34:12 tb Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.20 2024/07/14 13:13:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -631,6 +631,8 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 	case IMSG_VROUTE_DEL:
 		type = RTM_DELETE;
 		break;
+	default:
+		return (-1);
 	}
 
 	if (type == RTM_ADD)
