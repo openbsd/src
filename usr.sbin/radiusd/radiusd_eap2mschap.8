@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_eap2mschap.8,v 1.1 2024/07/14 16:09:23 yasuoka Exp $
+.\"	$OpenBSD: radiusd_eap2mschap.8,v 1.2 2024/07/14 18:09:05 jmc Exp $
 .\"
 .\" Copyright (c) 2024 Internet Initiative Japan Inc.
 .\"
@@ -29,7 +29,7 @@ The
 .Nm
 module is executed by
 .Xr radiusd 8
-as a
+as an
 .Dq authentication-filter
 module to provide conversion from EAP-MSCHAPv2 authentication messages to
 MS-CHAPv2 authentication messages.
@@ -37,7 +37,6 @@ MS-CHAPv2 authentication messages.
 The
 .Nm
 module supports the following configuration key and value:
-.Pp
 .Bl -tag -width Ds
 .It Ic chap-name Ar name
 Specify the name in CHAP.
@@ -51,16 +50,15 @@ The default is
 module executable.
 .El
 .Sh EXAMPLES
-An example shows
+An example showing the
 .Nm
-module provides an authentication server that supports EAP-MSCHAPv2.
-Although
+module providing an authentication server that supports EAP-MSCHAPv2.
+Although the
 .Xr radiusd_file 8
-module itself doesn't support any EAP method,
-but by working with the
+module itself doesn't support any EAP methods,
+when used with the
 .Nm
-module,
-it becomes possible to support EAP-MSCHAPv2.
+module it becomes possible to support EAP-MSCHAPv2.
 .Pp
 .Pa /etc/radiusd.conf :
 .Bd -literal -offset indent
@@ -79,8 +77,8 @@ authenticate * by file
 .Ed
 .Sh SEE ALSO
 .Xr authenticate 3 ,
-.Xr radiusd 8 ,
-.Xr radiusd.conf 5
+.Xr radiusd.conf 5 ,
+.Xr radiusd 8
 .Sh HISTORY
 The
 .Nm
