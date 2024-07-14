@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.9 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.10 2024/07/14 11:12:32 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -307,6 +307,7 @@ radius_test(struct parse_result *res)
 		u_char	 resp[1 + MD5_DIGEST_LENGTH]; /* "1 + " for CHAP Id */
 		MD5_CTX	 md5ctx;
 
+		arc4random_buf(chal, sizeof(chal));
 		arc4random_buf(resp, 1);	/* CHAP Id is random */
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, resp, 1);
