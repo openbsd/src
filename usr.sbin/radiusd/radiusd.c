@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.49 2024/07/14 15:27:57 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.50 2024/07/14 15:31:49 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <imsg.h>
-#include <md5.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -47,6 +46,7 @@
 
 #include "radiusd.h"
 #include "radiusd_local.h"
+#include "radius_subr.h"
 #include "log.h"
 #include "util.h"
 #include "imsg_subr.h"
@@ -1124,57 +1124,6 @@ radiusd_access_response_fixup(struct radius_query *q, struct radius_query *q0,
 	}
 
 	return (0);
-}
-
-void
-radius_attr_hide(const char *secret, const char *authenticator,
-    const u_char *salt, u_char *plain, int plainlen)
-{
-	int	  i, j;
-	u_char	  b[16];
-	MD5_CTX	  md5ctx;
-
-	i = 0;
-	do {
-		MD5Init(&md5ctx);
-		MD5Update(&md5ctx, secret, strlen(secret));
-		if (i == 0) {
-			MD5Update(&md5ctx, authenticator, 16);
-			if (salt != NULL)
-				MD5Update(&md5ctx, salt, 2);
-		} else
-			MD5Update(&md5ctx, plain + i - 16, 16);
-		MD5Final(b, &md5ctx);
-
-		for (j = 0; j < 16 && i < plainlen; i++, j++)
-			plain[i] ^= b[j];
-	} while (i < plainlen);
-}
-
-void
-radius_attr_unhide(const char *secret, const char *authenticator,
-    const u_char *salt, u_char *crypt0, int crypt0len)
-{
-	int	  i, j;
-	u_char	  b[16];
-	MD5_CTX	  md5ctx;
-
-	i = 16 * ((crypt0len - 1) / 16);
-	while (i >= 0) {
-		MD5Init(&md5ctx);
-		MD5Update(&md5ctx, secret, strlen(secret));
-		if (i == 0) {
-			MD5Update(&md5ctx, authenticator, 16);
-			if (salt != NULL)
-				MD5Update(&md5ctx, salt, 2);
-		} else
-			MD5Update(&md5ctx, crypt0 + i - 16, 16);
-		MD5Final(b, &md5ctx);
-
-		for (j = 0; j < 16 && i + j < crypt0len; j++)
-			crypt0[i + j] ^= b[j];
-		i -= 16;
-	}
 }
 
 static struct radius_query *

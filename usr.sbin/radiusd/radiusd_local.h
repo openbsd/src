@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.14 2024/07/14 15:27:57 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.15 2024/07/14 15:31:49 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -205,10 +205,6 @@ void		 radiusd_access_request_next(struct radius_query *, RADIUS_PACKET *);
 void		 radiusd_access_request_aborted(struct radius_query *);
 int		 radiusd_imsg_compose_module(struct radiusd *, const char *,
 		    uint32_t, uint32_t, pid_t, int, void *, size_t);
-void		 radius_attr_hide(const char *, const char *, const u_char *,
-		    u_char *, int);
-void		 radius_attr_unhide(const char *, const char *, const u_char *,
-		    u_char *, int);
 
 int		 radiusd_module_set(struct radiusd_module *, const char *, int,
 		    char * const *);
