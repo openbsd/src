@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2024/06/28 21:07:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2024/07/14 18:49:32 anton Exp $
 
 PROG=	unp-write-closed
+
+WARNINGS=	yes
 
 .include <bsd.regress.mk>

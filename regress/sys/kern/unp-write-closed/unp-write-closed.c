@@ -1,4 +1,4 @@
-/*	$OpenBSD: unp-write-closed.c,v 1.1.1.1 2024/06/28 21:07:27 bluhm Exp $	*/
+/*	$OpenBSD: unp-write-closed.c,v 1.2 2024/07/14 18:49:32 anton Exp $	*/
 /*
  * Copyright (c) 2024 Vitaliy Makkoveev <mvs@openbsd.org>
  * Copyright (c) 2024 Alenander Bluhm <bluhm@openbsd.org>
@@ -27,7 +27,7 @@
 
 sig_atomic_t done = 0;
 
-void
+static void
 handler(int sigraised)
 {
 	done = 1;
