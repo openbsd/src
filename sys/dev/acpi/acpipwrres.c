@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.13 2023/02/18 14:32:02 dv Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.14 2024/07/14 10:48:55 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -33,6 +33,7 @@
 
 int	acpipwrres_match(struct device *, void *, void *);
 void	acpipwrres_attach(struct device *, struct device *, void *);
+int	acpipwrres_activate(struct device *, int);
 
 #ifdef ACPIPWRRES_DEBUG
 #define DPRINTF(x)	printf x
@@ -66,7 +67,8 @@ struct acpipwrres_consumer {
 };
 
 const struct cfattach acpipwrres_ca = {
-	sizeof(struct acpipwrres_softc), acpipwrres_match, acpipwrres_attach
+	sizeof(struct acpipwrres_softc), acpipwrres_match, acpipwrres_attach,
+	NULL, acpipwrres_activate
 };
 
 struct cfdriver acpipwrres_cd = {
@@ -141,6 +143,23 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
+acpipwrres_activate(struct device *self, int act)
+{
+	struct acpipwrres_softc *sc = (struct acpipwrres_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (sc->sc_cons_ref == 0 && sc->sc_state != ACPIPWRRES_OFF) {
+			aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0,
+			    NULL, NULL);
+			sc->sc_state = ACPIPWRRES_OFF;
+		}
+		break;
+	}
+	return 0;
+}
+
+int
 acpipwrres_ref_incr(struct acpipwrres_softc *sc, struct aml_node *node)
 {
 	if (!acpipwrres_hascons(sc, node))
@@ -149,9 +168,11 @@ acpipwrres_ref_incr(struct acpipwrres_softc *sc, struct aml_node *node)
 	DPRINTF(("%s: dev %s ON %d\n", DEVNAME(sc), node->name,
 	    sc->sc_cons_ref));
 
-	if (sc->sc_cons_ref++ == 0)
+	if (sc->sc_cons_ref++ == 0) {
 		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_ON", 0,
 		    NULL, NULL);
+		sc->sc_state = ACPIPWRRES_ON;
+	}
 
 	return (0);
 }
@@ -165,9 +186,11 @@ acpipwrres_ref_decr(struct acpipwrres_softc *sc, struct aml_node *node)
 	DPRINTF(("%s: dev %s OFF %d\n", DEVNAME(sc), node->name,
 	    sc->sc_cons_ref));
 
-	if (--sc->sc_cons_ref == 0)
+	if (--sc->sc_cons_ref == 0) {
 		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0,
 		    NULL, NULL);
+		sc->sc_state = ACPIPWRRES_OFF;
+	}
 
 	return (0);
 }
