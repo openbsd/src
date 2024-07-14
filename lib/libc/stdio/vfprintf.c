@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.82 2023/10/06 16:41:02 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.83 2024/07/14 13:31:50 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -55,6 +55,10 @@
 
 #include "local.h"
 #include "fvwrite.h"
+
+#define	PRINTF_PAGESIZE		(1 << _MAX_PAGE_SHIFT)
+#define	PRINTF_PAGEMASK		(PRINTF_PAGESIZE - 1)
+#define	PAGEROUND(x)		(((x) + (PRINTF_PAGEMASK)) & ~PRINTF_PAGEMASK)
 
 union arg {
 	int			intarg;
@@ -153,12 +157,13 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
  * string is null-terminated.
  */
 static char *
-__wcsconv(wchar_t *wcsarg, int prec)
+__wcsconv(wchar_t *wcsarg, int prec, char **convbufp, size_t *convbufsizp)
 {
+	char *convbuf = *convbufp;
+	size_t convbufsiz = *convbufsizp;
 	mbstate_t mbs;
 	char buf[MB_LEN_MAX];
 	wchar_t *p;
-	char *convbuf;
 	size_t clen, nbytes;
 
 	/* Allocate space for the maximum number of bytes we could output. */
@@ -191,15 +196,26 @@ __wcsconv(wchar_t *wcsarg, int prec)
 				return (NULL);
 		}
 	}
-	if ((convbuf = malloc(nbytes + 1)) == NULL)
-		return (NULL);
+	if (nbytes + 1 > convbufsiz) {
+		if (convbuf != NULL)
+			munmap(convbuf, convbufsiz);
+		convbufsiz = PAGEROUND(nbytes + 1);
+		convbuf = mmap(NULL, convbufsiz, PROT_WRITE|PROT_READ,
+		    MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (convbuf == MAP_FAILED) {
+			*convbufp = NULL;
+			*convbufsizp = 0;
+			return (NULL);
+		}
+		*convbufp = convbuf;
+		*convbufsizp = convbufsiz;
+	}
 
 	/* Fill the output buffer. */
 	p = wcsarg;
 	memset(&mbs, 0, sizeof(mbs));
 	if ((nbytes = wcsrtombs(convbuf, (const wchar_t **)&p,
 	    nbytes, &mbs)) == (size_t)-1) {
-		free(convbuf);
 		return (NULL);
 	}
 	convbuf[nbytes] = '\0';
@@ -328,6 +344,7 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	va_list orgap;		/* original argument pointer */
 #ifdef PRINTF_WIDE_CHAR
 	char *convbuf;		/* buffer for wide to multi-byte conversion */
+	size_t convbufsiz;	/* size of convbuf, for munmap() */
 #endif
 
 	/*
@@ -475,6 +492,7 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	ret = 0;
 #ifdef PRINTF_WIDE_CHAR
 	convbuf = NULL;
+	convbufsiz = 0;
 #endif
 
 	/*
@@ -840,8 +858,6 @@ fp_common:
 			if (flags & LONGINT) {
 				wchar_t *wcp;
 
-				free(convbuf);
-				convbuf = NULL;
 				if ((wcp = GETARG(wchar_t *)) == NULL) {
 					struct syslog_data sdata = SYSLOG_DATA_INIT;
 					int save_errno = errno;
@@ -852,12 +868,12 @@ fp_common:
 
 					cp = "(null)";
 				} else {
-					convbuf = __wcsconv(wcp, prec);
-					if (convbuf == NULL) {
+					cp = __wcsconv(wcp, prec, &convbuf,
+					    &convbufsiz);
+					if (cp == NULL) {
 						ret = -1;
 						goto error;
 					}
-					cp = convbuf;
 				}
 			} else
 #endif /* PRINTF_WIDE_CHAR */
@@ -1072,7 +1088,8 @@ overflow:
 
 finish:
 #ifdef PRINTF_WIDE_CHAR
-	free(convbuf);
+	if (convbuf != NULL)
+		munmap(convbuf, convbufsiz);
 #endif
 #ifdef FLOATING_POINT
 	if (dtoaresult)
