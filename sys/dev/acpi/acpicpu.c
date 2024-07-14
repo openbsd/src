@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.93 2024/06/07 16:53:35 kettenis Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.94 2024/07/14 14:04:16 jmatthew Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -654,6 +654,9 @@ acpicpu_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
 	struct acpi_softc	*acpi = (struct acpi_softc *)parent;
+	CPU_INFO_ITERATOR	cii;
+	struct cpu_info		*ci;
+	int64_t			uid;
 
 	if (acpi_matchhids(aa, acpicpu_hids, cf->cf_driver->cd_name) &&
 	    aa->aaa_node && aa->aaa_node->value &&
@@ -663,7 +666,15 @@ acpicpu_match(struct device *parent, void *match, void *aux)
 		 * so we won't attach any Processor() nodes.
 		 */
 		acpi->sc_skip_processor = 1;
-		return (1);
+
+		/* Only match if we can find a CPU with the right ID */
+		if (aml_evalinteger(acpi, aa->aaa_node, "_UID", 0,
+		    NULL, &uid) == 0)
+			CPU_INFO_FOREACH(cii, ci)
+				if (ci->ci_acpi_proc_id == uid)
+					return (1);
+
+		return (0);
 	}
 
 	/* sanity */
