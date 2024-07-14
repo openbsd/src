@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.187 2024/07/14 11:14:29 jca Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.188 2024/07/14 11:36:54 jca Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -923,6 +923,14 @@ bad:
 		return (ENOEXEC);
 	return (error);
 }
+
+#ifdef __HAVE_CPU_HWCAP
+unsigned long hwcap;
+#endif /* __HAVE_CPU_HWCAP */
+
+#ifdef __HAVE_CPU_HWCAP2
+unsigned long hwcap2;
+#endif /* __HAVE_CPU_HWCAP2 */
 
 /*
  * Phase II of load. It is now safe to load the interpreter. Info collected
