@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.50 2024/07/13 17:42:13 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.51 2024/07/14 15:56:08 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -476,6 +476,7 @@ ERR_load_SSL_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(SSL_str_functs[0].error) == NULL) {
+		/* TMP UGLY CASTS */
 		ERR_load_strings(0, (ERR_STRING_DATA *)SSL_str_functs);
 		ERR_load_strings(0, (ERR_STRING_DATA *)SSL_str_reasons);
 	}
