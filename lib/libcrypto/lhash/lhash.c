@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.27 2024/06/30 14:13:08 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.28 2024/07/14 14:32:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,12 +65,33 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 
-#include "lhash_local.h"
-
 #undef MIN_NODES
 #define MIN_NODES	16
 #define UP_LOAD		(2*LH_LOAD_MULT) /* load times 256  (default 2) */
 #define DOWN_LOAD	(LH_LOAD_MULT)   /* load times 256  (default 1) */
+
+typedef struct lhash_node_st {
+	void *data;
+	struct lhash_node_st *next;
+#ifndef OPENSSL_NO_HASH_COMP
+	unsigned long hash;
+#endif
+} LHASH_NODE;
+
+struct lhash_st {
+	LHASH_NODE **b;
+	LHASH_COMP_FN_TYPE comp;
+	LHASH_HASH_FN_TYPE hash;
+	unsigned int num_nodes;
+	unsigned int num_alloc_nodes;
+	unsigned int p;
+	unsigned int pmax;
+	unsigned long up_load; /* load times 256 */
+	unsigned long down_load; /* load times 256 */
+	unsigned long num_items;
+
+	int error;
+} /* _LHASH */;
 
 static void
 expand(_LHASH *lh)
