@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.119 2024/01/15 07:23:32 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.120 2024/07/14 19:51:08 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -85,6 +85,7 @@ struct pfctl {
 	struct pfioc_queue *pqueue;
 	struct pfr_buffer *trans;
 	struct pf_anchor *anchor, *alast;
+	struct pfr_ktablehead pfr_ktlast;
 	const char *ruleset;
 
 	/* 'set foo' options */
@@ -211,6 +212,8 @@ struct pfctl_watermarks {
 	u_int32_t	lo;
 };
 
+struct pfr_uktable;
+
 void		 copy_satopfaddr(struct pf_addr *, struct sockaddr *);
 
 int	pfctl_rules(int, char *, int, int, char *, struct pfr_buffer *);
@@ -234,7 +237,7 @@ int	pfctl_set_interface_flags(struct pfctl *, char *, int, int);
 
 int	parse_config(char *, struct pfctl *);
 int	parse_flags(char *);
-int	pfctl_load_anchors(int, struct pfctl *, struct pfr_buffer *);
+int	pfctl_load_anchors(int, struct pfctl *);
 
 int	pfctl_load_queues(struct pfctl *);
 int	pfctl_add_queue(struct pfctl *, struct pf_queuespec *);
@@ -248,7 +251,7 @@ void	print_status(struct pf_status *, struct pfctl_watermarks *, int);
 void	print_queuespec(struct pf_queuespec *);
 
 int	pfctl_define_table(char *, int, int, const char *, struct pfr_buffer *,
-	    u_int32_t);
+	    u_int32_t, struct pfr_uktable *);
 void	pfctl_expand_label_nr(struct pf_rule *, unsigned int);
 
 void		 pfctl_clear_fingerprints(int, int);
@@ -298,5 +301,8 @@ struct node_host	*host(const char *, int);
 int			 append_addr(struct pfr_buffer *, char *, int, int);
 int			 append_addr_host(struct pfr_buffer *,
 			    struct node_host *, int, int);
+int			 pfr_ktable_compare(struct pfr_ktable *,
+			    struct pfr_ktable *);
+RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 
 #endif /* _PFCTL_PARSER_H_ */

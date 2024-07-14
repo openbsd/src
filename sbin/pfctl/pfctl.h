@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.63 2024/05/19 10:39:40 jsg Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.64 2024/07/14 19:51:08 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,6 +33,12 @@
 #ifndef _PFCTL_H_
 #define _PFCTL_H_
 
+#ifdef PFCTL_DEBUG
+#define DBGPRINT(...)	fprintf(stderr, __VA_ARGS__)
+#else
+#define DBGPRINT(...)	(void)(0)
+#endif
+
 enum pfctl_show { PFCTL_SHOW_RULES, PFCTL_SHOW_LABELS, PFCTL_SHOW_NOTHING };
 
 enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS,
@@ -53,6 +59,20 @@ struct pfr_anchoritem {
 	SLIST_ENTRY(pfr_anchoritem)	pfra_sle;
 	char	*pfra_anchorname;
 };
+
+struct pfr_uktable {
+	struct pfr_ktable	pfrukt_kt;
+	struct pfr_buffer	pfrukt_addrs;
+	int			pfrukt_init_addr;
+	SLIST_ENTRY(pfr_uktable)
+				pfrukt_entry;
+};
+
+#define pfrukt_t	pfrukt_kt.pfrkt_ts.pfrts_t
+#define pfrukt_name	pfrukt_kt.pfrkt_t.pfrt_name
+#define pfrukt_anchor	pfrukt_kt.pfrkt_t.pfrt_anchor
+
+extern struct pfr_ktablehead pfr_ktables;
 
 SLIST_HEAD(pfr_anchors, pfr_anchoritem);
 
