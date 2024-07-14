@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_file.8,v 1.1 2024/07/14 16:22:59 yasuoka Exp $
+.\"	$OpenBSD: radiusd_file.8,v 1.2 2024/07/14 18:11:18 jmc Exp $
 .\"
 .\" Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -34,7 +34,7 @@ module is executed by
 as a module to provide authentication from a file written in the syntax
 described in
 .Xr npppd-users 5 .
-It supports PAP, CHAP, and MSCHAPv2 authentication methods.
+It supports the PAP, CHAP, and MSCHAPv2 authentication methods.
 .Sh CONFIGURATIONS
 The
 .Nm module
@@ -53,8 +53,8 @@ written in the syntax described in
 module executable.
 .El
 .Sh SEE ALSO
-.Xr radiusd 8 ,
-.Xr npppd-users 5
+.Xr npppd-users 5 ,
+.Xr radiusd 8
 .Sh HISTORY
 The
 .Nm
