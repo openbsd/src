@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2024/07/13 13:06:47 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2024/07/14 13:44:30 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1010,6 +1010,7 @@ default_module_path(const char *name)
 		const char *path;
 	} module_paths[] = {
 		{ "bsdauth",	"/usr/libexec/radiusd/radiusd_bsdauth" },
+		{ "file",	"/usr/libexec/radiusd/radiusd_file" },
 		{ "ipcp",	"/usr/libexec/radiusd/radiusd_ipcp" },
 		{ "radius",	"/usr/libexec/radiusd/radiusd_radius" },
 		{ "standard",	"/usr/libexec/radiusd/radiusd_standard" }
