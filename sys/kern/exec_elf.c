@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.186 2024/04/02 08:39:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.187 2024/07/14 11:14:29 jca Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -89,6 +89,7 @@
 
 #include <machine/reg.h>
 #include <machine/exec.h>
+#include <machine/elf.h>
 
 int	elf_load_file(struct proc *, char *, struct exec_package *,
 	    struct elf_args *);
@@ -994,6 +995,18 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 		a->au_id = AUX_entry;
 		a->au_v = ap->arg_entry;
 		a++;
+
+#ifdef __HAVE_CPU_HWCAP
+		a->au_id = AUX_hwcap;
+		a->au_v = hwcap;
+		a++;
+#endif /* __HAVE_CPU_HWCAP */
+
+#ifdef __HAVE_CPU_HWCAP2
+		a->au_id = AUX_hwcap2;
+		a->au_v = hwcap2;
+		a++;
+#endif /* __HAVE_CPU_HWCAP2 */
 
 		a->au_id = AUX_openbsd_timekeep;
 		a->au_v = p->p_p->ps_timekeep;
