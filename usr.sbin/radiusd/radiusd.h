@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.h,v 1.8 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.h,v 1.9 2024/07/14 15:27:57 yasuoka Exp $	*/
 
 #ifndef	RADIUSD_H
 #define	RADIUSD_H 1
@@ -41,6 +41,8 @@ enum imsg_type {
 	/* Check the response's authenticator if the module doesn't */
 	IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER,
 	IMSG_RADIUSD_MODULE_ACCSREQ_ABORTED,
+	IMSG_RADIUSD_MODULE_ACCSREQ_NEXT, /* fall through to the next auth */
+	IMSG_RADIUSD_MODULE_NEXTRES,	  /* receive the respo from tht next */
 	IMSG_RADIUSD_MODULE_REQDECO,
 	IMSG_RADIUSD_MODULE_REQDECO_DONE,
 	IMSG_RADIUSD_MODULE_RESDECO0_REQ, /* request pkt for RESDECO */
@@ -55,13 +57,14 @@ enum imsg_type {
 
 /* Module sends LOAD when it becomes ready */
 struct radiusd_module_load_arg {
-	uint32_t	cap;	/* module capabity bits */
+	uint32_t	cap;	/* module capability bits */
 #define RADIUSD_MODULE_CAP_USERPASS	0x01
 #define RADIUSD_MODULE_CAP_ACCSREQ	0x02
 #define RADIUSD_MODULE_CAP_REQDECO	0x04
 #define RADIUSD_MODULE_CAP_RESDECO	0x08
 #define RADIUSD_MODULE_CAP_ACCTREQ	0x10
 #define RADIUSD_MODULE_CAP_CONTROL	0x20
+#define RADIUSD_MODULE_CAP_NEXTRES	0x40
 };
 
 struct radiusd_module_object {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.13 2024/07/14 13:36:44 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.14 2024/07/14 15:27:57 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -97,6 +97,7 @@ struct radiusd_module_ref {
 struct radiusd_authentication {
 	char					**username;
 	struct radiusd_module_ref		 *auth;
+	bool					  isfilter;
 	TAILQ_HEAD(,radiusd_module_ref)		  deco;
 	TAILQ_ENTRY(radiusd_authentication)	  next;
 };
@@ -140,6 +141,7 @@ struct radius_query {
 	char				 username[256]; /* original username */
 	TAILQ_ENTRY(radius_query)	 next;
 	struct radiusd_module_ref	*deco;
+	struct radius_query		*prev;
 };
 
 struct imsgev {
@@ -186,6 +188,9 @@ extern struct radiusd *radiusd_s;
 #define	MODULE_DO_RESDECO(_m)					\
 	((_m)->fd >= 0 &&					\
 	    ((_m)->capabilities & RADIUSD_MODULE_CAP_RESDECO) != 0)
+#define	MODULE_DO_NEXTRES(_m)					\
+	((_m)->fd >= 0 &&					\
+	    ((_m)->capabilities & RADIUSD_MODULE_CAP_NEXTRES) != 0)
 
 int	 parse_config(const char *, struct radiusd *);
 void	 radiusd_conf_init(struct radiusd *);
@@ -196,6 +201,7 @@ struct radiusd_module	*radiusd_module_load(struct radiusd *, const char *,
 void			 radiusd_module_unload(struct radiusd_module *);
 
 void		 radiusd_access_request_answer(struct radius_query *);
+void		 radiusd_access_request_next(struct radius_query *, RADIUS_PACKET *);
 void		 radiusd_access_request_aborted(struct radius_query *);
 int		 radiusd_imsg_compose_module(struct radiusd *, const char *,
 		    uint32_t, uint32_t, pid_t, int, void *, size_t);

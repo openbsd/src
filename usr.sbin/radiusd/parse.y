@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2024/07/14 13:44:30 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2024/07/14 15:27:57 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,10 @@ static struct	 radiusd_authentication  authen;
 static struct	 radiusd_module		*conf_module = NULL;
 static struct	 radiusd_client		 client;
 
-static struct	 radiusd_module *find_module(const char *);
+static struct radiusd_authentication
+		*create_authen(const char *, char **, int, char **);
+static struct radiusd_module
+		*find_module(const char *);
 static void	 free_str_l(void *);
 static struct	 radiusd_module_ref *create_module_ref(const char *);
 static void	 radiusd_authentication_init(struct radiusd_authentication *);
@@ -92,8 +95,8 @@ typedef struct {
 %}
 
 %token	INCLUDE LISTEN ON PORT CLIENT SECRET LOAD MODULE MSGAUTH_REQUIRED
-%token	ACCOUNT ACCOUNTING AUTHENTICATE AUTHENTICATE_BY BY DECORATE_BY QUICK
-%token	SET TO ERROR YES NO
+%token	ACCOUNT ACCOUNTING AUTHENTICATE AUTHENTICATE_BY AUTHENTICATION_FILTER
+%token	BY DECORATE_BY QUICK SET TO ERROR YES NO
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		optport optacct
@@ -385,40 +388,30 @@ key		: STRING
 		;
 
 authenticate	: AUTHENTICATE str_l BY STRING optdeco {
-			int				 i;
 			struct radiusd_authentication	*auth;
-			struct radiusd_module_ref	*modref, *modreft;
 
-			if ((auth = calloc(1,
-			    sizeof(struct radiusd_authentication))) == NULL) {
-				yyerror("Out of memory: %s", strerror(errno));
-				goto authenticate_error;
-			}
-			if ((auth->auth = create_module_ref($4)) == NULL)
-				goto authenticate_error;
-			auth->username = $2.v;
-			TAILQ_INIT(&auth->deco);
-			for (i = 0; i < $5.c; i++) {
-				if ((modref = create_module_ref($5.v[i]))
-				    == NULL)
-					goto authenticate_error;
-				TAILQ_INSERT_TAIL(&auth->deco, modref, next);
-			}
-			TAILQ_INSERT_TAIL(&conf->authen, auth, next);
-			auth = NULL;
- authenticate_error:
-			if (auth != NULL) {
-				free(auth->auth);
-				TAILQ_FOREACH_SAFE(modref, &auth->deco, next,
-				    modreft) {
-					TAILQ_REMOVE(&auth->deco, modref, next);
-					free(modref);
-				}
-				free_str_l(&$2);
-			}
-			free(auth);
+			auth = create_authen($4, $2.v, $5.c, $5.v);
 			free($4);
 			free_str_l(&$5);
+			if (auth == NULL) {
+				free_str_l(&$2);
+				YYERROR;
+			} else
+				TAILQ_INSERT_TAIL(&conf->authen, auth, next);
+		}
+		| AUTHENTICATION_FILTER str_l BY STRING optdeco {
+			struct radiusd_authentication	*auth;
+
+			auth = create_authen($4, $2.v, $5.c, $5.v);
+			free($4);
+			free_str_l(&$5);
+			if (auth == NULL) {
+				free_str_l(&$2);
+				YYERROR;
+			} else {
+				auth->isfilter = true;
+				TAILQ_INSERT_TAIL(&conf->authen, auth, next);
+			}
 		}
 		/* the followings are for backward compatibilities */
 		| AUTHENTICATE str_l optnl '{' {
@@ -609,6 +602,7 @@ lookup(char *s)
 		{ "accounting",			ACCOUNTING},
 		{ "authenticate",		AUTHENTICATE},
 		{ "authenticate-by",		AUTHENTICATE_BY},
+		{ "authentication-filter",	AUTHENTICATION_FILTER},
 		{ "by",				BY},
 		{ "client",			CLIENT},
 		{ "decorate-by",		DECORATE_BY},
@@ -938,6 +932,38 @@ parse_config(const char *filename, struct radiusd *radiusd)
 out:
 	conf = NULL;
 	return (errors ? -1 : 0);
+}
+
+static struct radiusd_authentication *
+create_authen(const char *byname, char **username, int decoc, char **deco)
+{
+	int				 i;
+	struct radiusd_authentication	*auth;
+	struct radiusd_module_ref	*modref, *modreft;
+
+	if ((auth = calloc(1, sizeof(struct radiusd_authentication)))
+	    == NULL) {
+		yyerror("Out of memory: %s", strerror(errno));
+		return (NULL);
+	}
+	if ((auth->auth = create_module_ref(byname)) == NULL)
+		goto on_error;
+
+	auth->username = username;
+	TAILQ_INIT(&auth->deco);
+	for (i = 0; i < decoc; i++) {
+		if ((modref = create_module_ref(deco[i])) == NULL)
+			goto on_error;
+		TAILQ_INSERT_TAIL(&auth->deco, modref, next);
+	}
+	return (auth);
+ on_error:
+	TAILQ_FOREACH_SAFE(modref, &auth->deco, next, modreft) {
+		TAILQ_REMOVE(&auth->deco, modref, next);
+		free(modref);
+	}
+	free(auth);
+	return (NULL);
 }
 
 static struct radiusd_module *
