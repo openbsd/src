@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.142 2024/05/09 07:55:48 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.143 2024/07/14 15:39:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -524,6 +524,7 @@ ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md)
 
 	handshake_mac = s->s3->hs.cipher->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
 
+	/* XXX - can we simplify this now that TLSv1.0 and TLSv1.1 are gone? */
 	/* For TLSv1.2 we upgrade the default MD5+SHA1 MAC to SHA256. */
 	if (SSL_USE_SHA256_PRF(s) && handshake_mac == SSL_HANDSHAKE_MAC_DEFAULT)
 		handshake_mac = SSL_HANDSHAKE_MAC_SHA256;
@@ -1623,6 +1624,21 @@ SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
 	}
 }
 LSSL_ALIAS(SSL_CIPHER_get_auth_nid);
+
+const EVP_MD *
+SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
+{
+	switch (c->algorithm2 & SSL_HANDSHAKE_MAC_MASK) {
+	case SSL_HANDSHAKE_MAC_DEFAULT:
+	case SSL_HANDSHAKE_MAC_SHA256:
+		return EVP_sha256();
+	case SSL_HANDSHAKE_MAC_SHA384:
+		return EVP_sha384();
+	default:
+		return NULL;
+	}
+}
+LSSL_ALIAS(SSL_CIPHER_get_handshake_digest);
 
 int
 SSL_CIPHER_is_aead(const SSL_CIPHER *c)

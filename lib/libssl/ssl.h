@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.238 2024/07/13 18:33:18 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.239 2024/07/14 15:39:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1125,6 +1125,9 @@ int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c);
+#endif
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
 int	SSL_get_fd(const SSL *s);
