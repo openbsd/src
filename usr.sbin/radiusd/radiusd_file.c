@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.1 2024/07/14 13:44:30 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.2 2024/07/14 15:13:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -560,6 +560,7 @@ auth_mschapv2(struct module_file *self, u_int q_id, RADIUS_PACKET *radpkt,
 		memset(&rcvkey, 0, sizeof(rcvkey));
 		arc4random_buf(rcvkey.salt, sizeof(rcvkey.salt));
 		rcvkey.salt[0] |= 0x80;
+		rcvkey.len = 16;
 		mschap_asymetric_startkey(master, rcvkey.key, 16, 0, 1);
 		radius_put_vs_raw_attr(respkt, RADIUS_VENDOR_MICROSOFT,
 		    RADIUS_VTYPE_MPPE_RECV_KEY, &rcvkey, sizeof(rcvkey));
@@ -568,6 +569,7 @@ auth_mschapv2(struct module_file *self, u_int q_id, RADIUS_PACKET *radpkt,
 		memset(&sndkey, 0, sizeof(sndkey));
 		arc4random_buf(sndkey.salt, sizeof(sndkey.salt));
 		sndkey.salt[0] |= 0x80;
+		sndkey.len = 16;
 		mschap_asymetric_startkey(master, sndkey.key, 16, 1, 1);
 		radius_put_vs_raw_attr(respkt, RADIUS_VENDOR_MICROSOFT,
 		    RADIUS_VTYPE_MPPE_SEND_KEY, &sndkey, sizeof(sndkey));
