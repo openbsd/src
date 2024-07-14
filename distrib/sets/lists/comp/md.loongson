@@ -17,6 +17,7 @@
 ./usr/include/loongson/cpustate.h
 ./usr/include/loongson/db_machdep.h
 ./usr/include/loongson/disklabel.h
+./usr/include/loongson/elf.h
 ./usr/include/loongson/endian.h
 ./usr/include/loongson/exec.h
 ./usr/include/loongson/fenv.h

@@ -15,6 +15,7 @@
 ./usr/include/riscv64/cpufunc.h
 ./usr/include/riscv64/db_machdep.h
 ./usr/include/riscv64/disklabel.h
+./usr/include/riscv64/elf.h
 ./usr/include/riscv64/endian.h
 ./usr/include/riscv64/exec.h
 ./usr/include/riscv64/fdt.h

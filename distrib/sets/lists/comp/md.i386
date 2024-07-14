@@ -23,6 +23,7 @@
 ./usr/include/i386/cpuvar.h
 ./usr/include/i386/db_machdep.h
 ./usr/include/i386/disklabel.h
+./usr/include/i386/elf.h
 ./usr/include/i386/endian.h
 ./usr/include/i386/exec.h
 ./usr/include/i386/fenv.h

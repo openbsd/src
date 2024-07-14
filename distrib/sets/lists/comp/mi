@@ -1289,6 +1289,7 @@
 ./usr/include/sys/ataio.h
 ./usr/include/sys/atomic.h
 ./usr/include/sys/audioio.h
+./usr/include/sys/auxv.h
 ./usr/include/sys/blist.h
 ./usr/include/sys/buf.h
 ./usr/include/sys/cdefs.h
@@ -2449,6 +2450,7 @@
 ./usr/share/man/man3/eddsa_pk_new.3
 ./usr/share/man/man3/editline.3
 ./usr/share/man/man3/elf.3
+./usr/share/man/man3/elf_aux_info.3
 ./usr/share/man/man3/elf_begin.3
 ./usr/share/man/man3/elf_cntl.3
 ./usr/share/man/man3/elf_end.3

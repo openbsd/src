@@ -16,6 +16,7 @@
 ./usr/include/hppa/db_machdep.h
 ./usr/include/hppa/disklabel.h
 ./usr/include/hppa/eisa_machdep.h
+./usr/include/hppa/elf.h
 ./usr/include/hppa/endian.h
 ./usr/include/hppa/exec.h
 ./usr/include/hppa/fenv.h

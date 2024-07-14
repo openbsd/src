@@ -15,6 +15,7 @@
 ./usr/include/mips64/cpu.h
 ./usr/include/mips64/cpustate.h
 ./usr/include/mips64/db_machdep.h
+./usr/include/mips64/elf.h
 ./usr/include/mips64/endian.h
 ./usr/include/mips64/exec.h
 ./usr/include/mips64/fenv.h

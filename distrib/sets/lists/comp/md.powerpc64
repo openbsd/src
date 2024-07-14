@@ -14,6 +14,7 @@
 ./usr/include/powerpc64/cpufunc.h
 ./usr/include/powerpc64/db_machdep.h
 ./usr/include/powerpc64/disklabel.h
+./usr/include/powerpc64/elf.h
 ./usr/include/powerpc64/endian.h
 ./usr/include/powerpc64/exec.h
 ./usr/include/powerpc64/fdt.h

@@ -17,6 +17,7 @@
 ./usr/include/arm/cpufunc.h
 ./usr/include/arm/db_machdep.h
 ./usr/include/arm/disklabel.h
+./usr/include/arm/elf.h
 ./usr/include/arm/endian.h
 ./usr/include/arm/exec.h
 ./usr/include/arm/fdt.h

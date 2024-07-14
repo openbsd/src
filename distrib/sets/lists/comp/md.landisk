@@ -16,6 +16,7 @@
 ./usr/include/landisk/cputypes.h
 ./usr/include/landisk/db_machdep.h
 ./usr/include/landisk/disklabel.h
+./usr/include/landisk/elf.h
 ./usr/include/landisk/endian.h
 ./usr/include/landisk/exec.h
 ./usr/include/landisk/fenv.h
