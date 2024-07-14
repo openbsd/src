@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.103 2024/07/10 09:27:32 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.104 2024/07/14 07:57:42 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -886,6 +886,7 @@ struct vcpu {
 	uint32_t vc_vmx_vmcs_state;		/* [a] */
 #define VMCS_CLEARED	0
 #define VMCS_LAUNCHED	1
+	uint64_t vc_vmx_invept_op;
 
 	/* SVM only (all requiring [v]) */
 	vaddr_t vc_svm_hsa_va;

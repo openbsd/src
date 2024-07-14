@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.113 2024/06/24 21:22:14 bluhm Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.114 2024/07/14 07:57:42 dv Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1117,6 +1117,8 @@
 #define IA32_EPT_VPID_CAP_PAGE_WALK_4		(1ULL << 6)
 #define IA32_EPT_VPID_CAP_WB			(1ULL << 14)
 #define IA32_EPT_VPID_CAP_AD_BITS		(1ULL << 21)
+#define IA32_EPT_VPID_CAP_INVEPT_CONTEXT	(1ULL << 25)
+#define IA32_EPT_VPID_CAP_INVEPT_ALL		(1ULL << 26)
 
 #define IA32_EPT_PAGING_CACHE_TYPE_UC	0x0
 #define IA32_EPT_PAGING_CACHE_TYPE_WB	0x6
