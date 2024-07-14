@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.195 2024/07/12 09:25:27 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.196 2024/07/14 18:53:39 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -588,9 +588,9 @@ reflect:
 		struct sockaddr_in sgw;
 		struct sockaddr_in ssrc;
 		struct rtentry *newrt = NULL;
+		int i_am_router = (atomic_load_int(&ip_forwarding) != 0);
 
-		if (icmp_rediraccept == 0 ||
-		    atomic_load_int(&ip_forwarding) != 0)
+		if (icmp_rediraccept == 0 || i_am_router)
 			goto freeit;
 		if (code > 3)
 			goto badcode;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.232 2024/07/04 12:50:08 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.233 2024/07/14 18:53:39 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1013,7 +1013,7 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 		if (ifp == NULL) {
 			int flags = 0;
 
-			switch (ip6_forwarding) {
+			switch (atomic_load_int(&ip6_forwarding)) {
 			case 2:
 				SET(flags, IPV6_FORWARDING_IPSEC);
 				/* FALLTHROUGH */

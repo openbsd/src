@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.281 2024/06/20 19:25:42 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.282 2024/07/14 18:53:39 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -107,8 +107,8 @@ void nd6_slowtimo(void *);
 void nd6_expire(void *);
 void nd6_expire_timer(void *);
 void nd6_invalidate(struct rtentry *);
-void nd6_free(struct rtentry *);
-int nd6_llinfo_timer(struct rtentry *);
+void nd6_free(struct rtentry *, int);
+int nd6_llinfo_timer(struct rtentry *, int);
 
 struct timeout nd6_timer_to;
 struct timeout nd6_slowtimo_ch;
@@ -264,6 +264,7 @@ nd6_timer(void *unused)
 {
 	struct llinfo_nd6 *ln, *nln;
 	time_t uptime, expire;
+	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 	int secs;
 
 	NET_LOCK();
@@ -276,7 +277,7 @@ nd6_timer(void *unused)
 		struct rtentry *rt = ln->ln_rt;
 
 		if (rt->rt_expire && rt->rt_expire <= uptime)
-			if (nd6_llinfo_timer(rt))
+			if (nd6_llinfo_timer(rt, i_am_router))
 				continue;
 
 		if (rt->rt_expire && rt->rt_expire < expire)
@@ -300,7 +301,7 @@ nd6_timer(void *unused)
  * Returns 1 if `rt' should no longer be used, 0 otherwise.
  */
 int
-nd6_llinfo_timer(struct rtentry *rt)
+nd6_llinfo_timer(struct rtentry *rt, int i_am_router)
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct sockaddr_in6 *dst = satosin6(rt_key(rt));
@@ -346,7 +347,7 @@ nd6_llinfo_timer(struct rtentry *rt)
 			} else
 				atomic_sub_int(&ln_hold_total, len);
 
-			nd6_free(rt);
+			nd6_free(rt, i_am_router);
 			ln = NULL;
 		}
 		break;
@@ -362,7 +363,7 @@ nd6_llinfo_timer(struct rtentry *rt)
 	case ND6_LLINFO_PURGE:
 		/* Garbage Collection(RFC 2461 5.3) */
 		if (!ND6_LLINFO_PERMANENT(ln)) {
-			nd6_free(rt);
+			nd6_free(rt, i_am_router);
 			ln = NULL;
 		}
 		break;
@@ -383,7 +384,7 @@ nd6_llinfo_timer(struct rtentry *rt)
 			nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr,
 			    &ln->ln_saddr6, 0);
 		} else {
-			nd6_free(rt);
+			nd6_free(rt, i_am_router);
 			ln = NULL;
 		}
 		break;
@@ -477,6 +478,7 @@ void
 nd6_purge(struct ifnet *ifp)
 {
 	struct llinfo_nd6 *ln, *nln;
+	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 
 	NET_ASSERT_LOCKED_EXCLUSIVE();
 
@@ -492,7 +494,7 @@ nd6_purge(struct ifnet *ifp)
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			sdl = satosdl(rt->rt_gateway);
 			if (sdl->sdl_index == ifp->if_index)
-				nd6_free(rt);
+				nd6_free(rt, i_am_router);
 		}
 	}
 }
@@ -661,7 +663,7 @@ nd6_invalidate(struct rtentry *rt)
  * Free an nd6 llinfo entry.
  */
 void
-nd6_free(struct rtentry *rt)
+nd6_free(struct rtentry *rt, int i_am_router)
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
@@ -671,7 +673,7 @@ nd6_free(struct rtentry *rt)
 
 	ifp = if_get(rt->rt_ifidx);
 
-	if (ip6_forwarding == 0) {
+	if (!i_am_router) {
 		if (ln->ln_router) {
 			/*
 			 * rt6_flush must be called whether or not the neighbor
@@ -1031,7 +1033,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
  */
 void
 nd6_cache_lladdr(struct ifnet *ifp, const struct in6_addr *from, char *lladdr,
-    int lladdrlen, int type, int code)
+    int lladdrlen, int type, int code, int i_am_router)
 {
 	struct rtentry *rt;
 	struct llinfo_nd6 *ln;
@@ -1080,7 +1082,7 @@ nd6_cache_lladdr(struct ifnet *ifp, const struct in6_addr *from, char *lladdr,
 		return;
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
-		nd6_free(rt);
+		nd6_free(rt, i_am_router);
 		rtfree(rt);
 		return;
 	}

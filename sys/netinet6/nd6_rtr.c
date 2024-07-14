@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.170 2023/03/31 19:43:33 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.171 2024/07/14 18:53:39 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 	struct in6_addr saddr6 = ip6->ip6_src;
 	char *lladdr = NULL;
 	int lladdrlen = 0;
+	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 	struct nd_opts ndopts;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
@@ -157,7 +158,8 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 		goto bad;
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, icmp6_type, 0);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, icmp6_type, 0,
+	    i_am_router);
 	if_put(ifp);
 
  freeit:

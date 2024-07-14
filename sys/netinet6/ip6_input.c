@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.264 2024/07/04 12:50:08 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.265 2024/07/14 18:53:39 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -416,7 +416,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		SET(flags, IPV6_REDIRECT);
 #endif
 
-	switch (ip6_forwarding) {
+	switch (atomic_load_int(&ip6_forwarding)) {
 	case 2:
 		SET(flags, IPV6_FORWARDING_IPSEC);
 		/* FALLTHROUGH */
@@ -1443,12 +1443,15 @@ const u_char inet6ctlerrmap[PRC_NCMDS] = {
 extern int ip6_mrtproto;
 #endif
 
+const struct sysctl_bounded_args ipv6ctl_vars_unlocked[] = {
+	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 2 },
+};
+
 const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_DAD_PENDING, &ip6_dad_pending, SYSCTL_INT_READONLY },
 #ifdef MROUTING
 	{ IPV6CTL_MRTPROTO, &ip6_mrtproto, SYSCTL_INT_READONLY },
 #endif
-	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 2 },
 	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
 	{ IPV6CTL_DEFHLIM, &ip6_defhlim, 0, 255 },
 	{ IPV6CTL_MAXFRAGPACKETS, &ip6_maxfragpackets, 0, 1000 },
@@ -1568,6 +1571,10 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			atomic_inc_long(&rtgeneration);
 		NET_UNLOCK();
 		return (error);
+	case IPV6CTL_FORWARDING:
+		return (sysctl_bounded_arr(
+		    ipv6ctl_vars_unlocked, nitems(ipv6ctl_vars_unlocked),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	default:
 		NET_LOCK();
 		error = sysctl_bounded_arr(ipv6ctl_vars, nitems(ipv6ctl_vars),

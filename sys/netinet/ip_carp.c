@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.362 2024/06/20 19:25:42 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.363 2024/07/14 18:53:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1287,9 +1287,10 @@ carp_send_na(struct carp_softc *sc)
 	struct ifaddr *ifa;
 	struct in6_addr *in6;
 	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
+	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 	int flags = ND_NA_FLAG_OVERRIDE;
 
-	if (ip6_forwarding != 0)
+	if (i_am_router)
 		flags |= ND_NA_FLAG_ROUTER;
 
 	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
