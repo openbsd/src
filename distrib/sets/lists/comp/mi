@@ -1160,8 +1160,6 @@
 ./usr/include/openssl/sm4.h
 ./usr/include/openssl/srtp.h
 ./usr/include/openssl/ssl.h
-./usr/include/openssl/ssl2.h
-./usr/include/openssl/ssl23.h
 ./usr/include/openssl/ssl3.h
 ./usr/include/openssl/stack.h
 ./usr/include/openssl/tls1.h
