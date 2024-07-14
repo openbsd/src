@@ -1666,6 +1666,7 @@ wcsncasecmp_l
 wcsncat
 wcsncmp
 wcsncpy
+wcsnlen
 wcspbrk
 wcsrchr
 wcsspn

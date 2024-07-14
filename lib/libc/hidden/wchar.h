@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.4 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.5 2024/07/14 09:51:18 jca Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -65,6 +65,7 @@ PROTO_NORMAL(wcsncasecmp);
 PROTO_NORMAL(wcsncat);
 PROTO_NORMAL(wcsncmp);
 PROTO_NORMAL(wcsncpy);
+PROTO_DEPRECATED(wcsnlen);
 PROTO_NORMAL(wcsnrtombs);
 PROTO_NORMAL(wcspbrk);
 PROTO_NORMAL(wcsrchr);

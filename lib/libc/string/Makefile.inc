@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.39 2017/09/05 03:16:13 schwarze Exp $
+#	$OpenBSD: Makefile.inc,v 1.40 2024/07/14 09:51:18 jca Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
@@ -9,9 +9,9 @@ SRCS+=	explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
 	strndup.c strnlen.c strsignal.c strtok.c strxfrm.c strxfrm_l.c \
 	timingsafe_bcmp.c timingsafe_memcmp.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
-	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c \
-	wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c wmemcpy.c \
-	wmemmove.c wmemset.c wcsdup.c wcscasecmp.c wcscasecmp_l.c
+	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcsnlen.c wcspbrk.c wcsrchr.c \
+	wcsspn.c wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c \
+	wmemcpy.c wmemmove.c wmemset.c wcsdup.c wcscasecmp.c wcscasecmp_l.c
 
 # machine-dependent net sources
 # ../arch/ARCH/Makefile.inc must include sources for:
