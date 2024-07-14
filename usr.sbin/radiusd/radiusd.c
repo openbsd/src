@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.47 2024/07/13 13:06:47 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.48 2024/07/14 13:36:44 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -536,6 +536,7 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 		strlcpy(q->username, username, sizeof(q->username));
 
 	q->id = ++radius_query_id_seq;
+	q->radiusd = listn->radiusd;
 	q->clientaddrlen = peerlen;
 	memcpy(&q->clientaddr, peer, peerlen);
 	q->listen = listn;
@@ -812,7 +813,7 @@ radiusd_access_request_aborted(struct radius_query *q)
 		radius_delete_packet(q->req);
 	if (q->res != NULL)
 		radius_delete_packet(q->res);
-	TAILQ_REMOVE(&q->listen->radiusd->query, q, next);
+	TAILQ_REMOVE(&q->radiusd->query, q, next);
 	free(q);
 }
 
