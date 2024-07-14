@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.52 2024/05/18 05:21:38 guenther Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.53 2024/07/14 14:32:02 jca Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -172,7 +172,7 @@ cmp_file_times(int mtime_flag, int ctime_flag, ARCHD *arcn, const char *path)
 	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, <=))
 		return 1;
 
-	/* 
+	/*
 	 * If we got here then the target arcn > sb for mtime *and* that's
 	 * the deciding factor.  Check whether they're equal after rounding
 	 * down the arcn mtime to the precision of the target path.
