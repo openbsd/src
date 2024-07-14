@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.19 2024/07/01 07:09:07 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.20 2024/07/14 10:52:50 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.19 2024/07/01 07:09:07 yasuoka Exp $ */
+/* $Id: chap.c,v 1.20 2024/07/14 10:52:50 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -537,14 +537,12 @@ md5chap_authenticate(chap *_this, int id, char *username, u_char *challenge,
 	MD5_CTX md5ctx;
 	int rval, passlen;
 	u_char digest[16];
-	char *password, buf[MAX_PASSWORD_LENGTH + 1];
+	char idpass[1 + MAX_PASSWORD_LENGTH + 1];
 
-	buf[0] = id;
-	passlen = sizeof(buf) - 1;
-	password = &buf[1];
-
+	idpass[0] = id;
+	passlen = MAX_PASSWORD_LENGTH;
 	rval = npppd_get_user_password(_this->ppp->pppd, _this->ppp, username,
-	    password, &passlen);
+	    idpass + 1, &passlen);
 
 	if (rval != 0) {
 		switch (rval) {
@@ -559,9 +557,9 @@ md5chap_authenticate(chap *_this, int id, char *username, u_char *challenge,
 		}
 		goto auth_failed;
 	}
-	passlen = strlen(password);
+	passlen = strlen(idpass + 1);
 	MD5Init(&md5ctx);
-	MD5Update(&md5ctx, buf, passlen + 1);
+	MD5Update(&md5ctx, idpass, 1 + passlen);
 	MD5Update(&md5ctx, challenge, lchallenge);
 	MD5Final(digest, &md5ctx);
 
