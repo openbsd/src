@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.30 2024/07/14 16:09:23 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.31 2024/07/14 16:22:59 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -89,6 +89,10 @@ The
 module provides conversion from EAP-MSCHAPv2 to MS-CHAPv2.
 See
 .Xr radiusd_eap2mschap 8 .
+.It Do file Dc module
+The
+.Dq file
+module provides authentication by a local file.
 .It Do ipcp Dc module
 The
 .Dq ipcp
@@ -225,6 +229,7 @@ account * to standard
 .Xr radiusd 8 ,
 .Xr radiusd_bsdauth 8 ,
 .Xr radiusd_eap2mschap 8 ,
+.Xr radiusd_file 8 ,
 .Xr radiusd_ipcp 8 ,
 .Xr radiusd_radius 8 ,
 .Xr radiusd_standard 8
