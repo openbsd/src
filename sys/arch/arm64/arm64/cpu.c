@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.125 2024/07/11 12:07:39 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.126 2024/07/14 09:48:48 jca Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -32,6 +32,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/fdt.h>
+#include <machine/elf.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -741,6 +742,10 @@ cpu_identify(struct cpu_info *ci)
 		printf("%sAtomic", sep);
 		sep = ",";
 		arm64_has_lse = 1;
+		/*
+		 * XXX should be populated and sanitized like cpu_sysctl() does
+		 */
+		hwcap |= HWCAP_ATOMICS;
 	}
 
 	if (ID_AA64ISAR0_CRC32(id) >= ID_AA64ISAR0_CRC32_BASE) {

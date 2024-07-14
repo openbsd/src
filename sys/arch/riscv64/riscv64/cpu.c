@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.19 2024/06/11 15:44:55 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.20 2024/07/14 09:48:49 jca Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -28,6 +28,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpufunc.h>
+#include <machine/elf.h>
 #include <machine/fdt.h>
 #include <machine/sbi.h>
 
@@ -235,6 +236,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	} else {
 #endif
 		cpu_identify(ci);
+
+		hwcap |= HWCAP_ISA_G | HWCAP_ISA_C;
 
 		if (OF_getproplen(ci->ci_node, "clocks") > 0) {
 			cpu_node = ci->ci_node;

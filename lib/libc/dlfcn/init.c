@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.22 2024/01/21 17:18:13 kettenis Exp $ */
+/*	$OpenBSD: init.c,v 1.23 2024/07/14 09:48:48 jca Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -49,6 +49,8 @@ char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
 /* provide definitions for these */
 int	_pagesize = 0;
 struct timekeep	*_timekeep;
+unsigned long	_hwcap, _hwcap2;
+int	_hwcap_avail, _hwcap2_avail;
 
 /*
  * In dynamically linked binaries environ and __progname are overridden by
@@ -96,6 +98,14 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 		;
 	for (aux = (void *)envp; aux->au_id != AUX_null; aux++) {
 		switch (aux->au_id) {
+		case AUX_hwcap:
+			_hwcap = aux->au_v;
+			_hwcap_avail = 1;
+			break;
+		case AUX_hwcap2:
+			_hwcap2 = aux->au_v;
+			_hwcap2_avail = 1;
+			break;
 		case AUX_pagesz:
 			_pagesize = aux->au_v;
 			break;
