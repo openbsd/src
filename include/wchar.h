@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.31 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.32 2024/07/14 10:04:17 jca Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -166,6 +166,7 @@ int wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
 wchar_t	*wcsdup(const wchar_t *);
 int wcscasecmp(const wchar_t *, const wchar_t *);
 int wcscasecmp_l(const wchar_t *, const wchar_t *, locale_t);
+size_t	wcsnlen(const wchar_t *, size_t);
 int wcsncasecmp(const wchar_t *, const wchar_t *, size_t);
 int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
 size_t wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
