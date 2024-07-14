@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.433 2024/07/02 08:27:04 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.434 2024/07/14 10:50:39 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -756,9 +756,10 @@ acpi_pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 void
 acpi_pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
 {
-#if NACPIPWRRES > 0
 	struct acpi_softc *sc = acpi_softc;
+#if NACPIPWRRES > 0
 	struct acpi_pwrres *pr;
+#endif
 	struct acpi_pci *pdev;
 	int bus, dev, fun;
 	char name[5];
@@ -769,10 +770,15 @@ acpi_pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
 			break;
 	}
 
-	/* XXX Add a check to discard nodes without Power Resources? */
 	if (pdev == NULL)
 		return;
 
+	if (state != ACPI_STATE_D0 && !pre) {
+		snprintf(name, sizeof(name), "_PS%d", state);
+		aml_evalname(sc, pdev->node, name, 0, NULL, NULL);
+	}
+
+#if NACPIPWRRES > 0
 	SIMPLEQ_FOREACH(pr, &sc->sc_pwrresdevs, p_next) {
 		if (pr->p_node != pdev->node)
 			continue;
@@ -811,6 +817,9 @@ acpi_pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
 
 	}
 #endif /* NACPIPWRRES > 0 */
+
+	if (state == ACPI_STATE_D0 && pre)
+		aml_evalname(sc, pdev->node, "_PS0", 0, NULL, NULL);
 }
 
 int
