@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.17 2024/06/25 14:10:45 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.18 2024/07/15 14:45:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,15 +254,6 @@ __BEGIN_HIDDEN_DECLS
 
 #define SSL3_CK_ID		0x03000000
 #define SSL3_CK_VALUE_MASK	0x0000ffff
-
-#define TLS1_PRF_DGST_MASK	(0xff << TLS1_PRF_DGST_SHIFT)
-
-#define TLS1_PRF_DGST_SHIFT 10
-#define TLS1_PRF_MD5 (SSL_HANDSHAKE_MAC_MD5 << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF_SHA1 (SSL_HANDSHAKE_MAC_SHA << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF_SHA256 (SSL_HANDSHAKE_MAC_SHA256 << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF_SHA384 (SSL_HANDSHAKE_MAC_SHA384 << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
 
 /*
  * Cipher strength information.
