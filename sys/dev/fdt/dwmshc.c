@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmshc.c,v 1.7 2024/05/26 22:04:52 kettenis Exp $ */
+/*	$OpenBSD: dwmshc.c,v 1.8 2024/07/15 09:56:30 patrick Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -101,6 +101,8 @@
 #define EMMC_DLL_TXCLK			0x808
 #define  EMMC_DLL_TXCLK_TX_TAP_NUM_SHIFT	0
 #define  EMMC_DLL_TXCLK_TX_TAP_NUM_MASK		0x1f
+#define  EMMC_DLL_TXCLK_TX_TAP_NUM_90_DEG	0x8
+#define  EMMC_DLL_TXCLK_TX_TAP_NUM_DEFAULT	0x10
 #define  EMMC_DLL_TXCLK_TX_TAP_VALUE_SHIFT	8
 #define  EMMC_DLL_TXCLK_TX_TAP_VALUE_MASK	0xff
 #define  EMMC_DLL_TXCLK_TX_DELAY_SHIFT		16
@@ -112,7 +114,7 @@
 #define EMMC_DLL_STRBIN			0x80c
 #define  EMMC_DLL_STRBIN_TAP_NUM_SHIFT		0
 #define  EMMC_DLL_STRBIN_TAP_NUM_MASK		0x1f
-#define  EMMC_DLL_STRBIN_TAP_NUM_DEFAULT	0x8
+#define  EMMC_DLL_STRBIN_TAP_NUM_90_DEG		0x8
 #define  EMMC_DLL_STRBIN_TAP_VALUE_SHIFT	8
 #define  EMMC_DLL_STRBIN_TAP_VALUE_MASK		0xff
 #define  EMMC_DLL_STRBIN_DELAY_NUM_SHIFT	16
@@ -122,6 +124,20 @@
 #define  EMMC_DLL_STRBIN_TAP_VALUE_SEL		(1U << 25)
 #define  EMMC_DLL_STRBIN_DELAY_NUM_SEL		(1U << 26)
 #define  EMMC_DLL_STRBIN_DELAY_ENA		(1U << 27)
+#define EMMC_DLL_CMDOUT			0x810
+#define  EMMC_DLL_CMDOUT_TAP_NUM_SHIFT		0
+#define  EMMC_DLL_CMDOUT_TAP_NUM_MASK		0x1f
+#define  EMMC_DLL_CMDOUT_TAP_NUM_90_DEG	0x8
+#define  EMMC_DLL_CMDOUT_TAP_VALUE_SHIFT	8
+#define  EMMC_DLL_CMDOUT_TAP_VALUE_MASK		0xff
+#define  EMMC_DLL_CMDOUT_DELAY_NUM_SHIFT	16
+#define  EMMC_DLL_CMDOUT_DELAY_NUM_MASK		0xff
+#define  EMMC_DLL_CMDOUT_TAP_NUM_SEL		(1U << 24)
+#define  EMMC_DLL_CMDOUT_TAP_VALUE_SEL		(1U << 25)
+#define  EMMC_DLL_CMDOUT_DELAY_NUM_SEL		(1U << 26)
+#define  EMMC_DLL_CMDOUT_DELAY_ENA		(1U << 27)
+#define  EMMC_DLL_CMDOUT_SRC_SEL		(1U << 28)
+#define  EMMC_DLL_CMDOUT_EN_SRC_SEL		(1U << 29)
 #define EMMC_DLL_STATUS0		0x840
 #define  EMMC_DLL_STATUS0_DLL_LOCK_VALUE_SHIFT	0
 #define  EMMC_DLL_STATUS0_DLL_LOCK_VALUE_MASK	0xff
@@ -182,7 +198,8 @@ dwmshc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "rockchip,rk3568-dwcmshc"));
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3568-dwcmshc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-dwcmshc"));
 }
 static void
 dwmshc_attach(struct device *parent, struct device *self, void *aux)
@@ -303,7 +320,7 @@ static void
 dwmshc_clock_post(struct sdhc_softc *sdhc, int freq, int timing)
 {
 	struct dwmshc_softc *sc = (struct dwmshc_softc *)sdhc;
-	uint32_t txclk_tapnum = EMMC_DLL_STRBIN_DELAY_NUM_DEFAULT;
+	uint32_t txclk_tapnum = EMMC_DLL_TXCLK_TX_TAP_NUM_DEFAULT;
 
 	clock_set_frequency(sc->sc_node, 0, freq * 1000);
 
@@ -324,8 +341,11 @@ dwmshc_clock_post(struct sdhc_softc *sdhc, int freq, int timing)
 	delay(1);
 	dwmshc_wr4(sc, EMMC_DLL_CTRL, 0);
 
-	dwmshc_wr4(sc, EMMC_DLL_RXCLK, EMMC_DLL_RXCLK_RX_CLK_OUT_SEL |
-	    /* rk3568 */ EMMC_DLL_RXCLK_RX_CLK_SRC_SEL);
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-dwcmshc"))
+		dwmshc_wr4(sc, EMMC_DLL_RXCLK, EMMC_DLL_RXCLK_RX_CLK_OUT_SEL |
+		    EMMC_DLL_RXCLK_RX_CLK_SRC_SEL);
+	else
+		dwmshc_wr4(sc, EMMC_DLL_RXCLK, EMMC_DLL_RXCLK_RX_CLK_OUT_SEL);
 	dwmshc_wr4(sc, EMMC_DLL_CTRL, EMMC_DLL_CTRL_DLL_START |
 	    0x5 << EMMC_DLL_CTRL_DLL_START_POINT_SHIFT |
 	    0x2 << EMMC_DLL_CTRL_DLL_INCREMENT_SHIFT);
@@ -341,7 +361,18 @@ dwmshc_clock_post(struct sdhc_softc *sdhc, int freq, int timing)
 		txclk_tapnum = OF_getpropint(sc->sc_node,
 		    "rockchip,txclk-tapnum", txclk_tapnum);
 
-		/* XXX rk3588 hs400 */
+#ifdef notyet
+		if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-dwcmshc") &&
+		    timing == SDMMC_TIMING_MMC_HS400) {
+			txclk_tapnum = EMMC_DLL_TXCLK_TX_TAP_NUM_90_DEG;
+			dwmshc_wr4(sc, EMMC_DLL_CMDOUT,
+			    EMMC_DLL_CMDOUT_TAP_NUM_90_DEG |
+			    EMMC_DLL_CMDOUT_TAP_NUM_SEL |
+			    EMMC_DLL_CMDOUT_DELAY_ENA |
+			    EMMC_DLL_CMDOUT_SRC_SEL |
+			    EMMC_DLL_CMDOUT_EN_SRC_SEL);
+		}
+#endif
 	}
 
 	dwmshc_wr4(sc, EMMC_DLL_TXCLK, EMMC_DLL_TXCLK_TX_CLK_OUT_SEL |
@@ -349,7 +380,7 @@ dwmshc_clock_post(struct sdhc_softc *sdhc, int freq, int timing)
 	    txclk_tapnum << EMMC_DLL_TXCLK_TX_TAP_NUM_SHIFT);
 	dwmshc_wr4(sc, EMMC_DLL_STRBIN, EMMC_DLL_STRBIN_DELAY_ENA |
 	    EMMC_DLL_STRBIN_TAP_NUM_SEL |
-	    (EMMC_DLL_STRBIN_TAP_NUM_DEFAULT <<
+	    (EMMC_DLL_STRBIN_TAP_NUM_90_DEG <<
 	     EMMC_DLL_STRBIN_TAP_NUM_SHIFT));
 }
 
