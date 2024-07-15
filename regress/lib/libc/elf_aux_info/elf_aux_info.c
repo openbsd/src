@@ -10,7 +10,6 @@ main(void)
 	int a;
 	unsigned long b;
 
-
 	/* Should always succeed */
 	if (elf_aux_info(AT_PAGESZ, &a, sizeof(a)))
 		ret |= 1;
