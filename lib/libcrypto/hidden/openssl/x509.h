@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.7 2024/07/08 17:01:54 beck Exp $ */
+/* $OpenBSD: x509.h,v 1.8 2024/07/15 18:50:42 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -442,15 +442,15 @@ LCRYPTO_USED(X509_ocspid_print);
 LCRYPTO_USED(X509_CRL_print);
 LCRYPTO_USED(X509_REQ_print_ex);
 LCRYPTO_USED(X509_REQ_print);
-LCRYPTO_USED(EVP_PKEY_get_attr_count);
-LCRYPTO_USED(EVP_PKEY_get_attr_by_NID);
-LCRYPTO_USED(EVP_PKEY_get_attr_by_OBJ);
-LCRYPTO_USED(EVP_PKEY_get_attr);
-LCRYPTO_USED(EVP_PKEY_delete_attr);
-LCRYPTO_USED(EVP_PKEY_add1_attr);
-LCRYPTO_USED(EVP_PKEY_add1_attr_by_OBJ);
-LCRYPTO_USED(EVP_PKEY_add1_attr_by_NID);
-LCRYPTO_USED(EVP_PKEY_add1_attr_by_txt);
+LCRYPTO_UNUSED(EVP_PKEY_get_attr_count);
+LCRYPTO_UNUSED(EVP_PKEY_get_attr_by_NID);
+LCRYPTO_UNUSED(EVP_PKEY_get_attr_by_OBJ);
+LCRYPTO_UNUSED(EVP_PKEY_get_attr);
+LCRYPTO_UNUSED(EVP_PKEY_delete_attr);
+LCRYPTO_UNUSED(EVP_PKEY_add1_attr);
+LCRYPTO_UNUSED(EVP_PKEY_add1_attr_by_OBJ);
+LCRYPTO_UNUSED(EVP_PKEY_add1_attr_by_NID);
+LCRYPTO_UNUSED(EVP_PKEY_add1_attr_by_txt);
 LCRYPTO_USED(PKCS8_PRIV_KEY_INFO_new);
 LCRYPTO_USED(PKCS8_PRIV_KEY_INFO_free);
 LCRYPTO_USED(d2i_PKCS8_PRIV_KEY_INFO);
