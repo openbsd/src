@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.24 2024/03/24 06:48:03 tb Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.25 2024/07/15 15:43:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -60,8 +60,11 @@
 
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+#include <openssl/x509.h>
 
+#include "evp_local.h"
 #include "pkcs12_local.h"
+#include "x509_local.h"
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS12_SAFEBAG *bag);
@@ -69,13 +72,25 @@ static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
 static int
 copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
 {
-	int idx;
-	X509_ATTRIBUTE *attr;
+	X509_ATTRIBUTE *attr = NULL;
+	const ASN1_OBJECT *obj;
+	int i;
 
-	idx = EVP_PKEY_get_attr_by_NID(pkey, nid, -1);
-	if (idx < 0)
+	if ((obj = OBJ_nid2obj(nid)) == NULL) {
+		/* XXX - this seems wrong but preserves behavior. */
 		return 1;
-	attr = EVP_PKEY_get_attr(pkey, idx);
+	}
+
+	for (i = 0; i < sk_X509_ATTRIBUTE_num(pkey->attributes); i++) {
+		attr = sk_X509_ATTRIBUTE_value(pkey->attributes, i);
+		if (OBJ_cmp(attr->object, obj) == 0)
+			break;
+		attr = NULL;
+	}
+
+	if (attr == NULL)
+		return 1;
+
 	if (!X509at_add1_attr(&bag->attrib, attr))
 		return 0;
 	return 1;
