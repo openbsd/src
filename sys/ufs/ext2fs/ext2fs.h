@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.26 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.27 2024/07/15 13:27:36 martijn Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -156,7 +156,48 @@ struct ext2fs {
 	u_int32_t  e2fs_first_meta_bg;
 	u_int32_t  e2fs_mkfs_time;
 	u_int32_t  e2fs_journal_backup[17];
-	u_int32_t  reserved2[172];
+	u_int32_t  e2fs_bcount_hi;	/* high bits of blocks count */
+	u_int32_t  e2fs_rbcount_hi;	/* high bits of reserved blocks count */
+	u_int32_t  e2fs_fbcount_hi;	/* high bits of free blocks count */
+	u_int16_t  e2fs_min_extra_isize; /* all inodes have some bytes */
+	u_int16_t  e2fs_want_extra_isize;/* inodes must reserve some bytes */
+	u_int32_t  e2fs_flags;		/* miscellaneous flags */
+	u_int16_t  e2fs_raid_stride;	/* RAID stride */
+	u_int16_t  e2fs_mmpintv;		/* seconds to wait in MMP checking */
+	u_int64_t  e2fs_mmpblk;		/* block for multi-mount protection */
+	u_int32_t  e2fs_raid_stripe_wid; /* blocks on data disks (N * stride) */
+	u_int8_t   e2fs_log_gpf;		/* FLEX_BG group size */
+	u_int8_t   e2fs_chksum_type;	/* metadata checksum algorithm used */
+	u_int8_t   e2fs_encrypt;		/* versioning level for encryption */
+	u_int8_t   e2fs_reserved_pad;
+	u_int64_t  e2fs_kbytes_written;	/* number of lifetime kilobytes */
+	u_int32_t  e2fs_snapinum;	/* inode number of active snapshot */
+	u_int32_t  e2fs_snapid;		/* sequential ID of active snapshot */
+	u_int64_t  e2fs_snaprbcount;	/* rsvd blocks for active snapshot */
+	u_int32_t  e2fs_snaplist;	/* inode number for on-disk snapshot */
+	u_int32_t  e2fs_errcount;	/* number of file system errors */
+	u_int32_t  e2fs_first_errtime;	/* first time an error happened */
+	u_int32_t  e2fs_first_errino;	/* inode involved in first error */
+	u_int64_t  e2fs_first_errblk;	/* block involved of first error */
+	u_int8_t   e2fs_first_errfunc[32];/* function where error happened */
+	u_int32_t  e2fs_first_errline;	/* line number where error happened */
+	u_int32_t  e2fs_last_errtime;	/* most recent time of an error */
+	u_int32_t  e2fs_last_errino;	/* inode involved in last error */
+	u_int32_t  e2fs_last_errline;	/* line number where error happened */
+	u_int64_t  e2fs_last_errblk;	/* block involved of last error */
+	u_int8_t   e2fs_last_errfunc[32];/* function where error happened */
+	u_int8_t   e2fs_mount_opts[64];
+	u_int32_t  e2fs_usrquota_inum;	/* inode for tracking user quota */
+	u_int32_t  e2fs_grpquota_inum;	/* inode for tracking group quota */
+	u_int32_t  e2fs_overhead_clusters;/* overhead blocks/clusters */
+	u_int32_t  e2fs_backup_bgs[2];	/* groups with sparse_super2 SBs */
+	u_int8_t   e2fs_encrypt_algos[4];/* encryption algorithms in use */
+	u_int8_t   e2fs_encrypt_pw_salt[16];/* salt used for string2key */
+	u_int32_t  e2fs_lpf_ino;		/* location of the lost+found inode */
+	u_int32_t  e2fs_proj_quota_inum;	/* inode for tracking project quota */
+	u_int32_t  e2fs_chksum_seed;	/* checksum seed */
+	u_int32_t  e2fs_reserved[98];	/* padding to the end of the block */
+	u_int32_t  e2fs_sbchksum;	/* superblock checksum */
 };
 
 
