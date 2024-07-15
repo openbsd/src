@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.89 2024/06/11 09:15:33 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.90 2024/07/15 09:54:38 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4218,6 +4218,20 @@ const struct rkclock rk3588_clocks[] = {
 		SET_PARENT
 	},
 	{
+		RK3588_CCLK_EMMC, RK3588_CRU_CLKSEL_CON(77),
+		SEL(15, 14), DIV(13, 8),
+		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL, RK3588_XIN24M }
+	},
+	{
+		RK3588_BCLK_EMMC, RK3588_CRU_CLKSEL_CON(78),
+		SEL(5, 5), DIV(4, 0),
+		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL }
+	},
+	{
+		RK3588_TMCLK_EMMC, 0, 0, 0,
+		{ RK3588_XIN24M }
+	},
+	{
 		RK3588_CLK_GMAC_125M, RK3588_CRU_CLKSEL_CON(83),
 		SEL(15, 15), DIV(14, 8),
 		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL }
@@ -4566,6 +4580,26 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	case RK3588_SRST_TSADC:
 		reg = RK3588_CRU_SOFTRST_CON(12);
 		bit = 1;
+		break;
+	case RK3588_SRST_H_EMMC:
+		reg = RK3588_CRU_SOFTRST_CON(31);
+		bit = 4;
+		break;
+	case RK3588_SRST_A_EMMC:
+		reg = RK3588_CRU_SOFTRST_CON(31);
+		bit = 5;
+		break;
+	case RK3588_SRST_C_EMMC:
+		reg = RK3588_CRU_SOFTRST_CON(31);
+		bit = 6;
+		break;
+	case RK3588_SRST_B_EMMC:
+		reg = RK3588_CRU_SOFTRST_CON(31);
+		bit = 7;
+		break;
+	case RK3588_SRST_T_EMMC:
+		reg = RK3588_CRU_SOFTRST_CON(31);
+		bit = 8;
 		break;
 	case RK3588_SRST_A_GMAC0:
 		reg = RK3588_CRU_SOFTRST_CON(32);
