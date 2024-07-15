@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.33 2019/07/01 07:13:44 kevlo Exp $	*/
+/*	$OpenBSD: setup.c,v 1.34 2024/07/15 13:32:50 martijn Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -347,6 +347,10 @@ readsb(int listerr)
 	asblk.b_un.b_fs->e2fs_features_rocompat &= ~EXT2F_ROCOMPAT_LARGE_FILE;
 	asblk.b_un.b_fs->e2fs_features_rocompat |=
 	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGE_FILE;
+	memcpy(asblk.b_un.b_fs->e2fs_fsmnt, sblk.b_un.b_fs->e2fs_fsmnt,
+	    sizeof(sblk.b_un.b_fs->e2fs_fsmnt));
+	asblk.b_un.b_fs->e2fs_kbytes_written = sblk.b_un.b_fs->e2fs_kbytes_written;
+
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
 	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
