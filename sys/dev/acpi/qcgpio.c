@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.10 2024/07/04 18:35:36 patrick Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.11 2024/07/15 15:33:54 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -237,6 +237,8 @@ qcgpio_x1e80100_pin_map(int pin, bus_size_t *off)
 		return pin;
 	case 0x180:
 		return 67;
+	case 0x380:
+		return 33;
 	case 0x3c0:
 		return 3;
 	default:
