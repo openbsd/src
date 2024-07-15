@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_exhaust.c,v 1.3 2012/12/05 23:20:07 deraadt Exp $	*/
+/*	$OpenBSD: t_exhaust.c,v 1.4 2024/07/15 10:11:56 anton Exp $	*/
 /*	$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $	*/
 
 /*-
@@ -158,8 +158,8 @@ static char *(*patterns[])(size_t) = {
 	p6,
 };
 
-
-main()
+int
+main(void)
 {
 	regex_t re;
 	int e, ret = 0;
@@ -181,4 +181,3 @@ main()
 	}
 	return ret;
 }
-
