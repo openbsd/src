@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.362 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.363 2024/07/15 07:24:03 jsg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -308,8 +308,8 @@ struct process {
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
-     "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER")
-
+     "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\034PIN" \
+     "\035LIBCPIN")
 
 struct kcov_dev;
 struct lock_list_entry;
