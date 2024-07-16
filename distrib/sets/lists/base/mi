@@ -2530,6 +2530,8 @@
 ./usr/libexec/ntalkd
 ./usr/libexec/radiusd
 ./usr/libexec/radiusd/radiusd_bsdauth
+./usr/libexec/radiusd/radiusd_eap2mschap
+./usr/libexec/radiusd/radiusd_file
 ./usr/libexec/radiusd/radiusd_ipcp
 ./usr/libexec/radiusd/radiusd_radius
 ./usr/libexec/radiusd/radiusd_standard

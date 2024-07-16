@@ -64,6 +64,7 @@
 ./usr/include/octeon/cpustate.h
 ./usr/include/octeon/db_machdep.h
 ./usr/include/octeon/disklabel.h
+./usr/include/octeon/elf.h
 ./usr/include/octeon/endian.h
 ./usr/include/octeon/exec.h
 ./usr/include/octeon/fdt.h
