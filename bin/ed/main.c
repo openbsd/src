@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.68 2022/11/18 14:52:03 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.69 2024/07/16 05:01:10 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -44,6 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -180,6 +181,7 @@ top:
 		signal(SIGWINCH, handle_winch);
 	}
 	signal(SIGHUP, signal_hup);
+	siginterrupt(SIGHUP, 1);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, signal_int);
 	if (sigsetjmp(env, 1)) {
@@ -1327,45 +1329,34 @@ strip_escapes(char *s)
 void
 signal_hup(int signo)
 {
-	int save_errno = errno;
-
-	if (mutex)
-		sighup = 1;
-	else
-		handle_hup(signo);
-	errno = save_errno;
+	sighup = 1;
 }
 
 
 void
 signal_int(int signo)
 {
-	int save_errno = errno;
-
 	if (mutex)
 		sigint = 1;
 	else
-		handle_int(signo);
-	errno = save_errno;
+		handle_int(signo);	/* XXX quite unsafe */
 }
 
 
 void
-handle_hup(int signo)
+handle_hup(void)
 {
 	char hup[PATH_MAX];
 
-	if (!sigactive)
-		quit(1);		/* XXX signal race */
+	signal(SIGHUP, SIG_IGN);
 	sighup = 0;
-	/* XXX signal race */
 	if (addr_last && write_file("ed.hup", "w", 1, addr_last) < 0 &&
 	    home != NULL && home[0] == '/') {
 		if (strlcpy(hup, home, sizeof(hup)) < sizeof(hup) &&
 		    strlcat(hup, "/ed.hup", sizeof(hup)) < sizeof(hup))
 			write_file(hup, "w", 1, addr_last);
 	}
-	_exit(2);
+	exit(2);
 }
 
 

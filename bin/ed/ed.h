@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.22 2016/03/27 00:43:38 mmcc Exp $	*/
+/*	$OpenBSD: ed.h,v 1.23 2024/07/16 05:01:10 deraadt Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -88,8 +88,6 @@ typedef struct undo {
 #define SPL0()						\
 	do {						\
 		if (--mutex == 0) {			\
-			if (sighup)			\
-				handle_hup(SIGHUP);	\
 			if (sigint)			\
 				handle_int(SIGINT);	\
 		}					\
@@ -160,7 +158,7 @@ char *get_extended_line(int *, int);
 int get_line_node_addr(line_t *);
 char *get_sbuf_line(line_t *);
 int get_tty_line(void);
-void handle_hup(int);
+void handle_hup(void);
 void handle_int(int);
 int has_trailing_escape(char *, char *);
 void init_buffers(void);

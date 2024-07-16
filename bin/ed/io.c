@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.25 2022/11/18 14:52:03 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.26 2024/07/16 05:01:10 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -30,6 +30,7 @@
 
 #include <regex.h>
 #include <signal.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -261,7 +262,9 @@ get_tty_line(void)
 	int i = 0;
 	int c;
 
-	for (;;)
+	for (;;) {
+		if (sighup)
+			handle_hup();
 		switch (c = getchar()) {
 		default:
 			oi = 0;
@@ -274,6 +277,8 @@ get_tty_line(void)
 			ibufp = ibuf;
 			return i;
 		case EOF:
+			if (sighup)
+				handle_hup();
 			if (ferror(stdin)) {
 				perror("stdin");
 				seterrmsg("cannot read stdin");
@@ -291,6 +296,7 @@ get_tty_line(void)
 				return i;
 			}
 		}
+	}
 }
 
 
