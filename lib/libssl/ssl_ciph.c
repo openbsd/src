@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.143 2024/07/14 15:39:36 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.144 2024/07/16 14:38:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -515,24 +515,12 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *ss, const EVP_AEAD **aead)
 int
 ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md)
 {
-	unsigned long handshake_mac;
-
 	*md = NULL;
 
 	if (s->s3->hs.cipher == NULL)
 		return 0;
 
-	handshake_mac = s->s3->hs.cipher->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
-
-	/* XXX - can we simplify this now that TLSv1.0 and TLSv1.1 are gone? */
-	/* For TLSv1.2 we upgrade the default MD5+SHA1 MAC to SHA256. */
-	if (SSL_USE_SHA256_PRF(s) && handshake_mac == SSL_HANDSHAKE_MAC_DEFAULT)
-		handshake_mac = SSL_HANDSHAKE_MAC_SHA256;
-
-	switch (handshake_mac) {
-	case SSL_HANDSHAKE_MAC_DEFAULT:
-		*md = EVP_md5_sha1();
-		return 1;
+	switch (s->s3->hs.cipher->algorithm2 & SSL_HANDSHAKE_MAC_MASK) {
 	case SSL_HANDSHAKE_MAC_SHA256:
 		*md = EVP_sha256();
 		return 1;
@@ -1629,7 +1617,6 @@ const EVP_MD *
 SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
 {
 	switch (c->algorithm2 & SSL_HANDSHAKE_MAC_MASK) {
-	case SSL_HANDSHAKE_MAC_DEFAULT:
 	case SSL_HANDSHAKE_MAC_SHA256:
 		return EVP_sha256();
 	case SSL_HANDSHAKE_MAC_SHA384:

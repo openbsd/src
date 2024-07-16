@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.18 2024/07/15 14:45:15 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.19 2024/07/16 14:38:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -246,11 +246,8 @@ __BEGIN_HIDDEN_DECLS
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
 #define SSL_HANDSHAKE_MAC_MASK		0xff0
-#define SSL_HANDSHAKE_MAC_MD5		0x010
-#define SSL_HANDSHAKE_MAC_SHA		0x020
 #define SSL_HANDSHAKE_MAC_SHA256	0x080
 #define SSL_HANDSHAKE_MAC_SHA384	0x100
-#define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
 #define SSL3_CK_ID		0x03000000
 #define SSL3_CK_VALUE_MASK	0x0000ffff
@@ -273,10 +270,6 @@ __BEGIN_HIDDEN_DECLS
 /* See if we use signature algorithms extension. */
 #define SSL_USE_SIGALGS(s) \
 	(s->method->enc_flags & SSL_ENC_FLAG_SIGALGS)
-
-/* See if we use SHA256 default PRF. */
-#define SSL_USE_SHA256_PRF(s) \
-	(s->method->enc_flags & SSL_ENC_FLAG_SHA256_PRF)
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_USE_TLS1_2_CIPHERS(s) \
@@ -1188,9 +1181,6 @@ typedef struct ssl3_state_st {
 /* Uses signature algorithms extension. */
 #define SSL_ENC_FLAG_SIGALGS            (1 << 1)
 
-/* Uses SHA256 default PRF. */
-#define SSL_ENC_FLAG_SHA256_PRF         (1 << 2)
-
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS     (1 << 4)
 
@@ -1200,7 +1190,6 @@ typedef struct ssl3_state_st {
 #define TLSV1_ENC_FLAGS		0
 #define TLSV1_1_ENC_FLAGS	0
 #define TLSV1_2_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
-				 SSL_ENC_FLAG_SHA256_PRF	| \
 				 SSL_ENC_FLAG_TLS1_2_CIPHERS)
 #define TLSV1_3_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
 				 SSL_ENC_FLAG_TLS1_3_CIPHERS)
