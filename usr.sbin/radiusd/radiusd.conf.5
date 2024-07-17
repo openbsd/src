@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.32 2024/07/14 18:03:59 jmc Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.33 2024/07/17 11:13:22 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 14 2024 $
+.Dd $Mdocdate: July 17 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -153,6 +153,18 @@ matches an authenticating user is used.
 Optionally decoration modules can be specified by
 .Ar deco .
 The specified modules decorate the RADIUS messages in the configured order.
+.It Xo
+.Ic authentication-filter
+.Ar username-pattern ...
+.Ic by Ar auth
+.Op Ic decorate-by Ar deco ...
+.Xc
+.Ic authentication-filter
+works the same as
+.Ic authenticate ,
+but the module can work as a filter,
+it can ask the authentication to the following authentication modules,
+and then it receives the authentication reply and modifies the reply.
 .It Xo
 .Ic account
 .Op Ic quick
