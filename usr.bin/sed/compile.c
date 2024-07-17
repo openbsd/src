@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.52 2024/06/18 00:32:22 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.53 2024/07/17 20:57:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <regex.h>
@@ -153,7 +153,7 @@ compile_stream(struct s_command **link)
 	for (;;) {
 		if ((p = cu_getline(&lbuf, &bufsize)) == NULL) {
 			if (stack != 0)
-				error(COMPILE, "unexpected EOF (pending }'s)");
+				error("unexpected EOF (pending }'s)");
 			return (link);
 		}
 
@@ -193,17 +193,16 @@ semicolon:	EATSPACE();
 
 nonsel:		/* Now parse the command */
 		if (!*p)
-			error(COMPILE, "command expected");
+			error("command expected");
 		cmd->code = *p;
 		for (fp = cmd_fmts; fp->code; fp++)
 			if (fp->code == *p)
 				break;
 		if (!fp->code)
-			error(COMPILE, "invalid command code %c", *p);
+			error("invalid command code %c", *p);
 		if (naddr > fp->naddr)
-			error(COMPILE,
-			    "command %c expects up to %d address(es), found %d",
-			    *p, fp->naddr, naddr);
+			error("command %c expects up to %d address(es),"
+			    " found %d", *p, fp->naddr, naddr);
 		switch (fp->args) {
 		case NONSEL:			/* ! */
 			p++;
@@ -226,7 +225,7 @@ nonsel:		/* Now parse the command */
 			 */
 			cmd->nonsel = 1;
 			if (stack == 0)
-				error(COMPILE, "unexpected }");
+				error("unexpected }");
 			cmd2 = stack;
 			stack = cmd2->next;
 			cmd2->next = cmd;
@@ -240,19 +239,19 @@ nonsel:		/* Now parse the command */
 				goto semicolon;
 			}
 			if (*p)
-				error(COMPILE,
-"extra characters at the end of %c command", cmd->code);
+				error("extra characters at the end of %c"
+				    " command", cmd->code);
 			break;
 		case TEXT:			/* a c i */
 			p++;
 			EATSPACE();
 			if (*p != '\\')
-				error(COMPILE, "command %c expects \\ followed by"
-				    " text", cmd->code);
+				error("command %c expects \\ followed by text",
+				    cmd->code);
 			p++;
 			EATSPACE();
 			if (*p)
-				error(COMPILE, "extra characters after \\ at the"
+				error("extra characters after \\ at the"
 				    " end of %c command", cmd->code);
 			cmd->t = compile_text();
 			break;
@@ -262,7 +261,7 @@ nonsel:		/* Now parse the command */
 			p++;
 			EATSPACE();
 			if (*p == '\0')
-				error(COMPILE, "filename expected");
+				error("filename expected");
 			cmd->t = duptoeol(p, "w command", NULL);
 			if (aflag) {
 				cmd->u.fd = -1;
@@ -271,14 +270,14 @@ nonsel:		/* Now parse the command */
 			else if ((cmd->u.fd = open(p,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				error(FATAL, "%s: %s", p, strerror(errno));
+				err(1, "%s", p);
 			break;
 		case RFILE:			/* r */
 			pledge_rpath = 1;
 			p++;
 			EATSPACE();
 			if (*p == '\0')
-				error(COMPILE, "filename expected");
+				error("filename expected");
 			cmd->t = duptoeol(p, "read command", NULL);
 			break;
 		case BRANCH:			/* b t */
@@ -298,7 +297,7 @@ nonsel:		/* Now parse the command */
 			EATSPACE();
 			cmd->t = duptoeol(p, "label", &p);
 			if (strlen(cmd->t) == 0)
-				error(COMPILE, "empty label");
+				error("empty label");
 			enterlabel(cmd);
 			if (*p == ';') {
 				p++;
@@ -308,12 +307,12 @@ nonsel:		/* Now parse the command */
 		case SUBST:			/* s */
 			p++;
 			if (*p == '\0' || *p == '\\')
-				error(COMPILE, "substitute pattern can not be"
+				error("substitute pattern can not be"
 				    " delimited by newline or backslash");
 			cmd->u.s = xmalloc(sizeof(struct s_subst));
 			p = compile_re(p, &cmd->u.s->re);
 			if (p == NULL)
-				error(COMPILE, "unterminated substitute pattern");
+				error("unterminated substitute pattern");
 			--p;
 			p = compile_subst(p, cmd->u.s);
 			p = compile_flags(p, cmd->u.s);
@@ -334,7 +333,7 @@ nonsel:		/* Now parse the command */
 				goto semicolon;
 			}
 			if (*p)
-				error(COMPILE, "extra text at the end of a"
+				error("extra text at the end of a"
 				    " transform command");
 			break;
 		}
@@ -359,9 +358,9 @@ compile_delimited(char *p, char *d)
 	if (c == '\0')
 		return (NULL);
 	else if (c == '\\')
-		error(COMPILE, "\\ can not be used as a string delimiter");
+		error("\\ can not be used as a string delimiter");
 	else if (c == '\n')
-		error(COMPILE, "newline can not be used as a string delimiter");
+		error("newline can not be used as a string delimiter");
 
 	while (p[0]) {
 		/* Unescaped delimiter: We are done. */
@@ -393,7 +392,7 @@ compile_delimited(char *p, char *d)
 		 * It may contain the delimiter without escaping.
 		 */
 		else if ((d = compile_ccl(&p, d)) == NULL)
-			error(COMPILE, "unbalanced brackets ([])");
+			error("unbalanced brackets ([])");
 	}
 	return NULL;
 }
@@ -453,7 +452,7 @@ compile_re(char *p, regex_t **repp)
 	}
 	*repp = xmalloc(sizeof(regex_t));
 	if (p && (eval = regcomp(*repp, re, Eflag ? REG_EXTENDED : 0)) != 0)
-		error(COMPILE, "RE error: %s", strregerror(eval, *repp));
+		error("RE error: %s", strregerror(eval, *repp));
 	if (maxnsub < (*repp)->re_nsub)
 		maxnsub = (*repp)->re_nsub;
 	free(re);
@@ -519,8 +518,8 @@ compile_subst(char *p, struct s_subst *s)
 					ref = *p - '0';
 					if (s->re != NULL &&
 					    ref > s->re->re_nsub)
-						error(COMPILE,
-"\\%c not defined in the RE", *p);
+						error("\\%c not defined in the"
+						    " RE", *p);
 					if (s->maxbref < ref)
 						s->maxbref = ref;
 				} else if (*p == '&' || *p == '\\')
@@ -532,14 +531,14 @@ compile_subst(char *p, struct s_subst *s)
 				s->new = xrealloc(text, size);
 				return (p);
 			} else if (*p == '\n') {
-				error(COMPILE,
-"unescaped newline inside substitute pattern");
+				error("unescaped newline inside substitute"
+				    " pattern");
 			}
 			*sp++ = *p;
 		}
 		size += sp - op;
 	} while ((p = cu_getline(&lbuf, &bufsize)));
-	error(COMPILE, "unterminated substitute in regular expression");
+	error("unterminated substitute in regular expression");
 }
 
 /*
@@ -560,7 +559,7 @@ compile_flags(char *p, struct s_subst *s)
 		switch (*p) {
 		case 'g':
 			if (gn)
-				error(COMPILE, "more than one number or 'g' in"
+				error("more than one number or 'g' in"
 				    " substitute flags");
 			gn = 1;
 			s->n = 0;
@@ -576,20 +575,20 @@ compile_flags(char *p, struct s_subst *s)
 		case '4': case '5': case '6':
 		case '7': case '8': case '9':
 			if (gn)
-				error(COMPILE, "more than one number or 'g' in"
+				error("more than one number or 'g' in"
 				    " substitute flags");
 			gn = 1;
 			l = strtol(p, &p, 10);
 			if (l <= 0 || l >= INT_MAX)
-				error(COMPILE,
-				    "number in substitute flags out of range");
+				error("number in substitute flags out of"
+				    " range");
 			s->n = (int)l;
 			continue;
 		case 'w':
 			p++;
 			EATSPACE();
 			if (*p == '\0')
-				error(COMPILE, "filename expected");
+				error("filename expected");
 			s->wfile = duptoeol(p, "s command w flag", NULL);
 			*p = '\0';
 			if (aflag)
@@ -597,11 +596,10 @@ compile_flags(char *p, struct s_subst *s)
 			else if ((s->wfd = open(s->wfile,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				error(FATAL, "%s: %s", s->wfile, strerror(errno));
+				err(1, "%s", s->wfile);
 			return (p);
 		default:
-			error(COMPILE,
-			    "bad flag in substitute command: '%c'", *p);
+			error("bad flag in substitute command: '%c'", *p);
 			break;
 		}
 		p++;
@@ -621,20 +619,20 @@ compile_tr(char *old, char **transtab)
 	memset(check, 0, sizeof(check));
 	delimiter = *old;
 	if (delimiter == '\\')
-		error(COMPILE, "\\ can not be used as a string delimiter");
+		error("\\ can not be used as a string delimiter");
 	else if (delimiter == '\n' || delimiter == '\0')
-		error(COMPILE, "newline can not be used as a string delimiter");
+		error("newline can not be used as a string delimiter");
 
 	new = old++;
 	do {
 		if ((new = strchr(new + 1, delimiter)) == NULL)
-			error(COMPILE, "unterminated transform source string");
+			error("unterminated transform source string");
 	} while (*(new - 1) == '\\' && *(new -2) != '\\');
 	*new = '\0';
 	end = new++;
 	do {
 		if ((end = strchr(end + 1, delimiter)) == NULL)
-			error(COMPILE, "unterminated transform target string");
+			error("unterminated transform target string");
 	} while (*(end -1) == '\\' && *(end -2) != '\\');
 	*end = '\0';
 
@@ -649,24 +647,22 @@ compile_tr(char *old, char **transtab)
 			if (*old == 'n')
 				*old = '\n';
 			else if (*old != delimiter && *old != '\\')
-				error(COMPILE, "Unexpected character after "
-				    "backslash");
+				error("Unexpected character after backslash");
 		}
 		if (*new == '\\') {
 			new++;
 			if (*new == 'n')
 				*new = '\n';
 			else if (*new != delimiter && *new != '\\')
-				error(COMPILE, "Unexpected character after "
-				    "backslash");
+				error("Unexpected character after backslash");
 		}
 		if (check[(u_char) *old] == 1)
-			error(COMPILE, "Repeated character in source string");
+			error("Repeated character in source string");
 		check[(u_char) *old] = 1;
 		(*transtab)[(u_char) *old++] = *new++;
 	}
 	if (*old != '\0' || *new != '\0')
-		error(COMPILE, "transform strings are not the same length");
+		error("transform strings are not the same length");
 	return end + 1;
 }
 
@@ -724,7 +720,7 @@ compile_addr(char *p, struct s_addr *a)
 	case '/':				/* Context address */
 		p = compile_re(p, &a->u.r);
 		if (p == NULL)
-			error(COMPILE, "unterminated regular expression");
+			error("unterminated regular expression");
 		a->type = AT_RE;
 		return (p);
 
@@ -738,7 +734,7 @@ compile_addr(char *p, struct s_addr *a)
 		a->u.l = strtoul(p, &end, 10);
 		return (end);
 	default:
-		error(COMPILE, "expected context address");
+		error("expected context address");
 		return (NULL);
 	}
 }
@@ -798,7 +794,7 @@ fixuplabel(struct s_command *cp, struct s_command *end)
 				break;
 			}
 			if ((cp->u.c = findlabel(cp->t)) == NULL)
-				error(COMPILE, "undefined label '%s'", cp->t);
+				error("undefined label '%s'", cp->t);
 			free(cp->t);
 			break;
 		case '{':
@@ -823,7 +819,7 @@ enterlabel(struct s_command *cp)
 	lhp = &labels[h & LHMASK];
 	for (lh = *lhp; lh != NULL; lh = lh->lh_next)
 		if (lh->lh_hash == h && strcmp(cp->t, lh->lh_cmd->t) == 0)
-			error(COMPILE, "duplicate label '%s'", cp->t);
+			error("duplicate label '%s'", cp->t);
 	lh = xmalloc(sizeof *lh);
 	lh->lh_next = *lhp;
 	lh->lh_hash = h;

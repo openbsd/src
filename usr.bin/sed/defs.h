@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.10 2022/12/26 19:16:02 jmc Exp $ */
+/*	$OpenBSD: defs.h,v 1.11 2024/07/17 20:57:15 millert Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -132,12 +132,6 @@ typedef struct {
 	char *back;		/* Backing memory. */
 	size_t blen;		/* Backing memory length. */
 } SPACE;
-
-/*
- * Error severity codes:
- */
-#define	FATAL		1	/* Exit immediately with 1 */
-#define	COMPILE		2	/* Print error, count and finish script */
 
 /*
  * Round up to the nearest multiple of _POSIX2_LINE_MAX

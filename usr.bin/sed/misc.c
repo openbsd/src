@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2017/01/20 10:26:16 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2024/07/17 20:57:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #include <sys/types.h>
 
-#include <errno.h>
+#include <err.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +54,7 @@ xmalloc(size_t size)
 	void *p;
 
 	if ((p = malloc(size)) == NULL)
-		error(FATAL, "%s", strerror(errno));
+		err(1, NULL);
 	return (p);
 }
 
@@ -64,7 +64,7 @@ xreallocarray(void *o, size_t nmemb, size_t size)
 	void *p;
 
 	if ((p = reallocarray(o, nmemb, size)) == NULL)
-		error(FATAL, "%s", strerror(errno));
+		err(1, NULL);
 	return (p);
 }
 
@@ -76,7 +76,7 @@ xrealloc(void *p, size_t size)
 {
 
 	if ((p = realloc(p, size)) == NULL)
-		error(FATAL, "%s", strerror(errno));
+		err(1, NULL);
 	return (p);
 }
 
@@ -102,16 +102,12 @@ strregerror(int errcode, regex_t *preg)
  * Error reporting function
  */
 __dead void
-error(int severity, const char *fmt, ...)
+error(const char *fmt, ...)
 {
 	va_list ap;
 
+	(void)fprintf(stderr, "sed: %lu: %s: ", linenum, fname);
 	va_start(ap, fmt);
-	(void)fprintf(stderr, "sed: ");
-	switch (severity) {
-	case COMPILE:
-		(void)fprintf(stderr, "%lu: %s: ", linenum, fname);
-	}
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -123,9 +119,8 @@ warning(const char *fmt, ...)
 {
 	va_list ap;
 
+	(void)fprintf(stderr, "sed: %lu: %s: ", linenum, fname);
 	va_start(ap, fmt);
-	(void)fprintf(stderr, "sed: ");
-	(void)fprintf(stderr, "%lu: %s: ", linenum, fname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");

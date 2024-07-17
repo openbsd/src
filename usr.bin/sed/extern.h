@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 2024/06/18 00:32:22 millert Exp $ */
+/*	$OpenBSD: extern.h,v 1.16 2024/07/17 20:57:16 millert Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -49,8 +49,8 @@ void	 cfclose(struct s_command *, struct s_command *);
 void	 compile(void);
 void	 cspace(SPACE *, const char *, size_t, enum e_spflag);
 char	*cu_getline(char **, size_t *);
-__dead void error(int, const char *, ...);
-void	warning(const char *, ...);
+__dead void error(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void	warning(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 int	 mf_getline(SPACE *, enum e_spflag);
 int	 lastline(void);
 void	 finish_file(void);
