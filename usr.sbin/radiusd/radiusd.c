@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.50 2024/07/14 15:31:49 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.51 2024/07/17 11:05:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -811,36 +811,10 @@ radius_query_client_secret(struct radius_query *q)
 void
 radiusd_access_request_answer(struct radius_query *q)
 {
-	const char	*authen_secret = q->authen->auth->module->secret;
-
 	radius_set_request_packet(q->res, q->req);
-
-	if (authen_secret == NULL) {
-		/*
-		 * The module diddn't check the authenticators
-		 */
-		if (radius_check_response_authenticator(q->res,
-		    q->client->secret) != 0) {
-			log_info("Response from module has bad response "
-			    "authenticator: id=%d", q->id);
-			goto on_error;
-		}
-		if (radius_has_attr(q->res,
-		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
-		    radius_check_message_authenticator(q->res,
-		    q->client->secret) != 0) {
-			log_info("Response from module has bad message "
-			    "authenticator: id=%d", q->id);
-			goto on_error;
-		}
-	}
-
 	RADIUSD_ASSERT(q->deco == NULL);
-	radius_query_access_response(q);
 
-	return;
-on_error:
-	radiusd_access_request_aborted(q);
+	radius_query_access_response(q);
 }
 
 void
@@ -1535,8 +1509,8 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 			case IMSG_RADIUSD_MODULE_REQDECO_DONE:
 				if (q->deco == NULL || q->deco->type !=
 				    IMSG_RADIUSD_MODULE_REQDECO) {
-					log_warnx("q=%u received %s "
-					    "but not requested", q->id, typestr);
+					log_warnx("q=%u received %s but not "
+					    "requested", q->id, typestr);
 					if (radpkt != NULL)
 						radius_delete_packet(radpkt);
 					break;
@@ -1791,9 +1765,8 @@ radiusd_module_access_request(struct radiusd_module *module,
 		radiusd_access_request_aborted(q);
 		return;
 	}
-	if (q->client->secret[0] != '\0' && module->secret != NULL &&
-	    radius_get_user_password_attr(radpkt, pass, sizeof(pass),
-		    q->client->secret) == 0) {
+	if (radius_get_user_password_attr(radpkt, pass, sizeof(pass),
+	    q->client->secret) == 0) {
 		radius_del_attr_all(radpkt, RADIUS_TYPE_USER_PASSWORD);
 		(void)radius_put_raw_attr(radpkt, RADIUS_TYPE_USER_PASSWORD,
 		    pass, strlen(pass));
