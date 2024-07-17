@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.363 2024/07/15 07:24:03 jsg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.364 2024/07/17 09:54:14 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -444,8 +444,8 @@ struct proc {
 #define	P_BITS \
     ("\20" "\01INKTR" "\02PROFPEND" "\03ALRMPEND" "\04SIGSUSPEND" \
      "\05CANTSLEEP" "\06WSLEEP" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
-     "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\027XX" \
-     "\030CONTINUED" "\033THREAD" "\034SUSPSIG" "\035SOFTDEP" "\037CPUPEG")
+     "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\030CONTINUED" "\033THREAD" \
+     "\034SUSPSIG" "\037CPUPEG")
 
 #define	THREAD_PID_OFFSET	100000
 
