@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.4 2024/07/12 15:54:52 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.5 2024/07/17 11:31:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -972,7 +972,7 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 	struct module_ipcp	*self = ctx;
 	struct assigned_ipv4	*assign, *assignt;
 	char			 username[256], nas_id[256], buf[256],
-				    buf1[80];
+				    buf1[384];
 	struct timespec		 dur;
 	struct radiusd_ipcp_statistics
 				 stat;

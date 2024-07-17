@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.15 2024/07/14 15:31:49 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.16 2024/07/17 11:31:46 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -160,7 +160,7 @@ extern struct radiusd *radiusd_s;
 #ifdef RADIUSD_DEBUG
 #define	RADIUSD_DBG(x)	log_debug x
 #else
-#define	RADIUSD_DBG(x)
+#define	RADIUSD_DBG(x)	((void)0)
 #endif
 #define	RADIUSD_ASSERT(_cond)					\
 	do {							\
