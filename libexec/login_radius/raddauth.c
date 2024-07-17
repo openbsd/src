@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.31 2023/03/02 16:13:57 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.32 2024/07/17 20:50:28 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -86,6 +86,7 @@
 #include <unistd.h>
 #include <md5.h>
 #include <readpassphrase.h>
+#include <openssl/hmac.h>
 #include "login_radius.h"
 
 
@@ -95,6 +96,7 @@
 #define AUTH_VECTOR_LEN			16
 #define AUTH_HDR_LEN			20
 #define	AUTH_PASS_LEN			(256 - 16)
+#define AUTH_MSGAUTH_LEN		16
 #define	PW_AUTHENTICATION_REQUEST	1
 #define	PW_AUTHENTICATION_ACK		2
 #define	PW_AUTHENTICATION_REJECT	3
@@ -105,6 +107,7 @@
 #define	PW_CLIENT_PORT_ID		5
 #define PW_PORT_MESSAGE			18
 #define PW_STATE			24
+#define PW_MSG_AUTH			80
 
 #ifndef	RADIUS_DIR
 #define RADIUS_DIR		"/etc/raddb"
@@ -347,7 +350,7 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 	int i, len, secretlen, total_length, p;
 	struct sockaddr_in sin;
 	u_char md5buf[MAXSECRETLEN+AUTH_VECTOR_LEN], digest[AUTH_VECTOR_LEN],
-	    pass_buf[AUTH_PASS_LEN], *pw, *ptr;
+	    pass_buf[AUTH_PASS_LEN], *pw, *ptr, *ma;
 	u_int length;
 	in_addr_t ipaddr;
 	MD5_CTX context;
@@ -358,6 +361,15 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 	memcpy(auth.vector, vector, AUTH_VECTOR_LEN);
 	total_length = AUTH_HDR_LEN;
 	ptr = auth.data;
+
+	/* Preserve space for msgauth */
+	*ptr++ = PW_MSG_AUTH;
+	length = 16;
+	*ptr++ = length + 2;
+	ma = ptr;
+	memset(ma, 0, 16);
+	ptr += length;
+	total_length += length + 2;
 
 	/* User name */
 	*ptr++ = PW_USER_NAME;
@@ -430,6 +442,11 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 	}
 
 	auth.length = htons(total_length);
+
+	/* Calc msgauth */
+	if (HMAC(EVP_md5(), auth_secret, secretlen, (unsigned char *)&auth,
+	    total_length, ma, NULL) == NULL)
+		errx(1, "HMAC() failed");
 
 	memset(&sin, 0, sizeof (sin));
 	sin.sin_family = AF_INET;
