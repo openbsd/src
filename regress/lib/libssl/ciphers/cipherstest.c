@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/ssl.h>
 
 #include <err.h>
@@ -67,16 +69,676 @@ check_cipher_order(void)
 	return 0;
 }
 
+struct ssl_cipher_test {
+	uint16_t value;
+	int auth_nid;
+	int cipher_nid;
+	int digest_nid;
+	int handshake_digest_nid;
+	int kx_nid;
+	int strength_bits;
+	int symmetric_bits;
+	int is_aead;
+};
+
+static const struct ssl_cipher_test ssl_cipher_tests[] = {
+	{
+		.value = 0x0004,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_rc4,
+		.digest_nid = NID_md5,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0005,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_rc4,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x000a,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_des_ede3_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 112,
+		.symmetric_bits = 168,
+	},
+	{
+		.value = 0x0016,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_des_ede3_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 112,
+		.symmetric_bits = 168,
+	},
+	{
+		.value = 0x0018,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_rc4,
+		.digest_nid = NID_md5,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x001b,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_des_ede3_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 112,
+		.symmetric_bits = 168,
+	},
+	{
+		.value = 0x002f,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0033,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0034,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0035,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x0039,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x003a,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x003c,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x003d,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x0041,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0045,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0046,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_camellia_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x0067,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x006b,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x006c,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x006d,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x0084,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x0088,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x0089,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_camellia_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x009c,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x009d,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x009e,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x009f,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x00a6,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_128_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x00a7,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_256_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x00ba,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x00be,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x00bf,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_camellia_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0x00c0,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_256_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_rsa,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x00c4,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_camellia_256_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x00c5,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_camellia_256_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0x1301,
+		.auth_nid = NID_undef,
+		.cipher_nid = NID_aes_128_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_undef,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x1302,
+		.auth_nid = NID_undef,
+		.cipher_nid = NID_aes_256_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_undef,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0x1303,
+		.auth_nid = NID_undef,
+		.cipher_nid = NID_chacha20_poly1305,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_undef,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xc007,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_rc4,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc008,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_des_ede3_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 112,
+		.symmetric_bits = 168,
+	},
+	{
+		.value = 0xc009,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc00a,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0xc011,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_rc4,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc012,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_des_ede3_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 112,
+		.symmetric_bits = 168,
+	},
+	{
+		.value = 0xc013,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc014,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0xc016,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_rc4,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc017,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_des_ede3_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 112,
+		.symmetric_bits = 168,
+	},
+	{
+		.value = 0xc018,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc019,
+		.auth_nid = NID_auth_null,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha1,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0xc023,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc024,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha384,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0xc027,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_cbc,
+		.digest_nid = NID_sha256,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+	},
+	{
+		.value = 0xc028,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_cbc,
+		.digest_nid = NID_sha384,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+	},
+	{
+		.value = 0xc02b,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_aes_128_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xc02c,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_aes_256_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xc02f,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_128_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 128,
+		.symmetric_bits = 128,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xc030,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_aes_256_gcm,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha384,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xcca8,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_chacha20_poly1305,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xcca9,
+		.auth_nid = NID_auth_ecdsa,
+		.cipher_nid = NID_chacha20_poly1305,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_ecdhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+	{
+		.value = 0xccaa,
+		.auth_nid = NID_auth_rsa,
+		.cipher_nid = NID_chacha20_poly1305,
+		.digest_nid = NID_undef,
+		.handshake_digest_nid = NID_sha256,
+		.kx_nid = NID_kx_dhe,
+		.strength_bits = 256,
+		.symmetric_bits = 256,
+		.is_aead = 1,
+	},
+};
+
+#define N_SSL_CIPHER_TESTS (sizeof(ssl_cipher_tests) / sizeof(ssl_cipher_tests[0]))
+
 static int
-cipher_find_test(void)
+test_ssl_ciphers(void)
 {
+	int i, strength_bits, symmetric_bits;
+	const struct ssl_cipher_test *sct;
 	STACK_OF(SSL_CIPHER) *ciphers;
 	const SSL_CIPHER *cipher;
+#if 0
+	const EVP_MD *digest;
+#endif
 	unsigned char buf[2];
+	const char *description;
+	char desc_buf[256];
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
+	size_t j;
 	int ret = 1;
-	int i;
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL) {
 		fprintf(stderr, "SSL_CTX_new() returned NULL\n");
@@ -96,6 +758,12 @@ cipher_find_test(void)
 		goto failure;
 	}
 
+	if (sk_SSL_CIPHER_num(ciphers) != N_SSL_CIPHER_TESTS) {
+		fprintf(stderr, "number of ciphers mismatch (%d != %zu)\n",
+		    sk_SSL_CIPHER_num(ciphers), N_SSL_CIPHER_TESTS);
+		goto failure;
+	}
+
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		uint16_t cipher_value;
 
@@ -106,16 +774,94 @@ cipher_find_test(void)
 		buf[1] = cipher_value & 0xff;
 
 		if ((cipher = SSL_CIPHER_find(ssl, buf)) == NULL) {
-			fprintf(stderr,
-			    "SSL_CIPHER_find() returned NULL for %s\n",
+			fprintf(stderr, "SSL_CIPHER_find() returned NULL for %s\n",
 			    SSL_CIPHER_get_name(cipher));
 			goto failure;
 		}
-
 		if (SSL_CIPHER_get_value(cipher) != cipher_value) {
-			fprintf(stderr,
-			    "got cipher with value 0x%x, want 0x%x\n",
+			fprintf(stderr, "got cipher with value 0x%04x, want 0x%04x\n",
 			    SSL_CIPHER_get_value(cipher), cipher_value);
+			goto failure;
+		}
+		if (SSL_CIPHER_get_id(cipher) != (0x03000000UL | cipher_value)) {
+			fprintf(stderr, "got cipher id 0x%08lx, want 0x%08lx\n",
+			    SSL_CIPHER_get_id(cipher), (0x03000000UL | cipher_value));
+			goto failure;
+		}
+
+		sct = NULL;
+		for (j = 0; j < N_SSL_CIPHER_TESTS; j++) {
+			if (ssl_cipher_tests[j].value == cipher_value) {
+				sct = &ssl_cipher_tests[j];
+				break;
+			}
+		}
+		if (sct == NULL) {
+			fprintf(stderr, "cipher '%s' (0x%04x) not found in test "
+			    "table\n", SSL_CIPHER_get_name(cipher), cipher_value);
+			goto failure;
+		}
+
+		if (SSL_CIPHER_get_auth_nid(cipher) != sct->auth_nid) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got auth nid %d, "
+			    "want %d\n", SSL_CIPHER_get_name(cipher), cipher_value,
+			    SSL_CIPHER_get_auth_nid(cipher), sct->auth_nid);
+			goto failure;
+		}
+		if (SSL_CIPHER_get_cipher_nid(cipher) != sct->cipher_nid) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got cipher nid %d, "
+			    "want %d\n", SSL_CIPHER_get_name(cipher), cipher_value,
+			    SSL_CIPHER_get_cipher_nid(cipher), sct->cipher_nid);
+			goto failure;
+		}
+		if (SSL_CIPHER_get_digest_nid(cipher) != sct->digest_nid) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got digest nid %d, "
+			    "want %d\n", SSL_CIPHER_get_name(cipher), cipher_value,
+			    SSL_CIPHER_get_digest_nid(cipher), sct->digest_nid);
+			goto failure;
+		}
+		if (SSL_CIPHER_get_kx_nid(cipher) != sct->kx_nid) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got kx nid %d, "
+			    "want %d\n", SSL_CIPHER_get_name(cipher), cipher_value,
+			    SSL_CIPHER_get_kx_nid(cipher), sct->kx_nid);
+			goto failure;
+		}
+
+#if 0
+		/* Having API consistency is a wonderful thing... */
+		digest = SSL_CIPHER_get_handshake_digest(cipher);
+		if (EVP_MD_nid(digest) != sct->handshake_digest_nid) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got handshake "
+			    "digest nid %d, want %d\n", SSL_CIPHER_get_name(cipher),
+			    cipher_value, EVP_MD_nid(digest), sct->handshake_digest_nid);
+			goto failure;
+		}
+#endif
+
+		strength_bits = SSL_CIPHER_get_bits(cipher, &symmetric_bits);
+		if (strength_bits != sct->strength_bits) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got strength bits "
+			    "%d, want %d\n", SSL_CIPHER_get_name(cipher),
+			    cipher_value, strength_bits, sct->strength_bits);
+			goto failure;
+		}
+		if (symmetric_bits != sct->symmetric_bits) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got symmetric bits "
+			    "%d, want %d\n", SSL_CIPHER_get_name(cipher),
+			    cipher_value, symmetric_bits, sct->symmetric_bits);
+			goto failure;
+		}
+		if (SSL_CIPHER_is_aead(cipher) != sct->is_aead) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - got is aead %d, "
+			    "want %d\n", SSL_CIPHER_get_name(cipher), cipher_value,
+			    SSL_CIPHER_is_aead(cipher), sct->is_aead);
+			goto failure;
+		}
+
+		if ((description = SSL_CIPHER_description(cipher, desc_buf,
+		    sizeof(desc_buf))) != desc_buf) {
+			fprintf(stderr, "cipher '%s' (0x%04x) - failed to get "
+			    "description\n", SSL_CIPHER_get_name(cipher), cipher_value);
 			goto failure;
 		}
 	}
@@ -466,7 +1212,7 @@ main(int argc, char **argv)
 
 	failed |= check_cipher_order();
 
-	failed |= cipher_find_test();
+	failed |= test_ssl_ciphers();
 
 	failed |= parse_ciphersuites_test();
 	failed |= cipher_set_test();
