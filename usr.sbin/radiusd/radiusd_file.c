@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.2 2024/07/14 15:13:41 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.3 2024/07/17 10:15:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -405,7 +405,6 @@ auth_pap(struct module_file *self, u_int q_id, RADIUS_PACKET *radpkt,
 		return;
 	}
 	ret = strcmp(ent->password, pass);
-	log_info("%s %s", ent->password, pass);
 	explicit_bzero(ent->password, strlen(ent->password));
 	log_info("q=%u User `%s' authentication %s (PAP)", q_id, username,
 	    (ret == 0)? "succeeded" : "failed");
