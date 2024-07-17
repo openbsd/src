@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 2024/07/14 15:31:49 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.4 2024/07/17 11:20:24 deraadt Exp $
+
 PROG=		radiusd
 BINDIR=		/usr/sbin
 MAN=		radiusd.8 radiusd.conf.5
