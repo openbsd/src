@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2024/06/18 00:32:22 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2024/07/17 03:05:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -310,7 +310,7 @@ finish_file(void)
 		fclose(infile);
 		if (*oldfname != '\0') {
 			if (rename(fname, oldfname) != 0) {
-				warning("rename()");
+				warning("rename(): %s", strerror(errno));
 				unlink(tmpfname);
 				exit(1);
 			}
@@ -320,7 +320,11 @@ finish_file(void)
 			if (outfile != NULL && outfile != stdout)
 				fclose(outfile);
 			outfile = NULL;
-			rename(tmpfname, fname);
+			if (rename(tmpfname, fname) != 0) {
+				warning("rename(): %s", strerror(errno));
+				unlink(tmpfname);
+				exit(1);
+			}
 			*tmpfname = '\0';
 		}
 		outfname = NULL;
@@ -377,7 +381,7 @@ mf_getline(SPACE *sp, enum e_spflag spflag)
 		}
 		fname = files->fname;
 		if (inplace != NULL) {
-			if (lstat(fname, &sb) != 0)
+			if (stat(fname, &sb) != 0)
 				error(FATAL, "%s: %s", fname,
 				    strerror(errno ? errno : EIO));
 			if (!S_ISREG(sb.st_mode))
@@ -399,12 +403,12 @@ mf_getline(SPACE *sp, enum e_spflag spflag)
 				error(FATAL, "%s: name too long", fname);
 			if ((fd = mkstemp(tmpfname)) == -1)
 				error(FATAL, "%s: %s", fname, strerror(errno));
+			(void)fchown(fd, sb.st_uid, sb.st_gid);
+			(void)fchmod(fd, sb.st_mode & ALLPERMS);
 			if ((outfile = fdopen(fd, "w")) == NULL) {
 				unlink(tmpfname);
 				error(FATAL, "%s", fname);
 			}
-			fchown(fileno(outfile), sb.st_uid, sb.st_gid);
-			fchmod(fileno(outfile), sb.st_mode & ALLPERMS);
 			outfname = tmpfname;
 			linenum = 0;
 			resetstate();
