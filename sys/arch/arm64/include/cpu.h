@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.48 2024/07/10 11:01:24 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.49 2024/07/17 15:21:59 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -63,8 +63,11 @@
 
 extern uint64_t cpu_id_aa64isar0;
 extern uint64_t cpu_id_aa64isar1;
+extern uint64_t cpu_id_aa64isar2;
 extern uint64_t cpu_id_aa64pfr0;
 extern uint64_t cpu_id_aa64pfr1;
+
+void cpu_identify_cleanup(void);
 
 #include <machine/intr.h>
 #include <machine/frame.h>

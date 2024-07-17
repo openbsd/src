@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2024/07/17 15:21:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -60,6 +60,8 @@ cpu_configure(void)
 	config_rootfound("mainbus", NULL);
 
 	unmap_startup();
+
+	cpu_identify_cleanup();
 
 #ifdef CRYPTO
 	if (arm64_has_aes)

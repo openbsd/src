@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.126 2024/07/14 09:48:48 jca Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.127 2024/07/17 15:21:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1022,6 +1022,40 @@ cpu_identify(struct cpu_info *ci)
 	id = READ_SPECIALREG(id_aa64pfr1_el1);
 	printf("\nID_AA64PFR1_EL1: 0x%016llx", id);
 #endif
+}
+
+void
+cpu_identify_cleanup(void)
+{
+	uint64_t value;
+
+	/* ID_AA64ISAR0_EL1 */
+	value = cpu_id_aa64isar0 & ID_AA64ISAR0_MASK;
+	value &= ~ID_AA64ISAR0_TLB_MASK;
+	cpu_id_aa64isar0 = value;
+
+	/* ID_AA64ISAR1_EL1 */
+	value = cpu_id_aa64isar1 &= ID_AA64ISAR1_MASK;
+	value &= ~ID_AA64ISAR1_SPECRES_MASK;
+	cpu_id_aa64isar1 = value;
+
+	/* ID_AA64ISAR2_EL1 */
+	value = cpu_id_aa64isar2 &= ID_AA64ISAR2_MASK;
+	value &= ~ID_AA64ISAR2_CLRBHB_MASK;
+	cpu_id_aa64isar2 = value;
+
+	/* ID_AA64PFR0_EL1 */
+	value = 0;
+	value |= cpu_id_aa64pfr0 & ID_AA64PFR0_FP_MASK;
+	value |= cpu_id_aa64pfr0 & ID_AA64PFR0_ADV_SIMD_MASK;
+	value |= cpu_id_aa64pfr0 & ID_AA64PFR0_DIT_MASK;
+	cpu_id_aa64pfr0 = value;
+
+	/* ID_AA64PFR1_EL1 */
+	value = 0;
+	value |= cpu_id_aa64pfr1 & ID_AA64PFR1_BT_MASK;
+	value |= cpu_id_aa64pfr1 & ID_AA64PFR1_SSBS_MASK;
+	cpu_id_aa64pfr1 = value;
 }
 
 void	cpu_init(void);
