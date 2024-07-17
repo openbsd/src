@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_eap2mschap.c,v 1.1 2024/07/14 16:09:23 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_eap2mschap.c,v 1.2 2024/07/17 11:19:27 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -119,7 +119,12 @@ eap2mschap_config_set(void *ctx, const char *name, int argc,
 	} else if (strcmp(name, "_debug") == 0)
 		log_init(1);
 	else if (strncmp(name, "_", 1) == 0)
-		/* ignore */;
+		/* ignore all internal messages */;
+	else {
+		module_send_message(self->base, IMSG_NG,
+		    "Unknown config parameter `%s'", name);
+		return;
+	}
 
 	module_send_message(self->base, IMSG_OK, NULL);
 	return;
