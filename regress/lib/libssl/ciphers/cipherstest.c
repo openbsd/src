@@ -729,9 +729,7 @@ test_ssl_ciphers(void)
 	const struct ssl_cipher_test *sct;
 	STACK_OF(SSL_CIPHER) *ciphers;
 	const SSL_CIPHER *cipher;
-#if 0
 	const EVP_MD *digest;
-#endif
 	unsigned char buf[2];
 	const char *description;
 	char desc_buf[256];
@@ -827,7 +825,6 @@ test_ssl_ciphers(void)
 			goto failure;
 		}
 
-#if 0
 		/* Having API consistency is a wonderful thing... */
 		digest = SSL_CIPHER_get_handshake_digest(cipher);
 		if (EVP_MD_nid(digest) != sct->handshake_digest_nid) {
@@ -836,7 +833,6 @@ test_ssl_ciphers(void)
 			    cipher_value, EVP_MD_nid(digest), sct->handshake_digest_nid);
 			goto failure;
 		}
-#endif
 
 		strength_bits = SSL_CIPHER_get_bits(cipher, &symmetric_bits);
 		if (strength_bits != sct->strength_bits) {
