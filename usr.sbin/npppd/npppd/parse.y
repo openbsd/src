@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2024/07/11 14:05:59 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.30 2024/07/17 08:26:19 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1543,7 +1543,7 @@ npppd_conf_fini(struct npppd_conf *xconf)
 	TAILQ_FOREACH_SAFE(radc, &xconf->raddaeclientconfs, entry, radct)
 		free(radc);
 	TAILQ_FOREACH_SAFE(radl, &xconf->raddaelistenconfs, entry, radlt)
-	free(radl);
+		free(radl);
 	TAILQ_INIT(&xconf->l2tp_confs);
 	TAILQ_INIT(&xconf->pptp_confs);
 	TAILQ_INIT(&xconf->pppoe_confs);
