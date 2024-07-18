@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.7 2024/07/13 14:28:27 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.8 2024/07/18 08:58:59 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -177,6 +177,7 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 	if (req == NULL) {
 		log_debug("%s: received an unknown RADIUS message: id=%u",
 		    __func__, (unsigned)resid);
+		radius_delete_packet(pkt);
 		return;
 	}
 
@@ -184,6 +185,7 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 	if (radius_check_response_authenticator(pkt, server->rs_secret) != 0) {
 		log_info("%s: received an invalid RADIUS message: bad "
 		    "response authenticator", __func__);
+		radius_delete_packet(pkt);
 		return;
 	}
 	if (req->rr_accounting) {
@@ -200,6 +202,7 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 		TAILQ_REMOVE(&server->rs_reqs, req, rr_entry);
 		req->rr_server = NULL;
 		free(req);
+		radius_delete_packet(pkt);
 		return;
 	}
 
@@ -207,6 +210,7 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 	if (radius_check_message_authenticator(pkt, server->rs_secret) != 0) {
 		log_info("%s: received an invalid RADIUS message: bad "
 		    "message authenticator", __func__);
+		radius_delete_packet(pkt);
 		return;
 	}
 
@@ -314,10 +318,14 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 		log_info("%s: failed to retrieve the EAP message", __func__);
 		goto fail;
 	}
+	radius_delete_packet(pkt);
 	ikev2_send_ike_e(env, req->rr_sa, e, IKEV2_PAYLOAD_EAP,
 	    IKEV2_EXCHANGE_IKE_AUTH, 1);
+	/* keep request for challenge state and config parameters */
+	req->rr_reqid = -1;	/* release reqid */
 	return;
  fail:
+	radius_delete_packet(pkt);
 	if (req->rr_server != NULL)
 		TAILQ_REMOVE(&server->rs_reqs, req, rr_entry);
 	req->rr_server = NULL;
@@ -416,8 +424,10 @@ iked_radius_request_send(struct iked *env, void *ctx)
 	if (req->rr_ntry == 0) {
 		/* decide the ID */
 		seq = ++server->rs_reqseq;
-		for (i = 0; i < UCHAR_MAX; i++) {
+		for (i = 0; i <= UCHAR_MAX; i++) {
 			TAILQ_FOREACH(req0, &server->rs_reqs, rr_entry) {
+				if (req0->rr_reqid == -1)
+					continue;
 				if (req0->rr_reqid == seq)
 					break;
 			}
@@ -425,7 +435,7 @@ iked_radius_request_send(struct iked *env, void *ctx)
 				break;
 			seq++;
 		}
-		if (i >= UCHAR_MAX) {
+		if (i > UCHAR_MAX) {
 			log_info("%s: RADIUS server %s failed.  Too many "
 			    "pending requests", __func__,
 			    print_addr(&server->rs_sockaddr));
