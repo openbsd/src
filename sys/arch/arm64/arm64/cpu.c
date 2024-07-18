@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.127 2024/07/17 15:21:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.128 2024/07/18 17:18:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1035,12 +1035,12 @@ cpu_identify_cleanup(void)
 	cpu_id_aa64isar0 = value;
 
 	/* ID_AA64ISAR1_EL1 */
-	value = cpu_id_aa64isar1 &= ID_AA64ISAR1_MASK;
+	value = cpu_id_aa64isar1 & ID_AA64ISAR1_MASK;
 	value &= ~ID_AA64ISAR1_SPECRES_MASK;
 	cpu_id_aa64isar1 = value;
 
 	/* ID_AA64ISAR2_EL1 */
-	value = cpu_id_aa64isar2 &= ID_AA64ISAR2_MASK;
+	value = cpu_id_aa64isar2 & ID_AA64ISAR2_MASK;
 	value &= ~ID_AA64ISAR2_CLRBHB_MASK;
 	cpu_id_aa64isar2 = value;
 
