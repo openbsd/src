@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.417 2024/05/13 01:15:53 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.418 2024/07/18 14:46:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -287,7 +287,7 @@ pfattach(int num)
 	 */
 	pf_anchor_stack = cpumem_malloc(
 	    sizeof(struct pf_anchor_stackframe) * (PF_ANCHOR_STACK_MAX + 2),
-	    M_WAITOK|M_ZERO);
+	    M_PF);
 	CPUMEM_FOREACH(sf, &cmi, pf_anchor_stack)
 		sf[PF_ANCHOR_STACK_MAX].sf_stack_top = &sf[0];
 }
