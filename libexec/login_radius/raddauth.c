@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.32 2024/07/17 20:50:28 yasuoka Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.33 2024/07/18 02:45:31 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -84,9 +84,9 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <md5.h>
 #include <readpassphrase.h>
 #include <openssl/hmac.h>
+#include <openssl/md5.h>
 #include "login_radius.h"
 
 
@@ -403,9 +403,9 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 	/* XOR the password into the md5 digest */
 	pw = pass_buf;
 	while (p-- > 0) {
-		MD5Init(&context);
-		MD5Update(&context, md5buf, secretlen + AUTH_VECTOR_LEN);
-		MD5Final(digest, &context);
+		MD5_Init(&context);
+		MD5_Update(&context, md5buf, secretlen + AUTH_VECTOR_LEN);
+		MD5_Final(digest, &context);
 		for (i = 0; i < AUTH_VECTOR_LEN; ++i) {
 			*ptr = digest[i] ^ *pw;
 			md5buf[secretlen+i] = *ptr++;
@@ -490,10 +490,10 @@ rad_recv(char *state, char *challenge, u_char *req_vector)
 	/* verify server's shared secret */
 	memcpy(recv_vector, auth.vector, AUTH_VECTOR_LEN);
 	memcpy(auth.vector, req_vector, AUTH_VECTOR_LEN);
-	MD5Init(&context);
-	MD5Update(&context, (u_char *)&auth, ntohs(auth.length));
-	MD5Update(&context, auth_secret, strlen(auth_secret));
-	MD5Final(test_vector, &context);
+	MD5_Init(&context);
+	MD5_Update(&context, (u_char *)&auth, ntohs(auth.length));
+	MD5_Update(&context, auth_secret, strlen(auth_secret));
+	MD5_Final(test_vector, &context);
 	if (memcmp(recv_vector, test_vector, AUTH_VECTOR_LEN) != 0)
 		errx(1, "shared secret incorrect");
 
