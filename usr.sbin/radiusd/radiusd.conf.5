@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.33 2024/07/17 11:13:22 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.34 2024/07/18 00:28:53 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2024 $
+.Dd $Mdocdate: July 18 2024 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -92,6 +92,8 @@ See
 The
 .Dq file
 module provides authentication by a local file.
+See
+.Xr radiusd_file 8 .
 .It Do ipcp Dc module
 The
 .Dq ipcp
