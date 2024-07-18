@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.4 2024/07/18 22:18:00 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.5 2024/07/18 22:40:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -81,6 +81,8 @@ static void	 auth_pap(struct module_file *, u_int, RADIUS_PACKET *, char *,
 static void	 auth_md5chap(struct module_file *, u_int, RADIUS_PACKET *,
 		    char *, struct module_file_userinfo *);
 static void	 auth_mschapv2(struct module_file *, u_int, RADIUS_PACKET *,
+		    char *, struct module_file_userinfo *);
+static void	 auth_reject(struct module_file *, u_int, RADIUS_PACKET *,
 		    char *, struct module_file_userinfo *);
 
 static struct module_handlers module_file_handlers = {
@@ -350,7 +352,7 @@ module_file_access_request(void *ctx, u_int query_id, const u_char *pkt,
 
 	if ((radpkt = radius_convert_packet(pkt, pktlen)) == NULL) {
 		log_warn("%s: radius_convert_packet()", __func__);
-		goto on_error;
+		goto out;
 	}
 	radius_get_string_attr(radpkt, RADIUS_TYPE_USER_NAME, username,
 	    sizeof(username));
@@ -360,11 +362,11 @@ module_file_access_request(void *ctx, u_int query_id, const u_char *pkt,
 	imsg_flush(&self->ibuf);
 	if ((n = imsg_read(&self->ibuf)) == -1 || n == 0) {
 		log_warn("%s: imsg_read()", __func__);
-		goto on_error;
+		goto out;
 	}
 	if ((n = imsg_get(&self->ibuf, &imsg)) <= 0) {
 		log_warn("%s: imsg_get()", __func__);
-		goto on_error;
+		goto out;
 	}
 
 	datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
@@ -373,24 +375,21 @@ module_file_access_request(void *ctx, u_int query_id, const u_char *pkt,
 		    password[0])) {
 			log_warn("%s: received IMSG_RADIUSD_FILE_USERINFO is "
 			    "invalid", __func__);
-			goto on_error;
+			goto out;
 		}
 		ent = imsg.data;
+		if (radius_has_attr(radpkt, RADIUS_TYPE_USER_PASSWORD))
+			auth_pap(self, query_id, radpkt, username, ent);
+		else if (radius_has_attr(radpkt, RADIUS_TYPE_CHAP_PASSWORD))
+			auth_md5chap(self, query_id, radpkt, username, ent);
+		else if (radius_has_vs_attr(radpkt, RADIUS_VENDOR_MICROSOFT,
+		    RADIUS_VTYPE_MS_CHAP2_RESPONSE))
+			auth_mschapv2(self, query_id, radpkt, username, ent);
+		else
+			auth_reject(self, query_id, radpkt, username, ent);
 	} else
-		goto on_error;
-
-	if (radius_has_attr(radpkt, RADIUS_TYPE_USER_PASSWORD))
-		auth_pap(self, query_id, radpkt, username, ent);
-	else if (radius_has_attr(radpkt, RADIUS_TYPE_CHAP_PASSWORD))
-		auth_md5chap(self, query_id, radpkt, username, ent);
-	else if (radius_has_vs_attr(radpkt, RADIUS_VENDOR_MICROSOFT,
-	    RADIUS_VTYPE_MS_CHAP2_RESPONSE))
-		auth_mschapv2(self, query_id, radpkt, username, ent);
-	else {
-		log_info("q=%u unsupported authentication methods", query_id);
-		explicit_bzero(ent->password, strlen(ent->password));
-	}
- on_error:
+		auth_reject(self, query_id, radpkt, username, NULL);
+ out:
 	if (radpkt != NULL)
 		radius_delete_packet(radpkt);
 	imsg_free(&imsg);
@@ -590,4 +589,25 @@ auth_mschapv2(struct module_file *self, u_int q_id, RADIUS_PACKET *radpkt,
 	free(pass);
 	if (respkt != NULL)
 		radius_delete_packet(respkt);
+}
+
+void
+auth_reject(struct module_file *self, u_int q_id, RADIUS_PACKET *radpkt,
+    char *username, struct module_file_userinfo *ent)
+{
+	RADIUS_PACKET	*respkt = NULL;
+
+	if (ent != NULL)
+		explicit_bzero(ent->password, strlen(ent->password));
+
+	log_info("q=%u User `%s' authentication failed", q_id,
+	    username);
+	if ((respkt = radius_new_response_packet(RADIUS_CODE_ACCESS_REJECT,
+	    radpkt)) == NULL) {
+		log_warn("%s: radius_new_response_packet()", __func__);
+		return;
+	}
+	module_accsreq_answer(self->base, q_id,
+	    radius_get_data(respkt), radius_get_length(respkt));
+	radius_delete_packet(respkt);
 }
