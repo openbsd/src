@@ -64,6 +64,7 @@
 ./usr/include/sh/db_machdep.h
 ./usr/include/sh/devreg.h
 ./usr/include/sh/disklabel.h
+./usr/include/sh/elf.h
 ./usr/include/sh/endian.h
 ./usr/include/sh/exec.h
 ./usr/include/sh/fenv.h
