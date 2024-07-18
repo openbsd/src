@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.3 2024/07/17 10:15:39 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.4 2024/07/18 22:18:00 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -100,6 +100,7 @@ main(int argc, char *argv[])
 	ssize_t				 n;
 	size_t				 datalen;
 	struct module_file_params	*paramsp, params;
+	char				 pathdb[PATH_MAX];
 
 	while ((ch = getopt(argc, argv, "M")) != -1)
 		switch (ch) {
@@ -122,9 +123,12 @@ main(int argc, char *argv[])
 	pid = start_child(saved_argv0, pairsock[1]);
 
 	/* Privileged process */
+	if (pledge("stdio rpath unveil", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
 	setproctitle("[priv]");
 	imsg_init(&ibuf, pairsock[0]);
 
+	/* Receive parameters from the main process. */
 	if (imsg_sync_read(&ibuf, 2000) <= 0 ||
 	    (n = imsg_get(&ibuf, &imsg)) <= 0)
 		exit(EXIT_FAILURE);
@@ -137,7 +141,10 @@ main(int argc, char *argv[])
 		    "message is wrong size");
 	paramsp = imsg.data;
 	if (paramsp->path[0] != '\0') {
-		if (unveil(paramsp->path, "r") == -1)
+		strlcpy(pathdb, paramsp->path, sizeof(pathdb));
+		strlcat(pathdb, ".db", sizeof(pathdb));
+		if (unveil(paramsp->path, "r") == -1 ||
+		    unveil(pathdb, "r") == -1)
 			err(EXIT_FAILURE, "unveil");
 	}
 	if (paramsp->debug)
@@ -145,8 +152,6 @@ main(int argc, char *argv[])
 
 	if (unveil(NULL, NULL) == -1)
 		err(EXIT_FAILURE, "unveil");
-	if (pledge("stdio rpath", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
 
 	memcpy(&params, paramsp, sizeof(params));
 
@@ -316,6 +321,7 @@ module_file_start(void *ctx)
 {
 	struct module_file	*module = ctx;
 
+	/* Send parameters to parent */
 	if (module->params.path[0] == '\0') {
 		module_send_message(module->base, IMSG_NG,
 		    "`path' is not configured");
