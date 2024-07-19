@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.88 2024/07/08 14:22:09 florian Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.89 2024/07/19 04:26:23 chrisz Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -435,18 +435,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 					kv_delete(&desc->http_headers,
 					    desc->http_lastheader);
 					break;
-				case HTTP_METHOD_RESPONSE:
-					/*
-					 * Strip Content-Length header from
-					 * HEAD responses since there is no
-					 * actual payload in the response.
-					 */
-					if (request_method == HTTP_METHOD_HEAD) {
-						kv_delete(&desc->http_headers,
-						    desc->http_lastheader);
-						break;
-					}
-					/* FALLTHROUGH */
 				default:
 					/*
 					 * Need to read data from the client
