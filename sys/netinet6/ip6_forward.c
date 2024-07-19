@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.123 2024/07/13 10:09:40 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.124 2024/07/19 16:58:32 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -280,8 +280,9 @@ reroute:
 		goto freecopy;
 	}
 	if (rt->rt_ifidx == ifidx &&
-	    ip6_sendredirects && !ISSET(flags, IPV6_REDIRECT) &&
-	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
+	    !ISSET(rt->rt_flags, RTF_DYNAMIC|RTF_MODIFIED) &&
+	    !ISSET(flags, IPV6_REDIRECT) &&
+	    atomic_load_int(&ip6_sendredirects)) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor(&ro->ro_dstsin6, ifp)) {
 			/*

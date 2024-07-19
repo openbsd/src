@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.265 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.266 2024/07/19 16:58:32 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1445,6 +1445,7 @@ extern int ip6_mrtproto;
 
 const struct sysctl_bounded_args ipv6ctl_vars_unlocked[] = {
 	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 2 },
+	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
 };
 
 const struct sysctl_bounded_args ipv6ctl_vars[] = {
@@ -1452,7 +1453,6 @@ const struct sysctl_bounded_args ipv6ctl_vars[] = {
 #ifdef MROUTING
 	{ IPV6CTL_MRTPROTO, &ip6_mrtproto, SYSCTL_INT_READONLY },
 #endif
-	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
 	{ IPV6CTL_DEFHLIM, &ip6_defhlim, 0, 255 },
 	{ IPV6CTL_MAXFRAGPACKETS, &ip6_maxfragpackets, 0, 1000 },
 	{ IPV6CTL_LOG_INTERVAL, &ip6_log_interval, 0, INT_MAX },
@@ -1572,6 +1572,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		NET_UNLOCK();
 		return (error);
 	case IPV6CTL_FORWARDING:
+	case IPV6CTL_SENDREDIRECTS:
 		return (sysctl_bounded_arr(
 		    ipv6ctl_vars_unlocked, nitems(ipv6ctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
