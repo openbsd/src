@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.19 2024/07/16 14:38:04 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.20 2024/07/19 08:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -443,8 +443,6 @@ struct ssl_session_st {
 					 * needs to be used to load
 					 * the 'cipher' structure */
 
-	STACK_OF(SSL_CIPHER) *ciphers; /* shared ciphers? */
-
 	char *tlsext_hostname;
 
 	/* Session resumption - RFC 5077 and RFC 8446. */
@@ -567,6 +565,9 @@ typedef struct ssl_handshake_st {
 
 	/* Cipher being negotiated in this handshake. */
 	const SSL_CIPHER *cipher;
+
+	/* Ciphers sent by the client. */
+	STACK_OF(SSL_CIPHER) *client_ciphers;
 
 	/* Extensions seen in this handshake. */
 	uint32_t extensions_seen;

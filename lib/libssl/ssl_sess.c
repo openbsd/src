@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.125 2024/03/27 06:47:52 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.126 2024/07/19 08:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -289,11 +289,6 @@ ssl_session_dup(SSL_SESSION *sess, int include_ticket)
 
 	copy->cipher = sess->cipher;
 	copy->cipher_id = sess->cipher_id;
-
-	if (sess->ciphers != NULL) {
-		if ((copy->ciphers = sk_SSL_CIPHER_dup(sess->ciphers)) == NULL)
-			goto err;
-	}
 
 	if (sess->tlsext_hostname != NULL) {
 		copy->tlsext_hostname = strdup(sess->tlsext_hostname);
@@ -880,8 +875,6 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	explicit_bzero(ss->session_id, sizeof ss->session_id);
 
 	X509_free(ss->peer_cert);
-
-	sk_SSL_CIPHER_free(ss->ciphers);
 
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);

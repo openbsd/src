@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.254 2024/07/16 14:38:04 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.255 2024/07/19 08:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1478,6 +1478,8 @@ ssl3_free(SSL *s)
 	tls_buffer_free(s->s3->handshake_fragment);
 
 	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
+
+	sk_SSL_CIPHER_free(s->s3->hs.client_ciphers);
 	sk_X509_pop_free(s->s3->hs.peer_certs, X509_free);
 	sk_X509_pop_free(s->s3->hs.peer_certs_no_leaf, X509_free);
 	sk_X509_pop_free(s->s3->hs.verified_chain, X509_free);
@@ -1522,6 +1524,8 @@ ssl3_clear(SSL *s)
 	s->s3->hs.sigalgs = NULL;
 	s->s3->hs.sigalgs_len = 0;
 
+	sk_SSL_CIPHER_free(s->s3->hs.client_ciphers);
+	s->s3->hs.client_ciphers = NULL;
 	sk_X509_pop_free(s->s3->hs.peer_certs, X509_free);
 	s->s3->hs.peer_certs = NULL;
 	sk_X509_pop_free(s->s3->hs.peer_certs_no_leaf, X509_free);

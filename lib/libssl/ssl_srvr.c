@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.161 2024/06/25 14:10:45 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.162 2024/07/19 08:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1078,13 +1078,13 @@ ssl3_get_client_hello(SSL *s)
 		s->hit = 1;
 		s->session->verify_result = X509_V_OK;
 
-		sk_SSL_CIPHER_free(s->session->ciphers);
-		s->session->ciphers = ciphers;
+		sk_SSL_CIPHER_free(s->s3->hs.client_ciphers);
+		s->s3->hs.client_ciphers = ciphers;
 		ciphers = NULL;
 
 		/* Check if some cipher was preferred by the callback. */
 		if (pref_cipher == NULL)
-			pref_cipher = ssl3_choose_cipher(s, s->session->ciphers,
+			pref_cipher = ssl3_choose_cipher(s, s->s3->hs.client_ciphers,
 			    SSL_get_ciphers(s));
 		if (pref_cipher == NULL) {
 			al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1094,7 +1094,7 @@ ssl3_get_client_hello(SSL *s)
 		s->session->cipher = pref_cipher;
 
 		sk_SSL_CIPHER_free(s->cipher_list);
-		s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
+		s->cipher_list = sk_SSL_CIPHER_dup(s->s3->hs.client_ciphers);
 	}
 
 	/*
@@ -1108,11 +1108,11 @@ ssl3_get_client_hello(SSL *s)
 			SSLerror(s, SSL_R_NO_CIPHERS_PASSED);
 			goto fatal_err;
 		}
-		sk_SSL_CIPHER_free(s->session->ciphers);
-		s->session->ciphers = ciphers;
+		sk_SSL_CIPHER_free(s->s3->hs.client_ciphers);
+		s->s3->hs.client_ciphers = ciphers;
 		ciphers = NULL;
 
-		if ((c = ssl3_choose_cipher(s, s->session->ciphers,
+		if ((c = ssl3_choose_cipher(s, s->s3->hs.client_ciphers,
 		    SSL_get_ciphers(s))) == NULL) {
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			SSLerror(s, SSL_R_NO_SHARED_CIPHER);

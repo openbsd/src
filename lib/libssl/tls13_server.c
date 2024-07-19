@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.106 2023/06/10 15:34:36 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.107 2024/07/19 08:54:31 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -275,8 +275,8 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	}
 	ctx->hs->cipher = cipher;
 
-	sk_SSL_CIPHER_free(s->session->ciphers);
-	s->session->ciphers = ciphers;
+	sk_SSL_CIPHER_free(s->s3->hs.client_ciphers);
+	s->s3->hs.client_ciphers = ciphers;
 	ciphers = NULL;
 
 	/* Ensure only the NULL compression method is advertised. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.326 2024/07/11 13:48:52 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.327 2024/07/19 08:54:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1528,9 +1528,9 @@ LSSL_ALIAS(SSL_get_ciphers);
 STACK_OF(SSL_CIPHER) *
 SSL_get_client_ciphers(const SSL *s)
 {
-	if (s == NULL || s->session == NULL || !s->server)
+	if (s == NULL || !s->server)
 		return NULL;
-	return s->session->ciphers;
+	return s->s3->hs.client_ciphers;
 }
 LSSL_ALIAS(SSL_get_client_ciphers);
 
@@ -1713,10 +1713,10 @@ SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 	char *end;
 	int i;
 
-	if (!s->server || s->session == NULL || len < 2)
+	if (!s->server || len < 2)
 		return NULL;
 
-	if ((client_ciphers = s->session->ciphers) == NULL)
+	if ((client_ciphers = s->s3->hs.client_ciphers) == NULL)
 		return NULL;
 	if ((server_ciphers = SSL_get_ciphers(s)) == NULL)
 		return NULL;
