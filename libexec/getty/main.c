@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2024/04/28 16:42:53 florian Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2024/07/19 15:28:51 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -172,7 +172,8 @@ main(int argc, char *argv[])
 
 	tname = "default";
 
-	if (unveil(_PATH_GETTYTAB, "r") == -1) {
+	if (unveil(_PATH_GETTYTAB, "r") == -1 ||
+	    unveil(_PATH_GETTYTAB ".db", "r") == -1) {
 		syslog(LOG_ERR, "%s: %m", tname);
 		exit(1);
 	}
