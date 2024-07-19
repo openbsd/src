@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.321 2024/07/12 19:50:35 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.322 2024/07/19 15:41:58 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -592,7 +592,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
-	soassertlocked(inp->inp_socket);
+	soassertlocked_readonly(inp->inp_socket);
 
 #ifdef INET6
 	if (ip6 && inp->inp_ip6_minhlim &&
@@ -1207,7 +1207,7 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp = sotoinpcb(so);
 
-	soassertlocked(so);
+	soassertlocked_readonly(so);
 
 #ifdef PIPEX
 	if (inp->inp_pipex) {
