@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.165 2024/02/03 18:03:49 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.166 2024/07/19 08:56:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -941,6 +941,11 @@ ssl3_get_server_hello(SSL *s)
 		}
 		s->session->master_key_length = master_key_length;
 
+		/*
+		 * XXX - this appears to be completely broken. The
+		 * client cannot change the cipher at this stage,
+		 * as the server has already made a selection.
+		 */
 		if ((s->session->cipher = pref_cipher) == NULL)
 			s->session->cipher =
 			    ssl3_get_cipher_by_value(cipher_suite);

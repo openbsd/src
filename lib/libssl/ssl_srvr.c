@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.162 2024/07/19 08:54:31 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.163 2024/07/19 08:56:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1082,6 +1082,13 @@ ssl3_get_client_hello(SSL *s)
 		s->s3->hs.client_ciphers = ciphers;
 		ciphers = NULL;
 
+		/*
+		 * XXX - this allows the callback to use any client cipher and
+		 * completely ignore the server cipher list. We should ensure
+		 * that the pref_cipher is in both the client list and the
+		 * server list.
+		 */
+
 		/* Check if some cipher was preferred by the callback. */
 		if (pref_cipher == NULL)
 			pref_cipher = ssl3_choose_cipher(s, s->s3->hs.client_ciphers,
@@ -1093,6 +1100,7 @@ ssl3_get_client_hello(SSL *s)
 		}
 		s->session->cipher = pref_cipher;
 
+		/* XXX - why? */
 		sk_SSL_CIPHER_free(s->cipher_list);
 		s->cipher_list = sk_SSL_CIPHER_dup(s->s3->hs.client_ciphers);
 	}
