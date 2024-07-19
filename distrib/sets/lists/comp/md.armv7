@@ -68,6 +68,7 @@
 ./usr/include/armv7/cpufunc.h
 ./usr/include/armv7/db_machdep.h
 ./usr/include/armv7/disklabel.h
+./usr/include/armv7/elf.h
 ./usr/include/armv7/endian.h
 ./usr/include/armv7/exec.h
 ./usr/include/armv7/fdt.h
