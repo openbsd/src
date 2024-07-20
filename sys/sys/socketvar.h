@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.132 2024/07/12 17:20:18 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.133 2024/07/20 17:26:19 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -52,6 +52,33 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 TAILQ_HEAD(soqhead, socket);
 
 /*
+ * Locks used to protect global data and struct members:
+ *	I	immutable after creation
+ *	mr	sb_mxt of so_rcv buffer
+ *	ms	sb_mtx of so_snd buffer
+ *	br	sblock() of so_rcv buffer
+ *	bs	sblock() od so_snd buffer
+ *	s	solock()
+ */
+
+/*
+ * XXXSMP: tcp(4) sockets rely on exclusive solock() for all the cases.
+ */
+
+/*
+ * Variables for socket splicing, allocated only when needed.
+ */
+struct sosplice {
+	struct	socket *ssp_socket;	/* [mr ms] send data to drain socket */
+	struct	socket *ssp_soback;	/* [ms ms] back ref to source socket */
+	off_t	ssp_len;		/* [mr] number of bytes spliced */
+	off_t	ssp_max;		/* [I] maximum number of bytes */
+	struct	timeval ssp_idletv;	/* [I] idle timeout */
+	struct	timeout ssp_idleto;
+	struct	task ssp_task;		/* task for somove */
+};
+
+/*
  * Kernel structure per socket.
  * Contains send and receive buffer queues,
  * handle on protocol and pointer to protocol
@@ -89,18 +116,8 @@ struct socket {
 	short	so_timeo;		/* connection timeout */
 	u_long	so_oobmark;		/* chars to oob mark */
 	u_int	so_error;		/* error affecting connection */
-/*
- * Variables for socket splicing, allocated only when needed.
- */
-	struct sosplice {
-		struct	socket *ssp_socket;	/* send data to drain socket */
-		struct	socket *ssp_soback;	/* back ref to source socket */
-		off_t	ssp_len;		/* number of bytes spliced */
-		off_t	ssp_max;		/* maximum number of bytes */
-		struct	timeval ssp_idletv;	/* idle timeout */
-		struct	timeout ssp_idleto;
-		struct	task ssp_task;		/* task for somove */
-	} *so_sp;
+
+	struct sosplice *so_sp;		/* [s br] */
 /*
  * Variables for socket buffering.
  */
@@ -329,6 +346,12 @@ int sblock(struct sockbuf *, int);
 
 /* release lock on sockbuf sb */
 void sbunlock(struct sockbuf *);
+
+static inline void
+sbassertlocked(struct sockbuf *sb)
+{
+	rw_assert_wrlock(&sb->sb_lock);
+}
 
 #define	SB_EMPTY_FIXUP(sb) do {						\
 	if ((sb)->sb_mb == NULL) {					\

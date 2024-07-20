@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.322 2024/07/19 15:41:58 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.323 2024/07/20 17:26:19 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1208,6 +1208,11 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp = sotoinpcb(so);
 
 	soassertlocked_readonly(so);
+
+	if (inp == NULL) {
+		/* PCB could be destroyed, but socket still spliced. */
+		return (EINVAL);
+	}
 
 #ifdef PIPEX
 	if (inp->inp_pipex) {
