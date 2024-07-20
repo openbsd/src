@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.163 2024/07/19 08:56:17 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.164 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -651,7 +651,7 @@ ssl3_accept(SSL *s)
 				goto end;
 			s->s3->hs.state = SSL3_ST_SW_FINISHED_A;
 			s->init_num = 0;
-			s->session->cipher = s->s3->hs.cipher;
+			s->session->cipher_id = s->s3->hs.cipher->id;
 
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
@@ -978,7 +978,7 @@ ssl3_get_client_hello(SSL *s)
 	/* XXX - CBS_len(&cipher_suites) will always be zero here... */
 	if (s->hit && CBS_len(&cipher_suites) > 0) {
 		j = 0;
-		id = s->session->cipher->id;
+		id = s->session->cipher_id;
 
 		for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 			c = sk_SSL_CIPHER_value(ciphers, i);
@@ -1098,7 +1098,7 @@ ssl3_get_client_hello(SSL *s)
 			SSLerror(s, SSL_R_NO_SHARED_CIPHER);
 			goto fatal_err;
 		}
-		s->session->cipher = pref_cipher;
+		s->s3->hs.cipher = pref_cipher;
 
 		/* XXX - why? */
 		sk_SSL_CIPHER_free(s->cipher_list);
@@ -1127,8 +1127,11 @@ ssl3_get_client_hello(SSL *s)
 			goto fatal_err;
 		}
 		s->s3->hs.cipher = c;
+		s->session->cipher_id = s->s3->hs.cipher->id;
 	} else {
-		s->s3->hs.cipher = s->session->cipher;
+		s->s3->hs.cipher = ssl3_get_cipher_by_id(s->session->cipher_id);
+		if (s->s3->hs.cipher == NULL)
+			goto fatal_err;
 	}
 
 	if (!tls1_transcript_hash_init(s))

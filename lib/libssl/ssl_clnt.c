@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.166 2024/07/19 08:56:17 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.167 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -481,7 +481,7 @@ ssl3_connect(SSL *s)
 
 			s->s3->hs.state = SSL3_ST_CW_FINISHED_A;
 			s->init_num = 0;
-			s->session->cipher = s->s3->hs.cipher;
+			s->session->cipher_id = s->s3->hs.cipher->id;
 
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
@@ -946,8 +946,8 @@ ssl3_get_server_hello(SSL *s)
 		 * client cannot change the cipher at this stage,
 		 * as the server has already made a selection.
 		 */
-		if ((s->session->cipher = pref_cipher) == NULL)
-			s->session->cipher =
+		if ((s->s3->hs.cipher = pref_cipher) == NULL)
+			s->s3->hs.cipher =
 			    ssl3_get_cipher_by_value(cipher_suite);
 		s->s3->flags |= SSL3_FLAGS_CCS_OK;
 	}
@@ -1016,14 +1016,13 @@ ssl3_get_server_hello(SSL *s)
 	 * and/or cipher_id values may not be set. Make sure that
 	 * cipher_id is set and use it for comparison.
 	 */
-	if (s->session->cipher)
-		s->session->cipher_id = s->session->cipher->id;
 	if (s->hit && (s->session->cipher_id != cipher->id)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
 		goto fatal_err;
 	}
 	s->s3->hs.cipher = cipher;
+	s->session->cipher_id = cipher->id;
 
 	if (!tls1_transcript_hash_init(s))
 		goto err;

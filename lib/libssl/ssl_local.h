@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.20 2024/07/19 08:54:31 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.21 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -438,7 +438,6 @@ struct ssl_session_st {
 	time_t time;
 	int references;
 
-	const SSL_CIPHER *cipher;
 	unsigned long cipher_id;	/* when ASN.1 loaded, this
 					 * needs to be used to load
 					 * the 'cipher' structure */
@@ -1267,9 +1266,9 @@ int ssl_merge_cipherlists(STACK_OF(SSL_CIPHER) *cipherlist,
     STACK_OF(SSL_CIPHER) *cipherlist_tls13,
     STACK_OF(SSL_CIPHER) **out_cipherlist);
 void ssl_update_cache(SSL *s, int mode);
-int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
+int ssl_cipher_get_evp(SSL *s, const EVP_CIPHER **enc,
     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size);
-int ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead);
+int ssl_cipher_get_evp_aead(SSL *s, const EVP_AEAD **aead);
 int ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md);
 
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.37 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.38 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,6 +108,7 @@ LSSL_ALIAS(SSL_SESSION_print_fp);
 int
 SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 {
+	const SSL_CIPHER *cipher;
 	size_t i;
 	int ret = 0;
 
@@ -121,15 +122,15 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	    ssl_version_string(x->ssl_version)) <= 0)
 		goto err;
 
-	if (x->cipher == NULL) {
+	if ((cipher = ssl3_get_cipher_by_id(x->cipher_id)) == NULL) {
 		if (BIO_printf(bp, "    Cipher    : %04lX\n",
 		    x->cipher_id & SSL3_CK_VALUE_MASK) <= 0)
 			goto err;
 	} else {
 		const char *cipher_name = "unknown";
 
-		if (x->cipher->name != NULL)
-			cipher_name = x->cipher->name;
+		if (cipher->name != NULL)
+			cipher_name = cipher->name;
 
 		if (BIO_printf(bp, "    Cipher    : %s\n", cipher_name) <= 0)
 			goto err;

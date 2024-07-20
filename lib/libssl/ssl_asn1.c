@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.67 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.68 2024/07/20 04:04:23 jsing Exp $ */
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -70,10 +70,7 @@ SSL_SESSION_encode(SSL_SESSION *s, unsigned char **out, size_t *out_len,
 		goto err;
 
 	/* Cipher suite ID. */
-	/* XXX - require cipher to be non-NULL or always/only use cipher_id. */
 	cid = (uint16_t)(s->cipher_id & SSL3_CK_VALUE_MASK);
-	if (s->cipher != NULL)
-		cid = ssl3_cipher_get_value(s->cipher);
 	if (!CBB_add_asn1(&session, &cipher_suite, CBS_ASN1_OCTETSTRING))
 		goto err;
 	if (!CBB_add_u16(&cipher_suite, cid))
@@ -196,7 +193,7 @@ SSL_SESSION_ticket(SSL_SESSION *ss, unsigned char **out, size_t *out_len)
 	if (ss == NULL)
 		return 0;
 
-	if (ss->cipher == NULL && ss->cipher_id == 0)
+	if (ss->cipher_id == 0)
 		return 0;
 
 	return SSL_SESSION_encode(ss, out, out_len, 1);
@@ -212,7 +209,7 @@ i2d_SSL_SESSION(SSL_SESSION *ss, unsigned char **pp)
 	if (ss == NULL)
 		return 0;
 
-	if (ss->cipher == NULL && ss->cipher_id == 0)
+	if (ss->cipher_id == 0)
 		return 0;
 
 	if (!SSL_SESSION_encode(ss, &data, &data_len, 0))
@@ -287,9 +284,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		goto err;
 	if (CBS_len(&cipher_suite) != 0)
 		goto err;
-
-	/* XXX - populate cipher instead? */
-	s->cipher = NULL;
 	s->cipher_id = SSL3_CK_ID | cipher_value;
 
 	/* Session ID. */

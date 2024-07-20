@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.144 2024/07/16 14:38:04 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.145 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -408,25 +408,27 @@ static const SSL_CIPHER cipher_aliases[] = {
 };
 
 int
-ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
-    const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size)
+ssl_cipher_get_evp(SSL *s, const EVP_CIPHER **enc, const EVP_MD **md,
+    int *mac_pkey_type, int *mac_secret_size)
 {
+	const SSL_CIPHER *cipher;
+
 	*enc = NULL;
 	*md = NULL;
 	*mac_pkey_type = NID_undef;
 	*mac_secret_size = 0;
 
-	if (ss->cipher == NULL)
+	if ((cipher = s->s3->hs.cipher) == NULL)
 		return 0;
 
 	/*
 	 * This function does not handle EVP_AEAD.
 	 * See ssl_cipher_get_evp_aead instead.
 	 */
-	if (ss->cipher->algorithm_mac & SSL_AEAD)
+	if (cipher->algorithm_mac & SSL_AEAD)
 		return 0;
 
-	switch (ss->cipher->algorithm_enc) {
+	switch (cipher->algorithm_enc) {
 	case SSL_3DES:
 		*enc = EVP_des_ede3_cbc();
 		break;
@@ -450,7 +452,7 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
 		break;
 	}
 
-	switch (ss->cipher->algorithm_mac) {
+	switch (cipher->algorithm_mac) {
 	case SSL_MD5:
 		*md = EVP_md5();
 		break;
@@ -487,16 +489,18 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
  * for s->cipher. It returns 1 on success and 0 on error.
  */
 int
-ssl_cipher_get_evp_aead(const SSL_SESSION *ss, const EVP_AEAD **aead)
+ssl_cipher_get_evp_aead(SSL *s, const EVP_AEAD **aead)
 {
+	const SSL_CIPHER *cipher;
+
 	*aead = NULL;
 
-	if (ss->cipher == NULL)
+	if ((cipher = s->s3->hs.cipher) == NULL)
 		return 0;
-	if ((ss->cipher->algorithm_mac & SSL_AEAD) == 0)
+	if ((cipher->algorithm_mac & SSL_AEAD) == 0)
 		return 0;
 
-	switch (ss->cipher->algorithm_enc) {
+	switch (cipher->algorithm_enc) {
 	case SSL_AES128GCM:
 		*aead = EVP_aead_aes_128_gcm();
 		return 1;
@@ -515,12 +519,14 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *ss, const EVP_AEAD **aead)
 int
 ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md)
 {
+	const SSL_CIPHER *cipher;
+
 	*md = NULL;
 
-	if (s->s3->hs.cipher == NULL)
+	if ((cipher = s->s3->hs.cipher) == NULL)
 		return 0;
 
-	switch (s->s3->hs.cipher->algorithm2 & SSL_HANDSHAKE_MAC_MASK) {
+	switch (cipher->algorithm2 & SSL_HANDSHAKE_MAC_MASK) {
 	case SSL_HANDSHAKE_MAC_SHA256:
 		*md = EVP_sha256();
 		return 1;

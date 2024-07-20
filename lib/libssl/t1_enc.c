@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.157 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.158 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -357,15 +357,17 @@ tls1_setup_key_block(SSL *s)
 	if (s->s3->hs.tls12.key_block != NULL)
 		return (1);
 
-	if (s->session->cipher &&
-	    (s->session->cipher->algorithm_mac & SSL_AEAD)) {
-		if (!ssl_cipher_get_evp_aead(s->session, &aead)) {
+	if (s->s3->hs.cipher == NULL)
+		return (0);
+
+	if ((s->s3->hs.cipher->algorithm_mac & SSL_AEAD) != 0) {
+		if (!ssl_cipher_get_evp_aead(s, &aead)) {
 			SSLerror(s, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
 		}
 	} else {
 		/* XXX - mac_type and mac_secret_size are now unused. */
-		if (!ssl_cipher_get_evp(s->session, &cipher, &mac_hash,
+		if (!ssl_cipher_get_evp(s, &cipher, &mac_hash,
 		    &mac_type, &mac_secret_size)) {
 			SSLerror(s, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
@@ -395,12 +397,12 @@ tls1_setup_key_block(SSL *s)
 		 */
 		s->s3->need_empty_fragments = 1;
 
-		if (s->session->cipher != NULL) {
-			if (s->session->cipher->algorithm_enc == SSL_eNULL)
+		if (s->s3->hs.cipher != NULL) {
+			if (s->s3->hs.cipher->algorithm_enc == SSL_eNULL)
 				s->s3->need_empty_fragments = 0;
 
 #ifndef OPENSSL_NO_RC4
-			if (s->session->cipher->algorithm_enc == SSL_RC4)
+			if (s->s3->hs.cipher->algorithm_enc == SSL_RC4)
 				s->s3->need_empty_fragments = 0;
 #endif
 		}

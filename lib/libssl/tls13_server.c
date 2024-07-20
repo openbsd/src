@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.107 2024/07/19 08:54:31 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.108 2024/07/20 04:04:23 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -383,7 +383,7 @@ tls13_server_engage_record_protection(struct tls13_ctx *ctx)
 	    &shared_key_len))
 		goto err;
 
-	s->session->cipher = ctx->hs->cipher;
+	s->session->cipher_id = ctx->hs->cipher->id;
 
 	if ((ctx->aead = tls13_cipher_aead(ctx->hs->cipher)) == NULL)
 		goto err;

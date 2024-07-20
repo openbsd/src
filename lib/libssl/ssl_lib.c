@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.327 2024/07/19 08:54:31 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.328 2024/07/20 04:04:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3073,11 +3073,10 @@ LSSL_ALIAS(SSL_get_privatekey);
 const SSL_CIPHER *
 SSL_get_current_cipher(const SSL *s)
 {
-	if ((s->session != NULL) && (s->session->cipher != NULL))
-		return (s->session->cipher);
-	return (NULL);
+	return s->s3->hs.cipher;
 }
 LSSL_ALIAS(SSL_get_current_cipher);
+
 const void *
 SSL_get_current_compression(SSL *s)
 {
