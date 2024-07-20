@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.89 2024/07/19 04:26:23 chrisz Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.90 2024/07/20 06:54:15 anton Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -435,6 +435,10 @@ relay_read_http(struct bufferevent *bev, void *arg)
 					kv_delete(&desc->http_headers,
 					    desc->http_lastheader);
 					break;
+				case HTTP_METHOD_RESPONSE:
+					if (request_method == HTTP_METHOD_HEAD)
+						break;
+					/* FALLTHROUGH */
 				default:
 					/*
 					 * Need to read data from the client
