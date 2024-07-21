@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.12 2022/01/15 09:08:51 tb Exp $
+.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.13 2024/07/21 08:36:43 tb Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .Fa "EVP_MD_CTX *ctx"
 .Fa "EVP_PKEY_CTX **pctx"
 .Fa "const EVP_MD *type"
-.Fa "ENGINE *e"
+.Fa "ENGINE *engine"
 .Fa "EVP_PKEY *pkey"
 .Fc
 .Ft int
@@ -97,11 +97,13 @@ sets up the signing context
 .Fa ctx
 to use the digest
 .Fa type
-from
-.Vt ENGINE
-.Fa e
 and private key
 .Fa pkey .
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Fa ctx
 must be initialized with
 .Xr EVP_MD_CTX_init 3

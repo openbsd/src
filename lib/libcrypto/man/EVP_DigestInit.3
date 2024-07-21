@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.33 2024/03/19 17:34:05 tb Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.34 2024/07/21 08:36:43 tb Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -70,7 +70,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 19 2024 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@
 .Fo EVP_DigestInit_ex
 .Fa "EVP_MD_CTX *ctx"
 .Fa "const EVP_MD *type"
-.Fa "ENGINE *impl"
+.Fa "ENGINE *engine"
 .Fc
 .Ft int
 .Fo EVP_DigestUpdate
@@ -153,7 +153,7 @@
 .Fa "unsigned char *md"
 .Fa "unsigned int *s"
 .Fa "const EVP_MD *type"
-.Fa "ENGINE *impl"
+.Fa "ENGINE *engine"
 .Fc
 .Ft int
 .Fo EVP_MD_CTX_copy_ex
@@ -249,21 +249,16 @@ respectively.
 sets up the digest context
 .Fa ctx
 to use a digest
-.Fa type
-from
-.Vt ENGINE
-.Fa impl .
+.Fa type .
 The
 .Fa type
 will typically be supplied by a function such as
 .Fn EVP_sha512 .
-If
-.Fa impl
-is
-.Dv NULL ,
-then the default implementation of digest
-.Fa type
-is used.
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Pp
 .Fn EVP_DigestUpdate
 hashes
@@ -306,9 +301,6 @@ bytes of data at
 .Fa d
 using the digest
 .Fa type
-from
-.Vt ENGINE
-.Fa impl
 in a one-shot operation and place the digest value into
 .Fa md ,
 and, unless
@@ -323,6 +315,11 @@ This wrapper uses a temporary digest context and passes its arguments to
 and
 .Fn EVP_DigestFinal_ex
 internally.
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Pp
 .Fn EVP_MD_CTX_copy_ex
 can be used to copy the message digest state from
@@ -335,8 +332,7 @@ differ in the last few bytes.
 .Fn EVP_DigestInit
 is a deprecated function behaving like
 .Fn EVP_DigestInit_ex
-except that it always uses the default digest implementation
-and that it requires
+except that it requires
 .Fn EVP_MD_CTX_reset
 before it can be used on a context that was already used.
 .Pp
@@ -399,11 +395,11 @@ in preference to the low-level interfaces.
 This is because the code then becomes transparent to the digest used and
 much more flexible.
 .Pp
-For most applications the
-.Fa impl
-parameter to
-.Fn EVP_DigestInit_ex
-will be set to NULL to use the default digest implementation.
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Pp
 The functions
 .Fn EVP_DigestInit ,
@@ -418,8 +414,7 @@ New applications should use
 and
 .Fn EVP_MD_CTX_copy_ex
 because they can efficiently reuse a digest context instead of
-initializing and cleaning it up on each call and allow non-default
-implementations of digests to be specified.
+initializing and cleaning it up on each call.
 .Pp
 If digest contexts are not cleaned up after use, memory leaks will occur.
 .Sh RETURN VALUES

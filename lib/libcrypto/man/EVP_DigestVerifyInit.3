@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestVerifyInit.3,v 1.14 2022/01/15 09:08:51 tb Exp $
+.\"	$OpenBSD: EVP_DigestVerifyInit.3,v 1.15 2024/07/21 08:36:43 tb Exp $
 .\"	OpenSSL fb552ac6 Sep 30 23:43:01 2009 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt EVP_DIGESTVERIFYINIT 3
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .Fa "EVP_MD_CTX *ctx"
 .Fa "EVP_PKEY_CTX **pctx"
 .Fa "const EVP_MD *type"
-.Fa "ENGINE *e"
+.Fa "ENGINE *engine"
 .Fa "EVP_PKEY *pkey"
 .Fc
 .Ft int
@@ -97,9 +97,6 @@ sets up verification context
 .Fa ctx
 to use digest
 .Fa type
-from
-.Vt ENGINE
-.Fa e
 and public key
 .Fa pkey .
 .Fa ctx
@@ -124,6 +121,11 @@ value returned must not be freed directly by the application.
 It will be freed automatically when the
 .Vt EVP_MD_CTX
 is freed.
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Pp
 .Fn EVP_DigestVerifyUpdate
 hashes

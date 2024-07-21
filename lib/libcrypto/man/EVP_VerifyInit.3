@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_VerifyInit.3,v 1.11 2023/11/16 20:27:43 schwarze Exp $
+.\" $OpenBSD: EVP_VerifyInit.3,v 1.12 2024/07/21 08:36:43 tb Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 79b49fb0 Mar 20 10:03:10 2018 +1000
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt EVP_VERIFYINIT 3
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .Fo EVP_VerifyInit_ex
 .Fa "EVP_MD_CTX *ctx"
 .Fa "const EVP_MD *type"
-.Fa "ENGINE *impl"
+.Fa "ENGINE *engine"
 .Fc
 .Ft int
 .Fo EVP_VerifyUpdate
@@ -93,14 +93,16 @@ digital signatures.
 sets up a verification context
 .Fa ctx
 to use the digest
-.Fa type
-from
-.Vt ENGINE
-.Fa impl .
+.Fa type .
 .Fa ctx
 must be initialized by calling
 .Xr EVP_MD_CTX_init 3
 before calling this function.
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Pp
 .Fn EVP_VerifyUpdate
 hashes

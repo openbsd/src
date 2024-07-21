@@ -1,4 +1,4 @@
-.\" $OpenBSD: HMAC.3,v 1.21 2024/05/26 09:54:16 tb Exp $
+.\" $OpenBSD: HMAC.3,v 1.22 2024/07/21 08:36:43 tb Exp $
 .\" full merge up to: OpenSSL crypto/hmac a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL man3/HMAC b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2024 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt HMAC 3
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@
 .Fa "const void *key"
 .Fa "int key_len"
 .Fa "const EVP_MD *md"
-.Fa "ENGINE *impl"
+.Fa "ENGINE *engine"
 .Fc
 .Ft int
 .Fo HMAC_Init
@@ -223,6 +223,11 @@ nor the same as the previous digest used by
 .Fa ctx ,
 then an error is returned because reuse of an existing key with a
 different digest is not supported.
+The
+.Fa ENGINE *engine
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 .Pp
 .Fn HMAC_Init
 is a deprecated wrapper around
