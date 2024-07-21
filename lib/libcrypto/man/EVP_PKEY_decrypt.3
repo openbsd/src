@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_decrypt.3,v 1.8 2022/03/31 17:27:17 naddy Exp $
+.\" $OpenBSD: EVP_PKEY_decrypt.3,v 1.9 2024/07/21 08:10:17 tb Exp $
 .\" full merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt EVP_PKEY_DECRYPT 3
 .Os
 .Sh NAME
@@ -130,16 +130,15 @@ Decrypt data using OAEP (for RSA keys):
 #include <openssl/rsa.h>
 
 EVP_PKEY_CTX *ctx;
-ENGINE *eng;
 unsigned char *out, *in;
 size_t outlen, inlen;
 EVP_PKEY *key;
 
 /*
- * Assumes that key, eng, in, and inlen are already set up
+ * Assumes that key, in, and inlen are already set up
  * and that key is an RSA private key.
  */
-ctx = EVP_PKEY_CTX_new(key, eng);
+ctx = EVP_PKEY_CTX_new(key, NULL);
 if (!ctx)
 	/* Error occurred */
 if (EVP_PKEY_decrypt_init(ctx) <= 0)
