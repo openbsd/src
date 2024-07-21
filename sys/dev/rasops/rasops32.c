@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops32.c,v 1.13 2023/01/18 11:08:49 nicm Exp $	*/
+/*	$OpenBSD: rasops32.c,v 1.14 2024/07/21 13:18:15 fcambus Exp $	*/
 /*	$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -112,6 +112,17 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 
 		/* double-pixel special cases for the common widths */
 		switch (width) {
+		case 6:
+			while (height--) {
+				fb = fr[0];
+				rp[0] = u.q[fb >> 6];
+				rp[1] = u.q[(fb >> 4) & 3];
+				rp[2] = u.q[(fb >> 2) & 3];
+				rp += step;
+				fr += 1;
+			}
+			break;
+
 		case 8:
 			while (height--) {
 				fb = fr[0];
