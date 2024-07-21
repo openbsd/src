@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.114 2024/07/14 07:57:42 dv Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.115 2024/07/21 19:41:31 bluhm Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -712,6 +712,9 @@
 #define	MSR_NB_CFG	0xc001001f
 #define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
 #define		NB_CFG_DISDATMSK	0x0000001000000000ULL
+
+#define MSR_SEV_STATUS	0xc0010131
+#define		SEV_STAT_ENABLED	0x00000001
 
 #define	MSR_LS_CFG	0xc0011020
 #define		LS_CFG_DIS_LS2_SQUISH	0x02000000

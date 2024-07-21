@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.24 2024/07/10 12:36:13 bluhm Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.25 2024/07/21 19:41:31 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -267,6 +267,78 @@ bi_size_ok:
 	popl	%edx
 cont:
 	orl	%edx, RELOC(cpu_feature)
+
+	/*
+	 * Determine AMD SME and SEV capabilities.
+	 */
+	movl	$RELOC(cpu_vendor),%ebp
+	cmpl $0x68747541, (%ebp)	/* "Auth" */
+	jne	.Lno_smesev
+	cmpl $0x69746e65, 4(%ebp)	/* "enti" */
+	jne	.Lno_smesev
+	cmpl $0x444d4163, 8(%ebp)	/* "cAMD" */
+	jne	.Lno_smesev
+
+	/* AMD CPU, check for SME and SEV. */
+	movl	$0x8000001f, %eax
+	cpuid
+	pushl	%eax
+	andl	$CPUIDEAX_SME, %eax	/* SME */
+	popl	%eax
+	jz	.Lno_smesev
+	andl	$CPUIDEAX_SEV, %eax	/* SEV */
+	jz	.Lno_smesev
+
+	/* Are we in guest mode with SEV enabled? */
+	movl	$MSR_SEV_STATUS, %ecx
+	rdmsr
+	andl	$SEV_STAT_ENABLED, %eax
+	jz	.Lno_smesev
+
+	/* Determine C bit position */
+	movl	%ebx, %ecx	/* %ebx from previous cpuid */
+	andl	$0x3f, %ecx
+	cmpl	$0x20, %ecx	/* must be at least bit 32 (counting from 0) */
+	jl	.Lno_smesev
+	xorl	%eax, %eax
+	movl	%eax, RELOC(pg_crypt)
+	subl	$0x20, %ecx
+	movl	$0x1, %eax
+	shll	%cl, %eax
+	movl	%eax, RELOC((pg_crypt + 4))
+
+	/*
+	 * Determine physical address reduction. Adjust page frame masks.
+	 *
+	 * The top 12 bits of a physical address are reserved and
+	 * supposed to be 0. Thus PG_FRAME masks of the top 12 bits
+	 * and low 10 bits (offset into page).  PG_LGFRAME is defined
+	 * similarly.
+	 *
+	 * According to the number of reduction bits we shrink the
+	 * page frame masks beginning at bit 51.
+	 *
+	 * E.g. with a 5 bit reduction PG_FRAME will be reduced from
+	 * 0x000ffffffffff000 to 0x00007ffffffff000.
+	 *
+	 * One of the now freed bits will be used as the C bit, e.g.
+	 * bit 51.
+	 */
+	movl	%ebx, %ecx			/* %ebx from previous cpuid */
+	andl	$0xfc0, %ecx
+	shrl	$6, %ecx			/* number of bits to reduce */
+
+	movl	$1, %eax			/* calculate mask */
+	shll	$20, %eax
+	shrl	%cl, %eax
+	decl	%eax
+
+	andl	%eax, RELOC(pg_frame + 4)	/* apply mask */
+	andl	%eax, RELOC(pg_lgframe + 4)
+
+	movl	$0x1, RELOC(cpu_sev_guestmode)	/* we are a SEV guest */
+
+.Lno_smesev:
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we

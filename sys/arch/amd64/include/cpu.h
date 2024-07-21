@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.174 2024/06/24 21:22:14 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.175 2024/07/21 19:41:31 bluhm Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -398,6 +398,7 @@ extern int cpu_feature;
 extern int cpu_ebxfeature;
 extern int cpu_ecxfeature;
 extern int ecpu_ecxfeature;
+extern int cpu_sev_guestmode;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
