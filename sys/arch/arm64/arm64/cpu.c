@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.128 2024/07/18 17:18:01 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.129 2024/07/21 18:57:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -742,10 +742,6 @@ cpu_identify(struct cpu_info *ci)
 		printf("%sAtomic", sep);
 		sep = ",";
 		arm64_has_lse = 1;
-		/*
-		 * XXX should be populated and sanitized like cpu_sysctl() does
-		 */
-		hwcap |= HWCAP_ATOMICS;
 	}
 
 	if (ID_AA64ISAR0_CRC32(id) >= ID_AA64ISAR0_CRC32_BASE) {
@@ -1056,6 +1052,121 @@ cpu_identify_cleanup(void)
 	value |= cpu_id_aa64pfr1 & ID_AA64PFR1_BT_MASK;
 	value |= cpu_id_aa64pfr1 & ID_AA64PFR1_SSBS_MASK;
 	cpu_id_aa64pfr1 = value;
+
+	/* HWCAP */
+	hwcap |= HWCAP_FP;	/* OpenBSD assumes Floating-point support */
+	hwcap |= HWCAP_ASIMD;	/* OpenBSD assumes Advanced SIMD support */
+	/* HWCAP_EVTSTRM: OpenBSD kernel doesn't configure event stream */
+	if (ID_AA64ISAR0_AES(cpu_id_aa64isar0) >= ID_AA64ISAR0_AES_BASE)
+		hwcap |= HWCAP_AES;
+	if (ID_AA64ISAR0_AES(cpu_id_aa64isar0) >= ID_AA64ISAR0_AES_PMULL)
+		hwcap |= HWCAP_PMULL;
+	if (ID_AA64ISAR0_SHA1(cpu_id_aa64isar0) >= ID_AA64ISAR0_SHA1_BASE)
+		hwcap |= HWCAP_SHA1;
+	if (ID_AA64ISAR0_SHA2(cpu_id_aa64isar0) >= ID_AA64ISAR0_SHA2_BASE)
+		hwcap |= HWCAP_SHA2;
+	if (ID_AA64ISAR0_CRC32(cpu_id_aa64isar0) >= ID_AA64ISAR0_CRC32_BASE)
+		hwcap |= HWCAP_CRC32;
+	if (ID_AA64ISAR0_ATOMIC(cpu_id_aa64isar0) >= ID_AA64ISAR0_ATOMIC_IMPL)
+		hwcap |= HWCAP_ATOMICS;
+	/* HWCAP_FPHP */
+	/* HWCAP_ASIMDHP */
+	/* HWCAP_CPUID */
+	if (ID_AA64ISAR0_RDM(cpu_id_aa64isar0) >= ID_AA64ISAR0_RDM_IMPL)
+		hwcap |= HWCAP_ASIMDRDM;
+	if (ID_AA64ISAR1_JSCVT(cpu_id_aa64isar1) >= ID_AA64ISAR1_JSCVT_IMPL)
+		hwcap |= HWCAP_JSCVT;
+	if (ID_AA64ISAR1_FCMA(cpu_id_aa64isar1) >= ID_AA64ISAR1_FCMA_IMPL)
+		hwcap |= HWCAP_FCMA;
+	if (ID_AA64ISAR1_LRCPC(cpu_id_aa64isar1) >= ID_AA64ISAR1_LRCPC_BASE)
+		hwcap |= HWCAP_LRCPC;
+	if (ID_AA64ISAR1_DPB(cpu_id_aa64isar1) >= ID_AA64ISAR1_DPB_IMPL)
+		hwcap |= HWCAP_DCPOP;
+	if (ID_AA64ISAR0_SHA3(cpu_id_aa64isar0) >= ID_AA64ISAR0_SHA3_IMPL)
+		hwcap |= HWCAP_SHA3;
+	if (ID_AA64ISAR0_SM3(cpu_id_aa64isar0) >= ID_AA64ISAR0_SM3_IMPL)
+		hwcap |= HWCAP_SM3;
+	if (ID_AA64ISAR0_SM4(cpu_id_aa64isar0) >= ID_AA64ISAR0_SM4_IMPL)
+		hwcap |= HWCAP_SM4;
+	if (ID_AA64ISAR0_DP(cpu_id_aa64isar0) >= ID_AA64ISAR0_DP_IMPL)
+		hwcap |= HWCAP_ASIMDDP;
+	if (ID_AA64ISAR0_SHA2(cpu_id_aa64isar0) >= ID_AA64ISAR0_SHA2_512)
+		hwcap |= HWCAP_SHA512;
+	/* HWCAP_SVE: OpenBSD kernel doesn't provide SVE support */
+	if (ID_AA64ISAR0_FHM(cpu_id_aa64isar0) >= ID_AA64ISAR0_FHM_IMPL)
+		hwcap |= HWCAP_ASIMDFHM;
+	if (ID_AA64PFR0_DIT(cpu_id_aa64pfr0) >= ID_AA64PFR0_DIT_IMPL)
+		hwcap |= HWCAP_DIT;
+	/* HWCAP_USCAT */
+	if (ID_AA64ISAR1_LRCPC(cpu_id_aa64isar1) >= ID_AA64ISAR1_LRCPC_LDAPUR)
+		hwcap |= HWCAP_ILRCPC;
+	if (ID_AA64ISAR0_TS(cpu_id_aa64isar0) >= ID_AA64ISAR0_TS_BASE)
+		hwcap |= HWCAP_FLAGM;
+	if (ID_AA64PFR1_SSBS(cpu_id_aa64pfr1) >= ID_AA64PFR1_SSBS_PSTATE_MSR)
+		hwcap |= HWCAP_SSBS;
+	if (ID_AA64ISAR1_SB(cpu_id_aa64isar1) >= ID_AA64ISAR1_SB_IMPL)
+		hwcap |= HWCAP_SB;
+	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
+	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE)
+		hwcap |= HWCAP_PACA;
+	if (ID_AA64ISAR1_GPA(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPA_IMPL ||
+	    ID_AA64ISAR1_GPI(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPI_IMPL)
+		hwcap |= HWCAP_PACG;
+
+	/* HWCAP2 */
+	/* HWCAP2_DCPODP */
+	/* HWCAP2_SVE2: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVEAES: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVEPMULL: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVEBITPERM: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVESHA3: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVESM4: OpenBSD kernel doesn't provide SVE support */
+	if (ID_AA64ISAR0_TS(cpu_id_aa64isar0) >= ID_AA64ISAR0_TS_AXFLAG)
+		hwcap2 |= HWCAP2_FLAGM2;
+	if (ID_AA64ISAR1_FRINTTS(cpu_id_aa64isar1) >= ID_AA64ISAR1_FRINTTS_IMPL)
+		hwcap2 |= HWCAP2_FRINT;
+	/* HWCAP2_SVEI8MM: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVEF32MM: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVEF64MM: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SVEBF16: OpenBSD kernel doesn't provide SVE support */
+	if (ID_AA64ISAR1_I8MM(cpu_id_aa64isar1) >= ID_AA64ISAR1_I8MM_IMPL)
+		hwcap2 |= HWCAP2_I8MM;
+	if (ID_AA64ISAR1_BF16(cpu_id_aa64isar1) >= ID_AA64ISAR1_BF16_BASE)
+		hwcap2 |= HWCAP2_BF16;
+	if (ID_AA64ISAR1_DGH(cpu_id_aa64isar1) >= ID_AA64ISAR1_DGH_IMPL)
+		hwcap2 |= HWCAP2_DGH;
+	if (ID_AA64ISAR0_RNDR(cpu_id_aa64isar0) >= ID_AA64ISAR0_RNDR_IMPL)
+		hwcap2 |= HWCAP2_RNG;
+	if (ID_AA64PFR1_BT(cpu_id_aa64pfr1) >= ID_AA64PFR1_BT_IMPL)
+		hwcap2 |= HWCAP2_BTI;
+	/* HWCAP2_MTE: OpenBSD kernel doesn't provide MTE support */
+	/* HWCAP2_ECV */
+	/* HWCAP2_AFP */
+	/* HWCAP2_RPRES */
+	/* HWCAP2_MTE3: OpenBSD kernel doesn't provide MTE support */
+	/* HWCAP2_SME: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_I16I64: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_F64F64: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_I8I32: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_F16F32: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_B16F32: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_F32F32: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_FA64: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_WFXT */
+	if (ID_AA64ISAR1_BF16(cpu_id_aa64isar1) >= ID_AA64ISAR1_BF16_EBF)
+		hwcap2 |= HWCAP2_EBF16;
+	/* HWCAP2_SVE_EBF16: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_CSSC */
+	/* HWCAP2_RPRFM */
+	/* HWCAP2_SVE2P1: OpenBSD kernel doesn't provide SVE support */
+	/* HWCAP2_SME2: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME2P1: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_I16I32: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_BI32I32: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_B16B16: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_SME_F16F16: OpenBSD kernel doesn't provide SME support */
+	/* HWCAP2_MOPS */
+	/* HWCAP2_HBC */
 }
 
 void	cpu_init(void);
