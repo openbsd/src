@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_derive.3,v 1.10 2024/03/05 19:21:31 tb Exp $
+.\" $OpenBSD: EVP_PKEY_derive.3,v 1.11 2024/07/21 08:25:33 tb Exp $
 .\" full merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 5 2024 $
+.Dd $Mdocdate: July 21 2024 $
 .Dt EVP_PKEY_DERIVE 3
 .Os
 .Sh NAME
@@ -209,13 +209,12 @@ Derive shared secret (for example DH or EC keys):
 #include <openssl/rsa.h>
 
 EVP_PKEY_CTX *ctx;
-ENGINE *eng;
 unsigned char *skey;
 size_t skeylen;
 EVP_PKEY *pkey, *peerkey;
 
-/* Assumes that pkey, eng, and peerkey have already been set up. */
-ctx = EVP_PKEY_CTX_new(pkey, eng);
+/* Assumes that pkey and peerkey have already been set up. */
+ctx = EVP_PKEY_CTX_new(pkey, NULL);
 if (!ctx)
 	/* Error occurred */
 if (EVP_PKEY_derive_init(ctx) <= 0)
