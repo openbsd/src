@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.29 2024/05/25 18:59:03 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.30 2024/07/21 13:25:11 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -581,14 +581,16 @@ asn1_time_compare_families(const struct asn1_time_test *fam1, size_t fam1_size,
 			asn1_cmp = ASN1_TIME_compare(t1, t2);
 
 			if (time_cmp != asn1_cmp) {
-				fprintf(stderr, "%s vs. %s: want %d, got %d\n",
+				fprintf(stderr, "ASN1_TIME_compare - %s vs. %s: "
+				    "want %d, got %d\n",
 				    att1->str, att2->str, time_cmp, asn1_cmp);
 				comparison_failure |= 1;
 			}
 
 			time_cmp = ASN1_TIME_cmp_time_t(t1, att2->time);
 			if (time_cmp != asn1_cmp) {
-				fprintf(stderr, "%s vs. %lld: want %d, got %d\n",
+				fprintf(stderr, "ASN1_TIME_cmp_time_t - %s vs. %lld: "
+				    "want %d, got %d\n",
 				    att1->str, (long long)att2->time,
 				    asn1_cmp, time_cmp);
 				comparison_failure |= 1;
@@ -598,7 +600,8 @@ asn1_time_compare_families(const struct asn1_time_test *fam1, size_t fam1_size,
 			if (t1->type != V_ASN1_UTCTIME)
 				asn1_cmp = -2;
 			if (time_cmp != asn1_cmp) {
-				fprintf(stderr, "%s vs. %lld: want %d, got %d\n",
+				fprintf(stderr, "ASN1_UTCTIME_cmp_time_t - %s vs. %lld: "
+				    "want %d, got %d\n",
 				    att1->str, (long long)att2->time,
 				    asn1_cmp, time_cmp);
 				comparison_failure |= 1;
