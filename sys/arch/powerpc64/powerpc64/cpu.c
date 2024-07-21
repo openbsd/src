@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.28 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.29 2024/07/21 16:49:26 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -226,6 +226,10 @@ cpu_init_features(void)
 {
 	uint32_t pvr = mfpvr();
 
+	cpu_features = PPC_FEATURE_32 | PPC_FEATURE_64 | PPC_FEATURE_HAS_FPU |
+	    PPC_FEATURE_HAS_MMU | PPC_FEATURE_HAS_ALTIVEC |
+	    PPC_FEATURE_HAS_VSX;
+
 	switch (CPU_VERSION(pvr)) {
 	case CPU_IBMPOWER9:
 	case CPU_IBMPOWER9P:
@@ -233,6 +237,9 @@ cpu_init_features(void)
 		cpu_features2 |= PPC_FEATURE2_DARN;
 		break;
 	}
+
+	hwcap = cpu_features;
+	hwcap2 = cpu_features2;
 }
 
 void
