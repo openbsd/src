@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.6 2024/07/22 09:39:23 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.7 2024/07/22 10:00:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -1347,8 +1347,8 @@ ipcp_restore_from_db(struct module_ipcp *self)
 			if ((assigned = ipcp_ipv4_assign(self, user, ipv4))
 			    == NULL)
 				return (-1);
-			self->seq = MAXIMUM(assigned->seq + 1, self->seq);
 			assigned->seq = record->seq;
+			self->seq = MAXIMUM(assigned->seq + 1, self->seq);
 			strlcpy(assigned->auth_method, record->auth_method,
 			    sizeof(assigned->auth_method));
 			strlcpy(assigned->session_id, record->session_id,
