@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi_i2c.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: ipmi_i2c.c,v 1.5 2024/07/22 14:03:22 jsg Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -51,8 +51,6 @@ struct ipmi_if ssif_if = {
 	IPMI_MSG_DATASND,
 	IPMI_MSG_DATARCV
 };
-
-extern void ipmi_attach(struct device *, struct device *, void *);
 
 int	ipmi_i2c_match(struct device *, void *, void *);
 void	ipmi_i2c_attach(struct device *, struct device *, void *);

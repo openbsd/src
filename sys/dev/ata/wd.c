@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.131 2024/05/26 10:01:01 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.132 2024/07/22 14:03:22 jsg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -116,7 +116,6 @@ int	wdprobe(struct device *, void *, void *);
 void	wdattach(struct device *, struct device *, void *);
 int	wddetach(struct device *, int);
 int	wdactivate(struct device *, int);
-int	wdprint(void *, char *);
 
 const struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach,
