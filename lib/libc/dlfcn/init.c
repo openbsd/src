@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.23 2024/07/14 09:48:48 jca Exp $ */
+/*	$OpenBSD: init.c,v 1.24 2024/07/22 22:06:27 kettenis Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -189,14 +189,16 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 # endif
 #endif
 
-#define ADD_TO_ARRAY(func, which) \
-	__asm(	" .section ."#which",\"a\","TYPE#which"\n " \
-	VALUE_ALIGN"\n "VALUE_DIRECTIVE" "#func"\n .previous")
-
 #ifdef PIC
-ADD_TO_ARRAY(_libc_preinit, init_array);
+/*
+ * Set a priority so _libc_preinit gets called before the constructor
+ * on libcompiler_rt that may use elf_aux_info(3).
+ */
+__asm(" .section .init_array.50,\"a\","TYPE"init_array\n " \
+	VALUE_ALIGN"\n "VALUE_DIRECTIVE" _libc_preinit\n .previous");
 #else
-ADD_TO_ARRAY(_libc_preinit, preinit_array);
+__asm(" .section .preinit_array,\"a\","TYPE"preinit_array\n " \
+	VALUE_ALIGN"\n "VALUE_DIRECTIVE" _libc_preinit\n .previous");
 #endif
 
 /*
