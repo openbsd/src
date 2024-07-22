@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.51 2024/07/17 11:05:11 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.52 2024/07/22 09:27:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -83,8 +83,8 @@ static struct radiusd_module_radpkt_arg *
 			 radiusd_module_recv_radpkt(struct radiusd_module *,
 			    struct imsg *, uint32_t, const char *);
 static void		 radiusd_module_on_imsg_io(int, short, void *);
-void			 radiusd_module_start(struct radiusd_module *);
-void			 radiusd_module_stop(struct radiusd_module *);
+static void		 radiusd_module_start(struct radiusd_module *);
+static void		 radiusd_module_stop(struct radiusd_module *);
 static void		 radiusd_module_close(struct radiusd_module *);
 static void		 radiusd_module_userpass(struct radiusd_module *,
 			    struct radius_query *);
