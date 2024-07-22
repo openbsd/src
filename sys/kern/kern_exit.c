@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.224 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.225 2024/07/22 08:18:53 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #include <sys/kcov.h>
 #endif
 
-void	proc_finish_wait(struct proc *, struct proc *);
+void	proc_finish_wait(struct proc *, struct process *);
 void	process_clear_orphan(struct process *);
 void	process_zap(struct process *);
 void	proc_free(struct proc *);
@@ -546,7 +546,7 @@ loop:
 			if (rusage != NULL)
 				memcpy(rusage, pr->ps_ru, sizeof(*rusage));
 			if ((options & WNOWAIT) == 0)
-				proc_finish_wait(q, p);
+				proc_finish_wait(q, pr);
 			return (0);
 		}
 		if ((options & WTRAPPED) &&
@@ -737,16 +737,15 @@ sys_waitid(struct proc *q, void *v, register_t *retval)
 }
 
 void
-proc_finish_wait(struct proc *waiter, struct proc *p)
+proc_finish_wait(struct proc *waiter, struct process *pr)
 {
-	struct process *pr, *tr;
+	struct process *tr;
 	struct rusage *rup;
 
 	/*
 	 * If we got the child via a ptrace 'attach',
 	 * we need to give it back to the old parent.
 	 */
-	pr = p->p_p;
 	if (pr->ps_oppid != 0 && (pr->ps_oppid != pr->ps_pptr->ps_pid) &&
 	   (tr = prfind(pr->ps_oppid))) {
 		pr->ps_oppid = 0;
@@ -755,7 +754,7 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 		prsignal(tr, SIGCHLD);
 		wakeup(tr);
 	} else {
-		scheduler_wait_hook(waiter, p);
+		scheduler_wait_hook(waiter, pr->ps_mainproc);
 		rup = &waiter->p_p->ps_cru;
 		ruadd(rup, pr->ps_ru);
 		LIST_REMOVE(pr, ps_list);	/* off zombprocess */
