@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.35 2019/06/28 13:35:03 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.36 2024/07/22 17:55:18 dv Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -480,7 +480,10 @@ h_output(infile, define, extend, outfile)
 	outfilename = extend ? extendfile(infile, outfile) : outfile;
 	open_output(infile, outfilename);
 	add_warning();
-	guard = generate_guard(outfilename ? outfilename : infile);
+	if (outfilename || infile)
+		guard = generate_guard(outfilename ? outfilename : infile);
+	else
+		guard = generate_guard("STDIN");
 
 	fprintf(fout, "#ifndef _%s\n#define _%s\n\n", guard,
 		guard);
