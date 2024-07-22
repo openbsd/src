@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.134 2024/02/03 18:51:57 beck Exp $
+.\"	$OpenBSD: ps.1,v 1.135 2024/07/22 09:44:37 claudio Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: February 3 2024 $
+.Dd $Mdocdate: July 22 2024 $
 .Dt PS 1
 .Os
 .Sh NAME
@@ -346,7 +346,7 @@ PS_SINGLEEXIT       0x1000 other threads must die
 PS_SINGLEUNWIND     0x2000 other threads must unwind
 PS_NOZOMBIE         0x4000 pid 1 waits for me instead of
                            dad
-PS_STOPPED          0x8000 just stopped, need to send
+PS_STOPPING         0x8000 just stopped, need to send
                            SIGCHLD
 PS_SYSTEM          0x10000 No signals, stats or swapping
 PS_EMBRYO          0x20000 New process, not yet fledged
