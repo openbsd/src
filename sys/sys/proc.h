@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.364 2024/07/17 09:54:14 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.365 2024/07/22 09:43:47 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -287,7 +287,7 @@ struct process {
 #define	PS_SINGLEEXIT	0x00001000	/* Other threads must die. */
 #define	PS_SINGLEUNWIND	0x00002000	/* Other threads must unwind. */
 #define	PS_NOZOMBIE	0x00004000	/* No signal or zombie at exit. */
-#define	PS_STOPPED	0x00008000	/* Just stopped, need sig to parent. */
+#define	PS_STOPPING	0x00008000	/* Just stopped, need sig to parent. */
 #define	PS_SYSTEM	0x00010000	/* No sigs, stats or swapping. */
 #define	PS_EMBRYO	0x00020000	/* New process, not yet fledged */
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
