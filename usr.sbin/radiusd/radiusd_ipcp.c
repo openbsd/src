@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.5 2024/07/17 11:31:46 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.6 2024/07/22 09:39:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -68,6 +68,11 @@ struct user {
 	char				 name[0];
 };
 
+struct radiusctl_client {
+	int				 peerid;
+	TAILQ_ENTRY(radiusctl_client)	 entry;
+};
+
 struct module_ipcp_dae;
 
 struct assigned_ipv4 {
@@ -98,6 +103,7 @@ struct assigned_ipv4 {
 	TAILQ_ENTRY(assigned_ipv4)	 dae_next;
 	int				 dae_ntry;
 	struct event			 dae_evtimer;
+	TAILQ_HEAD(, radiusctl_client)	 dae_clients;
 };
 
 struct module_ipcp_ctrlconn {
@@ -517,6 +523,7 @@ ipcp_config_set(void *ctx, const char *name, int argc, char * const * argv)
 		*dae0 = dae;
 		TAILQ_INIT(&dae0->reqs);
 		TAILQ_INSERT_TAIL(&module->daes, dae0, next);
+		dae0->ipcp = module;
 	} else if (strcmp(name, "_debug") == 0)
 		log_init(1);
 	else if (strncmp(name, "_", 1) == 0)
@@ -544,6 +551,8 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 	size_t				 dumpsiz;
 	u_int				 datalen;
 	unsigned			 seq;
+	struct radiusctl_client		*client;
+	const char			*cause;
 
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	switch (imsg->hdr.type) {
@@ -616,9 +625,13 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 			if (assign->seq == seq)
 				break;
 		}
-		if (assign == NULL)
+		if (assign == NULL) {
+			cause = "session not found";
 			log_warnx("Disconnect seq=%u requested, but the "
 			    "session is not found", seq);
+			module_imsg_compose(self->base, IMSG_NG,
+			    imsg->hdr.peerid, 0, -1, cause, strlen(cause) + 1);
+		}
 		else {
 			if (assign->dae == NULL)
 				log_warnx("Disconnect seq=%u requested, but "
@@ -626,9 +639,18 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 			else {
 				log_info("Disconnect seq=%u requested",
 				    assign->seq);
+				if ((client = calloc(1, sizeof(struct
+				    radiusctl_client))) == NULL) {
+					log_warn("%s: calloc: %m",
+					    __func__);
+					goto fail;
+				}
+				client->peerid = imsg->hdr.peerid;
 				if (assign->dae_ntry == 0)
 					ipcp_dae_send_disconnect_request(
 					    assign);
+				TAILQ_INSERT_TAIL(&assign->dae_clients,
+				    client, entry);
 			}
 		}
 		break;
@@ -1189,6 +1211,7 @@ ipcp_ipv4_assign(struct module_ipcp *self, struct user *user,
 	ip->authtime = self->uptime;
 	RB_INSERT(assigned_ipv4_tree, &self->ipv4s, ip);
 	TAILQ_INSERT_TAIL(&user->ipv4s, ip, next);
+	TAILQ_INIT(&ip->dae_clients);
 	self->nsessions++;
 	ip->seq = self->seq++;
 
@@ -1562,12 +1585,14 @@ void
 ipcp_dae_on_event(int fd, short ev, void *ctx)
 {
 	struct module_ipcp_dae	*dae = ctx;
+	struct module_ipcp	*self = dae->ipcp;
 	RADIUS_PACKET		*radres = NULL;
 	int			 code;
 	uint32_t		 u32;
 	struct assigned_ipv4	*assign;
 	char			 buf[80], causestr[80];
 	const char		*cause = "";
+	struct radiusctl_client	*client;
 
 	if ((ev & EV_READ) == 0)
 		return;
@@ -1627,6 +1652,19 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 		    &dae->nas_addr, buf, sizeof(buf)));
 		break;
 	}
+
+	TAILQ_FOREACH(client, &assign->dae_clients, entry) {
+		if (*cause != '\0')
+			module_imsg_compose(self->base,
+			    (code == RADIUS_CODE_DISCONNECT_ACK)
+			    ? IMSG_OK : IMSG_NG, client->peerid, 0, -1,
+			    cause + 1, strlen(cause + 1) + 1);
+		else
+			module_imsg_compose(self->base,
+			    (code == RADIUS_CODE_DISCONNECT_ACK)
+			    ? IMSG_OK : IMSG_NG, client->peerid, 0, -1,
+			    NULL, 0);
+	}
 	ipcp_dae_reset_request(assign);
  out:
 	if (radres != NULL)
@@ -1636,6 +1674,8 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 void
 ipcp_dae_reset_request(struct assigned_ipv4 *assign)
 {
+	struct radiusctl_client		*client, *clientt;
+
 	if (assign->dae != NULL) {
 		if (assign->dae_ntry > 0)
 			TAILQ_REMOVE(&assign->dae->reqs, assign, dae_next);
@@ -1645,6 +1685,10 @@ ipcp_dae_reset_request(struct assigned_ipv4 *assign)
 	assign->dae_reqpkt = NULL;
 	if (evtimer_pending(&assign->dae_evtimer, NULL))
 		evtimer_del(&assign->dae_evtimer);
+	TAILQ_FOREACH_SAFE(client, &assign->dae_clients, entry, clientt) {
+		TAILQ_REMOVE(&assign->dae_clients, client, entry);
+		free(client);
+	}
 	assign->dae_ntry = 0;
 }
 

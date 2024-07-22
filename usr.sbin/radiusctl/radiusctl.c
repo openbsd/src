@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.10 2024/07/14 11:12:32 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.11 2024/07/22 09:39:23 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -180,7 +180,6 @@ main(int argc, char *argv[])
 		iov[niov++].iov_len = sizeof(res->session_seq);
 		imsg_composev(&ibuf, IMSG_RADIUSD_MODULE_IPCP_DISCONNECT, 0, 0,
 		    -1, iov, niov);
-		done = 1;
 		break;
 	}
 	while (ibuf.w.queued) {
@@ -200,6 +199,7 @@ main(int argc, char *argv[])
 			case IPCP_SHOW:
 			case IPCP_DUMP:
 			case IPCP_MONITOR:
+			case IPCP_DISCONNECT:
 				done = ipcp_handle_imsg(res, &imsg, cnt++);
 				break;
 			default:
@@ -625,6 +625,13 @@ ipcp_handle_imsg(struct parse_result *res, struct imsg *imsg, int cnt)
 
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	switch (imsg->hdr.type) {
+	case IMSG_OK:
+		if (datalen > 0 && *((char *)imsg->data + datalen - 1) == '\0')
+			fprintf(stderr, "OK: %s\n", (char *)imsg->data);
+		else
+			fprintf(stderr, "OK\n");
+		done = 1;
+		break;
 	case IMSG_NG:
 		if (datalen > 0 && *((char *)imsg->data + datalen - 1) == '\0')
 			fprintf(stderr, "error: %s\n", (char *)imsg->data);
