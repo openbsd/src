@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.69 2022/06/17 07:28:05 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.70 2024/07/22 15:27:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -578,10 +578,28 @@ char *
 options_to_string(struct options_entry *o, int idx, int numeric)
 {
 	struct options_array_item	*a;
+	char				*result = NULL;
+	char				*last = NULL;
+	char				*next;
 
 	if (OPTIONS_IS_ARRAY(o)) {
-		if (idx == -1)
-			return (xstrdup(""));
+		if (idx == -1) {
+			RB_FOREACH(a, options_array, &o->value.array) {
+				next = options_value_to_string(o, &a->value,
+				    numeric);
+				if (last == NULL)
+					result = next;
+				else {
+					xasprintf(&result, "%s %s", last, next);
+					free(last);
+					free(next);
+				}
+				last = result;
+			}
+			if (result == NULL)
+				return (xstrdup(""));
+			return (result);
+		}
 		a = options_array_item(o, idx);
 		if (a == NULL)
 			return (xstrdup(""));
