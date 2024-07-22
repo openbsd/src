@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.90 2024/03/30 09:53:41 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.91 2024/07/22 14:50:45 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1151,9 +1151,7 @@ test_tlsext_ecpf_server(void)
 		errx(1, "failed to create session");
 
 	/* Setup the state so we can call needs. */
-	if ((ssl->s3->hs.cipher =
-	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_ECDSA_CHACHA20_POLY1305))
-	    == NULL) {
+	if ((ssl->s3->hs.cipher = ssl3_get_cipher_by_value(0xcca9)) == NULL) {
 		FAIL("server cannot find cipher\n");
 		goto err;
 	}
@@ -3362,8 +3360,7 @@ test_tlsext_serverhello_build(void)
 
 	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 	ssl->s3->hs.negotiated_tls_version = TLS1_3_VERSION;
-	ssl->s3->hs.cipher =
-	    ssl3_get_cipher_by_id(TLS1_CK_RSA_WITH_AES_128_SHA256);
+	ssl->s3->hs.cipher = ssl3_get_cipher_by_value(0x003c);
 
 	if (!tlsext_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("failed to build serverhello extensions\n");
@@ -3397,8 +3394,7 @@ test_tlsext_serverhello_build(void)
 
 	/* Turn a few things on so we get extensions... */
 	ssl->s3->send_connection_binding = 1;
-	ssl->s3->hs.cipher =
-	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_RSA_WITH_AES_128_SHA256);
+	ssl->s3->hs.cipher = ssl3_get_cipher_by_value(0xc027);
 	ssl->tlsext_status_expected = 1;
 	ssl->tlsext_ticket_expected = 1;
 	if ((ssl->session->tlsext_ecpointformatlist = malloc(1)) == NULL) {

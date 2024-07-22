@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.12 2022/11/26 16:08:56 tb Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.13 2024/07/22 14:50:45 jsing Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -82,7 +82,7 @@ unsigned char tlsext_tick[] = {
 struct ssl_asn1_test ssl_asn1_tests[] = {
 	{
 		.session = {
-			.cipher_id = 0x03000000L | 1,
+			.cipher_value = 1,
 			.ssl_version = TLS1_2_VERSION,
 		},
 		.asn1 = {
@@ -94,7 +94,7 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 	},
 	{
 		.session = {
-			.cipher_id = 0x03000000L | 1,
+			.cipher_value = 1,
 			.ssl_version = TLS1_2_VERSION,
 			.master_key_length = 26,
 			.session_id = "0123456789",
@@ -119,7 +119,7 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 	},
 	{
 		.session = {
-			.cipher_id = 0x03000000L | 1,
+			.cipher_value = 1,
 			.ssl_version = TLS1_2_VERSION,
 			.master_key_length = 26,
 			.session_id = "0123456789",
@@ -232,7 +232,7 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 	},
 	{
 		.session = {
-			.cipher_id = 0x03000000L | 1,
+			.cipher_value = 1,
 			.ssl_version = TLS1_2_VERSION,
 			.timeout = -1,
 		},
@@ -243,7 +243,7 @@ struct ssl_asn1_test ssl_asn1_tests[] = {
 	},
 	{
 		.session = {
-			.cipher_id = 0x03000000L | 1,
+			.cipher_value = 1,
 			.ssl_version = TLS1_2_VERSION,
 			.time = -1,
 		},
@@ -276,9 +276,9 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 		    s1->ssl_version, s2->ssl_version);
 		return (1);
 	}
-	if (s1->cipher_id != s2->cipher_id) {
-		fprintf(stderr, "cipher_id differs: %ld != %ld\n",
-		    s1->cipher_id, s2->cipher_id);
+	if (s1->cipher_value != s2->cipher_value) {
+		fprintf(stderr, "cipher_value differs: %d != %d\n",
+		    s1->cipher_value, s2->cipher_value);
 		return (1);
 	}
 
