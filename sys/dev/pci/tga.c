@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.44 2024/06/22 10:22:29 jsg Exp $ */
+/* $OpenBSD: tga.c,v 1.45 2024/07/22 12:05:38 jsg Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -68,7 +68,6 @@
 
 int	tgamatch(struct device *, struct cfdata *, void *);
 void	tgaattach(struct device *, struct device *, void *);
-int	tgaprint(void *, const char *);
 
 struct cfdriver tga_cd = {
 	NULL, "tga", DV_DULL
