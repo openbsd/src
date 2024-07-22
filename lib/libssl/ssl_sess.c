@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.127 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.128 2024/07/22 14:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -287,7 +287,7 @@ ssl_session_dup(SSL_SESSION *sess, int include_ticket)
 	copy->time = sess->time;
 	copy->references = 1;
 
-	copy->cipher_id = sess->cipher_id;
+	copy->cipher_value = sess->cipher_value;
 
 	if (sess->tlsext_hostname != NULL) {
 		copy->tlsext_hostname = strdup(sess->tlsext_hostname);
@@ -984,7 +984,7 @@ LSSL_ALIAS(SSL_SESSION_get_protocol_version);
 const SSL_CIPHER *
 SSL_SESSION_get0_cipher(const SSL_SESSION *s)
 {
-	return ssl3_get_cipher_by_id(s->cipher_id);
+	return ssl3_get_cipher_by_value(s->cipher_value);
 }
 LSSL_ALIAS(SSL_SESSION_get0_cipher);
 

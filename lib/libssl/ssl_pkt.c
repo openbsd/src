@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.67 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.68 2024/07/22 14:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1235,7 +1235,7 @@ ssl3_do_change_cipher_spec(SSL *s)
 			return (0);
 		}
 
-		s->session->cipher_id = s->s3->hs.cipher->id;
+		s->session->cipher_value = s->s3->hs.cipher->value;
 
 		if (!tls1_setup_key_block(s))
 			return (0);

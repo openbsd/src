@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.255 2024/07/19 08:54:31 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.256 2024/07/22 14:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,12 +171,12 @@
 /* list of available SSLv3 ciphers (sorted by id) */
 const SSL_CIPHER ssl3_ciphers[] = {
 
-	/* The RSA ciphers */
-	/* Cipher 01 */
+	/*
+	 * SSLv3 RSA cipher suites (RFC 6101, appendix A.6).
+	 */
 	{
-		.valid = 1,
+		.value = 0x0001,
 		.name = SSL3_TXT_RSA_NULL_MD5,
-		.id = SSL3_CK_RSA_NULL_MD5,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_eNULL,
@@ -187,12 +187,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0,
 	},
-
-	/* Cipher 02 */
 	{
-		.valid = 1,
+		.value = 0x0002,
 		.name = SSL3_TXT_RSA_NULL_SHA,
-		.id = SSL3_CK_RSA_NULL_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_eNULL,
@@ -203,12 +200,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0,
 	},
-
-	/* Cipher 04 */
 	{
-		.valid = 1,
+		.value = 0x0004,
 		.name = SSL3_TXT_RSA_RC4_128_MD5,
-		.id = SSL3_CK_RSA_RC4_128_MD5,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_RC4,
@@ -219,12 +213,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 05 */
 	{
-		.valid = 1,
+		.value = 0x0005,
 		.name = SSL3_TXT_RSA_RC4_128_SHA,
-		.id = SSL3_CK_RSA_RC4_128_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_RC4,
@@ -235,12 +226,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 0A */
 	{
-		.valid = 1,
+		.value = 0x000a,
 		.name = SSL3_TXT_RSA_DES_192_CBC3_SHA,
-		.id = SSL3_CK_RSA_DES_192_CBC3_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_3DES,
@@ -253,14 +241,11 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 
 	/*
-	 * Ephemeral DH (DHE) ciphers.
+	 * SSLv3 DHE cipher suites (RFC 6101, appendix A.6).
 	 */
-
-	/* Cipher 16 */
 	{
-		.valid = 1,
+		.value = 0x0016,
 		.name = SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA,
-		.id = SSL3_CK_EDH_RSA_DES_192_CBC3_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_3DES,
@@ -271,12 +256,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 112,
 		.alg_bits = 168,
 	},
-
-	/* Cipher 18 */
 	{
-		.valid = 1,
+		.value = 0x0018,
 		.name = SSL3_TXT_ADH_RC4_128_MD5,
-		.id = SSL3_CK_ADH_RC4_128_MD5,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_RC4,
@@ -287,12 +269,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 1B */
 	{
-		.valid = 1,
+		.value = 0x001b,
 		.name = SSL3_TXT_ADH_DES_192_CBC_SHA,
-		.id = SSL3_CK_ADH_DES_192_CBC_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_3DES,
@@ -305,14 +284,11 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 
 	/*
-	 * AES ciphersuites.
+	 * TLSv1.0 AES cipher suites (RFC 3268).
 	 */
-
-	/* Cipher 2F */
 	{
-		.valid = 1,
+		.value = 0x002f,
 		.name = TLS1_TXT_RSA_WITH_AES_128_SHA,
-		.id = TLS1_CK_RSA_WITH_AES_128_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128,
@@ -323,12 +299,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 33 */
 	{
-		.valid = 1,
+		.value = 0x0033,
 		.name = TLS1_TXT_DHE_RSA_WITH_AES_128_SHA,
-		.id = TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128,
@@ -339,12 +312,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 34 */
 	{
-		.valid = 1,
+		.value = 0x0034,
 		.name = TLS1_TXT_ADH_WITH_AES_128_SHA,
-		.id = TLS1_CK_ADH_WITH_AES_128_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES128,
@@ -355,12 +325,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 35 */
 	{
-		.valid = 1,
+		.value = 0x0035,
 		.name = TLS1_TXT_RSA_WITH_AES_256_SHA,
-		.id = TLS1_CK_RSA_WITH_AES_256_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256,
@@ -371,12 +338,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 39 */
 	{
-		.valid = 1,
+		.value = 0x0039,
 		.name = TLS1_TXT_DHE_RSA_WITH_AES_256_SHA,
-		.id = TLS1_CK_DHE_RSA_WITH_AES_256_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256,
@@ -387,12 +351,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 3A */
 	{
-		.valid = 1,
+		.value = 0x003a,
 		.name = TLS1_TXT_ADH_WITH_AES_256_SHA,
-		.id = TLS1_CK_ADH_WITH_AES_256_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES256,
@@ -404,12 +365,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-	/* TLS v1.2 ciphersuites */
-	/* Cipher 3B */
+	/*
+	 * TLSv1.2 RSA cipher suites (RFC 5246, appendix A.5).
+	 */
 	{
-		.valid = 1,
+		.value = 0x003b,
 		.name = TLS1_TXT_RSA_WITH_NULL_SHA256,
-		.id = TLS1_CK_RSA_WITH_NULL_SHA256,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_eNULL,
@@ -420,12 +381,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0,
 	},
-
-	/* Cipher 3C */
 	{
-		.valid = 1,
+		.value = 0x003c,
 		.name = TLS1_TXT_RSA_WITH_AES_128_SHA256,
-		.id = TLS1_CK_RSA_WITH_AES_128_SHA256,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128,
@@ -436,12 +394,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 3D */
 	{
-		.valid = 1,
+		.value = 0x003d,
 		.name = TLS1_TXT_RSA_WITH_AES_256_SHA256,
-		.id = TLS1_CK_RSA_WITH_AES_256_SHA256,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256,
@@ -454,13 +409,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 
 #ifndef OPENSSL_NO_CAMELLIA
-	/* Camellia ciphersuites from RFC4132 (128-bit portion) */
-
-	/* Cipher 41 */
+	/*
+	 * TLSv1.0 Camellia 128 bit cipher suites (RFC 4132).
+	 */
 	{
-		.valid = 1,
+		.value = 0x0041,
 		.name = TLS1_TXT_RSA_WITH_CAMELLIA_128_CBC_SHA,
-		.id = TLS1_CK_RSA_WITH_CAMELLIA_128_CBC_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA128,
@@ -471,12 +425,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 45 */
 	{
-		.valid = 1,
+		.value = 0x0045,
 		.name = TLS1_TXT_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA,
-		.id = TLS1_CK_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA128,
@@ -487,12 +438,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 46 */
 	{
-		.valid = 1,
+		.value = 0x0046,
 		.name = TLS1_TXT_ADH_WITH_CAMELLIA_128_CBC_SHA,
-		.id = TLS1_CK_ADH_WITH_CAMELLIA_128_CBC_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_CAMELLIA128,
@@ -505,12 +453,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
 
-	/* TLS v1.2 ciphersuites */
-	/* Cipher 67 */
+	/*
+	 * TLSv1.2 DHE cipher suites (RFC 5246, appendix A.5).
+	 */
 	{
-		.valid = 1,
+		.value = 0x0067,
 		.name = TLS1_TXT_DHE_RSA_WITH_AES_128_SHA256,
-		.id = TLS1_CK_DHE_RSA_WITH_AES_128_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128,
@@ -521,12 +469,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 6B */
 	{
-		.valid = 1,
+		.value = 0x006b,
 		.name = TLS1_TXT_DHE_RSA_WITH_AES_256_SHA256,
-		.id = TLS1_CK_DHE_RSA_WITH_AES_256_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256,
@@ -537,12 +482,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 6C */
 	{
-		.valid = 1,
+		.value = 0x006c,
 		.name = TLS1_TXT_ADH_WITH_AES_128_SHA256,
-		.id = TLS1_CK_ADH_WITH_AES_128_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES128,
@@ -553,12 +495,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 6D */
 	{
-		.valid = 1,
+		.value = 0x006d,
 		.name = TLS1_TXT_ADH_WITH_AES_256_SHA256,
-		.id = TLS1_CK_ADH_WITH_AES_256_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES256,
@@ -571,13 +510,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 
 #ifndef OPENSSL_NO_CAMELLIA
-	/* Camellia ciphersuites from RFC4132 (256-bit portion) */
-
-	/* Cipher 84 */
+	/*
+	 * TLSv1.0 Camellia 256 bit cipher suites (RFC 4132).
+	 */
 	{
-		.valid = 1,
+		.value = 0x0084,
 		.name = TLS1_TXT_RSA_WITH_CAMELLIA_256_CBC_SHA,
-		.id = TLS1_CK_RSA_WITH_CAMELLIA_256_CBC_SHA,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA256,
@@ -588,12 +526,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 88 */
 	{
-		.valid = 1,
+		.value = 0x0088,
 		.name = TLS1_TXT_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA,
-		.id = TLS1_CK_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA256,
@@ -604,12 +539,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 89 */
 	{
-		.valid = 1,
+		.value = 0x0089,
 		.name = TLS1_TXT_ADH_WITH_CAMELLIA_256_CBC_SHA,
-		.id = TLS1_CK_ADH_WITH_CAMELLIA_256_CBC_SHA,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_CAMELLIA256,
@@ -623,14 +555,11 @@ const SSL_CIPHER ssl3_ciphers[] = {
 #endif /* OPENSSL_NO_CAMELLIA */
 
 	/*
-	 * GCM ciphersuites from RFC5288.
+	 * TLSv1.2 AES GCM cipher suites (RFC 5288).
 	 */
-
-	/* Cipher 9C */
 	{
-		.valid = 1,
+		.value = 0x009c,
 		.name = TLS1_TXT_RSA_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_RSA_WITH_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128GCM,
@@ -641,12 +570,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 9D */
 	{
-		.valid = 1,
+		.value = 0x009d,
 		.name = TLS1_TXT_RSA_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_RSA_WITH_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256GCM,
@@ -657,12 +583,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 9E */
 	{
-		.valid = 1,
+		.value = 0x009e,
 		.name = TLS1_TXT_DHE_RSA_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_DHE_RSA_WITH_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128GCM,
@@ -673,12 +596,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 9F */
 	{
-		.valid = 1,
+		.value = 0x009f,
 		.name = TLS1_TXT_DHE_RSA_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_DHE_RSA_WITH_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256GCM,
@@ -689,12 +609,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher A6 */
 	{
-		.valid = 1,
+		.value = 0x00a6,
 		.name = TLS1_TXT_ADH_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_ADH_WITH_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES128GCM,
@@ -705,12 +622,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher A7 */
 	{
-		.valid = 1,
+		.value = 0x00a7,
 		.name = TLS1_TXT_ADH_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_ADH_WITH_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES256GCM,
@@ -723,13 +637,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 
 #ifndef OPENSSL_NO_CAMELLIA
-	/* TLS 1.2 Camellia SHA-256 ciphersuites from RFC5932 */
-
-	/* Cipher BA */
+	/*
+	 * TLSv1.2 Camellia SHA-256 cipher suites (RFC 5932).
+	 */
 	{
-		.valid = 1,
+		.value = 0x00ba,
 		.name = TLS1_TXT_RSA_WITH_CAMELLIA_128_CBC_SHA256,
-		.id = TLS1_CK_RSA_WITH_CAMELLIA_128_CBC_SHA256,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA128,
@@ -740,12 +653,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher BE */
 	{
-		.valid = 1,
+		.value = 0x000be,
 		.name = TLS1_TXT_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
-		.id = TLS1_CK_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA128,
@@ -756,12 +666,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher BF */
 	{
-		.valid = 1,
+		.value = 0x00bf,
 		.name = TLS1_TXT_ADH_WITH_CAMELLIA_128_CBC_SHA256,
-		.id = TLS1_CK_ADH_WITH_CAMELLIA_128_CBC_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_CAMELLIA128,
@@ -772,12 +679,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C0 */
 	{
-		.valid = 1,
+		.value = 0x00c0,
 		.name = TLS1_TXT_RSA_WITH_CAMELLIA_256_CBC_SHA256,
-		.id = TLS1_CK_RSA_WITH_CAMELLIA_256_CBC_SHA256,
 		.algorithm_mkey = SSL_kRSA,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA256,
@@ -788,12 +692,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher C4 */
 	{
-		.valid = 1,
+		.value = 0x00c4,
 		.name = TLS1_TXT_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256,
-		.id = TLS1_CK_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CAMELLIA256,
@@ -804,12 +705,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher C5 */
 	{
-		.valid = 1,
+		.value = 0x00c5,
 		.name = TLS1_TXT_ADH_WITH_CAMELLIA_256_CBC_SHA256,
-		.id = TLS1_CK_ADH_WITH_CAMELLIA_256_CBC_SHA256,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_CAMELLIA256,
@@ -821,17 +719,14 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
-
-	/*
-	 * TLSv1.3 cipher suites.
-	 */
 
 #ifdef LIBRESSL_HAS_TLS1_3
-	/* Cipher 1301 */
+	/*
+	 * TLSv1.3 cipher suites (RFC 8446).
+	 */
 	{
-		.valid = 1,
+		.value = 0x1301,
 		.name = TLS1_3_RFC_AES_128_GCM_SHA256,
-		.id = TLS1_3_CK_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kTLS1_3,
 		.algorithm_auth = SSL_aTLS1_3,
 		.algorithm_enc = SSL_AES128GCM,
@@ -842,12 +737,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher 1302 */
 	{
-		.valid = 1,
+		.value = 0x1302,
 		.name = TLS1_3_RFC_AES_256_GCM_SHA384,
-		.id = TLS1_3_CK_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kTLS1_3,
 		.algorithm_auth = SSL_aTLS1_3,
 		.algorithm_enc = SSL_AES256GCM,
@@ -858,12 +750,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher 1303 */
 	{
-		.valid = 1,
+		.value = 0x1303,
 		.name = TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
-		.id = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
 		.algorithm_mkey = SSL_kTLS1_3,
 		.algorithm_auth = SSL_aTLS1_3,
 		.algorithm_enc = SSL_CHACHA20POLY1305,
@@ -876,11 +765,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	},
 #endif
 
-	/* Cipher C006 */
+	/*
+	 * TLSv1.0 Elliptic Curve cipher suites (RFC 4492, section 6).
+	 */
 	{
-		.valid = 1,
+		.value = 0xc006,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_NULL_SHA,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_NULL_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_eNULL,
@@ -891,12 +781,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0,
 	},
-
-	/* Cipher C007 */
 	{
-		.valid = 1,
+		.value = 0xc007,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_RC4_128_SHA,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_RC4_128_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_RC4,
@@ -907,12 +794,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C008 */
 	{
-		.valid = 1,
+		.value = 0xc008,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_DES_192_CBC3_SHA,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_DES_192_CBC3_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_3DES,
@@ -923,12 +807,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 112,
 		.alg_bits = 168,
 	},
-
-	/* Cipher C009 */
 	{
-		.valid = 1,
+		.value = 0xc009,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_AES128,
@@ -939,12 +820,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C00A */
 	{
-		.valid = 1,
+		.value = 0xc00a,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_AES256,
@@ -955,12 +833,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher C010 */
 	{
-		.valid = 1,
+		.value = 0xc010,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_NULL_SHA,
-		.id = TLS1_CK_ECDHE_RSA_WITH_NULL_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_eNULL,
@@ -971,12 +846,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0,
 	},
-
-	/* Cipher C011 */
 	{
-		.valid = 1,
+		.value = 0xc011,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_RC4_128_SHA,
-		.id = TLS1_CK_ECDHE_RSA_WITH_RC4_128_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_RC4,
@@ -987,12 +859,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C012 */
 	{
-		.valid = 1,
+		.value = 0xc012,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_DES_192_CBC3_SHA,
-		.id = TLS1_CK_ECDHE_RSA_WITH_DES_192_CBC3_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_3DES,
@@ -1003,12 +872,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 112,
 		.alg_bits = 168,
 	},
-
-	/* Cipher C013 */
 	{
-		.valid = 1,
+		.value = 0xc013,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		.id = TLS1_CK_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128,
@@ -1019,12 +885,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C014 */
 	{
-		.valid = 1,
+		.value = 0xc014,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		.id = TLS1_CK_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256,
@@ -1035,12 +898,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher C015 */
 	{
-		.valid = 1,
+		.value = 0xc015,
 		.name = TLS1_TXT_ECDH_anon_WITH_NULL_SHA,
-		.id = TLS1_CK_ECDH_anon_WITH_NULL_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_eNULL,
@@ -1051,12 +911,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 0,
 		.alg_bits = 0,
 	},
-
-	/* Cipher C016 */
 	{
-		.valid = 1,
+		.value = 0xc016,
 		.name = TLS1_TXT_ECDH_anon_WITH_RC4_128_SHA,
-		.id = TLS1_CK_ECDH_anon_WITH_RC4_128_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_RC4,
@@ -1067,12 +924,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C017 */
 	{
-		.valid = 1,
+		.value = 0xc017,
 		.name = TLS1_TXT_ECDH_anon_WITH_DES_192_CBC3_SHA,
-		.id = TLS1_CK_ECDH_anon_WITH_DES_192_CBC3_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_3DES,
@@ -1083,12 +937,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 112,
 		.alg_bits = 168,
 	},
-
-	/* Cipher C018 */
 	{
-		.valid = 1,
+		.value = 0xc018,
 		.name = TLS1_TXT_ECDH_anon_WITH_AES_128_CBC_SHA,
-		.id = TLS1_CK_ECDH_anon_WITH_AES_128_CBC_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES128,
@@ -1099,12 +950,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C019 */
 	{
-		.valid = 1,
+		.value = 0xc019,
 		.name = TLS1_TXT_ECDH_anon_WITH_AES_256_CBC_SHA,
-		.id = TLS1_CK_ECDH_anon_WITH_AES_256_CBC_SHA,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aNULL,
 		.algorithm_enc = SSL_AES256,
@@ -1116,14 +964,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-
-	/* HMAC based TLS v1.2 ciphersuites from RFC5289 */
-
-	/* Cipher C023 */
+	/*
+	 * TLSv1.2 Elliptic Curve HMAC cipher suites (RFC 5289, section 3.1).
+	 */
 	{
-		.valid = 1,
+		.value = 0xc023,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_SHA256,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_AES_128_SHA256,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_AES128,
@@ -1134,12 +980,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C024 */
 	{
-		.valid = 1,
+		.value = 0xc024,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_SHA384,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_AES_256_SHA384,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_AES256,
@@ -1150,12 +993,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher C027 */
 	{
-		.valid = 1,
+		.value = 0xc027,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_AES_128_SHA256,
-		.id = TLS1_CK_ECDHE_RSA_WITH_AES_128_SHA256,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128,
@@ -1166,12 +1006,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C028 */
 	{
-		.valid = 1,
+		.value = 0xc028,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_AES_256_SHA384,
-		.id = TLS1_CK_ECDHE_RSA_WITH_AES_256_SHA384,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256,
@@ -1183,13 +1020,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-	/* GCM based TLS v1.2 ciphersuites from RFC5289 */
-
-	/* Cipher C02B */
+	/*
+	 * TLSv1.2 Elliptic Curve GCM cipher suites (RFC 5289, section 3.2).
+	 */
 	{
-		.valid = 1,
+		.value = 0xc02b,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_AES128GCM,
@@ -1200,12 +1036,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C02C */
 	{
-		.valid = 1,
+		.value = 0xc02c,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_AES256GCM,
@@ -1216,12 +1049,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher C02F */
 	{
-		.valid = 1,
+		.value = 0xc02f,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		.id = TLS1_CK_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES128GCM,
@@ -1232,12 +1062,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 128,
 		.alg_bits = 128,
 	},
-
-	/* Cipher C030 */
 	{
-		.valid = 1,
+		.value = 0xc030,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		.id = TLS1_CK_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_AES256GCM,
@@ -1249,11 +1076,12 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 
-	/* Cipher CCA8 */
+	/*
+	 * TLSv1.2 ChaCha20-Poly1305 cipher suites (RFC 7905).
+	 */
 	{
-		.valid = 1,
+		.value = 0xcca8,
 		.name = TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-		.id = TLS1_CK_ECDHE_RSA_CHACHA20_POLY1305,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CHACHA20POLY1305,
@@ -1264,12 +1092,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher CCA9 */
 	{
-		.valid = 1,
+		.value = 0xcca9,
 		.name = TLS1_TXT_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-		.id = TLS1_CK_ECDHE_ECDSA_CHACHA20_POLY1305,
 		.algorithm_mkey = SSL_kECDHE,
 		.algorithm_auth = SSL_aECDSA,
 		.algorithm_enc = SSL_CHACHA20POLY1305,
@@ -1280,12 +1105,9 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher CCAA */
 	{
-		.valid = 1,
+		.value = 0xccaa,
 		.name = TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305,
-		.id = TLS1_CK_DHE_RSA_CHACHA20_POLY1305,
 		.algorithm_mkey = SSL_kDHE,
 		.algorithm_auth = SSL_aRSA,
 		.algorithm_enc = SSL_CHACHA20POLY1305,
@@ -1296,8 +1118,6 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* end of list */
 };
 
 int
@@ -1316,37 +1136,19 @@ ssl3_get_cipher(unsigned int u)
 }
 
 static int
-ssl3_cipher_id_cmp(const void *id, const void *cipher)
+ssl3_cipher_value_cmp(const void *value, const void *cipher)
 {
-	unsigned long a = *(const unsigned long *)id;
-	unsigned long b = ((const SSL_CIPHER *)cipher)->id;
+	uint16_t a = *(const uint16_t *)value;
+	uint16_t b = ((const SSL_CIPHER *)cipher)->value;
 
 	return a < b ? -1 : a > b;
 }
 
 const SSL_CIPHER *
-ssl3_get_cipher_by_id(unsigned long id)
-{
-	const SSL_CIPHER *cipher;
-
-	cipher = bsearch(&id, ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof(*cipher),
-	    ssl3_cipher_id_cmp);
-	if (cipher != NULL && cipher->valid == 1)
-		return cipher;
-
-	return NULL;
-}
-
-const SSL_CIPHER *
 ssl3_get_cipher_by_value(uint16_t value)
 {
-	return ssl3_get_cipher_by_id(SSL3_CK_ID | value);
-}
-
-uint16_t
-ssl3_cipher_get_value(const SSL_CIPHER *c)
-{
-	return (c->id & SSL3_CK_VALUE_MASK);
+	return bsearch(&value, ssl3_ciphers, SSL3_NUM_CIPHERS,
+	    sizeof(ssl3_ciphers[0]), ssl3_cipher_value_cmp);
 }
 
 int

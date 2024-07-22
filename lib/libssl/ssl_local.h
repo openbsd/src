@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.21 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.22 2024/07/22 14:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,9 +339,9 @@ struct ssl_comp_st {
 };
 
 struct ssl_cipher_st {
-	int valid;
+	uint16_t value;			/* Cipher suite value. */
+
 	const char *name;		/* text name */
-	unsigned long id;		/* id, 4 bytes, first is version */
 
 	unsigned long algorithm_mkey;	/* key exchange algorithm */
 	unsigned long algorithm_auth;	/* server authentication */
@@ -438,9 +438,7 @@ struct ssl_session_st {
 	time_t time;
 	int references;
 
-	unsigned long cipher_id;	/* when ASN.1 loaded, this
-					 * needs to be used to load
-					 * the 'cipher' structure */
+	uint16_t cipher_value;
 
 	char *tlsext_hostname;
 
@@ -1293,9 +1291,7 @@ int ssl3_get_req_cert_types(SSL *s, CBB *cbb);
 int ssl3_get_message(SSL *s, int st1, int stn, int mt, long max);
 int ssl3_num_ciphers(void);
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
-const SSL_CIPHER *ssl3_get_cipher_by_id(unsigned long id);
 const SSL_CIPHER *ssl3_get_cipher_by_value(uint16_t value);
-uint16_t ssl3_cipher_get_value(const SSL_CIPHER *c);
 int ssl3_renegotiate(SSL *ssl);
 
 int ssl3_renegotiate_check(SSL *ssl);

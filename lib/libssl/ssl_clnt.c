@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.167 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.168 2024/07/22 14:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -481,7 +481,7 @@ ssl3_connect(SSL *s)
 
 			s->s3->hs.state = SSL3_ST_CW_FINISHED_A;
 			s->init_num = 0;
-			s->session->cipher_id = s->s3->hs.cipher->id;
+			s->session->cipher_value = s->s3->hs.cipher->value;
 
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
@@ -1016,13 +1016,13 @@ ssl3_get_server_hello(SSL *s)
 	 * and/or cipher_id values may not be set. Make sure that
 	 * cipher_id is set and use it for comparison.
 	 */
-	if (s->hit && (s->session->cipher_id != cipher->id)) {
+	if (s->hit && (s->session->cipher_value != cipher->value)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
 		goto fatal_err;
 	}
 	s->s3->hs.cipher = cipher;
-	s->session->cipher_id = cipher->id;
+	s->session->cipher_value = cipher->value;
 
 	if (!tls1_transcript_hash_init(s))
 		goto err;

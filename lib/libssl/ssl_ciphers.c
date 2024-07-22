@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.17 2022/11/26 16:08:55 tb Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.18 2024/07/22 14:47:15 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -28,7 +28,7 @@ ssl_cipher_in_list(STACK_OF(SSL_CIPHER) *ciphers, const SSL_CIPHER *cipher)
 	int i;
 
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
-		if (sk_SSL_CIPHER_value(ciphers, i)->id == cipher->id)
+		if (sk_SSL_CIPHER_value(ciphers, i)->value == cipher->value)
 			return 1;
 	}
 
@@ -72,7 +72,7 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 			continue;
 		if (!ssl_security_cipher_check(s, cipher))
 			continue;
-		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))
+		if (!CBB_add_u16(cbb, cipher->value))
 			return 0;
 
 		num_ciphers++;
@@ -165,34 +165,34 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 struct ssl_tls13_ciphersuite {
 	const char *name;
 	const char *alias;
-	unsigned long cid;
+	uint16_t value;
 };
 
 static const struct ssl_tls13_ciphersuite ssl_tls13_ciphersuites[] = {
 	{
 		.name = TLS1_3_RFC_AES_128_GCM_SHA256,
 		.alias = TLS1_3_TXT_AES_128_GCM_SHA256,
-		.cid = TLS1_3_CK_AES_128_GCM_SHA256,
+		.value = 0x1301,
 	},
 	{
 		.name = TLS1_3_RFC_AES_256_GCM_SHA384,
 		.alias = TLS1_3_TXT_AES_256_GCM_SHA384,
-		.cid = TLS1_3_CK_AES_256_GCM_SHA384,
+		.value = 0x1302,
 	},
 	{
 		.name = TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
 		.alias = TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
-		.cid = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+		.value = 0x1303,
 	},
 	{
 		.name = TLS1_3_RFC_AES_128_CCM_SHA256,
 		.alias = TLS1_3_TXT_AES_128_CCM_SHA256,
-		.cid = TLS1_3_CK_AES_128_CCM_SHA256,
+		.value = 0x1304,
 	},
 	{
 		.name = TLS1_3_RFC_AES_128_CCM_8_SHA256,
 		.alias = TLS1_3_TXT_AES_128_CCM_8_SHA256,
-		.cid = TLS1_3_CK_AES_128_CCM_8_SHA256,
+		.value = 0x1305,
 	},
 	{
 		.name = NULL,
@@ -234,7 +234,7 @@ ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str)
 			goto err;
 
 		/* We know about the cipher suite, but it is not supported. */
-		if ((cipher = ssl3_get_cipher_by_id(ciphersuite->cid)) == NULL)
+		if ((cipher = ssl3_get_cipher_by_value(ciphersuite->value)) == NULL)
 			continue;
 
 		if (!sk_SSL_CIPHER_push(ciphers, cipher))

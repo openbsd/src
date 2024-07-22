@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.145 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.146 2024/07/22 14:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -373,21 +373,18 @@ static const SSL_CIPHER cipher_aliases[] = {
 	/* cipher suite aliases */
 #ifdef LIBRESSL_HAS_TLS1_3
 	{
-		.valid = 1,
+		.value = 0x1301,
 		.name = "TLS_AES_128_GCM_SHA256",
-		.id = TLS1_3_CK_AES_128_GCM_SHA256,
 		.algorithm_ssl = SSL_TLSV1_3,
 	},
 	{
-		.valid = 1,
+		.value = 0x1302,
 		.name = "TLS_AES_256_GCM_SHA384",
-		.id = TLS1_3_CK_AES_256_GCM_SHA384,
 		.algorithm_ssl = SSL_TLSV1_3,
 	},
 	{
-		.valid = 1,
+		.value = 0x1303,
 		.name = "TLS_CHACHA20_POLY1305_SHA256",
-		.id = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
 		.algorithm_ssl = SSL_TLSV1_3,
 	},
 #endif
@@ -619,7 +616,7 @@ ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method, int num_of_ciphers,
 		 * Drop any invalid ciphers and any which use unavailable
 		 * algorithms.
 		 */
-		if ((c != NULL) && c->valid &&
+		if ((c != NULL) &&
 		    !(c->algorithm_mkey & disabled_mkey) &&
 		    !(c->algorithm_auth & disabled_auth) &&
 		    !(c->algorithm_enc & disabled_enc) &&
@@ -725,7 +722,7 @@ ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list, int num_of_group_aliases,
 }
 
 static void
-ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
+ssl_cipher_apply_rule(uint16_t cipher_value, unsigned long alg_mkey,
     unsigned long alg_auth, unsigned long alg_enc, unsigned long alg_mac,
     unsigned long alg_ssl, unsigned long algo_strength, int rule,
     int strength_bits, CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
@@ -757,7 +754,7 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
 
 		cp = curr->cipher;
 
-		if (cipher_id && cp->id != cipher_id)
+		if (cipher_value != 0 && cp->value != cipher_value)
 			continue;
 
 		/*
@@ -882,7 +879,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
 	unsigned long algo_strength;
 	int j, multi, found, rule, retval, ok, buflen;
-	unsigned long cipher_id = 0;
+	uint16_t cipher_value = 0;
 	const char *l, *buf;
 	char ch;
 
@@ -974,7 +971,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			 * '\0' terminated.)
 			 */
 			j = found = 0;
-			cipher_id = 0;
+			cipher_value = 0;
 			while (ca_list[j]) {
 				if (!strncmp(buf, ca_list[j]->name, buflen) &&
 				    (ca_list[j]->name[buflen] == '\0')) {
@@ -1047,13 +1044,13 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 					    SSL_STRONG_MASK;
 			}
 
-			if (ca_list[j]->valid) {
+			if (ca_list[j]->value != 0) {
 				/*
 				 * explicit ciphersuite found; its protocol
 				 * version does not become part of the search
 				 * pattern!
 				 */
-				cipher_id = ca_list[j]->id;
+				cipher_value = ca_list[j]->value;
 				if (ca_list[j]->algorithm_ssl == SSL_TLSV1_3)
 					*tls13_seen = 1;
 			} else {
@@ -1109,7 +1106,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 		} else if (found) {
 			if (alg_ssl == SSL_TLSV1_3)
 				*tls13_seen = 1;
-			ssl_cipher_apply_rule(cipher_id, alg_mkey, alg_auth,
+			ssl_cipher_apply_rule(cipher_value, alg_mkey, alg_auth,
 			    alg_enc, alg_mac, alg_ssl, algo_strength, rule,
 			    -1, head_p, tail_p);
 		} else {
@@ -1470,24 +1467,23 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 LSSL_ALIAS(SSL_CIPHER_description);
 
 const char *
-SSL_CIPHER_get_version(const SSL_CIPHER *c)
+SSL_CIPHER_get_version(const SSL_CIPHER *cipher)
 {
-	if (c == NULL)
-		return("(NONE)");
-	if ((c->id >> 24) == 3)
-		return("TLSv1/SSLv3");
-	else
-		return("unknown");
+	if (cipher == NULL)
+		return "(NONE)";
+
+	return "TLSv1/SSLv3";
 }
 LSSL_ALIAS(SSL_CIPHER_get_version);
 
 /* return the actual cipher being used */
 const char *
-SSL_CIPHER_get_name(const SSL_CIPHER *c)
+SSL_CIPHER_get_name(const SSL_CIPHER *cipher)
 {
-	if (c != NULL)
-		return (c->name);
-	return("(NONE)");
+	if (cipher == NULL)
+		return "(NONE)";
+
+	return cipher->name;
 }
 LSSL_ALIAS(SSL_CIPHER_get_name);
 
@@ -1507,16 +1503,16 @@ SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 LSSL_ALIAS(SSL_CIPHER_get_bits);
 
 unsigned long
-SSL_CIPHER_get_id(const SSL_CIPHER *c)
+SSL_CIPHER_get_id(const SSL_CIPHER *cipher)
 {
-	return c->id;
+	return SSL3_CK_ID | cipher->value;
 }
 LSSL_ALIAS(SSL_CIPHER_get_id);
 
 uint16_t
-SSL_CIPHER_get_value(const SSL_CIPHER *c)
+SSL_CIPHER_get_value(const SSL_CIPHER *cipher)
 {
-	return ssl3_cipher_get_value(c);
+	return cipher->value;
 }
 LSSL_ALIAS(SSL_CIPHER_get_value);
 
