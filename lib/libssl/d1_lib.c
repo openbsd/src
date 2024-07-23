@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.64 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.65 2024/07/23 14:40:53 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -248,27 +248,6 @@ dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 	}
 	return (ret);
-}
-
-/*
- * As it's impossible to use stream ciphers in "datagram" mode, this
- * simple filter is designed to disengage them in DTLS. Unfortunately
- * there is no universal way to identify stream SSL_CIPHER, so we have
- * to explicitly list their SSL_* codes. Currently RC4 is the only one
- * available, but if new ones emerge, they will have to be added...
- */
-const SSL_CIPHER *
-dtls1_get_cipher(unsigned int u)
-{
-	const SSL_CIPHER *cipher;
-
-	if ((cipher = ssl3_get_cipher(u)) == NULL)
-		return NULL;
-
-	if (cipher->algorithm_enc == SSL_RC4)
-		return NULL;
-
-	return cipher;
 }
 
 void

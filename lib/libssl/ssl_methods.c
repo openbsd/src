@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.31 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.32 2024/07/23 14:40:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,6 @@ static const SSL_METHOD DTLS_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
@@ -98,7 +97,6 @@ static const SSL_METHOD DTLS_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
@@ -119,7 +117,6 @@ static const SSL_METHOD DTLSv1_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
 
@@ -140,7 +137,6 @@ static const SSL_METHOD DTLSv1_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
 
@@ -161,7 +157,6 @@ static const SSL_METHOD DTLSv1_2_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
@@ -182,7 +177,6 @@ static const SSL_METHOD DTLSv1_2_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.get_cipher = dtls1_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
@@ -266,7 +260,6 @@ static const SSL_METHOD TLS_method_data = {
 	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
 
@@ -287,7 +280,6 @@ static const SSL_METHOD TLS_legacy_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
@@ -308,7 +300,6 @@ static const SSL_METHOD TLS_client_method_data = {
 	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
 
@@ -329,7 +320,6 @@ static const SSL_METHOD TLSv1_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_ENC_FLAGS,
 };
 
@@ -350,7 +340,6 @@ static const SSL_METHOD TLSv1_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_ENC_FLAGS,
 };
 
@@ -371,7 +360,6 @@ static const SSL_METHOD TLSv1_1_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
 
@@ -392,7 +380,6 @@ static const SSL_METHOD TLSv1_1_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
 
@@ -413,7 +400,6 @@ static const SSL_METHOD TLSv1_2_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
@@ -434,7 +420,6 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 

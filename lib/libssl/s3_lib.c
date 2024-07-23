@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.256 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.257 2024/07/23 14:40:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1127,12 +1127,12 @@ ssl3_num_ciphers(void)
 }
 
 const SSL_CIPHER *
-ssl3_get_cipher(unsigned int u)
+ssl3_get_cipher_by_index(int idx)
 {
-	if (u < SSL3_NUM_CIPHERS)
-		return (&(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]));
-	else
-		return (NULL);
+	if (idx < 0 || idx >= SSL3_NUM_CIPHERS)
+		return NULL;
+
+	return &ssl3_ciphers[idx];
 }
 
 static int

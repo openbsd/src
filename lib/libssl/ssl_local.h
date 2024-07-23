@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.22 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.23 2024/07/23 14:40:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,8 +378,6 @@ struct ssl_method_st {
 	int (*ssl_read_bytes)(SSL *s, int type, unsigned char *buf, int len,
 	    int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
-
-	const SSL_CIPHER *(*get_cipher)(unsigned int ncipher);
 
 	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
 };
@@ -1290,7 +1288,7 @@ int ssl3_send_alert(SSL *s, int level, int desc);
 int ssl3_get_req_cert_types(SSL *s, CBB *cbb);
 int ssl3_get_message(SSL *s, int st1, int stn, int mt, long max);
 int ssl3_num_ciphers(void);
-const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
+const SSL_CIPHER *ssl3_get_cipher_by_index(int idx);
 const SSL_CIPHER *ssl3_get_cipher_by_value(uint16_t value);
 int ssl3_renegotiate(SSL *ssl);
 

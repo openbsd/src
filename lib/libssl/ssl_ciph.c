@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.146 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.147 2024/07/23 14:40:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -576,22 +576,6 @@ ll_append_head(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 	*head = curr;
 }
 
-/* XXX beck: remove this in a followon to removing GOST */
-static void
-ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
-    unsigned long *enc, unsigned long *mac, unsigned long *ssl)
-{
-	*mkey = 0;
-	*auth = 0;
-	*enc = 0;
-	*mac = 0;
-	*ssl = 0;
-
-#ifdef SSL_FORBID_ENULL
-	*enc |= SSL_eNULL;
-#endif
-}
-
 static void
 ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method, int num_of_ciphers,
     unsigned long disabled_mkey, unsigned long disabled_auth,
@@ -608,10 +592,15 @@ ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method, int num_of_ciphers,
 	 * a linked list with at most num entries.
 	 */
 
-	/* Get the initial list of ciphers */
+	/*
+	 * Get the initial list of ciphers, iterating backwards over the
+	 * cipher list - the list is ordered by cipher value and we currently
+	 * hope that ciphers with higher cipher values are preferable...
+	 */
 	co_list_num = 0;	/* actual count of ciphers */
-	for (i = 0; i < num_of_ciphers; i++) {
-		c = ssl_method->get_cipher(i);
+	for (i = num_of_ciphers - 1; i >= 0; i--) {
+		c = ssl3_get_cipher_by_index(i);
+
 		/*
 		 * Drop any invalid ciphers and any which use unavailable
 		 * algorithms.
@@ -1153,11 +1142,19 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	if (rule_str == NULL || cipher_list == NULL)
 		goto err;
 
-	/*
-	 * To reduce the work to do we only want to process the compiled
-	 * in algorithms, so we first get the mask of disabled ciphers.
-	 */
-	ssl_cipher_get_disabled(&disabled_mkey, &disabled_auth, &disabled_enc, &disabled_mac, &disabled_ssl);
+	disabled_mkey = 0;
+	disabled_auth = 0;
+	disabled_enc = 0;
+	disabled_mac = 0;
+	disabled_ssl = 0;
+
+#ifdef SSL_FORBID_ENULL
+	disabled_enc |= SSL_eNULL;
+#endif
+
+	/* DTLS cannot be used with stream ciphers. */
+	if (ssl_method->dtls)
+		disabled_enc |= SSL_RC4;
 
 	/*
 	 * Now we have to collect the available ciphers from the compiled
