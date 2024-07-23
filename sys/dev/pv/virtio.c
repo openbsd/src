@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.25 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.26 2024/07/23 19:14:05 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -807,7 +807,7 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
  *                 if you forget to call this the slot will be leaked.
  *
  *                 Don't call this if you use statically allocated slots
- *                 and virtio_dequeue_trim().
+ *                 and virtio_enqueue_trim().
  */
 int
 virtio_dequeue_commit(struct virtqueue *vq, int slot)
