@@ -1,4 +1,3 @@
-/*	$OpenBSD: cipherstest.c,v 1.15 2024/07/17 15:22:56 tb Exp $ */
 /*
  * Copyright (c) 2015, 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -24,7 +23,7 @@
 #include <string.h>
 
 int ssl3_num_ciphers(void);
-const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
+const SSL_CIPHER *ssl3_get_cipher_by_index(int idx);
 
 int ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str);
 
@@ -48,12 +47,8 @@ check_cipher_order(void)
 
 	num_ciphers = ssl3_num_ciphers();
 
-	for (i = 1; i <= num_ciphers; i++) {
-		/*
-		 * For some reason, ssl3_get_cipher() returns ciphers in
-		 * reverse order.
-		 */
-		if ((cipher = ssl3_get_cipher(num_ciphers - i)) == NULL) {
+	for (i = 0; i < num_ciphers; i++) {
+		if ((cipher = ssl3_get_cipher_by_index(i)) == NULL) {
 			fprintf(stderr, "FAIL: ssl3_get_cipher(%d) returned "
 			    "NULL\n", i);
 			return 1;
