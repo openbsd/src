@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.205 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.206 2024/07/23 08:38:02 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #include <sys/ktrace.h>
 #endif
 
-int	sleep_signal_check(void);
+int	sleep_signal_check(struct proc *);
 int	thrsleep(struct proc *, struct sys___thrsleep_args *);
 int	thrsleep_unlock(void *);
 
@@ -385,7 +385,7 @@ sleep_finish(int timo, int do_sleep)
 		 * we must be ready for sleep when sleep_signal_check() is
 		 * called.
 		 */
-		if ((error = sleep_signal_check()) != 0) {
+		if ((error = sleep_signal_check(p)) != 0) {
 			catch = 0;
 			do_sleep = 0;
 		}
@@ -438,7 +438,7 @@ sleep_finish(int timo, int do_sleep)
 
 	/* Check if thread was woken up because of a unwind or signal */
 	if (catch != 0)
-		error = sleep_signal_check();
+		error = sleep_signal_check(p);
 
 	/* Signal errors are higher priority than timeouts. */
 	if (error == 0 && error1 != 0)
@@ -451,9 +451,8 @@ sleep_finish(int timo, int do_sleep)
  * Check and handle signals and suspensions around a sleep cycle.
  */
 int
-sleep_signal_check(void)
+sleep_signal_check(struct proc *p)
 {
-	struct proc *p = curproc;
 	struct sigctx ctx;
 	int err, sig;
 
