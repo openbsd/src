@@ -472,9 +472,18 @@ sioctl_sun_pollfd(struct sioctl_hdl *addr, struct pollfd *pfd, int events)
 {
 	struct sioctl_sun_hdl *hdl = (struct sioctl_sun_hdl *)addr;
 
+	hdl->events = events;
+
+	/*
+	 * The audio(4) driver doesn't support POLLOUT, so if it is
+	 * requested, don't set the struct pollfd. The AUDIO_MIXER_WRITE
+	 * ioctl never blocks, so just return POLLOUT in sioctl_sun_revents().
+	 */
+	if (events & POLLOUT)
+		return 0;
+
 	pfd->fd = hdl->fd;
 	pfd->events = POLLIN;
-	hdl->events = events;
 	return 1;
 }
 
@@ -484,6 +493,9 @@ sioctl_sun_revents(struct sioctl_hdl *arg, struct pollfd *pfd)
 	struct sioctl_sun_hdl *hdl = (struct sioctl_sun_hdl *)arg;
 	struct volume *vol;
 	int idx, n;
+
+	if (hdl->events & POLLOUT)
+		return POLLOUT;
 
 	if (pfd->revents & POLLIN) {
 		while (1) {
@@ -514,5 +526,5 @@ sioctl_sun_revents(struct sioctl_hdl *arg, struct pollfd *pfd)
 				return POLLHUP;
 		}
 	}
-	return hdl->events & POLLOUT;
+	return 0;
 }
