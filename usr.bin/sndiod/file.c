@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.26 2022/12/26 19:16:03 jmc Exp $	*/
+/*	$OpenBSD: file.c,v 1.27 2024/07/23 06:34:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -63,7 +63,7 @@
 void timo_update(unsigned int);
 void timo_init(void);
 void timo_done(void);
-void file_process(struct file *, struct pollfd *);
+int file_process(struct file *, struct pollfd *);
 
 struct timespec file_ts;
 struct file *file_list;
@@ -270,10 +270,10 @@ file_del(struct file *f)
 #endif
 }
 
-void
+int
 file_process(struct file *f, struct pollfd *pfd)
 {
-	int revents;
+	int rc, revents;
 #ifdef DEBUG
 	struct timespec ts0, ts1;
 	long us;
@@ -283,14 +283,21 @@ file_process(struct file *f, struct pollfd *pfd)
 	if (log_level >= 3)
 		clock_gettime(CLOCK_UPTIME, &ts0);
 #endif
+	rc = 0;
 	revents = (f->state != FILE_ZOMB) ?
 	    f->ops->revents(f->arg, pfd) : 0;
-	if ((revents & POLLHUP) && (f->state != FILE_ZOMB))
+	if ((revents & POLLHUP) && (f->state != FILE_ZOMB)) {
 		f->ops->hup(f->arg);
-	if ((revents & POLLIN) && (f->state != FILE_ZOMB))
+		rc = 1;
+	}
+	if ((revents & POLLIN) && (f->state != FILE_ZOMB)) {
 		f->ops->in(f->arg);
-	if ((revents & POLLOUT) && (f->state != FILE_ZOMB))
+		rc = 1;
+	}
+	if ((revents & POLLOUT) && (f->state != FILE_ZOMB)) {
 		f->ops->out(f->arg);
+		rc = 1;
+	}
 #ifdef DEBUG
 	if (log_level >= 3) {
 		clock_gettime(CLOCK_UPTIME, &ts1);
@@ -304,6 +311,7 @@ file_process(struct file *f, struct pollfd *pfd)
 		}
 	}
 #endif
+	return rc;
 }
 
 int
@@ -370,11 +378,19 @@ file_poll(void)
 	/*
 	 * process files that do not rely on poll
 	 */
+	res = 0;
 	for (f = file_list; f != NULL; f = f->next) {
 		if (f->nfds > 0)
 			continue;
-		file_process(f, NULL);
+		res |= file_process(f, NULL);
 	}
+	/*
+	 * The processing may have changed the poll(2) conditions of
+	 * other files, so restart the loop to force their poll(2) event
+	 * masks to be reevaluated.
+	 */
+	if (res)
+		return 1;
 
 	/*
 	 * Sleep. Calculate the number of milliseconds poll(2) must
