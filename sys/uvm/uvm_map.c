@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.329 2024/06/02 15:31:57 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.330 2024/07/24 12:17:31 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1346,7 +1346,6 @@ void
 uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 {
 	struct vm_map_entry *entry, *tmp;
-	int waitok = flags & UVM_PLA_WAITOK;
 
 	TAILQ_FOREACH_SAFE(entry, deadq, dfree.deadq, tmp) {
 		/* Drop reference to amap, if we've got one. */
@@ -1356,21 +1355,6 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 			    atop(entry->end - entry->start),
 			    flags & AMAP_REFALL);
 
-		/* Skip entries for which we have to grab the kernel lock. */
-		if (UVM_ET_ISSUBMAP(entry) || UVM_ET_ISOBJ(entry))
-			continue;
-
-		TAILQ_REMOVE(deadq, entry, dfree.deadq);
-		uvm_mapent_free(entry);
-	}
-
-	if (TAILQ_EMPTY(deadq))
-		return;
-
-	KERNEL_LOCK();
-	while ((entry = TAILQ_FIRST(deadq)) != NULL) {
-		if (waitok)
-			uvm_pause();
 		/* Drop reference to our backing object, if we've got one. */
 		if (UVM_ET_ISSUBMAP(entry)) {
 			/* ... unlikely to happen, but play it safe */
@@ -1381,11 +1365,9 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 			    entry->object.uvm_obj);
 		}
 
-		/* Step to next. */
 		TAILQ_REMOVE(deadq, entry, dfree.deadq);
 		uvm_mapent_free(entry);
 	}
-	KERNEL_UNLOCK();
 }
 
 void
@@ -2476,10 +2458,6 @@ uvm_map_teardown(struct vm_map *map)
 #endif
 	int			 i;
 
-	KERNEL_ASSERT_LOCKED();
-	KERNEL_UNLOCK();
-	KERNEL_ASSERT_UNLOCKED();
-
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	vm_map_lock(map);
@@ -2535,9 +2513,7 @@ uvm_map_teardown(struct vm_map *map)
 		numq++;
 	KASSERT(numt == numq);
 #endif
-	uvm_unmap_detach(&dead_entries, UVM_PLA_WAITOK);
-
-	KERNEL_LOCK();
+	uvm_unmap_detach(&dead_entries, 0);
 
 	pmap_destroy(map->pmap);
 	map->pmap = NULL;
@@ -3417,10 +3393,8 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 void
 uvmspace_addref(struct vmspace *vm)
 {
-	KERNEL_ASSERT_LOCKED();
 	KASSERT(vm->vm_refcnt > 0);
-
-	vm->vm_refcnt++;
+	atomic_inc_int(&vm->vm_refcnt);
 }
 
 /*
@@ -3429,9 +3403,7 @@ uvmspace_addref(struct vmspace *vm)
 void
 uvmspace_free(struct vmspace *vm)
 {
-	KERNEL_ASSERT_LOCKED();
-
-	if (--vm->vm_refcnt == 0) {
+	if (atomic_dec_int_nv(&vm->vm_refcnt) == 0) {
 		/*
 		 * lock the map, to wait out all other references to it.  delete
 		 * all of the mappings and pages they hold, then call the pmap
@@ -3439,8 +3411,11 @@ uvmspace_free(struct vmspace *vm)
 		 */
 #ifdef SYSVSHM
 		/* Get rid of any SYSV shared memory segments. */
-		if (vm->vm_shm != NULL)
+		if (vm->vm_shm != NULL) {
+			KERNEL_LOCK();
 			shmexit(vm);
+			KERNEL_UNLOCK();
+		}
 #endif
 
 		uvm_map_teardown(&vm->vm_map);

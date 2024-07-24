@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.174 2024/04/02 08:39:17 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.175 2024/07/24 12:17:31 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -195,11 +195,12 @@ struct pmap;
  *  Locks used to protect struct members in this file:
  *	K	kernel lock
  *	I	immutable after creation
+ *	a	atomic operations
  *	v	vm_map's lock
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
-	int	vm_refcnt;	/* [K] number of references */
+	int	vm_refcnt;	/* [a] number of references */
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize
