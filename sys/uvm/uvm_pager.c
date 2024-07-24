@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.91 2023/08/11 17:53:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.92 2024/07/24 12:18:10 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -134,24 +134,6 @@ uvm_pseg_get(int flags)
 	int i;
 	struct uvm_pseg *pseg;
 
-	/*
-	 * XXX Prevent lock ordering issue in uvm_unmap_detach().  A real
-	 * fix would be to move the KERNEL_LOCK() out of uvm_unmap_detach().
-	 *
-	 *  witness_checkorder() at witness_checkorder+0xba0
-	 *  __mp_lock() at __mp_lock+0x5f
-	 *  uvm_unmap_detach() at uvm_unmap_detach+0xc5
-	 *  uvm_map() at uvm_map+0x857
-	 *  uvm_km_valloc_try() at uvm_km_valloc_try+0x65
-	 *  uvm_pseg_get() at uvm_pseg_get+0x6f
-	 *  uvm_pagermapin() at uvm_pagermapin+0x45
-	 *  uvn_io() at uvn_io+0xcf
-	 *  uvn_get() at uvn_get+0x156
-	 *  uvm_fault_lower() at uvm_fault_lower+0x28a
-	 *  uvm_fault() at uvm_fault+0x1b3
-	 *  upageflttrap() at upageflttrap+0x62
-	 */
-	KERNEL_LOCK();
 	mtx_enter(&uvm_pseg_lck);
 
 pager_seg_restart:
@@ -178,7 +160,6 @@ pager_seg_restart:
 			if (!UVM_PSEG_INUSE(pseg, i)) {
 				pseg->use |= 1 << i;
 				mtx_leave(&uvm_pseg_lck);
-				KERNEL_UNLOCK();
 				return pseg->start + i * MAXBSIZE;
 			}
 		}
@@ -191,7 +172,6 @@ pager_seg_fail:
 	}
 
 	mtx_leave(&uvm_pseg_lck);
-	KERNEL_UNLOCK();
 	return 0;
 }
 
