@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BUF_MEM_new.3,v 1.18 2023/07/27 06:20:45 tb Exp $
+.\"	$OpenBSD: BUF_MEM_new.3,v 1.19 2024/07/24 08:57:58 tb Exp $
 .\"	OpenSSL doc/crypto/buffer.pod 18edda0f Sep 20 03:28:54 2000 +0000
 .\"	not merged: 74924dcb, 58e3457a, 21b0fa91, 7644a9ae
 .\"	OpenSSL doc/crypto/BUF_MEM_new.pod 53934822 Jun 9 16:39:19 2016 -0400
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 27 2023 $
+.Dd $Mdocdate: July 24 2024 $
 .Dt BUF_MEM_NEW 3
 .Os
 .Sh NAME
@@ -90,8 +90,7 @@ The library uses the
 .Vt BUF_MEM
 structure defined in buffer.h:
 .Bd -literal
-typedef struct buf_mem_st
-{
+typedef struct buf_mem_st {
 	size_t length;	/* current number of bytes */
 	char *data;
 	size_t max;	/* size of buffer */
