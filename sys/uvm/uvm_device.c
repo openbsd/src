@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.66 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.67 2024/07/24 12:15:55 mpi Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -244,8 +244,6 @@ static void
 udv_detach(struct uvm_object *uobj)
 {
 	struct uvm_device *udv = (struct uvm_device *)uobj;
-
-	KERNEL_ASSERT_LOCKED();
 
 	/*
 	 * loop until done
