@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.333 2024/07/22 09:43:47 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.334 2024/07/24 15:31:08 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2164,6 +2164,7 @@ single_thread_set(struct proc *p, int flags)
 		panic("single_thread_mode = %d", mode);
 #endif
 	}
+	KASSERT((p->p_flag & P_SUSPSINGLE) == 0);
 	pr->ps_single = p;
 	pr->ps_singlecnt = pr->ps_threadcnt;
 
@@ -2233,6 +2234,7 @@ single_thread_wait(struct process *pr, int recheck)
 		if (!recheck)
 			break;
 	}
+	KASSERT((pr->ps_single->p_flag & P_SUSPSINGLE) == 0);
 	mtx_leave(&pr->ps_mtx);
 
 	return wait;
