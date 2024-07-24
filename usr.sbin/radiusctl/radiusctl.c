@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.11 2024/07/22 09:39:23 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.12 2024/07/24 08:27:20 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -368,7 +368,8 @@ radius_test(struct parse_result *res)
 	u32val = htonl(res->nas_port);
 	radius_put_raw_attr(reqpkt, RADIUS_TYPE_NAS_PORT, &u32val, 4);
 
-	radius_put_message_authenticator(reqpkt, res->secret);
+	if (res->msgauth)
+		radius_put_message_authenticator(reqpkt, res->secret);
 
 	event_init();
 
@@ -500,6 +501,10 @@ radius_dump(FILE *out, RADIUS_PACKET *pkt, bool resp, const char *secret)
 		    : (radius_check_message_authenticator(pkt, secret) == 0)
 		    ? "Verified" : "NG");
 	}
+	if (!resp)
+		fprintf(out, "    Message-Authenticator     = %s\n",
+		    (radius_has_attr(pkt, RADIUS_TYPE_MESSAGE_AUTHENTICATOR))
+		    ? "(Present)" : "(Not present)");
 
 	if (radius_get_string_attr(pkt, RADIUS_TYPE_USER_NAME, buf,
 	    sizeof(buf)) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.3 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: parser.h,v 1.4 2024/07/24 08:27:20 yasuoka Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.h 1.9 */
 /*
@@ -60,6 +60,7 @@ struct parse_result {
 	const char		*password;
 	u_short			 port;
 	int			 nas_port;
+	int			 msgauth;
 	enum auth_method	 auth_method;
 
 	/* number of packets to try sending */

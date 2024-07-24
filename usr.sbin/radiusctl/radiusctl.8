@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusctl.8,v 1.8 2024/07/14 03:47:44 jsg Exp $
+.\"	$OpenBSD: radiusctl.8,v 1.9 2024/07/24 08:27:20 yasuoka Exp $
 .\"
 .\" Copyright (c) YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 14 2024 $
+.Dd $Mdocdate: July 24 2024 $
 .Dt RADIUSCTL 8
 .Os
 .Sh NAME
@@ -86,6 +86,9 @@ the default port number 1812 is used.
 .It Cm tries Ar number
 Specifies the number of packets to try sending.
 The default is 3.
+.It Cm msgauth Ar yes | no
+Specifies if Message-Authenticator is given for the access request packet.
+The default is yes.
 .El
 .It Cm ipcp show
 Show all ipcp sessions in the database of

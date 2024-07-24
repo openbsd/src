@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: parser.c,v 1.4 2024/07/24 08:27:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -44,6 +44,7 @@ enum token_type {
 	MAXWAIT,
 	FLAGS,
 	SESSION_SEQ,
+	MSGAUTH,
 	ENDTOKEN
 };
 
@@ -58,6 +59,7 @@ static struct parse_result res = {
 	.tries		= TEST_TRIES_DEFAULT,
 	.interval	= { TEST_INTERVAL_DEFAULT, 0 },
 	.maxwait	= { TEST_MAXWAIT_DEFAULT, 0 },
+	.msgauth	= 1
 };
 
 static const struct token t_test[];
@@ -71,6 +73,7 @@ static const struct token t_nas_port[];
 static const struct token t_tries[];
 static const struct token t_interval[];
 static const struct token t_maxwait[];
+static const struct token t_yesno[];
 static const struct token t_ipcp[];
 static const struct token t_ipcp_flags[];
 static const struct token t_ipcp_session_seq[];
@@ -105,6 +108,7 @@ static const struct token t_test_opts[] = {
 	{ KEYWORD,	"interval",	NONE,		t_interval },
 	{ KEYWORD,	"tries",	NONE,		t_tries },
 	{ KEYWORD,	"maxwait",	NONE,		t_maxwait },
+	{ KEYWORD,	"msgauth",	NONE,		t_yesno },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
@@ -140,6 +144,12 @@ static const struct token t_interval[] = {
 
 static const struct token t_maxwait[] = {
 	{ MAXWAIT,	"",		NONE,		t_test_opts },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_yesno[] = {
+	{ MSGAUTH,	"yes",		1,		t_test_opts },
+	{ MSGAUTH,	"no",		0,		t_test_opts },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
@@ -365,6 +375,14 @@ match_token(char *word, const struct token table[])
 				printf("invalid argument: %s is %s for "
 				"\"session-id\"", word, errstr);
 			t = &table[i];
+		case MSGAUTH:
+			if (word != NULL &&
+			    strcmp(word, table[i].keyword) == 0) {
+				match++;
+				res.msgauth = table[i].value;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -435,6 +453,9 @@ show_valid_args(const struct token table[])
 			break;
 		case SESSION_SEQ:
 			fprintf(stderr, "  <sequence number>\n");
+			break;
+		case MSGAUTH:
+			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
 		case ENDTOKEN:
 			break;
