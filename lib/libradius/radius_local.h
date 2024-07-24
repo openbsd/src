@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_local.h,v 1.1 2015/07/20 23:52:29 yasuoka Exp $ */
+/*	$OpenBSD: radius_local.h,v 1.2 2024/07/24 08:19:16 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -74,6 +74,8 @@ struct _RADIUS_PACKET {
 #define ATTRS_ADVANCE(x) (x = ATTRS_NEXT(x))
 
 int radius_ensure_add_capacity(RADIUS_PACKET * packet, size_t capacity);
+int radius_unshift_raw_attr(RADIUS_PACKET * packet, uint8_t type,
+    const void *buf, size_t length);
 
 #define ROUNDUP(a, b)	((((a) + (b) - 1) / (b)) * (b))
 #define	MINIMUM(a, b)	(((a) < (b))? (a) : (b))

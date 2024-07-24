@@ -1,4 +1,4 @@
-.\" $OpenBSD: radius_new_request_packet.3,v 1.6 2022/09/11 06:38:11 jmc Exp $
+.\" $OpenBSD: radius_new_request_packet.3,v 1.7 2024/07/24 08:19:16 yasuoka Exp $
 .\"
 .\" Copyright (c) 2009 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: July 24 2024 $
 .Dt RADIUS_NEW_REQUEST_PACKET 3
 .Os
 .Sh NAME
@@ -285,6 +285,10 @@ There are helper functions for Message-Authenticator attributes.
 and
 .Fn radius_set_message_authenticator
 calculate a Message-Authenticator and put or set it to packet, respectively.
+When
+.Fn radius_put_message_authenticator
+is used,
+the Message-Authenticator attribute is placed at the first in the attributes.
 .Pp
 .Fn radius_check_message_authenticator
 checks a Message-Authenticator.
@@ -368,9 +372,9 @@ NULL on failure.
 .Sh HISTORY
 The
 .Nm radius+
-library was first written by UMEZAWA Takeshi in 2002 for the ID gateway service
-of Internet Initiative Japan.
-YASUOKA Masahiko added support for Message-Authentication attributes in 2008.
+library was first written by UMEZAWA Takeshi in 2002 for the ID Gateway service
+of Internet Initiative Japan Inc.
+YASUOKA Masahiko added support for Message-Authenticator attributes in 2008.
 .Ox
 project rewrote C++ code to pure C code in 2010.
 The

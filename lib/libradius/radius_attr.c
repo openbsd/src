@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_attr.c,v 1.2 2023/07/08 08:53:26 yasuoka Exp $ */
+/*	$OpenBSD: radius_attr.c,v 1.3 2024/07/24 08:19:16 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -191,6 +191,31 @@ radius_put_raw_attr(RADIUS_PACKET * packet, uint8_t type, const void *buf,
 		return (-1);
 
 	newattr = ATTRS_END(packet->pdata);
+	newattr->type = type;
+	newattr->length = length + 2;
+	memcpy(newattr->data, buf, length);
+	packet->pdata->length = htons(radius_get_length(packet) + length + 2);
+
+	return (0);
+}
+
+int
+radius_unshift_raw_attr(RADIUS_PACKET * packet, uint8_t type, const void *buf,
+    size_t length)
+{
+	RADIUS_ATTRIBUTE	*newattr;
+
+	if (length > 255 - 2)
+		return (-1);
+
+	if (radius_ensure_add_capacity(packet, length + 2) != 0)
+		return (-1);
+
+	memmove(packet->pdata->attributes + length + 2,
+	    packet->pdata->attributes,
+	    radius_get_length(packet) - sizeof(RADIUS_PACKET_DATA));
+
+	newattr = ATTRS_BEGIN(packet->pdata);
 	newattr->type = type;
 	newattr->length = length + 2;
 	memcpy(newattr->data, buf, length);

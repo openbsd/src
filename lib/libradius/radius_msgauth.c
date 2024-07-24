@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_msgauth.c,v 1.2 2021/12/16 17:32:51 tb Exp $ */
+/*	$OpenBSD: radius_msgauth.c,v 1.3 2024/07/24 08:19:16 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -112,8 +112,8 @@ radius_put_message_authenticator(RADIUS_PACKET * packet, const char *secret)
 	 * because content of Message-Authenticator attribute is assumed zero
 	 * during calculation.
 	 */
-	if (radius_put_raw_attr(packet, RADIUS_TYPE_MESSAGE_AUTHENTICATOR,
-		ma, sizeof(ma)) != 0)
+	if (radius_unshift_raw_attr(packet, RADIUS_TYPE_MESSAGE_AUTHENTICATOR,
+	    ma, sizeof(ma)) != 0)
 		return (-1);
 
 	return (radius_set_message_authenticator(packet, secret));
