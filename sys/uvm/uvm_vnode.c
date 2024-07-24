@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.132 2023/04/10 04:21:20 jsg Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.133 2024/07/24 12:16:21 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -306,10 +306,12 @@ uvn_detach(struct uvm_object *uobj)
 	struct vnode *vp;
 	int oldflags;
 
+	KERNEL_LOCK();
 	rw_enter(uobj->vmobjlock, RW_WRITE);
 	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		rw_exit(uobj->vmobjlock);
+		KERNEL_UNLOCK();
 		return;
 	}
 
@@ -365,6 +367,7 @@ uvn_detach(struct uvm_object *uobj)
 
 	if ((uvn->u_flags & UVM_VNODE_RELKILL) == 0) {
 		rw_exit(uobj->vmobjlock);
+		KERNEL_UNLOCK();
 		return;
 	}
 
@@ -387,8 +390,7 @@ out:
 
 	/* drop our reference to the vnode. */
 	vrele(vp);
-
-	return;
+	KERNEL_UNLOCK();
 }
 
 /*
