@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.29 2024/07/14 07:57:42 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.30 2024/07/24 21:04:12 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1987,10 +1987,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
             PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
 
 	/* NPT */
-	if (vmm_softc->mode == VMM_MODE_RVI) {
-		vmcb->v_np_enable = 1;
-		vmcb->v_n_cr3 = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
-	}
+	vmcb->v_np_enable = 1;
+	vmcb->v_n_cr3 = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
 
 	/* Enable SVME in EFER (must always be set) */
 	vmcb->v_efer |= EFER_SVME;
@@ -2363,11 +2361,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_USE_TPR_SHADOW;
 	want0 = 0;
 
-	if (vmm_softc->mode == VMM_MODE_EPT) {
-		want1 |= IA32_VMX_ACTIVATE_SECONDARY_CONTROLS;
-		want0 |= IA32_VMX_CR3_LOAD_EXITING |
-		    IA32_VMX_CR3_STORE_EXITING;
-	}
+	want1 |= IA32_VMX_ACTIVATE_SECONDARY_CONTROLS;
+	want0 |= IA32_VMX_CR3_LOAD_EXITING | IA32_VMX_CR3_STORE_EXITING;
 
 	if (vcpu->vc_vmx_basic & IA32_VMX_TRUE_CTLS_AVAIL) {
 		ctrl = IA32_VMX_TRUE_PROCBASED_CTLS;
@@ -2403,7 +2398,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * IA32_VMX_UNRESTRICTED_GUEST - enable unrestricted guest (if caller
 	 *     specified CR0_PG | CR0_PE in %cr0 in the 'vrs' parameter)
 	 */
-	want1 = 0;
+	want1 = IA32_VMX_ENABLE_EPT;
 
 	/* XXX checking for 2ndary controls can be combined here */
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
@@ -2414,9 +2409,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 			vcpu->vc_vmx_vpid_enabled = 1;
 		}
 	}
-
-	if (vmm_softc->mode == VMM_MODE_EPT)
-		want1 |= IA32_VMX_ENABLE_EPT;
 
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
@@ -5419,8 +5411,7 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 	/* If the guest hasn't enabled paging ... */
 	if (!(r & CR0_PG) && (oldcr0 & CR0_PG)) {
 		/* Paging was disabled (prev. enabled) - Flush TLB */
-		if (vmm_softc->mode == VMM_MODE_EPT &&
-		    vcpu->vc_vmx_vpid_enabled) {
+		if (vcpu->vc_vmx_vpid_enabled) {
 			vid.vid_vpid = vcpu->vc_vpid;
 			vid.vid_addr = 0;
 			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
