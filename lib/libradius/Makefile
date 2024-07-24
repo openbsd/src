@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2016/03/30 06:38:43 jmc Exp $
+#	$OpenBSD: Makefile,v 1.4 2024/07/24 08:22:26 yasuoka Exp $
 
 LIB=    	radius
 SRCS=		radius.c radius_attr.c radius_msgauth.c radius_userpass.c \
@@ -9,7 +9,8 @@ CFLAGS+=	-Wall
 
 MAN=		radius_new_request_packet.3
 
-.include <bsd.lib.mk>
+VERSION_SCRIPT=	Symbols.map
+SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 includes:
 	@cd ${.CURDIR}; for i in $(INCS); do \
@@ -19,3 +20,10 @@ includes:
 		echo $$j; \
 		eval "$$j"; \
 	done
+
+${VERSION_SCRIPT}: ${SYMBOL_LIST}
+	{ printf '{\n\tglobal:\n'; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
+	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
+
+.include <bsd.lib.mk>
