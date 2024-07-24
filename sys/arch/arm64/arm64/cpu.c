@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.129 2024/07/21 18:57:31 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.130 2024/07/24 21:24:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -242,6 +242,9 @@ int cpu_node;
 uint64_t cpu_id_aa64isar0;
 uint64_t cpu_id_aa64isar1;
 uint64_t cpu_id_aa64isar2;
+uint64_t cpu_id_aa64mmfr0;
+uint64_t cpu_id_aa64mmfr1;
+uint64_t cpu_id_aa64mmfr2;
 uint64_t cpu_id_aa64pfr0;
 uint64_t cpu_id_aa64pfr1;
 
@@ -487,6 +490,7 @@ cpu_identify(struct cpu_info *ci)
 	static uint64_t prev_id_aa64isar2;
 	static uint64_t prev_id_aa64mmfr0;
 	static uint64_t prev_id_aa64mmfr1;
+	static uint64_t prev_id_aa64mmfr2;
 	static uint64_t prev_id_aa64pfr0;
 	static uint64_t prev_id_aa64pfr1;
 	uint64_t midr, impl, part;
@@ -642,6 +646,7 @@ cpu_identify(struct cpu_info *ci)
 	    READ_SPECIALREG(id_aa64isar2_el1) == prev_id_aa64isar2 &&
 	    READ_SPECIALREG(id_aa64mmfr0_el1) == prev_id_aa64mmfr0 &&
 	    READ_SPECIALREG(id_aa64mmfr1_el1) == prev_id_aa64mmfr1 &&
+	    READ_SPECIALREG(id_aa64mmfr2_el1) == prev_id_aa64mmfr2 &&
 	    READ_SPECIALREG(id_aa64pfr0_el1) == prev_id_aa64pfr0 &&
 	    READ_SPECIALREG(id_aa64pfr1_el1) == prev_id_aa64pfr1)
 		return;
@@ -660,6 +665,18 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (READ_SPECIALREG(id_aa64isar2_el1) != cpu_id_aa64isar2) {
 		printf("\n%s: mismatched ID_AA64ISAR2_EL1",
+		    ci->ci_dev->dv_xname);
+	}
+	if (READ_SPECIALREG(id_aa64mmfr0_el1) != cpu_id_aa64mmfr0) {
+		printf("\n%s: mismatched ID_AA64MMFR0_EL1",
+		    ci->ci_dev->dv_xname);
+	}
+	if (READ_SPECIALREG(id_aa64mmfr1_el1) != cpu_id_aa64mmfr1) {
+		printf("\n%s: mismatched ID_AA64MMFR1_EL1",
+		    ci->ci_dev->dv_xname);
+	}
+	if (READ_SPECIALREG(id_aa64mmfr2_el1) != cpu_id_aa64mmfr2) {
+		printf("\n%s: mismatched ID_AA64MMFR2_EL1",
 		    ci->ci_dev->dv_xname);
 	}
 	id = READ_SPECIALREG(id_aa64pfr0_el1);
@@ -939,6 +956,16 @@ cpu_identify(struct cpu_info *ci)
 	}
 
 	/*
+	 * ID_AA64MMFR2
+	 */
+	id = READ_SPECIALREG(id_aa64mmfr2_el1);
+
+	if (ID_AA64MMFR2_IDS(id) >= ID_AA64MMFR2_IDS_IMPL) {
+		printf("%sIDS", sep);
+		sep = ",";
+	}
+
+	/*
 	 * ID_AA64PFR0
 	 */
 	id = READ_SPECIALREG(id_aa64pfr0_el1);
@@ -989,6 +1016,7 @@ cpu_identify(struct cpu_info *ci)
 	prev_id_aa64isar2 = READ_SPECIALREG(id_aa64isar2_el1);
 	prev_id_aa64mmfr0 = READ_SPECIALREG(id_aa64mmfr0_el1);
 	prev_id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
+	prev_id_aa64mmfr2 = READ_SPECIALREG(id_aa64mmfr2_el1);
 	prev_id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
 	prev_id_aa64pfr1 = READ_SPECIALREG(id_aa64pfr1_el1);
 
@@ -1023,6 +1051,7 @@ cpu_identify(struct cpu_info *ci)
 void
 cpu_identify_cleanup(void)
 {
+	uint64_t id_aa64mmfr2;
 	uint64_t value;
 
 	/* ID_AA64ISAR0_EL1 */
@@ -1039,6 +1068,15 @@ cpu_identify_cleanup(void)
 	value = cpu_id_aa64isar2 & ID_AA64ISAR2_MASK;
 	value &= ~ID_AA64ISAR2_CLRBHB_MASK;
 	cpu_id_aa64isar2 = value;
+
+	/* ID_AA64MMFR0_EL1 */
+	cpu_id_aa64mmfr0 = 0;
+
+	/* ID_AA64MMFR1_EL1 */
+	cpu_id_aa64mmfr1 = 0;
+
+	/* ID_AA64MMFR2_EL1 */
+	cpu_id_aa64mmfr2 = 0;
 
 	/* ID_AA64PFR0_EL1 */
 	value = 0;
@@ -1071,7 +1109,9 @@ cpu_identify_cleanup(void)
 		hwcap |= HWCAP_ATOMICS;
 	/* HWCAP_FPHP */
 	/* HWCAP_ASIMDHP */
-	/* HWCAP_CPUID */
+	id_aa64mmfr2 = READ_SPECIALREG(id_aa64mmfr2_el1);
+	if (ID_AA64MMFR2_IDS(id_aa64mmfr2) >= ID_AA64MMFR2_IDS_IMPL)
+		hwcap |= HWCAP_CPUID;
 	if (ID_AA64ISAR0_RDM(cpu_id_aa64isar0) >= ID_AA64ISAR0_RDM_IMPL)
 		hwcap |= HWCAP_ASIMDRDM;
 	if (ID_AA64ISAR1_JSCVT(cpu_id_aa64isar1) >= ID_AA64ISAR1_JSCVT_IMPL)
@@ -1271,6 +1311,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		cpu_id_aa64isar0 = READ_SPECIALREG(id_aa64isar0_el1);
 		cpu_id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
 		cpu_id_aa64isar2 = READ_SPECIALREG(id_aa64isar2_el1);
+		cpu_id_aa64mmfr0 = READ_SPECIALREG(id_aa64mmfr0_el1);
+		cpu_id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
+		cpu_id_aa64mmfr2 = READ_SPECIALREG(id_aa64mmfr2_el1);
 		cpu_id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
 		cpu_id_aa64pfr1 = READ_SPECIALREG(id_aa64pfr1_el1);
 

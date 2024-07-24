@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.91 2024/07/17 15:21:59 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.92 2024/07/24 21:24:18 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -360,8 +360,11 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case CPU_ID_AA64PFR1:
 		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64pfr1);
 	case CPU_ID_AA64MMFR0:
+		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64mmfr0);
 	case CPU_ID_AA64MMFR1:
+		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64mmfr1);
 	case CPU_ID_AA64MMFR2:
+		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64mmfr2);
 	case CPU_ID_AA64SMFR0:
 	case CPU_ID_AA64ZFR0:
 		return sysctl_rdquad(oldp, oldlenp, newp, 0);

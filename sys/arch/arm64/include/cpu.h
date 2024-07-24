@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.49 2024/07/17 15:21:59 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.50 2024/07/24 21:24:18 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -64,6 +64,9 @@
 extern uint64_t cpu_id_aa64isar0;
 extern uint64_t cpu_id_aa64isar1;
 extern uint64_t cpu_id_aa64isar2;
+extern uint64_t cpu_id_aa64mmfr0;
+extern uint64_t cpu_id_aa64mmfr1;
+extern uint64_t cpu_id_aa64mmfr2;
 extern uint64_t cpu_id_aa64pfr0;
 extern uint64_t cpu_id_aa64pfr1;
 

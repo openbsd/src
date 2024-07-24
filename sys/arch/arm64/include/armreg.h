@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.35 2024/06/23 10:17:16 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.36 2024/07/24 21:24:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -171,6 +171,26 @@
 #define	 ISS_DATA_DFSC_ECC_L3	(0x1f << 0)
 #define	 ISS_DATA_DFSC_ALIGN	(0x21 << 0)
 #define	 ISS_DATA_DFSC_TLB_CONFLICT (0x30 << 0)
+#define	 ISS_MSR_DIR_SHIFT	0
+#define	 ISS_MSR_DIR		(0x01 << ISS_MSR_DIR_SHIFT)
+#define	 ISS_MSR_Rt_SHIFT	5
+#define	 ISS_MSR_Rt_MASK	(0x1f << ISS_MSR_Rt_SHIFT)
+#define	 ISS_MSR_Rt(x)		(((x) & ISS_MSR_Rt_MASK) >> ISS_MSR_Rt_SHIFT)
+#define	 ISS_MSR_CRm_SHIFT	1
+#define	 ISS_MSR_CRm_MASK	(0xf << ISS_MSR_CRm_SHIFT)
+#define	 ISS_MSR_CRm(x)		(((x) & ISS_MSR_CRm_MASK) >> ISS_MSR_CRm_SHIFT)
+#define	 ISS_MSR_CRn_SHIFT	10
+#define	 ISS_MSR_CRn_MASK	(0xf << ISS_MSR_CRn_SHIFT)
+#define	 ISS_MSR_CRn(x)		(((x) & ISS_MSR_CRn_MASK) >> ISS_MSR_CRn_SHIFT)
+#define	 ISS_MSR_OP1_SHIFT	14
+#define	 ISS_MSR_OP1_MASK	(0x7 << ISS_MSR_OP1_SHIFT)
+#define	 ISS_MSR_OP1(x)		(((x) & ISS_MSR_OP1_MASK) >> ISS_MSR_OP1_SHIFT)
+#define	 ISS_MSR_OP2_SHIFT	17
+#define	 ISS_MSR_OP2_MASK	(0x7 << ISS_MSR_OP2_SHIFT)
+#define	 ISS_MSR_OP2(x)		(((x) & ISS_MSR_OP2_MASK) >> ISS_MSR_OP2_SHIFT)
+#define	 ISS_MSR_OP0_SHIFT	20
+#define	 ISS_MSR_OP0_MASK	(0x3 << ISS_MSR_OP0_SHIFT)
+#define	 ISS_MSR_OP0(x)		(((x) & ISS_MSR_OP0_MASK) >> ISS_MSR_OP0_SHIFT)
 #define	ESR_ELx_IL		(0x01 << 25)
 #define	ESR_ELx_EC_SHIFT	26
 #define	ESR_ELx_EC_MASK		(0x3f << 26)
@@ -537,6 +557,10 @@
 #define	ID_AA64MMFR2_CCIDX_MASK		(0xfULL << ID_AA64MMFR2_CCIDX_SHIFT)
 #define	ID_AA64MMFR2_CCIDX(x)		((x) & ID_AA64MMFR2_CCIDX_MASK)
 #define	 ID_AA64MMFR2_CCIDX_IMPL	(0x1ULL << ID_AA64MMFR2_CCIDX_SHIFT)
+#define	ID_AA64MMFR2_IDS_SHIFT		36
+#define	ID_AA64MMFR2_IDS_MASK		(0xfULL << ID_AA64MMFR2_IDS_SHIFT)
+#define	ID_AA64MMFR2_IDS(x)		((x) & ID_AA64MMFR2_IDS_MASK)
+#define	 ID_AA64MMFR2_IDS_IMPL		(0x1ULL << ID_AA64MMFR2_IDS_SHIFT)
 
 /* ID_AA64PFR0_EL1 */
 #define	ID_AA64PFR0_MASK		0xff0fffffffffffffULL
