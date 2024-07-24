@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.78 2023/09/22 20:03:05 mvs Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.79 2024/07/24 13:37:05 claudio Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -73,10 +73,11 @@
 /*
  * Locking:
  *	L	log_mtx
+ *	Q	log_kq_mtx
  */
 struct logsoftc {
 	int	sc_state;		/* [L] see above for possibilities */
-	struct	klist sc_klist;		/* process waiting on kevent call */
+	struct	klist sc_klist;		/* [Q] process waiting on kevent call */
 	struct	sigio_ref sc_sigio;	/* async I/O registration */
 	int	sc_need_wakeup;		/* if set, wake up waiters */
 	struct timeout sc_tick;		/* wakeup poll timeout */
@@ -97,6 +98,8 @@ struct	rwlock syslogf_rwlock = RWLOCK_INITIALIZER("syslogf");
  */
 struct	mutex log_mtx =
     MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "logmtx", MTX_NOWITNESS);
+struct	mutex log_kq_mtx =
+    MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "logkqmtx", MTX_NOWITNESS);
 
 void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
@@ -208,7 +211,7 @@ logopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
-	klist_init_mutex(&logsoftc.sc_klist, &log_mtx);
+	klist_init_mutex(&logsoftc.sc_klist, &log_kq_mtx);
 	sigio_init(&logsoftc.sc_sigio);
 	timeout_set(&logsoftc.sc_tick, logtick, NULL);
 	timeout_add_msec(&logsoftc.sc_tick, LOG_TICK);
@@ -336,7 +339,9 @@ filt_logread(struct knote *kn, long hint)
 {
 	struct msgbuf *mbp = kn->kn_hook;
 
+	mtx_enter(&log_mtx);
 	kn->kn_data = msgbuf_getlen(mbp);
+	mtx_leave(&log_mtx);
 	return (kn->kn_data != 0);
 }
 
@@ -345,9 +350,9 @@ filt_logmodify(struct kevent *kev, struct knote *kn)
 {
 	int active;
 
-	mtx_enter(&log_mtx);
+	mtx_enter(&log_kq_mtx);
 	active = knote_modify(kev, kn);
-	mtx_leave(&log_mtx);
+	mtx_leave(&log_kq_mtx);
 
 	return (active);
 }
@@ -357,9 +362,9 @@ filt_logprocess(struct knote *kn, struct kevent *kev)
 {
 	int active;
 
-	mtx_enter(&log_mtx);
+	mtx_enter(&log_kq_mtx);
 	active = knote_process(kn, kev);
-	mtx_leave(&log_mtx);
+	mtx_leave(&log_kq_mtx);
 
 	return (active);
 }
@@ -404,8 +409,9 @@ logtick(void *arg)
 	state = logsoftc.sc_state;
 	if (logsoftc.sc_state & LOG_RDWAIT)
 		logsoftc.sc_state &= ~LOG_RDWAIT;
-	knote_locked(&logsoftc.sc_klist, 0);
 	mtx_leave(&log_mtx);
+
+	knote(&logsoftc.sc_klist, 0);
 
 	if (state & LOG_ASYNC)
 		pgsigio(&logsoftc.sc_sigio, SIGIO, 0);
