@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.2 2023/07/01 15:50:18 drahn Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.3 2024/07/25 20:21:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -795,13 +795,6 @@ qcpas_glink_recv_open(struct qcpas_softc *sc, uint32_t rcid, uint32_t namelen)
 		return;
 	}
 
-	/* Assume we can leave HW dangling if proto init fails */
-	err = proto->init(NULL);
-	if (err) {
-		free(name, M_TEMP, namelen);
-		return;
-	}
-
 	ch = malloc(sizeof(*ch), M_DEVBUF, M_WAITOK | M_ZERO);
 	ch->ch_sc = sc;
 	ch->ch_proto = proto;
@@ -810,6 +803,15 @@ qcpas_glink_recv_open(struct qcpas_softc *sc, uint32_t rcid, uint32_t namelen)
 	TAILQ_INIT(&ch->ch_l_intents);
 	TAILQ_INIT(&ch->ch_r_intents);
 	TAILQ_INSERT_TAIL(&sc->sc_glink_channels, ch, ch_q);
+
+	/* Assume we can leave HW dangling if proto init fails */
+	err = proto->init(ch);
+	if (err) {
+		TAILQ_REMOVE(&sc->sc_glink_channels, ch, ch_q);
+		free(ch, M_TEMP, sizeof(*ch));
+		free(name, M_TEMP, namelen);
+		return;
+	}
 
 	msg.cmd = GLINK_CMD_OPEN_ACK;
 	msg.param1 = ch->ch_rcid;
@@ -1108,7 +1110,7 @@ struct battmgr_bat_status {
 #define BATTMGR_BAT_STATE_CHARGING	(1 << 1)
 #define BATTMGR_BAT_STATE_CRITICAL_LOW	(1 << 2)
 	uint32_t capacity;
-	uint32_t rate;
+	int32_t rate;
 	uint32_t battery_voltage;
 	uint32_t power_state;
 #define BATTMGR_PWR_STATE_AC_ON			(1 << 0)
@@ -1151,7 +1153,7 @@ qcpas_pmic_rtr_battmgr_req_status(void *cookie)
 
 #if NAPM > 0
 struct apm_power_info qcpas_pmic_rtr_apm_power_info;
-uint32_t qcpas_pmic_rtr_last_full_capacity;
+void *qcpas_pmic_rtr_apm_cookie;
 #endif
 
 int
@@ -1166,6 +1168,7 @@ qcpas_pmic_rtr_init(void *cookie)
 	info->battery_life = 0;
 	info->minutes_left = -1;
 
+	qcpas_pmic_rtr_apm_cookie = cookie;
 	apm_setinfohook(qcpas_pmic_rtr_apminfo);
 #endif
 	return 0;
@@ -1174,6 +1177,9 @@ qcpas_pmic_rtr_init(void *cookie)
 int
 qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 {
+#if NAPM > 0
+	static uint32_t last_full_capacity;
+#endif
 	struct pmic_glink_hdr hdr;
 	uint32_t notification;
 	extern int hw_power;
@@ -1221,8 +1227,7 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			bat = malloc(sizeof(*bat), M_TEMP, M_WAITOK);
 			memcpy((void *)bat, buf + sizeof(hdr), sizeof(*bat));
 #if NAPM > 0
-			qcpas_pmic_rtr_last_full_capacity =
-			    bat->last_full_capacity;
+			last_full_capacity = bat->last_full_capacity;
 #endif
 			free(bat, M_TEMP, sizeof(*bat));
 			break;
@@ -1231,6 +1236,7 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			struct battmgr_bat_status *bat;
 #if NAPM > 0
 			struct apm_power_info *info;
+			uint32_t delta;
 #endif
 			if (len - sizeof(hdr) != sizeof(*bat)) {
 				printf("%s: invalid battgmr bat status\n",
@@ -1239,15 +1245,17 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			}
 #if NAPM > 0
 			/* Needs BAT_INFO fist */
-			if (!qcpas_pmic_rtr_last_full_capacity)
+			if (last_full_capacity == 0) {
+				wakeup(&qcpas_pmic_rtr_apm_power_info);
 				return 0;
+			}
 #endif
 			bat = malloc(sizeof(*bat), M_TEMP, M_WAITOK);
 			memcpy((void *)bat, buf + sizeof(hdr), sizeof(*bat));
 #if NAPM > 0
 			info = &qcpas_pmic_rtr_apm_power_info;
 			info->battery_life = ((bat->capacity * 100) /
-			    qcpas_pmic_rtr_last_full_capacity);
+			    last_full_capacity);
 			if (info->battery_life > 50)
 				info->battery_state = APM_BATT_HIGH;
 			else if (info->battery_life > 25)
@@ -1259,6 +1267,16 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			else if (bat->battery_state & BATTMGR_BAT_STATE_CRITICAL_LOW)
 				info->battery_state = APM_BATT_CRITICAL;
 
+			if (bat->rate < 0)
+				delta = bat->capacity;
+			else
+				delta = last_full_capacity - bat->capacity;
+			if (bat->rate == 0)
+				info->minutes_left = -1;
+			else
+				info->minutes_left =
+				    (60 * delta) / abs(bat->rate);
+
 			if (bat->power_state & BATTMGR_PWR_STATE_AC_ON) {
 				info->ac_state = APM_AC_ON;
 				hw_power = 1;
@@ -1266,6 +1284,7 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 				info->ac_state = APM_AC_OFF;
 				hw_power = 0;
 			}
+			wakeup(&qcpas_pmic_rtr_apm_power_info);
 #endif
 			free(bat, M_TEMP, sizeof(*bat));
 			break;
@@ -1289,8 +1308,15 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 int
 qcpas_pmic_rtr_apminfo(struct apm_power_info *info)
 {
-	memcpy(info, &qcpas_pmic_rtr_apm_power_info, sizeof(*info));
+	int error;
 
+	qcpas_pmic_rtr_battmgr_req_status(qcpas_pmic_rtr_apm_cookie);
+	error = tsleep_nsec(&qcpas_pmic_rtr_apm_power_info, PWAIT | PCATCH,
+	    "qcapm", SEC_TO_NSEC(5));
+	if (error)
+		return error;
+
+	memcpy(info, &qcpas_pmic_rtr_apm_power_info, sizeof(*info));
 	return 0;
 }
 #endif
