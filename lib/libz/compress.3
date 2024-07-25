@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.29 2024/06/29 16:10:08 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.30 2024/07/25 17:25:59 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: June 29 2024 $
+.Dd $Mdocdate: July 25 2024 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -1508,7 +1508,8 @@ are
 .Dv NULL ,
 then those values are not set.
 .Pp
-.Fn deflatePending returns
+.Fn deflatePending
+returns
 .Dv Z_OK
 if success, or
 .Dv Z_STREAM_ERROR
