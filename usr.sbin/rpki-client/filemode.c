@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.47 2024/06/17 18:54:36 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.48 2024/07/25 08:44:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -313,7 +313,7 @@ print_signature_path(const char *crl, const char *aia, const struct auth *a)
 {
 	if (crl != NULL)
 		printf("Signature path:           %s\n", crl);
-	if (a->cert->mft != NULL)
+	if (a != NULL && a->cert != NULL && a->cert->mft != NULL)
 		printf("                          %s\n", a->cert->mft);
 	if (aia != NULL)
 		printf("                          %s\n", aia);
@@ -352,7 +352,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	char *aia = NULL;
 	char *crl_uri = NULL;
 	time_t *expires = NULL, *notafter = NULL;
-	struct auth *a;
+	struct auth *a = NULL;
 	struct crl *c;
 	const char *errstr = NULL, *valid;
 	int status = 0;
@@ -612,7 +612,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	else {
 		printf("\n");
 
-		if (status && aia != NULL) {
+		if (aia != NULL && status) {
 			print_signature_path(crl_uri, aia, a);
 			if (expires != NULL)
 				printf("Signature path expires:   %s\n",
