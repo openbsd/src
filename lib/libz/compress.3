@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.30 2024/07/25 17:25:59 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.31 2024/07/25 17:29:51 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -42,6 +42,7 @@
 .Nm deflateTune ,
 .Nm deflateBound ,
 .Nm deflatePending ,
+.Nm deflateUsed ,
 .Nm deflatePrime ,
 .Nm deflateSetHeader ,
 .Nm inflateInit2 ,
@@ -137,6 +138,8 @@ Advanced functions
 .Fn deflateBound "z_streamp strm" "uLong sourceLen"
 .Ft int
 .Fn deflatePending "z_streamp strm" "unsigned *pending" "int *bits"
+.Ft int
+.Fn deflateUsed "z_streamp strm" "int *bits"
 .Ft int
 .Fn deflatePrime "z_streamp strm" "int bits" "int value"
 .Ft int
@@ -1509,6 +1512,25 @@ are
 then those values are not set.
 .Pp
 .Fn deflatePending
+returns
+.Dv Z_OK
+if success, or
+.Dv Z_STREAM_ERROR
+if the source stream state was inconsistent.
+.It Xo
+.Fa int
+.Fn deflateUsed "z_streamp strm" "int *bits" ;
+.Xc
+.Pp
+.Fn deflateUsed
+returns in
+.Pf * Fa bits
+the most recent number of deflate bits used in the last byte
+when flushing to a byte boundary.
+The result is in the range 1..8, or 0 if there has not yet been a flush.
+This helps determine the location of the last bit of a deflate stream.
+.Pp
+.Fn deflateUsed
 returns
 .Dv Z_OK
 if success, or
