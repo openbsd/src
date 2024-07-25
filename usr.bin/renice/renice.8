@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.25 2015/05/15 19:34:31 jmc Exp $
+.\"	$OpenBSD: renice.8,v 1.26 2024/07/25 13:40:55 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 15 2015 $
+.Dd $Mdocdate: July 25 2024 $
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ and can only monotonically increase their
 within the range 0 to
 .Dv PRIO_MAX
 (20),
-which  prevents overriding administrative fiats.
+which prevents overriding administrative fiats.
 The superuser
 may alter the priority of any process
 and set the priority to any value in the range
