@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.26 2024/07/23 19:14:05 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.27 2024/07/25 08:35:40 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -946,21 +946,43 @@ virtio_nused(struct virtqueue *vq)
 void
 virtio_vq_dump(struct virtqueue *vq)
 {
+#if VIRTIO_DEBUG >= 2
+	int i;
+#endif
 	/* Common fields */
+	printf(" + addr: %p\n", vq);
 	printf(" + vq num: %d\n", vq->vq_num);
 	printf(" + vq mask: 0x%X\n", vq->vq_mask);
 	printf(" + vq index: %d\n", vq->vq_index);
 	printf(" + vq used idx: %d\n", vq->vq_used_idx);
 	printf(" + vq avail idx: %d\n", vq->vq_avail_idx);
 	printf(" + vq queued: %d\n",vq->vq_queued);
+#if VIRTIO_DEBUG >= 2
+	for (i = 0; i < vq->vq_num; i++) {
+		struct vring_desc *desc = &vq->vq_desc[i];
+		printf("  D%-3d len:%d flags:%d next:%d\n", i, desc->len,
+		    desc->flags, desc->next);
+	}
+#endif
 	/* Avail ring fields */
 	printf(" + avail flags: 0x%X\n", vq->vq_avail->flags);
 	printf(" + avail idx: %d\n", vq->vq_avail->idx);
 	printf(" + avail event: %d\n", VQ_AVAIL_EVENT(vq));
+#if VIRTIO_DEBUG >= 2
+	for (i = 0; i < vq->vq_num; i++)
+		printf("  A%-3d idx:%d\n", i, vq->vq_avail->ring[i]);
+#endif
 	/* Used ring fields */
 	printf(" + used flags: 0x%X\n",vq->vq_used->flags);
 	printf(" + used idx: %d\n",vq->vq_used->idx);
 	printf(" + used event: %d\n", VQ_USED_EVENT(vq));
+#if VIRTIO_DEBUG >= 2
+	for (i = 0; i < vq->vq_num; i++) {
+		printf("  U%-3d id:%d len:%d\n", i,
+				vq->vq_used->ring[i].id,
+				vq->vq_used->ring[i].len);
+	}
+#endif
 	printf(" +++++++++++++++++++++++++++\n");
 }
 #endif
