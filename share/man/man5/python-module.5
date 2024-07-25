@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.12 2024/05/28 16:05:39 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.13 2024/07/25 15:36:56 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 28 2024 $
+.Dd $Mdocdate: July 25 2024 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -113,8 +113,8 @@ If the port provides a
 .Pa pyproject.toml
 file, check the "build-backend" line in the [build-system] section.
 .Nm
-currently supports flit_core, hatchling, hatch-vcs, jupyter_packaging,
-maturin, poetry-core, setuptools and setuptools_scm.
+currently supports flit, flit_core, hatchling, hatch-vcs, jupyter_packaging,
+maturin, pdm, poetry-core, setuptools and setuptools_scm.
 If no
 .Pa pyproject.toml
 is provided then it probably uses setuptools.
@@ -127,7 +127,9 @@ and sets
 In cases where a less common backend is used, or where the build backend is
 distributed with the software itself,
 .Ev MODPY_PYBUILD
-can be set to other to use the PEP 517 mechanism without adding a dependency
+can be set to
+.Sq other
+to use the PEP 517 mechanism without adding a dependency
 for a backend.
 .Pp
 Older ports using setuptools still set
