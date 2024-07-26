@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.23 2024/07/26 13:30:40 tb Exp $ */
+/* $OpenBSD: x509_att.c,v 1.24 2024/07/26 13:33:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,7 +71,8 @@
 int
 X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
 {
-	return sk_X509_ATTRIBUTE_num(x);
+	X509error(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(X509at_get_attr_count);
 
@@ -112,22 +113,16 @@ LCRYPTO_ALIAS(X509at_get_attr_by_OBJ);
 X509_ATTRIBUTE *
 X509at_get_attr(const STACK_OF(X509_ATTRIBUTE) *x, int loc)
 {
-	if (x == NULL || sk_X509_ATTRIBUTE_num(x) <= loc || loc < 0)
-		return NULL;
-	else
-		return sk_X509_ATTRIBUTE_value(x, loc);
+	X509error(ERR_R_DISABLED);
+	return NULL;
 }
 LCRYPTO_ALIAS(X509at_get_attr);
 
 X509_ATTRIBUTE *
 X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc)
 {
-	X509_ATTRIBUTE *ret;
-
-	if (x == NULL || sk_X509_ATTRIBUTE_num(x) <= loc || loc < 0)
-		return (NULL);
-	ret = sk_X509_ATTRIBUTE_delete(x, loc);
-	return (ret);
+	X509error(ERR_R_DISABLED);
+	return NULL;
 }
 LCRYPTO_ALIAS(X509at_delete_attr);
 
