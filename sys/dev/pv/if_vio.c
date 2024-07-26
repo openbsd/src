@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.42 2024/06/28 14:46:31 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.43 2024/07/26 06:29:01 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -731,7 +731,8 @@ vio_init(struct ifnet *ifp)
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS)) {
 		uint64_t features = 0;
 
-		SET(features, VIRTIO_NET_F_GUEST_CSUM);
+		if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
+			SET(features, VIRTIO_NET_F_GUEST_CSUM);
 
 		if (ISSET(ifp->if_xflags, IFXF_LRO)) {
 			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4))
