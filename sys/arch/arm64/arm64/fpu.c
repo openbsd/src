@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.1 2022/01/01 18:52:36 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.2 2024/07/26 00:23:57 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -22,6 +22,7 @@
 
 #include <machine/armreg.h>
 
+__attribute__((target("+fp")))
 void
 fpu_save(struct proc *p)
 {
@@ -74,6 +75,7 @@ fpu_save(struct proc *p)
 	fp->fp_cr = READ_SPECIALREG(fpcr);
 }
 
+__attribute__((target("+fp")))
 void
 fpu_load(struct proc *p)
 {
