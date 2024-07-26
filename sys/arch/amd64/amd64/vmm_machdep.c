@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.30 2024/07/24 21:04:12 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.31 2024/07/26 15:59:04 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1905,6 +1905,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * I/O instructions (SVM_INTERCEPT_INOUT)
 	 * MSR access (SVM_INTERCEPT_MSR)
 	 * shutdown events (SVM_INTERCEPT_SHUTDOWN)
+	 * INVLPGA instruction (SVM_INTERCEPT_INVLPGA)
 	 *
 	 * VMRUN instruction (SVM_INTERCEPT_VMRUN)
 	 * VMMCALL instruction (SVM_INTERCEPT_VMMCALL)
@@ -1918,19 +1919,17 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * MWAIT instruction (SVM_INTERCEPT_MWAIT_COND)
 	 * MONITOR instruction (SVM_INTERCEPT_MONITOR)
 	 * RDTSCP instruction (SVM_INTERCEPT_RDTSCP)
-	 * INVLPGA instruction (SVM_INTERCEPT_INVLPGA)
 	 * XSETBV instruction (SVM_INTERCEPT_XSETBV) (if available)
 	 */
 	vmcb->v_intercept1 = SVM_INTERCEPT_INTR | SVM_INTERCEPT_NMI |
 	    SVM_INTERCEPT_CPUID | SVM_INTERCEPT_HLT | SVM_INTERCEPT_INOUT |
-	    SVM_INTERCEPT_MSR | SVM_INTERCEPT_SHUTDOWN;
+	    SVM_INTERCEPT_MSR | SVM_INTERCEPT_SHUTDOWN | SVM_INTERCEPT_INVLPGA;
 
 	vmcb->v_intercept2 = SVM_INTERCEPT_VMRUN | SVM_INTERCEPT_VMMCALL |
 	    SVM_INTERCEPT_VMLOAD | SVM_INTERCEPT_VMSAVE | SVM_INTERCEPT_STGI |
 	    SVM_INTERCEPT_CLGI | SVM_INTERCEPT_SKINIT | SVM_INTERCEPT_ICEBP |
 	    SVM_INTERCEPT_MWAIT_UNCOND | SVM_INTERCEPT_MONITOR |
-	    SVM_INTERCEPT_MWAIT_COND | SVM_INTERCEPT_RDTSCP |
-	    SVM_INTERCEPT_INVLPGA;
+	    SVM_INTERCEPT_MWAIT_COND | SVM_INTERCEPT_RDTSCP;
 
 	if (xsave_mask)
 		vmcb->v_intercept2 |= SVM_INTERCEPT_XSETBV;
