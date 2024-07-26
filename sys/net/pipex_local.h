@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.52 2024/05/29 00:48:15 jsg Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.53 2024/07/26 15:51:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -140,6 +140,7 @@ struct pipex_l2tp_session {
 	uint16_t peer_tunnel_id;	/* [I] peer's tunnel-id */
 
 	uint32_t option_flags;		/* [I] protocol options */
+	uint32_t ipsecflowinfo;		/* [I] IPsec SA flow id for NAT-T */
 
 	int16_t ns_gap;		/* [s] gap between userland and pipex */
 	int16_t nr_gap;		/* [s] gap between userland and pipex */
@@ -150,7 +151,6 @@ struct pipex_l2tp_session {
 
 	uint16_t nr_nxt;	/* [s] next sequence number to recv */
 	uint16_t nr_acked;	/* [s] acked sequence number to recv */
-	uint32_t ipsecflowinfo;	/* [s] IPsec SA flow id for NAT-T */
 };
 #endif /* PIPEX_L2TP */
 
