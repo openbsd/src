@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtioreg.h,v 1.5 2023/04/20 19:28:31 jcs Exp $	*/
+/*	$OpenBSD: virtioreg.h,v 1.6 2024/07/26 07:55:23 sf Exp $	*/
 /*	$NetBSD: virtioreg.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -85,10 +85,19 @@
 
 /* device-independent feature bits */
 #define  VIRTIO_F_NOTIFY_ON_EMPTY		(1ULL<<24)
+#define  VIRTIO_F_ANY_LAYOUT			(1ULL<<27)
 #define  VIRTIO_F_RING_INDIRECT_DESC		(1ULL<<28)
 #define  VIRTIO_F_RING_EVENT_IDX		(1ULL<<29)
 #define  VIRTIO_F_BAD_FEATURE			(1ULL<<30)
 #define  VIRTIO_F_VERSION_1			(1ULL<<32)
+#define  VIRTIO_F_ACCESS_PLATFORM		(1ULL<<33)
+#define  VIRTIO_F_RING_PACKED			(1ULL<<34)
+#define  VIRTIO_F_IN_ORDER			(1ULL<<35)
+#define  VIRTIO_F_ORDER_PLATFORM		(1ULL<<36)
+#define  VIRTIO_F_SR_IOV			(1ULL<<37)
+#define  VIRTIO_F_NOTIFICATION_DATA		(1ULL<<38)
+#define  VIRTIO_F_NOTIF_CONFIG_DATA		(1ULL<<39)
+#define  VIRTIO_F_RING_RESET			(1ULL<<40)
 
 /* device status bits */
 #define  VIRTIO_CONFIG_DEVICE_STATUS_RESET		0

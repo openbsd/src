@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.43 2024/07/26 06:29:01 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.44 2024/07/26 07:55:23 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -90,7 +90,13 @@
 #define VIRTIO_NET_F_GUEST_ANNOUNCE		(1ULL<<21)
 #define VIRTIO_NET_F_MQ				(1ULL<<22)
 #define VIRTIO_NET_F_CTRL_MAC_ADDR		(1ULL<<23)
-
+#define VIRTIO_NET_F_HOST_USO			(1ULL<<56)
+#define VIRTIO_NET_F_HASH_REPORT		(1ULL<<57)
+#define VIRTIO_NET_F_GUEST_HDRLEN		(1ULL<<59)
+#define VIRTIO_NET_F_RSS			(1ULL<<60)
+#define VIRTIO_NET_F_RSC_EXT			(1ULL<<61)
+#define VIRTIO_NET_F_STANDBY			(1ULL<<62)
+#define VIRTIO_NET_F_SPEED_DUPLEX		(1ULL<<63)
 /*
  * Config(8) flags. The lowest byte is reserved for generic virtio stuff.
  */
@@ -123,6 +129,13 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_GUEST_ANNOUNCE,		"GuestAnnounce" },
 	{ VIRTIO_NET_F_MQ,			"MQ" },
 	{ VIRTIO_NET_F_CTRL_MAC_ADDR,		"CtrlMAC" },
+	{ VIRTIO_NET_F_HOST_USO,		"HostUso" },
+	{ VIRTIO_NET_F_HASH_REPORT,		"HashRpt" },
+	{ VIRTIO_NET_F_GUEST_HDRLEN,		"GuestHdrlen" },
+	{ VIRTIO_NET_F_RSS,			"RSS" },
+	{ VIRTIO_NET_F_RSC_EXT,			"RSSExt" },
+	{ VIRTIO_NET_F_STANDBY,			"Stdby" },
+	{ VIRTIO_NET_F_SPEED_DUPLEX,		"SpdDplx" },
 #endif
 	{ 0,					NULL }
 };

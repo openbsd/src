@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblkreg.h,v 1.4 2019/03/24 18:22:36 sf Exp $	*/
+/*	$OpenBSD: vioblkreg.h,v 1.5 2024/07/26 07:55:23 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -50,8 +50,11 @@
 #define VIRTIO_BLK_F_FLUSH		(1ULL<<9)
 #define VIRTIO_BLK_F_TOPOLOGY		(1ULL<<10)
 #define VIRTIO_BLK_F_CONFIG_WCE		(1ULL<<11)
-#define VIRTIO_BLK_F_DISCARD		(1ULL<<12)
-#define VIRTIO_BLK_F_WRITE_ZEROES	(1ULL<<13)
+#define VIRTIO_BLK_F_MQ			(1ULL<<12)
+#define VIRTIO_BLK_F_DISCARD		(1ULL<<13)
+#define VIRTIO_BLK_F_WRITE_ZEROES	(1ULL<<14)
+#define VIRTIO_BLK_F_LIFETIME		(1ULL<<15)
+#define VIRTIO_BLK_F_SECURE_ERASE	(1ULL<<16)
 
 /* Command */
 #define VIRTIO_BLK_T_IN			0
