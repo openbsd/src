@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.48 2023/12/15 15:12:08 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.49 2024/07/26 19:16:31 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -241,6 +241,8 @@ void    ktrstruct(struct proc *, const char *, const void *, size_t);
 	ktrstruct((p), "abstimeval", (s), sizeof(struct timeval))
 #define ktrreltimeval(p, s) \
 	ktrstruct((p), "reltimeval", (s), sizeof(struct timeval))
+#define ktritimerval(p, s) \
+	ktrstruct((p), "itimerval", (s), sizeof(struct itimerval))
 #define ktrsigaction(p, s) \
 	ktrstruct((p), "sigaction", (s), sizeof(struct sigaction))
 #define ktrrlimit(p, s) \

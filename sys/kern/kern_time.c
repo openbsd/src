@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.168 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.169 2024/07/26 19:16:31 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -602,7 +602,7 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
 	struct itimerval aitv;
-	int which;
+	int which, error;
 
 	which = SCARG(uap, which);
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
@@ -612,7 +612,12 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 
 	setitimer(which, NULL, &aitv);
 
-	return copyout(&aitv, SCARG(uap, itv), sizeof(aitv));
+	error = copyout(&aitv, SCARG(uap, itv), sizeof(aitv));
+#ifdef KTRACE
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+		ktritimerval(p, &aitv);
+#endif
+	return (error);
 }
 
 int
@@ -636,6 +641,10 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, itv), &aitv, sizeof(aitv));
 		if (error)
 			return error;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktritimerval(p, &aitv);
+#endif
 		error = itimerfix(&aitv);
 		if (error)
 			return error;
@@ -650,8 +659,14 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 
 	setitimer(which, newitvp, olditvp);
 
-	if (SCARG(uap, oitv) != NULL)
-		return copyout(&olditv, SCARG(uap, oitv), sizeof(olditv));
+	if (SCARG(uap, oitv) != NULL) {
+		error = copyout(&olditv, SCARG(uap, oitv), sizeof(olditv));
+#ifdef KTRACE
+		if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+			ktritimerval(p, &aitv);
+#endif
+		return error;
+	}
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.31 2022/12/29 01:36:36 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.32 2024/07/26 19:16:31 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -262,6 +262,18 @@ ktrtimeval(const struct timeval *tvp, int relative)
 {
 	printf("struct timeval { ");
 	print_timeval(tvp, relative);
+	printf(" }\n");
+}
+
+static void
+ktritimerval(const struct itimerval *itvp)
+{
+	printf("struct itimerval { value=");
+	print_timeval(&itvp->it_value, 0);
+	if (timerisset(&itvp->it_interval)) {
+		printf(", interval=");
+		print_timeval(&itvp->it_interval, 1);
+	}
 	printf(" }\n");
 }
 
@@ -615,6 +627,13 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&tv, data, datalen);
 		ktrtimeval(&tv, name[0] == 'r');
+	} else if (strcmp(name, "itimerval") == 0) {
+		struct itimerval itv;
+
+		if (datalen != sizeof(itv))
+			goto invalid;
+		memcpy(&itv, data, datalen);
+		ktritimerval(&itv);
 	} else if (strcmp(name, "sigaction") == 0) {
 		struct sigaction sa;
 
