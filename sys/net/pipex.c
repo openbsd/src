@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.154 2024/06/07 13:43:21 jsg Exp $ */
+/*	$OpenBSD: pipex.c,v 1.155 2024/07/26 15:45:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2031,7 +2031,13 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 	mtx_enter(&session->pxs_mtx);
 
 	l2tp_session = &session->proto.l2tp;
-	l2tp_session->ipsecflowinfo = ipsecflowinfo;
+	if (l2tp_session->ipsecflowinfo != ipsecflowinfo) {
+		pipex_session_log(session, LOG_DEBUG,
+		    "received message is %s",
+		    (ipsecflowinfo != 0)? "from invalid ipsec flow" :
+		    "without ipsec");
+		goto drop;
+	}
 
 	m_copydata(m0, off0, sizeof(flags), &flags);
 
