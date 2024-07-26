@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.271 2024/03/24 06:22:18 jsg Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.272 2024/07/26 06:24:52 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 24 2024 $
+.Dd $Mdocdate: July 26 2024 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -230,6 +230,14 @@ with higher priority.
 Operate as a backup mail exchanger delivering messages to any mail exchanger
 with higher priority than mail exchanger identified as
 .Ar name .
+.It Cm ca Ar caname
+For secure connections,
+use the certificate authority associated with
+.Ar caname
+(declared in a
+.Ic ca
+directive)
+to validate the server's identity.
 .It Cm helo Ar heloname
 Advertise
 .Ar heloname
@@ -366,7 +374,11 @@ Associate the Certificate Authority (CA) certificate file
 .Ar cafile
 with ca entry
 .Ar caname .
-The ca entry can be referenced in listener rules and relay actions.
+The ca entry can be referenced in
+.Cm listen on
+and
+.Cm action ... relay
+rules.
 .It Ic filter Ar chain-name Ic chain Brq Ar filter-name Op , Ar ...
 Register a chain of filters
 .Ar chain-name ,
