@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.22 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_att.c,v 1.23 2024/07/26 13:30:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,7 +227,7 @@ X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x, const ASN1_OBJECT *obj,
 		return NULL;
 	if ((lastpos <= -2) && (X509at_get_attr_by_OBJ(x, obj, i) != -1))
 		return NULL;
-	at = X509at_get_attr(x, i);
+	at = sk_X509_ATTRIBUTE_value(x, i);
 	if (lastpos <= -3 && (X509_ATTRIBUTE_count(at) != 1))
 		return NULL;
 	return X509_ATTRIBUTE_get0_data(at, 0, type, NULL);
