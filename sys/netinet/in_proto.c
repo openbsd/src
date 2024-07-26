@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.106 2024/07/13 12:00:11 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.107 2024/07/26 14:38:20 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ const struct protosw inetsw[] = {
   .pr_type	= SOCK_DGRAM,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_UDP,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_SPLICE|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_SPLICE|PR_MPINPUT|PR_MPSOCKET,
   .pr_input	= udp_input,
   .pr_ctlinput	= udp_ctlinput,
   .pr_ctloutput	= ip_ctloutput,
