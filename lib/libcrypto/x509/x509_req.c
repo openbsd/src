@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.41 2024/05/09 14:29:08 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.42 2024/07/26 13:24:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -236,7 +236,7 @@ LCRYPTO_ALIAS(X509_REQ_add_extensions);
 int
 X509_REQ_get_attr_count(const X509_REQ *req)
 {
-	return X509at_get_attr_count(req->req_info->attributes);
+	return sk_X509_ATTRIBUTE_num(req->req_info->attributes);
 }
 LCRYPTO_ALIAS(X509_REQ_get_attr_count);
 
@@ -258,14 +258,14 @@ LCRYPTO_ALIAS(X509_REQ_get_attr_by_OBJ);
 X509_ATTRIBUTE *
 X509_REQ_get_attr(const X509_REQ *req, int loc)
 {
-	return X509at_get_attr(req->req_info->attributes, loc);
+	return sk_X509_ATTRIBUTE_value(req->req_info->attributes, loc);
 }
 LCRYPTO_ALIAS(X509_REQ_get_attr);
 
 X509_ATTRIBUTE *
 X509_REQ_delete_attr(X509_REQ *req, int loc)
 {
-	return X509at_delete_attr(req->req_info->attributes, loc);
+	return sk_X509_ATTRIBUTE_delete(req->req_info->attributes, loc);
 }
 LCRYPTO_ALIAS(X509_REQ_delete_attr);
 
