@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.49 2024/07/26 19:16:31 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.50 2024/07/27 02:10:26 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -229,47 +229,49 @@ void ktrcleartrace(struct process *);
 void ktrsettrace(struct process *, int, struct vnode *, struct ucred *);
 
 void    ktrstruct(struct proc *, const char *, const void *, size_t);
-#define ktrsockaddr(p, s, l) \
-	ktrstruct((p), "sockaddr", (s), (l))
-#define ktrstat(p, s) \
-	ktrstruct((p), "stat", (s), sizeof(struct stat))
+
+/* please keep these sorted by second argument to ktrstruct() */
 #define ktrabstimespec(p, s) \
-	ktrstruct((p), "abstimespec", (s), sizeof(struct timespec))
-#define ktrreltimespec(p, s) \
-	ktrstruct((p), "reltimespec", (s), sizeof(struct timespec))
+	ktrstruct(p, "abstimespec", s, sizeof(struct timespec))
 #define ktrabstimeval(p, s) \
-	ktrstruct((p), "abstimeval", (s), sizeof(struct timeval))
-#define ktrreltimeval(p, s) \
-	ktrstruct((p), "reltimeval", (s), sizeof(struct timeval))
-#define ktritimerval(p, s) \
-	ktrstruct((p), "itimerval", (s), sizeof(struct itimerval))
-#define ktrsigaction(p, s) \
-	ktrstruct((p), "sigaction", (s), sizeof(struct sigaction))
-#define ktrrlimit(p, s) \
-	ktrstruct((p), "rlimit", (s), sizeof(struct rlimit))
-#define ktrrusage(p, s) \
-	ktrstruct((p), "rusage", (s), sizeof(struct rusage))
+	ktrstruct(p, "abstimeval", s, sizeof(struct timeval))
+#define ktrcmsghdr(p, s, l) \
+	ktrstruct(p, "cmsghdr", s, l)
+#define ktrfds(p, s, c) \
+	ktrstruct(p, "fds", s, (c) * sizeof(int))
 #define ktrfdset(p, s, l) \
-	ktrstruct((p), "fdset", (s), l)
-#define ktrquota(p, s) \
-	ktrstruct((p), "quota", (s), sizeof(struct dqblk))
-#define ktrmsghdr(p, s) \
-	ktrstruct(p, "msghdr", s, sizeof(struct msghdr))
+	ktrstruct(p, "fdset", s, l)
+#define ktrflock(p, s) \
+	ktrstruct(p, "flock", s, sizeof(struct flock))
+#define ktriovec(p, s, c) \
+	ktrstruct(p, "iovec", s, (c) * sizeof(struct iovec))
+#define ktritimerval(p, s) \
+	ktrstruct(p, "itimerval", s, sizeof(struct itimerval))
+#define ktrevent(p, s, c) \
+	ktrstruct(p, "kevent", s, (c) * sizeof(struct kevent))
 #define ktrmmsghdr(p, s) \
 	ktrstruct(p, "mmsghdr", s, sizeof(struct mmsghdr))
-#define ktriovec(p, s, count) \
-	ktrstruct(p, "iovec", s, (count) * sizeof(struct iovec))
-#define ktrcmsghdr(p, c, len) \
-	ktrstruct(p, "cmsghdr", c, len)
-#define ktrevent(p, kev, count) \
-	ktrstruct(p, "kevent", kev, (count) * sizeof(struct kevent))
-#define ktrpollfd(p, pfd, count) \
-	ktrstruct(p, "pollfd", pfd, (count) * sizeof(struct pollfd))
-#define ktrfds(p, fds, count) \
-	ktrstruct(p, "fds", fds, (count) * sizeof(int))
-#define ktrflock(p, fl) \
-	ktrstruct(p, "flock", (fl), sizeof(struct flock))
-#define ktrsiginfo(p, si) \
-	ktrstruct(p, "siginfo", (si), sizeof(siginfo_t))
+#define ktrmsghdr(p, s) \
+	ktrstruct(p, "msghdr", s, sizeof(struct msghdr))
+#define ktrpollfd(p, s, c) \
+	ktrstruct(p, "pollfd", s, (c) * sizeof(struct pollfd))
+#define ktrquota(p, s) \
+	ktrstruct(p, "quota", s, sizeof(struct dqblk))
+#define ktrreltimespec(p, s) \
+	ktrstruct(p, "reltimespec", s, sizeof(struct timespec))
+#define ktrreltimeval(p, s) \
+	ktrstruct(p, "reltimeval", s, sizeof(struct timeval))
+#define ktrrlimit(p, s) \
+	ktrstruct(p, "rlimit", s, sizeof(struct rlimit))
+#define ktrrusage(p, s) \
+	ktrstruct(p, "rusage", s, sizeof(struct rusage))
+#define ktrsigaction(p, s) \
+	ktrstruct(p, "sigaction", s, sizeof(struct sigaction))
+#define ktrsiginfo(p, s) \
+	ktrstruct(p, "siginfo", s, sizeof(siginfo_t))
+#define ktrsockaddr(p, s, l) \
+	ktrstruct(p, "sockaddr", s, l)
+#define ktrstat(p, s) \
+	ktrstruct(p, "stat", s, sizeof(struct stat))
 
 #endif	/* !_KERNEL */
