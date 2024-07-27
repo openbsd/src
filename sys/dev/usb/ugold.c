@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.28 2024/05/23 03:21:09 jsg Exp $   */
+/*	$OpenBSD: ugold.c,v 1.29 2024/07/27 17:31:49 miod Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -453,7 +453,8 @@ ugold_si700x_type(struct ugold_softc *sc)
 	if (sc->sc_model_len >= 9 &&
 	    memcmp(sc->sc_model, "TEMPerHUM", 9) == 0) {
 		if (memcmp(sc->sc_model + 9, "_V3.9  ", 16 - 9) == 0 ||
-		    memcmp(sc->sc_model + 9, "_V4.0  ", 16 - 9) == 0) {
+		    memcmp(sc->sc_model + 9, "_V4.0  ", 16 - 9) == 0 ||
+		    memcmp(sc->sc_model + 9, "_V4.1\0\0", 16 - 9) == 0) {
 			sc->sc_type = UGOLD_TYPE_TEMPERX;
 			descr = "temperx (temperature and humidity)";
 			goto identified;
@@ -484,7 +485,7 @@ ugold_si700x_type(struct ugold_softc *sc)
 		sc->sc_type = UGOLD_TYPE_GOLD;
 		/*
 		 * TEMPer1F devices lack the internal sensor, but will never
-		 * report data for it, so it will never gets marked as valid.
+		 * report data for it, so it will never get marked as valid.
 		 * We thus keep the value of sc_num_sensors unchanged at 2,
 		 * and make sure we will only report one single sensor below.
 		 */
