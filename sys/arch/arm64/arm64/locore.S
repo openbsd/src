@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.46 2024/03/16 20:46:28 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.47 2024/07/27 13:31:26 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -315,6 +315,9 @@ initstack:
 	.globl initstack_end
 initstack_end:
 
+/* The signal trampoline saves and restores the floating-point registers. */
+.arch_extension	fp
+
 	.text
 	.globl	sigcode
 	.type	sigcode,@function
@@ -386,6 +389,9 @@ esigfill:
 	.globl	sigfillsiz
 sigfillsiz:
 	.word	esigfill - sigfill
+
+/* Back to normal kernel code. */
+.arch_extension	nofp
 
 	.text
 
