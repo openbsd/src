@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.61 2023/04/19 12:58:16 jsg Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.62 2024/07/28 19:13:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -607,6 +607,10 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 		memmove(p, &flags, sizeof(int));
 		p += sizeof(int);
 		data.size = p - buf;
+
+		/* getpwent() does not support entries > _PW_BUF_LEN. */
+		if (data.size > _PW_BUF_LEN)
+			fatalx("%s: entry too large", pw->pw_name);
 
 		/* Write the secure record. */
 		if ((edp->put)(edp, &key, &data, dbmode) == -1)
