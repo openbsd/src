@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.18 2024/07/28 10:08:44 kn Exp $	*/
+/*	$OpenBSD: env.c,v 1.19 2024/07/28 21:44:42 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio exec", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "-iu:")) != -1)
+	while ((ch = getopt(argc, argv, "iu:-")) != -1)
 		switch(ch) {
 		case '-':			/* obsolete */
 		case 'i':
