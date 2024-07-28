@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.17 2016/10/28 07:22:59 schwarze Exp $	*/
+/*	$OpenBSD: env.c,v 1.18 2024/07/28 10:08:44 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -49,12 +49,16 @@ main(int argc, char *argv[])
 	if (pledge("stdio exec", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "i-")) != -1)
+	while ((ch = getopt(argc, argv, "-iu:")) != -1)
 		switch(ch) {
 		case '-':			/* obsolete */
 		case 'i':
 			if ((environ = calloc(1, sizeof(char *))) == NULL)
 				err(126, "calloc");
+			break;
+		case 'u':
+			if (unsetenv(optarg) == -1)
+				err(126, "unsetenv");
 			break;
 		default:
 			usage();
@@ -91,7 +95,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-i] [name=value ...] "
+	(void)fprintf(stderr, "usage: %s [-i] [-u name] [name=value ...] "
 	    "[utility [argument ...]]\n", __progname);
 	exit(1);
 }
