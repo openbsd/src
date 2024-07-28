@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.35 2023/03/08 04:43:04 guenther Exp $	*/
+/*	$OpenBSD: proc.c,v 1.36 2024/07/28 15:31:22 deraadt Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -207,6 +207,7 @@ pnote(void)
     neednote = 0;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     for (pp = proclist.p_next; pp != NULL; pp = pp->p_next) {
 	if (pp->p_flags & PNEEDNOTE) {
 	    sigprocmask(SIG_BLOCK, &sigset, &osigset);
@@ -234,6 +235,7 @@ pwait(void)
      */
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset, &osigset);
     for (pp = (fp = &proclist)->p_next; pp != NULL; pp = (fp = pp)->p_next)
 	if (pp->p_pid == 0) {
@@ -276,10 +278,12 @@ pjwait(struct process *pp)
     fp = pp;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset, &osigset);
     for (;;) {
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGCHLD);
+	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, NULL);
 	jobflags = 0;
 	do
@@ -289,6 +293,7 @@ pjwait(struct process *pp)
 	    break;
 	sigset = osigset;
 	sigdelset(&sigset, SIGCHLD);
+	sigdelset(&sigset, SIGHUP);
 	sigsuspend(&sigset);
     }
     sigprocmask(SIG_SETMASK, &osigset, NULL);
@@ -352,6 +357,7 @@ dowait(Char **v, struct command *t)
     pjobs++;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset, &osigset);
 loop:
     for (pp = proclist.p_next; pp; pp = pp->p_next)
@@ -1004,6 +1010,7 @@ pkill(Char **v, int signum)
 
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     if (setintr)
 	sigaddset(&sigset, SIGINT);
     sigprocmask(SIG_BLOCK, &sigset, NULL);
@@ -1095,6 +1102,7 @@ pstart(struct process *pp, int foregnd)
 
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset, &osigset);
     np = pp;
     do {
@@ -1255,10 +1263,11 @@ pfork(struct command *t, int wanttty)
     if (child == 16)
 	stderror(ERR_NESTING, 16);
     /*
-     * Hold SIGCHLD until we have the process installed in our table.
+     * Hold SIGCHLD/SIGHUP until we have the process installed in our table.
      */
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
+    sigaddset(&sigset, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset, &osigset);
     while ((pid = fork()) == -1)
 	if (setintr == 0)

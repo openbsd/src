@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.50 2023/03/08 04:43:04 guenther Exp $	*/
+/*	$OpenBSD: csh.c,v 1.51 2024/07/28 15:31:22 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -900,9 +900,7 @@ exitstat(void)
 static void
 phup(int sig)
 {
-    /* XXX sigh, everything after this is a signal race */
-
-    rechist();
+    rechist();	/* XXX big signal race */
 
     /*
      * We kill the last foreground process group. It then becomes

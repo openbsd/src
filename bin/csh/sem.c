@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.23 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.24 2024/07/28 15:31:22 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -196,12 +196,13 @@ execute(struct command *t, int wanttty, int *pipein, int *pipeout)
 		t->t_dflg & (F_REPEAT | F_AMPERSAND) || bifunc) {
 		forked++;
 		/*
-		 * We need to block SIGCHLD here, so that if the process does
+		 * We need to block SIGCHLD/SIGHUP here, so that if the process does
 		 * not die before we can set the process group
 		 */
 		if (wanttty >= 0 && !nosigchld) {
 		    sigemptyset(&sigset);
 		    sigaddset(&sigset, SIGCHLD);
+		    sigaddset(&sigset, SIGHUP);
 		    sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
@@ -231,11 +232,13 @@ execute(struct command *t, int wanttty, int *pipein, int *pipeout)
 		if (wanttty >= 0 && !nosigchld && !noexec) {
 		    sigemptyset(&sigset);
 		    sigaddset(&sigset, SIGCHLD);
+		    sigaddset(&sigset, SIGHUP);
 		    sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
 		sigemptyset(&sigset);
 		sigaddset(&sigset, SIGCHLD);
+		sigaddset(&sigset, SIGHUP);
 		sigaddset(&sigset, SIGINT);
 		sigprocmask(SIG_BLOCK, &sigset, &osigset);
 		ochild = child;
