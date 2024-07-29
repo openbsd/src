@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.56 2022/10/22 06:41:04 jmc Exp $
+.\" $OpenBSD: at.1,v 1.57 2024/07/29 20:25:55 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2022 $
+.Dd $Mdocdate: July 29 2024 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -172,6 +172,7 @@ to run a job at a specific time of day
 It is also possible to specify
 .Cm midnight ,
 .Cm noon ,
+.Cm now ,
 or
 .Cm teatime
 (4pm),
@@ -344,7 +345,7 @@ The
 and
 .Nm batch
 utilities are compliant with the
-.St -p1003.1-2008
+.St -p1003.1-2024
 specification.
 .Pp
 The
@@ -352,26 +353,38 @@ The
 flags
 .Op Fl bc
 and the
-.Nm batch
-flags
-.Op Fl fmq ,
-as well as
-the
 .Cm teatime
-keyword,
+.Ar timespec
 are extensions to that specification.
 .Pp
-.St -p1003.1-2008
+.St -p1003.1-2024
 states that
 .Nm batch
-jobs are submitted to the queue
-.Qq with no time constraints ;
-this implementation permits a
+is equivalent to running
+.Qq Cm at -q b -m now .
+This implementation permits a
 .Ar timespec
-argument.
+argument, as well as the ability to read from a file
+.Pq Fl f
+and specify a job queue
+.Pq Fl q ,
+and does not send mail to the user
+.Pq Fl m
+by default.
+.Pp
+By default,
+.St -p1003.1-2024
+schedules
+.Nm at
+jobs in queue
+.Sy a
+and
+.Nm batch
+jobs in queue
+.Sy b .
 .Pp
 The at.allow/deny mechanism is marked by
-.St -p1003.1-2008
+.St -p1003.1-2024
 as being an
 X/Open System Interfaces
 option.
