@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.71 2023/08/20 15:13:43 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.72 2024/07/29 12:42:53 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -285,7 +285,6 @@ struct proc;
 struct rwlock;
 struct timespec;
 
-extern const struct filterops sig_filtops;
 extern const struct filterops dead_filtops;
 
 extern void	kqpoll_init(unsigned int);

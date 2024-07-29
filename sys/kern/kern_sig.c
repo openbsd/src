@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.335 2024/07/29 09:49:49 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.336 2024/07/29 12:42:53 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -69,17 +69,6 @@
 #include <machine/tcb.h>
 
 int nosuidcoredump = 1;
-
-int	filt_sigattach(struct knote *kn);
-void	filt_sigdetach(struct knote *kn);
-int	filt_signal(struct knote *kn, long hint);
-
-const struct filterops sig_filtops = {
-	.f_flags	= 0,
-	.f_attach	= filt_sigattach,
-	.f_detach	= filt_sigdetach,
-	.f_event	= filt_signal,
-};
 
 /*
  * The array below categorizes the signals and their default actions.
@@ -1972,55 +1961,6 @@ initsiginfo(siginfo_t *si, int sig, u_long trapno, int code, union sigval val)
 			break;
 		}
 	}
-}
-
-int
-filt_sigattach(struct knote *kn)
-{
-	struct process *pr = curproc->p_p;
-	int s;
-
-	if (kn->kn_id >= NSIG)
-		return EINVAL;
-
-	kn->kn_ptr.p_process = pr;
-	kn->kn_flags |= EV_CLEAR;		/* automatically set */
-
-	s = splhigh();
-	klist_insert_locked(&pr->ps_klist, kn);
-	splx(s);
-
-	return (0);
-}
-
-void
-filt_sigdetach(struct knote *kn)
-{
-	struct process *pr = kn->kn_ptr.p_process;
-	int s;
-
-	s = splhigh();
-	klist_remove_locked(&pr->ps_klist, kn);
-	splx(s);
-}
-
-/*
- * signal knotes are shared with proc knotes, so we apply a mask to
- * the hint in order to differentiate them from process hints.  This
- * could be avoided by using a signal-specific knote list, but probably
- * isn't worth the trouble.
- */
-int
-filt_signal(struct knote *kn, long hint)
-{
-
-	if (hint & NOTE_SIGNAL) {
-		hint &= ~NOTE_SIGNAL;
-
-		if (kn->kn_id == hint)
-			kn->kn_data++;
-	}
-	return (kn->kn_data != 0);
 }
 
 void

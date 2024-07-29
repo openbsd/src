@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.198 2023/08/20 15:13:43 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.199 2024/07/29 12:42:53 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -124,6 +124,9 @@ int	filt_kqueue_common(struct knote *kn, struct kqueue *kq);
 int	filt_procattach(struct knote *kn);
 void	filt_procdetach(struct knote *kn);
 int	filt_proc(struct knote *kn, long hint);
+int	filt_sigattach(struct knote *kn);
+void	filt_sigdetach(struct knote *kn);
+int	filt_signal(struct knote *kn, long hint);
 int	filt_fileattach(struct knote *kn);
 void	filt_timerexpire(void *knx);
 int	filt_timerattach(struct knote *kn);
@@ -146,6 +149,13 @@ const struct filterops proc_filtops = {
 	.f_attach	= filt_procattach,
 	.f_detach	= filt_procdetach,
 	.f_event	= filt_proc,
+};
+
+const struct filterops sig_filtops = {
+	.f_flags	= 0,
+	.f_attach	= filt_sigattach,
+	.f_detach	= filt_sigdetach,
+	.f_event	= filt_signal,
 };
 
 const struct filterops file_filtops = {
@@ -448,6 +458,55 @@ filt_proc(struct knote *kn, long hint)
 	}
 
 	return (kn->kn_fflags != 0);
+}
+
+/*
+ * signal knotes are shared with proc knotes, so we apply a mask to
+ * the hint in order to differentiate them from process hints.  This
+ * could be avoided by using a signal-specific knote list, but probably
+ * isn't worth the trouble.
+ */
+int
+filt_sigattach(struct knote *kn)
+{
+	struct process *pr = curproc->p_p;
+	int s;
+
+	if (kn->kn_id >= NSIG)
+		return EINVAL;
+
+	kn->kn_ptr.p_process = pr;
+	kn->kn_flags |= EV_CLEAR;		/* automatically set */
+
+	s = splhigh();
+	klist_insert_locked(&pr->ps_klist, kn);
+	splx(s);
+
+	return (0);
+}
+
+void
+filt_sigdetach(struct knote *kn)
+{
+	struct process *pr = kn->kn_ptr.p_process;
+	int s;
+
+	s = splhigh();
+	klist_remove_locked(&pr->ps_klist, kn);
+	splx(s);
+}
+
+int
+filt_signal(struct knote *kn, long hint)
+{
+
+	if (hint & NOTE_SIGNAL) {
+		hint &= ~NOTE_SIGNAL;
+
+		if (kn->kn_id == hint)
+			kn->kn_data++;
+	}
+	return (kn->kn_data != 0);
 }
 
 #define NOTE_TIMER_UNITMASK \
