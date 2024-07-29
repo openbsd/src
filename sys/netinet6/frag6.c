@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.88 2024/03/26 23:48:49 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.89 2024/07/29 12:41:30 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -130,7 +130,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {
-		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, offset);
+		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
+		    offset);
 		return IPPROTO_DONE;
 	}
 
@@ -544,10 +545,10 @@ frag6_freef(struct ip6q *q6)
 			ip6->ip6_src = q6->ip6q_src;
 			ip6->ip6_dst = q6->ip6q_dst;
 
-			NET_LOCK();
+			NET_LOCK_SHARED();
 			icmp6_error(m, ICMP6_TIME_EXCEEDED,
 				    ICMP6_TIME_EXCEED_REASSEMBLY, 0);
-			NET_UNLOCK();
+			NET_UNLOCK_SHARED();
 		} else
 			m_freem(m);
 		pool_put(&ip6af_pool, af6);
