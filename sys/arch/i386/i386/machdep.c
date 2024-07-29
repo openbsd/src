@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.673 2024/07/09 07:28:12 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.674 2024/07/29 18:43:11 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -115,6 +115,7 @@
 
 #include "acpi.h"
 #if NACPI > 0
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #endif
 
@@ -2598,6 +2599,11 @@ struct pcb dumppcb;
 __dead void
 boot(int howto)
 {
+#if NACPI > 0
+	if ((howto & RB_POWERDOWN) != 0 && acpi_softc)
+		acpi_softc->sc_state = ACPI_STATE_S5;
+#endif
+
 	if ((howto & RB_POWERDOWN) != 0)
 		lid_action = 0;
 
