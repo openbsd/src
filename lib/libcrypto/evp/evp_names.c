@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.16 2024/04/09 13:52:41 beck Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.17 2024/07/29 06:05:31 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1010,7 +1010,7 @@ static const struct cipher_name cipher_names[] = {
 
 /*
  * Keep this table alphabetically sorted by increasing .name.
- * regresss/lib/libcrypto/evp/evp_test.c checks that.
+ * regress/lib/libcrypto/evp/evp_test.c checks that.
  */
 
 static const struct digest_name digest_names[] = {
