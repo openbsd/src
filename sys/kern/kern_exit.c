@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.227 2024/07/24 15:30:17 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.228 2024/07/29 09:49:49 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -597,9 +597,10 @@ loop:
 				memset(rusage, 0, sizeof(*rusage));
 			return (0);
 		}
-		if ((options & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
+		if ((options & WCONTINUED) && (pr->ps_flags & PS_CONTINUED)) {
 			if ((options & WNOWAIT) == 0)
-				atomic_clearbits_int(&p->p_flag, P_CONTINUED);
+				atomic_clearbits_int(&pr->ps_flags,
+				    PS_CONTINUED);
 
 			*retval = pr->ps_pid;
 			if (info != NULL) {

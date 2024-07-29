@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.334 2024/07/24 15:31:08 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.335 2024/07/29 09:49:49 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1097,7 +1097,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * an event, then it goes back to run state.
 			 * Otherwise, process goes back to sleep state.
 			 */
-			atomic_setbits_int(&p->p_flag, P_CONTINUED);
+			atomic_setbits_int(&pr->ps_flags, PS_CONTINUED);
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
@@ -1260,7 +1260,7 @@ out:
 	}
 	if (prop & SA_STOP) {
 		atomic_clearbits_int(siglist, CONTSIGMASK);
-		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
+		atomic_clearbits_int(&pr->ps_flags, PS_CONTINUED);
 	}
 
 	SCHED_UNLOCK();

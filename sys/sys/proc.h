@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.365 2024/07/22 09:43:47 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.366 2024/07/29 09:49:49 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -301,6 +301,7 @@ struct process {
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
 #define	PS_PIN		0x08000000	/* ld.so or static syscall pin */
 #define	PS_LIBCPIN	0x10000000	/* libc.so syscall pin */
+#define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
@@ -309,7 +310,7 @@ struct process {
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
      "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\034PIN" \
-     "\035LIBCPIN")
+     "\035LIBCPIN" "\036CONTINUED")
 
 struct kcov_dev;
 struct lock_list_entry;
@@ -436,7 +437,6 @@ struct proc {
 #define	P_WEXIT		0x00002000	/* Working on exiting. */
 #define	P_OWEUPC	0x00008000	/* Owe proc an addupc() at next ast. */
 #define	P_SUSPSINGLE	0x00080000	/* Need to stop for single threading. */
-#define P_CONTINUED	0x00800000	/* Proc has continued from a stopped state. */
 #define	P_THREAD	0x04000000	/* Only a thread, not a real process */
 #define	P_SUSPSIG	0x08000000	/* Stopped from signal. */
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
@@ -444,7 +444,7 @@ struct proc {
 #define	P_BITS \
     ("\20" "\01INKTR" "\02PROFPEND" "\03ALRMPEND" "\04SIGSUSPEND" \
      "\05CANTSLEEP" "\06WSLEEP" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
-     "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\030CONTINUED" "\033THREAD" \
+     "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\033THREAD" \
      "\034SUSPSIG" "\037CPUPEG")
 
 #define	THREAD_PID_OFFSET	100000
