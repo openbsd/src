@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2079 2024/07/02 22:28:02 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2080 2024/07/29 01:17:53 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3436,6 +3436,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mendocino",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_STRIX_POINT,
+	    "Strix Point",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX_1,
 	    "Phoenix",
 	},
@@ -6721,6 +6725,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI31_2,
+	    "Navi 31",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI31_4,
 	    "Navi 31",
 	},
 	{

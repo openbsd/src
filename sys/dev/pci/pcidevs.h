@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2079 2024/07/02 22:28:02 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2080 2024/07/29 01:17:53 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1332,6 +1332,7 @@
 #define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
 #define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
 #define	PCI_PRODUCT_ATI_MENDOCINO	0x1506		/* Mendocino */
+#define	PCI_PRODUCT_ATI_STRIX_POINT	0x150e		/* Strix Point */
 #define	PCI_PRODUCT_ATI_PHOENIX_1	0x15bf		/* Phoenix */
 #define	PCI_PRODUCT_ATI_PHOENIX_2	0x15c8		/* Phoenix */
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
@@ -2154,6 +2155,7 @@
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_5	0x7424		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_6	0x743f		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_NAVI31_2	0x7448		/* Navi 31 */
+#define	PCI_PRODUCT_ATI_NAVI31_4	0x744a		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_1	0x744c		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_3	0x745e		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI32_1	0x7470		/* Navi 32 */
