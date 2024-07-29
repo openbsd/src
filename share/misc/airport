@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.95 2024/07/09 03:21:47 jsg Exp $
+#	$OpenBSD: airport,v 1.96 2024/07/29 12:32:02 patrick Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1502,6 +1502,7 @@ SBH:St Barthelemy, Guadeloupe
 SBN:Michiana Regional, South Bend, Indiana, USA
 SBP:San Luis Obispo, California, USA
 SBW:Sibu, Sibu, Sarawak, Malaysia
+SBZ:Sibiu, Romania
 SCE:University Park Arpt, State College, Pennsylvania, USA
 SCL:Aeropuerto Comodoro Arturo Merino Benitez, Santiago, Chile
 SCN:Ensheim, Saarbruecken, Germany
