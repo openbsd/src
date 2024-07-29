@@ -209,6 +209,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 
 	/* GC 11.0.0, DCN 3.2.0, dGPU, "Navi 31" */
 	{0x1002, 0x7448 },	/* Radeon Pro W7900 */
+	{0x1002, 0x744a },	/* Radeon Pro W7900 Dual Slot */
 	{0x1002, 0x744c },	/* Radeon RX 7900 XT/XTX/GRE, 7900M */
 	{0x1002, 0x745e },	/* Radeon Pro W7800 */
 
@@ -234,9 +235,13 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.0.4, DCN 3.1.4, APU, Ryzen 8040, "Hawk Point" */
 	{0x1002, 0x1901 },	/* Radeon 740M */
 
-	/* GC 11.5.0, DCN 3.5.0, APU, linux >= 6.7 */
-	/* GC 11.5.1, DCN 3.5.1, APU, linux >= 6.9 */
+#ifdef notyet
+	/* GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 300, "Strix Point", linux 6.7 */
+	{0x1002, 0x150e },	/* Radeon 880M / 890M */
 
-	/* GC 12.0.0, DCN 4.0.1, dGPU, linux ?, amd-staging-drm-next */
-	/* GC 12.0.1, DCN 4.0.1, dGPU, linux ?, amd-staging-drm-next */
+	/* GC 11.5.1, DCN 3.5.1, APU, linux 6.9 */
+
+	/* GC 12.0.0, DCN 4.0.1, dGPU, linux 6.11 */
+	/* GC 12.0.1, DCN 4.0.1, dGPU, linux 6.11 */
+#endif
 };
