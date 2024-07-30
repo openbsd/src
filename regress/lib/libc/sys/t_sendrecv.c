@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_sendrecv.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_sendrecv.c,v 1.4 2024/07/30 13:28:27 claudio Exp $	*/
 /*	$NetBSD: t_sendrecv.c,v 1.8 2021/03/28 17:30:01 christos Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ receiver(int sd)
 			if (p.seq != seq)
 				printf("%ju != %ju\n", p.seq, seq);
 			if (seq % 10 == 0)
-				sched_yield();
+				usleep(100);
 			seq = p.seq + 1;
 		}
 //		printf("<<%zd %d %ju\n", n, errno, seq);
