@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.128 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.129 2024/07/30 13:41:15 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1417,9 +1417,11 @@ pppac_del_session(struct pppac_softc *sc, struct pipex_session_close_req *req)
 		return (EINVAL);
 	}
 	pipex_unlink_session_locked(session);
-	pipex_rele_session(session);
 
 	mtx_leave(&pipex_list_mtx);
+
+	pipex_export_session_stats(session, &req->psr_stat);
+	pipex_rele_session(session);
 
 	return (0);
 }
