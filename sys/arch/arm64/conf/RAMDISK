@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.216 2024/03/25 17:24:03 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.217 2024/07/30 19:47:05 mglocker Exp $
 
 machine		arm64
 maxusers	4
@@ -41,6 +41,7 @@ acpi0		at mainbus?
 acpiec*		at acpi?
 acpimcfg*	at acpi?
 acpiiort*	at acpi?
+acpisectwo*	at acpi?
 smmu*		at acpiiort?
 acpipci*	at acpi?
 pci*		at acpipci?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.69 2023/04/23 00:20:26 dlg Exp $
+#	$OpenBSD: files.acpi,v 1.70 2024/07/30 19:47:06 mglocker Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -109,6 +109,11 @@ file	dev/acpi/acpithinkpad.c		acpithinkpad
 device	acpitoshiba
 attach	acpitoshiba at acpi
 file	dev/acpi/acpitoshiba.c		acpitoshiba
+
+# Samsung EC2
+device	acpisectwo
+attach	acpisectwo at acpi
+file	dev/acpi/acpisectwo.c		acpisectwo
 
 # Sony support
 device	acpisony

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.435 2024/07/14 13:58:57 jmatthew Exp $ */
+/* $OpenBSD: acpi.c,v 1.436 2024/07/30 19:47:06 mglocker Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -95,6 +95,9 @@ int	acpi_gpe(struct acpi_softc *, int, void *);
 
 void	acpi_enable_rungpes(struct acpi_softc *);
 
+#ifdef __arm64__
+int	acpi_foundsectwo(struct aml_node *, void *);
+#endif
 int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundsony(struct aml_node *node, void *arg);
 int	acpi_foundhid(struct aml_node *, void *);
@@ -1230,6 +1233,10 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 
 	/* initialize runtime environment */
 	aml_find_node(sc->sc_root, "_INI", acpi_inidev, sc);
+
+#ifdef __arm64__
+	aml_find_node(sc->sc_root, "ECTC", acpi_foundsectwo, sc);
+#endif
 
 	/* Get PCI mapping */
 	aml_walknodes(sc->sc_root, AML_WALK_PRE, acpi_getpci, sc);
@@ -2769,6 +2776,26 @@ acpi_create_thread(void *arg)
 		printf("%s: unable to create isr thread, GPEs disabled\n",
 		    DEVNAME(sc));
 }
+
+#if __arm64__
+int
+acpi_foundsectwo(struct aml_node *node, void *arg)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)arg;
+	struct device *self = (struct device *)arg;
+	struct acpi_attach_args aaa;
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_name = "acpisectwo";
+
+	config_found(self, &aaa, acpi_print);
+
+	return 0;
+}
+#endif
 
 int
 acpi_foundec(struct aml_node *node, void *arg)
