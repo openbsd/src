@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.130 2024/07/24 21:24:18 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.131 2024/07/30 08:59:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -884,14 +884,46 @@ cpu_identify(struct cpu_info *ci)
 		printf("%sDPB", sep);
 		sep = ",";
 	}
+	if (ID_AA64ISAR1_DPB(id) >= ID_AA64ISAR1_DPB_DCCVADP)
+		printf("+DCCVADP");
 
 	/*
 	 * ID_AA64ISAR2
 	 */
 	id = READ_SPECIALREG(id_aa64isar2_el1);
 
+	if (ID_AA64ISAR2_CSSC(id) >= ID_AA64ISAR2_CSSC_IMPL) {
+		printf("%sCSSC", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR2_RPRFM(id) >= ID_AA64ISAR2_RPRFM_IMPL) {
+		printf("%sRPRFM", sep);
+		sep = ",";
+	}
+
 	if (ID_AA64ISAR2_CLRBHB(id) >= ID_AA64ISAR2_CLRBHB_IMPL) {
 		printf("%sCLRBHB", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR2_BC(id) >= ID_AA64ISAR2_BC_IMPL) {
+		printf("%sBC", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR2_MOPS(id) >= ID_AA64ISAR2_MOPS_IMPL) {
+		printf("%sMOPS", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR2_RPRES(id) >= ID_AA64ISAR2_RPRES_IMPL) {
+		printf("%sRPRES", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR2_WFXT(id) >= ID_AA64ISAR2_WFXT_IMPL) {
+		printf("%sWFXT", sep);
 		sep = ",";
 	}
 
@@ -901,6 +933,13 @@ cpu_identify(struct cpu_info *ci)
 	 * We only print ASIDBits for now.
 	 */
 	id = READ_SPECIALREG(id_aa64mmfr0_el1);
+
+	if (ID_AA64MMFR0_ECV(id) >= ID_AA64MMFR0_ECV_IMPL) {
+		printf("%sECV", sep);
+		sep = ",";
+	}
+	if (ID_AA64MMFR0_ECV(id) >= ID_AA64MMFR0_ECV_CNTHCTL)
+		printf("+CNTHCTL");
 
 	if (ID_AA64MMFR0_ASID_BITS(id) == ID_AA64MMFR0_ASID_BITS_16) {
 		printf("%sASID16", sep);
@@ -913,6 +952,11 @@ cpu_identify(struct cpu_info *ci)
 	 * We omit printing most virtualization related fields for now.
 	 */
 	id = READ_SPECIALREG(id_aa64mmfr1_el1);
+
+	if (ID_AA64MMFR1_AFP(id) >= ID_AA64MMFR1_AFP_IMPL) {
+		printf("%sAFP", sep);
+		sep = ",";
+	}
 
 	if (ID_AA64MMFR1_SPECSEI(id) >= ID_AA64MMFR1_SPECSEI_IMPL) {
 		printf("%sSpecSEI", sep);
@@ -965,6 +1009,11 @@ cpu_identify(struct cpu_info *ci)
 		sep = ",";
 	}
 
+	if (ID_AA64MMFR2_AT(id) >= ID_AA64MMFR2_AT_IMPL) {
+		printf("%sAT", sep);
+		sep = ",";
+	}
+
 	/*
 	 * ID_AA64PFR0
 	 */
@@ -986,6 +1035,18 @@ cpu_identify(struct cpu_info *ci)
 
 	if (ID_AA64PFR0_DIT(id) >= ID_AA64PFR0_DIT_IMPL) {
 		printf("%sDIT", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64PFR0_ADV_SIMD(id) != ID_AA64PFR0_ADV_SIMD_NONE &&
+	    ID_AA64PFR0_ADV_SIMD(id) >= ID_AA64PFR0_ADV_SIMD_HP) {
+		printf("%sAdvSIMD+HP", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64PFR0_FP(id) != ID_AA64PFR0_FP_NONE &&
+	    ID_AA64PFR0_FP(id) >= ID_AA64PFR0_FP_HP) {
+		printf("%sFP+HP", sep);
 		sep = ",";
 	}
 
@@ -1070,13 +1131,19 @@ cpu_identify_cleanup(void)
 	cpu_id_aa64isar2 = value;
 
 	/* ID_AA64MMFR0_EL1 */
-	cpu_id_aa64mmfr0 = 0;
+	value = 0;
+	value |= cpu_id_aa64mmfr0 & ID_AA64MMFR0_ECV_MASK;
+	cpu_id_aa64mmfr0 = value;
 
 	/* ID_AA64MMFR1_EL1 */
-	cpu_id_aa64mmfr1 = 0;
+	value = 0;
+	value |= cpu_id_aa64mmfr1 & ID_AA64MMFR1_AFP_MASK;
+	cpu_id_aa64mmfr1 = value;
 
 	/* ID_AA64MMFR2_EL1 */
-	cpu_id_aa64mmfr2 = 0;
+	value = 0;
+	value |= cpu_id_aa64mmfr2 & ID_AA64MMFR2_AT_MASK;
+	cpu_id_aa64mmfr2 = value;
 
 	/* ID_AA64PFR0_EL1 */
 	value = 0;
@@ -1107,8 +1174,12 @@ cpu_identify_cleanup(void)
 		hwcap |= HWCAP_CRC32;
 	if (ID_AA64ISAR0_ATOMIC(cpu_id_aa64isar0) >= ID_AA64ISAR0_ATOMIC_IMPL)
 		hwcap |= HWCAP_ATOMICS;
-	/* HWCAP_FPHP */
-	/* HWCAP_ASIMDHP */
+	if (ID_AA64PFR0_FP(cpu_id_aa64pfr0) != ID_AA64PFR0_FP_NONE &&
+	    ID_AA64PFR0_FP(cpu_id_aa64pfr0) >= ID_AA64PFR0_FP_HP)
+		hwcap |= HWCAP_FPHP;
+	if (ID_AA64PFR0_FP(cpu_id_aa64pfr0) != ID_AA64PFR0_ADV_SIMD_NONE &&
+	    ID_AA64PFR0_FP(cpu_id_aa64pfr0) >= ID_AA64PFR0_ADV_SIMD_HP)
+		hwcap |= HWCAP_ASIMDHP;
 	id_aa64mmfr2 = READ_SPECIALREG(id_aa64mmfr2_el1);
 	if (ID_AA64MMFR2_IDS(id_aa64mmfr2) >= ID_AA64MMFR2_IDS_IMPL)
 		hwcap |= HWCAP_CPUID;
@@ -1137,7 +1208,8 @@ cpu_identify_cleanup(void)
 		hwcap |= HWCAP_ASIMDFHM;
 	if (ID_AA64PFR0_DIT(cpu_id_aa64pfr0) >= ID_AA64PFR0_DIT_IMPL)
 		hwcap |= HWCAP_DIT;
-	/* HWCAP_USCAT */
+	if (ID_AA64MMFR2_AT(cpu_id_aa64mmfr2) >= ID_AA64MMFR2_AT_IMPL)
+		hwcap |= HWCAP_USCAT;
 	if (ID_AA64ISAR1_LRCPC(cpu_id_aa64isar1) >= ID_AA64ISAR1_LRCPC_LDAPUR)
 		hwcap |= HWCAP_ILRCPC;
 	if (ID_AA64ISAR0_TS(cpu_id_aa64isar0) >= ID_AA64ISAR0_TS_BASE)
@@ -1154,7 +1226,8 @@ cpu_identify_cleanup(void)
 		hwcap |= HWCAP_PACG;
 
 	/* HWCAP2 */
-	/* HWCAP2_DCPODP */
+	if (ID_AA64ISAR1_DPB(cpu_id_aa64isar1) >= ID_AA64ISAR1_DPB_DCCVADP)
+		hwcap2 |= HWCAP2_DCPODP;
 	/* HWCAP2_SVE2: OpenBSD kernel doesn't provide SVE support */
 	/* HWCAP2_SVEAES: OpenBSD kernel doesn't provide SVE support */
 	/* HWCAP2_SVEPMULL: OpenBSD kernel doesn't provide SVE support */
@@ -1180,9 +1253,12 @@ cpu_identify_cleanup(void)
 	if (ID_AA64PFR1_BT(cpu_id_aa64pfr1) >= ID_AA64PFR1_BT_IMPL)
 		hwcap2 |= HWCAP2_BTI;
 	/* HWCAP2_MTE: OpenBSD kernel doesn't provide MTE support */
-	/* HWCAP2_ECV */
-	/* HWCAP2_AFP */
-	/* HWCAP2_RPRES */
+	if (ID_AA64MMFR0_ECV(cpu_id_aa64mmfr0) >= ID_AA64MMFR0_ECV_IMPL)
+		hwcap2 |= HWCAP2_ECV;
+	if (ID_AA64MMFR1_AFP(cpu_id_aa64mmfr1) >= ID_AA64MMFR1_AFP_IMPL)
+		hwcap2 |= HWCAP2_AFP;
+	if (ID_AA64ISAR2_RPRES(cpu_id_aa64isar2) >= ID_AA64ISAR2_RPRES_IMPL)
+		hwcap2 |= HWCAP2_RPRES;
 	/* HWCAP2_MTE3: OpenBSD kernel doesn't provide MTE support */
 	/* HWCAP2_SME: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME_I16I64: OpenBSD kernel doesn't provide SME support */
@@ -1192,12 +1268,15 @@ cpu_identify_cleanup(void)
 	/* HWCAP2_SME_B16F32: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME_F32F32: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME_FA64: OpenBSD kernel doesn't provide SME support */
-	/* HWCAP2_WFXT */
+	if (ID_AA64ISAR2_WFXT(cpu_id_aa64isar2) >= ID_AA64ISAR2_WFXT_IMPL)
+		hwcap2 |= HWCAP2_WFXT;
 	if (ID_AA64ISAR1_BF16(cpu_id_aa64isar1) >= ID_AA64ISAR1_BF16_EBF)
 		hwcap2 |= HWCAP2_EBF16;
 	/* HWCAP2_SVE_EBF16: OpenBSD kernel doesn't provide SVE support */
-	/* HWCAP2_CSSC */
-	/* HWCAP2_RPRFM */
+	if (ID_AA64ISAR2_CSSC(cpu_id_aa64isar2) >= ID_AA64ISAR2_CSSC_IMPL)
+		hwcap2 |= HWCAP2_CSSC;
+	if (ID_AA64ISAR2_RPRFM(cpu_id_aa64isar2) >= ID_AA64ISAR2_RPRFM_IMPL)
+		hwcap2 |= HWCAP2_RPRFM;
 	/* HWCAP2_SVE2P1: OpenBSD kernel doesn't provide SVE support */
 	/* HWCAP2_SME2: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME2P1: OpenBSD kernel doesn't provide SME support */
@@ -1205,8 +1284,10 @@ cpu_identify_cleanup(void)
 	/* HWCAP2_SME_BI32I32: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME_B16B16: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME_F16F16: OpenBSD kernel doesn't provide SME support */
-	/* HWCAP2_MOPS */
-	/* HWCAP2_HBC */
+	if (ID_AA64ISAR2_MOPS(cpu_id_aa64isar2) >= ID_AA64ISAR2_MOPS_IMPL)
+		hwcap2 |= HWCAP2_MOPS;
+	if (ID_AA64ISAR2_BC(cpu_id_aa64isar2) >= ID_AA64ISAR2_BC_IMPL)
+		hwcap2 |= HWCAP2_HBC;
 }
 
 void	cpu_init(void);
