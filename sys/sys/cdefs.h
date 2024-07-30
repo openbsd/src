@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.43 2018/10/29 17:10:40 guenther Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.44 2024/07/30 05:57:31 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -287,11 +287,16 @@
  * _XOPEN_SOURCE == 520				XPG5v2
  * _XOPEN_SOURCE == 600				POSIX 1003.1-2001 with XSI
  * _XOPEN_SOURCE == 700				POSIX 1003.1-2008 with XSI
+ * _XOPEN_SOURCE == 800				POSIX 1003.1-2024 with XSI
  *
  * The XPG spec implies a specific value for _POSIX_C_SOURCE.
  */
 #ifdef _XOPEN_SOURCE
-# if (_XOPEN_SOURCE - 0 >= 700)
+# if (_XOPEN_SOURCE - 0 >= 800)
+#  define __XPG_VISIBLE		800
+#  undef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE	202405L
+# elif (_XOPEN_SOURCE - 0 >= 700)
 #  define __XPG_VISIBLE		700
 #  undef _POSIX_C_SOURCE
 #  define _POSIX_C_SOURCE	200809L
@@ -327,12 +332,16 @@
  *				and the omnibus ISO/IEC 9945-1:1996
  * _POSIX_C_SOURCE == 200112L   1003.1-2001
  * _POSIX_C_SOURCE == 200809L   1003.1-2008
+ * _POSIX_C_SOURCE == 202405L   1003.1-2024
  *
  * The POSIX spec implies a specific value for __ISO_C_VISIBLE, though
  * this may be overridden by the _ISOC99_SOURCE macro later.
  */
 #ifdef _POSIX_C_SOURCE
-# if (_POSIX_C_SOURCE - 0 >= 200809)
+# if (_POSIX_C_SOURCE - 0 >= 202405)
+#  define __POSIX_VISIBLE	202405
+#  define __ISO_C_VISIBLE	2017
+# elif (_POSIX_C_SOURCE - 0 >= 200809)
 #  define __POSIX_VISIBLE	200809
 #  define __ISO_C_VISIBLE	1999
 # elif (_POSIX_C_SOURCE - 0 >= 200112)
@@ -398,13 +407,13 @@
  * Default values.
  */
 #ifndef __XPG_VISIBLE
-# define __XPG_VISIBLE		700
+# define __XPG_VISIBLE		800
 #endif
 #ifndef __POSIX_VISIBLE
-# define __POSIX_VISIBLE	200809
+# define __POSIX_VISIBLE	202405
 #endif
 #ifndef __ISO_C_VISIBLE
-# define __ISO_C_VISIBLE	2011
+# define __ISO_C_VISIBLE	2017
 #endif
 #ifndef __BSD_VISIBLE
 # define __BSD_VISIBLE		1
