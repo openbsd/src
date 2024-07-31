@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.217 2024/07/30 19:47:05 mglocker Exp $
+# $OpenBSD: RAMDISK,v 1.218 2024/07/31 10:07:33 mglocker Exp $
 
 machine		arm64
 maxusers	4
@@ -83,6 +83,7 @@ bwfm*		at sdmmc?	# Broadcom FullMAC
 smmu*		at fdt?
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
+ufshci*		at fdt?
 
 # NS16550 compatible serial ports
 com*		at fdt?

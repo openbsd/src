@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.287 2024/07/30 19:47:05 mglocker Exp $
+# $OpenBSD: GENERIC,v 1.288 2024/07/31 10:07:33 mglocker Exp $
 #
 # GENERIC machine description file
 #
@@ -96,6 +96,7 @@ smmu*		at fdt?
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
 ipmi*		at fdt?
+ufshci*		at fdt?
 
 # NS16550 compatible serial ports
 com*		at fdt?

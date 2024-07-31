@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.202 2024/03/27 15:15:00 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.203 2024/07/31 10:07:33 mglocker Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -228,6 +228,9 @@ file	dev/fdt/sdhc_fdt.c		sdhc_fdt
 
 attach	xhci at fdt with xhci_fdt
 file	dev/fdt/xhci_fdt.c		xhci_fdt
+
+attach	ufshci at fdt with ufshci_fdt
+file	dev/fdt/ufshci_fdt.c		ufshci_fdt
 
 device	syscon: fdt
 attach	syscon at fdt
