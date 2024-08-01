@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.6 2024/05/24 10:05:55 jsg Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.7 2024/08/01 11:13:19 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -42,7 +42,7 @@ struct viogpu_softc;
 int	viogpu_match(struct device *, void *, void *);
 void	viogpu_attach(struct device *, struct device *, void *);
 int	viogpu_send_cmd(struct viogpu_softc *, void *, size_t, void *, size_t);
-int	viogpu_vq_wait(struct virtqueue *vq);
+int	viogpu_vq_done(struct virtqueue *vq);
 void	viogpu_rx_soft(void *arg);
 
 int	viogpu_get_display_info(struct viogpu_softc *);
@@ -178,7 +178,7 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 		printf(": alloc_vq failed\n");
 		return;
 	}
-	sc->sc_vqs[VQCTRL].vq_done = viogpu_vq_wait;
+	sc->sc_vqs[VQCTRL].vq_done = viogpu_vq_done;
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCURS], VQCURS, NBPG, 1,
 	    "cursor")) {
@@ -211,6 +211,8 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
+	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+
 	if (viogpu_get_display_info(sc) != 0)
 		goto unmap;
 
@@ -229,8 +231,6 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamap_load(vsc->sc_dmat, sc->sc_fb_dma_map,
 	    sc->sc_fb_dma_kva, sc->sc_fb_dma_size, NULL, BUS_DMA_NOWAIT) != 0)
 		goto fb_unmap;
-
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 
 	if (viogpu_create_2d(sc, 1, sc->sc_fb_width, sc->sc_fb_height) != 0)
 		goto fb_unmap;
@@ -325,14 +325,14 @@ viogpu_repaint(void *arg)
 }
 
 int
-viogpu_vq_wait(struct virtqueue *vq)
+viogpu_vq_done(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
 	struct viogpu_softc *sc = (struct viogpu_softc *)vsc->sc_child;
 	int slot, len;
 
-	while (virtio_dequeue(vsc, vq, &slot, &len) != 0)
-		;
+	if (virtio_dequeue(vsc, vq, &slot, &len) != 0)
+		return 0;
 
 	bus_dmamap_sync(vsc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,
 	    BUS_DMASYNC_POSTREAD);
@@ -402,7 +402,8 @@ viogpu_send_cmd(struct viogpu_softc *sc, void *cmd, size_t cmd_size, void *ret,
 	virtio_enqueue_p(vq, slot, sc->sc_dma_map, cmd_size, ret_size, 0);
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
-	viogpu_vq_wait(vq);
+	while (virtio_check_vq(vsc, vq) == 0)
+		;
 
 	bus_dmamap_sync(vsc->sc_dmat, sc->sc_dma_map, 0, cmd_size,
 	    BUS_DMASYNC_POSTWRITE);

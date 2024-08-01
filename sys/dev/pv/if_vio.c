@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.44 2024/07/26 07:55:23 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.45 2024/08/01 11:13:19 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1303,7 +1303,7 @@ vio_txtick(void *arg)
 {
 	struct virtqueue *vq = arg;
 	int s = splnet();
-	vio_tx_intr(vq);
+	virtio_check_vq(vq->vq_owner, vq);
 	splx(s);
 }
 

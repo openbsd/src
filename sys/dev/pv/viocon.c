@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.12 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.13 2024/08/01 11:13:19 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -463,7 +463,7 @@ vioconhwiflow(struct tty *tp, int stop)
 		virtio_stop_vq_intr(vp->vp_sc->sc_virtio, vp->vp_rx);
 	} else {
 		virtio_start_vq_intr(vp->vp_sc->sc_virtio, vp->vp_rx);
-		softintr_schedule(vp->vp_si);
+		virtio_check_vq(vp->vp_sc->sc_virtio, vp->vp_rx);
 	}
 	splx(s);
 	return 1;

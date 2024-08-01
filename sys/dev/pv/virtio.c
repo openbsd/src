@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.28 2024/07/26 07:55:23 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.29 2024/08/01 11:13:19 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -185,6 +185,9 @@ virtio_reinit_end(struct virtio_softc *sc)
 
 /*
  * dmamap sync operations for a virtqueue.
+ *
+ * XXX These should be more fine grained. Syncing the whole ring if we
+ * XXX only need a few bytes is inefficient if we use bounce buffers.
  */
 static inline void
 vq_sync_descs(struct virtio_softc *sc, struct virtqueue *vq, int ops)
@@ -203,12 +206,31 @@ vq_sync_aring(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 }
 
 static inline void
+vq_sync_aring_used_event(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, vq->vq_availoffset +
+	    offsetof(struct vring_avail, ring) + vq->vq_num * sizeof(uint16_t),
+	    sizeof(uint16_t), ops);
+}
+
+
+static inline void
 vq_sync_uring(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, vq->vq_usedoffset,
 	    offsetof(struct vring_used, ring) + vq->vq_num *
 	    sizeof(struct vring_used_elem), ops);
 }
+
+static inline void
+vq_sync_uring_avail_event(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_usedoffset + offsetof(struct vring_used, ring) +
+	    vq->vq_num * sizeof(struct vring_used_elem), sizeof(uint16_t),
+	    ops);
+}
+
 
 static inline void
 vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
@@ -672,11 +694,13 @@ virtio_enqueue_p(struct virtqueue *vq, int slot, bus_dmamap_t dmamap,
 static void
 publish_avail_idx(struct virtio_softc *sc, struct virtqueue *vq)
 {
+	/* first make sure the avail ring entries are visible to the device */
 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 
 	virtio_membar_producer();
 	vq->vq_avail->idx = vq->vq_avail_idx;
-	vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
+	/* make the avail idx visible to the device */
+	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued = 1;
 }
 
@@ -706,6 +730,7 @@ notify:
 			publish_avail_idx(sc, vq);
 
 			virtio_membar_sync();
+			vq_sync_uring_avail_event(sc, vq, BUS_DMASYNC_POSTREAD);
 			t = VQ_AVAIL_EVENT(vq) + 1;
 			if ((uint16_t)(n - t) < (uint16_t)(n - o))
 				sc->sc_ops->kick(sc, vq->vq_index);
@@ -713,6 +738,7 @@ notify:
 			publish_avail_idx(sc, vq);
 
 			virtio_membar_sync();
+			vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
 			if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))
 				sc->sc_ops->kick(sc, vq->vq_index);
 		}
@@ -781,8 +807,10 @@ virtio_enqueue_trim(struct virtqueue *vq, int slot, int nsegs)
  * Dequeue a request.
  */
 /*
- * dequeue: dequeue a request from uring; dmamap_sync for uring is
- *	    already done in the interrupt handler.
+ * dequeue: dequeue a request from uring; bus_dmamap_sync for uring must
+ * 	    already have been done, usually by virtio_check_vq()
+ * 	    in the interrupt handler. This means that polling virtio_dequeue()
+ * 	    repeatedly until it returns 0 does not work.
  */
 int
 virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
@@ -797,6 +825,7 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
 	usedidx &= vq->vq_mask;
 
 	virtio_membar_consumer();
+	vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
 	slot = vq->vq_used->ring[usedidx].id;
 	qe = &vq->vq_entries[slot];
 
@@ -852,7 +881,7 @@ virtio_postpone_intr(struct virtqueue *vq, uint16_t nslots)
 	VQ_USED_EVENT(vq) = idx;
 	virtio_membar_sync();
 
-	vq_sync_aring(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
+	vq_sync_aring_used_event(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
 
 	if (nslots < virtio_nused(vq))
@@ -905,6 +934,7 @@ virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		 * interrupt.
 		 */
 		VQ_USED_EVENT(vq) = vq->vq_used_idx + 0x8000;
+		vq_sync_aring_used_event(sc, vq, BUS_DMASYNC_PREWRITE);
 	} else {
 		vq->vq_avail->flags |= VRING_AVAIL_F_NO_INTERRUPT;
 	}
@@ -920,16 +950,19 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 	 * interrupts is done through setting the latest
 	 * consumed index in the used_event field
 	 */
-	if (virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX))
+	if (virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX)) {
 		VQ_USED_EVENT(vq) = vq->vq_used_idx;
-	else
+		vq_sync_aring_used_event(sc, vq, BUS_DMASYNC_PREWRITE);
+	} else {
 		vq->vq_avail->flags &= ~VRING_AVAIL_F_NO_INTERRUPT;
+		vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+	}
 
 	virtio_membar_sync();
 
-	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
 
+	vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
 	if (vq->vq_used_idx != vq->vq_used->idx)
 		return 1;
 
@@ -945,6 +978,7 @@ virtio_nused(struct virtqueue *vq)
 {
 	uint16_t	n;
 
+	vq_sync_uring(vq->vq_owner, vq, BUS_DMASYNC_POSTREAD);
 	n = (uint16_t)(vq->vq_used->idx - vq->vq_used_idx);
 	VIRTIO_ASSERT(n <= vq->vq_num);
 

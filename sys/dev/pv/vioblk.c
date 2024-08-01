@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.40 2024/07/26 07:55:23 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.41 2024/08/01 11:13:19 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -375,7 +375,7 @@ vioblk_reset(struct vioblk_softc *sc)
 	virtio_reset(sc->sc_virtio);
 
 	/* finish requests that have been completed */
-	vioblk_vq_done(&sc->sc_vq[0]);
+	virtio_check_vq(sc->sc_virtio, &sc->sc_vq[0]);
 
 	/* abort all remaining requests */
 	for (i = 0; i < sc->sc_nreqs; i++) {
@@ -535,7 +535,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	if (!ISSET(xs->flags, SCSI_POLL)) {
 		/* check if some xfers are done: */
 		if (sc->sc_queued > 1)
-			vioblk_vq_done(vq);
+			virtio_check_vq(sc->sc_virtio, vq);
 		splx(s);
 		return;
 	}
