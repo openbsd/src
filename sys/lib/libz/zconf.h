@@ -57,6 +57,7 @@
 #  define deflateSetDictionary  z_deflateSetDictionary
 #  define deflateSetHeader      z_deflateSetHeader
 #  define deflateTune           z_deflateTune
+#  define deflateUsed           z_deflateUsed
 #  define deflate_copyright     z_deflate_copyright
 #  define get_crc_table         z_get_crc_table
 #  ifndef Z_SOLO
