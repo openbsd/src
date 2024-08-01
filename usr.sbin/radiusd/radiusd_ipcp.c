@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.7 2024/07/22 10:00:16 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.8 2024/08/01 00:58:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -794,7 +794,7 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 			if (!found)
 				goto reject;
 		} else {
-			n = arc4random() % self->npools;
+			n = arc4random_uniform(self->npools);
 			i = 0;
 			TAILQ_FOREACH(addr, &self->addrs, next) {
 				if (addr->type == ADDRESS_TYPE_POOL) {
