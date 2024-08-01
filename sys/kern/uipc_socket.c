@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.340 2024/07/29 10:35:22 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.341 2024/08/01 17:19:01 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -361,7 +361,8 @@ sofree(struct socket *so, int keep_lock)
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
 		/* Reuse splice idle, sounsplice() has been called before. */
-		timeout_set_proc(&so->so_sp->ssp_idleto, soreaper, so);
+		timeout_set_flags(&so->so_sp->ssp_idleto, soreaper, so,
+		    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
 		timeout_add(&so->so_sp->ssp_idleto, 0);
 	} else
 #endif /* SOCKET_SPLICE */
@@ -1487,7 +1488,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		so->so_idletv = *tv;
 	else
 		timerclear(&so->so_idletv);
-	timeout_set_proc(&so->so_idleto, soidle, so);
+	timeout_set_flags(&so->so_idleto, soidle, so,
+	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
 	task_set(&so->so_splicetask, sotask, so);
 
 	/*
