@@ -19,6 +19,7 @@
 #define _KERNEL
 #include <machine/cpu.h>
 #include <sys/proc.h>
+#include <sys/exec_elf.h>
 #undef _KERNEL
 #endif
 
@@ -60,6 +61,14 @@ lldb::ProcessSP ProcessOpenBSDKernel::CreateInstance(lldb::TargetSP target_sp,
   ModuleSP executable = target_sp->GetExecutableModule();
   if (crash_file && !can_connect && executable) {
 #if defined(__OpenBSD__)
+    char buf[4];
+    FILE *fp = fopen(crash_file->GetPath().c_str(), "r");
+    if (fp == NULL)
+      return nullptr;
+    size_t r = fread(buf, 1, sizeof(buf), fp);
+    fclose(fp);
+    if (r != sizeof(buf) || memcmp(buf, ELFMAG, sizeof(buf)) == 0)
+      return nullptr;
     kvm_t *kvm =
 	kvm_open(executable->GetFileSpec().GetPath().c_str(),
 		 crash_file->GetPath().c_str(), nullptr, O_RDONLY, nullptr);
