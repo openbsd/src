@@ -791,6 +791,18 @@ ZEXTERN int ZEXPORT deflatePending(z_streamp strm,
    stream state was inconsistent.
  */
 
+ZEXTERN int ZEXPORT deflateUsed(z_streamp strm,
+                                int *bits);
+/*
+     deflateUsed() returns in *bits the most recent number of deflate bits used
+   in the last byte when flushing to a byte boundary. The result is in 1..8, or
+   0 if there has not yet been a flush. This helps determine the location of
+   the last bit of a deflate stream.
+
+     deflateUsed returns Z_OK if success, or Z_STREAM_ERROR if the source
+   stream state was inconsistent.
+ */
+
 ZEXTERN int ZEXPORT deflatePrime(z_streamp strm,
                                  int bits,
                                  int value);

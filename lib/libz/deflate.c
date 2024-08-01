@@ -716,6 +716,14 @@ int ZEXPORT deflatePending(z_streamp strm, unsigned *pending, int *bits) {
 }
 
 /* ========================================================================= */
+int ZEXPORT deflateUsed(z_streamp strm, int *bits) {
+    if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
+    if (bits != Z_NULL)
+        *bits = strm->state->bi_used;
+    return Z_OK;
+}
+
+/* ========================================================================= */
 int ZEXPORT deflatePrime(z_streamp strm, int bits, int value) {
     deflate_state *s;
     int put;
@@ -1742,8 +1750,10 @@ local block_state deflate_stored(deflate_state *s, int flush) {
         s->high_water = s->strstart;
 
     /* If the last block was written to next_out, then done. */
-    if (last)
+    if (last) {
+        s->bi_used = 8;
         return finish_done;
+    }
 
     /* If flushing and all input has been consumed, then done. */
     if (flush != Z_NO_FLUSH && flush != Z_FINISH &&
@@ -1795,6 +1805,8 @@ local block_state deflate_stored(deflate_state *s, int flush) {
     }
 
     /* We've done all we can with the available input and output. */
+    if (last)
+        s->bi_used = 8;
     return last ? finish_started : need_more;
 }
 
