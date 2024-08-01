@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: sndio
 Description: sndio library
-Version: 1.9.0
+Version: 1.10.0
 Requires:
 Libs: -L${libdir} -lsndio
 Cflags: -I${includedir}
