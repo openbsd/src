@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.54 2024/07/11 14:05:59 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.55 2024/08/01 00:05:16 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.54 2024/07/11 14:05:59 yasuoka Exp $
+ * $Id: npppd.c,v 1.55 2024/08/01 00:05:16 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -608,7 +608,7 @@ npppd_reset_routing_table(npppd *_this, int pool_only)
 				if (is_first)
 					in_route_add(&snp->snp_addr,
 					    &snp->snp_mask, &loop,
-					    LOOPBACK_IFNAME, RTF_BLACKHOLE, 0);
+					    LOOPBACK_IFNAME, RTF_REJECT, 0);
 				break;
 
 			case SNP_PPP:
