@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.147 2024/03/17 05:49:41 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.148 2024/08/02 22:24:51 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -182,7 +182,9 @@ sigcodecall:
 	.globl	sigcoderet
 sigcoderet:
 	int3
-1:	JMP_RETPOLINE(rax)
+1:	CODEPATCH_START
+	JMP_RETPOLINE(rax)
+	CODEPATCH_END(CPTAG_RETPOLINE_RAX)
 	.globl	esigcode
 esigcode:
 	.globl	sigfill
