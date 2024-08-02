@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.109 2024/05/18 05:20:22 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.110 2024/08/02 01:53:21 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -471,6 +471,10 @@ int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
 #endif
 
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
+int	getentropy(void *, size_t);
+#endif
+
 #if __BSD_VISIBLE
 int	dup3(int, int, int);
 int	pipe2(int [2], int);
@@ -525,7 +529,6 @@ int	 setthrname(pid_t, const char *);
 void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
 int	 swapctl(int cmd, const void *arg, int misc);
-int	 getentropy(void *, size_t);
 int	 pledge(const char *, const char *);
 int	 unveil(const char *, const char *);
 pid_t	 __tfork_thread(const struct __tfork *, size_t, void (*)(void *),

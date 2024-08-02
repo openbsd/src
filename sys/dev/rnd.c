@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.228 2024/06/14 10:17:05 claudio Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.229 2024/08/02 01:53:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -75,6 +75,7 @@
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/syslimits.h>
 
 #include <crypto/sha2.h>
 
@@ -814,11 +815,11 @@ sys_getentropy(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
-	char buf[256];
+	char buf[GETENTROPY_MAX];
 	int error;
 
 	if (SCARG(uap, nbyte) > sizeof(buf))
-		return (EIO);
+		return (EINVAL);
 	arc4random_buf(buf, SCARG(uap, nbyte));
 	if ((error = copyout(buf, SCARG(uap, buf), SCARG(uap, nbyte))) != 0)
 		return (error);
