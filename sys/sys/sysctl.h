@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.236 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.237 2024/08/02 14:34:45 mvs Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1048,6 +1048,9 @@ struct sysctl_bounded_args {
  * the name.
  */
 typedef int (sysctlfn)(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+
+int sysctl_vslock(void *, size_t);
+void sysctl_vsunlock(void *, size_t);
 
 int sysctl_int_lower(void *, size_t *, void *, size_t, int *);
 int sysctl_int(void *, size_t *, void *, size_t, int *);

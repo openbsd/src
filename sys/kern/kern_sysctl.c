@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.429 2024/07/11 14:11:55 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.430 2024/08/02 14:34:45 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -153,6 +153,11 @@ void fill_file(struct kinfo_file *, struct file *, struct filedesc *, int,
     struct vnode *, struct process *, struct proc *, struct socket *, int);
 void fill_kproc(struct process *, struct kinfo_proc *, struct proc *, int);
 
+int kern_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t,
+	struct proc *);
+int hw_sysctl_locked(int *, u_int, void *, size_t *,void *, size_t,
+	struct proc *);
+
 int (*cpu_cpuspeed)(int *);
 
 /*
@@ -161,6 +166,45 @@ int (*cpu_cpuspeed)(int *);
  */
 struct rwlock sysctl_lock = RWLOCK_INITIALIZER("sysctllk");
 struct rwlock sysctl_disklock = RWLOCK_INITIALIZER("sysctldlk");
+
+int
+sysctl_vslock(void *addr, size_t len)
+{
+	int error;
+
+	KERNEL_LOCK();
+	error = rw_enter(&sysctl_lock, RW_WRITE|RW_INTR);
+	if (error)
+		goto out;
+
+	if (addr) {
+		if (atop(len) > uvmexp.wiredmax - uvmexp.wired) {
+			error = ENOMEM;
+			goto out2;
+		}
+		error = uvm_vslock(curproc, addr, len, PROT_READ | PROT_WRITE);
+		if (error)
+			goto out2;
+	}
+
+	return (0);
+out2:
+	rw_exit_write(&sysctl_lock);
+out:
+	KERNEL_UNLOCK();
+	return (error);
+}
+
+void
+sysctl_vsunlock(void *addr, size_t len)
+{
+	KERNEL_ASSERT_LOCKED();
+
+	if (addr)
+		uvm_vsunlock(curproc, addr, len);
+	rw_exit_write(&sysctl_lock);
+	KERNEL_UNLOCK();
+}
 
 int
 sys_sysctl(struct proc *p, void *v, register_t *retval)
@@ -198,9 +242,11 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 
 	switch (name[0]) {
 	case CTL_KERN:
+		dolock = 0;
 		fn = kern_sysctl;
 		break;
 	case CTL_HW:
+		dolock = 0;
 		fn = hw_sysctl;
 		break;
 	case CTL_VM:
@@ -235,30 +281,18 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, oldlenp) &&
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
-	if (SCARG(uap, old) != NULL) {
-		if ((error = rw_enter(&sysctl_lock, RW_WRITE|RW_INTR)) != 0)
+
+	if (dolock) {
+		error = sysctl_vslock(SCARG(uap, old), oldlen);
+		if (error)
 			return (error);
-		if (dolock) {
-			if (atop(oldlen) > uvmexp.wiredmax - uvmexp.wired) {
-				rw_exit_write(&sysctl_lock);
-				return (ENOMEM);
-			}
-			error = uvm_vslock(p, SCARG(uap, old), oldlen,
-			    PROT_READ | PROT_WRITE);
-			if (error) {
-				rw_exit_write(&sysctl_lock);
-				return (error);
-			}
-		}
 		savelen = oldlen;
 	}
 	error = (*fn)(&name[1], SCARG(uap, namelen) - 1, SCARG(uap, old),
 	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
-	if (SCARG(uap, old) != NULL) {
-		if (dolock)
-			uvm_vsunlock(p, SCARG(uap, old), savelen);
-		rw_exit_write(&sysctl_lock);
-	}
+	if (dolock)
+		sysctl_vsunlock(SCARG(uap, old), savelen);
+
 	if (error)
 		return (error);
 	if (SCARG(uap, oldlenp))
@@ -449,14 +483,18 @@ int
 kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	int error, level, inthostid, stackgap;
-	dev_t dev;
-	extern int pool_debug;
+	int error;
+	size_t savelen;
 
 	/* dispatch the non-terminal nodes first */
 	if (namelen != 1) {
-		return kern_sysctl_dirs(name[0], name + 1, namelen - 1,
+		savelen = *oldlenp;
+		if ((error = sysctl_vslock(oldp, savelen)))
+			return (error);
+		error = kern_sysctl_dirs(name[0], name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, p);
+		sysctl_vsunlock(oldp, savelen);
+		return (error);
 	}
 
 	switch (name[0]) {
@@ -470,6 +508,45 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_NUMVNODES:  /* XXX numvnodes is a long */
 		return (sysctl_rdint(oldp, oldlenp, newp, numvnodes));
+	case KERN_MBSTAT: {
+		extern struct cpumem *mbstat;
+		uint64_t counters[MBSTAT_COUNT];
+		struct mbstat mbs;
+		unsigned int i;
+
+		memset(&mbs, 0, sizeof(mbs));
+		counters_read(mbstat, counters, MBSTAT_COUNT, NULL);
+		for (i = 0; i < MBSTAT_TYPES; i++)
+			mbs.m_mtypes[i] = counters[i];
+
+		mbs.m_drops = counters[MBSTAT_DROPS];
+		mbs.m_wait = counters[MBSTAT_WAIT];
+		mbs.m_drain = counters[MBSTAT_DRAIN];
+
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    &mbs, sizeof(mbs)));
+	}
+	}
+
+	savelen = *oldlenp;
+	if ((error = sysctl_vslock(oldp, savelen)))
+		return (error);
+	error = kern_sysctl_locked(name, namelen, oldp, oldlenp,
+	    newp, newlen, p);
+	sysctl_vsunlock(oldp, savelen);
+
+	return (error);
+}
+
+int
+kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	int error, level, inthostid, stackgap;
+	dev_t dev;
+	extern int pool_debug;
+
+	switch (name[0]) {
 	case KERN_SECURELVL:
 		level = securelevel;
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)) ||
@@ -516,24 +593,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		microboottime(&bt);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
 	  }
-	case KERN_MBSTAT: {
-		extern struct cpumem *mbstat;
-		uint64_t counters[MBSTAT_COUNT];
-		struct mbstat mbs;
-		unsigned int i;
-
-		memset(&mbs, 0, sizeof(mbs));
-		counters_read(mbstat, counters, MBSTAT_COUNT, NULL);
-		for (i = 0; i < MBSTAT_TYPES; i++)
-			mbs.m_mtypes[i] = counters[i];
-
-		mbs.m_drops = counters[MBSTAT_DROPS];
-		mbs.m_wait = counters[MBSTAT_WAIT];
-		mbs.m_drain = counters[MBSTAT_DRAIN];
-
-		return (sysctl_rdstruct(oldp, oldlenp, newp,
-		    &mbs, sizeof(mbs)));
-	}
 	case KERN_MSGBUFSIZE:
 	case KERN_CONSBUFSIZE: {
 		struct msgbuf *mp;
@@ -682,7 +741,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	extern char machine[], cpu_model[];
-	int err, cpuspeed;
+	int err;
 
 	/*
 	 * all sysctl names at this level except sensors and battery
@@ -705,36 +764,28 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp,
 		    ptoa(physmem - uvmexp.wired)));
 	case HW_DISKNAMES:
-		err = sysctl_diskinit(0, p);
-		if (err)
-			return err;
-		if (disknames)
-			return (sysctl_rdstring(oldp, oldlenp, newp,
-			    disknames));
-		else
-			return (sysctl_rdstring(oldp, oldlenp, newp, ""));
 	case HW_DISKSTATS:
-		err = sysctl_diskinit(1, p);
-		if (err)
-			return err;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, diskstats,
-		    disk_count * sizeof(struct diskstats)));
 	case HW_CPUSPEED:
-		if (!cpu_cpuspeed)
-			return (EOPNOTSUPP);
-		err = cpu_cpuspeed(&cpuspeed);
-		if (err)
-			return err;
-		return (sysctl_rdint(oldp, oldlenp, newp, cpuspeed));
 #ifndef	SMALL_KERNEL
 	case HW_SENSORS:
-		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
 	case HW_SETPERF:
-		return (sysctl_hwsetperf(oldp, oldlenp, newp, newlen));
 	case HW_PERFPOLICY:
-		return (sysctl_hwperfpolicy(oldp, oldlenp, newp, newlen));
+	case HW_BATTERY:
 #endif /* !SMALL_KERNEL */
+	case HW_ALLOWPOWERDOWN:
+	case HW_UCOMNAMES:
+#ifdef __HAVE_CPU_TOPOLOGY
+	case HW_SMT:
+#endif
+	{
+		size_t savelen = *oldlenp;
+		if ((err = sysctl_vslock(oldp, savelen)))
+			return (err);
+		err = hw_sysctl_locked(name, namelen, oldp, oldlenp,
+		    newp, newlen, p);
+		sysctl_vsunlock(oldp, savelen);
+		return (err);
+	}
 	case HW_VENDOR:
 		if (hw_vendor)
 			return (sysctl_rdstring(oldp, oldlenp, newp,
@@ -768,6 +819,51 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_USERMEM64:
 		return (sysctl_rdquad(oldp, oldlenp, newp,
 		    ptoa((psize_t)physmem - uvmexp.wired)));
+	default:
+		return sysctl_bounded_arr(hw_vars, nitems(hw_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+	}
+	/* NOTREACHED */
+}
+
+int
+hw_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	int err, cpuspeed;
+
+	switch (name[0]) {
+	case HW_DISKNAMES:
+		err = sysctl_diskinit(0, p);
+		if (err)
+			return err;
+		if (disknames)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    disknames));
+		else
+			return (sysctl_rdstring(oldp, oldlenp, newp, ""));
+	case HW_DISKSTATS:
+		err = sysctl_diskinit(1, p);
+		if (err)
+			return err;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, diskstats,
+		    disk_count * sizeof(struct diskstats)));
+	case HW_CPUSPEED:
+		if (!cpu_cpuspeed)
+			return (EOPNOTSUPP);
+		err = cpu_cpuspeed(&cpuspeed);
+		if (err)
+			return err;
+		return (sysctl_rdint(oldp, oldlenp, newp, cpuspeed));
+#ifndef SMALL_KERNEL
+	case HW_SENSORS:
+		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+	case HW_SETPERF:
+		return (sysctl_hwsetperf(oldp, oldlenp, newp, newlen));
+	case HW_PERFPOLICY:
+		return (sysctl_hwperfpolicy(oldp, oldlenp, newp, newlen));
+#endif /* !SMALL_KERNEL */
 	case HW_ALLOWPOWERDOWN:
 		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
 		    &allowpowerdown));
@@ -788,8 +884,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newp, newlen));
 #endif
 	default:
-		return sysctl_bounded_arr(hw_vars, nitems(hw_vars), name,
-		    namelen, oldp, oldlenp, newp, newlen);
+		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }
