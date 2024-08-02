@@ -1,4 +1,4 @@
-/* $OpenBSD: configtest.c,v 1.4 2024/08/02 15:02:22 tb Exp $ */
+/* $OpenBSD: configtest.c,v 1.5 2024/08/02 16:02:35 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -114,14 +114,12 @@ struct parse_protocols_test parse_protocols_tests[] = {
 	{
 		.protostr = "all,!tlsv1.0",
 		.want_return = 0,
-		.want_protocols = TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 | \
-			TLS_PROTOCOL_TLSv1_3,
+		.want_protocols = TLS_PROTOCOL_TLSv1_2 | TLS_PROTOCOL_TLSv1_3,
 	},
 	{
 		.protostr = "!tlsv1.0",
 		.want_return = 0,
-		.want_protocols = TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 | \
-			TLS_PROTOCOL_TLSv1_3,
+		.want_protocols = TLS_PROTOCOL_TLSv1_2 | TLS_PROTOCOL_TLSv1_3,
 	},
 	{
 		.protostr = "!tlsv1.0,!tlsv1.1,!tlsv1.3",
