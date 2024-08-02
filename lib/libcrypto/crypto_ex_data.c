@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_ex_data.c,v 1.1 2024/08/02 10:48:54 jsing Exp $ */
+/* $OpenBSD: crypto_ex_data.c,v 1.2 2024/08/02 14:02:33 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -165,6 +165,7 @@ CRYPTO_cleanup_all_ex_data(void)
 		if (class->indexes != NULL) {
 			for (j = 0; j < CRYPTO_EX_DATA_MAX_INDEX; j++)
 				free(class->indexes[j]);
+			free(class->indexes);
 		}
 
 		free(class);
