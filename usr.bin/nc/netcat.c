@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.226 2023/08/14 08:07:27 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.227 2024/08/02 21:08:47 jan Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -778,7 +778,7 @@ timeout_tls(int s, struct tls *tls_ctx, int (*func)(struct tls *))
 	struct pollfd pfd;
 	int ret;
 
-	while ((ret = (*func)(tls_ctx)) != 0) {
+	while ((ret = func(tls_ctx)) != 0) {
 		if (ret == TLS_WANT_POLLIN)
 			pfd.events = POLLIN;
 		else if (ret == TLS_WANT_POLLOUT)
