@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.15 2022/07/16 07:46:08 tb Exp $ */
+/* $OpenBSD: tlstest.c,v 1.16 2024/08/02 15:02:22 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -497,16 +497,15 @@ struct test_versions {
 static struct test_versions tls_test_versions[] = {
 	{"tlsv1.3", "all"},
 	{"tlsv1.2", "all"},
-	{"tlsv1.1", "all"},
-	{"tlsv1.0", "all"},
 	{"all", "tlsv1.3"},
 	{"all", "tlsv1.2"},
-	{"all", "tlsv1.1"},
-	{"all", "tlsv1.0"},
+	{"all:!tlsv1.1", "tlsv1.2"},
+	{"all:!tlsv1.2", "tlsv1.3"},
+	{"all:!tlsv1.3", "tlsv1.2"},
+	{"all:!tlsv1.2:!tlsv1.1", "tlsv1.3"},
+	{"all:!tlsv1.2:!tlsv1.1:!tlsv1.0", "tlsv1.3"},
 	{"tlsv1.3", "tlsv1.3"},
 	{"tlsv1.2", "tlsv1.2"},
-	{"tlsv1.1", "tlsv1.1"},
-	{"tlsv1.0", "tlsv1.0"},
 };
 
 #define N_TLS_VERSION_TESTS \
