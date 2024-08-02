@@ -1,4 +1,4 @@
-.\" $OpenBSD: setresuid.2,v 1.9 2015/09/10 17:55:21 schwarze Exp $
+.\" $OpenBSD: setresuid.2,v 1.10 2024/08/02 22:14:54 guenther Exp $
 .\"
 .\" Copyright (c) 2000
 .\"      Sheldon Hearn.  All rights reserved.
@@ -21,7 +21,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/setresuid.2,v 1.12 2001/10/01 16:09:02 ru Exp $
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: August 2 2024 $
 .Dt SETRESUID 2
 .Os
 .Sh NAME
@@ -31,7 +31,6 @@
 .Nm setresuid
 .Nd get or set real, effective and saved user or group ID
 .Sh SYNOPSIS
-.In sys/types.h
 .In unistd.h
 .Ft int
 .Fn getresgid "gid_t *rgid" "gid_t *egid" "gid_t *sgid"
@@ -89,10 +88,13 @@ was invalid.
 .Xr setreuid 2 ,
 .Xr setuid 2
 .Sh STANDARDS
-These functions are not part of the
-.St -p1003.1
-specification.
-While they are not completely portable, they are the least ambiguous way to
-manage user and group IDs.
+The
+.Fn getresgid ,
+.Fn getresuid ,
+.Fn setresgid ,
+and
+.Fn setresuid
+functions conform to the X/Open System Interfaces option of
+.St -p1003.1-2024 .
 .Sh HISTORY
 These functions first appeared in HP-UX.
