@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.14 2024/07/14 10:48:55 kettenis Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.15 2024/08/02 09:28:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -148,7 +148,7 @@ acpipwrres_activate(struct device *self, int act)
 	struct acpipwrres_softc *sc = (struct acpipwrres_softc *)self;
 
 	switch (act) {
-	case DVACT_SUSPEND:
+	case DVACT_POWERDOWN:
 		if (sc->sc_cons_ref == 0 && sc->sc_state != ACPIPWRRES_OFF) {
 			aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0,
 			    NULL, NULL);
