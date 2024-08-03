@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_ex_data.c,v 1.3 2024/08/03 07:43:33 tb Exp $ */
+/* $OpenBSD: crypto_ex_data.c,v 1.4 2024/08/03 07:45:26 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -19,7 +19,7 @@
 
 #include <openssl/crypto.h>
 
-#define CRYPTO_EX_DATA_MAX_INDEX 16
+#define CRYPTO_EX_DATA_MAX_INDEX 32
 
 struct crypto_ex_data {
 	int class_index;
