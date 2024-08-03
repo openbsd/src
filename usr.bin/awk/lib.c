@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.58 2024/06/03 00:55:05 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.59 2024/08/03 21:12:16 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -228,7 +228,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 	char *rs = getsval(rsloc);
 
 	if (CSV) {
-		c = readcsvrec(pbuf, pbufsize, inf, newflag);
+		c = readcsvrec(&buf, &bufsize, inf, newflag);
 		isrec = (c == EOF && rr == buf) ? false : true;
 	} else if (*rs && rs[1]) {
 		bool found;
