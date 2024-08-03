@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.35 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: skey.c,v 1.36 2024/08/03 22:00:31 millert Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -60,7 +60,8 @@ main(int argc, char *argv[])
 			case 'n':
 				if (++i == argc)
 					usage();
-				cnt = strtonum(argv[i], 1, SKEY_MAX_SEQ -1, &errstr);
+				cnt = strtonum(argv[i], 1, SKEY_MAX_SEQ + 1,
+				    &errstr);
 				if (errstr)
 					usage();
 				break;
