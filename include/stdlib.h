@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.77 2024/03/01 21:30:40 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.78 2024/08/03 20:09:24 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -116,7 +116,6 @@ void	freezero(void *, size_t)
 		 __attribute__ ((__bounded__(__buffer__,1,2)));
 void	*calloc_conceal(size_t, size_t);
 void	*malloc_conceal(size_t);
-void	*reallocarray(void *, size_t, size_t);
 void	*recallocarray(void *, size_t, size_t, size_t);
 #endif /* __BSD_VISIBLE */
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
@@ -257,10 +256,11 @@ int     getsubopt(char **, char * const *, char **);
 #endif
 
 /*
- * The Open Group Base Specifications, post-Issue 7
+ * The Open Group Base Specifications, Issue 8
  */
-#if __BSD_VISIBLE
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
 int	mkostemp(char *, int);
+void	*reallocarray(void *, size_t, size_t);
 #endif
 
 #if __BSD_VISIBLE

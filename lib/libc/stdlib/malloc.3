@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.141 2023/12/04 22:52:41 tb Exp $
+.\"	$OpenBSD: malloc.3,v 1.142 2024/08/03 20:09:24 guenther Exp $
 .\"
-.Dd $Mdocdate: December 4 2023 $
+.Dd $Mdocdate: August 3 2024 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -722,6 +722,10 @@ The
 .Fn aligned_alloc
 function conforms to
 .St -isoC-2011 .
+The
+.Fn reallocarray
+function conforms to
+.St -p1003.1-2024 .
 .Pp
 If
 .Fa nmemb
