@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strlcpy.3,v 1.27 2019/01/25 00:19:25 millert Exp $
+.\"	$OpenBSD: strlcpy.3,v 1.28 2024/08/03 20:13:23 guenther Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: August 3 2024 $
 .Dt STRLCPY 3
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Sh SYNOPSIS
 .In string.h
 .Ft size_t
-.Fn strlcpy "char *dst" "const char *src" "size_t dstsize"
+.Fn strlcpy "char * restrict dst" "const char * restrict src" "size_t dstsize"
 .Ft size_t
-.Fn strlcat "char *dst" "const char *src" "size_t dstsize"
+.Fn strlcat "char * restrict dst" "const char * restrict src" "size_t dstsize"
 .Sh DESCRIPTION
 The
 .Fn strlcpy
@@ -174,6 +174,13 @@ As a matter of fact, the first version of this manual page got it wrong.
 .Xr strncat 3 ,
 .Xr strncpy 3 ,
 .Xr wcslcpy 3
+.Sh STANDARDS
+The
+.Fn strlcat
+and
+.Fn strlcpy
+functions conform to
+.St -p1003.1-2024 .
 .Sh HISTORY
 .Fn strlcpy
 and

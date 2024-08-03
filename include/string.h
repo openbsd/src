@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.33 2024/06/23 07:08:26 otto Exp $	*/
+/*	$OpenBSD: string.h,v 1.34 2024/08/03 20:13:23 guenther Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -118,16 +118,19 @@ size_t	 strxfrm_l(char *__restrict, const char *__restrict, size_t, locale_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 #endif
 
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
+void	*memmem(const void *, size_t, const void *, size_t);
+size_t	 strlcat(char *__restrict, const char *__restrict, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strlcpy(char *__restrict, const char *__restrict, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+#endif
+
 #if __BSD_VISIBLE
 void	 explicit_bzero(void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,2)));
-void	*memmem(const void *, size_t, const void *, size_t);
 void	*memrchr(const void *, int, size_t);
 char	*strcasestr(const char *, const char *);
-size_t	 strlcat(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
-size_t	 strlcpy(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
 void	 strmode(__mode_t, char *);
 char	*strsep(char **, const char *);
 int	 timingsafe_bcmp(const void *, const void *, size_t);
