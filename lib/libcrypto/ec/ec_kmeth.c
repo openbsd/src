@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.13 2023/11/19 15:46:09 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.14 2024/08/03 13:06:37 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -149,7 +149,7 @@ EC_KEY_new_method(ENGINE *engine)
 	ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 	ret->references = 1;
 
-	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data))
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data))
 		goto err;
 	if (ret->meth->init != NULL && ret->meth->init(ret) == 0)
 		goto err;
