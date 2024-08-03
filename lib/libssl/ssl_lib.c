@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.328 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.329 2024/08/03 04:50:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3402,6 +3402,16 @@ SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 	ctx->cert_store = store;
 }
 LSSL_ALIAS(SSL_CTX_set_cert_store);
+
+void
+SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store)
+{
+	if (store != NULL)
+		X509_STORE_up_ref(store);
+
+	SSL_CTX_set_cert_store(ctx, store);
+}
+LSSL_ALIAS(SSL_CTX_set1_cert_store);
 
 X509 *
 SSL_CTX_get0_certificate(const SSL_CTX *ctx)
