@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.23 2022/01/11 05:34:32 jsg Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.24 2024/08/03 22:23:32 millert Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ cd9660_set_defaults(iso9660_disk *diskStructure)
 	memset(diskStructure->primaryDescriptor.abstract_file_id, 0x20,37);
 	memset(diskStructure->primaryDescriptor.bibliographic_file_id, 0x20,37);
 
-	strlcpy(diskStructure->primaryDescriptor.system_id,"NetBSD", sizeof(diskStructure->primaryDescriptor.system_id));
+	strlcpy(diskStructure->primaryDescriptor.system_id,"OpenBSD", sizeof(diskStructure->primaryDescriptor.system_id));
 
 	cd9660_defaults_set = 1;
 
