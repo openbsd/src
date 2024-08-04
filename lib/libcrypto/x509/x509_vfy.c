@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.143 2024/04/08 23:46:21 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.144 2024/08/04 08:15:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -646,7 +646,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	x509_verify_ctx_free(vctx);
 
 	/* if we succeed we have a chain in ctx->chain */
-	return (chain_count > 0 && ctx->chain != NULL);
+	return chain_count > 0 && ctx->chain != NULL;
 }
 LCRYPTO_ALIAS(X509_verify_cert);
 
@@ -1012,7 +1012,7 @@ check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
 		ptime = &ctx->param->check_time;
 	else if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
-		return (1);
+		return 1;
 	else
 		ptime = NULL;
 
@@ -2298,7 +2298,7 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *leaf,
 	}
 
 	if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
-	    &(ctx->ex_data)) == 0) {
+	    &ctx->ex_data) == 0) {
 		X509error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -2337,8 +2337,7 @@ X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 		sk_X509_pop_free(ctx->chain, X509_free);
 		ctx->chain = NULL;
 	}
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX,
-	    ctx, &(ctx->ex_data));
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx, &ctx->ex_data);
 	memset(&ctx->ex_data, 0, sizeof(CRYPTO_EX_DATA));
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_cleanup);
