@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.3 2024/07/25 20:21:40 kettenis Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.4 2024/08/04 15:30:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -36,6 +36,11 @@
 
 #include "apm.h"
 
+extern int qcscm_pas_init_image(uint32_t, paddr_t);
+extern int qcscm_pas_mem_setup(uint32_t, paddr_t, size_t);
+extern int qcscm_pas_auth_and_reset(uint32_t);
+extern int qcscm_pas_shutdown(uint32_t);
+
 #define MDT_TYPE_MASK				(7 << 24)
 #define MDT_TYPE_HASH				(2 << 24)
 #define MDT_RELOCATABLE				(1 << 27)
@@ -65,15 +70,17 @@ struct qcpas_softc {
 
 	void			*sc_ih[6];
 
-	paddr_t			sc_mem_phys;
-	size_t			sc_mem_size;
-	void			*sc_mem_region;
-	vaddr_t			sc_mem_reloc;
+	paddr_t			sc_mem_phys[2];
+	size_t			sc_mem_size[2];
+	void			*sc_mem_region[2];
+	vaddr_t			sc_mem_reloc[2];
 
 	uint32_t		sc_pas_id;
+	uint32_t		sc_dtb_pas_id;
+	uint32_t		sc_lite_pas_id;
 	char			*sc_load_state;
 
-	struct qcpas_dmamem	*sc_metadata;
+	struct qcpas_dmamem	*sc_metadata[2];
 
 	/* GLINK */
 	volatile uint32_t	*sc_tx_tail;
@@ -110,7 +117,7 @@ struct cfdriver qcpas_cd = {
 
 void	qcpas_mountroot(struct device *);
 int	qcpas_map_memory(struct qcpas_softc *);
-int	qcpas_mdt_init(struct qcpas_softc *, u_char *, size_t);
+int	qcpas_mdt_init(struct qcpas_softc *, int, u_char *, size_t);
 void	qcpas_glink_attach(struct qcpas_softc *, int);
 
 struct qcpas_dmamem *
@@ -130,7 +137,8 @@ qcpas_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "qcom,sc8280xp-adsp-pas");
+	return OF_is_compatible(faa->fa_node, "qcom,sc8280xp-adsp-pas") ||
+	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-adsp-pas");
 }
 
 void
@@ -164,6 +172,13 @@ qcpas_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_pas_id = 30;
 	}
 
+	if (OF_is_compatible(faa->fa_node, "qcom,x1e80100-adsp-pas")) {
+		sc->sc_pas_id = 1;
+		sc->sc_dtb_pas_id = 36;
+		sc->sc_lite_pas_id = 31;
+		sc->sc_load_state = "adsp";
+	}
+
 	qcpas_intr_establish(sc, 0, "wdog", qcpas_intr_wdog);
 	qcpas_intr_establish(sc, 1, "fatal", qcpas_intr_fatal);
 	qcpas_intr_establish(sc, 2, "ready", qcpas_intr_ready);
@@ -182,10 +197,11 @@ void
 qcpas_mountroot(struct device *self)
 {
 	struct qcpas_softc *sc = (struct qcpas_softc *)self;
-	char fwname[64];
-	size_t fwlen;
-	u_char *fw;
+	char fwname[128];
+	size_t fwlen, dtb_fwlen;
+	u_char *fw, *dtb_fw;
 	int node, ret;
+	int error;
 
 	if (qcpas_map_memory(sc) != 0)
 		return;
@@ -195,10 +211,32 @@ qcpas_mountroot(struct device *self)
 	OF_getprop(sc->sc_node, "firmware-name", fwname, sizeof(fwname));
 	fwname[sizeof(fwname) - 1] = '\0';
 
-	if (loadfirmware(fwname, &fw, &fwlen) != 0) {
-		printf("%s: failed to load %s\n",
-		    sc->sc_dev.dv_xname, fwname);
+	/* If we need a second firmware, make sure we have a name for it. */
+	if (sc->sc_dtb_pas_id && strlen(fwname) == sizeof(fwname) - 1)
 		return;
+
+	error = loadfirmware(fwname, &fw, &fwlen);
+	if (error) {
+		printf("%s: failed to load %s: %d\n",
+		    sc->sc_dev.dv_xname, fwname, error);
+		return;
+	}
+
+	if (sc->sc_lite_pas_id) {
+		if (qcscm_pas_shutdown(sc->sc_lite_pas_id)) {
+			printf("%s: failed to shutdown lite firmare\n",
+			    sc->sc_dev.dv_xname);
+		}
+	}
+
+	if (sc->sc_dtb_pas_id) {
+		error = loadfirmware(fwname + strlen(fwname) + 1,
+		    &dtb_fw, &dtb_fwlen);
+		if (error) {
+			printf("%s: failed to load %s: %d\n",
+			    sc->sc_dev.dv_xname, fwname, error);
+			return;
+		}
 	}
 
 	if (sc->sc_load_state) {
@@ -217,7 +255,12 @@ qcpas_mountroot(struct device *self)
 	power_domain_enable_all(sc->sc_node);
 	clock_enable(sc->sc_node, "xo");
 
-	ret = qcpas_mdt_init(sc, fw, fwlen);
+	if (sc->sc_dtb_pas_id) {
+		qcpas_mdt_init(sc, sc->sc_dtb_pas_id, dtb_fw, dtb_fwlen);
+		free(dtb_fw, M_DEVBUF, dtb_fwlen);
+	}
+
+	ret = qcpas_mdt_init(sc, sc->sc_pas_id, fw, fwlen);
 	free(fw, M_DEVBUF, fwlen);
 	if (ret != 0) {
 		printf("%s: failed to boot coprocessor\n",
@@ -233,44 +276,49 @@ qcpas_mountroot(struct device *self)
 int
 qcpas_map_memory(struct qcpas_softc *sc)
 {
-	uint32_t phandle, reg[4];
+	uint32_t memreg[2] = {};
+	uint32_t reg[4];
 	size_t off;
 	int node;
+	int i;
 
-	phandle = OF_getpropint(sc->sc_node, "memory-region", 0);
-	if (phandle == 0)
-		return EINVAL;
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return EINVAL;
-	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
+	OF_getpropintarray(sc->sc_node, "memory-region",
+	    memreg, sizeof(memreg));
+	if (memreg[0] == 0)
 		return EINVAL;
 
-	sc->sc_mem_phys = (uint64_t)reg[0] << 32 | reg[1];
-	KASSERT((sc->sc_mem_phys & PAGE_MASK) == 0);
-	sc->sc_mem_size = (uint64_t)reg[2] << 32 | reg[3];
-	KASSERT((sc->sc_mem_size & PAGE_MASK) == 0);
+	for (i = 0; i < nitems(memreg); i++) {
+		if (memreg[i] == 0)
+			break;
+		node = OF_getnodebyphandle(memreg[i]);
+		if (node == 0)
+			return EINVAL;
+		if (OF_getpropintarray(node, "reg", reg,
+		    sizeof(reg)) != sizeof(reg))
+			return EINVAL;
 
-	sc->sc_mem_region = km_alloc(sc->sc_mem_size, &kv_any, &kp_none,
-	    &kd_nowait);
-	if (!sc->sc_mem_region)
-		return ENOMEM;
+		sc->sc_mem_phys[i] = (uint64_t)reg[0] << 32 | reg[1];
+		KASSERT((sc->sc_mem_phys[i] & PAGE_MASK) == 0);
+		sc->sc_mem_size[i] = (uint64_t)reg[2] << 32 | reg[3];
+		KASSERT((sc->sc_mem_size[i] & PAGE_MASK) == 0);
 
-	for (off = 0; off < sc->sc_mem_size; off += PAGE_SIZE) {
-		pmap_kenter_cache((vaddr_t)sc->sc_mem_region + off,
-		    sc->sc_mem_phys + off, PROT_READ | PROT_WRITE,
-		    PMAP_CACHE_DEV_NGNRNE);
+		sc->sc_mem_region[i] = km_alloc(sc->sc_mem_size[i],
+		    &kv_any, &kp_none, &kd_nowait);
+		if (!sc->sc_mem_region[i])
+			return ENOMEM;
+
+		for (off = 0; off < sc->sc_mem_size[i]; off += PAGE_SIZE) {
+			pmap_kenter_cache((vaddr_t)sc->sc_mem_region[i] + off,
+			    sc->sc_mem_phys[i] + off, PROT_READ | PROT_WRITE,
+			    PMAP_CACHE_DEV_NGNRNE);
+		}
 	}
 
 	return 0;
 }
 
-extern int qcscm_pas_init_image(uint32_t, paddr_t);
-extern int qcscm_pas_mem_setup(uint32_t, paddr_t, size_t);
-extern int qcscm_pas_auth_and_reset(uint32_t);
-
 int
-qcpas_mdt_init(struct qcpas_softc *sc, u_char *fw, size_t fwlen)
+qcpas_mdt_init(struct qcpas_softc *sc, int pas_id, u_char *fw, size_t fwlen)
 {
 	Elf32_Ehdr *ehdr;
 	Elf32_Phdr *phdr;
@@ -278,6 +326,12 @@ qcpas_mdt_init(struct qcpas_softc *sc, u_char *fw, size_t fwlen)
 	int i, hashseg = 0, relocate = 0;
 	int error;
 	ssize_t off;
+	int idx;
+
+	if (pas_id == sc->sc_dtb_pas_id)
+		idx = 1;
+	else
+		idx = 0;
 
 	ehdr = (Elf32_Ehdr *)fw;
 	phdr = (Elf32_Phdr *)&ehdr[1];
@@ -306,17 +360,17 @@ qcpas_mdt_init(struct qcpas_softc *sc, u_char *fw, size_t fwlen)
 	if (!hashseg)
 		return EINVAL;
 
-	sc->sc_metadata = qcpas_dmamem_alloc(sc, phdr[0].p_filesz +
+	sc->sc_metadata[idx] = qcpas_dmamem_alloc(sc, phdr[0].p_filesz +
 	    phdr[hashseg].p_filesz, PAGE_SIZE);
-	if (sc->sc_metadata == NULL)
+	if (sc->sc_metadata[idx] == NULL)
 		return EINVAL;
 
-	memcpy(QCPAS_DMA_KVA(sc->sc_metadata), fw, phdr[0].p_filesz);
+	memcpy(QCPAS_DMA_KVA(sc->sc_metadata[idx]), fw, phdr[0].p_filesz);
 	if (phdr[0].p_filesz + phdr[hashseg].p_filesz == fwlen) {
-		memcpy(QCPAS_DMA_KVA(sc->sc_metadata) + phdr[0].p_filesz,
+		memcpy(QCPAS_DMA_KVA(sc->sc_metadata[idx]) + phdr[0].p_filesz,
 		    fw + phdr[0].p_filesz, phdr[hashseg].p_filesz);
 	} else if (phdr[hashseg].p_offset + phdr[hashseg].p_filesz <= fwlen) {
-		memcpy(QCPAS_DMA_KVA(sc->sc_metadata) + phdr[0].p_filesz,
+		memcpy(QCPAS_DMA_KVA(sc->sc_metadata[idx]) + phdr[0].p_filesz,
 		    fw + phdr[hashseg].p_offset, phdr[hashseg].p_filesz);
 	} else {
 		printf("%s: metadata split segment not supported\n",
@@ -326,36 +380,36 @@ qcpas_mdt_init(struct qcpas_softc *sc, u_char *fw, size_t fwlen)
 
 	membar_producer();
 
-	if (qcscm_pas_init_image(sc->sc_pas_id,
-	    QCPAS_DMA_DVA(sc->sc_metadata)) != 0) {
+	if (qcscm_pas_init_image(pas_id,
+	    QCPAS_DMA_DVA(sc->sc_metadata[idx])) != 0) {
 		printf("%s: init image failed\n", sc->sc_dev.dv_xname);
-		qcpas_dmamem_free(sc, sc->sc_metadata);
+		qcpas_dmamem_free(sc, sc->sc_metadata[idx]);
 		return EINVAL;
 	}
 
-	if (qcscm_pas_mem_setup(sc->sc_pas_id,
-	    sc->sc_mem_phys, maxpa - minpa) != 0) {
+	if (qcscm_pas_mem_setup(pas_id,
+	    sc->sc_mem_phys[idx], maxpa - minpa) != 0) {
 		printf("%s: mem setup failed\n", sc->sc_dev.dv_xname);
-		qcpas_dmamem_free(sc, sc->sc_metadata);
+		qcpas_dmamem_free(sc, sc->sc_metadata[idx]);
 		return EINVAL;
 	}
 
-	sc->sc_mem_reloc = relocate ? minpa : sc->sc_mem_phys;
+	sc->sc_mem_reloc[idx] = relocate ? minpa : sc->sc_mem_phys[idx];
 
 	for (i = 0; i < ehdr->e_phnum; i++) {
 		if ((phdr[i].p_flags & MDT_TYPE_MASK) == MDT_TYPE_HASH ||
 		    phdr[i].p_type != PT_LOAD || phdr[i].p_memsz == 0)
 			continue;
-		off = phdr[i].p_paddr - sc->sc_mem_reloc;
-		if (off < 0 || off + phdr[i].p_memsz > sc->sc_mem_size)
+		off = phdr[i].p_paddr - sc->sc_mem_reloc[idx];
+		if (off < 0 || off + phdr[i].p_memsz > sc->sc_mem_size[0])
 			return EINVAL;
 		if (phdr[i].p_filesz > phdr[i].p_memsz)
 			return EINVAL;
 
 		if (phdr[i].p_filesz && phdr[i].p_offset < fwlen &&
 		    phdr[i].p_offset + phdr[i].p_filesz <= fwlen) {
-			memcpy(sc->sc_mem_region + off, fw + phdr[i].p_offset,
-			    phdr[i].p_filesz);
+			memcpy(sc->sc_mem_region[idx] + off,
+			    fw + phdr[i].p_offset, phdr[i].p_filesz);
 		} else if (phdr[i].p_filesz) {
 			printf("%s: firmware split segment not supported\n",
 			    sc->sc_dev.dv_xname);
@@ -363,17 +417,20 @@ qcpas_mdt_init(struct qcpas_softc *sc, u_char *fw, size_t fwlen)
 		}
 
 		if (phdr[i].p_memsz > phdr[i].p_filesz)
-			memset(sc->sc_mem_region + off + phdr[i].p_filesz, 0,
-			    phdr[i].p_memsz - phdr[i].p_filesz);
+			memset(sc->sc_mem_region[idx] + off + phdr[i].p_filesz,
+			    0, phdr[i].p_memsz - phdr[i].p_filesz);
 	}
 
 	membar_producer();
 
-	if (qcscm_pas_auth_and_reset(sc->sc_pas_id) != 0) {
+	if (qcscm_pas_auth_and_reset(pas_id) != 0) {
 		printf("%s: auth and reset failed\n", sc->sc_dev.dv_xname);
-		qcpas_dmamem_free(sc, sc->sc_metadata);
+		qcpas_dmamem_free(sc, sc->sc_metadata[idx]);
 		return EINVAL;
 	}
+
+	if (pas_id == sc->sc_dtb_pas_id)
+		return 0;
 
 	error = tsleep_nsec(sc, PWAIT, "qcpas", SEC_TO_NSEC(5));
 	if (error) {
@@ -1219,7 +1276,7 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			break;
 		case BATTMGR_OPCODE_BAT_INFO: {
 			struct battmgr_bat_info *bat;
-			if (len - sizeof(hdr) != sizeof(*bat)) {
+			if (len - sizeof(hdr) < sizeof(*bat)) {
 				printf("%s: invalid battgmr bat info\n",
 				    __func__);
 				return 0;

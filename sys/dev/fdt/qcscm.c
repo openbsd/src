@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.8 2024/07/10 10:53:55 kettenis Exp $ */
+/* $OpenBSD: qcscm.c,v 1.9 2024/08/04 15:30:08 kettenis Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -914,6 +914,33 @@ qcscm_pas_auth_and_reset(uint32_t peripheral)
 	/* Make call into TEE */
 	ret = qcscm_smc_call(sc, ARM_SMCCC_OWNER_SIP, QCSCM_SVC_PIL,
 	    QCSCM_PIL_PAS_AUTH_AND_RESET, arginfo, args, nitems(args), res);
+
+	/* If the call succeeded, check the response status */
+	if (ret == 0)
+		ret = res[0];
+
+	return ret;
+}
+
+int
+qcscm_pas_shutdown(uint32_t peripheral)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	uint64_t res[3];
+	uint64_t args[1];
+	uint32_t arginfo;
+	int ret;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	arginfo = QCSCM_ARGINFO_NUM(nitems(args));
+	arginfo |= QCSCM_ARGINFO_TYPE(0, QCSCM_ARGINFO_TYPE_VAL);
+	args[0] = peripheral;
+
+	/* Make call into TEE */
+	ret = qcscm_smc_call(sc, ARM_SMCCC_OWNER_SIP, QCSCM_SVC_PIL,
+	    QCSCM_PIL_PAS_SHUTDOWN, arginfo, args, nitems(args), res);
 
 	/* If the call succeeded, check the response status */
 	if (ret == 0)
