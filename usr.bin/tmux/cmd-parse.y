@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.50 2023/03/15 08:15:39 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.51 2024/08/04 09:42:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1273,6 +1273,16 @@ yylex(void)
 			continue;
 		}
 
+		if (ch == '\r') {
+			/*
+			 * Treat \r\n as \n.
+			 */
+			ch = yylex_getc();
+			if (ch != '\n') {
+				yylex_ungetc(ch);
+				ch = '\r';
+			}
+		}
 		if (ch == '\n') {
 			/*
 			 * End of line. Update the line number.
@@ -1618,6 +1628,13 @@ yylex_token(int ch)
 		if (ch == EOF) {
 			log_debug("%s: end at EOF", __func__);
 			break;
+		}
+		if (state == NONE && ch == '\r') {
+			ch = yylex_getc();
+			if (ch != '\n') {
+				yylex_ungetc(ch);
+				ch = '\r';
+			}
 		}
 		if (state == NONE && ch == '\n') {
 			log_debug("%s: end at EOL", __func__);

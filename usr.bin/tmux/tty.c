@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.437 2024/08/04 09:35:30 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.438 2024/08/04 09:42:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2656,7 +2656,6 @@ static void
 tty_colours(struct tty *tty, const struct grid_cell *gc)
 {
 	struct grid_cell	*tc = &tty->cell;
-	int			 have_ax;
 
 	/* No changes? Nothing is necessary. */
 	if (gc->fg == tc->fg && gc->bg == tc->bg && gc->us == tc->us)
