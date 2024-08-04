@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.28 2024/05/26 13:37:31 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.29 2024/08/04 12:01:18 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,7 +26,7 @@
 
 #include <dev/ofw/openfirm.h>
 
-uint32_t arm_intr_get_parent(int);
+int arm_intr_get_parent(int);
 uint32_t arm_intr_map_msi(int, uint64_t *);
 
 void *arm_intr_prereg_establish_fdt(void *, int *, int, struct cpu_info *,
@@ -94,17 +94,21 @@ arm_cpu_fiq(void *frame)
 /*
  * Find the interrupt parent by walking up the tree.
  */
-uint32_t
+int
 arm_intr_get_parent(int node)
 {
-	uint32_t phandle = 0;
+	uint32_t phandle;
 
-	while (node && !phandle) {
+	while (node) {
 		phandle = OF_getpropint(node, "interrupt-parent", 0);
+		if (phandle)
+			return OF_getnodebyphandle(phandle);
 		node = OF_parent(node);
+		if (OF_getpropbool(node, "interrupt-controller"))
+			return node;
 	}
 
-	return phandle;
+	return 0;
 }
 
 uint32_t
@@ -291,8 +295,6 @@ arm_intr_register_fdt(struct interrupt_controller *ic)
 
 	ic->ic_cells = OF_getpropint(ic->ic_node, "#interrupt-cells", 0);
 	ic->ic_phandle = OF_getpropint(ic->ic_node, "phandle", 0);
-	if (ic->ic_phandle == 0)
-		return;
 	KASSERT(ic->ic_cells <= MAX_INTERRUPT_CELLS);
 
 	LIST_INSERT_HEAD(&interrupt_controllers, ic, ic_list);
@@ -341,7 +343,8 @@ arm_intr_establish_fdt_idx_cpu(int node, int idx, int level, struct cpu_info *ci
     int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
-	int i, len, ncells, extended = 1;
+	int i, len, ncells, parent;
+	int extended = 1;
 	uint32_t *cell, *cells, phandle;
 	struct machine_intr_handle *ih;
 	void *val = NULL;
@@ -356,9 +359,9 @@ arm_intr_establish_fdt_idx_cpu(int node, int idx, int level, struct cpu_info *ci
 
 	/* Old style. */
 	if (!extended) {
-		phandle = arm_intr_get_parent(node);
+		parent = arm_intr_get_parent(node);
 		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
-			if (ic->ic_phandle == phandle)
+			if (ic->ic_node == parent)
 				break;
 		}
 
@@ -569,12 +572,12 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
 {
 	struct interrupt_controller *ic = cookie;
 	struct machine_intr_handle *ih;
-	uint32_t phandle;
+	int parent;
 	void *val;
 
-	phandle = arm_intr_get_parent(ic->ic_node);
+	parent = arm_intr_get_parent(ic->ic_node);
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
-		if (ic->ic_phandle == phandle)
+		if (ic->ic_node == parent)
 			break;
 	}
 	if (ic == NULL)
