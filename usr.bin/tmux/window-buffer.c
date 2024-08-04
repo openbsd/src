@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.38 2024/03/21 11:32:49 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.39 2024/08/04 08:39:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -508,7 +508,7 @@ window_buffer_key(struct window_mode_entry *wme, struct client *c,
 	struct window_buffer_itemdata	*item;
 	int				 finished;
 
-	if (paste_get_top(NULL) == NULL) {
+	if (paste_is_empty()) {
 		finished = 1;
 		goto out;
 	}
@@ -541,7 +541,7 @@ window_buffer_key(struct window_mode_entry *wme, struct client *c,
 	}
 
 out:
-	if (finished || paste_get_top(NULL) == NULL)
+	if (finished || paste_is_empty())
 		window_pane_reset_mode(wp);
 	else {
 		mode_tree_draw(mtd);
