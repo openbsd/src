@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.67 2024/05/24 12:39:06 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.68 2024/08/04 08:53:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -261,19 +261,21 @@ mode_tree_up(struct mode_tree_data *mtd, int wrap)
 	}
 }
 
-void
+int
 mode_tree_down(struct mode_tree_data *mtd, int wrap)
 {
 	if (mtd->current == mtd->line_size - 1) {
 		if (wrap) {
 			mtd->current = 0;
 			mtd->offset = 0;
-		}
+		} else
+			return (0);
 	} else {
 		mtd->current++;
 		if (mtd->current > mtd->offset + mtd->height - 1)
 			mtd->offset++;
 	}
+	return (1);
 }
 
 void *
