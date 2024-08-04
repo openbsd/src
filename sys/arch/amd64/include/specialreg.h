@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.115 2024/07/21 19:41:31 bluhm Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.116 2024/08/04 11:05:18 kettenis Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -624,6 +624,12 @@
 #define MSR_PERF_GLOBAL_CTRL	0x38f
 #define MSR_PERF_GLOBAL_CTR1_EN	(1ULL << 33)
 #define MSR_PERF_GLOBAL_CTR2_EN	(1ULL << 34)
+#define MSR_PKG_C3_RESIDENCY	0x3f8
+#define MSR_PKG_C6_RESIDENCY	0x3f9
+#define MSR_PKG_C7_RESIDENCY	0x3fa
+#define MSR_CORE_C3_RESIDENCY	0x3fc
+#define MSR_CORE_C6_RESIDENCY	0x3fd
+#define MSR_CORE_C7_RESIDENCY	0x3fe
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
 #define MSR_MC0_ADDR		0x402
@@ -644,6 +650,10 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+#define MSR_PKG_C2_RESIDENCY	0x60d
+#define MSR_PKG_C8_RESIDENCY	0x630
+#define MSR_PKG_C9_RESIDENCY	0x631
+#define MSR_PKG_C10_RESIDENCY	0x632
 #define MSR_U_CET		0x6a0
 #define MSR_CET_ENDBR_EN		(1 << 2)
 #define MSR_CET_NO_TRACK_EN		(1 << 4)

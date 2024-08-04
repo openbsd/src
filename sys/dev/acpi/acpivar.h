@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.131 2024/06/30 00:29:36 jsg Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.132 2024/08/04 11:05:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -282,6 +282,10 @@ struct acpi_softc {
 	int			sc_flags;
 
 	int			sc_skip_processor;
+
+	void			(*sc_pmc_suspend)(void *);
+	void			(*sc_pmc_resume)(void *);
+	void			*sc_pmc_cookie;
 };
 
 extern struct acpi_softc *acpi_softc;

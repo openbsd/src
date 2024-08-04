@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.22 2024/06/25 11:57:10 kettenis Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.23 2024/08/04 11:05:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -104,8 +104,14 @@ gosleep(void *v)
 	acpi_disable_allgpes(sc);
 	acpi_enable_wakegpes(sc, sc->sc_state);
 
+	if (sc->sc_pmc_suspend)
+		sc->sc_pmc_suspend(sc->sc_pmc_cookie);
+
 	ret = acpi_sleep_cpu(sc, sc->sc_state);
 	acpi_resume_cpu(sc, sc->sc_state);
+
+	if (sc->sc_pmc_resume)
+		sc->sc_pmc_resume(sc->sc_pmc_cookie);
 
 	return ret;
 }
