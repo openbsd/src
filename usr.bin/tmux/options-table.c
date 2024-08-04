@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.174 2024/05/14 09:32:37 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.175 2024/08/04 09:35:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -398,7 +398,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_str = "",
+	  .default_str = "linux*:AX@",
 	  .separator = ",",
 	  .text = "List of terminal capabilities overrides."
 	},
