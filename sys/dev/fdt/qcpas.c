@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.4 2024/08/04 15:30:08 kettenis Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.5 2024/08/04 20:10:38 mglocker Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -224,7 +224,7 @@ qcpas_mountroot(struct device *self)
 
 	if (sc->sc_lite_pas_id) {
 		if (qcscm_pas_shutdown(sc->sc_lite_pas_id)) {
-			printf("%s: failed to shutdown lite firmare\n",
+			printf("%s: failed to shutdown lite firmware\n",
 			    sc->sc_dev.dv_xname);
 		}
 	}
