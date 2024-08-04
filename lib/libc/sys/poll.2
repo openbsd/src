@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.40 2023/07/18 04:17:17 asou Exp $
+.\"	$OpenBSD: poll.2,v 1.41 2024/08/04 22:28:08 guenther Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: July 18 2023 $
+.Dd $Mdocdate: August 4 2024 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Ft int
 .Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
 .Ft int
-.Fn ppoll "struct pollfd *fds" "nfds_t nfds" "const struct timespec *timeout" "const sigset_t *mask"
+.Fn ppoll "struct pollfd *fds" "nfds_t nfds" "const struct timespec * restrict timeout" "const sigset_t * restrict mask"
 .Sh DESCRIPTION
 .Fn poll
 provides a mechanism for multiplexing I/O across a set of file
@@ -325,12 +325,10 @@ The timeout passed was invalid.
 .Sh STANDARDS
 The
 .Fn poll
-function is compliant with the
-.St -p1003.1-2008
-specification.
-The
+and
 .Fn ppoll
-function is a Linux extension.
+functions conform to
+.St -p1003.1-2024 .
 .Sh HISTORY
 A
 .Fn poll
@@ -340,7 +338,7 @@ The
 .Fn ppoll
 function appeared in
 .Ox 5.4 .
-.Sh BUGS
+.Sh CAVEATS
 The
 .Dv POLLWRBAND
 flag is accepted but ignored by the kernel.
