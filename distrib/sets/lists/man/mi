@@ -1581,6 +1581,7 @@
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
+./usr/share/man/man4/intelpmc.4
 ./usr/share/man/man4/iophy.4
 ./usr/share/man/man4/iosf.4
 ./usr/share/man/man4/ip.4
