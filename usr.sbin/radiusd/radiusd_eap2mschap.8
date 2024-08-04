@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_eap2mschap.8,v 1.2 2024/07/14 18:09:05 jmc Exp $
+.\"	$OpenBSD: radiusd_eap2mschap.8,v 1.3 2024/08/04 03:56:57 yasuoka Exp $
 .\"
 .\" Copyright (c) 2024 Internet Initiative Japan Inc.
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: July 14 2024 $
+.Dd $Mdocdate: August 4 2024 $
 .Dt RADIUSD_EAP2MSCHAP 8
 .Os
 .Sh NAME
@@ -77,10 +77,11 @@ authenticate * by file
 .Ed
 .Sh SEE ALSO
 .Xr authenticate 3 ,
+.Xr radiusd 8 ,
 .Xr radiusd.conf 5 ,
-.Xr radiusd 8
+.Xr radiusd_file 5
 .Sh HISTORY
 The
 .Nm
-daemon first appeared in
+module first appeared in
 .Ox 7.6 .
