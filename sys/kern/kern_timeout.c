@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.97 2024/02/23 16:51:39 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.98 2024/08/05 23:51:11 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -386,14 +386,17 @@ timeout_add_usec(struct timeout *to, int usecs)
 }
 
 int
-timeout_add_nsec(struct timeout *to, int nsecs)
+timeout_add_nsec(struct timeout *to, uint64_t nsecs)
 {
-	int to_ticks = nsecs / (tick * 1000);
+	uint64_t to_ticks;
 
+	to_ticks = nsecs / (tick * 1000);
+	if (to_ticks > INT_MAX)
+	    to_ticks = INT_MAX;
 	if (to_ticks == 0 && nsecs > 0)
 		to_ticks = 1;
 
-	return timeout_add(to, to_ticks);
+	return timeout_add(to, (int)to_ticks);
 }
 
 int
