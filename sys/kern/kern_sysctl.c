@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.432 2024/08/05 15:43:58 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.433 2024/08/05 18:47:29 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -507,6 +507,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_NUMVNODES:  /* XXX numvnodes is a long */
 		return (sysctl_rdint(oldp, oldlenp, newp, numvnodes));
+	case KERN_BOOTTIME: {
+		struct timeval bt;
+		memset(&bt, 0, sizeof bt);
+		microboottime(&bt);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
+	}
 	case KERN_MBSTAT: {
 		extern struct cpumem *mbstat;
 		uint64_t counters[MBSTAT_COUNT];
@@ -610,12 +616,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (error);
 	case KERN_CLOCKRATE:
 		return (sysctl_clockrate(oldp, oldlenp, newp));
-	case KERN_BOOTTIME: {
-		struct timeval bt;
-		memset(&bt, 0, sizeof bt);
-		microboottime(&bt);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
-	  }
 	case KERN_MSGBUFSIZE:
 	case KERN_CONSBUFSIZE: {
 		struct msgbuf *mp;
