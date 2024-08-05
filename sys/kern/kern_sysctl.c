@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.430 2024/08/02 14:34:45 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.431 2024/08/05 13:46:16 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -172,26 +172,25 @@ sysctl_vslock(void *addr, size_t len)
 {
 	int error;
 
-	KERNEL_LOCK();
 	error = rw_enter(&sysctl_lock, RW_WRITE|RW_INTR);
 	if (error)
-		goto out;
+		return (error);
+	KERNEL_LOCK();
 
 	if (addr) {
 		if (atop(len) > uvmexp.wiredmax - uvmexp.wired) {
 			error = ENOMEM;
-			goto out2;
+			goto out;
 		}
 		error = uvm_vslock(curproc, addr, len, PROT_READ | PROT_WRITE);
 		if (error)
-			goto out2;
+			goto out;
 	}
 
 	return (0);
-out2:
-	rw_exit_write(&sysctl_lock);
 out:
 	KERNEL_UNLOCK();
+	rw_exit_write(&sysctl_lock);
 	return (error);
 }
 
@@ -202,8 +201,8 @@ sysctl_vsunlock(void *addr, size_t len)
 
 	if (addr)
 		uvm_vsunlock(curproc, addr, len);
-	rw_exit_write(&sysctl_lock);
 	KERNEL_UNLOCK();
+	rw_exit_write(&sysctl_lock);
 }
 
 int
