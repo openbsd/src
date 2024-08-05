@@ -798,8 +798,8 @@ static void reportGNUWarning(Symbol &sym, InputSectionBase &sec,
     // report first occurance only
     sym.gwarn = false;
     if (!gnuWarning.empty())
-      message(sec.getSrcMsg(sym, offset) + "(" + sec.getObjMsg(offset) +
-              "): warning: " + gnuWarning);
+      warn(sec.getSrcMsg(sym, offset) + "(" + sec.getObjMsg(offset) +
+           "): warning: " + gnuWarning);
   }
 }
 
