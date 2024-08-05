@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.227 2024/08/02 21:08:47 jan Exp $ */
+/* $OpenBSD: netcat.c,v 1.228 2024/08/05 07:16:30 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -643,10 +643,6 @@ main(int argc, char *argv[])
 					timeout_tls(s, tls_cctx, tls_close);
 				close(connfd);
 				tls_free(tls_cctx);
-			}
-			if (family == AF_UNIX && uflag) {
-				if (connect(s, NULL, 0) == -1)
-					err(1, "connect");
 			}
 
 			if (!kflag)
