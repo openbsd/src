@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.222 2024/01/26 21:14:08 jan Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.223 2024/08/05 23:56:10 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -731,6 +731,8 @@ bpf_set_wtimeout(struct bpf_d *d, const struct timeval *tv)
 		return (EINVAL);
 
 	nsec = TIMEVAL_TO_NSEC(tv);
+	if (nsec > SEC_TO_NSEC(300))
+		return (EINVAL);
 	if (nsec > MAXTSLP)
 		return (EOVERFLOW);
 

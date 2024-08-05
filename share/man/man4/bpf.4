@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.45 2023/03/09 06:01:40 dlg Exp $
+.\"	$OpenBSD: bpf.4,v 1.46 2024/08/05 23:56:10 dlg Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: March 9 2023 $
+.Dd $Mdocdate: August 5 2024 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -315,6 +315,7 @@ the kernel buffer becoming readable.
 By default, or when reset, the wait timeout is infinite, meaning
 the age of packets in the kernel buffer does not make the buffer
 readable.
+The maximum wait time that can be set is 5 minutes (300 seconds).
 .Pp
 .It Dv BIOCSETF Fa "struct bpf_program *"
 Sets the filter program used by the kernel to discard uninteresting packets.
