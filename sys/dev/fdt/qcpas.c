@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.5 2024/08/04 20:10:38 mglocker Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.6 2024/08/05 18:36:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,6 +21,7 @@
 #include <sys/malloc.h>
 #include <sys/atomic.h>
 #include <sys/exec_elf.h>
+#include <sys/sensors.h>
 #include <sys/task.h>
 
 #include <machine/apmvar.h>
@@ -102,6 +103,14 @@ struct qcpas_softc {
 	struct task		sc_glink_rx;
 	uint32_t		sc_glink_max_channel;
 	TAILQ_HEAD(,qcpas_glink_channel) sc_glink_channels;
+
+#ifndef SMALL_KERNEL
+	uint32_t		sc_last_full_capacity;
+	uint32_t		sc_warning_capacity;
+	uint32_t		sc_low_capacity;
+	struct ksensor		sc_sens[11];
+	struct ksensordev	sc_sensdev;
+#endif
 };
 
 int	qcpas_match(struct device *, void *, void *);
@@ -271,6 +280,77 @@ qcpas_mountroot(struct device *self)
 	node = OF_getnodebyname(sc->sc_node, "glink-edge");
 	if (node)
 		qcpas_glink_attach(sc, node);
+
+#ifndef SMALL_KERNEL
+	strlcpy(sc->sc_sensdev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensdev.xname));
+
+	strlcpy(sc->sc_sens[0].desc, "last full capacity",
+	    sizeof(sc->sc_sens[0].desc));
+	sc->sc_sens[0].type = SENSOR_WATTHOUR;
+	sc->sc_sens[0].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[0]);
+
+	strlcpy(sc->sc_sens[1].desc, "warning capacity",
+	    sizeof(sc->sc_sens[1].desc));
+	sc->sc_sens[1].type = SENSOR_WATTHOUR;
+	sc->sc_sens[1].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[1]);
+	
+	strlcpy(sc->sc_sens[2].desc, "low capacity",
+	    sizeof(sc->sc_sens[2].desc));
+	sc->sc_sens[2].type = SENSOR_WATTHOUR;
+	sc->sc_sens[2].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[2]);
+
+	strlcpy(sc->sc_sens[3].desc, "voltage", sizeof(sc->sc_sens[3].desc));
+	sc->sc_sens[3].type = SENSOR_VOLTS_DC;
+	sc->sc_sens[3].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[3]);
+
+	strlcpy(sc->sc_sens[4].desc, "battery unknown",
+	    sizeof(sc->sc_sens[4].desc));
+	sc->sc_sens[4].type = SENSOR_INTEGER;
+	sc->sc_sens[4].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[4]);
+
+	strlcpy(sc->sc_sens[5].desc, "rate", sizeof(sc->sc_sens[5].desc));
+	sc->sc_sens[5].type =SENSOR_WATTS;
+	sc->sc_sens[5].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[5]);
+
+	strlcpy(sc->sc_sens[6].desc, "remaining capacity",
+	    sizeof(sc->sc_sens[6].desc));
+	sc->sc_sens[6].type = SENSOR_WATTHOUR;
+	sc->sc_sens[6].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[6]);
+
+	strlcpy(sc->sc_sens[7].desc, "current voltage",
+	    sizeof(sc->sc_sens[7].desc));
+	sc->sc_sens[7].type = SENSOR_VOLTS_DC;
+	sc->sc_sens[7].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[7]);
+
+	strlcpy(sc->sc_sens[8].desc, "design capacity",
+	    sizeof(sc->sc_sens[8].desc));
+	sc->sc_sens[8].type = SENSOR_WATTHOUR;
+	sc->sc_sens[8].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[8]);
+
+	strlcpy(sc->sc_sens[9].desc, "discharge cycles",
+	    sizeof(sc->sc_sens[9].desc));
+	sc->sc_sens[9].type = SENSOR_INTEGER;
+	sc->sc_sens[9].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[9]);
+
+	strlcpy(sc->sc_sens[10].desc, "temperature",
+	    sizeof(sc->sc_sens[10].desc));
+	sc->sc_sens[10].type = SENSOR_TEMP;
+	sc->sc_sens[10].flags = SENSOR_FUNKNOWN;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[10]);
+
+	sensordev_install(&sc->sc_sensdev);
+#endif
 }
 
 int
@@ -1178,6 +1258,12 @@ struct battmgr_bat_status {
 	uint32_t temperature;
 };
 
+void	qcpas_pmic_rtr_refresh(void *);
+void	qcpas_pmic_rtr_bat_info(struct qcpas_softc *,
+	    struct battmgr_bat_info *);
+void	qcpas_pmic_rtr_bat_status(struct qcpas_softc *,
+	    struct battmgr_bat_status *);
+
 void
 qcpas_pmic_rtr_battmgr_req_info(void *cookie)
 {
@@ -1228,18 +1314,19 @@ qcpas_pmic_rtr_init(void *cookie)
 	qcpas_pmic_rtr_apm_cookie = cookie;
 	apm_setinfohook(qcpas_pmic_rtr_apminfo);
 #endif
+#ifndef SMALL_KERNEL
+	sensor_task_register(cookie, qcpas_pmic_rtr_refresh, 5);
+#endif
 	return 0;
 }
 
 int
 qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 {
-#if NAPM > 0
-	static uint32_t last_full_capacity;
-#endif
+	struct qcpas_glink_channel *ch = cookie;
+	struct qcpas_softc *sc = ch->ch_sc;
 	struct pmic_glink_hdr hdr;
 	uint32_t notification;
-	extern int hw_power;
 
 	if (len < sizeof(hdr)) {
 		printf("%s: pmic glink message too small\n",
@@ -1282,67 +1369,21 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 				return 0;
 			}
 			bat = malloc(sizeof(*bat), M_TEMP, M_WAITOK);
-			memcpy((void *)bat, buf + sizeof(hdr), sizeof(*bat));
-#if NAPM > 0
-			last_full_capacity = bat->last_full_capacity;
-#endif
+			memcpy(bat, buf + sizeof(hdr), sizeof(*bat));
+			qcpas_pmic_rtr_bat_info(sc, bat);
 			free(bat, M_TEMP, sizeof(*bat));
 			break;
 		}
 		case BATTMGR_OPCODE_BAT_STATUS: {
 			struct battmgr_bat_status *bat;
-#if NAPM > 0
-			struct apm_power_info *info;
-			uint32_t delta;
-#endif
 			if (len - sizeof(hdr) != sizeof(*bat)) {
 				printf("%s: invalid battgmr bat status\n",
 				    __func__);
 				return 0;
 			}
-#if NAPM > 0
-			/* Needs BAT_INFO fist */
-			if (last_full_capacity == 0) {
-				wakeup(&qcpas_pmic_rtr_apm_power_info);
-				return 0;
-			}
-#endif
 			bat = malloc(sizeof(*bat), M_TEMP, M_WAITOK);
-			memcpy((void *)bat, buf + sizeof(hdr), sizeof(*bat));
-#if NAPM > 0
-			info = &qcpas_pmic_rtr_apm_power_info;
-			info->battery_life = ((bat->capacity * 100) /
-			    last_full_capacity);
-			if (info->battery_life > 50)
-				info->battery_state = APM_BATT_HIGH;
-			else if (info->battery_life > 25)
-				info->battery_state = APM_BATT_LOW;
-			else
-				info->battery_state = APM_BATT_CRITICAL;
-			if (bat->battery_state & BATTMGR_BAT_STATE_CHARGING)
-				info->battery_state = APM_BATT_CHARGING;
-			else if (bat->battery_state & BATTMGR_BAT_STATE_CRITICAL_LOW)
-				info->battery_state = APM_BATT_CRITICAL;
-
-			if (bat->rate < 0)
-				delta = bat->capacity;
-			else
-				delta = last_full_capacity - bat->capacity;
-			if (bat->rate == 0)
-				info->minutes_left = -1;
-			else
-				info->minutes_left =
-				    (60 * delta) / abs(bat->rate);
-
-			if (bat->power_state & BATTMGR_PWR_STATE_AC_ON) {
-				info->ac_state = APM_AC_ON;
-				hw_power = 1;
-			} else {
-				info->ac_state = APM_AC_OFF;
-				hw_power = 0;
-			}
-			wakeup(&qcpas_pmic_rtr_apm_power_info);
-#endif
+			memcpy(bat, buf + sizeof(hdr), sizeof(*bat));
+			qcpas_pmic_rtr_bat_status(sc, bat);
 			free(bat, M_TEMP, sizeof(*bat));
 			break;
 		}
@@ -1377,3 +1418,127 @@ qcpas_pmic_rtr_apminfo(struct apm_power_info *info)
 	return 0;
 }
 #endif
+
+void
+qcpas_pmic_rtr_refresh(void *arg)
+{
+	qcpas_pmic_rtr_battmgr_req_status(arg);
+}
+
+void
+qcpas_pmic_rtr_bat_info(struct qcpas_softc *sc, struct battmgr_bat_info *bat)
+{
+#ifndef SMALL_KERNEL
+	sc->sc_last_full_capacity = bat->last_full_capacity;
+	sc->sc_warning_capacity = bat->capacity_warning;
+	sc->sc_low_capacity = bat->capacity_low;
+
+	sc->sc_sens[0].value = bat->last_full_capacity * 1000;
+	sc->sc_sens[0].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[1].value = bat->capacity_warning * 1000;
+	sc->sc_sens[1].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[2].value = bat->capacity_low * 1000;
+	sc->sc_sens[2].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[3].value = bat->design_voltage * 1000;
+	sc->sc_sens[3].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[8].value = bat->design_capacity * 1000;
+	sc->sc_sens[8].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[9].value = bat->cycle_count;
+	sc->sc_sens[9].flags &= ~SENSOR_FUNKNOWN;
+#endif
+}
+
+void
+qcpas_pmic_rtr_bat_status(struct qcpas_softc *sc,
+    struct battmgr_bat_status *bat)
+{
+#if NAPM > 0
+	extern int hw_power;
+	struct apm_power_info *info = &qcpas_pmic_rtr_apm_power_info;
+	uint32_t delta;
+#endif
+
+#ifndef SMALL_KERNEL
+	if (bat->capacity >= sc->sc_last_full_capacity)
+		strlcpy(sc->sc_sens[4].desc, "battery full",
+		    sizeof(sc->sc_sens[4].desc));
+	else if (bat->battery_state & BATTMGR_BAT_STATE_DISCHARGE)
+		strlcpy(sc->sc_sens[4].desc, "battery discharging",
+		    sizeof(sc->sc_sens[4].desc));
+	else if (bat->battery_state & BATTMGR_BAT_STATE_CHARGING)
+		strlcpy(sc->sc_sens[4].desc, "battery charging",
+		    sizeof(sc->sc_sens[4].desc));
+	else
+		strlcpy(sc->sc_sens[4].desc, "battery idle",
+		    sizeof(sc->sc_sens[4].desc));
+	if (bat->battery_state & BATTMGR_BAT_STATE_CRITICAL_LOW)
+		sc->sc_sens[4].status = SENSOR_S_CRIT;
+	else
+		sc->sc_sens[4].status = SENSOR_S_OK;
+	sc->sc_sens[4].value = bat->battery_state;
+	sc->sc_sens[4].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[5].value = abs(bat->rate) * 1000;
+	sc->sc_sens[5].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[6].value = bat->capacity * 1000;
+	if (bat->capacity < sc->sc_low_capacity)
+		sc->sc_sens[6].status = SENSOR_S_CRIT;
+	else if (bat->capacity < sc->sc_warning_capacity)
+		sc->sc_sens[6].status = SENSOR_S_WARN;
+	else
+		sc->sc_sens[6].status = SENSOR_S_OK;
+	sc->sc_sens[6].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[7].value = bat->battery_voltage * 1000;
+	sc->sc_sens[7].flags &= ~SENSOR_FUNKNOWN;
+
+	sc->sc_sens[10].value = (bat->temperature * 10000) + 273150000;
+	sc->sc_sens[10].flags &= ~SENSOR_FUNKNOWN;
+#endif
+
+#if NAPM > 0
+	/* Needs BAT_INFO fist */
+	if (sc->sc_last_full_capacity == 0) {
+		wakeup(&qcpas_pmic_rtr_apm_power_info);
+		return;
+	}
+
+	info->battery_life =
+	    ((bat->capacity * 100) / sc->sc_last_full_capacity);
+	if (info->battery_life > 50)
+		info->battery_state = APM_BATT_HIGH;
+	else if (info->battery_life > 25)
+		info->battery_state = APM_BATT_LOW;
+	else
+		info->battery_state = APM_BATT_CRITICAL;
+	if (bat->battery_state & BATTMGR_BAT_STATE_CHARGING)
+		info->battery_state = APM_BATT_CHARGING;
+	else if (bat->battery_state & BATTMGR_BAT_STATE_CRITICAL_LOW)
+		info->battery_state = APM_BATT_CRITICAL;
+
+	if (bat->rate < 0)
+		delta = bat->capacity;
+	else
+		delta = sc->sc_last_full_capacity - bat->capacity;
+	if (bat->rate == 0)
+		info->minutes_left = -1;
+	else
+		info->minutes_left = (60 * delta) / abs(bat->rate);
+
+	if (bat->power_state & BATTMGR_PWR_STATE_AC_ON) {
+		info->ac_state = APM_AC_ON;
+		hw_power = 1;
+	} else {
+		info->ac_state = APM_AC_OFF;
+		hw_power = 0;
+	}
+
+	wakeup(&qcpas_pmic_rtr_apm_power_info);
+#endif
+}
