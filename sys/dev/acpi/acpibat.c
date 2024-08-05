@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.71 2024/06/24 15:56:07 mglocker Exp $ */
+/* $OpenBSD: acpibat.c,v 1.72 2024/08/05 18:37:29 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -279,13 +279,11 @@ acpibat_refresh(void *arg)
 	else if (sc->sc_bst.bst_state & BST_CHARGE)
 		strlcpy(sc->sc_sens[4].desc, "battery charging",
 		    sizeof(sc->sc_sens[4].desc));
-	else if (sc->sc_bst.bst_state & BST_CRITICAL) {
-		strlcpy(sc->sc_sens[4].desc, "battery critical",
-		    sizeof(sc->sc_sens[4].desc));
-		sc->sc_sens[4].status = SENSOR_S_CRIT;
-	} else
+	else
 		strlcpy(sc->sc_sens[4].desc, "battery idle",
 		    sizeof(sc->sc_sens[4].desc));
+	if (sc->sc_bst.bst_state & BST_CRITICAL)
+		sc->sc_sens[4].status = SENSOR_S_CRIT;
 	sc->sc_sens[4].value = sc->sc_bst.bst_state;
 
 	if (sc->sc_bst.bst_rate == BST_UNKNOWN) {
