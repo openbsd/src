@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvgicp.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: mvgicp.c,v 1.6 2024/08/05 18:39:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -74,7 +74,7 @@ mvgicp_attach(struct device *parent, struct device *self, void *aux)
 	struct mvgicp_softc *sc = (struct mvgicp_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct interrupt_controller *ic;
-	uint32_t phandle;
+	int node;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -100,11 +100,11 @@ mvgicp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	extern uint32_t fdt_intr_get_parent(int);
-	phandle = fdt_intr_get_parent(faa->fa_node);
+	extern int fdt_intr_get_parent(int);
+	node = fdt_intr_get_parent(faa->fa_node);
 	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
-		if (ic->ic_phandle == phandle)
+		if (ic->ic_node == node)
 			break;
 	}
 	sc->sc_parent_ic = ic;
