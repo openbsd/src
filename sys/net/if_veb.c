@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.35 2024/02/13 12:22:09 bluhm Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.36 2024/08/05 17:47:29 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -944,7 +944,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 	 * let pf look at it, but use the veb interface as a proxy.
 	 */
 	if (ISSET(ifp->if_flags, IFF_LINK1) &&
-	    (m0 = veb_pf(ifp, PF_OUT, m0)) == NULL)
+	    (m0 = veb_pf(ifp, PF_FWD, m0)) == NULL)
 		return;
 #endif
 
@@ -1039,7 +1039,7 @@ veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
 
 #if NPF > 0
 	if (ISSET(ifp->if_flags, IFF_LINK1) &&
-	    (m = veb_pf(ifp0, PF_OUT, m)) == NULL)
+	    (m = veb_pf(ifp0, PF_FWD, m)) == NULL)
 		return (NULL);
 #endif
 

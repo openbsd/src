@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.370 2024/04/14 20:46:27 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.371 2024/08/05 17:47:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -70,7 +70,7 @@
 #if NPF > 0
 #include <net/pfvar.h>
 #define	BRIDGE_IN	PF_IN
-#define	BRIDGE_OUT	PF_OUT
+#define	BRIDGE_OUT	PF_FWD
 #else
 #define	BRIDGE_IN	0
 #define	BRIDGE_OUT	1
