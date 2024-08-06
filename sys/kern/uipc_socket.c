@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.341 2024/08/01 17:19:01 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.342 2024/08/06 20:14:56 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -234,8 +234,8 @@ sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 int
 solisten(struct socket *so, int backlog)
 {
-	int somaxconn_local = READ_ONCE(somaxconn);
-	int sominconn_local = READ_ONCE(sominconn);
+	int somaxconn_local = atomic_load_int(&somaxconn);
+	int sominconn_local = atomic_load_int(&sominconn);
 	int error;
 
 	switch (so->so_type) {
