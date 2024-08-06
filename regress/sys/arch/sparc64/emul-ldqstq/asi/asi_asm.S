@@ -1,4 +1,4 @@
-/*	$OpenBSD: asi_asm.S,v 1.2 2003/07/12 07:09:25 jason Exp $	*/
+/*	$OpenBSD: asi_asm.S,v 1.3 2024/08/06 05:39:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -27,6 +27,7 @@
  */
 
 #include <machine/asm.h>
+#define _LOCORE
 #include <machine/ctlreg.h>
 
 /* void asm_ldq_asi(int asi, struct fpquad *r)	%f0 = *r */

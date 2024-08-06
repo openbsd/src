@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: genc.pl,v 1.4 2004/08/05 11:39:37 art Exp $
+#	$OpenBSD: genc.pl,v 1.5 2024/08/06 05:39:48 claudio Exp $
 #
 # Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 # All rights reserved.
@@ -29,6 +29,8 @@
 print <<MY__EOF
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <err.h>
 #include "fpregs.h"
 

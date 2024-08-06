@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: genasm.pl,v 1.2 2003/07/13 06:39:44 jason Exp $
+#	$OpenBSD: genasm.pl,v 1.3 2024/08/06 05:39:48 claudio Exp $
 #
 # Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 # All rights reserved.
@@ -27,6 +27,7 @@
 #
 
 print "#include <machine/asm.h>\n";
+print "#define _LOCORE\n";
 print "#include <machine/ctlreg.h>\n\n";
 
 for ($i = -4096; $i <= 4095; $i++) {
