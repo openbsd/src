@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.323 2024/07/20 17:26:19 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.324 2024/08/06 20:15:53 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -113,14 +113,19 @@
 #endif
 
 /*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
+/*
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
-int	udpcksum = 1;
+int	udpcksum = 1;			/* [a] */
 
-u_int	udp_sendspace = 9216;		/* really max datagram size */
+u_int	udp_sendspace = 9216;		/* [a] really max datagram size */
 u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
-					/* 40 1K datagrams */
+					/* [a] 40 1K datagrams */
 
 const struct pr_usrreqs udp_usrreqs = {
 	.pru_attach	= udp_attach,
@@ -1063,7 +1068,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
-	if (udpcksum)
+	if (atomic_load_int(&udpcksum))
 		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 	udpstat_inc(udps_opackets);
@@ -1098,7 +1103,8 @@ udp_attach(struct socket *so, int proto, int wait)
 	if (so->so_pcb != NULL)
 		return EINVAL;
 
-	if ((error = soreserve(so, udp_sendspace, udp_recvspace)))
+	if ((error = soreserve(so, atomic_load_int(&udp_sendspace),
+	    atomic_load_int(&udp_recvspace))))
 		return error;
 
 	NET_ASSERT_LOCKED();
@@ -1285,10 +1291,8 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (udp_sysctl_udpstat(oldp, oldlenp, newp));
 
 	default:
-		NET_LOCK();
 		error = sysctl_bounded_arr(udpctl_vars, nitems(udpctl_vars),
 		    name, namelen, oldp, oldlenp, newp, newlen);
-		NET_UNLOCK();
 		return (error);
 	}
 	/* NOTREACHED */
