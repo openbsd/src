@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.76 2023/10/01 08:56:24 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.77 2024/08/06 15:03:36 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -1056,6 +1056,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	DPRINTF(1,("%s: cmd=%#x mode=%#x blksize=%d blkcount=%d\n",
 	    DEVNAME(hp->sc), command, mode, blksize, blkcount));
+
+	/* We're starting a new command, reset state. */
+	hp->intr_status = 0;
 
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
