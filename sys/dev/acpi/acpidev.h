@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.44 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpidev.h,v 1.45 2024/08/06 17:38:56 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -26,8 +26,9 @@
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
-#define ACPIDEV_NOPOLL		0
-#define ACPIDEV_POLL		1
+#define ACPIDEV_NOPOLL		0x0000
+#define ACPIDEV_POLL		0x0001
+#define ACPIDEV_WAKEUP		0x0002
 
 /*
  * _BIF (Battery InFormation)

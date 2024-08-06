@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.52 2024/05/13 19:56:37 kettenis Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.53 2024/08/06 17:38:56 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -213,7 +213,7 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpibtn_notify,
-	    sc, ACPIDEV_NOPOLL);
+	    sc, ACPIDEV_NOPOLL | ACPIDEV_WAKEUP);
 }
 
 int
