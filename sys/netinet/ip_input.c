@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.400 2024/07/19 16:58:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.401 2024/08/06 16:56:09 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ int	ip_dosourceroute = 0;
 int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
-int	ip_directedbcast = 0;
+int	ip_directedbcast = 0;			/* [a] */
 
 /* Protects `ipq' and `ip_frags'. */
 struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
@@ -114,6 +114,7 @@ int	ip_frags = 0;
 const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 	{ IPCTL_FORWARDING, &ip_forwarding, 0, 2 },
 	{ IPCTL_SENDREDIRECTS, &ip_sendredirects, 0, 1 },
+	{ IPCTL_DIRECTEDBCAST, &ip_directedbcast, 0, 1 },
 };
 
 const struct sysctl_bounded_args ipctl_vars[] = {
@@ -121,7 +122,6 @@ const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_MRTPROTO, &ip_mrtproto, SYSCTL_INT_READONLY },
 #endif
 	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
-	{ IPCTL_DIRECTEDBCAST, &ip_directedbcast, 0, 1 },
 	{ IPCTL_IPPORT_FIRSTAUTO, &ipport_firstauto, 0, 65535 },
 	{ IPCTL_IPPORT_LASTAUTO, &ipport_lastauto, 0, 65535 },
 	{ IPCTL_IPPORT_HIFIRSTAUTO, &ipport_hifirstauto, 0, 65535 },
@@ -483,7 +483,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		SET(flags, IP_FORWARDING);
 		break;
 	}
-	if (ip_directedbcast)
+	if (atomic_load_int(&ip_directedbcast))
 		SET(flags, IP_ALLOWBROADCAST);
 
 	hlen = ip->ip_hl << 2;
@@ -1805,6 +1805,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 	case IPCTL_FORWARDING:
 	case IPCTL_SENDREDIRECTS:
+	case IPCTL_DIRECTEDBCAST:
 		return (sysctl_bounded_arr(
 		    ipctl_vars_unlocked, nitems(ipctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
