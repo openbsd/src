@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.72 2024/07/29 12:42:53 claudio Exp $	*/
+/*	$OpenBSD: event.h,v 1.73 2024/08/06 08:44:54 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -294,6 +294,7 @@ extern void	knote(struct klist *list, long hint);
 extern void	knote_locked(struct klist *list, long hint);
 extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct process *);
+extern void	knote_processfork(struct process *, pid_t);
 extern void	knote_assign(const struct kevent *, struct knote *);
 extern void	knote_submit(struct knote *, struct kevent *);
 extern void	kqueue_init(void);

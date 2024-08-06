@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.366 2024/07/29 09:49:49 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.367 2024/08/06 08:44:54 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -136,6 +136,7 @@ struct pinsyscall {
  *	K	kernel lock
  *	m	this process' `ps_mtx'
  *	p	this process' `ps_lock'
+ *	Q	kqueue_ps_list_lock
  *	R	rlimit_lock
  *	S	scheduler lock
  *	T	itimer_mtx
@@ -181,7 +182,7 @@ struct process {
 
 /* The following fields are all zeroed upon creation in process_new. */
 #define	ps_startzero	ps_klist
-	struct	klist ps_klist;		/* knotes attached to this process */
+	struct	klist ps_klist;		/* [Q,m] knotes attached to process */
 	u_int	ps_flags;		/* [a] PS_* flags. */
 	int	ps_siglist;		/* Signals pending for the process. */
 

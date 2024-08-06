@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.228 2024/07/29 09:49:49 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.229 2024/08/06 08:44:54 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -477,16 +477,13 @@ reaper(void *arg)
 			/* Release the rest of the process's vmspace */
 			uvm_exit(pr);
 
+			/* Notify listeners of our demise and clean up. */
+			knote_processexit(pr);
+
 			KERNEL_LOCK();
 			if ((pr->ps_flags & PS_NOZOMBIE) == 0) {
 				/* Process is now a true zombie. */
 				atomic_setbits_int(&pr->ps_flags, PS_ZOMBIE);
-			}
-
-			/* Notify listeners of our demise and clean up. */
-			knote_processexit(pr);
-
-			if (pr->ps_flags & PS_ZOMBIE) {
 				/* Post SIGCHLD and wake up parent. */
 				prsignal(pr->ps_pptr, SIGCHLD);
 				wakeup(pr->ps_pptr);

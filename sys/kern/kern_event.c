@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.199 2024/07/29 12:42:53 claudio Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.200 2024/08/06 08:44:54 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -124,6 +124,8 @@ int	filt_kqueue_common(struct knote *kn, struct kqueue *kq);
 int	filt_procattach(struct knote *kn);
 void	filt_procdetach(struct knote *kn);
 int	filt_proc(struct knote *kn, long hint);
+int	filt_procmodify(struct kevent *kev, struct knote *kn);
+int	filt_procprocess(struct knote *kn, struct kevent *kev);
 int	filt_sigattach(struct knote *kn);
 void	filt_sigdetach(struct knote *kn);
 int	filt_signal(struct knote *kn, long hint);
@@ -145,17 +147,21 @@ const struct filterops kqread_filtops = {
 };
 
 const struct filterops proc_filtops = {
-	.f_flags	= 0,
+	.f_flags	= FILTEROP_MPSAFE,
 	.f_attach	= filt_procattach,
 	.f_detach	= filt_procdetach,
 	.f_event	= filt_proc,
+	.f_modify	= filt_procmodify,
+	.f_process	= filt_procprocess,
 };
 
 const struct filterops sig_filtops = {
-	.f_flags	= 0,
+	.f_flags	= FILTEROP_MPSAFE,
 	.f_attach	= filt_sigattach,
 	.f_detach	= filt_sigdetach,
 	.f_event	= filt_signal,
+	.f_modify	= filt_procmodify,
+	.f_process	= filt_procprocess,
 };
 
 const struct filterops file_filtops = {
@@ -177,6 +183,7 @@ const struct filterops timer_filtops = {
 struct	pool knote_pool;
 struct	pool kqueue_pool;
 struct	mutex kqueue_klist_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
+struct	rwlock kqueue_ps_list_lock = RWLOCK_INITIALIZER("kqpsl");
 int kq_ntimeouts = 0;
 int kq_timeoutmax = (4 * 1024);
 
@@ -333,7 +340,7 @@ int
 filt_procattach(struct knote *kn)
 {
 	struct process *pr;
-	int s;
+	int nolock;
 
 	if ((curproc->p_p->ps_flags & PS_PLEDGE) &&
 	    (curproc->p_p->ps_pledge & PLEDGE_PROC) == 0)
@@ -342,13 +349,14 @@ filt_procattach(struct knote *kn)
 	if (kn->kn_id > PID_MAX)
 		return ESRCH;
 
+	KERNEL_LOCK();
 	pr = prfind(kn->kn_id);
 	if (pr == NULL)
-		return (ESRCH);
+		goto fail;
 
 	/* exiting processes can't be specified */
 	if (pr->ps_flags & PS_EXITING)
-		return (ESRCH);
+		goto fail;
 
 	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
@@ -360,13 +368,26 @@ filt_procattach(struct knote *kn)
 		kn->kn_data = kn->kn_sdata;		/* ppid */
 		kn->kn_fflags = NOTE_CHILD;
 		kn->kn_flags &= ~EV_FLAG1;
+		rw_assert_wrlock(&kqueue_ps_list_lock);
 	}
 
-	s = splhigh();
+	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
+	nolock = (rw_status(&kqueue_ps_list_lock) == RW_WRITE);
+	if (!nolock)
+		rw_enter_write(&kqueue_ps_list_lock);
+	mtx_enter(&pr->ps_mtx);
 	klist_insert_locked(&pr->ps_klist, kn);
-	splx(s);
+	mtx_leave(&pr->ps_mtx);
+	if (!nolock)
+		rw_exit_write(&kqueue_ps_list_lock);
+
+	KERNEL_UNLOCK();
 
 	return (0);
+
+fail:
+	KERNEL_UNLOCK();
+	return (ESRCH);
 }
 
 /*
@@ -380,25 +401,25 @@ filt_procattach(struct knote *kn)
 void
 filt_procdetach(struct knote *kn)
 {
-	struct kqueue *kq = kn->kn_kq;
 	struct process *pr = kn->kn_ptr.p_process;
-	int s, status;
+	int status;
 
-	mtx_enter(&kq->kq_lock);
+	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
+	rw_enter_write(&kqueue_ps_list_lock);
+	mtx_enter(&pr->ps_mtx);
 	status = kn->kn_status;
-	mtx_leave(&kq->kq_lock);
 
-	if (status & KN_DETACHED)
-		return;
+	if ((status & KN_DETACHED) == 0)
+		klist_remove_locked(&pr->ps_klist, kn);
 
-	s = splhigh();
-	klist_remove_locked(&pr->ps_klist, kn);
-	splx(s);
+	mtx_leave(&pr->ps_mtx);
+	rw_exit_write(&kqueue_ps_list_lock);
 }
 
 int
 filt_proc(struct knote *kn, long hint)
 {
+	struct process *pr = kn->kn_ptr.p_process;
 	struct kqueue *kq = kn->kn_kq;
 	u_int event;
 
@@ -419,17 +440,14 @@ filt_proc(struct knote *kn, long hint)
 	 */
 	if (event == NOTE_EXIT) {
 		struct process *pr = kn->kn_ptr.p_process;
-		int s;
 
 		mtx_enter(&kq->kq_lock);
 		kn->kn_status |= KN_DETACHED;
 		mtx_leave(&kq->kq_lock);
 
-		s = splhigh();
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
 		klist_remove_locked(&pr->ps_klist, kn);
-		splx(s);
 		return (1);
 	}
 
@@ -452,12 +470,48 @@ filt_proc(struct knote *kn, long hint)
 		kev.fflags = kn->kn_sfflags;
 		kev.data = kn->kn_id;			/* parent */
 		kev.udata = kn->kn_udata;		/* preserve udata */
+
+		rw_assert_wrlock(&kqueue_ps_list_lock);
+		mtx_leave(&pr->ps_mtx);
 		error = kqueue_register(kq, &kev, 0, NULL);
+		mtx_enter(&pr->ps_mtx);
+
 		if (error)
 			kn->kn_fflags |= NOTE_TRACKERR;
 	}
 
 	return (kn->kn_fflags != 0);
+}
+
+int
+filt_procmodify(struct kevent *kev, struct knote *kn)
+{
+	struct process *pr = kn->kn_ptr.p_process;
+	int active;
+
+	mtx_enter(&pr->ps_mtx);
+	active = knote_modify(kev, kn);
+	mtx_leave(&pr->ps_mtx);
+
+	return (active);
+}
+
+/*
+ * By default only grab the mutex here. If the event requires extra protection
+ * because it alters the klist (NOTE_EXIT, NOTE_FORK the caller of the knote
+ * needs to grab the rwlock first.
+ */
+int
+filt_procprocess(struct knote *kn, struct kevent *kev)
+{
+	struct process *pr = kn->kn_ptr.p_process;
+	int active;
+
+	mtx_enter(&pr->ps_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&pr->ps_mtx);
+
+	return (active);
 }
 
 /*
@@ -470,7 +524,6 @@ int
 filt_sigattach(struct knote *kn)
 {
 	struct process *pr = curproc->p_p;
-	int s;
 
 	if (kn->kn_id >= NSIG)
 		return EINVAL;
@@ -478,9 +531,12 @@ filt_sigattach(struct knote *kn)
 	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
 
-	s = splhigh();
+	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
+	rw_enter_write(&kqueue_ps_list_lock);
+	mtx_enter(&pr->ps_mtx);
 	klist_insert_locked(&pr->ps_klist, kn);
-	splx(s);
+	mtx_leave(&pr->ps_mtx);
+	rw_exit_write(&kqueue_ps_list_lock);
 
 	return (0);
 }
@@ -489,17 +545,17 @@ void
 filt_sigdetach(struct knote *kn)
 {
 	struct process *pr = kn->kn_ptr.p_process;
-	int s;
 
-	s = splhigh();
+	rw_enter_write(&kqueue_ps_list_lock);
+	mtx_enter(&pr->ps_mtx);
 	klist_remove_locked(&pr->ps_klist, kn);
-	splx(s);
+	mtx_leave(&pr->ps_mtx);
+	rw_exit_write(&kqueue_ps_list_lock);
 }
 
 int
 filt_signal(struct knote *kn, long hint)
 {
-
 	if (hint & NOTE_SIGNAL) {
 		hint &= ~NOTE_SIGNAL;
 
@@ -2002,12 +2058,26 @@ knote_fdclose(struct proc *p, int fd)
 void
 knote_processexit(struct process *pr)
 {
-	KERNEL_ASSERT_LOCKED();
-
+	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
+	rw_enter_write(&kqueue_ps_list_lock);
+	mtx_enter(&pr->ps_mtx);
 	knote_locked(&pr->ps_klist, NOTE_EXIT);
+	mtx_leave(&pr->ps_mtx);
+	rw_exit_write(&kqueue_ps_list_lock);
 
 	/* remove other knotes hanging off the process */
 	klist_invalidate(&pr->ps_klist);
+}
+
+void
+knote_processfork(struct process *pr, pid_t pid)
+{
+	/* this needs both the ps_mtx and exclusive kqueue_ps_list_lock. */
+	rw_enter_write(&kqueue_ps_list_lock);
+	mtx_enter(&pr->ps_mtx);
+	knote_locked(&pr->ps_klist, NOTE_FORK | pid);
+	mtx_leave(&pr->ps_mtx);
+	rw_exit_write(&kqueue_ps_list_lock);
 }
 
 void

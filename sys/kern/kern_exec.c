@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.256 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.257 2024/08/06 08:44:54 claudio Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -711,7 +711,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/*
 	 * notify others that we exec'd
 	 */
-	knote_locked(&pr->ps_klist, NOTE_EXEC);
+	knote(&pr->ps_klist, NOTE_EXEC);
 
 	/* map the process's timekeep page, needs to be before exec_elf_fixup */
 	if (exec_timekeep_map(pr))

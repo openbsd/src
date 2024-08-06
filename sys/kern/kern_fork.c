@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.260 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.261 2024/08/06 08:44:54 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -199,6 +199,7 @@ process_initialize(struct process *pr, struct proc *p)
 
 	rw_init(&pr->ps_lock, "pslock");
 	mtx_init(&pr->ps_mtx, IPL_HIGH);
+	klist_init_mutex(&pr->ps_klist, &pr->ps_mtx);
 
 	timeout_set_flags(&pr->ps_realit_to, realitexpire, pr,
 	    KCLOCK_UPTIME, 0);
@@ -484,7 +485,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	/*
 	 * Notify any interested parties about the new process.
 	 */
-	knote_locked(&curpr->ps_klist, NOTE_FORK | pr->ps_pid);
+	knote_processfork(curpr, pr->ps_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.
