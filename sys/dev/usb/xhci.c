@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.131 2024/05/23 03:21:09 jsg Exp $ */
+/* $OpenBSD: xhci.c,v 1.132 2024/08/06 17:30:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -79,6 +79,7 @@ struct xhci_pipe {
 };
 
 int	xhci_reset(struct xhci_softc *);
+void	xhci_suspend(struct xhci_softc *);
 int	xhci_intr1(struct xhci_softc *);
 void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
@@ -533,7 +534,7 @@ xhci_activate(struct device *self, int act)
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
-		xhci_reset(sc);
+		xhci_suspend(sc);
 		break;
 	default:
 		rv = config_activate_children(self, act);
@@ -575,6 +576,73 @@ xhci_reset(struct xhci_softc *sc)
 	}
 
 	return (0);
+}
+
+void
+xhci_suspend(struct xhci_softc *sc)
+{
+	uint32_t hcr;
+	int i;
+
+	XOWRITE4(sc, XHCI_USBCMD, 0);	/* Halt controller */
+	for (i = 0; i < 100; i++) {
+		usb_delay_ms(&sc->sc_bus, 1);
+		hcr = XOREAD4(sc, XHCI_USBSTS) & XHCI_STS_HCH;
+		if (hcr)
+			break;
+	}
+
+	if (!hcr) {
+		printf("%s: halt timeout\n", DEVNAME(sc));
+		xhci_reset(sc);
+		return;
+	}
+
+	/*
+	 * Some Intel controllers will not power down completely
+	 * unless they have seen a save state command.  This in turn
+	 * will prevent the SoC from reaching its lowest idle state.
+	 * So save the state here.
+	 *
+	 * Note that we don't restore this saved state anywhere.
+	 * Instead we reset the controller and reinitialize it from
+	 * scratch when we resume.
+	 */
+
+	XOWRITE4(sc, XHCI_USBCMD, XHCI_CMD_CSS); /* Save state */
+	hcr = XOREAD4(sc, XHCI_USBSTS);
+	for (i = 0; i < 100; i++) {
+		usb_delay_ms(&sc->sc_bus, 1);
+		hcr = XOREAD4(sc, XHCI_USBSTS) & XHCI_STS_SSS;
+		if (!hcr)
+			break;
+	}
+
+	if (hcr) {
+		printf("%s: save state timeout\n", DEVNAME(sc));
+		xhci_reset(sc);
+		return;
+	}
+
+	/* Disable interrupts. */
+	XRWRITE4(sc, XHCI_IMOD(0), 0);
+	XRWRITE4(sc, XHCI_IMAN(0), 0);
+
+	/* Clear the event ring address. */
+	XRWRITE4(sc, XHCI_ERDP_LO(0), 0);
+	XRWRITE4(sc, XHCI_ERDP_HI(0), 0);
+
+	XRWRITE4(sc, XHCI_ERSTBA_LO(0), 0);
+	XRWRITE4(sc, XHCI_ERSTBA_HI(0), 0);
+
+	XRWRITE4(sc, XHCI_ERSTSZ(0), 0);
+
+	/* Clear the command ring address. */
+	XOWRITE4(sc, XHCI_CRCR_LO, 0);
+	XOWRITE4(sc, XHCI_CRCR_HI, 0);
+
+	XOWRITE4(sc, XHCI_DCBAAP_LO, 0);
+	XOWRITE4(sc, XHCI_DCBAAP_HI, 0);
 }
 
 void
