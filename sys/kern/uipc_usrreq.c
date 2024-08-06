@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.208 2024/06/28 21:30:24 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.209 2024/08/06 20:13:58 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -235,12 +235,12 @@ uipc_setaddr(const struct unpcb *unp, struct mbuf *nam)
  * be large enough for at least one max-size datagram plus address.
  */
 #define	PIPSIZ	8192
-u_int	unpst_sendspace = PIPSIZ;
-u_int	unpst_recvspace = PIPSIZ;
-u_int	unpsq_sendspace = PIPSIZ;
-u_int	unpsq_recvspace = PIPSIZ;
-u_int	unpdg_sendspace = 2*1024;	/* really max datagram size */
-u_int	unpdg_recvspace = 16*1024;
+u_int	unpst_sendspace = PIPSIZ;	/* [a] */
+u_int	unpst_recvspace = PIPSIZ;	/* [a] */
+u_int	unpsq_sendspace = PIPSIZ;	/* [a] */
+u_int	unpsq_recvspace = PIPSIZ;	/* [a] */
+u_int	unpdg_sendspace = 2*1024;	/* [a] really max datagram size */
+u_int	unpdg_recvspace = 16*1024;	/* [a] */
 
 const struct sysctl_bounded_args unpstctl_vars[] = {
 	{ UNPCTL_RECVSPACE, &unpst_recvspace, 0, SB_MAX },
@@ -267,15 +267,21 @@ uipc_attach(struct socket *so, int proto, int wait)
 		switch (so->so_type) {
 
 		case SOCK_STREAM:
-			error = soreserve(so, unpst_sendspace, unpst_recvspace);
+			error = soreserve(so,
+			    atomic_load_int(&unpst_sendspace),
+			    atomic_load_int(&unpst_recvspace));
 			break;
 
 		case SOCK_SEQPACKET:
-			error = soreserve(so, unpsq_sendspace, unpsq_recvspace);
+			error = soreserve(so,
+			    atomic_load_int(&unpsq_sendspace),
+			    atomic_load_int(&unpsq_recvspace));
 			break;
 
 		case SOCK_DGRAM:
-			error = soreserve(so, unpdg_sendspace, unpdg_recvspace);
+			error = soreserve(so,
+			    atomic_load_int(&unpdg_sendspace),
+			    atomic_load_int(&unpdg_recvspace));
 			break;
 
 		default:
