@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2080 2024/07/29 01:17:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2081 2024/08/07 06:48:55 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -712,6 +712,14 @@
 #define	PCI_PRODUCT_AMD_10_DRAM	0x1202		/* 10h DRAM Cfg */
 #define	PCI_PRODUCT_AMD_10_MISC	0x1203		/* 10h Misc Cfg */
 #define	PCI_PRODUCT_AMD_10_LINK	0x1204		/* 10h Link Cfg */
+#define	PCI_PRODUCT_AMD_19_78_DF_1	0x12f8		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_2	0x12f9		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_3	0x12fa		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_4	0x12fb		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_5	0x12fc		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_6	0x12fd		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_7	0x12fe		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_78_DF_8	0x12ff		/* 19h/7xh Data Fabric */
 #define	PCI_PRODUCT_AMD_11_HT	0x1300		/* 11h HyperTransport */
 #define	PCI_PRODUCT_AMD_11_ADDR	0x1301		/* 11h Address Map */
 #define	PCI_PRODUCT_AMD_11_DRAM	0x1302		/* 11h DRAM Cfg */
@@ -881,8 +889,12 @@
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_3	0x15b8		/* 19h/6xh xHCI */
 #define	PCI_PRODUCT_AMD_19_7X_XHCI_1	0x15b9		/* 19h/7xh xHCI */
 #define	PCI_PRODUCT_AMD_19_7X_XHCI_2	0x15ba		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_78_XHCI_1	0x15bb		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_78_XHCI_2	0x15bd		/* 19h/7xh xHCI */
 #define	PCI_PRODUCT_AMD_19_7X_XHCI_3	0x15c0		/* 19h/7xh xHCI */
 #define	PCI_PRODUCT_AMD_19_7X_XHCI_4	0x15c1		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_78_XHCI_3	0x15c2		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_78_XHCI_4	0x15c3		/* 19h/7xh xHCI */
 #define	PCI_PRODUCT_AMD_19_7X_PSP	0x15c7		/* 19h/7xh PSP */
 #define	PCI_PRODUCT_AMD_17_1X_RC	0x15d0		/* 17h/1xh Root Complex */
 #define	PCI_PRODUCT_AMD_17_1X_IOMMU	0x15d1		/* 17h/1xh IOMMU */
@@ -8797,6 +8809,7 @@
 #define	PCI_PRODUCT_REALTEK_REALMANAGE_SERIAL_2	0x816b		/* RealManage Serial */
 #define	PCI_PRODUCT_REALTEK_REALMANAGE_IPMI	0x816c		/* RealManage IPMI */
 #define	PCI_PRODUCT_REALTEK_REALMANAGE_EHCI	0x816d		/* RealManage USB */
+#define	PCI_PRODUCT_REALTEK_REALMANAGE_BMC	0x816e		/* RealManage BMC */
 #define	PCI_PRODUCT_REALTEK_RTL8192SE	0x8172		/* 8192SE */
 #define	PCI_PRODUCT_REALTEK_RTL8188CE	0x8176		/* 8188CE */
 #define	PCI_PRODUCT_REALTEK_RTL8192CE	0x8178		/* RTL8192CE */
@@ -9151,6 +9164,7 @@
 
 /* SK hynix products */
 #define	PCI_PRODUCT_SKHYNIX_SSD	0x1327		/* BC501 NVMe */
+#define	PCI_PRODUCT_SKHYNIX_BC901	0x1d59		/* BC901 */
 
 /* SMC products */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 */

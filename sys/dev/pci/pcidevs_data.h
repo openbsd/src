@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2080 2024/07/29 01:17:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2081 2024/08/07 06:48:55 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1080,6 +1080,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "10h Link Cfg",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_1,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_2,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_3,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_4,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_5,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_6,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_7,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_DF_8,
+	    "19h/7xh Data Fabric",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_11_HT,
 	    "11h HyperTransport",
 	},
@@ -1756,11 +1788,27 @@ static const struct pci_known_product pci_known_products[] = {
 	    "19h/7xh xHCI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_XHCI_1,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_XHCI_2,
+	    "19h/7xh xHCI",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_XHCI_3,
 	    "19h/7xh xHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_XHCI_4,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_XHCI_3,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_78_XHCI_4,
 	    "19h/7xh xHCI",
 	},
 	{
@@ -31732,6 +31780,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RealManage USB",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_REALMANAGE_BMC,
+	    "RealManage BMC",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8192SE,
 	    "8192SE",
 	},
@@ -32970,6 +33022,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
 	    "BC501 NVMe",
+	},
+	{
+	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_BC901,
+	    "BC901",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
