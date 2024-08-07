@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_ipcp.8,v 1.5 2024/08/04 03:56:57 yasuoka Exp $
+.\"	$OpenBSD: radiusd_ipcp.8,v 1.6 2024/08/07 07:15:18 yasuoka Exp $
 .\"
 .\" Copyright (c) 2024 Internet Initiative Japan Inc.
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: August 4 2024 $
+.Dd $Mdocdate: August 7 2024 $
 .Dt RADIUSD_IPCP 8
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ disconnects the session through DAE at the specified time after starting.
 When
 .Dq radius
 is specified,
-the value of the Session-Timeout attribute in Access-Accepted is used for
+the value of the Session-Timeout attribute in Access-Accept is used for
 the timeout.
 Configure
 .Ic dae server
