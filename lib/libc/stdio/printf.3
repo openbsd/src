@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.93 2022/08/04 06:20:24 jsg Exp $
+.\"	$OpenBSD: printf.3,v 1.94 2024/08/07 05:15:28 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 4 2022 $
+.Dd $Mdocdate: August 7 2024 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -53,29 +53,29 @@
 .Sh SYNOPSIS
 .In stdio.h
 .Ft int
-.Fn printf "const char *format" ...
+.Fn printf "const char * restrict format" ...
 .Ft int
-.Fn fprintf "FILE *stream" "const char *format" ...
+.Fn fprintf "FILE *stream" "const char * restrict format" ...
 .Ft int
-.Fn sprintf "char *str" "const char *format" ...
+.Fn sprintf "char * restrict str" "const char * restrict format" ...
 .Ft int
-.Fn snprintf "char *str" "size_t size" "const char *format" ...
+.Fn snprintf "char * restrict str" "size_t size" "const char * restrict format" ...
 .Ft int
-.Fn asprintf "char **ret" "const char *format" ...
+.Fn asprintf "char ** restrict ret" "const char * restrict format" ...
 .Ft int
 .Fn dprintf "int fd" "const char * restrict format" ...
 .In stdarg.h
 .In stdio.h
 .Ft int
-.Fn vprintf "const char *format" "va_list ap"
+.Fn vprintf "const char * restrict format" "va_list ap"
 .Ft int
-.Fn vfprintf "FILE *stream" "const char *format" "va_list ap"
+.Fn vfprintf "FILE *stream" "const char * restrict format" "va_list ap"
 .Ft int
-.Fn vsprintf "char *str" "const char *format" "va_list ap"
+.Fn vsprintf "char * restrict str" "const char * restrict format" "va_list ap"
 .Ft int
-.Fn vsnprintf "char *str" "size_t size" "const char *format" "va_list ap"
+.Fn vsnprintf "char * restrict str" "size_t size" "const char * restrict format" "va_list ap"
 .Ft int
-.Fn vasprintf "char **ret" "const char *format" "va_list ap"
+.Fn vasprintf "char ** restrict ret" "const char * restrict format" "va_list ap"
 .Ft int
 .Fn vdprintf "int fd" "const char * restrict format" "va_list ap"
 .Sh DESCRIPTION
@@ -906,11 +906,13 @@ and
 functions conform to
 .St -isoC-99 .
 The
-.Fn dprintf
+.Fn dprintf ,
+.Fn vdprintf ,
+.Fn asprintf ,
 and
-.Fn vdprintf
+.Fn vasprintf
 functions conform to
-.St -p1003.1-2008 .
+.St -p1003.1-2024 .
 .Sh HISTORY
 The predecessors
 .Fn ftoa

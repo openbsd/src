@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.55 2022/01/05 20:57:27 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.56 2024/08/07 05:15:28 guenther Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -217,7 +217,7 @@ int	 fgetpos(FILE *, fpos_t *);
 char	*fgets(char *, int, FILE *)
 		__attribute__((__bounded__ (__string__,1,2)));
 FILE	*fopen(const char *, const char *);
-int	 fprintf(FILE *, const char *, ...);
+int	 fprintf(FILE *, const char * __restrict, ...);
 int	 fputc(int, FILE *);
 int	 fputs(const char *, FILE *);
 size_t	 fread(void *, size_t, size_t, FILE *)
@@ -246,7 +246,7 @@ extern int sys_nerr;			/* perror(3) external variables */
 extern char *sys_errlist[];
 #endif
 void	 perror(const char *);
-int	 printf(const char *, ...);
+int	 printf(const char * __restrict, ...);
 int	 putc(int, FILE *);
 int	 putchar(int);
 int	 puts(const char *);
@@ -259,14 +259,14 @@ void	 rewind(FILE *);
 int	 scanf(const char *, ...);
 void	 setbuf(FILE *, char *);
 int	 setvbuf(FILE *, char *, int, size_t);
-int	 sprintf(char *, const char *, ...);
+int	 sprintf(char * __restrict, const char * __restrict, ...);
 int	 sscanf(const char *, const char *, ...);
 FILE	*tmpfile(void);
 char	*tmpnam(char *);
 int	 ungetc(int, FILE *);
-int	 vfprintf(FILE *, const char *, __va_list);
-int	 vprintf(const char *, __va_list);
-int	 vsprintf(char *, const char *, __va_list);
+int	 vfprintf(FILE *, const char * __restrict, __va_list);
+int	 vprintf(const char * __restrict, __va_list);
+int	 vsprintf(char * __restrict, const char * __restrict, __va_list);
 #if __POSIX_VISIBLE >= 200809
 int	 vdprintf(int, const char * __restrict, __va_list)
 		__attribute__((__format__ (printf, 2, 0)))
@@ -274,11 +274,12 @@ int	 vdprintf(int, const char * __restrict, __va_list)
 #endif
 
 #if __ISO_C_VISIBLE >= 1999 || __XPG_VISIBLE >= 500 || __BSD_VISIBLE
-int	 snprintf(char *, size_t, const char *, ...)
+int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
 		__attribute__((__format__ (printf, 3, 4)))
 		__attribute__((__nonnull__ (3)))
 		__attribute__((__bounded__ (__string__,1,2)));
-int	 vsnprintf(char *, size_t, const char *, __va_list)
+int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
+	     __va_list)
 		__attribute__((__format__ (printf, 3, 0)))
 		__attribute__((__nonnull__ (3)))
 		__attribute__((__bounded__(__string__,1,2)));
@@ -338,6 +339,15 @@ FILE	*open_memstream(char **, size_t *);
 #if __XPG_VISIBLE
 char	*tempnam(const char *, const char *);
 #endif
+
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
+int	 asprintf(char ** __restrict, const char * __restrict, ...)
+		__attribute__((__format__ (printf, 2, 3)))
+		__attribute__((__nonnull__ (2)));
+int	 vasprintf(char ** __restrict, const char * __restrict, __va_list)
+		__attribute__((__format__ (printf, 2, 0)))
+		__attribute__((__nonnull__ (2)));
+#endif /* __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE */
 __END_DECLS
 
 #endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
@@ -347,18 +357,12 @@ __END_DECLS
  */
 #if __BSD_VISIBLE
 __BEGIN_DECLS
-int	 asprintf(char **, const char *, ...)
-		__attribute__((__format__ (printf, 2, 3)))
-		__attribute__((__nonnull__ (2)));
 char	*fgetln(FILE *, size_t *);
 int	 fpurge(FILE *);
 int	 getw(FILE *);
 int	 putw(int, FILE *);
 void	 setbuffer(FILE *, char *, int);
 int	 setlinebuf(FILE *);
-int	 vasprintf(char **, const char *, __va_list)
-		__attribute__((__format__ (printf, 2, 0)))
-		__attribute__((__nonnull__ (2)));
 __END_DECLS
 
 /*
