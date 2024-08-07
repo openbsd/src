@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.32 2024/07/14 10:04:17 jca Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.33 2024/08/07 04:59:45 guenther Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -223,12 +223,15 @@ int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict, __va_list);
 int vwscanf(const wchar_t * __restrict, __va_list);
 int wscanf(const wchar_t * __restrict, ...);
 
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
+size_t	wcslcat(wchar_t * __restrict, const wchar_t * __restrict, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
+size_t	wcslcpy(wchar_t * __restrict, const wchar_t * __restrict, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
+#endif
+
 #if __BSD_VISIBLE
 wchar_t *fgetwln(FILE * __restrict, size_t * __restrict);
-size_t	wcslcat(wchar_t *, const wchar_t *, size_t)
-		__attribute__ ((__bounded__(__wcstring__,1,3)));
-size_t	wcslcpy(wchar_t *, const wchar_t *, size_t)
-		__attribute__ ((__bounded__(__wcstring__,1,3)));
 #endif
 
 #define getwc(f) fgetwc(f)

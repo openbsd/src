@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wcslcpy.3,v 1.7 2019/01/25 00:19:25 millert Exp $
+.\"	$OpenBSD: wcslcpy.3,v 1.8 2024/08/07 04:59:45 guenther Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: August 7 2024 $
 .Dt WCSLCPY 3
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Sh SYNOPSIS
 .In wchar.h
 .Ft size_t
-.Fn wcslcpy "wchar_t *dst" "const wchar_t *src" "size_t size"
+.Fn wcslcpy "wchar_t * restrict dst" "const wchar_t * restrict src" "size_t size"
 .Ft size_t
-.Fn wcslcat "wchar_t *dst" "const wchar_t *src" "size_t size"
+.Fn wcslcat "wchar_t * restrict dst" "const wchar_t * restrict src" "size_t size"
 .Sh DESCRIPTION
 The
 .Fn wcslcpy
@@ -137,6 +137,13 @@ The check exists to prevent potential security problems in incorrect code.
 .Xr swprintf 3 ,
 .Xr wcsncat 3 ,
 .Xr wcsncpy 3
+.Sh STANDARDS
+The
+.Fn wcslcpy
+and
+.Fn wcslcat
+functions conform to
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
 .Fn wcslcpy
