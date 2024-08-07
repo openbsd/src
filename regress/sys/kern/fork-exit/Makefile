@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/05/21 20:21:10 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2024/08/07 18:25:39 claudio Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -57,42 +57,42 @@ run-fork-thread: ${PROG}
 REGRESS_TARGETS +=	run-fork1-heap
 run-fork1-heap: ${PROG}
 	# allocate 400 MB of heap memory
-	ulimit -p 500 -n 1000; ./fork-exit -h 100000
+	ulimit -p 500 -n 1000; ./fork-exit -h 400000
 
 REGRESS_TARGETS +=	run-fork-heap
 run-fork-heap: ${PROG}
 	# allocate 400 MB of heap memory in processes
-	ulimit -p 500 -n 1000; ./fork-exit -p 100 -h 1000
+	ulimit -p 500 -n 1000; ./fork-exit -p 100 -h 4000
 
 REGRESS_TARGETS +=	run-fork1-thread1-heap
 run-fork1-thread1-heap: ${PROG}
 	# allocate 400 MB of heap memory in single child and one thread
-	ulimit -p 500 -n 1000; ./fork-exit -t 1 -h 100000
+	ulimit -p 500 -n 1000; ./fork-exit -t 1 -h 400000
 
 REGRESS_TARGETS +=	run-fork-thread-heap
 run-fork-thread-heap: ${PROG}
 	# allocate 400 MB of heap memory in threads
-	ulimit -p 500 -n 1000; ./fork-exit -p 10 -t 100 -h 100
+	ulimit -p 500 -n 1000; ./fork-exit -p 10 -t 100 -h 400
 
 REGRESS_TARGETS +=	run-fork1-stack
 run-fork1-stack: ${PROG}
 	# allocate 32 MB of stack memory
-	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -s 8000
+	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -s 32000
 
 REGRESS_TARGETS +=	run-fork-stack
 run-fork-stack: ${PROG}
 	# allocate 400 MB of stack memory in processes
-	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -p 100 -s 1000
+	ulimit -p 500 -n 1000; ulimit -s 32768; ./fork-exit -p 100 -s 4000
 
 REGRESS_TARGETS +=	run-fork1-thread1-stack
 run-fork1-thread1-stack: ${PROG}
 	# allocate 400 MB of stack memory in single child and one thread
-	ulimit -p 500 -n 1000; ./fork-exit -t 1 -s 100000
+	ulimit -p 500 -n 1000; ./fork-exit -t 1 -s 400000
 
 REGRESS_TARGETS +=	run-fork-thread-stack
 run-fork-thread-stack: ${PROG}
 	# allocate 400 MB of stack memory in threads
-	ulimit -p 500 -n 1000; ./fork-exit -p 10 -t 100 -s 100
+	ulimit -p 500 -n 1000; ./fork-exit -p 10 -t 100 -s 400
 
 REGRESS_CLEANUP =	cleanup
 cleanup:

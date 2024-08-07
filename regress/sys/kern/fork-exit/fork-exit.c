@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork-exit.c,v 1.7 2021/07/06 11:50:34 bluhm Exp $	*/
+/*	$OpenBSD: fork-exit.c,v 1.8 2024/08/07 18:25:39 claudio Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -39,6 +39,8 @@ int stack = 0;
 int threads = 0;
 int timeout = 30;
 
+int pagesize;
+
 pthread_barrier_t thread_barrier;
 char timeoutstr[sizeof("-2147483647")];
 
@@ -48,9 +50,9 @@ usage(void)
 	fprintf(stderr, "fork-exit [-ed] [-p procs] [-t threads] [-T timeout]\n"
 	    "    -e          child execs sleep(1), default call sleep(3)\n"
 	    "    -d          daemonize, use if already process group leader\n"
-	    "    -h heap     allocate pages of heap memory, default 0\n"
+	    "    -h heap     allocate number of kB of heap memory, default 0\n"
 	    "    -p procs    number of processes to fork, default 1\n"
-	    "    -s stack    allocate pages of stack memory, default 0\n"
+	    "    -s stack    allocate number of kB of stack memory, default 0\n"
 	    "    -t threads  number of threads to create, default 0\n"
 	    "    -T timeout  parent and children will exit, default 30 sec\n");
 	exit(2);
@@ -71,7 +73,7 @@ recurse_page(int depth)
 static void
 alloc_stack(void)
 {
-	recurse_page(stack);
+	recurse_page((stack * 1024) / (4096 + 200));
 }
 
 static void
@@ -80,8 +82,9 @@ alloc_heap(void)
 	int *p;
 	int i;
 
-	for(i = 0; i < heap; i++) {
-		p = mmap(0, 4096, PROT_WRITE, MAP_SHARED|MAP_ANON, -1, 0);
+	for (i = 0; i < heap / (pagesize / 1024); i++) {
+		p = mmap(0, pagesize, PROT_WRITE|PROT_READ,
+		    MAP_SHARED|MAP_ANON, -1, 0);
 		if (p == MAP_FAILED)
 			err(1, "mmap");
 		p[1] = 0x12345678;
@@ -123,7 +126,7 @@ create_threads(void)
 	if (stack) {
 		/* thread start and function call overhead needs a bit more */
 		error = pthread_attr_setstacksize(&tattr,
-		    (stack + 2) * (4096 + 64));
+		    (stack + 2) * (1024ULL + 50));
 		if (error)
 			errc(1, error, "pthread_attr_setstacksize");
 	}
@@ -213,6 +216,8 @@ main(int argc, char *argv[])
 	pid_t pgrp;
 	struct timeval tv;
 
+	pagesize = sysconf(_SC_PAGESIZE);
+
 	while ((ch = getopt(argc, argv, "edh:p:s:T:t:")) != -1) {
 	switch (ch) {
 		case 'e':
@@ -228,14 +233,15 @@ main(int argc, char *argv[])
 				    errstr, optarg);
 			break;
 		case 'p':
-			procs = strtonum(optarg, 0, INT_MAX / 4096, &errstr);
+			procs = strtonum(optarg, 0, INT_MAX / pagesize,
+			    &errstr);
 			if (errstr != NULL)
 				errx(1, "number of procs is %s: %s", errstr,
 				    optarg);
 			break;
 		case 's':
 			stack = strtonum(optarg, 0,
-			    (INT_MAX / (4096 + 64)) - 2, &errstr);
+			    (INT_MAX / (1024 + 50)) - 2, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of stack allocations is %s: %s",
 				    errstr, optarg);
