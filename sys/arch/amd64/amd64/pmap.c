@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.170 2024/07/21 19:41:31 bluhm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.171 2024/08/08 15:57:22 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2655,6 +2655,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 		}
 		atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 
+		ptp->wire_count = 1;
 		pptp->wire_count++;
 
 		npa = VM_PAGE_TO_PHYS(ptp);
