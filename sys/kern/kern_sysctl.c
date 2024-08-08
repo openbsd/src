@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.435 2024/08/08 10:25:00 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.436 2024/08/08 15:02:36 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1682,7 +1682,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			 */
 			if (pr->ps_flags & (PS_SYSTEM | PS_EMBRYO | PS_EXITING))
 				continue;
-			if (arg > 0 && pr->ps_pid != (pid_t)arg) {
+			if (arg >= 0 && pr->ps_pid != (pid_t)arg) {
 				/* not the pid we are looking for */
 				continue;
 			}
@@ -1702,6 +1702,9 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				FILLIT(fp, fdp, i, NULL, pr);
 				FRELE(fp, p);
 			}
+			/* pid is unique, stop searching */
+			if (arg >= 0)
+				break;
 		}
 		if (!matched)
 			error = ESRCH;
