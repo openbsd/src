@@ -34,9 +34,6 @@ my %internal = (
         EVP_MD_CTRL_ALG_CTRL
         EVP_MD_CTX_FLAG_CLEANED EVP_MD_CTX_FLAG_REUSE
     )],
-    objects => [qw(
-	OBJ_bsearch_ OBJ_bsearch_ex_
-    )],
     x509_vfy => [qw(
 	X509_VERIFY_PARAM_ID
     )]
