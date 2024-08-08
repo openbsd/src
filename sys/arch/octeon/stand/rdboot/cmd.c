@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.4 2023/10/20 19:55:49 kn Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.5 2024/08/08 13:59:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -499,11 +499,12 @@ upgrade(void)
 	path = disk_open(qualify("/bsd.upgrade"));
 	if (path == NULL)
 		return 0;
-	if (stat(path, &sb) == 0 && S_ISREG(sb.st_mode))
+	if (stat(path, &sb) == 0 && S_ISREG(sb.st_mode)) {
 		ret = 1;
-	if ((sb.st_mode & S_IXUSR) == 0) {
-		printf("/bsd.upgrade is not u+x\n");
-		ret = 0;
+		if ((sb.st_mode & S_IXUSR) == 0) {
+			printf("/bsd.upgrade is not u+x\n");
+			ret = 0;
+		}
 	}
 	disk_close();
 
