@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.25 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.26 2024/08/08 14:58:49 jan Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -881,7 +881,7 @@ igc_init(void *arg)
 	}
 	igc_initialize_transmit_unit(sc);
 
-	sc->rx_mbuf_sz = MCLBYTES + ETHER_ALIGN;
+	sc->rx_mbuf_sz = MCLBYTES;
 	/* Prepare receive descriptors and buffers. */
 	if (igc_setup_receive_structures(sc)) {
 		printf("%s: Could not setup receive structures\n",
@@ -2159,7 +2159,7 @@ igc_allocate_receive_buffers(struct igc_rxring *rxr)
 	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
 		error = bus_dmamap_create(rxr->rxdma.dma_tag,
-		    MAX_JUMBO_FRAME_SIZE, 1, MAX_JUMBO_FRAME_SIZE, 0,
+		    MAX_JUMBO_FRAME_SIZE, IGC_MAX_SCATTER, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &rxbuf->map);
 		if (error) {
 			printf("%s: Unable to create RX DMA map\n",
