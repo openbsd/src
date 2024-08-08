@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.58 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.59 2024/08/08 05:10:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -241,7 +241,13 @@ struct umb_quirk {
 	int			 umb_match;
 };
 const struct umb_quirk umb_quirks[] = {
-	{ { USB_VENDOR_DELL, USB_PRODUCT_DELL_DW5821E },
+	{ { USB_VENDOR_DELL, USB_PRODUCT_DELL_DW5821E_1 },
+	  0,
+	  2,
+	  UMATCH_VENDOR_PRODUCT
+	},
+
+	{ { USB_VENDOR_DELL, USB_PRODUCT_DELL_DW5821E_2 },
 	  0,
 	  2,
 	  UMATCH_VENDOR_PRODUCT
