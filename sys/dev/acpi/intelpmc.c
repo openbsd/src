@@ -1,4 +1,4 @@
-/*	$OpenBSD: intelpmc.c,v 1.2 2024/08/08 07:01:22 kettenis Exp $	*/
+/*	$OpenBSD: intelpmc.c,v 1.3 2024/08/08 18:46:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2024 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -278,7 +278,7 @@ intelpmc_suspend(void *cookie)
 			acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 			    sc->sc_counter[i].address_space_id,
 			    sc->sc_counter[i].address,
-			    (1 << sc->sc_counter[i].access_size),
+			    (1 << (sc->sc_counter[i].access_size - 1)),
 			    sc->sc_counter[i].register_bit_width / 8,
 			    &sc->sc_lpit[i][0]);
 		}
@@ -321,7 +321,7 @@ intelpmc_resume(void *cookie)
 			acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 			    sc->sc_counter[i].address_space_id,
 			    sc->sc_counter[i].address,
-			    (1 << sc->sc_counter[i].access_size),
+			    (1 << (sc->sc_counter[i].access_size - 1)),
 			    sc->sc_counter[i].register_bit_width / 8,
 			    &sc->sc_lpit[i][1]);
 		}
