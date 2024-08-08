@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.80 2024/06/20 10:46:11 aoyama Exp $ */
+/*	$OpenBSD: cpu.h,v 1.81 2024/08/08 13:56:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 struct pmap;
 
 struct cpu_info {
-	u_int		 ci_flags;
+	volatile u_int	 ci_flags;
 #define	CIF_ALIVE		0x01		/* cpu initialized */
 #define	CIF_PRIMARY		0x02		/* primary cpu */
 

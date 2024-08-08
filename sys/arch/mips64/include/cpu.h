@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.147 2024/06/09 21:15:29 jca Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.148 2024/08/08 13:56:00 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -186,7 +186,7 @@ struct cpu_info {
 	struct pmap	*ci_curpmap;
 	uint		ci_intrdepth;		/* interrupt depth */
 #ifdef MULTIPROCESSOR
-	u_long		ci_flags;		/* flags; see below */
+	volatile u_long	ci_flags;		/* flags; see below */
 #endif
 	volatile int    ci_ddb;
 #define	CI_DDB_RUNNING		0
