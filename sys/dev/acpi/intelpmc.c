@@ -1,4 +1,4 @@
-/*	$OpenBSD: intelpmc.c,v 1.1 2024/08/04 11:05:18 kettenis Exp $	*/
+/*	$OpenBSD: intelpmc.c,v 1.2 2024/08/08 07:01:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2024 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -46,6 +46,9 @@ struct intelpmc_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_node;
 
+	struct acpi_gas		sc_counter[4];
+	int			sc_num_counters;
+
 #ifdef INTELPMC_DEBUG
 	uint64_t		sc_c3[2];
 	uint64_t		sc_c6[2];
@@ -57,6 +60,7 @@ struct intelpmc_softc {
 	uint64_t		sc_pc8[2];
 	uint64_t		sc_pc9[2];
 	uint64_t		sc_pc10[2];
+	uint64_t		sc_lpit[4][2];
 #endif
 };
 
@@ -78,6 +82,7 @@ const char *intelpmc_hids[] = {
 	NULL
 };
 
+void	intelpmc_parse_lpit(struct intelpmc_softc *, struct acpi_lpit *);
 void	intelpmc_suspend(void *);
 void	intelpmc_resume(void *);
 
@@ -95,11 +100,24 @@ intelpmc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct intelpmc_softc *sc = (struct intelpmc_softc *)self;
 	struct acpi_attach_args *aaa = aux;
+	struct acpi_q *entry;
+	struct acpi_lpit *lpit = NULL;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 
 	printf(": %s\n", aaa->aaa_node->name);
+
+	SIMPLEQ_FOREACH(entry, &sc->sc_acpi->sc_tables, q_next) {
+		if (memcmp(entry->q_table, LPIT_SIG,
+		    sizeof(LPIT_SIG) - 1) == 0) {
+			lpit = entry->q_table;
+			break;
+		}
+	}
+
+	if (lpit)
+		intelpmc_parse_lpit(sc, lpit);
 
 	sc->sc_acpi->sc_pmc_suspend = intelpmc_suspend;
 	sc->sc_acpi->sc_pmc_resume = intelpmc_resume;
@@ -111,6 +129,7 @@ intelpmc_activate(struct device *self, int act)
 {
 #ifdef INTELPMC_DEBUG
 	struct intelpmc_softc *sc = (struct intelpmc_softc *)self;
+	int i;
 
 	switch (act) {
 	case DVACT_RESUME:
@@ -124,11 +143,72 @@ intelpmc_activate(struct device *self, int act)
 		printf("PC8: %lld -> %lld\n", sc->sc_pc8[0], sc->sc_pc8[1]);
 		printf("PC9: %lld -> %lld\n", sc->sc_pc9[0], sc->sc_pc9[1]);
 		printf("PC10: %lld -> %lld\n", sc->sc_pc10[0], sc->sc_pc10[1]);
+		for (i = 0; i < sc->sc_num_counters; i++) {
+			printf("LPIT%d: %lld -> %lld\n", i,
+			    sc->sc_lpit[i][0], sc->sc_lpit[i][1]);
+		}
 		break;
 	}
 #endif
 
 	return 0;
+}
+
+void
+intelpmc_parse_lpit(struct intelpmc_softc *sc, struct acpi_lpit *lpit)
+{
+	caddr_t addr = (caddr_t)(lpit + 1);
+
+	while (addr < (caddr_t)lpit + lpit->hdr.length) {
+		struct acpi_lpit_entry *entry = (struct acpi_lpit_entry *)addr;
+		uint32_t length = entry->length;
+
+		if (length < 8)
+			return;
+
+		if (addr + length > (caddr_t)lpit + lpit->hdr.length)
+			return;
+
+		switch (entry->type) {
+		case 0:
+			if (length != sizeof(struct acpi_lpit_entry))
+				return;
+
+			if (entry->flags & LPIT_DISABLED)
+				break;
+
+#ifdef INTELPMC_DEBUG
+			printf("state %d: 0x%02x:%d:%d:0x%02x:0x%016llx\n",
+			    entry->uid, entry->entry_trigger.address_space_id,
+			    entry->entry_trigger.register_bit_width,
+			    entry->entry_trigger.register_bit_offset,
+			    entry->entry_trigger.access_size,
+			    entry->entry_trigger.address);
+#endif
+
+			if (entry->flags & LPIT_COUNTER_NOT_AVAILABLE)
+				break;
+
+#ifdef INTELPMC_DEBUG
+			printf("counter: 0x%02x:%d:%d:0x%02x:0x%016llx\n",
+			    entry->residency_counter.address_space_id,
+			    entry->residency_counter.register_bit_width,
+			    entry->residency_counter.register_bit_offset,
+			    entry->residency_counter.access_size,
+			    entry->residency_counter.address);
+			printf("frequency: %lld\n",
+			    entry->residency_frequency);
+#endif
+
+			if (sc->sc_num_counters >= nitems(sc->sc_counter))
+				break;
+			memcpy(&sc->sc_counter[sc->sc_num_counters++],
+			       &entry->residency_counter, sizeof(struct acpi_gas));
+			break;
+		}
+
+		addr += length;
+	}
 }
 
 int
@@ -173,6 +253,9 @@ void
 intelpmc_suspend(void *cookie)
 {
 	struct intelpmc_softc *sc = cookie;
+#ifdef INTELPMC_DEBUG
+	int i;
+#endif
 
 	if (sc->sc_acpi->sc_state != ACPI_STATE_S0)
 		return;
@@ -188,6 +271,18 @@ intelpmc_suspend(void *cookie)
 	rdmsr_safe(MSR_PKG_C8_RESIDENCY, &sc->sc_pc8[0]);
 	rdmsr_safe(MSR_PKG_C9_RESIDENCY, &sc->sc_pc9[0]);
 	rdmsr_safe(MSR_PKG_C10_RESIDENCY, &sc->sc_pc10[0]);
+	for (i = 0; i < sc->sc_num_counters; i++) {
+		if (sc->sc_counter[i].address_space_id == GAS_FUNCTIONAL_FIXED)
+			rdmsr_safe(sc->sc_counter[i].address, &sc->sc_lpit[i][0]);
+		else {
+			acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
+			    sc->sc_counter[i].address_space_id,
+			    sc->sc_counter[i].address,
+			    (1 << sc->sc_counter[i].access_size),
+			    sc->sc_counter[i].register_bit_width / 8,
+			    &sc->sc_lpit[i][0]);
+		}
+	}
 #endif
 
 	intelpmc_dsm(sc->sc_acpi, sc->sc_node, ACPI_LPS0_SCREEN_OFF);
@@ -198,6 +293,9 @@ void
 intelpmc_resume(void *cookie)
 {
 	struct intelpmc_softc *sc = cookie;
+#ifdef INTELPMC_DEBUG
+	int i;
+#endif
 
 	if (sc->sc_acpi->sc_state != ACPI_STATE_S0)
 		return;
@@ -216,5 +314,17 @@ intelpmc_resume(void *cookie)
 	rdmsr_safe(MSR_PKG_C8_RESIDENCY, &sc->sc_pc8[1]);
 	rdmsr_safe(MSR_PKG_C9_RESIDENCY, &sc->sc_pc9[1]);
 	rdmsr_safe(MSR_PKG_C10_RESIDENCY, &sc->sc_pc10[1]);
+	for (i = 0; i < sc->sc_num_counters; i++) {
+		if (sc->sc_counter[i].address_space_id == GAS_FUNCTIONAL_FIXED)
+			rdmsr_safe(sc->sc_counter[i].address, &sc->sc_lpit[i][1]);
+		else {
+			acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
+			    sc->sc_counter[i].address_space_id,
+			    sc->sc_counter[i].address,
+			    (1 << sc->sc_counter[i].access_size),
+			    sc->sc_counter[i].register_bit_width / 8,
+			    &sc->sc_lpit[i][1]);
+		}
+	}
 #endif
 }

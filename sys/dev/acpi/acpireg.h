@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.60 2023/09/12 08:32:58 jmatthew Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.61 2024/08/08 07:01:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -475,6 +475,30 @@ struct acpi_tpm2 {
 	uint64_t	control_addr;
 	uint32_t	start_method;
 } __packed;
+
+/*
+ * Intel ACPI Low Power S0 Idle
+ */
+struct acpi_lpit {
+	struct acpi_table_header	hdr;
+#define LPIT_SIG	"LPIT"
+	/* struct acpi_lpit_entry[]; */
+} __packed;
+
+struct acpi_lpit_entry {
+	uint32_t	type;
+	uint32_t	length;
+	uint16_t	uid;
+	uint16_t	reserved;
+	uint32_t	flags;
+#define LPIT_DISABLED			(1L << 0)
+#define LPIT_COUNTER_NOT_AVAILABLE	(1L << 1)
+	struct acpi_gas	entry_trigger;
+	uint32_t	residency;
+	uint32_t	latency;
+	struct acpi_gas	residency_counter;
+	uint64_t	residency_frequency;
+};
 
 /*
  * Intel ACPI DMA Remapping Entries
