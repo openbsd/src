@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.8 2024/07/18 08:58:59 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.9 2024/08/08 03:58:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -841,7 +841,7 @@ iked_radius_dae_on_event(int fd, short ev, void *ctx)
 		if (code == RADIUS_CODE_COA_REQUEST) {
 			code = RADIUS_CODE_COA_NAK;
 			cause = RADIUS_ERROR_CAUSE_ADMINISTRATIVELY_PROHIBITED;
-			nakcause = "Coa-Request is not supprted";
+			nakcause = "Coa-Request is not supported";
 			goto send;
 		}
 		log_warnx("%s: received an invalid RADIUS message "
