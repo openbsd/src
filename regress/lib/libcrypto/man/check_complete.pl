@@ -220,6 +220,7 @@ try_again:
 	    /^#define HEADER_\w+_H$/ ||
 	    /^#endif$/ ||
 	    /^#else$/ ||
+	    /^#error/ ||
 	    /^extern\s+const\s+ASN1_ITEM\s+\w+_it;$/ ||
 	    /^#\s*include\s/ ||
 	    /^#ifn?def\s/ ||
