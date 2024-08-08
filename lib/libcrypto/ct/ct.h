@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.h,v 1.7 2022/05/08 20:59:32 tb Exp $ */
+/*	$OpenBSD: ct.h,v 1.8 2024/08/08 23:50:29 tb Exp $ */
 /*
  * Public API for Certificate Transparency (CT).
  * Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
@@ -116,7 +116,7 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 
 /* Gets the peer certificate that the SCTs are for */
-X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
+X509 *CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Sets the certificate associated with the received SCTs.
@@ -126,7 +126,7 @@ X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
-X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
+X509 *CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Sets the issuer of the certificate associated with the received SCTs.
