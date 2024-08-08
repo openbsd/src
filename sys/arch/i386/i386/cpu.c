@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.115 2024/05/29 12:21:33 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.116 2024/08/08 07:02:38 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -927,3 +927,4 @@ wbinvd_on_all_cpus(void)
 #endif
 
 int cpu_suspended;
+int cpu_wakeups;

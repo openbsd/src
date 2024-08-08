@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.191 2024/07/21 19:41:31 bluhm Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.192 2024/08/08 07:02:38 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1464,6 +1464,7 @@ wbinvd_on_all_cpus(void)
 #endif
 
 int cpu_suspended;
+int cpu_wakeups;
 
 #ifdef SUSPEND
 
@@ -1480,9 +1481,6 @@ int
 cpu_suspend_primary(void)
 {
 	struct cpu_info *ci = curcpu();
-	int count = 0;
-
-	printf("suspend\n");
 
 	/* Mask clock interrupts. */
 	local_pic.pic_hwmask(&local_pic, 0);
@@ -1500,7 +1498,7 @@ cpu_suspend_primary(void)
 
 	while (cpu_suspended) {
 		cpu_suspend_cycle();
-		count++;
+		cpu_wakeups++;
 	}
 
 	intr_disable();
@@ -1509,7 +1507,6 @@ cpu_suspend_primary(void)
 	/* Unmask clock interrupts. */
 	local_pic.pic_hwunmask(&local_pic, 0);
 
-	printf("resume %d\n", count);
 	return 0;
 }
 

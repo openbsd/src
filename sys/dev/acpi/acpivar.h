@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.133 2024/08/06 17:38:56 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.134 2024/08/08 07:02:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -265,6 +265,7 @@ struct acpi_softc {
 	struct aml_node		*sc_wak;
 	int			sc_state;
 	int			sc_wakeup;
+	int			sc_wakeups;
 	time_t			sc_resume_time;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
 
