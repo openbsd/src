@@ -2301,12 +2301,17 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Device parameters start as a copy of module parameters. */
 	i915_params_copy(&dev_priv->params, &i915_modparams);
-	dev_priv->params.enable_guc = 0;
 	dev_priv->params.request_timeout_ms = 0;
 	dev_priv->params.enable_psr = 0;
 
 	/* Set up device info and initial runtime info. */
 	intel_device_info_driver_create(dev_priv, dev->pdev->device, info);
+
+	/* uc_expand_default_options() with no GuC submission */
+	if (GRAPHICS_VER(dev_priv) >= 12 &&
+	    !IS_TIGERLAKE(dev_priv) && !IS_ROCKETLAKE(dev_priv) &&
+	    !IS_XEHPSDV(dev_priv) && !IS_PONTEVECCHIO(dev_priv))
+		dev_priv->params.enable_guc = ENABLE_GUC_LOAD_HUC;
 
 	mmio_bar = (GRAPHICS_VER(dev_priv) == 2) ? 0x14 : 0x10;
 
