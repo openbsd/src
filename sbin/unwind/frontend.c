@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.81 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.82 2024/08/09 19:43:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -260,6 +260,7 @@ frontend(int debug, int verbose)
 	TAILQ_INIT(&new_trust_anchors);
 
 	add_new_ta(&trust_anchors, KSK2017);
+	add_new_ta(&trust_anchors, KSK2024);
 
 	event_dispatch();
 
