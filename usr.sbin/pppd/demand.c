@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.11 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: demand.c,v 1.12 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -200,9 +200,7 @@ static u_short fcstab[256] = {
  * Return value is 1 if we need to bring up the link, 0 otherwise.
  */
 int
-loop_chars(p, n)
-    unsigned char *p;
-    int n;
+loop_chars(unsigned char *p, int n)
 {
     int c, rv;
 
@@ -252,9 +250,7 @@ loop_chars(p, n)
  * bring up the link.
  */
 int
-loop_frame(frame, len)
-    unsigned char *frame;
-    int len;
+loop_frame(unsigned char *frame, int len)
 {
     struct packet *pkt;
 
@@ -285,8 +281,7 @@ loop_frame(frame, len)
  * loopback, now that the real serial link is up.
  */
 void
-demand_rexmit(proto)
-    int proto;
+demand_rexmit(int proto)
 {
     struct packet *pkt, *prev, *nextpkt;
 
@@ -316,9 +311,7 @@ demand_rexmit(proto)
  * that is, whether it is worth bringing up the link for.
  */
 static int
-active_packet(p, len)
-    unsigned char *p;
-    int len;
+active_packet(unsigned char *p, int len)
 {
     int proto, i;
     struct protent *protp;

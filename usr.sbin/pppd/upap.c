@@ -1,4 +1,4 @@
-/*	$OpenBSD: upap.c,v 1.11 2017/11/17 20:48:30 jca Exp $	*/
+/*	$OpenBSD: upap.c,v 1.12 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -98,8 +98,7 @@ static void upap_sresp(upap_state *, int, int, char *, int);
  * upap_init - Initialize a UPAP unit.
  */
 static void
-upap_init(unit)
-    int unit;
+upap_init(int unit)
 {
     upap_state *u = &upap[unit];
 
@@ -123,9 +122,7 @@ upap_init(unit)
  * Set new state and send authenticate's.
  */
 void
-upap_authwithpeer(unit, user, password)
-    int unit;
-    char *user, *password;
+upap_authwithpeer(int unit, char *user, char *password)
 {
     upap_state *u = &upap[unit];
 
@@ -153,8 +150,7 @@ upap_authwithpeer(unit, user, password)
  * Set new state.
  */
 void
-upap_authpeer(unit)
-    int unit;
+upap_authpeer(int unit)
 {
     upap_state *u = &upap[unit];
 
@@ -175,8 +171,7 @@ upap_authpeer(unit)
  * upap_timeout - Retransmission timer for sending auth-reqs expired.
  */
 static void
-upap_timeout(arg)
-    void *arg;
+upap_timeout(void *arg)
 {
     upap_state *u = (upap_state *) arg;
 
@@ -199,8 +194,7 @@ upap_timeout(arg)
  * upap_reqtimeout - Give up waiting for the peer to send an auth-req.
  */
 static void
-upap_reqtimeout(arg)
-    void *arg;
+upap_reqtimeout(void *arg)
 {
     upap_state *u = (upap_state *) arg;
 
@@ -218,8 +212,7 @@ upap_reqtimeout(arg)
  * Start authenticating if pending.
  */
 static void
-upap_lowerup(unit)
-    int unit;
+upap_lowerup(int unit)
 {
     upap_state *u = &upap[unit];
 
@@ -245,8 +238,7 @@ upap_lowerup(unit)
  * Cancel all timeouts.
  */
 static void
-upap_lowerdown(unit)
-    int unit;
+upap_lowerdown(int unit)
 {
     upap_state *u = &upap[unit];
 
@@ -266,8 +258,7 @@ upap_lowerdown(unit)
  * This shouldn't happen.  In any case, pretend lower layer went down.
  */
 static void
-upap_protrej(unit)
-    int unit;
+upap_protrej(int unit)
 {
     upap_state *u = &upap[unit];
 
@@ -287,10 +278,7 @@ upap_protrej(unit)
  * upap_input - Input UPAP packet.
  */
 static void
-upap_input(unit, inpacket, l)
-    int unit;
-    u_char *inpacket;
-    int l;
+upap_input(int unit, u_char *inpacket, int l)
 {
     upap_state *u = &upap[unit];
     u_char *inp;
@@ -345,11 +333,7 @@ upap_input(unit, inpacket, l)
  * upap_rauth - Receive Authenticate.
  */
 static void
-upap_rauthreq(u, inp, id, len)
-    upap_state *u;
-    u_char *inp;
-    int id;
-    int len;
+upap_rauthreq(upap_state *u, u_char *inp, int id, int len)
 {
     u_char ruserlen, rpasswdlen;
     char *ruser, *rpasswd;
@@ -423,11 +407,7 @@ upap_rauthreq(u, inp, id, len)
  * upap_rauthack - Receive Authenticate-Ack.
  */
 static void
-upap_rauthack(u, inp, id, len)
-    upap_state *u;
-    u_char *inp;
-    int id;
-    int len;
+upap_rauthack(upap_state *u, u_char *inp, int id, int len)
 {
     u_char msglen;
     char *msg;
@@ -462,11 +442,7 @@ upap_rauthack(u, inp, id, len)
  * upap_rauthnak - Receive Authenticate-Nakk.
  */
 static void
-upap_rauthnak(u, inp, id, len)
-    upap_state *u;
-    u_char *inp;
-    int id;
-    int len;
+upap_rauthnak(upap_state *u, u_char *inp, int id, int len)
 {
     u_char msglen;
     char *msg;
@@ -502,8 +478,7 @@ upap_rauthnak(u, inp, id, len)
  * upap_sauthreq - Send an Authenticate-Request.
  */
 static void
-upap_sauthreq(u)
-    upap_state *u;
+upap_sauthreq(upap_state *u)
 {
     u_char *outp;
     int outlen;
@@ -537,11 +512,7 @@ upap_sauthreq(u)
  * upap_sresp - Send a response (ack or nak).
  */
 static void
-upap_sresp(u, code, id, msg, msglen)
-    upap_state *u;
-    u_char code, id;
-    char *msg;
-    int msglen;
+upap_sresp(upap_state *u, int code, int id, char *msg, int msglen)
 {
     u_char *outp;
     int outlen;
@@ -568,11 +539,7 @@ static char *upap_codenames[] = {
 };
 
 static int
-upap_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer)(void *, char *, ...);
-    void *arg;
+upap_printpkt(u_char *p, int plen, void (*printer)(void *, char *, ...), void *arg)
 {
     int code, id, len;
     int mlen, ulen, wlen;

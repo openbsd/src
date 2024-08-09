@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.h,v 1.7 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: lcp.h,v 1.8 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -67,18 +67,18 @@
  * The state of options is described by an lcp_options structure.
  */
 typedef struct lcp_options {
-    int passive : 1;		/* Don't die if we don't get a response */
-    int silent : 1;		/* Wait for the other end to start first */
-    int restart : 1;		/* Restart vs. exit after close */
-    int neg_mru : 1;		/* Negotiate the MRU? */
-    int neg_asyncmap : 1;	/* Negotiate the async map? */
-    int neg_upap : 1;		/* Ask for UPAP authentication? */
-    int neg_chap : 1;		/* Ask for CHAP authentication? */
-    int neg_magicnumber : 1;	/* Ask for magic number? */
-    int neg_pcompression : 1;	/* HDLC Protocol Field Compression? */
-    int neg_accompression : 1;	/* HDLC Address/Control Field Compression? */
-    int neg_lqr : 1;		/* Negotiate use of Link Quality Reports */
-    int neg_cbcp : 1;		/* Negotiate use of CBCP */
+    u_int passive : 1;		/* Don't die if we don't get a response */
+    u_int silent : 1;		/* Wait for the other end to start first */
+    u_int restart : 1;		/* Restart vs. exit after close */
+    u_int neg_mru : 1;		/* Negotiate the MRU? */
+    u_int neg_asyncmap : 1;	/* Negotiate the async map? */
+    u_int neg_upap : 1;		/* Ask for UPAP authentication? */
+    u_int neg_chap : 1;		/* Ask for CHAP authentication? */
+    u_int neg_magicnumber : 1;	/* Ask for magic number? */
+    u_int neg_pcompression : 1;	/* HDLC Protocol Field Compression? */
+    u_int neg_accompression : 1; /* HDLC Address/Control Field Compression? */
+    u_int neg_lqr : 1;		/* Negotiate use of Link Quality Reports */
+    u_int neg_cbcp : 1;		/* Negotiate use of CBCP */
     u_short mru;		/* Value of MRU */
     u_char chap_mdtype;		/* which MD type (hashing algorithm) */
     u_int32_t asyncmap;		/* Value of async map */

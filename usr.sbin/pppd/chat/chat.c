@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.35 2016/04/05 21:24:02 krw Exp $	*/
+/*	$OpenBSD: chat.c,v 1.36 2024/08/09 05:16:15 deraadt Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -173,7 +173,6 @@ int clear_report_next = 0;
 int say_next = 0, hup_next = 0;
 
 void *dup_mem(void *b, size_t c);
-void *copy_of(char *s);
 void usage(void);
 void logmsg(const char *fmt, ...);
 void fatal(int code, const char *fmt, ...);
@@ -188,15 +187,15 @@ void echo_stderr(int);
 void break_sequence(void);
 void terminate(int status);
 void do_file(char *chat_file);
-int  get_string(register char *string);
-int  put_string(register char *s);
+int  get_string(char *string);
+int  put_string(char *s);
 int  write_char(int c);
 int  put_char(int c);
 int  get_char(void);
-void chat_send(register char *s);
+void chat_send(char *s);
 char *character(int c);
-void chat_expect(register char *s);
-char *clean(register char *s, int sending);
+void chat_expect(char *s);
+char *clean(char *s, int sending);
 void break_sequence(void);
 void terminate(int status);
 void pack_array(char **array, int end);
@@ -205,9 +204,8 @@ int vfmtmsg(char *, int, const char *, va_list);	/* vsnprintf++ */
 
 int main(int, char *[]);
 
-void *dup_mem(b, c)
-void *b;
-size_t c;
+void *
+dup_mem(void *b, size_t c)
 {
     void *ans = malloc (c);
     if (!ans)
@@ -217,8 +215,7 @@ size_t c;
     return ans;
 }
 
-void *copy_of (s)
-char *s;
+void *copy_of (char *s)
 {
     return dup_mem (s, strlen (s) + 1);
 }
@@ -231,9 +228,7 @@ char *s;
  *	Perform a UUCP-dialer-like chat script on stdin and stdout.
  */
 int
-main(argc, argv)
-     int argc;
-     char **argv;
+main(int argc, char **argv)
 {
     int option;
 
@@ -262,7 +257,7 @@ main(argc, argv)
 	    break;
 
 	case 'f':
-	    chat_file = copy_of(optarg);
+	    chat_file = strdup(optarg);
 	    break;
 
 	case 't':
@@ -283,11 +278,11 @@ main(argc, argv)
 	    break;
 
 	case 'T':
-	    phone_num = copy_of(optarg);
+	    phone_num = strdup(optarg);
 	    break;
 
 	case 'U':
-	    phone_num2 = copy_of(optarg);
+	    phone_num2 = strdup(optarg);
 	    break;
 
 	case ':':
@@ -345,8 +340,8 @@ main(argc, argv)
  *  Process a chat script when read from a file.
  */
 
-void do_file (chat_file)
-char *chat_file;
+void
+do_file(char *chat_file)
 {
     int linect, sendflg;
     char *sp, *arg, quote;
@@ -459,8 +454,7 @@ void fatal(int code, const char *fmt, ...)
 
 int alarmed = 0;
 
-SIGTYPE sigalrm(signo)
-int signo;
+SIGTYPE sigalrm(int signo)
 {
     int flags;
 
@@ -489,20 +483,17 @@ void unalarm()
 	fatal(2, "Can't set file mode flags on stdin: %m");
 }
 
-SIGTYPE sigint(signo)
-int signo;
+SIGTYPE sigint(int signo)
 {
     fatal(2, "SIGINT");
 }
 
-SIGTYPE sigterm(signo)
-int signo;
+SIGTYPE sigterm(int signo)
 {
     fatal(2, "SIGTERM");
 }
 
-SIGTYPE sighup(signo)
-int signo;
+SIGTYPE sighup(int signo)
 {
     fatal(2, "SIGHUP");
 }
@@ -550,8 +541,7 @@ void break_sequence()
 #endif
 }
 
-void terminate(status)
-int status;
+void terminate(int status)
 {
     echo_stderr(-1);
     if (report_file != (char *) 0 && report_fp != (FILE *) NULL) {
@@ -593,13 +583,11 @@ int status;
 /*
  *	'Clean up' this string.
  */
-char *clean(s, sending)
-register char *s;
-int sending;  /* set to 1 when sending (putting) this string. */
+char *clean(char *s, int sending)
 {
     char *ret, *t, cur_chr;
     int new_length;
-    register char *s1, *phchar;
+    char *s1, *phchar;
     int add_return = sending;
 #define isoctal(chr) (((chr) >= '0') && ((chr) <= '7'))
 
@@ -808,8 +796,7 @@ int sending;  /* set to 1 when sending (putting) this string. */
  * A modified version of 'strtok'. This version skips \ sequences.
  */
 
-char *expect_strtok (s, term)
-     char *s, *term;
+char *expect_strtok (char *s, char *term)
 {
     static  char *str   = "";
     int	    escape_flag = 0;
@@ -863,8 +850,7 @@ char *expect_strtok (s, term)
  * Process the expect string
  */
 
-void chat_expect (s)
-char *s;
+void chat_expect (char *s)
 {
     char *expect;
     char *reply;
@@ -952,8 +938,7 @@ char *s;
  * the data.
  */
 
-char *character(c)
-int c;
+char *character(int c)
 {
     static char string[10];
     char *meta;
@@ -974,8 +959,7 @@ int c;
 /*
  *  process the reply string
  */
-void chat_send (s)
-register char *s;
+void chat_send (char *s)
 {
     if (say_next) {
 	say_next = 0;
@@ -1149,8 +1133,7 @@ int get_char()
     }
 }
 
-int put_char(c)
-int c;
+int put_char(int c)
 {
     int status;
     char ch = c;
@@ -1177,8 +1160,7 @@ int c;
     }
 }
 
-int write_char (c)
-int c;
+int write_char (int c)
 {
     if (alarmed || put_char(c) < 0) {
 	alarm(0);
@@ -1195,8 +1177,7 @@ int c;
     return (1);
 }
 
-int put_string (s)
-register char *s;
+int put_string (char *s)
 {
     quiet = 0;
     s = clean(s, 1);
@@ -1211,7 +1192,7 @@ register char *s;
     alarm(timeout); alarmed = 0;
 
     while (*s) {
-	register char c = *s++;
+	char c = *s++;
 
 	if (c != '\\') {
 	    if (!write_char (c))
@@ -1250,8 +1231,7 @@ register char *s;
  *	When called with -1, a '\n' character is generated when
  *	the cursor is not at the beginning of a line.
  */
-void echo_stderr(n)
-int n;
+void echo_stderr(int n)
 {
     static int need_lf;
     char *s;
@@ -1278,12 +1258,11 @@ int n;
 /*
  *	'Wait for' this string to appear on this file descriptor.
  */
-int get_string(string)
-register char *string;
+int get_string(char *string)
 {
     char temp[STR_LEN];
     int c, printed = 0, len, minlen;
-    register char *s = temp, *end = s + STR_LEN;
+    char *s = temp, *end = s + STR_LEN;
     char *logged = temp;
 
     fail_reason = NULL;
@@ -1427,9 +1406,7 @@ register char *string;
 }
 
 void
-pack_array (array, end)
-    char **array; /* The address of the array of string pointers */
-    int    end;   /* The index of the next free entry before CLR_ */
+pack_array (char **array, int end)
 {
     int i, j;
 
@@ -1455,11 +1432,7 @@ pack_array (array, end)
 #define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
 
 int
-vfmtmsg(buf, buflen, fmt, args)
-    char *buf;
-    int buflen;
-    const char *fmt;
-    va_list args;
+vfmtmsg(char *buf, int buflen, const char *fmt, va_list args)
 {
     int c, i, n;
     int width, prec, fillch;

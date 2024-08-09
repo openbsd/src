@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.h,v 1.7 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: ipcp.h,v 1.8 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -66,15 +66,15 @@
 				/* compression option*/ 
 
 typedef struct ipcp_options {
-    int neg_addr : 1;		/* Negotiate IP Address? */
-    int old_addrs : 1;		/* Use old (IP-Addresses) option? */
-    int req_addr : 1;		/* Ask peer to send IP address? */
-    int default_route : 1;	/* Assign default route through interface? */
-    int proxy_arp : 1;		/* Make proxy ARP entry for peer? */
-    int neg_vj : 1;		/* Van Jacobson Compression? */
-    int old_vj : 1;		/* use old (short) form of VJ option? */
-    int accept_local : 1;	/* accept peer's value for ouraddr */
-    int accept_remote : 1;	/* accept peer's value for hisaddr */
+    u_int neg_addr : 1;		/* Negotiate IP Address? */
+    u_int old_addrs : 1;	/* Use old (IP-Addresses) option? */
+    u_int req_addr : 1;		/* Ask peer to send IP address? */
+    u_int default_route : 1;	/* Assign default route through interface? */
+    u_int proxy_arp : 1;		/* Make proxy ARP entry for peer? */
+    u_int neg_vj : 1;		/* Van Jacobson Compression? */
+    u_int old_vj : 1;		/* use old (short) form of VJ option? */
+    u_int accept_local : 1;	/* accept peer's value for ouraddr */
+    u_int accept_remote : 1;	/* accept peer's value for hisaddr */
     u_short vj_protocol;	/* protocol value to use in VJ option */
     u_char maxslotindex, cflag;	/* values for RFC1332 VJ compression neg. */
     u_int32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */

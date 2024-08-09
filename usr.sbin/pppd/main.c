@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2023/03/08 04:43:14 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -95,7 +95,7 @@ static char default_devnam[PATH_MAX];	/* name of default device */
 static pid_t pid;		/* Our pid */
 static uid_t uid;		/* Our real user-id */
 static int conn_running;	/* we have a [dis]connector running */
-static int crashed = 0;
+static volatile sig_atomic_t crashed = 0;
 
 int ttyfd = -1;			/* Serial port file descriptor */
 mode_t tty_mode = -1;		/* Original access permissions to tty */
@@ -106,8 +106,8 @@ int need_holdoff;		/* need holdoff period before restarting */
 int detached;			/* have detached from terminal */
 
 int phase;			/* where the link is at */
-int kill_link;
-int open_ccp_flag;
+volatile sig_atomic_t kill_link;
+volatile sig_atomic_t open_ccp_flag;
 
 char **script_env;		/* Env. variable values for scripts */
 int s_env_nalloc;		/* # words avail at script_env */
@@ -174,9 +174,7 @@ struct protent *protocols[] = {
 };
 
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     int i, fdflags;
     struct sigaction sa;
@@ -624,8 +622,7 @@ detach()
  * holdoff_end - called via a timeout when the holdoff period ends.
  */
 static void
-holdoff_end(arg)
-    void *arg;
+holdoff_end(void *arg)
 {
     phase = PHASE_DORMANT;
 }
@@ -722,8 +719,7 @@ quit()
  * die - like quit, except we can specify an exit status.
  */
 void
-die(status)
-    int status;
+die(int status)
 {
     struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -792,10 +788,7 @@ static struct timeval timenow;		/* Current time */
  * the kernel).
  */
 void
-timeout(func, arg, time)
-    void (*func)(void *);
-    void *arg;
-    int time;
+timeout(void (*func)(void *), void *arg, int time)
 {
     struct callout *newp, *p, **pp;
 
@@ -832,9 +825,7 @@ timeout(func, arg, time)
  * untimeout - Unschedule a timeout.
  */
 void
-untimeout(func, arg)
-    void (*func)(void *);
-    void *arg;
+untimeout(void (*func)(void *), void *arg)
 {
     struct callout **copp, *freep;
 
@@ -884,8 +875,7 @@ calltimeout()
  * timeleft - return the length of time until the next timeout is due.
  */
 static struct timeval *
-timeleft(tvp)
-    struct timeval *tvp;
+timeleft(struct timeval *tvp)
 {
     if (callout == NULL)
 	return NULL;
@@ -908,8 +898,7 @@ timeleft(tvp)
  * kill_my_pg - send a signal to our process group, and ignore it ourselves.
  */
 static void
-kill_my_pg(sig)
-    int sig;
+kill_my_pg(int sig)
 {
     struct sigaction act, oldact;
 
@@ -929,8 +918,7 @@ kill_my_pg(sig)
  * signal, we just take the link down.
  */
 static void
-hup(sig)
-    int sig;
+hup(int sig)
 {
     int save_errno = errno;
     struct syslog_data sdata = SYSLOG_DATA_INIT;
@@ -952,8 +940,7 @@ hup(sig)
  * Indicates that we should initiate a graceful disconnect and exit.
  */
 static void
-term(sig)
-    int sig;
+term(int sig)
 {
     int save_errno = errno;
     struct syslog_data sdata = SYSLOG_DATA_INIT;
@@ -975,8 +962,7 @@ term(sig)
  * Calls reap_kids to get status for any dead kids.
  */
 static void
-chld(sig)
-    int sig;
+chld(int sig)
 {
     int save_errno = errno;
 
@@ -991,8 +977,7 @@ chld(sig)
  * Toggle debug flag.
  */
 static void
-toggle_debug(sig)
-    int sig;
+toggle_debug(int sig)
 {
     debug = !debug;
     if (debug) {
@@ -1009,8 +994,7 @@ toggle_debug(sig)
  * Try to (re)negotiate compression.
  */
 static void
-open_ccp(sig)
-    int sig;
+open_ccp(int sig)
 {
     open_ccp_flag = 1;
 }
@@ -1020,8 +1004,7 @@ open_ccp(sig)
  * bad_signal - We've caught a fatal signal.  Clean up state and exit.
  */
 static void
-bad_signal(sig)
-    int sig;
+bad_signal(int sig)
 {
     struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -1040,9 +1023,7 @@ bad_signal(sig)
  * serial device.
  */
 static int
-device_script(program, in, out)
-    char *program;
-    int in, out;
+device_script(char *program, int in, int out)
 {
     pid_t pid;
     int status;
@@ -1122,10 +1103,7 @@ device_script(program, in, out)
  * must_exist is 0 and the program file doesn't exist.
  */
 int
-run_program(prog, args, must_exist)
-    char *prog;
-    char **args;
-    int must_exist;
+run_program(char *prog, char **args, int must_exist)
 {
     pid_t pid;
     uid_t uid;
@@ -1194,7 +1172,7 @@ run_program(prog, args, must_exist)
  * and log a message for abnormal terminations.
  */
 static void
-reap_kids()
+reap_kids(void)
 {
     int status;
     pid_t pid;
@@ -1224,11 +1202,7 @@ char line[256];			/* line to be logged accumulated here */
 char *linep;
 
 void
-log_packet(p, len, prefix, level)
-    u_char *p;
-    int len;
-    char *prefix;
-    int level;
+log_packet(u_char *p, int len, char *prefix, int level)
 {
     strlcpy(line, prefix, sizeof line);
     linep = line + strlen(line);
@@ -1242,11 +1216,7 @@ log_packet(p, len, prefix, level)
  * calling `printer(arg, format, ...)' to output it.
  */
 void
-format_packet(p, len, printer, arg)
-    u_char *p;
-    int len;
-    void (*printer)(void *, char *, ...);
-    void *arg;
+format_packet(u_char *p, int len, void (*printer)(void *, char *, ...), void *arg)
 {
     int i, n;
     u_short proto;
@@ -1302,11 +1272,7 @@ pr_log(void *arg, char *fmt, ...)
  * printer.
  */
 void
-print_string(p, len, printer, arg)
-    char *p;
-    int len;
-    void (*printer)(void *, char *, ...);
-    void *arg;
+print_string(char *p, int len, void (*printer)(void *, char *, ...), void *arg)
 {
     int c;
 
@@ -1340,8 +1306,7 @@ print_string(p, len, printer, arg)
  * novm - log an error message saying we ran out of memory, and die.
  */
 void
-novm(msg)
-    char *msg;
+novm(char *msg)
 {
     syslog(LOG_ERR, "Virtual memory exhausted allocating %s", msg);
     die(1);
@@ -1372,11 +1337,7 @@ fmtmsg(char *buf, int buflen, char *fmt, ...)
 #define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
 
 int
-vfmtmsg(buf, buflen, fmt, args)
-    char *buf;
-    int buflen;
-    char *fmt;
-    va_list args;
+vfmtmsg(char *buf, int buflen, char *fmt, va_list args)
 {
     int c, i, n;
     int width, prec, fillch;
@@ -1580,8 +1541,7 @@ vfmtmsg(buf, buflen, fmt, args)
  * for scripts that we run (e.g. ip-up, auth-up, etc.)
  */
 void
-script_setenv(var, value)
-    char *var, *value;
+script_setenv(char *var, char *value)
 {
     int vl = strlen(var);
     int i;

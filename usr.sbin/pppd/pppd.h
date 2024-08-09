@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.22 2017/11/17 20:48:30 jca Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.23 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -54,6 +54,7 @@
 #include <net/ppp_defs.h>
 #include <stdio.h>		/* for FILE */
 #include <stdarg.h>
+#include <signal.h>
 
 /*
  * Limits.
@@ -108,7 +109,7 @@ extern char	user[];		/* Our name for authenticating ourselves */
 extern char	passwd[];	/* Password for PAP */
 extern int	auth_required;	/* Peer is required to authenticate */
 extern int	proxyarp;	/* Set up proxy ARP entry for peer */
-extern int	persist;	/* Reopen link after it goes down */
+extern volatile sig_atomic_t	persist; /* Reopen link after it goes down */
 extern int	uselogin;	/* Use /etc/passwd for checking PAP */
 extern int	lcp_echo_interval; /* Interval between LCP echo-requests */
 extern int	lcp_echo_fails;	/* Tolerance to unanswered echo-requests */

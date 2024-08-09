@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.40 2022/05/06 15:51:09 claudio Exp $	*/
+/*	$OpenBSD: auth.c,v 1.41 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -177,8 +177,7 @@ static void set_allowed_addrs(int, struct wordlist *);
  * Do what's necessary to bring the physical layer up.
  */
 void
-link_required(unit)
-    int unit;
+link_required(int unit)
 {
 }
 
@@ -187,8 +186,7 @@ link_required(unit)
  * physical layer down.
  */
 void
-link_terminated(unit)
-    int unit;
+link_terminated(int unit)
 {
     if (phase == PHASE_DEAD)
 	return;
@@ -202,8 +200,7 @@ link_terminated(unit)
  * LCP has gone down; it will either die or try to re-establish.
  */
 void
-link_down(unit)
-    int unit;
+link_down(int unit)
 {
     int i;
     struct protent *protp;
@@ -231,8 +228,7 @@ link_down(unit)
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
 void
-link_established(unit)
-    int unit;
+link_established(int unit)
 {
     int auth;
     lcp_options *wo = &lcp_wantoptions[unit];
@@ -293,8 +289,7 @@ link_established(unit)
  * Proceed to the network phase.
  */
 static void
-network_phase(unit)
-    int unit;
+network_phase(int unit)
 {
     int i;
     struct protent *protp;
@@ -341,8 +336,7 @@ network_phase(unit)
  * The peer has failed to authenticate himself using `protocol'.
  */
 void
-auth_peer_fail(unit, protocol)
-    int unit, protocol;
+auth_peer_fail(int unit, int protocol)
 {
     /*
      * Authentication failure: take the link down
@@ -354,10 +348,7 @@ auth_peer_fail(unit, protocol)
  * The peer has been successfully authenticated using `protocol'.
  */
 void
-auth_peer_success(unit, protocol, name, namelen)
-    int unit, protocol;
-    char *name;
-    int namelen;
+auth_peer_success(int unit, int protocol, char *name, int namelen)
 {
     int bit;
 
@@ -395,8 +386,7 @@ auth_peer_success(unit, protocol, name, namelen)
  * We have failed to authenticate ourselves to the peer using `protocol'.
  */
 void
-auth_withpeer_fail(unit, protocol)
-    int unit, protocol;
+auth_withpeer_fail(int unit, int protocol)
 {
     if (passwd_from_file)
 	EXPLICIT_BZERO(passwd, MAXSECRETLEN);
@@ -411,8 +401,7 @@ auth_withpeer_fail(unit, protocol)
  * We have successfully authenticated ourselves with the peer using `protocol'.
  */
 void
-auth_withpeer_success(unit, protocol)
-    int unit, protocol;
+auth_withpeer_success(int unit, int protocol)
 {
     int bit;
 
@@ -444,8 +433,7 @@ auth_withpeer_success(unit, protocol)
  * np_up - a network protocol has come up.
  */
 void
-np_up(unit, proto)
-    int unit, proto;
+np_up(int unit, int proto)
 {
     if (num_np_up == 0) {
 	/*
@@ -476,8 +464,7 @@ np_up(unit, proto)
  * np_down - a network protocol has gone down.
  */
 void
-np_down(unit, proto)
-    int unit, proto;
+np_down(int unit, int proto)
 {
     if (--num_np_up == 0 && idle_time_limit > 0) {
 	UNTIMEOUT(check_idle, NULL);
@@ -488,8 +475,7 @@ np_down(unit, proto)
  * np_finished - a network protocol has finished using the link.
  */
 void
-np_finished(unit, proto)
-    int unit, proto;
+np_finished(int unit, int roto)
 {
     if (--num_np_open <= 0) {
 	/* no further use for the link: shut up shop. */
@@ -502,8 +488,7 @@ np_finished(unit, proto)
  * enough that we can shut it down.
  */
 static void
-check_idle(arg)
-    void *arg;
+check_idle(void *arg)
 {
     struct ppp_idle idle;
     time_t itime;
@@ -524,8 +509,7 @@ check_idle(arg)
  * connect_time_expired - log a message and close the connection.
  */
 static void
-connect_time_expired(arg)
-    void *arg;
+connect_time_expired(void *arg)
 {
     syslog(LOG_INFO, "Connect time expired");
     lcp_close(0, "Connect time expired");	/* Close connection */
@@ -599,8 +583,8 @@ auth_check_options()
  * to use for authenticating ourselves and/or the peer.
  */
 void
-auth_reset(unit)
-    int unit;
+auth_reset(int unit)
+
 {
     lcp_options *go = &lcp_gotoptions[unit];
     lcp_options *ao = &lcp_allowoptions[0];
@@ -632,14 +616,8 @@ auth_reset(unit)
  * In either case, msg points to an appropriate message.
  */
 int
-check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
-    int unit;
-    char *auser;
-    int userlen;
-    char *apasswd;
-    int passwdlen;
-    char **msg;
-    int *msglen;
+check_passwd(int unit, char *auser, int userlen,
+    char *apasswd, int passwdlen, char **msg, int *msglen)
 {
     int ret;
     char *filename;
@@ -735,11 +713,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
  */
 
 static int
-plogin(user, passwd, msg, msglen)
-    char *user;
-    char *passwd;
-    char **msg;
-    int *msglen;
+plogin(char *user, char *passwd, char **msg, int *msglen)
 {
     struct passwd *pw;
     char *tty;
@@ -803,8 +777,7 @@ plogout()
  * and return 1.
  */
 static int
-null_login(unit)
-    int unit;
+null_login(int unit)
 {
     char *filename;
     FILE *f;
@@ -843,8 +816,7 @@ null_login(unit)
  * could be found.
  */
 static int
-get_pap_passwd(passwd)
-    char *passwd;
+get_pap_passwd(char *passwd)
 {
     char *filename;
     FILE *f;
@@ -904,10 +876,7 @@ have_pap_secret()
  * know the identity yet.
  */
 static int
-have_chap_secret(client, server, remote)
-    char *client;
-    char *server;
-    u_int32_t remote;
+have_chap_secret(char *client, char *server, u_int32_t remote)
 {
     FILE *f;
     int ret;
@@ -938,13 +907,8 @@ have_chap_secret(client, server, remote)
  * (We could be either client or server).
  */
 int
-get_secret(unit, client, server, secret, secret_len, save_addrs)
-    int unit;
-    char *client;
-    char *server;
-    char *secret;
-    int *secret_len;
-    int save_addrs;
+get_secret(int unit, char *client, char *server,
+    char *secret, int *secret_len, int save_addrs)
 {
     FILE *f;
     int ret, len;
@@ -988,9 +952,7 @@ get_secret(unit, client, server, secret, secret_len, save_addrs)
  * set_allowed_addrs() - set the list of allowed addresses.
  */
 static void
-set_allowed_addrs(unit, addrs)
-    int unit;
-    struct wordlist *addrs;
+set_allowed_addrs(int unit, struct wordlist *addrs)
 {
     if (addresses[unit] != NULL)
 	free_wordlist(addresses[unit]);
@@ -1021,17 +983,13 @@ set_allowed_addrs(unit, addrs)
  * a given IP address.  Returns 1 if authorized, 0 otherwise.
  */
 int
-auth_ip_addr(unit, addr)
-    int unit;
-    u_int32_t addr;
+auth_ip_addr(int unit, u_int32_t addr)
 {
     return ip_addr_check(addr, addresses[unit]);
 }
 
 static int
-ip_addr_check(addr, addrs)
-    u_int32_t addr;
-    struct wordlist *addrs;
+ip_addr_check(u_int32_t addr, struct wordlist *addrs)
 {
     u_int32_t mask, ah;
     struct in_addr ina;
@@ -1115,8 +1073,7 @@ ip_addr_check(addr, addrs)
  * addr is in network byte order.
  */
 int
-bad_ip_adrs(addr)
-    u_int32_t addr;
+bad_ip_adrs(u_int32_t addr)
 {
     addr = ntohl(addr);
     return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
@@ -1127,9 +1084,7 @@ bad_ip_adrs(addr)
  * check_access - complain if a secret file has too-liberal permissions.
  */
 void
-check_access(f, filename)
-    FILE *f;
-    char *filename;
+check_access(FILE *f, char *filename)
 {
     struct stat sbuf;
 
@@ -1151,14 +1106,8 @@ check_access(f, filename)
  * info) are placed in a wordlist and returned in *addrs.
  */
 static int
-scan_authfile(f, client, server, ipaddr, secret, addrs, filename)
-    FILE *f;
-    char *client;
-    char *server;
-    u_int32_t ipaddr;
-    char *secret;
-    struct wordlist **addrs;
-    char *filename;
+scan_authfile(FILE *f, char *client, char *server, u_int32_t ipaddr,
+    char *secret, struct wordlist **addrs, char *filename)
 {
     int newline, xxx;
     int got_flag, best_flag;
@@ -1302,8 +1251,7 @@ scan_authfile(f, client, server, ipaddr, secret, addrs, filename)
  * free_wordlist - release memory allocated for a wordlist.
  */
 static void
-free_wordlist(wp)
-    struct wordlist *wp;
+free_wordlist(struct wordlist *wp)
 {
     struct wordlist *next;
 
@@ -1319,8 +1267,7 @@ free_wordlist(wp)
  * interface-name peer-name real-user tty speed
  */
 static void
-auth_script(script)
-    char *script;
+auth_script(char *script)
 {
     char strspeed[32];
     struct passwd *pw;

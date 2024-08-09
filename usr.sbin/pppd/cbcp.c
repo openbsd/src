@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbcp.c,v 1.9 2018/07/28 22:57:27 deraadt Exp $	*/
+/*	$OpenBSD: cbcp.c,v 1.10 2024/08/09 05:16:13 deraadt Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -408,7 +408,7 @@ cbcp_recvack(cbcp_state *us, char *pckt, int len)
     cbcp_up(us);
 }
 
-extern int persist;
+extern volatile sig_atomic_t persist;
 
 /* ok peer will do callback */
 static void
