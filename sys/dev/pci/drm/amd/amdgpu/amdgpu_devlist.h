@@ -201,8 +201,14 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x1435 },	/* Custom GPU 0932 */
 	{0x1002, 0x163f },	/* Custom GPU 0405 */
 
-	/* GC 10.3.6, DCN 3.1.5, APU, Ryzen 7000 "Raphael" */
+	/*
+	 * GC 10.3.6, DCN 3.1.5, APU, Ryzen 7000 "Raphael"
+	 * GC 10.3.6, DCN 3.1.5, APU, Ryzen 7045 "Dragon Range"
+	 */
 	{0x1002, 0x164e },	/* Radeon 610M */
+
+	/* GC 10.3.6, DCN 3.1.5, APU, Ryzen 9000 "Granite Ridge" */
+	{0x1002, 0x13c0 },	/* Radeon Graphics */
 
 	/* GC 10.3.7, DCN 3.1.6, APU, Ryzen 7020 "Mendocino" */
 	{0x1002, 0x1506 },	/* Radeon 610M */
