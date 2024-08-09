@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.36 2024/08/09 13:52:09 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.37 2024/08/09 14:00:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -745,8 +745,7 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 	uint32_t cnt, i;
 	uint8_t flags;
 
-	if (ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1 ||
-	    ibuf_size(pdu) % sizeof(uint32_t) != 0)
+	if (ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1)
 		goto badlen;
 
 	flags = rtr_aspa.hdr.flags;
