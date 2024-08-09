@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.35 2024/04/09 12:09:20 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.36 2024/08/09 13:52:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -31,7 +31,14 @@
 struct rtr_header {
 	uint8_t		version;
 	uint8_t		type;
-	uint16_t	session_id; /* or error code */
+	union {
+		uint16_t	session_id;
+		uint16_t	errcode;
+		struct {
+			uint8_t	flags;
+			uint8_t	zero;
+		};
+	};
 	uint32_t	length;
 } __packed;
 
@@ -108,11 +115,8 @@ struct rtr_routerkey {
 #define FLAG_AFI_MASK	FLAG_AFI_V6
 struct rtr_aspa {
 	struct rtr_header	hdr;
-	uint8_t			flags;
-	uint8_t			afi_flags;
-	uint16_t		cnt;
 	uint32_t		cas;
-	/* array of spas with cnt elements follows */
+	/* array of spas filling the rest of the packet */
 } __packed;
 
 struct rtr_endofdata {
@@ -737,27 +741,21 @@ static int
 rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 {
 	struct rtr_aspa rtr_aspa;
-	struct aspa_tree *aspatree;
 	struct aspa_set *aspa, *a;
-	uint16_t cnt, i;
+	uint32_t cnt, i;
+	uint8_t flags;
 
-	if (ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1)
+	if (ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1 ||
+	    ibuf_size(pdu) % sizeof(uint32_t) != 0)
 		goto badlen;
 
-	cnt = ntohs(rtr_aspa.cnt);
-	if (ibuf_size(pdu) != cnt * sizeof(uint32_t))
-		goto badlen;
+	flags = rtr_aspa.hdr.flags;
+	cnt = ibuf_size(pdu) / sizeof(uint32_t);
 
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		rtr_send_error(rs, pdu, CORRUPT_DATA, "%s: out of context",
 		    log_rtr_type(ASPA));
 		return -1;
-	}
-
-	if (rtr_aspa.afi_flags & FLAG_AFI_V6) {
-		aspatree = &rs->aspa_oldv6;
-	} else {
-		aspatree = &rs->aspa;
 	}
 
 	/* treat ASPA records with too many SPAS like a withdraw */
@@ -768,9 +766,9 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 		log_warnx("rtr %s: oversized ASPA PDU: "
 		    "imlicit withdraw of customerAS %s",
 		    log_rtr(rs), log_as(needle.as));
-		a = RB_FIND(aspa_tree, aspatree, &needle);
+		a = RB_FIND(aspa_tree, &rs->aspa, &needle);
 		if (a != NULL) {
-			RB_REMOVE(aspa_tree, aspatree, a);
+			RB_REMOVE(aspa_tree, &rs->aspa, a);
 			free_aspa(a);
 		}
 		return 0;
@@ -796,13 +794,13 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 		}
 	}
 
-	if (rtr_aspa.flags & FLAG_ANNOUNCE) {
-		a = RB_INSERT(aspa_tree, aspatree, aspa);
+	if (flags & FLAG_ANNOUNCE) {
+		a = RB_INSERT(aspa_tree, &rs->aspa, aspa);
 		if (a != NULL) {
-			RB_REMOVE(aspa_tree, aspatree, a);
+			RB_REMOVE(aspa_tree, &rs->aspa, a);
 			free_aspa(a);
 
-			if (RB_INSERT(aspa_tree, aspatree, aspa) != NULL) {
+			if (RB_INSERT(aspa_tree, &rs->aspa, aspa) != NULL) {
 				rtr_send_error(rs, NULL, INTERNAL_ERROR,
 				    "corrupt aspa tree");
 				free_aspa(aspa);
@@ -810,14 +808,14 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 			}
 		}
 	} else {
-		a = RB_FIND(aspa_tree, aspatree, aspa);
+		a = RB_FIND(aspa_tree, &rs->aspa, aspa);
 		if (a == NULL) {
 			rtr_send_error(rs, pdu, UNK_REC_WDRAWL, "%s %s",
 			    log_rtr_type(ASPA), log_aspa(aspa));
 			free_aspa(aspa);
 			return -1;
 		}
-		RB_REMOVE(aspa_tree, aspatree, a);
+		RB_REMOVE(aspa_tree, &rs->aspa, a);
 		free_aspa(a);
 		free_aspa(aspa);
 	}
@@ -954,7 +952,7 @@ rtr_parse_error(struct rtr_session *rs, struct ibuf *pdu)
 
 	if (ibuf_get(pdu, &rh, sizeof(rh)) == -1)
 		goto fail;
-	errcode = ntohs(rh.session_id);
+	errcode = ntohs(rh.errcode);
 
 	if (ibuf_get_n32(pdu, &pdu_len) == -1)
 		goto fail;
