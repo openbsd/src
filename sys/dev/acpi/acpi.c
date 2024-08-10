@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.436 2024/07/30 19:47:06 mglocker Exp $ */
+/* $OpenBSD: acpi.c,v 1.437 2024/08/10 23:28:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2590,8 +2590,6 @@ acpi_resume_pm(struct acpi_softc *sc, int fromstate)
 	/* Enable runtime GPEs */
 	acpi_disable_allgpes(sc);
 	acpi_enable_rungpes(sc);
-
-	acpi_indicator(sc, ACPI_SST_WAKING);
 
 	/* 2nd resume AML step: _WAK(fromstate) */
 	aml_node_setval(sc, sc->sc_wak, fromstate);

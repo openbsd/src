@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.25 2024/08/08 07:02:38 kettenis Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.26 2024/08/10 23:28:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -123,6 +123,8 @@ gosleep(void *v)
 			sc->sc_wakeup = 1;
 	}
 
+	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
+
 	if (sc->sc_pmc_resume)
 		sc->sc_pmc_resume(sc->sc_pmc_cookie);
 
@@ -143,7 +145,6 @@ sleep_resume(void *v)
 		if (aml_node_setval(sc, sc->sc_tts, ACPI_STATE_S0) != 0)
 			return (EINVAL);
 	}
-	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
 	return 0;
 }
 
