@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.337 2024/08/06 08:44:54 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.338 2024/08/10 09:18:09 jsg Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2146,7 +2146,7 @@ single_thread_set(struct proc *p, int flags)
 		SCHED_UNLOCK();
 	}
 
-	/* count ourselfs out */
+	/* count ourself out */
 	--pr->ps_singlecnt;
 	mtx_leave(&pr->ps_mtx);
 
