@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.273 2024/06/17 08:02:57 sashan Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.274 2024/08/10 05:47:29 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -57,9 +57,7 @@
 #define LABEL_NAME_SIZE		1024
 #define TAG_NAME_SIZE		64
 #define TABLE_NAME_SIZE		64
-#define	RD_TAG_NAME_SIZE	64
 #define	RT_LABEL_SIZE		32
-#define SRV_NAME_SIZE		64
 #define MAX_NAME_SIZE		64
 #define SRV_MAX_VIRTS		16
 #define TLS_NAME_SIZE		512
@@ -545,8 +543,8 @@ struct rdr_config {
 	objid_t			 backup_id;
 	int			 mode;
 	union hashkey		 key;
-	char			 name[SRV_NAME_SIZE];
-	char			 tag[RD_TAG_NAME_SIZE];
+	char			 name[PF_TABLE_NAME_SIZE];
+	char			 tag[PF_TAG_NAME_SIZE];
 	struct timeval		 timeout;
 };
 

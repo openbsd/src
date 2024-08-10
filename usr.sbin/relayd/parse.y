@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.256 2024/06/17 08:02:57 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.257 2024/08/10 05:47:29 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -490,7 +490,7 @@ rdr		: REDIRECT STRING	{
 			if (strlcpy(srv->conf.name, $2,
 			    sizeof(srv->conf.name)) >=
 			    sizeof(srv->conf.name)) {
-				yyerror("redirection name truncated");
+				yyerror("redirection name truncated: %s", $2);
 				free($2);
 				free(srv);
 				YYERROR;
@@ -628,7 +628,8 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			if (strlcpy(rdr->conf.tag, $3,
 			    sizeof(rdr->conf.tag)) >=
 			    sizeof(rdr->conf.tag)) {
-				yyerror("redirection tag name truncated");
+				yyerror("redirection tag name truncated: %s",
+				    $3);
 				free($3);
 				YYERROR;
 			}
