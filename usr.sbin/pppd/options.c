@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.31 2024/08/09 05:16:13 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.32 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -509,7 +509,7 @@ scan_args(int argc, char **argv)
  * usage - print out a message telling how to use the program.
  */
 void
-usage()
+usage(void)
 {
     if (phase == PHASE_INITIALIZE)
 	fprintf(stderr, usage_string, VERSION, PATCHLEVEL, IMPLEMENTATION,
@@ -623,7 +623,7 @@ err:
  * and if so, interpret options from it.
  */
 int
-options_from_user()
+options_from_user(void)
 {
     char *user, *path, *file;
     int ret;
@@ -645,7 +645,7 @@ options_from_user()
  * device, and if so, interpret options from it.
  */
 int
-options_for_tty()
+options_for_tty(void)
 {
     char *dev, *path;
     int ret;

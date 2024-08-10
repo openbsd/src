@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.36 2024/08/09 05:16:15 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.37 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -407,7 +407,7 @@ do_file(char *chat_file)
 /*
  *	We got an error parsing the command line.
  */
-void usage()
+void usage(void)
 {
     fprintf(stderr, "\
 usage: %s [-eSsVv] [-f chat_file] [-r report_file] [-T phone_number]\n\
@@ -472,7 +472,7 @@ SIGTYPE sigalrm(int signo)
 	logmsg("alarm");
 }
 
-void unalarm()
+void unalarm(void)
 {
     int flags;
 
@@ -498,7 +498,7 @@ SIGTYPE sighup(int signo)
     fatal(2, "SIGHUP");
 }
 
-void init()
+void init(void)
 {
     signal(SIGINT, sigint);
     signal(SIGTERM, sigterm);
@@ -510,7 +510,7 @@ void init()
     alarmed = 0;
 }
 
-void set_tty_parameters()
+void set_tty_parameters(void)
 {
 #if defined(get_term_param)
     term_parms t;
@@ -534,7 +534,7 @@ void set_tty_parameters()
 #endif
 }
 
-void break_sequence()
+void break_sequence(void)
 {
 #ifdef TERMIOS
     tcsendbreak (0, 0);
@@ -1108,7 +1108,7 @@ void chat_send (char *s)
 	fatal(1, "Failed");
 }
 
-int get_char()
+int get_char(void)
 {
     int status;
     char c;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.16 2024/08/09 05:16:13 deraadt Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.17 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -1048,7 +1048,7 @@ endswitch:
  * and assign appropriate defaults.
  */
 static void
-ip_check_options()
+ip_check_options(void)
 {
     struct hostent *hp;
     u_int32_t local;

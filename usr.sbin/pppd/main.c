@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2024/08/09 05:16:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -606,7 +606,7 @@ main(int argc, char *argv[])
  * detach - detach us from the controlling terminal.
  */
 void
-detach()
+detach(void)
 {
     if (detached)
 	return;
@@ -631,7 +631,7 @@ holdoff_end(void *arg)
  * get_input - called when incoming data is available.
  */
 static void
-get_input()
+get_input(void)
 {
     int len, i;
     u_char *p;
@@ -710,7 +710,7 @@ get_input()
  * quit - Clean up state and exit (with an error indication).
  */
 void
-quit()
+quit(void)
 {
     die(1);
 }
@@ -732,7 +732,7 @@ die(int status)
  * cleanup - restore anything which needs to be restored before we exit
  */
 static void
-cleanup()
+cleanup(void)
 {
     sys_cleanup();
 
@@ -747,7 +747,7 @@ cleanup()
  * close_tty - restore the terminal device and close it.
  */
 static void
-close_tty()
+close_tty(void)
 {
     disestablish_ppp(ttyfd);
 
@@ -847,7 +847,7 @@ untimeout(void (*func)(void *), void *arg)
  * calltimeout - Call any timeout routines which are now due.
  */
 static void
-calltimeout()
+calltimeout(void)
 {
     struct callout *p;
 

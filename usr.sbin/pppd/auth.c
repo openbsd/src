@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.41 2024/08/09 05:16:13 deraadt Exp $	*/
+/*	$OpenBSD: auth.c,v 1.42 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -519,7 +519,7 @@ connect_time_expired(void *arg)
  * auth_check_options - called to check authentication options.
  */
 void
-auth_check_options()
+auth_check_options(void)
 {
     lcp_options *wo = &lcp_wantoptions[0];
     int can_auth;
@@ -758,7 +758,7 @@ plogin(char *user, char *passwd, char **msg, int *msglen)
  * plogout - Logout the user.
  */
 static void
-plogout()
+plogout(void)
 {
     char *tty;
 
@@ -846,7 +846,7 @@ get_pap_passwd(char *passwd)
  * secrets that we could possibly use for authenticating the peer.
  */
 static int
-have_pap_secret()
+have_pap_secret(void)
 {
     FILE *f;
     int ret;

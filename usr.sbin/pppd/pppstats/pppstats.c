@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.13 2024/08/09 05:16:15 deraadt Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.14 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * print PPP statistics:
@@ -82,7 +82,7 @@ void intpr(void);
 int main(int, char *argv[]);
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -155,7 +155,7 @@ get_ppp_cstats(struct ppp_comp_stats *csp)
  * First line printed is cumulative.
  */
 void
-intpr()
+intpr(void)
 {
 	register int line = 0;
 	sigset_t oldmask, mask;

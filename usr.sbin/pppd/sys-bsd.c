@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.34 2024/08/09 05:16:13 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.35 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -147,7 +147,7 @@ static int get_ether_addr(u_int32_t, struct sockaddr_dl *);
  * sys_init - System-dependent initialization.
  */
 void
-sys_init()
+sys_init(void)
 {
     /* Get an internet socket for doing socket ioctl's on. */
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
@@ -162,7 +162,7 @@ sys_init()
  * This should call die() because it's called from die().
  */
 void
-sys_cleanup()
+sys_cleanup(void)
 {
     struct ifreq ifr;
 
@@ -186,7 +186,7 @@ sys_cleanup()
  * sys_close - Clean up in a child process before execing.
  */
 void
-sys_close()
+sys_close(void)
 {
     close(sockfd);
     if (loop_slave >= 0) {
@@ -199,7 +199,7 @@ sys_close()
  * sys_check_options - check the options that the user specified
  */
 void
-sys_check_options()
+sys_check_options(void)
 {
 }
 
@@ -208,7 +208,7 @@ sys_check_options()
  * (in fact we check whether we can do an ioctl on ppp0).
  */
 int
-ppp_available()
+ppp_available(void)
 {
     int s, ok;
     struct ifreq ifr;
@@ -311,7 +311,7 @@ establish_ppp(int fd)
  * restore_loop - reattach the ppp unit to the loopback.
  */
 void
-restore_loop()
+restore_loop(void)
 {
     int x;
 
@@ -368,7 +368,7 @@ disestablish_ppp(int fd)
  * Check whether the link seems not to be 8-bit clean.
  */
 void
-clean_check()
+clean_check(void)
 {
     int x;
     char *s;
@@ -507,7 +507,7 @@ setdtr(int fd, int on)
  * Here we use a pty.
  */
 void
-open_ppp_loopback()
+open_ppp_loopback(void)
 {
     int flags;
     struct termios tios;
@@ -676,7 +676,7 @@ read_packet(u_char *buf)
  * Return value is 1 if we need to bring up the link, 0 otherwise.
  */
 int
-get_loop_output()
+get_loop_output(void)
 {
     int rv = 0;
     int n;
@@ -1445,7 +1445,7 @@ lock(char *dev)
  * unlock - remove our lockfile
  */
 void
-unlock()
+unlock(void)
 {
     if (lock_file) {
 	unlink(lock_file);

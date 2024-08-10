@@ -1,4 +1,4 @@
-/*	$OpenBSD: magic.c,v 1.10 2013/09/29 16:24:22 deraadt Exp $	*/
+/*	$OpenBSD: magic.c,v 1.11 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -59,7 +59,7 @@
  * and current time, currently.
  */
 void
-magic_init()
+magic_init(void)
 {
 }
 
@@ -67,7 +67,7 @@ magic_init()
  * magic - Returns the next magic number.
  */
 u_int32_t
-magic()
+magic(void)
 {
     return arc4random();
 }

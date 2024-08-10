@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.12 2024/08/09 05:16:13 deraadt Exp $	*/
+/*	$OpenBSD: demand.c,v 1.13 2024/08/10 05:32:28 jsg Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -80,7 +80,7 @@ static int active_packet(unsigned char *, int);
  * demand_conf - configure the interface for doing dial-on-demand.
  */
 void
-demand_conf()
+demand_conf(void)
 {
     int i;
     struct protent *protp;
@@ -119,7 +119,7 @@ demand_conf()
  * without an error.
  */
 void
-demand_drop()
+demand_drop(void)
 {
     struct packet *pkt, *nextpkt;
     int i;
@@ -146,7 +146,7 @@ demand_drop()
  * demand_unblock - set each enabled network protocol to pass packets.
  */
 void
-demand_unblock()
+demand_unblock(void)
 {
     int i;
     struct protent *protp;
