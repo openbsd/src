@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2082 2024/08/09 01:50:16 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2083 2024/08/10 11:00:14 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -32332,6 +32332,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PC SN520",
 	},
 	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN520_3,
+	    "PC SN520",
+	},
+	{
 	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG3X0C,
 	    "WD Black NVMe",
 	},
@@ -32340,12 +32344,40 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PC SN530",
 	},
 	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_NVME_1,
+	    "NVMe",
+	},
+	{
 	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_SN850,
 	    "SN850",
 	},
 	{
-	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN740,
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_NVME_2,
+	    "NVMe",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN740_1,
 	    "PC SN740",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN740_2,
+	    "PC SN740",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_NVME_3,
+	    "NVMe",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_SN750,
+	    "SN750",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_SN850X,
+	    "SN850X",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_SN580,
+	    "SN580",
 	},
 	{
 	    PCI_VENDOR_SANGOMA, PCI_PRODUCT_SANGOMA_A10X,
