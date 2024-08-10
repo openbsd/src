@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.128 2024/03/18 21:20:46 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.129 2024/08/10 20:20:50 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -752,8 +752,22 @@ pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 int
 pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
 {
-	pcireg_t reg;
+	pcireg_t id, reg;
 	int offset, ostate = state;
+	int d3_delay = 10 * 1000;
+
+	/* Some AMD Ryzen xHCI controllers need a bit more time to wake up. */
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(id) == PCI_VENDOR_AMD) {
+		switch (PCI_PRODUCT(id)) {
+		case PCI_PRODUCT_AMD_17_1X_XHCI_1:
+		case PCI_PRODUCT_AMD_17_1X_XHCI_2:
+		case PCI_PRODUCT_AMD_17_6X_XHCI:
+			d3_delay = 20 * 1000;
+		default:
+			break;
+		}
+	}
 
 	/*
 	 * Warn the firmware that we are going to put the device
@@ -783,7 +797,7 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
 			    (reg & ~PCI_PMCSR_STATE_MASK) | state);
 			if (state == PCI_PMCSR_STATE_D3 ||
 			    ostate == PCI_PMCSR_STATE_D3)
-				delay(10 * 1000);
+				delay(d3_delay);
 		}
 	}
 
