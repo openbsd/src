@@ -1001,25 +1001,21 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 	u32 pte_flags;
 	int ret;
 
-	/* For Modern GENs the PTEs and register space are split in the BAR */
 	type = pci_mapreg_type(i915->pc, i915->tag, 0x10);
 	ret = -pci_mapreg_info(i915->pc, i915->tag, 0x10, type,
 	    &addr, &len, NULL);
 	if (ret)
 		return ret;
 
-	/*
-	 * On BXT+/ICL+ writes larger than 64 bit to the GTT pagetable range
-	 * will be dropped. For WC mappings in general we have 64 byte burst
-	 * writes when the WC buffer is flushed, so we can't use it, but have to
-	 * resort to an uncached mapping. The WC issue is easily caught by the
-	 * readback check when writing GTT PTE entries.
-	 */
-	if (IS_GEN9_LP(i915) || GRAPHICS_VER(i915) >= 11)
-		flags = 0;
-	else
+	GEM_WARN_ON(len != gen6_gttmmadr_size(i915));
+	phys_addr = addr + gen6_gttadr_offset(i915);
+
+	if (needs_wc_ggtt_mapping(i915))
 		flags = BUS_SPACE_MAP_PREFETCHABLE;
-	ret = -bus_space_map(i915->bst, addr + len / 2, size,
+	else
+		flags = 0;
+
+	ret = -bus_space_map(i915->bst, phys_addr, size,
 	    flags | BUS_SPACE_MAP_LINEAR, &ggtt->gsm_bsh);
 	if (ret) {
 		drm_err(&i915->drm, "Failed to map the ggtt page table\n");
@@ -1028,7 +1024,7 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 	ggtt->gsm = bus_space_vaddr(i915->bst, ggtt->gsm_bsh);
 	ggtt->gsm_size = size;
 	if (!ggtt->gsm) {
-		DRM_ERROR("Failed to map the ggtt page table\n");
+		drm_err(&i915->drm, "Failed to map the ggtt page table\n");
 		return -ENOMEM;
 	}
 
