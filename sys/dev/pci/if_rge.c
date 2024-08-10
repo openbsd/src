@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.27 2024/06/30 08:13:02 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.28 2024/08/10 21:53:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -480,16 +480,19 @@ rge_encap(struct rge_queues *q, struct mbuf *m, int idx)
 
 		if (cur == RGE_TX_LIST_CNT - 1)
 			cmdsts |= RGE_TDCMDSTS_EOR;
+		if (i == (txmap->dm_nsegs - 1))
+			cmdsts |= RGE_TDCMDSTS_EOF;
 
 		d->rge_cmdsts = htole32(cmdsts);
+
+		bus_dmamap_sync(sc->sc_dmat, q->q_tx.rge_tx_list_map,
+		    cur * sizeof(struct rge_tx_desc), sizeof(struct rge_tx_desc),
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		last = cur;
 		cmdsts = RGE_TDCMDSTS_OWN;
 		cur = RGE_NEXT_TX_DESC(cur);
 	}
-
-	/* Set EOF on the last descriptor. */
-	d->rge_cmdsts |= htole32(RGE_TDCMDSTS_EOF);
 
 	/* Transfer ownership of packet to the chip. */
 	d = &q->q_tx.rge_tx_list[idx];
@@ -497,7 +500,7 @@ rge_encap(struct rge_queues *q, struct mbuf *m, int idx)
 	d->rge_cmdsts |= htole32(RGE_TDCMDSTS_OWN);
 
 	bus_dmamap_sync(sc->sc_dmat, q->q_tx.rge_tx_list_map,
-	    cur * sizeof(struct rge_tx_desc), sizeof(struct rge_tx_desc),
+	    idx * sizeof(struct rge_tx_desc), sizeof(struct rge_tx_desc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Update info of TX queue and descriptors. */
