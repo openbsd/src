@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.8,v 1.6 2023/03/02 17:09:52 jmc Exp $
+.\"	$OpenBSD: dhcpleased.8,v 1.7 2024/08/11 06:07:37 jmc Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: August 11 2024 $
 .Dt DHCPLEASED 8
 .Os
 .Sh NAME
@@ -28,11 +28,16 @@
 .Sh DESCRIPTION
 .Nm
 is a dynamic host configuration protocol (DHCP) daemon for clients.
-It requests IP configuration information from for example those offered by
-.Xr dhcpd 8 ,
-on interfaces with the
+If an interface has the
 .Sy AUTOCONF4
-flag set.
+flag set
+(auto configuration is enabled),
+.Nm
+sends requests for IP configuration information from a DHCP server,
+such as
+.Xr dhcpd 8 ,
+and uses that information to configure the relevant interface.
+.Pp
 See
 .Xr hostname.if 5
 and
@@ -41,9 +46,8 @@ on how to enable auto configuration on an interface.
 .Pp
 .Nm
 monitors network interface states (interface going up or down,
-auto configuration enabled or disabled etc.) and sends requests
+auto configuration enabled or disabled, etc.) and sends requests
 when necessary.
-.Pp
 A running
 .Nm
 can be controlled with the

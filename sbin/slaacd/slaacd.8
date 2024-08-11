@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.12 2023/03/02 17:09:54 jmc Exp $
+.\"	$OpenBSD: slaacd.8,v 1.13 2024/08/11 06:07:37 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: August 11 2024 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -28,15 +28,16 @@
 .Sh DESCRIPTION
 .Nm
 is a stateless address autoconfiguration (SLAAC) daemon for clients.
-It listens for IPv6 router advertisement messages,
-for example those sent by
-.Xr rad 8 ,
-on interfaces with the
+If an interface has the
 .Sy AUTOCONF6
-flag set.
+flag set
+(auto configuration is enabled),
 .Nm
-derives IPv6 addresses and default routes from received router
-advertisements and installs them in the kernel.
+regularly sends out requests for IPv6 router advertisement messages,
+such as those sent by
+.Xr rad 8 ,
+and uses those messages to configure the relevant interface.
+.Pp
 See
 .Xr hostname.if 5
 and
@@ -44,10 +45,9 @@ and
 on how to enable auto configuration on an interface.
 .Pp
 .Nm
-monitors network interface states (interface going up or down,
-auto configuration enabled or disabled etc.) and sends router solicitations
-when necessary.
-.Pp
+monitors network interface states
+(interface going up or down, auto configuration enabled or disabled, etc.)\&
+and sends router solicitations when necessary.
 A running
 .Nm
 can be controlled with the
