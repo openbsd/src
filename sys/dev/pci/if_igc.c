@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.26 2024/08/08 14:58:49 jan Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.27 2024/08/11 01:02:10 dlg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -202,6 +202,7 @@ igc_attach(struct device *parent, struct device *self, void *aux)
 	/* Determine hardware and mac info */
 	igc_identify_hardware(sc);
 
+	sc->rx_mbuf_sz = MCLBYTES;
 	sc->num_tx_desc = IGC_DEFAULT_TXD;
 	sc->num_rx_desc = IGC_DEFAULT_RXD;
 
@@ -881,7 +882,6 @@ igc_init(void *arg)
 	}
 	igc_initialize_transmit_unit(sc);
 
-	sc->rx_mbuf_sz = MCLBYTES;
 	/* Prepare receive descriptors and buffers. */
 	if (igc_setup_receive_structures(sc)) {
 		printf("%s: Could not setup receive structures\n",
@@ -1232,7 +1232,7 @@ igc_rxrinfo(struct igc_softc *sc, struct if_rxrinfo *ifri)
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		rxr = &sc->rx_rings[i];
-		ifr[n].ifr_size = MCLBYTES;
+		ifr[n].ifr_size = sc->rx_mbuf_sz;
 		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "%d", i);
 		ifr[n].ifr_info = rxr->rx_ring;
 		n++;
@@ -1673,11 +1673,11 @@ igc_get_buf(struct igc_rxring *rxr, int i)
 		return ENOBUFS;
 	}
 
-	m = MCLGETL(NULL, M_DONTWAIT, sc->rx_mbuf_sz);
+	m = MCLGETL(NULL, M_DONTWAIT, sc->rx_mbuf_sz + ETHER_ALIGN);
 	if (!m)
 		return ENOBUFS;
 
-	m->m_data += (m->m_ext.ext_size - sc->rx_mbuf_sz);
+	m->m_data += ETHER_ALIGN;
 	m->m_len = m->m_pkthdr.len = sc->rx_mbuf_sz;
 
 	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->map, m,
@@ -2159,7 +2159,7 @@ igc_allocate_receive_buffers(struct igc_rxring *rxr)
 	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
 		error = bus_dmamap_create(rxr->rxdma.dma_tag,
-		    MAX_JUMBO_FRAME_SIZE, IGC_MAX_SCATTER, MCLBYTES, 0,
+		    sc->rx_mbuf_sz, 1, sc->rx_mbuf_sz, 0,
 		    BUS_DMA_NOWAIT, &rxbuf->map);
 		if (error) {
 			printf("%s: Unable to create RX DMA map\n",
@@ -2223,7 +2223,8 @@ igc_setup_receive_ring(struct igc_rxring *rxr)
 	rxr->next_to_check = 0;
 	rxr->last_desc_filled = sc->num_rx_desc - 1;
 
-	if_rxr_init(&rxr->rx_ring, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1),
+	if_rxr_init(&rxr->rx_ring,
+	    2 * howmany(ifp->if_hardmtu, sc->rx_mbuf_sz) + 1,
 	    sc->num_rx_desc - 1);
 
 	return 0;
