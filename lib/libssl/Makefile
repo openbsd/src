@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.84 2024/07/13 18:33:18 tb Exp $
+# $OpenBSD: Makefile,v 1.85 2024/08/11 13:04:46 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -24,6 +24,7 @@ CFLAGS+= -DTLS13_DEBUG
 .endif
 CFLAGS+= -I${.CURDIR}
 CFLAGS+= -I${.CURDIR}/../libcrypto
+CFLAGS+= -I${.CURDIR}/../libcrypto/arch/${MACHINE_CPU}
 CFLAGS+= -I${.CURDIR}/../libcrypto/hidden
 CFLAGS+= -I${.CURDIR}/../libcrypto/bio
 CFLAGS+= -I${.CURDIR}/hidden
