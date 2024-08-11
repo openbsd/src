@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.10 2024/04/17 14:43:37 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.11 2024/08/11 13:02:39 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -19,6 +19,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include "crypto_arch.h"
 
 #ifndef HEADER_CRYPTO_INTERNAL_H
 #define HEADER_CRYPTO_INTERNAL_H

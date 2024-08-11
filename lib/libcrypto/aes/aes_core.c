@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.23 2024/03/30 05:14:12 joshua Exp $ */
+/* $OpenBSD: aes_core.c,v 1.24 2024/08/11 13:02:39 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -35,6 +35,7 @@
 #include <openssl/aes.h>
 
 #include "aes_local.h"
+#include "crypto_arch.h"
 #include "crypto_internal.h"
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.3 2024/03/30 05:14:12 joshua Exp $ */
+/* $OpenBSD: aes.c,v 1.4 2024/08/11 13:02:39 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -54,6 +54,8 @@
 #include <openssl/aes.h>
 #include <openssl/bio.h>
 #include <openssl/modes.h>
+
+#include "crypto_arch.h"
 
 static const unsigned char aes_wrap_default_iv[] = {
 	0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,

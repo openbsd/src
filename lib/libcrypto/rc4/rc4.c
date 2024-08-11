@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.c,v 1.11 2024/03/28 12:11:26 jsing Exp $ */
+/* $OpenBSD: rc4.c,v 1.12 2024/08/11 13:02:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,8 @@
 #include <endian.h>
 
 #include <openssl/rc4.h>
+
+#include "crypto_arch.h"
 
 /* RC4 as implemented from a posting from
  * Newsgroups: sci.crypt
