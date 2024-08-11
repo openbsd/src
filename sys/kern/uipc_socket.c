@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.342 2024/08/06 20:14:56 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.343 2024/08/11 00:19:00 jsg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1581,7 +1581,7 @@ sotask(void *arg)
 	int sockstream = (so->so_proto->pr_flags & PR_WANTRCVD);
 
 	/*
-	 * sblock() on `so_rcv' protects sockets from beind unspliced
+	 * sblock() on `so_rcv' protects sockets from being unspliced
 	 * for UDP case. TCP sockets still rely on solock(). 
 	 */
 
