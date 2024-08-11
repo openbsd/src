@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.16 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.17 2024/08/11 11:56:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 
 	return (0);
 }
-		
+
 void
 udpping(u_short portnum, int argc, char **argv)
 {
@@ -202,7 +202,7 @@ udpping(u_short portnum, int argc, char **argv)
 	int sock = RPC_ANYSOCK;
 	struct rpc_err rpcerr;
 	int failure;
-    
+
 	if (argc < 2)
 		usage("too few arguments");
 	if (argc > 3)
@@ -485,7 +485,7 @@ pmapdump(int argc, char **argv)
 	struct timeval minutetimeout;
 	CLIENT *client;
 	struct rpcent *rpc;
-	
+
 	if (argc > 1)
 		usage("too many arguments");
 
@@ -538,8 +538,8 @@ pmapdump(int argc, char **argv)
 	}
 }
 
-/* 
- * reply_proc collects replies from the broadcast. 
+/*
+ * reply_proc collects replies from the broadcast.
  * to get a unique list of responses the output of rpcinfo should
  * be piped through sort(1) and then uniq(1).
  */
@@ -567,7 +567,7 @@ brdcst(int argc, char **argv)
 		usage("program number out of range");
 	if (getul(argv[1], &vers_num))
 		usage("version number out of range");
-		
+
 	rpc_stat = clnt_broadcast(prognum, vers_num, NULLPROC, xdr_void,
 	    (char *)NULL, xdr_void, (char *)NULL, reply_proc);
 	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT)) {
@@ -613,7 +613,7 @@ setreg(int argc, char **argv)
 		usage("cannot parse port number");
 	if (port_num >= 65536)
 		usage("port number out of range");
-		
+
 	if ((pmap_set(prog_num, version_num, IPPROTO_TCP,
 	    (u_short)port_num)) == 0) {
 		fprintf(stderr, "rpcinfo: Could not set registration "
