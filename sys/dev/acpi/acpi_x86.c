@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.27 2024/08/11 05:21:52 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.28 2024/08/11 05:28:02 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -66,7 +66,6 @@ sleep_showstate(void *v, int sleepmode)
 		if (aml_node_setval(sc, sc->sc_tts, sc->sc_state) != 0)
 			return (EINVAL);
 	}
-	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
 	return 0;
 }
 
