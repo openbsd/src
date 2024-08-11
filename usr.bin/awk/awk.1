@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.69 2024/07/30 13:55:11 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.70 2024/08/11 18:24:43 schwarze Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2024 $
+.Dd $Mdocdate: August 11 2024 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -1040,11 +1040,6 @@ Also, the behaviour of
 and
 .Fn srand
 has been changed to support non-deterministic random numbers.
-.Pp
-In
-.Ev LC_CTYPE Ns Li =POSIX
-mode, treating non-ASCII input bytes as non-letter characters rather
-than as input encoding errors intentionally violates the specification.
 .Pp
 The flags
 .Op Fl \&dV ,
