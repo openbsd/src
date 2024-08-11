@@ -10,6 +10,7 @@
 struct resource {
 	u_long	start;
 	u_long	end;
+	const char *name;
 };
 
 static inline resource_size_t
@@ -22,6 +23,7 @@ resource_size(const struct resource *r)
 (struct resource) {				\
 		.start = (_start),		\
 		.end = (_start) + (_size) - 1,	\
+		.name = NULL,			\
 	}
 
 #endif
