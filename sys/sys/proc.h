@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.368 2024/08/11 15:10:53 mvs Exp $	*/
+/*	$OpenBSD: proc.h,v 1.369 2024/08/11 21:07:05 mvs Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <sys/resource.h>		/* For struct rusage */
 #include <sys/rwlock.h>			/* For struct rwlock */
 #include <sys/sigio.h>			/* For struct sigio */
+#include <sys/refcnt.h>			/* For struct refcnt */
 
 #ifdef _KERNEL
 #include <sys/atomic.h>
