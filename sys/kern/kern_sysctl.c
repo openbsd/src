@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.436 2024/08/08 15:02:36 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.437 2024/08/11 15:10:53 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1686,6 +1686,9 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				/* not the pid we are looking for */
 				continue;
 			}
+
+			refcnt_take(&pr->ps_refcnt);
+
 			matched = 1;
 			fdp = pr->ps_fd;
 			if (pr->ps_textvp)
@@ -1702,6 +1705,9 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				FILLIT(fp, fdp, i, NULL, pr);
 				FRELE(fp, p);
 			}
+
+			refcnt_rele_wake(&pr->ps_refcnt);
+
 			/* pid is unique, stop searching */
 			if (arg >= 0)
 				break;
@@ -1721,6 +1727,9 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				/* not the uid we are looking for */
 				continue;
 			}
+
+			refcnt_take(&pr->ps_refcnt);
+
 			fdp = pr->ps_fd;
 			if (fdp->fd_cdir)
 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pr);
@@ -1734,6 +1743,8 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 				FILLIT(fp, fdp, i, NULL, pr);
 				FRELE(fp, p);
 			}
+
+			refcnt_rele_wake(&pr->ps_refcnt);
 		}
 		break;
 	default:

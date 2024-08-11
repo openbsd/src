@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.230 2024/08/06 18:41:20 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.231 2024/08/11 15:10:53 mvs Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -151,6 +151,9 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 			    PS_ISPWAIT);
 			wakeup(pr->ps_pptr);
 		}
+
+		/* Wait for concurrent `allprocess' loops */
+		refcnt_finalize(&pr->ps_refcnt, "psdtor");
 	}
 
 	/* unlink ourselves from the active threads */

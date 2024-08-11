@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.261 2024/08/06 08:44:54 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.262 2024/08/11 15:10:53 mvs Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -178,6 +178,8 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 void
 process_initialize(struct process *pr, struct proc *p)
 {
+	refcnt_init(&pr->ps_refcnt);
+
 	/* initialize the thread links */
 	pr->ps_mainproc = p;
 	TAILQ_INIT(&pr->ps_threads);
