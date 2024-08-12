@@ -157,8 +157,8 @@ region_lmem_init(struct intel_memory_region *mem)
 
 #ifdef __linux__
 	if (!io_mapping_init_wc(&mem->iomap,
-				mem->io_start,
-				mem->io_size))
+				mem->io.start,
+				resource_size(&mem->io)))
 		return -EIO;
 #else
 	struct drm_i915_private *i915 = mem->i915;
@@ -167,20 +167,20 @@ region_lmem_init(struct intel_memory_region *mem)
 	int i;
 	bus_space_handle_t bsh;
 
-	start = atop(mem->io_start);
-	end = start + atop(mem->io_size);
+	start = atop(mem->io.start);
+	end = start + atop(resource_size(&mem->io));
 	uvm_page_physload(start, end, start, end, PHYSLOAD_DEVICE);
 
-	pgs = PHYS_TO_VM_PAGE(mem->io_start);
-	for (i = 0; i < atop(mem->io_size); i++)
+	pgs = PHYS_TO_VM_PAGE(mem->io.start);
+	for (i = 0; i < atop(resource_size(&mem->io)); i++)
 		atomic_setbits_int(&(pgs[i].pg_flags), PG_PMAP_WC);
 
-	if (bus_space_map(i915->bst, mem->io_start, mem->io_size,
+	if (bus_space_map(i915->bst, mem->io.start, resource_size(&mem->io),
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh))
 		panic("can't map lmem");
 
-	mem->iomap.base = mem->io_start;
-	mem->iomap.size = mem->io_size;
+	mem->iomap.base = mem->io.start;
+	mem->iomap.size = resource_size(&mem->io);
 	mem->iomap.iomem = bus_space_vaddr(i915->bst, bsh);
 #endif
 
@@ -327,12 +327,7 @@ static struct intel_memory_region *setup_lmem(struct intel_gt *gt)
 		goto err_region_put;
 
 	drm_dbg(&i915->drm, "Local memory: %pR\n", &mem->region);
-	drm_dbg(&i915->drm, "Local memory IO start: %pa\n",
-		&mem->io_start);
-	drm_info(&i915->drm, "Local memory IO size: %pa\n",
-		 &mem->io_size);
-	drm_info(&i915->drm, "Local memory available: %pa\n",
-		 &lmem_size);
+	drm_dbg(&i915->drm, "Local memory IO: %pR\n", &mem->io);
 
 	if (io_size < lmem_size)
 		drm_info(&i915->drm, "Using a reduced BAR size of %lluMiB. Consider enabling 'Resizable BAR' or similar, if available in the BIOS.\n",

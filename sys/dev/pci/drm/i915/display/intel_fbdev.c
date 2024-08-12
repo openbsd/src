@@ -294,7 +294,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 
 		/* Use fbdev's framebuffer from lmem for discrete */
 		info->fix.smem_start =
-			(unsigned long)(mem->io_start +
+			(unsigned long)(mem->io.start +
 					i915_gem_object_get_dma_address(obj, 0));
 		info->fix.smem_len = obj->base.size;
 	} else {

@@ -545,7 +545,9 @@ static int i915_gem_init_stolen(struct intel_memory_region *mem)
 
 	/* Exclude the reserved region from driver use */
 	mem->region.end = i915->dsm.reserved.start - 1;
-	mem->io_size = min(mem->io_size, resource_size(&mem->region));
+	mem->io = DEFINE_RES_MEM(mem->io.start,
+				 min(resource_size(&mem->io),
+				     resource_size(&mem->region)));
 
 	i915->dsm.usable_size = resource_size(&mem->region);
 
@@ -756,7 +758,7 @@ static int _i915_gem_object_stolen_init(struct intel_memory_region *mem,
 	 * With discrete devices, where we lack a mappable aperture there is no
 	 * possible way to ever access this memory on the CPU side.
 	 */
-	if (mem->type == INTEL_MEMORY_STOLEN_LOCAL && !mem->io_size &&
+	if (mem->type == INTEL_MEMORY_STOLEN_LOCAL && !resource_size(&mem->io) &&
 	    !(flags & I915_BO_ALLOC_GPU_ONLY))
 		return -ENOSPC;
 
@@ -843,37 +845,36 @@ static int init_stolen_lmem(struct intel_memory_region *mem)
 	}
 
 #ifdef __linux__
-	if (mem->io_size &&
-	    !io_mapping_init_wc(&mem->iomap, mem->io_start, mem->io_size))
+	if (resource_size(&mem->io) &&
+	    !io_mapping_init_wc(&mem->iomap, mem->io.start, resource_size(&mem->io)))
 		goto err_cleanup;
 #else
-	if (mem->io_size) {
+	if (resource_size(&mem->io)) {
 		paddr_t start, end;
 		struct vm_page *pgs;
 		int i;
 		bus_space_handle_t bsh;
 
-		start = atop(mem->io_start);
-		end = start + atop(mem->io_size);
+		start = atop(mem->io.start);
+		end = start + atop(resource_size(&mem->io));
 		uvm_page_physload(start, end, start, end, PHYSLOAD_DEVICE);
 
-		pgs = PHYS_TO_VM_PAGE(mem->io_start);
-		for (i = 0; i < atop(mem->io_size); i++)
+		pgs = PHYS_TO_VM_PAGE(mem->io.start);
+		for (i = 0; i < atop(resource_size(&mem->io)); i++)
 			atomic_setbits_int(&(pgs[i].pg_flags), PG_PMAP_WC);
 
-		if (bus_space_map(i915->bst, mem->io_start, mem->io_size,
+		if (bus_space_map(i915->bst, mem->io.start, resource_size(&mem->io),
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh))
 			panic("can't map stolen lmem");
 
-		mem->iomap.base = mem->io_start;
-		mem->iomap.size = mem->io_size;
+		mem->iomap.base = mem->io.start;
+		mem->iomap.size = resource_size(&mem->io);
 		mem->iomap.iomem = bus_space_vaddr(i915->bst, bsh);
 	}
 #endif
 
-	drm_dbg(&i915->drm, "Stolen Local memory IO start: %pa\n",
-		&mem->io_start);
-	drm_dbg(&i915->drm, "Stolen Local DSM base: %pa\n", &mem->region.start);
+	drm_dbg(&i915->drm, "Stolen Local DSM: %pR\n", &mem->region);
+	drm_dbg(&i915->drm, "Stolen Local memory IO: %pR\n", &mem->io);
 
 	return 0;
 #ifdef __linux__
@@ -887,7 +888,7 @@ static int release_stolen_lmem(struct intel_memory_region *mem)
 {
 	STUB();
 #ifdef notyet
-	if (mem->io_size)
+	if (resource_size(&mem->io))
 		io_mapping_fini(&mem->iomap);
 #endif
 	i915_gem_cleanup_stolen(mem->i915);
