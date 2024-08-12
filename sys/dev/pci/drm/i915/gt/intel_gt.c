@@ -1073,6 +1073,55 @@ err:
 
 #endif
 
+static void __intel_gt_bind_context_set_ready(struct intel_gt *gt, bool ready)
+{
+	struct intel_engine_cs *engine = gt->engine[BCS0];
+
+	if (engine && engine->bind_context)
+		engine->bind_context_ready = ready;
+}
+
+/**
+ * intel_gt_bind_context_set_ready - Set the context binding as ready
+ *
+ * @gt: GT structure
+ *
+ * This function marks the binder context as ready.
+ */
+void intel_gt_bind_context_set_ready(struct intel_gt *gt)
+{
+	__intel_gt_bind_context_set_ready(gt, true);
+}
+
+/**
+ * intel_gt_bind_context_set_unready - Set the context binding as ready
+ * @gt: GT structure
+ *
+ * This function marks the binder context as not ready.
+ */
+
+void intel_gt_bind_context_set_unready(struct intel_gt *gt)
+{
+	__intel_gt_bind_context_set_ready(gt, false);
+}
+
+/**
+ * intel_gt_is_bind_context_ready - Check if context binding is ready
+ *
+ * @gt: GT structure
+ *
+ * This function returns binder context's ready status.
+ */
+bool intel_gt_is_bind_context_ready(struct intel_gt *gt)
+{
+	struct intel_engine_cs *engine = gt->engine[BCS0];
+
+	if (engine)
+		return engine->bind_context_ready;
+
+	return false;
+}
+
 int intel_gt_tiles_init(struct drm_i915_private *i915)
 {
 	struct intel_gt *gt;
