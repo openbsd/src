@@ -2309,8 +2309,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* uc_expand_default_options() with no GuC submission */
 	if (GRAPHICS_VER(dev_priv) >= 12 &&
-	    !IS_TIGERLAKE(dev_priv) && !IS_ROCKETLAKE(dev_priv) &&
-	    !IS_XEHPSDV(dev_priv) && !IS_PONTEVECCHIO(dev_priv))
+	    (INTEL_INFO(dev_priv)->platform != INTEL_TIGERLAKE) &&
+	    (INTEL_INFO(dev_priv)->platform != INTEL_ROCKETLAKE) &&
+	    (INTEL_INFO(dev_priv)->platform != INTEL_XEHPSDV) &&
+	    (INTEL_INFO(dev_priv)->platform != INTEL_PONTEVECCHIO))
 		dev_priv->params.enable_guc = ENABLE_GUC_LOAD_HUC;
 
 	mmio_bar = (GRAPHICS_VER(dev_priv) == 2) ? 0x14 : 0x10;
