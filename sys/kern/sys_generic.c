@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.157 2024/04/10 10:05:26 claudio Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.158 2024/08/12 19:32:05 anton Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -68,11 +68,16 @@
  *  2 - print ppoll(2) information, somewhat verbose
  *  3 - print pselect(2) and ppoll(2) information, very verbose
  */
-int kqpoll_debug = 0;
+/* #define KQPOLL_DEBUG */
+#ifdef KQPOLL_DEBUG
+int kqpoll_debug = 1;
 #define DPRINTFN(v, x...) if (kqpoll_debug > v) {			\
 	printf("%s(%d): ", curproc->p_p->ps_comm, curproc->p_tid);	\
 	printf(x);							\
 }
+#else
+#define DPRINTFN(v, x...) do {} while (0);
+#endif
 
 int pselregister(struct proc *, fd_set **, fd_set **, int, int *, int *);
 int pselcollect(struct proc *, struct kevent *, fd_set **, int *);
