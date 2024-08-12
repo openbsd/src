@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.15 2024/08/02 09:28:35 kettenis Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.16 2024/08/12 17:24:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -33,7 +33,6 @@
 
 int	acpipwrres_match(struct device *, void *, void *);
 void	acpipwrres_attach(struct device *, struct device *, void *);
-int	acpipwrres_activate(struct device *, int);
 
 #ifdef ACPIPWRRES_DEBUG
 #define DPRINTF(x)	printf x
@@ -67,8 +66,7 @@ struct acpipwrres_consumer {
 };
 
 const struct cfattach acpipwrres_ca = {
-	sizeof(struct acpipwrres_softc), acpipwrres_match, acpipwrres_attach,
-	NULL, acpipwrres_activate
+	sizeof(struct acpipwrres_softc), acpipwrres_match, acpipwrres_attach
 };
 
 struct cfdriver acpipwrres_cd = {
@@ -140,23 +138,6 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 			   (SIMPLEQ_NEXT(cons, cs_next) == NULL) ? "" : ",");
 	}
 	printf("\n");
-}
-
-int
-acpipwrres_activate(struct device *self, int act)
-{
-	struct acpipwrres_softc *sc = (struct acpipwrres_softc *)self;
-
-	switch (act) {
-	case DVACT_POWERDOWN:
-		if (sc->sc_cons_ref == 0 && sc->sc_state != ACPIPWRRES_OFF) {
-			aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0,
-			    NULL, NULL);
-			sc->sc_state = ACPIPWRRES_OFF;
-		}
-		break;
-	}
-	return 0;
 }
 
 int
