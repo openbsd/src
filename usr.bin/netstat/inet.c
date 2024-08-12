@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.182 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.183 2024/08/12 06:22:36 florian Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -813,7 +813,6 @@ static char *
 getrpcportnam(in_port_t port, int proto)
 {
 	struct sockaddr_in server_addr;
-	struct hostent *hp;
 	static struct pmaplist *head;
 	int socket = RPC_ANYSOCK;
 	struct timeval minutetimeout;
@@ -828,11 +827,7 @@ getrpcportnam(in_port_t port, int proto)
 		first = 1;
 		memset(&server_addr, 0, sizeof server_addr);
 		server_addr.sin_family = AF_INET;
-		if ((hp = gethostbyname("localhost")) != NULL)
-			memmove((caddr_t)&server_addr.sin_addr, hp->h_addr,
-			    hp->h_length);
-		else
-			(void) inet_aton("0.0.0.0", &server_addr.sin_addr);
+		(void) inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
 		minutetimeout.tv_sec = 60;
 		minutetimeout.tv_usec = 0;
