@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.157 2024/07/08 06:00:09 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.158 2024/08/12 15:34:58 job Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 8 2024 $
+.Dd $Mdocdate: August 12 2024 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -943,6 +943,7 @@ but without cipher suite codes.
 .Oc
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
+.Op Fl CRLfile Ar file
 .Op Fl binary
 .Op Fl certfile Ar file
 .Op Fl certsout Ar file
@@ -1133,6 +1134,9 @@ This directory must be a standard certificate directory: that is a hash
 of each subject name (using
 .Nm x509 Fl hash )
 should be linked to each certificate.
+.It Fl CRLfile Ar file
+Allows additional certificate revocation lists to be specified for verification.
+The CRLs should be in PEM format.
 .It Ar cert.pem ...
 One or more certificates of message recipients: used when encrypting a message.
 .It Fl certfile Ar file

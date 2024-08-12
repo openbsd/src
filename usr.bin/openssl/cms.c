@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.35 2023/11/21 17:56:19 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.36 2024/08/12 15:34:58 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -110,6 +110,7 @@ static struct {
 	X509 *cert;
 	char *certfile;
 	char *certsoutfile;
+	char *crlfile;
 	const EVP_CIPHER *cipher;
 	char *contfile;
 	ASN1_OBJECT *econtent_type;
@@ -546,6 +547,13 @@ static const struct option cms_options[] = {
 		.desc = "Certificate Authority path",
 		.type = OPTION_ARG,
 		.opt.arg = &cfg.CApath,
+	},
+	{
+		.name = "CRLfile",
+		.argname = "file",
+		.desc = "Other certificate revocation lists file",
+		.type = OPTION_ARG,
+		.opt.arg = &cfg.crlfile,
 	},
 	{
 		.name = "binary",
@@ -1111,10 +1119,10 @@ cms_usage(void)
 	    "[-aes128 | -aes192 | -aes256 | -camellia128 |\n"
 	    "    -camellia192 | -camellia256 | -des | -des3 |\n"
 	    "    -rc2-40 | -rc2-64 | -rc2-128] [-CAfile file]\n"
-	    "    [-CApath directory] [-binary] [-certfile file]\n"
-	    "    [-certsout file] [-cmsout] [-compress] [-content file]\n"
-	    "    [-crlfeol] [-data_create] [-data_out] [-debug_decrypt]\n"
-	    "    [-decrypt] [-digest_create] [-digest_verify]\n"
+	    "    [-CApath directory] [-CRLfile file] [-binary]\n"
+	    "    [-certfile file] [-certsout file] [-cmsout] [-compress]\n"
+	    "    [-content file] [-crlfeol] [-data_create] [-data_out]\n"
+	    "    [-debug_decrypt] [-decrypt] [-digest_create] [-digest_verify]\n"
 	    "    [-econtent_type type] [-encrypt] [-EncryptedData_decrypt]\n"
 	    "    [-EncryptedData_encrypt] [-from addr] [-in file]\n"
 	    "    [-inform der | pem | smime] [-inkey file]\n"
@@ -1158,6 +1166,7 @@ cms_main(int argc, char **argv)
 	X509 *recip = NULL, *signer = NULL;
 	EVP_PKEY *key = NULL;
 	STACK_OF(X509) *other = NULL;
+	STACK_OF(X509_CRL) *crls = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
 	int badarg = 0;
 	CMS_ReceiptRequest *rr = NULL;
@@ -1316,6 +1325,14 @@ cms_main(int argc, char **argv)
 			goto end;
 		}
 	}
+
+	if (cfg.crlfile != NULL) {
+		crls = load_crls(bio_err, cfg.crlfile, FORMAT_PEM, NULL,
+		    "other CRLs");
+		if (crls == NULL)
+			goto end;
+	}
+
 	if (cfg.recipfile != NULL &&
 	    (cfg.operation == SMIME_DECRYPT)) {
 		if ((recip = load_cert(bio_err, cfg.recipfile,
@@ -1677,6 +1694,15 @@ cms_main(int argc, char **argv)
 		    cfg.secret_keylen, indata, out, cfg.flags))
 			goto end;
 	} else if (cfg.operation == SMIME_VERIFY) {
+		if (cfg.crlfile != NULL) {
+			int i;
+
+			for (i = 0; i < sk_X509_CRL_num(crls); i++) {
+				X509_CRL *crl = sk_X509_CRL_value(crls, i);
+				if (!CMS_add1_crl(cms, crl))
+					goto end;
+			}
+		}
 		if (CMS_verify(cms, other, store, indata, out,
 		    cfg.flags) > 0) {
 			BIO_printf(bio_err, "Verification successful\n");
@@ -1752,6 +1778,7 @@ cms_main(int argc, char **argv)
 
 	sk_X509_pop_free(cfg.encerts, X509_free);
 	sk_X509_pop_free(other, X509_free);
+	sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	X509_VERIFY_PARAM_free(cfg.vpm);
 	sk_OPENSSL_STRING_free(cfg.sksigners);
 	sk_OPENSSL_STRING_free(cfg.skkeys);
