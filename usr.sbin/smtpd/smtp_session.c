@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.442 2024/03/20 17:52:43 op Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.443 2024/08/12 09:32:44 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1026,6 +1026,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			filter_param = s->filter_param;
 			/* fallthrough */
 
+		case FILTER_REPORT:
 		case FILTER_REWRITE:
 			smtp_report_filter_response(s, s->filter_phase,
 			    filter_response,

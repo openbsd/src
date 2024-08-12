@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.77 2024/05/14 13:38:54 op Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.78 2024/08/12 09:32:44 op Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -47,6 +47,7 @@ static int	filter_builtins_data(struct filter_session *, struct filter *, uint64
 static int	filter_builtins_commit(struct filter_session *, struct filter *, uint64_t, const char *);
 
 static void	filter_result_proceed(uint64_t);
+static void	filter_result_report(uint64_t, const char *);
 static void	filter_result_junk(uint64_t);
 static void	filter_result_rewrite(uint64_t, const char *);
 static void	filter_result_reject(uint64_t, const char *);
@@ -657,6 +658,8 @@ lka_filter_process_response(const char *name, const char *line)
 			filter_result_reject(reqid, parameter);
 		else if (strncmp(response, "disconnect|", 11) == 0)
 			filter_result_disconnect(reqid, parameter);
+		else if (strncmp(response, "report|", 7) == 0)
+			filter_result_report(reqid, parameter);
 		else
 			fatalx("Invalid directive: %s", line);
 	}
@@ -953,6 +956,16 @@ filter_result_proceed(uint64_t reqid)
 	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
 	m_add_id(p_dispatcher, reqid);
 	m_add_int(p_dispatcher, FILTER_PROCEED);
+	m_close(p_dispatcher);
+}
+
+static void
+filter_result_report(uint64_t reqid, const char *param)
+{
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, FILTER_REPORT);
+	m_add_string(p_dispatcher, param);
 	m_close(p_dispatcher);
 }
 
@@ -1632,6 +1645,9 @@ lka_report_smtp_filter_response(const char *direction, struct timeval *tv, uint6
 	switch (response) {
 	case FILTER_PROCEED:
 		response_name = "proceed";
+		break;
+	case FILTER_REPORT:
+		response_name = "report";
 		break;
 	case FILTER_JUNK:
 		response_name = "junk";

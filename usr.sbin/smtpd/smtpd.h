@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.686 2024/06/02 23:26:39 jsg Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.687 2024/08/12 09:32:44 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1125,6 +1125,7 @@ struct filter_config {
 
 enum filter_status {
 	FILTER_PROCEED,
+	FILTER_REPORT,
 	FILTER_REWRITE,
 	FILTER_REJECT,
 	FILTER_DISCONNECT,
