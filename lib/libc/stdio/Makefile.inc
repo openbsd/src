@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.30 2024/01/19 16:30:28 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.31 2024/08/12 20:56:55 guenther Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -19,10 +19,11 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	getwchar.c putwc.c putwchar.c ungetwc.c \
 	fwprintf.c swprintf.c vfwprintf.c vswprintf.c vwprintf.c wprintf.c \
 	fwscanf.c swscanf.c vfwscanf.c vswscanf.c vwscanf.c wscanf.c \
-	getdelim.c getline.c dprintf.c vdprintf.c
+	getdelim.c getline.c dprintf.c vdprintf.c \
+	fpending.c freadahead.c freading.c freadptr.c fseterr.c fwriting.c
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fgetwln.3 fmemopen.3 \
-	fopen.3 fputs.3 fread.3 fseek.3 funopen.3 getc.3 \
+	fopen.3 __fpending.3 fputs.3 fread.3 fseek.3 funopen.3 getc.3 \
 	open_memstream.3 perror.3 printf.3 putc.3 remove.3 scanf.3 setbuf.3 \
 	setvbuf.3 stdio.3 tmpnam.3 ungetc.3 fgetws.3 fputws.3 fwide.3 getwc.3 \
 	putwc.3 ungetwc.3 wprintf.3 wscanf.3 getdelim.3

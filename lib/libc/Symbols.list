@@ -1361,6 +1361,13 @@ xprt_register
 xprt_unregister
 
 /* stdio */
+__fpending
+__freadahead
+__freading
+__freadptr
+__freadptrinc
+__fseterr
+__fwriting
 __sF
 __srget
 __swbuf

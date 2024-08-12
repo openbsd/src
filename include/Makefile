@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.231 2023/08/20 15:02:50 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.232 2024/08/12 20:56:55 guenther Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -25,7 +25,7 @@ FILES=	a.out.h ar.h asr.h assert.h \
 	ranlib.h readpassphrase.h regex.h resolv.h rmd160.h \
 	sched.h search.h setjmp.h semaphore.h sha1.h sha2.h \
 	signal.h siphash.h sndio.h spawn.h stdbool.h stddef.h \
-	stdio.h stdlib.h string.h strings.h sysexits.h \
+	stdio.h stdio_ext.h stdlib.h string.h strings.h sysexits.h \
 	tar.h tgmath.h tib.h time.h ttyent.h \
 	uchar.h unistd.h utime.h utmp.h uuid.h \
 	vis.h  \
