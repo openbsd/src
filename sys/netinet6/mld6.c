@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.62 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.63 2024/08/12 11:25:27 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -85,9 +85,9 @@
 #include <netinet6/mld6_var.h>
 
 static struct ip6_pktopts ip6_opts;
-int	mld6_timers_are_running;	/* [N] shortcut for fast timer */
+int	mld6_timers_are_running;	/* [a] shortcut for fast timer */
 
-void mld6_checktimer(struct ifnet *);
+int mld6_checktimer(struct ifnet *);
 static void mld6_sendpkt(struct in6_multi *, int, const struct in6_addr *);
 
 void
@@ -118,6 +118,7 @@ mld6_start_listening(struct in6_multi *in6m)
 {
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
+	int running = 0;
 
 	/*
 	 * RFC2710 page 10:
@@ -138,7 +139,12 @@ mld6_start_listening(struct in6_multi *in6m)
 		    MLD_RANDOM_DELAY(MLD_V1_MAX_RI *
 		    PR_FASTHZ);
 		in6m->in6m_state = MLD_IREPORTEDLAST;
-		mld6_timers_are_running = 1;
+		running = 1;
+	}
+
+	if (running) {
+		membar_producer();
+		atomic_store_int(&mld6_timers_are_running, running);
 	}
 }
 
@@ -169,6 +175,7 @@ mld6_input(struct mbuf *m, int off)
 	struct in6_multi *in6m;
 	struct ifmaddr *ifma;
 	int timer;		/* timer value in the MLD query header */
+	int running = 0;
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 
@@ -272,7 +279,7 @@ mld6_input(struct mbuf *m, int off)
 					in6m->in6m_timer > timer) {
 					in6m->in6m_timer =
 					    MLD_RANDOM_DELAY(timer);
-					mld6_timers_are_running = 1;
+					running = 1;
 				}
 			}
 		}
@@ -323,8 +330,13 @@ mld6_input(struct mbuf *m, int off)
 #endif
 		break;
 	}
-	if_put(ifp);
 
+	if (running) {
+		membar_producer();
+		atomic_store_int(&mld6_timers_are_running, running);
+	}
+
+	if_put(ifp);
 	m_freem(m);
 }
 
@@ -332,6 +344,7 @@ void
 mld6_fasttimeo(void)
 {
 	struct ifnet *ifp;
+	int running;
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -340,23 +353,29 @@ mld6_fasttimeo(void)
 	 * lock intentionally.  In case it is not set due to MP races, we may
 	 * miss to check the timers.  Then run the loop at next fast timeout.
 	 */
-	if (!mld6_timers_are_running)
+	if (!atomic_load_int(&mld6_timers_are_running))
 		return;
+	membar_consumer();
 
 	NET_LOCK();
 
-	mld6_timers_are_running = 0;
-	TAILQ_FOREACH(ifp, &ifnetlist, if_list)
-		mld6_checktimer(ifp);
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
+		if (mld6_checktimer(ifp))
+			running = 1;
+	}
+
+	membar_producer();
+	atomic_store_int(&mld6_timers_are_running, running);
 
 	NET_UNLOCK();
 }
 
-void
+int
 mld6_checktimer(struct ifnet *ifp)
 {
 	struct in6_multi *in6m;
 	struct ifmaddr *ifma;
+	int running = 0;
 
 	NET_ASSERT_LOCKED();
 
@@ -370,9 +389,11 @@ mld6_checktimer(struct ifnet *ifp)
 			mld6_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
 			in6m->in6m_state = MLD_IREPORTEDLAST;
 		} else {
-			mld6_timers_are_running = 1;
+			running = 1;
 		}
 	}
+
+	return (running);
 }
 
 static void
