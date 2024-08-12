@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.44 2024/05/22 08:42:34 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.45 2024/08/12 09:05:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -963,6 +963,7 @@ json_rtr(struct ctl_show_rtr *rtr)
 
 	if (rtr->session_id != -1) {
 		json_do_uint("version", rtr->version);
+		json_do_uint("minimal_version", rtr->min_version);
 		json_do_uint("session_id", rtr->session_id);
 		json_do_uint("serial", rtr->serial);
 	}
