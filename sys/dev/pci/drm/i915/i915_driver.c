@@ -2080,7 +2080,6 @@ inteldrm_doswitch(void *v)
 {
 	struct inteldrm_softc *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
-	struct drm_device *dev = &dev_priv->drm;
 
 	rasops_show_screen(ri, dev_priv->switchcookie, 0, NULL, NULL);
 	intel_fbdev_restore_mode(dev_priv);
@@ -2094,7 +2093,6 @@ inteldrm_enter_ddb(void *v, void *cookie)
 {
 	struct inteldrm_softc *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
-	struct drm_device *dev = &dev_priv->drm;
 
 	if (cookie == ri->ri_active)
 		return;
@@ -2252,11 +2250,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	struct drm_device *dev;
 	struct pci_attach_args *pa = aux;
 	const struct pci_device_id *id;
-	struct intel_device_info *info, *device_info;
-	struct intel_runtime_info *runtime;
+	struct intel_device_info *info;
 	extern int vga_console_attached;
 	int mmio_bar, mmio_size, mmio_type;
-	int ret;
 
 	dev_priv->pa = pa;
 	dev_priv->pc = pa->pa_pc;
@@ -2396,8 +2392,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 void
 inteldrm_forcedetach(struct inteldrm_softc *dev_priv)
 {
+#ifdef notyet
 	struct pci_softc *psc = (struct pci_softc *)dev_priv->sc_dev.dv_parent;
 	pcitag_t tag = dev_priv->tag;
+#endif
 	extern int vga_console_attached;
 
 	if (dev_priv->primary) {
@@ -2422,7 +2420,6 @@ inteldrm_attachhook(struct device *self)
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsemuldisplaydev_attach_args aa;
 	const struct pci_device_id *id = dev_priv->id;
-	struct drm_device *dev = &dev_priv->drm;
 	int orientation_quirk;
 
 	if (inteldrm_refcnt == 0) {
@@ -2631,7 +2628,6 @@ inteldrm_firmware_backlight(struct inteldrm_softc *dev_priv,
 void
 inteldrm_init_backlight(struct inteldrm_softc *dev_priv)
 {
-	struct drm_device *dev = &dev_priv->drm;
 	struct wsdisplay_param dp;
 
 	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
