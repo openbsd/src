@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.240 2024/08/03 04:50:27 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.241 2024/08/12 21:01:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1107,9 +1107,7 @@ long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
 long SSL_CTX_get_timeout(const SSL_CTX *ctx);
 X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *);
 void SSL_CTX_set_cert_store(SSL_CTX *, X509_STORE *);
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store);
-#endif
 X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
 EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx);
 int SSL_want(const SSL *s);
@@ -1128,9 +1126,7 @@ int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c);
-#endif
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
 int	SSL_get_fd(const SSL *s);
