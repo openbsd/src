@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.37 2024/08/09 14:00:48 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.38 2024/08/12 09:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,6 @@ struct rtr_header {
 	uint32_t	length;
 } __packed;
 
-#define RTR_MAX_VERSION		2
 #define RTR_MAX_PDU_SIZE	49152	/* XXX < IBUF_READ_SIZE */
 #define RTR_MAX_PDU_ERROR_SIZE	256
 #define RTR_DEFAULT_REFRESH	3600
@@ -213,6 +212,9 @@ struct rtr_session {
 	char				last_recv_msg[REASON_LEN];
 	uint8_t				version;
 	uint8_t				prev_version;
+	uint8_t				min_version;
+	uint8_t				errored;
+
 };
 
 TAILQ_HEAD(, rtr_session) rtrs = TAILQ_HEAD_INITIALIZER(rtrs);
@@ -258,6 +260,14 @@ log_rtr_type(enum rtr_pdu_type type)
 		return buf;
 	}
 };
+
+static uint8_t
+rtr_max_session_version(struct rtr_session *rs)
+{
+	if (rs->min_version > RTR_DEFAULT_VERSION)
+		return rs->min_version;
+	return RTR_DEFAULT_VERSION;
+}
 
 static void
 rtr_reset_cache(struct rtr_session *rs)
@@ -1084,13 +1094,14 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 
 	switch (event) {
 	case RTR_EVNT_UNSUPP_PROTO_VERSION:
-		if (rs->prev_version == rs->version) {
+		if (rs->prev_version == rs->version ||
+		    rs->version < rs->min_version) {
 			/*
 			 * Can't downgrade anymore, fail connection.
 			 * RFC requires sending the error with the
 			 * highest supported version number.
 			 */
-			rs->version = RTR_MAX_VERSION;
+			rs->version = rtr_max_session_version(rs);
 			rtr_send_error(rs, NULL, UNSUPP_PROTOCOL_VERS,
 			    "negotiation failed");
 			return;
@@ -1114,8 +1125,13 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 			rs->fd = -1;
 		}
 		/* try to reopen session */
-		timer_set(&rs->timers, Timer_Rtr_Retry,
-		    arc4random_uniform(10));
+		if (!rs->errored)
+			timer_set(&rs->timers, Timer_Rtr_Retry,
+			    arc4random_uniform(10));
+		else
+			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
+
+		rs->errored = 1;
 		/*
 		 * A close event during version negotiation needs to remain
 		 * in the negotiation state else the same error will happen
@@ -1190,6 +1206,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rtr_sem_release(rs->active_lock);
 		rtr_recalc();
 		rs->active_lock = 0;
+		rs->errored = 0;
 		/* clear the last errors */
 		rs->last_sent_error = NO_ERROR;
 		rs->last_recv_error = NO_ERROR;
@@ -1371,12 +1388,12 @@ rtr_poll_events(struct pollfd *pfds, size_t npfds, time_t *timeout)
 }
 
 struct rtr_session *
-rtr_new(uint32_t id, char *descr)
+rtr_new(uint32_t id, struct rtr_config_msg *conf)
 {
 	struct rtr_session *rs;
 
 	if ((rs = calloc(1, sizeof(*rs))) == NULL)
-		fatal("RTR session %s", descr);
+		fatal("RTR session %s", conf->descr);
 
 	RB_INIT(&rs->roa_set);
 	RB_INIT(&rs->aspa);
@@ -1384,11 +1401,12 @@ rtr_new(uint32_t id, char *descr)
 	TAILQ_INIT(&rs->timers);
 	msgbuf_init(&rs->w);
 
-	strlcpy(rs->descr, descr, sizeof(rs->descr));
+	strlcpy(rs->descr, conf->descr, sizeof(rs->descr));
 	rs->id = id;
 	rs->session_id = -1;
-	rs->version = RTR_MAX_VERSION;
-	rs->prev_version = RTR_MAX_VERSION;
+	rs->min_version = conf->min_version;	/* must be set before version */
+	rs->version = rtr_max_session_version(rs);
+	rs->prev_version = rtr_max_session_version(rs);
 	rs->refresh = RTR_DEFAULT_REFRESH;
 	rs->retry = RTR_DEFAULT_RETRY;
 	rs->expire = RTR_DEFAULT_EXPIRE;
@@ -1441,8 +1459,8 @@ rtr_open(struct rtr_session *rs, int fd)
 	}
 
 	if (rs->state == RTR_STATE_CLOSED) {
-		rs->version = RTR_MAX_VERSION;
-		rs->prev_version = RTR_MAX_VERSION;
+		rs->version = rtr_max_session_version(rs);
+		rs->prev_version = rtr_max_session_version(rs);
 	}
 
 	rs->fd = rs->w.fd = fd;
@@ -1471,8 +1489,10 @@ rtr_config_merge(void)
 }
 
 void
-rtr_config_keep(struct rtr_session *rs)
+rtr_config_keep(struct rtr_session *rs, struct rtr_config_msg *conf)
 {
+	strlcpy(rs->descr, conf->descr, sizeof(rs->descr));
+	rs->min_version = conf->min_version;
 	rs->reconf_action = RECONF_KEEP;
 }
 
@@ -1523,6 +1543,7 @@ rtr_show(struct rtr_session *rs, pid_t pid)
 
 	/* descr, remote_addr, local_addr and remote_port set by parent */
 	msg.version = rs->version;
+	msg.min_version = rs->min_version;
 	msg.serial = rs->serial;
 	msg.refresh = rs->refresh;
 	msg.retry = rs->retry;

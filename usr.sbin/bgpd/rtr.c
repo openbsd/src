@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.21 2024/04/09 12:05:07 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.22 2024/08/12 09:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -309,7 +309,7 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	struct imsg		 imsg;
 	struct bgpd_config	 tconf;
 	struct roa		 roa;
-	char			 descr[PEER_DESCR_LEN];
+	struct rtr_config_msg	 rtrconf;
 	struct rtr_session	*rs;
 	uint32_t		 rtrid;
 	int			 n, fd;
@@ -395,13 +395,14 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			aspa = NULL;
 			break;
 		case IMSG_RECONF_RTR_CONFIG:
-			if (imsg_get_data(&imsg, descr, sizeof(descr)) == -1)
+			if (imsg_get_data(&imsg, &rtrconf,
+			    sizeof(rtrconf)) == -1)
 				fatal("imsg_get_data");
 			rs = rtr_get(rtrid);
 			if (rs == NULL)
-				rtr_new(rtrid, descr);
+				rtr_new(rtrid, &rtrconf);
 			else
-				rtr_config_keep(rs);
+				rtr_config_keep(rs, &rtrconf);
 			break;
 		case IMSG_RECONF_DRAIN:
 			imsg_compose(ibuf_main, IMSG_RECONF_DRAIN, 0, 0,

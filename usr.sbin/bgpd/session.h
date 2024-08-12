@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.170 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: session.h,v 1.171 2024/08/12 09:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -296,13 +296,14 @@ struct rtr_session;
 size_t			 rtr_count(void);
 void			 rtr_check_events(struct pollfd *, size_t);
 size_t			 rtr_poll_events(struct pollfd *, size_t, time_t *);
-struct rtr_session	*rtr_new(uint32_t, char *);
+struct rtr_session	*rtr_new(uint32_t, struct rtr_config_msg *);
 struct rtr_session	*rtr_get(uint32_t);
 void			 rtr_free(struct rtr_session *);
 void			 rtr_open(struct rtr_session *, int);
 void			 rtr_config_prep(void);
 void			 rtr_config_merge(void);
-void			 rtr_config_keep(struct rtr_session *);
+void			 rtr_config_keep(struct rtr_session *,
+			     struct rtr_config_msg *);
 void			 rtr_roa_merge(struct roa_tree *);
 void			 rtr_aspa_merge(struct aspa_tree *);
 void			 rtr_shutdown(void);

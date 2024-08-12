@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.493 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.494 2024/08/12 09:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,8 @@
 #include <imsg.h>
 
 #define	BGP_VERSION			4
+#define	RTR_MAX_VERSION			2
+#define	RTR_DEFAULT_VERSION		1
 #define	BGP_PORT			179
 #define	RTR_PORT			323
 #define	CONFFILE			"/etc/bgpd.conf"
@@ -570,11 +572,19 @@ struct rtr_config {
 	struct bgpd_addr		local_addr;
 	uint32_t			id;
 	uint16_t			remote_port;
+	uint8_t				min_version;
+};
+
+struct rtr_config_msg {
+	char				descr[PEER_DESCR_LEN];
+	uint8_t				min_version;
 };
 
 struct ctl_show_rtr {
 	char			descr[PEER_DESCR_LEN];
 	char			state[PEER_DESCR_LEN];
+	char			last_sent_msg[REASON_LEN];
+	char			last_recv_msg[REASON_LEN];
 	struct bgpd_addr	remote_addr;
 	struct bgpd_addr	local_addr;
 	uint32_t		serial;
@@ -582,12 +592,11 @@ struct ctl_show_rtr {
 	uint32_t		retry;
 	uint32_t		expire;
 	int			session_id;
-	uint16_t		remote_port;
-	uint8_t			version;
 	enum rtr_error		last_sent_error;
 	enum rtr_error		last_recv_error;
-	char			last_sent_msg[REASON_LEN];
-	char			last_recv_msg[REASON_LEN];
+	uint16_t		remote_port;
+	uint8_t			version;
+	uint8_t			min_version;
 };
 
 enum imsg_type {

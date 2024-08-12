@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.463 2024/05/22 08:41:14 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.464 2024/08/12 09:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,7 +241,7 @@ typedef struct {
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
 %token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
-%token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT
+%token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT MINVERSION
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
 %token	FLOWSPEC PROTO FLAGS FRAGMENT TOS LENGTH ICMPTYPE CODE
@@ -723,6 +723,14 @@ rtropt		: DESCR STRING		{
 		}
 		| PORT port {
 			currtr->remote_port = $2;
+		}
+		| MINVERSION NUMBER {
+			if ($2 < 0 || $2 > RTR_MAX_VERSION) {
+				yyerror("min-version must be between %u and %u",
+				    0, RTR_MAX_VERSION);
+				YYERROR;
+			}
+			currtr->min_version = $2;
 		}
 		;
 
@@ -3578,6 +3586,7 @@ lookup(char *s)
 		{ "med",		MED},
 		{ "metric",		METRIC},
 		{ "min",		YMIN},
+		{ "min-version",	MINVERSION},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
 		{ "neighbor-as",	NEIGHBORAS},

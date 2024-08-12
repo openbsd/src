@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.264 2024/05/15 09:09:38 job Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.265 2024/08/12 09:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -738,8 +738,12 @@ send_config(struct bgpd_config *conf)
 	}
 	free_aspatree(&conf->aspa);
 	SIMPLEQ_FOREACH(rtr, &conf->rtrs, entry) {
+		struct rtr_config_msg rtrconf = { 0 };
+
+		strlcpy(rtrconf.descr, rtr->descr, sizeof(rtrconf.descr));
+		rtrconf.min_version = rtr->min_version;
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_RTR_CONFIG, rtr->id,
-		    0, -1, rtr->descr, sizeof(rtr->descr)) == -1)
+		    0, -1, &rtrconf, sizeof(rtrconf)) == -1)
 			return (-1);
 	}
 
