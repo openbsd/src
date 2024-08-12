@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.17 2019/06/29 16:12:21 deraadt Exp $ */
+/*	$OpenBSD: freopen.c,v 1.18 2024/08/12 20:53:09 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,9 +75,8 @@ freopen(const char *file, const char *mode, FILE *fp)
 		isopen = 0;
 		wantfd = -1;
 	} else {
-		/* flush the stream; ANSI doesn't require this. */
-		if (fp->_flags & __SWR)
-			(void) __sflush(fp);
+		/* flush the stream; POSIX, not ANSI, requires this. */
+		(void) __sflush(fp);
 		/* if close is NULL, closing is a no-op, hence pointless */
 		isopen = fp->_close != NULL;
 		if ((wantfd = fp->_file) < 0 && isopen) {
