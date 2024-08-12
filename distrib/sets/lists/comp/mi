@@ -1275,6 +1275,7 @@
 ./usr/include/stddef.h
 ./usr/include/stdint.h
 ./usr/include/stdio.h
+./usr/include/stdio_ext.h
 ./usr/include/stdlib.h
 ./usr/include/string.h
 ./usr/include/strings.h
@@ -2264,6 +2265,7 @@
 ./usr/share/man/man3/X509v3_addr_validate_path.3
 ./usr/share/man/man3/X509v3_asid_add_id_or_range.3
 ./usr/share/man/man3/X509v3_get_ext_by_NID.3
+./usr/share/man/man3/__fpending.3
 ./usr/share/man/man3/__tfork_thread.3
 ./usr/share/man/man3/a2d_ASN1_OBJECT.3
 ./usr/share/man/man3/a64l.3

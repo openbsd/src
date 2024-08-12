@@ -745,7 +745,7 @@
 ./usr/lib/crtendS.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libagentx.so.1.1
-./usr/lib/libc.so.100.2
+./usr/lib/libc.so.100.3
 ./usr/lib/libcbor.so.2.0
 ./usr/lib/libcrypto.so.54.0
 ./usr/lib/libcurses.so.15.0
@@ -776,10 +776,10 @@
 ./usr/lib/librpcsvc.so.3.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.7.3
-./usr/lib/libssl.so.57.0
+./usr/lib/libssl.so.57.1
 ./usr/lib/libtermcap.so.15.0
 ./usr/lib/libtermlib.so.15.0
-./usr/lib/libtls.so.30.0
+./usr/lib/libtls.so.30.1
 ./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.18.0
 ./usr/lib/libz.so.7.1
@@ -2995,7 +2995,7 @@
 ./usr/share/relink/usr/bin/ssh-agent
 ./usr/share/relink/usr/bin/ssh-agent/ssh-agent.tar
 ./usr/share/relink/usr/lib
-./usr/share/relink/usr/lib/libc.so.100.2.a
+./usr/share/relink/usr/lib/libc.so.100.3.a
 ./usr/share/relink/usr/lib/libcrypto.so.54.0.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
