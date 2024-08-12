@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.17 2024/08/11 11:56:08 florian Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.18 2024/08/12 06:19:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -491,15 +491,9 @@ pmapdump(int argc, char **argv)
 
 	if (argc == 1)
 		get_inet_address(&server_addr, argv[0]);
-	else {
-		bzero((char *)&server_addr, sizeof server_addr);
-		server_addr.sin_family = AF_INET;
-		if ((hp = gethostbyname("localhost")) != NULL)
-			bcopy(hp->h_addr, (caddr_t)&server_addr.sin_addr,
-			    hp->h_length);
-		else
-			(void) inet_aton("0.0.0.0", &server_addr.sin_addr);
-	}
+	else
+		get_inet_address(&server_addr, "127.0.0.1");
+
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;
 	server_addr.sin_port = htons(PMAPPORT);
@@ -689,16 +683,19 @@ fail:
 void
 get_inet_address(struct sockaddr_in *addr, char *host)
 {
-	struct hostent *hp;
+	struct addrinfo hints, *res;
+	int error;
 
-	bzero((char *)addr, sizeof *addr);
-	if (inet_aton(host, &addr->sin_addr) == 0) {
-		if ((hp = gethostbyname(host)) == NULL) {
-			fprintf(stderr, "rpcinfo: %s is unknown host\n",
-			    host);
-			exit(1);
-		}
-		bcopy(hp->h_addr, (char *)&addr->sin_addr, hp->h_length);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+
+	if ((error = getaddrinfo(host, NULL, &hints, &res))) {
+		fprintf(stderr, "rpcinfo: %s is unknown host: %s\n",
+		    host, gai_strerror(error));
+		exit(1);
 	}
+
 	addr->sin_family = AF_INET;
+	addr->sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	freeaddrinfo(res);
 }
