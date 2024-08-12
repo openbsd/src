@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.28 2024/08/10 21:53:06 patrick Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.29 2024/08/12 06:47:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -581,7 +581,7 @@ rge_start(struct ifqueue *ifq)
 	free -= idx;
 
 	for (;;) {
-		if (RGE_TX_NSEGS >= free + 2) {
+		if (free < RGE_TX_NSEGS + 2) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
