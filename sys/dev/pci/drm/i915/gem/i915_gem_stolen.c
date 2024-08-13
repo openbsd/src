@@ -990,8 +990,12 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 		dsm_size = ALIGN_DOWN(lmem_size - dsm_base, SZ_1M);
 	}
 
+	if (i915_direct_stolen_access(i915)) {
+		drm_dbg(&i915->drm, "Using direct DSM access\n");
+		io_start = intel_uncore_read64(uncore, GEN12_DSMBASE) & GEN12_BDSM_MASK;
+		io_size = dsm_size;
 #ifdef __linux__
-	if (pci_resource_len(pdev, GEN12_LMEM_BAR) < lmem_size) {
+	} else if (pci_resource_len(pdev, GEN12_LMEM_BAR) < lmem_size) {
 		io_start = 0;
 		io_size = 0;
 	} else {
@@ -999,7 +1003,7 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 		io_size = dsm_size;
 	}
 #else
-	if (lmem_len < lmem_size) {
+	} else if (lmem_len < lmem_size) {
 		io_start = 0;
 		io_size = 0;
 	} else {
