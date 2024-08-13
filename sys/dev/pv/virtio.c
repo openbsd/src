@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.29 2024/08/01 11:13:19 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.30 2024/08/13 08:47:28 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -311,10 +311,11 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq)
 		vq->vq_entries[i].qe_index = i;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, 0, vq->vq_bytesize,
+	    BUS_DMASYNC_PREWRITE);
 	/* enqueue/dequeue status */
 	vq->vq_avail_idx = 0;
 	vq->vq_used_idx = 0;
-	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
 	vq->vq_queued = 1;
 }
