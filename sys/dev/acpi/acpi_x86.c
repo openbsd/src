@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.29 2024/08/11 17:30:28 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.30 2024/08/13 22:31:16 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -126,6 +126,10 @@ gosleep(void *v)
 		sc->sc_pmc_resume(sc->sc_pmc_cookie);
 
 	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
+
+	/* 1st resume AML step: _WAK(fromstate) */
+	if (sc->sc_state != ACPI_STATE_S0)
+		aml_node_setval(sc, sc->sc_wak, sc->sc_state);
 	return ret;
 }
 
