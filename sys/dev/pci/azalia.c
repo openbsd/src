@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.287 2024/05/17 19:43:45 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.288 2024/08/13 22:32:58 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -599,6 +599,18 @@ azalia_pci_activate(struct device *self, int act)
 	int rv = 0; 
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+
+		if (sc->detached)
+			break;
+	
+		/* stop interrupts and clear status registers */
+		AZ_WRITE_4(sc, INTCTL, 0);
+		AZ_WRITE_2(sc, STATESTS, HDA_STATESTS_SDIWAKE);
+		AZ_WRITE_1(sc, RIRBSTS, HDA_RIRBSTS_RINTFL | HDA_RIRBSTS_RIRBOIS);
+		(void) AZ_READ_4(sc, INTSTS);
+		break;
 	case DVACT_SUSPEND:
 		azalia_suspend(sc);
 		break;
@@ -1387,6 +1399,12 @@ azalia_suspend(azalia_t *az)
 
 	if (az->detached)
 		return 0;
+
+	/* stop interrupts and clear status registers */
+	AZ_WRITE_4(az, INTCTL, 0);
+	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
+	AZ_WRITE_1(az, RIRBSTS, HDA_RIRBSTS_RINTFL | HDA_RIRBSTS_RIRBOIS);
+	(void) AZ_READ_4(az, INTSTS);
 
 	/* disable unsolicited responses */
 	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) & ~HDA_GCTL_UNSOL);
