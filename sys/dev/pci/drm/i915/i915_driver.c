@@ -2263,6 +2263,11 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->memex = pa->pa_memex;
 	dev_priv->vga_regs = &dev_priv->bar;
 
+	id = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), pciidlist);
+	dev_priv->id = id;
+	info = (struct intel_device_info *)id->driver_data;
+
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA &&
 	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
@@ -2281,6 +2286,18 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
+	/*
+	 * Meteor Lake GOP framebuffer doesn't pass efifb pci bar tests
+	 * too early for IS_METEORLAKE which uses runtime info
+	 */
+	if (info->platform == INTEL_METEORLAKE) {
+		dev_priv->primary = 1;
+		dev_priv->console = 1;
+#if NEFIFB > 0
+		efifb_detach();
+#endif
+	}
+
 	printf("\n");
 
 	dev = drm_attach_pci(&i915_drm_driver, pa, 0, dev_priv->primary,
@@ -2289,11 +2306,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: drm attach failed\n", dev_priv->sc_dev.dv_xname);
 		return;
 	}
-
-	id = drm_find_description(PCI_VENDOR(pa->pa_id),
-	    PCI_PRODUCT(pa->pa_id), pciidlist);
-	dev_priv->id = id;
-	info = (struct intel_device_info *)id->driver_data;
 
 	/* Device parameters start as a copy of module parameters. */
 	i915_params_copy(&dev_priv->params, &i915_modparams);
