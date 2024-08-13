@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fflush.3,v 1.15 2024/08/12 22:37:57 tb Exp $
+.\"	$OpenBSD: fflush.3,v 1.16 2024/08/13 05:52:09 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2024 $
+.Dd $Mdocdate: August 13 2024 $
 .Dt FFLUSH 3
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@ or
 of a seekable file and it is not already at EOF then
 .Fn fflush
 sets the seek position of the file to the file position of the
-stream and discards any text pushed back by via
+stream and discards any text pushed back via
 .Xr ungetc 3
 or
 .Xr ungetwc 3 .
