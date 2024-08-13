@@ -832,7 +832,6 @@ static const struct intel_memory_region_ops i915_region_stolen_smem_ops = {
 
 static int init_stolen_lmem(struct intel_memory_region *mem)
 {
-	struct drm_i915_private *i915 = mem->i915;
 	int err;
 
 	if (GEM_WARN_ON(resource_size(&mem->region) == 0))
@@ -863,18 +862,15 @@ static int init_stolen_lmem(struct intel_memory_region *mem)
 		for (i = 0; i < atop(resource_size(&mem->io)); i++)
 			atomic_setbits_int(&(pgs[i].pg_flags), PG_PMAP_WC);
 
-		if (bus_space_map(i915->bst, mem->io.start, resource_size(&mem->io),
+		if (bus_space_map(mem->i915->bst, mem->io.start, resource_size(&mem->io),
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh))
 			panic("can't map stolen lmem");
 
 		mem->iomap.base = mem->io.start;
 		mem->iomap.size = resource_size(&mem->io);
-		mem->iomap.iomem = bus_space_vaddr(i915->bst, bsh);
+		mem->iomap.iomem = bus_space_vaddr(mem->i915->bst, bsh);
 	}
 #endif
-
-	drm_dbg(&i915->drm, "Stolen Local DSM: %pR\n", &mem->region);
-	drm_dbg(&i915->drm, "Stolen Local memory IO: %pR\n", &mem->io);
 
 	return 0;
 #ifdef __linux__
