@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.26 2023/03/03 20:16:44 cheloha Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.27 2024/08/14 13:54:08 mvs Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 /* Global variables for the kernel. */
 
 /* 1.1 */
-extern long hostid;
+extern int hostid;
 extern char hostname[MAXHOSTNAMELEN];
 extern int hostnamelen;
 extern char domainname[MAXHOSTNAMELEN];

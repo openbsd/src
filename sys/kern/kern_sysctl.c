@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.437 2024/08/11 15:10:53 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.438 2024/08/14 13:54:08 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -306,7 +306,7 @@ char hostname[MAXHOSTNAMELEN];
 int hostnamelen;
 char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
-long hostid;
+int hostid;
 char *disknames = NULL;
 size_t disknameslen;
 struct diskstats *diskstats = NULL;
@@ -507,6 +507,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_NUMVNODES:  /* XXX numvnodes is a long */
 		return (sysctl_rdint(oldp, oldlenp, newp, numvnodes));
+	case KERN_HOSTID:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &hostid));
 	case KERN_CLOCKRATE:
 		return (sysctl_clockrate(oldp, oldlenp, newp));
 	case KERN_BOOTTIME: {
@@ -585,7 +587,7 @@ int
 kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
-	int error, level, inthostid, stackgap;
+	int error, level, stackgap;
 	dev_t dev;
 	extern int pool_debug;
 
@@ -622,11 +624,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			    domainname, sizeof(domainname));
 		if (newp && !error)
 			domainnamelen = newlen;
-		return (error);
-	case KERN_HOSTID:
-		inthostid = hostid;  /* XXX assumes sizeof long <= sizeof int */
-		error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
-		hostid = inthostid;
 		return (error);
 	case KERN_CONSBUF:
 		if ((error = suser(p)))
@@ -1055,17 +1052,36 @@ int
 sysctl_int_lower(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
     int *valp)
 {
-	unsigned int oval = *valp, val = *valp;
+	unsigned int oldval, newval;
 	int error;
 
-	if (newp == NULL)
-		return (sysctl_rdint(oldp, oldlenp, newp, val));
+	if (oldp && *oldlenp < sizeof(int))
+		return (ENOMEM);
+	if (newp && newlen != sizeof(int))
+		return (EINVAL);
+	*oldlenp = sizeof(int);
 
-	if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)))
-		return (error);
-	if (val > oval)
-		return (EPERM);		/* do not allow raising */
-	*(unsigned int *)valp = val;
+	if (newp) {
+		if ((error = copyin(newp, &newval, sizeof(int))))
+			return (error);
+		do {
+			oldval = atomic_load_int(valp);
+			if (oldval < (unsigned int)newval)
+				return (EPERM);	/* do not allow raising */
+		} while (atomic_cas_uint(valp, oldval, newval) != oldval);
+
+		if (oldp) {
+			/* new value has been set although user gets error */
+			if ((error = copyout(&oldval, oldp, sizeof(int))))
+				return (error);
+		}
+	} else if (oldp) {
+		oldval = atomic_load_int(valp);
+
+		if ((error = copyout(&oldval, oldp, sizeof(int))))
+			return (error);	
+	}
+
 	return (0);
 }
 
@@ -1076,18 +1092,8 @@ sysctl_int_lower(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
 int
 sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 {
-	int error = 0;
-
-	if (oldp && *oldlenp < sizeof(int))
-		return (ENOMEM);
-	if (newp && newlen != sizeof(int))
-		return (EINVAL);
-	*oldlenp = sizeof(int);
-	if (oldp)
-		error = copyout(valp, oldp, sizeof(int));
-	if (error == 0 && newp)
-		error = copyin(newp, valp, sizeof(int));
-	return (error);
+	return (sysctl_int_bounded(oldp, oldlenp, newp, newlen, valp,
+	    INT_MIN, INT_MAX));
 }
 
 /*
