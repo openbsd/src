@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwres.h,v 1.5 2024/08/14 17:37:40 florian Exp $ */
+/* $Id: lwres.h,v 1.6 2024/08/14 17:38:57 florian Exp $ */
 
 #ifndef LWRES_LWRES_H
 #define LWRES_LWRES_H 1
@@ -114,9 +114,7 @@ typedef struct {
 	char 	       *search[LWRES_CONFMAXSEARCH];
 	uint8_t	searchnxt;	/*%< index for next free slot */
 
-	uint8_t	resdebug;      /*%< non-zero if 'options debug' set */
 	uint8_t	ndots;	       /*%< set to n in 'options ndots:n' */
-	uint8_t	no_tld_query;  /*%< non-zero if 'options no_tld_query' */
 	int	flags;
 } lwres_conf_t;
 

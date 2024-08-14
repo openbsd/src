@@ -155,9 +155,7 @@ lwres_conf_init(lwres_conf_t *confdata, int lwresflags) {
 	confdata->nsnext = 0;
 	confdata->domainname = NULL;
 	confdata->searchnxt = 0;
-	confdata->resdebug = 0;
 	confdata->ndots = 1;
-	confdata->no_tld_query = 0;
 	confdata->flags = lwresflags;
 
 	for (i = 0; i < LWRES_CONFMAXNAMESERVERS; i++)
@@ -187,9 +185,7 @@ lwres_conf_clear(lwres_conf_t *confdata) {
 	confdata->nsnext = 0;
 	confdata->domainname = NULL;
 	confdata->searchnxt = 0;
-	confdata->resdebug = 0;
 	confdata->ndots = 1;
-	confdata->no_tld_query = 0;
 }
 
 static lwres_result_t
@@ -366,11 +362,7 @@ lwres_conf_parseoption(lwres_conf_t *confdata,  FILE *fp) {
 		return (LWRES_R_FAILURE); /* Empty line after keyword. */
 
 	while (strlen(word) > 0U) {
-		if (strcmp("debug", word) == 0) {
-			confdata->resdebug = 1;
-		} else if (strcmp("no_tld_query", word) == 0) {
-			confdata->no_tld_query = 1;
-		} else if (strncmp("ndots:", word, 6) == 0) {
+		if (strncmp("ndots:", word, 6) == 0) {
 			ndots = strtol(word + 6, &p, 10);
 			if (*p != '\0') /* Bad string. */
 				return (LWRES_R_FAILURE);
