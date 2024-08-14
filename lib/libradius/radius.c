@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.5 2024/08/08 09:16:37 yasuoka Exp $ */
+/*	$OpenBSD: radius.c,v 1.6 2024/08/14 04:50:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -261,7 +261,7 @@ radius_check_response_authenticator(const RADIUS_PACKET * packet,
 	uint8_t authenticator[16];
 
 	radius_calc_response_authenticator(authenticator, packet, secret);
-	return (timingsafe_memcmp(authenticator, packet->pdata->authenticator,
+	return (timingsafe_bcmp(authenticator, packet->pdata->authenticator,
 	    16));
 }
 
@@ -300,7 +300,7 @@ radius_check_accounting_request_authenticator(const RADIUS_PACKET * packet,
 
 	radius_calc_accounting_request_authenticator(authenticator, packet,
 	    secret);
-	return (timingsafe_memcmp(authenticator, packet->pdata->authenticator,
+	return (timingsafe_bcmp(authenticator, packet->pdata->authenticator,
 	    16));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_msgauth.c,v 1.4 2024/08/08 09:16:37 yasuoka Exp $ */
+/*	$OpenBSD: radius_msgauth.c,v 1.5 2024/08/14 04:50:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -149,5 +149,5 @@ radius_check_message_authenticator(RADIUS_PACKET * packet, const char *secret)
 	if (len != sizeof(ma1))
 		return (-1);
 
-	return (timingsafe_memcmp(ma0, ma1, sizeof(ma1)));
+	return (timingsafe_bcmp(ma0, ma1, sizeof(ma1)));
 }
