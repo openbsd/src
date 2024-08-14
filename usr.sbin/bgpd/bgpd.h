@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.494 2024/08/12 09:04:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.495 2024/08/14 19:09:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,7 @@
 #define	F_CTL_AVS_VALID		0x1000000
 #define	F_CTL_AVS_INVALID	0x2000000
 #define	F_CTL_AVS_UNKNOWN	0x4000000
+#define	F_CTL_FILTERED		0x8000000	/* only set on requests */
 #define	F_CTL_SSV		0x80000000	/* only used by bgpctl */
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
@@ -317,6 +318,7 @@ struct bgpd_config {
 	uint16_t				 min_holdtime;
 	uint16_t				 connectretry;
 	uint8_t					 fib_priority;
+	uint8_t					 filtered_in_locrib;
 };
 
 extern int cmd_opts;
@@ -888,6 +890,7 @@ struct ctl_neighbor {
 #define	F_PREF_OTC_LEAK	0x080
 #define	F_PREF_ECMP	0x100
 #define	F_PREF_AS_WIDE	0x200
+#define	F_PREF_FILTERED	0x400
 
 struct ctl_show_rib {
 	struct bgpd_addr	true_nexthop;

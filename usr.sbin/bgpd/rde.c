@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.625 2024/05/22 08:41:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.626 2024/08/14 19:09:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1854,7 +1854,7 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 	path_id_tx = pathid_assign(peer, path_id, prefix, prefixlen);
 	/* add original path to the Adj-RIB-In */
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, path_id, path_id_tx,
-	    in, prefix, prefixlen) == 1)
+	    in, 0, prefix, prefixlen) == 1)
 		peer->stats.prefix_cnt++;
 
 	/* max prefix checker */
@@ -1883,11 +1883,16 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
 			prefix_update(rib, peer, path_id, path_id_tx, &state,
-			    prefix, prefixlen);
-		} else if (prefix_withdraw(rib, peer, path_id, prefix,
-		    prefixlen)) {
-			rde_update_log(wmsg, i, peer,
-			    NULL, prefix, prefixlen);
+			    0, prefix, prefixlen);
+		} else if (conf->filtered_in_locrib && i == RIB_LOC_START) {
+			rde_update_log(wmsg, i, peer, NULL, prefix, prefixlen);
+			prefix_update(rib, peer, path_id, path_id_tx, &state,
+			    1, prefix, prefixlen);
+		} else {
+			if (prefix_withdraw(rib, peer, path_id, prefix,
+			    prefixlen))
+				rde_update_log(wmsg, i, peer,
+				    NULL, prefix, prefixlen);
 		}
 
 		rde_filterstate_clean(&state);
@@ -2738,7 +2743,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	rib.aspa_validation_state = prefix_aspa_vstate(p);
 	rib.dmetric = p->dmetric;
 	rib.flags = 0;
-	if (!adjout) {
+	if (!adjout && prefix_eligible(p)) {
 		re = prefix_re(p);
 		TAILQ_FOREACH(xp, &re->prefix_h, entry.list.rib) {
 			switch (xp->dmetric) {
@@ -2768,6 +2773,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 		rib.flags |= F_PREF_ANNOUNCE;
 	if (prefix_eligible(p))
 		rib.flags |= F_PREF_ELIGIBLE;
+	if (prefix_filtered(p))
+		rib.flags |= F_PREF_FILTERED;
 	/* otc loop includes parse err so skip the latter if the first is set */
 	if (asp->flags & F_ATTR_OTC_LEAK)
 		rib.flags |= F_PREF_OTC_LEAK;
@@ -2853,6 +2860,8 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 		return;
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
+		return;
+	if ((req->flags & F_CTL_FILTERED) && !prefix_filtered(p))
 		return;
 	if ((req->flags & F_CTL_INELIGIBLE) && prefix_eligible(p))
 		return;
@@ -3557,7 +3566,7 @@ rde_reload_done(void)
 	struct rde_prefixset_head originsets_old;
 	struct as_set_head	 as_sets_old;
 	uint16_t		 rid;
-	int			 reload = 0;
+	int			 reload = 0, force_locrib = 0;
 
 	softreconfig = 0;
 
@@ -3567,6 +3576,12 @@ rde_reload_done(void)
 	SIMPLEQ_CONCAT(&prefixsets_old, &conf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&originsets_old, &conf->rde_originsets);
 	SIMPLEQ_CONCAT(&as_sets_old, &conf->as_sets);
+
+	/* run softreconfig in if filter mode changed */
+	if (conf->filtered_in_locrib != nconf->filtered_in_locrib) {
+		log_debug("filter mode changed, reloading Loc-Rib");
+		force_locrib = 1;
+	}
 
 	/* merge the main config */
 	copy_config(conf, nconf);
@@ -3688,7 +3703,7 @@ rde_reload_done(void)
 	}
 
 	/* bring ribs in sync */
-	for (rid = 0; rid < rib_size; rid++) {
+	for (rid = RIB_LOC_START; rid < rib_size; rid++) {
 		struct rib *rib = rib_byid(rid);
 		if (rib == NULL)
 			continue;
@@ -3734,10 +3749,11 @@ rde_reload_done(void)
 			rib->state = RECONF_KEEP;
 			/* FALLTHROUGH */
 		case RECONF_KEEP:
-			if (rde_filter_equal(rib->in_rules, rib->in_rules_tmp))
+			if (!(force_locrib && rid == RIB_LOC_START) &&
+			    rde_filter_equal(rib->in_rules, rib->in_rules_tmp))
 				/* rib is in sync */
 				break;
-			log_debug("in filter change: reloading RIB %s",
+			log_debug("filter change: reloading RIB %s",
 			    rib->name);
 			rib->state = RECONF_RELOAD;
 			reload++;
@@ -3935,9 +3951,14 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
 				prefix_update(rib, peer, p->path_id,
-				    p->path_id_tx, &state,
+				    p->path_id_tx, &state, 0,
 				    &prefix, pt->prefixlen);
-			} else if (action == ACTION_DENY) {
+			} else if (conf->filtered_in_locrib &&
+			    i == RIB_LOC_START) {
+				prefix_update(rib, peer, p->path_id,
+				    p->path_id_tx, &state, 1,
+				    &prefix, pt->prefixlen);
+			} else {
 				/* remove from Local-RIB */
 				prefix_withdraw(rib, peer, p->path_id, &prefix,
 				    pt->prefixlen);
@@ -4084,9 +4105,14 @@ rde_rpki_softreload(struct rib_entry *re, void *bula)
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
 				prefix_update(rib, peer, p->path_id,
-				    p->path_id_tx, &state,
+				    p->path_id_tx, &state, 0,
 				    &prefix, pt->prefixlen);
-			} else if (action == ACTION_DENY) {
+			} else if (conf->filtered_in_locrib &&
+			    i == RIB_LOC_START) {
+				prefix_update(rib, peer, p->path_id,
+				    p->path_id_tx, &state, 1,
+				    &prefix, pt->prefixlen);
+			} else {
 				/* remove from Local-RIB */
 				prefix_withdraw(rib, peer, p->path_id, &prefix,
 				    pt->prefixlen);
@@ -4365,7 +4391,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 
 	path_id_tx = pathid_assign(peerself, 0, &nc->prefix, nc->prefixlen);
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, 0, path_id_tx,
-	    state, &nc->prefix, nc->prefixlen) == 1)
+	    state, 0, &nc->prefix, nc->prefixlen) == 1)
 		peerself->stats.prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		struct rib *rib = rib_byid(i);
@@ -4374,8 +4400,8 @@ network_add(struct network_config *nc, struct filterstate *state)
 		rde_update_log("announce", i, peerself,
 		    state->nexthop ? &state->nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
-		prefix_update(rib, peerself, 0, path_id_tx, state, &nc->prefix,
-		    nc->prefixlen);
+		prefix_update(rib, peerself, 0, path_id_tx, state, 0,
+		    &nc->prefix, nc->prefixlen);
 	}
 	filterset_free(&nc->attrset);
 }

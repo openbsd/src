@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.241 2024/08/12 09:04:23 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.242 2024/08/14 19:09:51 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2024 $
+.Dd $Mdocdate: August 14 2024 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -324,6 +324,13 @@ It is unnecessary to create
 and
 .Ic Loc-RIB ,
 which are created automatically and used by default.
+.Pp
+.It Ic rde rib Loc-RIB include filtered
+Include filtered prefixes in the
+.Ic Loc-RIB .
+Filtered prefixes are not eligible by the decision process but can be
+displayed by
+.Xr bgpctl 8 .
 .Pp
 .It Xo
 .Ic rde

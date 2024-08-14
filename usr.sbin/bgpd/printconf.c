@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.173 2024/05/22 08:41:14 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.174 2024/08/14 19:09:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1276,6 +1276,8 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l)
 	SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry)
 		print_l3vpn(vpn);
 	printf("\n");
+	if (conf->filtered_in_locrib)
+		printf("rde rib Loc-RIB include filtered\n");
 	SIMPLEQ_FOREACH(rr, rib_l, entry) {
 		if (rr->flags & F_RIB_NOEVALUATE)
 			printf("rde rib %s no evaluate\n", rr->name);

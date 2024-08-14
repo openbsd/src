@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.464 2024/08/12 09:04:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.465 2024/08/14 19:09:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -250,7 +250,7 @@ typedef struct {
 %token	SEND RECV PLUS POLICY ROLE
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
-%token	LOG TRANSPARENT
+%token	LOG TRANSPARENT FILTERED
 %token	TCP MD5SIG PASSWORD KEY TTLSECURITY
 %token	ALLOW DENY MATCH
 %token	QUICK
@@ -940,6 +940,14 @@ conf_main	: AS as4number		{
 				YYERROR;
 			}
 			free($3);
+		}
+		| RDE RIB STRING INCLUDE FILTERED {
+			if (strcmp($3, "Loc-RIB") != 0) {
+				yyerror("include filtered only supported in "
+				    "Loc-RIB");
+				YYERROR;
+			}
+			conf->filtered_in_locrib = 1;
 		}
 		| NEXTHOP QUALIFY VIA STRING	{
 			if (!strcmp($4, "bgp"))
@@ -3551,6 +3559,7 @@ lookup(char *s)
 		{ "ext-community",	EXTCOMMUNITY},
 		{ "fib-priority",	FIBPRIORITY},
 		{ "fib-update",		FIBUPDATE},
+		{ "filtered",		FILTERED},
 		{ "flags",		FLAGS},
 		{ "flowspec",		FLOWSPEC},
 		{ "fragment",		FRAGMENT},

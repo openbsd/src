@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.102 2023/10/12 14:22:08 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.103 2024/08/14 19:09:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -485,6 +485,10 @@ int
 prefix_eligible(struct prefix *p)
 {
 	struct rde_aspath *asp = prefix_aspath(p);
+
+	/* prefix itself is marked ineligible */
+	if (prefix_filtered(p))
+		return 0;
 
 	/* The aspath needs to be loop and error free */
 	if (asp == NULL ||
