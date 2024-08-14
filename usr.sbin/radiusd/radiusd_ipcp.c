@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.8 2024/08/01 00:58:14 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.9 2024/08/14 04:47:08 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -485,6 +485,8 @@ ipcp_config_set(void *ctx, const char *name, int argc, char * const * argv)
 			}
 		}
 	} else if (strcmp(name, "dae") == 0) {
+		memset(&dae, 0, sizeof(dae));
+		dae.sock = -1;
 		if (!(argc >= 1 || strcmp(argv[1], "server") == 0)) {
 			module_send_message(module->base, IMSG_NG,
 			    "`%s' is unknown", argv[1]);
