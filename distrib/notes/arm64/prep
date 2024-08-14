@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.19 2023/10/18 06:45:45 kevlo Exp $
+dnl	$OpenBSD: prep,v 1.20 2024/08/14 10:50:20 jsg Exp $
 To perform an installation you must be able to interact with the
 console of the machine.  In some cases this can be done by an attached
 monitor and keyboard.  In others a serial console is required.
@@ -77,7 +77,7 @@ Install on Apple Silicon:
 
   Now you can copy the miniroot or install image
   ("miniroot{:--:}OSrev.img" or "install{:--:}OSrev.img") to a USB
-  drive, plug it into one of the type-C ports on the machine and reset
+  drive, plug it into one of the ports on the machine and reset
   the machine to boot into the OpenBSD installer.
 
 Install on Raspberry Pi:
