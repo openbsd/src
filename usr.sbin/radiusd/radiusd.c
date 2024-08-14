@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.52 2024/07/22 09:27:16 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.53 2024/08/14 04:44:07 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -518,10 +518,10 @@ radiusd_listen_handle_packet(struct radiusd_listen *listn,
 			break;	/* found it */
 	}
 	if (q != NULL) {
-		log_info("Received %s(code=%d) from %s id=%d: duplicate "
-		    "request by q=%u", radius_code_string(req_code), req_code,
+		log_info("Received %s(code=%d) from %s id=%d: duplicated "
+		    "with q=%u", radius_code_string(req_code), req_code,
 		    peerstr, req_id, q->id);
-		/* XXX RFC 5080 suggests to answer the cached result */
+		q = NULL;
 		goto on_error;
 	}
 
