@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.306 2024/05/22 08:42:34 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.307 2024/08/14 19:10:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -745,6 +745,8 @@ fmt_flags(uint32_t flags, int sum)
 	char	*p = flagstr;
 
 	if (sum) {
+		if (flags & F_PREF_FILTERED)
+			*p++ = 'F';
 		if (flags & F_PREF_INVALID)
 			*p++ = 'E';
 		if (flags & F_PREF_OTC_LEAK)
@@ -771,6 +773,8 @@ fmt_flags(uint32_t flags, int sum)
 		else
 			strlcpy(buf, "external", sizeof(buf));
 
+		if (flags & F_PREF_FILTERED)
+			strlcat(buf, ", filtered", sizeof(buf));
 		if (flags & F_PREF_INVALID)
 			strlcat(buf, ", invalid", sizeof(buf));
 		if (flags & F_PREF_OTC_LEAK)

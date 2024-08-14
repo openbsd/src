@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.45 2024/08/12 09:05:28 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.46 2024/08/14 19:10:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -834,6 +834,8 @@ json_rib(struct ctl_show_rib *r, struct ibuf *asbuf, struct parse_result *res)
 
 	/* flags */
 	json_do_bool("valid", r->flags & F_PREF_ELIGIBLE);
+	if (r->flags & F_PREF_FILTERED)
+		json_do_bool("filtered", 1);
 	if (r->flags & F_PREF_BEST)
 		json_do_bool("best", 1);
 	if (r->flags & F_PREF_ECMP)

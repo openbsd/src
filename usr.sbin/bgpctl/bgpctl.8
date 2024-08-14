@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.111 2023/05/09 13:26:27 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.112 2024/08/14 19:10:51 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2023 $
+.Dd $Mdocdate: August 14 2024 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -416,6 +416,11 @@ Show only routes which are not eligible.
 Show only prefixes which are marked invalid and were treated as withdrawn.
 .It Ar family
 Limit the output to the given address family.
+.It Cm filtered
+Show only routes which were filtered out.
+Requires
+.Ic rde rib Loc-RIB include filtered
+to be set in the config.
 .It Cm in
 Show routes from the unfiltered Adj-RIB-In.
 The
