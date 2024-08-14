@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.20 2024/08/14 10:50:20 jsg Exp $
+dnl	$OpenBSD: prep,v 1.21 2024/08/14 15:34:39 jsg Exp $
 To perform an installation you must be able to interact with the
 console of the machine.  In some cases this can be done by an attached
 monitor and keyboard.  In others a serial console is required.
@@ -54,6 +54,13 @@ Install on Apple Silicon:
   These machines do not come with UEFI firmware by default.  In order
   to install OpenBSD on these machine you need to run the Asahi Linux
   installer first in macOS or the macOS recovery environment.
+
+  If "Erase All Content and Settings" has been run, the machine will
+  need to connect to Apple's servers to activate.  A user-linked
+  Activation Lock can be removed by turning off Find My for the machine
+  through iCloud.  An Apple account is otherwise not required for
+  activation or installation.
+
   Instructions on how to download and run the Asahi Linux installer
   can be found at https://asahilinux.org/.  Run it in macOS or the
   macOS recovery environment.
