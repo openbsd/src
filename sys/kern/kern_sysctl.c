@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.438 2024/08/14 13:54:08 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.439 2024/08/14 17:52:47 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -252,6 +252,7 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 		fn = uvm_sysctl;
 		break;
 	case CTL_NET:
+		dolock = 0;
 		fn = net_sysctl;
 		break;
 	case CTL_FS:

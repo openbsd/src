@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.20 2024/04/29 00:29:48 jsg Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.21 2024/08/14 17:52:47 mvs Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -58,6 +58,12 @@ int
 mpls_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	return sysctl_bounded_arr(mplsctl_vars, nitems(mplsctl_vars),
+	int error;
+
+	KERNEL_LOCK();
+	error = sysctl_bounded_arr(mplsctl_vars, nitems(mplsctl_vars),
 	    name, namelen, oldp, oldlenp, newp, newlen);
+	KERNEL_UNLOCK();
+
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.66 2024/08/12 11:25:27 bluhm Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.67 2024/08/14 17:52:47 mvs Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -236,9 +236,18 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EISDIR);		/* overloaded */
 	protocol = name[1];
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
-		if (pr->pr_protocol == protocol && pr->pr_sysctl)
-			return ((*pr->pr_sysctl)(name + 2, namelen - 2,
-			    oldp, oldlenp, newp, newlen));
+		if (pr->pr_protocol == protocol && pr->pr_sysctl) {
+			size_t savelen = *oldlenp;
+			int error;
+
+			if ((error = sysctl_vslock(oldp, savelen)))
+				return (error);
+			error = (*pr->pr_sysctl)(name + 2, namelen - 2,
+			    oldp, oldlenp, newp, newlen);
+			sysctl_vsunlock(oldp, savelen);
+
+			return (error);
+		}
 	return (ENOPROTOOPT);
 }
 
