@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcspmi.c,v 1.5 2024/07/04 21:54:38 kettenis Exp $	*/
+/*	$OpenBSD: qcspmi.c,v 1.6 2024/08/14 10:54:58 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -408,14 +408,23 @@ qcspmi_cmd_read(void *cookie, uint8_t sid, uint8_t cmd, uint16_t addr,
 		    SPMI_OBSV_OFF(sc, sc->sc_ee, apid) + SPMI_STATUS);
 		if (reg & SPMI_STATUS_DONE)
 			break;
+		if (reg & SPMI_STATUS_FAILURE) {
+			printf(": transaction failed\n");
+			return EIO;
+		}
+		if (reg & SPMI_STATUS_DENIED) {
+			printf(": transaction denied\n");
+			return EIO;
+		}
+		if (reg & SPMI_STATUS_DROPPED) {
+			printf(": transaction dropped\n");
+			return EIO;
+		}
 	}
-	if (i == 0)
+	if (i == 0) {
+		printf("\n");
 		return ETIMEDOUT;
-
-	if (reg & SPMI_STATUS_FAILURE ||
-	    reg & SPMI_STATUS_DENIED ||
-	    reg & SPMI_STATUS_DROPPED)
-		return EIO;
+	}
 
 	if (len > 0) {
 		reg = HREAD4(sc, QCSPMI_REG_OBSRVR,
