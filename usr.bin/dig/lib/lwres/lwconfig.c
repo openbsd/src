@@ -57,9 +57,6 @@ static lwres_result_t
 lwres_conf_parsenameserver(lwres_conf_t *confdata,  FILE *fp);
 
 static lwres_result_t
-lwres_conf_parselwserver(lwres_conf_t *confdata,  FILE *fp);
-
-static lwres_result_t
 lwres_conf_parsedomain(lwres_conf_t *confdata, FILE *fp);
 
 static lwres_result_t
@@ -159,7 +156,6 @@ lwres_conf_init(lwres_conf_t *confdata, int lwresflags) {
 	int i;
 
 	confdata->nsnext = 0;
-	confdata->lwnext = 0;
 	confdata->domainname = NULL;
 	confdata->searchnxt = 0;
 	confdata->sortlistnxt = 0;
@@ -202,7 +198,6 @@ lwres_conf_clear(lwres_conf_t *confdata) {
 	}
 
 	confdata->nsnext = 0;
-	confdata->lwnext = 0;
 	confdata->domainname = NULL;
 	confdata->searchnxt = 0;
 	confdata->sortlistnxt = 0;
@@ -237,31 +232,6 @@ lwres_conf_parsenameserver(lwres_conf_t *confdata,  FILE *fp) {
 	    (address.family == LWRES_ADDRTYPE_V6 && use_ipv6))) {
 		confdata->nameservers[confdata->nsnext++] = address;
 	}
-
-	return (LWRES_R_SUCCESS);
-}
-
-static lwres_result_t
-lwres_conf_parselwserver(lwres_conf_t *confdata,  FILE *fp) {
-	char word[LWRES_CONFMAXLINELEN];
-	int res;
-
-	if (confdata->lwnext == LWRES_CONFMAXLWSERVERS)
-		return (LWRES_R_SUCCESS);
-
-	res = getword(fp, word, sizeof(word));
-	if (strlen(word) == 0U)
-		return (LWRES_R_FAILURE); /* Nothing on line. */
-	else if (res == ' ' || res == '\t')
-		res = eatwhite(fp);
-
-	if (res != EOF && res != '\n')
-		return (LWRES_R_FAILURE); /* Extra junk on line. */
-
-	res = lwres_create_addr(word,
-				&confdata->lwservers[confdata->lwnext++], 1);
-	if (res != LWRES_R_SUCCESS)
-		return (res);
 
 	return (LWRES_R_SUCCESS);
 }
@@ -509,8 +479,6 @@ lwres_conf_parse(lwres_conf_t *confdata, const char *filename) {
 			rval = LWRES_R_SUCCESS;
 		else if (strcmp(word, "nameserver") == 0)
 			rval = lwres_conf_parsenameserver(confdata, fp);
-		else if (strcmp(word, "lwserver") == 0)
-			rval = lwres_conf_parselwserver(confdata, fp);
 		else if (strcmp(word, "domain") == 0)
 			rval = lwres_conf_parsedomain(confdata, fp);
 		else if (strcmp(word, "search") == 0)
