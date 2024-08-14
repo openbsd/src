@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.35 2020/10/28 09:58:57 jsg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.36 2024/08/14 18:31:33 bluhm Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -552,6 +552,9 @@ typedef struct bus_dmamap		*bus_dmamap_t;
 struct bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	vaddr_t		_ds_va;		/* mapped loaded data */
+	vaddr_t		_ds_bounce_va;	/* mapped bounced data */
+
 	/*
 	 * Ugh. need this so can pass alignment down from bus_dmamem_alloc
 	 * to scatter gather maps. only the first one is used so the rest is
@@ -654,6 +657,11 @@ struct bus_dmamap {
 	bus_size_t	_dm_boundary;	/* don't cross this */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
+
+	struct vm_page **_dm_pages;	/* replacement pages */
+	vaddr_t		_dm_pgva;	/* those above -- mapped */
+	int		_dm_npages;	/* number of pages allocated */
+	int		_dm_nused;	/* number of pages replaced */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
