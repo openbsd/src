@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.16 2024/07/17 11:31:46 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.17 2024/08/14 07:04:54 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -131,6 +131,7 @@ struct radius_query {
 	struct sockaddr_storage		 clientaddr;
 	int				 clientaddrlen;
 	int				 req_id;
+	bool				 hasnext;
 	u_char				 req_auth[16];
 	struct radiusd_listen		*listen;
 	struct radiusd_client		*client;
