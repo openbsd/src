@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwres.h,v 1.4 2024/08/14 17:36:48 florian Exp $ */
+/* $Id: lwres.h,v 1.5 2024/08/14 17:37:40 florian Exp $ */
 
 #ifndef LWRES_LWRES_H
 #define LWRES_LWRES_H 1
@@ -103,7 +103,6 @@ struct lwres_addr {
 #define LWRES_CONFMAXNAMESERVERS 3	/*%< max 3 "nameserver" entries */
 #define LWRES_CONFMAXSEARCH 8		/*%< max 8 domains in "search" entry */
 #define LWRES_CONFMAXLINELEN 256	/*%< max size of a line */
-#define LWRES_CONFMAXSORTLIST 10	/*%< max 10 */
 
 /*% lwres_conf_t */
 typedef struct {
@@ -114,13 +113,6 @@ typedef struct {
 
 	char 	       *search[LWRES_CONFMAXSEARCH];
 	uint8_t	searchnxt;	/*%< index for next free slot */
-
-	struct {
-		lwres_addr_t addr;
-		/*% mask has a non-zero 'family' and 'length' if set */
-		lwres_addr_t mask;
-	} sortlist[LWRES_CONFMAXSORTLIST];
-	uint8_t	sortlistnxt;
 
 	uint8_t	resdebug;      /*%< non-zero if 'options debug' set */
 	uint8_t	ndots;	       /*%< set to n in 'options ndots:n' */
