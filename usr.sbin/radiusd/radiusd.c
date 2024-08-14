@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.54 2024/08/14 07:04:54 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.55 2024/08/14 07:06:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1405,6 +1405,7 @@ radiusd_module_imsg_read(struct radiusd_module *module)
 		if (n == 0)
 			return (0);
 		radiusd_module_imsg(module, &imsg);
+		imsg_free(&imsg);
 	}
 
 	return (0);
