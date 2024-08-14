@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.218 2024/07/31 10:07:33 mglocker Exp $
+# $OpenBSD: RAMDISK,v 1.219 2024/08/14 14:40:46 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -319,6 +319,7 @@ athn*		at pci?			# Atheros AR9k (802.11a/g/n)
 bwfm*		at pci?			# Broadcom FullMAC
 iwx*		at pci?			# Intel WiFi Link 22xxx
 qwx*		at pci?			# Qualcomm 802.11ax
+#qwz*		at pci?			# Qualcomm 802.11be
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers

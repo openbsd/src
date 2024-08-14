@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.734 2024/07/13 13:20:44 bluhm Exp $
+#	$OpenBSD: files,v 1.735 2024/08/14 14:40:46 patrick Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -428,6 +428,10 @@ file	dev/ic/bwi.c			bwi
 # Qualcomm 802.11ax
 device	qwx: ether, ifnet, ifmedia, firmload, wlan
 file	dev/ic/qwx.c			qwx
+
+# Qualcomm 802.11be
+device	qwz: ether, ifnet, ifmedia, firmload, wlan
+file	dev/ic/qwz.c			qwz
 
 # Intel OnChip System Fabric
 device	iosf
