@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.21 2024/06/18 16:41:39 schwarze Exp $	*/
+/*	$OpenBSD: test.c,v 1.22 2024/08/15 06:27:24 guenther Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -424,19 +424,6 @@ filstat(char *nm, enum token mode)
 	struct stat s;
 	mode_t i;
 
-	if (mode == FILSYM) {
-#ifdef S_IFLNK
-		if (lstat(nm, &s) == 0) {
-			i = S_IFLNK;
-			goto filetype;
-		}
-#endif
-		return 0;
-	}
-
-	if (stat(nm, &s) != 0)
-		return 0;
-
 	switch (mode) {
 	case FILRD:
 		return access(nm, R_OK) == 0;
@@ -446,6 +433,22 @@ filstat(char *nm, enum token mode)
 		return access(nm, X_OK) == 0;
 	case FILEXIST:
 		return access(nm, F_OK) == 0;
+	default:
+		break;
+	}
+
+	if (mode == FILSYM) {
+		if (lstat(nm, &s) == 0) {
+			i = S_IFLNK;
+			goto filetype;
+		}
+		return 0;
+	}
+
+	if (stat(nm, &s) != 0)
+		return 0;
+
+	switch (mode) {
 	case FILREG:
 		i = S_IFREG;
 		goto filetype;
@@ -459,19 +462,11 @@ filstat(char *nm, enum token mode)
 		i = S_IFBLK;
 		goto filetype;
 	case FILFIFO:
-#ifdef S_IFIFO
 		i = S_IFIFO;
 		goto filetype;
-#else
-		return 0;
-#endif
 	case FILSOCK:
-#ifdef S_IFSOCK
 		i = S_IFSOCK;
 		goto filetype;
-#else
-		return 0;
-#endif
 	case FILSUID:
 		i = S_ISUID;
 		goto filebit;
