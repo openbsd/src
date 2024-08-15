@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpisurface.c,v 1.2 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: acpisurface.c,v 1.3 2024/08/15 17:30:40 deraadt Exp $	*/
 /*
  * Copyright (c) 2018 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -136,7 +136,7 @@ surface_hotkey(struct aml_node *node, int notify_type, void *arg)
 	case SURFACE_POWER_BUTTON_RELEASED:
 		DPRINTF("%s: power button released\n", __func__);
 		acpi_addtask(sc->sc_acpi, acpi_powerdown_task,
-			sc->sc_acpi, 0);
+		    sc->sc_acpi, 0);
 		break;
 	case SURFACE_WINDOWS_KEY_PRESSED:
 		DPRINTF("%s: windows key pressed\n", __func__);
