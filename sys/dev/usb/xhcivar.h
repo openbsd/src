@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.14 2022/12/12 19:18:25 kettenis Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.15 2024/08/15 17:17:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -89,6 +89,7 @@ struct xhci_softc {
 	bus_size_t		 sc_size;
 
 	int			 sc_dead;
+	int			 sc_saved_state;
 
 	bus_size_t		 sc_oper_off;	/* Operational Register space */
 	bus_size_t		 sc_runt_off;	/* Runtime */
