@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2024/07/14 16:09:23 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2024/08/15 07:24:28 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -451,7 +451,8 @@ authopts	: authopts '\n' authopt
 		| authopt
 		;
 
-authopt		: AUTHENTICATE_BY STRING {
+authopt		: /* empty */
+		| AUTHENTICATE_BY STRING {
 			struct radiusd_module_ref	*modref;
 
 			if (authen.auth != NULL) {
