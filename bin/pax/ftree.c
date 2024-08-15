@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.42 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.43 2024/08/15 00:47:44 guenther Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -52,8 +52,7 @@
  */
 typedef struct ftree {
 	char		*fname;		/* file tree name */
-	int		refcnt;		/* has tree had a selected file? */
-	int		newercnt;	/* skipped due to -u/-D */
+	int		refcnt;		/* had a selected (or skipped) file? */
 	int		chflg;		/* change directory flag */
 	struct ftree	*fow;		/* pointer to next entry on list */
 } FTREE;
@@ -173,7 +172,6 @@ ftree_add(char *str, int chflg)
 		str[len] = '\0';
 	ft->fname = str;
 	ft->refcnt = 0;
-	ft->newercnt = 0;
 	ft->chflg = chflg;
 	ft->fow = NULL;
 	if (fthead == NULL) {
@@ -228,7 +226,7 @@ ftree_skipped_newer(ARCHD *arcn)
 {
 	/* skipped due to -u/-D, mark accordingly */
 	if (ftcur != NULL)
-		ftcur->newercnt = 1;
+		ftcur->refcnt = 1;
 }
 
 /*
@@ -254,7 +252,7 @@ ftree_chk(void)
 	 * that never had a match
 	 */
 	for (ft = fthead; ft != NULL; ft = ft->fow) {
-		if ((ft->refcnt > 0) || ft->newercnt > 0 || ft->chflg)
+		if ((ft->refcnt > 0) || ft->chflg)
 			continue;
 		if (wban == 0) {
 			paxwarn(1,"WARNING! These file names were not selected:");
