@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2083 2024/08/10 11:00:14 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2084 2024/08/15 11:25:37 patrick Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8650,6 +8650,7 @@
 #define	PCI_PRODUCT_QUALCOMM_SC8280XP_PCIE	0x010e		/* SC8280XP PCIe */
 #define	PCI_PRODUCT_QUALCOMM_X1E80100_PCIE	0x0111		/* X1E80100 PCIe */
 #define	PCI_PRODUCT_QUALCOMM_QCNFA765	0x1103		/* QCNFA765 */
+#define	PCI_PRODUCT_QUALCOMM_WCN7850	0x1107		/* WCN7850 */
 
 /* Quancom products */
 #define	PCI_PRODUCT_QUANCOM_PWDOG1	0x0010		/* PWDOG1 */
