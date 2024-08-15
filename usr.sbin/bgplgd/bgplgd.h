@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgd.h,v 1.3 2023/03/13 17:31:28 claudio Exp $ */
+/*	$OpenBSD: bgplgd.h,v 1.4 2024/08/15 09:13:13 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -32,7 +32,8 @@
 #define QS_AVS			15
 #define QS_INVALID		16
 #define QS_LEAKED		17
-#define QS_MAX			18
+#define QS_FILTERED		18
+#define QS_MAX			19
 
 /* too add: empty-as, in, out, peer-as, source-as, transit-as */
 
@@ -44,7 +45,7 @@
 	(1 << QS_AF) |	(1 << QS_RIB) | (1 << QS_OVS) |		\
 	(1 << QS_BEST) | (1 << QS_ALL) | (1 << QS_SHORTER) |	\
 	(1 << QS_ERROR) | (1 << QS_AVS) | (1 << QS_INVALID) |	\
-	(1 << QS_LEAKED))
+	(1 << QS_LEAKED) | (1 << QS_FILTERED))
 
 struct cmd;
 struct lg_ctx {

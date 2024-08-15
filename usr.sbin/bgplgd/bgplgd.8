@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgplgd.8,v 1.8 2024/01/26 18:11:49 job Exp $
+.\" $OpenBSD: bgplgd.8,v 1.9 2024/08/15 09:13:13 claudio Exp $
 .\"
 .\" Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2024 $
+.Dd $Mdocdate: August 15 2024 $
 .Dt BGPLGD 8
 .Os
 .Sh NAME
@@ -148,6 +148,8 @@ Show only prefixes that match the specified ASPA Validation State.
 Show only selected routes.
 .It Cm error Ns = Ns 1
 Show only prefixes which are marked invalid and were treated as withdrawn.
+.It Cm filtered Ns = Ns 1
+Show only prefixes which are marked filtered by the input filter.
 .It Cm invalid Ns = Ns 1
 Show only prefixes which are not eligible.
 .It Cm leaked Ns = Ns 1
