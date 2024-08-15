@@ -63,8 +63,6 @@ t_ptrace_wait4		-
 t_ptrace_wait6		- not implemented
 t_ptrace_waitid		-
 t_ptrace_waitpid	-
-t_recvmmsg		- not implemented, not POSIX
-t_sendmmsg		- not implemented, not POSIX
 t_sigqueue		- not implemented, added in POSIX.1-2004
 t_sigtimedwait		- not implemented, added in POSIX.1-2004
 t_swapcontext		- not available, removed in POSIX.1-2008
