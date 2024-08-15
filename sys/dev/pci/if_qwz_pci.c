@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.1 2024/08/14 14:40:46 patrick Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.2 2024/08/15 22:01:37 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -116,11 +116,12 @@
 #define ATH12K_PCI_WINDOW_VALUE_MASK	GENMASK(24, 19)
 #define ATH12K_PCI_WINDOW_START		0x80000
 #define ATH12K_PCI_WINDOW_RANGE_MASK	GENMASK(18, 0)
+#define ATH12K_PCI_WINDOW_STATIC_MASK	GENMASK(31, 6)
 
 /* BAR0 + 4k is always accessible, and no need to force wakeup. */
 #define ATH12K_PCI_ACCESS_ALWAYS_OFF	0xFE0	/* 4K - 32 = 0xFE0 */
 
-#define TCSR_SOC_HW_VERSION		0x0224
+#define TCSR_SOC_HW_VERSION		0x1b00000
 #define TCSR_SOC_HW_VERSION_MAJOR_MASK	GENMASK(11, 8)
 #define TCSR_SOC_HW_VERSION_MINOR_MASK	GENMASK(7, 0)
 
@@ -145,7 +146,7 @@
 #define PCIE_PCIE_PARF_LTSSM			0x1e081b0
 #define PARM_LTSSM_VALUE			0x111
 
-#define GCC_GCC_PCIE_HOT_RST			0x1e402bc
+#define GCC_GCC_PCIE_HOT_RST			0x1e38338
 #define GCC_GCC_PCIE_HOT_RST_VAL		0x10
 
 #define PCIE_PCIE_INT_ALL_CLEAR			0x1e08228
@@ -169,6 +170,9 @@
 
 #define WLAON_QFPROM_PWR_CTRL_REG		0x01f8031c
 #define QFPROM_PWR_CTRL_VDD4BLOW_MASK		0x4
+
+#define PCI_MHIREGLEN_REG			0x1e0e100
+#define PCI_MHI_REGION_END			0x1e0effc
 
 /*
  * mhi.h
@@ -374,11 +378,9 @@ struct qwz_pci_softc {
 	struct qwz_dmamem	*cmd_ctxt;
 
 
-	struct qwz_pci_xfer_ring xfer_rings[4];
-#define QWZ_PCI_XFER_RING_LOOPBACK_OUTBOUND	0
-#define QWZ_PCI_XFER_RING_LOOPBACK_INBOUND	1
-#define QWZ_PCI_XFER_RING_IPCR_OUTBOUND		2
-#define QWZ_PCI_XFER_RING_IPCR_INBOUND		3
+	struct qwz_pci_xfer_ring xfer_rings[2];
+#define QWZ_PCI_XFER_RING_IPCR_OUTBOUND		0
+#define QWZ_PCI_XFER_RING_IPCR_INBOUND		1
 	struct qwz_pci_event_ring event_rings[QWZ_NUM_EVENT_CTX];
 	struct qwz_pci_cmd_ring cmd_ring;
 };
@@ -482,26 +484,12 @@ struct qwz_pci_ops {
 };
 
 
-static const struct qwz_pci_ops qwz_pci_ops_qca6390 = {
+static const struct qwz_pci_ops qwz_pci_ops_wcn7850 = {
 	.wakeup = qwz_pci_bus_wake_up,
 	.release = qwz_pci_bus_release,
-#if notyet
-	.get_msi_irq = qwz_pci_get_msi_irq,
-#endif
 	.window_write32 = qwz_pci_window_write32,
 	.window_read32 = qwz_pci_window_read32,
 	.alloc_xfer_rings = qwz_pci_alloc_xfer_rings_qca6390,
-};
-
-static const struct qwz_pci_ops qwz_pci_ops_qcn9074 = {
-	.wakeup = NULL,
-	.release = NULL,
-#if notyet
-	.get_msi_irq = qwz_pci_get_msi_irq,
-#endif
-	.window_write32 = qwz_pci_window_write32,
-	.window_read32 = qwz_pci_window_read32,
-	.alloc_xfer_rings = qwz_pci_alloc_xfer_rings_qcn9074,
 };
 
 const struct cfattach qwz_pci_ca = {
@@ -512,16 +500,8 @@ const struct cfattach qwz_pci_ca = {
 	qwz_activate
 };
 
-/* XXX pcidev */
-#define PCI_PRODUCT_QUALCOMM_QCA6390	0x1101
-#define PCI_PRODUCT_QUALCOMM_QCN9074	0x1104
-
 static const struct pci_matchid qwz_pci_devices[] = {
-#if notyet
-	{ PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_QCA6390 },
-	{ PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_QCN9074 },
-#endif
-	{ PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_QCNFA765 }
+	{ PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_WCN7850 }
 };
 
 int
@@ -535,8 +515,8 @@ qwz_pci_init_qmi_ce_config(struct qwz_softc *sc)
 {
 	struct qwz_qmi_ce_cfg *cfg = &sc->qmi_ce_cfg;
 
-	qwz_ce_get_shadow_config(sc, &cfg->shadow_reg_v2,
-	    &cfg->shadow_reg_v2_len);
+	qwz_ce_get_shadow_config(sc, &cfg->shadow_reg_v3,
+	    &cfg->shadow_reg_v3_len);
 }
 
 const struct qwz_msi_config qwz_msi_config_one_msi = {
@@ -552,17 +532,6 @@ const struct qwz_msi_config qwz_msi_config_one_msi = {
 
 const struct qwz_msi_config qwz_msi_config[] = {
 	{
-		.total_vectors = 32,
-		.total_users = 4,
-		.users = (struct qwz_msi_user[]) {
-			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
-			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
-			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
-			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
-		},
-		.hw_rev = ATH12K_HW_QCA6390_HW20,
-	},
-	{
 		.total_vectors = 16,
 		.total_users = 3,
 		.users = (struct qwz_msi_user[]) {
@@ -570,38 +539,7 @@ const struct qwz_msi_config qwz_msi_config[] = {
 			{ .name = "CE", .num_vectors = 5, .base_vector = 3 },
 			{ .name = "DP", .num_vectors = 8, .base_vector = 8 },
 		},
-		.hw_rev = ATH12K_HW_QCN9074_HW10,
-	},
-	{
-		.total_vectors = 32,
-		.total_users = 4,
-		.users = (struct qwz_msi_user[]) {
-			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
-			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
-			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
-			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
-		},
-		.hw_rev = ATH12K_HW_WCN6855_HW20,
-	},
-	{
-		.total_vectors = 32,
-		.total_users = 4,
-		.users = (struct qwz_msi_user[]) {
-			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
-			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
-			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
-			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
-		},
-		.hw_rev = ATH12K_HW_WCN6855_HW21,
-	},
-	{
-		.total_vectors = 28,
-		.total_users = 2,
-		.users = (struct qwz_msi_user[]) {
-			{ .name = "CE", .num_vectors = 10, .base_vector = 0 },
-			{ .name = "DP", .num_vectors = 18, .base_vector = 10 },
-		},
-		.hw_rev = ATH12K_HW_WCN6750_HW10,
+		.hw_rev = ATH12K_HW_WCN7850_HW20,
 	},
 };
 
@@ -745,7 +683,6 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t soc_hw_version_major, soc_hw_version_minor;
-	const struct qwz_pci_ops *pci_ops;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
@@ -885,63 +822,29 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_QUALCOMM_QCA6390:
-		qwz_pci_read_hw_version(sc, &soc_hw_version_major,
-		    &soc_hw_version_minor);
-		switch (soc_hw_version_major) {
-		case 2:
-			sc->sc_hw_rev = ATH12K_HW_QCA6390_HW20;
-			break;
-		default:
-			printf(": unsupported QCA6390 SOC version: %d %d\n",
-				soc_hw_version_major, soc_hw_version_minor);
-			return;
-		}
-
-		pci_ops = &qwz_pci_ops_qca6390;
-		psc->max_chan = QWZ_MHI_CONFIG_QCA6390_MAX_CHANNELS;
-		break;
-	case PCI_PRODUCT_QUALCOMM_QCN9074:
-		pci_ops = &qwz_pci_ops_qcn9074;
-		sc->sc_hw_rev = ATH12K_HW_QCN9074_HW10;
-		psc->max_chan = QWZ_MHI_CONFIG_QCA9074_MAX_CHANNELS;
-		break;
-	case PCI_PRODUCT_QUALCOMM_QCNFA765:
+	case PCI_PRODUCT_QUALCOMM_WCN7850:
+		sc->static_window_map = 0;
+		sc->hal_seq_wcss_umac_ce0_src_reg = 0x01b80000;
+		psc->sc_pci_ops = &qwz_pci_ops_wcn7850;
 		sc->id.bdf_search = ATH12K_BDF_SEARCH_BUS_AND_BOARD;
 		qwz_pci_read_hw_version(sc, &soc_hw_version_major,
 		    &soc_hw_version_minor);
 		switch (soc_hw_version_major) {
 		case 2:
-			switch (soc_hw_version_minor) {
-			case 0x00:
-			case 0x01:
-				sc->sc_hw_rev = ATH12K_HW_WCN6855_HW20;
-				break;
-			case 0x10:
-			case 0x11:
-				sc->sc_hw_rev = ATH12K_HW_WCN6855_HW21;
-				break;
-			default:
-				goto unsupported_wcn6855_soc;
-			}
+			sc->sc_hw_rev = ATH12K_HW_WCN7850_HW20;
 			break;
 		default:
-unsupported_wcn6855_soc:
-			printf(": unsupported WCN6855 SOC version: %d %d\n",
-				soc_hw_version_major, soc_hw_version_minor);
+			printf(": unknown hardware version found for WCN785: "
+			    "%d\n", soc_hw_version_major);
 			return;
 		}
 
-		pci_ops = &qwz_pci_ops_qca6390;
 		psc->max_chan = QWZ_MHI_CONFIG_QCA6390_MAX_CHANNELS;
 		break;
 	default:
 		printf(": unsupported chip\n");
 		return;
 	}
-
-	/* register PCI ops */
-	psc->sc_pci_ops = pci_ops;
 
 	error = qwz_pcic_init_msi_config(sc);
 	if (error)
@@ -1019,8 +922,6 @@ unsupported_wcn6855_soc:
 	sc->sc_nswq = taskq_create("qwzns", 1, IPL_NET, 0);
 	if (sc->sc_nswq == NULL)
 		goto err_ce_free;
-
-	qwz_pci_init_qmi_ce_config(sc);
 
 	error = qwz_pcic_config_irq(sc, pa);
 	if (error) {
@@ -1227,7 +1128,7 @@ qwz_pci_alloc_xfer_ring(struct qwz_softc *sc, struct qwz_pci_xfer_ring *ring,
 	memset(ring->data, 0, sizeof(ring->data));
 	for (i = 0; i < ring->num_elements; i++) {
 		struct qwz_xfer_data *xfer = &ring->data[i];
-		
+
 		err = bus_dmamap_create(sc->sc_dmat, QWZ_PCI_XFER_MAX_DATA_SIZE,
 		    1, QWZ_PCI_XFER_MAX_DATA_SIZE, 0, BUS_DMA_NOWAIT,
 		    &xfer->map);
@@ -1297,18 +1198,6 @@ qwz_pci_alloc_xfer_rings_qca6390(struct qwz_pci_softc *psc)
 	int ret;
 
 	ret = qwz_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWZ_PCI_XFER_RING_LOOPBACK_OUTBOUND],
-	    0, MHI_CHAN_TYPE_OUTBOUND, 0, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwz_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWZ_PCI_XFER_RING_LOOPBACK_INBOUND],
-	    1, MHI_CHAN_TYPE_INBOUND, 0, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwz_pci_alloc_xfer_ring(sc,
 	    &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_OUTBOUND],
 	    20, MHI_CHAN_TYPE_OUTBOUND, 1, 64);
 	if (ret)
@@ -1331,18 +1220,6 @@ qwz_pci_alloc_xfer_rings_qcn9074(struct qwz_pci_softc *psc)
 {
 	struct qwz_softc *sc = &psc->sc_sc;
 	int ret;
-
-	ret = qwz_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWZ_PCI_XFER_RING_LOOPBACK_OUTBOUND],
-	    0, MHI_CHAN_TYPE_OUTBOUND, 1, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwz_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWZ_PCI_XFER_RING_LOOPBACK_INBOUND],
-	    1, MHI_CHAN_TYPE_INBOUND, 1, 32);
-	if (ret)
-		goto fail;
 
 	ret = qwz_pci_alloc_xfer_ring(sc,
 	    &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_OUTBOUND],
@@ -1602,10 +1479,12 @@ qwz_pcic_ext_irq_config(struct qwz_softc *sc, struct pci_attach_args *pa)
 	struct qwz_pci_softc *psc = (struct qwz_pci_softc *)sc;
 	int i, ret, num_vectors = 0;
 	uint32_t msi_data_start = 0;
-	uint32_t base_vector = 0;
+	uint32_t base_idx, base_vector = 0;
 
 	if (!test_bit(ATH12K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags))
 		return 0;
+
+	base_idx = ATH12K_PCI_IRQ_CE0_OFFSET + CE_COUNT_MAX;
 
 	ret = qwz_pcic_get_user_msi_vector(sc, "DP", &num_vectors,
 	    &msi_data_start, &base_vector);
@@ -1618,7 +1497,7 @@ qwz_pcic_ext_irq_config(struct qwz_softc *sc, struct pci_attach_args *pa)
 
 		irq_grp->sc = sc;
 		irq_grp->grp_id = i;
-#if 0	
+#if 0
 		init_dummy_netdev(&irq_grp->napi_ndev);
 		netif_napi_add(&irq_grp->napi_ndev, &irq_grp->napi,
 			       ath12k_pcic_ext_grp_napi_poll);
@@ -1635,7 +1514,7 @@ qwz_pcic_ext_irq_config(struct qwz_softc *sc, struct pci_attach_args *pa)
 		}
 
 		irq_grp->num_irq = num_irq;
-		irq_grp->irqs[0] = ATH12K_PCI_IRQ_DP_OFFSET + i;
+		irq_grp->irqs[0] = base_idx + i;
 
 		if (num_irq) {
 			int irq_idx = irq_grp->irqs[0];
@@ -1805,7 +1684,7 @@ qwz_pci_bus_release(struct qwz_softc *sc)
 uint32_t
 qwz_pci_get_window_start(struct qwz_softc *sc, uint32_t offset)
 {
-	if (!sc->hw_params.static_window_map)
+	if (!sc->static_window_map)
 		return ATH12K_PCI_WINDOW_START;
 
 	if ((offset ^ HAL_SEQ_WCSS_UMAC_OFFSET) < ATH12K_PCI_WINDOW_RANGE_MASK)
@@ -1829,12 +1708,24 @@ qwz_pci_select_window(struct qwz_softc *sc, uint32_t offset)
 	lockdep_assert_held(&ab_pci->window_lock);
 #endif
 
+	/*
+	 * Preserve the static window configuration and reset only
+	 * dynamic window.
+	 */
+	window |= psc->register_window & ATH12K_PCI_WINDOW_STATIC_MASK;
+
 	if (window != psc->register_window) {
 		qwz_pci_write(sc, ATH12K_PCI_WINDOW_REG_ADDRESS,
 		    ATH12K_PCI_WINDOW_ENABLE_BIT | window);
 		(void) qwz_pci_read(sc, ATH12K_PCI_WINDOW_REG_ADDRESS);
 		psc->register_window = window;
 	}
+}
+
+static inline bool
+qwz_pci_is_offset_within_mhi_region(uint32_t offset)
+{
+	return (offset >= PCI_MHIREGLEN_REG && offset <= PCI_MHI_REGION_END);
 }
 
 void
@@ -1849,8 +1740,15 @@ qwz_pci_window_write32(struct qwz_softc *sc, uint32_t offset, uint32_t value)
 		spin_lock_bh(&ab_pci->window_lock);
 #endif
 		qwz_pci_select_window(sc, offset);
-		qwz_pci_write(sc, window_start +
-		    (offset & ATH12K_PCI_WINDOW_RANGE_MASK), value);
+
+		if (qwz_pci_is_offset_within_mhi_region(offset)) {
+			offset = offset - PCI_MHIREGLEN_REG;
+			qwz_pci_write(sc, offset & ATH12K_PCI_WINDOW_RANGE_MASK,
+			    value);
+		} else {
+			qwz_pci_write(sc, window_start +
+			    (offset & ATH12K_PCI_WINDOW_RANGE_MASK), value);
+		}
 #if notyet
 		spin_unlock_bh(&ab_pci->window_lock);
 #endif
@@ -1872,8 +1770,15 @@ qwz_pci_window_read32(struct qwz_softc *sc, uint32_t offset)
 		spin_lock_bh(&ab_pci->window_lock);
 #endif
 		qwz_pci_select_window(sc, offset);
-		val = qwz_pci_read(sc, window_start +
-		    (offset & ATH12K_PCI_WINDOW_RANGE_MASK));
+
+		if (qwz_pci_is_offset_within_mhi_region(offset)) {
+			offset = offset - PCI_MHIREGLEN_REG;
+			val = qwz_pci_read(sc,
+			    offset & ATH12K_PCI_WINDOW_RANGE_MASK);
+		} else {
+			val = qwz_pci_read(sc, window_start +
+			    (offset & ATH12K_PCI_WINDOW_RANGE_MASK));
+		}
 #if notyet
 		spin_unlock_bh(&ab_pci->window_lock);
 #endif
@@ -2120,7 +2025,7 @@ qwz_pci_msi_config(struct qwz_softc *sc, bool enable)
 	else
 		val &= ~PCI_MSI_MC_MSIE;
 
-	pci_conf_write(psc->sc_pc, psc->sc_tag,  psc->sc_msi_off + PCI_MSI_MC,
+	pci_conf_write(psc->sc_pc, psc->sc_tag, psc->sc_msi_off + PCI_MSI_MC,
 	    val);
 }
 
@@ -2189,7 +2094,7 @@ qwz_pci_power_up(struct qwz_softc *sc)
 	if (error)
 		return error;
 
-	if (sc->hw_params.static_window_map)
+	if (sc->static_window_map)
 		qwz_pci_select_static_window(sc);
 
 	return 0;
@@ -3273,7 +3178,7 @@ qwz_mhi_fw_load_bhi(struct qwz_pci_softc *psc, uint8_t *data, size_t len)
 	qwz_pci_write(sc, psc->bhi_off + MHI_BHI_IMGADDR_LOW,
 	    paddr & 0xffffffff);
 	qwz_pci_write(sc, psc->bhi_off + MHI_BHI_IMGSIZE, len);
-	
+
 	/* Set a random transaction sequence number. */
 	do {
 		seq = arc4random_uniform(MHI_BHI_TXDB_SEQNUM_BMSK);

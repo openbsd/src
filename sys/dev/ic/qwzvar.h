@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.1 2024/08/14 14:40:46 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.2 2024/08/15 22:01:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -64,6 +64,7 @@ struct ath12k_hw_ring_mask {
 	uint8_t reo_status[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t rxdma2host[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t host2rxdma[ATH12K_EXT_IRQ_GRP_NUM_MAX];
+	uint8_t	tx_mon_dest[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 };
 
 #define ATH12K_FW_DIR			"qwz"
@@ -88,29 +89,36 @@ struct ath12k_hw_tcl2wbm_rbm_map {
  * enum hal_rx_buf_return_buf_manager
  *
  * @HAL_RX_BUF_RBM_WBM_IDLE_BUF_LIST: Buffer returned to WBM idle buffer list
- * @HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST: Descriptor returned to WBM idle
- *	descriptor list.
+ * @HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST: Descriptor returned to WBM idle
+ * 	descriptor list, where the chip 0 WBM is chosen in case of a
+ *  	multi-chip config
  * @HAL_RX_BUF_RBM_FW_BM: Buffer returned to FW
  * @HAL_RX_BUF_RBM_SW0_BM: For Tx completion -- returned to host
  * @HAL_RX_BUF_RBM_SW1_BM: For Tx completion -- returned to host
  * @HAL_RX_BUF_RBM_SW2_BM: For Tx completion -- returned to host
  * @HAL_RX_BUF_RBM_SW3_BM: For Rx release -- returned to host
+ * @HAL_RX_BUF_RBM_SW4_BM: For Tx completion -- returned to host
+ * @HAL_RX_BUF_RBM_SW5_BM: For ring 5 -- returned to host
+ * @HAL_RX_BUF_RBM_SW6_BM: For ring 6 -- returned to host
  */
 
 enum hal_rx_buf_return_buf_manager {
 	HAL_RX_BUF_RBM_WBM_IDLE_BUF_LIST,
-	HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST,
+	HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST,
 	HAL_RX_BUF_RBM_FW_BM,
 	HAL_RX_BUF_RBM_SW0_BM,
 	HAL_RX_BUF_RBM_SW1_BM,
 	HAL_RX_BUF_RBM_SW2_BM,
 	HAL_RX_BUF_RBM_SW3_BM,
 	HAL_RX_BUF_RBM_SW4_BM,
+	HAL_RX_BUF_RBM_SW5_BM,
+	HAL_RX_BUF_RBM_SW6_BM,
 };
 
 struct ath12k_hw_hal_params {
 	enum hal_rx_buf_return_buf_manager rx_buf_rbm;
 	const struct ath12k_hw_tcl2wbm_rbm_map *tcl2wbm_rbm_map;
+	uint32_t wbm2sw_cc_enable;
 };
 
 struct hal_tx_info {
@@ -190,6 +198,7 @@ struct ath12k_hw_params {
 
 	bool rxdma1_enable;
 	int num_rxmda_per_pdev;
+	int num_rxdma_dst_ring;
 	bool rx_mac_buf_ring;
 	bool vdev_start_delay;
 	bool htt_peer_map_v2;
@@ -222,6 +231,7 @@ struct ath12k_hw_params {
 	bool credit_flow;
 	uint8_t max_tx_ring;
 	const struct ath12k_hw_hal_params *hal_params;
+	uint64_t qmi_cnss_feature_bitmap;
 #if notyet
 	bool supports_dynamic_smps_6ghz;
 	bool alloc_cacheable_memory;
@@ -237,7 +247,6 @@ struct ath12k_hw_params {
 	bool m3_fw_support;
 	bool fixed_bdf_addr;
 	bool fixed_mem_region;
-	bool static_window_map;
 	bool hybrid_bus_type;
 	bool fixed_fw_mem;
 #if notyet
@@ -312,19 +321,11 @@ struct ath12k_hw_ops {
 #endif
 };
 
-extern const struct ath12k_hw_ops ipq8074_ops;
-extern const struct ath12k_hw_ops ipq6018_ops;
-extern const struct ath12k_hw_ops qca6390_ops;
-extern const struct ath12k_hw_ops qcn9074_ops;
-extern const struct ath12k_hw_ops wcn6855_ops;
-extern const struct ath12k_hw_ops wcn6750_ops;
-
-extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_ipq8074;
-extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qca6390;
-extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9074;
-extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn6750;
+extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850;
 
 struct ath12k_hw_regs {
+	uint32_t hal_tcl1_ring_cmn_ctrl_reg;
+	uint32_t hal_tcl1_ring_dscp_tid_map;
 	uint32_t hal_tcl1_ring_base_lsb;
 	uint32_t hal_tcl1_ring_base_msb;
 	uint32_t hal_tcl1_ring_id;
@@ -338,8 +339,10 @@ struct ath12k_hw_regs {
 	uint32_t hal_tcl1_ring_msi1_data;
 	uint32_t hal_tcl2_ring_base_lsb;
 	uint32_t hal_tcl_ring_base_lsb;
+	uint32_t hal_tcl_ring_hp;
 
 	uint32_t hal_tcl_status_ring_base_lsb;
+	uint32_t hal_tcl_status_ring_hp;
 
 	uint32_t hal_reo1_ring_base_lsb;
 	uint32_t hal_reo1_ring_base_msb;
@@ -373,31 +376,53 @@ struct ath12k_hw_regs {
 	uint32_t hal_sw2reo_ring_base_lsb;
 	uint32_t hal_sw2reo_ring_hp;
 
-	uint32_t hal_seq_wcss_umac_ce0_src_reg;
 	uint32_t hal_seq_wcss_umac_ce0_dst_reg;
 	uint32_t hal_seq_wcss_umac_ce1_src_reg;
 	uint32_t hal_seq_wcss_umac_ce1_dst_reg;
 
 	uint32_t hal_wbm_idle_link_ring_base_lsb;
 	uint32_t hal_wbm_idle_link_ring_misc;
+	uint32_t hal_wbm_idle_link_ring_up;
+	uint32_t hal_wbm_r0_idle_list_cntl_addr;
+	uint32_t hal_wbm_r0_idle_list_size_addr;
+	uint32_t hal_wbm_scattered_ring_base_lsb;
+	uint32_t hal_wbm_scattered_ring_base_msb;
+	uint32_t hal_wbm_scattered_desc_head_info_ix0;
+	uint32_t hal_wbm_scattered_desc_head_info_ix1;
+	uint32_t hal_wbm_scattered_desc_tail_info_ix0;
+	uint32_t hal_wbm_scattered_desc_tail_info_ix1;
+	uint32_t hal_wbm_scattered_desc_ptr_hp_addr;
 
 	uint32_t hal_wbm_release_ring_base_lsb;
+	uint32_t hal_wbm_release_ring_hp;
+	uint32_t hal_wbm_sw1_release_ring_base_lsb;
 
 	uint32_t hal_wbm0_release_ring_base_lsb;
+	uint32_t hal_wbm0_release_ring_hp;
 	uint32_t hal_wbm1_release_ring_base_lsb;
+	uint32_t hal_wbm1_release_ring_hp;
 
 	uint32_t pcie_qserdes_sysclk_en_sel;
 	uint32_t pcie_pcs_osc_dtct_config_base;
 
+	uint32_t hal_ppe_rel_ring_base;
+
 	uint32_t hal_shadow_base_addr;
 	uint32_t hal_reo1_misc_ctl;
+	uint32_t hal_reo1_sw_cookie_cfg0;
+	uint32_t hal_reo1_sw_cookie_cfg1;
+	uint32_t hal_reo1_qdesc_lut_base0;
+	uint32_t hal_reo1_qdesc_lut_base1;
+	uint32_t hal_reo1_aging_thres_ix0;
+	uint32_t hal_reo1_aging_thres_ix1;
+	uint32_t hal_reo1_aging_thres_ix2;
+	uint32_t hal_reo1_aging_thres_ix3;
+
+	uint32_t hal_reo2_sw0_ring_base;
+	uint32_t hal_sw2reo1_ring_base;
 };
 
-extern const struct ath12k_hw_regs ipq8074_regs;
-extern const struct ath12k_hw_regs qca6390_regs;
-extern const struct ath12k_hw_regs qcn9074_regs;
-extern const struct ath12k_hw_regs wcn6855_regs;
-extern const struct ath12k_hw_regs wcn6750_regs;
+extern const struct ath12k_hw_regs wcn7850_regs;
 
 enum ath12k_dev_flags {
 	ATH12K_CAC_RUNNING,
@@ -647,7 +672,17 @@ enum hal_ring_type {
 	HAL_RXDMA_MONITOR_DST,
 	HAL_RXDMA_MONITOR_DESC,
 	HAL_RXDMA_DIR_BUF,
+	HAL_PPE2TCL,
+	HAL_PPE_RELEASE,
+	HAL_TX_MONITOR_BUF,
+	HAL_TX_MONITOR_DST,
 	HAL_MAX_RING_TYPES,
+};
+
+enum hal_srng_mac_type {
+	ATH12K_HAL_SRNG_UMAC,
+	ATH12K_HAL_SRNG_DMAC,
+	ATH12K_HAL_SRNG_PMAC
 };
 
 /* HW SRNG configuration table */
@@ -658,6 +693,7 @@ struct hal_srng_config {
 	uint32_t reg_start[HAL_SRNG_NUM_REG_GRP];
 	uint16_t reg_size[HAL_SRNG_NUM_REG_GRP];
 	uint8_t lmac_ring;
+	enum hal_srng_mac_type mac_type;
 	enum hal_srng_dir ring_dir;
 	uint32_t max_size;
 };
@@ -767,7 +803,7 @@ struct ath12k_hal {
 	struct hal_srng srng_list[HAL_SRNG_RING_ID_MAX];
 
 	/* SRNG configuration table */
-	struct hal_srng_config srng_config[QWZ_NUM_SRNG_CFG];
+	struct hal_srng_config *srng_config;
 
 	/* Remote pointer memory for HW/FW updates */
 	struct qwz_dmamem *rdpmem;
@@ -837,7 +873,6 @@ struct ce_attr {
 	unsigned int dest_nentries;
 
 	void (*recv_cb)(struct qwz_softc *, struct mbuf *);
-	void (*send_cb)(struct qwz_softc *, struct mbuf *);
 };
 
 #define CE_DESC_RING_ALIGN 8
@@ -912,7 +947,7 @@ struct qwz_ce_ring {
 	uint32_t hal_ring_id;
 
 	/*
-	 * Per-transfer data. 
+	 * Per-transfer data.
 	 * Size and type of this data depends on how the ring is used.
 	 *
 	 * For transfers using DMA, the context contains pointers to
@@ -982,6 +1017,12 @@ struct qwz_dp_htt_wbm_tx_status {
 #define DP_RXDMA_MONITOR_BUF_RING_SIZE	4096
 #define DP_RXDMA_MONITOR_DST_RING_SIZE	2048
 #define DP_RXDMA_MONITOR_DESC_RING_SIZE	4096
+#define DP_TX_MONITOR_BUF_RING_SIZE	4096
+#define DP_TX_MONITOR_DEST_RING_SIZE	2048
+
+#define DP_TX_MONITOR_BUF_SIZE		2048
+#define DP_TX_MONITOR_BUF_SIZE_MIN	48
+#define DP_TX_MONITOR_BUF_SIZE_MAX	8192
 
 #define DP_RX_RELEASE_RING_NUM	3
 
@@ -999,6 +1040,74 @@ struct qwz_dp_htt_wbm_tx_status {
 #define DP_TX_DESC_ID_MSDU_ID GENMASK(18, 2)
 #define DP_TX_DESC_ID_POOL_ID GENMASK(20, 19)
 
+#define ATH12K_NUM_POOL_TX_DESC	32768
+
+/* TODO: revisit this count during testing */
+#define ATH12K_RX_DESC_COUNT	(12288)
+
+#define ATH12K_PAGE_SIZE	PAGE_SIZE
+
+/* Total 1024 entries in PPT, i.e 4K/4 considering 4K aligned
+ * SPT pages which makes lower 12bits 0
+ */
+#define ATH12K_MAX_PPT_ENTRIES	1024
+
+/* Total 512 entries in a SPT, i.e 4K Page/8 */
+#define ATH12K_MAX_SPT_ENTRIES	512
+
+#define ATH12K_NUM_RX_SPT_PAGES	((ATH12K_RX_DESC_COUNT) / ATH12K_MAX_SPT_ENTRIES)
+
+#define ATH12K_TX_SPT_PAGES_PER_POOL (ATH12K_NUM_POOL_TX_DESC / \
+					  ATH12K_MAX_SPT_ENTRIES)
+#define ATH12K_NUM_TX_SPT_PAGES	(ATH12K_TX_SPT_PAGES_PER_POOL * ATH12K_HW_MAX_QUEUES)
+#define ATH12K_NUM_SPT_PAGES	(ATH12K_NUM_RX_SPT_PAGES + ATH12K_NUM_TX_SPT_PAGES)
+
+#define ATH12K_TX_SPT_PAGE_OFFSET 0
+#define ATH12K_RX_SPT_PAGE_OFFSET ATH12K_NUM_TX_SPT_PAGES
+
+/* The SPT pages are divided for RX and TX, first block for RX
+ * and remaining for TX
+ */
+#define ATH12K_NUM_TX_SPT_PAGE_START ATH12K_NUM_RX_SPT_PAGES
+
+#define ATH12K_DP_RX_DESC_MAGIC	0xBABABABA
+
+/* 4K aligned address have last 12 bits set to 0, this check is done
+ * so that two spt pages address can be stored per 8bytes
+ * of CMEM (PPT)
+ */
+#define ATH12K_SPT_4K_ALIGN_CHECK 0xFFF
+#define ATH12K_SPT_4K_ALIGN_OFFSET 12
+#define ATH12K_PPT_ADDR_OFFSET(ppt_index) (4 * (ppt_index))
+
+/* To indicate HW of CMEM address, b0-31 are cmem base received via QMI */
+#define ATH12K_CMEM_ADDR_MSB 0x10
+
+/* Of 20 bits cookie, b0-b8 is to indicate SPT offset and b9-19 for PPT */
+#define ATH12K_CC_SPT_MSB 8
+#define ATH12K_CC_PPT_MSB 19
+#define ATH12K_CC_PPT_SHIFT 9
+#define ATH12K_DP_CC_COOKIE_SPT	GENMASK(8, 0)
+#define ATH12K_DP_CC_COOKIE_PPT	GENMASK(19, 9)
+
+#define DP_REO_QREF_NUM		GENMASK(31, 16)
+#define DP_MAX_PEER_ID		2047
+
+/* Total size of the LUT is based on 2K peers, each having reference
+ * for 17tids, note each entry is of type ath12k_reo_queue_ref
+ * hence total size is 2048 * 17 * 8 = 278528
+ */
+#define DP_REOQ_LUT_SIZE	278528
+
+/* Invalid TX Bank ID value */
+#define DP_INVALID_BANK_ID -1
+
+struct ath12k_dp_tx_bank_profile {
+	uint8_t is_configured;
+	uint32_t num_users;
+	uint32_t bank_config;
+};
+
 struct qwz_hp_update_timer {
 	struct timeout timer;
 	int started;
@@ -1008,6 +1117,29 @@ struct qwz_hp_update_timer {
 	uint32_t ring_id;
 	uint32_t interval;
 	struct qwz_softc *sc;
+};
+
+struct ath12k_rx_desc_info {
+	TAILQ_ENTRY(ath12k_rx_desc_info) entry;
+//	struct sk_buff *skb;
+	uint32_t cookie;
+	uint32_t magic;
+	uint8_t in_use		: 1,
+	        reserved	: 7;
+};
+
+struct ath12k_tx_desc_info {
+	TAILQ_ENTRY(ath12k_tx_desc_info) entry;
+//	struct sk_buff *skb;
+	uint32_t desc_id; /* Cookie */
+	uint8_t mac_id;
+	uint8_t pool_id;
+};
+
+struct ath12k_spt_info {
+	struct qwz_dmamem *mem;
+	struct ath12k_rx_desc_info *rxbaddr[ATH12K_NUM_RX_SPT_PAGES];
+	struct ath12k_tx_desc_info *txbaddr[ATH12K_NUM_TX_SPT_PAGES];
 };
 
 struct dp_rx_tid {
@@ -1089,6 +1221,14 @@ struct dp_link_desc_bank {
 #define DP_LINK_DESC_ALLOC_SIZE_THRESH 0x200000
 #define DP_LINK_DESC_BANKS_MAX 8
 
+#define DP_LINK_DESC_START	0x4000
+#define DP_LINK_DESC_SHIFT	3
+
+#define DP_LINK_DESC_COOKIE_SET(id, page) \
+	((((id) + DP_LINK_DESC_START) << DP_LINK_DESC_SHIFT) | (page))
+
+#define DP_LINK_DESC_BANK_MASK	GENMASK(2, 0)
+
 struct hal_wbm_idle_scatter_list {
 	struct qwz_dmamem *mem;
 	bus_addr_t paddr;
@@ -1131,6 +1271,19 @@ struct qwz_dp {
 #endif
 	struct qwz_hp_update_timer reo_cmd_timer;
 	struct qwz_hp_update_timer tx_ring_timer[DP_TCL_NUM_RING_MAX];
+	struct ath12k_spt_info *spt_info;
+	uint32_t num_spt_pages;
+	TAILQ_HEAD(,ath12k_rx_desc_info) rx_desc_free_list;
+#ifdef notyet
+	/* protects the free desc list */
+	spinlock_t rx_desc_lock;
+#endif
+	TAILQ_HEAD(,ath12k_tx_desc_info) tx_desc_free_list[ATH12K_HW_MAX_QUEUES];
+	TAILQ_HEAD(,ath12k_tx_desc_info) tx_desc_used_list[ATH12K_HW_MAX_QUEUES];
+#ifdef notyet
+	/* protects the free and used desc lists */
+	spinlock_t tx_desc_lock[ATH12K_HW_MAX_QUEUES];
+#endif
 };
 
 #define ATH12K_SHADOW_DP_TIMER_INTERVAL 20
@@ -1143,7 +1296,7 @@ struct qwz_ce_pipe {
 	unsigned int buf_sz;
 	unsigned int rx_buf_needed;
 
-	void (*send_cb)(struct qwz_softc *, struct mbuf *);
+	int (*send_cb)(struct qwz_ce_pipe *pipe);
 	void (*recv_cb)(struct qwz_softc *, struct mbuf *);
 
 #ifdef notyet
@@ -1171,8 +1324,8 @@ struct qwz_ce {
 struct qwz_qmi_ce_cfg {
 	const uint8_t *shadow_reg;
 	int shadow_reg_len;
-	uint32_t *shadow_reg_v2;
-	uint32_t shadow_reg_v2_len;
+	uint32_t *shadow_reg_v3;
+	uint32_t shadow_reg_v3_len;
 };
 
 struct qwz_qmi_target_info {
@@ -1185,6 +1338,11 @@ struct qwz_qmi_target_info {
 	char fw_build_timestamp[ATH12K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 + 1];
 	char fw_build_id[ATH12K_QMI_WLANFW_MAX_BUILD_ID_LEN_V01 + 1];
 	char bdf_ext[ATH12K_QMI_BDF_EXT_STR_LENGTH];
+};
+
+struct qwz_qmi_dev_mem_info {
+	uint64_t start;
+	uint64_t size;
 };
 
 enum ath12k_bdf_search {
@@ -1631,7 +1789,8 @@ struct qwz_pdev_dp {
 	struct dp_rxdma_ring rx_refill_buf_ring;
 	struct dp_srng rx_mac_buf_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
-	struct dp_srng rxdma_mon_dst_ring;
+	struct dp_srng rxdma_mon_dst_ring[MAX_RXDMA_PER_PDEV];
+	struct dp_srng tx_mon_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng rxdma_mon_desc_ring;
 	struct dp_rxdma_ring rxdma_mon_buf_ring;
 	struct dp_rxdma_ring rx_mon_status_refill_ring[MAX_RXDMA_PER_PDEV];
@@ -1839,6 +1998,7 @@ struct qwz_softc {
 	int				qmi_cal_done;
 	struct qwz_qmi_ce_cfg		qmi_ce_cfg;
 	struct qwz_qmi_target_info	qmi_target;
+	struct qwz_qmi_dev_mem_info	qmi_dev_mem[ATH12K_QMI_WLFW_MAX_DEV_MEM_NUM_V01];
 	struct ath12k_targ_cap		target_caps;
 	int				num_radios;
 	uint32_t			cc_freq_hz;
@@ -1901,6 +2061,8 @@ struct qwz_softc {
 	struct qwz_ops			ops;
 	bus_dma_tag_t			sc_dmat;
 	enum ath12k_hw_rev		sc_hw_rev;
+	uint32_t			hal_seq_wcss_umac_ce0_src_reg;
+	int				static_window_map;
 	struct qwz_device_id		id;
 	char				sc_bus_str[4]; /* "pci" or "ahb" */
 	int				num_msivec;
