@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2083 2024/08/10 11:00:14 jsg Exp $
+$OpenBSD: pcidevs,v 1.2084 2024/08/15 11:25:37 patrick Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8645,6 +8645,7 @@ product QLOGIC ISP8432		0x8432	ISP8432
 product QUALCOMM SC8280XP_PCIE	0x010e	SC8280XP PCIe
 product QUALCOMM X1E80100_PCIE	0x0111	X1E80100 PCIe
 product QUALCOMM QCNFA765	0x1103	QCNFA765
+product QUALCOMM WCN7850	0x1107	WCN7850
 
 /* Quancom products */
 product QUANCOM PWDOG1		0x0010	PWDOG1
