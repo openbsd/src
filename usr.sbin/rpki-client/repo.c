@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.61 2024/07/12 09:27:32 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.62 2024/08/15 11:30:43 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1376,12 +1376,15 @@ repo_abort(struct repo *rp)
 	/* reset the alarm */
 	rp->alarm = getmonotime() + repo_timeout;
 
-	if (rp->rsync)
+	if (rp->rsync) {
+		warnx("%s: synchronisation timeout", rp->repouri);
 		rsync_abort(rp->rsync->id);
-	else if (rp->rrdp)
+	} else if (rp->rrdp) {
+		warnx("%s: synchronisation timeout", rp->notifyuri);
 		rrdp_abort(rp->rrdp->id);
-	else
-		repo_fail(rp);
+	}
+
+	repo_fail(rp);
 }
 
 int
@@ -1412,11 +1415,9 @@ repo_check_timeout(int timeout)
 	/* Look up in repository table. (Lookup should actually fail here) */
 	SLIST_FOREACH(rp, &repos, entry) {
 		if (repo_state(rp) == REPO_LOADING) {
-			if (rp->alarm <= now) {
-				warnx("%s: synchronisation timeout",
-				    rp->repouri);
+			if (rp->alarm <= now)
 				repo_abort(rp);
-			} else {
+			else {
 				diff = rp->alarm - now;
 				diff *= 1000;
 				if (timeout == INFTIM || diff < timeout)
