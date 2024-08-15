@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.262 2024/07/12 09:27:32 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.263 2024/08/15 09:22:12 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1285,13 +1285,13 @@ main(int argc, char *argv[])
 	while (entity_queue > 0 && !killme) {
 		int polltim;
 
+		polltim = repo_check_timeout(INFTIM);
+
 		for (i = 0; i < NPFD; i++) {
 			pfd[i].events = POLLIN;
 			if (queues[i]->queued)
 				pfd[i].events |= POLLOUT;
 		}
-
-		polltim = repo_check_timeout(INFTIM);
 
 		if (poll(pfd, NPFD, polltim) == -1) {
 			if (errno == EINTR)
