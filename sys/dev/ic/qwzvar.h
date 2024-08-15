@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.2 2024/08/15 22:01:37 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.3 2024/08/15 23:23:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -75,7 +75,6 @@ struct ath12k_hw_ring_mask {
 #define ATH12K_DEFAULT_CAL_FILE		"caldata"
 #define ATH12K_AMSS_FILE		"amss"
 #define ATH12K_M3_FILE			"m3"
-#define ATH12K_REGDB_FILE		"regdb"
 
 #define QWZ_FW_BUILD_ID_MASK "QC_IMAGE_VERSION_STRING="
 
@@ -219,14 +218,10 @@ struct ath12k_hw_params {
 	bool supports_shadow_regs;
 	bool idle_ps;
 	bool supports_sta_ps;
-	bool cold_boot_calib;
-	bool cbcal_restart_fw;
-	int fw_mem_mode;
 	uint32_t num_vdevs;
 	uint32_t num_peers;
 	bool supports_suspend;
 	uint32_t hal_desc_sz;
-	bool supports_regdb;
 	bool fix_l1ss;
 	bool credit_flow;
 	uint8_t max_tx_ring;
@@ -237,19 +232,10 @@ struct ath12k_hw_params {
 	bool alloc_cacheable_memory;
 	bool supports_rssi_stats;
 #endif
-	bool fw_wmi_diag_event;
 	bool current_cc_support;
 	bool dbr_debug_support;
-	bool global_reset;
 #ifdef notyet
 	const struct cfg80211_sar_capa *bios_sar_capa;
-#endif
-	bool m3_fw_support;
-	bool fixed_bdf_addr;
-	bool fixed_mem_region;
-	bool hybrid_bus_type;
-	bool fixed_fw_mem;
-#if notyet
 	bool support_off_channel_tx;
 	bool supports_multi_bssid;
 
@@ -1969,11 +1955,10 @@ struct qwz_softc {
 	struct {
 		u_char *data;
 		size_t size;
-	} fw_img[4];
+	} fw_img[3];
 #define QWZ_FW_AMSS	0
 #define QWZ_FW_BOARD	1
 #define QWZ_FW_M3	2
-#define QWZ_FW_REGDB	3
 
 	int			sc_tx_timer;
 	uint32_t		qfullmsk;
@@ -2048,7 +2033,7 @@ struct qwz_softc {
 	struct qwz_dmamem		*fwmem;
 	int				 expect_fwmem_req;
 	int				 fwmem_ready;
-	int				 fw_init_done;
+	int				 fw_ready;
 
 	int				 ctl_resp;
 

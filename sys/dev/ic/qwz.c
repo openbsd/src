@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.2 2024/08/15 22:01:37 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.3 2024/08/15 23:23:06 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3004,7 +3004,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.hw_ops = &wcn7850_ops,
 		.ring_mask = &ath12k_hw_ring_mask_wcn7850,
 		.regs = &wcn7850_regs,
-		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_QCA6390,
+		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_WCN7850,
 		.host_ce_config = qwz_host_ce_config_wcn7850,
 		.ce_count = QWZ_CE_COUNT_QCA6390,
 		.target_ce_config = ath12k_target_ce_config_wlan_qca6390,
@@ -3016,17 +3016,12 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.num_rxdma_dst_ring = 1,
 		.credit_flow = true,
 		.max_tx_ring = DP_TCL_NUM_RING_MAX,
-		.cold_boot_calib = false,
 		.htt_peer_map_v2 = false,
 		.supports_shadow_regs = true,
-		.fw_mem_mode = 0,
 		.fix_l1ss = false,
 		.hal_params = &ath12k_hw_hal_params_wcn7850,
 		.qmi_cnss_feature_bitmap = BIT(CNSS_QDSS_CFG_MISS_V01) |
 					   BIT(CNSS_PCIE_PERST_NO_PULL_V01),
-		.fixed_fw_mem = false,
-		.global_reset = true,
-		.m3_fw_support = true,
 		.tx_ring_size = DP_TCL_DATA_RING_SIZE,
 	},
 };
@@ -6364,9 +6359,9 @@ qwz_qmi_recv_indication(struct qwz_softc *sc, struct mbuf *m,
 		sc->fwmem_ready = 1;
 		wakeup(&sc->fwmem_ready);
 		break;
-	case QMI_WLFW_FW_INIT_DONE_IND_V01:
-		sc->fw_init_done = 1;
-		wakeup(&sc->fw_init_done);
+	case QMI_WLFW_FW_READY_IND_V01:
+		sc->fw_ready = 1;
+		wakeup(&sc->fw_ready);
 		break;
 	default:
 		printf("%s: unhandled QMI indication 0x%x\n",
@@ -7139,9 +7134,8 @@ qwz_qmi_phy_cap_send(struct qwz_softc *sc)
 		ret = tsleep_nsec(&sc->qmi_resp, 0, "qwzphycap",
 		    SEC_TO_NSEC(1));
 		if (ret) {
-			printf("%s: fw phy cap request timeout\n",
-			    sc->sc_dev.dv_xname);
-			return ret;
+			/* Not having a phy cap is OK */
+			return 0;
 		}
 	}
 
@@ -7160,6 +7154,10 @@ qwz_qmi_fw_ind_register_send(struct qwz_softc *sc)
 	req.client_id = QMI_WLANFW_CLIENT_ID;
 	req.fw_ready_enable_valid = 1;
 	req.fw_ready_enable = 1;
+	req.request_mem_enable_valid = 1;
+	req.request_mem_enable = 1;
+	req.fw_mem_ready_enable_valid = 1;
+	req.fw_mem_ready_enable = 1;
 	req.cal_done_enable_valid = 1;
 	req.cal_done_enable = 1;
 	req.fw_init_done_enable_valid = 1;
@@ -7167,17 +7165,6 @@ qwz_qmi_fw_ind_register_send(struct qwz_softc *sc)
 
 	req.pin_connect_result_enable_valid = 0;
 	req.pin_connect_result_enable = 0;
-
-	/*
-	 * WCN6750 doesn't request for DDR memory via QMI,
-	 * instead it uses a fixed 12MB reserved memory region in DDR.
-	 */
-	if (!sc->hw_params.fixed_fw_mem) {
-		req.request_mem_enable_valid = 1;
-		req.request_mem_enable = 1;
-		req.fw_mem_ready_enable_valid = 1;
-		req.fw_mem_ready_enable = 1;
-	}
 
 	DNPRINTF(QWZ_D_QMI, "%s: qmi indication register request\n", __func__);
 
@@ -7214,22 +7201,15 @@ qwz_qmi_host_cap_send(struct qwz_softc *sc)
 	memset(&req, 0, sizeof(req));
 	req.num_clients_valid = 1;
 	req.num_clients = 1;
-	req.mem_cfg_mode = sc->hw_params.fw_mem_mode;
+	req.mem_cfg_mode = ATH12K_QMI_TARGET_MEM_MODE_DEFAULT;
 	req.mem_cfg_mode_valid = 1;
 	req.bdf_support_valid = 1;
 	req.bdf_support = 1;
 
-	if (sc->hw_params.m3_fw_support) {
-		req.m3_support_valid = 1;
-		req.m3_support = 1;
-		req.m3_cache_support_valid = 1;
-		req.m3_cache_support = 1;
-	} else {
-		req.m3_support_valid = 0;
-		req.m3_support = 0;
-		req.m3_cache_support_valid = 0;
-		req.m3_cache_support = 0;
-	}
+	req.m3_support_valid = 1;
+	req.m3_support = 1;
+	req.m3_cache_support_valid = 1;
+	req.m3_cache_support = 1;
 
 	req.cal_done_valid = 1;
 	req.cal_done = sc->qmi_cal_done;
@@ -7251,10 +7231,8 @@ qwz_qmi_host_cap_send(struct qwz_softc *sc)
 		 * clock.
 		 */
 		req.nm_modem |= QWZ_SLEEP_CLOCK_SELECT_INTERNAL_BIT;
-	}
-
-	if (sc->hw_params.global_reset)
 		req.nm_modem |= QWZ_PLATFORM_CAP_PCIE_GLOBAL_RESET;
+	}
 
 	DNPRINTF(QWZ_D_QMI, "%s: qmi host cap request\n", __func__);
 
@@ -7413,15 +7391,13 @@ qwz_qmi_mem_seg_send(struct qwz_softc *sc)
 		return EBUSY; /* retry */
 	}
 
-	if (!sc->hw_params.fixed_fw_mem) {
-		while (!sc->fwmem_ready) {
-			ret = tsleep_nsec(&sc->fwmem_ready, 0, "qwzfwrdy",
-			    SEC_TO_NSEC(10));
-			if (ret) {
-				printf("%s: fw memory ready timeout\n",
-				    sc->sc_dev.dv_xname);
-				return -1;
-			}
+	while (!sc->fwmem_ready) {
+		ret = tsleep_nsec(&sc->fwmem_ready, 0, "qwzfwrdy",
+		    SEC_TO_NSEC(10));
+		if (ret) {
+			printf("%s: fw memory ready timeout\n",
+			    sc->sc_dev.dv_xname);
+			return -1;
 		}
 	}
 
@@ -7503,17 +7479,6 @@ qwz_qmi_request_target_cap(struct qwz_softc *sc)
 
 out:
 	return ret;
-}
-
-int
-qwz_qmi_request_device_info(struct qwz_softc *sc)
-{
-	/* device info message req is only sent for hybrid bus devices */
-	if (!sc->hw_params.hybrid_bus_type)
-		return 0;
-
-	/* TODO */
-	return -1;
 }
 
 int
@@ -7831,22 +7796,6 @@ qwz_qmi_load_file_target_mem(struct qwz_softc *sc, const u_char *data,
 		return ENOMEM;
 	}
 
-	if (sc->hw_params.fixed_bdf_addr) {
-#ifdef notyet
-		bdf_addr = ioremap(ab->hw_params.bdf_addr, ab->hw_params.fw.board_size);
-		if (!bdf_addr) {
-			ath12k_warn(ab, "qmi ioremap error for bdf_addr\n");
-			ret = -EIO;
-			goto err_free_req;
-		}
-#else
-		printf("%s: fixed bdf address not yet supported\n",
-		    sc->sc_dev.dv_xname);
-		ret = EIO;
-		goto err_free_req;
-#endif
-	}
-
 	while (remaining) {
 		req->valid = 1;
 		req->file_id_valid = 1;
@@ -7867,22 +7816,13 @@ qwz_qmi_load_file_target_mem(struct qwz_softc *sc, const u_char *data,
 			req->end = 1;
 		}
 
-		if (sc->hw_params.fixed_bdf_addr ||
-		    type == ATH12K_QMI_FILE_TYPE_EEPROM) {
+		if (type == ATH12K_QMI_FILE_TYPE_EEPROM) {
 			req->data_valid = 0;
 			req->end = 1;
 			req->data_len = ATH12K_QMI_MAX_BDF_FILE_NAME_SIZE;
 		} else {
 			memcpy(req->data, p, req->data_len);
 		}
-#ifdef notyet
-		if (ab->hw_params.fixed_bdf_addr) {
-			if (type == ATH12K_QMI_FILE_TYPE_CALDATA)
-				bdf_addr += ab->hw_params.fw.cal_offset;
-
-			memcpy_toio(bdf_addr, p, len);
-		}
-#endif
 		DPRINTF("%s: bdf download req fixed addr type %d\n",
 		    __func__, type);
 
@@ -7894,7 +7834,7 @@ qwz_qmi_load_file_target_mem(struct qwz_softc *sc, const u_char *data,
 		if (ret) {
 			printf("%s: failed to send bdf download request\n",
 			    sc->sc_dev.dv_xname);
-			goto err_iounmap;
+			goto err_free_req;
 		}
 
 		sc->qmi_resp.result = QMI_RESULT_FAILURE_V01;
@@ -7904,12 +7844,11 @@ qwz_qmi_load_file_target_mem(struct qwz_softc *sc, const u_char *data,
 			if (ret) {
 				printf("%s: bdf download request timeout\n",
 				    sc->sc_dev.dv_xname);
-				goto err_iounmap;
+				goto err_free_req;
 			}
 		}
 
-		if (sc->hw_params.fixed_bdf_addr ||
-		    type == ATH12K_QMI_FILE_TYPE_EEPROM) {
+		if (type == ATH12K_QMI_FILE_TYPE_EEPROM) {
 			remaining = 0;
 		} else {
 			remaining -= req->data_len;
@@ -7920,11 +7859,6 @@ qwz_qmi_load_file_target_mem(struct qwz_softc *sc, const u_char *data,
 		}
 	}
 
-err_iounmap:
-#ifdef notyet
-	if (ab->hw_params.fixed_bdf_addr)
-		iounmap(bdf_addr);
-#endif
 err_free_req:
 	free(req, M_DEVBUF, sizeof(*req));
 
@@ -7946,23 +7880,22 @@ qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, int regdb)
 	const uint8_t *tmp;
 	uint32_t file_type;
 #endif
-	int fw_idx = regdb ? QWZ_FW_REGDB : QWZ_FW_BOARD;
 
-	if (sc->fw_img[fw_idx].data) {
-		boardfw = sc->fw_img[fw_idx].data;
-		boardfw_len = sc->fw_img[fw_idx].size;
+	if (sc->fw_img[QWZ_FW_BOARD].data) {
+		boardfw = sc->fw_img[QWZ_FW_BOARD].data;
+		boardfw_len = sc->fw_img[QWZ_FW_BOARD].size;
 	} else {
 		ret = qwz_core_fetch_bdf(sc, &data, &len,
 		    &boardfw, &boardfw_len,
-		    regdb ? ATH12K_REGDB_FILE : ATH12K_BOARD_API2_FILE);
+		    ATH12K_BOARD_API2_FILE);
 		if (ret)
 			return ret;
 
-		sc->fw_img[fw_idx].data = malloc(boardfw_len, M_DEVBUF,
+		sc->fw_img[QWZ_FW_BOARD].data = malloc(boardfw_len, M_DEVBUF,
 		    M_NOWAIT);
-		if (sc->fw_img[fw_idx].data) {
-			memcpy(sc->fw_img[fw_idx].data, boardfw, boardfw_len);
-			sc->fw_img[fw_idx].size = boardfw_len;
+		if (sc->fw_img[QWZ_FW_BOARD].data) {
+			memcpy(sc->fw_img[QWZ_FW_BOARD].data, boardfw, boardfw_len);
+			sc->fw_img[QWZ_FW_BOARD].size = boardfw_len;
 		}
 	}
 
@@ -8055,15 +7988,12 @@ qwz_qmi_event_load_bdf(struct qwz_softc *sc)
 		return ret;
 	}
 
-	ret = qwz_qmi_request_device_info(sc);
+	ret = qwz_qmi_load_bdf_qmi(sc, 1);
 	if (ret < 0) {
-		printf("%s: failed to request qmi device info: %d\n",
+		printf("%s: failed to load regdb file: %d\n",
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
-
-	if (sc->hw_params.supports_regdb)
-		qwz_qmi_load_bdf_qmi(sc, 1);
 
 	ret = qwz_qmi_load_bdf_qmi(sc, 0);
 	if (ret < 0) {
@@ -8129,22 +8059,17 @@ qwz_qmi_wlanfw_m3_info_send(struct qwz_softc *sc)
 
 	memset(&req, 0, sizeof(req));
 
-	if (sc->hw_params.m3_fw_support) {
-		ret = qwz_qmi_m3_load(sc);
-		if (ret) {
-			printf("%s: failed to load m3 firmware: %d",
-			    sc->sc_dev.dv_xname, ret);
-			return ret;
-		}
-
-		paddr = QWZ_DMA_DVA(sc->m3_mem);
-		size = QWZ_DMA_LEN(sc->m3_mem);
-		req.addr = htole64(paddr);
-		req.size = htole32(size);
-	} else {
-		req.addr = 0;
-		req.size = 0;
+	ret = qwz_qmi_m3_load(sc);
+	if (ret) {
+		printf("%s: failed to load m3 firmware: %d",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
 	}
+
+	paddr = QWZ_DMA_DVA(sc->m3_mem);
+	size = QWZ_DMA_LEN(sc->m3_mem);
+	req.addr = htole64(paddr);
+	req.size = htole32(size);
 
 	ret = qwz_qmi_send_request(sc, QMI_WLANFW_M3_INFO_REQ_V01,
 	    QMI_WLANFW_M3_INFO_REQ_MSG_V01_MAX_MSG_LEN,
@@ -10135,20 +10060,14 @@ qwz_dp_free(struct qwz_softc *sc)
 	/* Deinit any SOC level resource */
 }
 
-void
-qwz_qmi_process_coldboot_calibration(struct qwz_softc *sc)
-{
-	printf("%s not implemented\n", __func__);
-}
-
 int
-qwz_qmi_wlanfw_wlan_ini_send(struct qwz_softc *sc, int enable)
+qwz_qmi_wlanfw_wlan_ini_send(struct qwz_softc *sc)
 {
 	int ret;
 	struct qmi_wlanfw_wlan_ini_req_msg_v01 req = {};
 
 	req.enablefwlog_valid = 1;
-	req.enablefwlog = enable ? 1 : 0;
+	req.enablefwlog = 1;
 
 	ret = qwz_qmi_send_request(sc, QMI_WLANFW_WLAN_INI_REQ_V01,
 	    QMI_WLANFW_WLAN_INI_REQ_MSG_V01_MAX_LEN,
@@ -10211,7 +10130,6 @@ qwz_qmi_wlanfw_wlan_cfg_send(struct qwz_softc *sc)
 		req->svc_cfg[pipe_num].pipe_dir = svc_cfg[pipe_num].pipedir;
 		req->svc_cfg[pipe_num].pipe_num = svc_cfg[pipe_num].pipenum;
 	}
-	req->shadow_reg_valid = 0;
 
 	/* set shadow v3 configuration */
 	if (sc->hw_params.supports_shadow_regs) {
@@ -10293,13 +10211,11 @@ qwz_qmi_firmware_start(struct qwz_softc *sc, enum ath12k_firmware_mode mode)
 
 	DPRINTF("%s: firmware start\n", sc->sc_dev.dv_xname);
 
-	if (sc->hw_params.fw_wmi_diag_event) {
-		ret = qwz_qmi_wlanfw_wlan_ini_send(sc, 1);
-		if (ret < 0) {
-			printf("%s: qmi failed to send wlan fw ini: %d\n",
-			    sc->sc_dev.dv_xname, ret);
-			return ret;
-		}
+	ret = qwz_qmi_wlanfw_wlan_ini_send(sc);
+	if (ret < 0) {
+		printf("%s: qmi failed to send wlan fw ini: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
 	}
 
 	ret = qwz_qmi_wlanfw_wlan_cfg_send(sc);
@@ -19356,22 +19272,18 @@ err_firmware_stop:
 }
 
 void
-qwz_qmi_fw_init_done(struct qwz_softc *sc)
+qwz_qmi_fw_ready(struct qwz_softc *sc)
 {
 	int ret = 0;
 
 	clear_bit(ATH12K_FLAG_QMI_FAIL, sc->sc_flags);
 
-	if (sc->qmi_cal_done == 0 && sc->hw_params.cold_boot_calib) {
-		qwz_qmi_process_coldboot_calibration(sc);
-	} else {
-		clear_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags);
-		clear_bit(ATH12K_FLAG_RECOVERY, sc->sc_flags);
-		ret = qwz_core_qmi_firmware_ready(sc);
-		if (ret) {
-			set_bit(ATH12K_FLAG_QMI_FAIL, sc->sc_flags);
-			return;
-		}
+	clear_bit(ATH12K_FLAG_CRASH_FLUSH, sc->sc_flags);
+	clear_bit(ATH12K_FLAG_RECOVERY, sc->sc_flags);
+	ret = qwz_core_qmi_firmware_ready(sc);
+	if (ret) {
+		set_bit(ATH12K_FLAG_QMI_FAIL, sc->sc_flags);
+		return;
 	}
 }
 
@@ -19380,7 +19292,7 @@ qwz_qmi_event_server_arrive(struct qwz_softc *sc)
 {
 	int ret;
 
-	sc->fw_init_done = 0;
+	sc->fw_ready = 0;
 	sc->expect_fwmem_req = 1;
 
 	ret = qwz_qmi_phy_cap_send(sc);
@@ -19431,16 +19343,16 @@ qwz_qmi_event_server_arrive(struct qwz_softc *sc)
 		return ret;
 	}
 
-	while (!sc->fw_init_done) {
-		ret = tsleep_nsec(&sc->fw_init_done, 0, "qwzfwinit",
+	while (!sc->fw_ready) {
+		ret = tsleep_nsec(&sc->fw_ready, 0, "qwzfwrdy",
 		    SEC_TO_NSEC(10));
 		if (ret) {
-			printf("%s: fw init timeout\n", sc->sc_dev.dv_xname);
+			printf("%s: fw ready timeout\n", sc->sc_dev.dv_xname);
 			return -1;
 		}
 	}
 
-	qwz_qmi_fw_init_done(sc);
+	qwz_qmi_fw_ready(sc);
 	return 0;
 }
 
