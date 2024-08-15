@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.26 2021/11/18 03:31:44 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.27 2024/08/15 00:51:51 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -36,6 +36,8 @@
 #include "ssherr.h"
 
 #ifdef WITH_OPENSSL
+#include <openssl/ec.h>
+#include <openssl/rsa.h>
 
 /* borrows code from sftp-server and ssh-agent */
 
@@ -176,10 +178,13 @@ static void
 process_sign(void)
 {
 	u_char *blob, *data, *signature = NULL;
-	size_t blen, dlen, slen = 0;
-	int r, ok = -1;
-	struct sshkey *key, *found;
+	size_t blen, dlen;
+	u_int slen = 0;
+	int len, r, ok = -1;
+	struct sshkey *key = NULL, *found;
 	struct sshbuf *msg;
+	RSA *rsa = NULL;
+	EC_KEY *ecdsa = NULL;
 
 	/* XXX support SHA2 signature flags */
 	if ((r = sshbuf_get_string(iqueue, &blob, &blen)) != 0 ||
@@ -189,39 +194,43 @@ process_sign(void)
 
 	if ((r = sshkey_from_blob(blob, blen, &key)) != 0)
 		fatal_fr(r, "decode key");
-	else {
-		if ((found = lookup_key(key)) != NULL) {
-#ifdef WITH_OPENSSL
-			int ret;
+	if ((found = lookup_key(key)) == NULL)
+		goto reply;
 
-			if (key->type == KEY_RSA) {
-				slen = RSA_size(key->rsa);
-				signature = xmalloc(slen);
-				ret = RSA_private_encrypt(dlen, data, signature,
-				    found->rsa, RSA_PKCS1_PADDING);
-				if (ret != -1) {
-					slen = ret;
-					ok = 0;
-				}
-			} else if (key->type == KEY_ECDSA) {
-				u_int xslen = ECDSA_size(key->ecdsa);
-
-				signature = xmalloc(xslen);
-				/* "The parameter type is ignored." */
-				ret = ECDSA_sign(-1, data, dlen, signature,
-				    &xslen, found->ecdsa);
-				if (ret != 0)
-					ok = 0;
-				else
-					error_f("ECDSA_sign returned %d", ret);
-				slen = xslen;
-			} else
-				error_f("don't know how to sign with key "
-				    "type %d", (int)key->type);
-#endif /* WITH_OPENSSL */
+	/* XXX use pkey API properly for signing */
+	switch (key->type) {
+	case KEY_RSA:
+		if ((rsa = EVP_PKEY_get1_RSA(found->pkey)) == NULL)
+			fatal_f("no RSA in pkey");
+		if ((len = RSA_size(rsa)) < 0)
+			fatal_f("bad RSA length");
+		signature = xmalloc(len);
+		if ((len = RSA_private_encrypt(dlen, data, signature,
+		    rsa, RSA_PKCS1_PADDING)) < 0) {
+			error_f("RSA_private_encrypt failed");
+			goto reply;
 		}
-		sshkey_free(key);
+		slen = (u_int)len;
+		break;
+	case KEY_ECDSA:
+		if ((ecdsa = EVP_PKEY_get1_EC_KEY(found->pkey)) == NULL)
+			fatal_f("no ECDSA in pkey");
+		if ((len = ECDSA_size(ecdsa)) < 0)
+			fatal_f("bad ECDSA length");
+		slen = (u_int)len;
+		signature = xmalloc(slen);
+		/* "The parameter type is ignored." */
+		if (!ECDSA_sign(-1, data, dlen, signature, &slen, ecdsa)) {
+			error_f("ECDSA_sign failed");
+			goto reply;
+		}
+		break;
+	default:
+		fatal_f("unsupported key type %d", key->type);
 	}
+	/* success */
+	ok = 0;
+ reply:
 	if ((msg = sshbuf_new()) == NULL)
 		fatal_f("sshbuf_new failed");
 	if (ok == 0) {
@@ -232,6 +241,9 @@ process_sign(void)
 		if ((r = sshbuf_put_u8(msg, SSH2_AGENT_FAILURE)) != 0)
 			fatal_fr(r, "compose failure response");
 	}
+	sshkey_free(key);
+	RSA_free(rsa);
+	EC_KEY_free(ecdsa);
 	free(data);
 	free(blob);
 	free(signature);

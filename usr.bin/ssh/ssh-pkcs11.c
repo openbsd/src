@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11.c,v 1.62 2024/04/02 12:22:38 deraadt Exp $ */
+/* $OpenBSD: ssh-pkcs11.c,v 1.63 2024/08/15 00:51:51 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -493,8 +493,10 @@ pkcs11_rsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 		memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
 	}
 
-	RSA_set_method(rsa, rsa_method);
-	RSA_set_ex_data(rsa, rsa_idx, k11);
+	if (RSA_set_method(rsa, rsa_method) != 1)
+		fatal_f("RSA_set_method failed");
+	if (RSA_set_ex_data(rsa, rsa_idx, k11) != 1)
+		fatal_f("RSA_set_ex_data failed");
 	return (0);
 }
 
@@ -605,8 +607,10 @@ pkcs11_ecdsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 		k11->keyid = xmalloc(k11->keyid_len);
 		memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
 	}
-	EC_KEY_set_method(ec, ec_key_method);
-	EC_KEY_set_ex_data(ec, ec_key_idx, k11);
+	if (EC_KEY_set_method(ec, ec_key_method) != 1)
+		fatal_f("EC_KEY_set_method failed");
+	if (EC_KEY_set_ex_data(ec, ec_key_idx, k11) != 1)
+		fatal_f("EC_KEY_set_ex_data failed");
 
 	return (0);
 }
@@ -791,11 +795,14 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 		goto fail;
 	}
 
-	key->ecdsa = ec;
+	EVP_PKEY_free(key->pkey);
+	if ((key->pkey = EVP_PKEY_new()) == NULL)
+		fatal("EVP_PKEY_new failed");
+	if (EVP_PKEY_set1_EC_KEY(key->pkey, ec) != 1)
+		fatal("EVP_PKEY_set1_EC_KEY failed");
 	key->ecdsa_nid = nid;
 	key->type = KEY_ECDSA;
 	key->flags |= SSHKEY_FLAG_EXT;
-	ec = NULL;	/* now owned by key */
 
 fail:
 	for (i = 0; i < 3; i++)
@@ -886,10 +893,13 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 		goto fail;
 	}
 
-	key->rsa = rsa;
+	EVP_PKEY_free(key->pkey);
+	if ((key->pkey = EVP_PKEY_new()) == NULL)
+		fatal("EVP_PKEY_new failed");
+	if (EVP_PKEY_set1_RSA(key->pkey, rsa) != 1)
+		fatal("EVP_PKEY_set1_RSA failed");
 	key->type = KEY_RSA;
 	key->flags |= SSHKEY_FLAG_EXT;
-	rsa = NULL;	/* now owned by key */
 
 fail:
 	for (i = 0; i < 3; i++)
@@ -997,10 +1007,13 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 			goto out;
 		}
 
-		key->rsa = rsa;
+		EVP_PKEY_free(key->pkey);
+		if ((key->pkey = EVP_PKEY_new()) == NULL)
+			fatal("EVP_PKEY_new failed");
+		if (EVP_PKEY_set1_RSA(key->pkey, rsa) != 1)
+			fatal("EVP_PKEY_set1_RSA failed");
 		key->type = KEY_RSA;
 		key->flags |= SSHKEY_FLAG_EXT;
-		rsa = NULL;	/* now owned by key */
 	} else if (EVP_PKEY_base_id(evp) == EVP_PKEY_EC) {
 		if (EVP_PKEY_get0_EC_KEY(evp) == NULL) {
 			error("invalid x509; no ec key");
@@ -1026,11 +1039,14 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 			goto out;
 		}
 
-		key->ecdsa = ec;
+		EVP_PKEY_free(key->pkey);
+		if ((key->pkey = EVP_PKEY_new()) == NULL)
+			fatal("EVP_PKEY_new failed");
+		if (EVP_PKEY_set1_EC_KEY(key->pkey, ec) != 1)
+			fatal("EVP_PKEY_set1_EC_KEY failed");
 		key->ecdsa_nid = nid;
 		key->type = KEY_ECDSA;
 		key->flags |= SSHKEY_FLAG_EXT;
-		ec = NULL;	/* now owned by key */
 	} else {
 		error("unknown certificate key type");
 		goto out;
