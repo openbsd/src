@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.48 2023/03/09 05:56:58 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.49 2024/08/15 12:20:20 dlg Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -123,6 +123,6 @@ struct bpf_if {
 	struct ifnet *bif_ifp;		/* corresponding interface */
 };
 
-int	 bpf_setf(struct bpf_d *, struct bpf_program *, int);
+int	 bpf_setf(struct bpf_d *, struct bpf_program *, u_long);
 #endif /* _KERNEL */
 #endif /* _NET_BPFDESC_H_ */

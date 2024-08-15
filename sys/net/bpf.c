@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.224 2024/08/12 17:02:58 mvs Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.225 2024/08/15 12:20:20 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -760,7 +760,8 @@ bpf_get_wtimeout(struct bpf_d *d, struct timeval *tv)
 /*
  *  FIONREAD		Check for read packet available.
  *  BIOCGBLEN		Get buffer len [for read()].
- *  BIOCSETF		Set ethernet read filter.
+ *  BIOCSETF		Set read filter.
+ *  BIOCSETFNR          Set read filter without resetting descriptor.
  *  BIOCFLUSH		Flush read packet buffer.
  *  BIOCPROMISC		Put interface into promiscuous mode.
  *  BIOCGDLTLIST	Get supported link layer types.
@@ -867,17 +868,12 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	/*
-	 * Set link layer read filter.
+	 * Set link layer read/write filter.
 	 */
 	case BIOCSETF:
-		error = bpf_setf(d, (struct bpf_program *)addr, 0);
-		break;
-
-	/*
-	 * Set link layer write filter.
-	 */
+	case BIOCSETFNR:
 	case BIOCSETWF:
-		error = bpf_setf(d, (struct bpf_program *)addr, 1);
+		error = bpf_setf(d, (struct bpf_program *)addr, cmd);
 		break;
 
 	/*
@@ -1122,7 +1118,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
  * free it and replace it.  Returns EINVAL for bogus requests.
  */
 int
-bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
+bpf_setf(struct bpf_d *d, struct bpf_program *fp, u_long cmd)
 {
 	struct bpf_program_smr *bps, *old_bps;
 	struct bpf_insn *fcode;
@@ -1157,7 +1153,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 		bps->bps_bf.bf_insns = fcode;
 	}
 
-	if (wf == 0) {
+	if (cmd != BIOCSETWF) {
 		old_bps = SMR_PTR_GET_LOCKED(&d->bd_rfilter);
 		SMR_PTR_SET_LOCKED(&d->bd_rfilter, bps);
 	} else {
@@ -1165,9 +1161,12 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 		SMR_PTR_SET_LOCKED(&d->bd_wfilter, bps);
 	}
 
-	mtx_enter(&d->bd_mtx);
-	bpf_resetd(d);
-	mtx_leave(&d->bd_mtx);
+	if (cmd == BIOCSETF) {
+		mtx_enter(&d->bd_mtx);
+		bpf_resetd(d);
+		mtx_leave(&d->bd_mtx);
+	}
+
 	if (old_bps != NULL)
 		smr_call(&old_bps->bps_smr, bpf_prog_smr, old_bps);
 

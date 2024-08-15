@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.46 2024/08/05 23:56:10 dlg Exp $
+.\"	$OpenBSD: bpf.4,v 1.47 2024/08/15 12:20:20 dlg Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: August 5 2024 $
+.Dd $Mdocdate: August 15 2024 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -318,6 +318,7 @@ readable.
 The maximum wait time that can be set is 5 minutes (300 seconds).
 .Pp
 .It Dv BIOCSETF Fa "struct bpf_program *"
+.It Dv BIOCSETFNR Fa "struct bpf_program *"
 Sets the filter program used by the kernel to discard uninteresting packets.
 An array of instructions and its length are passed in using the following
 structure:
@@ -335,9 +336,11 @@ field, while its length in units of
 is given by the
 .Fa bf_len
 field.
-Also, the actions of
+If
+.Dv BIOCSETF
+is used, the actions of
 .Dv BIOCFLUSH
-are performed.
+are also performed.
 .Pp
 See section
 .Sx FILTER MACHINE
@@ -350,8 +353,6 @@ network.
 See
 .Dv BIOCSETF
 for a description of the filter program.
-This ioctl also acts as
-.Dv BIOCFLUSH .
 .Pp
 Note that the filter operates on the packet data written to the descriptor.
 If the

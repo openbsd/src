@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.72 2024/01/26 21:14:08 jan Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.73 2024/08/15 12:20:20 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ struct bpf_version {
 #define BIOCSWTIMEOUT	_IOW('B',126, struct timeval)
 #define BIOCGWTIMEOUT	_IOR('B',126, struct timeval)
 #define BIOCDWTIMEOUT	_IO('B',126)
+#define BIOCSETFNR	_IOW('B',127, struct bpf_program)
 
 /*
  * Direction filters for BIOCSDIRFILT/BIOCGDIRFILT
