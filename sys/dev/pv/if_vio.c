@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.45 2024/08/01 11:13:19 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.46 2024/08/16 13:02:44 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1132,9 +1132,6 @@ vio_rx_offload(struct mbuf *m, struct virtio_net_hdr *hdr)
 		return;
 
 	ether_extract_headers(m, &ext);
-
-	if (ext.ip4)
-		SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK);
 
 	if (ext.tcp) {
 		SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK);
