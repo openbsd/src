@@ -1,5 +1,5 @@
 /* files.c -- file-related functions for makeinfo.
-   $Id: files.c,v 1.1.1.3 2006/07/17 16:03:46 espie Exp $
+   $Id: files.c,v 1.2 2024/08/16 22:53:32 guenther Exp $
 
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -456,8 +456,8 @@ full_pathname (char *filename)
           temp_home = (char *) getenv ("HOME");
           result = xmalloc (strlen (&filename[1])
                                     + 1
-                                    + temp_home ? strlen (temp_home)
-                                    : 0);
+                                    + (temp_home ? strlen (temp_home)
+                                    : 0));
           *result = 0;
 
           if (temp_home)
