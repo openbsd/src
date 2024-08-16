@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.10 2024/08/16 09:50:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.11 2024/08/16 09:52:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -252,6 +252,7 @@ main(int argc, char *argv[])
 	ipcp_fini(&module_ipcp);
 
 	event_loop(0);
+	event_base_free(NULL);
 
 	exit(EXIT_SUCCESS);
 }
@@ -341,11 +342,14 @@ ipcp_fini(struct module_ipcp *self)
 	struct user			*user, *usert;
 	struct module_ipcp_ctrlconn	*ctrl, *ctrlt;
 	struct module_ipcp_dae		*dae, *daet;
+	struct ipcp_address		*addr, *addrt;
 
 	RB_FOREACH_SAFE(assign, assigned_ipv4_tree, &self->ipv4s, assignt)
 		ipcp_ipv4_release(self, assign);
-	RB_FOREACH_SAFE(user, user_tree, &self->users, usert)
+	RB_FOREACH_SAFE(user, user_tree, &self->users, usert) {
+		RB_REMOVE(user_tree, &self->users, user);
 		free(user);
+	}
 	TAILQ_FOREACH_SAFE(ctrl, &self->ctrls, next, ctrlt)
 		free(ctrl);
 	TAILQ_FOREACH_SAFE(dae, &self->daes, next, daet) {
@@ -355,6 +359,8 @@ ipcp_fini(struct module_ipcp *self)
 		}
 		free(dae);
 	}
+	TAILQ_FOREACH_SAFE(addr, &self->addrs, next, addrt)
+		free(addr);
 	if (evtimer_pending(&self->ev_timer, NULL))
 		evtimer_del(&self->ev_timer);
 	module_destroy(self->base);
@@ -1934,9 +1940,9 @@ parse_addr(const char *str0, int af, struct sockaddr *sa, socklen_t salen)
 		free(str);
 		return (-1);
 	}
+	free(str);
 	if (salen < ai->ai_addrlen) {
 		freeaddrinfo(ai);
-		free(str);
 		return (-1);
 	}
 	memcpy(sa, ai->ai_addr, ai->ai_addrlen);

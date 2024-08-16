@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_eap2mschap.c,v 1.2 2024/07/17 11:19:27 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_eap2mschap.c,v 1.3 2024/08/16 09:52:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -74,7 +74,11 @@ main(int argc, char *argv[])
 
 	module_start(eap2mschap.base);
 	event_loop(0);
+
 	module_destroy(eap2mschap.base);
+
+	event_loop(0);
+	event_base_free(NULL);
 
 	exit(EXIT_SUCCESS);
 }
@@ -140,10 +144,14 @@ eap2mschap_stop(void *ctx)
 
 	evtimer_del(&self->ev_eapt);
 
-	RB_FOREACH_SAFE(req, access_reqt, &self->eapt, reqt)
+	RB_FOREACH_SAFE(req, access_reqt, &self->eapt, reqt) {
+		RB_REMOVE(access_reqt, &self->eapt, req);
 		access_request_free(req);
-	TAILQ_FOREACH_SAFE(req, &self->reqq, next, reqt)
+	}
+	TAILQ_FOREACH_SAFE(req, &self->reqq, next, reqt) {
+		TAILQ_REMOVE(&self->reqq, req, next);
 		access_request_free(req);
+	}
 }
 
 void

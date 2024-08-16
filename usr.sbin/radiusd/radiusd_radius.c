@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.21 2024/07/01 03:17:00 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.22 2024/08/16 09:52:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -139,6 +139,7 @@ main(int argc, char *argv[])
 	event_loop(0);
 
 	module_destroy(module_radius.base);
+	event_base_free(NULL);
 
 	exit(EXIT_SUCCESS);
 }
