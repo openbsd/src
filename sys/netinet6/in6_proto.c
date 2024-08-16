@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.117 2024/07/26 14:38:20 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.118 2024/08/16 09:20:35 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_DIVERT,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET|PR_MPSYSCTL,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreqs	= &divert6_usrreqs,
   .pr_init	= divert6_init,

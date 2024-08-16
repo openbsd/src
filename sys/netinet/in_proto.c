@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.107 2024/07/26 14:38:20 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.108 2024/08/16 09:20:35 mvs Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ const struct protosw inetsw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_DIVERT,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET|PR_MPSYSCTL,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreqs	= &divert_usrreqs,
   .pr_init	= divert_init,

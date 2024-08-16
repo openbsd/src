@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.96 2024/07/12 19:50:35 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.97 2024/08/16 09:20:35 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -44,17 +44,22 @@
 
 #include <net/pfvar.h>
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 struct	inpcbtable	divb6table;
 struct	cpumem		*div6counters;
 
 #ifndef DIVERT_SENDSPACE
 #define DIVERT_SENDSPACE	(65536 + 100)
 #endif
-u_int   divert6_sendspace = DIVERT_SENDSPACE;
+u_int   divert6_sendspace = DIVERT_SENDSPACE;	/* [a] */
 #ifndef DIVERT_RECVSPACE
 #define DIVERT_RECVSPACE	(65536 + 100)
 #endif
-u_int   divert6_recvspace = DIVERT_RECVSPACE;
+u_int   divert6_recvspace = DIVERT_RECVSPACE;	/* [a] */
 
 #ifndef DIVERTHASHSIZE
 #define DIVERTHASHSIZE	128
@@ -279,7 +284,8 @@ divert6_attach(struct socket *so, int proto, int wait)
 	if (error)
 		return (error);
 
-	error = soreserve(so, divert6_sendspace, divert6_recvspace);
+	error = soreserve(so, atomic_load_int(&divert6_sendspace),
+	    atomic_load_int(&divert6_recvspace));
 	if (error)
 		return (error);
 
@@ -322,8 +328,6 @@ int
 divert6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -332,12 +336,9 @@ divert6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case DIVERT6CTL_STATS:
 		return (divert6_sysctl_div6stat(oldp, oldlenp, newp));
 	default:
-		NET_LOCK();
-		error = sysctl_bounded_arr(divert6ctl_vars,
+		return (sysctl_bounded_arr(divert6ctl_vars,
 		    nitems(divert6ctl_vars), name, namelen, oldp, oldlenp,
-		    newp, newlen);
-		NET_UNLOCK();
-		return (error);
+		    newp, newlen));
 	}
 	/* NOTREACHED */
 }
