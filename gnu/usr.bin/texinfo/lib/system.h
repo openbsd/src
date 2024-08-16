@@ -1,5 +1,5 @@
 /* system.h: system-dependent declarations; include this first.
-   $Id: system.h,v 1.5 2006/07/17 16:12:36 espie Exp $
+   $Id: system.h,v 1.6 2024/08/16 22:57:03 guenther Exp $
 
    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -60,6 +60,7 @@ extern char *substring (const char *, const char *);
 #ifdef STDC_HEADERS
 #define getopt system_getopt
 #include <stdlib.h>
+#include <unistd.h>
 #undef getopt
 #else
 extern char *getenv ();
@@ -115,14 +116,6 @@ extern char *strerror ();
 # define _POSIX_PATH_MAX 255
 #endif
 #define PATH_MAX _POSIX_PATH_MAX
-#endif
-
-#ifndef HAVE_DECL_STRCASECMP
-extern int strcasecmp ();
-#endif
-
-#ifndef HAVE_DECL_STRNCASECMP
-extern int strncasecmp ();
 #endif
 
 #ifndef HAVE_DECL_STRCOLL
