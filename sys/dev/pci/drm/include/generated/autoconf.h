@@ -36,6 +36,7 @@
 #if NACPI > 0
 #define CONFIG_ACPI				1
 #define CONFIG_ACPI_SLEEP			1
+#define CONFIG_AMD_PMC				1
 #endif
 #endif
 
