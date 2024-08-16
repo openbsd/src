@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.15 2023/08/29 12:09:40 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.16 2024/08/16 04:14:27 deraadt Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -21,14 +21,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
-#ifdef __HAVE_ACPI
-#include <dev/acpi/acpireg.h>
-#include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpidev.h>
-#include <dev/acpi/amltypes.h>
-#include <dev/acpi/dsdt.h>
-#endif
-
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/ic/dwiicvar.h>
@@ -50,19 +42,9 @@ dwiic_activate(struct device *self, int act)
 		/* disable interrupts */
 		dwiic_write(sc, DW_IC_INTR_MASK, 0);
 		dwiic_read(sc, DW_IC_CLR_INTR);
-
-#if notyet
-		/* power down the controller */
-		dwiic_acpi_power(sc, 0);
-#endif
 		break;
 	case DVACT_WAKEUP:
-#if notyet
-		/* power up the controller */
-		dwiic_acpi_power(sc, 1);
-#endif
 		dwiic_init(sc);
-
 		break;
 	}
 
