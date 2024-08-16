@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.231 2024/08/11 15:10:53 mvs Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.232 2024/08/16 16:19:03 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ proc_free(struct proc *p)
 {
 	crfree(p->p_ucred);
 	pool_put(&proc_pool, p);
-	nthreads--;
+	atomic_dec_int(&nthreads);
 }
 
 /*
@@ -471,9 +471,7 @@ reaper(void *arg)
 
 		if (p->p_flag & P_THREAD) {
 			/* Just a thread */
-			KERNEL_LOCK();
 			proc_free(p);
-			KERNEL_UNLOCK();
 		} else {
 			struct process *pr = p->p_p;
 

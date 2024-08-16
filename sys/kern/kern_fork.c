@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.262 2024/08/11 15:10:53 mvs Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.263 2024/08/16 16:19:03 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #include <machine/tcb.h>
 
 int	nprocesses = 1;		/* process 0 */
-int	nthreads = 1;		/* proc 0 */
+int	nthreads = 1;		/* [a] proc 0 */
 struct	forkstat forkstat;
 
 void fork_return(void *);
@@ -307,6 +307,8 @@ struct timeval fork_tfmrate = { 10, 0 };
 int
 fork_check_maxthread(uid_t uid)
 {
+	int val;
+
 	/*
 	 * Although process entries are dynamically created, we still keep
 	 * a global limit on the maximum number we will create. We reserve
@@ -316,14 +318,15 @@ fork_check_maxthread(uid_t uid)
 	 * the variable nthreads is the current number of procs, maxthread is
 	 * the limit.
 	 */
-	if ((nthreads >= maxthread - 5 && uid != 0) || nthreads >= maxthread) {
+	val = atomic_inc_int_nv(&nthreads);
+	if ((val > maxthread - 5 && uid != 0) || val > maxthread) {
 		static struct timeval lasttfm;
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("thread");
+		atomic_dec_int(&nthreads);
 		return EAGAIN;
 	}
-	nthreads++;
 
 	return 0;
 }
@@ -369,7 +372,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("process");
-		nthreads--;
+		atomic_dec_int(&nthreads);
 		return EAGAIN;
 	}
 	nprocesses++;
@@ -382,7 +385,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	if (uid != 0 && count > lim_cur(RLIMIT_NPROC)) {
 		(void)chgproccnt(uid, -1);
 		nprocesses--;
-		nthreads--;
+		atomic_dec_int(&nthreads);
 		return EAGAIN;
 	}
 
@@ -390,7 +393,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	if (uaddr == 0) {
 		(void)chgproccnt(uid, -1);
 		nprocesses--;
-		nthreads--;
+		atomic_dec_int(&nthreads);
 		return (ENOMEM);
 	}
 
@@ -547,7 +550,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 
 	uaddr = uvm_uarea_alloc();
 	if (uaddr == 0) {
-		nthreads--;
+		atomic_dec_int(&nthreads);
 		return ENOMEM;
 	}
 
