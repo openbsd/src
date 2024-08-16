@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.16 2024/08/16 04:14:27 deraadt Exp $ */
+/* $OpenBSD: dwiic.c,v 1.17 2024/08/16 15:27:11 deraadt Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -471,32 +471,32 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 uint32_t
 dwiic_read_clear_intrbits(struct dwiic_softc *sc)
 {
-       uint32_t stat;
+	uint32_t stat;
 
-       stat = dwiic_read(sc, DW_IC_INTR_STAT);
+	stat = dwiic_read(sc, DW_IC_INTR_STAT);
 
-       if (stat & DW_IC_INTR_RX_UNDER)
-	       dwiic_read(sc, DW_IC_CLR_RX_UNDER);
-       if (stat & DW_IC_INTR_RX_OVER)
-	       dwiic_read(sc, DW_IC_CLR_RX_OVER);
-       if (stat & DW_IC_INTR_TX_OVER)
-	       dwiic_read(sc, DW_IC_CLR_TX_OVER);
-       if (stat & DW_IC_INTR_RD_REQ)
-	       dwiic_read(sc, DW_IC_CLR_RD_REQ);
-       if (stat & DW_IC_INTR_TX_ABRT)
-	       dwiic_read(sc, DW_IC_CLR_TX_ABRT);
-       if (stat & DW_IC_INTR_RX_DONE)
-	       dwiic_read(sc, DW_IC_CLR_RX_DONE);
-       if (stat & DW_IC_INTR_ACTIVITY)
-	       dwiic_read(sc, DW_IC_CLR_ACTIVITY);
-       if (stat & DW_IC_INTR_STOP_DET)
-	       dwiic_read(sc, DW_IC_CLR_STOP_DET);
-       if (stat & DW_IC_INTR_START_DET)
-	       dwiic_read(sc, DW_IC_CLR_START_DET);
-       if (stat & DW_IC_INTR_GEN_CALL)
-	       dwiic_read(sc, DW_IC_CLR_GEN_CALL);
+	if (stat & DW_IC_INTR_RX_UNDER)
+		dwiic_read(sc, DW_IC_CLR_RX_UNDER);
+	if (stat & DW_IC_INTR_RX_OVER)
+		dwiic_read(sc, DW_IC_CLR_RX_OVER);
+	if (stat & DW_IC_INTR_TX_OVER)
+		dwiic_read(sc, DW_IC_CLR_TX_OVER);
+	if (stat & DW_IC_INTR_RD_REQ)
+		dwiic_read(sc, DW_IC_CLR_RD_REQ);
+	if (stat & DW_IC_INTR_TX_ABRT)
+		dwiic_read(sc, DW_IC_CLR_TX_ABRT);
+	if (stat & DW_IC_INTR_RX_DONE)
+		dwiic_read(sc, DW_IC_CLR_RX_DONE);
+	if (stat & DW_IC_INTR_ACTIVITY)
+		dwiic_read(sc, DW_IC_CLR_ACTIVITY);
+	if (stat & DW_IC_INTR_STOP_DET)
+		dwiic_read(sc, DW_IC_CLR_STOP_DET);
+	if (stat & DW_IC_INTR_START_DET)
+		dwiic_read(sc, DW_IC_CLR_START_DET);
+	if (stat & DW_IC_INTR_GEN_CALL)
+		dwiic_read(sc, DW_IC_CLR_GEN_CALL);
 
-       return stat;
+	return stat;
 }
 
 int
