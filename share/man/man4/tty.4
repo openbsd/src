@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.55 2022/02/18 23:17:15 jsg Exp $
+.\"	$OpenBSD: tty.4,v 1.56 2024/08/16 16:10:27 florian Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: August 16 2024 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -61,8 +61,6 @@ These special terminal devices are called
 and provide the mechanism necessary to give users the same interface to the
 system when logging in over a network (using
 .Xr ssh 1
-or
-.Xr telnet 1
 for example).
 Even in these cases the details of how the terminal
 file was opened and set up is already handled by special software
