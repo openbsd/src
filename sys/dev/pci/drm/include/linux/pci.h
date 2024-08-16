@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.16 2024/01/16 23:38:13 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.17 2024/08/16 10:46:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -523,5 +523,11 @@ pci_match_id(const struct pci_device_id *ids, struct pci_dev *pdev)
     ((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_MISC)
 #define PCI_CLASS_ACCELERATOR_PROCESSING \
     (PCI_CLASS_ACCELERATOR << 8)
+
+static inline int
+pci_device_is_present(struct pci_dev *pdev)
+{
+	return 1;
+}
 
 #endif /* _LINUX_PCI_H_ */
