@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.2 2024/08/15 22:01:37 patrick Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.3 2024/08/16 00:26:54 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -824,7 +824,6 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_QUALCOMM_WCN7850:
 		sc->static_window_map = 0;
-		sc->hal_seq_wcss_umac_ce0_src_reg = 0x01b80000;
 		psc->sc_pci_ops = &qwz_pci_ops_wcn7850;
 		sc->id.bdf_search = ATH12K_BDF_SEARCH_BUS_AND_BOARD;
 		qwz_pci_read_hw_version(sc, &soc_hw_version_major,
@@ -1690,7 +1689,7 @@ qwz_pci_get_window_start(struct qwz_softc *sc, uint32_t offset)
 	if ((offset ^ HAL_SEQ_WCSS_UMAC_OFFSET) < ATH12K_PCI_WINDOW_RANGE_MASK)
 		/* if offset lies within DP register range, use 3rd window */
 		return 3 * ATH12K_PCI_WINDOW_START;
-	else if ((offset ^ HAL_SEQ_WCSS_UMAC_CE0_SRC_REG(sc)) <
+	else if ((offset ^ HAL_SEQ_WCSS_UMAC_CE0_SRC_REG) <
 		 ATH12K_PCI_WINDOW_RANGE_MASK)
 		 /* if offset lies within CE register range, use 2nd window */
 		return 2 * ATH12K_PCI_WINDOW_START;

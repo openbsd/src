@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.3 2024/08/15 23:23:06 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.4 2024/08/16 00:26:54 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -310,10 +310,6 @@ struct ath12k_hw_ops {
 extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850;
 
 struct ath12k_hw_regs {
-	uint32_t hal_tcl1_ring_cmn_ctrl_reg;
-	uint32_t hal_tcl1_ring_dscp_tid_map;
-	uint32_t hal_tcl1_ring_base_lsb;
-	uint32_t hal_tcl1_ring_base_msb;
 	uint32_t hal_tcl1_ring_id;
 	uint32_t hal_tcl1_ring_misc;
 	uint32_t hal_tcl1_ring_tp_addr_lsb;
@@ -323,52 +319,12 @@ struct ath12k_hw_regs {
 	uint32_t hal_tcl1_ring_msi1_base_lsb;
 	uint32_t hal_tcl1_ring_msi1_base_msb;
 	uint32_t hal_tcl1_ring_msi1_data;
-	uint32_t hal_tcl2_ring_base_lsb;
 	uint32_t hal_tcl_ring_base_lsb;
-	uint32_t hal_tcl_ring_hp;
 
 	uint32_t hal_tcl_status_ring_base_lsb;
-	uint32_t hal_tcl_status_ring_hp;
 
-	uint32_t hal_reo1_ring_base_lsb;
-	uint32_t hal_reo1_ring_base_msb;
-	uint32_t hal_reo1_ring_id;
-	uint32_t hal_reo1_ring_misc;
-	uint32_t hal_reo1_ring_hp_addr_lsb;
-	uint32_t hal_reo1_ring_hp_addr_msb;
-	uint32_t hal_reo1_ring_producer_int_setup;
-	uint32_t hal_reo1_ring_msi1_base_lsb;
-	uint32_t hal_reo1_ring_msi1_base_msb;
-	uint32_t hal_reo1_ring_msi1_data;
-	uint32_t hal_reo2_ring_base_lsb;
-	uint32_t hal_reo1_aging_thresh_ix_0;
-	uint32_t hal_reo1_aging_thresh_ix_1;
-	uint32_t hal_reo1_aging_thresh_ix_2;
-	uint32_t hal_reo1_aging_thresh_ix_3;
-
-	uint32_t hal_reo1_ring_hp;
-	uint32_t hal_reo1_ring_tp;
-	uint32_t hal_reo2_ring_hp;
-
-	uint32_t hal_reo_tcl_ring_base_lsb;
-	uint32_t hal_reo_tcl_ring_hp;
-
-	uint32_t hal_reo_status_ring_base_lsb;
-	uint32_t hal_reo_status_hp;
-
-	uint32_t hal_reo_cmd_ring_base_lsb;
-	uint32_t hal_reo_cmd_ring_hp;
-
-	uint32_t hal_sw2reo_ring_base_lsb;
-	uint32_t hal_sw2reo_ring_hp;
-
-	uint32_t hal_seq_wcss_umac_ce0_dst_reg;
-	uint32_t hal_seq_wcss_umac_ce1_src_reg;
-	uint32_t hal_seq_wcss_umac_ce1_dst_reg;
-
-	uint32_t hal_wbm_idle_link_ring_base_lsb;
-	uint32_t hal_wbm_idle_link_ring_misc;
-	uint32_t hal_wbm_idle_link_ring_up;
+	uint32_t hal_wbm_idle_ring_base_lsb;
+	uint32_t hal_wbm_idle_ring_misc_addr;
 	uint32_t hal_wbm_r0_idle_list_cntl_addr;
 	uint32_t hal_wbm_r0_idle_list_size_addr;
 	uint32_t hal_wbm_scattered_ring_base_lsb;
@@ -379,33 +335,45 @@ struct ath12k_hw_regs {
 	uint32_t hal_wbm_scattered_desc_tail_info_ix1;
 	uint32_t hal_wbm_scattered_desc_ptr_hp_addr;
 
-	uint32_t hal_wbm_release_ring_base_lsb;
-	uint32_t hal_wbm_release_ring_hp;
+	uint32_t hal_wbm_sw_release_ring_base_lsb;
 	uint32_t hal_wbm_sw1_release_ring_base_lsb;
-
 	uint32_t hal_wbm0_release_ring_base_lsb;
-	uint32_t hal_wbm0_release_ring_hp;
 	uint32_t hal_wbm1_release_ring_base_lsb;
-	uint32_t hal_wbm1_release_ring_hp;
 
 	uint32_t pcie_qserdes_sysclk_en_sel;
 	uint32_t pcie_pcs_osc_dtct_config_base;
 
 	uint32_t hal_ppe_rel_ring_base;
 
-	uint32_t hal_shadow_base_addr;
-	uint32_t hal_reo1_misc_ctl;
+	uint32_t hal_reo2_ring_base;
+	uint32_t hal_reo1_misc_ctrl_addr;
 	uint32_t hal_reo1_sw_cookie_cfg0;
 	uint32_t hal_reo1_sw_cookie_cfg1;
 	uint32_t hal_reo1_qdesc_lut_base0;
 	uint32_t hal_reo1_qdesc_lut_base1;
+	uint32_t hal_reo1_ring_base_lsb;
+	uint32_t hal_reo1_ring_base_msb;
+	uint32_t hal_reo1_ring_id;
+	uint32_t hal_reo1_ring_misc;
+	uint32_t hal_reo1_ring_hp_addr_lsb;
+	uint32_t hal_reo1_ring_hp_addr_msb;
+	uint32_t hal_reo1_ring_producer_int_setup;
+	uint32_t hal_reo1_ring_msi1_base_lsb;
+	uint32_t hal_reo1_ring_msi1_base_msb;
+	uint32_t hal_reo1_ring_msi1_data;
 	uint32_t hal_reo1_aging_thres_ix0;
 	uint32_t hal_reo1_aging_thres_ix1;
 	uint32_t hal_reo1_aging_thres_ix2;
 	uint32_t hal_reo1_aging_thres_ix3;
 
 	uint32_t hal_reo2_sw0_ring_base;
+
+	uint32_t hal_sw2reo_ring_base;
 	uint32_t hal_sw2reo1_ring_base;
+
+	uint32_t hal_reo_cmd_ring_base;
+
+	uint32_t hal_reo_status_ring_base;
 };
 
 extern const struct ath12k_hw_regs wcn7850_regs;
@@ -678,7 +646,6 @@ struct hal_srng_config {
 	uint16_t entry_size;
 	uint32_t reg_start[HAL_SRNG_NUM_REG_GRP];
 	uint16_t reg_size[HAL_SRNG_NUM_REG_GRP];
-	uint8_t lmac_ring;
 	enum hal_srng_mac_type mac_type;
 	enum hal_srng_dir ring_dir;
 	uint32_t max_size;
@@ -2046,7 +2013,6 @@ struct qwz_softc {
 	struct qwz_ops			ops;
 	bus_dma_tag_t			sc_dmat;
 	enum ath12k_hw_rev		sc_hw_rev;
-	uint32_t			hal_seq_wcss_umac_ce0_src_reg;
 	int				static_window_map;
 	struct qwz_device_id		id;
 	char				sc_bus_str[4]; /* "pci" or "ahb" */

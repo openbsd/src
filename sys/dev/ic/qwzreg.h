@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.3 2024/08/15 23:23:06 patrick Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.4 2024/08/16 00:26:54 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -7005,13 +7005,12 @@ enum ath12k_qmi_bdf_type {
 #define HAL_DSCP_TID_TBL_SIZE			24
 
 /* calculate the register address from bar0 of shadow register x */
-#define HAL_SHADOW_BASE_ADDR(sc)		\
-	(sc->hw_params.regs->hal_shadow_base_addr)
+#define HAL_SHADOW_BASE_ADDR			0x000008fc
 #define HAL_SHADOW_NUM_REGS			40
 #define HAL_HP_OFFSET_IN_REG_START		1
 #define HAL_OFFSET_FROM_HP_TO_TP		4
 
-#define HAL_SHADOW_REG(sc, x) (HAL_SHADOW_BASE_ADDR(sc) + (4 * (x)))
+#define HAL_SHADOW_REG(x) (HAL_SHADOW_BASE_ADDR + (4 * (x)))
 
 enum hal_srng_ring_id {
 	HAL_SRNG_RING_ID_REO2SW0 = 0,
@@ -7220,31 +7219,23 @@ enum hal_reo_cmd_status {
 #define HAL_SEQ_WCSS_UMAC_OFFSET		0x00a00000
 #define HAL_SEQ_WCSS_UMAC_REO_REG		0x00a38000
 #define HAL_SEQ_WCSS_UMAC_TCL_REG		0x00a44000
-#define HAL_SEQ_WCSS_UMAC_CE0_SRC_REG(sc) \
-	(sc->hal_seq_wcss_umac_ce0_src_reg)
-#define HAL_SEQ_WCSS_UMAC_CE0_DST_REG(sc) \
-	(sc->hw_params.regs->hal_seq_wcss_umac_ce0_dst_reg)
-#define HAL_SEQ_WCSS_UMAC_CE1_SRC_REG(sc) \
-	(sc->hw_params.regs->hal_seq_wcss_umac_ce1_src_reg)
-#define HAL_SEQ_WCSS_UMAC_CE1_DST_REG(sc) \
-	(sc->hw_params.regs->hal_seq_wcss_umac_ce1_dst_reg)
+#define HAL_SEQ_WCSS_UMAC_CE0_SRC_REG		0x01b80000
+#define HAL_SEQ_WCSS_UMAC_CE0_DST_REG		0x01b81000
+#define HAL_SEQ_WCSS_UMAC_CE1_SRC_REG		0x01b82000
+#define HAL_SEQ_WCSS_UMAC_CE1_DST_REG		0x01b83000
 #define HAL_SEQ_WCSS_UMAC_WBM_REG		0x00a34000
 
 #define HAL_CE_WFSS_CE_REG_BASE			0x01b80000
-#define HAL_WLAON_REG_BASE			0x01f80000
+
+#define HAL_TCL_SW_CONFIG_BANK_ADDR		0x00a4408c
 
 /* SW2TCL(x) R0 ring configuration address */
-#define HAL_TCL1_RING_CMN_CTRL_REG		\
-	(sc->hw_params.regs->hal_tcl1_ring_cmn_ctrl_reg)
-#define HAL_TCL1_RING_DSCP_TID_MAP		\
-	(sc->hw_params.regs->hal_tcl1_ring_dscp_tid_map)
-#define HAL_TCL1_RING_BASE_LSB(sc)		\
-	(sc->hw_params.regs->hal_tcl1_ring_base_lsb)
-#define HAL_TCL1_RING_BASE_MSB(sc)		\
-	(sc->hw_params.regs->hal_tcl1_ring_base_msb)
-#define HAL_TCL1_RING_ID(sc)			\
-	(sc->hw_params.regs->hal_tcl1_ring_id)
-#define HAL_TCL1_RING_MISC(sc)			\
+#define HAL_TCL1_RING_CMN_CTRL_REG		0x00000020
+#define HAL_TCL1_RING_DSCP_TID_MAP		0x00000240
+#define HAL_TCL1_RING_BASE_LSB			0x00000900
+#define HAL_TCL1_RING_BASE_MSB			0x00000904
+#define HAL_TCL1_RING_ID(sc)			(sc->hw_params.regs->hal_tcl1_ring_id)
+#define HAL_TCL1_RING_MISC(sc) \
 	(sc->hw_params.regs->hal_tcl1_ring_misc)
 #define HAL_TCL1_RING_TP_ADDR_LSB(sc) \
 	(sc->hw_params.regs->hal_tcl1_ring_tp_addr_lsb)
@@ -7260,39 +7251,36 @@ enum hal_reo_cmd_status {
 	(sc->hw_params.regs->hal_tcl1_ring_msi1_base_msb)
 #define HAL_TCL1_RING_MSI1_DATA(sc) \
 	(sc->hw_params.regs->hal_tcl1_ring_msi1_data)
-#define HAL_TCL2_RING_BASE_LSB(sc)		\
-	(sc->hw_params.regs->hal_tcl2_ring_base_lsb)
-#define HAL_TCL_RING_BASE_LSB(sc)		\
+#define HAL_TCL2_RING_BASE_LSB			0x00000978
+#define HAL_TCL_RING_BASE_LSB(sc) \
 	(sc->hw_params.regs->hal_tcl_ring_base_lsb)
 
 #define HAL_TCL1_RING_MSI1_BASE_LSB_OFFSET(sc)				\
-	(HAL_TCL1_RING_MSI1_BASE_LSB(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+	(HAL_TCL1_RING_MSI1_BASE_LSB(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_MSI1_BASE_MSB_OFFSET(sc)				\
-	(HAL_TCL1_RING_MSI1_BASE_MSB(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+	(HAL_TCL1_RING_MSI1_BASE_MSB(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_MSI1_DATA_OFFSET(sc)				\
-	(HAL_TCL1_RING_MSI1_DATA(sc) - HAL_TCL1_RING_BASE_LSB(sc))
-#define HAL_TCL1_RING_BASE_MSB_OFFSET(sc)				\
-	(HAL_TCL1_RING_BASE_MSB(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+	(HAL_TCL1_RING_MSI1_DATA(sc) - HAL_TCL1_RING_BASE_LSB)
+#define HAL_TCL1_RING_BASE_MSB_OFFSET				\
+	(HAL_TCL1_RING_BASE_MSB - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_ID_OFFSET(sc)				\
-	(HAL_TCL1_RING_ID(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+	(HAL_TCL1_RING_ID(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_CONSR_INT_SETUP_IX0_OFFSET(sc)			\
-	(HAL_TCL1_RING_CONSUMER_INT_SETUP_IX0(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+	(HAL_TCL1_RING_CONSUMER_INT_SETUP_IX0(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_CONSR_INT_SETUP_IX1_OFFSET(sc) \
-		(HAL_TCL1_RING_CONSUMER_INT_SETUP_IX1(sc) - \
-		HAL_TCL1_RING_BASE_LSB(sc))
+		(HAL_TCL1_RING_CONSUMER_INT_SETUP_IX1(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_TP_ADDR_LSB_OFFSET(sc) \
-		(HAL_TCL1_RING_TP_ADDR_LSB(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+		(HAL_TCL1_RING_TP_ADDR_LSB(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_TP_ADDR_MSB_OFFSET(sc) \
-		(HAL_TCL1_RING_TP_ADDR_MSB(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+		(HAL_TCL1_RING_TP_ADDR_MSB(sc) - HAL_TCL1_RING_BASE_LSB)
 #define HAL_TCL1_RING_MISC_OFFSET(sc) \
-		(HAL_TCL1_RING_MISC(sc) - HAL_TCL1_RING_BASE_LSB(sc))
+		(HAL_TCL1_RING_MISC(sc) - HAL_TCL1_RING_BASE_LSB)
 
 /* SW2TCL(x) R2 ring pointers (head/tail) address */
 #define HAL_TCL1_RING_HP			0x00002000
 #define HAL_TCL1_RING_TP			0x00002004
 #define HAL_TCL2_RING_HP			0x00002008
-#define HAL_TCL_RING_HP(sc)			\
-	(sc->hw_params.regs->hal_tcl_ring_hp)
+#define HAL_TCL_RING_HP				0x00002028
 
 #define HAL_TCL1_RING_TP_OFFSET \
 		(HAL_TCL1_RING_TP - HAL_TCL1_RING_HP)
@@ -7300,24 +7288,40 @@ enum hal_reo_cmd_status {
 /* TCL STATUS ring address */
 #define HAL_TCL_STATUS_RING_BASE_LSB(sc)	\
 	(sc->hw_params.regs->hal_tcl_status_ring_base_lsb)
-#define HAL_TCL_STATUS_RING_HP(sc)		\
-	(sc->hw_params.regs->hal_tcl_status_ring_hp)
+#define HAL_TCL_STATUS_RING_HP			0x00002048
+
+/* PPE2TCL1 Ring address */
+#define HAL_TCL_PPE2TCL1_RING_BASE_LSB		0x00000c48
+#define HAL_TCL_PPE2TCL1_RING_HP		0x00002038
+
+/* WBM PPE Release Ring address */
+#define HAL_WBM_PPE_RELEASE_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_ppe_rel_ring_base)
+#define HAL_WBM_PPE_RELEASE_RING_HP		0x00003020
 
 /* REO2SW(x) R0 ring configuration address */
 #define HAL_REO1_GEN_ENABLE			0x00000000
+#define HAL_REO1_MISC_CTRL_ADDR(sc) \
+	(sc->hw_params.regs->hal_reo1_misc_ctrl_addr)
 #define HAL_REO1_DEST_RING_CTRL_IX_0		0x00000004
 #define HAL_REO1_DEST_RING_CTRL_IX_1		0x00000008
 #define HAL_REO1_DEST_RING_CTRL_IX_2		0x0000000c
 #define HAL_REO1_DEST_RING_CTRL_IX_3		0x00000010
-#define HAL_REO1_MISC_CTL(sc)			\
-	(sc->hw_params.regs->hal_reo1_misc_ctl)
-#define HAL_REO1_RING_BASE_LSB(sc)		\
+#define HAL_REO1_SW_COOKIE_CFG0(sc) \
+	(sc->hw_params.regs->hal_reo1_sw_cookie_cfg0)
+#define HAL_REO1_SW_COOKIE_CFG1(sc) \
+	(sc->hw_params.regs->hal_reo1_sw_cookie_cfg1)
+#define HAL_REO1_QDESC_LUT_BASE0(sc) \
+	(sc->hw_params.regs->hal_reo1_qdesc_lut_base0)
+#define HAL_REO1_QDESC_LUT_BASE1(sc) \
+	(sc->hw_params.regs->hal_reo1_qdesc_lut_base1)
+#define HAL_REO1_RING_BASE_LSB(sc) \
 	(sc->hw_params.regs->hal_reo1_ring_base_lsb)
-#define HAL_REO1_RING_BASE_MSB(sc)		\
+#define HAL_REO1_RING_BASE_MSB(sc) \
 	(sc->hw_params.regs->hal_reo1_ring_base_msb)
-#define HAL_REO1_RING_ID(sc)			\
+#define HAL_REO1_RING_ID(sc) \
 	(sc->hw_params.regs->hal_reo1_ring_id)
-#define HAL_REO1_RING_MISC(sc)			\
+#define HAL_REO1_RING_MISC(sc) \
 	(sc->hw_params.regs->hal_reo1_ring_misc)
 #define HAL_REO1_RING_HP_ADDR_LSB(sc) \
 	(sc->hw_params.regs->hal_reo1_ring_hp_addr_lsb)
@@ -7331,80 +7335,69 @@ enum hal_reo_cmd_status {
 	(sc->hw_params.regs->hal_reo1_ring_msi1_base_msb)
 #define HAL_REO1_RING_MSI1_DATA(sc) \
 	(sc->hw_params.regs->hal_reo1_ring_msi1_data)
-#define HAL_REO2_RING_BASE_LSB(sc)		\
-	(sc->hw_params.regs->hal_reo2_ring_base_lsb)
+#define HAL_REO2_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_reo2_ring_base)
 #define HAL_REO1_AGING_THRESH_IX_0(sc) \
-	(sc->hw_params.regs->hal_reo1_aging_thresh_ix_0)
+	(sc->hw_params.regs->hal_reo1_aging_thres_ix0)
 #define HAL_REO1_AGING_THRESH_IX_1(sc) \
-	(sc->hw_params.regs->hal_reo1_aging_thresh_ix_1)
+	(sc->hw_params.regs->hal_reo1_aging_thres_ix1)
 #define HAL_REO1_AGING_THRESH_IX_2(sc) \
-	(sc->hw_params.regs->hal_reo1_aging_thresh_ix_2)
+	(sc->hw_params.regs->hal_reo1_aging_thres_ix2)
 #define HAL_REO1_AGING_THRESH_IX_3(sc) \
-	(sc->hw_params.regs->hal_reo1_aging_thresh_ix_3)
+	(sc->hw_params.regs->hal_reo1_aging_thres_ix3)
 
 #define HAL_REO1_RING_MSI1_BASE_LSB_OFFSET(sc) \
-		(HAL_REO1_RING_MSI1_BASE_LSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_MSI1_BASE_LSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_MSI1_BASE_MSB_OFFSET(sc) \
-		(HAL_REO1_RING_MSI1_BASE_MSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_MSI1_BASE_MSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_MSI1_DATA_OFFSET(sc) \
-		(HAL_REO1_RING_MSI1_DATA(sc) - HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_MSI1_DATA(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_BASE_MSB_OFFSET(sc) \
-		(HAL_REO1_RING_BASE_MSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
-#define HAL_REO1_RING_ID_OFFSET(sc) (HAL_REO1_RING_ID(sc) - \
-					HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_BASE_MSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
+#define HAL_REO1_RING_ID_OFFSET(sc) \
+	(HAL_REO1_RING_ID(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_PRODUCER_INT_SETUP_OFFSET(sc) \
-		(HAL_REO1_RING_PRODUCER_INT_SETUP(sc) - \
-		HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_PRODUCER_INT_SETUP(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_HP_ADDR_LSB_OFFSET(sc) \
-		(HAL_REO1_RING_HP_ADDR_LSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_HP_ADDR_LSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_HP_ADDR_MSB_OFFSET(sc) \
-		(HAL_REO1_RING_HP_ADDR_MSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
+	(HAL_REO1_RING_HP_ADDR_MSB(sc) - HAL_REO1_RING_BASE_LSB(sc))
 #define HAL_REO1_RING_MISC_OFFSET(sc) \
 	(HAL_REO1_RING_MISC(sc) - HAL_REO1_RING_BASE_LSB(sc))
 
 /* REO2SW(x) R2 ring pointers (head/tail) address */
-#define HAL_REO1_RING_HP(sc)			\
-	(sc->hw_params.regs->hal_reo1_ring_hp)
-#define HAL_REO1_RING_TP(sc)			\
-	(sc->hw_params.regs->hal_reo1_ring_tp)
-#define HAL_REO2_RING_HP(sc)			\
-	(sc->hw_params.regs->hal_reo2_ring_hp)
+#define HAL_REO1_RING_HP			0x00003048
+#define HAL_REO1_RING_TP			0x0000304c
+#define HAL_REO2_RING_HP			0x00003050
 
-#define HAL_REO1_RING_TP_OFFSET(sc)	\
-	(HAL_REO1_RING_TP(sc) - HAL_REO1_RING_HP(sc))
+#define HAL_REO1_RING_TP_OFFSET			(HAL_REO1_RING_TP - HAL_REO1_RING_HP)
 
 /* REO2SW0 ring configuration address */
 #define HAL_REO_SW0_RING_BASE_LSB(sc)		\
 	((sc)->hw_params.regs->hal_reo2_sw0_ring_base)
 
 /* REO2SW0 R2 ring pointer (head/tail) address */
-#define HAL_REO_SW0_RING_HP	0x00003088
-
-/* REO2TCL R0 ring configuration address */
-#define HAL_REO_TCL_RING_BASE_LSB(sc) \
-	(sc->hw_params.regs->hal_reo_tcl_ring_base_lsb)
-
-/* REO2TCL R2 ring pointer (head/tail) address */
-#define HAL_REO_TCL_RING_HP(sc)			\
-	(sc->hw_params.regs->hal_reo_tcl_ring_hp)
+#define HAL_REO_SW0_RING_HP			0x00003088
 
 /* REO CMD R0 address */
 #define HAL_REO_CMD_RING_BASE_LSB(sc) \
-	(sc->hw_params.regs->hal_reo_cmd_ring_base_lsb)
+	(sc->hw_params.regs->hal_reo_cmd_ring_base)
 
 /* REO CMD R2 address */
-#define HAL_REO_CMD_HP(sc)			\
-	(sc->hw_params.regs->hal_reo_cmd_ring_hp)
+#define HAL_REO_CMD_HP				0x00003020
 
 /* SW2REO R0 address */
 #define HAL_SW2REO_RING_BASE_LSB(sc) \
-	(sc->hw_params.regs->hal_sw2reo_ring_base_lsb)
+	(sc->hw_params.regs->hal_sw2reo_ring_base)
+#define HAL_SW2REO1_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_sw2reo1_ring_base)
 
 /* SW2REO R2 address */
-#define HAL_SW2REO_RING_HP(sc)			\
-	(sc->hw_params.regs->hal_sw2reo_ring_hp)
+#define HAL_SW2REO_RING_HP			0x00003028
+#define HAL_SW2REO1_RING_HP			0x00003030
 
 /* CE ring R0 address */
+#define HAL_CE_SRC_RING_BASE_LSB		0x00000000
 #define HAL_CE_DST_RING_BASE_LSB		0x00000000
 #define HAL_CE_DST_STATUS_RING_BASE_LSB		0x00000058
 #define HAL_CE_DST_RING_CTRL			0x000000b0
@@ -7415,62 +7408,83 @@ enum hal_reo_cmd_status {
 
 /* REO status address */
 #define HAL_REO_STATUS_RING_BASE_LSB(sc) \
-	(sc->hw_params.regs->hal_reo_status_ring_base_lsb)
-#define HAL_REO_STATUS_HP(sc)			\
-	(sc->hw_params.regs->hal_reo_status_hp)
+	(sc->hw_params.regs->hal_reo_status_ring_base)
+#define HAL_REO_STATUS_HP			0x000030a8
 
 /* WBM Idle R0 address */
-#define HAL_WBM_IDLE_LINK_RING_BASE_LSB(x) \
-		(sc->hw_params.regs->hal_wbm_idle_link_ring_base_lsb)
-#define HAL_WBM_IDLE_LINK_RING_MISC_ADDR(x) \
-		(sc->hw_params.regs->hal_wbm_idle_link_ring_misc)
-#define HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR	0x00000048
-#define HAL_WBM_R0_IDLE_LIST_SIZE_ADDR		0x0000004c
-#define HAL_WBM_SCATTERED_RING_BASE_LSB		0x00000058
-#define HAL_WBM_SCATTERED_RING_BASE_MSB		0x0000005c
-#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0 0x00000068
-#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1 0x0000006c
-#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0 0x00000078
-#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1 0x0000007c
-#define HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR	 0x00000084
+#define HAL_WBM_IDLE_LINK_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_wbm_idle_ring_base_lsb)
+#define HAL_WBM_IDLE_LINK_RING_MISC_ADDR(sc) \
+	(sc->hw_params.regs->hal_wbm_idle_ring_misc_addr)
+#define HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR(sc) \
+	(sc->hw_params.regs->hal_wbm_r0_idle_list_cntl_addr)
+#define HAL_WBM_R0_IDLE_LIST_SIZE_ADDR(sc) \
+	(sc->hw_params.regs->hal_wbm_r0_idle_list_size_addr)
+#define HAL_WBM_SCATTERED_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_ring_base_lsb)
+#define HAL_WBM_SCATTERED_RING_BASE_MSB(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_ring_base_msb)
+#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_desc_head_info_ix0)
+#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_desc_head_info_ix1)
+#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_desc_tail_info_ix0)
+#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_desc_tail_info_ix1)
+#define HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR(sc) \
+	(sc->hw_params.regs->hal_wbm_scattered_desc_ptr_hp_addr)
 
 /* WBM Idle R2 address */
-#define HAL_WBM_IDLE_LINK_RING_HP(sc)	\
-	(sc->hw_params.regs->hal_wbm_idle_link_ring_up)
+#define HAL_WBM_IDLE_LINK_RING_HP		0x000030b8
 
 /* SW2WBM R0 release address */
-#define HAL_WBM_RELEASE_RING_BASE_LSB(x)	\
-	(sc->hw_params.regs->hal_wbm_release_ring_base_lsb)
+#define HAL_WBM_SW_RELEASE_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_wbm_sw_release_ring_base_lsb)
+#define HAL_WBM_SW1_RELEASE_RING_BASE_LSB(sc) \
+	(sc->hw_params.regs->hal_wbm_sw1_release_ring_base_lsb)
 
 /* SW2WBM R2 release address */
-#define HAL_WBM_RELEASE_RING_HP(sc)		\
-	(sc->hw_params.regs->hal_wbm_release_ring_hp)
+#define HAL_WBM_SW_RELEASE_RING_HP		0x00003010
+#define HAL_WBM_SW1_RELEASE_RING_HP		0x00003018
 
 /* WBM2SW R0 release address */
-#define HAL_WBM0_RELEASE_RING_BASE_LSB(x)	\
+#define HAL_WBM0_RELEASE_RING_BASE_LSB(sc)	\
 	(sc->hw_params.regs->hal_wbm0_release_ring_base_lsb)
-#define HAL_WBM1_RELEASE_RING_BASE_LSB(x)	\
+
+#define HAL_WBM1_RELEASE_RING_BASE_LSB(sc)	\
 	(sc->hw_params.regs->hal_wbm1_release_ring_base_lsb)
 
 /* WBM2SW R2 release address */
-#define HAL_WBM0_RELEASE_RING_HP(sc)		\
-	(sc->hw_params.regs->hal_wbm0_release_ring_hp)
-#define HAL_WBM1_RELEASE_RING_HP(sc)		\
-	(sc->hw_params.regs->hal_wbm1_release_ring_hp)
+#define HAL_WBM0_RELEASE_RING_HP		0x000030c8
+#define HAL_WBM1_RELEASE_RING_HP		0x000030d0
 
 /* WBM cookie config address and mask */
-#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN	0x00000002
-#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW1_EN	0x00000004
-#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW2_EN	0x00000008
-#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN	0x00000010
-#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN	0x00000020
-#define HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN	0x00000100
+#define HAL_WBM_SW_COOKIE_CFG0			0x00000040
+#define HAL_WBM_SW_COOKIE_CFG1			0x00000044
+#define HAL_WBM_SW_COOKIE_CFG2			0x00000090
+#define HAL_WBM_SW_COOKIE_CONVERT_CFG		0x00000094
+
+#define HAL_WBM_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB	GENMASK(7, 0)
+#define HAL_WBM_SW_COOKIE_CFG_COOKIE_PPT_MSB		GENMASK(12, 8)
+#define HAL_WBM_SW_COOKIE_CFG_COOKIE_SPT_MSB		GENMASK(17, 13)
+#define HAL_WBM_SW_COOKIE_CFG_ALIGN			BIT(18)
+#define HAL_WBM_SW_COOKIE_CFG_RELEASE_PATH_EN		BIT(0)
+#define HAL_WBM_SW_COOKIE_CFG_ERR_PATH_EN		BIT(1)
+#define HAL_WBM_SW_COOKIE_CFG_CONV_IND_EN		BIT(3)
+
+#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN		BIT(1)
+#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW1_EN		BIT(2)
+#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW2_EN		BIT(3)
+#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN		BIT(4)
+#define HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN		BIT(5)
+#define HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN		BIT(8)
 
 /* TCL ring field mask and offset */
 #define HAL_TCL1_RING_BASE_MSB_RING_SIZE		GENMASK(27, 8)
 #define HAL_TCL1_RING_BASE_MSB_RING_BASE_ADDR_MSB	GENMASK(7, 0)
 #define HAL_TCL1_RING_ID_ENTRY_SIZE			GENMASK(7, 0)
-#define ATH12K_HAL_TCL1_RING_MISC_MSI_RING_ID_DISABLE	BIT(0)
+#define HAL_TCL1_RING_MISC_MSI_RING_ID_DISABLE		BIT(0)
 #define HAL_TCL1_RING_MISC_MSI_LOOPCNT_DISABLE		BIT(1)
 #define HAL_TCL1_RING_MISC_MSI_SWAP			BIT(3)
 #define HAL_TCL1_RING_MISC_HOST_FW_SWAP			BIT(4)
@@ -7505,11 +7519,16 @@ enum hal_reo_cmd_status {
 #define HAL_REO1_RING_PRDR_INT_SETUP_BATCH_COUNTER_THOLD GENMASK(14, 0)
 #define HAL_REO1_RING_MSI1_BASE_MSB_MSI1_ENABLE		BIT(8)
 #define HAL_REO1_RING_MSI1_BASE_MSB_ADDR		GENMASK(7, 0)
-#define HAL_REO1_GEN_ENABLE_FRAG_DST_RING		GENMASK(25, 23)
+#define HAL_REO1_MISC_CTL_FRAG_DST_RING			GENMASK(20, 17)
+#define HAL_REO1_MISC_CTL_BAR_DST_RING			GENMASK(24, 21)
 #define HAL_REO1_GEN_ENABLE_AGING_LIST_ENABLE		BIT(2)
 #define HAL_REO1_GEN_ENABLE_AGING_FLUSH_ENABLE		BIT(3)
-#define HAL_REO1_MISC_CTL_FRAGMENT_DST_RING		GENMASK(20, 17)
-#define HAL_REO1_MISC_CTL_BAR_DST_RING			GENMASK(24, 21)
+#define HAL_REO1_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB	GENMASK(7, 0)
+#define HAL_REO1_SW_COOKIE_CFG_COOKIE_PPT_MSB		GENMASK(12, 8)
+#define HAL_REO1_SW_COOKIE_CFG_COOKIE_SPT_MSB		GENMASK(17, 13)
+#define HAL_REO1_SW_COOKIE_CFG_ALIGN			BIT(18)
+#define HAL_REO1_SW_COOKIE_CFG_ENABLE			BIT(19)
+#define HAL_REO1_SW_COOKIE_CFG_GLOBAL_ENABLE		BIT(20)
 
 /* CE ring bit field mask and shift */
 #define HAL_CE_DST_R0_DEST_CTRL_MAX_LEN			GENMASK(15, 0)
@@ -7533,29 +7552,25 @@ enum hal_reo_cmd_status {
 
 #define BASE_ADDR_MATCH_TAG_VAL 0x5
 
-#define HAL_REO_REO2SW1_RING_BASE_MSB_RING_SIZE			0x000fffff
-#define HAL_REO_REO2SW0_RING_BASE_MSB_RING_SIZE			0x000fffff
-#define HAL_REO_REO2TCL_RING_BASE_MSB_RING_SIZE			0x000fffff
-#define HAL_REO_SW2REO_RING_BASE_MSB_RING_SIZE			0x0000ffff
-#define HAL_REO_CMD_RING_BASE_MSB_RING_SIZE			0x0000ffff
-#define HAL_REO_STATUS_RING_BASE_MSB_RING_SIZE			0x0000ffff
-#define HAL_SW2TCL1_RING_BASE_MSB_RING_SIZE			0x000fffff
-#define HAL_SW2TCL1_CMD_RING_BASE_MSB_RING_SIZE			0x000fffff
-#define HAL_TCL_STATUS_RING_BASE_MSB_RING_SIZE			0x0000ffff
-#define HAL_CE_SRC_RING_BASE_MSB_RING_SIZE			0x0000ffff
-#define HAL_CE_DST_RING_BASE_MSB_RING_SIZE			0x0000ffff
-#define HAL_CE_DST_STATUS_RING_BASE_MSB_RING_SIZE		0x0000ffff
-#define HAL_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE		0x0000ffff
-#define ATH12K_HAL_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE	0x000fffff
-#define HAL_SW2WBM_RELEASE_RING_BASE_MSB_RING_SIZE		0x0000ffff
-#define HAL_WBM2SW_RELEASE_RING_BASE_MSB_RING_SIZE		0x000fffff
-#define HAL_RXDMA_RING_MAX_SIZE					0x0000ffff
-#define HAL_RXDMA_RING_MAX_SIZE_BE				0x000fffff
-#define HAL_WBM2PPE_RELEASE_RING_BASE_MSB_RING_SIZE		0x000fffff
+#define HAL_REO_REO2SW1_RING_BASE_MSB_RING_SIZE		0x000fffff
+#define HAL_REO_REO2SW0_RING_BASE_MSB_RING_SIZE		0x000fffff
+#define HAL_REO_SW2REO_RING_BASE_MSB_RING_SIZE		0x0000ffff
+#define HAL_REO_CMD_RING_BASE_MSB_RING_SIZE		0x0000ffff
+#define HAL_REO_STATUS_RING_BASE_MSB_RING_SIZE		0x0000ffff
+#define HAL_SW2TCL1_RING_BASE_MSB_RING_SIZE		0x000fffff
+#define HAL_SW2TCL1_CMD_RING_BASE_MSB_RING_SIZE		0x000fffff
+#define HAL_TCL_STATUS_RING_BASE_MSB_RING_SIZE		0x0000ffff
+#define HAL_CE_SRC_RING_BASE_MSB_RING_SIZE		0x0000ffff
+#define HAL_CE_DST_RING_BASE_MSB_RING_SIZE		0x0000ffff
+#define HAL_CE_DST_STATUS_RING_BASE_MSB_RING_SIZE	0x0000ffff
+#define HAL_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE	0x000fffff
+#define HAL_SW2WBM_RELEASE_RING_BASE_MSB_RING_SIZE	0x0000ffff
+#define HAL_WBM2SW_RELEASE_RING_BASE_MSB_RING_SIZE	0x000fffff
+#define HAL_RXDMA_RING_MAX_SIZE				0x0000ffff
+#define HAL_RXDMA_RING_MAX_SIZE_BE			0x000fffff
+#define HAL_WBM2PPE_RELEASE_RING_BASE_MSB_RING_SIZE	0x000fffff
 
-/* IPQ5018 ce registers */
-#define HAL_IPQ5018_CE_WFSS_REG_BASE		0x08400000
-#define HAL_IPQ5018_CE_SIZE			0x200000
+#define HAL_WBM2SW_REL_ERR_RING_NUM 3
 
 #define BUFFER_ADDR_INFO0_ADDR         GENMASK(31, 0)
 
@@ -8692,10 +8707,6 @@ struct hal_reo_get_queue_stats {
 	uint32_t queue_addr_lo;
 	uint32_t info0;
 	uint32_t rsvd0[6];
-} __packed;
-
-struct ath12k_hal_reo_get_queue_stats {
-        struct hal_reo_get_queue_stats stats;
 	uint32_t tlv64_pad;
 } __packed;
 
@@ -8833,154 +8844,10 @@ struct hal_tcl_data_cmd {
 	uint32_t info2;
 	uint32_t info3;
 	uint32_t info4;
-} __packed;
-
-/* hal_tcl_data_cmd
- *
- * buf_addr_info
- *		Details of the physical address of a buffer or MSDU
- *		link descriptor.
- *
- * desc_type
- *		Indicates the type of address provided in the buf_addr_info.
- *		Values are defined in enum %HAL_REO_DEST_RING_BUFFER_TYPE_.
- *
- * epd
- *		When this bit is set then input packet is an EPD type.
- *
- * encap_type
- *		Indicates the encapsulation that HW will perform. Values are
- *		defined in enum %HAL_TCL_ENCAP_TYPE_.
- *
- * encrypt_type
- *		Field only valid for encap_type: RAW
- *		Values are defined in enum %HAL_ENCRYPT_TYPE_.
- *
- * src_buffer_swap
- *		Treats source memory (packet buffer) organization as big-endian.
- *		1'b0: Source memory is little endian
- *		1'b1: Source memory is big endian
- *
- * link_meta_swap
- *		Treats link descriptor and Metadata as big-endian.
- *		1'b0: memory is little endian
- *		1'b1: memory is big endian
- *
- * search_type
- *		Search type select
- *		0 - Normal search, 1 - Index based address search,
- *		2 - Index based flow search
- *
- * addrx_en
- * addry_en
- *		Address X/Y search enable in ASE correspondingly.
- *		1'b0: Search disable
- *		1'b1: Search Enable
- *
- * cmd_num
- *		This number can be used to match against status.
- *
- * data_length
- *		MSDU length in case of direct descriptor. Length of link
- *		extension descriptor in case of Link extension descriptor.
- *
- * *_checksum_en
- *		Enable checksum replacement for ipv4, udp_over_ipv4, ipv6,
- *		udp_over_ipv6, tcp_over_ipv4 and tcp_over_ipv6.
- *
- * to_fw
- *		Forward packet to FW along with classification result. The
- *		packet will not be forward to TQM when this bit is set.
- *		1'b0: Use classification result to forward the packet.
- *		1'b1: Override classification result & forward packet only to fw
- *
- * packet_offset
- *		Packet offset from Metadata in case of direct buffer descriptor.
- *
- * buffer_timestamp
- * buffer_timestamp_valid
- *		Frame system entrance timestamp. It shall be filled by first
- *		module (SW, TCL or TQM) that sees the frames first.
- *
- * mesh_enable
- *		For raw WiFi frames, this indicates transmission to a mesh STA,
- *		enabling the interpretation of the 'Mesh Control Present' bit
- *		(bit 8) of QoS Control.
- *		For native WiFi frames, this indicates that a 'Mesh Control'
- *		field is present between the header and the LLC.
- *
- * hlos_tid_overwrite
- *
- *		When set, TCL shall ignore the IP DSCP and VLAN PCP
- *		fields and use HLOS_TID as the final TID. Otherwise TCL
- *		shall consider the DSCP and PCP fields as well as HLOS_TID
- *		and choose a final TID based on the configured priority
- *
- * hlos_tid
- *		HLOS MSDU priority
- *		Field is used when HLOS_TID_overwrite is set.
- *
- * lmac_id
- *		TCL uses this LMAC_ID in address search, i.e, while
- *		finding matching entry for the packet in AST corresponding
- *		to given LMAC_ID
- *
- *		If LMAC ID is all 1s (=> value 3), it indicates wildcard
- *		match for any MAC
- *
- * dscp_tid_table_num
- *		DSCP to TID mapping table number that need to be used
- *		for the MSDU.
- *
- * search_index
- *		The index that will be used for index based address or
- *		flow search. The field is valid when 'search_type' is  1 or 2.
- *
- * cache_set_num
- *
- *		Cache set number that should be used to cache the index
- *		based search results, for address and flow search. This
- *		value should be equal to LSB four bits of the hash value of
- *		match data, in case of search index points to an entry which
- *		may be used in content based search also. The value can be
- *		anything when the entry pointed by search index will not be
- *		used for content based search.
- *
- * ring_id
- *		The buffer pointer ring ID.
- *		0 refers to the IDLE ring
- *		1 - N refers to other rings
- *
- * looping_count
- *
- *		A count value that indicates the number of times the
- *		producer of entries into the Ring has looped around the
- *		ring.
- *
- *		At initialization time, this value is set to 0. On the
- *		first loop, this value is set to 1. After the max value is
- *		reached allowed by the number of bits for this field, the
- *		count value continues with 0 again.
- *
- *		In case SW is the consumer of the ring entries, it can
- *		use this field to figure out up to where the producer of
- *		entries has created new entries. This eliminates the need to
- *		check where the head pointer' of the ring is located once
- *		the SW starts processing an interrupt indicating that new
- *		entries have been put into this ring...
- *
- *		Also note that SW if it wants only needs to look at the
- *		LSB bit of this count value.
- */
-
-#define HAL_TCL_DESC_LEN sizeof(struct hal_tcl_data_cmd)
-
-struct ath12k_hal_tcl_data_cmd {
-	struct hal_tcl_data_cmd cmd;
 	uint32_t info5;
 } __packed;
 
-/* ath12k_hal_tcl_data_cmd
+/* hal_tcl_data_cmd
  *
  * buf_addr_info
  *		Details of the physical address of a buffer or MSDU
@@ -9130,7 +8997,7 @@ struct ath12k_hal_tcl_data_cmd {
  *		LSB bit of this count value.
  */
 
-#define ATH12K_HAL_TCL_DESC_LEN sizeof(struct ath12k_hal_tcl_data_cmd)
+#define HAL_TCL_DESC_LEN sizeof(struct hal_tcl_data_cmd)
 
 enum hal_tcl_gse_ctrl {
 	HAL_TCL_GSE_CTRL_RD_STAT,
