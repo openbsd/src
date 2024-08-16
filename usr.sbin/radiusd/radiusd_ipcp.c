@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.9 2024/08/14 04:47:08 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.10 2024/08/16 09:50:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -1573,11 +1573,15 @@ ipcp_dae_request_on_timeout(int fd, short ev, void *ctx)
 {
 	struct assigned_ipv4	*assign = ctx;
 	char			 buf[80];
+	struct radiusctl_client	*client;
 
 	if (assign->dae_ntry >= (int)nitems(dae_request_timeouts)) {
 		log_warnx("No answer for Disconnect-Request seq=%u from %s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &assign->dae->nas_addr, buf, sizeof(buf)));
+		TAILQ_FOREACH(client, &assign->dae_clients, entry)
+			module_imsg_compose(assign->dae->ipcp->base, IMSG_NG,
+			    client->peerid, 0, -1, NULL, 0);
 		ipcp_dae_reset_request(assign);
 	} else
 		ipcp_dae_send_disconnect_request(assign);
@@ -1856,7 +1860,7 @@ radius_error_cause_string(unsigned val)
 	    { RADIUS_ERROR_CAUSE_UNSUPPORTED_EXTENSION,
 	      "Unsupported Extension" },
 	    { RADIUS_ERROR_CAUSE_INVALID_ATTRIBUTE_VALUE,
-	      "Invalid Attribute Valu" },
+	      "Invalid Attribute Value" },
 	    { RADIUS_ERROR_CAUSE_ADMINISTRATIVELY_PROHIBITED,
 	      "Administratively Prohibited" },
 	    { RADIUS_ERROR_CAUSE_REQUEST_NOT_ROUTABLE,
