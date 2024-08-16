@@ -1,5 +1,5 @@
 /* xml.c -- xml output.
-   $Id: xml.c,v 1.3 2019/05/27 07:13:38 otto Exp $
+   $Id: xml.c,v 1.4 2024/08/16 22:57:44 guenther Exp $
 
    Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
@@ -871,7 +871,7 @@ xml_insert_element_with_attribute (elt, arg, format, va_alist)
       return;
     }
 
-  if (!xml_element_list[elt].name || !strlen (xml_element_list[elt].name))
+  if (!strlen (xml_element_list[elt].name))
     {
       /*printf ("Warning: Inserting empty element %d\n", elt);*/
       return;
