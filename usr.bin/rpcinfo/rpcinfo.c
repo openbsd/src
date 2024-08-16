@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.18 2024/08/12 06:19:24 florian Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.19 2024/08/16 16:00:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -50,6 +50,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <arpa/inet.h>
+#include <err.h>
 
 #define MAXHOSTLEN 256
 
@@ -94,6 +95,15 @@ main(int argc, char *argv[])
 	function = NONE;
 	portnum = 0;
 	errflg = 0;
+
+	if (unveil("/etc/rpc", "r") == -1)
+		err(1, "unveil /");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+
+	if (pledge("stdio inet dns rpath", NULL) == -1)
+		err(1, "pledge");
+
 	while ((c = getopt(argc, argv, "ptubdsn:")) != -1) {
 		switch (c) {
 
