@@ -1,5 +1,5 @@
 /* texindex -- sort TeX index dribble output into an actual index.
-   $Id: texindex.c,v 1.6 2015/11/14 23:06:06 deraadt Exp $
+   $Id: texindex.c,v 1.7 2024/08/16 22:58:54 guenther Exp $
 
    Copyright (C) 1987, 1991, 1992, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004 Free Software Foundation, Inc.
@@ -143,7 +143,6 @@ int merge_direct (char **infiles, int nfiles, char *outfile);
 void pfatal_with_name (const char *name);
 void fatal (const char *format, const char *arg);
 void error (const char *format, const char *arg);
-void *xmalloc (), *xrealloc ();
 char *concat (char *s1, char *s2);
 void flush_tempfiles (int to_count);
 
@@ -565,7 +564,7 @@ find_field (struct keyfield *keyfield, char *str, long int *lengthptr)
 {
   char *start;
   char *end;
-  char *(*fun) ();
+  char *(*fun) (char *, int, int, int);
 
   if (keyfield->braced)
     fun = find_braced_pos;
