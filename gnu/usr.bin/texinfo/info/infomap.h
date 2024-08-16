@@ -1,5 +1,5 @@
 /* infomap.h -- description of a keymap in Info and related functions.
-   $Id: infomap.h,v 1.1.1.4 2006/07/17 16:03:43 espie Exp $
+   $Id: infomap.h,v 1.2 2024/08/16 23:09:25 guenther Exp $
 
    Copyright (C) 1993, 2001, 2004 Free Software Foundation, Inc.
 
@@ -40,7 +40,7 @@
 #define Meta_p(c) (((c) > meta_character_threshold))
 #define Control_p(c) ((c) < control_character_threshold)
 
-#define Meta(c) ((c) | (meta_character_bit))
+#define Meta(c) ((unsigned char)((c) | (meta_character_bit)))
 #define UnMeta(c) ((c) & (~meta_character_bit))
 #define Control(c) ((toupper (c)) & (~control_character_bit))
 #define UnControl(c) (tolower ((c) | control_character_bit))
