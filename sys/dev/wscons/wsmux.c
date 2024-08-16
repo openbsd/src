@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.58 2024/05/29 06:39:13 jsg Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.59 2024/08/16 12:22:17 miod Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -143,7 +143,7 @@ wsmux_getmux(int n)
 	struct wsmux_softc **new, **old;
 	int i;
 
-	if (n >= WSMUX_MAXDEV)
+	if (n < 0 || n >= WSMUX_MAXDEV)
 		return (NULL);
 
 	/* Make sure there is room for mux n in the table */
