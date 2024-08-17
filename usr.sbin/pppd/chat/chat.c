@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.37 2024/08/10 05:32:28 jsg Exp $	*/
+/*	$OpenBSD: chat.c,v 1.38 2024/08/17 15:42:20 denis Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -172,7 +172,6 @@ int clear_report_next = 0;
 
 int say_next = 0, hup_next = 0;
 
-void *dup_mem(void *b, size_t c);
 void usage(void);
 void logmsg(const char *fmt, ...);
 void fatal(int code, const char *fmt, ...);
@@ -203,22 +202,6 @@ char *expect_strtok(char *, char *);
 int vfmtmsg(char *, int, const char *, va_list);	/* vsnprintf++ */
 
 int main(int, char *[]);
-
-void *
-dup_mem(void *b, size_t c)
-{
-    void *ans = malloc (c);
-    if (!ans)
-	fatal(2, "memory error!");
-
-    memcpy (ans, b, c);
-    return ans;
-}
-
-void *copy_of (char *s)
-{
-    return dup_mem (s, strlen (s) + 1);
-}
 
 /*
  * chat [ -v ] [-T number] [-U number] [ -t timeout ] [ -f chat-file ] \
@@ -257,7 +240,8 @@ main(int argc, char **argv)
 	    break;
 
 	case 'f':
-	    chat_file = strdup(optarg);
+	    if ((chat_file = strdup(optarg)) == NULL)
+		fatal(2, "memory error!");
 	    break;
 
 	case 't':
@@ -267,7 +251,8 @@ main(int argc, char **argv)
 	case 'r':
 	    if (report_fp != NULL)
 		fclose (report_fp);
-	    report_file = copy_of (optarg);
+	    if ((report_file = strdup(optarg)) == NULL)
+		fatal(2, "memory error!");
 	    report_fp   = fopen (report_file, "a");
 	    if (report_fp != NULL) {
 		if (verbose)
@@ -278,11 +263,14 @@ main(int argc, char **argv)
 	    break;
 
 	case 'T':
-	    phone_num = strdup(optarg);
+	    if ((phone_num = strdup(optarg)) == NULL)
+		fatal(2, "memory error!");
 	    break;
 
 	case 'U':
 	    phone_num2 = strdup(optarg);
+	    if ((phone_num2 = strdup(optarg)) == NULL)
+		fatal(2, "memory error!");
 	    break;
 
 	case ':':
