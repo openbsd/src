@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.78 2024/05/18 06:45:00 jsg Exp $	*/
+/*	$OpenBSD: main.c,v 1.79 2024/08/17 20:50:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -743,7 +743,7 @@ ctl_convert(const char *srcfile, const char *dstfile, int dsttype, size_t dstsiz
 int
 ctl_status(struct parse_result *res, int argc, char *argv[])
 {
-	char ch;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "r")) != -1) {
 		switch (ch) {
