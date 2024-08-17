@@ -1519,6 +1519,7 @@ bool amdgpu_acpi_is_s0ix_active(struct amdgpu_device *adev)
 	if (adev->asic_type < CHIP_RAVEN)
 		return false;
 
+#ifdef __linux__
 	/*
 	 * If ACPI_FADT_LOW_POWER_S0 is not set in the FADT, it is generally
 	 * risky to do any special firmware-related preparations for entering
@@ -1531,6 +1532,7 @@ bool amdgpu_acpi_is_s0ix_active(struct amdgpu_device *adev)
 			      "To use suspend-to-idle change the sleep mode in BIOS setup.\n");
 		return false;
 	}
+#endif
 
 #if !IS_ENABLED(CONFIG_AMD_PMC)
 	dev_err_once(adev->dev,
