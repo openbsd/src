@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.19 2024/08/17 02:24:03 deraadt Exp $ */
+/* $OpenBSD: dwiic.c,v 1.20 2024/08/17 02:28:45 deraadt Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -46,7 +46,30 @@ dwiic_activate(struct device *self, int act)
 		dwiic_read(sc, DW_IC_CLR_INTR);
 		break;
 	case DVACT_RESUME:
-		dwiic_init(sc);
+		/* if it became enabled for some reason, force it down */
+		dwiic_enable(sc, 0);
+
+		dwiic_write(sc, DW_IC_INTR_MASK, 0);
+		dwiic_read(sc, DW_IC_CLR_INTR);
+
+		/* write standard-mode SCL timing parameters */
+		dwiic_write(sc, DW_IC_SS_SCL_HCNT, sc->ss_hcnt);
+		dwiic_write(sc, DW_IC_SS_SCL_LCNT, sc->ss_lcnt);
+
+		/* and fast-mode SCL timing parameters */
+		dwiic_write(sc, DW_IC_FS_SCL_HCNT, sc->fs_hcnt);
+		dwiic_write(sc, DW_IC_FS_SCL_LCNT, sc->fs_lcnt);
+
+		/* SDA hold time */
+		dwiic_write(sc, DW_IC_SDA_HOLD, sc->sda_hold_time);
+
+		dwiic_write(sc, DW_IC_TX_TL, sc->tx_fifo_depth / 2);
+		dwiic_write(sc, DW_IC_RX_TL, 0);
+
+		/* configure as i2c master with fast speed */
+		sc->master_cfg = DW_IC_CON_MASTER | DW_IC_CON_SLAVE_DISABLE |
+		    DW_IC_CON_RESTART_EN | DW_IC_CON_SPEED_FAST;
+		dwiic_write(sc, DW_IC_CON, sc->master_cfg);
 		rv = config_activate_children(self, act);
 		break;
 	default:
