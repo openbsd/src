@@ -1550,10 +1550,16 @@ drm_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_QUIESCE:
 #ifdef CONFIG_ACPI
-		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S3)
-			pm_suspend_target_state = PM_SUSPEND_MEM;
-		else
-			pm_suspend_target_state = PM_SUSPEND_TO_IDLE;
+		if (acpi_softc) {
+			switch (acpi_softc->sc_state) {
+			case ACPI_STATE_S0:
+				pm_suspend_target_state = PM_SUSPEND_TO_IDLE;
+				break;
+			case ACPI_STATE_S3:
+				pm_suspend_target_state = PM_SUSPEND_MEM;
+				break;
+			}
+		}
 #else
 		pm_suspend_target_state = PM_SUSPEND_TO_IDLE;
 #endif
