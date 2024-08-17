@@ -40,9 +40,6 @@ zonelistfile: @zonelistfile@
 logfile: @logfile@
 .RE
 .RS 5
-pidfile: @pidfile@
-.RE
-.RS 5
 xfrdfile: @xfrdfile@
 .RE
 .TP
@@ -321,8 +318,7 @@ Preferred EDNS buffer size for IPv4.  Default 1232.
 Preferred EDNS buffer size for IPv6.  Default 1232.
 .TP
 .B pidfile:\fR <filename>
-Use the pid file instead of the platform specific default, usually
-.IR @pidfile@.
+Use the pid file instead of the platform specific default.
 Same as command-line option
 .BR \-P .
 With "" there is no pidfile, for some startup management setups,

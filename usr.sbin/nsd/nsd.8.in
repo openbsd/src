@@ -153,8 +153,7 @@ default is 100.
 .B \-P\fI pidfile
 Use the specified
 .I pidfile
-instead of the platform specific default, which is mostly
-.IR @pidfile@ .
+instead of the platform specific default.
 If a 
 .B zonesdir: 
 is specified in the config file, this path can be relative to that 
@@ -213,9 +212,6 @@ them in.  Also reopens the logfile (assists logrotation).
 SIGUSR1
 Dump BIND8\-style statistics into the log. Ignored otherwise.
 .SH "FILES"
-.TP
-@pidfile@
-the process id of the name server.
 .TP
 @nsdconfigfile@
 default
