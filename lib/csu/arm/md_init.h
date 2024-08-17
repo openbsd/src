@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.18 2023/11/18 16:26:16 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.19 2024/08/17 09:48:31 phessler Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -87,7 +87,6 @@
  * of COPY relocations for WEAK symbols.
  */
 #define	MD_CRT0_START				\
-	char **environ, *__progname;		\
 	__asm(					\
 	".text					\n" \
 	"	.align	0			\n" \
