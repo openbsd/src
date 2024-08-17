@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.288 2024/07/10 08:51:28 tb Exp $
+# $OpenBSD: Makefile,v 1.289 2024/08/17 09:16:37 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -349,7 +349,6 @@ MAN=	\
 	X509_STORE_new.3 \
 	X509_STORE_set1_param.3 \
 	X509_STORE_set_verify_cb_func.3 \
-	X509_TRUST_set.3 \
 	X509_VERIFY_PARAM_new.3 \
 	X509_VERIFY_PARAM_set_flags.3 \
 	X509_add1_trust_object.3 \
