@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.13 2024/05/24 06:02:58 jsg Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.14 2024/08/17 01:55:03 jsg Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -150,6 +150,11 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
                 if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FRESCO_FL1000 ||
                     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FRESCO_FL1400)
 			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+		break;
+	case PCI_VENDOR_AMD:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_17_1X_XHCI_1 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_17_1X_XHCI_2)
+			psc->sc.sc_flags |= XHCI_NOCSS;
 		break;
 	}
 

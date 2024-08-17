@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.133 2024/08/15 17:17:05 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.134 2024/08/17 01:55:03 jsg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -626,23 +626,24 @@ xhci_suspend(struct xhci_softc *sc)
 	 * will prevent the SoC from reaching its lowest idle state.
 	 * So save the state here.
 	 */
+	if ((sc->sc_flags & XHCI_NOCSS) == 0) {
+		XOWRITE4(sc, XHCI_USBCMD, XHCI_CMD_CSS); /* Save state */
+		hcr = XOREAD4(sc, XHCI_USBSTS);
+		for (i = 0; i < 100; i++) {
+			usb_delay_ms(&sc->sc_bus, 1);
+			hcr = XOREAD4(sc, XHCI_USBSTS) & XHCI_STS_SSS;
+			if (!hcr)
+				break;
+		}
 
-	XOWRITE4(sc, XHCI_USBCMD, XHCI_CMD_CSS); /* Save state */
-	hcr = XOREAD4(sc, XHCI_USBSTS);
-	for (i = 0; i < 100; i++) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		hcr = XOREAD4(sc, XHCI_USBSTS) & XHCI_STS_SSS;
-		if (!hcr)
-			break;
+		if (hcr) {
+			printf("%s: save state timeout\n", DEVNAME(sc));
+			xhci_reset(sc);
+			return;
+		}
+
+		sc->sc_saved_state = 1;
 	}
-
-	if (hcr) {
-		printf("%s: save state timeout\n", DEVNAME(sc));
-		xhci_reset(sc);
-		return;
-	}
-
-	sc->sc_saved_state = 1;
 
 	/* Disable interrupts. */
 	XRWRITE4(sc, XHCI_IMOD(0), 0);
