@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.9 2024/08/08 03:58:53 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.10 2024/08/17 03:28:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -198,11 +198,8 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 			log_info("%s: received an invalid RADIUS message: "
 			    "code %u", __func__, (unsigned)code);
 		}
-		timer_del(env, &req->rr_timer);
-		TAILQ_REMOVE(&server->rs_reqs, req, rr_entry);
-		req->rr_server = NULL;
-		free(req);
 		radius_delete_packet(pkt);
+		iked_radius_request_free(env, req);
 		return;
 	}
 
@@ -229,8 +226,12 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 			    "state attribute", __func__);
 			goto fail;
 		}
-		if ((req->rr_state != NULL &&
-		    ibuf_set(req->rr_state, 0, attrval, attrlen) != 0) ||
+		if (req->rr_state != NULL &&
+		    ibuf_set(req->rr_state, 0, attrval, attrlen) != 0) {
+			ibuf_free(req->rr_state);
+			req->rr_state = NULL;
+		}
+		if (req->rr_state == NULL &&
 		    (req->rr_state = ibuf_new(attrval, attrlen)) == NULL) {
 			log_info("%s: ibuf_new() failed: %s", __func__,
 			    strerror(errno));
@@ -321,6 +322,7 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 	radius_delete_packet(pkt);
 	ikev2_send_ike_e(env, req->rr_sa, e, IKEV2_PAYLOAD_EAP,
 	    IKEV2_EXCHANGE_IKE_AUTH, 1);
+	ibuf_free(e);
 	/* keep request for challenge state and config parameters */
 	req->rr_reqid = -1;	/* release reqid */
 	return;
