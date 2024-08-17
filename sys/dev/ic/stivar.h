@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.28 2024/05/29 00:48:15 jsg Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.29 2024/08/17 08:45:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -47,22 +47,16 @@ struct sti_rom {
 	struct sti_dd		 rom_dd;	/* in word format */
 	u_int8_t		*rom_code;
 
+	int			 rom_enable;
+
 	/*
 	 * ROM-provided function pointers
 	 */
 	sti_init_t		 init;
-	sti_mgmt_t		 mgmt;
 	sti_unpmv_t		 unpmv;
 	sti_blkmv_t		 blkmv;
-	sti_test_t		 test;
-	sti_exhdl_t		 exhdl;
 	sti_inqconf_t		 inqconf;
 	sti_scment_t		 scment;
-	sti_dmac_t		 dmac;
-	sti_flowc_t		 flowc;
-	sti_utiming_t		 utiming;
-	sti_pmgr_t		 pmgr;
-	sti_util_t		 util;
 };
 
 /*

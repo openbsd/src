@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.83 2022/07/15 19:29:27 deraadt Exp $	*/
+/*	$OpenBSD: sti.c,v 1.84 2024/08/17 08:45:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -110,6 +110,7 @@ void	sti_describe_screen(struct sti_softc *, struct sti_screen *);
 void	sti_end_attach_screen(struct sti_softc *, struct sti_screen *, int);
 int	sti_fetchfonts(struct sti_screen *, struct sti_inqconfout *, u_int32_t,
 	    u_int);
+int32_t	sti_gvid(void *, uint32_t, uint32_t *);
 void	sti_region_setup(struct sti_screen *);
 int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
@@ -122,6 +123,10 @@ void	ngle_elk_setupfb(struct sti_screen *);
 void	ngle_timber_setupfb(struct sti_screen *);
 int	ngle_putcmap(struct sti_screen *, u_int, u_int);
 
+/*
+ * Helper macros to control whether the STI ROM is accessible on PCI
+ * devices.
+ */
 #if NSTI_PCI > 0
 #define	STI_ENABLE_ROM(sc) \
 do { \
@@ -302,6 +307,15 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 #endif
 
 	/*
+	 * Take note that it will be necessary to enable the PCI ROM around
+	 * some sti function calls if the MMAP (multiple map) bit is set in
+	 * the bus support flags, which means the PCI ROM is only available
+	 * through the PCI expansion ROM space and never through regular
+	 * PCI BARs.
+	 */
+	rom->rom_enable = dd->dd_bussup & STI_BUSSUPPORT_ROMMAP;
+
+	/*
 	 * Figure out how much bytes we need for the STI code.
 	 * Note there could be fewer than STI_END entries pointer
 	 * entries populated, especially on older devices.
@@ -337,9 +351,8 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 		u_int32_t addr, eaddr;
 
 		for (addr = dd->dd_pacode[STI_BEGIN], eaddr = addr + size * 4;
-		    addr < eaddr; addr += 4 )
+		    addr < eaddr; addr += 4)
 			*p++ = bus_space_read_4(memt, romh, addr) & 0xff;
-
 	} else	/* STI_DEVTYPE4 */
 		bus_space_read_raw_region_4(memt, romh,
 		    dd->dd_pacode[STI_BEGIN], rom->rom_code, size);
@@ -371,18 +384,10 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	      (rom->rom_devtype == STI_DEVTYPE1? 4 : 1)))
 
 	rom->init	= (sti_init_t)O(STI_INIT_GRAPH);
-	rom->mgmt	= (sti_mgmt_t)O(STI_STATE_MGMT);
 	rom->unpmv	= (sti_unpmv_t)O(STI_FONT_UNPMV);
 	rom->blkmv	= (sti_blkmv_t)O(STI_BLOCK_MOVE);
-	rom->test	= (sti_test_t)O(STI_SELF_TEST);
-	rom->exhdl	= (sti_exhdl_t)O(STI_EXCEP_HDLR);
 	rom->inqconf	= (sti_inqconf_t)O(STI_INQ_CONF);
 	rom->scment	= (sti_scment_t)O(STI_SCM_ENT);
-	rom->dmac	= (sti_dmac_t)O(STI_DMA_CTRL);
-	rom->flowc	= (sti_flowc_t)O(STI_FLOW_CTRL);
-	rom->utiming	= (sti_utiming_t)O(STI_UTIMING);
-	rom->pmgr	= (sti_pmgr_t)O(STI_PROC_MGR);
-	rom->util	= (sti_util_t)O(STI_UTIL);
 
 #undef	O
 
@@ -502,6 +507,42 @@ sti_region_setup(struct sti_screen *scr)
 #endif
 }
 
+/*
+ * ``gvid'' callback routine.
+ *
+ * The FireGL-UX board is using this interface, and will revert to direct
+ * PDC calls if no gvid callback is set.
+ * Unfortunately, under OpenBSD it is not possible to invoke PDC directly
+ * from its physical address once the MMU is turned on, and no documentation
+ * for the gvid interface (or for the particular PDC_PCI subroutines used
+ * by the FireGL-UX rom) has been found.
+ */
+int32_t
+sti_gvid(void *v, uint32_t cmd, uint32_t *params)
+{
+	struct sti_screen *scr = v;
+	struct sti_rom *rom = scr->scr_rom;
+
+	/* paranoia */
+	if (cmd != 0x000c0003)
+		return -1;
+
+	switch (params[0]) {
+	case 4:
+		/* register read */
+		params[2] =
+		    bus_space_read_4(rom->memt, rom->regh[2], params[1]);
+		return 0;
+	case 5:
+		/* register write */
+		bus_space_write_4(rom->memt, rom->regh[2], params[1],
+		    params[2]);
+		return 0;
+	default:
+		return -1;
+	}
+}
+
 int
 sti_screen_setup(struct sti_screen *scr, int flags)
 {
@@ -510,8 +551,8 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	bus_space_handle_t romh = rom->romh;
 	struct sti_dd *dd = &rom->rom_dd;
 	struct sti_cfg *cc = &scr->scr_cfg;
-	struct sti_inqconfout cfg;
-	struct sti_einqconfout ecfg;
+	struct sti_inqconfout inq;
+	struct sti_einqconfout einq;
 	int error, i;
 	int geometry_kluge = 0;
 	u_int fontindex = 0;
@@ -522,12 +563,18 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 
 	if (dd->dd_stimemreq) {
 		scr->scr_ecfg.addr =
-		    malloc(dd->dd_stimemreq, M_DEVBUF, M_NOWAIT);
+		    malloc(dd->dd_stimemreq, M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (!scr->scr_ecfg.addr) {
 			printf("cannot allocate %d bytes for STI\n",
 			    dd->dd_stimemreq);
 			return (ENOMEM);
 		}
+	}
+
+	if (dd->dd_ebussup & STI_EBUSSUPPORT_GVID) {
+		scr->scr_ecfg.future.g.gvid_cmd_arg = scr;
+		scr->scr_ecfg.future.g.gvid_cmd =
+		    (int32_t (*)(void *, ...))sti_gvid;
 	}
 
 	sti_region_setup(scr);
@@ -537,10 +584,10 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 		goto fail;
 	}
 
-	bzero(&cfg, sizeof(cfg));
-	bzero(&ecfg, sizeof(ecfg));
-	cfg.ext = &ecfg;
-	if ((error = sti_inqcfg(scr, &cfg))) {
+	bzero(&inq, sizeof(inq));
+	bzero(&einq, sizeof(einq));
+	inq.ext = &einq;
+	if ((error = sti_inqcfg(scr, &inq))) {
 		printf(": error %d inquiring config\n", error);
 		goto fail;
 	}
@@ -550,25 +597,24 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	 * similar to the displayable area size, at least in m68k mode.
 	 * Attempt to detect this and adjust here.
 	 */
-	if (cfg.owidth == cfg.width &&
-	    cfg.oheight == cfg.height)
+	if (inq.owidth == inq.width && inq.oheight == inq.height)
 		geometry_kluge = 1;
 
 	if (geometry_kluge) {
-		scr->scr_cfg.oscr_width = cfg.owidth =
-		    cfg.fbwidth - cfg.width;
-		scr->scr_cfg.oscr_height = cfg.oheight =
-		    cfg.fbheight - cfg.height;
+		scr->scr_cfg.oscr_width = inq.owidth =
+		    inq.fbwidth - inq.width;
+		scr->scr_cfg.oscr_height = inq.oheight =
+		    inq.fbheight - inq.height;
 	}
 
 	/*
 	 * Save a few fields for sti_describe_screen() later
 	 */
-	scr->fbheight = cfg.fbheight;
-	scr->fbwidth = cfg.fbwidth;
-	scr->oheight = cfg.oheight;
-	scr->owidth = cfg.owidth;
-	bcopy(cfg.name, scr->name, sizeof(scr->name));
+	scr->fbheight = inq.fbheight;
+	scr->fbwidth = inq.fbwidth;
+	scr->oheight = inq.oheight;
+	scr->owidth = inq.owidth;
+	bcopy(inq.name, scr->name, sizeof(scr->name));
 
 	if ((error = sti_init(scr, STI_TEXTMODE | flags))) {
 		printf(": can not initialize (%d)\n", error);
@@ -576,12 +622,12 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	}
 #ifdef STIDEBUG
 	printf("conf: bpp=%d planes=%d attr=%b\n"
-	    "crt=0x%x:0x%x:0x%x hw=0x%x:0x%x:0x%x\n", cfg.bpp,
-	    cfg.planes, cfg.attributes, STI_INQCONF_BITS,
-	    ecfg.crt_config[0], ecfg.crt_config[1], ecfg.crt_config[2],
-	    ecfg.crt_hw[0], ecfg.crt_hw[1], ecfg.crt_hw[2]);
+	    "crt=0x%x:0x%x:0x%x hw=0x%x:0x%x:0x%x\n", inq.bpp,
+	    inq.planes, inq.attributes, STI_INQCONF_BITS,
+	    einq.crt_config[0], einq.crt_config[1], einq.crt_config[2],
+	    einq.crt_hw[0], einq.crt_hw[1], einq.crt_hw[2]);
 #endif
-	scr->scr_bpp = cfg.bppu;
+	scr->scr_bpp = inq.bppu;
 
 	/*
 	 * Although scr->scr_ecfg.current_monitor is not filled by
@@ -618,7 +664,7 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 #endif
 	}
 
-	if ((error = sti_fetchfonts(scr, &cfg, dd->dd_fntaddr, fontindex))) {
+	if ((error = sti_fetchfonts(scr, &inq, dd->dd_fntaddr, fontindex))) {
 		printf(": cannot fetch fonts (%d)\n", error);
 		goto fail;
 	}
@@ -631,8 +677,8 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	 */
 
 	strlcpy(scr->scr_wsd.name, "std", sizeof(scr->scr_wsd.name));
-	scr->scr_wsd.ncols = cfg.width / scr->scr_curfont.width;
-	scr->scr_wsd.nrows = cfg.height / scr->scr_curfont.height;
+	scr->scr_wsd.ncols = inq.width / scr->scr_curfont.width;
+	scr->scr_wsd.nrows = inq.height / scr->scr_curfont.height;
 	scr->scr_wsd.textops = &sti_emulops;
 	scr->scr_wsd.fontwidth = scr->scr_curfont.width;
 	scr->scr_wsd.fontheight = scr->scr_curfont.height;
@@ -699,9 +745,10 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	case STI_DD_3X2V:
 	case STI_DD_DUAL_CRX:
 	case STI_DD_HCRX:
-	case STI_DD_LEGO:
 	case STI_DD_SUMMIT:
 	case STI_DD_PINNACLE:
+	case STI_DD_LEGO:
+	case STI_DD_FIREGL:
 	default:
 		scr->setupfb = NULL;
 		scr->putcmap =
@@ -713,7 +760,11 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	return (0);
 
 fail:
-	/* XXX free resources */
+	/* free resources */
+	if (scr->scr_romfont != NULL) {
+		free(scr->scr_romfont, M_DEVBUF, 0);
+		scr->scr_romfont = NULL;
+	}
 	if (scr->scr_ecfg.addr != NULL) {
 		free(scr->scr_ecfg.addr, M_DEVBUF, 0);
 		scr->scr_ecfg.addr = NULL;
@@ -809,7 +860,7 @@ sti_rom_size(bus_space_tag_t memt, bus_space_handle_t romh)
 }
 
 int
-sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
+sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *inq,
     u_int32_t baseaddr, u_int fontindex)
 {
 	struct sti_rom *rom = scr->scr_rom;
@@ -901,16 +952,16 @@ rescan:
 	 * display all the characters there in order to display them
 	 * faster with blkmv operations rather than unpmv later on.
 	 */
-	if (size <= cfg->fbheight *
-	    (cfg->fbwidth - cfg->width - cfg->owidth)) {
+	if (size <= inq->fbheight *
+	    (inq->fbwidth - inq->width - inq->owidth)) {
 		bzero(&a, sizeof(a));
 		a.flags.flags = STI_UNPMVF_WAIT;
 		a.in.fg_colour = STI_COLOUR_WHITE;
 		a.in.bg_colour = STI_COLOUR_BLACK;
 		a.in.font_addr = scr->scr_romfont;
 
-		scr->scr_fontmaxcol = cfg->fbheight / fp->height;
-		scr->scr_fontbase = cfg->width + cfg->owidth;
+		scr->scr_fontmaxcol = inq->fbheight / fp->height;
+		scr->scr_fontbase = inq->width + inq->owidth;
 		for (uc = fp->first; uc <= fp->last; uc++) {
 			a.in.x = ((uc - fp->first) / scr->scr_fontmaxcol) *
 			    fp->width + scr->scr_fontbase;
@@ -969,7 +1020,15 @@ sti_init(struct sti_screen *scr, int mode)
 	printf("sti_init,%p(%x, %p, %p, %p)\n",
 	    rom->init, a.flags.flags, &a.in, &a.out, &scr->scr_cfg);
 #endif
+	/*
+	 * Make the ROM visible during initialization, some devices
+	 * look for various data into their ROM image.
+	 */
+	if (rom->rom_enable)
+		STI_ENABLE_ROM(rom->rom_softc);
 	(*rom->init)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
+	if (rom->rom_enable)
+		STI_DISABLE_ROM(rom->rom_softc);
 	if (a.out.text_planes != a.in.text_planes)
 		return (-1);	/* not colliding with sti errno values */
 	return (a.out.errno);

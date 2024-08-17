@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.13 2023/04/13 15:07:43 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.14 2024/08/17 08:45:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -52,6 +52,9 @@ const struct pci_matchid sti_pci_devices[] = {
 	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FX4 },
 	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FX6 },
 	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FXE },
+#ifdef notyet
+	{ PCI_VENDOR_IBM, PCI_PRODUCT_IBM_FIREGL2 }
+#endif
 };
 
 int	sti_readbar(struct sti_softc *, struct pci_attach_args *, u_int, int);
@@ -267,6 +270,15 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	bus_space_read_region_1(pa->pa_memt, romh, offs, region_bars,
 	    STI_REGION_MAX);
 	for (i = 0; i < STI_REGION_MAX; i++) {
+		/*
+		 * Region 0 is supposed to always be the ROM. FireGL-UX
+		 * ROM agrees so well that it will report the expansion
+		 * ROM BAR rather than any regular BAR.
+		 * We'll address this later after remapping the ROM.
+		 */
+		if (i == 0 && region_bars[i] == PCI_ROM_REG)
+			continue;
+
 		rc = sti_readbar(sc, pa, i, region_bars[i]);
 		if (rc != 0)
 			goto unmap_disable_return;
@@ -295,6 +307,16 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		printf("%s: can't map STI ROM (%d)\n",
 		    sc->sc_dev.dv_xname, rc);
 		goto disable_return;
+	}
+
+	/*
+	 * Now set up region 0 if we had skipped it earlier.
+	 */
+
+	if (region_bars[0] == PCI_ROM_REG) {
+		sc->bases[0] =
+		    (bus_addr_t)bus_space_vaddr(pa->pa_memt, spc->sc_romh) -
+		    (offs - ctx.romoffs);
 	}
 
 	sti_pci_disable_rom(sc);
