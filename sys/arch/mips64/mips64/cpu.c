@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.83 2023/06/15 22:18:07 cheloha Exp $ */
+/*	$OpenBSD: cpu.c,v 1.84 2024/08/17 13:35:01 mpi Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -408,21 +408,19 @@ cpu_unidle(struct cpu_info *ci)
 		mips64_send_ipi(ci->ci_cpuid, MIPS64_IPI_NOP);
 }
 
-vaddr_t 
-alloc_contiguous_pages(size_t size)
+vaddr_t
+alloc_contiguous_pages(size_t sz)
 {
-	struct pglist mlist;
-	struct vm_page *m;
-	int error;
+	const struct kmem_pa_mode kp_contig = {
+		.kp_constraint = &no_constraint,
+		.kp_maxseg = 1,
+		.kp_zero = 1
+	};
 	paddr_t pa;
 
-	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(round_page(size), 0, (paddr_t)-1, 0, 0,
-		&mlist, 1, UVM_PLA_NOWAIT | UVM_PLA_ZERO);
-	if (error)
+	pa = (paddr_t)km_alloc(round_page(sz), &kv_any, &kp_contig, &kd_nowait);
+	if (pa == 0)
 		return 0;
-	m = TAILQ_FIRST(&mlist);
-	pa = VM_PAGE_TO_PHYS(m);
 
 	return PHYS_TO_XKPHYS(pa, CCA_CACHED);
 }
