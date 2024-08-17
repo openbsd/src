@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_pci.c,v 1.28 2024/08/17 02:14:21 deraadt Exp $ */
+/* $OpenBSD: dwiic_pci.c,v 1.29 2024/08/17 02:24:06 deraadt Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  * PCI attachment
@@ -298,10 +298,7 @@ dwiic_pci_activate(struct device *self, int act)
 		    (LPSS_RESETS_I2C | LPSS_RESETS_IDMA));
 		break;
 	}
-
-	dwiic_activate(self, act);
-
-	return 0;
+	return dwiic_activate(self, act);
 }
 
 void

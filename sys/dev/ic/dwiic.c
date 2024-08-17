@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.18 2024/08/17 02:14:20 deraadt Exp $ */
+/* $OpenBSD: dwiic.c,v 1.19 2024/08/17 02:24:03 deraadt Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -33,9 +33,11 @@ int
 dwiic_activate(struct device *self, int act)
 {
 	struct dwiic_softc *sc = (struct dwiic_softc *)self;
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);		
 		/* disable controller */
 		dwiic_enable(sc, 0);
 
@@ -45,12 +47,13 @@ dwiic_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		dwiic_init(sc);
+		rv = config_activate_children(self, act);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
-
-	config_activate_children(self, act);
-
-	return 0;
+	return rv;
 }
 
 int
