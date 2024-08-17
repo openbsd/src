@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.63 2024/06/11 10:06:35 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.64 2024/08/17 08:12:46 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -19836,10 +19836,7 @@ qwx_core_qmi_firmware_ready(struct qwx_softc *sc)
 		goto err_core_stop;
 	}
 
-#if 0 /* TODO: Is this in the right spot for OpenBSD? */
 	sc->ops.irq_enable(sc);
-#endif
-
 #if 0
 	mutex_unlock(&ab->core_lock);
 #endif
@@ -25389,9 +25386,6 @@ qwx_run(struct qwx_softc *sc)
 		   sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
-
-	/* Enable "ext" IRQs for datapath. */
-	sc->ops.irq_enable(sc);
 
 	return 0;
 }
