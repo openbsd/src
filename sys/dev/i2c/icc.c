@@ -1,4 +1,4 @@
-/*	$OpenBSD: icc.c,v 1.1 2022/11/11 15:25:13 matthieu Exp $	*/
+/*	$OpenBSD: icc.c,v 1.2 2024/08/17 15:10:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -48,6 +48,7 @@ const struct cfattach icc_ca = {
 	sizeof(struct icc_softc),
 	icc_match,
 	icc_attach,
+	icc_detach
 };
 
 int
