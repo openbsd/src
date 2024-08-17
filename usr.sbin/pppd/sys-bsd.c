@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.35 2024/08/10 05:32:28 jsg Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.36 2024/08/17 09:52:11 denis Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -1032,6 +1032,23 @@ cifaddr(int u, u_int32_t o, u_int32_t h)
 }
 
 /*
+ * getrtableid - return routing table id of ppp interface
+ */
+int
+getrtableid(void)
+{
+    struct ifreq ifr;
+    int tableid = 0;
+
+    memset(&ifr, 0, sizeof(ifr));
+    strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+    if (ioctl(sockfd, SIOCGIFRDOMAIN, (caddr_t) &ifr) == 0)
+	tableid = ifr.ifr_rdomainid;
+
+    return tableid;
+}
+
+/*
  * sifdefaultroute - assign a default route through the address given.
  */
 int
@@ -1073,6 +1090,7 @@ dodefaultroute(u_int32_t g, int cmd)
     rtmsg.hdr.rtm_type = cmd == 's'? RTM_ADD: RTM_DELETE;
     rtmsg.hdr.rtm_flags = RTF_UP | RTF_GATEWAY;
     rtmsg.hdr.rtm_version = RTM_VERSION;
+    rtmsg.hdr.rtm_tableid = getrtableid();
     rtmsg.hdr.rtm_seq = ++rtm_seq;
     rtmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
     rtmsg.dst.sin_len = sizeof(rtmsg.dst);
