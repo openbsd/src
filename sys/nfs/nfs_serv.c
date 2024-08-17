@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.126 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.127 2024/08/17 07:02:13 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1038,12 +1038,12 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
 		return 0;
 	else if (error != 0)
-		goto nfsmout;
+		return error;
 	fhp = &nfh.fh_generic;
 	if (nfsm_srvmtofh2(&info, fhp) != 0)
-		goto nfsmout;
+		return error;
 	if (nfsm_srvnamesiz(&info, &len) != 0)
-		goto nfsmout;
+		return error;
 	if (error) {
 		if (nfsm_reply(&info, nfsd, slp, mrq, error, 0) != 0)
 			return 0;
@@ -1325,12 +1325,12 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
 		return 0;
 	else if (error != 0)
-		goto nfsmout;
+		return error;
 	fhp = &nfh.fh_generic;
 	if (nfsm_srvmtofh2(&info, fhp) != 0)
-		goto nfsmout;
+		return error;
 	if (nfsm_srvnamesiz(&info, &len) != 0)
-		goto nfsmout;
+		return error;
 	if (error) {
 		if (nfsm_reply(&info, nfsd, slp, mrq, error, 0) != 0)
 			return 0;
@@ -1598,12 +1598,12 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
 		return 0;
 	else if (error != 0)
-		goto nfsmout;
+		return error;
 	ffhp = &fnfh.fh_generic;
 	if (nfsm_srvmtofh2(&info, ffhp) != 0)
-		goto nfsmout;
+		return error;
 	if (nfsm_srvnamesiz(&info, &len) != 0)
-		goto nfsmout;
+		return error;
 	if (error) {
 		if (nfsm_reply(&info, nfsd, slp, mrq, error, 0) != 0)
 			return 0;
@@ -1757,12 +1757,6 @@ out1:
 nfsmout:
 	if (fdirp)
 		vrele(fdirp);
-	if (tdirp)
-		vrele(tdirp);
-	if (tond.ni_cnd.cn_nameiop) {
-		vrele(tond.ni_startdir);
-		pool_put(&namei_pool, tond.ni_cnd.cn_pnbuf);
-	}
 	if (fromnd.ni_cnd.cn_nameiop) {
 		if (fromnd.ni_startdir)
 			vrele(fromnd.ni_startdir);
@@ -1928,12 +1922,12 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
 		return 0;
 	else if (error != 0)
-		goto nfsmout;
+		return error;
 	fhp = &nfh.fh_generic;
 	if (nfsm_srvmtofh2(&info, fhp) != 0)
-		goto nfsmout;
+		return error;
 	if (nfsm_srvnamesiz(&info, &len) != 0)
-		goto nfsmout;
+		return error;
 	if (error) {
 		if (nfsm_reply(&info, nfsd, slp, mrq, error, 0) != 0)
 			return 0;
@@ -2088,12 +2082,12 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nfsm_srvmtofh1(&info, nfsd, slp, mrq) != 0)
 		return 0;
 	else if (error != 0)
-		goto nfsmout;
+		return error;
 	fhp = &nfh.fh_generic;
 	if (nfsm_srvmtofh2(&info, fhp) != 0)
-		goto nfsmout;
+		return error;
 	if (nfsm_srvnamesiz(&info, &len) != 0)
-		goto nfsmout;
+		return error;
 	if (error) {
 		if (nfsm_reply(&info, nfsd, slp, mrq, error, 0) != 0)
 			return 0;
