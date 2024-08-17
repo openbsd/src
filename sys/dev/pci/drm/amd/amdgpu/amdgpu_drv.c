@@ -2458,8 +2458,6 @@ static int amdgpu_pmops_resume(struct device *dev)
 	return r;
 }
 
-#ifdef notyet
-
 static int amdgpu_pmops_freeze(struct device *dev)
 {
 	struct drm_device *drm_dev = dev_get_drvdata(dev);
@@ -2477,6 +2475,8 @@ static int amdgpu_pmops_freeze(struct device *dev)
 	return 0;
 }
 
+#ifdef notyet
+
 static int amdgpu_pmops_thaw(struct device *dev)
 {
 	struct drm_device *drm_dev = dev_get_drvdata(dev);
@@ -2491,12 +2491,16 @@ static int amdgpu_pmops_poweroff(struct device *dev)
 	return amdgpu_device_suspend(drm_dev, true);
 }
 
+#endif
+
 static int amdgpu_pmops_restore(struct device *dev)
 {
 	struct drm_device *drm_dev = dev_get_drvdata(dev);
 
 	return amdgpu_device_resume(drm_dev, true);
 }
+
+#ifdef notyet
 
 static int amdgpu_runtime_idle_check_display(struct device *dev)
 {
@@ -3674,15 +3678,22 @@ amdgpu_activate(struct device *self, int act)
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		amdgpu_pmops_prepare(self);
-		amdgpu_pmops_suspend(self);
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
+			amdgpu_pmops_freeze(self);
+		else
+			amdgpu_pmops_suspend(self);
 		break;
 	case DVACT_SUSPEND:
-		amdgpu_pmops_suspend_noirq(self);
+		if (!acpi_softc || acpi_softc->sc_state != ACPI_STATE_S4)
+			amdgpu_pmops_suspend_noirq(self);
 		break;
 	case DVACT_RESUME:
 		break;
 	case DVACT_WAKEUP:
-		amdgpu_pmops_resume(self);
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
+			amdgpu_pmops_restore(self);
+		else
+			amdgpu_pmops_resume(self);
 		rv = config_activate_children(self, act);
 		break;
 	}
