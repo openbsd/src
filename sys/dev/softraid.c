@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.430 2024/02/03 18:51:58 beck Exp $ */
+/* $OpenBSD: softraid.c,v 1.431 2024/08/18 19:44:10 phessler Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4862,10 +4862,25 @@ bad:
 void
 sr_sensors_delete(struct sr_discipline *sd)
 {
+	struct sr_softc		*sc = sd->sd_sc;
+
 	DNPRINTF(SR_D_STATE, "%s: sr_sensors_delete\n", DEVNAME(sd->sd_sc));
 
-	if (sd->sd_vol.sv_sensor_attached)
+	if (sd->sd_vol.sv_sensor_attached) {
 		sensor_detach(&sd->sd_sc->sc_sensordev, &sd->sd_vol.sv_sensor);
+		sd->sd_vol.sv_sensor_attached = 0;
+	}
+
+	/*
+	 * Unregister the refresh task if we detached our last sensor.
+	 */
+	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link)
+		if (sd->sd_vol.sv_sensor_attached)
+			return;
+	if (sc->sc_sensor_task != NULL) {
+		sensor_task_unregister(sc->sc_sensor_task);
+		sc->sc_sensor_task = NULL;
+	}
 }
 
 void
