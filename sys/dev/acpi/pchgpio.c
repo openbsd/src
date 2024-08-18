@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.15 2023/11/27 00:39:42 jsg Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.16 2024/08/18 11:10:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -117,6 +117,8 @@ const char *pchgpio_hids[] = {
 	"INTC1055",
 	"INTC1056",
 	"INTC1057",
+	"INTC1082",
+	"INTC1083",
 	"INTC1085",
 	NULL
 };
@@ -386,6 +388,63 @@ const struct pchgpio_device adl_n_device =
 	.npins = 384,
 };
 
+/* Meteor Lake-P */
+
+const struct pchgpio_group mtl_p_groups[] =
+{
+	/* Community 0 */
+	{ 0, 1, 5, 28, 32 },		/* GPP_V */
+	{ 0, 2, 29, 52, 64 },		/* GPP_C */
+
+	/* Community 1 */
+	{ 1, 0, 53, 77, 96 },		/* GPP_A */
+	{ 1, 1, 78, 102, 128 },		/* GPP_E */
+
+	/* Community 3 */
+	{ 2, 0, 103, 128, 160 },	/* GPP_H */
+	{ 2, 1, 129, 154, 192 },	/* GPP_F */
+
+	/* Community 4 */
+	{ 3, 0, 184, 191, 288 },	/* GPP_S */
+
+	/* Community 5 */
+	{ 4, 0, 204, 228, 352 },	/* GPP_B */
+	{ 4, 1, 229, 253, 384 },	/* GPP_D */
+};
+
+const struct pchgpio_device mtl_p_device =
+{
+	.pad_size = 16,
+	.gpi_is = 0x200,
+	.gpi_ie = 0x210,
+	.groups = mtl_p_groups,
+	.ngroups = nitems(mtl_p_groups),
+	.npins = 416,
+};
+
+/* Meteor Lake-S */
+
+const struct pchgpio_group mtl_s_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 27, 0 },		/* GPP_A */
+	{ 0, 2, 47, 73, 64 },		/* GPP_C */
+
+	/* Community 1 */
+	{ 1, 0, 74, 93, 96 },		/* GPP_B */
+	{ 1, 2, 96, 119, 160 },		/* GPP_D */
+};
+
+const struct pchgpio_device mtl_s_device =
+{
+	.pad_size = 16,
+	.gpi_is = 0x200,
+	.gpi_ie = 0x210,
+	.groups = mtl_s_groups,
+	.ngroups = nitems(mtl_s_groups),
+	.npins = 192,
+};
+
 struct pchgpio_match pchgpio_devices[] = {
 	{ "INT344B", &spt_lp_device },
 	{ "INT3450", &cnl_h_device },
@@ -398,6 +457,8 @@ struct pchgpio_match pchgpio_devices[] = {
 	{ "INTC1056", &adl_s_device },
 	{ "INTC1057", &adl_n_device },
 	{ "INTC1085", &adl_s_device },
+	{ "INTC1082", &mtl_s_device },
+	{ "INTC1083", &mtl_p_device },
 };
 
 int	pchgpio_read_pin(void *, int);
