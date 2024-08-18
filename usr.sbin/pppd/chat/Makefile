@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:48:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2024/08/18 20:08:58 deraadt Exp $
 
 PROG=	chat
 SRCS=	chat.c
