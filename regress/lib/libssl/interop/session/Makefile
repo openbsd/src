@@ -1,11 +1,8 @@
-# $OpenBSD: Makefile,v 1.10 2024/08/18 09:14:17 tb Exp $
+# $OpenBSD: Makefile,v 1.11 2024/08/18 10:02:10 tb Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl11)
 LIBRARIES +=		openssl11
-.endif
-.if exists(/usr/local/bin/eopenssl30)
-#LIBRARIES +=		openssl30
 .endif
 .if exists(/usr/local/bin/eopenssl31)
 #LIBRARIES +=		openssl31

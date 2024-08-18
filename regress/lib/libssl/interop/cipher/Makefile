@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2024/08/18 09:14:17 tb Exp $
+# $OpenBSD: Makefile,v 1.16 2024/08/18 10:02:10 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create lists of supported ciphers
@@ -9,9 +9,6 @@
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl11)
 LIBRARIES +=		openssl11
-.endif
-.if exists(/usr/local/bin/eopenssl30)
-LIBRARIES +=		openssl30
 .endif
 .if exists(/usr/local/bin/eopenssl31)
 LIBRARIES +=		openssl31
@@ -48,7 +45,6 @@ client-${clib}-server-${slib}.ciphers: \
 	# we are only interested in ciphers supported by libressl
 	sort $@ client-libressl.ciphers >$@.tmp
 . if "${clib}" == "openssl11" || "${slib}" == "openssl11" || \
-	"${clib}" == "openssl30" || "${slib}" == "openssl30" || \
 	"${clib}" == "openssl31" || "${slib}" == "openssl31" || \
 	"${clib}" == "openssl32" || "${slib}" == "openssl32"
 	# OpenSSL's SSL_CTX_set_cipher_list doesn't accept TLSv1.3 ciphers
@@ -79,7 +75,6 @@ regress: ciphers.mk
 
 LEVEL_libressl =
 LEVEL_openssl11 = ,@SECLEVEL=0
-LEVEL_openssl30 = ,@SECLEVEL=0
 LEVEL_openssl31 = ,@SECLEVEL=0
 LEVEL_openssl32 = ,@SECLEVEL=0
 
@@ -142,7 +137,7 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
 . endif
 . if "${clib}" == "libressl"
 	# libressl client may prefer chacha-poly if aes-ni is not supported
-.  if "${slib}" == "openssl11" || "${slib}" == "openssl30" || "${slib}" == "openssl31" || "${slib}" == "openssl32"
+.  if "${slib}" == "openssl11" || "${slib}" == "openssl31" || "${slib}" == "openssl32"
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
 .  else
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
