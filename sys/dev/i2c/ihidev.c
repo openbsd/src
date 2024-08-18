@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.29 2023/08/12 10:03:05 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.30 2024/08/18 03:25:04 deraadt Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -233,11 +233,13 @@ int
 ihidev_activate(struct device *self, int act)
 {
 	struct ihidev_softc *sc = (struct ihidev_softc *)self;
+	int rv;
 
 	DPRINTF(("%s(%d)\n", __func__, act));
 
 	switch (act) {
 	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
 		sc->sc_dying = 1;
 		if (sc->sc_poll && timeout_initialized(&sc->sc_timer)) {
 			DPRINTF(("%s: cancelling polling\n",
@@ -254,12 +256,13 @@ ihidev_activate(struct device *self, int act)
 		sc->sc_dying = 0;
 		if (sc->sc_poll && timeout_initialized(&sc->sc_timer))
 			timeout_add(&sc->sc_timer, 2000);
+		rv = config_activate_children(self, act);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
-
-	config_activate_children(self, act);
-
-	return 0;
+	return rv;
 }
 
 void

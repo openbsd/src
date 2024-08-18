@@ -1,4 +1,4 @@
-/* $OpenBSD: ietp.c,v 1.2 2023/07/21 02:19:49 jcs Exp $ */
+/* $OpenBSD: ietp.c,v 1.3 2024/08/18 03:25:04 deraadt Exp $ */
 /*
  * Elan I2C Touchpad driver
  *
@@ -304,11 +304,13 @@ int
 ietp_activate(struct device *self, int act)
 {
 	struct ietp_softc *sc = (struct ietp_softc *)self;
+	int rv;
 
 	DPRINTF(("%s(%d)\n", __func__, act));
 
 	switch (act) {
 	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
 		sc->sc_dying = 1;
 		if (ietp_set_power(sc, I2C_HID_POWER_OFF))
 			printf("%s: failed to power down\n",
@@ -317,12 +319,13 @@ ietp_activate(struct device *self, int act)
 	case DVACT_WAKEUP:
 		ietp_reset(sc);
 		sc->sc_dying = 0;
+		rv = config_activate_children(self, act);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
-
-	config_activate_children(self, act);
-
-	return 0;
+	return rv;
 }
 
 void
