@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.c,v 1.2 2024/02/04 12:46:01 jca Exp $ */
+/*	$OpenBSD: wctype.c,v 1.3 2024/08/18 02:22:29 guenther Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <wchar.h>
 #include <wctype.h>
 #include <string.h>
-#include "rune.h"
 #include "runetype.h"
 
 static struct _WCTypeEntry wctype_entries[_WCTYPE_NINDEXES] =

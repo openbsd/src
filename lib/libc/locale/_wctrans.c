@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wctrans.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: _wctrans.c,v 1.3 2024/08/18 02:22:29 guenther Exp $ */
 /*	$NetBSD: _wctrans.c,v 1.6 2005/02/10 19:19:57 tnozaki Exp $	*/
 
 /*-
@@ -62,8 +62,7 @@
 #include <wctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rune.h"
-#include "rune_local.h"
+#include "runetype.h"
 #include "_wctrans_local.h"
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.10 2022/07/27 20:00:11 guenther Exp $ */
+/*	$OpenBSD: rune.c,v 1.11 2024/08/18 02:22:29 guenther Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -63,12 +63,13 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include "rune.h"
+#include "runetype.h"
 #include "rune_local.h"
 
 #define SAFE_ADD(x, y)			\

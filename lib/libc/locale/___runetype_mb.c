@@ -1,4 +1,4 @@
-/*	$OpenBSD: ___runetype_mb.c,v 1.3 2017/09/05 03:16:13 schwarze Exp $ */
+/*	$OpenBSD: ___runetype_mb.c,v 1.4 2024/08/18 02:22:29 guenther Exp $ */
 /*	$NetBSD: ___runetype_mb.c,v 1.10 2005/02/10 19:19:57 tnozaki Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  */
 
 #include <wctype.h>
-#include "rune.h"
+#include "runetype.h"
 #include "rune_local.h"
 
 _RuneType

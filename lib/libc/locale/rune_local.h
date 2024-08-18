@@ -1,4 +1,4 @@
-/* 	$OpenBSD: rune_local.h,v 1.8 2022/07/27 20:00:11 guenther Exp $ */
+/* 	$OpenBSD: rune_local.h,v 1.9 2024/08/18 02:22:29 guenther Exp $ */
 /*	$NetBSD: rune_local.h,v 1.7 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*-
@@ -29,6 +29,9 @@
 
 #ifndef _RUNE_LOCAL_H_
 #define _RUNE_LOCAL_H_
+
+#include <stdio.h>
+#include <wchar.h>
 
 __BEGIN_HIDDEN_DECLS
 

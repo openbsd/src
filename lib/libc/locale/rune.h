@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.h,v 1.5 2024/02/04 12:46:01 jca Exp $ */
+/*	$OpenBSD: rune.h,v 1.6 2024/08/18 02:22:29 guenther Exp $ */
 /*	$NetBSD: rune.h,v 1.9 2003/08/07 16:43:04 agc Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 #define	_RUNE_H_
 
 #include <locale.h>
-#include <stdio.h>
-#include <wchar.h>
 #include "runetype.h"
 
 #define	_LOCALE_NONE	(locale_t)0

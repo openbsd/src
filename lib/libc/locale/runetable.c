@@ -40,7 +40,6 @@
 #include <assert.h>
 #include <wchar.h>
 #include "rune.h"
-#include "rune_local.h"
 #include "citrus_ctype.h"
 
 _RuneLocale _DefaultRuneLocale = {
