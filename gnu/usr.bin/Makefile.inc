@@ -1,3 +1,3 @@
-#	$Id: Makefile.inc,v 1.1.1.1 1995/10/18 08:38:45 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2024/08/18 20:14:49 deraadt Exp $
 
 BINDIR?=	/usr/bin
