@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.52 2024/08/14 18:31:33 bluhm Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.53 2024/08/18 21:04:29 bluhm Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -96,6 +96,11 @@
 
 #include <uvm/uvm_extern.h>
 
+/* #define FORCE_BOUNCE_BUFFER	1 */
+#ifndef FORCE_BOUNCE_BUFFER
+#define FORCE_BOUNCE_BUFFER	0
+#endif
+
 int _bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
     struct proc *, int, paddr_t *, int *, int);
 
@@ -115,6 +120,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	void *mapstore;
 	int npages, error;
 	const struct kmem_dyn_mode *kd;
+	/* allocate and use bounce buffers when running as SEV guest */
+	int use_bounce_buffer = cpu_sev_guestmode || FORCE_BOUNCE_BUFFER;
 
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
@@ -131,8 +138,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	mapsize = sizeof(struct bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 
-	/* allocate and use bounce buffers when running as SEV guest */
-	if (cpu_sev_guestmode) {
+	if (use_bounce_buffer) {
 		/* this many pages plus one in case we get split */
 		npages = round_page(size) / PAGE_SIZE + 1;
 		if (npages < nsegments)
@@ -150,13 +156,13 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	if (cpu_sev_guestmode) {
+	if (use_bounce_buffer) {
 		map->_dm_pages = (void *)&map->dm_segs[nsegments];
 		map->_dm_npages = npages;
 	}
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 
-	if (!cpu_sev_guestmode) {
+	if (!use_bounce_buffer) {
 		*dmamp = map;
 		return (0);
 	}
@@ -478,8 +484,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	bus_dma_segment_t *sg;
 	int i, off = addr;
 	bus_size_t l;
+	int use_bounce_buffer = cpu_sev_guestmode || FORCE_BOUNCE_BUFFER;
 
-	if (!cpu_sev_guestmode)
+	if (!use_bounce_buffer)
 		return;
 
 	for (i = map->_dm_segcnt, sg = map->dm_segs; size && i--; sg++) {
@@ -685,6 +692,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int seg, page, off;
 	pmap_t pmap;
 	struct vm_page *pg;
+	int use_bounce_buffer = cpu_sev_guestmode || FORCE_BOUNCE_BUFFER;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -705,8 +713,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			panic("Non dma-reachable buffer at curaddr %#lx(raw)",
 			    curaddr);
 
-		if (cpu_sev_guestmode) {
-			/* use bounce buffer */
+		if (use_bounce_buffer) {
 			if (map->_dm_nused + 1 >= map->_dm_npages)
 				return (ENOMEM);
 
