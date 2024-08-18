@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.13 2024/05/22 12:33:07 claudio Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.14 2024/08/18 14:58:47 phessler Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -117,6 +117,7 @@ main(void)
 	printf("%s\n", "qcpas");
 	printf("%s\n", "qcpas ^ppb0*\"Qualcomm SC8280XP PCIe\"");
 	printf("%s\n", "qwx");
+	printf("%s\n", "qwz");
 	printf("%s\n", "radeondrm");
 	print_devices("radeondrm", radeon_devices, nitems(radeon_devices));
 	printf("%s\n", "rsu");
