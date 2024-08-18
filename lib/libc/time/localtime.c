@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.66 2024/04/04 02:20:01 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.67 2024/08/18 02:20:29 guenther Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

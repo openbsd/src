@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.30 2019/07/03 03:24:04 deraadt Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.31 2024/08/18 02:20:29 guenther Exp $	*/
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <locale.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
