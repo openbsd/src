@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.31 2022/12/04 23:50:47 cheloha Exp $	*/
+/*	$OpenBSD: cal.c,v 1.32 2024/08/18 19:58:35 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ week(int day, int month, int year)
 	shift = 1;
 	if (yearday < firstsunday)
 		return (1);
-	if (firstweekday > THURSDAY - 1) 
+	if (firstweekday > THURSDAY - 1)
 		shift = 2;
 	return ((((yearday + 1) - (weekday - 1)) / 7) + shift);
 }
@@ -291,7 +291,7 @@ isoweek(int day, int month, int year)
 		return 53 - (g - s) / 5;
 	else if (n > 364 + s)
 		return 1;
-	else 
+	else
 		return n/7 + 1;
 }
 

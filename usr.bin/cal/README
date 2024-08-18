@@ -10,13 +10,13 @@ that even if I was dumb enough to try.  From this we can easily calculate
 the day of week for any date.  The algorithm for a zero based day of week:
 
 	calculate the number of days in all prior years (year-1)*365
-	add the number of leap years (days?) since year 1 
+	add the number of leap years (days?) since year 1
 		(not including this year as that is covered later)
 	add the day number within the year
 		this compensates for the non-inclusive leap year
 		calculation
 	if the day in question occurs before the gregorian reformation
-		(3 sep 1752 for our purposes), then simply return 
+		(3 sep 1752 for our purposes), then simply return
 		(value so far - 1 + SATURDAY's value of 6) modulo 7.
 	if the day in question occurs during the reformation (3 sep 1752
 		to 13 sep 1752 inclusive) return THURSDAY. This is my
