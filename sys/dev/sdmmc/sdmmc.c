@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.61 2023/04/19 02:01:02 dlg Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.62 2024/08/18 15:03:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -202,8 +202,8 @@ sdmmc_activate(struct device *self, int act)
 			sc->sc_dying = -1;
 		break;
 	case DVACT_RESUME:
-		rv = config_activate_children(self, act);
 		wakeup(&sc->sc_tskq);
+		rv = config_activate_children(self, act);
 		break;
 	default:
 		rv = config_activate_children(self, act);
