@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.53 2024/08/18 14:42:56 deraadt Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.54 2024/08/18 20:28:41 deraadt Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -1349,6 +1349,7 @@ int
 maestro_activate(struct device *self, int act)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
