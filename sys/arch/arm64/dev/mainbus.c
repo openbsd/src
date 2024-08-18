@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.29 2024/01/29 14:52:25 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.30 2024/08/18 15:50:49 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -60,8 +60,7 @@ struct mainbus_softc {
 };
 
 const struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach, NULL,
-	config_activate_children
+	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
 };
 
 struct cfdriver mainbus_cd = {

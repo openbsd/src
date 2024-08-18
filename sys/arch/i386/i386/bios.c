@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.129 2023/03/15 08:20:52 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.130 2024/08/18 15:50:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -81,8 +81,7 @@ int bios_print(void *, const char *);
 char *fixstring(char *);
 
 const struct cfattach bios_ca = {
-	sizeof(struct bios_softc), biosprobe, biosattach, NULL,
-	config_activate_children
+	sizeof(struct bios_softc), biosprobe, biosattach
 };
 
 struct cfdriver bios_cd = {
