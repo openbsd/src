@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.437 2024/08/10 23:28:17 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.438 2024/08/18 02:53:08 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2502,16 +2502,19 @@ acpi_init_states(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "_S%d_", i);
 		sc->sc_sleeptype[i].slp_typa = -1;
 		sc->sc_sleeptype[i].slp_typb = -1;
-		if (aml_evalname(sc, sc->sc_root, name, 0, NULL, &res) == 0) {
-			if (res.type == AML_OBJTYPE_PACKAGE) {
-				sc->sc_sleeptype[i].slp_typa =
-				    aml_val2int(res.v_package[0]);
-				sc->sc_sleeptype[i].slp_typb =
-				    aml_val2int(res.v_package[1]);
-				printf(" S%d", i);
-			}
+		if (aml_evalname(sc, sc->sc_root, name, 0, NULL, &res) != 0)
+			continue;
+		if (res.type != AML_OBJTYPE_PACKAGE) {
 			aml_freevalue(&res);
+			continue;
 		}
+		sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
+		sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
+		aml_freevalue(&res);
+
+		printf(" S%d", i);
+		if (i == 0 && (sc->sc_fadt->flags & FADT_POWER_S0_IDLE_CAPABLE))
+			printf("ix");
 	}
 }
 
