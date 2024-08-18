@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.141 2024/06/05 11:04:17 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.142 2024/08/18 08:01:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -470,10 +470,6 @@ uvm_pmr_alloc_pig(paddr_t *pa, psize_t sz, paddr_t piglet_pa)
  * Piglets are aligned.
  *
  * sz and align in bytes.
- *
- * The call will sleep for the pagedaemon to attempt to free memory.
- * The pagedaemon may decide its not possible to free enough memory, causing
- * the allocation to fail.
  */
 int
 uvm_pmr_alloc_piglet(vaddr_t *va, paddr_t *pa, vsize_t sz, paddr_t align)
