@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.33 2024/04/06 11:18:02 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.34 2024/08/18 08:23:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -99,8 +99,6 @@ struct dt_softc {
 	struct mutex		 ds_mtx;
 
 	struct dt_pcb_list	 ds_pcbs;	/* [K] list of enabled PCBs */
-	struct dt_evt		*ds_bufqueue;	/* [K] copy evts to userland */
-	size_t			 ds_bufqlen;	/* [K] length of the queue */
 	int			 ds_recording;	/* [K] currently recording? */
 	int			 ds_evtcnt;	/* [m] # of readable evts */
 
@@ -140,7 +138,8 @@ int	dt_ioctl_probe_enable(struct dt_softc *, struct dtioc_req *);
 int	dt_ioctl_probe_disable(struct dt_softc *, struct dtioc_req *);
 int	dt_ioctl_get_auxbase(struct dt_softc *, struct dtioc_getaux *);
 
-int	dt_pcb_ring_copy(struct dt_pcb *, struct dt_evt *, size_t, uint64_t *);
+int	dt_pcb_ring_copy(struct dt_pcb *, struct uio *, size_t, size_t *,
+		uint64_t *);
 
 void
 dtattach(struct device *parent, struct device *self, void *aux)
@@ -161,8 +160,6 @@ int
 dtopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct dt_softc *sc;
-	struct dt_evt *queue;
-	size_t qlen;
 	int unit = minor(dev);
 
 	if (!allowdt)
@@ -172,19 +169,8 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc == NULL)
 		return ENOMEM;
 
-	/*
-	 * Enough space to empty 2 full rings of events in a single read.
-	 */
-	qlen = 2 * DT_EVTRING_SIZE;
-	queue = mallocarray(qlen, sizeof(*queue), M_DEVBUF, M_WAITOK|M_CANFAIL);
-	if (queue == NULL) {
-		free(sc, M_DEVBUF, sizeof(*sc));
-		return ENOMEM;
-	}
-
 	/* no sleep after this point */
 	if (dtlookup(unit) != NULL) {
-		free(queue, M_DEVBUF, qlen * sizeof(*queue));
 		free(sc, M_DEVBUF, sizeof(*sc));
 		return EBUSY;
 	}
@@ -193,8 +179,6 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc->ds_pid = p->p_p->ps_pid;
 	TAILQ_INIT(&sc->ds_pcbs);
 	mtx_init(&sc->ds_mtx, IPL_HIGH);
-	sc->ds_bufqlen = qlen;
-	sc->ds_bufqueue = queue;
 	sc->ds_evtcnt = 0;
 	sc->ds_readevt = 0;
 	sc->ds_dropevt = 0;
@@ -221,8 +205,6 @@ dtclose(dev_t dev, int flags, int mode, struct proc *p)
 	dt_ioctl_record_stop(sc);
 	dt_pcb_purge(&sc->ds_pcbs);
 
-	free(sc->ds_bufqueue, M_DEVBUF,
-	    sc->ds_bufqlen * sizeof(*sc->ds_bufqueue));
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return 0;
@@ -232,17 +214,16 @@ int
 dtread(dev_t dev, struct uio *uio, int flags)
 {
 	struct dt_softc *sc;
-	struct dt_evt *estq;
 	struct dt_pcb *dp;
 	int error = 0, unit = minor(dev);
-	size_t qlen, count, read = 0;
+	size_t count, max, read = 0;
 	uint64_t dropped = 0;
 
 	sc = dtlookup(unit);
 	KASSERT(sc != NULL);
 
-	count = howmany(uio->uio_resid, sizeof(struct dt_evt));
-	if (count < 1)
+	max = howmany(uio->uio_resid, sizeof(struct dt_evt));
+	if (max < 1)
 		return (EMSGSIZE);
 
 	while (!sc->ds_evtcnt) {
@@ -254,20 +235,18 @@ dtread(dev_t dev, struct uio *uio, int flags)
 	if (error)
 		return error;
 
-	estq = sc->ds_bufqueue;
-	qlen = MIN(sc->ds_bufqlen, count);
-
 	KERNEL_ASSERT_LOCKED();
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
-		count = dt_pcb_ring_copy(dp, estq, qlen, &dropped);
+		count = 0;
+		error = dt_pcb_ring_copy(dp, uio, max, &count, &dropped);
+		if (error || count == 0)
+			break;
+
 		read += count;
-		estq += count; /* pointer arithmetic */
-		qlen -= count;
-		if (qlen == 0)
+		max -= count;
+		if (max == 0)
 			break;
 	}
-	if (read > 0)
-		uiomove(sc->ds_bufqueue, read * sizeof(struct dt_evt), uio);
 
 	mtx_enter(&sc->ds_mtx);
 	sc->ds_evtcnt -= read;
@@ -275,7 +254,7 @@ dtread(dev_t dev, struct uio *uio, int flags)
 	sc->ds_dropevt += dropped;
 	mtx_leave(&sc->ds_mtx);
 
-	return 0;
+	return error;
 }
 
 int
@@ -743,21 +722,25 @@ dt_pcb_ring_consume(struct dt_pcb *dp, struct dt_evt *dtev)
 }
 
 /*
- * Copy at most `qlen' events from `dp', producing the same amount
+ * Copy at most `max' events from `dp', producing the same amount
  * of free slots.
  */
 int
-dt_pcb_ring_copy(struct dt_pcb *dp, struct dt_evt *estq, size_t qlen,
-    uint64_t *dropped)
+dt_pcb_ring_copy(struct dt_pcb *dp, struct uio *uio, size_t max,
+		size_t *rcvd, uint64_t *dropped)
 {
 	size_t count, copied = 0;
 	unsigned int cons, prod;
+	int error = 0;
 
-	KASSERT(qlen > 0);
+	KASSERT(max > 0);
 
 	mtx_enter(&dp->dp_mtx);
 	cons = dp->dp_cons;
 	prod = dp->dp_prod;
+	*dropped += dp->dp_dropevt;
+	dp->dp_dropevt = 0;
+	mtx_leave(&dp->dp_mtx);
 
 	if (cons < prod)
 		count = DT_EVTRING_SIZE - prod;
@@ -765,30 +748,34 @@ dt_pcb_ring_copy(struct dt_pcb *dp, struct dt_evt *estq, size_t qlen,
 		count = cons - prod;
 
 	if (count == 0)
-		goto out;
+		return 0;
 
-	*dropped += dp->dp_dropevt;
-	dp->dp_dropevt = 0;
-
-	count = MIN(count, qlen);
-
-	memcpy(&estq[0], &dp->dp_ring[prod], count * sizeof(*estq));
+	count = MIN(count, max);
+	error = uiomove(&dp->dp_ring[prod], count * sizeof(struct dt_evt), uio);
+	if (error)
+		return error;
 	copied += count;
 
 	/* Produce */
 	prod = (prod + count) % DT_EVTRING_SIZE;
 
-	/* If the queue is full or the ring didn't wrap, stop here. */
-	if (qlen == copied || prod != 0 || cons == 0)
+	/* If the ring didn't wrap, stop here. */
+	if (max == copied || prod != 0 || cons == 0)
 		goto out;
 
-	count = MIN(cons, (qlen - copied));
-	memcpy(&estq[copied], &dp->dp_ring[0], count * sizeof(*estq));
+	count = MIN(cons, (max - copied));
+	error = uiomove(&dp->dp_ring[0], count * sizeof(struct dt_evt), uio);
+	if (error)
+		goto out;
+
 	copied += count;
 	prod += count;
 
 out:
+	mtx_enter(&dp->dp_mtx);
 	dp->dp_prod = prod;
 	mtx_leave(&dp->dp_mtx);
-	return copied;
+
+	*rcvd = copied;
+	return error;
 }
