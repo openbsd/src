@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.289 2024/08/18 14:35:14 deraadt Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.290 2024/08/18 14:42:56 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -611,14 +611,16 @@ azalia_pci_activate(struct device *self, int act)
 		(void) AZ_READ_4(sc, INTSTS);
 		break;
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		azalia_suspend(sc);
-		break;
-	case DVACT_POWERDOWN:
-		azalia_shutdown(sc);
 		break;
 	case DVACT_RESUME:
 		azalia_resume(sc);
 		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		azalia_shutdown(sc);
 		break;
 	default:
 		rv = config_activate_children(self, act);

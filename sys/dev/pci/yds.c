@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.65 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: yds.c,v 1.66 2024/08/18 14:42:56 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1571,11 +1571,11 @@ yds_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
 		if (sc->sc_play.intr || sc->sc_rec.intr)
 			sc->sc_resume_active = 1;
 		else
 			sc->sc_resume_active = 0;
-		rv = config_activate_children(self, act);
 		if (sc->sc_resume_active)
 			yds_close(sc);
 		break;

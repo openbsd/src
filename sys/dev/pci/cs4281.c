@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.46 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.47 2024/08/18 14:42:56 deraadt Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -960,6 +960,7 @@ cs4281_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		/* should I powerdown here ? */
 		cs4281_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
 		break;

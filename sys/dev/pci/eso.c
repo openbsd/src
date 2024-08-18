@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.55 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: eso.c,v 1.56 2024/08/18 14:42:56 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -1966,6 +1966,7 @@ eso_activate(struct device *self, int act)
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL, tmp);
 		break;
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAM, 0);
 		bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh,
 		    ESO_DMAC_CLEAR, 0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.53 2024/05/24 06:02:53 jsg Exp $ */
+/* $OpenBSD: auixp.c,v 1.54 2024/08/18 14:42:56 deraadt Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -911,6 +911,7 @@ auixp_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		auixp_disable_interrupts(sc);
 		break;
 	case DVACT_RESUME:

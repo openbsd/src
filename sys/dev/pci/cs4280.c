@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.61 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.62 2024/08/18 14:42:56 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1571,6 +1571,7 @@ cs4280_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		/* should I powerdown here ? */
 		cs4280_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
 		break;

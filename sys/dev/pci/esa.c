@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.43 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: esa.c,v 1.44 2024/08/18 14:42:56 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1489,16 +1489,22 @@ int
 esa_activate(struct device *self, int act)
 {
 	struct esa_softc *sc = (struct esa_softc *)self;
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		esa_suspend(sc);
 		break;
 	case DVACT_RESUME:
 		esa_resume(sc);
+		rv = config_activate_children(self, act);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
-	return 0;
+	return rv;
 }
 
 void
