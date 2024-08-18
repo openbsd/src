@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.66 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.67 2024/08/18 08:18:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -2303,7 +2303,18 @@ uvm_pmr_cache_put(struct vm_page *pg)
 {
 	struct uvm_pmr_cache *upc = &curcpu()->ci_uvm;
 	struct uvm_pmr_cache_item *upci;
+	struct uvm_pmemrange *pmr;
 	int s;
+
+	/*
+	 * Always give back low pages to the allocator to not accelerate
+	 * their exhaustion.
+	 */
+	pmr = uvm_pmemrange_find(atop(VM_PAGE_TO_PHYS(pg)));
+	if (pmr->use > 0) {
+		uvm_pmr_freepages(pg, 1);
+		return;
+	}
 
 	s = splvm();
 	upci = &upc->upc_magz[upc->upc_actv];
