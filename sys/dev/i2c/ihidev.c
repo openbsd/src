@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.30 2024/08/18 03:25:04 deraadt Exp $ */
+/* $OpenBSD: ihidev.c,v 1.31 2024/08/18 11:08:47 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -632,9 +632,6 @@ ihidev_intr(void *arg)
 	u_char *p;
 	u_int rep = 0;
 
-	if (sc->sc_dying)
-		return 1;
-
 	if (sc->sc_poll && !sc->sc_frompoll) {
 		DPRINTF(("%s: received interrupt while polling, disabling "
 		    "polling\n", sc->sc_dev.dv_xname));
@@ -711,7 +708,8 @@ ihidev_intr(void *arg)
 		return (1);
 	}
 
-	scd->sc_intr(scd, p, psize);
+	if (!sc->sc_dying)
+		scd->sc_intr(scd, p, psize);
 
 	if (sc->sc_poll && (fast != sc->sc_fastpoll)) {
 		DPRINTF(("%s: %s->%s polling\n", sc->sc_dev.dv_xname,
