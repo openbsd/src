@@ -1,11 +1,11 @@
-/* $OpenBSD: thread_private.h,v 1.36 2021/01/06 19:54:17 otto Exp $ */
+/* $OpenBSD: thread_private.h,v 1.37 2024/08/18 02:25:51 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
 
-#include <stdio.h>		/* for FILE and __isthreaded */
+extern int __isthreaded;
 
 #define _MALLOC_MUTEXES 32
 void _malloc_init(int);
@@ -77,14 +77,15 @@ PROTO_NORMAL(_malloc_init);
  *	Returns the address of the thread's TCB.
  */
 
+struct __sFILE;
 struct pthread;
 struct thread_callbacks {
 	int	*(*tc_errnoptr)(void);		/* MUST BE FIRST */
 	void	*(*tc_tcb)(void);
 	__dead void	(*tc_canceled)(void);
-	void	(*tc_flockfile)(FILE *);
-	int	(*tc_ftrylockfile)(FILE *);
-	void	(*tc_funlockfile)(FILE *);
+	void	(*tc_flockfile)(struct __sFILE *);
+	int	(*tc_ftrylockfile)(struct __sFILE *);
+	void	(*tc_funlockfile)(struct __sFILE *);
 	void	(*tc_malloc_lock)(int);
 	void	(*tc_malloc_unlock)(int);
 	void	(*tc_atexit_lock)(void);

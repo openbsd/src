@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cb.h,v 1.3 2021/01/06 19:54:17 otto Exp $ */
+/*	$OpenBSD: rthread_cb.h,v 1.4 2024/08/18 02:25:51 guenther Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
@@ -16,12 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
+struct __sFILE;
 
 __BEGIN_HIDDEN_DECLS
-void	_thread_flockfile(FILE *);
-int	_thread_ftrylockfile(FILE *);
-void	_thread_funlockfile(FILE *);
+void	_thread_flockfile(struct __sFILE *);
+int	_thread_ftrylockfile(struct __sFILE *);
+void	_thread_funlockfile(struct __sFILE *);
 void	_thread_malloc_lock(int);
 void	_thread_malloc_unlock(int);
 void	_thread_atexit_lock(void);
