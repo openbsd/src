@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.67 2023/11/21 17:56:19 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.68 2024/08/18 20:24:11 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1053,7 +1053,7 @@ load_config(BIO *err, CONF *cnf)
 	if (cnf == NULL)
 		return 1;
 
-	OPENSSL_load_builtin_modules();
+	OPENSSL_config(NULL);
 
 	if (CONF_modules_load(cnf, NULL, 0) <= 0) {
 		BIO_printf(err, "Error configuring OpenSSL\n");
