@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldcp.c,v 1.2 2024/07/12 10:01:28 tobhe Exp $	*/
+/*	$OpenBSD: apldcp.c,v 1.3 2024/08/18 10:50:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -115,14 +115,13 @@ struct apple_rtkit_ep {
 	uint8_t ep;
 };
 
-static struct pool rtktask_pool;
-
 struct apple_rtkit {
 	struct rtkit_state *state;
 	struct apple_rtkit_ep ep[64];
 	void *cookie;
 	struct platform_device *pdev;
 	const struct apple_rtkit_ops *ops;
+	struct pool task_pool;
 	struct taskq *tq;
 };
 
@@ -181,7 +180,7 @@ apple_rtkit_do_recv(void *arg)
 	struct apple_rtkit *rtk = rtkep->rtk;
 
 	rtk->ops->recv_message(rtk->cookie, rtkep->ep, rtktask->msg);
-	pool_put(&rtktask_pool, rtktask);
+	pool_put(&rtk->task_pool, rtktask);
 }
 
 void
@@ -191,7 +190,7 @@ apple_rtkit_recv(void *cookie, uint64_t msg)
 	struct apple_rtkit *rtk = rtkep->rtk;
 	struct apple_rtkit_task *rtktask;
 
-	rtktask = pool_get(&rtktask_pool, PR_NOWAIT | PR_ZERO);
+	rtktask = pool_get(&rtk->task_pool, PR_NOWAIT | PR_ZERO);
 	KASSERT(rtktask != NULL);
 
 	rtktask->rtkep = rtkep;
@@ -251,7 +250,7 @@ devm_apple_rtkit_init(struct device *dev, void *cookie,
 		return ERR_PTR(ENOMEM);
 	}
 
-	pool_init(&rtktask_pool, sizeof(struct apple_rtkit_task), 0, IPL_TTY,
+	pool_init(&rtk->task_pool, sizeof(struct apple_rtkit_task), 0, IPL_TTY,
 	    0, "apldcp_rtkit", NULL);
 
 	rk = malloc(sizeof(*rk), M_DEVBUF, M_WAITOK | M_ZERO);
