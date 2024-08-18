@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REQ_add_extensions.3,v 1.1 2021/10/27 14:54:07 schwarze Exp $
+.\" $OpenBSD: X509_REQ_add_extensions.3,v 1.2 2024/08/18 11:04:55 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,15 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2021 $
+.Dd $Mdocdate: August 18 2024 $
 .Dt X509_REQ_ADD_EXTENSIONS 3
 .Os
 .Sh NAME
 .Nm X509_REQ_add_extensions ,
 .Nm X509_REQ_add_extensions_nid ,
 .Nm X509_REQ_get_extensions ,
-.Nm X509_REQ_set_extension_nids ,
-.Nm X509_REQ_get_extension_nids ,
 .Nm X509_REQ_extension_nid
 .Nd extensions in certification requests
 .Sh SYNOPSIS
@@ -40,10 +38,6 @@
 .Fc
 .Ft STACK_OF(X509_EXTENSION) *
 .Fn X509_REQ_get_extensions "X509_REQ *req"
-.Ft void
-.Fn X509_REQ_set_extension_nids "int *nids"
-.Ft int *
-.Fn X509_REQ_get_extension_nids void
 .Ft int
 .Fn X509_REQ_extension_nid "int nid"
 .Sh DESCRIPTION
@@ -77,21 +71,6 @@ and
 .Dv NID_ms_ext_req
 are considered appropriate.
 .Pp
-.Fn X509_REQ_set_extension_nids
-replaces the list of attribute types that
-.Fn X509_REQ_get_extensions
-considers appropriate for storing extensions.
-The
-.Fa nids
-argument is interpreted as a pointer to the first element
-of a variable-sized array of
-.Vt int .
-The last element of the array has to be
-.Dv NID_undef .
-The array needs to remain valid until
-.Fn X509_REQ_set_extension_nids
-is called again with a different argument.
-.Pp
 .Fn X509_REQ_extension_nid
 checks whether
 .Fn X509_REQ_get_extensions
@@ -117,13 +96,6 @@ does not contain
 .Vt CertificationRequestInfo ,
 contains no attribute of an appropriate type,
 or if decoding or memory allocation fails.
-.Pp
-.Fn X509_REQ_get_extension_nids
-returns the pointer installed with
-.Fn X509_REQ_set_extension_nids
-or a pointer to a static array
-.Brq Dv NID_ext_req , NID_ms_ext_req , NID_undef
-by default.
 .Pp
 .Fn X509_REQ_extension_nid
 returns 1 if
