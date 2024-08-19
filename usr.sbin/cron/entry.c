@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.59 2023/07/19 21:26:02 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.60 2024/08/19 15:08:21 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -625,7 +625,10 @@ get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
 		/* got a number, check for valid terminator */
 		if (!strchr(terms, ch))
 			goto bad;
-		*numptr = atoi(temp);
+		i = atoi(temp);
+		if (i < 0)
+			goto bad;
+		*numptr = i;
 		return (ch);
 	}
 
@@ -675,7 +678,7 @@ set_range(bitstr_t *bits, int low, int high, int start, int stop, int step)
 	start -= low;
 	stop -= low;
 
-	if (step == 1) {
+	if (step <= 1 || step > stop) {
 		bit_nset(bits, start, stop);
 	} else {
 		for (i = start; i <= stop; i += step)
