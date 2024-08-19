@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.23 2015/02/08 23:40:35 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.24 2024/08/19 06:00:18 florian Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 	int notrans = 0, mode = 0, c, r, i;
 	struct ypmaplist *ypml, *y;
 	struct sockaddr_in sin;
-	struct hostent *hent;
+	struct addrinfo hints, *res;
 	CLIENT *client = NULL;
 
 	yp_get_default_domain(&domain);
@@ -181,17 +181,17 @@ main(int argc, char *argv[])
 			break;
 		case 1:
 			bzero(&sin, sizeof sin);
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_INET;
 			sin.sin_family = AF_INET;
-			if (inet_aton(argv[0], &sin.sin_addr) == 0) {
-				hent = gethostbyname(argv[0]);
-				if (!hent) {
-					fprintf(stderr, "ypwhich: host %s unknown\n",
-					    argv[0]);
-					exit(1);
-				}
-				bcopy(hent->h_addr, &sin.sin_addr,
-				    sizeof sin.sin_addr);
+			if (getaddrinfo(argv[0], NULL, &hints, &res) != 0) {
+				fprintf(stderr, "ypwhich: host %s unknown\n",
+				    argv[0]);
+				exit(1);
 			}
+			sin.sin_addr =
+			    ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+			freeaddrinfo(res);
 			if (bind_host(domain, &sin))
 				exit(1);
 			break;
