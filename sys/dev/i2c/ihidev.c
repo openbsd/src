@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.31 2024/08/18 11:08:47 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.32 2024/08/19 09:26:58 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -145,11 +145,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_nrepid++;
 	sc->sc_subdevs = mallocarray(sc->sc_nrepid, sizeof(struct ihidev *),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_subdevs == NULL) {
-		printf("%s: failed allocating memory\n", sc->sc_dev.dv_xname);
-		return;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* find largest report size and allocate memory for input buffer */
 	sc->sc_isize = letoh16(sc->hid_desc.wMaxInputLength);
@@ -163,7 +159,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 			DPRINTF(("%s: repid %d size %d\n", sc->sc_dev.dv_xname,
 			    repid, repsz));
 	}
-	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	iha.iaa = ia;
 	iha.parent = sc;
@@ -374,7 +370,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		 * rreq->data.
 		 */
 		report_len += report_id_len;
-		tmprep = malloc(report_len, M_DEVBUF, M_NOWAIT | M_ZERO);
+		tmprep = malloc(report_len, M_DEVBUF, M_WAITOK | M_ZERO);
 
 		/* type 3 id 8: 22 00 38 02 23 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
@@ -465,7 +461,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		cmd[dataoff] = rreq->id;
 
 		finalcmd = malloc(cmdlen + rreq->len, M_DEVBUF,
-		    M_NOWAIT | M_ZERO);
+		    M_WAITOK | M_ZERO);
 
 		memcpy(finalcmd, cmd, cmdlen);
 		memcpy(finalcmd + cmdlen, rreq->data, rreq->len);
@@ -602,7 +598,7 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 	}
 
 	sc->sc_reportlen = letoh16(sc->hid_desc.wReportDescLength);
-	sc->sc_report = malloc(sc->sc_reportlen, M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_report = malloc(sc->sc_reportlen, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	if (ihidev_hid_command(sc, I2C_HID_REPORT_DESCR, 0)) {
 		printf("%s: failed fetching HID report\n",
