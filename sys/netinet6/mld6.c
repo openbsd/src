@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.63 2024/08/12 11:25:27 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.64 2024/08/19 08:07:16 jsg Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ void
 mld6_fasttimeo(void)
 {
 	struct ifnet *ifp;
-	int running;
+	int running = 0;
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
