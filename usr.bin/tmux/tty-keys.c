@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.175 2024/07/12 11:21:18 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.176 2024/08/19 08:29:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1212,7 +1212,7 @@ tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 	}
 	if (end == len)
 		return (1);
-	*size = end + terminator;
+	*size = end + 1;
 
 	/* Skip the initial part. */
 	buf += 5;
