@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.28 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.29 2024/08/19 00:03:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,6 @@ int has_hv_cpuid = 0;
 
 extern void rdrand(void *);
 
-int	 pvbus_activate(struct device *, int);
 int	 pvbus_match(struct device *, void *, void *);
 void	 pvbus_attach(struct device *, struct device *, void *);
 int	 pvbus_print(void *, const char *);
@@ -64,8 +63,6 @@ const struct cfattach pvbus_ca = {
 	sizeof(struct pvbus_softc),
 	pvbus_match,
 	pvbus_attach,
-	NULL,
-	pvbus_activate
 };
 
 struct cfdriver pvbus_cd = {
@@ -216,29 +213,6 @@ pvbus_init_cpu(void)
 		if (pvbus_hv[i].hv_init_cpu != NULL)
 			(pvbus_hv[i].hv_init_cpu)(&pvbus_hv[i]);
 	}
-}
-
-int
-pvbus_activate(struct device *self, int act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_RESUME:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
-	}
-
-	return (rv);
 }
 
 int
