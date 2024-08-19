@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.89 2024/07/14 19:51:08 sashan Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.90 2024/08/19 13:01:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -529,7 +529,7 @@ pfctl_define_table(char *name, int flags, int addrs, const char *anchor,
 		bzero(&tbl_buf, sizeof(tbl_buf));
 		tbl = &tbl_buf;
 	} else {
-		 if (ab->pfrb_size != 0) {
+		if (ab->pfrb_size != 0) {
 			/*
 			 * copy IP addresses which come with table from
 			 * temporal buffer to buffer attached to table.
