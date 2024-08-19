@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.55 2020/01/22 06:24:08 tedu Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.56 2024/08/19 05:58:41 florian Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -383,7 +383,7 @@ int
 getnfsargs(char *spec, struct nfs_args *nfsargsp)
 {
 	CLIENT *clp;
-	struct hostent *hp;
+	struct addrinfo hints, *res;
 	static struct sockaddr_in saddr;
 	struct timeval pertry, try;
 	enum clnt_stat clnt_stat;
@@ -411,14 +411,15 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	/*
 	 * Handle an internet host address
 	 */
-	if (inet_aton(hostp, &saddr.sin_addr) == 0) {
-		hp = gethostbyname(hostp);
-		if (hp == NULL) {
-			warnx("can't resolve address for host %s", hostp);
-			return (0);
-		}
-		memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+
+	if (getaddrinfo(hostp, NULL, &hints, &res) != 0) {
+		warnx("can't resolve address for host %s", hostp);
+		return (0);
 	}
+	saddr.sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	freeaddrinfo(res);
 
 	if (force2) {
 		nfsvers = NFS_VER2;
