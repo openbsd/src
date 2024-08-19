@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.16 2022/03/11 18:00:45 mpi Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.17 2024/08/19 00:01:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -431,6 +431,7 @@ glxpcib_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 #ifndef SMALL_KERNEL
 		if (sc->sc_wdog) {
 			sc->sc_wdog_period = bus_space_read_2(sc->sc_iot,
@@ -438,7 +439,6 @@ glxpcib_activate(struct device *self, int act)
 			glxpcib_wdogctl_cb(sc, 0);
 		}
 #endif
-		rv = config_activate_children(self, act);
 #ifndef SMALL_KERNEL
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			sc->sc_msrsave[i] = rdmsr(glxpcib_msrlist[i]);
@@ -455,11 +455,11 @@ glxpcib_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
 #ifndef SMALL_KERNEL
 		if (sc->sc_wdog)
 			wdog_shutdown(self);
 #endif
-		rv = config_activate_children(self, act);
 		break;
 	default:
 		rv = config_activate_children(self, act);
