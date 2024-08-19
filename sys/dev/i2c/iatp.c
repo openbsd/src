@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.10 2024/08/18 03:25:04 deraadt Exp $ */
+/* $OpenBSD: iatp.c,v 1.11 2024/08/19 14:24:24 deraadt Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -300,10 +300,7 @@ iatp_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
-#if 0
-		/* XXX: causes dwiic troubles */
 		iatp_t7_set_power_mode(sc, MXT_T7_POWER_MODE_DEEP_SLEEP);
-#endif
 		break;
 	case DVACT_WAKEUP:
 		sc->sc_busy = 1;
