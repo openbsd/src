@@ -753,8 +753,9 @@ vm_fault_gtt(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 	int srcu;
 	int ret;
 
-	obj_offset = entry->offset - drm_vma_node_start(&mmo->vma_node);
+	obj_offset = (entry->offset >> PAGE_SHIFT) - drm_vma_node_start(&mmo->vma_node);
 	page_offset = (vaddr - entry->start) >> PAGE_SHIFT;
+	page_offset += obj_offset;
 
 	trace_i915_gem_object_fault(obj, page_offset, true, write);
 
