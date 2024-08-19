@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.3 2020/12/17 00:51:11 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2024/08/19 01:43:23 deraadt Exp $
 
 ED ?=		/bin/ed
-TESTDIR =	${.CURDIR}/../../../bin/ed/test
+TESTDIR =	${.CURDIR}
 
 TS !=		cd ${TESTDIR} && ls *.t
 ERRS !=		cd ${TESTDIR} && ls *.err
