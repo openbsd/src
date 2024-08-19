@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.68 2022/12/04 23:50:50 cheloha Exp $	*/
+/*	$OpenBSD: w.c,v 1.69 2024/08/19 07:28:22 florian Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -98,13 +98,13 @@ static void	 pr_header(time_t *, int);
 static struct stat
 		*ttystat(char *);
 static void	 usage(int);
+static char	*hostlookup(char *, char *);
 
 int
 main(int argc, char *argv[])
 {
 	extern char *__progname;
 	struct kinfo_proc *kp;
-	struct hostent *hp;
 	struct stat *stp;
 	FILE *ut;
 	struct in_addr addr;
@@ -295,29 +295,27 @@ main(int argc, char *argv[])
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
-		for (x = NULL, i = 0; p[i] != '\0' && i < UT_HOSTSIZE; i++)
+		for (x = NULL, i = 0; p[i] != '\0' && i < UT_HOSTSIZE; i++) {
 			if (p[i] == ':') {
 				x = &p[i];
 				*x++ = '\0';
 				break;
 			}
-		if (!nflag && inet_aton(p, &addr) &&
-		    (hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET))) {
-			if (domain[0] != '\0') {
-				p = hp->h_name;
-				p += strlen(hp->h_name);
-				p -= strlen(domain);
-				if (p > hp->h_name &&
-				    strcasecmp(p, domain) == 0)
-					*p = '\0';
-			}
-			p = hp->h_name;
 		}
+
 		if (x) {
 			(void)snprintf(buf, sizeof(buf), "%s:%.*s", p,
 			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
 		}
+
+		if (!nflag) {
+			char *tmp;
+
+			if ((tmp = hostlookup(p, domain)) != NULL)
+				p = tmp;
+		}
+
 		(void)printf("%-*.*s %-2.2s %-*.*s ",
 		    NAME_WIDTH, UT_NAMESIZE, ep->utmp.ut_name,
 		    strncmp(ep->utmp.ut_line, "tty", 3) ?
@@ -508,4 +506,33 @@ usage(int wcmd)
 		(void)fprintf(stderr,
 		    "usage: uptime\n");
 	exit (1);
+}
+
+static char*
+hostlookup(char *host, char *domain)
+{
+	static char buf[NI_MAXHOST];
+	struct addrinfo hints, *res;
+	int error;
+	char *p;
+
+	memset(&hints, 0, sizeof(hints));
+	if (getaddrinfo(host, NULL, &hints, &res) != 0)
+		return NULL;
+
+	error = getnameinfo(res->ai_addr, res->ai_addr->sa_len, buf,
+	    sizeof(buf), NULL, 0, 0);
+	freeaddrinfo(res);
+
+	if (error)
+		return NULL;
+
+	if (domain[0] != '\0') {
+		p = buf;
+		p += strlen(buf);
+		p -= strlen(domain);
+		if (p > buf && strcasecmp(p, domain) == 0)
+			*p = '\0';
+	}
+	return buf;
 }
