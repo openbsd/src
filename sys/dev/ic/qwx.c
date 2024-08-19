@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.65 2024/08/18 07:34:45 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.66 2024/08/19 08:22:30 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -173,7 +173,8 @@ qwx_node_alloc(struct ieee80211com *ic)
 	struct qwx_node *nq;
 
 	nq = malloc(sizeof(struct qwx_node), M_DEVBUF, M_NOWAIT | M_ZERO);
-	nq->peer.peer_id = HAL_INVALID_PEERID;
+	if (nq != NULL)
+		nq->peer.peer_id = HAL_INVALID_PEERID;
 	return (struct ieee80211_node *)nq;
 }
 
