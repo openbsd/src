@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.52 2023/09/11 08:41:26 mvs Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.53 2024/08/19 03:08:27 jsg Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -442,11 +442,11 @@ eginit(register struct eg_softc *sc)
 		printf("%s: configure card command failed\n",
 		    sc->sc_dev.dv_xname);
 
-	if (sc->eg_inbuf == 0)
+	if (sc->eg_inbuf == NULL)
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 	sc->eg_incount = 0;
 
-	if (sc->eg_outbuf == 0)
+	if (sc->eg_outbuf == NULL)
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 
 	bus_space_write_1(bst, bsh, EG_CONTROL, EG_CTL_CMDE);

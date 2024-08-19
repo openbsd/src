@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.15 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.16 2024/08/19 03:08:27 jsg Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ le_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mem == 0) {
+	if (sc->sc_mem == NULL) {
 		printf(": couldn't allocate memory for card\n");
 		return;
 	}

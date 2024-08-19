@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.133 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.134 2024/08/19 03:08:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -1950,7 +1950,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 
 	if (align_start || align_end) {
 		buf = malloc(len32, M_DEVBUF, M_NOWAIT);
-		if (buf == 0)
+		if (buf == NULL)
 			return (ENOMEM);
 
 		if (align_start)
