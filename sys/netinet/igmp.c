@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.84 2024/08/12 11:25:27 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.85 2024/08/20 07:46:27 mvs Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -687,8 +687,6 @@ igmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch (name[0]) {
 	case IGMPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
 		return (igmp_sysctl_igmpstat(oldp, oldlenp, newp));
 	default:
 		return (EOPNOTSUPP);
