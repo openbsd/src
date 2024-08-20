@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.171 2024/08/12 09:04:23 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.172 2024/08/20 11:59:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -151,6 +151,7 @@ struct peer_stats {
 	time_t			 last_updown;
 	time_t			 last_read;
 	time_t			 last_write;
+	uint32_t		 msg_queue_len;
 	uint32_t		 prefix_cnt;
 	uint32_t		 prefix_out_cnt;
 	uint32_t		 pending_update;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.38 2024/08/12 09:04:23 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.39 2024/08/20 11:59:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1263,7 +1263,7 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 		return;
 	}
-	if (pfd->revents & POLLOUT && rs->w.queued) {
+	if (pfd->revents & POLLOUT && msgbuf_queuelen(&rs->w) > 0) {
 		if ((error = ibuf_write(&rs->w)) == -1) {
 			if (errno != EAGAIN) {
 				log_warn("rtr %s: write error", log_rtr(rs));
@@ -1272,7 +1272,8 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 		}
 		if (error == 0)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
-		if (rs->w.queued == 0 && rs->state == RTR_STATE_ERROR)
+		if (rs->state == RTR_STATE_ERROR &&
+		    msgbuf_queuelen(&rs->w) == 0)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
 	if (pfd->revents & POLLIN) {
@@ -1378,7 +1379,7 @@ rtr_poll_events(struct pollfd *pfds, size_t npfds, time_t *timeout)
 		pfd->fd = rs->fd;
 		pfd->events = 0;
 
-		if (rs->w.queued)
+		if (msgbuf_queuelen(&rs->w) > 0)
 			pfd->events |= POLLOUT;
 		if (rs->state >= RTR_STATE_ESTABLISHED)
 			pfd->events |= POLLIN;

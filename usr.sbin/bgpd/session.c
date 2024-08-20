@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.480 2024/06/10 12:51:25 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.481 2024/08/20 11:59:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -305,7 +305,7 @@ session_main(int debug, int verbose)
 				free(m);
 				continue;
 			}
-			if (m->wbuf.queued)
+			if (msgbuf_queuelen(&m->wbuf) > 0)
 				mrt_cnt++;
 		}
 
@@ -415,7 +415,8 @@ session_main(int debug, int verbose)
 
 			/* are we waiting for a write? */
 			events = POLLIN;
-			if (p->wbuf.queued > 0 || p->state == STATE_CONNECT)
+			if (msgbuf_queuelen(&p->wbuf) > 0 ||
+			    p->state == STATE_CONNECT)
 				events |= POLLOUT;
 			/* is there still work to do? */
 			if (p->rpending && p->rbuf && p->rbuf->wpos)
@@ -433,7 +434,7 @@ session_main(int debug, int verbose)
 		idx_peers = i;
 
 		LIST_FOREACH(m, &mrthead, entry)
-			if (m->wbuf.queued) {
+			if (msgbuf_queuelen(&m->wbuf) > 0) {
 				pfd[i].fd = m->wbuf.fd;
 				pfd[i].events = POLLOUT;
 				mrt_l[i - idx_peers] = m;
@@ -884,7 +885,8 @@ change_state(struct peer *peer, enum session_state state,
 		 * try to write out what's buffered (maybe a notification),
 		 * don't bother if it fails
 		 */
-		if (peer->state >= STATE_OPENSENT && peer->wbuf.queued)
+		if (peer->state >= STATE_OPENSENT &&
+		    msgbuf_queuelen(&peer->wbuf) > 0)
 			msgbuf_write(&peer->wbuf);
 
 		/*
@@ -1429,7 +1431,7 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 	}
 
 	ibuf_close(&p->wbuf, msg->buf);
-	if (!p->throttled && p->wbuf.queued > SESS_MSG_HIGH_MARK) {
+	if (!p->throttled && msgbuf_queuelen(&p->wbuf) > SESS_MSG_HIGH_MARK) {
 		if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) == -1)
 			log_peer_warn(&p->conf, "imsg_compose XOFF");
 		else
@@ -1936,7 +1938,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		return (1);
 	}
 
-	if (pfd->revents & POLLOUT && p->wbuf.queued) {
+	if (pfd->revents & POLLOUT && msgbuf_queuelen(&p->wbuf) > 0) {
 		if ((error = msgbuf_write(&p->wbuf)) <= 0 && errno != EAGAIN) {
 			if (error == 0)
 				log_peer_warnx(&p->conf, "Connection closed");
@@ -1947,7 +1949,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		}
 		p->stats.last_write = getmonotime();
 		start_timer_sendholdtime(p);
-		if (p->throttled && p->wbuf.queued < SESS_MSG_LOW_MARK) {
+		if (p->throttled &&
+		    msgbuf_queuelen(&p->wbuf) < SESS_MSG_LOW_MARK) {
 			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
 				log_peer_warn(&p->conf, "imsg_compose XON");
 			else
