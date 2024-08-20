@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.53 2024/08/18 21:04:29 bluhm Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.54 2024/08/20 11:45:31 bluhm Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@
 #endif
 
 int _bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-    struct proc *, int, paddr_t *, int *, int);
+    struct proc *, int, paddr_t *, int *, int *, int);
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -251,7 +251,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
 	bus_addr_t lastaddr = 0;
-	int seg, error;
+	int seg, used, error;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -263,11 +263,13 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		return (EINVAL);
 
 	seg = 0;
+	used = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	    &lastaddr, &seg, 1);
+	    &lastaddr, &seg, &used, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_nused = used;
 	}
 	return (error);
 }
@@ -280,7 +282,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
 	paddr_t lastaddr = 0;
-	int seg, error, first;
+	int seg, used, error, first;
 	struct mbuf *m;
 
 	/*
@@ -299,17 +301,19 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 	first = 1;
 	seg = 0;
+	used = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		    NULL, flags, &lastaddr, &seg, &used, first);
 		first = 0;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_nused = used;
 	}
 	return (error);
 }
@@ -322,7 +326,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags)
 {
 	paddr_t lastaddr = 0;
-	int seg, i, error, first;
+	int seg, used, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
@@ -347,6 +351,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 	first = 1;
 	seg = 0;
+	used = 0;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
@@ -357,7 +362,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg, first);
+		    p, flags, &lastaddr, &seg, &used, first);
 		first = 0;
 
 		resid -= minlen;
@@ -365,6 +370,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_nused = used;
 	}
 	return (error);
 }
@@ -683,8 +689,8 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
  */
 int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp, int *segp,
-    int first)
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
+    int *segp, int *usedp, int first)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
@@ -699,6 +705,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	else
 		pmap = pmap_kernel();
 
+	page = *usedp;
 	lastaddr = *lastaddrp;
 	bmask  = ~(map->_dm_boundary - 1);
 
@@ -714,14 +721,14 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			    curaddr);
 
 		if (use_bounce_buffer) {
-			if (map->_dm_nused + 1 >= map->_dm_npages)
+			if (page >= map->_dm_npages)
 				return (ENOMEM);
 
 			off = vaddr & PAGE_MASK;
-			pg = map->_dm_pages[page = map->_dm_nused++];
+			pg = map->_dm_pages[page];
 			curaddr = VM_PAGE_TO_PHYS(pg) + off;
-
 			pgva = map->_dm_pgva + (page << PGSHIFT) + off;
+			page++;
 		}
 
 		/*
@@ -774,6 +781,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 
 	*segp = seg;
+	*usedp = page;
 	*lastaddrp = lastaddr;
 
 	/*
