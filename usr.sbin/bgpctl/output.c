@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.53 2024/08/14 19:10:51 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.54 2024/08/20 12:00:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,7 @@ show_summary(struct peer *p)
 	    p->stats.msg_sent_open + p->stats.msg_sent_notification +
 	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
 	    p->stats.msg_sent_rrefresh,
-	    p->wbuf.queued,
+	    p->stats.msg_queue_len,
 	    fmt_monotime(p->stats.last_updown));
 	if (p->state == STATE_ESTABLISHED) {
 		printf("%6u", p->stats.prefix_cnt);
