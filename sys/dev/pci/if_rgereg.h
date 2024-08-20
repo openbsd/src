@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.11 2024/06/30 08:13:02 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.12 2024/08/20 00:09:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -206,10 +206,9 @@
 struct rge_tx_desc {
 	uint32_t		rge_cmdsts;
 	uint32_t		rge_extsts;
-	uint32_t		rge_addrlo;
-	uint32_t		rge_addrhi;
+	uint64_t		rge_addr;
 	uint32_t		reserved[4];
-};
+} __packed __aligned(16);
 
 #define RGE_TDCMDSTS_COLL	0x000f0000
 #define RGE_TDCMDSTS_EXCESSCOLL	0x00100000
