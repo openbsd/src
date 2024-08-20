@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.6 2024/08/20 21:23:18 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.7 2024/08/20 21:24:15 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1729,186 +1729,22 @@ const struct ath12k_hw_ops wcn7850_ops = {
 
 #define ATH12K_REO_STATUS_RING_MASK_0 0x1
 
-#define ATH12K_RXDMA2HOST_RING_MASK_0 0x1
-#define ATH12K_RXDMA2HOST_RING_MASK_1 0x2
-#define ATH12K_RXDMA2HOST_RING_MASK_2 0x4
-
 #define ATH12K_HOST2RXDMA_RING_MASK_0 0x1
-#define ATH12K_HOST2RXDMA_RING_MASK_1 0x2
-#define ATH12K_HOST2RXDMA_RING_MASK_2 0x4
 
 #define ATH12K_RX_MON_STATUS_RING_MASK_0 0x1
 #define ATH12K_RX_MON_STATUS_RING_MASK_1 0x2
 #define ATH12K_RX_MON_STATUS_RING_MASK_2 0x4
 
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_ipq8074 = {
-	.tx  = {
-		ATH12K_TX_RING_MASK_0,
-		ATH12K_TX_RING_MASK_1,
-		ATH12K_TX_RING_MASK_2,
-	},
-	.rx_mon_status = {
-		0, 0, 0, 0,
-		ATH12K_RX_MON_STATUS_RING_MASK_0,
-		ATH12K_RX_MON_STATUS_RING_MASK_1,
-		ATH12K_RX_MON_STATUS_RING_MASK_2,
-	},
-	.rx = {
-		0, 0, 0, 0, 0, 0, 0,
-		ATH12K_RX_RING_MASK_0,
-		ATH12K_RX_RING_MASK_1,
-		ATH12K_RX_RING_MASK_2,
-		ATH12K_RX_RING_MASK_3,
-	},
-	.rx_err = {
-		ATH12K_RX_ERR_RING_MASK_0,
-	},
-	.rx_wbm_rel = {
-		ATH12K_RX_WBM_REL_RING_MASK_0,
-	},
-	.reo_status = {
-		ATH12K_REO_STATUS_RING_MASK_0,
-	},
-	.rxdma2host = {
-		ATH12K_RXDMA2HOST_RING_MASK_0,
-		ATH12K_RXDMA2HOST_RING_MASK_1,
-		ATH12K_RXDMA2HOST_RING_MASK_2,
-	},
-	.host2rxdma = {
-		ATH12K_HOST2RXDMA_RING_MASK_0,
-		ATH12K_HOST2RXDMA_RING_MASK_1,
-		ATH12K_HOST2RXDMA_RING_MASK_2,
-	},
-	.tx_mon_dest = {
-	},
-};
-
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qca6390 = {
-	.tx  = {
-		ATH12K_TX_RING_MASK_0,
-	},
-	.rx_mon_status = {
-		0, 0, 0, 0,
-		ATH12K_RX_MON_STATUS_RING_MASK_0,
-		ATH12K_RX_MON_STATUS_RING_MASK_1,
-		ATH12K_RX_MON_STATUS_RING_MASK_2,
-	},
-	.rx = {
-		0, 0, 0, 0, 0, 0, 0,
-		ATH12K_RX_RING_MASK_0,
-		ATH12K_RX_RING_MASK_1,
-		ATH12K_RX_RING_MASK_2,
-		ATH12K_RX_RING_MASK_3,
-	},
-	.rx_err = {
-		ATH12K_RX_ERR_RING_MASK_0,
-	},
-	.rx_wbm_rel = {
-		ATH12K_RX_WBM_REL_RING_MASK_0,
-	},
-	.reo_status = {
-		ATH12K_REO_STATUS_RING_MASK_0,
-	},
-	.rxdma2host = {
-		ATH12K_RXDMA2HOST_RING_MASK_0,
-		ATH12K_RXDMA2HOST_RING_MASK_1,
-		ATH12K_RXDMA2HOST_RING_MASK_2,
-	},
-	.host2rxdma = {
-	},
-	.tx_mon_dest = {
-	},
-};
-
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9074 = {
-	.tx  = {
-		ATH12K_TX_RING_MASK_0,
-		ATH12K_TX_RING_MASK_1,
-		ATH12K_TX_RING_MASK_2,
-	},
-	.rx_mon_status = {
-		0, 0, 0,
-		ATH12K_RX_MON_STATUS_RING_MASK_0,
-		ATH12K_RX_MON_STATUS_RING_MASK_1,
-		ATH12K_RX_MON_STATUS_RING_MASK_2,
-	},
-	.rx = {
-		0, 0, 0, 0,
-		ATH12K_RX_RING_MASK_0,
-		ATH12K_RX_RING_MASK_1,
-		ATH12K_RX_RING_MASK_2,
-		ATH12K_RX_RING_MASK_3,
-	},
-	.rx_err = {
-		0, 0, 0,
-		ATH12K_RX_ERR_RING_MASK_0,
-	},
-	.rx_wbm_rel = {
-		0, 0, 0,
-		ATH12K_RX_WBM_REL_RING_MASK_0,
-	},
-	.reo_status = {
-		0, 0, 0,
-		ATH12K_REO_STATUS_RING_MASK_0,
-	},
-	.rxdma2host = {
-		0, 0, 0,
-		ATH12K_RXDMA2HOST_RING_MASK_0,
-	},
-	.host2rxdma = {
-		0, 0, 0,
-		ATH12K_HOST2RXDMA_RING_MASK_0,
-	},
-	.tx_mon_dest = {
-	},
-};
-
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn6750 = {
-	.tx  = {
-		ATH12K_TX_RING_MASK_0,
-		0,
-		ATH12K_TX_RING_MASK_2,
-		0,
-		ATH12K_TX_RING_MASK_4,
-	},
-	.rx_mon_status = {
-		0, 0, 0, 0, 0, 0,
-		ATH12K_RX_MON_STATUS_RING_MASK_0,
-	},
-	.rx = {
-		0, 0, 0, 0, 0, 0, 0,
-		ATH12K_RX_RING_MASK_0,
-		ATH12K_RX_RING_MASK_1,
-		ATH12K_RX_RING_MASK_2,
-		ATH12K_RX_RING_MASK_3,
-	},
-	.rx_err = {
-		0, ATH12K_RX_ERR_RING_MASK_0,
-	},
-	.rx_wbm_rel = {
-		0, ATH12K_RX_WBM_REL_RING_MASK_0,
-	},
-	.reo_status = {
-		0, ATH12K_REO_STATUS_RING_MASK_0,
-	},
-	.rxdma2host = {
-		ATH12K_RXDMA2HOST_RING_MASK_0,
-		ATH12K_RXDMA2HOST_RING_MASK_1,
-		ATH12K_RXDMA2HOST_RING_MASK_2,
-	},
-	.host2rxdma = {
-	},
-	.tx_mon_dest = {
-	},
-};
+#define ATH12K_TX_MON_RING_MASK_0 0x1
+#define ATH12K_TX_MON_RING_MASK_1 0x2
 
 const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	.tx  = {
 		ATH12K_TX_RING_MASK_0,
+		ATH12K_TX_RING_MASK_1,
 		ATH12K_TX_RING_MASK_2,
-		ATH12K_TX_RING_MASK_4,
 	},
-	.rx_mon_status = {
+	.rx_mon_dest = {
 	},
 	.rx = {
 		0, 0, 0,
@@ -1925,8 +1761,6 @@ const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	},
 	.reo_status = {
 		ATH12K_REO_STATUS_RING_MASK_0,
-	},
-	.rxdma2host = {
 	},
 	.host2rxdma = {
 	},
@@ -8197,14 +8031,24 @@ int
 qwz_dp_srng_calculate_msi_group(struct qwz_softc *sc, enum hal_ring_type type,
     int ring_num)
 {
+	const struct ath12k_hal_tcl_to_wbm_rbm_map *map;
 	const uint8_t *grp_mask;
+	int i;
 
 	switch (type) {
 	case HAL_WBM2SW_RELEASE:
-		if (ring_num == DP_RX_RELEASE_RING_NUM) {
+		if (ring_num == HAL_WBM2SW_REL_ERR_RING_NUM) {
 			grp_mask = &sc->hw_params.ring_mask->rx_wbm_rel[0];
 			ring_num = 0;
 		} else {
+			map = sc->hw_params.hal_ops->tcl_to_wbm_rbm_map;
+			for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
+				if (ring_num == map[i].wbm_ring_num) {
+					ring_num = i;
+					break;
+				}
+			}
+
 			grp_mask = &sc->hw_params.ring_mask->tx[0];
 		}
 		break;
@@ -8219,13 +8063,10 @@ qwz_dp_srng_calculate_msi_group(struct qwz_softc *sc, enum hal_ring_type type,
 		break;
 	case HAL_RXDMA_MONITOR_STATUS:
 	case HAL_RXDMA_MONITOR_DST:
-		grp_mask = &sc->hw_params.ring_mask->rx_mon_status[0];
+		grp_mask = &sc->hw_params.ring_mask->rx_mon_dest[0];
 		break;
 	case HAL_TX_MONITOR_DST:
 		grp_mask = &sc->hw_params.ring_mask->tx_mon_dest[0];
-		break;
-	case HAL_RXDMA_DST:
-		grp_mask = &sc->hw_params.ring_mask->rxdma2host[0];
 		break;
 	case HAL_RXDMA_BUF:
 		grp_mask = &sc->hw_params.ring_mask->host2rxdma[0];
@@ -16900,7 +16741,7 @@ qwz_dp_service_srng(struct qwz_softc *sc, int grp_id)
 		for (j = 0; j < sc->hw_params.num_rxmda_per_pdev; j++) {
 			int id = i * sc->hw_params.num_rxmda_per_pdev + j;
 
-			if ((sc->hw_params.ring_mask->rx_mon_status[grp_id] &
+			if ((sc->hw_params.ring_mask->rx_mon_dest[grp_id] &
 			   (1 << id)) == 0)
 				continue;
 
@@ -16913,23 +16754,10 @@ qwz_dp_service_srng(struct qwz_softc *sc, int grp_id)
 	    qwz_dp_process_reo_status(sc))
 		ret = 1;
 
-	for (i = 0; i < sc->num_radios; i++) {
-		for (j = 0; j < sc->hw_params.num_rxmda_per_pdev; j++) {
-			int id = i * sc->hw_params.num_rxmda_per_pdev + j;
-
-			if (sc->hw_params.ring_mask->rxdma2host[grp_id] &
-			   (1 << (id))) {
-				if (qwz_dp_process_rxdma_err(sc, id))
-					ret = 1;
-			}
-
-			if (sc->hw_params.ring_mask->host2rxdma[grp_id] &
-			    (1 << id)) {
-				qwz_dp_rxbufs_replenish(sc, id,
-				    &dp->rx_refill_buf_ring, 0,
-				    sc->hw_params.hal_params->rx_buf_rbm);
-			}
-		}
+	if (sc->hw_params.ring_mask->host2rxdma[grp_id]) {
+		qwz_dp_rxbufs_replenish(sc, 0 /* FIXME */,
+		    &dp->rx_refill_buf_ring, 0,
+		    sc->hw_params.hal_params->rx_buf_rbm);
 	}
 
 	return ret;

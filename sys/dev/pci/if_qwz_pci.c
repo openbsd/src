@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.3 2024/08/16 00:26:54 patrick Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.4 2024/08/20 21:24:15 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1506,9 +1506,8 @@ qwz_pcic_ext_irq_config(struct qwz_softc *sc, struct pci_attach_args *pa)
 		    sc->hw_params.ring_mask->rx_err[i] ||
 		    sc->hw_params.ring_mask->rx_wbm_rel[i] ||
 		    sc->hw_params.ring_mask->reo_status[i] ||
-		    sc->hw_params.ring_mask->rxdma2host[i] ||
 		    sc->hw_params.ring_mask->host2rxdma[i] ||
-		    sc->hw_params.ring_mask->rx_mon_status[i]) {
+		    sc->hw_params.ring_mask->rx_mon_dest[i]) {
 			num_irq = 1;
 		}
 

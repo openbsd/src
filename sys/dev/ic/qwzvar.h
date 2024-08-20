@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.5 2024/08/20 21:23:18 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.6 2024/08/20 21:24:15 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -57,14 +57,13 @@ struct qwz_softc;
 
 struct ath12k_hw_ring_mask {
 	uint8_t tx[ATH12K_EXT_IRQ_GRP_NUM_MAX];
-	uint8_t rx_mon_status[ATH12K_EXT_IRQ_GRP_NUM_MAX];
+	uint8_t rx_mon_dest[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t rx[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t rx_err[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t rx_wbm_rel[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t reo_status[ATH12K_EXT_IRQ_GRP_NUM_MAX];
-	uint8_t rxdma2host[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	uint8_t host2rxdma[ATH12K_EXT_IRQ_GRP_NUM_MAX];
-	uint8_t	tx_mon_dest[ATH12K_EXT_IRQ_GRP_NUM_MAX];
+	uint8_t tx_mon_dest[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 };
 
 #define ATH12K_FW_DIR			"qwz"
