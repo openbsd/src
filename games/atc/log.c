@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.25 2019/06/28 13:32:52 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.26 2024/08/20 15:48:32 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -260,6 +260,6 @@ log_score(int list_em)
 void
 log_score_quit(int dummy)
 {
-	(void)log_score(0);
-	exit(0);
+	(void)log_score(0);	/* XXX signal race */
+	exit(0);		/* XXX signal race */
 }
