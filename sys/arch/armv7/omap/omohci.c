@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.4 2021/10/24 17:52:28 mpi Exp $ */
+/*	$OpenBSD: omohci.c,v 1.5 2024/08/20 16:24:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -271,6 +271,7 @@ int
 omohci_activate(struct device *self, int act)
 {
 	struct omohci_softc *sc = (struct omohci_softc *)self;
+	int rv;
 
 	switch (act) {
 	case DVACT_SUSPEND:
@@ -280,9 +281,11 @@ omohci_activate(struct device *self, int act)
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 #endif
 		sc->sc.sc_bus.use_polling--;
+		rv = config_activate_children(self, act);
 		break;
 
 	case DVACT_RESUME:
+		rv = config_activate_children(self, act);
 		sc->sc.sc_bus.use_polling++;
 #if 0
 		pxa2x0_clkman_config(CKEN_USBHC, 1);
@@ -291,8 +294,11 @@ omohci_activate(struct device *self, int act)
 		ohci_power(why, &sc->sc);
 		sc->sc.sc_bus.use_polling--;
 		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
 	}
-	return 0;
+	return rv;
 }
 
 void
