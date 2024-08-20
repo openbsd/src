@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.24 2024/07/28 15:31:22 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.25 2024/08/20 23:40:39 guenther Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -537,8 +537,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	    (void) dmove(fd, 0);
 	}
 	else if (flags & F_PIPEIN) {
-	    (void) close(0);
-	    (void) dup(pipein[0]);
+	    (void) dup2(pipein[0], 0);
 	    (void) close(pipein[0]);
 	    (void) close(pipein[1]);
 	}
@@ -547,9 +546,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	    (void) open(_PATH_DEVNULL, O_RDONLY);
 	}
 	else {
-	    (void) close(0);
-	    (void) dup(OLDSTD);
-	    (void) fcntl(STDIN_FILENO, F_SETFD, 0);
+	    (void) dup2(OLDSTD, 0);
 	}
     }
     if (t->t_drit) {
@@ -577,22 +574,17 @@ doio(struct command *t, int *pipein, int *pipeout)
 	(void) dmove(fd, 1);
     }
     else if (flags & F_PIPEOUT) {
-	(void) close(1);
-	(void) dup(pipeout[1]);
+	(void) dup2(pipeout[1], 1);
     }
     else {
-	(void) close(1);
-	(void) dup(SHOUT);
-	(void) fcntl(STDOUT_FILENO, F_SETFD, 0);
+	(void) dup2(SHOUT, 1);
     }
 
-    (void) close(2);
     if (flags & F_STDERR) {
-	(void) dup(1);
+	(void) dup2(1, 2);
     }
     else {
-	(void) dup(SHERR);
-	(void) fcntl(STDERR_FILENO, F_SETFD, 0);
+	(void) dup2(SHERR, 2);
     }
     didfds = 1;
 }
