@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.55 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.56 2024/08/20 07:47:25 mvs Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -55,6 +55,11 @@
 
 #include <net/if_etherip.h>
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+ 
 union etherip_addr {
 	struct in_addr	in4;
 	struct in6_addr	in6;
@@ -97,7 +102,7 @@ struct etherip_softc {
  * We can control the acceptance of EtherIP packets by altering the sysctl
  * net.inet.etherip.allow value. Zero means drop them, all else is acceptance.
  */
-int etherip_allow = 0;
+int etherip_allow = 0;	/* [a] */
 
 struct cpumem *etheripcounters;
 
@@ -628,7 +633,8 @@ etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
 	struct etherip_header *eip;
 	int rxprio;
 
-	if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
+	if (atomic_load_int(&etherip_allow) == 0 &&
+	    (m->m_flags & (M_AUTH|M_CONF)) == 0) {
 		etheripstat_inc(etherips_pdrops);
 		goto drop;
 	}
@@ -799,19 +805,14 @@ int
 etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;
 
 	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
-		NET_LOCK();
-		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &etherip_allow, 0, 1);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &etherip_allow, 0, 1));
 	case ETHERIPCTL_STATS:
 		return (etherip_sysctl_etheripstat(oldp, oldlenp, newp));
 	default:
