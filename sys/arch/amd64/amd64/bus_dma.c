@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.55 2024/08/20 12:36:09 sf Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.56 2024/08/20 15:30:29 bluhm Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -146,9 +146,9 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		mapsize += sizeof(struct vm_page *) * npages;
 	}
 
-	if ((mapstore = malloc(mapsize, M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ?
-	        (M_NOWAIT|M_ZERO) : (M_WAITOK|M_ZERO))) == NULL)
+	mapstore = malloc(mapsize, M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? (M_NOWAIT|M_ZERO) : (M_WAITOK|M_ZERO));
+	if (mapstore == NULL)
 		return (ENOMEM);
 
 	map = (struct bus_dmamap *)mapstore;
@@ -418,8 +418,8 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 
 			if (paddr > dma_constraint.ucr_high &&
 			    (map->_dm_flags & BUS_DMA_64BIT) == 0)
-				panic("Non dma-reachable buffer at paddr %#lx(raw)",
-				    paddr);
+				panic("Non dma-reachable buffer at "
+				    "paddr %#lx(raw)", paddr);
 
 			/*
 			 * Make sure we don't cross any boundaries.
@@ -865,4 +865,3 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	return (0);
 }
-
