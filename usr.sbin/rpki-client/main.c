@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.263 2024/08/15 09:22:12 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.264 2024/08/20 13:31:49 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1289,7 +1289,7 @@ main(int argc, char *argv[])
 
 		for (i = 0; i < NPFD; i++) {
 			pfd[i].events = POLLIN;
-			if (queues[i]->queued)
+			if (msgbuf_queuelen(queues[i]) > 0)
 				pfd[i].events |= POLLOUT;
 		}
 

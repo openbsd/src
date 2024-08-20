@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.48 2024/07/25 08:44:39 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.49 2024/08/20 13:31:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -731,7 +731,7 @@ proc_filemode(int fd)
 
 	for (;;) {
 		pfd.events = POLLIN;
-		if (msgq.queued)
+		if (msgbuf_queuelen(&msgq) > 0)
 			pfd.events |= POLLOUT;
 
 		if (poll(&pfd, 1, INFTIM) == -1) {

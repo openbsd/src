@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.141 2024/06/12 10:03:09 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.142 2024/08/20 13:31:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1056,7 +1056,7 @@ proc_parser(int fd)
 
 	for (;;) {
 		pfd.events = POLLIN;
-		if (msgq.queued)
+		if (msgbuf_queuelen(&msgq) > 0)
 			pfd.events |= POLLOUT;
 
 		if (poll(&pfd, 1, INFTIM) == -1) {

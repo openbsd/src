@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.33 2024/02/16 11:46:57 tb Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.34 2024/08/20 13:31:49 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -585,7 +585,7 @@ proc_rrdp(int fd)
 		 */
 		pfds[0].fd = fd;
 		pfds[0].events = POLLIN;
-		if (msgq.queued)
+		if (msgbuf_queuelen(&msgq) > 0)
 			pfds[0].events |= POLLOUT;
 
 		if (poll(pfds, i, INFTIM) == -1) {

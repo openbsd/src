@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.85 2024/04/23 10:27:46 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.86 2024/08/20 13:31:49 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -2077,7 +2077,7 @@ proc_http(char *bind_addr, int fd)
 		memset(&pfds, 0, sizeof(pfds));
 		pfds[0].fd = fd;
 		pfds[0].events = POLLIN;
-		if (msgq.queued)
+		if (msgbuf_queuelen(&msgq) > 0)
 			pfds[0].events |= POLLOUT;
 
 		i = 1;

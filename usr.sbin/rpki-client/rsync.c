@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.50 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.51 2024/08/20 13:31:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -294,7 +294,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		pfd.events = 0;
 		pfd.events |= POLLIN;
-		if (msgq.queued)
+		if (msgbuf_queuelen(&msgq) > 0)
 			pfd.events |= POLLOUT;
 
 		if (npending > 0 && nprocs < MAX_RSYNC_REQUESTS) {
