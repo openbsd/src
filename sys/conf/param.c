@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.51 2024/08/20 07:48:23 mvs Exp $	*/
+/*	$OpenBSD: param.c,v 1.52 2024/08/20 13:29:25 mvs Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ int	utc_offset = 0;
 int	initialvnodes = NVNODE;
 int	maxprocess = NPROCESS;				/* [a] */
 int	maxthread = 2 * NPROCESS;			/* [a] */
-int	maxfiles = 5 * (NPROCESS + MAXUSERS) + 80;
+int	maxfiles = 5 * (NPROCESS + MAXUSERS) + 80;	/* [a] */
 long	nmbclust = NMBCLUSTERS;
 
 #ifndef BUFCACHEPERCENT

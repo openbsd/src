@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.87 2024/08/20 07:48:23 mvs Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.88 2024/08/20 13:29:25 mvs Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 		maxlim = maxsmap;
 		break;
 	case RLIMIT_NOFILE:
-		maxlim = maxfiles;
+		maxlim = atomic_load_int(&maxfiles);
 		break;
 	case RLIMIT_NPROC:
 		maxlim = atomic_load_int(&maxprocess);

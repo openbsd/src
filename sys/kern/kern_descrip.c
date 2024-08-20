@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.208 2024/06/22 10:22:29 jsg Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.209 2024/08/20 13:29:25 mvs Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -362,7 +362,7 @@ restart:
 		return (0);
 	}
 	if ((u_int)new >= lim_cur(RLIMIT_NOFILE) ||
-	    (u_int)new >= maxfiles) {
+	    (u_int)new >= atomic_load_int(&maxfiles)) {
 		FRELE(fp, p);
 		return (EBADF);
 	}
@@ -424,7 +424,7 @@ restart:
 	case F_DUPFD_CLOEXEC:
 		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >= lim_cur(RLIMIT_NOFILE) ||
-		    (u_int)newmin >= maxfiles) {
+		    (u_int)newmin >= atomic_load_int(&maxfiles)) {
 			error = EINVAL;
 			break;
 		}
@@ -877,7 +877,7 @@ fdalloc(struct proc *p, int want, int *result)
 	 * expanding the ofile array.
 	 */
 restart:
-	lim = min((int)lim_cur(RLIMIT_NOFILE), maxfiles);
+	lim = min((int)lim_cur(RLIMIT_NOFILE), atomic_load_int(&maxfiles));
 	last = min(fdp->fd_nfiles, lim);
 	if ((i = want) < fdp->fd_freefile)
 		i = fdp->fd_freefile;
@@ -1037,7 +1037,7 @@ fnew(struct proc *p)
 	int nfiles;
 
 	nfiles = atomic_inc_int_nv(&numfiles);
-	if (nfiles > maxfiles) {
+	if (nfiles > atomic_load_int(&maxfiles)) {
 		atomic_dec_int(&numfiles);
 		tablefull("file");
 		return (NULL);

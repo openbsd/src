@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.441 2024/08/20 07:48:23 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.442 2024/08/20 13:29:25 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -555,6 +555,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	case KERN_OSREV:
 	case KERN_MAXPROC:
+	case KERN_MAXFILES:
 	case KERN_NFILES:
 	case KERN_TTYCOUNT:
 	case KERN_ARGMAX:
