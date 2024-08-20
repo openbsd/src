@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.54 2024/08/20 11:45:31 bluhm Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.55 2024/08/20 12:36:09 sf Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -223,11 +223,17 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	size_t mapsize;
 	struct vm_page **pg;
 	struct pglist mlist;
+	int use_bounce_buffer = cpu_sev_guestmode || FORCE_BOUNCE_BUFFER;
 
 	if (map->_dm_pgva) {
 		km_free((void *)map->_dm_pgva, map->_dm_npages << PGSHIFT,
 		    &kv_any, &kp_none);
 	}
+
+	mapsize = sizeof(struct bus_dmamap) +
+		(sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
+	if (use_bounce_buffer)
+		mapsize += sizeof(struct vm_page *) * map->_dm_npages;
 
 	if (map->_dm_pages) {
 		TAILQ_INIT(&mlist);
@@ -237,8 +243,6 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 		uvm_pglistfree(&mlist);
 	}
 
-	mapsize = sizeof(struct bus_dmamap) +
-		(sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
 	free(map, M_DEVBUF, mapsize);
 }
 
