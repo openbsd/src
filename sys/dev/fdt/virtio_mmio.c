@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.13 2024/05/17 16:37:10 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.14 2024/08/20 07:04:29 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -271,15 +271,15 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_DEVICE_ID);
 	printf(": Virtio %s Device", virtio_device_string(id));
 
-	if (sc->sc_version == 1)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    VIRTIO_MMIO_GUEST_PAGE_SIZE, PAGE_SIZE);
-
 	printf("\n");
 
 	/* No device connected. */
 	if (id == 0)
 		return;
+
+	if (sc->sc_version == 1)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_GUEST_PAGE_SIZE, PAGE_SIZE);
 
 	vsc->sc_ops = &virtio_mmio_ops;
 	vsc->sc_dmat = sc->sc_dmat;
