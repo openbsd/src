@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.4 2024/08/16 00:26:54 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.5 2024/08/20 21:23:18 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -78,8 +78,7 @@ struct ath12k_hw_ring_mask {
 
 #define QWZ_FW_BUILD_ID_MASK "QC_IMAGE_VERSION_STRING="
 
-struct ath12k_hw_tcl2wbm_rbm_map {
-	uint8_t tcl_ring_num;
+struct ath12k_hal_tcl_to_wbm_rbm_map {
 	uint8_t wbm_ring_num;
 	uint8_t rbm_id;
 };
@@ -167,6 +166,11 @@ struct hal_tx_status {
 	uint32_t rate_stats;
 };
 
+struct hal_ops {
+	int (*create_srng_config)(struct qwz_softc *);
+	const struct ath12k_hal_tcl_to_wbm_rbm_map *tcl_to_wbm_rbm_map;
+};
+
 struct ath12k_hw_params {
 	const char *name;
 	uint16_t hw_rev;
@@ -226,6 +230,7 @@ struct ath12k_hw_params {
 	bool credit_flow;
 	uint8_t max_tx_ring;
 	const struct ath12k_hw_hal_params *hal_params;
+	const struct hal_ops *hal_ops;
 	uint64_t qmi_cnss_feature_bitmap;
 #if notyet
 	bool supports_dynamic_smps_6ghz;
@@ -297,9 +302,6 @@ struct ath12k_hw_ops {
 	struct rx_attention *(*rx_desc_get_attention)(struct hal_rx_desc *desc);
 #ifdef notyet
 	uint8_t *(*rx_desc_get_msdu_payload)(struct hal_rx_desc *desc);
-#endif
-	void (*reo_setup)(struct qwz_softc *);
-#ifdef notyet
 	uint16_t (*mpdu_info_get_peerid)(uint8_t *tlv_data);
 	bool (*rx_desc_mac_addr2_valid)(struct hal_rx_desc *desc);
 	uint8_t* (*rx_desc_mpdu_start_addr2)(struct hal_rx_desc *desc);
@@ -1197,8 +1199,6 @@ struct qwz_dp {
 	struct dp_link_desc_bank link_desc_banks[DP_LINK_DESC_BANKS_MAX];
 	struct dp_srng wbm_idle_ring;
 	struct dp_srng wbm_desc_rel_ring;
-	struct dp_srng tcl_cmd_ring;
-	struct dp_srng tcl_status_ring;
 	struct dp_srng reo_reinject_ring;
 	struct dp_srng rx_rel_ring;
 	struct dp_srng reo_except_ring;

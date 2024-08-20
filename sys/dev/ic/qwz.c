@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.5 2024/08/19 08:22:30 jsg Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.6 2024/08/20 21:23:18 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -124,6 +124,7 @@ uint32_t	qwz_debug = 0
 #endif
 
 int qwz_ce_init_pipes(struct qwz_softc *);
+int qwz_hal_srng_create_config_wcn7850(struct qwz_softc *);
 int qwz_hal_srng_src_num_free(struct qwz_softc *, struct hal_srng *, int);
 int qwz_ce_per_engine_service(struct qwz_softc *, uint16_t);
 int qwz_hal_srng_setup(struct qwz_softc *, enum hal_ring_type, int, int,
@@ -1009,19 +1010,10 @@ qwz_init_wmi_config_qca6390(struct qwz_softc *sc,
 }
 
 void
-qwz_hw_wcn7850_reo_setup(struct qwz_softc *sc)
+qwz_hal_reo_hw_setup(struct qwz_softc *sc, uint32_t ring_hash_map)
 {
 	uint32_t reo_base = HAL_SEQ_WCSS_UMAC_REO_REG;
 	uint32_t val;
-	/* Each hash entry uses four bits to map to a particular ring. */
-	uint32_t ring_hash_map = HAL_HASH_ROUTING_RING_SW1 << 0 |
-	    HAL_HASH_ROUTING_RING_SW2 << 4 |
-	    HAL_HASH_ROUTING_RING_SW3 << 8 |
-	    HAL_HASH_ROUTING_RING_SW4 << 12 |
-	    HAL_HASH_ROUTING_RING_SW1 << 16 |
-	    HAL_HASH_ROUTING_RING_SW2 << 20 |
-	    HAL_HASH_ROUTING_RING_SW3 << 24 |
-	    HAL_HASH_ROUTING_RING_SW4 << 28;
 
 	val = sc->ops.read32(sc, reo_base + HAL_REO1_GEN_ENABLE);
 	val |= FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_LIST_ENABLE, 1) |
@@ -1718,7 +1710,6 @@ const struct ath12k_hw_ops wcn7850_ops = {
 	.get_hw_mac_from_pdev_id = qwz_hw_ipq6018_mac_from_pdev_id,
 	.mac_id_to_pdev_id = qwz_hw_mac_id_to_pdev_id_qca6390,
 	.mac_id_to_srng_id = qwz_hw_mac_id_to_srng_id_qca6390,
-	.reo_setup = qwz_hw_wcn7850_reo_setup,
 };
 
 #define ATH12K_TX_RING_MASK_0 BIT(0)
@@ -2964,19 +2955,17 @@ const struct ce_attr qwz_host_ce_config_wcn7850[QWZ_CE_COUNT_QCA6390] = {
 	},
 };
 
-static const struct ath12k_hw_tcl2wbm_rbm_map ath12k_hw_tcl2wbm_rbm_map_wcn7850[] = {
+static const struct ath12k_hal_tcl_to_wbm_rbm_map
+ath12k_hal_wcn7850_tcl_to_wbm_rbm_map[DP_TCL_NUM_RING_MAX] = {
 	{
-		.tcl_ring_num = 0,
 		.wbm_ring_num = 0,
 		.rbm_id = HAL_RX_BUF_RBM_SW0_BM,
 	},
 	{
-		.tcl_ring_num = 1,
 		.wbm_ring_num = 2,
 		.rbm_id = HAL_RX_BUF_RBM_SW2_BM,
 	},
 	{
-		.tcl_ring_num = 2,
 		.wbm_ring_num = 4,
 		.rbm_id = HAL_RX_BUF_RBM_SW4_BM,
 	},
@@ -2984,11 +2973,15 @@ static const struct ath12k_hw_tcl2wbm_rbm_map ath12k_hw_tcl2wbm_rbm_map_wcn7850[
 
 static const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
 	.rx_buf_rbm = HAL_RX_BUF_RBM_SW1_BM,
-	.tcl2wbm_rbm_map = ath12k_hw_tcl2wbm_rbm_map_wcn7850,
 	.wbm2sw_cc_enable = HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN |
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW2_EN |
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN |
-                            HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN,
+			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN,
+};
+
+const struct hal_ops hal_wcn7850_ops = {
+	.create_srng_config = qwz_hal_srng_create_config_wcn7850,
+	.tcl_to_wbm_rbm_map = ath12k_hal_wcn7850_tcl_to_wbm_rbm_map,
 };
 
 static const struct ath12k_hw_params ath12k_hw_params[] = {
@@ -3021,6 +3014,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.supports_shadow_regs = true,
 		.fix_l1ss = false,
 		.hal_params = &ath12k_hw_hal_params_wcn7850,
+		.hal_ops = &hal_wcn7850_ops,
 		.qmi_cnss_feature_bitmap = BIT(CNSS_QDSS_CFG_MISS_V01) |
 					   BIT(CNSS_PCIE_PERST_NO_PULL_V01),
 		.tx_ring_size = DP_TCL_DATA_RING_SIZE,
@@ -8969,8 +8963,6 @@ qwz_dp_srng_common_cleanup(struct qwz_softc *sc)
 	int i;
 
 	qwz_dp_srng_cleanup(sc, &dp->wbm_desc_rel_ring);
-	qwz_dp_srng_cleanup(sc, &dp->tcl_cmd_ring);
-	qwz_dp_srng_cleanup(sc, &dp->tcl_status_ring);
 	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
 		qwz_dp_srng_cleanup(sc, &dp->tx_ring[i].tcl_data_ring);
 		qwz_dp_srng_cleanup(sc, &dp->tx_ring[i].tcl_comp_ring);
@@ -9387,13 +9379,15 @@ out:
 #endif
 	return ret;
 }
+
 int
 qwz_dp_srng_common_setup(struct qwz_softc *sc)
 {
 	struct qwz_dp *dp = &sc->dp;
+	const struct ath12k_hal_tcl_to_wbm_rbm_map *map;
 	struct hal_srng *srng;
 	int i, ret;
-	uint8_t tcl_num, wbm_num;
+	uint8_t tx_comp_ring_num;
 
 	ret = qwz_dp_srng_setup(sc, &dp->wbm_desc_rel_ring, HAL_SW2WBM_RELEASE,
 	    0, 0, DP_WBM_RELEASE_RING_SIZE);
@@ -9403,31 +9397,12 @@ qwz_dp_srng_common_setup(struct qwz_softc *sc)
 		goto err;
 	}
 
-	ret = qwz_dp_srng_setup(sc, &dp->tcl_cmd_ring, HAL_TCL_CMD,
-	    0, 0, DP_TCL_CMD_RING_SIZE);
-	if (ret) {
-		printf("%s: failed to set up tcl_cmd ring :%d\n",
-		    sc->sc_dev.dv_xname, ret);
-		goto err;
-	}
-
-	ret = qwz_dp_srng_setup(sc, &dp->tcl_status_ring, HAL_TCL_STATUS,
-	    0, 0, DP_TCL_STATUS_RING_SIZE);
-	if (ret) {
-		printf("%s: failed to set up tcl_status ring :%d\n",
-		    sc->sc_dev.dv_xname, ret);
-		goto err;
-	}
-
 	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
-		const struct ath12k_hw_hal_params *hal_params;
-
-		hal_params = sc->hw_params.hal_params;
-		tcl_num = hal_params->tcl2wbm_rbm_map[i].tcl_ring_num;
-		wbm_num = hal_params->tcl2wbm_rbm_map[i].wbm_ring_num;
+		map = sc->hw_params.hal_ops->tcl_to_wbm_rbm_map;
+		tx_comp_ring_num = map[i].wbm_ring_num;
 
 		ret = qwz_dp_srng_setup(sc, &dp->tx_ring[i].tcl_data_ring,
-		    HAL_TCL_DATA, tcl_num, 0, sc->hw_params.tx_ring_size);
+		    HAL_TCL_DATA, i, 0, DP_TCL_DATA_RING_SIZE);
 		if (ret) {
 			printf("%s: failed to set up tcl_data ring (%d) :%d\n",
 			    sc->sc_dev.dv_xname, i, ret);
@@ -9435,7 +9410,7 @@ qwz_dp_srng_common_setup(struct qwz_softc *sc)
 		}
 
 		ret = qwz_dp_srng_setup(sc, &dp->tx_ring[i].tcl_comp_ring,
-		    HAL_WBM2SW_RELEASE, wbm_num, 0, DP_TX_COMP_RING_SIZE);
+		    HAL_WBM2SW_RELEASE, tx_comp_ring_num, 0, DP_TX_COMP_RING_SIZE);
 		if (ret) {
 			printf("%s: failed to set up tcl_comp ring (%d) :%d\n",
 			    sc->sc_dev.dv_xname, i, ret);
@@ -9491,8 +9466,17 @@ qwz_dp_srng_common_setup(struct qwz_softc *sc)
 
 	/* When hash based routing of rx packet is enabled, 32 entries to map
 	 * the hash values to the ring will be configured.
-	 */
-	sc->hw_params.hw_ops->reo_setup(sc);
+	 * Each hash entry uses four bits to map to a particular ring. */
+	uint32_t ring_hash_map = HAL_HASH_ROUTING_RING_SW1 << 0 |
+	    HAL_HASH_ROUTING_RING_SW2 << 4 |
+	    HAL_HASH_ROUTING_RING_SW3 << 8 |
+	    HAL_HASH_ROUTING_RING_SW4 << 12 |
+	    HAL_HASH_ROUTING_RING_SW1 << 16 |
+	    HAL_HASH_ROUTING_RING_SW2 << 20 |
+	    HAL_HASH_ROUTING_RING_SW3 << 24 |
+	    HAL_HASH_ROUTING_RING_SW4 << 28;
+
+	qwz_hal_reo_hw_setup(sc, ring_hash_map);
 	return 0;
 
 err:
@@ -16893,14 +16877,9 @@ qwz_dp_service_srng(struct qwz_softc *sc, int grp_id)
 	struct qwz_pdev_dp *dp = &sc->pdev_dp;
 	int i, j, ret = 0;
 
-	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
-		const struct ath12k_hw_tcl2wbm_rbm_map *map;
-
-		map = &sc->hw_params.hal_params->tcl2wbm_rbm_map[i];
-		if ((sc->hw_params.ring_mask->tx[grp_id]) &
-		    (1 << (map->wbm_ring_num)) &&
-		    qwz_dp_tx_completion_handler(sc, i))
-			ret = 1;
+	if (sc->hw_params.ring_mask->tx[grp_id]) {
+		i = fls(sc->hw_params.ring_mask->tx[grp_id]) - 1;
+		qwz_dp_tx_completion_handler(sc, i);
 	}
 
 	if (sc->hw_params.ring_mask->rx_err[grp_id] &&
@@ -19577,7 +19556,7 @@ static const struct hal_srng_config hw_srng_config_templ[] = {
 };
 
 int
-qwz_hal_srng_create_config(struct qwz_softc *sc)
+qwz_hal_srng_create_config_wcn7850(struct qwz_softc *sc)
 {
 	struct ath12k_hal *hal = &sc->hal;
 	struct hal_srng_config *s;
@@ -19915,7 +19894,7 @@ qwz_hal_srng_init(struct qwz_softc *sc)
 
 	memset(hal, 0, sizeof(*hal));
 
-	ret = qwz_hal_srng_create_config(sc);
+	ret = sc->hw_params.hal_ops->create_srng_config(sc);
 	if (ret)
 		goto err_hal;
 
@@ -23670,7 +23649,7 @@ qwz_dp_tx(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 	ring_selector = 0;
 
 	ti.ring_id = ring_selector % sc->hw_params.max_tx_ring;
-	ti.rbm_id = sc->hw_params.hal_params->tcl2wbm_rbm_map[ti.ring_id].rbm_id;
+	ti.rbm_id = sc->hw_params.hal_ops->tcl_to_wbm_rbm_map[ti.ring_id].rbm_id;
 
 	ring_map |= (1 << ti.ring_id);
 
