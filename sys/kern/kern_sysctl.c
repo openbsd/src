@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.440 2024/08/20 07:44:36 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.441 2024/08/20 07:48:23 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -554,6 +554,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, mp->msg_bufs));
 	}
 	case KERN_OSREV:
+	case KERN_MAXPROC:
 	case KERN_NFILES:
 	case KERN_TTYCOUNT:
 	case KERN_ARGMAX:
@@ -563,6 +564,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_SAVED_IDS:
 	case KERN_MAXPARTITIONS:
 	case KERN_RAWPARTITION:
+	case KERN_MAXTHREAD:
 	case KERN_NTHREADS:
 	case KERN_SOMAXCONN:
 	case KERN_SOMINCONN:

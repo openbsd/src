@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.263 2024/08/16 16:19:03 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.264 2024/08/20 07:48:23 mvs Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ struct timeval fork_tfmrate = { 10, 0 };
 int
 fork_check_maxthread(uid_t uid)
 {
-	int val;
+	int maxthread_local, val;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -318,8 +318,10 @@ fork_check_maxthread(uid_t uid)
 	 * the variable nthreads is the current number of procs, maxthread is
 	 * the limit.
 	 */
+	maxthread_local = atomic_load_int(&maxthread);
 	val = atomic_inc_int_nv(&nthreads);
-	if ((val > maxthread - 5 && uid != 0) || val > maxthread) {
+	if ((val > maxthread_local - 5 && uid != 0) ||
+	    val > maxthread_local) {
 		static struct timeval lasttfm;
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
@@ -353,7 +355,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	struct proc *p;
 	uid_t uid = curp->p_ucred->cr_ruid;
 	struct vmspace *vm;
-	int count;
+	int count, maxprocess_local;
 	vaddr_t uaddr;
 	int error;
 	struct  ptrace_state *newptstat = NULL;
@@ -366,8 +368,9 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	if ((error = fork_check_maxthread(uid)))
 		return error;
 
-	if ((nprocesses >= maxprocess - 5 && uid != 0) ||
-	    nprocesses >= maxprocess) {
+	maxprocess_local = atomic_load_int(&maxprocess);
+	if ((nprocesses >= maxprocess_local - 5 && uid != 0) ||
+	    nprocesses >= maxprocess_local) {
 		static struct timeval lasttfm;
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.50 2024/05/05 06:14:37 jsg Exp $	*/
+/*	$OpenBSD: param.c,v 1.51 2024/08/20 07:48:23 mvs Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -50,6 +50,11 @@
 #endif
 
 /*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
+/*
  * System parameter formulae.
  *
  * This file is copied into each directory where we compile
@@ -67,8 +72,8 @@ int	utc_offset = 0;
 #define	NTEXT (80 + NPROCESS / 8)		/* actually the object cache */
 #define	NVNODE (NPROCESS * 2 + NTEXT + 100)
 int	initialvnodes = NVNODE;
-int	maxprocess = NPROCESS;
-int	maxthread = 2 * NPROCESS;
+int	maxprocess = NPROCESS;				/* [a] */
+int	maxthread = 2 * NPROCESS;			/* [a] */
 int	maxfiles = 5 * (NPROCESS + MAXUSERS) + 80;
 long	nmbclust = NMBCLUSTERS;
 
