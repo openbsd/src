@@ -1,4 +1,4 @@
-/* $OpenBSD: rkvop.c,v 1.7 2023/01/01 01:34:33 jsg Exp $ */
+/* $OpenBSD: rkvop.c,v 1.8 2024/08/21 11:24:12 jsg Exp $ */
 /* $NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -207,7 +207,6 @@ rkvop_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkvop_softc *sc = (struct rkvop_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int i, port, ep, nep;
 	paddr_t paddr;
 
 	if (faa->fa_nreg < 1)
@@ -279,8 +278,6 @@ rkvop_plane_check(struct drm_plane *plane, struct drm_atomic_state *das)
 void
 rkvop_plane_update(struct drm_plane *plane, struct drm_atomic_state *das)
 {
-	struct drm_plane_state *old_state = drm_atomic_get_new_plane_state(das,
-	    plane);
 	struct drm_plane_state *state = plane->state;
 	struct drm_crtc *crtc = state->crtc;
 	struct rkvop_crtc *rkcrtc = to_rkvop_crtc(crtc);
@@ -401,8 +398,6 @@ rkvop_crtc_check(struct drm_crtc *crtc, struct drm_atomic_state *das)
 void
 rkvop_crtc_enable(struct drm_crtc *crtc, struct drm_atomic_state *das)
 {
-	struct drm_crtc_state *old_state = drm_atomic_get_old_crtc_state(das,
-	    crtc);
 	struct rkvop_crtc *rkcrtc = to_rkvop_crtc(crtc);
 	struct rkvop_softc *sc = rkcrtc->sc;
 	struct drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
@@ -496,8 +491,6 @@ rkvop_crtc_enable(struct drm_crtc *crtc, struct drm_atomic_state *das)
 void
 rkvop_crtc_flush(struct drm_crtc *crtc, struct drm_atomic_state *das)
 {
-	struct drm_crtc_state *old_state = drm_atomic_get_old_crtc_state(das,
-	    crtc);
 	struct rkvop_crtc *rkcrtc = to_rkvop_crtc(crtc);
 	struct rkvop_softc *sc = rkcrtc->sc;
 

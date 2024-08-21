@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.h,v 1.4 2023/09/11 04:51:24 jsg Exp $ */
+/* $OpenBSD: rkdrm.h,v 1.5 2024/08/21 11:24:12 jsg Exp $ */
 /* $NetBSD: rk_drm.h,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -48,8 +48,6 @@
 #define DRIVER_MINOR		0
 #define DRIVER_PATCHLEVEL	0
 
-struct rk_framebuffer;
-
 #define	RK_DRM_MAX_CRTC	2
 
 struct rkdrm_vblank {
@@ -86,20 +84,6 @@ struct rkdrm_framebuffer {
 	struct drm_gem_dma_object *obj;
 };
 
-struct rkdrm_fbdev {
-	struct drm_fb_helper	helper;
-};
-
-struct rkdrmfb_attach_args {
-	struct drm_device	*sfa_drm_dev;
-	struct drm_fb_helper	*sfa_fb_helper;
-	struct drm_fb_helper_surface_size sfa_fb_sizes;
-	bus_space_tag_t		sfa_fb_iot;
-	bus_dma_tag_t		sfa_fb_dmat;
-	uint32_t		sfa_fb_linebytes;
-};
-
-#define rkdrm_private(ddev)		(ddev)->dev_private
 #define to_rkdrm_framebuffer(x)	container_of(x, struct rkdrm_framebuffer, base)
 
 #endif /* _ARM_RK_DRM_H */

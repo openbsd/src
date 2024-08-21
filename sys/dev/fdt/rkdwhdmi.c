@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.7 2024/01/16 23:37:50 jsg Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.8 2024/08/21 11:24:12 jsg Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -123,8 +123,6 @@ rkdwhdmi_attach(struct device *parent, struct device *self, void *aux)
 	struct rkdwhdmi_softc *sc = (struct rkdwhdmi_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	uint32_t grf;
-	bus_addr_t addr;
-	bus_size_t size;
 	uint32_t phandle;
 
 	if (faa->fa_nreg < 1) {
