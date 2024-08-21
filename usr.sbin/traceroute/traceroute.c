@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.169 2022/03/24 14:39:08 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.170 2024/08/21 15:00:25 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -303,7 +303,6 @@ main(int argc, char *argv[])
 	char	hbuf[NI_MAXHOST];
 
 	struct addrinfo		 hints, *res;
-	struct hostent		*hp;
 	struct ip		*ip = NULL;
 	struct iovec		 rcviov[2];
 	static u_char		*rcvcmsgbuf;
@@ -449,14 +448,16 @@ main(int argc, char *argv[])
 		case 'g':
 			if (conf->lsrr >= MAX_LSRR)
 				errx(1, "too many gateways; max %d", MAX_LSRR);
-			if (inet_aton(optarg, &conf->gateway[conf->lsrr]) ==
-			    0) {
-				hp = gethostbyname(optarg);
-				if (hp == 0)
-					errx(1, "unknown host %s", optarg);
-				memcpy(&conf->gateway[conf->lsrr], hp->h_addr,
-				    hp->h_length);
-			}
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_INET;
+
+			if (getaddrinfo(optarg, NULL, &hints, &res) != 0)
+				errx(1, "unknown host %s", optarg);
+
+			conf->gateway[conf->lsrr] =
+			    ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+			freeaddrinfo(res);
+
 			if (++conf->lsrr == 1)
 				conf->lsrrlen = 4;
 			conf->lsrrlen += 4;
@@ -713,7 +714,8 @@ main(int argc, char *argv[])
 		if (conf->source) {
 			memset(&from4, 0, sizeof(from4));
 			from4.sin_family = AF_INET;
-			if (inet_aton(conf->source, &from4.sin_addr) == 0)
+			if (inet_pton(AF_INET, conf->source, &from4.sin_addr)
+			    != 1)
 				errx(1, "unknown host %s", conf->source);
 			ip->ip_src = from4.sin_addr;
 			if (ouid != 0 &&
