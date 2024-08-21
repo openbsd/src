@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.264 2024/08/20 07:48:23 mvs Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.265 2024/08/21 03:07:45 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -256,14 +256,12 @@ process_new(struct proc *p, struct process *parent, int flags)
 		    sizeof(u_int), M_PINSYSCALL, M_WAITOK);
 		memcpy(pr->ps_pin.pn_pins, parent->ps_pin.pn_pins,
 		    parent->ps_pin.pn_npins * sizeof(u_int));
-		pr->ps_flags |= PS_PIN;
 	}
 	if (parent->ps_libcpin.pn_pins) {
 		pr->ps_libcpin.pn_pins = mallocarray(parent->ps_libcpin.pn_npins,
 		    sizeof(u_int), M_PINSYSCALL, M_WAITOK);
 		memcpy(pr->ps_libcpin.pn_pins, parent->ps_libcpin.pn_pins,
 		    parent->ps_libcpin.pn_npins * sizeof(u_int));
-		pr->ps_flags |= PS_LIBCPIN;
 	}
 
 	/*

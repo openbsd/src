@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.369 2024/08/11 21:07:05 mvs Exp $	*/
+/*	$OpenBSD: proc.h,v 1.370 2024/08/21 03:07:45 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -303,8 +303,6 @@ struct process {
 #define	PS_CHROOT	0x01000000	/* Process is chrooted */
 #define	PS_NOBTCFI	0x02000000	/* No Branch Target CFI */
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
-#define	PS_PIN		0x08000000	/* ld.so or static syscall pin */
-#define	PS_LIBCPIN	0x10000000	/* libc.so syscall pin */
 #define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
 
 #define	PS_BITS \

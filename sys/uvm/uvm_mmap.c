@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.191 2024/04/05 14:16:05 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.192 2024/08/21 03:07:45 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -647,7 +647,6 @@ err:
 	pr->ps_libcpin.pn_end = base + len;
 	pr->ps_libcpin.pn_pins = pins;
 	pr->ps_libcpin.pn_npins = npins;
-	pr->ps_flags |= PS_LIBCPIN;
 
 #ifdef PMAP_CHECK_COPYIN
 	/* Assume (and insist) on libc.so text being execute-only */
