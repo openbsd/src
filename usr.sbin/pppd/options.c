@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.32 2024/08/10 05:32:28 jsg Exp $	*/
+/*	$OpenBSD: options.c,v 1.33 2024/08/21 14:57:05 florian Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -42,6 +42,10 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
@@ -53,8 +57,6 @@
 #include <string.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #ifdef PPP_FILTER
@@ -1565,7 +1567,7 @@ setipaddr(char *arg)
      */
     if (colon != arg) {
 	*colon = '\0';
-	if (inet_aton(arg, &ina) == 0) {
+	if (inet_pton(AF_INET, arg, &ina) != 1) {
 	    if ((hp = gethostbyname(arg)) == NULL) {
 		option_error("unknown host: %s", arg);
 		return -1;
@@ -1589,7 +1591,7 @@ setipaddr(char *arg)
      * If colon last character, then no remote addr.
      */
     if (*++colon != '\0') {
-	if (inet_aton(colon, &ina) == 0) {
+	if (inet_pton(AF_INET, colon, &ina) != 1) {
 	    if ((hp = gethostbyname(colon)) == NULL) {
 		option_error("unknown host: %s", colon);
 		return -1;
@@ -1653,7 +1655,7 @@ setnetmask(char **argv)
 {
     struct in_addr ina;
 
-    if (inet_aton(*argv, &ina) == 0 || (netmask & ~ina.s_addr) != 0) {
+    if (inet_pton(AF_INET, *argv, &ina) != 1 || (netmask & ~ina.s_addr) != 0) {
 	option_error("invalid netmask value '%s'", *argv);
 	return (0);
     }
@@ -2112,7 +2114,7 @@ setdnsaddr(char **argv)
     struct in_addr ina;
     struct hostent *hp;
 
-    if (inet_aton(*argv, &ina) == 0) {
+    if (inet_pton(AF_INET, *argv, &ina) != 1) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
 	    option_error("invalid address parameter '%s' for ms-dns option",
 			 *argv);
@@ -2142,7 +2144,7 @@ setwinsaddr(char **argv)
     struct in_addr ina;
     struct hostent *hp;
 
-    if (inet_aton(*argv, &ina) == 0) {
+    if (inet_pton(AF_INET, *argv, &ina) != 1) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
 	    option_error("invalid address parameter '%s' for ms-wins option",
 			 *argv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.42 2024/08/10 05:32:28 jsg Exp $	*/
+/*	$OpenBSD: auth.c,v 1.43 2024/08/21 14:57:05 florian Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -972,7 +972,7 @@ set_allowed_addrs(int unit, struct wordlist *addrs)
 	    hp = gethostbyname(p);
 	    if (hp != NULL && hp->h_addrtype == AF_INET)
 		wo->hisaddr = *(u_int32_t *)hp->h_addr;
-	    else if (inet_aton(p, &ina) == 1)
+	    else if (inet_pton(AF_INET, p, &ina) == 1)
 		wo->hisaddr = ina.s_addr;
 	}
     }
@@ -1038,7 +1038,7 @@ ip_addr_check(u_int32_t addr, struct wordlist *addrs)
 	if (hp != NULL && hp->h_addrtype == AF_INET) {
 	    ina.s_addr = *(u_int32_t *)hp->h_addr;
 	} else {
-	    r = inet_aton (ptr_word, &ina);
+	    r = inet_pton(AF_INET, ptr_word, &ina);
 	    if (ptr_mask == NULL) {
 		/* calculate appropriate mask for net */
 		ah = ntohl(ina.s_addr);
@@ -1054,7 +1054,7 @@ ip_addr_check(u_int32_t addr, struct wordlist *addrs)
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-	if (r == 0)
+	if (r != 1)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);
