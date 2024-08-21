@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.37 2023/06/20 15:19:55 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.38 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -116,7 +116,7 @@ send_db_description(struct nbr *nbr)
 
 	switch (nbr->iface->type) {
 	case IF_TYPE_POINTOPOINT:
-		inet_aton(AllSPFRouters, &dst.sin_addr);
+		inet_pton(AF_INET, AllSPFRouters, &dst.sin_addr);
 		dd_hdr.iface_mtu = htons(nbr->iface->mtu);
 		break;
 	case IF_TYPE_BROADCAST:

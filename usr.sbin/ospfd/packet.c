@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.37 2023/07/03 09:40:47 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.38 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -184,9 +184,9 @@ recv_packet(int fd, short event, void *bula)
 	 * or to the address of the interface itself.
 	 * AllDRouters is only valid for DR and BDR but this is checked later.
 	 */
-	inet_aton(AllSPFRouters, &addr);
+	inet_pton(AF_INET, AllSPFRouters, &addr);
 	if (ip_hdr.ip_dst.s_addr != addr.s_addr) {
-		inet_aton(AllDRouters, &addr);
+		inet_pton(AF_INET, AllDRouters, &addr);
 		if (ip_hdr.ip_dst.s_addr != addr.s_addr) {
 			if (ip_hdr.ip_dst.s_addr != iface->addr.s_addr) {
 				log_debug("recv_packet: packet sent to wrong "
@@ -230,7 +230,7 @@ recv_packet(int fd, short event, void *bula)
 	/* switch OSPF packet type */
 	switch (ospf_hdr->type) {
 	case PACKET_TYPE_HELLO:
-		inet_aton(AllSPFRouters, &addr);
+		inet_pton(AF_INET, AllSPFRouters, &addr);
 		if (iface->type == IF_TYPE_BROADCAST ||
 		    iface->type == IF_TYPE_POINTOPOINT)
 			if (ip_hdr.ip_dst.s_addr != addr.s_addr) {
@@ -313,8 +313,7 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 	}
 
 	if (iface->type == IF_TYPE_BROADCAST || iface->type == IF_TYPE_NBMA) {
-		if (inet_aton(AllDRouters, &addr) == 0)
-			fatalx("recv_packet: inet_aton");
+		inet_pton(AF_INET, AllDRouters, &addr);
 		if (ip_hdr->ip_dst.s_addr == addr.s_addr &&
 		    (iface->state & IF_STA_DRORBDR) == 0) {
 			log_debug("recv_packet: invalid destination IP in "

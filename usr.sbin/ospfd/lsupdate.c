@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.53 2023/06/21 07:44:08 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.54 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -457,7 +457,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 		 * because the router switched lately to DR or BDR
 		 */
 		if (le->le_oneshot && nbr->iface->state & IF_STA_DRORBDR)
-			inet_aton(AllSPFRouters, &addr);
+			inet_pton(AF_INET, AllSPFRouters, &addr);
 		else if (nbr->iface->state & IF_STA_DRORBDR) {
 			/*
 			 * old retransmission needs to be converted into
@@ -471,7 +471,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 		} else if (nbr->iface->type == IF_TYPE_POINTOPOINT)
 			memcpy(&addr, &nbr->addr, sizeof(addr));
 		else
-			inet_aton(AllDRouters, &addr);
+			inet_pton(AF_INET, AllDRouters, &addr);
 	} else
 		memcpy(&addr, &nbr->addr, sizeof(addr));
 

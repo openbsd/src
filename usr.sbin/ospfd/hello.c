@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.26 2022/12/28 21:30:18 jmc Exp $ */
+/*	$OpenBSD: hello.c,v 1.27 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -48,7 +48,7 @@ send_hello(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		inet_aton(AllSPFRouters, &dst.sin_addr);
+		inet_pton(AF_INET, AllSPFRouters, &dst.sin_addr);
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.87 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: interface.c,v 1.88 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -352,7 +352,7 @@ if_act_start(struct iface *iface)
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
-		inet_aton(AllSPFRouters, &addr);
+		inet_pton(AF_INET, AllSPFRouters, &addr);
 		if (if_join_group(iface, &addr))
 			return (-1);
 		iface->state = IF_STA_POINTTOPOINT;
@@ -366,7 +366,7 @@ if_act_start(struct iface *iface)
 		    if_type_name(iface->type), iface->name);
 		return (-1);
 	case IF_TYPE_BROADCAST:
-		inet_aton(AllSPFRouters, &addr);
+		inet_pton(AF_INET, AllSPFRouters, &addr);
 		if (if_join_group(iface, &addr))
 			return (-1);
 		if (iface->priority == 0) {
@@ -502,7 +502,7 @@ start:
 	iface->bdr = bdr;
 
 	if (changed) {
-		inet_aton(AllDRouters, &addr);
+		inet_pton(AF_INET, AllDRouters, &addr);
 		if (old_state & IF_STA_DRORBDR &&
 		    (iface->state & IF_STA_DRORBDR) == 0) {
 			if (if_leave_group(iface, &addr))
@@ -543,10 +543,10 @@ if_act_reset(struct iface *iface)
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		/* try to cleanup */
-		inet_aton(AllSPFRouters, &addr);
+		inet_pton(AF_INET, AllSPFRouters, &addr);
 		if_leave_group(iface, &addr);
 		if (iface->state & IF_STA_DRORBDR) {
-			inet_aton(AllDRouters, &addr);
+			inet_pton(AF_INET, AllDRouters, &addr);
 			if_leave_group(iface, &addr);
 		}
 		break;

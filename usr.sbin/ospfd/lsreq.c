@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.24 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.25 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -45,7 +45,7 @@ send_ls_req(struct nbr *nbr)
 
 	switch (nbr->iface->type) {
 	case IF_TYPE_POINTOPOINT:
-		inet_aton(AllSPFRouters, &dst.sin_addr);
+		inet_pton(AF_INET, AllSPFRouters, &dst.sin_addr);
 		break;
 	case IF_TYPE_BROADCAST:
 	case IF_TYPE_NBMA:

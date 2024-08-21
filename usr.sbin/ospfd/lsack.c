@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.24 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: lsack.c,v 1.25 2024/08/21 15:18:00 florian Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -268,14 +268,14 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 		/* send LS ack(s) but first set correct destination */
 		switch (iface->type) {
 		case IF_TYPE_POINTOPOINT:
-			inet_aton(AllSPFRouters, &addr);
+			inet_pton(AF_INET, AllSPFRouters, &addr);
 			send_ls_ack(iface, addr, buf);
 			break;
 		case IF_TYPE_BROADCAST:
 			if (iface->state & IF_STA_DRORBDR)
-				inet_aton(AllSPFRouters, &addr);
+				inet_pton(AF_INET, AllSPFRouters, &addr);
 			else
-				inet_aton(AllDRouters, &addr);
+				inet_pton(AF_INET, AllDRouters, &addr);
 			send_ls_ack(iface, addr, buf);
 			break;
 		case IF_TYPE_NBMA:
