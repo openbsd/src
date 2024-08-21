@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.40 2023/04/12 09:07:42 jsg Exp $
+	$OpenBSD: na.phone,v 1.41 2024/08/21 19:39:09 mglocker Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -1154,5 +1154,5 @@
 985:Covington:Louisiana:LA
 985:Hammond:Louisiana:LA
 985:Slidell:Louisiana:LA
-989:Mt.Pleasant:Michigan.MI
-989:Saginaw:Michigan.MI
+989:Mt.Pleasant:Michigan:MI
+989:Saginaw:Michigan:MI
