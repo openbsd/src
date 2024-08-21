@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.95 2024/08/21 04:17:09 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.96 2024/08/21 04:55:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -547,17 +547,19 @@ input_key_mode1(struct bufferevent *bev, key_code key)
 	 */
 	onlykey = key & KEYC_MASK_KEY;
 	if ((key & (KEYC_META | KEYC_CTRL)) == KEYC_CTRL &&
-	    (onlykey == '/' || onlykey == '@' || onlykey == '^' ||
+	    (onlykey == ' ' ||
+	     onlykey == '/' ||
+	     onlykey == '@' ||
+	     onlykey == '^' ||
 	     (onlykey >= '2' && onlykey <= '8') ||
 	     (onlykey >= '@' && onlykey <= '~')))
 		return (input_key_vt10x(bev, key));
 
 	/*
-	 * A regular or shifted Unicode key + Meta. In the absence of a
-	 * standard to back this, we mimic what iTerm 2 does.
+	 * A regular key + Meta. In the absence of a standard to back this, we
+	 * mimic what iTerm 2 does.
 	 */
-	if ((key & (KEYC_CTRL | KEYC_META)) == KEYC_META &&
-	    KEYC_IS_UNICODE(key))
+	if ((key & (KEYC_CTRL | KEYC_META)) == KEYC_META)
 		return (input_key_vt10x(bev, key));
 
 	return (-1);
