@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.176 2024/08/21 04:17:09 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.177 2024/08/21 04:37:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -313,7 +313,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .choices = options_table_extended_keys_list,
-	  .default_num = 1,
+	  .default_num = 0,
 	  .text = "Whether to request extended key sequences from terminals "
 		  "that support it."
 	},

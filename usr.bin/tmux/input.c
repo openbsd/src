@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.227 2024/08/21 04:17:09 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.228 2024/08/21 04:37:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1412,7 +1412,7 @@ input_csi_dispatch(struct input_ctx *ictx)
 		 * Set the extended key reporting mode as per the client request,
 		 * unless "extended-keys always" forces us into mode 1.
 		 */
-		if (options_get_number(global_options, "extended-keys") == 2)
+		if (options_get_number(global_options, "extended-keys") != 1)
 			break;
 		screen_write_mode_clear(sctx,
 		    MODE_KEYS_EXTENDED|MODE_KEYS_EXTENDED_2);
