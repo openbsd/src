@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.226 2024/08/19 08:31:36 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.227 2024/08/21 04:17:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1408,17 +1408,29 @@ input_csi_dispatch(struct input_ctx *ictx)
 	case INPUT_CSI_MODSET:
 		n = input_get(ictx, 0, 0, 0);
 		m = input_get(ictx, 1, 0, 0);
+		/*
+		 * Set the extended key reporting mode as per the client request,
+		 * unless "extended-keys always" forces us into mode 1.
+		 */
 		if (options_get_number(global_options, "extended-keys") == 2)
 			break;
-		if (n == 0 || (n == 4 && m == 0))
-			screen_write_mode_clear(sctx, MODE_KEXTENDED);
-		else if (n == 4 && (m == 1 || m == 2))
-			screen_write_mode_set(sctx, MODE_KEXTENDED);
+		screen_write_mode_clear(sctx,
+		    MODE_KEYS_EXTENDED|MODE_KEYS_EXTENDED_2);
+		if (n == 4 && m == 1)
+			screen_write_mode_set(sctx, MODE_KEYS_EXTENDED);
+		if (n == 4 && m == 2)
+			screen_write_mode_set(sctx, MODE_KEYS_EXTENDED_2);
 		break;
 	case INPUT_CSI_MODOFF:
 		n = input_get(ictx, 0, 0, 0);
-		if (n == 4)
-			screen_write_mode_clear(sctx, MODE_KEXTENDED);
+		/*
+		 * Clear the extended key reporting mode as per the client request,
+		 * unless "extended-keys always" forces us into mode 1.
+		 */
+		if (n == 4) {
+			screen_write_mode_clear(sctx,
+			    MODE_KEYS_EXTENDED|MODE_KEYS_EXTENDED_2);
+		}
 		break;
 	case INPUT_CSI_WINOPS:
 		input_csi_dispatch_winops(ictx);

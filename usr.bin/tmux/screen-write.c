@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.225 2024/03/21 12:10:57 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.226 2024/08/21 04:17:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -326,8 +326,9 @@ screen_write_reset(struct screen_write_ctx *ctx)
 	screen_write_scrollregion(ctx, 0, screen_size_y(s) - 1);
 
 	s->mode = MODE_CURSOR|MODE_WRAP;
+
 	if (options_get_number(global_options, "extended-keys") == 2)
-		s->mode |= MODE_KEXTENDED;
+		s->mode = (s->mode & ~EXTENDED_KEY_MODES)|MODE_KEYS_EXTENDED;
 
 	screen_write_clearscreen(ctx, 8);
 	screen_write_set_cursor(ctx, 0, 0);

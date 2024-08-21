@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.30 2023/11/14 15:38:33 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.31 2024/08/21 04:17:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -227,7 +227,7 @@ static const struct tty_feature tty_feature_sync = {
 
 /* Terminal supports extended keys. */
 static const char *const tty_feature_extkeys_capabilities[] = {
-	"Eneks=\\E[>4;1m",
+	"Eneks=\\E[>4;2m",
 	"Dseks=\\E[>4m",
 	NULL
 };
