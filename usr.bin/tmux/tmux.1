@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.949 2024/08/21 05:03:13 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.950 2024/08/21 05:06:45 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -6616,6 +6616,11 @@ is given, the buffer is also sent to the clipboard for
 using the
 .Xr xterm 1
 escape sequence, if possible.
+If
+.Ar path
+is
+.Ql - ,
+the contents are read from stdin.
 .Tg pasteb
 .It Xo Ic paste-buffer
 .Op Fl dpr
@@ -6653,6 +6658,11 @@ Save the contents of the specified paste buffer to
 The
 .Fl a
 option appends to rather than overwriting the file.
+If
+.Ar path
+is
+.Ql - ,
+the contents are read from stdin.
 .It Xo Ic set-buffer
 .Op Fl aw
 .Op Fl b Ar buffer-name
