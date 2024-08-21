@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.30 2020/02/14 19:17:33 schwarze Exp $	*/
+/*	$OpenBSD: driver.c,v 1.31 2024/08/21 14:55:17 florian Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -107,7 +107,8 @@ main(int ac, char **av)
 			Server_port = atoi(optarg);
 			break;
 		  case 'a':
-			if (!inet_aton(optarg, (struct in_addr *)&Server_addr))
+			if (inet_pton(AF_INET, optarg,
+			    (struct in_addr *)&Server_addr) != 1)
 				err(1, "bad interface address: %s", optarg);
 			break;
 		  case 'D':
