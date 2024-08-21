@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2021/10/15 15:01:28 naddy Exp $ */
+/*	$OpenBSD: parse.y,v 1.73 2024/08/21 09:17:56 florian Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -203,7 +203,7 @@ string		: string STRING	{
 		;
 
 routerid	: STRING {
-			if (!inet_aton($1, &$$)) {
+			if (!inet_pton(AF_INET, $1, &$$)) {
 				yyerror("%s: error parsing router id", $1);
 				free($1);
 				YYERROR;
