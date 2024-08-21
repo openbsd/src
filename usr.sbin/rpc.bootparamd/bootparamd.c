@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.22 2021/11/15 15:14:24 millert Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.23 2024/08/21 14:59:49 florian Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -66,7 +66,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct hostent *he;
+	struct addrinfo hints, *res;
 	struct stat buf;
 	SVCXPRT *transp;
 	int    c;
@@ -77,15 +77,16 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'r':
-			if (inet_aton(optarg, &route_addr) == 1)
-				break;
-			he = gethostbyname(optarg);
-			if (!he) {
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_INET;
+
+			if (getaddrinfo(optarg, NULL, &hints, &res) != 0) {
 				warnx("no such host: %s", optarg);
 				usage();
 			}
-			bcopy(he->h_addr, &route_addr.s_addr,
-			    sizeof(route_addr.s_addr));
+			route_addr =
+			    ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+			freeaddrinfo(res);
 			break;
 		case 'f':
 			bootpfile = optarg;
