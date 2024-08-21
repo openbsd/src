@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.243 2024/08/21 04:17:09 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.244 2024/08/21 05:03:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1626,8 +1626,9 @@ status_prompt_complete_list(u_int *size, const char *s, int at_start)
 	struct options_entry			 *o;
 	struct options_array_item		 *a;
 	const char				 *layouts[] = {
-		"even-horizontal", "even-vertical", "main-horizontal",
-		"main-vertical", "tiled", NULL
+		"even-horizontal", "even-vertical",
+		"main-horizontal", "main-horizontal-mirrored",
+		"main-vertical", "main-vertical-mirrored", "tiled", NULL
 	};
 
 	*size = 0;
