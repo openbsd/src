@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.34 2024/08/18 08:23:58 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.35 2024/08/21 09:27:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -239,7 +239,7 @@ dtread(dev_t dev, struct uio *uio, int flags)
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		count = 0;
 		error = dt_pcb_ring_copy(dp, uio, max, &count, &dropped);
-		if (error || count == 0)
+		if (error && count == 0)
 			break;
 
 		read += count;
