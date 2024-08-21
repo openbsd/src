@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.17 2023/07/03 10:34:08 claudio Exp $ */
+/*	$OpenBSD: message.c,v 1.18 2024/08/21 14:58:14 florian Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -107,7 +107,7 @@ send_triggered_update(struct iface *iface, struct rip_route *rr)
 	if (iface->passive)
 		return (0);
 
-	inet_aton(ALL_RIP_ROUTERS, &dst.sin_addr);
+	inet_pton(AF_INET, ALL_RIP_ROUTERS, &dst.sin_addr);
 
 	dst.sin_port = htons(RIP_PORT);
 	dst.sin_family = AF_INET;
@@ -161,7 +161,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 	} else {
 		/* multicast on interface */
 		iface = i;
-		inet_aton(ALL_RIP_ROUTERS, &dst.sin_addr);
+		inet_pton(AF_INET, ALL_RIP_ROUTERS, &dst.sin_addr);
 		port = htons(RIP_PORT);
 	}
 
@@ -237,7 +237,7 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 	} else {
 		/* multicast on interface */
 		iface = i;
-		inet_aton(ALL_RIP_ROUTERS, &dst.sin_addr);
+		inet_pton(AF_INET, ALL_RIP_ROUTERS, &dst.sin_addr);
 		port = htons(RIP_PORT);
 	}
 

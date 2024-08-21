@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.16 2021/01/19 10:09:59 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.17 2024/08/21 14:58:14 florian Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -192,7 +192,7 @@ if_act_start(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		inet_aton(ALL_RIP_ROUTERS, &addr);
+		inet_pton(AF_INET, ALL_RIP_ROUTERS, &addr);
 		if (if_join_group(iface, &addr)) {
 			log_warn("if_act_start: error joining group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
@@ -220,7 +220,7 @@ if_act_reset(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		inet_aton(ALL_RIP_ROUTERS, &addr);
+		inet_pton(AF_INET, ALL_RIP_ROUTERS, &addr);
 		if (if_leave_group(iface, &addr)) {
 		log_warn("if_act_reset: error leaving group %s, "
 		    "interface %s", inet_ntoa(addr), iface->name);
