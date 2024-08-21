@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.30 2024/08/20 00:09:12 dlg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.31 2024/08/21 00:56:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -74,7 +74,6 @@ int		rge_ifmedia_upd(struct ifnet *);
 void		rge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int		rge_allocmem(struct rge_softc *);
 int		rge_newbuf(struct rge_queues *);
-void		rge_discard_rxbuf(struct rge_queues *, int);
 void		rge_rx_list_init(struct rge_queues *);
 void		rge_tx_list_init(struct rge_queues *);
 void		rge_fill_rx_ring(struct rge_queues *);
@@ -884,11 +883,6 @@ rge_stop(struct ifnet *ifp)
 	ifq_barrier(&ifp->if_snd);
 	ifq_clr_oactive(&ifp->if_snd);
 
-	if (q->q_rx.rge_head != NULL) {
-		m_freem(q->q_rx.rge_head);
-		q->q_rx.rge_head = q->q_rx.rge_tail = NULL;
-	}
-
 	/* Free the TX list buffers. */
 	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
 		if (q->q_tx.rge_txq[i].txq_mbuf != NULL) {
@@ -1141,6 +1135,7 @@ rge_newbuf(struct rge_queues *q)
 	struct rge_rx_desc *r;
 	struct rge_rxq *rxq;
 	bus_dmamap_t rxmap;
+	uint32_t cmdsts;
 	int idx;
 
 	m = MCLGETL(NULL, M_DONTWAIT, RGE_JUMBO_FRAMELEN);
@@ -1166,15 +1161,23 @@ rge_newbuf(struct rge_queues *q)
 
 	rxq->rxq_mbuf = m;
 
-	r->hi_qword1.rx_qword4.rge_extsts = 0;
+	cmdsts = rxmap->dm_segs[0].ds_len;
+	if (idx == RGE_RX_LIST_CNT - 1)
+		cmdsts |= RGE_RDCMDSTS_EOR;
+
+	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
+	r->hi_qword1.rx_qword4.rge_extsts = htole32(0);
 	r->hi_qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
 
-	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(rxmap->dm_segs[0].ds_len);
-	if (idx == RGE_RX_LIST_CNT - 1)
-		r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
+	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
+	    BUS_DMASYNC_PREWRITE);
 
-	r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
-
+	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
+	    BUS_DMASYNC_POSTWRITE);
+	cmdsts |= RGE_RDCMDSTS_OWN;
+	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
 	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
 	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1185,33 +1188,13 @@ rge_newbuf(struct rge_queues *q)
 }
 
 void
-rge_discard_rxbuf(struct rge_queues *q, int idx)
-{
-	struct rge_softc *sc = q->q_sc;
-	struct rge_rx_desc *r;
-
-	r = &q->q_rx.rge_rx_list[idx];
-
-	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(RGE_JUMBO_FRAMELEN);
-	r->hi_qword1.rx_qword4.rge_extsts = 0;
-	if (idx == RGE_RX_LIST_CNT - 1)
-		r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
-	r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
-
-	bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-}
-
-void
 rge_rx_list_init(struct rge_queues *q)
 {
 	memset(q->q_rx.rge_rx_list, 0, RGE_RX_LIST_SZ);
 
 	q->q_rx.rge_rxq_prodidx = q->q_rx.rge_rxq_considx = 0;
-	q->q_rx.rge_head = q->q_rx.rge_tail = NULL;
 
-	if_rxr_init(&q->q_rx.rge_rx_ring, 32, RGE_RX_LIST_CNT);
+	if_rxr_init(&q->q_rx.rge_rx_ring, 32, RGE_RX_LIST_CNT - 1);
 	rge_fill_rx_ring(q);
 }
 
@@ -1262,79 +1245,54 @@ rge_rxeof(struct rge_queues *q)
 	struct rge_rxq *rxq;
 	uint32_t rxstat, extsts;
 	int i, total_len, rx = 0;
+	int cons;
 
-	for (i = q->q_rx.rge_rxq_considx; if_rxr_inuse(rxr) > 0;
-	    i = RGE_NEXT_RX_DESC(i)) {
-		/* Invalidate the descriptor memory. */
-		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
-		    i * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	i = cons = q->q_rx.rge_rxq_considx;
 
+	while (if_rxr_inuse(rxr) > 0) {
 		cur_rx = &q->q_rx.rge_rx_list[i];
+
+		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+		    i * sizeof(*cur_rx), sizeof(*cur_rx),
+		    BUS_DMASYNC_POSTREAD);
 		rxstat = letoh32(cur_rx->hi_qword1.rx_qword4.rge_cmdsts);
-		extsts = letoh32(cur_rx->hi_qword1.rx_qword4.rge_extsts);
-
-		if (rxstat & RGE_RDCMDSTS_OWN)
+		if (rxstat & RGE_RDCMDSTS_OWN) {
+			bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+			    i * sizeof(*cur_rx), sizeof(*cur_rx),
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
-		total_len = rxstat & RGE_RDCMDSTS_FRAGLEN;
 		rxq = &q->q_rx.rge_rxq[i];
-		m = rxq->rxq_mbuf;
-		rxq->rxq_mbuf = NULL;
-		if_rxr_put(rxr, 1);
-		rx = 1;
-
-		/* Invalidate the RX mbuf and unload its map. */
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_dmamap, 0,
 		    rxq->rxq_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxq->rxq_dmamap);
+		m = rxq->rxq_mbuf;
+		rxq->rxq_mbuf = NULL;
 
+		i = RGE_NEXT_RX_DESC(i);
+		if_rxr_put(rxr, 1);
+		rx = 1;
+
+		total_len = rxstat & RGE_RDCMDSTS_FRAGLEN;
+
+		/* We only handle a packet per rx descriptor at the moment */
 		if ((rxstat & (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) !=
 		    (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) {
 			ifp->if_ierrors++;
 			m_freem(m);
-			rge_discard_rxbuf(q, i);
 			continue;
 		}
 
 		if (rxstat & RGE_RDCMDSTS_RXERRSUM) {
 			ifp->if_ierrors++;
-			/*
-			 * If this is part of a multi-fragment packet,
-			 * discard all the pieces.
-			 */
-			if (q->q_rx.rge_head != NULL) {
-				m_freem(q->q_rx.rge_head);
-				q->q_rx.rge_head = q->q_rx.rge_tail = NULL;
-			}
 			m_freem(m);
-			rge_discard_rxbuf(q, i);
 			continue;
 		}
 
-		if (q->q_rx.rge_head != NULL) {
-			m->m_len = total_len;
-			/*
-			 * Special case: if there's 4 bytes or less
-			 * in this buffer, the mbuf can be discarded:
-			 * the last 4 bytes is the CRC, which we don't
-			 * care about anyway.
-			 */
-			if (m->m_len <= ETHER_CRC_LEN) {
-				q->q_rx.rge_tail->m_len -=
-				    (ETHER_CRC_LEN - m->m_len);
-				m_freem(m);
-			} else {
-				m->m_len -= ETHER_CRC_LEN;
-				m->m_flags &= ~M_PKTHDR;
-				q->q_rx.rge_tail->m_next = m;
-			}
-			m = q->q_rx.rge_head;
-			q->q_rx.rge_head = q->q_rx.rge_tail = NULL;
-			m->m_pkthdr.len = total_len - ETHER_CRC_LEN;
-		} else
-			m->m_pkthdr.len = m->m_len =
-			    (total_len - ETHER_CRC_LEN);
+		m->m_pkthdr.len = m->m_len = (total_len - ETHER_CRC_LEN);
+
+		extsts = letoh32(cur_rx->hi_qword1.rx_qword4.rge_extsts);
 
 		/* Check IP header checksum. */
 		if (!(extsts & RGE_RDEXTSTS_IPCSUMERR) &&
@@ -1361,13 +1319,32 @@ rge_rxeof(struct rge_queues *q)
 		ml_enqueue(&ml, m);
 	}
 
+	if (!rx)
+		return (0);
+
+	if (i >= cons) {
+		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+		    cons * sizeof(*cur_rx), (i - cons) * sizeof(*cur_rx),
+		    BUS_DMASYNC_POSTWRITE);
+	} else {
+		bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+		    cons * sizeof(*cur_rx),
+		    (RGE_RX_LIST_CNT - cons) * sizeof(*cur_rx),
+		    BUS_DMASYNC_POSTWRITE);
+		if (i > 0) {
+			bus_dmamap_sync(sc->sc_dmat, q->q_rx.rge_rx_list_map,
+			    0, i * sizeof(*cur_rx),
+			    BUS_DMASYNC_POSTWRITE);
+		}
+	}
+
 	if (ifiq_input(&ifp->if_rcv, &ml))
 		if_rxr_livelocked(rxr);
 
 	q->q_rx.rge_rxq_considx = i;
 	rge_fill_rx_ring(q);
 
-	return (rx);
+	return (1);
 }
 
 int
