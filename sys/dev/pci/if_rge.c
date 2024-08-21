@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.31 2024/08/21 00:56:58 dlg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.32 2024/08/21 01:12:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -883,6 +883,12 @@ rge_stop(struct ifnet *ifp)
 	ifq_barrier(&ifp->if_snd);
 	ifq_clr_oactive(&ifp->if_snd);
 
+	if (q->q_rx.rge_head != NULL) {
+		m_freem(q->q_rx.rge_head);
+		q->q_rx.rge_head = NULL;
+		q->q_rx.rge_tail = &q->q_rx.rge_head;
+	}
+
 	/* Free the TX list buffers. */
 	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
 		if (q->q_tx.rge_txq[i].txq_mbuf != NULL) {
@@ -1193,6 +1199,8 @@ rge_rx_list_init(struct rge_queues *q)
 	memset(q->q_rx.rge_rx_list, 0, RGE_RX_LIST_SZ);
 
 	q->q_rx.rge_rxq_prodidx = q->q_rx.rge_rxq_considx = 0;
+	q->q_rx.rge_head = NULL;
+	q->q_rx.rge_tail = &q->q_rx.rge_head;
 
 	if_rxr_init(&q->q_rx.rge_rx_ring, 32, RGE_RX_LIST_CNT - 1);
 	rge_fill_rx_ring(q);
@@ -1244,7 +1252,7 @@ rge_rxeof(struct rge_queues *q)
 	struct rge_rx_desc *cur_rx;
 	struct rge_rxq *rxq;
 	uint32_t rxstat, extsts;
-	int i, total_len, rx = 0;
+	int i, mlen, rx = 0;
 	int cons;
 
 	i = cons = q->q_rx.rge_rxq_considx;
@@ -1274,23 +1282,44 @@ rge_rxeof(struct rge_queues *q)
 		if_rxr_put(rxr, 1);
 		rx = 1;
 
-		total_len = rxstat & RGE_RDCMDSTS_FRAGLEN;
+		if (ISSET(rxstat, RGE_RDCMDSTS_SOF)) {
+			if (q->q_rx.rge_head != NULL) {
+				ifp->if_ierrors++;
+				m_freem(q->q_rx.rge_head);
+				q->q_rx.rge_tail = &q->q_rx.rge_head;
+			}
 
-		/* We only handle a packet per rx descriptor at the moment */
-		if ((rxstat & (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) !=
-		    (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) {
-			ifp->if_ierrors++;
+			m->m_pkthdr.len = 0;
+		} else if (q->q_rx.rge_head == NULL) {
 			m_freem(m);
 			continue;
-		}
+		} else
+			CLR(m->m_flags, M_PKTHDR);
+
+		*q->q_rx.rge_tail = m;
+		q->q_rx.rge_tail = &m->m_next;
+
+		mlen = rxstat & RGE_RDCMDSTS_FRAGLEN;
+		m->m_len = mlen;
+
+		m = q->q_rx.rge_head;
+		m->m_pkthdr.len += mlen;
 
 		if (rxstat & RGE_RDCMDSTS_RXERRSUM) {
 			ifp->if_ierrors++;
 			m_freem(m);
+			q->q_rx.rge_head = NULL;
+			q->q_rx.rge_tail = &q->q_rx.rge_head;
 			continue;
 		}
 
-		m->m_pkthdr.len = m->m_len = (total_len - ETHER_CRC_LEN);
+		if (!ISSET(rxstat, RGE_RDCMDSTS_EOF))
+			continue;
+
+		q->q_rx.rge_head = NULL;
+		q->q_rx.rge_tail = &q->q_rx.rge_head;
+
+		m_adj(m, -ETHER_CRC_LEN);
 
 		extsts = letoh32(cur_rx->hi_qword1.rx_qword4.rge_extsts);
 

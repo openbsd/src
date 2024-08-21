@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.12 2024/08/20 00:09:12 dlg Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.13 2024/08/21 01:12:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -270,7 +270,7 @@ struct rge_rx_desc {
 			uint32_t	rsvd8;
 		} rx_ptp;
 	} hi_qword1;
-};
+} __packed __aligned(16);
 
 #define RGE_RDCMDSTS_RXERRSUM	0x00100000
 #define RGE_RDCMDSTS_EOF	0x01000000
@@ -344,7 +344,7 @@ struct rge_rx {
 	struct rge_rx_desc	*rge_rx_list;
 
 	struct mbuf		*rge_head;
-	struct mbuf		*rge_tail;
+	struct mbuf		**rge_tail;
 };
 
 struct rge_queues {
