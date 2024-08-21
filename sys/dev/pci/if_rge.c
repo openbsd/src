@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.32 2024/08/21 01:12:52 dlg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.33 2024/08/21 01:17:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -566,7 +566,7 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, RGE_JUMBO_FRAMELEN, &sc->sc_queues->q_rx.rge_rx_ring);
+		    NULL, MCLBYTES, &sc->sc_queues->q_rx.rge_rx_ring);
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
@@ -1144,11 +1144,11 @@ rge_newbuf(struct rge_queues *q)
 	uint32_t cmdsts;
 	int idx;
 
-	m = MCLGETL(NULL, M_DONTWAIT, RGE_JUMBO_FRAMELEN);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (m == NULL)
 		return (ENOBUFS);
 
-	m->m_len = m->m_pkthdr.len = RGE_JUMBO_FRAMELEN;
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
 	idx = q->q_rx.rge_rxq_prodidx;
 	rxq = &q->q_rx.rge_rxq[idx];
