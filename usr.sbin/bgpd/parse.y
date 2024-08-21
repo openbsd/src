@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.465 2024/08/14 19:09:51 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.466 2024/08/21 09:17:05 florian Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4503,7 +4503,7 @@ parseextvalue(int type, char *s, uint32_t *v, uint32_t *flag)
 		*v = uval | (uvalh << 16);
 		break;
 	case EXT_COMMUNITY_TRANS_IPV4:
-		if (inet_aton(s, &ip) == 0) {
+		if (inet_pton(AF_INET, s, &ip) == 0) {
 			yyerror("Bad ext-community %s not parseable", s);
 			return (-1);
 		}
