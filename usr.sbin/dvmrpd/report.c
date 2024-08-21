@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.12 2023/06/26 10:08:56 claudio Exp $ */
+/*	$OpenBSD: report.c,v 1.13 2024/08/21 09:18:47 florian Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -233,7 +233,7 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 	} else {
 		/* multicast on interface */
 		iface = xiface;
-		inet_aton(AllDVMRPRouters, &addr);
+		inet_pton(AF_INET, AllDVMRPRouters, &addr);
 	}
 
 	while (!TAILQ_EMPTY(rr_list)) {

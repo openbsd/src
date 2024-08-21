@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.5 2023/06/26 10:08:56 claudio Exp $ */
+/*	$OpenBSD: igmp.c,v 1.6 2024/08/21 09:18:47 florian Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -78,7 +78,7 @@ send_igmp_query(struct iface *iface, struct group *group)
 	/* set destination address */
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
-	inet_aton(AllSystems, &dst.sin_addr);
+	inet_pton(AF_INET, AllSystems, &dst.sin_addr);
 
 	ret = send_packet(iface, buf, &dst);
 	ibuf_free(buf);

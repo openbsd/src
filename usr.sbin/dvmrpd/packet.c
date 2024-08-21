@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.8 2023/06/26 10:08:56 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.9 2024/08/21 09:18:47 florian Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -189,7 +189,7 @@ recv_packet(int fd, short event, void *bula)
 		buf += sizeof(*dvmrp_hdr);
 		len = l - sizeof(*dvmrp_hdr);
 
-		inet_aton(AllDVMRPRouters, &addr);
+		inet_pton(AF_INET, AllDVMRPRouters, &addr);
 		if ((ip_hdr.ip_dst.s_addr != addr.s_addr) &&
 		    (ip_hdr.ip_dst.s_addr != iface->addr.s_addr)) {
 			log_debug("recv_packet: interface %s, invalid"

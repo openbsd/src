@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.6 2024/04/23 13:34:51 jsg Exp $ */
+/*	$OpenBSD: probe.c,v 1.7 2024/08/21 09:18:47 florian Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -64,7 +64,7 @@ send_probe(struct iface *iface)
 	/* set destination address */
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
-	inet_aton(AllDVMRPRouters, &dst.sin_addr);
+	inet_pton(AF_INET, AllDVMRPRouters, &dst.sin_addr);
 
 	ret = send_packet(iface, buf, &dst);
 	ibuf_free(buf);

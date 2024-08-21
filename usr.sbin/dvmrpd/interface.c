@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.12 2019/06/28 13:32:47 deraadt Exp $ */
+/*	$OpenBSD: interface.c,v 1.13 2024/08/21 09:18:47 florian Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -396,19 +396,19 @@ if_act_start(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		inet_aton(AllSystems, &addr);
+		inet_pton(AF_INET, AllSystems, &addr);
 		if (if_join_group(iface, &addr)) {
 			log_warnx("if_act_start: error joining group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
 			return (-1);
 		}
-		inet_aton(AllRouters, &addr);
+		inet_pton(AF_INET, AllRouters, &addr);
 		if (if_join_group(iface, &addr)) {
 			log_warnx("if_act_start: error joining group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
 			return (-1);
 		}
-		inet_aton(AllDVMRPRouters, &addr);
+		inet_pton(AF_INET, AllDVMRPRouters, &addr);
 		if (if_join_group(iface, &addr)) {
 			log_warnx("if_act_start: error joining group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
@@ -455,19 +455,19 @@ if_act_reset(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		inet_aton(AllSystems, &addr);
+		inet_pton(AF_INET, AllSystems, &addr);
 		if (if_leave_group(iface, &addr)) {
 			log_warnx("if_act_reset: error leaving group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
 			return (-1);
 		}
-		inet_aton(AllRouters, &addr);
+		inet_pton(AF_INET, AllRouters, &addr);
 		if (if_leave_group(iface, &addr)) {
 			log_warnx("if_act_reset: error leaving group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
 			return (-1);
 		}
-		inet_aton(AllDVMRPRouters, &addr);
+		inet_pton(AF_INET, AllDVMRPRouters, &addr);
 		if (if_leave_group(iface, &addr)) {
 			log_warnx("if_act_reset: error leaving group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
