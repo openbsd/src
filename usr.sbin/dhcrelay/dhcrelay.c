@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.66 2021/10/24 21:24:18 deraadt Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.67 2024/08/21 10:35:12 florian Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -162,11 +162,14 @@ main(int argc, char *argv[])
 	}
 
 	while (argc > 0) {
-		struct hostent		*he;
+		struct addrinfo hints, *res;
 		struct in_addr		 ia, *iap = NULL;
 
 		if ((sp = calloc(1, sizeof(*sp))) == NULL)
 			fatalx("calloc");
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET;
 
 		if ((sp->intf = register_interface(argv[0], got_one,
 		    1)) != NULL) {
@@ -185,15 +188,14 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (inet_aton(argv[0], &ia))
-			iap = &ia;
+		if (getaddrinfo(argv[0], NULL, &hints, &res) != 0)
+			log_warnx("%s: host unknown", argv[0]);
 		else {
-			he = gethostbyname(argv[0]);
-			if (!he)
-				log_warnx("%s: host unknown", argv[0]);
-			else
-				iap = ((struct in_addr *)he->h_addr_list[0]);
+			ia = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+			iap = &ia;
+			freeaddrinfo(res);
 		}
+
 		if (iap) {
 			if (drm == DRM_LAYER2)
 				fatalx("don't mix interfaces with hosts");
