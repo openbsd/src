@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.189 2024/08/21 03:07:45 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.190 2024/08/21 03:16:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -570,6 +570,9 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			pr->ps_pin.pn_pins = pins;
 			pr->ps_pin.pn_npins = npins;
 		}
+	} else {
+		error = EINVAL;	/* no pin table */
+		goto bad1;
 	}
 
 	vn_marktext(nd.ni_vp);
