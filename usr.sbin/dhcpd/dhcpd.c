@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.59 2023/10/06 05:31:54 jmc Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.60 2024/08/21 09:19:55 florian Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		case 'u':
 			udpsockmode = 1;
 			if (optarg != NULL) {
-				if (inet_aton(optarg, &udpaddr) != 1)
+				if (inet_pton(AF_INET, optarg, &udpaddr) != 1)
 					errx(1, "Cannot parse binding IP "
 					    "address: %s", optarg);
 			}
