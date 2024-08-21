@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.33 2024/08/21 01:17:50 dlg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.34 2024/08/21 01:22:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -1149,6 +1149,7 @@ rge_newbuf(struct rge_queues *q)
 		return (ENOBUFS);
 
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, ETHER_ALIGN);
 
 	idx = q->q_rx.rge_rxq_prodidx;
 	rxq = &q->q_rx.rge_rxq[idx];
