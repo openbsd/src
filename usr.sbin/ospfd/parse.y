@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2024/08/21 15:16:56 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.106 2024/08/22 08:34:51 tb Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -620,7 +620,7 @@ areaid		: NUMBER {
 			$$.s_addr = htonl($1);
 		}
 		| STRING {
-		if (inet_pton(AF_INET, $1, &$$) != 1) {
+			if (inet_pton(AF_INET, $1, &$$) != 1) {
 				yyerror("error parsing area");
 				free($1);
 				YYERROR;
