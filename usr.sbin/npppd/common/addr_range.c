@@ -1,4 +1,4 @@
-/*	$OpenBSD: addr_range.c,v 1.7 2024/02/26 08:25:51 yasuoka Exp $ */
+/*	$OpenBSD: addr_range.c,v 1.8 2024/08/22 07:56:47 florian Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -56,13 +56,14 @@
  * Author:
  *	Yasuoka Masahiko <yasuoka@iij.ad.jp>
  *
- * $Id: addr_range.c,v 1.7 2024/02/26 08:25:51 yasuoka Exp $
+ * $Id: addr_range.c,v 1.8 2024/08/22 07:56:47 florian Exp $
  */
 #ifdef ADDR_RANGE_DEBUG
 #define IIJDEBUG
 #endif
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -264,23 +265,23 @@ in_addr_range_list_add(struct in_addr_range **list, const char *str)
 		is_maskaddr = 1;
 	}
 
-	if (inet_aton(p0, &a0) != 1) {
+	if (inet_pton(AF_INET, p0, &a0) != 1) {
 		if (errno == 0)
 			errno = EINVAL;
 #ifdef IIJDEBUG
 		saved_errno = errno;
-		log_printf(LOG_DL_1, "inet_aton(%s) failed: %m", p0);
+		log_printf(LOG_DL_1, "inet_pton(%s) failed: %m", p0);
 		errno = saved_errno;
 #endif
 		free(p0);
 		return -1;
 	}
-	if ((is_range || is_maskaddr) && inet_aton(p1, &a1) != 1) {
+	if ((is_range || is_maskaddr) && inet_pton(AF_INET, p1, &a1) != 1) {
 		if (errno == 0)
 			errno = EINVAL;
 #ifdef IIJDEBUG
 		saved_errno = errno;
-		log_printf(LOG_DL_1, "inet_aton(%s) failed: %m", p1);
+		log_printf(LOG_DL_1, "inet_pton(%s) failed: %m", p1);
 		errno = saved_errno;
 #endif
 		free(p0);

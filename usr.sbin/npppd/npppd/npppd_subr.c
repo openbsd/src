@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.21 2021/03/29 03:54:39 yasuoka Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.22 2024/08/22 07:56:47 florian Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -108,7 +108,7 @@ load_resolv_conf(struct in_addr *pri, struct in_addr *sec)
 				addr = pri;
 			else
 				addr = sec;
-			if (inet_aton(ap, addr) != 1) {
+			if (inet_pton(AF_INET, ap, addr) != 1) {
 				/*
 				 * FIXME: If configured IPv6, it may have IPv6
 				 * FIXME: address.  For the present, continue.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.25 2024/01/18 09:58:23 claudio Exp $ */
+/*	$OpenBSD: privsep.c,v 1.26 2024/08/22 07:56:47 florian Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -708,7 +708,7 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 				}
 				if ((retval = cgetstr(buf, "framed-ip-address",
 				    &str)) >= 0) {
-					if (inet_aton(str,
+					if (inet_pton(AF_INET, str,
 					    &r.framed_ip_address) != 1)
 						goto on_broken_entry;
 					free(str);
@@ -717,7 +717,7 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 
 				if ((retval = cgetstr(buf, "framed-ip-netmask",
 				    &str)) >= 0) {
-					if (inet_aton(str,
+					if (inet_pton(AF_INET, str,
 					    &r.framed_ip_netmask) != 1)
 						goto on_broken_entry;
 					free(str);
