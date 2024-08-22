@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.35 2024/08/21 09:27:37 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.36 2024/08/22 10:08:25 mvs Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -88,6 +88,7 @@
  * to keep track of enabled PCBs.
  *
  *  Locks used to protect struct members in this file:
+ *	a	atomic
  *	m	per-softc mutex
  *	K	kernel lock
  */
@@ -119,7 +120,7 @@ SIMPLEQ_HEAD(, dt_probe)	dt_probe_list;	/* [I] list of probes */
 struct rwlock			dt_lock = RWLOCK_INITIALIZER("dtlk");
 volatile uint32_t		dt_tracing = 0;	/* [K] # of processes tracing */
 
-int allowdt;
+int allowdt;					/* [a] */
 
 void	dtattach(struct device *, struct device *, void *);
 int	dtopen(dev_t, int, int, struct proc *);
@@ -162,7 +163,7 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	struct dt_softc *sc;
 	int unit = minor(dev);
 
-	if (!allowdt)
+	if (atomic_load_int(&allowdt) == 0)
 		return EPERM;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);

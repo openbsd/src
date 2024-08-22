@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.442 2024/08/20 13:29:25 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.443 2024/08/22 10:08:25 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -134,6 +134,7 @@ extern int autoconf_serial;
 
 int allowkmem;
 
+int sysctl_securelevel(void *, size_t *, void *, size_t, struct proc *);
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_proc_cwd(int *, u_int, void *, size_t *, struct proc *);
@@ -513,6 +514,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_NUMVNODES:  /* XXX numvnodes is a long */
 		return (sysctl_rdint(oldp, oldlenp, newp, numvnodes));
+#if NDT > 0
+	case KERN_ALLOWDT:
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &allowdt));
+#endif
 	case KERN_HOSTID:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &hostid));
 	case KERN_CLOCKRATE:
@@ -596,26 +602,13 @@ int
 kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
-	int error, level, stackgap;
+	int error, stackgap;
 	dev_t dev;
 	extern int pool_debug;
 
 	switch (name[0]) {
 	case KERN_SECURELVL:
-		level = securelevel;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)) ||
-		    newp == NULL)
-			return (error);
-		if ((securelevel > 0 || level < -1) &&
-		    level < securelevel && p->p_p->ps_pid != 1)
-			return (EPERM);
-		securelevel = level;
-		return (0);
-#if NDT > 0
-	case KERN_ALLOWDT:
-		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
-		    &allowdt));
-#endif
+		return (sysctl_securelevel(oldp, oldlenp, newp, newlen, p));
 	case KERN_ALLOWKMEM:
 		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
 		    &allowkmem));
@@ -1123,6 +1116,45 @@ sysctl_rdint(void *oldp, size_t *oldlenp, void *newp, int val)
 	return (error);
 }
 
+int
+sysctl_securelevel(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    struct proc *p)
+{
+	int oldval, newval;
+	int error;
+
+	if (oldp && *oldlenp < sizeof(int))
+		return (ENOMEM);
+	if (newp && newlen != sizeof(int))
+		return (EINVAL);
+	*oldlenp = sizeof(int);
+
+	if (newp) {
+		if ((error = copyin(newp, &newval, sizeof(int))))
+			return (error);
+		do {
+			oldval = atomic_load_int(&securelevel);
+			if ((oldval > 0 || newval < -1) && newval < oldval &&
+			    p->p_p->ps_pid != 1)
+				return (EPERM);
+		} while (atomic_cas_uint(&securelevel, oldval, newval) !=
+		    oldval);
+
+		if (oldp) {
+			/* new value has been set although user gets error */
+			if ((error = copyout(&oldval, oldp, sizeof(int))))
+				return (error);
+		}
+	} else if (oldp) {
+		oldval = atomic_load_int(&securelevel);
+
+		if ((error = copyout(&oldval, oldp, sizeof(int))))
+			return (error);	
+	}
+
+	return (0);
+}
+
 /*
  * Selects between sysctl_rdint and sysctl_int according to securelevel.
  */
@@ -1130,7 +1162,7 @@ int
 sysctl_securelevel_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
     int *valp)
 {
-	if (securelevel > 0)
+	if (atomic_load_int(&securelevel) > 0)
 		return (sysctl_rdint(oldp, oldlenp, newp, *valp));
 	return (sysctl_int(oldp, oldlenp, newp, newlen, valp));
 }
