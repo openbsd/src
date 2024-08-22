@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.25 2024/07/15 15:43:25 tb Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.26 2024/08/22 12:22:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -69,33 +69,6 @@
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS12_SAFEBAG *bag);
 
-static int
-copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
-{
-	X509_ATTRIBUTE *attr = NULL;
-	const ASN1_OBJECT *obj;
-	int i;
-
-	if ((obj = OBJ_nid2obj(nid)) == NULL) {
-		/* XXX - this seems wrong but preserves behavior. */
-		return 1;
-	}
-
-	for (i = 0; i < sk_X509_ATTRIBUTE_num(pkey->attributes); i++) {
-		attr = sk_X509_ATTRIBUTE_value(pkey->attributes, i);
-		if (OBJ_cmp(attr->object, obj) == 0)
-			break;
-		attr = NULL;
-	}
-
-	if (attr == NULL)
-		return 1;
-
-	if (!X509at_add1_attr(&bag->attrib, attr))
-		return 0;
-	return 1;
-}
-
 PKCS12 *
 PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
     STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter, int mac_iter,
@@ -156,11 +129,6 @@ PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
 		bag = PKCS12_add_key(&bags, pkey, keytype, iter, nid_key, pass);
 
 		if (!bag)
-			goto err;
-
-		if (!copy_bag_attr(bag, pkey, NID_ms_csp_name))
-			goto err;
-		if (!copy_bag_attr(bag, pkey, NID_LocalKeySet))
 			goto err;
 
 		if (name && !PKCS12_add_friendlyname(bag, name, -1))
