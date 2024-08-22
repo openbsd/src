@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.22 2024/04/12 09:41:39 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.23 2024/08/22 12:24:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -175,7 +175,6 @@ struct evp_pkey_st {
 #endif
 	} pkey;
 	int save_parameters;
-	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
 } /* EVP_PKEY */;
 
 struct evp_md_st {

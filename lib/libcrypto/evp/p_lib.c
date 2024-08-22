@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.60 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: p_lib.c,v 1.61 2024/08/22 12:24:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -422,7 +422,6 @@ EVP_PKEY_free(EVP_PKEY *pkey)
 		return;
 
 	evp_pkey_free_pkey_ptr(pkey);
-	sk_X509_ATTRIBUTE_pop_free(pkey->attributes, X509_ATTRIBUTE_free);
 	freezero(pkey, sizeof(*pkey));
 }
 LCRYPTO_ALIAS(EVP_PKEY_free);
