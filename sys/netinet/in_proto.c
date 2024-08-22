@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.112 2024/08/21 12:53:36 mvs Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.113 2024/08/22 10:58:31 mvs Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ const struct protosw inetsw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_IPV4,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET|PR_MPSYSCTL,
 #if NGIF > 0
   .pr_input	= in_gif_input,
 #else

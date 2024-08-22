@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.104 2024/08/21 12:53:36 mvs Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.105 2024/08/22 10:58:31 mvs Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -72,6 +72,11 @@
 #include <net/pfvar.h>
 #endif
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
@@ -87,7 +92,7 @@
  * We can control the acceptance of IP4 packets by altering the sysctl
  * net.inet.ipip.allow value.  Zero means drop them, all else is acceptance.
  */
-int ipip_allow = 0;
+int ipip_allow = 0;	/* [a] */
 
 struct cpumem *ipipcounters;
 
@@ -104,9 +109,10 @@ int
 ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
 {
 	struct ifnet *ifp;
+	int ipip_allow_local = atomic_load_int(&ipip_allow);
 
 	/* If we do not accept IP-in-IP explicitly, drop.  */
-	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
+	if (ipip_allow_local == 0 && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF("dropped due to policy");
 		ipipstat_inc(ipips_pdrops);
 		m_freemp(mp);
@@ -118,7 +124,7 @@ ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
 		m_freemp(mp);
 		return IPPROTO_DONE;
 	}
-	nxt = ipip_input_if(mp, offp, nxt, af, ifp);
+	nxt = ipip_input_if(mp, offp, nxt, af, ipip_allow_local, ifp);
 	if_put(ifp);
 
 	return nxt;
@@ -133,7 +139,7 @@ ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
  */
 
 int
-ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
+ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf, int allow,
     struct ifnet *ifp)
 {
 	struct mbuf *m = *mp;
@@ -271,7 +277,7 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 	}
 
 	/* Check for local address spoofing. */
-	if (!(ifp->if_flags & IFF_LOOPBACK) && ipip_allow != 2) {
+	if (!(ifp->if_flags & IFF_LOOPBACK) && allow != 2) {
 		struct sockaddr_storage ss;
 		struct rtentry *rt;
 
@@ -584,19 +590,14 @@ int
 ipip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	case IPIPCTL_ALLOW:
-		NET_LOCK();
-		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &ipip_allow, 0, 2);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &ipip_allow, 0, 2));
 	case IPIPCTL_STATS:
 		return (ipip_sysctl_ipipstat(oldp, oldlenp, newp));
 	default:
