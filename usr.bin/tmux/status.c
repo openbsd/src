@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.244 2024/08/21 05:03:13 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.245 2024/08/22 09:05:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -606,6 +606,8 @@ status_prompt_set(struct client *c, struct cmd_find_state *fs,
 {
 	struct format_tree	*ft;
 	char			*tmp;
+
+	server_client_clear_overlay(c);
 
 	if (fs != NULL)
 		ft = format_create_from_state(NULL, c, fs);

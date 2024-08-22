@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.73 2024/08/22 05:39:55 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.74 2024/08/22 09:05:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -277,7 +277,6 @@ key_string_lookup_string(const char *string)
 		}
 		free(udp);
 		return (uc);
-
 	}
 
 	/* Check for short Ctrl key. */
