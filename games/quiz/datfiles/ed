@@ -15,7 +15,7 @@ print every "Oxygen" or "oxygen":[g|1,$g]/\[[Oo|oO]\]xygen/[p|.p]
 change each "BTL" in file to "Bell Laboratories" and check:\
 [g|1,$g]/BTL/[s|.s]/[/|BTL/]Bell Laboratories/gp
 combine every even-numbered line with the next odd-numbered line:\
-2,${-{1}}g/[^|$]/[j|.,{.}+{1}j|.,.1j]
+2,${-{1}}g/[^|$]/[j|.,{.}+{1}j|.,+1j]
 print next "SH" and following line:\
 /SH/;[{.}+{1}|.1]p|/SH/,[//|/SH/][{.}+{1}|.1]p
 print from next "TS" to following "TE":/TS/;/TE/p
