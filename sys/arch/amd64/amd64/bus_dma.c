@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.56 2024/08/20 15:30:29 bluhm Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.57 2024/08/22 11:36:24 bluhm Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -499,7 +499,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	if (!use_bounce_buffer)
 		return;
 
-	for (i = map->_dm_segcnt, sg = map->dm_segs; size && i--; sg++) {
+	for (i = map->_dm_segcnt, sg = map->dm_segs; size && i; i--, sg++) {
 		if (off >= sg->ds_len) {
 			off -= sg->ds_len;
 			continue;
@@ -767,9 +767,11 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			     map->_dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
+			     (curaddr & bmask)) &&
+			    (!use_bounce_buffer || (map->dm_segs[seg]._ds_va +
+			     map->dm_segs[seg].ds_len) == vaddr)) {
 				map->dm_segs[seg].ds_len += sgsize;
-			else {
+			} else {
 				if (++seg >= map->_dm_segcnt)
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
