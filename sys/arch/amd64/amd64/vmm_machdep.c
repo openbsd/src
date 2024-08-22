@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.31 2024/07/26 15:59:04 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.32 2024/08/22 04:53:07 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/pool.h>
