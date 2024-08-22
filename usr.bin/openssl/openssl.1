@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.158 2024/08/12 15:34:58 job Exp $
+.\" $OpenBSD: openssl.1,v 1.159 2024/08/22 12:15:07 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: August 12 2024 $
+.Dd $Mdocdate: August 22 2024 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3084,7 +3084,6 @@ It is recommended that des3 is used.
 .Op Fl certpbe Ar alg
 .Op Fl chain
 .Op Fl clcerts
-.Op Fl CSP Ar name
 .Op Fl descert
 .Op Fl export
 .Op Fl in Ar file
@@ -3093,7 +3092,6 @@ It is recommended that des3 is used.
 .Op Fl keyex
 .Op Fl keypbe Ar alg
 .Op Fl keysig
-.Op Fl LMK
 .Op Fl macalg Ar alg
 .Op Fl maciter
 .Op Fl name Ar name
@@ -3202,10 +3200,6 @@ For interoperability reasons it is advisable to only use PKCS#12 algorithms.
 Include the entire certificate chain of the user certificate.
 The standard CA store is used for this search.
 If the search fails, it is considered a fatal error.
-.It Fl CSP Ar name
-Write
-.Ar name
-as a Microsoft CSP name.
 .It Fl descert
 Encrypt the certificate using triple DES; this may render the PKCS#12
 file unreadable by some
@@ -3237,8 +3231,6 @@ option marks the key for signing only.
 Signing only keys can be used for S/MIME signing, authenticode
 (ActiveX control signing)
 and SSL client authentication.
-.It Fl LMK
-Add local machine keyset attribute to private key.
 .It Fl macalg Ar alg
 Specify the MAC digest algorithm.
 The default is SHA1.
