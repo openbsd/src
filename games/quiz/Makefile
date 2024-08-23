@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2024/08/22 04:34:19 mglocker Exp $
+#	$OpenBSD: Makefile,v 1.8 2024/08/23 02:46:09 deraadt Exp $
 
 PROG=	quiz
 MAN=	quiz.6
@@ -12,7 +12,7 @@ NAPHONE= ${.CURDIR}/../../share/misc/na.phone
 CLEANFILES+= areas
 
 areas: ${NAPHONE}
-	${.CURDIR}/naphone2areas.sh ${NAPHONE} > areas
+	sh ${.CURDIR}/naphone2areas.sh ${NAPHONE} > areas
 
 afterinstall: areas
 	(cd ${.CURDIR}/datfiles; ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} \
