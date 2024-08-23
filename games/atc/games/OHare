@@ -7,6 +7,11 @@ exit:	(  6  0 x ) ( 18  0 x )
 	( 29  5 a ) ( 29 13 a )
 	( 14 20 e ) (  6 20 w ) ;
 
+#
+# Note: Some marker beacons at ORD were decommissioned after this file was
+#       written. Pilots are advised to not use the beacon information here for
+#       flight planning.
+#
 beacon:	(  6  5 ) ( 18  5 )
 	(  6 13 ) ;
 
