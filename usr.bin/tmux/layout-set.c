@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.31 2024/08/21 05:03:13 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.32 2024/08/23 10:19:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,6 +55,10 @@ layout_set_lookup(const char *name)
 	u_int	i;
 	int	matched = -1;
 
+	for (i = 0; i < nitems(layout_sets); i++) {
+		if (strcmp(layout_sets[i].name, name) == 0)
+			return (i);
+	}
 	for (i = 0; i < nitems(layout_sets); i++) {
 		if (strncmp(layout_sets[i].name, name, strlen(name)) == 0) {
 			if (matched != -1)	/* ambiguous */
