@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.25 2023/10/17 09:52:11 nicm Exp $
+.\"	$OpenBSD: tset.1,v 1.26 2024/08/23 15:10:40 nicm Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
@@ -40,11 +40,11 @@
 .el    .IP \(bu 2
 ..
 .SH NAME
-\fBtset\fP, \fB?\fP \- terminal initialization
+\fBtset\fP, \fBreset\fP \- terminal initialization
 .SH SYNOPSIS
 \fBtset\fP [\fB\-IQVcqrsw\fP] [\fB\-\fP] [\fB\-e\fP \fIch\fP] [\fB\-i\fP \fIch\fP] [\fB\-k\fP \fIch\fP] [\fB\-m\fP \fImapping\fP] [\fIterminal\fP]
 .br
-\fB?\fP [\fB\-IQVcqrsw\fP] [\fB\-\fP] [\fB\-e\fP \fIch\fP] [\fB\-i\fP \fIch\fP] [\fB\-k\fP \fIch\fP] [\fB\-m\fP \fImapping\fP] [\fIterminal\fP]
+\fBreset\fP [\fB\-IQVcqrsw\fP] [\fB\-\fP] [\fB\-e\fP \fIch\fP] [\fB\-i\fP \fIch\fP] [\fB\-k\fP \fIch\fP] [\fB\-m\fP \fImapping\fP] [\fIterminal\fP]
 .SH DESCRIPTION
 .SS tset - initialization
 This program initializes terminals.
@@ -118,7 +118,7 @@ Finally, if the erase, interrupt and line kill characters have changed,
 or are not set to their default values, their values are displayed to the
 standard error output.
 .SS reset - reinitialization
-When invoked as \fB?\fP, \fBtset\fP sets the terminal
+When invoked as \fBreset\fP, \fBtset\fP sets the terminal
 modes to \*(``sane\*('' values:
 .bP
 sets cooked and echo modes,
@@ -134,12 +134,12 @@ doing the terminal initialization described above.
 Also, rather than using the terminal \fIinitialization\fP strings,
 it uses the terminal \fIreset\fP strings.
 .PP
-The \fB?\fP command is useful
+The \fBreset\fP command is useful
 after a program dies leaving a terminal in an abnormal state:
 .bP
 you may have to type
 .sp
-    \fI<LF>\fB?\fI<LF>\fR
+    \fI<LF>\fBreset\fI<LF>\fR
 .sp
 (the line-feed character is normally control-J) to get the terminal
 to work, as carriage-return may no longer work in the abnormal state.
@@ -313,7 +313,7 @@ S. Raymond <esr@snark.thyrsus.com>.
 .SH COMPATIBILITY
 Neither IEEE Std 1003.1/The Open Group Base Specifications Issue 7
 (POSIX.1-2008) nor
-X/Open Curses Issue 7 documents \fBtset\fP or \fB?\fP.
+X/Open Curses Issue 7 documents \fBtset\fP or \fBreset\fP.
 .PP
 The AT&T \fBtput\fP utility (AIX, HPUX, Solaris)
 incorporated the terminal-mode manipulation as well as termcap-based features
@@ -370,7 +370,7 @@ although it is strongly recommended that such usage be fixed to
 explicitly specify the character.
 .PP
 As of 4.4BSD,
-executing \fBtset\fP as \fB?\fP no longer implies the \fB\-Q\fP option.
+executing \fBtset\fP as \fBreset\fP no longer implies the \fB\-Q\fP option.
 Also, the interaction between the \- option and the \fIterminal\fP
 argument in some historic implementations of \fBtset\fP has been removed.
 .PP

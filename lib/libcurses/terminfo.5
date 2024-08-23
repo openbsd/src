@@ -33,7 +33,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: terminfo.5,v 1.2 2023/10/17 09:52:08 nicm Exp $
+.\" $Id: terminfo.5,v 1.3 2024/08/23 15:10:40 nicm Exp $
 .TH terminfo 5 2023-07-01 "ncurses 6.4" "File formats"
 .ds n 5
 .ds d /usr/share/terminfo
@@ -73,8 +73,8 @@ used by screen-oriented programs such as
 and other curses applications,
 using high-level calls to libraries such as \fBcurses\fP(3).
 It is also used via low-level calls by non-curses applications
-which may be screen-oriented (such as \fB?\fP(1))
-or non-screen (such as \fB?\fP(1)).
+which may be screen-oriented (such as \fBclear\fP(1))
+or non-screen (such as \fBtabs\fP(1)).
 .PP
 .I Terminfo
 describes terminals by giving a set of capabilities which they
@@ -1784,7 +1784,7 @@ T}
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: terminfo.5,v 1.2 2023/10/17 09:52:08 nicm Exp $
+.\" $Id: terminfo.5,v 1.3 2024/08/23 15:10:40 nicm Exp $
 .ps +1
 .SS User-Defined Capabilities
 .
@@ -3140,7 +3140,7 @@ and
 respectively.
 These strings are output
 by \fIreset\fP option of \fBtput\fP,
-or by the \fB?\fP program
+or by the \fBreset\fP program
 (an alias of \fBtset\fP),
 which is used when the terminal gets into a wedged state.
 Commands are normally placed in
@@ -3157,7 +3157,7 @@ normally be part of
 but it causes an annoying glitch of the screen and is not normally
 needed since the terminal is usually already in 80-column mode.
 .PP
-The \fB?\fP program writes strings including
+The \fBreset\fP program writes strings including
 .BR iprog ,
 etc., in the same order as the
 .I init
@@ -3173,7 +3173,7 @@ If any of
 or
 .B rf
 reset capability strings are missing,
-the \fB?\fP program
+the \fBreset\fP program
 falls back upon the corresponding initialization capability string.
 .PP
 If there are commands to set and clear tab stops, they can be given as
@@ -3189,13 +3189,13 @@ or
 .BR if .
 .PP
 The \fBtput reset\fP command uses the same capability strings
-as the \fB?\fP command,
-although the two programs (\fBtput\fP and \fB?\fP)
+as the \fBreset\fP command,
+although the two programs (\fBtput\fP and \fBreset\fP)
 provide different command-line options.
 .PP
 In practice, these terminfo capabilities are not often used in
 initialization of tabs
-(though they are required for the \fB?\fP program):
+(though they are required for the \fBtabs\fP program):
 .bP
 Almost all hardware terminals (at least those which supported tabs)
 initialized those to every \fIeight\fP columns:
@@ -3828,7 +3828,7 @@ files containing terminal descriptions
 .na
 .hy 0
 \fBinfocmp\fP(1),
-\fB?\fP(1),
+\fBtabs\fP(1),
 \fBtic\fP(1),
 \fBcurses\fP(3),
 \fBcurs_color\fP(3),
