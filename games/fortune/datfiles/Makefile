@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2016/09/02 11:55:24 tb Exp $
+#	$OpenBSD: Makefile,v 1.8 2024/08/23 03:25:32 deraadt Exp $
 #	$NetBSD: Makefile,v 1.15 1996/02/29 00:21:16 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
@@ -6,16 +6,9 @@ SRCS=	fortunes fortunes2 startrek zippy recipes
 BLDS=	fortunes.dat fortunes2.dat startrek.dat zippy.dat \
 	fortunes-o fortunes-o.dat recipes.dat
 
-# TO INSTALL THE POTENTIALLY OFFENSIVE FORTUNES, UNCOMMENT THE THREE
-# LINES AND COMMENT OUT THE FOURTH LINE.
-
-# THE THREE LINES
 SRCS+=	fortunes2-o limerick
 BLDS+=	fortunes2-o.dat limerick.dat
 TYPE=	real
-
-# THE FOURTH LINE
-#TYPE=	fake
 
 CLEANFILES+=${BLDS}
 
