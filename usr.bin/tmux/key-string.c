@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.74 2024/08/22 09:05:51 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.75 2024/08/23 13:25:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -410,7 +410,7 @@ key_string_lookup_key(key_code key, int with_flags)
 		s = "MouseMoveBorder";
 		goto append;
 	}
-	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {
+	if (key >= KEYC_USER && key < KEYC_USER_END) {
 		snprintf(tmp, sizeof tmp, "User%u", (u_int)(key - KEYC_USER));
 		strlcat(out, tmp, sizeof out);
 		goto out;
