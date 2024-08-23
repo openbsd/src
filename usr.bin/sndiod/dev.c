@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.117 2024/06/01 09:44:10 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.118 2024/08/23 01:19:33 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2297,7 +2297,7 @@ ctlslot_visible(struct ctlslot *s, struct ctl *c)
 		if (strcmp(c->node0.name, "server") == 0 &&
 		    strcmp(c->func, "device") == 0)
 			return 0;
-		/* FALLTHROUHG */
+		/* FALLTHROUGH */
 	case CTL_DEV_MASTER:
 		return (s->opt->dev == c->u.any.arg0);
 	case CTL_OPT_DEV:
