@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.64 2024/07/08 06:00:34 tb Exp $
+# $OpenBSD: appstest.sh,v 1.65 2024/08/23 04:57:12 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1403,8 +1403,7 @@ function test_pkcs {
 		-caname "caname_server_p12" \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC -chain \
 		-name "name_server_p12" -des3 -maciter -macalg sha256 \
-		-CSP "csp_server_p12" -LMK -keyex \
-		-passout pass:$pkcs_pass -out $sv_rsa_cert.p12
+		-keyex -passout pass:$pkcs_pass -out $sv_rsa_cert.p12
 	check_exit_status $?
 
 	start_message "pkcs12 ... verify"
