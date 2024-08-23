@@ -10,30 +10,16 @@ if [ X"$1" == X"" ]; then
 	exit 1
 fi
 
-AC=0
-grep -v '\#' $1 | grep -v '\$' | \
-while T= read -r line; do
-	AC_LAST=$AC
-	AC=`echo $line | cut -d: -f1`
+awk '{
+	split($0, a, ":");
 
-	# skip line if area code isn't numeric
-	CMD=`echo $AC | grep "^[0-9]*$"`
-	if [ $? -eq 1 ]; then
-		continue
-	fi
-
-	# skip line if area code is a duplicate
-	if [ $AC -eq $AC_LAST ]; then
-		continue
-	fi
-
-	C=`echo $line | cut -d: -f2`
-	SP=`echo $line | cut -d: -f3`
-	SPA=`echo $line | cut -d: -f4`
-
-	if [ X"$SPA" == X"" ]; then
-		echo "$AC:$SP:$C"
-	else
-		echo "$AC:$SP|$SPA:$C"
-	fi
-done
+	if (a[1] ~ /^[0-9]+$/) {
+		if (last != a[1]) {
+			if (a[4] == "")
+				print a[1] ":" a[3] ":" a[2];
+			else
+				print a[1] ":" a[3] "|" a[4] ":" a[2];
+		}
+	}
+	last = a[1];
+}' $1
