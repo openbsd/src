@@ -103,7 +103,6 @@
 ./usr/share/games/quiz.db/elements
 ./usr/share/games/quiz.db/europe
 ./usr/share/games/quiz.db/flowers
-./usr/share/games/quiz.db/greek
 ./usr/share/games/quiz.db/inca
 ./usr/share/games/quiz.db/index
 ./usr/share/games/quiz.db/latin
@@ -119,6 +118,7 @@
 ./usr/share/games/quiz.db/seq-easy
 ./usr/share/games/quiz.db/seq-hard
 ./usr/share/games/quiz.db/sexes
+./usr/share/games/quiz.db/ship
 ./usr/share/games/quiz.db/sov
 ./usr/share/games/quiz.db/state
 ./usr/share/games/quiz.db/trek
