@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.108 2023/02/06 11:16:22 miod Exp $
+#	$OpenBSD: files.alpha,v 1.109 2024/08/23 18:45:28 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -279,7 +279,6 @@ file	arch/alpha/alpha/db_interface.c		ddb
 file	arch/alpha/alpha/db_trace.c		ddb
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor
-file	arch/alpha/alpha/lock_machdep.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/locore.s
