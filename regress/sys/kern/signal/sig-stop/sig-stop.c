@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig-stop.c,v 1.1 2020/09/16 14:02:23 mpi Exp $	*/
+/*	$OpenBSD: sig-stop.c,v 1.2 2024/08/23 12:56:26 anton Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2007 Public Domain.
  */
@@ -51,7 +51,7 @@ main(int argc, char **argv)
 	    (toggle ? WIFSTOPPED(status) : WIFCONTINUED(status)));
 
 	if (!WIFEXITED(status))
-		err(1, "bad status: %d\n", status);
+		err(1, "bad status: %d", status);
 
 	return 0;
 }

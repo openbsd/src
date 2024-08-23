@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.17 2022/01/11 06:01:15 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.18 2024/08/23 12:56:26 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -197,20 +197,20 @@ check_coverage(const unsigned long *cover, int mode, unsigned long maxsize,
 	if (nonzero == -1) {
 		return 0;
 	} else if (nonzero && cover[0] == 0) {
-		warnx("coverage empty (count=0)\n");
+		warnx("coverage empty (count=0)");
 		return 1;
 	} else if (!nonzero && cover[0] != 0) {
-		warnx("coverage not empty (count=%lu)\n", *cover);
+		warnx("coverage not empty (count=%lu)", *cover);
 		return 1;
 	} else if (cover[0] >= maxsize) {
-		warnx("coverage overflow (count=%lu, max=%lu)\n",
+		warnx("coverage overflow (count=%lu, max=%lu)",
 		    *cover, maxsize);
 		return 1;
 	}
 
 	if (mode == KCOV_MODE_TRACE_CMP) {
 		if (*cover * 4 >= maxsize) {
-			warnx("coverage cmp overflow (count=%lu, max=%lu)\n",
+			warnx("coverage cmp overflow (count=%lu, max=%lu)",
 			    *cover * 4, maxsize);
 			return 1;
 		}

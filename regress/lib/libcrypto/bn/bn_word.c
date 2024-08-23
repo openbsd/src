@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.1 2023/03/11 14:04:21 jsing Exp $ */
+/* $OpenBSD: bn_word.c,v 1.2 2024/08/23 12:56:26 anton Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -51,7 +51,7 @@ check_bn_word_test(const char *op_name, const BIGNUM *bn,
 	}
 
 	if ((out_hex = BN_bn2hex(bn)) == NULL)
-		errx(1, "BN_bn2hex() failed\n");
+		errx(1, "BN_bn2hex() failed");
 
 	if (strcmp(out_hex, bwt->out_hex) != 0) {
 		fprintf(stderr, "FAIL %s: Got hex %s, want %s\n",
@@ -82,7 +82,7 @@ test_bn_word(int (*bn_word_op)(BIGNUM *, BN_ULONG), const char *op_name,
 	int failed = 0;
 
 	if ((bn = BN_new()) == NULL)
-		errx(1, "BN_new() failed\n");
+		errx(1, "BN_new() failed");
 
 	for (i = 0; i < num_tests; i++) {
 		bwt = &bwts[i];
@@ -428,7 +428,7 @@ test_bn_div_word(void)
 	int failed = 0;
 
 	if ((bn = BN_new()) == NULL)
-		errx(1, "BN_new() failed\n");
+		errx(1, "BN_new() failed");
 
 	for (i = 0; i < N_BN_DIV_WORD_TESTS; i++) {
 		bwt = &bn_div_word_tests[i];
@@ -574,7 +574,7 @@ test_bn_mod_word(void)
 	int failed = 0;
 
 	if ((bn = BN_new()) == NULL)
-		errx(1, "BN_new() failed\n");
+		errx(1, "BN_new() failed");
 
 	for (i = 0; i < N_BN_MOD_WORD_TESTS; i++) {
 		bwt = &bn_mod_word_tests[i];

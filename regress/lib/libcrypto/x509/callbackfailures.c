@@ -1,4 +1,4 @@
-/* $OpenBSD: callbackfailures.c,v 1.2 2023/01/28 19:12:20 tb Exp $ */
+/* $OpenBSD: callbackfailures.c,v 1.3 2024/08/23 12:56:26 anton Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -167,7 +167,7 @@ verify_cert(const char *roots_dir, const char *roots_file,
 
 	verify_err = X509_STORE_CTX_get_error(xsc);
 	if (verify_err == 0)
-		errx(1, "Error unset on failure!\n");
+		errx(1, "Error unset on failure!");
 
 	fprintf(stderr, "failed to verify at %d: %s\n",
 	    X509_STORE_CTX_get_error_depth(xsc),

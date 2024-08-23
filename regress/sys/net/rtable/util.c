@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2023/11/11 07:34:54 anton Exp $ */
+/*	$OpenBSD: util.c,v 1.15 2024/08/23 12:56:26 anton Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -130,12 +130,12 @@ route_insert(unsigned int rid, sa_family_t af, char *string)
 
 	if ((error = rtable_insert(rid, ndst, mask, NULL, 0, rt)) != 0) {
 		inet_net_satop(af, ndst, plen, ip, sizeof(ip));
-		errx(1, "can't add route: %s, %s\n", ip, strerror(error));
+		errx(1, "can't add route: %s, %s", ip, strerror(error));
 	}
 	nrt = rtable_lookup(rid, dst, mask, NULL, RTP_ANY);
 	if (nrt != rt) {
 		inet_net_satop(af, rt_key(rt), plen, ip, sizeof(ip));
-		errx(1, "added route not found: %s\n", ip);
+		errx(1, "added route not found: %s", ip);
 	}
 	rtfree(rt);
 	rtfree(nrt);
@@ -161,7 +161,7 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 	rt = rtable_lookup(0, dst, mask, NULL, RTP_ANY);
 	if (rt == NULL) {
 		inet_net_satop(af, dst, plen, ip, sizeof(ip));
-		errx(1, "can't find route: %s\n", ip);
+		errx(1, "can't find route: %s", ip);
 	}
 
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
@@ -169,7 +169,7 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 
 	if ((error = rtable_delete(0, dst, mask, rt)) != 0) {
 		inet_net_satop(af, dst, plen, ip, sizeof(ip));
-		errx(1, "can't rm route: %s, %s\n", ip, strerror(error));
+		errx(1, "can't rm route: %s, %s", ip, strerror(error));
 	}
 
 	nrt = rtable_lookup(0, dst, mask, NULL, RTP_ANY);
@@ -207,7 +207,7 @@ route_lookup(unsigned int rid, sa_family_t af, char *string)
 	rt = rtable_lookup(0, dst, mask, NULL, RTP_ANY);
 	if (rt == NULL) {
 		inet_net_satop(af, dst, plen, ip, sizeof(ip));
-		errx(1, "%s not found\n", ip);
+		errx(1, "%s not found", ip);
 	}
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
 	assert(rt_plen(rt) == rtable_satoplen(af, mask));
@@ -225,7 +225,7 @@ do_from_file(unsigned int rid, sa_family_t af, char *filename,
 	int			 lines = 0;
 
 	if ((fp = fopen(filename, "r")) == NULL)
-		errx(1, "No such file: %s\n", filename);
+		errx(1, "No such file: %s", filename);
 
 	while ((buf = fgetln(fp, &len)) != NULL) {
 		if (buf[len - 1] == '\n')
@@ -264,7 +264,7 @@ rtentry_delete(struct rtentry *rt, void *w, unsigned int rid)
 
 	if ((error = rtable_delete(0, rt_key(rt), mask, rt)) != 0) {
 		inet_net_satop(af, rt_key(rt), rt_plen(rt), dest, sizeof(dest));
-		errx(1, "can't rm route: %s, %s\n", dest, strerror(error));
+		errx(1, "can't rm route: %s, %s", dest, strerror(error));
 	}
 	assert(refcnt_read(&rt->rt_refcnt) == 0);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: changerule.c,v 1.1 2021/11/11 12:49:53 sashan Exp $ */
+/* $OpenBSD: changerule.c,v 1.2 2024/08/23 12:56:26 anton Exp $ */
 /*
  * Copyright (c) 2021 Alexandr Nedvedicky <sashan@openbsd.org>
  *
@@ -96,7 +96,7 @@ do_chng_cmd(char *anchorname, int cmd, int rule_no)
 
 	if (strlcpy(pf.anchor->path, anchorname,
 	    sizeof(pf.anchor->path)) >= sizeof (pf.anchor->path))
-		errx(1, "%s: strlcpy\n", __func__);
+		errx(1, "%s: strlcpy", __func__);
 
 	pf.astack[0] = pf.anchor;
 	pf.asd = 0;
@@ -204,7 +204,7 @@ main(int argc, char *argv[])
 		int len = strlen(anchoropt);
 
 		if (anchoropt[len - 1] == '*') {
-			warnx("wildcard anchors not supported\n");
+			warnx("wildcard anchors not supported");
 			changerule_usage();
 		}
 		if (strlcpy(anchorname, anchoropt,

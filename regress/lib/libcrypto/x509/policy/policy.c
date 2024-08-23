@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.12 2023/06/02 08:35:10 tb Exp $ */
+/* $OpenBSD: policy.c,v 1.13 2024/08/23 12:56:26 anton Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2023 Bob Beck <beck@openbsd.org>
@@ -182,7 +182,7 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	}
 
 	if (*error == 0)
-		errx(1, "Error unset on failure!\n");
+		errx(1, "Error unset on failure!");
 
 	fprintf(stderr, "failed to verify at %d: %s\n",
 	    *error_depth, X509_verify_cert_error_string(*error));

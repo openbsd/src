@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.10 2023/04/11 10:10:52 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.11 2024/08/23 12:56:26 anton Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -2865,7 +2865,7 @@ mod_sqrt_test(struct mod_sqrt_test *test, BN_CTX *ctx)
 	if (!BN_hex2bn(&want, test->sqrt))
 		errx(1, "BN_hex2bn(%s)", test->sqrt);
 	if (!BN_mod_sub(diff, want, got, p, ctx))
-		errx(1, "BN_mod_sub() failed\n");
+		errx(1, "BN_mod_sub() failed");
 
 	if (!BN_is_zero(diff)) {
 		fprintf(stderr, "a: %s\n", test->a);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: aa.c,v 1.2 2007/08/01 12:53:28 kurt Exp $       */
+/*      $OpenBSD: aa.c,v 1.3 2024/08/23 12:56:26 anton Exp $       */
 
 /*
  * Copyright (c) 2007 Kurt Miller <kurt@openbsd.org>
@@ -27,5 +27,5 @@ void test_aa()
 {
 	libaa_hidden_val = hidden_check;
 	if (hidden_check != &hidden_check)
-		errx(1, "libaa: hidden_check != &hidden_check\n");
+		errx(1, "libaa: hidden_check != &hidden_check");
 }

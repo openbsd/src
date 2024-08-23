@@ -1,4 +1,4 @@
-/*      $OpenBSD: test2.c,v 1.3 2017/08/07 16:33:52 bluhm Exp $       */
+/*      $OpenBSD: test2.c,v 1.4 2024/08/23 12:56:26 anton Exp $       */
 
 /*
  * Copyright (c) 2007 Kurt Miller <kurt@openbsd.org>
@@ -36,11 +36,11 @@ main()
 	test_ab();
 
 	if (hidden_check != NULL)
-		errx(1, "hidden_check != NULL in main prog\n");
+		errx(1, "hidden_check != NULL in main prog");
 
 	if (libaa_hidden_val == NULL || libab_hidden_val == NULL ||
 	    libaa_hidden_val == libab_hidden_val)
-		errx(1, "incorrect hidden_check detected in libs\n");
+		errx(1, "incorrect hidden_check detected in libs");
 
 	return (0);
 }

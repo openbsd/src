@@ -1,4 +1,4 @@
-/* $OpenBSD: getpeereid_test.c,v 1.4 2017/03/08 19:28:47 deraadt Exp $ */
+/* $OpenBSD: getpeereid_test.c,v 1.5 2024/08/23 12:56:26 anton Exp $ */
 /* Written by Marc Espie in 2006 */
 /* Public domain */
 #include <sys/types.h>
@@ -142,7 +142,8 @@ main()
 		if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 			printf("getpeereid test okay\n");
 			exit(0);
-		} else
-			errx(1, "Problem with child\n");
+		} else {
+			errx(1, "Problem with child");
+		}
 	}
 }

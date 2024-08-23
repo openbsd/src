@@ -1,4 +1,4 @@
-/*      $OpenBSD: test1.c,v 1.3 2017/08/07 16:33:52 bluhm Exp $       */
+/*      $OpenBSD: test1.c,v 1.4 2024/08/23 12:56:26 anton Exp $       */
 
 /*
  * Copyright (c) 2007 Kurt Miller <kurt@openbsd.org>
@@ -35,28 +35,28 @@ main()
 	libaa = dlopen(LIBAA, RTLD_LAZY);
 	libab = dlopen(LIBAB, RTLD_LAZY);
 	if (libaa == NULL)
-               	errx(1, "dlopen(%s, RTLD_LAZY) FAILED\n", LIBAA);
+		errx(1, "dlopen(%s, RTLD_LAZY) FAILED", LIBAA);
 	if (libab == NULL)
-               	errx(1, "dlopen(%s, RTLD_LAZY) FAILED\n", LIBAB);
+		errx(1, "dlopen(%s, RTLD_LAZY) FAILED", LIBAB);
 
        	hidden_test = (void (*)())dlsym(libaa, "test_aa");
 	if (hidden_test == NULL)
-		errx(1, "dlsym(libaa, \"test_aa\") FAILED\n");
+		errx(1, "dlsym(libaa, \"test_aa\") FAILED");
 
 	(*hidden_test)();
 
        	hidden_test = (void (*)())dlsym(libab, "test_ab");
 	if (hidden_test == NULL)
-		errx(1, "dlsym(libab, \"test_ab\") FAILED\n");
+		errx(1, "dlsym(libab, \"test_ab\") FAILED");
 
 	(*hidden_test)();
 
 	if (hidden_check != NULL)
-		errx(1, "hidden_check != NULL in main prog\n");
+		errx(1, "hidden_check != NULL in main prog");
 
 	if (libaa_hidden_val == NULL || libab_hidden_val == NULL ||
 	    libaa_hidden_val == libab_hidden_val)
-		errx(1, "incorrect hidden_check detected in libs\n");
+		errx(1, "incorrect hidden_check detected in libs");
 
 	dlclose(libaa);
 	dlclose(libab);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.7 2024/04/09 21:55:16 dv Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.8 2024/08/23 12:56:26 anton Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (ours == NULL) {
-		warn("failed to find vm %uz\n", vcp.vcp_id);
+		warn("failed to find vm %uz", vcp.vcp_id);
 		goto out;
 	}
 
@@ -306,7 +306,7 @@ main(int argc, char **argv)
 	}
 
 	if (vrunp.vrp_vm_id != vcp.vcp_id) {
-		warnx("expected vm id %uz, got %uz\n", vcp.vcp_id,
+		warnx("expected vm id %uz, got %uz", vcp.vcp_id,
 		    vrunp.vrp_vm_id);
 		goto out;
 	}

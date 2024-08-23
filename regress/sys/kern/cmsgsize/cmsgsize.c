@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmsgsize.c,v 1.3 2020/01/22 07:52:37 deraadt Exp $ */
+/*	$OpenBSD: cmsgsize.c,v 1.4 2024/08/23 12:56:26 anton Exp $ */
 /*
  * Copyright (c) 2017 Alexander Markert <alexander.markert@siemens.com>
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 	bytes = test_cmsgsize(so, &src, &dst, CFG_SO_MAX_SEND_BUFFER,
 	    CFG_SO_MAX_SEND_BUFFER);
 	if (bytes >= 0)
-		errx(1, "1: %d bytes sent\n", bytes);
+		errx(1, "1: %d bytes sent", bytes);
 	if (errno != EMSGSIZE)
 		err(-1, "1: incorrect errno");
 	close(so);
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	bytes = test_cmsgsize(so, &src, &dst, CFG_SO_MAX_SEND_BUFFER,
 	    CFG_SO_MAX_SEND_BUFFER);
 	if (bytes >= 0)
-		errx(1, "2: %d bytes sent\n", bytes);
+		errx(1, "2: %d bytes sent", bytes);
 	if (errno != EMSGSIZE)
 		err(-1, "2: incorrect errno");
 	close(so);

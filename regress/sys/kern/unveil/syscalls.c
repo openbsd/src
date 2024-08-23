@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.35 2022/09/05 05:34:25 anton Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.36 2024/08/23 12:56:26 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -867,7 +867,7 @@ test_fork_locked(int do_uv)
 	status = 0;
 	waitpid(pid, &status, 0);
 	if (WIFSIGNALED(status))
-		errx(1, "child exited with signal %d\n", WTERMSIG(status));
+		errx(1, "child exited with signal %d", WTERMSIG(status));
 	if (WEXITSTATUS(status) == 0)
 		return 0;
 	else

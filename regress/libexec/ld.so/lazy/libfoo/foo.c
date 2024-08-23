@@ -1,4 +1,4 @@
-/*	$OpenBSD: foo.c,v 1.3 2017/08/07 16:33:52 bluhm Exp $ */
+/*	$OpenBSD: foo.c,v 1.4 2024/08/23 12:56:26 anton Exp $ */
 /* Public domain. 2008, Matthieu Herrb */
 
 #include <dlfcn.h>
@@ -15,7 +15,7 @@ foo_init(void)
 	printf("loading %s\n", BAR);
 	h = dlopen(BAR, RTLD_LAZY|RTLD_GLOBAL);
 	if (h == NULL)
-		errx(1, "dlopen %s: %s\n", BAR, dlerror());
+		errx(1, "dlopen %s: %s", BAR, dlerror());
 	printf("loaded: %s\n", BAR);
 }
 
