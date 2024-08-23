@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.443 2024/08/22 10:08:25 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.444 2024/08/23 01:31:04 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -487,7 +487,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		switch (name[0]) {
 #if NAUDIO > 0
 		case KERN_AUDIO:
-			return (sysctl_audio(name, namelen, oldp, oldlenp,
+			return (sysctl_audio(name + 1, namelen - 1, oldp, oldlenp,
 			    newp, newlen));
 #endif
 		default:
