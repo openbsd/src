@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.91 2023/04/13 15:23:21 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.92 2024/08/23 15:14:45 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -863,6 +863,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 		    pmap_asn_info[i].pma_asngen;
 	}
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap_kernel(), pm_list);
+	mtx_init(&pmap_kernel()->pm_mtx, IPL_VM);
 
 #if defined(MULTIPROCESSOR)
 	/*
