@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.60 2024/08/19 15:08:21 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.61 2024/08/23 00:58:04 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -68,7 +68,7 @@ static const char *DowNames[] = {
 
 static int	get_list(bitstr_t *, int, int, const char *[], int, FILE *),
 		get_range(bitstr_t *, int, int, const char *[], int, FILE *),
-		get_number(int *, int, const char *[], int, FILE *, const char *),
+		get_number(int *, int, int, const char *[], int, FILE *, const char *),
 		set_element(bitstr_t *, int, int, int),
 		set_range(bitstr_t *, int, int, int, int, int);
 
@@ -489,7 +489,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 			return (EOF);
 	} else {
 		if (ch != '~') {
-			ch = get_number(&num1, low, names, ch, file, ",-~ \t\n");
+			ch = get_number(&num1, low, high, names, ch, file, ",-~ \t\n");
 			if (ch == EOF)
 				return (EOF);
 		}
@@ -504,7 +504,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 
 			/* get the number following the dash
 			 */
-			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
+			ch = get_number(&num2, low, high, names, ch, file, "/, \t\n");
 			if (ch == EOF || num1 > num2)
 				return (EOF);
 			break;
@@ -517,7 +517,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 
 			/* get the (optional) number following the tilde
 			 */
-			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
+			ch = get_number(&num2, low, high, names, ch, file, "/, \t\n");
 			if (ch == EOF) {
 				/* no second number, check for valid terminator
 				 */
@@ -563,6 +563,8 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 	/* check for step size
 	 */
 	if (ch == '/') {
+		const int max_step = high + 1 - low;
+
 		/* eat the slash
 		 */
 		ch = get_char(file);
@@ -574,7 +576,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		 * element id, it's a step size.  'low' is
 		 * sent as a 0 since there is no offset either.
 		 */
-		ch = get_number(&num3, 0, NULL, ch, file, ", \t\n");
+		ch = get_number(&num3, 0, max_step, NULL, ch, file, ", \t\n");
 		if (ch == EOF || num3 == 0)
 			return (EOF);
 		if (rndstep) {
@@ -604,8 +606,8 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 }
 
 static int
-get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
-    const char *terms)
+get_number(int *numptr, int low, int high, const char *names[], int ch,
+    FILE *file, const char *terms)
 {
 	char temp[MAX_TEMPSTR], *pc;
 	int len, i;
@@ -622,11 +624,13 @@ get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
 	}
 	*pc = '\0';
 	if (len != 0) {
+		const char *errstr;
+
 		/* got a number, check for valid terminator */
 		if (!strchr(terms, ch))
 			goto bad;
-		i = atoi(temp);
-		if (i < 0)
+		i = strtonum(temp, low, high, &errstr);
+		if (errstr != NULL)
 			goto bad;
 		*numptr = i;
 		return (ch);
@@ -678,9 +682,11 @@ set_range(bitstr_t *bits, int low, int high, int start, int stop, int step)
 	start -= low;
 	stop -= low;
 
-	if (step <= 1 || step > stop) {
+	if (step <= 1) {
 		bit_nset(bits, start, stop);
 	} else {
+		if (step > stop + 1)
+			return (EOF);
 		for (i = start; i <= stop; i += step)
 			bit_set(bits, i);
 	}
