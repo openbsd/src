@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2024/08/10 05:32:28 jsg Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2024/08/23 00:43:34 millert Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -108,14 +108,13 @@ int detached;			/* have detached from terminal */
 int phase;			/* where the link is at */
 volatile sig_atomic_t kill_link;
 volatile sig_atomic_t open_ccp_flag;
+volatile sig_atomic_t got_sigchld;
 
 char **script_env;		/* Env. variable values for scripts */
 int s_env_nalloc;		/* # words avail at script_env */
 
 u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
-
-static int n_children;		/* # child processes still running */
 
 static int locked;		/* lock() has succeeded */
 
@@ -964,10 +963,7 @@ term(int sig)
 static void
 chld(int sig)
 {
-    int save_errno = errno;
-
-    reap_kids();		/* XXX somewhat unsafe */
-    errno = save_errno;
+    got_sigchld = 1;
 }
 
 
@@ -1162,7 +1158,6 @@ run_program(char *prog, char **args, int must_exist)
 	_exit(1);
     }
     MAINDEBUG((LOG_DEBUG, "Script %s started; pid = %ld", prog, (long)pid));
-    ++n_children;
     return 0;
 }
 
@@ -1177,18 +1172,29 @@ reap_kids(void)
     int status;
     pid_t pid;
 
-    if (n_children == 0)
+    if (!got_sigchld)
 	return;
-    if ((pid = waitpid(-1, &status, WNOHANG)) == -1) {
-	if (errno != ECHILD)
-	    syslog(LOG_ERR, "Error waiting for child process: %m");
-	return;
-    }
-    if (pid > 0) {
-	--n_children;
-	if (WIFSIGNALED(status)) {
-	    syslog(LOG_WARNING, "Child process %ld terminated with signal %d",
-		   (long)pid, WTERMSIG(status));
+    got_sigchld = 0;
+
+    for (;;) {
+	pid = waitpid(-1, &status, WNOHANG);
+	switch (pid) {
+	case -1:
+	    if (errno == EINTR)
+		continue;
+	    if (errno != ECHILD)
+		syslog(LOG_ERR, "Error waiting for child process: %m");
+	    return;
+	case 0:
+	    /* No children left */
+	    return;
+	default:
+	    if (WIFSIGNALED(status)) {
+		syslog(LOG_WARNING,
+		    "Child process %d terminated with signal %d",
+		    (int)pid, WTERMSIG(status));
+	    }
+	    break;
 	}
     }
 }
