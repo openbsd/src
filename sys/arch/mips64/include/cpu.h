@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.148 2024/08/08 13:56:00 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.149 2024/08/23 19:47:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -111,6 +111,7 @@
 #include <machine/intr.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 struct cpu_hwinfo {
 	uint32_t	c0prid;
@@ -144,6 +145,8 @@ struct cpu_info {
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#define __HAVE_UVM_PERCPU
+	struct uvm_pmr_cache	ci_uvm;
 #endif
 
 	/* cache information and pending flush state */
