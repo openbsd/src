@@ -1,4 +1,4 @@
-/*	$OpenBSD: goodaout.c,v 1.5 2017/02/16 20:59:20 patrick Exp $	*/
+/*	$OpenBSD: goodaout.c,v 1.6 2024/08/23 02:49:20 deraadt Exp $	*/
 /*	$NetBSD: goodaout.c,v 1.3 1995/04/20 22:44:20 cgd Exp $	*/
 
 /*
@@ -38,6 +38,6 @@
 int
 main(int argc, char *argv[])
 {
-	printf("succeeded\n");
+	printf("errno=0	succeeded\n");
 	exit(0);
 }

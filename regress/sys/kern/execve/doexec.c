@@ -1,4 +1,4 @@
-/*	$OpenBSD: doexec.c,v 1.5 2003/09/02 23:52:17 david Exp $	*/
+/*	$OpenBSD: doexec.c,v 1.6 2024/08/23 02:49:20 deraadt Exp $	*/
 /*	$NetBSD: doexec.c,v 1.3 1995/04/20 22:43:13 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ main(int argc, char *argv[])
 	}
 
 	if (execve(argv[1], &argv[1], NULL) == -1) {
-		printf("%s\n", strerror(errno));
+		printf("errno=%d\t%s\n", errno, strerror(errno));
 		exit(1);
 	}
 
