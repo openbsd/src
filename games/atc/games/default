@@ -1,3 +1,5 @@
+#	$OpenBSD: default,v 1.2 2024/08/23 04:21:18 deraadt Exp $
+
 update = 5;
 newplane = 10;
 width = 30;

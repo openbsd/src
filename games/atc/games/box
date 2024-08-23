@@ -1,4 +1,5 @@
-update = 5;
+#	$OpenBSD: box,v 1.2 2024/08/23 04:21:18 deraadt Exp $
+
 newplane = 6;
 width = 29;
 height = 21;
