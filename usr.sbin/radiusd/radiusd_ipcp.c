@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.12 2024/08/16 09:54:21 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.13 2024/08/23 01:23:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -591,7 +591,7 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 		    imsg->hdr.peerid, 0, -1, NULL, 0);
 		if (imsg->hdr.type == IMSG_RADIUSD_MODULE_IPCP_MONITOR)
 			break;
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case IMSG_RADIUSD_MODULE_IPCP_DUMP:
 		dumpsiz = MAX_IMSGSIZE;
 		if ((dump = calloc(1, dumpsiz)) == NULL) {
