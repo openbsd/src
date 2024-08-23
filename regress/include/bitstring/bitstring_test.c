@@ -1,4 +1,4 @@
-/* $OpenBSD: bitstring_test.c,v 1.5 2003/07/31 21:48:02 deraadt Exp $	 */
+/* $OpenBSD: bitstring_test.c,v 1.6 2024/08/23 17:19:16 florian Exp $	 */
 /* $NetBSD: bitstring_test.c,v 1.4 1995/04/29 05:44:35 cgd Exp $	 */
 
 /*
@@ -206,6 +206,16 @@ main(int argc, char *argv[])
 	for (i = 0; i < TEST_LENGTH; i++) {
 		bit_nclear(bs, 0, TEST_LENGTH - 1);
 		bit_nset(bs, i, i);
+		(void) printf("%3d ", i);
+		printbits(bs, TEST_LENGTH);
+	}
+
+	(void) printf("\n");
+	(void) printf("CHI square test\n");
+	for (i = 0; i < TEST_LENGTH; i++) {
+		bit_nclear(bs, 0, TEST_LENGTH - 1);
+		bit_nset(bs, i, i);
+		bit_nset(bs, TEST_LENGTH - 1 - i, TEST_LENGTH - 1 - i);
 		(void) printf("%3d ", i);
 		printbits(bs, TEST_LENGTH);
 	}
