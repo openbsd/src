@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2021/10/23 11:22:48 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2024/08/23 04:25:46 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -227,11 +227,13 @@ default_game(void)
 		warn("fopen %s", games);
 		return (NULL);
 	}
-	if (fgets(line, sizeof(line), fp) == NULL) {
-		warnx("%s: no default game available", games);
-		fclose(fp);
-		return (NULL);
-	}
+	do {
+		if (fgets(line, sizeof(line), fp) == NULL) {
+			warnx("%s: no default game available", games);
+			fclose(fp);
+			return (NULL);
+		}
+	} while (line[0] == '#');
 	fclose(fp);
 
 	line[strcspn(line, "\n")] = '\0';
@@ -261,6 +263,8 @@ okay_game(const char *s)
 	}
 	while (fgets(line, sizeof(line), fp) != NULL) {
 		line[strcspn(line, "\n")] = '\0';
+		if (line[0] == '#')
+			continue;
 		if (strcmp(s, line) == 0) {
 			if (strlen(line) + strlen(_PATH_GAMES) >= sizeof(file)) {
 				warnx("game name too long");
