@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.153 2024/08/24 10:38:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.154 2024/08/24 10:46:43 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -433,13 +433,14 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size)
 	uvm_unmap(map, trunc_page(addr), round_page(addr+size));
 }
 
+#ifdef __i386__
 /*
  * uvm_km_zalloc: allocate wired down memory in the kernel map.
  *
  * => we can sleep if needed
  */
 vaddr_t
-uvm_km_zalloc(struct vm_map *map, vsize_t size, vsize_t align)
+uvm_km_zalloc(struct vm_map *map, vsize_t size)
 {
 	vaddr_t kva, loopva;
 	voff_t offset;
@@ -452,7 +453,7 @@ uvm_km_zalloc(struct vm_map *map, vsize_t size, vsize_t align)
 
 	/* allocate some virtual space */
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, align,
+	    UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_INHERIT_NONE, MADV_RANDOM, 0)) != 0)) {
@@ -510,6 +511,7 @@ uvm_km_zalloc(struct vm_map *map, vsize_t size, vsize_t align)
 
 	return kva;
 }
+#endif
 
 #if defined(__HAVE_PMAP_DIRECT)
 /*
