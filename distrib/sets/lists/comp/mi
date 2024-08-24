@@ -1929,7 +1929,6 @@
 ./usr/share/man/man3/EVP_PKEY_CTX_new.3
 ./usr/share/man/man3/EVP_PKEY_CTX_set_hkdf_md.3
 ./usr/share/man/man3/EVP_PKEY_CTX_set_tls1_prf_md.3
-./usr/share/man/man3/EVP_PKEY_add1_attr.3
 ./usr/share/man/man3/EVP_PKEY_asn1_get_count.3
 ./usr/share/man/man3/EVP_PKEY_asn1_new.3
 ./usr/share/man/man3/EVP_PKEY_check.3
