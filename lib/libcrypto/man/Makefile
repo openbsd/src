@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.289 2024/08/17 09:16:37 tb Exp $
+# $OpenBSD: Makefile,v 1.290 2024/08/24 07:48:37 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -300,7 +300,6 @@ MAN=	\
 	SMIME_write_PKCS7.3 \
 	STACK_OF.3 \
 	TS_REQ_new.3 \
-	UI_UTIL_read_pw.3 \
 	UI_create_method.3 \
 	UI_get_string_type.3 \
 	UI_new.3 \
