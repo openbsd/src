@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.152 2024/03/27 15:41:40 kurt Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.153 2024/08/24 10:38:44 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -117,10 +117,10 @@
  * address minus the vm_map_min(kernel_map).
  * example:
  *   suppose kernel_map starts at 0xf8000000 and the kernel does a
- *   uvm_km_alloc(kernel_map, PAGE_SIZE) [allocate 1 wired down page in the
- *   kernel map].    if uvm_km_alloc returns virtual address 0xf8235000,
- *   then that means that the page at offset 0x235000 in kernel_object is
- *   mapped at 0xf8235000.   
+ *   km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok)) [allocate 1 wired
+ *   down page in the kernel map].    if km_alloc() returns virtual address
+ *   0xf8235000, then that means that the page at offset 0x235000 in
+ *   kernel_object is mapped at 0xf8235000.
  *
  * kernel objects have one other special property: when the kernel virtual
  * memory mapping them is unmapped, the backing memory in the object is
@@ -434,12 +434,12 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size)
 }
 
 /*
- * uvm_km_alloc1: allocate wired down memory in the kernel map.
+ * uvm_km_zalloc: allocate wired down memory in the kernel map.
  *
  * => we can sleep if needed
  */
 vaddr_t
-uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
+uvm_km_zalloc(struct vm_map *map, vsize_t size, vsize_t align)
 {
 	vaddr_t kva, loopva;
 	voff_t offset;
@@ -483,7 +483,7 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 				uvm_unmap(map, kva, loopva - kva);
 				return (0);
 			} else {
-				uvm_wait("km_alloc1w");	/* wait for memory */
+				uvm_wait("km_zallocw");	/* wait for memory */
 				continue;
 			}
 		}
@@ -501,13 +501,12 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		size -= PAGE_SIZE;
 	}
 	pmap_update(map->pmap);
-	
+
 	/*
 	 * zero on request (note that "size" is now zero due to the above loop
 	 * so we need to subtract kva from loopva to reconstruct the size).
 	 */
-	if (zeroit)
-		memset((caddr_t)kva, 0, loopva - kva);
+	memset((caddr_t)kva, 0, loopva - kva);
 
 	return kva;
 }
