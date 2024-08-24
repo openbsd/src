@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.35 2024/08/18 17:50:10 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.36 2024/08/24 12:08:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -658,7 +658,7 @@ static CONF_METHOD default_method = {
 	.dump = def_dump,
 	.is_number = def_is_number,
 	.to_int = def_to_int,
-	.load = def_load
+	.load = def_load,
 };
 
 static CONF_METHOD WIN32_method = {
@@ -671,7 +671,7 @@ static CONF_METHOD WIN32_method = {
 	def_dump,
 	def_is_number,
 	def_to_int,
-	def_load
+	def_load,
 };
 
 CONF_METHOD *
