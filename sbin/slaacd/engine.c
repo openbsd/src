@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.92 2024/08/24 09:44:41 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.93 2024/08/24 16:35:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -242,7 +242,7 @@ void			 engine_dispatch_frontend(int, short, void *);
 void			 engine_dispatch_main(int, short, void *);
 #ifndef	SMALL
 void			 send_interface_info(struct slaacd_iface *, pid_t);
-void			 engine_showinfo_ctl(struct imsg *, uint32_t);
+void			 engine_showinfo_ctl(pid_t, uint32_t);
 void			 debug_log_ra(struct imsg_ra *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 #endif	/* SMALL */
@@ -499,7 +499,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			    sizeof(if_index)) == -1)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 
-			engine_showinfo_ctl(&imsg, if_index);
+			engine_showinfo_ctl(imsg_get_pid(&imsg), if_index);
 			break;
 #endif	/* SMALL */
 		case IMSG_REMOVE_IF:
@@ -862,26 +862,18 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 }
 
 void
-engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
+engine_showinfo_ctl(pid_t pid, uint32_t if_index)
 {
 	struct slaacd_iface			*iface;
 
-	switch (imsg->hdr.type) {
-	case IMSG_CTL_SHOW_INTERFACE_INFO:
-		if (if_index == 0) {
-			LIST_FOREACH (iface, &slaacd_interfaces, entries)
-				send_interface_info(iface, imsg->hdr.pid);
-		} else {
-			if ((iface = get_slaacd_iface_by_id(if_index)) != NULL)
-				send_interface_info(iface, imsg->hdr.pid);
-		}
-		engine_imsg_compose_frontend(IMSG_CTL_END, imsg->hdr.pid, NULL,
-		    0);
-		break;
-	default:
-		log_debug("%s: error handling imsg", __func__);
-		break;
+	if (if_index == 0) {
+		LIST_FOREACH (iface, &slaacd_interfaces, entries)
+			send_interface_info(iface, pid);
+	} else {
+		if ((iface = get_slaacd_iface_by_id(if_index)) != NULL)
+			send_interface_info(iface, pid);
 	}
+	engine_imsg_compose_frontend(IMSG_CTL_END, pid, NULL, 0);
 }
 
 #endif	/* SMALL */
