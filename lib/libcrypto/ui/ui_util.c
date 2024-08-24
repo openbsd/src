@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_util.c,v 1.15 2024/08/08 09:56:51 tb Exp $ */
+/* $OpenBSD: ui_util.c,v 1.16 2024/08/24 07:50:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -58,40 +58,18 @@
 
 #include <openssl/ui.h>
 
+/* XXX - remove in next bump. */
+
 int
 UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 {
-	char buff[BUFSIZ];
-	int ret;
-
-	ret = UI_UTIL_read_pw(buf, buff, (length > BUFSIZ) ? BUFSIZ : length,
-	    prompt, verify);
-	explicit_bzero(buff, BUFSIZ);
-	return (ret);
+	return -1;
 }
 LCRYPTO_ALIAS(UI_UTIL_read_pw_string);
 
 int
 UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
 {
-	int ok = 0;
-	UI *ui;
-
-	if (size < 1)
-		return -1;
-
-	ui = UI_new();
-	if (ui) {
-		ok = UI_add_input_string(ui, prompt, 0, buf, 0, size - 1);
-		if (ok >= 0 && verify)
-			ok = UI_add_verify_string(ui, prompt, 0, buff, 0,
-			    size - 1, buf);
-		if (ok >= 0)
-			ok = UI_process(ui);
-		UI_free(ui);
-	}
-	if (ok > 0)
-		ok = 0;
-	return (ok);
+	return -1;
 }
 LCRYPTO_ALIAS(UI_UTIL_read_pw);
