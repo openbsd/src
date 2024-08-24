@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.70 2024/08/24 09:42:40 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.71 2024/08/24 09:44:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -381,6 +381,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct imsg_ifinfo	 imsg_ifinfo;
 	ssize_t			 n;
+	uint32_t		 type;
 	int			 shut = 0;
 	int			 rdomain;
 #ifndef	SMALL
@@ -408,29 +409,30 @@ main_dispatch_frontend(int fd, short event, void *bula)
 		if (n == 0)	/* No more messages. */
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+
+		switch (type) {
 		case IMSG_OPEN_ICMP6SOCK:
-			log_debug("IMSG_OPEN_ICMP6SOCK");
-			if (IMSG_DATA_SIZE(imsg) != sizeof(rdomain))
-				fatalx("%s: IMSG_OPEN_ICMP6SOCK wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&rdomain, imsg.data, sizeof(rdomain));
+			if (imsg_get_data(&imsg, &rdomain,
+			    sizeof(rdomain)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			open_icmp6sock(rdomain);
 			break;
 #ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
-				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&verbose, imsg.data, sizeof(verbose));
+			if (imsg_get_data(&imsg, &verbose,
+			    sizeof(verbose)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			log_setverbose(verbose);
 			break;
 #endif	/* SMALL */
 		case IMSG_UPDATE_IF:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_ifinfo))
-				fatalx("%s: IMSG_UPDATE_IF wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
+			if (imsg_get_data(&imsg, &imsg_ifinfo,
+			    sizeof(imsg_ifinfo)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			if (get_soiikey(imsg_ifinfo.soiikey) == -1)
 				log_warn("get_soiikey");
 			else
@@ -438,8 +440,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    &imsg_ifinfo, sizeof(imsg_ifinfo));
 			break;
 		default:
-			log_debug("%s: error handling imsg %d", __func__,
-			    imsg.hdr.type);
+			log_debug("%s: error handling imsg %d", __func__, type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -463,6 +464,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 	struct imsg_configure_dfr	 dfr;
 	struct imsg_propose_rdns	 rdns;
 	ssize_t				 n;
+	uint32_t			 type;
 	int				 shut = 0;
 
 	ibuf = &iev->ibuf;
@@ -486,54 +488,47 @@ main_dispatch_engine(int fd, short event, void *bula)
 		if (n == 0)	/* No more messages. */
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+
+		switch (type) {
 		case IMSG_CONFIGURE_ADDRESS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(address))
-				fatalx("%s: IMSG_CONFIGURE_ADDRESS wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&address, imsg.data, sizeof(address));
+			if (imsg_get_data(&imsg, &address,
+			    sizeof(address)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			configure_interface(&address);
 			break;
 		case IMSG_WITHDRAW_ADDRESS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(address))
-				fatalx("%s: IMSG_WITHDRAW_ADDRESS wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&address, imsg.data, sizeof(address));
+			if (imsg_get_data(&imsg, &address,
+			    sizeof(address)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			delete_address(&address);
 			break;
 		case IMSG_CONFIGURE_DFR:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(dfr))
-				fatalx("%s: IMSG_CONFIGURE_DFR wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&dfr, imsg.data, sizeof(dfr));
+			if (imsg_get_data(&imsg, &dfr, sizeof(dfr)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			add_gateway(&dfr);
 			break;
 		case IMSG_WITHDRAW_DFR:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(dfr))
-				fatalx("%s: IMSG_WITHDRAW_DFR wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&dfr, imsg.data, sizeof(dfr));
+			if (imsg_get_data(&imsg, &dfr, sizeof(dfr)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			delete_gateway(&dfr);
 			break;
 		case IMSG_PROPOSE_RDNS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(rdns))
-				fatalx("%s: IMSG_PROPOSE_RDNS wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&rdns, imsg.data, sizeof(rdns));
+			if (imsg_get_data(&imsg, &rdns, sizeof(rdns)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
 			if ((2 + rdns.rdns_count * sizeof(struct in6_addr)) >
 			    sizeof(struct sockaddr_rtdns))
 				fatalx("%s: rdns_count too big: %d", __func__,
 				    rdns.rdns_count);
+
 			send_rdns_proposal(&rdns);
 			break;
 		default:
-			log_debug("%s: error handling imsg %d", __func__,
-			    imsg.hdr.type);
+			log_debug("%s: error handling imsg %d", __func__, type);
 			break;
 		}
 		imsg_free(&imsg);

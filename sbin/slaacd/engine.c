@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.91 2024/07/13 16:06:34 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.92 2024/08/24 09:44:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -462,7 +462,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 #ifndef	SMALL
 	int				 verbose;
 #endif	/* SMALL */
-	uint32_t			 if_index;
+	uint32_t			 if_index, type;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -483,36 +483,36 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 		if (n == 0)	/* No more messages. */
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+
+		switch (type) {
 #ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
-				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&verbose, imsg.data, sizeof(verbose));
+			if (imsg_get_data(&imsg, &verbose,
+			    sizeof(verbose)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
-				fatalx("%s: IMSG_CTL_SHOW_INTERFACE_INFO wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&if_index, imsg.data, sizeof(if_index));
+			if (imsg_get_data(&imsg, &if_index,
+			    sizeof(if_index)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			engine_showinfo_ctl(&imsg, if_index);
 			break;
 #endif	/* SMALL */
 		case IMSG_REMOVE_IF:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
-				fatalx("%s: IMSG_REMOVE_IF wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&if_index, imsg.data, sizeof(if_index));
+			if (imsg_get_data(&imsg, &if_index,
+			    sizeof(if_index)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			remove_slaacd_iface(if_index);
 			break;
 		case IMSG_RA:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(ra))
-				fatalx("%s: IMSG_RA wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&ra, imsg.data, sizeof(ra));
+			if (imsg_get_data(&imsg, &ra, sizeof(ra)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			iface = get_slaacd_iface_by_id(ra.if_index);
 
 			/*
@@ -524,11 +524,10 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				parse_ra(iface, &ra);
 			break;
 		case IMSG_CTL_SEND_SOLICITATION:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
-				fatalx("%s: IMSG_CTL_SEND_SOLICITATION wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&if_index, imsg.data, sizeof(if_index));
+			if (imsg_get_data(&imsg, &if_index,
+			    sizeof(if_index)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			iface = get_slaacd_iface_by_id(if_index);
 			if (iface == NULL)
 				log_warnx("requested to send solicitation on "
@@ -539,10 +538,10 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_DEL_ADDRESS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(del_addr))
-				fatalx("%s: IMSG_DEL_ADDRESS wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&del_addr, imsg.data, sizeof(del_addr));
+			if (imsg_get_data(&imsg, &del_addr,
+			    sizeof(del_addr)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			iface = get_slaacd_iface_by_id(del_addr.if_index);
 			if (iface == NULL) {
 				log_debug("IMSG_DEL_ADDRESS: unknown interface"
@@ -562,10 +561,10 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				free_address_proposal(addr_proposal);
 			break;
 		case IMSG_DEL_ROUTE:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(del_route))
-				fatalx("%s: IMSG_DEL_ROUTE wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&del_route, imsg.data, sizeof(del_route));
+			if (imsg_get_data(&imsg, &del_route,
+			    sizeof(del_route)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			iface = get_slaacd_iface_by_id(del_route.if_index);
 			if (iface == NULL) {
 				log_debug("IMSG_DEL_ROUTE: unknown interface"
@@ -582,10 +581,10 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_DUP_ADDRESS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(dup_addr))
-				fatalx("%s: IMSG_DUP_ADDRESS wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&dup_addr, imsg.data, sizeof(dup_addr));
+			if (imsg_get_data(&imsg, &dup_addr,
+			    sizeof(dup_addr)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			iface = get_slaacd_iface_by_id(dup_addr.if_index);
 			if (iface == NULL) {
 				log_debug("IMSG_DUP_ADDRESS: unknown interface"
@@ -606,8 +605,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				    iface->rdomain);
 			break;
 		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
+			log_debug("%s: unexpected imsg %d", __func__, type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -629,6 +627,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg_ifinfo	 imsg_ifinfo;
 	ssize_t			 n;
+	uint32_t		 type;
 	int			 shut = 0;
 
 	if (event & EV_READ) {
@@ -650,7 +649,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 		if (n == 0)	/* No more messages. */
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+
+		switch (type) {
 		case IMSG_SOCKET_IPC:
 			/*
 			 * Setup pipe and event handler to the frontend
@@ -681,15 +682,14 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal("pledge");
 			break;
 		case IMSG_UPDATE_IF:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_ifinfo))
-				fatalx("%s: IMSG_UPDATE_IF wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
+			if (imsg_get_data(&imsg, &imsg_ifinfo,
+			    sizeof(imsg_ifinfo)) == -1)
+				fatalx("%s: invalid %s", __func__, i2s(type));
+
 			engine_update_iface(&imsg_ifinfo);
 			break;
 		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
+			log_debug("%s: unexpected imsg %d", __func__, type);
 			break;
 		}
 		imsg_free(&imsg);
