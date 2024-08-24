@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2024/08/24 09:44:41 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2024/08/24 16:34:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -296,10 +296,9 @@ control_imsg_relay(struct imsg *imsg)
 {
 	struct ctl_conn	*c;
 
-	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
+	if ((c = control_connbypid(imsg_get_pid(imsg))) == NULL)
 		return (0);
 
-	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
-	    -1, imsg->data, IMSG_DATA_SIZE(*imsg)));
+	return (imsg_forward_event(&c->iev, imsg));
 }
 #endif	/* SMALL */

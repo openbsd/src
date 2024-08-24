@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.71 2024/08/24 09:44:41 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.72 2024/08/24 16:34:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -587,6 +587,16 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 	return (ret);
 }
 
+int
+imsg_forward_event(struct imsgev *iev, struct imsg *imsg)
+{
+	int	ret;
+
+	if ((ret = imsg_forward(&iev->ibuf, imsg)) != -1)
+		imsg_event_add(iev);
+
+	return (ret);
+}
 static int
 main_imsg_send_ipc_sockets(struct imsgbuf *frontend_buf,
     struct imsgbuf *engine_buf)
