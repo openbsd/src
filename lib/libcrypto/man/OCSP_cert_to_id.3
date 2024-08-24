@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.12 2022/03/31 17:27:17 naddy Exp $
+.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.13 2024/08/24 19:31:09 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 24 2024 $
 .Dt OCSP_CERT_TO_ID 3
 .Os
 .Sh NAME
@@ -162,19 +162,25 @@ issuer key hash
 and serial number
 .Fa serialNumber .
 .Pp
-.Fn OCSP_id_cmp
-compares
+.Fn OCSP_id_issuer_cmp
+compares the hash algorithms,
+the hashed issuer distinguished names and
+the hashed public keys of
 .Vt OCSP_CERTID
 .Fa a
 and
 .Fa b .
 .Pp
-.Fn OCSP_id_issuer_cmp
-compares only the issuer name of
+.Fn OCSP_id_cmp
+compares
 .Vt OCSP_CERTID
 .Fa a
 and
-.Fa b .
+.Fa b
+using
+.Fn OCSP_id_issuer_cmp
+followed by a comparison of the certificate serial numbers with
+.Xr ASN1_INTEGER_cmp 3 .
 .Pp
 .Fn OCSP_id_get0_info
 returns the issuer name hash, hash OID, issuer key hash and serial
@@ -214,6 +220,7 @@ return 0 for a match or non-zero otherwise.
 .Fn OCSP_id_get0_info
 returns 1 for success or 0 for failure.
 .Sh SEE ALSO
+.Xr ASN1_INTEGER_cmp 3 ,
 .Xr EVP_DigestInit 3 ,
 .Xr OCSP_request_add1_nonce 3 ,
 .Xr OCSP_REQUEST_new 3 ,
