@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.38 2022/07/12 16:55:00 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.39 2024/08/24 09:42:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -206,6 +206,8 @@ int		imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
 		    int, void *, uint16_t);
 #ifndef	SMALL
 const char	*sin6_to_str(struct sockaddr_in6 *);
+const char	*i2s(uint32_t);
 #else
 #define	sin6_to_str(x...)	""
+#define	i2s(x...)		""
 #endif	/* SMALL */
