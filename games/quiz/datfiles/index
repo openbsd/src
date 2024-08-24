@@ -25,7 +25,7 @@
 /usr/share/games/quiz.db/seq-easy:easy{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/seq-hard:hard{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/sexes:male:female
-/usr/share/games/quiz.db/ship:description:part
+/usr/share/games/quiz.db/ship:ship:part
 /usr/share/games/quiz.db/sov:sov{ereign}:cen{t{ury}}:succ{essor}
 /usr/share/games/quiz.db/state:state:cap{ital}:abbr{ev{iation}}:flower:bird:tree
 /usr/share/games/quiz.db/trek:star:trek
