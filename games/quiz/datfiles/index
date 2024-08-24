@@ -11,7 +11,6 @@
 /usr/share/games/quiz.db/elements:symbol:number:weight:element
 /usr/share/games/quiz.db/europe:Europe{an}:cap{ital}
 /usr/share/games/quiz.db/flowers:flower{s}:meaning
-/usr/share/games/quiz.db/ship:description:part
 /usr/share/games/quiz.db/inca:inca:succ{essor}
 /usr/share/games/quiz.db/latin:latin:english
 /usr/share/games/quiz.db/locomotive:locomotive:name
@@ -26,6 +25,7 @@
 /usr/share/games/quiz.db/seq-easy:easy{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/seq-hard:hard{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/sexes:male:female
+/usr/share/games/quiz.db/ship:description:part
 /usr/share/games/quiz.db/sov:sov{ereign}:cen{t{ury}}:succ{essor}
 /usr/share/games/quiz.db/state:state:cap{ital}:abbr{ev{iation}}:flower:bird:tree
 /usr/share/games/quiz.db/trek:star:trek
