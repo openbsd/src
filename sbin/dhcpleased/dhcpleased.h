@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.16 2024/01/26 21:14:08 jan Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.17 2024/08/25 09:53:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -158,7 +158,6 @@
 
 #define	MAX_SERVERS	16	/* max servers that can be ignored per if */
 
-#define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 #define	DHCP_SNAME_LEN		64
 #define	DHCP_FILE_LEN		128
 
@@ -252,9 +251,9 @@ struct iface_conf {
 	SIMPLEQ_ENTRY(iface_conf)	 entry;
 	char				 name[IF_NAMESIZE];
 	uint8_t				*vc_id;
-	int				 vc_id_len;
+	size_t				 vc_id_len;
 	uint8_t				*c_id;
-	int				 c_id_len;
+	size_t				 c_id_len;
 	char				*h_name;
 	int				 ignore;
 	struct in_addr			 ignore_servers[MAX_SERVERS];
@@ -304,12 +303,14 @@ struct imsg_req_dhcp {
 void			 imsg_event_add(struct imsgev *);
 int			 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
 			     pid_t, int, void *, uint16_t);
+int			 imsg_forward_event(struct imsgev *, struct imsg *);
 #ifndef	SMALL
 void			 config_clear(struct dhcpleased_conf *);
 struct dhcpleased_conf	*config_new_empty(void);
 void			 merge_config(struct dhcpleased_conf *, struct
 			     dhcpleased_conf *);
 const char	*sin_to_str(struct sockaddr_in *);
+const char	*i2s(uint32_t);
 
 /* frontend.c */
 struct iface_conf	*find_iface_conf(struct iface_conf_head *, char *);
@@ -323,6 +324,7 @@ void	print_config(struct dhcpleased_conf *);
 struct dhcpleased_conf	*parse_config(const char *);
 int			 cmdline_symset(char *);
 #else
-#define	sin_to_str(x...)	""
+#define	sin_to_str(x)	""
+#define	i2s(x)		""
 #endif	/* SMALL */
 
