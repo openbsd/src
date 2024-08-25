@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.1,v 1.21 2011/01/24 19:58:32 jmc Exp $
+.\"	$OpenBSD: hostname.1,v 1.22 2024/08/25 09:32:08 tb Exp $
 .\"	$NetBSD: hostname.1,v 1.11 1995/09/07 06:28:39 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hostname.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 24 2011 $
+.Dd $Mdocdate: August 25 2024 $
 .Dt HOSTNAME 1
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ or by supplying a
 .Xr myname 5
 file,
 which is used at system boot time by
-.Xr netstart 8
+.Xr rc 8
 to initialize the hostname.
 .Pp
 The options are as follows:
@@ -67,7 +67,7 @@ name.
 .Xr gethostname 3 ,
 .Xr myname 5 ,
 .Xr hostname 7 ,
-.Xr netstart 8
+.Xr rc 8
 .Sh HISTORY
 The
 .Nm
