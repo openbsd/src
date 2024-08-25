@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.50 2024/08/01 14:36:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.51 2024/08/25 05:43:36 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1805,7 +1805,7 @@ sock_write(struct sock *f)
 		}
 		f->wstate = SOCK_WDATA;
 		f->wsize = f->wtodo = ntohl(f->wmsg.u.data.size);
-		/* PASSTHROUGH */
+		/* FALLTHROUGH */
 	case SOCK_WDATA:
 		if (!sock_wdata(f))
 			return 0;
@@ -1823,7 +1823,7 @@ sock_write(struct sock *f)
 			}
 #endif
 		}
-		/* PASSTHROUGH */
+		/* FALLTHROUGH */
 	case SOCK_WIDLE:
 		if (f->rstate == SOCK_RRET) {
 			f->wmsg = f->rmsg;
