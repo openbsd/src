@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.21 2017/11/02 14:04:24 mpi Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.22 2024/08/25 14:51:33 deraadt Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -330,16 +330,19 @@ tc_3000_500_ioslot(slot, flags, set)
 int
 tc_3000_500_activate(struct device *self, int act)
 {
-	int rc = config_activate_children(self, act);
 	int slot;
+	int rv;
 
-	/*
-	 * Reset all slots to non-sgmap when halting.
-	 */
-	if (act == DVACT_POWERDOWN) {
+	switch (act)
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		/* Reset all slots to non-sgmap when halting. */
 		for (slot = 0; slot < tc_3000_500_nslots; slot++)
 			tc_3000_500_ioslot(slot, IOSLOT_S, 0);
+		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
 	}
-
-	return rc;
+	return rv;
 }
