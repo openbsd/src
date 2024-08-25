@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.22 2024/08/25 14:51:33 deraadt Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.23 2024/08/25 19:57:33 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -333,7 +333,7 @@ tc_3000_500_activate(struct device *self, int act)
 	int slot;
 	int rv;
 
-	switch (act)
+	switch (act) {
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
 		/* Reset all slots to non-sgmap when halting. */
