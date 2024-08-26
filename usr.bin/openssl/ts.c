@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.28 2024/03/25 10:16:02 tb Exp $ */
+/* $OpenBSD: ts.c,v 1.29 2024/08/26 18:40:50 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -950,7 +950,7 @@ create_response(CONF *conf, const char *section, char *queryfile, char *passin,
 	if (!TS_CONF_set_clock_precision_digits(conf, section, resp_ctx))
 		goto end;
 
-	/* Setting the ordering flaf if requested. */
+	/* Setting the ordering flag if requested. */
 	if (!TS_CONF_set_ordering(conf, section, resp_ctx))
 		goto end;
 
