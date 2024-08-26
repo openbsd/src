@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitstring.h,v 1.6 2020/05/10 00:56:06 guenther Exp $	*/
+/*	$OpenBSD: bitstring.h,v 1.7 2024/08/26 11:52:54 bluhm Exp $	*/
 /*	$NetBSD: bitstring.h,v 1.5 1997/05/14 15:49:55 pk Exp $	*/
 
 /*
@@ -70,16 +70,22 @@ typedef	unsigned char bitstr_t;
 	((name)[bitstr_size(nbits)])
 
 				/* is bit N of bitstring name set? */
-#define	bit_test(name, bit) \
-	((name)[_bit_byte(bit)] & _bit_mask(bit))
+#define	bit_test(name, bit) ({ \
+	register int __tbit = (bit); \
+	((name)[_bit_byte(__tbit)] & _bit_mask(__tbit)); \
+})
 
 				/* set bit N of bitstring name */
-#define	bit_set(name, bit) \
-	((name)[_bit_byte(bit)] |= _bit_mask(bit))
+#define	bit_set(name, bit) do { \
+	register int __sbit = (bit); \
+	((name)[_bit_byte(__sbit)] |= _bit_mask(__sbit)); \
+} while(0)
 
 				/* clear bit N of bitstring name */
-#define	bit_clear(name, bit) \
-	((name)[_bit_byte(bit)] &= ~_bit_mask(bit))
+#define	bit_clear(name, bit) do { \
+	register int __cbit = (bit); \
+	((name)[_bit_byte(__cbit)] &= ~_bit_mask(__cbit)); \
+} while(0)
 
 				/* clear bits start ... stop in bitstring */
 #define	bit_nclear(name, start, stop) do { \
