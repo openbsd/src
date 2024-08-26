@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.48 2024/08/26 06:05:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.49 2024/08/26 06:06:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -552,8 +552,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 			char			 ifnamebuf[IF_NAMESIZE];
 
 			if (nconf == NULL)
-				fatalx("%s: IMSG_RECONF_END without "
-				    "IMSG_RECONF_CONF", __func__);
+				fatalx("%s: %s without IMSG_RECONF_CONF",
+				    __func__, i2s(type));
+
 			ifaces = changed_ifaces(engine_conf, nconf);
 			merge_config(engine_conf, nconf);
 			nconf = NULL;

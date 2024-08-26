@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.37 2024/08/26 06:04:24 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.38 2024/08/26 06:06:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -426,8 +426,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			char	 ifnamebuf[IF_NAMESIZE], *if_name;
 
 			if (nconf == NULL)
-				fatalx("%s: IMSG_RECONF_END without "
-				    "IMSG_RECONF_CONF", __func__);
+				fatalx("%s: %s without IMSG_RECONF_CONF",
+				    __func__, i2s(type));
 
 			ifaces = changed_ifaces(frontend_conf, nconf);
 			merge_config(frontend_conf, nconf);
