@@ -1,4 +1,4 @@
-/* $OpenBSD: bitstring_test.c,v 1.6 2024/08/23 17:19:16 florian Exp $	 */
+/* $OpenBSD: bitstring_test.c,v 1.7 2024/08/26 12:15:40 bluhm Exp $	 */
 /* $NetBSD: bitstring_test.c,v 1.4 1995/04/29 05:44:35 cgd Exp $	 */
 
 /*
@@ -6,7 +6,7 @@
  * inspect the output, you should notice problems
  * choose the ATT or BSD flavor
  */
-/* #define ATT /*- */
+// #define ATT /*-*/
 #define BSD			/*-*/
 
 /*
@@ -39,7 +39,7 @@ clearbits(bitstr_t *b, int n)
 static void
 printbits(bitstr_t *b, int n)
 {
-	register int    i;
+	register int    i, k;
 	int             jc, js;
 
 	bit_ffc(b, n, &jc);
@@ -54,7 +54,7 @@ printbits(bitstr_t *b, int n)
 int
 main(int argc, char *argv[])
 {
-	int             i;
+	int             i, j, k, *p;
 	bitstr_t       *bs;
 	bitstr_t        bit_decl(bss, DECL_TEST_LENGTH);
 
@@ -64,7 +64,8 @@ main(int argc, char *argv[])
 		TEST_LENGTH = DECL_TEST_LENGTH;
 
 	if (TEST_LENGTH < 4) {
-		fprintf(stderr, "TEST_LENGTH must be at least 4, but it is %d\n",
+		fprintf(stderr,
+			"TEST_LENGTH must be at least 4, but it is %d\n",
 			TEST_LENGTH);
 		exit(1);
 	}
@@ -92,7 +93,7 @@ main(int argc, char *argv[])
 	}
 	(void) printf("be:   1   0 ");
 	for (i = 0; i < TEST_LENGTH; i++)
-		(void) putchar(*("100" + (i % 3)));
+		(void) putchar("100"[i % 3]);
 	(void) printf("\nis: ");
 	printbits(bs, TEST_LENGTH);
 
@@ -102,7 +103,7 @@ main(int argc, char *argv[])
 	}
 	(void) printf("be:   0   3 ");
 	for (i = 0; i < TEST_LENGTH; i++)
-		(void) putchar(*("000100" + (i % 6)));
+		(void) putchar("000100"[i % 6]);
 	(void) printf("\nis: ");
 	printbits(bs, TEST_LENGTH);
 
@@ -220,6 +221,38 @@ main(int argc, char *argv[])
 		printbits(bs, TEST_LENGTH);
 	}
 
+	(void) printf("\n");
+	(void) printf("macros should evaluate arguments only once\n");
+	i = j = 0;
+	_bit_byte(i++);
+	(void) printf("_bit_byte(%d) -> %d\n", j++, i);
+	_bit_mask(i++);
+	(void) printf("_bit_mask(%d) -> %d\n", j++, i);
+	bitstr_size(i++);
+	(void) printf("bitstr_size(%d) -> %d\n", j++, i);
+	free(bit_alloc(i++));
+	(void) printf("bit_alloc(%d) -> %d\n", j++, i);
+	{ bitstr_t bit_decl(bd, i++); }
+	(void) printf("bit_alloc(%d) -> %d\n", j++, i);
+	bit_test(bs, i++);
+	(void) printf("bit_test(%d) -> %d\n", j++, i);
+	bit_set(bs, i++);
+	(void) printf("bit_set(%d) -> %d\n", j++, i);
+	bit_clear(bs, i++);
+	(void) printf("bit_clear(%d) -> %d\n", j++, i);
+	i %= TEST_LENGTH; j %= TEST_LENGTH;
+	bit_nclear(bs, i++, i++);
+	(void) printf("bit_nclear(%d, %d) -> %d\n", j, j + 1, i);
+	j += 2;
+	bit_nset(bs, i++, i++);
+	(void) printf("bit_nset(%d, %d) -> %d\n", j, j + 1, i);
+	j += 2;
+	p = &k;
+	bit_ffc(bs, i++, p++);
+	(void) printf("bit_ffc(%d, %ld) -> %d\n", j++, --p - &k, i);
+	bit_ffs(bs, i++, p++);
+	(void) printf("bit_ffs(%d, %ld) -> %d\n", j++, --p - &k, i);
+
 	(void) free(bs);
-	(void) exit(0);
+	return (0);
 }

@@ -335,3 +335,17 @@ CHI square test
  29   0   2 00100000000000000000000000000100
  30   0   1 01000000000000000000000000000010
  31   1   0 10000000000000000000000000000001
+
+macros should evaluate arguments only once
+_bit_byte(0) -> 1
+_bit_mask(1) -> 2
+bitstr_size(2) -> 3
+bit_alloc(3) -> 4
+bit_alloc(4) -> 5
+bit_test(5) -> 6
+bit_set(6) -> 7
+bit_clear(7) -> 8
+bit_nclear(8, 9) -> 10
+bit_nset(10, 11) -> 12
+bit_ffc(12, 0) -> 13
+bit_ffs(13, 0) -> 14
