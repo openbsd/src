@@ -1,4 +1,4 @@
-#	$OpenBSD: Notes,v 1.5 2018/09/15 09:44:19 bentley Exp $
+#	$OpenBSD: Notes,v 1.6 2024/08/26 20:10:53 jmc Exp $
 #	$NetBSD: Notes,v 1.2 1995/03/23 08:28:26 cgd Exp $
 #	@(#)Notes	8.1 (Berkeley) 5/31/93
 
@@ -25,18 +25,18 @@ database, and "fort.dat" is the data file which describes it.  See
 strfile(8) for more information on creating the data files.
 	Fortunes are split into potentially offensive and not potentially
 offensive parts.  The offensive version of a file has the same name as the
-non-offensive version with "-o" concatenated, i.e. "fort" is the standard
-fortune database, and "fort-o" is the standard offensive database.  The
+non-offensive version with "-o" concatenated, i.e. "fortune" is the standard
+fortune database, and "fortune-o" is the standard offensive database.  The
 fortune program automatically assumes that any file with a name ending in
 "-o" is potentially offensive, and should therefore only be displayed if
 explicitly requested, either with the -o option or by specifying a file name
 on the command line.
-	Potentially offensive fortune files should NEVER be maintained in
-clear text on the system.  They are rotated (see caesar(6)) 13 positions.
-To create a new, potentially offensive database, use caesar to rotate it,
-and then create its data file with the -x option to strfile(8).  The fortune
-program automatically decrypts the text when it prints entries from such
-databases.
+        Potentially offensive fortune files are maintained in
+clear text on the system.  If this is a concern, they can be rotated
+13 positions: to create a new, rotated database, use a utility such
+as rot13(6) or tr(1) to rotate it, and then create its data file
+with the -x option to strfile(8).  The fortune program automatically
+decrypts the text when it prints entries from such databases.
 	Anything which would not make it onto network prime time programming
 (or which would only be broadcast if some discredited kind of guy said it)
 MUST be in the potentially offensive database.  Fortunes containing any
