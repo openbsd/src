@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.103 2024/05/28 15:16:45 claudio Exp $ */
+/* $OpenBSD: pmap.c,v 1.104 2024/08/26 03:37:56 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2237,34 +2237,35 @@ pmap_show_mapping(uint64_t va)
 		pted, vp3->l3[VP_IDX3(va)], VP_IDX3(va)*8);
 }
 
+__attribute__((target("+pauth")))
 void
 pmap_setpauthkeys(struct pmap *pm)
 {
 	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
 	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
-		__asm volatile (".arch armv8.3-a; msr apiakeylo_el1, %0"
+		__asm volatile ("msr apiakeylo_el1, %0"
 		    :: "r"(pm->pm_apiakey[0]));
-		__asm volatile (".arch armv8.3-a; msr apiakeyhi_el1, %0"
+		__asm volatile ("msr apiakeyhi_el1, %0"
 		    :: "r"(pm->pm_apiakey[1]));
-		__asm volatile (".arch armv8.3-a; msr apdakeylo_el1, %0"
+		__asm volatile ("msr apdakeylo_el1, %0"
 		    :: "r"(pm->pm_apdakey[0]));
-		__asm volatile (".arch armv8.3-a; msr apdakeyhi_el1, %0"
+		__asm volatile ("msr apdakeyhi_el1, %0"
 		    :: "r"(pm->pm_apdakey[1]));
-		__asm volatile (".arch armv8.3-a; msr apibkeylo_el1, %0"
+		__asm volatile ("msr apibkeylo_el1, %0"
 		    :: "r"(pm->pm_apibkey[0]));
-		__asm volatile (".arch armv8.3-a; msr apibkeyhi_el1, %0"
+		__asm volatile ("msr apibkeyhi_el1, %0"
 		    :: "r"(pm->pm_apibkey[1]));
-		__asm volatile (".arch armv8.3-a; msr apdbkeylo_el1, %0"
+		__asm volatile ("msr apdbkeylo_el1, %0"
 		    :: "r"(pm->pm_apdbkey[0]));
-		__asm volatile (".arch armv8.3-a; msr apdbkeyhi_el1, %0"
+		__asm volatile ("msr apdbkeyhi_el1, %0"
 		    :: "r"(pm->pm_apdbkey[1]));
 	}
 
 	if (ID_AA64ISAR1_GPA(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPA_IMPL ||
 	    ID_AA64ISAR1_GPI(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPI_IMPL) {
-		__asm volatile (".arch armv8.3-a; msr apgakeylo_el1, %0"
+		__asm volatile ("msr apgakeylo_el1, %0"
 		    :: "r"(pm->pm_apgakey[0]));
-		__asm volatile (".arch armv8.3-a; msr apgakeyhi_el1, %0"
+		__asm volatile ("msr apgakeyhi_el1, %0"
 		    :: "r"(pm->pm_apgakey[1]));
 	}
 }
