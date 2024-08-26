@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.19 2023/12/28 22:11:26 tb Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.20 2024/08/26 22:00:47 op Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -58,6 +58,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1t.h>
@@ -244,34 +245,21 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int
 pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
-	long lval;
-	char *ep;
+	const char *errstr;
 
 	if (!strcmp(type, "dsa_paramgen_bits")) {
 		int nbits;
 
-		errno = 0;
-		lval = strtol(value, &ep, 10);
-		if (value[0] == '\0' || *ep != '\0')
-			goto not_a_number;
-		if ((errno == ERANGE &&
-		    (lval == LONG_MAX || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < INT_MIN))
-			goto out_of_range;
-		nbits = lval;
+		nbits = strtonum(value, INT_MIN, INT_MAX, &errstr);
+		if (errstr != NULL)
+			return -2;
 		return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits);
 	} else if (!strcmp(type, "dsa_paramgen_q_bits")) {
 		int qbits;
 
-		errno = 0;
-		lval = strtol(value, &ep, 10);
-		if (value[0] == '\0' || *ep != '\0')
-			goto not_a_number;
-		if ((errno == ERANGE &&
-		    (lval == LONG_MAX || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < INT_MIN))
-			goto out_of_range;
-		qbits = lval;
+		qbits = strtonum(value, INT_MIN, INT_MAX, &errstr);
+		if (errstr != NULL)
+			return -2;
 		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,
 		    EVP_PKEY_OP_PARAMGEN, EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS,
 		    qbits, NULL);
@@ -280,8 +268,7 @@ pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		    EVP_PKEY_OP_PARAMGEN, EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0,
 		    (void *)EVP_get_digestbyname(value));
 	}
-not_a_number:
-out_of_range:
+
 	return -2;
 }
 
