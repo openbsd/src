@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.88 2022/12/26 19:16:03 jmc Exp $	*/
+/*	$OpenBSD: commands.c,v 1.89 2024/08/26 21:34:32 op Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -358,6 +358,7 @@ send_tncmd(void (*func)(int, int), char *cmd, char *name)
 {
     char **cpp;
     extern char *telopts[];
+    const char *errstr;
     int val = 0;
 
     if (isprefix(name, "help") || isprefix(name, "?")) {
@@ -389,20 +390,10 @@ send_tncmd(void (*func)(int, int), char *cmd, char *name)
     if (cpp) {
 	val = cpp - telopts;
     } else {
-	char *cp = name;
-
-	while (*cp >= '0' && *cp <= '9') {
-	    val *= 10;
-	    val += *cp - '0';
-	    cp++;
-	}
-	if (*cp != 0) {
-	    fprintf(stderr, "'%s': unknown argument ('send %s ?' for help).\r\n",
-					name, cmd);
-	    return 0;
-	} else if (val < 0 || val > 255) {
-	    fprintf(stderr, "'%s': bad value ('send %s ?' for help).\r\n",
-					name, cmd);
+	val = strtonum(name, 0, 255, &errstr);
+	if (errstr) {
+	    fprintf(stderr, "'%s': %s ('send %s ?' for help).\r\n",
+					name, errstr, cmd);
 	    return 0;
 	}
     }
