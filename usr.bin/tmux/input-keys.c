@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.97 2024/08/23 13:25:39 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.98 2024/08/26 07:45:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -608,8 +608,9 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	 * key and no modifiers.
 	 */
 	if (!(key & ~KEYC_MASK_KEY)) {
-		if (key == C0_BS || key == C0_HT ||
-		    key == C0_CR || key == C0_ESC ||
+		if (key == C0_HT ||
+		    key == C0_CR ||
+		    key == C0_ESC ||
 		    (key >= 0x20 && key <= 0x7f)) {
 			ud.data[0] = key;
 			input_key_write(__func__, bev, &ud.data[0], 1);

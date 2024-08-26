@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.177 2024/08/21 04:17:09 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.178 2024/08/26 07:45:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -812,8 +812,9 @@ first_key:
 	 * lowercase, so ^A becomes a|CTRL.
 	 */
 	onlykey = key & KEYC_MASK_KEY;
-	if (onlykey < 0x20 && onlykey != C0_BS &&
-	    onlykey != C0_HT && onlykey != C0_CR &&
+	if (onlykey < 0x20 &&
+	    onlykey != C0_HT &&
+	    onlykey != C0_CR &&
 	    onlykey != C0_ESC) {
 		onlykey |= 0x40;
 		if (onlykey >= 'A' && onlykey <= 'Z')
