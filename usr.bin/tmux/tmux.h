@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1223 2024/08/26 07:09:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1224 2024/08/26 07:14:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -965,6 +965,11 @@ enum pane_lines {
 #define PANE_BORDER_COLOUR 1
 #define PANE_BORDER_ARROWS 2
 #define PANE_BORDER_BOTH 3
+
+/* Mode returned by window_pane_mode function. */
+#define WINDOW_PANE_NO_MODE 0
+#define WINDOW_PANE_COPY_MODE 1
+#define WINDOW_PANE_VIEW_MODE 2
 
 /* Screen redraw context. */
 struct screen_redraw_ctx {
@@ -3112,6 +3117,7 @@ void		 window_pane_update_used_data(struct window_pane *,
 		     struct window_pane_offset *, size_t);
 void		 window_set_fill_character(struct window *);
 void		 window_pane_default_cursor(struct window_pane *);
+int		 window_pane_mode(struct window_pane *);
 
 /* layout.c */
 u_int		 layout_count_cells(struct layout_cell *);
