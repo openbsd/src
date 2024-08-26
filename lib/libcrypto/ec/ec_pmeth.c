@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.21 2023/12/28 22:12:37 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.22 2024/08/26 22:01:28 op Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1t.h>
@@ -445,10 +446,15 @@ pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		}
 		return EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, md);
 	} else if (strcmp(type, "ecdh_cofactor_mode") == 0) {
-		int co_mode;
-		co_mode = atoi(value);
-		return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, co_mode);
+		int cofactor_mode;
+		const char *errstr;
+
+		cofactor_mode = strtonum(value, -1, 1, &errstr);
+		if (errstr != NULL)
+			return -2;
+		return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, cofactor_mode);
 	}
+
 	return -2;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.40 2023/12/28 21:59:07 tb Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.41 2024/08/26 22:01:28 op Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -58,6 +58,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -630,6 +631,8 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int
 pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
+	const char *errstr;
+
 	if (!value) {
 		RSAerror(RSA_R_VALUE_MISSING);
 		return 0;
@@ -664,13 +667,24 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 			saltlen = RSA_PSS_SALTLEN_MAX;
 		else if (!strcmp(value, "auto"))
 			saltlen = RSA_PSS_SALTLEN_AUTO;
-		else
-			saltlen = atoi(value);
+		else {
+			saltlen = strtonum(value, 0, INT_MAX, &errstr);
+			if (errstr != NULL) {
+				RSAerror(RSA_R_INVALID_PSS_SALTLEN);
+				return -2;
+			}
+		}
 		return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, saltlen);
 	}
 
 	if (strcmp(type, "rsa_keygen_bits") == 0) {
-		int nbits = atoi(value);
+		int nbits;
+
+		nbits = strtonum(value, 0, INT_MAX, &errstr);
+		if (errstr != NULL) {
+			RSAerror(RSA_R_INVALID_KEYBITS);
+			return -2;
+		}
 
 		return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, nbits);
 	}
@@ -702,7 +716,13 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 			    EVP_PKEY_CTRL_MD, value);
 
 		if (strcmp(type, "rsa_pss_keygen_saltlen") == 0) {
-			int saltlen = atoi(value);
+			int saltlen;
+
+			saltlen = strtonum(value, 0, INT_MAX, &errstr);
+			if (errstr != NULL) {
+				RSAerror(RSA_R_INVALID_PSS_SALTLEN);
+				return -2;
+			}
 
 			return EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, saltlen);
 		}
