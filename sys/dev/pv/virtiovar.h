@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.18 2024/05/17 16:37:10 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.19 2024/08/26 19:37:54 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -84,6 +84,11 @@
 #define VIRTIO_CF_NO_EVENT_IDX		2
 #define VIRTIO_CF_PREFER_VERSION_1	4
 #define VIRTIO_CF_NO_VERSION_1		8
+
+struct virtio_attach_args {
+	int			 va_devid;	/* virtio device id */
+	unsigned int		 va_nintr;	/* number of intr vectors */
+};
 
 struct vq_entry {
 	SLIST_ENTRY(vq_entry)	 qe_list;	/* free list */
@@ -177,7 +182,6 @@ struct virtio_softc {
 	int			 sc_nvqs;	/* set by child */
 	struct virtqueue	*sc_vqs;	/* set by child */
 
-	int			 sc_childdevid;	/* set by transport */
 	struct device		*sc_child;	/* set by child,
 						 * VIRTIO_CHILD_ERROR on error
 						 */

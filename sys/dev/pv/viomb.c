@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.10 2024/05/24 10:05:55 jsg Exp $	 */
+/* $OpenBSD: viomb.c,v 1.11 2024/08/26 19:37:54 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -124,8 +124,8 @@ struct cfdriver viomb_cd = {
 int
 viomb_match(struct device *parent, void *match, void *aux)
 {
-	struct virtio_softc *va = aux;
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BALLOON)
+	struct virtio_attach_args *va = aux;
+	if (va->va_devid == PCI_PRODUCT_VIRTIO_BALLOON)
 		return (1);
 	return (0);
 }

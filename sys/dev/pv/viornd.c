@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.9 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.10 2024/08/26 19:37:54 sf Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -72,8 +72,8 @@ struct cfdriver viornd_cd = {
 int
 viornd_match(struct device *parent, void *match, void *aux)
 {
-	struct virtio_softc *va = aux;
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_ENTROPY)
+	struct virtio_attach_args *va = aux;
+	if (va->va_devid == PCI_PRODUCT_VIRTIO_ENTROPY)
 		return 1;
 	return 0;
 }

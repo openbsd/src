@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.14 2024/08/20 07:04:29 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.15 2024/08/26 19:37:54 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)self;
 	struct virtio_softc *vsc = &sc->sc_sc;
 	uint32_t id, magic;
+	struct virtio_attach_args va = { 0 };
 
 	if (faa->fa_nreg < 1) {
 		printf(": no register data\n");
@@ -289,10 +290,10 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 
-	/* XXX: use softc as aux... */
-	vsc->sc_childdevid = id;
+	va.va_devid = id;
+	va.va_nintr = 1;
 	vsc->sc_child = NULL;
-	config_found(self, sc, NULL);
+	config_found(self, &va, NULL);
 	if (vsc->sc_child == NULL) {
 		printf("%s: no matching child driver; not configured\n",
 		    vsc->sc_dev.dv_xname);

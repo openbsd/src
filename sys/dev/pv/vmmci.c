@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.11 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.12 2024/08/26 19:37:54 sf Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -78,8 +78,8 @@ struct cfdriver vmmci_cd = {
 int
 vmmci_match(struct device *parent, void *match, void *aux)
 {
-	struct virtio_softc *va = aux;
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_VMMCI)
+	struct virtio_attach_args *va = aux;
+	if (va->va_devid == PCI_PRODUCT_VIRTIO_VMMCI)
 		return (1);
 	return (0);
 }

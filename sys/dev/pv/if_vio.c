@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.47 2024/08/26 19:24:02 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.48 2024/08/26 19:37:54 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -330,9 +330,9 @@ void	vio_dump(struct vio_softc *);
 int
 vio_match(struct device *parent, void *match, void *aux)
 {
-	struct virtio_softc *va = aux;
+	struct virtio_attach_args *va = aux;
 
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_NETWORK)
+	if (va->va_devid == PCI_PRODUCT_VIRTIO_NETWORK)
 		return 1;
 
 	return 0;

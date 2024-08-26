@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.7 2024/08/01 11:13:19 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.8 2024/08/26 19:37:54 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -137,9 +137,9 @@ struct cfdriver viogpu_cd = {
 int
 viogpu_match(struct device *parent, void *match, void *aux)
 {
-	struct virtio_softc *va = aux;
+	struct virtio_attach_args *va = aux;
 
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_GPU)
+	if (va->va_devid == PCI_PRODUCT_VIRTIO_GPU)
 		return 1;
 
 	return 0;
