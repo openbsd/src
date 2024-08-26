@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.26 2023/01/03 11:43:24 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.27 2024/08/26 13:02:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -942,13 +942,17 @@ colour_byname(const char *name)
 		{ "yellow3", 0xcdcd00 },
 		{ "yellow4", 0x8b8b00 }
 	};
-	u_int	i;
-	int	c;
+	u_int		 i;
+	int		 c;
+	const char	*errstr;
 
 	if (strncmp(name, "grey", 4) == 0 || strncmp(name, "gray", 4) == 0) {
-		if (!isdigit((u_char)name[4]))
-			return (0xbebebe|COLOUR_FLAG_RGB);
-		c = round(2.55 * atoi(name + 4));
+		if (name[4] == '\0')
+			return (-1);
+		c = strtonum(name + 4, 0, 100, &errstr);
+		if (errstr != NULL)
+			return (-1);
+		c = round(2.55 * c);
 		if (c < 0 || c > 255)
 			return (-1);
 		return (colour_join_rgb(c, c, c));

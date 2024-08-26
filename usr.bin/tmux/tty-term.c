@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.101 2023/10/17 09:55:32 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.102 2024/08/26 13:02:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -528,9 +528,10 @@ tty_term_create(struct tty *tty, char *name, char **caps, u_int ncaps,
 	struct options_array_item		*a;
 	union options_value			*ov;
 	u_int					 i, j;
-	const char				*s, *value;
+	const char				*s, *value, *errstr;
 	size_t					 offset, namelen;
 	char					*first;
+	int					 n;
 
 	log_debug("adding term %s", name);
 
@@ -564,8 +565,13 @@ tty_term_create(struct tty *tty, char *name, char **caps, u_int ncaps,
 				code->value.string = tty_term_strip(value);
 				break;
 			case TTYCODE_NUMBER:
-				code->type = TTYCODE_NUMBER;
-				code->value.number = atoi(value);
+				n = strtonum(value, 0, INT_MAX, &errstr);
+				if (errstr != NULL)
+					log_debug("%s: %s", ent->name, errstr);
+				else {
+					code->type = TTYCODE_NUMBER;
+					code->value.number = n;
+				}
 				break;
 			case TTYCODE_FLAG:
 				code->type = TTYCODE_FLAG;
