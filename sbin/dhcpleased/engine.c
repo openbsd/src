@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.47 2024/08/26 06:04:24 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.48 2024/08/26 06:05:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1433,7 +1433,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 			iface->xid = arc4random();
 			break;
 		case IF_BOUND:
-			fatal("invalid transition Bound -> Init");
+			fatalx("invalid transition Bound -> Init");
 			break;
 		}
 		request_dhcp_discover(iface);
@@ -1497,7 +1497,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 			iface->timo.tv_sec = iface->ipv6_only_time;
 			break;
 		case IF_BOUND:
-			fatal("invalid transition Bound -> IPv6 only");
+			fatalx("invalid transition Bound -> IPv6 only");
 			break;
 		}
 	}
