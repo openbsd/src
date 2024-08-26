@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.27 2021/05/07 14:31:27 martijn Exp $	*/
+/*	$OpenBSD: printf.c,v 1.28 2024/08/26 03:49:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 				start = fmt++;
 
 				if (*fmt == '%') {
-					putchar ('%');
+					putchar('%');
 					break;
 				} else if (*fmt == 'b') {
 					char *p = getstr();
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 				}
 
 				if (!*fmt) {
-					warnx ("missing format character");
+					warnx("missing format character");
 					return(1);
 				}
 
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 					break;
 				}
 				default:
-					warnx ("%s: invalid directive", start);
+					warnx("%s: invalid directive", start);
 					return(1);
 				}
 				*(fmt + 1) = nextch;
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 				break;
 
 			default:
-				putchar (*fmt);
+				putchar(*fmt);
 				break;
 			}
 		}
@@ -251,7 +251,7 @@ print_escape_str(const char *str)
 					value <<= 3;
 					value += octtobin(*str);
 				}
-				putchar (value);
+				putchar(value);
 				str--;
 			} else if (*str == 'c') {
 				return 1;
@@ -260,7 +260,7 @@ print_escape_str(const char *str)
 				str += print_escape(str);
 			}
 		} else {
-			putchar (*str);
+			putchar(*str);
 		}
 		str++;
 	}
@@ -297,7 +297,7 @@ print_escape(const char *str)
 			value <<= 4;
 			value += hextobin(*str);
 		}
-		putchar (value);
+		putchar(value);
 		return str - start - 1;
 		/* NOTREACHED */
 
@@ -433,7 +433,7 @@ getlong(void)
 		return (unsigned char) *((*gargv++)+1);
 
 	errno = 0;
-	val = strtol (*gargv, &ep, 0);
+	val = strtol(*gargv, &ep, 0);
 	check_conversion(*gargv++, ep);
 	return val;
 }
@@ -451,7 +451,7 @@ getulong(void)
 		return (unsigned char) *((*gargv++)+1);
 
 	errno = 0;
-	val = strtoul (*gargv, &ep, 0);
+	val = strtoul(*gargv, &ep, 0);
 	check_conversion(*gargv++, ep);
 	return val;
 }
@@ -469,7 +469,7 @@ getdouble(void)
 		return (unsigned char) *((*gargv++)+1);
 
 	errno = 0;
-	val = strtod (*gargv, &ep);
+	val = strtod(*gargv, &ep);
 	check_conversion(*gargv++, ep);
 	return val;
 }
@@ -479,9 +479,9 @@ check_conversion(const char *s, const char *ep)
 {
 	if (*ep) {
 		if (ep == s)
-			warnx ("%s: expected numeric value", s);
+			warnx("%s: expected numeric value", s);
 		else
-			warnx ("%s: not completely converted", s);
+			warnx("%s: not completely converted", s);
 		rval = 1;
 	} else if (errno == ERANGE) {
 		warnc(ERANGE, "%s", s);
