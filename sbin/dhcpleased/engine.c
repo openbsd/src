@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.46 2024/08/25 09:53:53 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.47 2024/08/26 06:04:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -493,8 +493,11 @@ engine_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_VC_ID:
 			if (iface_conf == NULL)
-				fatalx("IMSG_RECONF_VC_ID without "
-				    "IMSG_RECONF_IFACE");
+				fatalx("%s: %s without IMSG_RECONF_IFACE",
+				    __func__, i2s(type));
+			if (iface_conf->vc_id != NULL)
+				fatalx("%s: multiple %s for the same interface",
+				    __func__, i2s(type));
 			if ((iface_conf->vc_id_len = imsg_get_len(&imsg))
 			    > 255 + 2 || iface_conf->vc_id_len == 0)
 				fatalx("%s: invalid %s", __func__, i2s(type));
@@ -507,8 +510,11 @@ engine_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_C_ID:
 			if (iface_conf == NULL)
-				fatalx("IMSG_RECONF_C_ID without "
-				    "IMSG_RECONF_IFACE");
+				fatalx("%s: %s without IMSG_RECONF_IFACE",
+				    __func__, i2s(type));
+			if (iface_conf->c_id != NULL)
+				fatalx("%s: multiple %s for the same interface",
+				    __func__, i2s(type));
 			if ((iface_conf->c_id_len = imsg_get_len(&imsg))
 			    > 255 + 2 || iface_conf->c_id_len == 0)
 				fatalx("%s: invalid %s", __func__, i2s(type));
@@ -523,8 +529,11 @@ engine_dispatch_main(int fd, short event, void *bula)
 			size_t	len;
 
 			if (iface_conf == NULL)
-				fatalx("IMSG_RECONF_H_NAME without "
-				    "IMSG_RECONF_IFACE");
+				fatalx("%s: %s without IMSG_RECONF_IFACE",
+				    __func__, i2s(type));
+			if (iface_conf->h_name != NULL)
+				fatalx("%s: multiple %s for the same interface",
+				    __func__, i2s(type));
 			if ((len = imsg_get_len(&imsg)) > 256 || len == 0)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 			if ((iface_conf->h_name = malloc(len)) == NULL)
