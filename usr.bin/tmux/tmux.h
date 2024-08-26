@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1224 2024/08/26 07:14:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1225 2024/08/26 07:30:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2703,10 +2703,12 @@ void	 server_clear_marked(void);
 int	 server_is_marked(struct session *, struct winlink *,
 	     struct window_pane *);
 int	 server_check_marked(void);
-int	 server_start(struct tmuxproc *, int, struct event_base *, int, char *);
+int	 server_start(struct tmuxproc *, uint64_t, struct event_base *, int,
+	     char *);
 void	 server_update_socket(void);
 void	 server_add_accept(int);
 void printflike(1, 2) server_add_message(const char *, ...);
+int	 server_create_socket(uint64_t, char **);
 
 /* server-client.c */
 RB_PROTOTYPE(client_windows, client_window, entry, server_client_window_cmp);

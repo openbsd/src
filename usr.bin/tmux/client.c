@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.162 2024/05/15 09:59:12 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.163 2024/08/26 07:30:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -445,11 +445,12 @@ client_send_identify(const char *ttynam, const char *termname, char **caps,
 {
 	char	**ss;
 	size_t	  sslen;
-	int	  fd, flags = client_flags;
+	int	  fd;
+	uint64_t  flags = client_flags;
 	pid_t	  pid;
 	u_int	  i;
 
-	proc_send(client_peer, MSG_IDENTIFY_FLAGS, -1, &flags, sizeof flags);
+	proc_send(client_peer, MSG_IDENTIFY_LONGFLAGS, -1, &flags, sizeof flags);
 	proc_send(client_peer, MSG_IDENTIFY_LONGFLAGS, -1, &client_flags,
 	    sizeof client_flags);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.96 2022/06/30 09:55:53 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.97 2024/08/26 07:30:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -496,8 +496,8 @@ screen_redraw_draw_pane_status(struct screen_redraw_ctx *ctx)
 }
 
 /* Update status line and change flags if unchanged. */
-static int
-screen_redraw_update(struct client *c, int flags)
+static uint64_t
+screen_redraw_update(struct client *c, uint64_t flags)
 {
 	struct window			*w = c->session->curw->window;
 	struct window_pane		*wp;
@@ -567,7 +567,7 @@ void
 screen_redraw_screen(struct client *c)
 {
 	struct screen_redraw_ctx	ctx;
-	int				flags;
+	uint64_t			flags;
 
 	if (c->flags & CLIENT_SUSPENDED)
 		return;
