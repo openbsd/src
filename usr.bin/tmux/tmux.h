@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1225 2024/08/26 07:30:46 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1226 2024/08/27 07:49:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3434,6 +3434,7 @@ u_int	 		 hyperlinks_put(struct hyperlinks *, const char *,
 int			 hyperlinks_get(struct hyperlinks *, u_int,
 			     const char **, const char **, const char **);
 struct hyperlinks	*hyperlinks_init(void);
+struct hyperlinks	*hyperlinks_copy(struct hyperlinks *);
 void			 hyperlinks_reset(struct hyperlinks *);
 void			 hyperlinks_free(struct hyperlinks *);
 
