@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.20 2024/08/27 18:44:12 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.21 2024/08/27 19:01:11 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ struct virtio_ops {
 struct virtio_softc {
 	struct device		 sc_dev;
 	bus_dma_tag_t		 sc_dmat;	/* set by transport */
-	struct virtio_ops	*sc_ops;	/* set by transport */
+	const struct virtio_ops	*sc_ops;	/* set by transport */
 
 	int			 sc_ipl;		/* set by child */
 

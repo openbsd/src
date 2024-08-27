@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.15 2024/08/26 19:37:54 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.16 2024/08/27 19:01:11 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ const struct cfattach virtio_mmio_fdt_ca = {
 	NULL
 };
 
-struct virtio_ops virtio_mmio_ops = {
+const struct virtio_ops virtio_mmio_ops = {
 	virtio_mmio_kick,
 	virtio_mmio_read_device_config_1,
 	virtio_mmio_read_device_config_2,
