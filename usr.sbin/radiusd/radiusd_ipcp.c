@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.13 2024/08/23 01:23:50 jsg Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.14 2024/08/27 06:06:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -447,7 +447,7 @@ ipcp_config_set(void *ctx, const char *name, int argc, char * const * argv)
 		SYNTAX_ASSERT(argc == 1 || argc == 2,
 		    "specify 1 or 2 addresses for `name-server'");
 		for (i = 0; i < argc; i++) {
-			if (inet_aton(argv[i], &ina) != 1) {
+			if (inet_pton(AF_INET, argv[i], &ina) != 1) {
 				module_send_message(module->base, IMSG_NG,
 				    "Invalid IP address: %s", argv[i]);
 				return;
@@ -464,7 +464,7 @@ ipcp_config_set(void *ctx, const char *name, int argc, char * const * argv)
 		SYNTAX_ASSERT(argc == 1 || argc == 2,
 		    "specify 1 or 2 addresses for `name-server'");
 		for (i = 0; i < argc; i++) {
-			if (inet_aton(argv[i], &ina) != 1) {
+			if (inet_pton(AF_INET, argv[i], &ina) != 1) {
 				module_send_message(module->base, IMSG_NG,
 				    "Invalid IP address: %s", argv[i]);
 				return;
@@ -1735,22 +1735,22 @@ parse_address_range(const char *range)
 		goto error;
 	if ((sep = strchr(buf, '-')) != NULL) {
 		*sep = '\0';
-		if (inet_aton(buf, &start) != 1)
+		if (inet_pton(AF_INET, buf, &start) != 1)
 			goto error;
-		else if (inet_aton(++sep, &end) != 1)
+		else if (inet_pton(AF_INET, ++sep, &end) != 1)
 			goto error;
 		start.s_addr = ntohl(start.s_addr);
 		end.s_addr = ntohl(end.s_addr);
 	} else {
 		if ((sep = strchr(buf, '/')) != NULL) {
 			*sep = '\0';
-			if (inet_aton(buf, &start) != 1)
+			if (inet_pton(AF_INET, buf, &start) != 1)
 				goto error;
 			masklen = strtonum(++sep, 0, 32, &errstr);
 			if (errstr != NULL)
 				goto error;
 		} else {
-			if (inet_aton(buf, &start) != 1)
+			if (inet_pton(AF_INET, buf, &start) != 1)
 				goto error;
 			masklen = 32;
 		}
