@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.20 2015/01/16 06:40:23 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.21 2024/08/27 06:04:03 florian Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 {
 	struct ypbind_setdom ypsd;
 	struct in_addr iaddr;
-	struct hostent *hp;
+	struct addrinfo hints, *res;
 	struct timeval tv;
 	CLIENT *client;
 	int sock, port, r;
@@ -66,12 +66,14 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 
 	memset(&ypsd, 0, sizeof ypsd);
 
-	if (inet_aton(server, &iaddr) == 0) {
-		hp = gethostbyname(server);
-		if (hp == NULL)
-			errx(1, "can't find address for %s", server);
-		memmove(&iaddr.s_addr, hp->h_addr, sizeof(iaddr.s_addr));
-	}
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+
+	if (getaddrinfo(server, NULL, &hints, &res) != 0)
+		errx(1, "can't find address for %s", server);
+	iaddr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	freeaddrinfo(res);
+
 	ypsd.ypsetdom_domain = dom;
 	bcopy(&iaddr.s_addr, &ypsd.ypsetdom_binding.ypbind_binding_addr,
 	    sizeof(ypsd.ypsetdom_binding.ypbind_binding_addr));
@@ -105,7 +107,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_in sin;
-	struct hostent *hent;
+	struct addrinfo hints, *res;
 	extern char *optarg;
 	extern int optind;
 	char *domainname;
@@ -123,13 +125,15 @@ main(int argc, char *argv[])
 			domainname = optarg;
 			break;
 		case 'h':
-			if (inet_aton(optarg, &sin.sin_addr) == 0) {
-				hent = gethostbyname(optarg);
-				if (hent == NULL)
-					errx(1, "host %s unknown\n", optarg);
-				bcopy(hent->h_addr, &sin.sin_addr,
-				    sizeof(sin.sin_addr));
-			}
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_INET;
+
+			if (getaddrinfo(optarg, NULL, &hints, &res) != 0)
+				errx(1, "host %s unknown\n", optarg);
+
+			sin.sin_addr =
+			    ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+			freeaddrinfo(res);
 			break;
 		default:
 			usage();
