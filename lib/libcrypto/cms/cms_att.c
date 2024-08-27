@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_att.c,v 1.12 2024/07/26 13:23:52 tb Exp $ */
+/* $OpenBSD: cms_att.c,v 1.13 2024/08/27 01:19:27 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,12 +52,12 @@
  * ====================================================================
  */
 
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
+#include <openssl/asn1.h>
 #include <openssl/cms.h>
+#include <openssl/x509.h>
+
 #include "cms_local.h"
+#include "x509_local.h"
 
 /* CMS SignedData Attribute utilities */
 
