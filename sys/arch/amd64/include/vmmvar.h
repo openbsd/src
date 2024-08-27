@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.104 2024/07/14 07:57:42 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.105 2024/08/27 09:16:03 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -624,6 +624,7 @@ enum {
 
 /* Forward declarations */
 struct vm;
+struct vm_create_params;
 
 /*
  * Implementation-specific cpu state
@@ -635,6 +636,9 @@ struct vmcb_segment {
 	uint32_t			vs_lim;			/* 004h */
 	uint64_t			vs_base;		/* 008h */
 };
+
+#define SVM_ENABLE_NP	(1ULL << 0)
+#define SVM_ENABLE_SEV	(1ULL << 1)
 
 struct vmcb {
 	union {
@@ -893,6 +897,7 @@ struct vcpu {
 	paddr_t vc_svm_hsa_pa;
 	vaddr_t vc_svm_ioio_va;
 	paddr_t vc_svm_ioio_pa;
+	int vc_sev;				/* [I] */
 };
 
 SLIST_HEAD(vcpu_head, vcpu);
@@ -921,7 +926,7 @@ int	vmm_start(void);
 int	vmm_stop(void);
 int	vm_impl_init(struct vm *, struct proc *);
 void	vm_impl_deinit(struct vm *);
-int	vcpu_init(struct vcpu *);
+int	vcpu_init(struct vcpu *, struct vm_create_params *);
 void	vcpu_deinit(struct vcpu *);
 int	vm_rwregs(struct vm_rwregs_params *, int);
 int	vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);

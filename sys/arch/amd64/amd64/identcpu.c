@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.146 2024/07/08 14:46:47 mpi Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.147 2024/08/27 09:16:03 bluhm Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ char cpu_model[48];
 int cpuspeed;
 
 int amd64_has_xcrypt;
-int amd64_pos_cbit;
+int amd64_pos_cbit;	/* C bit position for SEV */
 int has_rdrand;
 int has_rdseed;
 

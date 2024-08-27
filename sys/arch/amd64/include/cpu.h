@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.175 2024/07/21 19:41:31 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.176 2024/08/27 09:16:03 bluhm Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -415,6 +415,7 @@ void	x86_print_cacheinfo(struct cpu_info *);
 void	identifycpu(struct cpu_info *);
 int	cpu_amd64speed(int *);
 extern int cpuspeed;
+extern int amd64_pos_cbit;
 
 /* machdep.c */
 void	dumpconf(void);

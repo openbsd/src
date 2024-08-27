@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.32 2024/08/22 04:53:07 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.33 2024/08/27 09:16:03 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -82,9 +82,9 @@ int vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reload_vmcs_vmx(struct vcpu *);
-int vcpu_init(struct vcpu *);
+int vcpu_init(struct vcpu *, struct vm_create_params *);
 int vcpu_init_vmx(struct vcpu *);
-int vcpu_init_svm(struct vcpu *);
+int vcpu_init_svm(struct vcpu *, struct vm_create_params *);
 int vcpu_run_vmx(struct vcpu *, struct vm_run_params *);
 int vcpu_run_svm(struct vcpu *, struct vm_run_params *);
 void vcpu_deinit(struct vcpu *);
@@ -1890,7 +1890,6 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 {
 	struct vmcb *vmcb;
 	int ret;
-	uint16_t asid;
 
 	vmcb = (struct vmcb *)vcpu->vc_control_va;
 
@@ -1963,14 +1962,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	svm_setmsrbr(vcpu, MSR_PSTATEDEF(0));
 
 	/* Guest VCPU ASID */
-	if (vmm_alloc_vpid(&asid)) {
-		DPRINTF("%s: could not allocate asid\n", __func__);
-		ret = EINVAL;
-		goto exit;
-	}
-
-	vmcb->v_asid = asid;
-	vcpu->vc_vpid = asid;
+	vmcb->v_asid = vcpu->vc_vpid;
 
 	/* TLB Control - First time in, flush all*/
 	vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_ALL;
@@ -1985,8 +1977,12 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
             PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
 
 	/* NPT */
-	vmcb->v_np_enable = 1;
+	vmcb->v_np_enable = SVM_ENABLE_NP;
 	vmcb->v_n_cr3 = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
+
+	/* SEV */
+	if (vcpu->vc_sev)
+		vmcb->v_np_enable |= SVM_ENABLE_SEV;
 
 	/* Enable SVME in EFER (must always be set) */
 	vmcb->v_efer |= EFER_SVME;
@@ -1998,7 +1994,6 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	vcpu->vc_parent->vm_map->pmap->eptp = 0;
 
-exit:
 	return ret;
 }
 
@@ -3086,6 +3081,7 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
  *
  * Parameters:
  *  vcpu: the VCPU structure being initialized
+ *  vcp: parameters provided by vmd(8)
  *
  * Return values:
  *  0: the VCPU was initialized successfully
@@ -3093,8 +3089,9 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
  *  EINVAL: an error occurred during VCPU initialization
  */
 int
-vcpu_init_svm(struct vcpu *vcpu)
+vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 {
+	uint16_t asid;
 	int ret = 0;
 
 	/* Allocate VMCB VA */
@@ -3176,6 +3173,21 @@ vcpu_init_svm(struct vcpu *vcpu)
 	    (uint64_t)vcpu->vc_svm_ioio_va,
 	    (uint64_t)vcpu->vc_svm_ioio_pa);
 
+	/* Guest VCPU ASID */
+	if (vmm_alloc_vpid(&asid)) {
+		DPRINTF("%s: could not allocate asid\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+	vcpu->vc_vpid = asid;
+
+	/* Shall we enable SEV? */
+	vcpu->vc_sev = vcp->vcp_sev;
+
+	/* Inform vmd(8) about ASID and C bit position. */
+	vcp->vcp_poscbit = amd64_pos_cbit;
+	vcp->vcp_asid[vcpu->vc_id] = vcpu->vc_vpid;
+
 exit:
 	if (ret)
 		vcpu_deinit_svm(vcpu);
@@ -3189,7 +3201,7 @@ exit:
  * Calls the architecture-specific VCPU init routine
  */
 int
-vcpu_init(struct vcpu *vcpu)
+vcpu_init(struct vcpu *vcpu, struct vm_create_params *vcp)
 {
 	int ret = 0;
 
@@ -3207,7 +3219,7 @@ vcpu_init(struct vcpu *vcpu)
 	if (vmm_softc->mode == VMM_MODE_EPT)
 		ret = vcpu_init_vmx(vcpu);
 	else if (vmm_softc->mode == VMM_MODE_RVI)
-		ret = vcpu_init_svm(vcpu);
+		ret = vcpu_init_svm(vcpu, vcp);
 	else
 		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 
@@ -6285,7 +6297,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x80000000:	/* Extended function level */
-		*rax = 0x80000008; /* curcpu()->ci_pnfeatset */
+		*rax = 0x8000001f; /* curcpu()->ci_pnfeatset */
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
@@ -6340,6 +6352,12 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = edx;
 		break;
 	case 0x8000001d:	/* cache topology (AMD) */
+		*rax = eax;
+		*rbx = ebx;
+		*rcx = ecx;
+		*rdx = edx;
+		break;
+	case 0x8000001f:	/* encryption features (AMD) */
 		*rax = eax;
 		*rbx = ebx;
 		*rcx = ecx;
