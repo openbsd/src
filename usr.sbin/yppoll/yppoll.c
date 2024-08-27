@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.15 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.16 2024/08/27 06:03:20 florian Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ get_remote_info(char *indomain, char *inmap, char *server, int *outorder,
 	struct sockaddr_in rsrv_sin;
 	int rsrv_sock;
 	CLIENT *client;
-	struct hostent *h;
+	struct addrinfo hints, *res;
 	int r;
 
 	bzero((char *)&rsrv_sin, sizeof rsrv_sin);
@@ -73,14 +73,15 @@ get_remote_info(char *indomain, char *inmap, char *server, int *outorder,
 	rsrv_sin.sin_family = AF_INET;
 	rsrv_sock = RPC_ANYSOCK;
 
-	h = gethostbyname(server);
-	if (h == NULL) {
-		if (inet_aton(server, &rsrv_sin.sin_addr) == 0) {
-			fprintf(stderr, "unknown host %s\n", server);
-			exit(1);
-		}
-	} else
-		rsrv_sin.sin_addr.s_addr = *(u_int32_t *)h->h_addr;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+
+	if (getaddrinfo(server, NULL, &hints, &res) != 0) {
+		fprintf(stderr, "unknown host %s\n", server);
+		exit(1);
+	}
+	rsrv_sin.sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	freeaddrinfo(res);
 
 	tv.tv_sec = 10;
 	tv.tv_usec = 0;
