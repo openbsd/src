@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.10 2024/08/26 19:37:54 sf Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.11 2024/08/27 18:44:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -125,8 +125,7 @@ viornd_attach(struct device *parent, struct device *self, void *aux)
 		goto err2;
 	}
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq, 0, VIORND_BUFSIZE, 1,
-	    "Entropy request") != 0) {
+	if (virtio_alloc_vq(vsc, &sc->sc_vq, 0, 1, "Entropy request") != 0) {
 		printf(": Can't alloc virtqueue\n");
 		goto err2;
 	}

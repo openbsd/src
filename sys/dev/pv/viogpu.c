@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.8 2024/08/26 19:37:54 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.9 2024/08/27 18:44:12 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -173,15 +173,13 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* allocate command and cursor virtqueues */
 	vsc->sc_vqs = sc->sc_vqs;
-	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCTRL], VQCTRL, NBPG, 1,
-	    "control")) {
+	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCTRL], VQCTRL, 1, "control")) {
 		printf(": alloc_vq failed\n");
 		return;
 	}
 	sc->sc_vqs[VQCTRL].vq_done = viogpu_vq_done;
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCURS], VQCURS, NBPG, 1,
-	    "cursor")) {
+	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCURS], VQCURS, 1, "cursor")) {
 		printf(": alloc_vq failed\n");
 		return;
 	}

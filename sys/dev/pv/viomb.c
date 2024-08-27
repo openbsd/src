@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.11 2024/08/26 19:37:54 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.12 2024/08/27 18:44:12 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -161,12 +161,12 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	if (virtio_negotiate_features(vsc, viomb_feature_names) != 0)
 		goto err;
 
-	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], VQ_INFLATE,
-	     sizeof(u_int32_t) * PGS_PER_REQ, 1, "inflate") != 0))
+	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], VQ_INFLATE, 1,
+	    "inflate") != 0))
 		goto err;
 	vsc->sc_nvqs++;
-	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_DEFLATE], VQ_DEFLATE,
-	     sizeof(u_int32_t) * PGS_PER_REQ, 1, "deflate") != 0))
+	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_DEFLATE], VQ_DEFLATE, 1,
+	    "deflate") != 0))
 		goto err;
 	vsc->sc_nvqs++;
 

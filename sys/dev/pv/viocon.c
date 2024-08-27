@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.14 2024/08/26 19:37:54 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.15 2024/08/27 18:44:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -235,8 +235,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	txidx = rxidx + 1;
 
 	snprintf(name, sizeof(name), "p%drx", portidx);
-	if (virtio_alloc_vq(vsc, &vsc->sc_vqs[rxidx], rxidx, BUFSIZE, 1,
-	    name) != 0) {
+	if (virtio_alloc_vq(vsc, &vsc->sc_vqs[rxidx], rxidx, 1, name) != 0) {
 		printf("\nCan't alloc %s virtqueue\n", name);
 		goto err;
 	}
@@ -246,8 +245,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	DPRINTF("%s: rx: %p\n", __func__, vp->vp_rx);
 
 	snprintf(name, sizeof(name), "p%dtx", portidx);
-	if (virtio_alloc_vq(vsc, &vsc->sc_vqs[txidx], txidx, BUFSIZE, 1,
-	    name) != 0) {
+	if (virtio_alloc_vq(vsc, &vsc->sc_vqs[txidx], txidx, 1, name) != 0) {
 		printf("\nCan't alloc %s virtqueue\n", name);
 		goto err;
 	}

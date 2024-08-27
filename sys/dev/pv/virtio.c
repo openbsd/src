@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.30 2024/08/13 08:47:28 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.31 2024/08/27 18:44:12 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq)
  */
 int
 virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
-    int maxsegsize, int maxnsegs, const char *name)
+    int maxnsegs, const char *name)
 {
 	int vq_size, allocsize1, allocsize2, allocsize3, allocsize = 0;
 	int rsegs, r, hdrlen;

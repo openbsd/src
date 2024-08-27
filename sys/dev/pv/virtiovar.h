@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.19 2024/08/26 19:37:54 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.20 2024/08/27 18:44:12 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -127,14 +127,11 @@ struct virtqueue {
 	/* free entry management */
 	struct vq_entry		*vq_entries;
 	SLIST_HEAD(, vq_entry) vq_freelist;
-	struct mutex		*vq_freelist_lock;
 
 	/* enqueue/dequeue status */
 	uint16_t		vq_avail_idx;
 	uint16_t		vq_used_idx;
 	int			vq_queued;
-	struct mutex		*vq_aring_lock;
-	struct mutex		*vq_uring_lock;
 
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*);
@@ -216,7 +213,7 @@ virtio_has_feature(struct virtio_softc *sc, uint64_t fbit)
 	return 0;
 }
 
-int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int, int,
+int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int,
 		    const char*);
 int virtio_free_vq(struct virtio_softc*, struct virtqueue*);
 void virtio_reset(struct virtio_softc *);

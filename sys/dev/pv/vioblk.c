@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.42 2024/08/26 19:37:54 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.43 2024/08/27 18:44:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -208,8 +208,8 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_capacity = virtio_read_device_config_8(vsc,
 	    VIRTIO_BLK_CONFIG_CAPACITY);
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, MAXPHYS, ALLOC_SEGS,
-	    "I/O request") != 0) {
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, ALLOC_SEGS, "I/O request")
+	    != 0) {
 		printf("\nCan't alloc virtqueue\n");
 		goto err;
 	}
