@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.31 2024/08/25 09:53:53 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.32 2024/08/27 05:55:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -733,14 +733,18 @@ main_imsg_send_config(struct dhcpleased_conf *xconf)
 		    sizeof(*iface_conf));
 		main_imsg_compose_engine(IMSG_RECONF_IFACE, -1, iface_conf,
 		    sizeof(*iface_conf));
-		main_imsg_compose_frontend(IMSG_RECONF_VC_ID, -1,
-		    iface_conf->vc_id, iface_conf->vc_id_len);
-		main_imsg_compose_engine(IMSG_RECONF_VC_ID, -1,
-		    iface_conf->vc_id, iface_conf->vc_id_len);
-		main_imsg_compose_frontend(IMSG_RECONF_C_ID, -1,
-		    iface_conf->c_id, iface_conf->c_id_len);
-		main_imsg_compose_engine(IMSG_RECONF_C_ID, -1,
-		    iface_conf->c_id, iface_conf->c_id_len);
+		if (iface_conf->vc_id_len) {
+			main_imsg_compose_frontend(IMSG_RECONF_VC_ID, -1,
+			    iface_conf->vc_id, iface_conf->vc_id_len);
+			main_imsg_compose_engine(IMSG_RECONF_VC_ID, -1,
+			    iface_conf->vc_id, iface_conf->vc_id_len);
+		}
+		if (iface_conf->c_id_len) {
+			main_imsg_compose_frontend(IMSG_RECONF_C_ID, -1,
+			    iface_conf->c_id, iface_conf->c_id_len);
+			main_imsg_compose_engine(IMSG_RECONF_C_ID, -1,
+			    iface_conf->c_id, iface_conf->c_id_len);
+		}
 		if (iface_conf->h_name != NULL)
 			main_imsg_compose_frontend(IMSG_RECONF_H_NAME, -1,
 			    iface_conf->h_name, strlen(iface_conf->h_name) + 1);
