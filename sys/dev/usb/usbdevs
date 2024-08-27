@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.767 2024/08/08 05:09:09 deraadt Exp $
+$OpenBSD: usbdevs,v 1.768 2024/08/27 12:31:18 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -365,6 +365,7 @@ vendor GARMIN		0x091e	Garmin International
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor TOSHIBA		0x0930	Toshiba Corp
+vendor PIXART		0x093a	PixArt
 vendor INTREPIDCS	0x093c	Intrepid
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
@@ -1347,6 +1348,7 @@ product CHIC CYPRESS		0x0003	Cypress
 
 /* Chicony products */
 product CHICONY KB8933		0x0001	KB-8933 keyboard
+product	CHICONY	OPTMOUSE	0x0939	Optical Mouse
 product	CHICONY	CAMERA		0x480c	Integrated Camera
 product CHICONY RTL8188CUS_1	0xaff7	RTL8188CUS
 product CHICONY RTL8188CUS_2	0xaff8	RTL8188CUS
@@ -2638,6 +2640,7 @@ product LENOVO RTL8153B_2	0x3098	RTL8153B
 product LENOVO RTL8153B_3	0x309b	RTL8153B
 product LENOVO RTL8153B_4	0x309c	RTL8153B
 product LENOVO RTL8153B_5	0x309d	RTL8153B
+product LENOVO OPTUSBMOUSE	0x600e	Optical Mouse
 product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 product LENOVO RTL8153_1	0x7205	RTL8153
 product LENOVO ONELINK		0x720a	OneLink
@@ -2753,6 +2756,8 @@ product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
 product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH UN58A		0xc030	iFeel Mouse
+product LOGITECH B100_1		0xc05a	B100 mouse
+product LOGITECH B100_2		0xc077	B100 mouse
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
 product LOGITECH WMJOY		0xc281	WingMan Force joystick
@@ -3139,6 +3144,7 @@ product MICROSOFT INETPRO	0x001c	Internet Keyboard Pro
 product MICROSOFT TBEXPLORER	0x0024	Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO2	0x002b	Internet Keyboard Pro
+product MICROSOFT PIXARTMOUSE	0x00cb	Optical Mouse
 product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT 700WX		0x0079	Palm 700WX
 product MICROSOFT MN110		0x007a	10/100 Ethernet
@@ -3599,6 +3605,10 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1
 /* Pioneer DJ products */
 product PIONEERDJ RTL8152B	0x0007	RTL8152B
 product PIONEERDJ RTL8153B	0x0031	RTL8153B
+
+/* PixArt products */
+
+product PIXART RPIMOUSE		0x2510	Raspberry Pi Mouse
 
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
