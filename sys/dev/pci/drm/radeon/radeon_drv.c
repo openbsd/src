@@ -1009,7 +1009,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM ||
 	    pci_mapreg_info(pa->pa_pc, pa->pa_tag, RADEON_PCI_MEM,
 	    type, &rdev->fb_aper_offset, &rdev->fb_aper_size, NULL)) {
-		printf(": can't get frambuffer info\n");
+		printf(": can't get framebuffer info\n");
 		return;
 	}
 	if (rdev->fb_aper_offset == 0) {
