@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.85 2024/08/27 18:45:58 op Exp $	*/
+/*	$OpenBSD: history.c,v 1.86 2024/08/27 19:27:19 op Exp $	*/
 
 /*
  * command history
@@ -509,7 +509,6 @@ findhistrel(const char *str)
 {
 	const char *errstr;
 	int	maxhist = histptr - history;
-	int	start = maxhist - 1;
 	int	rec;
 
 	rec = strtonum(str, -maxhist, maxhist, &errstr);
@@ -520,7 +519,7 @@ findhistrel(const char *str)
 		return -1;
 	if (rec > 0)
 		return rec - 1;
-	return start + rec + 1;
+	return maxhist + rec;
 }
 
 void
