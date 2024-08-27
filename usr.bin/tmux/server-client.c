@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.406 2024/08/26 07:30:46 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.407 2024/08/27 07:25:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -783,8 +783,7 @@ have_event:
 			log_debug("mouse on pane %%%u border", wp->id);
 		m->wp = wp->id;
 		m->w = wp->window->id;
-	} else
-		m->wp = -1;
+	}
 
 	/* Stop dragging if needed. */
 	if (type != DRAG && type != WHEEL && c->tty.mouse_drag_flag != 0) {
