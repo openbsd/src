@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.351 2024/08/26 07:09:34 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.352 2024/08/27 07:31:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -825,6 +825,10 @@ window_copy_formats(struct window_mode_entry *wme, struct format_tree *ft)
 	}
 
 	format_add(ft, "search_present", "%d", data->searchmark != NULL);
+	if (data->searchcount != -1) {
+		format_add(ft, "search_count", "%d", data->searchcount);
+		format_add(ft, "search_count_partial", "%d", data->searchmore);
+	}
 	format_add_cb(ft, "search_match", window_copy_search_match_cb);
 
 	format_add_cb(ft, "copy_cursor_word", window_copy_cursor_word_cb);
