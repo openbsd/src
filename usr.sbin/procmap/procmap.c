@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.72 2024/03/29 06:54:13 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.73 2024/08/28 14:22:36 naddy Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -483,11 +483,11 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 	/* headers */
 #ifdef DISABLED_HEADERS
 	if (print_map)
-		printf("%-*s   %-*s rwxSe RWX CPY NCP I W A\n",
+		printf("%-*s   %-*s rwxS RWX CPY NCP I W A\n",
 		    (int)sizeof(long) * 2 + 2, "Start",
 		    (int)sizeof(long) * 2 + 2, "End");
 	if (print_maps)
-		printf("%-*s   %-*s   rwxSep %-*s Dev   Inode      File\n",
+		printf("%-*s   %-*s   rwxSp %-*s Dev   Inode      File\n",
 		    (int)sizeof(long) * 2 + 0, "Start",
 		    (int)sizeof(long) * 2 + 0, "End",
 		    (int)sizeof(long) * 2 + 0, "Offset");
@@ -497,7 +497,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		    (int)sizeof(int) * 2 - 1,  "Size ");
 #endif
 	if (print_all)
-		printf("%-*s %-*s %*s %-*s rwxSeIpc  RWX  I/W/A Dev  %*s - File\n",
+		printf("%-*s %-*s %*s %-*s rwxSIpc  RWX  I/W/A Dev  %*s - File\n",
 		    (int)sizeof(long) * 2, "Start",
 		    (int)sizeof(long) * 2, "End",
 		    (int)sizeof(int)  * 2, "Size ",
