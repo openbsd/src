@@ -1384,6 +1384,12 @@ bool amdgpu_acpi_should_gpu_reset(struct amdgpu_device *adev)
 	if (amdgpu_sriov_vf(adev))
 		return false;
 
+#ifdef __OpenBSD__
+	/* XXX VEGA10 S3 fails if reset is done */
+	if (pm_suspend_target_state == PM_SUSPEND_MEM)
+		return false;
+#endif
+
 #if IS_ENABLED(CONFIG_SUSPEND)
 	return pm_suspend_target_state != PM_SUSPEND_TO_IDLE;
 #else
