@@ -61,7 +61,7 @@ dup_sockaddr(struct sockaddr *sa, size_t sa_length)
 static int
 get_instance(const char *name)
 {
-	const char *cp, *endcp;
+	const char *cp, *endcp, *errstr;
 	int n;
 
 	if (strcmp(name, "any") == 0) {
@@ -77,11 +77,10 @@ get_instance(const char *name)
 	for (cp = name; cp < endcp && !isdigit((unsigned char)*cp); ++cp)
 		continue;
 
-	if (isdigit((unsigned char)*cp))
-		n = atoi(cp);
-	else
-		n = 0;
-	return (n);
+	n = strtonum(cp, 0, INT_MAX, &errstr);
+	if (errstr != NULL)
+		return -1;
+	return n;
 }
 
 static int
@@ -168,7 +167,11 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 		 * Add it to the list, in the appropriate location.
 		 * First, get the instance number of this interface.
 		 */
-		this_instance = get_instance(name);
+		if ((this_instance = get_instance(name)) == -1) {
+			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+			    "malformed device name: %s", name);
+			goto fail;
+		}
 
 		/*
 		 * Now look for the last interface with an instance number

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.27 2024/04/05 18:01:56 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.28 2024/08/28 11:41:42 op Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -47,6 +47,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -115,6 +116,7 @@ pcap_lookupdev(char *errbuf)
 	struct ifaddrs *ifap, *ifa, *mp;
 	int n, minunit;
 	char *cp;
+	const char *errstr;
 	static char device[IF_NAMESIZE + 1];
 
 	if (getifaddrs(&ifap) != 0) {
@@ -132,7 +134,9 @@ pcap_lookupdev(char *errbuf)
 			continue;
 		for (cp = ifa->ifa_name; !isdigit((unsigned char)*cp); ++cp)
 			continue;
-		n = atoi(cp);
+		n = strtonum(cp, 0, INT_MAX, &errstr);
+		if (errstr != NULL)
+			continue;
 		if (n < minunit) {
 			minunit = n;
 			mp = ifa;
@@ -151,6 +155,7 @@ pcap_lookupdev(char *errbuf)
 #else
 	int fd, minunit, n;
 	char *cp;
+	const char *errstr;
 	struct ifreq *ifrp, *ifend, *ifnext, *mp;
 	struct ifconf ifc;
 	struct ifreq ibuf[16], ifr;
@@ -216,7 +221,9 @@ pcap_lookupdev(char *errbuf)
 
 		for (cp = ifrp->ifr_name; !isdigit((unsigned char)*cp); ++cp)
 			continue;
-		n = atoi(cp);
+		n = strtonum(cp, 0, INT_MAX, &errstr);
+		if (errstr != NULL)
+			continue;
 		if (n < minunit) {
 			minunit = n;
 			mp = ifrp;
