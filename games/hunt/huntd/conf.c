@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2022/08/08 17:57:05 op Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2024/08/28 15:51:01 op Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <sys/select.h>
@@ -252,7 +252,7 @@ load_config(FILE *f, char *fnm)
 	size_t linesize = 0;
 	ssize_t linelen;
 
-	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
 		lineno++;
 		if (line[linelen - 1] == '\n')
 			line[linelen - 1] = '\0';
