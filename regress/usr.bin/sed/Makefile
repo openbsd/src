@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.8 2022/01/12 15:32:15 martijn Exp $
+#	$OpenBSD: Makefile,v 1.9 2024/08/28 14:32:02 millert Exp $
 #	$NetBSD: Makefile,v 1.1 2005/04/04 16:48:45 peter Exp $
 
 SED?=	/usr/bin/sed
 
 REGRESS_TARGETS= sedtest substitute hanoi math sierpinski negation \
-	inplace inplace2 inplace3 commandl1 commandl2 commandc1 commandD1
+	inplace inplace2 inplace3 commandl1 commandl2 commandc1 commandD1 \
+	commandD2
 
 commandc1:
 	# New tests, currently failing, need fixes in sed.
@@ -62,6 +63,10 @@ commandc1:
 
 commandD1:
 	printf 'a\nbb\n' | ${SED} -f ${.CURDIR}/$@.sed > $@.out
+	diff ${.CURDIR}/$@.expected $@.out
+
+commandD2:
+	printf 'a\nbb\n\n' | ${SED} -f ${.CURDIR}/$@.sed > $@.out
 	diff ${.CURDIR}/$@.expected $@.out
 
 CLEANFILES+=*.out lines* script* *.txt
