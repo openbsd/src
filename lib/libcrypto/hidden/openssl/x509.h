@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.9 2024/07/26 13:34:56 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.10 2024/08/28 08:41:18 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -387,6 +387,7 @@ LCRYPTO_USED(X509_get_ex_data);
 LCRYPTO_USED(i2d_X509_AUX);
 LCRYPTO_USED(d2i_X509_AUX);
 LCRYPTO_USED(i2d_re_X509_tbs);
+LCRYPTO_USED(X509_get_signature_info);
 LCRYPTO_USED(X509_get0_signature);
 LCRYPTO_USED(X509_get_signature_nid);
 LCRYPTO_USED(X509_alias_set1);
