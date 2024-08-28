@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.18 2024/06/24 06:32:04 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.19 2024/08/28 08:33:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -562,35 +562,25 @@ int
 X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509 *cert)
 {
-	CONF ctmp;
-
-	CONF_set_nconf(&ctmp, conf);
-	return X509V3_EXT_add_nconf(&ctmp, ctx, section, cert);
+	X509V3error(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(X509V3_EXT_add_conf);
-
-/* Same as above but for a CRL */
 
 int
 X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509_CRL *crl)
 {
-	CONF ctmp;
-
-	CONF_set_nconf(&ctmp, conf);
-	return X509V3_EXT_CRL_add_nconf(&ctmp, ctx, section, crl);
+	X509V3error(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(X509V3_EXT_CRL_add_conf);
-
-/* Add extensions to certificate request */
 
 int
 X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509_REQ *req)
 {
-	CONF ctmp;
-
-	CONF_set_nconf(&ctmp, conf);
-	return X509V3_EXT_REQ_add_nconf(&ctmp, ctx, section, req);
+	X509V3error(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(X509V3_EXT_REQ_add_conf);
