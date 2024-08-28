@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.36 2024/08/24 12:08:49 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.37 2024/08/28 15:48:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@ def_create(CONF_METHOD *meth)
 {
 	CONF *ret;
 
-	ret = malloc(sizeof(CONF) + sizeof(unsigned short *));
+	ret = calloc(1, sizeof(CONF) + sizeof(unsigned short *));
 	if (ret)
 		if (meth->init(ret) == 0) {
 			free(ret);
