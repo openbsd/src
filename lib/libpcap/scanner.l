@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.30 2024/04/08 02:51:14 jsg Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.31 2024/08/28 11:40:33 op Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,6 +26,7 @@
 #include <sys/time.h>
 
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
@@ -47,7 +48,6 @@
 #include "grammar.h"
 
 static int stoi(char *);
-static inline int xdtoi(int);
 
 #ifdef FLEX_SCANNER
 #define YY_NO_UNPUT
@@ -333,41 +333,23 @@ yywrap(void)
 	return 1;
 }
 
-/* Hex digit to integer. */
-static inline int
-xdtoi(int c)
-{
-	if (isdigit(c))
-		return c - '0';
-	else if (islower(c))
-		return c - 'a' + 10;
-	else
-		return c - 'A' + 10;
-}
-
 /*
- * Convert string to integer.  Just like atoi(), but checks for
- * preceding 0x or 0 and uses hex or octal instead of decimal.
+ * Convert string to integer supporting also octal and hex notations.
  */
 static int
 stoi(char *s)
 {
-	int base = 10;
-	int n = 0;
+	long lval;
+	char *ep;
 
-	if (*s == '0') {
-		if (s[1] == 'x' || s[1] == 'X') {
-			s += 2;
-			base = 16;
-		}
-		else {
-			base = 8;
-			s += 1;
-		}
-	}
-	while (*s)
-		n = n * base + xdtoi(*s++);
+	errno = 0;
+	lval = strtol(s, &ep, 0);
+	if (*s == '\0' || *ep == '\0')
+		bpf_error("invalid number %s", s);
+	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+	    (lval > INT_MAX || lval < INT_MIN))
+		bpf_error("out of range: %s", s);
 
-	return n;
+	return lval;
 }
 
