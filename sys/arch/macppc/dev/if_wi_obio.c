@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.21 2022/10/15 08:41:18 jsg Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.22 2024/08/28 03:54:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -155,9 +155,7 @@ wi_obio_activate(struct device *dev, int act)
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
 
-	s = splnet();
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
@@ -166,7 +164,6 @@ wi_obio_activate(struct device *dev, int act)
 		wi_obio_disable(sc);
 		break;
 	}
-	splx(s);
 	return (0);
 }
 
