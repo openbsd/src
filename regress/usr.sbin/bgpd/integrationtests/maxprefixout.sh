@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: maxprefixout.sh,v 1.2 2023/02/15 14:19:08 claudio Exp $
+#	$OpenBSD: maxprefixout.sh,v 1.3 2024/08/28 13:14:39 claudio Exp $
 
 set -e
 
@@ -64,9 +64,12 @@ ifconfig ${PAIR1} patch ${PAIR2}
 ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 
-echo run bgpds
+echo test1: run bgpds
+sed -e 's/#MAX-PREFIX#/max-prefix 2 out/' \
+	${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain1.conf > \
+	./bgpd.maxprefixout.rdomain1.conf
 route -T ${RDOMAIN1} exec ${BGPD} \
-        -v -f ${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain1.conf
+        -v -f ./bgpd.maxprefixout.rdomain1.conf
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain2.conf
 
@@ -84,6 +87,42 @@ route -T ${RDOMAIN1} exec bgpctl show nei | \
 
 echo test1: add another network
 route -T ${RDOMAIN1} exec bgpctl network add 10.12.60.0/24
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl show nei | \
+	grep '^  Last error sent: Cease, sent max-prefix exceeded'
+
+echo test1: cleanup
+pkill -T ${RDOMAIN1} bgpd || true
+pkill -T ${RDOMAIN2} bgpd || true
+sleep 1
+
+echo test2: run bgpds
+sed -e 's/#MAX-PREFIX#/max-prefix 20 out/' \
+	${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain1.conf > \
+	./bgpd.maxprefixout.rdomain1.conf
+route -T ${RDOMAIN1} exec ${BGPD} \
+        -v -f ./bgpd.maxprefixout.rdomain1.conf
+route -T ${RDOMAIN2} exec ${BGPD} \
+	-v -f ${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain2.conf
+
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2 up
+sleep 1
+
+echo test2: add three networks
+route -T ${RDOMAIN1} exec bgpctl network add 10.12.58.0/24
+route -T ${RDOMAIN1} exec bgpctl network add 10.12.59.0/24
+route -T ${RDOMAIN1} exec bgpctl network add 10.12.60.0/24
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl show nei | \
+	awk '/^  Prefixes/ { if ($2 == "3") { print "ok"; ok=1; exit 0; } }
+	     END { if (ok != 1) { print "bad bgpctl output"; exit 2; } }'
+
+echo test2: reload config
+sed -e 's/#MAX-PREFIX#/max-prefix 2 out/' \
+	${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain1.conf > \
+	./bgpd.maxprefixout.rdomain1.conf
+route -T ${RDOMAIN1} exec bgpctl reload
 sleep 1
 route -T ${RDOMAIN1} exec bgpctl show nei | \
 	grep '^  Last error sent: Cease, sent max-prefix exceeded'
