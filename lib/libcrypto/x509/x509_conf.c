@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.21 2024/08/28 08:50:41 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.22 2024/08/28 08:59:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -150,7 +150,7 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int nid, int crit, const char *value)
 	} else if (method->s2i) {
 		ext_struct = method->s2i(method, ctx, value);
 	} else if (method->r2i) {
-		if (!ctx->db || !ctx->db_meth) {
+		if (ctx->db == NULL) {
 			X509V3error(X509V3_R_NO_CONFIG_DATABASE);
 			return NULL;
 		}
@@ -403,71 +403,44 @@ X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 }
 LCRYPTO_ALIAS(X509V3_EXT_REQ_add_nconf);
 
+/* XXX - remove in next bump. */
 char *
 X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
 {
-	if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_string) {
-		X509V3error(X509V3_R_OPERATION_NOT_DEFINED);
-		return NULL;
-	}
-	return ctx->db_meth->get_string(ctx->db, name, section);
+	X509V3error(ERR_R_DISABLED);
+	return NULL;
 }
 LCRYPTO_ALIAS(X509V3_get_string);
 
 STACK_OF(CONF_VALUE) *
 X509V3_get_section(X509V3_CTX *ctx, const char *section)
 {
-	if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_section) {
+	if (ctx->db == NULL) {
 		X509V3error(X509V3_R_OPERATION_NOT_DEFINED);
 		return NULL;
 	}
-	return ctx->db_meth->get_section(ctx->db, section);
+	return NCONF_get_section(ctx->db, section);
 }
 LCRYPTO_ALIAS(X509V3_get_section);
 
+/* XXX - remove in next bump. */
 void
 X509V3_string_free(X509V3_CTX *ctx, char *str)
 {
-	if (!str)
-		return;
-	if (ctx->db_meth->free_string)
-		ctx->db_meth->free_string(ctx->db, str);
+	return;
 }
 LCRYPTO_ALIAS(X509V3_string_free);
 
 void
 X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section)
 {
-	if (!section)
-		return;
-	if (ctx->db_meth->free_section)
-		ctx->db_meth->free_section(ctx->db, section);
+	return;
 }
 LCRYPTO_ALIAS(X509V3_section_free);
-
-static char *
-nconf_get_string(void *db, const char *section, const char *value)
-{
-	return NCONF_get_string(db, section, value);
-}
-
-static STACK_OF(CONF_VALUE) *
-nconf_get_section(void *db, const char *section)
-{
-	return NCONF_get_section(db, section);
-}
-
-static X509V3_CONF_METHOD nconf_method = {
-	nconf_get_string,
-	nconf_get_section,
-	NULL,
-	NULL
-};
 
 void
 X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
 {
-	ctx->db_meth = &nconf_method;
 	ctx->db = conf;
 }
 LCRYPTO_ALIAS(X509V3_set_nconf);
@@ -507,7 +480,7 @@ X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx, int nid,
 LCRYPTO_ALIAS(X509V3_EXT_conf_nid);
 
 /*
- * XXX -remove everything below in the next bump.
+ * XXX - remove everything below in the next bump.
  */
 
 void
