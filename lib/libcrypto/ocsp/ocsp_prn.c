@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_prn.c,v 1.10 2023/07/08 10:44:00 beck Exp $ */
+/* $OpenBSD: ocsp_prn.c,v 1.11 2024/08/28 06:18:44 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -65,16 +65,20 @@
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "ocsp_local.h"
 
 static int
 ocsp_certid_print(BIO *bp, OCSP_CERTID* a, int indent)
 {
+	const ASN1_OBJECT *aobj;
+
 	BIO_printf(bp, "%*sCertificate ID:\n", indent, "");
 	indent += 2;
 	BIO_printf(bp, "%*sHash Algorithm: ", indent, "");
-	i2a_ASN1_OBJECT(bp, a->hashAlgorithm->algorithm);
+	X509_ALGOR_get0(&aobj, NULL, NULL, a->hashAlgorithm);
+	i2a_ASN1_OBJECT(bp, aobj);
 	BIO_printf(bp, "\n%*sIssuer Name Hash: ", indent, "");
 	i2a_ASN1_STRING(bp, a->issuerNameHash, V_ASN1_OCTET_STRING);
 	BIO_printf(bp, "\n%*sIssuer Key Hash: ", indent, "");
