@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.29 2024/03/02 10:43:52 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.30 2024/08/28 08:22:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -120,6 +120,7 @@ struct v3_ext_method {
 	void *usr_data;	/* Any extension specific data */
 };
 
+/* XXX - remove in next bump. */
 typedef struct X509V3_CONF_METHOD_st {
 	char *(*get_string)(void *db, const char *section, const char *value);
 	STACK_OF(CONF_VALUE) *(*get_section)(void *db, const char *section);
@@ -127,7 +128,6 @@ typedef struct X509V3_CONF_METHOD_st {
 	void (*free_section)(void *db, STACK_OF(CONF_VALUE) *section);
 } X509V3_CONF_METHOD;
 
-/* Context specific info */
 struct v3_ext_ctx {
 	#define CTX_TEST 0x1
 	int flags;
@@ -135,9 +135,8 @@ struct v3_ext_ctx {
 	X509 *subject_cert;
 	X509_REQ *subject_req;
 	X509_CRL *crl;
-	X509V3_CONF_METHOD *db_meth;
+	X509V3_CONF_METHOD *db_meth;	/* XXX - remove in next bump. */
 	void *db;
-	/* Maybe more here */
 };
 
 typedef struct v3_ext_method X509V3_EXT_METHOD;
