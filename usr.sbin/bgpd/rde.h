@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.304 2024/08/14 19:09:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.305 2024/08/28 13:21:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -378,6 +378,12 @@ void		 peer_imsg_push(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pending(void);
 void		 peer_imsg_flush(struct rde_peer *);
+
+static inline int
+peer_is_up(struct rde_peer *peer)
+{
+	return (peer->state == PEER_UP);
+}
 
 RB_PROTOTYPE(peer_tree, rde_peer, entry, peer_cmp);
 

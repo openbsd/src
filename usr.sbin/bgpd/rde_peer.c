@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.37 2024/05/22 08:41:14 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.38 2024/08/28 13:21:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -234,7 +234,7 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 	/* skip ourself */
 	if (peer == peerself)
 		return;
-	if (peer->state != PEER_UP)
+	if (!peer_is_up(peer))
 		return;
 	/* skip peers using a different rib */
 	if (peer->loc_rib_id != re->rib_id)

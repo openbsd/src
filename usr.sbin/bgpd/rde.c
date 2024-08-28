@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.628 2024/08/28 13:18:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.629 2024/08/28 13:21:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -398,7 +398,8 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 				    peerid);
 				break;
 			}
-			peer_imsg_push(peer, &imsg);
+			if (peer_is_up(peer))
+				peer_imsg_push(peer, &imsg);
 			break;
 		case IMSG_SESSION_ADD:
 			if (imsg_get_data(&imsg, &pconf, sizeof(pconf)) == -1)
@@ -1311,13 +1312,16 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 	struct imsg imsg;
 	struct ibuf ibuf;
 
+	if (!peer_is_up(peer)) {
+		peer_imsg_flush(peer);
+		return;
+	}
+		
 	if (!peer_imsg_pop(peer, &imsg))
 		return;
 
 	switch (imsg_get_type(&imsg)) {
 	case IMSG_UPDATE:
-		if (peer->state != PEER_UP)
-			break;
 		if (imsg_get_ibuf(&imsg, &ibuf) == -1)
 			log_warn("update: bad imsg");
 		else
@@ -3332,7 +3336,7 @@ rde_update_queue_pending(void)
 	RB_FOREACH(peer, peer_tree, &peertable) {
 		if (peer->conf.id == 0)
 			continue;
-		if (peer->state != PEER_UP)
+		if (!peer_is_up(peer))
 			continue;
 		if (peer->throttled)
 			continue;
@@ -3358,7 +3362,7 @@ rde_update_queue_runner(uint8_t aid)
 		RB_FOREACH(peer, peer_tree, &peertable) {
 			if (peer->conf.id == 0)
 				continue;
-			if (peer->state != PEER_UP)
+			if (!peer_is_up(peer))
 				continue;
 			if (peer->throttled)
 				continue;
@@ -3387,7 +3391,7 @@ rde_update_queue_runner(uint8_t aid)
 		RB_FOREACH(peer, peer_tree, &peertable) {
 			if (peer->conf.id == 0)
 				continue;
-			if (peer->state != PEER_UP)
+			if (!peer_is_up(peer))
 				continue;
 			if (peer->throttled)
 				continue;
