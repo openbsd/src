@@ -1407,6 +1407,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 		dev->pdev->pc = pa->pa_pc;
 		dev->pdev->tag = pa->pa_tag;
 		dev->pdev->pci = (struct pci_softc *)parent->dv_parent;
+		dev->pdev->_dev = parent;
 
 #ifdef CONFIG_ACPI
 		dev->pdev->dev.node = acpi_find_pci(pa->pa_pc, pa->pa_tag);
