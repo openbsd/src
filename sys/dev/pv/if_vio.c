@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.50 2024/08/27 19:11:20 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.51 2024/08/28 12:40:22 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -465,14 +465,14 @@ vio_alloc_mem(struct vio_softc *sc)
 	}
 
 	sc->sc_arrays = mallocarray(rxqsize + txqsize,
-	    2 * sizeof(bus_dmamap_t) + sizeof(struct mbuf *), M_DEVBUF,
+	    sizeof(bus_dmamap_t) + sizeof(struct mbuf *), M_DEVBUF,
 	    M_WAITOK | M_CANFAIL | M_ZERO);
 	if (sc->sc_arrays == NULL) {
 		printf("unable to allocate mem for dmamaps\n");
 		goto err_hdr;
 	}
 	allocsize = (rxqsize + txqsize) *
-	    (2 * sizeof(bus_dmamap_t) + sizeof(struct mbuf *));
+	    (sizeof(bus_dmamap_t) + sizeof(struct mbuf *));
 
 	sc->sc_tx_dmamaps = sc->sc_arrays + rxqsize;
 	sc->sc_rx_mbufs = (void*) (sc->sc_tx_dmamaps + txqsize);
