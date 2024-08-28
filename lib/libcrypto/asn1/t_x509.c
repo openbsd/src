@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.45 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: t_x509.c,v 1.46 2024/08/28 06:17:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -155,8 +156,21 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 
 		bs = X509_get_serialNumber(x);
 		l = -1;
-		if (bs->length <= (int)sizeof(long))
-			l = ASN1_INTEGER_get(bs);
+
+		/*
+		 * For historical reasons, non-negative serial numbers are
+		 * printed in decimal as long as they fit into a long. Using
+		 * ASN1_INTEGER_get_uint64() avoids an error on the stack for
+		 * numbers between LONG_MAX and ULONG_MAX. Otherwise fall back
+		 * to hexadecimal, also for numbers that are non-conformant
+		 * (negative or larger than 2^159 - 1).
+		 */
+		if (bs->length <= sizeof(long) && bs->type == V_ASN1_INTEGER) {
+			uint64_t u64;
+
+			if (ASN1_INTEGER_get_uint64(&u64, bs) && u64 <= LONG_MAX)
+				l = (long)u64;
+		}
 		if (l >= 0) {
 			if (BIO_printf(bp, " %ld (0x%lx)\n", l, l) <= 0)
 				goto err;
