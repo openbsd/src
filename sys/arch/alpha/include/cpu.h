@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.75 2024/06/09 21:15:29 jca Exp $ */
+/* $OpenBSD: cpu.h,v 1.76 2024/08/28 17:37:12 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -103,6 +103,7 @@ typedef union alpha_t_float {
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 struct pcb;
 struct proc;
@@ -191,6 +192,8 @@ struct cpu_info {
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#define	__HAVE_UVM_PERCPU
+	struct uvm_pmr_cache ci_uvm;
 #endif
 
 	/*
