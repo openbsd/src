@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj_xref.c,v 1.14 2024/01/27 16:08:43 tb Exp $ */
+/*	$OpenBSD: obj_xref.c,v 1.15 2024/08/28 06:53:24 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -178,7 +178,7 @@ static const struct {
 	{
 		.sign_nid = NID_rsassaPss,
 		.hash_nid = NID_undef,
-		.pkey_nid = NID_rsaEncryption,
+		.pkey_nid = NID_rsassaPss,
 	},
 	{
 		.sign_nid = NID_id_tc26_signwithdigest_gost3410_2012_256,
