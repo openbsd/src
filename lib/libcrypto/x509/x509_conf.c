@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.19 2024/08/28 08:33:06 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.20 2024/08/28 08:43:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -74,10 +74,6 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int nid,
     int crit, const char *value);
 static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
     int crit, int type, X509V3_CTX *ctx);
-static char *conf_lhash_get_string(void *db, const char *section,
-    const char *value);
-static STACK_OF(CONF_VALUE) *conf_lhash_get_section(void *db,
-    const char *section);
 static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method, int nid,
     int crit, void *ext_struct);
 static unsigned char *generic_asn1(const char *value, X509V3_CTX *ctx,
@@ -531,30 +527,9 @@ X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx, int nid,
 }
 LCRYPTO_ALIAS(X509V3_EXT_conf_nid);
 
-static char *
-conf_lhash_get_string(void *db, const char *section, const char *value)
-{
-	return CONF_get_string(db, section, value);
-}
-
-static STACK_OF(CONF_VALUE) *
-conf_lhash_get_section(void *db, const char *section)
-{
-	return CONF_get_section(db, section);
-}
-
-static X509V3_CONF_METHOD conf_lhash_method = {
-	conf_lhash_get_string,
-	conf_lhash_get_section,
-	NULL,
-	NULL
-};
-
 void
 X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash)
 {
-	ctx->db_meth = &conf_lhash_method;
-	ctx->db = lhash;
 }
 LCRYPTO_ALIAS(X509V3_set_conf_lhash);
 
