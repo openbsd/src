@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.144 2024/08/04 08:15:36 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.145 2024/08/28 07:37:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2541,27 +2541,10 @@ check_key_level(X509_STORE_CTX *ctx, X509 *cert)
 static int
 check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
 {
-	const EVP_MD *md;
-	int bits, nid, md_nid;
+	int bits;
 
-	if ((nid = X509_get_signature_nid(cert)) == NID_undef)
+	if (!X509_get_signature_info(cert, NULL, NULL, &bits, NULL))
 		return 0;
-
-	/*
-	 * Look up signature algorithm digest.
-	 */
-
-	if (!OBJ_find_sigid_algs(nid, &md_nid, NULL))
-		return 0;
-
-	if (md_nid == NID_undef)
-		return 0;
-
-	if ((md = EVP_get_digestbynid(md_nid)) == NULL)
-		return 0;
-
-	/* Assume 4 bits of collision resistance for each hash octet. */
-	bits = EVP_MD_size(md) * 4;
 
 	return enough_bits_for_security_level(bits, ctx->param->security_level);
 }
