@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.27 2024/08/28 06:26:06 tb Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.28 2024/08/28 06:27:19 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -157,6 +157,11 @@ OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 {
 	int ret;
 
+	/*
+	 * XXX - should we really ignore parameters here? We probably need to
+	 * consider omitted parameters and explicit ASN.1 NULL as equal for
+	 * the SHAs, so don't blindly switch to X509_ALGOR_cmp().
+	 */
 	ret = OBJ_cmp(a->hashAlgorithm->algorithm, b->hashAlgorithm->algorithm);
 	if (ret)
 		return ret;
