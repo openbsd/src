@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.24 2023/12/12 15:54:18 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.25 2024/08/28 09:39:17 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -151,14 +151,15 @@ ibuf_realloc(struct ibuf *buf, size_t len)
 	unsigned char	*b;
 
 	/* on static buffers max is eq size and so the following fails */
-	if (buf->wpos + len > buf->max) {
+	if (len > SIZE_MAX - buf->wpos || buf->wpos + len > buf->max) {
 		errno = ERANGE;
 		return (-1);
 	}
 
-	b = recallocarray(buf->buf, buf->size, buf->wpos + len, 1);
+	b = realloc(buf->buf, buf->wpos + len);
 	if (b == NULL)
 		return (-1);
+	memset(b + buf->size, 0, buf->wpos + len - buf->size);
 	buf->buf = b;
 	buf->size = buf->wpos + len;
 
