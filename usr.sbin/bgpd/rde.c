@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.627 2024/08/20 11:59:39 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.628 2024/08/28 13:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3627,6 +3627,27 @@ rde_reload_done(void)
 			continue;
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
+
+		/* max prefix checker */
+		if (peer->conf.max_prefix &&
+		    peer->stats.prefix_cnt > peer->conf.max_prefix) {
+			log_peer_warnx(&peer->conf,
+			    "prefix limit reached (>%u/%u)",
+			    peer->stats.prefix_cnt, peer->conf.max_prefix);
+			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
+			    NULL);
+		}
+		/* max prefix checker outbound */
+		if (peer->conf.max_out_prefix &&
+		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
+			log_peer_warnx(&peer->conf,
+			    "outbound prefix limit reached (>%u/%u)",
+			    peer->stats.prefix_out_cnt,
+			    peer->conf.max_out_prefix);
+			rde_update_err(peer, ERR_CEASE,
+			    ERR_CEASE_MAX_SENT_PREFIX, NULL);
+		}
+
 		if (peer->export_type != peer->conf.export_type) {
 			log_peer_info(&peer->conf, "export type change, "
 			    "reloading");
