@@ -3491,8 +3491,9 @@ amdgpu_init_backlight(struct amdgpu_device *adev)
 void
 amdgpu_attachhook(struct device *self)
 {
-	struct amdgpu_device	*adev = (struct amdgpu_device *)self;
-	struct drm_device	*dev = &adev->ddev;
+	struct amdgpu_device *adev = (struct amdgpu_device *)self;
+	struct drm_device *dev = &adev->ddev;
+	struct pci_dev *pdev = adev->pdev;
 	int r, acpi_status;
 	struct rasops_info *ri = &adev->ro;
 	struct drm_fb_helper *fb_helper;
@@ -3500,7 +3501,7 @@ amdgpu_attachhook(struct device *self)
 	struct drm_gem_object *obj;
 	struct amdgpu_bo *rbo;
 
-	dev_set_drvdata(self, dev);
+	pci_set_drvdata(pdev, dev);
 
 	r = amdgpu_driver_load_kms(adev, adev->flags);
 	if (r)
