@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.58 2024/03/17 07:10:00 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.59 2024/08/28 07:15:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -845,6 +845,58 @@ rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
 	return 1;
 }
 
+static int
+rsa_pss_signature_info(const X509_ALGOR *alg, int *out_md_nid,
+    int *out_pkey_nid, int *out_security_bits, uint32_t *out_flags)
+{
+	RSA_PSS_PARAMS *pss = NULL;
+	const ASN1_OBJECT *aobj;
+	const EVP_MD *md, *mgf1md;
+	int md_len, salt_len;
+	int md_nid = NID_undef, pkey_nid = NID_undef;
+	int security_bits = -1;
+	uint32_t flags = 0;
+
+	X509_ALGOR_get0(&aobj, NULL, NULL, alg);
+	if (OBJ_obj2nid(aobj) != EVP_PKEY_RSA_PSS)
+		goto err;
+
+	if ((pss = rsa_pss_decode(alg)) == NULL)
+		goto err;
+	if (!rsa_pss_get_param(pss, &md, &mgf1md, &salt_len))
+		goto err;
+
+	if ((md_nid = EVP_MD_type(md)) == NID_undef)
+		goto err;
+	if ((md_len = EVP_MD_size(md)) <= 0)
+		goto err;
+
+	/*
+	 * RFC 8446, section 4.2.3 - restricts the digest algorithm:
+	 * - it must be one of SHA256, SHA384, and SHA512;
+	 * - the same digest must be used in the mask generation function;
+	 * - the salt length must match the output length of the digest.
+	 * XXX - consider separate flags for these checks.
+	 */
+	if (md_nid == NID_sha256 || md_nid == NID_sha384 || md_nid == NID_sha512) {
+		if (md_nid == EVP_MD_type(mgf1md) && salt_len == md_len)
+			flags |= X509_SIG_INFO_TLS;
+	}
+
+	security_bits = md_len * 4;
+	flags |= X509_SIG_INFO_VALID;
+
+	*out_md_nid = md_nid;
+	*out_pkey_nid = pkey_nid;
+	*out_security_bits = security_bits;
+	*out_flags = flags;
+
+ err:
+	RSA_PSS_PARAMS_free(pss);
+
+	return (flags & X509_SIG_INFO_VALID) != 0;
+}
+
 #ifndef OPENSSL_NO_CMS
 static int
 rsa_cms_verify(CMS_SignerInfo *si)
@@ -1215,6 +1267,8 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
 	.pkey_size = rsa_size,
 	.pkey_bits = rsa_bits,
 	.pkey_security_bits = rsa_security_bits,
+
+	.signature_info = rsa_pss_signature_info,
 
 	.sig_print = rsa_sig_print,
 

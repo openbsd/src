@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.112 2024/06/12 03:55:46 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.113 2024/08/28 07:15:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -621,6 +621,14 @@ int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
+
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+/* Flags returned by X509_get_signature_info(): valid and suitable for TLS. */
+#define X509_SIG_INFO_VALID	1
+#define X509_SIG_INFO_TLS	2
+int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+    uint32_t *flags);
+#endif
 
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.13 2024/04/02 04:04:07 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.14 2024/08/28 07:15:04 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -510,6 +510,24 @@ ecx_security_bits(const EVP_PKEY *pkey)
 }
 
 static int
+ecx_signature_info(const X509_ALGOR *algor, int *md_nid, int *pkey_nid,
+    int *security_bits, uint32_t *flags)
+{
+	const ASN1_OBJECT *aobj;
+
+	X509_ALGOR_get0(&aobj, NULL, NULL, algor);
+	if (OBJ_obj2nid(aobj) != EVP_PKEY_ED25519)
+		return 0;
+
+	*md_nid = NID_undef;
+	*pkey_nid = NID_ED25519;
+	*security_bits = ED25519_SECURITY_BITS;
+	*flags = X509_SIG_INFO_TLS | X509_SIG_INFO_VALID;
+
+	return 1;
+}
+
+static int
 ecx_param_cmp(const EVP_PKEY *pkey1, const EVP_PKEY *pkey2)
 {
 	/* No parameters, so always equivalent. */
@@ -928,6 +946,8 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
 	.pkey_size = ecx_sig_size,
 	.pkey_bits = ecx_bits,
 	.pkey_security_bits = ecx_security_bits,
+
+	.signature_info = ecx_signature_info,
 
 	.param_cmp = ecx_param_cmp,
 

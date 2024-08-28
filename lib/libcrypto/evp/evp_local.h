@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.23 2024/08/22 12:24:24 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.24 2024/08/28 07:15:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -111,6 +111,9 @@ struct evp_pkey_asn1_method_st {
 	int (*pkey_size)(const EVP_PKEY *pk);
 	int (*pkey_bits)(const EVP_PKEY *pk);
 	int (*pkey_security_bits)(const EVP_PKEY *pk);
+
+	int (*signature_info)(const X509_ALGOR *sig_alg, int *out_md_nid,
+	    int *out_pkey_nid, int *out_security_bits, uint32_t *out_flags);
 
 	int (*param_decode)(EVP_PKEY *pkey, const unsigned char **pder,
 	    int derlen);
