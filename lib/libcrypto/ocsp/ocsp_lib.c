@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.26 2023/07/08 10:44:00 beck Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.27 2024/08/28 06:26:06 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -75,6 +75,7 @@
 #include <openssl/x509v3.h>
 
 #include "ocsp_local.h"
+#include "x509_local.h"
 
 /* Convert a certificate and its issuer to an OCSP_CERTID */
 
@@ -109,50 +110,44 @@ OCSP_cert_id_new(const EVP_MD *dgst, const X509_NAME *issuerName,
 {
 	int nid;
 	unsigned int i;
-	X509_ALGOR *alg;
 	OCSP_CERTID *cid = NULL;
 	unsigned char md[EVP_MAX_MD_SIZE];
 
-	if (!(cid = OCSP_CERTID_new()))
+	if ((cid = OCSP_CERTID_new()) == NULL)
 		goto err;
 
-	alg = cid->hashAlgorithm;
-	if (alg->algorithm != NULL)
-		ASN1_OBJECT_free(alg->algorithm);
 	if ((nid = EVP_MD_type(dgst)) == NID_undef) {
 		OCSPerror(OCSP_R_UNKNOWN_NID);
 		goto err;
 	}
-	if (!(alg->algorithm = OBJ_nid2obj(nid)))
+	if (!X509_ALGOR_set0_by_nid(cid->hashAlgorithm, nid, V_ASN1_NULL, NULL))
 		goto err;
-	if ((alg->parameter = ASN1_TYPE_new()) == NULL)
-		goto err;
-	alg->parameter->type = V_ASN1_NULL;
 
-	if (!X509_NAME_digest(issuerName, dgst, md, &i))
-		goto digerr;
-	if (!(ASN1_OCTET_STRING_set(cid->issuerNameHash, md, i)))
+	if (!X509_NAME_digest(issuerName, dgst, md, &i)) {
+		OCSPerror(OCSP_R_DIGEST_ERR);
+		goto err;
+	}
+	if (!ASN1_OCTET_STRING_set(cid->issuerNameHash, md, i))
 		goto err;
 
 	/* Calculate the issuerKey hash, excluding tag and length */
 	if (!EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst, NULL))
 		goto err;
 
-	if (!(ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i)))
+	if (!ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i))
 		goto err;
 
-	if (serialNumber) {
+	if (serialNumber != NULL) {
 		ASN1_INTEGER_free(cid->serialNumber);
-		if (!(cid->serialNumber = ASN1_INTEGER_dup(serialNumber)))
+		if ((cid->serialNumber = ASN1_INTEGER_dup(serialNumber)) == NULL)
 			goto err;
 	}
+
 	return cid;
 
-digerr:
-	OCSPerror(OCSP_R_DIGEST_ERR);
-err:
-	if (cid)
-		OCSP_CERTID_free(cid);
+ err:
+	OCSP_CERTID_free(cid);
+
 	return NULL;
 }
 LCRYPTO_ALIAS(OCSP_cert_id_new);
