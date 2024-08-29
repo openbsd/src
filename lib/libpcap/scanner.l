@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.31 2024/08/28 11:40:33 op Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.32 2024/08/29 07:33:50 anton Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -344,7 +344,7 @@ stoi(char *s)
 
 	errno = 0;
 	lval = strtol(s, &ep, 0);
-	if (*s == '\0' || *ep == '\0')
+	if (*s == '\0' || *ep != '\0')
 		bpf_error("invalid number %s", s);
 	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
 	    (lval > INT_MAX || lval < INT_MIN))
