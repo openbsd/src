@@ -1959,7 +1959,6 @@
 ./usr/share/man/man3/EVP_sha3_224.3
 ./usr/share/man/man3/EVP_sm3.3
 ./usr/share/man/man3/EVP_sm4_cbc.3
-./usr/share/man/man3/EVP_whirlpool.3
 ./usr/share/man/man3/EXTENDED_KEY_USAGE_new.3
 ./usr/share/man/man3/GENERAL_NAME_new.3
 ./usr/share/man/man3/HMAC.3
