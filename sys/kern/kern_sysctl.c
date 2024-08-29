@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.445 2024/08/26 08:24:25 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.446 2024/08/29 10:44:40 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -530,7 +530,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
 	}
 	case KERN_MBSTAT: {
-		extern struct cpumem *mbstat;
 		uint64_t counters[MBSTAT_COUNT];
 		struct mbstat mbs;
 		unsigned int i;
@@ -543,6 +542,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		mbs.m_drops = counters[MBSTAT_DROPS];
 		mbs.m_wait = counters[MBSTAT_WAIT];
 		mbs.m_drain = counters[MBSTAT_DRAIN];
+		mbs.m_defrag_alloc = counters[MBSTAT_DEFRAG_ALLOC];
+		mbs.m_prepend_alloc = counters[MBSTAT_PREPEND_ALLOC];
+		mbs.m_pullup_alloc = counters[MBSTAT_PULLUP_ALLOC];
+		mbs.m_pullup_copy = counters[MBSTAT_PULLUP_COPY];
+		mbs.m_pulldown_alloc = counters[MBSTAT_PULLDOWN_ALLOC];
+		mbs.m_pulldown_copy = counters[MBSTAT_PULLDOWN_COPY];
 
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &mbs, sizeof(mbs)));

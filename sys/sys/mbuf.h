@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.263 2024/04/14 20:46:27 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.264 2024/08/29 10:44:40 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -363,11 +363,17 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
 
-#define MBSTAT_TYPES           MT_NTYPES
-#define MBSTAT_DROPS           (MBSTAT_TYPES + 0)
-#define MBSTAT_WAIT            (MBSTAT_TYPES + 1)
-#define MBSTAT_DRAIN           (MBSTAT_TYPES + 2)
-#define MBSTAT_COUNT           (MBSTAT_TYPES + 3)
+#define MBSTAT_TYPES		MT_NTYPES
+#define MBSTAT_DROPS		(MBSTAT_TYPES + 0)
+#define MBSTAT_WAIT		(MBSTAT_TYPES + 1)
+#define MBSTAT_DRAIN		(MBSTAT_TYPES + 2)
+#define MBSTAT_DEFRAG_ALLOC	(MBSTAT_TYPES + 3)
+#define MBSTAT_PREPEND_ALLOC	(MBSTAT_TYPES + 4)
+#define MBSTAT_PULLUP_ALLOC	(MBSTAT_TYPES + 5)
+#define MBSTAT_PULLUP_COPY	(MBSTAT_TYPES + 6)
+#define MBSTAT_PULLDOWN_ALLOC	(MBSTAT_TYPES + 7)
+#define MBSTAT_PULLDOWN_COPY	(MBSTAT_TYPES + 8)
+#define MBSTAT_COUNT		(MBSTAT_TYPES + 9)
 
 /*
  * Mbuf statistics.
@@ -378,8 +384,14 @@ struct mbstat {
 	u_long	m_drops;	/* times failed to find space */
 	u_long	m_wait;		/* times waited for space */
 	u_long	m_drain;	/* times drained protocols for space */
-	u_long	m_mtypes[MBSTAT_COUNT];
+	u_long	m_mtypes[MBSTAT_TYPES];
 				/* type specific mbuf allocations */
+	u_long	m_defrag_alloc;
+	u_long	m_prepend_alloc;
+	u_long	m_pullup_alloc;
+	u_long	m_pullup_copy;
+	u_long	m_pulldown_alloc;
+	u_long	m_pulldown_copy;
 };
 
 #include <sys/mutex.h>
@@ -404,6 +416,7 @@ extern	long nmbclust;			/* limit on the # of clusters */
 extern	int max_linkhdr;		/* largest link-level header */
 extern	int max_protohdr;		/* largest protocol header */
 extern	int max_hdr;			/* largest link+protocol header */
+extern	struct cpumem *mbstat;		/* mbuf statistics counter */
 
 void	mbinit(void);
 void	mbcpuinit(void);

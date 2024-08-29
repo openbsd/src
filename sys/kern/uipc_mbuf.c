@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.290 2024/03/05 18:52:41 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.291 2024/08/29 10:44:40 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -234,8 +234,6 @@ struct mbuf *
 m_get(int nowait, int type)
 {
 	struct mbuf *m;
-	struct counters_ref cr;
-	uint64_t *counters;
 	int s;
 
 	KASSERT(type >= 0 && type < MT_NTYPES);
@@ -245,9 +243,7 @@ m_get(int nowait, int type)
 		return (NULL);
 
 	s = splnet();
-	counters = counters_enter(&cr, mbstat);
-	counters[type]++;
-	counters_leave(&cr, mbstat);
+	counters_inc(mbstat, type);
 	splx(s);
 
 	m->m_type = type;
@@ -267,8 +263,6 @@ struct mbuf *
 m_gethdr(int nowait, int type)
 {
 	struct mbuf *m;
-	struct counters_ref cr;
-	uint64_t *counters;
 	int s;
 
 	KASSERT(type >= 0 && type < MT_NTYPES);
@@ -278,9 +272,7 @@ m_gethdr(int nowait, int type)
 		return (NULL);
 
 	s = splnet();
-	counters = counters_enter(&cr, mbstat);
-	counters[type]++;
-	counters_leave(&cr, mbstat);
+	counters_inc(mbstat, type);
 	splx(s);
 
 	m->m_type = type;
@@ -417,17 +409,13 @@ struct mbuf *
 m_free(struct mbuf *m)
 {
 	struct mbuf *n;
-	struct counters_ref cr;
-	uint64_t *counters;
 	int s;
 
 	if (m == NULL)
 		return (NULL);
 
 	s = splnet();
-	counters = counters_enter(&cr, mbstat);
-	counters[m->m_type]--;
-	counters_leave(&cr, mbstat);
+	counters_dec(mbstat, m->m_type);
 	splx(s);
 
 	n = m->m_next;
@@ -557,6 +545,7 @@ m_defrag(struct mbuf *m, int how)
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
+	counters_inc(mbstat, MBSTAT_DEFRAG_ALLOC);
 	if ((m0 = m_gethdr(how, m->m_type)) == NULL)
 		return (ENOBUFS);
 	if (m->m_pkthdr.len > MHLEN) {
@@ -616,6 +605,7 @@ m_prepend(struct mbuf *m, int len, int how)
 		m->m_data -= len;
 		m->m_len += len;
 	} else {
+		counters_inc(mbstat, MBSTAT_PREPEND_ALLOC);
 		MGET(mn, how, m->m_type);
 		if (mn == NULL) {
 			m_freem(m);
@@ -956,8 +946,8 @@ m_pullup(struct mbuf *m0, int len)
 			memmove(head, mtod(m0, caddr_t), m0->m_len);
 			m0->m_data = head;
 		}
-
 		len -= m0->m_len;
+		counters_inc(mbstat, MBSTAT_PULLUP_COPY);
 	} else {
 		/* the first mbuf is too small or read-only, make a new one */
 		space = adj + len;
@@ -968,6 +958,7 @@ m_pullup(struct mbuf *m0, int len)
 		m0->m_next = m;
 		m = m0;
 
+		counters_inc(mbstat, MBSTAT_PULLUP_ALLOC);
 		MGET(m0, M_DONTWAIT, m->m_type);
 		if (m0 == NULL)
 			goto bad;

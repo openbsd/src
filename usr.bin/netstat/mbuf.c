@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.45 2023/07/16 03:01:31 yasuoka Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.46 2024/08/29 10:44:40 bluhm Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static struct mbtypes {
 };
 
 int nmbtypes = sizeof(mbstat.m_mtypes) / sizeof(u_long);
-bool seen[MBSTAT_COUNT];		/* "have we seen this type yet?" */
+bool seen[MBSTAT_TYPES];		/* "have we seen this type yet?" */
 
 /*
  * Print mbuf statistics.
@@ -93,7 +93,7 @@ mbpr(void)
 	struct mbtypes *mp;
 	size_t size;
 
-	if (nmbtypes != MBSTAT_COUNT) {
+	if (nmbtypes != MBSTAT_TYPES) {
 		fprintf(stderr,
 		    "%s: unexpected change to mbstat; check source\n",
 		    __progname);
@@ -205,4 +205,10 @@ mbpr(void)
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
+	printf("%lu defrag mbuf allocation\n", mbstat.m_defrag_alloc);
+	printf("%lu prepend mbuf allocation\n", mbstat.m_prepend_alloc);
+	printf("%lu pullup mbuf allocation\n", mbstat.m_pullup_alloc);
+	printf("%lu pullup memory copy\n", mbstat.m_pullup_copy);
+	printf("%lu pulldown mbuf allocation\n", mbstat.m_pulldown_alloc);
+	printf("%lu pulldown memory copy\n", mbstat.m_pulldown_copy);
 }
