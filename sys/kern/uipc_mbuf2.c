@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.46 2024/08/29 10:44:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.47 2024/08/29 16:42:30 bluhm Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -171,7 +171,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;
 		counters_inc(mbstat, MBSTAT_PULLDOWN_COPY);
-		memmove(mtod(n->m_next, caddr_t), mtod(n, caddr_t) + off, hlen);
+		memcpy(mtod(n->m_next, caddr_t), mtod(n, caddr_t) + off, hlen);
 		n->m_len -= hlen;
 		n = n->m_next;
 		off = 0;
@@ -201,7 +201,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 	/* get hlen from <n, off> into <o, 0> */
 	o->m_len = hlen;
-	memmove(mtod(o, caddr_t), mtod(n, caddr_t) + off, hlen);
+	memcpy(mtod(o, caddr_t), mtod(n, caddr_t) + off, hlen);
 	n->m_len -= hlen;
 	/* get tlen from <n->m_next, 0> into <o, hlen> */
 	m_copydata(n->m_next, 0, tlen, mtod(o, caddr_t) + o->m_len);
