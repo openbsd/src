@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.226 2024/08/21 19:35:31 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.227 2024/08/29 09:53:04 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -984,6 +984,9 @@ int	mkpathat(int, const char *);
 #define RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
 
 #define DEFAULT_SKIPLIST_FILE	"/etc/rpki/skiplist"
+
+/* Interval in which random reinitialization to an RRDP snapshot happens. */
+#define RRDP_RANDOM_REINIT_MAX	12 /* weeks */
 
 /* Maximum number of TAL files we'll load. */
 #define	TALSZ_MAX		8

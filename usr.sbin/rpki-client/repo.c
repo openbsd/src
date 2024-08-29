@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.62 2024/08/15 11:30:43 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.63 2024/08/29 09:53:04 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -62,6 +62,7 @@ struct rrdprepo {
 	struct filepath_tree	 deleted;
 	unsigned int		 id;
 	enum repo_state		 state;
+	time_t			 last_reset;
 };
 static SLIST_HEAD(, rrdprepo)	rrdprepos = SLIST_HEAD_INITIALIZER(rrdprepos);
 
@@ -651,7 +652,7 @@ repo_alloc(int talid)
  * based on that information.
  */
 static struct rrdp_session *
-rrdp_session_parse(const struct rrdprepo *rr)
+rrdp_session_parse(struct rrdprepo *rr)
 {
 	FILE *f;
 	struct rrdp_session *state;
@@ -660,6 +661,9 @@ rrdp_session_parse(const struct rrdprepo *rr)
 	char *line = NULL, *file;
 	size_t len = 0;
 	ssize_t n;
+	time_t now, weeks;
+
+	now = time(NULL);
 
 	if ((state = calloc(1, sizeof(*state))) == NULL)
 		err(1, NULL);
@@ -690,6 +694,11 @@ rrdp_session_parse(const struct rrdprepo *rr)
 				goto fail;
 			break;
 		case 2:
+			rr->last_reset = strtonum(line, 1, LLONG_MAX, &errstr);
+			if (errstr)
+				goto fail;
+			break;
+		case 3:
 			if (strcmp(line, "-") == 0)
 				break;
 			if ((state->last_mod = strdup(line)) == NULL)
@@ -705,6 +714,17 @@ rrdp_session_parse(const struct rrdprepo *rr)
 		ln++;
 	}
 
+	/* check if it's time for reinitialization */
+	weeks = (now - rr->last_reset) / (86400 * 7);
+	if (now <= rr->last_reset || weeks > RRDP_RANDOM_REINIT_MAX) {
+		warnx("%s: reinitializing", rr->notifyuri);
+		goto reset;
+	}
+	if (arc4random_uniform(1 << RRDP_RANDOM_REINIT_MAX) < (1 << weeks)) {
+		warnx("%s: reinitializing", rr->notifyuri);
+		goto reset;
+	}
+
 	if (ferror(f))
 		goto fail;
 	fclose(f);
@@ -713,11 +733,13 @@ rrdp_session_parse(const struct rrdprepo *rr)
 
  fail:
 	warnx("%s: troubles reading state file", rr->basedir);
+ reset:
 	fclose(f);
 	free(line);
 	free(state->session_id);
 	free(state->last_mod);
 	memset(state, 0, sizeof(*state));
+	rr->last_reset = now;
 	return state;
 }
 
@@ -747,8 +769,8 @@ rrdp_session_save(unsigned int id, struct rrdp_session *state)
 		err(1, "fdopen");
 
 	/* write session state file out */
-	if (fprintf(f, "%s\n%lld\n", state->session_id,
-	    state->serial) < 0)
+	if (fprintf(f, "%s\n%lld\n%lld\n", state->session_id,
+	    state->serial, (long long)rr->last_reset) < 0)
 		goto fail;
 
 	if (state->last_mod != NULL) {
