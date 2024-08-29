@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.23 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: ocsp.c,v 1.24 2024/08/29 11:04:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -168,7 +168,7 @@ ocsp_opt_cert(char *arg)
 	}
 	return (0);
 }
-	
+
 static int
 ocsp_opt_cert_id_md(int argc, char **argv, int *argsused)
 {
