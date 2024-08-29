@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.24 2024/08/28 07:15:04 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.25 2024/08/29 16:58:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -139,10 +139,6 @@ struct evp_pkey_asn1_method_st {
 	    X509_ALGOR *a, ASN1_BIT_STRING *sig, EVP_PKEY *pkey);
 	int (*item_sign)(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	    X509_ALGOR *alg1, X509_ALGOR *alg2, ASN1_BIT_STRING *sig);
-
-	int (*pkey_check)(const EVP_PKEY *pk);
-	int (*pkey_public_check)(const EVP_PKEY *pk);
-	int (*pkey_param_check)(const EVP_PKEY *pk);
 
 	int (*set_priv_key)(EVP_PKEY *pk, const unsigned char *private_key,
 	    size_t len);
@@ -322,10 +318,6 @@ struct evp_pkey_method_st {
 	    const unsigned char *tbs, size_t tbslen);
 	int (*digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
 	    size_t siglen, const unsigned char *tbs, size_t tbslen);
-
-	int (*check)(EVP_PKEY *pkey);
-	int (*public_check)(EVP_PKEY *pkey);
-	int (*param_check)(EVP_PKEY *pkey);
 } /* EVP_PKEY_METHOD */;
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);

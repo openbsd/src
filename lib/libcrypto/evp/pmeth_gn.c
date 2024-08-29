@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.19 2024/04/17 08:24:11 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.20 2024/08/29 16:58:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -226,68 +226,30 @@ merr:
 }
 LCRYPTO_ALIAS(EVP_PKEY_new_mac_key);
 
+/*
+ * XXX - remove the API below in the next bump.
+ */
+
 int
 EVP_PKEY_check(EVP_PKEY_CTX *ctx)
 {
-	EVP_PKEY *pkey;
-
-	if ((pkey = ctx->pkey) == NULL) {
-		EVPerror(EVP_R_NO_KEY_SET);
-		return 0;
-	}
-
-	if (ctx->pmeth->check != NULL)
-		return ctx->pmeth->check(pkey);
-
-	if (pkey->ameth == NULL || pkey->ameth->pkey_check == NULL) {
-		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-		return -2;
-	}
-
-	return pkey->ameth->pkey_check(pkey);
+	EVPerror(ERR_R_DISABLED);
+	return -2;
 }
 LCRYPTO_ALIAS(EVP_PKEY_check);
 
 int
 EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
 {
-	EVP_PKEY *pkey;
-
-	if ((pkey = ctx->pkey) == NULL) {
-		EVPerror(EVP_R_NO_KEY_SET);
-		return 0;
-	}
-
-	if (ctx->pmeth->public_check != NULL)
-		return ctx->pmeth->public_check(pkey);
-
-	if (pkey->ameth == NULL || pkey->ameth->pkey_public_check == NULL) {
-		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-		return -2;
-	}
-
-	return pkey->ameth->pkey_public_check(pkey);
+	EVPerror(ERR_R_DISABLED);
+	return -2;
 }
 LCRYPTO_ALIAS(EVP_PKEY_public_check);
 
 int
 EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
 {
-	EVP_PKEY *pkey;
-
-	if ((pkey = ctx->pkey) == NULL) {
-		EVPerror(EVP_R_NO_KEY_SET);
-		return 0;
-	}
-
-	if (ctx->pmeth->param_check != NULL)
-		return ctx->pmeth->param_check(pkey);
-
-	if (pkey->ameth == NULL || pkey->ameth->pkey_param_check == NULL) {
-		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-		return -2;
-	}
-
-	return pkey->ameth->pkey_param_check(pkey);
+	EVPerror(ERR_R_DISABLED);
+	return -2;
 }
 LCRYPTO_ALIAS(EVP_PKEY_param_check);

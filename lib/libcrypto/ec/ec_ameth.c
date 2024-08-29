@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.68 2024/05/10 05:12:03 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.69 2024/08/29 16:58:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -689,41 +689,6 @@ ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 }
 
-static int
-ec_pkey_check(const EVP_PKEY *pkey)
-{
-	EC_KEY *eckey = pkey->pkey.ec;
-
-	if (eckey->priv_key == NULL) {
-		ECerror(EC_R_MISSING_PRIVATE_KEY);
-		return 0;
-	}
-
-	return EC_KEY_check_key(eckey);
-}
-
-static int
-ec_pkey_public_check(const EVP_PKEY *pkey)
-{
-	EC_KEY *eckey = pkey->pkey.ec;
-
-	/* This also checks the private key, but oh, well... */
-	return EC_KEY_check_key(eckey);
-}
-
-static int
-ec_pkey_param_check(const EVP_PKEY *pkey)
-{
-	EC_KEY *eckey = pkey->pkey.ec;
-
-	if (eckey->group == NULL) {
-		ECerror(EC_R_MISSING_PARAMETERS);
-		return 0;
-	}
-
-	return EC_GROUP_check(eckey->group, NULL);
-}
-
 #ifndef OPENSSL_NO_CMS
 
 static int
@@ -1092,8 +1057,4 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 	.pkey_ctrl = ec_pkey_ctrl,
 	.old_priv_decode = old_ec_priv_decode,
 	.old_priv_encode = old_ec_priv_encode,
-
-	.pkey_check = ec_pkey_check,
-	.pkey_public_check = ec_pkey_public_check,
-	.pkey_param_check = ec_pkey_param_check,
 };
