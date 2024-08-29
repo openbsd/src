@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.171 2024/08/08 15:57:22 dv Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.172 2024/08/29 20:13:42 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -334,9 +334,11 @@ static int pmap_is_active(struct pmap *, struct cpu_info *);
 paddr_t pmap_map_ptes(struct pmap *);
 struct pv_entry *pmap_remove_pv(struct vm_page *, struct pmap *, vaddr_t);
 void pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
+#if NVMM > 0
 void pmap_remove_ept(struct pmap *, vaddr_t, vaddr_t);
 void pmap_do_remove_ept(struct pmap *, vaddr_t);
 int pmap_enter_ept(struct pmap *, vaddr_t, paddr_t, vm_prot_t);
+#endif /* NVMM > 0 */
 int pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
     vaddr_t, int, struct pv_entry **);
 void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
@@ -1783,9 +1785,11 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
+#if NVMM > 0
 	if (pmap->pm_type == PMAP_TYPE_EPT)
 		pmap_remove_ept(pmap, sva, eva);
 	else
+#endif /* NVMM > 0 */
 		pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
 }
 
@@ -2415,13 +2419,43 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	DPRINTF("%s: setting PTE[%lld] = 0x%llx\n", __func__, l1idx, pd[l1idx]);
 }
 
+#if NVMM > 0
+/*
+ * pmap_convert
+ *
+ * Converts 'pmap' to the new 'mode'.
+ *
+ * Parameters:
+ *  pmap: the pmap to convert
+ *  mode: the new mode (see pmap.h, PMAP_TYPE_xxx)
+ */
+void
+pmap_convert(struct pmap *pmap, int mode)
+{
+	pt_entry_t *pte;
+
+	mtx_enter(&pmap->pm_mtx);
+	pmap->pm_type = mode;
+
+	if (mode == PMAP_TYPE_EPT) {
+		/* Clear PML4 */
+		pte = (pt_entry_t *)pmap->pm_pdir;
+		memset(pte, 0, PAGE_SIZE);
+
+		/* Give back the meltdown pdir */
+		if (pmap->pm_pdir_intel != NULL) {
+			pool_put(&pmap_pdp_pool, pmap->pm_pdir_intel);
+			pmap->pm_pdir_intel = NULL;
+		}
+	}
+	mtx_leave(&pmap->pm_mtx);
+}
+
 void
 pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 {
 	vaddr_t v;
-#if NVMM > 0
 	struct vmx_invept_descriptor vid;
-#endif /* NVMM > 0 */
 
 	mtx_enter(&pmap->pm_mtx);
 
@@ -2430,7 +2464,6 @@ pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 	for (v = sgpa; v < egpa + PAGE_SIZE; v += PAGE_SIZE)
 		pmap_do_remove_ept(pmap, v);
 
-#if NVMM > 0
 	if (pmap->eptp != 0) {
 		memset(&vid, 0, sizeof(vid));
 		vid.vid_eptp = pmap->eptp;
@@ -2438,7 +2471,6 @@ pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 		    vid.vid_eptp);
 		invept(IA32_VMX_INVEPT_SINGLE_CTX, &vid);
 	}
-#endif /* NVMM > 0 */
 
 	mtx_leave(&pmap->pm_mtx);
 }
@@ -2702,6 +2734,7 @@ unlock:
 
 	return ret;
 }
+#endif /* NVMM > 0 */
 
 /*
  * pmap_enter: enter a mapping into a pmap
@@ -2723,8 +2756,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	int error, shootself;
 	paddr_t scr3;
 
+#if NVMM > 0
 	if (pmap->pm_type == PMAP_TYPE_EPT)
 		return pmap_enter_ept(pmap, va, pa, prot);
+#endif /* NVMM > 0 */
 
 	KASSERT(!(wc && nocache));
 	pa &= PMAP_PA_MASK;
@@ -3145,37 +3180,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
 		*end = VM_MAX_KERNEL_ADDRESS;
 
 	return (va);
-}
-
-/*
- * pmap_convert
- *
- * Converts 'pmap' to the new 'mode'.
- *
- * Parameters:
- *  pmap: the pmap to convert
- *  mode: the new mode (see pmap.h, PMAP_TYPE_xxx)
- */
-void
-pmap_convert(struct pmap *pmap, int mode)
-{
-	pt_entry_t *pte;
-
-	mtx_enter(&pmap->pm_mtx);
-	pmap->pm_type = mode;
-
-	if (mode == PMAP_TYPE_EPT) {
-		/* Clear PML4 */
-		pte = (pt_entry_t *)pmap->pm_pdir;
-		memset(pte, 0, PAGE_SIZE);
-
-		/* Give back the meltdown pdir */
-		if (pmap->pm_pdir_intel != NULL) {
-			pool_put(&pmap_pdp_pool, pmap->pm_pdir_intel);
-			pmap->pm_pdir_intel = NULL;
-		}
-	}
-	mtx_leave(&pmap->pm_mtx);
 }
 
 #ifdef MULTIPROCESSOR
