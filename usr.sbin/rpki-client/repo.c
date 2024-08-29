@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.63 2024/08/29 09:53:04 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.64 2024/08/29 09:54:13 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -732,7 +732,8 @@ rrdp_session_parse(struct rrdprepo *rr)
 	return state;
 
  fail:
-	warnx("%s: troubles reading state file", rr->basedir);
+	warnx("%s: corrupted state file, reinitializing", rr->basedir);
+
  reset:
 	fclose(f);
 	free(line);
