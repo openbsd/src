@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.20 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: pkey.c,v 1.21 2024/08/29 17:01:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -66,7 +66,6 @@
 #include <openssl/pem.h>
 
 static struct {
-	int check;
 	const EVP_CIPHER *cipher;
 	char *infile;
 	int informat;
@@ -75,7 +74,6 @@ static struct {
 	int outformat;
 	char *passargin;
 	char *passargout;
-	int pubcheck;
 	int pubin;
 	int pubout;
 	int pubtext;
@@ -100,12 +98,6 @@ pkey_opt_cipher(int argc, char **argv, int *argsused)
 }
 
 static const struct option pkey_options[] = {
-	{
-		.name = "check",
-		.desc = "Check validity of key",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.check,
-	},
 	{
 		.name = "in",
 		.argname = "file",
@@ -155,12 +147,6 @@ static const struct option pkey_options[] = {
 		.opt.arg = &cfg.passargout,
 	},
 	{
-		.name = "pubcheck",
-		.desc = "Check validity of public key",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.pubcheck,
-	},
-	{
 		.name = "pubin",
 		.desc = "Expect a public key (default private key)",
 		.type = OPTION_VALUE,
@@ -200,9 +186,9 @@ pkey_usage(void)
 	int n = 0;
 
 	fprintf(stderr,
-	    "usage: pkey [-check] [-ciphername] [-in file] [-inform fmt] "
+	    "usage: pkey [-ciphername] [-in file] [-inform fmt] "
 	    "[-noout] [-out file]\n"
-	    "    [-outform fmt] [-passin src] [-passout src] [-pubcheck] "
+	    "    [-outform fmt] [-passin src] [-passout src] "
 	    "[-pubin] [-pubout]\n"
 	    "    [-text] [-text_pub]\n\n");
 	options_usage(pkey_options);
@@ -263,14 +249,6 @@ pkey_main(int argc, char **argv)
 		    cfg.informat, 1, passin, "key");
 	if (!pkey)
 		goto end;
-
-	if (cfg.check) {
-		if (!pkey_check(out, pkey, EVP_PKEY_check, "Key pair"))
-			goto end;
-	} else if (cfg.pubcheck) {
-		if (!pkey_check(out, pkey, EVP_PKEY_public_check, "Public key"))
-			goto end;
-	}
 
 	if (!cfg.noout) {
 		if (cfg.outformat == FORMAT_PEM) {

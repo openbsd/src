@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.18 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.19 2024/08/29 17:01:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -66,7 +66,6 @@
 #include <openssl/pem.h>
 
 static struct {
-	int check;
 	char *infile;
 	int noout;
 	char *outfile;
@@ -74,12 +73,6 @@ static struct {
 } cfg;
 
 static const struct option pkeyparam_options[] = {
-	{
-		.name = "check",
-		.desc = "Check validity of key parameters",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.check,
-	},
 	{
 		.name = "in",
 		.argname = "file",
@@ -113,8 +106,7 @@ static void
 pkeyparam_usage(void)
 {
 	fprintf(stderr,
-	    "usage: pkeyparam [-check] [-in file] [-noout] [-out file] "
-	    "[-text]\n");
+	    "usage: pkeyparam [-in file] [-noout] [-out file] [-text]\n");
 	options_usage(pkeyparam_options);
 }
 
@@ -161,11 +153,6 @@ pkeyparam_main(int argc, char **argv)
 		BIO_printf(bio_err, "Error reading parameters\n");
 		ERR_print_errors(bio_err);
 		goto end;
-	}
-
-	if (cfg.check) {
-		if (!pkey_check(out, pkey, EVP_PKEY_param_check, "Parameters"))
-			goto end;
 	}
 
 	if (!cfg.noout)

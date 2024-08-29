@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.68 2024/08/18 20:24:11 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.69 2024/08/29 17:01:02 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2155,32 +2155,4 @@ show_cipher(const OBJ_NAME *name, void *arg)
 		return;
 
 	fprintf(stderr, " -%-24s%s", name->name, (++*n % 3 != 0 ? "" : "\n"));
-}
-
-int
-pkey_check(BIO *out, EVP_PKEY *pkey, int (check_fn)(EVP_PKEY_CTX *),
-    const char *desc)
-{
-	EVP_PKEY_CTX *ctx;
-
-	if ((ctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL) {
-		ERR_print_errors(bio_err);
-		return 0;
-	}
-
-	if (check_fn(ctx) == 1) {
-		BIO_printf(out, "%s valid\n", desc);
-	} else {
-		unsigned long err;
-
-		BIO_printf(out, "%s invalid\n", desc);
-
-		while ((err = ERR_get_error()) != 0)
-			BIO_printf(out, "Detailed error: %s\n",
-			    ERR_reason_error_string(err));
-	}
-
-	EVP_PKEY_CTX_free(ctx);
-
-	return 1;
 }
