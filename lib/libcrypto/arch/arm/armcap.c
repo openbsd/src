@@ -1,4 +1,4 @@
-/* $OpenBSD: armcap.c,v 1.2 2023/07/26 09:57:34 jsing Exp $ */
+/* $OpenBSD: armcap.c,v 1.3 2024/08/29 03:30:05 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +14,11 @@ unsigned int OPENSSL_armcap_P;
 static sigset_t all_masked;
 
 static sigjmp_buf ill_jmp;
-	static void ill_handler (int sig) { siglongjmp(ill_jmp, sig);
+
+static void
+ill_handler(int sig)
+{
+	siglongjmp(ill_jmp, sig);
 }
 
 /*
