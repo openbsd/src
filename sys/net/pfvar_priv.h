@@ -72,7 +72,7 @@ struct pf_state_key {
 	sa_family_t	 af;
 	u_int8_t	 proto;
 
-	RB_ENTRY(pf_state_key)	 sk_entry;
+	RBT_ENTRY(pf_state_key)	 sk_entry;
 	struct pf_statelisthead	 sk_states;
 	struct pf_state_key	*sk_reverse;
 	struct inpcb		*sk_inp;	/* [L] */
@@ -109,7 +109,7 @@ struct pf_state {
 	struct pfsync_deferral	*sync_defer;	/* [S] */
 	TAILQ_ENTRY(pf_state)	 entry_list;	/* [L] */
 	SLIST_ENTRY(pf_state)	 gc_list;	/* [g] */
-	RB_ENTRY(pf_state)	 entry_id;	/* [P] */
+	RBT_ENTRY(pf_state)	 entry_id;	/* [P] */
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
 	struct pf_rule_slist	 match_rules;	/* [I] */

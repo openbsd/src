@@ -34,8 +34,8 @@
 struct rb_node {
 	RB_ENTRY(rb_node)	__entry;
 };
-#define	rb_left		__entry.rbe_left
-#define	rb_right	__entry.rbe_right
+#define	rb_left		__entry.rbe_link[_RB_LDIR]
+#define	rb_right	__entry.rbe_link[_RB_RDIR]
 
 /*
  * We provide a false structure that has the same bit pattern as tree.h
@@ -58,21 +58,17 @@ RB_HEAD(linux_root, rb_node);
 RB_PROTOTYPE(linux_root, rb_node, __entry, panic_cmp);
 
 #define	rb_parent(r)	RB_PARENT(r, __entry)
-#define	rb_color(r)	RB_COLOR(r, __entry)
-#define	rb_is_red(r)	(rb_color(r) == RB_RED)
-#define	rb_is_black(r)	(rb_color(r) == RB_BLACK)
-#define	rb_set_parent(r, p)	rb_parent((r)) = (p)
-#define	rb_set_color(r, c)	rb_color((r)) = (c)
+#define	rb_set_parent(r, p)	RB_SET_PARENT((r), (p), __entry)
 #define	rb_entry(ptr, type, member)	container_of(ptr, type, member)
 #define	rb_entry_safe(ptr, type, member) \
 	(ptr ? rb_entry(ptr, type, member) : NULL)
 
 #define RB_EMPTY_ROOT(root)	((root)->rb_node == NULL)
 #define RB_EMPTY_NODE(node)     (rb_parent(node) == node)
-#define RB_CLEAR_NODE(node)     (rb_set_parent(node, node))
+#define RB_CLEAR_NODE(node)     rb_set_parent(node, node)
 
 #define	rb_insert_color(node, root)					\
-	linux_root_RB_INSERT_COLOR((struct linux_root *)(root), (node))
+	linux_root_RB_INSERT_BALANCE((struct linux_root *)(root), (node))
 #define	rb_erase(node, root)						\
 	linux_root_RB_REMOVE((struct linux_root *)(root), (node))
 #define	rb_next(node)	RB_NEXT(linux_root, NULL, (node))
@@ -81,7 +77,7 @@ RB_PROTOTYPE(linux_root, rb_node, __entry, panic_cmp);
 #define	rb_last(root)	RB_MAX(linux_root, (struct linux_root *)(root))
 
 #define	rb_insert_color_cached(node, root, leftmost)			\
-	linux_root_RB_INSERT_COLOR((struct linux_root *)(&(root)->rb_root), (node))
+	linux_root_RB_INSERT_BALANCE((struct linux_root *)(&(root)->rb_root), (node))
 #define	rb_erase_cached(node, root)						\
 	linux_root_RB_REMOVE((struct linux_root *)(&(root)->rb_root), (node))
 #define	rb_first_cached(root)	RB_MIN(linux_root, (struct linux_root *)(&(root)->rb_root))
@@ -105,7 +101,7 @@ __rb_deepest_left(struct rb_node *node)
 static inline struct rb_node *
 rb_next_postorder(const struct rb_node *node)
 {
-	struct rb_node *parent = RB_PARENT(node, __entry);
+	struct rb_node *parent = rb_parent(node);
 	/* left -> right, right -> root */
 	if (parent != NULL &&
 	    (node == RB_LEFT(parent, __entry)) &&
@@ -127,8 +123,8 @@ rb_link_node(struct rb_node *node, struct rb_node *parent,
     struct rb_node **rb_link)
 {
 	rb_set_parent(node, parent);
-	rb_set_color(node, RB_RED);
-	node->__entry.rbe_left = node->__entry.rbe_right = NULL;
+	_RB_SET_RDIFF00(node, __entry);
+	node->rb_left = node->rb_right = NULL;
 	*rb_link = node;
 }
 
