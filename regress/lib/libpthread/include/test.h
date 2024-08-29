@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.6 2012/04/13 10:15:49 guenther Exp $	*/
+/*	$OpenBSD: test.h,v 1.7 2024/08/29 15:18:17 claudio Exp $	*/
 
 #ifndef _h_test_
 #define _h_test_
@@ -14,7 +14,8 @@
 static void __vpanic(const char *, const char *, const char *, 
 	int, const char *, va_list) __attribute__((__noreturn__));
 static void __panic(const char *, const char *, const char *,
-	int, const char *, ...) __attribute__((__noreturn__));
+	int, const char *, ...) __attribute__((__noreturn__))
+	__attribute__((__format__ (printf, 5, 6)));
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <pthread.h>
@@ -33,13 +34,8 @@ void	_thread_sys__exit(int) __attribute__((__noreturn__));
 #endif
 
 static void
-__vpanic(type, errstr, filenm, lineno, fmt, ap)
-	const char *type; 
-	const char *errstr;
-	const char *filenm;
-	int lineno; 
-	const char *fmt; 
-	va_list ap;
+__vpanic(const char *type, const char *errstr, const char *filenm, int lineno,
+    const char *fmt, va_list ap)
 {
 	char buf[1024];
 
@@ -62,12 +58,8 @@ __vpanic(type, errstr, filenm, lineno, fmt, ap)
 }
 
 static void
-__panic(type, errstr, filenm, lineno, fmt)
-	const char *type;
-	const char *errstr;
-	const char *filenm;
-	int lineno; 
-	const char *fmt;
+__panic(const char *type, const char *errstr, const char *filenm, int lineno,
+    const char *fmt, ...)
 {
 	va_list ap;
 
