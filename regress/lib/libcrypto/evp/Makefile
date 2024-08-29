@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.12 2023/03/02 20:45:11 tb Exp $
+#	$OpenBSD: Makefile,v 1.13 2024/08/29 16:43:52 tb Exp $
 
 PROGS +=	evp_ecx_test
-PROGS +=	evp_pkey_check
 PROGS +=	evp_pkey_cleanup
 PROGS +=	evp_test
 PROGS +=	evptest
