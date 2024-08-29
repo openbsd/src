@@ -1,4 +1,4 @@
-/* $OpenBSD: siginfo.c,v 1.11 2016/09/01 11:04:37 guenther Exp $ */
+/* $OpenBSD: siginfo.c,v 1.12 2024/08/29 15:16:43 claudio Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -19,16 +19,14 @@ static void
 act_handler(int signal, siginfo_t *siginfo, void *context)
 {
 	struct sigaction sa;
-	char * str;
 
 	CHECKe(sigaction(SIGSEGV, NULL, &sa));
 	ASSERT(sa.sa_handler == SIG_DFL);
 	ASSERT(siginfo != NULL);
-	asprintf(&str, "act_handler: signal %d, siginfo %p, context %p\n"
-		 "addr %p, code %d, trap %d\n", signal, siginfo, context,
-		 siginfo->si_addr, siginfo->si_code, siginfo->si_trapno);
-	write(STDOUT_FILENO, str, strlen(str));
-	free(str);
+	dprintf(STDOUT_FILENO, "act_handler: signal %d, siginfo %p, "
+		 "context %p\naddr %p, code %d, trap %d\n", signal, siginfo,
+		 context, siginfo->si_addr, siginfo->si_code,
+		 siginfo->si_trapno);
  	ASSERT(siginfo->si_addr == BOGUS);
 	ASSERT(siginfo->si_code == SEGV_MAPERR ||
 	       siginfo->si_code == SEGV_ACCERR);
