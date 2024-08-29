@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.142 2024/08/20 13:31:49 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.143 2024/08/29 13:46:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -166,35 +166,37 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
     const struct entity *entp)
 {
 	struct roa		*roa;
+	X509			*x509 = NULL;
 	struct auth		*a;
 	struct crl		*crl;
-	X509			*x509;
 	const char		*errstr;
 
 	if ((roa = roa_parse(&x509, file, entp->talid, der, len)) == NULL)
-		return NULL;
+		goto out;
 
 	a = find_issuer(file, entp->certid, roa->aki, entp->mftaki);
-	if (a == NULL) {
-		X509_free(x509);
-		roa_free(roa);
-		return NULL;
-	}
+	if (a == NULL)
+		goto out;
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
-		X509_free(x509);
-		roa_free(roa);
-		return NULL;
+		goto out;
 	}
 	X509_free(x509);
+	x509 = NULL;
 
 	roa->talid = a->cert->talid;
 
 	roa->expires = x509_find_expires(roa->notafter, a, &crlt);
 
 	return roa;
+
+ out:
+	roa_free(roa);
+	X509_free(x509);
+
+	return NULL;
 }
 
 /*
@@ -206,35 +208,37 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
     const struct entity *entp)
 {
 	struct spl		*spl;
+	X509			*x509 = NULL;
 	struct auth		*a;
 	struct crl		*crl;
-	X509			*x509;
 	const char		*errstr;
 
 	if ((spl = spl_parse(&x509, file, entp->talid, der, len)) == NULL)
-		return NULL;
+		goto out;
 
 	a = find_issuer(file, entp->certid, spl->aki, entp->mftaki);
-	if (a == NULL) {
-		X509_free(x509);
-		spl_free(spl);
-		return NULL;
-	}
+	if (a == NULL)
+		goto out;
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
-		X509_free(x509);
-		spl_free(spl);
-		return NULL;
+		goto out;
 	}
 	X509_free(x509);
+	x509 = NULL;
 
 	spl->talid = a->cert->talid;
 
 	spl->expires = x509_find_expires(spl->notafter, a, &crlt);
 
 	return spl;
+
+ out:
+	spl_free(spl);
+	X509_free(x509);
+
+	return NULL;
 }
 
 /*
@@ -556,30 +560,25 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	cert = cert_parse_pre(file, der, len);
 	cert = cert_parse(file, cert);
 	if (cert == NULL)
-		return NULL;
+		goto out;
 
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
-	if (a == NULL) {
-		cert_free(cert);
-		return NULL;
-	}
+	if (a == NULL)
+		goto out;
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
 	    !valid_cert(file, a, cert)) {
 		if (errstr != NULL)
 			warnx("%s: %s", file, errstr);
-		cert_free(cert);
-		return NULL;
+		goto out;
 	}
 
 	cert->talid = a->cert->talid;
 
 	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
-		if (!constraints_validate(file, cert)) {
-			cert_free(cert);
-			return NULL;
-		}
+		if (!constraints_validate(file, cert))
+			goto out;
 	}
 
 	/*
@@ -589,6 +588,11 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 		auth_insert(file, &auths, cert, a);
 
 	return cert;
+
+ out:
+	cert_free(cert);
+
+	return NULL;
 }
 
 static int
@@ -696,33 +700,35 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
     const struct entity *entp)
 {
 	struct gbr	*gbr;
-	X509		*x509;
+	X509		*x509 = NULL;
 	struct crl	*crl;
 	struct auth	*a;
 	const char	*errstr;
 
 	if ((gbr = gbr_parse(&x509, file, entp->talid, der, len)) == NULL)
-		return NULL;
+		goto out;
 
 	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
-	if (a == NULL) {
-		X509_free(x509);
-		gbr_free(gbr);
-		return NULL;
-	}
+	if (a == NULL)
+		goto out;
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
-		X509_free(x509);
-		gbr_free(gbr);
-		return NULL;
+		goto out;
 	}
 	X509_free(x509);
+	x509 = NULL;
 
 	gbr->talid = a->cert->talid;
 
 	return gbr;
+
+ out:
+	gbr_free(gbr);
+	X509_free(x509);
+
+	return NULL;
 }
 
 /*
@@ -733,35 +739,37 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
     const struct entity *entp)
 {
 	struct aspa	*aspa;
+	X509		*x509 = NULL;
 	struct auth	*a;
 	struct crl	*crl;
-	X509		*x509;
 	const char	*errstr;
 
 	if ((aspa = aspa_parse(&x509, file, entp->talid, der, len)) == NULL)
-		return NULL;
+		goto out;
 
 	a = find_issuer(file, entp->certid, aspa->aki, entp->mftaki);
-	if (a == NULL) {
-		X509_free(x509);
-		aspa_free(aspa);
-		return NULL;
-	}
+	if (a == NULL)
+		goto out;
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
-		X509_free(x509);
-		aspa_free(aspa);
-		return NULL;
+		goto out;
 	}
 	X509_free(x509);
+	x509 = NULL;
 
 	aspa->talid = a->cert->talid;
 
 	aspa->expires = x509_find_expires(aspa->notafter, a, &crlt);
 
 	return aspa;
+
+ out:
+	aspa_free(aspa);
+	X509_free(x509);
+
+	return NULL;
 }
 
 /*
@@ -772,14 +780,13 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
     const struct entity *entp)
 {
 	struct tak	*tak;
-	X509		*x509;
+	X509		*x509 = NULL;
 	struct crl	*crl;
 	struct auth	*a;
 	const char	*errstr;
-	int		 rc = 0;
 
 	if ((tak = tak_parse(&x509, file, entp->talid, der, len)) == NULL)
-		return NULL;
+		goto out;
 
 	a = find_issuer(file, entp->certid, tak->aki, entp->mftaki);
 	if (a == NULL)
@@ -790,20 +797,22 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
+	X509_free(x509);
+	x509 = NULL;
 
 	/* TAK EE must be signed by self-signed CA */
 	if (a->issuer != NULL)
 		goto out;
 
 	tak->talid = a->cert->talid;
-	rc = 1;
- out:
-	if (rc == 0) {
-		tak_free(tak);
-		tak = NULL;
-	}
-	X509_free(x509);
+
 	return tak;
+
+ out:
+	tak_free(tak);
+	X509_free(x509);
+
+	return NULL;
 }
 
 /*
