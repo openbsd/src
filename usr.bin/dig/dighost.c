@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.38 2024/04/23 13:34:50 jsg Exp $ */
+/* $Id: dighost.c,v 1.39 2024/08/29 07:20:16 florian Exp $ */
 
 /*! \file
  *  \note
@@ -116,8 +116,8 @@ static const struct {
 } root_hints[] = {
 	{ "198.41.0.4", AF_INET },		/*  a.root-servers.net  */
 	{ "2001:503:ba3e::2:30", AF_INET6 },	/*  a.root-servers.net  */
-	{ "199.9.14.201", AF_INET },		/*  b.root-servers.net  */
-	{ "2001:500:200::b", AF_INET6 },	/*  b.root-servers.net  */
+	{ "170.247.170.2", AF_INET },		/*  b.root-servers.net  */
+	{ "2801:1b8:10::b", AF_INET6 },		/*  b.root-servers.net  */
 	{ "192.33.4.12", AF_INET },		/*  c.root-servers.net  */
 	{ "2001:500:2::c", AF_INET6 },		/*  c.root-servers.net  */
 	{ "199.7.91.13", AF_INET },		/*  d.root-servers.net  */
