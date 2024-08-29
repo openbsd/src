@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.38 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.39 2024/08/29 21:04:16 op Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -246,6 +246,10 @@ readheaders(void)
 				break;
 			for (p = buf + 12; isspace((unsigned char)*p); ++p)
 				;
+			if (*p == '<') {
+				++p;
+				p[strcspn(p, ">")] = '\0';
+			}
 			if (strlcpy(from, p, sizeof(from)) >= sizeof(from)) {
 				syslog(LOG_NOTICE,
 				    "Return-Path %s exceeds limits", p);
@@ -303,13 +307,8 @@ readheaders(void)
 findme:			for (cur = names; !tome && cur; cur = cur->next)
 				tome += nsearch(cur->name, buf);
 		}
-	if (!tome)
+	if (!tome || !*from)
 		exit(0);
-	if (!*from) {
-		syslog(LOG_NOTICE,
-		    "no initial \"From\" or \"Return-Path\"line.");
-		exit(1);
-	}
 }
 
 /*
