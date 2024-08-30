@@ -1,10 +1,9 @@
-/*	$OpenBSD: freenull.c.head,v 1.9 2024/02/29 20:00:53 tb Exp $	*/
+/*	$OpenBSD: freenull.c.head,v 1.10 2024/08/30 05:00:38 tb Exp $	*/
 
 #include <openssl/asn1.h>
 #include <openssl/cmac.h>
 #include <openssl/cms.h>
 #include <openssl/comp.h>
-#include <openssl/conf_api.h>
 #include <openssl/ct.h>
 #include <openssl/engine.h>
 #ifndef OPENSSL_NO_GOST
