@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fflush.3,v 1.16 2024/08/13 05:52:09 jmc Exp $
+.\"	$OpenBSD: fflush.3,v 1.17 2024/08/30 03:44:48 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 13 2024 $
+.Dd $Mdocdate: August 30 2024 $
 .Dt FFLUSH 3
 .Os
 .Sh NAME
@@ -84,9 +84,7 @@ For input streams this discards any input read from the underlying object
 but not yet obtained via
 .Xr getc 3 ;
 this includes any text pushed back via
-.Xr ungetc 3
-or
-.Xr ungetwc 3 .
+.Xr ungetc 3 .
 .Sh RETURN VALUES
 Upon successful completion 0 is returned.
 Otherwise,
@@ -98,7 +96,9 @@ is set to indicate the error.
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa stream
-is not an open stream.
+is not an open stream or, in the case of
+.Fn fflush ,
+not a stream open for writing.
 .El
 .Pp
 The function
@@ -116,7 +116,7 @@ for any of the errors specified for the routine
 The
 .Fn fflush
 function conforms to
-.St -p1003.1-2024 .
+.St -ansiC .
 .Sh HISTORY
 A predecessor
 .Fn flush

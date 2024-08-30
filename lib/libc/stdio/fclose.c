@@ -1,4 +1,4 @@
-/*	$OpenBSD: fclose.c,v 1.11 2024/08/12 20:53:09 guenther Exp $ */
+/*	$OpenBSD: fclose.c,v 1.12 2024/08/30 03:44:48 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ fclose(FILE *fp)
 	}
 	FLOCKFILE(fp);
 	WCIO_FREE(fp);
-	r = __sflush(fp);
+	r = fp->_flags & __SWR ? __sflush(fp) : 0;
 	if (fp->_close != NULL && (*fp->_close)(fp->_cookie) < 0)
 		r = EOF;
 	if (fp->_flags & __SMBF)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftell.c,v 1.12 2024/08/12 20:53:09 guenther Exp $ */
+/*	$OpenBSD: ftell.c,v 1.13 2024/08/30 03:44:48 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,8 +55,7 @@ ftello(FILE *fp)
 	 * adjust for buffered bytes.
 	 */
 	FLOCKFILE(fp);
-	if (fp->_flags & __SWR)
-		__sflush(fp);	/* may adjust seek offset on append stream */
+	__sflush(fp);		/* may adjust seek offset on append stream */
 	if (fp->_flags & __SOFF)
 		pos = fp->_offset;
 	else {
