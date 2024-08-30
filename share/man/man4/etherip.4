@@ -1,4 +1,4 @@
-.\"	$OpenBSD: etherip.4,v 1.9 2024/08/30 09:39:07 dlg Exp $
+.\"	$OpenBSD: etherip.4,v 1.10 2024/08/30 20:08:05 jmc Exp $
 .\"
 .\" Copyright (c) 2015 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -55,11 +55,11 @@ must be set to 1, unless
 is being used to protect the traffic.
 .Pp
 .Nm
-interfaces can configured as part of an Ethernet bridges such as
+interfaces can configured as part of an Ethernet bridge, such as
 .Xr veb 4 ,
 .Xr tpmr 4 ,
 and
-.Xr bridge 4
+.Xr bridge 4 ,
 to extend the connectivity of Ethernet networks across IP networks,
 possibly across the Internet.
 .Pp
@@ -73,7 +73,7 @@ public Internet.
 EtherIP encapsulated packets may be protected with IPsec by specifying
 the appropriate IPsec flows between the two endpoints.
 To only protect the encapsulated EtherIP traffic between the tunnel
-enpoints the IP transport protocol 97 (etherip) selector may be used
+endpoints, the IP transport protocol 97 (etherip) selector may be used
 in
 .Xr ipsec.conf 5
 or
@@ -88,7 +88,7 @@ to network1 on em1, and host gw2 has the external IP address
 198.51.100.14 and is connected to network2 on ix1, the following
 configuration can be used to bridge network1 and network2.
 .Pp
-First create the a bridge using a
+First create a bridge using a
 .Xr veb 4
 interface,
 adding the
