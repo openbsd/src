@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.24 2024/08/29 11:04:02 tb Exp $ */
+/* $OpenBSD: ocsp.c,v 1.25 2024/08/30 17:26:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -70,6 +70,7 @@
 #include "apps.h"
 
 #include <openssl/bn.h>
+#include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -185,12 +186,50 @@ ocsp_opt_cert_id_md(int argc, char **argv, int *argsused)
 }
 
 static int
+x509v3_add_value(const char *name, const char *value,
+    STACK_OF(CONF_VALUE) **extlist)
+{
+	CONF_VALUE *vtmp = NULL;
+	STACK_OF(CONF_VALUE) *free_exts = NULL;
+
+	if ((vtmp = calloc(1, sizeof(CONF_VALUE))) == NULL)
+		goto err;
+	if (name != NULL) {
+		if ((vtmp->name = strdup(name)) == NULL)
+			goto err;
+	}
+	if (value != NULL) {
+		if ((vtmp->value = strdup(value)) == NULL)
+			goto err;
+	}
+
+	if (*extlist == NULL) {
+		if ((free_exts = *extlist = sk_CONF_VALUE_new_null()) == NULL)
+			goto err;
+	}
+
+	if (!sk_CONF_VALUE_push(*extlist, vtmp))
+		goto err;
+
+	return 1;
+
+ err:
+	X509V3error(ERR_R_MALLOC_FAILURE);
+	X509V3_conf_free(vtmp);
+	if (free_exts != NULL) {
+		sk_CONF_VALUE_free(*extlist);
+		*extlist = NULL;
+	}
+	return 0;
+}
+
+static int
 ocsp_opt_header(int argc, char **argv, int *argsused)
 {
 	if (argc < 3 || argv[1] == NULL || argv[2] == NULL)
 		return (1);
 
-	if (!X509V3_add_value(argv[1], argv[2], &cfg.headers)) {
+	if (!x509v3_add_value(argv[1], argv[2], &cfg.headers)) {
 		cfg.no_usage = 1;
 		return (1);
 	}
