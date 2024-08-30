@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_local.h,v 1.4 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: dh_local.h,v 1.5 2024/08/30 17:44:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,15 +101,6 @@ struct dh_st {
 	CRYPTO_EX_DATA ex_data;
 	const DH_METHOD *meth;
 };
-
-/*
- * Public API in OpenSSL that we only want to use internally.
- */
-
-int DH_check_params_ex(const DH *dh);
-int DH_check_params(const DH *dh, int *flags);
-int DH_check_ex(const DH *dh);
-int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key);
 
 __END_HIDDEN_DECLS
 
