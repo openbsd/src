@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.40 2024/08/20 05:36:38 jsg Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.41 2024/08/30 18:22:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1352,7 +1352,7 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 		/* 7.2.3: Clear completion notification 3b) */
 		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRLCNR, (1U << i));
 
-		/* 7.2.3: Mark software slot for re-use 3c) */
+		/* 7.2.3: Mark software slot for reuse 3c) */
 		ccb->ccb_status = CCB_STATUS_READY2FREE;
 
 		DPRINTF(3, "slot %d completed\n", i);
@@ -1951,7 +1951,7 @@ ufshci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		/* Stop run queues and disable interrupts. */
 		ufshci_disable(my->sc);
 
-		/* Tell the controler the new hibernate UTRD address. */
+		/* Tell the controller the new hibernate UTRD address. */
 		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
 		page_bus_phys = page_phys + ((void *)&my->utrd - page);
 		UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTRLBA,
@@ -2058,7 +2058,7 @@ ufshci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		return EIO;
 	UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTRLCNR, (1U << slot));
 
-	/* Check if the command was succesfully executed. */
+	/* Check if the command was successfully executed. */
 	if (my->utrd.dw2 != UFSHCI_UTRD_DW2_OCS_SUCCESS)
 		return EIO;
 
