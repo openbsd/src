@@ -1,4 +1,4 @@
-.\"	$OpenBSD: etherip.4,v 1.6 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: etherip.4,v 1.7 2024/08/30 07:25:55 dlg Exp $
 .\"
 .\" Copyright (c) 2015 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: August 30 2024 $
 .Dt ETHERIP 4
 .Os
 .Sh NAME
@@ -27,8 +27,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a pseudo-device for tunnelling Ethernet frames across IP[46]
-networks using RFC 3378 EtherIP encapsulation.
+interface is a pseudo-device for tunnelling Ethernet frames across
+IPv4 and IPv6 networks using RFC 3378 EtherIP encapsulation.
 .Pp
 An
 .Nm
