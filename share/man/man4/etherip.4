@@ -1,4 +1,4 @@
-.\"	$OpenBSD: etherip.4,v 1.7 2024/08/30 07:25:55 dlg Exp $
+.\"	$OpenBSD: etherip.4,v 1.8 2024/08/30 08:37:59 dlg Exp $
 .\"
 .\" Copyright (c) 2015 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -27,8 +27,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a pseudo-device for tunnelling Ethernet frames across
-IPv4 and IPv6 networks using RFC 3378 EtherIP encapsulation.
+driver provides point-to-point tunnel interfaces for carrying
+Ethernet frames across IPv4 and IPv6 networks using RFC 3378 EtherIP
+encapsulation.
 .Pp
 An
 .Nm
@@ -45,11 +46,6 @@ This can be done using
 command (which uses the
 .Dv SIOCSLIFPHYADDR
 ioctl).
-.Pp
-The
-.Nm
-interface must be made a member of a
-.Xr bridge 4 .
 The
 .Xr sysctl 2
 variable
@@ -57,22 +53,31 @@ variable
 must be set to 1, unless
 .Xr ipsec 4
 is being used to protect the traffic.
-Ethernet frames are then encapsulated and sent across the network
-to another
-.Xr bridge 4 ,
-which decapsulates the datagram and processes the resulting Ethernet
-frame as if it had originated on a normal Ethernet interface.
-This effectively allows a layer 2 network to be extended from one point to
-another, possibly through the Internet.
-This mechanism may be used in
-conjunction with IPsec by specifying the appropriate IPsec flows
-between the two bridges.
-To only protect the bridge traffic between
-the two bridges, the transport protocol 97 (etherip) selector may be
-used in
-.Xr ipsec.conf 5 .
-Otherwise, the Ethernet frames will be sent in the clear between the
-two bridges.
+.Pp
+.Nm
+interfaces can configured as part of an Ethernet bridges such as
+.Xr veb 4 ,
+.Xr tpmr 4 ,
+and
+.Xr bridge 4
+to extend the connectivity of Ethernet networks across IP networks,
+possibly across the Internet.
+.Pp
+The EtherIP protocol does not provide any integrated security
+features.
+EtherIP should only be deployed on trusted private networks, or
+protected with IPsec to add authentication and encryption for
+confidentiality.
+IPsec is especially recommended when transporting EtherIP over the
+public Internet.
+EtherIP encapsulated packets may be protected with IPsec by specifying
+the appropriate IPsec flows between the two endpoints.
+To only protect the encapsulated EtherIP traffic between the tunnel
+enpoints the IP transport protocol 97 (etherip) selector may be used
+in
+.Xr ipsec.conf 5
+or
+.Xr iked.conf 5 .
 .Sh EXAMPLES
 Given two physically separate Ethernet networks, a bridge can
 be used as follows to make them appear as the same local area network.
@@ -166,6 +171,8 @@ operator.
 .Xr inet6 4 ,
 .Xr ipsec 4 ,
 .Xr hostname.if 5 ,
+.Xr iked.conf 5 ,
+.Xr ipsec.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
 .Sh STANDARDS
