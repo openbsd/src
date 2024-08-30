@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.76 2024/03/22 19:22:23 jcs Exp $	*/
+/*	$OpenBSD: patch.c,v 1.77 2024/08/30 07:11:02 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -542,6 +542,7 @@ get_some_switches(void)
 		{NULL,			0,			0,	0}
 	};
 	int ch;
+	const char *errstr;
 
 	rejname[0] = '\0';
 	Argc_last = Argc;
@@ -598,7 +599,10 @@ get_some_switches(void)
 			force = true;
 			break;
 		case 'F':
-			maxfuzz = atoi(optarg);
+			maxfuzz = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				fatal("maximum fuzz is %s: %s\n",
+				    errstr, optarg);
 			break;
 		case 'i':
 			if (++filec == MAXFILEC)
@@ -618,7 +622,10 @@ get_some_switches(void)
 			outname = xstrdup(optarg);
 			break;
 		case 'p':
-			strippath = atoi(optarg);
+			strippath = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				fatal("strip count is %s: %s\n",
+				    errstr, optarg);
 			break;
 		case 'r':
 			if (strlcpy(rejname, optarg,
@@ -647,7 +654,10 @@ get_some_switches(void)
 			break;
 #ifdef DEBUGGING
 		case 'x':
-			debug = atoi(optarg);
+			debug = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				fatal("debug number is %s: %s\n",
+				    errstr, optarg);
 			break;
 #endif
 		default:
