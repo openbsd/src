@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmac.h,v 1.2 2023/07/05 21:14:54 bcook Exp $	*/
+/*	$OpenBSD: hmac.h,v 1.3 2024/08/31 10:42:21 tb Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -28,7 +28,6 @@
 LCRYPTO_USED(HMAC_CTX_new);
 LCRYPTO_USED(HMAC_CTX_free);
 LCRYPTO_UNUSED(HMAC_CTX_reset);
-LCRYPTO_UNUSED(HMAC_Init);
 LCRYPTO_USED(HMAC_Init_ex);
 LCRYPTO_USED(HMAC_Update);
 LCRYPTO_USED(HMAC_Final);

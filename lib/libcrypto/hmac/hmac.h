@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.h,v 1.19 2024/07/09 07:57:57 tb Exp $ */
+/* $OpenBSD: hmac.h,v 1.20 2024/08/31 10:42:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,8 +82,6 @@ HMAC_CTX *HMAC_CTX_new(void);
 void HMAC_CTX_free(HMAC_CTX *ctx);
 int HMAC_CTX_reset(HMAC_CTX *ctx);
 
-int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
-    __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,
     ENGINE *impl)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));

@@ -1433,7 +1433,6 @@ HMAC_CTX_new
 HMAC_CTX_reset
 HMAC_CTX_set_flags
 HMAC_Final
-HMAC_Init
 HMAC_Init_ex
 HMAC_Update
 IPAddressChoice_free
