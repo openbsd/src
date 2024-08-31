@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.205 2024/08/31 09:29:03 tb Exp $
+# $OpenBSD: Makefile,v 1.206 2024/08/31 10:28:03 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -544,7 +544,6 @@ SRCS+= ui_err.c
 SRCS+= ui_lib.c
 SRCS+= ui_null.c
 SRCS+= ui_openssl.c
-SRCS+= ui_util.c
 
 # whrlpool/
 SRCS+= whirlpool.c

@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.18 2023/04/18 08:33:43 tb Exp $ */
+/* $OpenBSD: ui.h,v 1.19 2024/08/31 10:28:03 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -363,12 +363,6 @@ int UI_get_result_minsize(UI_STRING *uis);
 int UI_get_result_maxsize(UI_STRING *uis);
 /* Set the result of a UI_STRING. */
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result);
-
-/* A couple of popular utility functions */
-int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
-    int verify);
-int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
-    int verify);
 
 void ERR_load_UI_strings(void);
 

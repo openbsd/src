@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.4 2024/08/24 07:51:19 tb Exp $ */
+/* $OpenBSD: ui.h,v 1.5 2024/08/31 10:28:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -75,8 +75,6 @@ LCRYPTO_USED(UI_get0_test_string);
 LCRYPTO_USED(UI_get_result_minsize);
 LCRYPTO_USED(UI_get_result_maxsize);
 LCRYPTO_USED(UI_set_result);
-LCRYPTO_UNUSED(UI_UTIL_read_pw_string);
-LCRYPTO_UNUSED(UI_UTIL_read_pw);
 LCRYPTO_USED(ERR_load_UI_strings);
 LCRYPTO_USED(UI_method_get_prompt_constructor);
 

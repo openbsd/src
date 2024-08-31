@@ -2279,8 +2279,6 @@ TXT_DB_insert
 TXT_DB_read
 TXT_DB_write
 UI_OpenSSL
-UI_UTIL_read_pw
-UI_UTIL_read_pw_string
 UI_add_error_string
 UI_add_info_string
 UI_add_input_boolean
