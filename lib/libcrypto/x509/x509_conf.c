@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.26 2024/08/31 10:03:03 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.27 2024/08/31 10:04:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -404,14 +404,6 @@ X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 }
 LCRYPTO_ALIAS(X509V3_EXT_REQ_add_nconf);
 
-/* XXX - remove in next bump. */
-char *
-X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
-{
-	X509V3error(ERR_R_DISABLED);
-	return NULL;
-}
-
 STACK_OF(CONF_VALUE) *
 X509V3_get_section(X509V3_CTX *ctx, const char *section)
 {
@@ -420,13 +412,6 @@ X509V3_get_section(X509V3_CTX *ctx, const char *section)
 		return NULL;
 	}
 	return NCONF_get_section(ctx->db, section);
-}
-
-/* XXX - remove in next bump. */
-void
-X509V3_string_free(X509V3_CTX *ctx, char *str)
-{
-	return;
 }
 
 void
