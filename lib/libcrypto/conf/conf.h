@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.22 2024/08/31 09:39:31 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.23 2024/08/31 09:41:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,7 +133,6 @@ struct conf_st {
 CONF *NCONF_new(const CONF_METHOD *meth);
 const CONF_METHOD *NCONF_default(void);
 void NCONF_free(CONF *conf);
-void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf, const char *file, long *eline);
 int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);

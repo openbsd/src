@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.22 2024/08/31 09:39:31 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.23 2024/08/31 09:41:53 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -191,7 +191,7 @@ CONF_free(LHASH_OF(CONF_VALUE) *conf)
 	CONF ctmp;
 
 	CONF_set_nconf(&ctmp, conf);
-	NCONF_free_data(&ctmp);
+	ctmp.meth->destroy_data(&ctmp);
 }
 LCRYPTO_ALIAS(CONF_free);
 
@@ -227,15 +227,6 @@ NCONF_free(CONF *conf)
 	conf->meth->destroy(conf);
 }
 LCRYPTO_ALIAS(NCONF_free);
-
-void
-NCONF_free_data(CONF *conf)
-{
-	if (conf == NULL)
-		return;
-	conf->meth->destroy_data(conf);
-}
-LCRYPTO_ALIAS(NCONF_free_data);
 
 int
 NCONF_load(CONF *conf, const char *file, long *eline)

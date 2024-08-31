@@ -1488,7 +1488,6 @@ NAME_CONSTRAINTS_it
 NAME_CONSTRAINTS_new
 NCONF_default
 NCONF_free
-NCONF_free_data
 NCONF_get_number_e
 NCONF_get_section
 NCONF_get_string
