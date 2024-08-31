@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.44 2024/07/20 18:37:38 tb Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.45 2024/08/31 12:47:24 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -515,11 +515,7 @@ hexdump(const uint8_t *buf, size_t len, const uint8_t *compare)
 static inline int
 ssl_aes_is_accelerated(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
-	return ((OPENSSL_cpu_caps() & (1ULL << 57)) != 0);
-#else
-	return (0);
-#endif
+	return (OPENSSL_cpu_caps() & CRYPTO_CPU_CAPS_ACCELERATED_AES) != 0;
 }
 
 static int

@@ -30,11 +30,7 @@ int ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str);
 static inline int
 ssl_aes_is_accelerated(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
-	return ((OPENSSL_cpu_caps() & (1ULL << 57)) != 0);
-#else
-	return (0);
-#endif
+	return (OPENSSL_cpu_caps() & CRYPTO_CPU_CAPS_ACCELERATED_AES) != 0;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.12 2024/03/20 10:38:05 jsing Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.13 2024/08/31 12:47:24 jsing Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -379,11 +379,7 @@ shutdown_peers(SSL *client_ssl, SSL *server_ssl, const char *description)
 static inline int
 ssl_aes_is_accelerated(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
-	return ((OPENSSL_cpu_caps() & (1ULL << 57)) != 0);
-#else
-	return (0);
-#endif
+	return (OPENSSL_cpu_caps() & CRYPTO_CPU_CAPS_ACCELERATED_AES) != 0;
 }
 
 static int
