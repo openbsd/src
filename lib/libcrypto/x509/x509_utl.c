@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.21 2024/08/31 10:03:03 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.22 2024/08/31 18:38:46 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -87,40 +87,53 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 /* Add a CONF_VALUE name-value pair to stack. */
 int
 X509V3_add_value(const char *name, const char *value,
-    STACK_OF(CONF_VALUE) **extlist)
+    STACK_OF(CONF_VALUE) **out_extlist)
 {
-	CONF_VALUE *vtmp = NULL;
-	STACK_OF(CONF_VALUE) *free_exts = NULL;
+	STACK_OF(CONF_VALUE) *extlist = NULL;
+	CONF_VALUE *conf_value = NULL;
+	int ret = 0;
 
-	if ((vtmp = calloc(1, sizeof(CONF_VALUE))) == NULL)
+	if ((conf_value = calloc(1, sizeof(*conf_value))) == NULL) {
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		goto err;
+	}
 	if (name != NULL) {
-		if ((vtmp->name = strdup(name)) == NULL)
+		if ((conf_value->name = strdup(name)) == NULL) {
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
+		}
 	}
 	if (value != NULL) {
-		if ((vtmp->value = strdup(value)) == NULL)
+		if ((conf_value->value = strdup(value)) == NULL) {
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
+		}
 	}
 
-	if (*extlist == NULL) {
-		if ((free_exts = *extlist = sk_CONF_VALUE_new_null()) == NULL)
-			goto err;
-	}
-
-	if (!sk_CONF_VALUE_push(*extlist, vtmp))
+	if ((extlist = *out_extlist) == NULL)
+		extlist = sk_CONF_VALUE_new_null();
+	if (extlist == NULL) {
+		X509V3error(ERR_R_MALLOC_FAILURE);
 		goto err;
+	}
 
-	return 1;
+	if (!sk_CONF_VALUE_push(extlist, conf_value)) {
+		X509V3error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	conf_value = NULL;
+
+	*out_extlist = extlist;
+	extlist = NULL;
+
+	ret = 1;
 
  err:
-	X509V3error(ERR_R_MALLOC_FAILURE);
-	X509V3_conf_free(vtmp);
-	if (free_exts != NULL) {
-		sk_CONF_VALUE_free(*extlist);
-		*extlist = NULL;
-	}
-	return 0;
+	if (extlist != *out_extlist)
+		sk_CONF_VALUE_pop_free(extlist, X509V3_conf_free);
+	X509V3_conf_free(conf_value);
+
+	return ret;
 }
 
 int
