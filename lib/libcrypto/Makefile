@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.208 2024/08/31 10:38:49 tb Exp $
+# $OpenBSD: Makefile,v 1.209 2024/08/31 10:44:39 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -54,10 +54,6 @@ CFLAGS+= -I${LCRYPTO_SRC}/x509
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
-
-.if (${MACHINE_CPU} == "amd64") || (${MACHINE_CPU} == "i386")
-SYMBOL_LIST+=	${.CURDIR}/arch/${MACHINE_CPU}/Symbols.list
-.endif
 
 # crypto/
 SRCS+= cpt_err.c

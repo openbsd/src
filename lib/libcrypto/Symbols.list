@@ -1653,7 +1653,6 @@ OPENSSL_cleanse
 OPENSSL_cleanup
 OPENSSL_config
 OPENSSL_cpu_caps
-OPENSSL_cpuid_setup
 OPENSSL_gmtime
 OPENSSL_init
 OPENSSL_init_crypto
