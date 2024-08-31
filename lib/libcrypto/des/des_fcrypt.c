@@ -1,4 +1,4 @@
-/* $OpenBSD: des_fcrypt.c,v 1.2 2024/08/31 16:04:22 jsing Exp $ */
+/* $OpenBSD: des_fcrypt.c,v 1.3 2024/08/31 16:17:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,9 +89,6 @@ fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
     DES_LONG Eswap1)
 {
 	DES_LONG l, r, t, u;
-#ifdef DES_PTR
-	const unsigned char *des_SP = (const unsigned char *)DES_SPtrans;
-#endif
 	DES_LONG *s;
 	int j;
 	DES_LONG E0, E1;

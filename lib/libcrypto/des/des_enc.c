@@ -1,4 +1,4 @@
-/* $OpenBSD: des_enc.c,v 1.19 2024/08/31 16:04:22 jsing Exp $ */
+/* $OpenBSD: des_enc.c,v 1.20 2024/08/31 16:17:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -210,9 +210,6 @@ void
 DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	DES_LONG l, r, t, u;
-#ifdef DES_PTR
-	const unsigned char *des_SP = (const unsigned char *)DES_SPtrans;
-#endif
 #ifndef DES_UNROLL
 	int i;
 #endif
@@ -301,9 +298,6 @@ void
 DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	DES_LONG l, r, t, u;
-#ifdef DES_PTR
-	const unsigned char *des_SP = (const unsigned char *)DES_SPtrans;
-#endif
 #ifndef DES_UNROLL
 	int i;
 #endif
