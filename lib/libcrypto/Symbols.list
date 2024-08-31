@@ -589,12 +589,7 @@ CMS_unsigned_get_attr_by_OBJ
 CMS_unsigned_get_attr_count
 CMS_verify
 CMS_verify_receipt
-CONF_free
 CONF_get1_default_config_file
-CONF_get_number
-CONF_get_section
-CONF_get_string
-CONF_load
 CONF_modules_finish
 CONF_modules_free
 CONF_modules_load

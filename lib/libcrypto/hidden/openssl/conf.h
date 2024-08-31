@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.6 2024/08/31 09:44:00 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.7 2024/08/31 09:50:52 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -25,15 +25,7 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(CONF_set_default_method);
 LCRYPTO_USED(CONF_set_nconf);
-LCRYPTO_USED(CONF_load);
-LCRYPTO_USED(CONF_load_fp);
-LCRYPTO_USED(CONF_load_bio);
-LCRYPTO_USED(CONF_get_section);
-LCRYPTO_USED(CONF_get_string);
-LCRYPTO_USED(CONF_get_number);
-LCRYPTO_USED(CONF_free);
 LCRYPTO_USED(OPENSSL_config);
 LCRYPTO_USED(OPENSSL_no_config);
 LCRYPTO_USED(NCONF_new);
