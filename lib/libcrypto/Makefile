@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.204 2024/08/31 09:21:44 tb Exp $
+# $OpenBSD: Makefile,v 1.205 2024/08/31 09:29:03 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -682,7 +682,6 @@ HDRS=\
 	${LCRYPTO_SRC}/cms/cms.h \
 	${LCRYPTO_SRC}/comp/comp.h \
 	${LCRYPTO_SRC}/conf/conf.h \
-	${LCRYPTO_SRC}/conf/conf_api.h \
 	${LCRYPTO_SRC}/crypto.h \
 	${LCRYPTO_SRC}/ct/ct.h \
 	${LCRYPTO_SRC}/curve25519/curve25519.h \

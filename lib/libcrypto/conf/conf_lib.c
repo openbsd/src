@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.20 2024/08/31 09:26:18 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.21 2024/08/31 09:29:03 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -60,7 +60,6 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#include <openssl/conf_api.h>
 #include <openssl/lhash.h>
 
 #include "conf_local.h"

@@ -2873,13 +2873,6 @@ X509v3_get_ext_by_OBJ
 X509v3_get_ext_by_critical
 X509v3_get_ext_count
 ZLONG_it
-_CONF_add_string
-_CONF_free_data
-_CONF_get_section
-_CONF_get_section_values
-_CONF_get_string
-_CONF_new_data
-_CONF_new_section
 a2d_ASN1_OBJECT
 a2i_ASN1_ENUMERATED
 a2i_ASN1_INTEGER
