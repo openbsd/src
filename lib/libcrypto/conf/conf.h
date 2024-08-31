@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.25 2024/08/31 09:50:52 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.26 2024/08/31 09:53:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,8 +103,6 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 #define CONF_MFLAGS_NO_DSO		0x8
 #define CONF_MFLAGS_IGNORE_MISSING_FILE	0x10
 #define CONF_MFLAGS_DEFAULT_SECTION	0x20
-
-void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
 
 void OPENSSL_config(const char *config_name);
 void OPENSSL_no_config(void);

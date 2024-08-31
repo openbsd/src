@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.7 2024/08/31 09:50:52 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.8 2024/08/31 09:53:02 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -25,7 +25,6 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(CONF_set_nconf);
 LCRYPTO_USED(OPENSSL_config);
 LCRYPTO_USED(OPENSSL_no_config);
 LCRYPTO_USED(NCONF_new);

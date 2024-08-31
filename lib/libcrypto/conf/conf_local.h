@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_local.h,v 1.5 2024/08/31 09:44:00 tb Exp $ */
+/* $OpenBSD: conf_local.h,v 1.6 2024/08/31 09:53:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,8 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data);
 
 int CONF_parse_list(const char *list, int sep, int nospc,
     int (*list_cb)(const char *elem, int len, void *usr), void *arg);
+
+void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
 
 CONF_VALUE *_CONF_new_section(CONF *conf, const char *section);
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section);
