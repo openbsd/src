@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2024/08/29 17:16:40 tb Exp $
+#	$OpenBSD: Makefile,v 1.14 2024/08/31 11:14:58 tb Exp $
 
 OPENSSL_RUBY_TESTS =	/usr/local/share/openssl-ruby-tests
 .if exists(/usr/local/bin/ruby32)
@@ -37,8 +37,7 @@ ${_BUILD_COOKIE}: ${_BUILDDIR_COOKIE}
 	    make;
 	touch $@
 
-# XXX - remove [^c] after bump
-OPENSSL_RUBY_TESTSRC =	${OPENSSL_RUBY_TESTS}/test/openssl/test_*[^c].rb
+OPENSSL_RUBY_TESTSRC =	${OPENSSL_RUBY_TESTS}/test/openssl/test_*.rb
 ${_TEST_COOKIE}: ${_BUILD_COOKIE} ${_BUILDDIR_COOKIE}
 	cd ${BUILDDIR} && \
 	    env SKIP_EXPECTED_FAILURES=true ${RUBY} -I. \
