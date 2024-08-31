@@ -720,8 +720,6 @@ DES_ede3_cbcm_encrypt
 DES_ede3_cfb64_encrypt
 DES_ede3_cfb_encrypt
 DES_ede3_ofb64_encrypt
-DES_enc_read
-DES_enc_write
 DES_encrypt1
 DES_encrypt2
 DES_encrypt3
@@ -734,7 +732,6 @@ DES_ofb_encrypt
 DES_pcbc_encrypt
 DES_quad_cksum
 DES_random_key
-DES_rw_mode
 DES_set_key
 DES_set_key_checked
 DES_set_key_unchecked

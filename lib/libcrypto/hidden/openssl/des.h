@@ -1,4 +1,4 @@
-/* $OpenBSD: des.h,v 1.2 2024/07/09 07:16:13 beck Exp $ */
+/* $OpenBSD: des.h,v 1.3 2024/08/31 10:30:16 tb Exp $ */
 /*
  * Copyright (c) 2024 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -41,8 +41,6 @@ LCRYPTO_USED(DES_ede3_cbcm_encrypt);
 LCRYPTO_USED(DES_ede3_cfb64_encrypt);
 LCRYPTO_USED(DES_ede3_cfb_encrypt);
 LCRYPTO_USED(DES_ede3_ofb64_encrypt);
-LCRYPTO_USED(DES_enc_read);
-LCRYPTO_USED(DES_enc_write);
 LCRYPTO_USED(DES_fcrypt);
 LCRYPTO_USED(DES_crypt);
 LCRYPTO_USED(DES_ofb_encrypt);
@@ -62,7 +60,6 @@ LCRYPTO_USED(DES_cfb64_encrypt);
 LCRYPTO_USED(DES_ofb64_encrypt);
 #if defined(LIBRESSL_NAMESPACE)
 extern LCRYPTO_USED(DES_check_key);
-extern LCRYPTO_USED(DES_rw_mode);
 #endif
 
 #endif /* _LIBCRYPTO_DES_H */

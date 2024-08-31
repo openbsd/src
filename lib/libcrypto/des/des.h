@@ -1,4 +1,4 @@
-/* $OpenBSD: des.h,v 1.21 2023/07/31 05:04:06 tb Exp $ */
+/* $OpenBSD: des.h,v 1.22 2024/08/31 10:30:16 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,7 +105,6 @@ typedef struct DES_ks {
 	DES_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
 extern int DES_check_key;	/* defaults to false */
-extern int DES_rw_mode;		/* defaults to DES_PCBC_MODE */
 
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
     DES_key_schedule *ks1, DES_key_schedule *ks2,
@@ -174,10 +173,6 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in, unsigned char *out,
     long length, DES_key_schedule *ks1,
     DES_key_schedule *ks2, DES_key_schedule *ks3,
     DES_cblock *ivec, int *num);
-int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
-    DES_cblock *iv);
-int DES_enc_write(int fd, const void *buf, int len, DES_key_schedule *sched,
-    DES_cblock *iv);
 char *DES_fcrypt(const char *buf, const char *salt, char *ret);
 char *DES_crypt(const char *buf, const char *salt);
 void DES_ofb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
