@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.32 2024/08/31 09:59:12 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.33 2024/08/31 10:03:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -648,29 +648,12 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
 X509_EXTENSION *X509V3_EXT_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *name, const char *value);
 
-int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
-			     STACK_OF(CONF_VALUE) **extlist);
-int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
-int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
 #endif
 
-char *X509V3_get_string(X509V3_CTX *ctx, const char *name,
-    const char *section);
-STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section);
-void X509V3_string_free(X509V3_CTX *ctx, char *str);
-void X509V3_section_free( X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
 				 X509_REQ *req, X509_CRL *crl, int flags);
 
-int X509V3_add_value(const char *name, const char *value,
-						STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_uchar(const char *name, const unsigned char *value,
-						STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_bool(const char *name, int asn1_bool,
-						STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
-						STACK_OF(CONF_VALUE) **extlist);
 char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const ASN1_INTEGER *aint);
 ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const char *value);
 char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, const ASN1_ENUMERATED *aint);
@@ -684,7 +667,6 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line);
 void *X509V3_EXT_d2i(X509_EXTENSION *ext);
 void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
     int *idx);
-
 
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value, int crit, unsigned long flags);

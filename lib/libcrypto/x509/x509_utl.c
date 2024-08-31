@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.20 2024/08/31 09:26:18 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.21 2024/08/31 10:03:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -122,7 +122,6 @@ X509V3_add_value(const char *name, const char *value,
 	}
 	return 0;
 }
-LCRYPTO_ALIAS(X509V3_add_value);
 
 int
 X509V3_add_value_uchar(const char *name, const unsigned char *value,
@@ -130,7 +129,6 @@ X509V3_add_value_uchar(const char *name, const unsigned char *value,
 {
 	return X509V3_add_value(name, (const char *)value, extlist);
 }
-LCRYPTO_ALIAS(X509V3_add_value_uchar);
 
 /* Free function for STACK_OF(CONF_VALUE) */
 
@@ -154,17 +152,6 @@ X509V3_add_value_bool(const char *name, int asn1_bool,
 		return X509V3_add_value(name, "TRUE", extlist);
 	return X509V3_add_value(name, "FALSE", extlist);
 }
-LCRYPTO_ALIAS(X509V3_add_value_bool);
-
-int
-X509V3_add_value_bool_nf(const char *name, int asn1_bool,
-    STACK_OF(CONF_VALUE) **extlist)
-{
-	if (asn1_bool)
-		return X509V3_add_value(name, "TRUE", extlist);
-	return 1;
-}
-LCRYPTO_ALIAS(X509V3_add_value_bool_nf);
 
 static char *
 bn_to_string(const BIGNUM *bn)
@@ -307,7 +294,6 @@ X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
 	free(strtmp);
 	return ret;
 }
-LCRYPTO_ALIAS(X509V3_add_value_int);
 
 int
 X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
@@ -333,7 +319,6 @@ X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 	X509V3_conf_err(value);
 	return 0;
 }
-LCRYPTO_ALIAS(X509V3_get_value_bool);
 
 int
 X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
@@ -347,7 +332,6 @@ X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 	*aint = itmp;
 	return 1;
 }
-LCRYPTO_ALIAS(X509V3_get_value_int);
 
 #define HDR_NAME	1
 #define HDR_VALUE	2

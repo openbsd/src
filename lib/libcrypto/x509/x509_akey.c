@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_akey.c,v 1.2 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_akey.c,v 1.3 2024/08/31 10:03:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,6 +64,8 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+#include "x509_local.h"
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     AUTHORITY_KEYID *akeyid, STACK_OF(CONF_VALUE) *extlist);

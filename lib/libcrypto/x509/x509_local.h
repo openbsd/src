@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.26 2024/07/13 15:08:58 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.27 2024/08/31 10:03:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -417,6 +417,23 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
 int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
+
+int X509V3_add_value(const char *name, const char *value,
+    STACK_OF(CONF_VALUE) **extlist);
+int X509V3_add_value_uchar(const char *name, const unsigned char *value,
+    STACK_OF(CONF_VALUE) **extlist);
+int X509V3_add_value_bool(const char *name, int asn1_bool,
+    STACK_OF(CONF_VALUE) **extlist);
+int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
+    STACK_OF(CONF_VALUE) **extlist);
+
+int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
+int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
+
+char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section);
+STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section);
+void X509V3_string_free(X509V3_CTX *ctx, char *str);
+void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 
 const X509V3_EXT_METHOD *x509v3_ext_method_authority_key_identifier(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_basic_constraints(void);
