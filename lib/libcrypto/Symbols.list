@@ -2384,7 +2384,6 @@ X509V3_get_value_bool
 X509V3_get_value_int
 X509V3_parse_list
 X509V3_section_free
-X509V3_set_conf_lhash
 X509V3_set_ctx
 X509V3_set_nconf
 X509V3_string_free

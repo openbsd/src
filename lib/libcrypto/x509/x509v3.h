@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.31 2024/08/31 09:56:50 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.32 2024/08/31 09:59:12 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -653,7 +653,6 @@ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
-void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash);
 #endif
 
 char *X509V3_get_string(X509V3_CTX *ctx, const char *name,

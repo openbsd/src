@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.24 2024/08/31 09:56:50 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.25 2024/08/31 09:59:12 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -479,13 +479,3 @@ X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx, int nid,
 	return X509V3_EXT_nconf_nid(&ctmp, ctx, nid, value);
 }
 LCRYPTO_ALIAS(X509V3_EXT_conf_nid);
-
-/*
- * XXX - remove everything below in the next bump.
- */
-
-void
-X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash)
-{
-}
-LCRYPTO_ALIAS(X509V3_set_conf_lhash);
