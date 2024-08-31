@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.3 2024/08/31 09:26:18 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.4 2024/08/31 09:34:05 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -38,7 +38,6 @@ LCRYPTO_USED(OPENSSL_config);
 LCRYPTO_USED(OPENSSL_no_config);
 LCRYPTO_USED(NCONF_new);
 LCRYPTO_USED(NCONF_default);
-LCRYPTO_USED(NCONF_WIN32);
 LCRYPTO_USED(NCONF_free);
 LCRYPTO_USED(NCONF_free_data);
 LCRYPTO_USED(NCONF_load);

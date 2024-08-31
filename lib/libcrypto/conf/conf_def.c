@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.39 2024/08/31 09:29:03 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.40 2024/08/31 09:34:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,19 +102,6 @@ def_init_default(CONF *conf)
 
 	conf->meth = NCONF_default();
 	conf->meth_data = CONF_type_default;
-	conf->data = NULL;
-
-	return 1;
-}
-
-static int
-def_init_WIN32(CONF *conf)
-{
-	if (conf == NULL)
-		return 0;
-
-	conf->meth = NCONF_WIN32();
-	conf->meth_data = (void *)CONF_type_win32;
 	conf->data = NULL;
 
 	return 1;
@@ -661,29 +648,9 @@ static CONF_METHOD default_method = {
 	.load = def_load,
 };
 
-static CONF_METHOD WIN32_method = {
-	"WIN32",
-	def_create,
-	def_init_WIN32,
-	def_destroy,
-	def_destroy_data,
-	def_load_bio,
-	def_dump,
-	def_is_number,
-	def_to_int,
-	def_load,
-};
-
 CONF_METHOD *
 NCONF_default(void)
 {
 	return &default_method;
 }
 LCRYPTO_ALIAS(NCONF_default);
-
-CONF_METHOD *
-NCONF_WIN32(void)
-{
-	return &WIN32_method;
-}
-LCRYPTO_ALIAS(NCONF_WIN32);
