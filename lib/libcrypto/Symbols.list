@@ -1209,10 +1209,6 @@ EVP_PKEY_CTX_set0_keygen_info
 EVP_PKEY_CTX_set_app_data
 EVP_PKEY_CTX_set_cb
 EVP_PKEY_CTX_set_data
-EVP_PKEY_add1_attr
-EVP_PKEY_add1_attr_by_NID
-EVP_PKEY_add1_attr_by_OBJ
-EVP_PKEY_add1_attr_by_txt
 EVP_PKEY_asn1_find
 EVP_PKEY_asn1_find_str
 EVP_PKEY_asn1_get0
@@ -1227,7 +1223,6 @@ EVP_PKEY_copy_parameters
 EVP_PKEY_decrypt
 EVP_PKEY_decrypt_init
 EVP_PKEY_decrypt_old
-EVP_PKEY_delete_attr
 EVP_PKEY_derive
 EVP_PKEY_derive_init
 EVP_PKEY_derive_set_peer
@@ -1246,10 +1241,6 @@ EVP_PKEY_get1_DH
 EVP_PKEY_get1_DSA
 EVP_PKEY_get1_EC_KEY
 EVP_PKEY_get1_RSA
-EVP_PKEY_get_attr
-EVP_PKEY_get_attr_by_NID
-EVP_PKEY_get_attr_by_OBJ
-EVP_PKEY_get_attr_count
 EVP_PKEY_get_default_digest_nid
 EVP_PKEY_get_raw_private_key
 EVP_PKEY_get_raw_public_key

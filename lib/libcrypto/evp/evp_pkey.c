@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.31 2024/08/22 12:21:07 tb Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.32 2024/08/31 10:25:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -140,83 +140,3 @@ error:
 	return NULL;
 }
 LCRYPTO_ALIAS(EVP_PKEY2PKCS8);
-
-/*
- * XXX - delete all the garbage below in the next bump.
- */
-
-int
-EVP_PKEY_add1_attr_by_NID(EVP_PKEY *pkey, int nid, int type,
-    const unsigned char *bytes, int len)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr_by_NID);
-
-int
-EVP_PKEY_get_attr_count(const EVP_PKEY *key)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EVP_PKEY_get_attr_count);
-
-int
-EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid, int lastpos)
-{
-	EVPerror(ERR_R_DISABLED);
-	return -1;
-}
-LCRYPTO_ALIAS(EVP_PKEY_get_attr_by_NID);
-
-int
-EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
-    int lastpos)
-{
-	EVPerror(ERR_R_DISABLED);
-	return -1;
-}
-LCRYPTO_ALIAS(EVP_PKEY_get_attr_by_OBJ);
-
-X509_ATTRIBUTE *
-EVP_PKEY_get_attr(const EVP_PKEY *key, int loc)
-{
-	EVPerror(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(EVP_PKEY_get_attr);
-
-X509_ATTRIBUTE *
-EVP_PKEY_delete_attr(EVP_PKEY *key, int loc)
-{
-	EVPerror(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(EVP_PKEY_delete_attr);
-
-int
-EVP_PKEY_add1_attr(EVP_PKEY *key, X509_ATTRIBUTE *attr)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr);
-
-int
-EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key, const ASN1_OBJECT *obj, int type,
-    const unsigned char *bytes, int len)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr_by_OBJ);
-
-int
-EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key, const char *attrname, int type,
-    const unsigned char *bytes, int len)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr_by_txt);
