@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.41 2024/08/31 09:36:38 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.42 2024/08/31 09:39:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,7 +81,7 @@ static char *scan_dquote(CONF *conf, char *p);
 #define scan_esc(conf,p)	(((IS_EOF((conf),(p)[1]))?((p)+1):((p)+2)))
 
 static CONF *
-def_create(CONF_METHOD *meth)
+def_create(const CONF_METHOD *meth)
 {
 	CONF *ret;
 
@@ -634,7 +634,7 @@ def_to_int(const CONF *conf, char c)
 	return c - '0';
 }
 
-static CONF_METHOD default_method = {
+static const CONF_METHOD default_method = {
 	.name = "OpenSSL default",
 	.create = def_create,
 	.init = def_init_default,
@@ -647,7 +647,7 @@ static CONF_METHOD default_method = {
 	.load = def_load,
 };
 
-CONF_METHOD *
+const CONF_METHOD *
 NCONF_default(void)
 {
 	return &default_method;

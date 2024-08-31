@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.21 2024/08/31 09:36:38 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.22 2024/08/31 09:39:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,12 +126,12 @@ void OPENSSL_no_config(void);
    If that wasn't the case, the above functions would have been replaced */
 
 struct conf_st {
-	CONF_METHOD *meth;
+	const CONF_METHOD *meth;
 	LHASH_OF(CONF_VALUE) *data;
 };
 
-CONF *NCONF_new(CONF_METHOD *meth);
-CONF_METHOD *NCONF_default(void);
+CONF *NCONF_new(const CONF_METHOD *meth);
+const CONF_METHOD *NCONF_default(void);
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 

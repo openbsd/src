@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_local.h,v 1.3 2024/08/31 09:29:03 tb Exp $ */
+/* $OpenBSD: conf_local.h,v 1.4 2024/08/31 09:39:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@ __BEGIN_HIDDEN_DECLS
 
 struct conf_method_st {
 	const char *name;
-	CONF *(*create)(CONF_METHOD *meth);
+	CONF *(*create)(const CONF_METHOD *meth);
 	int (*init)(CONF *conf);
 	int (*destroy)(CONF *conf);
 	int (*destroy_data)(CONF *conf);

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.21 2024/08/31 09:29:03 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.22 2024/08/31 09:39:31 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -64,7 +64,7 @@
 
 #include "conf_local.h"
 
-static CONF_METHOD *default_CONF_method = NULL;
+static const CONF_METHOD *default_CONF_method = NULL;
 
 /* Init a 'CONF' structure from an old LHASH */
 
@@ -202,7 +202,7 @@ LCRYPTO_ALIAS(CONF_free);
    by the "CONF classic" functions, for consistency.  */
 
 CONF *
-NCONF_new(CONF_METHOD *meth)
+NCONF_new(const CONF_METHOD *meth)
 {
 	CONF *ret;
 
