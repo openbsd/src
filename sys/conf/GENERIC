@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.296 2024/05/05 07:26:58 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.297 2024/08/31 04:17:14 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -96,6 +96,7 @@ pseudo-device	mpe		# MPLS PE interface
 pseudo-device	mpw		# MPLS pseudowire support
 pseudo-device	mpip		# MPLS IP Layer2 pseudowire support
 pseudo-device	bpe		# Provider Backbone Bridge edge interface
+pseudo-device	rport		# rdomain port interface
 pseudo-device	pair		# Virtual Ethernet interface pair
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
