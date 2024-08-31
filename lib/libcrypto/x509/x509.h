@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.117 2024/08/31 10:25:38 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.118 2024/08/31 10:46:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -906,26 +906,6 @@ ASN1_OBJECT *	X509_EXTENSION_get_object(X509_EXTENSION *ex);
 ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
 int		X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
 
-int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);
-int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
-			  int lastpos);
-int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
-    const ASN1_OBJECT *obj, int lastpos);
-X509_ATTRIBUTE *X509at_get_attr(const STACK_OF(X509_ATTRIBUTE) *x, int loc);
-X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc);
-STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
-					 X509_ATTRIBUTE *attr);
-STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
-			const ASN1_OBJECT *obj, int type,
-			const unsigned char *bytes, int len);
-STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
-			int nid, int type,
-			const unsigned char *bytes, int len);
-STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
-			const char *attrname, int type,
-			const unsigned char *bytes, int len);
-void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
-    const ASN1_OBJECT *obj, int lastpos, int type);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 	     int atrtype, const void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,

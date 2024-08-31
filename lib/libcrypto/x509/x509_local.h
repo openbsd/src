@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.31 2024/08/31 10:19:17 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.32 2024/08/31 10:46:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -423,6 +423,21 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
 int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
+
+int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
+    int lastpos);
+int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
+    const ASN1_OBJECT *obj, int lastpos);
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
+    X509_ATTRIBUTE *attr);
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
+    const ASN1_OBJECT *obj, int type, const unsigned char *bytes, int len);
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
+    int nid, int type, const unsigned char *bytes, int len);
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
+    const char *attrname, int type, const unsigned char *bytes, int len);
+void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
+    const ASN1_OBJECT *obj, int lastpos, int type);
 
 int X509V3_add_value(const char *name, const char *value,
     STACK_OF(CONF_VALUE) **extlist);

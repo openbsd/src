@@ -2785,16 +2785,6 @@ X509_up_ref
 X509_verify
 X509_verify_cert
 X509_verify_cert_error_string
-X509at_add1_attr
-X509at_add1_attr_by_NID
-X509at_add1_attr_by_OBJ
-X509at_add1_attr_by_txt
-X509at_delete_attr
-X509at_get0_data_by_OBJ
-X509at_get_attr
-X509at_get_attr_by_NID
-X509at_get_attr_by_OBJ
-X509at_get_attr_count
 X509v3_add_ext
 X509v3_addr_add_inherit
 X509v3_addr_add_prefix

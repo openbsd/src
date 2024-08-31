@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.13 2024/08/31 10:25:38 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.14 2024/08/31 10:46:40 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -241,16 +241,6 @@ LCRYPTO_USED(X509_EXTENSION_set_data);
 LCRYPTO_USED(X509_EXTENSION_get_object);
 LCRYPTO_USED(X509_EXTENSION_get_data);
 LCRYPTO_USED(X509_EXTENSION_get_critical);
-LCRYPTO_UNUSED(X509at_get_attr_count);
-LCRYPTO_USED(X509at_get_attr_by_NID);
-LCRYPTO_USED(X509at_get_attr_by_OBJ);
-LCRYPTO_UNUSED(X509at_get_attr);
-LCRYPTO_UNUSED(X509at_delete_attr);
-LCRYPTO_USED(X509at_add1_attr);
-LCRYPTO_USED(X509at_add1_attr_by_OBJ);
-LCRYPTO_USED(X509at_add1_attr_by_NID);
-LCRYPTO_USED(X509at_add1_attr_by_txt);
-LCRYPTO_USED(X509at_get0_data_by_OBJ);
 LCRYPTO_USED(X509_ATTRIBUTE_create_by_NID);
 LCRYPTO_USED(X509_ATTRIBUTE_create_by_OBJ);
 LCRYPTO_USED(X509_ATTRIBUTE_create_by_txt);
