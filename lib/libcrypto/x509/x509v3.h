@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.34 2024/08/31 10:06:39 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.35 2024/08/31 10:23:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -117,7 +117,7 @@ struct v3_ext_method {
 	X509V3_EXT_I2R i2r;
 	X509V3_EXT_R2I r2i;
 
-	void *usr_data;	/* Any extension specific data */
+	const void *usr_data;	/* Any extension specific data */
 };
 
 struct v3_ext_ctx {

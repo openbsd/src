@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_bitst.c,v 1.7 2024/08/31 10:03:03 tb Exp $ */
+/* $OpenBSD: x509_bitst.c,v 1.8 2024/08/31 10:23:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,7 +65,7 @@
 
 #include "x509_local.h"
 
-static BIT_STRING_BITNAME ns_cert_type_table[] = {
+static const BIT_STRING_BITNAME ns_cert_type_table[] = {
 	{0, "SSL Client", "client"},
 	{1, "SSL Server", "server"},
 	{2, "S/MIME", "email"},
@@ -77,7 +77,7 @@ static BIT_STRING_BITNAME ns_cert_type_table[] = {
 	{-1, NULL, NULL}
 };
 
-static BIT_STRING_BITNAME key_usage_type_table[] = {
+static const BIT_STRING_BITNAME key_usage_type_table[] = {
 	{0, "Digital Signature", "digitalSignature"},
 	{1, "Non Repudiation", "nonRepudiation"},
 	{2, "Key Encipherment", "keyEncipherment"},
@@ -90,7 +90,7 @@ static BIT_STRING_BITNAME key_usage_type_table[] = {
 	{-1, NULL, NULL}
 };
 
-static BIT_STRING_BITNAME crl_reasons[] = {
+static const BIT_STRING_BITNAME crl_reasons[] = {
 	{CRL_REASON_UNSPECIFIED,	 "Unspecified", "unspecified"},
 	{CRL_REASON_KEY_COMPROMISE,	 "Key Compromise", "keyCompromise"},
 	{CRL_REASON_CA_COMPROMISE,	 "CA Compromise", "CACompromise"},
