@@ -1,4 +1,4 @@
-.\" $OpenBSD: rport.4,v 1.1 2024/08/31 04:21:45 dlg Exp $
+.\" $OpenBSD: rport.4,v 1.2 2024/08/31 13:39:36 jmc Exp $
 .\"
 .\" Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
 .\"
@@ -31,7 +31,7 @@ between
 instances.
 .Pp
 Layer 3 connectivity between a pair of rdomains can be established
-by creating a
+by creating an
 .Nm
 interface in each rdomain, and connecting them together by configuring
 one of these interfaces as the parent of the other.
@@ -50,8 +50,8 @@ see its manual page for more information.
 Create two
 .Nm
 interfaces in separate
-.Xr rdomain 4 Ns s
-and connect them together:
+.Xr rdomain 4
+instances and connect them together:
 .Bd -literal -offset indent
 # ifconfig rport0 create rdomain 0 up
 # ifconfig rport1 create rdomain 1 parent rport0 up
