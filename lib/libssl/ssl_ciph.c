@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.147 2024/07/23 14:40:53 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.148 2024/08/31 10:51:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1639,13 +1639,6 @@ SSL_COMP_get_compression_methods(void)
 	return NULL;
 }
 LSSL_ALIAS(SSL_COMP_get_compression_methods);
-
-int
-SSL_COMP_add_compression_method(int id, void *cm)
-{
-	return 1;
-}
-LSSL_ALIAS(SSL_COMP_add_compression_method);
 
 const char *
 SSL_COMP_get_name(const void *comp)

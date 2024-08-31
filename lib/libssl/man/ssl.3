@@ -1,4 +1,4 @@
-.\" $OpenBSD: ssl.3,v 1.25 2024/07/13 18:33:18 tb Exp $
+.\" $OpenBSD: ssl.3,v 1.26 2024/08/31 10:51:48 tb Exp $
 .\" full merge up to: OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
 .\" selective merge up to: OpenSSL 322755cc Sep 1 08:40:51 2018 +0800
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2024 $
+.Dd $Mdocdate: August 31 2024 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -339,7 +339,7 @@ To inspect the state during ongoing communication:
 .Xr SSL_load_client_CA_file 3
 .Ss Obsolete functions
 .Xr OPENSSL_init_ssl 3 ,
-.Xr SSL_COMP_add_compression_method 3 ,
+.Xr SSL_COMP_get_compression_methods 3 ,
 .Xr SSL_CTX_set_tmp_rsa_callback 3 ,
 .Xr SSL_library_init 3 ,
 .Xr SSL_set_tmp_ecdh 3

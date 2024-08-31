@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_COMP_add_compression_method.3,v 1.6 2024/05/23 06:49:55 tb Exp $
+.\" $OpenBSD: SSL_COMP_add_compression_method.3,v 1.7 2024/08/31 10:51:48 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,45 +14,29 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2024 $
+.Dd $Mdocdate: August 31 2024 $
 .Dt SSL_COMP_ADD_COMPRESSION_METHOD 3
 .Os
 .Sh NAME
-.Nm SSL_COMP_add_compression_method ,
 .Nm SSL_COMP_get_compression_methods
 .Nd handle SSL/TLS integrated compression methods
 .Sh SYNOPSIS
 .In openssl/ssl.h
-.Ft int
-.Fn SSL_COMP_add_compression_method "int id" "void *cm"
 .Ft STACK_OF(SSL_COMP) *
 .Fn SSL_COMP_get_compression_methods void
 .Sh DESCRIPTION
-These functions are deprecated and have no effect.
-They are provided purely for compatibility with legacy application code.
-.Pp
-.Fn SSL_COMP_add_compression_method
-used to add the compression method
-.Fa cm
-with the identifier
-.Fa id
-to the list of available compression methods.
+This function is deprecated and has no effect.
+It is provided purely for compatibility with legacy application code.
 .Pp
 .Fn SSL_COMP_get_compression_methods
 used to return a stack of available compression methods.
 .Sh RETURN VALUES
-.Fn SSL_COMP_add_compression_method
-always returns 1.
 .Fn SSL_COMP_get_compression_methods
 always returns
 .Dv NULL .
 .Sh SEE ALSO
 .Xr ssl 3
 .Sh HISTORY
-.Fn SSL_COMP_add_compression_method
-first appeared in OpenSSL 0.9.2b and has been available since
-.Ox 2.6 .
-.Pp
 .Fn SSL_COMP_get_compression_methods
 first appeared in OpenSSL 0.9.8 and has been available since
 .Ox 4.5 .

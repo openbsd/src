@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.241 2024/08/12 21:01:00 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.242 2024/08/31 10:51:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1479,7 +1479,6 @@ const void *SSL_get_current_expansion(SSL *s);
 
 const char *SSL_COMP_get_name(const void *comp);
 void *SSL_COMP_get_compression_methods(void);
-int SSL_COMP_add_compression_method(int id, void *cm);
 
 /* TLS extensions functions */
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);

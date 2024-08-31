@@ -32,7 +32,6 @@ SSL_CIPHER_get_name
 SSL_CIPHER_get_value
 SSL_CIPHER_get_version
 SSL_CIPHER_is_aead
-SSL_COMP_add_compression_method
 SSL_COMP_get_compression_methods
 SSL_COMP_get_name
 SSL_CTX_add0_chain_cert
