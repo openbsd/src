@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.65 2024/03/22 06:24:54 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.66 2024/08/31 10:19:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +67,7 @@
 #include "x509_local.h"
 
 static X509_LOOKUP *
-X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
+X509_LOOKUP_new(const X509_LOOKUP_METHOD *method)
 {
 	X509_LOOKUP *lu;
 
@@ -245,7 +245,7 @@ X509_STORE_up_ref(X509_STORE *store)
 LCRYPTO_ALIAS(X509_STORE_up_ref);
 
 X509_LOOKUP *
-X509_STORE_add_lookup(X509_STORE *store, X509_LOOKUP_METHOD *method)
+X509_STORE_add_lookup(X509_STORE *store, const X509_LOOKUP_METHOD *method)
 {
 	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;

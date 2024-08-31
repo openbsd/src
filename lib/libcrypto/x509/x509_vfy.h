@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.68 2024/03/02 10:57:03 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.69 2024/08/31 10:19:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,11 +341,11 @@ void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
-X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
+X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, const X509_LOOKUP_METHOD *m);
 
-X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void);
-X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
-X509_LOOKUP_METHOD *X509_LOOKUP_mem(void);
+const X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void);
+const X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
+const X509_LOOKUP_METHOD *X509_LOOKUP_mem(void);
 
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x);
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
