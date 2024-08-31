@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.43 2024/08/31 09:44:00 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.44 2024/08/31 09:46:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,7 +319,10 @@ err:
 		*line = eline;
 	ERR_asprintf_error_data("line %ld", eline);
 	if ((h != conf->data) && (conf->data != NULL)) {
-		CONF_free(conf->data);
+		CONF ctmp;
+
+		CONF_set_nconf(&ctmp, conf->data);
+		ctmp.meth->destroy_data(&ctmp);
 		conf->data = NULL;
 	}
 	if (v != NULL) {
