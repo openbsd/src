@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.34 2024/07/09 07:17:13 beck Exp $ */
+/* $OpenBSD: err.h,v 1.35 2024/08/31 10:09:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -374,8 +374,6 @@ void ERR_print_errors_fp(FILE *fp);
 void ERR_print_errors(BIO *bp);
 #endif
 void ERR_asprintf_error_data(char * format, ...);
-void ERR_add_error_data(int num, ...);
-void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib, ERR_STRING_DATA *str);
 void ERR_unload_strings(int lib, ERR_STRING_DATA *str);
 void ERR_load_ERR_strings(void);

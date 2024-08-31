@@ -1006,8 +1006,6 @@ ENGINE_new
 ENGINE_register_all_complete
 ENGINE_set_default
 ENGINE_set_default_RSA
-ERR_add_error_data
-ERR_add_error_vdata
 ERR_asprintf_error_data
 ERR_clear_error
 ERR_error_string
