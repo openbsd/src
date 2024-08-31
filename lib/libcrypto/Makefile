@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.210 2024/08/31 15:39:33 jsing Exp $
+# $OpenBSD: Makefile,v 1.211 2024/08/31 15:56:09 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -251,24 +251,11 @@ SRCS+= curve25519-generic.c
 SRCS+= curve25519.c
 
 # des/
-SRCS+= cbc_cksm.c
-SRCS+= cbc_enc.c
-SRCS+= cfb64ede.c
-SRCS+= cfb64enc.c
-SRCS+= cfb_enc.c
+SRCS+= des.c
+SRCS+= des_cksum.c
 SRCS+= des_enc.c
-SRCS+= ecb3_enc.c
-SRCS+= ecb_enc.c
-SRCS+= ede_cbcm_enc.c
-SRCS+= fcrypt.c
-SRCS+= ofb64ede.c
-SRCS+= ofb64enc.c
-SRCS+= ofb_enc.c
-SRCS+= pcbc_enc.c
-SRCS+= qud_cksm.c
-SRCS+= set_key.c
-SRCS+= str2key.c
-SRCS+= xcbc_enc.c
+SRCS+= des_fcrypt.c
+SRCS+= des_key.c
 
 # dh/
 SRCS+= dh_ameth.c

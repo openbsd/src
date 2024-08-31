@@ -1,4 +1,4 @@
-/* $OpenBSD: fcrypt.c,v 1.17 2024/08/31 15:39:33 jsing Exp $ */
+/* $OpenBSD: des_fcrypt.c,v 1.1 2024/08/31 15:56:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
