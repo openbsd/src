@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.215 2024/05/21 11:19:39 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.216 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -401,7 +401,6 @@ ixgbe_activate(struct device *self, int act)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ixgbe_hw		*hw = &sc->hw;
 	uint32_t			 ctrl_ext;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_QUIESCE:
@@ -430,10 +429,8 @@ ixgbe_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_UP)
 			ixgbe_init(sc);
 		break;
-	default:
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 /*********************************************************************

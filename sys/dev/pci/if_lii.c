@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.47 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.48 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -282,23 +282,18 @@ lii_activate(struct device *self, int act)
 {
 	struct lii_softc *sc = (struct lii_softc *)self;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			lii_stop(ifp);
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			lii_init(ifp);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

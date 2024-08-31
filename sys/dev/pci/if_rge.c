@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.34 2024/08/21 01:22:31 dlg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.35 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -324,20 +324,15 @@ rge_activate(struct device *self, int act)
 #ifndef SMALL_KERNEL
 	struct rge_softc *sc = (struct rge_softc *)self;
 #endif
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
 #ifndef SMALL_KERNEL
 		rge_wol_power(sc);
 #endif
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.145 2024/05/24 06:02:56 jsg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.146 2024/08/31 16:23:09 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1219,23 +1219,18 @@ sis_activate(struct device *self, int act)
 {
 	struct sis_softc *sc = (struct sis_softc *)self;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			sis_stop(sc);
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			sis_init(sc);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 /*

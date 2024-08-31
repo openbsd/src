@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.58 2024/05/24 06:02:56 jsg Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.59 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -247,6 +247,5 @@ re_pci_activate(struct device *self, int act)
 			re_init(ifp);
 		break;
 	}
-
 	return (0);
 }

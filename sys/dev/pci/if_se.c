@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.25 2024/05/24 06:02:56 jsg Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.26 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -732,24 +732,18 @@ se_activate(struct device *self, int act)
 {
 	struct se_softc *sc = (struct se_softc *)self;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			se_stop(sc);
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			(void)se_init(ifp);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-
-	return (rv);
+	return (0);
 }
 
 /*

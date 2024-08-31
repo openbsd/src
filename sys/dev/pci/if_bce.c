@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.56 2024/05/24 06:02:53 jsg Exp $ */
+/* $OpenBSD: if_bce.c,v 1.57 2024/08/31 16:23:09 deraadt Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -445,7 +445,6 @@ bce_activate(struct device *self, int act)
 		}
 		break;
 	}
-
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.51 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.52 2024/08/31 16:23:09 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -583,23 +583,18 @@ ale_activate(struct device *self, int act)
 {
 	struct ale_softc *sc = (struct ale_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			ale_stop(sc);
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			ale_init(ifp);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

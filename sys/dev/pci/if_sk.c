@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.197 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.198 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1126,7 +1126,6 @@ sk_activate(struct device *self, int act)
 {
 	struct sk_if_softc *sc_if = (void *)self;
 	struct ifnet *ifp = &sc_if->arpcom.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_RESUME:
@@ -1134,11 +1133,8 @@ sk_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_RUNNING)
 			sk_init(sc_if);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

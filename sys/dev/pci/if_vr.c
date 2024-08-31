@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.161 2024/05/24 06:02:57 jsg Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.162 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -681,23 +681,18 @@ vr_activate(struct device *self, int act)
 {
 	struct vr_softc *sc = (struct vr_softc *)self;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			vr_stop(sc);
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			vr_init(sc);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.98 2020/07/10 13:26:37 patrick Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.99 2024/08/31 16:23:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1222,23 +1222,18 @@ rl_activate(struct device *self, int act)
 {
 	struct rl_softc	*sc = (struct rl_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			rl_stop(sc);
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			rl_init(sc);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

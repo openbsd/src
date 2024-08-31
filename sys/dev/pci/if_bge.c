@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.405 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.406 2024/08/31 16:23:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3251,11 +3251,9 @@ bge_activate(struct device *self, int act)
 {
 	struct bge_softc *sc = (struct bge_softc *)self;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_RUNNING)
 			bge_stop(sc, 0);
 		break;
@@ -3263,11 +3261,8 @@ bge_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_UP)
 			bge_init(sc);
 		break;
-	default:
-		rv = config_activate_children(self, act);
-		break;
 	}
-	return (rv);
+	return (0);
 }
 
 void
