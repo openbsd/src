@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.17 2024/08/31 09:18:00 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.18 2024/08/31 09:21:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,19 +84,6 @@ DECLARE_LHASH_OF(CONF_VALUE);
 struct conf_st;
 struct conf_method_st;
 typedef struct conf_method_st CONF_METHOD;
-
-struct conf_method_st {
-	const char *name;
-	CONF *(*create)(CONF_METHOD *meth);
-	int (*init)(CONF *conf);
-	int (*destroy)(CONF *conf);
-	int (*destroy_data)(CONF *conf);
-	int (*load_bio)(CONF *conf, BIO *bp, long *eline);
-	int (*dump)(const CONF *conf, BIO *bp);
-	int (*is_number)(const CONF *conf, char c);
-	int (*to_int)(const CONF *conf, char c);
-	int (*load)(CONF *conf, const char *name, long *eline);
-};
 
 /* Module definitions */
 

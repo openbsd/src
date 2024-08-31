@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.19 2024/07/14 14:32:45 jsing Exp $ */
+/* $OpenBSD: conf_api.c,v 1.20 2024/08/31 09:21:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,8 @@
 #include <unistd.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
+
+#include "conf_local.h"
 
 static void value_free_hash_doall_arg(CONF_VALUE *a,
     LHASH_OF(CONF_VALUE) *conf);
