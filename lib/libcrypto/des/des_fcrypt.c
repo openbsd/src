@@ -1,4 +1,4 @@
-/* $OpenBSD: des_fcrypt.c,v 1.3 2024/08/31 16:17:13 jsing Exp $ */
+/* $OpenBSD: des_fcrypt.c,v 1.4 2024/08/31 16:22:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,7 @@
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),		\
 	(a)=(a)^(t)^(t>>(16-(n))))					\
 
-void
+static void
 fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
     DES_LONG Eswap1)
 {

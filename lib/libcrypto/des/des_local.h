@@ -1,4 +1,4 @@
-/* $OpenBSD: des_local.h,v 1.4 2024/08/31 16:17:13 jsing Exp $ */
+/* $OpenBSD: des_local.h,v 1.5 2024/08/31 16:22:18 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -216,9 +216,6 @@ ROTATE(uint32_t a, uint32_t n)
 	}
 
 extern const DES_LONG DES_SPtrans[8][64];
-
-void fcrypt_body(DES_LONG *out, DES_key_schedule *ks,
-    DES_LONG Eswap0, DES_LONG Eswap1);
 
 #ifdef OPENSSL_SMALL_FOOTPRINT
 #undef DES_UNROLL
