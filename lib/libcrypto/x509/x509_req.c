@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.42 2024/07/26 13:24:39 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.43 2024/08/31 10:16:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -318,22 +318,3 @@ i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
 	return i2d_X509_REQ_INFO(req->req_info, pp);
 }
 LCRYPTO_ALIAS(i2d_re_X509_REQ_tbs);
-
-/*
- * XXX - remove the API below in the next major bump
- */
-
-int *
-X509_REQ_get_extension_nids(void)
-{
-	X509error(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(X509_REQ_get_extension_nids);
-
-void
-X509_REQ_set_extension_nids(int *nids)
-{
-	X509error(ERR_R_DISABLED);
-}
-LCRYPTO_ALIAS(X509_REQ_set_extension_nids);

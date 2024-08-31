@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.11 2024/08/31 10:12:23 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.12 2024/08/31 10:16:52 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -140,8 +140,6 @@ LCRYPTO_USED(X509_REQ_get_pubkey);
 LCRYPTO_USED(i2d_re_X509_REQ_tbs);
 LCRYPTO_USED(X509_REQ_get0_pubkey);
 LCRYPTO_USED(X509_REQ_extension_nid);
-LCRYPTO_USED(X509_REQ_get_extension_nids);
-LCRYPTO_USED(X509_REQ_set_extension_nids);
 LCRYPTO_USED(X509_REQ_get_extensions);
 LCRYPTO_USED(X509_REQ_add_extensions_nid);
 LCRYPTO_USED(X509_REQ_add_extensions);

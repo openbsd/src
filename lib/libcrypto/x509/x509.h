@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.115 2024/08/31 10:14:17 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.116 2024/08/31 10:16:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -721,8 +721,6 @@ EVP_PKEY *	X509_REQ_get_pubkey(X509_REQ *req);
 int		i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 EVP_PKEY *	X509_REQ_get0_pubkey(X509_REQ *req);
 int		X509_REQ_extension_nid(int nid);
-int *		X509_REQ_get_extension_nids(void);
-void		X509_REQ_set_extension_nids(int *nids);
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req);
 int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 				int nid);
