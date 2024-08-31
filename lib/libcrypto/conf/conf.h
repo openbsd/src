@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.26 2024/08/31 09:53:02 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.27 2024/08/31 09:54:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,8 +138,6 @@ void CONF_modules_finish(void);
 void CONF_modules_free(void);
 
 char *CONF_get1_default_config_file(void);
-
-void OPENSSL_load_builtin_modules(void);
 
 void ERR_load_CONF_strings(void);
 

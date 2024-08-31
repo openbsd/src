@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_sap.c,v 1.16 2024/04/09 13:56:30 beck Exp $ */
+/* $OpenBSD: conf_sap.c,v 1.17 2024/08/31 09:54:31 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -66,6 +66,8 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+
+#include "conf_local.h"
 
 /* This is the automatic configuration loader: it is called automatically by
  * OpenSSL when any of a number of standard initialisation functions are called,

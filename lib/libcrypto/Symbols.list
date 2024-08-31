@@ -1673,7 +1673,6 @@ OPENSSL_cpuid_setup
 OPENSSL_gmtime
 OPENSSL_init
 OPENSSL_init_crypto
-OPENSSL_load_builtin_modules
 OPENSSL_no_config
 OPENSSL_posix_to_tm
 OPENSSL_timegm
