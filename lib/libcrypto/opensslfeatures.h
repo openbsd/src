@@ -1,4 +1,4 @@
-/* $OpenBSD: opensslfeatures.h,v 1.43 2024/03/02 11:25:46 tb Exp $ */
+/* $OpenBSD: opensslfeatures.h,v 1.44 2024/08/31 10:38:49 tb Exp $ */
 /*
  * Feature flags for LibreSSL... so you can actually tell when things
  * are enabled, rather than not being able to tell when things are
@@ -140,7 +140,7 @@
 /* #define OPENSSL_NO_UNIT_TEST */
 /* #define OPENSSL_NO_UNIX_SOCK */
 /* #define OPENSSL_NO_WEAK_SSL_CIPHERS */
-/* #define OPENSSL_NO_WHIRLPOOL */
+#define OPENSSL_NO_WHIRLPOOL
 /* #define OPENSSL_NO_WINSTORE */
 #define OPENSSL_NO_ZLIB
 /* #define OPENSSL_NO_ZSTD */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.17 2024/07/29 06:05:31 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.18 2024/08/31 10:38:49 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1463,11 +1463,6 @@ static const struct digest_name digest_names[] = {
 		.name = "ssl3-sha1",
 		.digest = EVP_sha1,
 		.alias = SN_sha1,
-	},
-
-	{
-		.name = SN_whirlpool,
-		.digest = EVP_whirlpool,
 	},
 };
 

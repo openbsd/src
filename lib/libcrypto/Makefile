@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.207 2024/08/31 10:30:16 tb Exp $
+# $OpenBSD: Makefile,v 1.208 2024/08/31 10:38:49 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -367,7 +367,6 @@ SRCS+= m_sha1.c
 SRCS+= m_sha3.c
 SRCS+= m_sigver.c
 SRCS+= m_sm3.c
-SRCS+= m_wp.c
 SRCS+= p_legacy.c
 SRCS+= p_lib.c
 SRCS+= p_sign.c
@@ -544,9 +543,6 @@ SRCS+= ui_lib.c
 SRCS+= ui_null.c
 SRCS+= ui_openssl.c
 
-# whrlpool/
-SRCS+= whirlpool.c
-
 # x509/
 SRCS+= by_dir.c
 SRCS+= by_file.c
@@ -661,7 +657,6 @@ SRCS+= x_all.c
 	${LCRYPTO_SRC}/ts \
 	${LCRYPTO_SRC}/txt_db \
 	${LCRYPTO_SRC}/ui \
-	${LCRYPTO_SRC}/whrlpool \
 	${LCRYPTO_SRC}/x509
 
 HDRS=\
@@ -722,7 +717,6 @@ HDRS=\
 	${LCRYPTO_SRC}/ts/ts.h \
 	${LCRYPTO_SRC}/txt_db/txt_db.h \
 	${LCRYPTO_SRC}/ui/ui.h \
-	${LCRYPTO_SRC}/whrlpool/whrlpool.h \
 	${LCRYPTO_SRC}/x509/x509.h \
 	${LCRYPTO_SRC}/x509/x509_vfy.h \
 	${LCRYPTO_SRC}/x509/x509v3.h

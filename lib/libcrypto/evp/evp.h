@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.136 2024/08/31 09:14:21 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.137 2024/08/31 10:38:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -594,9 +594,6 @@ const EVP_MD *EVP_sm3(void);
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 const EVP_MD *EVP_ripemd160(void);
-#endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-const EVP_MD *EVP_whirlpool(void);
 #endif
 const EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
 #ifndef OPENSSL_NO_DES

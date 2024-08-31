@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.5 2024/08/31 09:14:21 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.6 2024/08/31 10:38:49 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -160,7 +160,6 @@ LCRYPTO_USED(EVP_sha3_384);
 LCRYPTO_USED(EVP_sha3_512);
 LCRYPTO_USED(EVP_sm3);
 LCRYPTO_USED(EVP_ripemd160);
-LCRYPTO_USED(EVP_whirlpool);
 LCRYPTO_USED(EVP_enc_null);
 LCRYPTO_USED(EVP_des_ecb);
 LCRYPTO_USED(EVP_des_ede);
