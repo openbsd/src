@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.4 2024/04/10 15:00:38 beck Exp $ */
+/* $OpenBSD: evp.h,v 1.5 2024/08/31 09:14:21 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -353,9 +353,6 @@ LCRYPTO_USED(EVP_PKEY_paramgen_init);
 LCRYPTO_USED(EVP_PKEY_paramgen);
 LCRYPTO_USED(EVP_PKEY_keygen_init);
 LCRYPTO_USED(EVP_PKEY_keygen);
-LCRYPTO_USED(EVP_PKEY_check);
-LCRYPTO_USED(EVP_PKEY_public_check);
-LCRYPTO_USED(EVP_PKEY_param_check);
 LCRYPTO_USED(EVP_PKEY_CTX_set_cb);
 LCRYPTO_USED(EVP_PKEY_CTX_get_cb);
 LCRYPTO_USED(EVP_PKEY_CTX_get_keygen_info);

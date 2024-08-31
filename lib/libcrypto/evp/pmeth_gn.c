@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.20 2024/08/29 16:58:19 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.21 2024/08/31 09:14:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -225,31 +225,3 @@ merr:
 	return mac_key;
 }
 LCRYPTO_ALIAS(EVP_PKEY_new_mac_key);
-
-/*
- * XXX - remove the API below in the next bump.
- */
-
-int
-EVP_PKEY_check(EVP_PKEY_CTX *ctx)
-{
-	EVPerror(ERR_R_DISABLED);
-	return -2;
-}
-LCRYPTO_ALIAS(EVP_PKEY_check);
-
-int
-EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
-{
-	EVPerror(ERR_R_DISABLED);
-	return -2;
-}
-LCRYPTO_ALIAS(EVP_PKEY_public_check);
-
-int
-EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
-{
-	EVPerror(ERR_R_DISABLED);
-	return -2;
-}
-LCRYPTO_ALIAS(EVP_PKEY_param_check);

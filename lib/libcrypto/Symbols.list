@@ -1245,7 +1245,6 @@ EVP_PKEY_asn1_get_count
 EVP_PKEY_assign
 EVP_PKEY_base_id
 EVP_PKEY_bits
-EVP_PKEY_check
 EVP_PKEY_cmp
 EVP_PKEY_cmp_parameters
 EVP_PKEY_copy_parameters
@@ -1287,13 +1286,11 @@ EVP_PKEY_new_CMAC_key
 EVP_PKEY_new_mac_key
 EVP_PKEY_new_raw_private_key
 EVP_PKEY_new_raw_public_key
-EVP_PKEY_param_check
 EVP_PKEY_paramgen
 EVP_PKEY_paramgen_init
 EVP_PKEY_print_params
 EVP_PKEY_print_private
 EVP_PKEY_print_public
-EVP_PKEY_public_check
 EVP_PKEY_save_parameters
 EVP_PKEY_security_bits
 EVP_PKEY_set1_DH
