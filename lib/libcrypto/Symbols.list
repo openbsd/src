@@ -589,8 +589,6 @@ CMS_unsigned_get_attr_by_OBJ
 CMS_unsigned_get_attr_count
 CMS_verify
 CMS_verify_receipt
-CONF_dump_bio
-CONF_dump_fp
 CONF_free
 CONF_get1_default_config_file
 CONF_get_number
@@ -1505,8 +1503,6 @@ NAME_CONSTRAINTS_it
 NAME_CONSTRAINTS_new
 NCONF_WIN32
 NCONF_default
-NCONF_dump_bio
-NCONF_dump_fp
 NCONF_free
 NCONF_free_data
 NCONF_get_number_e

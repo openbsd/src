@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.16 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: conf.h,v 1.17 2024/08/31 09:18:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,8 +131,6 @@ char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
 long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
     const char *name);
 void CONF_free(LHASH_OF(CONF_VALUE) *conf);
-int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
-int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 void OPENSSL_config(const char *config_name);
 void OPENSSL_no_config(void);
@@ -159,8 +157,6 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section);
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
 int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
     long *result);
-int NCONF_dump_fp(const CONF *conf, FILE *out);
-int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 #define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r)
 

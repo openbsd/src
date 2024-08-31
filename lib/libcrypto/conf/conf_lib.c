@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.17 2024/04/09 13:56:30 beck Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.18 2024/08/31 09:18:00 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -198,32 +198,6 @@ CONF_free(LHASH_OF(CONF_VALUE) *conf)
 }
 LCRYPTO_ALIAS(CONF_free);
 
-int
-CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
-{
-	BIO *btmp;
-	int ret;
-
-	if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
-		CONFerror(ERR_R_BUF_LIB);
-		return 0;
-	}
-	ret = CONF_dump_bio(conf, btmp);
-	BIO_free(btmp);
-	return ret;
-}
-LCRYPTO_ALIAS(CONF_dump_fp);
-
-int
-CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
-{
-	CONF ctmp;
-
-	CONF_set_nconf(&ctmp, conf);
-	return NCONF_dump_bio(&ctmp, out);
-}
-LCRYPTO_ALIAS(CONF_dump_bio);
-
 /* The following section contains the "New CONF" functions.  They are
    completely centralised around a new CONF structure that may contain
    basically anything, but at least a method pointer and a table of data.
@@ -368,30 +342,3 @@ NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 	return 1;
 }
 LCRYPTO_ALIAS(NCONF_get_number_e);
-
-int
-NCONF_dump_fp(const CONF *conf, FILE *out)
-{
-	BIO *btmp;
-	int ret;
-	if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
-		CONFerror(ERR_R_BUF_LIB);
-		return 0;
-	}
-	ret = NCONF_dump_bio(conf, btmp);
-	BIO_free(btmp);
-	return ret;
-}
-LCRYPTO_ALIAS(NCONF_dump_fp);
-
-int
-NCONF_dump_bio(const CONF *conf, BIO *out)
-{
-	if (conf == NULL) {
-		CONFerror(CONF_R_NO_CONF);
-		return 0;
-	}
-
-	return conf->meth->dump(conf, out);
-}
-LCRYPTO_ALIAS(NCONF_dump_bio);
