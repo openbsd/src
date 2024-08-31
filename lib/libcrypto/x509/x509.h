@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.113 2024/08/28 07:15:04 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.114 2024/08/31 10:12:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,11 +153,6 @@ typedef struct x509_cinf_st X509_CINF;
 
 DECLARE_STACK_OF(X509)
 
-/* standard trust ids */
-
-/* OpenSSL changed this to 0 */
-#define X509_TRUST_DEFAULT	-1	/* Only valid in purpose settings */
-
 #define X509_TRUST_COMPAT	1
 #define X509_TRUST_SSL_CLIENT	2
 #define X509_TRUST_SSL_SERVER	3
@@ -170,17 +165,6 @@ DECLARE_STACK_OF(X509)
 /* Keep these up to date! */
 #define X509_TRUST_MIN		1
 #define X509_TRUST_MAX		8
-
-
-/* trust_flags values */
-#define	X509_TRUST_DYNAMIC 	1
-#define	X509_TRUST_DYNAMIC_NAME	2
-
-/* check_trust return codes */
-
-#define X509_TRUST_TRUSTED	1
-#define X509_TRUST_REJECTED	2
-#define X509_TRUST_UNTRUSTED	3
 
 /* Flags for X509_print_ex() */
 
@@ -1012,8 +996,6 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj, int ptype,
     void *pval, unsigned char *penc, int penclen);
 int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg, const unsigned char **pk,
     int *ppklen, X509_ALGOR **pa, X509_PUBKEY *pub);
-
-int X509_check_trust(X509 *x, int id, int flags);
 
 int X509_up_ref(X509 *x);
 STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain);

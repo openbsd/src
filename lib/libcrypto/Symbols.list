@@ -2714,7 +2714,6 @@ X509_check_ip_asc
 X509_check_issued
 X509_check_private_key
 X509_check_purpose
-X509_check_trust
 X509_cmp
 X509_cmp_current_time
 X509_cmp_time

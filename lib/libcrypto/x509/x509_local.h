@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.28 2024/08/31 10:04:50 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.29 2024/08/31 10:12:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -71,13 +71,14 @@ __BEGIN_HIDDEN_DECLS
 #define X509_CRL_HASH_EVP	EVP_sha512()
 #define X509_CRL_HASH_LEN	SHA512_DIGEST_LENGTH
 
-/*
- * Used internally instead of the confusing X509_TRUST_DEFAULT,
- * which is not the default for X509_check_trust.
- * XXX Make X509_check_trust internal, and move the other
- * X509_TRUST values here to clean up this mess.
- */
 #define X509_TRUST_ACCEPT_ALL	-1
+
+/* check_trust return codes */
+#define X509_TRUST_TRUSTED	1
+#define X509_TRUST_REJECTED	2
+#define X509_TRUST_UNTRUSTED	3
+
+int X509_check_trust(X509 *x, int id, int flags);
 
 struct X509_pubkey_st {
 	X509_ALGOR *algor;

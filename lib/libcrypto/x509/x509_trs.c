@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.57 2024/07/12 18:15:10 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.58 2024/08/31 10:12:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -147,10 +147,6 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 	if (!x509v3_cache_extensions(x))
 		return X509_TRUST_UNTRUSTED;
 
-	/*
-	 * XXX make X509_TRUST_ACCEPT_ALL a real boy once it does not
-	 * need to have the same -1 value as X509_TRUST_DEFAULT
-	 */
 	if (trust_id == X509_TRUST_ACCEPT_ALL)
 		return 1;
 
@@ -175,4 +171,3 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 		return trust_if_self_signed(x);
 	}
 }
-LCRYPTO_ALIAS(X509_check_trust);
