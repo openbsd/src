@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.42 2024/08/31 09:39:31 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.43 2024/08/31 09:44:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -652,4 +652,3 @@ NCONF_default(void)
 {
 	return &default_method;
 }
-LCRYPTO_ALIAS(NCONF_default);

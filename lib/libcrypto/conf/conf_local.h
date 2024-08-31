@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_local.h,v 1.4 2024/08/31 09:39:31 tb Exp $ */
+/* $OpenBSD: conf_local.h,v 1.5 2024/08/31 09:44:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,8 @@
 #define HEADER_CONF_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
+
+const CONF_METHOD *NCONF_default(void);
 
 struct conf_method_st {
 	const char *name;
