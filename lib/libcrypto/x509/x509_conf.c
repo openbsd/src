@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.23 2024/08/31 09:21:44 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.24 2024/08/31 09:56:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -489,30 +489,3 @@ X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash)
 {
 }
 LCRYPTO_ALIAS(X509V3_set_conf_lhash);
-
-int
-X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-    const char *section, X509 *cert)
-{
-	X509V3error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add_conf);
-
-int
-X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-    const char *section, X509_CRL *crl)
-{
-	X509V3error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509V3_EXT_CRL_add_conf);
-
-int
-X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-    const char *section, X509_REQ *req)
-{
-	X509V3error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509V3_EXT_REQ_add_conf);

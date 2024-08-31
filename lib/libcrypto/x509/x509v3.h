@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.30 2024/08/28 08:22:57 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.31 2024/08/31 09:56:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -647,12 +647,6 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     int ext_nid, const char *value);
 X509_EXTENSION *X509V3_EXT_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *name, const char *value);
-int X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-    const char *section, X509 *cert);
-int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-    const char *section, X509_REQ *req);
-int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
-    const char *section, X509_CRL *crl);
 
 int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 			     STACK_OF(CONF_VALUE) **extlist);

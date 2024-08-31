@@ -2352,11 +2352,8 @@ WHIRLPOOL_Init
 WHIRLPOOL_Update
 X25519
 X25519_keypair
-X509V3_EXT_CRL_add_conf
 X509V3_EXT_CRL_add_nconf
-X509V3_EXT_REQ_add_conf
 X509V3_EXT_REQ_add_nconf
-X509V3_EXT_add_conf
 X509V3_EXT_add_nconf
 X509V3_EXT_add_nconf_sk
 X509V3_EXT_conf
