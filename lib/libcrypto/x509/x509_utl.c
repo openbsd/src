@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.19 2024/07/08 06:57:37 jca Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.20 2024/08/31 09:26:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,6 +66,8 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+#include "conf_local.h"
 
 #include "bytestring.h"
 

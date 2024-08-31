@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.2 2024/08/31 09:18:00 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.3 2024/08/31 09:26:18 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -42,7 +42,6 @@ LCRYPTO_USED(NCONF_WIN32);
 LCRYPTO_USED(NCONF_free);
 LCRYPTO_USED(NCONF_free_data);
 LCRYPTO_USED(NCONF_load);
-LCRYPTO_USED(NCONF_load_fp);
 LCRYPTO_USED(NCONF_load_bio);
 LCRYPTO_USED(NCONF_get_section);
 LCRYPTO_USED(NCONF_get_string);
@@ -52,18 +51,7 @@ LCRYPTO_USED(CONF_modules_load_file);
 LCRYPTO_USED(CONF_modules_unload);
 LCRYPTO_USED(CONF_modules_finish);
 LCRYPTO_USED(CONF_modules_free);
-LCRYPTO_USED(CONF_module_add);
-LCRYPTO_USED(CONF_imodule_get_name);
-LCRYPTO_USED(CONF_imodule_get_value);
-LCRYPTO_USED(CONF_imodule_get_usr_data);
-LCRYPTO_USED(CONF_imodule_set_usr_data);
-LCRYPTO_USED(CONF_imodule_get_module);
-LCRYPTO_USED(CONF_imodule_get_flags);
-LCRYPTO_USED(CONF_imodule_set_flags);
-LCRYPTO_USED(CONF_module_get_usr_data);
-LCRYPTO_USED(CONF_module_set_usr_data);
 LCRYPTO_USED(CONF_get1_default_config_file);
-LCRYPTO_USED(CONF_parse_list);
 LCRYPTO_USED(OPENSSL_load_builtin_modules);
 LCRYPTO_USED(ERR_load_CONF_strings);
 

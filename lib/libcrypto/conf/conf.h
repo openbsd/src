@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.18 2024/08/31 09:21:44 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.19 2024/08/31 09:26:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,7 +138,6 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf, const char *file, long *eline);
-int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section);
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
@@ -156,23 +155,8 @@ int CONF_modules_load_file(const char *filename, const char *appname,
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
 void CONF_modules_free(void);
-int CONF_module_add(const char *name, conf_init_func *ifunc,
-    conf_finish_func *ffunc);
-
-const char *CONF_imodule_get_name(const CONF_IMODULE *md);
-const char *CONF_imodule_get_value(const CONF_IMODULE *md);
-void *CONF_imodule_get_usr_data(const CONF_IMODULE *md);
-void CONF_imodule_set_usr_data(CONF_IMODULE *md, void *usr_data);
-CONF_MODULE *CONF_imodule_get_module(const CONF_IMODULE *md);
-unsigned long CONF_imodule_get_flags(const CONF_IMODULE *md);
-void CONF_imodule_set_flags(CONF_IMODULE *md, unsigned long flags);
-void *CONF_module_get_usr_data(CONF_MODULE *pmod);
-void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data);
 
 char *CONF_get1_default_config_file(void);
-
-int CONF_parse_list(const char *list, int sep, int nospc,
-    int (*list_cb)(const char *elem, int len, void *usr), void *arg);
 
 void OPENSSL_load_builtin_modules(void);
 

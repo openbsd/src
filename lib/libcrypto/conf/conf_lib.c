@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.19 2024/08/31 09:21:44 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.20 2024/08/31 09:26:18 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -77,7 +77,6 @@ CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash)
 	default_CONF_method->init(conf);
 	conf->data = hash;
 }
-LCRYPTO_ALIAS(CONF_set_nconf);
 
 /* The following section contains the "CONF classic" functions,
    rewritten in terms of the new CONF interface. */
@@ -88,7 +87,6 @@ CONF_set_default_method(CONF_METHOD *meth)
 	default_CONF_method = meth;
 	return 1;
 }
-LCRYPTO_ALIAS(CONF_set_default_method);
 
 LHASH_OF(CONF_VALUE) *
 CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file, long *eline)
@@ -123,7 +121,6 @@ CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp, long *eline)
 	BIO_free(btmp);
 	return ltmp;
 }
-LCRYPTO_ALIAS(CONF_load_fp);
 
 LHASH_OF(CONF_VALUE) *
 CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp, long *eline)
@@ -138,7 +135,6 @@ CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp, long *eline)
 		return ctmp.data;
 	return NULL;
 }
-LCRYPTO_ALIAS(CONF_load_bio);
 
 STACK_OF(CONF_VALUE) *
 CONF_get_section(LHASH_OF(CONF_VALUE) *conf, const char *section)
@@ -253,22 +249,6 @@ NCONF_load(CONF *conf, const char *file, long *eline)
 	return conf->meth->load(conf, file, eline);
 }
 LCRYPTO_ALIAS(NCONF_load);
-
-int
-NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
-{
-	BIO *btmp;
-	int ret;
-
-	if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
-		CONFerror(ERR_R_BUF_LIB);
-		return 0;
-	}
-	ret = NCONF_load_bio(conf, btmp, eline);
-	BIO_free(btmp);
-	return ret;
-}
-LCRYPTO_ALIAS(NCONF_load_fp);
 
 int
 NCONF_load_bio(CONF *conf, BIO *bp, long *eline)

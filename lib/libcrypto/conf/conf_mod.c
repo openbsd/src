@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.38 2024/04/09 13:56:30 beck Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.39 2024/08/31 09:26:18 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -413,7 +413,6 @@ CONF_module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc
 {
 	return module_add(name, ifunc, ffunc);
 }
-LCRYPTO_ALIAS(CONF_module_add);
 
 void
 CONF_modules_free(void)
@@ -430,63 +429,54 @@ CONF_imodule_get_name(const CONF_IMODULE *imod)
 {
 	return imod->name;
 }
-LCRYPTO_ALIAS(CONF_imodule_get_name);
 
 const char *
 CONF_imodule_get_value(const CONF_IMODULE *imod)
 {
 	return imod->value;
 }
-LCRYPTO_ALIAS(CONF_imodule_get_value);
 
 void *
 CONF_imodule_get_usr_data(const CONF_IMODULE *imod)
 {
 	return imod->usr_data;
 }
-LCRYPTO_ALIAS(CONF_imodule_get_usr_data);
 
 void
 CONF_imodule_set_usr_data(CONF_IMODULE *imod, void *usr_data)
 {
 	imod->usr_data = usr_data;
 }
-LCRYPTO_ALIAS(CONF_imodule_set_usr_data);
 
 CONF_MODULE *
 CONF_imodule_get_module(const CONF_IMODULE *imod)
 {
 	return imod->mod;
 }
-LCRYPTO_ALIAS(CONF_imodule_get_module);
 
 unsigned long
 CONF_imodule_get_flags(const CONF_IMODULE *imod)
 {
 	return imod->flags;
 }
-LCRYPTO_ALIAS(CONF_imodule_get_flags);
 
 void
 CONF_imodule_set_flags(CONF_IMODULE *imod, unsigned long flags)
 {
 	imod->flags = flags;
 }
-LCRYPTO_ALIAS(CONF_imodule_set_flags);
 
 void *
 CONF_module_get_usr_data(CONF_MODULE *mod)
 {
 	return mod->usr_data;
 }
-LCRYPTO_ALIAS(CONF_module_get_usr_data);
 
 void
 CONF_module_set_usr_data(CONF_MODULE *mod, void *usr_data)
 {
 	mod->usr_data = usr_data;
 }
-LCRYPTO_ALIAS(CONF_module_set_usr_data);
 
 /* Return default config file name */
 
@@ -547,4 +537,3 @@ CONF_parse_list(const char *list_, int sep, int nospc,
 		lstart = p + 1;
 	}
 }
-LCRYPTO_ALIAS(CONF_parse_list);
