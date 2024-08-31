@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.74 2024/04/10 15:13:23 beck Exp $ */
+/* $OpenBSD: crypto.h,v 1.75 2024/08/31 12:43:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -373,8 +373,6 @@ __attribute__((__noreturn__))
 void OpenSSLDie(const char *file, int line, const char *assertion);
 #define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
 
-uint64_t OPENSSL_cpu_caps(void);
-
 int FIPS_mode(void);
 int FIPS_mode_set(int r);
 
@@ -421,6 +419,13 @@ int CRYPTO_memcmp(const void *a, const void *b, size_t len);
 
 int OPENSSL_init_crypto(uint64_t opts, const void *settings);
 void OPENSSL_cleanup(void);
+
+/*
+ * CPU capabilities.
+ */
+#define	CRYPTO_CPU_CAPS_ACCELERATED_AES		0x00000001ULL
+
+uint64_t OPENSSL_cpu_caps(void);
 
 /*
  * OpenSSL helpfully put OPENSSL_gmtime() here because all other time related
