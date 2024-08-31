@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.29 2024/08/31 10:12:23 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.30 2024/08/31 10:14:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -79,6 +79,11 @@ __BEGIN_HIDDEN_DECLS
 #define X509_TRUST_UNTRUSTED	3
 
 int X509_check_trust(X509 *x, int id, int flags);
+
+struct X509_val_st {
+	ASN1_TIME *notBefore;
+	ASN1_TIME *notAfter;
+} /* X509_VAL */;
 
 struct X509_pubkey_st {
 	X509_ALGOR *algor;

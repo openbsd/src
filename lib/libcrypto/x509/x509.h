@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.114 2024/08/31 10:12:23 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.115 2024/08/31 10:14:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,10 +122,7 @@ struct X509_algor_st {
 
 typedef STACK_OF(X509_ALGOR) X509_ALGORS;
 
-typedef struct X509_val_st {
-	ASN1_TIME *notBefore;
-	ASN1_TIME *notAfter;
-} X509_VAL;
+typedef struct X509_val_st X509_VAL;
 
 typedef struct X509_sig_st X509_SIG;
 

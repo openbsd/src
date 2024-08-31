@@ -1,4 +1,4 @@
-/* $OpenBSD: x_val.c,v 1.15 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: x_val.c,v 1.16 2024/08/31 10:14:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,8 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+
+#include "x509_local.h"
 
 static const ASN1_TEMPLATE X509_VAL_seq_tt[] = {
 	{
