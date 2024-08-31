@@ -1919,6 +1919,7 @@
 ./usr/share/man/man4/rl.4
 ./usr/share/man/man4/rlphy.4
 ./usr/share/man/man4/route.4
+./usr/share/man/man4/rport.4
 ./usr/share/man/man4/rsu.4
 ./usr/share/man/man4/rtsx.4
 ./usr/share/man/man4/rtw.4
