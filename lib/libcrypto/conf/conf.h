@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.20 2024/08/31 09:34:05 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.21 2024/08/31 09:36:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,7 +127,6 @@ void OPENSSL_no_config(void);
 
 struct conf_st {
 	CONF_METHOD *meth;
-	void *meth_data;
 	LHASH_OF(CONF_VALUE) *data;
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.h,v 1.7 2024/08/31 09:34:05 tb Exp $ */
+/* $OpenBSD: conf_def.h,v 1.8 2024/08/31 09:36:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,9 @@ __BEGIN_HIDDEN_DECLS
 #define CONF_ALPHA_NUMERIC_PUNCT (CONF_ALPHA|CONF_NUMBER|CONF_UNDER| \
 					CONF_PUNCTUATION)
 
-#define KEYTYPES(c)		((unsigned short *)((c)->meth_data))
+static const unsigned short	CONF_type_default[256];
+
+#define KEYTYPES(c)		(CONF_type_default)
 #define IS_COMMENT(c,a)		(KEYTYPES(c)[(a)&0xff]&CONF_COMMENT)
 #define IS_FCOMMENT(c,a)	(KEYTYPES(c)[(a)&0xff]&CONF_FCOMMENT)
 #define IS_EOF(c,a)		(KEYTYPES(c)[(a)&0xff]&CONF_EOF)
@@ -93,7 +95,7 @@ __BEGIN_HIDDEN_DECLS
 #define IS_DQUOTE(c,a)		(KEYTYPES(c)[(a)&0xff]&CONF_DQUOTE)
 #define IS_HIGHBIT(c,a)		(KEYTYPES(c)[(a)&0xff]&CONF_HIGHBIT)
 
-static unsigned short CONF_type_default[256] = {
+static const unsigned short CONF_type_default[256] = {
 	0x0008, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0010, 0x0010, 0x0000, 0x0000, 0x0010, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,

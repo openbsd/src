@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.40 2024/08/31 09:34:05 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.41 2024/08/31 09:36:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,7 +101,6 @@ def_init_default(CONF *conf)
 		return 0;
 
 	conf->meth = NCONF_default();
-	conf->meth_data = CONF_type_default;
 	conf->data = NULL;
 
 	return 1;
