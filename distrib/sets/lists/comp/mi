@@ -1167,7 +1167,6 @@
 ./usr/include/openssl/ts.h
 ./usr/include/openssl/txt_db.h
 ./usr/include/openssl/ui.h
-./usr/include/openssl/whrlpool.h
 ./usr/include/openssl/x509.h
 ./usr/include/openssl/x509_vfy.h
 ./usr/include/openssl/x509v3.h
