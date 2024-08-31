@@ -1,4 +1,4 @@
-/* $OpenBSD: des_fcrypt.c,v 1.1 2024/08/31 15:56:09 jsing Exp $ */
+/* $OpenBSD: des_fcrypt.c,v 1.2 2024/08/31 16:04:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,8 +75,6 @@
 #include "des_local.h"
 #undef DES_FCRYPT
 
-#ifndef OPENBSD_DES_ASM
-
 #undef PERM_OP
 #define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),			\
 	(b)^=(t),							\
@@ -148,8 +146,6 @@ fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 	out[0] = r;
 	out[1] = l;
 }
-
-#endif /* OPENBSD_DES_ASM */
 
 /* Added more values to handle illegal salt values the way normal
  * crypt() implementations do.  The patch was sent by

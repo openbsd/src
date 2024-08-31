@@ -1,4 +1,4 @@
-/* $OpenBSD: des_enc.c,v 1.18 2024/08/31 16:01:18 jsing Exp $ */
+/* $OpenBSD: des_enc.c,v 1.19 2024/08/31 16:04:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,8 +206,6 @@ const DES_LONG DES_SPtrans[8][64] = {
 	},
 };
 
-#ifndef OPENBSD_DES_ASM
-
 void
 DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
@@ -382,8 +380,6 @@ DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 	l = r = t = u = 0;
 }
 LCRYPTO_ALIAS(DES_encrypt2);
-
-#endif /* OPENBSD_DES_ASM */
 
 void
 DES_encrypt3(DES_LONG *data, DES_key_schedule *ks1,
