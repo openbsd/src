@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccpvar.h,v 1.3 2024/06/13 17:59:08 bluhm Exp $ */
+/*	$OpenBSD: ccpvar.h,v 1.4 2024/09/01 19:25:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -243,6 +243,11 @@ struct psp_init {
 } __packed;
 
 
+struct psp_guest_shutdown {
+	/* Input parameter for PSP_CMD_GUEST_SHUTDOWN */
+	uint32_t		handle;
+} __packed;
+
 /* Selection of PSP commands of the SEV-SNP ABI Version 1.55 */
 
 #define PSP_CMD_SNP_PLATFORMSTATUS	0x81
@@ -272,6 +277,7 @@ struct psp_snp_platform_status {
 #define PSP_IOC_ACTIVATE	_IOW('P', 9, struct psp_activate)
 #define PSP_IOC_DEACTIVATE	_IOW('P', 10, struct psp_deactivate)
 #define PSP_IOC_SNP_GET_PSTATUS	_IOR('P', 11, struct psp_snp_platform_status)
+#define PSP_IOC_GUEST_SHUTDOWN	_IOW('P', 255, struct psp_guest_shutdown)
 #endif	/* __amd64__ */
 
 #ifdef _KERNEL
