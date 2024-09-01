@@ -1,4 +1,4 @@
-/*	$OpenBSD: rb-linux.c,v 1.1 2024/09/01 00:22:59 aisha Exp $	*/
+/*	$OpenBSD: rb-linux.c,v 1.2 2024/09/01 06:05:11 anton Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -42,7 +42,7 @@ struct keynode {
 
 struct rb_root root;
 
-struct keynode *
+static struct keynode *
 rb_find(struct rb_root *head, struct keynode *elm)
 {
 	struct rb_node *tmp = head->rb_node;
@@ -59,7 +59,7 @@ rb_find(struct rb_root *head, struct keynode *elm)
 	return NULL;
 }
 
-struct keynode *
+static struct keynode *
 rb_insert(struct rb_root *head, struct keynode *elm)
 {
 	struct rb_node **tmp;
@@ -100,9 +100,10 @@ main(int argc, char **argv)
 	for (t = 0; t < 10; t++) {
 		for (i = 0; i < ITER; i++) {
 			tmp = malloc(sizeof(struct keynode));
-			if (tmp == NULL) err(1, "malloc");
+			if (tmp == NULL)
+				err(1, "malloc");
 			do {
-				tmp->key = arc4random_uniform(MAX-MIN);
+				tmp->key = arc4random_uniform(MAX - MIN);
 				tmp->key += MIN;
 			} while (rb_find(&root, tmp) != NULL);
 			if (i == 0)
