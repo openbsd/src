@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.7 2024/09/01 03:08:56 jsg Exp $ */
+/*	$OpenBSD: ccp.c,v 1.8 2024/09/01 17:13:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
+#include <sys/pledge.h>
 
 #include <machine/bus.h>
 
@@ -646,12 +647,30 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    psp_snp_get_pstatus((struct psp_snp_platform_status *)data);
 		break;
 	default:
-		printf("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
+		break;
 	}
 
 	rw_exit_write(&ccp_softc->sc_lock);
 
 	return (ret);
+}
+
+int
+pledge_ioctl_psp(struct proc *p, long com)
+{
+	switch (com) {
+	case PSP_IOC_GET_PSTATUS:
+	case PSP_IOC_DF_FLUSH:
+	case PSP_IOC_GET_GSTATUS:
+	case PSP_IOC_LAUNCH_START:
+	case PSP_IOC_LAUNCH_UPDATE_DATA:
+	case PSP_IOC_LAUNCH_MEASURE:
+	case PSP_IOC_LAUNCH_FINISH:
+	case PSP_IOC_ACTIVATE:
+		return (0);
+	default:
+		return (pledge_fail(p, EPERM, PLEDGE_VMM));
+	}
 }
 #endif	/* __amd64__ */
