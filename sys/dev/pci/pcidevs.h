@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2085 2024/08/20 12:17:48 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2086 2024/09/01 03:09:00 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2300,7 +2300,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD3600	0x9590		/* Radeon HD 3600 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3650_M	0x9591		/* Mobility Radeon HD 3650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3670_M	0x9593		/* Mobility Radeon HD 3670 */
-#define	PCI_PRODUCT_ATI_FIREGL_V5700_M	0x9595		/* Mobilty FireGL V5700 */
+#define	PCI_PRODUCT_ATI_FIREGL_V5700_M	0x9595		/* Mobility FireGL V5700 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3650_AGP	0x9596		/* Radeon HD 3650 AGP */
 #define	PCI_PRODUCT_ATI_RV635_1	0x9597		/* RV635 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3650	0x9598		/* Radeon HD 3650 */
@@ -2838,7 +2838,7 @@
 #define	PCI_PRODUCT_CMI_HSP56	0x0211		/* HSP56 AMR */
 #define	PCI_PRODUCT_CMI_CMI8788	0x8788		/* CMI8788 HD Audio */
 
-/* CNet produts */
+/* CNet products */
 #define	PCI_PRODUCT_CNET_GIGACARD	0x434e		/* GigaCard */
 
 /* Cogent Data Technologies products */
