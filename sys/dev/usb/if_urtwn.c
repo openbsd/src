@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.110 2024/05/23 03:21:09 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.111 2024/09/01 03:09:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2494,7 +2494,7 @@ urtwn_burstlen_init(struct urtwn_softc *sc)
 		urtwn_write_1(sc, R92C_USTIME_TSF, 0x28);
 		urtwn_write_1(sc, R88F_USTIME_EDCA, 0x28);
 
-		/* To prevent mac is reseted by bus. */
+		/* To prevent bus resetting the mac. */
 		urtwn_write_1(sc, R92C_RSV_CTRL,
 		    urtwn_read_1(sc, R92C_RSV_CTRL) |
 		    R92C_RSV_CTRL_R_DIS_PRST_0 | R92C_RSV_CTRL_R_DIS_PRST_1);

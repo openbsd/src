@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.16 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.17 2024/09/01 03:09:00 jsg Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -101,7 +101,7 @@
 #define PDC262_ATAPI_LBA48_WRITE 0x06000000
 
 /*
- * The timings provided here cmoes from the PDC20262 docs. I hope they are
+ * The timings provided here comes from the PDC20262 docs. I hope they are
  * right for the PDC20246 too ...
  */
 

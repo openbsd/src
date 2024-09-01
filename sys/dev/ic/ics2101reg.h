@@ -1,4 +1,4 @@
-/* $OpenBSD: ics2101reg.h,v 1.3 2008/06/26 05:42:15 ray Exp $ */
+/* $OpenBSD: ics2101reg.h,v 1.4 2024/09/01 03:08:56 jsg Exp $ */
 /* $NetBSD: ics2101reg.h,v 1.3 1996/02/05 02:18:52 jtc Exp $ */
 
 /*-
@@ -61,7 +61,7 @@
 #define ICSMIX_CTRL_LEFT	0x00		/* Control left channel */
 #define ICSMIX_CTRL_RIGHT	0x01		/* Control right channel */
 #define ICSMIX_ATTN_LEFT	0x02		/* Attenuate left channel */
-#define ICSMIX_ATTN_RIGHT	0x03		/* Attenutate right channel */
+#define ICSMIX_ATTN_RIGHT	0x03		/* Attenuate right channel */
 #define ICSMIX_PAEN		0x04		/* Panning control */
 #define ICSMIX_CHAN_0		0		/* Values for mixer channels */
 #define ICSMIX_CHAN_1		1

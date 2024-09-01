@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.67 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.68 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -2060,7 +2060,7 @@ ahd_handle_pkt_busfree(struct ahd_softc *ahd, u_int busfreetime)
 		 * SCB that encountered the failure.  Clean
 		 * up the queue, clear SELDO and LQOBUSFREE,
 		 * and allow the sequencer to restart the select
-		 * out at its lesure.
+		 * out at its leisure.
 		 */
 		ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
 		scbid = ahd_inw(ahd, CURRSCB);

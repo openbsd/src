@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.88 2024/06/17 11:13:43 bluhm Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.89 2024/09/01 03:08:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1135,7 +1135,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		done[rid]++;
 
 		/*
-		 * A receive descriptor of type 4 which is flaged as start of
+		 * A receive descriptor of type 4 which is flagged as start of
 		 * packet, contains the number of TCP segment of an LRO packet.
 		 */
 		if (letoh32((rxcd->rxc_word3 & VMXNET3_RXC_TYPE_M) >>

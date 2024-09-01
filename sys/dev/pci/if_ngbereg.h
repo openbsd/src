@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngbereg.h,v 1.1 2023/03/31 08:19:41 kevlo Exp $	*/
+/*	$OpenBSD: if_ngbereg.h,v 1.2 2024/09/01 03:08:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015-2017 Beijing WangXun Technology Co., Ltd.
@@ -160,7 +160,7 @@
 #define NGBE_PSR_MAX_SZ			0x15020
 #define NGBE_PSR_VLAN_CTL		0x15088
 
-/* mcasst/ucast overflow tbl */
+/* mcast/ucast overflow tbl */
 #define NGBE_PSR_MC_TBL(_i)		(0x15200 + ((_i) * 4))
 #define NGBE_PSR_UC_TBL(_i)		(0x15400 + ((_i) * 4))
 

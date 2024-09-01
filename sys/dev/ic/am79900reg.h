@@ -1,4 +1,4 @@
-/*	$OpenBSD: am79900reg.h,v 1.2 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: am79900reg.h,v 1.3 2024/09/01 03:08:56 jsg Exp $	*/
 /*	$NetBSD: am79900reg.h,v 1.7 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ struct leinit {
 /* Transmit message descriptor 3 (tmd3) */
 #define	LE_T2_BUFF	(1<<31)		/* buffer error */
 #define	LE_T2_UFLO	(1<<30)		/* underflow error */
-#define	LE_T2_EXDEF	(1<<29)		/* excessive defferral */
+#define	LE_T2_EXDEF	(1<<29)		/* excessive deferral */
 #define	LE_T2_LCOL	(1<<28)		/* late collision */
 #define	LE_T2_LCAR	(1<<27)		/* loss of carrier */
 #define	LE_T2_RTRY	(1<<26)		/* retry error */

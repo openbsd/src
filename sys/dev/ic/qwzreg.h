@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.4 2024/08/16 00:26:54 patrick Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.5 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -159,7 +159,7 @@ struct wmi_tlv {
  *                        to be communicated separately.
  * @WMI_HOST_HW_MODE_DBS_SBS: 3 PHYs, with 2 on the same band doing SBS
  *                           as in WMI_HW_MODE_SBS, and 3rd on the other band
- * @WMI_HOST_HW_MODE_DBS_OR_SBS: Two PHY with one PHY capabale of both 2G and
+ * @WMI_HOST_HW_MODE_DBS_OR_SBS: Two PHY with one PHY capable of both 2G and
  *                        5G. It can support SBS (5G + 5G) OR DBS (5G + 2G).
  * @WMI_HOST_HW_MODE_MAX: Max hw_mode_id. Used to indicate invalid mode.
  */
@@ -2229,9 +2229,9 @@ enum {
 #define WMI_VDEV_SLOT_TIME_LONG         0x1
 /* slot time short */
 #define WMI_VDEV_SLOT_TIME_SHORT        0x2
-/* preablbe long */
+/* preamble long */
 #define WMI_VDEV_PREAMBLE_LONG          0x1
-/* preablbe short */
+/* preamble short */
 #define WMI_VDEV_PREAMBLE_SHORT         0x2
 
 enum wmi_peer_smps_state {
@@ -4220,7 +4220,7 @@ enum wmi_vdev_start_resp_status_code {
 	WMI_VDEV_START_RESPONSE_INVALID_REGDOMAIN = 4,
 };
 
-/* Regaulatory Rule Flags Passed by FW */
+/* Regulatory Rule Flags Passed by FW */
 #define REGULATORY_CHAN_DISABLED     BIT(0)
 #define REGULATORY_CHAN_NO_IR        BIT(1)
 #define REGULATORY_CHAN_RADAR        BIT(3)
@@ -8481,7 +8481,7 @@ struct ath12k_hal_reo_dest_ring {
  *		and the MPDU was processed in the following way:
  *		- NO re-order function is needed.
  *		- MPDU delinking is determined by the setting of Entrance
- *		  ring field: SW_excection_mpdu_delink
+ *		  ring field: SW_exception_mpdu_delink
  *		- Destination ring selection is based on the setting of
  *		  the Entrance ring field SW_exception_destination _ring_valid
  *
@@ -8633,7 +8633,7 @@ struct hal_reo_cmd_hdr {
 #define HAL_REO_CMD_FLG_UNBLK_RESOURCE		BIT(7)
 #define HAL_REO_CMD_FLG_UNBLK_CACHE		BIT(8)
 
-/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO0_UPD_* feilds */
+/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO0_UPD_* fields */
 #define HAL_REO_CMD_UPD0_RX_QUEUE_NUM		BIT(8)
 #define HAL_REO_CMD_UPD0_VLD			BIT(9)
 #define HAL_REO_CMD_UPD0_ALDC			BIT(10)
@@ -8658,7 +8658,7 @@ struct hal_reo_cmd_hdr {
 #define HAL_REO_CMD_UPD0_PN_VALID		BIT(29)
 #define HAL_REO_CMD_UPD0_PN			BIT(30)
 
-/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO1_* feilds */
+/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO1_* fields */
 #define HAL_REO_CMD_UPD1_VLD			BIT(16)
 #define HAL_REO_CMD_UPD1_ALDC			GENMASK(18, 17)
 #define HAL_REO_CMD_UPD1_DIS_DUP_DETECTION	BIT(19)
@@ -8674,7 +8674,7 @@ struct hal_reo_cmd_hdr {
 #define HAL_REO_CMD_UPD1_PN_HANDLE_ENABLE	BIT(30)
 #define HAL_REO_CMD_UPD1_IGNORE_AMPDU_FLG	BIT(31)
 
-/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO2_* feilds */
+/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO2_* fields */
 #define HAL_REO_CMD_UPD2_SVLD			BIT(10)
 #define HAL_REO_CMD_UPD2_SSN			GENMASK(22, 11)
 #define HAL_REO_CMD_UPD2_SEQ_2K_ERR		BIT(23)
@@ -11108,7 +11108,7 @@ struct rx_attention {
  * msdu_limit_error
  *		Indicates that the MSDU threshold was exceeded and thus
  *		all the rest of the MSDUs will not be scattered and will not
- *		be decasulated but will be DMA'ed in RAW format as a single
+ *		be decapsulated but will be DMA'ed in RAW format as a single
  *		MSDU buffer.
  *
  * da_is_valid

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyreg.h,v 1.8 2002/09/14 15:00:02 art Exp $	*/
+/*	$OpenBSD: cyreg.h,v 1.9 2024/09/01 03:08:56 jsg Exp $	*/
 /*	$FreeBSD: cyreg.h,v 1.1 1995/07/05 12:15:51 bde Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 #define	CY8_SVCACKT		0x200
 #define	CY8_SVCACKM		0x300
 
-/* twice this in PCI mode (shifed BUSTYPE bits left) */
+/* twice this in PCI mode (shifted BUSTYPE bits left) */
 #define	CY_CD1400_MEMSPACING	0x400
 
 /* adjustment value for accessing the last 4 cd1400s on Cyclom-32 */

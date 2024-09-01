@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_seeprom.c,v 1.9 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: aic7xxx_seeprom.c,v 1.10 2024/09/01 03:08:56 jsg Exp $	*/
 /*	$NetBSD: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@netbsd.org>
  *
- * $Id: aic7xxx_seeprom.c,v 1.9 2021/03/07 06:21:38 jsg Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.10 2024/09/01 03:08:56 jsg Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -88,7 +88,7 @@ static void ahc_parse_pci_eeprom(struct ahc_softc *, struct seeprom_config *);
 
 /*
  * Check the external port logic for a serial eeprom
- * and termination/cable detection contrls.
+ * and termination/cable detection controls.
  */
 void
 ahc_check_extport(struct ahc_softc *ahc, u_int *sxfrctl1)

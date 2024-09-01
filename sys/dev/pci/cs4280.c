@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.62 2024/08/18 14:42:56 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.63 2024/09/01 03:08:56 jsg Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ cs4280_set_dac_rate(struct cs4280_softc *sc, int rate)
 	 * playback rate may range from 8000Hz to 48000Hz
 	 *
 	 * play_phase_increment = floor(rate*65536*1024/48000)
-	 * px = round(rate*65536*1024 - play_phase_incremnt*48000)
+	 * px = round(rate*65536*1024 - play_phase_increment*48000)
 	 * py=floor(px/200)
 	 * play_sample_rate_correction = px - 200*py
 	 *

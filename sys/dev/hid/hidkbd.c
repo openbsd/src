@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.13 2024/07/02 05:50:02 gkoehler Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.14 2024/09/01 03:08:56 jsg Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -147,7 +147,7 @@ static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 67, 235 },	/* F10 -> backlight raise */
 	{ 39, 84 },	/* keypad divide */
 	{ 19, 85 },	/* keypad multiply */
-	{ 51, 86 },	/* keypad substract */
+	{ 51, 86 },	/* keypad subtract */
 	{ 56, 87 },	/* keypad add */
 	{ 13, 89 },	/* keypad 1 */
 	{ 14, 90 },	/* keypad 2 */

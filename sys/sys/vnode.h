@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.173 2024/07/13 14:37:55 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.174 2024/09/01 03:09:01 jsg Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ extern int		vttoif_tab[];
  * Flags to various vnode functions.
  */
 #define	SKIPSYSTEM	0x0001		/* vflush: skip vnodes marked VSYSTEM */
-#define	FORCECLOSE	0x0002		/* vflush: force file closeure */
+#define	FORCECLOSE	0x0002		/* vflush: force file closure */
 #define	WRITECLOSE	0x0004		/* vflush: only close writeable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	IGNORECLEAN	0x0010		/* vflush: ignore clean vnodes */

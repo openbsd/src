@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.370 2024/08/21 03:07:45 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.371 2024/09/01 03:09:00 jsg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -88,7 +88,7 @@ struct	pgrp {
 
 /*
  * time usage: accumulated times in ticks
- * Each thread is immediatly accumulated here. For processes only the
+ * Each thread is immediately accumulated here. For processes only the
  * time of exited threads is accumulated and to get the proper process
  * time usage tuagg_get_process() needs to be called.
  * Accounting of threads is done lockless by curproc using the tu_gen

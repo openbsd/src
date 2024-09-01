@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.416 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.417 2024/09/01 03:08:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9238,7 +9238,7 @@ iwm_calib_timeout(void *arg)
 		ieee80211_amrr_choose(&sc->sc_amrr, &in->in_ni, &in->in_amn);
 		/* 
 		 * If AMRR has chosen a new TX rate we must update
-		 * the firwmare's LQ rate table.
+		 * the firmware's LQ rate table.
 		 * ni_txrate may change again before the task runs so
 		 * cache the chosen rate in the iwm_node structure.
 		 */

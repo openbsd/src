@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxtreg.h,v 1.5 2022/01/28 07:11:14 guenther Exp $	*/
+/*	$OpenBSD: if_bnxtreg.h,v 1.6 2024/09/01 03:08:56 jsg Exp $	*/
 /*-
  *   BSD LICENSE
  *
@@ -8701,7 +8701,7 @@ struct hwrm_port_phy_cfg_input {
 	uint32_t tx_lpi_timer;
 	uint32_t unused_4;
 	/*
-	 * Reuested setting of TX LPI timer in microseconds. This field is valid
+	 * Requested setting of TX LPI timer in microseconds. This field is valid
 	 * only when EEE is enabled and TX LPI is enabled.
 	 */
 	#define HWRM_PORT_PHY_CFG_INPUT_TX_LPI_TIMER_MASK	UINT32_C(0xffffff)
@@ -23260,7 +23260,7 @@ struct hwrm_nvm_raw_write_blk_input {
 	 */
 	uint64_t host_src_addr;
 	/*
-	 * 64-bit Host Source Address. This is the loation of the source data to
+	 * 64-bit Host Source Address. This is the location of the source data to
 	 * be written.
 	 */
 	uint32_t dest_addr;
@@ -27747,7 +27747,7 @@ struct creq_destroy_cq_resp {
 	uint16_t cq_arm_lvl;
 	/*
 	 * CQ ARM Level: 0 ? Not Armed 1 ? Arm SE Only, Generate CNQE only for
-	 * incoming Solicted Events 2 ? Arm all, Generate CNQE for Rx and Tx
+	 * incoming Solicited Events 2 ? Arm all, Generate CNQE for Rx and Tx
 	 */
 	#define CREQ_DESTROY_CQ_RESP_CQ_ARM_LVL_MASK		UINT32_C(0x3)
 	#define CREQ_DESTROY_CQ_RESP_CQ_ARM_LVL_SFT		0

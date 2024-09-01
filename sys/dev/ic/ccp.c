@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.6 2024/08/13 20:48:00 bluhm Exp $ */
+/*	$OpenBSD: ccp.c,v 1.7 2024/09/01 03:08:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -129,7 +129,7 @@ psp_attach(struct ccp_softc *sc)
 
 	/*
          * create and map Trusted Memory Region (TMR); size 1 Mbyte,
-         * needs to be aligend to 1 Mbyte.
+         * needs to be aligned to 1 Mbyte.
 	 */
 	sc->sc_tmr_size = size = PSP_TMR_SIZE;
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -646,7 +646,7 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    psp_snp_get_pstatus((struct psp_snp_platform_status *)data);
 		break;
 	default:
-		printf("%s: unkown ioctl code 0x%lx\n", __func__, cmd);
+		printf("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
 	}
 

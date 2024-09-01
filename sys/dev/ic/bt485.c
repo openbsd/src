@@ -1,4 +1,4 @@
-/* $OpenBSD: bt485.c,v 1.14 2014/07/08 17:19:25 deraadt Exp $ */
+/* $OpenBSD: bt485.c,v 1.15 2024/09/01 03:08:56 jsg Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
@@ -210,7 +210,7 @@ bt485_init(rc)
 	regval |= 0x02;
 	data->ramdac_wr(data->cookie, BT485_REG_COMMAND_0, regval);
 
-	/* Set the RAMDAC to 8BPP (no interestion options). */
+	/* Set the RAMDAC to 8BPP (no interesting options). */
 	data->ramdac_wr(data->cookie, BT485_REG_COMMAND_1, 0x40);
 
 	/* Disable the cursor (for now) */

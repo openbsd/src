@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.45 2024/04/13 23:44:11 jsg Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.46 2024/09/01 03:08:56 jsg Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -784,7 +784,7 @@ siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 
 	/*
 	 * First let see if we have a resid from a phase mismatch. If so,
-	 * we have to adjst the table at offset to remove transferred data.
+	 * we have to adjust the table at offset to remove transferred data.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
 		siop_cmd->flags &= ~CMDFL_RESID;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.87 2023/01/30 10:49:04 jsg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.88 2024/09/01 03:08:56 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -402,7 +402,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 /*
  * First repair the interrupt hardware so that any events which occur
  * will cause the least number of unexpected side effects.  We re-start
- * the clocks early because we will soon run AML whigh might do DELAY.
+ * the clocks early because we will soon run AML which might do DELAY.
  * Then PM, and then further system/CPU work for the BSP cpu.
  */ 
 void

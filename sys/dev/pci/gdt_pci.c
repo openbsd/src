@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.28 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.29 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -493,7 +493,7 @@ gdt_pci_attach(struct device *parent, struct device *self, void *aux)
 			goto bail_out;
 		}
 
-		/* special commnd to controller BIOS */
+		/* special command to controller BIOS */
 		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_INFO, 0);
 		bus_space_write_4(dpmemt, dpmemh,
 		    GDT_MPR_IC + GDT_S_INFO + sizeof (u_int32_t), 0);

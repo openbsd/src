@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_i225.c,v 1.4 2023/02/03 11:31:52 mbuhl Exp $	*/
+/*	$OpenBSD: igc_i225.c,v 1.5 2024/09/01 03:08:59 jsg Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -763,7 +763,7 @@ igc_write_erase_flash_command_i225(struct igc_hw *hw, uint32_t opcode,
 /* igc_update_flash_i225 - Commit EEPROM to the flash
  * if fw_valid_bit is set, FW is active. setting FLUPD bit in EEC
  * register makes the FW load the internal shadow RAM into the flash.
- * Otherwise, fw_valid_bit is 0. if FL_SECU.block_prtotected_sw = 0
+ * Otherwise, fw_valid_bit is 0. if FL_SECU.block_protected_sw = 0
  * then FW is not active so the SW is responsible shadow RAM dump.
  *
  * @hw: pointer to the HW structure

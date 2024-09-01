@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xxreg.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: mtd8xxreg.h,v 1.3 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -92,7 +92,7 @@
 #define TCR_BACKOPT	0x10000000U	/* Optional back-off */
 #define TCR_FBACK	0x08000000U	/* Fast back-off */
 #define TCR_ENHANCED	0x02000000U	/* Enhanced transmit mode */
-#define TCR_TFCEN	0x01000000U	/* Ttansmit flow control enable */
+#define TCR_TFCEN	0x01000000U	/* Transmit flow control enable */
 #define TCR_TFT64	0x00000000U	/*   64 bytes */
 #define TCR_TFT32	0x00200000U	/*   32 bytes */
 #define TCR_TFT128	0x00400000U	/*  128 bytes */
@@ -144,7 +144,7 @@
 #define ISR_ROVF	0x00000200U	/* Receive overflow */
 #define ISR_ETI		0x00000100U	/* Early transfer interrupt */
 #define ISR_ERI		0x00000080U	/* Early receive interrupt */
-#define ISR_CNTOVF	0x00000040U	/* CRC or MPA tally ounter overflow */
+#define ISR_CNTOVF	0x00000040U	/* CRC or MPA tally counter overflow */
 #define ISR_RBU		0x00000020U	/* Receive buffer unavailable */
 #define ISR_TBU		0x00000010U	/* Transmit buffer unavailable */
 #define ISR_TI		0x00000008U	/* Transmit interrupt */
@@ -167,7 +167,7 @@
 #define IMR_MROVF	0x00000200U	/* Receive overflow */
 #define IMR_METI	0x00000100U	/* Early transfer interrupt */
 #define IMR_MERI	0x00000080U	/* Early receive interrupt */
-#define IMR_MCNTOVF	0x00000040U	/* CRC or MPA tally ounter overflow */
+#define IMR_MCNTOVF	0x00000040U	/* CRC or MPA tally counter overflow */
 #define IMR_MRBU	0x00000020U	/* Receive buffer unavailable */
 #define IMR_MTBU	0x00000010U	/* Transmit buffer unavailable */
 #define IMR_MTI		0x00000008U	/* Transmit interrupt */

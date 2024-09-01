@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.121 2024/07/13 08:59:41 dv Exp $ */
+/*	$OpenBSD: nvme.c,v 1.122 2024/09/01 03:08:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1946,7 +1946,7 @@ nvme_bioctl_inq(struct nvme_softc *sc, struct bioc_inq *bi)
 	nvme_bio_status(bs, "Max i/o %zu bytes%s%s%s, Sanitize 0x%b",
 	    sc->sc_mdts,
 	    ISSET(idctrl->lpa, NVM_ID_CTRL_LPA_PE) ?
-	    ", Persisent Event Log" : "",
+	    ", Persistent Event Log" : "",
 	    ISSET(idctrl->fna, NVM_ID_CTRL_FNA_CRYPTOFORMAT) ?
 	    ", CryptoFormat" : "",
 	    ISSET(idctrl->vwc, NVM_ID_CTRL_VWC_PRESENT) ?

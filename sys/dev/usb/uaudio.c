@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.175 2024/07/23 08:59:21 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.176 2024/09/01 03:09:00 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1999,7 +1999,7 @@ uaudio_process_header(struct uaudio_softc *sc, struct uaudio_blob *p)
 /*
  * Process AC interrupt endpoint descriptor, this is mainly to skip
  * the descriptor as we use neither of its properties. Our mixer
- * interface doesn't support unsolicitated state changes, so we've no
+ * interface doesn't support unsolicited state changes, so we've no
  * use of it yet.
  */
 int
@@ -2313,7 +2313,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
  *			to adapt to software's desired rate
  *
  *
- * For usb1.1 ival is cardcoded to 1 for isochronous
+ * For usb1.1 ival is hardcoded to 1 for isochronous
  * transfers, which means one transfer every ms. I.e one
  * transfer every frame period.
  *

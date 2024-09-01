@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.6 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.7 2024/09/01 03:08:56 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -361,7 +361,7 @@ imx23_usb_init(struct imxehci_softc *sc, uint32_t *cells)
 	    anatop, sizeof(anatop)) == sizeof(anatop))
 		rm = regmap_byphandle(anatop[0]);
 
-	/* Disable the carger detection, else signal on DP will be poor */
+	/* Disable the charger detection, else signal on DP will be poor */
 	switch (sc->sc_unit) {
 	case 0:
 		if (rm != NULL)

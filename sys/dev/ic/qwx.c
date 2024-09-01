@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.66 2024/08/19 08:22:30 jsg Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.67 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6691,7 +6691,7 @@ qwx_qmi_decode_msg(struct qwx_softc *sc, void *output, size_t output_len,
 
 			/* Related EIs must have the same type. */
 			if (ei->tlv_type != elem_type) {
-				printf("%s: unexepected element type 0x%x; "
+				printf("%s: unexpected element type 0x%x; "
 				    "expected 0x%x\n", __func__,
 				    ei->tlv_type, elem_type);
 				return -1;
@@ -7471,7 +7471,7 @@ qwx_qrtr_recv_msg(struct qwx_softc *sc, struct mbuf *m)
 		qwx_qrtr_resume_tx(sc);
 }
 
-// Not needed because we don't implenent QMI as a network service.
+// Not needed because we don't implement QMI as a network service.
 #define qwx_qmi_init_service(sc)	(0)
 #define qwx_qmi_deinit_service(sc)	(0)
 
@@ -14261,7 +14261,7 @@ qwx_dp_htt_htc_tx_complete(struct qwx_softc *sc, struct mbuf *m)
 static inline void
 qwx_dp_get_mac_addr(uint32_t addr_l32, uint16_t addr_h16, uint8_t *addr)
 {
-#if 0 /* Not needed on OpenBSD? We do swapping in sofware... */
+#if 0 /* Not needed on OpenBSD? We do swapping in software... */
 	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
 		addr_l32 = swab32(addr_l32);
 		addr_h16 = swab16(addr_h16);
@@ -20790,7 +20790,7 @@ qwx_hal_srng_setup(struct qwx_softc *sc, enum hal_ring_type type,
 	memset(srng->ring_base_vaddr, 0,
 	    (srng->entry_size * srng->num_entries) << 2);
 
-#if 0 /* Not needed on OpenBSD? We do swapping in sofware... */
+#if 0 /* Not needed on OpenBSD? We do swapping in software... */
 	/* TODO: Add comments on these swap configurations */
 	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		srng->flags |= HAL_SRNG_FLAGS_MSI_SWAP | HAL_SRNG_FLAGS_DATA_TLV_SWAP |
@@ -22252,7 +22252,7 @@ qwx_reg_update_chan_list(struct qwx_softc *sc, uint8_t pdev_id)
 		    ch->antennamax, ch->phy_mode);
 
 		ch++;
-		/* TODO: use quarrter/half rate, cfreq12, dfs_cfreq2
+		/* TODO: use quarter/half rate, cfreq12, dfs_cfreq2
 		 * set_agile, reg_class_idx
 		 */
 	}

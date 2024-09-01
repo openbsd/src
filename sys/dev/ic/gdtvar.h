@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.26 2021/08/30 14:44:39 jasper Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.27 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -66,7 +66,7 @@ struct gdt_intr_ctx {
 };
 
 /*
- * A command contol block, one for each corresponding command index of the
+ * A command control block, one for each corresponding command index of the
  * controller.
  */
 struct gdt_ccb {

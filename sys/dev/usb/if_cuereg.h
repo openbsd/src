@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.12 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.13 2024/09/01 03:09:00 jsg Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.14 2001/01/21 22:09:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
 
 #define CUE_LEDCTL				0x81
 
-/* Advenced operating mode register */
+/* Advanced operating mode register */
 #define CUE_AOP_SRAMWAITS			0x03
 #define CUE_AOP_EMBED_RXLEN			0x08
 #define CUE_AOP_RXCOMBINE			0x10

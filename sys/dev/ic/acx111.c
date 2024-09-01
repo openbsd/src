@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.24 2022/01/09 05:42:38 jsg Exp $ */
+/*	$OpenBSD: acx111.c,v 1.25 2024/09/01 03:08:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -80,7 +80,7 @@
 
 #define ACX111_INTR_ENABLE	(ACXRV_INTR_TX_FINI | ACXRV_INTR_RX_FINI)
 /*
- * XXX do we really care about fowlling interrupts?
+ * XXX do we really care about the following interrupts?
  *
  * ACXRV_INTR_IV_ICV_FAILURE | ACXRV_INTR_INFO |
  * ACXRV_INTR_SCAN_FINI | ACXRV_INTR_FCS_THRESHOLD

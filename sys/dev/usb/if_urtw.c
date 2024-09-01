@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.73 2024/05/23 03:21:09 jsg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.74 2024/09/01 03:09:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -3498,7 +3498,7 @@ urtw_task(void *arg)
 
 fail:
 	if (error != 0)
-		DPRINTF(("%s: error duing processing RUN state.",
+		DPRINTF(("%s: error processing RUN state.",
 		    sc->sc_dev.dv_xname));
 }
 

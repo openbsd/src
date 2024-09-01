@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.56 2024/07/09 08:47:10 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.57 2024/09/01 03:08:56 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -739,9 +739,9 @@ dwpcie_attach_deferred(struct device *self)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	/*
-	 * Only support mutiple MSI vectors if we have enough MSI
+	 * Only support multiple MSI vectors if we have enough MSI
 	 * interrupts (or are using an external interrupt controller
-	 * that hopefully suppors plenty of MSI interripts).
+	 * that hopefully supports plenty of MSI interrupts).
 	 */
 	if (OF_getproplen(sc->sc_node, "msi-map") > 0 ||
 	    sc->sc_num_msi > 32)

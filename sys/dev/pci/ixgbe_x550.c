@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x550.c,v 1.9 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_x550.c,v 1.10 2024/09/01 03:09:00 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1764,12 +1764,12 @@ int32_t ixgbe_get_link_capabilities_X550em(struct ixgbe_hw *hw,
 }
 
 /**
- * ixgbe_get_lasi_ext_t_x550em - Determime external Base T PHY interrupt cause
+ * ixgbe_get_lasi_ext_t_x550em - Determine external Base T PHY interrupt cause
  * @hw: pointer to hardware structure
  * @lsc: pointer to boolean flag which indicates whether external Base T
  *       PHY interrupt is lsc
  *
- * Determime if external Base T PHY interrupt cause is high temperature
+ * Determine if external Base T PHY interrupt cause is high temperature
  * failure alarm or link status change.
  *
  * Return IXGBE_ERR_OVERTEMP if interrupt is high temperature

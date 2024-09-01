@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.96 2023/09/11 12:10:47 mvs Exp $	*/
+/*	$OpenBSD: aac.c,v 1.97 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2677,7 +2677,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifJobFsVerify:
 			/* File System Verify operation */
-			printf("\t(FsVerivy)\n");
+			printf("\t(FsVerify)\n");
 			break;
 		case AifJobFsExtend:
 			/* File System Extend operation */

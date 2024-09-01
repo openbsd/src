@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.31 2024/05/29 00:48:15 jsg Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.32 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -409,7 +409,7 @@ typedef enum {
  */
 
 /*
- * Status information embedded in the shared poriton of
+ * Status information embedded in the shared portion of
  * an SCB after passing the cdb to the target.  The kernel
  * driver will only read this data for transactions that
  * complete abnormally.

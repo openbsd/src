@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.95 2024/06/09 05:18:12 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.96 2024/09/01 03:08:56 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2436,7 +2436,7 @@ struct em_host_command_info {
 #define EEPROM_WRITE_OPCODE_MICROWIRE 0x5  /* EEPROM write opcode */
 #define EEPROM_ERASE_OPCODE_MICROWIRE 0x7  /* EEPROM erase opcode */
 #define EEPROM_EWEN_OPCODE_MICROWIRE  0x13 /* EEPROM erase/write enable */
-#define EEPROM_EWDS_OPCODE_MICROWIRE  0x10 /* EEPROM erast/write disable */
+#define EEPROM_EWDS_OPCODE_MICROWIRE  0x10 /* EEPROM erase/write disable */
 
 /* EEPROM Commands - SPI */
 #define EEPROM_MAX_RETRY_SPI        5000 /* Max wait of 5ms, for RDY signal */

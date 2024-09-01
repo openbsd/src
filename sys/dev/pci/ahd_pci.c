@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.29 2022/10/21 17:45:40 kn Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.30 2024/09/01 03:08:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -649,7 +649,7 @@ fail:
 
 /*
  * Check the external port logic for a serial eeprom
- * and termination/cable detection contrls.
+ * and termination/cable detection controls.
  */
 int
 ahd_check_extport(struct ahd_softc *ahd)

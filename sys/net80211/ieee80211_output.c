@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.139 2024/05/08 14:02:59 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.140 2024/09/01 03:09:00 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1817,7 +1817,7 @@ ieee80211_get_action(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Send a management frame.  The node is for the destination (or ic_bss
  * when in station mode).  Nodes other than ic_bss have their reference
- * count bumped to reflect our use for an indeterminant time.
+ * count bumped to reflect our use for an indeterminate time.
  */
 int
 ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,

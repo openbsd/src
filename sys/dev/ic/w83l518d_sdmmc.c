@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l518d_sdmmc.c,v 1.5 2020/01/22 03:26:02 cheloha Exp $	*/
+/*	$OpenBSD: w83l518d_sdmmc.c,v 1.6 2024/09/01 03:08:56 jsg Exp $	*/
 /*	$NetBSD: w83l518d_sdmmc.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $ */
 
 /*
@@ -75,7 +75,7 @@ void	wb_sdmmc_card_intr_ack(sdmmc_chipset_handle_t);
 struct sdmmc_chip_functions wb_sdmmc_chip_functions = {
 	/* host controller reset */
 	wb_sdmmc_host_reset,
-	/* host controlle capabilities */
+	/* host controller capabilities */
 	wb_sdmmc_host_ocr,
 	wb_sdmmc_host_maxblklen,
 	/* card detection */
