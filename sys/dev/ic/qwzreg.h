@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.5 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.6 2024/09/01 03:14:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -6626,7 +6626,7 @@ struct qmi_wlanfw_host_cap_req_msg_v01 {
 	uint8_t mem_cfg_mode_valid;
 	uint8_t mem_cfg_mode;
 	uint8_t cal_duration_valid;
-	uint16_t cal_duraiton;
+	uint16_t cal_duration;
 	uint8_t platform_name_valid;
 	char platform_name[QMI_WLANFW_MAX_PLATFORM_NAME_LEN_V01 + 1];
 	uint8_t ddr_range_valid;

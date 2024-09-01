@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.6 2024/08/05 18:36:28 kettenis Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.7 2024/09/01 03:14:48 jsg Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -1223,7 +1223,7 @@ struct battmgr_bat_info {
 	uint32_t max_sample_time_ms;
 	uint32_t min_sample_time_ms;
 	uint32_t max_average_interval_ms;
-	uint32_t min_averae_interval_ms;
+	uint32_t min_average_interval_ms;
 	uint32_t capacity_granularity1;
 	uint32_t capacity_granularity2;
 	uint32_t swappable;

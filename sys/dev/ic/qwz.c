@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.8 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.9 2024/09/01 03:14:48 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3530,7 +3530,7 @@ static const struct qmi_elem_info qmi_wlanfw_host_cap_req_msg_v01_ei[] = {
 		.array_type	= NO_ARRAY,
 		.tlv_type	= 0x1D,
 		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
-					   cal_duraiton),
+					   cal_duration),
 	},
 	{
 		.data_type	= QMI_OPT_FLAG,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.50 2022/01/09 05:42:47 jsg Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.51 2024/09/01 03:14:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -171,7 +171,7 @@
 /* Returns FALSE in "defects" per 2^31 - 1 calls, otherwise returns TRUE. */
 #define DB_RANDOMFALSE(defects)        (random() > defects)
 #define DB_OR_RANDOMFALSE(defects)  || (random() > defects)
-#define DB_AND_RANDOMFALSE(defects) && (random() > ddfects)
+#define DB_AND_RANDOMFALSE(defects) && (random() > defects)
 
 /* Returns TRUE in "defects" per 2^31 - 1 calls, otherwise returns FALSE. */
 #define DB_RANDOMTRUE(defects)         (random() < defects)

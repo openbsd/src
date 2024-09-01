@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.30 2023/04/28 01:24:14 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.31 2024/09/01 03:14:48 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1259,7 +1259,7 @@ struct r92c_rom {
 	uint8_t		rf_opt4;
 	uint8_t		reserved5;
 	uint8_t		version;
-	uint8_t		curstomer_id;
+	uint8_t		customer_id;
 } __packed;
 
 struct r92e_tx_pwr {
