@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.367 2024/08/31 15:52:09 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.368 2024/09/01 23:26:10 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2002,10 +2002,8 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 		vflags |= VWRITE;
 		nd.ni_unveil |= UNVEIL_WRITE;
 	}
-	if (amode & X_OK) {
+	if (amode & X_OK)
 		vflags |= VEXEC;
-		nd.ni_unveil |= UNVEIL_EXEC;
-	}
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	vp = nd.ni_vp;
