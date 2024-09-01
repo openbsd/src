@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2024/08/25 09:53:53 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2024/09/01 20:24:42 tb Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,7 +291,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 
 			c->iev.ibuf.pid = pid;
 			frontend_imsg_compose_engine(IMSG_REQUEST_REBOOT, 0,
-			    pid, &if_index, sizeof(&if_index));
+			    pid, &if_index, sizeof(if_index));
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__, type);
