@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ccp.4,v 1.4 2019/04/23 20:23:36 jmc Exp $
+.\"     $OpenBSD: ccp.4,v 1.5 2024/09/01 19:32:48 bluhm Exp $
 .\"
 .\" Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2019 $
+.Dd $Mdocdate: September 1 2024 $
 .Dt CCP 4
 .Os
 .Sh NAME
@@ -33,6 +33,12 @@ The
 .Nm
 driver supports feeding output of the random number generator into
 the kernel entropy pool.
+.Pp
+On amd64
+.Nm
+provides
+.Xr ioctl 2
+access to the platform security processor (PSP).
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr random 4 ,
@@ -48,3 +54,5 @@ The
 .Nm
 driver was written by
 .An David Gwynne Aq Mt dlg@openbsd.org .
+PSP support was implemented by
+.An Hans-Joerg Hoexer Aq Mt hshoexer@genua.de .
