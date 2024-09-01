@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2002/08/21 15:10:06 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2024/09/01 00:22:59 aisha Exp $
 
-SUBDIR= splay rb
+SUBDIR= splay rb rb-linux
 
 install:
 
