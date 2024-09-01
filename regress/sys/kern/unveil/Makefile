@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2024/08/31 20:03:03 jeremy Exp $
+#	$OpenBSD: Makefile,v 1.7 2024/09/01 05:48:20 anton Exp $
 
 WARNINGS=	yes
 
@@ -10,6 +10,9 @@ run-regress-syscalls:
 	${SUDO} ./syscalls
 
 PROGS+=				socket
-PROGS+=				access
+
+PROGS+=access
+run-regress-access: access
+	./access ${.CURDIR}/access-expected
 
 .include <bsd.regress.mk>

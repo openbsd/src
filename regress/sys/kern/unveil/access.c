@@ -23,14 +23,20 @@ const char* filenames[] = {"f", "fr", "fw", "fx", "fc", "frw", "frx", "frc",
 			   "frwc", "frxc", "fwxc", "frwxc"};
 const char* header = "unveil:access\n";
 
-int main(int argc, char** argv) {
+int
+main(int argc, char *argv[])
+{
 	int i;
 	int log_fd;
 	FILE *log;
-	char expected[PATH_MAX];
-	char *exp;
+	const char *expected;
 
-	UV_SHOULD_SUCCEED(((exp = realpath("access-expected", expected)) == NULL), "realpath");
+	if (argc != 2) {
+		fprintf(stderr, "usage: access expected-path\n");
+		exit(1);
+	}
+	expected = argv[1];
+
 	UV_SHOULD_SUCCEED(((log_fd = mkstemp(uv_file)) == -1), "mkstemp");
 	UV_SHOULD_SUCCEED(((log = fdopen(log_fd, "w")) == NULL), "fdopen");
 	UV_SHOULD_SUCCEED((mkdtemp(uv_dir) == NULL), "mkdtmp");
