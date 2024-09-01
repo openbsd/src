@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.16 2022/08/20 17:39:22 tb Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.17 2024/09/01 04:27:45 guenther Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -52,17 +52,24 @@
 #define	RTLD_DEFAULT	((void *) -2)	/* Use default search algorithm. */
 #define	RTLD_SELF	((void *) -3)	/* Search the caller itself. */
 
-#if __BSD_VISIBLE
-
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 202405
 /*
  * Structure filled in by dladdr().
  */
-typedef	struct dl_info {
+typedef	struct
+#if __BSD_VISIBLE
+	dl_info
+#endif
+{
 	const char	*dli_fname;	/* Pathname of shared object. */
 	void		*dli_fbase;	/* Base address of shared object. */
 	const char	*dli_sname;	/* Name of nearest symbol. */
 	void		*dli_saddr;	/* Address of nearest symbol. */
-} Dl_info;
+} Dl_info_t;
+#endif /* __BSD_VISIBLE || __POSIX_VISIBLE >= 202405 */
+
+#if __BSD_VISIBLE
+typedef Dl_info_t Dl_info;
 
 /*
  * dlctl() commands
@@ -90,8 +97,11 @@ int	dlclose(void *);
 void	*dlsym(void *__restrict, const char *__restrict);
 char	*dlerror(void);
 
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 202405
+int	dladdr(const void *__restrict, Dl_info_t *__restrict);
+#endif
+
 #if __BSD_VISIBLE
-int	dladdr(const void *, Dl_info *);
 int	dlctl(void *, int, void *);
 #endif /* __BSD_VISIBLE */
 
