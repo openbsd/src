@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.12 2024/07/10 13:11:22 tb Exp $
+# $OpenBSD: symbols.awk,v 1.13 2024/09/01 17:20:37 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -18,13 +18,6 @@
 
 BEGIN {
 	printf("#include \"include_headers.c\"\n\n")
-}
-
-# These are machdep.
-/^OPENSSL_cpuid_setup$/						||
-/^OPENSSL_cpu_caps$/ {
-	printf("/* skipped %s */\n", $0)
-	next
 }
 
 {
