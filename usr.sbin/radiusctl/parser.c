@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 2024/07/24 08:27:20 yasuoka Exp $	*/
+/*	$OpenBSD: parser.c,v 1.5 2024/09/02 04:45:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -371,9 +371,11 @@ match_token(char *word, const struct token table[])
 				break;
 			match++;
 			res.session_seq = strtonum(word, 1, UINT_MAX, &errstr);
-			if (errstr != NULL)
+			if (errstr != NULL) {
 				printf("invalid argument: %s is %s for "
-				"\"session-id\"", word, errstr);
+				    "\"session-id\"\n", word, errstr);
+				return (NULL);
+			}
 			t = &table[i];
 		case MSGAUTH:
 			if (word != NULL &&
