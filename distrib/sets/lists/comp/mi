@@ -2230,7 +2230,6 @@
 ./usr/share/man/man3/X509_check_issued.3
 ./usr/share/man/man3/X509_check_private_key.3
 ./usr/share/man/man3/X509_check_purpose.3
-./usr/share/man/man3/X509_check_trust.3
 ./usr/share/man/man3/X509_cmp.3
 ./usr/share/man/man3/X509_cmp_time.3
 ./usr/share/man/man3/X509_digest.3
