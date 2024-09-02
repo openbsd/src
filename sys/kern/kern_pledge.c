@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.317 2024/09/01 17:13:46 bluhm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.318 2024/09/02 11:08:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -73,10 +73,8 @@
 
 #if defined(__amd64__)
 #include "vmm.h"
-#if NVMM > 0
-#include <machine/conf.h>
-#endif
 #include "ccp.h"
+#include <machine/conf.h>
 #endif
 
 #include "drm.h"
@@ -1350,7 +1348,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 	}
 #endif
 
-#if defined(__amd64__) && NCCP > 0 && NVMM > 0
+#if NCCP > 0
 	if ((pledge & PLEDGE_VMM)) {
 		if ((fp->f_type == DTYPE_VNODE) &&
 		    (vp->v_type == VCHR) &&
