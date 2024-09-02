@@ -11,6 +11,7 @@
 /usr/share/games/quiz.db/elements:symbol:number:weight:element
 /usr/share/games/quiz.db/europe:Europe{an}:cap{ital}
 /usr/share/games/quiz.db/flowers:flower{s}:meaning
+/usr/share/games/quiz.db/greek:greek:english:def{inition}
 /usr/share/games/quiz.db/inca:inca:succ{essor}
 /usr/share/games/quiz.db/latin:latin:english
 /usr/share/games/quiz.db/locomotive:locomotive:name
