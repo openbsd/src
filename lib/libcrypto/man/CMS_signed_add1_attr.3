@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.3 2024/01/22 14:00:13 tb Exp $
+.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.4 2024/09/02 07:43:07 tb Exp $
 .\"
 .\" Copyright (c) 2024 Job Snijders <job@openbsd.org>
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2024 $
+.Dd $Mdocdate: September 2 2024 $
 .Dt CMS_SIGNED_ADD1_ATTR 3
 .Os
 .Sh NAME
@@ -176,29 +176,18 @@ a set of signed attributes in the
 array and a set of unsigned attributes in the
 .Fa unsignedAttrs
 array.
-The functions in this manual are wrappers of the
-.Fn X509at_*
-functions.
-All arguments except
-.Fa si
-are passed to
-.Fn X509at_* .
 The
 .Fn CMS_signed_*
 and
 .Fn CMS_unsigned_*
 functions are similar, except
 .Fn CMS_signed_*
-calls
-.Fn X509at_*
-with the
-.Em CMS_SignerInfo
+modifies the
+.Vt CMS_SignerInfo
 object's set of signed attributes and
 .Fn CMS_unsigned_*
-calls
-.Fn X509at_*
-with the
-.Em CMS_SignerInfo
+modifies the
+.Vt CMS_SignerInfo
 object's set of unsigned attributes.
 For brevity only the
 .Fn CMS_signed_*
@@ -218,10 +207,11 @@ allocating a new array if necessary.
 and
 .Fn CMS_signed_add1_attr_by_txt
 create a new X.501 Attribute object using
-.Xr X509at_add1_attr_by_NID 3 ,
-.Xr X509at_add1_attr_by_OBJ 3 ,
-and
-.Xr X509at_add1_attr_by_txt 3 ,
+.Xr X509_ATTRIBUTE_create_by_NID 3 ,
+.Xr X509_ATTRIBUTE_create_by_OBJ 3 ,
+or
+.Xr X509_ATTRIBUTE_create_by_txt 3 ,
+respectively,
 and append it to the
 .Fa signedAttrs
 array of
@@ -356,8 +346,7 @@ return the number of array elements or \-1 on failure.
 .Xr CMS_get0_SignerInfos 3 ,
 .Xr OBJ_nid2obj 3 ,
 .Xr X509_ATTRIBUTE_create_by_OBJ 3 ,
-.Xr X509_ATTRIBUTE_new 3 ,
-.Xr X509at_add1_attr 3
+.Xr X509_ATTRIBUTE_new 3
 .Sh STANDARDS
 RFC 5652: Cryptographic Message Syntax (CMS)
 .Bl -dash -compact -offset indent
