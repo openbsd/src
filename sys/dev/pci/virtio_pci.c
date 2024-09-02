@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.41 2024/09/02 08:22:08 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.42 2024/09/02 08:26:26 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ void		virtio_pci_write_device_config_4(struct virtio_softc *, int, uint32_t);
 void		virtio_pci_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_pci_read_queue_size(struct virtio_softc *, uint16_t);
 void		virtio_pci_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
+void		virtio_pci_setup_intrs(struct virtio_softc *);
 int		virtio_pci_get_status(struct virtio_softc *);
 void		virtio_pci_set_status(struct virtio_softc *, int);
 int		virtio_pci_negotiate_features(struct virtio_softc *, const struct virtio_feature_name *);
@@ -169,6 +170,7 @@ const struct virtio_ops virtio_pci_ops = {
 	virtio_pci_write_device_config_8,
 	virtio_pci_read_queue_size,
 	virtio_pci_setup_queue,
+	virtio_pci_setup_intrs,
 	virtio_pci_get_status,
 	virtio_pci_set_status,
 	virtio_pci_negotiate_features,
@@ -271,23 +273,23 @@ virtio_pci_setup_queue(struct virtio_softc *vsc, struct virtqueue *vq,
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    VIRTIO_CONFIG_QUEUE_ADDRESS, addr / VIRTIO_PAGE_SIZE);
 	}
+}
 
-	/*
-	 * This path is only executed if this function is called after
-	 * the child's attach function has finished. In other cases,
-	 * it's done in virtio_pci_setup_msix().
-	 */
-	if (sc->sc_irq_type != IRQ_NO_MSIX) {
-		int vec = 1;
-		if (sc->sc_irq_type == IRQ_MSIX_PER_VQ)
-		       vec += vq->vq_index;
-		if (sc->sc_sc.sc_version_1) {
-			CWRITE(sc, queue_msix_vector, vec);
-		} else {
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    VIRTIO_MSI_QUEUE_VECTOR, vec);
-		}
+void
+virtio_pci_setup_intrs(struct virtio_softc *vsc)
+{
+	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
+	int i;
+
+	if (sc->sc_irq_type == IRQ_NO_MSIX)
+		return;
+
+	for (i = 0; i <= vsc->sc_nvqs; i++) {
+		unsigned vec = vsc->sc_vqs[i].vq_intr_vec;
+		virtio_pci_set_msix_queue_vector(sc, i, vec);
 	}
+	if (vsc->sc_config_change)
+		virtio_pci_set_msix_config_vector(sc, 0);
 }
 
 int
@@ -699,6 +701,7 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 			goto fail_2;
 		}
 	}
+	virtio_pci_setup_intrs(vsc);
 	printf("%s: %s\n", vsc->sc_dev.dv_xname, intrstr);
 
 	return;
@@ -1029,7 +1032,6 @@ virtio_pci_setup_msix(struct virtio_pci_softc *sc,
 		return 1;
 	sc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
 	virtio_pci_adjust_config_region(sc);
-	virtio_pci_set_msix_config_vector(sc, 0);
 
 	if (shared) {
 		if (virtio_pci_msix_establish(sc, vpa, 1,
@@ -1038,14 +1040,14 @@ virtio_pci_setup_msix(struct virtio_pci_softc *sc,
 		}
 
 		for (i = 0; i < vsc->sc_nvqs; i++)
-			virtio_pci_set_msix_queue_vector(sc, i, 1);
+			vsc->sc_vqs[i].vq_intr_vec = 1;
 	} else {
 		for (i = 0; i < vsc->sc_nvqs; i++) {
 			if (virtio_pci_msix_establish(sc, vpa, i + 1,
 			    virtio_pci_queue_intr, &vsc->sc_vqs[i])) {
 				goto fail;
 			}
-			virtio_pci_set_msix_queue_vector(sc, i, i + 1);
+			vsc->sc_vqs[i].vq_intr_vec = i + 1;
 		}
 	}
 

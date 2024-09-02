@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.31 2024/08/27 18:44:12 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.32 2024/09/02 08:26:26 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 		virtio_init_vq(sc, vq);
 		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
+	sc->sc_ops->setup_intrs(sc);
 }
 
 void
