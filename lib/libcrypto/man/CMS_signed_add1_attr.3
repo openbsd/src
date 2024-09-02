@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.4 2024/09/02 07:43:07 tb Exp $
+.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.5 2024/09/02 07:54:21 tb Exp $
 .\"
 .\" Copyright (c) 2024 Job Snijders <job@openbsd.org>
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -81,7 +81,7 @@
 .Fo CMS_signed_get0_data_by_OBJ
 .Fa "CMS_SignerInfo *si"
 .Fa "const ASN1_OBJECT *oid"
-.Fa "int lastpos"
+.Fa "int start_after"
 .Fa "int type"
 .Fc
 .Ft "X509_ATTRIBUTE *"
@@ -93,13 +93,13 @@
 .Fo CMS_signed_get_attr_by_NID
 .Fa "const CMS_SignerInfo *si"
 .Fa "int nid"
-.Fa "int lastpos"
+.Fa "int start_after"
 .Fc
 .Ft int
 .Fo CMS_signed_get_attr_by_OBJ
 .Fa "const CMS_SignerInfo *si"
 .Fa "const ASN1_OBJECT *obj"
-.Fa "int lastpos"
+.Fa "int start_after"
 .Fc
 .Ft int
 .Fo CMS_signed_get_attr_count
@@ -143,7 +143,7 @@
 .Fo CMS_unsigned_get0_data_by_OBJ
 .Fa "CMS_SignerInfo *si"
 .Fa "ASN1_OBJECT *oid"
-.Fa "int lastpos"
+.Fa "int start_after"
 .Fa "int type"
 .Fc
 .Ft "X509_ATTRIBUTE *"
@@ -155,13 +155,13 @@
 .Fo CMS_unsigned_get_attr_by_NID
 .Fa "const CMS_SignerInfo *si"
 .Fa "int nid"
-.Fa "int lastpos"
+.Fa "int start_after"
 .Fc
 .Ft int
 .Fo CMS_unsigned_get_attr_by_OBJ
 .Fa "const CMS_SignerInfo *si"
 .Fa "const ASN1_OBJECT *obj"
-.Fa "int lastpos"
+.Fa "int start_after"
 .Fc
 .Ft int
 .Fo CMS_unsigned_get_attr_count
@@ -230,26 +230,26 @@ of
 and
 .Fn CMS_signed_get_attr_by_OBJ
 search the array starting after the index
-.Fa lastpos .
+.Fa start_after .
 They fail if no matching object is found.
 .Fn CMS_signed_get0_data_by_OBJ
 also fails if the data is not of the requested
 .Fa type .
 .Pp
 Additionally, the
-.Fa lastpos
+.Fa start_after
 argument of
 .Fn CMS_signed_get0_data_by_OBJ
 is interpreted in a special way.
 If
-.Fa lastpos
+.Fa start_after
 is \-2 or smaller, the function also fails if the
 .Fa signedAttrs
 array of
 .Fa si ,
 contains more than one matching object.
 If
-.Fa lastpos
+.Fa start_after
 is \-3 or smaller, it also fails unless the matching object contains exactly
 one value.
 .Pp
@@ -305,7 +305,7 @@ and
 .Fn CMS_unsigned_get0_data_by_OBJ
 return an internal pointer to the data contained in the value of the first
 object that has an index greater than
-.Fa lastpos
+.Fa start_after
 and a type matching
 .Fa type ,
 or NULL on failure.
@@ -321,7 +321,7 @@ return an internal pointer or NULL on failure.
 and
 .Fn CMS_unsigned_get_attr_by_OBJ
 return the index of the first object in the array that has an index greater than
-.Fa lastpos
+.Fa start_after
 and a type matching
 .Fa nid
 or
