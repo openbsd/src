@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.292 2024/08/29 20:25:13 tb Exp $
+# $OpenBSD: Makefile,v 1.293 2024/09/02 07:57:27 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -376,8 +376,6 @@ MAN=	\
 	X509_sign.3 \
 	X509_signature_dump.3 \
 	X509_verify_cert.3 \
-	X509at_add1_attr.3 \
-	X509at_get_attr.3 \
 	X509v3_addr_add_inherit.3 \
 	X509v3_addr_get_range.3 \
 	X509v3_addr_inherits.3 \
