@@ -2252,8 +2252,6 @@
 ./usr/share/man/man3/X509_sign.3
 ./usr/share/man/man3/X509_signature_dump.3
 ./usr/share/man/man3/X509_verify_cert.3
-./usr/share/man/man3/X509at_add1_attr.3
-./usr/share/man/man3/X509at_get_attr.3
 ./usr/share/man/man3/X509v3_addr_add_inherit.3
 ./usr/share/man/man3/X509v3_addr_get_range.3
 ./usr/share/man/man3/X509v3_addr_inherits.3
