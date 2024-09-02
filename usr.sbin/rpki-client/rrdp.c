@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.34 2024/08/20 13:31:49 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.35 2024/09/02 11:56:22 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -33,7 +33,7 @@
 #include "extern.h"
 #include "rrdp.h"
 
-#define MAX_SESSIONS	12
+#define MAX_SESSIONS	32
 #define	READ_BUF_SIZE	(32 * 1024)
 
 static struct msgbuf	msgq;
