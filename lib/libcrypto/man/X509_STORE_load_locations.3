@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_load_locations.3,v 1.11 2024/03/06 10:07:47 tb Exp $
+.\" $OpenBSD: X509_STORE_load_locations.3,v 1.12 2024/09/02 07:20:21 tb Exp $
 .\" full merge up to:
 .\" OpenSSL X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2024 $
+.Dd $Mdocdate: September 2 2024 $
 .Dt X509_STORE_LOAD_LOCATIONS 3
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 .Ft X509_LOOKUP *
 .Fo X509_STORE_add_lookup
 .Fa "X509_STORE *store"
-.Fa "X509_LOOKUP_METHOD *method"
+.Fa "const X509_LOOKUP_METHOD *method"
 .Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_load_locations
