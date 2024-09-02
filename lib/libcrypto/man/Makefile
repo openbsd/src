@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.293 2024/09/02 07:57:27 tb Exp $
+# $OpenBSD: Makefile,v 1.294 2024/09/02 08:04:32 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -354,7 +354,6 @@ MAN=	\
 	X509_check_issued.3 \
 	X509_check_private_key.3 \
 	X509_check_purpose.3 \
-	X509_check_trust.3 \
 	X509_cmp.3 \
 	X509_cmp_time.3 \
 	X509_digest.3 \
