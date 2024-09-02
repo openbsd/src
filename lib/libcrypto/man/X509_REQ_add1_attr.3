@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REQ_add1_attr.3,v 1.2 2021/10/26 18:50:38 jmc Exp $
+.\" $OpenBSD: X509_REQ_add1_attr.3,v 1.3 2024/09/02 07:55:26 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2021 $
+.Dd $Mdocdate: September 2 2024 $
 .Dt X509_REQ_ADD1_ATTR 3
 .Os
 .Sh NAME
@@ -91,9 +91,8 @@ with a PKCS#10 certification request.
 .Pp
 .Fn X509_REQ_add1_attr
 appends a deep copy of the
-.Fa attr
-using
-.Xr X509at_add1_attr 3 .
+.Fa attr ,
+allocating a new array if necessary.
 .Pp
 .Fn X509_REQ_add1_attr_by_OBJ ,
 .Fn X509_REQ_add1_attr_by_NID ,
@@ -104,26 +103,20 @@ create a new X.501 Attribute object using
 .Xr X509_ATTRIBUTE_create_by_NID 3 ,
 or
 .Xr X509_ATTRIBUTE_create_by_txt 3 ,
-respectively, and append it using
-.Xr X509at_add1_attr 3 .
+respectively,
+allocating a new array if necessary.
 .Pp
 .Fn X509_REQ_delete_attr
 deletes the attribute with the zero-based
-.Fa index
-using
-.Xr X509at_delete_attr 3 .
+.Fa index .
 .Pp
 .Fn X509_REQ_get_attr
 returns the attribute with the zero-based
-.Fa index
-using
-.Xr X509at_get_attr 3 .
+.Fa index .
 .Pp
 .Fn X509_REQ_get_attr_count
 returns the number of attributes currently associated with
-.Fa req
-using
-.Xr X509at_get_attr_count 3 .
+.Fa req .
 .Pp
 .Fn X509_REQ_get_attr_by_OBJ
 and
@@ -131,12 +124,7 @@ and
 search for an attribute of the type
 .Fa obj
 or
-.Fa nid
-using
-.Xr X509at_get_attr_by_OBJ 3
-or
-.Xr X509at_get_attr_by_NID 3 ,
-respectively.
+.Fa nid .
 .Sh RETURN VALUES
 .Fn X509_REQ_add1_attr ,
 .Fn X509_REQ_add1_attr_by_OBJ ,
