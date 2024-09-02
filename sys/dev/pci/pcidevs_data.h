@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2086 2024/09/01 03:09:00 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2087 2024/09/02 03:59:40 yasuoka Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13744,6 +13744,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82599",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X540_VF,
+	    "X540 VF",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER_DUAL,
 	    "82580",
 	},
@@ -13798,6 +13802,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_BPLANE_FCOE,
 	    "82599",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_VF_HV,
+	    "82599 VF HV",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X540_VF_HV,
+	    "X540 VF HV",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER,
@@ -13878,6 +13890,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550T,
 	    "X550T",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550_VF_HV,
+	    "X550 VF HV",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550_VF,
+	    "X550 VF",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DSL5520,
@@ -13972,6 +13992,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I218-V",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_VF,
+	    "X552 VF",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_VF_HV,
+	    "X552 VF HV",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_KX4,
 	    "X552 Backplane",
 	},
@@ -13990,6 +14018,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_X_1G_T,
 	    "X552 1GbaseT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_VF_HV,
+	    "X553 VF HV",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM2,
@@ -14042,6 +14074,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SFP_N,
 	    "X553 SFP+",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_VF,
+	    "X553 VF",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550EM_A_SGMII,
