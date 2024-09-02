@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.40 2024/08/27 19:01:11 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.41 2024/09/02 08:22:08 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -99,6 +99,11 @@ enum irq_type {
 	IRQ_MSIX_PER_VQ, /* vec 0: config irq, vec n: irq of vq[n-1] */
 };
 
+struct virtio_pci_intr {
+	char	 name[16];
+	void	*ih;
+};
+
 struct virtio_pci_softc {
 	struct virtio_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
@@ -132,7 +137,8 @@ struct virtio_pci_softc {
 	bus_space_handle_t	sc_isr_ioh;
 	bus_size_t		sc_isr_iosize;
 
-	void			*sc_ih[MAX_MSIX_VECS];
+	struct virtio_pci_intr	*sc_intr;
+	int			sc_nintr;
 
 	enum irq_type		sc_irq_type;
 };
@@ -585,7 +591,6 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	struct virtio_pci_attach_args vpa = { { 0 }, pa };
-	int n;
 
 	revision = PCI_REVISION(pa->pa_class);
 	switch (revision) {
@@ -617,9 +622,12 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	virtio_pci_dump_caps(sc);
 #endif
 
-	n = MIN(MAX_MSIX_VECS, pci_intr_msix_count(pa));
-	n = MAX(n, 1);
-	vpa.vpa_va.va_nintr = n;
+	sc->sc_nintr = min(MAX_MSIX_VECS, pci_intr_msix_count(pa));
+	sc->sc_nintr = max(sc->sc_nintr, 1);
+	vpa.vpa_va.va_nintr = sc->sc_nintr;
+
+	sc->sc_intr = mallocarray(sc->sc_nintr, sizeof(*sc->sc_intr),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	vsc->sc_ops = &virtio_pci_ops;
 	if ((vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_VERSION_1) == 0 &&
@@ -633,13 +641,13 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (ret != 0) {
 		printf(": Cannot attach (%d)\n", ret);
-		return;
+		goto fail_0;
 	}
 
 	sc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
 	sc->sc_irq_type = IRQ_NO_MSIX;
 	if (virtio_pci_adjust_config_region(sc) != 0)
-		return;
+		goto fail_0;
 
 	virtio_device_reset(vsc);
 	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
@@ -680,9 +688,10 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (vsc->sc_ipl & IPL_MPSAFE)
 			ih_func = virtio_pci_legacy_intr_mpsafe;
-		sc->sc_ih[0] = pci_intr_establish(pc, ih, vsc->sc_ipl | IPL_MPSAFE,
-		    ih_func, sc, vsc->sc_dev.dv_xname);
-		if (sc->sc_ih[0] == NULL) {
+		sc->sc_intr[0].ih = pci_intr_establish(pc, ih,
+		    vsc->sc_ipl | IPL_MPSAFE, ih_func, sc,
+		    vsc->sc_child->dv_xname);
+		if (sc->sc_intr[0].ih == NULL) {
 			printf("%s: couldn't establish interrupt", vsc->sc_dev.dv_xname);
 			if (intrstr != NULL)
 				printf(" at %s", intrstr);
@@ -699,6 +708,8 @@ fail_2:
 fail_1:
 	/* no pci_mapreg_unmap() or pci_intr_unmap() */
 	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+fail_0:
+	free(sc->sc_intr, M_DEVBUF, sc->sc_nintr * sizeof(*sc->sc_intr));
 }
 
 int
@@ -929,6 +940,8 @@ virtio_pci_msix_establish(struct virtio_pci_softc *sc,
 	struct virtio_softc *vsc = &sc->sc_sc;
 	pci_intr_handle_t ih;
 
+	KASSERT(idx < sc->sc_nintr);
+
 	if (pci_intr_map_msix(vpa->vpa_pa, idx, &ih) != 0) {
 #if VIRTIO_DEBUG
 		printf("%s[%d]: pci_intr_map_msix failed\n",
@@ -936,9 +949,11 @@ virtio_pci_msix_establish(struct virtio_pci_softc *sc,
 #endif
 		return 1;
 	}
-	sc->sc_ih[idx] = pci_intr_establish(sc->sc_pc, ih, vsc->sc_ipl,
-	    handler, ih_arg, vsc->sc_dev.dv_xname);
-	if (sc->sc_ih[idx] == NULL) {
+	snprintf(sc->sc_intr[idx].name, sizeof(sc->sc_intr[idx].name), "%s:%d",
+	    vsc->sc_child->dv_xname, idx);
+	sc->sc_intr[idx].ih = pci_intr_establish(sc->sc_pc, ih, vsc->sc_ipl,
+	    handler, ih_arg, sc->sc_intr[idx].name);
+	if (sc->sc_intr[idx].ih == NULL) {
 		printf("%s[%d]: couldn't establish msix interrupt\n",
 		    vsc->sc_dev.dv_xname, idx);
 		return 1;
@@ -985,10 +1000,10 @@ virtio_pci_free_irqs(struct virtio_pci_softc *sc)
 		}
 	}
 
-	for (i = 0; i < MAX_MSIX_VECS; i++) {
-		if (sc->sc_ih[i]) {
-			pci_intr_disestablish(sc->sc_pc, sc->sc_ih[i]);
-			sc->sc_ih[i] = NULL;
+	for (i = 0; i < sc->sc_nintr; i++) {
+		if (sc->sc_intr[i].ih) {
+			pci_intr_disestablish(sc->sc_pc, sc->sc_intr[i].ih);
+			sc->sc_intr[i].ih = NULL;
 		}
 	}
 
