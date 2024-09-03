@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.11 2024/06/13 17:59:08 bluhm Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.12 2024/09/03 00:23:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -27,16 +27,15 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/ic/ccpvar.h>
+#include <dev/ic/pspvar.h>
 
 #define CCP_PCI_BAR	0x18
 
 int	ccp_pci_match(struct device *, void *, void *);
 void	ccp_pci_attach(struct device *, struct device *, void *);
 
-#ifdef __amd64__
 void	psp_pci_attach(struct device *, struct device *, void *);
 int	psp_pci_intr(void *);
-#endif
 
 const struct cfattach ccp_pci_ca = {
 	sizeof(struct ccp_softc),
@@ -79,14 +78,11 @@ ccp_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-#ifdef __amd64__
 	psp_pci_attach(parent, self, aux);
-#endif
 
 	ccp_attach(sc);
 }
 
-#ifdef __amd64__
 void
 psp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -140,4 +136,3 @@ psp_pci_intr(void *arg)
 
 	return (1);
 }
-#endif	/* __amd64__ */
