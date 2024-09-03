@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_pton.c,v 1.10 2015/09/13 21:36:08 guenther Exp $	*/
+/*	$OpenBSD: inet_pton.c,v 1.11 2024/09/03 17:05:59 deraadt Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -87,7 +87,7 @@ inet_pton4(const char *src, u_char *dst)
 
 			if (new > 255)
 				return (0);
-			if (! saw_digit) {
+			if (!saw_digit) {
 				if (++octets > 4)
 					return (0);
 				saw_digit = 1;
