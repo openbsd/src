@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.351 2024/05/07 12:10:06 op Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.352 2024/09/03 18:27:04 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1803,7 +1803,7 @@ parent_forward_open(char *username, char *directory, uid_t uid, gid_t gid)
 	}
 
 	if (!secure_file(fd, pathname, directory, uid, 1)) {
-		log_warnx("warn: smtpd: %s: unsecure file", pathname);
+		log_warnx("warn: smtpd: %s: insecure file", pathname);
 		close(fd);
 		return -1;
 	}

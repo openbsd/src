@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.48 2023/05/31 16:51:46 op Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.49 2024/09/03 18:27:04 op Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -846,7 +846,7 @@ rq_queue_merge(struct rq_queue *rq, struct rq_queue *update)
 
 	while (tree_poproot(&update->messages, &id, (void*)&message)) {
 		if ((tomessage = tree_get(&rq->messages, id)) == NULL) {
-			/* message does not exist. re-use structure */
+			/* message does not exist. reuse structure */
 			tree_xset(&rq->messages, id, message);
 			continue;
 		}

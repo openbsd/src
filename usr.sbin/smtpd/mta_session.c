@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.151 2024/01/20 09:01:03 claudio Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.152 2024/09/03 18:27:04 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -637,7 +637,7 @@ again:
 		else if (s->relay->secret) {
 			log_debug("debug: mta: %p: not using AUTH on non-TLS "
 			    "session", s);
-			mta_error(s, "Refuse to AUTH over unsecure channel");
+			mta_error(s, "Refuse to AUTH over insecure channel");
 			mta_connect(s);
 		} else {
 			mta_enter_state(s, MTA_READY);
