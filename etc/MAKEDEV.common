@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.120 2023/01/28 11:04:47 phessler Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.121 2024/09/03 09:35:46 bluhm Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -167,6 +167,7 @@ target(all, bpf)dnl
 target(all, kcov)dnl
 target(all, dt)dnl
 target(all, kstat)dnl
+target(all, psp)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -535,3 +536,5 @@ __devitem(kstat, kstat, Kernel Statistics)dnl
 _mkdev(kstat, kstat, {-M kstat c major_kstat_c 0 640-})dnl
 __devitem(efi, efi, EFI runtime services)dnl
 _mkdev(efi, efi, {-M efi c major_efi_c 0 600-})dnl
+__devitem(psp, psp, Platform Security Processor)dnl
+_mkdev(psp, psp, {-M psp c major_psp_c 0 600-})dnl
