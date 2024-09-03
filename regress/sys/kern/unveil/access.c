@@ -1,8 +1,6 @@
 #include <err.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -14,7 +12,6 @@
 
 #define NUM_PERMS 16
 static char uv_dir[] = "/tmp/uvdir.XXXXXX"; /* test directory */
-static char uv_file[] = "/tmp/uvfile.XXXXXX"; /* log file */
 
 const char* perms[] = {"", "r", "w", "x", "c", "rw", "rx", "rc",
                        "wx", "wc","xc", "rwx", "rwc", "rxc", "wxc", "rwxc"};
@@ -24,21 +21,11 @@ const char* filenames[] = {"f", "fr", "fw", "fx", "fc", "frw", "frx", "frc",
 const char* header = "unveil:access\n";
 
 int
-main(int argc, char *argv[])
+main(void)
 {
+	FILE *log = stdout;
 	int i;
-	int log_fd;
-	FILE *log;
-	const char *expected;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: access expected-path\n");
-		exit(1);
-	}
-	expected = argv[1];
-
-	UV_SHOULD_SUCCEED(((log_fd = mkstemp(uv_file)) == -1), "mkstemp");
-	UV_SHOULD_SUCCEED(((log = fdopen(log_fd, "w")) == NULL), "fdopen");
 	UV_SHOULD_SUCCEED((mkdtemp(uv_dir) == NULL), "mkdtmp");
 	UV_SHOULD_SUCCEED((unveil("/", "rwxc") == -1), "unveil");
 	UV_SHOULD_SUCCEED((chdir(uv_dir) == -1), "chdir");
@@ -63,7 +50,6 @@ main(int argc, char *argv[])
 			UV_SHOULD_SUCCEED((fwrite("F", 1, 1, log) != 1), "fwrite");
 		UV_SHOULD_SUCCEED((fwrite("\n", 1, 1, log) != 1), "fwrite");
 	}
-	UV_SHOULD_SUCCEED((fclose(log) == -1), "fclose");
 
-	return execl("/usr/bin/diff", "diff", "-u", uv_file, expected, NULL);
+	return 0;
 }

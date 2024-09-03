@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2024/09/01 05:48:20 anton Exp $
+#	$OpenBSD: Makefile,v 1.8 2024/09/03 04:58:30 anton Exp $
 
 WARNINGS=	yes
 
@@ -13,6 +13,6 @@ PROGS+=				socket
 
 PROGS+=access
 run-regress-access: access
-	./access ${.CURDIR}/access-expected
+	./access 2>&1 | diff -u ${.CURDIR}/access-expected -
 
 .include <bsd.regress.mk>
