@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.33 2024/08/27 09:16:03 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.34 2024/09/03 13:36:19 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2253,7 +2253,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
 	uint64_t ctrlval, cr3, msr_misc_enable;
-	uint16_t ctrl, vpid;
+	uint16_t ctrl;
 	struct vmx_msr_store *msr_store;
 
 	rw_assert_wrlock(&vcpu->vc_lock);
@@ -2516,30 +2516,12 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
 		    IA32_VMX_ENABLE_VPID, 1)) {
-
-			/* We may sleep during allocation, so reload VMCS. */
-			vcpu->vc_last_pcpu = curcpu();
-			ret = vmm_alloc_vpid(&vpid);
-			if (vcpu_reload_vmcs_vmx(vcpu)) {
-				printf("%s: failed to reload vmcs\n", __func__);
-				ret = EINVAL;
-				goto exit;
-			}
-			if (ret) {
-				DPRINTF("%s: could not allocate VPID\n",
-				    __func__);
-				ret = EINVAL;
-				goto exit;
-			}
-
-			if (vmwrite(VMCS_GUEST_VPID, vpid)) {
+			if (vmwrite(VMCS_GUEST_VPID, vcpu->vc_vpid)) {
 				DPRINTF("%s: error setting guest VPID\n",
 				    __func__);
 				ret = EINVAL;
 				goto exit;
 			}
-
-			vcpu->vc_vpid = vpid;
 		}
 	}
 
@@ -2832,13 +2814,19 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	uint32_t cr0, cr4;
 	int ret = 0;
 
+	/* Allocate a VPID early to avoid km_alloc if we're out of VPIDs. */
+	if (vmm_alloc_vpid(&vcpu->vc_vpid))
+		return (ENOMEM);
+
 	/* Allocate VMCS VA */
 	vcpu->vc_control_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page, &kp_zero,
 	    &kd_waitok);
 	vcpu->vc_vmx_vmcs_state = VMCS_CLEARED;
 
-	if (!vcpu->vc_control_va)
-		return (ENOMEM);
+	if (!vcpu->vc_control_va) {
+		ret = ENOMEM;
+		goto exit;
+	}
 
 	/* Compute VMCS PA */
 	if (!pmap_extract(pmap_kernel(), vcpu->vc_control_va,
@@ -3091,15 +3079,20 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 int
 vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 {
-	uint16_t asid;
 	int ret = 0;
+
+	/* Allocate an ASID early to avoid km_alloc if we're out of ASIDs. */
+	if (vmm_alloc_vpid(&vcpu->vc_vpid))
+		return (ENOMEM);
 
 	/* Allocate VMCB VA */
 	vcpu->vc_control_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page, &kp_zero,
 	    &kd_waitok);
 
-	if (!vcpu->vc_control_va)
-		return (ENOMEM);
+	if (!vcpu->vc_control_va) {
+		ret = ENOMEM;
+		goto exit;
+	}
 
 	/* Compute VMCB PA */
 	if (!pmap_extract(pmap_kernel(), vcpu->vc_control_va,
@@ -3172,14 +3165,6 @@ vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 	DPRINTF("%s: IOIO va @ 0x%llx, pa @ 0x%llx\n", __func__,
 	    (uint64_t)vcpu->vc_svm_ioio_va,
 	    (uint64_t)vcpu->vc_svm_ioio_pa);
-
-	/* Guest VCPU ASID */
-	if (vmm_alloc_vpid(&asid)) {
-		DPRINTF("%s: could not allocate asid\n", __func__);
-		ret = EINVAL;
-		goto exit;
-	}
-	vcpu->vc_vpid = asid;
 
 	/* Shall we enable SEV? */
 	vcpu->vc_sev = vcp->vcp_sev;
@@ -3260,8 +3245,7 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 	}
 #endif
 
-	if (vcpu->vc_vmx_vpid_enabled)
-		vmm_free_vpid(vcpu->vc_vpid);
+	vmm_free_vpid(vcpu->vc_vpid);
 }
 
 /*
