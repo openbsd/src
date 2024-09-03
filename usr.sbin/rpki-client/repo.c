@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.64 2024/08/29 09:54:13 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.65 2024/09/03 13:31:31 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -673,6 +673,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 		if (errno != ENOENT)
 			warn("%s: open state file", rr->basedir);
 		free(file);
+		rr->last_reset = now;
 		return state;
 	}
 	free(file);
