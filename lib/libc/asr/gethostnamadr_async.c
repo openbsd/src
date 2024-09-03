@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.49 2023/11/22 13:19:31 florian Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.50 2024/09/03 18:20:35 op Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -329,7 +329,7 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 
 		/*
 		 * We either got no packet or a packet without an answer.
-		 * Saveguard the h_errno and use the next DB.
+		 * Safeguard the h_errno and use the next DB.
 		 */
 		if (ar->ar_count == 0) {
 			free(ar->ar_data);
