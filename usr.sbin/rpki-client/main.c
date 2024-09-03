@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.264 2024/08/20 13:31:49 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.265 2024/09/03 15:04:48 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1489,9 +1489,12 @@ main(int argc, char *argv[])
 	    "invalid)\n", stats.repo_tal_stats.aspas,
 	    stats.repo_tal_stats.aspas_fail,
 	    stats.repo_tal_stats.aspas_invalid);
-	printf("Signed Prefix Lists: %u (%u failed parse, %u invalid)\n",
-	    stats.repo_tal_stats.spls, stats.repo_tal_stats.spls_fail,
-	    stats.repo_tal_stats.spls_invalid);
+	if (experimental) {
+		printf("Signed Prefix Lists: %u "
+		    "(%u failed parse, %u invalid)\n",
+		    stats.repo_tal_stats.spls, stats.repo_tal_stats.spls_fail,
+		    stats.repo_tal_stats.spls_invalid);
+	}
 	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
 	printf("Certificates: %u (%u invalid)\n",
 	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.49 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.50 2024/09/03 15:04:48 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -47,9 +47,11 @@ outputheader_json(struct stats *st)
 	json_do_int("roas", st->repo_tal_stats.roas);
 	json_do_int("failedroas", st->repo_tal_stats.roas_fail);
 	json_do_int("invalidroas", st->repo_tal_stats.roas_invalid);
-	json_do_int("spls", st->repo_tal_stats.spls);
-	json_do_int("failedspls", st->repo_tal_stats.spls_fail);
-	json_do_int("invalidspls", st->repo_tal_stats.spls_invalid);
+	if (experimental) {
+		json_do_int("spls", st->repo_tal_stats.spls);
+		json_do_int("failedspls", st->repo_tal_stats.spls_fail);
+		json_do_int("invalidspls", st->repo_tal_stats.spls_invalid);
+	}
 	json_do_int("aspas", st->repo_tal_stats.aspas);
 	json_do_int("failedaspas", st->repo_tal_stats.aspas_fail);
 	json_do_int("invalidaspas", st->repo_tal_stats.aspas_invalid);
