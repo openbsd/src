@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.82 2023/01/14 12:15:12 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.120 2023/01/28 11:04:47 phessler Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.83 2024/09/03 09:35:46 bluhm Exp 
+#	OpenBSD: MAKEDEV.common,v 1.121 2024/09/03 09:35:46 bluhm Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -101,6 +101,7 @@
 #	vscsi*	Virtual SCSI controller
 #	pvbus*	paravirtual device tree root
 #	kstat	Kernel Statistics
+#	psp	Platform Security Processor
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -250,6 +251,10 @@ std)
 ttyc*)
 	M ttyc$U c 38 $U 660 dialer root
 	M cuac$U c 38 $(($U+128)) 660 dialer root
+	;;
+
+psp)
+	M psp c 101 0 600
 	;;
 
 kstat)
@@ -604,7 +609,7 @@ all)
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0
 	R tun1 tun2 tun3 bio pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G
 	R fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0
-	R ch0 audio0 audio1 audio2 audio3 kstat dt kcov bpf pvbus0
+	R ch0 audio0 audio1 audio2 audio3 psp kstat dt kcov bpf pvbus0
 	R pvbus1 vmm fuse pppac pppx hotplug ptm local wscons pci0
 	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 tuner0 radio0 speaker video0 video1 uk0
