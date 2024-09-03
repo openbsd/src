@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.36 2024/08/23 12:56:26 anton Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.37 2024/09/03 04:59:03 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -679,8 +679,9 @@ test_fork_body(int do_uv)
 	UV_SHOULD_ENOENT((open(uv_file2, O_RDWR|O_CREAT, 0644) == -1), "open after fork");
 	return 0;
 }
+
 static int
-test_fork()
+test_fork(int do_uv)
 {
 	printf("testing fork inhertiance\n");
 	do_unveil();
