@@ -129,7 +129,7 @@ static int add_to_ipset(filter_dev dev, const char *setname, const void *ipaddr,
 		default:
 		errno = EAFNOSUPPORT;
 		return -1;
-	}
+}
 	addr.pfra_af = af;
 
 	if (ioctl(dev, DIOCRADDADDRS, &io) == -1) {
@@ -351,7 +351,7 @@ void ipset_destartup(struct module_env* env, int id) {
 	if (!env || !env->modinfo[id]) {
 		return;
 	}
-	ipset_env = (struct ipset_env*)env->modinfo[id];
+	ipset_env = (struct ipset_env *)env->modinfo[id];
 
 	dev = (filter_dev)ipset_env->dev;
 	if (dev) {

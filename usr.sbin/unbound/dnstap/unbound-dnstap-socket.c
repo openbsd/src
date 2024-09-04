@@ -75,18 +75,18 @@
 static void usage(char* argv[])
 {
 	printf("usage: %s [options]\n", argv[0]);
-	printf("	Listen to dnstap messages\n");
+	printf(" 	Listen to dnstap messages\n");
 	printf("stdout has dnstap log, stderr has verbose server log\n");
-	printf("-u <socketpath>		listen to unix socket with this file name\n");
-	printf("-s <serverip[@port]>	listen for TCP on the IP and port\n");
-	printf("-t <serverip[@port]>	listen for TLS on IP and port\n");
-	printf("-x <server.key>		server key file for TLS service\n");
-	printf("-y <server.pem>		server cert file for TLS service\n");
-	printf("-z <verify.pem>		cert file to verify client connections\n");
-	printf("-l			long format for DNS printout\n");
-	printf("-v			more verbose log output\n");
+	printf("-u <socketpath> listen to unix socket with this file name\n");
+	printf("-s <serverip[@port]> listen for TCP on the IP and port\n");
+	printf("-t <serverip[@port]> listen for TLS on IP and port\n");
+	printf("-x <server.key> server key file for TLS service\n");
+	printf("-y <server.pem> server cert file for TLS service\n");
+	printf("-z <verify.pem> cert file to verify client connections\n");
+	printf("-l 		long format for DNS printout\n");
+	printf("-v 		more verbose log output\n");
 	printf("-c			internal unit test and exit\n");
-	printf("-h			this help text\n");
+	printf("-h 		this help text\n");
 	exit(1);
 }
 
