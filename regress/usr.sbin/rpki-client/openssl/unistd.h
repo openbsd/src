@@ -1,3 +1,4 @@
+/*	$OpenBSD: unistd.h,v 1.2 2024/09/04 07:52:45 tb Exp $ */
 /*
  * Public domain
  * compatibility shim for OpenSSL 3
