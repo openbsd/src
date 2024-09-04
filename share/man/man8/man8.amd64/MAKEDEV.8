@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.97 2023/01/14 12:19:11 kettenis Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.98 2024/09/04 13:45:25 jsg Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.82 2023/01/14 12:15:12 kettenis Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.119 2023/01/14 12:15:12 kettenis Exp 
+.\"	OpenBSD: etc.amd64/MAKEDEV.md,v 1.83 2024/09/03 09:35:46 bluhm Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.121 2024/09/03 09:35:46 bluhm Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 14 2023 $
+.Dd $Mdocdate: September 4 2024 $
 .Dt MAKEDEV 8 amd64
 .Os
 .Sh NAME
@@ -299,6 +299,9 @@ paravirtual device tree root, see
 .It Ar kstat
 Kernel Statistics, see
 .Xr kstat 4 .
+.It Ar psp
+Platform Security Processor, see
+.Xr psp 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact
