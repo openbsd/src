@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.3 2024/09/04 07:47:21 jsg Exp $ */
+/*	$OpenBSD: psp.c,v 1.4 2024/09/04 08:14:18 jsg Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -377,7 +377,8 @@ psp_launch_start(struct psp_softc *sc, struct psp_launch_start *ustart)
 }
 
 int
-psp_launch_update_data(struct psp_softc *sc, struct psp_launch_update_data *ulud, struct proc *p)
+psp_launch_update_data(struct psp_softc *sc,
+    struct psp_launch_update_data *ulud, struct proc *p)
 {
 	struct psp_launch_update_data	*ludata;
 	pmap_t				 pmap;
@@ -577,7 +578,8 @@ psp_guest_shutdown(struct psp_softc *sc, struct psp_guest_shutdown *ugshutdown)
 }
 
 int
-psp_snp_get_pstatus(struct psp_softc *sc, struct psp_snp_platform_status *ustatus)
+psp_snp_get_pstatus(struct psp_softc *sc,
+    struct psp_snp_platform_status *ustatus)
 {
 	struct psp_snp_platform_status *status;
 	int			 ret;
