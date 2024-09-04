@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.108 2024/08/20 12:53:47 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.109 2024/09/04 15:46:43 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2024 $
+.Dd $Mdocdate: September 4 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP routing security
 .Sh SYNOPSIS
 .Nm
-.Op Fl ABcjmnoRrVvx
+.Op Fl ABcjmnoRVvx
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -171,13 +171,7 @@ Specify the time for the evaluation in
 seconds from the unix epoch.
 This overrides the default of using the current system time.
 .It Fl R
-Synchronize via RSYNC only.
-.It Fl r
-Synchronize via RRDP.
-If RRDP fails, RSYNC will be used.
-This is the default.
-Mutually exclusive with
-.Fl n .
+Disable RRDP, synchronize only via RSYNC.
 .It Fl S Ar skiplist
 Do not connect to hosts listed in the
 .Ar skiplist

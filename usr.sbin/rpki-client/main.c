@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.265 2024/09/03 15:04:48 job Exp $ */
+/*	$OpenBSD: main.c,v 1.266 2024/09/04 15:46:43 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1009,7 +1009,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "Ab:Bcd:e:fH:jmnoP:rRs:S:t:T:vVx")) != -1)
+	while ((c = getopt(argc, argv, "Ab:Bcd:e:fH:jmnoP:Rs:S:t:T:vVx")) != -1)
 		switch (c) {
 		case 'A':
 			excludeaspa = 1;
@@ -1057,9 +1057,6 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			rrdpon = 0;
-			break;
-		case 'r': /* Remove after OpenBSD 7.3 */
-			rrdpon = 1;
 			break;
 		case 's':
 			timeout = strtonum(optarg, 0, 24*60*60, &errs);
@@ -1527,7 +1524,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-ABcjmnoRrVvx] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-ABcjmnoRVvx] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-H fqdn] [-P epoch] [-S skiplist] [-s timeout]"
 	    " [-T table]\n"
