@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.646 2024/08/15 09:46:39 tb Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.647 2024/09/04 09:07:03 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 15 2024 $
+.Dd $Mdocdate: September 4 2024 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1731,12 +1731,7 @@ checksummed and extracted (see
 .Cm checksum ,
 .Cm extract ) .
 .Ev DISTFILES
-normally holds a list of files, possibly with
-.Sq :0
-to
-.Sq :9
-appended to select a different
-.Ev SITES .
+normally holds a list of files.
 .Pp
 Preferably, adding a suffix to
 .Ev DISTFILES ,
