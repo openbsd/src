@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.52 2024/09/04 06:34:08 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.53 2024/09/04 06:36:33 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -460,18 +460,18 @@ vio_alloc_mem(struct vio_softc *sc)
 	}
 
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
-		sc->sc_ctrl_cmd = (void*)(kva + offset);
+		sc->sc_ctrl_cmd = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_cmd);
-		sc->sc_ctrl_status = (void*)(kva + offset);
+		sc->sc_ctrl_status = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_status);
-		sc->sc_ctrl_rx = (void*)(kva + offset);
+		sc->sc_ctrl_rx = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_rx);
-		sc->sc_ctrl_guest_offloads = (void*)(kva + offset);
+		sc->sc_ctrl_guest_offloads = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_guest_offloads);
-		sc->sc_ctrl_mac_tbl_uc = (void*)(kva + offset);
+		sc->sc_ctrl_mac_tbl_uc = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_mac_tbl_uc) +
 		    ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_UC_ENTRIES;
-		sc->sc_ctrl_mac_tbl_mc = (void*)(kva + offset);
+		sc->sc_ctrl_mac_tbl_mc = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_mac_tbl_mc) +
 		    ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MC_ENTRIES;
 	}
@@ -491,7 +491,7 @@ vio_alloc_mem(struct vio_softc *sc)
 		}
 
 		vioq->viq_txdmamaps = vioq->viq_arrays + rxqsize;
-		vioq->viq_rxmbufs = (void*)(vioq->viq_txdmamaps + txqsize);
+		vioq->viq_rxmbufs = (void *)(vioq->viq_txdmamaps + txqsize);
 		vioq->viq_txmbufs = vioq->viq_rxmbufs + rxqsize;
 
 		for (i = 0; i < rxqsize; i++) {
@@ -924,7 +924,9 @@ vio_tx_offload(struct virtio_net_hdr *hdr, struct mbuf *m)
 		hdr->gso_type = VIRTIO_NET_HDR_GSO_TCPV6;
 #endif
 
-	/* VirtIO-Net need pseudo header cksum with IP-payload length for TSO */
+	/*
+	 * VirtIO-Net needs pseudo header cksum with IP-payload length for TSO
+	 */
 	ext.tcp->th_sum = vio_cksum_update(ext.tcp->th_sum,
 	    htons(ext.iplen - ext.iphlen));
 
@@ -1628,7 +1630,8 @@ vio_wait_ctrl_done(struct vio_softc *sc)
 		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viodone",
 		    VIRTIO_NET_CTRL_TIMEOUT);
 		if (r == EWOULDBLOCK) {
-			printf("%s: ctrl queue timeout\n", sc->sc_dev.dv_xname);
+			printf("%s: ctrl queue timeout\n",
+			    sc->sc_dev.dv_xname);
 			vio_ctrl_wakeup(sc, RESET);
 			return ENXIO;
 		}
