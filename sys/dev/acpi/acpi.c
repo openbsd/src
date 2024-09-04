@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.438 2024/08/18 02:53:08 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.439 2024/09/04 21:39:18 hastings Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3249,7 +3249,6 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 	aaa.aaa_cdev = cdev;
-	acpi_parse_crs(sc, &aaa);
 
 #ifndef SMALL_KERNEL
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
@@ -3265,6 +3264,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	if (acpi_matchhids(&aaa, acpi_skip_hids, "none") ||
 	    acpi_matchhids(&aaa, acpi_isa_hids, "none"))
 		return (0);
+
+	acpi_parse_crs(sc, &aaa);
 
 	aaa.aaa_dmat = acpi_iommu_device_map(node->parent, aaa.aaa_dmat);
 
