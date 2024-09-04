@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.265 2024/08/12 09:04:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.266 2024/09/04 13:30:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -575,13 +575,11 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 
 	merge_config(conf, new_conf);
 
-	if (prepare_listeners(conf) == -1) {
+	if (prepare_listeners(conf) == -1)
 		return (1);
-	}
 
-	if (control_setup(conf) == -1) {
+	if (control_setup(conf) == -1)
 		return (1);
-	}
 
 	return send_config(conf);
 }
@@ -647,6 +645,9 @@ send_config(struct bgpd_config *conf)
 
 	/* send peer list to the SE */
 	RB_FOREACH(p, peer_head, &conf->peers) {
+		if (p->reconf_action == RECONF_DELETE)
+			continue;
+
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(p->conf)) == -1)
 			return (-1);
@@ -1025,6 +1026,9 @@ dispatch_imsg(struct imsgbuf *imsgbuf, int idx, struct bgpd_config *conf)
 
 				/* redistribute list needs to be reloaded too */
 				kr_reload();
+
+				/* also remove old peers */
+				free_deleted_peers(conf);
 			}
 			reconfpending--;
 			break;
