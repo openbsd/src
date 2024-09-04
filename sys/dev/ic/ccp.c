@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.10 2024/09/03 00:23:05 jsg Exp $ */
+/*	$OpenBSD: ccp.c,v 1.11 2024/09/04 07:45:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -41,10 +41,7 @@ ccp_attach(struct ccp_softc *sc)
 	timeout_set(&sc->sc_tick, ccp_rng, sc);
 	ccp_rng(sc);
 
-	if (sc->sc_psp_attached != 0)
-		printf(", RNG\n");
-	else
-		printf(": RNG\n");
+	printf("\n");
 }
 
 static void

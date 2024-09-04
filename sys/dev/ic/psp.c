@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.1 2024/09/03 00:23:05 jsg Exp $ */
+/*	$OpenBSD: psp.c,v 1.2 2024/09/04 07:45:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -21,6 +21,7 @@
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/pledge.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -31,14 +32,54 @@
 #include <dev/ic/ccpvar.h>
 #include <dev/ic/pspvar.h>
 
-struct ccp_softc *ccp_softc;
+struct psp_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 
-int	psp_get_pstatus(struct psp_platform_status *);
-int	psp_init(struct psp_init *);
+	struct timeout		sc_tick;
+
+	bus_dma_tag_t		sc_dmat;
+	uint32_t		sc_capabilities;
+
+	bus_dmamap_t		sc_cmd_map;
+	bus_dma_segment_t	sc_cmd_seg;
+	size_t			sc_cmd_size;
+	caddr_t			sc_cmd_kva;
+
+	bus_dmamap_t		sc_tmr_map;
+	bus_dma_segment_t	sc_tmr_seg;
+	size_t			sc_tmr_size;
+	caddr_t			sc_tmr_kva;
+
+	struct rwlock		sc_lock;
+};
+
+int	psp_get_pstatus(struct psp_softc *, struct psp_platform_status *);
+int	psp_init(struct psp_softc *, struct psp_init *);
+int	psp_match(struct device *, void *, void *);
+void	psp_attach(struct device *, struct device *, void *);
+
+struct cfdriver psp_cd = {
+	NULL, "psp", DV_DULL
+};
+
+const struct cfattach psp_ca = {
+	sizeof(struct psp_softc),
+	psp_match,
+	psp_attach
+};
 
 int
-psp_sev_intr(struct ccp_softc *sc, uint32_t status)
+psp_sev_intr(void *arg)
 {
+	struct ccp_softc *csc = arg;
+	struct psp_softc *sc = (struct psp_softc *)csc->sc_psp;
+	uint32_t status;
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS, status);
+
 	if (!(status & PSP_CMDRESP_COMPLETE))
 		return (0);
 
@@ -48,24 +89,34 @@ psp_sev_intr(struct ccp_softc *sc, uint32_t status)
 }
 
 int
-psp_attach(struct ccp_softc *sc)
+psp_match(struct device *parent, void *match, void *aux)
 {
+	return (1);
+}
+
+void
+psp_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct psp_softc		*sc = (struct psp_softc *)self;
+	struct psp_attach_args		*arg = aux;
 	struct psp_platform_status	pst;
 	struct psp_init			init;
 	size_t				size;
 	int				nsegs;
 
-	if (!(sc->sc_capabilities & PSP_CAP_SEV))
-		return (0);
+	sc->sc_iot = arg->iot;
+	sc->sc_ioh = arg->ioh;
+	sc->sc_dmat = arg->dmat;
+	sc->sc_capabilities = arg->capabilities;
 
-	rw_init(&sc->sc_lock, "ccp_lock");
+	rw_init(&sc->sc_lock, "psp_lock");
 
 	/* create and map SEV command buffer */
 	sc->sc_cmd_size = size = PAGE_SIZE;
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 	    &sc->sc_cmd_map) != 0)
-		return (0);
+		return;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, 0, 0, &sc->sc_cmd_seg, 1,
 	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
@@ -79,10 +130,7 @@ psp_attach(struct ccp_softc *sc)
 	    size, NULL, BUS_DMA_WAITOK) != 0)
 		goto fail_2;
 
-	sc->sc_sev_intr = psp_sev_intr;
-	ccp_softc = sc;
-
-	if (psp_get_pstatus(&pst) || pst.state != 0)
+	if (psp_get_pstatus(sc, &pst) || pst.state != 0)
 		goto fail_3;
 
 	/*
@@ -111,18 +159,18 @@ psp_attach(struct ccp_softc *sc)
 	init.enable_es = 1;
 	init.tmr_length = PSP_TMR_SIZE;
 	init.tmr_paddr = sc->sc_tmr_map->dm_segs[0].ds_addr;
-	if (psp_init(&init))
+	if (psp_init(sc, &init))
 		goto fail_7;
 
-	printf(", SEV");
+	printf(": SEV");
 
-	psp_get_pstatus(&pst);
+	psp_get_pstatus(sc, &pst);
 	if ((pst.state == 1) && (pst.cfges_build & 0x1))
 		printf(", SEV-ES");
 
-	sc->sc_psp_attached = 1;
+	printf("\n");
 
-	return (1);
+	return;
 
 fail_7:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_tmr_map);
@@ -141,14 +189,13 @@ fail_1:
 fail_0:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmd_map);
 
-	ccp_softc = NULL;
-	sc->sc_psp_attached = -1;
+	printf("\n");
 
-	return (0);
+	return;
 }
 
 static int
-ccp_wait(struct ccp_softc *sc, uint32_t *status, int poll)
+ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 {
 	uint32_t	cmdword;
 	int		count;
@@ -180,7 +227,7 @@ done:
 }
 
 static int
-ccp_docmd(struct ccp_softc *sc, int cmd, uint64_t paddr)
+ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 {
 	uint32_t	plo, phi, cmdword, status;
 
@@ -207,9 +254,8 @@ ccp_docmd(struct ccp_softc *sc, int cmd, uint64_t paddr)
 }
 
 int
-psp_init(struct psp_init *uinit)
+psp_init(struct psp_softc *sc, struct psp_init *uinit)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_init		*init;
 	int			 ret;
 
@@ -230,9 +276,8 @@ psp_init(struct psp_init *uinit)
 }
 
 int
-psp_get_pstatus(struct psp_platform_status *ustatus)
+psp_get_pstatus(struct psp_softc *sc, struct psp_platform_status *ustatus)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_platform_status *status;
 	int			 ret;
 
@@ -251,9 +296,8 @@ psp_get_pstatus(struct psp_platform_status *ustatus)
 }
 
 int
-psp_df_flush(void)
+psp_df_flush(struct psp_softc *sc)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	int			 ret;
 
 	wbinvd_on_all_cpus();
@@ -267,9 +311,8 @@ psp_df_flush(void)
 }
 
 int
-psp_decommission(struct psp_decommission *udecom)
+psp_decommission(struct psp_softc *sc, struct psp_decommission *udecom)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_decommission	*decom;
 	int			 ret;
 
@@ -288,9 +331,8 @@ psp_decommission(struct psp_decommission *udecom)
 }
 
 int
-psp_get_gstatus(struct psp_guest_status *ustatus)
+psp_get_gstatus(struct psp_softc *sc, struct psp_guest_status *ustatus)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_guest_status	*status;
 	int			 ret;
 
@@ -313,9 +355,8 @@ psp_get_gstatus(struct psp_guest_status *ustatus)
 }
 
 int
-psp_launch_start(struct psp_launch_start *ustart)
+psp_launch_start(struct psp_softc *sc, struct psp_launch_start *ustart)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_launch_start	*start;
 	int			 ret;
 
@@ -339,9 +380,8 @@ psp_launch_start(struct psp_launch_start *ustart)
 }
 
 int
-psp_launch_update_data(struct psp_launch_update_data *ulud, struct proc *p)
+psp_launch_update_data(struct psp_softc *sc, struct psp_launch_update_data *ulud, struct proc *p)
 {
-	struct ccp_softc		*sc = ccp_softc;
 	struct psp_launch_update_data	*ludata;
 	pmap_t				 pmap;
 	vaddr_t				 v, next, end;
@@ -397,10 +437,9 @@ psp_launch_update_data(struct psp_launch_update_data *ulud, struct proc *p)
 }
 
 int
-psp_launch_measure(struct psp_launch_measure *ulm)
+psp_launch_measure(struct psp_softc *sc, struct psp_launch_measure *ulm)
 {
 	struct psp_launch_measure *lm;
-	struct ccp_softc	*sc = ccp_softc;
 	int			 ret;
 	uint64_t		 paddr;
 
@@ -427,9 +466,8 @@ psp_launch_measure(struct psp_launch_measure *ulm)
 }
 
 int
-psp_launch_finish(struct psp_launch_finish *ulf)
+psp_launch_finish(struct psp_softc *sc, struct psp_launch_finish *ulf)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_launch_finish *lf;
 	int			 ret;
 
@@ -448,9 +486,8 @@ psp_launch_finish(struct psp_launch_finish *ulf)
 }
 
 int
-psp_attestation(struct psp_attestation *uat)
+psp_attestation(struct psp_softc *sc, struct psp_attestation *uat)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_attestation	*at;
 	int			 ret;
 	uint64_t		 paddr;
@@ -479,9 +516,8 @@ psp_attestation(struct psp_attestation *uat)
 }
 
 int
-psp_activate(struct psp_activate *uact)
+psp_activate(struct psp_softc *sc, struct psp_activate *uact)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_activate	*act;
 	int			 ret;
 
@@ -501,9 +537,8 @@ psp_activate(struct psp_activate *uact)
 }
 
 int
-psp_deactivate(struct psp_deactivate *udeact)
+psp_deactivate(struct psp_softc *sc, struct psp_deactivate *udeact)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_deactivate	*deact;
 	int			 ret;
 
@@ -522,7 +557,7 @@ psp_deactivate(struct psp_deactivate *udeact)
 }
 
 int
-psp_guest_shutdown(struct psp_guest_shutdown *ugshutdown)
+psp_guest_shutdown(struct psp_softc *sc, struct psp_guest_shutdown *ugshutdown)
 {
 	struct psp_deactivate	deact;
 	struct psp_decommission	decom;
@@ -530,24 +565,23 @@ psp_guest_shutdown(struct psp_guest_shutdown *ugshutdown)
 
 	bzero(&deact, sizeof(deact));
 	deact.handle = ugshutdown->handle;
-	if ((ret = psp_deactivate(&deact)) != 0)
+	if ((ret = psp_deactivate(sc, &deact)) != 0)
 		return (ret);
 
-	if ((ret = psp_df_flush()) != 0)
+	if ((ret = psp_df_flush(sc)) != 0)
 		return (ret);
 
 	bzero(&decom, sizeof(decom));
 	decom.handle = ugshutdown->handle;
-	if ((ret = psp_decommission(&decom)) != 0)
+	if ((ret = psp_decommission(sc, &decom)) != 0)
 		return (ret);
 
 	return (0);
 }
 
 int
-psp_snp_get_pstatus(struct psp_snp_platform_status *ustatus)
+psp_snp_get_pstatus(struct psp_softc *sc, struct psp_snp_platform_status *ustatus)
 {
-	struct ccp_softc	*sc = ccp_softc;
 	struct psp_snp_platform_status *status;
 	int			 ret;
 
@@ -568,8 +602,11 @@ psp_snp_get_pstatus(struct psp_snp_platform_status *ustatus)
 int
 pspopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	if (ccp_softc == NULL)
-		return (ENODEV);
+	struct psp_softc *sc;
+
+	sc = (struct psp_softc *)device_lookup(&psp_cd, minor(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	return (0);
 }
@@ -577,64 +614,75 @@ pspopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 pspclose(dev_t dev, int flag, int mode, struct proc *p)
 {
+	struct psp_softc *sc;
+
+	sc = (struct psp_softc *)device_lookup(&psp_cd, minor(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
 	return (0);
 }
 
 int
 pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int	ret;
+	struct psp_softc *sc;
+	int ret;
 
-	rw_enter_write(&ccp_softc->sc_lock);
+	sc = (struct psp_softc *)device_lookup(&psp_cd, minor(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
+	rw_enter_write(&sc->sc_lock);
 
 	switch (cmd) {
 	case PSP_IOC_GET_PSTATUS:
-		ret = psp_get_pstatus((struct psp_platform_status *)data);
+		ret = psp_get_pstatus(sc, (struct psp_platform_status *)data);
 		break;
 	case PSP_IOC_DF_FLUSH:
-		ret = psp_df_flush();
+		ret = psp_df_flush(sc);
 		break;
 	case PSP_IOC_DECOMMISSION:
-		ret = psp_decommission((struct psp_decommission *)data);
+		ret = psp_decommission(sc, (struct psp_decommission *)data);
 		break;
 	case PSP_IOC_GET_GSTATUS:
-		ret = psp_get_gstatus((struct psp_guest_status *)data);
+		ret = psp_get_gstatus(sc, (struct psp_guest_status *)data);
 		break;
 	case PSP_IOC_LAUNCH_START:
-		ret = psp_launch_start((struct psp_launch_start *)data);
+		ret = psp_launch_start(sc, (struct psp_launch_start *)data);
 		break;
 	case PSP_IOC_LAUNCH_UPDATE_DATA:
-		ret = psp_launch_update_data(
+		ret = psp_launch_update_data(sc,
 		    (struct psp_launch_update_data *)data, p);
 		break;
 	case PSP_IOC_LAUNCH_MEASURE:
-		ret = psp_launch_measure((struct psp_launch_measure *)data);
+		ret = psp_launch_measure(sc, (struct psp_launch_measure *)data);
 		break;
 	case PSP_IOC_LAUNCH_FINISH:
-		ret = psp_launch_finish((struct psp_launch_finish *)data);
+		ret = psp_launch_finish(sc, (struct psp_launch_finish *)data);
 		break;
 	case PSP_IOC_ATTESTATION:
-		ret = psp_attestation((struct psp_attestation *)data);
+		ret = psp_attestation(sc, (struct psp_attestation *)data);
 		break;
 	case PSP_IOC_ACTIVATE:
-		ret = psp_activate((struct psp_activate *)data);
+		ret = psp_activate(sc, (struct psp_activate *)data);
 		break;
 	case PSP_IOC_DEACTIVATE:
-		ret = psp_deactivate((struct psp_deactivate *)data);
+		ret = psp_deactivate(sc, (struct psp_deactivate *)data);
 		break;
 	case PSP_IOC_GUEST_SHUTDOWN:
-		ret = psp_guest_shutdown((struct psp_guest_shutdown *)data);
+		ret = psp_guest_shutdown(sc, (struct psp_guest_shutdown *)data);
 		break;
 	case PSP_IOC_SNP_GET_PSTATUS:
-		ret =
-		    psp_snp_get_pstatus((struct psp_snp_platform_status *)data);
+		ret = psp_snp_get_pstatus(sc,
+		    (struct psp_snp_platform_status *)data);
 		break;
 	default:
 		ret = ENOTTY;
 		break;
 	}
 
-	rw_exit_write(&ccp_softc->sc_lock);
+	rw_exit_write(&sc->sc_lock);
 
 	return (ret);
 }
@@ -656,4 +704,21 @@ pledge_ioctl_psp(struct proc *p, long com)
 	default:
 		return (pledge_fail(p, EPERM, PLEDGE_VMM));
 	}
+}
+
+int
+pspprint(void *aux, const char *pnp)
+{
+	return QUIET;
+}
+
+int
+pspsubmatch(struct device *parent, void *match, void *aux)
+{
+	struct psp_attach_args *arg = aux;
+	struct cfdata *cf = match;
+
+	if (!(arg->capabilities & PSP_CAP_SEV))
+		return (0);
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }

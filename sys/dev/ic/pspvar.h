@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.1 2024/09/03 00:23:05 jsg Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.2 2024/09/04 07:45:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -246,10 +246,16 @@ struct psp_snp_platform_status {
 
 #ifdef _KERNEL
 
-int	psp_attach(struct ccp_softc *);
+struct psp_attach_args {
+	bus_space_tag_t		iot;
+	bus_space_handle_t	ioh;
 
-int	pspclose(dev_t, int, int, struct proc *);
-int	pspopen(dev_t, int, int, struct proc *);
-int	pspioctl(dev_t, u_long, caddr_t, int, struct proc *);
+	bus_dma_tag_t		dmat;
+	uint32_t		capabilities;
+};
+
+int pspsubmatch(struct device *, void *, void *);
+int pspprint(void *aux, const char *pnp);
+int psp_sev_intr(void *);
 
 #endif	/* _KERNEL */

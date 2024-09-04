@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.736 2024/08/31 04:17:14 dlg Exp $
+#	$OpenBSD: files,v 1.737 2024/09/04 07:45:08 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -470,8 +470,13 @@ device	xhci: usbus
 file	dev/usb/xhci.c			xhci	needs-flag
 
 # AMD Cryptographic Co-processor
-device	ccp
+device	ccp {}
 file	dev/ic/ccp.c			ccp	needs-flag
+
+# AMD Platform Security Processor
+device	psp
+attach	psp at ccp
+file	dev/ic/psp.c			psp	needs-flag
 
 # SDHC SD/MMC controller
 define	sdhc

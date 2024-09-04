@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.81 2024/06/12 12:54:54 bluhm Exp $	*/
+/*	$OpenBSD: conf.c,v 1.82 2024/09/04 07:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -152,8 +152,6 @@ cdev_decl(nvram);
 #include "drm.h"
 #include "viocon.h"
 cdev_decl(viocon);
-#include "ccp.h"
-cdev_decl(psp);
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -292,7 +290,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security keys */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 100: USB joystick/gamecontroller */
-	cdev_psp_init(NCCP,psp),		/* 101: PSP */
+	cdev_psp_init(NPSP,psp),	/* 101: PSP */
 };
 int	nchrdev = nitems(cdevsw);
 
