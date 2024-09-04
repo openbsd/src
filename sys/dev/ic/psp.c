@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.2 2024/09/04 07:45:08 jsg Exp $ */
+/*	$OpenBSD: psp.c,v 1.3 2024/09/04 07:47:21 jsg Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -19,7 +19,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 #include <sys/pledge.h>
 #include <sys/rwlock.h>
 
@@ -36,8 +35,6 @@ struct psp_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-
-	struct timeout		sc_tick;
 
 	bus_dma_tag_t		sc_dmat;
 	uint32_t		sc_capabilities;
