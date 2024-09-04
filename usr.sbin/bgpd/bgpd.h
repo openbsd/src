@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.495 2024/08/14 19:09:51 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.496 2024/09/04 15:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1416,6 +1416,7 @@ void		 send_imsg_session(int, pid_t, void *, uint16_t);
 int		 send_network(int, struct network_config *,
 		    struct filter_set_head *);
 int		 bgpd_oknexthop(struct kroute_full *);
+int		 bgpd_has_bgpnh(void);
 void		 set_pollfd(struct pollfd *, struct imsgbuf *);
 int		 handle_pollfd(struct pollfd *, struct imsgbuf *);
 

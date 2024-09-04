@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.309 2024/01/09 13:41:32 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.310 2024/09/04 15:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -511,6 +511,9 @@ kr4_change(struct ktable *kt, struct kroute_full *kf)
 		else
 			kr->flags &= ~F_REJECT;
 
+		if (kr->flags & F_NEXTHOP)
+			knexthop_update(kt, kf);
+
 		if (send_rtmsg(RTM_CHANGE, kt, kf))
 			kr->flags |= F_BGPD_INSERTED;
 	}
@@ -548,6 +551,9 @@ kr6_change(struct ktable *kt, struct kroute_full *kf)
 			kr6->flags |= F_REJECT;
 		else
 			kr6->flags &= ~F_REJECT;
+
+		if (kr6->flags & F_NEXTHOP)
+			knexthop_update(kt, kf);
 
 		if (send_rtmsg(RTM_CHANGE, kt, kf))
 			kr6->flags |= F_BGPD_INSERTED;
@@ -1719,13 +1725,14 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 		break;
 	}
 
-	/* XXX this is wrong for nexthop validated via BGP */
-	if (!(kf->flags & F_BGPD)) {
+	if (bgpd_has_bgpnh() || !(kf->flags & F_BGPD)) {
 		RB_FOREACH(n, knexthop_tree, KT2KNT(kt))
 			if (prefix_compare(&kf->prefix, &n->nexthop,
 			    kf->prefixlen) == 0)
 				knexthop_validate(kt, n);
+	}
 
+	if (!(kf->flags & F_BGPD)) {
 		/* redistribute multipath routes only once */
 		if (!multipath)
 			kr_redistribute(IMSG_NETWORK_ADD, kt, kf);

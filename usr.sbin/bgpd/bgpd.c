@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.266 2024/09/04 13:30:10 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.267 2024/09/04 15:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1179,6 +1179,12 @@ bgpd_oknexthop(struct kroute_full *kf)
 
 	/* any other route is fine */
 	return (1);
+}
+
+int
+bgpd_has_bgpnh(void)
+{
+	return ((cflags & BGPD_FLAG_NEXTHOP_BGP) != 0);
 }
 
 int
