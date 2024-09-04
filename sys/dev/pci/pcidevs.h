@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2087 2024/09/02 03:59:40 yasuoka Exp 
+ *	OpenBSD: pcidevs,v 1.2088 2024/09/04 23:56:43 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8574,7 +8574,8 @@
 #define	PCI_PRODUCT_PLX_PEX_8624	0x8624		/* PEX 8624 */
 #define	PCI_PRODUCT_PLX_PEX_8632	0x8632		/* PEX 8632 */
 #define	PCI_PRODUCT_PLX_PEX_8648	0x8648		/* PEX 8648 */
-#define	PCI_PRODUCT_PLX_PEX_8617	0x8717		/* PEX 8617 */
+#define	PCI_PRODUCT_PLX_PEX_8717	0x8717		/* PEX 8717 */
+#define	PCI_PRODUCT_PLX_PEX_8718	0x8718		/* PEX 8718 */
 #define	PCI_PRODUCT_PLX_PEX_8724	0x8724		/* PEX 8724 */
 #define	PCI_PRODUCT_PLX_PEX_8732	0x8732		/* PEX 8732 */
 #define	PCI_PRODUCT_PLX_PEX_8733	0x8733		/* PEX 8733 */
@@ -9184,7 +9185,8 @@
 #define	PCI_PRODUCT_SIS_966_HDA	0x7502		/* 966 HD Audio */
 
 /* SK hynix products */
-#define	PCI_PRODUCT_SKHYNIX_SSD	0x1327		/* BC501 NVMe */
+#define	PCI_PRODUCT_SKHYNIX_BC501	0x1327		/* BC501 */
+#define	PCI_PRODUCT_SKHYNIX_PC601	0x1627		/* PC601 */
 #define	PCI_PRODUCT_SKHYNIX_BC901	0x1d59		/* BC901 */
 
 /* SMC products */

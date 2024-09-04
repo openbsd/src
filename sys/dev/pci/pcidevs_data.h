@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2087 2024/09/02 03:59:40 yasuoka Exp 
+ *	OpenBSD: pcidevs,v 1.2088 2024/09/04 23:56:43 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -30928,8 +30928,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PEX 8648",
 	},
 	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8617,
-	    "PEX 8617",
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8717,
+	    "PEX 8717",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8718,
+	    "PEX 8718",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8724,
@@ -33104,8 +33108,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "966 HD Audio",
 	},
 	{
-	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
-	    "BC501 NVMe",
+	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_BC501,
+	    "BC501",
+	},
+	{
+	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_PC601,
+	    "PC601",
 	},
 	{
 	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_BC901,
