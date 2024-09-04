@@ -1,4 +1,4 @@
-.\"	$OpenBSD: psp.4,v 1.1 2024/09/04 11:12:53 jsg Exp $
+.\"	$OpenBSD: psp.4,v 1.2 2024/09/04 14:24:10 jsg Exp $
 .\"
 .\" Copyright (c) 2024 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -34,9 +34,12 @@ driver provides an interface to the AMD Platform Security Processor.
 .Xr ccp 4 ,
 .Xr vmd 8
 .Rs
-.%Q AMD
-.%T Secure Encrypted Virtualization API Version 0.24
-.%D April 2020
+.%T Secure Encrypted Virtualization API
+.%O Publication #55766
+.Re
+.Rs
+.%T SEV Secure Nested Paging Firmware ABI Specification
+.%O Publication #56860
 .Re
 .Sh HISTORY
 The
