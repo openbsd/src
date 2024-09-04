@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.35 2024/09/04 07:54:51 mglocker Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.36 2024/09/04 16:12:40 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6282,7 +6282,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x80000000:	/* Extended function level */
-		*rax = 0x8000001f; /* curcpu()->ci_pnfeatset */
+		/* We don't emulate past 0x8000001f currently. */
+		*rax = min(curcpu()->ci_pnfeatset, 0x8000001f);
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
