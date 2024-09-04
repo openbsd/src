@@ -1,6 +1,6 @@
-.\"     $OpenBSD: ccp.4,v 1.6 2024/09/04 11:12:53 jsg Exp $
+.\"	$OpenBSD: psp.4,v 1.1 2024/09/04 11:12:53 jsg Exp $
 .\"
-.\" Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
+.\" Copyright (c) 2024 Jonathan Gray <jsg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,37 +15,37 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: September 4 2024 $
-.Dt CCP 4
+.Dt PSP 4
 .Os
 .Sh NAME
-.Nm ccp
-.Nd AMD cryptographic co-processor
+.Nm psp
+.Nd AMD Platform Security Processor
 .Sh SYNOPSIS
-.Cd "ccp* at acpi?"
-.Cd "ccp* at fdt?"
-.Cd "ccp* at pci?"
+.Cd "psp* at ccp?"
 .Sh DESCRIPTION
-AMD cryptographic co-processor devices provide offload for various
-cryptographic algorithms, offload of zlib compression and decompression,
-and a random number generator.
-.Pp
 The
 .Nm
-driver supports feeding output of the random number generator into
-the kernel entropy pool.
+driver provides an interface to the AMD Platform Security Processor.
+.Sh FILES
+.Bl -tag -width /dev/psp
+.It Pa /dev/psp
+.El
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr psp 4 ,
-.Xr random 4 ,
-.Xr arc4random 9
+.Xr ccp 4 ,
+.Xr vmd 8
+.Rs
+.%Q AMD
+.%T Secure Encrypted Virtualization API Version 0.24
+.%D April 2020
+.Re
 .Sh HISTORY
 The
 .Nm
-driver first appeared in
-.Ox 6.4 .
+device driver first appeared in
+.Ox 7.6 .
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 driver was written by
-.An David Gwynne Aq Mt dlg@openbsd.org .
+.An Hans-Joerg Hoexer Aq Mt hshoexer@genua.de .
