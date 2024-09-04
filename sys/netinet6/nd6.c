@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.282 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.283 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct mutex nd6_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list =
     TAILQ_HEAD_INITIALIZER(nd6_list);	/* [mN] list of llinfo_nd6 structures */
 struct	pool nd6_pool;		/* [I] pool for llinfo_nd6 structures */
-int	nd6_inuse;		/* [m] limit neigbor discovery routes */
+int	nd6_inuse;		/* [m] limit neighbor discovery routes */
 unsigned int	ln_hold_total;	/* [a] packets currently in the nd6 queue */
 
 void nd6_timer(void *);

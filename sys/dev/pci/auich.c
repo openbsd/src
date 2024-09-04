@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.119 2022/10/26 20:19:08 kn Exp $	*/
+/*	$OpenBSD: auich.c,v 1.120 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1422,7 +1422,7 @@ auich_calibrate(struct auich_softc *sc)
 			break;
 		/*
 		 * check for strange changes in STS -
-		 * XXX remove it when everythings fine
+		 * XXX remove it when everything is fine
 		 */
 		if (sts != osts) {
 			printf("%s: ac97 sts changed after %d us sts=%b civ=%u\n",

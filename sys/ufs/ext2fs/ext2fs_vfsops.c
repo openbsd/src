@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.120 2024/06/07 09:26:37 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.121 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -1066,7 +1066,7 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 	return (allerror);
 }
 
-/* This is called before the superblock is copied.  Watch out for endianity! */
+/* This is called before the superblock is copied.  Watch out for endianness! */
 static int
 e2fs_sbcheck(struct ext2fs *fs, int ronly)
 {

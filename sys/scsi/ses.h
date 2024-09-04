@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.10 2006/05/11 00:45:59 krw Exp $ */
+/* $OpenBSD: ses.h,v 1.11 2024/09/04 07:54:53 mglocker Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -92,7 +92,7 @@ struct ses_enc_hdr {
 
 /* enclosure descriptor strings */
 struct ses_enc_desc {
-	u_int8_t	logical_id[8]; /* this isnt a string */
+	u_int8_t	logical_id[8]; /* this isn't a string */
 	u_int8_t	vendor_id[8];
 	u_int8_t	prod_id[16];
 	u_int8_t	prod_rev[4];

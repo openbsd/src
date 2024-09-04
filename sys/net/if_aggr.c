@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.45 2024/03/18 06:14:50 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.46 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1885,7 +1885,7 @@ aggr_set_selected(struct aggr_port *p, enum aggr_port_selected s,
 		    aggr_port_selected_names[s]);
 
 		/*
-		 * setting p_selected doesnt need the mtx except to
+		 * setting p_selected doesn't need the mtx except to
 		 * coordinate with a kstat read.
 		 */
 

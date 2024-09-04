@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_sbusreg.h,v 1.3 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: uperf_sbusreg.h,v 1.4 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -174,7 +174,7 @@
 #define	USC_MEM0_MRE	0x01000000	/* missed refresh error */
 #define	USC_MEM0_RPMC	0x00800000	/* RAS Phi 0 cookie for refresh */
 #define	USC_MEM0_RWMC	0x00400000	/* RAS Phi 0 cookie for writers */
-#define	USC_MEM0_SW0	0x001f0000	/* strecth count for first write */
+#define	USC_MEM0_SW0	0x001f0000	/* stretch count for first write */
 #define	USC_MEM0_SP	0x00000f00	/* simm present mask */
 #define	USC_MEM0_REFI	0x000000ff	/* refresh interval */
 

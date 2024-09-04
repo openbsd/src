@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.105 2024/02/21 15:53:07 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.106 2024/09/04 07:54:51 mglocker Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -182,7 +182,7 @@ upageflttrap(struct trapframe *frame, uint64_t cr2)
 	int signal, sicode, error;
 
 	/*
-	 * If NX is not enabled, we cant distinguish between PROT_READ
+	 * If NX is not enabled, we can't distinguish between PROT_READ
 	 * and PROT_EXEC access, so try both.
 	 */
 	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);

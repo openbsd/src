@@ -1,4 +1,4 @@
-/* $OpenBSD: siphash.h,v 1.5 2015/02/20 11:51:03 tedu Exp $ */
+/* $OpenBSD: siphash.h,v 1.6 2024/09/04 07:54:52 mglocker Exp $ */
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  * optimized for speed on short messages returning a 64bit hash/digest value.
  *
  * The number of rounds is defined during the initialization:
- *  SipHash24_Init() for the fast and resonable strong version
+ *  SipHash24_Init() for the fast and reasonably strong version
  *  SipHash48_Init() for the strong version (half as fast)
  *
  * struct SIPHASH_CTX ctx;

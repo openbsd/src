@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360var.h,v 1.10 2020/07/22 13:16:04 krw Exp $	*/
+/*	$OpenBSD: aic6360var.h,v 1.11 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct aic_dma_seg {
 /*
  * ACB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
- * with a request sense command.  Basicly, we refrain from fiddling with
+ * with a request sense command.  Basically, we refrain from fiddling with
  * the scsi_xfer struct (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.

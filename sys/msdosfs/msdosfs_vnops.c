@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.141 2024/05/13 11:17:40 semarie Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.142 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -717,7 +717,7 @@ msdosfs_write(void *v)
 		 * it.  Otherwise, if on a cluster boundary write it
 		 * asynchronously so we can move on to the next block
 		 * without delay.  Otherwise do a delayed write because we
-		 * may want to write somemore into the block later.
+		 * may want to write some more into the block later.
 		 */
 #if 0
 		if (ioflag & IO_NOCACHE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.190 2023/04/27 18:21:44 robert Exp $	*/
+/*	$OpenBSD: st.c,v 1.191 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1223,7 +1223,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 
 try_new_value:
 	/*
-	 * Check that the mode being asked for is aggreeable to the
+	 * Check that the mode being asked for is agreeable to the
 	 * drive. If not, put it back the way it was.
 	 */
 	if ((error = st_mode_select(st, 0)) != 0) {/* put it back as it was */

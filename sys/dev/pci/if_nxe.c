@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.81 2024/05/24 06:02:56 jsg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.82 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -2077,7 +2077,7 @@ nxe_crb_set(struct nxe_softc *sc, int window)
 		nxe_write(sc, NXE_WIN_CRB(sc->sc_function), r);
 
 		if (nxe_read(sc, NXE_WIN_CRB(sc->sc_function)) != r)
-			printf("%s: crb window hasnt moved\n", DEVNAME(sc));
+			printf("%s: crb window hasn't moved\n", DEVNAME(sc));
 	}
 
 	return (oldwindow);

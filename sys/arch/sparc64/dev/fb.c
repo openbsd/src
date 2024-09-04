@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.30 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: fb.c,v 1.31 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -211,7 +211,7 @@ fbwscons_init(struct sunfb *sf, int flags, int isconsole)
 	 * switch from the 12x22 font to the more adequate 8x16 font
 	 * here.
 	 * If we are the console device, we need to adjust two things:
-	 * - the display row should be overrided from the current PROM
+	 * - the display row should be overridden from the current PROM
 	 *   metrics, since it will not match the PROM reality anymore.
 	 * - the screen needs to be cleared.
 	 *

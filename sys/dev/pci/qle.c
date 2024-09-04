@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.65 2024/05/24 06:02:58 jsg Exp $ */
+/*	$OpenBSD: qle.c,v 1.66 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -691,7 +691,7 @@ qle_detach(struct device *self, int flags)
 	struct qle_softc *sc = (struct qle_softc *)self;
 
 	if (sc->sc_ih == NULL) {
-		/* we didnt attach properly, so nothing to detach */
+		/* we didn't attach properly, so nothing to detach */
 		return (0);
 	}
 

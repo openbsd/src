@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.67 2021/10/24 16:57:30 mpi Exp $ */
+/*	$OpenBSD: safte.c,v 1.68 2024/09/04 07:54:53 mglocker Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -352,7 +352,7 @@ safte_read_config(struct safte_softc *sc)
 
 	/*
 	 * Stash the temp info so we can get out of range status. Limit the
-	 * number so the out of temp checks can't go into memory it doesnt own.
+	 * number so the out of temp checks can't go into memory it doesn't own.
 	 */
 	sc->sc_ntemps = (config->ntemps > 15) ? 15 : config->ntemps;
 	sc->sc_temps = s;

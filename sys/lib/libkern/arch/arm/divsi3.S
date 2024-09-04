@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.6 2022/12/08 01:25:46 guenther Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.7 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.2 2001/11/13 20:06:40 chris Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ L_divide_b0:
 	cmp	ip, #0
 	rsbmi	r1, r1, #0
 	movs	ip, ip, lsl #1
-	bicmi	r0, r0, #0x80000000	/* Fix incase we divided 0x80000000 */
+	bicmi	r0, r0, #0x80000000	/* Fix in case we divided 0x80000000 */
 	rsbmi	r0, r0, #0
 	mov	pc, lr
 

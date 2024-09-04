@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.34 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.35 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -344,7 +344,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 			zs_conschan_put = zc;
 		}
-		/* Childs need to set cn_dev, etc */
+		/* Children need to set cn_dev, etc */
 
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.36 2024/07/04 04:52:10 jsg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.37 2024/09/04 07:54:53 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1076,7 +1076,7 @@ uaddr_pivot_newpivot(struct vm_map *map, struct uaddr_pivot_state *uaddr,
  *
  * Characteristics of the allocator:
  * - best case, an allocation is O(log N)
- *   (it would be O(1), if it werent for the need to check if the memory is
+ *   (it would be O(1), if it weren't for the need to check if the memory is
  *   free; although that can be avoided...)
  * - worst case, an allocation is O(log N)
  *   (the uaddr_pivot_newpivot() function has that complexity)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.9 2022/12/08 02:11:27 guenther Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.10 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 
 /*
  * Exception vectors.
- * The following routines are copied to vector addreses.
+ * The following routines are copied to vector addresses.
  *	sh_vector_generic:	VBR + 0x100
  *	sh_vector_tlbmiss:	VBR + 0x400
  *	sh_vector_interrupt:	VBR + 0x600

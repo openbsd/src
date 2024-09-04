@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.32 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.33 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -106,7 +106,7 @@ struct gem_txthresh_tab {
 };
 
 /*
- * Some misc. statics, useful for debugging.
+ * Some misc. statistics, useful for debugging.
  */
 struct gem_stats {
 	u_long		ts_tx_uf;	/* transmit underflow errors */

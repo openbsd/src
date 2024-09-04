@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.149 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.150 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 
 	/*
 	 * We need to start out by finding how big the authorization cred
-	 * and verifer are for the auth_type, to be able to correctly
+	 * and verifier are for the auth_type, to be able to correctly
 	 * align the mbuf header/chain.
 	 */
 	switch (auth_type) {
@@ -573,7 +573,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 		/*
 		 * In the RPCAUTH_UNIX case, the size is the static
 		 * part as shown in RFC1831 + the number of groups,
-		 * RPCAUTH_UNIX has a zero verifer.
+		 * RPCAUTH_UNIX has a zero verifier.
 		 */
 		if (cr->cr_ngroups > req->r_nmp->nm_numgrps)
 			ngroups = req->r_nmp->nm_numgrps;

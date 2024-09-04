@@ -29,7 +29,7 @@ Revision History
 
 
 //
-// EFI Partition header (normaly starts in LBA 1)
+// EFI Partition header (normally starts in LBA 1)
 //
 
 #define EFI_PARTITION_SIGNATURE         0x5053595320494249
@@ -85,7 +85,7 @@ typedef struct _EFI_FILE_HEADER {
 
 
 //
-// Logical Block Address List - the fundemental block
+// Logical Block Address List - the fundamental block
 // description structure
 //
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2024/04/29 10:07:37 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2024/09/04 07:54:51 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -276,7 +276,7 @@ VP_IDX3(vaddr_t va)
  * On RISC-V, the encodings for write permission without read
  * permission (r=0, w=1, x=0, or r=0, w=1, x=1) are reserved, so
  * PROT_WRITE implies PROT_READ.  We need to handle PROT_NONE
- * seperately (see pmap_pte_update()) since r=0, w=0, x=0 is reserved
+ * separately (see pmap_pte_update()) since r=0, w=0, x=0 is reserved
  * for non-leaf page table entries.
  */
 const pt_entry_t ap_bits_user[8] = {

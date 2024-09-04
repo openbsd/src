@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.19 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.20 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -215,7 +215,7 @@ aibs_attach_sif(struct aibs_softc *sc, enum sensor_type st)
 		aml_freevalue(&res);
 		return;
 	} else if (res.length - 1 > n) {
-		printf("%s: %s: misformed package: %i/%i",
+		printf("%s: %s: malformed package: %i/%i",
 		    DEVNAME(sc), name, n, res.length - 1);
 #ifdef AIBS_MORE_SENSORS
 		n = res.length - 1;

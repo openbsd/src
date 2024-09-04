@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.143 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.144 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -305,7 +305,7 @@ axe_miibus_readreg(struct device *dev, int phy, int reg)
 		/*
 		* BMSR of AX88772 indicates that it supports extended
 		* capability but the extended status register is
-		* revered for embedded ethernet PHY. So clear the
+		* reserved for embedded ethernet PHY. So clear the
 		* extended capability bit of BMSR.
 		*/
 		ival &= ~BMSR_EXTCAP;

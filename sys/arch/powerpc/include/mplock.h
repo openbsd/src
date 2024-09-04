@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.6 2024/04/03 19:30:59 gkoehler Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.7 2024/09/04 07:54:51 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 /*
  * __ppc_lock exists because pte_spill_r() can't use __mp_lock.
  * Really simple spinlock implementation with recursive capabilities.
- * Correctness is paramount, no fancyness allowed.
+ * Correctness is paramount, no fanciness allowed.
  */
 
 struct __ppc_lock {

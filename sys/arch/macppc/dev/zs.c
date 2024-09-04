@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.33 2023/01/04 09:34:26 jsg Exp $	*/
+/*	$OpenBSD: zs.c,v 1.34 2024/09/04 07:54:51 mglocker Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -691,7 +691,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
 	/*
 	 * Make sure we don't enable hfc on a signal line we're ignoring.
 	 * As we enable CTS interrupts only if we have CRTSCTS or CDTRCTS,
-	 * this code also effectivly turns off ZSWR15_CTS_IE.
+	 * this code also effectively turns off ZSWR15_CTS_IE.
 	 *
 	 * Also, disable DCD interrupts if we've been told to ignore
 	 * the DCD pin. Happens on mac68k because the input line for
@@ -880,7 +880,7 @@ static int stdin, stdout;
  * (the video, better than CN_LOWPRI), and CN_HIGHPRI (pick me!)
  *
  * As the mac's a bit different, we do extra work here. We mainly check
- * to see if we have serial echo going on. Also chould check for default
+ * to see if we have serial echo going on. Also could check for default
  * speeds.
  */
 

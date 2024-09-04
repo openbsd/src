@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.46 2024/06/22 10:22:29 jsg Exp $
+/*	$OpenBSD: trm.c,v 1.47 2024/09/04 07:54:52 mglocker Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -1124,7 +1124,7 @@ trm_DataInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 			 *
 			 * parsing the case:
 			 * when a transfer not yet complete
-			 * but be disconnected by uper layer
+			 * but be disconnected by upper layer
 			 * if transfer not yet complete
 			 * there were some data residue in SCSI FIFO or
 			 * SCSI transfer counter not empty

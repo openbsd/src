@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.62 2022/10/14 13:22:57 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.63 2024/09/04 07:54:51 mglocker Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -76,8 +76,8 @@
  * Mach writedisklabel logic seems to fail when no BSD label is found.
  *
  * Kernel handles disklabel in this way;
- *	- searchs BSD label at offset 64
- *	- if not found, searchs UniOS/ISI label at the end of block
+ *	- searches BSD label at offset 64
+ *	- if not found, searches UniOS/ISI label at the end of block
  *	- kernel can distinguish whether it was SunOS label or UniOS/ISI
  *	  label and understand both
  *	- kernel writes UniOS/ISI label combined with BSD label to update

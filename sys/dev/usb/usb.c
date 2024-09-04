@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.132 2024/08/18 02:59:51 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.133 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ usb_detach_roothub(struct usb_softc *sc)
 	sc->sc_bus->flags |= USB_BUS_DISCONNECTING;
 	/*
 	 * Reset the dying flag in case it has been set by the interrupt
-	 * handler when unplugging an HC card otherwise the task wont be
+	 * handler when unplugging an HC card otherwise the task won't be
 	 * scheduled.  This is safe since a dead HC should not trigger
 	 * new interrupt.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.126 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: arc.c,v 1.127 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2219,7 +2219,7 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	bd->bd_lun = diskinfo->scsi_attr.lun;
 #endif
 	/*
-	 * the firmware doesnt seem to fill scsi_attr in, so fake it with
+	 * the firmware doesn't seem to fill scsi_attr in, so fake it with
 	 * the diskid.
 	 */
 	bd->bd_channel = 0;

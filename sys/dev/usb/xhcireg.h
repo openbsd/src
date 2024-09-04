@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.19 2024/04/23 04:12:53 jsg Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.20 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -65,12 +65,12 @@
 #define XHCI_HCIVERSION_0_9	0x0090	/* xHCI version 0.9 */
 #define XHCI_HCIVERSION_1_0	0x0100	/* xHCI version 1.0 */
 
-#define XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
+#define XHCI_HCSPARAMS1		0x04	/* RO structural parameters 1 */
 #define  XHCI_HCS1_DEVSLOT_MAX(x)((x) & 0xff)
 #define  XHCI_HCS1_IRQ_MAX(x)	(((x) >> 8) & 0x3ff)
 #define  XHCI_HCS1_N_PORTS(x)	(((x) >> 24) & 0xff)
 
-#define XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
+#define XHCI_HCSPARAMS2		0x08	/* RO structural parameters 2 */
 #define  XHCI_HCS2_IST(x)	((x) & 0x7)
 #define  XHCI_HCS2_IST_MICRO(x) (!((x) & 0x8))
 #define  XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xf)
@@ -78,7 +78,7 @@
 #define  XHCI_HCS2_SPR(x)	(((x) >> 26) & 0x1)
 #define  XHCI_HCS2_SPB_MAX(x)	((((x) >> 16) & 0x3e0) | (((x) >> 27) & 0x1f))
 
-#define XHCI_HCSPARAMS3		0x0c	/* RO structual parameters 3 */
+#define XHCI_HCSPARAMS3		0x0c	/* RO structural parameters 3 */
 #define  XHCI_HCS3_U1_DEL(x)	((x) & 0xff)
 #define  XHCI_HCS3_U2_DEL(x)	(((x) >> 16) & 0xffff)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.253 2022/04/06 17:39:13 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.254 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -524,7 +524,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	}
 
 	/*
-	 * If we havent been given an io pool by now then fall back to
+	 * If we haven't been given an io pool by now then fall back to
 	 * using link->openings.
 	 */
 	if (link->pool == NULL) {

@@ -65,7 +65,7 @@ EFI_STATUS
 
   Arguments:
     This         - Protocol instance pointer.
-    Mode         - Are we in text of grahics mode.
+    Mode         - Are we in text of graphics mode.
     GopUgaExists - TRUE if Console Spliter has found a GOP or UGA device
     StdInLocked  - TRUE if StdIn device is keyboard locked
 

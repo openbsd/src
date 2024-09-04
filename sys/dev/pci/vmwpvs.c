@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.28 2024/05/24 06:02:58 jsg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.29 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -499,7 +499,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ccbs = mallocarray(r, sizeof(struct vmwpvs_ccb),
 	    M_DEVBUF, M_WAITOK);
-	/* cant fail */
+	/* can't fail */
 
 	sgls = VMWPVS_DMA_KVA(sc->sc_sgls);
 	sense = VMWPVS_DMA_KVA(sc->sc_sense);

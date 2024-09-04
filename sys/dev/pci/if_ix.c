@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.216 2024/08/31 16:23:09 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.217 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /******************************************************************************
 
@@ -2697,7 +2697,7 @@ ixgbe_get_buf(struct ix_rxring *rxr, int i)
 		return (ENOBUFS);
 	}
 
-	/* needed in any case so prealocate since this one will fail for sure */
+	/* needed in any case so preallocate since this one will fail for sure */
 	mp = MCLGETL(NULL, M_DONTWAIT, sc->rx_mbuf_sz);
 	if (!mp)
 		return (ENOBUFS);

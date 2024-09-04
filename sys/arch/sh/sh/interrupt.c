@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.19 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.20 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -366,7 +366,7 @@ intc_intr_priority(int evtcode, int level)
 }
 
 /*
- * Interrupt handler holder allocater.
+ * Interrupt handler holder allocator.
  */
 struct intc_intrhand *
 intc_alloc_ih(void)

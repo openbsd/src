@@ -135,7 +135,7 @@ typedef enum {
     MaxAllocateType
 } EFI_ALLOCATE_TYPE;
 
-//Preseve the attr on any range supplied.
+//Preserve the attr on any range supplied.
 //ConventialMemory must have WB,SR,SW when supplied.
 //When allocating from ConventialMemory always make it WB,SR,SW
 //When returning to ConventialMemory always make it WB,SR,SW

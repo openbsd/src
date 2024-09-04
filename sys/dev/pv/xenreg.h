@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenreg.h,v 1.11 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: xenreg.h,v 1.12 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -534,7 +534,7 @@ struct evtchn_unmask {
 };
 
 /*
- * Superceded by new event_channel_op() hypercall since 0x00030202.
+ * Superseded by new event_channel_op() hypercall since 0x00030202.
  */
 struct evtchn_op {
 	uint32_t cmd;		/* EVTCHNOP_* */

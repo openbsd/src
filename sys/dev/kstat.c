@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.3 2024/07/08 14:46:47 mpi Exp $ */
+/* $OpenBSD: kstat.c,v 1.4 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -252,7 +252,7 @@ kstatioc_leave(struct kstat_req *ksreq, struct kstat *ks)
 
 			/* KSTAT_F_REALLOC */
 			KASSERTMSG(ks->ks_datalen == klen,
-			    "kstat doesnt support resized data yet");
+			    "kstat doesn't support resized data yet");
 
 			error = (*ks->ks_copy)(ks, buf);
 		}

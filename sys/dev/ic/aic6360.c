@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.40 2022/04/16 19:19:58 naddy Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.41 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -69,7 +69,7 @@
  */
 
 /* Use doubleword transfers to/from SCSI chip.  Note: This requires
- * motherboard support.  Basicly, some motherboard chipsets are able to
+ * motherboard support.  Basically, some motherboard chipsets are able to
  * split a 32 bit I/O operation into two 16 bit I/O operations,
  * transparently to the processor.  This speeds up some things, notably long
  * data transfers.

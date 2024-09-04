@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.14 2012/04/03 23:39:09 deraadt Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.15 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -121,7 +121,7 @@ struct fxp_cb_ias {
  *  Bitfields cleaned out since it is not endian compatible. OK
  *  you can define a big endian structure but can never be 100% safe...
  *
- *  ANY PROGRAMER TRYING THE STUNT WITH BITFIELDS IN A DEVICE DRIVER
+ *  ANY PROGRAMMER TRYING THE STUNT WITH BITFIELDS IN A DEVICE DRIVER
  *  SHOULD BE PUT UP AGAINST THE WALL, BLINDFOLDED AND SHOT!
  */
 struct fxp_cb_config {

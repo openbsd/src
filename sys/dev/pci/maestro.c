@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.54 2024/08/18 20:28:41 deraadt Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.55 2024/09/04 07:54:52 mglocker Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -991,7 +991,7 @@ maestro_open(void *hdl, int flags)
 	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD))
 		return ENXIO;	/* XXX */
 
-/* XXX work around VM brokeness */
+/* XXX work around VM brokenness */
 #if 0
 	if ((OFLAGS(flags) & O_ACCMODE) != O_WRONLY)
 		return (EINVAL);

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.122 2024/06/26 01:40:49 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.123 2024/09/04 07:54:52 mglocker Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -3039,7 +3039,7 @@ em_copper_link_rtl8211_setup(struct em_hw *hw)
 		return ret_val;
 	}
 
-	/* pulse streching= 42-84ms, blink rate=84mm */
+	/* pulse stretching= 42-84ms, blink rate=84mm */
 	phy_data = 0x140 | RGEPHY_LC_PULSE_42MS | RGEPHY_LC_LINK | 
 	    RGEPHY_LC_DUPLEX | RGEPHY_LC_RX;
 
@@ -4271,7 +4271,7 @@ em_check_for_link(struct em_hw *hw)
 	ctrl = E1000_READ_REG(hw, CTRL);
 	status = E1000_READ_REG(hw, STATUS);
 	/*
-	 * On adapters with a MAC newer than 82544, SW Defineable pin 1 will
+	 * On adapters with a MAC newer than 82544, SW Definable pin 1 will
 	 * be set when the optics detect a signal. On older adapters, it will
 	 * be cleared when there is a signal.  This applies to fiber media
 	 * only.

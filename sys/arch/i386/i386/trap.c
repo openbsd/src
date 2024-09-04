@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.164 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.165 2024/09/04 07:54:51 mglocker Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ upageflttrap(struct trapframe *frame, uint32_t cr2)
 
 	/*
 	 * cpu_pae is true if system has PAE + NX.
-	 * If NX is not enabled, we cant distinguish between PROT_READ
+	 * If NX is not enabled, we can't distinguish between PROT_READ
 	 * and PROT_EXEC access, so try both.
 	 */
 	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);

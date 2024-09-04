@@ -211,7 +211,7 @@ VOID
 
 
 //
-// EFI platform varibles
+// EFI platform variables
 //
 
 #define EFI_GLOBAL_VARIABLE     \
@@ -672,7 +672,7 @@ typedef struct _EFI_TABLE_HEARDER {
 
 
 //
-// EFI Runtime Serivces Table
+// EFI Runtime Services Table
 //
 
 #define EFI_RUNTIME_SERVICES_SIGNATURE  0x56524553544e5552

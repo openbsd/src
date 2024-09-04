@@ -1,4 +1,4 @@
-\	$OpenBSD: bootblk.fth,v 1.10 2020/06/05 09:16:13 otto Exp $
+\	$OpenBSD: bootblk.fth,v 1.11 2024/09/04 07:54:52 mglocker Exp $
 \	$NetBSD: bootblk.fth,v 1.15 2015/08/20 05:40:08 dholland Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
@@ -308,7 +308,7 @@ defer if_daddr
 
 niaddr /w* constant narraysize
 
-\ Assume UFS2 dinodes are always biger than UFS1
+\ Assume UFS2 dinodes are always bigger than UFS1
 ufs2_dinode_SIZEOF buffer: cur-inode
 0 value indir-block
 create indir-addr -1 , -1 ,
@@ -431,7 +431,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 : is-symlink? ( ufs1_dinode -- is-symlink? )	di-mode w@ ifmt and iflnk = ;
 
 \
-\ Multi-FS initialiation.
+\ Multi-FS initialization.
 \
 \ It's way down here so all the fs-specific routines have already been defined.
 \

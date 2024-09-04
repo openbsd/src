@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.12 2024/01/26 19:20:00 kettenis Exp $	*/
+/*	$OpenBSD: plic.c,v 1.13 2024/09/04 07:54:51 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -292,7 +292,7 @@ plic_attach(struct device *parent, struct device *dev, void *aux)
 			plic_irq_handler, NULL, "plic0");
 
 	/*
-	 * From now on, spl update must be enforeced to plic, so
+	 * From now on, spl update must be enforced to plic, so
 	 * spl* routine should be updated.
 	 */
 	riscv_set_intr_func(plic_splraise, plic_spllower,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.h,v 1.7 2020/07/22 13:16:04 krw Exp $
+/*	$OpenBSD: trm.h,v 1.8 2024/09/04 07:54:52 mglocker Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.h
@@ -123,7 +123,7 @@ struct trm_scsi_req_q
 #define TRM_NO_TAG                  0x00
 
 	u_int8_t	TargetStatus;	    /* SCSI status codes + Tekram: */
-#define TRM_SCSI_UNEXP_BUS_FREE     0xFD    /*    Unexpect Bus Free        */
+#define TRM_SCSI_UNEXP_BUS_FREE     0xFD    /*    Unexpected Bus Free      */
 #define TRM_SCSI_BUS_RST_DETECTED   0xFE    /*    Scsi Bus Reset detected  */
 #define TRM_SCSI_SELECT_TIMEOUT     0xFF    /*    Selection Time out       */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1204 2024/08/06 16:56:09 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1205 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5008,7 +5008,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason,
 	 * (Selective ACK). We could optionally validate the SACK values
 	 * against the current ACK window, either forwards or backwards, but
 	 * I'm not confident that SACK has been implemented properly
-	 * everywhere. It wouldn't surprise me if several stacks accidently
+	 * everywhere. It wouldn't surprise me if several stacks accidentally
 	 * SACK too far backwards of previously ACKed data. There really aren't
 	 * any security implications of bad SACKing unless the target stack
 	 * doesn't validate the option length correctly. Someone trying to

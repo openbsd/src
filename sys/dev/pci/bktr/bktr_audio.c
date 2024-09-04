@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.14 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.15 2024/09/04 07:54:52 mglocker Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -267,7 +267,7 @@ init_BTSC( bktr_ptr_t bktr )
 
 /*
  * setup the dbx chip
- * XXX FIXME: alot of work to be done here, this merely unmutes it.
+ * XXX FIXME: a lot of work to be done here, this merely unmutes it.
  */
 int
 set_BTSC( bktr_ptr_t bktr, int control )

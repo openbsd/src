@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.198 2023/10/22 12:01:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.199 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2444,7 +2444,7 @@ ieee80211_40mhz_valid_secondary_below(uint8_t primary_chan)
  * Only accept 40 MHz channel configurations that conform to
  * regulatory operating classes as defined by the 802.11ac spec.
  * Passing other configurations down to firmware can result in
- * regulatory assertions being trigged, such as fatal firmware
+ * regulatory assertions being triggered, such as fatal firmware
  * error 14FD in iwm(4).
  *
  * See 802.11ac 2013, page 380, Tables E-1 to E-5.
@@ -2521,7 +2521,7 @@ ieee80211_setup_vhtcaps(struct ieee80211_node *ni, const uint8_t *data,
  * Only accept 80 MHz channel configurations that conform to
  * regulatory operating classes as defined by the 802.11ac spec.
  * Passing other configurations down to firmware can result in
- * regulatory assertions being trigged, such as fatal firmware
+ * regulatory assertions being triggered, such as fatal firmware
  * error 14FD in iwm(4).
  *
  * See 802.11ac 2013, page 380, Tables E-1 to E-5.

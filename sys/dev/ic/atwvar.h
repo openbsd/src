@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.26 2013/12/06 21:03:02 deraadt Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.27 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/timeout.h>
 
 /*
- * Some misc. statics, useful for debugging.
+ * Some misc. statistics, useful for debugging.
  */
 struct atw_stats {
 	u_long		ts_tx_tuf;	/* transmit underflow errors */

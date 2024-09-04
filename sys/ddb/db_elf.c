@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.32 2021/03/12 10:22:46 jsg Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.33 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -280,7 +280,7 @@ db_elf_sym_search(vaddr_t off, db_strategy_t strategy, db_expr_t *diffp)
 		if (symp->st_name == 0)
 			continue;
 #if 0
-		/* This prevents me from seeing anythin in locore.s -- eeh */
+		/* This prevents me from seeing anything in locore.s -- eeh */
 		if (ELF_SYM_TYPE(symp->st_info) != Elf_estt_object &&
 		    ELF_SYM_TYPE(symp->st_info) != Elf_estt_func)
 			continue;

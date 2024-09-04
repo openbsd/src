@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.65 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.66 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -340,7 +340,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 
 	/*
 	 * We read in some system nodes to do not allow 
-	 * reclaim them and to have everytime access to them.
+	 * reclaim them and to have every time access to them.
 	 */ 
 	{
 		int pi[3] = { NTFS_MFTINO, NTFS_ROOTINO, NTFS_BITMAPINO };

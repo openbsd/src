@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.151 2024/07/12 17:20:18 mvs Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.152 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -996,10 +996,10 @@ tryagain:
 
 	/*
 	 * Since we only support RPCAUTH_UNIX atm we step over the
-	 * reply verifer type, and in the (error) case that there really
+	 * reply verifier type, and in the (error) case that there really
 	 * is any data in it, we advance over it.
 	 */
-	tl++;			/* Step over verifer type */
+	tl++;			/* Step over verifier type */
 	i = fxdr_unsigned(int32_t, *tl);
 	if (i > 0) {
 		/* Should not happen */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.38 2023/08/15 08:27:30 miod Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.39 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -306,7 +306,7 @@
 #define NVM_VER_INVALID		0xFFFF
 #define NVM_ETK_VALID		0x8000
 #define NVM_INVALID_PTR		0xFFFF
-#define NVM_VER_SIZE		32    /* version sting size */
+#define NVM_VER_SIZE		32    /* version string size */
 
 struct ixgbe_nvm_version {
 	uint32_t etk_id;

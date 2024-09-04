@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.6 2024/07/03 01:36:50 jsg Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.7 2024/09/04 07:54:51 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -29,7 +29,7 @@
 
 /*
  * Really simple spinlock implementation with recursive capabilities.
- * Correctness is paramount, no fancyness allowed.
+ * Correctness is paramount, no fanciness allowed.
  */
 
 #define	MPL_LOCKED	0

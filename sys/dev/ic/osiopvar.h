@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.12 2020/07/22 13:16:04 krw Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.13 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct osiop_ds {
 
 /*
  * ACB. Holds additional information for each SCSI command Comments:
- * Basicly, we refrain from fiddling with the scsi_xfer struct
+ * Basically, we refrain from fiddling with the scsi_xfer struct
  * (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,status} and
  * occasionally xs->retries.

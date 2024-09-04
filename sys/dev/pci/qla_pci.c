@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_pci.c,v 1.10 2024/05/24 06:02:58 jsg Exp $ */
+/*	$OpenBSD: qla_pci.c,v 1.11 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -217,7 +217,7 @@ qla_pci_detach(struct device *self, int flags)
 	int rv;
 
 	if (psc->psc_ih == NULL) {
-		/* we didnt attach properly, so nothing to detach */
+		/* we didn't attach properly, so nothing to detach */
 		return (0);
 	}
 

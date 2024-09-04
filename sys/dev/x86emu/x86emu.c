@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu.c,v 1.12 2022/01/09 05:43:02 jsg Exp $	*/
+/*	$OpenBSD: x86emu.c,v 1.13 2024/09/04 07:54:52 mglocker Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ fetch_long_imm(struct x86emu *emu)
  * 	gs segment override
  * 	ss segment override
  * 
- * 	ds/ss select (in absense of override)
+ * 	ds/ss select (in absence of override)
  * 
  * Each of the above 7 items are handled with a bit in the mode field.
  */

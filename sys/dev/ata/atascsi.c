@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.155 2024/05/26 10:01:01 jsg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.156 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -418,7 +418,7 @@ atascsi_probe(struct scsi_link *link)
 	xa->pmp_port = ap->ap_pmp_port;
 	xa->atascsi_private = &ahp->ahp_iopool;
 	ata_exec(as, xa);
-	ata_polled(xa); /* we dont care if it doesnt work */
+	ata_polled(xa); /* we don't care if it doesn't work */
 
 	return (0);
 error:
@@ -1797,7 +1797,7 @@ ata_polled(struct ata_xfer *xa)
 	int			rv;
 
 	if (!ISSET(xa->flags, ATA_F_DONE))
-		panic("ata_polled: xa isnt complete");
+		panic("ata_polled: xa isn't complete");
 
 	switch (xa->state) {
 	case ATA_S_COMPLETE:

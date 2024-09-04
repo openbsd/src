@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.61 2022/04/09 20:10:26 naddy Exp $ */
+/*	$OpenBSD: sili.c,v 1.62 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -123,7 +123,7 @@ void			sili_ports_free(struct sili_softc *);
 
 /*
  * you can fit 22 sge's into 7 sgts and a prb:
- * there's 1 sgl in an atapi prb (two in the ata one, but we cant over
+ * there's 1 sgl in an atapi prb (two in the ata one, but we can't over
  * advertise), but that's needed for the chain element. you get three sges
  * per sgt cos you lose the 4th sge for the chaining, but you keep it in
  * the last sgt. so 3 x 6 + 4 is 22.

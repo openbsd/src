@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.406 2024/08/31 16:23:09 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.407 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1364,7 +1364,7 @@ bge_fill_rx_ring_std(struct bge_softc *sc)
 		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
 
 	/*
-	 * bge always needs more than 8 packets on the ring. if we cant do
+	 * bge always needs more than 8 packets on the ring. if we can't do
 	 * that now, then try again later.
 	 */
 	if (if_rxr_inuse(&sc->bge_std_ring) <= 8)
@@ -1468,7 +1468,7 @@ bge_fill_rx_ring_jumbo(struct bge_softc *sc)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
 
 	/*
-	 * bge always needs more than 8 packets on the ring. if we cant do
+	 * bge always needs more than 8 packets on the ring. if we can't do
 	 * that now, then try again later.
 	 */
 	if (if_rxr_inuse(&sc->bge_jumbo_ring) <= 8)

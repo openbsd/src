@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.170 2024/04/16 10:06:37 claudio Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.171 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1520,7 +1520,7 @@ ReTry:	/* XXXMRG */
  * smaller than the size of a cluster.
  *
  * As long as some swap slots are being used by pages currently in memory,
- * it is possible to reuse them.  Even if the swap space has been completly
+ * it is possible to reuse them.  Even if the swap space has been completely
  * filled we do not consider it full.
  */
 int

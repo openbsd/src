@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.45 2024/05/24 06:26:47 jsg Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.46 2024/09/04 07:54:52 mglocker Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -36,7 +36,7 @@
 /* This is a driver for CardBus based serial devices. It is less
    generic than it could be, but it keeps the complexity down. So far
    it assumes that anything that reports itself as a `serial' device
-   is infact a 16x50 or 8250, which is not necessarily true (in
+   is in fact a 16x50 or 8250, which is not necessarily true (in
    practice this shouldn't be a problem). It also does not handle
    devices in the `multiport serial' or `modem' sub-classes, I've
    never seen any of these, so I don't know what they might look like.

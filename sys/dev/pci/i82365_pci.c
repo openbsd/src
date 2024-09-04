@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.16 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.17 2024/09/04 07:54:52 mglocker Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -170,7 +170,8 @@ pcic_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (irq) {
 		sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
 		if (sc->ih == NULL) {
-			printf("%s: couldnt map interrupt\n", sc->dev.dv_xname);
+			printf("%s: couldn't map interrupt\n",
+			    sc->dev.dv_xname);
 			bus_space_unmap(memt, memh, 0x10000);
 			bus_space_unmap(sc->iot, sc->ioh, size);
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.146 2019/12/16 19:17:04 claudio Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.147 2024/09/04 07:54:52 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -657,7 +657,7 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 		    (iicprobe(0x03) & 0x3f) == 0x00 && iicprobe(0x04) <= 0x08)
 			/*
 			 * Genesys Logic doesn't make the datasheet
-			 * for the GL523SM publically available, so
+			 * for the GL523SM publicly available, so
 			 * the checks above are nothing more than a
 			 * (conservative) educated guess.
 			 */

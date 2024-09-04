@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.336 2024/05/04 16:40:38 kn Exp $	*/
+/*	$OpenBSD: sd.c,v 1.337 2024/09/04 07:54:53 mglocker Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1648,7 +1648,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 		return -1;
 
 	if (ISSET(sc->flags, SDF_THIN) && sd_thin_params(sc, flags) != 0) {
-		/* we dont know the unmap limits, so we cant use thin shizz */
+		/* we don't know the unmap limits, so we can't use this shizz */
 		CLR(sc->flags, SDF_THIN);
 	}
 

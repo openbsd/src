@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.7 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: md.h,v 1.8 2024/09/04 07:54:51 mglocker Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -17,7 +17,7 @@
 #include <sys/cdefs.h>
 
 /*****************************************************************
- * Muliply/Divide SFU Internal State                             *
+ * Multiply/Divide SFU Internal State                            *
  *****************************************************************/
 struct mdsfu_register {
     int rslt_hi,

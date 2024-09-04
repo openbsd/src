@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.6 2022/01/29 05:47:36 visa Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.7 2024/09/04 07:54:52 mglocker Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ ALEAF(bcopy)
 	PTR_ADDU t1, a1, a2		# t1 = end of to region
 1:
 	lb	v1, -1(t0)		# copy bytes backwards,
-	PTR_SUBU t0, t0, 1		#   doesnt happen often so do slow way
+	PTR_SUBU t0, t0, 1		#   doesn't happen often so do slow way
 	PTR_SUBU t1, t1, 1
 	bne	t0, a0, 1b
 	sb	v1, 0(t1)

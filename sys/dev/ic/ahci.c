@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.41 2024/05/28 01:37:53 jsg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.42 2024/09/04 07:54:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -268,7 +268,7 @@ noccc:
 	sc->sc_ncmds = max(2, sc->sc_ncmds);
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
 		if (!ISSET(pi, 1U << i)) {
-			/* dont allocate stuff if the port isnt implemented */
+			/* don't allocate stuff if the port isn't implemented */
 			continue;
 		}
 
