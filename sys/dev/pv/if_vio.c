@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.53 2024/09/04 06:36:33 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.54 2024/09/04 09:12:55 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -266,9 +266,6 @@ struct vio_softc {
 #define VIO_DMAMEM_SYNC(vsc, sc, p, size, flags)		\
 	bus_dmamap_sync((vsc)->sc_dmat, (sc)->sc_dma_map,	\
 	    VIO_DMAMEM_OFFSET((sc), (p)), (size), (flags))
-#define VIO_DMAMEM_ENQUEUE(sc, vq, slot, p, size, write)	\
-	virtio_enqueue_p((vq), (slot), (sc)->sc_dma_map,	\
-	    VIO_DMAMEM_OFFSET((sc), (p)), (size), (write))
 #define VIO_HAVE_MRG_RXBUF(sc)					\
 	((sc)->sc_hdr_size == sizeof(struct virtio_net_hdr))
 
@@ -539,6 +536,16 @@ vio_alloc_mem(struct vio_softc *sc)
  free:
 	vio_free_dmamem(sc);
 	return -1;
+}
+
+static void
+vio_dmamem_enqueue(struct virtio_softc *vsc, struct vio_softc *sc,
+    struct virtqueue *vq, int slot, void *p, size_t size, int write)
+{
+	VIO_DMAMEM_SYNC(vsc, sc, p, size, write ? BUS_DMASYNC_PREWRITE :
+	    BUS_DMASYNC_PREREAD);
+	virtio_enqueue_p(vq, slot, sc->sc_dma_map, VIO_DMAMEM_OFFSET(sc, p),
+	    size, write);
 }
 
 void
@@ -997,9 +1004,7 @@ again:
 		bus_dmamap_sync(vsc->sc_dmat, vioq->viq_txdmamaps[slot], 0,
 		    vioq->viq_txdmamaps[slot]->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
-		VIO_DMAMEM_SYNC(vsc, sc, hdr, sc->sc_hdr_size,
-		    BUS_DMASYNC_PREWRITE);
-		VIO_DMAMEM_ENQUEUE(sc, vq, slot, hdr, sc->sc_hdr_size, 1);
+		vio_dmamem_enqueue(vsc, sc, vq, slot, hdr, sc->sc_hdr_size, 1);
 		virtio_enqueue(vq, slot, vioq->viq_txdmamaps[slot], 1);
 		virtio_enqueue_commit(vsc, vq, slot, 0);
 		queued++;
@@ -1495,13 +1500,6 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 	sc->sc_ctrl_cmd->command = cmd;
 	sc->sc_ctrl_rx->onoff = onoff;
 
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_PREWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_rx,
-	    sizeof(*sc->sc_ctrl_rx), BUS_DMASYNC_PREWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_PREREAD);
-
 	r = virtio_enqueue_prep(vq, &slot);
 	if (r != 0)
 		panic("%s: %s virtio_enqueue_prep: control vq busy",
@@ -1510,11 +1508,11 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 	if (r != 0)
 		panic("%s: %s virtio_enqueue_reserve: control vq busy",
 		    sc->sc_dev.dv_xname, __func__);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_cmd,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_rx,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_rx,
 	    sizeof(*sc->sc_ctrl_rx), 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_status,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
 	    sizeof(*sc->sc_ctrl_status), 0);
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
@@ -1557,13 +1555,6 @@ vio_ctrl_guest_offloads(struct vio_softc *sc, uint64_t features)
 	sc->sc_ctrl_cmd->command = VIRTIO_NET_CTRL_GUEST_OFFLOADS_SET;
 	sc->sc_ctrl_guest_offloads->offloads = features;
 
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_PREWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_guest_offloads,
-	    sizeof(*sc->sc_ctrl_guest_offloads), BUS_DMASYNC_PREWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_PREREAD);
-
 	r = virtio_enqueue_prep(vq, &slot);
 	if (r != 0)
 		panic("%s: %s virtio_enqueue_prep: control vq busy",
@@ -1572,11 +1563,11 @@ vio_ctrl_guest_offloads(struct vio_softc *sc, uint64_t features)
 	if (r != 0)
 		panic("%s: %s virtio_enqueue_reserve: control vq busy",
 		    sc->sc_dev.dv_xname, __func__);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_cmd,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_guest_offloads,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_guest_offloads,
 	    sizeof(*sc->sc_ctrl_guest_offloads), 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_status,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
 	    sizeof(*sc->sc_ctrl_status), 0);
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
@@ -1683,13 +1674,6 @@ vio_set_rx_filter(struct vio_softc *sc)
 	sc->sc_ctrl_cmd->class = VIRTIO_NET_CTRL_MAC;
 	sc->sc_ctrl_cmd->command = VIRTIO_NET_CTRL_MAC_TABLE_SET;
 
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_PREWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_mac_info,
-	    VIO_CTRL_MAC_INFO_SIZE, BUS_DMASYNC_PREWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_PREREAD);
-
 	r = virtio_enqueue_prep(vq, &slot);
 	if (r != 0)
 		panic("%s: %s virtio_enqueue_prep: control vq busy",
@@ -1698,15 +1682,15 @@ vio_set_rx_filter(struct vio_softc *sc)
 	if (r != 0)
 		panic("%s: %s virtio_enqueue_reserve: control vq busy",
 		    sc->sc_dev.dv_xname, __func__);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_cmd,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_mac_tbl_uc,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mac_tbl_uc,
 	    sizeof(*sc->sc_ctrl_mac_tbl_uc) +
 	    sc->sc_ctrl_mac_tbl_uc->nentries * ETHER_ADDR_LEN, 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_mac_tbl_mc,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mac_tbl_mc,
 	    sizeof(*sc->sc_ctrl_mac_tbl_mc) +
 	    sc->sc_ctrl_mac_tbl_mc->nentries * ETHER_ADDR_LEN, 1);
-	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_status,
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
 	    sizeof(*sc->sc_ctrl_status), 0);
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
