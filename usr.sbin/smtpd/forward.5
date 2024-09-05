@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.10 2021/02/13 07:26:18 jmc Exp $
+.\"	$OpenBSD: forward.5,v 1.11 2024/09/05 05:51:46 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2021 $
+.Dd $Mdocdate: September 5 2024 $
 .Dt FORWARD 5
 .Os
 .Sh NAME
@@ -33,12 +33,7 @@ A
 file contains a list of expansion values, as described in
 .Xr aliases 5 .
 Each expansion value should be on a line by itself.
-However, the
-.Nm .forward
-mechanism differs from the aliases mechanism in that it disallows
-file inclusion
-.Pq :include:
-and it performs expansion under the user ID of the
+Expansion is performed under the user ID of the
 .Nm .forward
 file owner.
 .Pp
