@@ -1,6 +1,9 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* apply the fallthrough attribute. */
+#define ATTR_FALLTHROUGH __attribute__((fallthrough));
+
 /* apply the noreturn attribute to a function that exits the program */
 #define ATTR_NORETURN __attribute__((__noreturn__))
 
@@ -57,6 +60,9 @@
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1
+
+/* Whether the C compiler accepts the "fallthrough" attribute */
+#define HAVE_ATTR_FALLTHROUGH 1
 
 /* Whether the C compiler accepts the "format" attribute */
 #define HAVE_ATTR_FORMAT 1
@@ -407,6 +413,9 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #define HAVE_NET_IF_H 1
 
+/* Define to 1 if you have the <net/pfvar.h> header file. */
+/* #undef HAVE_NET_PFVAR_H */
+
 /* Define this to use nghttp2 client. */
 /* #undef HAVE_NGHTTP2 */
 
@@ -566,6 +575,9 @@
 /* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_evp_cb'
    function. */
 /* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB */
+
+/* Define to 1 if you have the `SSL_CTX_set_tmp_ecdh' function. */
+/* #undef HAVE_SSL_CTX_SET_TMP_ECDH */
 
 /* Define to 1 if you have the `SSL_get0_alpn_selected' function. */
 #define HAVE_SSL_GET0_ALPN_SELECTED 1
@@ -779,7 +791,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.20.0"
+#define PACKAGE_STRING "unbound 1.21.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -788,7 +800,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.20.0"
+#define PACKAGE_VERSION "1.21.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -811,7 +823,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,20,0,0
+#define RSRC_PACKAGE_VERSION 1,21,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -1485,6 +1497,7 @@ struct sockaddr_storage;
 #  define calloc(n,s) unbound_stat_calloc_log(n, s, __FILE__, __LINE__, __func__)
 #  define free(p) unbound_stat_free_log(p, __FILE__, __LINE__, __func__)
 #  define realloc(p,s) unbound_stat_realloc_log(p, s, __FILE__, __LINE__, __func__)
+#  define strdup(s) unbound_stat_strdup_log(s, __FILE__, __LINE__, __func__)
 void *unbound_stat_malloc(size_t size);
 void *unbound_stat_calloc(size_t nmemb, size_t size);
 void unbound_stat_free(void *ptr);
@@ -1497,6 +1510,8 @@ void unbound_stat_free_log(void *ptr, const char* file, int line,
 	const char* func);
 void *unbound_stat_realloc_log(void *ptr, size_t size, const char* file,
 	int line, const char* func);
+char *unbound_stat_strdup_log(const char *s, const char* file, int line,
+	const char* func);
 #elif defined(UNBOUND_ALLOC_LITE)
 #  include "util/alloc.h"
 #endif /* UNBOUND_ALLOC_LITE and UNBOUND_ALLOC_STATS */

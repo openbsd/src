@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.82 2024/08/09 19:43:26 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.83 2024/09/05 08:22:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -773,7 +773,7 @@ handle_query(struct pending_query *pq)
 	}
 
 	rcode = parse_edns_from_query_pkt(pq->qbuf, &pq->edns, NULL, NULL,
-	    NULL, 0, pq->region);
+	    NULL, 0, pq->region, NULL);
 	if (rcode != LDNS_RCODE_NOERROR) {
 		error_answer(pq, rcode);
 		goto send_answer;
@@ -1059,7 +1059,7 @@ resend_dns64_query(struct pending_query *opq)
 	}
 
 	rcode = parse_edns_from_query_pkt(pq->qbuf, &pq->edns, NULL, NULL,
-	    NULL, 0, pq->region);
+	    NULL, 0, pq->region, NULL);
 	if (rcode != LDNS_RCODE_NOERROR) {
 		error_answer(pq, rcode);
 		goto send_answer;
