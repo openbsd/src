@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.107 2024/02/05 21:33:00 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.108 2024/09/05 08:52:27 bluhm Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: February 5 2024 $
+.Dd $Mdocdate: September 5 2024 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -658,7 +658,11 @@ If the
 .Cm /f
 modifier is specified, the complete map is printed.
 .\" --------------------
-.It Ic show mbuf Ar addr
+.It Xo
+.Ic show mbuf
+.Op Cm /cp
+.Ar addr
+.Xc
 Prints the
 .Vt struct mbuf
 header at
@@ -668,6 +672,13 @@ Depending on the mbuf flags
 and
 .Vt struct m_ext
 are printed as well.
+If the
+.Cm /c
+modifier is specified, print the mbuf chain linked with the m_next
+pointer.
+.Cm /p
+does the same using m_nextpkt.
+Both can be combined.
 .\" --------------------
 .It Xo
 .Ic show mount

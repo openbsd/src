@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.291 2024/08/29 10:44:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.292 2024/09/05 08:52:27 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1532,6 +1532,80 @@ m_print(void *v,
 		    m->m_ext.ext_nextref, m->m_ext.ext_prevref);
 
 	}
+}
+
+const char *m_types[MT_NTYPES] = {
+	"fre",
+	"dat",
+	"hdr",
+	"nam",
+	"opt",
+	"ftb",
+	"ctl",
+	"oob",
+};
+
+void
+m_print_chain(void *v, int deep,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+{
+	struct mbuf *m;
+	const char *indent = deep ? "++-" : "-+-";
+	size_t chain = 0, len = 0, size = 0;
+
+	for (m = v; m != NULL; m = m->m_next) {
+		const char *type;
+
+		chain++;
+		len += m->m_len;
+		size += M_SIZE(m);
+		type = (m->m_type >= 0 && m->m_type < MT_NTYPES) ?
+		    m_types[m->m_type] : "???";
+		(*pr)("%s mbuf %p, %s, off %zd, len %u", indent, m, type,
+		    m->m_data - M_DATABUF(m), m->m_len);
+		if (m->m_flags & M_PKTHDR)
+			(*pr)(", pktlen %d", m->m_pkthdr.len);
+		if (m->m_flags & M_EXT)
+			(*pr)(", clsize %u", m->m_ext.ext_size);
+		(*pr)("\n");
+		indent = deep ? "|+-" : " +-";
+	}
+	indent = deep ? "|\\-" : " \\-";
+	if (v != NULL) {
+		(*pr)("%s total chain %zu, len %zu, size %zu\n",
+		    indent, chain, len, size);
+	}
+}
+
+void
+m_print_packet(void *v, int deep,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+{
+	struct mbuf *m, *n;
+	const char *indent = "+--";
+	size_t pkts = 0;
+
+	for (m = v; m != NULL; m = m->m_nextpkt) {
+		size_t chain = 0, len = 0, size = 0;
+
+		pkts++;
+		if (deep) {
+			m_print_chain(m, deep, pr);
+			continue;
+		}
+		for (n = m; n != NULL; n = n->m_next) {
+			chain++;
+			len += n->m_len;
+			size += M_SIZE(n);
+		}
+		(*pr)("%s mbuf %p, chain %zu", indent, m, chain);
+		if (m->m_flags & M_PKTHDR)
+			(*pr)(", pktlen %d", m->m_pkthdr.len);
+		(*pr)(", len %zu, size %zu\n", len, size);
+	}
+	indent = "\\--";
+	if (v != NULL)
+		(*pr)("%s total packets %zu\n", indent, pkts);
 }
 #endif
 

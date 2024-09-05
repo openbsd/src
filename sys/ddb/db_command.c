@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.101 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.102 2024/09/05 08:52:27 bluhm Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -340,7 +340,15 @@ db_malloc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_mbuf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	m_print((void *)addr, db_printf);
+	if ((modif[0] == 'c' && modif[1] == 'p') ||
+	    (modif[0] == 'p' && modif[1] == 'c'))
+		m_print_packet((void *)addr, 1, db_printf);
+	else if (modif[0] == 'c')
+		m_print_chain((void *)addr, 0, db_printf);
+	else if (modif[0] == 'p')
+		m_print_packet((void *)addr, 0, db_printf);
+	else
+		m_print((void *)addr, db_printf);
 }
 
 void
