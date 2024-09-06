@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.2 2020/09/18 19:19:38 jasper Exp $	*/
+/*	$OpenBSD: printf.c,v 1.3 2024/09/06 07:58:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -400,7 +400,7 @@ getchr(void)
 	if (gargv == NULL)
 		return((int)'\0');
 
-	c = (int)*ba2str(gargv, gdevt);
+	c = ba2long(gargv, gdevt);
 	gargv = SLIST_NEXT(gargv, ba_next);
 	return c;
 }
