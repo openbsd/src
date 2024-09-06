@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.12 2019/11/06 19:16:48 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.13 2024/09/06 13:31:59 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -38,6 +38,7 @@
 struct kubsan_report {
 	enum {
 		KUBSAN_FLOAT_CAST_OVERFLOW,
+		KUBSAN_INVALID_BUILTIN,
 		KUBSAN_INVALID_VALUE,
 		KUBSAN_NEGATE_OVERFLOW,
 		KUBSAN_NONNULL_ARG,
@@ -56,6 +57,10 @@ struct kubsan_report {
 			const struct float_cast_overflow_data *v_data;
 			unsigned long v_val;
 		} v_float_cast_overflow;
+
+		struct {
+			const struct invalid_builtin_data *v_data;
+		} v_invalid_builtin;
 
 		struct {
 			const struct invalid_value_data *v_data;
@@ -102,6 +107,7 @@ struct kubsan_report {
 	} kr_u;
 };
 #define kr_float_cast_overflow		kr_u.v_float_cast_overflow
+#define kr_invalid_builtin		kr_u.v_invalid_builtin
 #define kr_invalid_value		kr_u.v_invalid_value
 #define kr_negate_overflow		kr_u.v_negate_overflow
 #define kr_nonnull_arg			kr_u.v_nonnull_arg
@@ -127,6 +133,11 @@ struct float_cast_overflow_data {
 	struct source_location d_src;
 	struct type_descriptor *d_ftype;	/* from type */
 	struct type_descriptor *d_ttype;	/* to type */
+};
+
+struct invalid_builtin_data {
+	struct source_location d_src;
+	uint8_t d_kind;
 };
 
 struct invalid_value_data {
@@ -259,6 +270,18 @@ __ubsan_handle_float_cast_overflow(struct float_cast_overflow_data *data,
 		.kr_type		= KUBSAN_FLOAT_CAST_OVERFLOW,
 		.kr_src			= &data->d_src,
 		.kr_float_cast_overflow	= { data, val },
+	};
+
+	kubsan_defer_report(&kr);
+}
+
+void
+__ubsan_handle_invalid_builtin(struct invalid_builtin_data *data)
+{
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_INVALID_VALUE,
+		.kr_src			= &data->d_src,
+		.kr_invalid_builtin	= { data },
 	};
 
 	kubsan_defer_report(&kr);
@@ -559,6 +582,16 @@ again:
 			    "of representable values of type %s\n",
 			    bloc, blhs, data->d_ftype->t_name,
 			    data->d_ttype->t_name);
+			break;
+		}
+
+		case KUBSAN_INVALID_BUILTIN: {
+			const struct invalid_builtin_data *data =
+			    kr->kr_invalid_builtin.v_data;
+
+			printf("kubsan: %s: invalid builtin: passing zero to "
+			    "%s, which is not a valid argument\n",
+			    bloc, kubsan_kind(data->d_kind));
 			break;
 		}
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kubsan.4,v 1.4 2024/09/06 13:30:59 mbuhl Exp $
+.\"	$OpenBSD: kubsan.4,v 1.5 2024/09/06 13:31:59 mbuhl Exp $
 .\"
 .\" Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -69,6 +69,8 @@ Passing
 .Dv NULL
 as the value for a function argument annotated with
 .Dv __nonnull__ .
+.It Invalid builtin
+Passing zero to a compiler builtin where not allowed.
 .It Invalid load
 Loading a value that cannot be represented by the destination type.
 .It Type mismatch
