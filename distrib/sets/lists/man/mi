@@ -1842,6 +1842,7 @@
 ./usr/share/man/man4/pppoe.4
 ./usr/share/man/man4/pppx.4
 ./usr/share/man/man4/psci.4
+./usr/share/man/man4/psp.4
 ./usr/share/man/man4/pty.4
 ./usr/share/man/man4/puc.4
 ./usr/share/man/man4/pvbus.4
