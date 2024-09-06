@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.36 2024/08/22 10:08:25 mvs Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.37 2024/09/06 08:38:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -25,6 +25,8 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+
+#include <machine/intr.h>
 
 #include <dev/dt/dtvar.h>
 
@@ -96,6 +98,7 @@ struct dt_softc {
 	SLIST_ENTRY(dt_softc)	 ds_next;	/* [K] descriptor list */
 	int			 ds_unit;	/* [I] D_CLONE unique unit */
 	pid_t			 ds_pid;	/* [I] PID of tracing program */
+	void			*ds_si;		/* [I] to defer wakeup(9) */
 
 	struct mutex		 ds_mtx;
 
@@ -142,6 +145,9 @@ int	dt_ioctl_get_auxbase(struct dt_softc *, struct dtioc_getaux *);
 int	dt_pcb_ring_copy(struct dt_pcb *, struct uio *, size_t, size_t *,
 		uint64_t *);
 
+void	dt_wakeup(struct dt_softc *);
+void	dt_deferred_wakeup(void *);
+
 void
 dtattach(struct device *parent, struct device *self, void *aux)
 {
@@ -183,6 +189,11 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc->ds_evtcnt = 0;
 	sc->ds_readevt = 0;
 	sc->ds_dropevt = 0;
+	sc->ds_si = softintr_establish(IPL_SOFTCLOCK, dt_deferred_wakeup, sc);
+	if (sc->ds_si == NULL) {
+		free(sc, M_DEVBUF, sizeof(*sc));
+		return ENOMEM;
+	}
 
 	SLIST_INSERT_HEAD(&dtdev_list, sc, ds_next);
 
@@ -205,6 +216,7 @@ dtclose(dev_t dev, int flags, int mode, struct proc *p)
 	SLIST_REMOVE(&dtdev_list, sc, dt_softc, ds_next);
 	dt_ioctl_record_stop(sc);
 	dt_pcb_purge(&sc->ds_pcbs);
+	softintr_disestablish(sc->ds_si);
 
 	free(sc, M_DEVBUF, sizeof(*sc));
 
@@ -719,7 +731,7 @@ dt_pcb_ring_consume(struct dt_pcb *dp, struct dt_evt *dtev)
 	mtx_enter(&dp->dp_sc->ds_mtx);
 	dp->dp_sc->ds_evtcnt++;
 	mtx_leave(&dp->dp_sc->ds_mtx);
-	wakeup(dp->dp_sc);
+	dt_wakeup(dp->dp_sc);
 }
 
 /*
@@ -779,4 +791,25 @@ out:
 
 	*rcvd = copied;
 	return error;
+}
+
+void
+dt_wakeup(struct dt_softc *sc)
+{
+	/*
+	 * It is not always safe or possible to call wakeup(9) and grab
+	 * the SCHED_LOCK() from a given tracepoint.  This is true for
+	 * any tracepoint that might trigger inside the scheduler or at
+	 * any IPL higher than IPL_SCHED.  For this reason use a soft-
+	 * interrupt to defer the wakeup.
+	 */
+	softintr_schedule(sc->ds_si);
+}
+
+void
+dt_deferred_wakeup(void *arg)
+{
+	struct dt_softc *sc = arg;
+
+	wakeup(sc);
 }
