@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.58 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: e_aes.c,v 1.59 2024/09/06 09:57:32 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -54,6 +54,8 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h>
+
+#include "crypto_internal.h"
 
 #ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
@@ -154,7 +156,7 @@ void AES_xts_decrypt(const char *inp, char *out, size_t len,
 #include "x86_arch.h"
 
 #ifdef VPAES_ASM
-#define VPAES_CAPABLE	(OPENSSL_cpu_caps() & CPUCAP_MASK_SSSE3)
+#define VPAES_CAPABLE	(crypto_cpu_caps_ia32() & CPUCAP_MASK_SSSE3)
 #endif
 #ifdef BSAES_ASM
 #define BSAES_CAPABLE	VPAES_CAPABLE
@@ -162,7 +164,7 @@ void AES_xts_decrypt(const char *inp, char *out, size_t len,
 /*
  * AES-NI section
  */
-#define	AESNI_CAPABLE	(OPENSSL_cpu_caps() & CPUCAP_MASK_AESNI)
+#define	AESNI_CAPABLE	(crypto_cpu_caps_ia32() & CPUCAP_MASK_AESNI)
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key);

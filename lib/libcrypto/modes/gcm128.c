@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.26 2023/08/10 07:18:43 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.27 2024/09/06 09:57:32 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -50,9 +50,12 @@
 
 #define OPENSSL_FIPSAPI
 
-#include <openssl/crypto.h>
-#include "modes_local.h"
 #include <string.h>
+
+#include <openssl/crypto.h>
+
+#include "crypto_internal.h"
+#include "modes_local.h"
 
 #ifndef MODES_DEBUG
 # ifndef NDEBUG
@@ -660,7 +663,7 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 # if	defined(GHASH_ASM_X86_OR_64)
 #  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
 	/* check FXSR and PCLMULQDQ bits */
-	if ((OPENSSL_cpu_caps() & (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) ==
+	if ((crypto_cpu_caps_ia32() & (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) ==
 	    (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) {
 		gcm_init_clmul(ctx->Htable, ctx->H.u);
 		ctx->gmult = gcm_gmult_clmul;
@@ -671,9 +674,9 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 	gcm_init_4bit(ctx->Htable, ctx->H.u);
 #  if	defined(GHASH_ASM_X86)			/* x86 only */
 #   if	defined(OPENSSL_IA32_SSE2)
-	if (OPENSSL_cpu_caps() & CPUCAP_MASK_SSE) {	/* check SSE bit */
+	if (crypto_cpu_caps_ia32() & CPUCAP_MASK_SSE) {	/* check SSE bit */
 #   else
-	if (OPENSSL_cpu_caps() & CPUCAP_MASK_MMX) {	/* check MMX bit */
+	if (crypto_cpu_caps_ia32() & CPUCAP_MASK_MMX) {	/* check MMX bit */
 #   endif
 		ctx->gmult = gcm_gmult_4bit_mmx;
 		ctx->ghash = gcm_ghash_4bit_mmx;

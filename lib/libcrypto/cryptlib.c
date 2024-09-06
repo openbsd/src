@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.53 2024/08/31 12:43:58 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.54 2024/09/06 09:57:32 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -334,6 +334,12 @@ CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
 
 uint64_t OPENSSL_ia32cap_P;
 
+uint64_t
+crypto_cpu_caps_ia32(void)
+{
+	return OPENSSL_ia32cap_P;
+}
+
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
 #define OPENSSL_CPUID_SETUP
 void
@@ -352,6 +358,12 @@ OPENSSL_cpuid_setup(void)
 }
 #endif
 
+#else
+uint64_t
+crypto_cpu_caps_ia32(void)
+{
+	return 0;
+}
 #endif
 
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
