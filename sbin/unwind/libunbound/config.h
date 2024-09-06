@@ -2,7 +2,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* apply the fallthrough attribute. */
+#if defined(__clang__)
 #define ATTR_FALLTHROUGH __attribute__((fallthrough));
+#else
+#define ATTR_FALLTHROUGH
+#endif
 
 /* apply the noreturn attribute to a function that exits the program */
 #define ATTR_NORETURN __attribute__((__noreturn__))
