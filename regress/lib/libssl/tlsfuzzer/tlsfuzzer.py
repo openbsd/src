@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.52 2023/08/14 18:10:42 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.53 2024/09/06 14:56:57 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -352,7 +352,6 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-cve-2016-2107.py"),
     Test("test-cve-2016-6309.py"),
     Test("test-dhe-rsa-key-exchange.py"),
-    Test("test-dhe-rsa-key-exchange-with-bad-messages.py"),
     Test("test-early-application-data.py"),
     Test("test-empty-extensions.py"),
     Test("test-extensions.py"),
@@ -399,6 +398,10 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
             "-e", "TLS_DHE_RSA_WITH_AES_256_CBC_SHA sha224 signature",
         ]
     ),
+    Test("test-dhe-rsa-key-exchange-with-bad-messages.py", [
+        "-x", "invalid dh_Yc value - missing",
+        "-X", substitute_alert("decode_error", "illegal_parameter"),
+    ]),
     Test("test-dhe-key-share-random.py", tls12_exclude_legacy_protocols),
     Test("test-export-ciphers-rejected.py", ["--min-ver", "TLSv1.2"]),
     Test(
