@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpciareg.h,v 1.1 2007/03/16 21:22:27 robert Exp $ */
+/* $OpenBSD: mcpciareg.h,v 1.2 2024/09/06 10:54:08 jsg Exp $ */
 /* $NetBSD: mcpciareg.h,v 1.7 2006/05/17 21:32:59 drochner Exp $ */
 
 /*
@@ -109,7 +109,7 @@
  * - (8+x)(9+y*2).F000.3EFF
  *
  * (8+x)(9+y*2).F000.3F00,              N/A             PCIy Interrupt ACK0
- * (8+x)(9+y*2).F000.3F40                               PCIy INteruppt ACK1
+ * (8+x)(9+y*2).F000.3F40                               PCIy Interrupt ACK1
  *
  * (8+x)(9+y*2).F000.3F80               N/A             Unused
  * - (8+x)(9+y*2).FFFF.FFFF

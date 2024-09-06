@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.77 2024/05/24 06:02:57 jsg Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.78 2024/09/06 10:54:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1304,7 +1304,7 @@ wb_start(struct ifnet *ifp)
 		 * the own bit is clear because the chip cleared it
 		 * and where the own bit is clear because we haven't
 		 * set it yet. The magic value WB_UNSET is just some
-		 * ramdomly chosen number which doesn't have the own
+		 * randomly chosen number which doesn't have the own
 	 	 * bit set. When we actually transmit the frame, the
 		 * status word will have _only_ the own bit set, so
 		 * the txeoc handler will be able to tell if it needs

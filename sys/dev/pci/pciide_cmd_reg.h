@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_cmd_reg.h,v 1.11 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: pciide_cmd_reg.h,v 1.12 2024/09/06 10:54:08 jsg Exp $	*/
 /*	$NetBSD: pciide_cmd_reg.h,v 1.9 2000/08/02 20:23:46 bouyer Exp $	*/
 
 /*
@@ -78,12 +78,12 @@
 #define CMD_DMA			0x00
 #define CMD_DMA_MULTIPLE	0x01
 #define CMD_DMA_LINE		0x03
-/* the followings bits are only for 0646U/646U2/648/649 */
+/* the following bits are only for 0646U/646U2/648/649 */
 #define CMD_DMA_IRQ(chan) 	(0x4 << (chan))
 #define CMD_DMA_IRQ_DIS(chan) 	(0x10 << (chan))
 #define CMD_DMA_RST		0x40
 
-/* the followings are only for 0646U/646U2/648/649 */
+/* the following is only for 0646U/646U2/648/649 */
 /* busmaster control/status register */
 #define CMD_BICSR	0x79
 #define CMD_BICSR_80(chan)	(0x01 << (chan))

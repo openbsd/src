@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.184 2024/05/22 05:51:49 jsg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.185 2024/09/06 10:54:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -2247,7 +2247,7 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 	if (msr & PSL_PR)
 		return 0;
 
-	/* if copyin, throw to full excption handler */
+	/* if copyin, throw to full exception handler */
 	if (VP_SR(va) == PPC_USER_SR)
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.34 2024/05/22 05:51:49 jsg Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.35 2024/09/06 10:54:08 jsg Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@
 #define	MACE_FIFOCC		12  /* FIFO Configuration Control (read/write) */
 #define	MACE_MACCC		13  /* MAC Configuration Control (read/write) */
 #define	MACE_PLSCC		14  /* PLS Configuration Control (read/write) */
-#define	MACE_PHYCC		15  /* PHY Confiuration Control (read/write) */
+#define	MACE_PHYCC		15  /* PHY Configuration Control (read/write) */
 #define	MACE_CHIPIDL		16  /* Chip ID Register [07-00] (read only) */
 #define	MACE_CHIPIDH		17  /* Chip ID Register [15-08] (read only) */
 #define	MACE_IAC		18  /* Internal Address Configuration (read/write) */

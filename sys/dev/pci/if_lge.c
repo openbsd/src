@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.81 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.82 2024/09/06 10:54:08 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1063,7 +1063,7 @@ lge_init(void *xsc)
 	CSR_WRITE_4(sc, LGE_MODE1, LGE_MODE1_VLAN_RX|LGE_MODE1_VLAN_TX|
 	    LGE_MODE1_VLAN_STRIP|LGE_MODE1_VLAN_INSERT);
 
-	/* Workarond: FIFO overflow */
+	/* Workaround: FIFO overflow */
 	CSR_WRITE_2(sc, LGE_RXFIFO_HIWAT, 0x3FFF);
 	CSR_WRITE_4(sc, LGE_IMR, LGE_IMR_SETRST_CTL1|LGE_IMR_RXFIFO_WAT);
 

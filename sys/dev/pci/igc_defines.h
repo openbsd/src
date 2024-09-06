@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_defines.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_defines.h,v 1.2 2024/09/06 10:54:08 jsg Exp $	*/
 
 /*-
  * Copyright 2021 Intel Corp
@@ -749,7 +749,7 @@
 /* TTQF SCTP Bit, shift with IGC_TTQF_PROTOCOL_SHIFT */
 #define IGC_TTQF_PROTOCOL_SCTP		0x2
 #define IGC_TTQF_PROTOCOL_SHIFT		5       /* TTQF Protocol Shift */
-#define IGC_TTQF_QUEUE_SHIFT		16      /* TTQF Queue Shfit */
+#define IGC_TTQF_QUEUE_SHIFT		16      /* TTQF Queue Shift */
 #define IGC_TTQF_RX_QUEUE_MASK		0x70000 /* TTQF Queue Mask */
 #define IGC_TTQF_MASK_ENABLE		0x10000000 /* TTQF Mask Enable Bit */
 #define IGC_IMIR_CLEAR_MASK		0xF001FFFF /* IMIR Reg Clear Mask */

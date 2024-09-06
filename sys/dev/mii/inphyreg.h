@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphyreg.h,v 1.5 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: inphyreg.h,v 1.6 2024/09/06 10:54:08 jsg Exp $	*/
 /*	$NetBSD: inphyreg.h,v 1.1 1998/08/11 00:00:28 thorpej Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #define	SCTRL_SCRBYPASS		0x8000	/* scrambler bypass */
 #define	SCTRL_4B5BNYPASS	0x4000	/* 4bit to 5bit bypass */
 #define	SCTRL_FTHP		0x2000	/* force transmit H-pattern */
-#define	SCTRL_F34TP		0x1000	/* force 34 transmit patter */
+#define	SCTRL_F34TP		0x1000	/* force 34 transmit pattern */
 #define	SCTRL_GOODLINK		0x0800	/* 100baseTX link good */
 #define	SCTRL_TCSD		0x0200	/* transmit carrier sense disable */
 #define	SCTRL_DDPD		0x0100	/* disable dynamic power-down */
