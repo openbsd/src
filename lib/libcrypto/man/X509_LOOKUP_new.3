@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.11 2024/04/22 02:30:23 jsg Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.12 2024/09/06 07:48:20 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2024 $
+.Dd $Mdocdate: September 6 2024 $
 .Dt X509_LOOKUP_NEW 3
 .Os
 .Sh NAME
@@ -131,8 +131,6 @@ This lookup method is peculiar in so far as calling
 on a lookup object using it does not yet add any certificates to the associated
 .Vt X509_STORE
 object.
-They need to be added selectively using
-.Fn X509_LOOKUP_by_subject .
 .It Xr X509_LOOKUP_file 3
 The
 .Fa command
@@ -238,19 +236,6 @@ always ignores the
 .Fa ret
 argument.
 .Pp
-With LibreSSL,
-.Fn X509_LOOKUP_by_subject
-is only useful if
-.Fa lookup
-uses
-.Xr X509_LOOKUP_hash_dir 3 .
-It passes the
-.Fa name
-to
-.Xr X509_NAME_hash 3
-and converts the resulting hash to an eight-digit lower-case
-hexadecimal number.
-.Pp
 If the
 .Fa type
 is
@@ -283,28 +268,6 @@ provided by the caller, overwriting any previous content.
 returns 1 for success or 0 for failure.
 With library implementations other than LibreSSL,
 it might also return \-1 for internal errors.
-.Pp
-.Fn X509_LOOKUP_by_subject
-returns 1 for success or 0 for failure.
-In particular, it fails if
-.Fa lookup
-uses
-.Xr X509_LOOKUP_file 3
-or
-.Xr X509_LOOKUP_mem 3 ,
-if
-.Fa name
-is
-.Dv NULL ,
-if
-.Fa type
-is neither
-.Dv X509_LU_X509
-nor
-.Dv X509_LU_CRL ,
-if no match is found, or if memory allocation fails.
-With library implementations other than LibreSSL,
-it might also return negative values for internal errors.
 .Pp
 .Fn X509_get_default_cert_dir
 returns a pointer to the constant string
@@ -355,8 +318,7 @@ failed in
 was called with an invalid
 .Fa type .
 .It Dv ERR_R_BUF_LIB Qq "BUF lib"
-Memory allocation failed in
-.Fn X509_LOOKUP_by_subject .
+Memory allocation failed.
 .It Dv X509_R_INVALID_DIRECTORY Qq "invalid directory"
 The
 .Fa source
@@ -390,10 +352,7 @@ was called with
 and adding the certificates and revocation lists failed.
 This error is added after and in addition to a more specific diagnostic.
 .It Dv ERR_R_MALLOC_FAILURE Qq "malloc failure"
-Memory allocation failed in
-.Fn X509_LOOKUP_ctrl
-or
-.Fn X509_LOOKUP_by_subject .
+Memory allocation failed.
 .It Dv ERR_R_PEM_LIB Qq "PEM lib"
 .Xr PEM_X509_INFO_read_bio 3 ,
 .Xr PEM_read_bio_X509_AUX 3 ,
@@ -409,7 +368,7 @@ or
 failed in
 .Fn X509_LOOKUP_ctrl .
 .It Dv X509_R_WRONG_LOOKUP_TYPE Qq "wrong lookup type"
-.Fn X509_LOOKUP_by_subject
+.Xr X509_STORE_CTX_get_by_subject 3
 was called with an invalid
 .Fa type .
 .El
@@ -418,12 +377,6 @@ Passing an invalid
 .Fa command
 to
 .Fn X509_LOOKUP_ctrl
-or calling
-.Fn X509_LOOKUP_by_subject
-with a
-.Dv NULL
-.Fa name
-or with arguments that yield no match
 causes failure but provides no diagnostics.
 .Sh SEE ALSO
 .Xr d2i_X509_bio 3 ,
