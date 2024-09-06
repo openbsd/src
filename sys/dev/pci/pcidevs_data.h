@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2088 2024/09/04 23:56:43 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.2089 2024/09/06 03:48:20 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21976,6 +21976,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Apollo Lake Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HB,
+	    "Core Ultra Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_DTT,
+	    "Core Ultra DTT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_GT_1,
+	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_NPU,
+	    "Core Ultra NPU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_IPU,
+	    "Core Ultra IPU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_CT,
+	    "Core Ultra CT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_GT_2,
+	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_GT_3,
+	    "Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5100_HB,
 	    "5100 Host",
 	},
@@ -26398,6 +26430,214 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_U_GT_5,
 	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_ESPI,
+	    "Core Ultra eSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_P2SB_1,
+	    "Core Ultra P2SB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PMC,
+	    "Core Ultra PMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_SPI,
+	    "Core Ultra SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TH,
+	    "Core Ultra TH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_UART_0,
+	    "Core Ultra UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_UART_1,
+	    "Core Ultra UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_GSPI_0,
+	    "Core Ultra GSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HDA,
+	    "Core Ultra HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_GSPI_1,
+	    "Core Ultra GSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TC_XHCI,
+	    "Core Ultra xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TBT_DMA0,
+	    "Core Ultra TBT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TBT_DMA1,
+	    "Core Ultra TBT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PCIE_1,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PCIE_2,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PCIE_3,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PCIE_4,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PCIE_5,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_PCIE_6,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_ISH,
+	    "Core Ultra ISH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_GSPI_2,
+	    "Core Ultra GSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_THC_0_1,
+	    "Core Ultra THC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_THC_0_2,
+	    "Core Ultra THC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_THC_1_1,
+	    "Core Ultra THC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_THC_1_2,
+	    "Core Ultra THC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_P2SB_2,
+	    "Core Ultra P2SB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TC_PCIE_21,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TC_PCIE_22,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I2C_4,
+	    "Core Ultra I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I2C_5,
+	    "Core Ultra I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_UART_2,
+	    "Core Ultra UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HECI_4,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HECI_5,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HECI_6,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_TC_PCIE_23,
+	    "Core Ultra PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HECI_1,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HECI_2,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_HECI_3,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_CSE_HECI_1,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_CSE_HECI_2,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_IDER,
+	    "Core Ultra IDE-R",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_KT,
+	    "Core Ultra KT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_CSE_HECI_3,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_CSE_HECI_4,
+	    "Core Ultra HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I3C_2,
+	    "Core Ultra I3C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I2C_0,
+	    "Core Ultra I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I2C_1,
+	    "Core Ultra I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I2C_2,
+	    "Core Ultra I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I2C_3,
+	    "Core Ultra I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_I3C_1,
+	    "Core Ultra I3C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_XHCI,
+	    "Core Ultra xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_SRAM,
+	    "Core Ultra SRAM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21152,
