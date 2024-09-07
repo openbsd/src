@@ -1,4 +1,4 @@
-/* $OpenBSD: apitest.c,v 1.2 2023/04/14 12:38:30 tb Exp $ */
+/* $OpenBSD: apitest.c,v 1.3 2024/09/07 16:39:29 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -284,7 +284,7 @@ ssl_get_peer_cert_chain_test(uint16_t tls_version)
 	/*
 	 * Due to the wonders of API inconsistency, SSL_get_peer_cert_chain()
 	 * includes the peer's leaf certificate when called by the client,
-	 * however it does not when called by the server. Futhermore, the
+	 * however it does not when called by the server. Furthermore, the
 	 * certificate returned by SSL_get_peer_certificate() has already
 	 * had its reference count incremented and must be freed, where as
 	 * the certificates returned from SSL_get_peer_cert_chain() must
