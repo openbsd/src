@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.117 2024/06/11 10:38:40 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.118 2024/09/08 07:23:36 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -90,7 +90,7 @@ IMPLEMENT_ASN1_FUNCTIONS(Manifest);
 
 /*
  * Determine rtype corresponding to file extension. Returns RTYPE_INVALID
- * on error or unkown extension.
+ * on error or unknown extension.
  */
 enum rtype
 rtype_from_file_extension(const char *fn)

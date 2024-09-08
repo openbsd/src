@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.86 2024/08/20 13:31:49 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.87 2024/09/08 07:23:36 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -709,7 +709,7 @@ http_inflate_new(struct http_connection *conn)
 	return 0;
 
  fail:
-	warnx("%s: decompression initalisation failed", conn_info(conn));
+	warnx("%s: decompression initialisation failed", conn_info(conn));
 	if (zctx != NULL)
 		free(zctx->zbuf);
 	free(zctx);
@@ -823,7 +823,7 @@ http_inflate_advance(struct http_connection *conn)
 
 /*
  * Create a new HTTP connection which will be used for the HTTP request req.
- * On errors a req faulure is issued and both connection and request are freed.
+ * On errors a req failure is issued and both connection and request are freed.
  */
 static void
 http_new(struct http_request *req)
@@ -1070,7 +1070,7 @@ http_connect(struct http_connection *conn)
 }
 
 /*
- * Called once an asynchronus connect request finished.
+ * Called once an asynchronous connect request finished.
  */
 static enum res
 http_finish_connect(struct http_connection *conn)
