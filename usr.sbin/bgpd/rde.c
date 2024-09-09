@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.629 2024/08/28 13:21:39 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.630 2024/09/09 12:59:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3199,7 +3199,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 		return;
 	}
 	memcpy(&ctx->mrt, mrt, sizeof(struct mrt));
-	TAILQ_INIT(&ctx->mrt.wbuf.bufs);
+	msgbuf_init(&ctx->mrt.wbuf);
 	ctx->mrt.wbuf.fd = fd;
 	ctx->mrt.state = MRT_STATE_RUNNING;
 	rid = rib_find(ctx->mrt.rib);

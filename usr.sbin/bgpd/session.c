@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.481 2024/08/20 11:59:39 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.482 2024/09/09 12:59:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3159,13 +3159,13 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				if (mrt == NULL)
 					fatal("session_dispatch_imsg");
 				memcpy(mrt, &xmrt, sizeof(struct mrt));
-				TAILQ_INIT(&mrt->wbuf.bufs);
+				msgbuf_init(&mrt->wbuf);
 				LIST_INSERT_HEAD(&mrthead, mrt, entry);
 			} else {
 				/* old dump reopened */
 				close(mrt->wbuf.fd);
-				mrt->wbuf.fd = xmrt.wbuf.fd;
 			}
+			mrt->wbuf.fd = xmrt.wbuf.fd;
 			break;
 		case IMSG_MRT_CLOSE:
 			if (idx != PFD_PIPE_MAIN)
