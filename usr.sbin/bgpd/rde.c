@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.630 2024/09/09 12:59:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.631 2024/09/09 14:58:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1277,8 +1277,6 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 		case IMSG_RECONF_ASPA_TAS:
 			if (aspa == NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA_TAS");
-			if (imsg_get_len(&imsg) != aspa->num * sizeof(uint32_t))
-				fatalx("IMSG_RECONF_ASPA_TAS bad len");
 			aspa->tas = reallocarray(NULL, aspa->num,
 			    sizeof(uint32_t));
 			if (aspa->tas == NULL)
