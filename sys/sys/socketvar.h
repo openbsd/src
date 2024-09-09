@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.133 2024/07/20 17:26:19 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.134 2024/09/09 07:38:45 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -54,8 +54,10 @@ TAILQ_HEAD(soqhead, socket);
 /*
  * Locks used to protect global data and struct members:
  *	I	immutable after creation
+ *	a	atomic
  *	mr	sb_mxt of so_rcv buffer
  *	ms	sb_mtx of so_snd buffer
+ *	m	sb_mtx
  *	br	sblock() of so_rcv buffer
  *	bs	sblock() od so_snd buffer
  *	s	solock()
@@ -79,20 +81,56 @@ struct sosplice {
 };
 
 /*
+ * Variables for socket buffering.
+ */
+struct sockbuf {
+	struct rwlock sb_lock; 
+	struct mutex  sb_mtx;
+/* The following fields are all zeroed on flush. */
+#define	sb_startzero	sb_cc
+	u_long	sb_cc;			/* [m] actual chars in buffer */
+	u_long	sb_datacc;		/* [m] data only chars in buffer */
+	u_long	sb_hiwat;		/* [m] max actual char count */
+	u_long  sb_wat;			/* [m] default watermark */
+	u_long	sb_mbcnt;		/* [m] chars of mbufs used */
+	u_long	sb_mbmax;		/* [m] max chars of mbufs to use */
+	long	sb_lowat;		/* [m] low water mark */
+	struct mbuf *sb_mb;		/* [m] the mbuf chain */
+	struct mbuf *sb_mbtail;		/* [m] the last mbuf in the chain */
+	struct mbuf *sb_lastrecord;	/* [m] first mbuf of last record in
+					    socket buffer */
+	short	sb_flags;		/* [m] flags, see below */
+/* End area that is zeroed on flush. */
+#define	sb_endzero	sb_flags
+	short	sb_state;		/* [m] socket state on sockbuf */
+	uint64_t sb_timeo_nsecs;	/* [m] timeout for read/write */
+	struct klist sb_klist;		/* [m] list of knotes */
+};
+
+#define SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
+#define SB_WAIT		0x0001		/* someone is waiting for data/space */
+#define SB_ASYNC	0x0002		/* ASYNC I/O, need signals */
+#define SB_SPLICE	0x0004		/* buffer is splice source or drain */
+#define SB_NOINTR	0x0008		/* operations not interruptible */
+#define SB_MTXLOCK	0x0010		/* sblock() doesn't need solock() */
+
+/*
  * Kernel structure per socket.
  * Contains send and receive buffer queues,
  * handle on protocol and pointer to protocol
  * private data and error information.
  */
 struct socket {
-	const struct protosw *so_proto;	/* protocol handle */
+	const struct protosw *so_proto;	/* [I] protocol handle */
 	struct rwlock so_lock;		/* this socket lock */
 	struct refcnt so_refcnt;	/* references to this socket */
-	void	*so_pcb;		/* protocol control block */
-	u_int	so_state;		/* internal state flags SS_*, below */
-	short	so_type;		/* generic type, see socket.h */
-	short	so_options;		/* from socket call, see socket.h */
-	short	so_linger;		/* time to linger while closing */
+	void	*so_pcb;		/* [s] protocol control block */
+	u_int	so_state;		/* [s] internal state flags SS_*,
+					    see below */
+	short	so_type;		/* [I] generic type, see socket.h */
+	short	so_options;		/* [s] from socket call, see
+					    socket.h */
+	short	so_linger;		/* [s] time to linger while closing */
 /*
  * Variables for connection queueing.
  * Socket where accepts occur is so_head in all subsidiary sockets.
@@ -103,59 +141,37 @@ struct socket {
  * it has to be pulled out of either so_q0 or so_q.
  * We allow connections to queue up based on current queue lengths
  * and limit on number of queued connections for this socket.
+ *
+ * Connections queue relies on both socket locks of listening and
+ * unaccepted sockets. Socket lock of listening socket should be
+ * always taken first.
  */
-	struct	socket	*so_head;	/* back pointer to accept socket */
-	struct	soqhead	*so_onq;	/* queue (q or q0) that we're on */
-	struct	soqhead	so_q0;		/* queue of partial connections */
-	struct	soqhead	so_q;		/* queue of incoming connections */
+	struct	socket	*so_head;	/* [s] back pointer to accept socket */
+	struct	soqhead	*so_onq;	/* [s] queue (q or q0) that we're on */
+	struct	soqhead	so_q0;		/* [s] queue of partial connections */
+	struct	soqhead	so_q;		/* [s] queue of incoming connections */
 	struct	sigio_ref so_sigio;	/* async I/O registration */
-	TAILQ_ENTRY(socket) so_qe;	/* our queue entry (q or q0) */
-	short	so_q0len;		/* partials on so_q0 */
-	short	so_qlen;		/* number of connections on so_q */
-	short	so_qlimit;		/* max number queued connections */
-	short	so_timeo;		/* connection timeout */
-	u_long	so_oobmark;		/* chars to oob mark */
-	u_int	so_error;		/* error affecting connection */
+	TAILQ_ENTRY(socket) so_qe;	/* [s] our queue entry (q or q0) */
+	short	so_q0len;		/* [s] partials on so_q0 */
+	short	so_qlen;		/* [s] number of connections on so_q */
+	short	so_qlimit;		/* [s] max number queued connections */
+	short	so_timeo;		/* [s] connection timeout */
+	u_long	so_oobmark;		/* [mr] chars to oob mark */
+	u_int	so_error;		/* [a] error affecting connection */
 
 	struct sosplice *so_sp;		/* [s br] */
-/*
- * Variables for socket buffering.
- */
-	struct	sockbuf {
-		struct rwlock sb_lock; 
-		struct mutex  sb_mtx;
-/* The following fields are all zeroed on flush. */
-#define	sb_startzero	sb_cc
-		u_long	sb_cc;		/* actual chars in buffer */
-		u_long	sb_datacc;	/* data only chars in buffer */
-		u_long	sb_hiwat;	/* max actual char count */
-		u_long  sb_wat;		/* default watermark */
-		u_long	sb_mbcnt;	/* chars of mbufs used */
-		u_long	sb_mbmax;	/* max chars of mbufs to use */
-		long	sb_lowat;	/* low water mark */
-		struct mbuf *sb_mb;	/* the mbuf chain */
-		struct mbuf *sb_mbtail;	/* the last mbuf in the chain */
-		struct mbuf *sb_lastrecord;/* first mbuf of last record in
-					      socket buffer */
-		short	sb_flags;	/* flags, see below */
-/* End area that is zeroed on flush. */
-#define	sb_endzero	sb_flags
-		short	sb_state;	/* socket state on sockbuf */
-		uint64_t sb_timeo_nsecs;/* timeout for read/write */
-		struct klist sb_klist;	/* process selecting read/write */
-	} so_rcv, so_snd;
-#define SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
-#define SB_WAIT		0x0001		/* someone is waiting for data/space */
-#define SB_ASYNC	0x0002		/* ASYNC I/O, need signals */
-#define SB_SPLICE	0x0004		/* buffer is splice source or drain */
-#define SB_NOINTR	0x0008		/* operations not interruptible */
-#define SB_MTXLOCK	0x0010		/* sblock() doesn't need solock() */
 
-	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
-	caddr_t	so_upcallarg;		/* Arg for above */
-	uid_t	so_euid, so_ruid;	/* who opened the socket */
-	gid_t	so_egid, so_rgid;
-	pid_t	so_cpid;		/* pid of process that opened socket */
+	struct sockbuf so_rcv;
+	struct sockbuf so_snd;
+
+	void	(*so_upcall)(struct socket *, caddr_t, int); /* [s] */
+	caddr_t	so_upcallarg;		/* [s] Arg for above */
+	uid_t	so_euid;		/* [I] who opened the socket */
+	uid_t	so_ruid;		/* [I] */
+	gid_t	so_egid;		/* [I] */
+	gid_t	so_rgid;		/* [I] */
+	pid_t	so_cpid;		/* [I] pid of process that opened
+					    socket */
 };
 
 /*
