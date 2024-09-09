@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.95 2024/09/02 12:13:56 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.96 2024/09/09 02:39:57 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -38,8 +38,6 @@ WARNINGS=yes
 OPENSSL?=	yes
 ZLIB?=		yes
 DSAKEY?=	no
-# NB. experimental; Internet-draft subject to change.
-MLKEM?=		no
 
 .if (${OPENSSL:L} == "yes")
 CFLAGS+=	-DWITH_OPENSSL
@@ -51,10 +49,6 @@ CFLAGS+=	-DWITH_ZLIB
 
 .if (${DSAKEY:L} == "yes")
 CFLAGS+=	-DWITH_DSA
-.endif
-
-.if (${MLKEM:L} == "yes")
-CFLAGS+=	-DWITH_MLKEM
 .endif
 
 CFLAGS+=	-DENABLE_PKCS11
@@ -86,9 +80,7 @@ SRCS_KEX+=	smult_curve25519_ref.c
 SRCS_KEX+=	kexgen.c
 SRCS_KEX+=	kexsntrup761x25519.c
 SRCS_KEX+=	sntrup761.c
-.if (${MLKEM:L} == "yes")
 SRCS_KEX+=	kexmlkem768x25519.c
-.endif
 
 SRCS_KEY+=	sshkey.c
 SRCS_KEY+=	cipher.c
