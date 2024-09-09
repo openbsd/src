@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.65 2024/05/04 11:25:24 jsg Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.66 2024/09/09 03:50:14 jsg Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -142,6 +142,22 @@ int nfsrv_getcache(struct nfsrv_descript *, struct nfssvc_sock *,
 void nfsrv_updatecache(struct nfsrv_descript *, int, struct mbuf *);
 void nfsrv_cleancache(void);
 
+/* nfs_srvsubs.c */
+int nfs_namei(struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
+		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
+		   struct proc *);
+void nfsm_adj(struct mbuf *, int, int);
+void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
+		      struct vattr *, struct nfsm_info *);
+void nfsm_srvpostop_attr(struct nfsrv_descript *, int, struct vattr *,
+			     struct nfsm_info *);
+void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *,
+			struct nfs_fattr *);
+int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,
+		      struct nfssvc_sock *, struct mbuf *, int *);
+int netaddr_match(int, union nethostaddr *, struct mbuf *);
+int nfsm_srvsattr(struct mbuf **, struct vattr *, struct mbuf *, caddr_t *);
+
 /* nfs_subs.c */
 struct mbuf *nfsm_reqhead(int);
 void nfsm_rpchead(struct nfsreq *, struct ucred *, int);
@@ -156,21 +172,8 @@ int nfs_attrtimeo(struct nfsnode *);
 int nfs_loadattrcache(struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *);
 int nfs_getattrcache(struct vnode *, struct vattr *);
-int nfs_namei(struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
-		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
-		   struct proc *);
 void nfsm_v3attrbuild(struct mbuf **, struct vattr *, int);
 int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
-void nfsm_adj(struct mbuf *, int, int);
-void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
-		      struct vattr *, struct nfsm_info *);
-void nfsm_srvpostop_attr(struct nfsrv_descript *, int, struct vattr *,
-			     struct nfsm_info *);
-void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *,
-			struct nfs_fattr *);
-int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, struct ucred *,
-		      struct nfssvc_sock *, struct mbuf *, int *);
-int netaddr_match(int, union nethostaddr *, struct mbuf *);
 void nfs_clearcommit(struct mount *);
 int nfs_in_committed_range(struct vnode *, struct buf *);
 int nfs_in_tobecommitted_range(struct vnode *, struct buf *);
@@ -180,7 +183,6 @@ void nfs_add_tobecommitted_range(struct vnode *, struct buf *);
 void nfs_del_tobecommitted_range(struct vnode *, struct buf *);
 void nfs_merge_commit_ranges(struct vnode *);
 int nfsrv_errmap(struct nfsrv_descript *, int);
-int nfsm_srvsattr(struct mbuf **, struct vattr *, struct mbuf *, caddr_t *);
 void nfsm_fhtom(struct nfsm_info *, struct vnode *, int);
 void nfsm_srvfhtom(struct mbuf **, fhandle_t *, int);
 
