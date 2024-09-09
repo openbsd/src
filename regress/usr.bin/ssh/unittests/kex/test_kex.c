@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_kex.c,v 1.8 2024/03/25 19:28:09 djm Exp $ */
+/* 	$OpenBSD: test_kex.c,v 1.9 2024/09/09 03:13:39 djm Exp $ */
 /*
  * Regress test KEX
  *
@@ -145,6 +145,7 @@ do_kex_with_key(char *kex, int keytype, int bits)
 	server2->kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
 	server2->kex->kex[KEX_C25519_SHA256] = kex_gen_server;
 	server2->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
+	server2->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
 	server2->kex->load_host_public_key = server->kex->load_host_public_key;
 	server2->kex->load_host_private_key = server->kex->load_host_private_key;
 	server2->kex->sign = server->kex->sign;
@@ -193,4 +194,5 @@ kex_tests(void)
 	do_kex("diffie-hellman-group14-sha1");
 	do_kex("diffie-hellman-group1-sha1");
 	do_kex("sntrup761x25519-sha512@openssh.com");
+	do_kex("mlkem768x25519-sha256");
 }
