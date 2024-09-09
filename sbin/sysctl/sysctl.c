@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.261 2024/05/09 08:35:40 florian Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.262 2024/09/09 05:36:17 kn Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2973,8 +2973,7 @@ findname(char *string, char *level, char **bufp, struct list *namelist)
 void
 usage(void)
 {
-
 	(void)fprintf(stderr,
-	    "usage: sysctl [-Aanq] [name[=value]]\n");
+	    "usage: sysctl [-Aanq] [name[=value] ...]\n");
 	exit(1);
 }
