@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.129 2024/07/30 13:41:15 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.130 2024/09/09 07:37:47 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -786,10 +786,8 @@ pppx_set_session_descr(struct pppx_dev *pxd,
 	if (pxi == NULL)
 		return (EINVAL);
 
-	NET_LOCK();
 	(void)memset(pxi->pxi_if.if_description, 0, IFDESCRSIZE);
 	strlcpy(pxi->pxi_if.if_description, req->pdr_descr, IFDESCRSIZE);
-	NET_UNLOCK();
 
 	pppx_if_rele(pxi);
 
