@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.51 2024/07/14 15:56:08 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.52 2024/09/09 07:40:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -417,7 +417,6 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
 	{ERR_REASON(SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST), "tls invalid ecpointformat list"},
 	{ERR_REASON(SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST), "tls peer did not respond with certificate list"},
 	{ERR_REASON(SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG), "tls rsa encrypted value length is wrong"},
-	{ERR_REASON(SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER), "tried to use unsupported cipher"},
 	{ERR_REASON(SSL_R_UNABLE_TO_DECODE_DH_CERTS), "unable to decode dh certs"},
 	{ERR_REASON(SSL_R_UNABLE_TO_DECODE_ECDH_CERTS), "unable to decode ecdh certs"},
 	{ERR_REASON(SSL_R_UNABLE_TO_EXTRACT_PUBLIC_KEY), "unable to extract public key"},
