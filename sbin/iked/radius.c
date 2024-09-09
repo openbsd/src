@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.10 2024/08/17 03:28:22 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.11 2024/09/09 23:38:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -748,8 +748,6 @@ iked_radius_acct_request(struct iked *env, struct iked_sa *sa, uint8_t stype)
 
 	switch (stype) {
 	case RADIUS_ACCT_STATUS_TYPE_START:
-		radius_put_uint32_attr(pkt, RADIUS_TYPE_ACCT_STATUS_TYPE,
-		    RADIUS_ACCT_STATUS_TYPE_START);
 		break;
 	case RADIUS_ACCT_STATUS_TYPE_INTERIM_UPDATE:
 	case RADIUS_ACCT_STATUS_TYPE_STOP:
