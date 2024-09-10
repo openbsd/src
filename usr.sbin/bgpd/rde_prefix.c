@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.51 2024/06/25 13:21:18 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.52 2024/09/10 08:47:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -225,6 +225,8 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte_vpn4.prefixlen = prefixlen;
 		pte_vpn4.rd = prefix->rd;
 		pte_vpn4.labellen = prefix->labellen;
+		if (prefix->labellen == 0)
+			fatalx("pt_fill: no MPLS label in VPN addr");
 		memcpy(pte_vpn4.labelstack, prefix->labelstack,
 		    prefix->labellen);
 		return ((struct pt_entry *)&pte_vpn4);
@@ -239,6 +241,8 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte_vpn6.prefixlen = prefixlen;
 		pte_vpn6.rd = prefix->rd;
 		pte_vpn6.labellen = prefix->labellen;
+		if (prefix->labellen == 0)
+			fatalx("pt_fill: no MPLS label in VPN addr");
 		memcpy(pte_vpn6.labelstack, prefix->labelstack,
 		    prefix->labellen);
 		return ((struct pt_entry *)&pte_vpn6);
