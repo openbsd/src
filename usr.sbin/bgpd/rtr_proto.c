@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.39 2024/08/20 11:59:39 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.40 2024/09/10 08:41:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -110,8 +110,6 @@ struct rtr_routerkey {
 	/* followed by Subject Public Key Info */
 } __packed;
 
-#define FLAG_AFI_V6	0x1
-#define FLAG_AFI_MASK	FLAG_AFI_V6
 struct rtr_aspa {
 	struct rtr_header	hdr;
 	uint32_t		cas;
@@ -191,7 +189,6 @@ struct rtr_session {
 	char				descr[PEER_DESCR_LEN];
 	struct roa_tree			roa_set;
 	struct aspa_tree		aspa;
-	struct aspa_tree		aspa_oldv6;
 	struct ibuf_read		r;
 	struct msgbuf			w;
 	struct timer_head		timers;
@@ -277,7 +274,6 @@ rtr_reset_cache(struct rtr_session *rs)
 	timer_stop(&rs->timers, Timer_Rtr_Expire);
 	free_roatree(&rs->roa_set);
 	free_aspatree(&rs->aspa);
-	free_aspatree(&rs->aspa_oldv6);
 }
 
 static struct ibuf *
@@ -760,6 +756,17 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 
 	flags = rtr_aspa.hdr.flags;
 	cnt = ibuf_size(pdu) / sizeof(uint32_t);
+
+	if ((flags & FLAG_ANNOUNCE) && cnt == 0) {
+		rtr_send_error(rs, pdu, CORRUPT_DATA, "%s: "
+		    "announce with empty SPAS", log_rtr_type(ASPA));
+		return -1;
+	}
+	if ((flags & FLAG_ANNOUNCE) == 0 && cnt != 0) {
+		rtr_send_error(rs, pdu, CORRUPT_DATA, "%s: "
+		    "withdraw with non-empty SPAS", log_rtr_type(ASPA));
+		return -1;
+	}
 
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		rtr_send_error(rs, pdu, CORRUPT_DATA, "%s: out of context",
@@ -1398,7 +1405,6 @@ rtr_new(uint32_t id, struct rtr_config_msg *conf)
 
 	RB_INIT(&rs->roa_set);
 	RB_INIT(&rs->aspa);
-	RB_INIT(&rs->aspa_oldv6);
 	TAILQ_INIT(&rs->timers);
 	msgbuf_init(&rs->w);
 
@@ -1517,8 +1523,6 @@ rtr_aspa_merge(struct aspa_tree *at)
 
 	TAILQ_FOREACH(rs, &rtrs, entry) {
 		RB_FOREACH(aspa, aspa_tree, &rs->aspa)
-			rtr_aspa_insert(at, aspa);
-		RB_FOREACH(aspa, aspa_tree, &rs->aspa_oldv6)
 			rtr_aspa_insert(at, aspa);
 	}
 }
