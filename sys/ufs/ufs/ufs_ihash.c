@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.28 2024/09/04 17:00:08 beck Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.29 2024/09/10 12:14:26 claudio Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ext2fs/ext2fs_extern.h>
 
 #include <crypto/siphash.h>
 
@@ -109,7 +110,11 @@ loop:
 			* dealt with so this can't happen.
 			*/
 			if (VTOI(vp) != ip ||
-			    (DIP(ip, nlink) <= 0 &&
+			    ((
+#ifdef EXT2FS
+			    IS_EXT2_VNODE(ip->i_vnode) ? ip->i_e2fs_nlink <= 0 :
+#endif
+			    DIP(ip, nlink) <= 0) &&
 			     (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)) {
 				/*
 				 * This should recycle the inode immediately,
