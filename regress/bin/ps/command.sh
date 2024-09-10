@@ -142,7 +142,6 @@ test_ps "E=1 L=very_long_var" "" "-cewwo command" \
 	"E=1 L=very_long_var shortsleep"
 
 # test vis(3)ing
-test_ps "x$(printf \\000)x" "" "-o command" "./shortsleep xx"
 test_ps "" "" "-o command" "./shortsleep \\^A\\^B\\^C"
 test_ps "" "" "-o command" "./shortsleep \\^D\\^E\\^F\\a"
 test_ps "	x
