@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.22 2024/08/12 09:04:23 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.23 2024/09/10 08:37:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -143,7 +143,7 @@ aspa_set_entry(struct aspa_set *aspa, uint32_t asnum)
 	}
 
 	num = aspa->num + 1;
-	newtas = recallocarray(aspa->tas, aspa->num, num, sizeof(uint32_t));
+	newtas = reallocarray(aspa->tas, num, sizeof(uint32_t));
 	if (newtas == NULL)
 		fatal("aspa_set merge");
 
