@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.15 2024/01/24 14:51:12 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.16 2024/09/10 08:53:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -715,9 +715,12 @@ communities_copy(struct rde_community *to, struct rde_community *from)
 	memset(to, 0, sizeof(*to));
 
 	/* ignore from->size and allocate the perfect amount */
-	to->size = from->size;
+	to->size = from->nentries;
 	to->nentries = from->nentries;
 	to->flags = from->flags;
+
+	if (to->nentries == 0)
+		return;
 
 	if ((to->communities = reallocarray(NULL, to->size,
 	    sizeof(struct community))) == NULL)
@@ -725,8 +728,6 @@ communities_copy(struct rde_community *to, struct rde_community *from)
 
 	memcpy(to->communities, from->communities,
 	    to->nentries * sizeof(struct community));
-	memset(to->communities + to->nentries, 0, sizeof(struct community) *
-	    (to->size - to->nentries));
 }
 
 /*
