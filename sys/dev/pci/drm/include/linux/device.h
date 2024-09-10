@@ -14,11 +14,9 @@
 #include <linux/kobject.h>
 #include <linux/ratelimit.h> /* dev_printk.h -> ratelimit.h */
 #include <linux/module.h> /* via device/driver.h */
+#include <linux/device/bus.h>
 
 struct device_node;
-
-struct bus_type {
-};
 
 struct device_driver {
 	struct device *dev;
