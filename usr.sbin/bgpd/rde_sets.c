@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.12 2022/07/28 13:11:51 deraadt Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.13 2024/09/10 09:38:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -149,6 +149,9 @@ set_free(struct set_table *set)
 int
 set_add(struct set_table *set, void *elms, size_t nelms)
 {
+	if (nelms == 0)		/* nothing todo */
+		return 0;
+
 	if (set->max < nelms || set->max - nelms < set->nmemb) {
 		uint32_t *s;
 		size_t new_size;

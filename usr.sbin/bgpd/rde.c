@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.632 2024/09/09 15:00:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.633 2024/09/10 09:38:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1123,7 +1123,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			    sizeof(uint32_t));
 			break;
 		case IMSG_RECONF_AS_SET_ITEMS:
-			if (imsg_get_ibuf(&imsg, &ibuf) == -1)
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_size(&ibuf) == 0 ||
+			    ibuf_size(&ibuf) % sizeof(uint32_t) != 0)
 				fatalx("IMSG_RECONF_AS_SET_ITEMS bad len");
 			nmemb = ibuf_size(&ibuf) / sizeof(uint32_t);
 			if (set_add(last_as_set->set, ibuf_data(&ibuf),
