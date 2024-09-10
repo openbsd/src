@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpu.4,v 1.19 2024/05/11 20:35:13 jmc Exp $
+.\"	$OpenBSD: cpu.4,v 1.20 2024/09/10 17:01:09 tb Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2024 $
+.Dd $Mdocdate: September 10 2024 $
 .Dt CPU 4 i386
 .Os
 .Sh NAME
@@ -83,8 +83,6 @@ Supports the SSE instruction set.
 Supports the SSE2 instruction set.
 .It xcrypt
 Supports the VIA AES encryption instruction set.
-If this is supported,
-the libcrypto EVP AES functions automatically use this support.
 .El
 .Pp
 The sysctl
