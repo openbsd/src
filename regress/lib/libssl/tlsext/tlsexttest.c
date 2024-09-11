@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.91 2024/07/22 14:50:45 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.92 2024/09/11 15:04:16 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2073,7 +2073,7 @@ test_tlsext_quic_transport_parameters_client(void)
 
 	if (!SSL_set_quic_transport_params(ssl,
 	    tlsext_quic_transport_data, sizeof(tlsext_quic_transport_data))) {
-		FAIL("client failed to set QUIC parametes\n");
+		FAIL("client failed to set QUIC parameters\n");
 		goto err;
 	}
 
