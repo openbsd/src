@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.48 2024/04/30 17:04:23 miod Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.49 2024/09/11 12:22:34 claudio Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ nfsm_dissect(struct nfsm_info *infop, int s)
 	error = nfsm_disct(&infop->nmi_md, &infop->nmi_dpos, s, avail, &ret);
 	if (error != 0) {
 		m_freem(infop->nmi_mrep);
+		infop->nmi_mrep = NULL;
 		*infop->nmi_errorp = error;
 		return NULL;
 	} else {
@@ -95,6 +96,7 @@ nfsm_adv(struct nfsm_info *infop, int s)
 	error = nfs_adv(&infop->nmi_md, &infop->nmi_dpos, s, avail);
 	if (error != 0) {
 		m_freem(infop->nmi_mrep);
+		infop->nmi_mrep = NULL;
 		*infop->nmi_errorp = error;
 		return error;
 	}
@@ -121,6 +123,7 @@ nfsm_postop_attr(struct nfsm_info *infop, struct vnode **vpp, int *attrflagp)
 		    &infop->nmi_dpos, NULL);
 		if (error != 0) {
 			m_freem(infop->nmi_mrep);
+			infop->nmi_mrep = NULL;
 			*infop->nmi_errorp = error;
 			return error;
 		}
@@ -140,6 +143,7 @@ nfsm_strsiz(struct nfsm_info *infop, int *lenp, int maxlen)
 	len = fxdr_unsigned(int32_t, *tl);
 	if (len < 0 || len > maxlen) {
 		m_freem(infop->nmi_mrep);
+		infop->nmi_mrep = NULL;
 		*infop->nmi_errorp = EBADRPC;
 		return 1;
 	}
@@ -158,6 +162,7 @@ nfsm_mtouio(struct nfsm_info *infop, struct uio *uiop, int len)
 	error = nfsm_mbuftouio(&infop->nmi_md, uiop, len, &infop->nmi_dpos);
 	if (error != 0) {
 		m_freem(infop->nmi_mrep);
+		infop->nmi_mrep = NULL;
 		*infop->nmi_errorp = error;
 		return error;
 	}
@@ -169,6 +174,7 @@ nfsm_strtom(struct nfsm_info *infop, char *str, size_t len, size_t maxlen)
 {
 	if (len > maxlen) {
 		m_freem(infop->nmi_mreq);
+		infop->nmi_mreq = NULL;
 		*infop->nmi_errorp = ENAMETOOLONG;
 		return 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.152 2024/09/04 07:54:53 mglocker Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.153 2024/09/11 12:22:34 claudio Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1020,6 +1020,7 @@ tryagain:
 			if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 			    error == NFSERR_TRYLATER) {
 				m_freem(info.nmi_mrep);
+				info.nmi_mrep = NULL;
 				error = 0;
 				tsleep_nsec(&nowake, PSOCK, "nfsretry",
 				    SEC_TO_NSEC(trylater_delay));

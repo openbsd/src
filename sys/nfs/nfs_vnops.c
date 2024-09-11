@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.201 2024/07/06 09:53:25 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.202 2024/09/11 12:22:34 claudio Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -540,6 +540,7 @@ nfsm_loadattr(struct nfsm_info *infop, struct vnode **vpp, struct vattr *vap)
 	error = nfs_loadattrcache(&ttvp, &infop->nmi_md, &infop->nmi_dpos, vap);
 	if (error != 0) {
 		m_freem(infop->nmi_mrep);
+		infop->nmi_mrep = NULL;
 		*infop->nmi_errorp = error;
 		return error;
 	}
@@ -781,6 +782,7 @@ nfsm_getfh(struct nfsm_info *infop, int *sizep, int v3)
 		size = fxdr_unsigned(int, *tl);
 		if (size <= 0 || size > NFSX_V3FHMAX) {
 			m_freem(infop->nmi_mrep);
+			infop->nmi_mrep = NULL;
 			*infop->nmi_errorp = EBADRPC;
 			return NULL;
 		}
@@ -1400,6 +1402,7 @@ nfsm_mtofh(struct nfsm_info *infop, struct vnode *dvp, struct vnode **vpp,
 		error = nfs_nget(dvp->v_mount, ttfhp, ttfhsize, &ttnp);
 		if (error != 0) {
 			m_freem(infop->nmi_mrep);
+			infop->nmi_mrep = NULL;
 			*infop->nmi_errorp = error;
 			return error;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.128 2024/09/10 18:44:04 miod Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.129 2024/09/11 12:22:34 claudio Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -94,10 +94,8 @@ nfsm_reply(struct nfsm_info *infop, struct nfsrv_descript *nfsd,
 		statuslen = 0;
 	(void)nfs_rephead(statuslen, nfsd, slp, error,
 		&infop->nmi_mreq, &infop->nmi_mb);
-	if (infop->nmi_mrep != NULL) {
-		m_freem(infop->nmi_mrep);
-		infop->nmi_mrep = NULL;
-	}
+	m_freem(infop->nmi_mrep);
+	infop->nmi_mrep = NULL;
 	*mrq = infop->nmi_mreq;
 	if (error && (!infop->nmi_v3 || error == EBADRPC))
 		return error;
