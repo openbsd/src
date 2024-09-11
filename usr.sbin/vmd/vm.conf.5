@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.63 2023/05/12 00:06:53 kn Exp $
+.\" $OpenBSD: vm.conf.5,v 1.64 2024/09/11 15:42:52 bluhm Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2023 $
+.Dd $Mdocdate: September 11 2024 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -323,6 +323,8 @@ If only
 .Pf : Ar group
 is given,
 only the group is set.
+.It Ic sev
+Enables SEV for guest.
 .El
 .Sh VM INSTANCES
 It is possible to use configured or running VMs as a template for

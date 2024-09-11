@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.1 2024/07/10 10:41:19 dv Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.2 2024/09/11 15:42:52 bluhm Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -159,4 +159,52 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
 	return (0xff);
+}
+
+void
+set_return_data(struct vm_exit *vei, uint32_t data)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return;
+}
+
+void
+get_input_data(struct vm_exit *vei, uint32_t *data)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return;
+}
+
+int
+sev_init(struct vmd_vm *vm)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return (-1);
+}
+
+int
+sev_shutdown(struct vmd_vm *vm)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return (-1);
+}
+
+int
+sev_activate(struct vmd_vm *vm, int vcpu_id)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return (-1);
+}
+
+int
+sev_encrypt_memory(struct vmd_vm *vm)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return (-1);
 }

@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.48 2024/07/09 09:31:37 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.49 2024/09/11 15:42:52 bluhm Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,6 +130,8 @@ static void mbcopy(void *, paddr_t, int);
 extern char *__progname;
 extern int vm_id;
 
+uint64_t pg_crypt = 0;
+
 /*
  * setsegment
  *
@@ -194,6 +196,7 @@ push_gdt(void)
 	setsegment(&sd[2], 0, 0xffffffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 
 	write_mem(GDT_PAGE, gdtpage, PAGE_SIZE);
+	sev_register_encryption(GDT_PAGE, PAGE_SIZE);
 }
 
 /*
@@ -229,20 +232,24 @@ push_pt_64(void)
 
 	/* PDPDE0 - first 1GB */
 	memset(ptes, 0, sizeof(ptes));
-	ptes[0] = PG_V | PML3_PAGE;
+	ptes[0] = pg_crypt | PG_V | PML3_PAGE;
 	write_mem(PML4_PAGE, ptes, PAGE_SIZE);
+	sev_register_encryption(PML4_PAGE, PAGE_SIZE);
 
 	/* PDE0 - first 1GB */
 	memset(ptes, 0, sizeof(ptes));
-	ptes[0] = PG_V | PG_RW | PG_u | PML2_PAGE;
+	ptes[0] = pg_crypt | PG_V | PG_RW | PG_u | PML2_PAGE;
 	write_mem(PML3_PAGE, ptes, PAGE_SIZE);
+	sev_register_encryption(PML3_PAGE, PAGE_SIZE);
 
 	/* First 1GB (in 2MB pages) */
 	memset(ptes, 0, sizeof(ptes));
 	for (i = 0 ; i < 512; i++) {
-		ptes[i] = PG_V | PG_RW | PG_u | PG_PS | ((2048 * 1024) * i);
+		ptes[i] = pg_crypt | PG_V | PG_RW | PG_u | PG_PS |
+		    ((2048 * 1024) * i);
 	}
 	write_mem(PML2_PAGE, ptes, PAGE_SIZE);
+	sev_register_encryption(PML2_PAGE, PAGE_SIZE);
 }
 
 /*
@@ -300,8 +307,18 @@ loadfile_elf(gzFile fp, struct vmd_vm *vm, struct vcpu_reg_state *vrs,
 		vrs->vrs_crs[VCPU_REGS_CR4] = CR4_PSE;
 		vrs->vrs_msrs[VCPU_REGS_EFER] = 0ULL;
 	}
-	else
+	else {
+		if (vcp->vcp_sev) {
+			if (vcp->vcp_poscbit == 0) {
+				log_warnx("SEV enabled but no C-bit reported");
+				return 1;
+			}
+			pg_crypt = (1ULL << vcp->vcp_poscbit);
+			log_debug("%s: poscbit %d pg_crypt 0x%016llx",
+			    __func__, vcp->vcp_poscbit, pg_crypt);
+		}
 		push_pt_64();
+	}
 
 	if (bootdevice == VMBOOTDEV_NET) {
 		bootmac = &bm;
@@ -413,6 +430,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
 	ba[i++] = 0xFFFFFFFF; /* BOOTARG_END */
 
 	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE);
+	sev_register_encryption(BOOTARGS_PAGE, PAGE_SIZE);
 
 	return (i * sizeof(uint32_t));
 }
@@ -463,6 +481,7 @@ push_stack(uint32_t bootargsz, uint32_t end)
 	stack[--loc] = 0;
 
 	write_mem(STACK_PAGE, &stack, PAGE_SIZE);
+	sev_register_encryption(STACK_PAGE, PAGE_SIZE);
 
 	return (1024 - (loc - 1)) * sizeof(uint32_t);
 }
@@ -489,6 +508,8 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 	size_t ct;
 	size_t i, osz;
 	char buf[PAGE_SIZE];
+
+	sev_register_encryption(addr, sz);
 
 	/*
 	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
@@ -565,6 +586,8 @@ marc4random_buf(paddr_t addr, int sz)
 	int i, ct;
 	char buf[PAGE_SIZE];
 
+	sev_register_encryption(addr, sz);
+
 	/*
 	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
 	 * write_mem
@@ -614,6 +637,7 @@ mbzero(paddr_t addr, int sz)
 {
 	if (write_mem(addr, NULL, sz))
 		return;
+	sev_register_encryption(addr, sz);
 }
 
 /*
@@ -633,6 +657,7 @@ static void
 mbcopy(void *src, paddr_t dst, int sz)
 {
 	write_mem(dst, src, sz);
+	sev_register_encryption(dst, sz);
 }
 
 /*

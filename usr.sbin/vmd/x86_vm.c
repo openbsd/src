@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.2 2024/07/12 13:51:12 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.3 2024/09/11 15:42:52 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -52,8 +52,6 @@ extern char *__progname;
 void	 create_memory_map(struct vm_create_params *);
 int	 translate_gva(struct vm_exit*, uint64_t, uint64_t *, int);
 
-static struct vm_mem_range *find_gpa_range(struct vm_create_params *, paddr_t,
-    size_t);
 static int	loadfile_bios(gzFile, off_t, struct vcpu_reg_state *);
 static int	vcpu_exit_eptviolation(struct vm_run_params *);
 static void	vcpu_exit_inout(struct vm_run_params *);
@@ -792,7 +790,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
  *  NULL: on failure if there is no memory range as described by the parameters
  *  Pointer to vm_mem_range that contains the start of the range otherwise.
  */
-static struct vm_mem_range *
+struct vm_mem_range *
 find_gpa_range(struct vm_create_params *vcp, paddr_t gpa, size_t len)
 {
 	size_t i, n;

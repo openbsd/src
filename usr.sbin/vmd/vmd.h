@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.127 2024/07/10 09:27:33 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.128 2024/09/11 15:42:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -50,6 +50,7 @@
 #define VMD_CONF		"/etc/vm.conf"
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
+#define PSP_NODE		"/dev/psp"
 #define VM_DEFAULT_BIOS		"/etc/firmware/vmm-bios"
 #define VM_DEFAULT_KERNEL	"/bsd"
 #define VM_DEFAULT_DEVICE	"hd0a"
@@ -131,6 +132,7 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_END_DATA,
 	IMSG_VMDOP_LOAD,
 	IMSG_VMDOP_RECEIVE_VMM_FD,
+	IMSG_VMDOP_RECEIVE_PSP_FD,
 	IMSG_VMDOP_RELOAD,
 	IMSG_VMDOP_PRIV_IFDESCR,
 	IMSG_VMDOP_PRIV_IFADD,
@@ -305,6 +307,12 @@ struct vmd_vm {
 	struct vmop_create_params vm_params;
 	pid_t			 vm_pid;
 	uint32_t		 vm_vmid;
+	uint32_t		 vm_sev_handle;
+	uint32_t		 vm_sev_asid[VMM_MAX_VCPUS_PER_VM];
+
+#define VM_SEV_NSEGMENTS	128
+	size_t			 vm_sev_nmemsegments;
+	struct vm_mem_range	 vm_sev_memsegments[VM_SEV_NSEGMENTS];
 
 	int			 vm_kernel;
 	char			*vm_kernel_path; /* Used by vm.conf. */
@@ -398,6 +406,7 @@ struct vmd {
 	int			 vmd_fd;
 	int			 vmd_fd6;
 	int			 vmd_ptmfd;
+	int			 vmd_psp_fd;
 };
 
 struct vm_dev_pipe {
@@ -508,6 +517,8 @@ void	 unpause_vm_md(struct vmd_vm *);
 int	 dump_devs(int);
 int	 dump_send_header(int);
 void	*hvaddr_mem(paddr_t, size_t);
+struct vm_mem_range *
+	 find_gpa_range(struct vm_create_params *, paddr_t, size_t);
 int	 write_mem(paddr_t, const void *, size_t);
 int	 read_mem(paddr_t, void *, size_t);
 int	 intr_ack(struct vmd_vm *);
@@ -538,6 +549,7 @@ void	 vm_pipe_init2(struct vm_dev_pipe *, void (*)(int, short, void *),
 	    void *);
 void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
+int	 write_mem(paddr_t, const void *buf, size_t);
 int	 remap_guest_mem(struct vmd_vm *, int);
 __dead void vm_shutdown(unsigned int);
 
@@ -572,5 +584,23 @@ __dead void vionet_main(int, int);
 
 /* vioblk.c */
 __dead void vioblk_main(int, int);
+
+/* psp.c */
+int	 psp_get_pstate(uint16_t *);
+int	 psp_df_flush(void);
+int	 psp_get_gstate(uint32_t, uint32_t *, uint32_t *, uint8_t *);
+int	 psp_launch_start(uint32_t *);
+int	 psp_launch_update(uint32_t, vaddr_t, size_t);
+int	 psp_launch_measure(uint32_t);
+int	 psp_launch_finish(uint32_t);
+int	 psp_activate(uint32_t, uint32_t);
+int	 psp_guest_shutdown(uint32_t);
+
+/* sev.c */
+int	sev_init(struct vmd_vm *);
+int	sev_register_encryption(vaddr_t, size_t);
+int	sev_encrypt_memory(struct vmd_vm *);
+int	sev_activate(struct vmd_vm *, int);
+int	sev_shutdown(struct vmd_vm *);
 
 #endif /* VMD_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.104 2024/07/10 09:27:33 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.105 2024/09/11 15:42:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -48,6 +48,7 @@
 #include <util.h>
 
 #include "atomicio.h"
+#include "loadfile.h"
 #include "mmio.h"
 #include "pci.h"
 #include "virtio.h"
@@ -163,6 +164,11 @@ vm_main(int fd, int fd_vmm)
 		}
 	}
 
+	if (vcp->vcp_sev && env->vmd_psp_fd < 0) {
+		log_warnx("%s not available", PSP_NODE);
+		_exit(EINVAL);
+	}
+
 	ret = start_vm(&vm, fd);
 	_exit(ret);
 }
@@ -227,6 +233,13 @@ start_vm(struct vmd_vm *vm, int fd)
 		/* Let the vmm process know we failed by sending a 0 vm id. */
 		vcp->vcp_id = 0;
 		atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id));
+		return (ret);
+	}
+
+	/* Setup SEV. */
+	ret = sev_init(vm);
+	if (ret) {
+		log_warnx("could not initialize SEV");
 		return (ret);
 	}
 
@@ -317,6 +330,10 @@ start_vm(struct vmd_vm *vm, int fd)
 	 * Execute the vcpu run loop(s) for this VM.
 	 */
 	ret = run_vm(&vm->vm_params, &vrs);
+
+	/* Shutdown SEV. */
+	if (sev_shutdown(vm))
+		log_warnx("%s: could not shutdown SEV", __func__);
 
 	/* Ensure that any in-flight data is written back */
 	virtio_shutdown(vm);
@@ -455,6 +472,9 @@ vm_shutdown(unsigned int cmd)
 		fatalx("invalid vm ctl command: %d", cmd);
 	}
 	imsg_flush(&current_vm->vm_iev.ibuf);
+
+	if (sev_shutdown(current_vm))
+		log_warnx("%s: could not shutdown SEV", __func__);
 
 	_exit(0);
 }
@@ -820,6 +840,7 @@ static int
 vmm_create_vm(struct vmd_vm *vm)
 {
 	struct vm_create_params *vcp = &vm->vm_params.vmc_params;
+	size_t i;
 
 	/* Sanity check arguments */
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM)
@@ -837,6 +858,9 @@ vmm_create_vm(struct vmd_vm *vm)
 
 	if (ioctl(env->vmd_fd, VMM_IOC_CREATE, vcp) == -1)
 		return (errno);
+
+	for (i = 0; i < vcp->vcp_ncpus; i++)
+		vm->vm_sev_asid[i] = vcp->vcp_asid[i];
 
 	return (0);
 }
@@ -917,6 +941,18 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		if (vcpu_reset(vcp->vcp_id, i, vrs)) {
 			log_warnx("%s: cannot reset VCPU %zu - exiting.",
 			    __progname, i);
+			return (EIO);
+		}
+
+		if (sev_activate(current_vm, i)) {
+			log_warnx("%s: SEV activatation failed for VCPU "
+			    "%zu failed - exiting.", __progname, i);
+			return (EIO);
+		}
+
+		if (sev_encrypt_memory(current_vm)) {
+			log_warnx("%s: memory encryption failed for VCPU "
+			    "%zu failed - exiting.", __progname, i);
 			return (EIO);
 		}
 
