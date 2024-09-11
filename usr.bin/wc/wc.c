@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.31 2022/12/04 23:50:50 cheloha Exp $	*/
+/*	$OpenBSD: wc.c,v 1.32 2024/09/11 03:57:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -193,23 +193,19 @@ cnt(const char *path)
 		}
 		/*
 		 * If all we need is the number of characters and
-		 * it's a directory or a regular or linked file, just
-		 * stat the puppy.  We avoid testing for it not being
+		 * it's a directory or a regular file, just stat
+		 * our handle.  We avoid testing for it not being
 		 * a special device in case someone adds a new type
 		 * of inode.
 		 */
 		else if (dochar) {
-			mode_t ifmt;
-
 			if (fstat(fd, &sbuf)) {
 				warn("%s", file);
 				rval = 1;
 			} else {
-				ifmt = sbuf.st_mode & S_IFMT;
-				if (ifmt == S_IFREG || ifmt == S_IFLNK
-				    || ifmt == S_IFDIR) {
+				if (S_ISREG(sbuf.st_mode) || S_ISDIR(sbuf.st_mode))
 					charct = sbuf.st_size;
-				} else {
+				else {
 					while ((len = read(fd, buf, _MAXBSIZE)) > 0)
 						charct += len;
 					if (len == -1) {
