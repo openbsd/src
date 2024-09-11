@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.407 2024/08/27 07:25:27 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.408 2024/09/11 19:12:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2024,7 +2024,19 @@ try_again:
 	}
 
 	/*
-	 * No match in this table. If not in the root table or if repeating,
+	 * Binding movement keys is useless since we only turn them on when the
+	 * application requests, so don't let them exit the prefix table.
+	 */
+	if (key == KEYC_MOUSEMOVE_PANE ||
+	    key == KEYC_MOUSEMOVE_STATUS ||
+	    key == KEYC_MOUSEMOVE_STATUS_LEFT ||
+	    key == KEYC_MOUSEMOVE_STATUS_RIGHT ||
+	    key == KEYC_MOUSEMOVE_STATUS_DEFAULT ||
+	    key == KEYC_MOUSEMOVE_BORDER)
+		goto forward_key;
+
+	/*
+	 * No match in this table. If not in the root table or if repeating
 	 * switch the client back to the root table and try again.
 	 */
 	log_debug("not found in key table %s", table->name);
