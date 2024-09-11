@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.11 2024/09/09 23:38:29 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.12 2024/09/11 00:41:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -262,7 +262,7 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 		    strcmp(username, req->rr_user) != 0) {
 			/*
 			 * The Access-Accept might have a User-Name.  It
-			 * should be used for Accouting (RFC 2865 5.1).
+			 * should be used for Accounting (RFC 2865 5.1).
 			 */
 			free(req->rr_user);
 			req->rr_sa->sa_eapid = strdup(username);
