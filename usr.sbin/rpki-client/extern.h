@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.227 2024/08/29 09:53:04 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.228 2024/09/12 10:33:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -916,7 +916,10 @@ char		*x509_get_pubkey(X509 *, const char *);
 char		*x509_pubkey_get_ski(X509_PUBKEY *, const char *);
 enum cert_purpose	 x509_get_purpose(X509 *, const char *);
 int		 x509_get_time(const ASN1_TIME *, time_t *);
-char		*x509_convert_seqnum(const char *, const ASN1_INTEGER *);
+char		*x509_convert_seqnum(const char *, const char *,
+		    const ASN1_INTEGER *);
+int		 x509_valid_seqnum(const char *, const char *,
+		    const ASN1_INTEGER *);
 int		 x509_location(const char *, const char *, GENERAL_NAME *,
 		    char **);
 int		 x509_inherits(X509 *);

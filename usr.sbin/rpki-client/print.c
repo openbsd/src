@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.55 2024/06/08 13:30:35 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.56 2024/09/12 10:33:25 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -159,7 +159,8 @@ x509_print(const X509 *x)
 		goto out;
 	}
 
-	if ((serial = x509_convert_seqnum(__func__, xserial)) == NULL)
+	if ((serial = x509_convert_seqnum(__func__, "serial number",
+	    xserial)) == NULL)
 		goto out;
 
 	if (outformats & FORMAT_JSON) {
@@ -342,45 +343,33 @@ cert_print(const struct cert *p)
 		json_do_end();
 }
 
-/*
- * XXX - dedup with x509_convert_seqnum()?
- */
 static char *
 crl_parse_number(const X509_CRL *x509_crl)
 {
 	ASN1_INTEGER	*aint = NULL;
 	int		 crit;
-	BIGNUM		*seqnum = NULL;
 	char		*s = NULL;
 
 	aint = X509_CRL_get_ext_d2i(x509_crl, NID_crl_number, &crit, NULL);
 	if (aint == NULL) {
 		if (crit != -1)
-			warnx("failed to parse CRL Number");
+			warnx("%s: RFC 6487, section 5: "
+			    "failed to parse CRL number", __func__);
 		else
-			warnx("CRL Number missing");
+			warnx("%s: RFC 6487, section 5: missing CRL number",
+			    __func__);
+		goto out;
+	}
+	if (crit != 0) {
+		warnx("%s: RFC 6487, section 5: CRL number not non-critical",
+		    __func__);
 		goto out;
 	}
 
-	if (ASN1_STRING_length(aint) > 20)
-		warnx("CRL Number should fit in 20 octets");
-
-	seqnum = ASN1_INTEGER_to_BN(aint, NULL);
-	if (seqnum == NULL) {
-		warnx("CRL Number: ASN1_INTEGER_to_BN error");
-		goto out;
-	}
-
-	if (BN_is_negative(seqnum))
-		warnx("CRL Number should be positive");
-
-	s = BN_bn2hex(seqnum);
-	if (s == NULL)
-		warnx("CRL Number: BN_bn2hex error");
+	s = x509_convert_seqnum(__func__, "CRL Number", aint);
 
  out:
 	ASN1_INTEGER_free(aint);
-	BN_free(seqnum);
 	return s;
 }
 
@@ -435,7 +424,7 @@ crl_print(const struct crl *p)
 	revlist = X509_CRL_get_REVOKED(p->x509_crl);
 	for (i = 0; i < sk_X509_REVOKED_num(revlist); i++) {
 		rev = sk_X509_REVOKED_value(revlist, i);
-		serial = x509_convert_seqnum(__func__,
+		serial = x509_convert_seqnum(__func__, "serial number",
 		    X509_REVOKED_get0_serialNumber(rev));
 		x509_get_time(X509_REVOKED_get0_revocationDate(rev), &t);
 		if (serial != NULL) {

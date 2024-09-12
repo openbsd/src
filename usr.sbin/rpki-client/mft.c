@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.118 2024/09/08 07:23:36 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.119 2024/09/12 10:33:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -333,7 +333,8 @@ mft_parse_econtent(const char *fn, struct mft *mft, const unsigned char *d,
 	if (!valid_econtent_version(fn, mft_asn1->version, 0))
 		goto out;
 
-	mft->seqnum = x509_convert_seqnum(fn, mft_asn1->manifestNumber);
+	mft->seqnum = x509_convert_seqnum(fn, "manifest number",
+	    mft_asn1->manifestNumber);
 	if (mft->seqnum == NULL)
 		goto out;
 

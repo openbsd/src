@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.100 2024/07/08 16:11:47 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.101 2024/09/12 10:33:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -1015,44 +1015,71 @@ x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
 }
 
 /*
+ * Check ASN1_INTEGER is non-negative and fits in 20 octets.
+ * Returns allocated BIGNUM if true, NULL otherwise.
+ */
+static BIGNUM *
+x509_seqnum_to_bn(const char *fn, const char *descr, const ASN1_INTEGER *i)
+{
+	BIGNUM *bn = NULL;
+
+	if (ASN1_STRING_length(i) > 20) {
+		warnx("%s: %s should fit in 20 octets", fn, descr);
+		goto out;
+	}
+
+	if ((bn = ASN1_INTEGER_to_BN(i, NULL)) == NULL) {
+		warnx("%s: %s: ASN1_INTEGER_to_BN error", fn, descr);
+		goto out;
+	}
+
+	if (BN_is_negative(bn)) {
+		warnx("%s: %s should be non-negative", fn, descr);
+		goto out;
+	}
+
+	return bn;
+
+ out:
+	BN_free(bn);
+	return NULL;
+}
+
+/*
  * Convert an ASN1_INTEGER into a hexstring, enforcing that it is non-negative
  * and representable by at most 20 octets (RFC 5280, section 4.1.2.2).
  * Returned string needs to be freed by the caller.
  */
 char *
-x509_convert_seqnum(const char *fn, const ASN1_INTEGER *i)
+x509_convert_seqnum(const char *fn, const char *descr, const ASN1_INTEGER *i)
 {
-	BIGNUM	*seqnum = NULL;
+	BIGNUM	*bn = NULL;
 	char	*s = NULL;
 
 	if (i == NULL)
 		goto out;
 
-	if (ASN1_STRING_length(i) > 20) {
-		warnx("%s: %s: want 20 octets or fewer, have more.",
-		    __func__, fn);
+	if ((bn = x509_seqnum_to_bn(fn, descr, i)) == NULL)
 		goto out;
-	}
 
-	seqnum = ASN1_INTEGER_to_BN(i, NULL);
-	if (seqnum == NULL) {
-		warnx("%s: ASN1_INTEGER_to_BN error", fn);
-		goto out;
-	}
-
-	if (BN_is_negative(seqnum)) {
-		warnx("%s: %s: want positive integer, have negative.",
-		    __func__, fn);
-		goto out;
-	}
-
-	s = BN_bn2hex(seqnum);
-	if (s == NULL)
-		warnx("%s: BN_bn2hex error", fn);
+	if ((s = BN_bn2hex(bn)) == NULL)
+		warnx("%s: %s: BN_bn2hex error", fn, descr);
 
  out:
-	BN_free(seqnum);
+	BN_free(bn);
 	return s;
+}
+
+int
+x509_valid_seqnum(const char *fn, const char *descr, const ASN1_INTEGER *i)
+{
+	BIGNUM *bn;
+
+	if ((bn = x509_seqnum_to_bn(fn, descr, i)) == NULL)
+		return 0;
+
+	BN_free(bn);
+	return 1;
 }
 
 /*
