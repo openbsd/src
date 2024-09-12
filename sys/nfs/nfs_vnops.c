@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.202 2024/09/11 12:22:34 claudio Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.203 2024/09/12 09:04:51 claudio Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2262,6 +2262,11 @@ nfs_readdir(void *v)
 
 			dp->d_reclen -= NFS_DIRENT_OVERHEAD;
 			dp->d_off = fxdr_hyper(&ndp->cookie[0]);
+
+			if (memchr(dp->d_name, '/', dp->d_namlen) != NULL) {
+				error = EBADRPC;
+				break;
+			}
 
 			if (uio->uio_resid < dp->d_reclen) {
 				eof = 0;

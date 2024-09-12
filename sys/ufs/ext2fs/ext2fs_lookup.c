@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.46 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.47 2024/09/12 09:04:51 claudio Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -173,7 +173,11 @@ ext2fs_readdir(void *v)
 				break;
 			}
 			ext2fs_dirconv2ffs(dp, &dstd);
-			if(dstd.d_reclen > uio->uio_resid) {
+			if (memchr(dstd.d_name, '/', dstd.d_namlen) != NULL) {
+				error = EINVAL;
+				break;
+			}
+			if (dstd.d_reclen > uio->uio_resid) {
 				break;
 			}
 			dstd.d_off = off + e2d_reclen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.26 2022/11/15 17:16:44 mvs Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.27 2024/09/12 09:04:51 claudio Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -819,6 +819,11 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio)
 		memcpy(dent.d_name, de->td_name, de->td_namelen);
 		dent.d_name[de->td_namelen] = '\0';
 		dent.d_reclen = DIRENT_SIZE(&dent);
+
+		if (memchr(dent.d_name, '/', dent.d_namlen) != NULL) {
+			error = EINVAL;
+			break;
+		}
 
 		next_de = TAILQ_NEXT(de, td_entries);
 		if (next_de == NULL)

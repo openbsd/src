@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.95 2023/09/08 20:00:28 mvs Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.96 2024/09/12 09:04:51 claudio Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -316,6 +316,11 @@ iso_uiodir(struct isoreaddir *idp, struct dirent *dp, off_t off)
 
 	dp->d_name[dp->d_namlen] = 0;
 	dp->d_reclen = DIRENT_SIZE(dp);
+
+	if (memchr(dp->d_name, '/', dp->d_namlen) != NULL) {
+		/* illegal file name */
+		return (EINVAL);
+	}
 
 	if (idp->uio->uio_resid < dp->d_reclen) {
 		idp->eofflag = 0;

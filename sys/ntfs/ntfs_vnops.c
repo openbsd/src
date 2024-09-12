@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.49 2024/05/13 11:17:40 semarie Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.50 2024/09/12 09:04:51 claudio Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -489,6 +489,10 @@ ntfs_readdir(void *v)
 			    "flag: %u, ",
 			    num, cde.d_name, iep->ie_fnametype, iep->ie_flag);
 			cde.d_namlen = fname - (char *) cde.d_name;
+			if (memchr(cde.d_name, '/', cde.d_namlen) != NULL) {
+				error = EINVAL;
+				goto out;
+			}
 			cde.d_fileno = iep->ie_number;
 			cde.d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
 			cde.d_reclen = sizeof(struct dirent);
