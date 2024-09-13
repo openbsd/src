@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.122 2024/09/01 03:08:56 jsg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.123 2024/09/13 09:57:34 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -59,6 +59,10 @@ int	nvme_resume(struct nvme_softc *);
 void	nvme_dumpregs(struct nvme_softc *);
 int	nvme_identify(struct nvme_softc *, u_int);
 void	nvme_fill_identify(struct nvme_softc *, struct nvme_ccb *, void *);
+
+#ifndef SMALL_KERNEL
+void	nvme_refresh_sensors(void *);
+#endif
 
 int	nvme_ccbs_alloc(struct nvme_softc *, u_int);
 void	nvme_ccbs_free(struct nvme_softc *, u_int);
@@ -158,6 +162,7 @@ static const struct nvme_ops nvme_ops = {
 #define NVME_TIMO_QOP			5000	/* ms to create/delete queue */
 #define NVME_TIMO_PT			5000	/* ms to complete passthrough */
 #define NVME_TIMO_IDENT			10000	/* ms to probe/identify */
+#define NVME_TIMO_LOG_PAGE		5000	/* ms to read log pages */
 #define NVME_TIMO_DELAYNS		10	/* ns to delay() in poll loop */
 
 /*
@@ -406,6 +411,31 @@ nvme_attach(struct nvme_softc *sc)
 	saa.saa_pool = &sc->sc_iopool;
 	saa.saa_quirks = saa.saa_flags = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
+
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc), sizeof(sc->sc_sensordev.xname));
+
+#ifndef SMALL_KERNEL
+	sc->sc_temp_sensor.type = SENSOR_TEMP;
+	sc->sc_temp_sensor.status = SENSOR_S_UNKNOWN;
+	sensor_attach(&sc->sc_sensordev, &sc->sc_temp_sensor);
+
+	sc->sc_usage_sensor.type = SENSOR_PERCENT;
+	sc->sc_usage_sensor.status = SENSOR_S_UNKNOWN;
+	strlcpy(sc->sc_usage_sensor.desc, "endurance used",
+	    sizeof(sc->sc_usage_sensor.desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_usage_sensor);
+
+	sc->sc_spare_sensor.type = SENSOR_PERCENT;
+	sc->sc_spare_sensor.status = SENSOR_S_UNKNOWN;
+	strlcpy(sc->sc_spare_sensor.desc, "available spare",
+	    sizeof(sc->sc_spare_sensor.desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_spare_sensor);
+
+	if (sensor_task_register(sc, nvme_refresh_sensors, 60) == NULL)
+		goto free_q;
+
+	sensordev_install(&sc->sc_sensordev);
+#endif
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);
@@ -2128,3 +2158,70 @@ nvme_bioctl_disk(struct nvme_softc *sc, struct bioc_disk *bd)
 	return 0;
 }
 #endif	/* NBIO > 0 */
+
+#ifndef SMALL_KERNEL
+void
+nvme_refresh_sensors(void *arg)
+{
+	struct nvme_softc 		*sc = arg;
+	struct nvme_sqe			 sqe;
+	struct nvme_dmamem		*mem = NULL;
+	struct nvme_ccb			*ccb = NULL;
+	struct nvm_smart_health 	*health;
+	uint32_t			 dwlen;
+	uint8_t 			 cw;
+	int				 flags;
+	int64_t				 temp;
+
+	ccb = nvme_ccb_get(sc);
+	if (ccb == NULL)
+		goto failed;
+
+	mem = nvme_dmamem_alloc(sc, sizeof(*health));
+	if (mem == NULL)
+		goto failed;
+	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
+
+	dwlen = (sizeof(*health) >> 2) - 1;
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = NVM_ADMIN_GET_LOG_PG;
+	htolem32(&sqe.nsid, 0xffffffff);
+	htolem32(&sqe.cdw10, (dwlen << 16 | NVM_LOG_PAGE_SMART_HEALTH));
+	htolem64(&sqe.entry.prp[0], NVME_DMA_DVA(mem));
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+	flags = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_LOG_PAGE);
+
+	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
+
+	if (flags != 0)
+		goto failed;
+
+	health = NVME_DMA_KVA(mem); 
+	cw = health->critical_warning;
+
+	sc->sc_temp_sensor.status = (cw & NVM_HEALTH_CW_TEMP) ?
+	    SENSOR_S_CRIT : SENSOR_S_OK;
+	temp = letoh16(health->temperature);
+	sc->sc_temp_sensor.value = (temp * 1000000) + 150000;
+
+	sc->sc_spare_sensor.status = (cw & NVM_HEALTH_CW_SPARE) ?
+	    SENSOR_S_CRIT : SENSOR_S_OK;
+	sc->sc_spare_sensor.value = health->avail_spare * 1000;
+
+	sc->sc_usage_sensor.status = SENSOR_S_OK;
+	sc->sc_usage_sensor.value = health->percent_used * 1000;
+	goto done;
+
+ failed:
+	sc->sc_temp_sensor.status = SENSOR_S_UNKNOWN;
+	sc->sc_usage_sensor.status = SENSOR_S_UNKNOWN;
+	sc->sc_spare_sensor.status = SENSOR_S_UNKNOWN;
+ done:
+	if (mem != NULL)
+		nvme_dmamem_free(sc, mem);
+	if (ccb != NULL)
+		nvme_ccb_put(sc, ccb);
+}
+#endif /* SMALL_KERNEL */

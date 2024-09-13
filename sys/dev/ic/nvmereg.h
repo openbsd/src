@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.15 2024/05/24 12:04:07 krw Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.16 2024/09/13 09:57:34 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -414,4 +414,42 @@ struct nvm_identify_namespace {
 	u_int8_t	_reserved2[192];
 
 	u_int8_t	vs[3712];
+} __packed __aligned(8);
+
+#define NVM_LOG_PAGE_SMART_HEALTH	0x02
+struct nvm_smart_health {
+	u_int8_t	critical_warning;
+#define NVM_HEALTH_CW_SPARE		(1 << 0)
+#define NVM_HEALTH_CW_TEMP		(1 << 1)
+#define NVM_HEALTH_CW_MEDIA		(1 << 2)
+#define NVM_HEALTH_CW_READONLY		(1 << 3)
+#define NVM_HEALTH_CW_VOLATILE		(1 << 4)
+#define NVM_HEALTH_CW_PMR		(1 << 5)
+	u_int16_t	temperature;
+	u_int8_t	avail_spare;
+	u_int8_t	avail_spare_threshold;
+	u_int8_t	percent_used;
+	u_int8_t	end_grp_summary;	/* 1.4+ */
+
+	u_int8_t	_reserved1[25];
+
+	u_int64_t	data_units_read[2];
+	u_int64_t	data_units_written[2];
+	u_int64_t	host_read_commands[2];
+	u_int64_t	host_write_commands[2];
+	u_int64_t	busy_time[2];
+	u_int64_t	power_cycles[2];
+	u_int64_t	power_on_hours[2];
+	u_int64_t	unsafe_shutdowns[2];
+	u_int64_t	integrity_errors[2];
+	u_int64_t	error_log_entries[2];
+	u_int32_t	warn_temp_time;		/* 1.2+ */
+	u_int32_t	crit_temp_time;		/* 1.2+ */
+	u_int16_t	temp_sensors[8];	/* 1.2+ */
+	u_int32_t	therm_mgmt_count_1;	/* 1.3+ */
+	u_int32_t	therm_mgmt_count_2;	/* 1.3+ */
+	u_int32_t	therm_mgmt_time_1;	/* 1.3+ */
+	u_int32_t	therm_mgmt_time_2;	/* 1.3+ */
+	
+	u_int8_t	_reserved2[280];
 } __packed __aligned(8);

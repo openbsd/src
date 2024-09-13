@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.30 2024/06/26 21:41:30 asou Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.31 2024/09/13 09:57:34 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/sensors.h>
 
 #define NVME_IO_Q	1
 #define NVME_HIB_Q	2
@@ -126,6 +128,11 @@ struct nvme_softc {
 	struct scsi_iopool	sc_iopool;
 	struct rwlock		sc_lock;
 	struct scsibus_softc	*sc_scsibus;
+
+	struct ksensordev	sc_sensordev;
+	struct ksensor		sc_temp_sensor;
+	struct ksensor		sc_spare_sensor;
+	struct ksensor		sc_usage_sensor;
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
