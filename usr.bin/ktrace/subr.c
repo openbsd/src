@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.17 2023/12/15 15:12:08 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.18 2024/09/13 20:19:50 kn Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -40,8 +40,7 @@
 
 /*
  * If you change the trace point letters, then update to match:
- * ktrace/ktrace.1, ktrace/ltrace.1, kdump/kdump.1, and
- * usage() in kdump/kdump.c
+ * ktrace/ktrace.1, ktrace/ltrace.1 and kdump/kdump.1
  */
 int
 getpoints(const char *s, int defpoints)
