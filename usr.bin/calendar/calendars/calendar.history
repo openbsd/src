@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.82 2020/04/19 21:08:39 jmc Exp $
+ * $OpenBSD: calendar.history,v 1.83 2024/09/14 20:15:24 schwarze Exp $
  */
 
 #ifndef _calendar_history_
@@ -433,7 +433,6 @@
 11/07	Lewis and Clark Expedition in sight of the Pacific Ocean, 1805
 11/08	Invasion of Sweden by Danish forces results in the
 	Stockholm Bloodbath, 1520
-11/09	Giant panda discovered (?!), China, 1927
 11/09	Jack the Ripper kills fifth and final victim, Jane Kelly, 1888
 11/10	Henry Stanley asks David Livingstone, "Dr. Livingstone, I presume?",
 	1871
