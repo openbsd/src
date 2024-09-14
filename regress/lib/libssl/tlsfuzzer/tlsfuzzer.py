@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.54 2024/09/13 05:58:17 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.55 2024/09/14 07:11:34 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -654,7 +654,7 @@ failing_groups = [
 ]
 
 class TestRunner:
-    """ Runs the given tests groups against a server and displays stats. """
+    """ Runs the given tests against a server and displays stats. """
 
     def __init__(
         self, timing=False, verbose=False, host="localhost", port=4433,
