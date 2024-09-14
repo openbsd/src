@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.17 2023/04/20 19:28:31 jcs Exp $
+#	$OpenBSD: files.pv,v 1.18 2024/09/14 09:21:13 jsg Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -11,7 +11,7 @@ file	dev/pv/pvbus.c			pvbus	needs-flag
 # KVM clock
 device	pvclock
 attach	pvclock at pvbus
-file	dev/pv/pvclock.c		pvclock	needs-flag
+file	dev/pv/pvclock.c		pvclock
 
 # VMware Tools
 device	vmt
