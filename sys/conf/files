@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.738 2024/09/09 03:50:14 jsg Exp $
+#	$OpenBSD: files,v 1.739 2024/09/14 09:00:16 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -471,7 +471,7 @@ file	dev/usb/xhci.c			xhci	needs-flag
 
 # AMD Cryptographic Co-processor
 device	ccp {}
-file	dev/ic/ccp.c			ccp	needs-flag
+file	dev/ic/ccp.c			ccp
 
 # AMD Platform Security Processor
 device	psp
