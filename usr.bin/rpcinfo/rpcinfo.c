@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.19 2024/08/16 16:00:30 florian Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.20 2024/09/15 07:14:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -489,7 +489,6 @@ void
 pmapdump(int argc, char **argv)
 {
 	struct sockaddr_in server_addr;
-	struct hostent *hp;
 	struct pmaplist *head = NULL;
 	int socket = RPC_ANYSOCK;
 	struct timeval minutetimeout;

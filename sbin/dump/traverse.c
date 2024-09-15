@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.42 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.43 2024/09/15 07:14:58 jsg Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -150,7 +150,6 @@ fs_mapinodes(ino_t maxino, int64_t *tapesize, int *anydirskipped)
 	int i, cg, inosused;
 	struct cg *cgp;
 	ino_t ino;
-	char *cp;
 
 	if ((cgp = malloc(sblock->fs_cgsize)) == NULL)
 		quit("fs_mapinodes: cannot allocate memory.\n");

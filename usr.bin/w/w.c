@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.69 2024/08/19 07:28:22 florian Exp $	*/
+/*	$OpenBSD: w.c,v 1.70 2024/09/15 07:14:58 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 	struct kinfo_proc *kp;
 	struct stat *stp;
 	FILE *ut;
-	struct in_addr addr;
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
 	char buf[HOST_NAME_MAX+1], errbuf[_POSIX2_LINE_MAX];

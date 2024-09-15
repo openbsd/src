@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.42 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.43 2024/09/15 07:14:58 jsg Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -269,7 +269,6 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 	int cg, i, mode, errs = 0, status;
 	ino_t ino, inosused;
 	pid_t pid;
-	char *cp;
 
 	switch (pid = fork()) {
 	case -1:	/* error */

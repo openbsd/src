@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.66 2024/04/08 02:51:14 jsg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.67 2024/09/15 07:14:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -175,7 +175,6 @@ static void *
 newchunk(size_t n)
 {
 	struct membag *m;
-	int k, size;
 	void *p;
 
 	m = &membag[cur_membag];

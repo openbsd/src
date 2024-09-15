@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.49 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.50 2024/09/15 07:14:58 jsg Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ pass1(void)
 	u_int c;
 	struct inodesc idesc;
 	daddr_t i, cgd;
-	u_int8_t *cp;
 
 	/*
 	 * Set file system reserved blocks in used block map.
