@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.h,v 1.2 2024/09/15 05:26:05 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.h,v 1.3 2024/09/15 05:29:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -23,6 +23,8 @@
 #include <stdint.h>
 
 #include "radiusd.h"
+
+#define	RADIUSD_IPCP_DAE_MAX_INFLIGHT	64
 
 enum imsg_module_ipcp_type {
 	IMSG_RADIUSD_MODULE_IPCP_DUMP = IMSG_RADIUSD_MODULE_MIN,

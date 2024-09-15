@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.15 2024/09/15 05:26:05 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.16 2024/09/15 05:29:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -122,8 +122,10 @@ struct module_ipcp_dae {
 		struct sockaddr_in6	 sin6;
 	}				 nas_addr;
 	struct event			 ev_sock;
+	struct event			 ev_reqs;
 	TAILQ_ENTRY(module_ipcp_dae)	 next;
 	TAILQ_HEAD(, assigned_ipv4)	 reqs;
+	int				 ninflight;
 };
 
 struct module_ipcp {
@@ -200,6 +202,7 @@ static void	 ipcp_dae_send_disconnect_request(struct assigned_ipv4 *);
 static void	 ipcp_dae_request_on_timeout(int, short, void *);
 static void	 ipcp_dae_on_event(int, short, void *);
 static void	 ipcp_dae_reset_request(struct assigned_ipv4 *);
+static void	 ipcp_dae_send_pending_requests(int, short, void *);
 static struct ipcp_address
 		*parse_address_range(const char *);
 static const char
@@ -317,6 +320,7 @@ ipcp_start(void *ctx)
 		event_set(&dae->ev_sock, sock, EV_READ | EV_PERSIST,
 		    ipcp_dae_on_event, dae);
 		event_add(&dae->ev_sock, NULL);
+		evtimer_set(&dae->ev_reqs, ipcp_dae_send_pending_requests, dae);
 	}
 
 	module_send_message(self->base, IMSG_OK, NULL);
@@ -336,6 +340,8 @@ ipcp_stop(void *ctx)
 			close(dae->sock);
 			dae->sock = -1;
 		}
+		if (evtimer_pending(&dae->ev_reqs, NULL))
+			event_del(&dae->ev_reqs);
 	}
 	if (evtimer_pending(&self->ev_timer, NULL))
 		evtimer_del(&self->ev_timer);
@@ -1595,22 +1601,27 @@ ipcp_dae_send_disconnect_request(struct assigned_ipv4 *assign)
 		radius_set_accounting_request_authenticator(reqpkt,
 		    assign->dae->secret);
 		assign->dae_reqpkt = reqpkt;
+		TAILQ_INSERT_TAIL(&assign->dae->reqs, assign, dae_next);
 	}
 
 	if (assign->dae_ntry == 0) {
+		if (assign->dae->ninflight >= RADIUSD_IPCP_DAE_MAX_INFLIGHT)
+			return;
 		log_info("Sending Disconnect-Request seq=%u to %s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &assign->dae->nas_addr, buf, sizeof(buf)));
-		TAILQ_INSERT_TAIL(&assign->dae->reqs, assign, dae_next);
 	}
 
 	if (radius_send(assign->dae->sock, assign->dae_reqpkt, 0) < 0)
 		log_warn("%s: sendto: %m", __func__);
 
-	tv.tv_sec = dae_request_timeouts[assign->dae_ntry++];
+	tv.tv_sec = dae_request_timeouts[assign->dae_ntry];
 	tv.tv_usec = 0;
 	evtimer_set(&assign->dae_evtimer, ipcp_dae_request_on_timeout, assign);
 	evtimer_add(&assign->dae_evtimer, &tv);
+	if (assign->dae_ntry == 0)
+		assign->dae->ninflight++;
+	assign->dae_ntry++;
 }
 
 void
@@ -1728,10 +1739,16 @@ void
 ipcp_dae_reset_request(struct assigned_ipv4 *assign)
 {
 	struct radiusctl_client		*client, *clientt;
+	const struct timeval		 zero = { 0, 0 };
 
 	if (assign->dae != NULL) {
-		if (assign->dae_ntry > 0)
+		if (assign->dae_reqpkt != NULL)
 			TAILQ_REMOVE(&assign->dae->reqs, assign, dae_next);
+		if (assign->dae_ntry > 0) {
+			assign->dae->ninflight--;
+			if (!evtimer_pending(&assign->dae->ev_reqs, NULL))
+				evtimer_add(&assign->dae->ev_reqs, &zero);
+		}
 	}
 	if (assign->dae_reqpkt != NULL)
 		radius_delete_packet(assign->dae_reqpkt);
@@ -1743,6 +1760,23 @@ ipcp_dae_reset_request(struct assigned_ipv4 *assign)
 		free(client);
 	}
 	assign->dae_ntry = 0;
+}
+
+void
+ipcp_dae_send_pending_requests(int fd, short ev, void *ctx)
+{
+	struct module_ipcp_dae	*dae = ctx;
+	struct module_ipcp	*self = dae->ipcp;
+	struct assigned_ipv4	*assign, *assignt;
+
+	ipcp_update_time(self);
+
+	TAILQ_FOREACH_SAFE(assign, &dae->reqs, dae_next, assignt) {
+		if (dae->ninflight >= RADIUSD_IPCP_DAE_MAX_INFLIGHT)
+			break;
+		if (assign->dae_ntry == 0)	/* pending */
+			ipcp_dae_send_disconnect_request(assign);
+	}
 }
 
 /***********************************************************************
