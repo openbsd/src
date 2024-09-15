@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.14 2024/08/27 06:06:14 florian Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.15 2024/09/15 05:26:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -178,6 +178,8 @@ struct assigned_ipv4
 		    struct in_addr);
 static struct assigned_ipv4
 		*ipcp_ipv4_find(struct module_ipcp *, struct in_addr);
+static void	 ipcp_ipv4_delete(struct module_ipcp *,
+		    struct assigned_ipv4 *, const char *);
 static void	 ipcp_ipv4_release(struct module_ipcp *,
 		    struct assigned_ipv4 *);
 static int	 assigned_ipv4_compar(struct assigned_ipv4 *,
@@ -624,10 +626,14 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 		freezero(dump ,dumpsiz);
 		break;
 	case IMSG_RADIUSD_MODULE_IPCP_DISCONNECT:
+	case IMSG_RADIUSD_MODULE_IPCP_DELETE:
 		if (datalen < sizeof(unsigned)) {
 			log_warn("%s: received "
-			    "IMSG_RADIUSD_MODULE_IPCP_DISCONNECT message size "
-			    "is wrong", __func__);
+			    "%s message size is wrong", __func__,
+			    (imsg->hdr.type ==
+			    IMSG_RADIUSD_MODULE_IPCP_DISCONNECT)
+			    ? "IMSG_RADIUSD_MODULE_IPCP_DISCONNECT"
+			    : "IMSG_RADIUSD_MODULE_IPCP_DELETE");
 			goto fail;
 		}
 		seq = *(unsigned *)imsg->data;
@@ -640,12 +646,19 @@ ipcp_dispatch_control(void *ctx, struct imsg *imsg)
 		}
 		if (assign == NULL) {
 			cause = "session not found";
-			log_warnx("Disconnect seq=%u requested, but the "
-			    "session is not found", seq);
+			log_warnx("%s seq=%u requested, but the "
+			    "session is not found",
+			    (imsg->hdr.type ==
+			    IMSG_RADIUSD_MODULE_IPCP_DISCONNECT)? "Disconnect"
+			    : "Delete", seq);
 			module_imsg_compose(self->base, IMSG_NG,
 			    imsg->hdr.peerid, 0, -1, cause, strlen(cause) + 1);
-		}
-		else {
+		} else if (imsg->hdr.type == IMSG_RADIUSD_MODULE_IPCP_DELETE) {
+			log_info("Delete seq=%u by request", assign->seq);
+			ipcp_ipv4_delete(self,  assign, "By control");
+			module_imsg_compose(self->base, IMSG_OK,
+			    imsg->hdr.peerid, 0, -1, NULL, 0);
+		} else {
 			if (assign->dae == NULL)
 				log_warnx("Disconnect seq=%u requested, but "
 				    "DAE is not configured", assign->seq);
@@ -1061,8 +1074,9 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 				continue;
 			log_info("Delete record for %s", inet_ntop(AF_INET,
 			    &assign->ipv4, buf, sizeof(buf)));
-			ipcp_del_db(self, assign);
-			ipcp_ipv4_release(self, assign);
+			ipcp_ipv4_delete(self, assign,
+			    (type == RADIUS_ACCT_STATUS_TYPE_ACCT_ON)
+			    ? "Receive Acct-On" : "Receive Acct-Off");
 		}
 		return;
 	}
@@ -1252,6 +1266,20 @@ ipcp_ipv4_find(struct module_ipcp *self, struct in_addr ina)
 		}
 	}
 	return (ret);
+}
+
+void
+ipcp_ipv4_delete(struct module_ipcp *self, struct assigned_ipv4 *assign,
+    const char *cause)
+{
+	static struct radiusd_ipcp_statistics stat = { 0 };
+
+	memset(stat.cause, 0, sizeof(stat.cause));
+	strlcpy(stat.cause, cause, sizeof(stat.cause));
+
+	ipcp_del_db(self, assign);
+	ipcp_notice_startstop(self, assign, 0, &stat);
+	ipcp_ipv4_release(self, assign);
 }
 
 void

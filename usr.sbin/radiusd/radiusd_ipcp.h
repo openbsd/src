@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.h,v 1.1 2024/07/09 17:26:14 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.h,v 1.2 2024/09/15 05:26:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -30,6 +30,7 @@ enum imsg_module_ipcp_type {
 	IMSG_RADIUSD_MODULE_IPCP_DUMP_AND_MONITOR,
 	IMSG_RADIUSD_MODULE_IPCP_START,
 	IMSG_RADIUSD_MODULE_IPCP_STOP,
+	IMSG_RADIUSD_MODULE_IPCP_DELETE,
 	IMSG_RADIUSD_MODULE_IPCP_DISCONNECT
 };
 

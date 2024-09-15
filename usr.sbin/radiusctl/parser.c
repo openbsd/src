@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2024/09/02 04:45:22 yasuoka Exp $	*/
+/*	$OpenBSD: parser.c,v 1.6 2024/09/15 05:26:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -158,6 +158,7 @@ static const struct token t_ipcp[] = {
 	{ KEYWORD,	"dump",		IPCP_DUMP,	t_ipcp_flags },
 	{ KEYWORD,	"monitor",	IPCP_MONITOR,	t_ipcp_flags },
 	{ KEYWORD,	"disconnect",	IPCP_DISCONNECT,t_ipcp_session_seq },
+	{ KEYWORD,	"delete",	IPCP_DELETE,	t_ipcp_session_seq },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 

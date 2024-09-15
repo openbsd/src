@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusctl.8,v 1.9 2024/07/24 08:27:20 yasuoka Exp $
+.\"	$OpenBSD: radiusctl.8,v 1.10 2024/09/15 05:26:05 yasuoka Exp $
 .\"
 .\" Copyright (c) YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 24 2024 $
+.Dd $Mdocdate: September 15 2024 $
 .Dt RADIUSCTL 8
 .Os
 .Sh NAME
@@ -114,6 +114,10 @@ shows the sessions in JSON format.
 .It Cm ipcp disconnect Ar sequence
 Request to disconnect the session specified by the
 .Ar sequence .
+.It Cm ipcp delete Ar sequence
+Request to delete the session specified by the
+.Ar sequence
+without requesting disconnection.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent

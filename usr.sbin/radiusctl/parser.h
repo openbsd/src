@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.4 2024/07/24 08:27:20 yasuoka Exp $	*/
+/*	$OpenBSD: parser.h,v 1.5 2024/09/15 05:26:05 yasuoka Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.h 1.9 */
 /*
@@ -29,6 +29,7 @@ enum actions {
 	IPCP_SHOW,
 	IPCP_DUMP,
 	IPCP_MONITOR,
+	IPCP_DELETE,
 	IPCP_DISCONNECT
 };
 
