@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.190 2024/08/21 03:16:25 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.191 2024/09/15 23:13:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -311,8 +311,10 @@ elf_read_pintable(struct proc *p, struct vnode *vp, Elf_Phdr *pp,
 	for (i = 0; i < nsyscalls; i++) {
 		if (syscalls[i].sysno <= 0 ||
 		    syscalls[i].sysno >= SYS_MAXSYSCALL ||
-		    syscalls[i].offset > len)
+		    syscalls[i].offset > len) {
+			npins = 0;
 			goto bad;
+		}
 		npins = MAX(npins, syscalls[i].sysno);
 	}
 	if (is_ldso)
