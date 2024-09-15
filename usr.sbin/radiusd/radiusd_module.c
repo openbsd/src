@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.19 2024/07/14 15:27:57 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.20 2024/09/15 05:14:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -643,9 +643,13 @@ module_on_event(int fd, short evmask, void *ctx)
 		if (ret > 0)
 			continue;
 		base->writeready = false;
-		if (ret == 0 && errno == EAGAIN)
+		if (ret == -1 && errno == EAGAIN)
 			break;
-		syslog(LOG_ERR, "%s: msgbuf_write: %m", __func__);
+		if (ret == 0)
+			syslog(LOG_ERR, "%s: connection is closed", __func__);
+		else
+			syslog(LOG_ERR, "%s: msgbuf_write: %d %m", __func__,
+			    ret);
 		module_stop(base);
 		return;
 	}
