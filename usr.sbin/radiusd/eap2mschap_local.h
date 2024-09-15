@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap2mschap_local.h,v 1.2 2024/07/16 06:18:20 miod Exp $	*/
+/*	$OpenBSD: eap2mschap_local.h,v 1.3 2024/09/15 05:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -70,7 +70,7 @@ struct eap_mschap_challenge {
 	uint8_t		chall[16];
 	char		chap_name[0];
 } __packed;
-#if defined(__STDC_VERSION__) && __STDC_VERSION >= 201112L
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 static_assert(sizeof(struct eap_mschap_challenge) == 26, "");
 static_assert(offsetof(struct eap_mschap_challenge, chap) == 5, "");
 static_assert(offsetof(struct eap_mschap_challenge, chall) == 10, "");
@@ -87,7 +87,7 @@ struct eap_mschap_response {
 	uint8_t		flags;
 	uint8_t		chap_name[0];
 } __packed;
-#if defined(__STDC_VERSION__) && __STDC_VERSION >= 201112L
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 static_assert(sizeof(struct eap_mschap_response) == 59, "");
 static_assert(offsetof(struct eap_mschap_response, chap) == 5, "");
 static_assert(offsetof(struct eap_mschap_response, peerchall) == 10, "");
