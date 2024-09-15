@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.16 2024/09/15 05:29:11 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.17 2024/09/15 05:31:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -308,12 +308,13 @@ ipcp_start(void *ctx)
 	TAILQ_FOREACH(dae, &self->daes, next) {
 		if ((sock = socket(dae->nas_addr.sin4.sin_family,
 		    SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			log_warn("could not start dae: %s", strerror(errno));
+			log_warn("%s: could not start dae: socket()", __func__);
 			return;
 		}
 		if (connect(sock, (struct sockaddr *)&dae->nas_addr,
 		    dae->nas_addr.sin4.sin_len) == -1) {
-			log_warn("could not start dae: %s", strerror(errno));
+			log_warn("%s: could not start dae: connect()",
+			    __func__);
 			return;
 		}
 		dae->sock = sock;
@@ -1078,8 +1079,9 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 			    !IN6_ARE_ADDR_EQUAL(&assign->nas_ipv6, &nas_ipv6) ||
 			    strcmp(assign->nas_id, nas_id) != 0)
 				continue;
-			log_info("Delete record for %s", inet_ntop(AF_INET,
-			    &assign->ipv4, buf, sizeof(buf)));
+			log_info("q=%u Delete record for %s", q_id,
+			    inet_ntop(AF_INET, &assign->ipv4, buf,
+			    sizeof(buf)));
 			ipcp_ipv4_delete(self, assign,
 			    (type == RADIUS_ACCT_STATUS_TYPE_ACCT_ON)
 			    ? "Receive Acct-On" : "Receive Acct-Off");
@@ -1164,9 +1166,9 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 
 		if (ipcp_notice_startstop(self, assign, 1, NULL) != 0)
 			goto fail;
-		log_info("Start seq=%u user=%s duration=%dsec session=%s "
-		    "tunnel=%s from=%s auth=%s ip=%s", assign->seq,
-		    assign->user->name, delay, assign->session_id,
+		log_info("q=%u Start seq=%u user=%s duration=%dsec "
+		    "session=%s tunnel=%s from=%s auth=%s ip=%s", q_id,
+		    assign->seq, assign->user->name, delay, assign->session_id,
 		    assign->tun_type, print_addr((struct sockaddr *)
 		    &assign->tun_client, buf1, sizeof(buf1)),
 		    assign->auth_method, inet_ntop(AF_INET, &addr4, buf,
@@ -1200,10 +1202,10 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 			strlcpy(stat.cause, radius_terminate_cause_string(uval),
 			    sizeof(stat.cause));
 
-		log_info("Stop seq=%u user=%s duration=%lldsec session=%s "
-		    "tunnel=%s from=%s auth=%s ip=%s datain=%"PRIu64"bytes,%"
-		    PRIu32"packets dataout=%"PRIu64"bytes,%"PRIu32"packets "
-		    "cause=\"%s\"",
+		log_info("q=%u Stop seq=%u user=%s duration=%lldsec "
+		    "session=%s tunnel=%s from=%s auth=%s ip=%s "
+		    "datain=%"PRIu64"bytes,%" PRIu32"packets dataout=%"PRIu64
+		    "bytes,%"PRIu32"packets cause=\"%s\"", q_id,
 		    assign->seq, assign->user->name, dur.tv_sec,
 		    assign->session_id, assign->tun_type, print_addr(
 		    (struct sockaddr *)&assign->tun_client, buf1, sizeof(buf1)),
@@ -1664,7 +1666,7 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 	if ((radres = radius_recv(dae->sock, 0)) == NULL) {
 		if (errno == EAGAIN)
 			return;
-		log_warn("Failed to receive from %s", print_addr(
+		log_warn("%s: Failed to receive from %s", __func__, print_addr(
 		    (struct sockaddr *)&dae->nas_addr, buf, sizeof(buf)));
 		return;
 	}
@@ -1673,16 +1675,16 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 			break;
 	}
 	if (assign == NULL) {
-		log_warnx("Received RADIUS packet from %s has unknown id=%d",
-		    print_addr((struct sockaddr *)&dae->nas_addr, buf,
-		    sizeof(buf)), radius_get_id(radres));
+		log_warnx("%s: Received RADIUS packet from %s has unknown "
+		    "id=%d", __func__, print_addr((struct sockaddr *)
+		    &dae->nas_addr, buf, sizeof(buf)), radius_get_id(radres));
 		goto out;
 	}
 
 	radius_set_request_packet(radres, assign->dae_reqpkt);
 	if ((radius_check_response_authenticator(radres, dae->secret)) != 0) {
-		log_warnx("Received RADIUS packet for seq=%u from %s has a bad "
-		    "authenticator", assign->seq, print_addr(
+		log_warnx("%s: Received RADIUS packet for seq=%u from %s has "
+		    "a bad authenticator", __func__, assign->seq, print_addr(
 			(struct sockaddr *)&dae->nas_addr, buf,
 		    sizeof(buf)));
 		goto out;
@@ -1706,13 +1708,13 @@ ipcp_dae_on_event(int fd, short ev, void *ctx)
 		    &dae->nas_addr, buf, sizeof(buf)), cause);
 		break;
 	case RADIUS_CODE_DISCONNECT_NAK:
-		log_warnx("Received Disconnect-NAK for seq=%u from %s%s",
+		log_info("Received Disconnect-NAK for seq=%u from %s%s",
 		    assign->seq, print_addr((struct sockaddr *)
 		    &dae->nas_addr, buf, sizeof(buf)), cause);
 		break;
 	default:
-		log_warn("Received unknown code=%d for id=%u from %s",
-		    code, assign->seq, print_addr((struct sockaddr *)
+		log_warn("%s: Received unknown code=%d for id=%u from %s",
+		    __func__, code, assign->seq, print_addr((struct sockaddr *)
 		    &dae->nas_addr, buf, sizeof(buf)));
 		break;
 	}

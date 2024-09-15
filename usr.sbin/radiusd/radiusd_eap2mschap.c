@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_eap2mschap.c,v 1.3 2024/08/16 09:52:16 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_eap2mschap.c,v 1.4 2024/09/15 05:31:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -427,19 +427,18 @@ eap_recv(struct eap2mschap *self, u_int q_id, RADIUS_PACKET *pkt)
 		goto fail;
 	case EAP_TYPE_MSCHAPV2:
 		if (msgsiz < offsetof(struct eap, value[1])) {
-			log_warnx(
-			    "q=%u EAP state=%s Received message has wrong in "
-			    "size for EAP-MS-CHAPV2: received length %zu "
-			    "eap.length=%u", q_id, hex_string(state, statesiz,
-			    buf2, sizeof(buf2)), msgsiz, ntohs(eap->length));
+			log_warnx("q=%u EAP state=%s Received message has "
+			    "wrong in size for EAP-MS-CHAPV2: received length "
+			    "%zu eap.length=%u", q_id,
+			    hex_string(state, statesiz, buf2, sizeof(buf2)),
+			    msgsiz, ntohs(eap->length));
 			goto fail;
 		}
 		req = eap_recv_mschap(self, req, pkt, (struct eap_chap *)eap);
 
 		break;
 	default:
-		log_warnx(
-		    "q=%u EAP state=%s EAP unknown type=%u receieved.",
+		log_warnx("q=%u EAP state=%s EAP unknown type=%u receieved.",
 		    q_id, hex_string(state, statesiz, buf2, sizeof(buf2)),
 		    eap->value[0]);
 		goto fail;
@@ -476,9 +475,8 @@ eap_recv_mschap(struct eap2mschap *self, struct access_req *req,
 		    htons(resp->chap.length) <
 		    sizeof(struct eap_mschap_response) -
 		    offsetof(struct eap_mschap_response, chap)) {
-			log_warnx(
-			    "q=%u EAP state=%s Received EAP message has wrong "
-			    "in size: received length %zu eap.length=%u "
+			log_warnx("q=%u EAP state=%s Received EAP message has "
+			    "wrong in size: received length %zu eap.length=%u "
 			    "chap.length=%u valuesize=%u", req->q_id,
 			    hex_string(req->state, sizeof(req->state), buf,
 			    sizeof(buf)), eapsiz, ntohs(resp->eap.length),
