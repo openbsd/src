@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.12 2024/09/11 00:41:51 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.13 2024/09/15 11:08:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -269,6 +269,16 @@ iked_radius_on_event(int fd, short ev, void *ctx)
 		} else
 			req->rr_sa->sa_eapid = req->rr_user;
 		req->rr_user = NULL;
+
+		if (radius_get_raw_attr_ptr(pkt, RADIUS_TYPE_CLASS, &attrval,
+		    &attrlen) == 0) {
+			ibuf_free(req->rr_sa->sa_eapclass);
+			if ((req->rr_sa->sa_eapclass = ibuf_new(attrval,
+			    attrlen)) == NULL) {
+				log_info("%s: ibuf_new() failed: %s", __func__,
+				    strerror(errno));
+			}
+		}
 
 		sa_state(env, req->rr_sa, IKEV2_STATE_AUTH_SUCCESS);
 
@@ -748,6 +758,10 @@ iked_radius_acct_request(struct iked *env, struct iked_sa *sa, uint8_t stype)
 
 	switch (stype) {
 	case RADIUS_ACCT_STATUS_TYPE_START:
+		if (req->rr_sa && req->rr_sa->sa_eapclass != NULL)
+			radius_put_raw_attr(pkt, RADIUS_TYPE_CLASS,
+			    ibuf_data(req->rr_sa->sa_eapclass),
+			    ibuf_size(req->rr_sa->sa_eapclass));
 		break;
 	case RADIUS_ACCT_STATUS_TYPE_INTERIM_UPDATE:
 	case RADIUS_ACCT_STATUS_TYPE_STOP:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.387 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.388 2024/09/15 11:08:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4774,6 +4774,8 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	/* sa_eapid needs to be set on both for radius accounting */
 	if (sa->sa_eapid)
 		nsa->sa_eapid = strdup(sa->sa_eapid);
+	if (sa->sa_eapclass)
+		nsa->sa_eapclass = ibuf_dup(sa->sa_eapclass);
 
 	log_info("%srekeyed as new IKESA %s (enc %s%s%s group %s prf %s)",
 	    SPI_SA(sa, NULL), print_spi(nsa->sa_hdr.sh_ispi, 8),

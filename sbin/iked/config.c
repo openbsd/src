@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.98 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: config.c,v 1.99 2024/09/15 11:08:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -178,6 +178,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	ibuf_free(sa->sa_eap.id_buf);
 	free(sa->sa_eapid);
 	ibuf_free(sa->sa_eapmsk);
+	ibuf_free(sa->sa_eapclass);
 
 	free(sa->sa_cp_addr);
 	free(sa->sa_cp_addr6);

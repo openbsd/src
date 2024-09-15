@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.231 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: iked.h,v 1.232 2024/09/15 11:08:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -491,6 +491,7 @@ struct iked_sa {
 	char				*sa_eapid;	/* EAP identity */
 	struct iked_id			 sa_eap;	/* EAP challenge */
 	struct ibuf			*sa_eapmsk;	/* EAK session key */
+	struct ibuf			*sa_eapclass;	/* EAP/RADIUS class */
 
 	struct iked_proposals		 sa_proposals;	/* SA proposals */
 	struct iked_childsas		 sa_childsas;	/* IPsec Child SAs */
