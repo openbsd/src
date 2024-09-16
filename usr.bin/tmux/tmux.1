@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.955 2024/09/16 20:28:22 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.956 2024/09/16 20:38:48 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3795,7 +3795,8 @@ the sequence for only keys which lack an existing well-known representation; or
 mode 2 which changes the sequence for all keys.
 When set to
 .Ic always ,
-mode 1 output is forced and the program cannot change it.
+modes 1 and 2 can still be requested by applications, but mode 1 will be forced
+instead of the standard mode.
 When set to
 .Ic off ,
 this feature is disabled and only standard keys are reported.
