@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.177 2024/08/21 04:37:42 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.178 2024/09/16 20:28:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -384,6 +384,17 @@ const struct options_table_entry options_table[] = {
 	  .maximum = INT_MAX,
 	  .default_num = 1000,
 	  .text = "Maximum number of server messages to keep."
+	},
+
+	{ .name = "prefix-timeout",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 0,
+	  .unit = "milliseconds",
+	  .text = "The timeout for the prefix key if no subsequent key is "
+	          "pressed. Zero means disabled."
 	},
 
 	{ .name = "prompt-history-limit",

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1226 2024/08/27 07:49:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1227 2024/09/16 20:28:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1982,6 +1982,7 @@ RB_HEAD(key_bindings, key_binding);
 
 struct key_table {
 	const char		*name;
+	struct timeval		 activity_time;
 	struct key_bindings	 key_bindings;
 	struct key_bindings	 default_key_bindings;
 
