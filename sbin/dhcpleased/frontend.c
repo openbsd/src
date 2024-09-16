@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.38 2024/08/26 06:06:04 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.39 2024/09/16 07:34:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -310,7 +310,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 
 			if ((iface = get_iface_by_id(if_index)) == NULL) {
-				close(fd);
+				close(udpsock);
 				break;
 			}
 			if (iface->udpsock != -1)
