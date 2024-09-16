@@ -1,4 +1,4 @@
-/*  $OpenBSD: sntrup761.c,v 1.7 2024/09/15 02:20:51 djm Exp $ */
+/*  $OpenBSD: sntrup761.c,v 1.8 2024/09/16 05:37:05 djm Exp $ */
 
 /*
  * Public Domain, Authors:
@@ -912,8 +912,8 @@ crypto_int32 crypto_int32_min(crypto_int32 crypto_int32_x,crypto_int32 crypto_in
   __asm__ ("cmp %w0,%w1\n csel %w0,%w0,%w1,lt" : "+r"(crypto_int32_x) : "r"(crypto_int32_y) : "cc");
   return crypto_int32_x;
 #else
-  crypto_int32 crypto_int32_r = crypto_int32_y ^ crypto_int32_x;
-  crypto_int32 crypto_int32_z = crypto_int32_y - crypto_int32_x;
+  crypto_int64 crypto_int32_r = (crypto_int64)crypto_int32_y ^ (crypto_int64)crypto_int32_x;
+  crypto_int64 crypto_int32_z = (crypto_int64)crypto_int32_y - (crypto_int64)crypto_int32_x;
   crypto_int32_z ^= crypto_int32_r & (crypto_int32_z ^ crypto_int32_y);
   crypto_int32_z = crypto_int32_negative_mask(crypto_int32_z);
   crypto_int32_z &= crypto_int32_r;
@@ -931,8 +931,8 @@ crypto_int32 crypto_int32_max(crypto_int32 crypto_int32_x,crypto_int32 crypto_in
   __asm__ ("cmp %w0,%w1\n csel %w0,%w1,%w0,lt" : "+r"(crypto_int32_x) : "r"(crypto_int32_y) : "cc");
   return crypto_int32_x;
 #else
-  crypto_int32 crypto_int32_r = crypto_int32_y ^ crypto_int32_x;
-  crypto_int32 crypto_int32_z = crypto_int32_y - crypto_int32_x;
+  crypto_int64 crypto_int32_r = (crypto_int64)crypto_int32_y ^ (crypto_int64)crypto_int32_x;
+  crypto_int64 crypto_int32_z = (crypto_int64)crypto_int32_y - (crypto_int64)crypto_int32_x;
   crypto_int32_z ^= crypto_int32_r & (crypto_int32_z ^ crypto_int32_y);
   crypto_int32_z = crypto_int32_negative_mask(crypto_int32_z);
   crypto_int32_z &= crypto_int32_r;
@@ -956,8 +956,8 @@ void crypto_int32_minmax(crypto_int32 *crypto_int32_p,crypto_int32 *crypto_int32
   *crypto_int32_p = crypto_int32_r;
   *crypto_int32_q = crypto_int32_s;
 #else
-  crypto_int32 crypto_int32_r = crypto_int32_y ^ crypto_int32_x;
-  crypto_int32 crypto_int32_z = crypto_int32_y - crypto_int32_x;
+  crypto_int64 crypto_int32_r = (crypto_int64)crypto_int32_y ^ (crypto_int64)crypto_int32_x;
+  crypto_int64 crypto_int32_z = (crypto_int64)crypto_int32_y - (crypto_int64)crypto_int32_x;
   crypto_int32_z ^= crypto_int32_r & (crypto_int32_z ^ crypto_int32_y);
   crypto_int32_z = crypto_int32_negative_mask(crypto_int32_z);
   crypto_int32_z &= crypto_int32_r;
