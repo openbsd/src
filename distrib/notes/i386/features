@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.4 2023/10/05 11:58:34 kn Exp $
+dnl	$OpenBSD: features,v 1.5 2024/09/17 10:13:50 jsg Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -6,7 +6,7 @@ dnl
 dnl Information about the installer script features should be in sync with
 dnl	src/distrib/i386/common/install.md
 dnl and the list files in
-dnl	src/distrib/i386/{common/list,ramdiskC/list.local,ramdisk_cd/list.local}
+dnl	src/distrib/i386/{ramdisk,ramdisk_cd}/list
 dnl
 dnl ====
 dnl

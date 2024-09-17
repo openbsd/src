@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.5 2023/10/05 11:58:35 kn Exp $
+dnl	$OpenBSD: features,v 1.6 2024/09/17 10:13:50 jsg Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -6,7 +6,7 @@ dnl
 dnl Information about the installer script features should be in sync with
 dnl	src/distrib/sparc64/common/install.md
 dnl and the list files in
-dnl	src/distrib/sparc64/{bsd.rd,ramdisk,ramdiskB}/list
+dnl	src/distrib/sparc64/{miniroot,ramdisk,ramdiskB}/list
 dnl
 dnl ====
 dnl
