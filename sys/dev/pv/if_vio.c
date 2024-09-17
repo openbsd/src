@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.54 2024/09/04 09:12:55 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.55 2024/09/17 09:00:14 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -317,8 +317,9 @@ void	vio_iff(struct vio_softc *);
 int	vio_media_change(struct ifnet *);
 void	vio_media_status(struct ifnet *, struct ifmediareq *);
 int	vio_ctrleof(struct virtqueue *);
-int	vio_wait_ctrl(struct vio_softc *sc);
-int	vio_wait_ctrl_done(struct vio_softc *sc);
+int	vio_ctrl_start(struct vio_softc *, uint8_t, uint8_t, int, int *);
+int	vio_ctrl_submit(struct vio_softc *, int);
+void	vio_ctrl_finish(struct vio_softc *);
 void	vio_ctrl_wakeup(struct vio_softc *, enum vio_ctrl_state);
 int	vio_alloc_mem(struct vio_softc *);
 int	vio_alloc_dmamem(struct vio_softc *);
@@ -1483,6 +1484,111 @@ vio_tx_drain(struct vio_softc *sc)
 /*
  * Control vq
  */
+
+/*
+ * Lock the control queue and the sc_ctrl_* structs and prepare a request.
+ *
+ * If this function succeeds, the caller must also call either
+ * vio_ctrl_submit() or virtio_enqueue_abort(), in both cases followed by
+ * vio_ctrl_finish().
+ */
+int
+vio_ctrl_start(struct vio_softc *sc, uint8_t class, uint8_t cmd, int nslots,
+    int *slotp)
+{
+	struct virtio_softc *vsc = sc->sc_virtio;
+	struct virtqueue *vq = sc->sc_ctl_vq;
+	int r;
+
+	splassert(IPL_NET);
+
+	while (sc->sc_ctrl_inuse != FREE) {
+		if (sc->sc_ctrl_inuse == RESET || vio_needs_reset(sc))
+			return ENXIO;
+		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viowait", INFSLP);
+		if (r != 0)
+			return r;
+	}
+	sc->sc_ctrl_inuse = INUSE;
+
+	sc->sc_ctrl_cmd->class = class;
+	sc->sc_ctrl_cmd->command = cmd;
+
+	r = virtio_enqueue_prep(vq, slotp);
+	if (r != 0)
+		panic("%s: %s virtio_enqueue_prep: control vq busy",
+		    sc->sc_dev.dv_xname, __func__);
+	r = virtio_enqueue_reserve(vq, *slotp, nslots + 2);
+	if (r != 0)
+		panic("%s: %s virtio_enqueue_reserve: control vq busy",
+		    sc->sc_dev.dv_xname, __func__);
+
+	vio_dmamem_enqueue(vsc, sc, vq, *slotp, sc->sc_ctrl_cmd,
+	    sizeof(*sc->sc_ctrl_cmd), 1);
+
+	return 0;
+}
+
+/*
+ * Submit a control queue request and wait for the result.
+ *
+ * vio_ctrl_start() must have been called successfully.
+ * After vio_ctrl_submit(), the caller may inspect the
+ * data returned from the hypervisor. Afterwards, the caller
+ * must always call vio_ctrl_finish().
+ */
+int
+vio_ctrl_submit(struct vio_softc *sc, int slot)
+{
+	struct virtio_softc *vsc = sc->sc_virtio;
+	struct virtqueue *vq = sc->sc_ctl_vq;
+	int r;
+
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
+	    sizeof(*sc->sc_ctrl_status), 0);
+
+	virtio_enqueue_commit(vsc, vq, slot, 1);
+
+	while (sc->sc_ctrl_inuse != DONE) {
+		if (sc->sc_ctrl_inuse == RESET || vio_needs_reset(sc))
+			return ENXIO;
+		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viodone",
+		    VIRTIO_NET_CTRL_TIMEOUT);
+		if (r != 0) {
+			if (r == EWOULDBLOCK)
+				printf("%s: ctrl queue timeout\n",
+				    sc->sc_dev.dv_xname);
+			vio_ctrl_wakeup(sc, RESET);
+			return ENXIO;
+		}
+	}
+
+	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
+	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_POSTWRITE);
+	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
+	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_POSTREAD);
+
+	if (sc->sc_ctrl_status->ack != VIRTIO_NET_OK)
+		return EIO;
+
+	return 0;
+}
+
+/*
+ * Unlock the control queue and the sc_ctrl_* structs.
+ *
+ * It is ok to call this function if the control queue is marked dead
+ * due to a fatal error.
+ */
+void
+vio_ctrl_finish(struct vio_softc *sc)
+{
+	if (sc->sc_ctrl_inuse == RESET)
+		return;
+
+	vio_ctrl_wakeup(sc, FREE);
+}
+
 /* issue a VIRTIO_NET_CTRL_RX class command and wait for completion */
 int
 vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
@@ -1491,51 +1597,24 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 	struct virtqueue *vq = sc->sc_ctl_vq;
 	int r, slot;
 
-	splassert(IPL_NET);
-
-	if ((r = vio_wait_ctrl(sc)) != 0)
+	r = vio_ctrl_start(sc, VIRTIO_NET_CTRL_RX, cmd, 1, &slot);
+	if (r != 0)
 		return r;
 
-	sc->sc_ctrl_cmd->class = VIRTIO_NET_CTRL_RX;
-	sc->sc_ctrl_cmd->command = cmd;
 	sc->sc_ctrl_rx->onoff = onoff;
 
-	r = virtio_enqueue_prep(vq, &slot);
-	if (r != 0)
-		panic("%s: %s virtio_enqueue_prep: control vq busy",
-		    sc->sc_dev.dv_xname, __func__);
-	r = virtio_enqueue_reserve(vq, slot, 3);
-	if (r != 0)
-		panic("%s: %s virtio_enqueue_reserve: control vq busy",
-		    sc->sc_dev.dv_xname, __func__);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), 1);
 	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_rx,
 	    sizeof(*sc->sc_ctrl_rx), 1);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), 0);
-	virtio_enqueue_commit(vsc, vq, slot, 1);
 
-	if ((r = vio_wait_ctrl_done(sc)) != 0)
-		goto out;
-
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_POSTWRITE);
+	r = vio_ctrl_submit(sc, slot);
 	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_rx,
 	    sizeof(*sc->sc_ctrl_rx), BUS_DMASYNC_POSTWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_POSTREAD);
-
-	if (sc->sc_ctrl_status->ack == VIRTIO_NET_OK) {
-		r = 0;
-	} else {
+	if (r != 0)
 		printf("%s: ctrl cmd %d failed\n", sc->sc_dev.dv_xname, cmd);
-		r = EIO;
-	}
 
 	DPRINTF("%s: cmd %d %d: %d\n", __func__, cmd, onoff, r);
-out:
-	vio_ctrl_wakeup(sc, FREE);
+
+	vio_ctrl_finish(sc);
 	return r;
 }
 
@@ -1546,87 +1625,29 @@ vio_ctrl_guest_offloads(struct vio_softc *sc, uint64_t features)
 	struct virtqueue *vq = sc->sc_ctl_vq;
 	int r, slot;
 
-	splassert(IPL_NET);
-
-	if ((r = vio_wait_ctrl(sc)) != 0)
+	r = vio_ctrl_start(sc, VIRTIO_NET_CTRL_GUEST_OFFLOADS,
+	    VIRTIO_NET_CTRL_GUEST_OFFLOADS_SET, 1, &slot);
+	if (r != 0)
 		return r;
 
-	sc->sc_ctrl_cmd->class = VIRTIO_NET_CTRL_GUEST_OFFLOADS;
-	sc->sc_ctrl_cmd->command = VIRTIO_NET_CTRL_GUEST_OFFLOADS_SET;
 	sc->sc_ctrl_guest_offloads->offloads = features;
 
-	r = virtio_enqueue_prep(vq, &slot);
-	if (r != 0)
-		panic("%s: %s virtio_enqueue_prep: control vq busy",
-		    sc->sc_dev.dv_xname, __func__);
-	r = virtio_enqueue_reserve(vq, slot, 3);
-	if (r != 0)
-		panic("%s: %s virtio_enqueue_reserve: control vq busy",
-		    sc->sc_dev.dv_xname, __func__);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), 1);
 	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_guest_offloads,
 	    sizeof(*sc->sc_ctrl_guest_offloads), 1);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), 0);
-	virtio_enqueue_commit(vsc, vq, slot, 1);
 
-	if ((r = vio_wait_ctrl_done(sc)) != 0)
-		goto out;
+	r = vio_ctrl_submit(sc, slot);
 
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_POSTWRITE);
 	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_guest_offloads,
 	    sizeof(*sc->sc_ctrl_guest_offloads), BUS_DMASYNC_POSTWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_POSTREAD);
 
-	if (sc->sc_ctrl_status->ack == VIRTIO_NET_OK) {
-		r = 0;
-	} else {
+	if (r != 0) {
 		printf("%s: offload features 0x%llx failed\n",
 		    sc->sc_dev.dv_xname, features);
-		r = EIO;
 	}
 
-	DPRINTF("%s: features 0x%llx: %d\n", __func__, features, r);
- out:
-	vio_ctrl_wakeup(sc, FREE);
-	return r;
-}
+	DPRINTF("%s: offload features 0x%llx: %d\n", __func__, features, r);
 
-int
-vio_wait_ctrl(struct vio_softc *sc)
-{
-	int r = 0;
-
-	while (sc->sc_ctrl_inuse != FREE) {
-		if (sc->sc_ctrl_inuse == RESET || vio_needs_reset(sc))
-			return ENXIO;
-		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viowait", INFSLP);
-	}
-	sc->sc_ctrl_inuse = INUSE;
-
-	return r;
-}
-
-int
-vio_wait_ctrl_done(struct vio_softc *sc)
-{
-	int r = 0;
-
-	while (sc->sc_ctrl_inuse != DONE) {
-		if (sc->sc_ctrl_inuse == RESET || vio_needs_reset(sc))
-			return ENXIO;
-		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viodone",
-		    VIRTIO_NET_CTRL_TIMEOUT);
-		if (r == EWOULDBLOCK) {
-			printf("%s: ctrl queue timeout\n",
-			    sc->sc_dev.dv_xname);
-			vio_ctrl_wakeup(sc, RESET);
-			return ENXIO;
-		}
-	}
+	vio_ctrl_finish(sc);
 	return r;
 }
 
@@ -1665,55 +1686,35 @@ vio_set_rx_filter(struct vio_softc *sc)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct virtqueue *vq = sc->sc_ctl_vq;
 	int r, slot;
+	size_t len_uc, len_mc;
 
-	splassert(IPL_NET);
 
-	if ((r = vio_wait_ctrl(sc)) != 0)
+	r = vio_ctrl_start(sc, VIRTIO_NET_CTRL_MAC,
+	    VIRTIO_NET_CTRL_MAC_TABLE_SET, 2, &slot);
+	if (r != 0)
 		return r;
 
-	sc->sc_ctrl_cmd->class = VIRTIO_NET_CTRL_MAC;
-	sc->sc_ctrl_cmd->command = VIRTIO_NET_CTRL_MAC_TABLE_SET;
+	len_uc = sizeof(*sc->sc_ctrl_mac_tbl_uc) +
+	    sc->sc_ctrl_mac_tbl_uc->nentries * ETHER_ADDR_LEN;
+	len_mc = sizeof(*sc->sc_ctrl_mac_tbl_mc) +
+	    sc->sc_ctrl_mac_tbl_mc->nentries * ETHER_ADDR_LEN;
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mac_tbl_uc, len_uc,
+	    1);
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mac_tbl_mc, len_mc,
+	    1);
 
-	r = virtio_enqueue_prep(vq, &slot);
-	if (r != 0)
-		panic("%s: %s virtio_enqueue_prep: control vq busy",
-		    sc->sc_dev.dv_xname, __func__);
-	r = virtio_enqueue_reserve(vq, slot, 4);
-	if (r != 0)
-		panic("%s: %s virtio_enqueue_reserve: control vq busy",
-		    sc->sc_dev.dv_xname, __func__);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), 1);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mac_tbl_uc,
-	    sizeof(*sc->sc_ctrl_mac_tbl_uc) +
-	    sc->sc_ctrl_mac_tbl_uc->nentries * ETHER_ADDR_LEN, 1);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mac_tbl_mc,
-	    sizeof(*sc->sc_ctrl_mac_tbl_mc) +
-	    sc->sc_ctrl_mac_tbl_mc->nentries * ETHER_ADDR_LEN, 1);
-	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), 0);
-	virtio_enqueue_commit(vsc, vq, slot, 1);
+	r = vio_ctrl_submit(sc, slot);
+	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_mac_tbl_uc, len_uc,
+	    BUS_DMASYNC_POSTWRITE);
+	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_mac_tbl_mc, len_mc,
+	    BUS_DMASYNC_POSTWRITE);
 
-	if ((r = vio_wait_ctrl_done(sc)) != 0)
-		goto out;
-
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
-	    sizeof(*sc->sc_ctrl_cmd), BUS_DMASYNC_POSTWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_mac_info,
-	    VIO_CTRL_MAC_INFO_SIZE, BUS_DMASYNC_POSTWRITE);
-	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_status,
-	    sizeof(*sc->sc_ctrl_status), BUS_DMASYNC_POSTREAD);
-
-	if (sc->sc_ctrl_status->ack == VIRTIO_NET_OK) {
-		r = 0;
-	} else {
+	if (r != 0) {
 		/* The host's filter table is not large enough */
 		printf("%s: failed setting rx filter\n", sc->sc_dev.dv_xname);
-		r = EIO;
 	}
 
-out:
-	vio_ctrl_wakeup(sc, FREE);
+	vio_ctrl_finish(sc);
 	return r;
 }
 
