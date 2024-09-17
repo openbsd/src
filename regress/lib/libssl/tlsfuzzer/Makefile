@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2022/07/18 09:17:44 tb Exp $
+#	$OpenBSD: Makefile,v 1.7 2024/09/17 08:47:37 tb Exp $
 
 .if !exists(/usr/local/share/tlsfuzzer)
 regress:
@@ -13,6 +13,10 @@ localhost.key localhost.crt:
 		-subj /CN=localhost -nodes -batch
 
 certs: localhost.key localhost.crt
+
+start-server:	certs
+	openssl s_server -accept 4433 -groups X25519:P-256:P-521:P-384 \
+		-key localhost.key -cert localhost.crt -www
 
 CLEANFILES	+= localhost.key localhost.crt
 
@@ -40,7 +44,7 @@ list-failing:
 missing:
 	@python3 ${.CURDIR}/tlsfuzzer.py -m
 
-.PHONY: all certs failing list list-failing missing port
+.PHONY: all certs failing list list-failing missing port start-server
 
 .endif
 
