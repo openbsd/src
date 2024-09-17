@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.69 2023/10/30 06:11:04 jmc Exp $
+.\" $OpenBSD: pledge.2,v 1.70 2024/09/17 12:53:15 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2023 $
+.Dd $Mdocdate: September 17 2024 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -174,7 +174,6 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr fstat 2 ,
 .Xr fsync 2 ,
 .Xr ftruncate 2 ,
-.Xr getdents 2 ,
 .Xr getdtablecount 2 ,
 .Xr getegid 2 ,
 .Xr getentropy 2 ,
@@ -236,10 +235,11 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr writev 2
 .It Cm rpath
 A number of system calls are allowed if they only cause
-read-only effects on the filesystem:
+read-only effects on the filesystem, or expose filenames to programs:
 .Pp
 .Xr chdir 2 ,
 .Xr getcwd 3 ,
+.Xr getdents 2 ,
 .Xr openat 2 ,
 .Xr fstatat 2 ,
 .Xr faccessat 2 ,
