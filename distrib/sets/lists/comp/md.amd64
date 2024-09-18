@@ -1,7 +1,5 @@
-./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/readelf
 ./usr/include/amd64
 ./usr/include/amd64/_float.h
 ./usr/include/amd64/_types.h
@@ -80,10 +78,8 @@
 ./usr/include/amd64/vga_post.h
 ./usr/include/amd64/vmmvar.h
 ./usr/include/amd64/vmparam.h
-./usr/include/ieeefp.h
 ./usr/lib/libamd64.a
 ./usr/lib/libamd64_p.a
-./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf_i386.x
 ./usr/libdata/ldscripts/elf_i386.xbn
 ./usr/libdata/ldscripts/elf_i386.xc
@@ -134,7 +130,6 @@
 ./usr/libdata/ldscripts/elf_x86_64_obsd.xz
 ./usr/share/info/annotate.info
 ./usr/share/info/as.info
-./usr/share/info/bfd.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
 ./usr/share/info/ld.info

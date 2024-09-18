@@ -1,10 +1,7 @@
-./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
 ./usr/bin/protoize
-./usr/bin/readelf
 ./usr/bin/unprotoize
-./usr/include/ieeefp.h
 ./usr/include/luna88k
 ./usr/include/luna88k/_float.h
 ./usr/include/luna88k/_types.h
@@ -101,7 +98,6 @@
 ./usr/include/m88k/trap.h
 ./usr/include/m88k/vmparam.h
 ./usr/include/unwind.h
-./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32m88k_obsd.x
 ./usr/libdata/ldscripts/elf32m88k_obsd.xbn
 ./usr/libdata/ldscripts/elf32m88k_obsd.xc
@@ -120,7 +116,6 @@
 ./usr/libdata/ldscripts/elf32m88k_obsd.xz
 ./usr/share/info/annotate.info
 ./usr/share/info/as.info
-./usr/share/info/bfd.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
 ./usr/share/info/ld.info

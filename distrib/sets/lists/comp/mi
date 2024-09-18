@@ -1,4 +1,5 @@
 ./sys
+./usr/bin/addr2line
 ./usr/bin/c++filt
 ./usr/bin/cpp
 ./usr/bin/ctfdump
@@ -10,6 +11,7 @@
 ./usr/bin/lorder
 ./usr/bin/objdump
 ./usr/bin/ranlib
+./usr/bin/readelf
 ./usr/bin/rpcgen
 ./usr/bin/yacc
 ./usr/include/FlexLexer.h
@@ -919,6 +921,7 @@
 ./usr/include/grp.h
 ./usr/include/histedit.h
 ./usr/include/icdb.h
+./usr/include/ieeefp.h
 ./usr/include/ifaddrs.h
 ./usr/include/imsg.h
 ./usr/include/inttypes.h
@@ -1579,7 +1582,9 @@
 ./usr/lib/liby_p.a
 ./usr/lib/libz.a
 ./usr/lib/libz_p.a
+./usr/libdata/ldscripts
 ./usr/sbin/kgmon
+./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/man/man1/addr2line.1
 ./usr/share/man/man1/ar.1

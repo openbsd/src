@@ -1,7 +1,5 @@
-./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/readelf
 ./usr/include/alpha
 ./usr/include/alpha/_float.h
 ./usr/include/alpha/_types.h
@@ -54,11 +52,9 @@
 ./usr/include/alpha/timetc.h
 ./usr/include/alpha/vmparam.h
 ./usr/include/alpha/z8530var.h
-./usr/include/ieeefp.h
 ./usr/include/unwind.h
 ./usr/lib/libalpha.a
 ./usr/lib/libalpha_p.a
-./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf64alpha_obsd.x
 ./usr/libdata/ldscripts/elf64alpha_obsd.xbn
 ./usr/libdata/ldscripts/elf64alpha_obsd.xc
@@ -77,7 +73,6 @@
 ./usr/libdata/ldscripts/elf64alpha_obsd.xz
 ./usr/share/info/annotate.info
 ./usr/share/info/as.info
-./usr/share/info/bfd.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
 ./usr/share/info/ld.info

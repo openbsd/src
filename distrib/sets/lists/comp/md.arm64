@@ -1,5 +1,3 @@
-./usr/bin/addr2line
-./usr/bin/readelf
 ./usr/include/arm64
 ./usr/include/arm64/_float.h
 ./usr/include/arm64/_types.h
@@ -56,6 +54,3 @@
 ./usr/include/arm64/trap.h
 ./usr/include/arm64/vmmvar.h
 ./usr/include/arm64/vmparam.h
-./usr/include/ieeefp.h
-./usr/libdata/ldscripts
-./usr/share/info/bfd.info

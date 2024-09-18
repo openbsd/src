@@ -1,7 +1,5 @@
-./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/readelf
 ./usr/include/arm
 ./usr/include/arm/_float.h
 ./usr/include/arm/_types.h
@@ -101,10 +99,8 @@
 ./usr/include/armv7/timetc.h
 ./usr/include/armv7/trap.h
 ./usr/include/armv7/vmparam.h
-./usr/include/ieeefp.h
 ./usr/lib/libarm.a
 ./usr/lib/libarm_p.a
-./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/armelf_obsd.x
 ./usr/libdata/ldscripts/armelf_obsd.xbn
 ./usr/libdata/ldscripts/armelf_obsd.xc
@@ -139,7 +135,6 @@
 ./usr/libdata/ldscripts/armelfb_obsd.xz
 ./usr/share/info/annotate.info
 ./usr/share/info/as.info
-./usr/share/info/bfd.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
 ./usr/share/info/ld.info

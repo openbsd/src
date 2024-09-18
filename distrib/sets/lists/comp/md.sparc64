@@ -1,8 +1,5 @@
-./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/readelf
-./usr/include/ieeefp.h
 ./usr/include/sparc64
 ./usr/include/sparc64/_float.h
 ./usr/include/sparc64/_types.h
@@ -63,7 +60,6 @@
 ./usr/include/sparc64/vmparam.h
 ./usr/include/sparc64/z8530var.h
 ./usr/include/unwind.h
-./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf64_sparc_obsd.x
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xbn
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xc
@@ -82,7 +78,6 @@
 ./usr/libdata/ldscripts/elf64_sparc_obsd.xz
 ./usr/share/info/annotate.info
 ./usr/share/info/as.info
-./usr/share/info/bfd.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
 ./usr/share/info/ld.info

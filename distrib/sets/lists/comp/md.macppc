@@ -1,8 +1,5 @@
-./usr/bin/addr2line
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/readelf
-./usr/include/ieeefp.h
 ./usr/include/macppc
 ./usr/include/macppc/_float.h
 ./usr/include/macppc/_types.h
@@ -92,7 +89,6 @@
 ./usr/include/powerpc/spinlock.h
 ./usr/include/powerpc/tcb.h
 ./usr/include/powerpc/trap.h
-./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32ppc_obsd.x
 ./usr/libdata/ldscripts/elf32ppc_obsd.xbn
 ./usr/libdata/ldscripts/elf32ppc_obsd.xc
@@ -111,7 +107,6 @@
 ./usr/libdata/ldscripts/elf32ppc_obsd.xz
 ./usr/share/info/annotate.info
 ./usr/share/info/as.info
-./usr/share/info/bfd.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
 ./usr/share/info/ld.info
