@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvsubs.c,v 1.1 2024/09/09 03:50:14 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvsubs.c,v 1.2 2024/09/18 05:21:19 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 		break;
 	default:
 		break;
-	};
+	}
 	return (0);
 }
 
@@ -462,7 +462,7 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 		va->va_vaflags |= VA_UTIMES_CHANGE;
 		getnanotime(&va->va_atime);
 		break;
-	};
+	}
 
 	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
 	if (tl == NULL)
@@ -480,7 +480,7 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 		va->va_vaflags |= VA_UTIMES_CHANGE;
 		getnanotime(&va->va_mtime);
 		break;
-	};
+	}
 
 	*dposp = info.nmi_dpos;
 	*mp = info.nmi_md;

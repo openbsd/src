@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.31 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.32 2024/09/18 05:21:19 jsg Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 		rp->rc_flag |= RC_NAM;
 		rp->rc_nam = m_copym(nd->nd_nam, 0, M_COPYALL, M_WAIT);
 		break;
-	};
+	}
 	rp->rc_proc = nd->nd_procnum;
 	hash = NFSRCHASH(nd->nd_retxid);
 	LIST_INSERT_HEAD(hash, rp, rc_hash);

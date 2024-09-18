@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.129 2024/09/11 12:22:34 claudio Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.130 2024/09/18 05:21:19 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1110,7 +1110,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			if (nd.ni_vp == NULL)
 				va.va_mode = 0;
 			break;
-		};
+		}
 		va.va_type = VREG;
 	} else {
 		sp = (struct nfsv2_sattr *)nfsm_dissect(&info, NFSX_V2SATTR);
@@ -1133,7 +1133,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			break;
 		default:
 			break;
-		};
+		}
 	}
 
 	/*

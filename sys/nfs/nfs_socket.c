@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.153 2024/09/11 12:22:34 claudio Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.154 2024/09/18 05:21:19 jsg Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1125,7 +1125,7 @@ nfs_rephead(int siz, struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 				    *tl = 0;
 			}
 			break;
-		};
+		}
 	}
 
 	*mrq = mreq;

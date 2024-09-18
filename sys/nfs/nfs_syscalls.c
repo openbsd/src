@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.127 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.128 2024/09/18 05:21:19 jsg Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ loop:
 		m_freem(nd->nd_mrep);
 		m_freem(nd->nd_nam2);
 		break;
-	};
+	}
 
 	if (nd) {
 		pool_put(&nfsrv_descript_pl, nd);

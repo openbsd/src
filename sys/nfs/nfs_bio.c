@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.86 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.87 2024/09/18 05:21:19 jsg Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -616,7 +616,7 @@ nfs_doio(struct buf *bp, struct proc *p)
 	    default:
 		panic("nfs_doio:  type %x unexpected", vp->v_type);
 		break;
-	    };
+	    }
 	    if (error) {
 		bp->b_flags |= B_ERROR;
 		bp->b_error = error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.203 2024/09/12 09:04:51 claudio Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.204 2024/09/18 05:21:19 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ nfs_setattr(void *v)
 			tsize = np->n_size;
 			np->n_size = np->n_vattr.va_size = vap->va_size;
 			uvm_vnp_setsize(vp, np->n_size);
-		};
+		}
 	} else if ((vap->va_mtime.tv_nsec != VNOVAL ||
 		vap->va_atime.tv_nsec != VNOVAL) &&
 		vp->v_type == VREG &&
