@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zic.8,v 1.5 2022/03/31 17:27:32 naddy Exp $
-.Dd $Mdocdate: March 31 2022 $
+.\"	$OpenBSD: zic.8,v 1.6 2024/09/18 17:05:50 millert Exp $
+.Dd $Mdocdate: September 18 2024 $
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -240,6 +240,19 @@ The pair of characters
 is used to show where the
 .Dq variable part
 of the time zone abbreviation goes.
+Alternately, a format can use the pair of characters
+.Em %z
+to stand for the UTC offset in the form
+.No \(+- Ns Em hh ,
+.No \(+- Ns Em hhmm ,
+or
+.No \(+- Ns Em hhmmss ,
+using the shortest form that does not lose information, where
+.Em hh ,
+.Em mm ,
+and
+.Em ss
+are the hours, minutes, and seconds east (+) or west (\(mi) of UTC.
 Alternately,
 a slash
 .Pq \&/
