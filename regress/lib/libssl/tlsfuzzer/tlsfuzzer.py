@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.55 2024/09/14 07:11:34 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.56 2024/09/18 19:12:37 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -211,10 +211,9 @@ tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
     ]),
     # We don't accept an empty ECPF extension since it must advertise the
     # uncompressed point format. Exclude this extension type from the test.
-    # Also exclude QUIC transport parameters.
     Test(
         "test-tls13-large-number-of-extensions.py",
-        tls13_args = ["--exc", "11", "--exc", "57"],
+        tls13_args = ["--exc", "11"],
     ),
 ])
 
@@ -365,6 +364,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-invalid-content-type.py"),
     Test("test-invalid-session-id.py"),
     Test("test-invalid-version.py"),
+    Test("test-large-number-of-extensions.py"),
     Test("test-lucky13.py"),
     Test("test-message-skipping.py"),
     Test("test-no-heartbeat.py"),
@@ -532,11 +532,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     # let through some server names without sending an alert
     # again illegal_parameter vs unrecognized_name
     Test("test-invalid-server-name-extension.py"),
-
-    # 14 pass
-    # 7 fail
-    # 'n extensions', n in 4095, 4096, 4097, 8191, 8192, 8193, 16383,
-    Test("test-large-number-of-extensions.py"),
 
     # 4 failures:
     #   'insecure (legacy) renegotiation with GET after 2nd handshake'
