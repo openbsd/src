@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.66 2024/09/03 15:37:03 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.67 2024/09/19 20:48:36 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -735,7 +735,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 		warnx("%s: reinitializing", rr->notifyuri);
 		goto reset;
 	}
-	if (arc4random_uniform(1 << RRDP_RANDOM_REINIT_MAX) < (1 << weeks)) {
+	if (arc4random_uniform(1U << RRDP_RANDOM_REINIT_MAX) < (1U << weeks)) {
 		warnx("%s: reinitializing", rr->notifyuri);
 		goto reset;
 	}
