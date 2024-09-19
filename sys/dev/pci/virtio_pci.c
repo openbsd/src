@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.42 2024/09/02 08:26:26 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.43 2024/09/19 06:19:05 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ virtio_pci_setup_intrs(struct virtio_softc *vsc)
 	if (sc->sc_irq_type == IRQ_NO_MSIX)
 		return;
 
-	for (i = 0; i <= vsc->sc_nvqs; i++) {
+	for (i = 0; i < vsc->sc_nvqs; i++) {
 		unsigned vec = vsc->sc_vqs[i].vq_intr_vec;
 		virtio_pci_set_msix_queue_vector(sc, i, vec);
 	}
