@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.55 2024/09/17 09:00:14 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.56 2024/09/19 06:23:38 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -269,7 +269,6 @@ struct vio_softc {
 #define VIO_HAVE_MRG_RXBUF(sc)					\
 	((sc)->sc_hdr_size == sizeof(struct virtio_net_hdr))
 
-#define VIRTIO_NET_TX_MAXNSEGS		16 /* for larger chains, defrag */
 #define VIRTIO_NET_CTRL_MAC_MC_ENTRIES	64 /* for more entries, use ALLMULTI */
 #define VIRTIO_NET_CTRL_MAC_UC_ENTRIES	 1 /* one entry for own unicast addr */
 #define VIRTIO_NET_CTRL_TIMEOUT		(5*1000*1000*1000ULL) /* 5 seconds */
@@ -321,7 +320,7 @@ int	vio_ctrl_start(struct vio_softc *, uint8_t, uint8_t, int, int *);
 int	vio_ctrl_submit(struct vio_softc *, int);
 void	vio_ctrl_finish(struct vio_softc *);
 void	vio_ctrl_wakeup(struct vio_softc *, enum vio_ctrl_state);
-int	vio_alloc_mem(struct vio_softc *);
+int	vio_alloc_mem(struct vio_softc *, int);
 int	vio_alloc_dmamem(struct vio_softc *);
 void	vio_free_dmamem(struct vio_softc *);
 
@@ -416,7 +415,7 @@ vio_free_dmamem(struct vio_softc *sc)
  *   viq_txmbufs[slot]:		mbuf pointer array for sent frames
  */
 int
-vio_alloc_mem(struct vio_softc *sc)
+vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 {
 	struct virtio_softc	*vsc = sc->sc_virtio;
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
@@ -503,7 +502,7 @@ vio_alloc_mem(struct vio_softc *sc)
 
 		for (i = 0; i < txqsize; i++) {
 			r = bus_dmamap_create(vsc->sc_dmat, txsize,
-			    VIRTIO_NET_TX_MAXNSEGS, txsize, 0,
+			    tx_max_segments, txsize, 0,
 			    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 			    &vioq->viq_txdmamaps[i]);
 			if (r != 0)
@@ -586,7 +585,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	int i;
+	int i, tx_max_segments;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (vsc->sc_child != NULL) {
@@ -650,6 +649,17 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	else
 		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 
+	/* defrag for longer mbuf chains */
+	tx_max_segments = 16;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4) ||
+	    virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6)) {
+		/*
+		 * With TSO, we may get 64K packets and want to be able to
+		 * send longer chains without defragmenting
+		 */
+		tx_max_segments = 32;
+	}
+
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		int vqidx = 2 * i;
 		struct vio_queue *vioq = &sc->sc_q[i];
@@ -664,7 +674,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		vqidx++;
 		vioq->viq_txvq = &vsc->sc_vqs[vqidx];
 		if (virtio_alloc_vq(vsc, vioq->viq_txvq, vqidx,
-		    VIRTIO_NET_TX_MAXNSEGS + 1, "tx") != 0) {
+		    tx_max_segments + 1, "tx") != 0) {
 			goto err;
 		}
 		vioq->viq_txvq->vq_done = vio_tx_intr;
@@ -684,7 +694,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		virtio_start_vq_intr(vsc, sc->sc_ctl_vq);
 	}
 
-	if (vio_alloc_mem(sc) < 0)
+	if (vio_alloc_mem(sc, tx_max_segments) < 0)
 		goto err;
 
 	strlcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
