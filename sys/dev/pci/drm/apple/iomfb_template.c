@@ -796,7 +796,7 @@ void DCP_FW_NAME(iomfb_poweron)(struct apple_dcp *dcp)
 	struct dcp_wait_cookie *cookie;
 	int ret;
 	u32 handle;
-	dev_err(dcp->dev, "dcp_poweron() starting\n");
+	dev_info(dcp->dev, "dcp_poweron() starting\n");
 
 	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
 	if (!cookie)
@@ -938,7 +938,7 @@ void DCP_FW_NAME(iomfb_poweroff)(struct apple_dcp *dcp)
 
 	kref_put(&poff_cookie->refcount, release_wait_cookie);
 
-	dev_err(dcp->dev, "dcp_poweroff() done\n");
+	dev_info(dcp->dev, "dcp_poweroff() done\n");
 }
 
 static void last_client_closed_sleep(struct apple_dcp *dcp, void *out, void *cookie)
@@ -983,7 +983,7 @@ void DCP_FW_NAME(iomfb_sleep)(struct apple_dcp *dcp)
 		dev_warn(dcp->dev, "setDCPPower(0) timeout %u ms\n", 1000);
 
 	kref_put(&cookie->refcount, release_wait_cookie);
-	dev_err(dcp->dev, "dcp_sleep() done\n");
+	dev_info(dcp->dev, "dcp_sleep() done\n");
 }
 
 static void dcpep_cb_hotplug(struct apple_dcp *dcp, u64 *connected)
