@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgplgd.8,v 1.10 2024/09/19 06:12:46 denis Exp $
+.\" $OpenBSD: bgplgd.8,v 1.11 2024/09/19 08:55:22 claudio Exp $
 .\"
 .\" Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
 .\"
@@ -176,9 +176,9 @@ Add the following to
 to have
 .Xr bgpd 8
 open a second, restricted, control socket:
-.Pp 
+.Pp
 .Dl socket \&"/var/run/bgpd.rsock\&" restricted
-.Pp 
+.Pp
 An example setup in
 .Xr httpd 8
 is:
