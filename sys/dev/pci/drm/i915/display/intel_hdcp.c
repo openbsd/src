@@ -2165,7 +2165,6 @@ static int initialize_hdcp_port_data(struct intel_connector *connector,
 				     struct intel_digital_port *dig_port,
 				     const struct intel_hdcp_shim *shim)
 {
-	STUB();
 	return -ENOSYS;
 #ifdef notyet
 	struct drm_i915_private *i915 = to_i915(connector->base.dev);
@@ -2225,7 +2224,6 @@ void intel_hdcp_component_init(struct drm_i915_private *i915)
 	if (!is_hdcp2_supported(i915))
 		return;
 	
-	STUB();
 #ifdef notyet
 	mutex_lock(&i915->display.hdcp.hdcp_mutex);
 	drm_WARN_ON(&i915->drm, i915->display.hdcp.comp_added);
