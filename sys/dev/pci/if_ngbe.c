@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngbe.c,v 1.5 2024/05/24 06:02:56 jsg Exp $	*/
+/*	$OpenBSD: if_ngbe.c,v 1.6 2024/09/20 02:15:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015-2017 Beijing WangXun Technology Co., Ltd.
@@ -1707,7 +1707,7 @@ ngbe_initialize_transmit_unit(struct ngbe_softc *sc)
 	struct tx_ring *txr;
 	uint64_t tdba;
 	uint32_t txdctl;
-	int i, wait_loop = NGBE_MAX_RX_DESC_POLL;;
+	int i, wait_loop = NGBE_MAX_RX_DESC_POLL;
 	int error = 0;
 
 	/* TDM_CTL.TE must be before Tx queues are enabled */
