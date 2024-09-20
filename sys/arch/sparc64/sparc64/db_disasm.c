@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
@@ -944,7 +944,7 @@ db_disasm(vaddr_t loc, int altfmt)
 			break;
 		}
 		i_ptr++;
-	};
+	}
 
 	if (!matchp) {
 		db_printf("undefined\n");
@@ -1115,7 +1115,7 @@ db_disasm(vaddr_t loc, int altfmt)
 		}
 		if (*(++f_ptr))
 			db_printf(", ");
-	};
+	}
 
 	db_printf("\n");
 

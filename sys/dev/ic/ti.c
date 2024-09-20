@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.30 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: ti.c,v 1.31 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -781,7 +781,7 @@ ti_init_rx_ring_jumbo(struct ti_softc *sc)
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
 		if (ti_newbuf_jumbo(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_JUMBOPROD(sc, i - 1);
 	sc->ti_jumbo = i - 1;
@@ -812,7 +812,7 @@ ti_init_rx_ring_mini(struct ti_softc *sc)
 	for (i = 0; i < TI_MSLOTS; i++) {
 		if (ti_newbuf_mini(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_MINIPROD(sc, i - 1);
 	sc->ti_mini = i - 1;

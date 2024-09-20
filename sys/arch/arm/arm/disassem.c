@@ -1,4 +1,4 @@
-/*	$OpenBSD: disassem.c,v 1.5 2018/06/30 15:23:35 deraadt Exp $	*/
+/*	$OpenBSD: disassem.c,v 1.6 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
 
 /*
@@ -522,7 +522,7 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 			else
 				di->di_printf(", ");
 		}
-	};
+	}
 
 	di->di_printf("\n");
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.77 2022/12/04 18:01:57 cheloha Exp $	 */
+/* $OpenBSD: main.c,v 1.78 2024/09/20 02:00:46 jsg Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -376,7 +376,7 @@ keyboard_callback(int ch)
 		break;
 	default:
 		return 0;
-	};
+	}
 
 	return 1;
 }

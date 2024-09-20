@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.29 2024/09/04 07:54:52 mglocker Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.30 2024/09/20 02:00:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -799,7 +799,7 @@ vmwpvs_msg_task(void *xsc)
 				printf("%s: error probing target %d lun %d\n",
 				    DEVNAME(sc), letoh32(dvmsg->target),
 				    dvmsg->lun[1]);
-			};
+			}
 			break;
 
 		case VMWPVS_MSG_T_REMOVED:
@@ -817,7 +817,7 @@ vmwpvs_msg_task(void *xsc)
 				printf("%s: error detaching target %d lun %d\n",
 				    DEVNAME(sc), letoh32(dvmsg->target),
 				    dvmsg->lun[1]);
-			};
+			}
 			break;
 
 		default:

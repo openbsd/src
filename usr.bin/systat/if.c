@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.27 2021/11/29 06:39:23 deraadt Exp $ */
+/*	$OpenBSD: if.c,v 1.28 2024/09/20 02:00:46 jsg Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -488,7 +488,7 @@ if_keyboard_callback(int ch)
 		break;
 	default:
 		return keyboard_callback(ch);
-	};
+	}
 
 	return 1;
 }

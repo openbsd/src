@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.21 2023/09/06 11:03:30 jsg Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.22 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 				if (GetMopFileInfo(&dl, INFO_PRINT) < 0) {
 					printf("Some failure in GetMopFileInfo\n");
 				}
-			};
+			}
 		}
 		(void)close(dl.ldfd);
 	}

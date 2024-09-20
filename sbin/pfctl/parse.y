@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.716 2024/07/14 19:51:08 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.717 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5609,7 +5609,7 @@ mv_tables(struct pfctl *pf, struct pfr_ktablehead *ktables,
 	char *path_cut;
 	int sz;
 	struct pfr_uktable *ukt;
-	SLIST_HEAD(, pfr_uktable) ukt_list;;
+	SLIST_HEAD(, pfr_uktable) ukt_list;
 
 	/*
 	 * Here we need to rename anchor path from temporal names such as

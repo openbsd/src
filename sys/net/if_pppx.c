@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.130 2024/09/09 07:37:47 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.131 2024/09/20 02:00:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1069,7 +1069,7 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	ifp->if_softc = sc;
 	ifp->if_type = IFT_L3IPVLAN;
-	ifp->if_hdrlen = sizeof(uint32_t); /* for BPF */;
+	ifp->if_hdrlen = sizeof(uint32_t); /* for BPF */
 	ifp->if_mtu = MAXMCLBYTES - sizeof(uint32_t);
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;

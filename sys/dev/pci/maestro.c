@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.55 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.56 2024/09/20 02:00:46 jsg Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -627,7 +627,7 @@ maestro_attach(struct device *parent, struct device *self, void *aux)
 	    0, &sc->iot, &sc->ioh, NULL, NULL, 0)) != 0) {
 		printf(", can't map i/o space\n");
 		goto bad;
-	};
+	}
 
 	/* Allocate fixed DMA segment :-( */
 	sc->dmasize = MAESTRO_BUFSIZ * 16;

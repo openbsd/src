@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.51 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.52 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -544,7 +544,7 @@ rewrite_res(int fd, short events, void *arg)
 		tftp_open(client, filename);
 
 		free(filename);
-	};
+	}
 }
 
 int

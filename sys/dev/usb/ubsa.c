@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.70 2024/05/23 03:21:09 jsg Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.71 2024/09/20 02:00:46 jsg Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -478,7 +478,7 @@ ubsa_baudrate(struct ubsa_softc *sc, speed_t speed)
 		    sc->sc_dev.dv_xname));
 		value = B230400 / B9600;
 		break;
-	};
+	}
 
 	if (speed == B0) {
 		ubsa_flow(sc, 0, 0);

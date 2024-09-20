@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_prot.c,v 1.16 2020/08/30 23:15:31 mortimer Exp $ */
+/*	$OpenBSD: rpc_prot.c,v 1.17 2024/09/20 02:00:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -234,7 +234,7 @@ _seterr_reply(struct rpc_msg *msg, struct rpc_err *error)
 		if (msg->acpted_rply.ar_stat == SUCCESS) {
 			error->re_status = RPC_SUCCESS;
 			return;
-		};
+		}
 		accepted(msg->acpted_rply.ar_stat, error);
 		break;
 

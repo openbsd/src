@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.270 2024/08/06 17:38:56 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.271 2024/09/20 02:00:46 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1731,7 +1731,7 @@ aml_val_to_string(const struct aml_value *val)
 	default:
 		snprintf(buffer, sizeof(buffer),
 		    "Failed to convert type %d to string!", val->type);
-	};
+	}
 
 	return (buffer);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.53 2022/04/16 19:19:58 naddy Exp $	*/
+/*	$OpenBSD: adv.c,v 1.54 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ adv_attach(ASC_SOFTC *sc)
 	 */
 	error = adv_alloc_ccbs(sc);
 	if (error)
-		return; /* (error) */ ;
+		return; /* (error) */
 
 	/*
 	 * Create and initialize the Control Blocks.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.436 2024/03/31 15:53:12 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.437 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1128,7 +1128,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 	if (rt->rt_gateway == gate) {
 		/* nop */
 		return (0);
-	};
+	}
 
 	sa = malloc(glen, M_RTABLE, M_NOWAIT | M_ZERO);
 	if (sa == NULL)

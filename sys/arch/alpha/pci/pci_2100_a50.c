@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.25 2024/09/19 01:05:48 jsg Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.26 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ dec_2100_a50_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 1;
 			break;
-		};
+		}
 		break;
 
 	case 12:				/* slot 2 */
@@ -155,7 +155,7 @@ dec_2100_a50_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 2;
 			break;
-		};
+		}
 		break;
 
 	case 13:				/* slot 3 */
@@ -171,7 +171,7 @@ dec_2100_a50_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 0;
 			break;
-		};
+		}
 		break;
 
 	default:

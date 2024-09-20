@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.171 2024/01/11 19:16:26 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.172 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1230,7 +1230,7 @@ loop:
 			case OP_SYSCALL:
 			case OP_BREAK:
 				more = 1; /* stop now */
-			};
+			}
 			break;
 
 		case OP_BCOND:
@@ -1250,7 +1250,7 @@ loop:
 			switch (i.RType.rs) {
 			case OP_BC:
 				more = 2; /* stop after next instruction */
-			};
+			}
 			break;
 
 		case OP_SD:

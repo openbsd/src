@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.467 2024/08/22 08:17:54 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.468 2024/09/20 02:00:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4361,9 +4361,9 @@ parselargecommunity(struct community *c, char *s)
 	    getcommunity(q, 1, &c->data3, &dflag3) == -1)
 		return (-1);
 	c->flags = COMMUNITY_TYPE_LARGE;
-	c->flags |= dflag1 << 8;;
-	c->flags |= dflag2 << 16;;
-	c->flags |= dflag3 << 24;;
+	c->flags |= dflag1 << 8;
+	c->flags |= dflag2 << 16;
+	c->flags |= dflag3 << 24;
 	return (0);
 }
 

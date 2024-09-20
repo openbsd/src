@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.35 2023/04/17 10:11:30 op Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.36 2024/09/20 02:00:46 jsg Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -395,7 +395,7 @@ parsexp(char *begp, const char *par1, const char *par2, int blkid, int expctr,
 {
 	struct expentry *e1 = NULL;
 	PF		 funcp;
-	char		*cmdp, *fendp, *valp, *fname, *funb = NULL;;
+	char		*cmdp, *fendp, *valp, *fname, *funb = NULL;
 	int		 numparams, ret;
 
 	cmdp = begp;

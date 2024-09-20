@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.22 2018/11/16 02:16:17 tedu Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.23 2024/09/20 02:00:46 jsg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -134,13 +134,13 @@ char			*build_realname(struct fuse *, ino_t);
 #define tree_empty(t)	SPLAY_EMPTY((t))
 int			tree_check(struct tree *, uint64_t);
 void			*tree_set(struct tree *, uint64_t, void *);
-void			*tree_get(struct tree *, uint64_t);;
+void			*tree_get(struct tree *, uint64_t);
 void			*tree_pop(struct tree *, uint64_t);
 
 /* dict.c */
 int			dict_check(struct dict *, const char *);
 void			*dict_set(struct dict *, const char *, void *);
-void			*dict_get(struct dict *, const char *);;
+void			*dict_get(struct dict *, const char *);
 void			*dict_pop(struct dict *, const char *);
 
 #define FUSE_VERSION_PKG_INFO "2.8.0"

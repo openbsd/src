@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.306 2022/06/08 16:29:12 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.307 2024/09/20 02:00:46 jsg Exp $ */
 /*
  * Copyright (c) 2010-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -3042,6 +3042,6 @@ macro2len(enum roff_tok macro)
 		return 10;
 	default:
 		break;
-	};
+	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.5 2021/05/12 23:08:19 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2016-2018 Ruslan Bukin <br@bsdpad.com>
@@ -452,7 +452,7 @@ oprint(struct riscv_op *op, vaddr_t loc, int insn)
 				imm = ((insn >> 2) & 0x1f) << 0;
 				imm |= ((insn >> 12) & 0x1) << 5;
 				db_printf("%d", imm);
-			};
+			}
 			break;
 		case 'd':
 			db_printf("%s", reg_name[rd]);
@@ -592,7 +592,7 @@ db_disasm(vaddr_t loc, int altfmt)
 			oprint(op, loc, insn);
 			return (loc + 4);
 		}
-	};
+	}
 
 	insn = db_get_value(loc, 2, 0);
 	for (j = 0; riscv_c_opcodes[j].name != NULL; j++) {
@@ -601,7 +601,7 @@ db_disasm(vaddr_t loc, int altfmt)
 			oprint(op, loc, insn);
 			break;
 		}
-	};
+	}
 
 	db_printf("\n");
 	return (loc + 2);

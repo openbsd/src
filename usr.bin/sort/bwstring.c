@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.9 2019/05/15 09:33:34 schwarze Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.10 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -293,7 +293,7 @@ bwscsbdup(const unsigned char *str, size_t len)
 						/* NOTREACHED */
 						err(2, "mbrtowc error");
 					cptr += charlen;
-				};
+				}
 			}
 
 			ret->len = chars;

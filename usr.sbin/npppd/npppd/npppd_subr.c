@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.22 2024/08/22 07:56:47 florian Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.23 2024/09/20 02:00:46 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -69,7 +69,7 @@ skip_space(const char *s)
 {
 	const char *r;
 	for (r = s; *r != '\0' && isspace((unsigned char)*r); r++)
-		;; /* skip */
+		; /* skip */
 
 	return r;
 }

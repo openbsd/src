@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2023/06/21 07:49:24 claudio Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -149,7 +149,7 @@ host_status(enum host_status status)
 		return ("unknown");
 	case HOST_UP:
 		return ("up");
-	};
+	}
 	/* NOTREACHED */
 	return ("invalid");
 }
@@ -173,7 +173,7 @@ table_check(enum table_check check)
 		return ("send expect");
 	case CHECK_SCRIPT:
 		return ("script");
-	};
+	}
 	/* NOTREACHED */
 	return ("invalid");
 }
@@ -195,7 +195,7 @@ relay_state(enum relay_state state)
 		return ("closed");
 	case STATE_DONE:
 		return ("done");
-	};
+	}
 	/* NOTREACHED */
 	return ("invalid");
 }

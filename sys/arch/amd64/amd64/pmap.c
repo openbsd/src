@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.173 2024/09/03 17:19:53 bluhm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.174 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	 */
 
 	protection_codes[PROT_NONE] = pg_nx;			/* --- */
-	protection_codes[PROT_EXEC] = pg_xo;		;	/* --x */
+	protection_codes[PROT_EXEC] = pg_xo;			/* --x */
 	protection_codes[PROT_READ] = PG_RO | pg_nx;		/* -r- */
 	protection_codes[PROT_READ | PROT_EXEC] = PG_RO;	/* -rx */
 	protection_codes[PROT_WRITE] = PG_RW | pg_nx;		/* w-- */

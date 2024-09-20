@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.296 2024/03/30 07:50:39 miod Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.297 2024/09/20 02:00:46 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -2350,7 +2350,7 @@ aligned_alloc(size_t alignment, size_t size)
 	if (((alignment - 1) & alignment) != 0 || alignment == 0) {
 		errno = EINVAL;
 		return NULL;
-	};
+	}
 	/* Per spec, size should be a multiple of alignment */
 	if ((size & (alignment - 1)) != 0) {
 		errno = EINVAL;

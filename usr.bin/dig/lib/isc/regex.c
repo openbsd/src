@@ -251,7 +251,7 @@ isc_regex_validate(const char *c) {
 				range_start = *c & 0xff;
 				++c;
 				break;
-			};
+			}
 			break;
 		case parse_ce:
 			switch (*c) {

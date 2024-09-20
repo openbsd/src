@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.54 2024/08/18 14:42:56 deraadt Exp $ */
+/* $OpenBSD: auixp.c,v 1.55 2024/09/20 02:00:46 jsg Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -145,7 +145,7 @@ void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
 void	auixp_update_busbusy(struct auixp_softc *);
 
 #ifdef DEBUG_AUIXP
-#define DPRINTF(x)	printf x;
+#define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -1383,7 +1383,7 @@ auixp_reset_aclink(struct auixp_softc *sc)
 
 		/* have to wait at least 10 usec for it to initialise */
 		DELAY(20);
-	};
+	}
 
 	printf("%s: soft resetting aclink\n", sc->sc_dev.dv_xname);
 
@@ -1427,15 +1427,15 @@ auixp_reset_aclink(struct auixp_softc *sc)
 
 		timeout--;
 		if (timeout == 0) break;
-	};
+	}
 
 	if (timeout == 0) {
 		printf("%s: giving up aclink reset\n", sc->sc_dev.dv_xname);
-	};
+	}
 	if (timeout != 10) {
 		printf("%s: aclink hardware reset successful\n",
 			sc->sc_dev.dv_xname);
-	};
+	}
 
 	/* assert reset and sync for safety */
 	value  = bus_space_read_4(iot, ioh, ATI_REG_CMD);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.58 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.59 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2536,7 +2536,7 @@ rtwn_set_chan(struct rtwn_softc *sc, struct ieee80211_channel *c,
 				rtwn_rf_write(sc, i, 0x87, 0x65);
 				rtwn_rf_write(sc, i, 0x1c, 0);
 				rtwn_rf_write(sc, i, 0xdf, 0x0140);
-				rtwn_rf_write(sc, i, 0x1b, 0x1c6c);;
+				rtwn_rf_write(sc, i, 0x1b, 0x1c6c);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.c,v 1.12 2019/05/13 17:00:12 schwarze Exp $	*/
+/*	$OpenBSD: coll.c,v 1.13 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -672,7 +672,7 @@ setsuffix(wchar_t c, unsigned char *si)
 		break;
 	default:
 		*si = 0;
-	};
+	}
 }
 
 /*

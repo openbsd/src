@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.73 2024/09/12 09:04:51 claudio Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.74 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -471,7 +471,7 @@ udf_read(void *v)
 		}
 		if (error)
 			break;
-	};
+	}
 
 	return (error);
 }

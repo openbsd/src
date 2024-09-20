@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.70 2024/04/13 23:44:11 jsg Exp $ */
+/*	$OpenBSD: adw.c,v 1.71 2024/09/20 02:00:46 jsg Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -423,7 +423,7 @@ adw_attach(ADW_SOFTC *sc)
 	 */
 	error = adw_alloc_controls(sc);
 	if (error)
-		return; /* (error) */ ;
+		return; /* (error) */
 
 	/*
 	 * Create and initialize the Control Blocks.
@@ -444,7 +444,7 @@ adw_attach(ADW_SOFTC *sc)
 	 */
 	error = adw_alloc_carriers(sc);
 	if (error)
-		return; /* (error) */ ;
+		return; /* (error) */
 
 	/*
 	 * Zero's the freeze_device status

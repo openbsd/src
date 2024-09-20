@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.46 2023/10/10 09:27:03 tb Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.47 2024/09/20 02:00:46 jsg Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -488,7 +488,7 @@ ns_keyboard_callback(int ch)
 		break;
 	default:
 		return keyboard_callback(ch);
-	};
+	}
 
 	return 1;
 }

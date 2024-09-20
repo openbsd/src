@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_mutex.c,v 1.5 2019/02/13 13:09:32 mpi Exp $ */
+/*	$OpenBSD: rthread_mutex.c,v 1.6 2024/09/20 02:00:46 jsg Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -197,7 +197,7 @@ _rthread_mutex_timedlock(pthread_mutex_t *mutexp, int trywait,
 		 * doubt set the state to CONTENDED.
 		 */
 		lock = atomic_swap_uint(&mutex->lock, CONTENDED);
-	};
+	}
 
 	membar_enter_after_atomic();
 	mutex->owner = self;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.23 2019/12/30 16:07:13 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.24 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1102,7 +1102,7 @@ sort_list_to_file(struct sort_list *list, const char *outfile)
 		default:
 			errx(2, "The chosen sort method cannot be used with "
 			    "stable and/or unique sort");
-		};
+		}
 	}
 
 	if (sort_opts_vals.sort_method == SORT_DEFAULT)

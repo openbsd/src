@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.15 2024/04/23 13:34:51 jsg Exp $ */
+/*	$OpenBSD: print.c,v 1.16 2024/09/20 02:00:46 jsg Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -62,7 +62,7 @@ mopPrintBPTY(FILE *fd, u_char bpty)
 	default:
 		fprintf(fd, "Unknown");
 		break;
-	};
+	}
 }
 
 void
@@ -84,7 +84,7 @@ mopPrintPGTY(FILE *fd, u_char pgty)
 	default:
 		fprintf(fd, "Unknown");
 		break;
-	};
+	}
 }
 
 void
@@ -550,7 +550,7 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *idx, u_short moplen, u_char mopcode,
 			default:
 				fprintf(fd, "Unknown\n");
 				break;
-			};
+			}
 			break;
 		case MOP_K_INFO_DLTY:
 			tmpc = mopGetChar(pkt, idx);
@@ -568,7 +568,7 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *idx, u_short moplen, u_char mopcode,
 			default:
 				fprintf(fd, "Unknown\n");
 				break;
-			};
+			}
 			break;
 		case MOP_K_INFO_DLBSZ:
 			tmps = mopGetShort(pkt, idx);

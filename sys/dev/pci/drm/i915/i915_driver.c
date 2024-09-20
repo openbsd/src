@@ -2274,7 +2274,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
 	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
 		dev_priv->primary = 1;
-		dev_priv->console = vga_is_console(pa->pa_iot, -1);;
+		dev_priv->console = vga_is_console(pa->pa_iot, -1);
 		vga_console_attached = 1;
 	}
 

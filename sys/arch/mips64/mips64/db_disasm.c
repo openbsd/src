@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.20 2020/01/02 16:00:54 visa Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.21 2024/09/20 02:00:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.20 2020/01/02 16:00:54 visa Exp $
+ *      $Id: db_disasm.c,v 1.21 2024/09/20 02:00:46 jsg Exp $
  */
 
 #ifdef _KERNEL
@@ -697,7 +697,7 @@ dbmd_print_insn(uint32_t ins, vaddr_t mdbdot, int (*pr)(const char *, ...))
 			(*pr)("\t%s,%s,%s",
 			    reg_name[i.RType.rd], reg_name[i.RType.rs],
 			    reg_name[i.RType.rt]);
-		};
+		}
 		break;
 
 	case OP_BCOND:
@@ -855,7 +855,7 @@ unknown:
 			break;
 		default:
 			goto unknown;
-		};
+		}
 		break;
 
 	case OP_COP1:
@@ -893,7 +893,7 @@ unknown:
 			(*pr)("%s.%s\tf%d,f%d,f%d",
 			    insn, fmt_name[i.FRType.fmt],
 			    i.FRType.fd, i.FRType.fs, i.FRType.ft);
-		};
+		}
 		break;
 
 	case OP_COP2:
@@ -917,7 +917,7 @@ unknown:
 			goto pr_displ;
 		default:
 			goto unknown;
-		};
+		}
 		break;
 
 	case OP_COP1X:
