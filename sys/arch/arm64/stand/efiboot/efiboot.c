@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.58 2024/08/01 11:53:03 mglocker Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.59 2024/09/20 19:12:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1121,6 +1121,10 @@ struct smbios_dtb {
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
 	{ "LENOVO", "21BY",
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
+	{ "LENOVO", "21N1",
+	  "qcom/x1e78100-lenovo-thinkpad-t14s.dtb" },
+	{ "LENOVO", "21N2",
+	  "qcom/x1e78100-lenovo-thinkpad-t14s.dtb" },
 	{ "LENOVO", "83ED",
 	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
 	{ "SAMSUNG", "Galaxy Book4 Edge",
