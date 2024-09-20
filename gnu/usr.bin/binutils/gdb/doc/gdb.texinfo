@@ -32,7 +32,7 @@
 @set EDITION Ninth
 
 @c !!set GDB edit command default editor
-@set EDITOR /bin/ex
+@set EDITOR /usr/bin/ex
 
 @c THIS MANUAL REQUIRES TEXINFO 4.0 OR LATER.
 

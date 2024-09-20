@@ -625,7 +625,7 @@ edit_command (char *arg, int from_tty)
     }
 
   if ((editor = (char *) getenv ("EDITOR")) == NULL)
-      editor = "/bin/ex";
+      editor = "/usr/bin/ex";
   
   /* Approximate base-10 log of line to 1 unit for digit count */
   for(log10=32, m=0x80000000; !(sal.line & m) && log10>0; log10--, m=m>>1);
