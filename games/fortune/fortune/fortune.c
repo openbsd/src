@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.64 2024/05/21 05:00:47 jsg Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.65 2024/09/20 12:52:37 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -413,6 +413,7 @@ add_file(int percent, char *file, char *dir, FILEDESC **head, FILEDESC **tail,
 			if (was_malloc)
 				free(path);
 			path = offensive;
+			offensive = NULL;
 			file = off_name(file);
 			was_malloc = true;
 		}
@@ -430,9 +431,9 @@ over:
 		 * we'll pick up the -o file anyway.
 		 */
 		if (All_forts && offensive != NULL) {
-			path = offensive;
 			if (was_malloc)
 				free(path);
+			path = offensive;
 			offensive = NULL;
 			was_malloc = true;
 			DPRINTF(1, (stderr, "\ttrying \"%s\"\n", path));
