@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.55 2024/09/20 02:00:46 jsg Exp $ */
+/* $OpenBSD: auixp.c,v 1.56 2024/09/20 02:20:44 jsg Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -370,7 +370,7 @@ auixp_malloc(void *hdl, int direction, size_t size, int pool, int flags)
 	}
 	SLIST_INSERT_HEAD(&sc->sc_dma_list, dma, dma_chain);
 
-	DPRINTF(("auixp_malloc: returning kern %p,   hw 0x%08x for %d bytes "
+	DPRINTF(("auixp_malloc: returning kern %p,   hw 0x%08x for %zu bytes "
 	    "in %d segs\n", KERNADDR(dma), (u_int32_t) DMAADDR(dma), dma->size,
 	    dma->nsegs)
 	);
