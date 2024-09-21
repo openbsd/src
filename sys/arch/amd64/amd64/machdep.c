@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.296 2024/07/29 18:43:11 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.297 2024/09/21 19:06:07 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -488,7 +488,7 @@ extern int amd64_has_xcrypt;
 extern int need_retpoline;
 
 const struct sysctl_bounded_args cpuctl_vars[] = {
-	{ CPU_LIDACTION, &lid_action, 0, 2 },
+	{ CPU_LIDACTION, &lid_action, -1, 2 },
 	{ CPU_PWRACTION, &pwr_action, 0, 2 },
 	{ CPU_CPUID, &cpu_id, SYSCTL_INT_READONLY },
 	{ CPU_CPUFEATURE, &cpu_feature, SYSCTL_INT_READONLY },

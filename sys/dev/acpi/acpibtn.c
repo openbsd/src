@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.53 2024/08/06 17:38:56 kettenis Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.54 2024/09/21 19:06:06 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -254,6 +254,7 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 
 		switch (lid_action) {
 		case 1:
+		case -1:
 			goto sleep;
 #ifdef HIBERNATE
 		case 2:

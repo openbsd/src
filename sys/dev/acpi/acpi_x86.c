@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.31 2024/08/31 15:53:44 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.32 2024/09/21 19:06:06 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -32,12 +32,13 @@ sleep_showstate(void *v, int sleepmode)
 {
 	struct acpi_softc *sc = v;
 	int fallback_state = -1;
+	extern int lid_action;
 
 	switch (sleepmode) {
 	case SLEEP_SUSPEND:
 		sc->sc_state = ACPI_STATE_S3;
 #ifdef __amd64__
-		if (sc->sc_fadt->flags & FADT_POWER_S0_IDLE_CAPABLE)
+		if (lid_action == -1)
 			sc->sc_state = ACPI_STATE_S0;
 		fallback_state = ACPI_STATE_S0; /* No S3, use S0 */
 #endif
