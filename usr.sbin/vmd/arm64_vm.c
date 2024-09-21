@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.2 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.3 2024/09/21 04:12:18 mlarkin Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -17,6 +17,7 @@
 #include <sys/types.h>
 
 #include "vmd.h"
+#include "vmm.h"
 
 void
 create_memory_map(struct vm_create_params *vcp)
