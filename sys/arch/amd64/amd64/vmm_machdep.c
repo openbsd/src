@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.36 2024/09/04 16:12:40 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.37 2024/09/21 04:36:28 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -72,7 +72,6 @@ int vmm_quiesce_vmx(void);
 int vm_run(struct vm_run_params *);
 int vm_intr_pending(struct vm_intr_params *);
 int vm_rwregs(struct vm_rwregs_params *, int);
-int vm_mprotect_ept(struct vm_mprotect_ept_params *);
 int vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int vcpu_readregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
@@ -125,7 +124,6 @@ int svm_fault_page(struct vcpu *, paddr_t);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
 int svm_handle_np_fault(struct vcpu *);
-int vmx_mprotect_ept(struct vcpu *, vm_map_t, paddr_t, paddr_t, int);
 pt_entry_t *vmx_pmap_find_pte_ept(pmap_t, paddr_t);
 int vmm_alloc_vpid(uint16_t *);
 void vmm_free_vpid(uint16_t);
@@ -440,9 +438,6 @@ vmmioctl_machdep(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_INTR:
 		ret = vm_intr_pending((struct vm_intr_params *)data);
 		break;
-	case VMM_IOC_MPROTECT_EPT:
-		ret = vm_mprotect_ept((struct vm_mprotect_ept_params *)data);
-		break;
 	default:
 		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
@@ -456,7 +451,6 @@ pledge_ioctl_vmm_machdep(struct proc *p, long com)
 {
 	switch (com) {
 	case VMM_IOC_INTR:
-	case VMM_IOC_MPROTECT_EPT:
 		return (0);
 	}
 
@@ -622,250 +616,6 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 out:
 	refcnt_rele_wake(&vm->vm_refcnt);
 	return (ret);
-}
-
-/*
- * vm_mprotect_ept
- *
- * IOCTL handler to sets the access protections of the ept
- *
- * Parameters:
- *   vmep: describes the memory for which the protect will be applied..
- *
- * Return values:
- *  0: if successful
- *  ENOENT: if the VM defined by 'vmep' cannot be found
- *  EINVAL: if the sgpa or size is not page aligned, the prot is invalid,
- *          size is too large (512GB), there is wraparound
- *          (like start = 512GB-1 and end = 512GB-2),
- *          the address specified is not within the vm's mem range
- *          or the address lies inside reserved (MMIO) memory
- */
-int
-vm_mprotect_ept(struct vm_mprotect_ept_params *vmep)
-{
-	struct vm *vm;
-	struct vcpu *vcpu;
-	vaddr_t sgpa;
-	size_t size;
-	vm_prot_t prot;
-	uint64_t msr;
-	int ret = 0, memtype;
-
-	/* If not EPT or RVI, nothing to do here */
-	if (!(vmm_softc->mode == VMM_MODE_EPT
-	    || vmm_softc->mode == VMM_MODE_RVI))
-		return (0);
-
-	/* Find the desired VM */
-	ret = vm_find(vmep->vmep_vm_id, &vm);
-
-	/* Not found? exit. */
-	if (ret != 0) {
-		DPRINTF("%s: vm id %u not found\n", __func__,
-		    vmep->vmep_vm_id);
-		return (ret);
-	}
-
-	vcpu = vm_find_vcpu(vm, vmep->vmep_vcpu_id);
-
-	if (vcpu == NULL) {
-		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
-		    vmep->vmep_vcpu_id, vmep->vmep_vm_id);
-		ret = ENOENT;
-		goto out_nolock;
-	}
-
-	rw_enter_write(&vcpu->vc_lock);
-
-	if (vcpu->vc_state != VCPU_STATE_STOPPED) {
-		DPRINTF("%s: mprotect_ept %u on vm %u attempted "
-		    "while vcpu was in state %u (%s)\n", __func__,
-		    vmep->vmep_vcpu_id, vmep->vmep_vm_id, vcpu->vc_state,
-		    vcpu_state_decode(vcpu->vc_state));
-		ret = EBUSY;
-		goto out;
-	}
-
-	/* Only proceed if the pmap is in the correct mode */
-	KASSERT((vmm_softc->mode == VMM_MODE_EPT &&
-	    vm->vm_map->pmap->pm_type == PMAP_TYPE_EPT) ||
-	    (vmm_softc->mode == VMM_MODE_RVI &&
-	     vm->vm_map->pmap->pm_type == PMAP_TYPE_RVI));
-
-	sgpa = vmep->vmep_sgpa;
-	size = vmep->vmep_size;
-	prot = vmep->vmep_prot;
-
-	/* No W^X permissions */
-	if ((prot & PROT_MASK) != prot &&
-	    (prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC)) {
-		DPRINTF("%s: W+X permission requested\n", __func__);
-		ret = EINVAL;
-		goto out;
-	}
-
-	/* No Write only permissions */
-	if ((prot & (PROT_READ | PROT_WRITE | PROT_EXEC)) == PROT_WRITE) {
-		DPRINTF("%s: No Write only permissions\n", __func__);
-		ret = EINVAL;
-		goto out;
-	}
-
-	/* No empty permissions */
-	if (prot == 0) {
-		DPRINTF("%s: No empty permissions\n", __func__);
-		ret = EINVAL;
-		goto out;
-	}
-
-	/* No execute only on EPT CPUs that don't have that capability */
-	if (vmm_softc->mode == VMM_MODE_EPT) {
-		msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
-		if (prot == PROT_EXEC &&
-		    (msr & IA32_EPT_VPID_CAP_XO_TRANSLATIONS) == 0) {
-			DPRINTF("%s: Execute only permissions unsupported,"
-			   " adding read permission\n", __func__);
-
-			prot |= PROT_READ;
-		}
-	}
-
-	/* Must be page aligned */
-	if ((sgpa & PAGE_MASK) || (size & PAGE_MASK) || size == 0) {
-		ret = EINVAL;
-		goto out;
-	}
-
-	/* size must be less then 512GB */
-	if (size >= NBPD_L4) {
-		ret = EINVAL;
-		goto out;
-	}
-
-	/* no wraparound */
-	if (sgpa + size < sgpa) {
-		ret = EINVAL;
-		goto out;
-	}
-
-	/*
-	 * Specifying addresses within the PCI MMIO space is forbidden.
-	 * Disallow addresses that start inside the MMIO space:
-	 * [VMM_PCI_MMIO_BAR_BASE .. VMM_PCI_MMIO_BAR_END]
-	 */
-	if (sgpa >= VMM_PCI_MMIO_BAR_BASE && sgpa <= VMM_PCI_MMIO_BAR_END) {
-		ret = EINVAL;
-		goto out;
-	}
-
-	/*
-	 * ... and disallow addresses that end inside the MMIO space:
-	 * (VMM_PCI_MMIO_BAR_BASE .. VMM_PCI_MMIO_BAR_END]
-	 */
-	if (sgpa + size > VMM_PCI_MMIO_BAR_BASE &&
-	    sgpa + size <= VMM_PCI_MMIO_BAR_END) {
-		ret = EINVAL;
-		goto out;
-	}
-
-	memtype = vmm_get_guest_memtype(vm, sgpa);
-	if (memtype == VMM_MEM_TYPE_UNKNOWN) {
-		ret = EINVAL;
-		goto out;
-	}
-
-	if (vmm_softc->mode == VMM_MODE_EPT)
-		ret = vmx_mprotect_ept(vcpu, vm->vm_map, sgpa, sgpa + size,
-		    prot);
-	else if (vmm_softc->mode == VMM_MODE_RVI) {
-		pmap_write_protect(vm->vm_map->pmap, sgpa, sgpa + size, prot);
-		/* XXX requires a invlpga */
-		ret = 0;
-	} else
-		ret = EINVAL;
-out:
-	if (vcpu != NULL)
-		rw_exit_write(&vcpu->vc_lock);
-out_nolock:
-	refcnt_rele_wake(&vm->vm_refcnt);
-	return (ret);
-}
-
-/*
- * vmx_mprotect_ept
- *
- * apply the ept protections to the requested pages, faulting in the page if
- * required.
- */
-int
-vmx_mprotect_ept(struct vcpu *vcpu, vm_map_t vm_map, paddr_t sgpa, paddr_t egpa,
-    int prot)
-{
-	struct vmx_invept_descriptor vid;
-	pmap_t pmap;
-	pt_entry_t *pte;
-	paddr_t addr;
-	int ret = 0;
-
-	pmap = vm_map->pmap;
-
-	KERNEL_LOCK();
-
-	for (addr = sgpa; addr < egpa; addr += PAGE_SIZE) {
-		pte = vmx_pmap_find_pte_ept(pmap, addr);
-		if (pte == NULL) {
-			ret = uvm_fault(vm_map, addr, VM_FAULT_WIRE,
-			    PROT_READ | PROT_WRITE | PROT_EXEC);
-			if (ret)
-				printf("%s: uvm_fault returns %d, GPA=0x%llx\n",
-				    __func__, ret, (uint64_t)addr);
-
-			pte = vmx_pmap_find_pte_ept(pmap, addr);
-			if (pte == NULL) {
-				KERNEL_UNLOCK();
-				return EFAULT;
-			}
-		}
-
-		if (prot & PROT_READ)
-			*pte |= EPT_R;
-		else
-			*pte &= ~EPT_R;
-
-		if (prot & PROT_WRITE)
-			*pte |= EPT_W;
-		else
-			*pte &= ~EPT_W;
-
-		if (prot & PROT_EXEC)
-			*pte |= EPT_X;
-		else
-			*pte &= ~EPT_X;
-	}
-
-	/*
-	 * SDM 3C: 28.3.3.4 Guidelines for Use of the INVEPT Instruction
-	 * the first bullet point seems to say we should call invept.
-	 *
-	 * Software should use the INVEPT instruction with the “single-context”
-	 * INVEPT type after making any of the following changes to an EPT
-	 * paging-structure entry (the INVEPT descriptor should contain an
-	 * EPTP value that references — directly or indirectly
-	 * — the modified EPT paging structure):
-	 * —   Changing any of the privilege bits 2:0 from 1 to 0.
-	 * */
-	if (pmap->eptp != 0) {
-		memset(&vid, 0, sizeof(vid));
-		vid.vid_eptp = pmap->eptp;
-		DPRINTF("%s: flushing EPT TLB for EPTP 0x%llx\n", __func__,
-		    vid.vid_eptp);
-		invept(vcpu->vc_vmx_invept_op, &vid);
-	}
-
-	KERNEL_UNLOCK();
-
-	return ret;
 }
 
 /*

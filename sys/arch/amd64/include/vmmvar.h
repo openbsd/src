@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.105 2024/08/27 09:16:03 bluhm Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.106 2024/09/21 04:36:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -492,19 +492,8 @@ struct vm_rwregs_params {
 	struct vcpu_reg_state	vrwp_regs;
 };
 
-struct vm_mprotect_ept_params {
-	/* Input parameters to VMM_IOC_MPROTECT_EPT */
-	uint32_t		vmep_vm_id;
-	uint32_t		vmep_vcpu_id;
-	vaddr_t			vmep_sgpa;
-	size_t			vmep_size;
-	int			vmep_prot;
-};
-
 /* IOCTL definitions */
 #define VMM_IOC_INTR _IOW('V', 6, struct vm_intr_params) /* Intr pending */
-/* Control the protection of ept pages*/
-#define VMM_IOC_MPROTECT_EPT _IOW('V', 11, struct vm_mprotect_ept_params)
 
 /* CPUID masks */
 /*
