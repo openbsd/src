@@ -1,0 +1,9 @@
+IN-PARSE(2)                   System Calls Manual                  IN-PARSE(2)
+
+NNAAMMEE
+     IInn--ppaarrssee - parsing of include file macros
+
+DDEESSCCRRIIPPTTIIOONN
+     first line ppaarreenntt <_a_r_g_1> arg2 cchhiilldd middle line (<_a_r_g>) last line
+
+OpenBSD                       September 21, 2024                       OpenBSD

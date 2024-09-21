@@ -1,0 +1,13 @@
+.\" $OpenBSD: parse.in,v 1.1 2024/09/21 11:56:36 schwarze Exp $
+.Dd $Mdocdate: September 21 2024 $
+.Dt IN-PARSE 2
+.Os
+.Sh NAME
+.Nm In-parse
+.Nd parsing of include file macros
+.Sh DESCRIPTION
+first line
+.Sy parent In arg1 arg2 Sy child
+middle line
+.In ( arg )
+last line

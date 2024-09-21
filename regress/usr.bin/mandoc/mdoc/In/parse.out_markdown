@@ -1,0 +1,15 @@
+IN-PARSE(2) - System Calls Manual
+
+# NAME
+
+**In-parse** - parsing of include file macros
+
+# DESCRIPTION
+
+first line
+**parent** &lt;*arg1*> arg2 **child**
+middle line
+(&lt;*arg*>)
+last line
+
+OpenBSD - September 21, 2024
