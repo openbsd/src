@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.21 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.22 2024/09/22 04:19:22 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -43,8 +43,6 @@
 #include <unistd.h>
 
 #define	_PATH_LOGIN_LCHPASS	"/usr/libexec/auth/login_lchpass"
-
-#define BACK_CHANNEL	3
 
 void	local_chpass(char **);
 
