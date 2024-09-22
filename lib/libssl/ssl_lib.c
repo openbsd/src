@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.329 2024/08/03 04:50:27 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.330 2024/09/22 14:59:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1372,10 +1372,8 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 		s->max_cert_list = larg;
 		return (l);
 	case SSL_CTRL_SET_MTU:
-#ifndef OPENSSL_NO_DTLS1
 		if (larg < (long)dtls1_min_mtu())
 			return (0);
-#endif
 		if (SSL_is_dtls(s)) {
 			s->d1->mtu = larg;
 			return (larg);
