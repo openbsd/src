@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.209 2024/08/06 20:13:58 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.210 2024/09/22 08:40:37 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -234,13 +234,13 @@ uipc_setaddr(const struct unpcb *unp, struct mbuf *nam)
  * and don't really want to reserve the sendspace.  Their recvspace should
  * be large enough for at least one max-size datagram plus address.
  */
-#define	PIPSIZ	8192
+#define	PIPSIZ	32768
 u_int	unpst_sendspace = PIPSIZ;	/* [a] */
 u_int	unpst_recvspace = PIPSIZ;	/* [a] */
 u_int	unpsq_sendspace = PIPSIZ;	/* [a] */
 u_int	unpsq_recvspace = PIPSIZ;	/* [a] */
-u_int	unpdg_sendspace = 2*1024;	/* [a] really max datagram size */
-u_int	unpdg_recvspace = 16*1024;	/* [a] */
+u_int	unpdg_sendspace = 8192;		/* [a] really max datagram size */
+u_int	unpdg_recvspace = PIPSIZ;	/* [a] */
 
 const struct sysctl_bounded_args unpstctl_vars[] = {
 	{ UNPCTL_RECVSPACE, &unpst_recvspace, 0, SB_MAX },
