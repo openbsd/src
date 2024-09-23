@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.54 2024/09/23 20:37:42 kn Exp $
+.\"	$OpenBSD: netintro.4,v 1.55 2024/09/23 20:38:49 kn Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -284,6 +284,8 @@ When marked up again, the interface is reinitialized.
 Get the interface flags.
 .It Dv SIOCGIFXFLAGS Fa "struct ifreq *"
 Get the extended interface flags.
+.It Dv SIOCSIFMTU Fa "struct ifreq *"
+Set the MTU of the interface.
 .It Dv SIOCGIFMTU Fa "struct ifreq *"
 Get the current MTU of the interface.
 .It Dv SIOCGIFHARDMTU Fa "struct ifreq *"
