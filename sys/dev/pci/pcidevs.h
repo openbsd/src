@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2089 2024/09/06 03:48:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2090 2024/09/23 03:59:03 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2171,11 +2171,14 @@
 #define	PCI_PRODUCT_ATI_NAVI31_4	0x744a		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_1	0x744c		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_3	0x745e		/* Navi 31 */
+#define	PCI_PRODUCT_ATI_NAVI32_3	0x7460		/* Navi 32 */
+#define	PCI_PRODUCT_ATI_NAVI32_4	0x7461		/* Navi 32 */
 #define	PCI_PRODUCT_ATI_NAVI32_1	0x7470		/* Navi 32 */
 #define	PCI_PRODUCT_ATI_NAVI32_2	0x747e		/* Navi 32 */
 #define	PCI_PRODUCT_ATI_NAVI33_1	0x7480		/* Navi 33 */
 #define	PCI_PRODUCT_ATI_NAVI33_2	0x7483		/* Navi 33 */
 #define	PCI_PRODUCT_ATI_NAVI33_3	0x7489		/* Navi 33 */
+#define	PCI_PRODUCT_ATI_NAVI33_4	0x7499		/* Navi 33 */
 #define	PCI_PRODUCT_ATI_MI300A	0x74a0		/* MI300A */
 #define	PCI_PRODUCT_ATI_MI300X	0x74a1		/* MI300X */
 #define	PCI_PRODUCT_ATI_RADEON_9000IGP	0x7834		/* Radeon 9000/9100 IGP */
