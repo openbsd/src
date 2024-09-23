@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.34 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: shf.c,v 1.35 2024/09/23 21:18:33 deraadt Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -450,6 +450,10 @@ shf_read(char *buf, int bsize, struct shf *shf)
 		ncopy = shf->rnleft;
 		if (ncopy > bsize)
 			ncopy = bsize;
+		if (memchr((char *)shf->rp, '\0', ncopy) != NULL) {
+			errorf("syntax error: NUL byte unexpected");
+			return EOF;
+		}
 		memcpy(buf, shf->rp, ncopy);
 		buf += ncopy;
 		bsize -= ncopy;
@@ -493,6 +497,10 @@ shf_getse(char *buf, int bsize, struct shf *shf)
 		ncopy = end ? end - shf->rp + 1 : shf->rnleft;
 		if (ncopy > bsize)
 			ncopy = bsize;
+		if (memchr((char *)shf->rp, '\0', ncopy) != NULL) {
+			errorf("syntax error: NUL byte unexpected");
+			return NULL;
+		}
 		memcpy(buf, (char *) shf->rp, ncopy);
 		shf->rp += ncopy;
 		shf->rnleft -= ncopy;
