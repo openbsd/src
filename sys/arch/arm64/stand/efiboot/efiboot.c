@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.59 2024/09/20 19:12:50 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.60 2024/09/23 00:10:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1129,6 +1129,8 @@ struct smbios_dtb {
 	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
 	{ "SAMSUNG", "Galaxy Book4 Edge",
 	  "qcom/x1e80100-samsung-galaxy-book4-edge.dtb" },
+	{ "HP", "HP Omnibook X Laptop 14-fe0xxx",
+	  "qcom/x1e80100-hp-omnibook-x14.dtb" },
 };
 
 void *
