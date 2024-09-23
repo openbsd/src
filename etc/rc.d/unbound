@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: unbound,v 1.7 2022/05/21 10:10:45 ajacoutot Exp $
+# $OpenBSD: unbound,v 1.8 2024/09/23 20:44:24 kn Exp $
 
 daemon="/usr/sbin/unbound"
 daemon_flags="-c /var/unbound/etc/unbound.conf"
@@ -12,7 +12,8 @@ rc_pre() {
             /var/unbound/etc/unbound.conf > /dev/null 2>&1; then
 		/usr/sbin/unbound-anchor -v
 	fi
-	/usr/sbin/unbound-checkconf || return 1
+
+	/usr/sbin/unbound-checkconf
 }
 
 rc_cmd $1
