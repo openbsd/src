@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.446 2024/08/29 10:44:40 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.447 2024/09/24 12:37:11 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2491,7 +2491,7 @@ sysctl_diskinit(int update, struct proc *p)
 
 	/* Run in a loop, disks may change while malloc sleeps. */
 	while (disk_change) {
-		int tlen;
+		int tlen, count;
 
 		disk_change = 0;
 
@@ -2502,6 +2502,8 @@ sysctl_diskinit(int update, struct proc *p)
 			tlen += 18;	/* label uid + separators */
 		}
 		tlen++;
+		/* disk_count may change when malloc sleeps */
+		count = disk_count;
 
 		/*
 		 * The sysctl_disklock ensures that no other process can
@@ -2511,9 +2513,9 @@ sysctl_diskinit(int update, struct proc *p)
 		free(diskstats, M_SYSCTL, diskstatslen);
 		diskstats = NULL;
 		disknames = NULL;
-		diskstats = mallocarray(disk_count, sizeof(struct diskstats),
+		diskstats = mallocarray(count, sizeof(struct diskstats),
 		    M_SYSCTL, M_WAITOK|M_ZERO);
-		diskstatslen = disk_count * sizeof(struct diskstats);
+		diskstatslen = count * sizeof(struct diskstats);
 		disknames = malloc(tlen, M_SYSCTL, M_WAITOK|M_ZERO);
 		disknameslen = tlen;
 		disknames[0] = '\0';
