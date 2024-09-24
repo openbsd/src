@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmd.8,v 1.11 2024/09/24 19:34:01 mlarkin Exp $
+.\"	$OpenBSD: vmd.8,v 1.12 2024/09/24 20:02:39 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -68,20 +68,19 @@ When the host machine is shut down,
 sends each running VM a shutdown request via the
 .Xr vmmci 4
 device.
-If the VM(s) are
-.Xr vmmci 4
-aware, this provides each VM the chance to shutdown cleanly in anticipation
+If the VMs are vmmci-aware,
+this provides each VM the chance to shut down cleanly in anticipation
 of host shutdown.
 During shutdown,
 .Nm
-will wait 30 seconds for the VM(s) to terminate cleanly before forcibly
+waits 30 seconds for the VMs to terminate cleanly before forcibly
 stopping them.
 This 30 second default can be changed by
-.Dq rcctl set vmd timeout n
+.Dq rcctl set vmd timeout n ,
 where 'n' is the desired timeout in seconds.
 .Pp
 The options are as follows:
-.Bl -tag -width Dssmacro=value
+.Bl -tag -width Ds
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro
@@ -135,6 +134,7 @@ The
 command first appeared in
 .Ox 5.9 .
 .Sh AUTHORS
+.An -nosplit
 .An Mike Larkin Aq Mt mlarkin@openbsd.org
 and
-.An Reyk Floeter Aq Mt reyk@openbsd.org
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
