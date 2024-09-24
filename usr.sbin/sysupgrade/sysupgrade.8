@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.14 2024/09/05 06:39:54 jmc Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.15 2024/09/24 07:33:35 florian Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2024 $
+.Dd $Mdocdate: September 24 2024 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -22,8 +22,7 @@
 .Nd upgrade system to the next release or a new snapshot
 .Sh SYNOPSIS
 .Nm
-.Op Fl fkn
-.Op Fl r | s
+.Op Fl fkns
 .Op Fl b Ar base-directory
 .Op Ar installurl
 .Sh DESCRIPTION
@@ -66,12 +65,9 @@ By default they will be deleted after the upgrade.
 Fetch and verify the files and create
 .Pa /bsd.upgrade
 but do not reboot.
-.It Fl r
-Upgrade to the next release.
-This is the default if the system is currently running a release.
 .It Fl s
 Upgrade to a snapshot.
-This is the default if the system is currently running a snapshot.
+The default is to upgrade to the next release.
 .El
 .Pp
 See
