@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmd.8,v 1.10 2022/01/05 17:39:25 jmc Exp $
+.\"	$OpenBSD: vmd.8,v 1.11 2024/09/24 19:34:01 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2022 $
+.Dd $Mdocdate: September 24 2024 $
 .Dt VMD 8
 .Os
 .Sh NAME
@@ -63,6 +63,23 @@ such as stopping VMs, and retrieving information from
 .Xr vmm 4
 about running VMs.
 .Pp
+When the host machine is shut down,
+.Nm
+sends each running VM a shutdown request via the
+.Xr vmmci 4
+device.
+If the VM(s) are
+.Xr vmmci 4
+aware, this provides each VM the chance to shutdown cleanly in anticipation
+of host shutdown.
+During shutdown,
+.Nm
+will wait 30 seconds for the VM(s) to terminate cleanly before forcibly
+stopping them.
+This 30 second default can be changed by
+.Dq rcctl set vmd timeout n
+where 'n' is the desired timeout in seconds.
+.Pp
 The options are as follows:
 .Bl -tag -width Dssmacro=value
 .It Fl D Ar macro Ns = Ns Ar value
@@ -108,6 +125,7 @@ socket used for communication with
 .El
 .Sh SEE ALSO
 .Xr vmm 4 ,
+.Xr vmmci 4 ,
 .Xr vm.conf 5 ,
 .Xr rc.conf 8 ,
 .Xr vmctl 8
