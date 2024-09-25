@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.6 2022/02/17 14:08:11 jsg Exp $
+.\" $OpenBSD: dig.1,v 1.7 2024/09/25 06:13:01 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2022 $
+.Dd $Mdocdate: September 25 2024 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -307,11 +307,9 @@ The query options are:
 .Cm aaflag
 .Xc
 A synonym for
-.Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm aaonly .
-.Xc
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -413,11 +411,9 @@ is automatically set when
 is in use, to better emulate the default queries from a name server.
 .Pp
 This option was formerly called
-.Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm sit
-.Xc
 (Server Identity Token).
 In BIND 9.10.0 through BIND 9.10.2,
 it sent the experimental option code 65001.
@@ -425,17 +421,13 @@ This was changed to option code 10 in BIND 9.10.3 when the DNS
 COOKIE option was allocated.
 .Pp
 The
-.Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm sit
-.Xc
 option is now deprecated, but has been retained as a synonym for
-.Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm cookie
-.Xc
 for backward compatibility within the BIND 9.10 branch.
 .It Xo
 .Cm + Ns
@@ -453,11 +445,9 @@ the key id is displayed as the replacement, e.g. "[ key id = value ]".
 .Cm defname
 .Xc
 Deprecated, treated as a synonym for
-.Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm search
-.Xc .
+.Cm search .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -650,11 +640,9 @@ is returned (on by default).
 .Cm rdflag
 .Xc
 A synonym for
-.Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm recurse
-.Xc .
+.Cm recurse .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -817,11 +805,9 @@ Display the TTL when printing the record (on by default).
 .Xc
 Use TCP when querying name servers.
 This alternate syntax to
-.Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm tcp
-.Xc
 is provided for backwards compatibility.
 The "vc" stands for "virtual circuit".
 .El
@@ -848,11 +834,9 @@ also be supplied.
 These global query options must precede the first tuple of name, class, type,
 options, flags, and query options supplied on the command line.
 Any global query options (except the
-.Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm cmd
-.Xc
 option) can be overridden by a query-specific set of query options.
 For example:
 .Bd -literal -offset indent
