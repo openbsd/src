@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: maxattr.sh,v 1.1 2024/09/25 14:42:39 claudio Exp $
+#	$OpenBSD: maxattr.sh,v 1.2 2024/09/25 15:38:39 claudio Exp $
 
 set -e
 
@@ -14,7 +14,10 @@ RDOMAINS="${RDOMAIN1} ${RDOMAIN2}"
 PAIRS="${PAIR1} ${PAIR2}"
 PAIR1IP=10.12.57.1
 PAIR2IP=10.12.57.2
-PAIR2IP2=10.12.57.3
+PAIR2IP_2=10.12.57.3
+PAIR1IP6=2001:db8:57::1
+PAIR2IP6=2001:db8:57::2
+PAIR2IP6_2=2001:db8:57::3
 
 error_notify() {
 	echo cleanup
@@ -62,10 +65,15 @@ set -x
 echo setup
 ifconfig ${PAIR1} rdomain ${RDOMAIN1} ${PAIR1IP}/29 up
 ifconfig ${PAIR2} rdomain ${RDOMAIN2} ${PAIR2IP}/29 up
-ifconfig ${PAIR2} alias ${PAIR2IP2}/32
+ifconfig ${PAIR1} inet6 ${PAIR1IP6}/64
+ifconfig ${PAIR2} inet6 ${PAIR2IP6}/64
+ifconfig ${PAIR2} alias ${PAIR2IP_2}/32
+ifconfig ${PAIR2} inet6 ${PAIR2IP6_2}/128
 ifconfig ${PAIR1} patch ${PAIR2}
 ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
+
+tcpdump -s 2000 -w /tmp/bgp.pcap -i ${PAIR1} &
 
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
@@ -85,6 +93,13 @@ route -T ${RDOMAIN2} exec bgpctl network add 10.12.63.0/24 community 0:1
 route -T ${RDOMAIN2} exec bgpctl network add 10.12.64.0/24 community 0:1
 route -T ${RDOMAIN2} exec bgpctl network add 10.12.65.0/24 community 0:1
 route -T ${RDOMAIN2} exec bgpctl network add 10.12.66.0/24 community 0:1
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:60::/48
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:61::/48 community 0:2
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:62::/48 community 0:2
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:63::/48 community 0:2
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:64::/48 community 0:2
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:65::/48 community 0:2
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:66::/48 community 0:2
 
 sleep 4
 echo test1: check propagation
@@ -97,6 +112,11 @@ route -T ${RDOMAIN2} exec bgpctl network add 10.12.63.0/24 community 0:1 communi
 route -T ${RDOMAIN2} exec bgpctl network add 10.12.64.0/24 community 0:1 community 42:3
 route -T ${RDOMAIN2} exec bgpctl network add 10.12.65.0/24 community 0:1 community 42:4
 route -T ${RDOMAIN2} exec bgpctl network add 10.12.66.0/24 community 0:1 community 42:5
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:62::/48 community 0:2 community 42:1
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:63::/48 community 0:2 community 42:2
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:64::/48 community 0:2 community 42:3
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:65::/48 community 0:2 community 42:4
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:66::/48 community 0:2 community 42:5
 
 sleep 2
 echo test2: check propagation
