@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.633 2024/09/10 09:38:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.634 2024/09/25 14:46:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3383,11 +3383,7 @@ rde_update_queue_runner(uint8_t aid)
 			if (RB_EMPTY(&peer->withdraws[aid]))
 				continue;
 
-			if ((buf = ibuf_dynamic(4, 4096 - MSGSIZE_HEADER)) ==
-			    NULL)
-				fatal("%s", __func__);
-			if (up_dump_withdraws(buf, peer, aid) == -1) {
-				ibuf_free(buf);
+			if ((buf = up_dump_withdraws(peer, aid)) == NULL) {
 				continue;
 			}
 			if (imsg_compose_ibuf(ibuf_se, IMSG_UPDATE,
@@ -3422,11 +3418,7 @@ rde_update_queue_runner(uint8_t aid)
 				continue;
 			}
 
-			if ((buf = ibuf_dynamic(4, 4096 - MSGSIZE_HEADER)) ==
-			    NULL)
-				fatal("%s", __func__);
-			if (up_dump_update(buf, peer, aid) == -1) {
-				ibuf_free(buf);
+			if ((buf = up_dump_update(peer, aid)) == NULL) {
 				continue;
 			}
 			if (imsg_compose_ibuf(ibuf_se, IMSG_UPDATE,

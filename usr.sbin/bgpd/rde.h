@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.305 2024/08/28 13:21:39 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.306 2024/09/25 14:46:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -702,8 +702,8 @@ void		 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
 		    struct prefix *, struct prefix *);
 void		 up_generate_default(struct rde_peer *, uint8_t);
 int		 up_is_eor(struct rde_peer *, uint8_t);
-int		 up_dump_withdraws(struct ibuf *, struct rde_peer *, uint8_t);
-int		 up_dump_update(struct ibuf *, struct rde_peer *, uint8_t);
+struct ibuf	*up_dump_withdraws(struct rde_peer *, uint8_t);
+struct ibuf	*up_dump_update(struct rde_peer *, uint8_t);
 
 /* rde_aspa.c */
 void		 aspa_validation(struct rde_aspa *, struct aspath *,
