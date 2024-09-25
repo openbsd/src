@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.2 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: sev.c,v 1.3 2024/09/25 04:19:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -17,8 +17,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>	/* roundup */
 #include <sys/device.h>
-#include <sys/param.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>
