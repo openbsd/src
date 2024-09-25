@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.17 2024/09/25 15:08:42 jmc Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.18 2024/09/25 16:26:37 florian Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -55,8 +55,7 @@ Download files to
 instead of
 .Pa /home/_sysupgrade .
 .It Fl f
-Force an already applied upgrade.
-The default is to upgrade to latest snapshot only if available.
+For snapshots, force an already applied upgrade.
 This option has no effect on releases.
 .It Fl k
 Keep the files in
