@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.10 2023/07/02 21:44:04 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.11 2024/09/25 19:56:33 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -222,8 +222,10 @@ mousecfg_put_field(int fd, struct wsmouse_parameters *field)
 	    || (err = ioctl(fd, WSMOUSEIO_GETPARAMS, field)))
 		return err;
 
-	for (i = 0; i < field->nparams; i++)
+	for (i = 0; i < field->nparams; i++) {
+		n = index_of(field->params[i].key);
 		cfg_buffer[n].value = field->params[i].value;
+	}
 
 	return (0);
 }
