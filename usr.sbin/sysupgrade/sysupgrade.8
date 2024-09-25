@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.16 2024/09/25 13:55:23 sthen Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.17 2024/09/25 15:08:42 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -66,7 +66,7 @@ By default they will be deleted after the upgrade.
 Fetch and verify the files and create
 .Pa /bsd.upgrade
 but do not reboot.
-.It Fl R Op version
+.It Fl R Ar version
 Upgrade to a specific release version.
 Only upgrades from one version to the next are tested.
 Skipping versions may work.
