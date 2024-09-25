@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.53 2024/09/24 07:33:35 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.54 2024/09/25 13:55:23 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -35,7 +35,7 @@ err()
 
 usage()
 {
-	echo "usage: ${0##*/} [-fkns] [-b base-directory] [installurl]" 1>&2
+	echo "usage: ${0##*/} [-fkns] [-b base-directory] [-R version] [installurl]" 1>&2
 	return 1
 }
 
@@ -74,17 +74,25 @@ rmel() {
 
 SNAP=false
 FORCE=false
+FORCE_VERSION=false
 KEEP=false
 REBOOT=true
 WHAT='release'
 
-while getopts b:fknrs arg; do
+VERSION=$(uname -r)
+NEXT_VERSION=$(echo ${VERSION} + 0.1 | bc)
+
+while getopts b:fknrR:s arg; do
 	case ${arg} in
 	b)	SETSDIR=${OPTARG}/_sysupgrade;;
 	f)	FORCE=true;;
 	k)	KEEP=true;;
 	n)	REBOOT=false;;
 	r)	;;
+	R)	FORCE_VERSION=true
+		[[ ${OPTARG} == @([0-9]|[0-9][0-9]).[0-9] ]] ||
+		    err "invalid version: ${OPTARG}"
+		NEXT_VERSION=${OPTARG};;
 	s)	SNAP=true;;
 	*)	usage;;
 	esac
@@ -104,33 +112,39 @@ case $# in
 esac
 [[ $MIRROR == @(file|ftp|http|https)://* ]] ||
 	err "invalid installurl: $MIRROR"
+$FORCE_VERSION && $SNAP &&
+	err "incompatible options: -s -R $NEXT_VERSION"
+$FORCE && ! $SNAP &&
+	err "incompatible options: -f without -s"
 
 if $SNAP; then
 	WHAT='snapshot'
-fi
-
-VERSION=$(uname -r)
-NEXT_VERSION=$(echo ${VERSION} + 0.1 | bc)
-
-if $SNAP; then
 	URL=${MIRROR}/snapshots/${ARCH}/
 else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
-	ALT_URL=${MIRROR}/${VERSION}/${ARCH}/
+	$FORCE_VERSION || ALT_URL=${MIRROR}/${VERSION}/${ARCH}/
 fi
 
 install -d -o 0 -g 0 -m 0755 ${SETSDIR}
 cd ${SETSDIR}
 
 echo "Fetching from ${URL}"
-if ! $SNAP; then
-	if ! unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig; then
+if ! unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig; then
+	if [[ -n ${ALT_URL} ]]; then
 		echo "Fetching from ${ALT_URL}"
 		unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${ALT_URL}SHA256.sig
 		URL=${ALT_URL}
+		NEXT_VERSION=${VERSION}
+	else
+		exit 1
 	fi
-else
-	unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig
+fi
+
+SHORT_VERSION=${NEXT_VERSION%.*}${NEXT_VERSION#*.}
+if ! [[ -r /etc/signify/openbsd-${SHORT_VERSION}-base.pub ]]; then
+	echo "${0##*/}: signify key not found; download into /etc/signify from" 1>&2
+	echo "https://ftp.openbsd.org/pub/OpenBSD/signify/openbsd-${SHORT_VERSION}-base.pub" 1>&2
+	exit 1
 fi
 
 unpriv -f SHA256 signify -Ve -x SHA256.sig -m SHA256
