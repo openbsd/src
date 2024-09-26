@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.160 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.161 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
@@ -28,7 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>

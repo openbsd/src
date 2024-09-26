@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.13 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.14 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

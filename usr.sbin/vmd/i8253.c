@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.41 2024/07/10 09:27:33 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.42 2024/09/26 01:45:13 jsg Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -23,7 +23,6 @@
 
 #include <event.h>
 #include <string.h>
-#include <stddef.h>
 #include <time.h>
 #include <unistd.h>
 

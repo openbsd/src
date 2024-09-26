@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.115 2024/07/10 09:27:33 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.116 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,19 +25,14 @@
 #include <dev/pv/virtioreg.h>
 #include <dev/pci/virtio_pcireg.h>
 #include <dev/pv/vioblkreg.h>
-#include <dev/pv/vioscsireg.h>
 #include <dev/vmm/vmm.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

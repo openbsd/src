@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.3 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.4 2024/09/26 01:45:13 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
 
-#include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>

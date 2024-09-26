@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.24 2023/09/14 15:25:43 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.25 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -19,9 +19,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <dev/pci/pcireg.h>
-
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

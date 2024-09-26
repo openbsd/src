@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.1 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: psp.c,v 1.2 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -17,11 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/rwlock.h>
 
-#include <machine/bus.h>
 #include <dev/ic/pspvar.h>
 
 #include <string.h>

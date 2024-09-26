@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.42 2024/01/18 14:49:59 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.43 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -22,14 +22,9 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/tree.h>
-
-#include <net/if.h>
 
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.24 2024/01/18 14:49:59 claudio Exp $	*/
+/*	$OpenBSD: priv.c,v 1.25 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -17,12 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/ioctl.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -34,13 +30,10 @@
 #include <arpa/inet.h>
 
 #include <errno.h>
-#include <event.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 #include <ctype.h>
 
 #include "proc.h"

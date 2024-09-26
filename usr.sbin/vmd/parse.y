@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.70 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.71 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/uio.h>
 
 #include <dev/vmm/vmm.h>
 
@@ -37,10 +36,8 @@
 
 #include <agentx.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <string.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <netdb.h>

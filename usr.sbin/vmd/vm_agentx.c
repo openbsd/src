@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_agentx.c,v 1.2 2024/02/02 14:58:02 dv Exp $ */
+/*	$OpenBSD: vm_agentx.c,v 1.3 2024/09/26 01:45:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -21,11 +21,9 @@
 #include <sys/un.h>
 
 #include <agentx.h>
-#include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 

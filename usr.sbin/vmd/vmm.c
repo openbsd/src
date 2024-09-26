@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.122 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.123 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -20,14 +20,8 @@
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
-#include <sys/uio.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/mman.h>
 
-#include <dev/ic/i8253reg.h>
-#include <dev/isa/isareg.h>
-#include <dev/pci/pcireg.h>
 #include <dev/vmm/vmm.h>
 
 #include <net/if.h>
@@ -37,14 +31,10 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <limits.h>
-#include <poll.h>
-#include <pthread.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "vmd.h"
 #include "atomicio.h"

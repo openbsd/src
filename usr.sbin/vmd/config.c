@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.75 2024/02/05 21:58:09 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.76 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -19,20 +19,15 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/time.h>
-#include <sys/uio.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
 #include <fcntl.h>
-#include <util.h>
 #include <errno.h>
 #include <imsg.h>
 

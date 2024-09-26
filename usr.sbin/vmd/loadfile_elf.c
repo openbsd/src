@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.49 2024/09/11 15:42:52 bluhm Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.50 2024/09/26 01:45:13 jsg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,19 +82,15 @@
  */
 
 #include <sys/param.h>	/* PAGE_SIZE PAGE_MASK roundup */
-#include <sys/ioctl.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
 
 #include <elf.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <err.h>
-#include <stddef.h>
 
 #include <dev/vmm/vmm.h>
 

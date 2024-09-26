@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.24 2023/09/06 19:26:39 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.25 2024/09/26 01:45:13 jsg Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -25,10 +25,8 @@
 #include <scsi/scsiconf.h>
 #include <scsi/cd.h>
 
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "vmd.h"
 #include "vioscsi.h"

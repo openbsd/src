@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.9 2024/07/09 09:31:37 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.10 2024/09/26 01:45:13 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <machine/biosvar.h>	/* bios_memmap_t */
 #include <dev/pv/virtioreg.h>
 #include <dev/vmm/vmm.h>

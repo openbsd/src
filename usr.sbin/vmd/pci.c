@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.33 2024/07/10 09:27:33 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.34 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -20,7 +20,6 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/pv/virtioreg.h>
 #include <dev/vmm/vmm.h>
 
 #include <string.h>
@@ -28,7 +27,6 @@
 
 #include "vmd.h"
 #include "pci.h"
-#include "i8259.h"
 #include "atomicio.h"
 
 struct pci pci;

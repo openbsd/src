@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.16 2024/07/12 14:34:08 jan Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.17 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -16,7 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/socket.h>
 #include <sys/types.h>
 
 #include <dev/pci/virtio_pcireg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.24 2024/02/20 21:40:37 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.25 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/uio.h>
 
 #include <event.h>
 #include <imsg.h>

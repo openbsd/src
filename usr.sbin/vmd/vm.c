@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.105 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: vm.c,v 1.106 2024/09/26 01:45:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -19,28 +19,18 @@
 #include <sys/param.h>	/* PAGE_SIZE, MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/queue.h>
-#include <sys/wait.h>
-#include <sys/uio.h>
-#include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/vmm/vmm.h>
-
-#include <net/if.h>
 
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
-#include <limits.h>
 #include <poll.h>
 #include <pthread.h>
 #include <pthread_np.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,8 +38,6 @@
 #include <util.h>
 
 #include "atomicio.h"
-#include "loadfile.h"
-#include "mmio.h"
 #include "pci.h"
 #include "virtio.h"
 #include "vmd.h"
