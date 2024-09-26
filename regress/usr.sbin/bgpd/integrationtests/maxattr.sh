@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: maxattr.sh,v 1.2 2024/09/25 15:38:39 claudio Exp $
+#	$OpenBSD: maxattr.sh,v 1.3 2024/09/26 08:12:30 claudio Exp $
 
 set -e
 
@@ -72,8 +72,6 @@ ifconfig ${PAIR2} inet6 ${PAIR2IP6_2}/128
 ifconfig ${PAIR1} patch ${PAIR2}
 ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
-
-tcpdump -s 2000 -w /tmp/bgp.pcap -i ${PAIR1} &
 
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
