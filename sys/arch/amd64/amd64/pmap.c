@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.175 2024/09/26 13:18:25 dv Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.176 2024/09/26 21:55:42 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2468,7 +2468,9 @@ pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 	for (v = sgpa; v < egpa + PAGE_SIZE; v += PAGE_SIZE)
 		pmap_do_remove_ept(pmap, v);
 
+#ifdef MULTIPROCESSOR
 	pmap_shootept(pmap, 1);
+#endif /* MULTIPROCESSOR */
 
 	mtx_leave(&pmap->pm_mtx);
 
