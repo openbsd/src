@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.96 2024/07/21 16:19:25 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.97 2024/09/26 13:18:25 dv Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include "assym.h"
 #include "xen.h"
 #include "hyperv.h"
+#include "vmm.h"
 
 /*****************************************************************************/
 
@@ -600,6 +601,27 @@ IDTVEC(ipi_invltlb)
 	popq	%rax
 	iretq
 END(Xipi_invltlb)
+
+#if NVMM > 0
+/* Invalidate VMX EPT */
+IDTVEC(ipi_invept)
+	pushq	%rax
+	pushq	%rdx
+
+	ioapic_asm_ack()
+
+	movq	$ept_shoot_vid, %rax
+	movq	ept_shoot_mode, %rdx
+	invept	(%rax), %rdx
+
+	lock
+	decq	tlb_shoot_wait
+
+	popq	%rdx
+	popq	%rax
+	iretq
+END(Xipi_invept)
+#endif /* NVMM > 0 */
 
 /* invalidate a single page, no PCIDs version */
 IDTVEC(ipi_invlpg)

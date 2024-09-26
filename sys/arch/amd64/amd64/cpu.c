@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.192 2024/08/08 07:02:38 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.193 2024/09/26 13:18:25 dv Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -889,8 +889,10 @@ cpu_init(struct cpu_info *ci)
 void
 cpu_init_vmm(struct cpu_info *ci)
 {
+	uint64_t msr;
+
 	/*
-	 * Allocate a per-cpu VMXON region for VMX CPUs
+	 * Detect VMX specific features and initialize VMX-related state.
 	 */
 	if (ci->ci_vmm_flags & CI_VMM_VMX) {
 		ci->ci_vmxon_region = (struct vmxon_region *)malloc(PAGE_SIZE,
@@ -898,8 +900,17 @@ cpu_init_vmm(struct cpu_info *ci)
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)ci->ci_vmxon_region,
 		    &ci->ci_vmxon_region_pa))
 			panic("Can't locate VMXON region in phys mem");
+
 		ci->ci_vmcs_pa = VMX_VMCS_PA_CLEAR;
 		rw_init(&ci->ci_vmcs_lock, "vmcslock");
+
+		msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
+		if (msr & IA32_EPT_VPID_CAP_INVEPT_CONTEXT)
+			ci->ci_vmm_cap.vcc_vmx.vmx_invept_mode =
+			    IA32_VMX_INVEPT_SINGLE_CTX;
+		else
+			ci->ci_vmm_cap.vcc_vmx.vmx_invept_mode =
+			    IA32_VMX_INVEPT_GLOBAL_CTX;
 	}
 }
 #endif /* NVMM > 0 */

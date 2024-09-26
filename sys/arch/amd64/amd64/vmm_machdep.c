@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.37 2024/09/21 04:36:28 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.38 2024/09/26 13:18:25 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2673,11 +2673,6 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		ret = EINVAL;
 		goto exit;
 	}
-	if (msr & IA32_EPT_VPID_CAP_INVEPT_CONTEXT)
-		vcpu->vc_vmx_invept_op = IA32_VMX_INVEPT_SINGLE_CTX;
-	else
-		vcpu->vc_vmx_invept_op = IA32_VMX_INVEPT_GLOBAL_CTX;
-
 	if (msr & IA32_EPT_VPID_CAP_WB) {
 		/* WB cache type supported */
 		eptp |= IA32_EPT_PAGING_CACHE_TYPE_WB;
@@ -3736,10 +3731,15 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			ci = curcpu();
 			vcpu->vc_last_pcpu = ci;
 
+			/* We're now using this vcpu's EPT pmap on this cpu. */
+			atomic_swap_ptr(&ci->ci_ept_pmap,
+			    vcpu->vc_parent->vm_map->pmap);
+
 			/* Invalidate EPT cache. */
 			vid_ept.vid_reserved = 0;
 			vid_ept.vid_eptp = vcpu->vc_parent->vm_map->pmap->eptp;
-			if (invept(vcpu->vc_vmx_invept_op, &vid_ept)) {
+			if (invept(ci->ci_vmm_cap.vcc_vmx.vmx_invept_mode,
+			    &vid_ept)) {
 				printf("%s: invept\n", __func__);
 				return (EINVAL);
 			}

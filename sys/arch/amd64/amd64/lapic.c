@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.72 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.73 2024/09/26 13:18:25 dv Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -56,6 +56,7 @@
 #include "ioapic.h"
 #include "xen.h"
 #include "hyperv.h"
+#include "vmm.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
@@ -368,7 +369,11 @@ lapic_boot_init(paddr_t lapic_base)
 		idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg_pcid);
 		idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange_pcid);
 	}
-#endif
+#if NVMM > 0
+	idt_allocmap[LAPIC_IPI_INVEPT] = 1;
+	idt_vec_set(LAPIC_IPI_INVEPT, Xipi_invept);
+#endif /* NVMM > 0 */
+#endif /* MULTIPROCESSOR */
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 

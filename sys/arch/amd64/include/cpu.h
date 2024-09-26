@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.176 2024/08/27 09:16:03 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.177 2024/09/26 13:18:25 dv Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@ struct vmx {
 	uint32_t	vmx_cr3_tgt_count;
 	uint64_t	vmx_vm_func;
 	uint8_t		vmx_has_l1_flush_msr;
+	uint64_t	vmx_invept_mode;
 };
 
 /*
@@ -237,12 +238,12 @@ struct cpu_info {
 	union		vmm_cpu_cap ci_vmm_cap;
 	paddr_t		ci_vmxon_region_pa;
 	struct vmxon_region *ci_vmxon_region;
-	struct vcpu	*ci_guest_vcpu;		/* [o] last vcpu resumed */
-
-	char		ci_panicbuf[512];
-
 	paddr_t		ci_vmcs_pa;
 	struct rwlock	ci_vmcs_lock;
+	struct pmap		*ci_ept_pmap;	/* [o] last used EPT pmap */
+	struct vcpu		*ci_guest_vcpu;	/* [o] last vcpu resumed */
+
+	char		ci_panicbuf[512];
 
 	struct clockqueue ci_queue;
 };

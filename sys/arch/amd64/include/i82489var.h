@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.19 2024/06/09 03:12:59 jsg Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.20 2024/09/26 13:18:25 dv Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -32,6 +32,8 @@
 
 #ifndef _MACHINE_I82489VAR_H_
 #define _MACHINE_I82489VAR_H_
+
+#include "vmm.h"
 
 /*
  * Software definitions belonging to Local APIC driver.
@@ -70,6 +72,7 @@ extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_INVLTLB			(LAPIC_IPI_OFFSET + 0)
 #define LAPIC_IPI_INVLPG			(LAPIC_IPI_OFFSET + 1)
 #define LAPIC_IPI_INVLRANGE			(LAPIC_IPI_OFFSET + 2)
+#define LAPIC_IPI_INVEPT			(LAPIC_IPI_OFFSET + 3)
 
 extern void Xipi_invltlb(void);
 extern void Xipi_invltlb_pcid(void);
@@ -77,6 +80,9 @@ extern void Xipi_invlpg(void);
 extern void Xipi_invlpg_pcid(void);
 extern void Xipi_invlrange(void);
 extern void Xipi_invlrange_pcid(void);
+#if NVMM > 0
+extern void Xipi_invept(void);
+#endif /* NVMM > 0 */
 
 /*
  * Vector used for local apic timer interrupts.
