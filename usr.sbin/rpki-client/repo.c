@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.67 2024/09/19 20:48:36 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.68 2024/09/27 12:55:03 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -656,10 +656,10 @@ rrdp_session_parse(struct rrdprepo *rr)
 {
 	FILE *f;
 	struct rrdp_session *state;
-	int fd, i, ln = 0, deltacnt = 0;
+	int fd, ln = 0, deltacnt = 0;
 	const char *errstr;
 	char *line = NULL, *file;
-	size_t len = 0;
+	size_t i, len = 0;
 	ssize_t n;
 	time_t now, weeks;
 
@@ -749,7 +749,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 	free(line);
 	free(state->session_id);
 	free(state->last_mod);
-	for (i = 0; i < MAX_RRDP_DELTAS; i++)
+	for (i = 0; i < sizeof(state->deltas) / sizeof(state->deltas[0]); i++)
 		free(state->deltas[i]);
 	memset(state, 0, sizeof(*state));
 	rr->last_reset = now;
