@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocks.c,v 1.24 2024/09/18 10:22:36 job Exp $ */
+/*	$OpenBSD: blocks.c,v 1.25 2024/09/27 13:06:21 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -88,7 +88,8 @@ blkhash_alloc(void)
 int
 blkhash_set(struct blktab *p, const struct blkset *bset)
 {
-	size_t	 i, idx;
+	struct blkhash	*blks;
+	size_t		 i, idx;
 
 	if (bset == NULL)
 		return 1;
@@ -100,11 +101,14 @@ blkhash_set(struct blktab *p, const struct blkset *bset)
 
 	/* Fill in the hashtable. */
 
-	p->blks = reallocarray(p->blks, bset->blksz, sizeof(struct blkhash));
-	if (p->blks == NULL) {
+	blks = reallocarray(p->blks, bset->blksz, sizeof(struct blkhash));
+	if (blks == NULL) {
 		ERR("reallocarray");
+		free(p->blks);
+		p->blks = NULL;
 		return 0;
 	}
+	p->blks = blks;
 	for (i = 0; i < bset->blksz; i++) {
 		p->blks[i].blk = &bset->blks[i];
 		idx = bset->blks[i].chksum_short % p->qsz;
