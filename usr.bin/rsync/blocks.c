@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocks.c,v 1.25 2024/09/27 13:06:21 tb Exp $ */
+/*	$OpenBSD: blocks.c,v 1.26 2024/09/27 13:10:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -91,7 +91,7 @@ blkhash_set(struct blktab *p, const struct blkset *bset)
 	struct blkhash	*blks;
 	size_t		 i, idx;
 
-	if (bset == NULL)
+	if (bset == NULL || bset->blksz == 0)
 		return 1;
 
 	/* Wipe clean the table. */
