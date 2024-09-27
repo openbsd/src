@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocks.c,v 1.26 2024/09/27 13:10:39 tb Exp $ */
+/*	$OpenBSD: blocks.c,v 1.27 2024/09/27 13:13:14 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -125,6 +125,8 @@ blkhash_set(struct blktab *p, const struct blkset *bset)
 void
 blkhash_free(struct blktab *p)
 {
+	if (p == NULL)
+		return;
 	free(p->q);
 	free(p->blks);
 	free(p);
