@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.266 2024/09/04 15:46:43 job Exp $ */
+/*	$OpenBSD: main.c,v 1.267 2024/09/27 12:52:58 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -878,6 +878,8 @@ load_skiplist(const char *slf)
 		LIST_INSERT_HEAD(&skiplist, le, entry);
 		stats.skiplistentries++;
 	}
+	if (ferror(fp))
+		err(1, "error reading %s", slf);
 
 	fclose(fp);
 	free(line);
