@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.212 2024/05/15 09:59:12 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.213 2024/09/29 20:05:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -418,9 +418,9 @@ main(int argc, char **argv)
 			cfg_files[cfg_nfiles++] = xstrdup(optarg);
 			cfg_quiet = 0;
 			break;
- 		case 'V':
+		case 'V':
 			printf("tmux %s\n", getversion());
- 			exit(0);
+			exit(0);
 		case 'l':
 			flags |= CLIENT_LOGIN;
 			break;

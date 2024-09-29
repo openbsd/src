@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.27 2024/08/26 13:02:15 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.28 2024/09/29 20:05:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -948,7 +948,7 @@ colour_byname(const char *name)
 
 	if (strncmp(name, "grey", 4) == 0 || strncmp(name, "gray", 4) == 0) {
 		if (name[4] == '\0')
-			return (-1);
+			return (0xbebebe|COLOUR_FLAG_RGB);
 		c = strtonum(name + 4, 0, 100, &errstr);
 		if (errstr != NULL)
 			return (-1);
