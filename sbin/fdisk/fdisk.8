@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.119 2023/11/10 15:41:11 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.120 2024/09/29 18:00:38 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2023 $
+.Dd $Mdocdate: September 29 2024 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -166,7 +166,7 @@ or just the disk name, e.g.
 .Pa sd0 .
 .El
 .Sh TYPICAL LAYOUT
-When called without options
+When called without options,
 .Nm
 prints the partition table of
 .Ar disk .
@@ -253,7 +253,7 @@ Offset: 0       Signature: 0xAA55
 .Sh COMMAND MODE
 When
 .Nm
-enters interactive command mode
+enters interactive command mode,
 it copies the partition table from
 .Ar disk
 into memory and performs all edits on
@@ -327,7 +327,7 @@ An MBR partition will accept values from 0 to 0xff.
 A GPT partition will accept values from 0 to 0xfffffffffffffff.
 If
 .Ar value
-is not provided the partition's bootable flag is set
+is not provided, the partition's bootable flag is set
 and all other partitions have their bootable flags reset.
 MBR partitions with the bootable flag set are printed with a
 .Sq *
