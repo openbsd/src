@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.45 2024/05/05 08:16:45 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.46 2024/09/29 14:36:13 kn Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 5 2024 $
+.Dd $Mdocdate: September 29 2024 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm rcctl
 .Cm get Ns | Ns Cm getdef Ns | Ns Cm set
-.Ar service | daemon Op Ar variable Op Ar argument ...
+.Ar daemon Ns | Ns Ar service Op Ar variable Op Ar argument ...
 .Nm rcctl
 .Op Fl df
 .Sm off

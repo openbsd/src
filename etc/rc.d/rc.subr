@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.162 2024/01/17 08:26:06 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.163 2024/09/29 14:36:13 kn Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-_rc_actions="start stop restart reload check configtest"
+_rc_actions="check configtest reload restart start stop"
 readonly _rc_actions
 
 _rc_check_name() {
