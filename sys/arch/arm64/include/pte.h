@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.8 2023/03/27 19:02:48 kettenis Exp $ */
+/* $OpenBSD: pte.h,v 1.9 2024/09/29 12:22:57 jsg Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -102,33 +102,5 @@
 
 /* physical page mask */
 #define PTE_RPGN (((1ULL << 48) - 1) & ~PAGE_MASK)
-
-/* XXX */
-#ifndef _LOCORE
-struct pte {
-	uint64_t pte;
-};
-
-typedef uint64_t pd_entry_t;	/* L1 table entry */
-typedef uint64_t pt_entry_t;	/* L2 table entry */
-
-struct pv_node {
-};
-
-#endif /* _LOCORE */
-
-
-/// REWRITE
-#define L2_L_SIZE		0x00010000	/* 64K */
-#define L2_L_OFFSET		(L2_L_SIZE - 1)
-#define L2_L_FRAME		(~L2_L_OFFSET)
-#define L2_L_SHIFT		16
-
-#define L2_S_SIZE		0x00001000	/* 4K */
-#define L2_S_OFFSET		(L2_S_SIZE - 1)
-#define L2_S_FRAME		(~L2_S_OFFSET)
-#define L2_S_SHIFT		12
-
-///
 
 #endif /* _ARM_PTE_H_ */
