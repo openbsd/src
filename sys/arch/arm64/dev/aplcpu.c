@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.8 2023/07/13 08:33:36 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.9 2024/09/29 09:25:37 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -99,7 +99,7 @@ uint32_t aplcpu_opp_level(struct aplcpu_softc *, int);
 int	aplcpu_clockspeed(int *);
 void	aplcpu_setperf(int level);
 void	aplcpu_refresh_sensors(void *);
-void	aplcpu_idle_cycle();
+void	aplcpu_idle_cycle(void);
 void	aplcpu_deep_wfi(void);
 
 int
