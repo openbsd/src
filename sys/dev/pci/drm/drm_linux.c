@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.115 2024/07/13 15:38:21 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.116 2024/09/30 03:55:46 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -982,13 +982,6 @@ SPLAY_GENERATE(xarray_tree, xarray_entry, entry, xarray_cmp);
 void
 xa_init_flags(struct xarray *xa, gfp_t flags)
 {
-	static int initialized;
-
-	if (!initialized) {
-		pool_init(&xa_pool, sizeof(struct xarray_entry), 0, IPL_NONE, 0,
-		    "xapl", NULL);
-		initialized = 1;
-	}
 	SPLAY_INIT(&xa->xa_tree);
 	if (flags & XA_FLAGS_LOCK_IRQ)
 		mtx_init(&xa->xa_lock, IPL_TTY);
@@ -2853,6 +2846,8 @@ drm_linux_init(void)
 
 	pool_init(&idr_pool, sizeof(struct idr_entry), 0, IPL_TTY, 0,
 	    "idrpl", NULL);
+	pool_init(&xa_pool, sizeof(struct xarray_entry), 0, IPL_NONE, 0,
+	    "xapl", NULL);
 
 	kmap_atomic_va =
 	    (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
@@ -2868,6 +2863,7 @@ drm_linux_init(void)
 void
 drm_linux_exit(void)
 {
+	pool_destroy(&xa_pool);
 	pool_destroy(&idr_pool);
 
 	taskq_destroy(taskletq);
