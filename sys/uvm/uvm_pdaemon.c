@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.114 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.115 2024/09/30 08:09:39 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 #include "drm.h"
 
 #if NDRM > 0
-extern void drmbackoff(long);
+extern unsigned long drmbackoff(long);
 #endif
 
 /*

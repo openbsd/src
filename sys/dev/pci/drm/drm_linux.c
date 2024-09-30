@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.116 2024/09/30 03:55:46 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.117 2024/09/30 08:09:39 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -2942,20 +2942,25 @@ unregister_shrinker(struct shrinker *shrinker)
 	TAILQ_REMOVE(&shrinkers, shrinker, next);
 }
 
-void
+unsigned long
 drmbackoff(long npages)
 {
 	struct shrink_control sc;
 	struct shrinker *shrinker;
-	u_long ret;
+	u_long ret, freed = 0;
 
 	shrinker = TAILQ_FIRST(&shrinkers);
 	while (shrinker && npages > 0) {
 		sc.nr_to_scan = npages;
 		ret = shrinker->scan_objects(shrinker, &sc);
+		if (ret == SHRINK_STOP)
+			break;
 		npages -= ret;
+		freed += ret;
 		shrinker = TAILQ_NEXT(shrinker, next);
 	}
+
+	return freed;
 }
 
 void *
