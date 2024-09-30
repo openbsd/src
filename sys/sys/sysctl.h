@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.237 2024/08/02 14:34:45 mvs Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.238 2024/09/30 12:32:26 claudio Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -568,7 +568,7 @@ struct kinfo_vmentry {
  *	lim - source struct plimits
  *	sa - source struct sigacts
  * There are some members that are not handled by these macros
- * because they're too painful to generalize: p_ppid, p_sid, p_tdev,
+ * because they're too painful to generalize: p_sid, p_tdev,
  * p_tpgid, p_tsess, p_vm_rssize, p_u[us]time_{sec,usec}, p_cpuid
  */
 
@@ -645,6 +645,7 @@ do {									\
 	(kp)->p_sigmask = (p)->p_sigmask;				\
 									\
 	PR_LOCK(pr);							\
+	(kp)->p_ppid = (pr)->ps_ppid;					\
 	(kp)->p_sigignore = (sa) ? (sa)->ps_sigignore : 0;		\
 	(kp)->p_sigcatch = (sa) ? (sa)->ps_sigcatch : 0;		\
 									\

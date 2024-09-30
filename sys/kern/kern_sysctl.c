@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.447 2024/09/24 12:37:11 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.448 2024/09/30 12:32:26 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1996,8 +1996,6 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	    show_pointers);
 
 	/* stuff that's too painful to generalize into the macros */
-	if (pr->ps_pptr)
-		ki->p_ppid = pr->ps_ppid;
 	if (s->s_leader)
 		ki->p_sid = s->s_leader->ps_pid;
 

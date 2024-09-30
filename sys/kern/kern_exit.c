@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.233 2024/09/06 08:21:21 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.234 2024/09/30 12:32:26 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -746,7 +746,7 @@ proc_finish_wait(struct proc *waiter, struct process *pr)
 	 * If we got the child via a ptrace 'attach',
 	 * we need to give it back to the old parent.
 	 */
-	if (pr->ps_oppid != 0 && (pr->ps_oppid != pr->ps_pptr->ps_pid) &&
+	if (pr->ps_oppid != 0 && (pr->ps_oppid != pr->ps_ppid) &&
 	   (tr = prfind(pr->ps_oppid))) {
 		pr->ps_oppid = 0;
 		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
@@ -774,7 +774,7 @@ process_untrace(struct process *pr)
 	KASSERT(pr->ps_flags & PS_TRACED);
 
 	if (pr->ps_oppid != 0 &&
-	    (pr->ps_oppid != pr->ps_pptr->ps_pid))
+	    (pr->ps_oppid != pr->ps_ppid))
 		ppr = prfind(pr->ps_oppid);
 
 	/* not being traced any more */
@@ -803,7 +803,7 @@ process_reparent(struct process *child, struct process *parent)
 		return;
 
 	KASSERT(child->ps_oppid == 0 ||
-		child->ps_oppid == child->ps_pptr->ps_pid);
+		child->ps_oppid == child->ps_ppid);
 
 	LIST_REMOVE(child, ps_sibling);
 	LIST_INSERT_HEAD(&parent->ps_children, child, ps_sibling);

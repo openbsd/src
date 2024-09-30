@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.98 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.99 2024/09/30 12:32:26 claudio Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -291,7 +291,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		if (ISSET(tr->ps_flags, PS_TRACED))
 			return EBUSY;
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
-		tr->ps_oppid = tr->ps_pptr->ps_pid;
+		tr->ps_oppid = tr->ps_ppid;
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);
@@ -520,7 +520,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 * Stop the target.
 		 */
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
-		tr->ps_oppid = tr->ps_pptr->ps_pid;
+		tr->ps_oppid = tr->ps_ppid;
 		process_reparent(tr, p->p_p);
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),

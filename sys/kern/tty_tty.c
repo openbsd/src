@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.32 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.33 2024/09/30 12:32:26 claudio Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -117,7 +117,7 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return EINVAL;
 		sess = p->p_p->ps_pgrp->pg_session;
 		sess->s_verauthuid = p->p_ucred->cr_ruid;
-		sess->s_verauthppid = p->p_p->ps_pptr->ps_pid;
+		sess->s_verauthppid = p->p_p->ps_ppid;
 		timeout_add_sec(&sess->s_verauthto, secs);
 		return 0;
 	case TIOCCLRVERAUTH:
@@ -135,7 +135,7 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		 */
 		sess = p->p_p->ps_pgrp->pg_session;
 		if (sess->s_verauthuid == p->p_ucred->cr_ruid &&
-		    sess->s_verauthppid == p->p_p->ps_pptr->ps_pid)
+		    sess->s_verauthppid == p->p_p->ps_ppid)
 			return 0;
 		return EPERM;
 	}
