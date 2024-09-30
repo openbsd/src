@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1227 2024/09/16 20:28:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1228 2024/09/30 07:54:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2307,6 +2307,7 @@ typedef void (*job_free_cb) (void *);
 #define JOB_NOWAIT 0x1
 #define JOB_KEEPWRITE 0x2
 #define JOB_PTY 0x4
+#define JOB_DEFAULTSHELL 0x8
 struct job	*job_run(const char *, int, char **, struct environ *,
 		     struct session *, const char *, job_update_cb,
 		     job_complete_cb, job_free_cb, void *, int, int, int);
