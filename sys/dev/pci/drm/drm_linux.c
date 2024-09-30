@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.118 2024/09/30 12:09:04 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.119 2024/09/30 12:21:17 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1003,11 +1003,15 @@ xa_destroy(struct xarray *xa)
 
 /* Don't wrap ids. */
 int
-__xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
+__xa_alloc(struct xarray *xa, u32 *id, void *entry, struct xarray_range xr,
+    gfp_t gfp)
 {
 	struct xarray_entry *xid;
-	int start = (xa->xa_flags & XA_FLAGS_ALLOC1) ? 1 : 0;
-	int begin;
+	uint32_t start = xr.start;
+	uint32_t end = xr.end;
+
+	if (start == 0 && (xa->xa_flags & XA_FLAGS_ALLOC1))
+		start = 1;
 
 	if (gfp & GFP_NOWAIT) {
 		xid = pool_get(&xa_pool, PR_NOWAIT);
@@ -1020,17 +1024,14 @@ __xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
 	if (xid == NULL)
 		return -ENOMEM;
 
-	if (limit <= 0)
-		limit = INT_MAX;
-
-	xid->id = begin = start;
+	xid->id = start;
 
 	while (SPLAY_INSERT(xarray_tree, &xa->xa_tree, xid)) {
-		if (xid->id == limit)
+		if (xid->id == end)
 			xid->id = start;
 		else
 			xid->id++;
-		if (xid->id == begin) {
+		if (xid->id == start) {
 			pool_put(&xa_pool, xid);
 			return -EBUSY;
 		}
@@ -1046,10 +1047,10 @@ __xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
  * The only caller of this (i915_drm_client.c) doesn't use next id.
  */
 int
-__xa_alloc_cyclic(struct xarray *xa, u32 *id, void *entry, int limit, u32 *next,
-    gfp_t gfp)
+__xa_alloc_cyclic(struct xarray *xa, u32 *id, void *entry,
+    struct xarray_range xr, u32 *next, gfp_t gfp)
 {
-	int r = __xa_alloc(xa, id, entry, limit, gfp);
+	int r = __xa_alloc(xa, id, entry, xr, gfp);
 	*next = *id + 1;
 	return r;
 }
