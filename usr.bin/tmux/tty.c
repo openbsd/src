@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.438 2024/08/04 09:42:23 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.439 2024/09/30 08:10:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -42,7 +42,6 @@ static void	tty_cursor_pane(struct tty *, const struct tty_ctx *, u_int,
 		    u_int);
 static void	tty_cursor_pane_unless_wrap(struct tty *,
 		    const struct tty_ctx *, u_int, u_int);
-static void	tty_invalidate(struct tty *);
 static void	tty_colours(struct tty *, const struct grid_cell *);
 static void	tty_check_fg(struct tty *, struct colour_palette *,
     		    struct grid_cell *);
@@ -135,6 +134,14 @@ tty_resize(struct tty *tty)
 			ypixel = 0;
 		} else
 			ypixel = ws.ws_ypixel / sy;
+
+		if ((xpixel == 0 || ypixel == 0) &&
+		    tty->out != NULL &&
+		    !(tty->flags & TTY_WINSIZEQUERY) &&
+		    (tty->term->flags & TERM_VT100LIKE)) {
+			tty_puts(tty, "\033[18t\033[14t");
+			tty->flags |= TTY_WINSIZEQUERY;
+		}
 	} else {
 		sx = 80;
 		sy = 24;
@@ -2247,7 +2254,7 @@ tty_reset(struct tty *tty)
 	memcpy(&tty->last_cell, &grid_default_cell, sizeof tty->last_cell);
 }
 
-static void
+void
 tty_invalidate(struct tty *tty)
 {
 	memcpy(&tty->cell, &grid_default_cell, sizeof tty->cell);

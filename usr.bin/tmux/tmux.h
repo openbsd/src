@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1228 2024/09/30 07:54:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1229 2024/09/30 08:10:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1474,6 +1474,7 @@ struct tty {
 #define TTY_HAVEXDA 0x200
 #define TTY_SYNCING 0x400
 #define TTY_HAVEDA2 0x800 /* Secondary DA. */
+#define TTY_WINSIZEQUERY 0x1000
 #define TTY_ALL_REQUEST_FLAGS \
 	(TTY_HAVEDA|TTY_HAVEDA2|TTY_HAVEXDA)
 	int		 flags;
@@ -2370,6 +2371,7 @@ void	tty_cell(struct tty *, const struct grid_cell *,
 int	tty_init(struct tty *, struct client *);
 void	tty_resize(struct tty *);
 void	tty_set_size(struct tty *, u_int, u_int, u_int, u_int);
+void	tty_invalidate(struct tty *);
 void	tty_start_tty(struct tty *);
 void	tty_send_requests(struct tty *);
 void	tty_repeat_requests(struct tty *);
