@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.267 2024/09/04 15:06:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.268 2024/09/30 09:42:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1381,6 +1381,29 @@ bgpd_rtr_connect(struct rtr_config *r)
 		return;
 	}
 
+	switch (r->remote_addr.aid) {
+	case AID_INET:
+		if (setsockopt(ce->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) ==
+		    -1) {
+			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
+			return;
+		}
+		break;
+	case AID_INET6:
+		if (setsockopt(ce->fd, IPPROTO_IPV6, IPV6_TCLASS, &pre,
+		    sizeof(pre)) == -1) {
+			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
+			return;
+		}
+		break;
+	}
+
+	if (setsockopt(ce->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
+	    sizeof(nodelay)) == -1) {
+		log_warn("rtr %s: setsockopt TCP_NODELAY", r->descr);
+		return;
+	}
+
 	if ((sa = addr2sa(&r->local_addr, 0, &len)) != NULL) {
 		if (bind(ce->fd, sa, len) == -1) {
 			log_warn("rtr %s: bind to %s", r->descr,
@@ -1402,29 +1425,6 @@ bgpd_rtr_connect(struct rtr_config *r)
 		}
 		TAILQ_INSERT_TAIL(&connect_queue, ce, entry);
 		connect_cnt++;
-		return;
-	}
-
-	switch (r->remote_addr.aid) {
-	case AID_INET:
-		if (setsockopt(ce->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) ==
-		    -1) {
-			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
-			return;
-		}
-		break;
-	case AID_INET6:
-		if (setsockopt(ce->fd, IPPROTO_IPV6, IPV6_TCLASS, &pre,
-		    sizeof(pre)) == -1) {
-			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
-			return;
-		}
-		break;
-	}
-
-	if (setsockopt(ce->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
-	    sizeof(nodelay)) == -1) {
-		log_warn("rtr %s: setsockopt TCP_NODELAY", r->descr);
 		return;
 	}
 
