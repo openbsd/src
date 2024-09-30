@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.152 2023/01/10 16:33:18 tobhe Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.153 2024/09/30 01:41:49 jsg Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1314,25 +1314,6 @@ wsdisplay_driver_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
     int flag, struct proc *p)
 {
 	int error;
-
-#if defined(OpenBSD7_1) || defined(OpenBSD7_2) || defined(OpenBSD7_3)
-	if (cmd == WSDISPLAYIO_OGINFO) {
-		struct wsdisplay_ofbinfo *oinfo =
-			(struct wsdisplay_ofbinfo *)data;
-		struct wsdisplay_fbinfo info;
-
-		error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
-		    WSDISPLAYIO_GINFO, (caddr_t)&info, flag, p);
-		if (error)
-			return error;
-
-		oinfo->height = info.height;
-		oinfo->width = info.width;
-		oinfo->depth = info.depth;
-		oinfo->cmsize = info.cmsize;
-		return (0);
-	}
-#endif
 
 	error = ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
 	    flag, p));
