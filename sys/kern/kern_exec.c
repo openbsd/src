@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.258 2024/08/21 03:07:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.259 2024/09/30 11:49:44 claudio Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -796,11 +796,7 @@ exec_abort:
 free_pack_abort:
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 	exit1(p, 0, SIGABRT, EXIT_NORMAL);
-
 	/* NOTREACHED */
-	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
-
-	return (0);
 }
 
 
