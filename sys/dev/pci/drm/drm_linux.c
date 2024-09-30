@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.117 2024/09/30 08:09:39 mpi Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.118 2024/09/30 12:09:04 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -987,6 +987,7 @@ xa_init_flags(struct xarray *xa, gfp_t flags)
 		mtx_init(&xa->xa_lock, IPL_TTY);
 	else
 		mtx_init(&xa->xa_lock, IPL_NONE);
+	xa->xa_flags = flags;
 }
 
 void
