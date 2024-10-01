@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.46 2024/08/14 19:10:51 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.47 2024/10/01 11:50:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -240,9 +240,9 @@ json_neighbor_full(struct peer *p)
 			json_do_uint("max_out_prefix_restart",
 			    p->conf.max_out_prefix_restart);
 	}
-	if (p->auth.method != AUTH_NONE)
+	if (p->auth_state.method != AUTH_NONE)
 		json_do_string("authentication",
-		    fmt_auth_method(p->auth.method));
+		    fmt_auth_method(p->auth_state.method));
 	json_do_bool("ttl_security", p->conf.ttlsec);
 	json_do_uint("holdtime", p->conf.holdtime);
 	json_do_uint("min_holdtime", p->conf.min_holdtime);
