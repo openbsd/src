@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.293 2024/10/01 06:15:47 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.294 2024/10/01 08:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1686,15 +1686,7 @@ window_set_fill_character(struct window *w)
 void
 window_pane_default_cursor(struct window_pane *wp)
 {
-	struct screen	*s = wp->screen;
-	int		 c;
-
-	c = options_get_number(wp->options, "cursor-colour");
-	s->default_ccolour = c;
-
-	c = options_get_number(wp->options, "cursor-style");
-	s->default_mode = 0;
-	screen_set_cursor_style(c, &s->default_cstyle, &s->default_mode);
+	screen_set_default_cursor(wp->screen, wp->options);
 }
 
 int
