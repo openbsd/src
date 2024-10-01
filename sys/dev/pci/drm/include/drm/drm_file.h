@@ -48,6 +48,8 @@ struct device;
 struct file;
 struct seq_file;
 
+extern struct xarray drm_minors_xa;
+
 /*
  * FIXME: Not sure we want to have drm_minor here in the end, but to avoid
  * header include loops we need it here for now.
@@ -448,6 +450,9 @@ static inline bool drm_is_accel_client(const struct drm_file *file_priv)
 }
 
 void drm_file_update_pid(struct drm_file *);
+
+struct drm_minor *drm_minor_acquire(struct xarray *minors_xa, unsigned int minor_id);
+void drm_minor_release(struct drm_minor *minor);
 
 #ifdef __linux__
 int drm_open(struct inode *inode, struct file *filp);
