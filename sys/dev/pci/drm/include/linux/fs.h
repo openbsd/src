@@ -23,5 +23,6 @@ struct file_operations {
 };
 
 #define DEFINE_SIMPLE_ATTRIBUTE(a, b, c, d)
+#define MINORBITS	8
 
 #endif
