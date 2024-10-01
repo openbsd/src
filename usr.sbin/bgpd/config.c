@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.111 2024/09/04 13:30:10 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.112 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -440,8 +440,8 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		np = getpeerbyid(conf, p->conf.id);
 		if (np != NULL) {
 			np->reconf_action = RECONF_KEEP;
-			/* copy the auth state since parent uses it */
-			np->auth = p->auth;
+			/* keep the auth state since parent needs it */
+			np->auth_state = p->auth_state;
 
 			RB_REMOVE(peer_head, &xconf->peers, p);
 			free(p);
@@ -467,7 +467,7 @@ free_deleted_peers(struct bgpd_config *conf)
 	RB_FOREACH_SAFE(p, peer_head, &conf->peers, nextp) {
 		if (p->reconf_action == RECONF_DELETE) {
 			/* peer no longer exists, clear pfkey state */
-			pfkey_remove(p);
+			pfkey_remove(&p->auth_state);
 			RB_REMOVE(peer_head, &conf->peers, p);
 			free(p);
 		}

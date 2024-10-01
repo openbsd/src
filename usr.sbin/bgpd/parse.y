@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.468 2024/09/20 02:00:46 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.469 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2076,59 +2076,59 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.max_out_prefix_restart = $4;
 		}
 		| TCP MD5SIG PASSWORD string {
-			if (curpeer->conf.auth.method) {
+			if (curpeer->auth_conf.method) {
 				yyerror("auth method cannot be redefined");
 				free($4);
 				YYERROR;
 			}
-			if (strlcpy(curpeer->conf.auth.md5key, $4,
-			    sizeof(curpeer->conf.auth.md5key)) >=
-			    sizeof(curpeer->conf.auth.md5key)) {
+			if (strlcpy(curpeer->auth_conf.md5key, $4,
+			    sizeof(curpeer->auth_conf.md5key)) >=
+			    sizeof(curpeer->auth_conf.md5key)) {
 				yyerror("tcp md5sig password too long: max %zu",
-				    sizeof(curpeer->conf.auth.md5key) - 1);
+				    sizeof(curpeer->auth_conf.md5key) - 1);
 				free($4);
 				YYERROR;
 			}
-			curpeer->conf.auth.method = AUTH_MD5SIG;
-			curpeer->conf.auth.md5key_len = strlen($4);
+			curpeer->auth_conf.method = AUTH_MD5SIG;
+			curpeer->auth_conf.md5key_len = strlen($4);
 			free($4);
 		}
 		| TCP MD5SIG KEY string {
-			if (curpeer->conf.auth.method) {
+			if (curpeer->auth_conf.method) {
 				yyerror("auth method cannot be redefined");
 				free($4);
 				YYERROR;
 			}
 
-			if (str2key($4, curpeer->conf.auth.md5key,
-			    sizeof(curpeer->conf.auth.md5key)) == -1) {
+			if (str2key($4, curpeer->auth_conf.md5key,
+			    sizeof(curpeer->auth_conf.md5key)) == -1) {
 				free($4);
 				YYERROR;
 			}
-			curpeer->conf.auth.method = AUTH_MD5SIG;
-			curpeer->conf.auth.md5key_len = strlen($4) / 2;
+			curpeer->auth_conf.method = AUTH_MD5SIG;
+			curpeer->auth_conf.md5key_len = strlen($4) / 2;
 			free($4);
 		}
 		| IPSEC espah IKE {
-			if (curpeer->conf.auth.method) {
+			if (curpeer->auth_conf.method) {
 				yyerror("auth method cannot be redefined");
 				YYERROR;
 			}
 			if ($2)
-				curpeer->conf.auth.method = AUTH_IPSEC_IKE_ESP;
+				curpeer->auth_conf.method = AUTH_IPSEC_IKE_ESP;
 			else
-				curpeer->conf.auth.method = AUTH_IPSEC_IKE_AH;
+				curpeer->auth_conf.method = AUTH_IPSEC_IKE_AH;
 		}
 		| IPSEC espah inout SPI NUMBER STRING STRING encspec {
 			enum auth_alg	auth_alg;
 			uint8_t		keylen;
 
-			if (curpeer->conf.auth.method &&
-			    (((curpeer->conf.auth.spi_in && $3 == 1) ||
-			    (curpeer->conf.auth.spi_out && $3 == 0)) ||
-			    ($2 == 1 && curpeer->conf.auth.method !=
+			if (curpeer->auth_conf.method &&
+			    (((curpeer->auth_conf.spi_in && $3 == 1) ||
+			    (curpeer->auth_conf.spi_out && $3 == 0)) ||
+			    ($2 == 1 && curpeer->auth_conf.method !=
 			    AUTH_IPSEC_MANUAL_ESP) ||
-			    ($2 == 0 && curpeer->conf.auth.method !=
+			    ($2 == 0 && curpeer->auth_conf.method !=
 			    AUTH_IPSEC_MANUAL_AH))) {
 				yyerror("auth method cannot be redefined");
 				free($6);
@@ -2158,7 +2158,7 @@ peeropts	: REMOTEAS as4number	{
 			}
 
 			if ($2)
-				curpeer->conf.auth.method =
+				curpeer->auth_conf.method =
 				    AUTH_IPSEC_MANUAL_ESP;
 			else {
 				if ($8.enc_alg) {
@@ -2167,7 +2167,7 @@ peeropts	: REMOTEAS as4number	{
 					free($7);
 					YYERROR;
 				}
-				curpeer->conf.auth.method =
+				curpeer->auth_conf.method =
 				    AUTH_IPSEC_MANUAL_AH;
 			}
 
@@ -2178,37 +2178,37 @@ peeropts	: REMOTEAS as4number	{
 			}
 
 			if ($3 == 1) {
-				if (str2key($7, curpeer->conf.auth.auth_key_in,
-				    sizeof(curpeer->conf.auth.auth_key_in)) ==
+				if (str2key($7, curpeer->auth_conf.auth_key_in,
+				    sizeof(curpeer->auth_conf.auth_key_in)) ==
 				    -1) {
 					free($7);
 					YYERROR;
 				}
-				curpeer->conf.auth.spi_in = $5;
-				curpeer->conf.auth.auth_alg_in = auth_alg;
-				curpeer->conf.auth.enc_alg_in = $8.enc_alg;
-				memcpy(&curpeer->conf.auth.enc_key_in,
+				curpeer->auth_conf.spi_in = $5;
+				curpeer->auth_conf.auth_alg_in = auth_alg;
+				curpeer->auth_conf.enc_alg_in = $8.enc_alg;
+				memcpy(&curpeer->auth_conf.enc_key_in,
 				    &$8.enc_key,
-				    sizeof(curpeer->conf.auth.enc_key_in));
-				curpeer->conf.auth.enc_keylen_in =
+				    sizeof(curpeer->auth_conf.enc_key_in));
+				curpeer->auth_conf.enc_keylen_in =
 				    $8.enc_key_len;
-				curpeer->conf.auth.auth_keylen_in = keylen;
+				curpeer->auth_conf.auth_keylen_in = keylen;
 			} else {
-				if (str2key($7, curpeer->conf.auth.auth_key_out,
-				    sizeof(curpeer->conf.auth.auth_key_out)) ==
+				if (str2key($7, curpeer->auth_conf.auth_key_out,
+				    sizeof(curpeer->auth_conf.auth_key_out)) ==
 				    -1) {
 					free($7);
 					YYERROR;
 				}
-				curpeer->conf.auth.spi_out = $5;
-				curpeer->conf.auth.auth_alg_out = auth_alg;
-				curpeer->conf.auth.enc_alg_out = $8.enc_alg;
-				memcpy(&curpeer->conf.auth.enc_key_out,
+				curpeer->auth_conf.spi_out = $5;
+				curpeer->auth_conf.auth_alg_out = auth_alg;
+				curpeer->auth_conf.enc_alg_out = $8.enc_alg;
+				memcpy(&curpeer->auth_conf.enc_key_out,
 				    &$8.enc_key,
-				    sizeof(curpeer->conf.auth.enc_key_out));
-				curpeer->conf.auth.enc_keylen_out =
+				    sizeof(curpeer->auth_conf.enc_key_out));
+				curpeer->auth_conf.enc_keylen_out =
 				    $8.enc_key_len;
-				curpeer->conf.auth.auth_keylen_out = keylen;
+				curpeer->auth_conf.auth_keylen_out = keylen;
 			}
 			free($7);
 		}
@@ -5073,10 +5073,10 @@ neighbor_consistent(struct peer *p)
 	}
 
 	/* with any form of ipsec local-address is required */
-	if ((p->conf.auth.method == AUTH_IPSEC_IKE_ESP ||
-	    p->conf.auth.method == AUTH_IPSEC_IKE_AH ||
-	    p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
-	    p->conf.auth.method == AUTH_IPSEC_MANUAL_AH) &&
+	if ((p->auth_conf.method == AUTH_IPSEC_IKE_ESP ||
+	    p->auth_conf.method == AUTH_IPSEC_IKE_AH ||
+	    p->auth_conf.method == AUTH_IPSEC_MANUAL_ESP ||
+	    p->auth_conf.method == AUTH_IPSEC_MANUAL_AH) &&
 	    local_addr->aid == AID_UNSPEC) {
 		yyerror("neighbors with any form of IPsec configured "
 		    "need local-address to be specified");
@@ -5084,9 +5084,9 @@ neighbor_consistent(struct peer *p)
 	}
 
 	/* with static keying we need both directions */
-	if ((p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
-	    p->conf.auth.method == AUTH_IPSEC_MANUAL_AH) &&
-	    (!p->conf.auth.spi_in || !p->conf.auth.spi_out)) {
+	if ((p->auth_conf.method == AUTH_IPSEC_MANUAL_ESP ||
+	    p->auth_conf.method == AUTH_IPSEC_MANUAL_AH) &&
+	    (!p->auth_conf.spi_in || !p->auth_conf.spi_out)) {
 		yyerror("with manual keyed IPsec, SPIs and keys "
 		    "for both directions are required");
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.173 2024/09/04 13:30:10 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.174 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -163,6 +163,15 @@ struct peer_stats {
 	char			 last_reason[REASON_LEN];
 };
 
+struct auth_state {
+	struct bgpd_addr	local_addr;
+	struct bgpd_addr	remote_addr;
+	uint32_t		spi_in;
+	uint32_t		spi_out;
+	enum auth_method	method;
+	uint8_t			established;
+};
+
 enum Timer {
 	Timer_None,
 	Timer_ConnectRetry,
@@ -197,13 +206,8 @@ struct peer {
 		struct capabilities	peer;
 		struct capabilities	neg;
 	}			 capa;
-	struct {
-		struct bgpd_addr	local_addr;
-		uint32_t		spi_in;
-		uint32_t		spi_out;
-		enum auth_method	method;
-		uint8_t			established;
-	}			 auth;
+	struct auth_state	 auth_state;
+	struct auth_config	 auth_conf;
 	struct bgpd_addr	 local;
 	struct bgpd_addr	 local_alt;
 	struct bgpd_addr	 remote;
@@ -278,11 +282,14 @@ void	 mrt_done(struct mrt *);
 /* pfkey.c */
 struct sadb_msg;
 int	pfkey_read(int, struct sadb_msg *);
-int	pfkey_establish(struct peer *);
-int	pfkey_remove(struct peer *);
+int	pfkey_establish(struct auth_state *, struct auth_config *,
+	    const struct bgpd_addr *, const struct bgpd_addr *);
+int	pfkey_remove(struct auth_state *);
 int	pfkey_init(void);
-int	tcp_md5_check(int, struct peer *);
-int	tcp_md5_set(int, struct peer *);
+int	pfkey_send_conf(struct imsgbuf *, uint32_t, struct auth_config *);
+int	pfkey_recv_conf(struct peer *, struct imsg *);
+int	tcp_md5_check(int, struct auth_config *);
+int	tcp_md5_set(int, struct auth_config *, struct bgpd_addr *);
 int	tcp_md5_prep_listener(struct listen_addr *, struct peer_head *);
 void	tcp_md5_add_listener(struct bgpd_config *, struct peer *);
 void	tcp_md5_del_listener(struct bgpd_config *, struct peer *);
@@ -334,6 +341,7 @@ int		 imsg_ctl_parent(struct imsg *);
 int		 imsg_ctl_rde(struct imsg *);
 int		 imsg_ctl_rde_msg(int, uint32_t, pid_t);
 void		 session_stop(struct peer *, uint8_t, const char *);
+struct bgpd_addr *session_localaddr(struct peer *);
 
 /* timer.c */
 struct timer	*timer_get(struct timer_head *, enum Timer);

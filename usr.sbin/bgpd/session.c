@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.482 2024/09/09 12:59:49 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.483 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1032,14 +1032,15 @@ session_accept(int listenfd)
 		}
 
 open:
-		if (p->conf.auth.method != AUTH_NONE && sysdep.no_pfkey) {
+		if (p->auth_conf.method != AUTH_NONE && sysdep.no_pfkey) {
 			log_peer_warnx(&p->conf,
 			    "ipsec or md5sig configured but not available");
 			close(connfd);
 			return;
 		}
 
-		if (tcp_md5_check(connfd, p) == -1) {
+		if (tcp_md5_check(connfd, &p->auth_conf) == -1) {
+			log_peer_warn(&p->conf, "check md5sig");
 			close(connfd);
 			return;
 		}
@@ -1066,7 +1067,7 @@ int
 session_connect(struct peer *peer)
 {
 	struct sockaddr		*sa;
-	struct bgpd_addr	*bind_addr = NULL;
+	struct bgpd_addr	*bind_addr;
 	socklen_t		 sa_len;
 
 	/*
@@ -1084,25 +1085,20 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	if (peer->conf.auth.method != AUTH_NONE && sysdep.no_pfkey) {
+	if (peer->auth_conf.method != AUTH_NONE && sysdep.no_pfkey) {
 		log_peer_warnx(&peer->conf,
 		    "ipsec or md5sig configured but not available");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
 	}
 
-	tcp_md5_set(peer->fd, peer);
+	if (tcp_md5_set(peer->fd, &peer->auth_conf,
+	    &peer->conf.remote_addr) == -1)
+		log_peer_warn(&peer->conf, "setting md5sig");
 	peer->wbuf.fd = peer->fd;
 
 	/* if local-address is set we need to bind() */
-	switch (peer->conf.remote_addr.aid) {
-	case AID_INET:
-		bind_addr = &peer->conf.local_addr_v4;
-		break;
-	case AID_INET6:
-		bind_addr = &peer->conf.local_addr_v6;
-		break;
-	}
+	bind_addr = session_localaddr(peer);
 	if ((sa = addr2sa(bind_addr, 0, &sa_len)) != NULL) {
 		if (bind(peer->fd, sa, sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
@@ -3003,6 +2999,16 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			if (RB_INSERT(peer_head, &nconf->peers, p) != NULL)
 				fatalx("%s: peer tree is corrupt", __func__);
 			break;
+		case IMSG_RECONF_PEER_AUTH:
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("reconf request not from parent");
+			if ((p = getpeerbyid(nconf, peerid)) == NULL) {
+				log_warnx("no such peer: id=%u", peerid);
+				break;
+			}
+			if (pfkey_recv_conf(p, &imsg) == -1)
+				fatal("pfkey_recv_conf");
+			break;
 		case IMSG_RECONF_LISTENER:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
@@ -3641,6 +3647,18 @@ session_stop(struct peer *peer, uint8_t subcode, const char *reason)
 	bgp_fsm(peer, EVNT_STOP);
 }
 
+struct bgpd_addr *
+session_localaddr(struct peer *p)
+{
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
+		return &p->conf.local_addr_v4;
+	case AID_INET6:
+		return &p->conf.local_addr_v6;
+	}
+	fatalx("Unknown AID in %s", __func__);
+}
+
 void
 merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 {
@@ -3657,10 +3675,10 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		}
 
 		/* peer no longer uses TCP MD5SIG so deconfigure */
-		if (p->conf.auth.method == AUTH_MD5SIG &&
-		    np->conf.auth.method != AUTH_MD5SIG)
+		if (p->auth_conf.method == AUTH_MD5SIG &&
+		    np->auth_conf.method != AUTH_MD5SIG)
 			tcp_md5_del_listener(c, p);
-		else if (np->conf.auth.method == AUTH_MD5SIG)
+		else if (np->auth_conf.method == AUTH_MD5SIG)
 			tcp_md5_add_listener(c, np);
 
 		memcpy(&p->conf, &np->conf, sizeof(p->conf));
@@ -3706,7 +3724,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		RB_REMOVE(peer_head, &nc->peers, np);
 		if (RB_INSERT(peer_head, &c->peers, np) != NULL)
 			fatalx("%s: peer tree is corrupt", __func__);
-		if (np->conf.auth.method == AUTH_MD5SIG)
+		if (np->auth_conf.method == AUTH_MD5SIG)
 			tcp_md5_add_listener(c, np);
 	}
 }

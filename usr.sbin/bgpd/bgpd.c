@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.268 2024/09/30 09:42:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.269 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -467,7 +467,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 	pftable_clear_all();
 
 	RB_FOREACH(p, peer_head, &conf->peers)
-		pfkey_remove(p);
+		pfkey_remove(&p->auth_state);
 
 	while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
@@ -651,9 +651,12 @@ send_config(struct bgpd_config *conf)
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(p->conf)) == -1)
 			return (-1);
+		if (pfkey_send_conf(ibuf_se, p->conf.id, &p->auth_conf) == -1)
+			return (-1);
 
 		if (p->reconf_action == RECONF_REINIT)
-			if (pfkey_establish(p) == -1)
+			if (pfkey_establish(&p->auth_state, &p->auth_conf,
+			    session_localaddr(p), &p->conf.remote_addr) == -1)
 				log_peer_warnx(&p->conf, "pfkey setup failed");
 	}
 
@@ -943,7 +946,9 @@ dispatch_imsg(struct imsgbuf *imsgbuf, int idx, struct bgpd_config *conf)
 			}
 			p = getpeerbyid(conf, imsg_get_id(&imsg));
 			if (p != NULL) {
-				if (pfkey_establish(p) == -1)
+				if (pfkey_establish(&p->auth_state,
+				    &p->auth_conf, session_localaddr(p),
+				    &p->conf.remote_addr) == -1)
 					log_peer_warnx(&p->conf,
 					    "pfkey setup failed");
 			}

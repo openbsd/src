@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.496 2024/09/04 15:06:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.497 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -379,7 +379,7 @@ enum auth_enc_alg {
 	AUTH_EALG_AES,
 };
 
-struct peer_auth {
+struct auth_config {
 	char			md5key[TCP_MD5_KEY_LEN];
 	char			auth_key_in[IPSEC_AUTH_KEY_LEN];
 	char			auth_key_out[IPSEC_AUTH_KEY_LEN];
@@ -452,7 +452,6 @@ struct peer_config {
 	struct bgpd_addr	 remote_addr;
 	struct bgpd_addr	 local_addr_v4;
 	struct bgpd_addr	 local_addr_v6;
-	struct peer_auth	 auth;
 	struct capabilities	 capabilities;
 	struct addpath_eval	 eval;
 	char			 group[PEER_DESCR_LEN];
@@ -649,6 +648,7 @@ enum imsg_type {
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_RIB,
 	IMSG_RECONF_PEER,
+	IMSG_RECONF_PEER_AUTH,
 	IMSG_RECONF_FILTER,
 	IMSG_RECONF_LISTENER,
 	IMSG_RECONF_CTRL,

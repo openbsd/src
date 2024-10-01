@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.118 2024/08/20 11:59:39 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.119 2024/10/01 11:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,6 +544,7 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 	/* special handling for peers since only the stats are sent from RDE */
 	if (type == IMSG_CTL_SHOW_NEIGHBOR) {
 		struct rde_peer_stats stats;
+		struct peer peer;
 
 		if (p == NULL) {
 			log_warnx("%s: no such peer: id=%u", __func__,
@@ -554,20 +555,22 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 			log_warnx("%s: imsg_get_data", __func__);
 			return (0);
 		}
-		p->stats.prefix_cnt = stats.prefix_cnt;
-		p->stats.prefix_out_cnt = stats.prefix_out_cnt;
-		p->stats.prefix_rcvd_update = stats.prefix_rcvd_update;
-		p->stats.prefix_rcvd_withdraw = stats.prefix_rcvd_withdraw;
-		p->stats.prefix_rcvd_eor = stats.prefix_rcvd_eor;
-		p->stats.prefix_sent_update = stats.prefix_sent_update;
-		p->stats.prefix_sent_withdraw = stats.prefix_sent_withdraw;
-		p->stats.prefix_sent_eor = stats.prefix_sent_eor;
-		p->stats.pending_update = stats.pending_update;
-		p->stats.pending_withdraw = stats.pending_withdraw;
-		p->stats.msg_queue_len = msgbuf_queuelen(&p->wbuf);
+		peer = *p;
+		explicit_bzero(&peer.auth_conf, sizeof(peer.auth_conf));
+		peer.stats.prefix_cnt = stats.prefix_cnt;
+		peer.stats.prefix_out_cnt = stats.prefix_out_cnt;
+		peer.stats.prefix_rcvd_update = stats.prefix_rcvd_update;
+		peer.stats.prefix_rcvd_withdraw = stats.prefix_rcvd_withdraw;
+		peer.stats.prefix_rcvd_eor = stats.prefix_rcvd_eor;
+		peer.stats.prefix_sent_update = stats.prefix_sent_update;
+		peer.stats.prefix_sent_withdraw = stats.prefix_sent_withdraw;
+		peer.stats.prefix_sent_eor = stats.prefix_sent_eor;
+		peer.stats.pending_update = stats.pending_update;
+		peer.stats.pending_withdraw = stats.pending_withdraw;
+		peer.stats.msg_queue_len = msgbuf_queuelen(&p->wbuf);
 
 		return imsg_compose(&c->imsgbuf, type, 0, pid, -1,
-		    p, sizeof(*p));
+		    &peer, sizeof(peer));
 	}
 
 	/* if command finished no need to send exit message */
