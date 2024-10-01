@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.957 2024/09/16 20:46:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.958 2024/10/01 10:10:29 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 16 2024 $
+.Dd $Mdocdate: October 1 2024 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2627,7 +2627,7 @@ specifies the format for each item in the list and
 .Fl K
 a format for each shortcut key; both are evaluated once for each line.
 .Fl N
-starts without the preview.
+starts without the preview or if given twice with the larger preview.
 This command works only if at least one client is attached.
 .It Xo
 .Ic choose-tree
@@ -2711,7 +2711,7 @@ specifies the format for each item in the tree and
 .Fl K
 a format for each shortcut key; both are evaluated once for each line.
 .Fl N
-starts without the preview.
+starts without the preview or if given twice with the larger preview.
 .Fl G
 includes all sessions in any session groups in the tree rather than only the
 first.
