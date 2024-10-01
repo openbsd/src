@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.99 2024/09/30 12:32:26 claudio Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.100 2024/10/01 08:28:34 claudio Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -441,6 +441,13 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 
 		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
+		else if (t == tr->ps_single)
+			atomic_setbits_int(&t->p_flag, P_TRACESINGLE);
+		else {
+			error = EINVAL;
+			goto fail;
+		}
+			
 
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1)
