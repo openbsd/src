@@ -29,6 +29,13 @@ struct xarray {
 	SPLAY_HEAD(xarray_tree, xarray_entry) xa_tree;
 };
 
+#define DEFINE_XARRAY_ALLOC(name)				\
+	struct xarray name = {					\
+		.xa_flags = XA_FLAGS_ALLOC,			\
+		.xa_lock = MUTEX_INITIALIZER(IPL_NONE),		\
+		.xa_tree = SPLAY_INITIALIZER(&name.xa_tree)	\
+	}
+
 struct xarray_range {
 	uint32_t start;
 	uint32_t end;
