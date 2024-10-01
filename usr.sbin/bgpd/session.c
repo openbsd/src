@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.483 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.484 2024/10/01 18:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3682,6 +3682,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 			tcp_md5_add_listener(c, np);
 
 		memcpy(&p->conf, &np->conf, sizeof(p->conf));
+		memcpy(&p->auth_conf, &np->auth_conf, sizeof(p->auth_conf));
 		RB_REMOVE(peer_head, &nc->peers, np);
 		free(np);
 
