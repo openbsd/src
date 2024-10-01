@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.75 2023/01/16 11:26:14 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.76 2024/10/01 06:15:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,11 +73,13 @@ cmd_send_keys_inject_key(struct cmdq_item *item, struct cmdq_item *after,
 	if (args_has(args, 'K')) {
 		if (tc == NULL)
 			return (item);
-		event = xmalloc(sizeof *event);
+		event = xcalloc(1, sizeof *event);
 		event->key = key|KEYC_SENT;
 		memset(&event->m, 0, sizeof event->m);
-		if (server_client_handle_key(tc, event) == 0)
+		if (server_client_handle_key(tc, event) == 0) {
+			free(event->buf);
 			free(event);
+		}
 		return (item);
 	}
 

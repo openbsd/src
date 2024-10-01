@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.98 2024/08/26 07:45:05 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.99 2024/10/01 06:15:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -499,9 +499,12 @@ input_key_vt10x(struct bufferevent *bev, key_code key)
 		return (0);
 	}
 
-	/* Prevent TAB and RET from being swallowed by C0 remapping logic. */
+	/*
+	 * Prevent TAB, CR and LF from being swallowed by the C0 remapping
+	 * logic.
+	 */
 	onlykey = key & KEYC_MASK_KEY;
-	if (onlykey == '\r' || onlykey == '\t')
+	if (onlykey == '\r' || onlykey == '\n' || onlykey == '\t')
 		key &= ~KEYC_CTRL;
 
 	/*

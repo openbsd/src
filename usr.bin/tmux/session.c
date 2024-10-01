@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.96 2023/09/02 08:38:37 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.97 2024/10/01 06:15:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -272,19 +272,16 @@ session_lock_timer(__unused int fd, __unused short events, void *arg)
 void
 session_update_activity(struct session *s, struct timeval *from)
 {
-	struct timeval	*last = &s->last_activity_time;
 	struct timeval	 tv;
 
-	memcpy(last, &s->activity_time, sizeof *last);
 	if (from == NULL)
 		gettimeofday(&s->activity_time, NULL);
 	else
 		memcpy(&s->activity_time, from, sizeof s->activity_time);
 
-	log_debug("session $%u %s activity %lld.%06d (last %lld.%06d)", s->id,
+	log_debug("session $%u %s activity %lld.%06d", s->id,
 	    s->name, (long long)s->activity_time.tv_sec,
-	    (int)s->activity_time.tv_usec, (long long)last->tv_sec,
-	    (int)last->tv_usec);
+	    (int)s->activity_time.tv_usec);
 
 	if (evtimer_initialized(&s->lock_timer))
 		evtimer_del(&s->lock_timer);

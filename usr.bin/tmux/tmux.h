@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1229 2024/09/30 08:10:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1230 2024/10/01 06:15:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1311,8 +1311,7 @@ struct session {
 
 	struct options	*options;
 
-#define SESSION_PASTING 0x1
-#define SESSION_ALERTED 0x2
+#define SESSION_ALERTED 0x1
 	int		 flags;
 
 	u_int		 attached;
@@ -1390,8 +1389,11 @@ struct mouse_event {
 
 /* Key event. */
 struct key_event {
-	key_code		key;
-	struct mouse_event	m;
+	key_code		 key;
+	struct mouse_event	 m;
+
+	char			*buf;
+	size_t			 len;
 };
 
 /* Terminal definition. */
@@ -1806,6 +1808,7 @@ struct client {
 
 	struct timeval		 creation_time;
 	struct timeval		 activity_time;
+	struct timeval	 	 last_activity_time;
 
 	struct environ		*environ;
 	struct format_job_tree	*jobs;
@@ -1872,6 +1875,7 @@ struct client {
 #define CLIENT_WINDOWSIZECHANGED 0x400000000ULL
 #define CLIENT_CLIPBOARDBUFFER 0x800000000ULL
 #define CLIENT_BRACKETPASTING 0x1000000000ULL
+#define CLIENT_ASSUMEPASTING 0x2000000000ULL
 #define CLIENT_ALLREDRAWFLAGS		\
 	(CLIENT_REDRAWWINDOW|		\
 	 CLIENT_REDRAWSTATUS|		\
@@ -3097,6 +3101,7 @@ void		 window_pane_reset_mode_all(struct window_pane *);
 int		 window_pane_key(struct window_pane *, struct client *,
 		     struct session *, struct winlink *, key_code,
 		     struct mouse_event *);
+void		 window_pane_paste(struct window_pane *, char *, size_t);
 int		 window_pane_visible(struct window_pane *);
 int		 window_pane_exited(struct window_pane *);
 u_int		 window_pane_search(struct window_pane *, const char *, int,
