@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.119 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.120 2024/10/01 18:31:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -557,6 +557,7 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 		}
 		peer = *p;
 		explicit_bzero(&peer.auth_conf, sizeof(peer.auth_conf));
+		peer.auth_conf.method = p->auth_conf.method;
 		peer.stats.prefix_cnt = stats.prefix_cnt;
 		peer.stats.prefix_out_cnt = stats.prefix_out_cnt;
 		peer.stats.prefix_rcvd_update = stats.prefix_rcvd_update;
