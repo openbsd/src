@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.69 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.70 2024/10/01 18:28:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -838,7 +838,7 @@ pfkey_recv_conf(struct peer *p, struct imsg *imsg)
 	return imsg_get_data(imsg, &auth->method, sizeof(auth->method));
 }
 
-/* verify that connection is using TCP MD5UM if required by config */
+/* verify that connection is using TCP MD5SIG if required by config */
 int
 tcp_md5_check(int fd, struct auth_config *auth)
 {
