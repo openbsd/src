@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.32 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.33 2024/10/01 09:22:25 claudio Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ lim_cur(int which)
 
 rlim_t	 lim_cur_proc(struct proc *, int);
 
-void	 ruadd(struct rusage *, struct rusage *);
+void	 ruadd(struct rusage *, const struct rusage *);
 void	 rucheck(void *);
 
 #endif

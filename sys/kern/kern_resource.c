@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.88 2024/08/20 13:29:25 mvs Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.89 2024/10/01 09:22:25 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -555,9 +555,10 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 }
 
 void
-ruadd(struct rusage *ru, struct rusage *ru2)
+ruadd(struct rusage *ru, const struct rusage *ru2)
 {
-	long *ip, *ip2;
+	long *ip;
+	const long *ip2;
 	int i;
 
 	timeradd(&ru->ru_utime, &ru2->ru_utime, &ru->ru_utime);
