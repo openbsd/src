@@ -1,4 +1,4 @@
-# $OpenBSD: zone.tab,v 1.76 2024/01/02 22:43:21 millert Exp $
+# $OpenBSD: zone.tab,v 1.77 2024/10/02 17:08:47 millert Exp $
 # tzdb timezone descriptions (deprecated version)
 #
 # This file is in the public domain, so clarified as of
@@ -265,8 +265,7 @@ MK	+4159+02126	Europe/Skopje
 ML	+1239-00800	Africa/Bamako
 MM	+1647+09610	Asia/Yangon
 MN	+4755+10653	Asia/Ulaanbaatar	most of Mongolia
-MN	+4801+09139	Asia/Hovd	Bayan-Olgiy, Govi-Altai, Hovd, Uvs, Zavkhan
-MN	+4804+11430	Asia/Choibalsan	Dornod, Sukhbaatar
+MN	+4801+09139	Asia/Hovd	Bayan-Olgii, Hovd, Uvs
 MO	+221150+1133230	Asia/Macau
 MP	+1512+14545	Pacific/Saipan
 MQ	+1436-06105	America/Martinique
