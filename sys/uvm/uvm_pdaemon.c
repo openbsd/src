@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.115 2024/09/30 08:09:39 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.116 2024/10/02 10:24:11 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 			 */
 			free = uvmexp.free - BUFPAGES_DEFICIT;
 			if (((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
-			    (free + uvmexp.paging >= uvmexp.freetarg << 2)) ||
+			    (free + uvmexp.paging >= uvmexp.freetarg)) ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				if (swslot == 0) {
 					/* exit now if no swap-i/o pending */
@@ -565,7 +565,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 			 * free target when all the current pageouts complete.
 			 */
 			if ((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
-			    (free + uvmexp.paging > uvmexp.freetarg << 2)) {
+			    (free + uvmexp.paging > uvmexp.freetarg)) {
 				rw_exit(slock);
 				continue;
 			}
