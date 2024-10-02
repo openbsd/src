@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.7 2024/02/27 06:58:19 anton Exp $ */
+/*	$OpenBSD: generate.c,v 1.8 2024/10/02 12:31:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2017 Martin Pieuchot
@@ -208,6 +208,8 @@ imcs_add_type(struct imcs *imcs, struct itype *it)
 				ctt.ctt_size = 4;
 			else if (size <= 64)
 				ctt.ctt_size = 8;
+			else if (size <= 96)
+				ctt.ctt_size = 12;
 			else
 				ctt.ctt_size = 16;
 		} else
