@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.66 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.67 2024/10/02 10:12:52 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -238,10 +238,10 @@ struct pool pmap_pmap_pool;
  * Pool of PV structures
  */
 struct pool pmap_pv_pool;
-void *pmap_bootstrap_pv_page_alloc(struct pool *, int, int *);
-void pmap_bootstrap_pv_page_free(struct pool *, void *);
-struct pool_allocator pmap_bootstrap_pv_allocator = {
-	pmap_bootstrap_pv_page_alloc, pmap_bootstrap_pv_page_free
+void *pmap_pv_page_alloc(struct pool *, int, int *);
+void pmap_pv_page_free(struct pool *, void *);
+struct pool_allocator pmap_pv_allocator = {
+	pmap_pv_page_alloc, pmap_pv_page_free
 };
 
 /*
@@ -2360,7 +2360,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
 	    "pmappl", &pool_allocator_single);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
-	    "pvepl", &pmap_bootstrap_pv_allocator);
+	    "pvepl", &pmap_pv_allocator);
 	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, IPL_VM, 0,
 	    "l2dtblpl", NULL);
 	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL,
@@ -2397,48 +2397,22 @@ pmap_init(void)
 	pmap_initialized = 1;
 }
 
-static vaddr_t last_bootstrap_page = 0;
-static void *free_bootstrap_pages = NULL;
-
 void *
-pmap_bootstrap_pv_page_alloc(struct pool *pp, int flags, int *slowdown)
+pmap_pv_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
-	extern void *pool_page_alloc(struct pool *, int, int *);
-	vaddr_t new_page;
-	void *rv;
+	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
 
-	if (pmap_initialized)
-		return (pool_page_alloc(pp, flags, slowdown));
-	*slowdown = 0;
+	kd.kd_waitok = ISSET(flags, PR_WAITOK);
+	kd.kd_slowdown = slowdown;
 
-	if (free_bootstrap_pages) {
-		rv = free_bootstrap_pages;
-		free_bootstrap_pages = *((void **)rv);
-		return (rv);
-	}
-
-	new_page = uvm_km_kmemalloc(kernel_map, NULL, PAGE_SIZE,
-	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT);
-
-	last_bootstrap_page = new_page;
-	return ((void *)new_page);
+	return (km_alloc(pp->pr_pgsize,
+	    pmap_initialized ? &kv_page : &kv_any, pp->pr_crange, &kd));
 }
 
 void
-pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
+pmap_pv_page_free(struct pool *pp, void *v)
 {
-	extern void pool_page_free(struct pool *, void *);
-
-	if (pmap_initialized) {
-		pool_page_free(pp, v);
-		return;
-	}
-
-	if ((vaddr_t)v < last_bootstrap_page) {
-		*((void **)v) = free_bootstrap_pages;
-		free_bootstrap_pages = v;
-		return;
-	}
+	km_free(v, pp->pr_pgsize, &kv_page, pp->pr_crange);
 }
 
 /*
