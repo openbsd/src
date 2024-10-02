@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.116 2024/10/02 10:24:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.117 2024/10/02 10:36:33 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -103,8 +103,8 @@ extern unsigned long drmbackoff(long);
 
 struct rwlock	*uvmpd_trylockowner(struct vm_page *);
 void		uvmpd_scan(struct uvm_pmalloc *, struct uvm_constraint_range *);
-void		uvmpd_scan_inactive(struct uvm_pmalloc *,
-		    struct uvm_constraint_range *, struct pglist *);
+int		uvmpd_scan_inactive(struct uvm_pmalloc *,
+		    struct uvm_constraint_range *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
 int		uvmpd_dropswap(struct vm_page *);
@@ -418,11 +418,12 @@ uvmpd_dropswap(struct vm_page *pg)
  * => we handle the building of swap-backed clusters
  * => we return TRUE if we are exiting because we met our target
  */
-void
+int
 uvmpd_scan_inactive(struct uvm_pmalloc *pma,
-    struct uvm_constraint_range *constraint, struct pglist *pglst)
+    struct uvm_constraint_range *constraint)
 {
-	int free, result;
+	struct pglist *pglst = &uvm.page_inactive;
+	int free, result, freed = 0;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_page *pps[SWCLUSTPAGES], **ppsp;
@@ -542,7 +543,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 				/* zap all mappings with pmap_page_protect... */
 				pmap_page_protect(p, PROT_NONE);
 				uvm_pagefree(p);
-				uvmexp.pdfreed++;
+				freed++;
 
 				if (anon) {
 
@@ -846,6 +847,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 			uvm_lock_pageq();
 		}
 	}
+
+	return freed;
 }
 
 /*
@@ -890,10 +893,8 @@ uvmpd_scan(struct uvm_pmalloc *pma, struct uvm_constraint_range *constraint)
 	 * we work on meeting our inactive target by converting active pages
 	 * to inactive ones.
 	 */
-
-	pages_freed = uvmexp.pdfreed;
-	(void) uvmpd_scan_inactive(pma, constraint, &uvm.page_inactive);
-	pages_freed = uvmexp.pdfreed - pages_freed;
+	pages_freed = uvmpd_scan_inactive(pma, constraint);
+	uvmexp.pdfreed += pages_freed;
 
 	/*
 	 * we have done the scan to get free pages.   now we work on meeting
