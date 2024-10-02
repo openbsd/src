@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.99 2024/10/01 06:15:47 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.100 2024/10/02 08:06:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -555,6 +555,10 @@ input_key_mode1(struct bufferevent *bev, key_code key)
 	     onlykey == '^' ||
 	     (onlykey >= '2' && onlykey <= '8') ||
 	     (onlykey >= '@' && onlykey <= '~')))
+		return (input_key_vt10x(bev, key));
+
+	/* Avoid reporting A as Shift-A, which is not expected in mode 1. */
+	if ((key & KEYC_MASK_MODIFIERS) == KEYC_SHIFT)
 		return (input_key_vt10x(bev, key));
 
 	/*
