@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.70 2024/10/01 18:28:17 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.71 2024/10/02 09:45:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,10 +544,8 @@ pfkey_md5sig_establish(struct auth_state *as, struct auth_config *auth,
 		goto fail;
 
 	/* cleanup old flow if one was present */
-	if (as->established) {
-		if (pfkey_remove(as) == -1)
-			return (-1);
-	}
+	if (pfkey_remove(as) == -1)
+		return (-1);
 
 	as->established = 1;
 	as->method = auth->method;
@@ -613,10 +611,8 @@ pfkey_ipsec_establish(struct auth_state *as, struct auth_config *auth,
 	uint8_t satype = SADB_SATYPE_ESP;
 
 	/* cleanup first, unlike in the TCP MD5 case */
-	if (as->established) {
-		if (pfkey_remove(as) == -1)
-			return (-1);
-	}
+	if (pfkey_remove(as) == -1)
+		return (-1);
 
 	switch (auth->method) {
 	case AUTH_IPSEC_IKE_ESP:
@@ -774,22 +770,15 @@ int
 pfkey_establish(struct auth_state *as, struct auth_config *auth, 
     const struct bgpd_addr *local_addr, const struct bgpd_addr *remote_addr)
 {
-	int rv;
-
 	switch (auth->method) {
 	case AUTH_NONE:
-		rv = 0;
-		if (as->established)
-			rv = pfkey_remove(as);
-		break;
+		return pfkey_remove(as);
 	case AUTH_MD5SIG:
-		rv = pfkey_md5sig_establish(as, auth, local_addr, remote_addr);
-		break;
+		return pfkey_md5sig_establish(as, auth, local_addr,
+		    remote_addr);
 	default:
-		rv = pfkey_ipsec_establish(as, auth, local_addr, remote_addr);
-		break;
+		return pfkey_ipsec_establish(as, auth, local_addr, remote_addr);
 	}
-	return (rv);
 }
 
 int
