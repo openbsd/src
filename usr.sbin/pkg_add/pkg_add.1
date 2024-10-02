@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.167 2022/08/12 10:38:37 landry Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.168 2024/10/02 09:14:08 tb Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: August 12 2022 $
+.Dd $Mdocdate: October 2 2024 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -161,11 +161,6 @@ are defined,
 will use
 .Sq ./:installpath
 as a default.
-Specifying
-.Ql -
-as a package name causes
-.Nm
-to read from the standard input.
 .Pp
 .Nm
 also understands
@@ -288,7 +283,7 @@ dependencies with the list of packages left to install, then ask the
 user's opinion in interactive mode,
 then install default packages that satisfy the dependencies.
 .Pp
-.Sy Warning:
+.Sy Warning :
 Since
 .Nm
 may execute scripts or programs contained within a package file,
