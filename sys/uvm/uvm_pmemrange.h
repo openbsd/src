@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.17 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.18 2024/10/02 10:17:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -149,7 +149,7 @@ struct vm_page		*uvm_pmr_extract_range(struct uvm_pmemrange *,
 			    struct pglist *);
 struct vm_page		*uvm_pmr_cache_get(int);
 void			 uvm_pmr_cache_put(struct vm_page *);
-void			 uvm_pmr_cache_drain(void);
+unsigned int		 uvm_pmr_cache_drain(void);
 
 
 #endif /* _UVM_UVM_PMEMRANGE_H_ */

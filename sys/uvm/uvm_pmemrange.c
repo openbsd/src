@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.67 2024/08/18 08:18:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.68 2024/10/02 10:17:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -2279,7 +2279,7 @@ uvm_pmr_cache_get(int flags)
 	return pg;
 }
 
-void
+unsigned int
 uvm_pmr_cache_free(struct uvm_pmr_cache_item *upci)
 {
 	struct pglist pgl;
@@ -2296,6 +2296,8 @@ uvm_pmr_cache_free(struct uvm_pmr_cache_item *upci)
 	atomic_sub_int(&uvmexp.percpucaches, upci->upci_npages);
 	upci->upci_npages = 0;
 	memset(upci->upci_pages, 0, sizeof(upci->upci_pages));
+
+	return i;
 }
 
 void
@@ -2337,16 +2339,19 @@ uvm_pmr_cache_put(struct vm_page *pg)
 	splx(s);
 }
 
-void
+unsigned int
 uvm_pmr_cache_drain(void)
 {
 	struct uvm_pmr_cache *upc = &curcpu()->ci_uvm;
+	unsigned int freed = 0;
 	int s;
 
 	s = splvm();
-	uvm_pmr_cache_free(&upc->upc_magz[0]);
-	uvm_pmr_cache_free(&upc->upc_magz[1]);
+	freed += uvm_pmr_cache_free(&upc->upc_magz[0]);
+	freed += uvm_pmr_cache_free(&upc->upc_magz[1]);
 	splx(s);
+
+	return freed;
 }
 
 #else /* !(MULTIPROCESSOR && __HAVE_UVM_PERCPU) */
@@ -2363,8 +2368,9 @@ uvm_pmr_cache_put(struct vm_page *pg)
 	uvm_pmr_freepages(pg, 1);
 }
 
-void
+unsigned int
 uvm_pmr_cache_drain(void)
 {
+	return 0;
 }
 #endif
