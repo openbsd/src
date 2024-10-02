@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1231 2024/10/01 08:01:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1232 2024/10/02 11:48:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,6 +77,9 @@ struct winlink;
 #endif
 #ifndef TMUX_SOCK
 #define TMUX_SOCK "$TMUX_TMPDIR:" _PATH_TMP
+#endif
+#ifndef TMUX_SOCK_PERM
+#define TMUX_SOCK_PERM (7 /* o+rwx */)
 #endif
 #ifndef TMUX_TERM
 #define TMUX_TERM "screen"

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.213 2024/09/29 20:05:42 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.214 2024/10/02 11:48:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -226,7 +226,7 @@ make_label(const char *label, char **cause)
 		xasprintf(cause, "%s is not a directory", base);
 		goto fail;
 	}
-	if (sb.st_uid != uid || (sb.st_mode & S_IRWXO) != 0) {
+	if (sb.st_uid != uid || (sb.st_mode & TMUX_SOCK_PERM) != 0) {
 		xasprintf(cause, "directory %s has unsafe permissions", base);
 		goto fail;
 	}
