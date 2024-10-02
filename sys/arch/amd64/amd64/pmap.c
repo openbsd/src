@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.176 2024/09/26 21:55:42 dv Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.177 2024/10/02 18:18:27 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2468,9 +2468,7 @@ pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 	for (v = sgpa; v < egpa + PAGE_SIZE; v += PAGE_SIZE)
 		pmap_do_remove_ept(pmap, v);
 
-#ifdef MULTIPROCESSOR
 	pmap_shootept(pmap, 1);
-#endif /* MULTIPROCESSOR */
 
 	mtx_leave(&pmap->pm_mtx);
 
@@ -3518,4 +3516,22 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 		}
 	}
 }
+
+#if NVMM > 0
+void
+pmap_shootept(struct pmap *pm, int shootself)
+{
+	struct cpu_info *self = curcpu();
+	struct vmx_invept_descriptor vid;
+
+	KASSERT(pmap_is_ept(pm));
+
+	if (shootself && (self->ci_flags & CPUF_VMM)) {
+		vid.vid_eptp = pm->eptp;
+		vid.vid_reserved = 0;
+		invept(self->ci_vmm_cap.vcc_vmx.vmx_invept_mode, &vid);
+	}
+}
+#endif /* NVMM > 0 */
+
 #endif /* MULTIPROCESSOR */
