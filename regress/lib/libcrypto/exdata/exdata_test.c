@@ -1,4 +1,4 @@
-/* $OpenBSD: exdata_test.c,v 1.2 2024/03/25 10:41:36 jsing Exp $ */
+/* $OpenBSD: exdata_test.c,v 1.3 2024/10/02 14:12:21 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -231,8 +231,6 @@ ex_data_test(void)
 	return failed;
 }
 
-#if 0
-/* This insanity currently succeeds... */
 static int
 ex_new_index_test(void)
 {
@@ -257,7 +255,6 @@ ex_new_index_test(void)
  failure:
 	return failed;
 }
-#endif
 
 int
 main(int argc, char **argv)
@@ -265,9 +262,7 @@ main(int argc, char **argv)
 	int failed = 0;
 
 	failed |= ex_data_test();
-#if 0
 	failed |= ex_new_index_test();
-#endif
 
 	/* Force a clean up. */
 	CRYPTO_cleanup_all_ex_data();
