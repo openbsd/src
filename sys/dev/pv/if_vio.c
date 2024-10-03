@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.56 2024/09/19 06:23:38 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.57 2024/10/03 08:59:49 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -256,6 +256,7 @@ struct vio_softc {
 
 	struct vio_queue	*sc_q;
 	uint16_t		sc_nqueues;
+	int			sc_rx_mbuf_size;
 
 	enum vio_ctrl_state	sc_ctrl_inuse;
 
@@ -492,8 +493,9 @@ vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 		vioq->viq_txmbufs = vioq->viq_rxmbufs + rxqsize;
 
 		for (i = 0; i < rxqsize; i++) {
-			r = bus_dmamap_create(vsc->sc_dmat, MAXMCLBYTES,
-			    MAXMCLBYTES/PAGE_SIZE + 1, MCLBYTES, 0,
+			r = bus_dmamap_create(vsc->sc_dmat,
+			    sc->sc_rx_mbuf_size + sc->sc_hdr_size, 2,
+			    sc->sc_rx_mbuf_size, 0,
 			    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 			    &vioq->viq_rxdmamaps[i]);
 			if (r != 0)
@@ -644,10 +646,35 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		sc->sc_hdr_size = offsetof(struct virtio_net_hdr, num_buffers);
 	}
+
+	ifp->if_capabilities = 0;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities |= IFCAP_VLAN_HWOFFLOAD;
+#endif
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|
+		    IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4))
+		ifp->if_capabilities |= IFCAP_TSOv4;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
+		ifp->if_capabilities |= IFCAP_TSOv6;
+
+	sc->sc_rx_mbuf_size = MCLBYTES;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS) &&
+	    (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4) ||
+	     virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))) {
+		ifp->if_xflags |= IFXF_LRO;
+		ifp->if_capabilities |= IFCAP_LRO;
+		sc->sc_rx_mbuf_size = 4 * 1024;
+	}
+
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))
 		ifp->if_hardmtu = MAXMCLBYTES;
 	else
-		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
+		ifp->if_hardmtu = sc->sc_rx_mbuf_size - sc->sc_hdr_size -
+		    ETHER_HDR_LEN;
 
 	/* defrag for longer mbuf chains */
 	tx_max_segments = 16;
@@ -699,28 +726,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	strlcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vio_start;
 	ifp->if_ioctl = vio_ioctl;
-	ifp->if_capabilities = 0;
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-	ifp->if_capabilities |= IFCAP_VLAN_HWOFFLOAD;
-#endif
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|
-		    IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6;
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4))
-		ifp->if_capabilities |= IFCAP_TSOv4;
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
-		ifp->if_capabilities |= IFCAP_TSOv6;
-
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS) &&
-	    (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4) ||
-	     virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))) {
-		ifp->if_xflags |= IFXF_LRO;
-		ifp->if_capabilities |= IFCAP_LRO;
-	}
 
 	ifq_init_maxlen(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
@@ -808,7 +815,7 @@ vio_init(struct ifnet *ifp)
 		struct vio_queue *vioq = &sc->sc_q[qidx];
 
 		if_rxr_init(&vioq->viq_rxring,
-		    2 * ((ifp->if_hardmtu / MCLBYTES) + 1),
+		    2 * ((ifp->if_hardmtu / sc->sc_rx_mbuf_size) + 1),
 		    vioq->viq_rxvq->vq_num);
 		vio_populate_rx_mbufs(sc, vioq);
 	}
@@ -1102,7 +1109,7 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGIFRXR:
 		r = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, MCLBYTES, &sc->sc_q[0].viq_rxring);
+		    NULL, sc->sc_rx_mbuf_size, &sc->sc_q[0].viq_rxring);
 		break;
 	default:
 		r = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
@@ -1127,7 +1134,7 @@ vio_add_rx_mbuf(struct vio_softc *sc, struct vio_queue *vioq, int i)
 	struct mbuf *m;
 	int r;
 
-	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, sc->sc_rx_mbuf_size);
 	if (m == NULL)
 		return ENOBUFS;
 	vioq->viq_rxmbufs[i] = m;
@@ -1199,7 +1206,8 @@ vio_populate_rx_mbufs(struct vio_softc *sc, struct vio_queue *vioq)
 			virtio_enqueue_p(vq, slot, vioq->viq_rxdmamaps[slot],
 			    0, sc->sc_hdr_size, 0);
 			virtio_enqueue_p(vq, slot, vioq->viq_rxdmamaps[slot],
-			    sc->sc_hdr_size, MCLBYTES - sc->sc_hdr_size, 0);
+			    sc->sc_hdr_size,
+			    sc->sc_rx_mbuf_size - sc->sc_hdr_size, 0);
 		}
 		virtio_enqueue_commit(vsc, vq, slot, 0);
 		done = 1;
