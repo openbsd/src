@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.27 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.28 2024/10/03 06:24:07 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -216,9 +216,6 @@ struct ec_group_st {
 	/* Montgomery context and values used by EC_GFp_mont_method. */
 	BN_MONT_CTX *mont_ctx;
 	BIGNUM *mont_one;
-
-	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,
-	    BN_CTX *);
 } /* EC_GROUP */;
 
 struct ec_key_st {
