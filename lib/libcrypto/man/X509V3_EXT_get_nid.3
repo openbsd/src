@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_EXT_get_nid.3,v 1.4 2024/05/14 06:57:10 tb Exp $
+.\" $OpenBSD: X509V3_EXT_get_nid.3,v 1.5 2024/10/03 03:31:47 tb Exp $
 .\"
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2024 $
+.Dd $Mdocdate: October 3 2024 $
 .Dt X509V3_EXT_GET_NID 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ The library's
 .Vt X509V3_EXT_METHOD
 type,
 which is not yet documented in detail,
-contains a numeric identifier to represent the OID and various
+contains a numeric identifier (NID) to represent the OID and various
 handlers for encoding, decoding, printing, and configuring the
 extension's value.
 Criticality is handled separately, for example as an argument to
