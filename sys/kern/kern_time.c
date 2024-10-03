@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.169 2024/07/26 19:16:31 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.170 2024/10/03 10:18:29 claudio Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -147,8 +147,10 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 			q = tfind_user(__CLOCK_PTID(clock_id), p->p_p);
 			if (q == NULL)
 				error = ESRCH;
-			else
-				*tp = q->p_tu.tu_runtime;
+			else {
+				tuagg_get_proc(&tu, q);
+				*tp = tu.tu_runtime;
+			}
 			KERNEL_UNLOCK();
 		} else
 			error = EINVAL;
