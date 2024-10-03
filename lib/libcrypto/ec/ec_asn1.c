@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.56 2024/10/03 04:20:28 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.57 2024/10/03 05:07:49 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -405,7 +405,7 @@ static const ASN1_TEMPLATE ECPARAMETERS_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM ECPARAMETERS_it = {
+static const ASN1_ITEM ECPARAMETERS_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = ECPARAMETERS_seq_tt,
@@ -451,7 +451,7 @@ static const ASN1_TEMPLATE ECPKPARAMETERS_ch_tt[] = {
 	},
 };
 
-const ASN1_ITEM ECPKPARAMETERS_it = {
+static const ASN1_ITEM ECPKPARAMETERS_it = {
 	.itype = ASN1_ITYPE_CHOICE,
 	.utype = offsetof(ECPKPARAMETERS, type),
 	.templates = ECPKPARAMETERS_ch_tt,
