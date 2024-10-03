@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.54 2024/10/03 04:15:52 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.55 2024/10/03 04:17:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -843,7 +843,7 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 	EC_GROUP *ret = NULL;
 	BIGNUM *p = NULL, *a = NULL, *b = NULL;
 	EC_POINT *point = NULL;
-	long field_bits;
+	int field_bits;
 
 	if (!params->fieldID || !params->fieldID->fieldType ||
 	    !params->fieldID->p.ptr) {
@@ -941,7 +941,7 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
-	if (BN_num_bits(a) > (int) field_bits + 1) {	/* Hasse bound */
+	if (BN_num_bits(a) > field_bits + 1) {		/* Hasse bound */
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
