@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.55 2024/10/03 04:17:05 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.56 2024/10/03 04:20:28 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -841,7 +841,7 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 {
 	int ok = 0, tmp;
 	EC_GROUP *ret = NULL;
-	BIGNUM *p = NULL, *a = NULL, *b = NULL;
+	BIGNUM *p = NULL, *a = NULL, *b = NULL, *order = NULL, *cofactor = NULL;
 	EC_POINT *point = NULL;
 	int field_bits;
 
@@ -932,29 +932,26 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	/* extract the order */
-	if ((a = ASN1_INTEGER_to_BN(params->order, a)) == NULL) {
+	if ((order = ASN1_INTEGER_to_BN(params->order, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
-	if (BN_is_negative(a) || BN_is_zero(a)) {
+	if (BN_is_negative(order) || BN_is_zero(order)) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
-	if (BN_num_bits(a) > field_bits + 1) {		/* Hasse bound */
+	if (BN_num_bits(order) > field_bits + 1) {	/* Hasse bound */
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
-	/* extract the cofactor (optional) */
-	if (params->cofactor == NULL) {
-		BN_free(b);
-		b = NULL;
-	} else if ((b = ASN1_INTEGER_to_BN(params->cofactor, b)) == NULL) {
-		ECerror(ERR_R_ASN1_LIB);
-		goto err;
+	if (params->cofactor != NULL) {
+		if ((cofactor = ASN1_INTEGER_to_BN(params->cofactor,
+		    NULL)) == NULL) {
+			ECerror(ERR_R_ASN1_LIB);
+			goto err;
+		}
 	}
-	/* set the generator, order and cofactor (if present) */
-	if (!EC_GROUP_set_generator(ret, point, a, b)) {
+	if (!EC_GROUP_set_generator(ret, point, order, cofactor)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -968,8 +965,11 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 	BN_free(p);
 	BN_free(a);
 	BN_free(b);
+	BN_free(order);
+	BN_free(cofactor);
 	EC_POINT_free(point);
-	return (ret);
+
+	return ret;
 }
 
 EC_GROUP *
