@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.53 2024/04/17 23:24:18 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.54 2024/10/03 04:15:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -760,20 +760,19 @@ ec_asn1_group2parameters(const EC_GROUP *group, ECPARAMETERS *param)
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
-	/* set the order */
 	if (!EC_GROUP_get_order(group, tmp, NULL)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ret->order = BN_to_ASN1_INTEGER(tmp, ret->order);
-	if (ret->order == NULL) {
+	ASN1_INTEGER_free(ret->order);
+	if ((ret->order = BN_to_ASN1_INTEGER(tmp, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
-	/* set the cofactor (optional) */
+	ASN1_INTEGER_free(ret->cofactor);
+	ret->cofactor = NULL;
 	if (EC_GROUP_get_cofactor(group, tmp, NULL)) {
-		ret->cofactor = BN_to_ASN1_INTEGER(tmp, ret->cofactor);
-		if (ret->cofactor == NULL) {
+		if ((ret->cofactor = BN_to_ASN1_INTEGER(tmp, NULL)) == NULL) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
