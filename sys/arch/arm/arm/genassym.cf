@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.18 2019/10/27 10:26:12 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.19 2024/10/04 19:00:27 miod Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -129,7 +129,6 @@ member	pr_off
 member	pr_scale
 
 export	SIGTRAP
-export	SIGEMT
 
 struct	sigframe
 member	SIGF_SC			sf_sc
