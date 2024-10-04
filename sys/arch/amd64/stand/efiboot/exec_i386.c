@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.11 2023/07/22 10:11:19 jsg Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.12 2024/10/04 22:21:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -239,6 +239,33 @@ ucode_load(void)
 }
 
 #ifdef __amd64__
+int
+detect_sev(void)
+{
+	uint32_t max_ex_leaf, sev_feat;
+	uint32_t vendor[4];
+	uint32_t sev_status, dummy;
+
+	/* check whether we have SEV feature cpuid leaf */
+	CPUID(0x80000000, max_ex_leaf, vendor[0], vendor[2], vendor[1]);
+	vendor[3] = 0; /* NULL-terminate */
+	if (strcmp((char *)vendor, "AuthenticAMD") != 0 ||
+	    max_ex_leaf < 0x8000001F)
+		return -ENODEV;
+
+	CPUID(0x8000001F, sev_feat, dummy, dummy,  dummy);
+	/* check that SEV is supported */
+	if ((sev_feat & CPUIDEAX_SEV) == 0)
+		return -ENODEV;
+
+	__asm volatile ("rdmsr" : "=a" (sev_status), "=d"(dummy) : "c"(MSR_SEV_STATUS));
+	/* check whether SEV is enabled */
+	if ((sev_status & SEV_STAT_ENABLED) == 0)
+		return -ENODEV;
+
+	return 0;
+}
+
 void
 protect_writeable(uint64_t addr, size_t len)
 {
@@ -246,6 +273,9 @@ protect_writeable(uint64_t addr, size_t len)
 	uint64_t *cr3, *p;
 	uint64_t cr0;
 	size_t idx;
+
+	if (detect_sev() == 0)
+		return;
 
 	__asm volatile("movq %%cr0, %0;" : "=r"(cr0) : :);
 	if ((cr0 & CR0_PG) == 0)
