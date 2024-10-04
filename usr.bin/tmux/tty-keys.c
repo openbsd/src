@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.181 2024/10/03 05:41:59 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.182 2024/10/04 14:55:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1069,7 +1069,7 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 		nkey = number;
 
 	/* Convert UTF-32 codepoint into internal representation. */
-	if (nkey & ~0x7f) {
+	if (nkey != KEYC_BSPACE && nkey & ~0x7f) {
 		if (utf8_fromwc(nkey, &ud) == UTF8_DONE &&
 		    utf8_from_data(&ud, &uc) == UTF8_DONE)
 			nkey = uc;
