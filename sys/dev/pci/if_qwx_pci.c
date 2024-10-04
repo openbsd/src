@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.22 2024/07/06 05:34:35 patrick Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.23 2024/10/04 07:46:33 kevlo Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -374,11 +374,9 @@ struct qwx_pci_softc {
 	struct qwx_dmamem	*cmd_ctxt;
 
 
-	struct qwx_pci_xfer_ring xfer_rings[4];
-#define QWX_PCI_XFER_RING_LOOPBACK_OUTBOUND	0
-#define QWX_PCI_XFER_RING_LOOPBACK_INBOUND	1
-#define QWX_PCI_XFER_RING_IPCR_OUTBOUND		2
-#define QWX_PCI_XFER_RING_IPCR_INBOUND		3
+	struct qwx_pci_xfer_ring xfer_rings[2];
+#define QWX_PCI_XFER_RING_IPCR_OUTBOUND		0
+#define QWX_PCI_XFER_RING_IPCR_INBOUND		1
 	struct qwx_pci_event_ring event_rings[QWX_NUM_EVENT_CTX];
 	struct qwx_pci_cmd_ring cmd_ring;
 };
@@ -745,7 +743,6 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t soc_hw_version_major, soc_hw_version_minor;
-	const struct qwx_pci_ops *pci_ops;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
@@ -884,6 +881,9 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
+	/* register PCI ops */
+	psc->sc_pci_ops = &qwx_pci_ops_qca6390;
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_QUALCOMM_QCA6390:
 		qwx_pci_read_hw_version(sc, &soc_hw_version_major,
@@ -898,11 +898,10 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 
-		pci_ops = &qwx_pci_ops_qca6390;
 		psc->max_chan = QWX_MHI_CONFIG_QCA6390_MAX_CHANNELS;
 		break;
 	case PCI_PRODUCT_QUALCOMM_QCN9074:
-		pci_ops = &qwx_pci_ops_qcn9074;
+		psc->sc_pci_ops = &qwx_pci_ops_qcn9074;
 		sc->sc_hw_rev = ATH11K_HW_QCN9074_HW10;
 		psc->max_chan = QWX_MHI_CONFIG_QCA9074_MAX_CHANNELS;
 		break;
@@ -932,16 +931,12 @@ unsupported_wcn6855_soc:
 			return;
 		}
 
-		pci_ops = &qwx_pci_ops_qca6390;
 		psc->max_chan = QWX_MHI_CONFIG_QCA6390_MAX_CHANNELS;
 		break;
 	default:
 		printf(": unsupported chip\n");
 		return;
 	}
-
-	/* register PCI ops */
-	psc->sc_pci_ops = pci_ops;
 
 	error = qwx_pcic_init_msi_config(sc);
 	if (error)
@@ -1297,18 +1292,6 @@ qwx_pci_alloc_xfer_rings_qca6390(struct qwx_pci_softc *psc)
 	int ret;
 
 	ret = qwx_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWX_PCI_XFER_RING_LOOPBACK_OUTBOUND],
-	    0, MHI_CHAN_TYPE_OUTBOUND, 0, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwx_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWX_PCI_XFER_RING_LOOPBACK_INBOUND],
-	    1, MHI_CHAN_TYPE_INBOUND, 0, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwx_pci_alloc_xfer_ring(sc,
 	    &psc->xfer_rings[QWX_PCI_XFER_RING_IPCR_OUTBOUND],
 	    20, MHI_CHAN_TYPE_OUTBOUND, 1, 64);
 	if (ret)
@@ -1331,18 +1314,6 @@ qwx_pci_alloc_xfer_rings_qcn9074(struct qwx_pci_softc *psc)
 {
 	struct qwx_softc *sc = &psc->sc_sc;
 	int ret;
-
-	ret = qwx_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWX_PCI_XFER_RING_LOOPBACK_OUTBOUND],
-	    0, MHI_CHAN_TYPE_OUTBOUND, 1, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwx_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWX_PCI_XFER_RING_LOOPBACK_INBOUND],
-	    1, MHI_CHAN_TYPE_INBOUND, 1, 32);
-	if (ret)
-		goto fail;
 
 	ret = qwx_pci_alloc_xfer_ring(sc,
 	    &psc->xfer_rings[QWX_PCI_XFER_RING_IPCR_OUTBOUND],
