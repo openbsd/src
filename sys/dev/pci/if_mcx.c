@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.115 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.116 2024/10/04 06:37:22 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2927,22 +2927,24 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
-	printf(", %s, address %s\n", intrstr,
-	    ether_sprintf(sc->sc_ac.ac_enaddr));
-
 	msix--; /* admin ops took one */
 	sc->sc_intrmap = intrmap_create(&sc->sc_dev, msix, MCX_MAX_QUEUES,
 	    INTRMAP_POWEROF2);
 	if (sc->sc_intrmap == NULL) {
-		printf("%s: unable to create interrupt map\n", DEVNAME(sc));
+		printf(": unable to create interrupt map\n");
 		goto teardown;
 	}
 	sc->sc_queues = mallocarray(intrmap_count(sc->sc_intrmap),
 	    sizeof(*sc->sc_queues), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (sc->sc_queues == NULL) {
-		printf("%s: unable to create queues\n", DEVNAME(sc));
+		printf(": unable to create queues\n");
 		goto intrunmap;
 	}
+
+	printf(", %s, %d queue%s, address %s\n", intrstr,
+	    intrmap_count(sc->sc_intrmap),
+	    intrmap_count(sc->sc_intrmap) > 1 ? "s" : "",
+	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
