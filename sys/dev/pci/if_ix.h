@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.47 2024/05/21 11:19:39 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.48 2024/10/04 05:22:10 yasuoka Exp $	*/
 
 /******************************************************************************
 
@@ -169,6 +169,7 @@ struct ix_txring {
 	struct ix_softc		*sc;
 	struct ifqueue		*ifq;
 	uint32_t		me;
+	uint32_t		tail;
 	uint32_t		watchdog_timer;
 	union ixgbe_adv_tx_desc	*tx_base;
 	struct ixgbe_tx_buf	*tx_buffers;
@@ -194,6 +195,7 @@ struct ix_rxring {
 	struct ix_softc		*sc;
 	struct ifiqueue		*ifiq;
 	uint32_t		me;
+	uint32_t		tail;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
 #if 0
@@ -244,6 +246,7 @@ struct ix_softc {
 	uint16_t		num_segs;
 	uint32_t		link_speed;
 	bool			link_up;
+	bool			link_enabled;
 	uint32_t		linkvec;
 	struct rwlock		sfflock;
 
