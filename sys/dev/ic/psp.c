@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.4 2024/09/04 08:14:18 jsg Exp $ */
+/*	$OpenBSD: psp.c,v 1.5 2024/10/04 16:58:26 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -199,7 +199,7 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 
 	if (poll) {
 		count = 0;
-		while (count++ < 10) {
+		while (count++ < 100) {
 			cmdword = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			    PSP_REG_CMDRESP);
 			if (cmdword & PSP_CMDRESP_RESPONSE)
@@ -211,7 +211,7 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 		return (1);
 	}
 
-	if (tsleep_nsec(sc, PWAIT, "psp", SEC_TO_NSEC(1)) == EWOULDBLOCK)
+	if (tsleep_nsec(sc, PWAIT, "psp", SEC_TO_NSEC(2)) == EWOULDBLOCK)
 		return (1);
 
 done:
