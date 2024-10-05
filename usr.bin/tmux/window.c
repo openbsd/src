@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.294 2024/10/01 08:01:19 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.295 2024/10/05 12:10:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -482,7 +482,8 @@ window_pane_update_focus(struct window_pane *wp)
 				if (c->session != NULL &&
 				    c->session->attached != 0 &&
 				    (c->flags & CLIENT_FOCUSED) &&
-				    c->session->curw->window == wp->window) {
+				    c->session->curw->window == wp->window &&
+				    c->overlay_draw == NULL) {
 					focused = 1;
 					break;
 				}
