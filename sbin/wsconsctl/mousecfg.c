@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.11 2024/09/25 19:56:33 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.12 2024/10/05 13:27:16 chrisz Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -356,6 +356,7 @@ mousecfg_pr_field(struct wsmouse_parameters *field)
 
 	if (field == &cfg_scaling) {
 		value = get_value(field, WSMOUSECFG_DX_SCALE);
+		value = value == 0 ? 4096 : value;
 		f = (float) value / 4096;
 		printf("%.3f", f);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.21 2023/07/02 21:44:04 bru Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.22 2024/10/05 13:27:16 chrisz Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -58,13 +58,14 @@ struct field mouse_field_tab[] = {
     /* touchpad-specific options: */
     { "tp.tapping",		&cfg_tapping,	FMT_CFG,	FLG_NORDBACK },
     { "tp.mtbuttons",		&cfg_mtbuttons,	FMT_CFG,	FLG_NORDBACK },
-    { "tp.scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK | FLG_WRONLY },
     { "tp.swapsides",		&cfg_swapsides,	FMT_CFG,	FLG_NORDBACK },
     { "tp.disable",		&cfg_disable,	FMT_CFG,	FLG_NORDBACK },
     { "tp.edges",		&cfg_edges,	FMT_CFG,	FLG_NORDBACK },
     { "tp.param",		&cfg_param,	FMT_CFG,	FLG_WRONLY },
-    /* Add an alias.  This field is valid for all wsmouse devices. */
+    /* Add aliases.  These fields are valid for all wsmouse devices. */
     { "param",			&cfg_param,	FMT_CFG,	FLG_WRONLY },
+    { "scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK },
     { NULL }
 };
 
@@ -106,6 +107,7 @@ mouse_init(int devfd, int devidx) {
 		for (f = mouse_field_tab; f->name != NULL; f++)
 			if (f->format == FMT_CFG) {
 				if (f->valp != &cfg_param
+				    && f->valp != &cfg_scaling
 				    && f->valp != &cfg_revscroll)
 					f->flags |= FLG_DEAD;
 				else
