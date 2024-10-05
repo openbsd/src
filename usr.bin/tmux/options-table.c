@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.179 2024/10/02 11:51:15 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.180 2024/10/05 00:32:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -969,6 +969,18 @@ const struct options_table_entry options_table[] = {
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the marked line in copy mode."
+	},
+
+	{ .name = "copy-mode-position-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "#[align=right]"
+	                 "#{t/p:top_line_time}#{?#{e|>:#{top_line_time},0}, ,}"
+	                 "[#{scroll_position}/#{history_size}]"
+	                 "#{?search_timed_out, (timed out),"
+	                 "#{?search_count, (#{search_count}"
+	                 "#{?search_count_partial,+,} results),}}",
+	  .text = "Format of the position indicator in copy mode."
 	},
 
 	{ .name = "fill-character",
