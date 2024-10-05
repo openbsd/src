@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.356 2024/10/05 00:32:55 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.357 2024/10/05 00:35:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4221,7 +4221,6 @@ window_copy_write_line(struct window_mode_entry *wme,
 			ft = format_create_defaults(NULL, NULL, NULL, NULL, wp);
 			expanded = format_expand(ft, value);
 			if (*expanded != '\0') {
-				log_debug("--> %s", expanded);
 				screen_write_cursormove(ctx, 0, 0, 0);
 				format_draw(ctx, &gc, sx, expanded, NULL, 0);
 			}
