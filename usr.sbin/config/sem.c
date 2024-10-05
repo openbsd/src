@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.38 2021/11/28 19:26:03 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.39 2024/10/05 01:07:38 jsg Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ static int lresolve(struct nvlist **, const char *, const char *,
 static struct devi *newdevi(const char *, int, struct devbase *d);
 static struct devi *getdevi(const char *);
 static const char *concat(const char *, int);
-static char *extend(char *, const char *);
+static char *extend(char *, size_t, char *, const char *);
 static int split(const char *, size_t, char *, size_t, int *);
 static void selectbase(struct devbase *, struct deva *);
 static int onlist(struct nvlist *, void *);
@@ -1061,11 +1061,20 @@ onlist(struct nvlist *nv, void *ptr)
 }
 
 static char *
-extend(char *p, const char *name)
+extend(char *dst, size_t dstsize, char *p, const char *name)
 {
 	int l;
 
+	if (p < dst)
+		panic("extend invalid pointer");
+
 	l = strlen(name);
+
+	if (((p - dst) + l + 2) > dstsize) {
+		error("extend buffer length exceeded");
+		exit(1);
+	}
+
 	bcopy(name, p, l);
 	p += l;
 	*p++ = ',';
@@ -1112,7 +1121,7 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 		}
 		if (n == NULL && m->nv_int == 0) {
 			nmissing++;
-			mp = extend(mp, m->nv_name);
+			mp = extend(missing, sizeof(missing), mp, m->nv_name);
 		}
 		lp[ord] = m->nv_str;
 	}
@@ -1129,11 +1138,12 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 				lp[n->nv_int] = n->nv_str;
 			else if (lp[n->nv_int] == NULL) {
 				nnodefault++;
-				ndp = extend(ndp, n->nv_name);
+				ndp = extend(nodefault, sizeof(nodefault), ndp,
+				    n->nv_name);
 			}
 		} else {
 			nextra++;
-			ep = extend(ep, n->nv_name);
+			ep = extend(extra, sizeof(extra), ep, n->nv_name);
 		}
 	}
 	if (nextra) {
