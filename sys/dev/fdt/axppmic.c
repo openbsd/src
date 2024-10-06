@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.20 2023/08/02 11:52:18 uaa Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.21 2024/10/06 03:46:48 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -512,10 +512,6 @@ void	axppmic_rsb_attach(struct device *, struct device *, void *);
 const struct cfattach axppmic_rsb_ca = {
 	sizeof(struct axppmic_softc), axppmic_rsb_match, axppmic_rsb_attach,
 	NULL, axppmic_activate
-};
-
-struct cfdriver axppmic_rsb_cd = {
-	NULL, "axppmic", DV_DULL
 };
 
 uint8_t	axppmic_rsb_read(struct axppmic_softc *, uint8_t);
