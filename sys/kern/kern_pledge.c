@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.320 2024/09/24 02:22:42 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.321 2024/10/06 23:39:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -84,16 +84,6 @@ int	 parsepledges(struct proc *p, const char *kname,
 	    const char *promises, u_int64_t *fp);
 int	 canonpath(const char *input, char *buf, size_t bufsize);
 void	 unveil_destroy(struct process *ps);
-
-/* #define DEBUG_PLEDGE */
-#ifdef DEBUG_PLEDGE
-int debug_pledge = 1;
-#define DPRINTF(x...)    do { if (debug_pledge) printf(x); } while (0)
-#define DNPRINTF(n,x...) do { if (debug_pledge >= (n)) printf(x); } while (0)
-#else
-#define DPRINTF(x...)
-#define DNPRINTF(n,x...)
-#endif
 
 /*
  * Ordered in blocks starting with least risky and most required.
