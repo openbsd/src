@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.51 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.52 2024/10/06 23:43:18 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -316,6 +316,7 @@ void		bnxt_write_tx_doorbell(struct bnxt_softc *, struct bnxt_ring *,
 		    int);
 
 int		bnxt_rx_fill(struct bnxt_queue *);
+int		bnxt_rx_fill_ag(struct bnxt_queue *);
 u_int		bnxt_rx_fill_slots(struct bnxt_softc *, struct bnxt_ring *, void *,
 		    struct bnxt_slot *, uint *, int, uint16_t, u_int);
 void		bnxt_refill(void *);
@@ -955,6 +956,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	rx->rx_ag_prod = 0;
 	rx->rx_ag_cons = 0;
 	bnxt_rx_fill(bq);
+	bnxt_rx_fill_ag(bq);
 
 	tx->tx_cons = 0;
 	tx->tx_prod = 0;
@@ -1659,6 +1661,7 @@ bnxt_intr(void *xq)
 		}
 
 		bnxt_rx_fill(q);
+		bnxt_rx_fill_ag(q);
 		if ((rx->rx_cons == rx->rx_prod) ||
 		    (rx->rx_ag_cons == rx->rx_ag_prod))
 			timeout_add(&rx->rx_refill, 0);
@@ -2233,6 +2236,17 @@ bnxt_rx_fill(struct bnxt_queue *q)
 	} else
 		rv = 1;
 
+	return (rv);
+}
+
+int
+bnxt_rx_fill_ag(struct bnxt_queue *q)
+{
+	struct bnxt_rx_queue *rx = &q->q_rx;
+	struct bnxt_softc *sc = q->q_sc;
+	u_int slots;
+	int rv = 0;
+
 	slots = if_rxr_get(&rx->rxr[1],  rx->rx_ag_ring.ring_size);
 	if (slots > 0) {
 		slots = bnxt_rx_fill_slots(sc, &rx->rx_ag_ring,
@@ -2253,9 +2267,14 @@ bnxt_refill(void *xq)
 	struct bnxt_queue *q = xq;
 	struct bnxt_rx_queue *rx = &q->q_rx;
 
-	bnxt_rx_fill(q);
-
 	if (rx->rx_cons == rx->rx_prod)
+		bnxt_rx_fill(q);
+
+	if (rx->rx_ag_cons == rx->rx_ag_prod)
+		bnxt_rx_fill_ag(q);
+
+	if ((rx->rx_cons == rx->rx_prod) ||
+	    (rx->rx_ag_cons == rx->rx_ag_prod))
 		timeout_add(&rx->rx_refill, 1);
 }
 
