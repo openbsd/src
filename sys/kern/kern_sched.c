@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.100 2024/07/09 08:44:36 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.101 2024/10/06 01:50:56 jsg Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -580,7 +580,6 @@ log2(unsigned int i)
  * Just total guesstimates for now.
  */
 
-int sched_cost_load = 1;
 int sched_cost_priority = 1;
 int sched_cost_runnable = 3;
 int sched_cost_resident = 1;
