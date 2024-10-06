@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.193 2024/09/26 13:18:25 dv Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.194 2024/10/06 16:24:02 semarie Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -904,8 +904,8 @@ cpu_init_vmm(struct cpu_info *ci)
 		ci->ci_vmcs_pa = VMX_VMCS_PA_CLEAR;
 		rw_init(&ci->ci_vmcs_lock, "vmcslock");
 
-		msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
-		if (msr & IA32_EPT_VPID_CAP_INVEPT_CONTEXT)
+		if (rdmsr_safe(IA32_VMX_EPT_VPID_CAP, &msr) == 0 &&
+		    msr & IA32_EPT_VPID_CAP_INVEPT_CONTEXT)
 			ci->ci_vmm_cap.vcc_vmx.vmx_invept_mode =
 			    IA32_VMX_INVEPT_SINGLE_CTX;
 		else
