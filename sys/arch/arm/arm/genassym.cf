@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2024/10/04 19:00:27 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2024/10/06 22:47:38 jsg Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,40 +35,26 @@ include <sys/param.h>
 include <sys/proc.h>
 include <sys/systm.h>
 include <sys/mbuf.h>
-include <sys/resourcevar.h>
-include <sys/device.h>
-include <sys/user.h>
-include <sys/signal.h>
-include <sys/mbuf.h>
-include <sys/socketvar.h>
 include <netinet/in.h>
 include <netinet/ip.h>
 
 include <machine/cpu.h>
-include <uvm/uvm_extern.h>
+include <machine/cpufunc.h>
 
 include <arm/fiq.h>
 
-include <machine/pmap.h>
 include <machine/frame.h>
 include <machine/vmparam.h>
 
-export	VM_MIN_ADDRESS
-export	VM_MAXUSER_ADDRESS
+export	PAGE_SIZE
 
 ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
 endif
 
-export	PMAP_DOMAIN_KERNEL
-
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
 endif
-
-export	PAGE_SIZE
-export	UPAGES
-export	PAGE_SHIFT
 
 export	SONPROC
 
@@ -76,78 +62,22 @@ struct	proc
 member	p_addr
 member	p_cpu
 member	p_stat
-# XXX use PROC_SIZEOF in new code whenever possible
-define	PROCSIZE		sizeof(struct proc)
 
 struct	pcb
-member	pcb_tf
 member	pcb_pagedir
-member	pcb_pl1vec
-member	pcb_l1vec
-member	pcb_dacr
 member	pcb_cstate
-member	pcb_flags
 member	PCB_R8			pcb_un.un_32.pcb32_r8
-member	PCB_R9			pcb_un.un_32.pcb32_r9
-member	PCB_R10			pcb_un.un_32.pcb32_r10
-member	PCB_R11			pcb_un.un_32.pcb32_r11
-member	PCB_R12			pcb_un.un_32.pcb32_r12
-member	PCB_SP			pcb_un.un_32.pcb32_sp
-member	PCB_LR			pcb_un.un_32.pcb32_lr
-member	PCB_PC			pcb_un.un_32.pcb32_pc
 member	PCB_UND_SP		pcb_un.un_32.pcb32_und_sp
 member	pcb_onfault
 member	pcb_tcb
-# XXX use USER_SIZEOF in new code whenever possible
-define	USER_SIZE		sizeof(struct user)
-
-struct	uvmexp
-member	V_TRAP			traps
-member	V_INTR			intrs
-member	V_SOFT			softs
-
-struct	vmspace
-member	vm_map
-member	VM_PMAP			vm_map.pmap
-
-union	pmap_cache_state
-member	cs_tlb_id
-member	cs_tlb_d
-member	cs_tlb
-member	cs_cache_id
-member	cs_cache_d
-member	cs_cache
-member	cs_all
-
-struct	pmap
-member	PMAP_CSTATE		pm_cstate
-
-struct	uprof
-member	pr_base
-member	pr_size
-member	pr_off
-member	pr_scale
-
-export	SIGTRAP
 
 struct	sigframe
 member	SIGF_SC			sf_sc
 
-struct	trapframe
-member	tf_r0
-member	tf_r10
-member	tf_pc
-# XXX use TRAFRAME_SIZEOF in new code whenever possible
-define	TRAPFRAMESIZE		sizeof(struct trapframe)
-
 struct	cpu_functions
-member	cf_icache_sync_all
 member	cf_idcache_wbinv_all
-member	cf_dcache_wb_range
-member	cf_tlb_flushID_SE
 member	cf_context_switch
 member	cf_sleep
-member	cf_control
 
 struct	cpu_info
 member	ci_curproc
