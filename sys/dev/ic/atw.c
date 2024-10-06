@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.101 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.102 2024/10/06 01:12:15 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -127,7 +127,6 @@
 int atw_bbp_io_enable_delay = 20 * 1000;
 int atw_bbp_io_disable_delay = 2 * 1000;
 int atw_writewep_delay = 1000;
-int atw_beacon_len_adjust = 4;
 int atw_dwelltime = 200;
 int atw_xindiv2 = 0;
 
