@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.150 2024/07/08 15:31:58 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.151 2024/10/07 12:19:52 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1085,11 +1085,11 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		    "pubkey does not match TAL pubkey", fn);
 		goto badcert;
 	}
-	if (p->notbefore >= now) {
+	if (p->notbefore > now) {
 		warnx("%s: certificate not yet valid", fn);
 		goto badcert;
 	}
-	if (p->notafter <= now) {
+	if (p->notafter < now) {
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}
