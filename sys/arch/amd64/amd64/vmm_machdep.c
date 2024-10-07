@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.38 2024/09/26 13:18:25 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.39 2024/10/07 20:30:17 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -7154,16 +7154,6 @@ vmx_dump_vmcs(struct vcpu *vcpu)
 			vmx_dump_vmcs_field(VMCS_EOI_EXIT_BITMAP_3,
 			    "EOI Exit Bitmap 3");
 			DPRINTF("\n");
-		}
-
-		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
-		    IA32_VMX_ENABLE_VM_FUNCTIONS, 1)) {
-			/* We assume all CPUs have the same VMFUNC caps */
-			if (curcpu()->ci_vmm_cap.vcc_vmx.vmx_vm_func & 0x1) {
-				vmx_dump_vmcs_field(VMCS_EPTP_LIST_ADDRESS,
-				    "EPTP List Addr");
-				DPRINTF("\n");
-			}
 		}
 
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
