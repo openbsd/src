@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.768 2024/08/27 12:31:18 sthen Exp $
+$OpenBSD: usbdevs,v 1.769 2024/10/07 13:26:18 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1341,6 +1341,7 @@ product CHENSOURCE CM12402	0x933d	CM12402 Eagle IR Cam
 /* Cherry products */
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
 product CHERRY MY3000HUB	0x0003	My3000 hub
+product CHERRY MOUSE1		0xb091	mouse
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
