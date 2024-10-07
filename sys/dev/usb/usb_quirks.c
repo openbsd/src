@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.79 2024/08/27 12:41:18 sthen Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.80 2024/10/07 13:27:13 sthen Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -154,6 +154,8 @@ const struct usbd_quirk_entry {
 	ANY, { UQ_MS_VENDOR_BUTTONS }},
 
 /* Devices that need their data pipe held open */
+ { USB_VENDOR_CHERRY, USB_PRODUCT_CHERRY_MOUSE1,
+	ANY,	{ UQ_ALWAYS_OPEN }},
  { USB_VENDOR_CHICONY, USB_PRODUCT_CHICONY_OPTMOUSE,
 	ANY,	{ UQ_ALWAYS_OPEN }},
  { USB_VENDOR_HAILUCK, USB_PRODUCT_HAILUCK_KEYBOARD,
