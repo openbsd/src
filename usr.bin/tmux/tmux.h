@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1233 2024/10/04 19:16:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1234 2024/10/07 08:50:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1909,6 +1909,7 @@ struct client {
 	char			*exit_message;
 
 	struct key_table	*keytable;
+	key_code		 last_key;
 
 	uint64_t		 redraw_panes;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.180 2024/10/05 00:32:55 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.181 2024/10/07 08:50:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -572,6 +572,18 @@ const struct options_table_entry options_table[] = {
 		  "If changed, the new value applies only to new panes."
 	},
 
+	{ .name = "initial-repeat-time",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .minimum = 0,
+	  .maximum = 10000,
+	  .default_num = 0,
+	  .unit = "milliseconds",
+	  .text = "Time to wait for a key binding to repeat the first time the "
+	          "key is pressed, if it is bound with the '-r' flag. "
+	          "Subsequent presses use the 'repeat-time' option."
+	},
+
 	{ .name = "key-table",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
@@ -659,7 +671,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .minimum = 0,
-	  .maximum = SHRT_MAX,
+	  .maximum = 10000,
 	  .default_num = 500,
 	  .unit = "milliseconds",
 	  .text = "Time to wait for a key binding to repeat, if it is bound "
