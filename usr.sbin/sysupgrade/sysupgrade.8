@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.19 2024/10/07 13:21:53 deraadt Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.20 2024/10/07 15:57:15 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -79,7 +79,8 @@ When updating to a release or snapshot which lacks the required signify
 key in
 .Pa /etc/signify ,
 the missing key will be downloaded in a secure way.
-In the usual case, the key will already be present because OpenBSD
+In the usual case, the key will already be present because
+.Ox
 releases ship with the current key, the next key, and a collection of
 older keys.
 .Pp
