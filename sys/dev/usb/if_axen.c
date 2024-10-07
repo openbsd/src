@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.33 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.34 2024/10/07 07:35:40 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * ASIX Electronics AX88178a USB 2.0 ethernet and 
+ * ASIX Electronics AX88178a/AX88772d USB 2.0 ethernet and 
  * AX88179/AX88179a USB 3.0 Ethernet driver.
  */
 
@@ -251,6 +251,8 @@ axen_miibus_statchg(struct device *dev)
 			sc->axen_link++;
 			break;
 		    case IFM_1000_T:
+			if ((sc->axen_flags & AX772D) != 0)
+				break;
 			sc->axen_link++;
 			break;
 		    default:
@@ -658,8 +660,14 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	dd = usbd_get_device_descriptor(sc->axen_udev);
-	if (UGETW(dd->bcdDevice) == 0x200)
+	switch (UGETW(dd->bcdDevice)) {
+	case 0x200:
 		sc->axen_flags = AX179A;
+		break;
+	case 0x300:
+		sc->axen_flags = AX772D;
+		break;
+	}
 
 	s = splnet();
 
@@ -683,6 +691,8 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 		printf(" AX88178a");
 	else if (sc->axen_flags & AX179)
 		printf(" AX88179");
+	else if (sc->axen_flags & AX772D)
+		printf(" AX88772D");
 	else
 		printf(" AX88179A");
 	printf(", address %s\n", ether_sprintf(eaddr));
@@ -968,7 +978,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	/* skip pseudo header (2byte) */
 	padlen = 2;
 	/* skip trailer padding (4Byte) for ax88179 */
-	if (!(sc->axen_flags & AX179A))
+	if (!(sc->axen_flags & (AX179A | AX772D)))
 		padlen += 4;
 
 	do {

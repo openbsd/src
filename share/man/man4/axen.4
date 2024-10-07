@@ -1,4 +1,4 @@
-.\"	$OpenBSD: axen.4,v 1.10 2024/01/04 08:41:59 kevlo Exp $
+.\"	$OpenBSD: axen.4,v 1.11 2024/10/07 07:35:40 kevlo Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2024 $
+.Dd $Mdocdate: October 7 2024 $
 .Dt AXEN 4
 .Os
 .Sh NAME
 .Nm axen
-.Nd ASIX Electronics AX88179/AX88179A 10/100/1Gb USB Ethernet device
+.Nd ASIX Electronics AX88179/AX88179A/AX88772D 10/100/1Gb USB Ethernet device
 .Sh SYNOPSIS
 .Cd "axen*   at uhub?"
 .Cd "rgephy* at mii?"
@@ -28,7 +28,7 @@
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the ASIX
-Electronics AX88179/AX88179A USB 3.0 chipset, including the following:
+Electronics AX88179/AX88179A/AX88772D chipset, including the following:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It D-Link DUB-1312
@@ -38,7 +38,13 @@ Electronics AX88179/AX88179A USB 3.0 chipset, including the following:
 .It StarTech USB31000S
 .It TP-LINK UE300C v2
 .It TP-Link UE306
+.It Ugreen CM650-15632
 .El
+.Pp
+The AX88772D is a USB 2.0 device which supports both
+10 and 100Mbps speeds in either full or half duplex.
+The AX88179 and AX88179A are USB 3.0 devices, which contain
+a 10/100/1Gb Ethernet MAC with a GMII/MII interface.
 .Pp
 The
 .Nm

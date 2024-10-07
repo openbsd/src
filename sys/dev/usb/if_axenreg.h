@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axenreg.h,v 1.7 2024/01/04 08:41:59 kevlo Exp $	*/
+/*	$OpenBSD: if_axenreg.h,v 1.8 2024/10/07 07:35:40 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>. All right reserved.
@@ -228,6 +228,7 @@ struct axen_type {
 #define AX178A	0x0001		/* AX88178a */
 #define AX179	0x0002		/* AX88179 */
 #define AX179A	0x0004		/* AX88179a */
+#define AX772D	0x0008		/* AX88772d */
 };
 
 struct axen_softc;
