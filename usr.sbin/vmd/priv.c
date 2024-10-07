@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.25 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: priv.c,v 1.26 2024/10/07 04:29:01 kn Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -83,7 +83,6 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ifgroupreq	 ifgr;
 	struct ifaliasreq	 ifra;
 	struct in6_aliasreq	 in6_ifra;
-	struct if_afreq		 ifar;
 	struct vmop_addr_req	 vareq;
 	struct vmop_addr_result	 varesult;
 	char			 type[IF_NAMESIZE];
@@ -203,19 +202,11 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_warn("SIOCAIFADDR");
 		break;
 	case IMSG_VMDOP_PRIV_IFADDR6:
-		memset(&ifar, 0, sizeof(ifar));
 		memset(&in6_ifra, 0, sizeof(in6_ifra));
 
 		if (vfr.vfr_addr.ss_family != AF_INET6 ||
 		    vfr.vfr_addr.ss_family != vfr.vfr_mask.ss_family)
 			fatalx("%s: invalid address family", __func__);
-
-		/* First enable IPv6 on this interface */
-		strlcpy(ifar.ifar_name, vfr.vfr_name,
-		    sizeof(ifar.ifar_name));
-		ifar.ifar_af = AF_INET6;
-		if (ioctl(env->vmd_fd, SIOCIFAFATTACH, (caddr_t)&ifar) == -1)
-			log_warn("SIOCIFAFATTACH");
 
 		/* Set the interface address */
 		strlcpy(in6_ifra.ifra_name, vfr.vfr_name,
