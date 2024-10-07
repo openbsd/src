@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.18 2024/09/25 16:26:37 florian Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.19 2024/10/07 13:21:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2024 $
+.Dd $Mdocdate: October 7 2024 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -74,6 +74,14 @@ Downgrading is unlikely to work.
 Upgrade to a snapshot.
 The default is to upgrade to the next release.
 .El
+.Pp
+When updating to a release or snapshot which lacks the required signify
+key in
+.Pa /etc/signify ,
+the missing key will be downloaded in a secure way.
+In the usual case, the key will already be present because OpenBSD
+releases ship with the current key, the next key, and a collection of
+older keys.
 .Pp
 See
 .Xr upgrade.site 5
