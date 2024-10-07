@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.102 2024/10/07 12:18:31 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.103 2024/10/07 14:45:33 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -1033,6 +1033,7 @@ x509_seqnum_to_bn(const char *fn, const char *descr, const ASN1_INTEGER *i)
 		goto out;
 	}
 
+	/* Reject values larger than or equal to 2^159. */
 	if (BN_num_bytes(bn) > 20 || BN_is_bit_set(bn, 159)) {
 		warnx("%s: %s should fit in 20 octets", fn, descr);
 		goto out;
