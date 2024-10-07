@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.37 2024/02/22 12:51:50 job Exp $
+# $OpenBSD: Makefile.inc,v 1.38 2024/10/07 12:27:27 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -14,6 +14,7 @@ PROGS += test-rrdp
 PROGS += test-aspa
 PROGS += test-tak
 PROGS += test-spl
+PROGS += test-seqnum
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
@@ -95,6 +96,9 @@ SRCS_test-spl+=	test-spl.c spl.c cms.c x509.c ip.c as.c io.c \
 		constraints-dummy.c repo-dummy.c rfc3779.c
 run-regress-test-spl: test-spl
 	./test-spl -v ${.CURDIR}/../spl/*.spl
+
+SRCS_test-seqnum += test-seqnum.c as.c ip.c encoding.c x509.c print.c validate.c \
+			json.c crl.c
 
 SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c cms.c \
 			rrdp_snapshot.c rrdp_util.c cert.c as.c mft.c io.c \
