@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.132 2023/07/02 19:02:27 cheloha Exp $	*/
+/*	$OpenBSD: apm.c,v 1.133 2024/10/07 01:31:22 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/rwlock.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/clockintr.h>
 #include <sys/device.h>
