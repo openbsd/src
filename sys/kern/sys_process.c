@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.100 2024/10/01 08:28:34 claudio Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.101 2024/10/08 09:05:40 claudio Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -288,10 +288,14 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 	case PT_TRACE_ME:
 		/* Just set the trace flag. */
 		tr = p->p_p;
-		if (ISSET(tr->ps_flags, PS_TRACED))
+		mtx_enter(&tr->ps_mtx);
+		if (ISSET(tr->ps_flags, PS_TRACED)) {
+			mtx_leave(&tr->ps_mtx);
 			return EBUSY;
+		}
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
 		tr->ps_oppid = tr->ps_ppid;
+		mtx_leave(&tr->ps_mtx);
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);
@@ -489,8 +493,10 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 			goto fail;
 #endif
 
+		mtx_enter(&tr->ps_mtx);
 		process_untrace(tr);
 		atomic_clearbits_int(&tr->ps_flags, PS_WAITED);
+		mtx_leave(&tr->ps_mtx);
 
 	sendsig:
 		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
@@ -526,9 +532,11 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
+		mtx_enter(&tr->ps_mtx);
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
 		tr->ps_oppid = tr->ps_ppid;
 		process_reparent(tr, p->p_p);
+		mtx_leave(&tr->ps_mtx);
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);

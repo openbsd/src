@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.234 2024/09/30 12:32:26 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.235 2024/10/08 09:05:40 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -308,9 +308,11 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 			 * Traced processes are killed since their
 			 * existence means someone is screwing up.
 			 */
+			mtx_enter(&qr->ps_mtx);
 			if (qr->ps_flags & PS_TRACED &&
 			    !(qr->ps_flags & PS_EXITING)) {
 				process_untrace(qr);
+				mtx_leave(&qr->ps_mtx);
 
 				/*
 				 * If single threading is active,
@@ -324,6 +326,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 					prsignal(qr, SIGKILL);
 			} else {
 				process_reparent(qr, initprocess);
+				mtx_leave(&qr->ps_mtx);
 			}
 		}
 
@@ -331,9 +334,11 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 * Make sure orphans won't remember the exiting process.
 		 */
 		while ((qr = LIST_FIRST(&pr->ps_orphans)) != NULL) {
+			mtx_enter(&qr->ps_mtx);
 			KASSERT(qr->ps_oppid == pr->ps_pid);
 			qr->ps_oppid = 0;
 			process_clear_orphan(qr);
+			mtx_leave(&qr->ps_mtx);
 		}
 	}
 
@@ -359,11 +364,13 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 * we can wake our original parent to possibly unblock
 		 * wait4() to return ECHILD.
 		 */
+		mtx_enter(&pr->ps_mtx);
 		if (pr->ps_flags & PS_NOZOMBIE) {
 			struct process *ppr = pr->ps_pptr;
 			process_reparent(pr, initprocess);
 			wakeup(ppr);
 		}
+		mtx_leave(&pr->ps_mtx);
 	}
 
 	/* just a thread? check if last one standing. */
@@ -746,14 +753,17 @@ proc_finish_wait(struct proc *waiter, struct process *pr)
 	 * If we got the child via a ptrace 'attach',
 	 * we need to give it back to the old parent.
 	 */
+	mtx_enter(&pr->ps_mtx);
 	if (pr->ps_oppid != 0 && (pr->ps_oppid != pr->ps_ppid) &&
 	   (tr = prfind(pr->ps_oppid))) {
 		pr->ps_oppid = 0;
 		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
 		process_reparent(pr, tr);
+		mtx_leave(&pr->ps_mtx);
 		prsignal(tr, SIGCHLD);
 		wakeup(tr);
 	} else {
+		mtx_leave(&pr->ps_mtx);
 		scheduler_wait_hook(waiter, pr->ps_mainproc);
 		rup = &waiter->p_p->ps_cru;
 		ruadd(rup, pr->ps_ru);
@@ -772,6 +782,7 @@ process_untrace(struct process *pr)
 	struct process *ppr = NULL;
 
 	KASSERT(pr->ps_flags & PS_TRACED);
+	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
 
 	if (pr->ps_oppid != 0 &&
 	    (pr->ps_oppid != pr->ps_ppid))
@@ -814,6 +825,7 @@ process_reparent(struct process *child, struct process *parent)
 		LIST_INSERT_HEAD(&child->ps_pptr->ps_orphans, child, ps_orphan);
 	}
 
+	MUTEX_ASSERT_LOCKED(&child->ps_mtx);
 	child->ps_pptr = parent;
 	child->ps_ppid = parent->ps_pid;
 }

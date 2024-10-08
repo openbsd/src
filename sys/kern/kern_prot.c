@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.82 2023/01/09 02:12:13 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.83 2024/10/08 09:05:40 claudio Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -83,7 +83,9 @@ int
 sys_getppid(struct proc *p, void *v, register_t *retval)
 {
 
+	mtx_enter(&p->p_p->ps_mtx);
 	*retval = p->p_p->ps_ppid;
+	mtx_leave(&p->p_p->ps_mtx);
 	return (0);
 }
 

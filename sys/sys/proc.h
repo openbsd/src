@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.372 2024/10/01 08:28:34 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.373 2024/10/08 09:05:40 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -157,7 +157,7 @@ struct process {
 	TAILQ_HEAD(,proc) ps_threads;	/* [K|m] Threads in this process. */
 
 	LIST_ENTRY(process) ps_pglist;	/* List of processes in pgrp. */
-	struct	process *ps_pptr; 	/* Pointer to parent process. */
+	struct	process *ps_pptr; 	/* [K|m] Pointer to parent process. */
 	LIST_ENTRY(process) ps_sibling;	/* List of sibling processes. */
 	LIST_HEAD(, process) ps_children;/* Pointer to list of children. */
 	LIST_ENTRY(process) ps_hash;    /* Hash chain. */
@@ -176,7 +176,7 @@ struct process {
 	struct	vnode *ps_textvp;	/* Vnode of executable. */
 	struct	filedesc *ps_fd;	/* Ptr to open files structure */
 	struct	vmspace *ps_vmspace;	/* Address space */
-	pid_t	ps_pid;			/* Process identifier. */
+	pid_t	ps_pid;			/* [I] Process identifier. */
 
 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
 	struct	tslpqueue ps_tslpqueue;	/* [p] queue of threads in thrsleep */
@@ -200,8 +200,8 @@ struct process {
 	u_int	ps_xexit;		/* Exit status for wait */
 	int	ps_xsig;		/* Stopping or killing signal */
 
-	pid_t	ps_ppid;		/* [a] Cached parent pid */
-	pid_t	ps_oppid;	 	/* [a] Save parent pid during ptrace. */
+	pid_t	ps_ppid;		/* [K|m] Cached parent pid */
+	pid_t	ps_oppid;	 	/* [K|m] Old parent pid during ptrace */
 	int	ps_ptmask;		/* Ptrace event mask */
 	struct	ptrace_state *ps_ptstat;/* Ptrace state */
 
