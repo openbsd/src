@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.134 2024/08/17 01:55:03 jsg Exp $ */
+/* $OpenBSD: xhci.c,v 1.135 2024/10/08 19:42:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -238,12 +238,12 @@ usbd_dma_contig_alloc(struct usbd_bus *bus, struct usbd_dma_info *dma,
 	dma->size = size;
 
 	error = bus_dmamap_create(dma->tag, size, 1, size, boundary,
-	    BUS_DMA_NOWAIT, &dma->map);
+	    BUS_DMA_NOWAIT | bus->dmaflags, &dma->map);
 	if (error != 0)
 		return (error);
 
 	error = bus_dmamem_alloc(dma->tag, size, alignment, boundary, &dma->seg,
-	    1, &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
+	    1, &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO | bus->dmaflags);
 	if (error != 0)
 		goto destroy;
 
@@ -329,6 +329,7 @@ xhci_init(struct xhci_softc *sc)
 
 	hcr = XREAD4(sc, XHCI_HCCPARAMS);
 	sc->sc_ctxsize = XHCI_HCC_CSZ(hcr) ? 64 : 32;
+	sc->sc_bus.dmaflags |= XHCI_HCC_AC64(hcr) ? BUS_DMA_64BIT : 0;
 	DPRINTF(("%s: %d bytes context\n", DEVNAME(sc), sc->sc_ctxsize));
 
 #ifdef XHCI_DEBUG
