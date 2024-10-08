@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.58 2024/08/28 18:21:15 bluhm Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.59 2024/10/08 19:40:00 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -537,15 +537,18 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
+	paddr_t low, high;
 
-	/*
-	 * XXX in the presence of decent (working) iommus and bouncebuffers
-	 * we can then fallback this allocation to a range of { 0, -1 }.
-	 * However for now  we err on the side of caution and allocate dma
-	 * memory under the 4gig boundary.
-	 */
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, (bus_addr_t)0, (bus_addr_t)0xffffffff));
+	if (flags & BUS_DMA_64BIT) {
+		low = no_constraint.ucr_low;
+		high = no_constraint.ucr_high;
+	} else {
+		low = dma_constraint.ucr_low;
+		high = dma_constraint.ucr_high;
+	}
+
+	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, low, high);
 }
 
 /*
