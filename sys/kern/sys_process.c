@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.101 2024/10/08 09:05:40 claudio Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.102 2024/10/08 12:02:24 claudio Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -294,7 +294,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 			return EBUSY;
 		}
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
-		tr->ps_oppid = tr->ps_ppid;
+		tr->ps_opptr = tr->ps_pptr;
 		mtx_leave(&tr->ps_mtx);
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
@@ -534,7 +534,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 */
 		mtx_enter(&tr->ps_mtx);
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
-		tr->ps_oppid = tr->ps_ppid;
+		tr->ps_opptr = tr->ps_pptr;
 		process_reparent(tr, p->p_p);
 		mtx_leave(&tr->ps_mtx);
 		if (tr->ps_ptstat == NULL)

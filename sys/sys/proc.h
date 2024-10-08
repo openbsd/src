@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.373 2024/10/08 09:05:40 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.374 2024/10/08 12:02:24 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -201,9 +201,9 @@ struct process {
 	int	ps_xsig;		/* Stopping or killing signal */
 
 	pid_t	ps_ppid;		/* [K|m] Cached parent pid */
-	pid_t	ps_oppid;	 	/* [K|m] Old parent pid during ptrace */
 	int	ps_ptmask;		/* Ptrace event mask */
 	struct	ptrace_state *ps_ptstat;/* Ptrace state */
+	struct	process *ps_opptr; 	/* [K|m] Old parent during ptrace. */
 
 	struct	rusage *ps_ru;		/* sum of stats for dead threads. */
 	struct	tusage ps_tu;		/* [m] accumul times of dead threads. */

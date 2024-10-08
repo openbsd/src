@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.266 2024/10/08 09:05:40 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.267 2024/10/08 12:02:24 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 
 	mtx_enter(&pr->ps_mtx);
 	if (pr->ps_flags & PS_TRACED) {
-		pr->ps_oppid = curpr->ps_pid;
+		pr->ps_opptr = curpr;
 		process_reparent(pr, curpr->ps_pptr);
 
 		/*

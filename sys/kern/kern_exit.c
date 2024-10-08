@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.236 2024/10/08 11:57:59 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.237 2024/10/08 12:02:24 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -325,8 +325,8 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 */
 		while ((qr = LIST_FIRST(&pr->ps_orphans)) != NULL) {
 			mtx_enter(&qr->ps_mtx);
-			KASSERT(qr->ps_oppid == pr->ps_pid);
-			qr->ps_oppid = 0;
+			KASSERT(qr->ps_opptr == pr);
+			qr->ps_opptr = NULL;
 			process_clear_orphan(qr);
 			mtx_leave(&qr->ps_mtx);
 		}
@@ -744,9 +744,9 @@ proc_finish_wait(struct proc *waiter, struct process *pr)
 	 * we need to give it back to the old parent.
 	 */
 	mtx_enter(&pr->ps_mtx);
-	if (pr->ps_oppid != 0 && (pr->ps_oppid != pr->ps_ppid) &&
-	   (tr = prfind(pr->ps_oppid))) {
-		pr->ps_oppid = 0;
+	if (pr->ps_opptr != NULL && (pr->ps_opptr != pr->ps_pptr)) {
+		tr = pr->ps_opptr;
+		pr->ps_opptr = NULL;
 		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
 		process_reparent(pr, tr);
 		mtx_leave(&pr->ps_mtx);
@@ -774,12 +774,12 @@ process_untrace(struct process *pr)
 	KASSERT(pr->ps_flags & PS_TRACED);
 	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
 
-	if (pr->ps_oppid != 0 &&
-	    (pr->ps_oppid != pr->ps_ppid))
-		ppr = prfind(pr->ps_oppid);
+	if (pr->ps_opptr != NULL &&
+	    (pr->ps_opptr != pr->ps_pptr))
+		ppr = pr->ps_opptr;
 
 	/* not being traced any more */
-	pr->ps_oppid = 0;
+	pr->ps_opptr = NULL;
 	atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
 	process_reparent(pr, ppr ? ppr : initprocess);
 }
@@ -803,8 +803,8 @@ process_reparent(struct process *child, struct process *parent)
 	if (child->ps_pptr == parent)
 		return;
 
-	KASSERT(child->ps_oppid == 0 ||
-		child->ps_oppid == child->ps_ppid);
+	KASSERT(child->ps_opptr == NULL ||
+		child->ps_opptr == child->ps_pptr);
 
 	LIST_REMOVE(child, ps_sibling);
 	LIST_INSERT_HEAD(&parent->ps_children, child, ps_sibling);
