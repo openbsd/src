@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.84 2022/09/10 20:35:29 miod Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.85 2024/10/08 02:29:10 jsg Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -71,11 +71,9 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#include <sys/sched.h>
 
 #include <uvm/uvm.h>
 
@@ -433,18 +431,6 @@ uvm_atopg(vaddr_t kva)
 	pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg != NULL);
 	return (pg);
-}
-
-void
-uvm_pause(void)
-{
-	static unsigned int toggle;
-	if (toggle++ > 128) {
-		toggle = 0;
-		KERNEL_UNLOCK();
-		KERNEL_LOCK();
-	}
-	sched_pause(preempt);
 }
 
 #ifndef SMALL_KERNEL
