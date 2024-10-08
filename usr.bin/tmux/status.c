@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.247 2024/10/07 12:58:36 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.248 2024/10/08 06:29:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -736,7 +736,7 @@ status_prompt_redraw(struct client *c)
 	struct screen_write_ctx	 ctx;
 	struct session		*s = c->session;
 	struct screen		 old_screen;
-	u_int			 i, lines, offset, left, start, width;
+	u_int			 i, lines, offset, left, start, width, n;
 	u_int			 pcursor, pwidth, promptline;
 	struct grid_cell	 gc;
 	struct format_tree	*ft;
@@ -749,6 +749,12 @@ status_prompt_redraw(struct client *c)
 	if (lines <= 1)
 		lines = 1;
 	screen_init(sl->active, c->tty.sx, lines, 0);
+
+	n = options_get_number(s->options, "prompt-cursor-colour");
+	sl->active->default_ccolour = n;
+	n = options_get_number(s->options, "prompt-cursor-style");
+	screen_set_cursor_style(n, &sl->active->default_cstyle,
+	    &sl->active->default_mode);
 
 	promptline = status_prompt_line_at(c);
 	if (promptline > lines - 1)
