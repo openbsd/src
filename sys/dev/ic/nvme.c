@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.123 2024/09/13 09:57:34 jmatthew Exp $ */
+/*	$OpenBSD: nvme.c,v 1.124 2024/10/08 19:41:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1621,7 +1621,7 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 		goto ndmfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, sc->sc_mps, 0, &ndm->ndm_seg,
-	    1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+	    1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO | BUS_DMA_64BIT) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &ndm->ndm_seg, nsegs, size,
