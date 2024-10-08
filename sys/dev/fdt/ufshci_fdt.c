@@ -1,4 +1,4 @@
-/*      $OpenBSD: ufshci_fdt.c,v 1.1 2024/07/31 10:07:33 mglocker Exp $ */
+/*      $OpenBSD: ufshci_fdt.c,v 1.2 2024/10/08 00:46:29 jsg Exp $ */
 /*
  * Copyright (c) 2024 Marcus Glocker <mglocker@openbsd.org>
  *
@@ -36,7 +36,9 @@ void	ufshci_fdt_attach(struct device *, struct device *, void *);
 const struct cfattach ufshci_fdt_ca = {
 	sizeof(struct ufshci_softc),
 	ufshci_fdt_match,
-	ufshci_fdt_attach
+	ufshci_fdt_attach,
+	NULL,
+	ufshci_activate
 };
 
 int

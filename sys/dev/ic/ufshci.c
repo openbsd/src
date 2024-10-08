@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.41 2024/08/30 18:22:41 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.42 2024/10/08 00:46:29 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1380,8 +1380,9 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 }
 
 int
-ufshci_activate(struct ufshci_softc *sc, int act)
+ufshci_activate(struct device *self, int act)
 {
+	struct ufshci_softc *sc = (struct ufshci_softc *)self;
 	int rv = 0;
 
 	switch (act) {

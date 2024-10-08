@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcivar.h,v 1.9 2024/05/29 00:48:15 jsg Exp $ */
+/*	$OpenBSD: ufshcivar.h,v 1.10 2024/10/08 00:46:29 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -83,4 +83,4 @@ struct ufshci_softc {
 
 int	ufshci_intr(void *);
 int	ufshci_attach(struct ufshci_softc *);
-int	ufshci_activate(struct ufshci_softc *, int);
+int	ufshci_activate(struct device *, int);

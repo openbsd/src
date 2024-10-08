@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci_acpi.c,v 1.2 2024/01/06 17:47:43 mglocker Exp $ */
+/*	$OpenBSD: ufshci_acpi.c,v 1.3 2024/10/08 00:46:29 jsg Exp $ */
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
  *
@@ -45,7 +45,8 @@ int	ufshci_acpi_match(struct device *, void *, void *);
 void	ufshci_acpi_attach(struct device *, struct device *, void *);
 
 const struct cfattach ufshci_acpi_ca = {
-	sizeof(struct ufshci_acpi_softc), ufshci_acpi_match, ufshci_acpi_attach
+	sizeof(struct ufshci_acpi_softc), ufshci_acpi_match, ufshci_acpi_attach,
+	NULL, ufshci_activate
 };
 
 const char *ufshci_hids[] = {
