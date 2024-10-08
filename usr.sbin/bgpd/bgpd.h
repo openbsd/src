@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.497 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.498 2024/10/08 12:28:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -569,6 +569,7 @@ enum rtr_error {
 struct rtr_config {
 	SIMPLEQ_ENTRY(rtr_config)	entry;
 	char				descr[PEER_DESCR_LEN];
+	struct auth_config		auth;
 	struct bgpd_addr		remote_addr;
 	struct bgpd_addr		local_addr;
 	uint32_t			id;
@@ -645,6 +646,8 @@ enum imsg_type {
 	IMSG_SOCKET_CONN,
 	IMSG_SOCKET_CONN_CTL,
 	IMSG_SOCKET_CONN_RTR,
+	IMSG_SOCKET_SETUP,
+	IMSG_SOCKET_TEARDOWN,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_RIB,
 	IMSG_RECONF_PEER,

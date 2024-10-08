@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.40 2024/09/10 08:41:13 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.41 2024/10/08 12:28:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1130,6 +1130,8 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 			rs->r.wpos = 0;
 			close(rs->fd);
 			rs->fd = -1;
+			rtr_imsg_compose(IMSG_SOCKET_TEARDOWN, rs->id, 0,
+			    NULL, 0);
 		}
 		/* try to reopen session */
 		if (!rs->errored)
@@ -1158,7 +1160,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		case RTR_STATE_CLOSED:
 		case RTR_STATE_NEGOTIATION:
 			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
-			rtr_imsg_compose(IMSG_SOCKET_CONN, rs->id, 0, NULL, 0);
+			rtr_imsg_compose(IMSG_SOCKET_SETUP, rs->id, 0, NULL, 0);
 			break;
 		case RTR_STATE_ESTABLISHED:
 			if (rs->session_id == -1)

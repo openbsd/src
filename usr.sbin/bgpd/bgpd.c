@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.269 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.270 2024/10/08 12:28:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,8 +53,9 @@ int		control_setup(struct bgpd_config *);
 static void	getsockpair(int [2]);
 int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *,
 		    struct imsgbuf *);
-void		bgpd_rtr_connect(struct rtr_config *);
-void		bgpd_rtr_connect_done(int, struct bgpd_config *);
+void		bgpd_rtr_conn_setup(struct rtr_config *);
+void		bgpd_rtr_conn_setup_done(int, struct bgpd_config *);
+void		bgpd_rtr_conn_teardown(uint32_t);
 
 int			 cflags;
 volatile sig_atomic_t	 mrtdump;
@@ -71,12 +72,15 @@ char			*rcname;
 
 struct connect_elm {
 	TAILQ_ENTRY(connect_elm)	entry;
+	struct auth_state		auth_state;
 	uint32_t			id;
 	int				fd;
 };
 
 TAILQ_HEAD(, connect_elm)	connect_queue = \
-				    TAILQ_HEAD_INITIALIZER(connect_queue);
+				    TAILQ_HEAD_INITIALIZER(connect_queue),
+				socket_queue = \
+				    TAILQ_HEAD_INITIALIZER(socket_queue);
 u_int				connect_cnt;
 #define MAX_CONNECT_CNT		32
 
@@ -404,7 +408,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 		for (i = PFD_CONNECT_START; i < npfd; i++)
 			if (pfd[i].revents != 0)
-				bgpd_rtr_connect_done(pfd[i].fd, conf);
+				bgpd_rtr_conn_setup_done(pfd[i].fd, conf);
 
  next_loop:
 		if (reconfig) {
@@ -657,7 +661,7 @@ send_config(struct bgpd_config *conf)
 		if (p->reconf_action == RECONF_REINIT)
 			if (pfkey_establish(&p->auth_state, &p->auth_conf,
 			    session_localaddr(p), &p->conf.remote_addr) == -1)
-				log_peer_warnx(&p->conf, "pfkey setup failed");
+				log_peer_warnx(&p->conf, "auth setup failed");
 	}
 
 	/* networks go via kroute to the RDE */
@@ -1053,19 +1057,27 @@ dispatch_imsg(struct imsgbuf *imsgbuf, int idx, struct bgpd_config *conf)
 				reconfpending = 3; /* expecting 2 DONE msg */
 			}
 			break;
-		case IMSG_SOCKET_CONN:
+		case IMSG_SOCKET_SETUP:
 			if (idx != PFD_PIPE_RTR) {
 				log_warnx("connect request not from RTR");
 			} else {
+				uint32_t rtrid = imsg_get_id(&imsg);
 				SIMPLEQ_FOREACH(r, &conf->rtrs, entry) {
-					if (imsg_get_id(&imsg) == r->id)
+					if (rtrid == r->id)
 						break;
 				}
 				if (r == NULL)
-					log_warnx("unknown rtr id %d",
-					    imsg_get_id(&imsg));
+					log_warnx("unknown rtr id %d", rtrid);
 				else
-					bgpd_rtr_connect(r);
+					bgpd_rtr_conn_setup(r);
+			}
+			break;
+		case IMSG_SOCKET_TEARDOWN:
+			if (idx != PFD_PIPE_RTR) {
+				log_warnx("connect request not from RTR");
+			} else {
+				uint32_t rtrid = imsg_get_id(&imsg);
+				bgpd_rtr_conn_teardown(rtrid);
 			}
 			break;
 		case IMSG_CTL_SHOW_RTR:
@@ -1358,7 +1370,7 @@ imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde, struct imsgbuf *rtr)
 }
 
 void
-bgpd_rtr_connect(struct rtr_config *r)
+bgpd_rtr_conn_setup(struct rtr_config *r)
 {
 	struct connect_elm *ce;
 	struct sockaddr *sa;
@@ -1377,13 +1389,16 @@ bgpd_rtr_connect(struct rtr_config *r)
 		return;
 	}
 
+	if (pfkey_establish(&ce->auth_state, &r->auth,
+	    &r->local_addr, &r->remote_addr) == -1)
+		log_warnx("rtr %s: pfkey setup failed", r->descr);
+
 	ce->id = r->id;
 	ce->fd = socket(aid2af(r->remote_addr.aid),
 	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (ce->fd == -1) {
 		log_warn("rtr %s", r->descr);
-		free(ce);
-		return;
+		goto fail;
 	}
 
 	switch (r->remote_addr.aid) {
@@ -1409,13 +1424,14 @@ bgpd_rtr_connect(struct rtr_config *r)
 		return;
 	}
 
+	if (tcp_md5_set(ce->fd, &r->auth, &r->remote_addr) == -1)
+		log_warn("rtr %s: setting md5sig", r->descr);
+
 	if ((sa = addr2sa(&r->local_addr, 0, &len)) != NULL) {
 		if (bind(ce->fd, sa, len) == -1) {
 			log_warn("rtr %s: bind to %s", r->descr,
 			    log_addr(&r->local_addr));
-			close(ce->fd);
-			free(ce);
-			return;
+			goto fail;
 		}
 	}
 
@@ -1424,21 +1440,25 @@ bgpd_rtr_connect(struct rtr_config *r)
 		if (errno != EINPROGRESS) {
 			log_warn("rtr %s: connect to %s:%u", r->descr,
 			    log_addr(&r->remote_addr), r->remote_port);
-			close(ce->fd);
-			free(ce);
-			return;
+			goto fail;
 		}
 		TAILQ_INSERT_TAIL(&connect_queue, ce, entry);
 		connect_cnt++;
 		return;
 	}
 
-	imsg_compose(ibuf_rtr, IMSG_SOCKET_CONN, ce->id, 0, ce->fd, NULL, 0);
+	imsg_compose(ibuf_rtr, IMSG_SOCKET_SETUP, ce->id, 0, ce->fd, NULL, 0);
+	TAILQ_INSERT_TAIL(&socket_queue, ce, entry);
+	return;
+
+ fail:
+	if (ce->fd != -1)
+		close(ce->fd);
 	free(ce);
 }
 
 void
-bgpd_rtr_connect_done(int fd, struct bgpd_config *conf)
+bgpd_rtr_conn_setup_done(int fd, struct bgpd_config *conf)
 {
 	struct rtr_config *r;
 	struct connect_elm *ce;
@@ -1477,11 +1497,26 @@ bgpd_rtr_connect_done(int fd, struct bgpd_config *conf)
 		goto fail;
 	}
 
-	imsg_compose(ibuf_rtr, IMSG_SOCKET_CONN, ce->id, 0, ce->fd, NULL, 0);
-	free(ce);
+	imsg_compose(ibuf_rtr, IMSG_SOCKET_SETUP, ce->id, 0, ce->fd, NULL, 0);
+	TAILQ_INSERT_TAIL(&socket_queue, ce, entry);
 	return;
 
 fail:
 	close(fd);
 	free(ce);
+}
+
+void
+bgpd_rtr_conn_teardown(uint32_t id)
+{
+	struct connect_elm *ce;
+
+	TAILQ_FOREACH(ce, &socket_queue, entry) {
+		if (ce->id == id) {
+			pfkey_remove(&ce->auth_state);
+			TAILQ_REMOVE(&socket_queue, ce, entry);
+			free(ce);
+			return;
+		}
+	}
 }

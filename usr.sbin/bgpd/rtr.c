@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.23 2024/09/10 08:37:52 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.24 2024/10/08 12:28:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -338,15 +338,15 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				fatal(NULL);
 			imsg_init(ibuf_rde, fd);
 			break;
-		case IMSG_SOCKET_CONN:
+		case IMSG_SOCKET_SETUP:
 			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive imsg fd "
 				    "but didn't receive any");
 				break;
 			}
 			if ((rs = rtr_get(rtrid)) == NULL) {
-				log_warnx("IMSG_SOCKET_CONN: unknown rtr id %d",
-				    rtrid);
+				log_warnx("IMSG_SOCKET_SETUP: "
+				    "unknown rtr id %d", rtrid);
 				close(fd);
 				break;
 			}
