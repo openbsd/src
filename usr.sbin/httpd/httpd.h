@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.164 2023/11/08 19:19:10 millert Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.165 2024/10/08 05:28:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -164,11 +164,6 @@ struct control_sock {
 	TAILQ_ENTRY(control_sock) cs_entry;
 };
 TAILQ_HEAD(control_socks, control_sock);
-
-extern struct {
-	struct event	 ev;
-	int		 fd;
-} control_state;
 
 struct imsgev {
 	struct imsgbuf		 ibuf;

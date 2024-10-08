@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.274 2024/08/10 05:47:29 tb Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.275 2024/10/08 05:28:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -912,11 +912,6 @@ struct control_sock {
 	TAILQ_ENTRY(control_sock) cs_entry;
 };
 TAILQ_HEAD(control_socks, control_sock);
-
-extern struct {
-	struct event	 ev;
-	int		 fd;
-} control_state;
 
 struct imsgev {
 	struct imsgbuf		 ibuf;
