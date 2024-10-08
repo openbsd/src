@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.33 2024/10/01 09:22:25 claudio Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.34 2024/10/08 11:57:59 claudio Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ void	 addupc_task(struct proc *, u_long, u_int);
 struct clockrequest;
 void	 profclock(struct clockrequest *, void *, void *);
 void	 tuagg_add_process(struct process *, struct proc *);
+void	 tuagg_add_runtime(void);
 struct tusage;
 void	 tuagg_get_proc(struct tusage *, struct proc *);
 void	 tuagg_get_process(struct tusage *, struct process *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.90 2024/10/03 10:20:05 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.91 2024/10/08 11:57:59 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -441,6 +441,37 @@ tuagg_add_process(struct process *pr, struct proc *p)
 	/* Now reset CPU time usage for the thread. */
 	timespecclear(&p->p_tu.tu_runtime);
 	p->p_tu.tu_uticks = p->p_tu.tu_sticks = p->p_tu.tu_iticks = 0;
+}
+
+void
+tuagg_add_runtime(void)
+{
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct proc *p = curproc;
+	struct timespec ts;
+
+	/*
+	 * Compute the amount of time during which the current
+	 * process was running, and add that to its total so far.
+	 */
+	nanouptime(&ts);
+	if (timespeccmp(&ts, &spc->spc_runtime, <)) {
+#if 0
+		printf("uptime is not monotonic! "
+		    "ts=%lld.%09lu, runtime=%lld.%09lu\n",
+		    (long long)tv.tv_sec, tv.tv_nsec,
+		    (long long)spc->spc_runtime.tv_sec,
+		    spc->spc_runtime.tv_nsec);
+#endif
+		timespecclear(&ts);
+	} else {
+		timespecsub(&ts, &spc->spc_runtime, &ts);
+	}
+	/* update spc_runtime */
+	spc->spc_runtime = ts;
+	tu_enter(&p->p_tu);
+	timespecadd(&p->p_tu.tu_runtime, &ts, &p->p_tu.tu_runtime);
+	tu_leave(&p->p_tu);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.235 2024/10/08 09:05:40 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.236 2024/10/08 11:57:59 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 {
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
-	struct timespec ts, pts;
 
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
@@ -172,16 +171,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	}
 
 	/* proc is off ps_threads list so update accounting of process now */
-	nanouptime(&ts);
-	if (timespeccmp(&ts, &curcpu()->ci_schedstate.spc_runtime, <))
-		timespecclear(&pts);
-	else
-		timespecsub(&ts, &curcpu()->ci_schedstate.spc_runtime, &pts);
-	tu_enter(&p->p_tu);
-	timespecadd(&p->p_tu.tu_runtime, &pts, &p->p_tu.tu_runtime);
-	tu_leave(&p->p_tu);
-	/* adjust spc_runtime to not double account the runtime from above */
-	curcpu()->ci_schedstate.spc_runtime = ts;
+	tuagg_add_runtime();
 	tuagg_add_process(p->p_p, p);
 
 	if ((p->p_flag & P_THREAD) == 0) {
