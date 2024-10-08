@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.38 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.39 2024/10/08 02:58:26 jsg Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -92,9 +92,6 @@ int	ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 /* ext2fs_subr.c */
 int	ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
 int	ext2fs_vinit(struct mount *, struct vnode **);
-#ifdef DIAGNOSTIC
-void	ext2fs_checkoverlap(struct buf *, struct inode *);
-#endif
 
 /* ext2fs_vfsops.c */
 int	ext2fs_mountroot(void);

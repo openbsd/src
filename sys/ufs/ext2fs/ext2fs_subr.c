@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.37 2021/10/20 06:35:39 semarie Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.38 2024/10/08 02:58:26 jsg Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -109,37 +109,6 @@ ext2fs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 	return (0);
 }
 #endif
-
-#if defined(_KERNEL) && defined(DIAGNOSTIC)
-void
-ext2fs_checkoverlap(struct buf *bp, struct inode *ip)
-{
-	struct buf *ep;
-	struct vnode *vp;
-	daddr_t start, last;
-
-	start = bp->b_blkno;
-	last = start + btodb(bp->b_bcount) - 1;
-	LIST_FOREACH(ep, &bufhead, b_list) {
-		if (ep == bp || (ep->b_flags & B_INVAL) ||
-			ep->b_vp == NULLVP)
-			continue;
-		if (VOP_BMAP(ep->b_vp, 0, &vp, NULL, NULL))
-			continue;
-		if (vp != ip->i_devvp)
-			continue;
-		/* look for overlap */
-		if (ep->b_bcount == 0 || ep->b_blkno > last ||
-			ep->b_blkno + btodb(ep->b_bcount) <= start)
-			continue;
-		vprint("Disk overlap", vp);
-		printf("\tstart %lld, end %lld overlap start %lld, end %lld\n",
-			start, last, (long long)ep->b_blkno,
-			(long long)(ep->b_blkno + btodb(ep->b_bcount) - 1));
-		panic("Disk buffer overlap");
-	}
-}
-#endif /* DIAGNOSTIC */
 
 /*
  * Initialize the vnode associated with a new inode, handle aliased vnodes.

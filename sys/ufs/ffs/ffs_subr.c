@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.34 2021/10/20 06:35:39 semarie Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.35 2024/10/08 02:58:26 jsg Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -118,38 +118,6 @@ ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt)
 		}
 	}
 }
-
-#if defined(_KERNEL) && defined(DIAGNOSTIC)
-void
-ffs_checkoverlap(struct buf *bp, struct inode *ip)
-{
-	daddr_t start, last;
-	struct vnode *vp;
-	struct buf *ep;
-
-	start = bp->b_blkno;
-	last = start + btodb(bp->b_bcount) - 1;
-	LIST_FOREACH(ep, &bufhead, b_list) {
-		if (ep == bp || (ep->b_flags & B_INVAL) ||
-		    ep->b_vp == NULLVP)
-			continue;
-		if (VOP_BMAP(ep->b_vp, 0, &vp, NULL, NULL))
-			continue;
-		if (vp != ip->i_devvp)
-			continue;
-		/* look for overlap */
-		if (ep->b_bcount == 0 || ep->b_blkno > last ||
-		    ep->b_blkno + btodb(ep->b_bcount) <= start)
-			continue;
-		vprint("Disk overlap", vp);
-		(void)printf("\tstart %lld, end %lld overlap start %llu, "
-		    "end %llu\n", (long long)start, (long long)last,
-		    (long long)ep->b_blkno,
-		    (long long)(ep->b_blkno + btodb(ep->b_bcount) - 1));
-		panic("Disk buffer overlap");
-	}
-}
-#endif /* DIAGNOSTIC */
 
 /*
  * block operations

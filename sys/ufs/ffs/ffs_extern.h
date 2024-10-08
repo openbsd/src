@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.50 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.51 2024/10/08 02:58:26 jsg Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -125,9 +125,6 @@ int ffs_truncate(struct inode *, off_t, int, struct ucred *);
 /* ffs_subr.c */
 int  ffs_bufatoff(struct inode *, off_t, char **, struct buf **);
 void ffs_fragacct(struct fs *, int, int32_t[], int);
-#ifdef DIAGNOSTIC
-void	ffs_checkoverlap(struct buf *, struct inode *);
-#endif
 int  ffs_isfreeblock(struct fs *, u_char *, daddr_t);
 int  ffs_isblock(struct fs *, u_char *, daddr_t);
 void ffs_clrblock(struct fs *, u_char *, daddr_t);
