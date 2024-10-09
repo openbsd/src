@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.21 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.22 2024/10/09 08:01:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -592,6 +592,9 @@ SSL_alert_desc_string(int value)
 	case SSL_AD_BAD_RECORD_MAC:
 		str = "BM";
 		break;
+	case SSL_AD_RECORD_OVERFLOW:
+		str = "RO";
+		break;
 	case SSL_AD_DECOMPRESSION_FAILURE:
 		str = "DF";
 		break;
@@ -616,9 +619,6 @@ SSL_alert_desc_string(int value)
 	case SSL_AD_ILLEGAL_PARAMETER:
 		str = "IP";
 		break;
-	case SSL_AD_RECORD_OVERFLOW:
-		str = "RO";
-		break;
 	case SSL_AD_UNKNOWN_CA:
 		str = "CA";
 		break;
@@ -639,6 +639,9 @@ SSL_alert_desc_string(int value)
 		break;
 	case SSL_AD_INTERNAL_ERROR:
 		str = "IE";
+		break;
+	case SSL_AD_INAPPROPRIATE_FALLBACK:
+		str = "IF";
 		break;
 	case SSL_AD_USER_CANCELLED:
 		str = "US";
@@ -667,6 +670,12 @@ SSL_alert_desc_string(int value)
 	case SSL_AD_UNKNOWN_PSK_IDENTITY:
 		str = "UP";
 		break;
+	case SSL_AD_CERTIFICATE_REQUIRED:
+		str = "CQ"; /* XXX */
+		break;
+	case SSL_AD_NO_APPLICATION_PROTOCOL:
+		str = "AP";
+		break;
 	default:
 		str = "UK";
 		break;
@@ -689,6 +698,9 @@ SSL_alert_desc_string_long(int value)
 		break;
 	case SSL_AD_BAD_RECORD_MAC:
 		str = "bad record mac";
+		break;
+	case SSL_AD_RECORD_OVERFLOW:
+		str = "record overflow";
 		break;
 	case SSL_AD_DECOMPRESSION_FAILURE:
 		str = "decompression failure";
@@ -714,9 +726,6 @@ SSL_alert_desc_string_long(int value)
 	case SSL_AD_ILLEGAL_PARAMETER:
 		str = "illegal parameter";
 		break;
-	case SSL_AD_RECORD_OVERFLOW:
-		str = "record overflow";
-		break;
 	case SSL_AD_UNKNOWN_CA:
 		str = "unknown CA";
 		break;
@@ -737,6 +746,9 @@ SSL_alert_desc_string_long(int value)
 		break;
 	case SSL_AD_INTERNAL_ERROR:
 		str = "internal error";
+		break;
+	case SSL_AD_INAPPROPRIATE_FALLBACK:
+		str = "inappropriate fallback";
 		break;
 	case SSL_AD_USER_CANCELLED:
 		str = "user canceled";
@@ -764,6 +776,12 @@ SSL_alert_desc_string_long(int value)
 		break;
 	case SSL_AD_UNKNOWN_PSK_IDENTITY:
 		str = "unknown PSK identity";
+		break;
+	case SSL_AD_CERTIFICATE_REQUIRED:
+		str = "certificate required";
+		break;
+	case SSL_AD_NO_APPLICATION_PROTOCOL:
+		str = "no application protocol";
 		break;
 	default:
 		str = "unknown";
