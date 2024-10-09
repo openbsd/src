@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.340 2024/10/09 08:39:49 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.341 2024/10/09 08:58:19 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -840,6 +840,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			SCHED_UNLOCK();
 
 			signum = pr->ps_xsig;
+			pr->ps_xsig = 0;
 			if ((p->p_flag & P_TRACESINGLE) == 0)
 				single_thread_clear(p, 0);
 			atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);
@@ -1362,6 +1363,7 @@ cursig(struct proc *p, struct sigctx *sctx)
 			 * those are not true.
 			 */
 			signum = pr->ps_xsig;
+			pr->ps_xsig = 0;
 			mask = sigmask(signum);
 			setsigctx(p, signum, sctx);
 			if (!((pr->ps_flags & PS_TRACED) == 0 ||
