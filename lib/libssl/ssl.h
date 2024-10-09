@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.243 2024/10/09 08:00:29 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.244 2024/10/09 10:27:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2268,7 +2268,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST		 157
 #define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 233
 #define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 234
-#define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 235
 #define SSL_R_UNABLE_TO_DECODE_DH_CERTS			 236
 #define SSL_R_UNABLE_TO_DECODE_ECDH_CERTS		 313
 #define SSL_R_UNABLE_TO_EXTRACT_PUBLIC_KEY		 237
