@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.22 2022/10/08 19:46:52 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.23 2024/10/09 00:38:25 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -51,7 +51,8 @@ int	sdhc_acpi_match(struct device *, void *, void *);
 void	sdhc_acpi_attach(struct device *, struct device *, void *);
 
 const struct cfattach sdhc_acpi_ca = {
-	sizeof(struct sdhc_acpi_softc), sdhc_acpi_match, sdhc_acpi_attach
+	sizeof(struct sdhc_acpi_softc), sdhc_acpi_match, sdhc_acpi_attach,
+	NULL, sdhc_activate
 };
 
 const char *sdhc_hids[] = {

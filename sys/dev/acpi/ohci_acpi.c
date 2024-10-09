@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_acpi.c,v 1.2 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: ohci_acpi.c,v 1.3 2024/10/09 00:38:25 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -47,7 +47,8 @@ int	ohci_acpi_match(struct device *, void *, void *);
 void	ohci_acpi_attach(struct device *, struct device *, void *);
 
 const struct cfattach ohci_acpi_ca = {
-	sizeof(struct ohci_acpi_softc), ohci_acpi_match, ohci_acpi_attach
+	sizeof(struct ohci_acpi_softc), ohci_acpi_match, ohci_acpi_attach,
+	NULL, ohci_activate
 };
 
 void	ohci_acpi_attach_deferred(struct device *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi_acpi.c,v 1.5 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: ipmi_acpi.c,v 1.6 2024/10/09 00:38:25 jsg Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -55,6 +55,7 @@ struct ipmi_acpi_softc {
 
 const struct cfattach ipmi_acpi_ca = {
 	sizeof(struct ipmi_acpi_softc), ipmi_acpi_match, ipmi_acpi_attach,
+	NULL, ipmi_activate
 };
 
 const char *ipmi_acpi_hids[] = { ACPI_DEV_IPMI, NULL };

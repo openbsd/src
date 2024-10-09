@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.12 2024/06/19 21:31:10 patrick Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.13 2024/10/09 00:38:26 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -47,7 +47,8 @@ int	xhci_acpi_match(struct device *, void *, void *);
 void	xhci_acpi_attach(struct device *, struct device *, void *);
 
 const struct cfattach xhci_acpi_ca = {
-	sizeof(struct xhci_acpi_softc), xhci_acpi_match, xhci_acpi_attach
+	sizeof(struct xhci_acpi_softc), xhci_acpi_match, xhci_acpi_attach,
+	NULL, xhci_activate
 };
 
 const char *xhci_hids[] = {

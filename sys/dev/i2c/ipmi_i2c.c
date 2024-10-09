@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi_i2c.c,v 1.5 2024/07/22 14:03:22 jsg Exp $	*/
+/*	$OpenBSD: ipmi_i2c.c,v 1.6 2024/10/09 00:38:26 jsg Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,7 +56,8 @@ int	ipmi_i2c_match(struct device *, void *, void *);
 void	ipmi_i2c_attach(struct device *, struct device *, void *);
 
 const struct cfattach ipmi_i2c_ca = {
-	sizeof(struct ipmi_i2c_softc), ipmi_i2c_match, ipmi_i2c_attach
+	sizeof(struct ipmi_i2c_softc), ipmi_i2c_match, ipmi_i2c_attach,
+	NULL, ipmi_activate
 };
 
 int	ipmi_i2c_get_interface_caps(struct ipmi_i2c_softc *);
