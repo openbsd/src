@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.339 2024/10/01 08:28:34 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.340 2024/10/09 08:39:49 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -899,6 +899,16 @@ void
 psignal(struct proc *p, int signum)
 {
 	ptsignal(p, signum, SPROCESS);
+}
+
+void
+prsignal(struct process *pr, int signum)
+{
+	/* Ignore signal if the target process is exiting */
+	if (pr->ps_flags & PS_EXITING) {
+		return;
+	}
+	ptsignal(TAILQ_FIRST(&pr->ps_threads), signum, SPROCESS);
 }
 
 /*
