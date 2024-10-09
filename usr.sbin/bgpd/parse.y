@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.469 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.470 2024/10/09 10:01:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -187,6 +187,7 @@ static int	 push_unary_numop(enum comp_ops, long long);
 static int	 push_binary_numop(enum comp_ops, long long, long long);
 static int	 geticmptypebyname(char *, uint8_t);
 static int	 geticmpcodebyname(u_long, char *, uint8_t);
+static int	 merge_auth_conf(struct auth_config *, struct auth_config *);
 
 static struct bgpd_config	*conf;
 static struct network_head	*netconf;
@@ -228,6 +229,7 @@ typedef struct {
 		}			prefix;
 		struct filter_prefixlen	prefixlen;
 		struct prefixset_item	*prefixset_item;
+		struct auth_config	authconf;
 		struct {
 			enum auth_enc_alg	enc_alg;
 			uint8_t			enc_key_len;
@@ -293,6 +295,7 @@ typedef struct {
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l filter_prefix_h
 %type	<v.filter_prefix>	filter_prefix_m
 %type	<v.u8>			unaryop equalityop binaryop filter_as_type
+%type	<v.authconf>		authconf
 %type	<v.encspec>		encspec
 %type	<v.aspa_elm>		aspa_tas aspa_tas_l
 %%
@@ -731,6 +734,10 @@ rtropt		: DESCR STRING		{
 				YYERROR;
 			}
 			currtr->min_version = $2;
+		}
+		| authconf {
+			if (merge_auth_conf(&currtr->auth, &$1) == 0)
+				YYERROR;
 		}
 		;
 
@@ -2075,142 +2082,9 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.max_out_prefix = $2;
 			curpeer->conf.max_out_prefix_restart = $4;
 		}
-		| TCP MD5SIG PASSWORD string {
-			if (curpeer->auth_conf.method) {
-				yyerror("auth method cannot be redefined");
-				free($4);
+		| authconf {
+			if (merge_auth_conf(&curpeer->auth_conf, &$1) == 0)
 				YYERROR;
-			}
-			if (strlcpy(curpeer->auth_conf.md5key, $4,
-			    sizeof(curpeer->auth_conf.md5key)) >=
-			    sizeof(curpeer->auth_conf.md5key)) {
-				yyerror("tcp md5sig password too long: max %zu",
-				    sizeof(curpeer->auth_conf.md5key) - 1);
-				free($4);
-				YYERROR;
-			}
-			curpeer->auth_conf.method = AUTH_MD5SIG;
-			curpeer->auth_conf.md5key_len = strlen($4);
-			free($4);
-		}
-		| TCP MD5SIG KEY string {
-			if (curpeer->auth_conf.method) {
-				yyerror("auth method cannot be redefined");
-				free($4);
-				YYERROR;
-			}
-
-			if (str2key($4, curpeer->auth_conf.md5key,
-			    sizeof(curpeer->auth_conf.md5key)) == -1) {
-				free($4);
-				YYERROR;
-			}
-			curpeer->auth_conf.method = AUTH_MD5SIG;
-			curpeer->auth_conf.md5key_len = strlen($4) / 2;
-			free($4);
-		}
-		| IPSEC espah IKE {
-			if (curpeer->auth_conf.method) {
-				yyerror("auth method cannot be redefined");
-				YYERROR;
-			}
-			if ($2)
-				curpeer->auth_conf.method = AUTH_IPSEC_IKE_ESP;
-			else
-				curpeer->auth_conf.method = AUTH_IPSEC_IKE_AH;
-		}
-		| IPSEC espah inout SPI NUMBER STRING STRING encspec {
-			enum auth_alg	auth_alg;
-			uint8_t		keylen;
-
-			if (curpeer->auth_conf.method &&
-			    (((curpeer->auth_conf.spi_in && $3 == 1) ||
-			    (curpeer->auth_conf.spi_out && $3 == 0)) ||
-			    ($2 == 1 && curpeer->auth_conf.method !=
-			    AUTH_IPSEC_MANUAL_ESP) ||
-			    ($2 == 0 && curpeer->auth_conf.method !=
-			    AUTH_IPSEC_MANUAL_AH))) {
-				yyerror("auth method cannot be redefined");
-				free($6);
-				free($7);
-				YYERROR;
-			}
-
-			if (!strcmp($6, "sha1")) {
-				auth_alg = AUTH_AALG_SHA1HMAC;
-				keylen = 20;
-			} else if (!strcmp($6, "md5")) {
-				auth_alg = AUTH_AALG_MD5HMAC;
-				keylen = 16;
-			} else {
-				yyerror("unknown auth algorithm \"%s\"", $6);
-				free($6);
-				free($7);
-				YYERROR;
-			}
-			free($6);
-
-			if (strlen($7) / 2 != keylen) {
-				yyerror("auth key len: must be %u bytes, "
-				    "is %zu bytes", keylen, strlen($7) / 2);
-				free($7);
-				YYERROR;
-			}
-
-			if ($2)
-				curpeer->auth_conf.method =
-				    AUTH_IPSEC_MANUAL_ESP;
-			else {
-				if ($8.enc_alg) {
-					yyerror("\"ipsec ah\" doesn't take "
-					    "encryption keys");
-					free($7);
-					YYERROR;
-				}
-				curpeer->auth_conf.method =
-				    AUTH_IPSEC_MANUAL_AH;
-			}
-
-			if ($5 <= SPI_RESERVED_MAX || $5 > UINT_MAX) {
-				yyerror("bad spi number %lld", $5);
-				free($7);
-				YYERROR;
-			}
-
-			if ($3 == 1) {
-				if (str2key($7, curpeer->auth_conf.auth_key_in,
-				    sizeof(curpeer->auth_conf.auth_key_in)) ==
-				    -1) {
-					free($7);
-					YYERROR;
-				}
-				curpeer->auth_conf.spi_in = $5;
-				curpeer->auth_conf.auth_alg_in = auth_alg;
-				curpeer->auth_conf.enc_alg_in = $8.enc_alg;
-				memcpy(&curpeer->auth_conf.enc_key_in,
-				    &$8.enc_key,
-				    sizeof(curpeer->auth_conf.enc_key_in));
-				curpeer->auth_conf.enc_keylen_in =
-				    $8.enc_key_len;
-				curpeer->auth_conf.auth_keylen_in = keylen;
-			} else {
-				if (str2key($7, curpeer->auth_conf.auth_key_out,
-				    sizeof(curpeer->auth_conf.auth_key_out)) ==
-				    -1) {
-					free($7);
-					YYERROR;
-				}
-				curpeer->auth_conf.spi_out = $5;
-				curpeer->auth_conf.auth_alg_out = auth_alg;
-				curpeer->auth_conf.enc_alg_out = $8.enc_alg;
-				memcpy(&curpeer->auth_conf.enc_key_out,
-				    &$8.enc_key,
-				    sizeof(curpeer->auth_conf.enc_key_out));
-				curpeer->auth_conf.enc_keylen_out =
-				    $8.enc_key_len;
-				curpeer->auth_conf.auth_keylen_out = keylen;
-			}
-			free($7);
 		}
 		| TTLSECURITY yesno	{
 			curpeer->conf.ttlsec = $2;
@@ -2355,6 +2229,111 @@ safi		: NONE		{ $$ = SAFI_NONE; }
 
 nettype		: STATIC { $$ = 1; }
 		| CONNECTED { $$ = 0; }
+		;
+
+authconf	: TCP MD5SIG PASSWORD string {
+			memset(&$$, 0, sizeof($$));
+			if (strlcpy($$.md5key, $4, sizeof($$.md5key)) >=
+			    sizeof($$.md5key)) {
+				yyerror("tcp md5sig password too long: max %zu",
+				    sizeof($$.md5key) - 1);
+				free($4);
+				YYERROR;
+			}
+			$$.method = AUTH_MD5SIG;
+			$$.md5key_len = strlen($4);
+			free($4);
+		}
+		| TCP MD5SIG KEY string {
+			memset(&$$, 0, sizeof($$));
+			if (str2key($4, $$.md5key, sizeof($$.md5key)) == -1) {
+				free($4);
+				YYERROR;
+			}
+			$$.method = AUTH_MD5SIG;
+			$$.md5key_len = strlen($4) / 2;
+			free($4);
+		}
+		| IPSEC espah IKE {
+			memset(&$$, 0, sizeof($$));
+			if ($2)
+				$$.method = AUTH_IPSEC_IKE_ESP;
+			else
+				$$.method = AUTH_IPSEC_IKE_AH;
+		}
+		| IPSEC espah inout SPI NUMBER STRING STRING encspec {
+			enum auth_alg	auth_alg;
+			uint8_t		keylen;
+
+			memset(&$$, 0, sizeof($$));
+			if (!strcmp($6, "sha1")) {
+				auth_alg = AUTH_AALG_SHA1HMAC;
+				keylen = 20;
+			} else if (!strcmp($6, "md5")) {
+				auth_alg = AUTH_AALG_MD5HMAC;
+				keylen = 16;
+			} else {
+				yyerror("unknown auth algorithm \"%s\"", $6);
+				free($6);
+				free($7);
+				YYERROR;
+			}
+			free($6);
+
+			if (strlen($7) / 2 != keylen) {
+				yyerror("auth key len: must be %u bytes, "
+				    "is %zu bytes", keylen, strlen($7) / 2);
+				free($7);
+				YYERROR;
+			}
+
+			if ($2)
+				$$.method = AUTH_IPSEC_MANUAL_ESP;
+			else {
+				if ($8.enc_alg) {
+					yyerror("\"ipsec ah\" doesn't take "
+					    "encryption keys");
+					free($7);
+					YYERROR;
+				}
+				$$.method = AUTH_IPSEC_MANUAL_AH;
+			}
+
+			if ($5 <= SPI_RESERVED_MAX || $5 > UINT_MAX) {
+				yyerror("bad spi number %lld", $5);
+				free($7);
+				YYERROR;
+			}
+
+			if ($3 == 1) {
+				if (str2key($7, $$.auth_key_in,
+				    sizeof($$.auth_key_in)) == -1) {
+					free($7);
+					YYERROR;
+				}
+				$$.spi_in = $5;
+				$$.auth_alg_in = auth_alg;
+				$$.enc_alg_in = $8.enc_alg;
+				memcpy(&$$.enc_key_in, &$8.enc_key,
+				    sizeof($$.enc_key_in));
+				$$.enc_keylen_in = $8.enc_key_len;
+				$$.auth_keylen_in = keylen;
+			} else {
+				if (str2key($7, $$.auth_key_out,
+				    sizeof($$.auth_key_out)) == -1) {
+					free($7);
+					YYERROR;
+				}
+				$$.spi_out = $5;
+				$$.auth_alg_out = auth_alg;
+				$$.enc_alg_out = $8.enc_alg;
+				memcpy(&$$.enc_key_out, &$8.enc_key,
+				    sizeof($$.enc_key_out));
+				$$.enc_keylen_out = $8.enc_key_len;
+				$$.auth_keylen_out = keylen;
+			}
+			free($7);
+		}
 		;
 
 espah		: ESP		{ $$ = 1; }
@@ -6033,3 +6012,39 @@ geticmpcodebyname(u_long type, char *w, uint8_t aid)
 	}
 	return -1;
 }
+
+static int
+merge_auth_conf(struct auth_config *to, struct auth_config *from)
+{
+	if (to->method != 0) {
+		/* extra magic for manual ipsec rules */
+		if (to->method == from->method &&
+		    (to->method == AUTH_IPSEC_MANUAL_ESP ||
+		    to->method == AUTH_IPSEC_MANUAL_AH)) {
+			if (to->spi_in == 0 && from->spi_in != 0) {
+				to->spi_in = from->spi_in;
+				to->auth_alg_in = from->auth_alg_in;
+				to->enc_alg_in = from->enc_alg_in;
+				memcpy(to->enc_key_in, from->enc_key_in,
+				    sizeof(to->enc_key_in));
+				to->enc_keylen_in = from->enc_keylen_in;
+				to->auth_keylen_in = from->auth_keylen_in;
+				return 1;
+			} else if (to->spi_out == 0 && from->spi_out != 0) {
+				to->spi_out = from->spi_out;
+				to->auth_alg_out = from->auth_alg_out;
+				to->enc_alg_out = from->enc_alg_out;
+				memcpy(to->enc_key_out, from->enc_key_out,
+				    sizeof(to->enc_key_out));
+				to->enc_keylen_out = from->enc_keylen_out;
+				to->auth_keylen_out = from->auth_keylen_out;
+				return 1;
+			}
+		}
+		yyerror("auth method cannot be redefined");
+		return 0;
+	}
+	*to = *from;
+	return 1;
+}
+

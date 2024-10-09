@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.175 2024/10/01 11:49:24 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.176 2024/10/09 10:01:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -712,6 +712,39 @@ print_aspa(struct aspa_tree *a)
 	printf("\n}\n\n");
 }
 
+static void
+print_auth(struct auth_config *auth, const char *c)
+{
+	char *method;
+
+	if (auth->method == AUTH_MD5SIG)
+		printf("%s\ttcp md5sig\n", c);
+	else if (auth->method == AUTH_IPSEC_MANUAL_ESP ||
+	    auth->method == AUTH_IPSEC_MANUAL_AH) {
+		if (auth->method == AUTH_IPSEC_MANUAL_ESP)
+			method = "esp";
+		else
+			method = "ah";
+
+		printf("%s\tipsec %s in spi %u %s XXXXXX", c, method,
+		    auth->spi_in, print_auth_alg(auth->auth_alg_in));
+		if (auth->enc_alg_in)
+			printf(" %s XXXXXX", print_enc_alg(auth->enc_alg_in));
+		printf("\n");
+
+		printf("%s\tipsec %s out spi %u %s XXXXXX", c, method,
+		    auth->spi_out, print_auth_alg(auth->auth_alg_out));
+		if (auth->enc_alg_out)
+			printf(" %s XXXXXX",
+			    print_enc_alg(auth->enc_alg_out));
+		printf("\n");
+	} else if (auth->method == AUTH_IPSEC_IKE_AH)
+		printf("%s\tipsec ah ike\n", c);
+	else if (auth->method == AUTH_IPSEC_IKE_ESP)
+		printf("%s\tipsec esp ike\n", c);
+
+}
+
 void
 print_rtrs(struct rtr_config_head *rh)
 {
@@ -723,6 +756,7 @@ print_rtrs(struct rtr_config_head *rh)
 		printf("\tport %u\n", r->remote_port);
 		if (r->local_addr.aid != AID_UNSPEC)
 			printf("local-addr %s\n", log_addr(&r->local_addr));
+		print_auth(&r->auth, "");
 		printf("}\n\n");
 	}
 }
@@ -731,9 +765,7 @@ void
 print_peer(struct peer *peer, struct bgpd_config *conf, const char *c)
 {
 	struct in_addr		 ina;
-	char			*method;
 	struct peer_config	*p = &peer->conf;
-	struct auth_config	*auth = &peer->auth_conf;
 
 	if ((p->remote_addr.aid == AID_INET && p->remote_masklen != 32) ||
 	    (p->remote_addr.aid == AID_INET6 && p->remote_masklen != 128))
@@ -832,31 +864,7 @@ print_peer(struct peer *peer, struct bgpd_config *conf, const char *c)
 	if (p->flags & PEERFLAG_LOG_UPDATES)
 		printf("%s\tlog updates\n", c);
 
-	if (auth->method == AUTH_MD5SIG)
-		printf("%s\ttcp md5sig\n", c);
-	else if (auth->method == AUTH_IPSEC_MANUAL_ESP ||
-	    auth->method == AUTH_IPSEC_MANUAL_AH) {
-		if (auth->method == AUTH_IPSEC_MANUAL_ESP)
-			method = "esp";
-		else
-			method = "ah";
-
-		printf("%s\tipsec %s in spi %u %s XXXXXX", c, method,
-		    auth->spi_in, print_auth_alg(auth->auth_alg_in));
-		if (auth->enc_alg_in)
-			printf(" %s XXXXXX", print_enc_alg(auth->enc_alg_in));
-		printf("\n");
-
-		printf("%s\tipsec %s out spi %u %s XXXXXX", c, method,
-		    auth->spi_out, print_auth_alg(auth->auth_alg_out));
-		if (auth->enc_alg_out)
-			printf(" %s XXXXXX",
-			    print_enc_alg(auth->enc_alg_out));
-		printf("\n");
-	} else if (auth->method == AUTH_IPSEC_IKE_AH)
-		printf("%s\tipsec ah ike\n", c);
-	else if (auth->method == AUTH_IPSEC_IKE_ESP)
-		printf("%s\tipsec esp ike\n", c);
+	print_auth(&peer->auth_conf, c);
 
 	if (p->ttlsec)
 		printf("%s\tttl-security yes\n", c);
