@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.14 2022/12/28 21:30:19 jmc Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.15 2024/10/09 01:52:11 jsg Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -302,38 +302,38 @@ read_for_group(char *group)
 		*(lp->l_groupname + len) = '\0';
 		len = strlen(pos);
 		olen = 0;
-			/*
-			 * Loop around handling line continuations.
-			 */
-			do {
-				if (*(pos + len - 1) == '\n')
-					len--;
-				if (*(pos + len - 1) == '\\') {
-					len--;
-					cont = 1;
+		/*
+		 * Loop around handling line continuations.
+		 */
+		do {
+			if (*(pos + len - 1) == '\n')
+				len--;
+			if (*(pos + len - 1) == '\\') {
+				len--;
+				cont = 1;
+			} else
+				cont = 0;
+			if (len > 0) {
+				linep = malloc(olen + len + 1);
+				if (olen > 0) {
+					bcopy(olinep, linep, olen);
+					free(olinep);
+				}
+				bcopy(pos, linep + olen, len);
+				olen += len;
+				*(linep + olen) = '\0';
+				olinep = linep;
+			}
+#ifdef CANT_HAPPEN
+			if (cont) {
+				if (fgets(line, sizeof(line), netf)) {
+					pos = line;
+					len = strlen(pos);
 				} else
 					cont = 0;
-				if (len > 0) {
-					linep = malloc(olen + len + 1);
-					if (olen > 0) {
-						bcopy(olinep, linep, olen);
-						free(olinep);
-					}
-					bcopy(pos, linep + olen, len);
-					olen += len;
-					*(linep + olen) = '\0';
-					olinep = linep;
-				}
-#ifdef CANT_HAPPEN
-				if (cont) {
-					if (fgets(line, sizeof(line), netf)) {
-						pos = line;
-						len = strlen(pos);
-					} else
-						cont = 0;
-				}
+			}
 #endif
-			} while (cont);
+		} while (cont);
 		lp->l_line = linep;
 		lp->l_next = linehead;
 		linehead = lp;
