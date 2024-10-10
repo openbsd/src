@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.39 2024/08/31 09:26:18 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.40 2024/10/10 06:51:22 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -76,7 +76,6 @@ struct conf_module_st {
 	conf_finish_func *finish;
 	/* Number of successfully initialized modules */
 	int links;
-	void *usr_data;
 };
 
 
@@ -87,10 +86,7 @@ struct conf_module_st {
 
 struct conf_imodule_st {
 	CONF_MODULE *mod;
-	char *name;
 	char *value;
-	unsigned long flags;
-	void *usr_data;
 };
 
 static STACK_OF(CONF_MODULE) *supported_modules = NULL;
@@ -293,8 +289,6 @@ module_init(CONF_MODULE *mod, char *name, char *value, const CONF *cnf)
 
 	imod->mod = mod;
 
-	if ((imod->name = strdup(name)) == NULL)
-		goto err;
 	if ((imod->value = strdup(value)) == NULL)
 		goto err;
 
@@ -373,7 +367,6 @@ imodule_free(CONF_IMODULE *imod)
 	if (imod == NULL)
 		return;
 
-	free(imod->name);
 	free(imod->value);
 	free(imod);
 }
@@ -422,63 +415,11 @@ CONF_modules_free(void)
 }
 LCRYPTO_ALIAS(CONF_modules_free);
 
-/* Utility functions */
-
-const char *
-CONF_imodule_get_name(const CONF_IMODULE *imod)
-{
-	return imod->name;
-}
-
 const char *
 CONF_imodule_get_value(const CONF_IMODULE *imod)
 {
 	return imod->value;
 }
-
-void *
-CONF_imodule_get_usr_data(const CONF_IMODULE *imod)
-{
-	return imod->usr_data;
-}
-
-void
-CONF_imodule_set_usr_data(CONF_IMODULE *imod, void *usr_data)
-{
-	imod->usr_data = usr_data;
-}
-
-CONF_MODULE *
-CONF_imodule_get_module(const CONF_IMODULE *imod)
-{
-	return imod->mod;
-}
-
-unsigned long
-CONF_imodule_get_flags(const CONF_IMODULE *imod)
-{
-	return imod->flags;
-}
-
-void
-CONF_imodule_set_flags(CONF_IMODULE *imod, unsigned long flags)
-{
-	imod->flags = flags;
-}
-
-void *
-CONF_module_get_usr_data(CONF_MODULE *mod)
-{
-	return mod->usr_data;
-}
-
-void
-CONF_module_set_usr_data(CONF_MODULE *mod, void *usr_data)
-{
-	mod->usr_data = usr_data;
-}
-
-/* Return default config file name */
 
 char *
 CONF_get1_default_config_file(void)
