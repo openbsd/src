@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.36 2024/10/07 23:47:00 sthen Exp $ */
+/*	$Id: netproc.c,v 1.37 2024/10/10 09:39:35 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -386,7 +387,7 @@ donewacc(struct conn *c, const struct capaths *p, const char *contact)
 
 	if (c->kid != NULL) {
 		if (stravis(&accturi, c->kid, VIS_SAFE) != -1)
-			dodbg("account key: %s", accturi);
+			printf("account key: %s\n", accturi);
 		free(accturi);
 	}
 
