@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.38 2024/10/10 00:30:34 jsg Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.39 2024/10/10 00:41:01 jsg Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -31,15 +31,6 @@
 
 #ifndef _PCI_AGPVAR_H_
 #define _PCI_AGPVAR_H_
-
-/* #define	AGP_DEBUG */
-#ifdef AGP_DEBUG
-#define AGP_DPF(fmt, arg...) do { printf("agp: " fmt ,##arg); } while (0)
-#else
-#define AGP_DPF(fmt, arg...) do {} while (0)
-#endif
-
-#define AGPUNIT(x)	minor(x)
 
 struct agp_attach_args {
 	char			*aa_busname;
