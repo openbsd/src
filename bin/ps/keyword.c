@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.52 2022/02/25 18:05:49 rob Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.53 2024/10/10 10:24:14 claudio Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -158,7 +158,7 @@ VAR var[] = {
 	{"rtable", "RTABLE", NULL, 0, pvar, 0, 0, POFF(p_rtableid), INT32, "d"},
 	UID("ruid", "RUID", pvar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
-	{"sess", "SESS", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_sess), UINT64, "llx"},
+	PID("sess", "SESS", pvar, POFF(p_sid)),
 	{"sig", "PENDING", NULL, 0, pvar, 8, 0, POFF(p_siglist), INT32, "x"},
 	{"sigcatch", "CAUGHT", NULL, 0, pvar, 8, 0, POFF(p_sigcatch), UINT32, "x"},
 	{"sigignore", "IGNORED",
