@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.320 2024/08/26 07:14:40 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.321 2024/10/10 10:41:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2320,6 +2320,13 @@ format_cb_version(__unused struct format_tree *ft)
 	return (xstrdup(getversion()));
 }
 
+/* Callback for sixel_support. */
+static void *
+format_cb_sixel_support(__unused struct format_tree *ft)
+{
+	return (xstrdup("0"));
+}
+
 /* Callback for active_window_index. */
 static void *
 format_cb_active_window_index(struct format_tree *ft)
@@ -3146,6 +3153,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "session_windows", FORMAT_TABLE_STRING,
 	  format_cb_session_windows
+	},
+	{ "sixel_support", FORMAT_TABLE_STRING,
+	  format_cb_sixel_support
 	},
 	{ "socket_path", FORMAT_TABLE_STRING,
 	  format_cb_socket_path
