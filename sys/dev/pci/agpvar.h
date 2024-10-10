@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.37 2024/07/02 04:29:01 jsg Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.38 2024/10/10 00:30:34 jsg Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -70,13 +70,6 @@ struct agp_info {
 	vsize_t         ai_memory_allowed;
 	vsize_t         ai_memory_used;
 	u_int32_t       ai_devid;
-};
-
-struct agp_memory_info {
-        vsize_t         ami_size;       /* size in bytes */
-        bus_addr_t      ami_physical;   /* bogus hack for i810 */
-        off_t           ami_offset;     /* page offset if bound */
-        int             ami_is_bound;   /* non-zero if bound */
 };
 
 struct agp_methods {
