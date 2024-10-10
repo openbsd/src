@@ -1,4 +1,4 @@
-/*	$OpenBSD: qccpu.c,v 1.3 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: qccpu.c,v 1.4 2024/10/10 23:15:27 jsg Exp $	*/
 /*
  * Copyright (c) 2023 Dale Rahn <drahn@openbsd.org>
  *
@@ -48,11 +48,6 @@
 #define  CPUF_VOLT_LUT_VOLT_S		0
 #define CPUF_PERF_STATE		0x320
 #define LUT_ROW_SIZE  		4
-
-struct cpu_freq_tbl {
-	uint32_t driver_data;
-	uint32_t frequency;
-};
 
 #define NUM_GROUP	2
 #define MAX_LUT		40
