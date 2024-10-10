@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.240 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.241 2024/10/10 06:50:58 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ int	tundebug = TUN_DEBUG;
 #define TUNDEBUG(a)	/* (tundebug? printf a : 0) */
 #endif
 
-/* Only these IFF flags are changeable by TUNSIFINFO */
-#define TUN_IFF_FLAGS (IFF_UP|IFF_POINTOPOINT|IFF_MULTICAST|IFF_BROADCAST)
+/* Pretend that these IFF flags are changeable by TUNSIFINFO */
+#define TUN_IFF_FLAGS (IFF_POINTOPOINT|IFF_MULTICAST|IFF_BROADCAST)
 
 void	tunattach(int);
 
@@ -709,17 +709,18 @@ tun_dev_ioctl(dev_t dev, u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
+		if (tunp->flags != (sc->sc_if.if_flags & TUN_IFF_FLAGS)) {
+			error = EINVAL;
+			break;
+		}
 		sc->sc_if.if_mtu = tunp->mtu;
-		sc->sc_if.if_flags =
-		    (tunp->flags & TUN_IFF_FLAGS) |
-		    (sc->sc_if.if_flags & ~TUN_IFF_FLAGS);
 		sc->sc_if.if_baudrate = tunp->baudrate;
 		break;
 	case TUNGIFINFO:
 		tunp = (struct tuninfo *)data;
 		tunp->mtu = sc->sc_if.if_mtu;
 		tunp->type = sc->sc_if.if_type;
-		tunp->flags = sc->sc_if.if_flags;
+		tunp->flags = sc->sc_if.if_flags & TUN_IFF_FLAGS;
 		tunp->baudrate = sc->sc_if.if_baudrate;
 		break;
 #ifdef TUN_DEBUG
@@ -731,13 +732,7 @@ tun_dev_ioctl(dev_t dev, u_long cmd, void *data)
 		break;
 #endif
 	case TUNSIFMODE:
-		switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
-		case IFF_POINTOPOINT:
-		case IFF_BROADCAST:
-			sc->sc_if.if_flags &= ~TUN_IFF_FLAGS;
-			sc->sc_if.if_flags |= *(int *)data & TUN_IFF_FLAGS;
-			break;
-		default:
+		if (*(int *)data != (sc->sc_if.if_flags & TUN_IFF_FLAGS)) {
 			error = EINVAL;
 			break;
 		}
