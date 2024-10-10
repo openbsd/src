@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.55 2024/02/14 20:44:54 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.56 2024/10/10 19:33:05 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -74,37 +74,12 @@
  */
 #define	GET_CPUINFO		call_pal PAL_OSF1_rdval
 
-#define	GET_CURPROC							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPROC, v0
-
-#define	GET_FPCURPROC							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_FPCURPROC, v0
-
-#define	GET_CURPCB							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPCB, v0
-
-#define	GET_IDLE_PCB(reg)						\
-	call_pal PAL_OSF1_rdval					;	\
-	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(v0)
-
 #else	/* if not MULTIPROCESSOR... */
 
 IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 
 #define	GET_CPUINFO		lda v0, cpu_info_primary
 
-#define	GET_CURPROC		lda v0, cpu_info_primary + CPU_INFO_CURPROC
-
-#define	GET_FPCURPROC		lda v0, cpu_info_primary + CPU_INFO_FPCURPROC
-
-#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
-
-#define	GET_IDLE_PCB(reg)						\
-	lda	reg, cpu_info_primary				;	\
-	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(reg)
 #endif
 
 /*
@@ -113,8 +88,8 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
  */
 #define	SWITCH_CONTEXT							\
 	/* Make a note of the context we're running on. */		\
-	GET_CURPCB						;	\
-	stq	a0, 0(v0)					;	\
+	GET_CPUINFO						;	\
+	stq	a0, CPU_INFO_CURPCB(v0)				;	\
 									\
 	/* Swap in the new context. */					\
 	call_pal PAL_OSF1_swpctx
@@ -837,9 +812,9 @@ NESTED(_copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	t0, 0(v0)
+	/* Note: GET_CPUINFO clobbers v0, t0, t8...t11. */
+	GET_CPUINFO
+	ldq	t0, CPU_INFO_CURPROC(v0)
 	ldq	s0, P_ADDR(t0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	stq	v0, U_PCB_ONFAULT(s0)
@@ -859,9 +834,9 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	t0, 0(v0)
+	/* Note: GET_CPUINFO clobbers v0, t0, t8...t11. */
+	GET_CPUINFO
+	ldq	t0, CPU_INFO_CURPROC(v0)
 	ldq	s0, P_ADDR(t0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	stq	v0, U_PCB_ONFAULT(s0)
@@ -889,9 +864,9 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	stq	ra, (32-8)(sp)			/* save ra		     */
 	stq	s0, (32-16)(sp)			/* save s0		     */
 	stq	s1, (32-24)(sp)			/* save s1		     */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	t0, 0(v0)
+	/* Note: GET_CPUINFO clobbers v0, t0, t8...t11. */
+	GET_CPUINFO
+	ldq	t0, CPU_INFO_CURPROC(v0)
 	ldq	s1, P_ADDR(t0)
 	lda	v0, kcopyerr			/* set up fault handler.     */
 	ldq	s0, U_PCB_ONFAULT(s1)		/* save old handler.	     */
@@ -924,9 +899,9 @@ NESTED(_copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	t0, 0(v0)
+	/* Note: GET_CPUINFO clobbers v0, t0, t8...t11. */
+	GET_CPUINFO
+	ldq	t0, CPU_INFO_CURPROC(v0)
 	ldq	s0, P_ADDR(t0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	stq	v0, U_PCB_ONFAULT(s0)
@@ -947,9 +922,9 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	t0, 0(v0)
+	/* Note: GET_CPUINFO clobbers v0, t0, t8...t11. */
+	GET_CPUINFO
+	ldq	t0, CPU_INFO_CURPROC(v0)
 	ldq	s0, P_ADDR(t0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	stq	v0, U_PCB_ONFAULT(s0)
@@ -972,9 +947,9 @@ NESTED(copyin32, 2, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	t0, 0(v0)
+	/* Note: GET_CPUINFO clobbers v0, t0, t8...t11. */
+	GET_CPUINFO
+	ldq	t0, CPU_INFO_CURPROC(v0)
 	ldq	s0, P_ADDR(t0)
 	lda	v0, copyerr			/* set up fault handler.     */
 	stq	v0, U_PCB_ONFAULT(s0)

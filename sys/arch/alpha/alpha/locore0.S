@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.2 2017/07/14 05:34:10 dlg Exp $ */
+/* $OpenBSD: locore0.S,v 1.3 2024/10/10 19:33:05 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -66,15 +66,13 @@
 
 #if defined(MULTIPROCESSOR)
 
-#define	GET_CURPCB							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPCB, v0
+#define	GET_CPUINFO		call_pal PAL_OSF1_rdval
 
 #else	/* if not MULTIPROCESSOR... */
 
 IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 
-#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
+#define	GET_CPUINFO		lda v0, cpu_info_primary
 
 #endif
 
@@ -84,8 +82,8 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
  */
 #define	SWITCH_CONTEXT							\
 	/* Make a note of the context we're running on. */		\
-	GET_CURPCB						;	\
-	stq	a0, 0(v0)					;	\
+	GET_CPUINFO						;	\
+	stq	a0, CPU_INFO_CURPCB(v0)				;	\
 									\
 	/* Swap in the new context. */					\
 	call_pal PAL_OSF1_swpctx
