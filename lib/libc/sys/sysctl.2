@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.57 2023/10/14 19:02:16 kettenis Exp $
+.\"	$OpenBSD: sysctl.2,v 1.58 2024/10/10 22:21:05 lucas Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 14 2023 $
+.Dd $Mdocdate: October 10 2024 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1322,7 +1322,7 @@ priority value.
 .Pp
 An optional seventh level name can be provided to select the routing table
 on which to run the operation.
-If not provided, the table with ID 0 is used.
+If not provided, the current routing table is used.
 .It Dv PF_INET
 Get or set various global information about IPv4
 .Pq Internet Protocol version 4 .
