@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.8 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.9 2024/10/10 05:51:23 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -194,12 +194,18 @@ acpipci_attach_bus(struct device *parent, struct acpipci_softc *sc)
 	    (sc->sc_acpi->sc_fadt->iapc_boot_arch & FADT_NO_MSI) == 0)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
+	/* Enable MSI for QEMU claiming ACPI 1.0 */
+	tag = pci_make_tag(pba.pba_pc, sc->sc_bus, 0, 0);
+	id = pci_conf_read(pba.pba_pc, tag, PCI_SUBSYS_ID_REG);
+	if (sc->sc_acpi->sc_fadt->hdr.revision == 1 &&
+	    PCI_VENDOR(id) == PCI_VENDOR_QUMRANET)
+		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+
 	/*
 	 * Don't enable MSI on chipsets from low-end manufacturers
 	 * like VIA and SiS.  We do this by looking at the host
 	 * bridge, which should be device 0 function 0.
 	 */
-	tag = pci_make_tag(pba.pba_pc, sc->sc_bus, 0, 0);
 	id = pci_conf_read(pba.pba_pc, tag, PCI_ID_REG);
 	class = pci_conf_read(pba.pba_pc, tag, PCI_CLASS_REG);
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
