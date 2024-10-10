@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.87 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.88 2024/10/10 06:00:42 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -323,6 +323,11 @@ pci_attach_hook(struct device *parent, struct device *self,
 		}
 		break;
 	}
+
+	/* Enable MSI for QEMU */
+	id = pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG);
+	if (PCI_VENDOR(id) == PCI_VENDOR_QUMRANET)
+		pba->pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	/*
 	 * Don't enable MSI on a HyperTransport bus.  In order to
