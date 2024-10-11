@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.61 2024/10/11 06:21:30 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.62 2024/10/11 18:18:10 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -789,39 +789,37 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 ECPKPARAMETERS *
 ec_asn1_group2pkparameters(const EC_GROUP *group)
 {
-	int ok = 1, tmp;
-	ECPKPARAMETERS *ret;
+	ECPKPARAMETERS *pkparameters;
+	ECPARAMETERS *parameters;
+	ASN1_OBJECT *aobj;
+	int nid;
 
-	if ((ret = ECPKPARAMETERS_new()) == NULL) {
+	if ((pkparameters = ECPKPARAMETERS_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 
-	if (EC_GROUP_get_asn1_flag(group)) {
-		/*
-		 * use the asn1 OID to describe the elliptic curve
-		 * parameters
-		 */
-		tmp = EC_GROUP_get_curve_name(group);
-		if (tmp) {
-			ret->type = 0;
-			if ((ret->value.named_curve = OBJ_nid2obj(tmp)) == NULL)
-				ok = 0;
-		} else
-			/* we don't know the group => ERROR */
-			ok = 0;
+	if (EC_GROUP_get_asn1_flag(group) != 0) {
+		if ((nid = EC_GROUP_get_curve_name(group)) == NID_undef)
+			goto err;
+		if ((aobj = OBJ_nid2obj(nid)) == NULL)
+			goto err;
+		pkparameters->type = 0;
+		pkparameters->value.named_curve = aobj;
 	} else {
-		/* use the ECPARAMETERS structure */
-		ret->type = 1;
-		if ((ret->value.parameters = ec_asn1_group2parameters(group)) == NULL)
-			ok = 0;
+		if ((parameters = ec_asn1_group2parameters(group)) == NULL)
+			goto err;
+		pkparameters->type = 1;
+		pkparameters->value.parameters = parameters;
+		parameters = NULL;
 	}
 
-	if (!ok) {
-		ECPKPARAMETERS_free(ret);
-		return NULL;
-	}
-	return ret;
+	return pkparameters;
+
+ err:
+	ECPKPARAMETERS_free(pkparameters);
+
+	return NULL;
 }
 
 static EC_GROUP *
