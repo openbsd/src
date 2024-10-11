@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.65 2024/10/11 18:34:20 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.66 2024/10/11 18:35:39 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -803,7 +803,7 @@ ec_asn1_group2pkparameters(const EC_GROUP *group)
 		goto err;
 	}
 
-	if (EC_GROUP_get_asn1_flag(group) != 0) {
+	if ((EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) != 0) {
 		if ((nid = EC_GROUP_get_curve_name(group)) == NID_undef)
 			goto err;
 		if ((aobj = OBJ_nid2obj(nid)) == NULL)
