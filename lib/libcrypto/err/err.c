@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.66 2024/10/11 11:58:53 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.67 2024/10/11 12:10:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,7 +141,7 @@ typedef struct err_state_st {
 } ERR_STATE;
 
 #ifndef OPENSSL_NO_ERR
-static ERR_STRING_DATA ERR_str_libraries[] = {
+static const ERR_STRING_DATA ERR_str_libraries[] = {
 	{ERR_PACK(ERR_LIB_NONE,0,0),		"unknown library"},
 	{ERR_PACK(ERR_LIB_SYS,0,0),		"system library"},
 	{ERR_PACK(ERR_LIB_BN,0,0),		"bignum routines"},
@@ -174,7 +174,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
 	{0, NULL},
 };
 
-static ERR_STRING_DATA ERR_str_functs[] = {
+static const ERR_STRING_DATA ERR_str_functs[] = {
 	{ERR_PACK(ERR_LIB_SYS,SYS_F_FOPEN, 0),     	"fopen"},
 	{ERR_PACK(ERR_LIB_SYS,SYS_F_CONNECT, 0),	"connect"},
 	{ERR_PACK(ERR_LIB_SYS,SYS_F_GETSERVBYNAME, 0),	"getservbyname"},
@@ -188,7 +188,7 @@ static ERR_STRING_DATA ERR_str_functs[] = {
 	{0, NULL},
 };
 
-static ERR_STRING_DATA ERR_str_reasons[] = {
+static const ERR_STRING_DATA ERR_str_reasons[] = {
 	{ERR_R_SYS_LIB,				"system lib"},
 	{ERR_R_BN_LIB,				"BN lib"},
 	{ERR_R_RSA_LIB,				"RSA lib"},
@@ -609,9 +609,18 @@ ERR_get_state(void)
 static void
 err_load_strings(int lib, ERR_STRING_DATA *str)
 {
-	while (str->error) {
+	while (str->error != 0) {
 		if (lib)
 			str->error |= ERR_PACK(lib, 0, 0);
+		err_set_item(str);
+		str++;
+	}
+}
+
+static void
+err_load_const_strings(const ERR_STRING_DATA *str)
+{
+	while (str->error != 0) {
 		err_set_item(str);
 		str++;
 	}
@@ -688,9 +697,9 @@ ERR_load_ERR_strings_internal(void)
 {
 	err_init_thread = pthread_self();
 #ifndef OPENSSL_NO_ERR
-	err_load_strings(0, ERR_str_libraries);
-	err_load_strings(0, ERR_str_reasons);
-	err_load_strings(0, ERR_str_functs);
+	err_load_const_strings(ERR_str_libraries);
+	err_load_const_strings(ERR_str_reasons);
+	err_load_const_strings(ERR_str_functs);
 	build_SYS_str_reasons();
 	err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
@@ -723,10 +732,7 @@ void
 ERR_load_const_strings(const ERR_STRING_DATA *str)
 {
 	ERR_load_ERR_strings();
-	while (str->error) {
-		err_set_item(str);
-		str++;
-	}
+	err_load_const_strings(str);
 }
 
 void
