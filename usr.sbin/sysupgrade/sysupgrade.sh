@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.55 2024/10/07 13:21:53 deraadt Exp $
+# $OpenBSD: sysupgrade.sh,v 1.56 2024/10/11 14:12:05 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -153,9 +153,10 @@ if ! [[ -r /etc/signify/$KEY ]]; then
 	HAVEKEY=$(cd /etc/signify && ls -1 openbsd-*-base.pub | \
 	    tail -2 | head -1 | cut -d- -f2)
 	BUNDLE=sigbundle-${HAVEKEY}.tgz
-	echo "Adding additional key $KEY from bundle $BUNDLE"
+	FWKEY=$(echo $KEY | sed -e 's/base/fw/')
+	echo "Adding missing keys from bundle $BUNDLE"
 	unpriv -f ${BUNDLE} ftp -N sysupgrade -Vmo $BUNDLE https://ftp.openbsd.org/pub/OpenBSD/signify/$BUNDLE
-	signify -Vzq -m - -x $BUNDLE | (cd /etc/signify && tar xfz - $KEY)
+	signify -Vzq -m - -x $BUNDLE | (cd /etc/signify && tar xfz - $KEY $FWKEY)
 	rm $BUNDLE
 fi
 

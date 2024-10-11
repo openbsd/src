@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.20 2024/10/07 15:57:15 jmc Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.21 2024/10/11 14:12:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 7 2024 $
+.Dd $Mdocdate: October 11 2024 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -76,10 +76,10 @@ The default is to upgrade to the next release.
 .El
 .Pp
 When updating to a release or snapshot which lacks the required signify
-key in
+keys in
 .Pa /etc/signify ,
-the missing key will be downloaded in a secure way.
-In the usual case, the key will already be present because
+the missing keys will be downloaded in a secure way.
+In the usual case, the keys will already be present because
 .Ox
 releases ship with the current key, the next key, and a collection of
 older keys.
