@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.60 2024/10/11 06:19:52 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.61 2024/10/11 06:21:30 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -697,7 +697,7 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 }
 
 static ECPARAMETERS *
-ec_asn1_group2parameters(const EC_GROUP *group, ECPARAMETERS *param)
+ec_asn1_group2parameters(const EC_GROUP *group)
 {
 	int ok = 0;
 	size_t len = 0;
@@ -711,13 +711,10 @@ ec_asn1_group2parameters(const EC_GROUP *group, ECPARAMETERS *param)
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (param == NULL) {
-		if ((ret = ECPARAMETERS_new()) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	} else
-		ret = param;
+	if ((ret = ECPARAMETERS_new()) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	/* set the version (always one) */
 	ret->version = (long) 0x1;
@@ -781,8 +778,7 @@ ec_asn1_group2parameters(const EC_GROUP *group, ECPARAMETERS *param)
 
  err:
 	if (!ok) {
-		if (ret && !param)
-			ECPARAMETERS_free(ret);
+		ECPARAMETERS_free(ret);
 		ret = NULL;
 	}
 	BN_free(tmp);
@@ -817,8 +813,7 @@ ec_asn1_group2pkparameters(const EC_GROUP *group)
 	} else {
 		/* use the ECPARAMETERS structure */
 		ret->type = 1;
-		if ((ret->value.parameters = ec_asn1_group2parameters(group,
-		    NULL)) == NULL)
+		if ((ret->value.parameters = ec_asn1_group2parameters(group)) == NULL)
 			ok = 0;
 	}
 
