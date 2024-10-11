@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.64 2024/10/11 18:32:03 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.65 2024/10/11 18:34:20 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -123,6 +123,10 @@ typedef struct ec_parameters_st {
 	ASN1_INTEGER *order;
 	ASN1_INTEGER *cofactor;
 } ECPARAMETERS;
+
+#define ECPK_PARAM_NAMED_CURVE		0
+#define ECPK_PARAM_EXPLICIT		1
+#define ECPK_PARAM_IMPLICITLY_CA	2
 
 typedef struct ecpk_parameters_st {
 	int type;
@@ -804,12 +808,12 @@ ec_asn1_group2pkparameters(const EC_GROUP *group)
 			goto err;
 		if ((aobj = OBJ_nid2obj(nid)) == NULL)
 			goto err;
-		pkparameters->type = 0;
+		pkparameters->type = ECPK_PARAM_NAMED_CURVE;
 		pkparameters->value.named_curve = aobj;
 	} else {
 		if ((parameters = ec_asn1_group2parameters(group)) == NULL)
 			goto err;
-		pkparameters->type = 1;
+		pkparameters->type = ECPK_PARAM_EXPLICIT;
 		pkparameters->value.parameters = parameters;
 		parameters = NULL;
 	}
@@ -964,7 +968,7 @@ ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 	EC_GROUP *group;
 	int nid;
 
-	if (params->type == 0) {/* the curve is given by an OID */
+	if (params->type == ECPK_PARAM_NAMED_CURVE) {
 		if ((nid = OBJ_obj2nid(params->value.named_curve)) == NID_undef) {
 			ECerror(EC_R_UNKNOWN_GROUP);
 			return NULL;
@@ -974,15 +978,14 @@ ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 			return NULL;
 		}
 		EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
-	} else if (params->type == 1) {	/* the parameters are given by a
-					 * ECPARAMETERS structure */
+	} else if (params->type == ECPK_PARAM_EXPLICIT) {
 		group = ec_asn1_parameters2group(params->value.parameters);
 		if (group == NULL) {
 			ECerror(ERR_R_EC_LIB);
 			return NULL;
 		}
 		EC_GROUP_set_asn1_flag(group, 0);
-	} else if (params->type == 2) {	/* implicitlyCA */
+	} else if (params->type == ECPK_PARAM_IMPLICITLY_CA) {
 		return NULL;
 	} else {
 		ECerror(EC_R_ASN1_ERROR);
