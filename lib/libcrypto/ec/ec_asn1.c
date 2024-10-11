@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.67 2024/10/11 18:55:44 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.68 2024/10/11 18:58:04 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -604,7 +604,7 @@ ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 static int
 ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 {
-	BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
+	BIGNUM *a = NULL, *b = NULL;
 	unsigned char *buffer_1 = NULL, *buffer_2 = NULL, *a_buf = NULL,
 	*b_buf = NULL;
 	size_t len_1, len_2;
@@ -614,18 +614,18 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 	if (!group || !curve || !curve->a || !curve->b)
 		return 0;
 
-	if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL) {
+	if ((a = BN_new()) == NULL || (b = BN_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	/* get a and b */
-	if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
+	if (!EC_GROUP_get_curve(group, NULL, a, b, NULL)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	len_1 = (size_t) BN_num_bytes(tmp_1);
-	len_2 = (size_t) BN_num_bytes(tmp_2);
+	len_1 = (size_t) BN_num_bytes(a);
+	len_2 = (size_t) BN_num_bytes(b);
 
 	if (len_1 == 0) {
 		/* len_1 == 0 => a == 0 */
@@ -636,7 +636,7 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if ((len_1 = BN_bn2bin(tmp_1, buffer_1)) == 0) {
+		if ((len_1 = BN_bn2bin(a, buffer_1)) == 0) {
 			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -652,7 +652,7 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if ((len_2 = BN_bn2bin(tmp_2, buffer_2)) == 0) {
+		if ((len_2 = BN_bn2bin(b, buffer_2)) == 0) {
 			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -691,8 +691,9 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
  err:
 	free(buffer_1);
 	free(buffer_2);
-	BN_free(tmp_1);
-	BN_free(tmp_2);
+	BN_free(a);
+	BN_free(b);
+
 	return (ok);
 }
 
