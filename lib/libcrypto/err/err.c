@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.65 2024/10/02 15:21:39 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.66 2024/10/11 11:58:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,16 +175,16 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
 };
 
 static ERR_STRING_DATA ERR_str_functs[] = {
-	{ERR_PACK(0,SYS_F_FOPEN, 0),     	"fopen"},
-	{ERR_PACK(0,SYS_F_CONNECT, 0),		"connect"},
-	{ERR_PACK(0,SYS_F_GETSERVBYNAME, 0),	"getservbyname"},
-	{ERR_PACK(0,SYS_F_SOCKET, 0),		"socket"},
-	{ERR_PACK(0,SYS_F_IOCTLSOCKET, 0),	"ioctl"},
-	{ERR_PACK(0,SYS_F_BIND, 0),		"bind"},
-	{ERR_PACK(0,SYS_F_LISTEN, 0),		"listen"},
-	{ERR_PACK(0,SYS_F_ACCEPT, 0),		"accept"},
-	{ERR_PACK(0,SYS_F_OPENDIR, 0),		"opendir"},
-	{ERR_PACK(0,SYS_F_FREAD, 0),		"fread"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_FOPEN, 0),     	"fopen"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_CONNECT, 0),	"connect"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_GETSERVBYNAME, 0),	"getservbyname"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_SOCKET, 0),		"socket"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_IOCTLSOCKET, 0),	"ioctl"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_BIND, 0),		"bind"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_LISTEN, 0),		"listen"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_ACCEPT, 0),		"accept"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_OPENDIR, 0),	"opendir"},
+	{ERR_PACK(ERR_LIB_SYS,SYS_F_FREAD, 0),		"fread"},
 	{0, NULL},
 };
 
@@ -690,7 +690,7 @@ ERR_load_ERR_strings_internal(void)
 #ifndef OPENSSL_NO_ERR
 	err_load_strings(0, ERR_str_libraries);
 	err_load_strings(0, ERR_str_reasons);
-	err_load_strings(ERR_LIB_SYS, ERR_str_functs);
+	err_load_strings(0, ERR_str_functs);
 	build_SYS_str_reasons();
 	err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
