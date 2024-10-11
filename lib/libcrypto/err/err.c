@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.68 2024/10/11 12:19:35 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.69 2024/10/11 12:20:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,8 +126,6 @@
 
 DECLARE_LHASH_OF(ERR_STRING_DATA);
 DECLARE_LHASH_OF(ERR_STATE);
-
-typedef struct st_ERR_FNS ERR_FNS;
 
 typedef struct err_state_st {
 	CRYPTO_THREADID tid;
