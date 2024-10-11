@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.69 2024/10/11 12:20:06 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.70 2024/10/11 12:25:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -533,24 +533,26 @@ err_build_SYS_str_reasons(void)
 }
 #endif
 
-#define err_clear_data(p,i) \
-	do { \
-		if (((p)->err_data[i] != NULL) && \
-		    (p)->err_data_flags[i] & ERR_TXT_MALLOCED) { \
-			free((p)->err_data[i]); \
-			(p)->err_data[i] = NULL; \
-		} \
-		(p)->err_data_flags[i] = 0; \
-	} while(0)
+static void
+err_clear_data(ERR_STATE *s, int i)
+{
+	if ((s->err_data_flags[i] & ERR_TXT_MALLOCED) != 0)
+		free(s->err_data[i]);
 
-#define err_clear(p,i) \
-	do { \
-		(p)->err_flags[i] = 0; \
-		(p)->err_buffer[i] = 0; \
-		err_clear_data(p, i); \
-		(p)->err_file[i] = NULL; \
-		(p)->err_line[i] = -1; \
-	} while(0)
+	s->err_data[i] = NULL;
+	s->err_data_flags[i] = 0;
+}
+
+static void
+err_clear(ERR_STATE *s, int i)
+{
+	s->err_flags[i] = 0;
+	s->err_buffer[i] = 0;
+	s->err_file[i] = NULL;
+	s->err_line[i] = -1;
+
+	err_clear_data(s, i);
+}
 
 static void
 ERR_STATE_free(ERR_STATE *s)
@@ -560,9 +562,9 @@ ERR_STATE_free(ERR_STATE *s)
 	if (s == NULL)
 		return;
 
-	for (i = 0; i < ERR_NUM_ERRORS; i++) {
+	for (i = 0; i < ERR_NUM_ERRORS; i++)
 		err_clear_data(s, i);
-	}
+
 	free(s);
 }
 
@@ -831,9 +833,9 @@ ERR_clear_error(void)
 
 	es = ERR_get_state();
 
-	for (i = 0; i < ERR_NUM_ERRORS; i++) {
+	for (i = 0; i < ERR_NUM_ERRORS; i++)
 		err_clear(es, i);
-	}
+
 	es->top = es->bottom = 0;
 }
 LCRYPTO_ALIAS(ERR_clear_error);
