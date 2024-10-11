@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.66 2024/10/11 18:35:39 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.67 2024/10/11 18:55:44 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -559,50 +559,46 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 static int
 ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 {
-	int ok = 0, nid;
-	BIGNUM *tmp = NULL;
+	BIGNUM *p = NULL;
+	int nid;
+	int ret = 0;
 
 	if (group == NULL || field == NULL)
-		return 0;
-
-	/* clear the old values (if necessary) */
-	if (field->fieldType != NULL)
-		ASN1_OBJECT_free(field->fieldType);
-	if (field->p.other != NULL)
-		ASN1_TYPE_free(field->p.other);
+		goto err;
 
 	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
-	/* set OID for the field */
+	if (nid == NID_X9_62_characteristic_two_field) {
+		ECerror(EC_R_GF2M_NOT_SUPPORTED);
+		goto err;
+	}
+	if (nid != NID_X9_62_prime_field) {
+		ECerror(EC_R_INVALID_FIELD);
+		goto err;
+	}
+
 	if ((field->fieldType = OBJ_nid2obj(nid)) == NULL) {
 		ECerror(ERR_R_OBJ_LIB);
 		goto err;
 	}
-	if (nid == NID_X9_62_prime_field) {
-		if ((tmp = BN_new()) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		/* the parameters are specified by the prime number p */
-		if (!EC_GROUP_get_curve(group, tmp, NULL, NULL, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-		/* set the prime number */
-		field->p.prime = BN_to_ASN1_INTEGER(tmp, NULL);
-		if (field->p.prime == NULL) {
-			ECerror(ERR_R_ASN1_LIB);
-			goto err;
-		}
-	} else {
-		ECerror(EC_R_GF2M_NOT_SUPPORTED);
+	if ((p = BN_new()) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (!EC_GROUP_get_curve(group, p, NULL, NULL, NULL)) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	if ((field->p.prime = BN_to_ASN1_INTEGER(p, NULL)) == NULL) {
+		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
 
-	ok = 1;
+	ret = 1;
 
  err:
-	BN_free(tmp);
-	return (ok);
+	BN_free(p);
+
+	return ret;
 }
 
 static int
