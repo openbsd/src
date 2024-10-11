@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.221 2024/10/08 19:42:31 kettenis Exp $ */
+/*	$OpenBSD: ehci.c,v 1.222 2024/10/11 09:55:24 kettenis Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -317,7 +317,6 @@ ehci_init(struct ehci_softc *sc)
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	DPRINTF(("ehci_init: cparams=0x%x\n", cparams));
-	sc->sc_bus.dmaflags = EHCI_HCC_64BIT(cparams) ? BUS_DMA_64BIT : 0;
 
 	/* MUST clear segment register if 64 bit capable. */
 	if (EHCI_HCC_64BIT(cparams))
