@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.72 2024/10/11 12:40:25 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.73 2024/10/11 13:32:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,7 +182,7 @@ static const ERR_STRING_DATA ERR_str_functs[] = {
 	{ERR_PACK(ERR_LIB_SYS, SYS_F_LISTEN, 0),	"listen"},
 	{ERR_PACK(ERR_LIB_SYS, SYS_F_ACCEPT, 0),	"accept"},
 	{ERR_PACK(ERR_LIB_SYS, SYS_F_OPENDIR, 0),	"opendir"},
-	{ERR_PACK(ERR_LIB_SYS, SYS_F_FREAD, 0),		"fread"}, 
+	{ERR_PACK(ERR_LIB_SYS, SYS_F_FREAD, 0),		"fread"},
 	{0, NULL},
 };
 
