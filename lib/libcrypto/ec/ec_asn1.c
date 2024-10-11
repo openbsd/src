@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.59 2024/10/11 06:18:40 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.60 2024/10/11 06:19:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -791,21 +791,14 @@ ec_asn1_group2parameters(const EC_GROUP *group, ECPARAMETERS *param)
 }
 
 ECPKPARAMETERS *
-ec_asn1_group2pkparameters(const EC_GROUP *group, ECPKPARAMETERS *params)
+ec_asn1_group2pkparameters(const EC_GROUP *group)
 {
 	int ok = 1, tmp;
-	ECPKPARAMETERS *ret = params;
+	ECPKPARAMETERS *ret;
 
-	if (ret == NULL) {
-		if ((ret = ECPKPARAMETERS_new()) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			return NULL;
-		}
-	} else {
-		if (ret->type == 0 && ret->value.named_curve)
-			ASN1_OBJECT_free(ret->value.named_curve);
-		else if (ret->type == 1 && ret->value.parameters)
-			ECPARAMETERS_free(ret->value.parameters);
+	if ((ret = ECPKPARAMETERS_new()) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		return NULL;
 	}
 
 	if (EC_GROUP_get_asn1_flag(group)) {
@@ -1039,7 +1032,7 @@ i2d_ECPKParameters(const EC_GROUP *group, unsigned char **out_der)
 	ECPKPARAMETERS *parameters;
 	int ret = 0;
 
-	if ((parameters = ec_asn1_group2pkparameters(group, NULL)) == NULL) {
+	if ((parameters = ec_asn1_group2pkparameters(group)) == NULL) {
 		ECerror(EC_R_GROUP2PKPARAMETERS_FAILURE);
 		goto err;
 	}
@@ -1184,7 +1177,7 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 	if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS)) {
 		ECPKPARAMETERS *parameters;
 
-		if ((parameters = ec_asn1_group2pkparameters(a->group, NULL)) == NULL) {
+		if ((parameters = ec_asn1_group2pkparameters(a->group)) == NULL) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
