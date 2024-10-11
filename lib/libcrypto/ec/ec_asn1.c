@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.57 2024/10/03 05:07:49 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.58 2024/10/11 06:13:09 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1034,21 +1034,24 @@ d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 LCRYPTO_ALIAS(d2i_ECPKParameters);
 
 int
-i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
+i2d_ECPKParameters(const EC_GROUP *group, unsigned char **out_der)
 {
+	ECPKPARAMETERS *parameters;
 	int ret = 0;
-	ECPKPARAMETERS *tmp = ec_asn1_group2pkparameters(a, NULL);
-	if (tmp == NULL) {
+
+	if ((parameters = ec_asn1_group2pkparameters(group, NULL)) == NULL) {
 		ECerror(EC_R_GROUP2PKPARAMETERS_FAILURE);
-		return 0;
+		goto err;
 	}
-	if ((ret = i2d_ECPKPARAMETERS(tmp, out)) == 0) {
+	if ((ret = i2d_ECPKPARAMETERS(parameters, out_der)) <= 0) {
 		ECerror(EC_R_I2D_ECPKPARAMETERS_FAILURE);
-		ECPKPARAMETERS_free(tmp);
-		return 0;
+		goto err;
 	}
-	ECPKPARAMETERS_free(tmp);
-	return (ret);
+
+ err:
+	ECPKPARAMETERS_free(parameters);
+
+	return ret;
 }
 LCRYPTO_ALIAS(i2d_ECPKParameters);
 
