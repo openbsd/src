@@ -1,4 +1,4 @@
-/* $OpenBSD: err_test.c,v 1.1 2024/10/02 14:41:46 jsing Exp $ */
+/* $OpenBSD: err_test.c,v 1.2 2024/10/11 07:54:22 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -129,6 +129,24 @@ err_test(void)
 	}
 
 	ERR_clear_error();
+
+	/*
+	 * Check SYSerror() reasons, which are dynamically populated from
+	 * strerror().
+	 */
+	ERR_put_error(ERR_LIB_SYS, 0xfff, 1, "err.c", 300);
+
+	if ((err = ERR_get_error()) != 0x2fff001UL) {
+		fprintf(stderr, "FAIL: ERR_get_error() = %lx, want "
+		    "0x2fff001UL\n", err);
+		goto failure;
+	}
+	s = ERR_reason_error_string(err);
+	if (strcmp(s, strerror(ERR_GET_REASON(err))) != 0) {
+		fprintf(stderr, "FAIL: ERR_reason_error_string() = '%s', "
+		    "want '%s'\n", s, strerror(ERR_GET_REASON(err)));
+		goto failure;
+	}
 
 	s = ERR_lib_error_string(0x3fff067UL);
 	if (strcmp(s, "bignum routines") != 0) {
