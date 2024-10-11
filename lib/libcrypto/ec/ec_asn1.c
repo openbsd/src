@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.58 2024/10/11 06:13:09 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.59 2024/10/11 06:18:40 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1182,11 +1182,13 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 		goto err;
 	}
 	if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS)) {
-		if ((priv_key->parameters = ec_asn1_group2pkparameters(
-			    a->group, priv_key->parameters)) == NULL) {
+		ECPKPARAMETERS *parameters;
+
+		if ((parameters = ec_asn1_group2pkparameters(a->group, NULL)) == NULL) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
+		priv_key->parameters = parameters;
 	}
 	if (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key != NULL) {
 		priv_key->publicKey = ASN1_BIT_STRING_new();
