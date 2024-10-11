@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.63 2024/10/11 18:30:58 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.64 2024/10/11 18:32:03 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -964,10 +964,6 @@ ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 	EC_GROUP *group;
 	int nid;
 
-	if (params == NULL) {
-		ECerror(EC_R_MISSING_PARAMETERS);
-		return NULL;
-	}
 	if (params->type == 0) {/* the curve is given by an OID */
 		if ((nid = OBJ_obj2nid(params->value.named_curve)) == NID_undef) {
 			ECerror(EC_R_UNKNOWN_GROUP);
