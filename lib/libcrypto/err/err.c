@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.67 2024/10/11 12:10:12 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.68 2024/10/11 12:19:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -485,7 +485,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
  * value and never one of those 'standard' reason codes. */
 
 static void
-build_SYS_str_reasons(void)
+err_build_SYS_str_reasons(void)
 {
 	/* malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
@@ -700,7 +700,7 @@ ERR_load_ERR_strings_internal(void)
 	err_load_const_strings(ERR_str_libraries);
 	err_load_const_strings(ERR_str_reasons);
 	err_load_const_strings(ERR_str_functs);
-	build_SYS_str_reasons();
+	err_build_SYS_str_reasons();
 	err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
 }
