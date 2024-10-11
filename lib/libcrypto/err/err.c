@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.70 2024/10/11 12:25:05 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.71 2024/10/11 12:27:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -487,22 +487,8 @@ err_build_SYS_str_reasons(void)
 {
 	/* malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
-	int i;
-	static int init = 1;
 	int save_errno;
-
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
-	if (!init) {
-		CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
-		return;
-	}
-
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if (!init) {
-		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-		return;
-	}
+	int i;
 
 	/* strerror(3) will set errno to EINVAL when i is an unknown errno. */
 	save_errno = errno;
@@ -526,10 +512,6 @@ err_build_SYS_str_reasons(void)
 
 	/* Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL},
 	 * as required by ERR_load_strings. */
-
-	init = 0;
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 }
 #endif
 
