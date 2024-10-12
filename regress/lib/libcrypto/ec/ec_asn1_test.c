@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.2 2021/12/04 17:03:43 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.3 2024/10/12 16:15:28 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -194,6 +194,107 @@ ec_group_pkparameters_parameters_test(void)
 	    sizeof(ec_secp256r1_pkparameters_parameters));
 }
 
+static int
+ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
+{
+	EC_GROUP *new_group = NULL;
+	unsigned char *der = NULL;
+	int der_len;
+	const unsigned char *p;
+	int failed = 1;
+
+	der = NULL;
+	if ((der_len = i2d_ECPKParameters(group, &der)) <= 0)
+		errx(1, "failed to serialize %s %d", descr, nid);
+
+	p = der;
+	if ((new_group = d2i_ECPKParameters(NULL, &p, der_len)) == NULL)
+		errx(1, "failed to deserialize %s %d", descr, nid);
+
+	if (EC_GROUP_cmp(group, new_group, NULL) != 0) {
+		fprintf(stderr, "FAIL: %s %d groups mismatch\n", descr, nid);
+		goto err;
+	}
+	if (EC_GROUP_get_asn1_flag(group) != EC_GROUP_get_asn1_flag(new_group)) {
+		fprintf(stderr, "FAIL: %s %d asn1_flag %x != %x\n", descr, nid,
+		    EC_GROUP_get_asn1_flag(group),
+		    EC_GROUP_get_asn1_flag(new_group));
+		goto err;
+	}
+	if (EC_GROUP_get_point_conversion_form(group) !=
+	    EC_GROUP_get_point_conversion_form(new_group)) {
+		fprintf(stderr, "FAIL: %s %d form %02x != %02x\n", descr, nid,
+		    EC_GROUP_get_point_conversion_form(group),
+		    EC_GROUP_get_point_conversion_form(new_group));
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	EC_GROUP_free(new_group);
+	free(der);
+
+	return failed;
+}
+
+static int
+ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
+{
+	EC_GROUP *group = NULL;
+	int failed = 0;
+
+	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
+		errx(1, "failed to instantiate curve %d", curve->nid);
+
+	if (EC_GROUP_get_asn1_flag(group) != OPENSSL_EC_NAMED_CURVE) {
+		fprintf(stderr, "FAIL: ASN.1 flag not set for %d\n", curve->nid);
+		goto err;
+	}
+	if (EC_GROUP_get_point_conversion_form(group) !=
+	    POINT_CONVERSION_UNCOMPRESSED) {
+		fprintf(stderr, "FAIL: %d has point conversion form %02x\n",
+		    curve->nid, EC_GROUP_get_point_conversion_form(group));
+		goto err;
+	}
+
+	failed |= ec_group_roundtrip_curve(group, "named", curve->nid);
+
+	EC_GROUP_set_asn1_flag(group, 0);
+	failed |= ec_group_roundtrip_curve(group, "explicit", curve->nid);
+
+	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_COMPRESSED);
+	failed |= ec_group_roundtrip_curve(group, "compressed", curve->nid);
+
+	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_HYBRID);
+	failed |= ec_group_roundtrip_curve(group, "hybrid", curve->nid);
+
+ err:
+	EC_GROUP_free(group);
+
+	return failed;
+}
+
+static int
+ec_group_roundtrip_builtin_curves(void)
+{
+	EC_builtin_curve *all_curves = NULL;
+	size_t curve_id, ncurves;
+	int failed = 0;
+
+	ncurves = EC_get_builtin_curves(NULL, 0);
+	if ((all_curves = calloc(ncurves, sizeof(*all_curves))) == NULL)
+		err(1, "calloc builtin curves");
+	EC_get_builtin_curves(all_curves, ncurves);
+
+	for (curve_id = 0; curve_id < ncurves; curve_id++)
+		failed |= ec_group_roundtrip_builtin_curve(&all_curves[curve_id]);
+
+	free(all_curves);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -201,6 +302,7 @@ main(int argc, char **argv)
 
 	failed |= ec_group_pkparameters_named_curve_test();
 	failed |= ec_group_pkparameters_parameters_test();
+	failed |= ec_group_roundtrip_builtin_curves();
 
 	return (failed);
 }
