@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.539 2024/08/27 13:52:41 aisha Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.540 2024/10/12 23:31:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,7 +36,6 @@
 
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/rwlock.h>
 #include <sys/syslimits.h>
 #include <sys/refcnt.h>
 #include <sys/timeout.h>
