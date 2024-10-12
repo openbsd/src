@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.62 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.63 2024/10/12 23:10:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -272,8 +272,6 @@ struct pfsyncreq {
 };
 
 #ifdef _KERNEL
-
-#include <sys/percpu.h>
 
 enum pfsync_counters {
 	pfsyncs_ipackets,
