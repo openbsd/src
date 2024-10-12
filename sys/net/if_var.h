@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.132 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.133 2024/10/12 23:18:10 jsg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/srp.h>
 #include <sys/refcnt.h>
 #include <sys/task.h>
-#include <sys/time.h>
 #include <sys/timeout.h>
 
 #include <net/ifq.h>
