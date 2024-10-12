@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.46 2023/02/07 10:56:04 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.47 2024/10/12 08:13:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -241,6 +241,8 @@ paste_rename(const char *oldname, const char *newname, char **cause)
 	}
 
 	pb_new = paste_get_name(newname);
+	if (pb_new == pb)
+		return (0);
 	if (pb_new != NULL)
 		paste_free(pb_new);
 
