@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.8,v 1.3 2022/03/09 22:39:12 jsg Exp $
+.\" $OpenBSD: fw_update.8,v 1.4 2024/10/12 23:56:23 afresh1 Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2022 $
+.Dd $Mdocdate: October 12 2024 $
 .Dt FW_UPDATE 8
 .Os
 .Sh NAME
@@ -31,11 +31,9 @@ The
 utility installs, updates, or deletes firmware packages for
 .Ar driver
 from the Internet.
-If no
-.Ar driver
-is specified, the
+By default,
 .Nm
-utility tries to determine which firmware is needed on the system.
+tries to determine which firmware packages are needed.
 .Pp
 Since firmware with an acceptable license is already present in
 .Ox ,
@@ -51,9 +49,6 @@ Install or update firmware for all drivers.
 It is an error to specify this option with any
 .Ar driver
 arguments.
-This is enabled by default unless drivers, files or
-.Fl d
-are specified.
 .It Fl d
 Delete firmware for
 .Ar driver .

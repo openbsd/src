@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.56 2024/03/21 01:02:29 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.57 2024/10/12 23:56:23 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -331,6 +331,11 @@ EOL
 	return 0
 }
 
+available_firmware() {
+	check_cfile || return $?
+	sed -n 's/.*(\(.*\)-firmware.*/\1/p' "$CFILE"
+}
+
 installed_firmware() {
 	local _pre="$1" _match="$2" _post="$3" _firmware _fw
 	set -sA _firmware -- $(
@@ -626,6 +631,8 @@ CFILE="$LOCALSRC/$CFILE"
 
 if [ "${devices[*]:-}" ]; then
 	"$ALL" && warn "Cannot use -a and devices/files" && usage
+elif "$ALL"; then
+	set -sA devices -- $( available_firmware )
 else
 	((VERBOSE > 1)) && echo -n "Detect firmware ..."
 	set -sA devices -- $( detect_firmware )
