@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.46 2024/06/04 20:31:35 krw Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.47 2024/10/12 07:30:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 #include <lib/libz/zlib.h>
-#include <machine/vmparam.h>
 #include <crypto/sha2.h>
 
 #define HIB_PHYSSEG_MAX		22
