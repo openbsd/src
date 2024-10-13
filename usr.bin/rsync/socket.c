@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.33 2022/12/26 19:16:02 jmc Exp $ */
+/*	$OpenBSD: socket.c,v 1.34 2024/10/13 03:35:59 jsg Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+#include <stdio.h>
 
 #include "extern.h"
 
