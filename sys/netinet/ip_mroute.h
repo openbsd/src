@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.31 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.32 2024/10/13 02:27:44 jsg Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -17,8 +17,6 @@
  * MROUTING Revision: 1.2
  * advanced API support, bandwidth metering and signaling.
  */
-
-#include <sys/timeout.h>
 
 /*
  * Multicast Routing set/getsockopt commands.
