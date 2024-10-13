@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.h,v 1.5 2023/06/01 18:57:53 kn Exp $ */
+/*	$OpenBSD: if_wg.h,v 1.6 2024/10/13 00:53:21 jsg Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -19,9 +19,6 @@
 
 #ifndef __IF_WG_H__
 #define __IF_WG_H__
-
-#include <sys/limits.h>
-#include <sys/errno.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
