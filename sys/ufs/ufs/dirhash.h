@@ -1,4 +1,4 @@
-/* $OpenBSD: dirhash.h,v 1.8 2022/01/11 03:13:59 jsg Exp $	*/
+/* $OpenBSD: dirhash.h,v 1.9 2024/10/14 02:20:01 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
  *
@@ -29,7 +29,7 @@
 #ifndef _UFS_UFS_DIRHASH_H_
 #define _UFS_UFS_DIRHASH_H_
 
-#include <sys/mutex.h>
+#include <sys/rwlock.h>
 
 /*
  * For fast operations on large directories, we maintain a hash
