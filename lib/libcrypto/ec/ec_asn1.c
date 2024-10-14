@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.71 2024/10/14 12:50:18 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.72 2024/10/14 18:17:11 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -637,8 +637,10 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 	BIGNUM *a = NULL, *b = NULL;
 	int ret = 0;
 
-	if (!group || !curve || !curve->a || !curve->b)
-		return 0;
+	if (group == NULL)
+		goto err;
+	if (curve == NULL || curve->a == NULL || curve->b == NULL)
+		goto err;
 
 	if ((a = BN_new()) == NULL || (b = BN_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
