@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.119 2024/06/20 08:18:34 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.120 2024/10/14 03:02:08 djm Exp $
 #	Placed in the Public Domain.
 
 #SUDO=sudo
@@ -53,6 +53,7 @@ SSHKEYSCAN=ssh-keyscan
 SFTP=sftp
 SFTPSERVER=/usr/libexec/sftp-server
 SSHD_SESSION=/usr/libexec/sshd-session
+SSHD_AUTH=/usr/libexec/sshd-auth
 SCP=scp
 
 # Interop testing
@@ -76,6 +77,9 @@ if [ "x$TEST_SSH_SSH" != "x" ]; then
 fi
 if [ "x$TEST_SSH_SSHD_SESSION" != "x" ]; then
 	SSHD_SESSION="${TEST_SSH_SSHD_SESSION}"
+fi
+if [ "x$TEST_SSH_SSHD_AUTH" != "x" ]; then
+	SSHD_AUTH="${TEST_SSH_SSHD_AUTH}"
 fi
 if [ "x$TEST_SSH_SSHD" != "x" ]; then
 	SSHD="${TEST_SSH_SSHD}"
@@ -426,6 +430,7 @@ cat << EOF > $OBJ/sshd_config
 	AcceptEnv		_XXX_TEST
 	Subsystem	sftp	$SFTPSERVER
 	SshdSessionPath		$SSHD_SESSION
+	SshdAuthPath		$SSHD_AUTH
 	PerSourcePenalties	no
 EOF
 
