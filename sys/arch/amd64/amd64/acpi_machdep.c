@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.111 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.112 2024/10/14 11:49:34 jan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -366,10 +366,10 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	/* Unmap, will be remapped in acpi_sleep_cpu */
 	pmap_kremove(ACPI_TRAMPOLINE, PAGE_SIZE);
 	pmap_kremove(ACPI_TRAMP_DATA, PAGE_SIZE);
-#endif /* SMALL_KERNEL */
+#endif /* ! SMALL_KERNEL */
 }
 
-#ifndef SMALL_KERNEL
+#if defined(SUSPEND) && !defined(SMALL_KERNEL)
 /*
  * This function may not have local variables due to a bug between
  * acpi_savecpu() and the resume path.
@@ -562,7 +562,7 @@ resume_mp(void)
 }
 #endif /* MULTIPROCESSOR */
 
-#endif /* ! SMALL_KERNEL */
+#endif /* defined(SUSPEND) && !defined(SMALL_KERNEL) */
 
 bus_dma_tag_t
 acpi_iommu_device_map(struct aml_node *node, bus_dma_tag_t dmat)
