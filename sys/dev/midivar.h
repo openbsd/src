@@ -1,4 +1,4 @@
-/*	$OpenBSD: midivar.h,v 1.14 2023/09/26 19:55:24 mvs Exp $	*/
+/*	$OpenBSD: midivar.h,v 1.15 2024/10/14 00:47:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -22,7 +22,6 @@
 #include <dev/midi_if.h>
 #include <sys/device.h>
 #include <sys/event.h>
-#include <sys/proc.h>
 #include <sys/timeout.h>
 
 #define MIDI_RATE	3125	/* midi uart baud rate in bytes/second */
