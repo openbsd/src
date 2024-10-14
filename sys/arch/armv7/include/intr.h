@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2020/07/17 08:07:34 patrick Exp $	*/
+/*	$OpenBSD: intr.h,v 1.15 2024/10/14 10:08:13 jsg Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 #define	IST_EDGE_BOTH		6
 
 #ifndef _LOCORE
-#include <sys/device.h>
 #include <sys/queue.h>
 
 struct cpu_info;

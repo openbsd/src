@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.22 2023/09/12 08:29:28 jmatthew Exp $ */
+/*	$OpenBSD: intr.h,v 1.23 2024/10/14 10:08:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,7 +79,6 @@
 #define	IST_EDGE_BOTH		6
 
 #ifndef _LOCORE
-#include <sys/device.h>
 #include <sys/queue.h>
 
 int	splraise(int);
