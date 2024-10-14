@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.108 2024/09/05 08:52:27 bluhm Exp $
+.\"	$OpenBSD: ddb.4,v 1.109 2024/10/14 07:05:23 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 5 2024 $
+.Dd $Mdocdate: October 14 2024 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1168,14 +1168,6 @@ Register names can be found with the
 .Ic show registers
 command.
 .Pp
-Some variable names are suffixed with numbers, and some may have a modifier
-following a colon immediately after the variable name.
-For example, register variables can have the
-.Ql :u
-modifier to indicate a
-user register (e.g.,
-.Ql $eax:u ) .
-.Pp
 Built-in debugger variables currently supported are:
 .Bl -tag -width 10n -compact -offset indent
 .It Va $radix
@@ -1277,16 +1269,13 @@ command.
 The last address explicitly specified.
 .It Li $ Ns Ar variable
 The value of a register or variable.
-The name may be followed by a
-.Ql \&:
-and modifiers as described above with
-.Ar identifier .
 .It Ar expr Li # Ar expr
 A binary operator which rounds up the left hand side to the next
 multiple of right hand side.
 .It Li * Ns Ar expr
 Indirection.
-It may be followed by a ':' and modifiers as described above.
+It may be followed by a ':' as described above with
+.Ar identifier .
 .El
 .Sh SEE ALSO
 .Xr ctfstrip 1 ,
