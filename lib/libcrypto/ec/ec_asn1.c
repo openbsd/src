@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.69 2024/10/14 12:38:11 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.70 2024/10/14 12:42:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -669,14 +669,13 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 	ASN1_BIT_STRING_free(curve->seed);
 	curve->seed = NULL;
 
-	/* set the seed (optional) */
 	if (group->seed != NULL) {
 		if ((curve->seed = ASN1_BIT_STRING_new()) == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if (!ASN1_BIT_STRING_set(curve->seed, group->seed,
-			(int) group->seed_len)) {
+		if (!ASN1_BIT_STRING_set(curve->seed,
+		    group->seed, group->seed_len)) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
