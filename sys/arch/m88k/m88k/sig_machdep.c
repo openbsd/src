@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.31 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.32 2024/10/14 08:42:39 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -77,11 +77,6 @@
 #include <uvm/uvm_extern.h>
 
 vaddr_t	local_stack_frame(struct trapframe *, vaddr_t, size_t);
-
-struct sigstate {
-	int		 ss_flags;	/* which of the following are valid */
-	struct trapframe ss_frame;	/* original exception frame */
-};
 
 /*
  * WARNING: sigcode() in subr.s assumes sf_scp is the first field of the
