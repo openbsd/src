@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.68 2024/10/11 18:58:04 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.69 2024/10/14 12:38:11 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -609,7 +609,7 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 	*b_buf = NULL;
 	size_t len_1, len_2;
 	unsigned char char_zero = 0;
-	int ok = 0;
+	int ret = 0;
 
 	if (!group || !curve || !curve->a || !curve->b)
 		return 0;
@@ -686,7 +686,7 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 		}
 	}
 
-	ok = 1;
+	ret = 1;
 
  err:
 	free(buffer_1);
@@ -694,7 +694,7 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 	BN_free(a);
 	BN_free(b);
 
-	return (ok);
+	return ret;
 }
 
 static ECPARAMETERS *
