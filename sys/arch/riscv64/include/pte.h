@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2024/01/23 19:51:10 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2024/10/14 12:02:16 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -18,8 +18,6 @@
  */
 #ifndef _RISCV64_PTE_H_
 #define _RISCV64_PTE_H_
-
-#include "machine/vmparam.h"
 
 #define Lx_TABLE_ALIGN	(4096)
 

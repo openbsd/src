@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.9 2024/09/29 12:22:57 jsg Exp $ */
+/* $OpenBSD: pte.h,v 1.10 2024/10/14 12:02:16 jsg Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -16,8 +16,6 @@
  */
 #ifndef _ARM_PTE_H_
 #define _ARM_PTE_H_
-
-#include "arm64/vmparam.h"
 
 /*  level X descriptor */
 #define	Lx_TYPE_MASK	(0x00000003)	/* mask of type bits */
