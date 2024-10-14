@@ -1,4 +1,4 @@
-/* $OpenBSD: pathnames.h,v 1.32 2024/05/17 00:30:24 djm Exp $ */
+/* $OpenBSD: pathnames.h,v 1.33 2024/10/14 01:57:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,6 +41,7 @@
 
 /* Binary paths for the sshd components */
 #define _PATH_SSHD_SESSION		"/usr/libexec/sshd-session"
+#define _PATH_SSHD_AUTH			"/usr/libexec/sshd-auth"
 
 /*
  * The process id of the daemon listening for connections is saved here to

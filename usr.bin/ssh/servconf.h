@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.h,v 1.168 2024/09/15 01:18:26 djm Exp $ */
+/* $OpenBSD: servconf.h,v 1.169 2024/10/14 01:57:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -246,6 +246,7 @@ typedef struct {
 	int	unused_connection_timeout;
 
 	char   *sshd_session_path;
+	char   *sshd_auth_path;
 
 	int	refuse_connection;
 }       ServerOptions;

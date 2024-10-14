@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_wrap.h,v 1.51 2024/05/17 06:42:04 jsg Exp $ */
+/* $OpenBSD: monitor_wrap.h,v 1.52 2024/10/14 01:57:50 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -74,6 +74,12 @@ int mm_pty_allocate(int *, int *, char *, size_t);
 void mm_session_pty_cleanup2(struct Session *);
 
 void mm_send_keystate(struct ssh *, struct monitor*);
+
+/* state */
+struct include_list;
+void mm_get_state(struct ssh *, struct include_list *, struct sshbuf *,
+    struct sshbuf **, uint64_t *, struct sshbuf **, struct sshbuf **,
+    u_char **, struct sshbuf **, struct sshbuf **);
 
 /* bsdauth */
 int mm_bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);

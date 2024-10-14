@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.96 2024/09/09 02:39:57 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.97 2024/10/14 01:57:50 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -29,9 +29,9 @@ CDIAGFLAGS+=	-Wold-style-definition
 CDIAGFLAGS+=	-Werror
 .endif
 
-#CDIAGFLAGS+=	-fno-common
-#DEBUG=-g
-#INSTALL_STRIP=
+CDIAGFLAGS+=	-fno-common
+DEBUG=-g
+INSTALL_STRIP=
 
 WARNINGS=yes
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.338 2024/05/17 00:30:24 djm Exp $ */
+/* $OpenBSD: session.c,v 1.339 2024/10/14 01:57:50 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1224,8 +1224,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 
 	sshpkt_fmt_connection_id(ssh, remote_id, sizeof(remote_id));
 
-	/* remove hostkey from the child's memory */
-	destroy_sensitive_data();
+	/* remove keys from memory */
 	ssh_packet_clear_keys(ssh);
 
 	/* Force a password change */
@@ -1825,10 +1824,6 @@ session_signal_req(struct ssh *ssh, Session *s)
 	if (s->forced || s->is_subsystem) {
 		error_f("refusing to send signal %s to %s session",
 		    signame, s->forced ? "forced-command" : "subsystem");
-		goto out;
-	}
-	if (mm_is_monitor()) {
-		error_f("session signalling requires privilege separation");
 		goto out;
 	}
 
