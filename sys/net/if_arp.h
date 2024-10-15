@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arp.h,v 1.7 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_arp.h,v 1.8 2024/10/15 00:41:40 jsg Exp $	*/
 /*	$NetBSD: if_arp.h,v 1.8 1995/03/08 02:56:52 cgd Exp $	*/
 
 /*
@@ -71,19 +71,4 @@ struct	arphdr {
 	u_int8_t  ar_tpa[];	/* target protocol address */
 #endif
 };
-
-/*
- * ARP ioctl request
- */
-struct arpreq {
-	struct	sockaddr arp_pa;		/* protocol address */
-	struct	sockaddr arp_ha;		/* hardware address */
-	int	arp_flags;			/* flags */
-};
-/*  arp_flags and at_flags field values */
-#define	ATF_INUSE	0x01	/* entry in use */
-#define ATF_COM		0x02	/* completed entry (enaddr valid) */
-#define	ATF_PERM	0x04	/* permanent entry */
-#define	ATF_PUBL	0x08	/* publish entry (respond for other host) */
-#define	ATF_USETRAILERS	0x10	/* has requested trailers */
 #endif /* _NET_IF_ARP_H_ */
