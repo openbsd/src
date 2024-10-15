@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.374 2024/10/08 12:02:24 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.375 2024/10/15 13:49:26 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -304,15 +304,16 @@ struct process {
 #define	PS_NOBTCFI	0x02000000	/* No Branch Target CFI */
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
 #define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
+#define	PS_STOPPED	0x40000000	/* Stopped process */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
-     "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
+     "\017NOZOMBIE" "\020STOPPING" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
-     "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\034PIN" \
-     "\035LIBCPIN" "\036CONTINUED")
+     "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\036CONTINUED" \
+     "\037STOPPED")
 
 struct kcov_dev;
 struct lock_list_entry;

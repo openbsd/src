@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.99 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.100 2024/10/15 13:49:26 claudio Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -462,7 +462,7 @@ orphanpg(struct pgrp *pg)
 	struct process *pr;
 
 	LIST_FOREACH(pr, &pg->pg_members, ps_pglist) {
-		if (pr->ps_mainproc->p_stat == SSTOP) {
+		if (pr->ps_flags & PS_STOPPED) {
 			LIST_FOREACH(pr, &pg->pg_members, ps_pglist) {
 				prsignal(pr, SIGHUP);
 				prsignal(pr, SIGCONT);

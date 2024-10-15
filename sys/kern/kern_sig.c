@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.341 2024/10/09 08:58:19 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.342 2024/10/15 13:49:26 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1100,6 +1100,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * Otherwise, process goes back to sleep state.
 			 */
 			atomic_setbits_int(&pr->ps_flags, PS_CONTINUED);
+			atomic_clearbits_int(&pr->ps_flags,
+			    PS_WAITED | PS_STOPPED);
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
@@ -1512,6 +1514,7 @@ proc_stop_sweep(void *v)
 	LIST_FOREACH(pr, &allprocess, ps_list) {
 		if ((pr->ps_flags & PS_STOPPING) == 0)
 			continue;
+		atomic_setbits_int(&pr->ps_flags, PS_STOPPED);
 		atomic_clearbits_int(&pr->ps_flags, PS_STOPPING);
 
 		if ((pr->ps_pptr->ps_sigacts->ps_sigflags & SAS_NOCLDSTOP) == 0)
