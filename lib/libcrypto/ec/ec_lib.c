@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.67 2024/04/23 10:52:08 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.68 2024/10/15 06:27:43 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -392,6 +392,12 @@ EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 	return !BN_is_zero(&group->cofactor);
 }
 LCRYPTO_ALIAS(EC_GROUP_get_cofactor);
+
+const BIGNUM *
+EC_GROUP_get0_cofactor(const EC_GROUP *group)
+{
+	return &group->cofactor;
+}
 
 void
 EC_GROUP_set_curve_name(EC_GROUP *group, int nid)

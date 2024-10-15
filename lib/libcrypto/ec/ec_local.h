@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.28 2024/10/03 06:24:07 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.29 2024/10/15 06:27:43 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -356,6 +356,7 @@ int EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
     const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
 
 /* Public API in OpenSSL */
+const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
 
 __END_HIDDEN_DECLS
