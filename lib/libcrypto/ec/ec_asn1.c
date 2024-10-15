@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.72 2024/10/14 18:17:11 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.73 2024/10/15 06:35:59 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -695,15 +695,11 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 	int ok = 0;
 	size_t len = 0;
 	ECPARAMETERS *ret = NULL;
-	BIGNUM *tmp = NULL;
+	const BIGNUM *order, *cofactor;
 	unsigned char *buffer = NULL;
 	const EC_POINT *point = NULL;
 	point_conversion_form_t form;
 
-	if ((tmp = BN_new()) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
 	if ((ret = ECPARAMETERS_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -750,19 +746,27 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
-	if (!EC_GROUP_get_order(group, tmp, NULL)) {
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	if (BN_is_zero(order)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	ASN1_INTEGER_free(ret->order);
-	if ((ret->order = BN_to_ASN1_INTEGER(tmp, NULL)) == NULL) {
+	if ((ret->order = BN_to_ASN1_INTEGER(order, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
 	ASN1_INTEGER_free(ret->cofactor);
 	ret->cofactor = NULL;
-	if (EC_GROUP_get_cofactor(group, tmp, NULL)) {
-		if ((ret->cofactor = BN_to_ASN1_INTEGER(tmp, NULL)) == NULL) {
+	if ((cofactor = EC_GROUP_get0_cofactor(group)) == NULL) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	if (!BN_is_zero(cofactor)) {
+		if ((ret->cofactor = BN_to_ASN1_INTEGER(cofactor, NULL)) == NULL) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
@@ -774,7 +778,6 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		ECPARAMETERS_free(ret);
 		ret = NULL;
 	}
-	BN_free(tmp);
 	free(buffer);
 	return (ret);
 }
