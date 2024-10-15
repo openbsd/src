@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.237 2024/10/08 12:02:24 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.238 2024/10/15 11:54:07 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 
 	/* proc is off ps_threads list so update accounting of process now */
 	tuagg_add_runtime();
-	tuagg_add_process(p->p_p, p);
+	tuagg_add_process(pr, p);
 
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
