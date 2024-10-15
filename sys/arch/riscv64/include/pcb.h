@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 2021/06/30 22:20:56 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 2024/10/15 09:16:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -19,8 +19,6 @@
 #define	_MACHINE_PCB_H_
 
 #include <machine/frame.h>
-
-#include <machine/pte.h>
 #include <machine/reg.h>
 
 struct trapframe;
