@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.103 2024/10/07 14:45:33 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.104 2024/10/16 06:09:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -413,7 +413,7 @@ char *
 x509_get_pubkey(X509 *x, const char *fn)
 {
 	EVP_PKEY	*pkey;
-	EC_KEY		*eckey;
+	const EC_KEY	*eckey;
 	int		 nid;
 	const char	*cname;
 	uint8_t		*pubkey = NULL;
