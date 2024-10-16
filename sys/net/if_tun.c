@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.242 2024/10/16 11:03:55 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.243 2024/10/16 11:12:31 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ int	tap_clone_create(struct if_clone *, int);
 int	tun_create(struct if_clone *, int, int);
 int	tun_clone_destroy(struct ifnet *);
 void	tun_wakeup(struct tun_softc *);
-int	tun_init(struct tun_softc *);
 void	tun_start(struct ifnet *);
 int	filt_tunread(struct knote *, long);
 int	filt_tunwrite(struct knote *, long);
@@ -523,61 +522,6 @@ tun_dev_close(dev_t dev, struct proc *p)
 	return (error);
 }
 
-int
-tun_init(struct tun_softc *sc)
-{
-	struct ifnet	*ifp = &sc->sc_if;
-	struct ifaddr	*ifa;
-
-	TUNDEBUG(("%s: tun_init\n", ifp->if_xname));
-
-	ifp->if_flags |= IFF_UP | IFF_RUNNING;
-
-	sc->sc_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			struct sockaddr_in *sin;
-
-			sin = satosin(ifa->ifa_addr);
-			if (sin && sin->sin_addr.s_addr)
-				sc->sc_flags |= TUN_IASET;
-
-			if (ifp->if_flags & IFF_POINTOPOINT) {
-				sin = satosin(ifa->ifa_dstaddr);
-				if (sin && sin->sin_addr.s_addr)
-					sc->sc_flags |= TUN_DSTADDR;
-			} else
-				sc->sc_flags &= ~TUN_DSTADDR;
-
-			if (ifp->if_flags & IFF_BROADCAST) {
-				sin = satosin(ifa->ifa_broadaddr);
-				if (sin && sin->sin_addr.s_addr)
-					sc->sc_flags |= TUN_BRDADDR;
-			} else
-				sc->sc_flags &= ~TUN_BRDADDR;
-		}
-#ifdef INET6
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			struct sockaddr_in6 *sin6;
-
-			sin6 = satosin6(ifa->ifa_addr);
-			if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
-				sc->sc_flags |= TUN_IASET;
-
-			if (ifp->if_flags & IFF_POINTOPOINT) {
-				sin6 = satosin6(ifa->ifa_dstaddr);
-				if (sin6 &&
-				    !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
-					sc->sc_flags |= TUN_DSTADDR;
-			} else
-				sc->sc_flags &= ~TUN_DSTADDR;
-		}
-#endif /* INET6 */
-	}
-
-	return (0);
-}
-
 /*
  * Process an ioctl request.
  */
@@ -590,8 +534,8 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		tun_init(sc);
-		break;
+		SET(ifp->if_flags, IFF_UP);
+		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ISSET(ifp->if_flags, IFF_UP))
 			SET(ifp->if_flags, IFF_RUNNING);
