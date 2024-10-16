@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopa.out.c,v 1.18 2022/12/28 21:30:17 jmc Exp $ */
+/*	$OpenBSD: mopa.out.c,v 1.19 2024/10/16 18:47:48 miod Exp $ */
 
 /*
  * mopa.out - Convert a Unix format kernel into something that
@@ -53,7 +53,7 @@
 #include "common/mopdef.h"
 #include "common/file.h"
 #if defined(__OpenBSD__)
-#include <sys/exec.h>
+#include <a.out.h>
 #endif
 #if defined(__FreeBSD__)
 #include <sys/imgact_aout.h>

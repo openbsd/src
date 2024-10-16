@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.19 2017/10/29 08:45:53 mpi Exp $ */
+/*	$OpenBSD: file.c,v 1.20 2024/10/16 18:47:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #ifndef NOAOUT
 #if defined(__OpenBSD__)
-#include <sys/exec.h>
+#include <a.out.h>
 #endif
 #if defined(__bsdi__)
 #define NOAOUT
