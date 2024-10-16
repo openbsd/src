@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.125 2024/03/29 21:19:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.126 2024/10/16 18:43:42 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -584,9 +584,6 @@ dopanic:
 	}
 
 	case T_TAGOF:
-		trapsignal(p, SIGEMT, 0, EMT_TAGOVF, sv);	/* XXX code? */
-		break;
-
 	case T_BREAKPOINT:
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 		break;
