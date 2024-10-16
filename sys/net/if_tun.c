@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.241 2024/10/10 06:50:58 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.242 2024/10/16 11:03:55 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -599,10 +599,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			CLR(ifp->if_flags, IFF_RUNNING);
 		break;
 
-	case SIOCSIFDSTADDR:
-		tun_init(sc);
-		TUNDEBUG(("%s: destination address set\n", ifp->if_xname));
-		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > TUNMRU)
 			error = EINVAL;
