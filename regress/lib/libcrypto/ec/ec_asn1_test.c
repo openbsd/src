@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.4 2024/10/14 13:16:06 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.5 2024/10/16 23:49:49 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 
 const uint8_t ec_secp256r1_pkparameters_named_curve[] = {
@@ -339,6 +340,287 @@ ec_group_roundtrip_builtin_curves(void)
 	return failed;
 }
 
+/*
+ * From draft-ietf-lwig-curve-representation-23, Appendix E.3
+ */
+
+static const struct {
+	const char *oid;
+	const char *sn;
+	const char *ln;
+	const char *p;
+	const char *a;
+	const char *b;
+	const char *order;
+	const char *cofactor;
+	const char *x;
+	const char *y;
+} wei25519 = {
+	.oid = "1.3.101.108",
+	.sn = "Wei25519",
+	.p =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
+		 "ffffffff" "ffffffff" "ffffffff" "ffffffed",
+	.a =	 "2aaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+		 "aaaaaaaa" "aaaaaaaa" "aaaaaa98" "4914a144",
+	.b =	 "7b425ed0" "97b425ed" "097b425e" "d097b425"
+		 "ed097b42" "5ed097b4" "260b5e9c" "7710c864",
+	.x =	 "2aaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+		 "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaad245a",
+	.y =	 "20ae19a1" "b8a086b4" "e01edd2c" "7748d14c"
+		 "923d4d7e" "6d7c61b2" "29e9c5a2" "7eced3d9",
+	.order = "10000000" "00000000" "00000000" "00000000"
+		 "14def9de" "a2f79cd6" "5812631a" "5cf5d3ed",
+	.cofactor = "8",
+};
+
+const uint8_t ec_wei25519_pkparameters_named_curve[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x6c,
+};
+
+const uint8_t ec_wei25519_pkparameters_parameters[] = {
+	0x30, 0x81, 0xde, 0x02, 0x01, 0x01, 0x30, 0x2b,
+	0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x01,
+	0x01, 0x02, 0x20, 0x7f, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xed, 0x30, 0x44, 0x04, 0x20, 0x2a,
+	0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xaa, 0x98, 0x49, 0x14, 0xa1, 0x44, 0x04,
+	0x20, 0x7b, 0x42, 0x5e, 0xd0, 0x97, 0xb4, 0x25,
+	0xed, 0x09, 0x7b, 0x42, 0x5e, 0xd0, 0x97, 0xb4,
+	0x25, 0xed, 0x09, 0x7b, 0x42, 0x5e, 0xd0, 0x97,
+	0xb4, 0x26, 0x0b, 0x5e, 0x9c, 0x77, 0x10, 0xc8,
+	0x64, 0x04, 0x41, 0x04, 0x2a, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+	0xaa, 0xad, 0x24, 0x5a, 0x20, 0xae, 0x19, 0xa1,
+	0xb8, 0xa0, 0x86, 0xb4, 0xe0, 0x1e, 0xdd, 0x2c,
+	0x77, 0x48, 0xd1, 0x4c, 0x92, 0x3d, 0x4d, 0x7e,
+	0x6d, 0x7c, 0x61, 0xb2, 0x29, 0xe9, 0xc5, 0xa2,
+	0x7e, 0xce, 0xd3, 0xd9, 0x02, 0x20, 0x10, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0xde,
+	0xf9, 0xde, 0xa2, 0xf7, 0x9c, 0xd6, 0x58, 0x12,
+	0x63, 0x1a, 0x5c, 0xf5, 0xd3, 0xed, 0x02, 0x01,
+	0x08,
+};
+
+static int
+ec_weierstrass25519(void)
+{
+	EC_GROUP *group = NULL, *new_group = NULL;
+	EC_POINT *generator = NULL;
+	BN_CTX *ctx = NULL;
+	BIGNUM *p, *a, *b;
+	BIGNUM *order, *cofactor, *guessed_cofactor, *x, *y;
+	const unsigned char *pder;
+	unsigned char *der = NULL;
+	long error;
+	int der_len = 0;
+	int nid;
+	int failed = 1;
+
+	ERR_clear_error();
+	if ((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	BN_CTX_start(ctx);
+
+	if ((nid = OBJ_create(wei25519.oid, wei25519.sn, NULL)) == NID_undef) {
+		fprintf(stderr, "FAIL: %s OBJ_create(wei25519)\n", __func__);
+		goto err;
+	}
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((cofactor = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((guessed_cofactor = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+
+	if (BN_hex2bn(&p, wei25519.p) == 0)
+		errx(1, "BN_hex2bn(p)");
+	if (BN_hex2bn(&a, wei25519.a) == 0)
+		errx(1, "BN_hex2bn(a)");
+	if (BN_hex2bn(&b, wei25519.b) == 0)
+		errx(1, "BN_hex2bn(b)");
+
+	if ((group = EC_GROUP_new_curve_GFp(p, a, b, ctx)) == NULL) {
+		fprintf(stderr, "FAIL: %s EC_GROUP_new_curve_GFp", __func__);
+		goto err;
+	}
+
+	if (BN_hex2bn(&x, wei25519.x) == 0)
+		errx(1, "BN_hex2bn(x)");
+	if (BN_hex2bn(&x, wei25519.x) == 0)
+		errx(1, "BN_hex2bn(x)");
+	if (BN_hex2bn(&y, wei25519.y) == 0)
+		errx(1, "BN_hex2bn(y)");
+
+	if ((generator = EC_POINT_new(group)) == NULL)
+		errx(1, "EC_POINT_new()");
+
+	if (!EC_POINT_set_affine_coordinates(group, generator, x, y, ctx)) {
+		fprintf(stderr, "FAIL: %s EC_POINT_set_affine_coordinates", __func__);
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	if (BN_hex2bn(&order, wei25519.order) == 0)
+		errx(1, "BN_hex2bn(order)");
+	if (BN_hex2bn(&cofactor, wei25519.cofactor) == 0)
+		errx(1, "BN_hex2bn(cofactor)");
+
+	/* Don't set cofactor to exercise the cofactor guessing code. */
+	if (!EC_GROUP_set_generator(group, generator, order, NULL)) {
+		fprintf(stderr, "FAIL: %s EC_GROUP_set_generator\n", __func__);
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	if (!EC_GROUP_get_cofactor(group, guessed_cofactor, ctx)) {
+		fprintf(stderr, "FAIL: %s EC_GROUP_get_cofactor\n", __func__);
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	if (BN_cmp(cofactor, guessed_cofactor) != 0) {
+		fprintf(stderr, "FAIL: %s cofactor: want ", __func__);
+		BN_print_fp(stderr, cofactor);
+		fprintf(stderr, ", got ");
+		BN_print_fp(stderr, guessed_cofactor);
+		fprintf(stderr, "\n");
+		goto err;
+	}
+
+	if (!EC_GROUP_check(group, ctx)) {
+		fprintf(stderr, "FAIL: %s EC_GROUP_check\n", __func__);
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	/* Explicit curve parameter encoding should work without NID set. */
+	if (EC_GROUP_get_curve_name(group) != NID_undef) {
+		fprintf(stderr, "FAIL: %s unexpected curve name %d\n", __func__,
+		    EC_GROUP_get_curve_name(group));
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
+
+	der = NULL;
+	if ((der_len = i2d_ECPKParameters(group, &der)) <= 0) {
+		fprintf(stderr, "FAIL: %s i2d_ECPKParameters (explicit)\n", __func__);
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	if (compare_data("Weierstrass 25519 explicit", der, der_len,
+	    ec_wei25519_pkparameters_parameters,
+	    sizeof(ec_wei25519_pkparameters_parameters)) == -1)
+		goto err;
+
+	freezero(der, der_len);
+	der = NULL;
+
+	EC_GROUP_set_curve_name(group, nid);
+	EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
+
+	der = NULL;
+	if ((der_len = i2d_ECPKParameters(group, &der)) <= 0) {
+		fprintf(stderr, "FAIL: %s i2d_ECPKParameters (named)\n", __func__);
+		ERR_print_errors_fp(stderr);
+		goto err;
+	}
+
+	if (compare_data("Weierstrass 25519 named curve", der, der_len,
+	    ec_wei25519_pkparameters_named_curve,
+	    sizeof(ec_wei25519_pkparameters_named_curve)) == -1)
+		goto err;
+
+	freezero(der, der_len);
+	der = NULL;
+
+	/* At this point we should have no error on the stack. */
+	if (ERR_peek_last_error() != 0) {
+		fprintf(stderr, "FAIL: %s unexpected error %lu\n", __func__,
+		    ERR_peek_last_error());
+		goto err;
+	}
+
+	pder = ec_wei25519_pkparameters_named_curve;
+	der_len = sizeof(ec_wei25519_pkparameters_named_curve);
+	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) != NULL) {
+		fprintf(stderr, "FAIL: %s managed to decode unknown named curve\n",
+		    __func__);
+		goto err;
+	}
+
+	error = ERR_get_error();
+	if (ERR_GET_REASON(error) != EC_R_UNKNOWN_GROUP) {
+		fprintf(stderr, "FAIL: %s unexpected error: want %d, got %d\n",
+		    __func__, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
+		goto err;
+	}
+
+	ERR_clear_error();
+	pder = ec_wei25519_pkparameters_parameters;
+	der_len = sizeof(ec_wei25519_pkparameters_parameters);
+
+#if 0
+	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) != NULL) {
+		fprintf(stderr, "FAIL: %s managed to decode non-builtin parameters\n",
+		    __func__);
+		goto err;
+	}
+
+	error = ERR_peek_last_error();
+	if (ERR_GET_REASON(error) != EC_R_PKPARAMETERS2GROUP_FAILURE) {
+		fprintf(stderr, "FAIL: %s unexpected error: want %d, got %d\n",
+		    __func__, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
+		goto err;
+	}
+#else
+	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) == NULL) {
+		fprintf(stderr, "FAIL: %s d2i_ECPKParameters(Wei25519)\n", __func__);
+		goto err;
+	}
+	if (EC_GROUP_cmp(group, new_group, ctx) != 0) {
+		fprintf(stderr, "FAIL: %s Weierstrass groups do not match!\n",
+		    __func__);
+		goto err;
+	}
+#endif
+
+	failed = 0;
+
+ err:
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+
+	EC_GROUP_free(group);
+	EC_GROUP_free(new_group);
+	EC_POINT_free(generator);
+
+	freezero(der, der_len);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -348,6 +630,7 @@ main(int argc, char **argv)
 	failed |= ec_group_pkparameters_parameters_test();
 	failed |= ec_group_pkparameters_correct_padding_test();
 	failed |= ec_group_roundtrip_builtin_curves();
+	failed |= ec_weierstrass25519();
 
 	return (failed);
 }
