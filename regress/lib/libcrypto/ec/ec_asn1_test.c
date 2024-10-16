@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.5 2024/10/16 23:49:49 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.6 2024/10/16 23:58:25 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -458,6 +458,10 @@ ec_weierstrass25519(void)
 	if (BN_hex2bn(&b, wei25519.b) == 0)
 		errx(1, "BN_hex2bn(b)");
 
+	/*
+	 * XXX - this uses the Montgomery method. Consider exercising the
+	 * simple method as well.
+	 */
 	if ((group = EC_GROUP_new_curve_GFp(p, a, b, ctx)) == NULL) {
 		fprintf(stderr, "FAIL: %s EC_GROUP_new_curve_GFp", __func__);
 		goto err;
