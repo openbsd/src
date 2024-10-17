@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2091 2024/10/17 08:21:23 dlg Exp $
+$OpenBSD: pcidevs,v 1.2092 2024/10/17 08:22:34 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7429,6 +7429,7 @@ product JMICRON XD_2		0x2394	xD
 /* Kingston */
 product KINGSTON A2000		0x2263	A2000
 product KINGSTON KC3000		0x5013	KC3000
+product KINGSTON SNV2S		0x5017	SNV2S
 product KINGSTON NV2		0x5019	NV2
 
 /* Kioxia */
