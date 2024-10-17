@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.8 2023/11/24 07:57:39 miod Exp $	*/
+/*	$OpenBSD: exception.S,v 1.9 2024/10/17 01:57:18 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -36,7 +36,6 @@
 
 #include "assym.h"
 #include <machine/asm.h>
-#include <machine/trap.h>
 #include <machine/riscvreg.h>
 
 .macro save_registers mode

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2024/02/23 18:19:03 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2024/10/17 01:57:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -36,8 +36,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -47,7 +45,6 @@
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>
 #include <ddb/db_variables.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #include <dev/cons.h>

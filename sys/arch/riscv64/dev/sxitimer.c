@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.1 2024/01/27 12:05:40 kettenis Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.2 2024/10/17 01:57:18 jsg Exp $	*/
 /*
  * Copyright (c) 2024 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #include <sys/systm.h>
 #include <sys/clockintr.h>
 #include <sys/device.h>
-#include <sys/sensors.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

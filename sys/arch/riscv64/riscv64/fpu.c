@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.11 2021/06/30 22:20:56 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.12 2024/10/17 01:57:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include "machine/asm.h"
 
 void
 fpu_disable(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfgpio.c,v 1.2 2022/06/06 14:34:11 kettenis Exp $	*/
+/*	$OpenBSD: sfgpio.c,v 1.3 2024/10/17 01:57:18 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -20,7 +20,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/evcount.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

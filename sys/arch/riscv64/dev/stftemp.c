@@ -1,4 +1,4 @@
-/*	$OpenBSD: stftemp.c,v 1.2 2023/07/01 08:20:38 jsing Exp $	*/
+/*	$OpenBSD: stftemp.c,v 1.3 2024/10/17 01:57:18 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,7 +20,6 @@
 #include <sys/device.h>
 #include <sys/sensors.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 

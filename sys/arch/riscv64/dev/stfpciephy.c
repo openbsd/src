@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfpciephy.c,v 1.1 2023/07/08 10:06:14 kettenis Exp $	*/
+/*	$OpenBSD: stfpciephy.c,v 1.2 2024/10/17 01:57:18 jsg Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,12 +19,10 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
