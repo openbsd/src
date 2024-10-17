@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2091 2024/10/17 08:21:23 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.2092 2024/10/17 08:22:34 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -26990,6 +26990,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_KC3000,
 	    "KC3000",
+	},
+	{
+	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_SNV2S,
+	    "SNV2S",
 	},
 	{
 	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_NV2,

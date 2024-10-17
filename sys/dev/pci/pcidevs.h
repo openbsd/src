@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2091 2024/10/17 08:21:23 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.2092 2024/10/17 08:22:34 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7434,6 +7434,7 @@
 /* Kingston */
 #define	PCI_PRODUCT_KINGSTON_A2000	0x2263		/* A2000 */
 #define	PCI_PRODUCT_KINGSTON_KC3000	0x5013		/* KC3000 */
+#define	PCI_PRODUCT_KINGSTON_SNV2S	0x5017		/* SNV2S */
 #define	PCI_PRODUCT_KINGSTON_NV2	0x5019		/* NV2 */
 
 /* Kioxia */
