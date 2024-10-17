@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.206 2024/07/23 08:38:02 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.207 2024/10/17 09:11:35 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -458,7 +458,7 @@ sleep_signal_check(struct proc *p)
 
 	if ((err = single_thread_check(p, 1)) != 0)
 		return err;
-	if ((sig = cursig(p, &ctx)) != 0) {
+	if ((sig = cursig(p, &ctx, 1)) != 0) {
 		if (ctx.sig_intr)
 			return EINTR;
 		else
