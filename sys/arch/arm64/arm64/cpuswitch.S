@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuswitch.S,v 1.7 2023/10/24 13:20:09 claudio Exp $ */
+/* $OpenBSD: cpuswitch.S,v 1.8 2024/10/17 02:20:53 jsg Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "machine/asm.h"
+#include <machine/asm.h>
 #include "assym.h"
 
 /*
