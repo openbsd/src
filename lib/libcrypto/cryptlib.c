@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.54 2024/09/06 09:57:32 tb Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.55 2024/10/17 14:09:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -345,12 +345,8 @@ crypto_cpu_caps_ia32(void)
 void
 OPENSSL_cpuid_setup(void)
 {
-	static int trigger = 0;
 	uint64_t OPENSSL_ia32_cpuid(void);
 
-	if (trigger)
-		return;
-	trigger = 1;
 	OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid();
 
 	if ((OPENSSL_ia32cap_P & CPUCAP_MASK_AESNI) != 0)
