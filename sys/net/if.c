@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.720 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.721 2024/10/17 05:02:12 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -66,10 +66,8 @@
 #include "carp.h"
 #include "ether.h"
 #include "pf.h"
-#include "pfsync.h"
 #include "ppp.h"
 #include "pppoe.h"
-#include "if_wg.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
