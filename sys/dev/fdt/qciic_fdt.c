@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic_fdt.c,v 1.1 2022/11/06 15:36:13 patrick Exp $	*/
+/*	$OpenBSD: qciic_fdt.c,v 1.2 2024/10/17 17:58:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #define _I2C_PRIVATE
@@ -108,6 +109,8 @@ qciic_fdt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	pinctrl_byname(sc->sc_node, "default");
 
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = qciic_fdt_acquire_bus;
