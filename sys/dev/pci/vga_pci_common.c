@@ -1,3 +1,4 @@
+/*	$OpenBSD: vga_pci_common.c,v 1.12 2024/10/17 15:52:30 miod Exp $	*/
 /*
  * Copyright (c) 2008 Owain G. Ainsworth <oga@nicotinebsd.org>
  *
@@ -14,33 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "vga.h"
-#if defined(__i386__) || defined(__amd64__)
-#include "acpi.h"
-#endif
-
+#ifdef RAMDISK_HOOKS
 #include <sys/param.h>
-#include <sys/systm.h>
 
-#include <machine/bus.h>
-
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/ic/vgavar.h>
-#include <dev/pci/vga_pcivar.h>
 
 #include <dev/pci/drm/i915/i915_devlist.h>
 #include <dev/pci/drm/radeon/radeon_devlist.h>
 #include <dev/pci/drm/amd/amdgpu/amdgpu_devlist.h>
 
-#ifdef RAMDISK_HOOKS
 static const struct pci_matchid aperture_blacklist[] = {
 	/* server adapters found in mga200 drm driver */
 	{ PCI_VENDOR_MATROX,	PCI_PRODUCT_MATROX_G200E_SE },
