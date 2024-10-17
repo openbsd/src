@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.73 2024/10/15 06:35:59 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.74 2024/10/17 14:34:06 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -818,112 +818,103 @@ ec_asn1_group2pkparameters(const EC_GROUP *group)
 	return NULL;
 }
 
-static EC_GROUP *
-ec_asn1_parameters2group(const ECPARAMETERS *params)
+static int
+ec_asn1_is_prime_field(const X9_62_FIELDID *fieldid)
 {
-	int ok = 0, tmp;
-	EC_GROUP *ret = NULL;
-	BIGNUM *p = NULL, *a = NULL, *b = NULL, *order = NULL, *cofactor = NULL;
-	EC_POINT *point = NULL;
-	int field_bits;
+	int nid;
 
-	if (!params->fieldID || !params->fieldID->fieldType ||
-	    !params->fieldID->p.ptr) {
+	if (fieldid == NULL) {
 		ECerror(EC_R_ASN1_ERROR);
-		goto err;
+		return 0;
 	}
-	/* now extract the curve parameters a and b */
-	if (!params->curve || !params->curve->a ||
-	    !params->curve->a->data || !params->curve->b ||
-	    !params->curve->b->data) {
-		ECerror(EC_R_ASN1_ERROR);
-		goto err;
+	if ((nid = OBJ_obj2nid(fieldid->fieldType)) == NID_undef) {
+		ECerror(EC_R_INVALID_FIELD);
+		return 0;
 	}
-	a = BN_bin2bn(params->curve->a->data, params->curve->a->length, NULL);
-	if (a == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	b = BN_bin2bn(params->curve->b->data, params->curve->b->length, NULL);
-	if (b == NULL) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	/* get the field parameters */
-	tmp = OBJ_obj2nid(params->fieldID->fieldType);
-	if (tmp == NID_X9_62_characteristic_two_field) {
+	if (nid == NID_X9_62_characteristic_two_field) {
 		ECerror(EC_R_GF2M_NOT_SUPPORTED);
+		return 0;
+	}
+	if (nid != NID_X9_62_prime_field) {
+		ECerror(EC_R_UNSUPPORTED_FIELD);
+		return 0;
+	}
+
+	/* We can't check that this is actually a prime due to DoS risk. */
+	if (fieldid->p.prime == NULL) {
+		ECerror(EC_R_INVALID_FIELD);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+ec_asn1_parameters_curve2group(const X9_62_CURVE *curve,
+    const ASN1_INTEGER *prime, EC_GROUP **out_group)
+{
+	EC_GROUP *group = NULL;
+	BIGNUM *p = NULL, *a = NULL, *b = NULL;
+	int ret = 0;
+
+	if (*out_group != NULL)
 		goto err;
-	} else if (tmp == NID_X9_62_prime_field) {
-		/* we have a curve over a prime field */
-		/* extract the prime number */
-		if (!params->fieldID->p.prime) {
-			ECerror(EC_R_ASN1_ERROR);
-			goto err;
-		}
-		p = ASN1_INTEGER_to_BN(params->fieldID->p.prime, NULL);
-		if (p == NULL) {
-			ECerror(ERR_R_ASN1_LIB);
-			goto err;
-		}
-		if (BN_is_negative(p) || BN_is_zero(p)) {
-			ECerror(EC_R_INVALID_FIELD);
-			goto err;
-		}
-		field_bits = BN_num_bits(p);
-		if (field_bits > OPENSSL_ECC_MAX_FIELD_BITS) {
-			ECerror(EC_R_FIELD_TOO_LARGE);
-			goto err;
-		}
-		/* create the EC_GROUP structure */
-		ret = EC_GROUP_new_curve_GFp(p, a, b, NULL);
-	} else {
+
+	if ((p = ASN1_INTEGER_to_BN(prime, NULL)) == NULL)
+		goto err;
+	if ((a = BN_bin2bn(curve->a->data, curve->a->length, NULL)) == NULL)
+		goto err;
+	if ((b = BN_bin2bn(curve->b->data, curve->b->length, NULL)) == NULL)
+		goto err;
+
+	/*
+	 * XXX - move these checks to ec_GFp_simple_group_set_curve()?
+	 * What about checking 0 <= a, b < p?
+	 */
+	if (BN_is_zero(p) || BN_is_negative(p)) {
 		ECerror(EC_R_INVALID_FIELD);
 		goto err;
 	}
-
-	if (ret == NULL) {
-		ECerror(ERR_R_EC_LIB);
+	if (BN_num_bits(p) > OPENSSL_ECC_MAX_FIELD_BITS) {
+		ECerror(EC_R_FIELD_TOO_LARGE);
 		goto err;
 	}
-	/* extract seed (optional) */
-	if (params->curve->seed != NULL) {
-		free(ret->seed);
-		if (!(ret->seed = malloc(params->curve->seed->length))) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		memcpy(ret->seed, params->curve->seed->data,
-		    params->curve->seed->length);
-		ret->seed_len = params->curve->seed->length;
-	}
-	if (!params->order || !params->base || !params->base->data) {
-		ECerror(EC_R_ASN1_ERROR);
-		goto err;
-	}
-	if ((point = EC_POINT_new(ret)) == NULL)
+
+	if ((group = EC_GROUP_new_curve_GFp(p, a, b, NULL)) == NULL)
 		goto err;
 
-	/* set the point conversion form */
-	EC_GROUP_set_point_conversion_form(ret, (point_conversion_form_t)
-	    (params->base->data[0] & ~0x01));
+	*out_group = group;
+	group = NULL;
 
-	/* extract the ec point */
-	if (!EC_POINT_oct2point(ret, point, params->base->data,
-		params->base->length, NULL)) {
+	ret = 1;
+
+ err:
+	BN_free(p);
+	BN_free(a);
+	BN_free(b);
+	EC_GROUP_free(group);
+
+	return ret;
+}
+
+static int
+ec_asn1_set_group_parameters(const ECPARAMETERS *params, EC_GROUP *group)
+{
+	EC_POINT *generator;
+	BIGNUM *order = NULL, *cofactor = NULL;
+	const ASN1_BIT_STRING *seed;
+	point_conversion_form_t form;
+	int ret = 0;
+
+	if ((generator = EC_POINT_new(group)) == NULL)
+		goto err;
+	if (!EC_POINT_oct2point(group, generator,
+	    params->base->data, params->base->length, NULL)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if ((order = ASN1_INTEGER_to_BN(params->order, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
-		goto err;
-	}
-	if (BN_is_negative(order) || BN_is_zero(order)) {
-		ECerror(EC_R_INVALID_GROUP_ORDER);
-		goto err;
-	}
-	if (BN_num_bits(order) > field_bits + 1) {	/* Hasse bound */
-		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 	if (params->cofactor != NULL) {
@@ -933,25 +924,82 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 			goto err;
 		}
 	}
-	if (!EC_GROUP_set_generator(ret, point, order, cofactor)) {
+
+	/* Checks the Hasse bound and sets the cofactor if possible or fails. */
+	if (!EC_GROUP_set_generator(group, generator, order, cofactor)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ok = 1;
+
+	if ((seed = params->curve->seed) != NULL) {
+		if (EC_GROUP_set_seed(group, seed->data, seed->length) == 0) {
+			ECerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+	}
+
+	/* oct2point has ensured that to be compressed, uncompressed, or hybrid. */
+	form = params->base->data[0] & ~1U;
+	EC_GROUP_set_point_conversion_form(group, form);
+
+	ret = 1;
 
  err:
-	if (!ok) {
-		EC_GROUP_free(ret);
-		ret = NULL;
-	}
-	BN_free(p);
-	BN_free(a);
-	BN_free(b);
+	EC_POINT_free(generator);
 	BN_free(order);
 	BN_free(cofactor);
-	EC_POINT_free(point);
 
 	return ret;
+}
+
+static int
+ec_asn1_parameters_extract_prime_group(const ECPARAMETERS *params,
+    EC_GROUP **out_group)
+{
+	EC_GROUP *group = NULL;
+	int ret = 0;
+
+	if (*out_group != NULL)
+		goto err;
+
+	if (!ec_asn1_is_prime_field(params->fieldID))
+		goto err;
+	if (!ec_asn1_parameters_curve2group(params->curve,
+	    params->fieldID->p.prime, &group))
+		goto err;
+	if (!ec_asn1_set_group_parameters(params, group))
+		goto err;
+
+	*out_group = group;
+	group = NULL;
+
+	ret = 1;
+
+ err:
+	EC_GROUP_free(group);
+
+	return ret;
+}
+
+static EC_GROUP *
+ec_asn1_parameters2group(const ECPARAMETERS *params)
+{
+	EC_GROUP *group = NULL;
+
+	if (params == NULL) {
+		ECerror(EC_R_ASN1_ERROR);
+		goto err;
+	}
+
+	if (!ec_asn1_parameters_extract_prime_group(params, &group))
+		goto err;
+
+	return group;
+
+ err:
+	EC_GROUP_free(group);
+
+	return NULL;
 }
 
 EC_GROUP *
