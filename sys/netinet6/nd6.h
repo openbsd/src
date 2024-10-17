@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.100 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.101 2024/10/17 05:37:54 jsg Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
 
 #ifndef _NETINET6_ND6_H_
 #define _NETINET6_ND6_H_
-
-#include <sys/task.h>
 
 #define ND6_LLINFO_PURGE	-3
 #define ND6_LLINFO_NOSTATE	-2
