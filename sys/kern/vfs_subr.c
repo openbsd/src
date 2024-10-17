@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.322 2024/07/13 14:37:55 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.323 2024/10/17 22:44:17 dlg Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -246,10 +246,7 @@ vfs_unbusy(struct mount *mp)
 int
 vfs_isbusy(struct mount *mp)
 {
-	if (RWLOCK_OWNER(&mp->mnt_lock) > 0)
-		return (1);
-	else
-		return (0);
+	return (rw_status(&mp->mnt_lock) != 0);
 }
 
 /*
