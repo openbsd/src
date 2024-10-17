@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.53 2024/08/21 04:17:09 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.54 2024/10/17 17:10:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -453,7 +453,6 @@ menu_set_style(struct client *c, struct grid_cell *gc, const char *style,
 			gc->bg = sytmp.gc.bg;
 		}
 	}
-	gc->attr = 0;
 }
 
 struct menu_data *
