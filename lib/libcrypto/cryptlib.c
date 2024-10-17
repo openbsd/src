@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.55 2024/10/17 14:09:29 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.56 2024/10/17 14:27:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -124,6 +124,8 @@
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 
+#include "cryptlib.h"
+#include "crypto_internal.h"
 #include "crypto_local.h"
 #include "x86_arch.h"
 
@@ -366,6 +368,14 @@ crypto_cpu_caps_ia32(void)
 void
 OPENSSL_cpuid_setup(void)
 {
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CPU_CAPS_INIT
+void
+crypto_cpu_caps_init(void)
+{
+	OPENSSL_cpuid_setup();
 }
 #endif
 
