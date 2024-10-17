@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_dmac.c,v 1.4 2022/08/10 20:19:22 mglocker Exp $ */
+/*     $OpenBSD: bcm2835_dmac.c,v 1.5 2024/10/17 05:10:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -56,7 +56,7 @@
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
 
-#include "dev/ic/bcm2835_dmac.h"
+#include <dev/ic/bcm2835_dmac.h>
 
 #define BCMDMAC_CHANNELMASK ((1 << 12) - 1)
 #define DEVNAME(sc) ((sc)->sc_dev.dv_xname)
