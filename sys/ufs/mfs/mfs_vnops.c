@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.61 2024/04/16 10:04:41 claudio Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.62 2024/10/18 05:52:33 miod Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -252,10 +252,12 @@ mfs_reclaim(void *v)
 int
 mfs_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	printf("tag VT_MFS, tid %d, base %p, size %ld\n", mfsp->mfs_tid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
+#endif
 	return (0);
 }

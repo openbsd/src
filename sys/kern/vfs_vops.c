@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.36 2024/05/13 11:17:40 semarie Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.37 2024/10/18 05:52:32 miod Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -555,6 +555,7 @@ VOP_BMAP(struct vnode *vp, daddr_t bn, struct vnode **vpp,
 	return ((vp->v_op->vop_bmap)(&a));
 }
 
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 int
 VOP_PRINT(struct vnode *vp)
 {
@@ -566,6 +567,7 @@ VOP_PRINT(struct vnode *vp)
 
 	return ((vp->v_op->vop_print)(&a));
 }
+#endif
 
 int
 VOP_PATHCONF(struct vnode *vp, int name, register_t *retval)

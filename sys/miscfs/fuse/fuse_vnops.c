@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.70 2024/09/12 09:10:46 claudio Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.71 2024/10/18 05:52:32 miod Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -990,6 +990,7 @@ fusefs_reclaim(void *v)
 int
 fusefs_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fusefs_node *ip = VTOI(vp);
@@ -997,6 +998,7 @@ fusefs_print(void *v)
 	/* Complete the information given by vprint(). */
 	printf("tag VT_FUSE, hash id %u ", ip->ufs_ino.i_number);
 	printf("\n");
+#endif
 	return (0);
 }
 

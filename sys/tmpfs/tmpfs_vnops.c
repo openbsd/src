@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.55 2024/05/13 11:17:41 semarie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.56 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1126,6 +1126,7 @@ tmpfs_advlock(void *v)
 int
 tmpfs_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args /* {
 		struct vnode	*a_vp;
 	} */ *ap = v;
@@ -1141,6 +1142,7 @@ tmpfs_print(void *v)
 		fifo_printinfo(vp);
 #endif
 	printf("\n");
+#endif
 	return 0;
 }
 

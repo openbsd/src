@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.96 2024/09/12 09:04:51 claudio Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.97 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -743,7 +743,9 @@ cd9660_strategy(void *v)
 int
 cd9660_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	printf("tag VT_ISOFS, isofs vnode\n");
+#endif
 	return (0);
 }
 

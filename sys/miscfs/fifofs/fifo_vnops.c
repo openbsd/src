@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.107 2024/07/12 17:20:18 mvs Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.108 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -397,14 +397,17 @@ fifo_reclaim(void *v)
 int
 fifo_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 
 	printf("tag VT_NON");
 	fifo_printinfo(ap->a_vp);
 	printf("\n");
+#endif
 	return 0;
 }
 
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 /*
  * Print out internal contents of a fifo vnode.
  */
@@ -416,6 +419,7 @@ fifo_printinfo(struct vnode *vp)
 	printf(", fifo with %ld readers and %ld writers",
 		fip->fi_readers, fip->fi_writers);
 }
+#endif
 
 /*
  * Return POSIX pathconf information applicable to fifo's.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.74 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.75 2024/10/18 05:52:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -944,6 +944,7 @@ udf_islocked(void *v)
 int
 udf_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct unode *up = VTOU(vp);
@@ -954,6 +955,7 @@ udf_print(void *v)
 	printf("tag VT_UDF, hash id %u\n", up->u_ino);
 #ifdef DIAGNOSTIC
 	printf("\n");
+#endif
 #endif
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.72 2024/05/13 11:17:40 semarie Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.73 2024/10/18 05:52:32 miod Exp $  */
 
 /*
  *  Portions of this code are:
@@ -363,7 +363,9 @@ sync_inactive(void *v)
 int
 sync_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	printf("syncer vnode\n");
+#endif
 
 	return (0);
 }

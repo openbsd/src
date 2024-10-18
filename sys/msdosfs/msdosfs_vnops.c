@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.142 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.143 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1802,6 +1802,7 @@ msdosfs_strategy(void *v)
 int
 msdosfs_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 
@@ -1813,6 +1814,7 @@ msdosfs_print(void *v)
 	    VOP_ISLOCKED(ap->a_vp) ? "(LOCKED)" : "");
 #ifdef DIAGNOSTIC
 	printf("\n");
+#endif
 #endif
 
 	return (0);

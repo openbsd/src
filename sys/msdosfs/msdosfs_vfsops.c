@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.97 2023/07/17 09:41:20 semarie Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.98 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -577,7 +577,7 @@ msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 	pmp = VFSTOMSDOSFS(mp);
 	pmp->pm_devvp->v_specmountpoint = NULL;
 	vp = pmp->pm_devvp;
-#ifdef MSDOSFS_DEBUG
+#if defined(MSDOSFS_DEBUG) && (defined(DEBUG) || defined(DIAGNOSTIC))
 	vprint("msdosfs_umount(): just before calling VOP_CLOSE()\n", vp);
 #endif
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.323 2024/10/17 22:44:17 dlg Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.324 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -979,7 +979,7 @@ vflush_vnode(struct vnode *vp, void *arg)
 	if (empty)
 		return (0);
 
-#ifdef DEBUG_SYSCTL
+#if defined(DEBUG_SYSCTL) && (defined(DEBUG) || defined(DIAGNOSTIC))
 	if (busyprt)
 		vprint("vflush: busy vnode", vp);
 #endif

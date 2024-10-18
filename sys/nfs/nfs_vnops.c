@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.204 2024/09/18 05:21:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.205 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3287,6 +3287,7 @@ nfs_advlock(void *v)
 int
 nfs_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
@@ -3298,6 +3299,7 @@ nfs_print(void *v)
 		fifo_printinfo(vp);
 #endif
 	printf("\n");
+#endif
 	return (0);
 }
 

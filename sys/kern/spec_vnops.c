@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.112 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.113 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -608,10 +608,12 @@ spec_access(void *v)
 int
 spec_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	struct vop_print_args *ap = v;
 
 	printf("tag VT_NON, dev %d, %d\n", major(ap->a_vp->v_rdev),
 		minor(ap->a_vp->v_rdev));
+#endif
 	return 0;
 }
 

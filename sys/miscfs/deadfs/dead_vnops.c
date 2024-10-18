@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.42 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.43 2024/10/18 05:52:32 miod Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -233,7 +233,9 @@ dead_bmap(void *v)
 int
 dead_print(void *v)
 {
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(VFSLCKDEBUG)
 	printf("tag VT_NON, dead vnode\n");
+#endif
 	return 0;
 }
 
