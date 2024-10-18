@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_cvt.c,v 1.12 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ec_cvt.c,v 1.13 2024/10/18 10:50:26 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -74,13 +74,13 @@
 #include <openssl/err.h>
 #include "ec_local.h"
 
-static EC_GROUP *
-ec_group_new_curve(const EC_METHOD *method, const BIGNUM *p, const BIGNUM *a,
-    const BIGNUM *b, BN_CTX *ctx)
+EC_GROUP *
+EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
+    BN_CTX *ctx)
 {
 	EC_GROUP *group;
 
-	if ((group = EC_GROUP_new(method)) == NULL)
+	if ((group = EC_GROUP_new(EC_GFp_mont_method())) == NULL)
 		goto err;
 
 	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
@@ -92,12 +92,5 @@ ec_group_new_curve(const EC_METHOD *method, const BIGNUM *p, const BIGNUM *a,
 	EC_GROUP_free(group);
 
 	return NULL;
-}
-
-EC_GROUP *
-EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
-    BN_CTX *ctx)
-{
-	return ec_group_new_curve(EC_GFp_mont_method(), p, a, b, ctx);
 }
 LCRYPTO_ALIAS(EC_GROUP_new_curve_GFp);
