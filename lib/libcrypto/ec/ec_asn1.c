@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.74 2024/10/17 14:34:06 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.75 2024/10/18 17:27:07 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -992,6 +992,8 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 	}
 
 	if (!ec_asn1_parameters_extract_prime_group(params, &group))
+		goto err;
+	if (!ec_group_is_builtin_curve(group))
 		goto err;
 
 	return group;

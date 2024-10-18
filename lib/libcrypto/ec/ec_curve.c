@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.43 2024/03/24 06:05:41 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.44 2024/10/18 17:27:07 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -69,6 +69,7 @@
  *
  */
 
+#include <limits.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -2456,6 +2457,225 @@ EC_GROUP_new_by_curve_name(int nid)
 	return NULL;
 }
 LCRYPTO_ALIAS(EC_GROUP_new_by_curve_name);
+
+static void
+ec_list_element_free(struct ec_list_element *curve)
+{
+	if (curve == NULL)
+		return;
+
+	/* PERM UGLY CASTS */
+	free((uint8_t *)curve->seed);
+	free((uint8_t *)curve->p);
+	free((uint8_t *)curve->a);
+	free((uint8_t *)curve->b);
+	free((uint8_t *)curve->x);
+	free((uint8_t *)curve->y);
+	free((uint8_t *)curve->order);
+
+	free(curve);
+}
+
+static int
+ec_list_element_encode_parameter(const BIGNUM *bn, int param_len,
+    const uint8_t **out_param)
+{
+	uint8_t *buf = NULL;
+	int ret = 0;
+
+	if (out_param == NULL || *out_param != NULL)
+		goto err;
+
+	if ((buf = calloc(1, param_len)) == NULL)
+		goto err;
+	if (BN_bn2binpad(bn, buf, param_len) != param_len)
+		goto err;
+
+	*out_param = buf;
+	buf = NULL;
+
+	ret = 1;
+
+ err:
+	free(buf);
+
+	return ret;
+}
+
+static struct ec_list_element *
+ec_list_element_from_group(const EC_GROUP *group)
+{
+	struct ec_list_element *curve = NULL;
+	BN_CTX *ctx;
+	BIGNUM *p, *a, *b, *x, *y;
+	const EC_POINT *generator = NULL;
+	const BIGNUM *order, *cofactor;
+	size_t seed_len;
+
+	if ((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		goto err;
+	if ((generator = EC_GROUP_get0_generator(group)) == NULL)
+		goto err;
+	if (!EC_POINT_get_affine_coordinates(group, generator, x, y, ctx))
+		goto err;
+	if ((order = EC_GROUP_get0_order(group)) == NULL)
+		goto err;
+
+	if ((curve = calloc(1, sizeof(*curve))) == NULL)
+		goto err;
+
+	curve->param_len = BN_num_bytes(p);
+	if (BN_num_bytes(order) > curve->param_len)
+		curve->param_len = BN_num_bytes(order);
+
+	if (!ec_list_element_encode_parameter(p, curve->param_len, &curve->p))
+		goto err;
+	if (!ec_list_element_encode_parameter(a, curve->param_len, &curve->a))
+		goto err;
+	if (!ec_list_element_encode_parameter(b, curve->param_len, &curve->b))
+		goto err;
+	if (!ec_list_element_encode_parameter(x, curve->param_len, &curve->x))
+		goto err;
+	if (!ec_list_element_encode_parameter(y, curve->param_len, &curve->y))
+		goto err;
+	if (!ec_list_element_encode_parameter(order, curve->param_len, &curve->order))
+		goto err;
+
+	if ((cofactor = EC_GROUP_get0_cofactor(group)) != NULL) {
+		BN_ULONG cofactor_word;
+
+		if ((cofactor_word = BN_get_word(cofactor)) == BN_MASK2)
+			goto err;
+		if (cofactor_word > INT_MAX)
+			goto err;
+
+		curve->cofactor = cofactor_word;
+	}
+
+	if ((seed_len = EC_GROUP_get_seed_len(group)) > 0) {
+		uint8_t *seed;
+
+		if (seed_len > INT_MAX)
+			goto err;
+		if ((seed = calloc(1, seed_len)) == NULL)
+			goto err;
+		memcpy(seed, EC_GROUP_get0_seed(group), seed_len);
+
+		curve->seed = seed;
+		curve->seed_len = seed_len;
+	}
+
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+
+	return curve;
+
+ err:
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+
+	ec_list_element_free(curve);
+
+	return NULL;
+}
+
+static int
+ec_list_element_cmp(const struct ec_list_element *a, const struct ec_list_element *b)
+{
+	int cmp;
+
+	/* Treat nid as optional. The OID isn't part of EC parameters. */
+	if (a->nid != NID_undef && b->nid != NID_undef) {
+		if (a->nid < b->nid)
+			return -1;
+		if (a->nid > b->nid)
+			return 1;
+	}
+
+	if (a->cofactor < b->cofactor)
+		return -1;
+	if (a->cofactor > b->cofactor)
+		return 1;
+	if (a->param_len < b->param_len)
+		return -1;
+	if (a->param_len > b->param_len)
+		return 1;
+
+	if ((cmp = memcmp(a->p, b->p, a->param_len)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->a, b->a, a->param_len)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->b, b->b, a->param_len)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->x, b->x, a->param_len)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->y, b->y, a->param_len)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->order, b->order, a->param_len)) != 0)
+		return cmp;
+
+	/* Seed is optional, not used for computation. Must match if present. */
+	if (a->seed_len != 0 && b->seed_len != 0) {
+		if (a->seed_len < b->seed_len)
+			return -1;
+		if (a->seed_len > b->seed_len)
+			return 1;
+		if (a->seed != NULL && b->seed != NULL) {
+			if ((cmp = memcmp(a->seed, b->seed, a->seed_len)) != 0)
+				return cmp;
+		}
+	}
+
+	return 0;
+}
+
+static int
+ec_group_nid_from_curve(const struct ec_list_element *curve)
+{
+	size_t i;
+
+	for (i = 0; i < CURVE_LIST_LENGTH; i++) {
+		if (ec_list_element_cmp(curve, &curve_list[i]) == 0)
+			return curve_list[i].nid;
+	}
+
+	return NID_undef;
+}
+
+int
+ec_group_is_builtin_curve(const EC_GROUP *group)
+{
+	struct ec_list_element *curve;
+	int ret = 0;
+
+	if ((curve = ec_list_element_from_group(group)) == NULL)
+		goto err;
+
+	if (ec_group_nid_from_curve(curve) == NID_undef)
+		goto err;
+
+	ret = 1;
+
+ err:
+	ec_list_element_free(curve);
+
+	return ret;
+}
 
 size_t
 EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
