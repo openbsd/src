@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_local.h,v 1.8 2024/10/10 06:51:22 tb Exp $ */
+/* $OpenBSD: conf_local.h,v 1.9 2024/10/18 11:12:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,8 +97,6 @@ char *_CONF_get_string(const CONF *conf, const char *section,
 
 int _CONF_new_data(CONF *conf);
 void _CONF_free_data(CONF *conf);
-
-void OPENSSL_load_builtin_modules(void);
 
 __END_HIDDEN_DECLS
 
