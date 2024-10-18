@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.12 2024/10/18 19:55:34 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.13 2024/10/18 19:58:43 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -287,8 +287,7 @@ static int
 ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 {
 	EC_GROUP *group = NULL;
-	int failed = 0;
-	int ret = 0;
+	int failed = 1;
 
 	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
 		errx(1, "failed to instantiate curve %d", curve->nid);
@@ -309,6 +308,8 @@ ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 		goto err;
 	}
 
+	failed = 0;
+
 	failed |= ec_group_roundtrip_curve(group, "named", curve->nid);
 
 	EC_GROUP_set_asn1_flag(group, 0);
@@ -320,11 +321,7 @@ ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_HYBRID);
 	failed |= ec_group_roundtrip_curve(group, "hybrid", curve->nid);
 
-	ret = 1;
-
  err:
-	failed |= ret == 0;
-
 	EC_GROUP_free(group);
 
 	return failed;
