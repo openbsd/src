@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.7 2024/10/18 09:01:44 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.8 2024/10/18 09:34:20 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -340,6 +340,24 @@ ec_group_roundtrip_builtin_curves(void)
 	return failed;
 }
 
+struct curve {
+	const char *descr;
+	const char *oid;
+	const char *sn;
+	const char *ln;
+	const char *p;
+	const char *a;
+	const char *b;
+	const char *order;
+	const char *cofactor;
+	const char *x;
+	const char *y;
+	const char *named;
+	size_t named_len;
+	const char *param;
+	size_t param_len;
+};
+
 /*
  * From draft-ietf-lwig-curve-representation-23, Appendix E.3
  */
@@ -380,24 +398,8 @@ const uint8_t ec_wei25519_pkparameters_parameters[] = {
 	0x08,
 };
 
-struct curve {
-	const char *oid;
-	const char *sn;
-	const char *ln;
-	const char *p;
-	const char *a;
-	const char *b;
-	const char *order;
-	const char *cofactor;
-	const char *x;
-	const char *y;
-	const char *named;
-	size_t named_len;
-	const char *param;
-	size_t param_len;
-};
-
 static const struct curve wei25519 = {
+	.descr = "short Weierstrass 25519",
 	.oid = "1.3.101.108",
 	.sn = "Wei25519",
 	.p =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
@@ -417,6 +419,124 @@ static const struct curve wei25519 = {
 	.named_len = sizeof(ec_wei25519_pkparameters_named_curve),
 	.param = ec_wei25519_pkparameters_parameters,
 	.param_len = sizeof(ec_wei25519_pkparameters_parameters),
+};
+
+/*
+ * From draft-ietf-lwig-curve-representation-23, Appendix G.3
+ */
+
+const uint8_t ec_wei25519_2_pkparameters_parameters[] = {
+	0x30, 0x81, 0xde, 0x02, 0x01, 0x01, 0x30, 0x2b,
+	0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x01,
+	0x01, 0x02, 0x20, 0x7f, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xed, 0x30, 0x44, 0x04, 0x20, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x04,
+	0x20, 0x1a, 0xc1, 0xda, 0x05, 0xb5, 0x5b, 0xc1,
+	0x46, 0x33, 0xbd, 0x39, 0xe4, 0x7f, 0x94, 0x30,
+	0x2e, 0xf1, 0x98, 0x43, 0xdc, 0xf6, 0x69, 0x91,
+	0x6f, 0x6a, 0x5d, 0xfd, 0x01, 0x65, 0x53, 0x8c,
+	0xd1, 0x04, 0x41, 0x04, 0x17, 0xcf, 0xea, 0xc3,
+	0x78, 0xae, 0xd6, 0x61, 0x31, 0x8e, 0x86, 0x34,
+	0x58, 0x22, 0x75, 0xb6, 0xd9, 0xad, 0x4d, 0xef,
+	0x07, 0x2e, 0xa1, 0x93, 0x5e, 0xe3, 0xc4, 0xe8,
+	0x7a, 0x94, 0x0f, 0xfa, 0x0c, 0x08, 0xa9, 0x52,
+	0xc5, 0x5d, 0xfa, 0xd6, 0x2c, 0x4f, 0x13, 0xf1,
+	0xa8, 0xf6, 0x8d, 0xca, 0xdc, 0x5c, 0x33, 0x1d,
+	0x29, 0x7a, 0x37, 0xb6, 0xf0, 0xd7, 0xfd, 0xcc,
+	0x51, 0xe1, 0x6b, 0x4d, 0x02, 0x20, 0x10, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0xde,
+	0xf9, 0xde, 0xa2, 0xf7, 0x9c, 0xd6, 0x58, 0x12,
+	0x63, 0x1a, 0x5c, 0xf5, 0xd3, 0xed, 0x02, 0x01,
+	0x08,
+};
+
+static const struct curve wei25519_2 = {
+	.descr = "short Weierstrass 25519.2",
+	.oid = "1.3.101.108",
+	.sn = "Wei25519",
+	.p =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
+		 "ffffffff" "ffffffff" "ffffffff" "ffffffed",
+	.a =	 "02",
+	.b =	 "1ac1da05" "b55bc146" "33bd39e4" "7f94302e"
+		 "f19843dc" "f669916f" "6a5dfd01" "65538cd1",
+	.x =	 "17cfeac3" "78aed661" "318e8634" "582275b6"
+		 "d9ad4def" "072ea193" "5ee3c4e8" "7a940ffa",
+	.y =	 "0c08a952" "c55dfad6" "2c4f13f1" "a8f68dca"
+		 "dc5c331d" "297a37b6" "f0d7fdcc" "51e16b4d",
+	.order = "10000000" "00000000" "00000000" "00000000"
+		 "14def9de" "a2f79cd6" "5812631a" "5cf5d3ed",
+	.cofactor = "8",
+	.named = ec_wei25519_pkparameters_named_curve,
+	.named_len = sizeof(ec_wei25519_pkparameters_named_curve),
+	.param = ec_wei25519_2_pkparameters_parameters,
+	.param_len = sizeof(ec_wei25519_2_pkparameters_parameters),
+};
+
+const uint8_t ec_wei25519_3_pkparameters_parameters[] = {
+	0x30, 0x81, 0xde, 0x02, 0x01, 0x01, 0x30, 0x2b,
+	0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x01,
+	0x01, 0x02, 0x20, 0x7f, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xed, 0x30, 0x44, 0x04, 0x20, 0x7f,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xea, 0x04,
+	0x20, 0x41, 0xa3, 0xb6, 0xbf, 0xc6, 0x68, 0x77,
+	0x8e, 0xbe, 0x29, 0x54, 0xa4, 0xb1, 0xdf, 0x36,
+	0xd1, 0x48, 0x5e, 0xce, 0xf1, 0xea, 0x61, 0x42,
+	0x95, 0x79, 0x6e, 0x10, 0x22, 0x40, 0x89, 0x1f,
+	0xaa, 0x04, 0x41, 0x04, 0x77, 0x06, 0xc3, 0x7b,
+	0x5a, 0x84, 0x12, 0x8a, 0x38, 0x84, 0xa5, 0xd7,
+	0x18, 0x11, 0xf1, 0xb5, 0x5d, 0xa3, 0x23, 0x0f,
+	0xfb, 0x17, 0xa8, 0xab, 0x0b, 0x32, 0xe4, 0x8d,
+	0x31, 0xa6, 0x68, 0x5c, 0x0f, 0x60, 0x48, 0x0c,
+	0x7a, 0x5c, 0x0e, 0x11, 0x40, 0x34, 0x0a, 0xdc,
+	0x79, 0xd6, 0xa2, 0xbf, 0x0c, 0xb5, 0x7a, 0xd0,
+	0x49, 0xd0, 0x25, 0xdc, 0x38, 0xd8, 0x0c, 0x77,
+	0x98, 0x5f, 0x03, 0x29, 0x02, 0x20, 0x10, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0xde,
+	0xf9, 0xde, 0xa2, 0xf7, 0x9c, 0xd6, 0x58, 0x12,
+	0x63, 0x1a, 0x5c, 0xf5, 0xd3, 0xed, 0x02, 0x01,
+	0x08,
+};
+
+static const struct curve wei25519_3 = {
+	.descr = "short Weierstrass 25519.-3",
+	.oid = "1.3.101.108",
+	.sn = "Wei25519",
+	.p =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
+		 "ffffffff" "ffffffff" "ffffffff" "ffffffed",
+/* XXX - change this if we are going to enforce 0 <= a,b < p. */
+#if 0
+	.a =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
+		 "ffffffff" "ffffffff" "ffffffff" "ffffffea",
+#else
+	.a =	 "-03",
+#endif
+	.b =	 "41a3b6bf" "c668778e" "be2954a4" "b1df36d1"
+		 "485ecef1" "ea614295" "796e1022" "40891faa",
+	.x =	 "7706c37b" "5a84128a" "3884a5d7" "1811f1b5"
+		 "5da3230f" "fb17a8ab" "0b32e48d" "31a6685c",
+	.y =	 "0f60480c" "7a5c0e11" "40340adc" "79d6a2bf"
+		 "0cb57ad0" "49d025dc" "38d80c77" "985f0329",
+	.order = "10000000" "00000000" "00000000" "00000000"
+		 "14def9de" "a2f79cd6" "5812631a" "5cf5d3ed",
+	.cofactor = "8",
+	.named = ec_wei25519_pkparameters_named_curve,
+	.named_len = sizeof(ec_wei25519_pkparameters_named_curve),
+	.param = ec_wei25519_3_pkparameters_parameters,
+	.param_len = sizeof(ec_wei25519_3_pkparameters_parameters),
 };
 
 static EC_GROUP *
@@ -468,8 +588,8 @@ ec_group_from_curve_method(const struct curve *curve, const EC_METHOD *method,
 		errx(1, "EC_POINT_new()");
 
 	if (!EC_POINT_set_affine_coordinates(group, generator, x, y, ctx)) {
-		fprintf(stderr, "FAIL: %s EC_POINT_set_affine_coordinates",
-		    curve->sn);
+		fprintf(stderr, "FAIL: %s EC_POINT_set_affine_coordinates\n",
+		    curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
@@ -479,7 +599,7 @@ ec_group_from_curve_method(const struct curve *curve, const EC_METHOD *method,
 
 	/* Don't set cofactor to exercise the cofactor guessing code. */
 	if (!EC_GROUP_set_generator(group, generator, order, NULL)) {
-		fprintf(stderr, "FAIL: %s EC_GROUP_set_generator\n", curve->sn);
+		fprintf(stderr, "FAIL: %s EC_GROUP_set_generator\n", curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
@@ -511,7 +631,7 @@ ec_group_new(const struct curve *curve, const EC_METHOD *method, BN_CTX *ctx)
 	if ((nid = OBJ_txt2nid(curve->oid)) == NID_undef)
 		nid = OBJ_create(curve->oid, curve->sn, curve->ln);
 	if (nid == NID_undef) {
-		fprintf(stderr, "FAIL: OBJ_create(%s)\n", curve->sn);
+		fprintf(stderr, "FAIL: OBJ_create(%s)\n", curve->descr);
 		goto err;
 	}
 
@@ -524,19 +644,19 @@ ec_group_new(const struct curve *curve, const EC_METHOD *method, BN_CTX *ctx)
 		errx(1, "BN_hex2bn(cofactor)");
 
 	if ((group = ec_group_from_curve_method(curve, method, ctx)) == NULL) {
-		fprintf(stderr, "FAIL: %s ec_group_from_curve_method\n", curve->sn);
+		fprintf(stderr, "FAIL: %s ec_group_from_curve_method\n", curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
 
 	if (!EC_GROUP_get_cofactor(group, guessed_cofactor, ctx)) {
-		fprintf(stderr, "FAIL: %s EC_GROUP_get_cofactor\n", curve->sn);
+		fprintf(stderr, "FAIL: %s EC_GROUP_get_cofactor\n", curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
 
 	if (BN_cmp(cofactor, guessed_cofactor) != 0) {
-		fprintf(stderr, "FAIL: %s cofactor: want ", curve->sn);
+		fprintf(stderr, "FAIL: %s cofactor: want ", curve->descr);
 		BN_print_fp(stderr, cofactor);
 		fprintf(stderr, ", got ");
 		BN_print_fp(stderr, guessed_cofactor);
@@ -545,7 +665,7 @@ ec_group_new(const struct curve *curve, const EC_METHOD *method, BN_CTX *ctx)
 	}
 
 	if (!EC_GROUP_check(group, ctx)) {
-		fprintf(stderr, "FAIL: %s EC_GROUP_check\n", curve->sn);
+		fprintf(stderr, "FAIL: %s EC_GROUP_check\n", curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
@@ -583,7 +703,7 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 		goto err;
 
 	if ((nid = EC_GROUP_get_curve_name(group)) == NID_undef) {
-		fprintf(stderr, "FAIL: no curve name set for %s\n", curve->sn);
+		fprintf(stderr, "FAIL: no curve name set for %s\n", curve->descr);
 		goto err;
 	}
 
@@ -592,7 +712,7 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	der = NULL;
 	if ((der_len = i2d_ECPKParameters(group, &der)) <= 0) {
 		fprintf(stderr, "FAIL: %s i2d_ECPKParameters (named)\n",
-		    curve->sn);
+		    curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
@@ -612,12 +732,12 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	der = NULL;
 	if ((der_len = i2d_ECPKParameters(group, &der)) <= 0) {
 		fprintf(stderr, "FAIL: i2d_ECPKParameters (explicit) %s\n",
-		    curve->sn);
+		    curve->descr);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
 
-	if (compare_data(curve->sn, der, der_len,
+	if (compare_data(curve->descr, der, der_len,
 	    curve->param, curve->param_len) == -1)
 		goto err;
 
@@ -626,7 +746,7 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 
 	/* At this point we should have no error on the stack. */
 	if (ERR_peek_last_error() != 0) {
-		fprintf(stderr, "FAIL: %s unexpected error %lu\n", curve->sn,
+		fprintf(stderr, "FAIL: %s unexpected error %lu\n", curve->descr,
 		    ERR_peek_last_error());
 		goto err;
 	}
@@ -635,14 +755,14 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	der_len = curve->named_len;
 	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) != NULL) {
 		fprintf(stderr, "FAIL: managed to decode unknown named curve %s\n",
-		    curve->sn);
+		    curve->descr);
 		goto err;
 	}
 
 	error = ERR_get_error();
 	if (ERR_GET_REASON(error) != EC_R_UNKNOWN_GROUP) {
 		fprintf(stderr, "FAIL: %s unexpected error: want %d, got %d\n",
-		    curve->sn, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
+		    curve->descr, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
 		goto err;
 	}
 
@@ -652,25 +772,25 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 #if 0
 	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) != NULL) {
 		fprintf(stderr, "FAIL: managed to decode non-builtin parameters %s\n",
-		    curve->sn);
+		    curve->descr);
 		goto err;
 	}
 
 	error = ERR_peek_last_error();
 	if (ERR_GET_REASON(error) != EC_R_PKPARAMETERS2GROUP_FAILURE) {
 		fprintf(stderr, "FAIL: %s unexpected error: want %d, got %d\n",
-		    curve->sn, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
+		    curve->descr, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
 		goto err;
 	}
 #else
 	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) == NULL) {
-		fprintf(stderr, "FAIL: d2i_ECPKParameters(%s)\n", curve->sn);
+		fprintf(stderr, "FAIL: d2i_ECPKParameters(%s)\n", curve->descr);
 		goto err;
 	}
 	if (method == EC_GFp_mont_method() &&
 	    EC_GROUP_cmp(group, new_group, ctx) != 0) {
 		fprintf(stderr, "FAIL: %s Weierstrass groups do not match!\n",
-		    curve->sn);
+		    curve->descr);
 		goto err;
 	}
 #endif
@@ -699,6 +819,12 @@ ec_group_non_builtin_curves(void)
 
 	failed |= ec_group_non_builtin_curve(&wei25519, EC_GFp_mont_method(), ctx);
 	failed |= ec_group_non_builtin_curve(&wei25519, EC_GFp_simple_method(), ctx);
+
+	failed |= ec_group_non_builtin_curve(&wei25519_2, EC_GFp_mont_method(), ctx);
+	failed |= ec_group_non_builtin_curve(&wei25519_2, EC_GFp_simple_method(), ctx);
+
+	failed |= ec_group_non_builtin_curve(&wei25519_3, EC_GFp_mont_method(), ctx);
+	failed |= ec_group_non_builtin_curve(&wei25519_3, EC_GFp_simple_method(), ctx);
 
 	BN_CTX_free(ctx);
 
