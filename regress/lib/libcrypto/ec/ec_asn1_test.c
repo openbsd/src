@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.10 2024/10/18 10:40:31 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.11 2024/10/18 17:29:24 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -834,9 +834,9 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	}
 
 	ERR_clear_error();
+
 	pder = curve->param;
 	der_len = curve->param_len;
-#if 0
 	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) != NULL) {
 		fprintf(stderr, "FAIL: managed to decode non-builtin parameters %s\n",
 		    curve->descr);
@@ -849,18 +849,6 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 		    curve->descr, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
 		goto err;
 	}
-#else
-	if ((new_group = d2i_ECPKParameters(NULL, &pder, der_len)) == NULL) {
-		fprintf(stderr, "FAIL: d2i_ECPKParameters(%s)\n", curve->descr);
-		goto err;
-	}
-	if (method == EC_GFp_mont_method() &&
-	    EC_GROUP_cmp(group, new_group, ctx) != 0) {
-		fprintf(stderr, "FAIL: %s Weierstrass groups do not match!\n",
-		    curve->descr);
-		goto err;
-	}
-#endif
 
 	failed = 0;
 
