@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile.inc,v 1.29 2024/08/11 13:02:39 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.30 2024/10/18 13:36:24 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
 # all amd64 code generators use this
 EXTRA_PL =	${LCRYPTO_SRC}/perlasm/x86_64-xlate.pl
+
+SRCS += crypto_cpu_caps.c
 
 # aes
 CFLAGS+= -DAES_ASM
@@ -68,13 +70,5 @@ ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${EXTRA_PL}
 	(cd ${LCRYPTO_SRC}/${dir} ; \
 		/usr/bin/perl ./asm/${f}.pl openbsd) > ${.TARGET}
 .endfor
-
-CFLAGS+= -DOPENSSL_CPUID_OBJ
-SRCS+=	x86_64cpuid.S
-GENERATED+=x86_64cpuid.S
-
-x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl ${EXTRA_PL}
-	(cd ${LCRYPTO_SRC}/${dir} ; \
-		/usr/bin/perl ./x86_64cpuid.pl) > ${.TARGET}
 
 CFLAGS+=-fret-clean
