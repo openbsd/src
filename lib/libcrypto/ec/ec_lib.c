@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.69 2024/10/15 17:44:43 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.70 2024/10/18 10:57:26 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -543,6 +543,27 @@ EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 	return EC_GROUP_get_curve(group, p, a, b, ctx);
 }
 LCRYPTO_ALIAS(EC_GROUP_get_curve_GFp);
+
+EC_GROUP *
+EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
+    BN_CTX *ctx)
+{
+	EC_GROUP *group;
+
+	if ((group = EC_GROUP_new(EC_GFp_mont_method())) == NULL)
+		goto err;
+
+	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
+		goto err;
+
+	return group;
+
+ err:
+	EC_GROUP_free(group);
+
+	return NULL;
+}
+LCRYPTO_ALIAS(EC_GROUP_new_curve_GFp);
 
 int
 EC_GROUP_get_degree(const EC_GROUP *group)
