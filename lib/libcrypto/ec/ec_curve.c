@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.44 2024/10/18 17:27:07 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.45 2024/10/18 17:56:45 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1791,7 +1791,7 @@ static const struct {
 	},
 };
 
-static const struct ec_list_element {
+static const struct ec_curve {
 	const char *comment;
 	int nid;
 	int seed_len;
@@ -1804,7 +1804,7 @@ static const struct ec_list_element {
 	const uint8_t *x;
 	const uint8_t *y;
 	const uint8_t *order;
-} curve_list[] = {
+} ec_curve_list[] = {
 	/* secg curves */
 	{
 		.comment = "SECG/WTLS curve over a 112 bit prime field",
@@ -2329,10 +2329,10 @@ static const struct ec_list_element {
 	},
 };
 
-#define CURVE_LIST_LENGTH (sizeof(curve_list) / sizeof(curve_list[0]))
+#define EC_CURVE_LIST_LENGTH (sizeof(ec_curve_list) / sizeof(ec_curve_list[0]))
 
 static EC_GROUP *
-ec_group_new_from_data(const struct ec_list_element *curve)
+ec_group_new_from_data(const struct ec_curve *curve)
 {
 	EC_GROUP *group = NULL, *ret = NULL;
 	EC_POINT *generator = NULL;
@@ -2448,9 +2448,9 @@ EC_GROUP_new_by_curve_name(int nid)
 	if (nid <= 0)
 		return NULL;
 
-	for (i = 0; i < CURVE_LIST_LENGTH; i++) {
-		if (curve_list[i].nid == nid)
-			return ec_group_new_from_data(&curve_list[i]);
+	for (i = 0; i < EC_CURVE_LIST_LENGTH; i++) {
+		if (ec_curve_list[i].nid == nid)
+			return ec_group_new_from_data(&ec_curve_list[i]);
 	}
 
 	ECerror(EC_R_UNKNOWN_GROUP);
@@ -2459,7 +2459,7 @@ EC_GROUP_new_by_curve_name(int nid)
 LCRYPTO_ALIAS(EC_GROUP_new_by_curve_name);
 
 static void
-ec_list_element_free(struct ec_list_element *curve)
+ec_curve_free(struct ec_curve *curve)
 {
 	if (curve == NULL)
 		return;
@@ -2477,7 +2477,7 @@ ec_list_element_free(struct ec_list_element *curve)
 }
 
 static int
-ec_list_element_encode_parameter(const BIGNUM *bn, int param_len,
+ec_curve_encode_parameter(const BIGNUM *bn, int param_len,
     const uint8_t **out_param)
 {
 	uint8_t *buf = NULL;
@@ -2502,10 +2502,10 @@ ec_list_element_encode_parameter(const BIGNUM *bn, int param_len,
 	return ret;
 }
 
-static struct ec_list_element *
-ec_list_element_from_group(const EC_GROUP *group)
+static struct ec_curve *
+ec_curve_from_group(const EC_GROUP *group)
 {
-	struct ec_list_element *curve = NULL;
+	struct ec_curve *curve = NULL;
 	BN_CTX *ctx;
 	BIGNUM *p, *a, *b, *x, *y;
 	const EC_POINT *generator = NULL;
@@ -2543,17 +2543,17 @@ ec_list_element_from_group(const EC_GROUP *group)
 	if (BN_num_bytes(order) > curve->param_len)
 		curve->param_len = BN_num_bytes(order);
 
-	if (!ec_list_element_encode_parameter(p, curve->param_len, &curve->p))
+	if (!ec_curve_encode_parameter(p, curve->param_len, &curve->p))
 		goto err;
-	if (!ec_list_element_encode_parameter(a, curve->param_len, &curve->a))
+	if (!ec_curve_encode_parameter(a, curve->param_len, &curve->a))
 		goto err;
-	if (!ec_list_element_encode_parameter(b, curve->param_len, &curve->b))
+	if (!ec_curve_encode_parameter(b, curve->param_len, &curve->b))
 		goto err;
-	if (!ec_list_element_encode_parameter(x, curve->param_len, &curve->x))
+	if (!ec_curve_encode_parameter(x, curve->param_len, &curve->x))
 		goto err;
-	if (!ec_list_element_encode_parameter(y, curve->param_len, &curve->y))
+	if (!ec_curve_encode_parameter(y, curve->param_len, &curve->y))
 		goto err;
-	if (!ec_list_element_encode_parameter(order, curve->param_len, &curve->order))
+	if (!ec_curve_encode_parameter(order, curve->param_len, &curve->order))
 		goto err;
 
 	if ((cofactor = EC_GROUP_get0_cofactor(group)) != NULL) {
@@ -2589,13 +2589,13 @@ ec_list_element_from_group(const EC_GROUP *group)
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 
-	ec_list_element_free(curve);
+	ec_curve_free(curve);
 
 	return NULL;
 }
 
 static int
-ec_list_element_cmp(const struct ec_list_element *a, const struct ec_list_element *b)
+ec_curve_cmp(const struct ec_curve *a, const struct ec_curve *b)
 {
 	int cmp;
 
@@ -2645,13 +2645,13 @@ ec_list_element_cmp(const struct ec_list_element *a, const struct ec_list_elemen
 }
 
 static int
-ec_group_nid_from_curve(const struct ec_list_element *curve)
+ec_group_nid_from_curve(const struct ec_curve *curve)
 {
 	size_t i;
 
-	for (i = 0; i < CURVE_LIST_LENGTH; i++) {
-		if (ec_list_element_cmp(curve, &curve_list[i]) == 0)
-			return curve_list[i].nid;
+	for (i = 0; i < EC_CURVE_LIST_LENGTH; i++) {
+		if (ec_curve_cmp(curve, &ec_curve_list[i]) == 0)
+			return ec_curve_list[i].nid;
 	}
 
 	return NID_undef;
@@ -2660,10 +2660,10 @@ ec_group_nid_from_curve(const struct ec_list_element *curve)
 int
 ec_group_is_builtin_curve(const EC_GROUP *group)
 {
-	struct ec_list_element *curve;
+	struct ec_curve *curve;
 	int ret = 0;
 
-	if ((curve = ec_list_element_from_group(group)) == NULL)
+	if ((curve = ec_curve_from_group(group)) == NULL)
 		goto err;
 
 	if (ec_group_nid_from_curve(curve) == NID_undef)
@@ -2672,7 +2672,7 @@ ec_group_is_builtin_curve(const EC_GROUP *group)
 	ret = 1;
 
  err:
-	ec_list_element_free(curve);
+	ec_curve_free(curve);
 
 	return ret;
 }
@@ -2683,16 +2683,16 @@ EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 	size_t i, min;
 
 	if (r == NULL || nitems == 0)
-		return CURVE_LIST_LENGTH;
+		return EC_CURVE_LIST_LENGTH;
 
-	min = nitems < CURVE_LIST_LENGTH ? nitems : CURVE_LIST_LENGTH;
+	min = nitems < EC_CURVE_LIST_LENGTH ? nitems : EC_CURVE_LIST_LENGTH;
 
 	for (i = 0; i < min; i++) {
-		r[i].nid = curve_list[i].nid;
-		r[i].comment = curve_list[i].comment;
+		r[i].nid = ec_curve_list[i].nid;
+		r[i].comment = ec_curve_list[i].comment;
 	}
 
-	return CURVE_LIST_LENGTH;
+	return EC_CURVE_LIST_LENGTH;
 }
 LCRYPTO_ALIAS(EC_get_builtin_curves);
 
