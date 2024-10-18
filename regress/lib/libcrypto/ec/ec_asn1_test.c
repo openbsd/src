@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.11 2024/10/18 17:29:24 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.12 2024/10/18 19:55:34 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -117,7 +117,7 @@ compare_data(const char *label, const unsigned char *d1, size_t d1_len,
 		return -1;
 	}
 	if (memcmp(d1, d2, d1_len) != 0) {
-		fprintf(stderr, "FAIL: %sdiffer\n", label);
+		fprintf(stderr, "FAIL: %s differ\n", label);
 		fprintf(stderr, "got:\n");
 		hexdump(d1, d1_len);
 		fprintf(stderr, "want:\n");
@@ -288,9 +288,15 @@ ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 {
 	EC_GROUP *group = NULL;
 	int failed = 0;
+	int ret = 0;
 
 	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
 		errx(1, "failed to instantiate curve %d", curve->nid);
+
+	if (!EC_GROUP_check(group, NULL)) {
+		fprintf(stderr, "FAIL: EC_GROUP_check(%d) failed\n", curve->nid);
+		goto err;
+	}
 
 	if (EC_GROUP_get_asn1_flag(group) != OPENSSL_EC_NAMED_CURVE) {
 		fprintf(stderr, "FAIL: ASN.1 flag not set for %d\n", curve->nid);
@@ -314,7 +320,11 @@ ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_HYBRID);
 	failed |= ec_group_roundtrip_curve(group, "hybrid", curve->nid);
 
+	ret = 1;
+
  err:
+	failed |= ret == 0;
+
 	EC_GROUP_free(group);
 
 	return failed;

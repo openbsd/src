@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.23 2024/02/29 20:04:43 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.24 2024/10/18 19:55:34 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -703,68 +703,12 @@ prime_field_tests(void)
 
 }
 
-static void
-internal_curve_test(void)
-{
-	EC_builtin_curve *curves = NULL;
-	size_t crv_len = 0, n = 0;
-	int    ok = 1;
-
-	crv_len = EC_get_builtin_curves(NULL, 0);
-
-	curves = reallocarray(NULL, sizeof(EC_builtin_curve),  crv_len);
-
-	if (curves == NULL)
-		return;
-
-	if (!EC_get_builtin_curves(curves, crv_len)) {
-		free(curves);
-		return;
-	}
-
-	fprintf(stdout, "testing internal curves: ");
-
-	for (n = 0; n < crv_len; n++) {
-		EC_GROUP *group = NULL;
-		int nid = curves[n].nid;
-		if ((group = EC_GROUP_new_by_curve_name(nid)) == NULL) {
-			ok = 0;
-			fprintf(stdout, "\nEC_GROUP_new_curve_name() failed with"
-			    " curve %s\n", OBJ_nid2sn(nid));
-			/* try next curve */
-			continue;
-		}
-		if (!EC_GROUP_check(group, NULL)) {
-			ok = 0;
-			fprintf(stdout, "\nEC_GROUP_check() failed with"
-			    " curve %s\n", OBJ_nid2sn(nid));
-			EC_GROUP_free(group);
-			/* try the next curve */
-			continue;
-		}
-		fprintf(stdout, ".");
-		fflush(stdout);
-		EC_GROUP_free(group);
-	}
-	if (ok)
-		fprintf(stdout, " ok\n\n");
-	else {
-		fprintf(stdout, " failed\n\n");
-		ABORT;
-	}
-	free(curves);
-	return;
-}
-
 int
 main(int argc, char *argv[])
 {
 	ERR_load_crypto_strings();
 
 	prime_field_tests();
-	puts("");
-	/* test the internal curves */
-	internal_curve_test();
 
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
