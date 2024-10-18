@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile.inc,v 1.25 2024/08/11 13:02:39 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.26 2024/10/18 14:44:02 jsing Exp $
 
 # i386-specific libcrypto build rules
 
 # all i386 code generators use these
 EXTRA_PL =  ${LCRYPTO_SRC}/perlasm/x86gas.pl ${LCRYPTO_SRC}/perlasm/x86asm.pl
+
+SRCS += crypto_cpu_caps.c
 
 # aes
 CFLAGS+= -DAES_ASM
@@ -41,11 +43,3 @@ ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${EXTRA_PL}
 		${LCRYPTO_SRC}/${dir}/asm/${f}.pl \
 		    openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
 .endfor
-
-CFLAGS+= -DOPENSSL_CPUID_OBJ
-SRCS+=	x86cpuid.S
-GENERATED+=x86cpuid.S
-
-x86cpuid.S: ${LCRYPTO_SRC}/x86cpuid.pl ${EXTRA_PL}
-	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm ${LCRYPTO_SRC}/x86cpuid.pl \
-		openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
