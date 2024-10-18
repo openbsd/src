@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.8 2024/10/18 09:34:20 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.9 2024/10/18 10:12:25 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -717,9 +717,8 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 		goto err;
 	}
 
-	if (compare_data("Weierstrass 25519 named curve", der, der_len,
-	    ec_wei25519_pkparameters_named_curve,
-	    sizeof(ec_wei25519_pkparameters_named_curve)) == -1)
+	if (compare_data(curve->descr, der, der_len,
+	    curve->named, curve->named_len) == -1)
 		goto err;
 
 	freezero(der, der_len);
