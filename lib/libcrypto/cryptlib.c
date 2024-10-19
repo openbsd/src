@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.56 2024/10/17 14:27:57 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.57 2024/10/19 13:06:11 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -330,40 +330,6 @@ CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
 	return id->val;
 }
 
-#if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
-	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-
-uint64_t OPENSSL_ia32cap_P;
-
-uint64_t
-crypto_cpu_caps_ia32(void)
-{
-	return OPENSSL_ia32cap_P;
-}
-
-#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
-#define OPENSSL_CPUID_SETUP
-void
-OPENSSL_cpuid_setup(void)
-{
-	uint64_t OPENSSL_ia32_cpuid(void);
-
-	OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid();
-
-	if ((OPENSSL_ia32cap_P & CPUCAP_MASK_AESNI) != 0)
-		crypto_cpu_caps |= CRYPTO_CPU_CAPS_ACCELERATED_AES;
-}
-#endif
-
-#else
-uint64_t
-crypto_cpu_caps_ia32(void)
-{
-	return 0;
-}
-#endif
-
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
 void
 OPENSSL_cpuid_setup(void)
@@ -376,6 +342,14 @@ void
 crypto_cpu_caps_init(void)
 {
 	OPENSSL_cpuid_setup();
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CPU_CAPS_IA32
+uint64_t
+crypto_cpu_caps_ia32(void)
+{
+	return 0;
 }
 #endif
 
