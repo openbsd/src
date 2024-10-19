@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.19 2024/08/11 13:02:39 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.20 2024/10/19 11:55:32 jsing Exp $
 
 # sparc64-specific libcrypto build rules
 
@@ -24,7 +24,3 @@ ${dst}.S: ${LCRYPTO_SRC}/${dir}/asm/${src}.pl
 	/usr/bin/env CC=${CC} /usr/bin/perl \
 		${LCRYPTO_SRC}/${dir}/asm/${src}.pl ${.TARGET} -m64 > ${.TARGET}
 .endfor
-
-# not until Montgomery code enabled
-#CFLAGS+= -DOPENSSL_CPUID_OBJ
-#SRCS+=	sparccpuid.S sparcv9cap.c
