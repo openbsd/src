@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.20 2024/08/26 22:00:47 op Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.21 2024/10/19 14:39:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -205,7 +205,7 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
 	case EVP_PKEY_CTRL_MD:
 		/* ANSI X9.57 and NIST CSOR. */
-		switch (EVP_MD_type((const EVP_MD *)p2)) {
+		switch (EVP_MD_type(p2)) {
 		case NID_sha1:
 		case NID_dsa:
 		case NID_dsaWithSHA:
