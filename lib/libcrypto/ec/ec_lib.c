@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.71 2024/10/19 08:26:03 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.72 2024/10/19 08:29:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -614,12 +614,11 @@ EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 	if (ctx == NULL)
 		goto err;
 
-	/* check the discriminant */
 	if (!EC_GROUP_check_discriminant(group, ctx)) {
 		ECerror(EC_R_DISCRIMINANT_IS_ZERO);
 		goto err;
 	}
-	/* check the generator */
+
 	if (group->generator == NULL) {
 		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
@@ -628,7 +627,7 @@ EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
-	/* check the order of the generator */
+
 	if ((point = EC_POINT_new(group)) == NULL)
 		goto err;
 	if ((order = EC_GROUP_get0_order(group)) == NULL)
