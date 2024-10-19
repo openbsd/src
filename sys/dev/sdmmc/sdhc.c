@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.77 2024/08/06 15:03:36 patrick Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.78 2024/10/19 21:10:03 hastings Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -591,14 +591,9 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 
 	s = splsdmmc();
 
-	/*
-	 * Disable bus power before voltage change.
-	 */
-	if (!(hp->sc->sc_flags & SDHC_F_NOPWR0))
-		HWRITE1(hp, SDHC_POWER_CTL, 0);
-
 	/* If power is disabled, reset the host and return now. */
 	if (ocr == 0) {
+		HWRITE1(hp, SDHC_POWER_CTL, 0);
 		splx(s);
 		(void)sdhc_host_reset(hp);
 		return 0;
@@ -619,6 +614,21 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 		splx(s);
 		return EINVAL;
 	}
+
+	/*
+	 * Return if no change to powered bus voltage.
+	 */
+	if (HREAD1(hp, SDHC_POWER_CTL) ==
+	    ((vdd << SDHC_VOLTAGE_SHIFT) | SDHC_BUS_POWER)) {
+		splx(s);
+		return 0;
+	}
+
+	/*
+	 * Disable bus power before voltage change.
+	 */
+	if (!(hp->sc->sc_flags & SDHC_F_NOPWR0))
+		HWRITE1(hp, SDHC_POWER_CTL, 0);
 
 	/*
 	 * Enable bus power.  Wait at least 1 ms (or 74 clocks) plus

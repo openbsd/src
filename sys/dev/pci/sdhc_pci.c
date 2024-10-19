@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.26 2024/03/29 02:36:49 jsg Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.27 2024/10/19 21:10:22 hastings Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -124,16 +124,6 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* ENE controllers break if set to 0V bus power. */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENE &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENE_SDCARD)
-		sc->sc.sc_flags |= SDHC_F_NOPWR0;
-
-	/* Some Intel controllers break if set to 0V bus power. */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_100SERIES_LP_EMMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_APOLLOLAKE_EMMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GLK_EMMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_JSL_EMMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_EHL_EMMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_ADL_N_EMMC))
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 	/* Some RICOH controllers need to be bumped into the right mode. */
