@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.22 2024/08/26 22:01:28 op Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.23 2024/10/19 14:41:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -381,16 +381,19 @@ pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
 	case EVP_PKEY_CTRL_MD:
 		/* RFC 3279, RFC 5758 and NIST CSOR. */
-		if (EVP_MD_type((const EVP_MD *) p2) != NID_sha1 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_ecdsa_with_SHA1 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha224 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha256 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha384 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha512 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha3_224 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha3_256 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha3_384 &&
-		    EVP_MD_type((const EVP_MD *) p2) != NID_sha3_512) {
+		switch (EVP_MD_type(p2)) {
+		case NID_sha1:
+		case NID_ecdsa_with_SHA1:
+		case NID_sha224:
+		case NID_sha256:
+		case NID_sha384:
+		case NID_sha512:
+		case NID_sha3_224:
+		case NID_sha3_256:
+		case NID_sha3_384:
+		case NID_sha3_512:
+			break;
+		default:
 			ECerror(EC_R_INVALID_DIGEST_TYPE);
 			return 0;
 		}
