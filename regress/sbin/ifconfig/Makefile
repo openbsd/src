@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2020/12/17 00:51:12 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2024/10/19 07:10:55 anton Exp $
 
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -291,6 +291,8 @@ run-ether-ifaddr-prefixlen:
 	grep 'inet ${ETHER_ADDR} netmask 0xffffff00 ' ifconfig.out
 
 REGRESS_TARGETS +=	run-ppp-ifaddr-destination
+# XXX uses unsupported SIOCSIFDSTADDR ioctl command.
+REGRESS_EXPECTED_FAILURES += run-ppp-ifaddr-destination
 run-ppp-ifaddr-destination:
 	${IFADDR} ${PPP_IF} ${PPP_ADDR} ${PPP_DEST}
 	/sbin/ifconfig ${PPP_IF} >ifconfig.out
@@ -320,6 +322,8 @@ run-ether-ifaddr-change-netmask:
 	grep 'inet ${ETHER_NET}.2 netmask 0xffffff00 ' ifconfig.out
 
 REGRESS_TARGETS +=	run-ppp-ifaddr-change-destination
+# XXX uses unsupported SIOCSIFDSTADDR ioctl command.
+REGRESS_EXPECTED_FAILURES += run-ppp-ifaddr-change-destination
 run-ppp-ifaddr-change-destination:
 	${IFADDR} ${PPP_IF} ${PPP_NET}.1 ${PPP_NET}.11
 	${IFADDR} ${PPP_IF} ${PPP_NET}.2 ${PPP_NET}.12 alias
