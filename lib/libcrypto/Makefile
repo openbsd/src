@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.213 2024/10/18 11:12:10 tb Exp $
+# $OpenBSD: Makefile,v 1.214 2024/10/19 08:26:03 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -281,7 +281,6 @@ SRCS+= dsa_prn.c
 # ec/
 SRCS+= ec_ameth.c
 SRCS+= ec_asn1.c
-SRCS+= ec_check.c
 SRCS+= ec_curve.c
 SRCS+= ec_err.c
 SRCS+= ec_key.c

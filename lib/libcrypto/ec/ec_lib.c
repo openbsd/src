@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.70 2024/10/18 10:57:26 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.71 2024/10/19 08:26:03 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -600,6 +600,61 @@ EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx_in)
 	return ret;
 }
 LCRYPTO_ALIAS(EC_GROUP_check_discriminant);
+
+int
+EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
+{
+	BN_CTX *ctx;
+	EC_POINT *point = NULL;
+	const BIGNUM *order;
+	int ret = 0;
+
+	if ((ctx = ctx_in) == NULL)
+		ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
+
+	/* check the discriminant */
+	if (!EC_GROUP_check_discriminant(group, ctx)) {
+		ECerror(EC_R_DISCRIMINANT_IS_ZERO);
+		goto err;
+	}
+	/* check the generator */
+	if (group->generator == NULL) {
+		ECerror(EC_R_UNDEFINED_GENERATOR);
+		goto err;
+	}
+	if (EC_POINT_is_on_curve(group, group->generator, ctx) <= 0) {
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
+		goto err;
+	}
+	/* check the order of the generator */
+	if ((point = EC_POINT_new(group)) == NULL)
+		goto err;
+	if ((order = EC_GROUP_get0_order(group)) == NULL)
+		goto err;
+	if (BN_is_zero(order)) {
+		ECerror(EC_R_UNDEFINED_ORDER);
+		goto err;
+	}
+	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx))
+		goto err;
+	if (EC_POINT_is_at_infinity(group, point) <= 0) {
+		ECerror(EC_R_INVALID_GROUP_ORDER);
+		goto err;
+	}
+
+	ret = 1;
+
+ err:
+	if (ctx != ctx_in)
+		BN_CTX_free(ctx);
+
+	EC_POINT_free(point);
+
+	return ret;
+}
+LCRYPTO_ALIAS(EC_GROUP_check);
 
 int
 EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
