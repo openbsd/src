@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.46 2024/10/18 18:03:45 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.47 2024/10/20 10:28:23 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2665,7 +2665,6 @@ ec_group_is_builtin_curve(const EC_GROUP *group)
 
 	if ((curve = ec_curve_from_group(group)) == NULL)
 		goto err;
-
 	if (ec_group_nid_from_curve(curve) == NID_undef)
 		goto err;
 
