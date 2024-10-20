@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.330 2024/07/24 12:17:31 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.331 2024/10/20 11:28:17 dlg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5201,68 +5201,77 @@ out:
 boolean_t
 vm_map_lock_try_ln(struct vm_map *map, char *file, int line)
 {
-	boolean_t rv;
+	int rv;
 
 	if (map->flags & VM_MAP_INTRSAFE) {
-		rv = mtx_enter_try(&map->mtx);
+		if (!mtx_enter_try(&map->mtx))
+			return FALSE;
 	} else {
+		struct proc *busy;
+
 		mtx_enter(&map->flags_lock);
-		if ((map->flags & VM_MAP_BUSY) && (map->busy != curproc)) {
-			mtx_leave(&map->flags_lock);
-			return (FALSE);
-		}
+		busy = map->busy;
 		mtx_leave(&map->flags_lock);
-		rv = (rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP) == 0);
-		/* check if the lock is busy and back out if we won the race */
-		if (rv) {
-			mtx_enter(&map->flags_lock);
-			if ((map->flags & VM_MAP_BUSY) &&
-			    (map->busy != curproc)) {
-				rw_exit(&map->lock);
-				rv = FALSE;
-			}
-			mtx_leave(&map->flags_lock);
+		if (busy != NULL && busy != curproc)
+			return FALSE;
+
+		rv = rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP);
+		if (rv != 0)
+			return FALSE;
+
+		/* to be sure, to be sure */
+		mtx_enter(&map->flags_lock);
+		busy = map->busy;
+		mtx_leave(&map->flags_lock);
+		if (busy != NULL && busy != curproc) {
+			rw_exit(&map->lock);
+			return FALSE;
 		}
 	}
 
-	if (rv) {
-		map->timestamp++;
-		LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
-		uvm_tree_sanity(map, file, line);
-		uvm_tree_size_chk(map, file, line);
-	}
+	map->timestamp++;
+	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
+	uvm_tree_sanity(map, file, line);
+	uvm_tree_size_chk(map, file, line);
 
-	return (rv);
+	return TRUE;
 }
 
 void
 vm_map_lock_ln(struct vm_map *map, char *file, int line)
 {
 	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-		do {
-			mtx_enter(&map->flags_lock);
-tryagain:
-			while ((map->flags & VM_MAP_BUSY) &&
-			    (map->busy != curproc)) {
-				map->flags |= VM_MAP_WANTLOCK;
-				msleep_nsec(&map->flags, &map->flags_lock,
+		mtx_enter(&map->flags_lock);
+		for (;;) {
+			while (map->busy != NULL && map->busy != curproc) {
+				map->nbusy++;
+				msleep_nsec(&map->busy, &map->mtx,
 				    PVM, vmmapbsy, INFSLP);
+				map->nbusy--;
 			}
 			mtx_leave(&map->flags_lock);
-		} while (rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL) != 0);
-		/* check if the lock is busy and back out if we won the race */
-		mtx_enter(&map->flags_lock);
-		if ((map->flags & VM_MAP_BUSY) && (map->busy != curproc)) {
-			rw_exit(&map->lock);
-			goto tryagain;
+
+			rw_enter_write(&map->lock);
+
+			/* to be sure, to be sure */
+			mtx_enter(&map->flags_lock);
+			if (map->busy != NULL && map->busy != curproc) {
+				/* go around again */
+				rw_exit_write(&map->lock);
+			} else {
+				/* we won */
+				break;
+			}
 		}
 		mtx_leave(&map->flags_lock);
 	} else {
 		mtx_enter(&map->mtx);
 	}
 
-	if (map->busy != curproc)
+	if (map->busy != curproc) {
+		KASSERT(map->busy == NULL);
 		map->timestamp++;
+	}
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	uvm_tree_sanity(map, file, line);
 	uvm_tree_size_chk(map, file, line);
@@ -5314,25 +5323,24 @@ vm_map_busy_ln(struct vm_map *map, char *file, int line)
 
 	mtx_enter(&map->flags_lock);
 	map->busy = curproc;
-	map->flags |= VM_MAP_BUSY;
 	mtx_leave(&map->flags_lock);
 }
 
 void
 vm_map_unbusy_ln(struct vm_map *map, char *file, int line)
 {
-	int oflags;
+	unsigned int nbusy;
 
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 	KASSERT(map->busy == curproc);
 
 	mtx_enter(&map->flags_lock);
-	oflags = map->flags;
+	nbusy = map->nbusy;
 	map->busy = NULL;
-	map->flags &= ~(VM_MAP_BUSY|VM_MAP_WANTLOCK);
 	mtx_leave(&map->flags_lock);
-	if (oflags & VM_MAP_WANTLOCK)
-		wakeup(&map->flags);
+
+	if (nbusy > 0)
+		wakeup(&map->busy);
 }
 
 void
