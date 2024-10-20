@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.73 2024/08/28 14:22:36 naddy Exp $ */
+/*	$OpenBSD: procmap.c,v 1.74 2024/10/20 11:21:24 claudio Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -459,8 +459,14 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		    vmmap_flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
 		    vmmap_flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
 		    vmmap_flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
-		    vmmap_flags & VM_MAP_BUSY ? " BUSY" : "",
-		    vmmap_flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
+#ifdef VM_MAP_BUSY
+		    vmmap_flags & VM_MAP_BUSY ? " BUSY" :
+#endif
+		    "",
+#ifdef VM_MAP_WANTLOCK
+		    vmmap_flags & VM_MAP_WANTLOCK ? " WANTLOCK" :
+#endif
+		    "",
 #if VM_MAP_TOPDOWN > 0
 		    vmmap_flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
 #endif
