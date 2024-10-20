@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.75 2024/10/18 17:27:07 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.76 2024/10/20 10:48:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -56,10 +56,14 @@
  *
  */
 
-#include <string.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
