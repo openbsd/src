@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.69 2024/08/29 16:58:19 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.70 2024/10/20 10:52:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -56,18 +56,24 @@
  *
  */
 
-#include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pkcs7.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
-#include "ec_local.h"
+#include "bn_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 
