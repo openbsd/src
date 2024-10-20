@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.135 2024/03/03 11:14:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.136 2024/10/20 06:54:11 jsg Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -92,7 +92,7 @@ const char *trap_type[] = {
 	"Data Access Exception",
 	"Misaligned Access",
 	"Unimplemented Opcode",
-	"Privilege Violation"
+	"Privilege Violation",
 	"Bounds Check Violation",
 	"Illegal Integer Divide",
 	"Integer Overflow",
