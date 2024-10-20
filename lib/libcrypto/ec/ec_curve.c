@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.47 2024/10/20 10:28:23 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.48 2024/10/20 10:45:49 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -70,10 +70,14 @@
  */
 
 #include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/bn.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
 
