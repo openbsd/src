@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.65 2024/09/20 12:52:37 tb Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.66 2024/10/20 21:07:58 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -1116,6 +1116,8 @@ find_matches(void)
 
 	Found_one = false;
 	matches_in_list(File_list);
+	free(Fortbuf);
+	Fortbuf = NULL;
 	return Found_one;
 }
 
