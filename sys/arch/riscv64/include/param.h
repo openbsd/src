@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 2023/12/14 13:26:49 claudio Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 2024/10/21 22:55:52 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 
 #define	_MACHINE	riscv64
 #define	MACHINE		"riscv64"
-#define	_MACHINE_ARC	riscv64
+#define	_MACHINE_ARCH	riscv64
 #define	MACHINE_ARCH	"riscv64"
 #define	MID_MACHINE	MID_RISCV64
 
