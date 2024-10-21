@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.101 2024/10/03 05:41:59 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.102 2024/10/21 07:38:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -543,25 +543,22 @@ input_key_mode1(struct bufferevent *bev, key_code key)
 
 	log_debug("%s: key in %llx", __func__, key);
 
+	/* A regular or shifted key + Meta. */
+	if ((key & (KEYC_CTRL | KEYC_META)) == KEYC_META)
+		return (input_key_vt10x(bev, key));
+
 	/*
 	 * As per
 	 * https://invisible-island.net/xterm/modified-keys-us-pc105.html.
 	 */
 	onlykey = key & KEYC_MASK_KEY;
-	if ((key & (KEYC_META | KEYC_CTRL)) == KEYC_CTRL &&
+	if ((key & KEYC_CTRL) &&
 	    (onlykey == ' ' ||
 	     onlykey == '/' ||
 	     onlykey == '@' ||
 	     onlykey == '^' ||
 	     (onlykey >= '2' && onlykey <= '8') ||
 	     (onlykey >= '@' && onlykey <= '~')))
-		return (input_key_vt10x(bev, key));
-
-	/*
-	 * A regular key + Meta. In the absence of a standard to back this, we
-	 * mimic what iTerm 2 does.
-	 */
-	if ((key & (KEYC_CTRL | KEYC_META)) == KEYC_META)
 		return (input_key_vt10x(bev, key));
 
 	return (-1);
