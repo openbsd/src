@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.182 2024/10/07 12:58:36 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.183 2024/10/21 12:42:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -577,7 +577,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .minimum = 0,
-	  .maximum = 10000,
+	  .maximum = 2000000,
 	  .default_num = 0,
 	  .unit = "milliseconds",
 	  .text = "Time to wait for a key binding to repeat the first time the "
@@ -672,7 +672,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .minimum = 0,
-	  .maximum = 10000,
+	  .maximum = 2000000,
 	  .default_num = 500,
 	  .unit = "milliseconds",
 	  .text = "Time to wait for a key binding to repeat, if it is bound "
