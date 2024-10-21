@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.205 2024/06/06 00:36:46 bluhm Exp $	*/
+/*	$OpenBSD: locore.s,v 1.206 2024/10/21 07:21:18 jsg Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -38,22 +38,17 @@
 
 #include "npx.h"
 #include "assym.h"
-#include "apm.h"
 #include "lapic.h"
-#include "ksyms.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
 #include <machine/codepatch.h>
-#include <machine/cputypes.h>
 #include <machine/param.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
-
-#include <dev/isa/isareg.h>
 
 #if NLAPIC > 0
 #include <machine/i82489reg.h>

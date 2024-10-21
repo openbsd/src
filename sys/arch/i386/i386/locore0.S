@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.11 2023/07/21 04:04:52 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.12 2024/10/21 07:21:18 jsg Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -36,22 +36,12 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#include "npx.h"
 #include "assym.h"
-#include "apm.h"
-#include "lapic.h"
 #include "ksyms.h"
 
-#include <sys/errno.h>
-#include <sys/syscall.h>
-
-#include <machine/codepatch.h>
-#include <machine/cputypes.h>
 #include <machine/param.h>
 #include <machine/pte.h>
-#include <machine/segments.h>
 #include <machine/specialreg.h>
-#include <machine/trap.h>
 
 #include <dev/isa/isareg.h>
 
