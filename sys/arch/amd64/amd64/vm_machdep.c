@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.48 2024/10/21 18:27:34 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -135,8 +135,7 @@ cpu_exit(struct proc *p)
 void
 setguardpage(struct proc *p)
 {
-	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
-	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
+	pmap_kremove((vaddr_t)p->p_addr + PAGE_SIZE, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 }
 
