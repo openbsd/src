@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.66 2024/10/20 21:07:58 tb Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.67 2024/10/21 06:39:03 tb Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -163,8 +163,11 @@ main(int ac, char *av[])
 
 	init_prob();
 	if ((Short_only && minlen_in_list(File_list) > SLEN) ||
-	    (Long_only && maxlen_in_list(File_list) <= SLEN))
+	    (Long_only && maxlen_in_list(File_list) <= SLEN)) {
+		fprintf(stderr,
+		    "no fortunes matching length constraint found\n");
 		return 1;
+	}
 
 	do {
 		get_fort();
