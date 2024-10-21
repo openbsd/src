@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.357 2024/10/05 00:35:35 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.358 2024/10/21 12:39:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4186,6 +4186,23 @@ window_copy_write_one(struct window_mode_entry *wme,
 			screen_write_cell(ctx, &gc);
 		}
 	}
+}
+
+int
+window_copy_get_current_offset(struct window_pane *wp, u_int *offset,
+    u_int *size)
+{
+	struct window_mode_entry	*wme = TAILQ_FIRST(&wp->modes);
+	struct window_copy_mode_data	*data = wme->data;
+	u_int				 hsize;
+
+	if (data == NULL)
+		return (0);
+	hsize = screen_hsize(data->backing);
+
+	*offset = hsize - data->oy;
+	*size = hsize;
+	return (1);
 }
 
 static void

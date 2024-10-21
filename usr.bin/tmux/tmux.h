@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1234 2024/10/07 08:50:47 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1235 2024/10/21 12:39:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3245,6 +3245,8 @@ void		 window_copy_pagedown(struct window_pane *, int, int);
 void		 window_copy_start_drag(struct client *, struct mouse_event *);
 char		*window_copy_get_word(struct window_pane *, u_int, u_int);
 char		*window_copy_get_line(struct window_pane *, u_int);
+int		 window_copy_get_current_offset(struct window_pane *, u_int *,
+		     u_int *);
 
 /* window-option.c */
 extern const struct window_mode window_customize_mode;
