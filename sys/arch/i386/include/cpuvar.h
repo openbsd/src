@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.7 2016/07/28 21:57:57 kettenis Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.8 2024/10/21 03:07:54 jsg Exp $	*/
 /* $NetBSD: cpuvar.h,v 1.1.2.3 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -85,8 +85,6 @@ struct cpu_attach_args {
 	int cpu_signature;
 	int feature_flags;
 };
-
-#define MP_PICMODE	0x00000001      /* System booted in picmode */
 
 #ifdef _KERNEL
 

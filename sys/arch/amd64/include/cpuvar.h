@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.12 2022/08/12 02:20:36 cheloha Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.13 2024/10/21 03:07:54 jsg Exp $	*/
 /* 	$NetBSD: cpuvar.h,v 1.1 2003/03/01 18:29:28 fvdl Exp $ */
 
 /*-
@@ -83,8 +83,6 @@ struct cpu_attach_args {
 	int cpu_role;
 	struct cpu_functions *cpu_func;
 };
-
-#define MP_PICMODE	0x00000001      /* System booted in picmode */
 
 #ifdef _KERNEL
 
