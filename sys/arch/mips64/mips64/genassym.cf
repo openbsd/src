@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.16 2021/10/07 12:40:16 visa Exp $
+#	$OpenBSD: genassym.cf,v 1.17 2024/10/21 22:04:13 jsg Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -26,13 +26,10 @@
 
 
 include <sys/param.h>
-include <sys/buf.h>
 include <sys/proc.h>
-include <sys/mbuf.h>
-include <sys/user.h>
 include <uvm/uvm_extern.h>
-include <sys/siginfo.h>
 
+include <machine/pcb.h>
 include <machine/cpu.h>
 
 export	SONPROC
