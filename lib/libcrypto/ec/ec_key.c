@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.40 2024/03/27 01:22:30 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.41 2024/10/22 12:02:43 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -135,7 +135,7 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 	}
 	/* copy the parameters */
 	if (src->group) {
-		const EC_METHOD *meth = EC_GROUP_method_of(src->group);
+		const EC_METHOD *meth = src->group->meth;
 		/* clear the old group */
 		EC_GROUP_free(dest->group);
 		dest->group = EC_GROUP_new(meth);
