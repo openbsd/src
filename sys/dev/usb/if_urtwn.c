@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.111 2024/09/01 03:09:00 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.112 2024/10/22 22:21:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -239,7 +239,6 @@ static const struct urtwn_type {
 	struct usb_devno        dev;
 	uint32_t		chip;
 } urtwn_devs[] = {
-	URTWN_DEV_8192CU(ABOCOM,	RTL8188CU_1),
 	URTWN_DEV_8192CU(ABOCOM,	RTL8188CU_1),
 	URTWN_DEV_8192CU(ABOCOM,	RTL8188CU_2),
 	URTWN_DEV_8192CU(ABOCOM,	RTL8192CU),
