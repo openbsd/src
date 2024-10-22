@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.78 2024/06/22 10:22:29 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.79 2024/10/22 12:51:56 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ struct cpu_info {
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
 #endif
 
-	int ci_intrdepth;
+	int ci_idepth;
 	char *ci_intstk;
 #define CPUSAVE_LEN	8
 	register_t ci_tempsave[CPUSAVE_LEN];

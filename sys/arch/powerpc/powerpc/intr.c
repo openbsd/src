@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2022/07/24 00:28:09 cheloha Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2024/10/22 12:51:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -168,7 +168,7 @@ splassert_check(int wantipl, const char *func)
 	if (ci->ci_cpl < wantipl)
 		splassert_fail(wantipl, ci->ci_cpl, func);
 
-	if (wantipl == IPL_NONE && ci->ci_intrdepth != -1)
-		splassert_fail(-1, ci->ci_intrdepth, func);
+	if (wantipl == IPL_NONE && ci->ci_idepth != -1)
+		splassert_fail(-1, ci->ci_idepth, func);
 }
 #endif

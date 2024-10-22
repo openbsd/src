@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.64 2023/12/12 07:37:21 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.65 2024/10/22 12:51:56 mpi Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -367,9 +367,9 @@ nop32_5e:
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
-	lwz	%r31,CI_INTRDEPTH(%r1)	/* were we already running on intstk? */
+	lwz	%r31,CI_IDEPTH(%r1)	/* were we already running on intstk? */
 	addic.	%r31,%r31,1
-	stw	%r31,CI_INTRDEPTH(%r1)
+	stw	%r31,CI_IDEPTH(%r1)
 	lwz	%r1,CI_INTSTK(%r1)	/* get interrupt stack */
 	beq	1f
 	mfsprg	%r1,1			/* yes, get old SP */
@@ -395,9 +395,9 @@ nop32_6e:
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
-	lwz	%r31,CI_INTRDEPTH(%r1)	/* were we already running on intstk? */
+	lwz	%r31,CI_IDEPTH(%r1)	/* were we already running on intstk? */
 	addic.	%r31,%r31,1
-	stw	%r31,CI_INTRDEPTH(%r1)
+	stw	%r31,CI_IDEPTH(%r1)
 	lwz	%r1,CI_INTSTK(%r1)	/* get interrupt stack */
 	beq	1f
 	mfsprg	%r1,1			/* yes, get old SP */
@@ -971,7 +971,7 @@ s_isitrap:
 	GET_CPUINFO(%r4);						\
 	lmw	%r28,CI_TEMPSAVE(%r4);	/* restore r28-r31 */		\
 	mfctr	%r6;							\
-	lwz	%r5,CI_INTRDEPTH(%r4);			\
+	lwz	%r5,CI_IDEPTH(%r4);			\
 	mfsrr0	%r4;							\
 	mfsrr1	%r3;							\
 	stw	%r6,28(%r1);						\
@@ -1032,9 +1032,9 @@ intr_exit:
 	mtxer	%r3
 
 	GET_CPUINFO(%r5)
-	lwz	%r4,CI_INTRDEPTH(%r5)
+	lwz	%r4,CI_IDEPTH(%r5)
 	addi	%r4,%r4,-1		/* adjust reentrancy count */
-	stw	%r4,CI_INTRDEPTH(%r5)
+	stw	%r4,CI_IDEPTH(%r5)
 
 /* Returning to user mode? */
 	mtcr	%r6			/* saved SRR1 */
