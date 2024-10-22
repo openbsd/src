@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.25 2024/10/22 21:10:45 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.26 2024/10/22 21:28:53 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -207,6 +207,17 @@ static int
 ec_oct_conversion_form_is_valid(uint8_t form)
 {
 	return (form & EC_OCT_POINT_CONVERSION_MASK) == form;
+}
+
+static int
+ec_oct_check_hybrid_ybit_is_consistent(uint8_t form, int ybit, const BIGNUM *y)
+{
+	if (form == EC_OCT_POINT_HYBRID && ybit != BN_is_odd(y)) {
+		ECerror(EC_R_INVALID_ENCODING);
+		return 0;
+	}
+
+	return 1;
 }
 
 /* Nonzero y-bit only makes sense with compressed or hybrid encoding. */
@@ -437,12 +448,8 @@ ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 			goto err;
 		if (!ec_oct_get_field_element_cbs(&cbs, group, y))
 			goto err;
-		if (form == EC_OCT_POINT_HYBRID) {
-			if (ybit != BN_is_odd(y)) {
-				ECerror(EC_R_INVALID_ENCODING);
-				goto err;
-			}
-		}
+		if (!ec_oct_check_hybrid_ybit_is_consistent(form, ybit, y))
+			goto err;
 		if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 			goto err;
 	}
