@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.123 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.124 2024/10/22 15:19:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -318,7 +318,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_RECEIVE_PSP_FD:
 		if (env->vmd_psp_fd > -1)
 			fatalx("already received psp fd");
-		env->vmd_psp_fd = imsg->fd;
+		env->vmd_psp_fd = imsg_get_fd(imsg);
 		break;
 	default:
 		return (-1);
