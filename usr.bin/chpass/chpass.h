@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.h,v 1.11 2015/11/26 19:01:47 deraadt Exp $	*/
+/*	$OpenBSD: chpass.h,v 1.12 2024/10/22 22:15:38 jsg Exp $	*/
 /*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ int	 p_expire(char *, struct passwd *, ENTRY *);
 int	 p_gecos(char *, struct passwd *, ENTRY *);
 int	 p_gid(char *, struct passwd *, ENTRY *);
 int	 p_hdir(char *, struct passwd *, ENTRY *);
-int	 p_login(char *, struct passwd *, ENTRY *);
 int	 p_login(char *, struct passwd *, ENTRY *);
 int	 p_passwd(char *, struct passwd *, ENTRY *);
 int	 p_shell(char *, struct passwd *, ENTRY *);
