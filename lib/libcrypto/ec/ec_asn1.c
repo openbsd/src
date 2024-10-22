@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.76 2024/10/20 10:48:29 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.77 2024/10/22 12:06:08 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -570,7 +570,7 @@ ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 	if (group == NULL || field == NULL)
 		goto err;
 
-	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+	nid = ec_group_get_field_type(group);
 	if (nid == NID_X9_62_characteristic_two_field) {
 		ECerror(EC_R_GF2M_NOT_SUPPORTED);
 		goto err;

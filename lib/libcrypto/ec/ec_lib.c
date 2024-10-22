@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.72 2024/10/19 08:29:40 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.73 2024/10/22 12:06:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -218,6 +218,15 @@ EC_METHOD_get_field_type(const EC_METHOD *meth)
 	return meth->field_type;
 }
 LCRYPTO_ALIAS(EC_METHOD_get_field_type);
+
+int
+ec_group_get_field_type(const EC_GROUP *group)
+{
+	if (group == NULL || group->meth == NULL)
+		return NID_undef;
+
+	return group->meth->field_type;
+}
 
 /*
  * If there is a user-provided cofactor, sanity check and use it. Otherwise
@@ -663,8 +672,7 @@ EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 	BN_CTX *ctx_new = NULL;
 
 	/* compare the field types */
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(a)) !=
-	    EC_METHOD_get_field_type(EC_GROUP_method_of(b)))
+	if (ec_group_get_field_type(a) != ec_group_get_field_type(b))
 		return 1;
 	/* compare the curve name (if present in both) */
 	if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&

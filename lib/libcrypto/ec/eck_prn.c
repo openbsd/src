@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.30 2023/11/21 22:05:33 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.31 2024/10/22 12:06:08 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -258,7 +258,7 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	if (!BIO_indent(bp, off, 128))
 		goto err;
 
-	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+	nid = ec_group_get_field_type(group);
 	if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
 		goto err;
 
