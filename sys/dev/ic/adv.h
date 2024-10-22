@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.h,v 1.7 2020/02/18 20:24:52 krw Exp $	*/
+/*	$OpenBSD: adv.h,v 1.8 2024/10/22 21:50:02 jsg Exp $	*/
 /*      $NetBSD: adv.h,v 1.3 1998/09/26 16:02:56 dante Exp $        */
 
 /*
@@ -39,8 +39,7 @@
 
 /******************************************************************************/
 
-struct adv_ccb
-{
+struct adv_ccb {
 	ASC_SG_HEAD	sghead;
 	ASC_SCSI_Q	scsiq;
 
@@ -67,8 +66,7 @@ typedef struct adv_ccb ADV_CCB;
 
 #define ADV_MAX_CCB	32
 
-struct adv_control
-{
+struct adv_control {
 	ADV_CCB	ccbs[ADV_MAX_CCB];	/* all our control blocks */
 };
 

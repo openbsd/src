@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.12 2016/05/18 03:45:11 mlarkin Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.13 2024/10/22 21:50:02 jsg Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.1.2.3 2000/02/29 13:17:20 sommerfeld Exp $ */
 
 /*-
@@ -43,8 +43,7 @@
 
 #include <machine/mpbiosreg.h>
 
-struct mp_bus 
-{
+struct mp_bus {
 	char *mb_name;		/* XXX bus name */
 	int mb_idx;		/* XXX bus index */
 	void (*mb_intr_print) (int);
@@ -53,8 +52,7 @@ struct mp_bus
 	u_int32_t mb_data;	/* random bus-specific datum. */
 };
 
-struct mp_intr_map
-{
+struct mp_intr_map {
 	struct mp_intr_map *next;
 	struct mp_bus *bus;
 	int bus_pin;

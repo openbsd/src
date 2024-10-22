@@ -1,4 +1,4 @@
-/* $OpenBSD: esavar.h,v 1.2 2010/09/07 16:21:44 deraadt Exp $ */
+/* $OpenBSD: esavar.h,v 1.3 2024/10/22 21:50:02 jsg Exp $ */
 /* $NetBSD: esavar.h,v 1.4 2002/03/16 14:34:01 jmcneill Exp $ */
 
 /*
@@ -96,8 +96,7 @@ struct esa_voice {
 	int			index;	/* 0: play, 1: record */
 };
 
-struct esa_softc
-{
+struct esa_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiio.h,v 1.1 2023/01/14 12:11:11 kettenis Exp $	*/
+/*	$OpenBSD: efiio.h,v 1.2 2024/10/22 21:50:02 jsg Exp $	*/
 /*-
  * Copyright (c) 2016 Netflix, Inc.
  * Copyright (c) 2022 3mdeb <contact@3mdeb.com>
@@ -55,16 +55,14 @@ struct efi_esrt_entry_v1 {
 	uint32_t	last_attempt_status;
 };
 
-struct efi_get_table_ioc
-{
+struct efi_get_table_ioc {
 	void *buf;		/* Pointer to userspace buffer */
 	struct uuid uuid;	/* UUID to look up */
 	size_t table_len;	/* Table size */
 	size_t buf_len;		/* Size of the buffer */
 };
 
-struct efi_var_ioc
-{
+struct efi_var_ioc {
 	uint16_t *name;		/* User pointer to name, in UCS2 chars */
 	size_t namesize;	/* Number of *bytes* in the name including
 				   terminator */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.32 2024/06/07 23:19:18 jsg Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.33 2024/10/22 21:50:02 jsg Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -134,8 +134,7 @@ static const char *loc_where[] = {
 	"bios"
 };
 
-struct mp_map
-{
+struct mp_map {
 	vaddr_t		baseva;
 	int		vsize;
 	paddr_t		pa;

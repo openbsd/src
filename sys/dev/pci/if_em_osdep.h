@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.14 2020/02/04 10:59:23 mpi Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.15 2024/10/22 21:50:02 jsg Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -60,8 +60,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define CMD_MEM_WRT_INVALIDATE		0x0010  /* BIT_4 */
 
-struct em_osdep
-{
+struct em_osdep {
 	bus_space_tag_t		mem_bus_space_tag;
 	bus_space_handle_t	mem_bus_space_handle;
 	bus_space_tag_t		io_bus_space_tag;

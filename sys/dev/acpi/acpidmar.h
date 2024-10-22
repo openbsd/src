@@ -408,8 +408,7 @@ context_set_user(struct context_entry *ce, int v)
  *   126      = Type (0 = Read, 1 = Write)
  *   127      = Fault bit
  */
-struct fault_entry
-{
+struct fault_entry {
 	uint64_t	lo;
 	uint64_t	hi;
 };

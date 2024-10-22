@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.108 2024/10/02 17:05:56 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.109 2024/10/22 21:50:02 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -727,20 +727,17 @@ struct vmcs {
 	uint32_t	vmcs_revision;
 };
 
-struct vmx_invvpid_descriptor
-{
+struct vmx_invvpid_descriptor {
 	uint64_t	vid_vpid;
 	uint64_t	vid_addr;
 };
 
-struct vmx_invept_descriptor
-{
+struct vmx_invept_descriptor {
 	uint64_t	vid_eptp;
 	uint64_t	vid_reserved;
 };
 
-struct vmx_msr_store
-{
+struct vmx_msr_store {
 	uint64_t	vms_index;
 	uint64_t	vms_data;
 };
@@ -752,8 +749,7 @@ struct vmx_msr_store
  * Note that vmx/svm_enter_guest depend on the layout of this struct for
  * field access.
  */
-struct vcpu_gueststate
-{
+struct vcpu_gueststate {
 	/* %rsi should be first */
 	uint64_t	vg_rsi;			/* 0x00 */
 	uint64_t	vg_rax;			/* 0x08 */

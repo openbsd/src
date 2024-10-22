@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.36 2024/05/23 03:21:09 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.37 2024/10/22 21:50:02 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -127,8 +127,7 @@ int	uchcomdebug = 0;
 
 #define UCHCOM_TYPE_CH343	1
 
-struct uchcom_softc
-{
+struct uchcom_softc {
 	struct device		 sc_dev;
 	struct usbd_device	*sc_udev;
 	struct device		*sc_subdev;
@@ -151,8 +150,7 @@ struct uchcom_softc
 	int			 sc_lcr2;
 };
 
-struct uchcom_endpoints
-{
+struct uchcom_endpoints {
 	int		ep_bulkin;
 	int		ep_bulkin_size;
 	int		ep_bulkout;
@@ -160,15 +158,13 @@ struct uchcom_endpoints
 	int		ep_intr_size;
 };
 
-struct uchcom_divider
-{
+struct uchcom_divider {
 	uint8_t		dv_prescaler;
 	uint8_t		dv_div;
 	uint8_t		dv_mod;
 };
 
-struct uchcom_divider_record
-{
+struct uchcom_divider_record {
 	uint32_t		dvr_high;
 	uint32_t		dvr_low;
 	uint32_t		dvr_base_clock;

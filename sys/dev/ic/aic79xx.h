@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.33 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.34 2024/10/22 21:50:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1034,8 +1034,7 @@ typedef uint8_t ahd_mode_state;
 
 typedef void ahd_callback_t (void *);
 
-struct ahd_completion
-{
+struct ahd_completion {
 	uint16_t	tag;
 	uint8_t		sg_status;
 	uint8_t		valid_tag;

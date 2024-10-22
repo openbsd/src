@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.208 2024/08/20 07:44:36 mvs Exp $	*/
+/*	$OpenBSD: audio.c,v 1.209 2024/10/22 21:50:02 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -88,8 +88,7 @@ struct audio_buf {
 };
 
 #if NWSKBD > 0
-struct wskbd_vol
-{
+struct wskbd_vol {
 	int val;			/* index of the value control */
 	int mute;			/* index of the mute control */
 	int step;			/* increment/decrement step */

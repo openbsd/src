@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelvereg.h,v 1.2 2006/07/20 11:23:49 martin Exp $	*/
+/*	$OpenBSD: cgtwelvereg.h,v 1.3 2024/10/22 21:50:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -200,8 +200,7 @@ struct cgtwelve_apu {
 	u_int32_t	test;
 };
 
-struct cgtwelve_dac
-{
+struct cgtwelve_dac {
 	u_int32_t	addr_lo;
 	u_int8_t	pad1[0x100 - 4];
 	u_int32_t	addr_hi;

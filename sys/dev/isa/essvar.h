@@ -1,4 +1,4 @@
-/*	$OpenBSD: essvar.h,v 1.5 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: essvar.h,v 1.6 2024/10/22 21:50:02 jsg Exp $	*/
 /*	$NetBSD: essvar.h,v 1.14 1999/03/18 06:03:31 mycroft Exp $	*/
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.5 $ (SHARK) $Date: 2002/03/14 03:16:05 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.6 $ (SHARK) $Date: 2024/10/22 21:50:02 $
 **
 **++
 **
@@ -95,8 +95,7 @@
 #define ESS_1888_NDEVS		22
 #define ESS_MAX_NDEVS		22
 
-struct ess_audio_channel
-{
+struct ess_audio_channel {
 	int	drq;			/* DMA channel */
 #define IS16BITDRQ(drq) ((drq) >= 4)
 	int	irq;			/* IRQ line for this DMA channel */
@@ -118,8 +117,7 @@ struct ess_audio_channel
 	int	blksize;		/* current block size */
 };
 
-struct ess_softc
-{
+struct ess_softc {
 	struct	device sc_dev;		/* base device */
 	struct	device *sc_isa;
 	isa_chipset_tag_t sc_ic;

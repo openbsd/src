@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.94 2024/07/14 14:04:16 jmatthew Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.95 2024/10/22 21:50:02 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -101,8 +101,7 @@ void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 /* Make sure throttling bits are valid,a=addr,o=offset,w=width */
 #define valid_throttle(o,w,a)	(a && w && (o+w)<=31 && (o>4 || (o+w)<=4))
 
-struct acpi_cstate
-{
+struct acpi_cstate {
 	SLIST_ENTRY(acpi_cstate) link;
 
 	u_short		state;

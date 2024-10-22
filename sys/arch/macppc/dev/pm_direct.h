@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.16 2023/11/22 18:14:35 tobhe Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.17 2024/10/22 21:50:02 jsg Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.7 2005/01/07 04:59:58 briggs Exp $	*/
 
 /*
@@ -57,8 +57,7 @@ void	pm_intr(void);
 void	pm_read_date_time(time_t *);
 void	pm_set_date_time(time_t);
 
-struct pmu_battery_info
-{
+struct pmu_battery_info {
 	unsigned int flags;
 	unsigned int cur_charge;
 	unsigned int max_charge;

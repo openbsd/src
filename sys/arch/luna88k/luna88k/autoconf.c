@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2022/12/10 02:41:56 aoyama Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2024/10/22 21:50:02 jsg Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -105,8 +105,7 @@ diskconf(void)
  *
  * XXX Right now we can not handle network boot.
  */
-struct autoboot_t
-{
+struct autoboot_t {
 	char	cont[16];
 	int	targ;
 	int	part;

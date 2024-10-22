@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.h,v 1.8 2024/09/04 07:54:52 mglocker Exp $
+/*	$OpenBSD: trm.h,v 1.9 2024/10/22 21:50:02 jsg Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.h
@@ -41,8 +41,7 @@
  * Segment Entry
  * ------------------------------------------------------------
  */
-struct SGentry
-{
+struct SGentry {
        u_int32_t        address;
        u_int32_t        length;
 };
@@ -68,8 +67,7 @@ struct SGentry
  *               SCSI Request Block
  *-----------------------------------------------------------------------
  */
-struct trm_scsi_req_q
-{
+struct trm_scsi_req_q {
 	TAILQ_ENTRY(trm_scsi_req_q)      link;
 	bus_dmamap_t	dmamapxfer;
 	u_int32_t	PhysSRB;
@@ -144,8 +142,7 @@ TAILQ_HEAD(SRB_HEAD, trm_scsi_req_q);
  *                   Device Control Block
  *-----------------------------------------------------------------------
  */
-struct trm_dcb
-{
+struct trm_dcb {
 	u_int32_t	TagMask;
 
 	u_int16_t	DCBFlag;
@@ -180,8 +177,7 @@ struct trm_dcb
  *                  Adapter Control Block
  *-----------------------------------------------------------------------
  */
-struct trm_softc
-{
+struct trm_softc {
 	struct	device	sc_device;
 
 	bus_space_handle_t	sc_iohandle;
@@ -226,8 +222,7 @@ struct trm_softc
 /*
  * The SEEPROM structure for TRM_S1040
  */
-struct trm_target_nvram
-{
+struct trm_target_nvram {
     u_int8_t    NvmTarCfg0;        	/* Target configuration byte 0    */
 #define TRM_WIDE                0x20    /* Wide negotiate                 */
 #define TRM_TAG_QUEUING         0x10    /* Enable SCSI tag queuing        */
@@ -241,8 +236,7 @@ struct trm_target_nvram
     u_int8_t    NvmTarCfg3;        	/* Target configuration byte 3    */
 };
 
-struct trm_adapter_nvram
-{
+struct trm_adapter_nvram {
     u_int8_t         NvramSubVendorID[2];     /*0,1  Sub Vendor ID            */
     u_int8_t         NvramSubSysID[2];        /*2,3  Sub System ID            */
     u_int8_t         NvramSubClass;           /*4    Sub Class                */

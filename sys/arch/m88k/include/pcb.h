@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.8 2015/10/05 01:22:34 deraadt Exp $ */
+/*	$OpenBSD: pcb.h,v 1.9 2024/10/22 21:50:02 jsg Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -73,8 +73,7 @@ struct m88100_pcb {
 	unsigned long pcb_fcr63;
 };
 
-struct pcb
-{
+struct pcb {
 	struct m88100_pcb	kernel_state;
 	struct trapframe	user_state;
 	int			pcb_onfault;

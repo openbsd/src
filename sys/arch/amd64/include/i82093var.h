@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.6 2024/05/22 05:51:49 jsg Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.7 2024/10/22 21:50:02 jsg Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -37,8 +37,7 @@
 
 #include <machine/apicvar.h>
 
-struct ioapic_pin 
-{
+struct ioapic_pin {
 	struct ioapic_pin	*ip_next;	/* next pin on this vector */
 	struct mp_intr_map 	*ip_map;
 	int			ip_vector;	/* IDT vector */

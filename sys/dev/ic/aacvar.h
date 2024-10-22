@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.18 2023/09/11 08:40:25 mvs Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.19 2024/10/22 21:50:02 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -235,8 +235,7 @@ typedef struct rwlock aac_lock_t;
 /*
  * Per-container data structure
  */
-struct aac_container
-{
+struct aac_container {
 	struct aac_mntobj co_mntobj;
 	int				co_found;
 	TAILQ_ENTRY(aac_container)	co_link;
@@ -246,8 +245,7 @@ struct aac_container
  * A command control block, one for each corresponding command index of the
  * controller.
  */
-struct aac_command
-{
+struct aac_command {
 	TAILQ_ENTRY(aac_command) cm_link;	/* list linkage */
 
 	struct aac_softc	*cm_sc;		/* controller that owns us */
@@ -311,8 +309,7 @@ struct aac_qstat {
 /*
  * Per-controller structure.
  */
-struct aac_softc
-{
+struct aac_softc {
 	struct device aac_dev;
 	void   *aac_ih;
 

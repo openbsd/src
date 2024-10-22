@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb_osdep.h,v 1.4 2011/07/26 14:57:57 deraadt Exp $ */
+/* $OpenBSD: if_ixgb_osdep.h,v 1.5 2024/10/22 21:50:02 jsg Exp $ */
 
 #ifndef _IXGB_OPENBSD_OS_H_
 #define _IXGB_OPENBSD_OS_H_
@@ -62,8 +62,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define le16_to_cpu		letoh16
 
-struct ixgb_osdep
-{
+struct ixgb_osdep {
 	bus_space_tag_t		mem_bus_space_tag;
 	bus_space_handle_t	mem_bus_space_handle;
 	struct device		*dev;
