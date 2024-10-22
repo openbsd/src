@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.37 2023/12/24 11:12:34 jsg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.38 2024/10/22 22:01:58 jsg Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -85,9 +85,7 @@ extern int bus_space_debug;
 #define BSHDB_NO_ACCESS	0x02
 
 #if defined(BUS_SPACE_DEBUG)
-#ifndef _MACHINE_BUS_H_
 #include <sys/systm.h>
-#endif
 #define BUS_SPACE_PRINTF(l, s) do {				\
 	if(bus_space_debug & (l)) printf s;			\
 } while(0)
