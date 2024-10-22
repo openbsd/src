@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.120 2024/10/14 03:02:08 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.121 2024/10/22 07:13:28 dtucker Exp $
 #	Placed in the Public Domain.
 
 #SUDO=sudo
@@ -204,6 +204,7 @@ fi
 # to preserve our debug logging.  In the rare instance where -q is desirable
 # -qq is equivalent and is not removed.
 SSHLOGWRAP=$OBJ/ssh-log-wrapper.sh
+rm -f ${SSHLOGWRAP}
 cat >$SSHLOGWRAP <<EOD
 #!/bin/sh
 timestamp="\`$OBJ/timestamp\`"
@@ -222,6 +223,7 @@ REAL_SSHD="$SSHD"
 SSH="$SSHLOGWRAP"
 
 SSHDLOGWRAP=$OBJ/sshd-log-wrapper.sh
+rm -f ${SSHDLOGWRAP}
 cat >$SSHDLOGWRAP <<EOD
 #!/bin/sh
 timestamp="\`$OBJ/timestamp\`"
@@ -705,6 +707,7 @@ start_sshd ()
 		i=`expr $i + 1`
 		sleep $i
 	done
+	rm -f ${TEST_SSHD_LOGFILE}
 	ln -f -s ${logfile} $TEST_SSHD_LOGFILE
 
 	test -f $PIDFILE || fatal "no sshd running on port $PORT"
