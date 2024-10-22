@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.131 2024/09/20 02:00:46 jsg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.132 2024/10/22 22:05:17 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -562,7 +562,7 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 	mq_purge(&pxd->pxd_svcq);
 
 	klist_free(&pxd->pxd_rklist);
-	klist_free(&pxd->pxd_rklist);
+	klist_free(&pxd->pxd_wklist);
 
 	free(pxd, M_DEVBUF, sizeof(*pxd));
 
