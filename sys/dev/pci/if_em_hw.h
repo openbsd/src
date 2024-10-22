@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.97 2024/09/04 07:54:52 mglocker Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.98 2024/10/22 05:11:14 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -608,8 +608,6 @@ uint32_t em_translate_82542_register(uint32_t);
 #define E1000_DEV_ID_82583V              0x150C
 #define E1000_DEV_ID_82576_NS_SERDES     0x1518
 #define E1000_DEV_ID_82576_SERDES_QUAD   0x150D
-#define E1000_DEV_ID_PCH2_LV_LM          0x1502
-#define E1000_DEV_ID_PCH2_LV_V           0x1503
 #define E1000_DEV_ID_82580_COPPER        0x150E
 #define E1000_DEV_ID_82580_FIBER         0x150F
 #define E1000_DEV_ID_82580_SERDES        0x1510
