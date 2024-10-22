@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2024/08/18 09:14:17 tb Exp $
+# $OpenBSD: Makefile,v 1.2 2024/10/22 16:31:10 tb Exp $
 
 .if ! exists(/usr/local/bin/eopenssl32)
 regress:
@@ -8,6 +8,7 @@ regress:
 .else
 
 PROGS =			client server
+CFLAGS +=		-DOPENSSL_SUPPRESS_DEPRECATED
 CPPFLAGS =		-I /usr/local/include/eopenssl32
 LDFLAGS =		-L /usr/local/lib/eopenssl32
 LDADD =			-lssl -lcrypto
