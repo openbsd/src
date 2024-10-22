@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.375 2024/10/15 13:49:26 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.376 2024/10/22 11:54:05 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ struct process {
 /* The following fields are all copied upon creation in process_new. */
 #define	ps_startcopy	ps_limit
 	struct	plimit *ps_limit;	/* [m,R] Process limits. */
-	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
+	struct	pgrp *ps_pgrp;		/* [K|m] Pointer to process group. */
 
 	char	ps_comm[_MAXCOMLEN];	/* command name, incl NUL */
 

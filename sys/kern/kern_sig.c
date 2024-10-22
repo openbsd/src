@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.343 2024/10/17 09:11:35 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.344 2024/10/22 11:54:04 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1436,10 +1436,14 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 			 * process group, ignore tty stop signals.
 			 */
 			if (prop & SA_STOP) {
+				mtx_enter(&pr->ps_mtx);
 				if (pr->ps_flags & PS_TRACED ||
 		    		    (pr->ps_pgrp->pg_jobc == 0 &&
-				    prop & SA_TTYSTOP))
+				    prop & SA_TTYSTOP)) {
+					mtx_leave(&pr->ps_mtx);
 					break;	/* == ignore */
+				}
+				mtx_leave(&pr->ps_mtx);
 				pr->ps_xsig = signum;
 				SCHED_LOCK();
 				proc_stop(p, 1);
