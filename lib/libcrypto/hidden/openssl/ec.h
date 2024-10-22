@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.6 2024/10/22 12:07:27 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.7 2024/10/22 15:54:33 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -31,8 +31,8 @@ LCRYPTO_USED(EC_GROUP_new);
 LCRYPTO_USED(EC_GROUP_free);
 LCRYPTO_USED(EC_GROUP_copy);
 LCRYPTO_USED(EC_GROUP_dup);
-LCRYPTO_UNUSED(EC_GROUP_method_of);
-LCRYPTO_UNUSED(EC_METHOD_get_field_type);
+LCRYPTO_USED(EC_GROUP_method_of);
+LCRYPTO_USED(EC_METHOD_get_field_type);
 LCRYPTO_USED(EC_GROUP_set_generator);
 LCRYPTO_USED(EC_GROUP_get0_generator);
 LCRYPTO_USED(EC_GROUP_get_order);
