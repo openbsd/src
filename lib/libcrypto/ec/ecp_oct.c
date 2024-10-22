@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.22 2024/10/22 12:09:57 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.23 2024/10/22 21:06:16 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -63,6 +63,7 @@
  */
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
@@ -182,17 +183,52 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 	return ret;
 }
 
+/*
+ * Only the last three bits of the leading octet of a point should be set.
+ * Bits 3 and 2 encode the conversion form for all points except the point
+ * at infinity. In compressed and hybrid form bit 1 indicates if the even
+ * or the odd solution of the quadratic equation for y should be used.
+ *
+ * The public point_conversion_t enum lacks the point at infinity, so we
+ * ignore it except at the API boundary.
+ */
+
+#define EC_OCT_YBIT			0x01
+
+#define EC_OCT_POINT_AT_INFINITY	0x00
+#define EC_OCT_POINT_COMPRESSED		0x02
+#define EC_OCT_POINT_UNCOMPRESSED	0x04
+#define EC_OCT_POINT_HYBRID		0x06
+#define EC_OCT_POINT_CONVERSION_MASK	0x06
+
+static int
+ec_oct_conversion_form_is_valid(uint8_t form)
+{
+	return (form & EC_OCT_POINT_CONVERSION_MASK) == form;
+}
+
 size_t
 ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
-    point_conversion_form_t form, unsigned char *buf, size_t len, BN_CTX *ctx)
+    point_conversion_form_t conversion_form, unsigned char *buf, size_t len,
+    BN_CTX *ctx)
 {
+	uint8_t form;
 	BIGNUM *x, *y;
 	size_t field_len, i, skip;
 	size_t ret = 0;
 
-	if (form != POINT_CONVERSION_COMPRESSED &&
-	    form != POINT_CONVERSION_UNCOMPRESSED &&
-	    form != POINT_CONVERSION_HYBRID) {
+	if (conversion_form > UINT8_MAX) {
+		ECerror(EC_R_INVALID_FORM);
+		return 0;
+	}
+
+	form = conversion_form;
+
+	/*
+	 * Established behavior is to reject a request for the form 0 for the
+	 * point at infinity even if it is valid.
+	 */
+	if (form == 0 || !ec_oct_conversion_form_is_valid(form)) {
 		ECerror(EC_R_INVALID_FORM);
 		return 0;
 	}
