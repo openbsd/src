@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.178 2024/10/07 20:30:17 dv Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.179 2024/10/22 10:14:49 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -422,7 +422,6 @@ void	dumpconf(void);
 void	cpu_set_vendor(struct cpu_info *, int _level, const char *_vendor);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
-void	cpu_proc_fork(struct proc *, struct proc *);
 int	amd64_pa_used(paddr_t);
 #define	cpu_idle_enter()	do { /* nothing */ } while (0)
 extern void (*cpu_idle_cycle_fcn)(void);
