@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.12 2005/05/26 04:34:52 kettenis Exp $	*/
+/*	$OpenBSD: trap.h,v 1.13 2024/10/23 18:45:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -75,12 +75,10 @@
  * Various trap frame flags.
  */
 #define	TFF_LAST_POS	0
-#define	TFF_ITLB_POS	1
-#define	TFF_SYS_POS	2
-#define	TFF_INTR_POS	3
+#define	TFF_SYS_POS	1
+#define	TFF_INTR_POS	2
 
 #define	TFF_LAST	(1 << (31 - TFF_LAST_POS))
-#define	TFF_ITLB	(1 << (31 - TFF_ITLB_POS))
 #define	TFF_SYS		(1 << (31 - TFF_SYS_POS))
 #define	TFF_INTR	(1 << (31 - TFF_INTR_POS))
 

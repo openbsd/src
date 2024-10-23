@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.106 2024/10/23 07:52:55 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.107 2024/10/23 18:45:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -229,7 +229,6 @@ extern int cpu_hvers;
 #define	CLKF_PC(framep)		((framep)->tf_iioq_head)
 #define	CLKF_INTR(framep)	((framep)->tf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)
-#define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
 #define	need_proftick(p)	setsoftast(p)
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_iioq_head & ~HPPA_PC_PRIV_MASK)
