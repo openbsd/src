@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.53 2024/05/08 14:03:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.54 2024/10/23 02:16:40 jsg Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2015,7 +2015,6 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* REGULATORY_AND_NVM group subcommand IDs */
 #define IWX_NVM_ACCESS_COMPLETE	0x00
-#define IWX_NVM_GET_INFO	0x02
 #define IWX_NVM_GET_INFO	0x02
 #define IWX_PNVM_INIT_COMPLETE	0xfe
 
