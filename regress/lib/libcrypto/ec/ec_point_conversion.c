@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.16 2024/10/23 14:10:03 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.17 2024/10/23 15:06:46 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -510,7 +510,7 @@ check_point_at_infinity(const EC_GROUP *group, const EC_POINT *point,
 
 	ret = EC_POINT_point2oct(group, point, form, buf, sizeof(buf), NULL);
 	if (ret != 0) {
-		fprintf(stderr, "FAIL: %s: expected encoding with form 0x%02x"
+		fprintf(stderr, "FAIL: %s: expected encoding with form 0x%02x "
 		    "to fail, got %zu\n", test->description, form, ret);
 		failed |= 1;
 	}
@@ -559,9 +559,9 @@ point_conversion_form_y_bit(const struct point_conversion *test)
 		failed |= 1;
 	}
 
-	if (test->valid && test->point_at_infinity)
+	if (test->valid && test->point_at_infinity) {
 		failed |= check_point_at_infinity(group, point, test);
-	else if (test->valid) {
+	} else if (test->valid) {
 		uint8_t buf[256];
 		uint8_t form = test->octets[0] & 0x06;
 		size_t len;
