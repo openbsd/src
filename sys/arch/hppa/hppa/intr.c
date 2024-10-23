@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.51 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.52 2024/10/23 07:52:55 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -253,7 +253,7 @@ cpu_intr(void *v)
 	mtctl(0, CR_EIEM);
 
 	s = ci->ci_cpl;
-	if (ci->ci_in_intr++)
+	if (ci->ci_idepth++)
 		frame->tf_flags |= TFF_INTR;
 
 	/* Process higher priority interrupts first. */
@@ -306,7 +306,7 @@ cpu_intr(void *v)
 			mtctl(0, CR_EIEM);
 		}
 	}
-	ci->ci_in_intr--;
+	ci->ci_idepth--;
 	ci->ci_cpl = s;
 
 	mtctl(frame->tf_eiem, CR_EIEM);

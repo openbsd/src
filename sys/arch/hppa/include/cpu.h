@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.105 2024/06/09 21:15:29 jca Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.106 2024/10/23 07:52:55 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -100,7 +100,7 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile u_long	ci_mask;		/* Hardware interrupt mask. */
 	volatile u_long	ci_ipending;
-	volatile int	ci_in_intr;
+	volatile int	ci_idepth;
 	int		ci_want_resched;
 
 	volatile u_long	ci_ipi;			/* IPIs pending. */
