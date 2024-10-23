@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.267 2024/09/27 12:52:58 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.268 2024/10/23 12:09:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -970,7 +970,8 @@ suicide(int sig __attribute__((unused)))
 int
 main(int argc, char *argv[])
 {
-	int		 rc, c, i, st, proc, rsync, http, rrdp, hangup = 0;
+	int		 rc, c, i, st, hangup = 0;
+	int		 procfd, rsyncfd, httpfd, rrdpfd;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
@@ -1144,12 +1145,12 @@ main(int argc, char *argv[])
 	 * manifests, certificates, etc.) and returning contents.
 	 */
 
-	procpid = process_start("parser", &proc);
+	procpid = process_start("parser", &procfd);
 	if (procpid == 0) {
 		if (!filemode)
-			proc_parser(proc);
+			proc_parser(procfd);
 		else
-			proc_filemode(proc);
+			proc_filemode(procfd);
 	}
 
 	/* Constraints are only needed in the filemode and parser processes. */
@@ -1163,13 +1164,13 @@ main(int argc, char *argv[])
 	 */
 
 	if (!noop) {
-		rsyncpid = process_start("rsync", &rsync);
+		rsyncpid = process_start("rsync", &rsyncfd);
 		if (rsyncpid == 0) {
-			close(proc);
-			proc_rsync(rsync_prog, bind_addr, rsync);
+			close(procfd);
+			proc_rsync(rsync_prog, bind_addr, rsyncfd);
 		}
 	} else {
-		rsync = -1;
+		rsyncfd = -1;
 		rsyncpid = -1;
 	}
 
@@ -1180,15 +1181,15 @@ main(int argc, char *argv[])
 	 */
 
 	if (!noop && rrdpon) {
-		httppid = process_start("http", &http);
+		httppid = process_start("http", &httpfd);
 
 		if (httppid == 0) {
-			close(proc);
-			close(rsync);
-			proc_http(bind_addr, http);
+			close(procfd);
+			close(rsyncfd);
+			proc_http(bind_addr, httpfd);
 		}
 	} else {
-		http = -1;
+		httpfd = -1;
 		httppid = -1;
 	}
 
@@ -1199,15 +1200,15 @@ main(int argc, char *argv[])
 	 */
 
 	if (!noop && rrdpon) {
-		rrdppid = process_start("rrdp", &rrdp);
+		rrdppid = process_start("rrdp", &rrdpfd);
 		if (rrdppid == 0) {
-			close(proc);
-			close(rsync);
-			close(http);
-			proc_rrdp(rrdp);
+			close(procfd);
+			close(rsyncfd);
+			close(httpfd);
+			proc_rrdp(rrdpfd);
 		}
 	} else {
-		rrdp = -1;
+		rrdpfd = -1;
 		rrdppid = -1;
 	}
 
@@ -1231,10 +1232,10 @@ main(int argc, char *argv[])
 	msgbuf_init(&rsyncq);
 	msgbuf_init(&httpq);
 	msgbuf_init(&rrdpq);
-	procq.fd = proc;
-	rsyncq.fd = rsync;
-	httpq.fd = http;
-	rrdpq.fd = rrdp;
+	procq.fd = procfd;
+	rsyncq.fd = rsyncfd;
+	httpq.fd = httpfd;
+	rrdpq.fd = rrdpfd;
 
 	/*
 	 * The main process drives the top-down scan to leaf ROAs using
@@ -1242,13 +1243,13 @@ main(int argc, char *argv[])
 	 * parsing process.
 	 */
 
-	pfd[0].fd = proc;
+	pfd[0].fd = procfd;
 	queues[0] = &procq;
-	pfd[1].fd = rsync;
+	pfd[1].fd = rsyncfd;
 	queues[1] = &rsyncq;
-	pfd[2].fd = http;
+	pfd[2].fd = httpfd;
 	queues[2] = &httpq;
-	pfd[3].fd = rrdp;
+	pfd[3].fd = rrdpfd;
 	queues[3] = &rrdpq;
 
 	load_skiplist(skiplistfile);
@@ -1330,7 +1331,7 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[1].revents & POLLIN)) {
-			b = io_buf_read(rsync, &rsyncbuf);
+			b = io_buf_read(rsyncfd, &rsyncbuf);
 			if (b != NULL) {
 				unsigned int id;
 				int ok;
@@ -1343,7 +1344,7 @@ main(int argc, char *argv[])
 		}
 
 		if ((pfd[2].revents & POLLIN)) {
-			b = io_buf_read(http, &httpbuf);
+			b = io_buf_read(httpfd, &httpbuf);
 			if (b != NULL) {
 				unsigned int id;
 				enum http_result res;
@@ -1362,7 +1363,7 @@ main(int argc, char *argv[])
 		 * Handle RRDP requests here.
 		 */
 		if ((pfd[3].revents & POLLIN)) {
-			b = io_buf_read(rrdp, &rrdpbuf);
+			b = io_buf_read(rrdpfd, &rrdpbuf);
 			if (b != NULL) {
 				rrdp_process(b);
 				ibuf_free(b);
@@ -1375,7 +1376,7 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[0].revents & POLLIN)) {
-			b = io_buf_read(proc, &procbuf);
+			b = io_buf_read(procfd, &procbuf);
 			if (b != NULL) {
 				entity_process(b, &stats, &vrps, &brks, &vaps,
 				    &vsps);
@@ -1397,10 +1398,10 @@ main(int argc, char *argv[])
 	 * This will cause them to exit, then we reap them.
 	 */
 
-	close(proc);
-	close(rsync);
-	close(http);
-	close(rrdp);
+	close(procfd);
+	close(rsyncfd);
+	close(httpfd);
+	close(rrdpfd);
 
 	rc = 0;
 	for (;;) {
