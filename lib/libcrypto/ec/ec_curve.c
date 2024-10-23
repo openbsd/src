@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.48 2024/10/20 10:45:49 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.49 2024/10/23 10:41:51 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2681,19 +2681,19 @@ ec_group_is_builtin_curve(const EC_GROUP *group)
 }
 
 size_t
-EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
+EC_get_builtin_curves(EC_builtin_curve *curves, size_t nitems)
 {
 	size_t i;
 
-	if (r == NULL || nitems == 0)
+	if (curves == NULL || nitems == 0)
 		return EC_CURVE_LIST_LENGTH;
 
 	if (nitems > EC_CURVE_LIST_LENGTH)
 		nitems = EC_CURVE_LIST_LENGTH;
 
 	for (i = 0; i < nitems; i++) {
-		r[i].nid = ec_curve_list[i].nid;
-		r[i].comment = ec_curve_list[i].comment;
+		curves[i].nid = ec_curve_list[i].nid;
+		curves[i].comment = ec_curve_list[i].comment;
 	}
 
 	return EC_CURVE_LIST_LENGTH;
