@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.136 2024/10/20 06:54:11 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.137 2024/10/23 07:41:44 mpi Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -170,9 +170,9 @@ interrupt(struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
 
-	ci->ci_intrdepth++;
+	ci->ci_idepth++;
 	md_interrupt_func(frame);
-	ci->ci_intrdepth--;
+	ci->ci_idepth--;
 }
 
 #ifdef M88110
