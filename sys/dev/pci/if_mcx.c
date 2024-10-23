@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.116 2024/10/04 06:37:22 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.117 2024/10/23 01:47:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -918,7 +918,6 @@ struct mcx_cap_device {
 					0x08000000
 #define MCX_CAP_DEVICE_DC_CONNECT_CP	0x00040000
 #define MCX_CAP_DEVICE_DC_CNAK_DRACE	0x00020000
-#define MCX_CAP_DEVICE_DRAIN_SIGERR	0x00010000
 #define MCX_CAP_DEVICE_DRAIN_SIGERR	0x00010000
 #define MCX_CAP_DEVICE_CMDIF_CHECKSUM	0x0000c000
 #define MCX_CAP_DEVICE_SIGERR_QCE	0x00002000
