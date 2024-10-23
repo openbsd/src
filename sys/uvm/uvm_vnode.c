@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.133 2024/07/24 12:16:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.134 2024/10/23 07:18:44 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -306,15 +306,14 @@ uvn_detach(struct uvm_object *uobj)
 	struct vnode *vp;
 	int oldflags;
 
-	KERNEL_LOCK();
 	rw_enter(uobj->vmobjlock, RW_WRITE);
 	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		rw_exit(uobj->vmobjlock);
-		KERNEL_UNLOCK();
 		return;
 	}
 
+	KERNEL_LOCK();
 	/* get other pointers ... */
 	uvn = (struct uvm_vnode *) uobj;
 	vp = uvn->u_vnode;
