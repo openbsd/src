@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.74 2021/04/29 12:49:19 visa Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.75 2024/10/23 07:40:20 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -113,7 +113,7 @@ interrupt(struct trapframe *trapframe)
 	if (!(trapframe->sr & SR_INT_ENAB))
 		return;
 
-	ci->ci_intrdepth++;
+	ci->ci_idepth++;
 
 #ifdef DEBUG_INTERRUPT
 	trapdebug_enter(ci, trapframe, T_INT);
@@ -144,7 +144,7 @@ interrupt(struct trapframe *trapframe)
 		ci->ci_ipl = s;	/* no-overhead splx */
 	}
 
-	ci->ci_intrdepth--;
+	ci->ci_idepth--;
 }
 
 
@@ -254,7 +254,7 @@ splassert_check(int wantipl, const char *func)
 	if (ci->ci_ipl < wantipl)
 		splassert_fail(wantipl, ci->ci_ipl, func);
 
-	if (wantipl == IPL_NONE && ci->ci_intrdepth != 0)
-		splassert_fail(-1, ci->ci_intrdepth, func);
+	if (wantipl == IPL_NONE && ci->ci_idepth != 0)
+		splassert_fail(-1, ci->ci_idepth, func);
 }
 #endif

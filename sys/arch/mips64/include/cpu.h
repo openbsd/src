@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.149 2024/08/23 19:47:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.150 2024/10/23 07:40:20 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -187,7 +187,7 @@ struct cpu_info {
 			ci_queue;
 
 	struct pmap	*ci_curpmap;
-	uint		ci_intrdepth;		/* interrupt depth */
+	uint		ci_idepth;		/* interrupt depth */
 #ifdef MULTIPROCESSOR
 	volatile u_long	ci_flags;		/* flags; see below */
 #endif
@@ -281,7 +281,7 @@ unsigned int cpu_rnd_messybits(void);
 #define	SR_KSU_USER		0x00000010
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth > 1)	/* XXX */
+#define	CLKF_INTR(framep)	(curcpu()->ci_idepth > 1)	/* XXX */
 
 /*
  * This is used during profiling to integrate system time.
