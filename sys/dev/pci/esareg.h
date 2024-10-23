@@ -1,4 +1,4 @@
-/* $OpenBSD: esareg.h,v 1.2 2012/10/18 21:44:21 deraadt Exp $ */
+/* $OpenBSD: esareg.h,v 1.3 2024/10/23 00:53:28 jsg Exp $ */
 /* $NetBSD: esareg.h,v 1.8 2002/03/06 18:30:31 jmcneill Exp $ */
 
 /*
@@ -582,7 +582,6 @@
 #define ESA_SRC3_TEMP_OUTBUF_ADDR_OFFSET    (ESA_CDATA_HEADER_LEN + 17)
 
 #define ESA_MINISRC_IN_BUFFER_SIZE   (0x50 * 2)
-#define ESA_MINISRC_OUT_BUFFER_SIZE  (0x50 * 2 * 2)
 #define ESA_MINISRC_OUT_BUFFER_SIZE  (0x50 * 2 * 2)
 #define ESA_MINISRC_TMP_BUFFER_SIZE  (112 + (ESA_MINISRC_BIQUAD_STAGE * 3 + 4) * 2 * 2)
 #define ESA_MINISRC_BIQUAD_STAGE	2
