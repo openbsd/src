@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.59 2024/03/02 11:46:55 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.60 2024/10/23 01:57:19 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -747,8 +747,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_MD_CLIENT_FINISH_CONST_SIZE		15
 #define TLS_MD_SERVER_FINISH_CONST		"server finished"
 #define TLS_MD_SERVER_FINISH_CONST_SIZE		15
-#define TLS_MD_SERVER_WRITE_KEY_CONST		"server write key"
-#define TLS_MD_SERVER_WRITE_KEY_CONST_SIZE	16
 #define TLS_MD_KEY_EXPANSION_CONST		"key expansion"
 #define TLS_MD_KEY_EXPANSION_CONST_SIZE		13
 #define TLS_MD_CLIENT_WRITE_KEY_CONST		"client write key"

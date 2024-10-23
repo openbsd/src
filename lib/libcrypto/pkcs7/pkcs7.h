@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.21 2023/04/25 18:04:03 tb Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.22 2024/10/23 01:57:19 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,8 +215,6 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 #define PKCS7_type_is_digest(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_digest)
 #define PKCS7_type_is_encrypted(a) \
 		(OBJ_obj2nid((a)->type) == NID_pkcs7_encrypted)
-
-#define PKCS7_type_is_digest(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_digest)
 
 #define PKCS7_set_detached(p,v) \
 		PKCS7_ctrl(p,PKCS7_OP_SET_DETACHED_SIGNATURE,v,NULL)
