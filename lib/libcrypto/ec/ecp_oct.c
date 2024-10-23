@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.26 2024/10/22 21:28:53 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.27 2024/10/23 13:42:50 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -377,6 +377,13 @@ ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	CBB_init_fixed(&cbb, buf, len);
 	BN_CTX_start(ctx);
 
+	if (form == EC_OCT_POINT_AT_INFINITY) {
+		if (!ec_oct_add_leading_octet_cbb(&cbb, form, 0))
+			goto err;
+
+		goto done;
+	}
+
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((y = BN_CTX_get(ctx)) == NULL)
@@ -387,9 +394,7 @@ ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	if (!ec_oct_add_leading_octet_cbb(&cbb, form, BN_is_odd(y)))
 		goto err;
 
-	if (form == EC_OCT_POINT_AT_INFINITY) {
-		/* Encoded in leading octet. */;
-	} else if (form == EC_OCT_POINT_COMPRESSED) {
+	if (form == EC_OCT_POINT_COMPRESSED) {
 		if (!ec_oct_add_field_element_cbb(&cbb, group, x))
 			goto err;
 	} else {
@@ -399,6 +404,7 @@ ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 			goto err;
 	}
 
+ done:
 	if (!CBB_finish(&cbb, NULL, &ret))
 		goto err;
 
