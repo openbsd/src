@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.13 2024/10/23 18:45:34 miod Exp $	*/
+/*	$OpenBSD: trap.h,v 1.14 2024/10/24 06:30:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -81,11 +81,6 @@
 #define	TFF_LAST	(1 << (31 - TFF_LAST_POS))
 #define	TFF_SYS		(1 << (31 - TFF_SYS_POS))
 #define	TFF_INTR	(1 << (31 - TFF_INTR_POS))
-
-/*
- * Define this for pretty printings of trapflags.
- */
-#define	T_BITS	"\020\07user\036intr\037itlb\040last"
 
 /*
  * These are break instruction entry points.
