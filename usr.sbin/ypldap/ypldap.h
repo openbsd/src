@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.24 2023/07/18 13:06:33 claudio Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.25 2024/10/24 11:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -198,7 +198,7 @@ int		 parse_config(struct env *, const char *, int);
 int		 cmdline_symset(char *);
 
 /* ldapclient.c */
-pid_t		 ldapclient(int []);
+pid_t		 ldapclient(int [2]);
 
 /* ypldap.c */
 void		 purge_config(struct env *);
