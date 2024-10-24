@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.5 2024/10/04 16:58:26 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.6 2024/10/24 18:52:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -37,7 +37,12 @@ struct psp_softc {
 	bus_space_handle_t	sc_ioh;
 
 	bus_dma_tag_t		sc_dmat;
-	uint32_t		sc_capabilities;
+
+	bus_size_t		sc_reg_inten;
+	bus_size_t		sc_reg_intsts;
+	bus_size_t		sc_reg_cmdresp;
+	bus_size_t		sc_reg_addrlo;
+	bus_size_t		sc_reg_addrhi;
 
 	bus_dmamap_t		sc_cmd_map;
 	bus_dma_segment_t	sc_cmd_seg;
@@ -74,8 +79,8 @@ psp_sev_intr(void *arg)
 	struct psp_softc *sc = (struct psp_softc *)csc->sc_psp;
 	uint32_t status;
 
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS, status);
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_intsts);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_intsts, status);
 
 	if (!(status & PSP_CMDRESP_COMPLETE))
 		return (0);
@@ -101,10 +106,25 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 	size_t				size;
 	int				nsegs;
 
+	printf(":");
 	sc->sc_iot = arg->iot;
 	sc->sc_ioh = arg->ioh;
 	sc->sc_dmat = arg->dmat;
-	sc->sc_capabilities = arg->capabilities;
+	if (arg->version == 1) {
+		sc->sc_reg_inten = PSPV1_REG_INTEN;
+		sc->sc_reg_intsts = PSPV1_REG_INTSTS;
+		sc->sc_reg_cmdresp = PSPV1_REG_CMDRESP;
+		sc->sc_reg_addrlo = PSPV1_REG_ADDRLO;
+		sc->sc_reg_addrhi = PSPV1_REG_ADDRHI;
+	} else {
+		sc->sc_reg_inten = PSP_REG_INTEN;
+		sc->sc_reg_intsts = PSP_REG_INTSTS;
+		sc->sc_reg_cmdresp = PSP_REG_CMDRESP;
+		sc->sc_reg_addrlo = PSP_REG_ADDRLO;
+		sc->sc_reg_addrhi = PSP_REG_ADDRHI;
+	}
+	if (arg->version)
+		printf(" vers %d,", arg->version);
 
 	rw_init(&sc->sc_lock, "psp_lock");
 
@@ -127,8 +147,16 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 	    size, NULL, BUS_DMA_WAITOK) != 0)
 		goto fail_2;
 
-	if (psp_get_pstatus(sc, &pst) || pst.state != 0)
+	if (psp_get_pstatus(sc, &pst)) {
+		printf(" platform status");
 		goto fail_3;
+	}
+	if (pst.state != PSP_PSTATE_UNINIT) {
+		printf(" uninitialized state");
+		goto fail_3;
+	}
+	printf(" api %u.%u, build %u,",
+	    pst.api_major, pst.api_minor, pst.cfges_build >> 24);
 
 	/*
          * create and map Trusted Memory Region (TMR); size 1 Mbyte,
@@ -156,14 +184,19 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 	init.enable_es = 1;
 	init.tmr_length = PSP_TMR_SIZE;
 	init.tmr_paddr = sc->sc_tmr_map->dm_segs[0].ds_addr;
-	if (psp_init(sc, &init))
+	if (psp_init(sc, &init)) {
+		printf(" init");
 		goto fail_7;
+	}
 
-	printf(": SEV");
+	printf(" SEV");
 
 	psp_get_pstatus(sc, &pst);
-	if ((pst.state == 1) && (pst.cfges_build & 0x1))
+	if ((pst.state == PSP_PSTATE_INIT) && (pst.cfges_build & 0x1))
 		printf(", SEV-ES");
+
+        /* enable interrupts */
+        bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_inten, -1);
 
 	printf("\n");
 
@@ -186,7 +219,7 @@ fail_1:
 fail_0:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmd_map);
 
-	printf("\n");
+	printf(" failed\n");
 
 	return;
 }
@@ -199,9 +232,9 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 
 	if (poll) {
 		count = 0;
-		while (count++ < 100) {
+		while (count++ < 400) {
 			cmdword = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    PSP_REG_CMDRESP);
+			    sc->sc_reg_cmdresp);
 			if (cmdword & PSP_CMDRESP_RESPONSE)
 				goto done;
 			delay(5000);
@@ -214,12 +247,10 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 	if (tsleep_nsec(sc, PWAIT, "psp", SEC_TO_NSEC(2)) == EWOULDBLOCK)
 		return (1);
 
+	cmdword = bus_space_read_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_cmdresp);
 done:
-	if (status) {
-		*status = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    PSP_REG_CMDRESP);
-	}
-
+	if (status != NULL)
+		*status = cmdword;
 	return (0);
 }
 
@@ -234,9 +265,9 @@ ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 	if (!cold)
 		cmdword |= PSP_CMDRESP_IOC;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_ADDRLO, plo);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_ADDRHI, phi);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_CMDRESP, cmdword);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_addrlo, plo);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_addrhi, phi);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_cmdresp, cmdword);
 
 	if (ccp_wait(sc, &status, cold))
 		return (1);

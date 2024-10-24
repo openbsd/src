@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.2 2024/09/04 07:45:08 jsg Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.3 2024/10/24 18:52:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -19,6 +19,13 @@
 #include <sys/ioctl.h>
 
 /* AMD 17h */
+#define PSPV1_REG_INTEN		0x10610
+#define PSPV1_REG_INTSTS	0x10614
+#define PSPV1_REG_CMDRESP	0x10580
+#define PSPV1_REG_ADDRLO	0x105e0
+#define PSPV1_REG_ADDRHI	0x105e4
+#define PSPV1_REG_CAPABILITIES	0x105fc
+
 #define PSP_REG_INTEN		0x10690
 #define PSP_REG_INTSTS		0x10694
 #define PSP_REG_CMDRESP		0x10980
@@ -252,10 +259,18 @@ struct psp_attach_args {
 
 	bus_dma_tag_t		dmat;
 	uint32_t		capabilities;
+	int			version;
 };
 
 int pspsubmatch(struct device *, void *, void *);
 int pspprint(void *aux, const char *pnp);
 int psp_sev_intr(void *);
+
+struct ccp_softc;
+struct pci_attach_args;
+
+int psp_pci_match(struct ccp_softc *, struct pci_attach_args *);
+void psp_pci_intr_map(struct ccp_softc *, struct pci_attach_args *);
+void psp_pci_attach(struct ccp_softc *, struct pci_attach_args *);
 
 #endif	/* _KERNEL */
