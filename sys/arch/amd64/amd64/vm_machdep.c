@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.48 2024/10/21 18:27:34 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.49 2024/10/24 17:37:03 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -135,8 +135,16 @@ cpu_exit(struct proc *p)
 void
 setguardpage(struct proc *p)
 {
-	pmap_kremove((vaddr_t)p->p_addr + PAGE_SIZE, PAGE_SIZE);
+	struct vm_page *pg = NULL;
+	vaddr_t va = (vaddr_t)p->p_addr + PAGE_SIZE;
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa))
+		pg = PHYS_TO_VM_PAGE(pa);
+	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(pmap_kernel());
+	if (pg)
+		uvm_pagefree(pg);
 }
 
 struct kmem_va_mode kv_physwait = {
