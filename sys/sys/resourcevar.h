@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.34 2024/10/08 11:57:59 claudio Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.35 2024/10/24 23:24:58 jsg Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #define	_SYS_RESOURCEVAR_H_
 
 #include <sys/refcnt.h>
-#include <sys/timeout.h>
 
 /*
  * Kernel shareable process resource limits.  Because this structure
