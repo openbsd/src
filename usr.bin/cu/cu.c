@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.31 2024/02/10 15:29:04 deraadt Exp $ */
+/* $OpenBSD: cu.c,v 1.32 2024/10/24 22:42:08 krw Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -502,10 +502,16 @@ get_ucomnames(void)
 char *
 find_ucom(const char *usbid, char *names)
 {
+	const char *errstr;
+	const char *U;
 	char *cua, *id, *ucom;
+	uint32_t unit;
 
 	if (names == NULL)
 		return NULL;
+
+	/* The mapping of ucom[NN] to cuaU[C] is defined in MAKEDEV. */
+	U ="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	/* names is a comma separated list of "ucom<unit#>:<usb id>". */
 	cua = NULL;
@@ -518,7 +524,10 @@ find_ucom(const char *usbid, char *names)
 			continue;
 		*id++ = '\0';
 		if (strcasecmp(id, usbid) == 0) {
-			if (asprintf(&cua, "cuaU%s", ucom) == -1)
+			unit = strtonum(ucom, 0, strlen(U) - 1, &errstr);
+			if (errstr != NULL)
+				continue;
+			if (asprintf(&cua, "cuaU%c", U[unit]) == -1)
 				err(1, NULL);
 			break;
 		}
