@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.27 2024/10/23 13:42:50 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.28 2024/10/24 05:57:25 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -374,8 +374,9 @@ ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		return 0;
 	}
 
-	CBB_init_fixed(&cbb, buf, len);
 	BN_CTX_start(ctx);
+	if (!CBB_init_fixed(&cbb, buf, len))
+		goto err;
 
 	if (form == EC_OCT_POINT_AT_INFINITY) {
 		if (!ec_oct_add_leading_octet_cbb(&cbb, form, 0))
@@ -414,8 +415,8 @@ ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	}
 
  err:
-	BN_CTX_end(ctx);
 	CBB_cleanup(&cbb);
+	BN_CTX_end(ctx);
 
 	return ret;
 }
@@ -430,8 +431,8 @@ ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	BIGNUM *x, *y;
 	int ret = 0;
 
-	CBS_init(&cbs, buf, len);
 	BN_CTX_start(ctx);
+	CBS_init(&cbs, buf, len);
 
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
