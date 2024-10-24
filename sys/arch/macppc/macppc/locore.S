@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.65 2024/10/22 12:51:56 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.66 2024/10/24 17:37:06 gkoehler Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -368,7 +368,8 @@ nop32_5e:
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
 	lwz	%r31,CI_IDEPTH(%r1)	/* were we already running on intstk? */
-	addic.	%r31,%r31,1
+	cmpwi	%r31,0
+	addi  	%r31,%r31,1
 	stw	%r31,CI_IDEPTH(%r1)
 	lwz	%r1,CI_INTSTK(%r1)	/* get interrupt stack */
 	beq	1f
@@ -396,7 +397,8 @@ nop32_6e:
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
 	lwz	%r31,CI_IDEPTH(%r1)	/* were we already running on intstk? */
-	addic.	%r31,%r31,1
+	cmpwi	%r31,0
+	addi  	%r31,%r31,1
 	stw	%r31,CI_IDEPTH(%r1)
 	lwz	%r1,CI_INTSTK(%r1)	/* get interrupt stack */
 	beq	1f

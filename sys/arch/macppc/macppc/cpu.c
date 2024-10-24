@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.89 2024/10/22 12:51:56 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.90 2024/10/24 17:37:06 gkoehler Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -199,7 +199,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 	ci = &cpu_info[reg[0]];
 	ci->ci_cpuid = reg[0];
-	ci->ci_idepth = -1;
 	ci->ci_dev = dev;
 
 	hwcap = PPC_FEATURE_32 | PPC_FEATURE_HAS_FPU | PPC_FEATURE_HAS_MMU;
