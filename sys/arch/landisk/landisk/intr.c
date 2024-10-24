@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2015/08/29 23:59:19 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2024/10/24 05:28:00 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -73,6 +73,8 @@ intc_intr(int ssr, int spc, int ssp)
 	struct clockframe cf;
 	int evtcode;
 
+	curcpu()->ci_intrdepth++;
+
 	evtcode = _reg_read_4(SH4_INTEVT);
 	ih = EVTCODE_IH(evtcode);
 	KDASSERT(ih->ih_func);
@@ -119,6 +121,8 @@ intc_intr(int ssr, int spc, int ssp)
 		printf("NMI ignored.\n");
 		break;
 	}
+
+	curcpu()->ci_intrdepth--;
 }
 
 void

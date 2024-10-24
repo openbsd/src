@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2024/06/09 21:15:29 jca Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2024/10/24 05:28:00 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ struct cpu_info {
 #endif
 
 	int	ci_want_resched;
+	int	ci_intrdepth;
 
 	struct clockqueue ci_queue;
 
@@ -105,7 +106,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
 #define	CLKF_PC(cf)		((cf)->spc)
-#define	CLKF_INTR(cf)		0	/* XXX */
+#define	CLKF_INTR(cf)		(curcpu()->ci_intrdepth > 1)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
