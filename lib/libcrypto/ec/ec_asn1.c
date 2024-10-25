@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.78 2024/10/25 00:27:09 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.79 2024/10/25 00:59:00 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -786,7 +786,7 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 	return (ret);
 }
 
-ECPKPARAMETERS *
+static ECPKPARAMETERS *
 ec_asn1_group2pkparameters(const EC_GROUP *group)
 {
 	ECPKPARAMETERS *pkparameters;
@@ -1008,7 +1008,7 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 	return NULL;
 }
 
-EC_GROUP *
+static EC_GROUP *
 ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 {
 	EC_GROUP *group;
