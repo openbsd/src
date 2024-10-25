@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.439 2024/09/30 08:10:20 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.440 2024/10/25 19:36:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1360,6 +1360,8 @@ tty_check_codeset(struct tty *tty, const struct grid_cell *gc)
 
 	/* Characters less than 0x7f are always fine, no matter what. */
 	if (gc->data.size == 1 && *gc->data.data < 0x7f)
+		return (gc);
+	if (gc->flags & GRID_FLAG_TAB)
 		return (gc);
 
 	/* UTF-8 terminal and a UTF-8 character - fine. */
