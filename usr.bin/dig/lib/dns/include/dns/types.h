@@ -30,10 +30,8 @@
 
 #include <isc/types.h>
 
-typedef struct dns_acache			dns_acache_t;
 typedef uint16_t				dns_cert_t;
 typedef struct dns_compress			dns_compress_t;
-typedef struct dns_db				dns_db_t;
 typedef void					dns_dbnode_t;
 typedef void					dns_dbversion_t;
 typedef struct dns_decompress			dns_decompress_t;
@@ -56,8 +54,6 @@ typedef uint16_t				dns_rdatatype_t;
 typedef uint8_t				dns_secalg_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef uint32_t				dns_ttl_t;
-typedef struct dns_view				dns_view_t;
-typedef struct dns_zone				dns_zone_t;
 
 typedef enum {
 	dns_namereln_none = 0,
