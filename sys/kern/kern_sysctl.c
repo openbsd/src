@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.448 2024/09/30 12:32:26 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.449 2024/10/25 21:02:34 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -564,6 +564,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (ENXIO);
 		return (sysctl_rdint(oldp, oldlenp, newp, mp->msg_bufs));
 	}
+	case KERN_TIMEOUT_STATS:
+		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
 	case KERN_OSREV:
 	case KERN_MAXPROC:
 	case KERN_MAXFILES:
@@ -736,8 +738,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_PFSTATUS:
 		return (pf_sysctl(oldp, oldlenp, newp, newlen));
 #endif
-	case KERN_TIMEOUT_STATS:
-		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
 	case KERN_UTC_OFFSET:
 		return (sysctl_utc_offset(oldp, oldlenp, newp, newlen));
 	default:
