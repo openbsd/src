@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.41 2022/12/10 15:02:29 cheloha Exp $ */
+/* $OpenBSD: interrupt.c,v 1.42 2024/10/25 08:08:24 mpi Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -204,7 +204,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		atomic_add_ulong(&ci->ci_idepth, 1);
 
 		alpha_ipi_process(ci, framep);
 
@@ -216,7 +216,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
 
-		atomic_sub_ulong(&ci->ci_intrdepth, 1);
+		atomic_sub_ulong(&ci->ci_idepth, 1);
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
 #endif /* MULTIPROCESSOR */
@@ -231,13 +231,13 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		atomic_add_ulong(&ci->ci_idepth, 1);
 		a0 = alpha_pal_rdmces();
 		if (platform.mcheck_handler)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
 		else
 			machine_check(a0, framep, a1, a2);
-		atomic_sub_ulong(&ci->ci_intrdepth, 1);
+		atomic_sub_ulong(&ci->ci_idepth, 1);
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
@@ -246,11 +246,11 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		atomic_add_ulong(&ci->ci_idepth, 1);
 		atomic_add_int(&uvmexp.intrs, 1);
 		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
 		(*scb->scb_func)(scb->scb_arg, a1);
-		atomic_sub_ulong(&ci->ci_intrdepth, 1);
+		atomic_sub_ulong(&ci->ci_idepth, 1);
 		break;
 	    }
 

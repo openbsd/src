@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.76 2024/08/28 17:37:12 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.77 2024/10/25 08:08:24 mpi Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -205,7 +205,7 @@ struct cpu_info {
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	struct device *ci_dev;		/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
-	u_long ci_intrdepth;		/* interrupt trap depth */
+	u_long ci_idepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 
 #if defined(MULTIPROCESSOR)
@@ -320,7 +320,7 @@ struct clockframe {
  * r/m/w cycle is complete, we won't be counted... but it's not
  * like this statistic has to be extremely accurate.
  */
-#define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
+#define	CLKF_INTR(framep)	(curcpu()->ci_idepth)
 
 /*
  * This is used during profiling to integrate system time.
