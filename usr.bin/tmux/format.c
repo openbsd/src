@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.321 2024/10/10 10:41:33 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.322 2024/10/25 15:13:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5273,10 +5273,13 @@ format_grid_line(struct grid *gd, u_int y)
 	for (x = 0; x < grid_line_length(gd, y); x++) {
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
-			break;
+			continue;
 
 		ud = xreallocarray(ud, size + 2, sizeof *ud);
-		memcpy(&ud[size++], &gc.data, sizeof *ud);
+		if (gc.flags & GRID_FLAG_TAB)
+			utf8_set(&ud[size++], '\t');
+		else
+			memcpy(&ud[size++], &gc.data, sizeof *ud);
 	}
 	if (size != 0) {
 		ud[size].size = 0;
