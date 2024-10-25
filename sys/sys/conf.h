@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.163 2024/06/11 01:49:17 jsg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.164 2024/10/25 21:06:03 jsg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -290,13 +290,6 @@ extern struct cdevsw cdevsw[];
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, \
 	(dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl, mmap */
-#define	cdev_fb_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, \
-	dev_init(c,n,mmap) }
 
 /* open, close, read, write, ioctl, kqfilter */
 #define cdev_audio_init(c,n) { \
