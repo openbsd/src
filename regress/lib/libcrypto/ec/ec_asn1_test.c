@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.14 2024/10/25 00:18:19 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.15 2024/10/25 07:31:02 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -23,6 +23,11 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
+
+/* set to 0 if/when we are going to enforce 0 <= a,b < p. */
+#define NEGATIVE_CURVE_COEFFICIENTS_ALLOWED	1
+/* unifdef once private key padding in i2d_ECPrivateKey() is fixed. */
+#define CORRECT_PRIV_KEY_PADDING		0
 
 static const uint8_t ec_secp256r1_pkparameters_named_curve[] = {
 	0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03,
@@ -525,13 +530,8 @@ static const struct curve wei25519_3 = {
 	.sn = "Wei25519",
 	.p =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
 		 "ffffffff" "ffffffff" "ffffffff" "ffffffed",
-/* XXX - change this if we are going to enforce 0 <= a,b < p. */
-#if 0
 	.a =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
 		 "ffffffff" "ffffffff" "ffffffff" "ffffffea",
-#else
-	.a =	 "-03",
-#endif
 	.b =	 "41a3b6bf" "c668778e" "be2954a4" "b1df36d1"
 		 "485ecef1" "ea614295" "796e1022" "40891faa",
 	.x =	 "7706c37b" "5a84128a" "3884a5d7" "1811f1b5"
@@ -546,6 +546,31 @@ static const struct curve wei25519_3 = {
 	.param = ec_wei25519_3_pkparameters_parameters,
 	.param_len = sizeof(ec_wei25519_3_pkparameters_parameters),
 };
+
+#if NEGATIVE_CURVE_COEFFICIENTS_ALLOWED
+/* Same as wei25519_3 except for a. */
+static const struct curve wei25519_3_neg = {
+	.descr = "short Weierstrass 25519.-3 with negative a",
+	.oid = "1.3.101.108",
+	.sn = "Wei25519",
+	.p =	 "7fffffff" "ffffffff" "ffffffff" "ffffffff"
+		 "ffffffff" "ffffffff" "ffffffff" "ffffffed",
+	.a =	 "-03",
+	.b =	 "41a3b6bf" "c668778e" "be2954a4" "b1df36d1"
+		 "485ecef1" "ea614295" "796e1022" "40891faa",
+	.x =	 "7706c37b" "5a84128a" "3884a5d7" "1811f1b5"
+		 "5da3230f" "fb17a8ab" "0b32e48d" "31a6685c",
+	.y =	 "0f60480c" "7a5c0e11" "40340adc" "79d6a2bf"
+		 "0cb57ad0" "49d025dc" "38d80c77" "985f0329",
+	.order = "10000000" "00000000" "00000000" "00000000"
+		 "14def9de" "a2f79cd6" "5812631a" "5cf5d3ed",
+	.cofactor = "8",
+	.named = ec_wei25519_pkparameters_named_curve,
+	.named_len = sizeof(ec_wei25519_pkparameters_named_curve),
+	.param = ec_wei25519_3_pkparameters_parameters,
+	.param_len = sizeof(ec_wei25519_3_pkparameters_parameters),
+};
+#endif
 
 /*
  * From draft-ietf-lwig-curve-representation-23, Appendix L.3
@@ -888,6 +913,11 @@ ec_group_non_builtin_curves(void)
 	failed |= ec_group_non_builtin_curve(&wei25519_3, EC_GFp_mont_method(), ctx);
 	failed |= ec_group_non_builtin_curve(&wei25519_3, EC_GFp_simple_method(), ctx);
 
+#if NEGATIVE_CURVE_COEFFICIENTS_ALLOWED
+	failed |= ec_group_non_builtin_curve(&wei25519_3_neg, EC_GFp_mont_method(), ctx);
+	failed |= ec_group_non_builtin_curve(&wei25519_3_neg, EC_GFp_simple_method(), ctx);
+#endif
+
 	failed |= ec_group_non_builtin_curve(&secp256k1_m, EC_GFp_mont_method(), ctx);
 	failed |= ec_group_non_builtin_curve(&secp256k1_m, EC_GFp_simple_method(), ctx);
 
@@ -959,7 +989,7 @@ static const struct ec_private_key {
 			0x19, 0xbb, 0x6e, 0xcf, 0x3c, 0xe2,
 		},
 	},
-#if 0
+#if CORRECT_PRIV_KEY_PADDING
 	{
 		.name = "secp160k1",
 		.der_len = 83,
@@ -1030,7 +1060,7 @@ static const struct ec_private_key {
 			0x0c, 0x73, 0x6e, 0x73, 0x7c, 0xdc,
 		},
 	},
-#if 0
+#if CORRECT_PRIV_KEY_PADDING
 	{
 		.name = "secp224k1",
 		.der_len = 107,
@@ -1310,7 +1340,7 @@ static const struct ec_private_key {
 			0xb8, 0xf6, 0x80, 0xfe, 0x7a, 0xb1, 0xa2, 0x74,
 		},
 	},
-#if 0
+#if CORRECT_PRIV_KEY_PADDING
 	{
 		.name = "wap-wsg-idm-ecid-wtls7",
 		.der_len = 83,
