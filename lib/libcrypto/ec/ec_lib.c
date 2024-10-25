@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.73 2024/10/22 12:06:08 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.74 2024/10/25 00:37:51 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -452,19 +452,18 @@ EC_GROUP_get_point_conversion_form(const EC_GROUP *group)
 LCRYPTO_ALIAS(EC_GROUP_get_point_conversion_form);
 
 size_t
-EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
+EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *seed, size_t len)
 {
-	if (group->seed) {
-		free(group->seed);
-		group->seed = NULL;
-		group->seed_len = 0;
-	}
-	if (!len || !p)
+	free(group->seed);
+	group->seed = NULL;
+	group->seed_len = 0;
+
+	if (len == 0 || seed == NULL)
 		return 1;
 
 	if ((group->seed = malloc(len)) == NULL)
 		return 0;
-	memcpy(group->seed, p, len);
+	memcpy(group->seed, seed, len);
 	group->seed_len = len;
 
 	return len;
