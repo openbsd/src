@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-reader.c,v 1.7 2024/10/25 07:57:49 nicm Exp $ */
+/* $OpenBSD: grid-reader.c,v 1.8 2024/10/25 15:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Anindya Mukherjee <anindya49@hotmail.com>
@@ -345,6 +345,8 @@ grid_reader_cell_equals_data(const struct grid_cell *gc,
 {
 	if (gc->flags & GRID_FLAG_PADDING)
 		return (0);
+	if (gc->flags & GRID_FLAG_TAB && ud->size == 1 && *ud->data == '\t')
+		return (1);
 	if (gc->data.size != ud->size)
 		return (0);
 	return (memcmp(gc->data.data, ud->data, gc->data.size) == 0);

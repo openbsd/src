@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1235 2024/10/21 12:39:49 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1236 2024/10/25 15:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -709,6 +709,7 @@ struct colour_palette {
 #define GRID_FLAG_SELECTED 0x10
 #define GRID_FLAG_NOPALETTE 0x20
 #define GRID_FLAG_CLEARED 0x40
+#define GRID_FLAG_TAB 0x80
 
 /* Grid line flags. */
 #define GRID_LINE_WRAPPED 0x1
@@ -2861,6 +2862,7 @@ int	 attributes_fromstring(const char *);
 /* grid.c */
 extern const struct grid_cell grid_default_cell;
 void	 grid_empty_line(struct grid *, u_int, u_int);
+void	 grid_set_tab(struct grid_cell *, u_int);
 int	 grid_cells_equal(const struct grid_cell *, const struct grid_cell *);
 int	 grid_cells_look_equal(const struct grid_cell *,
 	     const struct grid_cell *);

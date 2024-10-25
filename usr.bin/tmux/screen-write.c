@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.227 2024/10/05 00:32:55 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.228 2024/10/25 15:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1813,6 +1813,8 @@ screen_write_collect_add(struct screen_write_ctx *ctx,
 
 	collect = 1;
 	if (gc->data.width != 1 || gc->data.size != 1 || *gc->data.data >= 0x7f)
+		collect = 0;
+	else if (gc->flags & GRID_FLAG_TAB)
 		collect = 0;
 	else if (gc->attr & GRID_ATTR_CHARSET)
 		collect = 0;
