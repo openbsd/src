@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.56 2024/10/11 14:12:05 deraadt Exp $
+# $OpenBSD: sysupgrade.sh,v 1.57 2024/10/25 03:42:06 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -35,7 +35,7 @@ err()
 
 usage()
 {
-	echo "usage: ${0##*/} [-fkns] [-b base-directory] [-R version] [installurl]" 1>&2
+	echo "usage: ${0##*/} [-fkns] [-b base-directory] [-R version] [installurl | path]" 1>&2
 	return 1
 }
 
@@ -73,6 +73,7 @@ rmel() {
 }
 
 SNAP=false
+FILE=false
 FORCE=false
 FORCE_VERSION=false
 KEEP=false
@@ -111,7 +112,7 @@ case $# in
 *)	usage
 esac
 [[ $MIRROR == @(file|ftp|http|https)://* ]] ||
-	err "invalid installurl: $MIRROR"
+	FILE=true
 $FORCE_VERSION && $SNAP &&
 	err "incompatible options: -s -R $NEXT_VERSION"
 $FORCE && ! $SNAP &&
@@ -123,6 +124,12 @@ if $SNAP; then
 else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
 	$FORCE_VERSION || ALT_URL=${MIRROR}/${VERSION}/${ARCH}/
+fi
+
+# Oh wait, this is a path install
+if $FILE; then
+	URL=file://$MIRROR/
+	ALT_URL=
 fi
 
 install -d -o 0 -g 0 -m 0755 ${SETSDIR}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.21 2024/10/11 14:12:05 deraadt Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.22 2024/10/25 03:42:06 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2024 $
+.Dd $Mdocdate: October 25 2024 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Op Fl fkns
 .Op Fl b Ar base-directory
 .Op Fl R Ar version
-.Op Ar installurl
+.Op Ar installurl | path
 .Sh DESCRIPTION
 .Nm
 is a utility to upgrade
