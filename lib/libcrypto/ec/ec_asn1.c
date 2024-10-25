@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.77 2024/10/22 12:06:08 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.78 2024/10/25 00:27:09 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1318,17 +1318,17 @@ o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 	if (a == NULL || (*a) == NULL || (*a)->group == NULL) {
 		/* An EC_GROUP structure is necessary to set the public key. */
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		return NULL;
 	}
 	ret = *a;
 	if (ret->pub_key == NULL &&
 	    (ret->pub_key = EC_POINT_new(ret->group)) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
-		return 0;
+		return NULL;
 	}
 	if (!EC_POINT_oct2point(ret->group, ret->pub_key, *in, len, NULL)) {
 		ECerror(ERR_R_EC_LIB);
-		return 0;
+		return NULL;
 	}
 	/* save the point conversion form */
 	ret->conv_form = (point_conversion_form_t) (*in[0] & ~0x01);
