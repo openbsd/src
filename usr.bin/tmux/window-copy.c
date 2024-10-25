@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.360 2024/10/25 15:13:10 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.361 2024/10/25 15:19:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3701,7 +3701,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 	struct screen_write_ctx		 ctx;
 	struct grid			*gd = s->grid;
 	const char			*str = data->searchstr;
-	u_int				 at, endline, fx, fy, start;
+	u_int				 at, endline, fx, fy, start, ssx;
 	int				 cis, found, keys, visible_only;
 	int				 wrapflag;
 
@@ -3728,7 +3728,9 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 	fx = data->cx;
 	fy = screen_hsize(data->backing) - data->oy + data->cy;
 
-	screen_init(&ss, screen_write_strlen("%s", str), 1, 0);
+	if ((ssx = screen_write_strlen("%s", str)) == 0)
+		return (0);
+	screen_init(&ss, ssx, 1, 0);
 	screen_write_start(&ctx, &ss);
 	screen_write_nputs(&ctx, -1, &grid_default_cell, "%s", str);
 	screen_write_stop(&ctx);
