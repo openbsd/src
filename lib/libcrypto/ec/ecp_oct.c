@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.28 2024/10/24 05:57:25 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.29 2024/10/25 18:06:42 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -434,18 +434,22 @@ ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	BN_CTX_start(ctx);
 	CBS_init(&cbs, buf, len);
 
-	if ((x = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((y = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
 	if (!ec_oct_get_leading_octet_cbs(&cbs, &form, &ybit))
 		goto err;
 
 	if (form == EC_OCT_POINT_AT_INFINITY) {
 		if (!EC_POINT_set_to_infinity(group, point))
 			goto err;
-	} else if (form == EC_OCT_POINT_COMPRESSED) {
+
+		goto done;
+	}
+
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (form == EC_OCT_POINT_COMPRESSED) {
 		if (!ec_oct_get_field_element_cbs(&cbs, group, x))
 			goto err;
 		if (!EC_POINT_set_compressed_coordinates(group, point, x, ybit, ctx))
@@ -461,6 +465,7 @@ ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 			goto err;
 	}
 
+ done:
 	if (CBS_len(&cbs) > 0) {
 		ECerror(EC_R_INVALID_ENCODING);
 		goto err;
