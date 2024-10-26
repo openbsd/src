@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.17 2024/10/26 13:49:08 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.18 2024/10/26 20:50:53 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -2827,6 +2827,33 @@ ec_group_check_private_key(const struct ec_private_key *key)
 	    NULL)) != 0) {
 		fprintf(stderr, "FAIL: EC_POINT_cmp() returned %d for %s "
 		    "after DER roundtrip\n", rv, key->name);
+		goto err;
+	}
+
+	/*
+	 * Also tickle the ECParameters API a little bit.
+	 */
+
+	freezero(der, der_len);
+	der = NULL;
+
+	if ((der_len = i2d_ECParameters(ec_key, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ECParameters returned %d for %s\n",
+		    der_len, key->name);
+		goto err;
+	}
+
+	/* Deliberately don't free ec_pub_key to see if we don't leak. */
+	p = der;
+	if (d2i_ECParameters(&ec_pub_key, &p, der_len) == NULL) {
+		fprintf(stderr, "FAIL: d2i_ECParameters for %s\n", key->name);
+		goto err;
+	}
+
+	if ((rv = EC_GROUP_cmp(EC_KEY_get0_group(ec_key),
+	    EC_KEY_get0_group(ec_pub_key), NULL)) != 0) {
+		fprintf(stderr, "FAIL: EC_GROUP_cmp returned %d for %s\n",
+		    rv, key->name);
 		goto err;
 	}
 
