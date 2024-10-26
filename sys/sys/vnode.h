@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.174 2024/09/01 03:09:01 jsg Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.175 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -565,7 +565,6 @@ int VOP_BWRITE(struct buf *);
 
 /* Public vnode manipulation functions. */
 struct file;
-struct filedesc;
 struct mount;
 struct nameidata;
 struct proc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: domain.h,v 1.24 2024/01/11 14:15:12 bluhm Exp $	*/
+/*	$OpenBSD: domain.h,v 1.25 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: domain.h,v 1.10 1996/02/09 18:25:07 christos Exp $	*/
 
 /*
@@ -45,7 +45,6 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
  * Forward structure declarations for function prototypes [sic].
  */
 struct	mbuf;
-struct	ifnet;
 
 struct domain {
 	int	dom_family;		/* AF_xxx */

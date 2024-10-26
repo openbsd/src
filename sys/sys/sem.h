@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.25 2022/09/16 15:57:23 mbuhl Exp $	*/
+/*	$OpenBSD: sem.h,v 1.26 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -174,8 +174,6 @@ extern struct seminfo	seminfo;
 #define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct undo)*SEMUME)
 
 extern struct	semid_ds **sema;	/* semaphore id list */
-
-struct proc;
 
 void	seminit(void);
 void	semexit(struct process *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.164 2024/10/25 21:06:03 jsg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.165 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@ struct buf;
 struct proc;
 struct tty;
 struct uio;
-struct vnode;
 struct knote;
 
 /*

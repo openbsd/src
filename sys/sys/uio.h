@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.19 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: uio.h,v 1.20 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ __END_DECLS
 #else
 int	ureadc(int c, struct uio *);
 
-struct file;
 int	iovec_copyin(const struct iovec *, struct iovec **, struct iovec *,
 	    unsigned int, size_t *);
 void	iovec_free(struct iovec *, unsigned int );

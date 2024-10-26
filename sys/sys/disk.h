@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.38 2023/11/15 20:23:19 kn Exp $	*/
+/*	$OpenBSD: disk.h,v 1.39 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 
-struct buf;
 struct disklabel;
 
 #define DS_DISKNAMELEN	16

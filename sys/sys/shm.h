@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.30 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: shm.h,v 1.31 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -129,7 +129,6 @@ struct shm_sysctl_info {
 extern struct shminfo shminfo;
 extern struct shmid_ds **shmsegs;
 
-struct proc;
 struct vmspace;
 
 void	shminit(void);

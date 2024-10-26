@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.78 2021/01/02 03:23:59 cheloha Exp $	*/
+/*	$OpenBSD: pool.h,v 1.79 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -262,7 +262,6 @@ void		pool_destroy(struct pool *);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 int		pool_sethardlimit(struct pool *, u_int, const char *, int);
-struct uvm_constraint_range; /* XXX */
 void		pool_set_constraints(struct pool *,
 		    const struct kmem_pa_mode *mode);
 

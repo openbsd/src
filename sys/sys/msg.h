@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.22 2024/06/10 04:10:25 jsg Exp $	*/
+/*	$OpenBSD: msg.h,v 1.23 2024/10/26 05:39:03 jsg Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -151,8 +151,6 @@ int msgsnd(int, const void *, size_t, int);
 int msgrcv(int, void *, size_t, long, int);
 __END_DECLS
 #else
-struct proc;
-
 void	msginit(void);
 #endif /* !_KERNEL */
 
