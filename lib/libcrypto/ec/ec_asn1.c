@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.79 2024/10/25 00:59:00 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.80 2024/10/26 14:32:56 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1093,9 +1093,9 @@ EC_KEY *
 d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 {
 	EC_KEY *ret = NULL;
-	EC_PRIVATEKEY *priv_key = NULL;
+	EC_PRIVATEKEY *ec_privatekey = NULL;
 
-	if ((priv_key = d2i_EC_PRIVATEKEY(NULL, in, len)) == NULL) {
+	if ((ec_privatekey = d2i_EC_PRIVATEKEY(NULL, in, len)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		return NULL;
 	}
@@ -1107,20 +1107,20 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 	} else
 		ret = *a;
 
-	if (priv_key->parameters) {
+	if (ec_privatekey->parameters) {
 		EC_GROUP_free(ret->group);
-		ret->group = ec_asn1_pkparameters2group(priv_key->parameters);
+		ret->group = ec_asn1_pkparameters2group(ec_privatekey->parameters);
 	}
 	if (ret->group == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ret->version = priv_key->version;
+	ret->version = ec_privatekey->version;
 
-	if (priv_key->privateKey) {
+	if (ec_privatekey->privateKey) {
 		ret->priv_key = BN_bin2bn(
-		    ASN1_STRING_data(priv_key->privateKey),
-		    ASN1_STRING_length(priv_key->privateKey),
+		    ASN1_STRING_data(ec_privatekey->privateKey),
+		    ASN1_STRING_length(ec_privatekey->privateKey),
 		    ret->priv_key);
 		if (ret->priv_key == NULL) {
 			ECerror(ERR_R_BN_LIB);
@@ -1139,12 +1139,12 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 		goto err;
 	}
 
-	if (priv_key->publicKey) {
+	if (ec_privatekey->publicKey) {
 		const unsigned char *pub_oct;
 		size_t pub_oct_len;
 
-		pub_oct = ASN1_STRING_data(priv_key->publicKey);
-		pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
+		pub_oct = ASN1_STRING_data(ec_privatekey->publicKey);
+		pub_oct_len = ASN1_STRING_length(ec_privatekey->publicKey);
 		if (pub_oct == NULL || pub_oct_len <= 0) {
 			ECerror(EC_R_BUFFER_TOO_SMALL);
 			goto err;
@@ -1167,7 +1167,7 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 		ret->enc_flag |= EC_PKEY_NO_PUBKEY;
 	}
 
-	EC_PRIVATEKEY_free(priv_key);
+	EC_PRIVATEKEY_free(ec_privatekey);
 	if (a != NULL)
 		*a = ret;
 	return (ret);
@@ -1175,8 +1175,8 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
  err:
 	if (a == NULL || *a != ret)
 		EC_KEY_free(ret);
-	if (priv_key)
-		EC_PRIVATEKEY_free(priv_key);
+	if (ec_privatekey)
+		EC_PRIVATEKEY_free(ec_privatekey);
 
 	return (NULL);
 }
@@ -1188,18 +1188,18 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 	int ret = 0, ok = 0;
 	unsigned char *buffer = NULL;
 	size_t buf_len = 0, tmp_len;
-	EC_PRIVATEKEY *priv_key = NULL;
+	EC_PRIVATEKEY *ec_privatekey = NULL;
 
 	if (a == NULL || a->group == NULL || a->priv_key == NULL ||
 	    (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL)) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if ((priv_key = EC_PRIVATEKEY_new()) == NULL) {
+	if ((ec_privatekey = EC_PRIVATEKEY_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	priv_key->version = a->version;
+	ec_privatekey->version = a->version;
 
 	buf_len = (size_t) BN_num_bytes(a->priv_key);
 	buffer = malloc(buf_len);
@@ -1211,7 +1211,7 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!ASN1_STRING_set(priv_key->privateKey, buffer, buf_len)) {
+	if (!ASN1_STRING_set(ec_privatekey->privateKey, buffer, buf_len)) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
@@ -1222,11 +1222,11 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
-		priv_key->parameters = parameters;
+		ec_privatekey->parameters = parameters;
 	}
 	if (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key != NULL) {
-		priv_key->publicKey = ASN1_BIT_STRING_new();
-		if (priv_key->publicKey == NULL) {
+		ec_privatekey->publicKey = ASN1_BIT_STRING_new();
+		if (ec_privatekey->publicKey == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
@@ -1247,24 +1247,24 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
-		if (!ASN1_STRING_set(priv_key->publicKey, buffer, buf_len)) {
+		if (!ASN1_STRING_set(ec_privatekey->publicKey, buffer, buf_len)) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
-		if (!asn1_abs_set_unused_bits(priv_key->publicKey, 0)) {
+		if (!asn1_abs_set_unused_bits(ec_privatekey->publicKey, 0)) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
 	}
-	if ((ret = i2d_EC_PRIVATEKEY(priv_key, out)) == 0) {
+	if ((ret = i2d_EC_PRIVATEKEY(ec_privatekey, out)) == 0) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	ok = 1;
  err:
 	free(buffer);
-	if (priv_key)
-		EC_PRIVATEKEY_free(priv_key);
+	if (ec_privatekey)
+		EC_PRIVATEKEY_free(ec_privatekey);
 	return (ok ? ret : 0);
 }
 LCRYPTO_ALIAS(i2d_ECPrivateKey);
