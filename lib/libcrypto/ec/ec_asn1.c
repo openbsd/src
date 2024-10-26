@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.81 2024/10/26 14:33:59 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.82 2024/10/26 14:35:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1095,17 +1095,15 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 	EC_KEY *ec_key = NULL;
 	EC_PRIVATEKEY *ec_privatekey = NULL;
 
+	if (out_ec_key == NULL || (ec_key = *out_ec_key) == NULL)
+		ec_key = EC_KEY_new();
+	if (ec_key == NULL)
+		goto err;
+
 	if ((ec_privatekey = d2i_EC_PRIVATEKEY(NULL, in, len)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
-		return NULL;
+		goto err;
 	}
-	if (out_ec_key == NULL || *out_ec_key == NULL) {
-		if ((ec_key = EC_KEY_new()) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	} else
-		ec_key = *out_ec_key;
 
 	if (ec_privatekey->parameters) {
 		EC_GROUP_free(ec_key->group);
@@ -1168,17 +1166,19 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 	}
 
 	EC_PRIVATEKEY_free(ec_privatekey);
+	ec_privatekey = NULL;
+
 	if (out_ec_key != NULL)
 		*out_ec_key = ec_key;
-	return (ec_key);
+
+	return ec_key;
 
  err:
 	if (out_ec_key == NULL || *out_ec_key != ec_key)
 		EC_KEY_free(ec_key);
-	if (ec_privatekey)
-		EC_PRIVATEKEY_free(ec_privatekey);
+	EC_PRIVATEKEY_free(ec_privatekey);
 
-	return (NULL);
+	return NULL;
 }
 LCRYPTO_ALIAS(d2i_ECPrivateKey);
 
