@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.80 2024/10/26 14:32:56 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.81 2024/10/26 14:33:59 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1090,39 +1090,39 @@ i2d_ECPKParameters(const EC_GROUP *group, unsigned char **out_der)
 LCRYPTO_ALIAS(i2d_ECPKParameters);
 
 EC_KEY *
-d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
+d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 {
-	EC_KEY *ret = NULL;
+	EC_KEY *ec_key = NULL;
 	EC_PRIVATEKEY *ec_privatekey = NULL;
 
 	if ((ec_privatekey = d2i_EC_PRIVATEKEY(NULL, in, len)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		return NULL;
 	}
-	if (a == NULL || *a == NULL) {
-		if ((ret = EC_KEY_new()) == NULL) {
+	if (out_ec_key == NULL || *out_ec_key == NULL) {
+		if ((ec_key = EC_KEY_new()) == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	} else
-		ret = *a;
+		ec_key = *out_ec_key;
 
 	if (ec_privatekey->parameters) {
-		EC_GROUP_free(ret->group);
-		ret->group = ec_asn1_pkparameters2group(ec_privatekey->parameters);
+		EC_GROUP_free(ec_key->group);
+		ec_key->group = ec_asn1_pkparameters2group(ec_privatekey->parameters);
 	}
-	if (ret->group == NULL) {
+	if (ec_key->group == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ret->version = ec_privatekey->version;
+	ec_key->version = ec_privatekey->version;
 
 	if (ec_privatekey->privateKey) {
-		ret->priv_key = BN_bin2bn(
+		ec_key->priv_key = BN_bin2bn(
 		    ASN1_STRING_data(ec_privatekey->privateKey),
 		    ASN1_STRING_length(ec_privatekey->privateKey),
-		    ret->priv_key);
-		if (ret->priv_key == NULL) {
+		    ec_key->priv_key);
+		if (ec_key->priv_key == NULL) {
 			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -1131,10 +1131,10 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 		goto err;
 	}
 
-	if (ret->pub_key)
-		EC_POINT_free(ret->pub_key);
-	ret->pub_key = EC_POINT_new(ret->group);
-	if (ret->pub_key == NULL) {
+	if (ec_key->pub_key)
+		EC_POINT_free(ec_key->pub_key);
+	ec_key->pub_key = EC_POINT_new(ec_key->group);
+	if (ec_key->pub_key == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -1151,30 +1151,30 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 		}
 
 		/* save the point conversion form */
-		ret->conv_form = (point_conversion_form_t) (pub_oct[0] & ~0x01);
-		if (!EC_POINT_oct2point(ret->group, ret->pub_key,
+		ec_key->conv_form = (point_conversion_form_t) (pub_oct[0] & ~0x01);
+		if (!EC_POINT_oct2point(ec_key->group, ec_key->pub_key,
 			pub_oct, pub_oct_len, NULL)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 	} else {
-		if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key,
+		if (!EC_POINT_mul(ec_key->group, ec_key->pub_key, ec_key->priv_key,
 			NULL, NULL, NULL)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		/* Remember the original private-key-only encoding. */
-		ret->enc_flag |= EC_PKEY_NO_PUBKEY;
+		ec_key->enc_flag |= EC_PKEY_NO_PUBKEY;
 	}
 
 	EC_PRIVATEKEY_free(ec_privatekey);
-	if (a != NULL)
-		*a = ret;
-	return (ret);
+	if (out_ec_key != NULL)
+		*out_ec_key = ec_key;
+	return (ec_key);
 
  err:
-	if (a == NULL || *a != ret)
-		EC_KEY_free(ret);
+	if (out_ec_key == NULL || *out_ec_key != ec_key)
+		EC_KEY_free(ec_key);
 	if (ec_privatekey)
 		EC_PRIVATEKEY_free(ec_privatekey);
 
