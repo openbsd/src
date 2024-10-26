@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.16 2024/10/26 10:15:19 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.17 2024/10/26 13:49:08 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -2679,6 +2679,52 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
+	if ((rv = EC_POINT_cmp(group, ec_public_point, point, NULL)) != 0) {
+		fprintf(stderr, "FAIL: EC_POINT_cmp() returned %d for %s\n",
+		    rv, key->name);
+		goto err;
+	}
+
+	/*
+	 * Invalidate the point by doubling and inverting it. Then see if
+	 * point reuse works.
+	 */
+
+	if (!EC_POINT_dbl(group, point, point, NULL)) {
+		fprintf(stderr, "FAIL: EC_POINT_dbl() failed for %s\n",
+		    key->name);
+		goto err;
+	}
+	if (!EC_POINT_invert(group, point, NULL)) {
+		fprintf(stderr, "FAIL: EC_POINT_invert() failed for %s\n",
+		    key->name);
+		goto err;
+	}
+	if (!EC_POINT_is_on_curve(group, point, NULL)) {
+		fprintf(stderr, "FAIL: EC_POINT_is_on_curve() failed for %s\n",
+		    key->name);
+		goto err;
+	}
+	if (EC_POINT_is_at_infinity(group, point)) {
+		fprintf(stderr, "FAIL: EC_POINT_is_at_infinity() is true for %s\n",
+		    key->name);
+		goto err;
+	}
+
+	/* The points are now different. */
+	if ((rv = EC_POINT_cmp(group, ec_public_point, point, NULL)) == 0) {
+		fprintf(stderr, "FAIL: EC_POINT_cmp() returned %d for %s\n",
+		    rv, key->name);
+		goto err;
+	}
+
+	if (EC_POINT_hex2point(group, hex, point, NULL) == NULL) {
+		fprintf(stderr, "FAIL: EC_POINT_hex2point() failed for %s\n",
+		    key->name);
+		goto err;
+	}
+
+	/* And after reuse they should be the same again. */
 	if ((rv = EC_POINT_cmp(group, ec_public_point, point, NULL)) != 0) {
 		fprintf(stderr, "FAIL: EC_POINT_cmp() returned %d for %s\n",
 		    rv, key->name);
