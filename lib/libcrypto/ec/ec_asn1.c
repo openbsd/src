@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.82 2024/10/26 14:35:32 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.83 2024/10/26 14:40:16 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1105,6 +1105,7 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 		goto err;
 	}
 
+	ec_key->version = ec_privatekey->version;
 	if (ec_privatekey->parameters) {
 		EC_GROUP_free(ec_key->group);
 		ec_key->group = ec_asn1_pkparameters2group(ec_privatekey->parameters);
@@ -1113,7 +1114,6 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ec_key->version = ec_privatekey->version;
 
 	if (ec_privatekey->privateKey) {
 		ec_key->priv_key = BN_bin2bn(
