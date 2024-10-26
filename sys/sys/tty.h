@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.43 2024/05/12 08:21:56 jsg Exp $	*/
+/*	$OpenBSD: tty.h,v 1.44 2024/10/26 00:56:35 jsg Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -164,7 +164,6 @@ struct itty {
 #define	TTIPRI	25			/* Sleep priority for tty reads. */
 #define	TTOPRI	26			/* Sleep priority for tty writes. */
 
-#define	TTMASK	15
 #define	OBUFSIZ	512
 #define	TTYHOG(tp)	(tp)->t_qlen
 
