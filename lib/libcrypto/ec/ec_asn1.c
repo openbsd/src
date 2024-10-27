@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.85 2024/10/27 09:38:49 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.86 2024/10/27 09:40:09 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1281,7 +1281,7 @@ i2d_ECParameters(EC_KEY *ec_key, unsigned char **out)
 LCRYPTO_ALIAS(i2d_ECParameters);
 
 EC_KEY *
-d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
+d2i_ECParameters(EC_KEY **out_ec_key, const unsigned char **in, long len)
 {
 	EC_KEY *ec_key;
 
@@ -1289,23 +1289,23 @@ d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
-	if (a == NULL || *a == NULL) {
+	if (out_ec_key == NULL || *out_ec_key == NULL) {
 		if ((ec_key = EC_KEY_new()) == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
 	} else
-		ec_key = *a;
+		ec_key = *out_ec_key;
 
 	if (!d2i_ECPKParameters(&ec_key->group, in, len)) {
 		ECerror(ERR_R_EC_LIB);
-		if (a == NULL || *a != ec_key)
+		if (out_ec_key == NULL || *out_ec_key != ec_key)
 			EC_KEY_free(ec_key);
 		return NULL;
 	}
 
-	if (a != NULL)
-		*a = ec_key;
+	if (out_ec_key != NULL)
+		*out_ec_key = ec_key;
 	return ec_key;
 }
 LCRYPTO_ALIAS(d2i_ECParameters);
