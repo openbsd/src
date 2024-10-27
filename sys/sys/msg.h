@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.23 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: msg.h,v 1.24 2024/10/27 22:08:25 jsg Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -133,25 +133,14 @@ struct msg_sysctl_info {
 #define MSGTQL	40
 #endif
 
-/*
- * macros to convert between msqid_ds's and msqid's.
- * XXX unused, going away
- */
-#define MSQID(ix,ds)	((ix) & 0xffff | (((ds).msg_perm.seq << 16) & 0xffff0000))
-#define MSQID_IX(id)	((id) & 0xffff)
-#define MSQID_SEQ(id)	(((id) >> 16) & 0xffff)
-#endif
-
-
-#ifndef _KERNEL
+void msginit(void);
+#else /* !_KERNEL */
 __BEGIN_DECLS
 int msgctl(int, int, struct msqid_ds *);
 int msgget(key_t, int);
 int msgsnd(int, const void *, size_t, int);
 int msgrcv(int, void *, size_t, long, int);
 __END_DECLS
-#else
-void	msginit(void);
-#endif /* !_KERNEL */
+#endif
 
 #endif /* !_SYS_MSG_H_ */
