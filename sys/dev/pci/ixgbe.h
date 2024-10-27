@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.36 2024/06/09 05:18:12 jsg Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.37 2024/10/27 04:44:41 yasuoka Exp $	*/
 
 /******************************************************************************
 
@@ -278,6 +278,7 @@ int32_t ixgbe_clear_vmdq(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_init_uta_tables(struct ixgbe_hw *hw);
 
 void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
+int32_t ixgbe_mta_vector(struct ixgbe_hw *hw, uint8_t *mc_addr);
 void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr);
 
 void ixgbe_disable_rx(struct ixgbe_hw *hw);
@@ -354,8 +355,37 @@ int32_t ixgbe_write_i2c_combined_generic(struct ixgbe_hw *, uint8_t addr, uint16
 int32_t ixgbe_write_i2c_combined_generic_unlocked(struct ixgbe_hw *, uint8_t addr,
 						  uint16_t reg, uint16_t val);
 
+/* Virtual Functions */
+int32_t ixgbe_init_ops_vf(struct ixgbe_hw *hw);
+int32_t ixgbe_init_hw_vf(struct ixgbe_hw *hw);
+int32_t ixgbe_start_hw_vf(struct ixgbe_hw *hw);
+int32_t ixgbe_reset_hw_vf(struct ixgbe_hw *hw);
+int32_t ixgbe_stop_adapter_vf(struct ixgbe_hw *hw);
+uint32_t ixgbe_get_num_of_tx_queues_vf(struct ixgbe_hw *hw);
+uint32_t ixgbe_get_num_of_rx_queues_vf(struct ixgbe_hw *hw);
+int32_t ixgbe_get_mac_addr_vf(struct ixgbe_hw *hw, uint8_t *mac_addr);
+int32_t ixgbe_setup_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed speed,
+			    bool autoneg_wait_to_complete);
+int32_t ixgbe_check_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
+			    bool *link_up, bool autoneg_wait_to_complete);
+int32_t ixgbe_set_rar_vf(struct ixgbe_hw *hw, uint32_t index, uint8_t *addr, uint32_t vmdq,
+		     uint32_t enable_addr);
+int32_t ixgbevf_set_uc_addr_vf(struct ixgbe_hw *hw, uint32_t index, uint8_t *addr);
+int32_t ixgbe_update_mc_addr_list_vf(struct ixgbe_hw *hw, uint8_t *mc_addr_list,
+				 uint32_t mc_addr_count, ixgbe_mc_addr_itr,
+				 bool clear);
+int32_t ixgbevf_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode);
+int32_t ixgbe_get_link_state_vf(struct ixgbe_hw *hw, bool *link_state);
+int32_t ixgbe_set_vfta_vf(struct ixgbe_hw *hw, uint32_t vlan, uint32_t vind,
+		      bool vlan_on, bool vlvf_bypass);
+int32_t ixgbevf_rlpml_set_vf(struct ixgbe_hw *hw, uint16_t max_size);
+int ixgbevf_negotiate_api_version(struct ixgbe_hw *hw, int api);
+int ixgbevf_get_queues(struct ixgbe_hw *hw, unsigned int *num_tcs,
+		       unsigned int *default_tc);
+
 /* MBX */
 int32_t ixgbe_read_mbx(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);
+int32_t ixgbe_poll_mbx(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);
 int32_t ixgbe_write_mbx(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);
 int32_t ixgbe_read_posted_mbx(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);
 int32_t ixgbe_write_posted_mbx(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);
@@ -363,6 +393,9 @@ int32_t ixgbe_check_for_msg(struct ixgbe_hw *, uint16_t);
 int32_t ixgbe_check_for_ack(struct ixgbe_hw *, uint16_t);
 int32_t ixgbe_check_for_rst(struct ixgbe_hw *, uint16_t);
 void ixgbe_init_mbx_ops_generic(struct ixgbe_hw *hw);
+void ixgbe_init_mbx_params_vf(struct ixgbe_hw *);
+void ixgbe_upgrade_mbx_params_vf(struct ixgbe_hw *);
 void ixgbe_init_mbx_params_pf(struct ixgbe_hw *);
+void ixgbe_upgrade_mbx_params_pf(struct ixgbe_hw *, uint16_t);
 
 #endif /* _IXGBE_H_ */

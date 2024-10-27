@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.39 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.40 2024/10/27 04:44:41 yasuoka Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -463,8 +463,14 @@ struct ixgbe_nvm_version {
 #define IXGBE_PFMAILBOX(_i)	(0x04B00 + (4 * (_i))) /* 64 total */
 /* 64 Mailboxes, 16 DW each */
 #define IXGBE_PFMBMEM(_i)	(0x13000 + (64 * (_i)))
+#define IXGBE_PFMBICR_INDEX(_i)	((_i) >> 4)
+#define IXGBE_PFMBICR_SHIFT(_i)	((_i) % 16)
 #define IXGBE_PFMBICR(_i)	(0x00710 + (4 * (_i))) /* 4 total */
 #define IXGBE_PFMBIMR(_i)	(0x00720 + (4 * (_i))) /* 4 total */
+#define IXGBE_PFVFLRE(_i)	((((_i) & 1) ? 0x001C0 : 0x00600))
+#define IXGBE_PFVFLREC(_i)	(0x00700 + ((_i) * 4))
+#define IXGBE_PFVFLRE_INDEX(_i)	((_i) >> 5)
+#define IXGBE_PFVFLRE_SHIFT(_i)	((_i) % 32)
 #define IXGBE_VFRE(_i)		(0x051E0 + ((_i) * 4))
 #define IXGBE_VFTE(_i)		(0x08110 + ((_i) * 4))
 #define IXGBE_VMECM(_i)		(0x08790 + ((_i) * 4))
@@ -3949,6 +3955,7 @@ struct ixgbe_mac_operations {
 	int32_t (*update_mc_addr_list)(struct ixgbe_hw *, uint8_t *, uint32_t,
 				   ixgbe_mc_addr_itr, bool clear);
 	int32_t (*update_xcast_mode)(struct ixgbe_hw *, int);
+	int32_t (*get_link_state)(struct ixgbe_hw *hw, bool *link_state);
 	int32_t (*enable_mc)(struct ixgbe_hw *);
 	int32_t (*disable_mc)(struct ixgbe_hw *);
 	int32_t (*clear_vfta)(struct ixgbe_hw *);
@@ -3968,7 +3975,7 @@ struct ixgbe_mac_operations {
 	/* Manageability interface */
 	void (*disable_rx)(struct ixgbe_hw *hw);
 	void (*enable_rx)(struct ixgbe_hw *hw);
-  void (*stop_mac_link_on_d3)(struct ixgbe_hw *);
+	void (*stop_mac_link_on_d3)(struct ixgbe_hw *);
 	void (*set_source_address_pruning)(struct ixgbe_hw *, bool,
 					   unsigned int);
 	int32_t (*dmac_update_tcs)(struct ixgbe_hw *hw);
@@ -4093,7 +4100,7 @@ struct ixgbe_phy_info {
 };
 
 #define IXGBE_VFMAILBOX_SIZE	16 /* 16 32 bit words - 64 bytes */
-#define IXGBE_ERR_MBX		-100
+#define IXGBE_MAX_MULTICAST_ADDRESSES_VF  30
 
 #define IXGBE_VFMAILBOX		0x002FC
 #define IXGBE_VFMBMEM		0x00200
@@ -4115,22 +4122,25 @@ struct ixgbe_phy_info {
 #define IXGBE_PFMAILBOX_PFU	0x00000008 /* PF owns the mailbox buffer */
 #define IXGBE_PFMAILBOX_RVFU	0x00000010 /* Reset VFU - used when VF stuck */
 
-#define IXGBE_MBVFICR_VFREQ_MASK	0x0000FFFF /* bits for VF messages */
-#define IXGBE_MBVFICR_VFREQ_VF1		0x00000001 /* bit for VF 1 message */
-#define IXGBE_MBVFICR_VFACK_MASK	0xFFFF0000 /* bits for VF acks */
-#define IXGBE_MBVFICR_VFACK_VF1		0x00010000 /* bit for VF 1 ack */
+#define IXGBE_PFMBICR_VFREQ_MASK	0x0000FFFF /* bits for VF messages */
+#define IXGBE_PFMBICR_VFREQ_VF1		0x00000001 /* bit for VF 1 message */
+#define IXGBE_PFMBICR_VFACK_MASK	0xFFFF0000 /* bits for VF acks */
+#define IXGBE_PFMBICR_VFACK_VF1		0x00010000 /* bit for VF 1 ack */
 
 
 /* If it's a IXGBE_VF_* msg then it originates in the VF and is sent to the
  * PF.  The reverse is TRUE if it is IXGBE_PF_*.
- * Message ACK's are the value or'd with 0xF0000000
+ * Message results are the value or'd with 0xF0000000
  */
-#define IXGBE_VT_MSGTYPE_ACK	0x80000000 /* Messages below or'd with
-					    * this are the ACK */
-#define IXGBE_VT_MSGTYPE_NACK	0x40000000 /* Messages below or'd with
-					    * this are the NACK */
-#define IXGBE_VT_MSGTYPE_CTS	0x20000000 /* Indicates that VF is still
-					    * clear to send requests */
+#define IXGBE_VT_MSGTYPE_SUCCESS	0x80000000 /* Messages or'd with this
+						    * have succeeded
+						    */
+#define IXGBE_VT_MSGTYPE_FAILURE	0x40000000 /* Messages or'd with this
+						    * have failed
+						    */
+#define IXGBE_VT_MSGTYPE_CTS		0x20000000 /* Indicates that VF is still
+						    * clear to send requests
+						    */
 #define IXGBE_VT_MSGINFO_SHIFT	16
 /* bits 23:16 are used for extra info for certain messages */
 #define IXGBE_VT_MSGINFO_MASK	(0xFF << IXGBE_VT_MSGINFO_SHIFT)
@@ -4147,6 +4157,9 @@ enum ixgbe_pfvf_api_rev {
 	ixgbe_mbox_api_11,	/* API version 1.1, linux/freebsd VF driver */
 	ixgbe_mbox_api_12,	/* API version 1.2, linux/freebsd VF driver */
 	ixgbe_mbox_api_13,	/* API version 1.3, linux/freebsd VF driver */
+	/* API 1.4 is being used in the upstream for IPsec */
+	ixgbe_mbox_api_14,	/* API version 1.4, linux/freebsd VF driver */
+	ixgbe_mbox_api_15,	/* API version 1.5, linux/freebsd VF driver */
 	/* This value should always be last */
 	ixgbe_mbox_api_unknown,	/* indicates that API version is not known */
 };
@@ -4169,6 +4182,7 @@ enum ixgbe_pfvf_api_rev {
 #define IXGBE_VF_GET_RETA      0x0a    /* VF request for RETA */
 #define IXGBE_VF_GET_RSS_KEY	0x0b    /* get RSS key */
 #define IXGBE_VF_UPDATE_XCAST_MODE	0x0c
+#define IXGBE_VF_GET_LINK_STATE 0x10 /* get vf link state */
 
 /* mode choices for IXGBE_VF_UPDATE_XCAST_MODE */
 enum ixgbevf_xcast_modes {
@@ -4207,9 +4221,61 @@ enum ixgbevf_xcast_modes {
 #define IXGBE_VF_MBX_INIT_TIMEOUT	2000 /* number of retries on mailbox */
 #define IXGBE_VF_MBX_INIT_DELAY		500  /* microseconds between retries */
 
+#define IXGBE_VF_IRQ_CLEAR_MASK	7
+#define IXGBE_VF_MAX_TX_QUEUES	8
+#define IXGBE_VF_MAX_RX_QUEUES	8
+/* DCB define */
+#define IXGBE_VF_MAX_TRAFFIC_CLASS	8
+
+#define IXGBE_VFCTRL		0x00000
+#define IXGBE_VFSTATUS		0x00008
+#define IXGBE_VFLINKS		0x00010
+#define IXGBE_VFFRTIMER		0x00048
+#define IXGBE_VFRXMEMWRAP	0x03190
+#define IXGBE_VTEICR		0x00100
+#define IXGBE_VTEICS		0x00104
+#define IXGBE_VTEIMS		0x00108
+#define IXGBE_VTEIMC		0x0010C
+#define IXGBE_VTEIAC		0x00110
+#define IXGBE_VTEIAM		0x00114
+#define IXGBE_VTEITR(x)		(0x00820 + (4 * (x)))
+#define IXGBE_VTIVAR(x)		(0x00120 + (4 * (x)))
+#define IXGBE_VTIVAR_MISC	0x00140
+#define IXGBE_VTRSCINT(x)	(0x00180 + (4 * (x)))
+/* define IXGBE_VFPBACL  still says TBD in EAS */
+#define IXGBE_VFRDBAL(x)	(0x01000 + (0x40 * (x)))
+#define IXGBE_VFRDBAH(x)	(0x01004 + (0x40 * (x)))
+#define IXGBE_VFRDLEN(x)	(0x01008 + (0x40 * (x)))
+#define IXGBE_VFRDH(x)		(0x01010 + (0x40 * (x)))
+#define IXGBE_VFRDT(x)		(0x01018 + (0x40 * (x)))
+#define IXGBE_VFRXDCTL(x)	(0x01028 + (0x40 * (x)))
+#define IXGBE_VFSRRCTL(x)	(0x01014 + (0x40 * (x)))
+#define IXGBE_VFRSCCTL(x)	(0x0102C + (0x40 * (x)))
+#define IXGBE_VFPSRTYPE		0x00300
+#define IXGBE_VFTDBAL(x)	(0x02000 + (0x40 * (x)))
+#define IXGBE_VFTDBAH(x)	(0x02004 + (0x40 * (x)))
+#define IXGBE_VFTDLEN(x)	(0x02008 + (0x40 * (x)))
+#define IXGBE_VFTDH(x)		(0x02010 + (0x40 * (x)))
+#define IXGBE_VFTDT(x)		(0x02018 + (0x40 * (x)))
+#define IXGBE_VFTXDCTL(x)	(0x02028 + (0x40 * (x)))
+#define IXGBE_VFTDWBAL(x)	(0x02038 + (0x40 * (x)))
+#define IXGBE_VFTDWBAH(x)	(0x0203C + (0x40 * (x)))
+#define IXGBE_VFDCA_RXCTRL(x)	(0x0100C + (0x40 * (x)))
+#define IXGBE_VFDCA_TXCTRL(x)	(0x0200c + (0x40 * (x)))
+#define IXGBE_VFGPRC		0x0101C
+#define IXGBE_VFGPTC		0x0201C
+#define IXGBE_VFGORC_LSB	0x01020
+#define IXGBE_VFGORC_MSB	0x01024
+#define IXGBE_VFGOTC_LSB	0x02020
+#define IXGBE_VFGOTC_MSB	0x02024
+#define IXGBE_VFMPRC		0x01034
+#define IXGBE_VFMRQC		0x3000
+#define IXGBE_VFRSSRK(x)	(0x3100 + ((x) * 4))
+#define IXGBE_VFRETA(x)		(0x3200 + ((x) * 4))
 
 struct ixgbe_mbx_operations {
 	void (*init_params)(struct ixgbe_hw *hw);
+	void (*release)(struct ixgbe_hw *, uint16_t);
 	int32_t  (*read)(struct ixgbe_hw *, uint32_t *, uint16_t,  uint16_t);
 	int32_t  (*write)(struct ixgbe_hw *, uint32_t *, uint16_t, uint16_t);
 	int32_t  (*read_posted)(struct ixgbe_hw *, uint32_t *, uint16_t,  uint16_t);
@@ -4217,6 +4283,7 @@ struct ixgbe_mbx_operations {
 	int32_t  (*check_for_msg)(struct ixgbe_hw *, uint16_t);
 	int32_t  (*check_for_ack)(struct ixgbe_hw *, uint16_t);
 	int32_t  (*check_for_rst)(struct ixgbe_hw *, uint16_t);
+	int32_t  (*clear)(struct ixgbe_hw *, uint16_t);
 };
 
 struct ixgbe_mbx_stats {
@@ -4233,7 +4300,7 @@ struct ixgbe_mbx_info {
 	struct ixgbe_mbx_stats stats;
 	uint32_t timeout;
 	uint32_t usec_delay;
-	uint32_t v2p_mailbox;
+	uint32_t vf_mailbox;
 	uint16_t size;
 };
 
@@ -4307,6 +4374,9 @@ struct ixgbe_hw {
 #define IXGBE_ERR_FDIR_CMD_INCOMPLETE		-38
 #define IXGBE_ERR_FW_RESP_INVALID		-39
 #define IXGBE_ERR_TOKEN_RETRY			-40
+#define IXGBE_ERR_MBX				-41
+#define IXGBE_ERR_MBX_NOMSG			-42
+#define IXGBE_ERR_TIMEOUT			-43
 
 #define IXGBE_NOT_IMPLEMENTED			0x7FFFFFFF
 
