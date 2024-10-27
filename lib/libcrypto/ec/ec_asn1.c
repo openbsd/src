@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.83 2024/10/26 14:40:16 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.84 2024/10/27 09:37:28 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1270,13 +1270,13 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 LCRYPTO_ALIAS(i2d_ECPrivateKey);
 
 int
-i2d_ECParameters(EC_KEY *a, unsigned char **out)
+i2d_ECParameters(EC_KEY *ec_key, unsigned char **out)
 {
-	if (a == NULL) {
+	if (ec_key == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-	return i2d_ECPKParameters(a->group, out);
+	return i2d_ECPKParameters(ec_key->group, out);
 }
 LCRYPTO_ALIAS(i2d_ECParameters);
 
