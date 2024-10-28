@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.90 2024/10/28 17:58:18 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.91 2024/10/28 17:59:45 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1113,6 +1113,35 @@ ec_key_set_group_from_parameters(EC_KEY *ec_key, const ECPKPARAMETERS *params)
 	return ret;
 }
 
+static int
+ec_key_set_private_key(EC_KEY *ec_key, const ASN1_OCTET_STRING *aos)
+{
+	BIGNUM *priv_key = NULL;
+	int ret = 0;
+
+	if (aos == NULL) {
+		ECerror(EC_R_MISSING_PRIVATE_KEY);
+		goto err;
+	}
+
+	/*
+	 * XXX - Sec 1, C.4 requires that this octet string be padded to the
+	 * byte length of the group's order. This can't be enforced because
+	 * i2d_ECPrivateKey() produces a semi-compatible ad hoc format.
+	 */
+	if ((priv_key = BN_bin2bn(aos->data, aos->length, NULL)) == NULL)
+		goto err;
+	if (!EC_KEY_set_private_key(ec_key, priv_key))
+		goto err;
+
+	ret = 1;
+
+ err:
+	BN_free(priv_key);
+
+	return ret;
+}
+
 EC_KEY *
 d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 {
@@ -1132,20 +1161,8 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 	ec_key->version = ec_privatekey->version;
 	if (!ec_key_set_group_from_parameters(ec_key, ec_privatekey->parameters))
 		goto err;
-
-	if (ec_privatekey->privateKey) {
-		ec_key->priv_key = BN_bin2bn(
-		    ASN1_STRING_data(ec_privatekey->privateKey),
-		    ASN1_STRING_length(ec_privatekey->privateKey),
-		    ec_key->priv_key);
-		if (ec_key->priv_key == NULL) {
-			ECerror(ERR_R_BN_LIB);
-			goto err;
-		}
-	} else {
-		ECerror(EC_R_MISSING_PRIVATE_KEY);
+	if (!ec_key_set_private_key(ec_key, ec_privatekey->privateKey))
 		goto err;
-	}
 
 	if (ec_key->pub_key)
 		EC_POINT_free(ec_key->pub_key);
