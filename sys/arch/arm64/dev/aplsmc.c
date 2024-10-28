@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.25 2023/07/16 16:11:11 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.26 2024/10/28 14:16:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -247,6 +247,12 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	error = rtkit_boot(sc->sc_rs);
 	if (error) {
 		printf(": can't boot firmware\n");
+		return;
+	}
+
+	error = rtkit_set_ap_pwrstate(sc->sc_rs, RTKIT_MGMT_PWR_STATE_ON);
+	if (error) {
+		printf(": can't set AP power state\n");
 		return;
 	}
 
