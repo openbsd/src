@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.19 2024/10/28 18:44:12 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.20 2024/10/28 21:20:30 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -26,8 +26,6 @@
 
 /* set to 0 if/when we are going to enforce 0 <= a,b < p. */
 #define NEGATIVE_CURVE_COEFFICIENTS_ALLOWED	1
-/* unifdef once private key padding in i2d_ECPrivateKey() is fixed. */
-#define CORRECT_PRIV_KEY_PADDING		1
 
 static const uint8_t ec_secp256r1_pkparameters_named_curve[] = {
 	0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03,
@@ -1040,7 +1038,6 @@ static const struct ec_private_key {
 			0xe2,
 		},
 	},
-#if CORRECT_PRIV_KEY_PADDING
 	{
 		.name = "secp160k1",
 		.der_len = 83,
@@ -1137,7 +1134,6 @@ static const struct ec_private_key {
 			0x63,
 		},
 	},
-#endif
 	{
 		.name = "secp192k1",
 		.der_len = 94,
@@ -1173,7 +1169,6 @@ static const struct ec_private_key {
 			0xdc,
 		},
 	},
-#if CORRECT_PRIV_KEY_PADDING
 	{
 		.name = "secp224k1",
 		.der_len = 107,
@@ -1213,7 +1208,6 @@ static const struct ec_private_key {
 			0x0b,
 		},
 	},
-#endif
 	{
 		.name = "secp224r1",
 		.der_len = 106,
@@ -1718,7 +1712,6 @@ static const struct ec_private_key {
 			0xfe, 0x7a, 0xb1, 0xa2, 0x74,
 		},
 	},
-#if CORRECT_PRIV_KEY_PADDING
 	{
 		.name = "wap-wsg-idm-ecid-wtls7",
 		.der_len = 83,
@@ -1809,7 +1802,6 @@ static const struct ec_private_key {
 			0x3c,
 		},
 	},
-#endif
 	{
 		.name = "wap-wsg-idm-ecid-wtls12",
 		.der_len = 106,
