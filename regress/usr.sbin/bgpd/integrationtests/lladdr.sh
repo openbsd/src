@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: lladdr.sh,v 1.2 2023/10/16 12:49:15 claudio Exp $
+#	$OpenBSD: lladdr.sh,v 1.3 2024/10/28 12:11:05 claudio Exp $
 
 set -e
 
@@ -22,7 +22,6 @@ GIF2IP6=fe80::beef:2
 error_notify() {
 	set -x
 	echo cleanup
-	pfctl -q -t bgpd_integ_test -T kill
 	pkill -T ${RDOMAIN1} bgpd || true
 	pkill -T ${RDOMAIN2} bgpd || true
 	sleep 1

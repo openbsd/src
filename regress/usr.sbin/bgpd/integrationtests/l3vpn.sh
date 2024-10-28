@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: l3vpn.sh,v 1.5 2024/10/28 12:06:14 claudio Exp $
+#	$OpenBSD: l3vpn.sh,v 1.6 2024/10/28 12:11:05 claudio Exp $
 
 set -e
 
@@ -22,7 +22,6 @@ PAIR2IP6=2001:db8:57::2
 error_notify() {
 	set -x
 	echo cleanup
-	pfctl -q -t bgpd_integ_test -T kill
 	pkill -T ${RDOMAIN1} bgpd || true
 	pkill -T ${RDOMAIN2} bgpd || true
 	sleep 1

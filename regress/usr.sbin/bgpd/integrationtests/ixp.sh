@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: ixp.sh,v 1.2 2024/01/28 12:36:21 anton Exp $
+#	$OpenBSD: ixp.sh,v 1.3 2024/10/28 12:11:05 claudio Exp $
 
 set -e
 
@@ -20,7 +20,6 @@ PAIR2IP4=192.0.2.41
 
 error_notify() {
 	echo cleanup
-	pfctl -q -t bgpd_integ_test -T kill
 	pkill -T ${RDOMAIN1} bgpd || true
 	pkill -T ${RDOMAIN2} bgpd || true
 	sleep 1

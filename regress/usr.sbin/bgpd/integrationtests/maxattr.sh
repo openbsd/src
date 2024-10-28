@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: maxattr.sh,v 1.3 2024/09/26 08:12:30 claudio Exp $
+#	$OpenBSD: maxattr.sh,v 1.4 2024/10/28 12:11:05 claudio Exp $
 
 set -e
 
@@ -21,7 +21,6 @@ PAIR2IP6_2=2001:db8:57::3
 
 error_notify() {
 	echo cleanup
-	pfctl -q -t bgpd_integ_test -T kill
 	pkill -T ${RDOMAIN1} bgpd || true
 	pkill -T ${RDOMAIN2} bgpd || true
 	sleep 1
