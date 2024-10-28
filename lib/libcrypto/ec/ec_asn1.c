@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.91 2024/10/28 17:59:45 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.92 2024/10/28 18:03:34 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1142,6 +1142,45 @@ ec_key_set_private_key(EC_KEY *ec_key, const ASN1_OCTET_STRING *aos)
 	return ret;
 }
 
+static int
+ec_key_set_public_key(EC_KEY *ec_key, const ASN1_BIT_STRING *abs)
+{
+	const EC_GROUP *group = ec_key->group;
+	EC_POINT *pub_key = NULL;
+	int ret = 0;
+
+	if (abs == NULL) {
+		ec_key->enc_flag |= EC_PKEY_NO_PUBKEY;
+		return eckey_compute_pubkey(ec_key);
+	}
+
+	/*
+	 * Per SEC 1, C.3, the bit string representing the public key comes from
+	 * an octet string, therefore the unused bits octet must be 0x00.
+	 * XXX - move this check to a helper in a_bitstr.c?
+	 */
+	if ((abs->flags & ASN1_STRING_FLAG_BITS_LEFT) != 0 &&
+	    (abs->flags & 0x07) != 0)
+		goto err;
+
+	/* XXX - SEC 1, 2.3.4 does not allow hybrid encoding. */
+	if ((pub_key = EC_POINT_new(group)) == NULL)
+		goto err;
+	if (!EC_POINT_oct2point(group, pub_key, abs->data, abs->length, NULL))
+		goto err;
+	if (!EC_KEY_set_public_key(ec_key, pub_key))
+		goto err;
+	/* oct2point has ensured that to be compressed, uncompressed, or hybrid. */
+	ec_key->conv_form = abs->data[0] & ~1U;
+
+	ret = 1;
+
+ err:
+	EC_POINT_free(pub_key);
+
+	return ret;
+}
+
 EC_KEY *
 d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 {
@@ -1163,42 +1202,8 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 		goto err;
 	if (!ec_key_set_private_key(ec_key, ec_privatekey->privateKey))
 		goto err;
-
-	if (ec_key->pub_key)
-		EC_POINT_free(ec_key->pub_key);
-	ec_key->pub_key = EC_POINT_new(ec_key->group);
-	if (ec_key->pub_key == NULL) {
-		ECerror(ERR_R_EC_LIB);
+	if (!ec_key_set_public_key(ec_key, ec_privatekey->publicKey))
 		goto err;
-	}
-
-	if (ec_privatekey->publicKey) {
-		const unsigned char *pub_oct;
-		size_t pub_oct_len;
-
-		pub_oct = ASN1_STRING_data(ec_privatekey->publicKey);
-		pub_oct_len = ASN1_STRING_length(ec_privatekey->publicKey);
-		if (pub_oct == NULL || pub_oct_len <= 0) {
-			ECerror(EC_R_BUFFER_TOO_SMALL);
-			goto err;
-		}
-
-		/* save the point conversion form */
-		ec_key->conv_form = (point_conversion_form_t) (pub_oct[0] & ~0x01);
-		if (!EC_POINT_oct2point(ec_key->group, ec_key->pub_key,
-			pub_oct, pub_oct_len, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-	} else {
-		if (!EC_POINT_mul(ec_key->group, ec_key->pub_key, ec_key->priv_key,
-			NULL, NULL, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-		/* Remember the original private-key-only encoding. */
-		ec_key->enc_flag |= EC_PKEY_NO_PUBKEY;
-	}
 
 	EC_PRIVATEKEY_free(ec_privatekey);
 	ec_privatekey = NULL;
