@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.14 2023/11/21 22:17:15 tb Exp $ */
+/* $OpenBSD: ec_print.c,v 1.15 2024/10/28 17:00:51 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +53,11 @@
  *
  */
 
-#include <openssl/crypto.h>
+#include <stdlib.h>
+
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+
 #include "ec_local.h"
 
 BIGNUM *
