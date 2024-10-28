@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.13 2024/07/25 15:36:56 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.14 2024/10/28 19:48:37 kirill Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 25 2024 $
+.Dd $Mdocdate: October 28 2024 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@ The module then sets
 .Ev MODPY_SITEPKG ,
 .Ev MODPY_SETUP ,
 .Ev MODPY_TEST_DIR ,
+.Ev MODPY_TEST_LINK_SO ,
 .Ev MODPY_TEST_LOCALE ,
 .Ev MODPY_WANTLIB ,
 .Ev MODPY_LIB_DEPENDS ,
@@ -101,6 +102,10 @@ and changes to the directory specified in
 by default ${WRKSRC}
 .Pc
 before running tests.
+In addition, it can link all .so files in ${WRKSRC} if
+.Ev MODPY_TEST_LINK_SO
+is set to Yes, which is required if you are using tests
+which use Python code that loads .so files via relative imports.
 .Pp
 Most modern Python software can be packaged using a PEP 517 build
 frontend (in the
