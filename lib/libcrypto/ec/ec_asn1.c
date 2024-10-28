@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.89 2024/10/28 17:40:46 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.90 2024/10/28 17:58:18 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1089,6 +1089,30 @@ i2d_ECPKParameters(const EC_GROUP *group, unsigned char **out_der)
 }
 LCRYPTO_ALIAS(i2d_ECPKParameters);
 
+static int
+ec_key_set_group_from_parameters(EC_KEY *ec_key, const ECPKPARAMETERS *params)
+{
+	EC_GROUP *group = NULL;
+	int ret = 0;
+
+	/* Use group in parameters, if any. Fall back to existing group. */
+	if (params != NULL) {
+		if ((group = ec_asn1_pkparameters2group(params)) == NULL)
+			goto err;
+		if (!EC_KEY_set_group(ec_key, group))
+			goto err;
+	}
+	if (ec_key->group == NULL)
+		goto err;
+
+	ret = 1;
+
+ err:
+	EC_GROUP_free(group);
+
+	return ret;
+}
+
 EC_KEY *
 d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 {
@@ -1106,14 +1130,8 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 	}
 
 	ec_key->version = ec_privatekey->version;
-	if (ec_privatekey->parameters) {
-		EC_GROUP_free(ec_key->group);
-		ec_key->group = ec_asn1_pkparameters2group(ec_privatekey->parameters);
-	}
-	if (ec_key->group == NULL) {
-		ECerror(ERR_R_EC_LIB);
+	if (!ec_key_set_group_from_parameters(ec_key, ec_privatekey->parameters))
 		goto err;
-	}
 
 	if (ec_privatekey->privateKey) {
 		ec_key->priv_key = BN_bin2bn(
