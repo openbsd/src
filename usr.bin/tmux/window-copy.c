@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.361 2024/10/25 15:19:15 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.362 2024/10/28 08:16:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3081,6 +3081,9 @@ window_copy_search_compare(struct grid *gd, u_int px, u_int py,
 	ud = &gc.data;
 	grid_get_cell(sgd, spx, 0, &sgc);
 	sud = &sgc.data;
+
+	if (*sud->data == '\t' && sud->size == 1 && gc.flags & GRID_FLAG_TAB)
+		return (1);
 
 	if (ud->size != sud->size || ud->width != sud->width)
 		return (0);
