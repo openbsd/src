@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.87 2024/10/27 09:54:01 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.88 2024/10/28 17:39:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1183,15 +1183,15 @@ d2i_ECPrivateKey(EC_KEY **out_ec_key, const unsigned char **in, long len)
 LCRYPTO_ALIAS(d2i_ECPrivateKey);
 
 int
-i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
+i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 {
 	int ret = 0, ok = 0;
 	unsigned char *buffer = NULL;
 	size_t buf_len = 0, tmp_len;
 	EC_PRIVATEKEY *ec_privatekey = NULL;
 
-	if (a == NULL || a->group == NULL || a->priv_key == NULL ||
-	    (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL)) {
+	if (ec_key == NULL || ec_key->group == NULL || ec_key->priv_key == NULL ||
+	    (!(ec_key->enc_flag & EC_PKEY_NO_PUBKEY) && ec_key->pub_key == NULL)) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
@@ -1199,15 +1199,15 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	ec_privatekey->version = a->version;
+	ec_privatekey->version = ec_key->version;
 
-	buf_len = (size_t) BN_num_bytes(a->priv_key);
+	buf_len = (size_t) BN_num_bytes(ec_key->priv_key);
 	buffer = malloc(buf_len);
 	if (buffer == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!BN_bn2bin(a->priv_key, buffer)) {
+	if (!BN_bn2bin(ec_key->priv_key, buffer)) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -1215,23 +1215,23 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
-	if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS)) {
+	if (!(ec_key->enc_flag & EC_PKEY_NO_PARAMETERS)) {
 		ECPKPARAMETERS *parameters;
 
-		if ((parameters = ec_asn1_group2pkparameters(a->group)) == NULL) {
+		if ((parameters = ec_asn1_group2pkparameters(ec_key->group)) == NULL) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		ec_privatekey->parameters = parameters;
 	}
-	if (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key != NULL) {
+	if (!(ec_key->enc_flag & EC_PKEY_NO_PUBKEY) && ec_key->pub_key != NULL) {
 		ec_privatekey->publicKey = ASN1_BIT_STRING_new();
 		if (ec_privatekey->publicKey == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		tmp_len = EC_POINT_point2oct(a->group, a->pub_key,
-		    a->conv_form, NULL, 0, NULL);
+		tmp_len = EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
+		    ec_key->conv_form, NULL, 0, NULL);
 
 		if (tmp_len > buf_len) {
 			unsigned char *tmp_buffer = realloc(buffer, tmp_len);
@@ -1242,8 +1242,8 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 			buffer = tmp_buffer;
 			buf_len = tmp_len;
 		}
-		if (!EC_POINT_point2oct(a->group, a->pub_key,
-			a->conv_form, buffer, buf_len, NULL)) {
+		if (!EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
+			ec_key->conv_form, buffer, buf_len, NULL)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
