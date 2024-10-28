@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.88 2024/10/28 17:39:57 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.89 2024/10/28 17:40:46 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1342,17 +1342,17 @@ o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 LCRYPTO_ALIAS(o2i_ECPublicKey);
 
 int
-i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
+i2o_ECPublicKey(const EC_KEY *ec_key, unsigned char **out)
 {
 	size_t buf_len = 0;
 	int new_buffer = 0;
 
-	if (a == NULL) {
+	if (ec_key == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-	buf_len = EC_POINT_point2oct(a->group, a->pub_key,
-	    a->conv_form, NULL, 0, NULL);
+	buf_len = EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
+	    ec_key->conv_form, NULL, 0, NULL);
 
 	if (out == NULL || buf_len == 0)
 		/* out == NULL => just return the length of the octet string */
@@ -1365,7 +1365,7 @@ i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 		}
 		new_buffer = 1;
 	}
-	if (!EC_POINT_point2oct(a->group, a->pub_key, a->conv_form,
+	if (!EC_POINT_point2oct(ec_key->group, ec_key->pub_key, ec_key->conv_form,
 		*out, buf_len, NULL)) {
 		ECerror(ERR_R_EC_LIB);
 		if (new_buffer) {
