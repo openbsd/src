@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.275 2024/10/08 05:28:11 jsg Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.276 2024/10/28 19:56:18 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -137,11 +137,12 @@ struct ctl_relaytable {
 };
 
 enum fd_type {
-	RELAY_FD_CERT	= 1,
-	RELAY_FD_CACERT	= 2,
-	RELAY_FD_CAFILE	= 3,
-	RELAY_FD_KEY	= 4,
-	RELAY_FD_OCSP	= 5
+	RELAY_FD_CERT		= 1,
+	RELAY_FD_CACERT		= 2,
+	RELAY_FD_CAFILE		= 3,
+	RELAY_FD_KEY		= 4,
+	RELAY_FD_OCSP		= 5,
+	RELAY_FD_CLIENTCACERT	= 6
 };
 
 struct ctl_relayfd {
@@ -744,6 +745,7 @@ struct protocol {
 	char			 tlscacert[PATH_MAX];
 	char			 tlscakey[PATH_MAX];
 	char			*tlscapass;
+	char			 tlsclientca[PATH_MAX];
 	struct keynamelist	 tlscerts;
 	char			 name[MAX_NAME_SIZE];
 	int			 tickets;
@@ -833,6 +835,7 @@ struct relay {
 
 	int			 rl_tls_ca_fd;
 	int			 rl_tls_cacert_fd;
+	int			 rl_tls_client_ca_fd;
 	EVP_PKEY		*rl_tls_pkey;
 	X509			*rl_tls_cacertx509;
 	char			*rl_tls_cakey;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.191 2023/06/25 08:07:38 op Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.192 2024/10/28 19:56:18 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1358,6 +1358,14 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
 
 	if ((rlay->rl_conf.flags & F_TLS) == 0)
 		return (0);
+
+	if (strlen(proto->tlsclientca) && rlay->rl_tls_client_ca_fd == -1) {
+		if ((rlay->rl_tls_client_ca_fd =
+		    open(proto->tlsclientca, O_RDONLY)) == -1)
+			return (-1);
+		log_debug("%s: using client ca %s", __func__,
+		    proto->tlsclientca);
+	}
 
 	if (name == NULL &&
 	    print_host(&rlay->rl_conf.ss, hbuf, sizeof(hbuf)) == NULL)

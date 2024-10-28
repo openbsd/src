@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.259 2024/01/17 10:01:24 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.260 2024/10/28 19:56:18 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2159,8 +2159,7 @@ relay_tls_ctx_create(struct relay *rlay)
 		tls_config_insecure_noverifyname(tls_client_cfg);
 
 		if (rlay->rl_tls_ca_fd != -1) {
-			if ((buf = relay_load_fd(rlay->rl_tls_ca_fd, &len)) ==
-			    NULL) {
+			if ((buf = relay_load_fd(rlay->rl_tls_ca_fd, &len)) == NULL) {
 				log_warn("failed to read root certificates");
 				goto err;
 			}
@@ -2250,6 +2249,26 @@ relay_tls_ctx_create(struct relay *rlay)
 				goto err;
 		}
 		rlay->rl_tls_cacert_fd = -1;
+
+		if (rlay->rl_tls_client_ca_fd != -1) {
+			if ((buf = relay_load_fd(rlay->rl_tls_client_ca_fd,
+			    &len)) == NULL) {
+				log_warn(
+				    "failed to read tls client CA certificate");
+				goto err;
+			}
+
+			if (tls_config_set_ca_mem(tls_cfg, buf, len) != 0) {
+				log_warnx(
+				    "failed to set tls client CA cert: %s",
+				    tls_config_error(tls_cfg));
+				goto err;
+			}
+			purge_key(&buf, len);
+
+			tls_config_verify_client(tls_cfg);
+		}
+		rlay->rl_tls_client_ca_fd = -1;
 
 		tls = tls_server();
 		if (tls == NULL) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.210 2024/09/21 05:37:26 aisha Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.211 2024/10/28 19:56:18 tb Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2024 $
+.Dd $Mdocdate: October 28 2024 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -954,6 +954,9 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about TLS cipher suites and preference lists.
+.It Ic client ca Ar path
+Require TLS client certificates that can be verified against the CA
+certificates in the specified file.
 .It Ic client-renegotiation
 Allow client-initiated renegotiation.
 To mitigate a potential DoS risk,

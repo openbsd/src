@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.257 2024/08/10 05:47:29 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.258 2024/10/28 19:56:18 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -179,7 +179,7 @@ typedef struct {
 %token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
-%token	WEBSOCKETS PFLOG
+%token	WEBSOCKETS PFLOG CLIENT
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	context hostname interface table value path
@@ -1351,6 +1351,16 @@ tlsflags	: SESSION TICKETS { proto->tickets = 1; }
 			name->name = $2;
 			TAILQ_INSERT_TAIL(&proto->tlscerts, name, entry);
 		}
+		| CLIENT CA STRING		{
+			if (strlcpy(proto->tlsclientca, $3,
+			    sizeof(proto->tlsclientca)) >=
+			    sizeof(proto->tlsclientca)) {
+				yyerror("tlsclientca truncated");
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
 		| NO flag			{ proto->tlsflags &= ~($2); }
 		| flag				{ proto->tlsflags |= $1; }
 		;
@@ -1822,6 +1832,7 @@ relay		: RELAY STRING	{
 			r->rl_conf.dstretry = 0;
 			r->rl_tls_ca_fd = -1;
 			r->rl_tls_cacert_fd = -1;
+			r->rl_tls_client_ca_fd = -1;
 			TAILQ_INIT(&r->rl_tables);
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
@@ -2411,6 +2422,7 @@ lookup(char *s)
 		{ "check",		CHECK },
 		{ "checks",		CHECKS },
 		{ "ciphers",		CIPHERS },
+		{ "client",		CLIENT },
 		{ "code",		CODE },
 		{ "connection",		CONNECTION },
 		{ "context",		CONTEXT },
@@ -3397,6 +3409,7 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	if (!(rb->rl_conf.flags & F_TLS)) {
 		rb->rl_tls_cacert_fd = -1;
 		rb->rl_tls_ca_fd = -1;
+		rb->rl_tls_client_ca_fd = -1;
 	}
 	TAILQ_INIT(&rb->rl_tables);
 
