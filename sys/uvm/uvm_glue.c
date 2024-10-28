@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.86 2024/10/21 18:27:34 kettenis Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.87 2024/10/28 08:25:32 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -337,13 +337,13 @@ int	swapdebug = 0;
  *   are swapped... otherwise the longest-sleeping or stopped process
  *   is swapped, otherwise the longest resident process...
  */
-void
+int
 uvm_swapout_threads(void)
 {
 	struct process *pr;
 	struct proc *p, *slpp;
 	struct process *outpr;
-	int outpri;
+	int free, outpri;
 	int didswap = 0;
 	extern int maxslp; 
 	/* XXXCDC: should move off to uvmexp. or uvm., also in uvm_meter */
@@ -352,6 +352,8 @@ uvm_swapout_threads(void)
 	if (!enableswap)
 		return;
 #endif
+
+	free = uvmexp.free;
 
 	/*
 	 * outpr/outpri  : stop/sleep process whose most active thread has
@@ -401,8 +403,7 @@ next_process:	;
 	 * if we are real low on memory since we don't gain much by doing
 	 * it.
 	 */
-	if (didswap == 0 && uvmexp.free <= atop(round_page(USPACE)) &&
-	    outpr != NULL) {
+	if (didswap == 0 && free <= atop(round_page(USPACE)) && outpr != NULL) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
 			printf("swapout_threads: no duds, try procpr %p\n",
@@ -410,6 +411,12 @@ next_process:	;
 #endif
 		pmap_collect(outpr->ps_vmspace->vm_map.pmap);
 	}
+
+	/*
+	 * XXX might return a non-0 value even if pmap_collect() didn't
+	 * free anything.
+	 */
+	return (uvmexp.free - free);
 }
 
 #endif	/* __HAVE_PMAP_COLLECT */
