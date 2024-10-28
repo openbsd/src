@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.449 2024/10/25 21:02:34 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.450 2024/10/28 10:18:03 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -122,6 +122,11 @@
 #include "ucom.h"
 #include "video.h"
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
 extern int fscale;
@@ -132,7 +137,7 @@ extern int audio_record_enable;
 extern int video_record_enable;
 extern int autoconf_serial;
 
-int allowkmem;
+int allowkmem;		/* [a] */
 
 int sysctl_securelevel(void *, size_t *, void *, size_t, struct proc *);
 int sysctl_diskinit(int, struct proc *);
@@ -504,6 +509,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 
 	switch (name[0]) {
+	case KERN_ALLOWKMEM:
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &allowkmem));
 	case KERN_OSTYPE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, ostype));
 	case KERN_OSRELEASE:
@@ -616,9 +624,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	switch (name[0]) {
 	case KERN_SECURELVL:
 		return (sysctl_securelevel(oldp, oldlenp, newp, newlen, p));
-	case KERN_ALLOWKMEM:
-		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
-		    &allowkmem));
 	case KERN_HOSTNAME:
 		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
 		    hostname, sizeof(hostname));
