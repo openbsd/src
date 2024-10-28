@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.15 2024/01/15 16:57:31 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.16 2024/10/28 14:14:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -142,14 +142,20 @@ rtkit_recv(struct mbox_channel *mc, struct aplmbox_msg *msg)
 }
 
 int
-rtkit_send(struct mbox_channel *mc, uint32_t endpoint,
+rtkit_send(struct rtkit_state *state, uint32_t endpoint,
     uint64_t type, uint64_t data)
 {
 	struct aplmbox_msg msg;
 
 	msg.data0 = (type << RTKIT_MGMT_TYPE_SHIFT) | data;
 	msg.data1 = endpoint;
-	return mbox_send(mc, &msg, sizeof(msg));
+
+	if (state->flags & RK_DEBUG) {
+		printf("%s: 0x%016llx 0x%02x\n", __func__,
+		    msg.data0, msg.data1);
+	}
+
+	return mbox_send(state->mc, &msg, sizeof(msg));
 }
 
 bus_addr_t
@@ -212,18 +218,16 @@ rtkit_alloc(struct rtkit_state *state, bus_size_t size, caddr_t *kvap)
 int
 rtkit_start(struct rtkit_state *state, uint32_t endpoint)
 {
-	struct mbox_channel *mc = state->mc;
 	uint64_t reply;
 
 	reply = ((uint64_t)endpoint << RTKIT_MGMT_STARTEP_EP_SHIFT);
 	reply |= RTKIT_MGMT_STARTEP_START;
-	return rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_STARTEP, reply);
+	return rtkit_send(state, RTKIT_EP_MGMT, RTKIT_MGMT_STARTEP, reply);
 }
 
 int
 rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 {
-	struct mbox_channel *mc = state->mc;
 	uint64_t minver, maxver, ver;
 	uint64_t base, bitmap, reply;
 	uint32_t endpoint;
@@ -244,7 +248,7 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 			return EINVAL;
 		}
 		ver = min(RTKIT_MAXVER, maxver);
-		error = rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_HELLO_ACK,
+		error = rtkit_send(state, RTKIT_EP_MGMT, RTKIT_MGMT_HELLO_ACK,
 		    (ver << RTKIT_MGMT_HELLO_MINVER_SHIFT) |
 		    (ver << RTKIT_MGMT_HELLO_MAXVER_SHIFT));
 		if (error)
@@ -267,7 +271,7 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 			reply |= RTKIT_MGMT_EPMAP_LAST;
 		else
 			reply |= RTKIT_MGMT_EPMAP_MORE;
-		error = rtkit_send(state->mc, RTKIT_EP_MGMT,
+		error = rtkit_send(state, RTKIT_EP_MGMT,
 		    RTKIT_MGMT_EPMAP, reply);
 		if (error)
 			return error;
@@ -459,7 +463,6 @@ void
 rtkit_handle_crashlog_buffer(void *arg)
 {
 	struct rtkit_state *state = arg;
-	struct mbox_channel *mc = state->mc;
 	struct rtkit *rk = state->rk;
 	bus_addr_t addr = state->crashlog_addr;
 	bus_size_t size = state->crashlog_size;
@@ -494,7 +497,7 @@ rtkit_handle_crashlog_buffer(void *arg)
 			return;
 	}
 
-	rtkit_send(mc, RTKIT_EP_CRASHLOG, RTKIT_BUFFER_REQUEST,
+	rtkit_send(state, RTKIT_EP_CRASHLOG, RTKIT_BUFFER_REQUEST,
 	    (size << RTKIT_BUFFER_SIZE_SHIFT) | addr);
 }
 
@@ -580,7 +583,6 @@ void
 rtkit_handle_syslog_buffer(void *arg)
 {
 	struct rtkit_state *state = arg;
-	struct mbox_channel *mc = state->mc;
 	struct rtkit *rk = state->rk;
 	bus_addr_t addr = state->syslog_addr;
 	bus_size_t size = state->syslog_size;
@@ -592,14 +594,13 @@ rtkit_handle_syslog_buffer(void *arg)
 			return;
 	}
 
-	rtkit_send(mc, RTKIT_EP_SYSLOG, RTKIT_BUFFER_REQUEST,
+	rtkit_send(state, RTKIT_EP_SYSLOG, RTKIT_BUFFER_REQUEST,
 	    (size << RTKIT_BUFFER_SIZE_SHIFT) | addr);
 }
 
 int
 rtkit_handle_syslog(struct rtkit_state *state, struct aplmbox_msg *msg)
 {
-	struct mbox_channel *mc = state->mc;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -628,7 +629,7 @@ rtkit_handle_syslog(struct rtkit_state *state, struct aplmbox_msg *msg)
 		break;
 	case RTKIT_SYSLOG_LOG:
 		rtkit_handle_syslog_log(state, msg);
-		error = rtkit_send(mc, RTKIT_EP_SYSLOG,
+		error = rtkit_send(state, RTKIT_EP_SYSLOG,
 		    RTKIT_MGMT_TYPE(msg->data0), msg->data0);
 		if (error)
 			return error;
@@ -646,7 +647,6 @@ void
 rtkit_handle_ioreport_buffer(void *arg)
 {
 	struct rtkit_state *state = arg;
-	struct mbox_channel *mc = state->mc;
 	struct rtkit *rk = state->rk;
 	bus_addr_t addr = state->ioreport_addr;
 	bus_size_t size = state->ioreport_size;
@@ -658,14 +658,13 @@ rtkit_handle_ioreport_buffer(void *arg)
 			return;
 	}
 
-	rtkit_send(mc, RTKIT_EP_IOREPORT, RTKIT_BUFFER_REQUEST,
+	rtkit_send(state, RTKIT_EP_IOREPORT, RTKIT_BUFFER_REQUEST,
 	    (size << RTKIT_BUFFER_SIZE_SHIFT) | addr);
 }
 
 int
 rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 {
-	struct mbox_channel *mc = state->mc;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -687,7 +686,7 @@ rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 	case RTKIT_IOREPORT_UNKNOWN1:
 	case RTKIT_IOREPORT_UNKNOWN2:
 		/* These unknown events have to be acked to make progress. */
-		error = rtkit_send(mc, RTKIT_EP_IOREPORT,
+		error = rtkit_send(state, RTKIT_EP_IOREPORT,
 		    RTKIT_MGMT_TYPE(msg->data0), msg->data0);
 		if (error)
 			return error;
@@ -705,7 +704,6 @@ void
 rtkit_handle_oslog_buffer(void *arg)
 {
 	struct rtkit_state *state = arg;
-	struct mbox_channel *mc = state->mc;
 	struct rtkit *rk = state->rk;
 	bus_addr_t addr = state->oslog_addr;
 	bus_size_t size = state->oslog_size;
@@ -716,7 +714,7 @@ rtkit_handle_oslog_buffer(void *arg)
 			return;
 	}
 
-	rtkit_send(mc, RTKIT_EP_OSLOG,
+	rtkit_send(state, RTKIT_EP_OSLOG,
 	    (RTKIT_OSLOG_BUFFER_REQUEST << RTKIT_OSLOG_TYPE_SHIFT),
 	    (size << RTKIT_OSLOG_BUFFER_SIZE_SHIFT) | (addr >> PAGE_SHIFT));
 }
@@ -768,8 +766,11 @@ rtkit_poll(struct rtkit_state *state)
 	if (error)
 		return error;
 
-	if (state->flags & RK_DEBUG)
-		printf("%s: 0x%016llx 0x%02x\n", __func__, msg.data0, msg.data1);
+	if (state->flags & RK_DEBUG) {
+		printf("%s: 0x%016llx 0x%02x\n", __func__,
+		    msg.data0, msg.data1);
+	}
+
 	endpoint = msg.data1;
 	switch (endpoint) {
 	case RTKIT_EP_MGMT:
@@ -856,7 +857,7 @@ int
 rtkit_boot(struct rtkit_state *state)
 {
 	/* Wake up! */
-	return rtkit_set_iop_pwrstate(state, RTKIT_MGMT_PWR_STATE_ON);
+	return rtkit_set_iop_pwrstate(state, RTKIT_MGMT_PWR_STATE_INIT);
 }
 
 void
@@ -896,13 +897,12 @@ rtkit_shutdown(struct rtkit_state *state)
 int
 rtkit_set_ap_pwrstate(struct rtkit_state *state, uint16_t pwrstate)
 {
-	struct mbox_channel *mc = state->mc;
 	int error, timo;
 
 	if (state->ap_pwrstate == pwrstate)
 		return 0;
 
-	error = rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_AP_PWR_STATE,
+	error = rtkit_send(state, RTKIT_EP_MGMT, RTKIT_MGMT_AP_PWR_STATE,
 	    pwrstate);
 	if (error)
 		return error;
@@ -935,13 +935,12 @@ rtkit_set_ap_pwrstate(struct rtkit_state *state, uint16_t pwrstate)
 int
 rtkit_set_iop_pwrstate(struct rtkit_state *state, uint16_t pwrstate)
 {
-	struct mbox_channel *mc = state->mc;
 	int error, timo;
 
 	if (state->iop_pwrstate == (pwrstate & 0xff))
 		return 0;
 
-	error = rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_IOP_PWR_STATE,
+	error = rtkit_send(state, RTKIT_EP_MGMT, RTKIT_MGMT_IOP_PWR_STATE,
 	    pwrstate);
 	if (error)
 		return error;
@@ -990,5 +989,5 @@ int
 rtkit_send_endpoint(struct rtkit_state *state, uint32_t endpoint,
     uint64_t data)
 {
-	return rtkit_send(state->mc, endpoint, 0, data);
+	return rtkit_send(state, endpoint, 0, data);
 }
