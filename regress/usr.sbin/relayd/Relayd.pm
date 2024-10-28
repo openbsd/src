@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.19 2021/10/12 05:42:39 anton Exp $
+#	$OpenBSD: Relayd.pm,v 1.20 2024/10/28 19:57:02 tb Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -84,6 +84,9 @@ sub new {
 		$self->{listenssl} = $self->{forwardssl} = 1;
 		print $fh "\n\ttls ca cert ca.crt";
 		print $fh "\n\ttls ca key ca.key password ''";
+	}
+	if ($self->{verifyclient}) {
+		print $fh "\n\ttls client ca client-ca.crt";
 	}
 	# substitute variables in config file
 	foreach (@protocol) {

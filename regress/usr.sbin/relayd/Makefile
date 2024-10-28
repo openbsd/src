@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2021/12/30 20:51:34 dv Exp $
+#	$OpenBSD: Makefile,v 1.22 2024/10/28 19:57:02 tb Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -92,7 +92,23 @@ server.req:
 server.crt: ca.crt server.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in server.req -out server.crt
 
-${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server.crt
+client-ca.crt:
+	openssl req -batch -new \
+		-subj /L=OpenBSD/O=relayd-regress/OU=client-ca/CN=root/ \
+		-nodes -newkey rsa -keyout client-ca.key -x509 \
+		-out client-ca.crt
+
+client.req:
+	openssl req -batch -new \
+		-subj /L=OpenBSD/O=relayd-regress/OU=client/CN=localhost/ \
+		-nodes -newkey rsa -keyout client.key \
+		-out client.req
+
+client.crt: client-ca.crt client.req
+	openssl x509 -CAcreateserial -CAkey client-ca.key -CA client-ca.crt \
+		-req -in client.req -out client.crt
+
+${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server.crt client.crt
 .if empty (REMOTE_SSH)
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: 127.0.0.1.crt
 .else
