@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.18 2024/10/26 20:50:53 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.19 2024/10/28 18:44:12 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -27,7 +27,7 @@
 /* set to 0 if/when we are going to enforce 0 <= a,b < p. */
 #define NEGATIVE_CURVE_COEFFICIENTS_ALLOWED	1
 /* unifdef once private key padding in i2d_ECPrivateKey() is fixed. */
-#define CORRECT_PRIV_KEY_PADDING		0
+#define CORRECT_PRIV_KEY_PADDING		1
 
 static const uint8_t ec_secp256r1_pkparameters_named_curve[] = {
 	0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03,
