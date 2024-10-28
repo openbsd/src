@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.92 2024/10/28 18:03:34 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.93 2024/10/28 18:15:53 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -606,15 +606,11 @@ ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 }
 
 static int
-ec_asn1_encode_field_element(const EC_GROUP *group, const BIGNUM *bn,
+ec_asn1_encode_bn(const EC_GROUP *group, const BIGNUM *bn, int len,
     ASN1_OCTET_STRING *os)
 {
 	unsigned char *buf;
-	int len;
 	int ret = 0;
-
-	/* Zero-pad field element per SEC 1, section 2.3.5. */
-	len = (EC_GROUP_get_degree(group) + 7) / 8;
 
 	/* One extra byte for historic NUL termination of ASN1_STRINGs. */
 	if ((buf = calloc(1, len + 1)) == NULL)
@@ -633,6 +629,32 @@ ec_asn1_encode_field_element(const EC_GROUP *group, const BIGNUM *bn,
 	freezero(buf, len);
 
 	return ret;
+}
+
+static int
+ec_asn1_encode_field_element(const EC_GROUP *group, const BIGNUM *bn,
+    ASN1_OCTET_STRING *os)
+{
+	int len;
+
+	/* Zero-pad field element to byte length of p per SEC 1, 2.3.5. */
+	len = (EC_GROUP_get_degree(group) + 7) / 8;
+	return ec_asn1_encode_bn(group, bn, len, os);
+}
+
+static int
+ec_asn1_encode_private_key(const EC_GROUP *group, const BIGNUM *bn,
+    ASN1_OCTET_STRING *os)
+{
+	const BIGNUM *order;
+
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
+		ECerror(EC_R_INVALID_GROUP_ORDER);
+		return 0;
+	}
+
+	/* Zero-pad private key to byte length of order per SEC 1, C.4. */
+	return ec_asn1_encode_bn(group, bn, BN_num_bytes(order), os);
 }
 
 static int
@@ -1227,7 +1249,7 @@ i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 {
 	int ret = 0, ok = 0;
 	unsigned char *buffer = NULL;
-	size_t buf_len = 0, tmp_len;
+	size_t buf_len = 0;
 	EC_PRIVATEKEY *ec_privatekey = NULL;
 
 	if (ec_key == NULL || ec_key->group == NULL || ec_key->priv_key == NULL ||
@@ -1241,20 +1263,9 @@ i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 	}
 	ec_privatekey->version = ec_key->version;
 
-	buf_len = (size_t) BN_num_bytes(ec_key->priv_key);
-	buffer = malloc(buf_len);
-	if (buffer == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
+	if (!ec_asn1_encode_private_key(ec_key->group, ec_key->priv_key,
+	    ec_privatekey->privateKey))
 		goto err;
-	}
-	if (!BN_bn2bin(ec_key->priv_key, buffer)) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	if (!ASN1_STRING_set(ec_privatekey->privateKey, buffer, buf_len)) {
-		ECerror(ERR_R_ASN1_LIB);
-		goto err;
-	}
 	if (!(ec_key->enc_flag & EC_PKEY_NO_PARAMETERS)) {
 		ECPKPARAMETERS *parameters;
 
@@ -1270,17 +1281,15 @@ i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		tmp_len = EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
-		    ec_key->conv_form, NULL, 0, NULL);
+		if ((buf_len = EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
+		    ec_key->conv_form, NULL, 0, NULL)) == 0) {
+			ECerror(ERR_R_EC_LIB);
+			goto err;
+		}
 
-		if (tmp_len > buf_len) {
-			unsigned char *tmp_buffer = realloc(buffer, tmp_len);
-			if (!tmp_buffer) {
-				ECerror(ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-			buffer = tmp_buffer;
-			buf_len = tmp_len;
+		if ((buffer = calloc(1, buf_len)) == NULL) {
+			ECerror(ERR_R_MALLOC_FAILURE);
+			goto err;
 		}
 		if (!EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
 			ec_key->conv_form, buffer, buf_len, NULL)) {
