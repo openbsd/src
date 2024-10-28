@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.70 2024/10/20 10:52:51 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.71 2024/10/28 18:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -310,7 +310,7 @@ eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 	return -2;
 }
 
-static int
+int
 eckey_compute_pubkey(EC_KEY *eckey)
 {
 	const BIGNUM *priv_key;

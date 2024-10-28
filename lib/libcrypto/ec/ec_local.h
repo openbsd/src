@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.31 2024/10/22 12:06:08 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.32 2024/10/28 18:01:26 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -336,6 +336,7 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
+int eckey_compute_pubkey(EC_KEY *eckey);
 int ec_key_gen(EC_KEY *eckey);
 int ecdh_compute_key(unsigned char **out, size_t *out_len,
     const EC_POINT *pub_key, const EC_KEY *ecdh);
