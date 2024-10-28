@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.322 2024/10/25 15:13:10 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.323 2024/10/28 08:16:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5188,6 +5188,16 @@ format_defaults_paste_buffer(struct format_tree *ft, struct paste_buffer *pb)
 	ft->pb = pb;
 }
 
+static int
+format_is_word_separator(const char *ws, const struct grid_cell *gc)
+{
+	if (utf8_cstrhas(ws, &gc->data))
+		return (1);
+	if (gc->flags & GRID_FLAG_TAB)
+		return (1);
+	return gc->data.size == 1 && *gc->data.data == ' ';
+}
+
 /* Return word at given coordinates. Caller frees. */
 char *
 format_grid_word(struct grid *gd, u_int x, u_int y)
@@ -5207,8 +5217,7 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
 			break;
-		if (utf8_cstrhas(ws, &gc.data) ||
-		    (gc.data.size == 1 && *gc.data.data == ' ')) {
+		if (format_is_word_separator(ws, &gc)) {
 			found = 1;
 			break;
 		}
@@ -5245,8 +5254,7 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
 			break;
-		if (utf8_cstrhas(ws, &gc.data) ||
-		    (gc.data.size == 1 && *gc.data.data == ' '))
+		if (format_is_word_separator(ws, &gc))
 			break;
 
 		ud = xreallocarray(ud, size + 2, sizeof *ud);
