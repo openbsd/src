@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.6 2024/10/24 18:52:59 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.7 2024/10/29 21:16:36 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -55,10 +55,14 @@ struct psp_softc {
 	caddr_t			sc_tmr_kva;
 
 	struct rwlock		sc_lock;
+
+	uint32_t		sc_flags;
+#define PSPF_INITIALIZED	0x1
 };
 
 int	psp_get_pstatus(struct psp_softc *, struct psp_platform_status *);
 int	psp_init(struct psp_softc *, struct psp_init *);
+int	psp_reinit(struct psp_softc *);
 int	psp_match(struct device *, void *, void *);
 void	psp_attach(struct device *, struct device *, void *);
 
@@ -102,7 +106,6 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 	struct psp_softc		*sc = (struct psp_softc *)self;
 	struct psp_attach_args		*arg = aux;
 	struct psp_platform_status	pst;
-	struct psp_init			init;
 	size_t				size;
 	int				nsegs;
 
@@ -155,61 +158,16 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 		printf(" uninitialized state");
 		goto fail_3;
 	}
-	printf(" api %u.%u, build %u,",
+	printf(" api %u.%u, build %u, SEV, SEV-ES",
 	    pst.api_major, pst.api_minor, pst.cfges_build >> 24);
 
-	/*
-         * create and map Trusted Memory Region (TMR); size 1 Mbyte,
-         * needs to be aligned to 1 Mbyte.
-	 */
-	sc->sc_tmr_size = size = PSP_TMR_SIZE;
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
-	    &sc->sc_tmr_map) != 0)
-		goto fail_3;
-
-	if (bus_dmamem_alloc(sc->sc_dmat, size, size, 0, &sc->sc_tmr_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
-		goto fail_4;
-
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_tmr_seg, nsegs, size,
-	    &sc->sc_tmr_kva, BUS_DMA_WAITOK) != 0)
-		goto fail_5;
-
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_tmr_map, sc->sc_tmr_kva,
-	    size, NULL, BUS_DMA_WAITOK) != 0)
-		goto fail_6;
-
-	memset(&init, 0, sizeof(init));
-	init.enable_es = 1;
-	init.tmr_length = PSP_TMR_SIZE;
-	init.tmr_paddr = sc->sc_tmr_map->dm_segs[0].ds_addr;
-	if (psp_init(sc, &init)) {
-		printf(" init");
-		goto fail_7;
-	}
-
-	printf(" SEV");
-
-	psp_get_pstatus(sc, &pst);
-	if ((pst.state == PSP_PSTATE_INIT) && (pst.cfges_build & 0x1))
-		printf(", SEV-ES");
-
-        /* enable interrupts */
-        bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_inten, -1);
+	/* enable interrupts */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_inten, -1);
 
 	printf("\n");
 
 	return;
 
-fail_7:
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_tmr_map);
-fail_6:
-	bus_dmamem_unmap(sc->sc_dmat, sc->sc_tmr_kva, size);
-fail_5:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_tmr_seg, 1);
-fail_4:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_tmr_map);
 fail_3:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_map);
 fail_2:
@@ -300,7 +258,67 @@ psp_init(struct psp_softc *sc, struct psp_init *uinit)
 
 	wbinvd_on_all_cpus();
 
+	sc->sc_flags |= PSPF_INITIALIZED;
+
 	return (0);
+}
+
+int
+psp_reinit(struct psp_softc *sc)
+{
+	struct psp_init	init;
+	size_t		size;
+	int		nsegs;
+
+	if (sc->sc_flags & PSPF_INITIALIZED) {
+		printf("%s: invalid flags 0x%x\n", __func__, sc->sc_flags);
+		return (EINVAL);
+	}
+
+	if (sc->sc_tmr_map != NULL)
+		return (EINVAL);
+
+	/*
+	 * create and map Trusted Memory Region (TMR); size 1 Mbyte,
+	 * needs to be aligend to 1 Mbyte.
+	 */
+	sc->sc_tmr_size = size = PSP_TMR_SIZE;
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+	    &sc->sc_tmr_map) != 0)
+		return (ENOMEM);
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, size, 0, &sc->sc_tmr_seg, 1,
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+		goto fail_0;
+
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_tmr_seg, nsegs, size,
+	    &sc->sc_tmr_kva, BUS_DMA_WAITOK) != 0)
+		goto fail_1;
+
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_tmr_map, sc->sc_tmr_kva,
+	    size, NULL, BUS_DMA_WAITOK) != 0)
+		goto fail_2;
+
+	memset(&init, 0, sizeof(init));
+	init.enable_es = 1;
+	init.tmr_length = PSP_TMR_SIZE;
+	init.tmr_paddr = sc->sc_tmr_map->dm_segs[0].ds_addr;
+	if (psp_init(sc, &init))
+		goto fail_3;
+
+	return (0);
+
+fail_3:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_tmr_map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_tmr_kva, size);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_tmr_seg, 1);
+fail_0:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_tmr_map);
+
+	return (ENOMEM);
 }
 
 int
@@ -638,6 +656,9 @@ pspopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
+	if (!(sc->sc_flags & PSPF_INITIALIZED))
+		return (psp_reinit(sc));
+
 	return (0);
 }
 
@@ -666,6 +687,9 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	rw_enter_write(&sc->sc_lock);
 
 	switch (cmd) {
+	case PSP_IOC_INIT:
+		ret = psp_reinit(sc);
+		break;
 	case PSP_IOC_GET_PSTATUS:
 		ret = psp_get_pstatus(sc, (struct psp_platform_status *)data);
 		break;

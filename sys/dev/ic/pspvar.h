@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.3 2024/10/24 18:52:59 bluhm Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.4 2024/10/29 21:16:36 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -249,6 +249,7 @@ struct psp_snp_platform_status {
 #define PSP_IOC_ACTIVATE	_IOW('P', 9, struct psp_activate)
 #define PSP_IOC_DEACTIVATE	_IOW('P', 10, struct psp_deactivate)
 #define PSP_IOC_SNP_GET_PSTATUS	_IOR('P', 11, struct psp_snp_platform_status)
+#define PSP_IOC_INIT		_IO('P', 12)
 #define PSP_IOC_GUEST_SHUTDOWN	_IOW('P', 255, struct psp_guest_shutdown)
 
 #ifdef _KERNEL
