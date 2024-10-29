@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.21 2024/10/29 05:21:31 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.22 2024/10/29 06:34:18 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -2682,13 +2682,11 @@ ec_group_check_private_key(const struct ec_private_key *key)
 	 * point reuse works.
 	 */
 
-#if 0
 	if (!EC_POINT_dbl(group, point, point, NULL)) {
 		fprintf(stderr, "FAIL: EC_POINT_dbl() failed for %s\n",
 		    key->name);
 		goto err;
 	}
-#endif
 	if (!EC_POINT_invert(group, point, NULL)) {
 		fprintf(stderr, "FAIL: EC_POINT_invert() failed for %s\n",
 		    key->name);
