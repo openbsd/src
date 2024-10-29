@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplrtk.c,v 1.3 2022/11/09 19:18:11 kettenis Exp $	*/
+/*	$OpenBSD: aplrtk.c,v 1.4 2024/10/29 21:19:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -98,7 +98,6 @@ int
 aplrtk_do_start(struct aplrtk_softc *sc)
 {
 	uint32_t ctrl;
-	int error;
 
 	ctrl = HREAD4(sc, CPU_CTRL);
 	HWRITE4(sc, CPU_CTRL, ctrl | CPU_CTRL_RUN);
@@ -109,11 +108,7 @@ aplrtk_do_start(struct aplrtk_softc *sc)
 	if (sc->sc_state == NULL)
 		return EIO;
 
-	error = rtkit_boot(sc->sc_state);
-	if (error)
-		return error;
-
-	return rtkit_set_ap_pwrstate(sc->sc_state, RTKIT_MGMT_PWR_STATE_ON);
+	return rtkit_boot(sc->sc_state);
 }
 
 int

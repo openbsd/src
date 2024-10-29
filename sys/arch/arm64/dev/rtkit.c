@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.16 2024/10/28 14:14:04 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.17 2024/10/29 21:19:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -856,8 +856,14 @@ rtkit_init(int node, const char *name, int flags, struct rtkit *rk)
 int
 rtkit_boot(struct rtkit_state *state)
 {
+	int error;
+
 	/* Wake up! */
-	return rtkit_set_iop_pwrstate(state, RTKIT_MGMT_PWR_STATE_INIT);
+	error = rtkit_set_iop_pwrstate(state, RTKIT_MGMT_PWR_STATE_INIT);
+	if (error)
+		return error;
+
+	return rtkit_set_ap_pwrstate(state, RTKIT_MGMT_PWR_STATE_ON);
 }
 
 void
