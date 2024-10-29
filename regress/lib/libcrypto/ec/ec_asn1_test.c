@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.22 2024/10/29 06:34:18 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.23 2024/10/29 13:19:22 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -2544,22 +2544,15 @@ static const struct ec_private_key {
 
 #define N_EC_PRIVATE_KEYS (sizeof(ec_private_keys) / sizeof(ec_private_keys[0]))
 
-static int
-ec_group_check_private_key(const struct ec_private_key *key)
+static EC_KEY *
+ec_key_check_sanity(const struct ec_private_key *key)
 {
-	EC_KEY *ec_key = NULL, *ec_pub_key = NULL;
-	const EC_GROUP *group;
-	const EC_POINT *ec_public_point;
-	EC_POINT *point = NULL;
-	BIGNUM *hex_bn = NULL, *point_bn = NULL;
+	EC_KEY *ec_key;
 	const unsigned char *p;
+	unsigned char *der = NULL;
+	int der_len = 0;
 	unsigned int flags;
-	unsigned char *der = NULL, *ostr = NULL;
-	char *hex = NULL;
-	int der_len = 0, hex_len = 0, ostr_len = 0;
 	uint8_t form;
-	int rv;
-	int failed = 1;
 
 	p = key->der;
 	if ((ec_key = d2i_ECPrivateKey(NULL, &p, key->der_len)) == NULL) {
@@ -2582,6 +2575,7 @@ ec_group_check_private_key(const struct ec_private_key *key)
 	if (!EC_KEY_check_key(ec_key)) {
 		fprintf(stderr, "FAIL: EC_KEY_check_key() for %s\n", key->name);
 		ERR_print_errors_fp(stderr);
+		goto err;
 	}
 
 	der = NULL;
@@ -2597,9 +2591,24 @@ ec_group_check_private_key(const struct ec_private_key *key)
 	freezero(der, der_len);
 	der = NULL;
 
-	/*
-	 * Check the outputs of EC_POINT_point2hex() and i2o_ECPublicKey().
-	 */
+	return ec_key;
+
+ err:
+	EC_KEY_free(ec_key);
+	freezero(der, der_len);
+
+	return NULL;
+}
+
+static int
+ec_key_test_point_encoding(const struct ec_private_key *key, const EC_KEY *ec_key)
+{
+	const EC_GROUP *group;
+	const EC_POINT *ec_public_point;
+	char *hex = NULL;
+	unsigned char *ostr = NULL;
+	int hex_len = 0, ostr_len = 0;
+	int failed = 1;
 
 	if ((group = EC_KEY_get0_group(ec_key)) == NULL) {
 		fprintf(stderr, "FAIL: EC_KEY_get0_group() for %s\n", key->name);
@@ -2622,8 +2631,12 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
-	freezero(ostr, ostr_len);
-	ostr = NULL;
+	if (compare_data(key->name, hex, hex_len, key->hex, hex_len) == -1) {
+		fprintf(stderr, "FAIL: EC_POINT_point2hex() comparison for %s\n",
+		    key->name);
+		goto err;
+	}
+
 	if ((ostr_len = i2o_ECPublicKey(ec_key, &ostr)) <= 0) {
 		fprintf(stderr, "FAIL: i2o_ECPublicKey for %s\n", key->name);
 		goto err;
@@ -2635,9 +2648,36 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
+	failed = 0;
+
+ err:
+	free(hex);
+	freezero(ostr, ostr_len);
+
+	return failed;
+}
+
+static int
+ec_key_test_point_versus_bn(const struct ec_private_key *key, const EC_KEY *ec_key)
+{
+	const EC_GROUP *group;
+	const EC_POINT *ec_public_point;
+	EC_POINT *point = NULL;
+	BIGNUM *hex_bn = NULL, *point_bn = NULL;
+	int rv;
+	int failed = 1;
+
+	if ((group = EC_KEY_get0_group(ec_key)) == NULL) {
+		fprintf(stderr, "FAIL: EC_KEY_get0_group() for %s\n", key->name);
+		goto err;
+	}
+	if ((ec_public_point = EC_KEY_get0_public_key(ec_key)) == NULL) {
+		fprintf(stderr, "FAIL: EC_KEY_get0_public_key() for %s\n", key->name);
+		goto err;
+	}
+
 	/*
-	 * Now compare the octet string placed into a bignum with what we got
-	 * from point2hex (what a wonderful idea).
+	 * Check that point2bn matches hex2bn.
 	 */
 
 	if ((point_bn = BN_new()) == NULL)
@@ -2648,7 +2688,7 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
-	if ((BN_hex2bn(&hex_bn, hex)) != hex_len) {
+	if ((BN_hex2bn(&hex_bn, key->hex)) == 0) {
 		fprintf(stderr, "FAIL: BN_hex2bn() for %s\n", key->name);
 		goto err;
 	}
@@ -2660,12 +2700,10 @@ ec_group_check_private_key(const struct ec_private_key *key)
 	}
 
 	/*
-	 * And translate back to a point on the curve.
+	 * Translate back to a point on the curve.
 	 */
 
-	EC_POINT_free(point);
-	point = NULL;
-	if ((point = EC_POINT_hex2point(group, hex, NULL, NULL)) == NULL) {
+	if ((point = EC_POINT_hex2point(group, key->hex, NULL, NULL)) == NULL) {
 		fprintf(stderr, "FAIL: EC_POINT_hex2point() failed for %s\n",
 		    key->name);
 		goto err;
@@ -2710,8 +2748,8 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
-	if (EC_POINT_hex2point(group, hex, point, NULL) == NULL) {
-		fprintf(stderr, "FAIL: EC_POINT_hex2point() failed for %s\n",
+	if (EC_POINT_hex2point(group, key->hex, point, NULL) == NULL) {
+		fprintf(stderr, "FAIL: EC_POINT_hex2point() 2 failed for %s\n",
 		    key->name);
 		goto err;
 	}
@@ -2723,15 +2761,31 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
-	free(hex);
-	hex = NULL;
+	failed = 0;
 
-	freezero(ostr, ostr_len);
-	ostr = NULL;
+ err:
+	BN_free(hex_bn);
+	BN_free(point_bn);
+	EC_POINT_free(point);
 
-	/*
-	 * Round trip the public key through i2o and o2i in compressed form.
-	 */
+	return failed;
+}
+
+static int
+ec_key_test_i2o_and_o2i(const struct ec_private_key *key, const EC_KEY *ec_key_orig)
+{
+	EC_KEY *ec_key = NULL, *ec_pub_key = NULL;
+	const unsigned char *p;
+	unsigned char *ostr = NULL;
+	int ostr_len = 0;
+	uint8_t form;
+	int rv;
+	int failed = 1;
+
+	if ((ec_key = EC_KEY_dup(ec_key_orig)) == NULL) {
+		fprintf(stderr, "FAIL: EC_KEY_dup failed for %s", key->name);
+		goto err;
+	}
 
 	EC_KEY_set_conv_form(ec_key, POINT_CONVERSION_COMPRESSED);
 
@@ -2776,6 +2830,37 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
+	failed = 0;
+
+ err:
+	EC_KEY_free(ec_key);
+	EC_KEY_free(ec_pub_key);
+	freezero(ostr, ostr_len);
+
+	return failed;
+}
+
+static int
+ec_key_test_hybrid_roundtrip(const struct ec_private_key *key,
+    const EC_KEY *ec_key_orig)
+{
+	EC_KEY *ec_key = NULL, *ec_pub_key = NULL;
+	const unsigned char *p;
+	unsigned char *der = NULL;
+	int der_len = 0;
+	unsigned int flags;
+	int rv;
+	uint8_t form;
+	int failed = 1;
+
+	if ((ec_key = EC_KEY_new()) == NULL)
+		errx(1, "EC_KEY_new()");
+
+	if (EC_KEY_copy(ec_key, ec_key_orig) == NULL) {
+		fprintf(stderr, "FAIL: failed to kopy EC_KEY for %s\n", key->name);
+		goto err;
+	}
+
 	EC_KEY_set_conv_form(ec_key, POINT_CONVERSION_HYBRID);
 	EC_KEY_set_enc_flags(ec_key, EC_PKEY_NO_PARAMETERS | EC_PKEY_NO_PUBKEY);
 
@@ -2785,14 +2870,20 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
+	if ((ec_pub_key = EC_KEY_new()) == NULL)
+		errx(1, "EC_KEY_new");
+	if (!EC_KEY_set_group(ec_pub_key, EC_KEY_get0_group(ec_key))) {
+		fprintf(stderr, "FAIL: EC_KEY_set_group() for %s\n", key->name);
+		goto err;
+	}
+	/* Change away from the default to see if it changed below. */
+	EC_KEY_set_conv_form(ec_pub_key, POINT_CONVERSION_COMPRESSED);
+
 	if ((flags = EC_KEY_get_enc_flags(ec_pub_key)) != 0) {
 		fprintf(stderr, "FAIL: EC_KEY_get_enc_flags() returned %x for %s\n",
 		    flags, key->name);
 		goto err;
 	}
-
-	/* Clear the public key - this returns failure, but works. */
-	(void)EC_KEY_set_public_key(ec_pub_key, NULL);
 
 	p = der;
 	if (d2i_ECPrivateKey(&ec_pub_key, &p, der_len) == NULL) {
@@ -2822,12 +2913,26 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
-	/*
-	 * Also tickle the ECParameters API a little bit.
-	 */
+	failed = 0;
 
+ err:
+	EC_KEY_free(ec_key);
+	EC_KEY_free(ec_pub_key);
 	freezero(der, der_len);
-	der = NULL;
+
+	return failed;
+}
+
+static int
+ec_key_test_parameter_roundtrip(const struct ec_private_key *key,
+    EC_KEY *ec_key)
+{
+	EC_KEY *ec_pub_key = NULL;
+	const unsigned char *p;
+	unsigned char *der = NULL;
+	int der_len = 0;
+	int rv;
+	int failed = 1;
 
 	if ((der_len = i2d_ECParameters(ec_key, &der)) <= 0) {
 		fprintf(stderr, "FAIL: i2d_ECParameters returned %d for %s\n",
@@ -2835,7 +2940,10 @@ ec_group_check_private_key(const struct ec_private_key *key)
 		goto err;
 	}
 
-	/* Deliberately don't free ec_pub_key to see if we don't leak. */
+	/* See if we leak on reuse, whether the curve is right or not. */
+	if ((ec_pub_key = EC_KEY_new_by_curve_name(NID_secp256k1)) == NULL)
+		errx(1, "EC_KEY_new_by_curve_name");
+
 	p = der;
 	if (d2i_ECParameters(&ec_pub_key, &p, der_len) == NULL) {
 		fprintf(stderr, "FAIL: d2i_ECParameters for %s\n", key->name);
@@ -2852,17 +2960,32 @@ ec_group_check_private_key(const struct ec_private_key *key)
 	failed = 0;
 
  err:
-	EC_KEY_free(ec_key);
 	EC_KEY_free(ec_pub_key);
-
 	freezero(der, der_len);
-	freezero(ostr, ostr_len);
-	free(hex);
 
-	BN_free(hex_bn);
-	BN_free(point_bn);
+	return failed;
+}
 
-	EC_POINT_free(point);
+static int
+ec_group_check_private_key(const struct ec_private_key *key)
+{
+	EC_KEY *ec_key = NULL;
+	int failed = 0;
+
+	if ((ec_key = ec_key_check_sanity(key)) == NULL) {
+		fprintf(stderr, "FAIL: ec_key_check_sanity() for %s\n", key->name);
+		failed = 1;
+		goto err;
+	}
+
+	failed |= ec_key_test_point_encoding(key, ec_key);
+	failed |= ec_key_test_point_versus_bn(key, ec_key);
+	failed |= ec_key_test_i2o_and_o2i(key, ec_key);
+	failed |= ec_key_test_hybrid_roundtrip(key, ec_key);
+	failed |= ec_key_test_parameter_roundtrip(key, ec_key);
+
+ err:
+	EC_KEY_free(ec_key);
 
 	return failed;
 }
