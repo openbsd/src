@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.71 2024/10/28 18:01:26 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.72 2024/10/29 06:36:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -328,7 +328,6 @@ eckey_compute_pubkey(EC_KEY *eckey)
 		goto err;
 	if (!EC_KEY_set_public_key(eckey, pub_key))
 		goto err;
-	pub_key = NULL;
 
 	ret = 1;
 
