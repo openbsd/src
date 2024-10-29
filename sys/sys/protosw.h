@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.69 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.70 2024/10/29 12:40:17 jsg Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -254,7 +254,6 @@ char	*prcorequests[] = {
 
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>
-#include <sys/systm.h>
 
 const struct protosw *pffindproto(int, int, int);
 const struct protosw *pffindtype(int, int);

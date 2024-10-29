@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.50 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.51 2024/10/29 12:40:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -19,8 +19,6 @@
 
 #ifndef _SYS_PLEDGE_H_
 #define _SYS_PLEDGE_H_
-
-#include <sys/cdefs.h>
 
 /*
  * pledge(2) requests

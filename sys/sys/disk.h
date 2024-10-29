@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.39 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: disk.h,v 1.40 2024/10/29 12:40:17 jsg Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -48,12 +48,12 @@
  * Disk device structures.
  */
 
-#include <sys/device.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 
+struct device;
 struct disklabel;
 
 #define DS_DISKNAMELEN	16

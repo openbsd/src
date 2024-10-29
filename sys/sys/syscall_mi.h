@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.35 2024/09/01 03:09:01 jsg Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.36 2024/10/29 12:40:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,7 +34,6 @@
 #include <sys/param.h>
 #include <sys/pledge.h>
 #include <sys/acct.h>
-#include <sys/syslog.h>
 #include <sys/tracepoint.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
