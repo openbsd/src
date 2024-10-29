@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.43 2024/09/19 06:19:05 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.44 2024/10/29 08:42:05 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -821,6 +821,11 @@ virtio_pci_negotiate_features_10(struct virtio_softc *vsc,
 	uint64_t host, negotiated;
 
 	vsc->sc_driver_features |= VIRTIO_F_VERSION_1;
+	/*
+	 * XXX Without this SEV doesn't work with a KVM/qemu hypervisor on
+	 * XXX amd64.
+	 */
+	vsc->sc_driver_features |= VIRTIO_F_ACCESS_PLATFORM;
 	/* notify on empty is 0.9 only */
 	vsc->sc_driver_features &= ~VIRTIO_F_NOTIFY_ON_EMPTY;
 	CWRITE(sc, device_feature_select, 0);
