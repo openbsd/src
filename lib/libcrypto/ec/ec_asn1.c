@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.93 2024/10/28 18:15:53 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.94 2024/10/29 04:57:33 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1286,7 +1286,6 @@ i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
-
 		if ((buffer = calloc(1, buf_len)) == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
