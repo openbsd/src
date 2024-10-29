@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.120 2024/10/01 18:31:10 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.121 2024/10/29 12:35:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -352,7 +352,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 					}
 				}
 			}
-			if (!matched && RB_EMPTY(peers)) {
+			if (!matched && !RB_EMPTY(peers)) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 			} else if (!neighbor.show_timers) {
 				imsg_ctl_rde_msg(IMSG_CTL_END, 0, pid);
@@ -473,7 +473,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			RB_FOREACH(p, peer_head, peers)
 				if (peer_matched(p, &ribreq.neighbor))
 					break;
-			if (p == NULL && RB_EMPTY(peers)) {
+			if (p == NULL && !RB_EMPTY(peers)) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 				break;
 			}
