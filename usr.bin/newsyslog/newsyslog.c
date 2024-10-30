@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.114 2024/04/22 14:20:35 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.115 2024/10/30 09:16:24 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -284,6 +284,7 @@ do_entry(struct conf_entry *ent)
 	struct stat sb;
 	int modhours;
 	off_t size;
+	int oversized;
 
 	if (lstat(ent->log, &sb) != 0)
 		return;
@@ -307,8 +308,9 @@ do_entry(struct conf_entry *ent)
 	    (ent->flags & CE_FOLLOW) ? "F" : "",
 	    (ent->flags & CE_MONITOR) && monitormode ? "M" : ""));
 	size = sizefile(&sb);
+	oversized = (ent->size > 0 && size >= ent->size);
 	modhours = age_old_log(ent);
-	if (ent->flags & CE_TRIMAT && !force) {
+	if (ent->flags & CE_TRIMAT && !force && !oversized) {
 		if (timenow < ent->trim_at ||
 		    difftime(timenow, ent->trim_at) >= 60 * 60) {
 			DPRINTF(("--> will trim at %s",
@@ -326,7 +328,7 @@ do_entry(struct conf_entry *ent)
 	if (monitormode && (ent->flags & CE_MONITOR) && domonitor(ent))
 		DPRINTF(("--> monitored\n"));
 	else if (!monitormode &&
-	    (force || (ent->size > 0 && size >= ent->size) ||
+	    (force || oversized ||
 	    (ent->hours <= 0 && (ent->flags & CE_TRIMAT)) ||
 	    (ent->hours > 0 && (modhours >= ent->hours || modhours < 0)
 	    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {

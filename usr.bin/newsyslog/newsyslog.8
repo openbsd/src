@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.55 2024/04/22 14:16:14 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.56 2024/10/30 09:16:24 jan Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: April 22 2024 $
+.Dd $Mdocdate: October 30 2024 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -253,6 +253,14 @@ If an interval is specified, the log file will be trimmed if that
 many hours have passed since the last rotation.
 When both a time and an interval are specified, both conditions
 must be satisfied for the rotation to take place.
+If the
+.Ar size
+field is set and not
+.Ql *
+or
+.Ql 0 ,
+the file will be rotated either if the size is
+exceeded or the specified time or interval is reached.
 .Pp
 There is no provision for the specification of a time zone.
 There is little point in specifying an explicit minutes or seconds
