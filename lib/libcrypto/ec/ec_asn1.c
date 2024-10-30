@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.94 2024/10/29 04:57:33 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.95 2024/10/30 06:11:50 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -561,6 +561,50 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 }
 
 static int
+ec_point_to_asn1_string_type(const EC_GROUP *group, const EC_POINT *point,
+    int form, int type, ASN1_STRING **out_astr)
+{
+	ASN1_STRING *astr = NULL;
+	unsigned char *buf = NULL;
+	size_t len = 0;
+	int ret = 0;
+
+	if (*out_astr != NULL && ASN1_STRING_type(*out_astr) != type)
+		goto err;
+
+	if (!ec_point_to_octets(group, point, form, &buf, &len, NULL))
+		goto err;
+
+	if ((astr = *out_astr) == NULL)
+		astr = ASN1_STRING_type_new(type);
+	if (astr == NULL)
+		goto err;
+
+	ASN1_STRING_set0(astr, buf, len);
+	buf = NULL;
+	len = 0;
+
+	*out_astr = astr;
+	astr = NULL;
+
+	ret = 1;
+
+ err:
+	ASN1_STRING_free(astr);
+	freezero(buf, len);
+
+	return ret;
+}
+
+static int
+ec_point_to_asn1_octet_string(const EC_GROUP *group, const EC_POINT *point,
+    int form, ASN1_OCTET_STRING **out_aos)
+{
+	return ec_point_to_asn1_string_type(group, point, form,
+	    V_ASN1_OCTET_STRING, out_aos);
+}
+
+static int
 ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 {
 	BIGNUM *p = NULL;
@@ -719,12 +763,10 @@ static ECPARAMETERS *
 ec_asn1_group2parameters(const EC_GROUP *group)
 {
 	int ok = 0;
-	size_t len = 0;
 	ECPARAMETERS *ret = NULL;
 	const BIGNUM *order, *cofactor;
-	unsigned char *buffer = NULL;
 	const EC_POINT *point = NULL;
-	point_conversion_form_t form;
+	uint8_t form;
 
 	if ((ret = ECPARAMETERS_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
@@ -749,29 +791,11 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
-	form = EC_GROUP_get_point_conversion_form(group);
 
-	len = EC_POINT_point2oct(group, point, form, NULL, len, NULL);
-	if (len == 0) {
-		ECerror(ERR_R_EC_LIB);
+	form = EC_GROUP_get_point_conversion_form(group);
+	if (!ec_point_to_asn1_octet_string(group, point, form, &ret->base))
 		goto err;
-	}
-	if ((buffer = malloc(len)) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (!EC_POINT_point2oct(group, point, form, buffer, len, NULL)) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-	if (ret->base == NULL && (ret->base = ASN1_OCTET_STRING_new()) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (!ASN1_OCTET_STRING_set(ret->base, buffer, len)) {
-		ECerror(ERR_R_ASN1_LIB);
-		goto err;
-	}
+
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
@@ -804,7 +828,6 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		ECPARAMETERS_free(ret);
 		ret = NULL;
 	}
-	free(buffer);
 	return (ret);
 }
 
