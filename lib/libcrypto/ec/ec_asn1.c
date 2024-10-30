@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.98 2024/10/30 06:41:33 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.99 2024/10/30 06:44:34 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -773,7 +773,6 @@ ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 static ECPARAMETERS *
 ec_asn1_group2parameters(const EC_GROUP *group)
 {
-	int ok = 0;
 	ECPARAMETERS *parameters = NULL;
 	const EC_POINT *generator = NULL;
 	const BIGNUM *order, *cofactor;
@@ -784,20 +783,18 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		goto err;
 	}
 
-	/* set the version (always one) */
-	parameters->version = (long) 0x1;
+	parameters->version = 0x1;
 
-	/* set the fieldID */
 	if (!ec_asn1_group2fieldid(group, parameters->fieldID)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	/* set the curve */
+
 	if (!ec_asn1_group2curve(group, parameters->curve)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	/* set the base point */
+
 	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
 		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
@@ -820,6 +817,7 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
+
 	ASN1_INTEGER_free(parameters->cofactor);
 	parameters->cofactor = NULL;
 	if ((cofactor = EC_GROUP_get0_cofactor(group)) == NULL) {
@@ -827,19 +825,19 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		goto err;
 	}
 	if (!BN_is_zero(cofactor)) {
-		if ((parameters->cofactor = BN_to_ASN1_INTEGER(cofactor, NULL)) == NULL) {
+		if ((parameters->cofactor = BN_to_ASN1_INTEGER(cofactor,
+		    NULL)) == NULL) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
 	}
-	ok = 1;
+
+	return parameters;
 
  err:
-	if (!ok) {
-		ECPARAMETERS_free(parameters);
-		parameters = NULL;
-	}
-	return (parameters);
+	ECPARAMETERS_free(parameters);
+
+	return NULL;
 }
 
 static ECPKPARAMETERS *
