@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.96 2024/10/30 06:12:47 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.97 2024/10/30 06:40:41 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -774,26 +774,26 @@ static ECPARAMETERS *
 ec_asn1_group2parameters(const EC_GROUP *group)
 {
 	int ok = 0;
-	ECPARAMETERS *ret = NULL;
+	ECPARAMETERS *parameters = NULL;
 	const BIGNUM *order, *cofactor;
 	const EC_POINT *point = NULL;
 	uint8_t form;
 
-	if ((ret = ECPARAMETERS_new()) == NULL) {
+	if ((parameters = ECPARAMETERS_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	/* set the version (always one) */
-	ret->version = (long) 0x1;
+	parameters->version = (long) 0x1;
 
 	/* set the fieldID */
-	if (!ec_asn1_group2fieldid(group, ret->fieldID)) {
+	if (!ec_asn1_group2fieldid(group, parameters->fieldID)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	/* set the curve */
-	if (!ec_asn1_group2curve(group, ret->curve)) {
+	if (!ec_asn1_group2curve(group, parameters->curve)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -804,7 +804,7 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 	}
 
 	form = EC_GROUP_get_point_conversion_form(group);
-	if (!ec_point_to_asn1_octet_string(group, point, form, &ret->base))
+	if (!ec_point_to_asn1_octet_string(group, point, form, &parameters->base))
 		goto err;
 
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
@@ -815,19 +815,19 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ASN1_INTEGER_free(ret->order);
-	if ((ret->order = BN_to_ASN1_INTEGER(order, NULL)) == NULL) {
+	ASN1_INTEGER_free(parameters->order);
+	if ((parameters->order = BN_to_ASN1_INTEGER(order, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
-	ASN1_INTEGER_free(ret->cofactor);
-	ret->cofactor = NULL;
+	ASN1_INTEGER_free(parameters->cofactor);
+	parameters->cofactor = NULL;
 	if ((cofactor = EC_GROUP_get0_cofactor(group)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if (!BN_is_zero(cofactor)) {
-		if ((ret->cofactor = BN_to_ASN1_INTEGER(cofactor, NULL)) == NULL) {
+		if ((parameters->cofactor = BN_to_ASN1_INTEGER(cofactor, NULL)) == NULL) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
@@ -836,10 +836,10 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 
  err:
 	if (!ok) {
-		ECPARAMETERS_free(ret);
-		ret = NULL;
+		ECPARAMETERS_free(parameters);
+		parameters = NULL;
 	}
-	return (ret);
+	return (parameters);
 }
 
 static ECPKPARAMETERS *
