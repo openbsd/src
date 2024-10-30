@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.97 2024/10/30 06:40:41 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.98 2024/10/30 06:41:33 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -775,8 +775,8 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 {
 	int ok = 0;
 	ECPARAMETERS *parameters = NULL;
+	const EC_POINT *generator = NULL;
 	const BIGNUM *order, *cofactor;
-	const EC_POINT *point = NULL;
 	uint8_t form;
 
 	if ((parameters = ECPARAMETERS_new()) == NULL) {
@@ -798,13 +798,13 @@ ec_asn1_group2parameters(const EC_GROUP *group)
 		goto err;
 	}
 	/* set the base point */
-	if ((point = EC_GROUP_get0_generator(group)) == NULL) {
+	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
 		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
 
 	form = EC_GROUP_get_point_conversion_form(group);
-	if (!ec_point_to_asn1_octet_string(group, point, form, &parameters->base))
+	if (!ec_point_to_asn1_octet_string(group, generator, form, &parameters->base))
 		goto err;
 
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
