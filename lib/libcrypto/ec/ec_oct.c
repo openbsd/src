@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.17 2024/04/10 15:01:31 beck Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.18 2024/10/30 06:10:35 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -65,9 +65,11 @@
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 
+#include "asn1_local.h"
 #include "ec_local.h"
 
 int
@@ -108,6 +110,44 @@ EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 	return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
 LCRYPTO_ALIAS(EC_POINT_set_compressed_coordinates_GFp);
+
+int
+ec_point_to_octets(const EC_GROUP *group, const EC_POINT *point, int form,
+    unsigned char **out_buf, size_t *out_len, BN_CTX *ctx)
+{
+	unsigned char *buf = NULL;
+	size_t len = 0;
+	int ret = 0;
+
+	if (out_buf != NULL && *out_buf != NULL)
+		goto err;
+
+	*out_len = 0;
+
+	if ((len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx)) == 0)
+		goto err;
+
+	if (out_buf == NULL)
+		goto done;
+
+	if ((buf = calloc(1, len)) == NULL)
+		goto err;
+	if (EC_POINT_point2oct(group, point, form, buf, len, ctx) != len)
+		goto err;
+
+	*out_buf = buf;
+	buf = NULL;
+
+ done:
+	*out_len = len;
+
+	ret = 1;
+
+ err:
+	freezero(buf, len);
+
+	return ret;
+}
 
 size_t
 EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
