@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.46 2023/06/11 14:00:04 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.47 2024/10/30 16:22:33 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -414,6 +414,42 @@ write_filesystem(struct disklabel *dl, char part)
 		if (rslt == -1)
 			goto umount;
 	}
+
+#ifdef __amd64__
+	/* Create "/efi/openbsd" directory in <duid>.<part>. */
+	dst[mntlen] = '\0';
+	if (strlcat(dst, "/efi/openbsd", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /efi/openbsd directory");
+		goto umount;
+	}
+	rslt = mkdir(dst, 0755);
+	if (rslt == -1 && errno != EEXIST) {
+		warn("mkdir('%s') failed", dst);
+		goto umount;
+	}
+
+	/* Copy BOOTX64.EFI to /efi/openbsd/. */
+	if (strlcat(dst, "/BOOTX64.EFI", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /BOOTX64.EFI path");
+		goto umount;
+	}
+	src = fileprefix(root, "/usr/mdec/BOOTX64.EFI");
+	if (src == NULL) {
+		rslt = -1;
+		goto umount;
+	}
+	srclen = strlen(src);
+	if (verbose)
+		fprintf(stderr, "%s %s to %s\n",
+		    (nowrite ? "would copy" : "copying"), src, dst);
+	if (!nowrite) {
+		rslt = filecopy(src, dst);
+		if (rslt == -1)
+			goto umount;
+	}
+#endif
 
 	rslt = 0;
 
