@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.8 2024/10/30 17:51:12 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.9 2024/10/30 18:33:26 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/pledge.h>
 #include <sys/rwlock.h>
 
@@ -58,6 +59,11 @@ struct psp_softc {
 
 	uint32_t		sc_flags;
 #define PSPF_INITIALIZED	0x1
+#define PSPF_UCODELOADED	0x2
+#define PSPF_NOUCODE		0x4
+
+	u_char			*sc_ucodebuf;
+	size_t			sc_ucodelen;
 };
 
 int	psp_get_pstatus(struct psp_softc *, struct psp_platform_status *);
@@ -65,6 +71,7 @@ int	psp_init(struct psp_softc *, struct psp_init *);
 int	psp_reinit(struct psp_softc *);
 int	psp_match(struct device *, void *, void *);
 void	psp_attach(struct device *, struct device *, void *);
+void	psp_load_ucode(struct psp_softc *);
 
 struct cfdriver psp_cd = {
 	NULL, "psp", DV_DULL
@@ -705,6 +712,8 @@ pspopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
+	psp_load_ucode(sc);
+
 	if (!(sc->sc_flags & PSPF_INITIALIZED))
 		return (psp_reinit(sc));
 
@@ -824,4 +833,71 @@ pspsubmatch(struct device *parent, void *match, void *aux)
 	if (!(arg->capabilities & PSP_CAP_SEV))
 		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
+struct ucode {
+	uint8_t		 family;
+	uint8_t		 model;
+	const char	*uname;
+} const psp_ucode_table[] = {
+	{ 0x17, 0x0, "amdsev/amd_sev_fam17h_model0xh.sbin" },
+	{ 0x17, 0x3, "amdsev/amd_sev_fam17h_model3xh.sbin" },
+	{ 0x19, 0x0, "amdsev/amd_sev_fam19h_model0xh.sbin" },
+	{ 0x19, 0x1, "amdsev/amd_sev_fam19h_model1xh.sbin" },
+	{ 0, 0, NULL }
+};
+
+void
+psp_load_ucode(struct psp_softc *sc)
+{
+	struct psp_downloadfirmware dlfw;
+	struct cpu_info		*ci = &cpu_info_primary;
+	const struct ucode	*uc;
+	uint8_t			 family, model;
+	int			 error;
+
+	if ((sc->sc_flags & PSPF_UCODELOADED) ||
+	    (sc->sc_flags & PSPF_NOUCODE) ||
+	    (sc->sc_flags & PSPF_INITIALIZED))
+		return;
+
+	family = ci->ci_family;
+	model = (ci->ci_model & 0xf0) >> 4;
+
+	for (uc = psp_ucode_table; uc->uname; uc++) {
+		if ((uc->family == family) && (uc->model == model))
+			break;
+	}
+
+	if (uc->uname == NULL) {
+		printf("%s: no firmware found, CPU family 0x%x model 0x%x\n",
+		    sc->sc_dev.dv_xname, family, model);
+		sc->sc_flags |= PSPF_NOUCODE;
+		return;
+	}
+
+	error = loadfirmware(uc->uname, &sc->sc_ucodebuf, &sc->sc_ucodelen);
+	if (error) {
+		if (error != ENOENT) {
+			printf("%s: error %d, could not read firmware %s\n",
+			    sc->sc_dev.dv_xname, error, uc->uname);
+		}
+		sc->sc_flags |= PSPF_NOUCODE;
+		return;
+	}
+
+	bzero(&dlfw, sizeof(dlfw));
+	dlfw.fw_len = sc->sc_ucodelen;
+	dlfw.fw_paddr = (uint64_t)sc->sc_ucodebuf;
+
+	if (psp_downloadfirmware(sc, &dlfw) < 0)
+		goto out;
+
+	sc->sc_flags |= PSPF_UCODELOADED;
+out:
+	if (sc->sc_ucodebuf) {
+		free(sc->sc_ucodebuf, M_DEVBUF, sc->sc_ucodelen);
+		sc->sc_ucodebuf = NULL;
+		sc->sc_ucodelen = 0;
+	}
 }
