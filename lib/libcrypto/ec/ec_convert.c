@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.3 2024/10/30 18:18:35 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.4 2024/10/30 18:21:12 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -491,3 +491,85 @@ EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 	return ret;
 }
 LCRYPTO_ALIAS(EC_POINT_oct2point);
+
+BIGNUM *
+EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *point,
+    point_conversion_form_t form, BIGNUM *in_bn, BN_CTX *ctx)
+{
+	BIGNUM *bn = NULL;
+	unsigned char *buf = NULL;
+	size_t buf_len = 0;
+
+	if (!ec_point_to_octets(group, point, form, &buf, &buf_len, ctx))
+		goto err;
+	if ((bn = BN_bin2bn(buf, buf_len, in_bn)) == NULL)
+		goto err;
+
+ err:
+	freezero(buf, buf_len);
+
+	return bn;
+}
+LCRYPTO_ALIAS(EC_POINT_point2bn);
+
+EC_POINT *
+EC_POINT_bn2point(const EC_GROUP *group,
+    const BIGNUM *bn, EC_POINT *point, BN_CTX *ctx)
+{
+	unsigned char *buf = NULL;
+	size_t buf_len = 0;
+
+	/* Of course BN_bn2bin() is in no way symmetric to BN_bin2bn()... */
+	if ((buf_len = BN_num_bytes(bn)) == 0)
+		goto err;
+	if ((buf = calloc(1, buf_len)) == NULL)
+		goto err;
+	if (!BN_bn2bin(bn, buf))
+		goto err;
+	if (!ec_point_from_octets(group, buf, buf_len, &point, NULL, ctx))
+		goto err;
+
+ err:
+	freezero(buf, buf_len);
+
+	return point;
+}
+LCRYPTO_ALIAS(EC_POINT_bn2point);
+
+char *
+EC_POINT_point2hex(const EC_GROUP *group, const EC_POINT *point,
+    point_conversion_form_t form, BN_CTX *ctx)
+{
+	BIGNUM *bn;
+	char *hex = NULL;
+
+	if ((bn = EC_POINT_point2bn(group, point, form, NULL, ctx)) == NULL)
+		goto err;
+	if ((hex = BN_bn2hex(bn)) == NULL)
+		goto err;
+
+ err:
+	BN_free(bn);
+
+	return hex;
+}
+LCRYPTO_ALIAS(EC_POINT_point2hex);
+
+EC_POINT *
+EC_POINT_hex2point(const EC_GROUP *group, const char *hex,
+    EC_POINT *in_point, BN_CTX *ctx)
+{
+	EC_POINT *point = NULL;
+	BIGNUM *bn = NULL;
+
+	if (BN_hex2bn(&bn, hex) == 0)
+		goto err;
+	if ((point = EC_POINT_bn2point(group, bn, in_point, ctx)) == NULL)
+		goto err;
+
+ err:
+	BN_free(bn);
+
+	return point;
+}
+LCRYPTO_ALIAS(EC_POINT_hex2point);
