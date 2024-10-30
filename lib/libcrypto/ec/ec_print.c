@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.15 2024/10/28 17:00:51 tb Exp $ */
+/* $OpenBSD: ec_print.c,v 1.16 2024/10/30 17:36:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -62,27 +62,21 @@
 
 BIGNUM *
 EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *point,
-    point_conversion_form_t form, BIGNUM *ret, BN_CTX *ctx)
+    point_conversion_form_t form, BIGNUM *in_bn, BN_CTX *ctx)
 {
+	BIGNUM *bn = NULL;
+	unsigned char *buf = NULL;
 	size_t buf_len = 0;
-	unsigned char *buf;
 
-	buf_len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx);
-	if (buf_len == 0)
-		return NULL;
+	if (!ec_point_to_octets(group, point, form, &buf, &buf_len, ctx))
+		goto err;
+	if ((bn = BN_bin2bn(buf, buf_len, in_bn)) == NULL)
+		goto err;
 
-	if ((buf = malloc(buf_len)) == NULL)
-		return NULL;
+ err:
+	freezero(buf, buf_len);
 
-	if (!EC_POINT_point2oct(group, point, form, buf, buf_len, ctx)) {
-		free(buf);
-		return NULL;
-	}
-	ret = BN_bin2bn(buf, buf_len, ret);
-
-	free(buf);
-
-	return ret;
+	return bn;
 }
 LCRYPTO_ALIAS(EC_POINT_point2bn);
 
