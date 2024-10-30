@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp6leased.8,v 1.1 2024/06/02 12:28:05 florian Exp $
+.\"	$OpenBSD: dhcp6leased.8,v 1.2 2024/10/30 17:01:28 florian Exp $
 .\"
 .\" Copyright (c) 2024 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2024 $
+.Dd $Mdocdate: October 30 2024 $
 .Dt DHCP6LEASED 8
 .Os
 .Sh NAME
@@ -30,6 +30,15 @@
 is an IPv6 dynamic host configuration protocol (DHCPv6) daemon for clients.
 It requests IPv6 prefix delegations from DHCPv6 servers for assignment
 to downstream interfaces.
+.Pp
+DHCPv6 clients are identified by DHCPv6 Unique Identifiers (DUID).
+.Nm
+uses a DUID based on a random Universally Unique Identifier
+(UUID).
+The DUID is stored in
+.Pa /var/db/dhcp6leased/uuid .
+If the file does not exist or the UUID is not readable a new UUID is
+generated.
 .Pp
 A running
 .Nm
@@ -70,6 +79,8 @@ Default
 configuration file.
 .It Pa /var/db/dhcp6leased/ Ns Aq Ar if
 Interface specific lease files.
+.It Pa /var/db/dhcp6leased/uuid
+DUID to identify this client.
 .El
 .Sh SEE ALSO
 .Xr dhcp6leased.conf 5 ,
