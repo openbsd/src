@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.95 2024/10/30 06:11:50 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.96 2024/10/30 06:12:47 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -594,6 +594,17 @@ ec_point_to_asn1_string_type(const EC_GROUP *group, const EC_POINT *point,
 	freezero(buf, len);
 
 	return ret;
+}
+
+static int
+ec_point_to_asn1_bit_string(const EC_GROUP *group, const EC_POINT *point,
+    int form, ASN1_BIT_STRING **out_abs)
+{
+	if (!ec_point_to_asn1_string_type(group, point, form,
+	    V_ASN1_BIT_STRING, out_abs))
+		return 0;
+
+	return asn1_abs_set_unused_bits(*out_abs, 0);
 }
 
 static int
@@ -1271,8 +1282,6 @@ int
 i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 {
 	int ret = 0, ok = 0;
-	unsigned char *buffer = NULL;
-	size_t buf_len = 0;
 	EC_PRIVATEKEY *ec_privatekey = NULL;
 
 	if (ec_key == NULL || ec_key->group == NULL || ec_key->priv_key == NULL ||
@@ -1299,33 +1308,9 @@ i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 		ec_privatekey->parameters = parameters;
 	}
 	if (!(ec_key->enc_flag & EC_PKEY_NO_PUBKEY) && ec_key->pub_key != NULL) {
-		ec_privatekey->publicKey = ASN1_BIT_STRING_new();
-		if (ec_privatekey->publicKey == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
+		if (!ec_point_to_asn1_bit_string(ec_key->group, ec_key->pub_key,
+		    ec_key->conv_form, &ec_privatekey->publicKey))
 			goto err;
-		}
-		if ((buf_len = EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
-		    ec_key->conv_form, NULL, 0, NULL)) == 0) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-		if ((buffer = calloc(1, buf_len)) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		if (!EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
-			ec_key->conv_form, buffer, buf_len, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-		if (!ASN1_STRING_set(ec_privatekey->publicKey, buffer, buf_len)) {
-			ECerror(ERR_R_ASN1_LIB);
-			goto err;
-		}
-		if (!asn1_abs_set_unused_bits(ec_privatekey->publicKey, 0)) {
-			ECerror(ERR_R_ASN1_LIB);
-			goto err;
-		}
 	}
 	if ((ret = i2d_EC_PRIVATEKEY(ec_privatekey, out)) == 0) {
 		ECerror(ERR_R_EC_LIB);
@@ -1333,7 +1318,6 @@ i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 	}
 	ok = 1;
  err:
-	free(buffer);
 	if (ec_privatekey)
 		EC_PRIVATEKEY_free(ec_privatekey);
 	return (ok ? ret : 0);
