@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.36 2021/12/01 18:28:46 deraadt Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.37 2024/10/30 10:36:28 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -1291,6 +1291,7 @@ pppoe_if_print(u_short ethertype, const u_char *p, u_int length, u_int l)
 	if (ethertype == ETHERTYPE_PPPOEDISC) {
 		while (l > 0) {
 			u_int16_t t_type, t_len;
+			int text = 0;
 
 			if (l < 4)
 				goto trunc;
@@ -1310,9 +1311,11 @@ pppoe_if_print(u_short ethertype, const u_char *p, u_int length, u_int l)
 				break;
 			case PPPOE_TAG_SERVICE_NAME:
 				printf("Service-Name");
+				text = 1;
 				break;
 			case PPPOE_TAG_AC_NAME:
 				printf("AC-Name");
+				text = 1;
 				break;
 			case PPPOE_TAG_HOST_UNIQ:
 				printf("Host-Uniq");
@@ -1331,25 +1334,32 @@ pppoe_if_print(u_short ethertype, const u_char *p, u_int length, u_int l)
 				break;
 			case PPPOE_TAG_SERVICE_NAME_ERROR:
 				printf("Service-Name-Error");
+				text = 1;
 				break;
 			case PPPOE_TAG_AC_SYSTEM_ERROR:
 				printf("AC-System-Error");
+				text = 1;
 				break;
 			case PPPOE_TAG_GENERIC_ERROR:
 				printf("Generic-Error");
+				text = 1;
 				break;
 			default:
 				printf("Unknown(0x%04x)", t_type);
 			}
 			printf(", length %u%s", t_len, t_len ? " " : "");
 
-			if (t_len) {
+			if (t_len && text == 1) {
 				for (t_type = 0; t_type < t_len; t_type++) {
 					if (isprint(p[t_type]))
 						printf("%c", p[t_type]);
 					else
 						printf("\\%03o", p[t_type]);
 				}
+			} else if (t_len) {
+				printf("0x");
+				for (t_type = 0; t_type < t_len; t_type++)
+					printf("%02x", p[t_type]);
 			}
 			p += t_len;
 			l -= t_len;
