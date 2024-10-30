@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.17 2024/10/30 17:49:27 tb Exp $ */
+/* $OpenBSD: ec_print.c,v 1.18 2024/10/30 17:51:35 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -137,19 +137,20 @@ EC_POINT_point2hex(const EC_GROUP *group, const EC_POINT *point,
 LCRYPTO_ALIAS(EC_POINT_point2hex);
 
 EC_POINT *
-EC_POINT_hex2point(const EC_GROUP *group, const char *buf,
-    EC_POINT *point, BN_CTX *ctx)
+EC_POINT_hex2point(const EC_GROUP *group, const char *hex,
+    EC_POINT *in_point, BN_CTX *ctx)
 {
-	EC_POINT *ret = NULL;
-	BIGNUM *tmp_bn = NULL;
+	EC_POINT *point = NULL;
+	BIGNUM *bn = NULL;
 
-	if (BN_hex2bn(&tmp_bn, buf) == 0)
-		return NULL;
+	if (BN_hex2bn(&bn, hex) == 0)
+		goto err;
+	if ((point = EC_POINT_bn2point(group, bn, in_point, ctx)) == NULL)
+		goto err;
 
-	ret = EC_POINT_bn2point(group, tmp_bn, point, ctx);
+ err:
+	BN_free(bn);
 
-	BN_free(tmp_bn);
-
-	return ret;
+	return point;
 }
 LCRYPTO_ALIAS(EC_POINT_hex2point);
