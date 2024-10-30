@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.18 2024/10/30 06:10:35 tb Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.19 2024/10/30 17:52:34 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -145,6 +145,36 @@ ec_point_to_octets(const EC_GROUP *group, const EC_POINT *point, int form,
 
  err:
 	freezero(buf, len);
+
+	return ret;
+}
+
+int
+ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf, size_t buf_len,
+    EC_POINT **out_point, uint8_t *out_form, BN_CTX *ctx)
+{
+	EC_POINT *point;
+	int ret = 0;
+
+	if ((point = *out_point) == NULL)
+		point = EC_POINT_new(group);
+	if (point == NULL)
+		goto err;
+
+	if (!EC_POINT_oct2point(group, point, buf, buf_len, ctx))
+		goto err;
+
+	if (out_form != NULL)
+		*out_form = buf[0] & ~1U;	/* XXX - EC_OCT_YBIT */
+
+	*out_point = point;
+	point = NULL;
+
+	ret = 1;
+
+ err:
+	if (*out_point != point)
+		EC_POINT_free(point);
 
 	return ret;
 }
