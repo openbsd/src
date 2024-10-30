@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.99 2024/10/30 06:44:34 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.100 2024/10/30 17:53:28 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -561,6 +561,21 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 }
 
 static int
+ec_point_from_asn1_string(const EC_GROUP *group, const ASN1_STRING *astr,
+    EC_POINT **out_point, uint8_t *out_form)
+{
+	return ec_point_from_octets(group, astr->data, astr->length,
+	    out_point, out_form, NULL);
+}
+
+static int
+ec_point_from_asn1_octet_string(const EC_GROUP *group, const ASN1_OCTET_STRING *aos,
+    EC_POINT **out_point, uint8_t *out_form)
+{
+	return ec_point_from_asn1_string(group, aos, out_point, out_form);
+}
+
+static int
 ec_point_to_asn1_string_type(const EC_GROUP *group, const EC_POINT *point,
     int form, int type, ASN1_STRING **out_astr)
 {
@@ -958,19 +973,16 @@ ec_asn1_parameters_curve2group(const X9_62_CURVE *curve,
 static int
 ec_asn1_set_group_parameters(const ECPARAMETERS *params, EC_GROUP *group)
 {
-	EC_POINT *generator;
+	EC_POINT *generator = NULL;
 	BIGNUM *order = NULL, *cofactor = NULL;
 	const ASN1_BIT_STRING *seed;
-	point_conversion_form_t form;
+	uint8_t form;
 	int ret = 0;
 
-	if ((generator = EC_POINT_new(group)) == NULL)
+	if (!ec_point_from_asn1_octet_string(group, params->base, &generator, &form))
 		goto err;
-	if (!EC_POINT_oct2point(group, generator,
-	    params->base->data, params->base->length, NULL)) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
+	EC_GROUP_set_point_conversion_form(group, form);
+
 	if ((order = ASN1_INTEGER_to_BN(params->order, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
@@ -995,10 +1007,6 @@ ec_asn1_set_group_parameters(const ECPARAMETERS *params, EC_GROUP *group)
 			goto err;
 		}
 	}
-
-	/* oct2point has ensured that to be compressed, uncompressed, or hybrid. */
-	form = params->base->data[0] & ~1U;
-	EC_GROUP_set_point_conversion_form(group, form);
 
 	ret = 1;
 
