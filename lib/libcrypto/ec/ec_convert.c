@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.20 2024/10/30 18:14:49 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.1 2024/10/30 18:14:49 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -63,18 +63,114 @@
 
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/asn1.h>
 #include <openssl/err.h>
-#include <openssl/opensslv.h>
 
 #include "asn1_local.h"
 #include "ec_local.h"
 
 int
-EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, int y_bit, BN_CTX *ctx_in)
+ec_point_to_octets(const EC_GROUP *group, const EC_POINT *point, int form,
+    unsigned char **out_buf, size_t *out_len, BN_CTX *ctx)
+{
+	unsigned char *buf = NULL;
+	size_t len = 0;
+	int ret = 0;
+
+	if (out_buf != NULL && *out_buf != NULL)
+		goto err;
+
+	*out_len = 0;
+
+	if ((len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx)) == 0)
+		goto err;
+
+	if (out_buf == NULL)
+		goto done;
+
+	if ((buf = calloc(1, len)) == NULL)
+		goto err;
+	if (EC_POINT_point2oct(group, point, form, buf, len, ctx) != len)
+		goto err;
+
+	*out_buf = buf;
+	buf = NULL;
+
+ done:
+	*out_len = len;
+
+	ret = 1;
+
+ err:
+	freezero(buf, len);
+
+	return ret;
+}
+
+int
+ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf, size_t buf_len,
+    EC_POINT **out_point, uint8_t *out_form, BN_CTX *ctx)
+{
+	EC_POINT *point;
+	int ret = 0;
+
+	if ((point = *out_point) == NULL)
+		point = EC_POINT_new(group);
+	if (point == NULL)
+		goto err;
+
+	if (!EC_POINT_oct2point(group, point, buf, buf_len, ctx))
+		goto err;
+
+	if (out_form != NULL)
+		*out_form = buf[0] & ~1U;	/* XXX - EC_OCT_YBIT */
+
+	*out_point = point;
+	point = NULL;
+
+	ret = 1;
+
+ err:
+	if (*out_point != point)
+		EC_POINT_free(point);
+
+	return ret;
+}
+
+size_t
+EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
+    point_conversion_form_t form, unsigned char *buf, size_t len,
+    BN_CTX *ctx_in)
+{
+	BN_CTX *ctx;
+	size_t ret = 0;
+
+	if ((ctx = ctx_in) == NULL)
+		ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
+
+	if (group->meth->point2oct == NULL) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		goto err;
+	}
+	if (group->meth != point->meth) {
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
+		goto err;
+	}
+	ret = group->meth->point2oct(group, point, form, buf, len, ctx);
+
+ err:
+	if (ctx != ctx_in)
+		BN_CTX_free(ctx);
+
+	return ret;
+}
+LCRYPTO_ALIAS(EC_POINT_point2oct);
+
+int
+EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
+    const unsigned char *buf, size_t len, BN_CTX *ctx_in)
 {
 	BN_CTX *ctx;
 	int ret = 0;
@@ -84,7 +180,7 @@ EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->point_set_compressed_coordinates == NULL) {
+	if (group->meth->oct2point == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		goto err;
 	}
@@ -92,8 +188,7 @@ EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
-	ret = group->meth->point_set_compressed_coordinates(group, point,
-	    x, y_bit, ctx);
+	ret = group->meth->oct2point(group, point, buf, len, ctx);
 
  err:
 	if (ctx != ctx_in)
@@ -101,12 +196,4 @@ EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 
 	return ret;
 }
-LCRYPTO_ALIAS(EC_POINT_set_compressed_coordinates);
-
-int
-EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, int y_bit, BN_CTX *ctx)
-{
-	return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
-}
-LCRYPTO_ALIAS(EC_POINT_set_compressed_coordinates_GFp);
+LCRYPTO_ALIAS(EC_POINT_oct2point);
