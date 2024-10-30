@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.18 2024/10/30 17:51:35 tb Exp $ */
+/* $OpenBSD: ec_print.c,v 1.19 2024/10/30 18:01:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -84,36 +84,23 @@ EC_POINT *
 EC_POINT_bn2point(const EC_GROUP *group,
     const BIGNUM *bn, EC_POINT *point, BN_CTX *ctx)
 {
+	unsigned char *buf = NULL;
 	size_t buf_len = 0;
-	unsigned char *buf;
-	EC_POINT *ret;
 
+	/* Of course BN_bn2bin() is in no way symmetric to BN_bin2bn()... */
 	if ((buf_len = BN_num_bytes(bn)) == 0)
-		return NULL;
-	buf = malloc(buf_len);
-	if (buf == NULL)
-		return NULL;
+		goto err;
+	if ((buf = calloc(1, buf_len)) == NULL)
+		goto err;
+	if (!BN_bn2bin(bn, buf))
+		goto err;
+	if (!ec_point_from_octets(group, buf, buf_len, &point, NULL, ctx))
+		goto err;
 
-	if (!BN_bn2bin(bn, buf)) {
-		free(buf);
-		return NULL;
-	}
-	if (point == NULL) {
-		if ((ret = EC_POINT_new(group)) == NULL) {
-			free(buf);
-			return NULL;
-		}
-	} else
-		ret = point;
+ err:
+	freezero(buf, buf_len);
 
-	if (!EC_POINT_oct2point(group, ret, buf, buf_len, ctx)) {
-		if (point == NULL)
-			EC_POINT_free(ret);
-		free(buf);
-		return NULL;
-	}
-	free(buf);
-	return ret;
+	return point;
 }
 LCRYPTO_ALIAS(EC_POINT_bn2point);
 
