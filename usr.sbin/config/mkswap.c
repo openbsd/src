@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.20 2024/10/30 06:16:27 jsg Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.21 2024/10/30 07:28:17 jsg Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ mkoneswap(struct config *cf)
 	}
 	if (fputs("\
 #include <sys/param.h>\n\
-#include <sys/conf.h>\n\
 #include <sys/systm.h>\n\n", fp) == EOF)
 		goto wrerror;
 	nv = cf->cf_root;
