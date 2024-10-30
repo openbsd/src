@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.100 2024/10/30 17:53:28 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.101 2024/10/30 17:54:54 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -566,6 +566,22 @@ ec_point_from_asn1_string(const EC_GROUP *group, const ASN1_STRING *astr,
 {
 	return ec_point_from_octets(group, astr->data, astr->length,
 	    out_point, out_form, NULL);
+}
+
+static int
+ec_point_from_asn1_bit_string(const EC_GROUP *group, const ASN1_BIT_STRING *abs,
+    EC_POINT **out_point, uint8_t *out_form)
+{
+	/*
+	 * Per SEC 1, C.3, the bit string representing the public key comes from
+	 * an octet string, therefore the unused bits octet must be 0x00.
+	 * XXX - move this check to a helper in a_bitstr.c?
+	 */
+	if ((abs->flags & ASN1_STRING_FLAG_BITS_LEFT) != 0 &&
+	    (abs->flags & 0x07) != 0)
+		return 0;
+
+	return ec_point_from_asn1_string(group, abs, out_point, out_form);
 }
 
 static int
@@ -1207,8 +1223,8 @@ ec_key_set_private_key(EC_KEY *ec_key, const ASN1_OCTET_STRING *aos)
 static int
 ec_key_set_public_key(EC_KEY *ec_key, const ASN1_BIT_STRING *abs)
 {
-	const EC_GROUP *group = ec_key->group;
 	EC_POINT *pub_key = NULL;
+	uint8_t form;
 	int ret = 0;
 
 	if (abs == NULL) {
@@ -1216,24 +1232,12 @@ ec_key_set_public_key(EC_KEY *ec_key, const ASN1_BIT_STRING *abs)
 		return eckey_compute_pubkey(ec_key);
 	}
 
-	/*
-	 * Per SEC 1, C.3, the bit string representing the public key comes from
-	 * an octet string, therefore the unused bits octet must be 0x00.
-	 * XXX - move this check to a helper in a_bitstr.c?
-	 */
-	if ((abs->flags & ASN1_STRING_FLAG_BITS_LEFT) != 0 &&
-	    (abs->flags & 0x07) != 0)
-		goto err;
-
 	/* XXX - SEC 1, 2.3.4 does not allow hybrid encoding. */
-	if ((pub_key = EC_POINT_new(group)) == NULL)
-		goto err;
-	if (!EC_POINT_oct2point(group, pub_key, abs->data, abs->length, NULL))
+	if (!ec_point_from_asn1_bit_string(ec_key->group, abs, &pub_key, &form))
 		goto err;
 	if (!EC_KEY_set_public_key(ec_key, pub_key))
 		goto err;
-	/* oct2point has ensured that to be compressed, uncompressed, or hybrid. */
-	ec_key->conv_form = abs->data[0] & ~1U;
+	EC_KEY_set_conv_form(ec_key, form);
 
 	ret = 1;
 
