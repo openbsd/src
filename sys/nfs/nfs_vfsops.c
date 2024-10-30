@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.131 2024/05/12 09:09:39 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.132 2024/10/30 06:16:27 jsg Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ struct nfs_diskless nfs_diskless;
  * - Call nfs_boot_init() to fill in the nfs_diskless struct
  *   (using RARP, bootparam RPC, mountd RPC)
  * - hand craft the swap nfs vnode hanging off a fake mount point
- *	if swdevt[0].sw_dev == NODEV
+ *	if swdevt[0] == NODEV
  * - build the rootfs mount point and call mountnfs() to do the rest.
  */
 int
@@ -315,17 +315,17 @@ nfs_mountroot(void)
 	 * "Mount" the swap device.
 	 *
 	 * On a "dataless" configuration (swap on disk) we will have:
-	 *	(swdevt[0].sw_dev != NODEV) identifying the swap device.
+	 *	(swdevt[0] != NODEV) identifying the swap device.
 	 */
-	if (swdevt[0].sw_dev != NODEV) {
+	if (swdevt[0] != NODEV) {
 		if (bdevvp(swapdev, &swapdev_vp))
 			panic("nfs_mountroot: can't setup swap vp");
-		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
+		printf("swap on device 0x%x\n", swdevt[0]);
 		return (0);
 	}
 
 	/*
-	 * If swapping to an nfs node:	(swdevt[0].sw_dev == NODEV)
+	 * If swapping to an nfs node:	(swdevt[0] == NODEV)
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 *
@@ -348,7 +348,7 @@ nfs_mountroot(void)
 		 * Next line is a hack to make swapmount() work on NFS
 		 * swap files.
 		 */
-		swdevt[0].sw_dev = NETDEV;
+		swdevt[0] = NETDEV;
 		/* end hack */
 		nfs_diskless.sw_vp = vp;
 
@@ -368,7 +368,7 @@ nfs_mountroot(void)
 	}
 
 	printf("WARNING: no swap\n");
-	swdevt[0].sw_dev = NODEV;
+	swdevt[0] = NODEV;
 	return (0);
 }
 

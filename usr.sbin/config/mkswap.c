@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.19 2021/11/28 19:26:03 deraadt Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.20 2024/10/30 06:16:27 jsg Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -108,13 +108,13 @@ mkoneswap(struct config *cf)
 	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
 	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
 		goto wrerror;
-	if (fputs("\nstruct\tswdevt swdevt[] = {\n", fp) == EOF)
+	if (fputs("\ndev_t\tswdevt[] = {\n", fp) == EOF)
 		goto wrerror;
 	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-		if (fprintf(fp, "\t{ %s,\t0 },\t/* %s */\n",
+		if (fprintf(fp, "\t%s,\t/* %s */\n",
 		    mkdevstr(nv->nv_int), nv->nv_str) < 0)
 			goto wrerror;
-	if (fputs("\t{ NODEV, 0 }\n};\n\n", fp) == EOF)
+	if (fputs("\tNODEV\n};\n\n", fp) == EOF)
 		goto wrerror;
 	mountroot =
 	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "dk_mountroot";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.142 2024/08/18 08:01:03 mpi Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.143 2024/10/30 06:16:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -573,12 +573,12 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 #endif /* ! NO_PROPOLICE */
 
 	/* Determine I/O function to use */
-	hib->io_func = get_hibernate_io_function(swdevt[0].sw_dev);
+	hib->io_func = get_hibernate_io_function(swdevt[0]);
 	if (hib->io_func == NULL)
 		return (1);
 
 	/* Calculate hibernate device */
-	hib->dev = swdevt[0].sw_dev;
+	hib->dev = swdevt[0];
 
 	/* Read disklabel (used to calculate signature and image offsets) */
 	dl_ret = disk_readlabel(&dl, hib->dev, err_string, sizeof(err_string));

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_apm.c,v 1.3 2023/08/06 14:30:08 tobhe Exp $ */
+/* $OpenBSD: acpi_apm.c,v 1.4 2024/10/30 06:16:27 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -138,7 +138,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EBADF;
 			break;
 		}
-		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL) {
+		if (get_hibernate_io_function(swdevt[0]) == NULL) {
 			error = EOPNOTSUPP;
 			break;
 		}
@@ -225,7 +225,7 @@ request_sleep(int sleepmode)
 
 #ifdef HIBERNATE
 	if (sleepmode == SLEEP_HIBERNATE) {
-		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL)
+		if (get_hibernate_io_function(swdevt[0]) == NULL)
 			return EOPNOTSUPP;
 	}
 #endif

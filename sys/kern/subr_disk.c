@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.272 2023/11/15 20:23:19 kn Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.273 2024/10/30 06:16:27 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1423,7 +1423,7 @@ void
 setroot(struct device *bootdv, int part, int exitflags)
 {
 	int majdev, unit, len, s, slept = 0;
-	struct swdevt *swp;
+	dev_t *swp;
 	struct device *dv;
 	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
 	struct ifnet *ifp = NULL;
@@ -1564,8 +1564,8 @@ setroot(struct device *bootdv, int part, int exitflags)
 gotswap:
 		rootdev = nrootdev;
 		dumpdev = nswapdev;
-		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
+		swdevt[0] = nswapdev;
+		swdevt[1] = NODEV;
 #if defined(NFSCLIENT)
 	} else if (mountroot == nfs_mountroot) {
 		rootdv = bootdv;
@@ -1605,8 +1605,8 @@ gotswap:
 			nswapdev = NODEV;
 		}
 		dumpdev = nswapdev;
-		swdevt[0].sw_dev = nswapdev;
-		/* swdevt[1].sw_dev = NODEV; */
+		swdevt[0] = nswapdev;
+		/* swdevt[1] = NODEV; */
 	} else {
 		/* Completely pre-configured, but we want rootdv .. */
 		majdev = major(rootdev);
@@ -1653,27 +1653,27 @@ gotswap:
 	/*
 	 * Make the swap partition on the root drive the primary swap.
 	 */
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (major(rootdev) == major(swp->sw_dev) &&
-		    DISKUNIT(rootdev) == DISKUNIT(swp->sw_dev)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
+	for (swp = swdevt; *swp != NODEV; swp++) {
+		if (major(rootdev) == major(*swp) &&
+		    DISKUNIT(rootdev) == DISKUNIT(*swp)) {
+			temp = swdevt[0];
+			swdevt[0] = *swp;
+			*swp = temp;
 			break;
 		}
 	}
-	if (swp->sw_dev != NODEV) {
+	if (*swp != NODEV) {
 		/*
 		 * If dumpdev was the same as the old primary swap device,
 		 * move it to the new primary swap device.
 		 */
 		if (temp == dumpdev)
-			dumpdev = swdevt[0].sw_dev;
+			dumpdev = swdevt[0];
 	}
-	if (swdevt[0].sw_dev != NODEV)
-		printf(" swap on %s%d%c", findblkname(major(swdevt[0].sw_dev)),
-		    DISKUNIT(swdevt[0].sw_dev),
-		    'a' + DISKPART(swdevt[0].sw_dev));
+	if (swdevt[0] != NODEV)
+		printf(" swap on %s%d%c", findblkname(major(swdevt[0])),
+		    DISKUNIT(swdevt[0]),
+		    'a' + DISKPART(swdevt[0]));
 	if (dumpdev != NODEV)
 		printf(" dump on %s%d%c", findblkname(major(dumpdev)),
 		    DISKUNIT(dumpdev), 'a' + DISKPART(dumpdev));

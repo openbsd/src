@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.171 2024/09/04 07:54:53 mglocker Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.172 2024/10/30 06:16:27 jsg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1007,7 +1007,7 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	 * Lock down the last region of primary disk swap, in case
 	 * hibernate needs to place a signature there.
 	 */
-	if (dev == swdevt[0].sw_dev && vp->v_type == VBLK && size > 3 ) {
+	if (dev == swdevt[0] && vp->v_type == VBLK && size > 3 ) {
 		if (blist_fill(sdp->swd_blist, npages - 1, 1) != 1)
 			panic("hibernate reserve");
 	}
@@ -1964,7 +1964,7 @@ swapmount(void)
 	struct swapdev *sdp;
 	struct swappri *spp;
 	struct vnode *vp;
-	dev_t swap_dev = swdevt[0].sw_dev;
+	dev_t swap_dev = swdevt[0];
 	char *nam;
 	char path[MNAMELEN + 1];
 
@@ -2037,7 +2037,7 @@ uvm_hibswap(dev_t dev, u_long *sp, u_long *ep)
 	struct swappri *spp;
 
 	/* no swap devices configured yet? */
-	if (uvmexp.nswapdev < 1 || dev != swdevt[0].sw_dev)
+	if (uvmexp.nswapdev < 1 || dev != swdevt[0])
 		return (1);
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.165 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.166 2024/10/30 06:16:27 jsg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -515,21 +515,7 @@ struct linesw {
 
 #ifdef _KERNEL
 extern struct linesw linesw[];
-#endif
-
-/*
- * Swap device table
- */
-struct swdevt {
-	dev_t	sw_dev;
-	int	sw_flags;
-};
-#define	SW_FREED	0x01
-#define	SW_SEQUENTIAL	0x02
-#define	sw_freed	sw_flags	/* XXX compat */
-
-#ifdef _KERNEL
-extern struct swdevt swdevt[];
+extern dev_t swdevt[];		/* Swap device table */
 extern const int chrtoblktbl[];
 extern const int nchrtoblktbl;
 

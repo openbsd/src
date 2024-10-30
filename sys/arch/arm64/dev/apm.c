@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.25 2024/05/28 09:40:40 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.26 2024/10/30 06:16:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -380,7 +380,7 @@ request_sleep(int sleepmode)
 		break;
 #ifdef HIBERNATE
 	case SLEEP_HIBERNATE:
-		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL)
+		if (get_hibernate_io_function(swdevt[0]) == NULL)
 			return EOPNOTSUPP;
 		task_add(sleep_taskq, &hibernate_task);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.4 2013/04/19 15:02:41 florian Exp $ */
+/*	$OpenBSD: swapgeneric.c,v 1.5 2024/10/30 06:16:27 jsg Exp $ */
 /*	$NetBSD: swapgeneric.c,v 1.12 1996/05/03 19:42:28 christos Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ int (*mountroot)(void) = NULL; /* tells autoconf.c that we are "generic" */
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
 
-struct	swdevt swdevt[] = {
-	{ NODEV, 0 },	/* to be filled in */
-	{ NODEV, 0 }
+dev_t	swdevt[] = {
+	NODEV,		/* to be filled in */
+	NODEV
 };
