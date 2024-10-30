@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.101 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.102 2024/10/30 18:02:45 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -49,6 +49,7 @@
 
 #include "bpfilter.h"
 #include "kstat.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1966,7 +1967,10 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifq_init_maxlen(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 
-	ifp->if_capabilities = IFCAP_VLAN_HWTAGGING;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
@@ -2806,11 +2810,13 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 	uint64_t hlen;
 	uint64_t offload = 0;
 
+#if NVLAN > 0
 	if (ISSET(m0->m_flags, M_VLANTAG)) {
 		uint64_t vtag = m0->m_pkthdr.ether_vtag;
 		offload |= IXL_TX_DESC_CMD_IL2TAG1;
 		offload |= vtag << IXL_TX_DESC_L2TAG1_SHIFT;
 	}
+#endif
 
 	if (!ISSET(m0->m_pkthdr.csum_flags,
 	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT|M_TCP_TSO))
@@ -3309,11 +3315,13 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 					m->m_pkthdr.csum_flags |= M_FLOWID;
 				}
 
+#if NVLAN > 0
 				if (ISSET(word, IXL_RX_DESC_L2TAG1P)) {
 					m->m_pkthdr.ether_vtag =
 					    lemtoh16(&rxd->l2tag1);
 					SET(m->m_flags, M_VLANTAG);
 				}
+#endif
 
 				ixl_rx_checksum(m, word);
 				ml_enqueue(&ml, m);
