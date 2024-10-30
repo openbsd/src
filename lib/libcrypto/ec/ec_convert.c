@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.4 2024/10/30 18:21:12 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.5 2024/10/30 20:00:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -70,6 +70,9 @@
 #include "ec_local.h"
 
 /*
+ * Internal handling of the point conversion octet
+ * (see X9.62, section 4.4.2, SEC 1 section 2.3.3)
+ *
  * Only the last three bits of the leading octet of a point should be set.
  * Bits 3 and 2 encode the conversion form for all points except the point
  * at infinity. In compressed and hybrid form bit 1 indicates if the even
