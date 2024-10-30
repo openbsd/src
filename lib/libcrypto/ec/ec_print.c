@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.16 2024/10/30 17:36:22 tb Exp $ */
+/* $OpenBSD: ec_print.c,v 1.17 2024/10/30 17:49:27 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -117,46 +117,22 @@ EC_POINT_bn2point(const EC_GROUP *group,
 }
 LCRYPTO_ALIAS(EC_POINT_bn2point);
 
-static const char *HEX_DIGITS = "0123456789ABCDEF";
-
-/* the return value must be freed (using free()) */
 char *
 EC_POINT_point2hex(const EC_GROUP *group, const EC_POINT *point,
     point_conversion_form_t form, BN_CTX *ctx)
 {
-	char *ret, *p;
-	size_t buf_len = 0, i;
-	unsigned char *buf, *pbuf;
+	BIGNUM *bn;
+	char *hex = NULL;
 
-	buf_len = EC_POINT_point2oct(group, point, form,
-	    NULL, 0, ctx);
-	if (buf_len == 0 || buf_len + 1 == 0)
-		return NULL;
+	if ((bn = EC_POINT_point2bn(group, point, form, NULL, ctx)) == NULL)
+		goto err;
+	if ((hex = BN_bn2hex(bn)) == NULL)
+		goto err;
 
-	if ((buf = malloc(buf_len)) == NULL)
-		return NULL;
+ err:
+	BN_free(bn);
 
-	if (!EC_POINT_point2oct(group, point, form, buf, buf_len, ctx)) {
-		free(buf);
-		return NULL;
-	}
-	ret = reallocarray(NULL, buf_len + 1, 2);
-	if (ret == NULL) {
-		free(buf);
-		return NULL;
-	}
-	p = ret;
-	pbuf = buf;
-	for (i = buf_len; i > 0; i--) {
-		int v = (int) *(pbuf++);
-		*(p++) = HEX_DIGITS[v >> 4];
-		*(p++) = HEX_DIGITS[v & 0x0F];
-	}
-	*p = '\0';
-
-	free(buf);
-
-	return ret;
+	return hex;
 }
 LCRYPTO_ALIAS(EC_POINT_point2hex);
 
