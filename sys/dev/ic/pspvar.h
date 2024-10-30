@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.4 2024/10/29 21:16:36 bluhm Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.5 2024/10/30 17:51:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -78,6 +78,7 @@
 #define PSP_CMD_INIT			0x1
 #define PSP_CMD_PLATFORMSTATUS		0x4
 #define PSP_CMD_DF_FLUSH		0xa
+#define PSP_CMD_DOWNLOADFIRMWARE	0xb
 #define PSP_CMD_DECOMMISSION		0x20
 #define PSP_CMD_ACTIVATE		0x21
 #define PSP_CMD_DEACTIVATE		0x22
@@ -214,6 +215,11 @@ struct psp_init {
 	uint32_t		tmr_length;
 } __packed;
 
+struct psp_downloadfirmware {
+	/* Input parameters for PSP_CMD_DOWNLOADFIRMWARE */
+	uint64_t		fw_paddr;
+	uint32_t		fw_len;
+} __packed;
 
 struct psp_guest_shutdown {
 	/* Input parameter for PSP_CMD_GUEST_SHUTDOWN */

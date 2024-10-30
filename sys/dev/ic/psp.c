@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.7 2024/10/29 21:16:36 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.8 2024/10/30 17:51:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -601,6 +601,55 @@ psp_deactivate(struct psp_softc *sc, struct psp_deactivate *udeact)
 		return (EIO);
 
 	return (0);
+}
+
+int
+psp_downloadfirmware(struct psp_softc *sc, struct psp_downloadfirmware *udlfw)
+{
+	struct psp_downloadfirmware *dlfw;
+	bus_dmamap_t		 map;
+	bus_dma_segment_t	 seg;
+	caddr_t			 kva;
+	int			 nsegs;
+	int			 ret;
+
+	dlfw = (struct psp_downloadfirmware *)sc->sc_cmd_kva;
+	bzero(dlfw, sizeof(*dlfw));
+
+	ret = ENOMEM;
+	if (bus_dmamap_create(sc->sc_dmat, udlfw->fw_len, 1, udlfw->fw_len, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT, &map) != 0)
+		return (ret);
+	if (bus_dmamem_alloc(sc->sc_dmat, udlfw->fw_len, 0, 0, &seg, 1,
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0 || nsegs != 1)
+		goto fail_0;
+	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, udlfw->fw_len, &kva,
+	    BUS_DMA_WAITOK) != 0)
+		goto fail_1;
+	if (bus_dmamap_load(sc->sc_dmat, map, kva, udlfw->fw_len, NULL,
+	    BUS_DMA_WAITOK) != 0)
+		goto fail_2;
+
+	bcopy((void *)udlfw->fw_paddr, kva, udlfw->fw_len);
+
+	dlfw->fw_paddr = map->dm_segs[0].ds_addr;
+	dlfw->fw_len = map->dm_segs[0].ds_len;
+
+	ret = ccp_docmd(sc, PSP_CMD_DOWNLOADFIRMWARE,
+	    sc->sc_cmd_map->dm_segs[0].ds_addr);
+
+	if (ret != 0)
+		ret = EIO;
+
+	bus_dmamap_unload(sc->sc_dmat, map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, kva, udlfw->fw_len);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat, &seg, 1);
+fail_0:
+	bus_dmamap_destroy(sc->sc_dmat, map);
+
+	return (ret);
 }
 
 int
