@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.7 2024/10/31 15:37:53 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.8 2024/10/31 15:42:47 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -91,13 +91,13 @@
 #define EC_OCT_POINT_CONVERSION_MASK	0x06
 
 static int
-ec_oct_conversion_form_is_valid(uint8_t form)
+ec_conversion_form_is_valid(uint8_t form)
 {
 	return (form & EC_OCT_POINT_CONVERSION_MASK) == form;
 }
 
 static int
-ec_oct_check_hybrid_ybit_is_consistent(uint8_t form, int ybit, const BIGNUM *y)
+ec_check_hybrid_ybit_is_consistent(uint8_t form, int ybit, const BIGNUM *y)
 {
 	if (form == EC_OCT_POINT_HYBRID && ybit != BN_is_odd(y)) {
 		ECerror(EC_R_INVALID_ENCODING);
@@ -109,22 +109,22 @@ ec_oct_check_hybrid_ybit_is_consistent(uint8_t form, int ybit, const BIGNUM *y)
 
 /* Nonzero y-bit only makes sense with compressed or hybrid encoding. */
 static int
-ec_oct_nonzero_ybit_allowed(uint8_t form)
+ec_nonzero_ybit_allowed(uint8_t form)
 {
 	return form == EC_OCT_POINT_COMPRESSED || form == EC_OCT_POINT_HYBRID;
 }
 
 static int
-ec_oct_add_leading_octet_cbb(CBB *cbb, uint8_t form, int ybit)
+ec_add_leading_octet_cbb(CBB *cbb, uint8_t form, int ybit)
 {
-	if (ec_oct_nonzero_ybit_allowed(form) && ybit != 0)
+	if (ec_nonzero_ybit_allowed(form) && ybit != 0)
 		form |= EC_OCT_YBIT;
 
 	return CBB_add_u8(cbb, form);
 }
 
 static int
-ec_oct_get_leading_octet_cbs(CBS *cbs, uint8_t *out_form, int *out_ybit)
+ec_get_leading_octet_cbs(CBS *cbs, uint8_t *out_form, int *out_ybit)
 {
 	uint8_t octet;
 
@@ -136,12 +136,12 @@ ec_oct_get_leading_octet_cbs(CBS *cbs, uint8_t *out_form, int *out_ybit)
 	*out_ybit = octet & EC_OCT_YBIT;
 	*out_form = octet & ~EC_OCT_YBIT;
 
-	if (!ec_oct_conversion_form_is_valid(*out_form)) {
+	if (!ec_conversion_form_is_valid(*out_form)) {
 		ECerror(EC_R_INVALID_ENCODING);
 		return 0;
 	}
 
-	if (*out_ybit != 0 && !ec_oct_nonzero_ybit_allowed(*out_form)) {
+	if (*out_ybit != 0 && !ec_nonzero_ybit_allowed(*out_form)) {
 		ECerror(EC_R_INVALID_ENCODING);
 		return 0;
 	}
@@ -150,7 +150,7 @@ ec_oct_get_leading_octet_cbs(CBS *cbs, uint8_t *out_form, int *out_ybit)
 }
 
 static int
-ec_oct_encoded_length(const EC_GROUP *group, uint8_t form, size_t *out_len)
+ec_encoded_length(const EC_GROUP *group, uint8_t form, size_t *out_len)
 {
 	switch (form) {
 	case EC_OCT_POINT_AT_INFINITY:
@@ -169,19 +169,19 @@ ec_oct_encoded_length(const EC_GROUP *group, uint8_t form, size_t *out_len)
 }
 
 static int
-ec_oct_field_element_is_valid(const EC_GROUP *group, const BIGNUM *bn)
+ec_field_element_is_valid(const EC_GROUP *group, const BIGNUM *bn)
 {
 	/* Ensure bn is in the range [0, field). */
 	return !BN_is_negative(bn) && BN_cmp(&group->field, bn) > 0;
 }
 
 static int
-ec_oct_add_field_element_cbb(CBB *cbb, const EC_GROUP *group, const BIGNUM *bn)
+ec_add_field_element_cbb(CBB *cbb, const EC_GROUP *group, const BIGNUM *bn)
 {
 	uint8_t *buf = NULL;
 	int buf_len = BN_num_bytes(&group->field);
 
-	if (!ec_oct_field_element_is_valid(group, bn)) {
+	if (!ec_field_element_is_valid(group, bn)) {
 		ECerror(EC_R_BIGNUM_OUT_OF_RANGE);
 		return 0;
 	}
@@ -198,7 +198,7 @@ ec_oct_add_field_element_cbb(CBB *cbb, const EC_GROUP *group, const BIGNUM *bn)
 }
 
 static int
-ec_oct_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
+ec_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
 {
 	CBS field_element;
 
@@ -210,7 +210,7 @@ ec_oct_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
 		ECerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!ec_oct_field_element_is_valid(group, bn)) {
+	if (!ec_field_element_is_valid(group, bn)) {
 		ECerror(EC_R_BIGNUM_OUT_OF_RANGE);
 		return 0;
 	}
@@ -219,7 +219,7 @@ ec_oct_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
 }
 
 static size_t
-ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
+ec_point2oct(const EC_GROUP *group, const EC_POINT *point,
     point_conversion_form_t conversion_form, unsigned char *buf, size_t len,
     BN_CTX *ctx)
 {
@@ -240,7 +240,7 @@ ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	 * Established behavior is to reject a request for the form 0 for the
 	 * point at infinity even if it is valid.
 	 */
-	if (form == 0 || !ec_oct_conversion_form_is_valid(form)) {
+	if (form == 0 || !ec_conversion_form_is_valid(form)) {
 		ECerror(EC_R_INVALID_FORM);
 		return 0;
 	}
@@ -248,7 +248,7 @@ ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	if (EC_POINT_is_at_infinity(group, point))
 		form = EC_OCT_POINT_AT_INFINITY;
 
-	if (!ec_oct_encoded_length(group, form, &encoded_length)) {
+	if (!ec_encoded_length(group, form, &encoded_length)) {
 		ECerror(EC_R_INVALID_FORM);
 		return 0;
 	}
@@ -266,7 +266,7 @@ ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		goto err;
 
 	if (form == EC_OCT_POINT_AT_INFINITY) {
-		if (!ec_oct_add_leading_octet_cbb(&cbb, form, 0))
+		if (!ec_add_leading_octet_cbb(&cbb, form, 0))
 			goto err;
 
 		goto done;
@@ -279,16 +279,16 @@ ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
 		goto err;
 
-	if (!ec_oct_add_leading_octet_cbb(&cbb, form, BN_is_odd(y)))
+	if (!ec_add_leading_octet_cbb(&cbb, form, BN_is_odd(y)))
 		goto err;
 
 	if (form == EC_OCT_POINT_COMPRESSED) {
-		if (!ec_oct_add_field_element_cbb(&cbb, group, x))
+		if (!ec_add_field_element_cbb(&cbb, group, x))
 			goto err;
 	} else {
-		if (!ec_oct_add_field_element_cbb(&cbb, group, x))
+		if (!ec_add_field_element_cbb(&cbb, group, x))
 			goto err;
-		if (!ec_oct_add_field_element_cbb(&cbb, group, y))
+		if (!ec_add_field_element_cbb(&cbb, group, y))
 			goto err;
 	}
 
@@ -309,7 +309,7 @@ ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
 }
 
 static int
-ec_oct_oct2point(const EC_GROUP *group, EC_POINT *point,
+ec_oct2point(const EC_GROUP *group, EC_POINT *point,
     const unsigned char *buf, size_t len, BN_CTX *ctx)
 {
 	CBS cbs;
@@ -321,7 +321,7 @@ ec_oct_oct2point(const EC_GROUP *group, EC_POINT *point,
 	BN_CTX_start(ctx);
 	CBS_init(&cbs, buf, len);
 
-	if (!ec_oct_get_leading_octet_cbs(&cbs, &form, &ybit))
+	if (!ec_get_leading_octet_cbs(&cbs, &form, &ybit))
 		goto err;
 
 	if (form == EC_OCT_POINT_AT_INFINITY) {
@@ -337,16 +337,16 @@ ec_oct_oct2point(const EC_GROUP *group, EC_POINT *point,
 		goto err;
 
 	if (form == EC_OCT_POINT_COMPRESSED) {
-		if (!ec_oct_get_field_element_cbs(&cbs, group, x))
+		if (!ec_get_field_element_cbs(&cbs, group, x))
 			goto err;
 		if (!EC_POINT_set_compressed_coordinates(group, point, x, ybit, ctx))
 			goto err;
 	} else {
-		if (!ec_oct_get_field_element_cbs(&cbs, group, x))
+		if (!ec_get_field_element_cbs(&cbs, group, x))
 			goto err;
-		if (!ec_oct_get_field_element_cbs(&cbs, group, y))
+		if (!ec_get_field_element_cbs(&cbs, group, y))
 			goto err;
-		if (!ec_oct_check_hybrid_ybit_is_consistent(form, ybit, y))
+		if (!ec_check_hybrid_ybit_is_consistent(form, ybit, y))
 			goto err;
 		if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 			goto err;
@@ -451,7 +451,7 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
-	ret = ec_oct_point2oct(group, point, form, buf, len, ctx);
+	ret = ec_point2oct(group, point, form, buf, len, ctx);
 
  err:
 	if (ctx != ctx_in)
@@ -477,7 +477,7 @@ EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
-	ret = ec_oct_oct2point(group, point, buf, len, ctx);
+	ret = ec_oct2point(group, point, buf, len, ctx);
 
  err:
 	if (ctx != ctx_in)
