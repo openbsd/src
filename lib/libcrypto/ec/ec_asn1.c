@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.101 2024/10/30 17:54:54 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.102 2024/10/31 14:58:22 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -56,8 +56,10 @@
  *
  */
 
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -1409,38 +1411,35 @@ LCRYPTO_ALIAS(o2i_ECPublicKey);
 int
 i2o_ECPublicKey(const EC_KEY *ec_key, unsigned char **out)
 {
+	unsigned char *buf = NULL;
 	size_t buf_len = 0;
-	int new_buffer = 0;
+	int ret = 0;
 
 	if (ec_key == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		goto err;
 	}
-	buf_len = EC_POINT_point2oct(ec_key->group, ec_key->pub_key,
-	    ec_key->conv_form, NULL, 0, NULL);
 
-	if (out == NULL || buf_len == 0)
-		/* out == NULL => just return the length of the octet string */
-		return buf_len;
+	if (!ec_point_to_octets(ec_key->group, ec_key->pub_key,
+	    ec_key->conv_form, &buf, &buf_len, NULL))
+		goto err;
+	if (buf_len > INT_MAX)
+		goto err;
 
-	if (*out == NULL) {
-		if ((*out = malloc(buf_len)) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		new_buffer = 1;
-	}
-	if (!EC_POINT_point2oct(ec_key->group, ec_key->pub_key, ec_key->conv_form,
-		*out, buf_len, NULL)) {
-		ECerror(ERR_R_EC_LIB);
-		if (new_buffer) {
-			free(*out);
-			*out = NULL;
-		}
-		return 0;
-	}
-	if (!new_buffer)
+	if (out != NULL && *out != NULL) {
+		/* Muppet's answer to the Jackass show. */
+		memcpy(*out, buf, buf_len);
 		*out += buf_len;
-	return buf_len;
+	} else if (out != NULL) {
+		*out = buf;
+		buf = NULL;
+	}
+
+	ret = buf_len;
+
+ err:
+	freezero(buf, buf_len);
+
+	return ret;
 }
 LCRYPTO_ALIAS(i2o_ECPublicKey);
