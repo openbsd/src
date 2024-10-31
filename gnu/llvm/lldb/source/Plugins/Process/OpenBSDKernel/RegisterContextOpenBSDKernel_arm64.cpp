@@ -91,7 +91,7 @@ bool RegisterContextOpenBSDKernel_arm64::ReadRegister(
     value = (u_int64_t)sf.sf_x29;
     return true;
   case gpr_sp_arm64:
-    value = (u_int64_t)pcb.pcb_sp;
+    value = (u_int64_t)(pcb.pcb_sp + sizeof(sf));
     return true;
   case gpr_pc_arm64:
     value = (u_int64_t)sf.sf_lr;

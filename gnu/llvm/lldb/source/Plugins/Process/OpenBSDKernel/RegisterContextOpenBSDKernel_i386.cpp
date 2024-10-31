@@ -62,12 +62,12 @@ bool RegisterContextOpenBSDKernel_i386::ReadRegister(
   if ((pcb.pcb_flags & PCB_SAVECTX) != 0) {
     uint32_t reg = reg_info->kinds[lldb::eRegisterKindLLDB];
     switch (reg) {
-#define PCBREG(x)							\
-    case lldb_##x##_i386:						\
-      value = pcb.pcb_##x;						\
       return true;
-    PCBREG(ebp);
-    PCBREG(esp);
+    case lldb_esp_i386:
+      value = (u_int32_t)pcb.pcb_ebp;
+      return true;
+    case lldb_ebp_i386:
+      value = m_thread.GetProcess()->ReadPointerFromMemory(pcb.pcb_ebp, error);
     case lldb_eip_i386:
       value = m_thread.GetProcess()->ReadPointerFromMemory(pcb.pcb_ebp + 4,
 							   error);
@@ -88,6 +88,10 @@ bool RegisterContextOpenBSDKernel_i386::ReadRegister(
 
   uint32_t reg = reg_info->kinds[lldb::eRegisterKindLLDB];
   switch (reg) {
+#define PCBREG(x, offset)                                              \
+    case lldb_##x##_i386:                                              \
+      value = (u_int32_t)(pcb.pcb_##x + (offset));                     \
+      return true;
 #define SFREG(x)							\
     case lldb_##x##_i386:						\
       value = sf.sf_##x;						\

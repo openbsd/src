@@ -77,9 +77,9 @@ bool RegisterContextOpenBSDKernel_x86_64::ReadRegister(
     case lldb_##x##_x86_64:			\
       value = (u_int64_t)sf.sf_##x;		\
       return true;
-#define PCBREG(x)				\
+#define PCBREG(x, offset)			\
     case lldb_##x##_x86_64:			\
-      value = pcb.pcb_##x;			\
+      value = pcb.pcb_##x + (offset);		\
       return true;
     switch (reg) {
       SFREG(r15);
@@ -89,15 +89,14 @@ bool RegisterContextOpenBSDKernel_x86_64::ReadRegister(
       SFREG(rbp);
       SFREG(rbx);
       SFREG(rip);
-      PCBREG(rsp);
+      PCBREG(rsp, sizeof(sf));
     }
   } else {
     switch (reg) {
-      PCBREG(rbp);
-      PCBREG(rsp);
+      PCBREG(rbp, 0);
+      PCBREG(rsp, 8);
     case lldb_rip_x86_64:
-      value = m_thread.GetProcess()->ReadPointerFromMemory(pcb.pcb_rbp + 8,
-							   error);
+      value = m_thread.GetProcess()->ReadPointerFromMemory(pcb.pcb_rbp, error);
       return true;
     }
   }
