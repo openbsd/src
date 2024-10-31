@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.103 2024/10/31 15:07:49 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.104 2024/10/31 15:26:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1293,46 +1293,66 @@ LCRYPTO_ALIAS(d2i_ECPrivateKey);
 int
 i2d_ECPrivateKey(EC_KEY *ec_key, unsigned char **out)
 {
-	int ret = 0, ok = 0;
 	EC_PRIVATEKEY *ec_privatekey = NULL;
+	const EC_GROUP *group;
+	const BIGNUM *private_key;
+	const EC_POINT *public_key = NULL;
+	int ret = 0;
 
-	if (ec_key == NULL || ec_key->group == NULL || ec_key->priv_key == NULL ||
-	    (!(ec_key->enc_flag & EC_PKEY_NO_PUBKEY) && ec_key->pub_key == NULL)) {
+	if (ec_key == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
+	if ((group = EC_KEY_get0_group(ec_key)) == NULL) {
+		ECerror(EC_R_MISSING_PARAMETERS);
+		goto err;
+	}
+	if ((private_key = EC_KEY_get0_private_key(ec_key)) == NULL) {
+		ECerror(EC_R_KEYS_NOT_SET);
+		goto err;
+	}
+	if ((ec_key->enc_flag & EC_PKEY_NO_PUBKEY) == 0) {
+		if ((public_key = EC_KEY_get0_public_key(ec_key)) == NULL) {
+			ECerror(EC_R_KEYS_NOT_SET);
+			goto err;
+		}
+	}
+
 	if ((ec_privatekey = EC_PRIVATEKEY_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	ec_privatekey->version = ec_key->version;
 
-	if (!ec_asn1_encode_private_key(ec_key->group, ec_key->priv_key,
-	    ec_privatekey->privateKey))
+	if (!ec_asn1_encode_private_key(group, private_key, ec_privatekey->privateKey))
 		goto err;
-	if (!(ec_key->enc_flag & EC_PKEY_NO_PARAMETERS)) {
+	if ((ec_key->enc_flag & EC_PKEY_NO_PARAMETERS) == 0) {
 		ECPKPARAMETERS *parameters;
 
-		if ((parameters = ec_asn1_group2pkparameters(ec_key->group)) == NULL) {
+		if ((parameters = ec_asn1_group2pkparameters(group)) == NULL) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		ec_privatekey->parameters = parameters;
 	}
-	if (!(ec_key->enc_flag & EC_PKEY_NO_PUBKEY) && ec_key->pub_key != NULL) {
-		if (!ec_point_to_asn1_bit_string(ec_key->group, ec_key->pub_key,
-		    ec_key->conv_form, &ec_privatekey->publicKey))
+	if (public_key != NULL) {
+		uint8_t form;
+
+		form = EC_KEY_get_conv_form(ec_key);
+		if (!ec_point_to_asn1_bit_string(group, public_key, form,
+		    &ec_privatekey->publicKey))
 			goto err;
 	}
-	if ((ret = i2d_EC_PRIVATEKEY(ec_privatekey, out)) == 0) {
+
+	if ((ret = i2d_EC_PRIVATEKEY(ec_privatekey, out)) <= 0) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	ok = 1;
+
  err:
-	if (ec_privatekey)
-		EC_PRIVATEKEY_free(ec_privatekey);
-	return (ok ? ret : 0);
+	EC_PRIVATEKEY_free(ec_privatekey);
+
+	return ret;
 }
 LCRYPTO_ALIAS(i2d_ECPrivateKey);
 
