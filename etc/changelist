@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.139 2024/06/03 10:07:27 florian Exp $
+#	$OpenBSD: changelist,v 1.140 2024/10/31 22:14:04 kn Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -168,6 +168,7 @@
 /var/cron/cron.allow
 /var/cron/cron.deny
 /var/cron/tabs/root
++/var/db/dhcp6leased/uuid
 /var/db/unwind.key
 +/var/nsd/etc/nsd.conf
 /var/unbound/etc/unbound.conf
