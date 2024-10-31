@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.30 2024/10/30 18:16:34 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.31 2024/10/31 05:47:37 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -63,15 +63,12 @@
  */
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
 
 #include "ec_local.h"
-
-#include "bytestring.h"
 
 int
 ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
