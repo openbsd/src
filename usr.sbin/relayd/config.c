@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.46 2024/10/28 19:56:18 tb Exp $	*/
+/*	$OpenBSD: config.c,v 1.47 2024/10/31 13:37:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1181,7 +1181,7 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 		rlay->rl_tls_cacert_fd = imsg_get_fd(imsg);
 		break;
 	case RELAY_FD_CLIENTCACERT:
-		rlay->rl_tls_client_ca_fd = imsg->fd;
+		rlay->rl_tls_client_ca_fd = imsg_get_fd(imsg);
 		break;
 	}
 
