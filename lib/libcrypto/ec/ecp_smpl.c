@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.56 2023/08/03 18:53:56 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.57 2024/10/31 15:37:53 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1534,8 +1534,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	    ec_GFp_simple_point_get_affine_coordinates,
 	.point_set_compressed_coordinates =
 	    ec_GFp_simple_set_compressed_coordinates,
-	.point2oct = ec_GFp_simple_point2oct,
-	.oct2point = ec_GFp_simple_oct2point,
 	.add = ec_GFp_simple_add,
 	.dbl = ec_GFp_simple_dbl,
 	.invert = ec_GFp_simple_invert,

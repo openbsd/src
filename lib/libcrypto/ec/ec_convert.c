@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.6 2024/10/31 05:03:57 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.7 2024/10/31 15:37:53 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -218,8 +218,8 @@ ec_oct_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
 	return 1;
 }
 
-size_t
-ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
+static size_t
+ec_oct_point2oct(const EC_GROUP *group, const EC_POINT *point,
     point_conversion_form_t conversion_form, unsigned char *buf, size_t len,
     BN_CTX *ctx)
 {
@@ -308,8 +308,8 @@ ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	return ret;
 }
 
-int
-ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
+static int
+ec_oct_oct2point(const EC_GROUP *group, EC_POINT *point,
     const unsigned char *buf, size_t len, BN_CTX *ctx)
 {
 	CBS cbs;
@@ -447,15 +447,11 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->point2oct == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
 	if (group->meth != point->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
-	ret = group->meth->point2oct(group, point, form, buf, len, ctx);
+	ret = ec_oct_point2oct(group, point, form, buf, len, ctx);
 
  err:
 	if (ctx != ctx_in)
@@ -477,15 +473,11 @@ EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->oct2point == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
 	if (group->meth != point->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
-	ret = group->meth->oct2point(group, point, buf, len, ctx);
+	ret = ec_oct_oct2point(group, point, buf, len, ctx);
 
  err:
 	if (ctx != ctx_in)

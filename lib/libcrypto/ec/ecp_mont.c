@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.30 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.31 2024/10/31 15:37:53 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -243,8 +243,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	    ec_GFp_simple_point_get_affine_coordinates,
 	.point_set_compressed_coordinates =
 	    ec_GFp_simple_set_compressed_coordinates,
-	.point2oct = ec_GFp_simple_point2oct,
-	.oct2point = ec_GFp_simple_oct2point,
 	.add = ec_GFp_simple_add,
 	.dbl = ec_GFp_simple_dbl,
 	.invert = ec_GFp_simple_invert,

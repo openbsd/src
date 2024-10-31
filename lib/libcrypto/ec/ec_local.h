@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.34 2024/10/30 17:52:34 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.35 2024/10/31 15:37:53 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -116,12 +116,6 @@ struct ec_method_st {
 	    BIGNUM *x, BIGNUM *y, BN_CTX *);
 	int (*point_set_compressed_coordinates)(const EC_GROUP *, EC_POINT *,
 	    const BIGNUM *x, int y_bit, BN_CTX *);
-
-	size_t (*point2oct)(const EC_GROUP *, const EC_POINT *,
-	    point_conversion_form_t form, unsigned char *buf, size_t len,
-	    BN_CTX *);
-	int (*oct2point)(const EC_GROUP *, EC_POINT *, const unsigned char *buf,
-	    size_t len, BN_CTX *);
 
 	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a,
 	    const EC_POINT *b, BN_CTX *);
@@ -282,10 +276,6 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *, const EC_POINT 
 	BIGNUM *x, BIGNUM *y, BN_CTX *);
 int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *, EC_POINT *,
 	const BIGNUM *x, int y_bit, BN_CTX *);
-size_t ec_GFp_simple_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
-	unsigned char *buf, size_t len, BN_CTX *);
-int ec_GFp_simple_oct2point(const EC_GROUP *, EC_POINT *,
-	const unsigned char *buf, size_t len, BN_CTX *);
 int ec_GFp_simple_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 int ec_GFp_simple_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 int ec_GFp_simple_invert(const EC_GROUP *, EC_POINT *, BN_CTX *);
