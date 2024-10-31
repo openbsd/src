@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: svcb_64.c,v 1.1 2022/07/03 12:07:52 florian Exp $ */
+/* $Id: svcb_64.c,v 1.2 2024/10/31 07:40:34 otto Exp $ */
 
 /* draft-ietf-dnsop-svcb-https-10, based on srv_33.c */
 
@@ -197,7 +197,6 @@ fromwire_in_svcb_https(ARGS_FROMWIRE) {
 	dns_name_t name;
 	isc_region_t sr;
 	unsigned int svc_param_value_len;
-	int alias_mode = 0;
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -213,20 +212,12 @@ fromwire_in_svcb_https(ARGS_FROMWIRE) {
 	if (sr.length < 2)
 		return (ISC_R_UNEXPECTEDEND);
 	RETERR(isc_mem_tobuffer(target, sr.base, 2));
-	alias_mode = uint16_fromregion(&sr) == 0;
 	isc_buffer_forward(source, 2);
 
 	/*
 	 * TargetName.
 	 */
 	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
-	if (alias_mode) {
-		/*
-		 * In AliasMode, recipients MUST ignore any SvcParams that
-		 * are present.
-		 */
-		return (ISC_R_SUCCESS);
-	}
 
 	isc_buffer_activeregion(source, &sr);
 	while (sr.length > 0) {
