@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.368 2024/09/01 23:26:10 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.369 2024/10/31 10:06:51 mvs Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2470,7 +2470,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    !vnoperm(vp) &&
-		    (suser(p) || suid_clear)) {
+		    (suser(p) || atomic_load_int(&suid_clear))) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2523,7 +2523,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    !vnoperm(vp) &&
-		    (suser(p) || suid_clear)) {
+		    (suser(p) || atomic_load_int(&suid_clear))) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2573,7 +2573,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    !vnoperm(vp) &&
-		    (suser(p) || suid_clear)) {
+		    (suser(p) || atomic_load_int(&suid_clear))) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;

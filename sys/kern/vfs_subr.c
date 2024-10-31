@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.324 2024/10/18 05:52:32 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.325 2024/10/31 10:06:51 mvs Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -72,6 +72,11 @@
 
 #include "softraid.h"
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 void sr_quiesce(void);
 
 enum vtype iftovt_tab[16] = {
@@ -84,8 +89,8 @@ int	vttoif_tab[9] = {
 	S_IFSOCK, S_IFIFO, S_IFMT,
 };
 
-int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
-int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
+int prtactive = 0;	/* 1 => print out reclaim of active vnodes */
+int suid_clear = 1;	/* [a] 1 => clear SUID / SGID on owner change */
 
 /*
  * Insq/Remq for the vnode usage lists.
