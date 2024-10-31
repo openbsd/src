@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.343 2024/08/11 00:19:00 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.344 2024/10/31 12:51:55 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -795,8 +795,6 @@ m_getuio(struct mbuf **mp, int atomic, long space, struct uio *uio)
 		if (top == NULL) {
 			MGETHDR(m, M_WAIT, MT_DATA);
 			mlen = MHLEN;
-			m->m_pkthdr.len = 0;
-			m->m_pkthdr.ph_ifidx = 0;
 		} else {
 			MGET(m, M_WAIT, MT_DATA);
 			mlen = MLEN;
