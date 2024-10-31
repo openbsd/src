@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.5 2024/10/30 20:00:13 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.6 2024/10/31 05:03:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -374,10 +374,10 @@ ec_point_to_octets(const EC_GROUP *group, const EC_POINT *point, int form,
 	size_t len = 0;
 	int ret = 0;
 
+	*out_len = 0;
+
 	if (out_buf != NULL && *out_buf != NULL)
 		goto err;
-
-	*out_len = 0;
 
 	if ((len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx)) == 0)
 		goto err;
