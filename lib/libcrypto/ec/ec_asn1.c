@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.102 2024/10/31 14:58:22 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.103 2024/10/31 15:07:49 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1382,29 +1382,32 @@ d2i_ECParameters(EC_KEY **out_ec_key, const unsigned char **in, long len)
 LCRYPTO_ALIAS(d2i_ECParameters);
 
 EC_KEY *
-o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
+o2i_ECPublicKey(EC_KEY **in_ec_key, const unsigned char **in, long len)
 {
-	EC_KEY *ret = NULL;
+	EC_KEY *ec_key = NULL;
+	const EC_GROUP *group;
+	uint8_t form;
 
-	if (a == NULL || (*a) == NULL || (*a)->group == NULL) {
-		/* An EC_GROUP structure is necessary to set the public key. */
+	if (in_ec_key == NULL || (ec_key = *in_ec_key) == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
-	ret = *a;
-	if (ret->pub_key == NULL &&
-	    (ret->pub_key = EC_POINT_new(ret->group)) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
+	if ((group = ec_key->group) == NULL) {
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
-	if (!EC_POINT_oct2point(ret->group, ret->pub_key, *in, len, NULL)) {
-		ECerror(ERR_R_EC_LIB);
+	if (len < 0) {
+		ECerror(EC_R_INVALID_ARGUMENT);
 		return NULL;
 	}
-	/* save the point conversion form */
-	ret->conv_form = (point_conversion_form_t) (*in[0] & ~0x01);
+
+	if (!ec_point_from_octets(group, *in, len, &ec_key->pub_key, &form, NULL))
+		return NULL;
+	EC_KEY_set_conv_form(ec_key, form);
+
 	*in += len;
-	return ret;
+
+	return ec_key;
 }
 LCRYPTO_ALIAS(o2i_ECPublicKey);
 
