@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.92 2024/10/21 06:07:33 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.93 2024/10/31 05:00:00 dlg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -214,17 +214,6 @@ RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
  *					map is write-locked.  may be tested
  *					without asserting `flags_lock'.
  *
- *		VM_MAP_BUSY		r/w; may only be set when map is
- *					write-locked, may only be cleared by
- *					thread which set it, map read-locked
- *					or write-locked.  must be tested
- *					while `flags_lock' is asserted.
- *
- *		VM_MAP_WANTLOCK		r/w; may only be set when the map
- *					is busy, and thread is attempting
- *					to write-lock.  must be tested
- *					while `flags_lock' is asserted.
- *
  *		VM_MAP_GUARDPAGES	r/o; must be specified at map
  *					initialization time.
  *					If set, guards will appear between
@@ -257,6 +246,7 @@ RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
  *	a	atomic operations
  *	I	immutable after creation or exec(2)
  *	v	`vm_map_lock' (this map `lock' or `mtx')
+ *	f	flags_lock
  */
 struct vm_map {
 	struct pmap		*pmap;		/* [I] Physical map */
@@ -266,9 +256,10 @@ struct vm_map {
 
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* [a] Reference count */
-	int			flags;		/* flags */
+	int			flags;		/* [f] flags */
 	unsigned int		timestamp;	/* Version number */
-	struct proc		*busy;		/* [v] thread holding map busy*/
+	struct proc		*busy;		/* [f] thread holding map busy*/
+	unsigned int		nbusy;		/* [f] waiters for busy */
 
 	vaddr_t			min_offset;	/* [I] First address in map. */
 	vaddr_t			max_offset;	/* [I] Last address in map. */
@@ -323,8 +314,6 @@ struct vm_map {
 #define	VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable */
 #define	VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
 #define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
-#define	VM_MAP_BUSY		0x08		/* rw: map is busy */
-#define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 #define	VM_MAP_GUARDPAGES	0x20		/* rw: add guard pgs to map */
 #define	VM_MAP_ISVMSPACE	0x40		/* ro: map is a vmspace */
 #define	VM_MAP_PINSYSCALL_ONCE	0x100		/* rw: pinsyscall done */
