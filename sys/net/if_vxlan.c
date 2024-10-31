@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.99 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.100 2024/10/31 11:41:31 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -708,8 +708,8 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 		break;
 	default:
 		m->m_pkthdr.pf.prio = rxhprio;
-		break;                                                  \
-        }                                                               \
+		break;
+        }
 
 	if_vinput(ifp, m);
 rele:
