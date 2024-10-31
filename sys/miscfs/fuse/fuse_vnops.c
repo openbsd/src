@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.71 2024/10/18 05:52:32 miod Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.72 2024/10/31 13:55:21 claudio Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -247,7 +247,7 @@ fusefs_open(void *v)
 	ap = v;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -298,7 +298,7 @@ fusefs_close(void *v)
 
 	ap = v;
 	ip = VTOI(ap->a_vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init)
 		return (0);
@@ -329,7 +329,7 @@ fusefs_close(void *v)
 	if (ip->fufh[fufh_type].fh_type == FUFH_INVALID)
 		return (EBADF);
 
-	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FLUSH, ap->a_p);
+	fbuf = fb_setup(0, ip->i_number, FBT_FLUSH, ap->a_p);
 	fbuf->fb_io_fd = ip->fufh[fufh_type].fh_id;
 	error = fb_queue(fmp->dev, fbuf);
 	fb_delete(fbuf);
@@ -358,7 +358,7 @@ fusefs_access(void *v)
 	p = ap->a_p;
 	cred = p->p_ucred;
 	ip = VTOI(ap->a_vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	/* 
 	 * Only user that mounted the file system can access it unless
@@ -409,7 +409,7 @@ fusefs_getattr(void *v)
 	int error = 0;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	/* 
 	 * Only user that mounted the file system can access it unless
@@ -427,7 +427,7 @@ fusefs_getattr(void *v)
 		vap->va_uid = fmp->mp->mnt_stat.f_owner;
 		vap->va_gid = fmp->mp->mnt_stat.f_owner;
 		vap->va_fsid = fmp->mp->mnt_stat.f_fsid.val[0];
-		vap->va_fileid = ip->ufs_ino.i_number;
+		vap->va_fileid = ip->i_number;
 		vap->va_size = S_BLKSIZE;
 		vap->va_blocksize = S_BLKSIZE;
 		vap->va_atime.tv_sec = fmp->mp->mnt_stat.f_ctime;
@@ -441,7 +441,7 @@ fusefs_getattr(void *v)
 	if (!fmp->sess_init)
 		return (ENXIO);
 
-	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_GETATTR, p);
+	fbuf = fb_setup(0, ip->i_number, FBT_GETATTR, p);
 
 	error = fb_queue(fmp->dev, fbuf);
 	if (error) {
@@ -485,7 +485,7 @@ fusefs_setattr(void *v)
 	struct fb_io *io;
 	int error = 0;
 
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 	/*
 	 * Check for unsettable attributes.
 	 */
@@ -501,7 +501,7 @@ fusefs_setattr(void *v)
 	if (fmp->undef_op & UNDEF_SETATTR)
 		return (ENOSYS);
 
-	fbuf = fb_setup(sizeof(*io), ip->ufs_ino.i_number, FBT_SETATTR, p);
+	fbuf = fb_setup(sizeof(*io), ip->i_number, FBT_SETATTR, p);
 	io = fbtod(fbuf, struct fb_io *);
 	io->fi_flags = 0;
 
@@ -634,7 +634,7 @@ fusefs_link(void *v)
 
 	ip = VTOI(vp);
 	dip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init) {
 		VOP_ABORTOP(dvp, cnp);
@@ -651,10 +651,10 @@ fusefs_link(void *v)
 		goto out2;
 	}
 
-	fbuf = fb_setup(cnp->cn_namelen + 1, dip->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, dip->i_number,
 	    FBT_LINK, p);
 
-	fbuf->fb_io_ino = ip->ufs_ino.i_number;
+	fbuf->fb_io_ino = ip->i_number;
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
 
@@ -698,7 +698,7 @@ fusefs_symlink(void *v)
 	int len;
 
 	dp = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)dp->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)dp->i_ump;
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
@@ -712,7 +712,7 @@ fusefs_symlink(void *v)
 
 	len = strlen(target) + 1;
 
-	fbuf = fb_setup(len + cnp->cn_namelen + 1, dp->ufs_ino.i_number,
+	fbuf = fb_setup(len + cnp->cn_namelen + 1, dp->i_number,
 	    FBT_SYMLINK, p);
 
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
@@ -764,7 +764,7 @@ fusefs_readdir(void *v)
 	p = uio->uio_procp;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -781,7 +781,7 @@ fusefs_readdir(void *v)
 	}
 
 	while (uio->uio_resid > 0) {
-		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READDIR, p);
+		fbuf = fb_setup(0, ip->i_number, FBT_READDIR, p);
 
 		fbuf->fb_io_fd = ip->fufh[FUFH_RDONLY].fh_id;
 		fbuf->fb_io_off = uio->uio_offset;
@@ -865,7 +865,7 @@ fusefs_inactive(void *v)
 	struct fusefs_mnt *fmp;
 	int type, flags;
 
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	/* Close all open file handles. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
@@ -912,7 +912,7 @@ fusefs_readlink(void *v)
 	int error = 0;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 	uio = ap->a_uio;
 	p = uio->uio_procp;
 
@@ -922,7 +922,7 @@ fusefs_readlink(void *v)
 	if (fmp->undef_op & UNDEF_READLINK)
 		return (ENOSYS);
 
-	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READLINK, p);
+	fbuf = fb_setup(0, ip->i_number, FBT_READLINK, p);
 
 	error = fb_queue(fmp->dev, fbuf);
 
@@ -952,7 +952,7 @@ fusefs_reclaim(void *v)
 	struct fusebuf *fbuf;
 	int type, error = 0;
 
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	/* Close opened files. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
@@ -967,8 +967,8 @@ fusefs_reclaim(void *v)
 	/*
 	 * If the fuse connection is opened ask libfuse to free the vnodes.
 	 */
-	if (fmp->sess_init && ip->ufs_ino.i_number != FUSE_ROOTINO) {
-		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_RECLAIM, p);
+	if (fmp->sess_init && ip->i_number != FUSE_ROOTINO) {
+		fbuf = fb_setup(0, ip->i_number, FBT_RECLAIM, p);
 		error = fb_queue(fmp->dev, fbuf);
 		if (error)
 			printf("fusefs: vnode reclaim failed: %d\n", error);
@@ -978,7 +978,7 @@ fusefs_reclaim(void *v)
 	/*
 	 * Remove the inode from its hash chain.
 	 */
-	ufs_ihashrem(&ip->ufs_ino);
+	fuse_ihashrem(ip);
 
 	free(ip, M_FUSEFS, sizeof(*ip));
 	vp->v_data = NULL;
@@ -996,7 +996,7 @@ fusefs_print(void *v)
 	struct fusefs_node *ip = VTOI(vp);
 
 	/* Complete the information given by vprint(). */
-	printf("tag VT_FUSE, hash id %u ", ip->ufs_ino.i_number);
+	printf("tag VT_FUSE, hash id %llu ", ip->i_number);
 	printf("\n");
 #endif
 	return (0);
@@ -1019,7 +1019,7 @@ fusefs_create(void *v)
 	mode_t mode;
 
 	ip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
 	if (!fmp->sess_init) {
@@ -1032,7 +1032,7 @@ fusefs_create(void *v)
 		return (ENOSYS);
 	}
 
-	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, ip->i_number,
 	    FBT_MKNOD, p);
 
 	fbuf->fb_io_mode = mode;
@@ -1077,7 +1077,7 @@ fusefs_mknod(void *v)
 	int error = 0;
 
 	ip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init) {
 		VOP_ABORTOP(dvp, cnp);
@@ -1089,7 +1089,7 @@ fusefs_mknod(void *v)
 		return (ENOSYS);
 	}
 
-	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, ip->i_number,
 	    FBT_MKNOD, p);
 
 	fbuf->fb_io_mode = MAKEIMODE(vap->va_type, vap->va_mode);
@@ -1143,7 +1143,7 @@ fusefs_read(void *v)
 	int error=0;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -1153,7 +1153,7 @@ fusefs_read(void *v)
 		return (EINVAL);
 
 	while (uio->uio_resid > 0) {
-		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READ, p);
+		fbuf = fb_setup(0, ip->i_number, FBT_READ, p);
 
 		size = MIN(uio->uio_resid, fmp->max_read);
 		fbuf->fb_io_fd = fusefs_fd_get(ip, FUFH_RDONLY);
@@ -1197,7 +1197,7 @@ fusefs_write(void *v)
 	int error=0;
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -1213,7 +1213,7 @@ fusefs_write(void *v)
 
 	while (uio->uio_resid > 0) {
 		len = MIN(uio->uio_resid, fmp->max_read);
-		fbuf = fb_setup(len, ip->ufs_ino.i_number, FBT_WRITE, p);
+		fbuf = fb_setup(len, ip->i_number, FBT_WRITE, p);
 
 		fbuf->fb_io_fd = fusefs_fd_get(ip, FUFH_WRONLY);
 		fbuf->fb_io_off = uio->uio_offset;
@@ -1305,7 +1305,7 @@ abortit:
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	/*
 	 * Be sure we are not renaming ".", "..", or an alias of ".". This
@@ -1341,14 +1341,14 @@ abortit:
 	}
 
 	fbuf = fb_setup(fcnp->cn_namelen + tcnp->cn_namelen + 2,
-	    dp->ufs_ino.i_number, FBT_RENAME, p);
+	    dp->i_number, FBT_RENAME, p);
 
 	memcpy(fbuf->fb_dat, fcnp->cn_nameptr, fcnp->cn_namelen);
 	fbuf->fb_dat[fcnp->cn_namelen] = '\0';
 	memcpy(fbuf->fb_dat + fcnp->cn_namelen + 1, tcnp->cn_nameptr,
 	    tcnp->cn_namelen);
 	fbuf->fb_dat[fcnp->cn_namelen + tcnp->cn_namelen + 1] = '\0';
-	fbuf->fb_io_ino = VTOI(tdvp)->ufs_ino.i_number;
+	fbuf->fb_io_ino = VTOI(tdvp)->i_number;
 
 	error = fb_queue(fmp->dev, fbuf);
 
@@ -1394,7 +1394,7 @@ fusefs_mkdir(void *v)
 	int error = 0;
 
 	ip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 
 	if (!fmp->sess_init) {
@@ -1407,7 +1407,7 @@ fusefs_mkdir(void *v)
 		goto out;
 	}
 
-	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, ip->i_number,
 	    FBT_MKDIR, p);
 
 	fbuf->fb_io_mode = MAKEIMODE(vap->va_type, vap->va_mode);
@@ -1454,7 +1454,7 @@ fusefs_rmdir(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
@@ -1468,7 +1468,7 @@ fusefs_rmdir(void *v)
 
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 
-	fbuf = fb_setup(cnp->cn_namelen + 1, dp->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, dp->i_number,
 	    FBT_RMDIR, p);
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
@@ -1514,7 +1514,7 @@ fusefs_remove(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
@@ -1526,7 +1526,7 @@ fusefs_remove(void *v)
 		goto out;
 	}
 
-	fbuf = fb_setup(cnp->cn_namelen + 1, dp->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, dp->i_number,
 	    FBT_UNLINK, p);
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
@@ -1560,7 +1560,7 @@ fusefs_lock(void *v)
 	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return rrw_enter(&VTOI(vp)->ufs_ino.i_lock, ap->a_flags & LK_RWFLAGS);
+	return rrw_enter(&VTOI(vp)->i_lock, ap->a_flags & LK_RWFLAGS);
 }
 
 int
@@ -1569,7 +1569,7 @@ fusefs_unlock(void *v)
 	struct vop_unlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	rrw_exit(&VTOI(vp)->ufs_ino.i_lock);
+	rrw_exit(&VTOI(vp)->i_lock);
 	return 0;
 }
 
@@ -1578,7 +1578,7 @@ fusefs_islocked(void *v)
 {
 	struct vop_islocked_args *ap = v;
 
-	return rrw_status(&VTOI(ap->a_vp)->ufs_ino.i_lock);
+	return rrw_status(&VTOI(ap->a_vp)->i_lock);
 }
 
 int
@@ -1587,7 +1587,7 @@ fusefs_advlock(void *v)
 	struct vop_advlock_args *ap = v;
 	struct fusefs_node *ip = VTOI(ap->a_vp);
 
-	return (lf_advlock(&ip->ufs_ino.i_lockf, ip->filesize, ap->a_id,
+	return (lf_advlock(&ip->i_lockf, ip->filesize, ap->a_id,
 	    ap->a_op, ap->a_fl, ap->a_flags));
 }
 
@@ -1611,7 +1611,7 @@ fusefs_fsync(void *v)
 		return (0);
 
 	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+	fmp = (struct fusefs_mnt *)ip->i_ump;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -1626,7 +1626,7 @@ fusefs_fsync(void *v)
 		if (fufh->fh_type == FUFH_WRONLY ||
 		    fufh->fh_type == FUFH_RDWR) {
 
-			fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FSYNC, p);
+			fbuf = fb_setup(0, ip->i_number, FBT_FSYNC, p);
 			fbuf->fb_io_fd = fufh->fh_id;
 
 			/* Always behave as if ap->a_waitfor = MNT_WAIT. */

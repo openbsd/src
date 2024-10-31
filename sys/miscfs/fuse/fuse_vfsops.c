@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.47 2024/05/20 09:11:21 mvs Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.48 2024/10/31 13:55:21 claudio Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -276,7 +276,7 @@ retry:
 	/*
 	 * check if vnode is in hash.
 	 */
-	if ((*vpp = ufs_ihashget(fmp->dev, ino)) != NULLVP)
+	if ((*vpp = fuse_ihashget(fmp->dev, ino)) != NULLVP)
 		return (0);
 
 	/*
@@ -289,17 +289,17 @@ retry:
 	}
 
 	ip = malloc(sizeof(*ip), M_FUSEFS, M_WAITOK | M_ZERO);
-	rrw_init_flags(&ip->ufs_ino.i_lock, "fuseinode",
+	rrw_init_flags(&ip->i_lock, "fuseinode",
 	    RWL_DUPOK | RWL_IS_VNODE);
 	nvp->v_data = ip;
-	ip->ufs_ino.i_vnode = nvp;
-	ip->ufs_ino.i_dev = fmp->dev;
-	ip->ufs_ino.i_number = ino;
+	ip->i_vnode = nvp;
+	ip->i_dev = fmp->dev;
+	ip->i_number = ino;
 
 	for (i = 0; i < FUFH_MAXTYPE; i++)
 		ip->fufh[i].fh_type = FUFH_INVALID;
 
-	error = ufs_ihashins(&ip->ufs_ino);
+	error = fuse_ihashins(ip);
 	if (error) {
 		vrele(nvp);
 
@@ -309,7 +309,7 @@ retry:
 		return (error);
 	}
 
-	ip->ufs_ino.i_ump = (struct ufsmount *)fmp;
+	ip->i_ump = fmp;
 
 	if (ino == FUSE_ROOTINO)
 		nvp->v_flag |= VROOT;
@@ -348,6 +348,7 @@ fusefs_init(struct vfsconf *vfc)
 {
 	pool_init(&fusefs_fbuf_pool, sizeof(struct fusebuf), 0, 0, PR_WAITOK,
 	    "fmsg", NULL);
+	fuse_ihashinit();
 
 	return (0);
 }

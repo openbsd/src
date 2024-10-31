@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.740 2024/09/14 11:06:48 jsg Exp $
+#	$OpenBSD: files,v 1.741 2024/10/31 13:55:21 claudio Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -610,6 +610,7 @@ file	dev/kstat.c			kstat needs-flag
 pseudo-device fuse
 file	miscfs/fuse/fuse_device.c	fuse	needs-flag
 file	miscfs/fuse/fuse_file.c		fuse
+file	miscfs/fuse/fuse_ihash.c	fuse
 file	miscfs/fuse/fuse_lookup.c	fuse
 file	miscfs/fuse/fuse_vfsops.c	fuse
 file	miscfs/fuse/fuse_vnops.c	fuse
