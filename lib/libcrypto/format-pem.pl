@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: format-pem.pl,v 1.6 2022/07/03 15:02:04 sthen Exp $
+# $OpenBSD: format-pem.pl,v 1.7 2024/11/01 11:19:13 sthen Exp $
 #
 # Copyright (c) 2016 Stuart Henderson <sthen@openbsd.org>
 #
@@ -115,9 +115,9 @@ while(<>) {
 close $tmp;
 chomp $rcsid;
 print $rcsid;
-foreach my $o (sort{lc($a) cmp lc($b)} keys %ca) {
+foreach my $o (sort{$a cmp $b} keys %ca) {
 	print "\n### $o\n\n";
-	foreach my $subj (sort{lc($a) cmp lc($b)} keys %{ $ca{$o} }) {
+	foreach my $subj (sort{$a cmp $b} keys %{ $ca{$o} }) {
 		if ($ca{$o}{$subj}{'valid'} == 1) {
 			print "=== $subj\n";
 			print $ca{$o}{$subj}{'info'};
@@ -127,9 +127,9 @@ foreach my $o (sort{lc($a) cmp lc($b)} keys %ca) {
 }
 
 # print a visual summary at the end
-foreach my $o (sort{lc($a) cmp lc($b)} keys %ca) {
+foreach my $o (sort{$a cmp $b} keys %ca) {
 	print STDERR "\n$o\n";
-	foreach my $subj (sort{lc($a) cmp lc($b)} keys %{ $ca{$o} }) {
+	foreach my $subj (sort{$a cmp $b} keys %{ $ca{$o} }) {
 		print STDERR "  $subj\n";
 	}
 }
