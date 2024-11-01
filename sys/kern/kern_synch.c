@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.207 2024/10/17 09:11:35 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.208 2024/11/01 09:30:12 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -401,13 +401,14 @@ sleep_finish(int timo, int do_sleep)
 		do_sleep = 0;
 	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
 
+	if (p->p_stat == SSTOP) /* force sleep if process is stopped */
+		do_sleep = 1;
 	if (do_sleep) {
 		KASSERT(p->p_stat == SSLEEP || p->p_stat == SSTOP);
 		p->p_ru.ru_nvcsw++;
 		mi_switch();
 	} else {
-		KASSERT(p->p_stat == SONPROC || p->p_stat == SSLEEP ||
-		    p->p_stat == SSTOP);
+		KASSERT(p->p_stat == SONPROC || p->p_stat == SSLEEP);
 		unsleep(p);
 		p->p_stat = SONPROC;
 	}
