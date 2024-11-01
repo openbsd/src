@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.178 2024/10/08 02:29:10 jsg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.179 2024/11/01 20:26:18 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -286,9 +286,6 @@ int			uvm_io(vm_map_t, struct uio *, int);
 
 #define	UVM_IO_FIXPROT	0x01
 
-#ifdef __i386__
-vaddr_t			uvm_km_zalloc(vm_map_t, vsize_t);
-#endif
 void			uvm_km_free(vm_map_t, vaddr_t, vsize_t);
 vaddr_t			uvm_km_kmemalloc_pla(struct vm_map *,
 			    struct uvm_object *, vsize_t, vsize_t, int,
