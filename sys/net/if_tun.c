@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.243 2024/10/16 11:12:31 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.244 2024/11/01 02:07:14 jsg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -905,15 +905,12 @@ int
 tun_dev_kqfilter(dev_t dev, struct knote *kn)
 {
 	struct tun_softc	*sc;
-	struct ifnet		*ifp;
 	struct klist		*klist;
 	int			 error = 0;
 
 	sc = tun_get(dev);
 	if (sc == NULL)
 		return (ENXIO);
-
-	ifp = &sc->sc_if;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
