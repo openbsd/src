@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.24 2024/11/01 17:08:46 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.25 2024/11/01 18:00:16 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -288,8 +288,8 @@ ec_group_simple_from_builtin(const EC_GROUP *group, int nid, BN_CTX *ctx)
 
 	if ((simple_generator = EC_POINT_new(simple_group)) == NULL)
 		errx(1, "EC_POINT_new");
-	if (!EC_POINT_set_affine_coordinates(simple_group, simple_generator,
-	    x, y, ctx))
+	if (!EC_POINT_set_compressed_coordinates(simple_group, simple_generator,
+	    x, BN_is_odd(y), ctx))
 		errx(1, "EC_POINT_set_affine_coordinates");
 	if (!EC_GROUP_set_generator(simple_group, simple_generator, order,
 	    cofactor))
