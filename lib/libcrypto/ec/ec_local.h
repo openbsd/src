@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.35 2024/10/31 15:37:53 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.36 2024/11/01 05:10:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -152,8 +152,6 @@ struct ec_method_st {
 	    const BIGNUM *b, BN_CTX *);
 	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 	    BN_CTX *);
-	int (*field_div)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
-	    const BIGNUM *b, BN_CTX *);
 
 	/* Encode to and decode from other forms (e.g. Montgomery). */
 	int (*field_encode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
