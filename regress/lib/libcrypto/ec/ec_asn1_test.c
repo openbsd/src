@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.23 2024/10/29 13:19:22 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.24 2024/11/01 17:08:46 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -184,7 +184,7 @@ ec_group_pkparameters_test(const char *label, int nid, int asn1_flag,
 	if ((bio_mem = BIO_new(BIO_s_mem())) == NULL)
                 errx(1, "BIO_new failed for BIO_s_mem");
 
-	if ((len = i2d_ECPKParameters_bio(bio_mem, group_a)) < 0) {
+	if (i2d_ECPKParameters_bio(bio_mem, group_a) < 0) {
 		fprintf(stderr, "FAIL: i2d_ECPKParameters_bio failed\n");
 		goto done;
 	}
@@ -212,7 +212,7 @@ ec_group_pkparameters_test(const char *label, int nid, int asn1_flag,
 	EC_GROUP_free(group_b);
 	free(out);
 
-	return (failure);
+	return failure;
 }
 
 static int
@@ -242,12 +242,72 @@ ec_group_pkparameters_correct_padding_test(void)
 	    sizeof(ec_secp256k1_pkparameters_parameters));
 }
 
+static EC_GROUP *
+ec_group_simple_from_builtin(const EC_GROUP *group, int nid, BN_CTX *ctx)
+{
+	EC_GROUP *simple_group;
+	BIGNUM *p, *a, *b, *x, *y, *order, *cofactor;
+	const EC_POINT *generator;
+	EC_POINT *simple_generator = NULL;
+
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+	if ((cofactor = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
+
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		errx(1, "EC_GROUP_get_curve");
+	if (!EC_GROUP_get_order(group, order, ctx))
+		errx(1, "EC_GROUP_get_order");
+	if (!EC_GROUP_get_cofactor(group, cofactor, ctx))
+		errx(1, "EC_GROUP_get_cofactor");
+	if ((generator = EC_GROUP_get0_generator(group)) == NULL)
+		errx(1, "EC_GROUP_get0_generator");
+	if (!EC_POINT_get_affine_coordinates(group, generator, x, y, ctx))
+		errx(1, "EC_POINT_get_affine_coordinates");
+
+	if ((simple_group = EC_GROUP_new(EC_GFp_simple_method())) == NULL)
+		errx(1, "EC_GROUP_new");
+	if (!EC_GROUP_set_curve(simple_group, p, a, b, ctx))
+		errx(1, "EC_GROUP_set_curve");
+	EC_GROUP_set_curve_name(simple_group, nid);
+
+	if ((simple_generator = EC_POINT_new(simple_group)) == NULL)
+		errx(1, "EC_POINT_new");
+	if (!EC_POINT_set_affine_coordinates(simple_group, simple_generator,
+	    x, y, ctx))
+		errx(1, "EC_POINT_set_affine_coordinates");
+	if (!EC_GROUP_set_generator(simple_group, simple_generator, order,
+	    cofactor))
+		errx(1, "EC_GROUP_set_generator");
+
+	BN_CTX_end(ctx);
+
+	EC_POINT_free(simple_generator);
+
+	return simple_group;
+}
+
 static int
 ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
 {
 	EC_GROUP *new_group = NULL;
-	unsigned char *der = NULL;
-	int der_len;
+	unsigned char *der = NULL, *new_der = NULL;
+	int der_len, new_der_len;
 	const unsigned char *p;
 	int failed = 1;
 
@@ -259,9 +319,20 @@ ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
 	if ((new_group = d2i_ECPKParameters(NULL, &p, der_len)) == NULL)
 		errx(1, "failed to deserialize %s %d", descr, nid);
 
-	if (EC_GROUP_cmp(group, new_group, NULL) != 0) {
-		fprintf(stderr, "FAIL: %s %d groups mismatch\n", descr, nid);
+	new_der = NULL;
+	if ((new_der_len = i2d_ECPKParameters(new_group, &new_der)) <= 0)
+		errx(1, "failed to serialize new %s %d", descr, nid);
+
+	if (compare_data(__func__, der, der_len, new_der, new_der_len) == -1) {
+		fprintf(stderr, "FAIL: new and old der for %s %d\n", descr, nid);
 		goto err;
+	}
+
+	if (EC_GROUP_method_of(group) == EC_GFp_mont_method()) {
+		if (EC_GROUP_cmp(group, new_group, NULL) != 0) {
+			fprintf(stderr, "FAIL: %s %d groups mismatch\n", descr, nid);
+			goto err;
+		}
 	}
 	if (EC_GROUP_get_asn1_flag(group) != EC_GROUP_get_asn1_flag(new_group)) {
 		fprintf(stderr, "FAIL: %s %d asn1_flag %x != %x\n", descr, nid,
@@ -287,10 +358,43 @@ ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
 }
 
 static int
-ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
+ec_group_roundtrip_group(EC_GROUP *group, int nid)
 {
-	EC_GROUP *group = NULL;
 	int failed = 1;
+
+	if (EC_GROUP_get_asn1_flag(group) != OPENSSL_EC_NAMED_CURVE) {
+		fprintf(stderr, "FAIL: ASN.1 flag not set for %d\n", nid);
+		goto err;
+	}
+	if (EC_GROUP_get_point_conversion_form(group) !=
+	    POINT_CONVERSION_UNCOMPRESSED) {
+		fprintf(stderr, "FAIL: %d has point conversion form %02x\n",
+		    nid, EC_GROUP_get_point_conversion_form(group));
+		goto err;
+	}
+
+	failed = 0;
+
+	failed |= ec_group_roundtrip_curve(group, "named", nid);
+
+	EC_GROUP_set_asn1_flag(group, 0);
+	failed |= ec_group_roundtrip_curve(group, "explicit", nid);
+
+	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_COMPRESSED);
+	failed |= ec_group_roundtrip_curve(group, "compressed", nid);
+
+	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_HYBRID);
+	failed |= ec_group_roundtrip_curve(group, "hybrid", nid);
+
+ err:
+	return failed;
+}
+
+static int
+ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve, BN_CTX *ctx)
+{
+	EC_GROUP *group = NULL, *simple_group = NULL;
+	int failed = 0;
 
 	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
 		errx(1, "failed to instantiate curve %d", curve->nid);
@@ -300,32 +404,21 @@ ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 		goto err;
 	}
 
-	if (EC_GROUP_get_asn1_flag(group) != OPENSSL_EC_NAMED_CURVE) {
-		fprintf(stderr, "FAIL: ASN.1 flag not set for %d\n", curve->nid);
+	if ((simple_group = ec_group_simple_from_builtin(group, curve->nid,
+	    ctx)) == NULL)
+		errx(1, "failed to instantiate simple group %d", curve->nid);
+
+	if (!EC_GROUP_check(group, NULL)) {
+		fprintf(stderr, "FAIL: EC_GROUP_check(%d) failed\n", curve->nid);
 		goto err;
 	}
-	if (EC_GROUP_get_point_conversion_form(group) !=
-	    POINT_CONVERSION_UNCOMPRESSED) {
-		fprintf(stderr, "FAIL: %d has point conversion form %02x\n",
-		    curve->nid, EC_GROUP_get_point_conversion_form(group));
-		goto err;
-	}
 
-	failed = 0;
-
-	failed |= ec_group_roundtrip_curve(group, "named", curve->nid);
-
-	EC_GROUP_set_asn1_flag(group, 0);
-	failed |= ec_group_roundtrip_curve(group, "explicit", curve->nid);
-
-	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_COMPRESSED);
-	failed |= ec_group_roundtrip_curve(group, "compressed", curve->nid);
-
-	EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_HYBRID);
-	failed |= ec_group_roundtrip_curve(group, "hybrid", curve->nid);
+	failed |= ec_group_roundtrip_group(group, curve->nid);
+	failed |= ec_group_roundtrip_group(simple_group, curve->nid);
 
  err:
 	EC_GROUP_free(group);
+	EC_GROUP_free(simple_group);
 
 	return failed;
 }
@@ -333,9 +426,13 @@ ec_group_roundtrip_builtin_curve(const EC_builtin_curve *curve)
 static int
 ec_group_roundtrip_builtin_curves(void)
 {
+	BN_CTX *ctx = NULL;
 	EC_builtin_curve *all_curves = NULL;
 	size_t curve_id, ncurves;
 	int failed = 0;
+
+	if ((ctx = BN_CTX_new()) == NULL)
+		errx(1, "BN_CTX_new");
 
 	ncurves = EC_get_builtin_curves(NULL, 0);
 	if ((all_curves = calloc(ncurves, sizeof(*all_curves))) == NULL)
@@ -343,9 +440,10 @@ ec_group_roundtrip_builtin_curves(void)
 	EC_get_builtin_curves(all_curves, ncurves);
 
 	for (curve_id = 0; curve_id < ncurves; curve_id++)
-		failed |= ec_group_roundtrip_builtin_curve(&all_curves[curve_id]);
+		failed |= ec_group_roundtrip_builtin_curve(&all_curves[curve_id], ctx);
 
 	free(all_curves);
+	BN_CTX_free(ctx);
 
 	return failed;
 }
@@ -787,7 +885,6 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	unsigned char *der = NULL;
 	long error;
 	int der_len = 0;
-	int nid;
 	int failed = 1;
 
 	ERR_clear_error();
@@ -796,7 +893,7 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	if ((group = ec_group_new(curve, method, ctx)) == NULL)
 		goto err;
 
-	if ((nid = EC_GROUP_get_curve_name(group)) == NID_undef) {
+	if (EC_GROUP_get_curve_name(group) == NID_undef) {
 		fprintf(stderr, "FAIL: no curve name set for %s\n", curve->descr);
 		goto err;
 	}
@@ -3014,5 +3111,5 @@ main(int argc, char **argv)
 	failed |= ec_group_non_builtin_curves();
 	failed |= ec_group_check_private_keys();
 
-	return (failed);
+	return failed;
 }
