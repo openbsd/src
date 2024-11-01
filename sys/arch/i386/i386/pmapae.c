@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.72 2024/05/30 10:56:24 mpi Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.73 2024/11/01 12:07:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -606,6 +606,38 @@ pmap_pte_paddr_pae(vaddr_t va)
 }
 
 /*
+ * Allocate a new PD for Intel's U-K.
+ */
+void
+pmap_alloc_pdir_intel_pae(struct pmap *pmap)
+{
+	vaddr_t		 va;
+	int		 i;
+
+	KASSERT(pmap->pm_pdir_intel == 0);
+
+	va = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero, &kd_waitok);
+	if (va == 0)
+		panic("kernel_map out of virtual space");
+	pmap->pm_pdir_intel = va;
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)&pmap->pm_pdidx_intel,
+	    &pmap->pm_pdirpa_intel))
+		panic("can't locate PDPT");
+
+	for (i = 0; i < 4; i++) {
+		pmap->pm_pdidx_intel[i] = 0;
+		if (!pmap_extract(pmap, va + i * NBPG,
+		    (paddr_t *)&pmap->pm_pdidx_intel[i]))
+			panic("can't locate PD page");
+
+		pmap->pm_pdidx_intel[i] |= PG_V;
+
+		DPRINTF("%s: pm_pdidx_intel[%d] = 0x%llx\n", __func__,
+		    i, pmap->pm_pdidx_intel[i]);
+	}
+}
+
+/*
  * Switch over to PAE page tables
  */
 void
@@ -615,7 +647,7 @@ pmap_bootstrap_pae(void)
 	struct pmap *kpm = pmap_kernel();
 	struct vm_page *ptp;
 	paddr_t ptaddr;
-	u_int32_t bits;
+	u_int32_t bits, *pd = NULL;
 	vaddr_t va, eva;
 	pt_entry_t pte;
 
@@ -639,6 +671,13 @@ pmap_bootstrap_pae(void)
 	PDE(kpm, PDSLOT_PTE+1) = kpm->pm_pdidx[1] | PG_KW | PG_M | PG_U;
 	PDE(kpm, PDSLOT_PTE+2) = kpm->pm_pdidx[2] | PG_KW | PG_M | PG_U;
 	PDE(kpm, PDSLOT_PTE+3) = kpm->pm_pdidx[3] | PG_KW | PG_M | PG_U;
+
+	/* allocate new special PD before transferring all mappings. */
+	if (kpm->pm_pdir_intel) {
+		pd = (uint32_t *)kpm->pm_pdir_intel;
+		kpm->pm_pdir_intel = kpm->pm_pdirpa_intel = 0;
+		pmap_alloc_pdir_intel_pae(kpm);
+	}
 
 	/* transfer all kernel mappings over into pae tables */
 	for (va = KERNBASE, eva = va + (nkpde << PDSHIFT86);
@@ -679,14 +718,11 @@ pmap_bootstrap_pae(void)
 	}
 
 	/* Transfer special mappings */
-	if (kpm->pm_pdir_intel) {
-		uint32_t	*pd, *ptp;
+	if (pd) {
+		uint32_t	*ptp;
 		uint32_t	 l1idx, l2idx;
 		paddr_t		 npa;
 		struct vm_page	*ptppg;
-
-		pd = (uint32_t *)kpm->pm_pdir_intel;
-		kpm->pm_pdir_intel = kpm->pm_pdirpa_intel = 0;
 
 		for (va = KERNBASE, eva = va + (nkpde << PDSHIFT86); va < eva;
 		    va += PAGE_SIZE) {
@@ -939,7 +975,7 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	pmap->pm_pdir = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_dirty,
 	    &kd_waitok);
 	if (pmap->pm_pdir == 0)
-		panic("pmap_pinit_pd_pae: kernel_map out of virtual space!");
+		panic("kernel_map out of virtual space");
 	/* page index is in the pmap! */
 	pmap_extract(pmap_kernel(), (vaddr_t)pmap, &pmap->pm_pdirpa);
 	va = (vaddr_t)pmap->pm_pdir;
@@ -988,25 +1024,7 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	 * execution, one that lacks all kernel mappings.
 	 */
 	if (cpu_meltdown) {
-		int i;
-
-		va = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero, &kd_waitok);
-		if (va == 0)
-			panic("%s: kernel_map out of virtual space!", __func__);
-		if (!pmap_extract(pmap_kernel(),
-		    (vaddr_t)&pmap->pm_pdidx_intel, &pmap->pm_pdirpa_intel))
-			panic("%s: can't locate PDPT", __func__);
-		pmap->pm_pdir_intel = va;
-
-		for (i = 0; i < 4; i++) {
-			pmap->pm_pdidx_intel[i] = 0;
-			if (!pmap_extract(pmap, va + i * NBPG,
-			    (paddr_t *)&pmap->pm_pdidx_intel[i]))
-				panic("%s: can't locate PD page", __func__);
-			pmap->pm_pdidx_intel[i] |= PG_V;
-			DPRINTF("%s: pm_pdidx_intel[%d] = 0x%llx\n", __func__,
-			    i, pmap->pm_pdidx_intel[i]);
-		}
+		pmap_alloc_pdir_intel_pae(pmap);
 
 		/* Copy PDEs from pmap_kernel's U-K view */
 		bcopy((void *)pmap_kernel()->pm_pdir_intel,
@@ -1016,9 +1034,6 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 		    "pdir_intel 0x%lx pdirpa_intel 0x%lx\n",
 		    __func__, pmap, pmap->pm_pdir, pmap->pm_pdirpa,
 		    pmap->pm_pdir_intel, pmap->pm_pdirpa_intel);
-	} else {
-		pmap->pm_pdir_intel = 0;
-		pmap->pm_pdirpa_intel = 0;
 	}
 
 	mtx_enter(&pmaps_lock);
@@ -1903,13 +1918,11 @@ void
 pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 {
 	struct pmap 	*pmap = pmap_kernel();
-	struct vm_page	*ptppg = NULL, *pdppg;
+	struct vm_page	*ptppg = NULL;
 	pd_entry_t	*pd, *ptp;
 	pt_entry_t	*ptes;
 	uint32_t	 l2idx, l1idx;
-	vaddr_t		 vapd;
 	paddr_t		 npa;
-	int		 i;
 
 	/* If CPU is secure, no need to do anything */
 	if (!cpu_meltdown)
@@ -1917,36 +1930,9 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 
 	/* Must be kernel VA */
 	if (va < VM_MIN_KERNEL_ADDRESS)
-		panic("%s: invalid special mapping va 0x%lx requested",
-		    __func__, va);
+		panic("invalid special mapping va 0x%lx requested", va);
 
-	if (!pmap->pm_pdir_intel) {
-		if ((vapd = uvm_km_zalloc(kernel_map, 4 * NBPG)) == 0)
-			panic("%s: kernel_map out of virtual space!", __func__);
-		pmap->pm_pdir_intel = vapd;
-		if (!pmap_extract(pmap, (vaddr_t)&pmap->pm_pdidx_intel,
-		    &pmap->pm_pdirpa_intel))
-			panic("%s: can't locate PDPT", __func__);
-
-		for (i = 0; i < 4; i++) {
-			pmap->pm_pdidx_intel[i] = 0;
-			if (!pmap_extract(pmap, vapd + i*NBPG,
-			    (paddr_t *)&pmap->pm_pdidx_intel[i]))
-				panic("%s: can't locate PD page", __func__);
-
-			/* ensure PDPs are wired down XXX hshoexer why? */
-			pdppg = PHYS_TO_VM_PAGE(pmap->pm_pdidx_intel[i]);
-			if (pdppg == NULL)
-				panic("%s: no vm_page for pdidx %d", __func__, i);
-			atomic_clearbits_int(&pdppg->pg_flags, PG_BUSY);
-			pdppg->wire_count = 1;	/* no mappings yet */
-
-			pmap->pm_pdidx_intel[i] |= PG_V;
-
-			DPRINTF("%s: pm_pdidx_intel[%d] = 0x%llx\n", __func__,
-			    i, pmap->pm_pdidx_intel[i]);
-		}
-	}
+	KASSERT(pmap->pm_pdir_intel != 0);
 
 	DPRINTF("%s: pm_pdir_intel 0x%x pm_pdirpa_intel 0x%x\n", __func__,
 	    (uint32_t)pmap->pm_pdir_intel, (uint32_t)pmap->pm_pdirpa_intel);
