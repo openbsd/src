@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_def.c,v 1.8 2024/11/01 18:34:06 tb Exp $ */
+/* $OpenBSD: x509_def.c,v 1.9 2024/11/01 18:36:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,41 +63,41 @@
 const char *
 X509_get_default_private_dir(void)
 {
-	return (X509_PRIVATE_DIR);
+	return X509_PRIVATE_DIR;
 }
 LCRYPTO_ALIAS(X509_get_default_private_dir);
 
 const char *
 X509_get_default_cert_area(void)
 {
-	return (X509_CERT_AREA);
+	return X509_CERT_AREA;
 }
 LCRYPTO_ALIAS(X509_get_default_cert_area);
 
 const char *
 X509_get_default_cert_dir(void)
 {
-	return (X509_CERT_DIR);
+	return X509_CERT_DIR;
 }
 LCRYPTO_ALIAS(X509_get_default_cert_dir);
 
 const char *
 X509_get_default_cert_file(void)
 {
-	return (X509_CERT_FILE);
+	return X509_CERT_FILE;
 }
 LCRYPTO_ALIAS(X509_get_default_cert_file);
 
 const char *
 X509_get_default_cert_dir_env(void)
 {
-	return (X509_CERT_DIR_EVP);
+	return X509_CERT_DIR_EVP;
 }
 LCRYPTO_ALIAS(X509_get_default_cert_dir_env);
 
 const char *
 X509_get_default_cert_file_env(void)
 {
-	return (X509_CERT_FILE_EVP);
+	return X509_CERT_FILE_EVP;
 }
 LCRYPTO_ALIAS(X509_get_default_cert_file_env);

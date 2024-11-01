@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.19 2024/03/16 21:42:20 tb Exp $ */
+/* $OpenBSD: cversion.c,v 1.20 2024/11/01 18:36:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,7 +83,7 @@ LCRYPTO_ALIAS(SSLeay_version);
 unsigned long
 SSLeay(void)
 {
-	return (SSLEAY_VERSION_NUMBER);
+	return SSLEAY_VERSION_NUMBER;
 }
 LCRYPTO_ALIAS(SSLeay);
 
