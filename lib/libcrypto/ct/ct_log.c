@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_log.c,v 1.7 2024/08/31 09:26:18 tb Exp $ */
+/*	$OpenBSD: ct_log.c,v 1.8 2024/11/01 18:34:06 tb Exp $ */
 /* Author: Adam Eijdenberg <adam.eijdenberg@gmail.com>. */
 /* ====================================================================
  * Copyright (c) 1998-2016 The OpenSSL Project.  All rights reserved.
@@ -58,14 +58,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/asn1.h>
 #include <openssl/conf.h>
 #include <openssl/ct.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/safestack.h>
+#include <openssl/sha.h>
+#include <openssl/x509.h>
 
 #include "conf_local.h"
 
