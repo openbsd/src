@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2023/02/23 19:48:22 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2024/11/01 17:16:04 gkoehler Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -212,6 +212,7 @@ run_loadfile(uint64_t *marks, int howto)
 		OF_release((void*)lastpage, CLAIM_LIMIT - lastpage);
 	}
 
+	syncicache((void *)entry, (size_t)ssym - entry);
 	chain((void *)entry, bootline, ssym, esym);
 
 	_rtt();
