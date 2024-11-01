@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.8 2024/10/31 15:42:47 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.9 2024/11/01 05:20:58 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -219,31 +219,13 @@ ec_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
 }
 
 static size_t
-ec_point2oct(const EC_GROUP *group, const EC_POINT *point,
-    point_conversion_form_t conversion_form, unsigned char *buf, size_t len,
-    BN_CTX *ctx)
+ec_point2oct(const EC_GROUP *group, const EC_POINT *point, uint8_t form,
+    unsigned char *buf, size_t len, BN_CTX *ctx)
 {
 	CBB cbb;
-	uint8_t form;
 	BIGNUM *x, *y;
 	size_t encoded_length;
 	size_t ret = 0;
-
-	if (conversion_form > UINT8_MAX) {
-		ECerror(EC_R_INVALID_FORM);
-		return 0;
-	}
-
-	form = conversion_form;
-
-	/*
-	 * Established behavior is to reject a request for the form 0 for the
-	 * point at infinity even if it is valid.
-	 */
-	if (form == 0 || !ec_conversion_form_is_valid(form)) {
-		ECerror(EC_R_INVALID_FORM);
-		return 0;
-	}
 
 	if (EC_POINT_is_at_infinity(group, point))
 		form = EC_OCT_POINT_AT_INFINITY;
@@ -266,6 +248,8 @@ ec_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		goto err;
 
 	if (form == EC_OCT_POINT_AT_INFINITY) {
+		if (!EC_POINT_is_at_infinity(group, point))
+			goto err;
 		if (!ec_add_leading_octet_cbb(&cbb, form, 0))
 			goto err;
 
@@ -434,13 +418,39 @@ ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf, size_t buf
 	return ret;
 }
 
+static int
+ec_normalize_form(const EC_GROUP *group, const EC_POINT *point, int form,
+    uint8_t *out_form)
+{
+	/*
+	 * Established behavior is to reject a request for the form 0 for the
+	 * point at infinity even if it is valid.
+	 */
+	if (form <= 0 || form > UINT8_MAX)
+		return 0;
+	if (!ec_conversion_form_is_valid(form))
+		return 0;
+
+	*out_form = form;
+	if (EC_POINT_is_at_infinity(group, point))
+		*out_form = EC_OCT_POINT_AT_INFINITY;
+
+	return 1;
+}
+
 size_t
 EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
-    point_conversion_form_t form, unsigned char *buf, size_t len,
+    point_conversion_form_t conv_form, unsigned char *buf, size_t len,
     BN_CTX *ctx_in)
 {
-	BN_CTX *ctx;
+	BN_CTX *ctx = NULL;
+	uint8_t form;
 	size_t ret = 0;
+
+	if (!ec_normalize_form(group, point, conv_form, &form)) {
+		ECerror(EC_R_INVALID_FORM);
+		goto err;
+	}
 
 	if ((ctx = ctx_in) == NULL)
 		ctx = BN_CTX_new();
