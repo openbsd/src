@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2024/03/29 07:24:09 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2024/11/01 12:56:38 jsing Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -7,8 +7,7 @@
 #SSLASM+= aes aes-ppc aes-ppc
 # bn
 SSLASM+= bn ppc bn-ppc
-SSLASM+= bn ppc-mont ppc-mont		# bn_mul_mont_int
-#SSLASM+= bn ppc64-mont ppc64-mont	# bn_mul_mont_fpu64
+SSLASM+= bn ppc-mont ppc-mont
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
 # sha
 CFLAGS+= -DSHA1_ASM
@@ -23,6 +22,3 @@ ${dst}.S: ${LCRYPTO_SRC}/${dir}/asm/${src}.pl
 	/usr/bin/perl \
 		${LCRYPTO_SRC}/${dir}/asm/${src}.pl linux32 ${.TARGET} > ${.TARGET}
 .endfor
-
-#CFLAGS+= -DOPENSSL_CPUID_OBJ		# it's commented out in ppccap.c
-SRCS+=	ppccap.c
