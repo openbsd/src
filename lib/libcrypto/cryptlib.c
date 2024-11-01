@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.57 2024/10/19 13:06:11 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.58 2024/11/01 10:05:18 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -211,7 +211,8 @@ CRYPTO_get_dynlock_value(int i)
 }
 LCRYPTO_ALIAS(CRYPTO_get_dynlock_value);
 
-int CRYPTO_get_new_dynlockid(void)
+int
+CRYPTO_get_new_dynlockid(void)
 {
 	return 0;
 }
