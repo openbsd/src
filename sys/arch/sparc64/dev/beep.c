@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.11 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: beep.c,v 1.12 2024/11/02 10:36:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -188,13 +188,13 @@ beep_setfreq(struct beep_softc *sc, int freq)
 		selected = 0;
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_0,
-	    (sc->sc_freqs[i].reg >> 24) & 0xff);
+	    (sc->sc_freqs[selected].reg >> 24) & 0xff);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_1,
-	    (sc->sc_freqs[i].reg >> 16) & 0xff);
+	    (sc->sc_freqs[selected].reg >> 16) & 0xff);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_2,
-	    (sc->sc_freqs[i].reg >>  8) & 0xff);
+	    (sc->sc_freqs[selected].reg >>  8) & 0xff);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CNT_3,
-	    (sc->sc_freqs[i].reg >>  0) & 0xff);
+	    (sc->sc_freqs[selected].reg >>  0) & 0xff);
 }
 
 #if NHIDKBD > 0
