@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.367 2024/10/24 18:52:59 bluhm Exp $
+#	$OpenBSD: files.pci,v 1.368 2024/11/02 04:37:20 yasuoka Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -350,13 +350,19 @@ file	dev/pci/ixgb_hw.c		ixgb
 # Intel 82598 10GbE
 device	ix: ether, ifnet, ifmedia, intrmap, stoeplitz
 attach	ix at pci
-file	dev/pci/if_ix.c			ix
-file	dev/pci/ixgbe.c			ix
-file	dev/pci/ixgbe_82598.c		ix
-file	dev/pci/ixgbe_82599.c		ix
-file	dev/pci/ixgbe_x540.c		ix
-file	dev/pci/ixgbe_x550.c		ix
-file	dev/pci/ixgbe_phy.c		ix
+file	dev/pci/if_ix.c			ix | ixv
+file	dev/pci/ixgbe.c			ix | ixv
+file	dev/pci/ixgbe_82598.c		ix | ixv
+file	dev/pci/ixgbe_82599.c		ix | ixv
+file	dev/pci/ixgbe_x540.c		ix | ixv
+file	dev/pci/ixgbe_x550.c		ix | ixv
+file	dev/pci/ixgbe_phy.c		ix | ixv
+
+# Virtual Function of i82599.
+device	ixv: ether, ifnet, ifmedia, intrmap, stoeplitz
+attach	ixv at pci
+file	dev/pci/if_ixv.c		ixv
+file	dev/pci/ixgbe_vf.c		ixv
 
 # Intel Ethernet 700 Series
 device	ixl: ether, ifnet, ifmedia, intrmap, stoeplitz
