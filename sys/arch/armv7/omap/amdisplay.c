@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.18 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.19 2024/11/02 15:00:26 miod Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -218,7 +218,7 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 
 	free(edid_buf, M_DEVBUF, EDID_LENGTH);
 
-#ifdef LCD_DEBUG
+#if defined(LCD_DEBUG) && defined(EDID_DEBUG)
 	edid_print(&sc->sc_edid);
 #endif
 

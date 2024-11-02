@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.100 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: udl.c,v 1.101 2024/11/02 15:00:26 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -2027,7 +2027,7 @@ udl_select_mode(struct udl_softc *sc)
 
 	/* try to get the preferred mode from EDID */
 	edid_parse(sc->sc_edid, &sc->sc_edid_info);
-#ifdef UDL_DEBUG
+#if defined(UDL_DEBUG) && defined(EDID_DEBUG)
 	edid_print(&sc->sc_edid_info);
 #endif
 	if (sc->sc_edid_info.edid_preferred_mode != NULL) {

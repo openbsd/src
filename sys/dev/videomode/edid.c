@@ -1,3 +1,4 @@
+/* $OpenBSD: edid.c,v 1.6 2024/11/02 15:00:26 miod Exp $ */
 /* $NetBSD: edid.c,v 1.5 2007/03/07 19:56:40 macallan Exp $ */
 
 /*-
@@ -50,6 +51,7 @@ int edid_std_timing(uint8_t *, struct videomode *);
 int edid_det_timing(uint8_t *, struct videomode *);
 void edid_block(struct edid_info *, uint8_t *);
 
+/* #define EDID_DEBUG */
 #define	EDIDVERBOSE	1
 #define	DIVIDE(x,y)	(((x) + ((y) / 2)) / (y))
 
@@ -148,6 +150,7 @@ edid_is_valid(uint8_t *d)
 	return 0;
 }
 
+#ifdef EDID_DEBUG
 void
 edid_print(struct edid_info *edid)
 {
@@ -279,6 +282,7 @@ edid_print(struct edid_info *edid)
 			       edid->edid_preferred_mode->htotal),
 			edid->edid_preferred_mode->vtotal));
 }
+#endif
 
 const struct videomode *
 edid_mode_lookup_list(const char *name)
