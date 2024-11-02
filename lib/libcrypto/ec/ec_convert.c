@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.9 2024/11/01 05:20:58 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.10 2024/11/02 16:02:01 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -82,24 +82,24 @@
  * ignore it except at the API boundary.
  */
 
-#define EC_OCT_YBIT			0x01
+#define EC_YBIT				0x01
 
-#define EC_OCT_POINT_AT_INFINITY	0x00
-#define EC_OCT_POINT_COMPRESSED		0x02
-#define EC_OCT_POINT_UNCOMPRESSED	0x04
-#define EC_OCT_POINT_HYBRID		0x06
-#define EC_OCT_POINT_CONVERSION_MASK	0x06
+#define EC_POINT_AT_INFINITY		0x00
+#define EC_POINT_COMPRESSED		0x02
+#define EC_POINT_UNCOMPRESSED		0x04
+#define EC_POINT_HYBRID			0x06
+#define EC_POINT_CONVERSION_MASK	0x06
 
 static int
 ec_conversion_form_is_valid(uint8_t form)
 {
-	return (form & EC_OCT_POINT_CONVERSION_MASK) == form;
+	return (form & EC_POINT_CONVERSION_MASK) == form;
 }
 
 static int
 ec_check_hybrid_ybit_is_consistent(uint8_t form, int ybit, const BIGNUM *y)
 {
-	if (form == EC_OCT_POINT_HYBRID && ybit != BN_is_odd(y)) {
+	if (form == EC_POINT_HYBRID && ybit != BN_is_odd(y)) {
 		ECerror(EC_R_INVALID_ENCODING);
 		return 0;
 	}
@@ -111,14 +111,14 @@ ec_check_hybrid_ybit_is_consistent(uint8_t form, int ybit, const BIGNUM *y)
 static int
 ec_nonzero_ybit_allowed(uint8_t form)
 {
-	return form == EC_OCT_POINT_COMPRESSED || form == EC_OCT_POINT_HYBRID;
+	return form == EC_POINT_COMPRESSED || form == EC_POINT_HYBRID;
 }
 
 static int
 ec_add_leading_octet_cbb(CBB *cbb, uint8_t form, int ybit)
 {
 	if (ec_nonzero_ybit_allowed(form) && ybit != 0)
-		form |= EC_OCT_YBIT;
+		form |= EC_YBIT;
 
 	return CBB_add_u8(cbb, form);
 }
@@ -133,8 +133,8 @@ ec_get_leading_octet_cbs(CBS *cbs, uint8_t *out_form, int *out_ybit)
 		return 0;
 	}
 
-	*out_ybit = octet & EC_OCT_YBIT;
-	*out_form = octet & ~EC_OCT_YBIT;
+	*out_ybit = octet & EC_YBIT;
+	*out_form = octet & ~EC_YBIT;
 
 	if (!ec_conversion_form_is_valid(*out_form)) {
 		ECerror(EC_R_INVALID_ENCODING);
@@ -153,14 +153,14 @@ static int
 ec_encoded_length(const EC_GROUP *group, uint8_t form, size_t *out_len)
 {
 	switch (form) {
-	case EC_OCT_POINT_AT_INFINITY:
+	case EC_POINT_AT_INFINITY:
 		*out_len = 1;
 		return 1;
-	case EC_OCT_POINT_COMPRESSED:
+	case EC_POINT_COMPRESSED:
 		*out_len = 1 + BN_num_bytes(&group->field);
 		return 1;
-	case EC_OCT_POINT_UNCOMPRESSED:
-	case EC_OCT_POINT_HYBRID:
+	case EC_POINT_UNCOMPRESSED:
+	case EC_POINT_HYBRID:
 		*out_len = 1 + 2 * BN_num_bytes(&group->field);
 		return 1;
 	default:
@@ -228,7 +228,7 @@ ec_point2oct(const EC_GROUP *group, const EC_POINT *point, uint8_t form,
 	size_t ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point))
-		form = EC_OCT_POINT_AT_INFINITY;
+		form = EC_POINT_AT_INFINITY;
 
 	if (!ec_encoded_length(group, form, &encoded_length)) {
 		ECerror(EC_R_INVALID_FORM);
@@ -247,7 +247,7 @@ ec_point2oct(const EC_GROUP *group, const EC_POINT *point, uint8_t form,
 	if (!CBB_init_fixed(&cbb, buf, len))
 		goto err;
 
-	if (form == EC_OCT_POINT_AT_INFINITY) {
+	if (form == EC_POINT_AT_INFINITY) {
 		if (!EC_POINT_is_at_infinity(group, point))
 			goto err;
 		if (!ec_add_leading_octet_cbb(&cbb, form, 0))
@@ -266,7 +266,7 @@ ec_point2oct(const EC_GROUP *group, const EC_POINT *point, uint8_t form,
 	if (!ec_add_leading_octet_cbb(&cbb, form, BN_is_odd(y)))
 		goto err;
 
-	if (form == EC_OCT_POINT_COMPRESSED) {
+	if (form == EC_POINT_COMPRESSED) {
 		if (!ec_add_field_element_cbb(&cbb, group, x))
 			goto err;
 	} else {
@@ -308,7 +308,7 @@ ec_oct2point(const EC_GROUP *group, EC_POINT *point,
 	if (!ec_get_leading_octet_cbs(&cbs, &form, &ybit))
 		goto err;
 
-	if (form == EC_OCT_POINT_AT_INFINITY) {
+	if (form == EC_POINT_AT_INFINITY) {
 		if (!EC_POINT_set_to_infinity(group, point))
 			goto err;
 
@@ -320,7 +320,7 @@ ec_oct2point(const EC_GROUP *group, EC_POINT *point,
 	if ((y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (form == EC_OCT_POINT_COMPRESSED) {
+	if (form == EC_POINT_COMPRESSED) {
 		if (!ec_get_field_element_cbs(&cbs, group, x))
 			goto err;
 		if (!EC_POINT_set_compressed_coordinates(group, point, x, ybit, ctx))
@@ -404,7 +404,7 @@ ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf, size_t buf
 		goto err;
 
 	if (out_form != NULL)
-		*out_form = buf[0] & ~EC_OCT_YBIT;
+		*out_form = buf[0] & ~EC_YBIT;
 
 	*out_point = point;
 	point = NULL;
@@ -433,7 +433,7 @@ ec_normalize_form(const EC_GROUP *group, const EC_POINT *point, int form,
 
 	*out_form = form;
 	if (EC_POINT_is_at_infinity(group, point))
-		*out_form = EC_OCT_POINT_AT_INFINITY;
+		*out_form = EC_POINT_AT_INFINITY;
 
 	return 1;
 }
