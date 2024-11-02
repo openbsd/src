@@ -1,4 +1,4 @@
-#	$OpenBSD: apnic.constraints,v 1.6 2024/04/17 14:31:59 job Exp $
+#	$OpenBSD: apnic.constraints,v 1.7 2024/11/02 09:43:12 job Exp $
 
 # From https://www.iana.org/assignments/ipv6-unicast-address-assignments
 allow 2001:200::/23
@@ -9,6 +9,7 @@ allow 2001:8000::/19
 allow 2001:a000::/20
 allow 2001:b000::/20
 allow 2400::/12
+allow 2410::/12
 
 # IX Assignments
 allow 2001:7fa::/32
