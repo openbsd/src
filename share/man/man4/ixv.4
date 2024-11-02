@@ -1,4 +1,4 @@
-.\" $OpenBSD: ixv.4,v 1.1 2024/11/02 04:37:20 yasuoka Exp $
+.\" $OpenBSD: ixv.4,v 1.2 2024/11/02 06:44:31 jmc Exp $
 .\"
 .\" Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\" Copyright (c) 2019 Jonathan Matthew <jmatthew@openbsd.org>
@@ -36,15 +36,6 @@ driver supports the SR-IOV Virtual Functions of Intel 82598EB,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
-.Sh BUGS
-The VF relies on
-.Dq vlan-filter
-to receive VLAN-tagged packets.
-Because the current driver doesn't have a way to configure it,
-any VLAN-tagged packets will not be passed.
-Alternatively,
-on the host running the primary function,
-there might be a way to configure a VLAN ID.
 .Sh HISTORY
 The
 .Nm
@@ -54,4 +45,16 @@ driver first appeared in
 The
 .Nm
 driver was written by
-Intel Corporation and ported to OpenBSD by NAITO Yuichiro.
+Intel Corporation and ported to
+.Ox
+by
+.An NAITO Yuichiro .
+.Sh BUGS
+The VF relies on
+.Dq vlan-filter
+to receive VLAN-tagged packets.
+Because the current driver doesn't have a way to configure it,
+any VLAN-tagged packets will not be passed.
+Alternatively,
+on the host running the primary function,
+there might be a way to configure a VLAN ID.
