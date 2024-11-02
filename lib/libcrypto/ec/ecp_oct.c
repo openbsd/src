@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.31 2024/10/31 05:47:37 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.32 2024/11/02 09:21:04 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -72,21 +72,17 @@
 
 int
 ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
-    EC_POINT *point, const BIGNUM *x_, int y_bit, BN_CTX *ctx)
+    EC_POINT *point, const BIGNUM *in_x, int y_bit, BN_CTX *ctx)
 {
-	BIGNUM *tmp1, *tmp2, *x, *y;
+	const BIGNUM *p = &group->field, *a = &group->a, *b = &group->b;
+	BIGNUM *w, *x, *y;
 	int ret = 0;
-
-	/* clear error queue */
-	ERR_clear_error();
 
 	y_bit = (y_bit != 0);
 
 	BN_CTX_start(ctx);
 
-	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((tmp2 = BN_CTX_get(ctx)) == NULL)
+	if ((w = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -94,83 +90,73 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 		goto err;
 
 	/*
-	 * Recover y.  We have a Weierstrass equation y^2 = x^3 + a*x + b, so
-	 * y  is one of the square roots of  x^3 + a*x + b.
+	 * Weierstrass equation: y^2 = x^3 + ax + b, so y is one of the
+	 * square roots of x^3 + ax + b. The y-bit indicates which one.
 	 */
 
-	/* tmp1 := x^3 */
-	if (!BN_nnmod(x, x_, &group->field, ctx))
+	/* XXX - should we not insist on 0 <= x < p instead? */
+	if (!BN_nnmod(x, in_x, p, ctx))
 		goto err;
-	if (group->meth->field_decode == NULL) {
-		/* field_{sqr,mul} work on standard representation */
-		if (!group->meth->field_sqr(group, tmp2, x_, ctx))
-			goto err;
-		if (!group->meth->field_mul(group, tmp1, tmp2, x_, ctx))
-			goto err;
-	} else {
-		if (!BN_mod_sqr(tmp2, x_, &group->field, ctx))
-			goto err;
-		if (!BN_mod_mul(tmp1, tmp2, x_, &group->field, ctx))
+
+	if (group->meth->field_encode != NULL) {
+		if (!group->meth->field_encode(group, x, x, ctx))
 			goto err;
 	}
 
-	/* tmp1 := tmp1 + a*x */
+	/* y = x^3 */
+	if (!group->meth->field_sqr(group, y, x, ctx))
+		goto err;
+	if (!group->meth->field_mul(group, y, y, x, ctx))
+		goto err;
+
+	/* y += ax */
 	if (group->a_is_minus3) {
-		if (!BN_mod_lshift1_quick(tmp2, x, &group->field))
+		if (!BN_mod_lshift1_quick(w, x, p))
 			goto err;
-		if (!BN_mod_add_quick(tmp2, tmp2, x, &group->field))
+		if (!BN_mod_add_quick(w, w, x, p))
 			goto err;
-		if (!BN_mod_sub_quick(tmp1, tmp1, tmp2, &group->field))
+		if (!BN_mod_sub_quick(y, y, w, p))
 			goto err;
 	} else {
-		if (group->meth->field_decode) {
-			if (!group->meth->field_decode(group, tmp2, &group->a, ctx))
-				goto err;
-			if (!BN_mod_mul(tmp2, tmp2, x, &group->field, ctx))
-				goto err;
-		} else {
-			/* field_mul works on standard representation */
-			if (!group->meth->field_mul(group, tmp2, &group->a, x, ctx))
-				goto err;
-		}
-
-		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field))
+		if (!group->meth->field_mul(group, w, a, x, ctx))
+			goto err;
+		if (!BN_mod_add_quick(y, y, w, p))
 			goto err;
 	}
 
-	/* tmp1 := tmp1 + b */
+	/* y += b */
+	if (!BN_mod_add_quick(y, y, b, p))
+		goto err;
+
 	if (group->meth->field_decode != NULL) {
-		if (!group->meth->field_decode(group, tmp2, &group->b, ctx))
+		if (!group->meth->field_decode(group, x, x, ctx))
 			goto err;
-		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field))
-			goto err;
-	} else {
-		if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field))
+		if (!group->meth->field_decode(group, y, y, ctx))
 			goto err;
 	}
 
-	if (!BN_mod_sqrt(y, tmp1, &group->field, ctx)) {
-		unsigned long err = ERR_peek_last_error();
-
-		if (ERR_GET_LIB(err) == ERR_LIB_BN && ERR_GET_REASON(err) == BN_R_NOT_A_SQUARE) {
-			ERR_clear_error();
-			ECerror(EC_R_INVALID_COMPRESSED_POINT);
-		} else
-			ECerror(ERR_R_BN_LIB);
+	if (!BN_mod_sqrt(y, y, p, ctx)) {
+		ECerror(EC_R_INVALID_COMPRESSED_POINT);
 		goto err;
 	}
-	if (y_bit != BN_is_odd(y)) {
-		if (BN_is_zero(y)) {
-			ECerror(EC_R_INVALID_COMPRESSION_BIT);
-			goto err;
-		}
-		if (!BN_usub(y, &group->field, y))
-			goto err;
-		if (y_bit != BN_is_odd(y)) {
-			ECerror(ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
+
+	if (y_bit == BN_is_odd(y))
+		goto done;
+
+	if (BN_is_zero(y)) {
+		ECerror(EC_R_INVALID_COMPRESSION_BIT);
+		goto err;
 	}
+	if (!BN_usub(y, &group->field, y))
+		goto err;
+
+	if (y_bit != BN_is_odd(y)) {
+		/* Can only happen if p is even and should not be reachable. */
+		ECerror(ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+ done:
 	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 		goto err;
 
