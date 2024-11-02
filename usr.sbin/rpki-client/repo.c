@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.68 2024/09/27 12:55:03 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.69 2024/11/02 12:30:28 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1500,6 +1500,8 @@ repo_stat_inc(struct repo *rp, int talid, enum rtype type, enum stype subtype)
 			rp->stats[talid].mfts++;
 		if (subtype == STYPE_FAIL)
 			rp->stats[talid].mfts_fail++;
+		if (subtype == STYPE_SEQNUM_GAP)
+			rp->stats[talid].mfts_gap++;
 		break;
 	case RTYPE_ROA:
 		switch (subtype) {

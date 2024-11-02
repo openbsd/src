@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.143 2024/08/29 13:46:28 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.144 2024/11/02 12:30:28 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -39,6 +39,8 @@
 #include "extern.h"
 
 extern int certid;
+
+extern BN_CTX		*bn_ctx;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -451,6 +453,14 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 		    "#%s were recycled", file, (long long)mft->thisupdate,
 		    mft->seqnum);
 		goto err;
+	}
+
+	if (seqnum_cmp > 0) {
+		if (mft_seqnum_gap_present(mft, cached_mft)) {
+			mft->seqnum_gap = 1;
+			warnx("%s: seqnum gap detected #%s -> #%s", file,
+			    cached_mft->seqnum, mft->seqnum);
+		}
 	}
 
 	return mft;
@@ -1055,6 +1065,8 @@ proc_parser(int fd)
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");
+	if ((bn_ctx = BN_CTX_new()) == NULL)
+		err(1, "BN_CTX_new");
 
 	TAILQ_INIT(&q);
 
@@ -1114,6 +1126,8 @@ proc_parser(int fd)
 	crl_tree_free(&crlt);
 
 	X509_STORE_CTX_free(ctx);
+	BN_CTX_free(bn_ctx);
+
 	msgbuf_clear(&msgq);
 
 	ibuf_free(inbuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.228 2024/09/12 10:33:25 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.229 2024/11/02 12:30:28 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -219,6 +219,7 @@ struct mft {
 	unsigned int	 repoid;
 	int		 talid;
 	int		 certid;
+	int		 seqnum_gap; /* was there a gap compared to prev mft? */
 };
 
 /*
@@ -584,6 +585,7 @@ enum stype {
 	STYPE_DEC_UNIQUE,
 	STYPE_PROVIDERS,
 	STYPE_OVERFLOW,
+	STYPE_SEQNUM_GAP,
 };
 
 struct repo;
@@ -598,6 +600,7 @@ struct repotalstats {
 	uint32_t	 certs; /* certificates */
 	uint32_t	 certs_fail; /* invalid certificate */
 	uint32_t	 mfts; /* total number of manifests */
+	uint32_t	 mfts_gap; /* manifests with sequence gaps */
 	uint32_t	 mfts_fail; /* failing syntactic parse */
 	uint32_t	 roas; /* route origin authorizations */
 	uint32_t	 roas_fail; /* failing syntactic parse */
@@ -690,6 +693,7 @@ struct mft	*mft_parse(X509 **, const char *, int, const unsigned char *,
 struct mft	*mft_read(struct ibuf *);
 int		 mft_compare_issued(const struct mft *, const struct mft *);
 int		 mft_compare_seqnum(const struct mft *, const struct mft *);
+int		 mft_seqnum_gap_present(const struct mft *, const struct mft *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
