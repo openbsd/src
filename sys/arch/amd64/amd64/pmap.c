@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.177 2024/10/02 18:18:27 dv Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.178 2024/11/02 07:58:58 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2265,27 +2265,6 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	}
 #endif
 }
-
-#if 0
-/*
- * pmap_collect: free resources held by a pmap
- *
- * => optional function.
- * => called when a process is swapped out to free memory.
- */
-
-void
-pmap_collect(struct pmap *pmap)
-{
-	/*
-	 * free all of the pt pages by removing the physical mappings
-	 * for its entire address space.
-	 */
-
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
-	    PMAP_REMOVE_SKIPWIRED);
-}
-#endif
 
 void
 pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)

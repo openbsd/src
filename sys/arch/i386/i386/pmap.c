@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.224 2024/11/01 12:07:53 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.225 2024/11/02 07:58:58 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2251,25 +2251,6 @@ pmap_unwire_86(struct pmap *pmap, vaddr_t va)
 		panic("pmap_unwire_86: invalid PDE");
 	}
 #endif
-}
-
-/*
- * pmap_collect: free resources held by a pmap
- *
- * => optional function.
- * => called when a process is swapped out to free memory.
- */
-
-void
-pmap_collect(struct pmap *pmap)
-{
-	/*
-	 * free all of the pt pages by removing the physical mappings
-	 * for its entire address space.
-	 */
-
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
-	    PMAP_REMOVE_SKIPWIRED);
 }
 
 /*
