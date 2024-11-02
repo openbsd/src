@@ -1,4 +1,4 @@
-/* $OpenBSD: db_instruction.h,v 1.5 2002/07/10 20:30:14 jsyn Exp $ */
+/* $OpenBSD: db_instruction.h,v 1.6 2024/11/02 09:34:06 miod Exp $ */
 /* $NetBSD: db_instruction.h,v 1.7 2001/04/26 03:10:44 ross Exp $ */
 
 /*
@@ -70,8 +70,6 @@
 
 #ifndef	_ALPHA_INSTRUCTION_H_
 #define	_ALPHA_INSTRUCTION_H_ 1
-
-#if	!defined(ASSEMBLER)
 
 /*
  *	All instructions are in one of five formats:
@@ -206,8 +204,6 @@ typedef union {
 	} pal_format;
 
 } alpha_instruction;
-
-#endif /* !defined(ASSEMBLER) */
 
 /*
  *
