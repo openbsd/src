@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.19 2024/04/06 11:18:02 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.20 2024/11/02 16:59:22 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -163,12 +163,6 @@ struct dt_pcb {
 	SMR_SLIST_ENTRY(dt_pcb)	 dp_pnext;	/* [K,S] next PCB per probe */
 	TAILQ_ENTRY(dt_pcb)	 dp_snext;	/* [K] next PCB per softc */
 
-	/* Event states ring */
-	unsigned int		 dp_prod;	/* [m] read index */
-	unsigned int		 dp_cons;	/* [m] write index */
-	struct dt_evt		*dp_ring;	/* [m] ring of event states */
-	struct mutex		 dp_mtx;
-
 	struct dt_softc		*dp_sc;		/* [I] related softc */
 	struct dt_probe		*dp_dtp;	/* [I] related probe */
 	uint64_t		 dp_evtflags;	/* [I] event states to record */
@@ -177,9 +171,6 @@ struct dt_pcb {
 	struct clockintr	 dp_clockintr;	/* [D] profiling handle */
 	uint64_t		 dp_nsecs;	/* [I] profiling period */
 	struct cpu_info		*dp_cpu;	/* [I] on which CPU */
-
-	/* Counters */
-	uint64_t		 dp_dropevt;	/* [m] # dropped event */
 };
 
 TAILQ_HEAD(dt_pcb_list, dt_pcb);
