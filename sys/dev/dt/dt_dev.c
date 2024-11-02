@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.38 2024/11/02 16:59:22 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.39 2024/11/02 17:03:12 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -89,10 +89,10 @@
  * Per-CPU Event States
  *
  *  Locks used to protect struct members:
- *	r	owned by read(2) proc
+ *	r	owned by thread doing read(2)
  *	c	owned by CPU
  *	s	sliced ownership, based on read/write indexes
- *	S	written by CPU, read by read(2) proc
+ *	p	written by CPU, read by thread doing read(2)
  */
 struct dt_cpubuf {
 	unsigned int		 dc_prod;	/* [r] read index */
@@ -101,7 +101,7 @@ struct dt_cpubuf {
 	unsigned int	 	 dc_inevt;	/* [c] in event already? */
 
 	/* Counters */
-	unsigned int		 dc_dropevt;	/* [S] # of events dropped */
+	unsigned int		 dc_dropevt;	/* [p] # of events dropped */
 	unsigned int		 dc_readevt;	/* [r] # of events read */
 };
 
@@ -112,7 +112,7 @@ struct dt_cpubuf {
  *  Locks used to protect struct members in this file:
  *	a	atomic
  *	K	kernel lock
- *	r	owned by read(2) proc
+ *	r	owned by thread doing read(2)
  *	I	invariant after initialization
  */
 struct dt_softc {
