@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.61 2024/11/01 18:34:06 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.62 2024/11/02 07:11:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -56,8 +56,8 @@
  *
  */
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <openssl/opensslconf.h>
