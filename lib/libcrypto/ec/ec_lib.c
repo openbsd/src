@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.75 2024/11/02 15:50:50 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.76 2024/11/02 15:58:49 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -61,11 +61,15 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/bn.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
 #include <openssl/opensslv.h>
 
 #include "bn_local.h"
