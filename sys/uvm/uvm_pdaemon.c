@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.117 2024/10/02 10:36:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.118 2024/11/02 07:57:54 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -102,7 +102,8 @@ extern unsigned long drmbackoff(long);
  */
 
 struct rwlock	*uvmpd_trylockowner(struct vm_page *);
-void		uvmpd_scan(struct uvm_pmalloc *, struct uvm_constraint_range *);
+void		uvmpd_scan(struct uvm_pmalloc *, int,
+		    struct uvm_constraint_range *);
 int		uvmpd_scan_inactive(struct uvm_pmalloc *,
 		    struct uvm_constraint_range *);
 void		uvmpd_tune(void);
@@ -205,7 +206,7 @@ uvm_pageout(void *arg)
 {
 	struct uvm_constraint_range constraint;
 	struct uvm_pmalloc *pma;
-	int free;
+	int inactive_shortage, free;
 
 	/* ensure correct priority and set paging parameters... */
 	uvm.pagedaemon_proc = curproc;
@@ -269,9 +270,11 @@ uvm_pageout(void *arg)
 		 */
 		uvm_lock_pageq();
 		free = uvmexp.free - BUFPAGES_DEFICIT;
+		inactive_shortage =
+			uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
 		if (pma != NULL || (free < uvmexp.freetarg) ||
-		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
-			uvmpd_scan(pma, &constraint);
+		    (inactive_shortage > 0)) {
+			uvmpd_scan(pma, inactive_shortage, &constraint);
 		}
 
 		/*
@@ -858,9 +861,10 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
  */
 
 void
-uvmpd_scan(struct uvm_pmalloc *pma, struct uvm_constraint_range *constraint)
+uvmpd_scan(struct uvm_pmalloc *pma, int inactive_shortage,
+    struct uvm_constraint_range *constraint)
 {
-	int free, inactive_shortage, swap_shortage, pages_freed;
+	int free, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
 	struct rwlock *slock;
 	paddr_t paddr;
@@ -899,10 +903,7 @@ uvmpd_scan(struct uvm_pmalloc *pma, struct uvm_constraint_range *constraint)
 	/*
 	 * we have done the scan to get free pages.   now we work on meeting
 	 * our inactive target.
-	 */
-	inactive_shortage = uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
-
-	/*
+	 *
 	 * detect if we're not going to be able to page anything out
 	 * until we free some swap resources from active pages.
 	 */
