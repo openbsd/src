@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.55 2024/10/16 18:47:48 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.56 2024/11/02 10:02:23 jsg Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -161,7 +161,6 @@ int	check_exec(struct proc *, struct exec_package *);
 int	exec_setup_stack(struct proc *, struct exec_package *);
 int	exec_process_vmcmds(struct proc *, struct exec_package *);
 
-#ifdef DEBUG
 void	new_vmcmd(struct exec_vmcmd_set *evsp,
 		    int (*proc)(struct proc *p, struct exec_vmcmd *),
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
@@ -170,25 +169,6 @@ void	new_vmcmd(struct exec_vmcmd_set *evsp,
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot, 0);
 #define NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
-#else	/* DEBUG */
-#define NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
-#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
-	struct exec_vmcmd *__vcp; \
-	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
-		vmcmdset_extend(evsp); \
-	__vcp = &(evsp)->evs_cmds[(evsp)->evs_used++]; \
-	__vcp->ev_proc = (proc); \
-	__vcp->ev_len = (len); \
-	__vcp->ev_addr = (addr); \
-	if ((__vcp->ev_vp = (vp)) != NULLVP) \
-		vref(vp); \
-	__vcp->ev_offset = (offset); \
-	__vcp->ev_prot = (prot); \
-	__vcp->ev_flags = (flags); \
-} while (0)
-
-#endif /* DEBUG */
 
 /* Initialize an empty vmcmd set */
 #define VMCMDSET_INIT(vmc) do { \

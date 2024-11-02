@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.67 2024/04/02 08:39:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.68 2024/11/02 10:02:23 jsg Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -42,14 +42,11 @@
 
 #include <uvm/uvm_extern.h>
 
-#ifdef DEBUG
 /*
  * new_vmcmd():
  *	create a new vmcmd structure and fill in its fields based
  *	on function call arguments.  make sure objects ref'd by
  *	the vmcmd are 'held'.
- *
- * If not debugging, this is a macro, so it's expanded inline.
  */
 
 void
@@ -71,7 +68,6 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 	vcp->ev_prot = prot;
 	vcp->ev_flags = flags;
 }
-#endif /* DEBUG */
 
 void
 vmcmdset_extend(struct exec_vmcmd_set *evsp)
