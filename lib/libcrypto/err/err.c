@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.74 2024/11/02 08:54:40 tb Exp $ */
+/* $OpenBSD: err.c,v 1.75 2024/11/02 12:46:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -753,6 +753,7 @@ ERR_remove_thread_state(const CRYPTO_THREADID *id)
 {
 	ERR_STATE tmp;
 
+	OPENSSL_assert(id == NULL);
 	tmp.tid = pthread_self();
 
 	/*
