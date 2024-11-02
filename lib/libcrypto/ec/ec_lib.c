@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.74 2024/10/25 00:37:51 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.75 2024/11/02 15:50:50 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1030,6 +1030,45 @@ EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point
 	return EC_POINT_get_affine_coordinates(group, point, x, y, ctx);
 }
 LCRYPTO_ALIAS(EC_POINT_get_affine_coordinates_GFp);
+
+int
+EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *x, int y_bit, BN_CTX *ctx_in)
+{
+	BN_CTX *ctx;
+	int ret = 0;
+
+	if ((ctx = ctx_in) == NULL)
+		ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
+
+	if (group->meth->point_set_compressed_coordinates == NULL) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		goto err;
+	}
+	if (group->meth != point->meth) {
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
+		goto err;
+	}
+	ret = group->meth->point_set_compressed_coordinates(group, point,
+	    x, y_bit, ctx);
+
+ err:
+	if (ctx != ctx_in)
+		BN_CTX_free(ctx);
+
+	return ret;
+}
+LCRYPTO_ALIAS(EC_POINT_set_compressed_coordinates);
+
+int
+EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *x, int y_bit, BN_CTX *ctx)
+{
+	return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
+}
+LCRYPTO_ALIAS(EC_POINT_set_compressed_coordinates_GFp);
 
 int
 EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
