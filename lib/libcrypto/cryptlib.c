@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.58 2024/11/01 10:05:18 tb Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.59 2024/11/02 08:56:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -305,31 +305,6 @@ void
 	return NULL;
 }
 LCRYPTO_ALIAS(CRYPTO_get_dynlock_destroy_callback);
-
-void
-CRYPTO_THREADID_current(CRYPTO_THREADID *id)
-{
-	memset(id, 0, sizeof(*id));
-	id->val = (unsigned long)pthread_self();
-}
-
-int
-CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b)
-{
-	return memcmp(a, b, sizeof(*a));
-}
-
-void
-CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src)
-{
-	memcpy(dest, src, sizeof(*src));
-}
-
-unsigned long
-CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
-{
-	return id->val;
-}
 
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
 void

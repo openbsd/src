@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_local.h,v 1.1 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: crypto_local.h,v 1.2 2024/11/02 08:56:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -122,16 +122,6 @@
 #define HEADER_CRYPTO_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
-
-struct crypto_threadid_st {
-	void *ptr;
-	unsigned long val;
-} /* CRYPTO_THREADID */;
-
-void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
-int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
-void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
-unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
 
 __END_HIDDEN_DECLS
 
