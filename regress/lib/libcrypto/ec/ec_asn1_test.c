@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.25 2024/11/01 18:00:16 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.26 2024/11/02 13:42:49 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -307,7 +307,7 @@ ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
 {
 	EC_GROUP *new_group = NULL;
 	unsigned char *der = NULL, *new_der = NULL;
-	int der_len, new_der_len;
+	int der_len = 0, new_der_len = 0;
 	const unsigned char *p;
 	int failed = 1;
 
@@ -352,7 +352,8 @@ ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
 
  err:
 	EC_GROUP_free(new_group);
-	free(der);
+	freezero(der, der_len);
+	freezero(new_der, new_der_len);
 
 	return failed;
 }
