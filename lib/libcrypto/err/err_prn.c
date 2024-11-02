@@ -1,4 +1,4 @@
-/* $OpenBSD: err_prn.c,v 1.23 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: err_prn.c,v 1.24 2024/11/02 08:54:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -66,7 +67,6 @@
 #include <openssl/lhash.h>
 
 #include "bio_local.h"
-#include "crypto_local.h"
 
 void
 ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u), void *u)
@@ -77,10 +77,8 @@ ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u), void *u)
 	const char *file, *data;
 	int line, flags;
 	unsigned long es;
-	CRYPTO_THREADID cur;
 
-	CRYPTO_THREADID_current(&cur);
-	es = CRYPTO_THREADID_hash(&cur);
+	es = (unsigned long)pthread_self();
 	while ((l = ERR_get_error_line_data(&file, &line, &data,
 	    &flags)) != 0) {
 		ERR_error_string_n(l, buf, sizeof buf);

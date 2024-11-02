@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.73 2024/10/11 13:32:22 tb Exp $ */
+/* $OpenBSD: err.c,v 1.74 2024/11/02 08:54:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,13 +122,11 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 
-#include "crypto_local.h"
-
 DECLARE_LHASH_OF(ERR_STRING_DATA);
 DECLARE_LHASH_OF(ERR_STATE);
 
 typedef struct err_state_st {
-	CRYPTO_THREADID tid;
+	pthread_t tid;
 	int err_flags[ERR_NUM_ERRORS];
 	unsigned long err_buffer[ERR_NUM_ERRORS];
 	char *err_data[ERR_NUM_ERRORS];
@@ -350,14 +348,14 @@ err_del_item(const ERR_STRING_DATA *d)
 static unsigned long
 err_state_hash(const ERR_STATE *a)
 {
-	return CRYPTO_THREADID_hash(&a->tid) * 13;
+	return 13 * (unsigned long)a->tid;
 }
 static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE)
 
 static int
 err_state_cmp(const ERR_STATE *a, const ERR_STATE *b)
 {
-	return CRYPTO_THREADID_cmp(&a->tid, &b->tid);
+	return pthread_equal(a->tid, b->tid) == 0;
 }
 static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE)
 
@@ -557,10 +555,8 @@ ERR_get_state(void)
 	static ERR_STATE fallback;
 	ERR_STATE *ret, tmp, *tmpp = NULL;
 	int i;
-	CRYPTO_THREADID tid;
 
-	CRYPTO_THREADID_current(&tid);
-	CRYPTO_THREADID_cpy(&tmp.tid, &tid);
+	tmp.tid = pthread_self();
 	ret = err_thread_get_item(&tmp);
 
 	/* ret == the error state, if NULL, make a new one */
@@ -568,7 +564,7 @@ ERR_get_state(void)
 		ret = malloc(sizeof(ERR_STATE));
 		if (ret == NULL)
 			return (&fallback);
-		CRYPTO_THREADID_cpy(&ret->tid, &tid);
+		ret->tid = pthread_self();
 		ret->top = 0;
 		ret->bottom = 0;
 		for (i = 0; i < ERR_NUM_ERRORS; i++) {
@@ -757,10 +753,7 @@ ERR_remove_thread_state(const CRYPTO_THREADID *id)
 {
 	ERR_STATE tmp;
 
-	if (id)
-		CRYPTO_THREADID_cpy(&tmp.tid, id);
-	else
-		CRYPTO_THREADID_current(&tmp.tid);
+	tmp.tid = pthread_self();
 
 	/*
 	 * err_thread_del_item automatically destroys the LHASH if the number of
