@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.104 2024/10/31 15:26:05 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.105 2024/11/02 19:21:24 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1143,7 +1143,8 @@ d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 
  err:
 	ECPKPARAMETERS_free(params);
-	return (group);
+
+	return group;
 }
 LCRYPTO_ALIAS(d2i_ECPKParameters);
 
