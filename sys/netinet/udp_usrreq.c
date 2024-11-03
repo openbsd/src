@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.324 2024/08/06 20:15:53 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.325 2024/11/03 14:28:06 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -298,6 +298,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			}
 		}
 	}
+	CLR(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT);
 
 #ifdef IPSEC
 	if (udpencap_enable && udpencap_port && esp_enable &&
