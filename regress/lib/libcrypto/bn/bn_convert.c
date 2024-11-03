@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.6 2024/04/17 08:51:11 jsing Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.7 2024/11/03 12:46:55 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -274,7 +274,7 @@ static const struct bn_convert_test bn_convert_tests[] = {
 		.neg = 0,
 		.dec = "8388607",
 		.hex = "7FFFFF",
-		.mpi = { 0x00, 0x00, 0x00, 0x03, 0x7f, 0xff, 0xff },
+		.mpi = { 0x00, 0x00, 0x00, 0x03, 0x7f, 0xff, 0xff, },
 		.mpi_len = 7,
 	},
 	{
@@ -283,8 +283,26 @@ static const struct bn_convert_test bn_convert_tests[] = {
 		.neg = 1,
 		.dec = "-8388607",
 		.hex = "-7FFFFF",
-		.mpi = { 0x00, 0x00, 0x00, 0x03, 0xff, 0xff, 0xff },
+		.mpi = { 0x00, 0x00, 0x00, 0x03, 0xff, 0xff, 0xff, },
 		.mpi_len = 7,
+	},
+	{
+		.bin = { 0x01, 0x02, 0x03, 0x04, },
+		.bin_len = 4,
+		.neg = 0,
+		.dec = "16909060",
+		.hex = "01020304",
+		.mpi = { 0x00, 0x00, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04, },
+		.mpi_len = 8,
+	},
+	{
+		.bin = { 0x04, 0x03, 0x02, 0x01, },
+		.bin_len = 4,
+		.neg = 0,
+		.dec = "67305985",
+		.hex = "04030201",
+		.mpi = { 0x00, 0x00, 0x00, 0x04, 0x04, 0x03, 0x02, 0x01, },
+		.mpi_len = 8,
 	},
 	{
 		.bin = { 0xff, 0xff, 0xff, 0xff, },
