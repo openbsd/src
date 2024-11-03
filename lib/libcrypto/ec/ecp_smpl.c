@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.59 2024/11/02 15:58:49 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.60 2024/11/03 15:47:11 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -393,11 +393,6 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 {
 	BIGNUM *z, *Z, *Z_1, *Z_2, *Z_3;
 	int ret = 0;
-
-	if (EC_POINT_is_at_infinity(group, point) > 0) {
-		ECerror(EC_R_POINT_AT_INFINITY);
-		return 0;
-	}
 
 	BN_CTX_start(ctx);
 
