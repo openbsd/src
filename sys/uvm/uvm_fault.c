@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.138 2024/11/03 08:00:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.139 2024/11/03 11:33:32 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ struct uvm_faultctx {
 
 int		uvm_fault_check(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
-		    struct vm_anon ***, vm_fault_t);
+		    struct vm_anon ***);
 
 int		uvm_fault_upper(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
@@ -585,14 +585,19 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
+	if (fault_type == VM_FAULT_WIRE)
+		flt.narrow = TRUE;	/* don't look for neighborhood
+					 * pages on wire */
+	else
+		flt.narrow = FALSE;	/* normal fault */
 	flt.access_type = access_type;
-	flt.narrow = FALSE;		/* assume normal fault for now */
+
 
 	error = ERESTART;
 	while (error == ERESTART) { /* ReFault: */
 		anons = anons_store;
 
-		error = uvm_fault_check(&ufi, &flt, &anons, fault_type);
+		error = uvm_fault_check(&ufi, &flt, &anons);
 		if (error != 0)
 			continue;
 
@@ -655,7 +660,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
  */
 int
 uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-    struct vm_anon ***ranons, vm_fault_t fault_type)
+    struct vm_anon ***ranons)
 {
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -689,14 +694,12 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * be more strict than ufi->entry->protection.  "wired" means either
 	 * the entry is wired or we are fault-wiring the pg.
 	 */
+
 	flt->enter_prot = ufi->entry->protection;
 	flt->pa_flags = UVM_ET_ISWC(ufi->entry) ? PMAP_WC : 0;
-	if (VM_MAPENT_ISWIRED(ufi->entry) || (fault_type == VM_FAULT_WIRE)) {
-		flt->wired = TRUE;
+	flt->wired = VM_MAPENT_ISWIRED(ufi->entry) || (flt->narrow == TRUE);
+	if (flt->wired)
 		flt->access_type = flt->enter_prot; /* full access for wired */
-		/*  don't look for neighborhood * pages on "wire" fault */
-		flt->narrow = TRUE;
-	}
 
 	/* handle "needs_copy" case. */
 	if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
@@ -1074,14 +1077,9 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * ... update the page queues.
 	 */
 	uvm_lock_pageq();
-	if (flt->wired) {
-		uvm_pagewire(pg);
-	} else {
-		uvm_pageactivate(pg);
-	}
-	uvm_unlock_pageq();
 
-	if (flt->wired) {
+	if (fault_type == VM_FAULT_WIRE) {
+		uvm_pagewire(pg);
 		/*
 		 * since the now-wired page cannot be paged out,
 		 * release its swap resources for others to use.
@@ -1090,7 +1088,12 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 */
 		atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 		uvm_anon_dropswap(anon);
+	} else {
+		/* activate it */
+		uvm_pageactivate(pg);
 	}
+
+	uvm_unlock_pageq();
 
 	/*
 	 * done case 1!  finish up by unlocking everything and returning success
@@ -1205,7 +1208,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	boolean_t promote, locked;
-	int result, dropswap = 0;
+	int result;
 	struct vm_page *uobjpage, *pg = NULL;
 	struct vm_anon *anon = NULL;
 	voff_t uoff;
@@ -1537,9 +1540,10 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		return ERESTART;
 	}
 
-	uvm_lock_pageq();
-	if (flt->wired) {
+	if (fault_type == VM_FAULT_WIRE) {
+		uvm_lock_pageq();
 		uvm_pagewire(pg);
+		uvm_unlock_pageq();
 		if (pg->pg_flags & PQ_AOBJ) {
 			/*
 			 * since the now-wired page cannot be paged out,
@@ -1554,15 +1558,14 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			KASSERT(uobj != NULL);
 			KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
 			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
-			dropswap = 1;
+			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}
 	} else {
+		/* activate it */
+		uvm_lock_pageq();
 		uvm_pageactivate(pg);
+		uvm_unlock_pageq();
 	}
-	uvm_unlock_pageq();
-
-	if (dropswap)
-		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 
 	if (pg->pg_flags & PG_WANTED)
 		wakeup(pg);
@@ -1651,6 +1654,9 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
+		if (pmap_extract(pmap, va, &pa) == FALSE)
+			continue;
+
 		/*
 		 * find the map entry for the current address.
 		 */
@@ -1675,9 +1681,6 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 			uvm_map_lock_entry(entry);
 			oentry = entry;
 		}
-
-		if (!pmap_extract(pmap, va, &pa))
-			continue;
 
 		/*
 		 * if the entry is no longer wired, tell the pmap.
