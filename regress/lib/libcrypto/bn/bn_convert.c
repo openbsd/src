@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.7 2024/11/03 12:46:55 jsing Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.8 2024/11/03 12:47:49 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -23,8 +23,6 @@
 /*
  * Additional test coverage is needed for:
  *
- * - BN_bn2binpad()
- * - BN_bn2lebinpad()
  * - BN_print()/BN_print_fp()
  *
  * - Invalid inputs to {asc,dec,hex,mpi}2bn
@@ -765,6 +763,141 @@ test_bn_hex2bn(void)
 	return failed;
 }
 
+static int
+test_bn_binpad(void)
+{
+	const struct bn_convert_test *bct;
+	BIGNUM *bn = NULL;
+	uint8_t lebin[64];
+	uint8_t buf[128];
+	size_t i, j;
+	int ret;
+	int failed = 1;
+
+	for (i = 0; i < N_BN_CONVERT_TESTS; i++) {
+		bct = &bn_convert_tests[i];
+
+		BN_free(bn);
+		if ((bn = BN_bin2bn(bct->bin, bct->bin_len, NULL)) == NULL) {
+			fprintf(stderr, "FAIL: BN_bin2bn() failed\n");
+			goto failure;
+		}
+		BN_set_negative(bn, bct->neg);
+
+		for (j = 0; j < bct->bin_len; j++)
+			lebin[j] = bct->bin[bct->bin_len - j - 1];
+
+		if ((ret = BN_bn2binpad(bn, buf, bct->bin_len)) < 0) {
+			fprintf(stderr, "FAIL: BN_bn2binpad() failed\n");
+			goto failure;
+		}
+		if ((size_t)ret != bct->bin_len) {
+			fprintf(stderr, "FAIL: BN_bn2binpad() = %d, want %zu\n",
+			    ret, bct->bin_len);
+			goto failure;
+		}
+		if (memcmp(buf, bct->bin, bct->bin_len) != 0) {
+			fprintf(stderr, "FAIL: Test %zu - output from "
+			    "BN_bn2binpad() differs\n", i);
+			fprintf(stderr, "Got:\n");
+			hexdump(buf, bct->bin_len);
+			fprintf(stderr, "Want:\n");
+			hexdump(bct->bin, bct->bin_len);
+			goto failure;
+		}
+		if (bct->bin_len > 0) {
+			if ((ret = BN_bn2binpad(bn, buf, bct->bin_len - 1)) != -1) {
+				fprintf(stderr, "FAIL: BN_bn2binpad() succeeded "
+				    "with truncation\n");
+				goto failure;
+			}
+		}
+		if ((ret = BN_bn2binpad(bn, buf, 128)) < 0) {
+			fprintf(stderr, "FAIL: BN_bn2binpad() failed\n");
+			goto failure;
+		}
+		if (ret != 128) {
+			fprintf(stderr, "FAIL: BN_bn2binpad() = %d, want 128\n",
+			    ret);
+			goto failure;
+		}
+		if (memcmp(&buf[128 - bct->bin_len], bct->bin, bct->bin_len) != 0) {
+			fprintf(stderr, "FAIL: Test %zu - output from "
+			    "BN_bn2binpad() differs\n", i);
+			fprintf(stderr, "Got:\n");
+			hexdump(&buf[128 - bct->bin_len], bct->bin_len);
+			fprintf(stderr, "Want:\n");
+			hexdump(bct->bin, bct->bin_len);
+			goto failure;
+		}
+		for (j = 0; j < 128 - bct->bin_len; j++) {
+			if (buf[j] != 0) {
+				fprintf(stderr, "FAIL: BN_bn2binpad() is not "
+				    "zero padded\n");
+				goto failure;
+			}
+		}
+
+		if ((ret = BN_bn2lebinpad(bn, buf, bct->bin_len)) < 0) {
+			fprintf(stderr, "FAIL: BN_bn2lebinpad() failed\n");
+			goto failure;
+		}
+		if ((size_t)ret != bct->bin_len) {
+			fprintf(stderr, "FAIL: BN_bn2lebinpad() = %d, want %zu\n",
+			    ret, bct->bin_len);
+			goto failure;
+		}
+		if (memcmp(buf, lebin, bct->bin_len) != 0) {
+			fprintf(stderr, "FAIL: Test %zu - output from "
+			    "BN_bn2lebinpad() differs\n", i);
+			fprintf(stderr, "Got:\n");
+			hexdump(buf, bct->bin_len);
+			fprintf(stderr, "Want:\n");
+			hexdump(lebin, bct->bin_len);
+			goto failure;
+		}
+		if (bct->bin_len > 0) {
+			if ((ret = BN_bn2lebinpad(bn, buf, bct->bin_len - 1)) != -1) {
+				fprintf(stderr, "FAIL: BN_bn2lebinpad() succeeded "
+				    "with truncation\n");
+				goto failure;
+			}
+		}
+		if ((ret = BN_bn2lebinpad(bn, buf, 128)) < 0) {
+			fprintf(stderr, "FAIL: BN_bn2lebinpad() failed\n");
+			goto failure;
+		}
+		if (ret != 128) {
+			fprintf(stderr, "FAIL: BN_bn2lebinpad() = %d, want 128\n",
+			    ret);
+			goto failure;
+		}
+		if (memcmp(buf, lebin, bct->bin_len) != 0) {
+			fprintf(stderr, "FAIL: Test %zu - output from "
+			    "BN_bn2lebinpad() differs\n", i);
+			fprintf(stderr, "Got:\n");
+			hexdump(buf, bct->bin_len);
+			fprintf(stderr, "Want:\n");
+			hexdump(lebin, bct->bin_len);
+			goto failure;
+		}
+		for (j = bct->bin_len; j < 128; j++) {
+			if (buf[j] != 0) {
+				fprintf(stderr, "FAIL: BN_bn2lebinpad() is not "
+				    "zero padded\n");
+				goto failure;
+			}
+		}
+	}
+
+	failed = 0;
+
+ failure:
+	BN_free(bn);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -774,6 +907,7 @@ main(int argc, char **argv)
 	failed |= test_bn_convert();
 	failed |= test_bn_dec2bn();
 	failed |= test_bn_hex2bn();
+	failed |= test_bn_binpad();
 
 	return failed;
 }
