@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.137 2024/11/02 10:31:16 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.138 2024/11/03 08:00:36 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1074,9 +1074,14 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * ... update the page queues.
 	 */
 	uvm_lock_pageq();
-
-	if (fault_type == VM_FAULT_WIRE) {
+	if (flt->wired) {
 		uvm_pagewire(pg);
+	} else {
+		uvm_pageactivate(pg);
+	}
+	uvm_unlock_pageq();
+
+	if (flt->wired) {
 		/*
 		 * since the now-wired page cannot be paged out,
 		 * release its swap resources for others to use.
@@ -1085,12 +1090,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 */
 		atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 		uvm_anon_dropswap(anon);
-	} else {
-		/* activate it */
-		uvm_pageactivate(pg);
 	}
-
-	uvm_unlock_pageq();
 
 	/*
 	 * done case 1!  finish up by unlocking everything and returning success
@@ -1205,7 +1205,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	boolean_t promote, locked;
-	int result;
+	int result, dropswap = 0;
 	struct vm_page *uobjpage, *pg = NULL;
 	struct vm_anon *anon = NULL;
 	voff_t uoff;
@@ -1537,10 +1537,9 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		return ERESTART;
 	}
 
-	if (fault_type == VM_FAULT_WIRE) {
-		uvm_lock_pageq();
+	uvm_lock_pageq();
+	if (flt->wired) {
 		uvm_pagewire(pg);
-		uvm_unlock_pageq();
 		if (pg->pg_flags & PQ_AOBJ) {
 			/*
 			 * since the now-wired page cannot be paged out,
@@ -1555,14 +1554,15 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			KASSERT(uobj != NULL);
 			KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
 			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
-			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+			dropswap = 1;
 		}
 	} else {
-		/* activate it */
-		uvm_lock_pageq();
 		uvm_pageactivate(pg);
-		uvm_unlock_pageq();
 	}
+	uvm_unlock_pageq();
+
+	if (dropswap)
+		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 
 	if (pg->pg_flags & PG_WANTED)
 		wakeup(pg);
