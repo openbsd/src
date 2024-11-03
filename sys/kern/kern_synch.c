@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.208 2024/11/01 09:30:12 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.209 2024/11/03 22:52:08 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -393,23 +393,29 @@ sleep_finish(int timo, int do_sleep)
 
 	SCHED_LOCK();
 	/*
-	 * If the wakeup happens while going to sleep, p->p_wchan
+	 * A few checks need to happen before going to sleep:
+	 * - If the wakeup happens while going to sleep, p->p_wchan
 	 * will be NULL. In that case unwind immediately but still
 	 * check for possible signals and timeouts.
+	 * - If the sleep is aborted call unsleep and take us of the
+	 * sleep queue.
+	 * - If requested to stop force a switch even if the sleep
+	 * condition got cleared.
 	 */
 	if (p->p_wchan == NULL)
 		do_sleep = 0;
+	if (do_sleep == 0)
+		unsleep(p);
+	if (p->p_stat == SSTOP)
+		do_sleep = 1;
 	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
 
-	if (p->p_stat == SSTOP) /* force sleep if process is stopped */
-		do_sleep = 1;
 	if (do_sleep) {
 		KASSERT(p->p_stat == SSLEEP || p->p_stat == SSTOP);
 		p->p_ru.ru_nvcsw++;
 		mi_switch();
 	} else {
 		KASSERT(p->p_stat == SONPROC || p->p_stat == SSLEEP);
-		unsleep(p);
 		p->p_stat = SONPROC;
 	}
 
