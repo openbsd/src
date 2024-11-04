@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.9 2024/08/27 18:44:12 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.10 2024/11/04 15:43:10 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -369,7 +369,7 @@ viogpu_send_cmd(struct viogpu_softc *sc, void *cmd, size_t cmd_size, void *ret,
 	memcpy(sc->sc_cmd, cmd, cmd_size);
 	memset(sc->sc_cmd + cmd_size, 0, ret_size);
 
-#if VIRTIO_DEBUG
+#if VIRTIO_DEBUG >= 3
 	printf("%s: [%ld -> %ld]: ", __func__, cmd_size, ret_size);
 	for (int i = 0; i < cmd_size; i++) {
 		printf(" %02x", ((unsigned char *)sc->sc_cmd)[i]);
