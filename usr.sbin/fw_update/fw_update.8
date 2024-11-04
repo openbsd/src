@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.8,v 1.4 2024/10/12 23:56:23 afresh1 Exp $
+.\" $OpenBSD: fw_update.8,v 1.5 2024/11/04 00:34:47 afresh1 Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2024 $
+.Dd $Mdocdate: November 4 2024 $
 .Dt FW_UPDATE 8
 .Os
 .Sh NAME
 .Nm fw_update
-.Nd install non-free firmware packages
+.Nd install non-free firmware
 .Sh SYNOPSIS
 .Nm
 .Op Fl adFnv
@@ -28,12 +28,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility installs, updates, or deletes firmware packages for
+utility installs, updates, or deletes firmware for
 .Ar driver
 from the Internet.
 By default,
 .Nm
-tries to determine which firmware packages are needed.
+tries to determine which firmware are needed.
 .Pp
 Since firmware with an acceptable license is already present in
 .Ox ,
@@ -58,31 +58,25 @@ If used in conjunction with
 .Fl a ,
 delete firmware for all drivers.
 .It Fl F
-Download firmware only.
-By default downloads to the current directory.
-Specifying a URL with
-.Fl p
-downloads from that URL,
-specifying a path downloads to that directory.
+Download SHA256.sig and firmware .tgz to the current directory.
 .It Fl n
 Dry run.
-Do not actually install or update any firmware packages;
+Do not actually install or update any firmware;
 just report the steps that would be taken.
 .It Fl p Ar path
-Use the firmware found at package repository
+Use
 .Ar path ,
-being either a local directory or a URL,
-instead of the default location.
+either a local directory or a URL,
+as the source for firmware instead of the default location.
 .It Fl v
 Turn on verbose output.
 This flag can be specified multiple times for increased verbosity.
 .El
 .Pp
 Firmware is downloaded from release-specific directories at
-.Lk http://firmware.openbsd.org/firmware/ .
-The files are in the format required by
-.Xr pkg_add 1 ,
-but direct use of pkg_add is discouraged.
+.Lk http://firmware.openbsd.org/firmware/
+unless overridden with
+.Fl p .
 .Sh ENVIRONMENT
 .Bl -tag -width DESTDIRXXX
 .It Ev DESTDIR

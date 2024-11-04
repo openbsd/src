@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.57 2024/10/12 23:56:23 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.58 2024/11/04 00:34:47 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -500,7 +500,7 @@ do
 	d) DELETE=true ;;
 	F) OPT_F=true ;;
 	n) DRYRUN=true ;;
-	p) LOCALSRC="$OPTARG" ;;
+	p) FWURL="$OPTARG" ;;
 	v) ((++VERBOSE)) ;;
 	:)
 	    warn "${0##*/}: option requires an argument -- -$OPTARG"
@@ -517,33 +517,18 @@ shift $((OPTIND - 1))
 # Progress bars, not spinner When VERBOSE > 1
 ((VERBOSE > 1)) && ENABLE_SPINNER=false
 
-if [ "$LOCALSRC" ]; then
-	if [[ $LOCALSRC = @(ftp|http?(s))://* ]]; then
-		FWURL="${LOCALSRC}"
-		LOCALSRC=
-	else
-		LOCALSRC="${LOCALSRC#file:}"
-		! [ -d "$LOCALSRC" ] &&
-		    warn "The path must be a URL or an existing directory" &&
-		    exit 1
-	fi
+if [[ $FWURL != @(ftp|http?(s))://* ]]; then
+	FWURL="${FWURL#file:}"
+	! [ -d "$FWURL" ] &&
+	    warn "The path must be a URL or an existing directory" &&
+	    exit 1
+	FWURL="file:$FWURL"
 fi
 
 # "Download only" means local dir and don't install
 if [ "$OPT_F" ]; then
 	INSTALL=false
 	LOCALSRC="${LOCALSRC:-.}"
-
-	# Always check for latest CFILE and so latest firmware
-	if [ -e "$LOCALSRC/$CFILE" ]; then
-		mv "$LOCALSRC/$CFILE" "$LOCALSRC/$CFILE-OLD"
-		if check_cfile; then
-			rm -f "$LOCALSRC/$CFILE-OLD"
-		else
-			mv "$LOCALSRC/$CFILE-OLD" "$LOCALSRC/$CFILE"
-			warn "Using existing $CFILE"
-		fi
-	fi
 elif [ "$LOCALSRC" ]; then
 	DOWNLOAD=false
 fi
