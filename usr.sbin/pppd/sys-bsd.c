@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.36 2024/08/17 09:52:11 denis Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.37 2024/11/04 11:12:52 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -1409,6 +1409,7 @@ GetMask(u_int32_t addr)
 int
 lock(char *dev)
 {
+    const char *errstr;
     char hdb_lock_buffer[12];
     int fd, n;
     pid_t pid;
@@ -1429,8 +1430,11 @@ lock(char *dev)
 		close(fd);
 	    } else {
 		hdb_lock_buffer[n] = 0;
-		pid = atoi(hdb_lock_buffer);
-		if (kill(pid, 0) == -1 && errno == ESRCH) {
+		pid = strtonum(hdb_lock_buffer, 1, 65535, &errstr);
+		if (errstr)
+		    syslog(LOG_NOTICE, "lock file %s contains garbage: %s\n",
+			   dev, errstr);
+		else if (kill(pid, 0) == -1 && errno == ESRCH) {
 		    /* pid no longer exists - remove the lock file */
 		    if (unlink(lock_file) == 0) {
 			close(fd);
