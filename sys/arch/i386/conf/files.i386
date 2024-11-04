@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.250 2023/07/08 08:01:10 tobhe Exp $
+#	$OpenBSD: files.i386,v 1.251 2024/11/04 22:08:03 jsg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -66,7 +66,6 @@ include "dev/mii/files.mii"
 
 include "scsi/files.scsi"
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
 major	{rd = 17}
 

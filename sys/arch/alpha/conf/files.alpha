@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.109 2024/08/23 18:45:28 miod Exp $
+#	$OpenBSD: files.alpha,v 1.110 2024/11/04 22:08:02 jsg Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -41,7 +41,6 @@ include	"dev/mii/files.mii"
 #
 
 include	"scsi/files.scsi"
-major	{st = 2}
 major	{cd = 3}
 major	{sd = 8}
 major	{rd = 6}

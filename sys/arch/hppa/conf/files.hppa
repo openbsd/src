@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.98 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files.hppa,v 1.99 2024/11/04 22:08:03 jsg Exp $
 #
 # hppa-specific configuration info
 
@@ -26,7 +26,6 @@ include "dev/mii/files.mii"
 #
 include "scsi/files.scsi"
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
 
 #

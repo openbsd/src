@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.111 2024/09/04 07:45:08 jsg Exp $
+#	$OpenBSD: files.amd64,v 1.112 2024/11/04 22:08:03 jsg Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -280,7 +280,6 @@ attach	ipmi at mainbus
 
 major	{vnd = 14}
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
 major	{rd = 17}
 major	{wd = 0}
