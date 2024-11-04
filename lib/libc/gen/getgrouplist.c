@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.30 2022/08/02 17:00:15 deraadt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.31 2024/11/04 21:49:26 jca Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -55,8 +55,7 @@ static int _read_netid(const char *, uid_t, gid_t*, int*, int);
 
 /*
  * Parse one string of the form "uid:gid[,gid[,...]]".
- * If the uid matches, add the groups to the group list.
- * If the groups fit, return 1, otherwise return -1. 
+ * If the uid matches, add the groups to the group list and return 1.
  * If the uid does not match, return 0.
  */
 static int
@@ -89,15 +88,16 @@ _parse_netid(char *netid, uid_t uid, gid_t *groups, int *ngroups,
 			continue;
 
 		/* Skip this group if it is already in the list. */
-		for (i = 0; i < *ngroups; i++)
+		for (i = 0; i < maxgroups && i < *ngroups; i++)
 			if (groups[i] == gid)
 				break;
 
 		/* Try to add this new group to the list. */
 		if (i == *ngroups) {
 			if (*ngroups >= maxgroups)
-				return (-1);
-			groups[(*ngroups)++] = gid;
+				(*ngroups)++;
+			else
+				groups[(*ngroups)++] = gid;
 		}
 	}
 	return (1);
@@ -144,7 +144,7 @@ _read_netid(const char *key, uid_t uid, gid_t *groups, int *ngroups,
 int
 getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 {
-	int i, ngroups = 0, ret = 0, maxgroups = *grpcnt, bail;
+	int i, ngroups = 0, maxgroups = *grpcnt, bail;
 	int needyp = 0, foundyp = 0;
 	int *skipyp = &foundyp;
 	extern struct group *_getgrent_yp(int *);
@@ -153,11 +153,10 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	/*
 	 * install primary group
 	 */
-	if (ngroups >= maxgroups) {
-		*grpcnt = ngroups;
-		return (-1);
-	}
-	groups[ngroups++] = agroup;
+	if (ngroups >= maxgroups)
+		ngroups++;
+	else
+		groups[ngroups++] = agroup;
 
 	/*
 	 * Scan the group file to find additional groups.
@@ -174,18 +173,19 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 		}
 		if (grp->gr_gid == agroup)
 			continue;
-		for (bail = 0, i = 0; bail == 0 && i < ngroups; i++)
+		for (bail = 0, i = 0; bail == 0 && i < maxgroups &&
+		    i < ngroups; i++) {
 			if (groups[i] == grp->gr_gid)
 				bail = 1;
+		}
 		if (bail)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
-				if (ngroups >= maxgroups) {
-					ret = -1;
-					goto out;
-				}
-				groups[ngroups++] = grp->gr_gid;
+				if (ngroups >= maxgroups)
+					ngroups++;
+				else
+					groups[ngroups++] = grp->gr_gid;
 				break;
 			}
 		}
@@ -210,24 +210,17 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 			goto out;
 
 		/* First scan the static netid file. */
-		switch (_read_netid(key, pwstore.pw_uid,
-		    groups, &ngroups, maxgroups)) {
-		case -1:
-			ret = -1;
-			/* FALLTHROUGH */
-		case 1:
+		if (_read_netid(key, pwstore.pw_uid, groups, &ngroups,
+		    maxgroups)) {
 			free(key);
 			goto out;
-		default:
-			break;
 		}
 
 		/* Only access YP when there is no static entry. */
 		if (!yp_match(__ypdomain, "netid.byname", key,
 		    (int)strlen(key), &ypdata, &ypdatalen))
-			if (_parse_netid(ypdata, pwstore.pw_uid,
-			    groups, &ngroups, maxgroups) == -1)
-				ret = -1;
+			_parse_netid(ypdata, pwstore.pw_uid, groups, &ngroups,
+			    maxgroups);
 
 		free(key);
 		free(ypdata);
@@ -237,6 +230,6 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 out:
 	endgrent();
 	*grpcnt = ngroups;
-	return (ret);
+	return (ngroups > maxgroups ? -1 : 0);
 }
 DEF_WEAK(getgrouplist);
