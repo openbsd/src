@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.239 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.240 2024/11/04 11:49:19 jsg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -946,7 +946,7 @@ struct kinfo_file {
 #define	HW_POWER		26	/* int: machine has wall-power */
 #define	HW_BATTERY		27	/* node: battery */
 #define	HW_UCOMNAMES		28	/* strings: ucom names */
-#define	HW_MAXID		30	/* number of valid hw ids */
+#define	HW_MAXID		29	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
