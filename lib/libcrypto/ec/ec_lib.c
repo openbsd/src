@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.77 2024/11/03 13:53:14 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.78 2024/11/04 13:19:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -762,28 +762,33 @@ ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 EC_POINT *
 EC_POINT_new(const EC_GROUP *group)
 {
-	EC_POINT *ret;
+	EC_POINT *point = NULL;
 
 	if (group == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
+		goto err;
 	}
 	if (group->meth->point_init == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return NULL;
+		goto err;
 	}
-	ret = malloc(sizeof *ret);
-	if (ret == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ret->meth = group->meth;
 
-	if (!ret->meth->point_init(ret)) {
-		free(ret);
-		return NULL;
+	if ((point = calloc(1, sizeof(*point))) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		goto err;
 	}
-	return ret;
+
+	point->meth = group->meth;
+
+	if (!point->meth->point_init(point))
+		goto err;
+
+	return point;
+
+ err:
+	EC_POINT_free(point);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(EC_POINT_new);
 
@@ -825,23 +830,25 @@ EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 LCRYPTO_ALIAS(EC_POINT_copy);
 
 EC_POINT *
-EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
+EC_POINT_dup(const EC_POINT *in_point, const EC_GROUP *group)
 {
-	EC_POINT *t;
-	int r;
+	EC_POINT *point = NULL;
 
-	if (a == NULL)
-		return NULL;
+	if (in_point == NULL)
+		goto err;
 
-	t = EC_POINT_new(group);
-	if (t == NULL)
-		return (NULL);
-	r = EC_POINT_copy(t, a);
-	if (!r) {
-		EC_POINT_free(t);
-		return NULL;
-	} else
-		return t;
+	if ((point = EC_POINT_new(group)) == NULL)
+		goto err;
+
+	if (!EC_POINT_copy(point, in_point))
+		goto err;
+
+	return point;
+
+ err:
+	EC_POINT_free(point);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(EC_POINT_dup);
 
