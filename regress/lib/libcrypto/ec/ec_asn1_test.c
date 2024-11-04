@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.26 2024/11/02 13:42:49 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.27 2024/11/04 09:51:51 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/resource.h>
 
 #include <err.h>
 #include <string.h>
@@ -884,7 +886,9 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	EC_GROUP *group = NULL, *new_group = NULL;
 	const unsigned char *pder;
 	unsigned char *der = NULL;
+#ifndef OPENSSL_SUPPRESS_DEPRECATED
 	long error;
+#endif
 	int der_len = 0;
 	int failed = 1;
 
@@ -952,7 +956,7 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 	}
 	EC_GROUP_free(new_group);
 	new_group = NULL;
-
+#ifndef OPENSSL_SUPPRESS_DEPRECATED
 	error = ERR_get_error();
 	if (!curve->known_named_curve &&
 	    ERR_GET_REASON(error) != EC_R_UNKNOWN_GROUP) {
@@ -960,6 +964,7 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 		    curve->descr, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
 		goto err;
 	}
+#endif
 
 	ERR_clear_error();
 
@@ -971,12 +976,14 @@ ec_group_non_builtin_curve(const struct curve *curve, const EC_METHOD *method,
 		goto err;
 	}
 
+#ifndef OPENSSL_SUPPRESS_DEPRECATED
 	error = ERR_peek_last_error();
 	if (ERR_GET_REASON(error) != EC_R_PKPARAMETERS2GROUP_FAILURE) {
 		fprintf(stderr, "FAIL: %s unexpected error: want %d, got %d\n",
 		    curve->descr, EC_R_UNKNOWN_GROUP, ERR_GET_REASON(error));
 		goto err;
 	}
+#endif
 
 	failed = 0;
 
