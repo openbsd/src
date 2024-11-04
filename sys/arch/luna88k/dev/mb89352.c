@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.34 2022/08/29 02:58:13 jsg Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.35 2024/11/04 18:27:14 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -419,7 +419,6 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 
 	/* Initialize acb */
 	acb->xs = xs;
-	acb->timeout = xs->timeout;
 	timeout_set(&xs->stimeout, spc_timeout, acb);
 
 	if (xs->flags & SCSI_RESET) {
@@ -453,9 +452,9 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 
 	/* Not allowed to use interrupts, use polling instead */
 	s = splbio();
-	if (spc_poll(sc, xs, acb->timeout)) {
+	if (spc_poll(sc, xs, xs->timeout)) {
 		spc_timeout(acb);
-		if (spc_poll(sc, xs, acb->timeout))
+		if (spc_poll(sc, xs, xs->timeout))
 			spc_timeout(acb);
 	}
 	splx(s);
@@ -1724,7 +1723,7 @@ loop:
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->flags & SCSI_POLL) == 0)
 				timeout_add_msec(&acb->xs->stimeout,
-				    acb->timeout);
+				    acb->xs->timeout);
 			sc->sc_state = SPC_CONNECTED;
 		} else if ((ints & INTS_TIMEOUT) != 0) {
 			SPC_MISC(("selection timeout  "));
@@ -1961,7 +1960,7 @@ spc_abort(struct spc_softc *sc, struct spc_acb *acb)
 {
 
 	/* 2 secs for the abort */
-	acb->timeout = SPC_ABORT_TIMEOUT;
+	acb->xs->timeout = SPC_ABORT_TIMEOUT;
 	acb->flags |= ACB_ABORT;
 
 	if (acb == sc->sc_nexus) {

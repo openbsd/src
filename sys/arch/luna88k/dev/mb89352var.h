@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.10 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.11 2024/11/04 18:27:14 miod Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -87,7 +87,6 @@ struct spc_acb {
 #define ACB_SENSE	0x04
 #define ACB_ABORT	0x40
 #define ACB_RESET	0x80
-	int timeout;
 };
 
 /*
