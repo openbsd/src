@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.57 2024/10/03 08:59:49 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.58 2024/11/04 15:41:09 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1054,7 +1054,6 @@ void
 vio_dump(struct vio_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct virtio_softc *vsc = sc->sc_virtio;
 	int i;
 
 	printf("%s status dump:\n", ifp->if_xname);
@@ -1066,7 +1065,7 @@ vio_dump(struct vio_softc *sc)
 		printf("%d: RX virtqueue:\n", i);
 		virtio_vq_dump(sc->sc_q[i].viq_rxvq);
 	}
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
+	if (sc->sc_ctl_vq != NULL) {
 		printf("CTL virtqueue:\n");
 		virtio_vq_dump(sc->sc_ctl_vq);
 		printf("ctrl_inuse: %d\n", sc->sc_ctrl_inuse);
