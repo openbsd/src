@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.h,v 1.4 2021/07/05 04:17:41 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.h,v 1.5 2024/11/04 00:13:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -98,11 +98,5 @@ int	 etherbridge_add_addr(struct etherbridge *, void *,
 	     const struct ether_addr *, unsigned int);
 int	 etherbridge_del_addr(struct etherbridge *, const struct ether_addr *);
 void	 etherbridge_flush(struct etherbridge *, uint32_t);
-
-static inline unsigned int
-etherbridge_num(const struct etherbridge *eb)
-{
-	return (eb->eb_num);
-}
 
 #endif /* _NET_ETHERBRIDGE_H_ */
