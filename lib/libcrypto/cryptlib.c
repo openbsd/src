@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.59 2024/11/02 08:56:44 tb Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.60 2024/11/04 17:07:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -126,7 +126,6 @@
 
 #include "cryptlib.h"
 #include "crypto_internal.h"
-#include "crypto_local.h"
 #include "x86_arch.h"
 
 /* Machine independent capabilities. */
