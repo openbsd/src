@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.27 2024/10/29 21:19:25 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.28 2024/11/04 09:33:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -143,6 +143,7 @@ struct aplsmc_softc {
 
 #define CH0I_DISCHARGE		(1 << 0)
 #define CH0C_INHIBIT		(1 << 0)
+#define CHLS_FORCE_DISCHARGE	(1 << 8)
 
 struct aplsmc_softc *aplsmc_sc;
 
@@ -204,7 +205,8 @@ void	aplsmc_reboot_attachhook(struct device *);
 void	aplsmc_battery_init(struct aplsmc_softc *);
 int	aplsmc_battery_setchargemode(int);
 int	aplsmc_battery_setchargestart(int);
-int	aplsmc_battery_setchargestop(int);
+int	aplsmc_battery_chls_setchargestop(int);
+int	aplsmc_battery_chwa_setchargestop(int);
 
 int
 aplsmc_match(struct device *parent, void *match, void *aux)
@@ -809,11 +811,13 @@ aplsmc_powerdown(void)
 	aplsmc_write_key(sc, key, &off1, sizeof(off1));
 }
 
+#ifndef SMALL_KERNEL
+
 void
 aplsmc_battery_init(struct aplsmc_softc *sc)
 {
-	uint8_t ch0i, ch0c;
-	int error;
+	uint8_t ch0i, ch0c, chwa;
+	int error, stop;
 
 	error = aplsmc_read_key(sc, SMC_KEY("CH0I"), &ch0i, sizeof(ch0i));
 	if (error)
@@ -822,7 +826,6 @@ aplsmc_battery_init(struct aplsmc_softc *sc)
 	if (error)
 		return;
 
-#ifndef SMALL_KERNEL
 	if (ch0i & CH0I_DISCHARGE)
 		hw_battery_chargemode = -1;
 	else if (ch0c & CH0C_INHIBIT)
@@ -830,16 +833,37 @@ aplsmc_battery_init(struct aplsmc_softc *sc)
 	else
 		hw_battery_chargemode = 1;
 
-	hw_battery_chargestart = 0;
-	hw_battery_chargestop = 100;
-
 	hw_battery_setchargemode = aplsmc_battery_setchargemode;
+
+	/*
+	 * The system firmware for macOS 15 (Sequoia) introduced a new
+	 * CHLS key that allows setting the level at which to stop
+	 * charging, and dropped support for the old CHWA key that
+	 * only supports a fixed limit of 80%.  However, CHLS is
+	 * broken in some beta versions.  Those versions still support
+	 * CHWA so prefer that over CHLS.
+	 */
+	error = aplsmc_read_key(sc, SMC_KEY("CHWA"), &chwa, sizeof(chwa));
+	if (error) {
+		uint16_t chls;
+
+		error = aplsmc_read_key(sc, SMC_KEY("CHLS"),
+		    &chls, sizeof(chls));
+		if (error)
+			return;
+		stop = (chls & 0xff) ? (chls & 0xff) : 100;
+		hw_battery_setchargestop = aplsmc_battery_chls_setchargestop;
+	} else {
+		stop = chwa ? 80 : 100;
+		hw_battery_setchargestop = aplsmc_battery_chwa_setchargestop;
+	}
+
 	hw_battery_setchargestart = aplsmc_battery_setchargestart;
-	hw_battery_setchargestop = aplsmc_battery_setchargestop;
-#endif
+	
+	hw_battery_chargestart = stop - 5;
+	hw_battery_chargestop = stop;
 }
 
-#ifndef SMALL_KERNEL
 int
 aplsmc_battery_setchargemode(int mode)
 {
@@ -899,21 +923,54 @@ aplsmc_battery_setchargestart(int start)
 }
 
 int
-aplsmc_battery_setchargestop(int stop)
+aplsmc_battery_chls_setchargestop(int stop)
+{
+	struct aplsmc_softc *sc = aplsmc_sc;
+	uint16_t chls;
+	int error;
+
+	if (stop < 10)
+		stop = 10;
+
+	/*
+	 * Setting the CHLS_FORCE_DISCHARGE flags makes sure the
+	 * battery is discharged until the configured charge level is
+	 * reached when the limit is lowered.
+	 */
+	chls = (stop == 100 ? 0 : stop) | CHLS_FORCE_DISCHARGE;
+	error = aplsmc_write_key(sc, SMC_KEY("CHLS"), &chls, sizeof(chls));
+	if (error)
+		return error;
+
+	hw_battery_chargestart = stop - 5;
+	hw_battery_chargestop = stop;
+
+	return 0;
+}
+
+int
+aplsmc_battery_chwa_setchargestop(int stop)
 {
 	struct aplsmc_softc *sc = aplsmc_sc;
 	uint8_t chwa;
+	int error;
 
 	if (stop <= 80) {
-		hw_battery_chargestart = 75;
-		hw_battery_chargestop = 80;
+		stop = 80;
 		chwa = 1;
 	} else {
-		hw_battery_chargestart = 95;
-		hw_battery_chargestop = 100;
+		stop = 100;
 		chwa = 0;
 	}
 
-	return aplsmc_write_key(sc, SMC_KEY("CHWA"), &chwa, sizeof(chwa));
+	error = aplsmc_write_key(sc, SMC_KEY("CHWA"), &chwa, sizeof(chwa));
+	if (error)
+		return error;
+
+	hw_battery_chargestart = stop - 5;
+	hw_battery_chargestop = stop;
+
+	return 0;
 }
+
 #endif
