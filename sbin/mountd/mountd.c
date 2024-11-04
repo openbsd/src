@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.92 2024/05/21 05:00:47 jsg Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.93 2024/11/04 21:59:15 jca Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -2157,7 +2157,7 @@ parsecred(char *namelist, struct xucred *cr)
 	char *name, *names;
 	struct passwd *pw;
 	struct group *gr;
-	int ngroups, cnt;
+	int maxgroups, ngroups, cnt;
 
 	/*
 	 * Set up the unprivileged user.
@@ -2182,9 +2182,12 @@ parsecred(char *namelist, struct xucred *cr)
 			return;
 		}
 		cr->cr_uid = pw->pw_uid;
-		ngroups = NGROUPS_MAX + 1;
-		if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups))
+		maxgroups = ngroups = NGROUPS_MAX + 1;
+		if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups) == -1) {
 			syslog(LOG_ERR, "Too many groups for %s: %m", pw->pw_name);
+			/* Truncate group list */
+			ngroups = maxgroups;
+		}
 		/*
 		 * compress out duplicate
 		 */

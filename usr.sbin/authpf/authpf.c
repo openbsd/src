@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.129 2022/01/28 06:33:26 guenther Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.130 2024/11/04 21:59:15 jca Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -528,8 +528,17 @@ allowed_luser(struct passwd *pw)
 				}
 
 				if (!gl_init) {
-					(void) getgrouplist(pw->pw_name,
+					int maxgroups, ret;
+
+					maxgroups = ngroups;
+					ret = getgrouplist(pw->pw_name,
 					    pw->pw_gid, groups, &ngroups);
+					if (ret == -1) {
+						/*
+						 * Silently truncate group list
+						 */
+						ngroups = maxgroups;
+					}
 					gl_init++;
 				}
 
