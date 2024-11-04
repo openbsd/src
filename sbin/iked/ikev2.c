@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.388 2024/09/15 11:08:50 yasuoka Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.389 2024/11/04 02:44:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -70,7 +70,6 @@ struct iked_sa *
 	 ikev2_getimsgdata(struct iked *, struct imsg *, struct iked_sahdr *,
 	    uint8_t *, uint8_t **, size_t *);
 
-void	 ikev2_recv(struct iked *, struct iked_message *);
 int	 ikev2_ike_auth_compatible(struct iked_sa *, uint8_t, uint8_t);
 int	 ikev2_ike_auth_recv(struct iked *, struct iked_sa *,
 	    struct iked_message *);
@@ -2334,6 +2333,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 	uint64_t		 rspi, ispi;
 	struct ibuf		*buf;
 	uint32_t		 rnd;
+	int			 natt_force = 0;
 
 	if (ptr == NULL)
 		return (mdlen);
@@ -2401,7 +2401,14 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 		goto done;
 	}
 
-	if (env->sc_nattmode == NATT_FORCE) {
+	if (env->sc_nattmode == NATT_FORCE)
+		natt_force = 1;
+	else if (msg->msg_policy != NULL) {
+		if (msg->msg_policy->pol_flags & IKED_POLICY_NATT_FORCE)
+			natt_force = 1;
+	}
+
+	if (natt_force) {
 		/* Enforce NAT-T/UDP-encapsulation by distorting the digest */
 		rnd = arc4random();
 		EVP_DigestUpdate(ctx, &rnd, sizeof(rnd));
@@ -3395,6 +3402,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	resp.msg_fd = msg->msg_fd;
 	resp.msg_natt = msg->msg_natt;
 	resp.msg_msgid = 0;
+	resp.msg_policy = sa->sa_policy;
 
 	/* IKE header */
 	if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid,
@@ -3702,6 +3710,7 @@ ikev2_send_init_error(struct iked *env, struct iked_message *msg)
 	resp.msg_fd = msg->msg_fd;
 	resp.msg_natt = msg->msg_natt;
 	resp.msg_msgid = 0;
+	resp.msg_policy = sa->sa_policy;
 
 	/* IKE header */
 	if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid,
