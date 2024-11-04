@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.58 2024/11/04 00:34:47 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.59 2024/11/04 01:24:00 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -51,6 +51,7 @@ unset FTPPID
 unset LOCKPID
 unset FWPKGTMP
 REMOVE_LOCALSRC=false
+DROP_PRIVS=true
 
 status() { echo -n "$*" >&"$STATUS_FD"; }
 warn()   { echo    "$*" >&"$WARN_FD"; }
@@ -121,7 +122,9 @@ fetch() {
 		  2) _flags=-Vm ;;
 	esac
 
-	if [ -x /usr/bin/su ]; then
+	if ! "$DROP_PRIVS"; then
+		/usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
+	elif [ -x /usr/bin/su ]; then
 		exec /usr/bin/su -s /bin/ksh "$_user" -c \
 		    "/usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- '$_src'" > "$_dst"
 	else
@@ -492,13 +495,13 @@ usage() {
 }
 
 ALL=false
-OPT_F=
+DOWNLOAD_ONLY=false
 while getopts :adFnp:v name
 do
 	case "$name" in
 	a) ALL=true ;;
 	d) DELETE=true ;;
-	F) OPT_F=true ;;
+	F) DOWNLOAD_ONLY=true ;;
 	n) DRYRUN=true ;;
 	p) FWURL="$OPTARG" ;;
 	v) ((++VERBOSE)) ;;
@@ -526,7 +529,7 @@ if [[ $FWURL != @(ftp|http?(s))://* ]]; then
 fi
 
 # "Download only" means local dir and don't install
-if [ "$OPT_F" ]; then
+if "$DOWNLOAD_ONLY"; then
 	INSTALL=false
 	LOCALSRC="${LOCALSRC:-.}"
 elif [ "$LOCALSRC" ]; then
@@ -534,8 +537,14 @@ elif [ "$LOCALSRC" ]; then
 fi
 
 if [ -x /usr/bin/id ] && [ "$(/usr/bin/id -u)" != 0 ]; then
-	warn "need root privileges"
-	exit 1
+	if "$DOWNLOAD_ONLY"; then
+		# When we aren't in the installer,
+		# allow downloading as the current user.
+		DROP_PRIVS=false
+	else
+		warn "need root privileges"
+		exit 1
+	fi
 fi
 
 set -sA devices -- "$@"
@@ -555,7 +564,7 @@ WARN_FD=4
 status "${0##*/}:"
 
 if "$DELETE"; then
-	[ "$OPT_F" ] && warn "Cannot use -F and -d" && usage
+	"$DOWNLOAD_ONLY" && warn "Cannot use -F and -d" && usage
 	lock_db
 
 	# Show the "Uninstall" message when just deleting not upgrading
