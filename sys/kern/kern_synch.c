@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.209 2024/11/03 22:52:08 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.210 2024/11/04 22:41:50 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
 int	sleep_signal_check(struct proc *);
 int	thrsleep(struct proc *, struct sys___thrsleep_args *);
 int	thrsleep_unlock(void *);
+
+extern void proc_stop(struct proc *p, int);
 
 /*
  * We're only looking at 7 bits of the address; everything is
@@ -466,7 +468,11 @@ sleep_signal_check(struct proc *p)
 	if ((err = single_thread_check(p, 1)) != 0)
 		return err;
 	if ((sig = cursig(p, &ctx, 1)) != 0) {
-		if (ctx.sig_intr)
+		if (ctx.sig_stop) {
+			SCHED_LOCK();
+			proc_stop(p, 0);
+			SCHED_UNLOCK();
+		} else if (ctx.sig_intr)
 			return EINTR;
 		else
 			return ERESTART;

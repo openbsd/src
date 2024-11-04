@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.56 2024/10/17 09:11:35 claudio Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.57 2024/11/04 22:41:50 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ struct sigctx {
 	int		sig_info;
 	int		sig_ignore;
 	int		sig_catch;
+	int		sig_stop;
 };
 
 /*

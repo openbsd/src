@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.344 2024/10/22 11:54:04 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.345 2024/11/04 22:41:50 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1276,10 +1276,11 @@ out:
 void
 setsigctx(struct proc *p, int signum, struct sigctx *sctx)
 {
-	struct sigacts *ps = p->p_p->ps_sigacts;
+	struct process *pr = p->p_p;
+	struct sigacts *ps = pr->ps_sigacts;
 	sigset_t mask;
 
-	mtx_enter(&p->p_p->ps_mtx);
+	mtx_enter(&pr->ps_mtx);
 	mask = sigmask(signum);
 	sctx->sig_action = ps->ps_sigact[signum];
 	sctx->sig_catchmask = ps->ps_catchmask[signum];
@@ -1289,7 +1290,21 @@ setsigctx(struct proc *p, int signum, struct sigctx *sctx)
 	sctx->sig_onstack = (ps->ps_sigonstack & mask) != 0;
 	sctx->sig_ignore = (ps->ps_sigignore & mask) != 0;
 	sctx->sig_catch = (ps->ps_sigcatch & mask) != 0;
-	mtx_leave(&p->p_p->ps_mtx);
+	sctx->sig_stop = sigprop[signum] & SA_STOP && 
+	    (long)sctx->sig_action == (long)SIG_DFL;
+	if (sctx->sig_stop) {
+		/* 
+		 * If the process is a member of an orphaned
+		 * process group, ignore tty stop signals.
+		 */
+		if (pr->ps_flags & PS_TRACED ||
+		    (pr->ps_pgrp->pg_jobc == 0 &&
+		    sigprop[signum] & SA_TTYSTOP)) {
+			sctx->sig_stop = 0;
+			sctx->sig_ignore = 1;
+		}
+	}
+	mtx_leave(&pr->ps_mtx);
 }
 
 /*
@@ -1431,11 +1446,9 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 			/*
 			 * If there is a pending stop signal to process
 			 * with default action, stop here,
-			 * then clear the signal.  However,
-			 * if process is member of an orphaned
-			 * process group, ignore tty stop signals.
+			 * then clear the signal.
 			 */
-			if (prop & SA_STOP) {
+			if (sctx->sig_stop) {
 				mtx_enter(&pr->ps_mtx);
 				if (pr->ps_flags & PS_TRACED ||
 		    		    (pr->ps_pgrp->pg_jobc == 0 &&
