@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_legacy.c,v 1.4 2024/11/05 11:11:29 tb Exp $ */
+/* $OpenBSD: crypto_legacy.c,v 1.5 2024/11/05 11:14:04 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -123,6 +123,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #include "crypto_internal.h"
 #include "crypto_local.h"
@@ -384,6 +385,23 @@ CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
 	return x;
 }
 LCRYPTO_ALIAS(CRYPTO_memcmp);
+
+int
+FIPS_mode(void)
+{
+	return 0;
+}
+LCRYPTO_ALIAS(FIPS_mode);
+
+int
+FIPS_mode_set(int r)
+{
+	if (r == 0)
+		return 1;
+	CRYPTOerror(CRYPTO_R_FIPS_MODE_NOT_SUPPORTED);
+	return 0;
+}
+LCRYPTO_ALIAS(FIPS_mode_set);
 
 const char *
 SSLeay_version(int t)
