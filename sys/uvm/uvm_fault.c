@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.139 2024/11/03 11:33:32 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.140 2024/11/05 08:13:41 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ struct uvm_faultctx {
 
 int		uvm_fault_check(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
-		    struct vm_anon ***);
+		    struct vm_anon ***, vm_fault_t);
 
 int		uvm_fault_upper(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
@@ -585,19 +585,15 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-	if (fault_type == VM_FAULT_WIRE)
-		flt.narrow = TRUE;	/* don't look for neighborhood
-					 * pages on wire */
-	else
-		flt.narrow = FALSE;	/* normal fault */
 	flt.access_type = access_type;
-
+	flt.narrow = FALSE;		/* assume normal fault for now */
+	flt.wired = FALSE;		/* assume non-wired fault for now */
 
 	error = ERESTART;
 	while (error == ERESTART) { /* ReFault: */
 		anons = anons_store;
 
-		error = uvm_fault_check(&ufi, &flt, &anons);
+		error = uvm_fault_check(&ufi, &flt, &anons, fault_type);
 		if (error != 0)
 			continue;
 
@@ -660,7 +656,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
  */
 int
 uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-    struct vm_anon ***ranons)
+    struct vm_anon ***ranons, vm_fault_t fault_type)
 {
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -694,12 +690,14 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * be more strict than ufi->entry->protection.  "wired" means either
 	 * the entry is wired or we are fault-wiring the pg.
 	 */
-
 	flt->enter_prot = ufi->entry->protection;
 	flt->pa_flags = UVM_ET_ISWC(ufi->entry) ? PMAP_WC : 0;
-	flt->wired = VM_MAPENT_ISWIRED(ufi->entry) || (flt->narrow == TRUE);
-	if (flt->wired)
+	if (VM_MAPENT_ISWIRED(ufi->entry) || (fault_type == VM_FAULT_WIRE)) {
+		flt->wired = TRUE;
 		flt->access_type = flt->enter_prot; /* full access for wired */
+		/*  don't look for neighborhood * pages on "wire" fault */
+		flt->narrow = TRUE;
+	}
 
 	/* handle "needs_copy" case. */
 	if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
