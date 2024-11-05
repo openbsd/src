@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.27 2024/11/04 09:51:51 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.28 2024/11/05 09:14:25 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/resource.h>
 
 #include <err.h>
 #include <string.h>
