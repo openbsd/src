@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_log.c,v 1.8 2024/11/01 18:34:06 tb Exp $ */
+/*	$OpenBSD: ct_log.c,v 1.9 2024/11/05 09:35:40 tb Exp $ */
 /* Author: Adam Eijdenberg <adam.eijdenberg@gmail.com>. */
 /* ====================================================================
  * Copyright (c) 1998-2016 The OpenSSL Project.  All rights reserved.
@@ -71,8 +71,7 @@
 #include <openssl/x509.h>
 
 #include "conf_local.h"
-
-#include "cryptlib.h"
+#include "crypto_local.h"
 
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_def.c,v 1.9 2024/11/01 18:36:30 tb Exp $ */
+/* $OpenBSD: x509_def.c,v 1.10 2024/11/05 09:35:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,7 @@
 
 #include <openssl/x509.h>
 
-#include "cryptlib.h"
+#include "crypto_local.h"
 
 const char *
 X509_get_default_private_dir(void)

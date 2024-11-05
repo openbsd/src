@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.20 2024/11/01 18:36:29 tb Exp $ */
+/* $OpenBSD: cversion.c,v 1.21 2024/11/05 09:35:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,7 @@
 #include <openssl/crypto.h>
 #include <openssl/opensslv.h>
 
-#include "cryptlib.h"
+#include "crypto_local.h"
 
 const char *
 SSLeay_version(int t)
