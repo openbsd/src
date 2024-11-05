@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.31 2024/11/05 08:12:08 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.32 2024/11/05 15:54:12 miod Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -738,6 +738,17 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		edp->crow = ((edp->flags & VTFL_DECOM) ?
 			     edp->scrreg_startrow : 0);
 		edp->ccol = 0;
+		break;
+	case 's':
+		edp->flags |= VTFL_SAVEDCURS;
+		edp->savedcursor_row = edp->crow;
+		edp->savedcursor_col = edp->ccol;
+		break;
+	case 'u':
+		if (edp->flags & VTFL_SAVEDCURS) {
+			edp->crow = edp->savedcursor_row;
+			edp->ccol = edp->savedcursor_col;
+		}
 		break;
 	case 'y':
 		switch (ARG(0)) {
