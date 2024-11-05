@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.12 2024/05/14 13:34:05 op Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.13 2024/11/05 19:36:53 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 14 2024 $
+.Dd $Mdocdate: November 5 2024 $
 .Dt SMTPD-FILTERS 7
 .Os
 .Sh NAME
@@ -428,7 +428,8 @@ it is either one of
 .Dq report ,
 .Dq reject ,
 .Dq disconnect ,
-.Dq junk or
+.Dq junk
+or
 .Dq rewrite .
 .Pp
 If specified,
