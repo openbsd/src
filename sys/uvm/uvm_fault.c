@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.140 2024/11/05 08:13:41 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.141 2024/11/05 08:15:01 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1652,9 +1652,6 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
-		if (pmap_extract(pmap, va, &pa) == FALSE)
-			continue;
-
 		/*
 		 * find the map entry for the current address.
 		 */
@@ -1679,6 +1676,9 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 			uvm_map_lock_entry(entry);
 			oentry = entry;
 		}
+
+		if (!pmap_extract(pmap, va, &pa))
+			continue;
 
 		/*
 		 * if the entry is no longer wired, tell the pmap.
