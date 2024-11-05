@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_legacy.c,v 1.1 2024/11/05 10:59:42 tb Exp $ */
+/* $OpenBSD: crypto_legacy.c,v 1.2 2024/11/05 11:02:58 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -125,6 +125,7 @@
 #include <openssl/crypto.h>
 
 #include "crypto_internal.h"
+#include "crypto_local.h"
 #include "x86_arch.h"
 
 /* Machine independent capabilities. */
@@ -369,3 +370,57 @@ CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
 	return x;
 }
 LCRYPTO_ALIAS(CRYPTO_memcmp);
+
+const char *
+SSLeay_version(int t)
+{
+	switch (t) {
+	case SSLEAY_VERSION:
+		return OPENSSL_VERSION_TEXT;
+	case SSLEAY_BUILT_ON:
+		return "built on: date not available";
+	case SSLEAY_CFLAGS:
+		return "compiler: information not available";
+	case SSLEAY_PLATFORM:
+		return "platform: information not available";
+	case SSLEAY_DIR:
+		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
+	}
+	return "not available";
+}
+LCRYPTO_ALIAS(SSLeay_version);
+
+unsigned long
+SSLeay(void)
+{
+	return SSLEAY_VERSION_NUMBER;
+}
+LCRYPTO_ALIAS(SSLeay);
+
+const char *
+OpenSSL_version(int t)
+{
+	switch (t) {
+	case OPENSSL_VERSION:
+		return OPENSSL_VERSION_TEXT;
+	case OPENSSL_BUILT_ON:
+		return "built on: date not available";
+	case OPENSSL_CFLAGS:
+		return "compiler: information not available";
+	case OPENSSL_PLATFORM:
+		return "platform: information not available";
+	case OPENSSL_DIR:
+		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
+	case OPENSSL_ENGINES_DIR:
+		return "ENGINESDIR: N/A";
+	}
+	return "not available";
+}
+LCRYPTO_ALIAS(OpenSSL_version);
+
+unsigned long
+OpenSSL_version_num(void)
+{
+	return SSLeay();
+}
+LCRYPTO_ALIAS(OpenSSL_version_num);
