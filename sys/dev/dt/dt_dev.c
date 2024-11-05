@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.39 2024/11/02 17:03:12 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.40 2024/11/05 08:11:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -206,11 +206,6 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	TAILQ_INIT(&sc->ds_pcbs);
 	sc->ds_lastcpu = 0;
 	sc->ds_evtcnt = 0;
-	sc->ds_si = softintr_establish(IPL_SOFTCLOCK, dt_deferred_wakeup, sc);
-	if (sc->ds_si == NULL) {
-		dtfree(sc);
-		return ENOMEM;
-	}
 
 	SLIST_INSERT_HEAD(&dtdev_list, sc, ds_next);
 
@@ -233,7 +228,6 @@ dtclose(dev_t dev, int flags, int mode, struct proc *p)
 	SLIST_REMOVE(&dtdev_list, sc, dt_softc, ds_next);
 	dt_ioctl_record_stop(sc);
 	dt_pcb_purge(&sc->ds_pcbs);
-	softintr_disestablish(sc->ds_si);
 	dtfree(sc);
 
 	return 0;
@@ -364,13 +358,19 @@ dtalloc(void)
 		return NULL;
 
 	for (i = 0; i < ncpusfound; i++) {
-		dtev = mallocarray(DT_EVTRING_SIZE, sizeof(*dtev), M_DT,
-				   M_WAITOK|M_CANFAIL|M_ZERO);
+		dtev = mallocarray(DT_EVTRING_SIZE, sizeof(*dtev), M_DEVBUF,
+		    M_WAITOK|M_CANFAIL|M_ZERO);
 		if (dtev == NULL)
 			break;
 		sc->ds_cpu[i].dc_ring = dtev;
 	}
 	if (i < ncpusfound) {
+		dtfree(sc);
+		return NULL;
+	}
+
+	sc->ds_si = softintr_establish(IPL_SOFTCLOCK, dt_deferred_wakeup, sc);
+	if (sc->ds_si == NULL) {
 		dtfree(sc);
 		return NULL;
 	}
@@ -384,10 +384,12 @@ dtfree(struct dt_softc *sc)
 	struct dt_evt *dtev;
 	int i;
 
+	if (sc->ds_si != NULL)
+		softintr_disestablish(sc->ds_si);
+
 	for (i = 0; i < ncpusfound; i++) {
 		dtev = sc->ds_cpu[i].dc_ring;
-		if (dtev != NULL)
-			free(dtev, M_DT, DT_EVTRING_SIZE * sizeof(*dtev));
+		free(dtev, M_DEVBUF, DT_EVTRING_SIZE * sizeof(*dtev));
 	}
 	free(sc, M_DEVBUF, sizeof(*sc));
 }
