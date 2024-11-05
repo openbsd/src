@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.161 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.162 2024/11/05 23:16:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -842,11 +842,8 @@ main(int argc, char **argv)
 	if (!env->vmd_noaction)
 		proc_connect(ps);
 
-	if (env->vmd_noaction == 0 && proc_id == PROC_PARENT) {
-		env->vmd_psp_fd = open(PSP_NODE, O_RDWR);
-		if (env->vmd_psp_fd == -1)
-			log_debug("%s: failed to open %s", __func__, PSP_NODE);
-	}
+	if (env->vmd_noaction == 0 && proc_id == PROC_PARENT)
+		psp_setup();
 
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");

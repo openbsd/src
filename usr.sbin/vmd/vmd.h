@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.128 2024/09/11 15:42:52 bluhm Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.129 2024/11/05 23:16:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -595,6 +595,7 @@ int	 psp_launch_measure(uint32_t);
 int	 psp_launch_finish(uint32_t);
 int	 psp_activate(uint32_t, uint32_t);
 int	 psp_guest_shutdown(uint32_t);
+void	 psp_setup(void);
 
 /* sev.c */
 int	sev_init(struct vmd_vm *);

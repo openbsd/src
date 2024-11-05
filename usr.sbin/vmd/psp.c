@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.2 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: psp.c,v 1.3 2024/11/05 23:16:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -21,6 +21,8 @@
 
 #include <dev/ic/pspvar.h>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 
 #include "vmd.h"
@@ -266,4 +268,63 @@ psp_guest_shutdown(uint32_t handle)
 	}
 
 	return (0);
+}
+
+/*
+ * Initialize PSP.
+ */
+static int
+psp_init(void)
+{
+	if (ioctl(env->vmd_psp_fd, PSP_IOC_INIT) < 0) {
+		log_warn("%s: ioctl", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * Shutdown PSP.
+ */
+static int
+psp_shutdown(void)
+{
+	if (ioctl(env->vmd_psp_fd, PSP_IOC_SHUTDOWN) < 0) {
+		log_warn("%s: ioctl", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * Reset PSP.
+ *
+ * Shut PSP down, then re-initialize it.  This clears and resets
+ * all active contexts.
+ */
+static int
+psp_reset(void)
+{
+	int	ret;
+
+	if ((ret = psp_shutdown()) < 0 || (ret = psp_init()) < 0)
+		return (ret);
+
+	return (0);
+}
+
+void
+psp_setup(void)
+{
+	env->vmd_psp_fd = open(PSP_NODE, O_RDWR);
+	if (env->vmd_psp_fd == -1) {
+		if (errno != ENXIO)
+			log_debug("%s: failed to open %s", __func__, PSP_NODE);
+		return;
+	}
+
+	if (psp_reset() < 0)
+		fatalx("%s: failed to reset PSP", __func__);
 }
