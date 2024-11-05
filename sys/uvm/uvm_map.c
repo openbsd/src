@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.333 2024/10/31 05:00:00 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.334 2024/11/05 08:18:44 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1856,10 +1856,8 @@ uvm_unmap_kill_entry_withlock(struct vm_map *map, struct vm_map_entry *entry,
 {
 	/* Unwire removed map entry. */
 	if (VM_MAPENT_ISWIRED(entry)) {
-		KERNEL_LOCK();
 		entry->wired_count = 0;
 		uvm_fault_unwire_locked(map, entry->start, entry->end);
-		KERNEL_UNLOCK();
 	}
 
 	if (needlock)
