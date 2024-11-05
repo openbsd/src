@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.70 2024/03/21 16:46:04 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.71 2024/11/05 18:12:55 jan Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -51,6 +51,12 @@
 #include <poll.h>
 #include <paths.h>
 #include <math.h>
+#include <tls.h>
+
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #define DEFAULT_PORT "12345"
 #define DEFAULT_STATS_INTERVAL 1000 /* ms */
@@ -74,6 +80,7 @@ struct {
 	char	**kvars;	/* Kvm enabled vars */
 	char	 *dummybuf;	/* IO buffer */
 	size_t	  dummybuf_len;	/* IO buffer len */
+	struct tls_config *tls_cfg;
 } tcpbench, *ptb;
 
 struct tcpservsock {
@@ -95,8 +102,12 @@ struct statctx {
 	struct tcpservsock *tcp_ts;
 	/* UDP only */
 	u_long udp_slice_pkts;
+	/* TLS context */
+	struct tls *tls;
 };
 
+char *tls_ciphers;
+char *tls_protocols;
 struct statctx *udp_sc; /* singleton */
 
 static void	signal_handler(int, short, void *);
@@ -196,11 +207,11 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
-	    "       tcpbench [-46DRUuv] [-B buf] [-b sourceaddr] [-k kvars] [-n connections]\n"
-	    "                [-p port] [-r interval] [-S space] [-T toskeyword]\n"
+	    "       tcpbench [-46cDRUuv] [-B buf] [-b sourceaddr] [-k kvars] [-n connections]\n"
+	    "                [-p port] [-r interval] [-S space] [-T keyword]\n"
 	    "                [-t secs] [-V rtable] hostname\n"
-	    "       tcpbench -s [-46DUuv] [-B buf] [-k kvars] [-p port] [-r interval]\n"
-	    "                [-S space] [-T toskeyword] [-V rtable] [hostname]\n");
+	    "       tcpbench -s [-46cDUuv] [-B buf] [-C certfile -K keyfile] [-k kvars] [-p port] [-r interval]\n"
+	    "                [-S space] [-T keyword] [-V rtable] [hostname]\n");
 	exit(1);
 }
 
@@ -592,8 +603,13 @@ tcp_server_handle_sc(int fd, short event, void *v_sc)
 	struct statctx *sc = v_sc;
 	ssize_t n;
 
-	n = read(sc->fd, sc->buf, sc->buflen);
+	if (sc->tls)
+		n = tls_read(sc->tls, sc->buf, sc->buflen);
+	else
+		n = read(sc->fd, sc->buf, sc->buflen);
 	if (n == -1) {
+		if (sc->tls)
+			err(1, "tls_read: %s", tls_error(sc->tls));
 		if (errno != EINTR && errno != EWOULDBLOCK)
 			warn("fd %d read error", sc->fd);
 		return;
@@ -623,6 +639,33 @@ tcp_server_handle_sc(int fd, short event, void *v_sc)
 	mainstats.total_bytes += n;
 }
 
+int
+timeout_tls(int s, struct tls *tls_ctx, int (*func)(struct tls *))
+{
+	struct pollfd pfd;
+	int ret;
+
+	while ((ret = func(tls_ctx)) != 0) {
+		if (ret == TLS_WANT_POLLIN)
+			pfd.events = POLLIN;
+		else if (ret == TLS_WANT_POLLOUT)
+			pfd.events = POLLOUT;
+		else
+			break;
+		pfd.fd = s;
+		if ((ret = poll(&pfd, 1, -1)) == 1)
+			continue;
+		else if (ret == 0) {
+			errno = ETIMEDOUT;
+			ret = -1;
+			break;
+		} else
+			err(1, "poll failed");
+	}
+
+	return ret;
+}
+
 static void
 tcp_server_accept(int fd, short event, void *arg)
 {
@@ -632,6 +675,15 @@ tcp_server_accept(int fd, short event, void *arg)
 	struct sockaddr_storage ss;
 	socklen_t sslen;
 	char tmp[NI_MAXHOST + 2 + NI_MAXSERV];
+	static struct tls *tls = NULL;
+
+	if (ptb->tls_cfg && tls == NULL) {
+		tls = tls_server();
+		if (tls == NULL)
+			err(1, "Unable to create TLS context.");
+		if (tls_configure(tls, ptb->tls_cfg) == -1)
+			errx(1, "tls_configure: %s", tls_error(tls));
+	}
 
 	sslen = sizeof(ss);
 
@@ -672,6 +724,8 @@ tcp_server_accept(int fd, short event, void *arg)
 	sc->tcp_ts = ts;
 	sc->fd = sock;
 	stats_prepare(sc);
+	if (tls && tls_accept_socket(tls, &sc->tls, sc->fd) == -1)
+		err(1, "tls_accept_socket: %s", tls_error(tls));
 
 	event_set(&sc->ev, sc->fd, EV_READ | EV_PERSIST,
 	    tcp_server_handle_sc, sc);
@@ -786,7 +840,14 @@ client_handle_sc(int fd, short event, void *v_sc)
 
 	if (ptb->Rflag)
 		blen = arc4random_uniform(blen) + 1;
-	if ((n = write(sc->fd, sc->buf, blen)) == -1) {
+
+	if (sc->tls)
+		n = tls_write(sc->tls, sc->buf, blen);
+	else
+		n = write(sc->fd, sc->buf, blen);
+	if (n == -1) {
+		if (sc->tls)
+			warn("tls_write: %s", tls_error(sc->tls));
 		if (errno == EINTR || errno == EWOULDBLOCK ||
 		    (UDP_MODE && errno == ENOBUFS))
 			return;
@@ -885,6 +946,29 @@ client_init(struct addrinfo *aitop, int nconn, struct addrinfo *aib)
 			sc = udp_sc;
 
 		sc->fd = sock;
+
+		if (ptb->tls_cfg) {
+			sc->tls = tls_client();
+			if (sc->tls == NULL)
+				err(1, "Unable to create TLS context.");
+
+			if (tls_configure(sc->tls, ptb->tls_cfg) == -1)
+				errx(1, "tls_configure: %s",
+				    tls_error(sc->tls));
+
+			if (tls_connect_socket(sc->tls, sc->fd,
+			    mainstats.host) == -1)
+				errx(1, "tls_connect_socket: %s",
+				    tls_error(sc->tls));
+			if (timeout_tls(sc->fd, sc->tls, tls_handshake) == -1) {
+				const char *errstr;
+
+				if ((errstr = tls_error(sc->tls)) == NULL)
+					errstr = strerror(errno);
+				errx(1, "tls handshake failed (%s)", errstr);
+			}
+		}
+
 		stats_prepare(sc);
 
 		event_set(&sc->ev, sc->fd, EV_WRITE | EV_PERSIST,
@@ -982,6 +1066,39 @@ wrapup(int err)
 }
 
 int
+process_tls_opt(char *s)
+{
+	size_t len;
+	char *v;
+
+	const struct tlskeywords {
+		const char	 *keyword;
+		char		**value;
+	} *t, tlskeywords[] = {
+		{ "ciphers",	&tls_ciphers },
+		{ "protocols",	&tls_protocols },
+		{ NULL,		NULL },
+	};
+
+	len = strlen(s);
+	if ((v = strchr(s, '=')) != NULL) {
+		len = v - s;
+		v++;
+	}
+
+	for (t = tlskeywords; t->keyword != NULL; t++) {
+		if (strlen(t->keyword) == len &&
+		    strncmp(s, t->keyword, len) == 0) {
+			if (v == NULL)
+				errx(1, "invalid tls value `%s'", s);
+			*t->value = v;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int
 main(int argc, char **argv)
 {
 	struct timeval tv;
@@ -990,11 +1107,14 @@ main(int argc, char **argv)
 	struct addrinfo *aitop, *aib, hints;
 	const char *errstr;
 	struct rlimit rl;
-	int ch, herr, nconn;
+	int ch, herr, nconn, usetls = 0;
 	int family = PF_UNSPEC;
 	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
 	struct event ev_sigint, ev_sigterm, ev_sighup, ev_siginfo, ev_progtimer;
 	struct sockaddr_un sock_un;
+	char *crtfile = NULL, *keyfile = NULL;
+	uint8_t *crt = NULL, *key = NULL;
+	size_t key_size, crt_size;
 
 	/* Init world */
 	setvbuf(stdout, NULL, _IOLBF, 0);
@@ -1005,11 +1125,12 @@ main(int argc, char **argv)
 	ptb->kvars = NULL;
 	ptb->rflag = DEFAULT_STATS_INTERVAL;
 	ptb->Tflag = -1;
+	ptb->tls_cfg = NULL;
 	nconn = 1;
 	aib = NULL;
 	secs = 0;
 
-	while ((ch = getopt(argc, argv, "46b:B:Dhlk:n:p:Rr:sS:t:T:uUvV:"))
+	while ((ch = getopt(argc, argv, "46b:B:cC:Dhlk:K:n:p:Rr:sS:t:T:uUvV:"))
 	    != -1) {
 		switch (ch) {
 		case '4':
@@ -1020,6 +1141,12 @@ main(int argc, char **argv)
 			break;
 		case 'b':
 			srcbind = optarg;
+			break;
+		case 'c':
+			usetls = 1;
+			break;
+		case 'C':
+			crtfile = optarg;
 			break;
 		case 'D':
 			ptb->Dflag = 1;
@@ -1032,6 +1159,9 @@ main(int argc, char **argv)
 				err(1, "strdup");
 			ptb->kvars = check_prepare_kvars(tmp);
 			free(tmp);
+			break;
+		case 'K':
+			keyfile = optarg;
 			break;
 		case 'R':
 			ptb->Rflag = 1;
@@ -1088,6 +1218,8 @@ main(int argc, char **argv)
 			ptb->Uflag = 1;
 			break;
 		case 'T':
+			if (process_tls_opt(optarg))
+				break;
 			if (map_tos(optarg, &ptb->Tflag))
 				break;
 			errstr = NULL;
@@ -1118,8 +1250,18 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 	if ((argc != (ptb->sflag && !ptb->Uflag ? 0 : 1)) ||
-	    (UDP_MODE && (ptb->kvars || nconn != 1)))
+	    (UDP_MODE && (ptb->kvars || nconn != 1 || usetls)))
 		usage();
+
+	if (ptb->sflag && usetls && (crtfile == NULL || keyfile == NULL))
+		usage();
+
+	if (crtfile != NULL && keyfile != NULL) {
+		if ((crt = tls_load_file(crtfile, &crt_size, NULL)) == NULL)
+			err(1, "tls_load_file");
+		if ((key = tls_load_file(keyfile, &key_size, NULL)) == NULL)
+			err(1, "tls_load_file");
+	}
 
 	if (!ptb->sflag || ptb->Uflag)
 		mainstats.host = host = argv[0];
@@ -1200,6 +1342,33 @@ main(int argc, char **argv)
 
 	if (pledge("stdio inet unix", NULL) == -1)
 		err(1, "pledge");
+
+	if (usetls) {
+		uint32_t protocols = 0;
+
+		if ((ptb->tls_cfg = tls_config_new()) == NULL)
+			errx(1, "unable to allocate TLS config");
+
+		if (ptb->sflag) {
+			if (tls_config_set_key_mem(ptb->tls_cfg, key,
+			    key_size) == -1)
+				errx(1, "%s", tls_config_error(ptb->tls_cfg));
+			if (tls_config_set_cert_mem(ptb->tls_cfg, crt,
+			    crt_size) == -1)
+				errx(1, "%s", tls_config_error(ptb->tls_cfg));
+		} else {
+			/* Don't check server certificate. */
+			tls_config_insecure_noverifyname(ptb->tls_cfg);
+			tls_config_insecure_noverifycert(ptb->tls_cfg);
+		}
+
+		if (tls_config_parse_protocols(&protocols, tls_protocols) == -1)
+			errx(1, "invalid TLS protocols `%s'", tls_protocols);
+		if (tls_config_set_protocols(ptb->tls_cfg, protocols) == -1)
+			errx(1, "%s", tls_config_error(ptb->tls_cfg));
+		if (tls_config_set_ciphers(ptb->tls_cfg, tls_ciphers) == -1)
+			errx(1, "%s", tls_config_error(ptb->tls_cfg));
+	}
 
 	/* Init world */
 	TAILQ_INIT(&sc_queue);
