@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.15 2021/01/15 18:57:04 rob Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.16 2024/11/05 09:18:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -145,7 +145,6 @@ index_namespace(struct namespace *ns, const char *datadir)
 	struct cursor		*cursor;
 	struct ber_element	*elm;
 	char			*path;
-	long long int		 ncomplete = 0;
 	int			 i, rc;
 
 	log_info("indexing namespace %s", ns->suffix);
@@ -201,7 +200,6 @@ index_namespace(struct namespace *ns, const char *datadir)
 			btval_reset(&val);
 			if (rc != 0)
 				break;
-			++ncomplete;
 		}
 
 		if (btree_txn_commit(ns->indx_txn) != BT_SUCCESS)
