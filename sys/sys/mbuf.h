@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.264 2024/08/29 10:44:40 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.265 2024/11/05 13:15:13 jsg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -58,12 +58,10 @@
 
 #define	MAXMCLBYTES	(64 * 1024)		/* largest cluster from the stack */
 #define	MINCLSIZE	(MHLEN + MLEN + 1)	/* smallest amount to put in cluster */
-#define	M_MAXCOMPRESS	(MHLEN / 2)		/* max amount to copy for compression */
 
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
 					/* 2K cluster can hold Ether frame */
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)
 
 /* Packet tags structure */
 struct m_tag {

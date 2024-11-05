@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.126 2024/07/09 18:56:54 jan Exp $
+.\"     $OpenBSD: mbuf.9,v 1.127 2024/11/05 13:15:13 jsg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2024 $
+.Dd $Mdocdate: November 5 2024 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -145,12 +145,10 @@
 
 #define MAXMCLBYTES     (64 * 1024)
 #define MINCLSIZE       (MHLEN + MLEN + 1)
-#define M_MAXCOMPRESS   (MHLEN / 2)
 
 #define MCLSHIFT        11
 
 #define MCLBYTES        (1 << MCLSHIFT)
-#define MCLOFSET        (MCLBYTES - 1)
 
 #define mtod(m,t)       ((t)((m)->m_data))
 
