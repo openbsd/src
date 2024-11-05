@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.41 2024/10/22 12:02:43 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.42 2024/11/05 08:56:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -287,7 +287,7 @@ EC_KEY_check_key(const EC_KEY *eckey)
 		goto err;
 	}
 
-	if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key) > 0) {
+	if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
 		ECerror(EC_R_POINT_AT_INFINITY);
 		goto err;
 	}
@@ -313,7 +313,7 @@ EC_KEY_check_key(const EC_KEY *eckey)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (EC_POINT_is_at_infinity(eckey->group, point) <= 0) {
+	if (!EC_POINT_is_at_infinity(eckey->group, point)) {
 		ECerror(EC_R_WRONG_ORDER);
 		goto err;
 	}

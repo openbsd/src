@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.78 2024/11/04 13:19:08 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.79 2024/11/05 08:56:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -650,7 +650,7 @@ EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 	}
 	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx))
 		goto err;
-	if (EC_POINT_is_at_infinity(group, point) <= 0) {
+	if (!EC_POINT_is_at_infinity(group, point)) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
