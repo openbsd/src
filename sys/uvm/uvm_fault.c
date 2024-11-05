@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.142 2024/11/05 08:16:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.143 2024/11/05 15:32:08 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -548,6 +548,7 @@ struct uvm_faultctx {
 	boolean_t narrow;
 	boolean_t wired;
 	paddr_t pa_flags;
+	boolean_t promote;
 };
 
 int		uvm_fault_check(
@@ -564,6 +565,9 @@ boolean_t	uvm_fault_upper_lookup(
 int		uvm_fault_lower(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
 		    struct vm_page **, vm_fault_t);
+int		uvm_fault_lower_io(
+		    struct uvm_faultinfo *, struct uvm_faultctx *,
+		    struct uvm_object **, struct vm_page **);
 
 int
 uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
@@ -1198,6 +1202,14 @@ uvm_fault_lower_lookup(
 /*
  * uvm_fault_lower: handle lower fault.
  *
+ *	1. check uobj
+ *	1.1. if null, ZFOD.
+ *	1.2. if not null, look up unnmapped neighbor pages.
+ *	2. for center page, check if promote.
+ *	2.1. ZFOD always needs promotion.
+ *	2.2. other uobjs, when entry is marked COW (usually MAP_PRIVATE vnode).
+ *	3. if uobj is not ZFOD and page is not found, do i/o.
+ *	4. dispatch either direct / promote fault.
  */
 int
 uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1205,11 +1217,10 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	boolean_t promote, locked;
-	int result, dropswap = 0;
+	int dropswap = 0;
 	struct vm_page *uobjpage, *pg = NULL;
 	struct vm_anon *anon = NULL;
-	voff_t uoff;
+	int error;
 
 	/*
 	 * now, if the desired page is not shadowed by the amap and we have
@@ -1250,10 +1261,10 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 	if (uobj == NULL) {
 		uobjpage = PGO_DONTCARE;
-		promote = TRUE;		/* always need anon here */
+		flt->promote = TRUE;		/* always need anon here */
 	} else {
 		KASSERT(uobjpage != PGO_DONTCARE);
-		promote = (flt->access_type & PROT_WRITE) &&
+		flt->promote = (flt->access_type & PROT_WRITE) &&
 		     UVM_ET_ISCOPYONWRITE(ufi->entry);
 	}
 
@@ -1269,86 +1280,9 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		/* update rusage counters */
 		curproc->p_ru.ru_minflt++;
 	} else {
-		int gotpages;
-
-		/* update rusage counters */
-		curproc->p_ru.ru_majflt++;
-
-		uvmfault_unlockall(ufi, amap, NULL);
-
-		counters_inc(uvmexp_counters, flt_get);
-		gotpages = 1;
-		uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
-		result = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
-		    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
-		    PGO_SYNCIO);
-
-		/*
-		 * recover from I/O
-		 */
-		if (result != VM_PAGER_OK) {
-			KASSERT(result != VM_PAGER_PEND);
-
-			if (result == VM_PAGER_AGAIN) {
-				tsleep_nsec(&nowake, PVM, "fltagain2",
-				    MSEC_TO_NSEC(5));
-				return ERESTART;
-			}
-
-			if (!UVM_ET_ISNOFAULT(ufi->entry))
-				return (EIO);
-
-			uobjpage = PGO_DONTCARE;
-			uobj = NULL;
-			promote = TRUE;
-		}
-
-		/* re-verify the state of the world.  */
-		locked = uvmfault_relock(ufi);
-		if (locked && amap != NULL)
-			amap_lock(amap);
-
-		/* might be changed */
-		if (uobjpage != PGO_DONTCARE) {
-			uobj = uobjpage->uobject;
-			rw_enter(uobj->vmobjlock, RW_WRITE);
-		}
-
-		/*
-		 * Re-verify that amap slot is still free. if there is
-		 * a problem, we clean up.
-		 */
-		if (locked && amap && amap_lookup(&ufi->entry->aref,
-		      ufi->orig_rvaddr - ufi->entry->start)) {
-			if (locked)
-				uvmfault_unlockall(ufi, amap, NULL);
-			locked = FALSE;
-		}
-
-		/* didn't get the lock?   release the page and retry. */
-		if (locked == FALSE && uobjpage != PGO_DONTCARE) {
-			uvm_lock_pageq();
-			/* make sure it is in queues */
-			uvm_pageactivate(uobjpage);
-			uvm_unlock_pageq();
-
-			if (uobjpage->pg_flags & PG_WANTED)
-				/* still holding object lock */
-				wakeup(uobjpage);
-			atomic_clearbits_int(&uobjpage->pg_flags,
-			    PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(uobjpage, NULL);
-		}
-
-		if (locked == FALSE) {
-			if (uobjpage != PGO_DONTCARE)
-				rw_exit(uobj->vmobjlock);
-			return ERESTART;
-		}
-
-		/*
-		 * we have the data in uobjpage which is PG_BUSY
-		 */
+		error = uvm_fault_lower_io(ufi, flt, &uobj, &uobjpage);
+		if (error != 0)
+			return error;
 	}
 
 	/*
@@ -1356,7 +1290,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 *  - at this point uobjpage can not be NULL
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
-	if (promote == FALSE) {
+	if (flt->promote == FALSE) {
 		/*
 		 * we are not promoting.   if the mapping is COW ensure that we
 		 * don't give more access than we should (e.g. when doing a read
@@ -1576,6 +1510,108 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	return (0);
 }
 
+/*
+ * uvm_fault_lower_io: get lower page from backing store.
+ *
+ *	1. unlock everything, because i/o will block.
+ *	2. call pgo_get.
+ *	3. if failed, recover.
+ *	4. if succeeded, relock everything and verify things.
+ */
+int
+uvm_fault_lower_io(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	struct uvm_object **ruobj, struct vm_page **ruobjpage)
+{
+	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	struct uvm_object *uobj = *ruobj;
+	struct vm_page *pg;
+	boolean_t locked;
+	int gotpages;
+	int result;
+	voff_t uoff;
+
+	/* update rusage counters */
+	curproc->p_ru.ru_majflt++;
+
+	uvmfault_unlockall(ufi, amap, NULL);
+
+	counters_inc(uvmexp_counters, flt_get);
+	gotpages = 1;
+	pg = NULL;
+	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
+	result = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
+	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
+	    PGO_SYNCIO);
+
+	/*
+	 * recover from I/O
+	 */
+	if (result != VM_PAGER_OK) {
+		KASSERT(result != VM_PAGER_PEND);
+
+		if (result == VM_PAGER_AGAIN) {
+			tsleep_nsec(&nowake, PVM, "fltagain2", MSEC_TO_NSEC(5));
+			return ERESTART;
+		}
+
+		if (!UVM_ET_ISNOFAULT(ufi->entry))
+			return (EIO);
+
+		pg = PGO_DONTCARE;
+		uobj = NULL;
+		flt->promote = TRUE;
+	}
+
+	/* re-verify the state of the world.  */
+	locked = uvmfault_relock(ufi);
+	if (locked && amap != NULL)
+		amap_lock(amap);
+
+	/* might be changed */
+	if (pg != PGO_DONTCARE) {
+		uobj = pg->uobject;
+		rw_enter(uobj->vmobjlock, RW_WRITE);
+	}
+
+	/*
+	 * Re-verify that amap slot is still free. if there is
+	 * a problem, we clean up.
+	 */
+	if (locked && amap && amap_lookup(&ufi->entry->aref,
+	      ufi->orig_rvaddr - ufi->entry->start)) {
+		if (locked)
+			uvmfault_unlockall(ufi, amap, NULL);
+		locked = FALSE;
+	}
+
+	/* didn't get the lock?   release the page and retry. */
+	if (locked == FALSE && pg != PGO_DONTCARE) {
+		uvm_lock_pageq();
+		/* make sure it is in queues */
+		uvm_pageactivate(pg);
+		uvm_unlock_pageq();
+
+		if (pg->pg_flags & PG_WANTED)
+			/* still holding object lock */
+			wakeup(pg);
+		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_WANTED);
+		UVM_PAGE_OWN(pg, NULL);
+	}
+
+	if (locked == FALSE) {
+		if (pg != PGO_DONTCARE)
+			rw_exit(uobj->vmobjlock);
+		return ERESTART;
+	}
+
+	/*
+	 * we have the data in pg which is PG_BUSY
+	 */
+	*ruobj = uobj;
+	*ruobjpage = pg;
+	return 0;
+}
 
 /*
  * uvm_fault_wire: wire down a range of virtual addresses in a map.
