@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2021/01/26 18:21:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2024/11/05 16:14:39 sobrado Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -336,9 +336,9 @@ setscreensize(void)
 __dead void
 usage(void)
 {
-
 	fprintf(stderr, "usage: %s [-dEIinv] [-b list] [-c list] "
-	    "[-r from-addr] [-s subject] to-addr ...\n", __progname);
+	    "[-r from-addr] [-s subject]\n"
+	    "%*s to-addr ...\n", __progname, (int)strlen(__progname) + 7, "");
 	fprintf(stderr, "       %s [-dEIiNnv] -f [file]\n", __progname);
 	fprintf(stderr, "       %s [-dEIiNnv] [-u user]\n", __progname);
 	exit(1);
