@@ -1,4 +1,4 @@
-/* $OpenBSD: cpt_err.c,v 1.16 2024/06/24 06:43:22 tb Exp $ */
+/* $OpenBSD: crypto_err.c,v 1.1 2024/11/05 11:21:15 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
