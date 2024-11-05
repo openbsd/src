@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.31 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.32 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ int	epic_mediachange(struct ifnet *);
 void	epic_mediastatus(struct ifnet *, struct ifmediareq *);
 
 struct cfdriver epic_cd = {
-	0, "epic", DV_IFNET
+	NULL, "epic", DV_IFNET
 };
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \

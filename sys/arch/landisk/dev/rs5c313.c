@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs5c313.c,v 1.4 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: rs5c313.c,v 1.5 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: rs5c313.c,v 1.1 2006/09/07 01:12:00 uwe Exp $	*/
 /*	$NetBSD: rs5c313_landisk.c,v 1.1 2006/09/07 01:55:03 uwe Exp $	*/
 
@@ -402,7 +402,7 @@ const struct cfattach rsclock_ca = {
 };
 
 struct cfdriver rsclock_cd = {
-	0, "rsclock", DV_DULL
+	NULL, "rsclock", DV_DULL
 };
 
 int

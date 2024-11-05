@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.35 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.36 2024/11/05 18:58:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -1059,5 +1059,5 @@ mtd_txeof(struct mtd_softc *sc)
 }
 
 struct cfdriver mtd_cd = {
-	0, "mtd", DV_IFNET
+	NULL, "mtd", DV_IFNET
 };

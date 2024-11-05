@@ -1,4 +1,4 @@
-/*	$OpenBSD: shb.c,v 1.3 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: shb.c,v 1.4 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: shb.c,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ const struct cfattach shb_ca = {
 };
 
 struct cfdriver shb_cd = {
-	0, "shb", DV_DULL
+	NULL, "shb", DV_DULL
 };
 
 int

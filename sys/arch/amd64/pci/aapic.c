@@ -1,4 +1,4 @@
-/*	$OpenBSD: aapic.c,v 1.7 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: aapic.c,v 1.8 2024/11/05 18:58:59 miod Exp $	*/
 /* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
 
 /*
@@ -36,7 +36,7 @@ const struct cfattach aapic_ca = {
 };
 
 struct cfdriver aapic_cd = {
-	0, "aapic", DV_DULL
+	NULL, "aapic", DV_DULL
 };
 
 int

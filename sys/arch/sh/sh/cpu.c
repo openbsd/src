@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.7 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ const struct cfattach cpu_ca = {
 };
 
 struct cfdriver cpu_cd = {
-	0, "cpu", DV_DULL
+	NULL, "cpu", DV_DULL
 };
 
 struct cpu_info cpu_info_store;

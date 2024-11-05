@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.23 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: scif.c,v 1.24 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -230,7 +230,7 @@ const struct cfattach scif_ca = {
 };
 
 struct cfdriver scif_cd = {
-	0, "scif", DV_DULL
+	NULL, "scif", DV_DULL
 };
 
 static int scif_attached;

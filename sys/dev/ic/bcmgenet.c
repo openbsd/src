@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.7 2023/11/10 15:51:20 bluhm Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.8 2024/11/05 18:58:59 miod Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -82,7 +82,7 @@ CTASSERT(MCLBYTES == 2048);
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 struct cfdriver bse_cd = {
-	0, "bse", DV_IFNET
+	NULL, "bse", DV_IFNET
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.14 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.15 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ const struct cfattach shpcic_ca = {
 };
 
 struct cfdriver shpcic_cd = {
-	0, "shpcic", DV_DULL
+	NULL, "shpcic", DV_DULL
 };
 
 /* There can be only one. */

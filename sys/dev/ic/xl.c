@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.140 2024/08/31 16:23:09 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.141 2024/11/05 18:58:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2654,5 +2654,5 @@ xl_wol(struct ifnet *ifp, int enable)
 #endif
 
 struct cfdriver xl_cd = {
-	0, "xl", DV_IFNET
+	NULL, "xl", DV_IFNET
 };

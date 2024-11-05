@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.29 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: cz.c,v 1.30 2024/11/05 18:58:59 miod Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ int	cztty_to_tiocm(struct cztty_softc *sc);
 void	cztty_diag(void *arg);
 
 struct cfdriver cz_cd = {
-	0, "cz", DV_TTY
+	NULL, "cz", DV_TTY
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.26 2024/08/31 16:23:09 deraadt Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.27 2024/11/05 18:58:59 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -142,7 +142,7 @@ const struct cfattach se_ca = {
 };
 
 struct cfdriver se_cd = {
-	0, "se", DV_IFNET
+	NULL, "se", DV_IFNET
 };
 
 uint32_t

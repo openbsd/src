@@ -1576,7 +1576,7 @@ const struct cfattach drm_ca = {
 };
 
 struct cfdriver drm_cd = {
-	0, "drm", DV_DULL
+	NULL, "drm", DV_DULL
 };
 
 const struct pci_device_id *

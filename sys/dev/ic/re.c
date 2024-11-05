@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.218 2024/08/12 06:47:11 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.219 2024/11/05 18:58:59 miod Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -205,7 +205,7 @@ void	re_kstat_detach(struct rl_softc *);
 void	in_delayed_cksum(struct mbuf *);
 
 struct cfdriver re_cd = {
-	0, "re", DV_IFNET
+	NULL, "re", DV_IFNET
 };
 
 #define EE_SET(x)					\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.199 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.200 2024/11/05 18:58:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2529,7 +2529,7 @@ const struct cfattach skc_ca = {
 };
 
 struct cfdriver skc_cd = {
-	0, "skc", DV_DULL
+	NULL, "skc", DV_DULL
 };
 
 const struct cfattach sk_ca = {

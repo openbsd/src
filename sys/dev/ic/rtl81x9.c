@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.99 2024/08/31 16:23:09 deraadt Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.100 2024/11/05 18:58:59 miod Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1368,5 +1368,5 @@ rl_detach(struct rl_softc *sc)
 }
 
 struct cfdriver rl_cd = {
-	0, "rl", DV_IFNET
+	NULL, "rl", DV_IFNET
 };

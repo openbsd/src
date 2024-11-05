@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.11 2022/05/10 18:04:50 kettenis Exp $	*/
+/*	$OpenBSD: obio.c,v 1.12 2024/11/05 18:58:59 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ const struct cfattach obio_ca = {
 };
 
 struct cfdriver obio_cd = {
-	0, "obio", DV_DULL
+	NULL, "obio", DV_DULL
 };
 
 int

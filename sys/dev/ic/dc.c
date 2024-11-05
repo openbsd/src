@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.158 2024/08/31 16:23:09 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.159 2024/11/05 18:58:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3110,5 +3110,5 @@ dc_detach(struct dc_softc *sc)
 }
 
 struct cfdriver dc_cd = {
-	0, "dc", DV_IFNET
+	NULL, "dc", DV_IFNET
 };
