@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.h,v 1.26 2021/11/24 01:12:43 beck Exp $ */
+/* $OpenBSD: cryptlib.h,v 1.27 2024/11/05 06:09:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_CRYPTLIB_H
-#define HEADER_CRYPTLIB_H
+#ifndef HEADER_CRYPTO_LOCAL_H
+#define HEADER_CRYPTO_LOCAL_H
 
 #include <openssl/opensslconf.h>
 
