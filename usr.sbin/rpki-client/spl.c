@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.4 2024/11/05 18:09:16 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.5 2024/11/05 18:58:35 lucas Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -373,7 +373,7 @@ spl_read(struct ibuf *b)
 	io_read_buf(b, &s->pfxsz, sizeof(s->pfxsz));
 	io_read_buf(b, &s->expires, sizeof(s->expires));
 
-	if (s->pfxs > 0) {
+	if (s->pfxsz > 0) {
 		if ((s->pfxs = calloc(s->pfxsz, sizeof(s->pfxs[0]))) == NULL)
 			err(1, NULL);
 		io_read_buf(b, s->pfxs, s->pfxsz * sizeof(s->pfxs[0]));
