@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.119 2024/11/03 08:02:15 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.120 2024/11/05 15:29:00 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ extern unsigned long drmbackoff(long);
 struct rwlock	*uvmpd_trylockowner(struct vm_page *);
 void		uvmpd_scan(struct uvm_pmalloc *, int, int,
 		    struct uvm_constraint_range *);
-int		uvmpd_scan_inactive(struct uvm_pmalloc *,
+int		uvmpd_scan_inactive(struct uvm_pmalloc *, int,
 		    struct uvm_constraint_range *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
@@ -422,11 +422,11 @@ uvmpd_dropswap(struct vm_page *pg)
  * => we return TRUE if we are exiting because we met our target
  */
 int
-uvmpd_scan_inactive(struct uvm_pmalloc *pma,
+uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
     struct uvm_constraint_range *constraint)
 {
 	struct pglist *pglst = &uvm.page_inactive;
-	int free, result, freed = 0;
+	int result, freed = 0;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_page *pps[SWCLUSTPAGES], **ppsp;
@@ -470,9 +470,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 			/*
 			 * see if we've met our target
 			 */
-			free = uvmexp.free - BUFPAGES_DEFICIT;
 			if (((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
-			    (free + uvmexp.paging >= uvmexp.freetarg)) ||
+			    (uvmexp.paging >= (shortage - freed))) ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				if (swslot == 0) {
 					/* exit now if no swap-i/o pending */
@@ -569,7 +568,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 			 * free target when all the current pageouts complete.
 			 */
 			if ((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
-			    (free + uvmexp.paging > uvmexp.freetarg)) {
+			    (uvmexp.paging > (shortage - freed))) {
 				rw_exit(slock);
 				continue;
 			}
@@ -893,7 +892,7 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage,
 	 * we work on meeting our inactive target by converting active pages
 	 * to inactive ones.
 	 */
-	pages_freed = uvmpd_scan_inactive(pma, constraint);
+	pages_freed = uvmpd_scan_inactive(pma, shortage, constraint);
 	uvmexp.pdfreed += pages_freed;
 	shortage -= pages_freed;
 
