@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.71 2024/11/05 18:27:24 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.72 2024/11/05 18:35:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -80,6 +80,21 @@ int	uvm_pmr_pg_to_memtype(struct vm_page *);
 #ifdef DDB
 void	uvm_pmr_print(void);
 #endif
+
+static inline int
+in_pagedaemon(int allowsyncer)
+{
+#if !defined(__sparc64__)
+	if (curcpu()->ci_idepth > 0)
+		return 0;
+#endif
+	if (curproc == uvm.pagedaemon_proc)
+		return 1;
+	/* XXX why is the syncer allowed to use the pagedaemon's reserve? */
+	if (allowsyncer && (curproc == syncerproc))
+		return 1;
+	return 0;
+}
 
 /*
  * Memory types. The page flags are used to derive what the current memory
@@ -967,8 +982,8 @@ again:
 	}
 
 	if ((uvmexp.free <= (uvmexp.reserve_pagedaemon + count)) &&
-	    (curproc != uvm.pagedaemon_proc) && (curproc != syncerproc)) {
-		uvm_unlock_fpageq();
+	    !in_pagedaemon(1)) {
+	    	uvm_unlock_fpageq();
 		if (flags & UVM_PLA_WAITOK) {
 			uvm_wait("uvm_pmr_getpages");
 			goto again;
@@ -2094,6 +2109,10 @@ uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
 {
 	struct uvm_pmalloc pma;
 	const char *wmsg = "pmrwait";
+
+#if !defined(__sparc64__)
+	KASSERT(curcpu()->ci_idepth == 0);
+#endif
 
 	if (curproc == uvm.pagedaemon_proc) {
 		/*
