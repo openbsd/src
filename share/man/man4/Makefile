@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.852 2024/11/02 04:37:20 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.853 2024/11/05 11:12:48 miod Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
-	acpibtn.4 acpicbkbd.4 acpicpu.4 acpidock.4 acpihve.4 acpiec.4 \
-	acpige.4 acpihid.4 \
-	acpihpet.4 acpimadt.4 acpimcfg.4 acpipci.4 acpiprt.4 acpipwrres.4 \
+	acpibtn.4 acpicbkbd.4 acpicmos.4 acpicpu.4 acpidock.4 \
+	acpiec.4 acpige.4 acpihid.4 acpihpet.4 acpihve.4 \
+	acpimadt.4 acpimcfg.4 acpipci.4 acpiprt.4 acpipwrres.4 \
 	acpisbs.4 acpisony.4 acpisurface.4 acpithinkpad.4 acpitoshiba.4 \
 	acpitimer.4 acpivideo.4 acpivout.4 acpitz.4 \
 	acx.4 adc.4 addcom.4 adl.4 admcts.4 admlc.4 admtemp.4 \
