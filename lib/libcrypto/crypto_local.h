@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_local.h,v 1.3 2024/11/05 09:35:40 tb Exp $ */
+/* $OpenBSD: crypto_local.h,v 1.4 2024/11/05 10:11:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,4 +81,4 @@ void OPENSSL_cpuid_setup(void);
 }
 #endif
 
-#endif
+#endif /* HEADER_CRYPTO_LOCAL_H */
