@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.144 2024/04/12 16:07:09 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.145 2024/11/05 10:49:23 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -479,6 +479,8 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
 	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
+		if (in_pcb_is_iterator(inp))
+			continue;
 		KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 
 		/*

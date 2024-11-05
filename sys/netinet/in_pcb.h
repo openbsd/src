@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.158 2024/07/12 19:50:35 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.159 2024/11/05 10:49:23 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -178,6 +178,20 @@ struct inpcb {
 
 LIST_HEAD(inpcbhead, inpcb);
 
+struct inpcb_iterator {
+	LIST_ENTRY(inpcb) inp_hash;		/* unused */
+	LIST_ENTRY(inpcb) inp_lhash;		/* unused */
+	TAILQ_ENTRY(inpcb) inp_queue;		/* [t] inet PCB queue */
+	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* unused */
+	struct	  inpcbtable *inp_table;	/* [I] always NULL */
+};
+
+static inline int
+in_pcb_is_iterator(struct inpcb *inp)
+{
+	return (inp->inp_table == NULL ? 1 : 0);
+}
+
 struct inpcbtable {
 	struct mutex inpt_mtx;			/* protect queue and hash */
 	struct rwlock inpt_notify;		/* protect inp_notify list */
@@ -302,6 +316,11 @@ struct inpcb *
 	 in_pcbref(struct inpcb *);
 void	 in_pcbunref(struct inpcb *);
 void	 in_pcbdisconnect(struct inpcb *);
+struct inpcb *
+	 in_pcb_iterator(struct inpcbtable *, struct inpcb *,
+	    struct inpcb_iterator *);
+void	 in_pcb_iterator_abort(struct inpcbtable *, struct inpcb *,
+	    struct inpcb_iterator *);
 struct inpcb *
 	 in_pcblookup(struct inpcbtable *, struct in_addr,
 			       u_int, struct in_addr, u_int, u_int);

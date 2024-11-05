@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.303 2024/07/12 19:50:35 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.304 2024/11/05 10:49:23 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -644,6 +644,55 @@ in_pcbunref(struct inpcb *inp)
 	pool_put(&inpcb_pool, inp);
 }
 
+struct inpcb *
+in_pcb_iterator(struct inpcbtable *table, struct inpcb *inp,
+    struct inpcb_iterator *iter)
+{
+	struct inpcb *tmp;
+
+	mtx_enter(&table->inpt_mtx);
+
+	if (inp)
+		tmp = TAILQ_NEXT((struct inpcb *)iter, inp_queue);
+	else
+		tmp = TAILQ_FIRST(&table->inpt_queue);
+
+	while (tmp && tmp->inp_table == NULL)
+		tmp = TAILQ_NEXT(tmp, inp_queue);
+
+	if (inp) {
+		TAILQ_REMOVE(&table->inpt_queue, (struct inpcb *)iter,
+		    inp_queue);
+	}
+	if (tmp) {
+		TAILQ_INSERT_AFTER(&table->inpt_queue, tmp,
+		    (struct inpcb *)iter, inp_queue);
+		in_pcbref(tmp);
+	}
+
+	mtx_leave(&table->inpt_mtx);
+
+	in_pcbunref(inp);
+
+	return tmp;
+}
+
+void
+in_pcb_iterator_abort(struct inpcbtable *table, struct inpcb *inp,
+    struct inpcb_iterator *iter)
+{
+	mtx_enter(&table->inpt_mtx);
+
+	if (inp) {
+		TAILQ_REMOVE(&table->inpt_queue, (struct inpcb *)iter,
+		    inp_queue);
+	}
+
+	mtx_leave(&table->inpt_mtx);
+
+	in_pcbunref(inp);
+}
+
 void
 in_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 {
@@ -743,6 +792,8 @@ in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
 	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
+		if (in_pcb_is_iterator(inp))
+			continue;
 		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 
 		if (inp->inp_faddr.s_addr != dst->sin_addr.s_addr ||
@@ -1098,6 +1149,8 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	table->inpt_size = hashsize;
 
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
+		if (in_pcb_is_iterator(inp))
+			continue;
 		LIST_REMOVE(inp, inp_lhash);
 		LIST_REMOVE(inp, inp_hash);
 		in_pcbhash_insert(inp);

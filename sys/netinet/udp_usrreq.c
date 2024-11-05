@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.325 2024/11/03 14:28:06 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.326 2024/11/05 10:49:23 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -382,8 +382,9 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		SIMPLEQ_HEAD(, inpcb) inpcblist;
 		struct inpcbtable *table;
+		struct inpcb_iterator iter = { .inp_table = NULL };
+		struct inpcb *last;
 
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
@@ -401,11 +402,6 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * fixing the interface.  Maybe 4.5BSD will remedy this?)
 		 */
 
-		/*
-		 * Locate pcb(s) for datagram.
-		 * (Algorithm copied from raw_intr().)
-		 */
-		SIMPLEQ_INIT(&inpcblist);
 #ifdef INET6
 		if (ip6)
 			table = &udb6table;
@@ -413,9 +409,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 #endif
 			table = &udbtable;
 
-		rw_enter_write(&table->inpt_notify);
-		mtx_enter(&table->inpt_mtx);
-		TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
+		last = inp = NULL;
+		while ((inp = in_pcb_iterator(table, inp, &iter)) != NULL) {
 			if (ip6)
 				KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 			else
@@ -466,8 +461,17 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 					continue;
 			}
 
-			in_pcbref(inp);
-			SIMPLEQ_INSERT_TAIL(&inpcblist, inp, inp_notify);
+			if (last != NULL) {
+				struct mbuf *n;
+
+				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+				if (n != NULL) {
+					udp_sbappend(last, n, ip, ip6, iphlen,
+					    uh, &srcsa.sa, 0);
+				}
+				in_pcbunref(last);
+			}
+			last = in_pcbref(inp);
 
 			/*
 			 * Don't look for additional matches if this one does
@@ -478,14 +482,13 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			 * clear these options after setting them.
 			 */
 			if ((inp->inp_socket->so_options & (SO_REUSEPORT |
-			    SO_REUSEADDR)) == 0)
+			    SO_REUSEADDR)) == 0) {
+				in_pcb_iterator_abort(table, inp, &iter);
 				break;
+			}
 		}
-		mtx_leave(&table->inpt_mtx);
 
-		if (SIMPLEQ_EMPTY(&inpcblist)) {
-			rw_exit_write(&table->inpt_notify);
-
+		if (last == NULL) {
 			/*
 			 * No matching pcb found; discard datagram.
 			 * (No need to send an ICMP Port Unreachable
@@ -495,21 +498,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			goto bad;
 		}
 
-		while ((inp = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
-			struct mbuf *n;
-
-			SIMPLEQ_REMOVE_HEAD(&inpcblist, inp_notify);
-			if (SIMPLEQ_EMPTY(&inpcblist))
-				n = m;
-			else
-				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-			if (n != NULL) {
-				udp_sbappend(inp, n, ip, ip6, iphlen, uh,
-				    &srcsa.sa, 0);
-			}
-			in_pcbunref(inp);
-		}
-		rw_exit_write(&table->inpt_notify);
+		udp_sbappend(last, m, ip, ip6, iphlen, uh, &srcsa.sa, 0);
+		in_pcbunref(last);
 
 		return IPPROTO_DONE;
 	}

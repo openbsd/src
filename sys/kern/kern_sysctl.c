@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.451 2024/10/31 10:06:51 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.452 2024/11/05 10:49:23 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1689,13 +1689,19 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			mtx_leave(&tcb6table.inpt_mtx);
 #endif
 			mtx_enter(&udbtable.inpt_mtx);
-			TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue)
+			TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
+				if (in_pcb_is_iterator(inp))
+					continue;
 				FILLSO(inp->inp_socket);
+			}
 			mtx_leave(&udbtable.inpt_mtx);
 #ifdef INET6
 			mtx_enter(&udb6table.inpt_mtx);
-			TAILQ_FOREACH(inp, &udb6table.inpt_queue, inp_queue)
+			TAILQ_FOREACH(inp, &udb6table.inpt_queue, inp_queue) {
+				if (in_pcb_is_iterator(inp))
+					continue;
 				FILLSO(inp->inp_socket);
+			}
 			mtx_leave(&udb6table.inpt_mtx);
 #endif
 			mtx_enter(&rawcbtable.inpt_mtx);
