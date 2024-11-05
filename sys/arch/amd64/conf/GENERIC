@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.527 2024/11/02 04:37:20 yasuoka Exp $
+#	$OpenBSD: GENERIC,v 1.528 2024/11/05 00:54:32 yasuoka Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -529,7 +529,7 @@ msk*	at mskc?			#  each port of above
 em*	at pci?				# Intel Pro/1000 ethernet
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
 ix*	at pci?				# Intel 82598EB 10Gb ethernet
-#ixv*	at pci?				# Virtual Function of Intel 82599
+ixv*	at pci?				# Virtual Function of Intel 82599
 myx*	at pci?				# Myricom Myri-10G 10Gb ethernet
 oce*	at pci?				# Emulex OneConnect 10Gb ethernet
 txp*	at pci?				# 3com 3CR990
