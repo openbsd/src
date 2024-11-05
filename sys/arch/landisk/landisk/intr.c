@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.11 2024/10/24 05:28:00 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.12 2024/11/05 08:51:23 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ intc_intr(int ssr, int spc, int ssp)
 	struct clockframe cf;
 	int evtcode;
 
-	curcpu()->ci_intrdepth++;
+	curcpu()->ci_idepth++;
 
 	evtcode = _reg_read_4(SH4_INTEVT);
 	ih = EVTCODE_IH(evtcode);
@@ -122,7 +122,7 @@ intc_intr(int ssr, int spc, int ssp)
 		break;
 	}
 
-	curcpu()->ci_intrdepth--;
+	curcpu()->ci_idepth--;
 }
 
 void
