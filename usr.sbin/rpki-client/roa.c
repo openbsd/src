@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.78 2024/05/24 12:57:20 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.79 2024/11/05 18:09:16 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -289,6 +289,11 @@ roa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		goto out;
 	}
 
+	if (cert->ipsz == 0) {
+		warnx("%s: no IP address present", fn);
+		goto out;
+	}
+
 	/*
 	 * If the ROA isn't valid, we accept it anyway and depend upon
 	 * the code around roa_read() to check the "valid" field itself.
@@ -365,9 +370,11 @@ roa_read(struct ibuf *b)
 	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
 	io_read_buf(b, &p->expires, sizeof(p->expires));
 
-	if ((p->ips = calloc(p->ipsz, sizeof(struct roa_ip))) == NULL)
-		err(1, NULL);
-	io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+	if (p->ipsz > 0) {
+		if ((p->ips = calloc(p->ipsz, sizeof(p->ips[0]))) == NULL)
+			err(1, NULL);
+		io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+	}
 
 	io_read_str(b, &p->aia);
 	io_read_str(b, &p->aki);

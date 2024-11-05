@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.30 2024/04/08 14:02:13 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.31 2024/11/05 18:09:16 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -290,9 +290,14 @@ aspa_read(struct ibuf *b)
 	io_read_buf(b, &p->expires, sizeof(p->expires));
 
 	io_read_buf(b, &p->providersz, sizeof(size_t));
-	if ((p->providers = calloc(p->providersz, sizeof(uint32_t))) == NULL)
-		err(1, NULL);
-	io_read_buf(b, p->providers, p->providersz * sizeof(p->providers[0]));
+
+	if (p->providersz > 0) {
+		if ((p->providers = calloc(p->providersz,
+		    sizeof(p->providers[0]))) == NULL)
+			err(1, NULL);
+		io_read_buf(b, p->providers,
+		    p->providersz * sizeof(p->providers[0]));
+	}
 
 	io_read_str(b, &p->aia);
 	io_read_str(b, &p->aki);

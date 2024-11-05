@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.151 2024/10/07 12:19:52 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.152 2024/11/05 18:09:16 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1208,15 +1208,17 @@ cert_read(struct ibuf *b)
 	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
 	io_read_buf(b, &p->asz, sizeof(p->asz));
 
-	p->ips = calloc(p->ipsz, sizeof(struct cert_ip));
-	if (p->ips == NULL)
-		err(1, NULL);
-	io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+	if (p->ipsz > 0) {
+		if ((p->ips = calloc(p->ipsz, sizeof(p->ips[0]))) == NULL)
+			err(1, NULL);
+		io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+	}
 
-	p->as = calloc(p->asz, sizeof(struct cert_as));
-	if (p->as == NULL)
-		err(1, NULL);
-	io_read_buf(b, p->as, p->asz * sizeof(p->as[0]));
+	if (p->asz > 0) {
+		if ((p->as = calloc(p->asz, sizeof(p->as[0]))) == NULL)
+			err(1, NULL);
+		io_read_buf(b, p->as, p->asz * sizeof(p->as[0]));
+	}
 
 	io_read_str(b, &p->mft);
 	io_read_str(b, &p->notify);
