@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.304 2024/11/05 10:49:23 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.305 2024/11/05 22:44:20 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ in_pcb_iterator(struct inpcbtable *table, struct inpcb *inp,
 {
 	struct inpcb *tmp;
 
-	mtx_enter(&table->inpt_mtx);
+	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
 
 	if (inp)
 		tmp = TAILQ_NEXT((struct inpcb *)iter, inp_queue);
@@ -663,16 +663,13 @@ in_pcb_iterator(struct inpcbtable *table, struct inpcb *inp,
 	if (inp) {
 		TAILQ_REMOVE(&table->inpt_queue, (struct inpcb *)iter,
 		    inp_queue);
+		in_pcbunref(inp);
 	}
 	if (tmp) {
 		TAILQ_INSERT_AFTER(&table->inpt_queue, tmp,
 		    (struct inpcb *)iter, inp_queue);
 		in_pcbref(tmp);
 	}
-
-	mtx_leave(&table->inpt_mtx);
-
-	in_pcbunref(inp);
 
 	return tmp;
 }
@@ -681,16 +678,13 @@ void
 in_pcb_iterator_abort(struct inpcbtable *table, struct inpcb *inp,
     struct inpcb_iterator *iter)
 {
-	mtx_enter(&table->inpt_mtx);
+	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
 
 	if (inp) {
 		TAILQ_REMOVE(&table->inpt_queue, (struct inpcb *)iter,
 		    inp_queue);
+		in_pcbunref(inp);
 	}
-
-	mtx_leave(&table->inpt_mtx);
-
-	in_pcbunref(inp);
 }
 
 void
