@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.60 2024/09/23 00:10:04 jsg Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.61 2024/11/05 16:33:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1115,8 +1115,11 @@ struct smbios_dtb {
 	const char *prod;
 	const char *dtb;
 } smbios_dtb[] = {
+	/* Keep the list below sorted by vendor */
 	{ "ASUS", "ASUS Vivobook S 15 S5507",
 	  "qcom/x1e80100-asus-vivobook-s15.dtb" },
+	{ "HP", "HP OmniBook X Laptop 14-fe0xxx",
+	  "qcom/x1e80100-hp-omnibook-x14.dtb" },
 	{ "LENOVO", "21BX",
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
 	{ "LENOVO", "21BY",
@@ -1129,8 +1132,6 @@ struct smbios_dtb {
 	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
 	{ "SAMSUNG", "Galaxy Book4 Edge",
 	  "qcom/x1e80100-samsung-galaxy-book4-edge.dtb" },
-	{ "HP", "HP Omnibook X Laptop 14-fe0xxx",
-	  "qcom/x1e80100-hp-omnibook-x14.dtb" },
 };
 
 void *
