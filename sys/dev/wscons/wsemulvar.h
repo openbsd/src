@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.19 2023/03/06 17:14:44 miod Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.20 2024/11/05 08:12:08 miod Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -81,6 +81,9 @@ struct wsemul_inputstate {
 	uint32_t	inchar;	/* character being reconstructed */
 	uint32_t	lbound;	/* lower bound of above */
 	u_int		mbleft;	/* multibyte bytes left until char complete */
+
+	uint32_t	last_output;	/* last printable character */
+					/* (used by vt100 emul only) */
 };
 
 extern const struct wsemul_ops wsemul_dumb_ops;
