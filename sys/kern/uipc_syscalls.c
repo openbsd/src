@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.219 2024/04/25 17:32:53 bluhm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.220 2024/11/05 09:14:19 claudio Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -788,11 +788,8 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
-			KERNEL_LOCK();
+		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0)
 			ptsignal(p, SIGPIPE, STHREAD);
-			KERNEL_UNLOCK();
-		}
 	}
 	if (error == 0) {
 		*retsize = len - auio.uio_resid;

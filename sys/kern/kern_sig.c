@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.346 2024/11/05 06:03:19 jsg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.347 2024/11/05 09:14:19 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -123,6 +123,8 @@ void setsigctx(struct proc *, int, struct sigctx *);
 void postsig_done(struct proc *, int, sigset_t, int);
 void postsig(struct proc *, int, struct sigctx *);
 int cansignal(struct proc *, struct process *, int);
+
+void ptsignal_locked(struct proc *, int, enum signal_type);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
 
@@ -877,9 +879,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			sigexit(p, signum);
 			/* NOTREACHED */
 		}
-		KERNEL_LOCK();
 		ptsignal(p, signum, STHREAD);
-		KERNEL_UNLOCK();
 	}
 }
 
@@ -905,11 +905,14 @@ psignal(struct proc *p, int signum)
 void
 prsignal(struct process *pr, int signum)
 {
+	mtx_enter(&pr->ps_mtx);
 	/* Ignore signal if the target process is exiting */
 	if (pr->ps_flags & PS_EXITING) {
+		mtx_leave(&pr->ps_mtx);
 		return;
 	}
-	ptsignal(TAILQ_FIRST(&pr->ps_threads), signum, SPROCESS);
+	ptsignal_locked(TAILQ_FIRST(&pr->ps_threads), signum, SPROCESS);
+	mtx_leave(&pr->ps_mtx);
 }
 
 /*
@@ -920,6 +923,16 @@ prsignal(struct process *pr, int signum)
 void
 ptsignal(struct proc *p, int signum, enum signal_type type)
 {
+	struct process *pr = p->p_p;
+
+	mtx_enter(&pr->ps_mtx);
+	ptsignal_locked(p, signum, type);
+	mtx_leave(&pr->ps_mtx);
+}
+
+void
+ptsignal_locked(struct proc *p, int signum, enum signal_type type)
+{
 	int prop;
 	sig_t action, altaction = SIG_DFL;
 	sigset_t mask, sigmask;
@@ -928,7 +941,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	struct proc *q;
 	int wakeparent = 0;
 
-	KERNEL_ASSERT_LOCKED();
+	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
 
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
@@ -998,7 +1011,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	}
 
 	if (type != SPROPAGATED)
-		knote(&pr->ps_klist, NOTE_SIGNAL | signum);
+		knote_locked(&pr->ps_klist, NOTE_SIGNAL | signum);
 
 	prop = sigprop[signum];
 
@@ -1017,10 +1030,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * and if it is set to SIG_IGN,
 		 * action will be SIG_DFL here.)
 		 */
-		mtx_enter(&pr->ps_mtx);
 		sigignore = pr->ps_sigacts->ps_sigignore;
 		sigcatch = pr->ps_sigacts->ps_sigcatch;
-		mtx_leave(&pr->ps_mtx);
 
 		if (sigignore & mask)
 			return;
@@ -1061,7 +1072,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	if (prop & (SA_CONT | SA_STOP) && type != SPROPAGATED)
 		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link)
 			if (q != p)
-				ptsignal(q, signum, SPROPAGATED);
+				ptsignal_locked(q, signum, SPROPAGATED);
 
 	SCHED_LOCK();
 
@@ -2020,15 +2031,11 @@ userret(struct proc *p)
 	/* send SIGPROF or SIGVTALRM if their timers interrupted this thread */
 	if (p->p_flag & P_PROFPEND) {
 		atomic_clearbits_int(&p->p_flag, P_PROFPEND);
-		KERNEL_LOCK();
 		psignal(p, SIGPROF);
-		KERNEL_UNLOCK();
 	}
 	if (p->p_flag & P_ALRMPEND) {
 		atomic_clearbits_int(&p->p_flag, P_ALRMPEND);
-		KERNEL_LOCK();
 		psignal(p, SIGVTALRM);
-		KERNEL_UNLOCK();
 	}
 
 	if (SIGPENDING(p) != 0) {
