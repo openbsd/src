@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.345 2024/11/04 22:41:50 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.346 2024/11/05 06:03:19 jsg Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1819,7 +1819,7 @@ coredump(struct proc *p)
 		vn_close(vp, FWRITE, cred, p);
 		goto out;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_size = 0;
 	VOP_SETATTR(vp, &vattr, cred, p);
 	pr->ps_acflag |= ACORE;

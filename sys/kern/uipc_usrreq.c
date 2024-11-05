@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.210 2024/09/22 08:40:37 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.211 2024/11/05 06:03:19 jsg Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ uipc_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 		solock(unp->unp_socket);
 		goto out;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);

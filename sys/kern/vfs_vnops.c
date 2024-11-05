@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.122 2023/07/10 22:54:40 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.123 2024/11/05 06:03:19 jsg Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			return (error);
 
 		if (ndp->ni_vp == NULL) {
-			VATTR_NULL(&va);
+			vattr_null(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
@@ -169,7 +169,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		}
 	}
 	if ((fmode & O_TRUNC) && vp->v_type == VREG) {
-		VATTR_NULL(&va);
+		vattr_null(&va);
 		va.va_size = 0;
 		if ((error = VOP_SETATTR(vp, &va, cred, p)) != 0)
 			goto bad;

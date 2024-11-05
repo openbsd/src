@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.175 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.176 2024/11/05 06:03:20 jsg Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -243,7 +243,6 @@ extern int		vttoif_tab[];
 #define REVOKEALL	0x0001		/* vop_revoke: revoke all aliases */
 
 
-#define	VATTR_NULL(vap)	vattr_null(vap)
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
 	knote_locked(&vp->v_klist, (b))

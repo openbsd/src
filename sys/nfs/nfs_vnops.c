@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.205 2024/10/18 05:52:32 miod Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.206 2024/11/05 06:03:19 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3516,7 +3516,7 @@ nfsspec_close(void *v)
 		np->n_flag |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-			VATTR_NULL(&vattr);
+			vattr_null(&vattr);
 			if (np->n_flag & NACC)
 				vattr.va_atime = np->n_atim;
 			if (np->n_flag & NUPD)
@@ -3585,7 +3585,7 @@ nfsfifo_close(void *v)
 		np->n_flag |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-			VATTR_NULL(&vattr);
+			vattr_null(&vattr);
 			if (np->n_flag & NACC)
 				vattr.va_atime = np->n_atim;
 			if (np->n_flag & NUPD)
