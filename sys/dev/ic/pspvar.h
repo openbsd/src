@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.5 2024/10/30 17:51:12 bluhm Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.6 2024/11/05 13:28:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -76,6 +76,7 @@
 /* Selection of PSP commands of the SEV API Version 0.24 */
 
 #define PSP_CMD_INIT			0x1
+#define PSP_CMD_SHUTDOWN		0x2
 #define PSP_CMD_PLATFORMSTATUS		0x4
 #define PSP_CMD_DF_FLUSH		0xa
 #define PSP_CMD_DOWNLOADFIRMWARE	0xb
@@ -256,6 +257,7 @@ struct psp_snp_platform_status {
 #define PSP_IOC_DEACTIVATE	_IOW('P', 10, struct psp_deactivate)
 #define PSP_IOC_SNP_GET_PSTATUS	_IOR('P', 11, struct psp_snp_platform_status)
 #define PSP_IOC_INIT		_IO('P', 12)
+#define PSP_IOC_SHUTDOWN	_IO('P', 13)
 #define PSP_IOC_GUEST_SHUTDOWN	_IOW('P', 255, struct psp_guest_shutdown)
 
 #ifdef _KERNEL
