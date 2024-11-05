@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.8 2024/11/03 12:47:49 jsing Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.9 2024/11/05 18:20:08 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -55,7 +55,7 @@ check_bin_output(size_t test_no, const char *label, const uint8_t *bin,
 		    "want %zu\n", test_no, label, out_len, bin_len);
 		goto failure;
 	}
-	if ((out = malloc(out_len)) == NULL)
+	if (out_len > 0 && (out = malloc(out_len)) == NULL)
 		err(1, "malloc");
 	if ((ret = BN_bn2bin(bn, out)) != out_len) {
 		fprintf(stderr, "FAIL: Test %zu %s - BN_bn2bin() returned %d, "
