@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.23 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.24 2024/11/05 10:19:11 miod Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	if (count == -1)
+	if (count < 1)
 		count = 1;
 
 	db_set_breakpoint((vaddr_t)addr, count);

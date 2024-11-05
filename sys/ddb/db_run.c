@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.31 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.32 2024/11/05 10:19:11 miod Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ db_stop_at_pc(db_regs_t *regs, int *is_breakpoint)
 			bkpt->count = bkpt->init_count;
 			*is_breakpoint = 1;
 			return 1;	/* stop here */
+		} else {
+			return 0;	/* continue */
 		}
 	} else if (*is_breakpoint
 #ifdef SOFTWARE_SSTEP
