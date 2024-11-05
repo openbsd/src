@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.7 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: frame.h,v 1.8 2024/11/05 21:47:00 miod Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,7 +51,7 @@ struct switchframe {
 struct clockframe {
 	register_t srr1;
 	register_t srr0;
-	int pri;
+	int unused;
 	int depth;
 };
 
