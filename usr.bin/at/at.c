@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.84 2023/03/08 04:43:10 guenther Exp $	*/
+/*	$OpenBSD: at.c,v 1.85 2024/11/05 16:26:01 sobrado Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -580,7 +580,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	if (!shortformat)
 		(void)puts(" Rank     Execution Date     Owner          "
-		    "Job       Queue");
+		    "Job        Queue");
 
 	for (i = 0; i < numjobs; i++) {
 		print_job(atjobs[i], i + 1, shortformat);
