@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.80 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.81 2024/11/05 15:34:30 mpi Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -158,23 +158,25 @@ int
 shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s)
 {
 	struct shmid_ds *shmseg;
-	int segnum;
+	int segnum, deallocate = 0;
 	vaddr_t end;
 
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	if (segnum < 0 || segnum >= shminfo.shmmni ||
 	    (shmseg = shmsegs[segnum]) == NULL)
 		return (EINVAL);
+	if ((--shmseg->shm_nattch <= 0) &&
+	    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
+	    	deallocate = 1;
+		shm_last_free = segnum;
+		shmsegs[shm_last_free] = NULL;
+	}
 	end = round_page(shmmap_s->va+shmseg->shm_segsz);
 	uvm_unmap(&vm->vm_map, trunc_page(shmmap_s->va), end);
 	shmmap_s->shmid = -1;
 	shmseg->shm_dtime = gettime();
-	if ((--shmseg->shm_nattch <= 0) &&
-	    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
+	if (deallocate)
 		shm_deallocate_segment(shmseg);
-		shm_last_free = segnum;
-		shmsegs[shm_last_free] = NULL;
-	}
 	return (0);
 }
 
