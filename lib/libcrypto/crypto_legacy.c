@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.61 2024/11/05 09:35:40 tb Exp $ */
+/* $OpenBSD: crypto_legacy.c,v 1.1 2024/11/05 10:59:42 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
