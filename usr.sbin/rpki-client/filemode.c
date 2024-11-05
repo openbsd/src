@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.50 2024/11/02 12:30:28 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.51 2024/11/05 06:05:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -353,7 +353,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct tal *tal = NULL;
 	char *aia = NULL;
 	char *crl_uri = NULL;
-	time_t *expires = NULL, *notafter = NULL;
+	time_t *notbefore = NULL, *expires = NULL, *notafter = NULL;
+	time_t now;
 	struct auth *a = NULL;
 	struct crl *c;
 	const char *errstr = NULL, *valid;
@@ -362,6 +363,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	char *hash;
 	enum rtype type;
 	int is_ta = 0;
+
+	now = get_current_time();
 
 	if (outformats & FORMAT_JSON) {
 		json_do_start(stdout);
@@ -404,6 +407,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = aspa->aia;
 		expires = &aspa->expires;
+		notbefore = &aspa->notbefore;
 		notafter = &aspa->notafter;
 		break;
 	case RTYPE_CER:
@@ -420,6 +424,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (X509_up_ref(x509) == 0)
 			errx(1, "%s: X509_up_ref failed", __func__);
 		expires = &cert->expires;
+		notbefore = &cert->notbefore;
 		notafter = &cert->notafter;
 		break;
 	case RTYPE_CRL:
@@ -434,6 +439,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = mft->aia;
 		expires = &mft->expires;
+		notbefore = &mft->thisupdate;
 		notafter = &mft->nextupdate;
 		break;
 	case RTYPE_GBR:
@@ -442,6 +448,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = gbr->aia;
 		expires = &gbr->expires;
+		notbefore = &gbr->notbefore;
 		notafter = &gbr->notafter;
 		break;
 	case RTYPE_GEOFEED:
@@ -450,6 +457,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = geofeed->aia;
 		expires = &geofeed->expires;
+		notbefore = &geofeed->notbefore;
 		notafter = &geofeed->notafter;
 		break;
 	case RTYPE_ROA:
@@ -458,6 +466,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = roa->aia;
 		expires = &roa->expires;
+		notbefore = &roa->notbefore;
 		notafter = &roa->notafter;
 		break;
 	case RTYPE_RSC:
@@ -466,6 +475,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = rsc->aia;
 		expires = &rsc->expires;
+		notbefore = &rsc->notbefore;
 		notafter = &rsc->notafter;
 		break;
 	case RTYPE_SPL:
@@ -474,6 +484,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = spl->aia;
 		expires = &spl->expires;
+		notbefore = &spl->notbefore;
 		notafter = &spl->notafter;
 		break;
 	case RTYPE_TAK:
@@ -482,6 +493,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		aia = tak->aia;
 		expires = &tak->expires;
+		notbefore = &tak->notbefore;
 		notafter = &tak->notafter;
 		break;
 	case RTYPE_TAL:
@@ -592,9 +604,16 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		}
 	}
 
-	if (status)
-		valid = "OK";
-	else if (aia == NULL)
+	if (status) {
+		if (notbefore != NULL && *notbefore > now)
+			valid = "Not yet valid";
+		else if (notafter != NULL && *notafter < now)
+			valid = "Expired";
+		else if (expires != NULL && *expires < now)
+			valid = "Signature path expired";
+		else
+			valid = "OK";
+	} else if (aia == NULL)
 		valid = "N/A";
 	else
 		valid = "Failed";
