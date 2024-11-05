@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.151 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: mount.h,v 1.152 2024/11/05 17:28:32 mpi Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ extern long buflowpages, bufhighpages, bufbackpages;
 extern int bufcachepercent;
 extern void bufadjust(int);
 struct uvm_constraint_range;
-extern int bufbackoff(struct uvm_constraint_range*, long);
+extern unsigned long bufbackoff(struct uvm_constraint_range*, long);
 
 /*
  * Operations supported on mounted file system.

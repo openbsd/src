@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.120 2024/11/05 15:29:00 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.121 2024/11/05 17:28:32 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ uvm_wait(const char *wmsg)
 	 */
 	if (curproc == uvm.pagedaemon_proc) {
 		printf("uvm_wait emergency bufbackoff\n");
-		if (bufbackoff(NULL, 4) == 0)
+		if (bufbackoff(NULL, 4) >= 4)
 			return;
 		/*
 		 * now we have a problem: the pagedaemon wants to go to

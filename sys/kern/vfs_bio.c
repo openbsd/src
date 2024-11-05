@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.213 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.214 2024/11/05 17:28:31 mpi Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -284,22 +284,16 @@ bufadjust(int newbufpages)
 }
 
 /*
- * Make the buffer cache back off from cachepct.
+ * Back off "size" buffer cache pages. Called by the page
+ * daemon to consume buffer cache pages rather than scanning.
+ *
+ * It returns the number of freed pages.
  */
-int
+unsigned long
 bufbackoff(struct uvm_constraint_range *range, long size)
 {
-	/*
-	 * Back off "size" buffer cache pages. Called by the page
-	 * daemon to consume buffer cache pages rather than scanning.
-	 *
-	 * It returns 0 to the pagedaemon to indicate that it has
-	 * succeeded in freeing enough pages. It returns -1 to
-	 * indicate that it could not and the pagedaemon should take
-	 * other measures.
-	 *
-	 */
 	long pdelta, oldbufpages;
+	int64_t dmarecovered, recovered = 0;
 
 	/*
 	 * If we will accept high memory for this backoff
@@ -307,11 +301,13 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 	 */
 	if (range != NULL && range->ucr_high > dma_constraint.ucr_high) {
 		struct buf *bp;
-		int64_t start = bcstats.numbufpages, recovered = 0;
-		int s = splbio();
+		int64_t start;
+		int s;
 
-		while ((recovered < size) &&
-		    (bp = bufcache_gethighcleanbuf())) {
+		start = bcstats.numbufpages;
+
+		s = splbio();
+		while (recovered < size && (bp = bufcache_gethighcleanbuf())) {
 			bufcache_take(bp);
 			if (bp->b_vp) {
 				RBT_REMOVE(buf_rb_bufs,
@@ -324,16 +320,13 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 		bufcache_adjust();
 		splx(s);
 
-		/* If we got enough, return success */
+		/* We got enough. */
 		if (recovered >= size)
-			return 0;
+			return recovered;
 
-		/*
-		 * If we needed only memory above DMA,
-		 * return failure
-		 */
+		/* If we needed only memory above DMA, we're done. */
 		if (range->ucr_low > dma_constraint.ucr_high)
-			return -1;
+			return recovered;
 
 		/* Otherwise get the rest from DMA */
 		size -= recovered;
@@ -351,15 +344,14 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 	pdelta = (size > bufbackpages) ? size : bufbackpages;
 
 	if (bufpages <= buflowpages)
-		return(-1);
+		return recovered;
 	if (bufpages - pdelta < buflowpages)
 		pdelta = bufpages - buflowpages;
 	oldbufpages = bufpages;
 	bufadjust(bufpages - pdelta);
-	if (oldbufpages - bufpages < size)
-		return (-1); /* we did not free what we were asked */
-	else
-		return(0);
+	dmarecovered = oldbufpages - bufpages;
+
+	return recovered + dmarecovered;
 }
 
 

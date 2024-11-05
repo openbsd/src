@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.69 2024/11/05 17:02:19 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.70 2024/11/05 17:28:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -2122,7 +2122,7 @@ uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
 		 * easily use up that reserve in a single scan iteration.
 		 */
 		uvm_unlock_fpageq();
-		if (bufbackoff(NULL, atop(size)) == 0) {
+		if (bufbackoff(NULL, atop(size)) >= atop(size)) {
 			uvm_lock_fpageq();
 			return 0;
 		}
