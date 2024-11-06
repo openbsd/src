@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.72 2024/11/05 18:35:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.73 2024/11/06 10:41:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -955,9 +955,8 @@ uvm_pmr_getpages(psize_t count, paddr_t start, paddr_t end, paddr_t align,
 	 */
 	desperate = 0;
 
-again:
 	uvm_lock_fpageq();
-
+retry:		/* Return point after sleeping. */
 	/*
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
@@ -986,12 +985,12 @@ again:
 	    	uvm_unlock_fpageq();
 		if (flags & UVM_PLA_WAITOK) {
 			uvm_wait("uvm_pmr_getpages");
-			goto again;
+			uvm_lock_fpageq();
+			goto retry;
 		}
 		return ENOMEM;
 	}
 
-retry:		/* Return point after sleeping. */
 	fcount = 0;
 	fnsegs = 0;
 
