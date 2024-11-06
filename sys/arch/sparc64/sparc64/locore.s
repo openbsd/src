@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.224 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: locore.s,v 1.225 2024/11/06 11:57:50 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1563,7 +1563,7 @@ winfixfill:
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
 	membar	#Sync					! No real reason for this XXXX
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 	saved						! Blow away that one register window we didn't ever use.
 	ba,a,pt	%icc, Ldatafault_internal		! Now we should return directly to user mode
 	 nop
@@ -1795,7 +1795,7 @@ datafault:
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
 	membar	#Sync					! No real reason for this XXXX
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 Ldatafault_internal:
 	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2) should not fault
 	mov	%g1, %o0				! Move these to the out regs so we can save the globals
@@ -1964,7 +1964,7 @@ textfault:
 	stxa	%g0, [SFSR] %asi			! Clear out old info
 	membar	#Sync					! No real reason for this XXXX
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2)
 
 	mov	%g3, %o3
@@ -2556,7 +2556,7 @@ sun4v_datatrap:
 	add	%g3, 0x50, %g2
 	ldxa	[%g2] ASI_PHYS_CACHED, %g2
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 	or	%g1, %g2, %o3
 	mov	%g1, %o4
 
@@ -2619,7 +2619,7 @@ sun4v_texttrap:
 	add	%g3, 0x10, %g2
 	ldxa	[%g2] ASI_PHYS_CACHED, %g2
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 
 	or	%g1, %g2, %o2
 	clr	%o3
@@ -2757,7 +2757,7 @@ checkalign:
  *
  */
 slowtrap:
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 
 	rdpr	%tt, %g4
 	rdpr	%tstate, %g1
@@ -2837,7 +2837,7 @@ softtrap:
 	bnz,pt	%xcc, Lslowtrap_reenter
 	 nop
 	GET_CPCB(%g7)
-	set	USPACE-CC64FSZ-TF_SIZE-BIAS, %g5
+	set	USPACE-CC64FSZ-TRAPFRAME_SIZEOF-BIAS, %g5
 	add	%g7, %g5, %g6
 	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_O + (0*8)]	! Generate a new trapframe
 	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_O + (1*8)]	!	but don't bother with
@@ -2856,7 +2856,7 @@ softtrap:
  *	ptrace...
  */
 syscall_setup:
-	TRAP_SETUP -CC64FSZ-TF_SIZE
+	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 
 #ifdef DEBUG
 	rdpr	%tt, %o1	! debug
@@ -3320,7 +3320,9 @@ sparc_interrupt:
 	ba,pt	%icc, setup_sparcintr
 	 add	%g7, CI_TICKINTR, %g5
 0:
-	INTR_SETUP -CC64FSZ-TF_SIZE-8
+	! We don't use TRAPFRAME_SIZEOF here because it might be a clock
+	! interrupt, which uses a larger frame.	
+	INTR_SETUP -CC64FSZ-CLOCKFRAME_SIZEOF
 
 	NORMAL_GLOBALS()
 
@@ -3376,7 +3378,7 @@ sparc_interrupt:
 	 */
 	ld	[%g7 + CI_HANDLED_INTR_LEVEL], %l7
 	st	%l6, [%g7 + CI_HANDLED_INTR_LEVEL]
-	st	%l7, [%sp + CC64FSZ + BIAS + TF_SIZE]
+	st	%l7, [%sp + CC64FSZ + BIAS + SAVED_INTR_LEVEL]
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
@@ -3440,7 +3442,7 @@ intrcmplt:
 	 mov	1, %l5			! initialize intr count for next run
 
 	/* Restore old handled_intr_level */
-	ld	[%sp + CC64FSZ + BIAS + TF_SIZE], %l7
+	ld	[%sp + CC64FSZ + BIAS + SAVED_INTR_LEVEL], %l7
 	st	%l7, [%g7 + CI_HANDLED_INTR_LEVEL]
 
 	ldub	[%sp + CC64FSZ + BIAS + TF_OLDPIL], %l3	! restore old %pil
@@ -3477,7 +3479,7 @@ intrcmplt:
  */
 return_from_trap:
 	ldx	[%sp + CC64FSZ + BIAS + TF_TSTATE], %g1
-	btst	TSTATE_PRIV, %g1			! returning to userland?
+	btst	TSTATE_PRIV, %g1
 	!!
 	!! Let all pending interrupts drain before returning to userland
 	!!

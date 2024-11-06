@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.46 2024/04/11 18:58:44 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.47 2024/11/06 11:57:50 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -178,7 +178,9 @@ member	TF_G		tf_global
 member	TF_O		tf_out
 member	TF_L		tf_local
 member	TF_I		tf_in
-define	TF_SIZE		sizeof(struct trapframe)
+
+struct	clockframe
+member	saved_intr_level
 
 # interrupt handler fields
 struct	intrhand
