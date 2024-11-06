@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.79 2024/11/05 08:56:57 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.80 2024/11/06 08:59:32 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -80,39 +80,38 @@
 EC_GROUP *
 EC_GROUP_new(const EC_METHOD *meth)
 {
-	EC_GROUP *ret;
+	EC_GROUP *group = NULL;
 
 	if (meth == NULL) {
 		ECerror(EC_R_SLOT_FULL);
-		return NULL;
+		goto err;
 	}
 	if (meth->group_init == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return NULL;
+		goto err;
 	}
-	ret = malloc(sizeof *ret);
-	if (ret == NULL) {
+	if ((group = calloc(1, sizeof(*group))) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
-	ret->meth = meth;
 
-	ret->generator = NULL;
-	BN_init(&ret->order);
-	BN_init(&ret->cofactor);
+	group->meth = meth;
 
-	ret->curve_name = 0;
-	ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
-	ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
+	BN_init(&group->order);
+	BN_init(&group->cofactor);
 
-	ret->seed = NULL;
-	ret->seed_len = 0;
+	group->asn1_flag = OPENSSL_EC_NAMED_CURVE;
+	group->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
 
-	if (!meth->group_init(ret)) {
-		free(ret);
-		return NULL;
-	}
-	return ret;
+	if (!meth->group_init(group))
+		goto err;
+
+	return group;
+
+ err:
+	EC_GROUP_free(group);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(EC_GROUP_new);
 
