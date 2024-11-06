@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_memory.c,v 1.1 2024/11/06 04:08:26 tb Exp $ */
+/* $OpenBSD: crypto_memory.c,v 1.2 2024/11/06 04:10:35 tb Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
