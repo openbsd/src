@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.80 2024/11/06 08:59:32 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.81 2024/11/06 09:10:55 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -154,41 +154,29 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	if (dest == src)
 		return 1;
 
+	if (!dest->meth->group_copy(dest, src))
+		return 0;
+
+	EC_POINT_free(dest->generator);
+	dest->generator = NULL;
 	if (src->generator != NULL) {
-		if (dest->generator == NULL) {
-			dest->generator = EC_POINT_new(dest);
-			if (dest->generator == NULL)
-				return 0;
-		}
-		if (!EC_POINT_copy(dest->generator, src->generator))
+		if (!EC_GROUP_set_generator(dest, src->generator, &src->order,
+		    &src->cofactor))
 			return 0;
 	} else {
-		/* src->generator == NULL */
-		EC_POINT_free(dest->generator);
-		dest->generator = NULL;
+		/* XXX - should do the sanity checks as in set_generator() */
+		if (!bn_copy(&dest->order, &src->order))
+			return 0;
+		if (!bn_copy(&dest->cofactor, &src->cofactor))
+			return 0;
 	}
-
-	if (!bn_copy(&dest->order, &src->order))
-		return 0;
-	if (!bn_copy(&dest->cofactor, &src->cofactor))
-		return 0;
 
 	dest->curve_name = src->curve_name;
 	dest->asn1_flag = src->asn1_flag;
 	dest->asn1_form = src->asn1_form;
 
-	if (src->seed) {
-		free(dest->seed);
-		dest->seed = malloc(src->seed_len);
-		if (dest->seed == NULL)
-			return 0;
-		memcpy(dest->seed, src->seed, src->seed_len);
-		dest->seed_len = src->seed_len;
-	} else {
-		free(dest->seed);
-		dest->seed = NULL;
-		dest->seed_len = 0;
-	}
+	if (!EC_GROUP_set_seed(dest, src->seed, src->seed_len))
+		return 0;
 
 	return dest->meth->group_copy(dest, src);
 }
