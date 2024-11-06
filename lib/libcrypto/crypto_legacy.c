@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_legacy.c,v 1.5 2024/11/05 11:14:04 tb Exp $ */
+/* $OpenBSD: crypto_legacy.c,v 1.6 2024/11/06 04:18:42 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -356,13 +356,6 @@ OpenSSLDie(const char *file, int line, const char *assertion)
 	_exit(1);
 }
 LCRYPTO_ALIAS(OpenSSLDie);
-
-void
-OPENSSL_cleanse(void *ptr, size_t len)
-{
-	explicit_bzero(ptr, len);
-}
-LCRYPTO_ALIAS(OPENSSL_cleanse);
 
 int
 CRYPTO_mem_ctrl(int mode)

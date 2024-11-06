@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_memory.c,v 1.2 2024/11/06 04:10:35 tb Exp $ */
+/* $OpenBSD: crypto_memory.c,v 1.3 2024/11/06 04:18:42 tb Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -20,6 +20,13 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
+
+void
+OPENSSL_cleanse(void *ptr, size_t len)
+{
+	explicit_bzero(ptr, len);
+}
+LCRYPTO_ALIAS(OPENSSL_cleanse);
 
 int
 CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
