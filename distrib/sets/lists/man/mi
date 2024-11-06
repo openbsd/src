@@ -1146,6 +1146,7 @@
 ./usr/share/man/man4/acpibat.4
 ./usr/share/man/man4/acpibtn.4
 ./usr/share/man/man4/acpicbkbd.4
+./usr/share/man/man4/acpicmos.4
 ./usr/share/man/man4/acpicpu.4
 ./usr/share/man/man4/acpidock.4
 ./usr/share/man/man4/acpiec.4
@@ -1603,9 +1604,9 @@
 ./usr/share/man/man4/iwn.4
 ./usr/share/man/man4/iwx.4
 ./usr/share/man/man4/ix.4
-./usr/share/man/man4/ixv.4
 ./usr/share/man/man4/ixgb.4
 ./usr/share/man/man4/ixl.4
+./usr/share/man/man4/ixv.4
 ./usr/share/man/man4/jmb.4
 ./usr/share/man/man4/jme.4
 ./usr/share/man/man4/jmphy.4
