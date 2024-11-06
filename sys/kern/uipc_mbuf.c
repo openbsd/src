@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.294 2024/09/10 14:52:42 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.295 2024/11/06 14:37:45 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -129,8 +129,8 @@ struct	mutex m_extref_mtx = MUTEX_INITIALIZER(IPL_NET);
 void	m_extfree(struct mbuf *);
 void	m_zero(struct mbuf *);
 
-unsigned long mbuf_mem_limit;	/* how much memory can be allocated */
-unsigned long mbuf_mem_alloc;	/* how much memory has been allocated */
+unsigned long mbuf_mem_limit;	/* [a] how much memory can be allocated */
+unsigned long mbuf_mem_alloc;	/* [a] how much memory has been allocated */
 
 void	*m_pool_alloc(struct pool *, int, int *);
 void	m_pool_free(struct pool *, void *);
@@ -219,7 +219,7 @@ nmbclust_update(long newval)
 		return ERANGE;
 	/* update the global mbuf memory limit */
 	nmbclust = newval;
-	mbuf_mem_limit = nmbclust * MCLBYTES;
+	atomic_store_long(&mbuf_mem_limit, nmbclust * MCLBYTES);
 
 	pool_wakeup(&mbpool);
 	for (i = 0; i < nitems(mclsizes); i++)
@@ -1458,7 +1458,8 @@ m_pool_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	void *v;
 
-	if (atomic_add_long_nv(&mbuf_mem_alloc, pp->pr_pgsize) > mbuf_mem_limit)
+	if (atomic_add_long_nv(&mbuf_mem_alloc, pp->pr_pgsize) >
+	    atomic_load_long(&mbuf_mem_limit))
 		goto fail;
 
 	v = (*pool_allocator_multi.pa_alloc)(pp, flags, slowdown);
@@ -1488,7 +1489,8 @@ m_pool_init(struct pool *pp, u_int size, u_int align, const char *wmesg)
 u_int
 m_pool_used(void)
 {
-	return ((mbuf_mem_alloc * 100) / mbuf_mem_limit);
+	return ((atomic_load_long(&mbuf_mem_alloc) * 100) / 
+	    atomic_load_long(&mbuf_mem_limit));
 }
 
 #ifdef DDB
