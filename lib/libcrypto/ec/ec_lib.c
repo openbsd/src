@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.81 2024/11/06 09:10:55 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.82 2024/11/06 09:13:11 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -183,16 +183,24 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 LCRYPTO_ALIAS(EC_GROUP_copy);
 
 EC_GROUP *
-EC_GROUP_dup(const EC_GROUP *a)
+EC_GROUP_dup(const EC_GROUP *in_group)
 {
-	EC_GROUP *t = NULL;
+	EC_GROUP *group = NULL;
 
-	if ((a != NULL) && ((t = EC_GROUP_new(a->meth)) != NULL) &&
-	    (!EC_GROUP_copy(t, a))) {
-		EC_GROUP_free(t);
-		t = NULL;
-	}
-	return t;
+	if (in_group == NULL)
+		goto err;
+
+	if ((group = EC_GROUP_new(in_group->meth)) == NULL)
+		goto err;
+	if (!EC_GROUP_copy(group, in_group))
+		goto err;
+
+	return group;
+
+ err:
+	EC_GROUP_free(group);
+
+	return group;
 }
 LCRYPTO_ALIAS(EC_GROUP_dup);
 
