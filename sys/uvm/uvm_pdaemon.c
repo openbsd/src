@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.121 2024/11/05 17:28:32 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.122 2024/11/06 10:45:51 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -237,6 +237,7 @@ uvm_pageout(void *arg)
 			} else
 				constraint = no_constraint;
 		}
+		/* How many pages do we need to free during this round? */
 		shortage = uvmexp.freetarg - uvmexp.free + BUFPAGES_DEFICIT;
 		uvm_unlock_fpageq();
 
@@ -248,6 +249,8 @@ uvm_pageout(void *arg)
 		if (uvmexp.inactarg <= uvmexp.freetarg) {
 			uvmexp.inactarg = uvmexp.freetarg + 1;
 		}
+		inactive_shortage =
+			uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
 		uvm_unlock_pageq();
 
 		/* Reclaim pages from the buffer cache if possible. */
@@ -259,19 +262,17 @@ uvm_pageout(void *arg)
 		if (size == 0)
 			size = 16; /* XXX */
 
-		(void) bufbackoff(&constraint, size * 2);
+		shortage -= bufbackoff(&constraint, size * 2);
 #if NDRM > 0
-		drmbackoff(size * 2);
+		shortage -= drmbackoff(size * 2);
 #endif
-		uvm_pmr_cache_drain();
+		if (shortage > 0)
+			shortage -= uvm_pmr_cache_drain();
 
 		/*
 		 * scan if needed
 		 */
 		uvm_lock_pageq();
-		shortage = uvmexp.freetarg - uvmexp.free + BUFPAGES_DEFICIT;
-		inactive_shortage =
-			uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
 		if (pma != NULL || (shortage > 0) || (inactive_shortage > 0)) {
 			uvmpd_scan(pma, shortage, inactive_shortage,
 			    &constraint);
