@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.162 2024/11/05 23:16:46 bluhm Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.163 2024/11/06 14:26:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -842,8 +842,11 @@ main(int argc, char **argv)
 	if (!env->vmd_noaction)
 		proc_connect(ps);
 
+	env->vmd_psp_fd = -1;
+#ifdef __amd64__
 	if (env->vmd_noaction == 0 && proc_id == PROC_PARENT)
 		psp_setup();
+#endif
 
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");
