@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.129 2024/11/05 23:16:46 bluhm Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.130 2024/11/06 22:06:16 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -586,7 +586,7 @@ __dead void vionet_main(int, int);
 __dead void vioblk_main(int, int);
 
 /* psp.c */
-int	 psp_get_pstate(uint16_t *);
+int	 psp_get_pstate(uint16_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
 int	 psp_df_flush(void);
 int	 psp_get_gstate(uint32_t, uint32_t *, uint32_t *, uint8_t *);
 int	 psp_launch_start(uint32_t *);

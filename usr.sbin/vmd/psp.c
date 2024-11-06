@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.3 2024/11/05 23:16:46 bluhm Exp $	*/
+/*	$OpenBSD: psp.c,v 1.4 2024/11/06 22:06:16 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -42,7 +42,8 @@ extern struct vmd	*env;
  * Retrieve platform state.
  */
 int
-psp_get_pstate(uint16_t *state)
+psp_get_pstate(uint16_t *state, uint8_t *major, uint8_t *minor,
+    uint8_t *build, uint8_t *seves)
 {
 	struct psp_platform_status pst;
 
@@ -53,6 +54,14 @@ psp_get_pstate(uint16_t *state)
 
 	if (state)
 		*state = pst.state;
+	if (major)
+		*major = pst.api_major;
+	if (minor)
+		*minor = pst.api_minor;
+	if (build)
+		*build = (pst.cfges_build >> 24) & 0xff;
+	if (seves)
+		*seves = pst.cfges_build & 0x1;
 
 	return (0);
 }
@@ -318,6 +327,8 @@ psp_reset(void)
 void
 psp_setup(void)
 {
+	uint8_t	major, minor, build;
+
 	env->vmd_psp_fd = open(PSP_NODE, O_RDWR);
 	if (env->vmd_psp_fd == -1) {
 		if (errno != ENXIO)
@@ -327,4 +338,7 @@ psp_setup(void)
 
 	if (psp_reset() < 0)
 		fatalx("%s: failed to reset PSP", __func__);
+	if (psp_get_pstate(NULL, &major, &minor, &build, NULL) < 0)
+		fatalx("%s: failed to get platform state", __func__);
+	log_info("PSP api %hhu.%hhu, build %hhu", major, minor, build);
 }

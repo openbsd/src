@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.4 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: sev.c,v 1.5 2024/11/06 22:06:16 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -49,7 +49,7 @@ sev_init(struct vmd_vm *vm)
 	if (!vcp->vcp_sev)
 		return (0);
 
-	if (psp_get_pstate(&pstate)) {
+	if (psp_get_pstate(&pstate, NULL, NULL, NULL, NULL)) {
 		log_warnx("%s: failed to get platform state", __func__);
 		return (-1);
 	}
