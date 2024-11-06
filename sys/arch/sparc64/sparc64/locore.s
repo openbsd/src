@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.226 2024/11/06 12:06:15 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.227 2024/11/06 12:26:54 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2895,8 +2895,6 @@ syscall_setup:
 	call	syscall				! syscall(&tf, code, pc)
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
-	/* see `proc_trampoline' for the reason for this label */
-return_from_syscall:
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 	wrpr	%g0, 0, %tl			! Return to tl==0
 	ba,a,pt	%icc, return_from_trap
@@ -3252,23 +3250,11 @@ END(ipi_db)
  * are set, handle those interrupts, then clear them by setting the
  * appropriate bits in ASR_CLEAR_SOFTINT(0x15).
  *
- * We have an array of 8 interrupt vector slots for each of 15 interrupt
- * levels.  If a vectored interrupt can be dispatched, the dispatch
- * routine will place a pointer to an intrhand structure in one of
- * the slots.  The interrupt handler will go through the list to look
- * for an interrupt to dispatch.  If it finds one it will pull it off
- * the list, free the entry, and call the handler.  The code is like
- * this:
- *
- *	for (i=0; i<8; i++)
- *		if (ih = intrpending[intlev][i]) {
- *			intrpending[intlev][i] = NULL;
- *			if ((*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : &frame))
- *				return;
- *			return;
- *		}
- *
- * Otherwise we go back to the old style of polled interrupts.
+ * We have a list of interrupt handlers for each of 15 interrupt levels.
+ * If a vectored interrupt can be dispatched, the dispatch routine will put
+ * the intrhand at the head of the appropriate list. The interrupt handler
+ * will go through the list to look for an interrupt to dispatch.  If it
+ * finds one it will pull it off the list, and call the handler.
  *
  * After preliminary setup work, the interrupt is passed to each
  * registered handler in turn.  These are expected to return nonzero if
@@ -3276,10 +3262,6 @@ END(ipi_db)
  * we exit (hardware interrupts are latched in the requestor so we'll
  * just take another interrupt in the unlikely event of simultaneous
  * interrupts from two different devices at the same level).
- *
- *	for (ih = intrhand[intlev]; ih; ih = ih->ih_next)
- *		if ((*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : &frame))
- *			return;
  *
  * Inputs:
  *	%l0 = %tstate
@@ -3385,7 +3367,7 @@ sparc_intr_retry:
 
 1:
 	membar	#StoreLoad		! Make sure any failed casxa instructions complete
-	ldx	[%l4], %l2		! Check a slot
+	ldx	[%l4], %l2		! Check the head of the list
 	brz,pn	%l2, intrcmplt		! Empty list?
 
 	 clr	%l7
@@ -3407,7 +3389,7 @@ sparc_intr_retry:
 	ldx	[%l2 + IH_ACK], %l1	! ih->ih_ack
 
 	! At this point, the current ih could already be added
-	! back to the pending table.
+	! back to the pending list.
 
 	call	intr_handler
 	 mov	%l2, %o1
