@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.96 2024/07/29 12:32:02 patrick Exp $
+#	$OpenBSD: airport,v 1.97 2024/11/06 18:09:56 volker Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -338,6 +338,7 @@ CJS:International Abraham Gonzalez, Ciudad Juarez, Chihuahua, Mexico
 CJU:Jeju International, South Korea
 CKB:North Central West Virginia, Bridgeport, West Virginia, USA
 CKC:Cherkasy International, Cherkasy, Ukraine
+CKG:Chongqing International, China
 CKS:International / Brasilia Brazil, Carajas, Para, Brazil
 CKY:Conakry, Conakry, Guinea
 CLD:Carlsbad/Palomar, California, USA
@@ -474,6 +475,7 @@ DUR:King Shaka International, Durban, South Africa
 DUS:Duesseldorf, Germany
 DUT:Dutch Harbor, Alaska, USA
 DVO:Mati, Davao, Philippines
+DYG:Zhangjiajie Hehua International, China
 DXB:Dubai, UAE
 EAP:Euro Basel Mulhouse Freiburg, Switzerland/France/Germany
 EAR:Kearney Municipal, Nebraska, USA
@@ -600,6 +602,7 @@ GGG:Gregg County, Longview/Gladewater/Kilgore, Texas, USA
 GGT:Exuma International, George Town, Bahamas
 GGW:Glasgow, Montana, USA
 GHB:Governors Harbour, Bahamas
+GHV:Brasov-Ghimbav International, Romania
 GIB:Gibraltar
 GIG:Rio De Janeiro, Brazil
 GJT:Walker Field, Grand Junction, Colorado, USA
@@ -1001,12 +1004,14 @@ LNV:Londolovit, Papua New Guinea
 LNY:Lanai City, Hawaii, USA
 LNZ:Linz, Austria
 LON:All Airports around London, United Kingdom
+LOP:Lombok International, Indonesia
 LOS:Murtala Muhammed, Lagos, Nigeria
 LOV:Monclova, Coahuila, Mexico
 LPA:Aeropuerto De Gran Canaria, Canary Islands, Spain
 LPB:El Alto, La Paz, Bolivia
 LPI:Linkoping City Airport, Linkoping, Sweden
 LPL:John Lennon, Liverpool, England, United Kingdom
+LPQ:Luang Prabang, Laos
 LRA:Larisa, Greece
 LRD:Laredo, Texas, USA
 LRE:Longreach, Queensland, Australia
@@ -1296,6 +1301,7 @@ PAS:Paros, Greece
 PAT:Patna, India
 PAZ:Poza Rica, Veracruz, Mexico
 PBC:Puebla, Mexico
+PBH:Paro, Bhutan
 PBI:Palm Beach International, Florida, USA
 PBM:Zanderij International, Paramaribo, Suriname
 PBO:Paraburdoo, Western Australia, Australia
@@ -1456,6 +1462,7 @@ RKD:Rockland, Maine, USA
 RKS:Rock Springs Sweetwater County, Wyoming, USA
 RKV:Reykjavik, Iceland
 RMA:Roma, Queensland, Australia
+RMF:Marsa Alam International, Egypt
 RNB:Kallinge, Ronneby, Sweden
 RNN:Arnager, Bornholm, Denmark
 RNO:Reno/Tahoe International, Nevada, USA
@@ -1656,6 +1663,7 @@ TAC:Dz Romualdez, Tacloban, Philippines
 TAE:Daegu International, South Korea
 TAG:Tagbilaran, Philippines
 TAM:Tampico, Tamaulipas, Mexico
+TAO:Qingdao International, China
 TAP:Tapachula International, Chiapas, Mexico
 TAS:Tashkent, Uzbekistan
 TAT:Tatry/Poprad, Slovakia
@@ -1744,6 +1752,7 @@ TUS:Tucson International, Arizona, USA
 TVC:Cherry Capital, Traverse City, Michigan, USA
 TVF:Thief River Falls Municipal, Minnesota, USA
 TVL:Lake Tahoe, South Lake Tahoe, California, USA
+TVU:Matei, Taveuni, Fiji
 TWB:Toowoomba, Queensland, Australia
 TWF:Twin Falls, Idaho, USA
 TXK:Texarkana Municipal, Arkansas, USA
