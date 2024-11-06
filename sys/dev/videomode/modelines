@@ -1,4 +1,5 @@
-// $NetBSD: modelines,v 1.7 2009/01/21 14:40:25 jnemeth Exp $
+// $OpenBSD: modelines,v 1.2 2024/11/06 09:32:09 miod Exp $
+// $NetBSD: modelines,v 1.9 2011/03/30 18:45:04 jdc Exp $
 //
 // This file was imported from XFree86, and is made of the contents of both
 // the vesamodes and extramodes files.  As a result these should correspond
@@ -21,14 +22,20 @@ ModeLine "640x350"    31.5  640  672  736  832    350  382  385  445 +hsync -vsy
 # 640x400 @ 85Hz (VESA) hsync: 37.9kHz
 ModeLine "640x400"    31.5  640  672  736  832    400  401  404  445 -hsync +vsync
 
+# 720x400 @ 70Hz (EDID established timing) hsync: 31.47kHz
+ModeLine "720x400"    28.32 720  738  846  900    400  412  414  449 -hsync +vsync
+
 # 720x400 @ 85Hz (VESA) hsync: 37.9kHz
 ModeLine "720x400"    35.5  720  756  828  936    400  401  404  446 -hsync +vsync
 
+# 720x400 @ 88Hz (EDID established timing) hsync: 39.44kHz
+ModeLine "720x400"    35.5  720  738  846  900    400  421  423  449 -hsync -vsync
+
 # 640x480 @ 60Hz (Industry standard) hsync: 31.5kHz
-ModeLine "640x480"    25.2  640  656  752  800    480  490  492  525 -hsync -vsync
+ModeLine "640x480"    25.175 640  656  752  800    480  490  492  525 -hsync -vsync
 
 # 640x480 @ 72Hz (VESA) hsync: 37.9kHz
-ModeLine "640x480"    31.5  640  664  704  832    480  489  491  520 -hsync -vsync
+ModeLine "640x480"    31.5  640  664  704  832    480  489  492  520 -hsync -vsync
 
 # 640x480 @ 75Hz (VESA) hsync: 37.5kHz
 ModeLine "640x480"    31.5  640  656  720  840    480  481  484  500 -hsync -vsync
@@ -49,7 +56,7 @@ ModeLine "800x600"    50.0  800  856  976 1040    600  637  643  666 +hsync +vsy
 ModeLine "800x600"    49.5  800  816  896 1056    600  601  604  625 +hsync +vsync
 
 # 800x600 @ 85Hz (VESA) hsync: 53.7kHz
-ModeLine "800x600"    56.3  800  832  896 1048    600  601  604  631 +hsync +vsync
+ModeLine "800x600"    56.25  800  832  896 1048    600  601  604  631 +hsync +vsync
 
 # 1024x768i @ 43Hz (industry standard) hsync: 35.5kHz
 ModeLine "1024x768"   44.9 1024 1032 1208 1264    768  768  776  817 +hsync +vsync Interlace
@@ -61,7 +68,7 @@ ModeLine "1024x768"   65.0 1024 1048 1184 1344    768  771  777  806 -hsync -vsy
 ModeLine "1024x768"   75.0 1024 1048 1184 1328    768  771  777  806 -hsync -vsync
 
 # 1024x768 @ 75Hz (VESA) hsync: 60.0kHz
-ModeLine "1024x768"   78.8 1024 1040 1136 1312    768  769  772  800 +hsync +vsync
+ModeLine "1024x768"   78.75 1024 1040 1136 1312    768  769  772  800 +hsync +vsync
 
 # 1024x768 @ 85Hz (VESA) hsync: 68.7kHz
 ModeLine "1024x768"   94.5 1024 1072 1168 1376    768  769  772  808 +hsync +vsync
