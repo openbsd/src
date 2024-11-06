@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.18 2022/12/04 23:50:51 cheloha Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.19 2024/11/06 17:14:03 miod Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -52,32 +52,37 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dFkm] [-e emul] [-f ctldev] [-t type] index\n",
+	    "usage: %s [-dFgkm] [-e emul] [-f ctldev] [-t type] index\n",
 	    __progname);
 	exit(1);
 }
+
 
 int
 main(int argc, char *argv[])
 {
 	char *wsdev;
-	int c, delete, kbd, idx, wsfd, res, mux;
+	int c, delete, get, kbd, idx, wsfd, res, mux;
 	struct wsdisplay_addscreendata asd;
 	struct wsdisplay_delscreendata dsd;
 	struct wsmux_device wmd;
 
 	wsdev = DEFDEV;
 	delete = 0;
+	get = 0;
 	kbd = 0;
 	mux = 0;
 	asd.screentype[0] = 0;
 	asd.emul[0] = 0;
 	dsd.flags = 0;
 
-	while ((c = getopt(argc, argv, "f:dkmt:e:F")) != -1) {
+	while ((c = getopt(argc, argv, "f:dgkmt:e:F")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
+			break;
+		case 'g':
+			get = 1;
 			break;
 		case 'd':
 			delete = 1;
@@ -106,14 +111,15 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (kbd ? (argc > 1) : (argc != 1))
+	if ((kbd && get) ||
+	    ((kbd || get) ? (argc > 1) : (argc != 1)))
 		usage();
 
 	idx = -1;
 	if (argc > 0 && sscanf(argv[0], "%d", &idx) != 1)
 		errx(1, "invalid index");
 
-	wsfd = open(wsdev, O_RDWR);
+	wsfd = open(wsdev, get ? O_RDONLY : O_RDWR);
 	if (wsfd < 0)
 		err(2, "%s", wsdev);
 
@@ -137,6 +143,13 @@ main(int argc, char *argv[])
 		res = ioctl(wsfd, WSDISPLAYIO_DELSCREEN, &dsd);
 		if (res < 0)
 			err(3, "WSDISPLAYIO_DELSCREEN");
+	} else if (get) {
+		asd.idx = idx;
+		res = ioctl(wsfd, WSDISPLAYIO_GETSCREEN, &asd);
+		if (res < 0)
+			err(3, "WSDISPLAYIO_GETSCREEN");
+		else
+			printf("%d\n", asd.idx);
 	} else {
 		asd.idx = idx;
 		res = ioctl(wsfd, WSDISPLAYIO_ADDSCREEN, &asd);
