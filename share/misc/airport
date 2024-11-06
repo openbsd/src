@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.97 2024/11/06 18:09:56 volker Exp $
+#	$OpenBSD: airport,v 1.98 2024/11/06 22:27:42 benno Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1723,6 +1723,7 @@ TPP:Tarapoto, Peru
 TPQ:Tepic, Nayarit, Mexico
 TPS:Birgi, Trapani, Sicily, Italy
 TRC:Torreon, Coahuila, Mexico
+TRD:Trondheim Airport Vaernes, Trondheim, Norway
 TRE:Tiree Island, Scotland, United Kingdom
 TRF:Torp, Sandefjord, Norway
 TRG:Tauranga, New Zealand
