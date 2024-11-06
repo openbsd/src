@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.6 2023/10/13 19:28:59 anton Exp $
+# $OpenBSD: Makefile.inc,v 1.7 2024/11/06 18:42:54 bluhm Exp $
 
 PERL_REQUIRE != perl -e 'eval { require File::Slurp } or print $$@'
 
@@ -35,6 +35,11 @@ unconfig:
 	-rmdir ${FILEOPS_MNT} 2>/dev/null || true
 	-vnconfig -u $$(<vnd) 2>/dev/null || true
 	rm -f stamp-setup
+
+# disk image takes up too much space in /usr/obj
+REGRESS_CLEANUP+=      remove-diskimage
+remove-diskimage:
+	rm -f diskimage
 
 ${.OBJDIR}/../fileops:
 	${.MAKE} -C ${.CURDIR}/.. fileops

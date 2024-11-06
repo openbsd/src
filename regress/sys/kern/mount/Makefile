@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2023/10/12 16:59:24 anton Exp $
+# $OpenBSD: Makefile,v 1.11 2024/11/06 18:42:54 bluhm Exp $
 
 # This regress test uses a vnd device to run mount and unmount.
 # All tests have to be run as root.
@@ -36,6 +36,11 @@ unconfig:
 	-umount -f /dev/$$(<vnd)a 2>/dev/null || true
 	-rmdir /mnt/regress-mount 2>/dev/null || true
 	-vnconfig -u $$(<vnd) 2>/dev/null || true
+
+# disk image takes up too much space in /usr/obj
+REGRESS_CLEANUP +=	remove-diskimage
+remove-diskimage:
+	rm -f diskimage
 
 # The unmount-nested test uses a disk template to create 15 partitions
 # on a vnd device.  All are initialized with a ffs file system.
