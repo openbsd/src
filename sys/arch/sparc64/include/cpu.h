@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.108 2024/06/13 06:47:13 claudio Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.109 2024/11/06 12:06:15 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -133,7 +133,8 @@ struct cpu_info {
 
 	int			ci_want_resched;
 	int			ci_handled_intr_level;
-	void			*ci_intrpending[16][8];
+	int			ci_idepth;
+	struct intrhand		*ci_intrpending[16];
 	struct clockqueue	ci_queue;
 	struct intrhand		ci_tickintr;
 

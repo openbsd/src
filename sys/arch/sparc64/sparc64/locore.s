@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.225 2024/11/06 11:57:50 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.226 2024/11/06 12:06:15 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2938,18 +2938,13 @@ return_from_syscall:
  * vector number to lookup the appropriate intrhand from the intrlev
  * array.  It then looks up the interrupt level from the intrhand
  * structure.  It uses the level to index the per-cpu intrpending array,
- * which is 8 slots for each possible interrupt level (so we can
- * shift instead of multiply for address calculation).  It hunts for
- * any available slot at that level.  Available slots are NULL.
- *
- * NOTE: If no slots are available, we issue an un-vectored interrupt,
- * but it will probably be lost anyway.
+ * and inserts the intrhand at the head of the proper intrpending entry.
  *
  * Then interrupt_vector uses the interrupt level in the intrhand
  * to issue a softint of the appropriate level.  The softint handler
- * figures out what level interrupt it's handling and pulls the first
- * intrhand pointer out of the intrpending array for that interrupt
- * level, puts a NULL in its place, clears the interrupt generator,
+ * figures out what level interrupt it's handling and pulls the
+ * intrhand pointer at thead of the intrpending list for that interrupt
+ * level, removes it from the list, clears the interrupt generator,
  * and invokes the interrupt handler.
  */
 
@@ -3001,7 +2996,7 @@ setup_sparcintr:
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
 	GET_CPUINFO_VA(%g1)
-	sll	%g6, 3+3, %g3	! Find start of table for this IPL
+	sll	%g6, 3, %g3		! Find start of list for this IPL
 	add	%g1, CI_INTRPENDING, %g1
 	add	%g1, %g3, %g1
 1:
@@ -3383,7 +3378,7 @@ sparc_interrupt:
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
-	sll	%l6, 3+3, %l2
+	sll	%l6, 3, %l2
 	add	%g7, CI_INTRPENDING, %l4
 	mov	8, %l7
 	add	%l2, %l4, %l4
@@ -6187,7 +6182,7 @@ ENTRY(send_softint)
 
 	ldx	[%o1 + IH_PEND], %o5
 	brnz,pn	%o5, 1f
-	 sll	%o0, 3+3, %o5	! Find start of table for this IPL
+	 sll	%o0, 3, %o5		! Find start of list for this IPL
 	add	%o3, %o5, %o3
 
 	ldx	[%o3], %o5		! Load list head
