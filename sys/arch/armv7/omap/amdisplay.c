@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.19 2024/11/02 15:00:26 miod Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.20 2024/11/06 07:09:45 miod Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -209,7 +209,7 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_flags |= LCD_MODE_ALLOC;
 
 	if (nxphdmi_get_edid(edid_buf, EDID_LENGTH) ||
-	    edid_parse(edid_buf, &sc->sc_edid)) {
+	    edid_parse(DEVNAME(sc), edid_buf, &sc->sc_edid)) {
 		printf("%s: no display attached.\n", DEVNAME(sc));
 		free(edid_buf, M_DEVBUF, EDID_LENGTH);
 		amdisplay_detach(self, 0);

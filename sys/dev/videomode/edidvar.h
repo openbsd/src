@@ -87,7 +87,7 @@ struct edid_info {
 };
 
 int edid_is_valid(uint8_t *);
-int edid_parse(uint8_t *, struct edid_info *);
+int edid_parse(const char *, uint8_t *, struct edid_info *);
 void edid_print(struct edid_info *);
 
 #endif /* _DEV_VIDEOMODE_EDIDVAR_H */

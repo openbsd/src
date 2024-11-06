@@ -1,4 +1,4 @@
-/* $OpenBSD: edid.c,v 1.6 2024/11/02 15:00:26 miod Exp $ */
+/* $OpenBSD: edid.c,v 1.7 2024/11/06 07:09:45 miod Exp $ */
 /* $NetBSD: edid.c,v 1.5 2007/03/07 19:56:40 macallan Exp $ */
 
 /*-
@@ -485,7 +485,7 @@ edid_block(struct edid_info *edid, uint8_t *data)
  * Gets EDID version in BCD, e.g. EDID v1.3  returned as 0x0103
  */
 int
-edid_parse(uint8_t *data, struct edid_info *edid)
+edid_parse(const char *devname, uint8_t *data, struct edid_info *edid)
 {
 	uint16_t		manfid, estmodes;
 	const struct videomode	*vmp;
@@ -560,8 +560,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 			}
 #ifdef DIAGNOSTIC
 			  else
-				printf("no data for est. mode %s\n",
-				    _edid_modes[i]);
+				printf("%s: no data for est. mode %s\n",
+				    devname, _edid_modes[i]);
 #endif
 		}
 	}
@@ -598,8 +598,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 		if (edid->edid_modes[i].dot_clock > max_dotclock)
 			max_dotclock = edid->edid_modes[i].dot_clock;
 
-	printf("max_dotclock according to supported modes: %d\n",
-	    max_dotclock);
+	printf("%s: max_dotclock according to supported modes: %d\n",
+	    devname, max_dotclock);
 
 	mhz = (max_dotclock + 999) / 1000;
 
