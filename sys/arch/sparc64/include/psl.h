@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.36 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: psl.h,v 1.37 2024/11/06 07:11:14 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -104,20 +104,14 @@
 
 
 /*
- * 32-bit code requires TSO or at best PSO since that's what's supported on
- * SPARC V8 and earlier machines.
- *
- * 64-bit code sets the memory model in the ELF header.
- *
  * We're running kernel code in TSO for the moment so we don't need to worry
  * about possible memory barrier bugs.
+ * Userland code sets the memory model in the ELF header.
  */
 
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
-#define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
-#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
 #define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_IE)
 
 
@@ -140,31 +134,14 @@
 
 /* Leftover SPARC V8 PSTATE stuff */
 #define PSR_ICC 0x00f00000
-#define PSRCC_TO_TSTATE(x)	(((int64_t)(x)&PSR_ICC)<<(TSTATE_CCR_SHIFT-19))
-#define TSTATECCR_TO_PSR(x)	(((x)&TSTATE_CCR)>>(TSTATE_CCR_SHIFT-19))
 
 /*
  * These are here to simplify life.
  */
-#define TSTATE_IG	(PSTATE_IG<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_MG	(PSTATE_MG<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_CLE	(PSTATE_CLE<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_TLE	(PSTATE_TLE<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_MM	(PSTATE_MM<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_MM_TSO	(PSTATE_MM_TSO<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_MM_PSO	(PSTATE_MM_PSO<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_MM_RMO	(PSTATE_MM_RMO<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_RED	(PSTATE_RED<<TSTATE_PSTATE_SHIFT)
 #define TSTATE_PEF	(PSTATE_PEF<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_AM	(PSTATE_AM<<TSTATE_PSTATE_SHIFT)
 #define TSTATE_PRIV	(PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_IE	(PSTATE_IE<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_AG	(PSTATE_AG<<TSTATE_PSTATE_SHIFT)
-
-#define TSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
 #define TSTATE_KERN	((PSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_USER	((PSTATE_USER)<<TSTATE_PSTATE_SHIFT)
 /*
  * SPARC V9 VER version register.
  *
