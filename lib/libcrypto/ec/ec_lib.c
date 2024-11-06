@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.82 2024/11/06 09:13:11 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.83 2024/11/06 09:14:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -457,7 +457,7 @@ EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *seed, size_t len)
 	group->seed = NULL;
 	group->seed_len = 0;
 
-	if (len == 0 || seed == NULL)
+	if (seed == NULL || len == 0)
 		return 1;
 
 	if ((group->seed = malloc(len)) == NULL)
