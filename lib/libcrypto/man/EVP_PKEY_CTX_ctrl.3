@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.23 2023/09/13 13:32:01 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.24 2024/11/06 18:58:01 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\" Parts were split out into RSA_pkey_ctx_ctrl(3).
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 13 2023 $
+.Dd $Mdocdate: November 6 2024 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -410,6 +410,37 @@ macro gets the user key material for
 The return value is the user key material length.
 The resulting pointer is owned by the library and should not be
 freed by the caller.
+.Ss CMAC parameters
+Application programs normally initialize an
+.Vt EVP_PKEY_CTX
+object using
+.Xr EVP_PKEY_CTX_new 3 ,
+specifying the
+.Vt EVP_PKEY
+object containing the symmetric key right away.
+Alternatively, an empty
+.Vt EVP_PKEY_CTX
+object can be created by passing the
+.Dv EVP_PKEY_CMAC
+constant to
+.Xr EVP_PKEY_CTX_new_id 3 .
+After that, the block cipher can be selected by calling
+.Fn EVP_PKEY_CTX_ctrl
+with an
+.Fa optype
+of \-1, a
+.Fa cmd
+of
+.Dv EVP_PKEY_CTRL_CIPHER ,
+and
+.Fa p2
+pointing to an
+.Vt EVP_CIPHER
+object, which can be obtained from the functions in the CIPHER LISTING in
+.Xr EVP_EncryptInit 3 .
+The
+.Fa p1
+argument is ignored; passing 0 is recommended.
 .Ss Other parameters
 The
 .Fn EVP_PKEY_CTX_set1_id ,
