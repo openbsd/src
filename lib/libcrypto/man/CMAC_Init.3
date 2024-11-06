@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.6 2024/03/02 09:30:21 tb Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.7 2024/11/06 18:23:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2024 $
+.Dd $Mdocdate: November 6 2024 $
 .Dt CMAC_INIT 3
 .Os
 .Sh NAME
@@ -100,7 +100,7 @@ for use by
 Functions to obtain suitable
 .Vt EVP_CIPHER
 objects are listed in the CIPHER LISTING section of the
-.Xr EVP_Cipher 3
+.Xr EVP_EncryptInit 3
 manual page.
 Unless
 .Fa key
@@ -244,13 +244,13 @@ The CMAC code itself does not use the
 framework, so in general, the reasons for failure cannot be found out with
 .Xr ERR_get_error 3 .
 However, since the
-.Xr EVP_Cipher 3
+.Xr EVP_EncryptInit 3
 functions are used internally, entries may still get pushed onto
 the error stack in some cases of failure.
 .Sh SEE ALSO
 .Xr EVP_aes_128_cbc 3 ,
-.Xr EVP_Cipher 3 ,
 .Xr EVP_DigestInit 3 ,
+.Xr EVP_EncryptInit 3 ,
 .Xr EVP_PKEY_CTX_new_id 3 ,
 .Xr HMAC 3
 .Sh STANDARDS
