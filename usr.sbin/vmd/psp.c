@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.4 2024/11/06 22:06:16 bluhm Exp $	*/
+/*	$OpenBSD: psp.c,v 1.5 2024/11/06 23:04:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -200,7 +200,7 @@ psp_launch_measure(uint32_t handle)
 	    i++, p += 2, len -= 2) {
 		snprintf(p, len, "%02x", lm.measure[i]);
 	}
-	log_info("%s: measurement\t0x%s", __func__, buf);
+	log_info("%s: measurement 0x%s", __func__, buf);
 
 	len = sizeof(buf);
 	memset(buf, 0, len);
@@ -209,7 +209,7 @@ psp_launch_measure(uint32_t handle)
 	    i++, p += 2, len -= 2) {
 		snprintf(p, len, "%02x", lm.measure_nonce[i]);
 	}
-	log_info("%s: nonce\t0x%s", __func__, buf);
+	log_info("%s: nonce 0x%s", __func__, buf);
 
 	return (0);
 }

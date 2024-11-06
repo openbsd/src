@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.124 2024/10/22 15:19:48 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.125 2024/11/06 23:04:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -762,7 +762,6 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		 * Prepare our new argv for execvp(2) with the fd of our open
 		 * pipe to the parent/vmm process as an argument.
 		 */
-		memset(&nargv, 0, sizeof(nargv));
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", fds[1]);
 		memset(vmm_fd, 0, sizeof(vmm_fd));
@@ -770,23 +769,23 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		memset(psp_fd, 0, sizeof(psp_fd));
 		snprintf(psp_fd, sizeof(psp_fd), "%d", env->vmd_psp_fd);
 
-		nargv[0] = env->argv0;
-		nargv[1] = "-V";
-		nargv[2] = num;
-		nargv[3] = "-n";
-		nargv[4] = "-i";
-		nargv[5] = vmm_fd;
-		nargv[6] = "-j";
-		nargv[7] = psp_fd;
-		nargv[8] = NULL;
-
-		if (env->vmd_verbose == 1) {
-			nargv[8] = VMD_VERBOSE_1;
-			nargv[9] = NULL;
-		} else if (env->vmd_verbose > 1) {
-			nargv[8] = VMD_VERBOSE_2;
-			nargv[9] = NULL;
-		}
+		i = 0;
+		nargv[i++] = env->argv0;
+		nargv[i++] = "-V";
+		nargv[i++] = num;
+		nargv[i++] = "-i";
+		nargv[i++] = vmm_fd;
+		nargv[i++] = "-j";
+		nargv[i++] = psp_fd;
+		if (env->vmd_debug)
+			nargv[i++] = "-d";
+		if (env->vmd_verbose == 1)
+			nargv[i++] = "-v";
+		else if (env->vmd_verbose > 1)
+			nargv[i++] = "-vv";
+		nargv[i++] = NULL;
+		if (i > sizeof(nargv) / sizeof(nargv[0]))
+			fatalx("%s: nargv overflow", __func__);
 
 		/* Control resumes in vmd main(). */
 		execvp(nargv[0], nargv);

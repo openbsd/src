@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.130 2024/11/06 22:06:16 bluhm Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.131 2024/11/06 23:04:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -103,10 +103,6 @@
 
 /* Unique local address for IPv6 */
 #define VMD_ULA_PREFIX		"fd00::/8"
-
-/* Verbosity arguments for use when caling execvp(2). */
-#define VMD_VERBOSE_1		"-v";
-#define VMD_VERBOSE_2		"-vv";
 
 enum imsg_type {
 	IMSG_VMDOP_START_VM_REQUEST = IMSG_PROC_MAX,

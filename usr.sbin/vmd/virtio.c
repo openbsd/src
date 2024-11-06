@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.116 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.117 2024/11/06 23:04:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1296,7 +1296,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 	char *nargv[12], num[32], vmm_fd[32], vm_name[VM_NAME_MAX], t[2];
 	pid_t dev_pid;
 	int sync_fds[2], async_fds[2], ret = 0;
-	size_t sz = 0;
+	size_t i, sz = 0;
 	struct viodev_msg msg;
 	struct virtio_dev *dev_entry;
 	struct imsg imsg;
@@ -1441,7 +1441,6 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 				fatalx("unable to close other virtio devs");
 		}
 
-		memset(&nargv, 0, sizeof(nargv));
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", sync_fds[1]);
 		memset(vmm_fd, 0, sizeof(vmm_fd));
@@ -1453,25 +1452,25 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		t[0] = dev->dev_type;
 		t[1] = '\0';
 
-		nargv[0] = env->argv0;
-		nargv[1] = "-X";
-		nargv[2] = num;
-		nargv[3] = "-t";
-		nargv[4] = t;
-		nargv[5] = "-i";
-		nargv[6] = vmm_fd;
-		nargv[7] = "-p";
-		nargv[8] = vm_name;
-		nargv[9] = "-n";
-		nargv[10] = NULL;
-
-		if (env->vmd_verbose == 1) {
-			nargv[10] = VMD_VERBOSE_1;
-			nargv[11] = NULL;
-		} else if (env->vmd_verbose > 1) {
-			nargv[10] = VMD_VERBOSE_2;
-			nargv[11] = NULL;
-		}
+		i = 0;
+		nargv[i++] = env->argv0;
+		nargv[i++] = "-X";
+		nargv[i++] = num;
+		nargv[i++] = "-t";
+		nargv[i++] = t;
+		nargv[i++] = "-i";
+		nargv[i++] = vmm_fd;
+		nargv[i++] = "-p";
+		nargv[i++] = vm_name;
+		if (env->vmd_debug)
+			nargv[i++] = "-d";
+		if (env->vmd_verbose == 1)
+			nargv[i++] = "-v";
+		else if (env->vmd_verbose > 1)
+			nargv[i++] = "-vv";
+		nargv[i++] = NULL;
+		if (i > sizeof(nargv) / sizeof(nargv[0]))
+			fatalx("%s: nargv overflow", __func__);
 
 		/* Control resumes in vmd.c:main(). */
 		execvp(nargv[0], nargv);
