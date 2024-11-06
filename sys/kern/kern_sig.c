@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.347 2024/11/05 09:14:19 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.348 2024/11/06 17:14:01 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ const int sigprop[NSIG] = {
 
 void setsigvec(struct proc *, int, struct sigaction *);
 
+int proc_trap(struct proc *, int);
 void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
 void *proc_stop_si;
@@ -834,30 +835,20 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL && (p->p_sigmask & mask) != 0) {
-			single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
-			pr->ps_xsig = signum;
+			signum = proc_trap(p, signum);
 
-			SCHED_LOCK();
-			proc_stop(p, 1);
-			SCHED_UNLOCK();
-
-			signum = pr->ps_xsig;
-			pr->ps_xsig = 0;
-			if ((p->p_flag & P_TRACESINGLE) == 0)
-				single_thread_clear(p, 0);
-			atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);
+			mask = sigmask(signum);
+			setsigctx(p, signum, &ctx);
 
 			/*
 			 * If we are no longer being traced, or the parent
 			 * didn't give us a signal, skip sending the signal.
 			 */
-			if ((pr->ps_flags & PS_TRACED) == 0 ||
-			    signum == 0)
+			if ((pr->ps_flags & PS_TRACED) == 0 || signum == 0)
 				return;
 
 			/* update signal info */
 			p->p_sisig = signum;
-			mask = sigmask(signum);
 		}
 
 		/*
@@ -1386,48 +1377,28 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL) {
-			single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
-			pr->ps_xsig = signum;
+			signum = proc_trap(p, signum);
 
-			SCHED_LOCK();
-			proc_stop(p, 1);
-			SCHED_UNLOCK();
-
-			/*
-			 * re-take the signal before releasing
-			 * the other threads. Must check the continue
-			 * conditions below and only take the signal if
-			 * those are not true.
-			 */
-			signum = pr->ps_xsig;
-			pr->ps_xsig = 0;
 			mask = sigmask(signum);
 			setsigctx(p, signum, sctx);
-			if (!((pr->ps_flags & PS_TRACED) == 0 ||
-			    signum == 0 ||
-			    (p->p_sigmask & mask) != 0)) {
-				atomic_clearbits_int(&p->p_siglist, mask);
-				atomic_clearbits_int(&pr->ps_siglist, mask);
-			}
-
-			if ((p->p_flag & P_TRACESINGLE) == 0)
-				single_thread_clear(p, 0);
-			atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);
 
 			/*
 			 * If we are no longer being traced, or the parent
-			 * didn't give us a signal, look for more signals.
+			 * didn't give us a signal, or the signal is ignored,
+			 * look for more signals.
 			 */
-			if ((pr->ps_flags & PS_TRACED) == 0 ||
-			    signum == 0)
+			if ((pr->ps_flags & PS_TRACED) == 0 || signum == 0 ||
+			    sctx->sig_ignore)
 				continue;
 
 			/*
 			 * If the new signal is being masked, look for other
-			 * signals.
+			 * signals but leave it for later.
 			 */
-			if ((p->p_sigmask & mask) != 0)
+			if ((p->p_sigmask & mask) != 0) {
+				atomic_setbits_int(&p->p_siglist, mask);
 				continue;
+			}
 
 		}
 
@@ -1505,6 +1476,27 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 keep:
 	atomic_setbits_int(&p->p_siglist, mask); /*leave the signal for later */
 	return (signum);
+}
+
+int
+proc_trap(struct proc *p, int signum)
+{
+	struct process *pr = p->p_p;
+
+	single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
+	pr->ps_xsig = signum;
+
+	SCHED_LOCK();
+	proc_stop(p, 1);
+	SCHED_UNLOCK();
+
+	signum = pr->ps_xsig;
+	pr->ps_xsig = 0;
+	if ((p->p_flag & P_TRACESINGLE) == 0)
+		single_thread_clear(p, 0);
+	atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);
+
+	return signum;
 }
 
 /*
