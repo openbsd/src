@@ -1,5 +1,5 @@
-/* $OpenBSD: edid.c,v 1.7 2024/11/06 07:09:45 miod Exp $ */
-/* $NetBSD: edid.c,v 1.5 2007/03/07 19:56:40 macallan Exp $ */
+/* $OpenBSD: edid.c,v 1.8 2024/11/06 09:34:10 miod Exp $ */
+/* $NetBSD: edid.c,v 1.15 2020/01/25 15:59:11 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,13 +30,12 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/ediddevs.h>
 #include <dev/videomode/edidreg.h>
@@ -47,21 +46,25 @@ const char *edid_findvendor(const char *);
 const char *edid_findproduct(const char *, uint16_t);
 void edid_strchomp(char *);
 const struct videomode *edid_mode_lookup_list(const char *);
+struct videomode *edid_search_mode(struct edid_info *,
+    const struct videomode *);
 int edid_std_timing(uint8_t *, struct videomode *);
 int edid_det_timing(uint8_t *, struct videomode *);
+void bump_preferred_mode(struct edid_info *, struct videomode *);
 void edid_block(struct edid_info *, uint8_t *);
 
 /* #define EDID_DEBUG */
 #define	EDIDVERBOSE	1
 #define	DIVIDE(x,y)	(((x) + ((y) / 2)) / (y))
 
+/* These are reversed established timing order */
 static const char *_edid_modes[] =  {
 	"1280x1024x75",
 	"1024x768x75",
 	"1024x768x70",
 	"1024x768x60",
 	"1024x768x87i",
-	"832x768x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
+	"832x624x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
 	"800x600x75",
 	"800x600x72",
 	"800x600x60",
@@ -70,8 +73,8 @@ static const char *_edid_modes[] =  {
 	"640x480x72",
 	"640x480x67",
 	"640x480x60",
-	"720x400x85",	/* should this really be "720x400x88" ? */
-	"720x400x70",	/* hmm... videomode.c doesn't have this one */
+	"720x400x87",	/* rounding error, 87.85 Hz aka "720x400x88" */
+	"720x400x70",
 };
 
 #ifdef	EDIDVERBOSE
@@ -97,7 +100,7 @@ edid_findvendor(const char *vendor)
 
 	for (n = 0; n < edid_nvendors; n++)
 		if (memcmp(edid_vendors[n].vendor, vendor, 3) == 0)
-			return (edid_vendors[n].name);
+			return edid_vendors[n].name;
 #endif
 	return NULL;
 }
@@ -109,9 +112,9 @@ edid_findproduct(const char *vendor, uint16_t product)
 	int	n;
 
 	for (n = 0; n < edid_nproducts; n++)
-		if ((edid_products[n].product == product) &&
-		    (memcmp(edid_products[n].vendor, vendor, 3) == 0))
-			return (edid_products[n].name);
+		if (edid_products[n].product == product &&
+		    memcmp(edid_products[n].vendor, vendor, 3) == 0)
+			return edid_products[n].name;
 #endif	/* EDIDVERBOSE */
 	return NULL;
 
@@ -122,11 +125,11 @@ edid_strchomp(char *ptr)
 {
 	for (;;) {
 		switch (*ptr) {
-		case 0:
+		case '\0':
 			return;
 		case '\r':
 		case '\n':
-			*ptr = 0;
+			*ptr = '\0';
 			return;
 		}
 		ptr++;
@@ -138,15 +141,15 @@ edid_is_valid(uint8_t *d)
 {
 	int sum = 0, i;
 	uint8_t sig[8] = EDID_SIGNATURE;
-	
+
 	if (memcmp(d, sig, 8) != 0)
 		return EINVAL;
-	
+
 	for (i = 0; i < 128; i++)
 		sum += d[i];
 	if ((sum & 0xff) != 0)
 		return EINVAL;
-		
+
 	return 0;
 }
 
@@ -267,20 +270,35 @@ edid_print(struct edid_info *edid)
 	}
 	printf("Video modes:\n");
 	for (i = 0; i < edid->edid_nmodes; i++) {
-		printf("\t%dx%d @ %dHz\n",
+		printf("\t%dx%d @ %dHz",
 		    edid->edid_modes[i].hdisplay,
 		    edid->edid_modes[i].vdisplay,
 		    DIVIDE(DIVIDE(edid->edid_modes[i].dot_clock * 1000,
-			       edid->edid_modes[i].htotal),
+			edid->edid_modes[i].htotal),
 			edid->edid_modes[i].vtotal));
+		printf(" (%d %d %d %d %d %d %d",
+		    edid->edid_modes[i].dot_clock,
+		    edid->edid_modes[i].hsync_start,
+		    edid->edid_modes[i].hsync_end,
+		    edid->edid_modes[i].htotal,
+		    edid->edid_modes[i].vsync_start,
+		    edid->edid_modes[i].vsync_end,
+		    edid->edid_modes[i].vtotal);
+		printf(" %s%sH %s%sV)\n",
+		    edid->edid_modes[i].flags & VID_PHSYNC ? "+" : "",
+		    edid->edid_modes[i].flags & VID_NHSYNC ? "-" : "",
+		    edid->edid_modes[i].flags & VID_PVSYNC ? "+" : "",
+		    edid->edid_modes[i].flags & VID_NVSYNC ? "-" : "");
 	}
 	if (edid->edid_preferred_mode)
 		printf("Preferred mode: %dx%d @ %dHz\n",
 		    edid->edid_preferred_mode->hdisplay,
 		    edid->edid_preferred_mode->vdisplay,
 		    DIVIDE(DIVIDE(edid->edid_preferred_mode->dot_clock * 1000,
-			       edid->edid_preferred_mode->htotal),
+			edid->edid_preferred_mode->htotal),
 			edid->edid_preferred_mode->vtotal));
+
+	printf("Number of extension blocks: %d\n", edid->edid_ext_block_count);
 }
 #endif
 
@@ -292,6 +310,26 @@ edid_mode_lookup_list(const char *name)
 	for (i = 0; i < videomode_count; i++)
 		if (strcmp(name, videomode_list[i].name) == 0)
 			return &videomode_list[i];
+	return NULL;
+}
+
+struct videomode *
+edid_search_mode(struct edid_info *edid, const struct videomode *mode)
+{
+	int	refresh, i;
+
+	refresh = DIVIDE(DIVIDE(mode->dot_clock * 1000,
+	    mode->htotal), mode->vtotal);
+	for (i = 0; i < edid->edid_nmodes; i++) {
+		if (mode->hdisplay == edid->edid_modes[i].hdisplay &&
+		    mode->vdisplay == edid->edid_modes[i].vdisplay &&
+		    refresh == DIVIDE(DIVIDE(
+		    edid->edid_modes[i].dot_clock * 1000,
+		    edid->edid_modes[i].htotal),
+		    edid->edid_modes[i].vtotal)) {
+			return &edid->edid_modes[i];
+		}
+	}
 	return NULL;
 }
 
@@ -326,13 +364,11 @@ edid_std_timing(uint8_t *data, struct videomode *vmp)
 	f = EDID_STD_TIMING_VFREQ(data);
 
 	/* first try to lookup the mode as a DMT timing */
-	snprintf(name, sizeof (name), "%dx%dx%d", x, y, f);
+	snprintf(name, sizeof(name), "%dx%dx%d", x, y, f);
 	if ((lookup = edid_mode_lookup_list(name)) != NULL) {
 		*vmp = *lookup;
-	}
-
-	/* failing that, calculate it using gtf */
-	else {
+	} else {
+		/* failing that, calculate it using gtf */
 		/*
 		 * Hmm. I'm not using alternate GTF timings, which
 		 * could, in theory, be present.
@@ -353,7 +389,7 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 
 	/* we don't support stereo modes (for now) */
 	if (flags & (EDID_DET_TIMING_FLAG_STEREO |
-		EDID_DET_TIMING_FLAG_STEREO1))
+		EDID_DET_TIMING_FLAG_STEREO_MODE))
 		return 0;
 
 	vmp->dot_clock = EDID_DET_TIMING_DOT_CLOCK(data) / 1000;
@@ -367,8 +403,8 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 	vblank = EDID_DET_TIMING_VBLANK(data);
 	vsyncwid = EDID_DET_TIMING_VSYNC_WIDTH(data);
 	vsyncoff = EDID_DET_TIMING_VSYNC_OFFSET(data);
-	
-	/* XXX: I'm not doing anything with the borders, should I? */
+
+	/* Borders are contained within the blank areas. */
 
 	vmp->hdisplay = hactive;
 	vmp->htotal = hactive + hblank;
@@ -397,64 +433,74 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 	return 1;
 }
 
+void bump_preferred_mode(struct edid_info *edid, struct videomode *m)
+{
+	/*
+	 * XXX
+	 * Iiyama 4800 series monitors may have their native resolution in the
+	 * 2nd detailed timing descriptor instead of the 1st. Try to detect
+	 * that here and pick the native mode anyway.
+	 */
+	if (edid->edid_preferred_mode == NULL) {
+		edid->edid_preferred_mode = m;
+	} else if ((strncmp(edid->edid_vendor, "IVM", 3) == 0) &&
+	           (edid->edid_product == 0x4800) &&
+	           (edid->edid_preferred_mode->dot_clock < m->dot_clock))
+		edid->edid_preferred_mode = m;
+}
+
 void
 edid_block(struct edid_info *edid, uint8_t *data)
 {
 	int			i;
-	struct videomode	mode;
+	struct videomode	mode, *exist_mode;
 
 	if (EDID_BLOCK_IS_DET_TIMING(data)) {
-		if (edid_det_timing(data, &mode)) {
+		if (!edid_det_timing(data, &mode))
+			return;
+		/* Does this mode already exist? */
+		exist_mode = edid_search_mode(edid, &mode);
+		if (exist_mode != NULL) {
+			*exist_mode = mode;
+			bump_preferred_mode(edid, exist_mode);
+		} else {
 			edid->edid_modes[edid->edid_nmodes] = mode;
-			if (edid->edid_preferred_mode == NULL) {
-				edid->edid_preferred_mode =
-				    &edid->edid_modes[edid->edid_nmodes];
-			}
-			edid->edid_nmodes++;	
+			bump_preferred_mode(edid,
+			    &edid->edid_modes[edid->edid_nmodes]);
+			edid->edid_nmodes++;
 		}
 		return;
 	}
 
 	switch (EDID_BLOCK_TYPE(data)) {
 	case EDID_DESC_BLOCK_TYPE_SERIAL:
-		memcpy(edid->edid_serial,
-		    data + EDID_DESC_ASCII_DATA_OFFSET,
+		memcpy(edid->edid_serial, data + EDID_DESC_ASCII_DATA_OFFSET,
 		    EDID_DESC_ASCII_DATA_LEN);
-		edid->edid_serial[sizeof (edid->edid_serial) - 1] = 0;
+		edid->edid_serial[EDID_DESC_ASCII_DATA_LEN] = 0;
 		break;
 
 	case EDID_DESC_BLOCK_TYPE_ASCII:
-		memcpy(edid->edid_comment,
-		    data + EDID_DESC_ASCII_DATA_OFFSET,
+		memcpy(edid->edid_comment, data + EDID_DESC_ASCII_DATA_OFFSET,
 		    EDID_DESC_ASCII_DATA_LEN);
-		edid->edid_comment[sizeof (edid->edid_comment) - 1] = 0;
+		edid->edid_comment[EDID_DESC_ASCII_DATA_LEN] = 0;
 		break;
 
 	case EDID_DESC_BLOCK_TYPE_RANGE:
 		edid->edid_have_range = 1;
-		edid->edid_range.er_min_vfreq =	
-		    EDID_DESC_RANGE_MIN_VFREQ(data);
-		edid->edid_range.er_max_vfreq =	
-		    EDID_DESC_RANGE_MAX_VFREQ(data);
-		edid->edid_range.er_min_hfreq =	
-		    EDID_DESC_RANGE_MIN_HFREQ(data);
-		edid->edid_range.er_max_hfreq =	
-		    EDID_DESC_RANGE_MAX_HFREQ(data);
-		edid->edid_range.er_max_clock =
-		    EDID_DESC_RANGE_MAX_CLOCK(data);
-		if (EDID_DESC_RANGE_HAVE_GTF2(data)) {
-			edid->edid_range.er_have_gtf2 = 1;
-			edid->edid_range.er_gtf2_hfreq =
-			    EDID_DESC_RANGE_GTF2_HFREQ(data);
-			edid->edid_range.er_gtf2_c =
-			    EDID_DESC_RANGE_GTF2_C(data);
-			edid->edid_range.er_gtf2_m =
-			    EDID_DESC_RANGE_GTF2_M(data);
-			edid->edid_range.er_gtf2_j =
-			    EDID_DESC_RANGE_GTF2_J(data);
-			edid->edid_range.er_gtf2_k =
-			    EDID_DESC_RANGE_GTF2_K(data);
-		}
+		edid->edid_range.er_min_vfreq =	EDID_DESC_RANGE_MIN_VFREQ(data);
+		edid->edid_range.er_max_vfreq =	EDID_DESC_RANGE_MAX_VFREQ(data);
+		edid->edid_range.er_min_hfreq =	EDID_DESC_RANGE_MIN_HFREQ(data);
+		edid->edid_range.er_max_hfreq =	EDID_DESC_RANGE_MAX_HFREQ(data);
+		edid->edid_range.er_max_clock = EDID_DESC_RANGE_MAX_CLOCK(data);
+		if (!EDID_DESC_RANGE_HAVE_GTF2(data))
+			break;
+		edid->edid_range.er_have_gtf2 = 1;
+		edid->edid_range.er_gtf2_hfreq =
+		    EDID_DESC_RANGE_GTF2_HFREQ(data);
+		edid->edid_range.er_gtf2_c = EDID_DESC_RANGE_GTF2_C(data);
+		edid->edid_range.er_gtf2_m = EDID_DESC_RANGE_GTF2_M(data);
+		edid->edid_range.er_gtf2_j = EDID_DESC_RANGE_GTF2_J(data);
+		edid->edid_range.er_gtf2_k = EDID_DESC_RANGE_GTF2_K(data);
 		break;
 
 	case EDID_DESC_BLOCK_TYPE_NAME:
@@ -462,14 +508,20 @@ edid_block(struct edid_info *edid, uint8_t *data)
 		memcpy(edid->edid_productname,
 		    data + EDID_DESC_ASCII_DATA_OFFSET,
 		    EDID_DESC_ASCII_DATA_LEN);
+		edid->edid_productname[EDID_DESC_ASCII_DATA_LEN] = '\0';
 		break;
 
 	case EDID_DESC_BLOCK_TYPE_STD_TIMING:
 		data += EDID_DESC_STD_TIMING_START;
 		for (i = 0; i < EDID_DESC_STD_TIMING_COUNT; i++) {
 			if (edid_std_timing(data, &mode)) {
-				edid->edid_modes[edid->edid_nmodes] = mode;
-				edid->edid_nmodes++;
+				/* Does this mode already exist? */
+				exist_mode = edid_search_mode(edid, &mode);
+				if (exist_mode == NULL) {
+					edid->edid_modes[edid->edid_nmodes] =
+					    mode;
+					edid->edid_nmodes++;
+				}
 			}
 			data += 2;
 		}
@@ -482,7 +534,7 @@ edid_block(struct edid_info *edid, uint8_t *data)
 }
 
 /*
- * Gets EDID version in BCD, e.g. EDID v1.3  returned as 0x0103
+ * Gets EDID version in BCD, e.g. EDID v1.3 returned as 0x0103
  */
 int
 edid_parse(const char *devname, uint8_t *data, struct edid_info *edid)
@@ -504,24 +556,26 @@ edid_parse(const char *devname, uint8_t *data, struct edid_info *edid)
 	edid->edid_vendor[2] = EDID_MANFID_2(manfid);
 	edid->edid_vendor[3] = 0;	/* null terminate for convenience */
 
-	edid->edid_product = data[EDID_OFFSET_PRODUCT_ID] + 
+	edid->edid_product = data[EDID_OFFSET_PRODUCT_ID] +
 	    (data[EDID_OFFSET_PRODUCT_ID + 1] << 8);
 
 	name = edid_findvendor(edid->edid_vendor);
 	if (name != NULL) {
-		snprintf(edid->edid_vendorname,
-		    sizeof (edid->edid_vendorname), "%s", name);
-	}
-	edid->edid_vendorname[sizeof (edid->edid_vendorname) - 1] = 0;
+		strlcpy(edid->edid_vendorname, name,
+		    sizeof(edid->edid_vendorname));
+	} else
+		edid->edid_vendorname[0] = '\0';
 
 	name = edid_findproduct(edid->edid_vendor, edid->edid_product);
 	if (name != NULL) {
-		snprintf(edid->edid_productname,
-		    sizeof (edid->edid_productname), "%s", name);
-	}
-	edid->edid_productname[sizeof (edid->edid_productname) - 1] = 0;
+		strlcpy(edid->edid_productname, name,
+		    sizeof(edid->edid_productname));
+	} else
+		edid->edid_productname[0] = '\0';
 
-	snprintf(edid->edid_serial, sizeof (edid->edid_serial), "%08x",
+	edid->edid_comment[0] = '\0';
+
+	snprintf(edid->edid_serial, sizeof(edid->edid_serial), "%08x",
 	    EDID_SERIAL_NUMBER(data));
 
 	edid->edid_week = EDID_WEEK(data);
@@ -547,11 +601,14 @@ edid_parse(const char *devname, uint8_t *data, struct edid_info *edid)
 	edid->edid_chroma.ec_whitex = EDID_CHROMA_WHITEX(data);
 	edid->edid_chroma.ec_whitey = EDID_CHROMA_WHITEY(data);
 
+	edid->edid_ext_block_count = EDID_EXT_BLOCK_COUNT(data);
+
 	/* lookup established modes */
 	edid->edid_nmodes = 0;
 	edid->edid_preferred_mode = NULL;
 	estmodes = EDID_EST_TIMING(data);
-	for (i = 0; i < 16; i++) {
+	/* Iterate in established timing order */
+	for (i = 15; i >= 0; i--) {
 		if (estmodes & (1 << i)) {
 			vmp = edid_mode_lookup_list(_edid_modes[i]);
 			if (vmp != NULL) {
@@ -568,11 +625,15 @@ edid_parse(const char *devname, uint8_t *data, struct edid_info *edid)
 
 	/* do standard timing section */
 	for (i = 0; i < EDID_STD_TIMING_COUNT; i++) {
-		struct videomode	mode;
+		struct videomode	mode, *exist_mode;
 		if (edid_std_timing(data + EDID_OFFSET_STD_TIMING + i * 2,
 			&mode)) {
-			edid->edid_modes[edid->edid_nmodes] = mode;
-			edid->edid_nmodes++;
+			/* Does this mode already exist? */
+			exist_mode = edid_search_mode(edid, &mode);
+			if (exist_mode == NULL) {
+				edid->edid_modes[edid->edid_nmodes] = mode;
+				edid->edid_nmodes++;
+			}
 		}
 	}
 	/* do detailed timings and descriptors */
@@ -598,13 +659,14 @@ edid_parse(const char *devname, uint8_t *data, struct edid_info *edid)
 		if (edid->edid_modes[i].dot_clock > max_dotclock)
 			max_dotclock = edid->edid_modes[i].dot_clock;
 
+#ifdef DIAGNOSTIC
 	printf("%s: max_dotclock according to supported modes: %d\n",
 	    devname, max_dotclock);
+#endif
 
 	mhz = (max_dotclock + 999) / 1000;
 
 	if (edid->edid_have_range) {
-
 		if (mhz > edid->edid_range.er_max_clock)
 			edid->edid_range.er_max_clock = mhz;
 	} else

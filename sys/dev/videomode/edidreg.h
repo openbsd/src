@@ -1,4 +1,5 @@
-/*	$NetBSD: edidreg.h,v 1.2 2006/05/13 00:39:19 gdamore Exp $	*/
+/*	$OpenBSD: edidreg.h,v 1.2 2024/11/06 09:34:10 miod Exp $	*/
+/*	$NetBSD: edidreg.h,v 1.4 2014/11/17 00:46:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -29,7 +30,7 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 #ifndef _DEV_VIDEOMODE_EDIDREG_H
 #define _DEV_VIDEOMODE_EDIDREG_H
@@ -203,11 +204,11 @@
 #define	EDID_DET_TIMING_VBORDER(ptr)	((ptr)[16])
 #define	EDID_DET_TIMING_FLAGS(ptr)	((ptr)[17])
 #define	EDID_DET_TIMING_FLAG_INTERLACE		0x80
-#define	EDID_DET_TIMING_FLAG_STEREO		0x60	/* wtf? */
+#define	EDID_DET_TIMING_FLAG_STEREO		0x60	/* stereo or not */
 #define	EDID_DET_TIMING_FLAG_SYNC_SEPARATE	0x18
-#define	EDID_DET_TIMING_FLAG_HSYNC_POSITIVE	0x04
-#define	EDID_DET_TIMING_FLAG_VSYNC_POSITIVE	0x02
-#define	EDID_DET_TIMING_FLAG_STEREO1		0x01	/* wtf? */
+#define	EDID_DET_TIMING_FLAG_VSYNC_POSITIVE	0x04
+#define	EDID_DET_TIMING_FLAG_HSYNC_POSITIVE	0x02
+#define	EDID_DET_TIMING_FLAG_STEREO_MODE	0x01	/* stereo mode */
 
 
 /* N.B.: these tests assume that we already checked for detailed timing! */
@@ -249,5 +250,7 @@
 
 #define	EDID_DESC_STD_TIMING_START		5
 #define	EDID_DESC_STD_TIMING_COUNT		6
+
+#define	EDID_EXT_BLOCK_COUNT(ptr)		((ptr)[126])
 
 #endif /* _DEV_VIDEOMODE_EDIDREG_H */

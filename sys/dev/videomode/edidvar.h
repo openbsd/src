@@ -1,4 +1,5 @@
-/*	$NetBSD: edidvar.h,v 1.2 2006/05/11 19:05:41 gdamore Exp $	*/
+/*	$OpenBSD: edidvar.h,v 1.3 2024/11/06 09:34:10 miod Exp $	*/
+/*	$NetBSD: edidvar.h,v 1.5 2021/12/19 11:01:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -29,10 +30,12 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 #ifndef _DEV_VIDEOMODE_EDIDVAR_H
 #define _DEV_VIDEOMODE_EDIDVAR_H
+
+#include <dev/videomode/videomode.h>
 
 struct edid_chroma {
 	uint16_t	ec_redx;
@@ -75,6 +78,7 @@ struct edid_info {
 	uint8_t		edid_max_vsize;		/* in cm */
 	uint8_t		edid_gamma;
 	uint8_t		edid_features;
+	uint8_t		edid_ext_block_count;
 
 	int			edid_have_range;
 	struct edid_range	edid_range;
