@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.74 2024/11/07 10:39:15 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.75 2024/11/07 11:12:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -835,13 +835,6 @@ uvm_pmr_extract_range(struct uvm_pmemrange *pmr, struct vm_page *pg,
 	uvm_pmr_assertvalid(pmr);
 	return (after_sz > 0 ? after : NULL);
 }
-
-/*
- * Indicate to the page daemon that a nowait call failed and it should
- * recover at least some memory in the most restricted region (assumed
- * to be dma_constraint).
- */
-extern struct uvm_pmalloc nowait_pma;
 
 /*
  * Acquire a number of pages.

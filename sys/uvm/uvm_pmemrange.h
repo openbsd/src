@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.18 2024/10/02 10:17:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.19 2024/11/07 11:12:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -59,9 +59,15 @@ struct uvm_pmemrange {
 /*
  * Description of failing memory allocation.
  *
- * Two ways new pages can become available:
- * [1] page daemon drops them (we notice because they are freed)
- * [2] a process calls free
+ * Every descriptor corresponds to a request for the page daemon to release
+ * pages in a given memory range.  There is one global descriptor for nowait
+ * allocations, all others are sitting on the stack of processes waiting for
+ * physical pages.
+ *
+ * There are multiple ways physical pages can become available:
+ * [1] unmanaged pages are released by shrinkers (bufbackoff(), drmbackoff()...)
+ * [2] page daemon drops them (we notice because they are freed)
+ * [3] a process calls free or exit
  *
  * The buffer cache and page daemon can decide that they don't have the
  * ability to make pages available in the requested range. In that case,
@@ -70,21 +76,25 @@ struct uvm_pmemrange {
  * XXX has not yet been freed, or that a page was busy.
  * XXX Also, wired pages are not considered for paging, so they could
  * XXX cause a failure that may be recoverable.
+ *
+ * Locks used to protect struct members in this file:
+ *	F	uvm_lock_fpageq
+ *	I	immutable after creation
  */
 struct uvm_pmalloc {
-	TAILQ_ENTRY(uvm_pmalloc) pmq;
-
-	/*
-	 * Allocation request parameters.
-	 */
-	struct uvm_constraint_range pm_constraint;
-	psize_t	pm_size;
-
-	/*
-	 * State flags.
-	 */
-	int	pm_flags;
+	TAILQ_ENTRY(uvm_pmalloc) pmq;			/* [F] next request */
+	struct uvm_constraint_range pm_constraint;	/* [I] memory range */
+	psize_t	pm_size;				/* [I] # pages */
+	int	pm_flags;				/* [F] states flags */
 };
+
+/*
+ * Indicate to the page daemon that a nowait call failed and it should
+ * recover at least some memory in the most restricted region (assumed
+ * to be dma_constraint).
+ */
+extern struct uvm_pmalloc nowait_pma;			/* [F] */
+
 
 /*
  * uvm_pmalloc flags.
