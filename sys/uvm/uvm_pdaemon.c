@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.123 2024/11/07 10:18:51 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.124 2024/11/07 10:23:02 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -198,6 +198,14 @@ uvmpd_tune(void)
  */
 volatile int uvm_nowait_failed;
 
+static inline int
+uvmpd_pma_done(struct uvm_pmalloc *pma)
+{
+	if (pma == NULL || (pma->pm_flags & UVM_PMA_FREED))
+		return 1;
+	return 0;
+}
+
 /*
  * uvm_pageout: the main loop for the pagedaemon
  */
@@ -273,7 +281,8 @@ uvm_pageout(void *arg)
 		 * scan if needed
 		 */
 		uvm_lock_pageq();
-		if (pma != NULL || (shortage > 0) || (inactive_shortage > 0)) {
+		if (!uvmpd_pma_done(pma) ||
+		    (shortage > 0) || (inactive_shortage > 0)) {
 			uvmpd_scan(pma, shortage, inactive_shortage,
 			    &constraint);
 		}
@@ -485,7 +494,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
 			/*
 			 * see if we've met our target
 			 */
-			if (((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
+			if ((uvmpd_pma_done(pma) &&
 			    (uvmexp.paging >= (shortage - freed))) ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				if (swslot == 0) {
@@ -582,7 +591,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
 			 * this page is dirty, skip it if we'll have met our
 			 * free target when all the current pageouts complete.
 			 */
-			if ((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
+			if (uvmpd_pma_done(pma) &&
 			    (uvmexp.paging > (shortage - freed))) {
 				rw_exit(slock);
 				continue;
