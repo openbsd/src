@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.67 2024/10/02 10:12:52 mpi Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.68 2024/11/07 08:12:12 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -189,6 +189,20 @@
 #include <machine/param.h>
 #include <arm/cpufunc.h>
 
+/*
+ * XXX We want to use proper TEX settings eventually.
+ */
+
+#define	PTE_L1_S_CACHE_MODE	(L1_S_B | L1_S_C)
+#define	PTE_L1_S_CACHE_MODE_PT	(L1_S_B | L1_S_C)
+
+/* write-allocate should be tested */
+#define	PTE_L2_L_CACHE_MODE	(L2_B | L2_C)
+#define	PTE_L2_S_CACHE_MODE	(L2_B | L2_C)
+
+#define	PTE_L2_L_CACHE_MODE_PT	(L2_B | L2_C)
+#define	PTE_L2_S_CACHE_MODE_PT	(L2_B | L2_C)
+
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
 
@@ -264,8 +278,8 @@ paddr_t pmap_kernel_l2ptp_phys;
 /*
  * pmap copy/zero page, wb page, and mem(5) hook point
  */
-pt_entry_t *csrc_pte, *cdst_pte, *cwb_pte;
-vaddr_t csrcp, cdstp, cwbp;
+pt_entry_t *csrc_pte, *cdst_pte;
+vaddr_t csrcp, cdstp;
 char *memhook;
 extern caddr_t msgbufaddr;
 
@@ -1157,7 +1171,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			mapped = 0;
 		}
 
-		npte |= pte_l2_s_cache_mode;
+		npte |= PTE_L2_S_CACHE_MODE;
 
 		if (pg == opg) {
 			/*
@@ -1375,7 +1389,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, opte, npte;
-	pt_entry_t cache_mode = pte_l2_s_cache_mode;
+	pt_entry_t cache_mode = PTE_L2_S_CACHE_MODE;
 
 	NPDEBUG(PDB_KENTER,
 	    printf("pmap_kenter_pa: va 0x%08lx, pa 0x%08lx, prot 0x%x\n",
@@ -1871,7 +1885,7 @@ pmap_reference(pmap_t pm)
  * _any_ bulk data very slow.
  */
 void
-pmap_zero_page_generic(struct vm_page *pg)
+pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 #ifdef DEBUG
@@ -1884,7 +1898,7 @@ pmap_zero_page_generic(struct vm_page *pg)
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
 	*cdst_pte = L2_S_PROTO | phys | L2_V7_AF |
-	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | PTE_L2_S_CACHE_MODE;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
 	bzero_page(cdstp);
@@ -1898,7 +1912,7 @@ pmap_zero_page_generic(struct vm_page *pg)
  * pmap_zero_page also applies here.
  */
 void
-pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
+pmap_copy_page(struct vm_page *src_pg, struct vm_page *dst_pg)
 {
 	paddr_t src = VM_PAGE_TO_PHYS(src_pg);
 	paddr_t dst = VM_PAGE_TO_PHYS(dst_pg);
@@ -1913,10 +1927,10 @@ pmap_copy_page_generic(struct vm_page *src_pg, struct vm_page *dst_pg)
 	 * as required.
 	 */
 	*csrc_pte = L2_S_PROTO | src | L2_V7_AF |
-	    L2_S_PROT(PTE_KERNEL, PROT_READ) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_READ) | PTE_L2_S_CACHE_MODE;
 	PTE_SYNC(csrc_pte);
 	*cdst_pte = L2_S_PROTO | dst | L2_V7_AF |
-	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, PROT_WRITE) | PTE_L2_S_CACHE_MODE;
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
@@ -2001,7 +2015,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			/*
 			 * Need to allocate a backing page
 			 */
-			if (pmap_grow_map(nva, pte_l2_s_cache_mode, NULL))
+			if (pmap_grow_map(nva, PTE_L2_S_CACHE_MODE, NULL))
 				return (NULL);
 		}
 
@@ -2014,7 +2028,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			 * Map in another page to cover it.
 			 */
 			if (pmap_grow_map(trunc_page(nva),
-			    pte_l2_s_cache_mode, NULL))
+			    PTE_L2_S_CACHE_MODE, NULL))
 				return (NULL);
 		}
 
@@ -2044,7 +2058,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			/*
 			 * Need to allocate a backing page
 			 */
-			if (pmap_grow_map(nva, pte_l2_s_cache_mode_pt,
+			if (pmap_grow_map(nva, PTE_L2_S_CACHE_MODE_PT,
 			    &pmap_kernel_l2ptp_phys))
 				return (NULL);
 			PTE_SYNC_RANGE(ptep, PAGE_SIZE / sizeof(pt_entry_t));
@@ -2328,7 +2342,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 
 	pmap_alloc_specials(&virtual_avail, 1, &csrcp, &csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
-	pmap_alloc_specials(&virtual_avail, 1, &cwbp, &cwb_pte);
 	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
 	    (void *)&msgbufaddr, NULL);
@@ -2491,11 +2504,11 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 		break;
 
 	case PTE_CACHE:
-		fl = pte_l1_s_cache_mode;
+		fl = PTE_L1_S_CACHE_MODE;
 		break;
 
 	case PTE_PAGETABLE:
-		fl = pte_l1_s_cache_mode_pt;
+		fl = PTE_L1_S_CACHE_MODE_PT;
 		break;
 	}
 
@@ -2523,11 +2536,11 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 		break;
 
 	case PTE_CACHE:
-		fl = pte_l2_s_cache_mode;
+		fl = PTE_L2_S_CACHE_MODE;
 		break;
 
 	case PTE_PAGETABLE:
-		fl = pte_l2_s_cache_mode_pt;
+		fl = PTE_L2_S_CACHE_MODE_PT;
 		break;
 	}
 
@@ -2614,15 +2627,15 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		break;
 
 	case PTE_CACHE:
-		f1 = pte_l1_s_cache_mode;
-		f2l = pte_l2_l_cache_mode;
-		f2s = pte_l2_s_cache_mode;
+		f1 = PTE_L1_S_CACHE_MODE;
+		f2l = PTE_L2_L_CACHE_MODE;
+		f2s = PTE_L2_S_CACHE_MODE;
 		break;
 
 	case PTE_PAGETABLE:
-		f1 = pte_l1_s_cache_mode_pt;
-		f2l = pte_l2_l_cache_mode_pt;
-		f2s = pte_l2_s_cache_mode_pt;
+		f1 = PTE_L1_S_CACHE_MODE_PT;
+		f2l = PTE_L2_L_CACHE_MODE_PT;
+		f2s = PTE_L2_S_CACHE_MODE_PT;
 		break;
 	}
 
@@ -2712,105 +2725,15 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 /********************** PTE initialization routines **************************/
 
 /*
- * These routines are called when the CPU type is identified to set up
- * the PTE prototypes, cache modes, etc.
- *
- * The variables are always here, just in case LKMs need to reference
- * them (though, they shouldn't).
+ * This routine is called to set up cache modes, etc.
  */
-
-pt_entry_t	pte_l1_s_cache_mode;
-pt_entry_t	pte_l1_s_cache_mode_pt;
-pt_entry_t	pte_l1_s_cache_mask;
-
-pt_entry_t	pte_l2_l_cache_mode;
-pt_entry_t	pte_l2_l_cache_mode_pt;
-pt_entry_t	pte_l2_l_cache_mask;
-
-pt_entry_t	pte_l2_s_cache_mode;
-pt_entry_t	pte_l2_s_cache_mode_pt;
-pt_entry_t	pte_l2_s_cache_mask;
-
-pt_entry_t	pte_l1_s_coherent;
-pt_entry_t	pte_l2_l_coherent;
-pt_entry_t	pte_l2_s_coherent;
-
-pt_entry_t	pte_l1_s_prot_ur;
-pt_entry_t	pte_l1_s_prot_uw;
-pt_entry_t	pte_l1_s_prot_kr;
-pt_entry_t	pte_l1_s_prot_kw;
-pt_entry_t	pte_l1_s_prot_mask;
-
-pt_entry_t	pte_l2_l_prot_ur;
-pt_entry_t	pte_l2_l_prot_uw;
-pt_entry_t	pte_l2_l_prot_kr;
-pt_entry_t	pte_l2_l_prot_kw;
-pt_entry_t	pte_l2_l_prot_mask;
-
-pt_entry_t	pte_l2_s_prot_ur;
-pt_entry_t	pte_l2_s_prot_uw;
-pt_entry_t	pte_l2_s_prot_kr;
-pt_entry_t	pte_l2_s_prot_kw;
-pt_entry_t	pte_l2_s_prot_mask;
-
-pt_entry_t	pte_l1_s_proto;
-pt_entry_t	pte_l1_c_proto;
-pt_entry_t	pte_l2_s_proto;
-
-void		(*pmap_copy_page_func)(struct vm_page *, struct vm_page *);
-void		(*pmap_zero_page_func)(struct vm_page *);
 
 void
 pmap_pte_init_armv7(void)
 {
 	uint32_t id_mmfr0, id_mmfr3;
 
-	/*
-	 * XXX We want to use proper TEX settings eventually.
-	 */
-
-	/* write-allocate should be tested */
-	pte_l1_s_cache_mode = L1_S_C|L1_S_B;
-	pte_l2_l_cache_mode = L2_C|L2_B;
-	pte_l2_s_cache_mode = L2_C|L2_B;
-
-	pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_B|L2_C;
-	pte_l2_s_cache_mode_pt = L2_B|L2_C;
 	pmap_needs_pte_sync = 1;
-
-	pte_l1_s_cache_mask = L1_S_CACHE_MASK_v7;
-	pte_l2_l_cache_mask = L2_L_CACHE_MASK_v7;
-	pte_l2_s_cache_mask = L2_S_CACHE_MASK_v7;
-
-	pte_l1_s_coherent = L1_S_COHERENT_v7;
-	pte_l2_l_coherent = L2_L_COHERENT_v7;
-	pte_l2_s_coherent = L2_S_COHERENT_v7;
-
-	pte_l1_s_prot_ur = L1_S_PROT_UR_v7;
-	pte_l1_s_prot_uw = L1_S_PROT_UW_v7;
-	pte_l1_s_prot_kr = L1_S_PROT_KR_v7;
-	pte_l1_s_prot_kw = L1_S_PROT_KW_v7;
-	pte_l1_s_prot_mask = L1_S_PROT_MASK_v7;
-
-	pte_l2_l_prot_ur = L2_L_PROT_UR_v7;
-	pte_l2_l_prot_uw = L2_L_PROT_UW_v7;
-	pte_l2_l_prot_kr = L2_L_PROT_KR_v7;
-	pte_l2_l_prot_kw = L2_L_PROT_KW_v7;
-	pte_l2_l_prot_mask = L2_L_PROT_MASK_v7;
-
-	pte_l2_s_prot_ur = L2_S_PROT_UR_v7;
-	pte_l2_s_prot_uw = L2_S_PROT_UW_v7;
-	pte_l2_s_prot_kr = L2_S_PROT_KR_v7;
-	pte_l2_s_prot_kw = L2_S_PROT_KW_v7;
-	pte_l2_s_prot_mask = L2_S_PROT_MASK_v7;
-
-	pte_l1_s_proto = L1_S_PROTO_v7;
-	pte_l1_c_proto = L1_C_PROTO_v7;
-	pte_l2_s_proto = L2_S_PROTO_v7;
-
-	pmap_copy_page_func = pmap_copy_page_generic;
-	pmap_zero_page_func = pmap_zero_page_generic;
 
 	/* Check if the PXN bit is supported. */
 	__asm volatile("mrc p15, 0, %0, c0, c1, 4" : "=r"(id_mmfr0));

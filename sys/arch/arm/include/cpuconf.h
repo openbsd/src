@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.19 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.20 2024/11/07 08:12:12 miod Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -38,12 +38,6 @@
 
 #ifndef _ARM_CPUCONF_H_
 #define	_ARM_CPUCONF_H_
-
-/*
- * IF YOU CHANGE THIS FILE, MAKE SURE TO UPDATE THE DEFINITION OF
- * "PMAP_NEEDS_PTE_SYNC" IN <arm/arm/pmap.h> FOR THE CPU TYPE
- * YOU ARE ADDING SUPPORT FOR.
- */
 
 /*
  * Define which MMU classes are configured:

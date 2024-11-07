@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.56 2024/04/29 12:24:46 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.57 2024/11/07 08:12:12 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -279,20 +279,16 @@ vtopte(vaddr_t va)
 }
 
 /*
- * The new pmap ensures that page-tables are always mapping Write-Thru.
+ * Page tables are always mapped write-through.
  * Thus, on some platforms we can run fast and loose and avoid syncing PTEs
  * on every change.
  *
  * Unfortunately, not all CPUs have a write-through cache mode.  So we
- * define PMAP_NEEDS_PTE_SYNC for C code to conditionally do PTE syncs,
- * and if there is the chance for PTE syncs to be needed, we define
- * PMAP_INCLUDE_PTE_SYNC so e.g. assembly code can include (and run)
- * the code.
+ * define PMAP_NEEDS_PTE_SYNC for C code to conditionally do PTE syncs.
  */
 extern int pmap_needs_pte_sync;
 
 #define	PMAP_NEEDS_PTE_SYNC	pmap_needs_pte_sync
-#define	PMAP_INCLUDE_PTE_SYNC
 
 #define	PTE_SYNC(pte)							\
 do {									\
@@ -342,59 +338,7 @@ do {									\
 
 /************************* ARM MMU configuration *****************************/
 
-#if (ARM_MMU_V7) != 0
-void	pmap_copy_page_generic(struct vm_page *, struct vm_page *);
-void	pmap_zero_page_generic(struct vm_page *);
-
-void	pmap_pte_init_generic(void);
 void	pmap_pte_init_armv7(void);
-#endif /* (ARM_MMU_V7) != 0 */
-
-#if ARM_MMU_V7 == 1
-void	pmap_pte_init_v7(void);
-#endif /* ARM_MMU_V7 == 1 */
-
-extern pt_entry_t		pte_l1_s_cache_mode;
-extern pt_entry_t		pte_l1_s_cache_mask;
-
-extern pt_entry_t		pte_l2_l_cache_mode;
-extern pt_entry_t		pte_l2_l_cache_mask;
-
-extern pt_entry_t		pte_l2_s_cache_mode;
-extern pt_entry_t		pte_l2_s_cache_mask;
-
-extern pt_entry_t		pte_l1_s_cache_mode_pt;
-extern pt_entry_t		pte_l2_l_cache_mode_pt;
-extern pt_entry_t		pte_l2_s_cache_mode_pt;
-
-extern pt_entry_t		pte_l1_s_coherent;
-extern pt_entry_t		pte_l2_l_coherent;
-extern pt_entry_t		pte_l2_s_coherent;
-
-extern pt_entry_t		pte_l1_s_prot_ur;
-extern pt_entry_t		pte_l1_s_prot_uw;
-extern pt_entry_t		pte_l1_s_prot_kr;
-extern pt_entry_t		pte_l1_s_prot_kw;
-extern pt_entry_t		pte_l1_s_prot_mask;
-
-extern pt_entry_t		pte_l2_l_prot_ur;
-extern pt_entry_t		pte_l2_l_prot_uw;
-extern pt_entry_t		pte_l2_l_prot_kr;
-extern pt_entry_t		pte_l2_l_prot_kw;
-extern pt_entry_t		pte_l2_l_prot_mask;
-
-extern pt_entry_t		pte_l2_s_prot_ur;
-extern pt_entry_t		pte_l2_s_prot_uw;
-extern pt_entry_t		pte_l2_s_prot_kr;
-extern pt_entry_t		pte_l2_s_prot_kw;
-extern pt_entry_t		pte_l2_s_prot_mask;
- 
-extern pt_entry_t		pte_l1_s_proto;
-extern pt_entry_t		pte_l1_c_proto;
-extern pt_entry_t		pte_l2_s_proto;
-
-extern void (*pmap_copy_page_func)(struct vm_page *, struct vm_page *);
-extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #endif /* !_LOCORE */
 
@@ -450,45 +394,6 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L2_S_PROTO_v7		(L2_TYPE_S)
 
-/*
- * User-visible names for the ones that vary with MMU class.
- */
-
-#if ARM_NMMUS > 1
-/* More than one MMU class configured; use variables. */
-#define	L1_S_PROT_UR		pte_l1_s_prot_ur
-#define	L1_S_PROT_UW		pte_l1_s_prot_uw
-#define	L1_S_PROT_KR		pte_l1_s_prot_kr
-#define	L1_S_PROT_KW		pte_l1_s_prot_kw
-#define	L1_S_PROT_MASK		pte_l1_s_prot_mask
-
-#define	L2_L_PROT_UR		pte_l2_l_prot_ur
-#define	L2_L_PROT_UW		pte_l2_l_prot_uw
-#define	L2_L_PROT_KR		pte_l2_l_prot_kr
-#define	L2_L_PROT_KW		pte_l2_l_prot_kw
-#define	L2_L_PROT_MASK		pte_l2_l_prot_mask
-
-#define	L2_S_PROT_UR		pte_l2_s_prot_ur
-#define	L2_S_PROT_UW		pte_l2_s_prot_uw
-#define	L2_S_PROT_KR		pte_l2_s_prot_kr
-#define	L2_S_PROT_KW		pte_l2_s_prot_kw
-#define	L2_S_PROT_MASK		pte_l2_s_prot_mask
-
-#define	L1_S_CACHE_MASK		pte_l1_s_cache_mask
-#define	L2_L_CACHE_MASK		pte_l2_l_cache_mask
-#define	L2_S_CACHE_MASK		pte_l2_s_cache_mask
-
-#define	L1_S_COHERENT		pte_l1_s_coherent
-#define	L2_L_COHERENT		pte_l2_l_coherent
-#define	L2_S_COHERENT		pte_l2_s_coherent
-
-#define	L1_S_PROTO		pte_l1_s_proto
-#define	L1_C_PROTO		pte_l1_c_proto
-#define	L2_S_PROTO		pte_l2_s_proto
-
-#define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
-#define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
-#elif ARM_MMU_V7 == 1
 #define	L1_S_PROT_UR		L1_S_PROT_UR_v7
 #define	L1_S_PROT_UW		L1_S_PROT_UW_v7
 #define	L1_S_PROT_KR		L1_S_PROT_KR_v7
@@ -518,10 +423,6 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROTO		L1_S_PROTO_v7
 #define	L1_C_PROTO		L1_C_PROTO_v7
 #define	L2_S_PROTO		L2_S_PROTO_v7
-
-#define	pmap_copy_page(s, d)	pmap_copy_page_generic((s), (d))
-#define	pmap_zero_page(d)	pmap_zero_page_generic((d))
-#endif /* ARM_NMMUS > 1 */
 
 /*
  * These macros return various bits based on kernel/user and protection.
