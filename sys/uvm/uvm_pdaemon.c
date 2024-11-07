@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.127 2024/11/07 10:41:01 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.128 2024/11/07 10:42:26 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ extern unsigned long drmbackoff(long);
 struct rwlock	*uvmpd_trylockowner(struct vm_page *);
 void		uvmpd_scan(struct uvm_pmalloc *, int, int);
 int		uvmpd_scan_inactive(struct uvm_pmalloc *, int);
+void		uvmpd_scan_active(struct uvm_pmalloc *, int, int);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
 int		uvmpd_dropswap(struct vm_page *);
@@ -259,15 +260,27 @@ uvm_pageout(void *arg)
 			uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
 		uvm_unlock_pageq();
 
-		/* Reclaim pages from the buffer cache if possible. */
 		size = 0;
 		if (pma != NULL)
 			size += pma->pm_size >> PAGE_SHIFT;
 		if (shortage > 0)
 			size += shortage;
-		if (size == 0)
-			size = 16; /* XXX */
 
+		if (size == 0) {
+			/*
+			 * Since the inactive target just got updated
+			 * above both `size' and `inactive_shortage' can
+			 * be 0.
+			 */
+			if (inactive_shortage) {
+				uvm_lock_pageq();
+				uvmpd_scan_active(NULL, 0, inactive_shortage);
+				uvm_unlock_pageq();
+			}
+			continue;
+		}
+
+		/* Reclaim pages from the buffer cache if possible. */
 		shortage -= bufbackoff(&constraint, size * 2);
 #if NDRM > 0
 		shortage -= drmbackoff(size * 2);
@@ -897,8 +910,6 @@ void
 uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage)
 {
 	int swap_shortage, pages_freed;
-	struct vm_page *p, *nextpg;
-	struct rwlock *slock;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
@@ -940,6 +951,18 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage)
 	    pages_freed == 0) {
 		swap_shortage = shortage;
 	}
+
+	uvmpd_scan_active(pma, swap_shortage, inactive_shortage);
+}
+
+void
+uvmpd_scan_active(struct uvm_pmalloc *pma, int swap_shortage,
+    int inactive_shortage)
+{
+	struct vm_page *p, *nextpg;
+	struct rwlock *slock;
+
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	for (p = TAILQ_FIRST(&uvm.page_active);
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
