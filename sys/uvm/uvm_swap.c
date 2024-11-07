@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.172 2024/10/30 06:16:27 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.173 2024/11/07 09:04:55 jsg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1624,7 +1624,7 @@ uvm_swap_free(int startslot, int nslots)
 
 					key = SWD_KEY(sdp, startslot + i);
 					if (key->refcount != 0)
-						SWAP_KEY_PUT(sdp, key);
+						swap_key_put(key);
 				}
 
 			/* Mark range as not decrypt */
@@ -1813,7 +1813,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 
 			if (encrypt) {
 				key = SWD_KEY(sdp, startslot + i);
-				SWAP_KEY_GET(sdp, key);	/* add reference */
+				swap_key_get(key);	/* add reference */
 
 				swap_encrypt(key, src, dst, block, PAGE_SIZE);
 				block += btodb(PAGE_SIZE);
