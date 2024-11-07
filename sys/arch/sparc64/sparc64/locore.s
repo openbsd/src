@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.227 2024/11/06 12:26:54 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.228 2024/11/07 07:29:47 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3336,7 +3336,6 @@ sparc_interrupt:
 	sth	%l5, [%sp + CC64FSZ + BIAS + TF_TT]! debug
 	stx	%l0, [%sp + CC64FSZ + BIAS + TF_TSTATE]	! set up intrframe/clockframe
 	stx	%l1, [%sp + CC64FSZ + BIAS + TF_PC]
-	btst	TSTATE_PRIV, %l0		! User mode?
 	stx	%l2, [%sp + CC64FSZ + BIAS + TF_NPC]
 	
 	sub	%l5, 0x40, %l6			! Convert to interrupt level
@@ -3362,7 +3361,6 @@ sparc_intr_retry:
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	sll	%l6, 3, %l2
 	add	%g7, CI_INTRPENDING, %l4
-	mov	8, %l7
 	add	%l2, %l4, %l4
 
 1:
