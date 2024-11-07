@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.73 2024/11/06 10:41:12 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.74 2024/11/07 10:39:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -841,7 +841,7 @@ uvm_pmr_extract_range(struct uvm_pmemrange *pmr, struct vm_page *pg,
  * recover at least some memory in the most restricted region (assumed
  * to be dma_constraint).
  */
-extern volatile int uvm_nowait_failed;
+extern struct uvm_pmalloc nowait_pma;
 
 /*
  * Acquire a number of pages.
@@ -1190,9 +1190,12 @@ fail:
 		    flags & UVM_PLA_FAILOK) == 0)
 			goto retry;
 		KASSERT(flags & UVM_PLA_FAILOK);
-	} else {
-		if (!(flags & UVM_PLA_NOWAKE)) {
-			uvm_nowait_failed = 1;
+	} else if (!(flags & UVM_PLA_NOWAKE)) {
+		struct uvm_pmalloc *pma = &nowait_pma;
+
+		if (!(nowait_pma.pm_flags & UVM_PMA_LINKED)) {
+			nowait_pma.pm_flags = UVM_PMA_LINKED;
+			TAILQ_INSERT_TAIL(&uvm.pmr_control.allocs, pma, pmq);
 			wakeup(&uvm.pagedaemon);
 		}
 	}

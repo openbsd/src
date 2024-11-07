@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.125 2024/11/07 10:31:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.126 2024/11/07 10:39:15 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ uvmpd_tune(void)
  * recover at least some memory in the most restricted region (assumed
  * to be dma_constraint).
  */
-volatile int uvm_nowait_failed;
+struct uvm_pmalloc nowait_pma;
 
 static inline int
 uvmpd_pma_done(struct uvm_pmalloc *pma)
@@ -219,11 +219,19 @@ uvm_pageout(void *arg)
 	(void) spl0();
 	uvmpd_tune();
 
+	/*
+	 * XXX realistically, this is what our nowait callers probably
+	 * care about.
+	 */
+	nowait_pma.pm_constraint = dma_constraint;
+	nowait_pma.pm_size = (16 << PAGE_SHIFT); /* XXX */
+	nowait_pma.pm_flags = 0;
+
 	for (;;) {
 		long size;
 
 		uvm_lock_fpageq();
-		if (!uvm_nowait_failed && TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
+		if (TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
 			msleep_nsec(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", INFSLP);
 			uvmexp.pdwoke++;
@@ -233,15 +241,7 @@ uvm_pageout(void *arg)
 			pma->pm_flags |= UVM_PMA_BUSY;
 			constraint = pma->pm_constraint;
 		} else {
-			if (uvm_nowait_failed) {
-				/*
-				 * XXX realistically, this is what our
-				 * nowait callers probably care about
-				 */
-				constraint = dma_constraint;
-				uvm_nowait_failed = 0;
-			} else
-				constraint = no_constraint;
+			constraint = no_constraint;
 		}
 		/* How many pages do we need to free during this round? */
 		shortage = uvmexp.freetarg - uvmexp.free + BUFPAGES_DEFICIT;
@@ -303,8 +303,7 @@ uvm_pageout(void *arg)
 			pma->pm_flags &= ~UVM_PMA_BUSY;
 			if (pma->pm_flags & UVM_PMA_FREED) {
 				pma->pm_flags &= ~UVM_PMA_LINKED;
-				TAILQ_REMOVE(&uvm.pmr_control.allocs, pma,
-				    pmq);
+				TAILQ_REMOVE(&uvm.pmr_control.allocs, pma, pmq);
 				wakeup(pma);
 			}
 		}
