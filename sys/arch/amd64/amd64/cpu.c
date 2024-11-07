@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.194 2024/10/06 16:24:02 semarie Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.195 2024/11/07 17:24:42 bluhm Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1472,7 +1472,48 @@ wbinvd_on_all_cpus(void)
 	wbinvd();
 	return 0;
 }
-#endif
+
+volatile long wbinvd_wait __attribute__((section(".kudata")));
+
+void
+wbinvd_on_all_cpus_acked(void)
+{
+	struct cpu_info *ci, *self = curcpu();;
+	CPU_INFO_ITERATOR cii;
+	long wait = 0;
+	u_int64_t mask = 0;
+	int s;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == self)
+			continue;
+		mask |= (1ULL << ci->ci_cpuid);
+		wait++;
+	}
+
+	KASSERT(wait > 0);
+
+	s = splvm();
+	while (atomic_cas_ulong(&wbinvd_wait, 0 , wait) != 0) {
+		while (wbinvd_wait != 0) {
+			CPU_BUSY_CYCLE();
+		}
+	}
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if ((mask & (1ULL << ci->ci_cpuid)) == 0)
+			continue;
+		if (x86_fast_ipi(ci, LAPIC_IPI_WBINVD) != 0)
+			panic("%s: ipi failed", __func__);
+	}
+	splx(s);
+
+	wbinvd();
+
+	while (wbinvd_wait != 0)
+		CPU_BUSY_CYCLE();
+}
+#endif /* MULTIPROCESSOR */
 
 int cpu_suspended;
 int cpu_wakeups;
