@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.18 2024/11/07 06:37:18 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.19 2024/11/07 16:00:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -1092,14 +1092,21 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 	}
 
 	if (radius_get_ipv4_attr(radpkt, RADIUS_TYPE_FRAMED_IP_ADDRESS, &addr4)
-	    != 0)
+	    != 0) {
+		log_warnx("q=%u no Framed-IP-Address-Address attribute", q_id);
 		goto out;
+	}
 	if (radius_get_string_attr(radpkt, RADIUS_TYPE_USER_NAME, username,
-	    sizeof(username)) != 0)
+	    sizeof(username)) != 0) {
+		log_warnx("q=%u no User-Name attribute", q_id);
 		goto out;
-	if ((assign = ipcp_ipv4_find(self, addr4)) == NULL)
+	}
+	if ((assign = ipcp_ipv4_find(self, addr4)) == NULL) {
 		/* not assigned by this */
+		log_warnx("q=%u %s is not assigned by us", q_id,
+		    inet_ntop(AF_INET, &addr4, buf, sizeof(buf)));
 		goto out;
+	}
 
 	if (radius_get_uint32_attr(radpkt, RADIUS_TYPE_ACCT_DELAY_TIME, &delay)
 	    != 0)
@@ -1307,7 +1314,11 @@ ipcp_ipv4_release(struct module_ipcp *self, struct assigned_ipv4 *assign)
 int
 assigned_ipv4_compar(struct assigned_ipv4 *a, struct assigned_ipv4 *b)
 {
-	return (b->ipv4.s_addr - a->ipv4.s_addr);
+	if (a->ipv4.s_addr > b->ipv4.s_addr)
+		return (1);
+	else if (a->ipv4.s_addr < b->ipv4.s_addr)
+		return (-1);
+	return (0);
 }
 
 struct user *
