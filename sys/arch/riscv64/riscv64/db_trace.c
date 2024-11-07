@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2024/10/17 01:57:18 jsg Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2024/11/07 16:02:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -54,7 +54,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	char		c, *cp = modif;
 	db_expr_t	offset;
 	Elf_Sym *	sym;
-	char		*name;
+	const char	*name;
 	int		kernel_only = 1;
 
 	while ((c = *cp++) != 0) {

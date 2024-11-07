@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.134 2024/01/11 19:16:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.135 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = frame->exc;
 	union sigval sv;
-	char *name;
+	const char *name;
 	db_expr_t offset;
 	faultbuf *fb;
 	struct vm_map *map;

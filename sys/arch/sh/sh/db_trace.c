@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.10 2019/11/07 16:08:08 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.11 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			if ((tf->tf_ssr & PSL_MD) == 0)
 				break;
 		} else {
-			char *name;
+			const char *name;
 			db_expr_t offset;
 			Elf_Sym *sym;
 

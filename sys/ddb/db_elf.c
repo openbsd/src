@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.33 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.34 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 
 db_symtab_t db_symtab;
 
-Elf_Sym		*db_elf_sym_lookup(char *);
+Elf_Sym		*db_elf_sym_lookup(const char *);
 
 /*
  * Find the symbol table and strings; tell ddb about them.
@@ -185,20 +185,21 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
  * Internal helper function - return a pointer to the string table
  * for the current symbol table.
  */
-char *
+const char *
 db_elf_find_strtab(db_symtab_t *stab)
 {
 	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
 	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
-	char *shstrtab;
+	const char *shstrtab;
 	int i;
 
-	shstrtab = (char *)elf + shp[elf->e_shstrndx].sh_offset;
+	shstrtab = (const char *)elf + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
 		if (shp[i].sh_type == SHT_SYMTAB)
-			return ((char *)elf + shp[shp[i].sh_link].sh_offset);
+			return ((const char *)elf +
+			    shp[shp[i].sh_link].sh_offset);
 		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0)
-			return ((char *)elf + shp[i].sh_offset);
+			return ((const char *)elf + shp[i].sh_offset);
 	}
 
 	return (NULL);
@@ -232,11 +233,11 @@ db_elf_find_section(db_symtab_t *stab, size_t *size, const char *sname)
  * Lookup the symbol with the given name.
  */
 Elf_Sym *
-db_elf_sym_lookup(char *symstr)
+db_elf_sym_lookup(const char *symstr)
 {
 	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp, *symtab_start, *symtab_end;
-	char *strtab;
+	const char *strtab;
 
 	if (stab->private == NULL)
 		return (NULL);
@@ -328,11 +329,11 @@ db_elf_sym_search(vaddr_t off, db_strategy_t strategy, db_expr_t *diffp)
  * Return the name and value for a symbol.
  */
 void
-db_symbol_values(Elf_Sym *sym, char **namep, db_expr_t *valuep)
+db_symbol_values(Elf_Sym *sym, const char **namep, db_expr_t *valuep)
 {
 	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp = (Elf_Sym *)sym;
-	char *strtab;
+	const char *strtab;
 
 	if (sym == NULL) {
 		*namep = NULL;
@@ -359,7 +360,7 @@ db_symbol_values(Elf_Sym *sym, char **namep, db_expr_t *valuep)
  * if we can find the appropriate debugging symbol.
  */
 int
-db_elf_line_at_pc(Elf_Sym *cursym, char **filename,
+db_elf_line_at_pc(Elf_Sym *cursym, const char **filename,
     int *linenum, db_expr_t off)
 {
 	db_symtab_t *stab = &db_symtab;
@@ -390,7 +391,7 @@ void
 db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 {
 	db_symtab_t *stab = &db_symtab;
-	char *strtab;
+	const char *strtab;
 	static char suffix[2];
 	Elf_Sym *symp, *symtab_start, *symtab_end;
 
@@ -424,12 +425,12 @@ db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 				suffix[0] = '\0';
 			}
 			(*db_forall_func)(symp,
-			    strtab + symp->st_name, suffix, 0, arg);
+			    strtab + symp->st_name, suffix, arg);
 		}
 }
 
 Elf_Sym *
-db_symbol_by_name(char *name, db_expr_t *valuep)
+db_symbol_by_name(const char *name, db_expr_t *valuep)
 {
 	Elf_Sym		*sym;
 

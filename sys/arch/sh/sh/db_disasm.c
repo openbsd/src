@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 2019/11/07 16:08:07 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ disasm_branch(char *buf, size_t bufsiz, const char *opstr, vaddr_t addr)
 {
 	size_t len;
 	db_expr_t d, value;
-	char *name;
+	const char *name;
 	Elf_Sym *cursym;
 	extern unsigned long db_lastsym;
 	extern unsigned int db_maxoff;

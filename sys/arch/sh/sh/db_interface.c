@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2022/04/14 19:47:11 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -579,7 +579,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 __db_print_symbol(db_expr_t value)
 {
-	char *name;
+	const char *name;
 	db_expr_t offset;
 
 	db_find_sym_and_offset((vaddr_t)value, &name, &offset);

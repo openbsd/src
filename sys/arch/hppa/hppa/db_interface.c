@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.50 2024/02/23 18:19:03 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.51 2024/11/07 16:02:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -231,7 +231,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	register_t *fp, pc, rp, *argp;
 	Elf_Sym *sym;
 	db_expr_t off;
-	char *name;
+	const char *name;
 	int nargs;
 
 	if (count < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.38 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.39 2024/11/07 16:02:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -49,7 +49,7 @@ struct _abc {
 #define	ISLOWALPHA(c)	('a'<=(c) && (c)<='z')
 #define	ISALPHA(c)	ISLOWALPHA(TOLOWER(c))
 
-void	 db_hang(int, char *, struct _abc *);
+void	 db_hang(int, const char *, struct _abc *);
 
 u_long		db_plays, db_guesses;
 
@@ -72,10 +72,10 @@ struct db_hang_forall_arg {
 /*
  * Horrible abuse of the forall function, but we're not in a hurry.
  */
-static void db_hang_forall(Elf_Sym *, char *, char *, int, void *);
+static void db_hang_forall(Elf_Sym *, const char *, const char *, void *);
 
 static void
-db_hang_forall(Elf_Sym *sym, char *name, char *suff, int pre, void *varg)
+db_hang_forall(Elf_Sym *sym, const char *name, const char *suff, void *varg)
 {
 	struct db_hang_forall_arg *arg = varg;
 
@@ -83,11 +83,11 @@ db_hang_forall(Elf_Sym *sym, char *name, char *suff, int pre, void *varg)
 		arg->sym = sym;
 }
 
-static __inline char *
+static __inline const char *
 db_randomsym(size_t *lenp)
 {
 	int nsyms;
-	char	*p, *q;
+	const char	*p, *q;
 	struct db_hang_forall_arg dfa;
 
 	dfa.cnt = 0;
@@ -111,7 +111,7 @@ db_randomsym(size_t *lenp)
 }
 
 void
-db_hang(int tries, char *word, struct _abc *sabc)
+db_hang(int tries, const char *word, struct _abc *sabc)
 {
 	const char	*p;
 	int i;
@@ -152,7 +152,7 @@ db_hang(int tries, char *word, struct _abc *sabc)
 void
 db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	char	*word;
+	const char *word;
 	size_t	tries;
 	size_t	len;
 	struct _abc sabc[1];
@@ -179,7 +179,7 @@ db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		c = TOLOWER(c);
 
 		if (ISLOWALPHA(c) && ABC_ISCLR(c)) {
-			char	*p;
+			const char *p;
 			size_t	n;
 
 			/* strchr(word,c) */
@@ -200,7 +200,7 @@ db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 			continue;
 
 		if (!tries && skill > 2) {
-			char	*p = word;
+			const char *p = word;
 			for (; *p; p++)
 				if (ISALPHA(*p))
 					ABC_SETRIGHT(TOLOWER(*p));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.99 2024/08/11 00:49:34 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.100 2024/11/07 16:02:29 miod Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -937,7 +937,7 @@ db_show_timeout(struct timeout *to, struct circq *bucket)
 	char buf[8];
 	db_expr_t offset;
 	struct circq *wheel;
-	char *name, *where;
+	const char *name, *where;
 	int width = sizeof(long) * 2;
 
 	db_find_sym_and_offset((vaddr_t)to->to_func, &name, &offset);

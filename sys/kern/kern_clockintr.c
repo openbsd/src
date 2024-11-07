@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.70 2024/02/25 19:15:50 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.71 2024/11/07 16:02:29 miod Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -653,7 +653,7 @@ void
 db_show_clockintr(const struct clockintr *cl, const char *state, u_int cpu)
 {
 	struct timespec ts;
-	char *name;
+	const char *name;
 	db_expr_t offset;
 	int width = sizeof(long) * 2;
 

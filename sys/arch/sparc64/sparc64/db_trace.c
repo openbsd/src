@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.27 2024/04/08 20:07:53 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.28 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -96,7 +96,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	while (count--) {
 		int		i;
 		db_expr_t	offset;
-		char		*name;
+		const char	*name;
 		vaddr_t		pc;
 		struct frame	*f64;
 

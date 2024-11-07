@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.102 2024/09/05 08:52:27 bluhm Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.103 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -895,7 +895,7 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct db_variable *regp;
 	db_expr_t	value, offset;
-	char *		name;
+	const char *	name;
 	char		tmpfmt[28];
 
 	for (regp = db_regs; regp < db_eregs; regp++) {

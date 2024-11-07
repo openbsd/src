@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.56 2021/07/09 20:59:17 jasper Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.57 2024/11/07 16:02:29 miod Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ ddb_init(void)
 }
 
 int
-db_eqname(char *src, char *dst, int c)
+db_eqname(const char *src, const char *dst, int c)
 {
 	if (!strcmp(src, dst))
 		return (1);
@@ -139,8 +139,8 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
     int (*pr)(const char *, ...))
 {
 	db_expr_t	d;
-	char		*filename;
-	char		*name;
+	const char	*filename;
+	const char	*name;
 	db_expr_t	value;
 	int		linenum;
 	Elf_Sym		*cursym;

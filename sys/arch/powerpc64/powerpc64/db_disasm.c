@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2024/05/22 05:51:49 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2024/11/07 16:02:29 miod Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -568,7 +568,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 	int i;
 	char *pfmt = *ppfmt;
 	enum opf opf;
-	char *name;
+	const char *name;
 	db_expr_t offset;
 
 	/* find field */

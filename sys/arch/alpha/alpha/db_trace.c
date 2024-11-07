@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.23 2019/11/07 14:44:52 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.24 2024/11/07 16:02:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -172,7 +172,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	int		i, framesize;
 	vaddr_t		pc, ra;
 	u_int		inst;
-	char		*name;
+	const char	*name;
 	db_expr_t	offset;
 	db_regs_t	*regs;
 	u_long		*slot[32];

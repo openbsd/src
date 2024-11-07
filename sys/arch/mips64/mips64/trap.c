@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.173 2024/10/16 18:40:52 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.174 2024/11/07 16:02:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1128,7 +1128,7 @@ stacktrace_subr(struct trapframe *regs, int count,
 #ifdef DDB
 	db_expr_t diff;
 	Elf_Sym *sym;
-	char *symname;
+	const char *symname;
 #endif
 
 	/* get initial values from the exception frame */

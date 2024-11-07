@@ -51,27 +51,26 @@ typedef int		db_strategy_t;	/* search strategy */
 /*
  * Internal db_forall function calling convention:
  *
- * (*db_forall_func)(stab, sym, name, suffix, prefix, arg);
+ * (*db_forall_func)(sym, name, suffix, arg);
  *
- * stab is the symbol table, symbol the (opaque) symbol pointer,
- * name the name of the symbol, suffix a string representing
- * the type, prefix an initial ignorable function prefix (e.g. "_"
- * in a.out), and arg an opaque argument to be passed in.
+ * symbol is the (opaque) symbol pointer, name the name of the symbol,
+ * suffix a string representing the type, and arg an opaque argument to
+ * be passed in.
  */
-typedef void (db_forall_func_t)(Elf_Sym *, char *, char *, int, void *);
+typedef void (db_forall_func_t)(Elf_Sym *, const char *, const char *, void *);
 
 extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 
-int db_eqname(char *, char *, int);
+int db_eqname(const char *, const char *, int);
 					/* strcmp, modulo leading char */
 
-Elf_Sym * db_symbol_by_name(char *, db_expr_t *);
+Elf_Sym * db_symbol_by_name(const char *, db_expr_t *);
 					/* find symbol value given name */
 
 Elf_Sym * db_search_symbol(vaddr_t, db_strategy_t, db_expr_t *);
 					/* find symbol given value */
 
-void db_symbol_values(Elf_Sym *, char **, db_expr_t *);
+void db_symbol_values(Elf_Sym *, const char **, db_expr_t *);
 					/* return name and value of symbol */
 
 #define db_find_sym_and_offset(val,namep,offp)	\
@@ -87,7 +86,7 @@ void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));
 
 int db_elf_sym_init(int, void *, void *, const char *);
 Elf_Sym * db_elf_sym_search(vaddr_t, db_strategy_t, db_expr_t *);
-int db_elf_line_at_pc(Elf_Sym *, char **, int *, db_expr_t);
+int db_elf_line_at_pc(Elf_Sym *, const char **, int *, db_expr_t);
 void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);
 
 bool db_dwarf_line_at_pc(const char *, size_t, uintptr_t,

@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.29 2024/02/23 18:19:02 cheloha Exp $ */
+/* $OpenBSD: db_interface.c,v 1.30 2024/11/07 16:02:29 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -459,7 +459,7 @@ int
 db_valid_breakpoint(addr)
 	vaddr_t addr;
 {
-	char *name;
+	const char *name;
 	db_expr_t offset;
 
 	db_find_sym_and_offset(addr, &name, &offset);
