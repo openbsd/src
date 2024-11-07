@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.122 2024/11/06 10:45:51 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.123 2024/11/07 10:18:51 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -414,6 +414,23 @@ uvmpd_dropswap(struct vm_page *pg)
 }
 
 /*
+ * Return 1 if the page `p' belongs to the memory range described by
+ * 'constraint', 0 otherwise.
+ */
+static inline int
+uvmpd_match_constraint(struct vm_page *p,
+    struct uvm_constraint_range *constraint)
+{
+	paddr_t paddr;
+
+	paddr = atop(VM_PAGE_TO_PHYS(p));
+	if (paddr >= constraint->ucr_low && paddr < constraint->ucr_high)
+		return 1;
+
+	return 0;
+}
+
+/*
  * uvmpd_scan_inactive: scan an inactive list for pages to clean or free.
  *
  * => called with page queues locked
@@ -440,7 +457,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
 	boolean_t swap_backed;
 	vaddr_t start;
 	int dirtyreacts;
-	paddr_t paddr;
 
 	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
@@ -454,9 +470,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
 
 	/* Start with the first page on the list that fit in `constraint' */
 	TAILQ_FOREACH(p, pglst, pageq) {
-		paddr = atop(VM_PAGE_TO_PHYS(p));
-		if (paddr >= constraint->ucr_low &&
-		    paddr < constraint->ucr_high)
+		if (uvmpd_match_constraint(p, constraint))
 			break;
 	}
 
@@ -867,7 +881,6 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage,
 	int swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
 	struct rwlock *slock;
-	paddr_t paddr;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
@@ -921,9 +934,7 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage,
 		/*
 		 * skip this page if it doesn't match the constraint.
 		 */
-		paddr = atop(VM_PAGE_TO_PHYS(p));
-		if (paddr < constraint->ucr_low &&
-		    paddr >= constraint->ucr_high)
+		if (!uvmpd_match_constraint(p, &pma->pm_constraint))
 			continue;
 
 		/*
