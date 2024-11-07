@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.13 2022/03/22 22:58:00 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.14 2024/11/07 10:12:18 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -240,7 +240,7 @@ buffertls_handshakecb(int fd, short event, void *arg)
 	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_writecb, buftls);
 	if (bufev->enabled & EV_READ)
 		bufferevent_add(&bufev->ev_read, bufev->timeout_read);
-	if (EVBUFFER_LENGTH(bufev->output) != 0 && bufev->enabled & EV_WRITE)
+	if (bufev->enabled & EV_WRITE)
 		bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 
 	return;
