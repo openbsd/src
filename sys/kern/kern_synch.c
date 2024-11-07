@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.211 2024/11/05 18:02:03 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.212 2024/11/07 13:34:16 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -472,6 +472,7 @@ sleep_signal_check(struct proc *p, int nostop)
 		return err;
 	if ((sig = cursig(p, &ctx, 1)) != 0) {
 		if (!nostop && ctx.sig_stop) {
+			p->p_p->ps_xsig = sig;
 			SCHED_LOCK();
 			proc_stop(p, 0);
 			SCHED_UNLOCK();
