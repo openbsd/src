@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.126 2024/11/07 10:39:15 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.127 2024/11/07 10:41:01 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -514,6 +514,16 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			uvmexp.pdscans++;
 			nextpg = TAILQ_NEXT(p, pageq);
 
+			/*
+			 * If we are not short on memory and only interested
+			 * in releasing pages from a given memory range do not
+			 * bother with other pages.
+			 */
+			if (uvmexp.paging >= (shortage - freed) &&
+			    !uvmpd_pma_done(pma) &&
+			    !uvmpd_match_constraint(p, &pma->pm_constraint))
+				continue;
+
 			anon = p->uanon;
 			uobj = p->uobject;
 
@@ -940,9 +950,15 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage)
 		}
 
 		/*
-		 * skip this page if it doesn't match the constraint.
+		 * If we couldn't release enough pages from a given memory
+		 * range try to deactivate them first...
+		 *
+		 * ...unless we are low on swap slots, in such case we are
+		 * probably OOM and want to release swap resources as quickly
+		 * as possible.
 		 */
-		if (!uvmpd_pma_done(pma) &&
+		if (inactive_shortage > 0 && swap_shortage == 0 &&
+		    !uvmpd_pma_done(pma) &&
 		    !uvmpd_match_constraint(p, &pma->pm_constraint))
 			continue;
 
