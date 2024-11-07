@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.h,v 1.12 2024/05/28 12:31:24 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.h,v 1.13 2024/11/07 06:04:11 jsg Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -44,7 +44,6 @@
 	{ "keysdeleted", CTLTYPE_INT }, \
 }
 
-#define SWAP_KEY_EXPIRE (120 /*60 * 60*/)	/* time after that keys expire */
 #define SWAP_KEY_SIZE	4		/* 128-bit keys */
 
 struct swap_key {
