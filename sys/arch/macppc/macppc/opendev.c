@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.10 2020/04/02 19:27:51 gkoehler Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.11 2024/11/07 15:40:02 miod Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -68,43 +68,6 @@ OF_instance_to_package(int ihandle)
 	ppc_mtmsr(s);
 	return ret;
 }
-
-int
-OF_package_to_path(int phandle, char *buf, int buflen)
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int phandle;
-		char *buf;
-		int buflen;
-		int length;
-	} args = {
-		"package-to-path",
-		3,
-		1,
-	};
-	uint32_t s;
-	int ret;
-
-	if (buflen > PAGE_SIZE)
-		return -1;
-	s = ofw_msr();
-	args.phandle = phandle;
-	args.buf = OF_buf;
-	args.buflen = buflen;
-	if (openfirmware(&args) < 0)
-		ret = -1;
-	else {
-		if (args.length > 0)
-			ofbcopy(OF_buf, buf, args.length);
-		ret = args.length;
-	}
-	ppc_mtmsr(s);
-	return ret;
-}
-
 
 int
 OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
