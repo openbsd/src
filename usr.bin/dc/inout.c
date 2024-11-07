@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.23 2023/03/08 04:43:10 guenther Exp $	*/
+/*	$OpenBSD: inout.c,v 1.24 2024/11/07 16:20:00 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -38,7 +38,7 @@ static void	src_freestring(struct source *);
 static void	flushwrap(FILE *);
 static void	putcharwrap(FILE *, int);
 static void	printwrap(FILE *, const char *);
-static char	*get_digit(u_long, int, u_int);
+static void	get_digit(u_long, int, u_int, char *, size_t);
 
 static struct vtable stream_vtable = {
 	src_getcharstream,
@@ -264,20 +264,17 @@ read_string(struct source *src)
 	return p;
 }
 
-static char *
-get_digit(u_long num, int digits, u_int base)
+static void
+get_digit(u_long num, int digits, u_int base, char *buf, size_t sz)
 {
-	char *p;
-
 	if (base <= 16) {
-		p = bmalloc(2);
-		p[0] = num >= 10 ? num + 'A' - 10 : num + '0';
-		p[1] = '\0';
+		buf[0] = num >= 10 ? num + 'A' - 10 : num + '0';
+		buf[1] = '\0';
 	} else {
-		if (asprintf(&p, "%0*lu", digits, num) == -1)
-			err(1, NULL);
+		int ret = snprintf(buf, sz, "%0*lu", digits, num);
+		if (ret < 0 || (size_t)ret >= sz)
+			err(1, "truncation");
 	}
-	return p;
 }
 
 void
@@ -285,11 +282,10 @@ printnumber(FILE *f, const struct number *b, u_int base)
 {
 	struct number	*int_part, *fract_part;
 	int		digits;
-	char		buf[11];
-	size_t		sz;
+	char		buf[12], *str, *p;
+	size_t		allocated;
 	int		i;
-	struct stack	stack;
-	char		*p;
+	BN_ULONG	*mem;
 
 	charcount = 0;
 	lastchar = -1;
@@ -307,24 +303,49 @@ printnumber(FILE *f, const struct number *b, u_int base)
 	}
 	split_number(b, int_part->number, fract_part->number);
 
-	i = 0;
-	stack_init(&stack);
-	while (!BN_is_zero(int_part->number)) {
-		BN_ULONG rem = BN_div_word(int_part->number, base);
-		stack_pushstring(&stack, get_digit(rem, digits, base));
-		i++;
+	if (base == 10 && !BN_is_zero(int_part->number)) {
+		str = BN_bn2dec(int_part->number);
+		bn_checkp(str);
+		p = str;
+		while (*p)
+			putcharwrap(f, *p++);
+		free(str);
+	} else if (base == 16 && !BN_is_zero(int_part->number)) {
+		str = BN_bn2hex(int_part->number);
+		bn_checkp(str);
+		p = str;
+		if (*p == '-')
+			putcharwrap(f, *p++);
+		/* skip leading zero's */
+		while (*p == '0')
+			p++;
+		while (*p)
+			putcharwrap(f, *p++);
+		free(str);
+	} else {
+		i = 0;
+		allocated = 1;
+		mem = breallocarray(NULL, allocated, sizeof(BN_ULONG));
+		while (!BN_is_zero(int_part->number)) {
+			if (i >= allocated) {
+				allocated *= 2;
+				mem = breallocarray(mem, allocated,
+				    sizeof(BN_ULONG));
+			}
+			mem[i++] = BN_div_word(int_part->number, base);
+		}
+		if (BN_is_negative(b->number))
+			putcharwrap(f, '-');
+		for (i = i - 1; i >= 0; i--) {
+			get_digit(mem[i], digits, base, buf,
+			    sizeof(buf));
+			if (base > 16)
+				putcharwrap(f, ' ');
+			printwrap(f, buf);
+		}
+		free(mem);
 	}
-	sz = i;
-	if (BN_is_negative(b->number))
-		putcharwrap(f, '-');
-	for (i = 0; i < sz; i++) {
-		p = stack_popstring(&stack);
-		if (base > 16)
-			putcharwrap(f, ' ');
-		printwrap(f, p);
-		free(p);
-	}
-	stack_clear(&stack);
+
 	if (b->scale > 0) {
 		struct number	*num_base;
 		BIGNUM		*mult, *stop;
@@ -352,13 +373,12 @@ printnumber(FILE *f, const struct number *b, u_int base)
 			    bmachine_scale());
 			split_number(fract_part, int_part->number, NULL);
 			rem = BN_get_word(int_part->number);
-			p = get_digit(rem, digits, base);
+			get_digit(rem, digits, base, buf, sizeof(buf));
 			int_part->scale = 0;
 			normalize(int_part, fract_part->scale);
 			bn_check(BN_sub(fract_part->number, fract_part->number,
 			    int_part->number));
-			printwrap(f, p);
-			free(p);
+			printwrap(f, buf);
 			bn_check(BN_mul_word(mult, base));
 		}
 		free_number(num_base);
