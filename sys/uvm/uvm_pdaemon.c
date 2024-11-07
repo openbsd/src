@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.124 2024/11/07 10:23:02 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.125 2024/11/07 10:31:11 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -102,10 +102,8 @@ extern unsigned long drmbackoff(long);
  */
 
 struct rwlock	*uvmpd_trylockowner(struct vm_page *);
-void		uvmpd_scan(struct uvm_pmalloc *, int, int,
-		    struct uvm_constraint_range *);
-int		uvmpd_scan_inactive(struct uvm_pmalloc *, int,
-		    struct uvm_constraint_range *);
+void		uvmpd_scan(struct uvm_pmalloc *, int, int);
+int		uvmpd_scan_inactive(struct uvm_pmalloc *, int);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
 int		uvmpd_dropswap(struct vm_page *);
@@ -283,8 +281,7 @@ uvm_pageout(void *arg)
 		uvm_lock_pageq();
 		if (!uvmpd_pma_done(pma) ||
 		    (shortage > 0) || (inactive_shortage > 0)) {
-			uvmpd_scan(pma, shortage, inactive_shortage,
-			    &constraint);
+			uvmpd_scan(pma, shortage, inactive_shortage);
 		}
 
 		/*
@@ -449,8 +446,7 @@ uvmpd_match_constraint(struct vm_page *p,
  * => we return TRUE if we are exiting because we met our target
  */
 int
-uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
-    struct uvm_constraint_range *constraint)
+uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 {
 	struct pglist *pglst = &uvm.page_inactive;
 	int result, freed = 0;
@@ -477,9 +473,14 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
 	dirtyreacts = 0;
 	p = NULL;
 
-	/* Start with the first page on the list that fit in `constraint' */
+	/*
+	 * If a thread is waiting for us to release memory from a specific
+	 * memory range start with the first page on the list that fits in
+	 * it.
+	 */
 	TAILQ_FOREACH(p, pglst, pageq) {
-		if (uvmpd_match_constraint(p, constraint))
+		if (uvmpd_pma_done(pma) ||
+		    uvmpd_match_constraint(p, &pma->pm_constraint))
 			break;
 	}
 
@@ -884,8 +885,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage,
  */
 
 void
-uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage,
-    struct uvm_constraint_range *constraint)
+uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage)
 {
 	int swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
@@ -915,7 +915,7 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage,
 	 * we work on meeting our inactive target by converting active pages
 	 * to inactive ones.
 	 */
-	pages_freed = uvmpd_scan_inactive(pma, shortage, constraint);
+	pages_freed = uvmpd_scan_inactive(pma, shortage);
 	uvmexp.pdfreed += pages_freed;
 	shortage -= pages_freed;
 
@@ -943,7 +943,8 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage,
 		/*
 		 * skip this page if it doesn't match the constraint.
 		 */
-		if (!uvmpd_match_constraint(p, &pma->pm_constraint))
+		if (!uvmpd_pma_done(pma) &&
+		    !uvmpd_match_constraint(p, &pma->pm_constraint))
 			continue;
 
 		/*
