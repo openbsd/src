@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.98 2024/11/06 22:27:42 benno Exp $
+#	$OpenBSD: airport,v 1.99 2024/11/07 08:43:18 sthen Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1221,7 +1221,7 @@ NNG:Nanning, China
 NOC:Rep Of Ireland, Connaught, Ireland
 NOU:Tontouta, Noumea, New Caledonia
 NPL:New Plymouth, New Zealand
-NQY:Newquay Civil, England, United Kingdom
+NQY:Newquay, England, United Kingdom
 NRK:Norrkoping, Sweden
 NRT:Narita, Tokyo, Japan
 NRW:All Airports around Nordrhein-Westfalen, Germany
