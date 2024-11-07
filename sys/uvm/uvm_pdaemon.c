@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.128 2024/11/07 10:42:26 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.129 2024/11/07 10:46:52 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ uvm_pageout(void *arg)
 		if (size == 0) {
 			/*
 			 * Since the inactive target just got updated
-			 * above both `size' and `inactive_shortage' can
+			 * above, both `size' and `inactive_shortage' can
 			 * be 0.
 			 */
 			if (inactive_shortage) {
@@ -529,7 +529,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 			/*
 			 * If we are not short on memory and only interested
-			 * in releasing pages from a given memory range do not
+			 * in releasing pages from a given memory range, do not
 			 * bother with other pages.
 			 */
 			if (uvmexp.paging >= (shortage - freed) &&
