@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.13 2024/10/17 14:27:57 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.14 2024/11/08 14:05:43 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -27,6 +27,74 @@
 
 #define CTASSERT(x) \
     extern char _ctassert[(x) ? 1 : -1] __attribute__((__unused__))
+
+/*
+ * Constant time functions for size_t.
+ */
+#ifndef HAVE_CRYPTO_CT_NE_ZERO
+static inline int
+crypto_ct_ne_zero(size_t v)
+{
+	return (v | ~(v - 1)) >> ((sizeof(v) * 8) - 1);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_NE_ZERO_MASK
+static inline size_t
+crypto_ct_ne_zero_mask(size_t v)
+{
+	return 0 - crypto_ct_ne_zero(v);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_EQ_ZERO
+static inline int
+crypto_ct_eq_zero(size_t v)
+{
+	return 1 - crypto_ct_ne_zero(v);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_EQ_ZERO_MASK_U8
+static inline size_t
+crypto_ct_eq_zero_mask(size_t v)
+{
+	return 0 - crypto_ct_eq_zero(v);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_LT
+static inline int
+crypto_ct_lt(size_t a, size_t b)
+{
+	return (((a - b) | (b & ~a)) & (b | ~a)) >>
+	    (sizeof(size_t) * 8 - 1);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_LT_MASK
+static inline size_t
+crypto_ct_lt_mask(size_t a, size_t b)
+{
+	return 0 - crypto_ct_lt(a, b);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_GT
+static inline int
+crypto_ct_gt(size_t a, size_t b)
+{
+	return crypto_ct_lt(b, a);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_GT_MASK
+static inline size_t
+crypto_ct_gt_mask(size_t a, size_t b)
+{
+	return 0 - crypto_ct_gt(a, b);
+}
+#endif
 
 /*
  * Constant time operations for uint8_t.
