@@ -565,6 +565,8 @@
 ./usr/include/dev/pci/if_em_osdep.h
 ./usr/include/dev/pci/if_em_soc.h
 ./usr/include/dev/pci/if_etreg.h
+./usr/include/dev/pci/if_icereg.h
+./usr/include/dev/pci/if_icevar.h
 ./usr/include/dev/pci/if_igc.h
 ./usr/include/dev/pci/if_ipwreg.h
 ./usr/include/dev/pci/if_ipwvar.h
