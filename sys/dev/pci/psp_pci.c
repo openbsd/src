@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp_pci.c,v 1.1 2024/10/24 18:52:59 bluhm Exp $	*/
+/*	$OpenBSD: psp_pci.c,v 1.2 2024/11/08 17:34:22 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023-2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -50,8 +50,8 @@ psp_pci_match(struct ccp_softc *sc, struct pci_attach_args *pa)
 		reg_capabilities = PSP_REG_CAPABILITIES;
 	capabilities = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    reg_capabilities);
-        if (!ISSET(capabilities, PSP_CAP_SEV))
-                return (0);
+	if (!ISSET(capabilities, PSP_CAP_SEV))
+		return (0);
 
 	return (1);
 }
@@ -81,8 +81,8 @@ psp_pci_intr_map(struct ccp_softc *sc, struct pci_attach_args *pa)
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_irqh = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, psp_sev_intr,
-	    sc, sc->sc_dev.dv_xname);
+	sc->sc_irqh = pci_intr_establish(pa->pa_pc, ih, IPL_BIO | IPL_MPSAFE,
+	    psp_sev_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_irqh != NULL)
 		printf(": %s", intrstr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.11 2024/11/08 12:08:22 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.12 2024/11/08 17:34:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -20,12 +20,13 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/pledge.h>
+#include <sys/proc.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
-#include <sys/proc.h>
 #include <uvm/uvm.h>
 #include <crypto/xform.h>
 
@@ -56,6 +57,7 @@ struct psp_softc {
 	caddr_t			sc_tmr_kva;
 
 	struct rwlock		sc_lock;
+	struct mutex		psp_lock;
 
 	uint32_t		sc_flags;
 #define PSPF_INITIALIZED	0x1
@@ -90,8 +92,10 @@ psp_sev_intr(void *arg)
 	struct psp_softc *sc = (struct psp_softc *)csc->sc_psp;
 	uint32_t status;
 
+	mtx_enter(&sc->psp_lock);
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_intsts);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_intsts, status);
+	mtx_leave(&sc->psp_lock);
 
 	if (!(status & PSP_CMDRESP_COMPLETE))
 		return (0);
@@ -137,6 +141,7 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 		printf(" vers %d,", arg->version);
 
 	rw_init(&sc->sc_lock, "psp_lock");
+	mtx_init(&sc->psp_lock, IPL_BIO);
 
 	/* create and map SEV command buffer */
 	sc->sc_cmd_size = size = PAGE_SIZE;
@@ -195,6 +200,8 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 	uint32_t	cmdword;
 	int		count;
 
+	MUTEX_ASSERT_LOCKED(&sc->psp_lock);
+
 	if (poll) {
 		count = 0;
 		while (count++ < 400) {
@@ -209,7 +216,8 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 		return (1);
 	}
 
-	if (tsleep_nsec(sc, PWAIT, "psp", SEC_TO_NSEC(2)) == EWOULDBLOCK)
+	if (msleep_nsec(sc, &sc->psp_lock, PWAIT, "psp", SEC_TO_NSEC(2))
+	    == EWOULDBLOCK)
 		return (1);
 
 	cmdword = bus_space_read_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_cmdresp);
@@ -223,6 +231,7 @@ static int
 ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 {
 	uint32_t	plo, phi, cmdword, status;
+	int		ret;
 
 	plo = ((paddr >> 0) & 0xffffffff);
 	phi = ((paddr >> 32) & 0xffffffff);
@@ -230,11 +239,14 @@ ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 	if (!cold)
 		cmdword |= PSP_CMDRESP_IOC;
 
+	mtx_enter(&sc->psp_lock);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_addrlo, plo);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_addrhi, phi);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_cmdresp, cmdword);
 
-	if (ccp_wait(sc, &status, cold))
+	ret = ccp_wait(sc, &status, cold);
+	mtx_leave(&sc->psp_lock);
+	if (ret)
 		return (1);
 
 	/* Did PSP sent a response code? */
@@ -771,6 +783,8 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
+	KERNEL_UNLOCK();
+
 	rw_enter_write(&sc->sc_lock);
 
 	switch (cmd) {
@@ -827,6 +841,8 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 
 	rw_exit_write(&sc->sc_lock);
+
+	KERNEL_LOCK();
 
 	return (ret);
 }
