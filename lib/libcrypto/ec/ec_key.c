@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.42 2024/11/05 08:56:57 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.43 2024/11/08 21:53:54 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -80,20 +80,26 @@ LCRYPTO_ALIAS(EC_KEY_new);
 EC_KEY *
 EC_KEY_new_by_curve_name(int nid)
 {
-	EC_KEY *ret = EC_KEY_new();
-	if (ret == NULL)
-		return NULL;
-	ret->group = EC_GROUP_new_by_curve_name(nid);
-	if (ret->group == NULL) {
-		EC_KEY_free(ret);
-		return NULL;
+	EC_KEY *ec_key;
+
+	if ((ec_key = EC_KEY_new()) == NULL)
+		goto err;
+
+	if ((ec_key->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
+		goto err;
+
+	/* XXX - do we want an ec_key_set0_group()? */
+	if (ec_key->meth->set_group != NULL) {
+		if (!ec_key->meth->set_group(ec_key, ec_key->group))
+			goto err;
 	}
-	if (ret->meth->set_group != NULL &&
-	    ret->meth->set_group(ret, ret->group) == 0) {
-		EC_KEY_free(ret);
-		return NULL;
-	}
-	return ret;
+
+	return ec_key;
+
+ err:
+	EC_KEY_free(ec_key);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(EC_KEY_new_by_curve_name);
 
