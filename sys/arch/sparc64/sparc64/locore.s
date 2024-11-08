@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.228 2024/11/07 07:29:47 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.229 2024/11/08 08:44:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3352,9 +3352,9 @@ sparc_interrupt:
 	 * Set handled_intr_level and save the old one so we can restore it
 	 * later.
 	 */
-	ld	[%g7 + CI_HANDLED_INTR_LEVEL], %l7
+	ld	[%g7 + CI_HANDLED_INTR_LEVEL], %l0
 	st	%l6, [%g7 + CI_HANDLED_INTR_LEVEL]
-	st	%l7, [%sp + CC64FSZ + BIAS + SAVED_INTR_LEVEL]
+	st	%l0, [%sp + CC64FSZ + BIAS + SAVED_INTR_LEVEL]
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
@@ -3410,15 +3410,14 @@ intrcmplt:
 	 * at this level.
 	 */
 	mov	1, %l3			! Ack softint
-	rd	SOFTINT, %l7		! %l5 contains #intr handled.
+	rd	SOFTINT, %l7
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	btst	%l3, %l7		! leave mask in %l3 for retry code
 	bnz,pn	%icc, sparc_intr_retry
 	 mov	1, %l5			! initialize intr count for next run
 
 	/* Restore old handled_intr_level */
-	ld	[%sp + CC64FSZ + BIAS + SAVED_INTR_LEVEL], %l7
-	st	%l7, [%g7 + CI_HANDLED_INTR_LEVEL]
+	st	%l0, [%g7 + CI_HANDLED_INTR_LEVEL]
 
 	ldub	[%sp + CC64FSZ + BIAS + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts

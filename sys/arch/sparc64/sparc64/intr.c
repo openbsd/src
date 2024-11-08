@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.67 2024/03/29 21:29:34 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.68 2024/11/08 08:44:07 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -74,6 +74,7 @@ void	intr_ack(struct intrhand *);
 int
 intr_handler(struct trapframe *tf, struct intrhand *ih)
 {
+	struct cpu_info *ci = curcpu();
 	int rc;
 #ifdef MULTIPROCESSOR
 	int need_lock;
@@ -86,7 +87,9 @@ intr_handler(struct trapframe *tf, struct intrhand *ih)
 	if (need_lock)
 		KERNEL_LOCK();
 #endif
+	ci->ci_idepth++;
 	rc = (*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : tf);
+	ci->ci_idepth--;
 #ifdef MULTIPROCESSOR
 	if (need_lock)
 		KERNEL_UNLOCK();
