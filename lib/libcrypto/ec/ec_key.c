@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.45 2024/11/08 22:03:29 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.46 2024/11/08 22:10:18 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -186,17 +186,22 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 LCRYPTO_ALIAS(EC_KEY_copy);
 
 EC_KEY *
-EC_KEY_dup(const EC_KEY *ec_key)
+EC_KEY_dup(const EC_KEY *in_ec_key)
 {
-	EC_KEY *ret;
+	EC_KEY *ec_key;
 
-	if ((ret = EC_KEY_new_method(NULL)) == NULL)
-		return NULL;
-	if (EC_KEY_copy(ret, ec_key) == NULL) {
-		EC_KEY_free(ret);
-		return NULL;
-	}
-	return ret;
+	/* XXX - Pass NULL - so we're perhaps not running the right init()? */
+	if ((ec_key = EC_KEY_new_method(NULL)) == NULL)
+		goto err;
+	if (EC_KEY_copy(ec_key, in_ec_key) == NULL)
+		goto err;
+
+	return ec_key;
+
+ err:
+	EC_KEY_free(ec_key);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(EC_KEY_dup);
 
