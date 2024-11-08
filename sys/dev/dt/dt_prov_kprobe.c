@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.8 2024/04/06 11:18:02 mpi Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.9 2024/11/08 12:28:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -120,7 +120,7 @@ dt_prov_kprobe_init(void)
 	struct dt_probe *dtp;
 	struct kprobe_probe *kprobe_dtp;
 	Elf_Sym *symp, *symtab_start, *symtab_end;
-	char *strtab, *name;
+	const char *strtab, *name;
 	vaddr_t inst, limit;
 	int nb_sym, nb_probes;
 
