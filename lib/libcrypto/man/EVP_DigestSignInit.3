@@ -1,8 +1,9 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.13 2024/07/21 08:36:43 tb Exp $
-.\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
+.\" $OpenBSD: EVP_DigestSignInit.3,v 1.14 2024/11/08 22:23:35 schwarze Exp $
+.\" full merge up to: OpenSSL 28428130 Apr 17 15:18:40 2018 +0200
+.\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2006, 2009, 2015, 2016 The OpenSSL Project.
+.\" Copyright (c) 2006, 2009, 2015, 2016, 2017 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 21 2024 $
+.Dd $Mdocdate: November 8 2024 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -97,33 +98,35 @@ sets up the signing context
 .Fa ctx
 to use the digest
 .Fa type
-and private key
+and the private key
 .Fa pkey .
+Before calling this function, obtain
+.Fa ctx
+from
+.Xr EVP_MD_CTX_new 3
+or call
+.Xr EVP_MD_CTX_reset 3
+on it.
 The
-.Fa ENGINE *engine
+.Fa engine
 argument is always ignored and passing
 .Dv NULL
 is recommended.
-.Fa ctx
-must be initialized with
-.Xr EVP_MD_CTX_init 3
-before calling this function.
+.Pp
 If
 .Fa pctx
 is not
 .Dv NULL ,
-the
-.Vt EVP_PKEY_CTX
-of the signing operation will be written to
-.Pf * Fa pctx :
-this can be used to set alternative signing options.
-Any existing value in
+any pointer passed in as
 .Pf * Fa pctx
-will be overwritten.
-The
+is ignored and overwritten by an internal pointer to the
 .Vt EVP_PKEY_CTX
-value returned must not be freed directly by the application.
-It will be freed automatically when the
+used by the signing operation:
+this can be used to set alternative signing options.
+The returned
+.Vt EVP_PKEY_CTX
+must not be freed by the application.
+It is freed automatically when the
 .Vt EVP_MD_CTX
 is freed.
 .Pp
