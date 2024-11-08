@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.44 2024/11/08 21:56:58 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.45 2024/11/08 22:03:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -132,58 +132,54 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
+
 	if (src->meth != dest->meth) {
 		if (dest->meth != NULL && dest->meth->finish != NULL)
 			dest->meth->finish(dest);
 	}
-	/* copy the parameters */
-	if (src->group) {
-		const EC_METHOD *meth = src->group->meth;
-		/* clear the old group */
+
+	if (src->group != NULL) {
 		EC_GROUP_free(dest->group);
-		dest->group = EC_GROUP_new(meth);
-		if (dest->group == NULL)
+		if ((dest->group = EC_GROUP_dup(src->group)) == NULL)
 			return NULL;
-		if (!EC_GROUP_copy(dest->group, src->group))
-			return NULL;
-	}
-	/* copy the public key */
-	if (src->pub_key && src->group) {
-		EC_POINT_free(dest->pub_key);
-		dest->pub_key = EC_POINT_new(src->group);
-		if (dest->pub_key == NULL)
-			return NULL;
-		if (!EC_POINT_copy(dest->pub_key, src->pub_key))
-			return NULL;
-	}
-	/* copy the private key */
-	if (src->priv_key) {
-		if (dest->priv_key == NULL) {
-			dest->priv_key = BN_new();
-			if (dest->priv_key == NULL)
+		if (src->pub_key != NULL) {
+			EC_POINT_free(dest->pub_key);
+			if ((dest->pub_key = EC_POINT_dup(src->pub_key,
+			    src->group)) == NULL)
 				return NULL;
 		}
-		if (!bn_copy(dest->priv_key, src->priv_key))
+	}
+
+	/*
+	 * XXX - if there's no priv_key on src, dest retains its probably
+	 * invalid priv_key. This makes no sense. Can we change this?
+	 */
+	if (src->priv_key != NULL) {
+		BN_free(dest->priv_key);
+		if ((dest->priv_key = BN_dup(src->priv_key)) == NULL)
 			return NULL;
 	}
 
-	/* copy the rest */
 	dest->enc_flag = src->enc_flag;
 	dest->conv_form = src->conv_form;
 	dest->version = src->version;
 	dest->flags = src->flags;
 
+	/*
+	 * The fun part about being a toolkit implementer is that the rest of
+	 * the world gets to live with your terrible API design choices for
+	 * eternity. (To be fair: the signature was changed in OpenSSL 3).
+	 */
 	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EC_KEY, &dest->ex_data,
 	    &((EC_KEY *)src)->ex_data))	/* XXX const */
 		return NULL;
 
-	if (src->meth != dest->meth) {
-		dest->meth = src->meth;
-	}
+	dest->meth = src->meth;
 
-	if (src->meth != NULL && src->meth->copy != NULL &&
-	    src->meth->copy(dest, src) == 0)
-		return 0;
+	if (src->meth != NULL && src->meth->copy != NULL) {
+		if (!src->meth->copy(dest, src))
+			return NULL;
+	}
 
 	return dest;
 }
