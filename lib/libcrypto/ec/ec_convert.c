@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.10 2024/11/02 16:02:01 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.11 2024/11/08 02:24:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -82,7 +82,7 @@
  * ignore it except at the API boundary.
  */
 
-#define EC_YBIT				0x01
+#define EC_POINT_YBIT			0x01
 
 #define EC_POINT_AT_INFINITY		0x00
 #define EC_POINT_COMPRESSED		0x02
@@ -118,7 +118,7 @@ static int
 ec_add_leading_octet_cbb(CBB *cbb, uint8_t form, int ybit)
 {
 	if (ec_nonzero_ybit_allowed(form) && ybit != 0)
-		form |= EC_YBIT;
+		form |= EC_POINT_YBIT;
 
 	return CBB_add_u8(cbb, form);
 }
@@ -133,8 +133,8 @@ ec_get_leading_octet_cbs(CBS *cbs, uint8_t *out_form, int *out_ybit)
 		return 0;
 	}
 
-	*out_ybit = octet & EC_YBIT;
-	*out_form = octet & ~EC_YBIT;
+	*out_ybit = octet & EC_POINT_YBIT;
+	*out_form = octet & ~EC_POINT_YBIT;
 
 	if (!ec_conversion_form_is_valid(*out_form)) {
 		ECerror(EC_R_INVALID_ENCODING);
@@ -404,7 +404,7 @@ ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf, size_t buf
 		goto err;
 
 	if (out_form != NULL)
-		*out_form = buf[0] & ~EC_YBIT;
+		*out_form = buf[0] & ~EC_POINT_YBIT;
 
 	*out_point = point;
 	point = NULL;
