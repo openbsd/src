@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.368 2024/11/02 04:37:20 yasuoka Exp $
+#	$OpenBSD: files.pci,v 1.369 2024/11/08 12:17:07 stsp Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -372,6 +372,11 @@ file	dev/pci/if_ixl.c		ixl
 # Intel Elkhart Lake Ethernet
 attach	dwqe at pci with dwqe_pci
 file	dev/pci/if_dwqe_pci.c		dwqe_pci
+
+# Intel E810 100GbE
+device	ice: ether, ifnet, ifmedia, intrmap, stoeplitz
+attach	ice at pci with ice
+file	dev/pci/if_ice.c		ice
 
 # Neterion Xframe 10 Gigabit ethernet
 device	xge: ether, ifnet, ifmedia

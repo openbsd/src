@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.528 2024/11/05 00:54:32 yasuoka Exp $
+#	$OpenBSD: GENERIC,v 1.529 2024/11/08 12:17:07 stsp Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -561,6 +561,7 @@ jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
 bnxt*	at pci?				# Broadcom BCM573xx, BCM574xx
 ixl*	at pci?				# Intel Ethernet 700 Series
 dwqe*	at pci?				# Intel Elkhart Lake Ethernet
+#ice*	at pci?				# Intel E810 100GbE
 mcx*	at pci?				# Mellanox ConnectX-4
 iavf*	at pci?				# Intel Ethernet Adaptive VF
 aq*	at pci?				# Aquantia aQtion Ethernet
