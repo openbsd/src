@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.63 2024/09/04 07:54:51 mglocker Exp $ */
+/* $OpenBSD: disksubr.c,v 1.64 2024/11/08 21:47:10 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -116,7 +116,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_dev = dev;
 
 	if (spoofonly)
-		goto done;
+		goto doslabel;
 
 	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, LABELSECTOR));
 	if (error)
@@ -128,8 +128,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	error = checkdisklabel(bp->b_dev, bp->b_data + LABELOFFSET, lp, 0,
-	    DL_GETDSIZE(lp));
+ doslabel:
+	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
 		goto done;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.6 2015/09/30 14:57:03 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 2024/11/08 21:47:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 #define _MACHINE_DISKLABEL_H_
 
 #define	LABELSECTOR	0	/* sector containing label */
-#define	LABELOFFSET	64	/* offset of label in sector */
+#define	LABELOFFSET	0	/* offset of label in sector */
 #define	MAXPARTITIONS	16	/* number of partitions */
 
 #endif /* _MACHINE_DISKLABEL_H_ */
