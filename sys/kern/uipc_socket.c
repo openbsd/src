@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.344 2024/10/31 12:51:55 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.345 2024/11/08 21:47:03 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2433,6 +2433,8 @@ int
 filt_soread(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
+	u_int state = READ_ONCE(so->so_state);
+	u_int error = READ_ONCE(so->so_error);
 	int rv = 0;
 
 	MUTEX_ASSERT_LOCKED(&so->so_rcv.sb_mtx);
@@ -2440,18 +2442,20 @@ filt_soread(struct knote *kn, long hint)
 		soassertlocked_readonly(so);
 
 	if (so->so_options & SO_ACCEPTCONN) {
+		short qlen = READ_ONCE(so->so_qlen);
+
 		if (so->so_rcv.sb_flags & SB_MTXLOCK)
 			soassertlocked_readonly(so);
 
-		kn->kn_data = so->so_qlen;
+		kn->kn_data = qlen;
 		rv = (kn->kn_data != 0);
 
 		if (kn->kn_flags & (__EV_POLL | __EV_SELECT)) {
-			if (so->so_state & SS_ISDISCONNECTED) {
+			if (state & SS_ISDISCONNECTED) {
 				kn->kn_flags |= __EV_HUP;
 				rv = 1;
 			} else {
-				rv = soreadable(so);
+				rv = qlen || soreadable(so);
 			}
 		}
 
@@ -2467,12 +2471,12 @@ filt_soread(struct knote *kn, long hint)
 	if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
-			if (so->so_state & SS_ISDISCONNECTED)
+			if (state & SS_ISDISCONNECTED)
 				kn->kn_flags |= __EV_HUP;
 		}
-		kn->kn_fflags = so->so_error;
+		kn->kn_fflags = error;
 		rv = 1;
-	} else if (so->so_error) {
+	} else if (error) {
 		rv = 1;
 	} else if (kn->kn_sfflags & NOTE_LOWAT) {
 		rv = (kn->kn_data >= kn->kn_sdata);
@@ -2495,6 +2499,8 @@ int
 filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
+	u_int state = READ_ONCE(so->so_state);
+	u_int error = READ_ONCE(so->so_error);
 	int rv;
 
 	MUTEX_ASSERT_LOCKED(&so->so_snd.sb_mtx);
@@ -2505,14 +2511,14 @@ filt_sowrite(struct knote *kn, long hint)
 	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
-			if (so->so_state & SS_ISDISCONNECTED)
+			if (state & SS_ISDISCONNECTED)
 				kn->kn_flags |= __EV_HUP;
 		}
-		kn->kn_fflags = so->so_error;
+		kn->kn_fflags = error;
 		rv = 1;
-	} else if (so->so_error) {
+	} else if (error) {
 		rv = 1;
-	} else if (((so->so_state & SS_ISCONNECTED) == 0) &&
+	} else if (((state & SS_ISCONNECTED) == 0) &&
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED)) {
 		rv = 0;
 	} else if (kn->kn_sfflags & NOTE_LOWAT) {
@@ -2548,7 +2554,9 @@ filt_soexcept(struct knote *kn, long hint)
 	}
 
 	if (kn->kn_flags & __EV_POLL) {
-		if (so->so_state & SS_ISDISCONNECTED) {
+		u_int state = READ_ONCE(so->so_state);
+
+		if (state & SS_ISDISCONNECTED) {
 			kn->kn_flags |= __EV_HUP;
 			rv = 1;
 		}
