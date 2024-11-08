@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.38 2024/10/22 02:58:10 jsg Exp $ */
+/* $OpenBSD: armreg.h,v 1.39 2024/11/08 04:40:34 jsg Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -885,20 +885,6 @@
 #define	 PMCR_IDCODE_CORTEX_A53	0x03
 #define	PMCR_N_SHIFT	11       /* Number of counters implemented */
 #define	PMCR_N_MASK	(0x1f << PMCR_N_SHIFT)
-
-/* Individual CPUs are probably best IDed by everything but the revision. */
-#define	CPU_ID_CPU_MASK		0xfffffff0
-
-/* ARM64 CPUs */
-#define	CPU_ID_CORTEX_A53	0x410fd030
-#define	CPU_ID_CORTEX_A53_R1	0x411fd030
-#define	CPU_ID_CORTEX_A53_MASK	0xff0ffff0
-#define	CPU_ID_CORTEX_A57	0x410fd070
-#define	CPU_ID_CORTEX_A57_R1	0x411fd070
-#define	CPU_ID_CORTEX_A57_MASK	0xff0ffff0
-#define	CPU_ID_CORTEX_A72	0x410fd080
-#define	CPU_ID_CORTEX_A72_R1	0x411fd080
-#define	CPU_ID_CORTEX_A57_MASK	0xff0ffff0
 
 #define I_bit (1 << 7)		/* IRQ disable */
 #define F_bit 0			/* FIQ disable - not actually used */
