@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.95 2024/06/18 12:37:29 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.96 2024/11/08 13:18:29 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ extern void (*pmap_unwire_p)(struct pmap *, vaddr_t);
 extern void (*pmap_write_protect_p)(struct pmap*, vaddr_t, vaddr_t, vm_prot_t);
 extern void (*pmap_pinit_pd_p)(pmap_t);
 extern void (*pmap_zero_phys_p)(paddr_t);
-extern int (*pmap_zero_page_uncached_p)(paddr_t);
 extern void (*pmap_copy_page_p)(struct vm_page *, struct vm_page *);
 
 u_int32_t pmap_pte_set_pae(vaddr_t, paddr_t, u_int32_t);
@@ -295,7 +294,6 @@ void pmap_unwire_pae(struct pmap *, vaddr_t);
 void pmap_write_protect_pae(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_pinit_pd_pae(pmap_t);
 void pmap_zero_phys_pae(paddr_t);
-int pmap_zero_page_uncached_pae(paddr_t);
 void pmap_copy_page_pae(struct vm_page *, struct vm_page *);
 
 #define	pmap_pte_set		(*pmap_pte_set_p)
@@ -310,7 +308,6 @@ void pmap_copy_page_pae(struct vm_page *, struct vm_page *);
 #define	pmap_write_protect	(*pmap_write_protect_p)
 #define	pmap_pinit_pd		(*pmap_pinit_pd_p)
 #define	pmap_zero_phys		(*pmap_zero_phys_p)
-#define	pmap_zero_page_uncached	(*pmap_zero_page_uncached_p)
 #define	pmap_copy_page		(*pmap_copy_page_p)
 
 u_int32_t pmap_pte_set_86(vaddr_t, paddr_t, u_int32_t);
@@ -329,7 +326,6 @@ void pmap_unwire_86(struct pmap *, vaddr_t);
 void pmap_write_protect_86(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_pinit_pd_86(pmap_t);
 void pmap_zero_phys_86(paddr_t);
-int pmap_zero_page_uncached_86(paddr_t);
 void pmap_copy_page_86(struct vm_page *, struct vm_page *);
 void pmap_tlb_shootpage(struct pmap *, vaddr_t);
 void pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t);
@@ -361,11 +357,6 @@ void pmap_flush_page_pae(paddr_t);
 #define PMAP_CHECK_COPYIN	1
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
-
-/*
- * Do idle page zero'ing uncached to avoid polluting the cache.
- */
-#define	PMAP_PAGEIDLEZERO(pg)	pmap_zero_page_uncached(VM_PAGE_TO_PHYS(pg))
 
 /*
  * Inline functions

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.73 2024/11/01 12:07:53 mpi Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.74 2024/11/08 13:18:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -811,7 +811,6 @@ pmap_bootstrap_pae(void)
 		pmap_write_protect_p = pmap_write_protect_pae;
 		pmap_pinit_pd_p = pmap_pinit_pd_pae;
 		pmap_zero_phys_p = pmap_zero_phys_pae;
-		pmap_zero_page_uncached_p = pmap_zero_page_uncached_pae;
 		pmap_copy_page_p = pmap_copy_page_pae;
 
 		bzero((void *)kpm->pm_pdir + 8, (PDSLOT_PTE-1) * 8);
@@ -1092,32 +1091,6 @@ pmap_zero_phys_pae(paddr_t pa)
 	pmap_update_pg((vaddr_t)zerova);	/* flush TLB */
 	pagezero(zerova, PAGE_SIZE);		/* zero */
 	*zpte = 0;
-}
-
-/*
- * pmap_zero_page_uncached: the same, except uncached.
- */
-
-int
-pmap_zero_page_uncached_pae(paddr_t pa)
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *zpte = PTESLEW(zero_pte, id);
-	caddr_t zerova = VASLEW(pmap_zerop, id);
-
-#ifdef DIAGNOSTIC
-	if (*zpte)
-		panic("pmap_zero_page_uncached_pae: lock botch");
-#endif
-
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_N;	/* map in */
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	pagezero(zerova, PAGE_SIZE);		/* zero */
-	*zpte = 0;
-
-	return 1;
 }
 
 /*

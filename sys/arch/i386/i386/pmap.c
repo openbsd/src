@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.225 2024/11/02 07:58:58 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.226 2024/11/08 13:18:29 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1612,32 +1612,6 @@ pmap_zero_phys_86(paddr_t pa)
 }
 
 /*
- * pmap_zero_page_uncached: the same, except uncached.
- */
-
-int
-pmap_zero_page_uncached_86(paddr_t pa)
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *zpte = PTESLEW(zero_pte, id);
-	caddr_t zerova = VASLEW(pmap_zerop, id);
-
-#ifdef DIAGNOSTIC
-	if (*zpte)
-		panic("pmap_zero_page_uncached_86: lock botch");
-#endif
-
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_N;	/* map in */
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	pagezero(zerova, PAGE_SIZE);		/* zero */
-	*zpte = 0;
-
-	return 1;
-}
-
-/*
  * pmap_flush_cache: flush the cache for a virtual address.
  */
 void
@@ -2882,7 +2856,5 @@ void		(*pmap_write_protect_p)(struct pmap *, vaddr_t, vaddr_t,
     vm_prot_t) = pmap_write_protect_86;
 void		(*pmap_pinit_pd_p)(pmap_t) = pmap_pinit_pd_86;
 void		(*pmap_zero_phys_p)(paddr_t) = pmap_zero_phys_86;
-int		(*pmap_zero_page_uncached_p)(paddr_t) =
-    pmap_zero_page_uncached_86;
 void		(*pmap_copy_page_p)(struct vm_page *, struct vm_page *) =
     pmap_copy_page_86;
