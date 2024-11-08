@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.231 2024/04/12 16:07:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.232 2024/11/08 15:46:55 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -102,15 +102,20 @@
 #include <netinet6/in6_var.h>
 #endif
 
+/*
+ * Locks used to protect global variables in this file:
+ *	I	immutable after creation
+ */
+
 #ifndef TCP_SENDSPACE
 #define	TCP_SENDSPACE	1024*16
 #endif
-u_int	tcp_sendspace = TCP_SENDSPACE;
+u_int	tcp_sendspace = TCP_SENDSPACE;		/* [I] */
 #ifndef TCP_RECVSPACE
 #define	TCP_RECVSPACE	1024*16
 #endif
-u_int	tcp_recvspace = TCP_RECVSPACE;
-u_int	tcp_autorcvbuf_inc = 16 * 1024;
+u_int	tcp_recvspace = TCP_RECVSPACE;		/* [I] */
+u_int	tcp_autorcvbuf_inc = 16 * 1024;		/* [I] */
 
 const struct pr_usrreqs tcp_usrreqs = {
 	.pru_attach	= tcp_attach,
@@ -1516,13 +1521,14 @@ tcp_update_sndspace(struct tcpcb *tp)
 		/* low on memory try to get rid of some */
 		if (tcp_sendspace < nmax)
 			nmax = tcp_sendspace;
-	} else if (so->so_snd.sb_wat != tcp_sendspace)
+	} else if (so->so_snd.sb_wat != tcp_sendspace) {
 		/* user requested buffer size, auto-scaling disabled */
 		nmax = so->so_snd.sb_wat;
-	else
+	} else {
 		/* automatic buffer scaling */
 		nmax = MIN(sb_max, so->so_snd.sb_wat + tp->snd_max -
 		    tp->snd_una);
+	}
 
 	/* a writable socket must be preserved because of poll(2) semantics */
 	if (sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat) {
@@ -1556,10 +1562,10 @@ tcp_update_rcvspace(struct tcpcb *tp)
 		/* low on memory try to get rid of some */
 		if (tcp_recvspace < nmax)
 			nmax = tcp_recvspace;
-	} else if (so->so_rcv.sb_wat != tcp_recvspace)
+	} else if (so->so_rcv.sb_wat != tcp_recvspace) {
 		/* user requested buffer size, auto-scaling disabled */
 		nmax = so->so_rcv.sb_wat;
-	else {
+	} else {
 		/* automatic buffer scaling */
 		if (tp->rfbuf_cnt > so->so_rcv.sb_hiwat / 8 * 7)
 			nmax = MIN(sb_max, so->so_rcv.sb_hiwat +
