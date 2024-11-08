@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.185 2024/07/12 19:50:35 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.186 2024/11/08 10:24:13 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -118,6 +118,9 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_peeraddr	= in6_peeraddr,
 };
 
+void	rip6_sbappend(struct inpcb *, struct mbuf *, struct ip6_hdr *, int,
+	    struct sockaddr_in6 *);
+
 /*
  * Initialize raw connection block queue.
  */
@@ -133,8 +136,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct inpcb *inp;
-	SIMPLEQ_HEAD(, inpcb) inpcblist;
+	struct inpcb_iterator iter = { .inp_table = NULL };
+	struct inpcb *inp, *last;
 	struct in6_addr *key;
 	struct sockaddr_in6 rip6src;
 	uint8_t type;
@@ -177,10 +180,9 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 	}
 #endif
-	SIMPLEQ_INIT(&inpcblist);
-	rw_enter_write(&rawin6pcbtable.inpt_notify);
 	mtx_enter(&rawin6pcbtable.inpt_mtx);
-	TAILQ_FOREACH(inp, &rawin6pcbtable.inpt_queue, inp_queue) {
+	last = inp = NULL;
+	while ((inp = in_pcb_iterator(&rawin6pcbtable, inp, &iter)) != NULL) {
 		KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 
 		/*
@@ -226,16 +228,25 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 			}
 		}
 
-		in_pcbref(inp);
-		SIMPLEQ_INSERT_TAIL(&inpcblist, inp, inp_notify);
+		if (last != NULL) {
+			struct mbuf *n;
+
+			mtx_leave(&rawin6pcbtable.inpt_mtx);
+
+			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+			if (n != NULL)
+				rip6_sbappend(last, n, ip6, *offp, &rip6src);
+			in_pcbunref(last);
+
+			mtx_enter(&rawin6pcbtable.inpt_mtx);
+		}
+		last = in_pcbref(inp);
 	}
 	mtx_leave(&rawin6pcbtable.inpt_mtx);
 
-	if (SIMPLEQ_EMPTY(&inpcblist)) {
+	if (last == NULL) {
 		struct counters_ref ref;
 		uint64_t *counters;
-
-		rw_exit_write(&rawin6pcbtable.inpt_notify);
 
 		if (proto != IPPROTO_ICMPV6) {
 			rip6stat_inc(rip6s_nosock);
@@ -257,43 +268,36 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
-	while ((inp = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
-		struct mbuf *n, *opts = NULL;
-
-		SIMPLEQ_REMOVE_HEAD(&inpcblist, inp_notify);
-		if (SIMPLEQ_EMPTY(&inpcblist))
-			n = m;
-		else
-			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-		if (n != NULL) {
-			struct socket *so = inp->inp_socket;
-			int ret = 0;
-
-			if (inp->inp_flags & IN6P_CONTROLOPTS)
-				ip6_savecontrol(inp, n, &opts);
-			/* strip intermediate headers */
-			m_adj(n, *offp);
-
-			mtx_enter(&so->so_rcv.sb_mtx);
-			if (!ISSET(inp->inp_socket->so_rcv.sb_state,
-			    SS_CANTRCVMORE)) {
-				ret = sbappendaddr(so, &so->so_rcv,
-				    sin6tosa(&rip6src), n, opts);
-			}
-			mtx_leave(&so->so_rcv.sb_mtx);
-
-			if (ret == 0) {
-				m_freem(n);
-				m_freem(opts);
-				rip6stat_inc(rip6s_fullsock);
-			} else
-				sorwakeup(so);
-		}
-		in_pcbunref(inp);
-	}
-	rw_exit_write(&rawin6pcbtable.inpt_notify);
+	rip6_sbappend(last, m, ip6, *offp, &rip6src);
+	in_pcbunref(last);
 
 	return IPPROTO_DONE;
+}
+
+void
+rip6_sbappend(struct inpcb *inp, struct mbuf *m, struct ip6_hdr *ip6, int hlen,
+    struct sockaddr_in6 *rip6src)
+{
+	struct socket *so = inp->inp_socket;
+	struct mbuf *opts = NULL;
+	int ret = 0;
+
+	if (inp->inp_flags & IN6P_CONTROLOPTS)
+		ip6_savecontrol(inp, m, &opts);
+	/* strip intermediate headers */
+	m_adj(m, hlen);
+
+	mtx_enter(&so->so_rcv.sb_mtx);
+	if (!ISSET(inp->inp_socket->so_rcv.sb_state, SS_CANTRCVMORE))
+		ret = sbappendaddr(so, &so->so_rcv, sin6tosa(rip6src), m, opts);
+	mtx_leave(&so->so_rcv.sb_mtx);
+
+	if (ret == 0) {
+		m_freem(m);
+		m_freem(opts);
+		rip6stat_inc(rip6s_fullsock);
+	} else
+		sorwakeup(so);
 }
 
 void

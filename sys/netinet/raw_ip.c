@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.161 2024/11/05 22:44:20 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.162 2024/11/08 10:24:13 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -136,8 +136,6 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct inpcb_iterator iter = { .inp_table = NULL };
 	struct inpcb *inp, *last;
 	struct in_addr *key;
-	struct counters_ref ref;
-	uint64_t *counters;
 	struct sockaddr_in ripsrc;
 
 	KASSERT(af == AF_INET);
@@ -209,12 +207,15 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	mtx_leave(&rawcbtable.inpt_mtx);
 
 	if (last == NULL) {
-		if (ip->ip_p != IPPROTO_ICMP)
+		struct counters_ref ref;
+		uint64_t *counters;
+
+		if (ip->ip_p == IPPROTO_ICMP) {
+			m_freem(m);
+		} else {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
 			    0, 0);
-		else
-			m_freem(m);
-
+		}
 		counters = counters_enter(&ref, ipcounters);
 		counters[ips_noproto]++;
 		counters[ips_delivered]--;
