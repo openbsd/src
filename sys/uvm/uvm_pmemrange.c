@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.75 2024/11/07 11:12:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.76 2024/11/08 15:54:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -84,10 +84,8 @@ void	uvm_pmr_print(void);
 static inline int
 in_pagedaemon(int allowsyncer)
 {
-#if !defined(__sparc64__)
 	if (curcpu()->ci_idepth > 0)
 		return 0;
-#endif
 	if (curproc == uvm.pagedaemon_proc)
 		return 1;
 	/* XXX why is the syncer allowed to use the pagedaemon's reserve? */
@@ -2105,9 +2103,7 @@ uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
 	struct uvm_pmalloc pma;
 	const char *wmsg = "pmrwait";
 
-#if !defined(__sparc64__)
 	KASSERT(curcpu()->ci_idepth == 0);
-#endif
 
 	if (curproc == uvm.pagedaemon_proc) {
 		/*
