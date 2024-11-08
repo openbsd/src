@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_test.c,v 1.1 2024/04/25 14:27:29 jsing Exp $	*/
+/*	$OpenBSD: crypto_test.c,v 1.2 2024/11/08 14:06:34 jsing Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -17,68 +17,161 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "crypto_internal.h"
 
 static int
-test_ct_u8(void)
+test_ct_size_t(void)
 {
-	uint8_t i, j, mask;
+	size_t a, b, mask;
+	uint8_t buf[8];
+	int i, j;
 	int failed = 1;
 
-	i = 0;
+	CTASSERT(sizeof(a) <= sizeof(buf));
+
+	for (i = 0; i < 4096; i++) {
+		arc4random_buf(buf, sizeof(buf));
+		memcpy(&a, buf, sizeof(a));
+
+		if ((a != 0) != crypto_ct_ne_zero(a)) {
+			fprintf(stderr, "FAIL: crypto_ct_ne_zero(0x%llx) = %d, "
+			    "want %d\n", (unsigned long long)a,
+			    crypto_ct_ne_zero(a), a != 0);
+			goto failure;
+		}
+		mask = (a != 0) ? -1 : 0;
+		if (mask != crypto_ct_ne_zero_mask(a)) {
+			fprintf(stderr, "FAIL: crypto_ct_ne_zero_mask(0x%llx) = "
+			    "0x%llx, want 0x%llx\n", (unsigned long long)a,
+			    (unsigned long long)crypto_ct_ne_zero_mask(a),
+			    (unsigned long long)mask);
+			goto failure;
+		}
+		if ((a == 0) != crypto_ct_eq_zero(a)) {
+			fprintf(stderr, "FAIL: crypto_ct_eq_zero(0x%llx) = %d, "
+			    "want %d\n", (unsigned long long)a,
+			    crypto_ct_ne_zero(a), a != 0);
+			goto failure;
+		}
+		mask = (a == 0) ? -1 : 0;
+		if (mask != crypto_ct_eq_zero_mask(a)) {
+			fprintf(stderr, "FAIL: crypto_ct_eq_zero_mask(0x%llx) = "
+			    "0x%llx, want 0x%llx\n", (unsigned long long)a,
+			    (unsigned long long)crypto_ct_ne_zero_mask(a),
+			    (unsigned long long)mask);
+			goto failure;
+		}
+
+		for (j = 0; j < 4096; j++) {
+			arc4random_buf(buf, sizeof(buf));
+			memcpy(&b, buf, sizeof(b));
+
+			if ((a < b) != crypto_ct_lt(a, b)) {
+				fprintf(stderr, "FAIL: crypto_ct_lt(0x%llx, "
+				    "0x%llx) = %d, want %d\n",
+				    (unsigned long long)a,
+				    (unsigned long long)b,
+				    crypto_ct_lt(a, b), a < b);
+				goto failure;
+			}
+			mask = (a < b) ? -1 : 0;
+			if (mask != crypto_ct_lt_mask(a, b)) {
+				fprintf(stderr, "FAIL: crypto_ct_lt_mask(0x%llx, "
+				    "0x%llx) = 0x%llx, want 0x%llx\n",
+				    (unsigned long long)a,
+				    (unsigned long long)b,
+				    (unsigned long long)crypto_ct_lt_mask(a, b),
+				    (unsigned long long)mask);
+				goto failure;
+			}
+			if ((a > b) != crypto_ct_gt(a, b)) {
+				fprintf(stderr, "FAIL: crypto_ct_gt(0x%llx, "
+				    "0x%llx) = %d, want %d\n",
+				    (unsigned long long)a,
+				    (unsigned long long)b,
+				    crypto_ct_gt(a, b), a > b);
+				goto failure;
+			}
+			mask = (a > b) ? -1 : 0;
+			if (mask != crypto_ct_gt_mask(a, b)) {
+				fprintf(stderr, "FAIL: crypto_ct_gt_mask(0x%llx, "
+				    "0x%llx) = 0x%llx, want 0x%llx\n",
+				    (unsigned long long)a,
+				    (unsigned long long)b,
+				    (unsigned long long)crypto_ct_gt_mask(a, b),
+				    (unsigned long long)mask);
+				goto failure;
+			}
+		}
+	}
+
+	failed = 0;
+
+ failure:
+	return failed;
+}
+
+static int
+test_ct_u8(void)
+{
+	uint8_t a, b, mask;
+	int failed = 1;
+
+	a = 0;
 
 	do {
-		if ((i != 0) != crypto_ct_ne_zero_u8(i)) {
+		if ((a != 0) != crypto_ct_ne_zero_u8(a)) {
 			fprintf(stderr, "FAIL: crypto_ct_ne_zero_u8(%d) = %d, "
-			    "want %d\n", i, crypto_ct_ne_zero_u8(i), i != 0);
+			    "want %d\n", a, crypto_ct_ne_zero_u8(a), a != 0);
 			goto failure;
 		}
-		mask = (i != 0) ? 0xff : 0x00;
-		if (mask != crypto_ct_ne_zero_mask_u8(i)) {
+		mask = (a != 0) ? -1 : 0;
+		if (mask != crypto_ct_ne_zero_mask_u8(a)) {
 			fprintf(stderr, "FAIL: crypto_ct_ne_zero_mask_u8(%d) = %x, "
-			    "want %x\n", i, crypto_ct_ne_zero_mask_u8(i), mask);
+			    "want %x\n", a, crypto_ct_ne_zero_mask_u8(a), mask);
 			goto failure;
 		}
-		if ((i == 0) != crypto_ct_eq_zero_u8(i)) {
+		if ((a == 0) != crypto_ct_eq_zero_u8(a)) {
 			fprintf(stderr, "FAIL: crypto_ct_eq_zero_u8(%d) = %d, "
-			    "want %d\n", i, crypto_ct_ne_zero_u8(i), i != 0);
+			    "want %d\n", a, crypto_ct_ne_zero_u8(a), a != 0);
 			goto failure;
 		}
-		mask = (i == 0) ? 0xff : 0x00;
-		if (mask != crypto_ct_eq_zero_mask_u8(i)) {
+		mask = (a == 0) ? -1 : 0;
+		if (mask != crypto_ct_eq_zero_mask_u8(a)) {
 			fprintf(stderr, "FAIL: crypto_ct_eq_zero_mask_u8(%d) = %x, "
-			    "want %x\n", i, crypto_ct_ne_zero_mask_u8(i), mask);
+			    "want %x\n", a, crypto_ct_ne_zero_mask_u8(a), mask);
 			goto failure;
 		}
 
-		j = 0;
+		b = 0;
 
 		do {
-			if ((i != j) != crypto_ct_ne_u8(i, j)) {
+			if ((a != b) != crypto_ct_ne_u8(a, b)) {
 				fprintf(stderr, "FAIL: crypto_ct_ne_u8(%d, %d) = %d, "
-				    "want %d\n", i, j, crypto_ct_ne_u8(i, j), i != j);
+				    "want %d\n", a, b, crypto_ct_ne_u8(a, b), a != b);
 				goto failure;
 			}
-			mask = (i != j) ? 0xff : 0x00;
-			if (mask != crypto_ct_ne_mask_u8(i, j)) {
+			mask = (a != b) ? -1 : 0;
+			if (mask != crypto_ct_ne_mask_u8(a, b)) {
 				fprintf(stderr, "FAIL: crypto_ct_ne_mask_u8(%d, %d) = %x, "
-				    "want %x\n", i, j, crypto_ct_ne_mask_u8(i, j), mask);
+				    "want %x\n", a, b, crypto_ct_ne_mask_u8(a, b), mask);
 				goto failure;
 			}
-			if ((i == j) != crypto_ct_eq_u8(i, j)) {
+			if ((a == b) != crypto_ct_eq_u8(a, b)) {
 				fprintf(stderr, "FAIL: crypto_ct_eq_u8(%d, %d) = %d, "
-				    "want %d\n", i, j, crypto_ct_eq_u8(i, j), i != j);
+				    "want %d\n", a, b, crypto_ct_eq_u8(a, b), a != b);
 				goto failure;
 			}
-			mask = (i == j) ? 0xff : 0x00;
-			if (mask != crypto_ct_eq_mask_u8(i, j)) {
+			mask = (a == b) ? -1 : 0;
+			if (mask != crypto_ct_eq_mask_u8(a, b)) {
 				fprintf(stderr, "FAIL: crypto_ct_eq_mask_u8(%d, %d) = %x, "
-				    "want %x\n", i, j, crypto_ct_eq_mask_u8(i, j), mask);
+				    "want %x\n", a, b, crypto_ct_eq_mask_u8(a, b), mask);
 				goto failure;
 			}
-		} while (++j != 0);
-	} while (++i != 0);
+		} while (++b != 0);
+	} while (++a != 0);
 
 	failed = 0;
 
@@ -91,6 +184,7 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
+	failed |= test_ct_size_t();
 	failed |= test_ct_u8();
 
 	return failed;
