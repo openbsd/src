@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.1 2024/07/10 10:41:19 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.2 2024/11/08 04:02:30 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -22,9 +22,6 @@
 #define _MACHINE_VMMVAR_H_
 
 #define VMM_HV_SIGNATURE 	"OpenBSDVMM58"
-
-#define VMM_PCI_MMIO_BAR_BASE	0xF0000000ULL
-#define VMM_PCI_MMIO_BAR_END	0xFFDFFFFFULL		/* 2 MiB below 4 GiB */
 
 /* Exit Reasons */
 #define VM_EXIT_TERMINATED			0xFFFE
