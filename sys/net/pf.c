@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1205 2024/09/04 07:54:52 mglocker Exp $ */
+/*	$OpenBSD: pf.c,v 1.1206 2024/11/08 13:22:09 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5753,6 +5753,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 				return (PF_DROP);
 
 			pd2.tot_len = ntohs(h2.ip_len);
+			pd2.ttl = h2.ip_ttl;
 			pd2.src = (struct pf_addr *)&h2.ip_src;
 			pd2.dst = (struct pf_addr *)&h2.ip_dst;
 			break;
@@ -5773,6 +5774,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 
 			pd2.tot_len = ntohs(h2_6.ip6_plen) +
 			    sizeof(struct ip6_hdr);
+			pd2.ttl = h2_6.ip6_hlim;
 			pd2.src = (struct pf_addr *)&h2_6.ip6_src;
 			pd2.dst = (struct pf_addr *)&h2_6.ip6_dst;
 			break;
