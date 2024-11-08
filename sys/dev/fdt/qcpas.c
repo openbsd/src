@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.7 2024/09/01 03:14:48 jsg Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.8 2024/11/08 21:13:34 landry Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -1461,6 +1461,7 @@ qcpas_pmic_rtr_bat_status(struct qcpas_softc *sc,
 	extern int hw_power;
 	struct apm_power_info *info = &qcpas_pmic_rtr_apm_power_info;
 	uint32_t delta;
+	u_char nblife;
 #endif
 
 #ifndef SMALL_KERNEL
@@ -1509,8 +1510,10 @@ qcpas_pmic_rtr_bat_status(struct qcpas_softc *sc,
 		return;
 	}
 
-	info->battery_life =
-	    ((bat->capacity * 100) / sc->sc_last_full_capacity);
+	nblife = ((bat->capacity * 100) / sc->sc_last_full_capacity);
+	if (info->battery_life != nblife)
+		apm_record_event(APM_POWER_CHANGE);
+	info->battery_life = nblife;
 	if (info->battery_life > 50)
 		info->battery_state = APM_BATT_HIGH;
 	else if (info->battery_life > 25)
@@ -1532,9 +1535,13 @@ qcpas_pmic_rtr_bat_status(struct qcpas_softc *sc,
 		info->minutes_left = (60 * delta) / abs(bat->rate);
 
 	if (bat->power_state & BATTMGR_PWR_STATE_AC_ON) {
+		if (info->ac_state != APM_AC_ON)
+			apm_record_event(APM_POWER_CHANGE);
 		info->ac_state = APM_AC_ON;
 		hw_power = 1;
 	} else {
+		if (info->ac_state != APM_AC_OFF)
+			apm_record_event(APM_POWER_CHANGE);
 		info->ac_state = APM_AC_OFF;
 		hw_power = 0;
 	}
