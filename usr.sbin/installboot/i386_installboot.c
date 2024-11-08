@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.47 2024/10/30 16:22:33 kettenis Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.48 2024/11/08 10:43:07 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -290,6 +290,9 @@ write_filesystem(struct disklabel *dl, char part)
 {
 	static const char *fsckfmt = "/sbin/fsck -t msdos %s >/dev/null";
 	struct msdosfs_args args;
+#ifdef __amd64__
+	struct statfs sf;
+#endif
 	char cmd[60];
 	char dst[PATH_MAX];
 	char *src;
@@ -416,6 +419,12 @@ write_filesystem(struct disklabel *dl, char part)
 	}
 
 #ifdef __amd64__
+	/* Skip installing a 2nd copy if we have a small filesystem. */
+	if (statfs(dst, &sf) || sf.f_blocks < 2048) {
+		rslt = 0;
+		goto umount;
+	}
+
 	/* Create "/efi/openbsd" directory in <duid>.<part>. */
 	dst[mntlen] = '\0';
 	if (strlcat(dst, "/efi/openbsd", sizeof(dst)) >= sizeof(dst)) {
