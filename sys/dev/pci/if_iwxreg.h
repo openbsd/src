@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.54 2024/10/23 02:16:40 jsg Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.55 2024/11/08 09:12:46 kettenis Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -139,6 +139,10 @@ struct iwx_context_info_dram {
 	uint64_t umac_img[IWX_MAX_DRAM_ENTRY];
 	uint64_t lmac_img[IWX_MAX_DRAM_ENTRY];
 	uint64_t virtual_img[IWX_MAX_DRAM_ENTRY];
+} __packed;
+
+struct iwx_pnvm_info_dram {
+	uint64_t pnvm_img[IWX_MAX_DRAM_ENTRY];
 } __packed;
 
 /*
@@ -1363,6 +1367,7 @@ enum msix_ivar_for_cause {
 #define IWX_UCODE_TLV_CAPA_LAR_MULTI_MCC		29
 #define IWX_UCODE_TLV_CAPA_BT_COEX_RRC			30
 #define IWX_UCODE_TLV_CAPA_GSCAN_SUPPORT		31
+#define IWX_UCODE_TLV_CAPA_FRAGMENTED_PNVM_IMG		32
 #define IWX_UCODE_TLV_CAPA_NAN_SUPPORT			34
 #define IWX_UCODE_TLV_CAPA_UMAC_UPLOAD			35
 #define IWM_UCODE_TLV_CAPA_SOC_LATENCY_SUPPORT		37
@@ -1414,6 +1419,7 @@ enum msix_ivar_for_cause {
 #define IWX_UCODE_TLV_CAPA_MLME_OFFLOAD			96
 #define IWX_UCODE_TLV_CAPA_BIGTK_SUPPORT		100
 #define IWX_UCODE_TLV_CAPA_RFIM_SUPPORT			102
+#define IWX_UCODE_TLV_CAPA_MLD_API_SUPPORT		110 
 
 #define IWX_NUM_UCODE_TLV_CAPA 128
 
@@ -2001,6 +2007,10 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* MAC_CONF group subcommand IDs */
 #define IWX_SESSION_PROTECTION_CMD	0x05
+#define IWX_MAC_CONFIG_CMD		0x08
+#define IWX_LINK_CONFIG_CMD		0x09
+#define IWX_STA_CONFIG_CMD		0x0a
+#define IWX_STA_REMOVE_CMD		0x0c
 #define IWX_SESSION_PROTECTION_NOTIF	0xfb
 
 /* DATA_PATH group subcommand IDs */
@@ -2009,6 +2019,7 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_TLC_MNG_CONFIG_CMD	0x0f
 #define IWX_RX_BAID_ALLOCATION_CONFIG_CMD	0x16
 #define IWX_SCD_QUEUE_CONFIG_CMD	0x17
+#define IWX_SEC_KEY_CMD		0x18
 #define IWX_RX_NO_DATA_NOTIF	0xf5
 #define IWX_THERMAL_DUAL_CHAIN_REQUEST 0xf6
 #define IWX_TLC_MNG_UPDATE_NOTIF 0xf7
@@ -4508,6 +4519,404 @@ struct iwx_mac_ctx_cmd {
 	};
 } __packed; /* IWX_MAC_CONTEXT_CMD_API_S_VER_1 */
 
+/**
+ * struct iwx_mac_client_data - configuration data for client MAC context
+ *
+ * @is_assoc: 1 for associated state, 0 otherwise
+ * @esr_transition_timeout: the timeout required by the AP for the eSR transition.
+ *	Available only from version 2 of the command.
+ *	This values comes from the EMLSR transition delay in the EML Capabilities
+ *	subfield.
+ * @medium_sync_delay: the value as it appeasr in P802.11be_D2.2 Figure 9-1002j.
+ * @assoc_id: unique ID assigned by the AP during association
+ * @reserved1: alignment
+ * @data_policy: see &enum iwx_mac_data_policy
+ * @reserved2: alignment
+ * @ctwin: client traffic window in TU (period after TBTT when GO is present).
+ *	0 indicates that there is no CT window.
+ */
+struct iwx_mac_client_data {
+	uint8_t is_assoc;
+	uint8_t esr_transition_timeout;
+	uint16_t medium_sync_delay;
+
+	uint16_t assoc_id;
+	uint16_t reserved1;
+	uint16_t data_policy;
+	uint16_t reserved2;
+	uint32_t ctwin;
+} __packed; /* MAC_CONTEXT_CONFIG_CLIENT_DATA_API_S_VER_2 */
+
+/**
+ * struct iwx_mac_p2p_dev_data  - configuration data for P2P device MAC context
+ *
+ * @is_disc_extended: if set to true, P2P Device discoverability is enabled on
+ *	other channels as well. This should be to true only in case that the
+ *	device is discoverable and there is an active GO. Note that setting this
+ *	field when not needed, will increase the number of interrupts and have
+ *	effect on the platform power, as this setting opens the Rx filters on
+ *	all macs.
+ */
+struct iwx_mac_p2p_dev_data {
+	uint32_t is_disc_extended;
+} __packed; /* MAC_CONTEXT_CONFIG_P2P_DEV_DATA_API_S_VER_1 */
+
+/**
+ * enum iwx_mac_config_filter_flags - MAC context configuration filter flags
+ *
+ * @IWX_MAC_CFG_FILTER_PROMISC: accept all data frames
+ * @IWX_MAC_CFG_FILTER_ACCEPT_CONTROL_AND_MGMT: pass all management and
+ *	control frames to the host
+ * @IWX_MAC_CFG_FILTER_ACCEPT_GRP: accept multicast frames
+ * @IWX_MAC_CFG_FILTER_ACCEPT_BEACON: accept beacon frames
+ * @IWX_MAC_CFG_FILTER_ACCEPT_BCAST_PROBE_RESP: accept broadcast probe response
+ * @IWX_MAC_CFG_FILTER_ACCEPT_PROBE_REQ: accept probe requests
+ */
+enum iwx_mac_config_filter_flags {
+	IWX_MAC_CFG_FILTER_PROMISC			= (1 << 0),
+	IWX_MAC_CFG_FILTER_ACCEPT_CONTROL_AND_MGMT	= (1 << 1),
+	IWX_MAC_CFG_FILTER_ACCEPT_GRP			= (1 << 2),
+	IWX_MAC_CFG_FILTER_ACCEPT_BEACON		= (1 << 3),
+	IWX_MAC_CFG_FILTER_ACCEPT_BCAST_PROBE_RESP	= (1 << 4),
+	IWX_MAC_CFG_FILTER_ACCEPT_PROBE_REQ		= (1 << 5),
+}; /* MAC_FILTER_FLAGS_MASK_E_VER_1 */
+
+/**
+ * struct iwx_mac_config_cmd - command structure to configure MAC contexts in
+ *	MLD API
+ * ( MAC_CONTEXT_CONFIG_CMD = 0x8 )
+ *
+ * @id_and_color: ID and color of the MAC
+ * @action: action to perform, see &enum iwx_ctxt_action
+ * @mac_type: one of &enum iwx_mac_types
+ * @local_mld_addr: mld address
+ * @reserved_for_local_mld_addr: reserved
+ * @filter_flags: combination of &enum iwx_mac_config_filter_flags
+ * @he_support: does this MAC support HE
+ * @he_ap_support: HE AP enabled, "pseudo HE", no trigger frame handling
+ * @eht_support: does this MAC support EHT. Requires he_support
+ * @nic_not_ack_enabled: mark that the NIC doesn't support receiving
+ *	ACK-enabled AGG, (i.e. both BACK and non-BACK frames in single AGG).
+ *	If the NIC is not ACK_ENABLED it may use the EOF-bit in first non-0
+ *	len delim to determine if AGG or single.
+ */
+struct iwx_mac_config_cmd {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* MAC_CONTEXT_TYPE_API_E */
+	uint32_t mac_type;
+	uint8_t local_mld_addr[6];
+	uint16_t reserved_for_local_mld_addr;
+	uint32_t filter_flags;
+	uint16_t he_support;
+	uint16_t he_ap_support;
+	uint32_t eht_support;
+	uint32_t nic_not_ack_enabled;
+	/* MAC_CONTEXT_CONFIG_SPECIFIC_DATA_API_U_VER_2 */
+	union {
+		struct iwx_mac_client_data client;
+		struct iwx_mac_p2p_dev_data p2p_dev;
+	};
+} __packed; /* MAC_CONTEXT_CONFIG_CMD_API_S_VER_2 */
+
+/**
+ * struct iwx_he_backoff_conf - used for backoff configuration
+ * Per each trigger-based AC, (set by MU EDCA Parameter set info-element)
+ * used for backoff configuration of TXF5..TXF8 trigger based.
+ * The MU-TIMER is reloaded w/ MU_TIME each time a frame from the AC is sent via
+ * trigger-based TX.
+ * @cwmin: CW min
+ * @cwmax: CW max
+ * @aifsn: AIFSN
+ *	AIFSN=0, means that no backoff from the specified TRIG-BASED AC is
+ *	allowed till the MU-TIMER is 0
+ * @mu_time: MU time in 8TU units
+ */
+struct iwx_he_backoff_conf {
+	uint16_t cwmin;
+	uint16_t cwmax;
+	uint16_t aifsn;
+	uint16_t mu_time;
+} __packed; /* AC_QOS_DOT11AX_API_S */
+
+/**
+ * enum iwx_link_ctx_modify_flags - indicate to the fw what fields are being
+ *	modified in &iwx_link_ctx_cfg_cmd
+ *
+ * @IWX_LINK_CONTEXT_MODIFY_ACTIVE: covers iwx_link_ctx_cfg_cmd::active
+ * @IWX_LINK_CONTEXT_MODIFY_RATES_INFO: covers iwx_link_ctx_cfg_cmd::cck_rates,
+ *	iwx_link_ctx_cfg_cmd::ofdm_rates,
+ *	iwx_link_ctx_cfg_cmd::cck_short_preamble,
+ *	iwx_link_ctx_cfg_cmd::short_slot
+ * @IWX_LINK_CONTEXT_MODIFY_PROTECT_FLAGS: covers
+ *	iwx_link_ctx_cfg_cmd::protection_flags
+ * @IWX_LINK_CONTEXT_MODIFY_QOS_PARAMS: covers iwx_link_ctx_cfg_cmd::qos_flags,
+ *	iwx_link_ctx_cfg_cmd::ac,
+ * @IWX_LINK_CONTEXT_MODIFY_BEACON_TIMING: covers iwx_link_ctx_cfg_cmd::bi,
+ *	iwx_link_ctx_cfg_cmd::dtim_interval,
+ *	iwx_link_ctx_cfg_cmd::dtim_time,
+ *	iwx_link_ctx_cfg_cmd::dtim_tsf,
+ *	iwx_link_ctx_cfg_cmd::assoc_beacon_arrive_time.
+ *	This flag can be set only once after assoc.
+ * @IWX_LINK_CONTEXT_MODIFY_HE_PARAMS: covers
+ *	iwx_link_ctx_cfg_cmd::htc_trig_based_pkt_ext
+ *	iwx_link_ctx_cfg_cmd::rand_alloc_ecwmin,
+ *	iwx_link_ctx_cfg_cmd::rand_alloc_ecwmax,
+ *	iwx_link_ctx_cfg_cmd::trig_based_txf,
+ *	iwx_link_ctx_cfg_cmd::bss_color,
+ *	iwx_link_ctx_cfg_cmd::ndp_fdbk_buff_th_exp,
+ *	iwx_link_ctx_cfg_cmd::ref_bssid_addr
+ *	iwx_link_ctx_cfg_cmd::bssid_index,
+ *	iwx_link_ctx_cfg_cmd::frame_time_rts_th.
+ *	This flag can be set any time.
+ * @IWX_LINK_CONTEXT_MODIFY_BSS_COLOR_DISABLE: covers
+ *	iwx_link_ctx_cfg_cmd::bss_color_disable
+ * @IWX_LINK_CONTEXT_MODIFY_EHT_PARAMS: covers iwx_link_ctx_cfg_cmd::puncture_mask.
+ *	This flag can be set only if the MAC that this link relates to has
+ *	eht_support set to true.
+ * @IWX_LINK_CONTEXT_MODIFY_ALL: set all above flags
+ */
+enum iwx_link_ctx_modify_flags {
+	IWX_LINK_CONTEXT_MODIFY_ACTIVE		= (1 << 0),
+	IWX_LINK_CONTEXT_MODIFY_RATES_INFO	= (1 << 1),
+	IWX_LINK_CONTEXT_MODIFY_PROTECT_FLAGS	= (1 << 2),
+	IWX_LINK_CONTEXT_MODIFY_QOS_PARAMS	= (1 << 3),
+	IWX_LINK_CONTEXT_MODIFY_BEACON_TIMING	= (1 << 4),
+	IWX_LINK_CONTEXT_MODIFY_HE_PARAMS	= (1 << 5),
+	IWX_LINK_CONTEXT_MODIFY_BSS_COLOR_DISABLE	= (1 << 6),
+	IWX_LINK_CONTEXT_MODIFY_EHT_PARAMS	= (1 << 7),
+	IWX_LINK_CONTEXT_MODIFY_ALL		= 0xff,
+}; /* LINK_CONTEXT_MODIFY_MASK_E_VER_1 */
+
+/**
+ * enum iwx_link_ctx_protection_flags - link protection flags
+ * @IWX_LINK_PROT_FLG_TGG_PROTECT: 11g protection when transmitting OFDM frames,
+ *	this will require CCK RTS/CTS2self.
+ *	RTS/CTS will protect full burst time.
+ * @IWX_LINK_PROT_FLG_HT_PROT: enable HT protection
+ * @IWX_LINK_PROT_FLG_FAT_PROT: protect 40 MHz transmissions
+ * @IWX_LINK_PROT_FLG_SELF_CTS_EN: allow CTS2self
+ */
+enum iwx_link_ctx_protection_flags {
+	IWX_LINK_PROT_FLG_TGG_PROTECT	= (1 << 0),
+	IWX_LINK_PROT_FLG_HT_PROT	= (1 << 1),
+	IWX_LINK_PROT_FLG_FAT_PROT	= (1 << 2),
+	IWX_LINK_PROT_FLG_SELF_CTS_EN	= (1 << 3),
+}; /* LINK_PROTECT_FLAGS_E_VER_1 */
+
+/**
+ * struct iwx_link_config_cmd - command structure to configure the LINK context
+ *	in MLD API
+ * ( LINK_CONFIG_CMD =0x9 )
+ *
+ * @action: action to perform, see &enum iwx_ctxt_action
+ * @link_id: the id of the link that this cmd configures
+ * @mac_id: interface ID. Relevant only if action is FW_CTXT_ACTION_ADD
+ * @phy_id: PHY index. Can be changed only if the link was inactive
+ *	(and stays inactive). If the link is active (or becomes active),
+ *	this field is ignored.
+ * @local_link_addr: the links MAC address. Can be changed only if the link was
+ *	inactive (and stays inactive). If the link is active
+ *	(or becomes active), this field is ignored.
+ * @reserved_for_local_link_addr: reserved
+ * @modify_mask: from &enum iwx_link_ctx_modify_flags, selects what to change.
+ *	Relevant only if action is FW_CTXT_ACTION_MODIFY
+ * @active: indicates whether the link is active or not
+ * @listen_lmac: indicates whether the link should be allocated on the Listen
+ *	Lmac or on the Main Lmac. Cannot be changed on an active Link.
+ *	Relevant only for eSR.
+ * @cck_rates: basic rates available for CCK
+ * @ofdm_rates: basic rates available for OFDM
+ * @cck_short_preamble: 1 for enabling short preamble, 0 otherwise
+ * @short_slot: 1 for enabling short slots, 0 otherwise
+ * @protection_flags: combination of &enum iwx_link_ctx_protection_flags
+ * @qos_flags: from &enum iwx_mac_qos_flags
+ * @ac: one iwx_mac_qos configuration for each AC
+ * @htc_trig_based_pkt_ext: default PE in 4us units
+ * @rand_alloc_ecwmin: random CWmin = 2**ECWmin-1
+ * @rand_alloc_ecwmax: random CWmax = 2**ECWmax-1
+ * @ndp_fdbk_buff_th_exp: set exponent for the NDP feedback buffered threshold
+ * @trig_based_txf: MU EDCA Parameter set for the trigger based traffic queues
+ * @bi: beacon interval in TU, applicable only when associated
+ * @dtim_interval: DTIM interval in TU.
+ *	Relevant only for GO, otherwise this is offloaded.
+ * @puncture_mask: puncture mask for EHT
+ * @frame_time_rts_th: HE duration RTS threshold, in units of 32us
+ * @flags: a combination from &enum iwx_link_ctx_flags
+ * @flags_mask: what of %flags have changed. Also &enum iwx_link_ctx_flags
+ * Below fields are for multi-bssid:
+ * @ref_bssid_addr: reference BSSID used by the AP
+ * @reserved_for_ref_bssid_addr: reserved
+ * @bssid_index: index of the associated VAP
+ * @bss_color: 11ax AP ID that is used in the HE SIG-A to mark inter BSS frame
+ * @spec_link_id: link_id as the AP knows it
+ * @reserved: alignment
+ * @ibss_bssid_addr: bssid for ibss
+ * @reserved_for_ibss_bssid_addr: reserved
+ * @reserved1: reserved for future use
+ */
+struct iwx_link_config_cmd {
+	uint32_t action;
+	uint32_t link_id;
+	uint32_t mac_id;
+	uint32_t phy_id;
+	uint8_t local_link_addr[6];
+	uint16_t reserved_for_local_link_addr;
+	uint32_t modify_mask;
+	uint32_t active;
+	uint32_t listen_lmac;
+	uint32_t cck_rates;
+	uint32_t ofdm_rates;
+	uint32_t cck_short_preamble;
+	uint32_t short_slot;
+	uint32_t protection_flags;
+	/* MAC_QOS_PARAM_API_S_VER_1 */
+	uint32_t qos_flags;
+	struct iwx_ac_qos ac[IWX_AC_NUM + 1];
+	uint8_t htc_trig_based_pkt_ext;
+	uint8_t rand_alloc_ecwmin;
+	uint8_t rand_alloc_ecwmax;
+	uint8_t ndp_fdbk_buff_th_exp;
+	struct iwx_he_backoff_conf trig_based_txf[IWX_AC_NUM];
+	uint32_t bi;
+	uint32_t dtim_interval;
+	uint16_t puncture_mask;
+	uint16_t frame_time_rts_th;
+	uint32_t flags;
+	uint32_t flags_mask;
+	/* The below fields are for multi-bssid */
+	uint8_t ref_bssid_addr[6];
+	uint16_t reserved_for_ref_bssid_addr;
+	uint8_t bssid_index;
+	uint8_t bss_color;
+	uint8_t spec_link_id;
+	uint8_t reserved;
+	uint8_t ibss_bssid_addr[6];
+	uint16_t reserved_for_ibss_bssid_addr;
+	uint32_t reserved1[8];
+} __packed; /* LINK_CONTEXT_CONFIG_CMD_API_S_VER_1 */
+
+#define MAX_HE_SUPP_NSS	2
+#define MAX_CHANNEL_BW_INDX_API_D_VER_2	4
+#define MAX_CHANNEL_BW_INDX_API_D_VER_3	5
+
+/**
+ * struct iwx_he_pkt_ext_v1 - QAM thresholds
+ * The required PPE is set via HE Capabilities IE, per Nss x BW x MCS
+ * The IE is organized in the following way:
+ * Support for Nss x BW (or RU) matrix:
+ *	(0=SISO, 1=MIMO2) x (0-20MHz, 1-40MHz, 2-80MHz, 3-160MHz)
+ * Each entry contains 2 QAM thresholds for 8us and 16us:
+ *	0=BPSK, 1=QPSK, 2=16QAM, 3=64QAM, 4=256QAM, 5=1024QAM, 6=RES, 7=NONE
+ * i.e. QAM_th1 < QAM_th2 such if TX uses QAM_tx:
+ *	QAM_tx < QAM_th1            --> PPE=0us
+ *	QAM_th1 <= QAM_tx < QAM_th2 --> PPE=8us
+ *	QAM_th2 <= QAM_tx           --> PPE=16us
+ * @pkt_ext_qam_th: QAM thresholds
+ *	For each Nss/Bw define 2 QAM thrsholds (0..5)
+ *	For rates below the low_th, no need for PPE
+ *	For rates between low_th and high_th, need 8us PPE
+ *	For rates equal or higher then the high_th, need 16us PPE
+ *	Nss (0-siso, 1-mimo2) x BW (0-20MHz, 1-40MHz, 2-80MHz, 3-160MHz) x
+ *	(0-low_th, 1-high_th)
+ */
+struct iwx_he_pkt_ext_v1 {
+	uint8_t pkt_ext_qam_th[MAX_HE_SUPP_NSS][MAX_CHANNEL_BW_INDX_API_D_VER_2][2];
+} __packed; /* PKT_EXT_DOT11AX_API_S_VER_1 */
+
+/**
+ * struct iwx_he_pkt_ext_v2 - QAM thresholds
+ * The required PPE is set via HE Capabilities IE, per Nss x BW x MCS
+ * The IE is organized in the following way:
+ * Support for Nss x BW (or RU) matrix:
+ *	(0=SISO, 1=MIMO2) x (0-20MHz, 1-40MHz, 2-80MHz, 3-160MHz)
+ * Each entry contains 2 QAM thresholds for 8us and 16us:
+ *	0=BPSK, 1=QPSK, 2=16QAM, 3=64QAM, 4=256QAM, 5=1024QAM, 6=RES, 7=NONE
+ * i.e. QAM_th1 < QAM_th2 such if TX uses QAM_tx:
+ *	QAM_tx < QAM_th1            --> PPE=0us
+ *	QAM_th1 <= QAM_tx < QAM_th2 --> PPE=8us
+ *	QAM_th2 <= QAM_tx           --> PPE=16us
+ * @pkt_ext_qam_th: QAM thresholds
+ *	For each Nss/Bw define 2 QAM thrsholds (0..5)
+ *	For rates below the low_th, no need for PPE
+ *	For rates between low_th and high_th, need 8us PPE
+ *	For rates equal or higher then the high_th, need 16us PPE
+ *	Nss (0-siso, 1-mimo2) x
+ *	BW (0-20MHz, 1-40MHz, 2-80MHz, 3-160MHz, 4-320MHz) x
+ *	(0-low_th, 1-high_th)
+ */
+struct iwx_he_pkt_ext_v2 {
+	uint8_t pkt_ext_qam_th[MAX_HE_SUPP_NSS][MAX_CHANNEL_BW_INDX_API_D_VER_3][2];
+} __packed; /* PKT_EXT_DOT11AX_API_S_VER_2 */
+
+/**
+ * struct iwx_mvm_sta_cfg_cmd - cmd structure to add a peer sta to the uCode's
+ *	station table
+ * ( STA_CONFIG_CMD = 0xA )
+ *
+ * @sta_id: index of station in uCode's station table
+ * @link_id: the id of the link that is used to communicate with this sta
+ * @peer_mld_address: the peers mld address
+ * @reserved_for_peer_mld_address: reserved
+ * @peer_link_address: the address of the link that is used to communicate
+ *	with this sta
+ * @reserved_for_peer_link_address: reserved
+ * @station_type: type of this station. See &enum iwx_fw_sta_type
+ * @assoc_id: for GO only
+ * @beamform_flags: beam forming controls
+ * @mfp: indicates whether the STA uses management frame protection or not.
+ * @mimo: indicates whether the sta uses mimo or not
+ * @mimo_protection: indicates whether the sta uses mimo protection or not
+ * @ack_enabled: indicates that the AP supports receiving ACK-
+ *	enabled AGG, i.e. both BACK and non-BACK frames in a single AGG
+ * @trig_rnd_alloc: indicates that trigger based random allocation
+ *	is enabled according to UORA element existence
+ * @tx_ampdu_spacing: minimum A-MPDU spacing:
+ *	4 - 2us density, 5 - 4us density, 6 - 8us density, 7 - 16us density
+ * @tx_ampdu_max_size: maximum A-MPDU length: 0 - 8K, 1 - 16K, 2 - 32K,
+ *	3 - 64K, 4 - 128K, 5 - 256K, 6 - 512K, 7 - 1024K.
+ * @sp_length: the size of the SP in actual number of frames
+ * @uapsd_acs:  4 LS bits are trigger enabled ACs, 4 MS bits are the deliver
+ *	enabled ACs.
+ * @pkt_ext: optional, exists according to PPE-present bit in the HE/EHT-PHY
+ *	capa
+ * @htc_flags: which features are supported in HTC
+ */
+struct iwx_mvm_sta_cfg_cmd {
+	uint32_t sta_id;
+	uint32_t link_id;
+	uint8_t peer_mld_address[6];
+	uint16_t reserved_for_peer_mld_address;
+	uint8_t peer_link_address[6];
+	uint16_t reserved_for_peer_link_address;
+	uint32_t station_type;
+	uint32_t assoc_id;
+	uint32_t beamform_flags;
+	uint32_t mfp;
+	uint32_t mimo;
+	uint32_t mimo_protection;
+	uint32_t ack_enabled;
+	uint32_t trig_rnd_alloc;
+	uint32_t tx_ampdu_spacing;
+	uint32_t tx_ampdu_max_size;
+	uint32_t sp_length;
+	uint32_t uapsd_acs;
+	struct iwx_he_pkt_ext_v2 pkt_ext;
+	uint32_t htc_flags;
+} __packed; /* STA_CMD_API_S_VER_1 */
+
+/**
+ * struct iwx_mvm_remove_sta_cmd - a cmd structure to remove a sta added by
+ *	STA_CONFIG_CMD or AUX_STA_CONFIG_CMD
+ * ( STA_REMOVE_CMD = 0xC )
+ *
+ * @sta_id: index of station to remove
+ */
+struct iwx_mvm_remove_sta_cmd {
+	uint32_t sta_id;
+} __packed; /* REMOVE_STA_API_S_VER_1 */
+
 static inline uint32_t iwx_reciprocal(uint32_t v)
 {
 	if (!v)
@@ -5479,6 +5888,80 @@ struct iwx_scd_queue_cfg_cmd {
 		} __packed modify; /* TX_QUEUE_CFG_CMD_MODIFY_API_S_VER_1 */
 	} __packed u; /* TX_QUEUE_CFG_CMD_OPERATION_API_U_VER_1 */
 } __packed; /* TX_QUEUE_CFG_CMD_API_S_VER_3 */
+
+/**
+ * enum iwx_sec_key_flags - security key command key flags
+ * @IWX_SEC_KEY_FLAG_CIPHER_MASK: cipher mask
+ * @IWX_SEC_KEY_FLAG_CIPHER_WEP: WEP cipher
+ * @IWX_SEC_KEY_FLAG_CIPHER_CCMP: CCMP/CMAC cipher
+ * @IWX_SEC_KEY_FLAG_CIPHER_TKIP: TKIP cipher
+ * @IWX_SEC_KEY_FLAG_CIPHER_GCMP: GCMP/GMAC cipher
+ * @IWX_SEC_KEY_FLAG_NO_TX: don't install for TX
+ * @IWX_SEC_KEY_FLAG_KEY_SIZE: large key size (WEP-104, GCMP-256, GMAC-256)
+ * @IWX_SEC_KEY_FLAG_MFP: MFP is in used for this key
+ * @IWX_SEC_KEY_FLAG_MCAST_KEY: this is a multicast key
+ * @IWX_SEC_KEY_FLAG_SPP_AMSDU: SPP A-MSDU should be used
+ */
+enum iwx_sec_key_flags {
+	IWX_SEC_KEY_FLAG_CIPHER_MASK	= 0x07,
+	IWX_SEC_KEY_FLAG_CIPHER_WEP	= 0x01,
+	IWX_SEC_KEY_FLAG_CIPHER_CCMP	= 0x02,
+	IWX_SEC_KEY_FLAG_CIPHER_TKIP	= 0x03,
+	IWX_SEC_KEY_FLAG_CIPHER_GCMP	= 0x05,
+	IWX_SEC_KEY_FLAG_NO_TX		= 0x08,
+	IWX_SEC_KEY_FLAG_KEY_SIZE	= 0x10,
+	IWX_SEC_KEY_FLAG_MFP		= 0x20,
+	IWX_SEC_KEY_FLAG_MCAST_KEY	= 0x40,
+	IWX_SEC_KEY_FLAG_SPP_AMSDU	= 0x80,
+};
+
+#define IWX_SEC_WEP_KEY_OFFSET	3
+
+/**
+ * struct iwx_sec_key_cmd - security key command
+ * @action: action from &enum iwx_ctxt_action
+ * @u.add.sta_mask: station mask for the new key
+ * @u.add.key_id: key ID (0-7) for the new key
+ * @u.add.key_flags: key flags per &enum iwx_sec_key_flags
+ * @u.add.key: key material. WEP keys should start from &IWX_SEC_WEP_KEY_OFFSET.
+ * @u.add.tkip_mic_rx_key: TKIP MIC RX key
+ * @u.add.tkip_mic_tx_key: TKIP MIC TX key
+ * @u.add.rx_seq: RX sequence counter value
+ * @u.add.tx_seq: TX sequence counter value
+ * @u.modify.old_sta_mask: old station mask
+ * @u.modify.new_sta_mask: new station mask
+ * @u.modify.key_id: key ID
+ * @u.modify.key_flags: new key flags
+ * @u.remove.sta_mask: station mask
+ * @u.remove.key_id: key ID
+ * @u.remove.key_flags: key flags
+ */
+struct iwx_sec_key_cmd {
+	uint32_t action;
+	union {
+		struct {
+			uint32_t sta_mask;
+			uint32_t key_id;
+			uint32_t key_flags;
+			uint8_t key[32];
+			uint8_t tkip_mic_rx_key[8];
+			uint8_t tkip_mic_tx_key[8];
+			uint64_t rx_seq;
+			uint64_t tx_seq;
+		} __packed add; /* SEC_KEY_ADD_CMD_API_S_VER_1 */
+		struct {
+			uint32_t old_sta_mask;
+			uint32_t new_sta_mask;
+			uint32_t key_id;
+			uint32_t key_flags;
+		} __packed modify; /* SEC_KEY_MODIFY_CMD_API_S_VER_1 */
+		struct {
+			uint32_t sta_mask;
+			uint32_t key_id;
+			uint32_t key_flags;
+		} __packed remove; /* SEC_KEY_REMOVE_CMD_API_S_VER_1 */
+	} __packed u; /* SEC_KEY_OPERATION_API_U_VER_1 */
+} __packed; /* SEC_KEY_CMD_API_S_VER_1 */
 
 /**
  * Options for TLC config flags

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.41 2023/03/06 11:53:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.42 2024/11/08 09:12:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -123,7 +123,7 @@ struct iwx_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
-#define IWX_UCODE_SECT_MAX 57
+#define IWX_UCODE_SECT_MAX 60
 
 /*
  * fw_status is used to determine if we've already parsed the firmware file
@@ -486,6 +486,14 @@ struct iwx_device_cfg {
 #define IWX_SO_A_GF4_A_PNVM	"iwx-so-a0-gf4-a0.pnvm"
 #define IWX_SO_A_HR_B_FW	"iwx-so-a0-hr-b0-77"
 #define IWX_SO_A_JF_B_FW	"iwx-so-a0-jf-b0-77"
+#define IWX_MA_B_HR_B_FW	"iwx-ma-a0-hr-b0-83"
+#define IWX_MA_B_HR_B_PNVM	"iwx-ma-a0-hr-b0.pnvm"
+#define IWX_MA_B_GF_A_FW	"iwx-ma-b0-gf-a0-83"
+#define IWX_MA_B_GF_A_PNVM	"iwx-ma-b0-gf-a0.pnvm"
+#define IWX_MA_B_GF4_A_FW	"iwx-ma-b0-gf4-a0-83"
+#define IWX_MA_B_GF4_A_PNVM	"iwx-ma-b0-gf4-a0.pnvm"
+#define IWX_MA_A_FM_A_FW	"iwx-ma-a0-fm-a0-83"
+#define IWX_MA_A_FM_A_PNVM	"iwx-ma-a0-fm-a0.pnvm"
 
 const struct iwx_device_cfg iwx_9560_quz_a0_jf_b0_cfg = {
 	.fw_name = IWX_QUZ_A_JF_B_FW,
@@ -572,6 +580,26 @@ const struct iwx_device_cfg iwx_2ax_cfg_ty_gf_a0 = {
 
 const struct iwx_device_cfg iwx_2ax_cfg_so_jf_b0 = {
 	.fw_name = IWX_SO_A_JF_B_FW,
+};
+
+const struct iwx_device_cfg iwx_cfg_ma_b0_hr_b0 = {
+	.fw_name = IWX_MA_B_HR_B_FW,
+	.pnvm_name = IWX_MA_B_HR_B_PNVM,
+};
+
+const struct iwx_device_cfg iwx_cfg_ma_b0_gf_a0 = {
+	.fw_name = IWX_MA_B_GF_A_FW,
+	.pnvm_name = IWX_MA_B_GF_A_PNVM,
+};
+
+const struct iwx_device_cfg iwx_cfg_ma_b0_gf4_a0 = {
+	.fw_name = IWX_MA_B_GF4_A_FW,
+	.pnvm_name = IWX_MA_B_GF4_A_PNVM,
+};
+
+const struct iwx_device_cfg iwx_cfg_ma_a0_fm_a0 = {
+	.fw_name = IWX_MA_A_FM_A_FW,
+	.pnvm_name = IWX_MA_A_FM_A_PNVM,
 };
 
 #define IWX_CFG_ANY (~0)
@@ -693,6 +721,9 @@ struct iwx_softc {
 	struct iwx_dma_info prph_info_dma;
 	struct iwx_dma_info iml_dma;
 	struct iwx_dma_info pnvm_dma;
+	struct iwx_dma_info pnvm_seg_dma[IWX_MAX_DRAM_ENTRY];
+	uint32_t pnvm_size;
+	int pnvm_segs;
 	uint32_t sc_pnvm_ver;
 
 	int sc_fw_chunk_done;
@@ -713,6 +744,7 @@ struct iwx_softc {
 	struct iwx_fw_cmd_version cmd_versions[IWX_MAX_FW_CMD_VERSIONS];
 	int n_cmd_versions;
 	int sc_rate_n_flags_version;
+	int sc_use_mld_api;
 
 	int sc_intmask;
 	int sc_flags;
