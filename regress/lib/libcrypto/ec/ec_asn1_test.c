@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.28 2024/11/05 09:14:25 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.29 2024/11/08 12:35:26 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -2785,13 +2785,13 @@ ec_key_test_point_versus_bn(const struct ec_private_key *key, const EC_KEY *ec_k
 
 	if ((point_bn = BN_new()) == NULL)
 		err(1, "BN_new()");
-	if ((EC_POINT_point2bn(group, ec_public_point,
-	    POINT_CONVERSION_UNCOMPRESSED, point_bn, NULL)) == NULL) {
+	if (EC_POINT_point2bn(group, ec_public_point,
+	    POINT_CONVERSION_UNCOMPRESSED, point_bn, NULL) == NULL) {
 		fprintf(stderr, "FAIL: EC_POINT_point2bn() for %s\n", key->name);
 		goto err;
 	}
 
-	if ((BN_hex2bn(&hex_bn, key->hex)) == 0) {
+	if (BN_hex2bn(&hex_bn, key->hex) == 0) {
 		fprintf(stderr, "FAIL: BN_hex2bn() for %s\n", key->name);
 		goto err;
 	}
