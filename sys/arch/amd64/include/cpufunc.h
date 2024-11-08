@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.42 2024/11/07 17:24:42 bluhm Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.43 2024/11/08 12:08:22 bluhm Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -293,7 +293,14 @@ wbinvd_on_all_cpus(void)
 	wbinvd();
 	return 0;
 }
-#endif
+
+static inline int
+wbinvd_on_all_cpus_acked(void)
+{
+	wbinvd();
+	return 0;
+}
+#endif /* MULTIPROCESSOR */
 
 static __inline void
 clflush(u_int64_t addr)

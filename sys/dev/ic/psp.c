@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.10 2024/11/05 13:28:35 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.11 2024/11/08 12:08:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -263,7 +263,7 @@ psp_init(struct psp_softc *sc, struct psp_init *uinit)
 	if (ret != 0)
 		return (EIO);
 
-	wbinvd_on_all_cpus();
+	wbinvd_on_all_cpus_acked();
 
 	sc->sc_flags |= PSPF_INITIALIZED;
 
@@ -342,7 +342,7 @@ psp_shutdown(struct psp_softc *sc)
 		return (EIO);
 
 	/* wbinvd right after SHUTDOWN */
-	wbinvd_on_all_cpus();
+	wbinvd_on_all_cpus_acked();
 
 	/* release TMR */
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_tmr_map);
@@ -382,7 +382,7 @@ psp_df_flush(struct psp_softc *sc)
 {
 	int			 ret;
 
-	wbinvd_on_all_cpus();
+	wbinvd_on_all_cpus_acked();
 
 	ret = ccp_docmd(sc, PSP_CMD_DF_FLUSH, 0x0);
 
@@ -482,7 +482,7 @@ psp_launch_update_data(struct psp_softc *sc,
 	ludata->handle = ulud->handle;
 
 	/* Drain caches before we encrypt memory. */
-	wbinvd_on_all_cpus();
+	wbinvd_on_all_cpus_acked();
 
 	/*
 	 * Launch update one physical page at a time.  We could
