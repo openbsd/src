@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.43 2024/11/08 21:53:54 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.44 2024/11/08 21:56:58 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -104,27 +104,24 @@ EC_KEY_new_by_curve_name(int nid)
 LCRYPTO_ALIAS(EC_KEY_new_by_curve_name);
 
 void
-EC_KEY_free(EC_KEY *r)
+EC_KEY_free(EC_KEY *ec_key)
 {
-	int i;
-
-	if (r == NULL)
+	if (ec_key == NULL)
 		return;
 
-	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_EC);
-	if (i > 0)
+	if (CRYPTO_add(&ec_key->references, -1, CRYPTO_LOCK_EC) > 0)
 		return;
 
-	if (r->meth != NULL && r->meth->finish != NULL)
-		r->meth->finish(r);
+	if (ec_key->meth != NULL && ec_key->meth->finish != NULL)
+		ec_key->meth->finish(ec_key);
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ec_key, &ec_key->ex_data);
 
-	EC_GROUP_free(r->group);
-	EC_POINT_free(r->pub_key);
-	BN_free(r->priv_key);
+	EC_GROUP_free(ec_key->group);
+	EC_POINT_free(ec_key->pub_key);
+	BN_free(ec_key->priv_key);
 
-	freezero(r, sizeof(EC_KEY));
+	freezero(ec_key, sizeof(*ec_key));
 }
 LCRYPTO_ALIAS(EC_KEY_free);
 
