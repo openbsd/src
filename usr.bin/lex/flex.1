@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.45 2021/03/08 02:47:27 jsg Exp $
+.\"	$OpenBSD: flex.1,v 1.46 2024/11/09 18:06:00 op Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: November 9 2024 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -224,24 +224,17 @@ A somewhat more complicated example:
 .Bd -literal -offset indent
 /* scanner for a toy Pascal-like language */
 
-%{
-/* need this for the call to atof() below */
-#include <math.h>
-%}
-
 DIGIT    [0-9]
 ID       [a-z][a-z0-9]*
 
 %%
 
 {DIGIT}+ {
-        printf("An integer: %s (%d)\en", yytext,
-            atoi(yytext));
+        printf("An integer: %s\en", yytext);
 }
 
 {DIGIT}+"."{DIGIT}* {
-        printf("A float: %s (%g)\en", yytext,
-            atof(yytext));
+        printf("A float: %s\en", yytext);
 }
 
 if|then|begin|end|procedure|function {
@@ -260,6 +253,7 @@ if|then|begin|end|procedure|function {
 
 %%
 
+int
 main(int argc, char *argv[])
 {
         ++argv; --argc;  /* skip over program name */
@@ -1564,8 +1558,7 @@ it will treat it as a single token, the floating-point number 123.456:
 expect-floats        BEGIN(expect);
 
 <expect>[0-9]+"."[0-9]+ {
-        printf("found a float, = %f\en",
-            atof(yytext));
+        printf("found a float, = %s\en", yytext);
 }
 <expect>\en {
         /*
@@ -1578,8 +1571,7 @@ expect-floats        BEGIN(expect);
 }
 
 [0-9]+ {
-        printf("found an integer, = %d\en",
-            atoi(yytext));
+        printf("found an integer, = %s\en", yytext);
 }
 
 "."     printf("found a dot\en");
@@ -2289,9 +2281,7 @@ appearing in the yacc input.
 This file is then included in the
 .Nm
 scanner.
-For example, if one of the tokens is
-.Qq TOK_NUMBER ,
-part of the scanner might look like:
+For example, part of the scanner might look like:
 .Bd -literal -offset indent
 %{
 #include "y.tab.h"
@@ -2299,7 +2289,10 @@ part of the scanner might look like:
 
 %%
 
-[0-9]+        yylval = atoi(yytext); return TOK_NUMBER;
+if            return TOK_IF;
+then          return TOK_THEN;
+begin         return TOK_BEGIN;
+end           return TOK_END;
 .Ed
 .Sh OPTIONS
 .Nm
