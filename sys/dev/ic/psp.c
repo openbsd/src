@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.12 2024/11/08 17:34:22 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.13 2024/11/09 11:47:47 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -479,7 +479,7 @@ psp_launch_update_data(struct psp_softc *sc,
 {
 	struct psp_launch_update_data	*ludata;
 	pmap_t				 pmap;
-	vaddr_t				 v, next, end;
+	vaddr_t				 v, next, start, end;
 	size_t				 size, len, off;
 	int				 ret;
 
@@ -504,31 +504,43 @@ psp_launch_update_data(struct psp_softc *sc,
 	 * to system physical address.
 	 */
 	pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	start = ulud->paddr;
 	size = ulud->length;
-	end = ulud->paddr + ulud->length;
+	end = start + size;
+
+	ret = EINVAL;
+
+	/* Wire mapping. */
+	if (uvm_map_pageable(&p->p_vmspace->vm_map, start, end, FALSE, 0))
+		goto out;
+
 	for (v = ulud->paddr; v < end; v = next) {
 		off = v & PAGE_MASK;
 
 		len = MIN(PAGE_SIZE - off, size);
 
-		/* Wire mapping. */
-		if (uvm_map_pageable(&p->p_vmspace->vm_map, v, v+len, FALSE, 0))
-			return (EINVAL);
 		if (!pmap_extract(pmap, v, (paddr_t *)&ludata->paddr))
-			return (EINVAL);
+			goto out;
 		ludata->length = len;
 
 		ret = ccp_docmd(sc, PSP_CMD_LAUNCH_UPDATE_DATA,
 		    sc->sc_cmd_map->dm_segs[0].ds_addr);
 
-		if (ret != 0)
-			return (EIO);
+		if (ret != 0) {
+			ret = EIO;
+			goto out;
+		}
 
 		size -= len;
 		next = v + len;
 	}
 
-	return (0);
+out:
+	/* Unwire again. */
+	if (uvm_map_pageable(&p->p_vmspace->vm_map, start, end, TRUE, 0))
+		return (EINVAL);
+
+	return (ret);
 }
 
 int
