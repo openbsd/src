@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.59 2024/11/04 01:24:00 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.60 2024/11/09 02:19:48 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -490,18 +490,20 @@ unregister_firmware() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-adFnv] [-p path] [driver | file ...]"
+	echo "usage: ${0##*/} [-adFlnv] [-p path] [driver | file ...]"
 	exit 1
 }
 
 ALL=false
 DOWNLOAD_ONLY=false
-while getopts :adFnp:v name
+LIST=false
+while getopts :adFlnp:v name
 do
 	case "$name" in
 	a) ALL=true ;;
 	d) DELETE=true ;;
 	F) DOWNLOAD_ONLY=true ;;
+	l) LIST=true ;;
 	n) DRYRUN=true ;;
 	p) FWURL="$OPTARG" ;;
 	v) ((++VERBOSE)) ;;
@@ -517,6 +519,9 @@ do
 done
 shift $((OPTIND - 1))
 
+# When listing, provide a clean output
+"$LIST" && VERBOSE=1 ENABLE_SPINNER=false
+
 # Progress bars, not spinner When VERBOSE > 1
 ((VERBOSE > 1)) && ENABLE_SPINNER=false
 
@@ -531,13 +536,13 @@ fi
 # "Download only" means local dir and don't install
 if "$DOWNLOAD_ONLY"; then
 	INSTALL=false
-	LOCALSRC="${LOCALSRC:-.}"
+	"$LIST" || LOCALSRC="${LOCALSRC:-.}"
 elif [ "$LOCALSRC" ]; then
 	DOWNLOAD=false
 fi
 
 if [ -x /usr/bin/id ] && [ "$(/usr/bin/id -u)" != 0 ]; then
-	if "$DOWNLOAD_ONLY"; then
+	if "$DOWNLOAD_ONLY" || "$LIST"; then
 		# When we aren't in the installer,
 		# allow downloading as the current user.
 		DROP_PRIVS=false
@@ -602,6 +607,8 @@ if "$DELETE"; then
 			comma=,
 			if "$DRYRUN"; then
 				((VERBOSE)) && echo "Delete $fw"
+			elif "$LIST"; then
+				echo "$fw"
 			else
 				delete_firmware "$fw" || {
 					status " ($fw failed)"
@@ -612,6 +619,9 @@ if "$DELETE"; then
 	fi
 
 	[ "$comma" ] || status none
+
+	# no status when listing
+	"$LIST" && rm -f "$FD_DIR/status"
 
 	exit
 fi
@@ -640,10 +650,18 @@ set -A update ''
 kept=''
 unregister=''
 
+"$LIST" && "$DOWNLOAD_ONLY" &&
+    echo "$FWURL/${CFILE##*/}"
+
 if [ "${devices[*]:-}" ]; then
 	lock_db
 	for f in "${devices[@]}"; do
 		d="$( firmware_devicename "$f" )"
+
+		if "$LIST" && ! "$DOWNLOAD_ONLY"; then
+			echo "$d"
+			continue
+		fi
 
 		verify_existing=true
 		if [ "$f" = "$d" ]; then
@@ -673,6 +691,11 @@ if [ "${devices[*]:-}" ]; then
 		else
 			# Don't verify files specified on the command-line
 			verify_existing=false
+		fi
+
+		if "$LIST"; then
+			echo "$FWURL/$f"
+			continue
 		fi
 
 		set -A installed
@@ -730,6 +753,12 @@ if [ "${devices[*]:-}" ]; then
 		fi
 
 	done
+fi
+
+if "$LIST"; then
+	# No status when listing
+	rm -f "$FD_DIR/status"
+	exit
 fi
 
 if "$INSTALL"; then
