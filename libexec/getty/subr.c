@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.28 2018/06/14 23:19:27 gsoares Exp $	*/
+/*	$OpenBSD: subr.c,v 1.29 2024/11/09 11:22:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -307,9 +307,9 @@ setflags(int n)
 		CLR(lflag, ECHOCTL);
 
 	if (DX)
-		SET(lflag, IXANY);
-	else
 		CLR(lflag, IXANY);
+	else
+		SET(lflag, IXANY);
 
 out:
 	tmode.c_iflag = iflag;
