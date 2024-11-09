@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.22 2020/01/03 05:37:00 visa Exp $
+.\"     $OpenBSD: file.9,v 1.23 2024/11/09 15:54:14 matthieu Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2020 $
+.Dd $Mdocdate: November 9 2024 $
 .Dt FALLOC 9
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .In sys/file.h
 .In sys/filedesc.h
 .Ft int
-.Fn falloc "struct proc *p" "int flags" "struct file **resultfp" "int *resultfd"
+.Fn falloc "struct proc *p" "struct file **resultfp" "int *resultfd"
 .Ft int
 .Fn fdrelease "struct proc *p" "int fd"
 .Ft void
@@ -74,11 +74,6 @@ and various special purpose communication endpoints.
 .Pp
 A new file and a file descriptor for it are allocated with the function
 .Fn falloc .
-The
-.Fa flags
-argument can be used to set the
-.Dv UF_EXCLOSE
-flag on the new descriptor.
 The larval file and fd are returned via
 .Fa resultfp
 and
