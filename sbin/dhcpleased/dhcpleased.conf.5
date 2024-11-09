@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.13 2023/11/25 12:00:39 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.14 2024/11/09 12:44:12 kn Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2023 $
+.Dd $Mdocdate: November 9 2024 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -50,9 +50,8 @@ Macro names may not be reserved words (for example,
 Macros are not expanded inside quotes.
 .Sh INTERFACES
 A list of interfaces to overwrite defaults:
-.Bd -unfilled -offset indent
-.Ic interface Ar name Cm { Oo Ar option ... Oc Cm }
-.Ed
+.Bl -tag -width Ds
+.It Ic interface Ar name Brq Op Ar option ...
 .Pp
 .Ic interface
 options are as follows:
@@ -112,6 +111,7 @@ The default is to send a DHCP host name option with the name of the host.
 Send the DHCP vendor class identifier option with a value of
 .Ar vendor-class-id .
 The default is to not send a vendor class identifier.
+.El
 .El
 .Sh FILES
 .Bl -tag -width /etc/dhcpleased.conf -compact
