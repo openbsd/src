@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_cbc.3,v 1.5 2023/11/16 20:27:43 schwarze Exp $
+.\" $OpenBSD: EVP_aes_128_cbc.3,v 1.6 2024/11/09 22:03:49 schwarze Exp $
 .\" selective merge up to: OpenSSL 7c6d372a Nov 20 13:20:01 2018 +0000
 .\"
 .\" This file was written by Ronald Tse <ronald.tse@ribose.com>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: November 9 2024 $
 .Dt EVP_AES_128_CBC 3
 .Os
 .Sh NAME
@@ -170,6 +170,8 @@
 These functions provide the AES encryption algorithm in the
 .Xr evp 3
 framework.
+AES is a family of block ciphers operating on 128 bit blocks
+using key lengths of 128, 192, and 256 bits.
 .Pp
 .Fn EVP_aes_128_cbc ,
 .Fn EVP_aes_192_cbc ,
