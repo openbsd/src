@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.60 2024/11/09 02:19:48 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.61 2024/11/09 02:40:57 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -495,14 +495,13 @@ usage() {
 }
 
 ALL=false
-DOWNLOAD_ONLY=false
 LIST=false
 while getopts :adFlnp:v name
 do
 	case "$name" in
 	a) ALL=true ;;
 	d) DELETE=true ;;
-	F) DOWNLOAD_ONLY=true ;;
+	F) INSTALL=false ;;
 	l) LIST=true ;;
 	n) DRYRUN=true ;;
 	p) FWURL="$OPTARG" ;;
@@ -530,19 +529,12 @@ if [[ $FWURL != @(ftp|http?(s))://* ]]; then
 	! [ -d "$FWURL" ] &&
 	    warn "The path must be a URL or an existing directory" &&
 	    exit 1
+	DOWNLOAD=false
 	FWURL="file:$FWURL"
 fi
 
-# "Download only" means local dir and don't install
-if "$DOWNLOAD_ONLY"; then
-	INSTALL=false
-	"$LIST" || LOCALSRC="${LOCALSRC:-.}"
-elif [ "$LOCALSRC" ]; then
-	DOWNLOAD=false
-fi
-
 if [ -x /usr/bin/id ] && [ "$(/usr/bin/id -u)" != 0 ]; then
-	if "$DOWNLOAD_ONLY" || "$LIST"; then
+	if ! "$INSTALL" || "$LIST"; then
 		# When we aren't in the installer,
 		# allow downloading as the current user.
 		DROP_PRIVS=false
@@ -569,7 +561,7 @@ WARN_FD=4
 status "${0##*/}:"
 
 if "$DELETE"; then
-	"$DOWNLOAD_ONLY" && warn "Cannot use -F and -d" && usage
+	! "$INSTALL" && warn "Cannot use -F and -d" && usage
 	lock_db
 
 	# Show the "Uninstall" message when just deleting not upgrading
@@ -626,6 +618,8 @@ if "$DELETE"; then
 	exit
 fi
 
+! "$INSTALL" && ! "$LIST" && LOCALSRC="${LOCALSRC:-.}"
+
 if [ ! "$LOCALSRC" ]; then
 	LOCALSRC="$( tmpdir "${DESTDIR}/tmp/${0##*/}" )"
 	REMOVE_LOCALSRC=true
@@ -650,7 +644,7 @@ set -A update ''
 kept=''
 unregister=''
 
-"$LIST" && "$DOWNLOAD_ONLY" &&
+"$LIST" && ! "$INSTALL" &&
     echo "$FWURL/${CFILE##*/}"
 
 if [ "${devices[*]:-}" ]; then
@@ -658,7 +652,7 @@ if [ "${devices[*]:-}" ]; then
 	for f in "${devices[@]}"; do
 		d="$( firmware_devicename "$f" )"
 
-		if "$LIST" && ! "$DOWNLOAD_ONLY"; then
+		if "$LIST" && "$INSTALL"; then
 			echo "$d"
 			continue
 		fi
