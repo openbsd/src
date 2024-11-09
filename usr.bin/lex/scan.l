@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.l,v 1.13 2019/09/22 00:47:12 miko Exp $	*/
+/*	$OpenBSD: scan.l,v 1.14 2024/11/09 18:03:44 op Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -61,7 +61,7 @@ extern const char *escaped_qstart, *escaped_qend;
 #define MARK_END_OF_PROLOG mark_prolog();
 
 #define YY_DECL \
-	int flexscan()
+	int flexscan(void)
 
 #define RETURNCHAR \
 	yylval = (unsigned char) yytext[0]; \
@@ -977,8 +977,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 
 %%
 
-
-int yywrap()
+int yywrap(void)
 	{
 	if ( --num_input_files > 0 )
 		{
@@ -993,8 +992,7 @@ int yywrap()
 
 /* set_input_file - open the given file (if NULL, stdin) for scanning */
 
-void set_input_file( file )
-char *file;
+void set_input_file(const char *file)
 	{
 	if ( file && strcmp( file, "-" ) )
 		{

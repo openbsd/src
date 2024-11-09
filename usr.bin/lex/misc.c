@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2022/12/26 19:16:01 jmc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.21 2024/11/09 18:03:44 op Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -95,9 +95,7 @@ sko_pop(bool * dc)
 
 /* Append "#define defname value\n" to the running buffer. */
 void 
-action_define(defname, value)
-	const char *defname;
-	int value;
+action_define(const char *defname, int value)
 {
 	char buf[MAXLINE];
 	char *cpy;
@@ -117,31 +115,9 @@ action_define(defname, value)
 }
 
 
-/** Append "m4_define([[defname]],[[value]])m4_dnl\n" to the running buffer.
- *  @param defname The macro name.
- *  @param value The macro value, can be NULL, which is the same as the empty string.
- */
-void 
-action_m4_define(const char *defname, const char *value)
-{
-	char buf[MAXLINE];
-
-	flexfatal("DO NOT USE THIS FUNCTION!");
-
-	if ((int) strlen(defname) > MAXLINE / 2) {
-		format_pinpoint_message(_
-		    ("name \"%s\" ridiculously long"),
-		    defname);
-		return;
-	}
-	snprintf(buf, sizeof(buf), "m4_define([[%s]],[[%s]])m4_dnl\n", defname, value ? value : "");
-	add_action(buf);
-}
-
 /* Append "new_text" to the running buffer. */
 void 
-add_action(new_text)
-	const char *new_text;
+add_action(const char *new_text)
 {
 	int len = strlen(new_text);
 
@@ -172,9 +148,7 @@ add_action(new_text)
 /* allocate_array - allocate memory for an integer array of the given size */
 
 void *
-allocate_array(size, element_size)
-	int size;
-	size_t element_size;
+allocate_array(int size, size_t element_size)
 {
 	void *mem;
 	size_t num_bytes = element_size * size;
@@ -191,8 +165,7 @@ allocate_array(size, element_size)
 /* all_lower - true if a string is all lower-case */
 
 int 
-all_lower(str)
-	char *str;
+all_lower(char *str)
 {
 	while (*str) {
 		if (!isascii((u_char) * str) || !islower((u_char) * str))
@@ -207,8 +180,7 @@ all_lower(str)
 /* all_upper - true if a string is all upper-case */
 
 int 
-all_upper(str)
-	char *str;
+all_upper(char *str)
 {
 	while (*str) {
 		if (!isascii((u_char) * str) || !isupper((u_char) * str))
@@ -235,8 +207,7 @@ intcmp(const void *a, const void *b)
  */
 
 void 
-check_char(c)
-	int c;
+check_char(int c)
 {
 	if (c >= CSIZE)
 		lerrsf(_("bad character '%s' detected in check_char()"),
@@ -253,8 +224,7 @@ check_char(c)
 /* clower - replace upper-case letter to lower-case */
 
 u_char 
-clower(c)
-	int c;
+clower(int c)
 {
 	return (u_char) ((isascii(c) && isupper(c)) ? tolower(c) : c);
 }
@@ -263,8 +233,7 @@ clower(c)
 /* copy_string - returns a dynamically allocated copy of a string */
 
 char *
-copy_string(str)
-	const char *str;
+copy_string(const char *str)
 {
 	const char *c1;
 	char *c2;
@@ -292,8 +261,7 @@ copy_string(str)
  */
 
 u_char *
-copy_unsigned_string(str)
-	u_char *str;
+copy_unsigned_string(unsigned char *str)
 {
 	u_char *c;
 	u_char *copy;
@@ -326,7 +294,7 @@ cclcmp(const void *a, const void *b)
 /* dataend - finish up a block of data declarations */
 
 void 
-dataend()
+dataend(void)
 {
 	/* short circuit any output */
 	if (gentables) {
@@ -345,7 +313,7 @@ dataend()
 /* dataflush - flush generated data statements */
 
 void 
-dataflush()
+dataflush(void)
 {
 	/* short circuit any output */
 	if (!gentables)
@@ -369,8 +337,7 @@ dataflush()
 /* flexerror - report an error message and terminate */
 
 void 
-flexerror(msg)
-	const char *msg;
+flexerror(const char *msg)
 {
 	fprintf(stderr, "%s: %s\n", program_name, msg);
 	flexend(1);
@@ -380,8 +347,7 @@ flexerror(msg)
 /* flexfatal - report a fatal error message and terminate */
 
 void 
-flexfatal(msg)
-	const char *msg;
+flexfatal(const char *msg)
 {
 	fprintf(stderr, _("%s: fatal internal error, %s\n"),
 	    program_name, msg);
@@ -392,8 +358,7 @@ flexfatal(msg)
 /* htoi - convert a hexadecimal digit string to an integer value */
 
 int 
-htoi(str)
-	u_char str[];
+htoi(unsigned char str[])
 {
 	unsigned int result;
 
@@ -406,9 +371,7 @@ htoi(str)
 /* lerrif - report an error message formatted with one integer argument */
 
 void 
-lerrif(msg, arg)
-	const char *msg;
-	int arg;
+lerrif(const char *msg, int arg)
 {
 	char errmsg[MAXLINE];
 
@@ -420,8 +383,7 @@ lerrif(msg, arg)
 /* lerrsf - report an error message formatted with one string argument */
 
 void 
-lerrsf(msg, arg)
-	const char *msg, arg[];
+lerrsf(const char *msg, const char arg[])
 {
 	char errmsg[MAXLINE];
 
@@ -434,8 +396,7 @@ lerrsf(msg, arg)
 /* lerrsf_fatal - as lerrsf, but call flexfatal */
 
 void 
-lerrsf_fatal(msg, arg)
-	const char *msg, arg[];
+lerrsf_fatal(const char *msg, const char arg[])
 {
 	char errmsg[MAXLINE];
 
@@ -448,9 +409,7 @@ lerrsf_fatal(msg, arg)
 /* line_directive_out - spit out a "#line" statement */
 
 void 
-line_directive_out(output_file, do_infile)
-	FILE *output_file;
-	int do_infile;
+line_directive_out(FILE *output_file, int do_infile)
 {
 	char directive[MAXLINE], filename[MAXLINE];
 	char *s1, *s2, *s3;
@@ -499,7 +458,7 @@ line_directive_out(output_file, do_infile)
  *		 and the prolog begins
  */
 void 
-mark_defs1()
+mark_defs1(void)
 {
 	defs1_offset = 0;
 	action_array[action_index++] = '\0';
@@ -512,7 +471,7 @@ mark_defs1()
  *               representing the end of the action prolog
  */
 void 
-mark_prolog()
+mark_prolog(void)
 {
 	action_array[action_index++] = '\0';
 	action_offset = action_index;
@@ -525,8 +484,7 @@ mark_prolog()
  * Generates a data statement initializing the current 2-D array to "value".
  */
 void 
-mk2data(value)
-	int value;
+mk2data(int value)
 {
 	/* short circuit any output */
 	if (!gentables)
@@ -555,8 +513,7 @@ mk2data(value)
  * "value".
  */
 void 
-mkdata(value)
-	int value;
+mkdata(int value)
 {
 	/* short circuit any output */
 	if (!gentables)
@@ -581,8 +538,7 @@ mkdata(value)
 /* myctoi - return the integer represented by a string of digits */
 
 int 
-myctoi(array)
-	const char *array;
+myctoi(const char *array)
 {
 	int val = 0;
 
@@ -595,8 +551,7 @@ myctoi(array)
 /* myesc - return character corresponding to escape sequence */
 
 u_char 
-myesc(array)
-	u_char array[];
+myesc(unsigned char array[])
 {
 	u_char c, esc_char;
 
@@ -686,8 +641,7 @@ myesc(array)
 /* otoi - convert an octal digit string to an integer value */
 
 int 
-otoi(str)
-	u_char str[];
+otoi(unsigned char str[])
 {
 	unsigned int result;
 
@@ -701,68 +655,55 @@ otoi(str)
  */
 
 void 
-out(str)
-	const char *str;
+out(const char *str)
 {
 	fputs(str, stdout);
 }
 
 void 
-out_dec(fmt, n)
-	const char *fmt;
-	int n;
+out_dec(const char *fmt, int n)
 {
 	fprintf(stdout, fmt, n);
 }
 
 void 
-out_dec2(fmt, n1, n2)
-	const char *fmt;
-	int n1, n2;
+out_dec2(const char *fmt, int n1, int n2)
 {
 	fprintf(stdout, fmt, n1, n2);
 }
 
 void 
-out_hex(fmt, x)
-	const char *fmt;
-	unsigned int x;
+out_hex(const char *fmt, unsigned int x)
 {
 	fprintf(stdout, fmt, x);
 }
 
 void 
-out_str(fmt, str)
-	const char *fmt, str[];
+out_str(const char *fmt, const char str[])
 {
 	fprintf(stdout, fmt, str);
 }
 
 void 
-out_str3(fmt, s1, s2, s3)
-	const char *fmt, s1[], s2[], s3[];
+out_str3(const char *fmt, const char s1[], const char s2[], const char s3[])
 {
 	fprintf(stdout, fmt, s1, s2, s3);
 }
 
 void 
-out_str_dec(fmt, str, n)
-	const char *fmt, str[];
-	int n;
+out_str_dec(const char *fmt, const char str[], int n)
 {
 	fprintf(stdout, fmt, str, n);
 }
 
 void 
-outc(c)
-	int c;
+outc(int c)
 {
 	fputc(c, stdout);
 }
 
 void 
-outn(str)
-	const char *str;
+outn(const char *str)
 {
 	fputs(str, stdout);
 	fputc('\n', stdout);
@@ -787,8 +728,7 @@ out_m4_define(const char *def, const char *val)
  */
 
 char *
-readable_form(c)
-	int c;
+readable_form(int c)
 {
 	static char rform[10];
 
@@ -831,10 +771,7 @@ readable_form(c)
 /* reallocate_array - increase the size of a dynamic array */
 
 void *
-reallocate_array(array, size, element_size)
-	void *array;
-	int size;
-	size_t element_size;
+reallocate_array(void *array, int size, size_t element_size)
 {
 	void *new_array;
 	size_t num_bytes = element_size * size;
@@ -854,7 +791,7 @@ reallocate_array(array, size, element_size)
  *    "%%" or EOF is found.
  */
 void 
-skelout()
+skelout(void)
 {
 	char buf_storage[MAXLINE];
 	char *buf = buf_storage;
@@ -969,8 +906,7 @@ skelout()
  */
 
 void 
-transition_struct_out(element_v, element_n)
-	int element_v, element_n;
+transition_struct_out(int element_v, int element_n)
 {
 
 	/* short circuit any output */
@@ -996,8 +932,7 @@ transition_struct_out(element_v, element_n)
  * broken versions of bison.
  */
 void *
-yy_flex_xmalloc(size)
-	int size;
+yy_flex_xmalloc(int size)
 {
 	void *result = malloc((size_t) size);
 
@@ -1013,8 +948,7 @@ yy_flex_xmalloc(size)
  * str can be any null-terminated string, or NULL.
  * returns str. */
 char *
-chomp(str)
-	char *str;
+chomp(char *str)
 {
 	char *p = str;
 

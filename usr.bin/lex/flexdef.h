@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.16 2022/12/26 19:16:01 jmc Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.17 2024/11/09 18:03:44 op Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -997,7 +997,7 @@ extern int yyparse PROTO ((void));	/* the YACC parser */
 extern int flexscan PROTO ((void));
 
 /* Open the given file (if NULL, stdin) for scanning. */
-extern void set_input_file PROTO ((char *));
+extern void set_input_file PROTO ((const char *));
 
 /* Wrapup a file in the lexical analyzer. */
 extern int yywrap PROTO ((void));
