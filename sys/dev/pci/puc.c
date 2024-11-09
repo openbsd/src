@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.31 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: puc.c,v 1.32 2024/11/09 10:23:06 miod Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -161,7 +161,8 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id), PCI_VENDOR(subsys), PCI_PRODUCT(subsys));
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_EXAR &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_EXAR_XR17V354)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_EXAR_XR17V352 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_EXAR_XR17V354))
 		sc->sc_xr17v35x = 1;
 
 	puc_print_ports(sc->sc_desc);

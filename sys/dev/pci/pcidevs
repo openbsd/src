@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2093 2024/11/08 11:57:53 stsp Exp $
+$OpenBSD: pcidevs,v 1.2094 2024/11/09 10:23:06 miod Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3222,6 +3222,7 @@ product EUMITCOM WL11000P	0x1100	WL11000P
 product EXAR XR17C152		0x0152	XR17C152
 product EXAR XR17C154		0x0154	XR17C154
 product EXAR XR17C158		0x0158	XR17C158
+product EXAR XR17V352		0x0352	XR17V352
 product EXAR XR17V354		0x0354	XR17V354
 
 /* FORE products */
