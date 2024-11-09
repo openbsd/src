@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.42 2024/10/08 00:46:29 jsg Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.43 2024/11/09 22:41:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -97,9 +97,6 @@ void			 ufshci_ccb_put(void *, void *);
 void			 ufshci_ccb_free(struct ufshci_softc*, int);
 
 void			 ufshci_scsi_cmd(struct scsi_xfer *);
-void			 ufshci_minphys(struct buf *, struct scsi_link *);
-int			 ufshci_scsi_probe(struct scsi_link *);
-void			 ufshci_scsi_free(struct scsi_link *);
 
 void			 ufshci_scsi_inquiry(struct scsi_xfer *);
 void			 ufshci_scsi_capacity16(struct scsi_xfer *);
@@ -1550,26 +1547,6 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	mtx_leave(&sc->sc_cmd_mtx);
-}
-
-void
-ufshci_minphys(struct buf *bp, struct scsi_link *link)
-{
-	DPRINTF(3, "%s\n", __func__);
-}
-
-int
-ufshci_scsi_probe(struct scsi_link *link)
-{
-	DPRINTF(3, "%s\n", __func__);
-
-	return 0;
-}
-
-void
-ufshci_scsi_free(struct scsi_link *link)
-{
-	DPRINTF(3, "%s\n", __func__);
 }
 
 void
