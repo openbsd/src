@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2092 2024/10/17 08:22:34 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.2094 2024/11/09 10:23:06 miod Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10458,6 +10458,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C158,
 	    "XR17C158",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V352,
+	    "XR17V352",
 	},
 	{
 	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V354,
