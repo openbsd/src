@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.92 2024/07/24 21:24:18 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.93 2024/11/10 05:59:27 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -628,10 +628,6 @@ dumpsys(void)
 	}
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
-
-#ifdef UVM_SWAP_ENCRYPT
-	uvm_swap_finicrypt_all();
-#endif
 
 	error = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
