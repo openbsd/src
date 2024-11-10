@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.31 2023/06/24 17:49:44 jsing Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.32 2024/11/10 00:46:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -236,7 +236,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	int r_is_at_infinity = 1;
 	size_t *wsize = NULL;	/* individual window sizes */
 	signed char **wNAF = NULL;	/* individual wNAFs */
-	signed char *tmp_wNAF = NULL;
 	size_t *wNAF_len = NULL;
 	size_t max_len = 0;
 	size_t num_val;
@@ -431,7 +430,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	EC_POINT_free(tmp);
 	free(wsize);
 	free(wNAF_len);
-	free(tmp_wNAF);
 	if (wNAF != NULL) {
 		signed char **w;
 
