@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.49 2023/07/29 06:52:50 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.50 2024/11/10 10:04:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -132,12 +132,7 @@ struct pool kr_pool;
 static inline int
 inintr(struct cpu_info *ci)
 {
-#if defined(__amd64__) || defined(__arm__) || defined(__arm64__) || \
-    defined(__i386__)
 	return (ci->ci_idepth > 0);
-#else
-	return (0);
-#endif
 }
 
 /*
