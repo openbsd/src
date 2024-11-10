@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.267 2024/10/08 12:02:24 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.268 2024/11/10 06:51:59 jsg Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 
 #include <sys/syscallargs.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/tcb.h>
 
 int	nprocesses = 1;		/* process 0 */

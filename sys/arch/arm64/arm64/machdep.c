@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.93 2024/11/10 05:59:27 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.94 2024/11/10 06:51:59 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -35,7 +35,7 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <dev/cons.h>
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>

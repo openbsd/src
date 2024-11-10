@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2024/07/14 09:48:49 jca Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.21 2024/11/10 06:51:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -25,7 +25,7 @@
 #include <sys/sysctl.h>
 #include <sys/task.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/elf.h>

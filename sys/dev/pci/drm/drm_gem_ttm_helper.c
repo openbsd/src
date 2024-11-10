@@ -2,7 +2,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <linux/kernel.h>
 #include <linux/iosys-map.h>

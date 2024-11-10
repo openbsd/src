@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.49 2024/07/24 21:24:18 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.50 2024/11/10 06:51:59 jsg Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -36,7 +36,6 @@
 #include <sys/signalvar.h>
 #include <sys/user.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_gem_dma_helper.c,v 1.3 2024/01/16 23:37:51 jsg Exp $ */
+/* $OpenBSD: drm_gem_dma_helper.c,v 1.4 2024/11/10 06:51:59 jsg Exp $ */
 /* $NetBSD: drm_gem_dma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #include <drm/drm_device.h>
 #include <drm/drm_gem_dma_helper.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 static const struct drm_gem_object_funcs drm_gem_dma_default_funcs = {
 	.free = drm_gem_dma_free_object,

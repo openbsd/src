@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.133 2024/09/29 11:22:39 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.134 2024/11/10 06:51:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -29,7 +29,7 @@
 #include <sys/user.h>
 #include <sys/kstat.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/fdt.h>
 #include <machine/elf.h>

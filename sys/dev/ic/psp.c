@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.13 2024/11/09 11:47:47 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.14 2024/11/10 06:51:59 jsg Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -27,7 +27,7 @@
 
 #include <machine/bus.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <crypto/xform.h>
 
 #include <dev/ic/ccpvar.h>
