@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.98 2024/11/07 17:24:42 bluhm Exp $	*/
+/*	$OpenBSD: vector.S,v 1.99 2024/11/10 03:02:43 jsg Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -530,9 +530,6 @@ KTEXT_PAGE_END
  * If the interrupt frame is made more flexible,  INTR can push %eax first and
  * decide the ipending case with less overhead
  */
-
-/* XXX See comment in locore.s */
-#define	XINTR(name,num)		Xintr_##name##num
 
 KUENTRY(x2apic_eoi)
 	pushq   %rax
