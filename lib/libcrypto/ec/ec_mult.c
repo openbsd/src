@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.32 2024/11/10 00:46:57 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.33 2024/11/10 05:59:35 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -350,8 +350,11 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		goto err;
 
 	/*
-	 * prepare precomputed values: val_sub[i][0] :=     points[i]
-	 * val_sub[i][1] := 3 * points[i] val_sub[i][2] := 5 * points[i] ...
+	 * prepare precomputed values:
+	 *  val_sub[i][0] :=     points[i]
+	 *  val_sub[i][1] := 3 * points[i]
+	 *  val_sub[i][2] := 5 * points[i]
+	 *  ...
 	 */
 	for (i = 0; i < num + num_scalar; i++) {
 		if (i < num) {
