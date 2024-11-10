@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.92 2024/10/15 12:26:53 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.93 2024/11/10 06:45:36 jsg Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
 /* Resource usage check interval in msec */
