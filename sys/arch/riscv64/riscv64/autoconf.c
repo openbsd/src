@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2024/11/10 06:51:59 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2024/11/11 23:48:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -101,7 +101,7 @@ const struct nam2blk nam2blk[] = {
 	{ "wd",		 0 },
 	{ "sd",		 4 },
 	{ "cd",		 6 },
-	{ "vnd",	14 },
 	{ "rd",		 8 },
+	{ "vnd",	14 },
 	{ NULL,		-1 }
 };
