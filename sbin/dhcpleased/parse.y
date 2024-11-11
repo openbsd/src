@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2024/06/03 17:58:33 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2024/11/11 15:19:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -172,7 +172,6 @@ dhcp_iface	: DHCP_IFACE STRING {
 		;
 
 iface_block	: optnl ifaceopts_l
-		| optnl
 		;
 
 ifaceopts_l	: ifaceopts_l ifaceoptsl nl
