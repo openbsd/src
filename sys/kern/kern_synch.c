@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.212 2024/11/07 13:34:16 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.213 2024/11/11 13:28:29 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -461,6 +461,9 @@ sleep_finish(int timo, int do_sleep)
 
 /*
  * Check and handle signals and suspensions around a sleep cycle.
+ * The 2nd call in sleep_finish() sets nostop = 1 and then stop
+ * signals can be ignored since the sleep is over and the process
+ * will stop in userret.
  */
 int
 sleep_signal_check(struct proc *p, int nostop)
@@ -471,7 +474,9 @@ sleep_signal_check(struct proc *p, int nostop)
 	if ((err = single_thread_check(p, 1)) != 0)
 		return err;
 	if ((sig = cursig(p, &ctx, 1)) != 0) {
-		if (!nostop && ctx.sig_stop) {
+		if (ctx.sig_stop) {
+			if (nostop)
+				return 0;
 			p->p_p->ps_xsig = sig;
 			SCHED_LOCK();
 			proc_stop(p, 0);
