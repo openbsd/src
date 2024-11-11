@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.30 2024/08/18 15:50:49 deraadt Exp $ */
+/* $OpenBSD: mainbus.c,v 1.31 2024/11/11 22:43:07 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -29,7 +29,6 @@
 #include <dev/ofw/ofw_thermal.h>
 
 #include <arm64/arm64/arm64var.h>
-#include <arm64/dev/mainbus.h>
 
 int mainbus_match(struct device *, void *, void *);
 void mainbus_attach(struct device *, struct device *, void *);
