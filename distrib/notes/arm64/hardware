@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2024/08/09 04:40:09 dtucker Exp $
+dnl	$OpenBSD: hardware,v 1.26 2024/11/11 03:58:26 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6/H616
@@ -62,6 +62,8 @@ The following machines are targeted by OpenBSD/MACHINE:
 	Qualcomm Snapdragon 8cx Gen 3 (SC8280XP)
 		Lenovo ThinkPad X13s Gen 1
 		Microsoft Windows Dev Kit 2023
+	Qualcomm Snapdragon X Elite (X1E80100)
+		HP OmniBook X14
 	Rockchip RK3328/RK3399(pro)
 		Pine64 ROCK64
 		Pine64 ROCKPro64
