@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.71 2024/11/04 21:46:13 jsg Exp $
+# $OpenBSD: files.arm64,v 1.72 2024/11/12 04:56:27 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -37,8 +37,8 @@ file	arch/arm64/arm64/cpufunc_asm.S
 file	arch/arm64/arm64/lse.S
 file	arch/arm64/arm64/support.S
 file	arch/arm64/arm64/bus_dma.c
+file	arch/arm64/arm64/bus_space.c
 
-file	arch/arm64/dev/arm64_bus_space.c
 file	arch/arm64/dev/pci_machdep.c
 
 file	arch/arm64/arm64/cryptox.c		crypto

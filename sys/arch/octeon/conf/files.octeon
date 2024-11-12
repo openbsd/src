@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.59 2024/01/01 18:25:50 kettenis Exp $
+#	$OpenBSD: files.octeon,v 1.60 2024/11/12 04:56:27 jsg Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -15,6 +15,7 @@ major	{ amdcf = 19 }
 file	dev/cninit.c
 file	arch/octeon/octeon/autoconf.c
 file	arch/octeon/octeon/bus_dma.c
+file	arch/octeon/octeon/bus_space.c
 file	arch/octeon/octeon/conf.c
 file	arch/octeon/octeon/disksubr.c		disk
 file	arch/octeon/octeon/machdep.c
@@ -128,7 +129,6 @@ file	arch/octeon/dev/cn30xxuart.c			octuart
 device	pcibus
 attach	pcibus at iobus
 file	arch/octeon/dev/octeon_pcibus.c			pcibus
-file	arch/octeon/dev/octeon_bus_space.c
 
 device	octpcie: pcibus
 attach	octpcie at iobus
