@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_generic.S,v 1.1 2024/11/08 15:09:48 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_generic.S,v 1.2 2024/11/12 13:51:14 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -164,17 +164,17 @@ sha256_block_generic:
 	pushq	%r14
 	pushq	%r15
 
-	/* Allocate space for message schedule and context pointer. */
+	/* Allocate space for message schedule, context pointer and end of message. */
 	movq	%rsp, %rax
-	subq	$(64+32), %rsp
+	subq	$(64+3*8), %rsp
 	andq	$~63, %rsp
-	movq	%rax, (64+16)(%rsp)
-	movq	ctx, (64+8)(%rsp)
+	movq	%rax, (64+2*8)(%rsp)
+	movq	ctx, (64+1*8)(%rsp)
 
 	/* Compute and store end of message. */
 	shlq	$6, num
 	leaq	(in, num, 1), %rbx
-	movq	%rbx, (64+0)(%rsp)
+	movq	%rbx, (64+0*8)(%rsp)
 
 	/* Address of SHA-256 constants. */
 	leaq	K256(%rip), k256
@@ -238,7 +238,7 @@ sha256_block_generic:
 	cmp	$64, round
 	jb	.Lblock_loop16
 
-	movq	(64+8)(%rsp), ctx
+	movq	(64+1*8)(%rsp), ctx
 
 	/* Add intermediate state to hash state. */
 	addl	(0*4)(ctx), hs0
@@ -261,10 +261,10 @@ sha256_block_generic:
 	movl	hs7, (7*4)(ctx)
 
 	addq	$64, in
-	cmpq	(64+0)(%rsp), in
+	cmpq	(64+0*8)(%rsp), in
 	jb	.Lblock_loop0
 
-	movq	(64+16)(%rsp), %rsp
+	movq	(64+2*8)(%rsp), %rsp
 
 	/* Restore callee save registers. */
 	popq	%r15
