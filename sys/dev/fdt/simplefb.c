@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.20 2023/04/16 11:34:32 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.21 2024/11/12 20:52:35 tobhe Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -47,10 +47,10 @@ struct simplefb_format {
  * rasops defaults.
  */
 const struct simplefb_format simplefb_formats[] = {
-	{ "r5g6b5", 16 },
-	{ "x1r5g5b5", 15 },
-	{ "a1r5g5b5", 15 },
-	{ "r8g8b8", 24 },
+	{ "r5g6b5", 16, 11, 5, 5, 6, 0, 5 },
+	{ "x1r5g5b5", 15, 10, 5, 5, 5, 0, 5 },
+	{ "a1r5g5b5", 15, 10, 5, 5, 5, 0, 5 },
+	{ "r8g8b8", 24, 16, 8, 8, 8, 0, 8 },
 	{ "x8r8g8b8", 32, 16, 8, 8, 8, 0, 8 },
 	{ "a8r8g8b8", 32, 16, 8, 8, 8, 0, 8 },
 	{ "x8b8g8r8", 32 },
