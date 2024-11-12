@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.295 2024/10/22 22:41:01 jsg Exp $
+# $OpenBSD: Makefile,v 1.296 2024/11/12 20:15:24 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -189,6 +189,7 @@ MAN=	\
 	EVP_PKEY_meth_get0_info.3 \
 	EVP_PKEY_meth_new.3 \
 	EVP_PKEY_new.3 \
+	EVP_PKEY_new_CMAC_key.3 \
 	EVP_PKEY_print_private.3 \
 	EVP_PKEY_set1_RSA.3 \
 	EVP_PKEY_sign.3 \

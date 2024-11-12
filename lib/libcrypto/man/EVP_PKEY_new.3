@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_new.3,v 1.20 2024/08/24 09:15:36 tb Exp $
+.\" $OpenBSD: EVP_PKEY_new.3,v 1.21 2024/11/12 20:15:24 schwarze Exp $
 .\" full merge up to: OpenSSL 4dcfdfce May 27 11:50:05 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 24 2024 $
+.Dd $Mdocdate: November 12 2024 $
 .Dt EVP_PKEY_NEW 3
 .Os
 .Sh NAME
@@ -75,7 +75,6 @@
 .Nm EVP_PKEY_free ,
 .Nm EVP_PKEY_new_raw_private_key ,
 .Nm EVP_PKEY_new_raw_public_key ,
-.Nm EVP_PKEY_new_CMAC_key ,
 .Nm EVP_PKEY_new_mac_key ,
 .Nm EVP_PKEY_get_raw_private_key ,
 .Nm EVP_PKEY_get_raw_public_key
@@ -105,13 +104,6 @@
 .Fa "ENGINE *engine"
 .Fa "const unsigned char *rawpub"
 .Fa "size_t rawlen"
-.Fc
-.Ft EVP_PKEY *
-.Fo EVP_PKEY_new_CMAC_key
-.Fa "ENGINE *engine"
-.Fa "const unsigned char *rawpriv"
-.Fa "size_t rawlen"
-.Fa "const EVP_CIPHER *cipher"
 .Fc
 .Ft EVP_PKEY *
 .Fo EVP_PKEY_new_mac_key
@@ -198,19 +190,6 @@ Algorithm types that support raw public keys are
 and
 .Dv EVP_PKEY_ED25519 .
 .Pp
-.Fn EVP_PKEY_new_CMAC_key
-works in the same way as
-.Fn EVP_PKEY_new_raw_private_key
-except that it only handles the
-.Dv EVP_PKEY_CMAC
-algorithm type.
-The additional
-.Fa cipher
-argument specifies the cipher algorithm
-to be used during the creation of the CMAC.
-It should be a standard encryption only cipher.
-For example, AEAD and XTS ciphers should not be used.
-.Pp
 .Fn EVP_PKEY_new_mac_key
 is a deprecated function that works in the same way as
 .Fn EVP_PKEY_new_raw_private_key .
@@ -250,7 +229,6 @@ and
 .Fn EVP_PKEY_new ,
 .Fn EVP_PKEY_new_raw_private_key ,
 .Fn EVP_PKEY_new_raw_public_key ,
-.Fn EVP_PKEY_new_CMAC_key ,
 and
 .Fn EVP_PKEY_new_mac_key
 return either the newly allocated
@@ -275,6 +253,7 @@ return 1 for success or 0 for failure.
 .Xr EVP_PKEY_CTX_new 3 ,
 .Xr EVP_PKEY_get_default_digest_nid 3 ,
 .Xr EVP_PKEY_meth_new 3 ,
+.Xr EVP_PKEY_new_CMAC_key 3 ,
 .Xr EVP_PKEY_print_private 3 ,
 .Xr EVP_PKEY_set1_RSA 3 ,
 .Xr EVP_PKEY_size 3 ,
@@ -285,10 +264,6 @@ and
 .Fn EVP_PKEY_free
 first appeared in SSLeay 0.6.0 and have been available since
 .Ox 2.4 .
-.Pp
-.Fn EVP_PKEY_new_CMAC_key
-first appeared in OpenSSL 1.1.1 and has been available since
-.Ox 6.9 .
 .Pp
 .Fn EVP_PKEY_new_mac_key
 first appeared in OpenSSL 1.0.0 and has been available since
