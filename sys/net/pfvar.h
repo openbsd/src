@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.540 2024/10/12 23:31:14 jsg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.541 2024/11/12 04:14:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1241,7 +1241,7 @@ struct pf_status {
 #define PF_PRIO_ZERO		0xff		/* match "prio 0" packets */
 
 struct pf_queue_bwspec {
-	u_int		absolute;
+	uint64_t	absolute;
 	u_int		percent;
 };
 

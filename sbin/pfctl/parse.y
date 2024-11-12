@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.717 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.718 2024/11/12 04:14:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1540,10 +1540,14 @@ bandwidth	: STRING {
 				}
 			}
 			free($1);
-			$$.bw_absolute = (u_int32_t)bps;
+			if (bps < 0 || bps > (double)LLONG_MAX) {
+				yyerror("bandwidth number too big");
+				YYERROR;
+			}
+			$$.bw_absolute = (u_int64_t)bps;
 		}
 		| NUMBER {
-			if ($1 < 0 || $1 > UINT_MAX) {
+			if ($1 < 0 || $1 > LLONG_MAX) {
 				yyerror("bandwidth number too big");
 				YYERROR;
 			}

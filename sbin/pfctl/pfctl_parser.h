@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.120 2024/07/14 19:51:08 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.121 2024/11/12 04:14:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -142,7 +142,7 @@ struct node_os {
 };
 
 struct node_queue_bw {
-	u_int32_t	bw_absolute;
+	u_int64_t	bw_absolute;
 	u_int16_t	bw_percent;
 };
 

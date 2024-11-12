@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.351 2024/04/22 13:30:22 bluhm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.352 2024/11/12 04:14:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1213,7 +1213,7 @@ print_tabledef(const char *name, int flags, int addrs,
 void
 print_bwspec(const char *prefix, struct pf_queue_bwspec *bw)
 {
-	u_int	rate;
+	uint64_t rate;
 	int	i;
 	static const char unit[] = " KMG";
 
@@ -1223,7 +1223,7 @@ print_bwspec(const char *prefix, struct pf_queue_bwspec *bw)
 		rate = bw->absolute;
 		for (i = 0; rate >= 1000 && i <= 3 && (rate % 1000 == 0); i++)
 			rate /= 1000;
-		printf("%s%u%c", prefix, rate, unit[i]);
+		printf("%s%llu%c", prefix, rate, unit[i]);
 	}
 }
 
