@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.5 2024/11/12 10:57:56 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.6 2024/11/12 11:01:14 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -80,9 +80,8 @@
  * multiplication, and field_encode and field_decode (if defined)
  * will be used for converting between representations.
  *
- * Functions ec_points_make_affine() and
- * ec_point_get_affine_coordinates() specifically assume
- * that if a non-trivial representation is used, it is a Montgomery
+ * Functions ec_points_make_affine() and ec_point_get_affine_coordinates()
+ * assume that if a non-trivial representation is used, it is a Montgomery
  * representation (i.e. 'encoding' means multiplying by some factor R).
  */
 
@@ -203,8 +202,8 @@ ec_group_set_curve(EC_GROUP *group,
 }
 
 static int
-ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
-    BIGNUM *b, BN_CTX *ctx)
+ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
+    BN_CTX *ctx)
 {
 	if (p != NULL) {
 		if (!bn_copy(p, &group->field))
@@ -324,9 +323,8 @@ ec_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 }
 
 static int
-ec_set_Jprojective_coordinates(const EC_GROUP *group,
-    EC_POINT *point, const BIGNUM *x, const BIGNUM *y, const BIGNUM *z,
-    BN_CTX *ctx)
+ec_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
 {
 	int ret = 0;
 
@@ -356,8 +354,8 @@ ec_set_Jprojective_coordinates(const EC_GROUP *group,
 }
 
 static int
-ec_get_Jprojective_coordinates(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
+ec_get_Jprojective_coordinates(const EC_GROUP *group, const EC_POINT *point,
+    BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
 {
 	int ret = 0;
 
@@ -388,8 +386,8 @@ ec_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
 }
 
 static int
-ec_point_get_affine_coordinates(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
+    BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
 	BIGNUM *z, *Z, *Z_1, *Z_2, *Z_3;
 	int ret = 0;
@@ -469,8 +467,8 @@ ec_point_get_affine_coordinates(const EC_GROUP *group,
 }
 
 static int
-ec_set_compressed_coordinates(const EC_GROUP *group,
-    EC_POINT *point, const BIGNUM *in_x, int y_bit, BN_CTX *ctx)
+ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *in_x, int y_bit, BN_CTX *ctx)
 {
 	const BIGNUM *p = &group->field, *a = &group->a, *b = &group->b;
 	BIGNUM *w, *x, *y;
@@ -567,7 +565,8 @@ ec_set_compressed_coordinates(const EC_GROUP *group,
 }
 
 static int
-ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
+ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
+    BN_CTX *ctx)
 {
 	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
@@ -1124,7 +1123,8 @@ ec_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 }
 
 static int
-ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[], BN_CTX *ctx)
+ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
+    BN_CTX *ctx)
 {
 	BIGNUM *tmp0, *tmp1;
 	size_t pow2 = 0;
@@ -1293,7 +1293,8 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[], BN_
 }
 
 static int
-ec_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+ec_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+    BN_CTX *ctx)
 {
 	return BN_mod_mul(r, a, b, &group->field, ctx);
 }
@@ -1587,23 +1588,22 @@ ec_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #undef EC_POINT_CSWAP
 
 static int
-ec_mul_generator_ct(const EC_GROUP *group, EC_POINT *r,
-    const BIGNUM *scalar, BN_CTX *ctx)
+ec_mul_generator_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+    BN_CTX *ctx)
 {
 	return ec_mul_ct(group, r, scalar, NULL, ctx);
 }
 
 static int
-ec_mul_single_ct(const EC_GROUP *group, EC_POINT *r,
-    const BIGNUM *scalar, const EC_POINT *point, BN_CTX *ctx)
+ec_mul_single_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+    const EC_POINT *point, BN_CTX *ctx)
 {
 	return ec_mul_ct(group, r, scalar, point, ctx);
 }
 
 static int
-ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r,
-    const BIGNUM *g_scalar, const BIGNUM *p_scalar, const EC_POINT *point,
-    BN_CTX *ctx)
+ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
+    const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *ctx)
 {
 	return ec_wNAF_mul(group, r, g_scalar, 1, &point, &p_scalar, ctx);
 }
