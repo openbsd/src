@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.61 2024/11/05 08:56:57 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.1 2024/11/12 10:25:16 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
