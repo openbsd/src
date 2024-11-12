@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.56 2024/09/12 10:33:25 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.57 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -177,21 +177,21 @@ x509_print(const X509 *x)
 }
 
 static void
-as_resources_print(struct cert_as *as, size_t asz)
+as_resources_print(struct cert_as *ases, size_t num_ases)
 {
 	size_t i;
 
-	for (i = 0; i < asz; i++) {
+	for (i = 0; i < num_ases; i++) {
 		if (outformats & FORMAT_JSON)
 			json_do_object("resource", 1);
-		switch (as[i].type) {
+		switch (ases[i].type) {
 		case CERT_AS_ID:
 			if (outformats & FORMAT_JSON) {
-				json_do_uint("asid", as[i].id);
+				json_do_uint("asid", ases[i].id);
 			} else {
 				if (i > 0)
 					printf("%26s", "");
-				printf("AS: %u", as[i].id);
+				printf("AS: %u", ases[i].id);
 			}
 			break;
 		case CERT_AS_INHERIT:
@@ -206,14 +206,14 @@ as_resources_print(struct cert_as *as, size_t asz)
 		case CERT_AS_RANGE:
 			if (outformats & FORMAT_JSON) {
 				json_do_object("asrange", 1);
-				json_do_uint("min", as[i].range.min);
-				json_do_uint("max", as[i].range.max);
+				json_do_uint("min", ases[i].range.min);
+				json_do_uint("max", ases[i].range.max);
 				json_do_end();
 			} else {
 				if (i > 0)
 					printf("%26s", "");
-				printf("AS: %u -- %u", as[i].range.min,
-				    as[i].range.max);
+				printf("AS: %u -- %u", ases[i].range.min,
+				    ases[i].range.max);
 			}
 			break;
 		}
@@ -225,13 +225,13 @@ as_resources_print(struct cert_as *as, size_t asz)
 }
 
 static void
-ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
+ip_resources_print(struct cert_ip *ips, size_t num_ips, size_t num_ases)
 {
 	char buf1[64], buf2[64];
 	size_t i;
 	int sockt;
 
-	for (i = 0; i < ipsz; i++) {
+	for (i = 0; i < num_ips; i++) {
 		if (outformats & FORMAT_JSON)
 			json_do_object("resource", 1);
 		switch (ips[i].type) {
@@ -239,7 +239,7 @@ ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
 			if (outformats & FORMAT_JSON) {
 				json_do_bool("ip_inherit", 1);
 			} else {
-				if (i > 0 || asz > 0)
+				if (i > 0 || num_ases > 0)
 					printf("%26s", "");
 				printf("IP: inherit");
 			}
@@ -250,7 +250,7 @@ ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
 			if (outformats & FORMAT_JSON) {
 				json_do_string("ip_prefix", buf1);
 			} else {
-				if (i > 0 || asz > 0)
+				if (i > 0 || num_ases > 0)
 					printf("%26s", "");
 				printf("IP: %s", buf1);
 			}
@@ -266,7 +266,7 @@ ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
 				json_do_string("max", buf2);
 				json_do_end();
 			} else {
-				if (i > 0 || asz > 0)
+				if (i > 0 || num_ases > 0)
 					printf("%26s", "");
 				printf("IP: %s -- %s", buf1, buf2);
 			}
@@ -336,8 +336,8 @@ cert_print(const struct cert *p)
 		printf("Subordinate resources:    ");
 	}
 
-	as_resources_print(p->as, p->asz);
-	ip_resources_print(p->ips, p->ipsz, p->asz);
+	as_resources_print(p->ases, p->num_ases);
+	ip_resources_print(p->ips, p->num_ips, p->num_ases);
 
 	if (outformats & FORMAT_JSON)
 		json_do_end();
@@ -543,9 +543,8 @@ roa_print(const X509 *x, const struct roa *p)
 
 	if (outformats & FORMAT_JSON)
 		json_do_array("vrps");
-	for (i = 0; i < p->ipsz; i++) {
-		ip_addr_print(&p->ips[i].addr,
-		    p->ips[i].afi, buf, sizeof(buf));
+	for (i = 0; i < p->num_ips; i++) {
+		ip_addr_print(&p->ips[i].addr, p->ips[i].afi, buf, sizeof(buf));
 
 		if (outformats & FORMAT_JSON) {
 			json_do_object("vrp", 1);
@@ -683,8 +682,8 @@ rsc_print(const X509 *x, const struct rsc *p)
 		printf("Signed with resources:    ");
 	}
 
-	as_resources_print(p->as, p->asz);
-	ip_resources_print(p->ips, p->ipsz, p->asz);
+	as_resources_print(p->ases, p->num_ases);
+	ip_resources_print(p->ips, p->num_ips, p->num_ases);
 
 	if (outformats & FORMAT_JSON) {
 		json_do_end();
@@ -886,7 +885,7 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		printf("Geofeed CSV records:      ");
 	}
 
-	for (i = 0; i < p->geoipsz; i++) {
+	for (i = 0; i < p->num_geoips; i++) {
 		if (p->geoips[i].ip->type != CERT_IP_ADDR)
 			continue;
 

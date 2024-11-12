@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.152 2024/11/05 18:09:16 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.153 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -48,12 +48,12 @@ int certid = TALSZ_MAX;
  * Returns zero on failure (IP overlap) non-zero on success.
  */
 static int
-append_ip(const char *fn, struct cert_ip *ips, size_t *ipsz,
+append_ip(const char *fn, struct cert_ip *ips, size_t *num_ips,
     const struct cert_ip *ip)
 {
-	if (!ip_addr_check_overlap(ip, fn, ips, *ipsz, 0))
+	if (!ip_addr_check_overlap(ip, fn, ips, *num_ips, 0))
 		return 0;
-	ips[(*ipsz)++] = *ip;
+	ips[(*num_ips)++] = *ip;
 	return 1;
 }
 
@@ -63,12 +63,12 @@ append_ip(const char *fn, struct cert_ip *ips, size_t *ipsz,
  * as defined by RFC 3779 section 3.3.
  */
 static int
-append_as(const char *fn, struct cert_as *ases, size_t *asz,
+append_as(const char *fn, struct cert_as *ases, size_t *num_ases,
     const struct cert_as *as)
 {
-	if (!as_check_overlap(as, fn, ases, *asz, 0))
+	if (!as_check_overlap(as, fn, ases, *num_ases, 0))
 		return 0;
-	ases[(*asz)++] = *as;
+	ases[(*num_ases)++] = *as;
 	return 1;
 }
 
@@ -77,7 +77,7 @@ append_as(const char *fn, struct cert_as *ases, size_t *asz,
  * Returns zero on failure, non-zero on success.
  */
 int
-sbgp_as_range(const char *fn, struct cert_as *ases, size_t *asz,
+sbgp_as_range(const char *fn, struct cert_as *ases, size_t *num_ases,
     const ASRange *range)
 {
 	struct cert_as		 as;
@@ -107,14 +107,14 @@ sbgp_as_range(const char *fn, struct cert_as *ases, size_t *asz,
 		return 0;
 	}
 
-	return append_as(fn, ases, asz, &as);
+	return append_as(fn, ases, num_ases, &as);
 }
 
 /*
  * Parse an entire 3.2.3.10 integer type.
  */
 int
-sbgp_as_id(const char *fn, struct cert_as *ases, size_t *asz,
+sbgp_as_id(const char *fn, struct cert_as *ases, size_t *num_ases,
     const ASN1_INTEGER *i)
 {
 	struct cert_as	 as;
@@ -133,30 +133,30 @@ sbgp_as_id(const char *fn, struct cert_as *ases, size_t *asz,
 		return 0;
 	}
 
-	return append_as(fn, ases, asz, &as);
+	return append_as(fn, ases, num_ases, &as);
 }
 
 static int
-sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *asz)
+sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *num_ases)
 {
 	struct cert_as as;
 
 	memset(&as, 0, sizeof(struct cert_as));
 	as.type = CERT_AS_INHERIT;
 
-	return append_as(fn, ases, asz, &as);
+	return append_as(fn, ases, num_ases, &as);
 }
 
 int
 sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
-    struct cert_as **out_as, size_t *out_asz)
+    struct cert_as **out_as, size_t *out_num_ases)
 {
 	const ASIdOrRanges	*aors = NULL;
 	struct cert_as		*as = NULL;
-	size_t			 asz = 0, sz;
+	size_t			 num_ases = 0, num;
 	int			 i;
 
-	assert(*out_as == NULL && *out_asz == 0);
+	assert(*out_as == NULL && *out_num_ases == 0);
 
 	if (asidentifiers->rdi != NULL) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
@@ -172,11 +172,11 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 
 	switch (asidentifiers->asnum->type) {
 	case ASIdentifierChoice_inherit:
-		sz = 1;
+		num = 1;
 		break;
 	case ASIdentifierChoice_asIdsOrRanges:
 		aors = asidentifiers->asnum->u.asIdsOrRanges;
-		sz = sk_ASIdOrRange_num(aors);
+		num = sk_ASIdOrRange_num(aors);
 		break;
 	default:
 		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
@@ -184,21 +184,21 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 		goto out;
 	}
 
-	if (sz == 0) {
+	if (num == 0) {
 		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges", fn);
 		goto out;
 	}
-	if (sz >= MAX_AS_SIZE) {
+	if (num >= MAX_AS_SIZE) {
 		warnx("%s: too many AS number entries: limit %d",
 		    fn, MAX_AS_SIZE);
 		goto out;
 	}
-	as = calloc(sz, sizeof(struct cert_as));
+	as = calloc(num, sizeof(struct cert_as));
 	if (as == NULL)
 		err(1, NULL);
 
 	if (aors == NULL) {
-		if (!sbgp_as_inherit(fn, as, &asz))
+		if (!sbgp_as_inherit(fn, as, &num_ases))
 			goto out;
 	}
 
@@ -208,11 +208,11 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 		aor = sk_ASIdOrRange_value(aors, i);
 		switch (aor->type) {
 		case ASIdOrRange_id:
-			if (!sbgp_as_id(fn, as, &asz, aor->u.id))
+			if (!sbgp_as_id(fn, as, &num_ases, aor->u.id))
 				goto out;
 			break;
 		case ASIdOrRange_range:
-			if (!sbgp_as_range(fn, as, &asz, aor->u.range))
+			if (!sbgp_as_range(fn, as, &num_ases, aor->u.range))
 				goto out;
 			break;
 		default:
@@ -223,7 +223,7 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 	}
 
 	*out_as = as;
-	*out_asz = asz;
+	*out_num_ases = num_ases;
 
 	return 1;
 
@@ -256,7 +256,8 @@ sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (!sbgp_parse_assysnum(fn, asidentifiers, &cert->as, &cert->asz))
+	if (!sbgp_parse_assysnum(fn, asidentifiers, &cert->ases,
+	    &cert->num_ases))
 		goto out;
 
 	rc = 1;
@@ -270,7 +271,7 @@ sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 int
-sbgp_addr(const char *fn, struct cert_ip *ips, size_t *ipsz, enum afi afi,
+sbgp_addr(const char *fn, struct cert_ip *ips, size_t *num_ips, enum afi afi,
     const ASN1_BIT_STRING *bs)
 {
 	struct cert_ip	ip;
@@ -292,7 +293,7 @@ sbgp_addr(const char *fn, struct cert_ip *ips, size_t *ipsz, enum afi afi,
 		return 0;
 	}
 
-	return append_ip(fn, ips, ipsz, &ip);
+	return append_ip(fn, ips, num_ips, &ip);
 }
 
 /*
@@ -300,7 +301,7 @@ sbgp_addr(const char *fn, struct cert_ip *ips, size_t *ipsz, enum afi afi,
  * Returns zero on failure, non-zero on success.
  */
 int
-sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *ipsz,
+sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *num_ips,
     enum afi afi, const IPAddressRange *range)
 {
 	struct cert_ip	ip;
@@ -328,11 +329,11 @@ sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *ipsz,
 		return 0;
 	}
 
-	return append_ip(fn, ips, ipsz, &ip);
+	return append_ip(fn, ips, num_ips, &ip);
 }
 
 static int
-sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *ipsz,
+sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *num_ips,
     enum afi afi)
 {
 	struct cert_ip	ip;
@@ -342,23 +343,23 @@ sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *ipsz,
 	ip.afi = afi;
 	ip.type = CERT_IP_INHERIT;
 
-	return append_ip(fn, ips, ipsz, &ip);
+	return append_ip(fn, ips, num_ips, &ip);
 }
 
 int
 sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
-    struct cert_ip **out_ips, size_t *out_ipsz)
+    struct cert_ip **out_ips, size_t *out_num_ips)
 {
 	const IPAddressFamily	*af;
 	const IPAddressOrRanges	*aors;
 	const IPAddressOrRange	*aor;
 	enum afi		 afi;
 	struct cert_ip		*ips = NULL;
-	size_t			 ipsz = 0, sz;
+	size_t			 num_ips = 0, num;
 	int			 ipv4_seen = 0, ipv6_seen = 0;
 	int			 i, j, ipaddrblocksz;
 
-	assert(*out_ips == NULL && *out_ipsz == 0);
+	assert(*out_ips == NULL && *out_num_ips == 0);
 
 	ipaddrblocksz = sk_IPAddressFamily_num(addrblk);
 	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
@@ -374,26 +375,26 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 		switch (af->ipAddressChoice->type) {
 		case IPAddressChoice_inherit:
 			aors = NULL;
-			sz = ipsz + 1;
+			num = num_ips + 1;
 			break;
 		case IPAddressChoice_addressesOrRanges:
 			aors = af->ipAddressChoice->u.addressesOrRanges;
-			sz = ipsz + sk_IPAddressOrRange_num(aors);
+			num = num_ips + sk_IPAddressOrRange_num(aors);
 			break;
 		default:
 			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
 			    fn, af->ipAddressChoice->type);
 			goto out;
 		}
-		if (sz == ipsz) {
+		if (num == num_ips) {
 			warnx("%s: RFC 6487 section 4.8.10: "
 			    "empty ipAddressesOrRanges", fn);
 			goto out;
 		}
 
-		if (sz >= MAX_IP_SIZE)
+		if (num >= MAX_IP_SIZE)
 			goto out;
-		ips = recallocarray(ips, ipsz, sz, sizeof(struct cert_ip));
+		ips = recallocarray(ips, num_ips, num, sizeof(struct cert_ip));
 		if (ips == NULL)
 			err(1, NULL);
 
@@ -420,7 +421,7 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 		}
 
 		if (aors == NULL) {
-			if (!sbgp_addr_inherit(fn, ips, &ipsz, afi))
+			if (!sbgp_addr_inherit(fn, ips, &num_ips, afi))
 				goto out;
 			continue;
 		}
@@ -429,12 +430,12 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 			aor = sk_IPAddressOrRange_value(aors, j);
 			switch (aor->type) {
 			case IPAddressOrRange_addressPrefix:
-				if (!sbgp_addr(fn, ips, &ipsz, afi,
+				if (!sbgp_addr(fn, ips, &num_ips, afi,
 				    aor->u.addressPrefix))
 					goto out;
 				break;
 			case IPAddressOrRange_addressRange:
-				if (!sbgp_addr_range(fn, ips, &ipsz, afi,
+				if (!sbgp_addr_range(fn, ips, &num_ips, afi,
 				    aor->u.addressRange))
 					goto out;
 				break;
@@ -447,7 +448,7 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 	}
 
 	*out_ips = ips;
-	*out_ipsz = ipsz;
+	*out_num_ips = num_ips;
 
 	return 1;
 
@@ -480,10 +481,10 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (!sbgp_parse_ipaddrblk(fn, addrblk, &cert->ips, &cert->ipsz))
+	if (!sbgp_parse_ipaddrblk(fn, addrblk, &cert->ips, &cert->num_ips))
 		goto out;
 
-	if (cert->ipsz == 0) {
+	if (cert->num_ips == 0) {
 		warnx("%s: RFC 6487 section 4.8.10: empty ipAddrBlock", fn);
 		goto out;
 	}
@@ -975,7 +976,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			warnx("%s: RFC 6487 section 4.8.8: missing SIA", fn);
 			goto out;
 		}
-		if (cert->asz == 0 && cert->ipsz == 0) {
+		if (cert->num_ases == 0 && cert->num_ips == 0) {
 			warnx("%s: missing IP or AS resources", fn);
 			goto out;
 		}
@@ -986,12 +987,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			warnx("%s: x509_get_pubkey failed", fn);
 			goto out;
 		}
-		if (cert->ipsz > 0) {
+		if (cert->num_ips > 0) {
 			warnx("%s: unexpected IP resources in BGPsec cert", fn);
 			goto out;
 		}
-		for (j = 0; j < cert->asz; j++) {
-			if (cert->as[j].type == CERT_AS_INHERIT) {
+		for (j = 0; j < cert->num_ases; j++) {
+			if (cert->ases[j].type == CERT_AS_INHERIT) {
 				warnx("%s: inherit elements not allowed in EE"
 				    " cert", fn);
 				goto out;
@@ -1150,7 +1151,7 @@ cert_free(struct cert *p)
 	free(p->mft);
 	free(p->notify);
 	free(p->ips);
-	free(p->as);
+	free(p->ases);
 	free(p->aia);
 	free(p->aki);
 	free(p->ski);
@@ -1171,11 +1172,11 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->certid, sizeof(p->certid));
 	io_simple_buffer(b, &p->repoid, sizeof(p->repoid));
-	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
-	io_simple_buffer(b, &p->asz, sizeof(p->asz));
+	io_simple_buffer(b, &p->num_ips, sizeof(p->num_ips));
+	io_simple_buffer(b, &p->num_ases, sizeof(p->num_ases));
 
-	io_simple_buffer(b, p->ips, p->ipsz * sizeof(p->ips[0]));
-	io_simple_buffer(b, p->as, p->asz * sizeof(p->as[0]));
+	io_simple_buffer(b, p->ips, p->num_ips * sizeof(p->ips[0]));
+	io_simple_buffer(b, p->ases, p->num_ases * sizeof(p->ases[0]));
 
 	io_str_buffer(b, p->mft);
 	io_str_buffer(b, p->notify);
@@ -1205,19 +1206,19 @@ cert_read(struct ibuf *b)
 	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->certid, sizeof(p->certid));
 	io_read_buf(b, &p->repoid, sizeof(p->repoid));
-	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
-	io_read_buf(b, &p->asz, sizeof(p->asz));
+	io_read_buf(b, &p->num_ips, sizeof(p->num_ips));
+	io_read_buf(b, &p->num_ases, sizeof(p->num_ases));
 
-	if (p->ipsz > 0) {
-		if ((p->ips = calloc(p->ipsz, sizeof(p->ips[0]))) == NULL)
+	if (p->num_ips > 0) {
+		if ((p->ips = calloc(p->num_ips, sizeof(p->ips[0]))) == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+		io_read_buf(b, p->ips, p->num_ips * sizeof(p->ips[0]));
 	}
 
-	if (p->asz > 0) {
-		if ((p->as = calloc(p->asz, sizeof(p->as[0]))) == NULL)
+	if (p->num_ases > 0) {
+		if ((p->ases = calloc(p->num_ases, sizeof(p->ases[0]))) == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->as, p->asz * sizeof(p->as[0]));
+		io_read_buf(b, p->ases, p->num_ases * sizeof(p->ases[0]));
 	}
 
 	io_read_str(b, &p->mft);
@@ -1348,14 +1349,14 @@ cert_insert_brks(struct brk_tree *tree, struct cert *cert)
 {
 	size_t		 i, asid;
 
-	for (i = 0; i < cert->asz; i++) {
-		switch (cert->as[i].type) {
+	for (i = 0; i < cert->num_ases; i++) {
+		switch (cert->ases[i].type) {
 		case CERT_AS_ID:
-			insert_brk(tree, cert, cert->as[i].id);
+			insert_brk(tree, cert, cert->ases[i].id);
 			break;
 		case CERT_AS_RANGE:
-			for (asid = cert->as[i].range.min;
-			    asid <= cert->as[i].range.max; asid++)
+			for (asid = cert->ases[i].range.min;
+			    asid <= cert->ases[i].range.max; asid++)
 				insert_brk(tree, cert, asid);
 			break;
 		default:

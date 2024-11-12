@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.16 2023/12/27 07:15:55 tb Exp $ */
+/*	$OpenBSD: as.c,v 1.17 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,21 +38,21 @@ as_id_parse(const ASN1_INTEGER *v, uint32_t *out)
 }
 
 /*
- * Given a newly-parsed AS number or range "a", make sure that "a" does
- * not overlap with any other numbers or ranges in the "as" array.
+ * Given a newly-parsed AS number or range "as", make sure that "as" does
+ * not overlap with any other numbers or ranges in the "ases" array.
  * This is defined by RFC 3779 section 3.2.3.4.
  * Returns zero on failure, non-zero on success.
  */
 int
-as_check_overlap(const struct cert_as *a, const char *fn,
-    const struct cert_as *as, size_t asz, int quiet)
+as_check_overlap(const struct cert_as *as, const char *fn,
+    const struct cert_as *ases, size_t num_ases, int quiet)
 {
 	size_t	 i;
 
 	/* We can have only one inheritance statement. */
 
-	if (asz &&
-	    (a->type == CERT_AS_INHERIT || as[0].type == CERT_AS_INHERIT)) {
+	if (num_ases &&
+	    (as->type == CERT_AS_INHERIT || ases[0].type == CERT_AS_INHERIT)) {
 		if (!quiet) {
 			warnx("%s: RFC 3779 section 3.2.3.3: "
 			    "cannot have inheritance and multiple ASnum or "
@@ -63,17 +63,17 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 
 	/* Now check for overlaps between singletons/ranges. */
 
-	for (i = 0; i < asz; i++) {
-		switch (as[i].type) {
+	for (i = 0; i < num_ases; i++) {
+		switch (ases[i].type) {
 		case CERT_AS_ID:
-			switch (a->type) {
+			switch (as->type) {
 			case CERT_AS_ID:
-				if (a->id != as[i].id)
+				if (as->id != ases[i].id)
 					continue;
 				break;
 			case CERT_AS_RANGE:
-				if (as->range.min > as[i].id ||
-				    as->range.max < as[i].id)
+				if (ases->range.min > ases[i].id ||
+				    ases->range.max < ases[i].id)
 					continue;
 				break;
 			default:
@@ -81,15 +81,15 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 			}
 			break;
 		case CERT_AS_RANGE:
-			switch (a->type) {
+			switch (as->type) {
 			case CERT_AS_ID:
-				if (as[i].range.min > a->id ||
-				    as[i].range.max < a->id)
+				if (ases[i].range.min > as->id ||
+				    ases[i].range.max < as->id)
 					continue;
 				break;
 			case CERT_AS_RANGE:
-				if (a->range.max < as[i].range.min ||
-				    a->range.min > as[i].range.max)
+				if (as->range.max < ases[i].range.min ||
+				    as->range.min > ases[i].range.max)
 					continue;
 				break;
 			default:
@@ -112,23 +112,23 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 /*
  * See if a given AS range (which may be the same number, in the case of
  * singleton AS identifiers) is covered by the AS numbers or ranges
- * specified in the "as" array.
+ * specified in the "ases" array.
  * Return <0 if there is no cover, 0 if we're inheriting, >0 if there is.
  */
 int
 as_check_covered(uint32_t min, uint32_t max,
-    const struct cert_as *as, size_t asz)
+    const struct cert_as *ases, size_t num_ases)
 {
 	size_t	 i;
 	uint32_t amin, amax;
 
-	for (i = 0; i < asz; i++) {
-		if (as[i].type == CERT_AS_INHERIT)
+	for (i = 0; i < num_ases; i++) {
+		if (ases[i].type == CERT_AS_INHERIT)
 			return 0;
-		amin = as[i].type == CERT_AS_RANGE ?
-		    as[i].range.min : as[i].id;
-		amax = as[i].type == CERT_AS_RANGE ?
-		    as[i].range.max : as[i].id;
+		amin = ases[i].type == CERT_AS_RANGE ?
+		    ases[i].range.min : ases[i].id;
+		amax = ases[i].type == CERT_AS_RANGE ?
+		    ases[i].range.max : ases[i].id;
 		if (min >= amin && max <= amax)
 			return 1;
 	}

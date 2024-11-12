@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.229 2024/11/02 12:30:28 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.230 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -120,10 +120,10 @@ enum cert_purpose {
  * inheriting.
  */
 struct cert {
-	struct cert_ip	*ips; /* list of IP address ranges */
-	size_t		 ipsz; /* length of "ips" */
-	struct cert_as	*as; /* list of AS numbers and ranges */
-	size_t		 asz; /* length of "asz" */
+	struct cert_ip	*ips;	/* list of IP address ranges */
+	size_t		 num_ips;
+	struct cert_as	*ases;	/* list of AS numbers and ranges */
+	size_t		 num_ases;
 	int		 talid; /* cert is covered by which TAL */
 	int		 certid;
 	unsigned int	 repoid; /* repository of this cert file */
@@ -241,8 +241,8 @@ struct roa_ip {
  */
 struct roa {
 	uint32_t	 asid; /* asID of ROA (if 0, RFC 6483 sec 4) */
-	struct roa_ip	*ips; /* IP prefixes */
-	size_t		 ipsz; /* number of IP prefixes */
+	struct roa_ip	*ips;	/* IP prefixes */
+	size_t		 num_ips;
 	int		 talid; /* ROAs are covered by which TAL */
 	int		 valid; /* validated resources */
 	char		*aia; /* AIA */
@@ -266,10 +266,10 @@ struct rscfile {
 struct rsc {
 	int		 talid; /* RSC covered by what TAL */
 	int		 valid; /* eContent resources covered by EE's 3779? */
-	struct cert_ip	*ips; /* IP prefixes */
-	size_t		 ipsz; /* number of IP prefixes */
-	struct cert_as	*as; /* AS resources */
-	size_t		 asz; /* number of AS resources */
+	struct cert_ip	*ips;	/* IP prefixes */
+	size_t		 num_ips;
+	struct cert_as	*ases;	/* AS resources */
+	size_t		 num_ases;
 	struct rscfile	*files; /* FileAndHashes in the RSC */
 	size_t		 filesz; /* number of FileAndHashes */
 	char		*aia; /* AIA */
@@ -353,7 +353,7 @@ struct geoip {
  */
 struct geofeed {
 	struct geoip	*geoips; /* Prefix + location entry in the CSV */
-	size_t		 geoipsz; /* number of IPs */
+	size_t		 num_geoips;
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */

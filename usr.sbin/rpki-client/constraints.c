@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.4 2024/03/15 05:14:16 tb Exp $ */
+/*	$OpenBSD: constraints.c,v 1.5 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -41,13 +41,13 @@ struct tal_constraints {
 	char		*fn;		/* constraints filename */
 	char		*warn;		/* warning msg used for violations */
 	struct cert_ip	*allow_ips;	/* list of allowed IP address ranges */
-	size_t		 allow_ipsz;	/* length of "allow_ips" */
-	struct cert_as	*allow_as;	/* allowed AS numbers and ranges */
-	size_t		 allow_asz;	/* length of "allow_as" */
+	size_t		 num_allow_ips;
+	struct cert_as	*allow_ases;	/* allowed AS numbers and ranges */
+	size_t		 num_allow_ases;
 	struct cert_ip	*deny_ips;	/* forbidden IP address ranges */
-	size_t		 deny_ipsz;	/* length of "deny_ips" */
-	struct cert_as	*deny_as;	/* forbidden AS numbers and ranges */
-	size_t		 deny_asz;	/* length of "deny_as" */
+	size_t		 num_deny_ips;
+	struct cert_as	*deny_ases;	/* forbidden AS numbers and ranges */
+	size_t		 num_deny_ases;
 } tal_constraints[TALSZ_MAX];
 
 /*
@@ -334,10 +334,10 @@ constraints_parse_talid(int talid)
 	ASIdentifiers	*allow_asids, *deny_asids;
 	FILE		*f;
 	char		*fn, *p, *pp;
-	struct cert_as	*allow_as = NULL, *deny_as = NULL;
+	struct cert_as	*allow_ases = NULL, *deny_ases = NULL;
 	struct cert_ip	*allow_ips = NULL, *deny_ips = NULL;
-	size_t		 allow_asz = 0, allow_ipsz = 0,
-			 deny_asz = 0, deny_ipsz = 0;
+	size_t		 num_allow_ases = 0, num_allow_ips = 0,
+			 num_deny_as = 0, num_deny_ips = 0;
 	char		*line = NULL;
 	size_t		 len = 0;
 	ssize_t		 n;
@@ -452,14 +452,14 @@ constraints_parse_talid(int talid)
 		errx(1, "%s: failed to canonize AS numbers denylist", fn);
 
 	if (have_allow_as) {
-		if (!sbgp_parse_assysnum(fn, allow_asids, &allow_as,
-		    &allow_asz))
+		if (!sbgp_parse_assysnum(fn, allow_asids, &allow_ases,
+		    &num_allow_ases))
 			errx(1, "%s: failed to parse AS identifiers allowlist",
 			    fn);
 	}
 	if (have_deny_as) {
-		if (!sbgp_parse_assysnum(fn, deny_asids, &deny_as,
-		    &deny_asz))
+		if (!sbgp_parse_assysnum(fn, deny_asids, &deny_ases,
+		    &num_deny_as))
 			errx(1, "%s: failed to parse AS identifiers denylist",
 			    fn);
 	}
@@ -467,7 +467,7 @@ constraints_parse_talid(int talid)
 		constraints_normalize_ip_addrblocks(fn, &allow_addrs);
 
 		if (!sbgp_parse_ipaddrblk(fn, allow_addrs, &allow_ips,
-		    &allow_ipsz))
+		    &num_allow_ips))
 			errx(1, "%s: failed to parse IP addresses allowlist",
 			    fn);
 	}
@@ -475,19 +475,19 @@ constraints_parse_talid(int talid)
 		constraints_normalize_ip_addrblocks(fn, &deny_addrs);
 
 		if (!sbgp_parse_ipaddrblk(fn, deny_addrs, &deny_ips,
-		    &deny_ipsz))
+		    &num_deny_ips))
 			errx(1, "%s: failed to parse IP addresses denylist",
 			    fn);
 	}
 
-	tal_constraints[talid].allow_as = allow_as;
-	tal_constraints[talid].allow_asz = allow_asz;
+	tal_constraints[talid].allow_ases = allow_ases;
+	tal_constraints[talid].num_allow_ases = num_allow_ases;
 	tal_constraints[talid].allow_ips = allow_ips;
-	tal_constraints[talid].allow_ipsz = allow_ipsz;
-	tal_constraints[talid].deny_as = deny_as;
-	tal_constraints[talid].deny_asz = deny_asz;
+	tal_constraints[talid].num_allow_ips = num_allow_ips;
+	tal_constraints[talid].deny_ases = deny_ases;
+	tal_constraints[talid].num_deny_ases = num_deny_as;
 	tal_constraints[talid].deny_ips = deny_ips;
-	tal_constraints[talid].deny_ipsz = deny_ipsz;
+	tal_constraints[talid].num_deny_ips = num_deny_ips;
 
 	IPAddrBlocks_free(allow_addrs);
 	IPAddrBlocks_free(deny_addrs);
@@ -511,8 +511,8 @@ constraints_parse(void)
 
 static int
 constraints_check_as(const char *fn, struct cert_as *cert,
-    const struct cert_as *allow_as, size_t allow_asz,
-    const struct cert_as *deny_as, size_t deny_asz)
+    const struct cert_as *allow_ases, size_t num_allow_ases,
+    const struct cert_as *deny_ases, size_t num_deny_ases)
 {
 	uint32_t min, max;
 
@@ -528,12 +528,12 @@ constraints_check_as(const char *fn, struct cert_as *cert,
 		max = cert->range.max;
 	}
 
-	if (deny_as != NULL) {
-		if (!as_check_overlap(cert, fn, deny_as, deny_asz, 1))
+	if (deny_ases != NULL) {
+		if (!as_check_overlap(cert, fn, deny_ases, num_deny_ases, 1))
 			return 0;
 	}
-	if (allow_as != NULL) {
-		if (as_check_covered(min, max, allow_as, allow_asz) <= 0)
+	if (allow_ases != NULL) {
+		if (as_check_covered(min, max, allow_ases, num_allow_ases) <= 0)
 			return 0;
 	}
 	return 1;
@@ -541,20 +541,20 @@ constraints_check_as(const char *fn, struct cert_as *cert,
 
 static int
 constraints_check_ips(const char *fn, struct cert_ip *cert,
-    const struct cert_ip *allow_ips, size_t allow_ipsz,
-    const struct cert_ip *deny_ips, size_t deny_ipsz)
+    const struct cert_ip *allow_ips, size_t num_allow_ips,
+    const struct cert_ip *deny_ips, size_t num_deny_ips)
 {
 	/* Inheriting EE resources are not to be constrained. */
 	if (cert->type == CERT_IP_INHERIT)
 		return 1;
 
 	if (deny_ips != NULL) {
-		if (!ip_addr_check_overlap(cert, fn, deny_ips, deny_ipsz, 1))
+		if (!ip_addr_check_overlap(cert, fn, deny_ips, num_deny_ips, 1))
 			return 0;
 	}
 	if (allow_ips != NULL) {
 		if (ip_addr_check_covered(cert->afi, cert->min, cert->max,
-		    allow_ips, allow_ipsz) <= 0)
+		    allow_ips, num_allow_ips) <= 0)
 			return 0;
 	}
 	return 1;
@@ -569,9 +569,11 @@ int
 constraints_validate(const char *fn, const struct cert *cert)
 {
 	int		 talid = cert->talid;
-	struct cert_as	*allow_as, *deny_as;
+	struct cert_as	*allow_ases, *deny_ases;
 	struct cert_ip	*allow_ips, *deny_ips;
-	size_t		 i, allow_asz, allow_ipsz, deny_asz, deny_ipsz;
+	size_t		 num_allow_ases, num_allow_ips;
+	size_t		 num_deny_ases, num_deny_ips;
+	size_t		 i;
 
 	/* Accept negative talid to bypass validation. */
 	if (talid < 0)
@@ -579,28 +581,28 @@ constraints_validate(const char *fn, const struct cert *cert)
 	if (talid >= talsz)
 		errx(1, "%s: talid out of range %d", fn, talid);
 
-	allow_as = tal_constraints[talid].allow_as;
-	allow_asz = tal_constraints[talid].allow_asz;
-	deny_as = tal_constraints[talid].deny_as;
-	deny_asz = tal_constraints[talid].deny_asz;
+	allow_ases = tal_constraints[talid].allow_ases;
+	num_allow_ases = tal_constraints[talid].num_allow_ases;
+	deny_ases = tal_constraints[talid].deny_ases;
+	num_deny_ases = tal_constraints[talid].num_deny_ases;
 
-	for (i = 0; i < cert->asz; i++) {
-		if (constraints_check_as(fn, &cert->as[i], allow_as, allow_asz,
-		    deny_as, deny_asz))
+	for (i = 0; i < cert->num_ases; i++) {
+		if (constraints_check_as(fn, &cert->ases[i],
+		    allow_ases, num_allow_ases, deny_ases, num_deny_ases))
 			continue;
 
-		as_warn(fn, tal_constraints[talid].warn, &cert->as[i]);
+		as_warn(fn, tal_constraints[talid].warn, &cert->ases[i]);
 		return 0;
 	}
 
 	allow_ips = tal_constraints[talid].allow_ips;
-	allow_ipsz = tal_constraints[talid].allow_ipsz;
+	num_allow_ips = tal_constraints[talid].num_allow_ips;
 	deny_ips = tal_constraints[talid].deny_ips;
-	deny_ipsz = tal_constraints[talid].deny_ipsz;
+	num_deny_ips = tal_constraints[talid].num_deny_ips;
 
-	for (i = 0; i < cert->ipsz; i++) {
+	for (i = 0; i < cert->num_ips; i++) {
 		if (constraints_check_ips(fn, &cert->ips[i], allow_ips,
-		    allow_ipsz, deny_ips, deny_ipsz))
+		    num_allow_ips, deny_ips, num_deny_ips))
 			continue;
 
 		ip_warn(fn, tal_constraints[talid].warn, &cert->ips[i]);

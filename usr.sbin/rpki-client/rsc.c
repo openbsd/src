@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.35 2024/06/11 10:38:40 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.36 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -130,38 +130,38 @@ static int
 rsc_parse_aslist(const char *fn, struct rsc *rsc,
     const ConstrainedASIdentifiers *asids)
 {
-	int	 i, asz;
+	int	 i, num_ases;
 
 	if (asids == NULL)
 		return 1;
 
-	if ((asz = sk_ASIdOrRange_num(asids->asnum)) == 0) {
+	if ((num_ases = sk_ASIdOrRange_num(asids->asnum)) == 0) {
 		warnx("%s: RSC asID empty", fn);
 		return 0;
 	}
 
-	if (asz >= MAX_AS_SIZE) {
+	if (num_ases >= MAX_AS_SIZE) {
 		warnx("%s: too many AS number entries: limit %d",
 		    fn, MAX_AS_SIZE);
 		return 0;
 	}
 
-	rsc->as = calloc(asz, sizeof(struct cert_as));
-	if (rsc->as == NULL)
+	if ((rsc->ases = calloc(num_ases, sizeof(struct cert_as))) == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < asz; i++) {
+	for (i = 0; i < num_ases; i++) {
 		const ASIdOrRange *aor;
 
 		aor = sk_ASIdOrRange_value(asids->asnum, i);
 
 		switch (aor->type) {
 		case ASIdOrRange_id:
-			if (!sbgp_as_id(fn, rsc->as, &rsc->asz, aor->u.id))
+			if (!sbgp_as_id(fn, rsc->ases, &rsc->num_ases,
+			    aor->u.id))
 				return 0;
 			break;
 		case ASIdOrRange_range:
-			if (!sbgp_as_range(fn, rsc->as, &rsc->asz,
+			if (!sbgp_as_range(fn, rsc->ases, &rsc->num_ases,
 			    aor->u.range))
 				return 0;
 			break;
@@ -181,7 +181,7 @@ rsc_parse_iplist(const char *fn, struct rsc *rsc,
 	const ConstrainedIPAddressFamily	*af;
 	const IPAddressOrRanges			*aors;
 	const IPAddressOrRange			*aor;
-	size_t					 ipsz;
+	size_t					 num_ips;
 	enum afi				 afi;
 	int					 i, j;
 
@@ -197,14 +197,14 @@ rsc_parse_iplist(const char *fn, struct rsc *rsc,
 		af = sk_ConstrainedIPAddressFamily_value(ipAddrBlocks, i);
 		aors = af->addressesOrRanges;
 
-		ipsz = rsc->ipsz + sk_IPAddressOrRange_num(aors);
-		if (ipsz >= MAX_IP_SIZE) {
+		num_ips = rsc->num_ips + sk_IPAddressOrRange_num(aors);
+		if (num_ips >= MAX_IP_SIZE) {
 			warnx("%s: too many IP address entries: limit %d",
 			    fn, MAX_IP_SIZE);
 			return 0;
 		}
 
-		rsc->ips = recallocarray(rsc->ips, rsc->ipsz, ipsz,
+		rsc->ips = recallocarray(rsc->ips, rsc->num_ips, num_ips,
 		    sizeof(struct cert_ip));
 		if (rsc->ips == NULL)
 			err(1, NULL);
@@ -219,12 +219,12 @@ rsc_parse_iplist(const char *fn, struct rsc *rsc,
 			switch (aor->type) {
 			case IPAddressOrRange_addressPrefix:
 				if (!sbgp_addr(fn, rsc->ips,
-				    &rsc->ipsz, afi, aor->u.addressPrefix))
+				    &rsc->num_ips, afi, aor->u.addressPrefix))
 					return 0;
 				break;
 			case IPAddressOrRange_addressRange:
 				if (!sbgp_addr_range(fn, rsc->ips,
-				    &rsc->ipsz, afi, aor->u.addressRange))
+				    &rsc->num_ips, afi, aor->u.addressRange))
 					return 0;
 				break;
 			default:
@@ -465,7 +465,7 @@ rsc_free(struct rsc *p)
 	free(p->aki);
 	free(p->ski);
 	free(p->ips);
-	free(p->as);
+	free(p->ases);
 	free(p->files);
 	free(p);
 }

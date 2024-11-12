@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.79 2024/11/05 18:09:16 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.80 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -174,13 +174,13 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 			goto out;
 		}
 
-		if (roa->ipsz + addrsz >= MAX_IP_SIZE) {
+		if (roa->num_ips + addrsz >= MAX_IP_SIZE) {
 			warnx("%s: too many ROAIPAddress entries: limit %d",
 			    fn, MAX_IP_SIZE);
 			goto out;
 		}
-		roa->ips = recallocarray(roa->ips, roa->ipsz,
-		    roa->ipsz + addrsz, sizeof(struct roa_ip));
+		roa->ips = recallocarray(roa->ips, roa->num_ips,
+		    roa->num_ips + addrsz, sizeof(struct roa_ip));
 		if (roa->ips == NULL)
 			err(1, NULL);
 
@@ -216,7 +216,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 				}
 			}
 
-			res = &roa->ips[roa->ipsz++];
+			res = &roa->ips[roa->num_ips++];
 			res->addr = ipaddr;
 			res->afi = afi;
 			res->maxlength = maxlen;
@@ -284,12 +284,12 @@ roa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
-	if (cert->asz > 0) {
+	if (cert->num_ases > 0) {
 		warnx("%s: superfluous AS Resources extension present", fn);
 		goto out;
 	}
 
-	if (cert->ipsz == 0) {
+	if (cert->num_ips == 0) {
 		warnx("%s: no IP address present", fn);
 		goto out;
 	}
@@ -341,10 +341,10 @@ roa_buffer(struct ibuf *b, const struct roa *p)
 	io_simple_buffer(b, &p->valid, sizeof(p->valid));
 	io_simple_buffer(b, &p->asid, sizeof(p->asid));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
-	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
+	io_simple_buffer(b, &p->num_ips, sizeof(p->num_ips));
 	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 
-	io_simple_buffer(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+	io_simple_buffer(b, p->ips, p->num_ips * sizeof(p->ips[0]));
 
 	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
@@ -367,13 +367,13 @@ roa_read(struct ibuf *b)
 	io_read_buf(b, &p->valid, sizeof(p->valid));
 	io_read_buf(b, &p->asid, sizeof(p->asid));
 	io_read_buf(b, &p->talid, sizeof(p->talid));
-	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
+	io_read_buf(b, &p->num_ips, sizeof(p->num_ips));
 	io_read_buf(b, &p->expires, sizeof(p->expires));
 
-	if (p->ipsz > 0) {
-		if ((p->ips = calloc(p->ipsz, sizeof(p->ips[0]))) == NULL)
+	if (p->num_ips > 0) {
+		if ((p->ips = calloc(p->num_ips, sizeof(p->ips[0]))) == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+		io_read_buf(b, p->ips, p->num_ips * sizeof(p->ips[0]));
 	}
 
 	io_read_str(b, &p->aia);
@@ -395,7 +395,7 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, struct repo *rp)
 	struct vrp	*v, *found;
 	size_t		 i;
 
-	for (i = 0; i < roa->ipsz; i++) {
+	for (i = 0; i < roa->num_ips; i++) {
 		if ((v = malloc(sizeof(*v))) == NULL)
 			err(1, NULL);
 		v->afi = roa->ips[i].afi;

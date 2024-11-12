@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.77 2024/10/16 06:09:45 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.78 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ valid_as(struct auth *a, uint32_t min, uint32_t max)
 		return 0;
 
 	/* Does this certificate cover our AS number? */
-	c = as_check_covered(min, max, a->cert->as, a->cert->asz);
+	c = as_check_covered(min, max, a->cert->ases, a->cert->num_ases);
 	if (c > 0)
 		return 1;
 	else if (c < 0)
@@ -69,7 +69,8 @@ valid_ip(struct auth *a, enum afi afi,
 		return 0;
 
 	/* Does this certificate cover our IP prefix? */
-	c = ip_addr_check_covered(afi, min, max, a->cert->ips, a->cert->ipsz);
+	c = ip_addr_check_covered(afi, min, max, a->cert->ips,
+	    a->cert->num_ips);
 	if (c > 0)
 		return 1;
 	else if (c < 0)
@@ -90,26 +91,26 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 	size_t		 i;
 	uint32_t	 min, max;
 
-	for (i = 0; i < cert->asz; i++) {
-		if (cert->as[i].type == CERT_AS_INHERIT)
+	for (i = 0; i < cert->num_ases; i++) {
+		if (cert->ases[i].type == CERT_AS_INHERIT)
 			continue;
 
-		if (cert->as[i].type == CERT_AS_ID) {
-			min = cert->as[i].id;
-			max = cert->as[i].id;
+		if (cert->ases[i].type == CERT_AS_ID) {
+			min = cert->ases[i].id;
+			max = cert->ases[i].id;
 		} else {
-			min = cert->as[i].range.min;
-			max = cert->as[i].range.max;
+			min = cert->ases[i].range.min;
+			max = cert->ases[i].range.max;
 		}
 
 		if (valid_as(a, min, max))
 			continue;
 
-		as_warn(fn, "RFC 6487: uncovered resource", &cert->as[i]);
+		as_warn(fn, "RFC 6487: uncovered resource", &cert->ases[i]);
 		return 0;
 	}
 
-	for (i = 0; i < cert->ipsz; i++) {
+	for (i = 0; i < cert->num_ips; i++) {
 		if (cert->ips[i].type == CERT_IP_INHERIT)
 			continue;
 
@@ -134,9 +135,9 @@ valid_roa(const char *fn, struct cert *cert, struct roa *roa)
 	size_t	 i;
 	char	 buf[64];
 
-	for (i = 0; i < roa->ipsz; i++) {
+	for (i = 0; i < roa->num_ips; i++) {
 		if (ip_addr_check_covered(roa->ips[i].afi, roa->ips[i].min,
-		    roa->ips[i].max, cert->ips, cert->ipsz) > 0)
+		    roa->ips[i].max, cert->ips, cert->num_ips) > 0)
 			continue;
 
 		ip_addr_print(&roa->ips[i].addr, roa->ips[i].afi, buf,
@@ -156,7 +157,8 @@ valid_roa(const char *fn, struct cert *cert, struct roa *roa)
 int
 valid_spl(const char *fn, struct cert *cert, struct spl *spl)
 {
-	if (as_check_covered(spl->asid, spl->asid, cert->as, cert->asz) > 0)
+	if (as_check_covered(spl->asid, spl->asid, cert->ases,
+	    cert->num_ases) > 0)
 		return 1;
 
 	warnx("%s: SPL: uncovered ASID: %u", fn, spl->asid);
@@ -442,25 +444,25 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 	size_t		i;
 	uint32_t	min, max;
 
-	for (i = 0; i < rsc->asz; i++) {
-		if (rsc->as[i].type == CERT_AS_ID) {
-			min = rsc->as[i].id;
-			max = rsc->as[i].id;
+	for (i = 0; i < rsc->num_ases; i++) {
+		if (rsc->ases[i].type == CERT_AS_ID) {
+			min = rsc->ases[i].id;
+			max = rsc->ases[i].id;
 		} else {
-			min = rsc->as[i].range.min;
-			max = rsc->as[i].range.max;
+			min = rsc->ases[i].range.min;
+			max = rsc->ases[i].range.max;
 		}
 
-		if (as_check_covered(min, max, cert->as, cert->asz) > 0)
+		if (as_check_covered(min, max, cert->ases, cert->num_ases) > 0)
 			continue;
 
-		as_warn(fn, "RSC ResourceBlock uncovered", &rsc->as[i]);
+		as_warn(fn, "RSC ResourceBlock uncovered", &rsc->ases[i]);
 		return 0;
 	}
 
-	for (i = 0; i < rsc->ipsz; i++) {
+	for (i = 0; i < rsc->num_ips; i++) {
 		if (ip_addr_check_covered(rsc->ips[i].afi, rsc->ips[i].min,
-		    rsc->ips[i].max, cert->ips, cert->ipsz) > 0)
+		    rsc->ips[i].max, cert->ips, cert->num_ips) > 0)
 			continue;
 
 		ip_warn(fn, "RSC ResourceBlock uncovered", &rsc->ips[i]);
@@ -511,7 +513,7 @@ valid_aspa(const char *fn, struct cert *cert, struct aspa *aspa)
 {
 
 	if (as_check_covered(aspa->custasid, aspa->custasid,
-	    cert->as, cert->asz) > 0)
+	    cert->ases, cert->num_ases) > 0)
 		return 1;
 
 	warnx("%s: ASPA: uncovered Customer ASID: %u", fn, aspa->custasid);
@@ -529,10 +531,10 @@ valid_geofeed(const char *fn, struct cert *cert, struct geofeed *g)
 	size_t	 i;
 	char	 buf[64];
 
-	for (i = 0; i < g->geoipsz; i++) {
+	for (i = 0; i < g->num_geoips; i++) {
 		if (ip_addr_check_covered(g->geoips[i].ip->afi,
 		    g->geoips[i].ip->min, g->geoips[i].ip->max, cert->ips,
-		    cert->ipsz) > 0)
+		    cert->num_ips) > 0)
 			continue;
 
 		ip_addr_print(&g->geoips[i].ip->ip, g->geoips[i].ip->afi, buf,

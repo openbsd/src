@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.5 2024/11/05 18:58:35 lucas Exp $ */
+/*	$OpenBSD: spl.c,v 1.6 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -291,12 +291,12 @@ spl_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
-	if (cert->asz == 0) {
+	if (cert->num_ases == 0) {
 		warnx("%s: AS Resources extension missing", fn);
 		goto out;
 	}
 
-	if (cert->ipsz > 0) {
+	if (cert->num_ips > 0) {
 		warnx("%s: superfluous IP Resources extension present", fn);
 		goto out;
 	}

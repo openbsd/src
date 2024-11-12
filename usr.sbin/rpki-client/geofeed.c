@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.16 2024/02/21 09:17:06 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.17 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -68,11 +68,11 @@ geofeed_parse_geoip(struct geofeed *geofeed, char *cidr, char *loc)
 
 	ipaddr->prefixlen = plen;
 
-	geofeed->geoips = recallocarray(geofeed->geoips, geofeed->geoipsz,
-	    geofeed->geoipsz + 1, sizeof(struct geoip));
+	geofeed->geoips = recallocarray(geofeed->geoips, geofeed->num_geoips,
+	    geofeed->num_geoips + 1, sizeof(struct geoip));
 	if (geofeed->geoips == NULL)
 		err(1, NULL);
-	geoip = &geofeed->geoips[geofeed->geoipsz++];
+	geoip = &geofeed->geoips[geofeed->num_geoips++];
 
 	if ((geoip->ip = calloc(1, sizeof(struct cert_ip))) == NULL)
 		err(1, NULL);
@@ -253,7 +253,7 @@ geofeed_parse(X509 **x509, const char *fn, int talid, char *buf, size_t len)
 		goto out;
 	}
 
-	if (cert->asz > 0) {
+	if (cert->num_ases > 0) {
 		warnx("%s: superfluous AS Resources extension present", fn);
 		goto out;
 	}
@@ -288,7 +288,7 @@ geofeed_free(struct geofeed *p)
 	if (p == NULL)
 		return;
 
-	for (i = 0; i < p->geoipsz; i++) {
+	for (i = 0; i < p->num_geoips; i++) {
 		free(p->geoips[i].ip);
 		free(p->geoips[i].loc);
 	}

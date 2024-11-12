@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.33 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.34 2024/11/12 09:23:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -78,11 +78,11 @@ ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
 int
 ip_addr_check_covered(enum afi afi,
     const unsigned char *min, const unsigned char *max,
-    const struct cert_ip *ips, size_t ipsz)
+    const struct cert_ip *ips, size_t num_ips)
 {
 	size_t	 i, sz = AFI_IPV4 == afi ? 4 : 16;
 
-	for (i = 0; i < ipsz; i++) {
+	for (i = 0; i < num_ips; i++) {
 		if (ips[i].afi != afi)
 			continue;
 		if (ips[i].type == CERT_IP_INHERIT)
@@ -103,7 +103,7 @@ ip_addr_check_covered(enum afi afi,
  */
 int
 ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
-    const struct cert_ip *ips, size_t ipsz, int quiet)
+    const struct cert_ip *ips, size_t num_ips, int quiet)
 {
 	size_t	 i, sz = ip->afi == AFI_IPV4 ? 4 : 16;
 	int	 inherit_v4 = 0, inherit_v6 = 0;
@@ -114,7 +114,7 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	 * going to need to do a lot of scanning for big allocations.
 	 */
 
-	for (i = 0; i < ipsz; i++)
+	for (i = 0; i < num_ips; i++)
 		if (ips[i].type == CERT_IP_INHERIT) {
 			if (ips[i].afi == AFI_IPV4)
 				inherit_v4 = 1;
@@ -145,7 +145,7 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 
 	/* Check our ranges. */
 
-	for (i = 0; i < ipsz; i++) {
+	for (i = 0; i < num_ips; i++) {
 		if (ips[i].afi != ip->afi)
 			continue;
 		if (memcmp(ips[i].max, ip->min, sz) <= 0 ||
