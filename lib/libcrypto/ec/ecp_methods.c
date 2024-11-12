@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.2 2024/11/12 10:26:06 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.3 2024/11/12 10:44:25 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1608,6 +1608,160 @@ ec_GFp_simple_mul_double_nonct(const EC_GROUP *group, EC_POINT *r,
 	return ec_wNAF_mul(group, r, g_scalar, 1, &point, &p_scalar, ctx);
 }
 
+static void
+ec_GFp_mont_group_clear(EC_GROUP *group)
+{
+	BN_MONT_CTX_free(group->mont_ctx);
+	group->mont_ctx = NULL;
+
+	BN_free(group->mont_one);
+	group->mont_one = NULL;
+}
+
+static int
+ec_GFp_mont_group_init(EC_GROUP *group)
+{
+	int ok;
+
+	ok = ec_GFp_simple_group_init(group);
+	group->mont_ctx = NULL;
+	group->mont_one = NULL;
+	return ok;
+}
+
+static void
+ec_GFp_mont_group_finish(EC_GROUP *group)
+{
+	ec_GFp_mont_group_clear(group);
+	ec_GFp_simple_group_finish(group);
+}
+
+static int
+ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
+{
+	ec_GFp_mont_group_clear(dest);
+
+	if (!ec_GFp_simple_group_copy(dest, src))
+		return 0;
+
+	if (src->mont_ctx != NULL) {
+		dest->mont_ctx = BN_MONT_CTX_new();
+		if (dest->mont_ctx == NULL)
+			return 0;
+		if (!BN_MONT_CTX_copy(dest->mont_ctx, src->mont_ctx))
+			goto err;
+	}
+	if (src->mont_one != NULL) {
+		dest->mont_one = BN_dup(src->mont_one);
+		if (dest->mont_one == NULL)
+			goto err;
+	}
+	return 1;
+
+ err:
+	if (dest->mont_ctx != NULL) {
+		BN_MONT_CTX_free(dest->mont_ctx);
+		dest->mont_ctx = NULL;
+	}
+	return 0;
+}
+
+static int
+ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+    const BIGNUM *b, BN_CTX *ctx)
+{
+	BN_MONT_CTX *mont = NULL;
+	BIGNUM *one = NULL;
+	int ret = 0;
+
+	ec_GFp_mont_group_clear(group);
+
+	mont = BN_MONT_CTX_new();
+	if (mont == NULL)
+		goto err;
+	if (!BN_MONT_CTX_set(mont, p, ctx)) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	one = BN_new();
+	if (one == NULL)
+		goto err;
+	if (!BN_to_montgomery(one, BN_value_one(), mont, ctx))
+		goto err;
+
+	group->mont_ctx = mont;
+	mont = NULL;
+	group->mont_one = one;
+	one = NULL;
+
+	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
+	if (!ret)
+		ec_GFp_mont_group_clear(group);
+
+ err:
+	BN_MONT_CTX_free(mont);
+	BN_free(one);
+
+	return ret;
+}
+
+static int
+ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+    const BIGNUM *b, BN_CTX *ctx)
+{
+	if (group->mont_ctx == NULL) {
+		ECerror(EC_R_NOT_INITIALIZED);
+		return 0;
+	}
+	return BN_mod_mul_montgomery(r, a, b, group->mont_ctx, ctx);
+}
+
+static int
+ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+    BN_CTX *ctx)
+{
+	if (group->mont_ctx == NULL) {
+		ECerror(EC_R_NOT_INITIALIZED);
+		return 0;
+	}
+	return BN_mod_mul_montgomery(r, a, a, group->mont_ctx, ctx);
+}
+
+static int
+ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+    BN_CTX *ctx)
+{
+	if (group->mont_ctx == NULL) {
+		ECerror(EC_R_NOT_INITIALIZED);
+		return 0;
+	}
+	return BN_to_montgomery(r, a, group->mont_ctx, ctx);
+}
+
+static int
+ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+    BN_CTX *ctx)
+{
+	if (group->mont_ctx == NULL) {
+		ECerror(EC_R_NOT_INITIALIZED);
+		return 0;
+	}
+	return BN_from_montgomery(r, a, group->mont_ctx, ctx);
+}
+
+static int
+ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
+{
+	if (group->mont_one == NULL) {
+		ECerror(EC_R_NOT_INITIALIZED);
+		return 0;
+	}
+	if (!bn_copy(r, group->mont_one))
+		return 0;
+
+	return 1;
+}
+
 static const EC_METHOD ec_GFp_simple_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_init = ec_GFp_simple_group_init,
@@ -1654,3 +1808,53 @@ EC_GFp_simple_method(void)
 	return &ec_GFp_simple_method;
 }
 LCRYPTO_ALIAS(EC_GFp_simple_method);
+
+static const EC_METHOD ec_GFp_mont_method = {
+	.field_type = NID_X9_62_prime_field,
+	.group_init = ec_GFp_mont_group_init,
+	.group_finish = ec_GFp_mont_group_finish,
+	.group_copy = ec_GFp_mont_group_copy,
+	.group_set_curve = ec_GFp_mont_group_set_curve,
+	.group_get_curve = ec_GFp_simple_group_get_curve,
+	.group_get_degree = ec_GFp_simple_group_get_degree,
+	.group_order_bits = ec_group_simple_order_bits,
+	.group_check_discriminant = ec_GFp_simple_group_check_discriminant,
+	.point_init = ec_GFp_simple_point_init,
+	.point_finish = ec_GFp_simple_point_finish,
+	.point_copy = ec_GFp_simple_point_copy,
+	.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
+	.point_set_Jprojective_coordinates =
+	    ec_GFp_simple_set_Jprojective_coordinates,
+	.point_get_Jprojective_coordinates =
+	    ec_GFp_simple_get_Jprojective_coordinates,
+	.point_set_affine_coordinates =
+	    ec_GFp_simple_point_set_affine_coordinates,
+	.point_get_affine_coordinates =
+	    ec_GFp_simple_point_get_affine_coordinates,
+	.point_set_compressed_coordinates =
+	    ec_GFp_simple_set_compressed_coordinates,
+	.add = ec_GFp_simple_add,
+	.dbl = ec_GFp_simple_dbl,
+	.invert = ec_GFp_simple_invert,
+	.is_at_infinity = ec_GFp_simple_is_at_infinity,
+	.is_on_curve = ec_GFp_simple_is_on_curve,
+	.point_cmp = ec_GFp_simple_cmp,
+	.make_affine = ec_GFp_simple_make_affine,
+	.points_make_affine = ec_GFp_simple_points_make_affine,
+	.mul_generator_ct = ec_GFp_simple_mul_generator_ct,
+	.mul_single_ct = ec_GFp_simple_mul_single_ct,
+	.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
+	.field_mul = ec_GFp_mont_field_mul,
+	.field_sqr = ec_GFp_mont_field_sqr,
+	.field_encode = ec_GFp_mont_field_encode,
+	.field_decode = ec_GFp_mont_field_decode,
+	.field_set_to_one = ec_GFp_mont_field_set_to_one,
+	.blind_coordinates = ec_GFp_simple_blind_coordinates,
+};
+
+const EC_METHOD *
+EC_GFp_mont_method(void)
+{
+	return &ec_GFp_mont_method;
+}
+LCRYPTO_ALIAS(EC_GFp_mont_method);
