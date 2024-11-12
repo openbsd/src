@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.6 2024/11/12 11:01:14 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.7 2024/11/12 13:09:54 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -73,14 +73,13 @@
 #include "ec_local.h"
 
 /*
- * Most method functions in this file are designed to work with
- * non-trivial representations of field elements if necessary
- * (see ecp_mont.c): while standard modular addition and subtraction
- * are used, the field_mul and field_sqr methods will be used for
- * multiplication, and field_encode and field_decode (if defined)
+ * Most method functions in this file are designed to work with non-trivial
+ * representations of field elements if necessary: while standard modular
+ * addition and subtraction are used, the field_mul and field_sqr methods will
+ * be used for multiplication, and field_encode and field_decode (if defined)
  * will be used for converting between representations.
  *
- * Functions ec_points_make_affine() and ec_point_get_affine_coordinates()
+ * The functions ec_points_make_affine() and ec_point_get_affine_coordinates()
  * assume that if a non-trivial representation is used, it is a Montgomery
  * representation (i.e. 'encoding' means multiplying by some factor R).
  */
