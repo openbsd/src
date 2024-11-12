@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.100 2024/11/05 09:41:17 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.101 2024/11/12 09:32:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1001,6 +1001,10 @@ screen_redraw_draw_pane_scrollbar(struct screen_redraw_ctx *ctx,
 
 	screen_redraw_draw_scrollbar(ctx, wp, sb_pos, sb_x, sb_y, sb_h,
 	    slider_h, slider_y);
+
+	/* Store current position and height of the slider */
+	wp->sb_slider_y = slider_y;  /* top of slider y pos in scrollbar */
+	wp->sb_slider_h = slider_h;  /* height of slider */
 }
 
 static void
