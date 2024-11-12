@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.30 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.31 2024/11/12 22:50:06 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -226,7 +226,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 
 	subject_name = X509_get_subject_name(cert);
 	if (subject_name == NULL)
-		goto done;
+		goto err;
 
 	lastpos = X509_NAME_get_index_by_NID(subject_name,
 	    NID_commonName, lastpos);
