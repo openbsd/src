@@ -1,8 +1,8 @@
-/* $OpenBSD: ecp_methods.c,v 1.1 2024/11/12 10:25:16 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.2 2024/11/12 10:26:06 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
-*/
+ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
