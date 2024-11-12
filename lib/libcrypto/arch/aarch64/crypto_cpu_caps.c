@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_cpu_caps.c,v 1.1 2024/11/08 13:34:24 jsing Exp $ */
+/* $OpenBSD: crypto_cpu_caps.c,v 1.2 2024/11/12 13:52:31 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -25,6 +25,7 @@
 
 #include "crypto_arch.h"
 
+/* Machine dependent CPU capabilities. */
 uint64_t crypto_cpu_caps_aarch64;
 
 static inline uint64_t
