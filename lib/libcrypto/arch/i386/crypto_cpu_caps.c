@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_cpu_caps.c,v 1.2 2024/10/19 13:06:11 jsing Exp $ */
+/*	$OpenBSD: crypto_cpu_caps.c,v 1.3 2024/11/12 13:14:57 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -43,7 +43,7 @@ cpuid(uint32_t eax, uint32_t *out_eax, uint32_t *out_ebx, uint32_t *out_ecx,
 		*out_eax = eax;
 	if (out_ebx != NULL)
 		*out_ebx = ebx;
-	if (out_ebx != NULL)
+	if (out_ecx != NULL)
 		*out_ecx = ecx;
 	if (out_edx != NULL)
 		*out_edx = edx;
