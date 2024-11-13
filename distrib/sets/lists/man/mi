@@ -2055,7 +2055,6 @@
 ./usr/share/man/man4/sym.4
 ./usr/share/man/man4/sypwr.4
 ./usr/share/man/man4/syscon.4
-./usr/share/man/man4/tap.4
 ./usr/share/man/man4/tascodec.4
 ./usr/share/man/man4/tcic.4
 ./usr/share/man/man4/tcp.4
