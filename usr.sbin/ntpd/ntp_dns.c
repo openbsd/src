@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.28 2023/04/19 12:58:16 jsg Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.29 2024/11/13 15:51:50 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -237,14 +237,29 @@ probe_root_ns(void)
 void
 probe_root(void)
 {
-	int		n;
+	int		i, n;
+	struct timespec	start, probe_start, probe_end;
+	struct timespec	duration;
 
-	n = probe_root_ns();	
-	if (n < 0) {
-		/* give programs like unwind a second chance */
-		sleep(1);
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for (i = 0; ; i++) {
+		clock_gettime(CLOCK_MONOTONIC, &probe_start);
 		n = probe_root_ns();
+		clock_gettime(CLOCK_MONOTONIC, &probe_end);
+		if (n >= 0)
+			break;
+		timespecsub(&probe_end, &start, &duration);
+		if (duration.tv_sec > 5)
+			break;
+		timespecsub(&probe_end, &probe_start, &duration);
+		/* normally the probe takes 1s * nscount, but
+		   sleep a little if the probe returned quickly */
+		if (duration.tv_sec == 0)
+			sleep(1);
 	}
+	if (i > 0)
+		log_warnx("DNS root probe failed %d times (%s)", i,
+		    n >= 0 ? "eventually succeeded": "gave up");
 	if (imsg_compose(ibuf_dns, IMSG_PROBE_ROOT, 0, 0, -1, &n,
 	    sizeof(int)) == -1)
 		fatalx("probe_root");
