@@ -1947,6 +1947,7 @@
 ./usr/share/man/man3/EVP_PKEY_meth_get0_info.3
 ./usr/share/man/man3/EVP_PKEY_meth_new.3
 ./usr/share/man/man3/EVP_PKEY_new.3
+./usr/share/man/man3/EVP_PKEY_new_CMAC_key.3
 ./usr/share/man/man3/EVP_PKEY_print_private.3
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3
 ./usr/share/man/man3/EVP_PKEY_sign.3
