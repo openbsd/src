@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.207 2024/08/14 14:40:45 patrick Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.208 2024/11/13 15:03:02 yasuoka Exp $
 
 machine		amd64
 maxusers	4
@@ -235,6 +235,7 @@ msk*		at mskc?		#  each port of above
 em*		at pci?			# Intel Pro/1000 ethernet
 ixgb*		at pci?			# Intel Pro/10Gb ethernet
 ix*		at pci?			# Intel 82598EB 10Gb ethernet
+ixv*		at pci?			# Virtual Function of Intel 82599
 myx*		at pci?			# Myricom Myri-10G 10Gb ethernet
 oce*		at pci?			# Emulex OneConnect 10Gb ethernet
 sf*		at pci?			# Adaptec AIC-6915 ethernet
