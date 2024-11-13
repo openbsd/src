@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.1 2024/11/08 12:17:07 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.2 2024/11/13 16:32:18 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -12941,6 +12941,7 @@ ice_up(struct ice_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ice_vsi *vsi = &sc->pf_vsi;
 	struct ice_rx_queue *rxq;
+	struct ice_tx_queue *txq;
 	struct ifiqueue *ifiq;
 	struct ice_intr_vector *iv;
 	int i, err;
@@ -12961,6 +12962,13 @@ ice_up(struct ice_softc *sc)
 		ifiq = ifp->if_iqs[i];
 		ifiq->ifiq_softc = rxq;
 		rxq->rxq_ifiq = ifiq;
+	}
+
+	for (i = 0, txq = vsi->tx_queues; i < vsi->num_tx_queues; i++, txq++) {
+		/* wire everything together */
+		iv = &sc->sc_vectors[i];
+		iv->iv_txq = txq;
+		txq->irqv = iv;
 	}
 
 	err = ice_cfg_vsi_for_tx(&sc->pf_vsi);
@@ -13022,6 +13030,259 @@ err_cleanup_tx:
 	return err;
 }
 
+/**
+ * ice_find_ucast_rule_entry - Search for a unicast MAC filter rule entry
+ * @list_head: head of rule list
+ * @f_info: rule information
+ *
+ * Helper function to search for a unicast rule entry - this is to be used
+ * to remove unicast MAC filter that is not shared with other VSIs on the
+ * PF switch.
+ *
+ * Returns pointer to entry storing the rule if found
+ */
+struct ice_fltr_mgmt_list_entry *
+ice_find_ucast_rule_entry(struct ice_fltr_mgmt_list_head *list_head,
+			  struct ice_fltr_info *f_info)
+{
+	struct ice_fltr_mgmt_list_entry *list_itr;
+
+	TAILQ_FOREACH(list_itr, list_head, list_entry) {
+		if (!memcmp(&f_info->l_data, &list_itr->fltr_info.l_data,
+			    sizeof(f_info->l_data)) &&
+		    f_info->fwd_id.hw_vsi_id ==
+		    list_itr->fltr_info.fwd_id.hw_vsi_id &&
+		    f_info->flag == list_itr->fltr_info.flag)
+			return list_itr;
+	}
+	return NULL;
+}
+
+/**
+ * ice_remove_mac_rule - remove a MAC based filter rule
+ * @hw: pointer to the hardware structure
+ * @m_list: list of MAC addresses and forwarding information
+ * @recp_list: list from which function remove MAC address
+ *
+ * This function removes either a MAC filter rule or a specific VSI from a
+ * VSI list for a multicast MAC address.
+ *
+ * Returns ICE_ERR_DOES_NOT_EXIST if a given entry was not added by
+ * ice_add_mac. Caller should be aware that this call will only work if all
+ * the entries passed into m_list were added previously. It will not attempt to
+ * do a partial remove of entries that were found.
+ */
+enum ice_status
+ice_remove_mac_rule(struct ice_hw *hw, struct ice_fltr_list_head *m_list,
+		    struct ice_sw_recipe *recp_list)
+{
+	struct ice_fltr_list_entry *list_itr, *tmp;
+	struct ice_lock *rule_lock; /* Lock to protect filter rule list */
+
+	if (!m_list)
+		return ICE_ERR_PARAM;
+
+	rule_lock = &recp_list->filt_rule_lock;
+	TAILQ_FOREACH_SAFE(list_itr, m_list, list_entry, tmp) {
+		enum ice_sw_lkup_type l_type = list_itr->fltr_info.lkup_type;
+		uint8_t *add = &list_itr->fltr_info.l_data.mac.mac_addr[0];
+		uint16_t vsi_handle;
+
+		if (l_type != ICE_SW_LKUP_MAC)
+			return ICE_ERR_PARAM;
+
+		vsi_handle = list_itr->fltr_info.vsi_handle;
+		if (!ice_is_vsi_valid(hw, vsi_handle))
+			return ICE_ERR_PARAM;
+
+		list_itr->fltr_info.fwd_id.hw_vsi_id =
+		    hw->vsi_ctx[vsi_handle]->vsi_num;
+		if (!ETHER_IS_MULTICAST(add) && !hw->umac_shared) {
+			/* Don't remove the unicast address that belongs to
+			 * another VSI on the switch, since it is not being
+			 * shared...
+			 */
+#if 0
+			ice_acquire_lock(rule_lock);
+#endif
+			if (!ice_find_ucast_rule_entry(&recp_list->filt_rules,
+						       &list_itr->fltr_info)) {
+#if 0
+				ice_release_lock(rule_lock);
+#endif
+				return ICE_ERR_DOES_NOT_EXIST;
+			}
+#if 0
+			ice_release_lock(rule_lock);
+#endif
+		}
+		list_itr->status = ice_remove_rule_internal(hw, recp_list,
+							    list_itr);
+		if (list_itr->status)
+			return list_itr->status;
+	}
+	return ICE_SUCCESS;
+}
+
+/**
+ * ice_remove_mac - remove a MAC address based filter rule
+ * @hw: pointer to the hardware structure
+ * @m_list: list of MAC addresses and forwarding information
+ *
+ */
+enum ice_status
+ice_remove_mac(struct ice_hw *hw, struct ice_fltr_list_head *m_list)
+{
+	struct ice_sw_recipe *recp_list;
+
+	recp_list = &hw->switch_info->recp_list[ICE_SW_LKUP_MAC];
+	return ice_remove_mac_rule(hw, m_list, recp_list);
+}
+
+/**
+ * ice_remove_vsi_mac_filter - Remove a MAC address filter for a VSI
+ * @vsi: the VSI to add the filter for
+ * @addr: MAC address to remove a filter for
+ *
+ * Remove a MAC address filter from a given VSI. This is a wrapper around
+ * ice_remove_mac to simplify the interface. First, it only accepts a single
+ * address, so we don't have to mess around with the list setup in other
+ * functions. Second, it ignores the ICE_ERR_DOES_NOT_EXIST error, so that
+ * callers don't need to worry about attempting to remove filters which
+ * haven't yet been added.
+ */
+int
+ice_remove_vsi_mac_filter(struct ice_vsi *vsi, uint8_t *addr)
+{
+	struct ice_softc *sc = vsi->sc;
+	struct ice_fltr_list_head mac_addr_list;
+	struct ice_hw *hw = &sc->hw;
+	enum ice_status status;
+	int err = 0;
+
+	TAILQ_INIT(&mac_addr_list);
+
+	err = ice_add_mac_to_list(vsi, &mac_addr_list, addr, ICE_FWD_TO_VSI);
+	if (err)
+		goto free_mac_list;
+
+	status = ice_remove_mac(hw, &mac_addr_list);
+	if (status && status != ICE_ERR_DOES_NOT_EXIST) {
+		DPRINTF("%s: failed to remove a filter for MAC %s, "
+		    "err %s aq_err %s\n", __func__,
+		    ether_sprintf(addr), ice_status_str(status),
+		    ice_aq_str(hw->adminq.sq_last_status));
+		err = EIO;
+	}
+
+free_mac_list:
+	ice_free_fltr_list(&mac_addr_list);
+	return err;
+}
+
+/**
+ * ice_rm_pf_default_mac_filters - Remove default unicast and broadcast addrs
+ * @sc: device softc structure
+ *
+ * Remove the default unicast and broadcast filters from the PF VSI.
+ */
+int
+ice_rm_pf_default_mac_filters(struct ice_softc *sc)
+{
+	struct ice_vsi *vsi = &sc->pf_vsi;
+	struct ice_hw *hw = &sc->hw;
+	int err;
+
+	/* Remove the LAN MAC address */
+	err = ice_remove_vsi_mac_filter(vsi, hw->port_info->mac.lan_addr);
+	if (err)
+		return err;
+
+	/* Remove the broadcast address */
+	err = ice_remove_vsi_mac_filter(vsi, etherbroadcastaddr);
+	if (err)
+		return (EIO);
+
+	return (0);
+}
+
+/**
+ * ice_flush_rxq_interrupts - Unconfigure Hw Rx queues MSI-X interrupt cause
+ * @vsi: the VSI to configure
+ *
+ * Unset the CAUSE_ENA flag of the TQCTL register for each queue, then trigger
+ * a software interrupt on that cause. This is required as part of the Rx
+ * queue disable logic to dissociate the Rx queue from the interrupt.
+ *
+ * This function must be called prior to disabling Rx queues with
+ * ice_control_all_rx_queues, otherwise the Rx queue may not be disabled
+ * properly.
+ */
+void
+ice_flush_rxq_interrupts(struct ice_vsi *vsi)
+{
+	struct ice_hw *hw = &vsi->sc->hw;
+	int i;
+
+	for (i = 0; i < vsi->num_rx_queues; i++) {
+		struct ice_rx_queue *rxq = &vsi->rx_queues[i];
+		uint32_t reg, val;
+		int v = rxq->irqv->iv_qid + 1;
+
+		/* Clear the CAUSE_ENA flag */
+		reg = vsi->rx_qmap[rxq->me];
+		val = ICE_READ(hw, QINT_RQCTL(reg));
+		val &= ~QINT_RQCTL_CAUSE_ENA_M;
+		ICE_WRITE(hw, QINT_RQCTL(reg), val);
+
+		ice_flush(hw);
+
+		/* Trigger a software interrupt to complete interrupt
+		 * dissociation.
+		 */
+		ICE_WRITE(hw, GLINT_DYN_CTL(v),
+		     GLINT_DYN_CTL_SWINT_TRIG_M | GLINT_DYN_CTL_INTENA_MSK_M);
+	}
+}
+
+/**
+ * ice_flush_txq_interrupts - Unconfigure Hw Tx queues MSI-X interrupt cause
+ * @vsi: the VSI to configure
+ *
+ * Unset the CAUSE_ENA flag of the TQCTL register for each queue, then trigger
+ * a software interrupt on that cause. This is required as part of the Tx
+ * queue disable logic to dissociate the Tx queue from the interrupt.
+ *
+ * This function must be called prior to ice_vsi_disable_tx, otherwise
+ * the Tx queue disable may not complete properly.
+ */
+void
+ice_flush_txq_interrupts(struct ice_vsi *vsi)
+{
+	struct ice_hw *hw = &vsi->sc->hw;
+	int i;
+
+	for (i = 0; i < vsi->num_tx_queues; i++) {
+		struct ice_tx_queue *txq = &vsi->tx_queues[i];
+		uint32_t reg, val;
+		int v = txq->irqv->iv_qid + 1;
+
+		/* Clear the CAUSE_ENA flag */
+		reg = vsi->tx_qmap[txq->me];
+		val = ICE_READ(hw, QINT_TQCTL(reg));
+		val &= ~QINT_TQCTL_CAUSE_ENA_M;
+		ICE_WRITE(hw, QINT_TQCTL(reg), val);
+
+		ice_flush(hw);
+
+		/* Trigger a software interrupt to complete interrupt
+		 * dissociation.
+		 */
+		ICE_WRITE(hw, GLINT_DYN_CTL(v),
+		     GLINT_DYN_CTL_SWINT_TRIG_M | GLINT_DYN_CTL_INTENA_MSK_M);
+	}
+}
+
 int
 ice_down(struct ice_softc *sc)
 {
@@ -13029,8 +13290,51 @@ ice_down(struct ice_softc *sc)
 
 	timeout_del(&sc->sc_admin_timer);
 	ifp->if_flags &= ~IFF_RUNNING;
+#if 0
+	ASSERT_CTX_LOCKED(sc);
+#endif
+	if (!ice_testandclear_state(&sc->state, ICE_STATE_DRIVER_INITIALIZED))
+		return 0;
 
-	/* TODO */
+	if (ice_test_state(&sc->state, ICE_STATE_RESET_FAILED)) {
+		printf("%s: request to stop interface cannot be completed "
+		    "as the device failed to reset\n", sc->sc_dev.dv_xname);
+		return ENODEV;
+	}
+
+	if (ice_test_state(&sc->state, ICE_STATE_PREPARED_FOR_RESET)) {
+		DPRINTF("%s: request to stop interface while device is "
+		    "prepared for impending reset\n", __func__);
+		return EBUSY;
+	}
+#if 0
+	ice_rdma_pf_stop(sc);
+#endif
+	/* Remove the MAC filters, stop Tx, and stop Rx. We don't check the
+	 * return of these functions because there's nothing we can really do
+	 * if they fail, and the functions already print error messages.
+	 * Just try to shut down as much as we can.
+	 */
+	ice_rm_pf_default_mac_filters(sc);
+
+	/* Dissociate the Tx and Rx queues from the interrupts */
+	ice_flush_txq_interrupts(&sc->pf_vsi);
+	ice_flush_rxq_interrupts(&sc->pf_vsi);
+
+	/* Disable the Tx and Rx queues */
+	ice_vsi_disable_tx(&sc->pf_vsi);
+	ice_control_all_rx_queues(&sc->pf_vsi, false);
+
+	if (!ice_test_state(&sc->state, ICE_STATE_LINK_ACTIVE_ON_DOWN) &&
+		 !(ifp->if_flags & IFF_UP) && sc->link_up)
+		ice_set_link(sc, false);
+#if 0
+	if (sc->mirr_if && ice_test_state(&mif->state, ICE_STATE_SUBIF_NEEDS_REINIT)) {
+		ice_subif_if_stop(sc->mirr_if->subctx);
+		device_printf(sc->dev, "The subinterface also comes down and up after reset\n");
+	}
+#endif
+
 	return 0;
 }
 
