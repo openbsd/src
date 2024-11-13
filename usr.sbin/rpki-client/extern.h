@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.230 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.231 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -151,7 +151,7 @@ struct cert {
  */
 struct tal {
 	char		**uri; /* well-formed rsync URIs */
-	size_t		 urisz; /* number of URIs */
+	size_t		 num_uris;
 	unsigned char	*pkey; /* DER-encoded public key */
 	size_t		 pkeysz; /* length of pkey */
 	char		*descr; /* basename of tal file */
@@ -271,7 +271,7 @@ struct rsc {
 	struct cert_as	*ases;	/* AS resources */
 	size_t		 num_ases;
 	struct rscfile	*files; /* FileAndHashes in the RSC */
-	size_t		 filesz; /* number of FileAndHashes */
+	size_t		 num_files;
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
@@ -295,8 +295,8 @@ struct spl_pfx {
  */
 struct spl {
 	uint32_t	 asid;
-	struct spl_pfx	*pfxs;
-	size_t		 pfxsz;
+	struct spl_pfx	*prefixes;
+	size_t		 num_prefixes;
 	int		 talid;
 	char		*aia;
 	char		*aki;
@@ -314,9 +314,9 @@ struct spl {
  */
 struct takey {
 	char		**comments; /* Comments */
-	size_t		 commentsz; /* number of Comments */
+	size_t		 num_comments;
 	char		**uris; /* CertificateURI */
-	size_t		 urisz; /* number of CertificateURIs */
+	size_t		 num_uris;
 	unsigned char	*pubkey; /* DER encoded SubjectPublicKeyInfo */
 	size_t		 pubkeysz;
 	char		*ski; /* hex encoded SubjectKeyIdentifier of pubkey */
@@ -392,7 +392,7 @@ struct aspa {
 	char			*ski; /* SKI */
 	uint32_t		 custasid; /* the customerASID */
 	uint32_t		*providers; /* the providers */
-	size_t			 providersz; /* number of providers */
+	size_t			 num_providers;
 	time_t			 signtime; /* CMS signing-time attribute */
 	time_t			 notbefore; /* EE cert's Not Before */
 	time_t			 notafter; /* notAfter of the ASPA EE cert */
@@ -407,7 +407,7 @@ struct vap {
 	RB_ENTRY(vap)		 entry;
 	uint32_t		 custasid;
 	uint32_t		*providers;
-	size_t			 providersz;
+	size_t			 num_providers;
 	time_t			 expires;
 	int			 talid;
 	unsigned int		 repoid;
@@ -448,7 +448,7 @@ struct vsp {
 	RB_ENTRY(vsp)	 entry;
 	uint32_t	 asid;
 	struct spl_pfx	*prefixes;
-	size_t		 prefixesz;
+	size_t		 num_prefixes;
 	time_t		 expires;
 	int		 talid;
 	unsigned int	 repoid;

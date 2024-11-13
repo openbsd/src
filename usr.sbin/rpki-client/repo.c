@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.69 2024/11/02 12:30:28 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.70 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -80,7 +80,7 @@ struct tarepo {
 	char			*descr;
 	char			*basedir;
 	char			**uri;
-	size_t			 urisz;
+	size_t			 num_uris;
 	size_t			 uriidx;
 	unsigned int		 id;
 	enum repo_state		 state;
@@ -356,14 +356,14 @@ static void
 ta_fetch(struct tarepo *tr)
 {
 	if (!rrdpon) {
-		for (; tr->uriidx < tr->urisz; tr->uriidx++) {
+		for (; tr->uriidx < tr->num_uris; tr->uriidx++) {
 			if (strncasecmp(tr->uri[tr->uriidx],
 			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0)
 				break;
 		}
 	}
 
-	if (tr->uriidx >= tr->urisz) {
+	if (tr->uriidx >= tr->num_uris) {
 		tr->state = REPO_FAILED;
 		logx("ta/%s: fallback to cache", tr->descr);
 
@@ -426,9 +426,9 @@ ta_get(struct tal *tal)
 	}
 
 	/* steal URI information from TAL */
-	tr->urisz = tal->urisz;
+	tr->num_uris = tal->num_uris;
 	tr->uri = tal->uri;
-	tal->urisz = 0;
+	tal->num_uris = 0;
 	tal->uri = NULL;
 
 	ta_fetch(tr);
@@ -1150,7 +1150,7 @@ ta_lookup(int id, struct tal *tal)
 {
 	struct repo	*rp;
 
-	if (tal->urisz == 0)
+	if (tal->num_uris == 0)
 		errx(1, "TAL %s has no URI", tal->descr);
 
 	/* Look up in repository table. (Lookup should actually fail here) */
@@ -1358,7 +1358,7 @@ repo_proto(const struct repo *rp)
 
 	if (rp->ta != NULL) {
 		const struct tarepo *tr = rp->ta;
-		if (tr->uriidx < tr->urisz &&
+		if (tr->uriidx < tr->num_uris &&
 		    strncasecmp(tr->uri[tr->uriidx], RSYNC_PROTO,
 		    RSYNC_PROTO_LEN) == 0)
 			return "rsync";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.31 2024/04/08 14:02:13 tb Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.32 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -64,10 +64,10 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		    "provider-as { ", vap->custasid,
 		    (long long)vap->expires) < 0)
 			return -1;
-		for (i = 0; i < vap->providersz; i++) {
+		for (i = 0; i < vap->num_providers; i++) {
 			if (fprintf(out, "%u", vap->providers[i]) < 0)
 				return -1;
-			if (i + 1 < vap->providersz)
+			if (i + 1 < vap->num_providers)
 				if (fprintf(out, ", ") < 0)
 					return -1;
 		}

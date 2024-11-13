@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.20 2024/05/15 09:01:36 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.21 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -94,29 +94,30 @@ parse_takey(const char *fn, const TAKey *takey)
 	if ((res = calloc(1, sizeof(struct takey))) == NULL)
 		err(1, NULL);
 
-	res->commentsz = sk_ASN1_UTF8STRING_num(takey->comments);
-	if (res->commentsz > 0) {
-		res->comments = calloc(res->commentsz, sizeof(char *));
+	res->num_comments = sk_ASN1_UTF8STRING_num(takey->comments);
+	if (res->num_comments > 0) {
+		res->comments = calloc(res->num_comments, sizeof(char *));
 		if (res->comments == NULL)
 			err(1, NULL);
 
-		for (i = 0; i < res->commentsz; i++) {
+		for (i = 0; i < res->num_comments; i++) {
 			comment = sk_ASN1_UTF8STRING_value(takey->comments, i);
-			res->comments[i] = strndup(comment->data, comment->length);
+			res->comments[i] = strndup(comment->data,
+			    comment->length);
 			if (res->comments[i] == NULL)
 				err(1, NULL);
 		}
 	}
 
-	res->urisz = sk_ASN1_IA5STRING_num(takey->certificateURIs);
-	if (res->urisz == 0) {
+	res->num_uris = sk_ASN1_IA5STRING_num(takey->certificateURIs);
+	if (res->num_uris == 0) {
 		warnx("%s: Signed TAL requires at least 1 CertificateURI", fn);
 		goto err;
 	}
-	if ((res->uris = calloc(res->urisz, sizeof(char *))) == NULL)
+	if ((res->uris = calloc(res->num_uris, sizeof(char *))) == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < res->urisz; i++) {
+	for (i = 0; i < res->num_uris; i++) {
 		certURI = sk_ASN1_IA5STRING_value(takey->certificateURIs, i);
 		if (!valid_uri(certURI->data, certURI->length, NULL)) {
 			warnx("%s: invalid TA URI", fn);
@@ -279,10 +280,10 @@ takey_free(struct takey *t)
 	if (t == NULL)
 		return;
 
-	for (i = 0; i < t->commentsz; i++)
+	for (i = 0; i < t->num_comments; i++)
 		free(t->comments[i]);
 
-	for (i = 0; i < t->urisz; i++)
+	for (i = 0; i < t->num_uris; i++)
 		free(t->uris[i]);
 
 	free(t->comments);

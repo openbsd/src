@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.57 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.58 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -118,14 +118,14 @@ tal_print(const struct tal *p)
 		json_do_string("name", p->descr);
 		json_do_string("ski", pretty_key_id(ski));
 		json_do_array("trust_anchor_locations");
-		for (i = 0; i < p->urisz; i++)
+		for (i = 0; i < p->num_uris; i++)
 			json_do_string("tal", p->uri[i]);
 		json_do_end();
 	} else {
 		printf("Trust anchor name:        %s\n", p->descr);
 		printf("Subject key identifier:   %s\n", pretty_key_id(ski));
 		printf("Trust anchor locations:   ");
-		for (i = 0; i < p->urisz; i++) {
+		for (i = 0; i < p->num_uris; i++) {
 			if (i > 0)
 				printf("%26s", "");
 			printf("%s\n", p->uri[i]);
@@ -600,8 +600,8 @@ spl_print(const X509 *x, const struct spl *s)
 
 	if (outformats & FORMAT_JSON)
 		json_do_array("prefixes");
-	for (i = 0; i < s->pfxsz; i++) {
-		ip_addr_print(&s->pfxs[i].prefix, s->pfxs[i].afi, buf,
+	for (i = 0; i < s->num_prefixes; i++) {
+		ip_addr_print(&s->prefixes[i].prefix, s->prefixes[i].afi, buf,
 		    sizeof(buf));
 
 		if (outformats & FORMAT_JSON) {
@@ -691,7 +691,7 @@ rsc_print(const X509 *x, const struct rsc *p)
 	} else
 		printf("Filenames and hashes:     ");
 
-	for (i = 0; i < p->filesz; i++) {
+	for (i = 0; i < p->num_files; i++) {
 		if (base64_encode(p->files[i].hash, sizeof(p->files[i].hash),
 		    &hash) == -1)
 			errx(1, "base64_encode failure");
@@ -754,7 +754,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 		printf("Providers:                ");
 	}
 
-	for (i = 0; i < p->providersz; i++) {
+	for (i = 0; i < p->num_providers; i++) {
 		if (outformats & FORMAT_JSON)
 			json_do_uint("asid", p->providers[i]);
 		else {
@@ -781,11 +781,11 @@ takey_print(char *name, const struct takey *t)
 		json_do_object("takey", 0);
 		json_do_string("name", name);
 		json_do_array("comments");
-		for (i = 0; i < t->commentsz; i++)
+		for (i = 0; i < t->num_comments; i++)
 			json_do_string("comment", t->comments[i]);
 		json_do_end();
 		json_do_array("uris");
-		for (i = 0; i < t->urisz; i++)
+		for (i = 0; i < t->num_uris; i++)
 			json_do_string("uri", t->uris[i]);
 		json_do_end();
 		json_do_string("spki", spki);
@@ -793,11 +793,11 @@ takey_print(char *name, const struct takey *t)
 	} else {
 		printf("TAL derived from the '%s' Trust Anchor Key:\n\n", name);
 
-		for (i = 0; i < t->commentsz; i++)
+		for (i = 0; i < t->num_comments; i++)
 			printf("\t# %s\n", t->comments[i]);
-		if (t->commentsz > 0)
+		if (t->num_comments > 0)
 			printf("\n");
-		for (i = 0; i < t->urisz; i++)
+		for (i = 0; i < t->num_uris; i++)
 			printf("\t%s\n", t->uris[i]);
 		printf("\n\t");
 		for (i = 0; i < strlen(spki); i++) {

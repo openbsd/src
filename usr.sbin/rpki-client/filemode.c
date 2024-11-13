@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.51 2024/11/05 06:05:35 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.52 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -269,7 +269,7 @@ parse_load_ta(struct tal *tal)
 
 	cert->talid = tal->id;
 	auth_insert(file, &auths, cert, NULL);
-	for (i = 0; i < tal->urisz; i++) {
+	for (i = 0; i < tal->num_uris; i++) {
 		if (strncasecmp(tal->uri[i], RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
 			continue;
 		/* Add all rsync uri since any of them could be used as AIA. */

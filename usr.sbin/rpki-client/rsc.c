@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.36 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.37 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -272,25 +272,25 @@ rsc_parse_checklist(const char *fn, struct rsc *rsc,
 	FileNameAndHash		*fh;
 	ASN1_IA5STRING		*fileName;
 	struct rscfile		*file;
-	size_t			 sz, i;
+	size_t			 num_files, i;
 
-	if ((sz = sk_FileNameAndHash_num(checkList)) == 0) {
+	if ((num_files = sk_FileNameAndHash_num(checkList)) == 0) {
 		warnx("%s: RSC checkList needs at least one entry", fn);
 		return 0;
 	}
 
-	if (sz >= MAX_CHECKLIST_ENTRIES) {
-		warnx("%s: %zu exceeds checklist entry limit (%d)", fn, sz,
-		    MAX_CHECKLIST_ENTRIES);
+	if (num_files >= MAX_CHECKLIST_ENTRIES) {
+		warnx("%s: %zu exceeds checklist entry limit (%d)", fn,
+		    num_files, MAX_CHECKLIST_ENTRIES);
 		return 0;
 	}
 
-	rsc->files = calloc(sz, sizeof(struct rscfile));
+	rsc->files = calloc(num_files, sizeof(struct rscfile));
 	if (rsc->files == NULL)
 		err(1, NULL);
-	rsc->filesz = sz;
+	rsc->num_files = num_files;
 
-	for (i = 0; i < sz; i++) {
+	for (i = 0; i < num_files; i++) {
 		fh = sk_FileNameAndHash_value(checkList, i);
 
 		file = &rsc->files[i];
@@ -458,7 +458,7 @@ rsc_free(struct rsc *p)
 	if (p == NULL)
 		return;
 
-	for (i = 0; i < p->filesz; i++)
+	for (i = 0; i < p->num_files; i++)
 		free(p->files[i].filename);
 
 	free(p->aia);

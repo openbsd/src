@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.31 2024/11/05 18:09:16 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.32 2024/11/13 12:51:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -110,7 +110,7 @@ aspa_parse_providers(const char *fn, struct aspa *aspa,
 			}
 		}
 
-		aspa->providers[aspa->providersz++] = provider;
+		aspa->providers[aspa->num_providers++] = provider;
 	}
 
 	return 1;
@@ -262,9 +262,9 @@ aspa_buffer(struct ibuf *b, const struct aspa *p)
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 
-	io_simple_buffer(b, &p->providersz, sizeof(size_t));
+	io_simple_buffer(b, &p->num_providers, sizeof(size_t));
 	io_simple_buffer(b, p->providers,
-	    p->providersz * sizeof(p->providers[0]));
+	    p->num_providers * sizeof(p->providers[0]));
 
 	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
@@ -289,14 +289,14 @@ aspa_read(struct ibuf *b)
 	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->expires, sizeof(p->expires));
 
-	io_read_buf(b, &p->providersz, sizeof(size_t));
+	io_read_buf(b, &p->num_providers, sizeof(size_t));
 
-	if (p->providersz > 0) {
-		if ((p->providers = calloc(p->providersz,
+	if (p->num_providers > 0) {
+		if ((p->providers = calloc(p->num_providers,
 		    sizeof(p->providers[0]))) == NULL)
 			err(1, NULL);
 		io_read_buf(b, p->providers,
-		    p->providersz * sizeof(p->providers[0]));
+		    p->num_providers * sizeof(p->providers[0]));
 	}
 
 	io_read_str(b, &p->aia);
@@ -315,11 +315,11 @@ aspa_read(struct ibuf *b)
 static void
 insert_vap(struct vap *v, uint32_t idx, uint32_t *p)
 {
-	if (idx < v->providersz)
+	if (idx < v->num_providers)
 		memmove(v->providers + idx + 1, v->providers + idx,
-		    (v->providersz - idx) * sizeof(*v->providers));
+		    (v->num_providers - idx) * sizeof(v->providers[0]));
 	v->providers[idx] = *p;
-	v->providersz++;
+	v->num_providers++;
 }
 
 /*
@@ -365,7 +365,7 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 	repo_stat_inc(rp, aspa->talid, RTYPE_ASPA, STYPE_TOTAL);
 
 	v->providers = reallocarray(v->providers,
-	    v->providersz + aspa->providersz, sizeof(*v->providers));
+	    v->num_providers + aspa->num_providers, sizeof(v->providers[0]));
 	if (v->providers == NULL)
 		err(1, NULL);
 
@@ -374,8 +374,8 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 	 * insert them in the right place in v->providers while keeping the
 	 * order of the providers array.
 	 */
-	for (i = 0, j = 0; i < aspa->providersz; ) {
-		if (j == v->providersz ||
+	for (i = 0, j = 0; i < aspa->num_providers; ) {
+		if (j == v->num_providers ||
 		    aspa->providers[i] < v->providers[j]) {
 			/* merge provider from aspa into v */
 			repo_stat_inc(rp, v->talid, RTYPE_ASPA,
@@ -385,15 +385,15 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 		} else if (aspa->providers[i] == v->providers[j])
 			i++;
 
-		if (j < v->providersz)
+		if (j < v->num_providers)
 			j++;
 	}
 
-	if (v->providersz >= MAX_ASPA_PROVIDERS) {
+	if (v->num_providers >= MAX_ASPA_PROVIDERS) {
 		v->overflowed = 1;
 		free(v->providers);
 		v->providers = NULL;
-		v->providersz = 0;
+		v->num_providers = 0;
 		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_OVERFLOW);
 		warnx("%s: too many providers for ASPA Customer ASID %u "
 		    "(more than %d)", fn, v->custasid, MAX_ASPA_PROVIDERS);

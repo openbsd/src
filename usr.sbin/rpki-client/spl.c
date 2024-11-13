@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.6 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.7 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -133,7 +133,7 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
 	const AddressFamilyPrefixes	*afp;
 	const STACK_OF(ASN1_BIT_STRING)	*prefixes;
 	const ASN1_BIT_STRING		*prefix_asn1;
-	int				 afpsz, prefixesz;
+	int				 num_afps, num_prefixes;
 	enum afi			 afi;
 	struct ip_addr			 ip_addr;
 	struct spl_pfx			*prefix;
@@ -160,25 +160,25 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
 		goto out;
 	}
 
-	afpsz = sk_AddressFamilyPrefixes_num(spl_asn1->prefixBlocks);
-	if (afpsz < 0 || afpsz > 2) {
+	num_afps = sk_AddressFamilyPrefixes_num(spl_asn1->prefixBlocks);
+	if (num_afps < 0 || num_afps > 2) {
 		warnx("%s: unexpected number of AddressFamilyAddressPrefixes"
-		    "(got %d, expected 0, 1, or 2)", fn, afpsz);
+		    "(got %d, expected 0, 1, or 2)", fn, num_afps);
 		goto out;
 	}
 
-	for (i = 0; i < afpsz; i++) {
+	for (i = 0; i < num_afps; i++) {
 		struct ip_addr *prev_ip_addr = NULL;
 
 		afp = sk_AddressFamilyPrefixes_value(spl_asn1->prefixBlocks, i);
 		prefixes = afp->addressPrefixes;
-		prefixesz = sk_ASN1_BIT_STRING_num(afp->addressPrefixes);
+		num_prefixes = sk_ASN1_BIT_STRING_num(afp->addressPrefixes);
 
-		if (prefixesz == 0) {
+		if (num_prefixes == 0) {
 			warnx("%s: empty AddressFamilyAddressPrefixes", fn);
 			goto out;
 		}
-		if (spl->pfxsz + prefixesz >= MAX_IP_SIZE) {
+		if (spl->num_prefixes + num_prefixes >= MAX_IP_SIZE) {
 			warnx("%s: too many addressPrefixes entries", fn);
 			goto out;
 		}
@@ -207,12 +207,12 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
 			}
 		}
 
-		spl->pfxs = recallocarray(spl->pfxs, spl->pfxsz,
-		    spl->pfxsz + prefixesz, sizeof(struct spl_pfx));
-		if (spl->pfxs == NULL)
+		spl->prefixes = recallocarray(spl->prefixes, spl->num_prefixes,
+		    spl->num_prefixes + num_prefixes, sizeof(spl->prefixes[0]));
+		if (spl->prefixes == NULL)
 			err(1, NULL);
 
-		for (j = 0; j < prefixesz; j++) {
+		for (j = 0; j < num_prefixes; j++) {
 			prefix_asn1 = sk_ASN1_BIT_STRING_value(prefixes, j);
 
 			if (!ip_addr_parse(prefix_asn1, afi, fn, &ip_addr))
@@ -224,7 +224,7 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
 				goto out;
 			}
 
-			prefix = &spl->pfxs[spl->pfxsz++];
+			prefix = &spl->prefixes[spl->num_prefixes++];
 			prefix->prefix = ip_addr;
 			prefix->afi = afi;
 			prev_ip_addr = &prefix->prefix;
@@ -330,7 +330,7 @@ spl_free(struct spl *s)
 	free(s->aki);
 	free(s->sia);
 	free(s->ski);
-	free(s->pfxs);
+	free(s->prefixes);
 	free(s);
 }
 
@@ -344,10 +344,11 @@ spl_buffer(struct ibuf *b, const struct spl *s)
 	io_simple_buffer(b, &s->valid, sizeof(s->valid));
 	io_simple_buffer(b, &s->asid, sizeof(s->asid));
 	io_simple_buffer(b, &s->talid, sizeof(s->talid));
-	io_simple_buffer(b, &s->pfxsz, sizeof(s->pfxsz));
+	io_simple_buffer(b, &s->num_prefixes, sizeof(s->num_prefixes));
 	io_simple_buffer(b, &s->expires, sizeof(s->expires));
 
-	io_simple_buffer(b, s->pfxs, s->pfxsz * sizeof(s->pfxs[0]));
+	io_simple_buffer(b, s->prefixes,
+	    s->num_prefixes * sizeof(s->prefixes[0]));
 
 	io_str_buffer(b, s->aia);
 	io_str_buffer(b, s->aki);
@@ -370,13 +371,15 @@ spl_read(struct ibuf *b)
 	io_read_buf(b, &s->valid, sizeof(s->valid));
 	io_read_buf(b, &s->asid, sizeof(s->asid));
 	io_read_buf(b, &s->talid, sizeof(s->talid));
-	io_read_buf(b, &s->pfxsz, sizeof(s->pfxsz));
+	io_read_buf(b, &s->num_prefixes, sizeof(s->num_prefixes));
 	io_read_buf(b, &s->expires, sizeof(s->expires));
 
-	if (s->pfxsz > 0) {
-		if ((s->pfxs = calloc(s->pfxsz, sizeof(s->pfxs[0]))) == NULL)
+	if (s->num_prefixes > 0) {
+		if ((s->prefixes = calloc(s->num_prefixes,
+		    sizeof(s->prefixes[0]))) == NULL)
 			err(1, NULL);
-		io_read_buf(b, s->pfxs, s->pfxsz * sizeof(s->pfxs[0]));
+		io_read_buf(b, s->prefixes,
+		    s->num_prefixes * sizeof(s->prefixes[0]));
 	}
 
 	io_read_str(b, &s->aia);
@@ -401,11 +404,11 @@ spl_pfx_cmp(const struct spl_pfx *a, const struct spl_pfx *b)
 static void
 insert_vsp(struct vsp *vsp, size_t idx, struct spl_pfx *pfx)
 {
-	if (idx < vsp->prefixesz)
+	if (idx < vsp->num_prefixes)
 		memmove(vsp->prefixes + idx + 1, vsp->prefixes + idx,
-		    (vsp->prefixesz - idx) * sizeof(*vsp->prefixes));
+		    (vsp->num_prefixes - idx) * sizeof(vsp->prefixes[0]));
 	vsp->prefixes[idx] = *pfx;
-	vsp->prefixesz++;
+	vsp->num_prefixes++;
 }
 
 /*
@@ -449,7 +452,7 @@ spl_insert_vsps(struct vsp_tree *tree, struct spl *spl, struct repo *rp)
 
 	/* merge content of multiple SPLs */
 	vsp->prefixes = reallocarray(vsp->prefixes,
-	    vsp->prefixesz + spl->pfxsz, sizeof(struct spl_pfx));
+	    vsp->num_prefixes + spl->num_prefixes, sizeof(vsp->prefixes[0]));
 	if (vsp->prefixes == NULL)
 		err(1, NULL);
 
@@ -458,16 +461,17 @@ spl_insert_vsps(struct vsp_tree *tree, struct spl *spl, struct repo *rp)
 	 * all SPL->pfxs, and insert them in the right place in
 	 * vsp->prefixes while keeping the order of the array.
 	 */
-	for (i = 0, j = 0; i < spl->pfxsz; ) {
+	for (i = 0, j = 0; i < spl->num_prefixes; ) {
 		cmp = -1;
-		if (j == vsp->prefixesz ||
-		    (cmp = spl_pfx_cmp(&spl->pfxs[i], &vsp->prefixes[j])) < 0) {
-			insert_vsp(vsp, j, &spl->pfxs[i]);
+		if (j == vsp->num_prefixes ||
+		    (cmp = spl_pfx_cmp(&spl->prefixes[i],
+		     &vsp->prefixes[j])) < 0) {
+			insert_vsp(vsp, j, &spl->prefixes[i]);
 			i++;
 		} else if (cmp == 0)
 			i++;
 
-		if (j < vsp->prefixesz)
+		if (j < vsp->num_prefixes)
 			j++;
 	}
 }

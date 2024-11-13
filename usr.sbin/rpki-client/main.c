@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.269 2024/11/02 12:30:28 job Exp $ */
+/*	$OpenBSD: main.c,v 1.270 2024/11/13 12:51:04 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -460,7 +460,7 @@ queue_add_from_tal(struct tal *tal)
 	unsigned char	*data;
 	char		*nfile;
 
-	assert(tal->urisz);
+	assert(tal->num_uris > 0);
 
 	if ((taldescs[tal->id] = strdup(tal->descr)) == NULL)
 		err(1, NULL);
