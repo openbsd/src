@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.94 2022/03/20 12:01:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.95 2024/11/14 07:49:24 kevlo Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ extern const struct ieee80211_rateset ieee80211_std_rateset_11a;
 extern const struct ieee80211_rateset ieee80211_std_rateset_11b;
 extern const struct ieee80211_rateset ieee80211_std_rateset_11g;
 
-/* Index into ieee80211_std_rateset_11n[] array. */
+/* Index into ieee80211_std_ratesets_11n[] array. */
 #define IEEE80211_HT_RATESET_SISO	0
 #define IEEE80211_HT_RATESET_SISO_SGI	1
 #define IEEE80211_HT_RATESET_MIMO2	2
@@ -98,7 +98,7 @@ struct ieee80211_ht_rateset {
 
 extern const struct ieee80211_ht_rateset ieee80211_std_ratesets_11n[];
 
-/* Index into ieee80211_std_rateset_11ac[] array. */
+/* Index into ieee80211_std_ratesets_11ac[] array. */
 #define IEEE80211_VHT_RATESET_SISO		0
 #define IEEE80211_VHT_RATESET_SISO_SGI		1
 #define IEEE80211_VHT_RATESET_MIMO2		2
@@ -117,7 +117,7 @@ extern const struct ieee80211_ht_rateset ieee80211_std_ratesets_11n[];
 #define IEEE80211_VHT_RATESET_MAX_NRATES	10
 
 struct ieee80211_vht_rateset {
-	int idx; /* This rateset's index in ieee80211_std_rateset_11ac[]. */
+	int idx; /* This rateset's index in ieee80211_std_ratesets_11ac[]. */
 
 	uint32_t nrates;
 	uint32_t rates[IEEE80211_VHT_RATESET_MAX_NRATES]; /* 500 kbit/s units */
