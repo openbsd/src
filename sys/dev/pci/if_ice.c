@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.3 2024/11/14 09:35:41 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.4 2024/11/14 09:38:51 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -7938,6 +7938,10 @@ ice_update_laa_mac(struct ice_softc *sc)
 	struct ice_hw *hw = &sc->hw;
 	enum ice_status status;
 
+	/* Desired address already set in hardware? */
+	if (!memcmp(lladdr, hw->port_info->mac.lan_addr, ETHER_ADDR_LEN))
+		return;
+
 	status = ice_aq_manage_mac_write(hw, lladdr,
 	    ICE_AQC_MAN_MAC_UPDATE_LAA_WOL, NULL);
 	if (status) {
@@ -7945,7 +7949,11 @@ ice_update_laa_mac(struct ice_softc *sc)
 		    "err %s aq_err %s\n", sc->sc_dev.dv_xname,
 		    ether_sprintf(lladdr), ice_status_str(status),
 		    ice_aq_str(hw->adminq.sq_last_status));
+		return;
 	}
+
+	/* Cache current hardware address. */
+	memcpy(hw->port_info->mac.lan_addr, lladdr, ETHER_ADDR_LEN);
 }
 
 /**
@@ -9121,13 +9129,12 @@ free_mac_list:
 int
 ice_cfg_pf_default_mac_filters(struct ice_softc *sc)
 {
+	struct ice_hw *hw = &sc->hw;
 	struct ice_vsi *vsi = &sc->pf_vsi;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	uint8_t *lladdr = ((struct arpcom *)ifp)->ac_enaddr;
 	int err;
 
 	/* Add the LAN MAC address */
-	err = ice_add_vsi_mac_filter(vsi, lladdr);
+	err = ice_add_vsi_mac_filter(vsi, hw->port_info->mac.lan_addr);
 	if (err)
 		return err;
 
