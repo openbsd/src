@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.38 2024/11/14 10:25:17 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.39 2024/11/14 10:27:59 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -246,6 +246,7 @@ ecpk_print_explicit_parameters(BIO *bio, const EC_GROUP *group, int off)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
+
 	form = EC_GROUP_get_point_conversion_form(group);
 	if (EC_POINT_point2bn(group, generator, form, gen, ctx) == NULL) {
 		ECerror(ERR_R_EC_LIB);
@@ -281,6 +282,7 @@ ecpk_print_explicit_parameters(BIO *bio, const EC_GROUP *group, int off)
 		goto err;
 	if (!bn_printf(bio, cofactor, off, "Cofactor: "))
 		goto err;
+
 	if ((seed = EC_GROUP_get0_seed(group)) != NULL) {
 		size_t i;
 
