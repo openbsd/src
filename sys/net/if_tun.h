@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.15 2007/02/06 10:49:40 claudio Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.16 2024/11/14 01:51:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <Julian.Onions@nexor.co.uk>
@@ -30,6 +30,48 @@
 #define _NET_IF_TUN_H_
 
 #include <sys/ioccom.h>
+
+/*
+ * tun_hdr is a multiple of 4 bytes, but is built out of uint16_t
+ * fields. This allows it to sit on a 2 byte boundary in front of
+ * either IP (and MPLS) or Ethernet packets for tun(4) and tap(4)
+ * interfaces respectively while maintaining the alignment of their
+ * payloads.
+ *
+ * Userland can request the use of the tun_hdr using the TUNSCAP
+ * ioctl. This ioctl also allows userland to specify which "offload"
+ * capabilities it is able to accept in packets it will read from the
+ * kernel. It is acceptable to enable tun_hdr without enabling any
+ * interface offload capabilities.
+ *
+ * Once the tap_hdr is enabled, userland can write packets into the
+ * kernel with any of the supported features. tun(4)/tap(4) reads
+ * will unconditionally handle any features specified on the packet,
+ * regardless of what capabilities were specified by the TUNSCAP
+ * ioctl.
+ *
+ * The tun_hdr can be read from one interface and written directly
+ * to another without interpretation or modification.
+ *
+ * Use of tun_hdr and the associated capabilities are reset when a
+ * tun(4)/tap(4) device is closed.
+ */
+
+struct tun_hdr {
+	uint16_t	th_flags;
+#define TUN_H_VTAG		(1 << 0)  /* th_vtag is set */
+#define TUN_H_TCP_MSS		(1 << 1)  /* Cut TCP frame up by th_mss */
+
+#define TUN_H_IPV4_CSUM		(1 << 8)
+#define TUN_H_TCP_CSUM		(1 << 9)
+#define TUN_H_UDP_CSUM		(1 << 10)
+#define TUN_H_ICMP_CSUM		(1 << 11)
+
+	uint16_t	th_pad;
+
+	uint16_t	th_vtag;
+	uint16_t	th_mss;
+};
 
 #define	TUN_OPEN	0x0001
 #define	TUN_INITED	0x0002
@@ -67,5 +109,13 @@ struct tuninfo {
 /* ioctl's for get/set debug */
 #define	TUNSDEBUG	_IOW('t', 94, int)
 #define	TUNGDEBUG	_IOR('t', 95, int)
+
+struct tun_capabilities {
+	uint32_t	tun_if_capabilities; /* IFCAP_* from net/if.h */
+};
+
+#define	TUNSCAP		_IOW('t', 96, struct tun_capabilities)
+#define	TUNGCAP		_IOR('t', 96, struct tun_capabilities)
+#define	TUNDCAP		_IO('t', 96)
 
 #endif /* _NET_IF_TUN_H_ */
