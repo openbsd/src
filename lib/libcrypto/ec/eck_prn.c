@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.32 2024/11/14 10:11:43 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.33 2024/11/14 10:16:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -84,8 +84,10 @@ EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 		goto err;
 
 	ret = EVP_PKEY_print_private(bp, pk, off, NULL);
+
  err:
 	EVP_PKEY_free(pk);
+
 	return ret;
 }
 LCRYPTO_ALIAS(EC_KEY_print);
@@ -98,12 +100,16 @@ EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
 		ECerror(ERR_R_BIO_LIB);
-		return (0);
+		return 0;
 	}
+
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
+
 	ret = EC_KEY_print(b, x, off);
+
 	BIO_free(b);
-	return (ret);
+
+	return ret;
 }
 LCRYPTO_ALIAS(EC_KEY_print_fp);
 
@@ -120,8 +126,10 @@ ECParameters_print(BIO *bp, const EC_KEY *x)
 		goto err;
 
 	ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
+
  err:
 	EVP_PKEY_free(pk);
+
 	return ret;
 }
 LCRYPTO_ALIAS(ECParameters_print);
@@ -134,12 +142,16 @@ ECParameters_print_fp(FILE *fp, const EC_KEY *x)
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
 		ECerror(ERR_R_BIO_LIB);
-		return (0);
+		return 0;
 	}
+
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
+
 	ret = ECParameters_print(b, x);
+
 	BIO_free(b);
-	return (ret);
+
+	return ret;
 }
 LCRYPTO_ALIAS(ECParameters_print_fp);
 
@@ -329,11 +341,15 @@ ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 
 	if ((b = BIO_new(BIO_s_file())) == NULL) {
 		ECerror(ERR_R_BUF_LIB);
-		return (0);
+		return 0;
 	}
+
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
+
 	ret = ECPKParameters_print(b, x, off);
+
 	BIO_free(b);
-	return (ret);
+
+	return ret;
 }
 LCRYPTO_ALIAS(ECPKParameters_print_fp);
