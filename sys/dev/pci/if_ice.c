@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.2 2024/11/13 16:32:18 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.3 2024/11/14 09:35:41 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -14873,7 +14873,7 @@ ice_print_nvm_version(struct ice_softc *sc)
 
 	printf("%s: %s, address %s\n", sc->sc_dev.dv_xname,
 	    ice_nvm_version_str(hw, buf, sizeof(buf)),
-	    ether_sprintf(hw->port_info->mac.lan_addr));
+	    ether_sprintf(hw->port_info->mac.perm_addr));
 }
 
 /**
@@ -23883,7 +23883,7 @@ ice_attach_hook(struct device *self)
 	ice_print_nvm_version(sc);
 
 	/* Setup the MAC address */
-	err = if_setlladdr(ifp,  hw->port_info->mac.lan_addr);
+	err = if_setlladdr(ifp, hw->port_info->mac.perm_addr);
 	if (err)
 		printf("%s: could not set MAC address (error %d)\n",
 		    sc->sc_dev.dv_xname, err);
