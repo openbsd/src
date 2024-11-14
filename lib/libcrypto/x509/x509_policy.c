@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.27 2024/03/02 11:20:36 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.28 2024/11/14 18:47:31 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -31,8 +31,8 @@
 #define X509_R_INVALID_POLICY_EXTENSION 201
 
 /*
- * This file computes the X.509 policy tree, as described in RFC 5280, section
- * 6.1. It differs in that:
+ * This file computes the X.509 policy tree, as described in RFC 5280,
+ * section 6.1 and RFC 9618. It differs in that:
  *
  *  (1) It does not track "qualifier_set". This is not needed as it is not
  *      output by this implementation.
