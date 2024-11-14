@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.47 2015/11/01 20:09:59 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.48 2024/11/14 20:32:13 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -29,7 +29,7 @@
 /*
  * Machine dependent constants for HP PA
  */
-#define	USRSTACK	0x78000000UL	/* start (bottom) of user stack */
+#define	USRSTACK	0xB8000000UL	/* start (bottom) of user stack */
 #define	SYSCALLGATE	0xC0000000	/* syscall gateway page */
 
 /*
