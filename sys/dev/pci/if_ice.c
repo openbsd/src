@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.4 2024/11/14 09:38:51 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.5 2024/11/14 09:39:52 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13346,15 +13346,6 @@ ice_down(struct ice_softc *sc)
 }
 
 int
-ice_iff(struct ice_softc *sc)
-{
-	/* Configure promiscuous mode */
-	ice_if_promisc_set(sc);
-
-	return 0;
-}
-
-int
 ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ice_softc *sc = ifp->if_softc;
@@ -13389,7 +13380,12 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	if (error == ENETRESET) {
-		error = ice_iff(sc);
+		error = 0;
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+		    (IFF_UP | IFF_RUNNING)) {
+			ice_down(sc);
+			error = ice_up(sc);
+		}
 	}
 
 	splx(s);
