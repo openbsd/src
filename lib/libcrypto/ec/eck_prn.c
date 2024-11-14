@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.34 2024/11/14 10:18:00 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.35 2024/11/14 10:20:17 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -72,7 +72,7 @@
 #include "ec_local.h"
 
 int
-EC_KEY_print(BIO *bio, const EC_KEY *x, int off)
+EC_KEY_print(BIO *bio, const EC_KEY *ec_key, int off)
 {
 	EVP_PKEY *pk;
 	int ret = 0;
@@ -80,7 +80,7 @@ EC_KEY_print(BIO *bio, const EC_KEY *x, int off)
 	if ((pk = EVP_PKEY_new()) == NULL)
 		goto err;
 
-	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
+	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)ec_key))
 		goto err;
 
 	ret = EVP_PKEY_print_private(bio, pk, off, NULL);
@@ -93,7 +93,7 @@ EC_KEY_print(BIO *bio, const EC_KEY *x, int off)
 LCRYPTO_ALIAS(EC_KEY_print);
 
 int
-EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
+EC_KEY_print_fp(FILE *fp, const EC_KEY *ec_key, int off)
 {
 	BIO *bio;
 	int ret;
@@ -105,7 +105,7 @@ EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 
 	BIO_set_fp(bio, fp, BIO_NOCLOSE);
 
-	ret = EC_KEY_print(bio, x, off);
+	ret = EC_KEY_print(bio, ec_key, off);
 
 	BIO_free(bio);
 
@@ -114,7 +114,7 @@ EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 LCRYPTO_ALIAS(EC_KEY_print_fp);
 
 int
-ECParameters_print(BIO *bio, const EC_KEY *x)
+ECParameters_print(BIO *bio, const EC_KEY *ec_key)
 {
 	EVP_PKEY *pk;
 	int ret = 0;
@@ -122,7 +122,7 @@ ECParameters_print(BIO *bio, const EC_KEY *x)
 	if ((pk = EVP_PKEY_new()) == NULL)
 		goto err;
 
-	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
+	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)ec_key))
 		goto err;
 
 	ret = EVP_PKEY_print_params(bio, pk, 4, NULL);
@@ -135,7 +135,7 @@ ECParameters_print(BIO *bio, const EC_KEY *x)
 LCRYPTO_ALIAS(ECParameters_print);
 
 int
-ECParameters_print_fp(FILE *fp, const EC_KEY *x)
+ECParameters_print_fp(FILE *fp, const EC_KEY *ec_key)
 {
 	BIO *bio;
 	int ret;
@@ -147,7 +147,7 @@ ECParameters_print_fp(FILE *fp, const EC_KEY *x)
 
 	BIO_set_fp(bio, fp, BIO_NOCLOSE);
 
-	ret = ECParameters_print(bio, x);
+	ret = ECParameters_print(bio, ec_key);
 
 	BIO_free(bio);
 
