@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.35 2024/11/14 10:20:17 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.36 2024/11/14 10:21:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -334,7 +334,7 @@ ECPKParameters_print(BIO *bio, const EC_GROUP *group, int off)
 LCRYPTO_ALIAS(ECPKParameters_print);
 
 int
-ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
+ECPKParameters_print_fp(FILE *fp, const EC_GROUP *group, int off)
 {
 	BIO *bio;
 	int ret;
@@ -346,7 +346,7 @@ ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 
 	BIO_set_fp(bio, fp, BIO_NOCLOSE);
 
-	ret = ECPKParameters_print(bio, x, off);
+	ret = ECPKParameters_print(bio, group, off);
 
 	BIO_free(bio);
 
