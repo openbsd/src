@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.37 2024/11/14 10:22:45 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.38 2024/11/14 10:25:17 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -62,13 +62,15 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
 
+#include "bn_local.h"
 #include "ec_local.h"
 
 int
