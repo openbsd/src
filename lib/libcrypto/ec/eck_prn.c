@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.31 2024/10/22 12:06:08 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.32 2024/11/14 10:11:43 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -72,57 +72,6 @@
 #include "ec_local.h"
 
 int
-ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
-{
-	BIO *b;
-	int ret;
-
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		ECerror(ERR_R_BUF_LIB);
-		return (0);
-	}
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
-	ret = ECPKParameters_print(b, x, off);
-	BIO_free(b);
-	return (ret);
-}
-LCRYPTO_ALIAS(ECPKParameters_print_fp);
-
-int
-EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
-{
-	BIO *b;
-	int ret;
-
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		ECerror(ERR_R_BIO_LIB);
-		return (0);
-	}
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
-	ret = EC_KEY_print(b, x, off);
-	BIO_free(b);
-	return (ret);
-}
-LCRYPTO_ALIAS(EC_KEY_print_fp);
-
-int
-ECParameters_print_fp(FILE *fp, const EC_KEY *x)
-{
-	BIO *b;
-	int ret;
-
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
-		ECerror(ERR_R_BIO_LIB);
-		return (0);
-	}
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
-	ret = ECParameters_print(b, x);
-	BIO_free(b);
-	return (ret);
-}
-LCRYPTO_ALIAS(ECParameters_print_fp);
-
-int
 EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 {
 	EVP_PKEY *pk;
@@ -142,6 +91,23 @@ EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 LCRYPTO_ALIAS(EC_KEY_print);
 
 int
+EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
+{
+	BIO *b;
+	int ret;
+
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ECerror(ERR_R_BIO_LIB);
+		return (0);
+	}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = EC_KEY_print(b, x, off);
+	BIO_free(b);
+	return (ret);
+}
+LCRYPTO_ALIAS(EC_KEY_print_fp);
+
+int
 ECParameters_print(BIO *bp, const EC_KEY *x)
 {
 	EVP_PKEY *pk;
@@ -159,6 +125,23 @@ ECParameters_print(BIO *bp, const EC_KEY *x)
 	return ret;
 }
 LCRYPTO_ALIAS(ECParameters_print);
+
+int
+ECParameters_print_fp(FILE *fp, const EC_KEY *x)
+{
+	BIO *b;
+	int ret;
+
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ECerror(ERR_R_BIO_LIB);
+		return (0);
+	}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECParameters_print(b, x);
+	BIO_free(b);
+	return (ret);
+}
+LCRYPTO_ALIAS(ECParameters_print_fp);
 
 static int
 ecpk_print_asn1_parameters(BIO *bp, const EC_GROUP *group, int off)
@@ -337,3 +320,20 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *group, int off)
 	return ecpk_print_explicit_parameters(bp, group, off);
 }
 LCRYPTO_ALIAS(ECPKParameters_print);
+
+int
+ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
+{
+	BIO *b;
+	int ret;
+
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ECerror(ERR_R_BUF_LIB);
+		return (0);
+	}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECPKParameters_print(b, x, off);
+	BIO_free(b);
+	return (ret);
+}
+LCRYPTO_ALIAS(ECPKParameters_print_fp);
