@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.33 2024/11/14 10:16:02 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.34 2024/11/14 10:18:00 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -72,7 +72,7 @@
 #include "ec_local.h"
 
 int
-EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
+EC_KEY_print(BIO *bio, const EC_KEY *x, int off)
 {
 	EVP_PKEY *pk;
 	int ret = 0;
@@ -83,7 +83,7 @@ EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
 		goto err;
 
-	ret = EVP_PKEY_print_private(bp, pk, off, NULL);
+	ret = EVP_PKEY_print_private(bio, pk, off, NULL);
 
  err:
 	EVP_PKEY_free(pk);
@@ -95,26 +95,26 @@ LCRYPTO_ALIAS(EC_KEY_print);
 int
 EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 {
-	BIO *b;
+	BIO *bio;
 	int ret;
 
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
+	if ((bio = BIO_new(BIO_s_file())) == NULL) {
 		ECerror(ERR_R_BIO_LIB);
 		return 0;
 	}
 
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	BIO_set_fp(bio, fp, BIO_NOCLOSE);
 
-	ret = EC_KEY_print(b, x, off);
+	ret = EC_KEY_print(bio, x, off);
 
-	BIO_free(b);
+	BIO_free(bio);
 
 	return ret;
 }
 LCRYPTO_ALIAS(EC_KEY_print_fp);
 
 int
-ECParameters_print(BIO *bp, const EC_KEY *x)
+ECParameters_print(BIO *bio, const EC_KEY *x)
 {
 	EVP_PKEY *pk;
 	int ret = 0;
@@ -125,7 +125,7 @@ ECParameters_print(BIO *bp, const EC_KEY *x)
 	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
 		goto err;
 
-	ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
+	ret = EVP_PKEY_print_params(bio, pk, 4, NULL);
 
  err:
 	EVP_PKEY_free(pk);
@@ -137,32 +137,32 @@ LCRYPTO_ALIAS(ECParameters_print);
 int
 ECParameters_print_fp(FILE *fp, const EC_KEY *x)
 {
-	BIO *b;
+	BIO *bio;
 	int ret;
 
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
+	if ((bio = BIO_new(BIO_s_file())) == NULL) {
 		ECerror(ERR_R_BIO_LIB);
 		return 0;
 	}
 
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	BIO_set_fp(bio, fp, BIO_NOCLOSE);
 
-	ret = ECParameters_print(b, x);
+	ret = ECParameters_print(bio, x);
 
-	BIO_free(b);
+	BIO_free(bio);
 
 	return ret;
 }
 LCRYPTO_ALIAS(ECParameters_print_fp);
 
 static int
-ecpk_print_asn1_parameters(BIO *bp, const EC_GROUP *group, int off)
+ecpk_print_asn1_parameters(BIO *bio, const EC_GROUP *group, int off)
 {
 	const char *nist_name;
 	int nid;
 	int ret = 0;
 
-	if (!BIO_indent(bp, off, 128)) {
+	if (!BIO_indent(bio, off, 128)) {
 		ECerror(ERR_R_BIO_LIB);
 		goto err;
 	}
@@ -172,17 +172,17 @@ ecpk_print_asn1_parameters(BIO *bp, const EC_GROUP *group, int off)
 		goto err;
 	}
 
-	if (BIO_printf(bp, "ASN1 OID: %s\n", OBJ_nid2sn(nid)) <= 0) {
+	if (BIO_printf(bio, "ASN1 OID: %s\n", OBJ_nid2sn(nid)) <= 0) {
 		ECerror(ERR_R_BIO_LIB);
 		goto err;
 	}
 
 	if ((nist_name = EC_curve_nid2nist(nid)) != NULL) {
-		if (!BIO_indent(bp, off, 128)) {
+		if (!BIO_indent(bio, off, 128)) {
 			ECerror(ERR_R_BIO_LIB);
 			goto err;
 		}
-		if (BIO_printf(bp, "NIST CURVE: %s\n", nist_name) <= 0) {
+		if (BIO_printf(bio, "NIST CURVE: %s\n", nist_name) <= 0) {
 			ECerror(ERR_R_BIO_LIB);
 			goto err;
 		}
@@ -195,7 +195,7 @@ ecpk_print_asn1_parameters(BIO *bp, const EC_GROUP *group, int off)
 }
 
 static int
-ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
+ecpk_print_explicit_parameters(BIO *bio, const EC_GROUP *group, int off)
 {
 	BN_CTX *ctx = NULL;
 	const BIGNUM *order;
@@ -250,18 +250,18 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		goto err;
 	}
 
-	if (!BIO_indent(bp, off, 128))
+	if (!BIO_indent(bio, off, 128))
 		goto err;
 
 	nid = ec_group_get_field_type(group);
-	if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
+	if (BIO_printf(bio, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
 		goto err;
 
-	if (!bn_printf(bp, p, off, "Prime:"))
+	if (!bn_printf(bio, p, off, "Prime:"))
 		goto err;
-	if (!bn_printf(bp, a, off, "A:   "))
+	if (!bn_printf(bio, a, off, "A:   "))
 		goto err;
-	if (!bn_printf(bp, b, off, "B:   "))
+	if (!bn_printf(bio, b, off, "B:   "))
 		goto err;
 
 	if (form == POINT_CONVERSION_COMPRESSED)
@@ -272,12 +272,12 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		conversion_form = "hybrid";
 	else
 		conversion_form = "unknown";
-	if (!bn_printf(bp, gen, off, "Generator (%s):", conversion_form))
+	if (!bn_printf(bio, gen, off, "Generator (%s):", conversion_form))
 		goto err;
 
-	if (!bn_printf(bp, order, off, "Order: "))
+	if (!bn_printf(bio, order, off, "Order: "))
 		goto err;
-	if (!bn_printf(bp, cofactor, off, "Cofactor: "))
+	if (!bn_printf(bio, cofactor, off, "Cofactor: "))
 		goto err;
 	if ((seed = EC_GROUP_get0_seed(group)) != NULL) {
 		size_t i;
@@ -285,28 +285,28 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		seed_len = EC_GROUP_get_seed_len(group);
 
 		/* XXX - ecx_buf_print() has a CBS version of this - dedup. */
-		if (!BIO_indent(bp, off, 128))
+		if (!BIO_indent(bio, off, 128))
 			goto err;
-		if (BIO_printf(bp, "Seed:") <= 0)
+		if (BIO_printf(bio, "Seed:") <= 0)
 			goto err;
 
 		for (i = 0; i < seed_len; i++) {
 			const char *sep = ":";
 
 			if (i % 15 == 0) {
-				if (BIO_printf(bp, "\n") <= 0)
+				if (BIO_printf(bio, "\n") <= 0)
 					goto err;
-				if (!BIO_indent(bp, off + 4, 128))
+				if (!BIO_indent(bio, off + 4, 128))
 					goto err;
 			}
 
 			if (i + 1 == seed_len)
 				sep = "";
-			if (BIO_printf(bp, "%02x%s", seed[i], sep) <= 0)
+			if (BIO_printf(bio, "%02x%s", seed[i], sep) <= 0)
 				goto err;
 		}
 
-		if (BIO_printf(bp, "\n") <= 0)
+		if (BIO_printf(bio, "\n") <= 0)
 			goto err;
 	}
 
@@ -319,7 +319,7 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 }
 
 int
-ECPKParameters_print(BIO *bp, const EC_GROUP *group, int off)
+ECPKParameters_print(BIO *bio, const EC_GROUP *group, int off)
 {
 	if (group == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
@@ -327,28 +327,28 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *group, int off)
 	}
 
 	if (EC_GROUP_get_asn1_flag(group))
-		return ecpk_print_asn1_parameters(bp, group, off);
+		return ecpk_print_asn1_parameters(bio, group, off);
 
-	return ecpk_print_explicit_parameters(bp, group, off);
+	return ecpk_print_explicit_parameters(bio, group, off);
 }
 LCRYPTO_ALIAS(ECPKParameters_print);
 
 int
 ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 {
-	BIO *b;
+	BIO *bio;
 	int ret;
 
-	if ((b = BIO_new(BIO_s_file())) == NULL) {
+	if ((bio = BIO_new(BIO_s_file())) == NULL) {
 		ECerror(ERR_R_BUF_LIB);
 		return 0;
 	}
 
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	BIO_set_fp(bio, fp, BIO_NOCLOSE);
 
-	ret = ECPKParameters_print(b, x, off);
+	ret = ECPKParameters_print(bio, x, off);
 
-	BIO_free(b);
+	BIO_free(bio);
 
 	return ret;
 }
