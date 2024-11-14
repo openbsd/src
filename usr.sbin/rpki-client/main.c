@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.270 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.271 2024/11/14 10:28:59 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -500,7 +500,7 @@ queue_add_from_cert(const struct cert *cert)
 
 	if (strncmp(cert->repo, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
 		errx(1, "unexpected protocol");
-	host = cert->repo + 8;
+	host = cert->repo + RSYNC_PROTO_LEN;
 
 	LIST_FOREACH(le, &skiplist, entry) {
 		if (strncasecmp(host, le->fqdn, strcspn(host, "/")) == 0) {

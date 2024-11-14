@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.87 2024/09/08 07:23:36 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.88 2024/11/14 10:28:59 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -415,7 +415,7 @@ proxy_parse_uri(char *uri)
 	if (strncasecmp(uri, HTTP_PROTO, HTTP_PROTO_LEN) != 0)
 		errx(1, "%s: http_proxy not using http schema", http_info(uri));
 
-	host = uri + 7;
+	host = uri + HTTP_PROTO_LEN;
 	if ((fullhost = strndup(host, strcspn(host, "/"))) == NULL)
 		err(1, NULL);
 
@@ -483,7 +483,7 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 		warnx("%s: not using https schema", http_info(uri));
 		return -1;
 	}
-	host = uri + 8;
+	host = uri + HTTPS_PROTO_LEN;
 	if ((path = strchr(host, '/')) == NULL) {
 		warnx("%s: missing https path", http_info(uri));
 		return -1;

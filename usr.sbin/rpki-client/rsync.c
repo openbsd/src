@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.51 2024/08/20 13:31:49 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.52 2024/11/14 10:28:59 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,7 +71,7 @@ rsync_base_uri(const char *uri)
 	}
 
 	/* Parse the non-zero-length hostname. */
-	host = uri + 8;
+	host = uri + RSYNC_PROTO_LEN;
 
 	if ((module = strchr(host, '/')) == NULL) {
 		warnx("%s: missing rsync module", uri);
