@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1240 2024/11/12 09:32:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1241 2024/11/15 09:01:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1271,6 +1271,9 @@ TAILQ_HEAD(winlink_stack, winlink);
 /* Pane scrollbars width and padding. */
 #define PANE_SCROLLBARS_WIDTH 1
 #define PANE_SCROLLBARS_PADDING 0
+
+/* True if screen in alternate screen. */
+#define SCREEN_IS_ALTERNATE(s) ((s)->saved_grid != NULL)
 
 /* Layout direction. */
 enum layout_type {
@@ -3173,6 +3176,7 @@ void		 window_pane_update_used_data(struct window_pane *,
 void		 window_set_fill_character(struct window *);
 void		 window_pane_default_cursor(struct window_pane *);
 int		 window_pane_mode(struct window_pane *);
+int		 window_pane_show_scrollbar(struct window_pane *, int);
 
 /* layout.c */
 u_int		 layout_count_cells(struct layout_cell *);

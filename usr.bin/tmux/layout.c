@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.49 2024/11/05 09:41:17 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.50 2024/11/15 09:01:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -292,7 +292,7 @@ layout_fix_panes(struct window *w, struct window_pane *skip)
 	struct window_pane	*wp;
 	struct layout_cell	*lc;
 	int			 status, scrollbars, sb_pos;
-	u_int			 sx, sy, mode;
+	u_int			 sx, sy;
 
 	status = options_get_number(w->options, "pane-border-status");
 	scrollbars = options_get_number(w->options, "pane-scrollbars");
@@ -313,10 +313,7 @@ layout_fix_panes(struct window *w, struct window_pane *skip)
 			sy--;
 		}
 
-		mode = window_pane_mode(wp);
-		if (scrollbars == PANE_SCROLLBARS_ALWAYS ||
-		    (scrollbars == PANE_SCROLLBARS_MODAL &&
-		    mode != WINDOW_PANE_NO_MODE)) {
+		if (window_pane_show_scrollbar(wp, scrollbars)) {
 			if (sb_pos == PANE_SCROLLBARS_LEFT) {
 				sx = sx - PANE_SCROLLBARS_WIDTH;
 				wp->xoff = wp->xoff + PANE_SCROLLBARS_WIDTH;

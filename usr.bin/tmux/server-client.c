@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.416 2024/11/12 09:32:56 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.417 2024/11/15 09:01:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -783,11 +783,7 @@ have_event:
 
 			/* Try the scrollbar next to a pane. */
 			sb = options_get_number(wo, "pane-scrollbars");
-			sb_pos = options_get_number(wo,
-			    "pane-scrollbars-position");
-			if (sb == PANE_SCROLLBARS_ALWAYS ||
-			    (sb == PANE_SCROLLBARS_MODAL &&
-			    window_pane_mode(wp) != WINDOW_PANE_NO_MODE))
+			if (window_pane_show_scrollbar(wp, sb))
 				sb_w = PANE_SCROLLBARS_WIDTH;
 			else
 				sb_w = 0;
@@ -806,6 +802,8 @@ have_event:
 			if ((pane_status != PANE_STATUS_OFF && py != line) ||
 			    (wp->yoff == 0 && py < wp->sy) ||
 			    (py >= wp->yoff && py < wp->yoff + wp->sy)) {
+				sb_pos = options_get_number(wo,
+				    "pane-scrollbars-position");
 				if ((sb_pos == PANE_SCROLLBARS_RIGHT &&
 				    (px >= wp->xoff + wp->sx &&
 				    px < wp->xoff + wp->sx + sb_w)) ||

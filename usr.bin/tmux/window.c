@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.296 2024/11/05 09:41:17 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.297 2024/11/15 09:01:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1725,4 +1725,17 @@ window_pane_mode(struct window_pane *wp)
 			return (WINDOW_PANE_VIEW_MODE);
 	}
 	return (WINDOW_PANE_NO_MODE);
+}
+
+/* Return 1 if scrollbar is or should be displayed. */
+int
+window_pane_show_scrollbar(struct window_pane *wp, int sb_option)
+{
+	if (SCREEN_IS_ALTERNATE(wp->screen))
+		return (0);
+	if (sb_option == PANE_SCROLLBARS_ALWAYS ||
+	    (sb_option == PANE_SCROLLBARS_MODAL &&
+	    window_pane_mode(wp) != WINDOW_PANE_NO_MODE))
+		return (1);
+	return (0);
 }
