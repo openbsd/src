@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.46 2024/11/08 22:10:18 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.47 2024/11/15 08:49:07 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -150,12 +150,9 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 		}
 	}
 
-	/*
-	 * XXX - if there's no priv_key on src, dest retains its probably
-	 * invalid priv_key. This makes no sense. Can we change this?
-	 */
+	BN_free(dest->priv_key);
+	dest->priv_key = NULL;
 	if (src->priv_key != NULL) {
-		BN_free(dest->priv_key);
 		if ((dest->priv_key = BN_dup(src->priv_key)) == NULL)
 			return NULL;
 	}
