@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.33 2024/11/10 05:59:35 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.34 2024/11/15 12:09:36 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -61,10 +61,13 @@
  * and contributed to the OpenSSL project.
  */
 
-#include <string.h>
+#include <stdlib.h>
 
+#include <openssl/bn.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
 
+#include "bn_local.h"
 #include "ec_local.h"
 
 /*
