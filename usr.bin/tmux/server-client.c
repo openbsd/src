@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.418 2024/11/15 13:12:20 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.419 2024/11/15 14:09:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3683,6 +3683,8 @@ server_client_set_flags(struct client *c, const char *flags)
 			flag = CLIENT_IGNORESIZE;
 		else if (strcmp(next, "active-pane") == 0)
 			flag = CLIENT_ACTIVEPANE;
+		else if (strcmp(next, "no-detach-on-destroy") == 0)
+			flag = CLIENT_NO_DETACH_ON_DESTROY;
 		if (flag == 0)
 			continue;
 
@@ -3716,6 +3718,8 @@ server_client_get_flags(struct client *c)
 		strlcat(s, "control-mode,", sizeof s);
 	if (c->flags & CLIENT_IGNORESIZE)
 		strlcat(s, "ignore-size,", sizeof s);
+	if (c->flags & CLIENT_NO_DETACH_ON_DESTROY)
+		strlcat(s, "no-detach-on-destroy,", sizeof s);
 	if (c->flags & CLIENT_CONTROL_NOOUTPUT)
 		strlcat(s, "no-output,", sizeof s);
 	if (c->flags & CLIENT_CONTROL_WAITEXIT)
