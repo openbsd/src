@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.5 2024/11/14 09:39:52 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.6 2024/11/15 15:34:56 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -15193,6 +15193,8 @@ void
 ice_setup_vsi_common(struct ice_softc *sc, struct ice_vsi *vsi,
 		     enum ice_vsi_type type, int idx, bool dynamic)
 {
+	struct ice_hw *hw = &sc->hw;
+
 	/* Store important values in VSI struct */
 	vsi->type = type;
 	vsi->sc = sc;
@@ -15208,6 +15210,7 @@ ice_setup_vsi_common(struct ice_softc *sc, struct ice_vsi *vsi,
 	ice_add_vsi_tunables(vsi, sc->vsi_sysctls);
 #endif
 	vsi->mbuf_sz = MCLBYTES + ETHER_ALIGN;
+	vsi->max_frame_size = hw->port_info->phy.link_info.max_frame_size;
 }
 
 /**
