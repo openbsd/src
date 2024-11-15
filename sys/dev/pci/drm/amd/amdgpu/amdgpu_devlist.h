@@ -249,6 +249,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x150e },	/* Radeon 880M / 890M */
 
 	/* GC 11.5.1, DCN 3.5.1, APU, linux 6.9 */
+	/* GC 11.5.2, DCN 3.5.1, APU, linux 6.11 */
 
 	/* GC 12.0.0, DCN 4.0.1, dGPU, linux 6.11 */
 	/* GC 12.0.1, DCN 4.0.1, dGPU, linux 6.11 */
