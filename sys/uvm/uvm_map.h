@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.93 2024/10/31 05:00:00 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.94 2024/11/15 02:59:23 jsg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ struct vm_map {
 
 	/*
 	 * XXX struct mutex changes size because of compile options, so
-	 * place after fields which are inspected by libkvm / procmap(8)
+	 * place after fields which are inspected by libkvm / procmap(1)
 	 */
 	struct rwlock		lock;		/* Non-intrsafe lock */
 	struct mutex		mtx;		/* Intrsafe lock */
