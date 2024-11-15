@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.7 2024/11/15 15:41:10 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.8 2024/11/15 15:42:00 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -1817,6 +1817,7 @@ void
 ice_debug_cq(struct ice_hw *hw, struct ice_ctl_q_info *cq,
 	     void *desc, void *buf, uint16_t buf_len, bool response)
 {
+#ifdef ICE_DEBUG
 	struct ice_aq_desc *cq_desc = (struct ice_aq_desc *)desc;
 	uint16_t datalen, flags;
 
@@ -1852,6 +1853,7 @@ ice_debug_cq(struct ice_hw *hw, struct ice_ctl_q_info *cq,
 		ice_debug_array(hw, ICE_DBG_AQ_DESC_BUF, 16, 1, (uint8_t *)buf,
 		    MIN(buf_len, datalen));
 	}
+#endif
 }
 
 /*
@@ -6466,6 +6468,7 @@ ice_fw_supports_link_override(struct ice_hw *hw)
 
 #define ice_arr_elem_idx(idx, val)	[(idx)] = (val)
 
+#ifdef ICE_DEBUG
 static const char * const ice_link_mode_str_low[] = {
 	ice_arr_elem_idx(0, "100BASE_TX"),
 	ice_arr_elem_idx(1, "100M_SGMII"),
@@ -6540,6 +6543,7 @@ static const char * const ice_link_mode_str_high[] = {
 	ice_arr_elem_idx(3, "100G_AUI2_AOC_ACC"),
 	ice_arr_elem_idx(4, "100G_AUI2"),
 };
+#endif
 
 /**
  * ice_dump_phy_type - helper function to dump phy_type
@@ -6552,6 +6556,7 @@ void
 ice_dump_phy_type(struct ice_hw *hw, uint64_t low, uint64_t high,
     const char *prefix)
 {
+#ifdef ICE_DEBUG
 	uint32_t i;
 
 	DNPRINTF(ICE_DBG_PHY, "%s: phy_type_low: 0x%016llx\n", prefix,
@@ -6571,6 +6576,7 @@ ice_dump_phy_type(struct ice_hw *hw, uint64_t low, uint64_t high,
 			DNPRINTF(ICE_DBG_PHY, "%s:   bit(%d): %s\n",
 				  prefix, i, ice_link_mode_str_high[i]);
 	}
+#endif
 }
 
 /**
@@ -21073,6 +21079,7 @@ void
 ice_debug_print_mib_change_event(struct ice_softc *sc,
     struct ice_rq_event_info *event)
 {
+#ifdef ICE_DEBUG
 	struct ice_aqc_lldp_get_mib *params =
 	    (struct ice_aqc_lldp_get_mib *)&event->desc.params.lldp_get_mib;
 	uint8_t mib_type, bridge_type, tx_status;
@@ -21115,6 +21122,7 @@ ice_debug_print_mib_change_event(struct ice_softc *sc,
 	DNPRINTF(ICE_DBG_DCB, "- %s contents:\n", mib_type_strings[mib_type]);
 	ice_debug_array(&sc->hw, ICE_DBG_DCB, 16, 1, event->msg_buf,
 			event->msg_len);
+#endif
 }
 
 /**
@@ -22179,6 +22187,7 @@ void
 ice_handle_lan_overflow_event(struct ice_softc *sc,
     struct ice_rq_event_info *event)
 {
+#ifdef ICE_DEBUG
 	struct ice_aqc_event_lan_overflow *params =
 	    (struct ice_aqc_event_lan_overflow *)&event->desc.params.lan_overflow;
 
@@ -22186,6 +22195,7 @@ ice_handle_lan_overflow_event(struct ice_softc *sc,
 	    "prtdcb_ruptq=0x%08x, qtx_ctl=0x%08x\n",
 	    sc->sc_dev.dv_xname, le32toh(params->prtdcb_ruptq),
 	    le32toh(params->qtx_ctl));
+#endif
 }
 
 /**
@@ -23830,7 +23840,6 @@ ice_init_saved_phy_cfg(struct ice_softc *sc)
 {
 	struct ice_port_info *pi = sc->hw.port_info;
 	struct ice_aqc_get_phy_caps_data pcaps = { 0 };
-	struct ice_hw *hw = &sc->hw;
 	enum ice_status status;
 	uint64_t phy_low, phy_high;
 	uint8_t report_mode = ICE_AQC_REPORT_TOPO_CAP_MEDIA;
@@ -23843,7 +23852,7 @@ ice_init_saved_phy_cfg(struct ice_softc *sc)
 		    "aq_err %s\n", __func__,
 		    report_mode == ICE_AQC_REPORT_DFLT_CFG ? "DFLT" : "w/MEDIA",
 		    ice_status_str(status),
-		    ice_aq_str(hw->adminq.sq_last_status));
+		    ice_aq_str(sc->hw.adminq.sq_last_status));
 		return;
 	}
 
