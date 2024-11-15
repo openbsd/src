@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.20 2023/08/29 10:07:42 tb Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.21 2024/11/15 20:14:58 tb Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\" selective merge up to: OpenSSL da4ea0cf Aug 5 16:13:24 2019 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 29 2023 $
+.Dd $Mdocdate: November 15 2024 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -342,8 +342,8 @@ error.
 The error codes can be obtained by
 .Xr ERR_get_error 3 .
 .Sh EXAMPLES
-Creating an ECDSA signature of given SHA-1 hash value using the named
-curve secp192k1.
+Creating an ECDSA signature of given SHA-384 hash value using the named
+curve secp384r1.
 .Pp
 First step: create an
 .Vt EC_KEY
@@ -356,7 +356,7 @@ int ret;
 ECDSA_SIG *sig;
 EC_KEY *eckey;
 
-eckey = EC_KEY_new_by_curve_name(NID_secp192k1);
+eckey = EC_KEY_new_by_curve_name(NID_secp384r1);
 if (eckey == NULL) {
 	/* error */
 }
@@ -365,10 +365,10 @@ if (!EC_KEY_generate_key(eckey)) {
 }
 .Ed
 .Pp
-Second step: compute the ECDSA signature of a SHA-1 hash value using
+Second step: compute the ECDSA signature of a SHA-384 hash value using
 .Fn ECDSA_do_sign
 .Bd -literal -offset indent
-sig = ECDSA_do_sign(digest, 20, eckey);
+sig = ECDSA_do_sign(digest, SHA384_DIGEST_LENGTH, eckey);
 if (sig == NULL) {
 	/* error */
 }
@@ -391,12 +391,12 @@ if (!ECDSA_sign(0, dgst, dgstlen, pp, &buf_len, eckey) {
 Third step: verify the created ECDSA signature using
 .Fn ECDSA_do_verify
 .Pp
-.Dl ret = ECDSA_do_verify(digest, 20, sig, eckey);
+.Dl ret = ECDSA_do_verify(digest, SHA384_DIGEST_LENGTH, sig, eckey);
 .Pp
 or using
 .Fn ECDSA_verify
 .Pp
-.Dl ret = ECDSA_verify(0, digest, 20, buffer, buf_len, eckey);
+.Dl ret = ECDSA_verify(0, digest, SHA384_DIGEST_LENGTH, buffer, buf_len, eckey);
 .Pp
 and finally evaluate the return value:
 .Bd -literal -offset indent
