@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icevar.h,v 1.1 2024/11/08 12:17:07 stsp Exp $	*/
+/*	$OpenBSD: if_icevar.h,v 1.2 2024/11/15 15:41:10 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -4216,6 +4216,8 @@ struct ice_rx_queue {
 	unsigned int			rxq_prod;
 	unsigned int			rxq_cons;
 	struct ifiqueue			*rxq_ifiq;
+	struct mbuf			*rxq_m_head;
+	struct mbuf			**rxq_m_tail;
 };
 
 /**

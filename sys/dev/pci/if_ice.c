@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.6 2024/11/15 15:34:56 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.7 2024/11/15 15:41:10 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -22952,11 +22952,154 @@ ice_intr0(void *xsc)
 	return 1;
 }
 
-int
-ice_intr_vector(void *v)
+/*
+ * Macro to help extract the NIC mode flexible Rx descriptor fields from the
+ * advanced 32byte Rx descriptors.
+ */
+#define ICE_RX_FLEX_NIC(desc, field) \
+	(((struct ice_32b_rx_flex_desc_nic *)desc)->field)
+
+void
+ice_rx_checksum(struct mbuf *m, uint16_t status0)
 {
-	printf("%s\n", __func__);
-	return 1;
+	/* TODO */
+}
+
+int
+ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
+{
+	struct ifiqueue *ifiq = rxq->rxq_ifiq;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	union ice_32b_rx_flex_desc *ring, *cur;
+	struct ice_rx_map *rxm;
+	bus_dmamap_t map;
+	unsigned int cons, prod;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
+	uint16_t status0;
+	unsigned int eop;
+	unsigned int len;
+	unsigned int mask;
+	int done = 0;
+
+	prod = rxq->rxq_prod;
+	cons = rxq->rxq_cons;
+
+	if (cons == prod)
+		return (0);
+
+	rxm = &rxq->rx_map[cons];
+	map = rxm->rxm_map;
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+	ring = ICE_DMA_KVA(&rxq->rx_desc_mem);
+	mask = rxq->desc_count - 1;
+
+	do {
+		cur = &ring[cons];
+
+		status0 = le16toh(cur->wb.status_error0);
+		if ((status0 & BIT(ICE_RX_FLEX_DESC_STATUS0_DD_S)) == 0)
+			break;
+
+		if_rxr_put(&rxq->rxq_acct, 1);
+
+		rxm = &rxq->rx_map[cons];
+
+		map = rxm->rxm_map;
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, map);
+		
+		m = rxm->rxm_m;
+		rxm->rxm_m = NULL;
+
+		len = le16toh(cur->wb.pkt_len) & ICE_RX_FLX_DESC_PKT_LEN_M;
+		m->m_len = len;
+		m->m_pkthdr.len = 0;
+
+		m->m_next = NULL;
+		*rxq->rxq_m_tail = m;
+		rxq->rxq_m_tail = &m->m_next;
+
+		m = rxq->rxq_m_head;
+		m->m_pkthdr.len += len;
+
+		eop = !!(status0 & BIT(ICE_RX_FLEX_DESC_STATUS0_EOF_S));
+		if (eop && (status0 & BIT(ICE_RX_FLEX_DESC_STATUS0_RXE_S))) {
+			/*
+			 * Make sure packets with bad L2 values are discarded.
+			 * This bit is only valid in the last descriptor.
+			 */
+			ifp->if_ierrors++;
+			m_freem(m);
+			m = NULL;
+			rxq->rxq_m_head = NULL;
+			rxq->rxq_m_tail = &rxq->rxq_m_head;
+		} else if (eop) {
+#if NVLAN > 0
+			if (status0 & BIT(ICE_RX_FLEX_DESC_STATUS0_L2TAG1P_S)) {
+				m->m_pkthdr.ether_vtag =
+				    le16toh(cur->wb.l2tag1);
+				SET(m->m_flags, M_VLANTAG);
+			}
+#endif
+			if (status0 &
+			    BIT(ICE_RX_FLEX_DESC_STATUS0_RSS_VALID_S)) {
+				m->m_pkthdr.ph_flowid = le32toh(
+				    ICE_RX_FLEX_NIC(&cur->wb, rss_hash));
+				m->m_pkthdr.csum_flags |= M_FLOWID;
+			}
+
+			ice_rx_checksum(m, status0);
+			ml_enqueue(&ml, m);
+
+			rxq->rxq_m_head = NULL;
+			rxq->rxq_m_tail = &rxq->rxq_m_head;
+		}
+
+		cons++;
+		cons &= mask;
+
+		done = 1;
+	} while (cons != prod);
+
+	if (done) {
+		rxq->rxq_cons = cons;
+		if (ifiq_input(ifiq, &ml))
+			if_rxr_livelocked(&rxq->rxq_acct);
+		ice_rxfill(sc, rxq);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	return (done);
+}
+
+int
+ice_txeof(struct ice_softc *sc, struct ice_tx_queue *rxq)
+{
+	/* TODO */
+	return 0;
+}
+
+int
+ice_intr_vector(void *ivp)
+{
+	struct ice_intr_vector *iv = ivp;
+	struct ice_softc *sc = iv->iv_sc;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int rv = 0, v = iv->iv_qid + 1;
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		rv |= ice_rxeof(sc, iv->iv_rxq);
+		rv |= ice_txeof(sc, iv->iv_txq);
+	}
+
+	ice_enable_intr(&sc->hw, v);
+	return rv;
 }
 
 /**
@@ -23307,6 +23450,10 @@ ice_rx_queues_alloc(struct ice_softc *sc)
 		if_rxr_init(&rxq->rxq_acct, ICE_MIN_DESC_COUNT,
 		    rxq->desc_count - 1);
 		timeout_set(&rxq->rxq_refill, ice_rxrefill, rxq);
+
+		rxq->rxq_cons = rxq->rxq_prod = 0;
+		rxq->rxq_m_head = NULL;
+		rxq->rxq_m_tail = &rxq->rxq_m_head;
 	}
 
 	vsi->num_rx_queues = sc->sc_nqueues;
