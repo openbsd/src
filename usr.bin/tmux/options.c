@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.72 2024/11/11 08:41:05 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.73 2024/11/15 13:12:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1177,6 +1177,15 @@ options_push_changes(const char *name)
 		RB_FOREACH(w, windows, &windows)
 			layout_fix_panes(w, NULL);
 	}
+	if (strcmp(name, "pane-scrollbars-style") == 0) {
+		RB_FOREACH(wp, window_pane_tree, &all_window_panes) {
+			style_set_scrollbar_style_from_option(
+			    &wp->scrollbar_style, wp->options);
+		}
+		RB_FOREACH(w, windows, &windows)
+			layout_fix_panes(w, NULL);
+	}
+
 	if (strcmp(name, "input-buffer-size") == 0)
 		input_set_buffer_size(options_get_number(global_options, name));
 	RB_FOREACH(s, sessions, &sessions)
