@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.8 2024/11/15 15:42:00 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.9 2024/11/15 15:43:49 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -328,6 +328,8 @@ struct ice_softc {
 	bool link_up;
 
 	int rebuild_ticks;
+
+	int sw_intr[ICE_MAX_VECTORS];
 };
 
 /**
@@ -13234,13 +13236,15 @@ ice_rm_pf_default_mac_filters(struct ice_softc *sc)
 void
 ice_flush_rxq_interrupts(struct ice_vsi *vsi)
 {
-	struct ice_hw *hw = &vsi->sc->hw;
+	struct ice_softc *sc = vsi->sc;
+	struct ice_hw *hw = &sc->hw;
 	int i;
 
 	for (i = 0; i < vsi->num_rx_queues; i++) {
 		struct ice_rx_queue *rxq = &vsi->rx_queues[i];
 		uint32_t reg, val;
 		int v = rxq->irqv->iv_qid + 1;
+		int tries = 0;
 
 		/* Clear the CAUSE_ENA flag */
 		reg = vsi->rx_qmap[rxq->me];
@@ -13253,8 +13257,23 @@ ice_flush_rxq_interrupts(struct ice_vsi *vsi)
 		/* Trigger a software interrupt to complete interrupt
 		 * dissociation.
 		 */
+		sc->sw_intr[v] = -1;
 		ICE_WRITE(hw, GLINT_DYN_CTL(v),
 		     GLINT_DYN_CTL_SWINT_TRIG_M | GLINT_DYN_CTL_INTENA_MSK_M);
+		do {
+			int ret;
+
+			/* Sleep to allow interrupt processing to occur. */
+			ret = tsleep_nsec(&sc->sw_intr[v], 0, "iceswi",
+			    USEC_TO_NSEC(1));
+			if (ret == 0 && sc->sw_intr[v] == 1) {
+				sc->sw_intr[v] = 0;
+				break;
+			}
+			tries++;
+		} while (tries < 10);
+		if (tries == 10)
+			DPRINTF("%s: missed software interrupt\n", __func__);
 	}
 }
 
@@ -13272,13 +13291,15 @@ ice_flush_rxq_interrupts(struct ice_vsi *vsi)
 void
 ice_flush_txq_interrupts(struct ice_vsi *vsi)
 {
-	struct ice_hw *hw = &vsi->sc->hw;
+	struct ice_softc *sc = vsi->sc;
+	struct ice_hw *hw = &sc->hw;
 	int i;
 
 	for (i = 0; i < vsi->num_tx_queues; i++) {
 		struct ice_tx_queue *txq = &vsi->tx_queues[i];
 		uint32_t reg, val;
 		int v = txq->irqv->iv_qid + 1;
+		int tries = 0;
 
 		/* Clear the CAUSE_ENA flag */
 		reg = vsi->tx_qmap[txq->me];
@@ -13291,8 +13312,23 @@ ice_flush_txq_interrupts(struct ice_vsi *vsi)
 		/* Trigger a software interrupt to complete interrupt
 		 * dissociation.
 		 */
+		sc->sw_intr[v] = -1;
 		ICE_WRITE(hw, GLINT_DYN_CTL(v),
 		     GLINT_DYN_CTL_SWINT_TRIG_M | GLINT_DYN_CTL_INTENA_MSK_M);
+		do {
+			int ret;
+
+			/* Sleep to allow interrupt processing to occur. */
+			ret = tsleep_nsec(&sc->sw_intr[v], 0, "iceswi",
+			    USEC_TO_NSEC(1));
+			if (ret == 0 && sc->sw_intr[v] == 1) {
+				sc->sw_intr[v] = 0;
+				break;
+			}
+			tries++;
+		} while (tries < 10);
+		if (tries == 10)
+			DPRINTF("%s: missed software interrupt\n", __func__);
 	}
 }
 
@@ -23108,6 +23144,12 @@ ice_intr_vector(void *ivp)
 		rv |= ice_txeof(sc, iv->iv_txq);
 	}
 
+	/* Wake threads waiting for software interrupt confirmation. */
+	if (sc->sw_intr[v] == -1) {
+		sc->sw_intr[v] = 1;
+		wakeup(&sc->sw_intr[v]);
+	}
+		
 	ice_enable_intr(&sc->hw, v);
 	return rv;
 }
