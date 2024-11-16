@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.349 2024/11/16 12:54:05 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.350 2024/11/16 13:06:06 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1329,7 +1329,7 @@ int
 cursig(struct proc *p, struct sigctx *sctx, int deep)
 {
 	struct process *pr = p->p_p;
-	int signum, mask, prop;
+	int signum, mask, keep = 0, prop;
 	sigset_t ps_siglist;
 
 	KASSERT(p == curproc);
@@ -1340,9 +1340,9 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 		mask = SIGPENDING(p);
 		if (pr->ps_flags & PS_PPWAIT)
 			mask &= ~STOPSIGMASK;
-		if (mask == 0)	 	/* no signal to send */
-			return (0);
-		signum = ffs((long)mask);
+		signum = ffs(mask);
+		if (signum == 0)	 	/* no signal to send */
+			goto keep;
 		mask = sigmask(signum);
 
 		/* take the signal! */
@@ -1367,8 +1367,22 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 		 * cursig is called again and there the signal can be
 		 * handled cleanly.
 		 */
-		if (deep)
+		if (deep) {
+			/*
+			 * Do not stop the thread here if multiple
+			 * signals are pending and at least one of
+			 * them would force an unwind.
+			 *
+			 * ffs() favors low numbered signals and
+			 * so stop signals may be picked up before
+			 * other pending signals.
+			 */
+			if (sctx->sig_stop && SIGPENDING(p)) {
+				keep |= mask;
+				continue;
+			}
 			goto keep;
+		}
 
 		/*
 		 * If traced, always stop, and stay stopped until released
@@ -1466,7 +1480,16 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 	/* NOTREACHED */
 
 keep:
-	atomic_setbits_int(&p->p_siglist, mask); /*leave the signal for later */
+	/*
+	 * if we stashed a stop signal but no other signal is pending
+	 * anymore pick the stop signal up again.
+	 */
+	if (keep != 0 && signum == 0) {
+		signum = ffs(keep);
+		setsigctx(p, signum, sctx);
+	}
+	/* move the signal to p_siglist for later */
+	atomic_setbits_int(&p->p_siglist, mask | keep);
 	return (signum);
 }
 
