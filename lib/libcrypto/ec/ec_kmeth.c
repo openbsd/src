@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.15 2024/11/16 10:30:48 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.16 2024/11/16 10:32:08 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -301,14 +301,14 @@ static const EC_KEY_METHOD openssl_ec_key_method = {
 	.verify_sig = ecdsa_verify_sig,
 };
 
-const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
-
 const EC_KEY_METHOD *
 EC_KEY_OpenSSL(void)
 {
 	return &openssl_ec_key_method;
 }
 LCRYPTO_ALIAS(EC_KEY_OpenSSL);
+
+const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
 
 const EC_KEY_METHOD *
 EC_KEY_get_default_method(void)
