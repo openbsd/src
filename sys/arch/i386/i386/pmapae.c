@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.74 2024/11/08 13:18:29 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.75 2024/11/16 10:09:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1347,7 +1347,7 @@ pmap_page_remove_pae(struct vm_page *pg)
 		pm = pve->pv_pmap;
 		mtx_leave(&pg->mdpage.pv_mtx);
 
-		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
+		ptes = pmap_map_ptes_pae(pm);	/* locks pmap */
 
 		/*
 		 * We dropped the pvlist lock before grabbing the pmap
