@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.34 2024/11/15 12:09:36 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.35 2024/11/16 15:32:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -219,20 +219,17 @@ compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 		  (b) >=   20 ? 2 : \
 		  1))
 
-/* Compute
- *      \sum scalars[i]*points[i],
- * also including
- *      scalar*generator
- * in the addition if scalar != NULL
+/*
+ * Compute r = generator * m + point * n in non-constant time.
  */
+
 int
-ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-    size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
+ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
+    const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx)
 {
 	const EC_POINT *generator = NULL;
 	EC_POINT *tmp = NULL;
 	size_t totalnum;
-	size_t numblocks = 0;	/* for wNAF splitting */
 	size_t i, j;
 	int k;
 	int r_is_inverted = 0;
@@ -246,37 +243,23 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	EC_POINT **v;
 	EC_POINT ***val_sub = NULL;	/* pointers to sub-arrays of 'val' or
 					 * 'pre_comp->points' */
-	int num_scalar = 0;	/* flag: will be set to 1 if 'scalar' must be
-				 * treated like other scalars, i.e.
-				 * precomputation is not available */
 	int ret = 0;
 
-	if (group->meth != r->meth) {
+	if (m == NULL || n == NULL) {
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
+		goto err;
+	}
+	if (group->meth != r->meth || group->meth != point->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		return 0;
-	}
-	if ((scalar == NULL) && (num == 0)) {
-		return EC_POINT_set_to_infinity(group, r);
-	}
-	for (i = 0; i < num; i++) {
-		if (group->meth != points[i]->meth) {
-			ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-			return 0;
-		}
+		goto err;
 	}
 
-	if (scalar != NULL) {
-		generator = EC_GROUP_get0_generator(group);
-		if (generator == NULL) {
-			ECerror(EC_R_UNDEFINED_GENERATOR);
-			goto err;
-		}
-
-		numblocks = 1;
-		num_scalar = 1;	/* treat 'scalar' like 'num'-th
-				 * element of 'scalars' */
+	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
+		ECerror(EC_R_UNDEFINED_GENERATOR);
+		goto err;
 	}
-	totalnum = num + numblocks;
+
+	totalnum = 2;
 
 	/* includes space for pivot */
 	wNAF = reallocarray(NULL, (totalnum + 1), sizeof wNAF[0]);
@@ -299,28 +282,20 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	/* num_val will be the total number of temporarily precomputed points */
 	num_val = 0;
 
-	for (i = 0; i < num + num_scalar; i++) {
+	for (i = 0; i < 2; i++) {
 		size_t bits;
 
-		bits = i < num ? BN_num_bits(scalars[i]) : BN_num_bits(scalar);
+		bits = i < 1 ? BN_num_bits(n) : BN_num_bits(m);
 		wsize[i] = EC_window_bits_for_scalar_size(bits);
 		num_val += (size_t) 1 << (wsize[i] - 1);
 		wNAF[i + 1] = NULL;	/* make sure we always have a pivot */
-		wNAF[i] = compute_wNAF((i < num ? scalars[i] : scalar), wsize[i], &wNAF_len[i]);
+		wNAF[i] = compute_wNAF(i < 1 ? n : m, wsize[i], &wNAF_len[i]);
 		if (wNAF[i] == NULL)
 			goto err;
 		if (wNAF_len[i] > max_len)
 			max_len = wNAF_len[i];
 	}
 
-	if (numblocks) {
-		/* we go here iff scalar != NULL */
-
-		if (num_scalar != 1) {
-			ECerror(ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-	}
 	/*
 	 * All points we precompute now go into a single array 'val'.
 	 * 'val_sub[i]' is a pointer to the subarray for the i-th point, or
@@ -336,7 +311,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	/* allocate points for precomputation */
 	v = val;
-	for (i = 0; i < num + num_scalar; i++) {
+	for (i = 0; i < 2; i++) {
 		val_sub[i] = v;
 		for (j = 0; j < ((size_t) 1 << (wsize[i] - 1)); j++) {
 			*v = EC_POINT_new(group);
@@ -359,9 +334,9 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	 *  val_sub[i][2] := 5 * points[i]
 	 *  ...
 	 */
-	for (i = 0; i < num + num_scalar; i++) {
-		if (i < num) {
-			if (!EC_POINT_copy(val_sub[i][0], points[i]))
+	for (i = 0; i < 2; i++) {
+		if (i < 1) {
+			if (!EC_POINT_copy(val_sub[i][0], point))
 				goto err;
 		} else {
 			if (!EC_POINT_copy(val_sub[i][0], generator))

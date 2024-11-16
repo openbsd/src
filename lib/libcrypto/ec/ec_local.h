@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.37 2024/11/12 10:53:22 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.38 2024/11/16 15:32:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -247,10 +247,9 @@ struct ec_point_st {
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;
 
-/* method functions in ec_mult.c
- * (ec_lib.c uses these as defaults if group->method->mul is 0) */
-int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+/* Compute r = generator * m + point * n in non-constant time. */
+int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
+    const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx);
 
 int ec_group_simple_order_bits(const EC_GROUP *group);
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
