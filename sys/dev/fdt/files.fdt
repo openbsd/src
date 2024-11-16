@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.203 2024/07/31 10:07:33 mglocker Exp $
+#	$OpenBSD: files.fdt,v 1.204 2024/11/16 21:17:54 tobhe Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -683,6 +683,11 @@ file	dev/fdt/qcaoss.c		qcaoss
 device	qccpu
 attach	qccpu at fdt
 file	dev/fdt/qccpu.c		qccpu
+
+# Qualcomm CPUCP Mailbox
+device	qccpucp
+attach	qccpucp at fdt
+file	dev/fdt/qccpucp.c		qccpucp
 
 device	qcdwusb: fdt
 attach	qcdwusb at fdt
