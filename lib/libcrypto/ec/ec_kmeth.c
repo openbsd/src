@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.14 2024/08/03 13:06:37 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.15 2024/11/16 10:30:48 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -58,55 +58,6 @@
 #include "bn_local.h"
 #include "ec_local.h"
 #include "ecdsa_local.h"
-
-static const EC_KEY_METHOD openssl_ec_key_method = {
-	.name = "OpenSSL EC_KEY method",
-	.flags = 0,
-
-	.init = NULL,
-	.finish = NULL,
-	.copy = NULL,
-
-	.set_group = NULL,
-	.set_private = NULL,
-	.set_public = NULL,
-
-	.keygen = ec_key_gen,
-	.compute_key = ecdh_compute_key,
-
-	.sign = ecdsa_sign,
-	.sign_setup = ecdsa_sign_setup,
-	.sign_sig = ecdsa_sign_sig,
-
-	.verify = ecdsa_verify,
-	.verify_sig = ecdsa_verify_sig,
-};
-
-const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
-
-const EC_KEY_METHOD *
-EC_KEY_OpenSSL(void)
-{
-	return &openssl_ec_key_method;
-}
-LCRYPTO_ALIAS(EC_KEY_OpenSSL);
-
-const EC_KEY_METHOD *
-EC_KEY_get_default_method(void)
-{
-	return default_ec_key_meth;
-}
-LCRYPTO_ALIAS(EC_KEY_get_default_method);
-
-void
-EC_KEY_set_default_method(const EC_KEY_METHOD *meth)
-{
-	if (meth == NULL)
-		default_ec_key_meth = &openssl_ec_key_method;
-	else
-		default_ec_key_meth = meth;
-}
-LCRYPTO_ALIAS(EC_KEY_set_default_method);
 
 const EC_KEY_METHOD *
 EC_KEY_get_method(const EC_KEY *key)
@@ -326,3 +277,52 @@ EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 		*pverify_sig = meth->verify_sig;
 }
 LCRYPTO_ALIAS(EC_KEY_METHOD_get_verify);
+
+static const EC_KEY_METHOD openssl_ec_key_method = {
+	.name = "OpenSSL EC_KEY method",
+	.flags = 0,
+
+	.init = NULL,
+	.finish = NULL,
+	.copy = NULL,
+
+	.set_group = NULL,
+	.set_private = NULL,
+	.set_public = NULL,
+
+	.keygen = ec_key_gen,
+	.compute_key = ecdh_compute_key,
+
+	.sign = ecdsa_sign,
+	.sign_setup = ecdsa_sign_setup,
+	.sign_sig = ecdsa_sign_sig,
+
+	.verify = ecdsa_verify,
+	.verify_sig = ecdsa_verify_sig,
+};
+
+const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
+
+const EC_KEY_METHOD *
+EC_KEY_OpenSSL(void)
+{
+	return &openssl_ec_key_method;
+}
+LCRYPTO_ALIAS(EC_KEY_OpenSSL);
+
+const EC_KEY_METHOD *
+EC_KEY_get_default_method(void)
+{
+	return default_ec_key_meth;
+}
+LCRYPTO_ALIAS(EC_KEY_get_default_method);
+
+void
+EC_KEY_set_default_method(const EC_KEY_METHOD *meth)
+{
+	if (meth == NULL)
+		default_ec_key_meth = &openssl_ec_key_method;
+	else
+		default_ec_key_meth = meth;
+}
+LCRYPTO_ALIAS(EC_KEY_set_default_method);
