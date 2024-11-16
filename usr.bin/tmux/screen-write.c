@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.231 2024/11/15 09:01:16 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.232 2024/11/16 16:49:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2204,7 +2204,9 @@ screen_write_alternateon(struct screen_write_ctx *ctx, struct grid_cell *gc,
 
 	screen_write_collect_flush(ctx, 0, __func__);
 	screen_alternate_on(ctx->s, gc, cursor);
-	layout_fix_panes(wp->window, NULL);
+
+	if (wp != NULL)
+		layout_fix_panes(wp->window, NULL);
 
 	screen_write_initctx(ctx, &ttyctx, 1);
 	if (ttyctx.redraw_cb != NULL)
@@ -2224,7 +2226,9 @@ screen_write_alternateoff(struct screen_write_ctx *ctx, struct grid_cell *gc,
 
 	screen_write_collect_flush(ctx, 0, __func__);
 	screen_alternate_off(ctx->s, gc, cursor);
-	layout_fix_panes(wp->window, NULL);
+
+	if (wp != NULL)
+		layout_fix_panes(wp->window, NULL);
 
 	screen_write_initctx(ctx, &ttyctx, 1);
 	if (ttyctx.redraw_cb != NULL)
