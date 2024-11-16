@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.348 2024/11/06 17:14:01 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.349 2024/11/16 12:54:05 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1431,14 +1431,6 @@ cursig(struct proc *p, struct sigctx *sctx, int deep)
 			 * then clear the signal.
 			 */
 			if (sctx->sig_stop) {
-				mtx_enter(&pr->ps_mtx);
-				if (pr->ps_flags & PS_TRACED ||
-		    		    (pr->ps_pgrp->pg_jobc == 0 &&
-				    prop & SA_TTYSTOP)) {
-					mtx_leave(&pr->ps_mtx);
-					break;	/* == ignore */
-				}
-				mtx_leave(&pr->ps_mtx);
 				pr->ps_xsig = signum;
 				SCHED_LOCK();
 				proc_stop(p, 1);
