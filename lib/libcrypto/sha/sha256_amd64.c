@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64.c,v 1.1 2024/11/08 15:09:48 jsing Exp $ */
+/* $OpenBSD: sha256_amd64.c,v 1.2 2024/11/16 15:31:36 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -17,10 +17,18 @@
 
 #include <openssl/sha.h>
 
+#include "crypto_arch.h"
+
 void sha256_block_generic(SHA256_CTX *ctx, const void *in, size_t num);
+void sha256_block_shani(SHA256_CTX *ctx, const void *in, size_t num);
 
 void
 sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 {
+	if ((crypto_cpu_caps_amd64 & CRYPTO_CPU_CAPS_AMD64_SHA) != 0) {
+		sha256_block_shani(ctx, in, num);
+		return;
+	}
+
 	sha256_block_generic(ctx, in, num);
 }
