@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_cpu_caps.c,v 1.3 2024/11/12 13:14:57 jsing Exp $ */
+/*	$OpenBSD: crypto_cpu_caps.c,v 1.4 2024/11/16 13:05:35 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,14 @@
 
 #include <openssl/crypto.h>
 
+#include "crypto_arch.h"
 #include "x86_arch.h"
 
 /* Legacy architecture specific capabilities, used by perlasm. */
 uint64_t OPENSSL_ia32cap_P;
+
+/* Machine dependent CPU capabilities. */
+uint64_t crypto_cpu_caps_amd64;
 
 /* Machine independent CPU capabilities. */
 extern uint64_t crypto_cpu_caps;
@@ -67,19 +71,21 @@ xgetbv(uint32_t ecx, uint32_t *out_eax, uint32_t *out_edx)
 void
 crypto_cpu_caps_init(void)
 {
-	uint32_t eax, ebx, ecx, edx;
+	uint32_t eax, ebx, ecx, edx, max_cpuid;
 	uint64_t caps = 0;
 
 	cpuid(0, &eax, &ebx, &ecx, &edx);
+
+	max_cpuid = eax;
 
 	/* "GenuineIntel" in little endian. */
 	if (ebx == 0x756e6547 && edx == 0x49656e69 && ecx == 0x6c65746e)
 		caps |= CPUCAP_MASK_INTEL;
 
-	if (eax < 1)
+	if (max_cpuid < 1)
 		return;
 
-	cpuid(1, &eax, &ebx, &ecx, &edx);
+	cpuid(1, &eax, NULL, &ecx, &edx);
 
 	if ((edx & IA32CAP_MASK0_FXSR) != 0)
 		caps |= CPUCAP_MASK_FXSR;
@@ -104,6 +110,14 @@ crypto_cpu_caps_init(void)
 		xgetbv(0, &eax, NULL);
 		if (((eax >> 1) & 3) == 3 && (ecx & IA32CAP_MASK1_AVX) != 0)
 			caps |= CPUCAP_MASK_AVX;
+	}
+
+	if (max_cpuid >= 7) {
+		cpuid(7, NULL, &ebx, NULL, NULL);
+
+		/* Intel SHA extensions feature bit - ebx[29]. */
+		if (((ebx >> 29) & 1) != 0)
+			crypto_cpu_caps_amd64 |= CRYPTO_CPU_CAPS_AMD64_SHA;
 	}
 
 	/* Set machine independent CPU capabilities. */
