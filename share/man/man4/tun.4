@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.50 2024/11/17 07:44:47 jmc Exp $
+.\"	$OpenBSD: tun.4,v 1.51 2024/11/17 09:19:46 dlg Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -217,6 +217,10 @@ struct tun_hdr {
 	uint16_t	th_mss;
 };
 .Ed
+.Pp
+The fields in the
+.Va struct tun_hdr
+are in host native byte order.
 .Pp
 The following flags can be set in
 .Fa th_flags
