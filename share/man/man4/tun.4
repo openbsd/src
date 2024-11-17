@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.48 2024/11/17 00:51:04 dlg Exp $
+.\"	$OpenBSD: tun.4,v 1.49 2024/11/17 01:44:25 dlg Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -132,6 +132,8 @@ The
 .Fa tun_if_capabilities
 field is set with IFCAP values from
 .In net/if.h .
+It is acceptable to enable the offload header without enabling any
+interface offload capabilities.
 .Pp
 The prepending of network packets with the a
 .Vt struct tun_hdr
@@ -190,7 +192,68 @@ commands:
 .It Dv SIOCSIFADDR Fa uint8_t Ns [ETHER_ADDR_LEN]
 Get or set the link layer address (MAC address) of the interface.
 .El
-.\" .Ss Network offload support
+.Ss Network offload support
+When network offload support has been enabled with the
+.Dv TUNSCAP
+.Xr ioctl 2
+command,
+.Va struct tun_hdr
+is prepended to packets read from and written to the device special
+file.
+.Pp
+The kernel will populate the offload header for reads from the
+device special file depending on which interface offload capabilities
+are enabled.
+A program may use any offload feature when writing to the device
+special file regardless of which interface offload capabilities are
+enabled.
+The offload header can be read from one device special file and
+written directly to another without interpretation or modification.
+.Pp
+.Bd -literal
+struct tun_hdr {
+	uint16_t	th_flags;
+	uint16_t	th_pad;
+	uint16_t	th_vtag;
+	uint16_t	th_mss;
+};
+.Ed
+.Pp
+The following flags can be set in
+.Fa th_flags
+to specify which offloads are requested for the current packet:
+.Pp
+.Bl -tag -width indent -compact
+.It Dv TUN_H_VTAG
+.Fa th_vtag
+is set.
+.It Dv TUN_H_TCP_MSS
+TCP segmentation offload is requested for the current packet.
+The maximum segment size is specified in
+.Fa th_mss .
+.It Dv TUN_H_IPV4_CSUM
+IPv4 header checksum calculation requested.
+.It Dv TUN_H_TCP_CSUM
+TCP checksum calculation requested.
+.It Dv TUN_H_UDP_CSUM
+UDP checksum calculation requested.
+.It Dv TUN_H_ICMP_CSUM
+ICMP checksum calculation requested.
+.El
+.Pp
+Only one of
+.Dv TUN_H_TCP_CSUM ,
+.Dv TUN_H_UDP_CSUM ,
+and TUN_H_ICMP_CSUM
+can be specified at a time.
+.Dv TUN_H_VTAG
+can only be used with
+.Nm tap
+interfacse.
+.Pp
+.Fa th_pad
+should be set to 0 when writing to the device special file, and
+ignored when reading from the device special file.
 .Sh FILES
 .Bl -tag -width /dev/tun* -compact
 .It Pa /dev/tun*
