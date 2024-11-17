@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.248 2024/11/17 23:21:45 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.249 2024/11/17 23:31:01 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -922,9 +922,9 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 {
 	struct tun_softc	*sc;
 	struct ifnet		*ifp;
-	struct mbuf		*m0;
+	struct mbuf		*m0, *m, *n;
 	int			error = 0;
-	size_t			mlen;
+	size_t			len, alen, mlen;
 	size_t			hlen;
 	struct tun_hdr		th;
 
@@ -938,30 +938,16 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 	if (ISSET(sc->sc_flags, TUN_HDR))
 		hlen += sizeof(th);
 	if (uio->uio_resid < hlen ||
-	    uio->uio_resid > (hlen + ifp->if_hardmtu)) {
+	    uio->uio_resid > (hlen + MAXMCLBYTES)) {
 		error = EMSGSIZE;
 		goto put;
 	}
-
-	align += max_linkhdr;
-	mlen = align + uio->uio_resid;
 
 	m0 = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m0 == NULL) {
 		error = ENOMEM;
 		goto put;
 	}
-	if (mlen > MHLEN) {
-		m_clget(m0, M_DONTWAIT, mlen);
-		if (!ISSET(m0->m_flags, M_EXT)) {
-			error = ENOMEM;
-			goto drop;
-		}
-	}
-
-	m_align(m0, mlen);
-	m0->m_pkthdr.len = m0->m_len = mlen;
-	m_adj(m0, align);
 
 	if (ISSET(sc->sc_flags, TUN_HDR)) {
 		error = uiomove(&th, sizeof(th), uio);
@@ -1009,9 +995,52 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 		}
 	}
 
-	error = uiomove(mtod(m0, void *), m0->m_len, uio);
-	if (error != 0)
-		goto drop;
+	align += roundup(max_linkhdr, sizeof(long));
+	mlen = MHLEN; /* how much space in the mbuf */
+
+	len = uio->uio_resid;
+	m0->m_pkthdr.len = len;
+
+	m = m0;
+	for (;;) {
+		alen = align + len; /* what we want to put in this mbuf */
+		if (alen > mlen) {
+			if (alen > MAXMCLBYTES)
+				alen = MAXMCLBYTES;
+			m_clget(m, M_DONTWAIT, alen);
+			if (!ISSET(m->m_flags, M_EXT)) {
+				error = ENOMEM;
+				goto put;
+			}
+		}
+
+		m->m_len = alen;
+		if (align > 0) {
+			/* avoid m_adj to protect m0->m_pkthdr.len */
+			m->m_data += align;
+			m->m_len -= align;
+		}
+
+		error = uiomove(mtod(m, void *), m->m_len, uio);
+		if (error != 0)
+			goto drop;
+
+		len = uio->uio_resid;
+		if (len == 0)
+			break;
+
+		n = m_get(M_DONTWAIT, MT_DATA);
+		if (n == NULL) {
+			error = ENOMEM;
+			goto put;
+		}
+
+		align = 0;
+		mlen = MLEN;
+
+		m->m_next = n;
+		m = n;
+	}
 
 	NET_LOCK();
 	if_vinput(ifp, m0);
