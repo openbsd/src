@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.85 2024/11/08 13:55:45 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.86 2024/11/17 06:33:35 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -662,77 +662,101 @@ EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 }
 LCRYPTO_ALIAS(EC_GROUP_check);
 
+/*
+ * Returns -1 on error, 0 if the groups are equal, 1 if they are distinct.
+ */
 int
-EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
+EC_GROUP_cmp(const EC_GROUP *group1, const EC_GROUP *group2, BN_CTX *ctx_in)
 {
-	int r = 0;
-	BIGNUM *a1, *a2, *a3, *b1, *b2, *b3;
-	BN_CTX *ctx_new = NULL;
+	BN_CTX *ctx = NULL;
+	BIGNUM *p1, *a1, *b1, *p2, *a2, *b2;
+	const EC_POINT *generator1, *generator2;
+	const BIGNUM *order1, *order2, *cofactor1, *cofactor2;
+	int nid1, nid2;
+	int cmp = 1;
+	int ret = -1;
 
-	/* compare the field types */
-	if (ec_group_get_field_type(a) != ec_group_get_field_type(b))
-		return 1;
-	/* compare the curve name (if present in both) */
-	if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
-	    EC_GROUP_get_curve_name(a) != EC_GROUP_get_curve_name(b))
-		return 1;
-
-	if (!ctx)
-		ctx_new = ctx = BN_CTX_new();
-	if (!ctx)
-		return -1;
+	if ((ctx = ctx_in) == NULL)
+		ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
 
 	BN_CTX_start(ctx);
+
+	if (ec_group_get_field_type(group1) != ec_group_get_field_type(group2))
+		goto distinct;
+	if ((nid1 = EC_GROUP_get_curve_name(group1)) != NID_undef &&
+	    (nid2 = EC_GROUP_get_curve_name(group2)) != NID_undef) {
+		if (nid1 != nid2)
+			goto distinct;
+	}
+
+	if ((p1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	if ((a1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((a2 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((a3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((b1 = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b2 = BN_CTX_get(ctx)) == NULL)
+	if ((p2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b3 = BN_CTX_get(ctx)) == NULL)
+	if ((a2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/*
-	 * XXX This approach assumes that the external representation of
-	 * curves over the same field type is the same.
+	 * If we ever support curves in non-Weierstrass form, this check needs
+	 * to be adjusted. The comparison of the generators will fail anyway.
 	 */
-	if (!a->meth->group_get_curve(a, a1, a2, a3, ctx) ||
-	    !b->meth->group_get_curve(b, b1, b2, b3, ctx))
-		r = 1;
+	if (!EC_GROUP_get_curve(group1, p1, a1, b1, ctx))
+		goto err;
+	if (!EC_GROUP_get_curve(group2, p2, a2, b2, ctx))
+		goto err;
 
-	if (r || BN_cmp(a1, b1) || BN_cmp(a2, b2) || BN_cmp(a3, b3))
-		r = 1;
+	if (BN_cmp(p1, p2) != 0 || BN_cmp(a1, a2) != 0 || BN_cmp(b1, b2) != 0)
+		goto distinct;
 
-	/* XXX EC_POINT_cmp() assumes that the methods are equal */
-	if (r || EC_POINT_cmp(a, EC_GROUP_get0_generator(a),
-		EC_GROUP_get0_generator(b), ctx))
-		r = 1;
+	if ((generator1 = EC_GROUP_get0_generator(group1)) == NULL)
+		goto err;
+	if ((generator2 = EC_GROUP_get0_generator(group2)) == NULL)
+		goto err;
 
-	if (!r) {
-		/* compare the order and cofactor */
-		if (!EC_GROUP_get_order(a, a1, ctx) ||
-		    !EC_GROUP_get_order(b, b1, ctx) ||
-		    !EC_GROUP_get_cofactor(a, a2, ctx) ||
-		    !EC_GROUP_get_cofactor(b, b2, ctx))
-			goto err;
-		if (BN_cmp(a1, b1) || BN_cmp(a2, b2))
-			r = 1;
-	}
-	BN_CTX_end(ctx);
-	if (ctx_new)
-		BN_CTX_free(ctx);
+	/*
+	 * It does not matter whether group1 or group2 is used: both points must
+	 * have a matching method for this to succeed.
+	 */
+	if ((cmp = EC_POINT_cmp(group1, generator1, generator2, ctx)) < 0)
+		goto err;
+	if (cmp == 1)
+		goto distinct;
+	cmp = 1;
 
-	return r;
+	if ((order1 = EC_GROUP_get0_order(group1)) == NULL)
+		goto err;
+	if ((order2 = EC_GROUP_get0_order(group2)) == NULL)
+		goto err;
+
+	if ((cofactor1 = EC_GROUP_get0_cofactor(group1)) == NULL)
+		goto err;
+	if ((cofactor2 = EC_GROUP_get0_cofactor(group2)) == NULL)
+		goto err;
+
+	if (BN_cmp(order1, order2) != 0 || BN_cmp(cofactor1, cofactor2) != 0)
+		goto distinct;
+
+	/* All parameters match: the groups are equal. */
+	cmp = 0;
+
+ distinct:
+	ret = cmp;
 
  err:
 	BN_CTX_end(ctx);
-	if (ctx_new)
+
+	if (ctx != ctx_in)
 		BN_CTX_free(ctx);
-	return -1;
+
+	return ret;
 }
 LCRYPTO_ALIAS(EC_GROUP_cmp);
 
