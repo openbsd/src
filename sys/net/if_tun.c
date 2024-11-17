@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.247 2024/11/17 00:25:07 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.248 2024/11/17 23:21:45 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -681,6 +681,19 @@ tun_del_capabilities(struct tun_softc *sc)
 	return (0);
 }
 
+static int
+tun_hdatalen(struct tun_softc *sc)
+{
+	struct ifnet		*ifp = &sc->sc_if;
+	int			 len;
+
+	len = ifq_hdatalen(&ifp->if_snd);
+	if (len > 0 && ISSET(sc->sc_flags, TUN_HDR))
+		len += sizeof(struct tun_hdr);
+
+	return (len);
+}
+
 int
 tun_dev_ioctl(dev_t dev, u_long cmd, void *data)
 {
@@ -753,7 +766,7 @@ tun_dev_ioctl(dev_t dev, u_long cmd, void *data)
 			sc->sc_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		*(int *)data = ifq_hdatalen(&sc->sc_if.if_snd);
+		*(int *)data = tun_hdatalen(sc);
 		break;
 	case FIOSETOWN:
 	case TIOCSPGRP:
@@ -1103,11 +1116,10 @@ int
 filt_tunread(struct knote *kn, long hint)
 {
 	struct tun_softc	*sc = kn->kn_hook;
-	struct ifnet		*ifp = &sc->sc_if;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
-	kn->kn_data = ifq_hdatalen(&ifp->if_snd);
+	kn->kn_data = tun_hdatalen(sc);
 
 	return (kn->kn_data > 0);
 }
