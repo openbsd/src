@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.49 2024/11/17 01:44:25 dlg Exp $
+.\"	$OpenBSD: tun.4,v 1.50 2024/11/17 07:44:47 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -113,14 +113,14 @@ are set by the kernel when an interface is created,
 and must be set to the same values that the kernel provided.
 .Pp
 .It Dv TUNSIFMODE Fa int *
-is provided for backwards compatibility.
+Provided for backwards compatibility.
 The flags set must match what the kernel initialised them to.
 .Pp
 .It Dv TUNSCAP Fa struct tun_capabilities *
 Enable the prepending of network packets with a
 .Vt struct tun_hdr
 offload header,
-and set which interface offload capabilities that userland can
+and set which interface offload capabilities userland can
 handle on behalf of the kernel.
 .Bd -literal
 struct tun_capabilities {
@@ -135,7 +135,7 @@ field is set with IFCAP values from
 It is acceptable to enable the offload header without enabling any
 interface offload capabilities.
 .Pp
-The prepending of network packets with the a
+The prepending of network packets with a
 .Vt struct tun_hdr
 offload header is disabled,
 and the interface offload capabilities are reset when the device
@@ -209,7 +209,6 @@ special file regardless of which interface offload capabilities are
 enabled.
 The offload header can be read from one device special file and
 written directly to another without interpretation or modification.
-.Pp
 .Bd -literal
 struct tun_hdr {
 	uint16_t	th_flags;
@@ -223,7 +222,7 @@ The following flags can be set in
 .Fa th_flags
 to specify which offloads are requested for the current packet:
 .Pp
-.Bl -tag -width indent -compact
+.Bl -tag -width "TUN_H_ICMP_CSUM" -compact
 .It Dv TUN_H_VTAG
 .Fa th_vtag
 is set.
@@ -249,7 +248,7 @@ can be specified at a time.
 .Dv TUN_H_VTAG
 can only be used with
 .Nm tap
-interfacse.
+interfaces.
 .Pp
 .Fa th_pad
 should be set to 0 when writing to the device special file, and
