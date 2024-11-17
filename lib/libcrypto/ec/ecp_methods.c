@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.8 2024/11/16 15:32:08 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.9 2024/11/17 08:19:08 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -993,28 +993,26 @@ ec_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 	return ret;
 }
 
+/*
+ * Returns -1 on error, 0 if the points are equal, 1 if the points are distinct.
+ */
+
 static int
 ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 {
-	/*
-	 * return values: -1   error 0   equal (in affine coordinates) 1
-	 * not equal
-	 */
-
 	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
 	BIGNUM *tmp1, *tmp2, *Za23, *Zb23;
 	const BIGNUM *tmp1_, *tmp2_;
 	int ret = -1;
 
-	if (EC_POINT_is_at_infinity(group, a))
-		return !EC_POINT_is_at_infinity(group, b);
-
-	if (EC_POINT_is_at_infinity(group, b))
+	if (EC_POINT_is_at_infinity(group, a) && EC_POINT_is_at_infinity(group, b))
+		return 0;
+	if (EC_POINT_is_at_infinity(group, a) || EC_POINT_is_at_infinity(group, b))
 		return 1;
 
 	if (a->Z_is_one && b->Z_is_one)
-		return ((BN_cmp(&a->X, &b->X) == 0) && BN_cmp(&a->Y, &b->Y) == 0) ? 0 : 1;
+		return BN_cmp(&a->X, &b->X) != 0 || BN_cmp(&a->Y, &b->Y) != 0;
 
 	field_mul = group->meth->field_mul;
 	field_sqr = group->meth->field_sqr;
