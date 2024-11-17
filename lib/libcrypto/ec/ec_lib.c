@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.86 2024/11/17 06:33:35 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.87 2024/11/17 10:48:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -74,8 +74,6 @@
 
 #include "bn_local.h"
 #include "ec_local.h"
-
-/* functions for EC_GROUP objects */
 
 EC_GROUP *
 EC_GROUP_new(const EC_METHOD *meth)
