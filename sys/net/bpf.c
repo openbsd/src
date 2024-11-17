@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.225 2024/08/15 12:20:20 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.226 2024/11/17 12:21:48 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1798,8 +1798,10 @@ bpfsdetach(void *p)
 			break;
 
 	while ((bd = SMR_SLIST_FIRST_LOCKED(&bp->bif_dlist))) {
+		bpf_get(bd);
 		vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
 		klist_invalidate(&bd->bd_klist);
+		bpf_put(bd);
 	}
 
 	for (tbp = bpf_iflist; tbp; tbp = tbp->bif_next) {
