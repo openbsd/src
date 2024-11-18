@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.57 2016/06/10 18:36:06 jcs Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.58 2024/11/18 02:32:22 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -100,7 +100,7 @@ bios_E820(bios_memmap_t *mp)
 /*
  * BIOS int 15, AX=8800
  *
- * Only used if int 15, AX=E801 does not work.
+ * Only used if int 15, AX=E820 does not work.
  * Machines with this are restricted to 64MB.
  */
 static __inline bios_memmap_t *
