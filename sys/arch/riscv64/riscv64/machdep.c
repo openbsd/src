@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2024/11/10 06:51:59 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2024/11/18 05:32:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -42,7 +42,6 @@
 #include <machine/param.h>
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
-#include <machine/riscv64var.h>
 #include <machine/sbi.h>
 #include <machine/sysarch.h>
 

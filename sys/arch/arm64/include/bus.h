@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.10 2024/01/20 11:22:46 kettenis Exp $ */
+/* $OpenBSD: bus.h,v 1.11 2024/11/18 05:32:39 jsg Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -133,6 +133,8 @@ struct bus_space {
 #define BUS_SPACE_MAP_POSTED		0x02
 #define BUS_SPACE_MAP_LINEAR		0x04
 #define BUS_SPACE_MAP_PREFETCHABLE	0x08
+
+extern bus_space_t arm64_bs_tag;
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
 #define	bus_space_mmap(t, a, o, p, f) \
