@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.454 2024/11/08 10:24:13 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.455 2024/11/18 08:42:53 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1173,7 +1173,7 @@ int
 sysctl_securelevel_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
     int *valp)
 {
-	if (atomic_load_int(&securelevel) > 0)
+	if ((int)atomic_load_int(&securelevel) > 0)
 		return (sysctl_rdint(oldp, oldlenp, newp, *valp));
 	return (sysctl_int(oldp, oldlenp, newp, newlen, valp));
 }

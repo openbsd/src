@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 2024/10/28 10:18:03 mvs Exp $ */
+/*	$OpenBSD: mem.c,v 1.9 2024/11/18 08:42:53 mvs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,7 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	switch (minor(dev)) {
 	case 0:
 	case 1:
-		if (atomic_load_int(&securelevel) <= 0 ||
+		if ((int)atomic_load_int(&securelevel) <= 0 ||
 		    atomic_load_int(&allowkmem))
 			break;
 		return (EPERM);
