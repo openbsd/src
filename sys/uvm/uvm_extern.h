@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.179 2024/11/01 20:26:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.180 2024/11/19 06:18:26 jsg Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -169,7 +169,6 @@ typedef int		vm_prot_t;
 
 #ifdef _KERNEL
 struct buf;
-struct mount;
 struct pglist;
 struct vmspace;
 struct pmap;
