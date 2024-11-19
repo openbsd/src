@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.226 2024/11/17 12:21:48 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.227 2024/11/19 23:26:35 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -98,8 +98,8 @@ int bpf_maxbufsize = BPF_MAXBUFSIZE;	/* [a] */
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
  *  bpf_d_list is the list of descriptors
  */
-struct bpf_if	*bpf_iflist;
-LIST_HEAD(, bpf_d) bpf_d_list;
+TAILQ_HEAD(, bpf_if) bpf_iflist = TAILQ_HEAD_INITIALIZER(bpf_iflist);
+LIST_HEAD(, bpf_d) bpf_d_list = LIST_HEAD_INITIALIZER(bpf_d_list);
 
 int	bpf_allocbufs(struct bpf_d *);
 void	bpf_ifname(struct bpf_if*, struct ifreq *);
@@ -369,7 +369,6 @@ bpf_detachd(struct bpf_d *d)
 void
 bpfilterattach(int n)
 {
-	LIST_INIT(&bpf_d_list);
 }
 
 /*
@@ -1187,7 +1186,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	TAILQ_FOREACH(bp, &bpf_iflist, bif_next) {
 		if (strcmp(bp->bif_name, ifr->ifr_name) != 0)
 			continue;
 
@@ -1742,8 +1741,7 @@ bpfsattach(caddr_t *bpfp, const char *name, u_int dlt, u_int hdrlen)
 	bp->bif_ifp = NULL;
 	bp->bif_dlt = dlt;
 
-	bp->bif_next = bpf_iflist;
-	bpf_iflist = bp;
+	TAILQ_INSERT_TAIL(&bpf_iflist, bp, bif_next);
 
 	*bp->bif_driverp = NULL;
 
@@ -1775,8 +1773,7 @@ bpfdetach(struct ifnet *ifp)
 
 	KERNEL_ASSERT_LOCKED();
 
-	for (bp = bpf_iflist; bp; bp = nbp) {
-		nbp = bp->bif_next;
+	TAILQ_FOREACH_SAFE(bp, &bpf_iflist, bif_next, nbp) {
 		if (bp->bif_ifp == ifp)
 			bpfsdetach(bp);
 	}
@@ -1786,7 +1783,7 @@ bpfdetach(struct ifnet *ifp)
 void
 bpfsdetach(void *p)
 {
-	struct bpf_if *bp = p, *tbp;
+	struct bpf_if *bp = p;
 	struct bpf_d *bd;
 	int maj;
 
@@ -1804,15 +1801,7 @@ bpfsdetach(void *p)
 		bpf_put(bd);
 	}
 
-	for (tbp = bpf_iflist; tbp; tbp = tbp->bif_next) {
-		if (tbp->bif_next == bp) {
-			tbp->bif_next = bp->bif_next;
-			break;
-		}
-	}
-
-	if (bpf_iflist == bp)
-		bpf_iflist = bp->bif_next;
+	TAILQ_REMOVE(&bpf_iflist, bp, bif_next);
 
 	free(bp, M_DEVBUF, sizeof(*bp));
 }
@@ -1865,7 +1854,7 @@ bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
 	name = d->bd_bif->bif_name;
 	n = 0;
 	error = 0;
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	TAILQ_FOREACH(bp, &bpf_iflist, bif_next) {
 		if (strcmp(name, bp->bif_name) != 0)
 			continue;
 		if (bfl->bfl_list != NULL) {
@@ -1896,7 +1885,7 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	if (d->bd_bif->bif_dlt == dlt)
 		return (0);
 	name = d->bd_bif->bif_name;
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	TAILQ_FOREACH(bp, &bpf_iflist, bif_next) {
 		if (strcmp(name, bp->bif_name) != 0)
 			continue;
 		if (bp->bif_dlt == dlt)

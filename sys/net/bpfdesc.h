@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.49 2024/08/15 12:20:20 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.50 2024/11/19 23:26:35 dlg Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct bpf_d {
  * Descriptor associated with each attached hardware interface.
  */
 struct bpf_if {
-	struct bpf_if *bif_next;	/* list of all interfaces */
+	TAILQ_ENTRY(bpf_if) bif_next;	/* list of all interfaces */
 	SMR_SLIST_HEAD(, bpf_d) bif_dlist;		/* descriptor list */
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
