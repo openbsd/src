@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.12 2024/09/18 00:03:19 jmatthew Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.13 2024/11/19 02:31:35 jcs Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -131,7 +131,7 @@ unmap:
 int
 nvme_pci_detach(struct device *self, int flags)
 {
-	return (0);
+	return config_detach_children(self, flags);
 }
 
 int
