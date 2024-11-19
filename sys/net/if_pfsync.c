@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.326 2024/05/24 06:38:41 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.327 2024/11/19 02:11:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -100,9 +100,7 @@
 #include <net/pfvar_priv.h>
 #include <net/if_pfsync.h>
 
-#define PFSYNC_MINPKT ( \
-	sizeof(struct ip) + \
-	sizeof(struct pfsync_header))
+#define PFSYNC_MINPKT sizeof(struct pfsync_header)
 
 struct pfsync_softc;
 
@@ -212,6 +210,7 @@ struct pfsync_softc {
 	struct task		 sc_ltask;
 	struct task		 sc_dtask;
 	struct ip		 sc_template;
+	caddr_t			 sc_bpf;
 
 	struct pfsync_slice	 sc_slices[PFSYNC_NSLICES];
 
@@ -455,6 +454,9 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if.if_bpf, ifp, DLT_PFSYNC, PFSYNC_HDRLEN);
+#if 0
+	bpfattach(&sc->sc_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+#endif
 #endif
 
 	return (0);
@@ -618,7 +620,7 @@ pfsync_set_mtu(struct pfsync_softc *sc, unsigned int mtu)
 	if (ifp0 == NULL)
 		return (EINVAL);
 
-	if (mtu <= PFSYNC_MINPKT || mtu > ifp0->if_mtu) {
+	if (mtu <= sizeof(struct ip) + PFSYNC_MINPKT || mtu > ifp0->if_mtu) {
 		error = EINVAL;
 		goto put;
 	}
@@ -945,7 +947,7 @@ pfsync_bulk_req_nstate_bulk(struct pfsync_softc *sc)
 {
 	/* calculate the number of packets we expect */
 	int t = pf_pool_limits[PF_LIMIT_STATES].limit /
-	    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
+	    ((sc->sc_if.if_mtu - (sizeof(struct ip) + PFSYNC_MINPKT)) /
 	     sizeof(struct pfsync_state));
 
 	/* turn it into seconds */
@@ -1408,7 +1410,6 @@ pfsync_slice_write(struct pfsync_slice *s)
 	struct pfsync_softc *sc = s->s_pfsync;
 	struct mbuf *m;
 
-	struct ip *ip;
 	struct pfsync_header *ph;
 	struct pfsync_subheader *subh;
 
@@ -1441,17 +1442,11 @@ pfsync_slice_write(struct pfsync_slice *s)
 	ptr = mtod(m, caddr_t);
 	off = 0;
 
-	ip = (struct ip *)(ptr + off);
-	off += sizeof(*ip);
-	*ip = sc->sc_template;
-	ip->ip_len = htons(m->m_pkthdr.len);
-	ip->ip_id = htons(ip_randomid());
-
 	ph = (struct pfsync_header *)(ptr + off);
 	off += sizeof(*ph);
 	memset(ph, 0, sizeof(*ph));
 	ph->version = PFSYNC_VERSION;
-	ph->len = htons(m->m_pkthdr.len - sizeof(*ip));
+	ph->len = htons(m->m_pkthdr.len);
 
 	for (q = 0; q < nitems(s->s_qs); q++) {
 		struct pf_state_queue *psq = &s->s_qs[q];
@@ -1528,26 +1523,49 @@ static void
 pfsync_sendout(struct pfsync_softc *sc, struct mbuf *m)
 {
 	struct ip_moptions imo;
-	unsigned int len = m->m_pkthdr.len;
+	unsigned int len;
+	struct ip *ip;
+
 #if NBPFILTER > 0
-	caddr_t if_bpf = sc->sc_if.if_bpf;
+	caddr_t if_bpf;
+
+	if_bpf = sc->sc_if.if_bpf;
 	if (if_bpf)
 		bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
 #endif
+
+	m = m_prepend(m, sizeof(*ip), M_DONTWAIT);
+	if (m == NULL)
+		goto oerror;
+
+	ip = mtod(m, struct ip *);
+	*ip = sc->sc_template;
+	ip->ip_len = htons(m->m_pkthdr.len);
+	ip->ip_id = htons(ip_randomid());
+
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf)
+		bpf_mtap_af(if_bpf, AF_INET, m, BPF_DIRECTION_OUT);
+#endif
+
+	len = m->m_pkthdr.len;
 
 	imo.imo_ifidx = sc->sc_sync_ifidx;
 	imo.imo_ttl = PFSYNC_DFLTTL;
 	imo.imo_loop = 0;
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
-	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) == 0) {
-		counters_pkt(sc->sc_if.if_counters, ifc_opackets,
-		    ifc_obytes, len);
-		pfsyncstat_inc(pfsyncs_opackets);
-	} else {
-		counters_inc(sc->sc_if.if_counters, ifc_oerrors);
-		pfsyncstat_inc(pfsyncs_oerrors);
-	}
+	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) != 0)
+		goto oerror;
+
+	counters_pkt(sc->sc_if.if_counters, ifc_opackets, ifc_obytes, len);
+	pfsyncstat_inc(pfsyncs_opackets);
+	return;
+
+oerror:
+	counters_inc(sc->sc_if.if_counters, ifc_oerrors);
+	pfsyncstat_inc(pfsyncs_oerrors);
 }
 
 static void
@@ -2622,7 +2640,7 @@ pfsync_in_skip(struct pfsync_softc *sc,
 }
 
 static struct mbuf *
-pfsync_input(struct mbuf *m, uint8_t ttl, unsigned int hlen)
+pfsync_input(struct mbuf *m, int af, uint8_t ttl, unsigned int hlen)
 {
 	struct pfsync_softc *sc;
 	struct pfsync_header *ph;
@@ -2630,6 +2648,9 @@ pfsync_input(struct mbuf *m, uint8_t ttl, unsigned int hlen)
 	unsigned int len;
 	void (*in)(struct pfsync_softc *,
 	    const caddr_t, unsigned int, unsigned int);
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
 	pfsyncstat_inc(pfsyncs_ipackets);
 
@@ -2655,12 +2676,23 @@ pfsync_input(struct mbuf *m, uint8_t ttl, unsigned int hlen)
 		goto leave;
 	}
 
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf)
+		bpf_mtap_af(if_bpf, af, m, BPF_DIRECTION_IN);
+#endif
+
 	m_adj(m, hlen);
 
 	if (m->m_pkthdr.len < sizeof(*ph)) {
 		pfsyncstat_inc(pfsyncs_hdrops);
 		goto leave;
 	}
+#if NBPFILTER > 0
+	if_bpf = sc->sc_if.if_bpf;
+	if (if_bpf)
+		bpf_mtap(if_bpf, m, BPF_DIRECTION_IN);
+#endif
 	if (m->m_len < sizeof(*ph)) {
 		m = m_pullup(m, sizeof(*ph));
 		if (m == NULL)
@@ -3325,7 +3357,7 @@ pfsync_input4(struct mbuf **mp, int *offp, int proto, int af)
 
 	ip = mtod(m, struct ip *);
 
-	m = pfsync_input(m, ip->ip_ttl, ip->ip_hl << 2);
+	m = pfsync_input(m, af, ip->ip_ttl, ip->ip_hl << 2);
 
 	m_freem(m);
 	*mp = NULL;
