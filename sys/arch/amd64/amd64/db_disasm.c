@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.26 2024/07/09 01:21:19 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.27 2024/11/19 05:49:27 anton Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -162,6 +162,17 @@ char * db_GrpC[] = {
 	"",		"",		"",		""
 };
 
+struct inst db_Grp0f1e[] = {
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 0,    NONE, 0,          0 },
+	{ "", 1,    NONE, op2(MEx,2), "\0\0endbr64" },
+};
+
 struct inst db_inst_0f0x[] = {
 /*00*/	{ NULL,	   1,  NONE,  op1(Ew),     db_Grp6 },
 /*01*/	{ "",	   1,  RDEP,  0,           db_Grp7 },
@@ -180,6 +191,26 @@ struct inst db_inst_0f0x[] = {
 /*0d*/	{ "",      0, NONE,  0,	      0 },
 /*0e*/	{ "",      0, NONE,  0,	      0 },
 /*0f*/	{ "",      0, NONE,  0,	      0 },
+};
+
+struct inst db_inst_0f1x[] = {
+/*10*/	{ "",      0, NONE,  0,	      0 },
+/*11*/	{ "",      0, NONE,  0,	      0 },
+/*12*/	{ "",      0, NONE,  0,	      0 },
+/*13*/	{ "",      0, NONE,  0,	      0 },
+/*14*/	{ "",      0, NONE,  0,	      0 },
+/*15*/	{ "",      0, NONE,  0,	      0 },
+/*16*/	{ "",      0, NONE,  0,	      0 },
+/*17*/	{ "",      0, NONE,  0,	      0 },
+
+/*18*/	{ "",      0, NONE,  0,	      0 },
+/*19*/	{ "",      0, NONE,  0,	      0 },
+/*1a*/	{ "",      0, NONE,  0,	      0 },
+/*1b*/	{ "",      0, NONE,  0,	      0 },
+/*1c*/	{ "",      0, NONE,  0,	      0 },
+/*1d*/	{ "",      0, NONE,  0,	      0 },
+/*1e*/	{ "",      1, RDEP,  0,	      db_Grp0f1e },
+/*1f*/	{ "",      0, NONE,  0,	      0 },
 };
 
 struct inst	db_inst_0f2x[] = {
@@ -324,7 +355,7 @@ struct inst	db_inst_0fcx[] = {
 
 struct inst *db_inst_0f[] = {
 	db_inst_0f0x,
-	NULL,
+	db_inst_0f1x,
 	db_inst_0f2x,
 	db_inst_0f3x,
 	NULL,
@@ -1175,6 +1206,11 @@ db_disasm(vaddr_t loc, int altfmt)
 	} while (prefix);
 	if (segovr_grp > 1)
 		seg = "<bad segment override prefix combination> ";
+
+	/* prefix with escape byte, not a rep */
+	if ((repe || repne) && inst == 0x0f)
+		repe = repne = 0;
+
 	if (repe > 0 && repne > 0)
 		db_printf("<bad repeat prefix combination> ");
 	else if (repe > 0)
