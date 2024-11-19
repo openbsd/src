@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.9 2024/11/15 15:43:49 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.10 2024/11/19 09:39:57 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -77,6 +77,7 @@
 #endif
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/ethertypes.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -19628,6 +19629,138 @@ ice_init_health_events(struct ice_softc *sc)
 }
 
 /**
+ * ice_fw_supports_lldp_fltr_ctrl - check NVM version supports lldp_fltr_ctrl
+ * @hw: pointer to HW struct
+ */
+bool
+ice_fw_supports_lldp_fltr_ctrl(struct ice_hw *hw)
+{
+	if (hw->mac_type != ICE_MAC_E810 && hw->mac_type != ICE_MAC_GENERIC)
+		return false;
+
+	return ice_is_fw_api_min_ver(hw, ICE_FW_API_LLDP_FLTR_MAJ,
+				     ICE_FW_API_LLDP_FLTR_MIN,
+				     ICE_FW_API_LLDP_FLTR_PATCH);
+}
+
+/**
+ * ice_add_ethertype_to_list - Add an Ethertype filter to a filter list
+ * @vsi: the VSI to target packets to
+ * @list: the list to add the filter to
+ * @ethertype: the Ethertype to filter on
+ * @direction: The direction of the filter (Tx or Rx)
+ * @action: the action to take
+ *
+ * Add an Ethertype filter to a filter list. Used to forward a series of
+ * filters to the firmware for configuring the switch.
+ *
+ * Returns 0 on success, and an error code on failure.
+ */
+int
+ice_add_ethertype_to_list(struct ice_vsi *vsi, struct ice_fltr_list_head *list,
+    uint16_t ethertype, uint16_t direction, enum ice_sw_fwd_act_type action)
+{
+	struct ice_fltr_list_entry *entry;
+
+	KASSERT((direction == ICE_FLTR_TX) || (direction == ICE_FLTR_RX));
+
+	entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (!entry)
+		return (ENOMEM);
+
+	entry->fltr_info.flag = direction;
+	entry->fltr_info.src_id = ICE_SRC_ID_VSI;
+	entry->fltr_info.lkup_type = ICE_SW_LKUP_ETHERTYPE;
+	entry->fltr_info.fltr_act = action;
+	entry->fltr_info.vsi_handle = vsi->idx;
+	entry->fltr_info.l_data.ethertype_mac.ethertype = ethertype;
+
+	TAILQ_INSERT_HEAD(list, entry, list_entry);
+
+	return 0;
+}
+
+/**
+ * ice_lldp_fltr_add_remove - add or remove a LLDP Rx switch filter
+ * @hw: pointer to HW struct
+ * @vsi_num: absolute HW index for VSI
+ * @add: boolean for if adding or removing a filter
+ */
+enum ice_status
+ice_lldp_fltr_add_remove(struct ice_hw *hw, uint16_t vsi_num, bool add)
+{
+	struct ice_aqc_lldp_filter_ctrl *cmd;
+	struct ice_aq_desc desc;
+
+	cmd = &desc.params.lldp_filter_ctrl;
+
+	ice_fill_dflt_direct_cmd_desc(&desc, ice_aqc_opc_lldp_filter_ctrl);
+
+	if (add)
+		cmd->cmd_flags = ICE_AQC_LLDP_FILTER_ACTION_ADD;
+	else
+		cmd->cmd_flags = ICE_AQC_LLDP_FILTER_ACTION_DELETE;
+
+	cmd->vsi_num = htole16(vsi_num);
+
+	return ice_aq_send_cmd(hw, &desc, NULL, 0, NULL);
+}
+
+/**
+ * ice_add_eth_mac_rule - Add ethertype and MAC based filter rule
+ * @hw: pointer to the hardware structure
+ * @em_list: list of ether type MAC filter, MAC is optional
+ * @sw: pointer to switch info struct for which function add rule
+ * @lport: logic port number on which function add rule
+ *
+ * This function requires the caller to populate the entries in
+ * the filter list with the necessary fields (including flags to
+ * indicate Tx or Rx rules).
+ */
+enum ice_status
+ice_add_eth_mac_rule(struct ice_hw *hw, struct ice_fltr_list_head *em_list,
+		     struct ice_switch_info *sw, uint8_t lport)
+{
+	struct ice_fltr_list_entry *em_list_itr;
+
+	TAILQ_FOREACH(em_list_itr, em_list, list_entry) {
+		struct ice_sw_recipe *recp_list;
+		enum ice_sw_lkup_type l_type;
+
+		l_type = em_list_itr->fltr_info.lkup_type;
+		recp_list = &sw->recp_list[l_type];
+
+		if (l_type != ICE_SW_LKUP_ETHERTYPE_MAC &&
+		    l_type != ICE_SW_LKUP_ETHERTYPE)
+			return ICE_ERR_PARAM;
+
+		em_list_itr->status = ice_add_rule_internal(hw, recp_list,
+							    lport,
+							    em_list_itr);
+		if (em_list_itr->status)
+			return em_list_itr->status;
+	}
+	return ICE_SUCCESS;
+}
+
+/**
+ * ice_add_eth_mac - Add a ethertype based filter rule
+ * @hw: pointer to the hardware structure
+ * @em_list: list of ethertype and forwarding information
+ *
+ * Function add ethertype rule for logical port from HW struct
+ */
+enum ice_status
+ice_add_eth_mac(struct ice_hw *hw, struct ice_fltr_list_head *em_list)
+{
+	if (!em_list || !hw)
+		return ICE_ERR_PARAM;
+
+	return ice_add_eth_mac_rule(hw, em_list, hw->switch_info,
+				    hw->port_info->lport);
+}
+
+/**
  * ice_add_rx_lldp_filter - add ethertype filter for Rx LLDP frames
  * @sc: the device private structure
  *
@@ -19638,25 +19771,23 @@ ice_init_health_events(struct ice_softc *sc)
 void
 ice_add_rx_lldp_filter(struct ice_softc *sc)
 {
-#if 0
-	struct ice_list_head ethertype_list;
+	struct ice_fltr_list_head ethertype_list;
 	struct ice_vsi *vsi = &sc->pf_vsi;
 	struct ice_hw *hw = &sc->hw;
-	device_t dev = sc->dev;
 	enum ice_status status;
 	int err;
-	u16 vsi_num;
+	uint16_t vsi_num;
 
 	/*
 	 * If FW is new enough, use a direct AQ command to perform the filter
 	 * addition.
 	 */
 	if (ice_fw_supports_lldp_fltr_ctrl(hw)) {
-		vsi_num = ice_get_hw_vsi_num(hw, vsi->idx);
+		vsi_num = hw->vsi_ctx[vsi->idx]->vsi_num;
 		status = ice_lldp_fltr_add_remove(hw, vsi_num, true);
 		if (status) {
-			device_printf(dev,
-			    "Failed to add Rx LLDP filter, err %s aq_err %s\n",
+			DPRINTF("%s: failed to add Rx LLDP filter, "
+			    "err %s aq_err %s\n", __func__,
 			    ice_status_str(status),
 			    ice_aq_str(hw->adminq.sq_last_status));
 		} else
@@ -19665,25 +19796,22 @@ ice_add_rx_lldp_filter(struct ice_softc *sc)
 		return;
 	}
 
-	INIT_LIST_HEAD(&ethertype_list);
+	TAILQ_INIT(&ethertype_list);
 
 	/* Forward Rx LLDP frames to the stack */
-	err = ice_add_ethertype_to_list(vsi, &ethertype_list,
-					ETHERTYPE_LLDP_FRAMES,
+	err = ice_add_ethertype_to_list(vsi, &ethertype_list, ETHERTYPE_LLDP,
 					ICE_FLTR_RX, ICE_FWD_TO_VSI);
 	if (err) {
-		device_printf(dev,
-			      "Failed to add Rx LLDP filter, err %s\n",
-			      ice_err_str(err));
+		DPRINTF("%s: failed to add Rx LLDP filter, err %d\n",
+		    __func__, err);
 		goto free_ethertype_list;
 	}
 
 	status = ice_add_eth_mac(hw, &ethertype_list);
 	if (status && status != ICE_ERR_ALREADY_EXISTS) {
-		device_printf(dev,
-			      "Failed to add Rx LLDP filter, err %s aq_err %s\n",
-			      ice_status_str(status),
-			      ice_aq_str(hw->adminq.sq_last_status));
+		DPRINTF("%s: failed to add Rx LLDP filter, err %s aq_err %s\n",
+		    __func__, ice_status_str(status),
+		    ice_aq_str(hw->adminq.sq_last_status));
 	} else {
 		/*
 		 * If status == ICE_ERR_ALREADY_EXISTS, we won't treat an
@@ -19694,9 +19822,6 @@ ice_add_rx_lldp_filter(struct ice_softc *sc)
 
 free_ethertype_list:
 	ice_free_fltr_list(&ethertype_list);
-#else
-	printf("%s: not implemented\n", __func__);
-#endif
 }
 
 /**
