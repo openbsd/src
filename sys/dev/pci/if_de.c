@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.143 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.144 2024/11/20 02:26:53 dlg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3728,6 +3728,8 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
     u_int32_t d_status;
     bus_dmamap_t map;
     struct ifnet *ifp = &sc->tulip_if;
+    void (*set_oactive)(struct ifqueue *) =
+      notonqueue ? ifq_set_oactive : ifq_deq_set_oactive;
 
 #if defined(TULIP_DEBUG)
     if ((sc->tulip_cmdmode & TULIP_CMD_TXRUN) == 0) {
@@ -3846,8 +3848,10 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
      * The descriptors have been filled in.  Now get ready
      * to transmit.
      */
-    if (!notonqueue)
+    if (!notonqueue) {
 	ifq_deq_commit(&ifp->if_snd, m);
+	set_oactive = ifq_set_oactive;
+    }
 
     TULIP_SETCTX(m, map);
     map = NULL;
@@ -3897,7 +3901,7 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
 
     if (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) {
 	TULIP_CSR_WRITE(sc, csr_txpoll, 1);
-	ifq_set_oactive(&sc->tulip_if.if_snd);
+	(*set_oactive)(&sc->tulip_if.if_snd);
 	TULIP_PERFEND(txput);
 	return (NULL);
     }
@@ -3926,7 +3930,7 @@ tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int notonqueue)
     sc->tulip_dbg.dbg_txput_finishes[6]++;
 #endif
     if (sc->tulip_flags & (TULIP_WANTTXSTART|TULIP_DOINGSETUP)) {
-	ifq_set_oactive(&sc->tulip_if.if_snd);
+	(*set_oactive)(&sc->tulip_if.if_snd);
 	if ((sc->tulip_intrmask & TULIP_STS_TXINTR) == 0) {
 	    sc->tulip_intrmask |= TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
