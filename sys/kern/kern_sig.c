@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.350 2024/11/16 13:06:06 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.351 2024/11/20 10:21:22 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1117,7 +1117,6 @@ ptsignal_locked(struct proc *p, int signum, enum signal_type type)
 				goto out;
 			}
 			if (p->p_wchan == NULL) {
-				unsleep(p);
 				setrunnable(p);
 				goto out;
 			}
