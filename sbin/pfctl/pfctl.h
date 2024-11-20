@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.64 2024/07/14 19:51:08 sashan Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.65 2024/11/20 13:57:29 kirill Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -82,6 +82,7 @@ int	 pfr_del_tables(struct pfr_table *, int, int *, int);
 int	 pfr_get_tables(struct pfr_table *, struct pfr_table *, int *, int);
 int	 pfr_get_tstats(struct pfr_table *, struct pfr_tstats *, int *, int);
 int	 pfr_clr_tstats(struct pfr_table *, int, int *, int);
+int	 pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *, int);
 int	 pfr_clr_addrs(struct pfr_table *, int *, int);
 int	 pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *, int);
 int	 pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *, int);
