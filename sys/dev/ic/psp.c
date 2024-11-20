@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.14 2024/11/10 06:51:59 jsg Exp $ */
+/*	$OpenBSD: psp.c,v 1.15 2024/11/20 13:36:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -73,7 +73,7 @@ int	psp_init(struct psp_softc *, struct psp_init *);
 int	psp_reinit(struct psp_softc *);
 int	psp_match(struct device *, void *, void *);
 void	psp_attach(struct device *, struct device *, void *);
-void	psp_load_ucode(struct psp_softc *);
+int	psp_load_ucode(struct psp_softc *);
 
 struct cfdriver psp_cd = {
 	NULL, "psp", DV_DULL
@@ -118,7 +118,7 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 	struct psp_attach_args		*arg = aux;
 	struct psp_platform_status	pst;
 	size_t				size;
-	int				nsegs;
+	int				nsegs, error;
 
 	printf(":");
 	sc->sc_iot = arg->iot;
@@ -145,30 +145,33 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 
 	/* create and map SEV command buffer */
 	sc->sc_cmd_size = size = PAGE_SIZE;
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
-	    &sc->sc_cmd_map) != 0)
-		return;
-
-	if (bus_dmamem_alloc(sc->sc_dmat, size, 0, 0, &sc->sc_cmd_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT, &sc->sc_cmd_map);
+	if (error)
 		goto fail_0;
 
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_cmd_seg, nsegs, size,
-	    &sc->sc_cmd_kva, BUS_DMA_WAITOK) != 0)
+	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, 0, &sc->sc_cmd_seg, 1,
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
+	if (error)
 		goto fail_1;
 
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_cmd_map, sc->sc_cmd_kva,
-	    size, NULL, BUS_DMA_WAITOK) != 0)
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cmd_seg, nsegs, size,
+	    &sc->sc_cmd_kva, BUS_DMA_WAITOK);
+	if (error)
 		goto fail_2;
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmd_map, sc->sc_cmd_kva,
+	    size, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto fail_3;
 
 	if (psp_get_pstatus(sc, &pst)) {
 		printf(" platform status");
-		goto fail_3;
+		goto fail_4;
 	}
 	if (pst.state != PSP_PSTATE_UNINIT) {
 		printf(" uninitialized state");
-		goto fail_3;
+		goto fail_4;
 	}
 	printf(" api %u.%u, build %u, SEV, SEV-ES",
 	    pst.api_major, pst.api_minor, pst.cfges_build >> 24);
@@ -180,25 +183,23 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail_3:
+fail_4:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_map);
-fail_2:
+fail_3:
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_cmd_kva, size);
+fail_2:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmd_seg, nsegs);
 fail_1:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmd_seg, 1);
-fail_0:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmd_map);
-
+fail_0:
 	printf(" failed\n");
-
-	return;
 }
 
 static int
 ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 {
 	uint32_t	cmdword;
-	int		count;
+	int		count, error;
 
 	MUTEX_ASSERT_LOCKED(&sc->psp_lock);
 
@@ -213,12 +214,12 @@ ccp_wait(struct psp_softc *sc, uint32_t *status, int poll)
 		}
 
 		/* timeout */
-		return (1);
+		return (EWOULDBLOCK);
 	}
 
-	if (msleep_nsec(sc, &sc->psp_lock, PWAIT, "psp", SEC_TO_NSEC(2))
-	    == EWOULDBLOCK)
-		return (1);
+	error = msleep_nsec(sc, &sc->psp_lock, PWAIT, "psp", SEC_TO_NSEC(2));
+	if (error)
+		return (error);
 
 	cmdword = bus_space_read_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_cmdresp);
 done:
@@ -231,7 +232,7 @@ static int
 ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 {
 	uint32_t	plo, phi, cmdword, status;
-	int		ret;
+	int		error;
 
 	plo = ((paddr >> 0) & 0xffffffff);
 	phi = ((paddr >> 32) & 0xffffffff);
@@ -244,15 +245,15 @@ ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_addrhi, phi);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_reg_cmdresp, cmdword);
 
-	ret = ccp_wait(sc, &status, cold);
+	error = ccp_wait(sc, &status, cold);
 	mtx_leave(&sc->psp_lock);
-	if (ret)
-		return (1);
+	if (error)
+		return (error);
 
 	/* Did PSP sent a response code? */
 	if (status & PSP_CMDRESP_RESPONSE) {
 		if ((status & PSP_STATUS_MASK) != PSP_STATUS_SUCCESS)
-			return (1);
+			return (EIO);
 	}
 
 	return (0);
@@ -262,7 +263,7 @@ int
 psp_init(struct psp_softc *sc, struct psp_init *uinit)
 {
 	struct psp_init		*init;
-	int			 ret;
+	int			 error;
 
 	init = (struct psp_init *)sc->sc_cmd_kva;
 	bzero(init, sizeof(*init));
@@ -271,9 +272,9 @@ psp_init(struct psp_softc *sc, struct psp_init *uinit)
 	init->tmr_paddr = uinit->tmr_paddr;
 	init->tmr_length = uinit->tmr_length;
 
-	ret = ccp_docmd(sc, PSP_CMD_INIT, sc->sc_cmd_map->dm_segs[0].ds_addr);
-	if (ret != 0)
-		return (EIO);
+	error = ccp_docmd(sc, PSP_CMD_INIT, sc->sc_cmd_map->dm_segs[0].ds_addr);
+	if (error)
+		return (error);
 
 	wbinvd_on_all_cpus_acked();
 
@@ -287,71 +288,73 @@ psp_reinit(struct psp_softc *sc)
 {
 	struct psp_init	init;
 	size_t		size;
-	int		nsegs;
+	int		nsegs, error;
 
 	if (sc->sc_flags & PSPF_INITIALIZED) {
 		printf("%s: invalid flags 0x%x\n", __func__, sc->sc_flags);
-		return (EINVAL);
+		return (EBUSY);
 	}
 
 	if (sc->sc_tmr_map != NULL)
-		return (EINVAL);
+		return (EBUSY);
 
 	/*
 	 * create and map Trusted Memory Region (TMR); size 1 Mbyte,
 	 * needs to be aligend to 1 Mbyte.
 	 */
 	sc->sc_tmr_size = size = PSP_TMR_SIZE;
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
-	    &sc->sc_tmr_map) != 0)
-		return (ENOMEM);
-
-	if (bus_dmamem_alloc(sc->sc_dmat, size, size, 0, &sc->sc_tmr_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT, &sc->sc_tmr_map);
+	if (error)
 		goto fail_0;
 
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_tmr_seg, nsegs, size,
-	    &sc->sc_tmr_kva, BUS_DMA_WAITOK) != 0)
+	error = bus_dmamem_alloc(sc->sc_dmat, size, size, 0, &sc->sc_tmr_seg, 1,
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
+	if (error)
 		goto fail_1;
 
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_tmr_map, sc->sc_tmr_kva,
-	    size, NULL, BUS_DMA_WAITOK) != 0)
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_tmr_seg, nsegs, size,
+	    &sc->sc_tmr_kva, BUS_DMA_WAITOK);
+	if (error)
 		goto fail_2;
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_tmr_map, sc->sc_tmr_kva,
+	    size, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto fail_3;
 
 	memset(&init, 0, sizeof(init));
 	init.enable_es = 1;
 	init.tmr_length = PSP_TMR_SIZE;
 	init.tmr_paddr = sc->sc_tmr_map->dm_segs[0].ds_addr;
-	if (psp_init(sc, &init))
-		goto fail_3;
+	if ((error = psp_init(sc, &init)) != 0)
+		goto fail_4;
 
 	return (0);
 
-fail_3:
+fail_4:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_tmr_map);
-fail_2:
+fail_3:
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_tmr_kva, size);
+fail_2:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_tmr_seg, nsegs);
 fail_1:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_tmr_seg, 1);
-fail_0:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_tmr_map);
-
-	return (ENOMEM);
+fail_0:
+	return (error);
 }
 
 int
 psp_shutdown(struct psp_softc *sc)
 {
-	int ret;
+	int error;
 
 	if (sc->sc_tmr_map == NULL)
 		return (EINVAL);
 
-	ret = ccp_docmd(sc, PSP_CMD_SHUTDOWN, 0x0);
-
-	if (ret != 0)
-		return (EIO);
+	error = ccp_docmd(sc, PSP_CMD_SHUTDOWN, 0x0);
+	if (error)
+		return (error);
 
 	/* wbinvd right after SHUTDOWN */
 	wbinvd_on_all_cpus_acked();
@@ -372,17 +375,16 @@ psp_shutdown(struct psp_softc *sc)
 int
 psp_get_pstatus(struct psp_softc *sc, struct psp_platform_status *ustatus)
 {
-	struct psp_platform_status *status;
-	int			 ret;
+	struct psp_platform_status	*status;
+	int				 error;
 
 	status = (struct psp_platform_status *)sc->sc_cmd_kva;
 	bzero(status, sizeof(*status));
 
-	ret = ccp_docmd(sc, PSP_CMD_PLATFORMSTATUS,
+	error = ccp_docmd(sc, PSP_CMD_PLATFORMSTATUS,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
-
-	if (ret != 0)
-		return (EIO);
+	if (error)
+		return (error);
 
 	bcopy(status, ustatus, sizeof(*ustatus));
 
@@ -392,54 +394,47 @@ psp_get_pstatus(struct psp_softc *sc, struct psp_platform_status *ustatus)
 int
 psp_df_flush(struct psp_softc *sc)
 {
-	int			 ret;
+	int error;
 
 	wbinvd_on_all_cpus_acked();
 
-	ret = ccp_docmd(sc, PSP_CMD_DF_FLUSH, 0x0);
+	error = ccp_docmd(sc, PSP_CMD_DF_FLUSH, 0x0);
 
-	if (ret != 0)
-		return (EIO);
-
-	return (0);
+	return (error);
 }
 
 int
 psp_decommission(struct psp_softc *sc, struct psp_decommission *udecom)
 {
 	struct psp_decommission	*decom;
-	int			 ret;
+	int			 error;
 
 	decom = (struct psp_decommission *)sc->sc_cmd_kva;
 	bzero(decom, sizeof(*decom));
 
 	decom->handle = udecom->handle;
 
-	ret = ccp_docmd(sc, PSP_CMD_DECOMMISSION,
+	error = ccp_docmd(sc, PSP_CMD_DECOMMISSION,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
 
-	if (ret != 0)
-		return (EIO);
-
-	return (0);
+	return (error);
 }
 
 int
 psp_get_gstatus(struct psp_softc *sc, struct psp_guest_status *ustatus)
 {
 	struct psp_guest_status	*status;
-	int			 ret;
+	int			 error;
 
 	status = (struct psp_guest_status *)sc->sc_cmd_kva;
 	bzero(status, sizeof(*status));
 
 	status->handle = ustatus->handle;
 
-	ret = ccp_docmd(sc, PSP_CMD_GUESTSTATUS,
+	error = ccp_docmd(sc, PSP_CMD_GUESTSTATUS,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
-
-	if (ret != 0)
-		return (EIO);
+	if (error)
+		return (error);
 
 	ustatus->policy = status->policy;
 	ustatus->asid = status->asid;
@@ -452,7 +447,7 @@ int
 psp_launch_start(struct psp_softc *sc, struct psp_launch_start *ustart)
 {
 	struct psp_launch_start	*start;
-	int			 ret;
+	int			 error;
 
 	start = (struct psp_launch_start *)sc->sc_cmd_kva;
 	bzero(start, sizeof(*start));
@@ -460,11 +455,10 @@ psp_launch_start(struct psp_softc *sc, struct psp_launch_start *ustart)
 	start->handle = ustart->handle;
 	start->policy = ustart->policy;
 
-	ret = ccp_docmd(sc, PSP_CMD_LAUNCH_START,
+	error = ccp_docmd(sc, PSP_CMD_LAUNCH_START,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
-
-	if (ret != 0)
-		return (EIO);
+	if (error)
+		return (error);
 
 	/* If requested, return new handle. */
 	if (ustart->handle == 0)
@@ -481,7 +475,7 @@ psp_launch_update_data(struct psp_softc *sc,
 	pmap_t				 pmap;
 	vaddr_t				 v, next, start, end;
 	size_t				 size, len, off;
-	int				 ret;
+	int				 error;
 
 	/* Ensure AES_XTS_BLOCKSIZE alignment and multiplicity. */
 	if ((ulud->paddr & (AES_XTS_BLOCKSIZE - 1)) != 0 ||
@@ -508,10 +502,9 @@ psp_launch_update_data(struct psp_softc *sc,
 	size = ulud->length;
 	end = start + size;
 
-	ret = EINVAL;
-
 	/* Wire mapping. */
-	if (uvm_map_pageable(&p->p_vmspace->vm_map, start, end, FALSE, 0))
+	error = uvm_map_pageable(&p->p_vmspace->vm_map, start, end, FALSE, 0);
+	if (error)
 		goto out;
 
 	for (v = ulud->paddr; v < end; v = next) {
@@ -519,36 +512,37 @@ psp_launch_update_data(struct psp_softc *sc,
 
 		len = MIN(PAGE_SIZE - off, size);
 
-		if (!pmap_extract(pmap, v, (paddr_t *)&ludata->paddr))
-			goto out;
-		ludata->length = len;
-
-		ret = ccp_docmd(sc, PSP_CMD_LAUNCH_UPDATE_DATA,
-		    sc->sc_cmd_map->dm_segs[0].ds_addr);
-
-		if (ret != 0) {
-			ret = EIO;
+		if (!pmap_extract(pmap, v, (paddr_t *)&ludata->paddr)) {
+			error = EINVAL;
 			goto out;
 		}
+		ludata->length = len;
+
+		error = ccp_docmd(sc, PSP_CMD_LAUNCH_UPDATE_DATA,
+		    sc->sc_cmd_map->dm_segs[0].ds_addr);
+		if (error)
+			goto out;
 
 		size -= len;
 		next = v + len;
 	}
 
 out:
-	/* Unwire again. */
-	if (uvm_map_pageable(&p->p_vmspace->vm_map, start, end, TRUE, 0))
-		return (EINVAL);
+	/*
+	 * Unwire again.  Ignore new error.  Error has either been set,
+	 * or PSP command has already succeeded.
+	 */
+	(void) uvm_map_pageable(&p->p_vmspace->vm_map, start, end, TRUE, 0);
 
-	return (ret);
+	return (error);
 }
 
 int
 psp_launch_measure(struct psp_softc *sc, struct psp_launch_measure *ulm)
 {
-	struct psp_launch_measure *lm;
-	int			 ret;
-	uint64_t		 paddr;
+	struct psp_launch_measure	*lm;
+	uint64_t			 paddr;
+	int				 error;
 
 	if (ulm->measure_len != sizeof(ulm->psp_measure))
 		return (EINVAL);
@@ -562,10 +556,11 @@ psp_launch_measure(struct psp_softc *sc, struct psp_launch_measure *ulm)
 	    paddr + offsetof(struct psp_launch_measure, psp_measure);
 	lm->measure_len = sizeof(lm->psp_measure);
 
-	ret = ccp_docmd(sc, PSP_CMD_LAUNCH_MEASURE, paddr);
-
-	if (ret != 0 || lm->measure_len != ulm->measure_len)
-		return (EIO);
+	error = ccp_docmd(sc, PSP_CMD_LAUNCH_MEASURE, paddr);
+	if (error)
+		return (error);
+	if (lm->measure_len != ulm->measure_len)
+		return (ERANGE);
 
 	bcopy(&lm->psp_measure, &ulm->psp_measure, ulm->measure_len);
 
@@ -575,29 +570,26 @@ psp_launch_measure(struct psp_softc *sc, struct psp_launch_measure *ulm)
 int
 psp_launch_finish(struct psp_softc *sc, struct psp_launch_finish *ulf)
 {
-	struct psp_launch_finish *lf;
-	int			 ret;
+	struct psp_launch_finish	*lf;
+	int				 error;
 
 	lf = (struct psp_launch_finish *)sc->sc_cmd_kva;
 	bzero(lf, sizeof(*lf));
 
 	lf->handle = ulf->handle;
 
-	ret = ccp_docmd(sc, PSP_CMD_LAUNCH_FINISH,
+	error = ccp_docmd(sc, PSP_CMD_LAUNCH_FINISH,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
 
-	if (ret != 0)
-		return (EIO);
-
-	return (0);
+	return (error);
 }
 
 int
 psp_attestation(struct psp_softc *sc, struct psp_attestation *uat)
 {
 	struct psp_attestation	*at;
-	int			 ret;
 	uint64_t		 paddr;
+	int			 error;
 
 	if (uat->attest_len != sizeof(uat->psp_report))
 		return (EINVAL);
@@ -612,10 +604,11 @@ psp_attestation(struct psp_softc *sc, struct psp_attestation *uat)
 	bcopy(uat->attest_nonce, at->attest_nonce, sizeof(at->attest_nonce));
 	at->attest_len = sizeof(at->psp_report);
 
-	ret = ccp_docmd(sc, PSP_CMD_ATTESTATION, paddr);
-
-	if (ret != 0 || at->attest_len != uat->attest_len)
-		return (EIO);
+	error = ccp_docmd(sc, PSP_CMD_ATTESTATION, paddr);
+	if (error)
+		return (error);
+	if (at->attest_len != uat->attest_len)
+		return (ERANGE);
 
 	bcopy(&at->psp_report, &uat->psp_report, uat->attest_len);
 
@@ -626,7 +619,7 @@ int
 psp_activate(struct psp_softc *sc, struct psp_activate *uact)
 {
 	struct psp_activate	*act;
-	int			 ret;
+	int			 error;
 
 	act = (struct psp_activate *)sc->sc_cmd_kva;
 	bzero(act, sizeof(*act));
@@ -634,82 +627,78 @@ psp_activate(struct psp_softc *sc, struct psp_activate *uact)
 	act->handle = uact->handle;
 	act->asid = uact->asid;
 
-	ret = ccp_docmd(sc, PSP_CMD_ACTIVATE,
+	error = ccp_docmd(sc, PSP_CMD_ACTIVATE,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
 
-	if (ret != 0)
-		return (EIO);
-
-	return (0);
+	return (error);
 }
 
 int
 psp_deactivate(struct psp_softc *sc, struct psp_deactivate *udeact)
 {
 	struct psp_deactivate	*deact;
-	int			 ret;
+	int			 error;
 
 	deact = (struct psp_deactivate *)sc->sc_cmd_kva;
 	bzero(deact, sizeof(*deact));
 
 	deact->handle = udeact->handle;
 
-	ret = ccp_docmd(sc, PSP_CMD_DEACTIVATE,
+	error = ccp_docmd(sc, PSP_CMD_DEACTIVATE,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
 
-	if (ret != 0)
-		return (EIO);
-
-	return (0);
+	return (error);
 }
 
 int
 psp_downloadfirmware(struct psp_softc *sc, struct psp_downloadfirmware *udlfw)
 {
-	struct psp_downloadfirmware *dlfw;
-	bus_dmamap_t		 map;
-	bus_dma_segment_t	 seg;
-	caddr_t			 kva;
-	int			 nsegs;
-	int			 ret;
+	struct psp_downloadfirmware	*dlfw;
+	bus_dmamap_t			 map;
+	bus_dma_segment_t		 seg;
+	caddr_t				 kva;
+	int				 nsegs, error;
 
 	dlfw = (struct psp_downloadfirmware *)sc->sc_cmd_kva;
 	bzero(dlfw, sizeof(*dlfw));
 
-	ret = ENOMEM;
-	if (bus_dmamap_create(sc->sc_dmat, udlfw->fw_len, 1, udlfw->fw_len, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT, &map) != 0)
-		return (ret);
-	if (bus_dmamem_alloc(sc->sc_dmat, udlfw->fw_len, 0, 0, &seg, 1,
-	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0 || nsegs != 1)
+	error = bus_dmamap_create(sc->sc_dmat, udlfw->fw_len, 1, udlfw->fw_len,
+	    0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT, &map);
+	if (error)
 		goto fail_0;
-	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, udlfw->fw_len, &kva,
-	    BUS_DMA_WAITOK) != 0)
+
+	error = bus_dmamem_alloc(sc->sc_dmat, udlfw->fw_len, 0, 0, &seg, 1,
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
+	if (error)
 		goto fail_1;
-	if (bus_dmamap_load(sc->sc_dmat, map, kva, udlfw->fw_len, NULL,
-	    BUS_DMA_WAITOK) != 0)
+
+	error = bus_dmamem_map(sc->sc_dmat, &seg, nsegs, udlfw->fw_len, &kva,
+	    BUS_DMA_WAITOK);
+	if (error)
 		goto fail_2;
+
+	error = bus_dmamap_load(sc->sc_dmat, map, kva, udlfw->fw_len, NULL,
+	    BUS_DMA_WAITOK);
+	if (error)
+		goto fail_3;
 
 	bcopy((void *)udlfw->fw_paddr, kva, udlfw->fw_len);
 
 	dlfw->fw_paddr = map->dm_segs[0].ds_addr;
 	dlfw->fw_len = map->dm_segs[0].ds_len;
 
-	ret = ccp_docmd(sc, PSP_CMD_DOWNLOADFIRMWARE,
+	error = ccp_docmd(sc, PSP_CMD_DOWNLOADFIRMWARE,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
 
-	if (ret != 0)
-		ret = EIO;
-
 	bus_dmamap_unload(sc->sc_dmat, map);
-fail_2:
+fail_3:
 	bus_dmamem_unmap(sc->sc_dmat, kva, udlfw->fw_len);
+fail_2:
+	bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
 fail_1:
-	bus_dmamem_free(sc->sc_dmat, &seg, 1);
-fail_0:
 	bus_dmamap_destroy(sc->sc_dmat, map);
-
-	return (ret);
+fail_0:
+	return (error);
 }
 
 int
@@ -717,20 +706,20 @@ psp_guest_shutdown(struct psp_softc *sc, struct psp_guest_shutdown *ugshutdown)
 {
 	struct psp_deactivate	deact;
 	struct psp_decommission	decom;
-	int			ret;
+	int			error;
 
 	bzero(&deact, sizeof(deact));
 	deact.handle = ugshutdown->handle;
-	if ((ret = psp_deactivate(sc, &deact)) != 0)
-		return (ret);
+	if ((error = psp_deactivate(sc, &deact)) != 0)
+		return (error);
 
-	if ((ret = psp_df_flush(sc)) != 0)
-		return (ret);
+	if ((error = psp_df_flush(sc)) != 0)
+		return (error);
 
 	bzero(&decom, sizeof(decom));
 	decom.handle = ugshutdown->handle;
-	if ((ret = psp_decommission(sc, &decom)) != 0)
-		return (ret);
+	if ((error = psp_decommission(sc, &decom)) != 0)
+		return (error);
 
 	return (0);
 }
@@ -739,17 +728,16 @@ int
 psp_snp_get_pstatus(struct psp_softc *sc,
     struct psp_snp_platform_status *ustatus)
 {
-	struct psp_snp_platform_status *status;
-	int			 ret;
+	struct psp_snp_platform_status	*status;
+	int				 error;
 
 	status = (struct psp_snp_platform_status *)sc->sc_cmd_kva;
 	bzero(status, sizeof(*status));
 
-	ret = ccp_docmd(sc, PSP_CMD_SNP_PLATFORMSTATUS,
+	error = ccp_docmd(sc, PSP_CMD_SNP_PLATFORMSTATUS,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
-
-	if (ret != 0)
-		return (EIO);
+	if (error)
+		return (error);
 
 	bcopy(status, ustatus, sizeof(*ustatus));
 
@@ -765,7 +753,8 @@ pspopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	psp_load_ucode(sc);
+	/* Ignore error, proceed without new firmware. */
+	(void) psp_load_ucode(sc);
 
 	if (!(sc->sc_flags & PSPF_INITIALIZED))
 		return (psp_reinit(sc));
@@ -788,8 +777,8 @@ pspclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct psp_softc *sc;
-	int ret;
+	struct psp_softc	*sc;
+	int			 error;
 
 	sc = (struct psp_softc *)device_lookup(&psp_cd, minor(dev));
 	if (sc == NULL)
@@ -801,54 +790,56 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case PSP_IOC_INIT:
-		ret = psp_reinit(sc);
+		error = psp_reinit(sc);
 		break;
 	case PSP_IOC_SHUTDOWN:
-		ret = psp_shutdown(sc);
+		error = psp_shutdown(sc);
 		break;
 	case PSP_IOC_GET_PSTATUS:
-		ret = psp_get_pstatus(sc, (struct psp_platform_status *)data);
+		error = psp_get_pstatus(sc, (struct psp_platform_status *)data);
 		break;
 	case PSP_IOC_DF_FLUSH:
-		ret = psp_df_flush(sc);
+		error = psp_df_flush(sc);
 		break;
 	case PSP_IOC_DECOMMISSION:
-		ret = psp_decommission(sc, (struct psp_decommission *)data);
+		error = psp_decommission(sc, (struct psp_decommission *)data);
 		break;
 	case PSP_IOC_GET_GSTATUS:
-		ret = psp_get_gstatus(sc, (struct psp_guest_status *)data);
+		error = psp_get_gstatus(sc, (struct psp_guest_status *)data);
 		break;
 	case PSP_IOC_LAUNCH_START:
-		ret = psp_launch_start(sc, (struct psp_launch_start *)data);
+		error = psp_launch_start(sc, (struct psp_launch_start *)data);
 		break;
 	case PSP_IOC_LAUNCH_UPDATE_DATA:
-		ret = psp_launch_update_data(sc,
+		error = psp_launch_update_data(sc,
 		    (struct psp_launch_update_data *)data, p);
 		break;
 	case PSP_IOC_LAUNCH_MEASURE:
-		ret = psp_launch_measure(sc, (struct psp_launch_measure *)data);
+		error = psp_launch_measure(sc,
+		    (struct psp_launch_measure *)data);
 		break;
 	case PSP_IOC_LAUNCH_FINISH:
-		ret = psp_launch_finish(sc, (struct psp_launch_finish *)data);
+		error = psp_launch_finish(sc, (struct psp_launch_finish *)data);
 		break;
 	case PSP_IOC_ATTESTATION:
-		ret = psp_attestation(sc, (struct psp_attestation *)data);
+		error = psp_attestation(sc, (struct psp_attestation *)data);
 		break;
 	case PSP_IOC_ACTIVATE:
-		ret = psp_activate(sc, (struct psp_activate *)data);
+		error = psp_activate(sc, (struct psp_activate *)data);
 		break;
 	case PSP_IOC_DEACTIVATE:
-		ret = psp_deactivate(sc, (struct psp_deactivate *)data);
+		error = psp_deactivate(sc, (struct psp_deactivate *)data);
 		break;
 	case PSP_IOC_GUEST_SHUTDOWN:
-		ret = psp_guest_shutdown(sc, (struct psp_guest_shutdown *)data);
+		error = psp_guest_shutdown(sc,
+		    (struct psp_guest_shutdown *)data);
 		break;
 	case PSP_IOC_SNP_GET_PSTATUS:
-		ret = psp_snp_get_pstatus(sc,
+		error = psp_snp_get_pstatus(sc,
 		    (struct psp_snp_platform_status *)data);
 		break;
 	default:
-		ret = ENOTTY;
+		error = ENOTTY;
 		break;
 	}
 
@@ -856,7 +847,7 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	KERNEL_LOCK();
 
-	return (ret);
+	return (error);
 }
 
 int
@@ -907,7 +898,7 @@ struct ucode {
 	{ 0, 0, NULL }
 };
 
-void
+int
 psp_load_ucode(struct psp_softc *sc)
 {
 	struct psp_downloadfirmware dlfw;
@@ -919,7 +910,7 @@ psp_load_ucode(struct psp_softc *sc)
 	if ((sc->sc_flags & PSPF_UCODELOADED) ||
 	    (sc->sc_flags & PSPF_NOUCODE) ||
 	    (sc->sc_flags & PSPF_INITIALIZED))
-		return;
+		return (EBUSY);
 
 	family = ci->ci_family;
 	model = (ci->ci_model & 0xf0) >> 4;
@@ -933,7 +924,7 @@ psp_load_ucode(struct psp_softc *sc)
 		printf("%s: no firmware found, CPU family 0x%x model 0x%x\n",
 		    sc->sc_dev.dv_xname, family, model);
 		sc->sc_flags |= PSPF_NOUCODE;
-		return;
+		return (EOPNOTSUPP);
 	}
 
 	error = loadfirmware(uc->uname, &sc->sc_ucodebuf, &sc->sc_ucodelen);
@@ -943,14 +934,14 @@ psp_load_ucode(struct psp_softc *sc)
 			    sc->sc_dev.dv_xname, error, uc->uname);
 		}
 		sc->sc_flags |= PSPF_NOUCODE;
-		return;
+		return (error);
 	}
 
 	bzero(&dlfw, sizeof(dlfw));
 	dlfw.fw_len = sc->sc_ucodelen;
 	dlfw.fw_paddr = (uint64_t)sc->sc_ucodebuf;
 
-	if (psp_downloadfirmware(sc, &dlfw) < 0)
+	if ((error = psp_downloadfirmware(sc, &dlfw)) != 0)
 		goto out;
 
 	sc->sc_flags |= PSPF_UCODELOADED;
@@ -960,4 +951,6 @@ out:
 		sc->sc_ucodebuf = NULL;
 		sc->sc_ucodelen = 0;
 	}
+
+	return (error);
 }
