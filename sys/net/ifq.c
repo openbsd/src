@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.54 2024/11/09 04:09:56 jsg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.55 2024/11/20 02:18:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -153,6 +153,17 @@ ifq_set_oactive(struct ifqueue *ifq)
 		ifq->ifq_oactives++;
 	}
 	mtx_leave(&ifq->ifq_mtx);
+}
+
+void
+ifq_deq_set_oactive(struct ifqueue *ifq)
+{
+	MUTEX_ASSERT_LOCKED(&ifq->ifq_mtx);
+
+	if (!ifq->ifq_oactive) {
+		ifq->ifq_oactive = 1;
+		ifq->ifq_oactives++;
+	}
 }
 
 void
