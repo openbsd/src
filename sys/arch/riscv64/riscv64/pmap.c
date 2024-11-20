@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2024/09/04 07:54:51 mglocker Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2024/11/20 22:25:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -792,12 +792,19 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	paddr_t dstpa = VM_PAGE_TO_PHYS(dstpg);
 	vaddr_t srcva = copy_src_page + cpu_number() * PAGE_SIZE;
 	vaddr_t dstva = copy_dst_page + cpu_number() * PAGE_SIZE;
+	int s;
 
+	/*
+	 * XXX The buffer flipper (incorrectly?) uses pmap_copy_page()
+	 * (from uvm_pagerealloc_multi()) from interrupt context!
+	 */
+	s = splbio();
 	pmap_kenter_pa(srcva, srcpa, PROT_READ);
 	pmap_kenter_pa(dstva, dstpa, PROT_READ|PROT_WRITE);
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 	pmap_kremove_pg(srcva);
 	pmap_kremove_pg(dstva);
+	splx(s);
 }
 
 void
