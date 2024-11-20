@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.134 2024/11/08 08:51:36 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.135 2024/11/20 20:54:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1560,4 +1560,28 @@ grid_line_length(struct grid *gd, u_int py)
 		px--;
 	}
 	return (px);
+}
+
+/* Check if character is in set. */
+int
+grid_in_set(struct grid *gd, u_int px, u_int py, const char *set)
+{
+	struct grid_cell	gc, tmp_gc;
+	u_int			pxx;
+
+	grid_get_cell(gd, px, py, &gc);
+	if (strchr(set, '\t')) {
+		if (gc.flags & GRID_FLAG_PADDING) {
+			pxx = px;
+			do
+				grid_get_cell(gd, --pxx, py, &tmp_gc);
+			while (pxx > 0 && tmp_gc.flags & GRID_FLAG_PADDING);
+			if (tmp_gc.flags & GRID_FLAG_TAB)
+				return (tmp_gc.data.width - (px - pxx));
+		} else if (gc.flags & GRID_FLAG_TAB)
+			return (gc.data.width);
+	}
+	if (gc.flags & GRID_FLAG_PADDING)
+		return (0);
+	return (utf8_cstrhas(set, &gc.data));
 }
