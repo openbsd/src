@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.77 2024/11/21 13:28:03 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.78 2024/11/21 13:29:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -579,14 +579,14 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 void
 evbuf_enqueue(struct evbuf *eb, struct ibuf *buf)
 {
-	ibuf_close(&eb->wbuf, buf);
+	ibuf_close(eb->wbuf, buf);
 	evbuf_event_add(eb);
 }
 
 void
 evbuf_event_add(struct evbuf *eb)
 {
-	if (msgbuf_queuelen(&eb->wbuf) > 0)
+	if (msgbuf_queuelen(eb->wbuf) > 0)
 		event_add(&eb->ev, NULL);
 }
 
@@ -594,7 +594,10 @@ void
 evbuf_init(struct evbuf *eb, int fd, void (*handler)(int, short, void *),
     void *arg)
 {
-	msgbuf_init(&eb->wbuf);
+	if (eb->wbuf != NULL)
+		fatalx("evbuf_init: msgbuf already set");
+	if ((eb->wbuf = msgbuf_new()) == NULL)
+		fatal(__func__);
 	event_set(&eb->ev, fd, EV_WRITE, handler, arg);
 }
 
@@ -602,7 +605,8 @@ void
 evbuf_clear(struct evbuf *eb)
 {
 	event_del(&eb->ev);
-	msgbuf_clear(&eb->wbuf);
+	msgbuf_free(eb->wbuf);
+	eb->wbuf = NULL;
 }
 
 static int

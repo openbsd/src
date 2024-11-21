@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.76 2024/11/21 13:28:03 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.77 2024/11/21 13:29:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -598,11 +598,11 @@ session_write(int fd, short event, void *arg)
 	if (!(event & EV_WRITE))
 		return;
 
-	if (ibuf_write(fd, &tcp->wbuf.wbuf) == -1)
+	if (ibuf_write(fd, tcp->wbuf.wbuf) == -1)
 		if (nbr)
 			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 
-	if (nbr == NULL && msgbuf_queuelen(&tcp->wbuf.wbuf) == 0) {
+	if (nbr == NULL && msgbuf_queuelen(tcp->wbuf.wbuf) == 0) {
 		/*
 		 * We are done sending the notification message, now we can
 		 * close the socket.
@@ -707,7 +707,7 @@ static void
 tcp_close(struct tcp_conn *tcp)
 {
 	/* try to flush write buffer */
-	ibuf_write(tcp->fd, &tcp->wbuf.wbuf);
+	ibuf_write(tcp->fd, tcp->wbuf.wbuf);
 	evbuf_clear(&tcp->wbuf);
 
 	if (tcp->nbr) {
@@ -783,7 +783,7 @@ pending_conn_timeout(int fd, short event, void *arg)
 	 */
 	tcp = tcp_new(pconn->fd, NULL);
 	send_notification(tcp, S_NO_HELLO, 0, 0);
-	ibuf_write(fd, &tcp->wbuf.wbuf);
+	ibuf_write(fd, tcp->wbuf.wbuf);
 
 	pending_conn_del(pconn);
 }

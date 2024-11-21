@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.92 2021/01/19 15:59:25 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.93 2024/11/21 13:29:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -60,8 +60,8 @@
 #define	F_REDISTRIBUTED		0x0040
 
 struct evbuf {
-	struct msgbuf		wbuf;
-	struct event		ev;
+	struct msgbuf		*wbuf;
+	struct event		 ev;
 };
 
 struct imsgev {
