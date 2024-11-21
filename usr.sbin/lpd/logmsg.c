@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.3 2024/11/21 13:34:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -147,10 +147,10 @@ log_imsg(struct imsgproc *proc, struct imsg *imsg)
 		log_debug("imsg src=%s closed",
 		    log_fmt_proctype(proc_gettype(proc)));
 	else
-		log_debug("imsg src=%s type=%s len=%d fd=%d",
+		log_debug("imsg src=%s type=%s len=%d",
 		    log_fmt_proctype(proc_gettype(proc)),
 		    log_fmt_imsgtype(imsg->hdr.type),
-		    imsg->hdr.len, imsg->fd);
+		    imsg->hdr.len);
 }
 
 void

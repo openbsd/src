@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.3 2022/12/28 21:30:17 jmc Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.4 2024/11/21 13:34:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -248,6 +248,7 @@ static void
 frontend_dispatch_priv(struct imsgproc *proc, struct imsg *imsg, void *arg)
 {
 	struct listener *l;
+	int fd;
 
 	if (imsg == NULL) {
 		log_debug("%s: imsg connection lost", __func__);
@@ -260,10 +261,10 @@ frontend_dispatch_priv(struct imsgproc *proc, struct imsg *imsg, void *arg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_SOCK_ENGINE:
-		if (imsg->fd == -1)
+		if ((fd = imsg_get_fd(imsg)) == -1)
 			fatalx("%s: engine socket not received", __func__);
 		m_end(proc);
-		p_engine = proc_attach(PROC_ENGINE, imsg->fd);
+		p_engine = proc_attach(PROC_ENGINE, fd);
 		proc_setcallback(p_engine, frontend_dispatch_engine, NULL);
 		proc_enable(p_engine);
 		break;
@@ -276,14 +277,14 @@ frontend_dispatch_priv(struct imsgproc *proc, struct imsg *imsg, void *arg)
 		break;
 
 	case IMSG_CONF_LISTENER:
-		if (imsg->fd == -1)
+		if ((fd = imsg_get_fd(imsg)) == -1)
 			fatalx("%s: listener socket not received", __func__);
 		if ((l = calloc(1, sizeof(*l))) == NULL)
 			fatal("%s: calloc", __func__);
 		m_get_int(proc, &l->proto);
 		m_get_sockaddr(proc, (struct sockaddr *)&l->ss);
 		m_end(proc);
-		l->sock = imsg->fd;
+		l->sock = fd;
 		TAILQ_INSERT_TAIL(&tmpconf->listeners, l, entry);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend_lpr.c,v 1.4 2022/12/28 21:30:17 jmc Exp $	*/
+/*	$OpenBSD: frontend_lpr.c,v 1.5 2024/11/21 13:34:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -148,8 +148,6 @@ lpr_dispatch_engine(struct imsgproc *proc, struct imsg *imsg)
 		conn = SPLAY_FIND(lpr_conn_tree, &conns, &key);
 		if (conn == NULL) {
 			log_debug("%08x dead-session", key.id);
-			if (imsg->fd != -1)
-				close(imsg->fd);
 			return;
 		}
 	}
@@ -174,7 +172,7 @@ lpr_dispatch_engine(struct imsgproc *proc, struct imsg *imsg)
 		m_get_int(proc, &ack);
 		m_get_size(proc, &sz);
 		m_end(proc);
-		lpr_on_recvjob_file(conn, ack, sz, cf, imsg->fd);
+		lpr_on_recvjob_file(conn, ack, sz, cf, imsg_get_fd(imsg));
 		break;
 
 	case IMSG_LPR_DISPLAYQ:
@@ -182,7 +180,7 @@ lpr_dispatch_engine(struct imsgproc *proc, struct imsg *imsg)
 		m_get_string(proc, &hostname);
 		m_get_string(proc, &cmd);
 		m_end(proc);
-		lpr_on_request(conn, imsg->fd, hostname, cmd);
+		lpr_on_request(conn, imsg_get_fd(imsg), hostname, cmd);
 		break;
 
 	default:

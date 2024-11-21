@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.6 2024/11/21 13:22:48 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.7 2024/11/21 13:34:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -217,10 +217,15 @@ proc_new(int type)
 	if (p == NULL)
 		return NULL;
 
+	if (imsgbuf_init(&p->imsgbuf, -1) == -1) {
+		free(p);
+		return NULL;
+	}
+	imsgbuf_allow_fdpass(&p->imsgbuf);
+
 	p->type = type;
 	p->instance = -1;
 	p->pid = -1;
-	imsgbuf_init(&p->imsgbuf, -1);
 
 	TAILQ_INSERT_TAIL(&procs, p, tqe);
 
@@ -231,7 +236,6 @@ static void
 proc_setsock(struct imsgproc *p, int sock)
 {
 	p->imsgbuf.fd = sock;
-	p->imsgbuf.w.fd = sock;
 }
 
 static void
@@ -240,7 +244,7 @@ proc_event_add(struct imsgproc *p)
 	short	events;
 
 	events = EV_READ;
-	if (p->imsgbuf.w.queued)
+	if (imsgbuf_queuelen(&p->imsgbuf) > 0)
 		events |= EV_WRITE;
 
 	if (p->events)
