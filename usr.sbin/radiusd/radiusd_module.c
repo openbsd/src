@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.21 2024/11/21 13:10:48 claudio Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.22 2024/11/21 13:16:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -631,27 +631,19 @@ module_on_event(int fd, short evmask, void *ctx)
 	int			 ret;
 
 	base->ev_onhandler = true;
-	if (evmask & EV_WRITE)
+	if (evmask & EV_WRITE) {
 		base->writeready = true;
+		if (imsg_write(&base->ibuf) == -1) {
+			syslog(LOG_ERR, "%s: imsg_write: %m", __func__);
+			module_stop(base);
+			return;
+		}
+		base->writeready = false;
+	}
 	if (evmask & EV_READ) {
 		ret = module_recv_imsg(base);
 		if (ret < 0)
 			return;
-	}
-	while (base->writeready && base->ibuf.w.queued) {
-		ret = imsg_write(&base->ibuf);
-		if (ret > 0)
-			continue;
-		base->writeready = false;
-		if (ret == -1 && errno == EAGAIN)
-			break;
-		if (ret == 0)
-			syslog(LOG_ERR, "%s: connection is closed", __func__);
-		else
-			syslog(LOG_ERR, "%s: imsg_write: %d %m", __func__,
-			    ret);
-		module_stop(base);
-		return;
 	}
 	base->ev_onhandler = false;
 	module_reset_event(base);

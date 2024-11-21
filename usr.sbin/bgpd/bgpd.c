@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.271 2024/11/21 13:10:26 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.272 2024/11/21 13:16:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1273,7 +1273,7 @@ handle_pollfd(struct pollfd *pfd, struct imsgbuf *i)
 		return (0);
 
 	if (pfd->revents & POLLOUT)
-		if (imsg_write(i) <= 0 && errno != EAGAIN) {
+		if (imsg_write(i) == -1) {
 			log_warn("imsg write error");
 			close(i->fd);
 			i->fd = -1;

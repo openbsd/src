@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.107 2024/11/21 13:10:56 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.108 2024/11/21 13:16:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -354,10 +354,11 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE)
+				_exit(0);
 			fatal("%s: imsg_write fd %d", __func__, ibuf->fd);
-		if (n == 0)
-			_exit(0);
+		}
 	}
 
 	for (;;) {

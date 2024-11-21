@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.70 2024/11/21 13:10:39 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.71 2024/11/21 13:16:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -385,10 +385,12 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_write");
-		if (n == 0)
-			shut = 1;
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE)	/* connection closed */
+				shut = 1;
+			else
+				fatal("imsg_write");
+		}
 	}
 
 	for (;;) {
@@ -464,10 +466,12 @@ main_dispatch_lde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_write");
-		if (n == 0)
-			shut = 1;
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE)	/* connection closed */
+				shut = 1;
+			else
+				fatal("imsg_write");
+		}
 	}
 
 	for (;;) {

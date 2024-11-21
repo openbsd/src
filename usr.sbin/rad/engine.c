@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.23 2024/11/21 13:10:47 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.24 2024/11/21 13:16:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -200,10 +200,12 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_write");
-		if (n == 0)	/* Connection closed. */
-			shut = 1;
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE)	/* connection closed */
+				shut = 1;
+			else
+				fatal("imsg_write");
+		}
 	}
 
 	for (;;) {
@@ -282,10 +284,12 @@ engine_dispatch_main(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_write");
-		if (n == 0)	/* Connection closed. */
-			shut = 1;
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE)	/* connection closed */
+				shut = 1;
+			else
+				fatal("imsg_write");
+		}
 	}
 
 	for (;;) {

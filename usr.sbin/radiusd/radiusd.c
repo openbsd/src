@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.56 2024/11/21 13:10:48 claudio Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.57 2024/11/21 13:16:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1319,27 +1319,22 @@ static void
 radiusd_module_on_imsg_io(int fd, short evmask, void *ctx)
 {
 	struct radiusd_module	*module = ctx;
-	int			 ret;
 
-	if (evmask & EV_WRITE)
+	if (evmask & EV_WRITE) {
 		module->writeready = true;
+		if (imsg_write(&module->ibuf) == -1) {
+			log_warn("Failed to write to module `%s': imsg_write()",
+			    module->name);
+			goto on_error;
+		}
+		module->writeready = false;
+	}
 
 	if (evmask & EV_READ) {
 		if (radiusd_module_imsg_read(module) == -1)
 			goto on_error;
 	}
 
-	while (module->writeready && module->ibuf.w.queued) {
-		ret = imsg_write(&module->ibuf);
-		if (ret > 0)
-			continue;
-		module->writeready = false;
-		if (ret == 0 && errno == EAGAIN)
-			break;
-		log_warn("Failed to write to module `%s': imsg_write()",
-		    module->name);
-		goto on_error;
-	}
 	radiusd_module_reset_ev_handler(module);
 
 	return;

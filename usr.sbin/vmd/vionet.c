@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.18 2024/11/21 13:10:56 claudio Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.19 2024/11/21 13:16:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -915,14 +915,15 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE) {
+				/* this pipe is dead, remove the handler */
+				log_debug("%s: pipe dead (EV_WRITE)", __func__);
+				event_del(&iev->ev);
+				event_loopexit(NULL);
+				return;
+			}
 			fatal("%s: imsg_write", __func__);
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			log_debug("%s: pipe dead (EV_WRITE)", __func__);
-			event_del(&iev->ev);
-			event_base_loopexit(ev_base_main, NULL);
-			return;
 		}
 	}
 
@@ -987,14 +988,15 @@ handle_sync_io(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE) {
+				/* this pipe is dead, remove the handler */
+				log_debug("%s: pipe dead (EV_WRITE)", __func__);
+				event_del(&iev->ev);
+				event_loopexit(NULL);
+				return;
+			}
 			fatal("%s: imsg_write", __func__);
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			log_debug("%s: pipe dead (EV_WRITE)", __func__);
-			event_del(&iev->ev);
-			event_base_loopexit(ev_base_main, NULL);
-			return;
 		}
 	}
 

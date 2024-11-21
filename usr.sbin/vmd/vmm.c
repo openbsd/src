@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.126 2024/11/21 13:10:56 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.127 2024/11/21 13:16:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -505,12 +505,13 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+		if (imsg_write(ibuf) == -1) {
+			if (errno == EPIPE) {
+				/* This pipe is dead, remove the handler */
+				event_del(&iev->ev);
+				return;
+			}
 			fatal("%s: imsg_write fd %d", __func__, ibuf->fd);
-		if (n == 0) {
-			/* This pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			return;
 		}
 	}
 

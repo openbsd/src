@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.30 2024/11/21 13:10:44 claudio Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.31 2024/11/21 13:16:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -117,8 +117,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 			}
 
 		if (nfds > 0 && (pfd[0].revents & POLLOUT))
-			if (imsg_write(ibuf_dns) <= 0 &&
-			    errno != EAGAIN) {
+			if (imsg_write(ibuf_dns) == -1) {
 				log_warn("pipe write error (to ntp engine)");
 				quit_dns = 1;
 			}
