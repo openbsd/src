@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.39 2024/09/16 07:34:49 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.40 2024/11/21 13:10:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -194,10 +194,10 @@ __dead void
 frontend_shutdown(void)
 {
 	/* Close pipes. */
-	msgbuf_write(&iev_engine->ibuf.w);
+	imsg_write(&iev_engine->ibuf);
 	msgbuf_clear(&iev_engine->ibuf.w);
 	close(iev_engine->ibuf.fd);
-	msgbuf_write(&iev_main->ibuf.w);
+	imsg_write(&iev_main->ibuf);
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
@@ -248,8 +248,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
@@ -489,8 +489,8 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}

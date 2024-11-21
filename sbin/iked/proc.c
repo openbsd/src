@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.45 2024/11/21 13:06:19 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.46 2024/11/21 13:10:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -627,8 +627,8 @@ proc_dispatch(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("%s: msgbuf_write", __func__);
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_write", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			event_del(&iev->ev);

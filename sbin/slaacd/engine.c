@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.93 2024/08/24 16:35:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.94 2024/11/21 13:10:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -471,8 +471,8 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
@@ -637,8 +637,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}

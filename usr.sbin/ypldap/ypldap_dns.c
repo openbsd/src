@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.16 2023/07/18 13:06:33 claudio Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.17 2024/11/21 13:10:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -152,8 +152,8 @@ dns_dispatch_imsg(int fd, short events, void *p)
 			shut = 1;
 	}
 	if (events & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)
 			shut = 1;
 		goto done;

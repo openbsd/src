@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.72 2024/08/24 16:34:23 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.73 2024/11/21 13:10:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -397,8 +397,8 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
@@ -476,8 +476,8 @@ main_dispatch_engine(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}

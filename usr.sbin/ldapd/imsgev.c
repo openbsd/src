@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsgev.c,v 1.6 2017/03/01 00:53:39 gsoares Exp $ */
+/*	$OpenBSD: imsgev.c,v 1.7 2024/11/21 13:10:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Eric Faurot <eric@openbsd.org>
@@ -139,7 +139,7 @@ imsgev_dispatch(int fd, short ev, void *humppa)
 		 * closed, or some error occured. Both case are not recoverable
 		 * from the imsg perspective, so we treat it as a WRITE error.
 		 */
-		if ((n = msgbuf_write(&ibuf->w)) <= 0 && errno != EAGAIN) {
+		if (imsg_write(ibuf) <= 0 && errno != EAGAIN) {
 			imsgev_disconnect(iev, IMSGEV_EWRITE);
 			return;
 		}

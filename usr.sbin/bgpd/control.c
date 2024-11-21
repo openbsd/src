@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.121 2024/10/29 12:35:37 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.122 2024/11/21 13:10:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -249,7 +249,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	}
 
 	if (pfd->revents & POLLOUT) {
-		if (msgbuf_write(&c->imsgbuf.w) <= 0 && errno != EAGAIN)
+		if (imsg_write(&c->imsgbuf) <= 0 && errno != EAGAIN)
 			return control_close(c);
 		if (c->throttled && c->imsgbuf.w.queued < CTL_MSG_LOW_MARK) {
 			if (imsg_ctl_rde_msg(IMSG_XON, 0, c->imsgbuf.pid) != -1)

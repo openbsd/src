@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.484 2024/10/01 18:29:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.485 2024/11/21 13:10:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -539,7 +539,7 @@ session_main(int debug, int verbose)
 
 	/* close pipes */
 	if (ibuf_rde) {
-		msgbuf_write(&ibuf_rde->w);
+		imsg_write(ibuf_rde);
 		msgbuf_clear(&ibuf_rde->w);
 		close(ibuf_rde->fd);
 		free(ibuf_rde);
@@ -549,7 +549,7 @@ session_main(int debug, int verbose)
 		close(ibuf_rde_ctl->fd);
 		free(ibuf_rde_ctl);
 	}
-	msgbuf_write(&ibuf_main->w);
+	imsg_write(ibuf_main);
 	msgbuf_clear(&ibuf_main->w);
 	close(ibuf_main->fd);
 	free(ibuf_main);

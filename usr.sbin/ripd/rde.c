@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.25 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: rde.c,v 1.26 2024/11/21 13:10:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -203,8 +203,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
@@ -304,8 +304,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}

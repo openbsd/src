@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.69 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.70 2024/11/21 13:10:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -385,8 +385,8 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)
 			shut = 1;
 	}
@@ -464,8 +464,8 @@ main_dispatch_lde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)
 			shut = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.25 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.26 2024/11/21 13:10:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -367,8 +367,8 @@ main_dispatch_client(int fd, short events, void *p)
 			shut = 1;
 	}
 	if (events & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)
 			shut = 1;
 		goto done;

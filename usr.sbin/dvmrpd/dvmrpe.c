@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.24 2024/04/23 13:34:51 jsg Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.25 2024/11/21 13:10:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -191,10 +191,10 @@ dvmrpe_shutdown(void)
 	struct iface	*iface;
 
 	/* close pipes */
-	msgbuf_write(&iev_rde->ibuf.w);
+	imsg_write(&iev_rde->ibuf);
 	msgbuf_clear(&iev_rde->ibuf.w);
 	close(iev_rde->ibuf.fd);
-	msgbuf_write(&iev_main->ibuf.w);
+	imsg_write(&iev_main->ibuf);
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
@@ -247,8 +247,8 @@ dvmrpe_dispatch_main(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
@@ -321,8 +321,8 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.31 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: rad.c,v 1.32 2024/11/21 13:10:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -387,8 +387,8 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
@@ -455,8 +455,8 @@ main_dispatch_engine(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.12 2024/07/11 10:38:57 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.13 2024/11/21 13:10:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -432,8 +432,8 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
@@ -508,8 +508,8 @@ main_dispatch_engine(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}

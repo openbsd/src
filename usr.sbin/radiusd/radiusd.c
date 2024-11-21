@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.55 2024/08/14 07:06:50 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.56 2024/11/21 13:10:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1330,13 +1330,13 @@ radiusd_module_on_imsg_io(int fd, short evmask, void *ctx)
 	}
 
 	while (module->writeready && module->ibuf.w.queued) {
-		ret = msgbuf_write(&module->ibuf.w);
+		ret = imsg_write(&module->ibuf);
 		if (ret > 0)
 			continue;
 		module->writeready = false;
 		if (ret == 0 && errno == EAGAIN)
 			break;
-		log_warn("Failed to write to module `%s': msgbuf_write()",
+		log_warn("Failed to write to module `%s': imsg_write()",
 		    module->name);
 		goto on_error;
 	}

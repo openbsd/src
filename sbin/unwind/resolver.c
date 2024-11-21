@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.167 2024/06/29 17:25:56 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.168 2024/11/21 13:10:24 claudio Exp $	*/
 
 
 /*
@@ -501,8 +501,8 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
@@ -637,8 +637,8 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}

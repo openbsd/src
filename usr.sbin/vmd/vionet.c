@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.17 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.18 2024/11/21 13:10:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -915,8 +915,8 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("%s: msgbuf_write", __func__);
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_write", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			log_debug("%s: pipe dead (EV_WRITE)", __func__);
@@ -987,8 +987,8 @@ handle_sync_io(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("%s: msgbuf_write", __func__);
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_write", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			log_debug("%s: pipe dead (EV_WRITE)", __func__);

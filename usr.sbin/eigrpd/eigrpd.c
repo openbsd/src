@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.29 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.30 2024/11/21 13:10:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -379,8 +379,8 @@ main_dispatch_eigrpe(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
@@ -455,8 +455,8 @@ main_dispatch_rde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_write");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}

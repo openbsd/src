@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.117 2024/11/06 23:04:45 bluhm Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.118 2024/11/21 13:10:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1536,8 +1536,8 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("%s: msgbuf_write", __func__);
+		if ((n = imsg_write(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_write", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			log_debug("%s: pipe dead (EV_WRITE)", __func__);
