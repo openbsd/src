@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.24 2024/11/21 12:47:27 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.25 2024/11/21 12:48:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -323,11 +323,6 @@ imsg_forward(struct imsgbuf *imsgbuf, struct imsg *msg)
 {
 	struct ibuf	*wbuf;
 	size_t		 len = 0;
-
-	if (msg->fd != -1) {
-		close(msg->fd);
-		msg->fd = -1;
-	}
 
 	if (msg->buf != NULL) {
 		ibuf_rewind(msg->buf);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.33 2023/12/29 11:48:47 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.34 2024/11/21 12:48:02 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 29 2023 $
+.Dd $Mdocdate: November 21 2024 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -224,7 +224,10 @@ forwards a just received
 .Fa msg
 unaltered on
 .Fa imsgbuf .
-Any attached file descriptor is closed.
+File descriptors are not forwarded by this function.
+It is possible to call
+.Fn imsg_forward
+more than once per message.
 .Pp
 .Fn imsg_flush
 calls
@@ -280,6 +283,8 @@ returns 0.
 .Fn imsg_get_fd
 returns the file descriptor and passes the responsibility to track the
 descriptor back to the program.
+Unclaimed file descriptors are closed by
+.Fn imsg_free .
 .Pp
 .Fn imsg_get_data
 and
