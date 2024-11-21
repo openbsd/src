@@ -13,7 +13,7 @@
 
 #include "extern.h"
 
-static struct msgbuf	httpq;
+static struct msgbuf	*httpq;
 
 void
 logx(const char *fmt, ...)
@@ -66,7 +66,7 @@ http_request(unsigned int id, const char *uri, const char *last_mod, int fd)
 	io_str_buffer(b, last_mod);
 	/* pass file as fd */
 	b->fd = fd;
-	io_close_buffer(&httpq, b);
+	io_close_buffer(httpq, b);
 }
 
 static const char *
@@ -111,7 +111,7 @@ int
 main(int argc, char **argv)
 {
 	pid_t httppid;
-	int error, fd[2], outfd, http;
+	int error, fd[2], outfd, httpfd;
 	int fl = SOCK_STREAM | SOCK_CLOEXEC;
 	char *uri, *file, *mod;
 	unsigned int req = 0;
@@ -141,16 +141,16 @@ main(int argc, char **argv)
 	}
 
 	close(fd[0]);
-	http = fd[1];
-	msgbuf_init(&httpq);
-	httpq.fd = http;
+	httpfd = fd[1];
+	if ((httpq = msgbuf_new()) == NULL)
+		err(1, NULL);
 
 	if ((outfd = open(file, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 		err(1, "open %s", file);
 
 	http_request(req++, uri, mod, outfd);
-	if (msgbuf_write(&httpq) == -1)
+	if (msgbuf_write(httpfd, httpq) == -1)
 		err(1, "write");
-	error = http_response(http);
+	error = http_response(httpfd);
 	return error;
 }
