@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.42 2024/11/21 13:13:37 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.43 2024/11/21 13:27:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -189,7 +189,7 @@ struct rtr_session {
 	char				descr[PEER_DESCR_LEN];
 	struct roa_tree			roa_set;
 	struct aspa_tree		aspa;
-	struct ibuf_read		r;
+	struct buf_read			r;
 	struct msgbuf			w;
 	struct timer_head		timers;
 	uint32_t			id;		/* rtr_config id */

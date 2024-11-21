@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.490 2024/11/21 13:26:49 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.491 2024/11/21 13:27:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -607,7 +607,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			timer_stop(&peer->timers, Timer_IdleHold);
 
 			/* allocate read buffer */
-			peer->rbuf = calloc(1, sizeof(struct ibuf_read));
+			peer->rbuf = calloc(1, sizeof(*peer->rbuf));
 			if (peer->rbuf == NULL)
 				fatal(NULL);
 
