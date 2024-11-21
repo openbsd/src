@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.71 2024/11/21 13:17:01 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.72 2024/11/21 13:20:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	struct imsgbuf		 ibuf;
 	struct imsg		 imsg;
 	struct input_msg	 msg;
-	struct input_ack	*ack;
+	struct input_ack	 ack;
 	pid_t			 pid, parent;
 
 	tzset();
@@ -223,10 +223,9 @@ main(int argc, char **argv)
 
 		if (read_message(&ibuf, &imsg, pid) == 0)
 			break;
-		if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof *ack)
-			errx(1, "message too small");
-		ack = imsg.data;
-		if (ack->idx != idx)
+		if (imsg_get_data(&imsg, &ack, sizeof ack) == -1)
+			err(1, "bad message");
+		if (ack.idx != idx)
 			errx(1, "index not expected");
 		imsg_free(&imsg);
 	}
@@ -365,7 +364,7 @@ child(int fd, pid_t parent, int argc, char **argv)
 	struct magic		*m;
 	struct imsgbuf		 ibuf;
 	struct imsg		 imsg;
-	struct input_msg	*msg;
+	struct input_msg	 msg;
 	struct input_ack	 ack;
 	struct input_file	 inf;
 	int			 i, idx;
@@ -405,17 +404,16 @@ child(int fd, pid_t parent, int argc, char **argv)
 	for (;;) {
 		if (read_message(&ibuf, &imsg, parent) == 0)
 			break;
-		if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof *msg)
-			errx(1, "message too small");
-		msg = imsg.data;
+		if (imsg_get_data(&imsg, &msg, sizeof msg) == -1)
+			err(1, "bad message");
 
-		idx = msg->idx;
+		idx = msg.idx;
 		if (idx < 0 || idx >= argc)
 			errx(1, "index out of range");
 
 		memset(&inf, 0, sizeof inf);
 		inf.m = m;
-		inf.msg = msg;
+		inf.msg = &msg;
 
 		inf.path = argv[idx];
 		inf.fd = imsg_get_fd(&imsg);
