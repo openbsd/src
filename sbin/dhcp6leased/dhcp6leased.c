@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.17 2024/11/21 13:18:37 claudio Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.18 2024/11/21 13:21:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -426,7 +426,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;

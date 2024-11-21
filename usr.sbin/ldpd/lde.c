@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.82 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.83 2024/11/21 13:21:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -198,7 +198,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -395,7 +395,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	struct fec		 fec;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;

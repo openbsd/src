@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.81 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.82 2024/11/21 13:21:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -277,7 +277,7 @@ vmmaction(struct parse_result *res)
 		err(1, "write error");
 
 	while (!done) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");

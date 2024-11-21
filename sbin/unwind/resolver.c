@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.171 2024/11/21 13:17:57 claudio Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.172 2024/11/21 13:21:34 claudio Exp $	*/
 
 
 /*
@@ -495,7 +495,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
@@ -633,7 +633,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;

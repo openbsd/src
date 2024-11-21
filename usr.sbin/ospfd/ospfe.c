@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.118 2024/11/21 13:17:58 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.119 2024/11/21 13:21:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -272,7 +272,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	int		 n, link_ok, stub_changed, shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -496,7 +496,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	u_int16_t		 l, age;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;

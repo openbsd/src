@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leasectl.c,v 1.3 2024/11/21 13:17:01 claudio Exp $	*/
+/*	$OpenBSD: dhcp6leasectl.c,v 1.4 2024/11/21 13:21:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		if (imsgbuf_flush(ibuf) == -1)
 			err(1, "write error");
 
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");

@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.53 2024/11/21 13:17:02 claudio Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.54 2024/11/21 13:21:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -141,7 +141,7 @@ client_dispatch_dns(int fd, short events, void *p)
 		fatalx("unknown event");
 
 	if (events & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)
 			shut = 1;
@@ -241,7 +241,7 @@ client_dispatch_parent(int fd, short events, void *p)
 		fatalx("unknown event");
 
 	if (events & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)
 			shut = 1;

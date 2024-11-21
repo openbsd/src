@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.32 2024/11/21 13:18:38 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.33 2024/11/21 13:21:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -317,7 +317,7 @@ main_dispatch_dvmrpe(int fd, short event, void *bula)
 	int		 shut = 0, verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
@@ -381,7 +381,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 	int		 shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.37 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.38 2024/11/21 13:21:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -206,7 +206,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct iface		*iface;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
