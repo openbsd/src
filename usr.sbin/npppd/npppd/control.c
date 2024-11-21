@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2024/11/21 13:23:13 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.15 2024/11/21 13:43:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -181,13 +181,20 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 	}
 	if ((c->ctx = npppd_ctl_create(cs->cs_ctx)) == NULL) {
-		free(c);
 		log_warn("control_accept");
 		close(connfd);
+		free(c);
 		return;
 	}
 
-	imsgbuf_init(&c->iev.ibuf, connfd);
+	if (imsgbuf_init(&c->iev.ibuf, connfd) == -1) {
+		log_warn("control_accept");
+		close(connfd);
+		free(c->ctx);
+		free(c);
+		return;
+	}
+
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
 	c->iev.data = cs;

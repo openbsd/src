@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.25 2024/11/21 13:23:37 claudio Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.26 2024/11/21 13:43:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -95,7 +95,10 @@ module_create(int sock, void *ctx, struct module_handlers *handler)
 	if ((base = calloc(1, sizeof(struct module_base))) == NULL)
 		return (NULL);
 
-	imsgbuf_init(&base->ibuf, sock);
+	if (imsgbuf_init(&base->ibuf, sock) == -1) {
+		free(base);
+		return (NULL);
+	}
 	base->ctx = ctx;
 
 	module_userpass = handler->userpass;

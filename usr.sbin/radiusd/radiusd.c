@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.60 2024/11/21 13:23:37 claudio Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.61 2024/11/21 13:43:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1200,7 +1200,10 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	}
 	strlcpy(module->name, name, sizeof(module->name));
 	module->pid = pid;
-	imsgbuf_init(&module->ibuf, module->fd);
+	if (imsgbuf_init(&module->ibuf, module->fd) == -1) {
+		log_warn("Could not load module `%s': imsgbuf_init", name);
+		goto on_error;
+	}
 
 	if (imsg_sync_read(&module->ibuf, MODULE_IO_TIMEOUT) <= 0 ||
 	    (n = imsg_get(&module->ibuf, &imsg)) <= 0) {

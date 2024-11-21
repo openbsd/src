@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.7 2024/11/21 13:23:37 claudio Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.8 2024/11/21 13:43:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -128,7 +128,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 	setproctitle("[priv]");
-	imsgbuf_init(&ibuf, pairsock[0]);
+	if (imsgbuf_init(&ibuf, pairsock[0]) == -1)
+		err(EXIT_FAILURE, "imsgbuf_init");
 
 	/* Receive parameters from the main process. */
 	if (imsg_sync_read(&ibuf, 2000) <= 0 ||
@@ -244,7 +245,8 @@ module_file_main(void)
 	module_drop_privilege(module_file.base, 0);
 
 	module_load(module_file.base);
-	imsgbuf_init(&module_file.ibuf, 3);
+	if (imsgbuf_init(&module_file.ibuf, 3) == -1)
+		err(EXIT_FAILURE, "imsgbuf_init");
 
 	if (pledge("stdio", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");

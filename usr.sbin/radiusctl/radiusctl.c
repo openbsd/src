@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.16 2024/11/21 13:23:37 claudio Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.17 2024/11/21 13:43:10 claudio Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -147,7 +147,8 @@ main(int argc, char *argv[])
 		err(EX_OSERR, "socket");
 	if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(EX_OSERR, "connect");
-	imsgbuf_init(&ibuf, sock);
+	if (imsgbuf_init(&ibuf, sock) == -1)
+		err(EX_OSERR, "imsgbuf_init");
 
 	res = parse(argc, argv);
 	if (res == NULL)

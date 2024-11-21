@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.18 2024/11/21 13:23:37 claudio Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.19 2024/11/21 13:43:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -113,7 +113,8 @@ main(int argc, char *argv[])
 	 * Privileged process
 	 */
 	setproctitle("[priv]");
-	imsgbuf_init(&ibuf, pairsock[0]);
+	if (imsgbuf_init(&ibuf, pairsock[0]) == 1)
+		err(EXIT_FAILURE, "imsgbuf_init");
 
 	if (pledge("stdio getpw rpath proc exec", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
@@ -250,7 +251,8 @@ module_bsdauth_main(void)
 	module_drop_privilege(module_bsdauth.base, 0);
 
 	module_load(module_bsdauth.base);
-	imsgbuf_init(&module_bsdauth.ibuf, 3);
+	if (imsgbuf_init(&module_bsdauth.ibuf, 3) == -1)
+		err(EXIT_FAILURE, "imsgbuf_init");
 
 	if (pledge("stdio proc", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");

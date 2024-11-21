@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2024/11/21 13:23:37 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.7 2024/11/21 13:43:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,10 +165,15 @@ control_accept(int listenfd, short event, void *bula)
 		return;
 	}
 
+	if (imsgbuf_init(&c->iev.ibuf, connfd) == -1) {
+		log_warn("control_accept");
+		close(connfd);
+		free(c);
+		return;
+	}
 	if (idseq == 0)	/* don't use zero.  See radiusd_module_imsg */
 		++idseq;
 	c->id = idseq++;
-	imsgbuf_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events, c->iev.handler, c);

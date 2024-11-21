@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.14 2024/11/21 13:23:13 claudio Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.15 2024/11/21 13:43:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -108,7 +108,8 @@ main(int argc, char *argv[])
 	if (connect(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(EXIT_FAILURE, "connect");
 
-	imsgbuf_init(&ctl_ibuf, ctlsock);
+	if (imsgbuf_init(&ctl_ibuf, ctlsock) == -1)
+		err(EXIT_FAILURE, "imsgbuf_init");
 
 	switch (result->action) {
 	case SESSION_BRIEF:

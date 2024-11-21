@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.28 2024/11/21 13:23:13 claudio Exp $ */
+/*	$OpenBSD: privsep.c,v 1.29 2024/11/21 13:43:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -37,6 +37,7 @@
 
 #include "npppd.h"
 #include "ppp.h"
+#include "log.h"
 
 #ifndef nitems
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
@@ -191,7 +192,9 @@ privsep_init(void)
 	close(pairsock[0]);
 	privsep_sock = pairsock[1];
 	privsep_pid = pid;
-	imsgbuf_init(&privsep_ibuf, privsep_sock);
+	if (imsgbuf_init(&privsep_ibuf, privsep_sock) == -1)
+		goto fail;
+	imsgbuf_allow_fdpass(&privsep_ibuf);
 
 	return (0);
 	/* NOTREACHED */
@@ -565,7 +568,9 @@ privsep_priv_main(int sock)
 {
 	struct imsgbuf	 ibuf;
 
-	imsgbuf_init(&ibuf, sock);
+	if (imsgbuf_init(&ibuf, sock) == -1)
+		fatal("imsgbuf_init");
+	imsgbuf_allow_fdpass(&ibuf);
 	privsep_priv_dispatch_imsg(&ibuf);
 	imsgbuf_clear(&ibuf);
 	close(sock);
