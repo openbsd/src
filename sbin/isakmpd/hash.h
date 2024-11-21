@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.h,v 1.8 2006/06/10 20:10:02 hshoexer Exp $	 */
+/* $OpenBSD: hash.h,v 1.9 2024/11/21 10:07:30 yasuoka Exp $	 */
 /* $EOM: hash.h,v 1.6 1998/07/25 22:04:36 niklas Exp $	 */
 
 /*
@@ -53,6 +53,7 @@ struct hash {
 	enum hashes     type;
 	int             id;	/* ISAKMP/Oakley ID */
 	u_int8_t        hashsize;	/* Size of the hash */
+	unsigned	blocklen;	/* The hash's block length */
 	void           *ctx;	/* Pointer to a context, for HMAC ictx */
 	unsigned char  *digest;	/* Pointer to a digest */
 	int             ctxsize;
@@ -68,7 +69,6 @@ struct hash {
 
 #define HMAC_IPAD_VAL	0x36
 #define HMAC_OPAD_VAL	0x5C
-#define HMAC_BLOCKLEN	64
 
 extern struct hash *hash_get(enum hashes);
 extern void     hmac_init(struct hash *, unsigned char *, unsigned int);
