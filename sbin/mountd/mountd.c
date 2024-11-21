@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.95 2024/11/21 13:24:07 claudio Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.96 2024/11/21 13:35:20 claudio Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -321,7 +321,10 @@ main(int argc, char *argv[])
 	}
 
 	signal(SIGTERM, (void (*)(int)) send_umntall);
-	imsgbuf_init(&ibuf, socks[0]);
+	if (imsgbuf_init(&ibuf, socks[0]) == -1) {
+		syslog(LOG_ERR, "imsgbuf_init: %m");
+		exit(1);
+	}
 	setproctitle("parent");
 
 	if (debug)
@@ -370,7 +373,10 @@ privchild(int sock)
 	char *path;
 	int error, size;
 
-	imsgbuf_init(&ibuf, sock);
+	if (imsgbuf_init(&ibuf, sock) == -1) {
+		syslog(LOG_ERR, "imsgbuf_init: %m");
+		_exit(1);
+	}
 	setproctitle("[priv]");
 	fp = NULL;
 

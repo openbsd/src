@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.73 2024/11/21 13:24:07 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.74 2024/11/21 13:35:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -216,7 +216,9 @@ main(int argc, char **argv)
 	if (cflag)
 		goto wait_for_child;
 
-	imsgbuf_init(&ibuf, pair[0]);
+	if (imsgbuf_init(&ibuf, pair[0]) == -1)
+		err(1, "imsgbuf_init");
+	imsgbuf_allow_fdpass(&ibuf);
 	for (idx = 0; idx < argc; idx++) {
 		fd = prepare_message(&msg, idx, argv[idx]);
 		send_message(&ibuf, &msg, sizeof msg, fd);
@@ -400,7 +402,9 @@ child(int fd, pid_t parent, int argc, char **argv)
 			width = len;
 	}
 
-	imsgbuf_init(&ibuf, fd);
+	if (imsgbuf_init(&ibuf, fd) == -1)
+		err(1, "imsgbuf_init");
+	imsgbuf_allow_fdpass(&ibuf);
 	for (;;) {
 		if (read_message(&ibuf, &imsg, parent) == 0)
 			break;

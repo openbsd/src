@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.172 2024/11/21 13:21:34 claudio Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.173 2024/11/21 13:35:20 claudio Exp $	*/
 
 
 /*
@@ -415,7 +415,9 @@ resolver(int debug, int verbose)
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
 
-	imsgbuf_init(&iev_main->ibuf, 3);
+	if (imsgbuf_init(&iev_main->ibuf, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_main->ibuf);
 	iev_main->handler = resolver_dispatch_main;
 
 	/* Setup event handlers. */
@@ -671,7 +673,8 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			if (iev_frontend == NULL)
 				fatal(NULL);
 
-			imsgbuf_init(&iev_frontend->ibuf, fd);
+			if (imsgbuf_init(&iev_frontend->ibuf, fd) == -1)
+				fatal(NULL);
 			iev_frontend->handler = resolver_dispatch_frontend;
 			iev_frontend->events = EV_READ;
 

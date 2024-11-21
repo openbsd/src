@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.29 2024/11/21 13:21:34 claudio Exp $ */
+/* $OpenBSD: proc.c,v 1.30 2024/11/21 13:35:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -305,7 +305,9 @@ proc_add_peer(struct tmuxproc *tp, int fd,
 	peer->dispatchcb = dispatchcb;
 	peer->arg = arg;
 
-	imsgbuf_init(&peer->ibuf, fd);
+	if (imsgbuf_init(&peer->ibuf, fd) == -1)
+		fatal("imsgbuf_init");
+	imsgbuf_allow_fdpass(&peer->ibuf);
 	event_set(&peer->event, fd, EV_READ, proc_event_cb, peer);
 
 	if (getpeereid(fd, &peer->uid, &gid) != 0)

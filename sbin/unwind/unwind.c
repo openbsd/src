@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.74 2024/11/21 13:21:34 claudio Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.75 2024/11/21 13:35:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -239,9 +239,13 @@ main(int argc, char *argv[])
 	if ((iev_frontend = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_resolver = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_frontend->ibuf, pipe_main2frontend[0]);
+	if (imsgbuf_init(&iev_frontend->ibuf, pipe_main2frontend[0]) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_frontend->ibuf);
 	iev_frontend->handler = main_dispatch_frontend;
-	imsgbuf_init(&iev_resolver->ibuf, pipe_main2resolver[0]);
+	if (imsgbuf_init(&iev_resolver->ibuf, pipe_main2resolver[0]) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_resolver->ibuf);
 	iev_resolver->handler = main_dispatch_resolver;
 
 	/* Setup event handlers for pipes. */

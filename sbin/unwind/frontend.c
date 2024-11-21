@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.88 2024/11/21 13:21:34 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.89 2024/11/21 13:35:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -233,7 +233,9 @@ frontend(int debug, int verbose)
 		fatal("iev_main");
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_main->ibuf, 3);
+	if (imsgbuf_init(&iev_main->ibuf, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_main->ibuf);
 	iev_main->handler = frontend_dispatch_main;
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
@@ -355,7 +357,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (iev_resolver == NULL)
 				fatal(NULL);
 
-			imsgbuf_init(&iev_resolver->ibuf, fd);
+			if (imsgbuf_init(&iev_resolver->ibuf, fd) == -1)
+				fatal(NULL);
 			iev_resolver->handler = frontend_dispatch_resolver;
 			iev_resolver->events = EV_READ;
 
