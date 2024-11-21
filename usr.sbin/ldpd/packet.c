@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.73 2024/11/21 13:12:11 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.74 2024/11/21 13:20:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -602,7 +602,7 @@ session_write(int fd, short event, void *arg)
 		if (nbr)
 			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 
-	if (nbr == NULL && !tcp->wbuf.wbuf.queued) {
+	if (nbr == NULL && msgbuf_queuelen(&tcp->wbuf.wbuf) == 0) {
 		/*
 		 * We are done sending the notification message, now we can
 		 * close the socket.

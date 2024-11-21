@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.74 2024/11/21 13:18:38 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.75 2024/11/21 13:20:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -586,7 +586,7 @@ evbuf_enqueue(struct evbuf *eb, struct ibuf *buf)
 void
 evbuf_event_add(struct evbuf *eb)
 {
-	if (eb->wbuf.queued)
+	if (msgbuf_queuelen(&eb->wbuf) > 0)
 		event_add(&eb->ev, NULL);
 }
 
