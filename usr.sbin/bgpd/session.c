@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.489 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.490 2024/11/21 13:26:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1622,7 +1622,7 @@ session_open(struct peer *p)
 		} else {
 			errs += ibuf_add_n8(buf->buf, ibuf_size(opb));
 		}
-		errs += ibuf_add_buf(buf->buf, opb);
+		errs += ibuf_add_ibuf(buf->buf, opb);
 	}
 
 	ibuf_free(opb);
@@ -1677,7 +1677,7 @@ session_update(uint32_t peerid, struct ibuf *ibuf)
 		return;
 	}
 
-	if (ibuf_add_buf(buf->buf, ibuf)) {
+	if (ibuf_add_ibuf(buf->buf, ibuf)) {
 		ibuf_free(buf->buf);
 		free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
@@ -1746,7 +1746,7 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 	errs += ibuf_add_n8(buf->buf, subcode);
 
 	if (ibuf != NULL)
-		errs += ibuf_add_buf(buf->buf, ibuf);
+		errs += ibuf_add_ibuf(buf->buf, ibuf);
 
 	if (errs) {
 		ibuf_free(buf->buf);

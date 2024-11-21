@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.118 2024/11/21 13:13:37 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.119 2024/11/21 13:26:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -680,7 +680,7 @@ mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
 			goto fail;
 		if (ibuf_add_n16(buf, ibuf_size(tbuf)) == -1)
 			goto fail;
-		if (ibuf_add_buf(buf, tbuf) == -1)
+		if (ibuf_add_ibuf(buf, tbuf) == -1)
 			goto fail;
 		ibuf_free(tbuf);
 		tbuf = NULL;
@@ -750,7 +750,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 
 		if (ibuf_add_n32(hbuf, snum) == -1)
 			goto fail;
-		if (ibuf_add_buf(hbuf, pbuf) == -1)
+		if (ibuf_add_ibuf(hbuf, pbuf) == -1)
 			goto fail;
 		if (ibuf_add_n16(hbuf, nump) == -1)
 			goto fail;
@@ -769,7 +769,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 
 		if (ibuf_add_n32(hbuf, snum) == -1)
 			goto fail;
-		if (ibuf_add_buf(hbuf, pbuf) == -1)
+		if (ibuf_add_ibuf(hbuf, pbuf) == -1)
 			goto fail;
 		if (ibuf_add_n16(hbuf, apnump) == -1)
 			goto fail;
