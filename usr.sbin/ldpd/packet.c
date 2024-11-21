@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.75 2024/11/21 13:27:13 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.76 2024/11/21 13:28:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -598,7 +598,7 @@ session_write(int fd, short event, void *arg)
 	if (!(event & EV_WRITE))
 		return;
 
-	if (msgbuf_write(&tcp->wbuf.wbuf) == -1)
+	if (ibuf_write(fd, &tcp->wbuf.wbuf) == -1)
 		if (nbr)
 			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 
@@ -707,7 +707,7 @@ static void
 tcp_close(struct tcp_conn *tcp)
 {
 	/* try to flush write buffer */
-	msgbuf_write(&tcp->wbuf.wbuf);
+	ibuf_write(tcp->fd, &tcp->wbuf.wbuf);
 	evbuf_clear(&tcp->wbuf);
 
 	if (tcp->nbr) {
@@ -783,7 +783,7 @@ pending_conn_timeout(int fd, short event, void *arg)
 	 */
 	tcp = tcp_new(pconn->fd, NULL);
 	send_notification(tcp, S_NO_HELLO, 0, 0);
-	msgbuf_write(&tcp->wbuf.wbuf);
+	ibuf_write(fd, &tcp->wbuf.wbuf);
 
 	pending_conn_del(pconn);
 }
