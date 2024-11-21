@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.138 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.139 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 		memset(pfd, 0, sizeof(*pfd) * pfd_elms);
 		pfd[PFD_PIPE].fd = ibuf->fd;
 		pfd[PFD_PIPE].events = POLLIN;
-		if (ibuf->w.queued)
+		if (imsgbuf_queuelen(ibuf) > 0)
 			pfd[PFD_PIPE].events |= POLLOUT;
 
 		i = PFD_MAX;

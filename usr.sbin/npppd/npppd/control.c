@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.12 2024/11/21 13:17:57 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.13 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -256,7 +256,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			control_close(fd, cs);
 			return;
 		}
-		if (!c->iev.ibuf.w.queued)
+		if (imsgbuf_queuelen(&c->iev.ibuf) > 0)
 			npppd_ctl_imsg_compose(c->ctx, &c->iev.ibuf);
 		imsg_event_add(&c->iev);
 		if (!(event & EV_READ))
@@ -330,7 +330,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		}
 		imsg_free(&imsg);
 	}
-	if (!c->iev.ibuf.w.queued)
+	if (imsgbuf_queuelen(&c->iev.ibuf) > 0)
 		npppd_ctl_imsg_compose(c->ctx, &c->iev.ibuf);
 	imsg_event_add(&c->iev);
 }

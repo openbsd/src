@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.178 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: ntp.c,v 1.179 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -332,15 +332,15 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 				clear_cdns = 0;
 		}
 
-		if (ibuf_main->w.queued > 0)
+		if (imsgbuf_queuelen(ibuf_main) > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
-		if (ibuf_dns->w.queued > 0)
+		if (imsgbuf_queuelen(ibuf_dns) > 0)
 			pfd[PFD_PIPE_DNS].events |= POLLOUT;
 
 		TAILQ_FOREACH(cc, &ctl_conns, entry) {
 			pfd[i].fd = cc->ibuf.fd;
 			pfd[i].events = POLLIN;
-			if (cc->ibuf.w.queued > 0)
+			if (imsgbuf_queuelen(&cc->ibuf) > 0)
 				pfd[i].events |= POLLOUT;
 			i++;
 		}

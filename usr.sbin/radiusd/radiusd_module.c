@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.23 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.24 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -666,7 +666,7 @@ module_reset_event(struct module_base *base)
 	event_del(&base->ev);
 
 	evmask |= EV_READ;
-	if (base->ibuf.w.queued) {
+	if (imsgbuf_queuelen(&base->ibuf) > 0) {
 		if (!base->writeready)
 			evmask |= EV_WRITE;
 		else

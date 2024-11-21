@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.76 2024/11/21 13:17:57 claudio Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.77 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -570,7 +570,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf) > 0)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.35 2024/11/21 13:17:58 claudio Exp $	*/
+/*	$OpenBSD: rad.c,v 1.36 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -510,7 +510,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf) > 0)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);

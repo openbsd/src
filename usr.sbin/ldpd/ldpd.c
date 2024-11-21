@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.73 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.74 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -556,7 +556,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf) > 0)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);

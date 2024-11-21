@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.36 2024/11/21 13:17:56 claudio Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.37 2024/11/21 13:18:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -653,7 +653,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf) > 0)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);

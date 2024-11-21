@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.33 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.34 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -107,7 +107,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 	while (quit_dns == 0) {
 		pfd[0].fd = ibuf_dns->fd;
 		pfd[0].events = POLLIN;
-		if (ibuf_dns->w.queued)
+		if (imsgbuf_queuelen(ibuf_dns) > 0)
 			pfd[0].events |= POLLOUT;
 
 		if ((nfds = poll(pfd, 1, INFTIM)) == -1)

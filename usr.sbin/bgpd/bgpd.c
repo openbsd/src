@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.274 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.275 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1260,7 +1260,7 @@ set_pollfd(struct pollfd *pfd, struct imsgbuf *i)
 	}
 	pfd->fd = i->fd;
 	pfd->events = POLLIN;
-	if (i->w.queued > 0)
+	if (imsgbuf_queuelen(i) > 0)
 		pfd->events |= POLLOUT;
 }
 

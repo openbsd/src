@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.125 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.126 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -147,7 +147,7 @@ control_fill_pfds(struct pollfd *pfd, size_t size)
 	TAILQ_FOREACH(ctl_conn, &ctl_conns, entry) {
 		pfd[i].fd = ctl_conn->imsgbuf.fd;
 		pfd[i].events = POLLIN;
-		if (ctl_conn->imsgbuf.w.queued > 0)
+		if (imsgbuf_queuelen(&ctl_conn->imsgbuf) > 0)
 			pfd[i].events |= POLLOUT;
 		i++;
 	}
@@ -251,7 +251,8 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	if (pfd->revents & POLLOUT) {
 		if (imsgbuf_write(&c->imsgbuf) == -1)
 			return control_close(c);
-		if (c->throttled && c->imsgbuf.w.queued < CTL_MSG_LOW_MARK) {
+		if (c->throttled &&
+		    imsgbuf_queuelen(&c->imsgbuf) < CTL_MSG_LOW_MARK) {
 			if (imsg_ctl_rde_msg(IMSG_XON, 0, c->imsgbuf.pid) != -1)
 				c->throttled = 0;
 		}
@@ -578,7 +579,8 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 	if (type == IMSG_CTL_END || type == IMSG_CTL_RESULT)
 		c->terminate = 0;
 
-	if (!c->throttled && c->imsgbuf.w.queued > CTL_MSG_HIGH_MARK) {
+	if (!c->throttled &&
+	    imsgbuf_queuelen(&c->imsgbuf) > CTL_MSG_HIGH_MARK) {
 		if (imsg_ctl_rde_msg(IMSG_XOFF, 0, pid) != -1)
 			c->throttled = 1;
 	}

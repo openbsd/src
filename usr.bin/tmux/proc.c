@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.27 2024/11/21 13:17:01 claudio Exp $ */
+/* $OpenBSD: proc.c,v 1.28 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -111,7 +111,7 @@ proc_event_cb(__unused int fd, short events, void *arg)
 		}
 	}
 
-	if ((peer->flags & PEER_BAD) && peer->ibuf.w.queued == 0) {
+	if ((peer->flags & PEER_BAD) && imsgbuf_queuelen(&peer->ibuf) == 0) {
 		peer->dispatchcb(NULL, peer->arg);
 		return;
 	}
@@ -152,7 +152,7 @@ proc_update_event(struct tmuxpeer *peer)
 	event_del(&peer->event);
 
 	events = EV_READ;
-	if (peer->ibuf.w.queued > 0)
+	if (imsgbuf_queuelen(&peer->ibuf) > 0)
 		events |= EV_WRITE;
 	event_set(&peer->event, peer->ibuf.fd, events, proc_event_cb, peer);
 

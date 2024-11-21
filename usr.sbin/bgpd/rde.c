@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.636 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.637 2024/11/21 13:18:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -308,7 +308,7 @@ rde_main(int debug, int verbose)
 		peer_foreach(rde_dispatch_imsg_peer, NULL);
 		rib_dump_runner();
 		nexthop_runner();
-		if (ibuf_se && ibuf_se->w.queued < SESS_MSG_HIGH_MARK) {
+		if (ibuf_se && imsgbuf_queuelen(ibuf_se) < SESS_MSG_HIGH_MARK) {
 			for (aid = AID_MIN; aid < AID_MAX; aid++)
 				rde_update_queue_runner(aid);
 		}
@@ -3344,7 +3344,7 @@ rde_update_queue_pending(void)
 	struct rde_peer *peer;
 	uint8_t aid;
 
-	if (ibuf_se && ibuf_se->w.queued >= SESS_MSG_HIGH_MARK)
+	if (ibuf_se && imsgbuf_queuelen(ibuf_se) >= SESS_MSG_HIGH_MARK)
 		return 0;
 
 	RB_FOREACH(peer, peer_tree, &peertable) {

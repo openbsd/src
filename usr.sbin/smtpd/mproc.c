@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.43 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.44 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -115,7 +115,7 @@ mproc_event_add(struct mproc *p)
 	else
 		events = 0;
 
-	if (p->imsgbuf.w.queued)
+	if (imsgbuf_queuelen(&p->imsgbuf) > 0)
 		events |= EV_WRITE;
 
 	if (p->events)

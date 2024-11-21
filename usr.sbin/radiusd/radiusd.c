@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.58 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.59 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1352,7 +1352,7 @@ radiusd_module_reset_ev_handler(struct radiusd_module *module)
 	event_del(&module->ev);
 
 	evmask = EV_READ;
-	if (module->ibuf.w.queued) {
+	if (imsgbuf_queuelen(&module->ibuf) > 0) {
 		if (!module->writeready)
 			evmask |= EV_WRITE;
 		else
@@ -1927,7 +1927,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf) > 0)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);

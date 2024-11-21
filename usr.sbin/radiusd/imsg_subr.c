@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_subr.c,v 1.2 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: imsg_subr.c,v 1.3 2024/11/21 13:18:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -61,7 +61,7 @@ imsg_sync_flush(struct imsgbuf *ibuf, int millisec)
 	struct pollfd	 fds[1];
 	int		 retval;
 
-	if (!ibuf->w.queued)
+	if (imsgbuf_queuelen(ibuf) == 0)
 		return (0);	/* already flushed */
 
 	fds[0].fd = ibuf->fd;

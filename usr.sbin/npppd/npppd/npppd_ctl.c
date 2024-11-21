@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.c,v 1.16 2017/08/11 16:25:59 goda Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.17 2024/11/21 13:18:38 claudio Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -200,7 +200,7 @@ npppd_ctl_imsg_compose(struct npppd_ctl *_this, struct imsgbuf *ibuf)
 	npppd_ppp             *ppp;
 	struct stopped_ppp    *e, *t;
 
-	if (ibuf->w.queued)
+	if (imsgbuf_queuelen(ibuf) > 0)
 		return (0);
 
 	cnt = 0;

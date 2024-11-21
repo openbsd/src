@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.48 2024/11/21 13:17:01 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.49 2024/11/21 13:18:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -732,7 +732,7 @@ imsg_event_add(struct imsgev *iev)
 	}
 
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf) > 0)
 		iev->events |= EV_WRITE;
 
 	event_del(&iev->ev);
