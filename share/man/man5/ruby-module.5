@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.47 2024/06/20 22:43:16 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.48 2024/11/21 06:12:23 jeremy Exp $
 .\"
 .\" Copyright (c) 2011-2015, 2023 Jeremy Evans <jeremy@openbsd.org>
 .\" Copyright (c) 2008, 2011 Marc Espie <espie@openbsd.org>
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2024 $
+.Dd $Mdocdate: November 21 2024 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ those via
 .Ev CONFIGURE_STYLE Ns = Ns Qq ruby gem
 and
 .Ev CONFIGURE_STYLE Ns = Ns Qq ruby gem ext
-both add ruby31, ruby32, and ruby33
+both add ruby32 and ruby33
 .Ev FLAVOR Ns s
 to the port.
 They also cause the
@@ -82,7 +82,7 @@ To specify a version for a gem port, use a specific
 such as ruby32 to use Ruby 3.2.
 To specify the Ruby version to use for a non Ruby-gem port, set
 .Ev MODRUBY_REV
-to 3.1, 3.2, or 3.3.
+to 3.2 or 3.3.
 .Pp
 To ensure that dependencies use the same Ruby implementation as the
 current port, all Ruby gem dependencies specified in the port
