@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.22 2024/11/21 12:44:06 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.23 2024/11/21 12:49:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -569,24 +569,21 @@ ibuf_write(struct msgbuf *msgbuf)
 		iov[i].iov_len = ibuf_size(buf);
 		i++;
 	}
+	if (i == 0)
+		return (0);	/* nothing queued */
 
 again:
 	if ((n = writev(msgbuf->fd, iov, i)) == -1) {
 		if (errno == EINTR)
 			goto again;
-		if (errno == ENOBUFS)
-			errno = EAGAIN;
+		if (errno == EAGAIN || errno == ENOBUFS)
+			/* lets retry later again */
+			return (0);
 		return (-1);
 	}
 
-	if (n == 0) {			/* connection closed */
-		errno = 0;
-		return (0);
-	}
-
 	msgbuf_drain(msgbuf, n);
-
-	return (1);
+	return (0);
 }
 
 void
@@ -653,6 +650,9 @@ msgbuf_write(struct msgbuf *msgbuf)
 			buf0 = buf;
 	}
 
+	if (i == 0)
+		return (0);	/* nothing queued */
+
 	msg.msg_iov = iov;
 	msg.msg_iovlen = i;
 
@@ -670,14 +670,10 @@ again:
 	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
 		if (errno == EINTR)
 			goto again;
-		if (errno == ENOBUFS)
-			errno = EAGAIN;
+		if (errno == EAGAIN || errno == ENOBUFS)
+			/* lets retry later again */
+			return (0);
 		return (-1);
-	}
-
-	if (n == 0) {			/* connection closed */
-		errno = 0;
-		return (0);
 	}
 
 	/*
@@ -691,7 +687,7 @@ again:
 
 	msgbuf_drain(msgbuf, n);
 
-	return (1);
+	return (0);
 }
 
 uint32_t

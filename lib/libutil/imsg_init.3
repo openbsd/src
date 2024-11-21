@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.35 2024/11/21 12:49:14 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.36 2024/11/21 12:49:58 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -21,6 +21,9 @@
 .Sh NAME
 .Nm imsg_init ,
 .Nm imsg_read ,
+.Nm imsg_write ,
+.Nm imsg_flush ,
+.Nm imsg_clear
 .Nm imsg_get ,
 .Nm imsg_get_ibuf ,
 .Nm imsg_get_data ,
@@ -36,9 +39,7 @@
 .Nm imsg_add ,
 .Nm imsg_close ,
 .Nm imsg_forward ,
-.Nm imsg_free ,
-.Nm imsg_flush ,
-.Nm imsg_clear
+.Nm imsg_free
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .In sys/queue.h
@@ -235,7 +236,9 @@ more than once per message.
 calls
 .Fn imsg_write
 in a loop until all imsgs in the output buffer are sent.
-It returns 0 if it succeeds, \-1 otherwise.
+It returns 0 if it succeeds, \-1 otherwise and the global variable
+.Va errno
+is set to indicate the error.
 .Pp
 The
 .Fn imsg_read
@@ -253,8 +256,19 @@ and renders it suitable only for passing to
 .Pp
 .Fn imsg_write
 writes out queued messages.
-It returns 1 if it succeeds, -1 on error, and 0 when the queue
-was empty or an EOF condition on the socket is detected.
+It returns 0 if it succeeds, -1 on error and the global variable
+.Va errno
+is set to indicate the error.
+The errors
+.Er EINTR ,
+.Er EAGAIN ,
+and
+.Er ENOBUFS
+are treated as follows.
+.Er EINTR
+will automatically retry the write operation while the other errors are
+ignored with a 0 return.
+The caller will then retry the operation at a later stage.
 .Fn imsg_get
 fills in an individual imsg pending on
 .Fa imsgbuf
@@ -377,11 +391,11 @@ library is used to monitor the socket file descriptor.
 When the socket is ready for writing, queued messages are transmitted with
 .Fn imsg_write :
 .Bd -literal -offset indent
-	if ((n = imsg_write(&imsgbuf-\*(Gtw)) == -1 && errno != EAGAIN) {
-		/* handle write failure */
-	}
-	if (n == 0) {
-		/* handle closed connection */
+	if (imsg_write(imsgbuf) == -1) {
+		if (errno == EPIPE)
+			/* handle closed connection */
+		else
+			/* handle write failure */
 	}
 .Ed
 .Pp
