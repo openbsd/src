@@ -18,7 +18,6 @@
 		getptmfd;
 		getrawpartition;
 		ibuf_add;
-		ibuf_add_buf;
 		ibuf_add_ibuf;
 		ibuf_add_h16;
 		ibuf_add_h32;

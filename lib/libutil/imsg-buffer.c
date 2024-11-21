@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.23 2024/11/21 12:49:58 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.24 2024/11/21 12:58:46 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -134,13 +134,6 @@ int
 ibuf_add_ibuf(struct ibuf *buf, const struct ibuf *from)
 {
 	return ibuf_add(buf, ibuf_data(from), ibuf_size(from));
-}
-
-/* remove after tree is converted */
-int
-ibuf_add_buf(struct ibuf *buf, const struct ibuf *from)
-{
-	return ibuf_add_ibuf(buf, from);
 }
 
 int

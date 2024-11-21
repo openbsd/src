@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.14 2024/11/21 12:54:52 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.15 2024/11/21 12:58:46 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -81,7 +81,6 @@ struct iovec;
 struct ibuf	*ibuf_open(size_t);
 struct ibuf	*ibuf_dynamic(size_t, size_t);
 int		 ibuf_add(struct ibuf *, const void *, size_t);
-int		 ibuf_add_buf(struct ibuf *, const struct ibuf *);
 int		 ibuf_add_ibuf(struct ibuf *, const struct ibuf *);
 int		 ibuf_add_zero(struct ibuf *, size_t);
 int		 ibuf_add_n8(struct ibuf *, uint64_t);
