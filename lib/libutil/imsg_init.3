@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.39 2024/11/21 12:54:52 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.40 2024/11/21 13:04:01 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -36,16 +36,20 @@
 .Nm imsg_get_len ,
 .Nm imsg_get_pid ,
 .Nm imsg_get_type ,
+.Nm imsgbuf_allow_fdpass ,
 .Nm imsgbuf_clear ,
 .Nm imsgbuf_flush ,
 .Nm imsgbuf_init ,
 .Nm imsgbuf_queuelen ,
 .Nm imsgbuf_read ,
+.Nm imsgbuf_set_maxsize ,
 .Nm imsgbuf_write
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .In sys/queue.h
 .In imsg.h
+.Fd #define IMSG_HEADER_SIZE sizeof(struct imsg_hdr)
+.Fd #define MAX_IMSGSIZE 16384
 .Ft int
 .Fn imsg_add "struct ibuf *msg" "const void *data" "size_t datalen"
 .Ft void
@@ -80,15 +84,19 @@
 .Ft uint32_t
 .Fn imsg_get_type "struct imsg *imsg"
 .Ft void
+.Fn imsgbuf_allow_fdpass "struct imsgbuf *imsgbuf"
+.Ft void
 .Fn imsgbuf_clear "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_flush "struct imsgbuf *imsgbuf"
-.Ft void
+.Ft int
 .Fn imsgbuf_init "struct imsgbuf *imsgbuf" "int fd"
 .Ft uint32_t
 .Fn imsgbuf_queuelen "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_read "struct imsgbuf *imsgbuf"
+.Ft void
+.Fn imsgbuf_set_maxsize "struct imsgbuf *imsgbuf" "uint32_t maxsize"
 .Ft int
 .Fn imsgbuf_write "struct imsgbuf *imsgbuf"
 .In sys/uio.h
@@ -115,6 +123,20 @@ as one side of a channel associated with
 .Fa fd .
 The file descriptor is used to send and receive messages,
 but is not closed by any of the imsg functions.
+It returns 0 if successful and -1 on failure.
+.Pp
+.Fn imsgbuf_allow_fdpass
+enables file descriptor passing in both directions for this
+.Fa imsgbuf .
+.Pp
+.Fn imsgbuf_set_maxsize
+changes the default maximum imsg size from
+.Dv MAX_IMSGSIZE
+to
+.Fa maxsize .
+.Fa maxsize
+must be bigger than
+.Dv IMSG_HEADER_SIZE .
 .Pp
 The
 .Fn imsgbuf_clear
@@ -344,13 +366,15 @@ case -1:
 case 0:
 	/* child */
 	close(imsg_fds[0]);
-	imsgbuf_init(&child_ibuf, imsg_fds[1]);
+	if (imsgbuf_init(&child_ibuf, imsg_fds[1]) == -1)
+		err(1, NULL);
 	exit(child_main(&child_ibuf));
 }
 
 /* parent */
 close(imsg_fds[1]);
-imsgbuf_init(&parent_ibuf, imsg_fds[0]);
+if (imsgbuf_init(&parent_ibuf, imsg_fds[0]) == -1)
+	err(1, NULL);
 exit(parent_main(&parent_ibuf));
 .Ed
 .Pp
@@ -405,11 +429,13 @@ dispatch_imsg(struct imsgbuf *imsgbuf)
 	ssize_t         n;
 	int		idata;
 
-	if ((n = imsgbuf_read(imsgbuf)) == -1) {
+	switch (imsgbuf_read(imsgbuf)) {
+	case -1:
 		/* handle read error */
-	}
-	if (n == 0) {
+		break;
+	case 0:
 		/* handle closed connection */
+		break;
 	}
 
 	for (;;) {
