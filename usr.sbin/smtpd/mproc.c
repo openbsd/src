@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.45 2024/11/21 13:22:21 claudio Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.46 2024/11/21 13:32:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -25,8 +25,6 @@
 #include "log.h"
 
 static void mproc_dispatch(int, short, void *);
-
-static int imsgbuf_read_nofd(struct imsgbuf *);
 
 int
 mproc_fork(struct mproc *p, const char *path, char *argv[])
@@ -139,10 +137,7 @@ mproc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_READ) {
 
-		if (p->proc == PROC_CLIENT)
-			n = imsgbuf_read_nofd(&p->imsgbuf);
-		else
-			n = imsgbuf_read(&p->imsgbuf);
+		n = imsgbuf_read(&p->imsgbuf);
 
 		switch (n) {
 		case -1:
@@ -194,30 +189,6 @@ mproc_dispatch(int fd, short event, void *arg)
 	}
 
 	mproc_event_add(p);
-}
-
-/* This should go into libutil */
-static int
-imsgbuf_read_nofd(struct imsgbuf *ibuf)
-{
-	ssize_t	 n;
-	char	*buf;
-	size_t	 len;
-
-	buf = ibuf->r.buf + ibuf->r.wpos;
-	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
-
-	while ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
-		if (errno == EAGAIN)
-			return (1);
-		if (errno != EINTR)
-			return (-1);
-	}
-	if (n == 0)
-		return (0);
-
-	ibuf->r.wpos += n;
-	return (1);
 }
 
 void
