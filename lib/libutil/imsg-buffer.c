@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.20 2024/11/21 12:42:14 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.21 2024/11/21 12:42:57 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,6 @@
 
 #include "imsg.h"
 
-static int	ibuf_realloc(struct ibuf *, size_t);
 static void	ibuf_enqueue(struct msgbuf *, struct ibuf *);
 static void	ibuf_dequeue(struct msgbuf *, struct ibuf *);
 static void	msgbuf_drain(struct msgbuf *, size_t);
@@ -83,27 +82,6 @@ ibuf_dynamic(size_t len, size_t max)
 	return (buf);
 }
 
-static int
-ibuf_realloc(struct ibuf *buf, size_t len)
-{
-	unsigned char	*b;
-
-	/* on static buffers max is eq size and so the following fails */
-	if (len > SIZE_MAX - buf->wpos || buf->wpos + len > buf->max) {
-		errno = ERANGE;
-		return (-1);
-	}
-
-	b = realloc(buf->buf, buf->wpos + len);
-	if (b == NULL)
-		return (-1);
-	memset(b + buf->size, 0, buf->wpos + len - buf->size);
-	buf->buf = b;
-	buf->size = buf->wpos + len;
-
-	return (0);
-}
-
 void *
 ibuf_reserve(struct ibuf *buf, size_t len)
 {
@@ -114,9 +92,21 @@ ibuf_reserve(struct ibuf *buf, size_t len)
 		return (NULL);
 	}
 
-	if (buf->wpos + len > buf->size)
-		if (ibuf_realloc(buf, len) == -1)
+	if (buf->wpos + len > buf->size) {
+		unsigned char	*nb;
+
+		/* check if buffer is allowed to grow */
+		if (buf->wpos + len > buf->max) {
+			errno = ERANGE;
 			return (NULL);
+		}
+		nb = realloc(buf->buf, buf->wpos + len);
+		if (nb == NULL)
+			return (NULL);
+		memset(nb + buf->size, 0, buf->wpos + len - buf->size);
+		buf->buf = nb;
+		buf->size = buf->wpos + len;
+	}
 
 	b = buf->buf + buf->wpos;
 	buf->wpos += len;
