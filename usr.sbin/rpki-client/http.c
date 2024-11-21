@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.89 2024/11/21 13:12:19 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.90 2024/11/21 13:28:54 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -2067,7 +2067,6 @@ proc_http(char *bind_addr, int fd)
 		err(1, "pledge");
 
 	msgbuf_init(&msgq);
-	msgq.fd = fd;
 
 	for (;;) {
 		time_t now;
@@ -2138,7 +2137,7 @@ proc_http(char *bind_addr, int fd)
 		if (pfds[0].revents & POLLHUP)
 			break;
 		if (pfds[0].revents & POLLOUT) {
-			if (msgbuf_write(&msgq) == -1) {
+			if (msgbuf_write(fd, &msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else

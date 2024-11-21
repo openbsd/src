@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.53 2024/11/21 13:12:19 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.54 2024/11/21 13:28:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -749,8 +749,6 @@ proc_filemode(int fd)
 	TAILQ_INIT(&q);
 
 	msgbuf_init(&msgq);
-	msgq.fd = fd;
-
 	pfd.fd = fd;
 
 	for (;;) {
@@ -784,7 +782,7 @@ proc_filemode(int fd)
 		}
 
 		if (pfd.revents & POLLOUT) {
-			if (msgbuf_write(&msgq) == -1) {
+			if (msgbuf_write(fd, &msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else

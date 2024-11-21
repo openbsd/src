@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.53 2024/11/21 13:12:19 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.54 2024/11/21 13:28:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -234,9 +234,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	pfd.fd = fd;
 	msgbuf_init(&msgq);
-	msgq.fd = fd;
+	pfd.fd = fd;
 
 	/*
 	 * Unveil the command we want to run.
@@ -355,7 +354,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		}
 
 		if (pfd.revents & POLLOUT) {
-			if (msgbuf_write(&msgq) == -1) {
+			if (msgbuf_write(fd, &msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else
