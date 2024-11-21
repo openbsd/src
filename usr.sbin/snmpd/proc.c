@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.38 2024/11/21 13:21:34 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.39 2024/11/21 13:38:45 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -155,8 +155,10 @@ proc_connect(struct privsep *ps)
 
 		for (inst = 0; inst < ps->ps_instances[dst]; inst++) {
 			iev = &ps->ps_ievs[dst][inst];
-			imsgbuf_init(&iev->ibuf,
-			    ps->ps_pp->pp_pipes[dst][inst]);
+			if (imsgbuf_init(&iev->ibuf,
+			    ps->ps_pp->pp_pipes[dst][inst]) == -1)
+				fatal("imsgbuf_init");
+			imsgbuf_allow_fdpass(&iev->ibuf);
 			event_set(&iev->ev, iev->ibuf.fd, iev->events,
 			    iev->handler, iev->data);
 			event_add(&iev->ev, NULL);
@@ -265,7 +267,9 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 		pp->pp_pipes[dst][n] = fd;
 
 	iev = &ps->ps_ievs[dst][n];
-	imsgbuf_init(&iev->ibuf, fd);
+	if (imsgbuf_init(&iev->ibuf, fd) == -1)
+		fatal("imsgbuf_init");
+	imsgbuf_allow_fdpass(&iev->ibuf);
 	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
 	event_add(&iev->ev, NULL);
 }
