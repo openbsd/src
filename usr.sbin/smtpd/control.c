@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.131 2024/01/20 09:01:03 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.132 2024/11/21 13:42:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -435,6 +435,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SMTP_SESSION:
+		imsgbuf_allow_fdpass(&p->imsgbuf);
 		if (env->sc_flags & SMTPD_SMTP_PAUSED) {
 			m_compose(p, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			return;

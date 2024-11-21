@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.175 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.176 2024/11/21 13:42:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -118,7 +118,9 @@ srv_connect(void)
 	}
 
 	ibuf = xcalloc(1, sizeof(struct imsgbuf));
-	imsgbuf_init(ibuf, ctl_sock);
+	if (imsgbuf_init(ibuf, ctl_sock) == -1)
+		err(1, "imsgbuf_init");
+	imsgbuf_allow_fdpass(ibuf);
 
 	return (1);
 }

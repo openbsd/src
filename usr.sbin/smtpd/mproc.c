@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.46 2024/11/21 13:32:02 claudio Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.47 2024/11/21 13:42:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -65,7 +65,10 @@ err:
 void
 mproc_init(struct mproc *p, int fd)
 {
-	imsgbuf_init(&p->imsgbuf, fd);
+	if (imsgbuf_init(&p->imsgbuf, fd) == -1)
+		fatal("mproc_init: imsgbuf_init");
+	if (p->proc != PROC_CLIENT)
+		imsgbuf_allow_fdpass(&p->imsgbuf);
 }
 
 void

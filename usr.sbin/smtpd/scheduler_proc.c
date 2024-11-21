@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.12 2024/11/21 13:22:21 claudio Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.13 2024/11/21 13:42:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -104,7 +104,9 @@ scheduler_proc_init(const char *conf)
 	if (fd == -1)
 		fatalx("scheduler-proc: exiting");
 
-	imsgbuf_init(&ibuf, fd);
+	if (imsgbuf_init(&ibuf, fd) == -1)
+		fatal("scheduler-proc: exiting");
+	imsgbuf_allow_fdpass(&ibuf);
 
 	version = PROC_SCHEDULER_API_VERSION;
 	imsg_compose(&ibuf, PROC_SCHEDULER_INIT, 0, 0, -1,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.13 2024/11/21 13:22:21 claudio Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.14 2024/11/21 13:42:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -291,7 +291,9 @@ queue_proc_init(struct passwd *pw, int server, const char *conf)
 	if (fd == -1)
 		fatalx("queue-proc: exiting");
 
-	imsgbuf_init(&ibuf, fd);
+	if (imsgbuf_init(&ibuf, fd) == -1)
+		fatal("queue-proc: exiting");
+	imsgbuf_allow_fdpass(&ibuf);
 
 	version = PROC_QUEUE_API_VERSION;
 	imsg_compose(&ibuf, PROC_QUEUE_INIT, 0, 0, -1,
