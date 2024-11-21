@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.36 2024/11/21 14:36:03 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.37 2024/11/21 15:03:56 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -371,27 +371,28 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 			goto err;
 
 		for (i = 0; i < totalnum; i++) {
-			if (wNAF_len[i] > (size_t) k) {
-				int digit = wNAF[i][k];
-				int is_neg;
+			int digit;
+			int is_neg = 0;
 
-				if (digit) {
-					is_neg = digit < 0;
+			if (k >= wNAF_len[i])
+				continue;
 
-					if (is_neg)
-						digit = -digit;
+			if ((digit = wNAF[i][k]) == 0)
+				continue;
 
-					if (is_neg != r_is_inverted) {
-						if (!EC_POINT_invert(group, r, ctx))
-							goto err;
-						r_is_inverted = !r_is_inverted;
-					}
-					/* digit > 0 */
-
-					if (!EC_POINT_add(group, r, r, val_sub[i][digit >> 1], ctx))
-						goto err;
-				}
+			if (digit < 0) {
+				is_neg = 1;
+				digit = 0 - digit;
 			}
+
+			if (is_neg != r_is_inverted) {
+				if (!EC_POINT_invert(group, r, ctx))
+					goto err;
+				r_is_inverted = !r_is_inverted;
+			}
+
+			if (!EC_POINT_add(group, r, r, val_sub[i][digit >> 1], ctx))
+				goto err;
 		}
 	}
 
