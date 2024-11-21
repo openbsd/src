@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.23 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.24 2024/11/21 13:42:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -484,10 +484,13 @@ m_priv_iked_imsg(u_int cmd)
 
 	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		log_err("m_priv_iked_imsg: connect");
-		goto out;				
+		goto out;
 	}
 
-	imsgbuf_init(&ibuf, fd);
+	if (imsgbuf_init(&ibuf, fd) == -1) {
+		log_err("m_priv_iked_imsg: imsgbuf_init");
+		goto out;
+	}
 	if (imsg_compose(&ibuf, cmd, 0, 0, -1, NULL, 0) == -1) {
 		log_err("m_priv_iked_imsg: compose");
 		goto err;
