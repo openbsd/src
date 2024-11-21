@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.79 2024/08/17 20:50:06 mlarkin Exp $	*/
+/*	$OpenBSD: main.c,v 1.80 2024/11/21 13:09:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -273,9 +273,8 @@ vmmaction(struct parse_result *res)
 	flags = res->flags;
 	parse_free(res);
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

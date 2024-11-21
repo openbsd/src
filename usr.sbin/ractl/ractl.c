@@ -1,4 +1,4 @@
-/*	$OpenBSD: ractl.c,v 1.3 2021/02/27 10:35:20 florian Exp $	*/
+/*	$OpenBSD: ractl.c,v 1.4 2024/11/21 13:08:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -123,9 +123,8 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

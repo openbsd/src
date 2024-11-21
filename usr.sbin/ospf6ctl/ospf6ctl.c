@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.54 2023/06/21 09:47:03 sthen Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.55 2024/11/21 13:08:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -250,9 +250,8 @@ main(int argc, char *argv[])
 #endif
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

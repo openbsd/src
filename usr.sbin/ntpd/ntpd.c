@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.133 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.134 2024/11/21 13:08:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -694,9 +694,8 @@ ctl_main(int argc, char *argv[])
 		break; /* NOTREACHED */
 	}
 
-	while (ibuf_ctl->w.queued)
-		if (msgbuf_write(&ibuf_ctl->w) <= 0 && errno != EAGAIN)
-			err(1, "ibuf_ctl: msgbuf_write error");
+	if (imsg_flush(ibuf_ctl) == -1)
+		err(1, "ibuf_ctl: imsg_flush error");
 
 	done = 0;
 	while (!done) {

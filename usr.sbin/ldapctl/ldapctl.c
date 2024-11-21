@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.16 2024/11/05 09:18:35 claudio Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.17 2024/11/21 13:08:53 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -355,9 +355,8 @@ main(int argc, char *argv[])
 		fatal("internal error");
 	}
 
-	while (ibuf.w.queued)
-		if (msgbuf_write(&ibuf.w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(&ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN)

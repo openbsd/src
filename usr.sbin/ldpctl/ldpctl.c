@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.32 2016/07/15 17:09:25 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.33 2024/11/21 13:08:54 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -206,9 +206,8 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

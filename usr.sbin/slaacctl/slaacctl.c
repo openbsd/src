@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.23 2022/03/21 16:25:47 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.24 2024/11/21 13:09:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -136,9 +136,8 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.58 2017/11/29 15:24:50 benno Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.59 2024/11/21 13:09:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -221,9 +221,8 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

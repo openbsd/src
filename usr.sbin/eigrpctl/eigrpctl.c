@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpctl.c,v 1.9 2017/02/22 14:18:25 renato Exp $ */
+/*	$OpenBSD: eigrpctl.c,v 1.10 2024/11/21 13:08:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -217,9 +217,8 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.68 2020/05/20 11:11:24 denis Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.69 2024/11/21 13:08:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -213,9 +213,8 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
-			err(1, "write error");
+	if (imsg_flush(ibuf) == -1)
+		err(1, "write error");
 
 	/* no output for certain commands such as log verbose */
 	if (!done) {
