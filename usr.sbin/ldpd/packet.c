@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.74 2024/11/21 13:20:00 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.75 2024/11/21 13:27:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -36,7 +36,7 @@ static struct iface		*disc_find_iface(unsigned int, int,
 				    union ldpd_addr *, int);
 static void			 session_read(int, short, void *);
 static void			 session_write(int, short, void *);
-static ssize_t			 session_get_pdu(struct ibuf_read *, char **);
+static ssize_t			 session_get_pdu(struct buf_read *, char **);
 static void			 tcp_close(struct tcp_conn *);
 static struct pending_conn	*pending_conn_new(int, int, union ldpd_addr *);
 static void			 pending_conn_timeout(int, short, void *);
@@ -651,7 +651,7 @@ session_close(struct nbr *nbr)
 }
 
 static ssize_t
-session_get_pdu(struct ibuf_read *r, char **b)
+session_get_pdu(struct buf_read *r, char **b)
 {
 	struct ldp_hdr	l;
 	size_t		av, dlen, left;
@@ -691,7 +691,7 @@ tcp_new(int fd, struct nbr *nbr)
 	evbuf_init(&tcp->wbuf, tcp->fd, session_write, tcp);
 
 	if (nbr) {
-		if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
+		if ((tcp->rbuf = calloc(1, sizeof(struct buf_read))) == NULL)
 			fatal(__func__);
 
 		event_set(&tcp->rev, tcp->fd, EV_READ | EV_PERSIST,
