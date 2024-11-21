@@ -149,12 +149,8 @@ main(int argc, char **argv)
 		err(1, "open %s", file);
 
 	http_request(req++, uri, mod, outfd);
-	switch (msgbuf_write(&httpq)) {
-	case 0:
-		errx(1, "write: connection closed");
-	case -1:
+	if (msgbuf_write(&httpq) == -1)
 		err(1, "write");
-	}
 	error = http_response(http);
 	return error;
 }
