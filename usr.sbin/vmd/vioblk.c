@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.19 2024/11/21 13:25:30 claudio Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.20 2024/11/21 13:39:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -174,7 +174,11 @@ vioblk_main(int fd, int fd_vmm)
 	/* Configure our sync channel event handler. */
 	log_debug("%s: wiring in sync channel handler (fd=%d)", __func__,
 		dev.sync_fd);
-	imsgbuf_init(&dev.sync_iev.ibuf, dev.sync_fd);
+	if (imsgbuf_init(&dev.sync_iev.ibuf, dev.sync_fd) == -1) {
+		log_warn("imsgbuf_init");
+		goto fail;
+	}
+	imsgbuf_allow_fdpass(&dev.sync_iev.ibuf);
 	dev.sync_iev.handler = handle_sync_io;
 	dev.sync_iev.data = &dev;
 	dev.sync_iev.events = EV_READ;

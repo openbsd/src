@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.121 2024/11/21 13:25:30 claudio Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.122 2024/11/21 13:39:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1381,7 +1381,11 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		 * communication will be synchronous. We expect the child to
 		 * report itself "ready" to confirm the launch was a success.
 		 */
-		imsgbuf_init(&iev->ibuf, sync_fds[0]);
+		if (imsgbuf_init(&iev->ibuf, sync_fds[0]) == -1) {
+			log_warn("%s: failed to init imsgbuf", __func__);
+			goto err;
+		}
+		imsgbuf_allow_fdpass(&iev->ibuf);
 		ret = imsgbuf_read_one(&iev->ibuf, &imsg);
 		if (ret == 0 || ret == -1) {
 			log_warnx("%s: failed to receive ready message from "
@@ -1496,7 +1500,9 @@ vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *),
 	log_debug("%s: initializing '%c' device pipe (fd=%d)", __func__,
 	    dev->dev_type, fd);
 
-	imsgbuf_init(&iev->ibuf, fd);
+	if (imsgbuf_init(&iev->ibuf, fd) == -1)
+		fatal("imsgbuf_init");
+	imsgbuf_allow_fdpass(&iev->ibuf);
 	iev->handler = cb;
 	iev->data = dev;
 	iev->events = EV_READ;

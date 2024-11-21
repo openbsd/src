@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.84 2024/11/21 13:39:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -209,7 +209,9 @@ vmmaction(struct parse_result *res)
 
 		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 			err(1, "malloc");
-		imsgbuf_init(ibuf, ctl_sock);
+		if (imsgbuf_init(ibuf, ctl_sock) == -1)
+			err(1, "imsgbuf_init");
+		imsgbuf_allow_fdpass(ibuf);
 	}
 
 	switch (res->action) {

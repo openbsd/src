@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.129 2024/11/21 13:25:30 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.130 2024/11/21 13:39:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -470,7 +470,11 @@ vmm_pipe(struct vmd_vm *vm, int fd, void (*cb)(int, short, void *))
 		return (-1);
 	}
 
-	imsgbuf_init(&iev->ibuf, fd);
+	if (imsgbuf_init(&iev->ibuf, fd) == -1) {
+		log_warn("failed to init imsgbuf");
+		return (-1);
+	}
+	imsgbuf_allow_fdpass(&iev->ibuf);
 	iev->handler = cb;
 	iev->data = vm;
 	imsg_event_add(iev);
