@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.179 2024/11/21 13:34:01 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.180 2024/11/21 13:34:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -191,11 +191,6 @@ struct timer {
 
 TAILQ_HEAD(timer_head, timer);
 
-struct buf_read {
-	uint8_t				buf[IBUF_READ_SIZE];
-	size_t				wpos;
-};
-
 struct peer {
 	struct peer_config	 conf;
 	struct peer_stats	 stats;
@@ -212,7 +207,6 @@ struct peer {
 	struct bgpd_addr	 remote;
 	struct timer_head	 timers;
 	struct msgbuf		*wbuf;
-	struct buf_read		*rbuf;
 	struct peer		*template;
 	int			 fd;
 	int			 lasterr;

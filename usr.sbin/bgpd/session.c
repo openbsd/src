@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.496 2024/11/21 13:34:01 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.497 2024/11/21 13:34:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,7 @@ int	session_graceful_restart(struct peer *);
 int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 void	session_process_msg(struct peer *);
-int	parse_header(struct peer *, u_char *, uint16_t *, uint8_t *);
+ssize_t parse_header(struct ibuf *, void *);
 int	parse_open(struct peer *, struct ibuf *);
 int	parse_update(struct peer *, struct ibuf *);
 int	parse_rrefresh(struct peer *, struct ibuf *);
@@ -420,7 +420,7 @@ session_main(int debug, int verbose)
 			    p->state == STATE_CONNECT)
 				events |= POLLOUT;
 			/* is there still work to do? */
-			if (p->rpending && p->rbuf && p->rbuf->wpos)
+			if (p->rpending)
 				timeout = 0;
 
 			/* poll events */
@@ -508,8 +508,7 @@ session_main(int debug, int verbose)
 			    peer_l[j - idx_listeners]);
 
 		RB_FOREACH(p, peer_head, &conf->peers)
-			if (p->rbuf && p->rbuf->wpos)
-				session_process_msg(p);
+			session_process_msg(p);
 
 		for (; j < idx_mrts; j++)
 			if (pfd[j].revents & POLLOUT)
@@ -567,8 +566,9 @@ init_peer(struct peer *p)
 	TAILQ_INIT(&p->timers);
 	p->fd = -1;
 	if (p->wbuf != NULL)
-		fatal("%s: msgbuf already set", __func__);
-	if ((p->wbuf = msgbuf_new()) == NULL)
+		fatalx("%s: msgbuf already set", __func__);
+	if ((p->wbuf = msgbuf_new_reader(MSGSIZE_HEADER, parse_header, p)) ==
+	    NULL)
 		fatal(NULL);
 
 	if (p->conf.if_depend[0])
@@ -610,11 +610,6 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 			timer_stop(&peer->timers, Timer_SendHold);
 			timer_stop(&peer->timers, Timer_Keepalive);
 			timer_stop(&peer->timers, Timer_IdleHold);
-
-			/* allocate read buffer */
-			peer->rbuf = calloc(1, sizeof(*peer->rbuf));
-			if (peer->rbuf == NULL)
-				fatal(NULL);
 
 			if (!peer->depend_ok)
 				timer_stop(&peer->timers, Timer_ConnectRetry);
@@ -908,8 +903,6 @@ change_state(struct peer *peer, enum session_state state,
 		timer_stop(&peer->timers, Timer_IdleHoldReset);
 		session_close_connection(peer);
 		msgbuf_clear(peer->wbuf);
-		free(peer->rbuf);
-		peer->rbuf = NULL;
 		peer->rpending = 0;
 		memset(&peer->capa.peer, 0, sizeof(peer->capa.peer));
 		if (!peer->template)
@@ -1860,7 +1853,6 @@ session_graceful_stop(struct peer *p)
 int
 session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 {
-	ssize_t		n;
 	socklen_t	len;
 	int		error;
 
@@ -1927,21 +1919,19 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			return (1);
 	}
 
-	if (p->rbuf && pfd->revents & POLLIN) {
-		if ((n = read(p->fd, p->rbuf->buf + p->rbuf->wpos,
-		    sizeof(p->rbuf->buf) - p->rbuf->wpos)) == -1) {
-			if (errno != EINTR && errno != EAGAIN) {
-				log_peer_warn(&p->conf, "read error");
-				bgp_fsm(p, EVNT_CON_FATAL, NULL);
-			}
+	if (p->fd != -1 && pfd->revents & POLLIN) {
+		switch (ibuf_read(p->fd, p->wbuf)) {
+		case -1:
+			if (p->state == STATE_IDLE)
+				/* error already handled before */
+				return (1);
+			log_peer_warn(&p->conf, "read error");
+			bgp_fsm(p, EVNT_CON_FATAL, NULL);
 			return (1);
-		}
-		if (n == 0) {	/* connection closed */
+		case 0:
 			bgp_fsm(p, EVNT_CON_CLOSED, NULL);
 			return (1);
 		}
-
-		p->rbuf->wpos += n;
 		p->stats.last_read = getmonotime();
 		return (1);
 	}
@@ -1951,33 +1941,29 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 void
 session_process_msg(struct peer *p)
 {
-	struct ibuf	ibuf, *msg = &ibuf;
+	struct ibuf	*msg;
 	struct mrt	*mrt;
-	ssize_t		rpos, av, left;
 	int		processed = 0;
-	uint16_t	msglen;
 	uint8_t		msgtype;
 
-	rpos = 0;
-	av = p->rbuf->wpos;
 	p->rpending = 0;
+	if (p->wbuf == NULL)
+		return;
 
 	/*
-	 * session might drop to IDLE -> buffers deallocated
-	 * we MUST check rbuf != NULL before use
+	 * session might drop to IDLE -> all buffers are flushed
 	 */
-	for (;;) {
-		if (p->rbuf == NULL)
+	while ((msg = msgbuf_get(p->wbuf)) != NULL) {
+		/* skip msg header and extract type */
+		if (ibuf_skip(msg, MSGSIZE_HEADER_MARKER) == -1 ||
+		    ibuf_skip(msg, sizeof(uint16_t)) == -1 ||
+		    ibuf_get_n8(msg, &msgtype) == -1) {
+			log_peer_warn(&p->conf, "process message failed");
+			bgp_fsm(p, EVNT_CON_FATAL, NULL);
+			ibuf_free(msg);
 			return;
-		if (rpos + MSGSIZE_HEADER > av)
-			break;
-		if (parse_header(p, p->rbuf->buf + rpos, &msglen,
-		    &msgtype) == -1)
-			return;
-		if (rpos + msglen > av)
-			break;
-
-		ibuf_from_buffer(&ibuf, p->rbuf->buf + rpos, msglen);
+		}
+		ibuf_rewind(msg);
 
 		/* dump to MRT as soon as we have a full packet */
 		LIST_FOREACH(mrt, &mrthead, entry) {
@@ -2020,114 +2006,95 @@ session_process_msg(struct peer *p)
 			    "received message with unknown type %u", msgtype);
 			bgp_fsm(p, EVNT_CON_FATAL, NULL);
 		}
-		rpos += msglen;
+		ibuf_free(msg);
 		if (++processed > MSG_PROCESS_LIMIT) {
 			p->rpending = 1;
 			break;
 		}
 	}
-
-	if (p->rbuf == NULL)
-		return;
-	if (rpos < av) {
-		left = av - rpos;
-		memmove(&p->rbuf->buf, p->rbuf->buf + rpos, left);
-		p->rbuf->wpos = left;
-	} else
-		p->rbuf->wpos = 0;
 }
 
-int
-parse_header(struct peer *peer, u_char *data, uint16_t *len, uint8_t *type)
+ssize_t
+parse_header(struct ibuf *msg, void *arg)
 {
-	u_char			*p;
-	uint16_t		 olen;
+	struct peer		*peer = arg;
+	u_char			 m[MSGSIZE_HEADER_MARKER];
+	uint16_t		 len;
+	uint8_t			 type;
 
+	if (ibuf_get(msg, m, sizeof(m)) == -1 ||
+	    ibuf_get_n16(msg, &len) == -1 ||
+	    ibuf_get_n8(msg, &type) == -1)
+		return (-1);
 	/* caller MUST make sure we are getting 19 bytes! */
-	p = data;
-	if (memcmp(p, marker, sizeof(marker))) {
+	if (memcmp(m, marker, sizeof(marker))) {
 		log_peer_warnx(&peer->conf, "sync error");
 		session_notification(peer, ERR_HEADER, ERR_HDR_SYNC, NULL);
 		bgp_fsm(peer, EVNT_CON_FATAL, NULL);
+		errno = EINVAL;
 		return (-1);
 	}
-	p += MSGSIZE_HEADER_MARKER;
 
-	memcpy(&olen, p, 2);
-	*len = ntohs(olen);
-	p += 2;
-	memcpy(type, p, 1);
-
-	if (*len < MSGSIZE_HEADER || *len > MAX_PKTSIZE) {
+	if (len < MSGSIZE_HEADER || len > MAX_PKTSIZE) {
 		log_peer_warnx(&peer->conf,
-		    "received message: illegal length: %u byte", *len);
-		session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
-		    &olen, sizeof(olen));
-		bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-		return (-1);
+		    "received message: illegal length: %u byte", len);
+		goto badlen;
 	}
 
-	switch (*type) {
+	switch (type) {
 	case OPEN:
-		if (*len < MSGSIZE_OPEN_MIN) {
+		if (len < MSGSIZE_OPEN_MIN) {
 			log_peer_warnx(&peer->conf,
-			    "received OPEN: illegal len: %u byte", *len);
-			session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
-			    &olen, sizeof(olen));
-			bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-			return (-1);
+			    "received OPEN: illegal len: %u byte", len);
+			goto badlen;
 		}
 		break;
 	case NOTIFICATION:
-		if (*len < MSGSIZE_NOTIFICATION_MIN) {
+		if (len < MSGSIZE_NOTIFICATION_MIN) {
 			log_peer_warnx(&peer->conf,
-			    "received NOTIFICATION: illegal len: %u byte",
-			    *len);
-			session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
-			    &olen, sizeof(olen));
-			bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-			return (-1);
+			    "received NOTIFICATION: illegal len: %u byte", len);
+			goto badlen;
 		}
 		break;
 	case UPDATE:
-		if (*len < MSGSIZE_UPDATE_MIN) {
+		if (len < MSGSIZE_UPDATE_MIN) {
 			log_peer_warnx(&peer->conf,
-			    "received UPDATE: illegal len: %u byte", *len);
-			session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
-			    &olen, sizeof(olen));
-			bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-			return (-1);
+			    "received UPDATE: illegal len: %u byte", len);
+			goto badlen;
 		}
 		break;
 	case KEEPALIVE:
-		if (*len != MSGSIZE_KEEPALIVE) {
+		if (len != MSGSIZE_KEEPALIVE) {
 			log_peer_warnx(&peer->conf,
-			    "received KEEPALIVE: illegal len: %u byte", *len);
-			session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
-			    &olen, sizeof(olen));
-			bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-			return (-1);
+			    "received KEEPALIVE: illegal len: %u byte", len);
+			goto badlen;
 		}
 		break;
 	case RREFRESH:
-		if (*len < MSGSIZE_RREFRESH_MIN) {
+		if (len < MSGSIZE_RREFRESH_MIN) {
 			log_peer_warnx(&peer->conf,
-			    "received RREFRESH: illegal len: %u byte", *len);
-			session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
-			    &olen, sizeof(olen));
-			bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-			return (-1);
+			    "received RREFRESH: illegal len: %u byte", len);
+			goto badlen;
 		}
 		break;
 	default:
 		log_peer_warnx(&peer->conf,
-		    "received msg with unknown type %u", *type);
+		    "received msg with unknown type %u", type);
 		session_notification_data(peer, ERR_HEADER, ERR_HDR_TYPE,
-		    type, 1);
+		    &type, sizeof(type));
 		bgp_fsm(peer, EVNT_CON_FATAL, NULL);
+		errno = EINVAL;
 		return (-1);
 	}
-	return (0);
+	return (len);
+
+ badlen:
+	len = htons(len);
+	session_notification_data(peer, ERR_HEADER, ERR_HDR_LEN,
+	    &len, sizeof(len));
+	bgp_fsm(peer, EVNT_CON_FATAL, NULL);
+	errno = ERANGE;
+	return (-1);
 }
 
 int
@@ -3335,8 +3302,8 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 		session_template_clone(newpeer, ip, id, 0);
 		newpeer->state = newpeer->prev_state = STATE_NONE;
 		newpeer->reconf_action = RECONF_KEEP;
-		newpeer->rbuf = NULL;
 		newpeer->rpending = 0;
+		newpeer->wbuf = NULL;
 		init_peer(newpeer);
 		bgp_fsm(newpeer, EVNT_START, NULL);
 		if (RB_INSERT(peer_head, &c->peers, newpeer) != NULL)
