@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.26 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: proc.c,v 1.27 2024/11/21 13:06:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -825,10 +825,7 @@ proc_flush_imsg(struct privsep *ps, enum privsep_procid id, int n)
 	for (; n < m; n++) {
 		if ((ibuf = proc_ibuf(ps, id, n)) == NULL)
 			return (-1);
-		do {
-			ret = imsg_flush(ibuf);
-		} while (ret == -1 && errno == EAGAIN);
-		if (ret == -1)
+		if ((ret = imsg_flush(ibuf)) == -1)
 			break;
 		imsg_event_add(&ps->ps_ievs[id][n]);
 	}
