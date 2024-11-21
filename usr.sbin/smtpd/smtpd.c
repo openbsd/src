@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.353 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.354 2024/11/21 13:22:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1013,8 +1013,7 @@ imsg_wait(struct imsgbuf *ibuf, struct imsg *imsg, int timeout)
 			return -1;
 		}
 
-		if (((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN) ||
-		    n == 0)
+		if (imsgbuf_read(ibuf) != 1)
 			return -1;
 	}
 }

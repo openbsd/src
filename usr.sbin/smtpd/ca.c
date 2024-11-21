@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.48 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.49 2024/11/21 13:22:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -323,7 +323,7 @@ rsae_send_imsg(int flen, const unsigned char *from, unsigned char *to,
 	ibuf = &p_ca->imsgbuf;
 
 	while (!done) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatalx("imsgbuf_read");
 		if (n == 0)
 			fatalx("pipe closed");
@@ -431,7 +431,7 @@ ecdsae_send_enc_imsg(const unsigned char *dgst, int dgst_len,
 	ibuf = &p_ca->imsgbuf;
 
 	while (!done) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatalx("imsgbuf_read");
 		if (n == 0)
 			fatalx("pipe closed");

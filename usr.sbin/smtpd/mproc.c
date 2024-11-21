@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.44 2024/11/21 13:18:38 claudio Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.45 2024/11/21 13:22:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -26,7 +26,7 @@
 
 static void mproc_dispatch(int, short, void *);
 
-static ssize_t imsgbuf_read_nofd(struct imsgbuf *);
+static int imsgbuf_read_nofd(struct imsgbuf *);
 
 int
 mproc_fork(struct mproc *p, const char *path, char *argv[])
@@ -146,8 +146,6 @@ mproc_dispatch(int fd, short event, void *arg)
 
 		switch (n) {
 		case -1:
-			if (errno == EAGAIN)
-				break;
 			log_warn("warn: %s -> %s: imsgbuf_read",
 			    proc_name(smtpd_process),  p->name);
 			fatal("exiting");
@@ -199,7 +197,7 @@ mproc_dispatch(int fd, short event, void *arg)
 }
 
 /* This should go into libutil */
-static ssize_t
+static int
 imsgbuf_read_nofd(struct imsgbuf *ibuf)
 {
 	ssize_t	 n;
@@ -210,12 +208,16 @@ imsgbuf_read_nofd(struct imsgbuf *ibuf)
 	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
 
 	while ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
+		if (errno == EAGAIN)
+			return (1);
 		if (errno != EINTR)
-			return (n);
+			return (-1);
 	}
+	if (n == 0)
+		return (0);
 
 	ibuf->r.wpos += n;
-	return (n);
+	return (1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.173 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.174 2024/11/21 13:22:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -192,7 +192,7 @@ srv_recv(int type)
 			break;
 		}
 
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.12 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.13 2024/11/21 13:22:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -54,7 +54,7 @@ queue_proc_call(void)
 			return;
 		}
 
-		if ((n = imsgbuf_read(&ibuf)) == -1 && errno != EAGAIN) {
+		if ((n = imsgbuf_read(&ibuf)) == -1) {
 			log_warn("warn: queue-proc: imsgbuf_read");
 			break;
 		}

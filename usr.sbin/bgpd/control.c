@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.126 2024/11/21 13:18:38 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.127 2024/11/21 13:22:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@ struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 int		 control_close(struct ctl_conn *);
 void		 control_result(struct ctl_conn *, u_int);
-ssize_t		 imsgbuf_read_nofd(struct imsgbuf *);
+int		 imsgbuf_read_nofd(struct imsgbuf *);
 
 int
 control_check(char *path)
@@ -261,8 +261,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	if (!(pfd->revents & POLLIN))
 		return (0);
 
-	if (((n = imsgbuf_read_nofd(&c->imsgbuf)) == -1 && errno != EAGAIN) ||
-	    n == 0)
+	if (imsgbuf_read_nofd(&c->imsgbuf) != 1)
 		return control_close(c);
 
 	for (;;) {
@@ -596,7 +595,7 @@ control_result(struct ctl_conn *c, u_int code)
 }
 
 /* This should go into libutil, from smtpd/mproc.c */
-ssize_t
+int
 imsgbuf_read_nofd(struct imsgbuf *imsgbuf)
 {
 	ssize_t	 n;
@@ -607,10 +606,14 @@ imsgbuf_read_nofd(struct imsgbuf *imsgbuf)
 	len = sizeof(imsgbuf->r.buf) - imsgbuf->r.wpos;
 
 	while ((n = recv(imsgbuf->fd, buf, len, 0)) == -1) {
+		if (errno == EAGAIN)
+			return (1);
 		if (errno != EINTR)
-			return (n);
+			return (-1);
 	}
+	if (n == 0)
+		return (0);
 
 	imsgbuf->r.wpos += n;
-	return (n);
+	return (1);
 }

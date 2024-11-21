@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.11 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.12 2024/11/21 13:22:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -53,7 +53,7 @@ scheduler_proc_call(void)
 			return;
 		}
 
-		if ((n = imsgbuf_read(&ibuf)) == -1 && errno != EAGAIN) {
+		if ((n = imsgbuf_read(&ibuf)) == -1) {
 			log_warn("warn: scheduler-proc: imsgbuf_read");
 			break;
 		}
