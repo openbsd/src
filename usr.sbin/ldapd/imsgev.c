@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsgev.c,v 1.12 2024/11/21 13:25:56 claudio Exp $ */
+/*	$OpenBSD: imsgev.c,v 1.13 2024/11/21 13:39:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Eric Faurot <eric@openbsd.org>
@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include "imsgev.h"
+#include "log.h"
 
 void imsgev_add(struct imsgev *);
 void imsgev_dispatch(int, short, void *);
@@ -37,7 +38,9 @@ imsgev_init(struct imsgev *iev, int fd, void *data,
     void (*callback)(struct imsgev *, int, struct imsg *),
     void (*needfd)(struct imsgev *))
 {
-	imsgbuf_init(&iev->ibuf, fd);
+	if (imsgbuf_init(&iev->ibuf, fd) == -1)
+		fatal("imsgbuf_init");
+	imsgbuf_allow_fdpass(&iev->ibuf);
 	iev->terminate = 0;
 
 	iev->data = data;
