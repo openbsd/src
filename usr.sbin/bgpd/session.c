@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.491 2024/11/21 13:27:40 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.492 2024/11/21 13:28:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -435,7 +435,7 @@ session_main(int debug, int verbose)
 
 		LIST_FOREACH(m, &mrthead, entry)
 			if (msgbuf_queuelen(&m->wbuf) > 0) {
-				pfd[i].fd = m->wbuf.fd;
+				pfd[i].fd = m->fd;
 				pfd[i].events = POLLOUT;
 				mrt_l[i - idx_peers] = m;
 				i++;
@@ -564,7 +564,7 @@ void
 init_peer(struct peer *p)
 {
 	TAILQ_INIT(&p->timers);
-	p->fd = p->wbuf.fd = -1;
+	p->fd = -1;
 
 	if (p->conf.if_depend[0])
 		imsg_compose(ibuf_main, IMSG_SESSION_DEPENDON, 0, 0, -1,
@@ -865,7 +865,7 @@ session_close_connection(struct peer *peer)
 		close(peer->fd);
 		pauseaccept = 0;
 	}
-	peer->fd = peer->wbuf.fd = -1;
+	peer->fd = -1;
 }
 
 void
@@ -887,7 +887,7 @@ change_state(struct peer *peer, enum session_state state,
 		 */
 		if (peer->state >= STATE_OPENSENT &&
 		    msgbuf_queuelen(&peer->wbuf) > 0)
-			ibuf_write(&peer->wbuf);
+			ibuf_write(peer->fd, &peer->wbuf);
 
 		/*
 		 * we must start the timer for the next EVNT_START
@@ -1044,7 +1044,7 @@ open:
 			close(connfd);
 			return;
 		}
-		p->fd = p->wbuf.fd = connfd;
+		p->fd = connfd;
 		if (session_setup_socket(p)) {
 			close(connfd);
 			return;
@@ -1095,7 +1095,6 @@ session_connect(struct peer *peer)
 	if (tcp_md5_set(peer->fd, &peer->auth_conf,
 	    &peer->conf.remote_addr) == -1)
 		log_peer_warn(&peer->conf, "setting md5sig");
-	peer->wbuf.fd = peer->fd;
 
 	/* if local-address is set we need to bind() */
 	bind_addr = session_localaddr(peer);
@@ -1935,7 +1934,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	}
 
 	if (pfd->revents & POLLOUT && msgbuf_queuelen(&p->wbuf) > 0) {
-		if (ibuf_write(&p->wbuf) == -1) {
+		if (ibuf_write(p->fd, &p->wbuf) == -1) {
 			if (errno == EPIPE)
 				log_peer_warnx(&p->conf, "Connection closed");
 			else
@@ -3152,7 +3151,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				break;
 			}
 
-			if ((xmrt.wbuf.fd = imsg_get_fd(&imsg)) == -1) {
+			if ((xmrt.fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
 				break;
@@ -3169,9 +3168,9 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				LIST_INSERT_HEAD(&mrthead, mrt, entry);
 			} else {
 				/* old dump reopened */
-				close(mrt->wbuf.fd);
+				close(mrt->fd);
 			}
-			mrt->wbuf.fd = xmrt.wbuf.fd;
+			mrt->fd = xmrt.fd;
 			break;
 		case IMSG_MRT_CLOSE:
 			if (idx != PFD_PIPE_MAIN)

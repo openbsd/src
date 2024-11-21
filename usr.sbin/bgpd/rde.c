@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.637 2024/11/21 13:18:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.638 2024/11/21 13:28:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,11 +246,11 @@ rde_main(int debug, int verbose)
 			if (i >= pfd_elms)
 				fatalx("poll pfd too small");
 			if (msgbuf_queuelen(&mctx->mrt.wbuf) > 0) {
-				pfd[i].fd = mctx->mrt.wbuf.fd;
+				pfd[i].fd = mctx->mrt.fd;
 				pfd[i].events = POLLOUT;
 				i++;
 			} else if (mctx->mrt.state == MRT_STATE_REMOVE) {
-				close(mctx->mrt.wbuf.fd);
+				close(mctx->mrt.fd);
 				LIST_REMOVE(mctx, entry);
 				free(mctx);
 				rde_mrt_cnt--;
@@ -299,7 +299,7 @@ rde_main(int debug, int verbose)
 
 		for (j = PFD_PIPE_COUNT, mctx = LIST_FIRST(&rde_mrts);
 		    j < i && mctx != 0; j++) {
-			if (pfd[j].fd == mctx->mrt.wbuf.fd &&
+			if (pfd[j].fd == mctx->mrt.fd &&
 			    pfd[j].revents & POLLOUT)
 				mrt_write(&mctx->mrt);
 			mctx = LIST_NEXT(mctx, entry);
@@ -345,7 +345,7 @@ rde_main(int debug, int verbose)
 
 	while ((mctx = LIST_FIRST(&rde_mrts)) != NULL) {
 		msgbuf_clear(&mctx->mrt.wbuf);
-		close(mctx->mrt.wbuf.fd);
+		close(mctx->mrt.fd);
 		LIST_REMOVE(mctx, entry);
 		free(mctx);
 	}
@@ -3214,7 +3214,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	}
 	memcpy(&ctx->mrt, mrt, sizeof(struct mrt));
 	msgbuf_init(&ctx->mrt.wbuf);
-	ctx->mrt.wbuf.fd = fd;
+	ctx->mrt.fd = fd;
 	ctx->mrt.state = MRT_STATE_RUNNING;
 	rid = rib_find(ctx->mrt.rib);
 	if (rid == RIB_NOTFOUND) {

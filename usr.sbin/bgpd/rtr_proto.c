@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.43 2024/11/21 13:27:40 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.44 2024/11/21 13:28:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1272,7 +1272,7 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 		return;
 	}
 	if (pfd->revents & POLLOUT && msgbuf_queuelen(&rs->w) > 0) {
-		if (ibuf_write(&rs->w) == -1) {
+		if (ibuf_write(rs->fd, &rs->w) == -1) {
 			log_warn("rtr %s: write error", log_rtr(rs));
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			return;
@@ -1468,7 +1468,7 @@ rtr_open(struct rtr_session *rs, int fd)
 		rs->prev_version = rtr_max_session_version(rs);
 	}
 
-	rs->fd = rs->w.fd = fd;
+	rs->fd = fd;
 	rtr_fsm(rs, RTR_EVNT_CON_OPEN);
 }
 
