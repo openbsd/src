@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.17 2024/11/21 13:01:07 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.18 2024/11/21 13:03:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -38,29 +38,19 @@ struct ibuf {
 	int			 fd;
 };
 
-struct ibuf_read {
-	unsigned char		 buf[IBUF_READ_SIZE];
-	unsigned char		*rptr;
-	size_t			 wpos;
-};
-
 struct msgbuf;
-struct imsg_fd;
 
 struct imsgbuf {
-	TAILQ_HEAD(, imsg_fd)	 fds;
-	struct ibuf_read	 r;
 	struct msgbuf		*w;
-	int			 fd;
 	pid_t			 pid;
+	uint32_t		 maxsize;
+	int			 fd;
+	int			 flags;
 };
-
-#define IMSGF_HASFD	1
 
 struct imsg_hdr {
 	uint32_t	 type;
-	uint16_t	 len;
-	uint16_t	 flags;
+	uint32_t	 len;
 	uint32_t	 peerid;
 	uint32_t	 pid;
 };
@@ -120,14 +110,21 @@ int		 ibuf_fd_avail(struct ibuf *);
 int		 ibuf_fd_get(struct ibuf *);
 void		 ibuf_fd_set(struct ibuf *, int);
 struct msgbuf	*msgbuf_new(void);
+struct msgbuf	*msgbuf_new_reader(size_t, ssize_t (*)(struct ibuf *, void *),
+		    void *);
 void		 msgbuf_free(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 uint32_t	 msgbuf_queuelen(struct msgbuf *);
 int		 ibuf_write(int, struct msgbuf *);
 int		 msgbuf_write(int, struct msgbuf *);
+int		 ibuf_read(int, struct msgbuf *);
+int		 msgbuf_read(int, struct msgbuf *);
+struct ibuf	*msgbuf_get(struct msgbuf *);
 
 /* imsg.c */
-void	 imsgbuf_init(struct imsgbuf *, int);
+int	 imsgbuf_init(struct imsgbuf *, int);
+void	 imsgbuf_allow_fdpass(struct imsgbuf *imsgbuf);
+void	 imsgbuf_set_maxsize(struct imsgbuf *, uint32_t);
 int	 imsgbuf_read(struct imsgbuf *);
 int	 imsgbuf_write(struct imsgbuf *);
 int	 imsgbuf_flush(struct imsgbuf *);

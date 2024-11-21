@@ -48,6 +48,7 @@
 		ibuf_get_string;
 		ibuf_left;
 		ibuf_open;
+		ibuf_read;
 		ibuf_reserve;
 		ibuf_rewind;
 		ibuf_seek;
@@ -79,11 +80,13 @@
 		imsg_get_len;
 		imsg_get_pid;
 		imsg_get_type;
+		imsgbuf_allow_fdpass;
 		imsgbuf_clear;
 		imsgbuf_flush;
 		imsgbuf_init;
 		imsgbuf_queuelen;
 		imsgbuf_read;
+		imsgbuf_set_maxsize;
 		imsgbuf_write;
 		isduid;
 		login;
@@ -94,8 +97,11 @@
 		logwtmp;
 		msgbuf_clear;
 		msgbuf_free;
+		msgbuf_get;
 		msgbuf_new;
+		msgbuf_new_reader;
 		msgbuf_queuelen;
+		msgbuf_read;
 		msgbuf_write;
 		ober_add_bitstring;
 		ober_add_boolean;

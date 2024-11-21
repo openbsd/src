@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.27 2024/11/21 13:01:07 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.28 2024/11/21 13:03:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -34,9 +34,17 @@
 
 struct msgbuf {
 	TAILQ_HEAD(, ibuf)	 bufs;
+	TAILQ_HEAD(, ibuf)	 rbufs;
 	uint32_t		 queued;
+	char			*rbuf;
+	struct ibuf		*rpmsg;
+	ssize_t			(*readhdr)(struct ibuf *, void *);
+	void			*rarg;
+	size_t			 roff;
+	size_t			 hdrsize;
 };
 
+static void	msgbuf_read_enqueue(struct msgbuf *, struct ibuf *);
 static void	msgbuf_enqueue(struct msgbuf *, struct ibuf *);
 static void	msgbuf_dequeue(struct msgbuf *, struct ibuf *);
 static void	msgbuf_drain(struct msgbuf *, size_t);
@@ -560,8 +568,38 @@ msgbuf_new(void)
 		return (NULL);
 	msgbuf->queued = 0;
 	TAILQ_INIT(&msgbuf->bufs);
+	TAILQ_INIT(&msgbuf->rbufs);
 
 	return msgbuf;
+}
+
+struct msgbuf *
+msgbuf_new_reader(size_t hdrsz, ssize_t (*readhdr)(struct ibuf *, void *),
+    void *arg)
+{
+	struct msgbuf *msgbuf;
+	char *buf;
+
+	if (hdrsz == 0 || hdrsz > IBUF_READ_SIZE / 2) {
+		errno = EINVAL;
+		return (NULL);
+	}
+
+	if ((buf = malloc(IBUF_READ_SIZE)) == NULL)
+		return (NULL);
+
+	msgbuf = msgbuf_new();
+	if (msgbuf == NULL) {
+		free(buf);
+		return (NULL);
+	}
+
+	msgbuf->rbuf = buf;
+	msgbuf->hdrsize = hdrsz;
+	msgbuf->readhdr = readhdr;
+	msgbuf->rarg = arg;
+
+	return (msgbuf);
 }
 
 void
@@ -569,6 +607,7 @@ msgbuf_free(struct msgbuf *msgbuf)
 {
 	if (msgbuf != NULL)
 		msgbuf_clear(msgbuf);
+	free(msgbuf->rbuf);
 	free(msgbuf);
 }
 
@@ -583,8 +622,29 @@ msgbuf_clear(struct msgbuf *msgbuf)
 {
 	struct ibuf	*buf;
 
+	/* write side */
 	while ((buf = TAILQ_FIRST(&msgbuf->bufs)) != NULL)
 		msgbuf_dequeue(msgbuf, buf);
+	msgbuf->queued = 0;
+
+	/* read side */
+	while ((buf = TAILQ_FIRST(&msgbuf->rbufs)) != NULL) {
+		TAILQ_REMOVE(&msgbuf->rbufs, buf, entry);
+		ibuf_free(buf);
+	}
+	msgbuf->roff = 0;
+	ibuf_free(msgbuf->rpmsg);
+	msgbuf->rpmsg = NULL;
+}
+
+struct ibuf *
+msgbuf_get(struct msgbuf *msgbuf)
+{
+	struct ibuf	*buf;
+
+	if ((buf = TAILQ_FIRST(&msgbuf->rbufs)) != NULL)
+		TAILQ_REMOVE(&msgbuf->rbufs, buf, entry);
+	return buf;
 }
 
 int
@@ -606,7 +666,7 @@ ibuf_write(int fd, struct msgbuf *msgbuf)
 	if (i == 0)
 		return (0);	/* nothing queued */
 
-again:
+ again:
 	if ((n = writev(fd, iov, i)) == -1) {
 		if (errno == EINTR)
 			goto again;
@@ -665,7 +725,7 @@ msgbuf_write(int fd, struct msgbuf *msgbuf)
 		*(int *)CMSG_DATA(cmsg) = buf0->fd;
 	}
 
-again:
+ again:
 	if ((n = sendmsg(fd, &msg, 0)) == -1) {
 		if (errno == EINTR)
 			goto again;
@@ -687,6 +747,187 @@ again:
 	msgbuf_drain(msgbuf, n);
 
 	return (0);
+}
+
+static int
+ibuf_read_process(struct msgbuf *msgbuf, int fd)
+{
+	struct ibuf rbuf, msg;
+	ssize_t sz;
+
+	ibuf_from_buffer(&rbuf, msgbuf->rbuf, msgbuf->roff);
+
+	/* fds must be passed at start of message of at least hdrsize bytes */
+	if (msgbuf->rpmsg != NULL && fd != -1) {
+		close(fd);
+		fd = -1;
+	}
+
+	do {
+		if (msgbuf->rpmsg == NULL) {
+			if (ibuf_size(&rbuf) < msgbuf->hdrsize) {
+				if (fd != -1) {
+					close(fd);
+					fd = -1;
+				}
+				break;
+			}
+			/* get size from header */
+			ibuf_from_buffer(&msg, ibuf_data(&rbuf),
+			    msgbuf->hdrsize);
+			sz = msgbuf->readhdr(&msg, msgbuf->rarg);
+			if (sz == -1)
+				goto fail;
+			if ((msgbuf->rpmsg = ibuf_open(sz)) == NULL)
+				goto fail;
+			if (fd != -1) {
+				ibuf_fd_set(msgbuf->rpmsg, fd);
+				fd = -1;
+			}
+		}
+
+		if (ibuf_left(msgbuf->rpmsg) <= ibuf_size(&rbuf))
+			sz = ibuf_left(msgbuf->rpmsg);
+		else
+			sz = ibuf_size(&rbuf);
+
+		/* neither call below can fail */
+		if (ibuf_get_ibuf(&rbuf, sz, &msg) == -1 ||
+		    ibuf_add_ibuf(msgbuf->rpmsg, &msg) == -1)
+			goto fail;
+
+		if (ibuf_left(msgbuf->rpmsg) == 0) {
+			msgbuf_read_enqueue(msgbuf, msgbuf->rpmsg);
+			msgbuf->rpmsg = NULL;
+		}
+	} while (ibuf_size(&rbuf) > 0);
+
+	if (ibuf_size(&rbuf) > 0)
+		memmove(msgbuf->rbuf, ibuf_data(&rbuf), ibuf_size(&rbuf));
+	msgbuf->roff = ibuf_size(&rbuf);
+
+	return (1);
+
+ fail:
+	/* XXX cleanup */
+	return (-1);
+}
+
+int
+ibuf_read(int fd, struct msgbuf *msgbuf)
+{
+	struct iovec	iov;
+	ssize_t		n;
+
+	if (msgbuf->rbuf == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	iov.iov_base = msgbuf->rbuf + msgbuf->roff;
+	iov.iov_len = IBUF_READ_SIZE - msgbuf->roff;
+
+ again:
+	if ((n = readv(fd, &iov, 1)) == -1) {
+		if (errno == EINTR)
+			goto again;
+		if (errno == EAGAIN)
+			/* lets retry later again */
+			return (1);
+		return (-1);
+	}
+	if (n == 0)	/* connection closed */
+		return (0);
+
+	msgbuf->roff += n;
+	/* new data arrived, try to process it */
+	return (ibuf_read_process(msgbuf, -1));
+}
+
+int
+msgbuf_read(int fd, struct msgbuf *msgbuf)
+{
+	struct msghdr		 msg;
+	struct cmsghdr		*cmsg;
+	union {
+		struct cmsghdr hdr;
+		char	buf[CMSG_SPACE(sizeof(int) * 1)];
+	} cmsgbuf;
+	struct iovec		 iov;
+	ssize_t			 n;
+	int			 fdpass = -1;
+
+	if (msgbuf->rbuf == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	memset(&msg, 0, sizeof(msg));
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+
+	iov.iov_base = msgbuf->rbuf + msgbuf->roff;
+	iov.iov_len = IBUF_READ_SIZE - msgbuf->roff;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
+
+again:
+	if ((n = recvmsg(fd, &msg, 0)) == -1) {
+		if (errno == EINTR)
+			goto again;
+		if (errno == EMSGSIZE)
+			/*
+			 * Not enough fd slots: fd passing failed, retry
+			 * to receive the message without fd.
+			 * imsg_get_fd() will return -1 in that case.
+			 */
+			goto again;
+		if (errno == EAGAIN)
+			/* lets retry later again */
+			return (1);
+		return (-1);
+	}
+	if (n == 0)	/* connection closed */
+		return (0);
+
+	msgbuf->roff += n;
+
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+		    cmsg->cmsg_type == SCM_RIGHTS) {
+			int i, j, f;
+
+			/*
+			 * We only accept one file descriptor.  Due to C
+			 * padding rules, our control buffer might contain
+			 * more than one fd, and we must close them.
+			 */
+			j = ((char *)cmsg + cmsg->cmsg_len -
+			    (char *)CMSG_DATA(cmsg)) / sizeof(int);
+			for (i = 0; i < j; i++) {
+				f = ((int *)CMSG_DATA(cmsg))[i];
+				if (i == 0)
+					fdpass = f;
+				else
+					close(f);
+			}
+		}
+		/* we do not handle other ctl data level */
+	}
+
+	/* new data arrived, try to process it */
+	return (ibuf_read_process(msgbuf, fdpass));
+}
+
+static void
+msgbuf_read_enqueue(struct msgbuf *msgbuf, struct ibuf *buf)
+{
+	/* if buf lives on the stack abort before causing more harm */
+	if (buf->fd == IBUF_FD_MARK_ON_STACK)
+		abort();
+	TAILQ_INSERT_TAIL(&msgbuf->rbufs, buf, entry);
 }
 
 static void
