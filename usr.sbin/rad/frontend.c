@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.52 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.53 2024/11/21 13:17:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -274,10 +274,10 @@ frontend_shutdown(void)
 {
 	/* Close pipes. */
 	imsgbuf_write(&iev_engine->ibuf);
-	msgbuf_clear(&iev_engine->ibuf.w);
+	imsgbuf_clear(&iev_engine->ibuf);
 	close(iev_engine->ibuf.fd);
 	imsgbuf_write(&iev_main->ibuf);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	config_clear(frontend_conf);

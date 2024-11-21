@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.177 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ntp.c,v 1.178 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -461,10 +461,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 	}
 
 	imsgbuf_write(ibuf_main);
-	msgbuf_clear(&ibuf_main->w);
+	imsgbuf_clear(ibuf_main);
 	free(ibuf_main);
 	imsgbuf_write(ibuf_dns);
-	msgbuf_clear(&ibuf_dns->w);
+	imsgbuf_clear(ibuf_dns);
 	free(ibuf_dns);
 
 	log_info("ntp engine exiting");

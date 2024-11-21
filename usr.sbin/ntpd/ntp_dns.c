@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.32 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.33 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -129,7 +129,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 		}
 	}
 
-	msgbuf_clear(&ibuf_dns->w);
+	imsgbuf_clear(ibuf_dns);
 	free(ibuf_dns);
 	exit(0);
 }

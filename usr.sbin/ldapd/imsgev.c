@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsgev.c,v 1.9 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: imsgev.c,v 1.10 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Eric Faurot <eric@openbsd.org>
@@ -74,7 +74,7 @@ void
 imsgev_clear(struct imsgev *iev)
 {
 	event_del(&iev->ev);
-	msgbuf_clear(&iev->ibuf.w);
+	imsgbuf_clear(&iev->ibuf);
 	close(iev->ibuf.fd);
 }
 

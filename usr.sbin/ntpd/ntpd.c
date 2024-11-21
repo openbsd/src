@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.137 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.138 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -365,7 +365,7 @@ main(int argc, char *argv[])
 			fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	msgbuf_clear(&ibuf->w);
+	imsgbuf_clear(ibuf);
 	free(ibuf);
 	log_info("Terminating");
 	return (0);

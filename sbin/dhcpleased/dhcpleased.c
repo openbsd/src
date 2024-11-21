@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.35 2024/11/21 13:17:01 claudio Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.36 2024/11/21 13:17:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -352,9 +352,9 @@ main_shutdown(void)
 	int	 status;
 
 	/* Close pipes. */
-	msgbuf_clear(&iev_frontend->ibuf.w);
+	imsgbuf_clear(&iev_frontend->ibuf);
 	close(iev_frontend->ibuf.fd);
-	msgbuf_clear(&iev_engine->ibuf.w);
+	imsgbuf_clear(&iev_engine->ibuf);
 	close(iev_engine->ibuf.fd);
 
 #ifndef SMALL

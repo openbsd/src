@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.71 2024/11/21 13:17:01 claudio Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.72 2024/11/21 13:17:57 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -312,9 +312,9 @@ main_shutdown(void)
 	int	 status;
 
 	/* Close pipes. */
-	msgbuf_clear(&iev_frontend->ibuf.w);
+	imsgbuf_clear(&iev_frontend->ibuf);
 	close(iev_frontend->ibuf.fd);
-	msgbuf_clear(&iev_resolver->ibuf.w);
+	imsgbuf_clear(&iev_resolver->ibuf);
 	close(iev_resolver->ibuf.fd);
 
 	config_clear(main_conf);

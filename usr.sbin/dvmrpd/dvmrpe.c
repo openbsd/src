@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.27 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.28 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -192,10 +192,10 @@ dvmrpe_shutdown(void)
 
 	/* close pipes */
 	imsgbuf_write(&iev_rde->ibuf);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 	imsgbuf_write(&iev_main->ibuf);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	/* stop all interfaces and delete them */

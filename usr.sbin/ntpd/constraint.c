@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.57 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.58 2024/11/21 13:17:57 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -581,7 +581,7 @@ constraint_remove(struct constraint *cstr)
 {
 	TAILQ_REMOVE(&conf->constraints, cstr, entry);
 
-	msgbuf_clear(&cstr->ibuf.w);
+	imsgbuf_clear(&cstr->ibuf);
 	if (cstr->fd != -1)
 		close(cstr->fd);
 	free(cstr->addr_head.name);

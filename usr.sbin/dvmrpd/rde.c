@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.36 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.37 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -156,9 +156,9 @@ rde_shutdown(void)
 	struct iface	*iface;
 
 	/* close pipes */
-	msgbuf_clear(&iev_dvmrpe->ibuf.w);
+	imsgbuf_clear(&iev_dvmrpe->ibuf);
 	close(iev_dvmrpe->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	rt_clear();

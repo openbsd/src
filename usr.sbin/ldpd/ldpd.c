@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.72 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.73 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -291,9 +291,9 @@ ldpd_shutdown(void)
 	int		 status;
 
 	/* close pipes */
-	msgbuf_clear(&iev_ldpe->ibuf.w);
+	imsgbuf_clear(&iev_ldpe->ibuf);
 	close(iev_ldpe->ibuf.fd);
-	msgbuf_clear(&iev_lde->ibuf.w);
+	imsgbuf_clear(&iev_lde->ibuf);
 	close(iev_lde->ibuf.fd);
 
 	kr_shutdown();

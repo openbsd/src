@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.94 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.95 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -220,9 +220,9 @@ rde_shutdown(void)
 	struct vertex	*v, *nv;
 
 	/* close pipes */
-	msgbuf_clear(&iev_ospfe->ibuf.w);
+	imsgbuf_clear(&iev_ospfe->ibuf);
 	close(iev_ospfe->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	stop_spf_timer(rdeconf);

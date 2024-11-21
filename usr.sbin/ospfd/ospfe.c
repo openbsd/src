@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.117 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.118 2024/11/21 13:17:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -211,10 +211,10 @@ ospfe_shutdown(void)
 
 	/* close pipes */
 	imsgbuf_write(&iev_rde->ibuf);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 	imsgbuf_write(&iev_main->ibuf);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	/* stop all interfaces and remove all areas */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.34 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.35 2024/11/21 13:17:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -457,10 +457,10 @@ ripe_shutdown(void)
 
 	/* close pipes */
 	imsgbuf_write(&iev_rde->ibuf);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 	imsgbuf_write(&iev_main->ibuf);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	LIST_FOREACH(iface, &oeconf->iface_list, entry) {

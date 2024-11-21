@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.25 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.26 2024/11/21 13:17:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -159,9 +159,9 @@ __dead void
 engine_shutdown(void)
 {
 	/* Close pipes. */
-	msgbuf_clear(&iev_frontend->ibuf.w);
+	imsgbuf_clear(&iev_frontend->ibuf);
 	close(iev_frontend->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	config_clear(engine_conf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.170 2024/11/21 13:17:01 claudio Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.171 2024/11/21 13:17:57 claudio Exp $	*/
 
 
 /*
@@ -453,9 +453,9 @@ __dead void
 resolver_shutdown(void)
 {
 	/* Close pipes. */
-	msgbuf_clear(&iev_frontend->ibuf.w);
+	imsgbuf_clear(&iev_frontend->ibuf);
 	close(iev_frontend->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	config_clear(resolver_conf);

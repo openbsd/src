@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.44 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.45 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -174,10 +174,10 @@ eigrpe_shutdown(void)
 {
 	/* close pipes */
 	imsgbuf_write(&iev_rde->ibuf);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 	imsgbuf_write(&iev_main->ibuf);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	config_clear(econf, PROC_EIGRP_ENGINE);

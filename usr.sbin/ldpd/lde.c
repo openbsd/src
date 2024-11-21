@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.81 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.82 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -151,9 +151,9 @@ static __dead void
 lde_shutdown(void)
 {
 	/* close pipes */
-	msgbuf_clear(&iev_ldpe->ibuf.w);
+	imsgbuf_clear(&iev_ldpe->ibuf);
 	close(iev_ldpe->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	lde_gc_stop_timer();

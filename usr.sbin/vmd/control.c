@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.46 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.47 2024/11/21 13:17:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -340,7 +340,7 @@ control_close(int fd, struct control_sock *cs)
 		return;
 	}
 
-	msgbuf_clear(&c->iev.ibuf.w);
+	imsgbuf_clear(&c->iev.ibuf);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
 	TAILQ_FOREACH_SAFE(notify, &ctl_notify_q, entry, notify_next) {

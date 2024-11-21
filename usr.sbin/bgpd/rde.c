@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.635 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.636 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -274,7 +274,7 @@ rde_main(int debug, int verbose)
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
 			log_warnx("RDE: Lost connection to SE");
-			msgbuf_clear(&ibuf_se->w);
+			imsgbuf_clear(ibuf_se);
 			free(ibuf_se);
 			ibuf_se = NULL;
 		} else
@@ -283,7 +283,7 @@ rde_main(int debug, int verbose)
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION_CTL], ibuf_se_ctl) ==
 		    -1) {
 			log_warnx("RDE: Lost connection to SE control");
-			msgbuf_clear(&ibuf_se_ctl->w);
+			imsgbuf_clear(ibuf_se_ctl);
 			free(ibuf_se_ctl);
 			ibuf_se_ctl = NULL;
 		} else
@@ -291,7 +291,7 @@ rde_main(int debug, int verbose)
 
 		if (handle_pollfd(&pfd[PFD_PIPE_ROA], ibuf_rtr) == -1) {
 			log_warnx("RDE: Lost connection to ROA");
-			msgbuf_clear(&ibuf_rtr->w);
+			imsgbuf_clear(ibuf_rtr);
 			free(ibuf_rtr);
 			ibuf_rtr = NULL;
 		} else
@@ -325,21 +325,21 @@ rde_main(int debug, int verbose)
 
 	/* close pipes */
 	if (ibuf_se) {
-		msgbuf_clear(&ibuf_se->w);
+		imsgbuf_clear(ibuf_se);
 		close(ibuf_se->fd);
 		free(ibuf_se);
 	}
 	if (ibuf_se_ctl) {
-		msgbuf_clear(&ibuf_se_ctl->w);
+		imsgbuf_clear(ibuf_se_ctl);
 		close(ibuf_se_ctl->fd);
 		free(ibuf_se_ctl);
 	}
 	if (ibuf_rtr) {
-		msgbuf_clear(&ibuf_rtr->w);
+		imsgbuf_clear(ibuf_rtr);
 		close(ibuf_rtr->fd);
 		free(ibuf_rtr);
 	}
-	msgbuf_clear(&ibuf_main->w);
+	imsgbuf_clear(ibuf_main);
 	close(ibuf_main->fd);
 	free(ibuf_main);
 
@@ -849,7 +849,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				if (ibuf_se) {
 					log_warnx("Unexpected imsg connection "
 					    "to SE received");
-					msgbuf_clear(&ibuf_se->w);
+					imsgbuf_clear(ibuf_se);
 					free(ibuf_se);
 				}
 				ibuf_se = i;
@@ -858,7 +858,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				if (ibuf_se_ctl) {
 					log_warnx("Unexpected imsg ctl "
 					    "connection to SE received");
-					msgbuf_clear(&ibuf_se_ctl->w);
+					imsgbuf_clear(ibuf_se_ctl);
 					free(ibuf_se_ctl);
 				}
 				ibuf_se_ctl = i;
@@ -867,7 +867,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				if (ibuf_rtr) {
 					log_warnx("Unexpected imsg ctl "
 					    "connection to ROA received");
-					msgbuf_clear(&ibuf_rtr->w);
+					imsgbuf_clear(ibuf_rtr);
 					free(ibuf_rtr);
 				}
 				ibuf_rtr = i;

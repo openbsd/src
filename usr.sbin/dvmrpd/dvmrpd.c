@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.30 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.31 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -274,9 +274,9 @@ dvmrpd_shutdown(void)
 	int		 status;
 
 	/* close pipes */
-	msgbuf_clear(&iev_dvmrpe->ibuf.w);
+	imsgbuf_clear(&iev_dvmrpe->ibuf);
 	close(iev_dvmrpe->ibuf.fd);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 
 	control_cleanup();

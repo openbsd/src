@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.57 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.58 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -299,9 +299,9 @@ ospfd_shutdown(void)
 	int	status;
 
 	/* close pipes */
-	msgbuf_clear(&iev_ospfe->ibuf.w);
+	imsgbuf_clear(&iev_ospfe->ibuf);
 	close(iev_ospfe->ibuf.fd);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 
 	control_cleanup();

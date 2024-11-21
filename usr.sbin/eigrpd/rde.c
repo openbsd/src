@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.29 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.30 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -131,9 +131,9 @@ static __dead void
 rde_shutdown(void)
 {
 	/* close pipes */
-	msgbuf_clear(&iev_eigrpe->ibuf.w);
+	imsgbuf_clear(&iev_eigrpe->ibuf);
 	close(iev_eigrpe->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	config_clear(rdeconf, PROC_RDE_ENGINE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.32 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.33 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -284,9 +284,9 @@ eigrpd_shutdown(void)
 	int		 status;
 
 	/* close pipes */
-	msgbuf_clear(&iev_eigrpe->ibuf.w);
+	imsgbuf_clear(&iev_eigrpe->ibuf);
 	close(iev_eigrpe->ibuf.fd);
-	msgbuf_clear(&iev_rde->ibuf.w);
+	imsgbuf_clear(&iev_rde->ibuf);
 	close(iev_rde->ibuf.fd);
 
 	kr_shutdown();

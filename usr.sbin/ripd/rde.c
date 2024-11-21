@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.28 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.29 2024/11/21 13:17:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -164,9 +164,9 @@ __dead void
 rde_shutdown(void)
 {
 	/* close pipes */
-	msgbuf_clear(&iev_ripe->ibuf.w);
+	imsgbuf_clear(&iev_ripe->ibuf);
 	close(iev_ripe->ibuf.fd);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	rt_clear();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.85 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.86 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -160,10 +160,10 @@ ldpe_shutdown(void)
 
 	/* close pipes */
 	imsgbuf_write(&iev_lde->ibuf);
-	msgbuf_clear(&iev_lde->ibuf.w);
+	imsgbuf_clear(&iev_lde->ibuf);
 	close(iev_lde->ibuf.fd);
 	imsgbuf_write(&iev_main->ibuf);
-	msgbuf_clear(&iev_main->ibuf.w);
+	imsgbuf_clear(&iev_main->ibuf);
 	close(iev_main->ibuf.fd);
 
 	control_cleanup();

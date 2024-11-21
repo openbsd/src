@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.124 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.125 2024/11/21 13:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -221,7 +221,7 @@ control_close(struct ctl_conn *c)
 	if (c->terminate && c->imsgbuf.pid)
 		imsg_ctl_rde_msg(IMSG_CTL_TERMINATE, 0, c->imsgbuf.pid);
 
-	msgbuf_clear(&c->imsgbuf.w);
+	imsgbuf_clear(&c->imsgbuf);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
 	close(c->imsgbuf.fd);
