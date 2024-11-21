@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.486 2024/11/21 13:11:33 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.487 2024/11/21 13:13:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1935,10 +1935,10 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	}
 
 	if (pfd->revents & POLLOUT && msgbuf_queuelen(&p->wbuf) > 0) {
-		if ((error = ibuf_write(&p->wbuf)) <= 0 && errno != EAGAIN) {
-			if (error == 0)
+		if (ibuf_write(&p->wbuf) == -1) {
+			if (errno == EPIPE)
 				log_peer_warnx(&p->conf, "Connection closed");
-			else if (error == -1)
+			else
 				log_peer_warn(&p->conf, "write error");
 			bgp_fsm(p, EVNT_CON_FATAL);
 			return (1);

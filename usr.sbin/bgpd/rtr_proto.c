@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.41 2024/10/08 12:28:09 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.42 2024/11/21 13:13:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1260,7 +1260,6 @@ static void
 rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 {
 	ssize_t n;
-	int error;
 
 	if (pfd->revents & POLLHUP) {
 		log_warnx("rtr %s: Connection closed, hangup", log_rtr(rs));
@@ -1273,14 +1272,11 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 		return;
 	}
 	if (pfd->revents & POLLOUT && msgbuf_queuelen(&rs->w) > 0) {
-		if ((error = ibuf_write(&rs->w)) == -1) {
-			if (errno != EAGAIN) {
-				log_warn("rtr %s: write error", log_rtr(rs));
-				rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
-			}
-		}
-		if (error == 0)
+		if (ibuf_write(&rs->w) == -1) {
+			log_warn("rtr %s: write error", log_rtr(rs));
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
+			return;
+		}
 		if (rs->state == RTR_STATE_ERROR &&
 		    msgbuf_queuelen(&rs->w) == 0)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
