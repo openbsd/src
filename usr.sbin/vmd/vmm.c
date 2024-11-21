@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.128 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.129 2024/11/21 13:25:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -495,7 +495,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	unsigned int		 i;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* This pipe is dead, so remove the event handler */

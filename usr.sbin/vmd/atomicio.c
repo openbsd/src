@@ -1,4 +1,4 @@
-/* $OpenBSD: atomicio.c,v 1.1 2017/05/08 09:08:40 reyk Exp $ */
+/* $OpenBSD: atomicio.c,v 1.2 2024/11/21 13:25:30 claudio Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.
  * Copyright (c) 2005 Anil Madhavapeddy. All rights reserved.
@@ -33,6 +33,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+
+#include <sys/queue.h>
+#include <imsg.h>
 
 #include "atomicio.h"
 
@@ -150,4 +153,34 @@ atomiciov(ssize_t (*f) (int, const struct iovec *, int), int fd,
     const struct iovec *_iov, int iovcnt)
 {
 	return atomiciov6(f, fd, _iov, iovcnt, NULL, NULL);
+}
+
+int
+imsgbuf_read_one(struct imsgbuf *imsgbuf, struct imsg *imsg)
+{
+	struct pollfd pfd;
+	int dopoll = 0;
+
+	pfd.fd = imsgbuf->fd;
+	pfd.events = POLLIN;
+	while (1) {
+		switch (imsg_get(imsgbuf, imsg)) {
+		case -1:
+			return (-1);
+		case 0:
+			if (dopoll)
+				(void)poll(&pfd, 1, -1);
+			break;
+		default:
+			return (1);
+		}
+		dopoll = 1;
+
+		switch (imsgbuf_read(imsgbuf)) {
+		case -1:
+			return (-1);
+		case 0:
+			return (0);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: atomicio.h,v 1.2 2021/06/16 16:55:02 dv Exp $ */
+/* $OpenBSD: atomicio.h,v 1.3 2024/11/21 13:25:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller.  All rights reserved.
@@ -49,5 +49,12 @@ atomiciov6(ssize_t (*f) (int, const struct iovec *, int), int fd,
     const struct iovec *_iov, int iovcnt, int (*cb)(void *, size_t), void *);
 size_t	atomiciov(ssize_t (*)(int, const struct iovec *, int),
     int, const struct iovec *, int);
+
+/*
+ * Ensure one imsg is read from socket used by imsgbuf.
+ */
+struct imsgbuf;
+struct imsg;
+int imsgbuf_read_one(struct imsgbuf *, struct imsg *);
 
 #endif /* _ATOMICIO_H */

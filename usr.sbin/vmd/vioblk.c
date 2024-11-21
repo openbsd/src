@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.18 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.19 2024/11/21 13:25:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -432,7 +432,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	int			 verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
@@ -500,7 +500,7 @@ handle_sync_io(int fd, short event, void *arg)
 	int8_t intr = INTR_STATE_NOOP;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */

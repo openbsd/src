@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.20 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.21 2024/11/21 13:25:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -903,7 +903,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 		fatalx("%s: missing vionet pointer", __func__);
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
@@ -976,7 +976,7 @@ handle_sync_io(int fd, short event, void *arg)
 	int8_t intr = INTR_STATE_NOOP;
 
 	if (event & EV_READ) {
-		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+		if ((n = imsgbuf_read(ibuf)) == -1)
 			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
