@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.36 2024/11/21 12:49:58 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.37 2024/11/21 12:53:11 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -16,60 +16,39 @@
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 21 2024 $
-.Dt IMSG_INIT 3
+.Dt IMSG_ADD 3
 .Os
 .Sh NAME
-.Nm imsg_init ,
-.Nm imsg_read ,
-.Nm imsg_write ,
-.Nm imsg_flush ,
-.Nm imsg_clear
+.Nm imsg_add ,
+.Nm imsg_close ,
+.Nm imsg_compose ,
+.Nm imsg_compose_ibuf ,
+.Nm imsg_composev ,
+.Nm imsg_create ,
+.Nm imsg_forward ,
+.Nm imsg_free ,
 .Nm imsg_get ,
-.Nm imsg_get_ibuf ,
 .Nm imsg_get_data ,
 .Nm imsg_get_fd ,
+.Nm imsg_get_ibuf ,
 .Nm imsg_get_id ,
+.Nm imsg_get_ibuf ,
 .Nm imsg_get_len ,
 .Nm imsg_get_pid ,
 .Nm imsg_get_type ,
-.Nm imsg_compose ,
-.Nm imsg_composev ,
-.Nm imsg_compose_ibuf ,
-.Nm imsg_create ,
-.Nm imsg_add ,
-.Nm imsg_close ,
-.Nm imsg_forward ,
-.Nm imsg_free
+.Nm imsgbuf_clear ,
+.Nm imsgbuf_flush ,
+.Nm imsgbuf_init ,
+.Nm imsgbuf_read ,
+.Nm imsgbuf_write
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .In sys/queue.h
 .In imsg.h
+.Ft int
+.Fn imsg_add "struct ibuf *msg" "const void *data" "size_t datalen"
 .Ft void
-.Fn imsg_init "struct imsgbuf *imsgbuf" "int fd"
-.Ft ssize_t
-.Fn imsg_read "struct imsgbuf *imsgbuf"
-.Ft int
-.Fn imsg_write "struct imsgbuf *imsgbuf"
-.Ft int
-.Fn imsg_flush "struct imsgbuf *imsgbuf"
-.Ft void
-.Fn imsg_clear "struct imsgbuf *imsgbuf"
-.Ft ssize_t
-.Fn imsg_get "struct imsgbuf *imsgbuf" "struct imsg *imsg"
-.Ft int
-.Fn imsg_get_ibuf "struct imsg *imsg" "struct ibuf *ibuf"
-.Ft int
-.Fn imsg_get_data "struct imsg *imsg" "void *data" "size_t len"
-.Ft int
-.Fn imsg_get_fd "struct imsg *imsg"
-.Ft uint32_t
-.Fn imsg_get_id "struct imsg *imsg"
-.Ft size_t
-.Fn imsg_get_len "struct imsg *imsg"
-.Ft pid_t
-.Fn imsg_get_pid "struct imsg *imsg"
-.Ft uint32_t
-.Fn imsg_get_type "struct imsg *imsg"
+.Fn imsg_close "struct imsgbuf *imsgbuf" "struct ibuf *msg"
 .Ft int
 .Fn imsg_compose "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "int fd" "const void *data" "size_t datalen"
@@ -80,13 +59,35 @@
 .Fn imsg_create "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "size_t datalen"
 .Ft int
-.Fn imsg_add "struct ibuf *msg" "const void *data" "size_t datalen"
-.Ft void
-.Fn imsg_close "struct imsgbuf *imsgbuf" "struct ibuf *msg"
+.Fn imsg_forward "struct imsgbuf *imsgbuf" "struct imsg *msg"
 .Ft void
 .Fn imsg_free "struct imsg *imsg"
+.Ft ssize_t
+.Fn imsg_get "struct imsgbuf *imsgbuf" "struct imsg *imsg"
 .Ft int
-.Fn imsg_forward "struct imsgbuf *imsgbuf" "struct imsg *msg"
+.Fn imsg_get_data "struct imsg *imsg" "void *data" "size_t len"
+.Ft int
+.Fn imsg_get_fd "struct imsg *imsg"
+.Ft int
+.Fn imsg_get_ibuf "struct imsg *imsg" "struct ibuf *ibuf"
+.Ft uint32_t
+.Fn imsg_get_id "struct imsg *imsg"
+.Ft size_t
+.Fn imsg_get_len "struct imsg *imsg"
+.Ft pid_t
+.Fn imsg_get_pid "struct imsg *imsg"
+.Ft uint32_t
+.Fn imsg_get_type "struct imsg *imsg"
+.Ft void
+.Fn imsgbuf_clear "struct imsgbuf *imsgbuf"
+.Ft int
+.Fn imsgbuf_flush "struct imsgbuf *imsgbuf"
+.Ft void
+.Fn imsgbuf_init "struct imsgbuf *imsgbuf" "int fd"
+.Ft ssize_t
+.Fn imsgbuf_read "struct imsgbuf *imsgbuf"
+.Ft int
+.Fn imsgbuf_write "struct imsgbuf *imsgbuf"
 .In sys/uio.h
 .Ft int
 .Fn imsg_composev "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
@@ -104,40 +105,59 @@ different rights are required to cooperate.
 A program using these functions should be linked with
 .Em -lutil .
 .Pp
-The basic
-.Nm
-structure is the
-.Em imsgbuf ,
-which wraps a file descriptor and represents one side of a channel on which
-messages are sent and received:
-.Bd -literal -offset indent
-struct imsgbuf {
-	TAILQ_HEAD(, imsg_fd)	fds;
-	struct ibuf_read	r;
-	struct msgbuf		w;
-	int			fd;
-	pid_t			pid;
-};
-.Ed
-.Pp
-.Fn imsg_init
+.Fn imsgbuf_init
 initializes
 .Fa imsgbuf
 as one side of a channel associated with
 .Fa fd .
 The file descriptor is used to send and receive messages,
 but is not closed by any of the imsg functions.
-An imsgbuf is initialized with the
-.Em w
-member as the output buffer queue,
-.Em fd
-with the file descriptor passed to
-.Fn imsg_init
-and the other members for internal use only.
 .Pp
 The
-.Fn imsg_clear
+.Fn imsgbuf_clear
 function frees any data allocated as part of an imsgbuf.
+This function does not close the file descriptor used for communication.
+.Pp
+The
+.Fn imsgbuf_read
+routine reads pending data with
+.Xr recvmsg 2
+and queues it as individual messages on
+.Fa imsgbuf .
+It returns the number of bytes read on success, or \-1 on error.
+A return value of \-1 from
+.Fn imsgbuf_read
+invalidates
+.Fa imsgbuf ,
+and renders it suitable only for passing to
+.Fn imsgbuf_clear .
+.Pp
+.Fn imsgbuf_write
+writes out queued messages.
+It returns 0 if it succeeds, -1 on error and the global variable
+.Va errno
+is set to indicate the error.
+The errors
+.Er EINTR ,
+.Er EAGAIN ,
+and
+.Er ENOBUFS
+are treated as follows.
+.Er EINTR
+will automatically retry the write operation while the other errors are
+ignored with a 0 return.
+The caller will then retry the operation at a later stage.
+.Pp
+.Fn imsgbuf_flush
+calls
+.Fn imsgbuf_write
+in a loop until all imsgs in the output buffer are sent.
+It returns 0 if it succeeds, \-1 otherwise and the global variable
+.Va errno
+is set to indicate the error.
+.Fn imsgbuf_flush
+should not be called on non-blocking sockets since it will busy loop if the
+socket is not available.
 .Pp
 .Fn imsg_create ,
 .Fn imsg_add
@@ -232,43 +252,6 @@ It is possible to call
 .Fn imsg_forward
 more than once per message.
 .Pp
-.Fn imsg_flush
-calls
-.Fn imsg_write
-in a loop until all imsgs in the output buffer are sent.
-It returns 0 if it succeeds, \-1 otherwise and the global variable
-.Va errno
-is set to indicate the error.
-.Pp
-The
-.Fn imsg_read
-routine reads pending data with
-.Xr recvmsg 2
-and queues it as individual messages on
-.Fa imsgbuf .
-It returns the number of bytes read on success, or \-1 on error.
-A return value of \-1 from
-.Fn imsg_read
-invalidates
-.Fa imsgbuf ,
-and renders it suitable only for passing to
-.Fn imsg_clear .
-.Pp
-.Fn imsg_write
-writes out queued messages.
-It returns 0 if it succeeds, -1 on error and the global variable
-.Va errno
-is set to indicate the error.
-The errors
-.Er EINTR ,
-.Er EAGAIN ,
-and
-.Er ENOBUFS
-are treated as follows.
-.Er EINTR
-will automatically retry the write operation while the other errors are
-ignored with a 0 return.
-The caller will then retry the operation at a later stage.
 .Fn imsg_get
 fills in an individual imsg pending on
 .Fa imsgbuf
@@ -350,13 +333,13 @@ case -1:
 case 0:
 	/* child */
 	close(imsg_fds[0]);
-	imsg_init(&child_ibuf, imsg_fds[1]);
+	imsgbuf_init(&child_ibuf, imsg_fds[1]);
 	exit(child_main(&child_ibuf));
 }
 
 /* parent */
 close(imsg_fds[1]);
-imsg_init(&parent_ibuf, imsg_fds[0]);
+imsgbuf_init(&parent_ibuf, imsg_fds[0]);
 exit(parent_main(&parent_ibuf));
 .Ed
 .Pp
@@ -389,9 +372,9 @@ or the
 .Xr event 3
 library is used to monitor the socket file descriptor.
 When the socket is ready for writing, queued messages are transmitted with
-.Fn imsg_write :
+.Fn imsgbuf_write :
 .Bd -literal -offset indent
-	if (imsg_write(imsgbuf) == -1) {
+	if (imsgbuf_write(imsgbuf) == -1) {
 		if (errno == EPIPE)
 			/* handle closed connection */
 		else
@@ -400,7 +383,7 @@ When the socket is ready for writing, queued messages are transmitted with
 .Ed
 .Pp
 And when ready for reading, messages are first received using
-.Fn imsg_read
+.Fn imsgbuf_read
 and then extracted with
 .Fn imsg_get :
 .Bd -literal -offset indent
@@ -411,7 +394,7 @@ dispatch_imsg(struct imsgbuf *imsgbuf)
 	ssize_t         n;
 	int		idata;
 
-	if ((n = imsg_read(imsgbuf)) == -1 && errno != EAGAIN) {
+	if ((n = imsgbuf_read(imsgbuf)) == -1 && errno != EAGAIN) {
 		/* handle read error */
 	}
 	if (n == 0) {

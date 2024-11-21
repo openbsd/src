@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.28 2024/11/21 12:49:58 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.29 2024/11/21 12:53:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -39,7 +39,7 @@ int	 imsg_fd_overhead = 0;
 static int	 imsg_dequeue_fd(struct imsgbuf *);
 
 void
-imsg_init(struct imsgbuf *imsgbuf, int fd)
+imsgbuf_init(struct imsgbuf *imsgbuf, int fd)
 {
 	msgbuf_init(&imsgbuf->w);
 	memset(&imsgbuf->r, 0, sizeof(imsgbuf->r));
@@ -50,7 +50,7 @@ imsg_init(struct imsgbuf *imsgbuf, int fd)
 }
 
 ssize_t
-imsg_read(struct imsgbuf *imsgbuf)
+imsgbuf_read(struct imsgbuf *imsgbuf)
 {
 	struct msghdr		 msg;
 	struct cmsghdr		*cmsg;
@@ -127,9 +127,28 @@ fail:
 }
 
 int
-imsg_write(struct imsgbuf *imsgbuf)
+imsgbuf_write(struct imsgbuf *imsgbuf)
 {
 	return msgbuf_write(&imsgbuf->w);
+}
+
+int
+imsgbuf_flush(struct imsgbuf *imsgbuf)
+{
+	while (imsgbuf->w.queued)
+		if (imsgbuf_write(imsgbuf) == -1)
+			return (-1);
+	return (0);
+}
+
+void
+imsgbuf_clear(struct imsgbuf *imsgbuf)
+{
+	int	fd;
+
+	msgbuf_clear(&imsgbuf->w);
+	while ((fd = imsg_dequeue_fd(imsgbuf)) != -1)
+		close(fd);
 }
 
 ssize_t
@@ -423,23 +442,4 @@ imsg_dequeue_fd(struct imsgbuf *imsgbuf)
 	free(ifd);
 
 	return (fd);
-}
-
-int
-imsg_flush(struct imsgbuf *imsgbuf)
-{
-	while (imsgbuf->w.queued)
-		if (imsg_write(imsgbuf) == -1)
-			return (-1);
-	return (0);
-}
-
-void
-imsg_clear(struct imsgbuf *imsgbuf)
-{
-	int	fd;
-
-	msgbuf_clear(&imsgbuf->w);
-	while ((fd = imsg_dequeue_fd(imsgbuf)) != -1)
-		close(fd);
 }
