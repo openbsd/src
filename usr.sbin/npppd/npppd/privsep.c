@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.27 2024/11/21 13:17:02 claudio Exp $ */
+/*	$OpenBSD: privsep.c,v 1.28 2024/11/21 13:23:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -954,11 +954,8 @@ imsg_read_and_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	ssize_t	 n;
 
 	for (;;) {
-		if ((n = imsgbuf_read(ibuf)) <= 0) {
-			if (n == -1 && (errno == EAGAIN || errno == EINTR))
-				continue;
+		if (imsgbuf_read(ibuf) != 1)
 			return (-1);
-		}
 		if ((n = imsg_get(ibuf, imsg)) < 0)
 			return (-1);
 		if (n == 0)
