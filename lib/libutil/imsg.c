@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.34 2024/11/21 13:00:14 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.35 2024/11/21 13:01:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -39,7 +39,7 @@ static int	 imsg_dequeue_fd(struct imsgbuf *);
 void
 imsgbuf_init(struct imsgbuf *imsgbuf, int fd)
 {
-	msgbuf_init(&imsgbuf->w);
+	imsgbuf->w = msgbuf_new();
 	memset(&imsgbuf->r, 0, sizeof(imsgbuf->r));
 	imsgbuf->fd = fd;
 	imsgbuf->pid = getpid();
@@ -137,15 +137,16 @@ fail:
 int
 imsgbuf_write(struct imsgbuf *imsgbuf)
 {
-	return msgbuf_write(imsgbuf->fd, &imsgbuf->w);
+	return msgbuf_write(imsgbuf->fd, imsgbuf->w);
 }
 
 int
 imsgbuf_flush(struct imsgbuf *imsgbuf)
 {
-	while (imsgbuf->w.queued)
+	while (imsgbuf_queuelen(imsgbuf) > 0) {
 		if (imsgbuf_write(imsgbuf) == -1)
 			return (-1);
+	}
 	return (0);
 }
 
@@ -154,7 +155,9 @@ imsgbuf_clear(struct imsgbuf *imsgbuf)
 {
 	int	fd;
 
-	msgbuf_clear(&imsgbuf->w);
+	msgbuf_clear(imsgbuf->w);
+	msgbuf_free(imsgbuf->w);
+	imsgbuf->w = NULL;
 	while ((fd = imsg_dequeue_fd(imsgbuf)) != -1)
 		close(fd);
 }
@@ -162,7 +165,7 @@ imsgbuf_clear(struct imsgbuf *imsgbuf)
 uint32_t
 imsgbuf_queuelen(struct imsgbuf *imsgbuf)
 {
-	return msgbuf_queuelen(&imsgbuf->w);
+	return msgbuf_queuelen(imsgbuf->w);
 }
 
 ssize_t
@@ -342,8 +345,8 @@ imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id,
 	if (imsg_add(hdrbuf, &hdr, sizeof(hdr)) == -1)
 		goto fail;
 
-	ibuf_close(&imsgbuf->w, hdrbuf);
-	ibuf_close(&imsgbuf->w, buf);
+	ibuf_close(imsgbuf->w, hdrbuf);
+	ibuf_close(imsgbuf->w, buf);
 	return (1);
 
  fail:
@@ -433,7 +436,7 @@ imsg_close(struct imsgbuf *imsgbuf, struct ibuf *msg)
 		hdr->flags |= IMSGF_HASFD;
 	hdr->len = ibuf_size(msg);
 
-	ibuf_close(&imsgbuf->w, msg);
+	ibuf_close(imsgbuf->w, msg);
 }
 
 void

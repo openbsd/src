@@ -93,7 +93,8 @@
 		logout;
 		logwtmp;
 		msgbuf_clear;
-		msgbuf_init;
+		msgbuf_free;
+		msgbuf_new;
 		msgbuf_queuelen;
 		msgbuf_write;
 		ober_add_bitstring;
