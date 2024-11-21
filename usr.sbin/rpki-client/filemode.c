@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.52 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.53 2024/11/21 13:12:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -784,11 +784,11 @@ proc_filemode(int fd)
 		}
 
 		if (pfd.revents & POLLOUT) {
-			switch (msgbuf_write(&msgq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
+			if (msgbuf_write(&msgq) == -1) {
+				if (errno == EPIPE)
+					errx(1, "write: connection closed");
+				else
+					err(1, "write");
 			}
 		}
 

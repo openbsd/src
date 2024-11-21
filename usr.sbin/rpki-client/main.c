@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.271 2024/11/14 10:28:59 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.272 2024/11/21 13:12:19 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1310,16 +1310,13 @@ main(int argc, char *argv[])
 			if (pfd[i].revents & POLLHUP)
 				hangup = 1;
 			if (pfd[i].revents & POLLOUT) {
-				switch (msgbuf_write(queues[i])) {
-				case 0:
-					warnx("write[%d]: "
-					    "connection closed", i);
+				if (msgbuf_write(queues[i]) == -1) {
+					if (errno == EPIPE)
+						warnx("write[%d]: "
+						    "connection closed", i);
+					else
+						warn("write[%d]", i);
 					hangup = 1;
-					break;
-				case -1:
-					warn("write[%d]", i);
-					hangup = 1;
-					break;
 				}
 			}
 		}

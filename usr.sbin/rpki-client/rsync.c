@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.52 2024/11/14 10:28:59 tb Exp $ */
+/*	$OpenBSD: rsync.c,v 1.53 2024/11/21 13:12:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -355,11 +355,11 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		}
 
 		if (pfd.revents & POLLOUT) {
-			switch (msgbuf_write(&msgq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
+			if (msgbuf_write(&msgq) == -1) {
+				if (errno == EPIPE)
+					errx(1, "write: connection closed");
+				else
+					err(1, "write");
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.88 2024/11/14 10:28:59 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.89 2024/11/21 13:12:19 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -2138,11 +2138,11 @@ proc_http(char *bind_addr, int fd)
 		if (pfds[0].revents & POLLHUP)
 			break;
 		if (pfds[0].revents & POLLOUT) {
-			switch (msgbuf_write(&msgq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
+			if (msgbuf_write(&msgq) == -1) {
+				if (errno == EPIPE)
+					errx(1, "write: connection closed");
+				else
+					err(1, "write");
 			}
 		}
 		if (pfds[0].revents & POLLIN) {

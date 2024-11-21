@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.35 2024/09/02 11:56:22 job Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.36 2024/11/21 13:12:19 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -597,11 +597,11 @@ proc_rrdp(int fd)
 		if (pfds[0].revents & POLLHUP)
 			break;
 		if (pfds[0].revents & POLLOUT) {
-			switch (msgbuf_write(&msgq)) {
-			case 0:
-				errx(1, "write: connection closed");
-			case -1:
-				err(1, "write");
+			if (msgbuf_write(&msgq) == -1) {
+				if (errno == EPIPE)
+					errx(1, "write: connection closed");
+				else
+					err(1, "write");
 			}
 		}
 		if (pfds[0].revents & POLLIN)
