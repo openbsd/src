@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.492 2024/11/21 13:28:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.493 2024/11/21 13:29:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -274,6 +274,7 @@ session_main(int debug, int verbose)
 					    NULL);
 					timer_remove_all(&p->timers);
 					tcp_md5_del_listener(conf, p);
+					msgbuf_free(p->wbuf);
 					RB_REMOVE(peer_head, &conf->peers, p);
 					log_peer_warnx(&p->conf, "removed");
 					free(p);
@@ -305,7 +306,7 @@ session_main(int debug, int verbose)
 				free(m);
 				continue;
 			}
-			if (msgbuf_queuelen(&m->wbuf) > 0)
+			if (msgbuf_queuelen(m->wbuf) > 0)
 				mrt_cnt++;
 		}
 
@@ -415,7 +416,7 @@ session_main(int debug, int verbose)
 
 			/* are we waiting for a write? */
 			events = POLLIN;
-			if (msgbuf_queuelen(&p->wbuf) > 0 ||
+			if (msgbuf_queuelen(p->wbuf) > 0 ||
 			    p->state == STATE_CONNECT)
 				events |= POLLOUT;
 			/* is there still work to do? */
@@ -434,7 +435,7 @@ session_main(int debug, int verbose)
 		idx_peers = i;
 
 		LIST_FOREACH(m, &mrthead, entry)
-			if (msgbuf_queuelen(&m->wbuf) > 0) {
+			if (msgbuf_queuelen(m->wbuf) > 0) {
 				pfd[i].fd = m->fd;
 				pfd[i].events = POLLOUT;
 				mrt_l[i - idx_peers] = m;
@@ -565,6 +566,10 @@ init_peer(struct peer *p)
 {
 	TAILQ_INIT(&p->timers);
 	p->fd = -1;
+	if (p->wbuf != NULL)
+		fatal("%s: msgbuf already set", __func__);
+	if ((p->wbuf = msgbuf_new()) == NULL)
+		fatal(NULL);
 
 	if (p->conf.if_depend[0])
 		imsg_compose(ibuf_main, IMSG_SESSION_DEPENDON, 0, 0, -1,
@@ -610,9 +615,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			peer->rbuf = calloc(1, sizeof(*peer->rbuf));
 			if (peer->rbuf == NULL)
 				fatal(NULL);
-
-			/* init write buffer */
-			msgbuf_init(&peer->wbuf);
 
 			if (!peer->depend_ok)
 				timer_stop(&peer->timers, Timer_ConnectRetry);
@@ -886,8 +888,8 @@ change_state(struct peer *peer, enum session_state state,
 		 * don't bother if it fails
 		 */
 		if (peer->state >= STATE_OPENSENT &&
-		    msgbuf_queuelen(&peer->wbuf) > 0)
-			ibuf_write(peer->fd, &peer->wbuf);
+		    msgbuf_queuelen(peer->wbuf) > 0)
+			ibuf_write(peer->fd, peer->wbuf);
 
 		/*
 		 * we must start the timer for the next EVNT_START
@@ -905,7 +907,7 @@ change_state(struct peer *peer, enum session_state state,
 		timer_stop(&peer->timers, Timer_IdleHold);
 		timer_stop(&peer->timers, Timer_IdleHoldReset);
 		session_close_connection(peer);
-		msgbuf_clear(&peer->wbuf);
+		msgbuf_clear(peer->wbuf);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
 		peer->rpending = 0;
@@ -952,7 +954,7 @@ change_state(struct peer *peer, enum session_state state,
 			timer_stop(&peer->timers, Timer_IdleHold);
 			timer_stop(&peer->timers, Timer_IdleHoldReset);
 			session_close_connection(peer);
-			msgbuf_clear(&peer->wbuf);
+			msgbuf_clear(peer->wbuf);
 			memset(&peer->capa.peer, 0, sizeof(peer->capa.peer));
 		}
 		break;
@@ -1425,8 +1427,8 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 			    msg->type);
 	}
 
-	ibuf_close(&p->wbuf, msg->buf);
-	if (!p->throttled && msgbuf_queuelen(&p->wbuf) > SESS_MSG_HIGH_MARK) {
+	ibuf_close(p->wbuf, msg->buf);
+	if (!p->throttled && msgbuf_queuelen(p->wbuf) > SESS_MSG_HIGH_MARK) {
 		if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) == -1)
 			log_peer_warn(&p->conf, "imsg_compose XOFF");
 		else
@@ -1933,8 +1935,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		return (1);
 	}
 
-	if (pfd->revents & POLLOUT && msgbuf_queuelen(&p->wbuf) > 0) {
-		if (ibuf_write(p->fd, &p->wbuf) == -1) {
+	if (pfd->revents & POLLOUT && msgbuf_queuelen(p->wbuf) > 0) {
+		if (ibuf_write(p->fd, p->wbuf) == -1) {
 			if (errno == EPIPE)
 				log_peer_warnx(&p->conf, "Connection closed");
 			else
@@ -1945,7 +1947,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		p->stats.last_write = getmonotime();
 		start_timer_sendholdtime(p);
 		if (p->throttled &&
-		    msgbuf_queuelen(&p->wbuf) < SESS_MSG_LOW_MARK) {
+		    msgbuf_queuelen(p->wbuf) < SESS_MSG_LOW_MARK) {
 			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
 				log_peer_warn(&p->conf, "imsg_compose XON");
 			else
@@ -3164,7 +3166,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				if (mrt == NULL)
 					fatal("session_dispatch_imsg");
 				memcpy(mrt, &xmrt, sizeof(struct mrt));
-				msgbuf_init(&mrt->wbuf);
+				if ((mrt->wbuf = msgbuf_new()) == NULL)
+					fatal("session_dispatch_imsg");
 				LIST_INSERT_HEAD(&mrthead, mrt, entry);
 			} else {
 				/* old dump reopened */

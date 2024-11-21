@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.44 2024/11/21 13:28:34 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.45 2024/11/21 13:29:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -190,7 +190,7 @@ struct rtr_session {
 	struct roa_tree			roa_set;
 	struct aspa_tree		aspa;
 	struct buf_read			r;
-	struct msgbuf			w;
+	struct msgbuf			*w;
 	struct timer_head		timers;
 	uint32_t			id;		/* rtr_config id */
 	uint32_t			serial;
@@ -360,7 +360,7 @@ rtr_send_error(struct rtr_session *rs, struct ibuf *pdu, enum rtr_error err,
 		goto fail;
 	if (ibuf_add(buf, rs->last_sent_msg, mlen) == -1)
 		goto fail;
-	ibuf_close(&rs->w, buf);
+	ibuf_close(rs->w, buf);
 
 	rtr_fsm(rs, RTR_EVNT_SEND_ERROR);
 	return;
@@ -378,7 +378,7 @@ rtr_send_reset_query(struct rtr_session *rs)
 	buf = rtr_newmsg(rs, RESET_QUERY, 0, 0);
 	if (buf == NULL)
 		goto fail;
-	ibuf_close(&rs->w, buf);
+	ibuf_close(rs->w, buf);
 	return;
 
  fail:
@@ -397,7 +397,7 @@ rtr_send_serial_query(struct rtr_session *rs)
 		goto fail;
 	if (ibuf_add_n32(buf, rs->serial) == -1)
 		goto fail;
-	ibuf_close(&rs->w, buf);
+	ibuf_close(rs->w, buf);
 	return;
 
  fail:
@@ -1126,7 +1126,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 	case RTR_EVNT_CON_CLOSE:
 		if (rs->fd != -1) {
 			/* flush buffers */
-			msgbuf_clear(&rs->w);
+			msgbuf_clear(rs->w);
 			rs->r.wpos = 0;
 			close(rs->fd);
 			rs->fd = -1;
@@ -1271,14 +1271,14 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 		return;
 	}
-	if (pfd->revents & POLLOUT && msgbuf_queuelen(&rs->w) > 0) {
-		if (ibuf_write(rs->fd, &rs->w) == -1) {
+	if (pfd->revents & POLLOUT && msgbuf_queuelen(rs->w) > 0) {
+		if (ibuf_write(rs->fd, rs->w) == -1) {
 			log_warn("rtr %s: write error", log_rtr(rs));
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			return;
 		}
 		if (rs->state == RTR_STATE_ERROR &&
-		    msgbuf_queuelen(&rs->w) == 0)
+		    msgbuf_queuelen(rs->w) == 0)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
 	if (pfd->revents & POLLIN) {
@@ -1384,7 +1384,7 @@ rtr_poll_events(struct pollfd *pfds, size_t npfds, time_t *timeout)
 		pfd->fd = rs->fd;
 		pfd->events = 0;
 
-		if (msgbuf_queuelen(&rs->w) > 0)
+		if (msgbuf_queuelen(rs->w) > 0)
 			pfd->events |= POLLOUT;
 		if (rs->state >= RTR_STATE_ESTABLISHED)
 			pfd->events |= POLLIN;
@@ -1400,11 +1400,12 @@ rtr_new(uint32_t id, struct rtr_config_msg *conf)
 
 	if ((rs = calloc(1, sizeof(*rs))) == NULL)
 		fatal("RTR session %s", conf->descr);
+	if ((rs->w = msgbuf_new()) == NULL)
+		fatal("RTR session %s", conf->descr);
 
 	RB_INIT(&rs->roa_set);
 	RB_INIT(&rs->aspa);
 	TAILQ_INIT(&rs->timers);
-	msgbuf_init(&rs->w);
 
 	strlcpy(rs->descr, conf->descr, sizeof(rs->descr));
 	rs->id = id;
@@ -1451,6 +1452,7 @@ rtr_free(struct rtr_session *rs)
 	rtr_reset_cache(rs);
 	rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	timer_remove_all(&rs->timers);
+	msgbuf_free(rs->w);
 	free(rs);
 }
 

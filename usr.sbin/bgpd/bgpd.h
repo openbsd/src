@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.499 2024/11/21 13:28:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.500 2024/11/21 13:29:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1395,8 +1395,8 @@ enum mrt_state {
 
 struct mrt {
 	char			rib[PEER_DESCR_LEN];
-	struct msgbuf		wbuf;
 	LIST_ENTRY(mrt)		entry;
+	struct msgbuf		*wbuf;
 	uint32_t		peer_id;
 	uint32_t		group_id;
 	int			fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.120 2024/11/21 13:28:34 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.121 2024/11/21 13:29:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -192,7 +192,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, uint16_t pkglen,
 	if (ibuf_add(buf, pkg, pkglen) == -1)
 		goto fail;
 
-	ibuf_close(&mrt->wbuf, buf);
+	ibuf_close(mrt->wbuf, buf);
 	return;
 
 fail:
@@ -219,7 +219,7 @@ mrt_dump_state(struct mrt *mrt, uint16_t old_state, uint16_t new_state,
 	if (ibuf_add_n16(buf, new_state) == -1)
 		goto fail;
 
-	ibuf_close(&mrt->wbuf, buf);
+	ibuf_close(mrt->wbuf, buf);
 	return;
 
 fail:
@@ -515,9 +515,9 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	    len) == -1)
 		goto fail;
 
-	ibuf_close(&mrt->wbuf, hbuf);
-	ibuf_close(&mrt->wbuf, h2buf);
-	ibuf_close(&mrt->wbuf, buf);
+	ibuf_close(mrt->wbuf, hbuf);
+	ibuf_close(mrt->wbuf, h2buf);
+	ibuf_close(mrt->wbuf, buf);
 
 	return (len + MRT_HEADER_SIZE);
 
@@ -608,8 +608,8 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	if (ibuf_add_n16(hbuf, len) == -1)
 		goto fail;
 
-	ibuf_close(&mrt->wbuf, hbuf);
-	ibuf_close(&mrt->wbuf, buf);
+	ibuf_close(mrt->wbuf, hbuf);
+	ibuf_close(mrt->wbuf, buf);
 
 	return (len + MRT_HEADER_SIZE);
 
@@ -755,8 +755,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		if (ibuf_add_n16(hbuf, nump) == -1)
 			goto fail;
 
-		ibuf_close(&mrt->wbuf, hbuf);
-		ibuf_close(&mrt->wbuf, nbuf);
+		ibuf_close(mrt->wbuf, hbuf);
+		ibuf_close(mrt->wbuf, nbuf);
 		hbuf = NULL;
 		nbuf = NULL;
 	}
@@ -774,8 +774,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		if (ibuf_add_n16(hbuf, apnump) == -1)
 			goto fail;
 
-		ibuf_close(&mrt->wbuf, hbuf);
-		ibuf_close(&mrt->wbuf, apbuf);
+		ibuf_close(mrt->wbuf, hbuf);
+		ibuf_close(mrt->wbuf, apbuf);
 		hbuf = NULL;
 		apbuf = NULL;
 	}
@@ -851,8 +851,8 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf)
 	    MRT_DUMP_V2_PEER_INDEX_TABLE, len) == -1)
 		goto fail;
 
-	ibuf_close(&mrt->wbuf, hbuf);
-	ibuf_close(&mrt->wbuf, buf);
+	ibuf_close(mrt->wbuf, hbuf);
+	ibuf_close(mrt->wbuf, buf);
 
 	return (0);
 fail:
@@ -1110,7 +1110,7 @@ fail:
 void
 mrt_write(struct mrt *mrt)
 {
-	if (ibuf_write(mrt->fd, &mrt->wbuf) == -1) {
+	if (ibuf_write(mrt->fd, mrt->wbuf) == -1) {
 		log_warn("mrt dump aborted, mrt_write");
 		mrt_clean(mrt);
 		mrt_done(mrt);
@@ -1121,7 +1121,8 @@ void
 mrt_clean(struct mrt *mrt)
 {
 	close(mrt->fd);
-	msgbuf_clear(&mrt->wbuf);
+	msgbuf_free(mrt->wbuf);
+	mrt->wbuf = NULL;
 }
 
 static struct imsgbuf	*mrt_imsgbuf[2];

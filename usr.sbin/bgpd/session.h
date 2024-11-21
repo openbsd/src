@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.175 2024/11/21 13:27:40 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.176 2024/11/21 13:29:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -218,7 +218,7 @@ struct peer {
 	struct bgpd_addr	 local_alt;
 	struct bgpd_addr	 remote;
 	struct timer_head	 timers;
-	struct msgbuf		 wbuf;
+	struct msgbuf		*wbuf;
 	struct buf_read		*rbuf;
 	struct peer		*template;
 	int			 fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.638 2024/11/21 13:28:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.639 2024/11/21 13:29:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -245,12 +245,12 @@ rde_main(int debug, int verbose)
 
 			if (i >= pfd_elms)
 				fatalx("poll pfd too small");
-			if (msgbuf_queuelen(&mctx->mrt.wbuf) > 0) {
+			if (msgbuf_queuelen(mctx->mrt.wbuf) > 0) {
 				pfd[i].fd = mctx->mrt.fd;
 				pfd[i].events = POLLOUT;
 				i++;
 			} else if (mctx->mrt.state == MRT_STATE_REMOVE) {
-				close(mctx->mrt.fd);
+				mrt_clean(&mctx->mrt);
 				LIST_REMOVE(mctx, entry);
 				free(mctx);
 				rde_mrt_cnt--;
@@ -344,8 +344,7 @@ rde_main(int debug, int verbose)
 	free(ibuf_main);
 
 	while ((mctx = LIST_FIRST(&rde_mrts)) != NULL) {
-		msgbuf_clear(&mctx->mrt.wbuf);
-		close(mctx->mrt.fd);
+		mrt_clean(&mctx->mrt);
 		LIST_REMOVE(mctx, entry);
 		free(mctx);
 	}
@@ -3193,7 +3192,7 @@ rde_mrt_throttled(void *arg)
 {
 	struct mrt	*mrt = arg;
 
-	return (msgbuf_queuelen(&mrt->wbuf) > SESS_MSG_LOW_MARK);
+	return (msgbuf_queuelen(mrt->wbuf) > SESS_MSG_LOW_MARK);
 }
 
 static void
@@ -3213,7 +3212,11 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 		return;
 	}
 	memcpy(&ctx->mrt, mrt, sizeof(struct mrt));
-	msgbuf_init(&ctx->mrt.wbuf);
+	if ((ctx->mrt.wbuf = msgbuf_new()) == NULL) {
+		log_warn("rde_dump_mrt_new");
+		free(ctx);
+		return;
+	}
 	ctx->mrt.fd = fd;
 	ctx->mrt.state = MRT_STATE_RUNNING;
 	rid = rib_find(ctx->mrt.rib);
