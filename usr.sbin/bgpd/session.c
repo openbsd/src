@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.485 2024/11/21 13:10:26 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.486 2024/11/21 13:11:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -887,7 +887,7 @@ change_state(struct peer *peer, enum session_state state,
 		 */
 		if (peer->state >= STATE_OPENSENT &&
 		    msgbuf_queuelen(&peer->wbuf) > 0)
-			msgbuf_write(&peer->wbuf);
+			ibuf_write(&peer->wbuf);
 
 		/*
 		 * we must start the timer for the next EVNT_START
@@ -1935,7 +1935,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	}
 
 	if (pfd->revents & POLLOUT && msgbuf_queuelen(&p->wbuf) > 0) {
-		if ((error = msgbuf_write(&p->wbuf)) <= 0 && errno != EAGAIN) {
+		if ((error = ibuf_write(&p->wbuf)) <= 0 && errno != EAGAIN) {
 			if (error == 0)
 				log_peer_warnx(&p->conf, "Connection closed");
 			else if (error == -1)
