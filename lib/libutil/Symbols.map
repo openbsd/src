@@ -46,6 +46,7 @@
 		ibuf_get_n32;
 		ibuf_get_n64;
 		ibuf_get_n8;
+		ibuf_get_string;
 		ibuf_left;
 		ibuf_open;
 		ibuf_reserve;

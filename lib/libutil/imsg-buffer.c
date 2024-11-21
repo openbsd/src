@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.19 2024/08/26 13:57:34 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.20 2024/11/21 12:42:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -429,6 +429,24 @@ ibuf_get_ibuf(struct ibuf *buf, size_t len, struct ibuf *new)
 }
 
 int
+ibuf_get_h16(struct ibuf *buf, uint16_t *value)
+{
+	return ibuf_get(buf, value, sizeof(*value));
+}
+
+int
+ibuf_get_h32(struct ibuf *buf, uint32_t *value)
+{
+	return ibuf_get(buf, value, sizeof(*value));
+}
+
+int
+ibuf_get_h64(struct ibuf *buf, uint64_t *value)
+{
+	return ibuf_get(buf, value, sizeof(*value));
+}
+
+int
 ibuf_get_n8(struct ibuf *buf, uint8_t *value)
 {
 	return ibuf_get(buf, value, sizeof(*value));
@@ -464,22 +482,21 @@ ibuf_get_n64(struct ibuf *buf, uint64_t *value)
 	return (rv);
 }
 
-int
-ibuf_get_h16(struct ibuf *buf, uint16_t *value)
+char *
+ibuf_get_string(struct ibuf *buf, size_t len)
 {
-	return ibuf_get(buf, value, sizeof(*value));
-}
+	char *str;
 
-int
-ibuf_get_h32(struct ibuf *buf, uint32_t *value)
-{
-	return ibuf_get(buf, value, sizeof(*value));
-}
+	if (ibuf_size(buf) < len) {
+		errno = EBADMSG;
+		return (NULL);
+	}
 
-int
-ibuf_get_h64(struct ibuf *buf, uint64_t *value)
-{
-	return ibuf_get(buf, value, sizeof(*value));
+	str = strndup(ibuf_data(buf), len);
+	if (str == NULL)
+		return (NULL);
+	buf->rpos += len;
+	return (str);
 }
 
 int

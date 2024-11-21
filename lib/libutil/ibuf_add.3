@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.1 2023/12/12 15:49:21 claudio Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.2 2024/11/21 12:42:14 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2023 $
+.Dd $Mdocdate: November 21 2024 $
 .Dt IBUF_ADD 3
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Nm ibuf_get_n32 ,
 .Nm ibuf_get_n64 ,
 .Nm ibuf_get_n8 ,
+.Nm ibuf_get_string ,
 .Nm ibuf_left ,
 .Nm ibuf_open ,
 .Nm ibuf_reserve ,
@@ -128,6 +129,8 @@
 .Fn ibuf_get_n64 "struct ibuf *buf" "uint64_t *value"
 .Ft int
 .Fn ibuf_get_n8 "struct ibuf *buf" "uint8_t *value"
+.Ft "char *"
+.Fn ibuf_get_string "struct ibuf *buf" "size_t len"
 .Ft size_t
 .Fn ibuf_left "const struct ibuf *buf"
 .Ft "struct ibuf *"
@@ -354,6 +357,18 @@ from
 .Fa buf
 converting the value from network to host byte order.
 0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_get_string
+consumes
+.Fa len
+bytes from the buffer
+.Fa buf
+and returns the result of passing the bytes and len to
+.Xr strndup(3) .
+The returned pointer should be passed to
+.Xr free 3
+when it is no longer needed.
+On error NULL is returned.
 .Pp
 The
 .Fn ibuf_open
