@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.72 2021/01/19 15:59:25 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.73 2024/11/21 13:12:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -598,8 +598,8 @@ session_write(int fd, short event, void *arg)
 	if (!(event & EV_WRITE))
 		return;
 
-	if (msgbuf_write(&tcp->wbuf.wbuf) <= 0)
-		if (errno != EAGAIN && nbr)
+	if (msgbuf_write(&tcp->wbuf.wbuf) == -1)
+		if (nbr)
 			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 
 	if (nbr == NULL && !tcp->wbuf.wbuf.queued) {
