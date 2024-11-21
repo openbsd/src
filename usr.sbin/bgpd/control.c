@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.129 2024/11/21 13:31:37 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.130 2024/11/21 13:33:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -381,7 +381,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 
 				switch (type) {
 				case IMSG_CTL_NEIGHBOR_UP:
-					bgp_fsm(p, EVNT_START);
+					bgp_fsm(p, EVNT_START, NULL);
 					p->conf.down = 0;
 					p->conf.reason[0] = '\0';
 					p->IdleHoldTime =

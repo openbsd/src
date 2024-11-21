@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.177 2024/11/21 13:33:14 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.178 2024/11/21 13:33:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -193,7 +193,6 @@ TAILQ_HEAD(timer_head, timer);
 
 struct buf_read {
 	uint8_t				buf[IBUF_READ_SIZE];
-	uint8_t				*rptr;
 	size_t				wpos;
 };
 
@@ -331,7 +330,7 @@ void	rtr_recalc(void);
 RB_PROTOTYPE(peer_head, peer, entry, peer_compare);
 
 void		 session_main(int, int);
-void		 bgp_fsm(struct peer *, enum session_events);
+void		 bgp_fsm(struct peer *, enum session_events, struct ibuf *);
 int		 session_neighbor_rrefresh(struct peer *p);
 struct peer	*getpeerbydesc(struct bgpd_config *, const char *);
 struct peer	*getpeerbyip(struct bgpd_config *, struct sockaddr *);
