@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.26 2024/11/21 12:48:34 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.27 2024/11/21 12:49:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -124,6 +124,12 @@ again:
 fail:
 	free(ifd);
 	return (n);
+}
+
+int
+imsg_write(struct imsgbuf *imsgbuf)
+{
+	return msgbuf_write(&imsgbuf->w);
 }
 
 ssize_t
@@ -423,7 +429,7 @@ int
 imsg_flush(struct imsgbuf *imsgbuf)
 {
 	while (imsgbuf->w.queued)
-		if (msgbuf_write(&imsgbuf->w) <= 0 && errno != EAGAIN)
+		if (imsg_write(imsgbuf) <= 0 && errno != EAGAIN)
 			return (-1);
 	return (0);
 }

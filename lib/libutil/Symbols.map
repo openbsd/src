@@ -85,6 +85,7 @@
 		imsg_get_type;
 		imsg_init;
 		imsg_read;
+		imsg_write;
 		isduid;
 		login;
 		login_check_expire;
