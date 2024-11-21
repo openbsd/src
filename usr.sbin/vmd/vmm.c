@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.127 2024/11/21 13:16:07 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.128 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -470,7 +470,7 @@ vmm_pipe(struct vmd_vm *vm, int fd, void (*cb)(int, short, void *))
 		return (-1);
 	}
 
-	imsg_init(&iev->ibuf, fd);
+	imsgbuf_init(&iev->ibuf, fd);
 	iev->handler = cb;
 	iev->data = vm;
 	imsg_event_add(iev);
@@ -495,8 +495,8 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	unsigned int		 i;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("%s: imsg_read", __func__);
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* This pipe is dead, so remove the event handler */
 			event_del(&iev->ev);
@@ -505,13 +505,13 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE) {
 				/* This pipe is dead, remove the handler */
 				event_del(&iev->ev);
 				return;
 			}
-			fatal("%s: imsg_write fd %d", __func__, ibuf->fd);
+			fatal("%s: imsgbuf_write fd %d", __func__, ibuf->fd);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.4 2024/11/21 13:16:07 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.5 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -203,7 +203,7 @@ proc_free(struct imsgproc *p)
 	if (event_initialized(&p->ev))
 		event_del(&p->ev);
 	close(p->imsgbuf.fd);
-	imsg_clear(&p->imsgbuf);
+	imsgbuf_clear(&p->imsgbuf);
 	free(p->title);
 	free(p);
 }
@@ -220,7 +220,7 @@ proc_new(int type)
 	p->type = type;
 	p->instance = -1;
 	p->pid = -1;
-	imsg_init(&p->imsgbuf, -1);
+	imsgbuf_init(&p->imsgbuf, -1);
 
 	TAILQ_INSERT_TAIL(&procs, p, tqe);
 
@@ -278,12 +278,12 @@ proc_dispatch(int fd, short event, void *arg)
 	p->events = 0;
 
 	if (event & EV_READ) {
-		n = imsg_read(&p->imsgbuf);
+		n = imsgbuf_read(&p->imsgbuf);
 		switch (n) {
 		case -1:
 			if (errno == EAGAIN)
 				break;
-			log_warn("%s: imsg_read", __func__);
+			log_warn("%s: imsgbuf_read", __func__);
 			proc_callback(p, NULL);
 			return;
 		case 0:
@@ -296,9 +296,9 @@ proc_dispatch(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if (imsg_write(&p->imsgbuf) == -1) {
+		if (imsgbuf_write(&p->imsgbuf) == -1) {
 			if (errno != EPIPE)
-				log_warn("%s: imsg_write", __func__);
+				log_warn("%s: imsgbuf_write", __func__);
 			proc_callback(p, NULL);
 			return;
 		}

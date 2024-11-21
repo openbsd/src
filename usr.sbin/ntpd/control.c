@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.24 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,7 @@ control_accept(int listenfd)
 		return (0);
 	}
 
-	imsg_init(&ctl_conn->ibuf, connfd);
+	imsgbuf_init(&ctl_conn->ibuf, connfd);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);
 
@@ -207,7 +207,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	}
 
 	if (pfd->revents & POLLOUT)
-		if (imsg_write(&c->ibuf) == -1) {
+		if (imsgbuf_write(&c->ibuf) == -1) {
 			*ctl_cnt -= control_close(pfd->fd);
 			return (1);
 		}
@@ -215,7 +215,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	if (!(pfd->revents & POLLIN))
 		return (0);
 
-	if (((n = imsg_read(&c->ibuf)) == -1 && errno != EAGAIN) || n == 0) {
+	if (((n = imsgbuf_read(&c->ibuf)) == -1 && errno != EAGAIN) || n == 0) {
 		*ctl_cnt -= control_close(pfd->fd);
 		return (1);
 	}

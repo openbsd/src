@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.70 2024/01/16 13:07:29 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.71 2024/11/21 13:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -216,7 +216,7 @@ main(int argc, char **argv)
 	if (cflag)
 		goto wait_for_child;
 
-	imsg_init(&ibuf, pair[0]);
+	imsgbuf_init(&ibuf, pair[0]);
 	for (idx = 0; idx < argc; idx++) {
 		fd = prepare_message(&msg, idx, argv[idx]);
 		send_message(&ibuf, &msg, sizeof msg, fd);
@@ -288,8 +288,8 @@ send_message(struct imsgbuf *ibuf, void *msg, size_t msglen, int fd)
 {
 	if (imsg_compose(ibuf, -1, -1, 0, fd, msg, msglen) != 1)
 		err(1, "imsg_compose");
-	if (imsg_flush(ibuf) != 0)
-		err(1, "imsg_flush");
+	if (imsgbuf_flush(ibuf) != 0)
+		err(1, "imsgbuf_flush");
 }
 
 static int
@@ -297,10 +297,10 @@ read_message(struct imsgbuf *ibuf, struct imsg *imsg, pid_t from)
 {
 	int	n;
 
-	while ((n = imsg_read(ibuf)) == -1 && errno == EAGAIN)
+	while ((n = imsgbuf_read(ibuf)) == -1 && errno == EAGAIN)
 		/* nothing */ ;
 	if (n == -1)
-		err(1, "imsg_read");
+		err(1, "imsgbuf_read");
 	if (n == 0)
 		return (0);
 
@@ -401,7 +401,7 @@ child(int fd, pid_t parent, int argc, char **argv)
 			width = len;
 	}
 
-	imsg_init(&ibuf, fd);
+	imsgbuf_init(&ibuf, fd);
 	for (;;) {
 		if (read_message(&ibuf, &imsg, parent) == 0)
 			break;

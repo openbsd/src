@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.176 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: ntp.c,v 1.177 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,10 +159,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_main, PARENT_SOCK_FILENO);
+	imsgbuf_init(ibuf_main, PARENT_SOCK_FILENO);
 	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_dns, pipe_dns[0]);
+	imsgbuf_init(ibuf_dns, pipe_dns[0]);
 
 	constraint_cnt = 0;
 	conf->constraint_median = 0;
@@ -365,7 +365,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT))
-			if (imsg_write(ibuf_main) == -1) {
+			if (imsgbuf_write(ibuf_main) == -1) {
 				log_warn("pipe write error (to parent)");
 				ntp_quit = 1;
 			}
@@ -379,7 +379,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_DNS].revents & POLLOUT))
-			if (imsg_write(ibuf_dns) == -1) {
+			if (imsgbuf_write(ibuf_dns) == -1) {
 				log_warn("pipe write error (to dns engine)");
 				ntp_quit = 1;
 			}
@@ -460,10 +460,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		}
 	}
 
-	imsg_write(ibuf_main);
+	imsgbuf_write(ibuf_main);
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
-	imsg_write(ibuf_dns);
+	imsgbuf_write(ibuf_dns);
 	msgbuf_clear(&ibuf_dns->w);
 	free(ibuf_dns);
 
@@ -477,7 +477,7 @@ ntp_dispatch_imsg(void)
 	struct imsg		 imsg;
 	int			 n;
 
-	if (((n = imsg_read(ibuf_main)) == -1 && errno != EAGAIN) || n == 0)
+	if (((n = imsgbuf_read(ibuf_main)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
 
 	for (;;) {
@@ -551,7 +551,7 @@ ntp_dispatch_imsg_dns(void)
 	size_t			 addrcount, peercount;
 	int			 n;
 
-	if (((n = imsg_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
+	if (((n = imsgbuf_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
 
 	for (;;) {

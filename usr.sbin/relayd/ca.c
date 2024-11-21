@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.43 2023/07/16 09:23:33 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.44 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -337,8 +337,8 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 */
 	if (imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt) == -1)
 		log_warn("%s: imsg_composev", __func__);
-	if (imsg_flush(ibuf) == -1)
-		log_warn("%s: imsg_flush", __func__);
+	if (imsgbuf_flush(ibuf) == -1)
+		log_warn("%s: imsgbuf_flush", __func__);
 
 	pfd[0].fd = ibuf->fd;
 	pfd[0].events = POLLIN;
@@ -357,8 +357,8 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 		default:
 			break;
 		}
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatalx("imsg_read");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatalx("imsgbuf_read");
 		if (n == 0)
 			fatalx("pipe closed");
 

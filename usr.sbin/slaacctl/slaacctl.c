@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.24 2024/11/21 13:09:03 claudio Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.25 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsg_init(ibuf, ctl_sock);
+	imsgbuf_init(ibuf, ctl_sock);
 	done = 0;
 
 	/* Process user request. */
@@ -136,12 +136,12 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	if (imsg_flush(ibuf) == -1)
+	if (imsgbuf_flush(ibuf) == -1)
 		err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			errx(1, "imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 

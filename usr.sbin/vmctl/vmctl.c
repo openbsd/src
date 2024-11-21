@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.91 2024/07/09 15:51:11 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.92 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -310,7 +310,7 @@ send_vm(uint32_t id, const char *name)
 	} else {
 		imsg_compose(ibuf, IMSG_VMDOP_SEND_VM_REQUEST, 0, 0, fds[0],
 				&vid, sizeof(vid));
-		imsg_flush(ibuf);
+		imsgbuf_flush(ibuf);
 		while (1) {
 			readn = atomicio(read, fds[1], buf, pagesz);
 			if (!readn)
@@ -350,7 +350,7 @@ vm_receive(uint32_t id, const char *name)
 	} else {
 		imsg_compose(ibuf, IMSG_VMDOP_RECEIVE_VM_REQUEST, 0, 0, fds[0],
 		    &vid, sizeof(vid));
-		imsg_flush(ibuf);
+		imsgbuf_flush(ibuf);
 		while (1) {
 			readn = atomicio(read, STDIN_FILENO, buf, pagesz);
 			if (!readn) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.22 2024/11/21 13:16:07 claudio Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.23 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -95,7 +95,7 @@ module_create(int sock, void *ctx, struct module_handlers *handler)
 	if ((base = calloc(1, sizeof(struct module_base))) == NULL)
 		return (NULL);
 
-	imsg_init(&base->ibuf, sock);
+	imsgbuf_init(&base->ibuf, sock);
 	base->ctx = ctx;
 
 	module_userpass = handler->userpass;
@@ -134,7 +134,7 @@ module_run(struct module_base *base)
 
 	ret = module_recv_imsg(base);
 	if (ret == 0)
-		imsg_flush(&base->ibuf);
+		imsgbuf_flush(&base->ibuf);
 
 	return (ret);
 }
@@ -145,7 +145,7 @@ module_destroy(struct module_base *base)
 	if (base != NULL) {
 		free(base->radpkt);
 		free(base->radpkt2);
-		imsg_clear(&base->ibuf);
+		imsgbuf_clear(&base->ibuf);
 	}
 	free(base);
 }
@@ -172,7 +172,7 @@ module_load(struct module_base *base)
 		load.cap |= RADIUSD_MODULE_CAP_CONTROL;
 	imsg_compose(&base->ibuf, IMSG_RADIUSD_MODULE_LOAD, 0, 0, -1, &load,
 	    sizeof(load));
-	imsg_flush(&base->ibuf);
+	imsgbuf_flush(&base->ibuf);
 }
 
 void
@@ -356,9 +356,10 @@ module_recv_imsg(struct module_base *base)
 	ssize_t		 n;
 	struct imsg	 imsg;
 
-	if (((n = imsg_read(&base->ibuf)) == -1 && errno != EAGAIN) || n == 0) {
+	if (((n = imsgbuf_read(&base->ibuf)) == -1 && errno != EAGAIN) ||
+	    n == 0) {
 		if (n != 0)
-			syslog(LOG_ERR, "%s: imsg_read(): %m", __func__);
+			syslog(LOG_ERR, "%s: imsgbuf_read(): %m", __func__);
 		module_stop(base);
 		return (-1);
 	}
@@ -633,8 +634,8 @@ module_on_event(int fd, short evmask, void *ctx)
 	base->ev_onhandler = true;
 	if (evmask & EV_WRITE) {
 		base->writeready = true;
-		if (imsg_write(&base->ibuf) == -1) {
-			syslog(LOG_ERR, "%s: imsg_write: %m", __func__);
+		if (imsgbuf_write(&base->ibuf) == -1) {
+			syslog(LOG_ERR, "%s: imsgbuf_write: %m", __func__);
 			module_stop(base);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.93 2024/11/04 21:59:15 jca Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.94 2024/11/21 13:17:01 claudio Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 	}
 
 	signal(SIGTERM, (void (*)(int)) send_umntall);
-	imsg_init(&ibuf, socks[0]);
+	imsgbuf_init(&ibuf, socks[0]);
 	setproctitle("parent");
 
 	if (debug)
@@ -370,7 +370,7 @@ privchild(int sock)
 	char *path;
 	int error, size;
 
-	imsg_init(&ibuf, sock);
+	imsgbuf_init(&ibuf, sock);
 	setproctitle("[priv]");
 	fp = NULL;
 
@@ -398,9 +398,9 @@ privchild(int sock)
 		if (!(pfd[0].revents & POLLIN))
 			continue;
 
-		switch (imsg_read(&ibuf)) {
+		switch (imsgbuf_read(&ibuf)) {
 		case -1:
-			syslog(LOG_ERR, "imsg_read: %m");
+			syslog(LOG_ERR, "imsgbuf_read: %m");
 			_exit(1);
 		case 0:
 			syslog(LOG_ERR, "Socket disconnected");
@@ -623,9 +623,9 @@ recv_imsg(struct imsg *imsg)
 {
 	ssize_t n;
 
-	n = imsg_read(&ibuf);
+	n = imsgbuf_read(&ibuf);
 	if (n == -1) {
-		syslog(LOG_ERR, "imsg_read: %m");
+		syslog(LOG_ERR, "imsgbuf_read: %m");
 		return (-1);
 	}
 	if (n == 0) {
@@ -656,8 +656,8 @@ send_imsg(u_int32_t type, void *data, u_int16_t size)
 		return (-1);
 	}
 
-	if (imsg_flush(&ibuf) == -1) {
-		syslog(LOG_ERR, "imsg_flush: %m");
+	if (imsgbuf_flush(&ibuf) == -1) {
+		syslog(LOG_ERR, "imsgbuf_flush: %m");
 		return (-1);
 	}
 

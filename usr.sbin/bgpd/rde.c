@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.634 2024/09/25 14:46:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.635 2024/11/21 13:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -201,7 +201,7 @@ rde_main(int debug, int verbose)
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_main, 3);
+	imsgbuf_init(ibuf_main, 3);
 
 	/* initialize the RIB structures */
 	if ((out_rules = calloc(1, sizeof(struct filter_head))) == NULL)
@@ -843,7 +843,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			}
 			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
-			imsg_init(i, fd);
+			imsgbuf_init(i, fd);
 			switch (imsg_get_type(&imsg)) {
 			case IMSG_SOCKET_CONN:
 				if (ibuf_se) {

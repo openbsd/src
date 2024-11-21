@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.34 2024/11/21 13:14:44 claudio Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.35 2024/11/21 13:17:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -273,9 +273,9 @@ main(int argc, char *argv[])
 	if ((iev_frontend = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_engine = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_frontend->ibuf, pipe_main2frontend[0]);
+	imsgbuf_init(&iev_frontend->ibuf, pipe_main2frontend[0]);
 	iev_frontend->handler = main_dispatch_frontend;
-	imsg_init(&iev_engine->ibuf, pipe_main2engine[0]);
+	imsgbuf_init(&iev_engine->ibuf, pipe_main2engine[0]);
 	iev_engine->handler = main_dispatch_engine;
 
 	/* Setup event handlers for pipes to engine & frontend. */
@@ -444,17 +444,17 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* Connection closed. */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -526,17 +526,17 @@ main_dispatch_engine(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* Connection closed. */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -698,11 +698,11 @@ main_imsg_send_ipc_sockets(struct imsgbuf *frontend_buf,
 	if (imsg_compose(frontend_buf, IMSG_SOCKET_IPC, 0, 0,
 	    pipe_frontend2engine[0], NULL, 0) == -1)
 		return (-1);
-	imsg_flush(frontend_buf);
+	imsgbuf_flush(frontend_buf);
 	if (imsg_compose(engine_buf, IMSG_SOCKET_IPC, 0, 0,
 	    pipe_frontend2engine[1], NULL, 0) == -1)
 		return (-1);
-	imsg_flush(engine_buf);
+	imsgbuf_flush(engine_buf);
 	return (0);
 }
 

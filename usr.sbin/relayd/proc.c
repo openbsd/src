@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.48 2024/11/21 13:16:07 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.49 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -155,7 +155,8 @@ proc_connect(struct privsep *ps)
 
 		for (inst = 0; inst < ps->ps_instances[dst]; inst++) {
 			iev = &ps->ps_ievs[dst][inst];
-			imsg_init(&iev->ibuf, ps->ps_pp->pp_pipes[dst][inst]);
+			imsgbuf_init(&iev->ibuf,
+			    ps->ps_pp->pp_pipes[dst][inst]);
 			event_set(&iev->ev, iev->ibuf.fd, iev->events,
 			    iev->handler, iev->data);
 			event_add(&iev->ev, NULL);
@@ -264,7 +265,7 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 		pp->pp_pipes[dst][n] = fd;
 
 	iev = &ps->ps_ievs[dst][n];
-	imsg_init(&iev->ibuf, fd);
+	imsgbuf_init(&iev->ibuf, fd);
 	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
 	event_add(&iev->ev, NULL);
 }
@@ -294,7 +295,7 @@ proc_setup(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 		    sizeof(struct imsgev))) == NULL)
 			fatal("%s: calloc", __func__);
 
-		/* With this set up, we are ready to call imsg_init(). */
+		/* With this set up, we are ready to call imsgbuf_init(). */
 		for (i = 0; i < ps->ps_instances[id]; i++) {
 			ps->ps_ievs[id][i].handler = proc_dispatch;
 			ps->ps_ievs[id][i].events = EV_READ;
@@ -428,7 +429,7 @@ proc_open(struct privsep *ps, int src, int dst)
 			 */
 			if (proc_flush_imsg(ps, src, i) == -1 ||
 			    proc_flush_imsg(ps, dst, j) == -1)
-				fatal("%s: imsg_flush", __func__);
+				fatal("%s: proc_flush_imsg", __func__);
 		}
 	}
 }
@@ -454,7 +455,7 @@ proc_close(struct privsep *ps)
 
 			/* Cancel the fd, close and invalidate the fd */
 			event_del(&(ps->ps_ievs[dst][n].ev));
-			imsg_clear(&(ps->ps_ievs[dst][n].ibuf));
+			imsgbuf_clear(&(ps->ps_ievs[dst][n].ibuf));
 			close(pp->pp_pipes[dst][n]);
 			pp->pp_pipes[dst][n] = -1;
 		}
@@ -601,8 +602,8 @@ proc_dispatch(int fd, short event, void *arg)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("%s: imsg_read", __func__);
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			event_del(&iev->ev);
@@ -612,14 +613,14 @@ proc_dispatch(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE) {
 				/* this pipe is dead, remove the handler */
 				event_del(&iev->ev);
 				event_loopexit(NULL);
 				return;
 			}
-			fatal("%s: imsg_write", __func__);
+			fatal("%s: imsgbuf_write", __func__);
 		}
 	}
 
@@ -685,7 +686,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	if (iev->handler == NULL) {
-		imsg_flush(&iev->ibuf);
+		imsgbuf_flush(&iev->ibuf);
 		return;
 	}
 
@@ -819,7 +820,7 @@ proc_flush_imsg(struct privsep *ps, enum privsep_procid id, int n)
 	for (; n < m; n++) {
 		if ((ibuf = proc_ibuf(ps, id, n)) == NULL)
 			return (-1);
-		if ((ret = imsg_flush(ibuf)) == -1)
+		if ((ret = imsgbuf_flush(ibuf)) == -1)
 			break;
 		imsg_event_add(&ps->ps_ievs[id][n]);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.11 2024/05/07 12:10:06 op Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.12 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -33,8 +33,8 @@ queue_proc_call(void)
 {
 	ssize_t	n;
 
-	if (imsg_flush(&ibuf) == -1) {
-		log_warn("warn: queue-proc: imsg_flush");
+	if (imsgbuf_flush(&ibuf) == -1) {
+		log_warn("warn: queue-proc: imsgbuf_flush");
 		fatalx("queue-proc: exiting");
 	}
 
@@ -54,8 +54,8 @@ queue_proc_call(void)
 			return;
 		}
 
-		if ((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN) {
-			log_warn("warn: queue-proc: imsg_read");
+		if ((n = imsgbuf_read(&ibuf)) == -1 && errno != EAGAIN) {
+			log_warn("warn: queue-proc: imsgbuf_read");
 			break;
 		}
 
@@ -291,7 +291,7 @@ queue_proc_init(struct passwd *pw, int server, const char *conf)
 	if (fd == -1)
 		fatalx("queue-proc: exiting");
 
-	imsg_init(&ibuf, fd);
+	imsgbuf_init(&ibuf, fd);
 
 	version = PROC_QUEUE_API_VERSION;
 	imsg_compose(&ibuf, PROC_QUEUE_INIT, 0, 0, -1,

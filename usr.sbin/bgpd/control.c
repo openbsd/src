@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.123 2024/11/21 13:16:06 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.124 2024/11/21 13:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@ struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 int		 control_close(struct ctl_conn *);
 void		 control_result(struct ctl_conn *, u_int);
-ssize_t		 imsg_read_nofd(struct imsgbuf *);
+ssize_t		 imsgbuf_read_nofd(struct imsgbuf *);
 
 int
 control_check(char *path)
@@ -181,7 +181,7 @@ control_accept(int listenfd, int restricted)
 		return (0);
 	}
 
-	imsg_init(&ctl_conn->imsgbuf, connfd);
+	imsgbuf_init(&ctl_conn->imsgbuf, connfd);
 	ctl_conn->restricted = restricted;
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);
@@ -249,7 +249,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	}
 
 	if (pfd->revents & POLLOUT) {
-		if (imsg_write(&c->imsgbuf) == -1)
+		if (imsgbuf_write(&c->imsgbuf) == -1)
 			return control_close(c);
 		if (c->throttled && c->imsgbuf.w.queued < CTL_MSG_LOW_MARK) {
 			if (imsg_ctl_rde_msg(IMSG_XON, 0, c->imsgbuf.pid) != -1)
@@ -260,7 +260,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	if (!(pfd->revents & POLLIN))
 		return (0);
 
-	if (((n = imsg_read_nofd(&c->imsgbuf)) == -1 && errno != EAGAIN) ||
+	if (((n = imsgbuf_read_nofd(&c->imsgbuf)) == -1 && errno != EAGAIN) ||
 	    n == 0)
 		return control_close(c);
 
@@ -595,7 +595,7 @@ control_result(struct ctl_conn *c, u_int code)
 
 /* This should go into libutil, from smtpd/mproc.c */
 ssize_t
-imsg_read_nofd(struct imsgbuf *imsgbuf)
+imsgbuf_read_nofd(struct imsgbuf *imsgbuf)
 {
 	ssize_t	 n;
 	char	*buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.22 2017/05/21 02:37:52 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.23 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -487,19 +487,19 @@ m_priv_iked_imsg(u_int cmd)
 		goto out;				
 	}
 
-	imsg_init(&ibuf, fd);
+	imsgbuf_init(&ibuf, fd);
 	if (imsg_compose(&ibuf, cmd, 0, 0, -1, NULL, 0) == -1) {
 		log_err("m_priv_iked_imsg: compose");
 		goto err;
 	}
-	if (imsg_flush(&ibuf) == -1) {
+	if (imsgbuf_flush(&ibuf) == -1) {
 		log_err("m_priv_iked_imsg: flush");
 		goto err;
 	}
 
 	ret = 0;
  err:
-	imsg_clear(&ibuf);
+	imsgbuf_clear(&ibuf);
  out:
 	if (fd != -1)
 		close(fd);

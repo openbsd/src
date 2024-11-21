@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.28 2024/11/21 13:16:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.29 2024/11/21 13:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -112,7 +112,7 @@ rde(int debug, int verbose)
 	/* setup pipe and event handler to the parent process */
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_main->ibuf, 3);
+	imsgbuf_init(&iev_main->ibuf, 3);
 	iev_main->handler = rde_dispatch_parent;
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
@@ -175,17 +175,17 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -312,17 +312,17 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -367,7 +367,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			iev_eigrpe = malloc(sizeof(struct imsgev));
 			if (iev_eigrpe == NULL)
 				fatal(NULL);
-			imsg_init(&iev_eigrpe->ibuf, fd);
+			imsgbuf_init(&iev_eigrpe->ibuf, fd);
 			iev_eigrpe->handler = rde_dispatch_imsg;
 			iev_eigrpe->events = EV_READ;
 			event_set(&iev_eigrpe->ev, iev_eigrpe->ibuf.fd,

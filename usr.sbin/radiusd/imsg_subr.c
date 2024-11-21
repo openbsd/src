@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_subr.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: imsg_subr.c,v 1.2 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -29,8 +29,8 @@
 #include "imsg_subr.h"
 
 /*
- * Check readability not to spin before calling imsg_read(3).  Wait 'millisec'
- * until it becomes readable.
+ * Check readability not to spin before calling imsgbuf_read(3).
+ * Wait 'millisec' until it becomes readable.
  */
 int
 imsg_sync_read(struct imsgbuf *ibuf, int millisec)
@@ -46,14 +46,14 @@ imsg_sync_read(struct imsgbuf *ibuf, int millisec)
 		return (-1);
 	}
 	if (retval > 0 && (fds[0].revents & POLLIN) != 0)
-		return imsg_read(ibuf);
+		return imsgbuf_read(ibuf);
 
 	return (-1);
 }
 
 /*
- * Check writability not to spin before calling imsg_flush(3).  Wait 'millisec'
- * until it becomes writable.
+ * Check writability not to spin before calling imsgbuf_flush(3).
+ * Wait 'millisec' until it becomes writable.
  */
 int
 imsg_sync_flush(struct imsgbuf *ibuf, int millisec)
@@ -72,7 +72,7 @@ imsg_sync_flush(struct imsgbuf *ibuf, int millisec)
 		return (-1);
 	}
 	if (retval > 0 && (fds[0].revents & POLLOUT) != 0)
-		return imsg_flush(ibuf);
+		return imsgbuf_flush(ibuf);
 
 	return (-1);
 }

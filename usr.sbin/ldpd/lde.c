@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.80 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.81 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -128,7 +128,7 @@ lde(int debug, int verbose)
 	/* setup pipe and event handler to the parent process */
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_main->ibuf, 3);
+	imsgbuf_init(&iev_main->ibuf, 3);
 	iev_main->handler = lde_dispatch_parent;
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
@@ -198,17 +198,17 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -395,17 +395,17 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	struct fec		 fec;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -464,7 +464,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 
 			if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL)
 				fatal(NULL);
-			imsg_init(&iev_ldpe->ibuf, fd);
+			imsgbuf_init(&iev_ldpe->ibuf, fd);
 			iev_ldpe->handler = lde_dispatch_imsg;
 			iev_ldpe->events = EV_READ;
 			event_set(&iev_ldpe->ev, iev_ldpe->ibuf.fd,

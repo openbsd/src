@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.108 2024/11/21 13:16:07 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.109 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -347,17 +347,17 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 	int			 verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("%s: imsg_read", __func__);
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0)
 			_exit(0);
 	}
 
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)
 				_exit(0);
-			fatal("%s: imsg_write fd %d", __func__, ibuf->fd);
+			fatal("%s: imsgbuf_write fd %d", __func__, ibuf->fd);
 		}
 	}
 
@@ -415,7 +415,7 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
 			    sizeof(vmr));
 			if (!vmr.vmr_result) {
-				imsg_flush(&current_vm->vm_iev.ibuf);
+				imsgbuf_flush(&current_vm->vm_iev.ibuf);
 				_exit(0);
 			}
 			break;
@@ -460,7 +460,7 @@ vm_shutdown(unsigned int cmd)
 	default:
 		fatalx("invalid vm ctl command: %d", cmd);
 	}
-	imsg_flush(&current_vm->vm_iev.ibuf);
+	imsgbuf_flush(&current_vm->vm_iev.ibuf);
 
 	if (sev_shutdown(current_vm))
 		log_warnx("%s: could not shutdown SEV", __func__);

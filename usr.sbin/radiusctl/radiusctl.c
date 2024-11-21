@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.14 2024/11/21 13:09:00 claudio Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.15 2024/11/21 13:17:02 claudio Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		err(EX_OSERR, "socket");
 	if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(EX_OSERR, "connect");
-	imsg_init(&ibuf, sock);
+	imsgbuf_init(&ibuf, sock);
 
 	res = parse(argc, argv);
 	if (res == NULL)
@@ -185,10 +185,11 @@ main(int argc, char *argv[])
 		    : IMSG_RADIUSD_MODULE_IPCP_DISCONNECT, 0, 0, -1, iov, niov);
 		break;
 	}
-	if (imsg_flush(&ibuf) == -1)
-		err(1, "ibuf_ctl: imsg_flush error");
+	if (imsgbuf_flush(&ibuf) == -1)
+		err(1, "ibuf_ctl: imsgbuf_flush error");
 	while (!done) {
-		if (((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN) || n == 0)
+		if (((n = imsgbuf_read(&ibuf)) == -1 && errno != EAGAIN) ||
+		    n == 0)
 			break;
 		for (;;) {
 			if ((n = imsg_get(&ibuf, &imsg)) <= 0) {

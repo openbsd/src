@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.31 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.32 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -94,7 +94,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 
 	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_dns, PARENT_SOCK_FILENO);
+	imsgbuf_init(ibuf_dns, PARENT_SOCK_FILENO);
 
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
@@ -117,7 +117,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 			}
 
 		if (nfds > 0 && (pfd[0].revents & POLLOUT))
-			if (imsg_write(ibuf_dns) == -1) {
+			if (imsgbuf_write(ibuf_dns) == -1) {
 				log_warn("pipe write error (to ntp engine)");
 				quit_dns = 1;
 			}
@@ -145,7 +145,7 @@ dns_dispatch_imsg(struct ntpd_conf *nconf)
 	const char		*str;
 	size_t			 len;
 
-	if (((n = imsg_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
+	if (((n = imsgbuf_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
 
 	for (;;) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.119 2024/11/21 13:16:07 claudio Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.120 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -820,8 +820,8 @@ virtio_shutdown(struct vmd_vm *vm)
 		if (ret == -1)
 			fatalx("%s: failed to send shutdown to device",
 			    __func__);
-		if (imsg_flush(ibuf) == -1)
-			fatalx("%s: imsg_flush", __func__);
+		if (imsgbuf_flush(ibuf) == -1)
+			fatalx("%s: imsgbuf_flush", __func__);
 	}
 
 	/*
@@ -1127,8 +1127,8 @@ vionet_dump(int fd)
 			    __func__, dev->vionet.idx);
 			return (-1);
 		}
-		if (imsg_flush(ibuf) == -1) {
-			log_warnx("%s: imsg_flush", __func__);
+		if (imsgbuf_flush(ibuf) == -1) {
+			log_warnx("%s: imsgbuf_flush", __func__);
 			return (-1);
 		}
 
@@ -1185,8 +1185,8 @@ vioblk_dump(int fd)
 			    __func__, dev->vioblk.idx);
 			return (-1);
 		}
-		if (imsg_flush(ibuf) == -1) {
-			log_warnx("%s: imsg_flush", __func__);
+		if (imsgbuf_flush(ibuf) == -1) {
+			log_warnx("%s: imsgbuf_flush", __func__);
 			return (-1);
 		}
 
@@ -1381,9 +1381,9 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		 * communication will be synchronous. We expect the child to
 		 * report itself "ready" to confirm the launch was a success.
 		 */
-		imsg_init(&iev->ibuf, sync_fds[0]);
+		imsgbuf_init(&iev->ibuf, sync_fds[0]);
 		do
-			ret = imsg_read(&iev->ibuf);
+			ret = imsgbuf_read(&iev->ibuf);
 		while (ret == -1 && errno == EAGAIN);
 		if (ret == 0 || ret == -1) {
 			log_warnx("%s: failed to receive ready message from "
@@ -1504,7 +1504,7 @@ vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *),
 	log_debug("%s: initializing '%c' device pipe (fd=%d)", __func__,
 	    dev->dev_type, fd);
 
-	imsg_init(&iev->ibuf, fd);
+	imsgbuf_init(&iev->ibuf, fd);
 	iev->handler = cb;
 	iev->data = dev;
 	iev->events = EV_READ;
@@ -1524,8 +1524,8 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 	ssize_t			 n = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("%s: imsg_read", __func__);
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsgbuf_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
 			log_debug("%s: pipe dead (EV_READ)", __func__);
@@ -1536,7 +1536,7 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 	}
 
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE) {
 				/* this pipe is dead, remove the handler */
 				log_debug("%s: pipe dead (EV_WRITE)", __func__);
@@ -1544,7 +1544,7 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 				event_loopexit(NULL);
 				return;
 			}
-			fatal("%s: imsg_write", __func__);
+			fatal("%s: imsgbuf_write", __func__);
 		}
 	}
 
@@ -1644,8 +1644,8 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			    " device", __func__);
 			return (ret);
 		}
-		if (imsg_flush(ibuf) == -1) {
-			log_warnx("%s: imsg_flush (write)", __func__);
+		if (imsgbuf_flush(ibuf) == -1) {
+			log_warnx("%s: imsgbuf_flush (write)", __func__);
 			return (-1);
 		}
 	} else {
@@ -1659,17 +1659,17 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			    " device", __func__);
 			return (ret);
 		}
-		if (imsg_flush(ibuf) == -1) {
-			log_warnx("%s: imsg_flush (read)", __func__);
+		if (imsgbuf_flush(ibuf) == -1) {
+			log_warnx("%s: imsgbuf_flush (read)", __func__);
 			return (-1);
 		}
 
 		/* Read our reply. */
 		do
-			n = imsg_read(ibuf);
+			n = imsgbuf_read(ibuf);
 		while (n == -1 && errno == EAGAIN);
 		if (n == 0 || n == -1) {
-			log_warn("%s: imsg_read (n=%ld)", __func__, n);
+			log_warn("%s: imsgbuf_read (n=%ld)", __func__, n);
 			return (-1);
 		}
 		if ((n = imsg_get(ibuf, &imsg)) == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.17 2024/11/21 13:08:53 claudio Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.18 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sock);
 
-	imsg_init(&ibuf, ctl_sock);
+	imsgbuf_init(&ibuf, ctl_sock);
 	done = 0;
 
 	if (pledge("stdio", NULL) == -1)
@@ -355,12 +355,12 @@ main(int argc, char *argv[])
 		fatal("internal error");
 	}
 
-	if (imsg_flush(&ibuf) == -1)
+	if (imsgbuf_flush(&ibuf) == -1)
 		err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(&ibuf)) == -1 && errno != EAGAIN)
-			errx(1, "imsg_read error");
+		if ((n = imsgbuf_read(&ibuf)) == -1 && errno != EAGAIN)
+			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 

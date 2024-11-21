@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.26 2024/11/21 13:15:01 claudio Exp $ */
+/* $OpenBSD: proc.c,v 1.27 2024/11/21 13:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,8 +77,8 @@ proc_event_cb(__unused int fd, short events, void *arg)
 	struct imsg	 imsg;
 
 	if (!(peer->flags & PEER_BAD) && (events & EV_READ)) {
-		if (((n = imsg_read(&peer->ibuf)) == -1 && errno != EAGAIN) ||
-		    n == 0) {
+		if (((n = imsgbuf_read(&peer->ibuf)) == -1 &&
+		    errno != EAGAIN) || n == 0) {
 			peer->dispatchcb(NULL, peer->arg);
 			return;
 		}
@@ -105,7 +105,7 @@ proc_event_cb(__unused int fd, short events, void *arg)
 	}
 
 	if (events & EV_WRITE) {
-		if (imsg_write(&peer->ibuf) == -1) {
+		if (imsgbuf_write(&peer->ibuf) == -1) {
 			peer->dispatchcb(NULL, peer->arg);
 			return;
 		}
@@ -218,7 +218,7 @@ proc_exit(struct tmuxproc *tp)
 	struct tmuxpeer	*peer;
 
 	TAILQ_FOREACH(peer, &tp->peers, entry)
-	    imsg_flush(&peer->ibuf);
+	    imsgbuf_flush(&peer->ibuf);
 	tp->exit = 1;
 }
 
@@ -306,7 +306,7 @@ proc_add_peer(struct tmuxproc *tp, int fd,
 	peer->dispatchcb = dispatchcb;
 	peer->arg = arg;
 
-	imsg_init(&peer->ibuf, fd);
+	imsgbuf_init(&peer->ibuf, fd);
 	event_set(&peer->event, fd, EV_READ, proc_event_cb, peer);
 
 	if (getpeereid(fd, &peer->uid, &gid) != 0)
@@ -326,7 +326,7 @@ proc_remove_peer(struct tmuxpeer *peer)
 	log_debug("remove peer %p", peer);
 
 	event_del(&peer->event);
-	imsg_clear(&peer->ibuf);
+	imsgbuf_clear(&peer->ibuf);
 
 	close(peer->ibuf.fd);
 	free(peer);
@@ -341,7 +341,7 @@ proc_kill_peer(struct tmuxpeer *peer)
 void
 proc_flush_peer(struct tmuxpeer *peer)
 {
-	imsg_flush(&peer->ibuf);
+	imsgbuf_flush(&peer->ibuf);
 }
 
 void

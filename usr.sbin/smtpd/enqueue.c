@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.123 2024/11/21 13:09:04 claudio Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.124 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -784,12 +784,12 @@ open_connection(void)
 
 	imsg_compose(ibuf, IMSG_CTL_SMTP_SESSION, IMSG_VERSION, 0, -1, NULL, 0);
 
-	if (imsg_flush(ibuf) == -1)
+	if (imsgbuf_flush(ibuf) == -1)
 		err(1, "write error");
 
 	while (1) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			errx(1, "imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 

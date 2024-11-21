@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.136 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.137 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf, pipe_chld[0]);
+	imsgbuf_init(ibuf, pipe_chld[0]);
 
 	constraint_cnt = 0;
 
@@ -333,7 +333,7 @@ main(int argc, char *argv[])
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE].revents & POLLOUT))
-			if (imsg_write(ibuf) == -1) {
+			if (imsgbuf_write(ibuf) == -1) {
 				log_warn("pipe write error (to child)");
 				quit = 1;
 			}
@@ -393,7 +393,7 @@ dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 	int			 n;
 	double			 d;
 
-	if (((n = imsg_read(ibuf)) == -1 && errno != EAGAIN) || n == 0)
+	if (((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
 
 	for (;;) {
@@ -670,7 +670,7 @@ ctl_main(int argc, char *argv[])
 
 	if ((ibuf_ctl = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsg_init(ibuf_ctl, fd);
+	imsgbuf_init(ibuf_ctl, fd);
 
 	switch (action) {
 	case CTL_SHOW_STATUS:
@@ -694,13 +694,13 @@ ctl_main(int argc, char *argv[])
 		break; /* NOTREACHED */
 	}
 
-	if (imsg_flush(ibuf_ctl) == -1)
-		err(1, "ibuf_ctl: imsg_flush error");
+	if (imsgbuf_flush(ibuf_ctl) == -1)
+		err(1, "ibuf_ctl: imsgbuf_flush error");
 
 	done = 0;
 	while (!done) {
-		if ((n = imsg_read(ibuf_ctl)) == -1 && errno != EAGAIN)
-			err(1, "ibuf_ctl: imsg_read error");
+		if ((n = imsgbuf_read(ibuf_ctl)) == -1 && errno != EAGAIN)
+			err(1, "ibuf_ctl: imsgbuf_read error");
 		if (n == 0)
 			errx(1, "ntpctl: pipe closed");
 

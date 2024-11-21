@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.352 2024/09/03 18:27:04 op Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.353 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -706,8 +706,8 @@ main(int argc, char *argv[])
 			    0, -1, env->sc_queue_key, strlen(env->sc_queue_key)
 			    + 1) == -1)
 				fatal("imsg_compose");
-			if (imsg_flush(&p_queue->imsgbuf) == -1)
-				fatal("imsg_flush");
+			if (imsgbuf_flush(&p_queue->imsgbuf) == -1)
+				fatal("imsgbuf_flush");
 		}
 
 		setup_done(p_ca);
@@ -857,14 +857,14 @@ setup_peers(struct mproc *a, struct mproc *b)
 	if (imsg_compose(&a->imsgbuf, IMSG_SETUP_PEER, b->proc, b->pid, sp[0],
 	    NULL, 0) == -1)
 		fatal("imsg_compose");
-	if (imsg_flush(&a->imsgbuf) == -1)
-		fatal("imsg_flush");
+	if (imsgbuf_flush(&a->imsgbuf) == -1)
+		fatal("imsgbuf_flush");
 
 	if (imsg_compose(&b->imsgbuf, IMSG_SETUP_PEER, a->proc, a->pid, sp[1],
 	    NULL, 0) == -1)
 		fatal("imsg_compose");
-	if (imsg_flush(&b->imsgbuf) == -1)
-		fatal("imsg_flush");
+	if (imsgbuf_flush(&b->imsgbuf) == -1)
+		fatal("imsgbuf_flush");
 }
 
 static void
@@ -874,8 +874,8 @@ setup_done(struct mproc *p)
 
 	if (imsg_compose(&p->imsgbuf, IMSG_SETUP_DONE, 0, 0, -1, NULL, 0) == -1)
 		fatal("imsg_compose");
-	if (imsg_flush(&p->imsgbuf) == -1)
-		fatal("imsg_flush");
+	if (imsgbuf_flush(&p->imsgbuf) == -1)
+		fatal("imsgbuf_flush");
 
 	if (imsg_wait(&p->imsgbuf, &imsg, 10000) == -1)
 		fatal("imsg_wait");
@@ -932,8 +932,8 @@ setup_proc(void)
 	if (imsg_compose(ibuf, IMSG_SETUP_DONE, 0, 0, -1, NULL, 0) == -1)
 		fatal("imsg_compose");
 
-	if (imsg_flush(ibuf) == -1)
-		fatal("imsg_flush");
+	if (imsgbuf_flush(ibuf) == -1)
+		fatal("imsgbuf_flush");
 
 	log_debug("setup_proc: %s done", proc_title(smtpd_process));
 }
@@ -1013,7 +1013,8 @@ imsg_wait(struct imsgbuf *ibuf, struct imsg *imsg, int timeout)
 			return -1;
 		}
 
-		if (((n = imsg_read(ibuf)) == -1 && errno != EAGAIN) || n == 0)
+		if (((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN) ||
+		    n == 0)
 			return -1;
 	}
 }

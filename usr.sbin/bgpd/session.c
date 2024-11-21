@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.487 2024/11/21 13:13:37 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.488 2024/11/21 13:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,7 @@ session_main(int debug, int verbose)
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_main, 3);
+	imsgbuf_init(ibuf_main, 3);
 
 	LIST_INIT(&mrthead);
 	listener_cnt = 0;
@@ -539,7 +539,7 @@ session_main(int debug, int verbose)
 
 	/* close pipes */
 	if (ibuf_rde) {
-		imsg_write(ibuf_rde);
+		imsgbuf_write(ibuf_rde);
 		msgbuf_clear(&ibuf_rde->w);
 		close(ibuf_rde->fd);
 		free(ibuf_rde);
@@ -549,7 +549,7 @@ session_main(int debug, int verbose)
 		close(ibuf_rde_ctl->fd);
 		free(ibuf_rde_ctl);
 	}
-	imsg_write(ibuf_main);
+	imsgbuf_write(ibuf_main);
 	msgbuf_clear(&ibuf_main->w);
 	close(ibuf_main->fd);
 	free(ibuf_main);
@@ -2957,7 +2957,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			}
 			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
-			imsg_init(i, fd);
+			imsgbuf_init(i, fd);
 			if (imsg_get_type(&imsg) == IMSG_SOCKET_CONN) {
 				if (ibuf_rde) {
 					log_warnx("Unexpected imsg connection "

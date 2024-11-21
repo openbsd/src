@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.39 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.40 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -235,9 +235,9 @@ main(int argc, char *argv[])
 	if ((iev_ripe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_rde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_ripe->ibuf, pipe_parent2ripe[0]);
+	imsgbuf_init(&iev_ripe->ibuf, pipe_parent2ripe[0]);
 	iev_ripe->handler = main_dispatch_ripe;
-	imsg_init(&iev_rde->ibuf, pipe_parent2rde[0]);
+	imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]);
 	iev_rde->handler = main_dispatch_rde;
 
 	/* setup event handler */
@@ -314,17 +314,17 @@ main_dispatch_ripe(int fd, short event, void *bula)
 	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -394,17 +394,17 @@ main_dispatch_rde(int fd, short event, void *bula)
 	int		 shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -526,7 +526,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	if (iev->handler == NULL) {
-		imsg_flush(&iev->ibuf);
+		imsgbuf_flush(&iev->ibuf);
 		return;
 	}
 

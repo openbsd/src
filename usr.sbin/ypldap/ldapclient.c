@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.52 2024/11/21 13:16:07 claudio Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.53 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -141,17 +141,17 @@ client_dispatch_dns(int fd, short events, void *p)
 		fatalx("unknown event");
 
 	if (events & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)
 			shut = 1;
 	}
 	if (events & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -241,17 +241,17 @@ client_dispatch_parent(int fd, short events, void *p)
 		fatalx("unknown event");
 
 	if (events & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)
 			shut = 1;
 	}
 	if (events & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -393,7 +393,7 @@ ldapclient(int pipe_main2client[2])
 
 	env.sc_iev->events = EV_READ;
 	env.sc_iev->data = &env;
-	imsg_init(&env.sc_iev->ibuf, pipe_main2client[1]);
+	imsgbuf_init(&env.sc_iev->ibuf, pipe_main2client[1]);
 	env.sc_iev->handler = client_dispatch_parent;
 	event_set(&env.sc_iev->ev, env.sc_iev->ibuf.fd, env.sc_iev->events,
 	    env.sc_iev->handler, &env);
@@ -401,7 +401,7 @@ ldapclient(int pipe_main2client[2])
 
 	env.sc_iev_dns->events = EV_READ;
 	env.sc_iev_dns->data = &env;
-	imsg_init(&env.sc_iev_dns->ibuf, pipe_dns[0]);
+	imsgbuf_init(&env.sc_iev_dns->ibuf, pipe_dns[0]);
 	env.sc_iev_dns->handler = client_dispatch_dns;
 	event_set(&env.sc_iev_dns->ev, env.sc_iev_dns->ibuf.fd,
 	    env.sc_iev_dns->events, env.sc_iev_dns->handler, &env);

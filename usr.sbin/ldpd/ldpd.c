@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.71 2024/11/21 13:16:07 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.72 2024/11/21 13:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -242,9 +242,9 @@ main(int argc, char *argv[])
 	if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_lde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(&iev_ldpe->ibuf, pipe_parent2ldpe[0]);
+	imsgbuf_init(&iev_ldpe->ibuf, pipe_parent2ldpe[0]);
 	iev_ldpe->handler = main_dispatch_ldpe;
-	imsg_init(&iev_lde->ibuf, pipe_parent2lde[0]);
+	imsgbuf_init(&iev_lde->ibuf, pipe_parent2lde[0]);
 	iev_lde->handler = main_dispatch_lde;
 
 	/* setup event handler */
@@ -379,17 +379,17 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 
@@ -460,17 +460,17 @@ main_dispatch_lde(int fd, short event, void *bula)
 	int		 shut = 0;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsgbuf_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (imsg_write(ibuf) == -1) {
+		if (imsgbuf_write(ibuf) == -1) {
 			if (errno == EPIPE)	/* connection closed */
 				shut = 1;
 			else
-				fatal("imsg_write");
+				fatal("imsgbuf_write");
 		}
 	}
 

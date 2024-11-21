@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.80 2024/11/21 13:09:06 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.81 2024/11/21 13:17:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -209,7 +209,7 @@ vmmaction(struct parse_result *res)
 
 		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 			err(1, "malloc");
-		imsg_init(ibuf, ctl_sock);
+		imsgbuf_init(ibuf, ctl_sock);
 	}
 
 	switch (res->action) {
@@ -273,12 +273,12 @@ vmmaction(struct parse_result *res)
 	flags = res->flags;
 	parse_free(res);
 
-	if (imsg_flush(ibuf) == -1)
+	if (imsgbuf_flush(ibuf) == -1)
 		err(1, "write error");
 
 	while (!done) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			errx(1, "imsg_read error");
+		if ((n = imsgbuf_read(ibuf)) == -1 && errno != EAGAIN)
+			errx(1, "imsgbuf_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 
