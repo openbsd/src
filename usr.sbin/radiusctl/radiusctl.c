@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.15 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.16 2024/11/21 13:23:37 claudio Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -188,8 +188,7 @@ main(int argc, char *argv[])
 	if (imsgbuf_flush(&ibuf) == -1)
 		err(1, "ibuf_ctl: imsgbuf_flush error");
 	while (!done) {
-		if (((n = imsgbuf_read(&ibuf)) == -1 && errno != EAGAIN) ||
-		    n == 0)
+		if (imsgbuf_read(&ibuf) != 1)
 			break;
 		for (;;) {
 			if ((n = imsg_get(&ibuf, &imsg)) <= 0) {

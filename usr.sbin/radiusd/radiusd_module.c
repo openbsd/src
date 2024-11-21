@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.24 2024/11/21 13:18:38 claudio Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.25 2024/11/21 13:23:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -356,9 +356,8 @@ module_recv_imsg(struct module_base *base)
 	ssize_t		 n;
 	struct imsg	 imsg;
 
-	if (((n = imsgbuf_read(&base->ibuf)) == -1 && errno != EAGAIN) ||
-	    n == 0) {
-		if (n != 0)
+	if ((n = imsgbuf_read(&base->ibuf)) != 1) {
+		if (n == -1)
 			syslog(LOG_ERR, "%s: imsgbuf_read(): %m", __func__);
 		module_stop(base);
 		return (-1);

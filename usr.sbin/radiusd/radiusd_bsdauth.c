@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.17 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.18 2024/11/21 13:23:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "pledge");
 
 	for (;;) {
-		if ((n = imsgbuf_read(&ibuf)) <= 0 && errno != EAGAIN)
+		if (imsgbuf_read(&ibuf) != 1)
 			break;
 		for (;;) {
 			if ((n = imsg_get(&ibuf, &imsg)) == -1)
@@ -347,7 +347,7 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 
 	imsg_composev(&module->ibuf, IMSG_BSDAUTH_USERCHECK, 0, 0, -1, iov, 3);
 	imsgbuf_flush(&module->ibuf);
-	if ((n = imsgbuf_read(&module->ibuf)) == -1 || n == 0)
+	if (imsgbuf_read(&module->ibuf) != 1)
 		fatal("imsgbuf_read() failed in module_bsdauth_userpass()");
 	if ((n = imsg_get(&module->ibuf, &imsg)) <= 0)
 		fatal("imsg_get() failed in module_bsdauth_userpass()");
@@ -372,7 +372,7 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 			imsg_composev(&module->ibuf, IMSG_BSDAUTH_GROUPCHECK,
 			    0, 0, -1, iov, 3);
 			imsgbuf_flush(&module->ibuf);
-			if ((n = imsgbuf_read(&module->ibuf)) == -1 || n == 0)
+			if (imsgbuf_read(&module->ibuf) != 1)
 				fatal("imsgbuf_read() failed in "
 				    "module_bsdauth_userpass()");
 			if ((n = imsg_get(&module->ibuf, &imsg)) <= 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_file.c,v 1.6 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: radiusd_file.c,v 1.7 2024/11/21 13:23:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2024 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 	memcpy(&params, paramsp, sizeof(params));
 
 	for (;;) {
-		if ((n = imsgbuf_read(&ibuf)) <= 0 && errno != EAGAIN)
+		if (imsgbuf_read(&ibuf) != 1)
 			break;
 		for (;;) {
 			if ((n = imsg_get(&ibuf, &imsg)) == -1)
@@ -360,7 +360,7 @@ module_file_access_request(void *ctx, u_int query_id, const u_char *pkt,
 	imsg_compose(&self->ibuf, IMSG_RADIUSD_FILE_USERINFO, 0, -1, -1,
 	    username, strlen(username) + 1);
 	imsgbuf_flush(&self->ibuf);
-	if ((n = imsgbuf_read(&self->ibuf)) == -1 || n == 0) {
+	if (imsgbuf_read(&self->ibuf) != 1) {
 		log_warn("%s: imsgbuf_read()", __func__);
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.59 2024/11/21 13:18:38 claudio Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.60 2024/11/21 13:23:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1381,9 +1381,7 @@ radiusd_module_imsg_read(struct radiusd_module *module)
 	int		 n;
 	struct imsg	 imsg;
 
-	if ((n = imsgbuf_read(&module->ibuf)) == -1 || n == 0) {
-		if (n == -1 && errno == EAGAIN)
-			return (0);
+	if ((n = imsgbuf_read(&module->ibuf)) != 1) {
 		if (n == -1)
 			log_warn("Receiving a message from module `%s' "
 			    "failed: imsgbuf_read", module->name);
