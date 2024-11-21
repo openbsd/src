@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.35 2024/11/16 15:32:08 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.36 2024/11/21 14:36:03 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -233,7 +233,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	size_t i, j;
 	int k;
 	int r_is_inverted = 0;
-	int r_is_at_infinity = 1;
 	size_t *wsize = NULL;	/* individual window sizes */
 	signed char **wNAF = NULL;	/* individual wNAFs */
 	size_t *wNAF_len = NULL;
@@ -356,13 +355,21 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	if (!EC_POINTs_make_affine(group, num_val, val, ctx))
 		goto err;
 
-	r_is_at_infinity = 1;
+	/*
+	 * Set r to the neutral element. Scan through the wNAF representations
+	 * of m and n, starting at the most significant digit. Double r and for
+	 * each wNAF digit of m add the digit times the point, and for each
+	 * wNAF digit of n add the digit times the generator, adjusting the
+	 * signs as appropriate.
+	 */
+
+	if (!EC_POINT_set_to_infinity(group, r))
+		goto err;
 
 	for (k = max_len - 1; k >= 0; k--) {
-		if (!r_is_at_infinity) {
-			if (!EC_POINT_dbl(group, r, r, ctx))
-				goto err;
-		}
+		if (!EC_POINT_dbl(group, r, r, ctx))
+			goto err;
+
 		for (i = 0; i < totalnum; i++) {
 			if (wNAF_len[i] > (size_t) k) {
 				int digit = wNAF[i][k];
@@ -375,34 +382,22 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 						digit = -digit;
 
 					if (is_neg != r_is_inverted) {
-						if (!r_is_at_infinity) {
-							if (!EC_POINT_invert(group, r, ctx))
-								goto err;
-						}
+						if (!EC_POINT_invert(group, r, ctx))
+							goto err;
 						r_is_inverted = !r_is_inverted;
 					}
 					/* digit > 0 */
 
-					if (r_is_at_infinity) {
-						if (!EC_POINT_copy(r, val_sub[i][digit >> 1]))
-							goto err;
-						r_is_at_infinity = 0;
-					} else {
-						if (!EC_POINT_add(group, r, r, val_sub[i][digit >> 1], ctx))
-							goto err;
-					}
+					if (!EC_POINT_add(group, r, r, val_sub[i][digit >> 1], ctx))
+						goto err;
 				}
 			}
 		}
 	}
 
-	if (r_is_at_infinity) {
-		if (!EC_POINT_set_to_infinity(group, r))
+	if (r_is_inverted) {
+		if (!EC_POINT_invert(group, r, ctx))
 			goto err;
-	} else {
-		if (r_is_inverted)
-			if (!EC_POINT_invert(group, r, ctx))
-				goto err;
 	}
 
 	ret = 1;
