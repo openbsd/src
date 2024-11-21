@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.59 2024/11/21 13:25:01 claudio Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.60 2024/11/21 13:38:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -270,7 +270,8 @@ priv_constraint_msg(u_int32_t id, u_int8_t *data, size_t len, int argc,
 
 	/* Prepare and send constraint data to child. */
 	cstr->fd = pipes[0];
-	imsgbuf_init(&cstr->ibuf, cstr->fd);
+	if (imsgbuf_init(&cstr->ibuf, cstr->fd) == -1)
+		fatal("imsgbuf_init");
 	if (imsg_compose(&cstr->ibuf, IMSG_CONSTRAINT_QUERY, id, 0, -1,
 	    data, len) == -1)
 		fatal("%s: imsg_compose", __func__);
@@ -400,7 +401,8 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 		fatal("pledge");
 
 	cstr.fd = CONSTRAINT_PASSFD;
-	imsgbuf_init(&cstr.ibuf, cstr.fd);
+	if (imsgbuf_init(&cstr.ibuf, cstr.fd) == -1)
+		fatal("imsgbuf_init");
 	priv_constraint_readquery(&cstr, &am, &data);
 
 	/*

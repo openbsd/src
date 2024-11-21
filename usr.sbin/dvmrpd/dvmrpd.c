@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.33 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.34 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -234,8 +234,9 @@ main(int argc, char *argv[])
 	if ((iev_dvmrpe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_rde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_dvmrpe->ibuf, pipe_parent2dvmrpe[0]);
-	imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]);
+	if (imsgbuf_init(&iev_dvmrpe->ibuf, pipe_parent2dvmrpe[0]) == -1 ||
+	    imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]) == -1)
+		fatal(NULL);
 	iev_dvmrpe->handler =  main_dispatch_dvmrpe;
 	iev_rde->handler = main_dispatch_rde;
 

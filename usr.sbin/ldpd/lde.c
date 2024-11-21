@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.83 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.84 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -128,7 +128,9 @@ lde(int debug, int verbose)
 	/* setup pipe and event handler to the parent process */
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_main->ibuf, 3);
+	if (imsgbuf_init(&iev_main->ibuf, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_main->ibuf);
 	iev_main->handler = lde_dispatch_parent;
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
@@ -464,7 +466,8 @@ lde_dispatch_parent(int fd, short event, void *bula)
 
 			if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL)
 				fatal(NULL);
-			imsgbuf_init(&iev_ldpe->ibuf, fd);
+			if (imsgbuf_init(&iev_ldpe->ibuf, fd) == -1)
+				fatal(NULL);
 			iev_ldpe->handler = lde_dispatch_imsg;
 			iev_ldpe->events = EV_READ;
 			event_set(&iev_ldpe->ev, iev_ldpe->ibuf.fd,

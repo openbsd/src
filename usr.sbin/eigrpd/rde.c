@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.31 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.32 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -112,7 +112,9 @@ rde(int debug, int verbose)
 	/* setup pipe and event handler to the parent process */
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_main->ibuf, 3);
+	if (imsgbuf_init(&iev_main->ibuf, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_main->ibuf);
 	iev_main->handler = rde_dispatch_parent;
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
@@ -367,7 +369,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			iev_eigrpe = malloc(sizeof(struct imsgev));
 			if (iev_eigrpe == NULL)
 				fatal(NULL);
-			imsgbuf_init(&iev_eigrpe->ibuf, fd);
+			if (imsgbuf_init(&iev_eigrpe->ibuf, fd) == -1)
+				fatal(NULL);
 			iev_eigrpe->handler = rde_dispatch_imsg;
 			iev_eigrpe->events = EV_READ;
 			event_set(&iev_eigrpe->ev, iev_eigrpe->ibuf.fd,

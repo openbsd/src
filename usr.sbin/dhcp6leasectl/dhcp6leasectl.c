@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leasectl.c,v 1.5 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: dhcp6leasectl.c,v 1.6 2024/11/21 13:38:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -122,7 +122,8 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsgbuf_init(ibuf, ctl_sock);
+	if (imsgbuf_init(ibuf, ctl_sock) == -1)
+		err(1, NULL);
 
 	if (!lFlag) {
 		imsg_compose(ibuf, IMSG_CTL_SEND_REQUEST, 0, 0, -1,

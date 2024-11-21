@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.35 2024/11/21 13:24:39 claudio Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.36 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -94,7 +94,8 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 
 	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf_dns, PARENT_SOCK_FILENO);
+	if (imsgbuf_init(ibuf_dns, PARENT_SOCK_FILENO) == -1)
+		fatal(NULL);
 
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");

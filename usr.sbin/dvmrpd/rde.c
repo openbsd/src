@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.38 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.39 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -123,10 +123,12 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
 
-	imsgbuf_init(&iev_dvmrpe->ibuf, pipe_dvmrpe2rde[1]);
+	if (imsgbuf_init(&iev_dvmrpe->ibuf, pipe_dvmrpe2rde[1]) == -1)
+		fatal(NULL);
 	iev_dvmrpe->handler = rde_dispatch_imsg;
 
-	imsgbuf_init(&iev_main->ibuf, pipe_parent2rde[1]);
+	if (imsgbuf_init(&iev_main->ibuf, pipe_parent2rde[1]) == -1)
+		fatal(NULL);
 	iev_main->handler = rde_dispatch_imsg;
 
 	/* setup event handler */

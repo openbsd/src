@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.62 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.63 2024/11/21 13:38:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -148,7 +148,8 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsgbuf_init(ibuf, ctl_sock);
+	if (imsgbuf_init(ibuf, ctl_sock) == -1)
+		err(1, NULL);
 	done = 0;
 
 	/* process user request */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ractl.c,v 1.7 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: ractl.c,v 1.8 2024/11/21 13:38:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -100,7 +100,8 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsgbuf_init(ibuf, ctl_sock);
+	if (imsgbuf_init(ibuf, ctl_sock) == -1)
+		err(1, NULL);
 	done = 0;
 
 	/* Process user request. */

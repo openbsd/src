@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.276 2024/11/21 13:22:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.277 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -276,9 +276,13 @@ main(int argc, char *argv[])
 	    (ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_rtr = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf_se, pipe_m2s[0]);
-	imsgbuf_init(ibuf_rde, pipe_m2r[0]);
-	imsgbuf_init(ibuf_rtr, pipe_m2roa[0]);
+	if (imsgbuf_init(ibuf_se, pipe_m2s[0]) == -1 ||
+	    imsgbuf_init(ibuf_rde, pipe_m2r[0]) == -1 ||
+	    imsgbuf_init(ibuf_rtr, pipe_m2roa[0]) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(ibuf_se);
+	imsgbuf_allow_fdpass(ibuf_rde);
+	imsgbuf_allow_fdpass(ibuf_rtr);
 	mrt_init(ibuf_rde, ibuf_se);
 	if (kr_init(&rfd, conf->fib_priority) == -1)
 		quit = 1;

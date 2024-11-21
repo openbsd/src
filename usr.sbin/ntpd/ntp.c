@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.180 2024/11/21 13:24:39 claudio Exp $ */
+/*	$OpenBSD: ntp.c,v 1.181 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,10 +159,12 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf_main, PARENT_SOCK_FILENO);
+	if (imsgbuf_init(ibuf_main, PARENT_SOCK_FILENO) == -1)
+		fatal(NULL);
 	if ((ibuf_dns = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf_dns, pipe_dns[0]);
+	if (imsgbuf_init(ibuf_dns, pipe_dns[0]) == -1)
+		fatal(NULL);
 
 	constraint_cnt = 0;
 	conf->constraint_median = 0;

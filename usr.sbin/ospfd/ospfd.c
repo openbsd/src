@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.123 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.124 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -260,9 +260,12 @@ main(int argc, char *argv[])
 	if ((iev_ospfe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_rde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_ospfe->ibuf, pipe_parent2ospfe[0]);
+	if (imsgbuf_init(&iev_ospfe->ibuf, pipe_parent2ospfe[0]) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_ospfe->ibuf);
 	iev_ospfe->handler = main_dispatch_ospfe;
-	imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]);
+	if (imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]) == -1)
+		fatal(NULL);
 	iev_rde->handler = main_dispatch_rde;
 
 	/* setup event handler */

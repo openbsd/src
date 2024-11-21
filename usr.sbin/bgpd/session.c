@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.497 2024/11/21 13:34:30 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.498 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,9 @@ session_main(int debug, int verbose)
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf_main, 3);
+	if (imsgbuf_init(ibuf_main, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(ibuf_main);
 
 	LIST_INIT(&mrthead);
 	listener_cnt = 0;
@@ -2845,7 +2847,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			}
 			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
-			imsgbuf_init(i, fd);
+			if (imsgbuf_init(i, fd) == -1)
+				fatal(NULL);
 			if (imsg_get_type(&imsg) == IMSG_SOCKET_CONN) {
 				if (ibuf_rde) {
 					log_warnx("Unexpected imsg connection "

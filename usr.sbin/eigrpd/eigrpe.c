@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.46 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.47 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -146,7 +146,9 @@ eigrpe(int debug, int verbose, char *sockname)
 	/* setup pipe and event handler to the parent process */
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_main->ibuf, 3);
+	if (imsgbuf_init(&iev_main->ibuf, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_main->ibuf);
 	iev_main->handler = eigrpe_dispatch_main;
 	iev_main->events = EV_READ;
 	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
@@ -300,7 +302,8 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 			iev_rde = malloc(sizeof(struct imsgev));
 			if (iev_rde == NULL)
 				fatal(NULL);
-			imsgbuf_init(&iev_rde->ibuf, fd);
+			if (imsgbuf_init(&iev_rde->ibuf, fd) == -1)
+				fatal(NULL);
 			iev_rde->handler = eigrpe_dispatch_rde;
 			iev_rde->events = EV_READ;
 			event_set(&iev_rde->ev, iev_rde->ibuf.fd,

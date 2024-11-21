@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.43 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.44 2024/11/21 13:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -235,9 +235,11 @@ main(int argc, char *argv[])
 	if ((iev_ripe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_rde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_ripe->ibuf, pipe_parent2ripe[0]);
+	if (imsgbuf_init(&iev_ripe->ibuf, pipe_parent2ripe[0]) == -1)
+		fatal(NULL);
 	iev_ripe->handler = main_dispatch_ripe;
-	imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]);
+	if (imsgbuf_init(&iev_rde->ibuf, pipe_parent2rde[0]) == -1)
+		fatal(NULL);
 	iev_rde->handler = main_dispatch_rde;
 
 	/* setup event handler */

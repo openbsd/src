@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.26 2024/11/21 13:17:57 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.27 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -219,7 +219,9 @@ rtr_main(int debug, int verbose)
 
 	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf_main, 3);
+	if (imsgbuf_init(ibuf_main, 3) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(ibuf_main);
 
 	conf = new_config();
 	log_info("rtr engine ready");
@@ -336,7 +338,8 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			}
 			if ((ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
-			imsgbuf_init(ibuf_rde, fd);
+			if (imsgbuf_init(ibuf_rde, fd) == -1)
+				fatal(NULL);
 			break;
 		case IMSG_SOCKET_SETUP:
 			if ((fd = imsg_get_fd(&imsg)) == -1) {

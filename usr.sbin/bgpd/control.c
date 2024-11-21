@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.130 2024/11/21 13:33:41 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.131 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -180,7 +180,12 @@ control_accept(int listenfd, int restricted)
 		return (0);
 	}
 
-	imsgbuf_init(&ctl_conn->imsgbuf, connfd);
+	if (imsgbuf_init(&ctl_conn->imsgbuf, connfd) == -1) {
+		log_warn("control_accept");
+		close(connfd);
+		free(ctl_conn);
+		return (0);
+	}
 	ctl_conn->restricted = restricted;
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);

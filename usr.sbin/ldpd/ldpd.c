@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.78 2024/11/21 13:29:28 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.79 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -242,9 +242,13 @@ main(int argc, char *argv[])
 	if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_lde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&iev_ldpe->ibuf, pipe_parent2ldpe[0]);
+	if (imsgbuf_init(&iev_ldpe->ibuf, pipe_parent2ldpe[0]) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_ldpe->ibuf);
 	iev_ldpe->handler = main_dispatch_ldpe;
-	imsgbuf_init(&iev_lde->ibuf, pipe_parent2lde[0]);
+	if (imsgbuf_init(&iev_lde->ibuf, pipe_parent2lde[0]) == -1)
+		fatal(NULL);
+	imsgbuf_allow_fdpass(&iev_lde->ibuf);
 	iev_lde->handler = main_dispatch_lde;
 
 	/* setup event handler */

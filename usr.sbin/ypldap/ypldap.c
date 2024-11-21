@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.30 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.31 2024/11/21 13:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -589,7 +589,8 @@ main(int argc, char *argv[])
 	close(pipe_main2client[1]);
 	if ((env.sc_iev = calloc(1, sizeof(*env.sc_iev))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(&env.sc_iev->ibuf, pipe_main2client[0]);
+	if (imsgbuf_init(&env.sc_iev->ibuf, pipe_main2client[0]) == -1)
+		fatal(NULL);
 	env.sc_iev->handler = main_dispatch_client;
 
 	env.sc_iev->events = EV_READ;

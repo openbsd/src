@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.35 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.36 2024/11/21 13:38:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -250,7 +250,8 @@ main(int argc, char *argv[])
 	else
 		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 			err(1, "malloc");
-	imsgbuf_init(ibuf, ctl_sock);
+	if (imsgbuf_init(ibuf, ctl_sock) == -1)
+		err(1, "imsgbuf_init");
 
 	/* process user request */
 	switch (res->action) {

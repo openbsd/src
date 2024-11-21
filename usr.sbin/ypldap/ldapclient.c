@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.54 2024/11/21 13:21:34 claudio Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.55 2024/11/21 13:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -393,7 +393,8 @@ ldapclient(int pipe_main2client[2])
 
 	env.sc_iev->events = EV_READ;
 	env.sc_iev->data = &env;
-	imsgbuf_init(&env.sc_iev->ibuf, pipe_main2client[1]);
+	if (imsgbuf_init(&env.sc_iev->ibuf, pipe_main2client[1]) == -1)
+		fatal(NULL);
 	env.sc_iev->handler = client_dispatch_parent;
 	event_set(&env.sc_iev->ev, env.sc_iev->ibuf.fd, env.sc_iev->events,
 	    env.sc_iev->handler, &env);
@@ -401,7 +402,8 @@ ldapclient(int pipe_main2client[2])
 
 	env.sc_iev_dns->events = EV_READ;
 	env.sc_iev_dns->data = &env;
-	imsgbuf_init(&env.sc_iev_dns->ibuf, pipe_dns[0]);
+	if (imsgbuf_init(&env.sc_iev_dns->ibuf, pipe_dns[0]) == -1)
+		fatal(NULL);
 	env.sc_iev_dns->handler = client_dispatch_dns;
 	event_set(&env.sc_iev_dns->ev, env.sc_iev_dns->ibuf.fd,
 	    env.sc_iev_dns->events, env.sc_iev_dns->handler, &env);

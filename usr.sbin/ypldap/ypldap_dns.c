@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.20 2024/11/21 13:21:34 claudio Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.21 2024/11/21 13:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,8 @@ ypldap_dns(int pipe_ntp[2], struct passwd *pw)
 
 	env.sc_iev->events = EV_READ;
 	env.sc_iev->data = &env;
-	imsgbuf_init(&env.sc_iev->ibuf, pipe_ntp[1]);
+	if (imsgbuf_init(&env.sc_iev->ibuf, pipe_ntp[1]) == -1)
+		fatal(NULL);
 	env.sc_iev->handler = dns_dispatch_imsg;
 	event_set(&env.sc_iev->ev, env.sc_iev->ibuf.fd, env.sc_iev->events,
 	    env.sc_iev->handler, &env);

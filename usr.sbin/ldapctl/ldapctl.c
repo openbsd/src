@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.20 2024/11/21 13:26:25 claudio Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.21 2024/11/21 13:38:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -328,7 +328,8 @@ main(int argc, char *argv[])
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sock);
 
-	imsgbuf_init(&ibuf, ctl_sock);
+	if (imsgbuf_init(&ibuf, ctl_sock) == -1)
+		err(1, "imsgbuf_init");
 	done = 0;
 
 	if (pledge("stdio", NULL) == -1)

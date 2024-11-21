@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.26 2024/11/21 13:24:39 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.27 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,12 @@ control_accept(int listenfd)
 		return (0);
 	}
 
-	imsgbuf_init(&ctl_conn->ibuf, connfd);
+	if (imsgbuf_init(&ctl_conn->ibuf, connfd) == -1) {
+		log_warn("control_accept");
+		close(connfd);
+		free(ctl_conn);
+		return (0);
+	}
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);
 

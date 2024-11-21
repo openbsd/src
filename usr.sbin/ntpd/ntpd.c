@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.141 2024/11/21 13:26:25 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.142 2024/11/21 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -274,7 +274,8 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsgbuf_init(ibuf, pipe_chld[0]);
+	if (imsgbuf_init(ibuf, pipe_chld[0]) == -1)
+		fatal(NULL);
 
 	constraint_cnt = 0;
 
@@ -670,7 +671,8 @@ ctl_main(int argc, char *argv[])
 
 	if ((ibuf_ctl = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsgbuf_init(ibuf_ctl, fd);
+	if (imsgbuf_init(ibuf_ctl, fd) == -1)
+		err(1, NULL);
 
 	switch (action) {
 	case CTL_SHOW_STATUS:
