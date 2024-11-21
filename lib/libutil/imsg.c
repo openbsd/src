@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.29 2024/11/21 12:53:11 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.30 2024/11/21 12:54:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -149,6 +149,12 @@ imsgbuf_clear(struct imsgbuf *imsgbuf)
 	msgbuf_clear(&imsgbuf->w);
 	while ((fd = imsg_dequeue_fd(imsgbuf)) != -1)
 		close(fd);
+}
+
+uint32_t
+imsgbuf_queuelen(struct imsgbuf *imsgbuf)
+{
+	return msgbuf_queuelen(&imsgbuf->w);
 }
 
 ssize_t

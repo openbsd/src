@@ -84,6 +84,7 @@
 		imsgbuf_clear;
 		imsgbuf_flush;
 		imsgbuf_init;
+		imsgbuf_queuelen;
 		imsgbuf_read;
 		imsgbuf_write;
 		isduid;

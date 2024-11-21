@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.37 2024/11/21 12:53:11 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.38 2024/11/21 12:54:10 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -39,6 +39,7 @@
 .Nm imsgbuf_clear ,
 .Nm imsgbuf_flush ,
 .Nm imsgbuf_init ,
+.Nm imsgbuf_queuelen ,
 .Nm imsgbuf_read ,
 .Nm imsgbuf_write
 .Nd IPC messaging functions
@@ -84,6 +85,8 @@
 .Fn imsgbuf_flush "struct imsgbuf *imsgbuf"
 .Ft void
 .Fn imsgbuf_init "struct imsgbuf *imsgbuf" "int fd"
+.Ft uint32_t
+.Fn imsgbuf_queuelen "struct imsgbuf *imsgbuf"
 .Ft ssize_t
 .Fn imsgbuf_read "struct imsgbuf *imsgbuf"
 .Ft int
@@ -158,6 +161,10 @@ is set to indicate the error.
 .Fn imsgbuf_flush
 should not be called on non-blocking sockets since it will busy loop if the
 socket is not available.
+.Pp
+.Fn imsgbuf_queuelen
+returns the number of messages ready to be sent.
+This function returns 0 if no messages are pending for transmission.
 .Pp
 .Fn imsg_create ,
 .Fn imsg_add
