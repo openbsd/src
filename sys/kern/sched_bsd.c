@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.96 2024/10/09 08:58:19 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.97 2024/11/21 11:58:45 jca Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -538,7 +538,8 @@ void (*cpu_setperf)(int);
 #define PERFPOL_AUTO 1
 #define PERFPOL_HIGH 2
 int perflevel = 100;
-int perfpolicy = PERFPOL_AUTO;
+int perfpolicy_on_ac = PERFPOL_HIGH;
+int perfpolicy_on_battery = PERFPOL_AUTO;
 
 #ifndef SMALL_KERNEL
 /*
@@ -549,6 +550,19 @@ int perfpolicy = PERFPOL_AUTO;
 void setperf_auto(void *);
 struct timeout setperf_to = TIMEOUT_INITIALIZER(setperf_auto, NULL);
 extern int hw_power;
+
+static inline int
+perfpolicy_dynamic(void)
+{
+	return (perfpolicy_on_ac == PERFPOL_AUTO ||
+	    perfpolicy_on_battery == PERFPOL_AUTO);
+}
+
+static inline int
+current_perfpolicy(void)
+{
+	return (hw_power) ? perfpolicy_on_ac : perfpolicy_on_battery;
+}
 
 void
 setperf_auto(void *v)
@@ -561,13 +575,13 @@ setperf_auto(void *v)
 	struct cpu_info *ci;
 	uint64_t idle, total, allidle = 0, alltotal = 0;
 
-	if (perfpolicy != PERFPOL_AUTO)
+	if (!perfpolicy_dynamic())
 		return;
 
 	if (cpu_setperf == NULL)
 		return;
 
-	if (hw_power) {
+	if (current_perfpolicy() == PERFPOL_HIGH) {
 		speedup = 1;
 		goto faster;
 	}
@@ -625,7 +639,7 @@ sysctl_hwsetperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	if (!cpu_setperf)
 		return EOPNOTSUPP;
 
-	if (perfpolicy != PERFPOL_MANUAL)
+	if (perfpolicy_on_ac != PERFPOL_MANUAL)
 		return sysctl_rdint(oldp, oldlenp, newp, perflevel);
 
 	err = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
@@ -643,12 +657,13 @@ int
 sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	char policy[32];
-	int err;
+	char *policy_on_battery;
+	int err, perfpolicy;
 
 	if (!cpu_setperf)
 		return EOPNOTSUPP;
 
-	switch (perfpolicy) {
+	switch (current_perfpolicy()) {
 	case PERFPOL_MANUAL:
 		strlcpy(policy, "manual", sizeof(policy));
 		break;
@@ -669,6 +684,13 @@ sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	err = sysctl_string(oldp, oldlenp, newp, newlen, policy, sizeof(policy));
 	if (err)
 		return err;
+
+	policy_on_battery = strchr(policy, ',');
+	if (policy_on_battery != NULL) {
+		*policy_on_battery = '\0';
+		policy_on_battery++;
+	}
+
 	if (strcmp(policy, "manual") == 0)
 		perfpolicy = PERFPOL_MANUAL;
 	else if (strcmp(policy, "auto") == 0)
@@ -678,12 +700,31 @@ sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	else
 		return EINVAL;
 
-	if (perfpolicy == PERFPOL_AUTO) {
-		timeout_add_msec(&setperf_to, 200);
-	} else if (perfpolicy == PERFPOL_HIGH) {
+	if (policy_on_battery == NULL)
+		perfpolicy_on_battery = perfpolicy_on_ac = perfpolicy;
+	else {
+		if (strcmp(policy_on_battery, "manual") == 0 ||
+		    perfpolicy == PERFPOL_MANUAL) {
+			/* Not handled */
+			return EINVAL;
+		}
+		if (strcmp(policy_on_battery, "auto") == 0)
+			perfpolicy_on_battery = PERFPOL_AUTO;
+		else if (strcmp(policy_on_battery, "high") == 0)
+			perfpolicy_on_battery = PERFPOL_HIGH;
+		else
+			return EINVAL;
+		perfpolicy_on_ac = perfpolicy;
+	}
+
+	if (current_perfpolicy() == PERFPOL_HIGH) {
 		perflevel = 100;
 		cpu_setperf(perflevel);
 	}
+
+	if (perfpolicy_dynamic())
+		timeout_add_msec(&setperf_to, 200);
+
 	return 0;
 }
 #endif
@@ -698,7 +739,7 @@ scheduler_start(void)
 	update_loadavg(NULL);
 
 #ifndef SMALL_KERNEL
-	if (perfpolicy == PERFPOL_AUTO)
+	if (perfpolicy_dynamic())
 		timeout_add_msec(&setperf_to, 200);
 #endif
 }

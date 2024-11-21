@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.59 2024/10/30 05:24:38 jsg Exp $
+.\"	$OpenBSD: sysctl.2,v 1.60 2024/11/21 11:58:45 jca Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 30 2024 $
+.Dd $Mdocdate: November 21 2024 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -386,6 +386,10 @@ Can be one of
 .Dq auto ,
 or
 .Dq high .
+If the policy contains a comma, the second part specifies an alternative
+policy used while the system is running on battery.
+The default setting is
+.Dq high,auto .
 .It Dv HW_PHYSMEM
 The total physical memory, in bytes.
 This variable is deprecated; use
