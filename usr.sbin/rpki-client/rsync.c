@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.54 2024/11/21 13:28:54 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.55 2024/11/21 13:30:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -226,7 +226,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 {
 	int			 nprocs = 0, npending = 0, rc = 0;
 	struct pollfd		 pfd;
-	struct msgbuf		 msgq;
+	struct msgbuf		*msgq;
 	struct ibuf		*b, *inbuf = NULL;
 	sigset_t		 mask, oldmask;
 	struct rsync		*s, *ns;
@@ -234,7 +234,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	msgbuf_init(&msgq);
+	if ((msgq = msgbuf_new()) == NULL)
+		err(1, NULL);
 	pfd.fd = fd;
 
 	/*
@@ -293,7 +294,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		pfd.events = 0;
 		pfd.events |= POLLIN;
-		if (msgbuf_queuelen(&msgq) > 0)
+		if (msgbuf_queuelen(msgq) > 0)
 			pfd.events |= POLLOUT;
 
 		if (npending > 0 && nprocs < MAX_RSYNC_REQUESTS) {
@@ -342,7 +343,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 				b = io_new_buffer();
 				io_simple_buffer(b, &s->id, sizeof(s->id));
 				io_simple_buffer(b, &ok, sizeof(ok));
-				io_close_buffer(&msgq, b);
+				io_close_buffer(msgq, b);
 
 				rsync_free(s);
 				nprocs--;
@@ -354,7 +355,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		}
 
 		if (pfd.revents & POLLOUT) {
-			if (msgbuf_write(fd, &msgq) == -1) {
+			if (msgbuf_write(fd, msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else
@@ -404,6 +405,6 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		rsync_free(s);
 	}
 
-	msgbuf_clear(&msgq);
+	msgbuf_free(msgq);
 	exit(rc);
 }

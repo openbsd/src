@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.273 2024/11/21 13:28:54 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.274 2024/11/21 13:30:17 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -60,7 +60,7 @@ volatile sig_atomic_t killme;
 void	suicide(int sig);
 
 static struct filepath_tree	fpt = RB_INITIALIZER(&fpt);
-static struct msgbuf		procq, rsyncq, httpq, rrdpq;
+static struct msgbuf		*procq, *rsyncq, *httpq, *rrdpq;
 static int			cachefd, outdirfd;
 
 const char	*bird_tablename = "ROAS";
@@ -182,7 +182,7 @@ entity_write_req(const struct entity *ent)
 	io_str_buffer(b, ent->file);
 	io_str_buffer(b, ent->mftaki);
 	io_buf_buffer(b, ent->data, ent->datasz);
-	io_close_buffer(&procq, b);
+	io_close_buffer(procq, b);
 }
 
 static void
@@ -208,7 +208,7 @@ entity_write_repo(const struct repo *rp)
 	io_str_buffer(b, altpath);
 	io_buf_buffer(b, NULL, 0); /* ent->mftaki */
 	io_buf_buffer(b, NULL, 0); /* ent->data */
-	io_close_buffer(&procq, b);
+	io_close_buffer(procq, b);
 	free(path);
 	free(altpath);
 }
@@ -279,7 +279,7 @@ rrdp_file_resp(unsigned int id, int ok)
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &ok, sizeof(ok));
-	io_close_buffer(&rrdpq, b);
+	io_close_buffer(rrdpq, b);
 }
 
 void
@@ -296,7 +296,7 @@ rrdp_fetch(unsigned int id, const char *uri, const char *local,
 	io_str_buffer(b, uri);
 
 	rrdp_session_buffer(b, s);
-	io_close_buffer(&rrdpq, b);
+	io_close_buffer(rrdpq, b);
 }
 
 void
@@ -308,7 +308,7 @@ rrdp_abort(unsigned int id)
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
-	io_close_buffer(&rrdpq, b);
+	io_close_buffer(rrdpq, b);
 }
 
 /*
@@ -325,7 +325,7 @@ rsync_fetch(unsigned int id, const char *uri, const char *local,
 	io_str_buffer(b, local);
 	io_str_buffer(b, base);
 	io_str_buffer(b, uri);
-	io_close_buffer(&rsyncq, b);
+	io_close_buffer(rsyncq, b);
 }
 
 void
@@ -338,7 +338,7 @@ rsync_abort(unsigned int id)
 	io_str_buffer(b, NULL);
 	io_str_buffer(b, NULL);
 	io_str_buffer(b, NULL);
-	io_close_buffer(&rsyncq, b);
+	io_close_buffer(rsyncq, b);
 }
 
 /*
@@ -355,7 +355,7 @@ http_fetch(unsigned int id, const char *uri, const char *last_mod, int fd)
 	io_str_buffer(b, last_mod);
 	/* pass file as fd */
 	ibuf_fd_set(b, fd);
-	io_close_buffer(&httpq, b);
+	io_close_buffer(httpq, b);
 }
 
 /*
@@ -376,7 +376,7 @@ rrdp_http_fetch(unsigned int id, const char *uri, const char *last_mod)
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	ibuf_fd_set(b, pi[0]);
-	io_close_buffer(&rrdpq, b);
+	io_close_buffer(rrdpq, b);
 
 	http_fetch(id, uri, last_mod, pi[1]);
 }
@@ -393,7 +393,7 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, last_mod);
-	io_close_buffer(&rrdpq, b);
+	io_close_buffer(rrdpq, b);
 }
 
 /*
@@ -1231,10 +1231,14 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr sendfd unveil", NULL) == -1)
 		err(1, "pledge");
 
-	msgbuf_init(&procq);
-	msgbuf_init(&rsyncq);
-	msgbuf_init(&httpq);
-	msgbuf_init(&rrdpq);
+	if ((procq = msgbuf_new()) == NULL)
+		err(1, NULL);
+	if ((rsyncq = msgbuf_new()) == NULL)
+		err(1, NULL);
+	if ((httpq = msgbuf_new()) == NULL)
+		err(1, NULL);
+	if ((rrdpq = msgbuf_new()) == NULL)
+		err(1, NULL);
 
 	/*
 	 * The main process drives the top-down scan to leaf ROAs using
@@ -1243,13 +1247,13 @@ main(int argc, char *argv[])
 	 */
 
 	pfd[0].fd = procfd;
-	queues[0] = &procq;
+	queues[0] = procq;
 	pfd[1].fd = rsyncfd;
-	queues[1] = &rsyncq;
+	queues[1] = rsyncq;
 	pfd[2].fd = httpfd;
-	queues[2] = &httpq;
+	queues[2] = httpq;
 	pfd[3].fd = rrdpfd;
-	queues[3] = &rrdpq;
+	queues[3] = rrdpq;
 
 	load_skiplist(skiplistfile);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.54 2024/11/21 13:28:54 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.55 2024/11/21 13:30:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -724,8 +724,8 @@ void
 proc_filemode(int fd)
 {
 	struct entityq	 q;
-	struct msgbuf	 msgq;
 	struct pollfd	 pfd;
+	struct msgbuf	*msgq;
 	struct entity	*entp;
 	struct ibuf	*b, *inbuf = NULL;
 
@@ -748,12 +748,13 @@ proc_filemode(int fd)
 
 	TAILQ_INIT(&q);
 
-	msgbuf_init(&msgq);
+	if ((msgq = msgbuf_new()) == NULL)
+		err(1, NULL);
 	pfd.fd = fd;
 
 	for (;;) {
 		pfd.events = POLLIN;
-		if (msgbuf_queuelen(&msgq) > 0)
+		if (msgbuf_queuelen(msgq) > 0)
 			pfd.events |= POLLOUT;
 
 		if (poll(&pfd, 1, INFTIM) == -1) {
@@ -782,7 +783,7 @@ proc_filemode(int fd)
 		}
 
 		if (pfd.revents & POLLOUT) {
-			if (msgbuf_write(fd, &msgq) == -1) {
+			if (msgbuf_write(fd, msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else
@@ -790,10 +791,10 @@ proc_filemode(int fd)
 			}
 		}
 
-		parse_file(&q, &msgq);
+		parse_file(&q, msgq);
 	}
 
-	msgbuf_clear(&msgq);
+	msgbuf_free(msgq);
 	while ((entp = TAILQ_FIRST(&q)) != NULL) {
 		TAILQ_REMOVE(&q, entp, entries);
 		entity_free(entp);

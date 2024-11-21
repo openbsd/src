@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.37 2024/11/21 13:28:54 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.38 2024/11/21 13:30:17 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,7 @@
 #define MAX_SESSIONS	32
 #define	READ_BUF_SIZE	(32 * 1024)
 
-static struct msgbuf	msgq;
+static struct msgbuf	*msgq;
 
 #define RRDP_STATE_REQ		0x01
 #define RRDP_STATE_WAIT		0x02
@@ -98,7 +98,7 @@ rrdp_done(unsigned int id, int ok)
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &ok, sizeof(ok));
-	io_close_buffer(&msgq, b);
+	io_close_buffer(msgq, b);
 }
 
 /*
@@ -120,7 +120,7 @@ rrdp_http_req(unsigned int id, const char *uri, const char *last_mod)
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
-	io_close_buffer(&msgq, b);
+	io_close_buffer(msgq, b);
 }
 
 /*
@@ -136,7 +136,7 @@ rrdp_state_send(struct rrdp *s)
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &s->id, sizeof(s->id));
 	rrdp_session_buffer(b, s->current);
-	io_close_buffer(&msgq, b);
+	io_close_buffer(msgq, b);
 }
 
 /*
@@ -151,7 +151,7 @@ rrdp_clear_repo(struct rrdp *s)
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &s->id, sizeof(s->id));
-	io_close_buffer(&msgq, b);
+	io_close_buffer(msgq, b);
 }
 
 /*
@@ -174,7 +174,7 @@ rrdp_publish_file(struct rrdp *s, struct publish_xml *pxml,
 			io_simple_buffer(b, &pxml->hash, sizeof(pxml->hash));
 		io_str_buffer(b, pxml->uri);
 		io_buf_buffer(b, data, datasz);
-		io_close_buffer(&msgq, b);
+		io_close_buffer(msgq, b);
 		s->file_pending++;
 	}
 }
@@ -543,7 +543,8 @@ proc_rrdp(int fd)
 	if (pledge("stdio recvfd", NULL) == -1)
 		err(1, "pledge");
 
-	msgbuf_init(&msgq);
+	if ((msgq = msgbuf_new()) == NULL)
+		err(1, NULL);
 
 	for (;;) {
 		i = 1;
@@ -584,7 +585,7 @@ proc_rrdp(int fd)
 		 */
 		pfds[0].fd = fd;
 		pfds[0].events = POLLIN;
-		if (msgbuf_queuelen(&msgq) > 0)
+		if (msgbuf_queuelen(msgq) > 0)
 			pfds[0].events |= POLLOUT;
 
 		if (poll(pfds, i, INFTIM) == -1) {
@@ -596,7 +597,7 @@ proc_rrdp(int fd)
 		if (pfds[0].revents & POLLHUP)
 			break;
 		if (pfds[0].revents & POLLOUT) {
-			if (msgbuf_write(fd, &msgq) == -1) {
+			if (msgbuf_write(fd, msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else

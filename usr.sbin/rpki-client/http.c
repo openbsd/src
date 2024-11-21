@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.90 2024/11/21 13:28:54 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.91 2024/11/21 13:30:17 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -163,7 +163,7 @@ static struct http_conn_list	idle = LIST_HEAD_INITIALIZER(idle);
 static struct http_req_queue	queue = TAILQ_HEAD_INITIALIZER(queue);
 static unsigned int		http_conn_count;
 
-static struct msgbuf msgq;
+static struct msgbuf *msgq;
 static struct sockaddr_storage http_bindaddr;
 static struct tls_config *tls_config;
 static uint8_t *tls_ca_mem;
@@ -625,7 +625,7 @@ http_req_done(unsigned int id, enum http_result res, const char *last_modified)
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, last_modified);
-	io_close_buffer(&msgq, b);
+	io_close_buffer(msgq, b);
 }
 
 /*
@@ -641,7 +641,7 @@ http_req_fail(unsigned int id)
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
 	io_str_buffer(b, NULL);
-	io_close_buffer(&msgq, b);
+	io_close_buffer(msgq, b);
 }
 
 /*
@@ -2066,7 +2066,8 @@ proc_http(char *bind_addr, int fd)
 	if (pledge("stdio inet dns recvfd", NULL) == -1)
 		err(1, "pledge");
 
-	msgbuf_init(&msgq);
+	if ((msgq = msgbuf_new()) == NULL)
+		err(1, NULL);
 
 	for (;;) {
 		time_t now;
@@ -2076,7 +2077,7 @@ proc_http(char *bind_addr, int fd)
 		memset(&pfds, 0, sizeof(pfds));
 		pfds[0].fd = fd;
 		pfds[0].events = POLLIN;
-		if (msgbuf_queuelen(&msgq) > 0)
+		if (msgbuf_queuelen(msgq) > 0)
 			pfds[0].events |= POLLOUT;
 
 		i = 1;
@@ -2137,7 +2138,7 @@ proc_http(char *bind_addr, int fd)
 		if (pfds[0].revents & POLLHUP)
 			break;
 		if (pfds[0].revents & POLLOUT) {
-			if (msgbuf_write(fd, &msgq) == -1) {
+			if (msgbuf_write(fd, msgq) == -1) {
 				if (errno == EPIPE)
 					errx(1, "write: connection closed");
 				else
