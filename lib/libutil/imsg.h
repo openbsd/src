@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.13 2024/11/21 12:54:10 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.14 2024/11/21 12:54:52 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -132,7 +132,7 @@ int		 msgbuf_write(struct msgbuf *);
 
 /* imsg.c */
 void	 imsgbuf_init(struct imsgbuf *, int);
-ssize_t	 imsgbuf_read(struct imsgbuf *);
+int	 imsgbuf_read(struct imsgbuf *);
 int	 imsgbuf_write(struct imsgbuf *);
 int	 imsgbuf_flush(struct imsgbuf *);
 void	 imsgbuf_clear(struct imsgbuf *);

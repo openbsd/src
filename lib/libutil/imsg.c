@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.30 2024/11/21 12:54:10 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.31 2024/11/21 12:54:52 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -49,7 +49,7 @@ imsgbuf_init(struct imsgbuf *imsgbuf, int fd)
 	TAILQ_INIT(&imsgbuf->fds);
 }
 
-ssize_t
+int
 imsgbuf_read(struct imsgbuf *imsgbuf)
 {
 	struct msghdr		 msg;
@@ -59,7 +59,7 @@ imsgbuf_read(struct imsgbuf *imsgbuf)
 		char	buf[CMSG_SPACE(sizeof(int) * 1)];
 	} cmsgbuf;
 	struct iovec		 iov;
-	ssize_t			 n = -1;
+	ssize_t			 n;
 	int			 fd;
 	struct imsg_fd		*ifd;
 
@@ -80,15 +80,23 @@ again:
 	if (getdtablecount() + imsg_fd_overhead +
 	    (int)((CMSG_SPACE(sizeof(int))-CMSG_SPACE(0))/sizeof(int))
 	    >= getdtablesize()) {
-		errno = EAGAIN;
 		free(ifd);
-		return (-1);
+		return (1);
 	}
 
 	if ((n = recvmsg(imsgbuf->fd, &msg, 0)) == -1) {
 		if (errno == EINTR)
 			goto again;
+		if (errno == EAGAIN) {
+			free(ifd);
+			return (1);
+		}
 		goto fail;
+	}
+
+	if (n == 0) {	/* connection closed */
+		free(ifd);
+		return (0);
 	}
 
 	imsgbuf->r.wpos += n;
@@ -121,9 +129,12 @@ again:
 		/* we do not handle other ctl data level */
 	}
 
+	free(ifd);
+	return (1);
+
 fail:
 	free(ifd);
-	return (n);
+	return (-1);
 }
 
 int

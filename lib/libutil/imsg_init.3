@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.38 2024/11/21 12:54:10 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.39 2024/11/21 12:54:52 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -87,7 +87,7 @@
 .Fn imsgbuf_init "struct imsgbuf *imsgbuf" "int fd"
 .Ft uint32_t
 .Fn imsgbuf_queuelen "struct imsgbuf *imsgbuf"
-.Ft ssize_t
+.Ft int
 .Fn imsgbuf_read "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_write "struct imsgbuf *imsgbuf"
@@ -127,13 +127,18 @@ routine reads pending data with
 .Xr recvmsg 2
 and queues it as individual messages on
 .Fa imsgbuf .
-It returns the number of bytes read on success, or \-1 on error.
-A return value of \-1 from
-.Fn imsgbuf_read
-invalidates
-.Fa imsgbuf ,
-and renders it suitable only for passing to
-.Fn imsgbuf_clear .
+It returns 1 on success, 0 if the connection is closed, or \-1 on error
+and the global variable
+.Va errno
+is set to indicate the error.
+The errors
+.Er EINTR
+and
+.Er EAGAIN
+are treated as follows.
+.Er EINTR
+will automatically retry the read operation while the other errors are
+ignored with a 1 return.
 .Pp
 .Fn imsgbuf_write
 writes out queued messages.
@@ -149,7 +154,6 @@ are treated as follows.
 .Er EINTR
 will automatically retry the write operation while the other errors are
 ignored with a 0 return.
-The caller will then retry the operation at a later stage.
 .Pp
 .Fn imsgbuf_flush
 calls
@@ -401,7 +405,7 @@ dispatch_imsg(struct imsgbuf *imsgbuf)
 	ssize_t         n;
 	int		idata;
 
-	if ((n = imsgbuf_read(imsgbuf)) == -1 && errno != EAGAIN) {
+	if ((n = imsgbuf_read(imsgbuf)) == -1) {
 		/* handle read error */
 	}
 	if (n == 0) {
