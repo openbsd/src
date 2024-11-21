@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.21 2024/11/21 12:42:57 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.22 2024/11/21 12:44:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -36,20 +36,20 @@ static void	ibuf_enqueue(struct msgbuf *, struct ibuf *);
 static void	ibuf_dequeue(struct msgbuf *, struct ibuf *);
 static void	msgbuf_drain(struct msgbuf *, size_t);
 
+#define	IBUF_FD_MARK_ON_STACK	-2
+
 struct ibuf *
 ibuf_open(size_t len)
 {
 	struct ibuf	*buf;
 
-	if (len == 0) {
-		errno = EINVAL;
-		return (NULL);
-	}
 	if ((buf = calloc(1, sizeof(struct ibuf))) == NULL)
 		return (NULL);
-	if ((buf->buf = calloc(len, 1)) == NULL) {
-		free(buf);
-		return (NULL);
+	if (len > 0) {
+		if ((buf->buf = calloc(len, 1)) == NULL) {
+			free(buf);
+			return (NULL);
+		}
 	}
 	buf->size = buf->max = len;
 	buf->fd = -1;
@@ -87,8 +87,13 @@ ibuf_reserve(struct ibuf *buf, size_t len)
 {
 	void	*b;
 
-	if (len > SIZE_MAX - buf->wpos || buf->max == 0) {
+	if (len > SIZE_MAX - buf->wpos) {
 		errno = ERANGE;
+		return (NULL);
+	}
+	if (buf->fd == IBUF_FD_MARK_ON_STACK) {
+		/* can not grow stack buffers */
+		errno = EINVAL;
 		return (NULL);
 	}
 
@@ -345,7 +350,8 @@ ibuf_size(const struct ibuf *buf)
 size_t
 ibuf_left(const struct ibuf *buf)
 {
-	if (buf->max == 0)
+	/* on stack buffers have no space left */
+	if (buf->fd == IBUF_FD_MARK_ON_STACK)
 		return (0);
 	return (buf->max - buf->wpos);
 }
@@ -357,8 +363,8 @@ ibuf_truncate(struct ibuf *buf, size_t len)
 		buf->wpos = buf->rpos + len;
 		return (0);
 	}
-	if (buf->max == 0) {
-		/* only allow to truncate down */
+	if (buf->fd == IBUF_FD_MARK_ON_STACK) {
+		/* only allow to truncate down for stack buffers */
 		errno = ERANGE;
 		return (-1);
 	}
@@ -383,7 +389,7 @@ ibuf_from_buffer(struct ibuf *buf, void *data, size_t len)
 	memset(buf, 0, sizeof(*buf));
 	buf->buf = data;
 	buf->size = buf->wpos = len;
-	buf->fd = -1;
+	buf->fd = IBUF_FD_MARK_ON_STACK;
 }
 
 void
@@ -506,9 +512,10 @@ ibuf_free(struct ibuf *buf)
 {
 	if (buf == NULL)
 		return;
-	if (buf->max == 0)	/* if buf lives on the stack */
-		abort();	/* abort before causing more harm */
-	if (buf->fd != -1)
+	/* if buf lives on the stack abort before causing more harm */
+	if (buf->fd == IBUF_FD_MARK_ON_STACK)
+		abort();
+	if (buf->fd >= 0)
 		close(buf->fd);
 	freezero(buf->buf, buf->size);
 	free(buf);
@@ -517,7 +524,7 @@ ibuf_free(struct ibuf *buf)
 int
 ibuf_fd_avail(struct ibuf *buf)
 {
-	return (buf->fd != -1);
+	return (buf->fd >= 0);
 }
 
 int
@@ -525,6 +532,9 @@ ibuf_fd_get(struct ibuf *buf)
 {
 	int fd;
 
+	/* negative fds are internal use and equivalent to -1 */
+	if (buf->fd < 0)
+		return (-1);
 	fd = buf->fd;
 	buf->fd = -1;
 	return (fd);
@@ -533,11 +543,14 @@ ibuf_fd_get(struct ibuf *buf)
 void
 ibuf_fd_set(struct ibuf *buf, int fd)
 {
-	if (buf->max == 0)	/* if buf lives on the stack */
-		abort();	/* abort before causing more harm */
-	if (buf->fd != -1)
+	/* if buf lives on the stack abort before causing more harm */
+	if (buf->fd == IBUF_FD_MARK_ON_STACK)
+		abort();
+	if (buf->fd >= 0)
 		close(buf->fd);
-	buf->fd = fd;
+	buf->fd = -1;
+	if (fd >= 0)
+		buf->fd = fd;
 }
 
 int
@@ -690,8 +703,9 @@ msgbuf_queuelen(struct msgbuf *msgbuf)
 static void
 ibuf_enqueue(struct msgbuf *msgbuf, struct ibuf *buf)
 {
-	if (buf->max == 0)	/* if buf lives on the stack */
-		abort();	/* abort before causing more harm */
+	/* if buf lives on the stack abort before causing more harm */
+	if (buf->fd == IBUF_FD_MARK_ON_STACK)
+		abort();
 	TAILQ_INSERT_TAIL(&msgbuf->bufs, buf, entry);
 	msgbuf->queued++;
 }
