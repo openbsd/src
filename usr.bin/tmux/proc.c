@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.25 2024/11/21 13:10:25 claudio Exp $ */
+/* $OpenBSD: proc.c,v 1.26 2024/11/21 13:15:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -105,7 +105,7 @@ proc_event_cb(__unused int fd, short events, void *arg)
 	}
 
 	if (events & EV_WRITE) {
-		if (imsg_write(&peer->ibuf) <= 0 && errno != EAGAIN) {
+		if (imsg_write(&peer->ibuf) == -1) {
 			peer->dispatchcb(NULL, peer->arg);
 			return;
 		}
