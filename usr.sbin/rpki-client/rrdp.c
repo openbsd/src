@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.38 2024/11/21 13:30:17 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.39 2024/11/21 13:32:27 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -400,21 +400,15 @@ rrdp_abort_req(struct rrdp *s)
 }
 
 static void
-rrdp_input_handler(int fd)
+rrdp_input_handler(struct ibuf *b)
 {
-	static struct ibuf *inbuf;
 	struct rrdp_session *state;
 	char *local, *notify, *last_mod;
-	struct ibuf *b;
 	struct rrdp *s;
 	enum rrdp_msg type;
 	enum http_result res;
 	unsigned int id;
 	int ok;
-
-	b = io_buf_recvfd(fd, &inbuf);
-	if (b == NULL)
-		return;
 
 	io_read_buf(b, &type, sizeof(type));
 	io_read_buf(b, &id, sizeof(id));
@@ -483,7 +477,6 @@ rrdp_input_handler(int fd)
 	default:
 		errx(1, "unexpected message %d", type);
 	}
-	ibuf_free(b);
 }
 
 static void
@@ -538,12 +531,14 @@ proc_rrdp(int fd)
 {
 	struct pollfd pfds[MAX_SESSIONS + 1];
 	struct rrdp *s, *ns;
+	struct ibuf *b;
 	size_t i;
 
 	if (pledge("stdio recvfd", NULL) == -1)
 		err(1, "pledge");
 
-	if ((msgq = msgbuf_new()) == NULL)
+	if ((msgq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
 
 	for (;;) {
@@ -604,8 +599,18 @@ proc_rrdp(int fd)
 					err(1, "write");
 			}
 		}
-		if (pfds[0].revents & POLLIN)
-			rrdp_input_handler(fd);
+		if (pfds[0].revents & POLLIN) {
+			switch (msgbuf_read(fd, msgq)) {
+			case -1:
+				err(1, "msgbuf_read");
+			case 0:
+				errx(1, "msgbuf_read: connection closed");
+			}
+			while ((b = io_buf_get(msgq)) != NULL) {
+				rrdp_input_handler(b);
+				ibuf_free(b);
+			}
+		}
 
 		TAILQ_FOREACH_SAFE(s, &states, entry, ns) {
 			if (s->pfd == NULL)

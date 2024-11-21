@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.147 2024/11/21 13:30:17 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.148 2024/11/21 13:32:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1070,7 +1070,8 @@ proc_parser(int fd)
 
 	TAILQ_INIT(&q);
 
-	if ((msgq = msgbuf_new()) == NULL)
+	if ((msgq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
 
 	pfd.fd = fd;
@@ -1094,8 +1095,13 @@ proc_parser(int fd)
 			break;
 
 		if ((pfd.revents & POLLIN)) {
-			b = io_buf_read(fd, &inbuf);
-			if (b != NULL) {
+			switch (ibuf_read(fd, msgq)) {
+			case -1:
+				err(1, "ibuf_read");
+			case 0:
+				errx(1, "ibuf_read: connection closed");
+			}
+			while ((b = io_buf_get(msgq)) != NULL) {
 				entp = calloc(1, sizeof(struct entity));
 				if (entp == NULL)
 					err(1, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.91 2024/11/21 13:30:17 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.92 2024/11/21 13:32:27 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -2044,7 +2044,7 @@ proc_http(char *bind_addr, int fd)
 	struct pollfd pfds[NPFDS];
 	struct http_connection *conn, *nc;
 	struct http_request *req, *nr;
-	struct ibuf *b, *inbuf = NULL;
+	struct ibuf *b;
 
 	if (pledge("stdio rpath inet dns recvfd", NULL) == -1)
 		err(1, "pledge");
@@ -2066,7 +2066,8 @@ proc_http(char *bind_addr, int fd)
 	if (pledge("stdio inet dns recvfd", NULL) == -1)
 		err(1, "pledge");
 
-	if ((msgq = msgbuf_new()) == NULL)
+	if ((msgq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
 
 	for (;;) {
@@ -2146,8 +2147,13 @@ proc_http(char *bind_addr, int fd)
 			}
 		}
 		if (pfds[0].revents & POLLIN) {
-			b = io_buf_recvfd(fd, &inbuf);
-			if (b != NULL) {
+			switch (msgbuf_read(fd, msgq)) {
+			case -1:
+				err(1, "msgbuf_read");
+			case 0:
+				errx(1, "msgbuf_read: connection closed");
+			}
+			while ((b = io_buf_get(msgq)) != NULL) {
 				unsigned int id;
 				char *uri;
 				char *mod;

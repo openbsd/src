@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.274 2024/11/21 13:30:17 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.275 2024/11/21 13:32:27 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -978,8 +978,7 @@ main(int argc, char *argv[])
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
-	struct ibuf	*b, *httpbuf = NULL, *procbuf = NULL;
-	struct ibuf	*rrdpbuf = NULL, *rsyncbuf = NULL;
+	struct ibuf	*b;
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
@@ -1231,13 +1230,17 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr sendfd unveil", NULL) == -1)
 		err(1, "pledge");
 
-	if ((procq = msgbuf_new()) == NULL)
+	if ((procq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
-	if ((rsyncq = msgbuf_new()) == NULL)
+	if ((rsyncq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
-	if ((httpq = msgbuf_new()) == NULL)
+	if ((httpq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
-	if ((rrdpq = msgbuf_new()) == NULL)
+	if ((rrdpq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	   NULL)
 		err(1, NULL);
 
 	/*
@@ -1331,8 +1334,13 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[1].revents & POLLIN)) {
-			b = io_buf_read(rsyncfd, &rsyncbuf);
-			if (b != NULL) {
+			switch (ibuf_read(pfd[1].fd, queues[1])) {
+			case -1:
+				err(1, "ibuf_read");
+			case 0:
+				errx(1, "ibuf_read: connection closed");
+			}
+			while ((b = io_buf_get(queues[1])) != NULL) {
 				unsigned int id;
 				int ok;
 
@@ -1344,8 +1352,13 @@ main(int argc, char *argv[])
 		}
 
 		if ((pfd[2].revents & POLLIN)) {
-			b = io_buf_read(httpfd, &httpbuf);
-			if (b != NULL) {
+			switch (ibuf_read(pfd[2].fd, queues[2])) {
+			case -1:
+				err(1, "ibuf_read");
+			case 0:
+				errx(1, "ibuf_read: connection closed");
+			}
+			while ((b = io_buf_get(queues[2])) != NULL) {
 				unsigned int id;
 				enum http_result res;
 				char *last_mod;
@@ -1363,8 +1376,14 @@ main(int argc, char *argv[])
 		 * Handle RRDP requests here.
 		 */
 		if ((pfd[3].revents & POLLIN)) {
-			b = io_buf_read(rrdpfd, &rrdpbuf);
-			if (b != NULL) {
+			switch (ibuf_read(pfd[3].fd, queues[3])) {
+			case -1:
+				abort();
+				err(1, "ibuf_read");
+			case 0:
+				errx(1, "ibuf_read: connection closed");
+			}
+			while ((b = io_buf_get(queues[3])) != NULL) {
 				rrdp_process(b);
 				ibuf_free(b);
 			}
@@ -1376,8 +1395,13 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[0].revents & POLLIN)) {
-			b = io_buf_read(procfd, &procbuf);
-			if (b != NULL) {
+			switch (ibuf_read(pfd[0].fd, queues[0])) {
+			case -1:
+				err(1, "ibuf_read");
+			case 0:
+				errx(1, "ibuf_read: connection closed");
+			}
+			while ((b = io_buf_get(queues[0])) != NULL) {
 				entity_process(b, &stats, &vrps, &brks, &vaps,
 				    &vsps);
 				ibuf_free(b);

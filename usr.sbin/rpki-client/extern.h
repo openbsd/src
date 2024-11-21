@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.231 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.232 2024/11/21 13:32:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,8 @@
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
 			    __attribute__((__unused__))
+
+#define MAX_MSG_SIZE	(50 * 1024 * 1024)
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
@@ -902,8 +904,8 @@ void		 io_close_buffer(struct msgbuf *, struct ibuf *);
 void		 io_read_buf(struct ibuf *, void *, size_t);
 void		 io_read_str(struct ibuf *, char **);
 void		 io_read_buf_alloc(struct ibuf *, void **, size_t *);
-struct ibuf	*io_buf_read(int, struct ibuf **);
-struct ibuf	*io_buf_recvfd(int, struct ibuf **);
+ssize_t		 io_parse_hdr(struct ibuf *, void *);
+struct ibuf	*io_buf_get(struct msgbuf *);
 
 /* X509 helpers. */
 

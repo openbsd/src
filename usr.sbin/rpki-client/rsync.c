@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.55 2024/11/21 13:30:17 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.56 2024/11/21 13:32:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -227,14 +227,15 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	int			 nprocs = 0, npending = 0, rc = 0;
 	struct pollfd		 pfd;
 	struct msgbuf		*msgq;
-	struct ibuf		*b, *inbuf = NULL;
+	struct ibuf		*b;
 	sigset_t		 mask, oldmask;
 	struct rsync		*s, *ns;
 
 	if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	if ((msgq = msgbuf_new()) == NULL)
+	if ((msgq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
 	pfd.fd = fd;
 
@@ -370,30 +371,35 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		if (!(pfd.revents & POLLIN))
 			continue;
 
-		b = io_buf_read(fd, &inbuf);
-		if (b == NULL)
-			continue;
+		switch (ibuf_read(fd, msgq)) {
+		case -1:
+			err(1, "ibuf_read");
+		case 0:
+			errx(1, "ibuf_read: connection closed");
+		}
 
-		/* Read host and module. */
-		io_read_buf(b, &id, sizeof(id));
-		io_read_str(b, &dst);
-		io_read_str(b, &compdst);
-		io_read_str(b, &uri);
+		while ((b = io_buf_get(msgq)) != NULL) {
+			/* Read host and module. */
+			io_read_buf(b, &id, sizeof(id));
+			io_read_str(b, &dst);
+			io_read_str(b, &compdst);
+			io_read_str(b, &uri);
 
-		ibuf_free(b);
+			ibuf_free(b);
 
-		if (dst != NULL) {
-			rsync_new(id, uri, dst, compdst);
-			npending++;
-		} else {
-			TAILQ_FOREACH(s, &states, entry)
-				if (s->id == id)
-					break;
-			if (s != NULL) {
-				if (s->pid != 0)
-					kill(s->pid, SIGTERM);
-				else
-					rsync_free(s);
+			if (dst != NULL) {
+				rsync_new(id, uri, dst, compdst);
+				npending++;
+			} else {
+				TAILQ_FOREACH(s, &states, entry)
+					if (s->id == id)
+						break;
+				if (s != NULL) {
+					if (s->pid != 0)
+						kill(s->pid, SIGTERM);
+					else
+						rsync_free(s);
+				}
 			}
 		}
 	}
