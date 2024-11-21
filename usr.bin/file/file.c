@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.72 2024/11/21 13:20:27 claudio Exp $ */
+/* $OpenBSD: file.c,v 1.73 2024/11/21 13:24:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -294,25 +294,25 @@ send_message(struct imsgbuf *ibuf, void *msg, size_t msglen, int fd)
 static int
 read_message(struct imsgbuf *ibuf, struct imsg *imsg, pid_t from)
 {
-	int	n;
+	while (1) {
+		switch (imsg_get(ibuf, imsg)) {
+		case -1:
+			err(1, "imsg_get");
+		case 0:
+			break;
+		default:
+			if ((pid_t)imsg->hdr.pid != from)
+				errx(1, "PIDs don't match");
+			return (1);
+		}
 
-	while ((n = imsgbuf_read(ibuf)) == -1 && errno == EAGAIN)
-		/* nothing */ ;
-	if (n == -1)
-		err(1, "imsgbuf_read");
-	if (n == 0)
-		return (0);
-
-	if ((n = imsg_get(ibuf, imsg)) == -1)
-		err(1, "imsg_get");
-	if (n == 0)
-		return (0);
-
-	if ((pid_t)imsg->hdr.pid != from)
-		errx(1, "PIDs don't match");
-
-	return (n);
-
+		switch (imsgbuf_read(ibuf)) {
+		case -1:
+			err(1, "imsgbuf_read");
+		case 0:
+			return (0);
+		}
+	}
 }
 
 static void

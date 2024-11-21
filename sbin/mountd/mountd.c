@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.94 2024/11/21 13:17:01 claudio Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.95 2024/11/21 13:24:07 claudio Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -621,31 +621,27 @@ imsg_export(const char *dir, struct export_args *args)
 ssize_t
 recv_imsg(struct imsg *imsg)
 {
-	ssize_t n;
+	while (1) {
+		switch (imsg_get(&ibuf, imsg)) {
+		case -1:
+			syslog(LOG_ERR, "imsg_get: %m");
+			return (-1);
+		case 0:
+			break;
+		default:
+			return (imsg_get_len(imsg));
+		}
 
-	n = imsgbuf_read(&ibuf);
-	if (n == -1) {
-		syslog(LOG_ERR, "imsgbuf_read: %m");
-		return (-1);
+		switch (imsgbuf_read(&ibuf)) {
+		case -1:
+			syslog(LOG_ERR, "imsgbuf_read: %m");
+			return (-1);
+		case 0:
+			syslog(LOG_ERR, "Socket disconnected");
+			errno = EINVAL;
+			return (-1);
+		}
 	}
-	if (n == 0) {
-		syslog(LOG_ERR, "Socket disconnected");
-		errno = EINVAL;
-		return (-1);
-	}
-
-	n = imsg_get(&ibuf, imsg);
-	if (n == -1) {
-		syslog(LOG_ERR, "imsg_get: %m");
-		return (-1);
-	}
-	if (n == 0) {
-		syslog(LOG_ERR, "No messages ready");
-		errno = EINVAL;
-		return (-1);
-	}
-
-	return (n - IMSG_HEADER_SIZE);
 }
 
 int
