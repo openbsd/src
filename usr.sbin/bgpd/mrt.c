@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.121 2024/11/21 13:29:52 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.122 2024/11/21 13:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -56,33 +56,27 @@ static int	mrt_open(struct mrt *, time_t);
 			)
 
 static uint8_t
-mrt_update_msg_guess_aid(uint8_t *pkg, uint16_t pkglen)
+mrt_update_msg_guess_aid(struct ibuf *pkg)
 {
+	struct ibuf buf;
 	uint16_t wlen, alen, len, afi;
-	uint8_t type, aid;
+	uint8_t type, flags, aid, safi;
 
-	pkg += MSGSIZE_HEADER;
-	pkglen -= MSGSIZE_HEADER;
+	ibuf_from_ibuf(&buf, pkg);
 
-	if (pkglen < 4)
+	if (ibuf_skip(&buf, MSGSIZE_HEADER) == -1 ||
+	    ibuf_get_n16(&buf, &wlen) == -1)
 		goto bad;
-
-	memcpy(&wlen, pkg, 2);
-	wlen = ntohs(wlen);
-	pkg += 2;
-	pkglen -= 2;
 
 	if (wlen > 0) {
 		/* UPDATE has withdraw routes, therefore IPv4 */
 		return AID_INET;
 	}
 
-	memcpy(&alen, pkg, 2);
-	alen = ntohs(alen);
-	pkg += 2;
-	pkglen -= 2;
+	if (ibuf_get_n16(&buf, &alen) == -1)
+		goto bad;
 
-	if (alen < pkglen) {
+	if (alen < ibuf_size(&buf)) {
 		/* UPDATE has NLRI prefixes, therefore IPv4 */
 		return AID_INET;
 	}
@@ -93,42 +87,37 @@ mrt_update_msg_guess_aid(uint8_t *pkg, uint16_t pkglen)
 	}
 
 	/* bad attribute length */
-	if (alen > pkglen)
+	if (alen > ibuf_size(&buf))
 		goto bad;
 
 	/* try to extract AFI/SAFI from the MP attributes */
-	while (alen > 0) {
-		if (alen < 3)
+	while (ibuf_size(&buf) > 0) {
+		if (ibuf_get_n8(&buf, &flags) == -1 ||
+		    ibuf_get_n8(&buf, &type) == -1)
 			goto bad;
-		type = pkg[1];
-		if (pkg[0] & ATTR_EXTLEN) {
-			if (alen < 4)
+		if (flags & ATTR_EXTLEN) {
+			if (ibuf_get_n16(&buf, &len) == -1)
 				goto bad;
-			memcpy(&len, pkg + 2, 2);
-			len = ntohs(len);
-			pkg += 4;
-			alen -= 4;
 		} else {
-			len = pkg[2];
-			pkg += 3;
-			alen -= 3;
+			uint8_t tmp;
+			if (ibuf_get_n8(&buf, &tmp) == -1)
+				goto bad;
+			len = tmp;
 		}
-		if (len > alen)
+		if (len > ibuf_size(&buf))
 			goto bad;
 
 		if (type == ATTR_MP_REACH_NLRI ||
 		    type == ATTR_MP_UNREACH_NLRI) {
-			if (alen < 3)
+			if (ibuf_get_n16(&buf, &afi) == -1 ||
+			    ibuf_get_n8(&buf, &safi) == -1)
 				goto bad;
-			memcpy(&afi, pkg, 2);
-			afi = ntohs(afi);
-			if (afi2aid(afi, pkg[2], &aid) == -1)
+			if (afi2aid(afi, safi, &aid) == -1)
 				goto bad;
 			return aid;
 		}
-
-		pkg += len;
-		alen -= len;
+		if (ibuf_skip(&buf, len) == -1)
+			goto bad;
 	}
 
 bad:
@@ -136,8 +125,8 @@ bad:
 }
 
 static uint16_t
-mrt_bgp_msg_subtype(struct mrt *mrt, void *pkg, uint16_t pkglen,
-    struct peer *peer, enum msg_type msgtype, int in)
+mrt_bgp_msg_subtype(struct mrt *mrt, struct ibuf *pkg, struct peer *peer,
+    enum msg_type msgtype, int in)
 {
 	uint16_t subtype = BGP4MP_MESSAGE;
 	uint8_t aid, mask;
@@ -158,7 +147,7 @@ mrt_bgp_msg_subtype(struct mrt *mrt, void *pkg, uint16_t pkglen,
 	mask = in ? CAPA_AP_RECV : CAPA_AP_SEND;
 	/* only guess if add-path could be active */
 	if (peer->capa.neg.add_path[0] & mask) {
-		aid = mrt_update_msg_guess_aid(pkg, pkglen);
+		aid = mrt_update_msg_guess_aid(pkg);
 		if (aid != AID_UNSPEC &&
 		    (peer->capa.neg.add_path[aid] & mask)) {
 			if (peer->capa.neg.as4byte)
@@ -172,8 +161,8 @@ mrt_bgp_msg_subtype(struct mrt *mrt, void *pkg, uint16_t pkglen,
 }
 
 void
-mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, uint16_t pkglen,
-    struct peer *peer, enum msg_type msgtype)
+mrt_dump_bgp_msg(struct mrt *mrt, struct ibuf *pkg, struct peer *peer,
+    enum msg_type msgtype)
 {
 	struct ibuf	*buf;
 	int		 in = 0;
@@ -183,13 +172,13 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, uint16_t pkglen,
 	if (mrt->type == MRT_ALL_IN || mrt->type == MRT_UPDATE_IN)
 		in = 1;
 
-	subtype = mrt_bgp_msg_subtype(mrt, pkg, pkglen, peer, msgtype, in);
+	subtype = mrt_bgp_msg_subtype(mrt, pkg, peer, msgtype, in);
 
 	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP_ET, subtype,
-	    pkglen, in) == -1)
+	    ibuf_size(pkg), in) == -1)
 		goto fail;
 
-	if (ibuf_add(buf, pkg, pkglen) == -1)
+	if (ibuf_add_ibuf(buf, pkg) == -1)
 		goto fail;
 
 	ibuf_close(mrt->wbuf, buf);

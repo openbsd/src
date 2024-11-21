@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.178 2024/11/21 13:33:41 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.179 2024/11/21 13:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -272,8 +272,8 @@ void	 log_conn_attempt(const struct peer *, struct sockaddr *,
 	    socklen_t);
 
 /* mrt.c */
-void	 mrt_dump_bgp_msg(struct mrt *, void *, uint16_t,
-	    struct peer *, enum msg_type);
+void	 mrt_dump_bgp_msg(struct mrt *, struct ibuf *, struct peer *,
+	    enum msg_type);
 void	 mrt_dump_state(struct mrt *, uint16_t, uint16_t,
 	    struct peer *);
 void	 mrt_done(struct mrt *);

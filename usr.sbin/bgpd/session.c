@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.495 2024/11/21 13:33:41 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.496 2024/11/21 13:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1418,8 +1418,7 @@ session_sendmsg(struct ibuf *msg, struct peer *p, enum msg_type msgtype)
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == p->conf.groupid))
-			mrt_dump_bgp_msg(mrt, ibuf_data(msg), ibuf_size(msg),
-			    p, msgtype);
+			mrt_dump_bgp_msg(mrt, msg, p, msgtype);
 	}
 
 	ibuf_close(p->wbuf, msg);
@@ -1988,8 +1987,7 @@ session_process_msg(struct peer *p)
 			if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 			    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 			    mrt->group_id == p->conf.groupid))
-				mrt_dump_bgp_msg(mrt, ibuf_data(msg),
-				    ibuf_size(msg), p, msgtype);
+				mrt_dump_bgp_msg(mrt, msg, p, msgtype);
 		}
 
 		ibuf_skip(msg, MSGSIZE_HEADER);
