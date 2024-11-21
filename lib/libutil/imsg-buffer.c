@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.25 2024/11/21 12:59:33 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.26 2024/11/21 13:00:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -550,7 +550,6 @@ void
 msgbuf_init(struct msgbuf *msgbuf)
 {
 	msgbuf->queued = 0;
-	msgbuf->fd = -1;
 	TAILQ_INIT(&msgbuf->bufs);
 }
 
@@ -570,7 +569,7 @@ msgbuf_clear(struct msgbuf *msgbuf)
 }
 
 int
-ibuf_write(struct msgbuf *msgbuf)
+ibuf_write(int fd, struct msgbuf *msgbuf)
 {
 	struct iovec	 iov[IOV_MAX];
 	struct ibuf	*buf;
@@ -589,7 +588,7 @@ ibuf_write(struct msgbuf *msgbuf)
 		return (0);	/* nothing queued */
 
 again:
-	if ((n = writev(msgbuf->fd, iov, i)) == -1) {
+	if ((n = writev(fd, iov, i)) == -1) {
 		if (errno == EINTR)
 			goto again;
 		if (errno == EAGAIN || errno == ENOBUFS)
@@ -603,7 +602,7 @@ again:
 }
 
 int
-msgbuf_write(struct msgbuf *msgbuf)
+msgbuf_write(int fd, struct msgbuf *msgbuf)
 {
 	struct iovec	 iov[IOV_MAX];
 	struct ibuf	*buf, *buf0 = NULL;
@@ -648,7 +647,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	}
 
 again:
-	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
+	if ((n = sendmsg(fd, &msg, 0)) == -1) {
 		if (errno == EINTR)
 			goto again;
 		if (errno == EAGAIN || errno == ENOBUFS)

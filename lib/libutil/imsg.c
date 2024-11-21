@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.33 2024/11/21 12:58:46 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.34 2024/11/21 13:00:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,6 @@ imsgbuf_init(struct imsgbuf *imsgbuf, int fd)
 	msgbuf_init(&imsgbuf->w);
 	memset(&imsgbuf->r, 0, sizeof(imsgbuf->r));
 	imsgbuf->fd = fd;
-	imsgbuf->w.fd = fd;
 	imsgbuf->pid = getpid();
 	TAILQ_INIT(&imsgbuf->fds);
 }
@@ -138,7 +137,7 @@ fail:
 int
 imsgbuf_write(struct imsgbuf *imsgbuf)
 {
-	return msgbuf_write(&imsgbuf->w);
+	return msgbuf_write(imsgbuf->fd, &imsgbuf->w);
 }
 
 int

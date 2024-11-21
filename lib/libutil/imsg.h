@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.15 2024/11/21 12:58:46 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.16 2024/11/21 13:00:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -41,7 +41,6 @@ struct ibuf {
 struct msgbuf {
 	TAILQ_HEAD(, ibuf)	 bufs;
 	uint32_t		 queued;
-	int			 fd;
 };
 
 struct ibuf_read {
@@ -123,11 +122,11 @@ void		 ibuf_free(struct ibuf *);
 int		 ibuf_fd_avail(struct ibuf *);
 int		 ibuf_fd_get(struct ibuf *);
 void		 ibuf_fd_set(struct ibuf *, int);
-int		 ibuf_write(struct msgbuf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 uint32_t	 msgbuf_queuelen(struct msgbuf *);
-int		 msgbuf_write(struct msgbuf *);
+int		 ibuf_write(int, struct msgbuf *);
+int		 msgbuf_write(int, struct msgbuf *);
 
 /* imsg.c */
 void	 imsgbuf_init(struct imsgbuf *, int);
