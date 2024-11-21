@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.5 2024/11/21 13:17:02 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.6 2024/11/21 13:22:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -281,8 +281,6 @@ proc_dispatch(int fd, short event, void *arg)
 		n = imsgbuf_read(&p->imsgbuf);
 		switch (n) {
 		case -1:
-			if (errno == EAGAIN)
-				break;
 			log_warn("%s: imsgbuf_read", __func__);
 			proc_callback(p, NULL);
 			return;
