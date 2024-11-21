@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.401 2024/08/06 16:56:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.402 2024/11/21 20:15:44 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -147,6 +147,7 @@ static struct mbuf_queue	ipsendraw_mq;
 extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
+int	ip_ours_enqueue(struct mbuf **mp, int *offp, int nxt);
 int	ip_dooptions(struct mbuf *, struct ifnet *, int);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct route *, int);
 
@@ -259,6 +260,12 @@ ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
 
+	return ip_ours_enqueue(mp, offp, nxt);
+}
+
+int
+ip_ours_enqueue(struct mbuf **mp, int *offp, int nxt)
+{
 	/* save values for later, use after dequeue */
 	if (*offp != sizeof(struct ip)) {
 		struct m_tag *mtag;
@@ -766,11 +773,11 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared)
 			switch (af) {
 			case AF_INET:
 				counters_dec(ipcounters, ips_delivered);
-				break;
+				return ip_ours_enqueue(mp, offp, nxt);
 #ifdef INET6
 			case AF_INET6:
 				counters_dec(ip6counters, ip6s_delivered);
-				break;
+				return ip6_ours_enqueue(mp, offp, nxt);
 #endif
 			}
 			break;

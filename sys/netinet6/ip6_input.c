@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.266 2024/07/19 16:58:32 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.267 2024/11/21 20:15:44 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -189,6 +189,12 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af, int flags)
 	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
 
+	return ip6_ours_enqueue(mp, offp, nxt);
+}
+
+int
+ip6_ours_enqueue(struct mbuf **mp, int *offp, int nxt)
+{
 	/* save values for later, use after dequeue */
 	if (*offp != sizeof(struct ip6_hdr)) {
 		struct m_tag *mtag;
