@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.176 2024/11/21 13:29:52 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.177 2024/11/21 13:33:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,12 +104,6 @@ enum opt_params {
 	OPT_PARAM_AUTH,
 	OPT_PARAM_CAPABILITIES,
 	OPT_PARAM_EXT_LEN=255,
-};
-
-struct bgp_msg {
-	struct ibuf	*buf;
-	enum msg_type	 type;
-	uint16_t	 len;
 };
 
 struct bgpd_sysdep {

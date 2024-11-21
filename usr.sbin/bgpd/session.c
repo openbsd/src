@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.493 2024/11/21 13:29:52 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.494 2024/11/21 13:33:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -69,8 +69,8 @@ void	session_tcp_established(struct peer *);
 int	session_capa_add(struct ibuf *, uint8_t, uint8_t);
 int	session_capa_add_mp(struct ibuf *, uint8_t);
 int	session_capa_add_afi(struct ibuf *, uint8_t, uint8_t);
-struct bgp_msg	*session_newmsg(enum msg_type, uint16_t);
-int	session_sendmsg(struct bgp_msg *, struct peer *);
+struct ibuf	*session_newmsg(enum msg_type, uint16_t);
+void	session_sendmsg(struct ibuf *, struct peer *, enum msg_type);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
 void	session_update(uint32_t, struct ibuf *);
@@ -1385,10 +1385,9 @@ session_capa_add_afi(struct ibuf *b, uint8_t aid, uint8_t flags)
 	return (errs);
 }
 
-struct bgp_msg *
+struct ibuf *
 session_newmsg(enum msg_type msgtype, uint16_t len)
 {
-	struct bgp_msg		*msg;
 	struct ibuf		*buf;
 	int			 errs = 0;
 
@@ -1399,44 +1398,37 @@ session_newmsg(enum msg_type msgtype, uint16_t len)
 	errs += ibuf_add_n16(buf, len);
 	errs += ibuf_add_n8(buf, msgtype);
 
-	if (errs || (msg = calloc(1, sizeof(*msg))) == NULL) {
+	if (errs) {
 		ibuf_free(buf);
 		return (NULL);
 	}
 
-	msg->buf = buf;
-	msg->type = msgtype;
-	msg->len = len;
-
-	return (msg);
+	return (buf);
 }
 
-int
-session_sendmsg(struct bgp_msg *msg, struct peer *p)
+void
+session_sendmsg(struct ibuf *msg, struct peer *p, enum msg_type msgtype)
 {
 	struct mrt		*mrt;
 
 	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (!(mrt->type == MRT_ALL_OUT || (msg->type == UPDATE &&
+		if (!(mrt->type == MRT_ALL_OUT || (msgtype == UPDATE &&
 		    mrt->type == MRT_UPDATE_OUT)))
 			continue;
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == p->conf.groupid))
-			mrt_dump_bgp_msg(mrt, ibuf_data(msg->buf), msg->len, p,
-			    msg->type);
+			mrt_dump_bgp_msg(mrt, ibuf_data(msg), ibuf_size(msg),
+			    p, msgtype);
 	}
 
-	ibuf_close(p->wbuf, msg->buf);
+	ibuf_close(p->wbuf, msg);
 	if (!p->throttled && msgbuf_queuelen(p->wbuf) > SESS_MSG_HIGH_MARK) {
 		if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) == -1)
 			log_peer_warn(&p->conf, "imsg_compose XOFF");
 		else
 			p->throttled = 1;
 	}
-
-	free(msg);
-	return (0);
 }
 
 /*
@@ -1483,8 +1475,7 @@ capa2role(uint8_t val)
 void
 session_open(struct peer *p)
 {
-	struct bgp_msg		*buf;
-	struct ibuf		*opb;
+	struct ibuf		*buf, *opb;
 	size_t			 len, optparamlen;
 	uint16_t		 holdtime;
 	uint8_t			 i;
@@ -1601,59 +1592,54 @@ session_open(struct peer *p)
 	else
 		holdtime = conf->holdtime;
 
-	errs += ibuf_add_n8(buf->buf, 4);
-	errs += ibuf_add_n16(buf->buf, p->conf.local_short_as);
-	errs += ibuf_add_n16(buf->buf, holdtime);
+	errs += ibuf_add_n8(buf, 4);
+	errs += ibuf_add_n16(buf, p->conf.local_short_as);
+	errs += ibuf_add_n16(buf, holdtime);
 	/* is already in network byte order */
-	errs += ibuf_add_n32(buf->buf, conf->bgpid);
-	errs += ibuf_add_n8(buf->buf, optparamlen);
+	errs += ibuf_add_n32(buf, conf->bgpid);
+	errs += ibuf_add_n8(buf, optparamlen);
 
 	if (extlen) {
 		/* RFC9072 extra header which spans over the capabilities hdr */
-		errs += ibuf_add_n8(buf->buf, OPT_PARAM_EXT_LEN);
-		errs += ibuf_add_n16(buf->buf, ibuf_size(opb) + 1 + 2);
+		errs += ibuf_add_n8(buf, OPT_PARAM_EXT_LEN);
+		errs += ibuf_add_n16(buf, ibuf_size(opb) + 1 + 2);
 	}
 
 	if (optparamlen) {
-		errs += ibuf_add_n8(buf->buf, OPT_PARAM_CAPABILITIES);
+		errs += ibuf_add_n8(buf, OPT_PARAM_CAPABILITIES);
 
 		if (extlen) {
 			/* RFC9072: 2-byte extended length */
-			errs += ibuf_add_n16(buf->buf, ibuf_size(opb));
+			errs += ibuf_add_n16(buf, ibuf_size(opb));
 		} else {
-			errs += ibuf_add_n8(buf->buf, ibuf_size(opb));
+			errs += ibuf_add_n8(buf, ibuf_size(opb));
 		}
-		errs += ibuf_add_ibuf(buf->buf, opb);
+		errs += ibuf_add_ibuf(buf, opb);
 	}
 
 	ibuf_free(opb);
 
 	if (errs) {
-		ibuf_free(buf->buf);
-		free(buf);
+		ibuf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	if (session_sendmsg(buf, p) == -1) {
-		bgp_fsm(p, EVNT_CON_FATAL);
-		return;
-	}
-
+	session_sendmsg(buf, p, OPEN);
 	p->stats.msg_sent_open++;
 }
 
 void
 session_keepalive(struct peer *p)
 {
-	struct bgp_msg		*buf;
+	struct ibuf		*buf;
 
-	if ((buf = session_newmsg(KEEPALIVE, MSGSIZE_KEEPALIVE)) == NULL ||
-	    session_sendmsg(buf, p) == -1) {
+	if ((buf = session_newmsg(KEEPALIVE, MSGSIZE_KEEPALIVE)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
+	session_sendmsg(buf, p, KEEPALIVE);
 	start_timer_keepalive(p);
 	p->stats.msg_sent_keepalive++;
 }
@@ -1662,7 +1648,7 @@ void
 session_update(uint32_t peerid, struct ibuf *ibuf)
 {
 	struct peer		*p;
-	struct bgp_msg		*buf;
+	struct ibuf		*buf;
 
 	if ((p = getpeerbyid(conf, peerid)) == NULL) {
 		log_warnx("no such peer: id=%u", peerid);
@@ -1678,18 +1664,13 @@ session_update(uint32_t peerid, struct ibuf *ibuf)
 		return;
 	}
 
-	if (ibuf_add_ibuf(buf->buf, ibuf)) {
-		ibuf_free(buf->buf);
-		free(buf);
+	if (ibuf_add_ibuf(buf, ibuf)) {
+		ibuf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	if (session_sendmsg(buf, p) == -1) {
-		bgp_fsm(p, EVNT_CON_FATAL);
-		return;
-	}
-
+	session_sendmsg(buf, p, UPDATE);
 	start_timer_keepalive(p);
 	p->stats.msg_sent_update++;
 }
@@ -1708,7 +1689,7 @@ void
 session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
     struct ibuf *ibuf)
 {
-	struct bgp_msg		*buf;
+	struct ibuf		*buf;
 	int			 errs = 0;
 	size_t			 datalen = 0;
 
@@ -1743,24 +1724,19 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 		return;
 	}
 
-	errs += ibuf_add_n8(buf->buf, errcode);
-	errs += ibuf_add_n8(buf->buf, subcode);
+	errs += ibuf_add_n8(buf, errcode);
+	errs += ibuf_add_n8(buf, subcode);
 
 	if (ibuf != NULL)
-		errs += ibuf_add_ibuf(buf->buf, ibuf);
+		errs += ibuf_add_ibuf(buf, ibuf);
 
 	if (errs) {
-		ibuf_free(buf->buf);
-		free(buf);
+		ibuf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	if (session_sendmsg(buf, p) == -1) {
-		bgp_fsm(p, EVNT_CON_FATAL);
-		return;
-	}
-
+	session_sendmsg(buf, p, NOTIFICATION);
 	p->stats.msg_sent_notification++;
 	p->stats.last_sent_errcode = errcode;
 	p->stats.last_sent_suberr = subcode;
@@ -1785,7 +1761,7 @@ session_neighbor_rrefresh(struct peer *p)
 void
 session_rrefresh(struct peer *p, uint8_t aid, uint8_t subtype)
 {
-	struct bgp_msg		*buf;
+	struct ibuf		*buf;
 	int			 errs = 0;
 	uint16_t		 afi;
 	uint8_t			 safi;
@@ -1816,22 +1792,17 @@ session_rrefresh(struct peer *p, uint8_t aid, uint8_t subtype)
 		return;
 	}
 
-	errs += ibuf_add_n16(buf->buf, afi);
-	errs += ibuf_add_n8(buf->buf, subtype);
-	errs += ibuf_add_n8(buf->buf, safi);
+	errs += ibuf_add_n16(buf, afi);
+	errs += ibuf_add_n8(buf, subtype);
+	errs += ibuf_add_n8(buf, safi);
 
 	if (errs) {
-		ibuf_free(buf->buf);
-		free(buf);
+		ibuf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	if (session_sendmsg(buf, p) == -1) {
-		bgp_fsm(p, EVNT_CON_FATAL);
-		return;
-	}
-
+	session_sendmsg(buf, p, RREFRESH);
 	p->stats.msg_sent_rrefresh++;
 }
 
