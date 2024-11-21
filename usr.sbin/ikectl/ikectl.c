@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.34 2024/11/21 13:21:34 claudio Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.35 2024/11/21 13:26:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 
 	while (!done) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
-			errx(1, "imsgbuf_read error");
+			err(1, "read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 

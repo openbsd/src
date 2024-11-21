@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.125 2024/11/21 13:22:21 claudio Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.126 2024/11/21 13:26:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -789,7 +789,7 @@ open_connection(void)
 
 	while (1) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
-			errx(1, "imsgbuf_read error");
+			err(1, "read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 

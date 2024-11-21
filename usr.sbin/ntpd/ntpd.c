@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.140 2024/11/21 13:24:39 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.141 2024/11/21 13:26:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -695,14 +695,14 @@ ctl_main(int argc, char *argv[])
 	}
 
 	if (imsgbuf_flush(ibuf_ctl) == -1)
-		err(1, "ibuf_ctl: imsgbuf_flush error");
+		err(1, "write error");
 
 	done = 0;
 	while (!done) {
 		if ((n = imsgbuf_read(ibuf_ctl)) == -1)
-			err(1, "ibuf_ctl: imsgbuf_read error");
+			err(1, "read error");
 		if (n == 0)
-			errx(1, "ntpctl: pipe closed");
+			errx(1, "pipe closed");
 
 		while (!done) {
 			if ((n = imsg_get(ibuf_ctl, &imsg)) == -1)

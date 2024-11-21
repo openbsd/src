@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.309 2024/11/21 13:17:01 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.310 2024/11/21 13:26:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -436,7 +436,7 @@ main(int argc, char *argv[])
 			break;
 
 		if ((n = imsgbuf_read(imsgbuf)) == -1)
-			err(1, "imsgbuf_read error");
+			err(1, "read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 
