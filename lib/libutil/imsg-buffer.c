@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.24 2024/11/21 12:58:46 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.25 2024/11/21 12:59:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -32,8 +32,8 @@
 
 #include "imsg.h"
 
-static void	ibuf_enqueue(struct msgbuf *, struct ibuf *);
-static void	ibuf_dequeue(struct msgbuf *, struct ibuf *);
+static void	msgbuf_enqueue(struct msgbuf *, struct ibuf *);
+static void	msgbuf_dequeue(struct msgbuf *, struct ibuf *);
 static void	msgbuf_drain(struct msgbuf *, size_t);
 
 #define	IBUF_FD_MARK_ON_STACK	-2
@@ -373,7 +373,7 @@ ibuf_rewind(struct ibuf *buf)
 void
 ibuf_close(struct msgbuf *msgbuf, struct ibuf *buf)
 {
-	ibuf_enqueue(msgbuf, buf);
+	msgbuf_enqueue(msgbuf, buf);
 }
 
 void
@@ -546,6 +546,29 @@ ibuf_fd_set(struct ibuf *buf, int fd)
 		buf->fd = fd;
 }
 
+void
+msgbuf_init(struct msgbuf *msgbuf)
+{
+	msgbuf->queued = 0;
+	msgbuf->fd = -1;
+	TAILQ_INIT(&msgbuf->bufs);
+}
+
+uint32_t
+msgbuf_queuelen(struct msgbuf *msgbuf)
+{
+	return (msgbuf->queued);
+}
+
+void
+msgbuf_clear(struct msgbuf *msgbuf)
+{
+	struct ibuf	*buf;
+
+	while ((buf = TAILQ_FIRST(&msgbuf->bufs)) != NULL)
+		msgbuf_dequeue(msgbuf, buf);
+}
+
 int
 ibuf_write(struct msgbuf *msgbuf)
 {
@@ -577,41 +600,6 @@ again:
 
 	msgbuf_drain(msgbuf, n);
 	return (0);
-}
-
-void
-msgbuf_init(struct msgbuf *msgbuf)
-{
-	msgbuf->queued = 0;
-	msgbuf->fd = -1;
-	TAILQ_INIT(&msgbuf->bufs);
-}
-
-static void
-msgbuf_drain(struct msgbuf *msgbuf, size_t n)
-{
-	struct ibuf	*buf, *next;
-
-	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
-	    buf = next) {
-		next = TAILQ_NEXT(buf, entry);
-		if (n >= ibuf_size(buf)) {
-			n -= ibuf_size(buf);
-			ibuf_dequeue(msgbuf, buf);
-		} else {
-			buf->rpos += n;
-			n = 0;
-		}
-	}
-}
-
-void
-msgbuf_clear(struct msgbuf *msgbuf)
-{
-	struct ibuf	*buf;
-
-	while ((buf = TAILQ_FIRST(&msgbuf->bufs)) != NULL)
-		ibuf_dequeue(msgbuf, buf);
 }
 
 int
@@ -683,14 +671,8 @@ again:
 	return (0);
 }
 
-uint32_t
-msgbuf_queuelen(struct msgbuf *msgbuf)
-{
-	return (msgbuf->queued);
-}
-
 static void
-ibuf_enqueue(struct msgbuf *msgbuf, struct ibuf *buf)
+msgbuf_enqueue(struct msgbuf *msgbuf, struct ibuf *buf)
 {
 	/* if buf lives on the stack abort before causing more harm */
 	if (buf->fd == IBUF_FD_MARK_ON_STACK)
@@ -700,9 +682,27 @@ ibuf_enqueue(struct msgbuf *msgbuf, struct ibuf *buf)
 }
 
 static void
-ibuf_dequeue(struct msgbuf *msgbuf, struct ibuf *buf)
+msgbuf_dequeue(struct msgbuf *msgbuf, struct ibuf *buf)
 {
 	TAILQ_REMOVE(&msgbuf->bufs, buf, entry);
 	msgbuf->queued--;
 	ibuf_free(buf);
+}
+
+static void
+msgbuf_drain(struct msgbuf *msgbuf, size_t n)
+{
+	struct ibuf	*buf, *next;
+
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
+	    buf = next) {
+		next = TAILQ_NEXT(buf, entry);
+		if (n >= ibuf_size(buf)) {
+			n -= ibuf_size(buf);
+			msgbuf_dequeue(msgbuf, buf);
+		} else {
+			buf->rpos += n;
+			n = 0;
+		}
+	}
 }
