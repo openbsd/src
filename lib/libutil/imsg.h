@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.9 2024/11/21 12:42:14 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.10 2024/11/21 12:47:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -71,7 +71,6 @@ struct imsg_hdr {
 
 struct imsg {
 	struct imsg_hdr	 hdr;
-	int		 fd;
 	void		*data;
 	struct ibuf	*buf;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.23 2023/12/12 15:47:41 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.24 2024/11/21 12:47:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -146,15 +146,14 @@ imsg_get(struct imsgbuf *imsgbuf, struct imsg *imsg)
 	if (m.hdr.len > av)
 		return (0);
 
-	m.fd = -1;
-	m.buf = NULL;
 	m.data = NULL;
 
 	datalen = m.hdr.len - IMSG_HEADER_SIZE;
 	imsgbuf->r.rptr = imsgbuf->r.buf + IMSG_HEADER_SIZE;
+
+	if ((m.buf = ibuf_open(datalen)) == NULL)
+		return (-1);
 	if (datalen != 0) {
-		if ((m.buf = ibuf_open(datalen)) == NULL)
-			return (-1);
 		if (ibuf_add(m.buf, imsgbuf->r.rptr, datalen) == -1) {
 			/* this should never fail */
 			ibuf_free(m.buf);
@@ -164,7 +163,7 @@ imsg_get(struct imsgbuf *imsgbuf, struct imsg *imsg)
 	}
 
 	if (m.hdr.flags & IMSGF_HASFD)
-		m.fd = imsg_dequeue_fd(imsgbuf);
+		ibuf_fd_set(m.buf, imsg_dequeue_fd(imsgbuf));
 
 	if (m.hdr.len < av) {
 		left = av - m.hdr.len;
@@ -204,10 +203,7 @@ imsg_get_data(struct imsg *imsg, void *data, size_t len)
 int
 imsg_get_fd(struct imsg *imsg)
 {
-	int fd = imsg->fd;
-
-	imsg->fd = -1;
-	return fd;
+	return ibuf_fd_get(imsg->buf);
 }
 
 uint32_t
