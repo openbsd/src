@@ -70,7 +70,6 @@
 		imsg_compose_ibuf;
 		imsg_composev;
 		imsg_create;
-		imsg_fd_overhead;
 		imsg_forward;
 		imsg_free;
 		imsg_get;
