@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.40 2024/11/22 00:52:39 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.41 2024/11/22 00:54:42 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -233,7 +233,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	const EC_POINT *generator = NULL;
 	EC_POINT *tmp = NULL;
 	EC_POINT **row[2] = { 0 };
-	size_t totalnum;
 	size_t i, j;
 	int k;
 	int r_is_inverted = 0;
@@ -256,8 +255,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
-
-	totalnum = 2;
 
 	/* num_val will be the total number of temporarily precomputed points */
 	num_val = 0;
@@ -350,7 +347,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 		if (!EC_POINT_dbl(group, r, r, ctx))
 			goto err;
 
-		for (i = 0; i < totalnum; i++) {
+		for (i = 0; i < 2; i++) {
 			int digit;
 			int is_neg = 0;
 
