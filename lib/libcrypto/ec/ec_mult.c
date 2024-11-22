@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.43 2024/11/22 15:21:14 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.44 2024/11/22 16:17:36 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -70,154 +70,95 @@
 #include "bn_local.h"
 #include "ec_local.h"
 
-/*
- * This file implements the wNAF-based interleaving multi-exponentation method
- * (<URL:http://www.informatik.tu-darmstadt.de/TI/Mitarbeiter/moeller.html#multiexp>);
- * for multiplication with precomputation, we use wNAF splitting
- * (<URL:http://www.informatik.tu-darmstadt.de/TI/Mitarbeiter/moeller.html#fastexp>).
- */
-
-/* Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
- * This is an array  r[]  of values that are either zero or odd with an
- * absolute value less than  2^w  satisfying
- *     scalar = \sum_j r[j]*2^j
- * where at most one of any  w+1  consecutive digits is non-zero
- * with the exception that the most significant digit may be only
- * w-1 zeros away from that next non-zero digit.
- */
-static signed char *
-compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
+static int
+ec_window_bits(const BIGNUM *bn)
 {
-	int window_val;
-	int ok = 0;
-	signed char *r = NULL;
-	int sign = 1;
-	int bit, next_bit, mask;
-	size_t len = 0, j;
+	int bits = BN_num_bits(bn);
 
-	if (BN_is_zero(scalar)) {
-		r = malloc(1);
-		if (!r) {
+	if (bits >= 2000)
+		return 6;
+	if (bits >= 800)
+		return 5;
+	if (bits >= 300)
+		return 4;
+	if (bits >= 70)
+		return 3;
+	if (bits >= 20)
+		return 2;
+
+	return 1;
+}
+
+static int
+ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
+    size_t *out_len)
+{
+	signed char *wNAF = NULL;
+	size_t wNAF_len = 1, len = 1;
+	int digit, bit, next, mask, sign, wbits, window;
+	size_t i;
+	int ret = 0;
+
+	if (BN_is_zero(bn)) {
+		if ((wNAF = calloc(1, 1)) == NULL) {
 			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		r[0] = 0;
-		*ret_len = 1;
-		return r;
-	}
-	if (w <= 0 || w > 7) {
-		/* 'signed char' can represent integers with
-		 * absolute values less than 2^7 */
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-	bit = 1 << w;		/* at most 128 */
-	next_bit = bit << 1;	/* at most 256 */
-	mask = next_bit - 1;	/* at most 255 */
 
-	if (BN_is_negative(scalar)) {
-		sign = -1;
+		goto done;
 	}
-	if (scalar->d == NULL || scalar->top == 0) {
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-	len = BN_num_bits(scalar);
-	r = malloc(len + 1);	/* modified wNAF may be one digit longer than
-				 * binary representation (*ret_len will be
-				 * set to the actual length, i.e. at most
-				 * BN_num_bits(scalar) + 1) */
-	if (r == NULL) {
+
+	wNAF_len = BN_num_bits(bn);
+	if ((wNAF = calloc(1, wNAF_len + 1)) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	window_val = scalar->d[0] & mask;
-	j = 0;
-	while ((window_val != 0) || (j + w + 1 < len)) {
-		/* if j+w+1 >= len, window_val will not increase */
-		int digit = 0;
 
-		/* 0 <= window_val <= 2^(w+1) */
-		if (window_val & 1) {
-			/* 0 < window_val < 2^(w+1) */
-			if (window_val & bit) {
-				digit = window_val - next_bit;	/* -2^w < digit < 0 */
+	wbits = ec_window_bits(bn);
+	len = 1 << (wbits - 1);
 
-#if 1				/* modified wNAF */
-				if (j + w + 1 >= len) {
-					/*
-					 * special case for generating
-					 * modified wNAFs: no new bits will
-					 * be added into window_val, so using
-					 * a positive digit here will
-					 * decrease the total length of the
-					 * representation
-					 */
+	bit = 1 << wbits;
+	next = bit << 1;
+	mask = next - 1;
 
-					digit = window_val & (mask >> 1);	/* 0 < digit < 2^w */
-				}
-#endif
-			} else {
-				digit = window_val;	/* 0 < digit < 2^w */
+	sign = BN_is_negative(bn) ? -1 : 1;
+
+	window = bn->d[0] & mask;
+	i = 0;
+	while (window != 0 || i + wbits + 1 < wNAF_len) {
+		digit = 0;
+
+		if ((window & 1) != 0) {
+			digit = window;
+			if ((window & bit) != 0) {
+				digit = window - next;
+
+				if (i + wbits + 1 >= wNAF_len)
+					digit = window & (mask >> 1);
 			}
-
-			if (digit <= -bit || digit >= bit || !(digit & 1)) {
-				ECerror(ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			window_val -= digit;
-
-			/*
-			 * now window_val is 0 or 2^(w+1) in standard wNAF
-			 * generation; for modified window NAFs, it may also
-			 * be 2^w
-			 */
-			if (window_val != 0 && window_val != next_bit && window_val != bit) {
-				ECerror(ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
+			window -= digit;
 		}
-		r[j++] = sign * digit;
 
-		window_val >>= 1;
-		window_val += bit * BN_is_bit_set(scalar, j + w);
-
-		if (window_val > next_bit) {
-			ECerror(ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
+		wNAF[i++] = sign * digit;
+		window >>= 1;
+		window += bit * BN_is_bit_set(bn, i + wbits);
 	}
 
-	if (j > len + 1) {
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-	len = j;
-	ok = 1;
+	wNAF_len = i;
+
+ done:
+	*out_wNAF = wNAF;
+	wNAF = NULL;
+	*out_wNAF_len = wNAF_len;
+	*out_len = len;
+
+	ret = 1;
 
  err:
-	if (!ok) {
-		free(r);
-		r = NULL;
-	}
-	if (ok)
-		*ret_len = len;
-	return r;
+	free(wNAF);
+
+	return ret;
 }
-
-
-/* TODO: table should be optimised for the wNAF-based implementation,
- *       sometimes smaller windows will give better performance
- *       (thus the boundaries should be increased)
- */
-#define EC_window_bits_for_scalar_size(b) \
-		((size_t) \
-		 ((b) >= 2000 ? 6 : \
-		  (b) >=  800 ? 5 : \
-		  (b) >=  300 ? 4 : \
-		  (b) >=   70 ? 3 : \
-		  (b) >=   20 ? 2 : \
-		  1))
 
 static int
 ec_compute_odd_multiples(const EC_GROUP *group, const EC_POINT *point,
@@ -270,8 +211,8 @@ ec_wNAF_precompute(const EC_GROUP *group, const BIGNUM *m, const EC_POINT *point
 	EC_POINT **val = NULL;
 	size_t val_len = 0;
 	const EC_POINT *generator;
-	size_t wsize[2] = { 0 };
-	size_t i, len0, len1;
+	size_t len[2] = { 0 };
+	size_t i;
 	int ret = 0;
 
 	*out_val = NULL;
@@ -282,29 +223,23 @@ ec_wNAF_precompute(const EC_GROUP *group, const BIGNUM *m, const EC_POINT *point
 		goto err;
 	}
 
-	wsize[0] = EC_window_bits_for_scalar_size(BN_num_bits(m));
-	if ((wNAF[0] = compute_wNAF(m, wsize[0], &wNAF_len[0])) == NULL)
+	if (!ec_compute_wNAF(m, &wNAF[0], &wNAF_len[0], &len[0]))
+		goto err;
+	if (!ec_compute_wNAF(n, &wNAF[1], &wNAF_len[1], &len[1]))
 		goto err;
 
-	wsize[1] = EC_window_bits_for_scalar_size(BN_num_bits(n));
-	if ((wNAF[1] = compute_wNAF(n, wsize[1], &wNAF_len[1])) == NULL)
-		goto err;
-
-	len0 = 1 << (wsize[0] - 1);
-	len1 = 1 << (wsize[1] - 1);
-
-	if ((val = calloc(len0 + len1, sizeof(*val))) == NULL) {
+	if ((val = calloc(len[0] + len[1], sizeof(*val))) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	val_len = len0 + len1;
+	val_len = len[0] + len[1];
 
 	row[0] = &val[0];
-	row[1] = &val[len0];
+	row[1] = &val[len[0]];
 
-	if (!ec_compute_odd_multiples(group, generator, row[0], len0, ctx))
+	if (!ec_compute_odd_multiples(group, generator, row[0], len[0], ctx))
 		goto err;
-	if (!ec_compute_odd_multiples(group, point, row[1], len1, ctx))
+	if (!ec_compute_odd_multiples(group, point, row[1], len[1], ctx))
 		goto err;
 
 	if (!EC_POINTs_make_affine(group, val_len, val, ctx))
