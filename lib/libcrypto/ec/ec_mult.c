@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.42 2024/11/22 14:59:40 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.43 2024/11/22 15:21:14 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -282,12 +282,12 @@ ec_wNAF_precompute(const EC_GROUP *group, const BIGNUM *m, const EC_POINT *point
 		goto err;
 	}
 
-	wsize[0] = EC_window_bits_for_scalar_size(BN_num_bits(n));
-	if ((wNAF[0] = compute_wNAF(n, wsize[0], &wNAF_len[0])) == NULL)
+	wsize[0] = EC_window_bits_for_scalar_size(BN_num_bits(m));
+	if ((wNAF[0] = compute_wNAF(m, wsize[0], &wNAF_len[0])) == NULL)
 		goto err;
 
-	wsize[1] = EC_window_bits_for_scalar_size(BN_num_bits(m));
-	if ((wNAF[1] = compute_wNAF(m, wsize[1], &wNAF_len[1])) == NULL)
+	wsize[1] = EC_window_bits_for_scalar_size(BN_num_bits(n));
+	if ((wNAF[1] = compute_wNAF(n, wsize[1], &wNAF_len[1])) == NULL)
 		goto err;
 
 	len0 = 1 << (wsize[0] - 1);
@@ -302,9 +302,9 @@ ec_wNAF_precompute(const EC_GROUP *group, const BIGNUM *m, const EC_POINT *point
 	row[0] = &val[0];
 	row[1] = &val[len0];
 
-	if (!ec_compute_odd_multiples(group, point, row[0], len0, ctx))
+	if (!ec_compute_odd_multiples(group, generator, row[0], len0, ctx))
 		goto err;
-	if (!ec_compute_odd_multiples(group, generator, row[1], len1, ctx))
+	if (!ec_compute_odd_multiples(group, point, row[1], len1, ctx))
 		goto err;
 
 	if (!EC_POINTs_make_affine(group, val_len, val, ctx))
@@ -365,9 +365,9 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	/*
 	 * Set r to the neutral element. Scan through the wNAF representations
 	 * of m and n, starting at the most significant digit. Double r and for
-	 * each wNAF digit of m add the digit times the point, and for each
-	 * wNAF digit of n add the digit times the generator, adjusting the
-	 * signs as appropriate.
+	 * each wNAF digit of m add the digit times the generator, and for each
+	 * wNAF digit of n add the digit times the point, adjusting the signs
+	 * as appropriate.
 	 */
 
 	if (!EC_POINT_set_to_infinity(group, r))
