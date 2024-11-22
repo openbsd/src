@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.46 2024/11/22 17:08:13 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.47 2024/11/22 17:27:05 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -127,7 +127,7 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 	mask = next - 1;
 
 
-	/* Extract the wbits + 1 lowest bits without using BIGNUM internals. */
+	/* Extract the wbits + 1 lowest bits from bn into window. */
 	window = 0;
 	for (i = 0; i < wbits + 1; i++) {
 		if (BN_is_bit_set(bn, i))
