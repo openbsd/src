@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.106 2024/11/08 13:55:45 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.107 2024/11/22 12:01:14 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1110,7 +1110,7 @@ ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 			ECerror(ERR_R_EC_LIB);
 			return NULL;
 		}
-		EC_GROUP_set_asn1_flag(group, 0);
+		EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
 	} else if (params->type == ECPK_PARAM_IMPLICITLY_CA) {
 		return NULL;
 	} else {
