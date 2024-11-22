@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.44 2024/11/22 16:17:36 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.45 2024/11/22 16:27:46 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -124,8 +124,8 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 	sign = BN_is_negative(bn) ? -1 : 1;
 
 	window = bn->d[0] & mask;
-	i = 0;
-	while (window != 0 || i + wbits + 1 < wNAF_len) {
+
+	for (i = 0; i + wbits + 1 < wNAF_len || window != 0; i++) {
 		digit = 0;
 
 		if ((window & 1) != 0) {
@@ -139,9 +139,9 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 			window -= digit;
 		}
 
-		wNAF[i++] = sign * digit;
+		wNAF[i] = sign * digit;
 		window >>= 1;
-		window += bit * BN_is_bit_set(bn, i + wbits);
+		window += bit * BN_is_bit_set(bn, i + wbits + 1);
 	}
 
 	wNAF_len = i;
