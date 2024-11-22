@@ -87,13 +87,21 @@ http_result(enum http_result res)
 static int
 http_response(int fd)
 {
-	struct ibuf *b, *httpbuf = NULL;
+	struct ibuf *b;
 	unsigned int id;
 	enum http_result res;
 	char *lastmod;
 
-	while ((b = io_buf_read(fd, &httpbuf)) == NULL)
-		/* nothing */ ;
+	while (1) {
+		switch (msgbuf_read(fd, httpq)) {
+		case -1:
+			err(1, "msgbuf_read");
+		case 0:
+			errx(1, "msgbuf_read: connection closed");
+		}
+		if ((b = io_buf_get(httpq)) != NULL)
+			break;
+	}
 
 	io_read_buf(b, &id, sizeof(id));
 	io_read_buf(b, &res, sizeof(res));
@@ -142,7 +150,8 @@ main(int argc, char **argv)
 
 	close(fd[0]);
 	httpfd = fd[1];
-	if ((httpq = msgbuf_new()) == NULL)
+	if ((httpq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	    NULL)
 		err(1, NULL);
 
 	if ((outfd = open(file, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
