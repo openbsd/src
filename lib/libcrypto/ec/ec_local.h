@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.38 2024/11/16 15:32:08 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.39 2024/11/22 12:14:41 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -175,7 +175,7 @@ struct ec_group_st {
 	BIGNUM order;
 	BIGNUM cofactor;
 
-	int curve_name;		/* Optional NID for named curve. */
+	int nid;		/* Optional NID for named curve. */
 
 	/* ASN.1 encoding controls. */
 	int asn1_flag;

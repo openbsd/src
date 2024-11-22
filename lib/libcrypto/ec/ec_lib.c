@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.87 2024/11/17 10:48:13 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.88 2024/11/22 12:14:41 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -169,7 +169,7 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 			return 0;
 	}
 
-	dest->curve_name = src->curve_name;
+	dest->nid = src->nid;
 	dest->asn1_flag = src->asn1_flag;
 	dest->asn1_form = src->asn1_form;
 
@@ -408,14 +408,14 @@ EC_GROUP_get0_cofactor(const EC_GROUP *group)
 void
 EC_GROUP_set_curve_name(EC_GROUP *group, int nid)
 {
-	group->curve_name = nid;
+	group->nid = nid;
 }
 LCRYPTO_ALIAS(EC_GROUP_set_curve_name);
 
 int
 EC_GROUP_get_curve_name(const EC_GROUP *group)
 {
-	return group->curve_name;
+	return group->nid;
 }
 LCRYPTO_ALIAS(EC_GROUP_get_curve_name);
 
