@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.37 2024/11/21 15:03:56 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.38 2024/11/22 00:14:36 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -229,6 +229,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 {
 	const EC_POINT *generator = NULL;
 	EC_POINT *tmp = NULL;
+	EC_POINT **row[2] = { 0 };
 	size_t totalnum;
 	size_t i, j;
 	int k;
@@ -240,8 +241,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	size_t num_val;
 	EC_POINT **val = NULL;	/* precomputation */
 	EC_POINT **v;
-	EC_POINT ***val_sub = NULL;	/* pointers to sub-arrays of 'val' or
-					 * 'pre_comp->points' */
 	int ret = 0;
 
 	if (m == NULL || n == NULL) {
@@ -271,9 +270,8 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 
 	wsize = reallocarray(NULL, totalnum, sizeof wsize[0]);
 	wNAF_len = reallocarray(NULL, totalnum, sizeof wNAF_len[0]);
-	val_sub = reallocarray(NULL, totalnum, sizeof val_sub[0]);
 
-	if (wsize == NULL || wNAF_len == NULL || val_sub == NULL) {
+	if (wsize == NULL || wNAF_len == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -311,7 +309,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	/* allocate points for precomputation */
 	v = val;
 	for (i = 0; i < 2; i++) {
-		val_sub[i] = v;
+		row[i] = v;
 		for (j = 0; j < ((size_t) 1 << (wsize[i] - 1)); j++) {
 			*v = EC_POINT_new(group);
 			if (*v == NULL)
@@ -328,25 +326,25 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 
 	/*
 	 * prepare precomputed values:
-	 *  val_sub[i][0] :=     points[i]
-	 *  val_sub[i][1] := 3 * points[i]
-	 *  val_sub[i][2] := 5 * points[i]
+	 *  row[i][0] :=     points[i]
+	 *  row[i][1] := 3 * points[i]
+	 *  row[i][2] := 5 * points[i]
 	 *  ...
 	 */
 	for (i = 0; i < 2; i++) {
 		if (i < 1) {
-			if (!EC_POINT_copy(val_sub[i][0], point))
+			if (!EC_POINT_copy(row[i][0], point))
 				goto err;
 		} else {
-			if (!EC_POINT_copy(val_sub[i][0], generator))
+			if (!EC_POINT_copy(row[i][0], generator))
 				goto err;
 		}
 
 		if (wsize[i] > 1) {
-			if (!EC_POINT_dbl(group, tmp, val_sub[i][0], ctx))
+			if (!EC_POINT_dbl(group, tmp, row[i][0], ctx))
 				goto err;
 			for (j = 1; j < ((size_t) 1 << (wsize[i] - 1)); j++) {
-				if (!EC_POINT_add(group, val_sub[i][j], val_sub[i][j - 1], tmp, ctx))
+				if (!EC_POINT_add(group, row[i][j], row[i][j - 1], tmp, ctx))
 					goto err;
 			}
 		}
@@ -391,7 +389,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 				r_is_inverted = !r_is_inverted;
 			}
 
-			if (!EC_POINT_add(group, r, r, val_sub[i][digit >> 1], ctx))
+			if (!EC_POINT_add(group, r, r, row[i][digit >> 1], ctx))
 				goto err;
 		}
 	}
@@ -420,6 +418,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 			EC_POINT_free(*v);
 		free(val);
 	}
-	free(val_sub);
+
 	return ret;
 }
