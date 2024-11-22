@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.39 2024/11/22 00:15:38 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.40 2024/11/22 00:52:39 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -227,6 +227,9 @@ int
 ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx)
 {
+	signed char *wNAF[2] = { 0 };
+	size_t wNAF_len[2] = { 0 };
+	size_t wsize[2] = { 0 };
 	const EC_POINT *generator = NULL;
 	EC_POINT *tmp = NULL;
 	EC_POINT **row[2] = { 0 };
@@ -234,9 +237,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	size_t i, j;
 	int k;
 	int r_is_inverted = 0;
-	size_t *wsize = NULL;	/* individual window sizes */
-	signed char **wNAF = NULL;	/* individual wNAFs */
-	size_t *wNAF_len = NULL;
 	size_t max_len = 0;
 	size_t num_val;
 	EC_POINT **val = NULL;	/* precomputation */
@@ -259,23 +259,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 
 	totalnum = 2;
 
-	/* includes space for pivot */
-	wNAF = reallocarray(NULL, (totalnum + 1), sizeof wNAF[0]);
-	if (wNAF == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	wNAF[0] = NULL;		/* preliminary pivot */
-
-	wsize = reallocarray(NULL, totalnum, sizeof wsize[0]);
-	wNAF_len = reallocarray(NULL, totalnum, sizeof wNAF_len[0]);
-
-	if (wsize == NULL || wNAF_len == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
 	/* num_val will be the total number of temporarily precomputed points */
 	num_val = 0;
 
@@ -285,7 +268,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 		bits = i < 1 ? BN_num_bits(n) : BN_num_bits(m);
 		wsize[i] = EC_window_bits_for_scalar_size(bits);
 		num_val += (size_t) 1 << (wsize[i] - 1);
-		wNAF[i + 1] = NULL;	/* make sure we always have a pivot */
 		wNAF[i] = compute_wNAF(i < 1 ? n : m, wsize[i], &wNAF_len[i]);
 		if (wNAF[i] == NULL)
 			goto err;
@@ -403,16 +385,8 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 
  err:
 	EC_POINT_free(tmp);
-	free(wsize);
-	free(wNAF_len);
-	if (wNAF != NULL) {
-		signed char **w;
-
-		for (w = wNAF; *w != NULL; w++)
-			free(*w);
-
-		free(wNAF);
-	}
+	free(wNAF[0]);
+	free(wNAF[1]);
 	if (val != NULL) {
 		for (v = val; *v != NULL; v++)
 			EC_POINT_free(*v);
