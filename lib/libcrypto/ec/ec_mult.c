@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.41 2024/11/22 00:54:42 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.42 2024/11/22 14:59:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -219,6 +219,113 @@ compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 		  (b) >=   20 ? 2 : \
 		  1))
 
+static int
+ec_compute_odd_multiples(const EC_GROUP *group, const EC_POINT *point,
+    EC_POINT **row, size_t len, BN_CTX *ctx)
+{
+	EC_POINT *doubled = NULL;
+	size_t i;
+	int ret = 0;
+
+	if (len < 1)
+		goto err;
+
+	if ((row[0] = EC_POINT_dup(point, group)) == NULL)
+		goto err;
+
+	if ((doubled = EC_POINT_new(group)) == NULL)
+		goto err;
+	if (!EC_POINT_dbl(group, doubled, point, ctx))
+		goto err;
+	for (i = 1; i < len; i++) {
+		if ((row[i] = EC_POINT_new(group)) == NULL)
+			goto err;
+		if (!EC_POINT_add(group, row[i], row[i - 1], doubled, ctx))
+			goto err;
+	}
+
+	ret = 1;
+
+ err:
+	EC_POINT_free(doubled);
+
+	return ret;
+}
+
+/*
+ * This computes the wNAF representation of m and n and uses the window size to
+ * precompute the two rows of odd multiples of point and generator. On success,
+ * out_val owns the out_val_len points in the two rows.
+ *
+ * XXX - the only reason we need a single array is to be able to pass it to
+ * EC_POINTs_make_affine(). Consider writing a suitable variant that doesn't
+ * require such grotesque gymnastics.
+ */
+
+static int
+ec_wNAF_precompute(const EC_GROUP *group, const BIGNUM *m, const EC_POINT *point,
+    const BIGNUM *n, signed char *wNAF[2], size_t wNAF_len[2], EC_POINT **row[2],
+    EC_POINT ***out_val, size_t *out_val_len, BN_CTX *ctx)
+{
+	EC_POINT **val = NULL;
+	size_t val_len = 0;
+	const EC_POINT *generator;
+	size_t wsize[2] = { 0 };
+	size_t i, len0, len1;
+	int ret = 0;
+
+	*out_val = NULL;
+	*out_val_len = 0;
+
+	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
+		ECerror(EC_R_UNDEFINED_GENERATOR);
+		goto err;
+	}
+
+	wsize[0] = EC_window_bits_for_scalar_size(BN_num_bits(n));
+	if ((wNAF[0] = compute_wNAF(n, wsize[0], &wNAF_len[0])) == NULL)
+		goto err;
+
+	wsize[1] = EC_window_bits_for_scalar_size(BN_num_bits(m));
+	if ((wNAF[1] = compute_wNAF(m, wsize[1], &wNAF_len[1])) == NULL)
+		goto err;
+
+	len0 = 1 << (wsize[0] - 1);
+	len1 = 1 << (wsize[1] - 1);
+
+	if ((val = calloc(len0 + len1, sizeof(*val))) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	val_len = len0 + len1;
+
+	row[0] = &val[0];
+	row[1] = &val[len0];
+
+	if (!ec_compute_odd_multiples(group, point, row[0], len0, ctx))
+		goto err;
+	if (!ec_compute_odd_multiples(group, generator, row[1], len1, ctx))
+		goto err;
+
+	if (!EC_POINTs_make_affine(group, val_len, val, ctx))
+		goto err;
+
+	*out_val = val;
+	val = NULL;
+
+	*out_val_len = val_len;
+	val_len = 0;
+
+	ret = 1;
+
+ err:
+	for (i = 0; i < val_len; i++)
+		EC_POINT_free(val[i]);
+	free(val);
+
+	return ret;
+}
+
 /*
  * Compute r = generator * m + point * n in non-constant time.
  */
@@ -229,17 +336,13 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 {
 	signed char *wNAF[2] = { 0 };
 	size_t wNAF_len[2] = { 0 };
-	size_t wsize[2] = { 0 };
-	const EC_POINT *generator = NULL;
-	EC_POINT *tmp = NULL;
 	EC_POINT **row[2] = { 0 };
-	size_t i, j;
+	EC_POINT **val = NULL;
+	size_t val_len = 0;
+	size_t i;
 	int k;
 	int r_is_inverted = 0;
 	size_t max_len = 0;
-	size_t num_val;
-	EC_POINT **val = NULL;	/* precomputation */
-	EC_POINT **v;
 	int ret = 0;
 
 	if (m == NULL || n == NULL) {
@@ -251,86 +354,13 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 		goto err;
 	}
 
-	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
-		ECerror(EC_R_UNDEFINED_GENERATOR);
-		goto err;
-	}
-
-	/* num_val will be the total number of temporarily precomputed points */
-	num_val = 0;
-
-	for (i = 0; i < 2; i++) {
-		size_t bits;
-
-		bits = i < 1 ? BN_num_bits(n) : BN_num_bits(m);
-		wsize[i] = EC_window_bits_for_scalar_size(bits);
-		num_val += (size_t) 1 << (wsize[i] - 1);
-		wNAF[i] = compute_wNAF(i < 1 ? n : m, wsize[i], &wNAF_len[i]);
-		if (wNAF[i] == NULL)
-			goto err;
-		if (wNAF_len[i] > max_len)
-			max_len = wNAF_len[i];
-	}
-
-	/*
-	 * All points we precompute now go into a single array 'val'.
-	 * 'val_sub[i]' is a pointer to the subarray for the i-th point, or
-	 * to a subarray of 'pre_comp->points' if we already have
-	 * precomputation.
-	 */
-	val = reallocarray(NULL, (num_val + 1), sizeof val[0]);
-	if (val == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	val[num_val] = NULL;	/* pivot element */
-
-	/* allocate points for precomputation */
-	v = val;
-	for (i = 0; i < 2; i++) {
-		row[i] = v;
-		for (j = 0; j < ((size_t) 1 << (wsize[i] - 1)); j++) {
-			*v = EC_POINT_new(group);
-			if (*v == NULL)
-				goto err;
-			v++;
-		}
-	}
-	if (!(v == val + num_val)) {
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-	if (!(tmp = EC_POINT_new(group)))
+	if (!ec_wNAF_precompute(group, m, point, n, wNAF, wNAF_len, row,
+	    &val, &val_len, ctx))
 		goto err;
 
-	/*
-	 * prepare precomputed values:
-	 *  row[i][0] :=     points[i]
-	 *  row[i][1] := 3 * points[i]
-	 *  row[i][2] := 5 * points[i]
-	 *  ...
-	 */
-	for (i = 0; i < 2; i++) {
-		if (i < 1) {
-			if (!EC_POINT_copy(row[i][0], point))
-				goto err;
-		} else {
-			if (!EC_POINT_copy(row[i][0], generator))
-				goto err;
-		}
-
-		if (wsize[i] > 1) {
-			if (!EC_POINT_dbl(group, tmp, row[i][0], ctx))
-				goto err;
-			for (j = 1; j < ((size_t) 1 << (wsize[i] - 1)); j++) {
-				if (!EC_POINT_add(group, row[i][j], row[i][j - 1], tmp, ctx))
-					goto err;
-			}
-		}
-	}
-
-	if (!EC_POINTs_make_affine(group, num_val, val, ctx))
-		goto err;
+	max_len = wNAF_len[0];
+	if (wNAF_len[1] > max_len)
+		max_len = wNAF_len[1];
 
 	/*
 	 * Set r to the neutral element. Scan through the wNAF representations
@@ -381,14 +411,11 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	ret = 1;
 
  err:
-	EC_POINT_free(tmp);
 	free(wNAF[0]);
 	free(wNAF[1]);
-	if (val != NULL) {
-		for (v = val; *v != NULL; v++)
-			EC_POINT_free(*v);
-		free(val);
-	}
+	for (i = 0; i < val_len; i++)
+		EC_POINT_free(val[i]);
+	free(val);
 
 	return ret;
 }
