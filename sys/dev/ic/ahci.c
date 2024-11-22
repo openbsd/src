@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.42 2024/09/04 07:54:52 mglocker Exp $ */
+/*	$OpenBSD: ahci.c,v 1.43 2024/11/22 09:29:41 jan Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -320,6 +320,9 @@ noccc:
 	}
 
 	sc->sc_atascsi = atascsi_attach(&sc->sc_dev, &aaa);
+
+	/* Flush all residual bits of the interrupt status register */
+	ahci_write(sc, AHCI_REG_IS, ahci_read(sc, AHCI_REG_IS));
 
 	/* Enable interrupts */
 	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE | AHCI_REG_GHC_IE);
