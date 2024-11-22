@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.38 2024/11/22 00:14:36 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.39 2024/11/22 00:15:38 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -380,7 +380,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 
 			if (digit < 0) {
 				is_neg = 1;
-				digit = 0 - digit;
+				digit = -digit;
 			}
 
 			if (is_neg != r_is_inverted) {
