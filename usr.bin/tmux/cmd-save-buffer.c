@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.55 2022/12/07 09:44:44 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.56 2024/11/22 12:58:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -102,7 +102,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 			if (evb == NULL)
 				fatalx("out of memory");
 			evbuffer_add(evb, bufdata, bufsize);
-			cmdq_print_data(item, 1, evb);
+			cmdq_print_data(item, evb);
 			evbuffer_free(evb);
 			return (CMD_RETURN_NORMAL);
 		}
