@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.28 2024/11/21 13:03:21 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.29 2024/11/22 02:11:09 tb Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -605,9 +605,10 @@ msgbuf_new_reader(size_t hdrsz, ssize_t (*readhdr)(struct ibuf *, void *),
 void
 msgbuf_free(struct msgbuf *msgbuf)
 {
-	if (msgbuf != NULL)
+	if (msgbuf != NULL) {
 		msgbuf_clear(msgbuf);
-	free(msgbuf->rbuf);
+		free(msgbuf->rbuf);
+	}
 	free(msgbuf);
 }
 
