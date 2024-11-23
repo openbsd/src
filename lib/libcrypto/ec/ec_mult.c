@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.48 2024/11/23 07:28:57 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.49 2024/11/23 07:33:26 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -98,30 +98,23 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
     size_t *out_len)
 {
 	signed char *wNAF = NULL;
-	size_t wNAF_len = 1, len = 1;
+	size_t i, wNAF_len, len;
 	int digit, bit, next, sign, wbits, window;
-	size_t i;
 	int ret = 0;
 
-	if (BN_is_zero(bn)) {
-		if ((wNAF = calloc(1, 1)) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-
-		goto done;
-	}
-
-	sign = BN_is_negative(bn) ? -1 : 1;
-
-	wNAF_len = BN_num_bits(bn);
-	if ((wNAF = calloc(1, wNAF_len + 1)) == NULL) {
+	wNAF_len = BN_num_bits(bn) + 1;
+	if ((wNAF = calloc(1, wNAF_len)) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	wbits = ec_window_bits(bn);
 	len = 1 << (wbits - 1);
+
+	if (BN_is_zero(bn))
+		goto done;
+
+	sign = BN_is_negative(bn) ? -1 : 1;
 
 	bit = 1 << wbits;
 	next = bit << 1;
@@ -134,15 +127,14 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 	}
 
 	/* Instead of bn >>= 1 in each iteration, slide window to the left. */
-	for (i = 0; i + wbits + 1 < wNAF_len || window != 0; i++) {
+	for (i = 0; i < wNAF_len; i++) {
 		digit = 0;
 
 		/*
 		 * If window is odd, the i-th wNAF digit is window (mods 2^w),
-		 * where mods is the signed modulo in (-2^w-1, 2^w-1]. In the
-		 * last iterations the digits are grouped slightly differently.
-		 * Subtract the digit from window, so window is 0, next, or bit,
-		 * and add the digit to the wNAF digits.
+		 * where mods is the signed modulo in (-2^w-1, 2^w-1]. Subtract
+		 * the digit from window, so window is 0 or next, and add the
+		 * digit to the wNAF digits.
 		 */
 		if ((window & 1) != 0) {
 			digit = window;
@@ -157,8 +149,6 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 		window >>= 1;
 		window += bit * BN_is_bit_set(bn, i + wbits + 1);
 	}
-
-	wNAF_len = i;
 
  done:
 	*out_wNAF = wNAF;
