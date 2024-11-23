@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.47 2024/11/22 17:27:05 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.48 2024/11/23 07:28:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -89,7 +89,8 @@ ec_window_bits(const BIGNUM *bn)
 }
 
 /*
- * Modified width-(w+1) non-adjacent form of bn.
+ * Width-(w+1) non-adjacent form of bn = \sum_j n_j 2^j, with odd n_j,
+ * where at most one of any (w+1) consecutive digits is non-zero.
  */
 
 static int
@@ -98,7 +99,7 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 {
 	signed char *wNAF = NULL;
 	size_t wNAF_len = 1, len = 1;
-	int digit, bit, next, mask, sign, wbits, window;
+	int digit, bit, next, sign, wbits, window;
 	size_t i;
 	int ret = 0;
 
@@ -124,8 +125,6 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 
 	bit = 1 << wbits;
 	next = bit << 1;
-	mask = next - 1;
-
 
 	/* Extract the wbits + 1 lowest bits from bn into window. */
 	window = 0;
@@ -147,12 +146,8 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 		 */
 		if ((window & 1) != 0) {
 			digit = window;
-			if ((window & bit) != 0) {
+			if ((window & bit) != 0)
 				digit = window - next;
-
-				if (i + wbits + 1 >= wNAF_len)
-					digit = window & (mask >> 1);
-			}
 			window -= digit;
 		}
 
