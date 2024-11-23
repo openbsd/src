@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.15 2023/04/16 15:32:16 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.16 2024/11/23 15:38:12 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -57,17 +57,8 @@ sha3_keccakf(uint64_t st[25])
 	uint64_t t, bc[5];
 	int i, j, r;
 
-#if BYTE_ORDER != LITTLE_ENDIAN
-	uint8_t *v;
-
-	for (i = 0; i < 25; i++) {
-		v = (uint8_t *) &st[i];
-		st[i] = ((uint64_t) v[0])	 | (((uint64_t) v[1]) << 8) |
-			(((uint64_t) v[2]) << 16) | (((uint64_t) v[3]) << 24) |
-			(((uint64_t) v[4]) << 32) | (((uint64_t) v[5]) << 40) |
-			(((uint64_t) v[6]) << 48) | (((uint64_t) v[7]) << 56);
-	}
-#endif
+	for (i = 0; i < 25; i++)
+		st[i] = le64toh(st[i]);
 
 	for (r = 0; r < KECCAKF_ROUNDS; r++) {
 
@@ -102,20 +93,8 @@ sha3_keccakf(uint64_t st[25])
 		st[0] ^= sha3_keccakf_rndc[r];
 	}
 
-#if BYTE_ORDER != LITTLE_ENDIAN
-	for (i = 0; i < 25; i++) {
-		v = (uint8_t *) &st[i];
-		t = st[i];
-		v[0] = t & 0xFF;
-		v[1] = (t >> 8) & 0xFF;
-		v[2] = (t >> 16) & 0xFF;
-		v[3] = (t >> 24) & 0xFF;
-		v[4] = (t >> 32) & 0xFF;
-		v[5] = (t >> 40) & 0xFF;
-		v[6] = (t >> 48) & 0xFF;
-		v[7] = (t >> 56) & 0xFF;
-	}
-#endif
+	for (i = 0; i < 25; i++)
+		st[i] = htole64(st[i]);
 }
 
 int
