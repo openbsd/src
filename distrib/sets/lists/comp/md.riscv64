@@ -37,7 +37,6 @@
 ./usr/include/riscv64/ptrace.h
 ./usr/include/riscv64/reg.h
 ./usr/include/riscv64/reloc.h
-./usr/include/riscv64/riscv64var.h
 ./usr/include/riscv64/riscvreg.h
 ./usr/include/riscv64/sbi.h
 ./usr/include/riscv64/setjmp.h
