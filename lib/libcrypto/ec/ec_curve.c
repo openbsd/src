@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.49 2024/10/23 10:41:51 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.50 2024/11/24 10:12:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -83,6 +83,8 @@
 
 #include "ec_local.h"
 
+#ifdef ENABLE_SMALL_CURVES
+
 /* the nist prime curves */
 static const struct {
 	uint8_t seed[20];
@@ -128,6 +130,8 @@ static const struct {
 		0xb4, 0xd2, 0x28, 0x31,
 	},
 };
+
+#endif /* ENABLE_SMALL_CURVES */
 
 static const struct {
 	uint8_t seed[20];
@@ -300,6 +304,8 @@ static const struct {
 	},
 };
 
+#ifdef ENABLE_SMALL_CURVES
+
 /* the x9.62 prime curves (minus the nist prime curves) */
 static const struct {
 	uint8_t seed[20];
@@ -390,6 +396,8 @@ static const struct {
 		0xf6, 0x40, 0xec, 0x13,
 	},
 };
+
+#endif /* ENABLE_SMALL_CURVES */
 
 static const struct {
 	uint8_t seed[20];
@@ -576,6 +584,8 @@ static const struct {
 		0x25, 0x51,
 	},
 };
+
+#ifdef ENABLE_SMALL_CURVES
 
 /* the secg prime curves (minus the nist and x9.62 prime curves) */
 static const struct {
@@ -904,6 +914,8 @@ static const struct {
 	},
 };
 
+#endif /* ENABLE_SMALL_CURVES */
+
 static const struct {
 	uint8_t p[29];
 	uint8_t a[29];
@@ -989,6 +1001,8 @@ static const struct {
 		0x41, 0x41,
 	},
 };
+
+#ifdef ENABLE_SMALL_CURVES
 
 /* some wap/wtls curves */
 static const struct {
@@ -1252,6 +1266,8 @@ static const struct {
 		0x9a, 0xc4, 0xac, 0xc1,
 	},
 };
+
+#endif /* ENABLE_SMALL_CURVES */
 
 static const struct {
 	uint8_t p[28];
@@ -1810,6 +1826,7 @@ static const struct ec_curve {
 	const uint8_t *order;
 } ec_curve_list[] = {
 	/* secg curves */
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.comment = "SECG/WTLS curve over a 112 bit prime field",
 		.nid = NID_secp112r1,
@@ -1919,6 +1936,7 @@ static const struct ec_curve {
 		.order = _EC_SECG_PRIME_192K1.order,
 		.cofactor = 1,
 	},
+#endif /* ENABLE_SMALL_CURVES */
 	{
 		.comment = "SECG curve over a 224 bit prime field",
 		.nid = NID_secp224k1,
@@ -1987,6 +2005,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	/* X9.62 curves */
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.comment = "NIST/X9.62/SECG curve over a 192 bit prime field",
 		.nid = NID_X9_62_prime192v1,
@@ -2029,6 +2048,7 @@ static const struct ec_curve {
 		.order = _EC_X9_62_PRIME_192V3.order,
 		.cofactor = 1,
 	},
+#endif /* ENABLE_SMALL_CURVES */
 	{
 		.comment = "X9.62 curve over a 239 bit prime field",
 		.nid = NID_X9_62_prime239v1,
@@ -2085,6 +2105,7 @@ static const struct ec_curve {
 		.order = _EC_X9_62_PRIME_256V1.order,
 		.cofactor = 1,
 	},
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.comment = "SECG/WTLS curve over a 112 bit prime field",
 		.nid = NID_wap_wsg_idm_ecid_wtls6,
@@ -2198,6 +2219,7 @@ static const struct ec_curve {
 		.order = _EC_brainpoolP192t1.order,
 		.cofactor = 1,
 	},
+#endif /* ENABLE_SMALL_CURVES */
 	{
 		.comment = "RFC 5639 curve over a 224 bit prime field",
 		.nid = NID_brainpoolP224r1,
