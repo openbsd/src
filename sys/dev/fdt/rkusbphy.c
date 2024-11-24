@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkusbphy.c,v 1.5 2024/06/23 10:18:11 kettenis Exp $ */
+/*	$OpenBSD: rkusbphy.c,v 1.6 2024/11/24 22:46:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -59,6 +59,47 @@ struct rkusbphy_regs {
 struct rkusbphy_chip {
 	bus_addr_t			 c_base_addr;
 	const struct rkusbphy_regs	*c_regs;
+};
+
+/*
+ * RK3399 has two USB2PHY nodes that share a GRF.
+ */
+
+static const struct rkusbphy_regs rkusbphy_rk3399_usb0_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0xe450,	4,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0xe454,	0,	0x3,	0x2 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0xe458,	0,	0x3,	0x2 },
+	},
+};
+
+static const struct rkusbphy_regs rkusbphy_rk3399_usb1_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0xe460,	4,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0xe464,	0,	0x3,	0x2 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0xe468,	0,	0x3,	0x2 },
+	},
+ };
+
+static const struct rkusbphy_chip rkusbphy_rk3399[] = {
+	{
+		.c_base_addr = 0xe450,
+		.c_regs = &rkusbphy_rk3399_usb0_regs,
+	},
+	{
+		.c_base_addr = 0xe460,
+		.c_regs = &rkusbphy_rk3399_usb1_regs,
+	},
 };
 
 /*
@@ -190,6 +231,7 @@ struct rkusbphy_id {
 #define RKUSBPHY_ID(_n, _c) { _n, _c, nitems(_c) }
 
 static const struct rkusbphy_id rkusbphy_ids[] = {
+	RKUSBPHY_ID("rockchip,rk3399-usb2phy", rkusbphy_rk3399),
 	RKUSBPHY_ID("rockchip,rk3568-usb2phy", rkusbphy_rk3568),
 	RKUSBPHY_ID("rockchip,rk3588-usb2phy", rkusbphy_rk3588),
 };
