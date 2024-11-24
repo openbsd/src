@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.89 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.90 2024/11/24 11:33:34 kirill Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -118,6 +118,8 @@ TAILQ_HEAD(, pending_query)	 pending_queries;
 struct bl_node {
 	RB_ENTRY(bl_node)	 entry;
 	char			*domain;
+	int			 len;
+	int			 wildcard;
 };
 
 __dead void		 frontend_shutdown(void);
@@ -153,6 +155,7 @@ int			 bl_cmp(struct bl_node *, struct bl_node *);
 void			 free_bl(void);
 int			 pending_query_cnt(void);
 void			 check_available_af(void);
+void			 reverse(char *, char *);
 
 struct uw_conf		*frontend_conf;
 static struct imsgev	*iev_main;
@@ -741,7 +744,7 @@ handle_query(struct pending_query *pq)
 {
 	struct query_imsg	 query_imsg;
 	struct bl_node		 find;
-	int			 rcode;
+	int			 rcode, matched;
 	char			*str;
 	char			 dname[LDNS_MAX_DOMAINLEN + 1];
 	char			 qclass_buf[16];
@@ -798,12 +801,19 @@ handle_query(struct pending_query *pq)
 	log_debug("%s: %s %s %s ?", ip_port((struct sockaddr *)&pq->from),
 	    dname, qclass_buf, qtype_buf);
 
-	find.domain = dname;
-	if (RB_FIND(bl_tree, &bl_head, &find) != NULL) {
-		if (frontend_conf->blocklist_log)
-			log_info("blocking %s", dname);
-		error_answer(pq, LDNS_RCODE_REFUSED);
-		goto send_answer;
+	if (!RB_EMPTY(&bl_head)) {
+		find.len = strlen(dname);
+		find.wildcard = 0;
+		reverse(dname, dname + find.len);
+		find.domain = dname;
+		matched = (RB_FIND(bl_tree, &bl_head, &find) != NULL);
+		reverse(dname, dname + find.len);
+		if (matched) {
+			if (frontend_conf->blocklist_log)
+				log_info("blocking %s", dname);
+			error_answer(pq, LDNS_RCODE_REFUSED);
+			goto send_answer;
+		}
 	}
 
 	if (pq->qinfo.qtype == LDNS_RR_TYPE_AXFR || pq->qinfo.qtype ==
@@ -1549,14 +1559,20 @@ parse_blocklist(int fd)
 			if (linelen >= 2 && line[linelen - 2] != '.')
 				line[linelen - 1] = '.';
 			else
-				line[linelen - 1] = '\0';
+				line[linelen-- - 1] = '\0';
 		}
+
+		if (line[0] == '#')
+		    continue;
 
 		bl_node = malloc(sizeof *bl_node);
 		if (bl_node == NULL)
 			fatal("%s: malloc", __func__);
 		if ((bl_node->domain = strdup(line)) == NULL)
 			fatal("%s: strdup", __func__);
+		reverse(bl_node->domain, bl_node->domain + linelen);
+		bl_node->len = linelen;
+		bl_node->wildcard = line[0] == '.';
 		if (RB_INSERT(bl_tree, &bl_head, bl_node) != NULL) {
 			log_warnx("duplicate blocked domain \"%s\"", line);
 			free(bl_node->domain);
@@ -1571,7 +1587,12 @@ parse_blocklist(int fd)
 
 int
 bl_cmp(struct bl_node *e1, struct bl_node *e2) {
-	return (strcasecmp(e1->domain, e2->domain));
+	if (e1->wildcard == e2->wildcard)
+		return (strcasecmp(e1->domain, e2->domain));
+	else if (e1->wildcard)
+		return (strncasecmp(e1->domain, e2->domain, e1->len));
+	else /* e2->wildcard */
+		return (strncasecmp(e1->domain, e2->domain, e2->len));
 }
 
 void
@@ -1828,5 +1849,18 @@ check_available_af(void)
 		available_af = new_available_af;
 		frontend_imsg_compose_resolver(IMSG_CHANGE_AFS, 0,
 		    &available_af, sizeof(available_af));
+	}
+}
+
+void
+reverse(char *begin, char *end)
+{
+	char	t;
+
+	while (begin < --end) {
+		t = *begin;
+		*begin = *end;
+		*end = t;
+		++begin;
 	}
 }
