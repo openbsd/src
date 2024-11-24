@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.351 2024/11/20 10:21:22 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.352 2024/11/24 12:58:06 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1120,7 +1120,6 @@ ptsignal_locked(struct proc *p, int signum, enum signal_type type)
 				setrunnable(p);
 				goto out;
 			}
-			atomic_clearbits_int(&p->p_flag, P_WSLEEP);
 			p->p_stat = SSLEEP;
 			goto out;
 		}
