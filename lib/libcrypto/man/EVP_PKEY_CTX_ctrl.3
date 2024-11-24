@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.25 2024/11/07 17:33:42 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.26 2024/11/24 14:48:12 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\" Parts were split out into RSA_pkey_ctx_ctrl(3).
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 7 2024 $
+.Dd $Mdocdate: November 24 2024 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -411,24 +411,34 @@ The return value is the user key material length.
 The resulting pointer is owned by the library and should not be
 freed by the caller.
 .Ss CMAC parameters
-Application programs normally initialize an
+Application programs normally implement CMAC as described in
+.Xr EVP_PKEY_new_CMAC_key 3
+and do not need the control commands documented here.
+.Pp
+Alternatively, the call to
+.Xr EVP_PKEY_new_CMAC_key 3
+can be replaced as follows,
+leaving the rest of the example code given there unchanged:
+.Pp
+.Bl -enum -width 2n -compact
+.It
+Create an empty
 .Vt EVP_PKEY_CTX
-object using
-.Xr EVP_PKEY_CTX_new 3 ,
-specifying the
-.Vt EVP_PKEY
-object containing the symmetric key right away.
-Alternatively, an empty
-.Vt EVP_PKEY_CTX
-object can be created by passing the
+object by passing the
 .Dv EVP_PKEY_CMAC
 constant to
 .Xr EVP_PKEY_CTX_new_id 3 .
-After that, the block cipher can be selected by calling
+.It
+Initialize it with
+.Xr EVP_PKEY_keygen_init 3 .
+.It
+Select the block cipher by calling
 .Fn EVP_PKEY_CTX_ctrl
 with an
 .Fa optype
-of \-1, a
+of
+.Dv EVP_PKEY_OP_KEYGEN ,
+a
 .Fa cmd
 of
 .Dv EVP_PKEY_CTRL_CIPHER ,
@@ -441,13 +451,14 @@ object, which can be obtained from the functions in the CIPHER LISTING in
 The
 .Fa p1
 argument is ignored; passing 0 is recommended.
-.Pp
-After selecting the block cipher with
-.Dv EVP_PKEY_CTRL_CIPHER ,
+.It
+Call
 .Fn EVP_PKEY_CTX_ctrl
-can be called again with an
+again with an
 .Fa optype
-of \-1, a
+of
+.Dv EVP_PKEY_OP_KEYGEN ,
+a
 .Fa cmd
 of
 .Dv EVP_PKEY_CTRL_SET_MAC_KEY ,
@@ -455,6 +466,24 @@ of
 pointing to the symmetric key, and
 .Fa p1
 specifying the length of the symmetric key in bytes.
+.It
+Extract the desired
+.Vt EVP_PKEY
+object using
+.Xr EVP_PKEY_keygen 3 ,
+making sure the
+.Fa ppkey
+argument points to a storage location containing a
+.Dv NULL
+pointer.
+.It
+Proceed with
+.Xr EVP_MD_CTX_new 3 ,
+.Xr EVP_DigestSignInit 3 ,
+and
+.Xr EVP_DigestSign 3
+as usual.
+.El
 .Ss Other parameters
 The
 .Fn EVP_PKEY_CTX_set1_id ,
