@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.29 2023/07/01 08:27:26 jsing Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.30 2024/11/24 22:58:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -1252,6 +1252,7 @@ void
 dwmmc_pwrseq_post(uint32_t phandle)
 {
 	uint32_t *gpios, *gpio;
+	int post_delay;
 	int node;
 	int len;
 
@@ -1274,6 +1275,10 @@ dwmmc_pwrseq_post(uint32_t phandle)
 		gpio_controller_set_pin(gpio, 0);
 		gpio = gpio_controller_next_pin(gpio);
 	}
+
+	post_delay = OF_getpropint(node, "post-power-on-delay-ms", 0);
+	if (post_delay)
+		delay(post_delay * 1000);
 
 	free(gpios, M_TEMP, len);
 }
