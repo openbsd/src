@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.61 2024/11/09 02:40:57 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.62 2024/11/24 21:27:04 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -245,7 +245,7 @@ verify_existing() {
 	( VERBOSE=$_v verify "$@" )
 }
 
-firmware_in_dmesg() {
+devices_in_dmesg() {
 	local IFS
 	local _d _m _dmesgtail _last='' _nl='
 '
@@ -360,7 +360,7 @@ detect_firmware() {
 	local _devices _last='' _d
 
 	set -sA _devices -- $(
-	    firmware_in_dmesg
+	    devices_in_dmesg
 	    for _d in $( installed_firmware '*' '-firmware-' '*' ); do
 		firmware_devicename "$_d"
 	    done
@@ -588,6 +588,17 @@ if "$DELETE"; then
 		)
 	elif "$ALL"; then
 		set -A installed -- $( installed_firmware '*' '-firmware-' '*' )
+	else
+		set -A installed -- $(
+		    set -- $( devices_in_dmesg )
+		    for f in $( installed_firmware '*' -firmware- '*' ); do
+		        n="$( firmware_devicename "$f" )"
+		        for d; do
+		            [ "$d" = "$n" ] && continue 2
+		        done
+		        echo "$f"
+		    done
+		)
 	fi
 
 	status " delete "
