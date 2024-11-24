@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.97 2024/11/21 11:58:45 jca Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.98 2024/11/24 13:02:37 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -465,6 +465,11 @@ setrunnable(struct proc *p)
 		panic("setrunnable");
 	case SSTOP:
 		prio = p->p_usrpri;
+		/* if not yet asleep, unstop but don't add to runqueue */
+		if (ISSET(p->p_flag, P_WSLEEP)) {
+			p->p_stat = SSLEEP;
+			return;
+		}
 		setrunqueue(NULL, p, prio);
 		break;
 	case SSLEEP:
