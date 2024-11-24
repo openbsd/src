@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.29 2024/11/08 12:35:26 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.30 2024/11/24 10:13:16 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -1035,6 +1035,7 @@ static const struct ec_private_key {
 	int oct_len;
 	uint8_t oct[256];
 } ec_private_keys[] = {
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.name = "secp112r1",
 		.der_len = 64,
@@ -1272,6 +1273,7 @@ static const struct ec_private_key {
 			0xdc,
 		},
 	},
+#endif /* ENABLE_SMALL_CURVES */
 	{
 		.name = "secp224k1",
 		.der_len = 107,
@@ -1519,6 +1521,7 @@ static const struct ec_private_key {
 			0x9c, 0x6b, 0xce, 0xc4, 0x8e,
 		},
 	},
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.name = "prime192v1",
 		.der_len = 97,
@@ -1627,6 +1630,7 @@ static const struct ec_private_key {
 			0xd3,
 		},
 	},
+#endif /* ENABLE_SMALL_CURVES */
 	{
 		.name = "prime239v1",
 		.der_len = 115,
@@ -1790,6 +1794,7 @@ static const struct ec_private_key {
 			0xe3,
 		},
 	},
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.name = "wap-wsg-idm-ecid-wtls6",
 		.der_len = 64,
@@ -2080,6 +2085,7 @@ static const struct ec_private_key {
 			0xc7,
 		},
 	},
+#endif /* ENABLE_SMALL_CURVES */
 	{
 		.name = "brainpoolP224r1",
 		.der_len = 110,

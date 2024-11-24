@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.160 2024/05/22 14:03:24 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.161 2024/11/24 10:13:16 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -639,6 +639,14 @@ func nidFromString(ns string) (int, error) {
 		return nid, nil
 	}
 	return -1, fmt.Errorf("unknown NID %q", ns)
+}
+
+func skipSmallCurve(nid int) bool {
+	switch C.int(nid) {
+	case C.NID_secp160k1, C.NID_secp160r1, C.NID_secp160r2, C.NID_secp192k1, C.NID_X9_62_prime192v1:
+		return true
+	}
+	return false
 }
 
 var evpMds = map[string]*C.EVP_MD{
@@ -1637,6 +1645,9 @@ func (wtg *wycheproofTestGroupECDH) run(algorithm string, variant testVariant) b
 	if err != nil {
 		log.Fatalf("Failed to get nid for curve: %v", err)
 	}
+	if skipSmallCurve(nid) {
+		return true
+	}
 
 	success := true
 	for _, wt := range wtg.Tests {
@@ -1785,6 +1796,9 @@ func (wtg *wycheproofTestGroupECDSA) run(algorithm string, variant testVariant) 
 	nid, err := nidFromString(wtg.Key.Curve)
 	if err != nil {
 		log.Fatalf("Failed to get nid for curve: %v", err)
+	}
+	if skipSmallCurve(nid) {
+		return true
 	}
 	ecKey := C.EC_KEY_new_by_curve_name(C.int(nid))
 	if ecKey == nil {
@@ -2750,7 +2764,7 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sect\d{3}[rk]1)_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sect\d{3}[rk]1|secp(160|192))_`)
 
 	for _, test := range tests {
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))

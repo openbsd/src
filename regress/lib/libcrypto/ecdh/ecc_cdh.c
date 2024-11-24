@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecc_cdh.c,v 1.2 2023/07/16 08:25:41 tb Exp $ */
+/*	$OpenBSD: ecc_cdh.c,v 1.3 2024/11/24 10:13:16 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -40,6 +40,7 @@ static const struct ecc_cdh_test {
 	const char *pub_y;
 	const char *want;
 } ecc_cdh_tests[] = {
+#ifdef ENABLE_SMALL_CURVES
 	{
 		.nid = NID_X9_62_prime192v1,
 		.peer_x = "42ea6dd9969dd2a61fea1aac7f8e98edcc896c6e55857cc0",
@@ -265,6 +266,7 @@ static const struct ecc_cdh_test {
 		.pub_y = "58ea42edbeeafca9ff44cfd7f29abd2cbde7626d79e422c9",
 		.want = "72e88f3ea67d46d46dbf83926e7e2a6b85b54536741e6d2c",
 	},
+#endif /* ENABLE_SMALL_CURVES */
 
 	{
 		.nid = NID_secp224r1,
