@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.26 2024/10/07 04:29:01 kn Exp $	*/
+/*	$OpenBSD: priv.c,v 1.27 2024/11/24 10:44:59 kn Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -189,14 +189,10 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		/* Set the interface address */
 		strlcpy(ifra.ifra_name, vfr.vfr_name, sizeof(ifra.ifra_name));
 
-		ifra.ifra_addr.sa_len =
-		    ifra.ifra_mask.sa_len =
-		    sizeof(struct sockaddr_in);
-
 		memcpy(&ifra.ifra_addr, &vfr.vfr_addr,
-		    ifra.ifra_addr.sa_len);
+		    sizeof(ifra.ifra_addr));
 		memcpy(&ifra.ifra_mask, &vfr.vfr_mask,
-		    ifra.ifra_mask.sa_len);
+		    sizeof(ifra.ifra_mask));
 
 		if (ioctl(env->vmd_fd, SIOCAIFADDR, &ifra) == -1)
 			log_warn("SIOCAIFADDR");
@@ -212,14 +208,10 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		strlcpy(in6_ifra.ifra_name, vfr.vfr_name,
 		    sizeof(in6_ifra.ifra_name));
 
-		in6_ifra.ifra_addr.sin6_len =
-		    in6_ifra.ifra_prefixmask.sin6_len =
-		    sizeof(struct sockaddr_in6);
-
 		memcpy(&in6_ifra.ifra_addr, &vfr.vfr_addr,
-		    in6_ifra.ifra_addr.sin6_len);
+		    sizeof(in6_ifra.ifra_addr));
 		memcpy(&in6_ifra.ifra_prefixmask, &vfr.vfr_mask,
-		    in6_ifra.ifra_prefixmask.sin6_len);
+		    sizeof(in6_ifra.ifra_prefixmask));
 		in6_ifra.ifra_prefixmask.sin6_scope_id = 0;
 
 		in6_ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
