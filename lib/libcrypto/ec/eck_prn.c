@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.39 2024/11/14 10:27:59 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.40 2024/11/25 06:51:39 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -330,7 +330,7 @@ ECPKParameters_print(BIO *bio, const EC_GROUP *group, int off)
 		return 0;
 	}
 
-	if (EC_GROUP_get_asn1_flag(group))
+	if ((EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) != 0)
 		return ecpk_print_asn1_parameters(bio, group, off);
 
 	return ecpk_print_explicit_parameters(bio, group, off);

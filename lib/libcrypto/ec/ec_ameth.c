@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.72 2024/10/29 06:36:58 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.73 2024/11/25 06:51:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -104,7 +104,7 @@ eckey_get_curve_name(const EC_KEY *eckey, int *nid)
 		ECerror(EC_R_MISSING_PARAMETERS);
 		return 0;
 	}
-	if (EC_GROUP_get_asn1_flag(group) != 0)
+	if ((EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) != 0)
 		*nid = EC_GROUP_get_curve_name(group);
 
 	return 1;
