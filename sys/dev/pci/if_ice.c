@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.15 2024/11/25 12:50:47 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.16 2024/11/25 12:52:11 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -1751,7 +1751,7 @@ void
 ice_debug_array(struct ice_hw *hw, uint64_t mask, uint32_t rowsize,
 		uint32_t __unused groupsize, uint8_t *buf, size_t len)
 {
-	if (!(mask & hw->debug_mask))
+	if (!(mask & ice_debug))
 		return;
 
 	/* Make sure the row-size isn't too large */
@@ -1832,7 +1832,7 @@ ice_debug_cq(struct ice_hw *hw, struct ice_ctl_q_info *cq,
 	struct ice_aq_desc *cq_desc = (struct ice_aq_desc *)desc;
 	uint16_t datalen, flags;
 
-	if (!((ICE_DBG_AQ_DESC | ICE_DBG_AQ_DESC_BUF) & hw->debug_mask))
+	if (!((ICE_DBG_AQ_DESC | ICE_DBG_AQ_DESC_BUF) & ice_debug))
 		return;
 
 	if (!desc)
@@ -26749,7 +26749,7 @@ ice_set_link_management_mode(struct ice_softc *sc)
 		return;
 	}
 #if 0
-	if (sc->hw.debug_mask & ICE_DBG_LINK)
+	if (ice_debug & ICE_DBG_LINK)
 		ice_print_ldo_tlv(sc, &tlv);
 #endif
 	/* Set lenient link mode */

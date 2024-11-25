@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icevar.h,v 1.3 2024/11/19 09:41:32 stsp Exp $	*/
+/*	$OpenBSD: if_icevar.h,v 1.4 2024/11/25 12:52:11 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -3559,7 +3559,6 @@ struct ice_hw {
 #endif
 	/* PSM clock frequency for calculating RL profile params */
 	uint32_t psm_clk_freq;
-	uint64_t debug_mask;		/* BITMAP for debug mask */
 	enum ice_mac_type mac_type;
 #if 0
 	/* pci info */
