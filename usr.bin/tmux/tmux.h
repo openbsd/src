@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1245 2024/11/22 12:58:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1246 2024/11/25 08:34:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3348,9 +3348,12 @@ void	control_notify_paste_buffer_deleted(const char *);
 
 /* session.c */
 extern struct sessions sessions;
+extern struct session_groups session_groups;
 extern u_int next_session_id;
 int	session_cmp(struct session *, struct session *);
 RB_PROTOTYPE(sessions, session, entry, session_cmp);
+int	session_group_cmp(struct session_group *, struct session_group *s2);
+RB_PROTOTYPE(session_groups, session_group, entry, session_group_cmp);
 int		 session_alive(struct session *);
 struct session	*session_find(const char *);
 struct session	*session_find_by_id_str(const char *);
