@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icereg.h,v 1.1 2024/11/08 12:17:07 stsp Exp $	*/
+/*	$OpenBSD: if_icereg.h,v 1.2 2024/11/25 12:50:47 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -12453,6 +12453,14 @@ struct ice_aqc_fw_log_cfg_resp {
 	uint16_t module_identifier;
 	uint8_t log_level;
 	uint8_t rsvd0;
+};
+
+struct ice_aq_get_set_rss_lut_params {
+	uint16_t vsi_handle;	/* software VSI handle */
+	uint16_t lut_size;	/* size of the LUT buffer */
+	uint8_t lut_type;	/* type of the LUT (i.e. VSI, PF, Global) */
+	uint8_t *lut;		/* input RSS LUT for set / output for get */
+	uint8_t global_lut_id;	/* only valid when lut_type is global */
 };
 
 /**
