@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.92 2024/07/24 12:18:10 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.93 2024/11/25 12:51:00 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -520,7 +520,6 @@ uvm_pager_put(struct uvm_object *uobj, struct vm_page *pg,
 	 * now attempt the I/O.   if we have a failure and we are
 	 * clustered, we will drop the cluster and try again.
 	 */
-ReTry:
 	if (uobj) {
 		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
 	} else {
@@ -564,48 +563,34 @@ ReTry:
 		 * "swblk" (for transient errors, so we can retry),
 		 * or 0 (for hard errors).
 		 */
-		if (uobj == NULL && pg != NULL) {
-			/* XXX daddr_t -> int */
-			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
-			if (pg->pg_flags & PQ_ANON) {
-				rw_enter(pg->uanon->an_lock, RW_WRITE);
-				pg->uanon->an_swslot = nswblk;
-				rw_exit(pg->uanon->an_lock);
-			} else {
-				rw_enter(pg->uobject->vmobjlock, RW_WRITE);
-				uao_set_swslot(pg->uobject,
-					       pg->offset >> PAGE_SHIFT,
-					       nswblk);
-				rw_exit(pg->uobject->vmobjlock);
-			}
-		}
-		if (result == VM_PAGER_AGAIN) {
-			/*
-			 * for transient failures, free all the swslots that
-			 * we're not going to retry with.
-			 */
-			if (uobj == NULL) {
-				if (pg) {
-					/* XXX daddr_t -> int */
-					uvm_swap_free(swblk + 1, *npages - 1);
+		if (uobj == NULL) {
+			if (pg != NULL) {
+				if (pg->pg_flags & PQ_ANON) {
+					rw_enter(pg->uanon->an_lock, RW_WRITE);
+					pg->uanon->an_swslot = 0;
+					rw_exit(pg->uanon->an_lock);
 				} else {
-					/* XXX daddr_t -> int */
-					uvm_swap_free(swblk, *npages);
+					rw_enter(pg->uobject->vmobjlock, RW_WRITE);
+					uao_set_swslot(pg->uobject,
+					    pg->offset >> PAGE_SHIFT, 0);
+					rw_exit(pg->uobject->vmobjlock);
 				}
 			}
-			if (pg) {
-				ppsp[0] = pg;
-				*npages = 1;
-				goto ReTry;
-			}
-		} else if (uobj == NULL) {
 			/*
-			 * for hard errors on swap-backed pageouts,
-			 * mark the swslots as bad.  note that we do not
-			 * free swslots that we mark bad.
+			 * for transient failures, free all the swslots
 			 */
-			/* XXX daddr_t -> int */
-			uvm_swap_markbad(swblk, *npages);
+			if (result == VM_PAGER_AGAIN) {
+				/* XXX daddr_t -> int */
+				uvm_swap_free(swblk, *npages);
+			} else {
+				/*
+				 * for hard errors on swap-backed pageouts,
+				 * mark the swslots as bad.  note that we do not
+				 * free swslots that we mark bad.
+				 */
+				/* XXX daddr_t -> int */
+				uvm_swap_markbad(swblk, *npages);
+			}
 		}
 	}
 
@@ -614,7 +599,6 @@ ReTry:
 	 * was one).    give up!   the caller only has one page ("pg")
 	 * to worry about.
 	 */
-	
 	return result;
 }
 

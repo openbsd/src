@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.129 2024/11/07 10:46:52 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.130 2024/11/25 12:51:00 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -859,8 +859,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 					if (result != VM_PAGER_AGAIN)
 						uvm_pageactivate(p);
 					pmap_clear_reference(p);
-					/* XXXCDC: if (swap_backed) FREE p's
-					 * swap block? */
 				} else {
 					/* pageout was a success... */
 					pmap_clear_reference(p);
