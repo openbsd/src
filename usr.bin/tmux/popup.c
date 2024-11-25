@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.55 2024/09/30 07:54:51 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.56 2024/11/25 08:36:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -692,6 +692,7 @@ popup_display(int flags, enum box_lines lines, struct cmdq_item *item, u_int px,
 	pd->border_cell.attr = 0;
 
 	screen_init(&pd->s, jx, jy, 0);
+	screen_set_default_cursor(&pd->s, global_w_options);
 	colour_palette_init(&pd->palette);
 	colour_palette_from_option(&pd->palette, global_w_options);
 
