@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.16 2024/11/25 12:52:11 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.17 2024/11/25 14:39:20 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -14509,6 +14509,13 @@ ice_load_pkg_file(struct ice_softc *sc)
 	uint8_t cached_layer_count;
 	const char *fwname = "ice-ddp";
 	int err;
+
+	/*
+	 * XXX At present this driver always runs in safe mode.
+	 * Do not attempt to load firmware yet.
+	 */
+	status = ICE_ERR_NOT_IMPL;
+	goto err_load_pkg;
 
 	err = loadfirmware(fwname, &pkg, &pkg_size);
 	if (err) {
