@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.13 2024/11/25 12:35:37 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.14 2024/11/25 12:43:16 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -23868,7 +23868,6 @@ ice_rx_queues_alloc(struct ice_softc *sc)
 	struct ice_vsi *vsi = &sc->pf_vsi;
 	struct ice_rx_queue *rxq;
 	int err, i;
-	uint32_t hardmtu = ice_hardmtu(&sc->hw);
 
 	KASSERT(sc->isc_nrxd[0] <= ICE_MAX_DESC_COUNT);
 #if 0
@@ -23916,8 +23915,8 @@ ice_rx_queues_alloc(struct ice_softc *sc)
 
 		for (j = 0; j < sc->isc_nrxd[i]; j++) {
 			map = &rxq->rx_map[j];
-			if (bus_dmamap_create(sc->sc_dmat, hardmtu, 1,
-			    hardmtu, 0,
+			if (bus_dmamap_create(sc->sc_dmat, vsi->mbuf_sz, 1,
+			    vsi->mbuf_sz, 0,
 			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 			    &map->rxm_map) != 0) {
 				printf("%s: could not allocate Rx DMA map\n",
