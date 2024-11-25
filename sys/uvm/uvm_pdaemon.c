@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.130 2024/11/25 12:51:00 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.131 2024/11/25 13:06:25 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ uvm_pageout(void *arg)
 		long size;
 
 		uvm_lock_fpageq();
-		if (TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
+		if (TAILQ_EMPTY(&uvm.pmr_control.allocs) || uvmexp.paging > 0) {
 			msleep_nsec(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", INFSLP);
 			uvmexp.pdwoke++;
@@ -245,7 +245,8 @@ uvm_pageout(void *arg)
 			constraint = no_constraint;
 		}
 		/* How many pages do we need to free during this round? */
-		shortage = uvmexp.freetarg - uvmexp.free + BUFPAGES_DEFICIT;
+		shortage = uvmexp.freetarg -
+		    (uvmexp.free + uvmexp.paging) + BUFPAGES_DEFICIT;
 		uvm_unlock_fpageq();
 
 		/*
@@ -302,8 +303,7 @@ uvm_pageout(void *arg)
 		 * wake up any waiters.
 		 */
 		uvm_lock_fpageq();
-		if (uvmexp.free > uvmexp.reserve_kernel ||
-		    uvmexp.paging == 0) {
+		if (uvmexp.free > uvmexp.reserve_kernel || uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
 		}
 
@@ -339,7 +339,7 @@ uvm_pageout(void *arg)
 void
 uvm_aiodone_daemon(void *arg)
 {
-	int s, free;
+	int s, npages;
 	struct buf *bp, *nbp;
 
 	uvm.aiodoned_proc = curproc;
@@ -358,10 +358,10 @@ uvm_aiodone_daemon(void *arg)
 		mtx_leave(&uvm.aiodoned_lock);
 
 		/* process each i/o that's done. */
-		free = uvmexp.free;
+		npages = 0;
 		while (bp != NULL) {
 			if (bp->b_flags & B_PDAEMON) {
-				uvmexp.paging -= bp->b_bufsize >> PAGE_SHIFT;
+				npages += bp->b_bufsize >> PAGE_SHIFT;
 			}
 			nbp = TAILQ_NEXT(bp, b_freelist);
 			s = splbio();	/* b_iodone must by called at splbio */
@@ -371,8 +371,10 @@ uvm_aiodone_daemon(void *arg)
 
 			sched_pause(yield);
 		}
+
 		uvm_lock_fpageq();
-		wakeup(free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
+		atomic_sub_int(&uvmexp.paging, npages);
+		wakeup(uvmexp.free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
 		    &uvmexp.free);
 		uvm_unlock_fpageq();
 	}
@@ -776,7 +778,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 		 */
 
 		if (result == VM_PAGER_PEND) {
-			uvmexp.paging += npages;
+			atomic_add_int(&uvmexp.paging, npages);
 			uvm_lock_pageq();
 			uvmexp.pdpending++;
 			if (p) {
