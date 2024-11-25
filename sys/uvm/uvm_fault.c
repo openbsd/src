@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.143 2024/11/05 15:32:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.144 2024/11/25 13:46:55 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -557,14 +557,14 @@ int		uvm_fault_check(
 
 int		uvm_fault_upper(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
-		    struct vm_anon **, vm_fault_t);
+		    struct vm_anon **);
 boolean_t	uvm_fault_upper_lookup(
 		    struct uvm_faultinfo *, const struct uvm_faultctx *,
 		    struct vm_anon **, struct vm_page **);
 
 int		uvm_fault_lower(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
-		    struct vm_page **, vm_fault_t);
+		    struct vm_page **);
 int		uvm_fault_lower_io(
 		    struct uvm_faultinfo *, struct uvm_faultctx *,
 		    struct uvm_object **, struct vm_page **);
@@ -605,7 +605,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 		shadowed = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
 		if (shadowed == TRUE) {
 			/* case 1: fault on an anon in our amap */
-			error = uvm_fault_upper(&ufi, &flt, anons, fault_type);
+			error = uvm_fault_upper(&ufi, &flt, anons);
 		} else {
 			struct uvm_object *uobj = ufi.entry->object.uvm_obj;
 
@@ -634,8 +634,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 					error = EACCES;
 			} else {
 				/* case 2: fault on backing obj or zero fill */
-				error = uvm_fault_lower(&ufi, &flt, pages,
-				    fault_type);
+				error = uvm_fault_lower(&ufi, &flt, pages);
 			}
 		}
 	}
@@ -918,7 +917,7 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
  */
 int
 uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-   struct vm_anon **anons, vm_fault_t fault_type)
+   struct vm_anon **anons)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct vm_anon *oanon, *anon = anons[flt->centeridx];
@@ -1213,7 +1212,7 @@ uvm_fault_lower_lookup(
  */
 int
 uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-   struct vm_page **pages, vm_fault_t fault_type)
+   struct vm_page **pages)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
