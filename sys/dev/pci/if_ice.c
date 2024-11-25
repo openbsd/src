@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.11 2024/11/19 09:41:32 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.12 2024/11/25 10:40:53 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -10962,8 +10962,6 @@ ice_setup_rx_ctx(struct ice_rx_queue *rxq)
 		    ice_aq_str(hw->adminq.sq_last_status));
 		return (EIO);
 	}
-
-	ICE_WRITE(hw, rxq->tail, 0);
 
 	return 0;
 }
