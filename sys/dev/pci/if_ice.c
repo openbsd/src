@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.12 2024/11/25 10:40:53 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.13 2024/11/25 12:35:37 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -11831,6 +11831,23 @@ ice_enable_intr(struct ice_hw *hw, int vector)
 }
 
 /**
+ * ice_disable_intr - Disable interrupts for given vector
+ * @hw: the device private HW structure
+ * @vector: the interrupt index in PF space
+ *
+ * In MSI or Legacy interrupt mode, interrupt 0 is the only valid index.
+ */
+void
+ice_disable_intr(struct ice_hw *hw, int vector)
+{
+	uint32_t dyn_ctl;
+
+	/* Use ITR_NONE so that ITR configuration is not changed. */
+	dyn_ctl = ICE_ITR_NONE << GLINT_DYN_CTL_ITR_INDX_S;
+	ICE_WRITE(hw, GLINT_DYN_CTL(vector), dyn_ctl);
+}
+
+/**
  * ice_copy_phy_caps_to_cfg - Copy PHY ability data to configuration data
  * @pi: port information structure
  * @caps: PHY ability structure to copy data from
@@ -13342,6 +13359,8 @@ int
 ice_down(struct ice_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ice_hw *hw = &sc->hw;
+	int i;
 
 	timeout_del(&sc->sc_admin_timer);
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -13362,6 +13381,14 @@ ice_down(struct ice_softc *sc)
 		    "prepared for impending reset\n", __func__);
 		return EBUSY;
 	}
+
+	/*
+	 * Disable all possible interrupts except ITR 0 because this handles
+	 * the AdminQ interrupts, and we want to keep processing these even
+	 * when the interface is down.
+	 */
+	for (i = 1; i < hw->func_caps.common_cap.num_msix_vectors; i++)
+		ice_disable_intr(hw, i);
 #if 0
 	ice_rdma_pf_stop(sc);
 #endif
