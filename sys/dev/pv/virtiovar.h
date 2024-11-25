@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.22 2024/09/02 08:26:26 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.23 2024/11/25 19:30:47 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ struct virtio_ops {
 	void		(*set_status)(struct virtio_softc *, int);
 	int		(*neg_features)(struct virtio_softc *, const struct virtio_feature_name *);
 	int		(*poll_intr)(void *);
+	void		(*intr_barrier)(struct virtio_softc *);
 };
 
 #define VIRTIO_CHILD_ERROR	((void*)1)
@@ -203,6 +204,7 @@ struct virtio_softc {
 #define	virtio_poll_intr(sc)			(sc)->sc_ops->poll_intr(sc)
 #define	virtio_get_status(sc)			(sc)->sc_ops->get_status(sc)
 #define	virtio_set_status(sc, i)		(sc)->sc_ops->set_status(sc, i)
+#define	virtio_intr_barrier(sc)			(sc)->sc_ops->intr_barrier(sc)
 
 /* only for transport drivers */
 #define	virtio_device_reset(sc)			virtio_set_status((sc), 0)
