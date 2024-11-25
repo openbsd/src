@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.420 2024/11/21 07:34:38 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.421 2024/11/25 12:32:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3842,17 +3842,21 @@ server_client_print(struct client *c, int parse, struct evbuffer *evb)
 	size_t				 size = EVBUFFER_LENGTH(evb);
 	struct window_pane		*wp;
 	struct window_mode_entry	*wme;
-	char				*sanitized, *msg, *line;
+	char				*sanitized, *msg, *line, empty = '\0';
 
 	if (!parse) {
 		utf8_stravisx(&msg, data, size,
 		    VIS_OCTAL|VIS_CSTYLE|VIS_NOSLASH);
-		log_debug("%s: %s", __func__, msg);
 	} else {
-		msg = EVBUFFER_DATA(evb);
-		if (msg[size - 1] != '\0')
-			evbuffer_add(evb, "", 1);
+		if (size == 0)
+			msg = &empty;
+		else {
+			msg = EVBUFFER_DATA(evb);
+			if (msg[size - 1] != '\0')
+				evbuffer_add(evb, "", 1);
+		}
 	}
+	log_debug("%s: %s", __func__, msg);
 
 	if (c == NULL)
 		goto out;
