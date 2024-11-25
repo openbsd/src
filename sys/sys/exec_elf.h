@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.105 2024/07/14 09:48:49 jca Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.106 2024/11/25 04:37:06 jsg Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -196,8 +196,6 @@ typedef struct {
 /* Non-standard */
 #define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
 #define EM__LAST__	(EM_ALPHA_EXP + 1)
-
-#define EM_NUM		22		/* number of machine types */
 
 /* Version */
 #define EV_NONE		0		/* Invalid */
