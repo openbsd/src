@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.131 2024/11/25 13:06:25 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.132 2024/11/25 13:37:49 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -343,6 +343,7 @@ uvm_aiodone_daemon(void *arg)
 	struct buf *bp, *nbp;
 
 	uvm.aiodoned_proc = curproc;
+	KERNEL_UNLOCK();
 
 	for (;;) {
 		/*
@@ -359,6 +360,7 @@ uvm_aiodone_daemon(void *arg)
 
 		/* process each i/o that's done. */
 		npages = 0;
+		KERNEL_LOCK();
 		while (bp != NULL) {
 			if (bp->b_flags & B_PDAEMON) {
 				npages += bp->b_bufsize >> PAGE_SHIFT;
@@ -371,6 +373,7 @@ uvm_aiodone_daemon(void *arg)
 
 			sched_pause(yield);
 		}
+		KERNEL_UNLOCK();
 
 		uvm_lock_fpageq();
 		atomic_sub_int(&uvmexp.paging, npages);
