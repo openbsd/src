@@ -1,0 +1,52 @@
+.\" $OpenBSD: ice.4,v 1.1 2024/11/26 21:59:30 stsp Exp $
+.\"
+.\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 26 2024 $
+.Dt ICE 4
+.Os
+.Sh NAME
+.Nm ice
+.Nd Intel Ethernet 800 series Ethernet device
+.Sh SYNOPSIS
+.Cd "ice* at pci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports Intel 800 series controllers based on the
+Intel E810 Ethernet chipset.
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Fx 12.2 .
+.Ox
+support was added in
+.Ox 7.7 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Intel and ported to
+.Ox
+by
+.An Stefan Sperling Aq Mt stsp@openbsd.org .
