@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.19 2024/11/26 17:34:00 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.20 2024/11/26 17:36:06 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -9230,13 +9230,13 @@ ice_setup_tx_ctx(struct ice_tx_queue *txq, struct ice_tlan_ctx *tlan_ctx,
 	}
 
 	tlan_ctx->src_vsi = hw->vsi_ctx[vsi->idx]->vsi_num;
-#if 0
+
 	/* Enable TSO */
 	tlan_ctx->tso_ena = 1;
 	tlan_ctx->internal_usage_flag = 1;
 
 	tlan_ctx->tso_qnum = pf_q;
-#endif
+
 	/*
 	 * Stick with the older legacy Tx queue interface, instead of the new
 	 * advanced queue interface.
