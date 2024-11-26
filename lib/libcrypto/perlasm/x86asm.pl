@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # require 'x86asm.pl';
-# &asm_init(<flavor>,"des-586.pl"[,$i386only]);
+# &asm_init(<flavor>,"aes-586.pl"[,$x86only]);
 # &function_begin("foo");
 # ...
 # &function_end("foo");
