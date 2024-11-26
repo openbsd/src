@@ -1,8 +1,11 @@
-# $OpenBSD: bsd.regress.mk,v 1.27 2023/09/24 08:28:20 tb Exp $
+# $OpenBSD: bsd.regress.mk,v 1.28 2024/11/26 06:12:44 tb Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
 NOMAN=
+
+# Include debug information in binaries
+CFLAGS+= -g
 
 # No installation.
 install:
