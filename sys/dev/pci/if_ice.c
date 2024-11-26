@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.21 2024/11/26 17:37:30 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.22 2024/11/26 17:38:43 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -31,8 +31,9 @@
  */
 
 /*
- * Ported from FreeBSD ice(4) by Stefan Sperling in 2024.
+ * Ported from FreeBSD ice(4) and OpenBSD ixl(4) by Stefan Sperling in 2024.
  *
+ * Copyright (c) 2016,2017 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
