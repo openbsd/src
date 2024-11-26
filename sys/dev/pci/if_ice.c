@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.20 2024/11/26 17:36:06 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.21 2024/11/26 17:37:30 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -26237,10 +26237,66 @@ ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
 }
 
 int
-ice_txeof(struct ice_softc *sc, struct ice_tx_queue *rxq)
+ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 {
-	/* TODO */
-	return 0;
+	struct ifqueue *ifq = txq->txq_ifq;
+	struct ice_tx_desc *ring, *txd;
+	struct ice_tx_map *txm;
+	bus_dmamap_t map;
+	unsigned int cons, prod, last;
+	unsigned int mask;
+	uint64_t dtype;
+	int done = 0;
+
+	prod = txq->txq_prod;
+	cons = txq->txq_cons;
+
+	if (cons == prod)
+		return (0);
+
+	bus_dmamap_sync(sc->sc_dmat, ICE_DMA_MAP(&txq->tx_desc_mem),
+	    0, ICE_DMA_LEN(&txq->tx_desc_mem), BUS_DMASYNC_POSTREAD);
+
+	ring = ICE_DMA_KVA(&txq->tx_desc_mem);
+	mask = txq->desc_count - 1;
+
+	do {
+		txm = &txq->tx_map[cons];
+		last = txm->txm_eop;
+		txd = &ring[last];
+
+		dtype = htole64((txd->cmd_type_offset_bsz &
+		    ICE_TXD_QW1_DTYPE_M) >> ICE_TXD_QW1_DTYPE_S);
+		if (dtype != htole64(ICE_TX_DESC_DTYPE_DESC_DONE))
+			break;
+
+		map = txm->txm_map;
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, map);
+		m_freem(txm->txm_m);
+
+		txm->txm_m = NULL;
+		txm->txm_eop = -1;
+
+		cons = last + 1;
+		cons &= mask;
+
+		done = 1;
+	} while (cons != prod);
+
+	bus_dmamap_sync(sc->sc_dmat, ICE_DMA_MAP(&txq->tx_desc_mem),
+	    0, ICE_DMA_LEN(&txq->tx_desc_mem), BUS_DMASYNC_PREREAD);
+
+	txq->txq_cons = cons;
+
+	//ixl_enable(sc, txr->txr_msix);
+
+	if (ifq_is_oactive(ifq))
+		ifq_restart(ifq);
+
+	return (done);
 }
 
 int
