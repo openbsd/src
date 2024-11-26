@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.92 2024/07/09 16:08:30 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.93 2024/11/26 10:28:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -452,6 +452,10 @@ rules_do(int fd)
 		fprintf(stderr, "%llu events read\n", dtst.dtst_readevt);
 		fprintf(stderr, "%llu events dropped\n", dtst.dtst_dropevt);
 		fprintf(stderr, "%llu events filtered\n", bt_filtered);
+		fprintf(stderr, "%llu clock ticks skipped\n",
+			dtst.dtst_skiptick);
+		fprintf(stderr, "%llu recursive events dropped\n",
+			dtst.dtst_recurevt);
 	}
 }
 

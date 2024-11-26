@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_profile.c,v 1.8 2024/04/06 11:18:02 mpi Exp $ */
+/*	$OpenBSD: dt_prov_profile.c,v 1.9 2024/11/26 10:28:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -101,15 +101,18 @@ dt_prov_profile_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 void
 dt_clock(struct clockrequest *cr, void *cf, void *arg)
 {
-	uint64_t count, i;
+	uint64_t count;
 	struct dt_evt *dtev;
 	struct dt_pcb *dp = arg;
 
 	count = clockrequest_advance(cr, dp->dp_nsecs);
-	for (i = 0; i < count; i++) {
-		dtev = dt_pcb_ring_get(dp, 1);
-		if (dtev == NULL)
-			return;
-		dt_pcb_ring_consume(dp, dtev);
-	}
+	if (count == 0)
+		return;
+	else if (count > 1)
+		dt_pcb_ring_skiptick(dp, count - 1);
+
+	dtev = dt_pcb_ring_get(dp, 1);
+	if (dtev == NULL)
+		return;
+	dt_pcb_ring_consume(dp, dtev);
 }

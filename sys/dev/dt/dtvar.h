@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.20 2024/11/02 16:59:22 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.21 2024/11/26 10:28:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -116,6 +116,8 @@ struct dtioc_req {
 struct dtioc_stat {
 	uint64_t		 dtst_readevt;	/* events read */
 	uint64_t		 dtst_dropevt;	/* events dropped */
+	uint64_t		 dtst_skiptick;	/* clock ticks skipped */
+	uint64_t		 dtst_recurevt;	/* recursive events */
 };
 
 struct dtioc_getaux {
@@ -179,6 +181,7 @@ struct dt_pcb	*dt_pcb_alloc(struct dt_probe *, struct dt_softc *);
 void		 dt_pcb_free(struct dt_pcb *);
 void		 dt_pcb_purge(struct dt_pcb_list *);
 
+void		 dt_pcb_ring_skiptick(struct dt_pcb *, unsigned int);
 struct dt_evt	*dt_pcb_ring_get(struct dt_pcb *, int);
 void		 dt_pcb_ring_consume(struct dt_pcb *, struct dt_evt *);
 
