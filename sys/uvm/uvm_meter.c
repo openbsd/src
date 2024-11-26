@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.50 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.51 2024/11/26 09:51:30 mpi Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -301,9 +301,6 @@ uvmexp_print(int (*pr)(const char *, ...))
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free (%d zero)\n",
 	    uexp.npages, uexp.active, uexp.inactive, uexp.wired,
 	    uexp.free, uexp.zeropages);
-	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
-	    uexp.anonminpct, uexp.anonmin, uexp.vnodeminpct,
-	    uexp.vnodemin, uexp.vtextminpct, uexp.vtextmin);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
 	    "wired-max=%d\n", uexp.freemin, uexp.freetarg, uexp.inactarg,
 	    uexp.wiredmax);
