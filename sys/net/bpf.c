@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.227 2024/11/19 23:26:35 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.228 2024/11/26 10:42:58 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1180,22 +1180,19 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, u_long cmd)
 int
 bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 {
-	struct bpf_if *bp, *candidate = NULL;
+	struct bpf_if *bp;
 	int error = 0;
 
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
 	TAILQ_FOREACH(bp, &bpf_iflist, bif_next) {
-		if (strcmp(bp->bif_name, ifr->ifr_name) != 0)
-			continue;
-
-		if (candidate == NULL || candidate->bif_dlt > bp->bif_dlt)
-			candidate = bp;
+		if (strcmp(bp->bif_name, ifr->ifr_name) == 0)
+			break;
 	}
 
 	/* Not found. */
-	if (candidate == NULL)
+	if (bp == NULL)
 		return (ENXIO);
 
 	/*
@@ -1208,12 +1205,12 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		if ((error = bpf_allocbufs(d)))
 			goto out;
 	}
-	if (candidate != d->bd_bif) {
+	if (bp != d->bd_bif) {
 		/*
 		 * Detach if attached to something else.
 		 */
 		bpf_detachd(d);
-		bpf_attachd(d, candidate);
+		bpf_attachd(d, bp);
 	}
 	bpf_resetd(d);
 out:
