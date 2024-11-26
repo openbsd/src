@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.17 2024/11/25 14:39:20 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.18 2024/11/26 17:32:05 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -271,6 +271,7 @@ struct ice_softc {
 	struct task sc_admin_task;
 	struct timeout sc_admin_timer;
 
+	struct rwlock sc_cfg_lock;
 	unsigned int sc_dead;
 
 	enum ice_state state;
@@ -12985,6 +12986,12 @@ ice_up(struct ice_softc *sc)
 	struct ice_intr_vector *iv;
 	int i, err;
 
+	rw_enter_write(&sc->sc_cfg_lock);
+	if (sc->sc_dead) {
+		rw_exit_write(&sc->sc_cfg_lock);
+		return (ENXIO);
+	}
+
 	ice_update_laa_mac(sc);
 
 	/* Initialize software Tx tracking values */
@@ -13014,6 +13021,7 @@ ice_up(struct ice_softc *sc)
 	if (err) {
 		printf("%s: Unable to configure the main VSI for Tx: err %d\n",
 		    sc->sc_dev.dv_xname, err);
+		rw_exit_write(&sc->sc_cfg_lock);
 		return err;
 	}
 
@@ -13060,12 +13068,14 @@ ice_up(struct ice_softc *sc)
 	ifp->if_flags |= IFF_RUNNING;
 
 	ice_set_state(&sc->state, ICE_STATE_DRIVER_INITIALIZED);
+	rw_exit_write(&sc->sc_cfg_lock);
 	return 0;
 
 err_stop_rx:
 	ice_control_all_rx_queues(&sc->pf_vsi, false);
 err_cleanup_tx:
 	ice_vsi_disable_tx(&sc->pf_vsi);
+	rw_exit_write(&sc->sc_cfg_lock);
 	return err;
 }
 
@@ -13363,25 +13373,33 @@ ice_down(struct ice_softc *sc)
 	struct ice_hw *hw = &sc->hw;
 	int i;
 
+	rw_enter_write(&sc->sc_cfg_lock);
+
 	timeout_del(&sc->sc_admin_timer);
 	ifp->if_flags &= ~IFF_RUNNING;
 #if 0
 	ASSERT_CTX_LOCKED(sc);
 #endif
-	if (!ice_testandclear_state(&sc->state, ICE_STATE_DRIVER_INITIALIZED))
+	if (!ice_testandclear_state(&sc->state, ICE_STATE_DRIVER_INITIALIZED)) {
+		rw_exit_write(&sc->sc_cfg_lock);
 		return 0;
+	}
 
 	if (ice_test_state(&sc->state, ICE_STATE_RESET_FAILED)) {
 		printf("%s: request to stop interface cannot be completed "
 		    "as the device failed to reset\n", sc->sc_dev.dv_xname);
+		rw_exit_write(&sc->sc_cfg_lock);
 		return ENODEV;
 	}
 
 	if (ice_test_state(&sc->state, ICE_STATE_PREPARED_FOR_RESET)) {
 		DPRINTF("%s: request to stop interface while device is "
 		    "prepared for impending reset\n", __func__);
+		rw_exit_write(&sc->sc_cfg_lock);
 		return EBUSY;
 	}
+
+	NET_UNLOCK();
 
 	/*
 	 * Disable all possible interrupts except ITR 0 because this handles
@@ -13418,6 +13436,8 @@ ice_down(struct ice_softc *sc)
 	}
 #endif
 
+	rw_exit_write(&sc->sc_cfg_lock);
+	NET_LOCK();
 	return 0;
 }
 
@@ -27209,6 +27229,8 @@ ice_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype;
 	enum ice_status status;
 	int err, i;
+
+	rw_init(&sc->sc_cfg_lock, "icecfg");
 
 	ice_set_state(&sc->state, ICE_STATE_ATTACHING);
 
