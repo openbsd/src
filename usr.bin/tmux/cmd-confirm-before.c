@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.55 2024/05/15 08:39:30 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.56 2024/11/26 15:51:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -130,7 +130,7 @@ cmd_confirm_before_callback(struct client *c, void *data, const char *s,
 
 	if (s == NULL)
 		goto out;
-	if (s[0] != cdata->confirm_key && (s[0] != '\0' || !cdata->default_yes))
+	if (s[0] != cdata->confirm_key && (s[0] != '\r' || !cdata->default_yes))
 		goto out;
 	retcode = 0;
 
