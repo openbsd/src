@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.22 2024/11/26 17:38:43 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.23 2024/11/26 21:21:44 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -141,7 +141,6 @@ ice_match(struct device *parent, ice_match_t match __unused, void *aux)
 	return pci_matchbyid(pa, ice_devices, nitems(ice_devices));
 }
 
-#define ICE_DEBUG
 #ifdef ICE_DEBUG
 #define DPRINTF(x...)		do { if (ice_debug) printf(x); } while(0)
 #define DNPRINTF(n,x...)	do { if (ice_debug & n) printf(x); } while(0)
@@ -1753,6 +1752,7 @@ void
 ice_debug_array(struct ice_hw *hw, uint64_t mask, uint32_t rowsize,
 		uint32_t __unused groupsize, uint8_t *buf, size_t len)
 {
+#ifdef ICE_DEBUG
 	if (!(mask & ice_debug))
 		return;
 
@@ -1761,6 +1761,7 @@ ice_debug_array(struct ice_hw *hw, uint64_t mask, uint32_t rowsize,
 		rowsize = 0xFF;
 
 	ice_hexdump(buf, len);
+#endif
 }
 
 /**
