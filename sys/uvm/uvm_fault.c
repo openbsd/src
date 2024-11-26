@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.144 2024/11/25 13:46:55 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.145 2024/11/26 10:10:28 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * try again.
 			 */
 			if ((pg->pg_flags & (PG_BUSY|PG_RELEASED)) == 0)
-				return (VM_PAGER_OK);
+				return 0;
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			counters_inc(uvmexp_counters, flt_pgwait);
 
@@ -404,7 +404,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 					uvmfault_unlockall(ufi, NULL, NULL);
 				uvm_anon_release(anon);	/* frees page for us */
 				counters_inc(uvmexp_counters, flt_pgrele);
-				return (VM_PAGER_REFAULT);	/* refault! */
+				return ERESTART;	/* refault! */
 			}
 
 			if (error != VM_PAGER_OK) {
@@ -435,7 +435,12 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 					uvmfault_unlockall(ufi, NULL, NULL);
 				}
 				rw_exit(anon->an_lock);
-				return (VM_PAGER_ERROR);
+				/*
+				 * An error occurred while trying to bring
+				 * in the page -- this is the only error we
+				 * return right now.
+				 */
+				return EACCES;	/* XXX */
 			}
 
 			/*
@@ -457,7 +462,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if (we_own) {
 				rw_exit(anon->an_lock);
 			}
-			return (VM_PAGER_REFAULT);
+			return ERESTART;
 		}
 
 		/*
@@ -468,7 +473,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				ufi->orig_rvaddr - ufi->entry->start) != anon) {
 
 			uvmfault_unlockall(ufi, amap, NULL);
-			return (VM_PAGER_REFAULT);
+			return ERESTART;
 		}
 
 		/*
@@ -942,25 +947,14 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 	error = uvmfault_anonget(ufi, amap, anon);
 	switch (error) {
-	case VM_PAGER_OK:
+	case 0:
 		break;
 
-	case VM_PAGER_REFAULT:
+	case ERESTART:
 		return ERESTART;
 
-	case VM_PAGER_ERROR:
-		/*
-		 * An error occurred while trying to bring in the
-		 * page -- this is the only error we return right
-		 * now.
-		 */
-		return EACCES;	/* XXX */
 	default:
-#ifdef DIAGNOSTIC
-		panic("uvm_fault: uvmfault_anonget -> %d", error);
-#else
-		return EACCES;
-#endif
+		return error;
 	}
 
 	KASSERT(rw_write_held(amap->am_lock));
