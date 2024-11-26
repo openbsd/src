@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.40 2024/11/21 13:04:01 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.41 2024/11/26 13:57:31 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2024 $
+.Dd $Mdocdate: November 26 2024 $
 .Dt IMSG_ADD 3
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@
 .Fn imsgbuf_queuelen "struct imsgbuf *imsgbuf"
 .Ft int
 .Fn imsgbuf_read "struct imsgbuf *imsgbuf"
-.Ft void
+.Ft int
 .Fn imsgbuf_set_maxsize "struct imsgbuf *imsgbuf" "uint32_t maxsize"
 .Ft int
 .Fn imsgbuf_write "struct imsgbuf *imsgbuf"
@@ -137,6 +137,7 @@ to
 .Fa maxsize
 must be bigger than
 .Dv IMSG_HEADER_SIZE .
+It returns 0 if successful and -1 on failure.
 .Pp
 The
 .Fn imsgbuf_clear

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.5 2024/11/21 13:04:01 claudio Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.6 2024/11/26 13:57:31 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2024 $
+.Dd $Mdocdate: November 26 2024 $
 .Dt IBUF_ADD 3
 .Os
 .Sh NAME
@@ -184,7 +184,7 @@
 .Fn msgbuf_new void
 .Ft "struct msgbuf *"
 .Fn msgbuf_new_reader "size_t hdrsz" \
-    "ssize_t (*readhdr)(struct ibuf *, void *)" "void *arg"
+    "struct ibuf *(*readhdr)(struct ibuf *, void *, int *)" "void *arg"
 .Ft uint32_t
 .Fn msgbuf_queuelen "struct msgbuf *msgbuf"
 .Ft int
@@ -401,9 +401,11 @@ The
 .Fn ibuf_read
 routine receives pending messages using
 .Xr read 2 .
-The function calls the
+It calls the
 .Fn readhdr
-callback function to get the total size of message.
+callback to obtain a
+.Vt struct ibuf
+of the appropriate size.
 It returns 1 on success, 0 if the connection was closed and \-1 on error
 and the global variable errno is set to indicate the error.
 The errors
@@ -555,8 +557,13 @@ argument defines the size of the ibuf passed to the
 callback.
 The
 .Fa readhdr
-callback parses the header and returns the size of the full message.
-It should return \-1 on error and set the global variable
+callback parses the header and returns a new
+.Vt struct ibuf
+of the size of the full message.
+It can take ownership of the file descriptor passed in its
+.Vt "int *"
+argument.
+It should return NULL on error and set the global variable
 .Va errno
 appropriately.
 The
