@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.26 2024/11/21 13:32:27 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.27 2024/11/26 13:59:09 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -29,6 +29,8 @@
 #include <imsg.h>
 
 #include "extern.h"
+
+#define IO_FD_MARK	0x80000000U
 
 /*
  * Create new io buffer, call io_close() when done with it.
@@ -88,6 +90,8 @@ io_close_buffer(struct msgbuf *msgbuf, struct ibuf *b)
 	size_t len;
 
 	len = ibuf_size(b);
+	if (ibuf_fd_avail(b))
+		len |= IO_FD_MARK;
 	ibuf_set(b, 0, &len, sizeof(len));
 	ibuf_close(msgbuf, b);
 }
@@ -144,18 +148,31 @@ io_read_buf_alloc(struct ibuf *b, void **res, size_t *sz)
 	io_read_buf(b, *res, *sz);
 }
 
-ssize_t
-io_parse_hdr(struct ibuf *b, void *arg)
+struct ibuf *
+io_parse_hdr(struct ibuf *buf, void *arg, int *fd)
 {
-	size_t s;
+	struct ibuf *b;
+	size_t len;
+	int hasfd = 0;
 
-	if (ibuf_get(b, &s, sizeof(s)) == -1)
-		return -1;
-	if (s > MAX_MSG_SIZE) {
-		errno = ERANGE;
-		return -1;
+	if (ibuf_get(buf, &len, sizeof(len)) == -1)
+		return NULL;
+
+	if (len & IO_FD_MARK) {
+		hasfd = 1;
+		len &= ~IO_FD_MARK;
 	}
-	return s;
+	if (len <= sizeof(len) || len > MAX_MSG_SIZE) {
+		errno = ERANGE;
+		return NULL;
+	}
+	if ((b = ibuf_open(len)) == NULL)
+		return NULL;
+	if (hasfd) {
+		ibuf_fd_set(b, *fd);
+		*fd = -1;
+	}
+	return b;
 }
 
 struct ibuf *

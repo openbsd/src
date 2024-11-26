@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.232 2024/11/21 13:32:27 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.233 2024/11/26 13:59:09 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -904,7 +904,7 @@ void		 io_close_buffer(struct msgbuf *, struct ibuf *);
 void		 io_read_buf(struct ibuf *, void *, size_t);
 void		 io_read_str(struct ibuf *, char **);
 void		 io_read_buf_alloc(struct ibuf *, void **, size_t *);
-ssize_t		 io_parse_hdr(struct ibuf *, void *);
+struct ibuf	*io_parse_hdr(struct ibuf *, void *, int *);
 struct ibuf	*io_buf_get(struct msgbuf *);
 
 /* X509 helpers. */
