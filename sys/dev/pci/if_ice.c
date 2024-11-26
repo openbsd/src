@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.18 2024/11/26 17:32:05 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.19 2024/11/26 17:34:00 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -12982,6 +12982,7 @@ ice_up(struct ice_softc *sc)
 	struct ice_vsi *vsi = &sc->pf_vsi;
 	struct ice_rx_queue *rxq;
 	struct ice_tx_queue *txq;
+	struct ifqueue *ifq;
 	struct ifiqueue *ifiq;
 	struct ice_intr_vector *iv;
 	int i, err;
@@ -13015,6 +13016,10 @@ ice_up(struct ice_softc *sc)
 		iv = &sc->sc_vectors[i];
 		iv->iv_txq = txq;
 		txq->irqv = iv;
+
+		ifq = ifp->if_ifqs[i];
+		ifq->ifq_softc = txq;
+		txq->txq_ifq = ifq;
 	}
 
 	err = ice_cfg_vsi_for_tx(&sc->pf_vsi);
@@ -13488,10 +13493,174 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
+uint64_t
+ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
+    unsigned int prod)
+{
+	struct ether_extracted ext;
+	uint64_t offload = 0, hlen;
+
+#if NVLAN > 0
+	if (ISSET(m0->m_flags, M_VLANTAG)) {
+		uint16_t vtag = m0->m_pkthdr.ether_vtag;
+		offload |= (ICE_TX_DESC_CMD_IL2TAG1 << ICE_TXD_QW1_CMD_S) |
+		    (htole16(vtag) << ICE_TXD_QW1_L2TAG1_S);
+	}
+#endif
+	if (!ISSET(m0->m_pkthdr.csum_flags,
+	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT|M_TCP_TSO))
+		return offload;
+
+	ether_extract_headers(m0, &ext);
+	hlen = ext.iphlen;
+
+	if (ext.ip4) {
+		/* TODO: ipv4 checksum offload */
+		offload |= ICE_TX_DESC_CMD_IIPT_IPV4 << ICE_TXD_QW1_CMD_S;
+	} else if (ext.ip6)
+		offload |= ICE_TX_DESC_CMD_IIPT_IPV6 << ICE_TXD_QW1_CMD_S;
+
+	offload |= ((ETHER_HDR_LEN >> 1) << ICE_TX_DESC_LEN_MACLEN_S) <<
+	    ICE_TXD_QW1_OFFSET_S;
+	if (ext.ip4 || ext.ip6)
+		offload |= ((hlen >> 2) << ICE_TX_DESC_LEN_IPLEN_S) <<
+		    ICE_TXD_QW1_OFFSET_S;
+
+	/* TODO: enable offloading features */
+
+	return offload;
+}
+
+static inline int
+ice_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
+{
+	int error;
+
+	error = bus_dmamap_load_mbuf(dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+	if (error != EFBIG)
+		return (error);
+
+	error = m_defrag(m, M_DONTWAIT);
+	if (error != 0)
+		return (error);
+
+	return (bus_dmamap_load_mbuf(dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT));
+}
+
 void
 ice_start(struct ifqueue *ifq)
 {
-	printf("%s\n", __func__);
+	struct ifnet *ifp = ifq->ifq_if;
+	struct ice_softc *sc = ifp->if_softc;
+	struct ice_tx_queue *txq = ifq->ifq_softc;
+	struct ice_tx_desc *ring, *txd;
+	struct ice_tx_map *txm;
+	bus_dmamap_t map;
+	struct mbuf *m;
+	uint64_t qword1;
+	unsigned int prod, free, last, i;
+	unsigned int mask;
+	int post = 0;
+	uint64_t offload;
+	uint64_t paddr;
+	uint64_t seglen;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+
+	if (!LINK_STATE_IS_UP(ifp->if_link_state)) {
+		ifq_purge(ifq);
+		return;
+	}
+
+	prod = txq->txq_prod;
+	free = txq->txq_cons;
+	if (free <= prod)
+		free += txq->desc_count;
+	free -= prod;
+
+	bus_dmamap_sync(sc->sc_dmat, ICE_DMA_MAP(&txq->tx_desc_mem),
+	    0, ICE_DMA_LEN(&txq->tx_desc_mem), BUS_DMASYNC_POSTWRITE);
+
+	ring = ICE_DMA_KVA(&txq->tx_desc_mem);
+	mask = txq->desc_count - 1;
+
+	for (;;) {
+		/* We need one extra descriptor for TSO packets. */
+		if (free <= (ICE_MIN_DESC_COUNT + 1)) {
+			ifq_set_oactive(ifq);
+			break;
+		}
+
+		m = ifq_dequeue(ifq);
+		if (m == NULL)
+			break;
+
+		offload = ice_tx_setup_offload(m, txq, prod);
+
+		txm = &txq->tx_map[prod];
+		map = txm->txm_map;
+#if 0
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			prod++;
+			prod &= mask;
+			free--;
+		}
+#endif
+		if (ice_load_mbuf(sc->sc_dmat, map, m) != 0) {
+			ifq->ifq_errors++;
+			m_freem(m);
+			continue;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0,
+		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+		for (i = 0; i < map->dm_nsegs; i++) {
+			txd = &ring[prod];
+
+			paddr = (uint64_t)map->dm_segs[i].ds_addr;
+			seglen = (uint64_t)map->dm_segs[i].ds_len;
+
+			qword1 = ICE_TX_DESC_DTYPE_DATA | offload |
+			    (seglen << ICE_TXD_QW1_TX_BUF_SZ_S);
+
+			htolem64(&txd->buf_addr, paddr);
+			htolem64(&txd->cmd_type_offset_bsz, qword1);
+
+			last = prod;
+
+			prod++;
+			prod &= mask;
+		}
+
+		/* Set the last descriptor for report */
+		qword1 |= (ICE_TX_DESC_CMD_EOP | ICE_TX_DESC_CMD_RS) <<
+		    ICE_TXD_QW1_CMD_S;
+		htolem64(&txd->cmd_type_offset_bsz, qword1);
+
+		txm->txm_m = m;
+		txm->txm_eop = last;
+
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+		free -= i;
+		post = 1;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, ICE_DMA_MAP(&txq->tx_desc_mem),
+	    0, ICE_DMA_LEN(&txq->tx_desc_mem), BUS_DMASYNC_PREWRITE);
+
+	if (post) {
+		txq->txq_prod = prod;
+		ICE_WRITE(&sc->hw, txq->tail, prod);
+	}
 }
 
 void
@@ -26297,6 +26466,8 @@ ice_tx_queues_alloc(struct ice_softc *sc)
 #if 0
 		ice_add_txq_sysctls(txq);
 #endif
+
+		txq->txq_cons = txq->txq_prod = 0;
 	}
 
 	vsi->num_tx_queues = sc->sc_nqueues;
