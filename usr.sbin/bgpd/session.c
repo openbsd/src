@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.498 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.499 2024/11/26 13:59:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,7 @@ int	session_graceful_restart(struct peer *);
 int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 void	session_process_msg(struct peer *);
-ssize_t parse_header(struct ibuf *, void *);
+struct ibuf	*parse_header(struct ibuf *, void *, int *);
 int	parse_open(struct peer *, struct ibuf *);
 int	parse_update(struct peer *, struct ibuf *);
 int	parse_rrefresh(struct peer *, struct ibuf *);
@@ -2016,10 +2016,11 @@ session_process_msg(struct peer *p)
 	}
 }
 
-ssize_t
-parse_header(struct ibuf *msg, void *arg)
+struct ibuf *
+parse_header(struct ibuf *msg, void *arg, int *fd)
 {
 	struct peer		*peer = arg;
+	struct ibuf		*b;
 	u_char			 m[MSGSIZE_HEADER_MARKER];
 	uint16_t		 len;
 	uint8_t			 type;
@@ -2027,14 +2028,14 @@ parse_header(struct ibuf *msg, void *arg)
 	if (ibuf_get(msg, m, sizeof(m)) == -1 ||
 	    ibuf_get_n16(msg, &len) == -1 ||
 	    ibuf_get_n8(msg, &type) == -1)
-		return (-1);
+		return (NULL);
 	/* caller MUST make sure we are getting 19 bytes! */
 	if (memcmp(m, marker, sizeof(marker))) {
 		log_peer_warnx(&peer->conf, "sync error");
 		session_notification(peer, ERR_HEADER, ERR_HDR_SYNC, NULL);
 		bgp_fsm(peer, EVNT_CON_FATAL, NULL);
 		errno = EINVAL;
-		return (-1);
+		return (NULL);
 	}
 
 	if (len < MSGSIZE_HEADER || len > MAX_PKTSIZE) {
@@ -2086,9 +2087,12 @@ parse_header(struct ibuf *msg, void *arg)
 		    &type, sizeof(type));
 		bgp_fsm(peer, EVNT_CON_FATAL, NULL);
 		errno = EINVAL;
-		return (-1);
+		return (NULL);
 	}
-	return (len);
+
+	if ((b = ibuf_open(len)) == NULL)
+		return (NULL);
+	return (b);
 
  badlen:
 	len = htons(len);
@@ -2096,7 +2100,7 @@ parse_header(struct ibuf *msg, void *arg)
 	    &len, sizeof(len));
 	bgp_fsm(peer, EVNT_CON_FATAL, NULL);
 	errno = ERANGE;
-	return (-1);
+	return (NULL);
 }
 
 int

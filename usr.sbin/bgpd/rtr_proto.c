@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.46 2024/11/21 13:32:50 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.47 2024/11/26 13:59:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -425,15 +425,16 @@ rtr_check_session_id(struct rtr_session *rs, uint16_t session_id,
 /*
  * Callback for ibuf_read to get the size of a PDU.
  */
-static ssize_t
-rtr_reader_get_size(struct ibuf *hdr, void *arg)
+static struct ibuf *
+rtr_reader_callback(struct ibuf *hdr, void *arg, int *fd)
 {
 	struct rtr_session *rs = arg;
 	struct rtr_header rh;
+	struct ibuf *b;
 	ssize_t len;
 
 	if (ibuf_get(hdr, &rh, sizeof(rh)) == -1)
-		return -1;
+		return NULL;
 
 	len = ntohl(rh.length);
 
@@ -441,10 +442,12 @@ rtr_reader_get_size(struct ibuf *hdr, void *arg)
 		rtr_send_error(rs, hdr, CORRUPT_DATA, "%s: too big: %zu bytes",
 		    log_rtr_type(rh.type), len);
 		errno = ERANGE;
-		return -1;
+		return NULL;
 	}
 
-	return (len);
+	if ((b = ibuf_open(len)) == NULL)
+		return NULL;
+	return b;
 }
 
 /*
@@ -1399,7 +1402,7 @@ rtr_new(uint32_t id, struct rtr_config_msg *conf)
 	if ((rs = calloc(1, sizeof(*rs))) == NULL)
 		fatal("RTR session %s", conf->descr);
 	if ((rs->w = msgbuf_new_reader(sizeof(struct rtr_header),
-	    rtr_reader_get_size, rs)) == NULL)
+	    rtr_reader_callback, rs)) == NULL)
 		fatal("RTR session %s", conf->descr);
 
 	RB_INIT(&rs->roa_set);
