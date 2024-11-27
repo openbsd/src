@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.28 2021/01/11 18:49:38 mpi Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.29 2024/11/27 01:02:03 dlg Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -60,6 +60,8 @@ struct proc;
 
 struct rwlock {
 	volatile unsigned long	 rwl_owner;
+	volatile unsigned int	 rwl_waiters;
+	volatile unsigned int	 rwl_readers;
 	const char		*rwl_name;
 #ifdef WITNESS
 	struct lock_object	 rwl_lock_obj;
@@ -91,14 +93,12 @@ struct rwlock {
 
 #ifdef WITNESS
 #define RWLOCK_INITIALIZER(name) \
-	{ 0, name, .rwl_lock_obj = RWLOCK_LO_INITIALIZER(name, 0) }
+	{ 0, 0, 0, name, .rwl_lock_obj = RWLOCK_LO_INITIALIZER(name, 0) }
 #else
 #define RWLOCK_INITIALIZER(name) \
-	{ 0, name }
+	{ 0, 0, 0, name }
 #endif
 
-#define RWLOCK_WAIT		0x01UL
-#define RWLOCK_WRWANT		0x02UL
 #define RWLOCK_WRLOCK		0x04UL
 #define RWLOCK_MASK		0x07UL
 
