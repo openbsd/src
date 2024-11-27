@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.43 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: ptrace.2,v 1.44 2024/11/27 05:25:56 anton Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: November 27 2024 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -500,6 +500,58 @@ pointed to by
 The window cookie needs to be
 .Sq XOR'ed
 to stack-saved program counters.
+.It Dv PT_GETXSTATE_INFO Pq amd64 only
+This request can be used to obtain details about the traced process XSAVE area,
+specified in a
+.Dq Li "struct ptrace_xstate_info"
+defined as follows:
+.Bd -literal -offset indent
+struct ptrace_xstate_info {
+	uint64_t xsave_mask;
+	uint32_t xsave_len;
+};
+.Ed
+.Pp
+The
+.Fa xsave_mask
+field denotes the enabled XSAVE components.
+The
+.Fa xsave_len
+field denotes the size of XSAVE area intended to be used with the
+.Dv PT_GETXSTATE
+and
+.Dv PT_SETXSTATE
+requests.
+.Pp
+A pointer to
+.Dq Li "struct ptrace_xstate_info"
+must be passed in
+.Fa addr
+and the
+.Fa data
+argument must be set to
+.Li sizeof(struct ptrace_xstate_info) .
+.It Dv PT_GETXSTATE Pq amd64 only
+This request can be used to read the XSAVE area of the traced process.
+A pointer to a buffer must be passed in
+.Fa addr
+with a capacity of the length obtained using the
+.Dv PT_GETXSTATE_INFO
+request.
+The
+.Fa data
+argument must reflect the same length.
+.It Dv PT_SETXSTATE Pq amd64 only
+This request can be used to write the XSAVE area of the traced process.
+Only changes to the x87, SSE and AVX state components are honored.
+A pointer to a buffer must be passed in
+.Fa addr
+with a capacity of the length obtained using the
+.Dv PT_GETXSTATE_INFO
+request.
+The
+.Fa data
+argument must reflect the same length.
 .El
 .Sh ERRORS
 Some requests can cause
@@ -579,6 +631,12 @@ An attempt was made to use
 .Dv PT_ATTACH
 on a system process.
 .El
+.It Bq Er ENOTSUP
+.Dv PT_GETXSTATE_INFO ,
+.Dv PT_GETXSTATE ,
+or
+.Dv PT_SETXSTATE
+was attempted on a CPU lacking support for XSAVE.
 .El
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.17 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.18 2024/11/27 05:25:56 anton Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
@@ -196,6 +197,86 @@ process_set_pc(struct proc *p, caddr_t addr)
 	if ((u_int64_t)addr > VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	tf->tf_rip = (u_int64_t)addr;
+
+	return (0);
+}
+
+int
+process_read_xstate_info(struct proc *p, void *addr)
+{
+	struct ptrace_xstate_info *info = addr;
+
+	if (xsave_mask == 0)
+		return (ENOTSUP);
+
+	info->xsave_mask = xsave_mask;
+	info->xsave_len = fpu_save_len;
+	return (0);
+}
+
+struct xsave_area {
+	uint8_t	legacy_region[512];
+
+	struct xsave_header {
+		uint64_t	xstate_bv;
+		uint64_t	xcomp_bv;
+		uint8_t		rsvd0[48];
+	} xsave_header;
+
+	uint8_t	extended_region[];
+} __attribute__((packed));
+
+#define XSTATE_COMPONENT_X87	(1ULL << 0)
+#define XSTATE_COMPONENT_SSE	(1ULL << 1)
+#define XSTATE_COMPONENT_AVX	(1ULL << 2)
+
+int
+process_read_xstate(struct proc *p, void *addr)
+{
+	struct xsave_area *area =
+	    (struct xsave_area *)&p->p_addr->u_pcb.pcb_savefpu;
+
+	if (xsave_mask == 0)
+		return (ENOTSUP);
+
+	memcpy(addr, area, fpu_save_len);
+	return (0);
+}
+
+int
+process_write_xstate(struct proc *p, void *addr)
+{
+	struct xsave_area *area =
+	    (struct xsave_area *)&p->p_addr->u_pcb.pcb_savefpu;
+	struct xsave_area *new_area = (struct xsave_area *)addr;
+	uint32_t offset_extended_region = offsetof(struct xsave_area,
+	    extended_region);
+	uint32_t a, b, c, d;
+
+	if (xsave_mask == 0)
+		return (ENOTSUP);
+
+	/*
+	 * Honor changes to x87, SSE and AVX components and mark them as in use.
+	 * Required to ensure any changes are restored once the traced process
+	 * continues execution.
+	 */
+	if ((xsave_mask & XSTATE_COMPONENT_X87) ||
+	    (xsave_mask & XSTATE_COMPONENT_SSE)) {
+		memcpy(area->legacy_region, new_area->legacy_region,
+		    sizeof(area->legacy_region));
+		area->xsave_header.xstate_bv |= xsave_mask &
+		    (XSTATE_COMPONENT_X87 | XSTATE_COMPONENT_SSE);
+	}
+	if (xsave_mask & XSTATE_COMPONENT_AVX) {
+		CPUID_LEAF(0xd, 2, a, b, c, d);
+		if (offset_extended_region == b &&
+		    offset_extended_region + a <= fpu_save_len) {
+			memcpy(area->extended_region,
+			    new_area->extended_region, a);
+			area->xsave_header.xstate_bv |= XSTATE_COMPONENT_AVX;
+		}
+	}
 
 	return (0);
 }

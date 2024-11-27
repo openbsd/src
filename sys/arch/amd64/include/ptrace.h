@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.2 2024/11/27 05:25:57 anton Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -39,3 +39,18 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+
+#define	PT_GETXSTATE_INFO	(PT_FIRSTMACH + 5)
+#define	PT_GETXSTATE		(PT_FIRSTMACH + 6)
+#define	PT_SETXSTATE		(PT_FIRSTMACH + 7)
+
+struct ptrace_xstate_info {
+	uint64_t	xsave_mask;
+	uint32_t	xsave_len;
+};
+
+#ifdef _KERNEL
+int	process_read_xstate_info(struct proc *, void *);
+int	process_read_xstate(struct proc *, void *);
+int	process_write_xstate(struct proc *, void *);
+#endif
