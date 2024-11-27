@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.17 2024/07/10 09:50:28 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.18 2024/11/27 02:40:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -49,6 +49,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +76,7 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/udp.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -890,11 +892,13 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifq_init_maxlen(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
-#if 0
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	ifmedia_init(&sc->sc_media, 0, iavf_media_change, iavf_media_status);
 
@@ -1656,6 +1660,57 @@ iavf_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT));
 }
 
+static uint64_t
+iavf_tx_offload(struct mbuf *m)
+{
+	struct ether_extracted ext;
+	uint64_t hlen;
+	uint64_t offload = 0;
+
+#if NVLAN > 0
+	if (ISSET(m->m_flags, M_VLANTAG)) {
+		uint64_t vtag = m->m_pkthdr.ether_vtag;
+		offload |= IAVF_TX_DESC_CMD_IL2TAG1;
+		offload |= vtag << IAVF_TX_DESC_L2TAG1_SHIFT;
+	}
+#endif
+
+	if (!ISSET(m->m_pkthdr.csum_flags,
+	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
+		return (offload);
+
+	ether_extract_headers(m, &ext);
+
+	if (ext.ip4) {
+		offload |= ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) ?
+		    IAVF_TX_DESC_CMD_IIPT_IPV4_CSUM :
+		    IAVF_TX_DESC_CMD_IIPT_IPV4;
+#ifdef INET6
+	} else if (ext.ip6) {
+		offload |= IAVF_TX_DESC_CMD_IIPT_IPV6;
+#endif
+	} else {
+		panic("CSUM_OUT set for non-IP packet");
+		/* NOTREACHED */
+	}
+	hlen = ext.iphlen;
+
+	offload |= (ETHER_HDR_LEN >> 1) << IAVF_TX_DESC_MACLEN_SHIFT;
+	offload |= (hlen >> 2) << IAVF_TX_DESC_IPLEN_SHIFT;
+
+	if (ext.tcp && ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
+		offload |= IAVF_TX_DESC_CMD_L4T_EOFT_TCP;
+		offload |= (uint64_t)(ext.tcphlen >> 2)
+		    << IAVF_TX_DESC_L4LEN_SHIFT;
+	} else if (ext.udp && ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
+		offload |= IAVF_TX_DESC_CMD_L4T_EOFT_UDP;
+		offload |= (uint64_t)(sizeof(*ext.udp) >> 2)
+		    << IAVF_TX_DESC_L4LEN_SHIFT;
+	}
+
+	return offload;
+}
+
 static void
 iavf_start(struct ifqueue *ifq)
 {
@@ -1667,7 +1722,7 @@ iavf_start(struct ifqueue *ifq)
 	bus_dmamap_t map;
 	struct mbuf *m;
 	uint64_t cmd;
-	uint64_t vlan_cmd;
+	uint64_t offload;
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
@@ -1702,6 +1757,8 @@ iavf_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
+		offload = iavf_tx_offload(m);
+
 		txm = &txr->txr_maps[prod];
 		map = txm->txm_map;
 
@@ -1714,20 +1771,13 @@ iavf_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-		vlan_cmd = 0;
-		if (m->m_flags & M_VLANTAG) {
-			vlan_cmd = IAVF_TX_DESC_CMD_IL2TAG1 |
-			    (((uint64_t)m->m_pkthdr.ether_vtag) <<
-			    IAVF_TX_DESC_L2TAG1_SHIFT);
-		}
-
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txd = &ring[prod];
 
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IAVF_TX_DESC_BSIZE_SHIFT;
-			cmd |= IAVF_TX_DESC_DTYPE_DATA | IAVF_TX_DESC_CMD_ICRC |
-			    vlan_cmd;
+			cmd |= IAVF_TX_DESC_DTYPE_DATA | IAVF_TX_DESC_CMD_ICRC;
+			cmd |= offload;
 
 			htolem64(&txd->addr, map->dm_segs[i].ds_addr);
 			htolem64(&txd->cmd, cmd);
@@ -1938,6 +1988,24 @@ iavf_rxr_free(struct iavf_softc *sc, struct iavf_rx_ring *rxr)
 	free(rxr, M_DEVBUF, sizeof(*rxr));
 }
 
+static void
+iavf_rx_checksum(struct mbuf *m, uint64_t word)
+{
+	if (!ISSET(word, IAVF_RX_DESC_L3L4P))
+		return;
+
+	if (ISSET(word, IAVF_RX_DESC_IPE))
+		return;
+
+	m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+	if (ISSET(word, IAVF_RX_DESC_L4E))
+		return;
+
+	m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+}
+
+
 static int
 iavf_rxeof(struct iavf_softc *sc, struct ifiqueue *ifiq)
 {
@@ -2002,6 +2070,7 @@ iavf_rxeof(struct iavf_softc *sc, struct ifiqueue *ifiq)
 		m->m_pkthdr.len += len;
 
 		if (ISSET(word, IAVF_RX_DESC_EOP)) {
+#if NVLAN > 0
 			if (ISSET(word, IAVF_RX_DESC_L2TAG1P)) {
 				vlan = (lemtoh64(&rxd->qword0) &
 				    IAVF_RX_DESC_L2TAG1_MASK)
@@ -2009,8 +2078,10 @@ iavf_rxeof(struct iavf_softc *sc, struct ifiqueue *ifiq)
 				m->m_pkthdr.ether_vtag = vlan;
 				m->m_flags |= M_VLANTAG;
 			}
+#endif
 			if (!ISSET(word,
 			    IAVF_RX_DESC_RXE | IAVF_RX_DESC_OVERSIZE)) {
+				iavf_rx_checksum(m, word);
 				ml_enqueue(&ml, m);
 			} else {
 				ifp->if_ierrors++; /* XXX */
