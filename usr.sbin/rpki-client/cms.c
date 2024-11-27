@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.49 2024/11/26 13:35:48 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.50 2024/11/27 15:19:26 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -314,7 +314,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	 * XXX - can only error check for OpenSSL >= 3.4.
 	 */
 	crls = CMS_get1_crls(cms);
-	if (crls != NULL && sk_X509_CRL_num(crls) != 0) { 
+	if (crls != NULL && sk_X509_CRL_num(crls) != 0) {
 		warnx("%s: RFC 6488: CMS has CRLs", fn);
 		goto out;
 	}
