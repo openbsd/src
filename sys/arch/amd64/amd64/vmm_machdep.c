@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.40 2024/11/10 22:35:31 jsg Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.41 2024/11/27 10:09:51 mpi Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4542,9 +4542,10 @@ svm_get_guest_faulttype(struct vmcb *vmcb)
 int
 svm_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
+	paddr_t pa = trunc_page(gpa);
 	int ret;
 
-	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
+	ret = uvm_fault_wire(vcpu->vc_parent->vm_map, pa, pa + PAGE_SIZE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 	if (ret)
 		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
@@ -4611,12 +4612,13 @@ svm_handle_np_fault(struct vcpu *vcpu)
  *  0: if successful
  *  EINVAL: if fault type could not be determined or VMCS reload fails
  *  EAGAIN: if a protection fault occurred, ie writing to a read-only page
- *  errno: if uvm_fault(9) fails to wire in the page
+ *  errno: if uvm_fault_wire() fails to wire in the page
  */
 int
 vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
 	int fault_type, ret;
+	paddr_t pa = trunc_page(gpa);
 
 	fault_type = vmx_get_guest_faulttype();
 	switch (fault_type) {
@@ -4631,9 +4633,9 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 		break;
 	}
 
-	/* We may sleep during uvm_fault(9), so reload VMCS. */
+	/* We may sleep during uvm_fault_wire(), so reload VMCS. */
 	vcpu->vc_last_pcpu = curcpu();
-	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
+	ret = uvm_fault_wire(vcpu->vc_parent->vm_map, pa, pa + PAGE_SIZE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 	if (vcpu_reload_vmcs_vmx(vcpu)) {
 		printf("%s: failed to reload vmcs\n", __func__);
