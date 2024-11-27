@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.145 2024/11/26 10:10:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.146 2024/11/27 10:58:07 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -893,6 +893,9 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 			uvm_unlock_pageq();
 			counters_inc(uvmexp_counters, flt_namap);
 
+			/* No fault-ahead when wired. */
+			KASSERT(flt->wired == FALSE);
+
 			/*
 			 * Since this isn't the page that's actually faulting,
 			 * ignore pmap_enter() failures; it's not critical
@@ -902,8 +905,7 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 			    VM_PAGE_TO_PHYS(anon->an_page) | flt->pa_flags,
 			    (anon->an_ref > 1) ?
 			    (flt->enter_prot & ~PROT_WRITE) : flt->enter_prot,
-			    PMAP_CANFAIL |
-			     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
+			    PMAP_CANFAIL);
 		}
 	}
 	if (flt->npages > 1)
@@ -1167,6 +1169,9 @@ uvm_fault_lower_lookup(
 		uvm_unlock_pageq();
 		counters_inc(uvmexp_counters, flt_nomap);
 
+		/* No fault-ahead when wired. */
+		KASSERT(flt->wired == FALSE);
+
 		/*
 		 * Since this page isn't the page that's
 		 * actually faulting, ignore pmap_enter()
@@ -1175,9 +1180,7 @@ uvm_fault_lower_lookup(
 		 */
 		(void) pmap_enter(ufi->orig_map->pmap, currva,
 		    VM_PAGE_TO_PHYS(pages[lcv]) | flt->pa_flags,
-		    flt->enter_prot & MASK(ufi->entry),
-		    PMAP_CANFAIL |
-		     (flt->wired ? PMAP_WIRED : 0));
+		    flt->enter_prot & MASK(ufi->entry), PMAP_CANFAIL);
 
 		/*
 		 * NOTE: page can't be PG_WANTED because
