@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.23 2024/11/26 21:21:44 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.24 2024/11/27 15:23:58 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -27257,12 +27257,6 @@ ice_attach_hook(struct device *self)
 
 	ice_print_nvm_version(sc);
 
-	/* Setup the MAC address */
-	err = if_setlladdr(ifp, hw->port_info->mac.perm_addr);
-	if (err)
-		printf("%s: could not set MAC address (error %d)\n",
-		    sc->sc_dev.dv_xname, err);
-
 	ice_setup_scctx(sc);
 	if (ice_is_bit_set(sc->feat_en, ICE_FEATURE_SAFE_MODE))
 		ice_set_safe_mode_caps(hw);
@@ -27366,9 +27360,6 @@ ice_attach_hook(struct device *self)
 	if (err)
 		goto free_queues;
 
-	if_attach_queues(ifp, sc->sc_nqueues);
-	if_attach_iqueues(ifp, sc->sc_nqueues);
-
 	/* Enable FW health event reporting */
 	ice_init_health_events(sc);
 
@@ -27425,6 +27416,29 @@ ice_attach_hook(struct device *self)
 		 !ice_test_state(&sc->state, ICE_STATE_NO_MEDIA))
 		ice_set_state(&sc->state, ICE_STATE_FIRST_INIT_LINK);
 
+	ifp->if_softc = sc;
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_ioctl = ice_ioctl;
+	ifp->if_qstart = ice_start;
+	ifp->if_watchdog = ice_watchdog;
+	ifp->if_hardmtu = ice_hardmtu(hw);
+
+	ifq_init_maxlen(&ifp->if_snd, ICE_DEFAULT_DESC_COUNT);
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+	if_attach_queues(ifp, sc->sc_nqueues);
+	if_attach_iqueues(ifp, sc->sc_nqueues);
+
+	/* Setup the MAC address */
+	err = if_setlladdr(ifp, hw->port_info->mac.perm_addr);
+	if (err)
+		printf("%s: could not set MAC address (error %d)\n",
+		    sc->sc_dev.dv_xname, err);
+
 	ice_clear_state(&sc->state, ICE_STATE_ATTACHING);
 	return;
 
@@ -27451,7 +27465,6 @@ void
 ice_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ice_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ice_hw *hw = &sc->hw;
 	struct pci_attach_args *pa = aux;
 	enum ice_fw_modes fw_mode;
@@ -27577,24 +27590,9 @@ ice_attach(struct device *parent, struct device *self, void *aux)
 	if (err)
 		goto deinit_hw;
 
-	ifp->if_softc = sc;
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
-	ifp->if_ioctl = ice_ioctl;
-	ifp->if_qstart = ice_start;
-	ifp->if_watchdog = ice_watchdog;
-	ifp->if_hardmtu = ice_hardmtu(hw);
-
-	ifq_init_maxlen(&ifp->if_snd, ICE_DEFAULT_DESC_COUNT);
-
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->media, IFM_IMASK, ice_media_change, ice_media_status);
-
 	ice_add_media_types(sc, &sc->media);
-
-	if_attach(ifp);
-	ether_ifattach(ifp);
 
 	config_mountroot(self, ice_attach_hook);
 	return;
