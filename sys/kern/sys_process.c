@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.103 2024/11/27 05:25:57 anton Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.104 2024/11/27 12:29:14 jsg Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/fpu.h>
 #include <machine/reg.h>
 
 #ifdef PTRACE
