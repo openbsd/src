@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2024/06/04 17:31:59 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.63 2024/11/27 20:30:15 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -816,8 +816,8 @@ pte_insert(struct pte_desc *pted)
 		pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
 		pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
-		idx ^= (PTED_HID(pted) ? pmap_ptab_mask : 0);
-		pte = pmap_ptable + (idx * 8);
+		pte = pmap_ptable;
+		pte += (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
 		pte += PTED_PTEGIDX(pted); /* increment by index into pteg */
 
 		if ((pte->pte_hi & PTE_WIRED) == 0)
@@ -838,6 +838,7 @@ pte_insert(struct pte_desc *pted)
 		vsid = avpn >> PTE_VSID_SHIFT;
 		vpn = avpn << (ADDR_VSID_SHIFT - PTE_VSID_SHIFT - PAGE_SHIFT);
 
+		idx ^= (PTED_HID(pted) ? pmap_ptab_mask : 0);
 		idx ^= ((pte->pte_hi & PTE_HID) ? pmap_ptab_mask : 0);
 		vpn |= ((idx ^ vsid) & (ADDR_PIDX >> ADDR_PIDX_SHIFT));
 
