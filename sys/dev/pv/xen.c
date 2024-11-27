@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.98 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: xen.c,v 1.99 2024/11/27 02:14:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -1355,6 +1355,7 @@ xen_attach_device(struct xen_softc *sc, struct xen_devlist *xdl,
 	struct xen_device *xdv;
 	unsigned long long res;
 
+	memset(&xa, 0, sizeof(xa));
 	xa.xa_dmat = &xen_bus_dma_tag;
 
 	strlcpy(xa.xa_name, name, sizeof(xa.xa_name));
