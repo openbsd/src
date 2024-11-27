@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.20 2024/11/21 13:39:34 claudio Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.21 2024/11/27 22:32:14 kirill Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -369,6 +369,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			 * often send this command regardless.
 			 */
 			ds = VIRTIO_BLK_S_UNSUPP;
+			break;
 		default:
 			log_warnx("%s: unsupported vioblk command %d", __func__,
 			    cmd->type);
