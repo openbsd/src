@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.33 2024/11/25 19:30:47 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.34 2024/11/27 13:26:42 jan Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -848,25 +848,22 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
  *
  *                 Don't call this if you use statically allocated slots
  *                 and virtio_enqueue_trim().
- *
- *                 returns the number of freed slots.
  */
 int
 virtio_dequeue_commit(struct virtqueue *vq, int slot)
 {
 	struct vq_entry *qe = &vq->vq_entries[slot];
 	struct vring_desc *vd = &vq->vq_desc[0];
-	int s = slot, r = 1;
+	int s = slot;
 
 	while (vd[s].flags & VRING_DESC_F_NEXT) {
 		s = vd[s].next;
 		vq_free_entry(vq, qe);
 		qe = &vq->vq_entries[s];
-		r++;
 	}
 	vq_free_entry(vq, qe);
 
-	return r;
+	return 0;
 }
 
 /*

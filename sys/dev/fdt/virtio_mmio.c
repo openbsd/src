@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.18 2024/11/25 19:30:47 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.19 2024/11/27 13:26:42 jan Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ void		virtio_mmio_set_status(struct virtio_softc *, int);
 int		virtio_mmio_negotiate_features(struct virtio_softc *,
     const struct virtio_feature_name *);
 int		virtio_mmio_intr(void *);
-void		virtio_mmio_intr_barrier(struct virtio_softc *);
 
 struct virtio_mmio_softc {
 	struct virtio_softc	sc_sc;
@@ -152,7 +151,6 @@ const struct virtio_ops virtio_mmio_ops = {
 	virtio_mmio_set_status,
 	virtio_mmio_negotiate_features,
 	virtio_mmio_intr,
-	virtio_mmio_intr_barrier,
 };
 
 uint16_t
@@ -523,12 +521,4 @@ virtio_mmio_kick(struct virtio_softc *vsc, uint16_t idx)
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_NOTIFY,
 	    idx);
-}
-
-void
-virtio_mmio_intr_barrier(struct virtio_softc *vsc)
-{
-	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	if (sc->sc_ih)
-		intr_barrier(sc->sc_ih);
 }
