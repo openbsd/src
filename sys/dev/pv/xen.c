@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.99 2024/11/27 02:14:48 jsg Exp $	*/
+/*	$OpenBSD: xen.c,v 1.100 2024/11/27 02:38:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -1365,15 +1365,14 @@ xen_attach_device(struct xen_softc *sc, struct xen_devlist *xdl,
 	    sizeof(xa.xa_backend))) {
 		DPRINTF("%s: failed to identify \"backend\" for "
 		    "\"%s\"\n", sc->sc_dev.dv_xname, xa.xa_node);
-		return (EIO);
 	}
 
 	if (xs_getnum(sc, xa.xa_node, "backend-id", &res) || res > UINT16_MAX) {
 		DPRINTF("%s: invalid \"backend-id\" for \"%s\"\n",
 		    sc->sc_dev.dv_xname, xa.xa_node);
-		return (EIO);
 	}
-	xa.xa_domid = (uint16_t)res;
+	if (res <= UINT16_MAX)
+		xa.xa_domid = (uint16_t)res;
 
 	xdv = malloc(sizeof(struct xen_device), M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (xdv == NULL)
@@ -1427,7 +1426,7 @@ xen_probe_devices(struct xen_softc *sc)
 				printf("%s: failed to attach \"%s/%s\"\n",
 				    sc->sc_dev.dv_xname, path,
 				    (const char *)iovp2[j].iov_base);
-				goto out;
+				continue;
 			}
 		}
 		/* Setup a watch for every device subtree */
