@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.82 2024/09/04 07:45:08 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.83 2024/11/27 10:33:31 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -120,10 +120,6 @@ cdev_decl(fd);
 cdev_decl(lpt);
 #include "ch.h"
 #include "bpfilter.h"
-#if 0
-#include "pcmcia.h"
-cdev_decl(pcmcia);
-#endif
 #include "spkr.h"
 cdev_decl(spkr);
 #include "cy.h"
@@ -203,11 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
-#if 0
-	cdev_ocis_init(NPCMCIA,pcmcia), /* 25: PCMCIA Bus */
-#else
 	cdev_notdef(),			/* 25 */
-#endif
 	cdev_notdef(),			/* 26 */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_notdef(),			/* 28 was LKM */

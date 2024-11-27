@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.178 2024/06/11 09:21:32 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.179 2024/11/27 10:33:31 jsg Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -109,10 +109,6 @@ cdev_decl(fd);
 cdev_decl(lpt);
 #include "ch.h"
 #include "bpfilter.h"
-#if 0
-#include "pcmcia.h"
-cdev_decl(pcmcia);
-#endif
 #include "spkr.h"
 cdev_decl(spkr);
 #include "cy.h"
@@ -191,11 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
-#if 0
-	cdev_ocis_init(NPCMCIA,pcmcia), /* 25: PCMCIA Bus */
-#else
 	cdev_notdef(),			/* 25 */
-#endif
 	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_notdef(),			/* 28: was LKM */
