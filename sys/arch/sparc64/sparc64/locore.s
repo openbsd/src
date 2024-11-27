@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.229 2024/11/08 08:44:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.230 2024/11/27 20:11:32 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4288,11 +4288,12 @@ sigfillsiz:
  */
 
 /*
- * getfp() - get stack frame pointer
+ * getfp() - get unbiased stack frame pointer
  */
 ENTRY(getfp)
+	mov %fp, %o0
 	retl
-	 mov %fp, %o0
+	 add	%o0, BIAS, %o0
 
 /*
  * _copyinstr(fromaddr, toaddr, maxlength, &lencopied)
