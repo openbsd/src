@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.222 2024/09/01 03:09:00 jsg Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.223 2024/11/27 11:37:23 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1935,6 +1935,11 @@ uvideo_vs_close(struct uvideo_softc *sc)
 {
 	if (sc->sc_vs_cur->bulk_running == 1) {
 		sc->sc_vs_cur->bulk_running = 0;
+
+		/* Bulk thread may sleep in usbd_transfer, abort it */
+		if (sc->sc_vs_cur->pipeh)
+			usbd_abort_pipe(sc->sc_vs_cur->pipeh);
+
 		usbd_ref_wait(sc->sc_udev);
 	}
 
