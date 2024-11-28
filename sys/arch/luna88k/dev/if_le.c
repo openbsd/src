@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.12 2017/06/17 00:28:18 aoyama Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.13 2024/11/28 13:13:04 aoyama Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -56,6 +56,12 @@
 #include <dev/ic/am7990var.h>
 
 #include <luna88k/luna88k/isr.h>
+
+#define TRI_PORT_RAM_LANCE_OFFSET	0x10000	/* first 64KB is used by XP */
+
+#ifndef TRI_PORT_RAM_LANCE_SIZE
+#define TRI_PORT_RAM_LANCE_SIZE		0x10000	/* 64KB is the default */
+#endif
 
 /*
  * LANCE registers.
@@ -128,10 +134,10 @@ le_attach(struct device *parent, struct device *self, void *aux)
 
 	lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;	/* LANCE */
 
-	sc->sc_mem = (void *)(TRI_PORT_RAM + 0x10000);	/* SRAM */
+	sc->sc_mem = (void *)(TRI_PORT_RAM + TRI_PORT_RAM_LANCE_OFFSET);
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
-	sc->sc_memsize = 64 * 1024;			/* 64KB */
+	sc->sc_memsize = TRI_PORT_RAM_LANCE_SIZE;
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 

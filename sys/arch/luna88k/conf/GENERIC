@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2019/12/30 12:16:12 aoyama Exp $
+#	$OpenBSD: GENERIC,v 1.25 2024/11/28 13:13:03 aoyama Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -24,6 +24,9 @@ option		ERRATA__XXX_USR
 
 # Options for luna88k hardware
 option		WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
+
+# In case of limiting LANCE's 3 port RAM allocation to 32KB
+#option		TRI_PORT_RAM_LANCE_SIZE=0x8000
 
 config		bsd		swap generic
 
