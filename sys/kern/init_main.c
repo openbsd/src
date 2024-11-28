@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.326 2024/04/02 08:39:16 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.327 2024/11/28 02:01:57 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ void	db_ctf_init(void);
 void	prof_init(void);
 void	init_exec(void);
 void	futex_init(void);
+void	tslp_init(void);
 void	taskq_init(void);
 void	timeout_proc_init(void);
 void	pool_gc_pages(void *);
@@ -250,6 +251,7 @@ main(void *framep)
 	 * Initialize futexes.
 	 */
 	futex_init();
+	tslp_init();
 
 	/* Create credentials. */
 	p->p_ucred = crget();
