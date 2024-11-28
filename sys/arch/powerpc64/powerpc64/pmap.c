@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2024/11/27 20:30:15 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.64 2024/11/28 18:54:36 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1601,7 +1601,7 @@ pmap_bootstrap_cpu(void)
 	/* Clear TLB. */
 	tlbia();
 
-	if (cpu_features2 & PPC_FEATURE2_ARCH_3_00) {
+	if (hwcap2 & PPC_FEATURE2_ARCH_3_00) {
 		/* Set partition table. */
 		mtptcr((paddr_t)pmap_pat | PATSIZE);
 	} else {
