@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.19 2024/11/07 16:00:11 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.20 2024/11/28 10:42:16 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -736,7 +736,7 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 	const struct in_addr	 mask4 = { .s_addr = 0xffffffffUL };
 	int			 res_code, msraserr = 935;
 	struct ipcp_address	*addr;
-	int			 i, j, n;
+	int			 i, n;
 	bool			 found = false;
 	char			 username[256], buf[128];
 	struct user		*user = NULL;
@@ -829,6 +829,7 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 			if (!found)
 				goto reject;
 		} else {
+			int j = 0;
 			n = arc4random_uniform(self->npools);
 			i = 0;
 			TAILQ_FOREACH(addr, &self->addrs, next) {
@@ -1289,9 +1290,9 @@ void
 ipcp_ipv4_delete(struct module_ipcp *self, struct assigned_ipv4 *assign,
     const char *cause)
 {
-	static struct radiusd_ipcp_statistics stat = { 0 };
+	struct radiusd_ipcp_statistics stat;
 
-	memset(stat.cause, 0, sizeof(stat.cause));
+	memset(&stat, 0, sizeof(stat));
 	strlcpy(stat.cause, cause, sizeof(stat.cause));
 
 	ipcp_del_db(self, assign);
