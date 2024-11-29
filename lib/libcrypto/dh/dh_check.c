@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.29 2024/08/30 17:44:56 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.30 2024/11/29 15:59:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,10 +127,8 @@ DH_check(const DH *dh, int *flags)
 	BN_CTX_start(ctx);
 
 	if (dh->q != NULL) {
-		BIGNUM *quotient, *residue;
+		BIGNUM *residue;
 
-		if ((quotient = BN_CTX_get(ctx)) == NULL)
-			goto err;
 		if ((residue = BN_CTX_get(ctx)) == NULL)
 			goto err;
 		if ((*flags & DH_NOT_SUITABLE_GENERATOR) == 0) {
@@ -147,12 +145,10 @@ DH_check(const DH *dh, int *flags)
 		if (is_prime == 0)
 			*flags |= DH_CHECK_Q_NOT_PRIME;
 		/* Check p == 1 mod q, i.e., q divides p - 1 */
-		if (!BN_div_ct(quotient, residue, dh->p, dh->q, ctx))
+		if (!BN_div_ct(NULL, residue, dh->p, dh->q, ctx))
 			goto err;
 		if (!BN_is_one(residue))
 			*flags |= DH_CHECK_INVALID_Q_VALUE;
-		if (dh->j != NULL && BN_cmp(dh->j, quotient) != 0)
-			*flags |= DH_CHECK_INVALID_J_VALUE;
 	}
 
 	is_prime = BN_is_prime_ex(dh->p, DH_NUMBER_ITERATIONS_FOR_PRIME,

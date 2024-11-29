@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_local.h,v 1.6 2024/11/29 07:42:35 tb Exp $ */
+/* $OpenBSD: dh_local.h,v 1.7 2024/11/29 15:59:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,6 +80,7 @@ struct dh_method {
 struct dh_st {
 	int version;
 	BIGNUM *p;
+	BIGNUM *q;
 	BIGNUM *g;
 	long length; /* optional */
 	BIGNUM *pub_key;	/* g^x */
@@ -87,12 +88,6 @@ struct dh_st {
 
 	int flags;
 	BN_MONT_CTX *method_mont_p;
-	/* Place holders if we want to do X9.42 DH */
-	BIGNUM *q;
-	BIGNUM *j;
-	unsigned char *seed;
-	int seedlen;
-	BIGNUM *counter;
 
 	int references;
 	CRYPTO_EX_DATA ex_data;
