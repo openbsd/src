@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_local.h,v 1.4 2024/05/11 06:43:50 tb Exp $ */
+/* $OpenBSD: dsa_local.h,v 1.5 2024/11/29 07:42:35 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -75,9 +75,6 @@ struct dsa_method {
 } /* DSA_METHOD */;
 
 struct dsa_st {
-	/* This first variable is used to pick up errors where
-	 * a DSA is passed instead of of a EVP_PKEY */
-	int pad;
 	long version;
 	BIGNUM *p;
 	BIGNUM *q;	/* == 20 */

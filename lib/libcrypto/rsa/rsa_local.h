@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.8 2024/01/01 15:43:02 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.9 2024/11/29 07:42:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,9 +98,6 @@ struct rsa_meth_st {
 };
 
 struct rsa_st {
-	/* The first parameter is used to pickup errors where
-	 * this is passed instead of aEVP_PKEY, it is set to 0 */
-	int pad;
 	long version;
 	const RSA_METHOD *meth;
 

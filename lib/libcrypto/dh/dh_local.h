@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_local.h,v 1.5 2024/08/30 17:44:56 tb Exp $ */
+/* $OpenBSD: dh_local.h,v 1.6 2024/11/29 07:42:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,9 +78,6 @@ struct dh_method {
 };
 
 struct dh_st {
-	/* This first argument is used to pick up errors when
-	 * a DH is passed instead of a EVP_PKEY */
-	int pad;
 	int version;
 	BIGNUM *p;
 	BIGNUM *g;
