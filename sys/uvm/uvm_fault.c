@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.146 2024/11/27 10:58:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.147 2024/11/29 06:40:57 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -841,10 +841,11 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct vm_anon *anon;
+	struct vm_page *pg;
 	boolean_t shadowed;
 	vaddr_t currva;
 	paddr_t pa;
-	int lcv;
+	int lcv, entered = 0;
 
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL ||
@@ -858,16 +859,6 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 	currva = flt->startva;
 	shadowed = FALSE;
 	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
-		/*
-		 * dont play with VAs that are already mapped
-		 * except for center)
-		 */
-		if (lcv != flt->centeridx &&
-		    pmap_extract(ufi->orig_map->pmap, currva, &pa)) {
-			pages[lcv] = PGO_DONTCARE;
-			continue;
-		}
-
 		/*
 		 * unmapped or center page.   check if any anon at this level.
 		 */
@@ -884,12 +875,20 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 			shadowed = TRUE;
 			continue;
 		}
+
 		anon = anons[lcv];
+		pg = anon->an_page;
+
 		KASSERT(anon->an_lock == amap->am_lock);
-		if (anon->an_page &&
-		    (anon->an_page->pg_flags & (PG_RELEASED|PG_BUSY)) == 0) {
+
+		/*
+		 * ignore busy pages.
+		 * don't play with VAs that are already mapped.
+		 */
+		if (pg && (pg->pg_flags & (PG_RELEASED|PG_BUSY)) == 0 &&
+		    !pmap_extract(ufi->orig_map->pmap, currva, &pa)) {
 			uvm_lock_pageq();
-			uvm_pageactivate(anon->an_page);	/* reactivate */
+			uvm_pageactivate(pg);	/* reactivate */
 			uvm_unlock_pageq();
 			counters_inc(uvmexp_counters, flt_namap);
 
@@ -902,13 +901,14 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 			 * that we enter these right now.
 			 */
 			(void) pmap_enter(ufi->orig_map->pmap, currva,
-			    VM_PAGE_TO_PHYS(anon->an_page) | flt->pa_flags,
+			    VM_PAGE_TO_PHYS(pg) | flt->pa_flags,
 			    (anon->an_ref > 1) ?
 			    (flt->enter_prot & ~PROT_WRITE) : flt->enter_prot,
 			    PMAP_CANFAIL);
+			entered++;
 		}
 	}
-	if (flt->npages > 1)
+	if (entered > 0)
 		pmap_update(ufi->orig_map->pmap);
 
 	return shadowed;
