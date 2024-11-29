@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.147 2024/11/29 06:40:57 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.148 2024/11/29 06:44:57 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1115,8 +1115,9 @@ uvm_fault_lower_lookup(
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage = NULL;
-	int lcv, gotpages;
+	int lcv, gotpages, entered;
 	vaddr_t currva;
+	paddr_t pa;
 
 	rw_enter(uobj->vmobjlock, RW_WRITE);
 
@@ -1135,6 +1136,7 @@ uvm_fault_lower_lookup(
 		return NULL;
 	}
 
+	entered = 0;
 	currva = flt->startva;
 	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
 		if (pages[lcv] == NULL ||
@@ -1155,18 +1157,14 @@ uvm_fault_lower_lookup(
 			continue;
 		}
 
-		/*
-		 * note: calling pgo_get with locked data
-		 * structures returns us pages which are
-		 * neither busy nor released, so we don't
-		 * need to check for this.   we can just
-		 * directly enter the page (after moving it
-		 * to the head of the active queue [useful?]).
-		 */
+		if (pmap_extract(ufi->orig_map->pmap, currva, &pa))
+			goto next;
 
-		uvm_lock_pageq();
-		uvm_pageactivate(pages[lcv]);	/* reactivate */
-		uvm_unlock_pageq();
+		if (pages[lcv]->wire_count == 0) {
+			uvm_lock_pageq();
+			uvm_pageactivate(pages[lcv]);
+			uvm_unlock_pageq();
+		}
 		counters_inc(uvmexp_counters, flt_nomap);
 
 		/* No fault-ahead when wired. */
@@ -1181,16 +1179,19 @@ uvm_fault_lower_lookup(
 		(void) pmap_enter(ufi->orig_map->pmap, currva,
 		    VM_PAGE_TO_PHYS(pages[lcv]) | flt->pa_flags,
 		    flt->enter_prot & MASK(ufi->entry), PMAP_CANFAIL);
+		entered++;
 
 		/*
 		 * NOTE: page can't be PG_WANTED because
 		 * we've held the lock the whole time
 		 * we've had the handle.
 		 */
+next:
 		atomic_clearbits_int(&pages[lcv]->pg_flags, PG_BUSY);
 		UVM_PAGE_OWN(pages[lcv], NULL);
 	}
-	pmap_update(ufi->orig_map->pmap);
+	if (entered > 0)
+		pmap_update(ufi->orig_map->pmap);
 
 	return uobjpage;
 }
