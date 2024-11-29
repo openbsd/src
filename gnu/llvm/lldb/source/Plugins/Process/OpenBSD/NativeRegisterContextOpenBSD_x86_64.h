@@ -15,6 +15,9 @@
 #include <machine/reg.h>
 // clang-format on
 
+#include <array>
+#include <vector>
+
 #include "Plugins/Process/OpenBSD/NativeRegisterContextOpenBSD.h"
 #include "Plugins/Process/Utility/RegisterContext_x86.h"
 #include "Plugins/Process/Utility/lldb-x86-register-enums.h"
@@ -52,16 +55,29 @@ protected:
 
 private:
   // Private member types.
-  enum { GPRegSet, FPRegSet };
+  enum {
+    GPRegSet,
+    FPRegSet,
+    YMMRegSet,
+    MaxRegSet = YMMRegSet,
+  };
 
   // Private member variables.
   struct reg m_gpr;
   struct fpreg m_fpr;
+  std::vector<uint8_t> m_xsave;
+  std::array<uint32_t, MaxRegSet + 1> m_xsave_offsets;
 
   int GetSetForNativeRegNum(int reg_num) const;
 
   int ReadRegisterSet(uint32_t set);
   int WriteRegisterSet(uint32_t set);
+
+  struct YMMSplitPtr {
+    void *xmm;
+    void *ymm_hi;
+  };
+  std::optional<YMMSplitPtr> GetYMMSplitReg(uint32_t reg);
 };
 
 } // namespace process_openbsd

@@ -9,13 +9,13 @@
 
 #if defined(__x86_64__)
 
+#include "NativeRegisterContextOpenBSD_x86_64.h"
 
+#include <cpuid.h>
 #include <elf.h>
 #include <err.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-#include "NativeRegisterContextOpenBSD_x86_64.h"
 
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Utility/DataBufferHeap.h"
@@ -24,9 +24,11 @@
 #include "lldb/Utility/Status.h"
 
 #include "Plugins/Process/Utility/RegisterContextOpenBSD_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContext_x86.h"
 
 // clang-format off
 #include <sys/types.h>
+#include <sys/ptrace.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <machine/cpu.h>
@@ -92,8 +94,20 @@ static_assert(
       == k_num_fpr_registers_x86_64,
   "g_fpu_regnums_x86_64 has wrong number of register infos");
 
+static const uint32_t g_avx_regnums_x86_64[] = {
+    lldb_ymm0_x86_64,   lldb_ymm1_x86_64,  lldb_ymm2_x86_64,  lldb_ymm3_x86_64,
+    lldb_ymm4_x86_64,   lldb_ymm5_x86_64,  lldb_ymm6_x86_64,  lldb_ymm7_x86_64,
+    lldb_ymm8_x86_64,   lldb_ymm9_x86_64,  lldb_ymm10_x86_64, lldb_ymm11_x86_64,
+    lldb_ymm12_x86_64,  lldb_ymm13_x86_64, lldb_ymm14_x86_64, lldb_ymm15_x86_64,
+    LLDB_INVALID_REGNUM // register sets need to end with this flag
+};
+static_assert(
+  (sizeof(g_avx_regnums_x86_64) / sizeof(g_avx_regnums_x86_64[0])) - 1
+       == k_num_avx_registers_x86_64,
+  "g_avx_regnums_x86_64 has wrong number of register infos");
+
 // Number of register sets provided by this context.
-enum { k_num_register_sets = 2 };
+enum { k_num_register_sets = 3 };
 
 // Register sets for x86 64-bit.
 static const RegisterSet g_reg_sets_x86_64[k_num_register_sets] = {
@@ -101,11 +115,18 @@ static const RegisterSet g_reg_sets_x86_64[k_num_register_sets] = {
      g_gpr_regnums_x86_64},
     {"Floating Point Registers", "fpu", k_num_fpr_registers_x86_64,
      g_fpu_regnums_x86_64},
+    {"Advanced Vector Extensions", "avx", k_num_avx_registers_x86_64,
+     g_avx_regnums_x86_64},
 };
 
 struct x86_fpu_addr {
   uint32_t offset;
   uint32_t selector;
+};
+
+enum {
+  k_xsave_offset_legacy_region = 160,
+  k_xsave_offset_invalid = UINT32_MAX,
 };
 
 } // namespace
@@ -135,7 +156,18 @@ NativeRegisterContextOpenBSD_x86_64::NativeRegisterContextOpenBSD_x86_64(
     const ArchSpec &target_arch, NativeThreadProtocol &native_thread)
     : NativeRegisterContextOpenBSD(native_thread,
                                   CreateRegisterInfoInterface(target_arch)),
-      m_gpr(), m_fpr() {}
+      m_gpr(), m_fpr() {
+  uint32_t a, b, c, d;
+
+  struct ptrace_xstate_info info;
+  const Status error = NativeProcessOpenBSD::PtraceWrapper(
+      PT_GETXSTATE_INFO, GetProcessPid(), &info, sizeof(info));
+  if (error.Success())
+      m_xsave.resize(info.xsave_len);
+
+  __get_cpuid_count(0xd, 2, &a, &b, &c, &d);
+  m_xsave_offsets[YMMRegSet] = b > 0 ? b : k_xsave_offset_invalid;
+}
 
 uint32_t NativeRegisterContextOpenBSD_x86_64::GetUserRegisterCount() const {
 	uint32_t count = 0;
@@ -167,6 +199,8 @@ int NativeRegisterContextOpenBSD_x86_64::GetSetForNativeRegNum(
     return GPRegSet;
   else if (reg_num >= k_first_fpr_x86_64 && reg_num <= k_last_fpr_x86_64)
     return FPRegSet;
+  else if (reg_num >= k_first_avx_x86_64 && reg_num <= k_last_avx_x86_64)
+    return YMMRegSet;
   else
     return -1;
 }
@@ -179,6 +213,11 @@ int NativeRegisterContextOpenBSD_x86_64::ReadRegisterSet(uint32_t set) {
   case FPRegSet:
     ReadFPR();
     return 0;
+  case YMMRegSet: {
+    const Status error = NativeProcessOpenBSD::PtraceWrapper(
+        PT_GETXSTATE, GetProcessPid(), m_xsave.data(), m_xsave.size());
+    return error.Success() ? 0 : -1;
+  }
   default:
     break;
   }
@@ -192,6 +231,11 @@ int NativeRegisterContextOpenBSD_x86_64::WriteRegisterSet(uint32_t set) {
   case FPRegSet:
     WriteFPR();
     return 0;
+  case YMMRegSet: {
+    const Status error = NativeProcessOpenBSD::PtraceWrapper(
+        PT_SETXSTATE, GetProcessPid(), m_xsave.data(), m_xsave.size());
+    return error.Success() ? 0 : -1;
+  }
   default:
     break;
   }
@@ -393,6 +437,18 @@ NativeRegisterContextOpenBSD_x86_64::ReadRegister(const RegisterInfo *reg_info,
     break;
   }
 
+  if (set == YMMRegSet) {
+    std::optional<YMMSplitPtr> ymm_reg = GetYMMSplitReg(reg);
+    if (ymm_reg) {
+      YMMReg ymm = XStateToYMM(ymm_reg->xmm, ymm_reg->ymm_hi);
+      reg_value.SetBytes(ymm.bytes, reg_info->byte_size,
+                         endian::InlHostByteOrder());
+    } else {
+      error.SetErrorStringWithFormat("register \"%s\" not supported",
+                                     reg_info->name);
+    }
+  }
+
   return error;
 }
 
@@ -591,6 +647,18 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteRegister(
     break;
   }
 
+  if (set == YMMRegSet) {
+    std::optional<YMMSplitPtr> ymm_reg = GetYMMSplitReg(reg);
+    if (!ymm_reg) {
+      error.SetErrorStringWithFormat("register \"%s\" not supported",
+                                     reg_info->name);
+      return error;
+    }
+    YMMReg ymm;
+    ::memcpy(ymm.bytes, reg_value.GetBytes(), reg_value.GetByteSize());
+    YMMToXState(ymm, ymm_reg->xmm, ymm_reg->ymm_hi);
+  }
+
   if (WriteRegisterSet(set) != 0)
     error.SetErrorStringWithFormat("failed to write register set");
 
@@ -674,4 +742,18 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteAllRegisterValues(
 
   return error;
 }
+
+std::optional<NativeRegisterContextOpenBSD_x86_64::YMMSplitPtr>
+NativeRegisterContextOpenBSD_x86_64::GetYMMSplitReg(uint32_t reg) {
+  if (m_xsave_offsets[YMMRegSet] == k_xsave_offset_invalid)
+    return std::nullopt;
+
+  uint32_t reg_index = reg - lldb_ymm0_x86_64;
+  auto *xmm =
+      reinterpret_cast<XMMReg *>(m_xsave.data() + k_xsave_offset_legacy_region);
+  auto *ymm =
+      reinterpret_cast<XMMReg *>(m_xsave.data() + m_xsave_offsets[YMMRegSet]);
+  return YMMSplitPtr{&xmm[reg_index], &ymm[reg_index]};
+}
+
 #endif
