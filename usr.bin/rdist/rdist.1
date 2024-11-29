@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.49 2017/01/01 01:08:11 tb Exp $
+.\"	$OpenBSD: rdist.1,v 1.50 2024/11/29 23:46:40 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: January 1 2017 $
+.Dd $Mdocdate: November 29 2024 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ Otherwise,
 .Nm
 will run the command:
 .Bd -literal -offset indent
-ssh \*(Lthost\*(Gt -l \*(Ltlogin_name\*(Gt rdistd -S
+ssh <host> -l <login_name> rdistd -S
 .Ed
 .Pp
 .Ar host
@@ -140,7 +140,7 @@ option was specified,
 .Nm
 will attempt to run the command:
 .Bd -literal -offset indent
-\*(Ltrdistd path\*(Gt -S
+<rdistd path> -S
 .Ed
 .Pp
 If no
@@ -180,7 +180,7 @@ $ rdist -c name ... [login@]host[:dest]
 .Pp
 The equivalent distfile is as follows:
 .Bd -literal -offset indent
-(  name ... ) -\*(Gt [login@]host
+(  name ... ) -> [login@]host
 	install	[dest] ;
 .Ed
 .It Fl D
@@ -415,9 +415,9 @@ to be copied, the destination hosts, and what operations to perform
 to do the updating.
 Each entry has one of the following formats.
 .Bd -literal -offset indent
-\*(Ltvariable name\*(Gt = \*(Ltname list\*(Gt
-[ label: ] \*(Ltsource list\*(Gt -\*(Gt \*(Ltdestination list\*(Gt \*(Ltcommand list\*(Gt
-[ label: ] \*(Ltsource list\*(Gt :: \*(Lttimestamp file\*(Gt \*(Ltcommand list\*(Gt
+<variable name> = <name list>
+[ label: ] <source list> -< <destination list> <command list>
+[ label: ] <source list> :: <timestamp file> <command list>
 .Ed
 .Pp
 The first format is used for defining variables.
@@ -454,11 +454,11 @@ They are used to identify a specific command to execute
 .Pp
 The source and destination lists have the following format:
 .Bd -literal -offset indent
-\*(Ltname\*(Gt
+<name>
 .Ed
 or
 .Bd -literal -compact -offset indent
-`(' \*(Ltzero or more names separated by whitespace\*(Gt `)'
+`(' <zero or more names separated by whitespace> `)'
 .Ed
 .Pp
 These simple lists can be modified by using one level of set addition,
@@ -478,29 +478,43 @@ then the list will have to be explicitly constructed in steps using
 .Dq temporary
 variables.
 .Pp
-The shell meta-characters `[', `]', `{', `}', `*', and `?'
+The shell meta-characters
+.Sq \&[ ,
+.Sq \&] ,
+.Sq \&{ ,
+.Sq \&} ,
+.Sq * ,
+and
+.Sq \&?
 are recognized and expanded (on the local host only) in the same way as
 .Xr ksh 1 .
 They can be escaped with a backslash.
-The `~' character is also expanded in the same way as
+The
+.Sq ~
+character is also expanded in the same way as
 .Xr ksh 1
 but is expanded separately on the local and destination hosts.
 When the
 .Fl o Ar whole
-option is used with a file name that begins with `~', everything except the
-home directory is appended to the destination name.
-File names which do not begin with `/' or `~' use the destination user's
+option is used with a file name that begins with
+.Sq \&~ ,
+everything except the home directory is appended to the destination name.
+File names which do not begin with
+.Sq /
+or
+.Sq ~
+use the destination user's
 home directory as the root directory for the rest of the file name.
 .Pp
 The command list consists of zero or more commands of the following
 format:
 .Bl -column "except_pat" "<pattern list>" "opt_dest_name" ";" -offset indent
-.It install Ta \*(Ltoptions\*(Gt Ta opt_dest_name Ta ;
-.It notify Ta \*(Ltname list\*(Gt Ta "" Ta ;
-.It except Ta \*(Ltname list\*(Gt Ta "" Ta ;
-.It except_pat Ta \*(Ltpattern list\*(Gt Ta "" Ta ;
-.It special Ta \*(Ltname list\*(Gt Ta string Ta ;
-.It cmdspecial Ta \*(Ltname list\*(Gt Ta string Ta ;
+.It install Ta <options> Ta opt_dest_name Ta ;
+.It notify Ta <name list> Ta "" Ta ;
+.It except Ta <name list> Ta "" Ta ;
+.It except_pat Ta <pattern list> Ta "" Ta ;
+.It special Ta <name list> Ta string Ta ;
+.It cmdspecial Ta <name list> Ta string Ta ;
 .El
 .Pp
 The
@@ -554,12 +568,17 @@ is a list of basic regular expressions
 for details).
 If one of the patterns matches some string within a file name, that file will
 be ignored.
-Note that since `\e' is a quote character, it must be doubled to become
+Note that since
+.Sq \e
+is a quote character, it must be doubled to become
 part of the regular expression.
 Variables are expanded in
 .Ar pattern list
 but not shell file pattern matching characters.
-To include a `$', it must be escaped with `\e'.
+To include a
+.Sq $ ,
+it must be escaped with
+.Sq \e .
 .Pp
 The
 .Cm special
@@ -573,7 +592,9 @@ If the
 is omitted then the shell commands will be executed for every file
 updated or installed.
 .Ar string
-starts and ends with `"' and can cross multiple lines in
+starts and ends with
+.Sq \&"
+and can cross multiple lines in
 .Pa distfile .
 Multiple commands to the shell should be separated by `;'.
 Commands are executed in the user's home directory on the host
@@ -750,20 +771,20 @@ FILES = ( /bin /lib /usr/bin /usr/games
 EXLIB = ( Mail.rc aliases aliases.db crontab dshrc
 	sendmail.cf sendmail.hf sendmail.st uucp vfont )
 
-${FILES} -\*(Gt ${HOSTS}
+${FILES} -> ${HOSTS}
 	install -oremove,chknfs ;
 	except /usr/lib/${EXLIB} ;
 	except /usr/games/lib ;
 	special /usr/lib/sendmail "/usr/lib/sendmail -bi" ;
 
 srcs:
-/usr/src/bin -\*(Gt arpa
+/usr/src/bin -> arpa
 	except_pat ( \e\e.o\e$ /SCCS\e$ ) ;
 
 IMAGEN = (ips dviimp catdvi)
 
 imagen:
-/usr/local/${IMAGEN} -\*(Gt arpa
+/usr/local/${IMAGEN} -> arpa
 	install /usr/local/lib ;
 	notify ralph ;
 
