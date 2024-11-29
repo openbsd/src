@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.37 2024/11/26 13:57:31 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.38 2024/11/29 04:35:13 tb Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -334,7 +334,6 @@ imsg_add(struct ibuf *msg, const void *data, size_t datalen)
 void
 imsg_close(struct imsgbuf *imsgbuf, struct ibuf *msg)
 {
-	struct imsg_hdr	*hdr;
 	uint32_t len;
 
 	len = ibuf_size(msg);
