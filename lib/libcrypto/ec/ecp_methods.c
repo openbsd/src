@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.10 2024/11/30 16:18:01 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.11 2024/11/30 16:34:34 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1141,7 +1141,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 	if ((prod_Z = calloc(num, sizeof *prod_Z)) == NULL)
 		goto err;
 	for (i = 0; i < num; i++) {
-		if ((prod_Z[i] = BN_new()) == NULL)
+		if ((prod_Z[i] = BN_CTX_get(ctx)) == NULL)
 			goto err;
 	}
 
@@ -1253,12 +1253,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 
  err:
 	BN_CTX_end(ctx);
-
-	if (prod_Z != NULL) {
-		for (i = 0; i < num; i++)
-			BN_free(prod_Z[i]);
-		free(prod_Z);
-	}
+	free(prod_Z);
 
 	return ret;
 }
