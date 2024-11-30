@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.9 2024/11/17 08:19:08 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.10 2024/11/30 16:18:01 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1123,9 +1123,8 @@ static int
 ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
     BN_CTX *ctx)
 {
-	BIGNUM *tmp0, *tmp1;
-	size_t pow2 = 0;
-	BIGNUM **heap = NULL;
+	BIGNUM **prod_Z = NULL;
+	BIGNUM *tmp, *tmp_Z;
 	size_t i;
 	int ret = 0;
 
@@ -1134,141 +1133,120 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 
 	BN_CTX_start(ctx);
 
-	if ((tmp0 = BN_CTX_get(ctx)) == NULL)
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	/*
-	 * Before converting the individual points, compute inverses of all Z
-	 * values. Modular inversion is rather slow, but luckily we can do
-	 * with a single explicit inversion, plus about 3 multiplications per
-	 * input value.
-	 */
-
-	pow2 = 1;
-	while (num > pow2)
-		pow2 <<= 1;
-	/*
-	 * Now pow2 is the smallest power of 2 satifsying pow2 >= num. We
-	 * need twice that.
-	 */
-	pow2 <<= 1;
-
-	heap = reallocarray(NULL, pow2, sizeof heap[0]);
-	if (heap == NULL)
+	if ((tmp_Z = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
+	if ((prod_Z = calloc(num, sizeof *prod_Z)) == NULL)
+		goto err;
+	for (i = 0; i < num; i++) {
+		if ((prod_Z[i] = BN_new()) == NULL)
+			goto err;
+	}
+
 	/*
-	 * The array is used as a binary tree, exactly as in heapsort:
-	 *
-	 * heap[1] heap[2]                     heap[3] heap[4]       heap[5]
-	 * heap[6]       heap[7] heap[8]heap[9] heap[10]heap[11]
-	 * heap[12]heap[13] heap[14] heap[15]
-	 *
-	 * We put the Z's in the last line; then we set each other node to the
-	 * product of its two child-nodes (where empty or 0 entries are
-	 * treated as ones); then we invert heap[1]; then we invert each
-	 * other node by replacing it by the product of its parent (after
-	 * inversion) and its sibling (before inversion).
+	 * Set prod_Z[i] to the product of points[0]->Z, ..., points[i]->Z,
+	 * skipping any zero-valued inputs (pretend that they're 1).
 	 */
-	heap[0] = NULL;
-	for (i = pow2 / 2 - 1; i > 0; i--)
-		heap[i] = NULL;
-	for (i = 0; i < num; i++)
-		heap[pow2 / 2 + i] = &points[i]->Z;
-	for (i = pow2 / 2 + num; i < pow2; i++)
-		heap[i] = NULL;
 
-	/* set each node to the product of its children */
-	for (i = pow2 / 2 - 1; i > 0; i--) {
-		heap[i] = BN_new();
-		if (heap[i] == NULL)
+	if (!BN_is_zero(&points[0]->Z)) {
+		if (!bn_copy(prod_Z[0], &points[0]->Z))
 			goto err;
-
-		if (heap[2 * i] != NULL) {
-			if ((heap[2 * i + 1] == NULL) || BN_is_zero(heap[2 * i + 1])) {
-				if (!bn_copy(heap[i], heap[2 * i]))
-					goto err;
-			} else {
-				if (BN_is_zero(heap[2 * i])) {
-					if (!bn_copy(heap[i], heap[2 * i + 1]))
-						goto err;
-				} else {
-					if (!group->meth->field_mul(group, heap[i],
-						heap[2 * i], heap[2 * i + 1], ctx))
-						goto err;
-				}
-			}
-		}
-	}
-
-	/* invert heap[1] */
-	if (!BN_is_zero(heap[1])) {
-		if (BN_mod_inverse_ct(heap[1], heap[1], &group->field, ctx) == NULL) {
-			ECerror(ERR_R_BN_LIB);
-			goto err;
-		}
-	}
-	if (group->meth->field_encode != NULL) {
-		/*
-		 * in the Montgomery case, we just turned  R*H  (representing
-		 * H) into  1/(R*H),  but we need  R*(1/H)  (representing
-		 * 1/H); i.e. we have need to multiply by the Montgomery
-		 * factor twice
-		 */
-		if (!group->meth->field_encode(group, heap[1], heap[1], ctx))
-			goto err;
-		if (!group->meth->field_encode(group, heap[1], heap[1], ctx))
-			goto err;
-	}
-	/* set other heap[i]'s to their inverses */
-	for (i = 2; i < pow2 / 2 + num; i += 2) {
-		/* i is even */
-		if ((heap[i + 1] != NULL) && !BN_is_zero(heap[i + 1])) {
-			if (!group->meth->field_mul(group, tmp0, heap[i / 2], heap[i + 1], ctx))
-				goto err;
-			if (!group->meth->field_mul(group, tmp1, heap[i / 2], heap[i], ctx))
-				goto err;
-			if (!bn_copy(heap[i], tmp0))
-				goto err;
-			if (!bn_copy(heap[i + 1], tmp1))
+	} else {
+		if (group->meth->field_set_to_one != NULL) {
+			if (!group->meth->field_set_to_one(group, prod_Z[0], ctx))
 				goto err;
 		} else {
-			if (!bn_copy(heap[i], heap[i / 2]))
+			if (!BN_one(prod_Z[0]))
+				goto err;
+		}
+	}
+
+	for (i = 1; i < num; i++) {
+		if (!BN_is_zero(&points[i]->Z)) {
+			if (!group->meth->field_mul(group, prod_Z[i],
+			    prod_Z[i - 1], &points[i]->Z, ctx))
+				goto err;
+		} else {
+			if (!bn_copy(prod_Z[i], prod_Z[i - 1]))
 				goto err;
 		}
 	}
 
 	/*
-	 * we have replaced all non-zero Z's by their inverses, now fix up
-	 * all the points
+	 * Now use a single explicit inversion to replace every non-zero
+	 * points[i]->Z by its inverse.
 	 */
+	if (!BN_mod_inverse_nonct(tmp, prod_Z[num - 1], &group->field, ctx)) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+
+	if (group->meth->field_encode != NULL) {
+		/*
+		 * In the Montgomery case we just turned R*H (representing H)
+		 * into 1/(R*H), but we need R*(1/H) (representing 1/H); i.e.,
+		 * we need to multiply by the Montgomery factor twice.
+		 */
+		if (!group->meth->field_encode(group, tmp, tmp, ctx))
+			goto err;
+		if (!group->meth->field_encode(group, tmp, tmp, ctx))
+			goto err;
+	}
+
+	for (i = num - 1; i > 0; i--) {
+		/*
+		 * Loop invariant: tmp is the product of the inverses of
+		 * points[0]->Z, ..., points[i]->Z (zero-valued inputs skipped).
+		 */
+		if (BN_is_zero(&points[i]->Z))
+			continue;
+
+		/* Set tmp_Z to the inverse of points[i]->Z. */
+		if (!group->meth->field_mul(group, tmp_Z, prod_Z[i - 1], tmp, ctx))
+			goto err;
+		/* Adjust tmp to satisfy loop invariant. */
+		if (!group->meth->field_mul(group, tmp, tmp, &points[i]->Z, ctx))
+			goto err;
+		/* Replace points[i]->Z by its inverse. */
+		if (!bn_copy(&points[i]->Z, tmp_Z))
+			goto err;
+	}
+
+	if (!BN_is_zero(&points[0]->Z)) {
+		/* Replace points[0]->Z by its inverse. */
+		if (!bn_copy(&points[0]->Z, tmp))
+			goto err;
+	}
+
+	/* Finally, fix up the X and Y coordinates for all points. */
 	for (i = 0; i < num; i++) {
 		EC_POINT *p = points[i];
 
-		if (!BN_is_zero(&p->Z)) {
-			/* turn  (X, Y, 1/Z)  into  (X/Z^2, Y/Z^3, 1) */
+		if (BN_is_zero(&p->Z))
+			continue;
 
-			if (!group->meth->field_sqr(group, tmp1, &p->Z, ctx))
-				goto err;
-			if (!group->meth->field_mul(group, &p->X, &p->X, tmp1, ctx))
-				goto err;
+		/* turn  (X, Y, 1/Z)  into  (X/Z^2, Y/Z^3, 1) */
 
-			if (!group->meth->field_mul(group, tmp1, tmp1, &p->Z, ctx))
-				goto err;
-			if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp1, ctx))
-				goto err;
+		if (!group->meth->field_sqr(group, tmp, &p->Z, ctx))
+			goto err;
+		if (!group->meth->field_mul(group, &p->X, &p->X, tmp, ctx))
+			goto err;
 
-			if (group->meth->field_set_to_one != NULL) {
-				if (!group->meth->field_set_to_one(group, &p->Z, ctx))
-					goto err;
-			} else {
-				if (!BN_one(&p->Z))
-					goto err;
-			}
-			p->Z_is_one = 1;
+		if (!group->meth->field_mul(group, tmp, tmp, &p->Z, ctx))
+			goto err;
+		if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp, ctx))
+			goto err;
+
+		if (group->meth->field_set_to_one != NULL) {
+			if (!group->meth->field_set_to_one(group, &p->Z, ctx))
+				goto err;
+		} else {
+			if (!BN_one(&p->Z))
+				goto err;
 		}
+		p->Z_is_one = 1;
 	}
 
 	ret = 1;
@@ -1276,16 +1254,12 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
  err:
 	BN_CTX_end(ctx);
 
-	if (heap != NULL) {
-		/*
-		 * heap[pow2/2] .. heap[pow2-1] have not been allocated
-		 * locally!
-		 */
-		for (i = pow2 / 2 - 1; i > 0; i--) {
-			BN_free(heap[i]);
-		}
-		free(heap);
+	if (prod_Z != NULL) {
+		for (i = 0; i < num; i++)
+			BN_free(prod_Z[i]);
+		free(prod_Z);
 	}
+
 	return ret;
 }
 
