@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.11 2024/11/30 16:34:34 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.12 2024/11/30 21:09:59 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -277,48 +277,6 @@ ec_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	BN_CTX_end(ctx);
 
 	return ret;
-}
-
-static int
-ec_point_init(EC_POINT * point)
-{
-	BN_init(&point->X);
-	BN_init(&point->Y);
-	BN_init(&point->Z);
-	point->Z_is_one = 0;
-
-	return 1;
-}
-
-static void
-ec_point_finish(EC_POINT *point)
-{
-	BN_free(&point->X);
-	BN_free(&point->Y);
-	BN_free(&point->Z);
-	point->Z_is_one = 0;
-}
-
-static int
-ec_point_copy(EC_POINT *dest, const EC_POINT *src)
-{
-	if (!bn_copy(&dest->X, &src->X))
-		return 0;
-	if (!bn_copy(&dest->Y, &src->Y))
-		return 0;
-	if (!bn_copy(&dest->Z, &src->Z))
-		return 0;
-	dest->Z_is_one = src->Z_is_one;
-
-	return 1;
-}
-
-static int
-ec_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
-{
-	point->Z_is_one = 0;
-	BN_zero(&point->Z);
-	return 1;
 }
 
 static int
@@ -888,12 +846,6 @@ ec_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 		return 1;
 
 	return BN_usub(&point->Y, &group->field, &point->Y);
-}
-
-static int
-ec_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
-{
-	return BN_is_zero(&point->Z);
 }
 
 static int
@@ -1738,10 +1690,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.group_get_degree = ec_group_get_degree,
 	.group_order_bits = ec_group_simple_order_bits,
 	.group_check_discriminant = ec_group_check_discriminant,
-	.point_init = ec_point_init,
-	.point_finish = ec_point_finish,
-	.point_copy = ec_point_copy,
-	.point_set_to_infinity = ec_point_set_to_infinity,
 	.point_set_Jprojective_coordinates = ec_set_Jprojective_coordinates,
 	.point_get_Jprojective_coordinates = ec_get_Jprojective_coordinates,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
@@ -1750,7 +1698,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
-	.is_at_infinity = ec_is_at_infinity,
 	.is_on_curve = ec_is_on_curve,
 	.point_cmp = ec_cmp,
 	.make_affine = ec_make_affine,
@@ -1780,10 +1727,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.group_get_degree = ec_group_get_degree,
 	.group_order_bits = ec_group_simple_order_bits,
 	.group_check_discriminant = ec_group_check_discriminant,
-	.point_init = ec_point_init,
-	.point_finish = ec_point_finish,
-	.point_copy = ec_point_copy,
-	.point_set_to_infinity = ec_point_set_to_infinity,
 	.point_set_Jprojective_coordinates = ec_set_Jprojective_coordinates,
 	.point_get_Jprojective_coordinates = ec_get_Jprojective_coordinates,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
@@ -1792,7 +1735,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
-	.is_at_infinity = ec_is_at_infinity,
 	.is_on_curve = ec_is_on_curve,
 	.point_cmp = ec_cmp,
 	.make_affine = ec_make_affine,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.88 2024/11/22 12:14:41 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.89 2024/11/30 21:09:59 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -785,10 +785,6 @@ EC_POINT_new(const EC_GROUP *group)
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if (group->meth->point_init == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
 
 	if ((point = calloc(1, sizeof(*point))) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
@@ -796,9 +792,6 @@ EC_POINT_new(const EC_GROUP *group)
 	}
 
 	point->meth = group->meth;
-
-	if (!point->meth->point_init(point))
-		goto err;
 
 	return point;
 
@@ -815,8 +808,9 @@ EC_POINT_free(EC_POINT *point)
 	if (point == NULL)
 		return;
 
-	if (point->meth->point_finish != NULL)
-		point->meth->point_finish(point);
+	BN_free(&point->X);
+	BN_free(&point->Y);
+	BN_free(&point->Z);
 
 	freezero(point, sizeof *point);
 }
@@ -832,17 +826,22 @@ LCRYPTO_ALIAS(EC_POINT_clear_free);
 int
 EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 {
-	if (dest->meth->point_copy == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
 	if (dest->meth != src->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
 	if (dest == src)
 		return 1;
-	return dest->meth->point_copy(dest, src);
+
+	if (!bn_copy(&dest->X, &src->X))
+		return 0;
+	if (!bn_copy(&dest->Y, &src->Y))
+		return 0;
+	if (!bn_copy(&dest->Z, &src->Z))
+		return 0;
+	dest->Z_is_one = src->Z_is_one;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EC_POINT_copy);
 
@@ -879,15 +878,15 @@ LCRYPTO_ALIAS(EC_POINT_method_of);
 int
 EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
-	if (group->meth->point_set_to_infinity == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
 	if (group->meth != point->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	return group->meth->point_set_to_infinity(group, point);
+
+	BN_zero(&point->Z);
+	point->Z_is_one = 0;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EC_POINT_set_to_infinity);
 
@@ -1196,15 +1195,12 @@ LCRYPTO_ALIAS(EC_POINT_invert);
 int
 EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 {
-	if (group->meth->is_at_infinity == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
 	if (group->meth != point->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	return group->meth->is_at_infinity(group, point);
+
+	return BN_is_zero(&point->Z);
 }
 LCRYPTO_ALIAS(EC_POINT_is_at_infinity);
 
