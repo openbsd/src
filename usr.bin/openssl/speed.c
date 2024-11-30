@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.39 2024/07/13 16:43:56 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.40 2024/11/30 10:05:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,7 +168,7 @@ static int do_multi(int multi);
 #define RSA_NUM		4
 #define DSA_NUM		3
 
-#define EC_NUM       6
+#define EC_NUM		4
 #define MAX_ECDH_SIZE 256
 
 static const char *names[ALGOR_NUM] = {
@@ -362,12 +362,10 @@ speed_main(int argc, char **argv)
 #define	R_RSA_2048	2
 #define	R_RSA_4096	3
 
-#define R_EC_P160    0
-#define R_EC_P192    1
-#define R_EC_P224    2
-#define R_EC_P256    3
-#define R_EC_P384    4
-#define R_EC_P521    5
+#define R_EC_P224    0
+#define R_EC_P256    1
+#define R_EC_P384    2
+#define R_EC_P521    3
 
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
@@ -388,23 +386,19 @@ speed_main(int argc, char **argv)
 	 * accordingly.
 	 */
 	static unsigned int test_curves[EC_NUM] = {
-		NID_secp160r1,
-		NID_X9_62_prime192v1,
 		NID_secp224r1,
 		NID_X9_62_prime256v1,
 		NID_secp384r1,
 		NID_secp521r1,
 	};
 	static const char *test_curves_names[EC_NUM] = {
-		"secp160r1",
-		"nistp192",
 		"nistp224",
 		"nistp256",
 		"nistp384",
 		"nistp521",
 	};
 	static int test_curves_bits[EC_NUM] = {
-		160, 192, 224, 256, 384, 521,
+		224, 256, 384, 521,
 	};
 
 #endif
@@ -719,11 +713,7 @@ speed_main(int argc, char **argv)
 			dsa_doit[R_DSA_512] = 1;
 			dsa_doit[R_DSA_1024] = 1;
 			dsa_doit[R_DSA_2048] = 1;
-		} else if (strcmp(*argv, "ecdsap160") == 0)
-			ecdsa_doit[R_EC_P160] = 2;
-		else if (strcmp(*argv, "ecdsap192") == 0)
-			ecdsa_doit[R_EC_P192] = 2;
-		else if (strcmp(*argv, "ecdsap224") == 0)
+		} else if (strcmp(*argv, "ecdsap224") == 0)
 			ecdsa_doit[R_EC_P224] = 2;
 		else if (strcmp(*argv, "ecdsap256") == 0)
 			ecdsa_doit[R_EC_P256] = 2;
@@ -734,11 +724,7 @@ speed_main(int argc, char **argv)
 		else if (strcmp(*argv, "ecdsa") == 0) {
 			for (i = 0; i < EC_NUM; i++)
 				ecdsa_doit[i] = 1;
-		} else if (strcmp(*argv, "ecdhp160") == 0)
-			ecdh_doit[R_EC_P160] = 2;
-		else if (strcmp(*argv, "ecdhp192") == 0)
-			ecdh_doit[R_EC_P192] = 2;
-		else if (strcmp(*argv, "ecdhp224") == 0)
+		} else if (strcmp(*argv, "ecdhp224") == 0)
 			ecdh_doit[R_EC_P224] = 2;
 		else if (strcmp(*argv, "ecdhp256") == 0)
 			ecdh_doit[R_EC_P256] = 2;
@@ -816,8 +802,8 @@ speed_main(int argc, char **argv)
 			BIO_printf(bio_err, "rsa512   rsa1024  rsa2048  rsa4096\n");
 
 			BIO_printf(bio_err, "dsa512   dsa1024  dsa2048\n");
-			BIO_printf(bio_err, "ecdsap160 ecdsap192 ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
-			BIO_printf(bio_err, "ecdhp160  ecdhp192  ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
+			BIO_printf(bio_err, "ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
+			BIO_printf(bio_err, "ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
 
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err, "idea     ");
