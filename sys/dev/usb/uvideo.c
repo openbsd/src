@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.223 2024/11/27 11:37:23 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.224 2024/11/30 17:47:23 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -298,6 +298,7 @@ const struct video_hw_if uvideo_hw_if = {
 #define UVIDEO_FLAG_REATTACH			0x2
 #define UVIDEO_FLAG_VENDOR_CLASS		0x4
 #define UVIDEO_FLAG_NOATTACH			0x8
+#define UVIDEO_FLAG_RENEGOTIATE_AFTER_SET_ALT	0x10
 const struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
@@ -378,6 +379,12 @@ const struct uvideo_devs {
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_NOATTACH
+	},
+	{   /* Needs renegotiate after setting alternate interface */
+	    { USB_VENDOR_GN_NETCOM, USB_PRODUCT_GN_NETCOM_JABRA_PANACAST_20 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_RENEGOTIATE_AFTER_SET_ALT
 	},
 };
 #define uvideo_lookup(v, p) \
@@ -1897,6 +1904,17 @@ uvideo_vs_open(struct uvideo_softc *sc)
 		printf("%s: no endpoint descriptor for VS iface\n",
 		    DEVNAME(sc));
 		return (USBD_INVAL);
+	}
+
+	/* renegotiate with commit after setting alternate interface */
+	if (sc->sc_quirk &&
+	    sc->sc_quirk->flags & UVIDEO_FLAG_RENEGOTIATE_AFTER_SET_ALT) {
+		error = uvideo_vs_negotiation(sc, 1);
+		if (error != USBD_NORMAL_COMPLETION) {
+			printf("%s: could not renegotiate after setting "
+			    "alternate interface!\n", DEVNAME(sc));
+			return (error);
+		}
 	}
 
 	DPRINTF(1, "%s: open pipe for bEndpointAddress=0x%02x\n",
