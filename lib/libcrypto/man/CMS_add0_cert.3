@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_add0_cert.3,v 1.8 2024/11/30 21:15:19 tb Exp $
+.\" $OpenBSD: CMS_add0_cert.3,v 1.9 2024/11/30 21:20:44 tb Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file is a derived work.
@@ -183,9 +183,10 @@ and
 return the STACK of certificates or CRLs or
 .Dv NULL
 if there are none or an error occurs.
-The only error which will occur in practice is if the
+Possible errors are that the
 .Fa cms
-type is invalid.
+type is invalid or memory allocation failure, not all
+errors result in an error on the error stack.
 The returned stack must be freed using the appropriate
 macro wrapper of
 .Xr sk_pop_free 3 ,
