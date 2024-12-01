@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.32 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: upd.c,v 1.33 2024/12/01 09:05:05 landry Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -60,6 +60,8 @@ static struct upd_usage_entry upd_usage_batdep[] = {
 	    SENSOR_PERCENT,	 "RemainingCapacity" },
 	{ HUP_BATTERY,	HUB_FULLCHARGE_CAPACITY,
 	    SENSOR_PERCENT,	 "FullChargeCapacity" },
+	{ HUP_POWER,	HUP_PERCENT_LOAD,
+	    SENSOR_PERCENT,	 "PercentLoad" },
 	{ HUP_BATTERY,	HUB_CHARGING,
 	    SENSOR_INDICATOR,	 "Charging" },
 	{ HUP_BATTERY,	HUB_DISCHARGING,
@@ -411,6 +413,7 @@ upd_sensor_update(struct upd_softc *sc, struct upd_sensor *sensor,
 	case HUB_ABS_STATEOF_CHARGE:
 	case HUB_REM_CAPACITY:
 	case HUB_FULLCHARGE_CAPACITY:
+	case HUP_PERCENT_LOAD:
 		adjust = 1000; /* scale adjust */
 		break;
 	case HUB_ATRATE_TIMETOFULL:
