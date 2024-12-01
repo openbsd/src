@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.26 2021/06/26 15:42:58 deraadt Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.27 2024/12/01 09:58:15 kn Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -787,7 +787,7 @@ void usage(void)
     extern char *__progname;
 
     fprintf(stderr,
-	    "usage: %s [-fgn] [-d level] [-r count] [-t seconds] "
+	    "usage: %s [-fgn] [-d[level]] [-r count] [-t seconds] "
 	    "[starting_router]\n\n", __progname);
 
     exit(1);

@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 
     if (argc > 0) {
 usage:	fprintf(stderr,
-		"usage: mrouted [-p] [-c config_file] [-d [debug_level]]\n");
+		"usage: mrouted [-p] [-c config_file] [-d[debug_level]]\n");
 	exit(1);
     }
 

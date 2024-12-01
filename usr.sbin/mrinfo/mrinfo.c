@@ -271,7 +271,7 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "Usage: mrinfo [-d [debug_level]] [-n] [-t timeout] [-r retries] [router]\n");
+	    "Usage: mrinfo [-d[debug_level]] [-n] [-t timeout] [-r retries] [router]\n");
 	exit(1);
 }
 

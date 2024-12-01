@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.27 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: mrouted.8,v 1.28 2024/12/01 09:58:15 kn Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: December 1 2024 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -15,7 +15,7 @@
 .Nm mrouted
 .Op Fl p
 .Op Fl c Ar config_file
-.Op Fl d Op Ar debug_level
+.Op Fl d Ns Op Ar debug_level
 .Sh DESCRIPTION
 .Nm
 is an implementation of the Distance-Vector Multicast Routing
@@ -82,7 +82,7 @@ The options are as follows:
 Specify an alternative configuration file,
 instead of the default
 .Pa mrouted.conf .
-.It Fl d Op Ar debug_level
+.It Fl d Ns Op Ar debug_level
 By default,
 .Nm
 detaches from the invoking terminal.
