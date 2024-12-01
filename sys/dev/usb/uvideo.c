@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.224 2024/11/30 17:47:23 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.225 2024/12/01 10:38:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1564,7 +1564,7 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	 * Uncompressed formats have fixed bits per pixel, which means
 	 * the frame buffer size is fixed and can be calculated.  Because
 	 * some devices return incorrect values, always override the
-	 * the frame size with a calculated value.
+	 * frame size with a calculated value.
 	 */
 	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_UNCOMPRESSED) {
 		USETDW(pc->dwMaxVideoFrameSize,
