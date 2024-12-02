@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.277 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.278 2024/12/02 15:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -277,8 +277,11 @@ main(int argc, char *argv[])
 	    (ibuf_rtr = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	if (imsgbuf_init(ibuf_se, pipe_m2s[0]) == -1 ||
+	    imsgbuf_set_maxsize(ibuf_se, MAX_BGPD_IMSGSIZE) == -1 ||
 	    imsgbuf_init(ibuf_rde, pipe_m2r[0]) == -1 ||
-	    imsgbuf_init(ibuf_rtr, pipe_m2roa[0]) == -1)
+	    imsgbuf_set_maxsize(ibuf_rde, MAX_BGPD_IMSGSIZE) == -1 ||
+	    imsgbuf_init(ibuf_rtr, pipe_m2roa[0]) == -1 ||
+	    imsgbuf_set_maxsize(ibuf_rtr, MAX_BGPD_IMSGSIZE) == -1)
 		fatal(NULL);
 	imsgbuf_allow_fdpass(ibuf_se);
 	imsgbuf_allow_fdpass(ibuf_rde);

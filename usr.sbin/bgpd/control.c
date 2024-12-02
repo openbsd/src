@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.131 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.132 2024/12/02 15:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -180,8 +180,10 @@ control_accept(int listenfd, int restricted)
 		return (0);
 	}
 
-	if (imsgbuf_init(&ctl_conn->imsgbuf, connfd) == -1) {
+	if (imsgbuf_init(&ctl_conn->imsgbuf, connfd) == -1 ||
+	    imsgbuf_set_maxsize(&ctl_conn->imsgbuf, MAX_BGPD_IMSGSIZE) == -1) {
 		log_warn("control_accept");
+		imsgbuf_clear(&ctl_conn->imsgbuf);
 		close(connfd);
 		free(ctl_conn);
 		return (0);

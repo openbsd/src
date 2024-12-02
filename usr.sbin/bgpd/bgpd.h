@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.500 2024/11/21 13:29:52 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.501 2024/12/02 15:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,8 +50,8 @@
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
-#define	READ_BUF_SIZE			65535
-#define	MAX_SOCK_BUF			(4 * READ_BUF_SIZE)
+#define	MAX_BGPD_IMSGSIZE		(128 * 1024)
+#define	MAX_SOCK_BUF			(4 * IBUF_READ_SIZE)
 #define	RT_BUF_SIZE			16384
 #define	MAX_RTSOCK_BUF			(2 * 1024 * 1024)
 #define	MAX_COMM_MATCH			3
