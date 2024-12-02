@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.28 2024/12/02 15:03:18 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.29 2024/12/02 15:13:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -538,14 +538,6 @@ rtr_recalc(void)
 	/* walk tree in reverse because aspa_add_set requires that */
 	RB_FOREACH_REVERSE(aspa, aspa_tree, &at) {
 		struct aspa_set	as = { .as = aspa->as, .num = aspa->num };
-
-		/* XXX prevent oversized IMSG for now */
-		if (aspa->num * sizeof(*aspa->tas) >
-		    MAX_IMSGSIZE - IMSG_HEADER_SIZE) {
-			log_warnx("oversized ASPA set for customer-as %s, %s",
-			    log_as(aspa->as), "dropped");
-			continue;
-		}
 
 		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA, 0, 0, -1,
 		    &as, offsetof(struct aspa_set, tas));
