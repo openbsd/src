@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.311 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.312 2024/12/02 15:03:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -176,7 +176,8 @@ main(int argc, char *argv[])
 
 	if ((imsgbuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	if (imsgbuf_init(imsgbuf, fd) == -1)
+	if (imsgbuf_init(imsgbuf, fd) == -1 ||
+	    imsgbuf_set_maxsize(imsgbuf, MAX_BGPD_IMSGSIZE) == -1)
 		err(1, NULL);
 	done = 0;
 
