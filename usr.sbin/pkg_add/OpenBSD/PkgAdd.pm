@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.150 2024/01/02 10:25:48 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.151 2024/12/02 22:32:57 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -847,6 +847,7 @@ sub really_add($set, $state)
 			$handle->location->{repository}->setup_cache($state->{setlist});
 		}
 	}
+	$state->ldconfig->ensure;
 	delete $state->{partial};
 	$set->{solver}->register_dependencies($state);
 	if ($replacing) {
