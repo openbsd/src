@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.113 2024/11/04 11:39:12 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.114 2024/12/02 14:55:02 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2024 $
+.Dd $Mdocdate: December 2 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP routing security
 .Sh SYNOPSIS
 .Nm
-.Op Fl ABcjmnoRVvx
+.Op Fl 0ABcjmnoRVvx
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -63,6 +63,10 @@ in various formats.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 0
+Include hazardous AS0 TALs in the output files.
+AS0 TALs are not recommended for automatic filtering of BGP routes.
+The default is not to include them.
 .It Fl A
 Exclude the ASPA-set from the output files that support it (JSON and
 OpenBGPD).

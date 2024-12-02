@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.233 2024/11/26 13:59:09 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.234 2024/12/02 14:55:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -663,6 +663,7 @@ extern int noop;
 extern int filemode;
 extern int excludeaspa;
 extern int experimental;
+extern int excludeas0;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];
