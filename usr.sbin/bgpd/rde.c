@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.642 2024/12/02 15:03:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.643 2024/12/02 16:31:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3012,6 +3012,9 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		free(ctx);
 		return;
 	}
+
+	if (strcmp(req->rib, "Adj-RIB-Out") == 0)
+		req->flags |= F_CTL_ADJ_OUT;
 
 	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
 	ctx->req.pid = pid;
