@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.640 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.641 2024/12/02 13:46:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3341,8 +3341,6 @@ rde_up_flush_upcall(struct prefix *p, void *ptr)
 {
 	prefix_adjout_withdraw(p);
 }
-
-u_char	queue_buf[4096];
 
 int
 rde_update_queue_pending(void)
