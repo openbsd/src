@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.46 2024/11/27 13:26:42 jan Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.47 2024/12/03 19:14:40 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ void		virtio_pci_set_msix_queue_vector(struct virtio_pci_softc *, uint32_t, uint
 void		virtio_pci_set_msix_config_vector(struct virtio_pci_softc *, uint16_t);
 int		virtio_pci_msix_establish(struct virtio_pci_softc *, struct virtio_pci_attach_args *, int, int (*)(void *), void *);
 int		virtio_pci_setup_msix(struct virtio_pci_softc *, struct virtio_pci_attach_args *, int);
+void		virtio_pci_intr_barrier(struct virtio_softc *);
 void		virtio_pci_free_irqs(struct virtio_pci_softc *);
 int		virtio_pci_poll_intr(void *);
 int		virtio_pci_legacy_intr(void *);
@@ -175,6 +176,7 @@ const struct virtio_ops virtio_pci_ops = {
 	virtio_pci_set_status,
 	virtio_pci_negotiate_features,
 	virtio_pci_poll_intr,
+	virtio_pci_intr_barrier,
 };
 
 static inline uint64_t
@@ -1060,6 +1062,18 @@ virtio_pci_setup_msix(struct virtio_pci_softc *sc,
 fail:
 	virtio_pci_free_irqs(sc);
 	return 1;
+}
+
+void
+virtio_pci_intr_barrier(struct virtio_softc *vsc)
+{
+	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
+	int i;
+
+	for (i = 0; i < sc->sc_nintr; i++) {
+		if (sc->sc_intr[i].ih != NULL)
+			intr_barrier(sc->sc_intr[i].ih);
+	}
 }
 
 /*
