@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.279 2024/12/02 15:13:57 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.280 2024/12/03 13:46:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1306,29 +1306,23 @@ getsockpair(int pipe[2])
 		fatal("socketpair");
 
 	for (i = 0; i < 2; i++) {
-		for (bsize = MAX_SOCK_BUF; bsize >= 16 * 1024; bsize /= 2) {
-			if (setsockopt(pipe[i], SOL_SOCKET, SO_RCVBUF,
-			    &bsize, sizeof(bsize)) == -1) {
-				if (errno != ENOBUFS)
-					fatal("setsockopt(SO_RCVBUF, %d)",
-					    bsize);
-				log_warn("setsockopt(SO_RCVBUF, %d)", bsize);
-				continue;
-			}
-			break;
+		bsize = MAX_SOCK_BUF;
+		if (setsockopt(pipe[i], SOL_SOCKET, SO_RCVBUF,
+		    &bsize, sizeof(bsize)) == -1) {
+			if (errno != ENOBUFS)
+				fatal("setsockopt(SO_RCVBUF, %d)",
+				    bsize);
+			log_warn("setsockopt(SO_RCVBUF, %d)", bsize);
 		}
 	}
 	for (i = 0; i < 2; i++) {
-		for (bsize = MAX_SOCK_BUF; bsize >= 16 * 1024; bsize /= 2) {
-			if (setsockopt(pipe[i], SOL_SOCKET, SO_SNDBUF,
-			    &bsize, sizeof(bsize)) == -1) {
-				if (errno != ENOBUFS)
-					fatal("setsockopt(SO_SNDBUF, %d)",
-					    bsize);
-				log_warn("setsockopt(SO_SNDBUF, %d)", bsize);
-				continue;
-			}
-			break;
+		bsize = MAX_SOCK_BUF;
+		if (setsockopt(pipe[i], SOL_SOCKET, SO_SNDBUF,
+		    &bsize, sizeof(bsize)) == -1) {
+			if (errno != ENOBUFS)
+				fatal("setsockopt(SO_SNDBUF, %d)",
+				    bsize);
+			log_warn("setsockopt(SO_SNDBUF, %d)", bsize);
 		}
 	}
 }
