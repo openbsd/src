@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.149 2024/12/03 07:51:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.150 2024/12/03 07:54:20 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1418,6 +1418,12 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 		if (amap_add(&ufi->entry->aref,
 		    ufi->orig_rvaddr - ufi->entry->start, anon, 0)) {
+			if (pg->pg_flags & PG_WANTED)
+				wakeup(pg);
+
+			atomic_clearbits_int(&pg->pg_flags,
+			    PG_BUSY|PG_FAKE|PG_WANTED);
+			UVM_PAGE_OWN(pg, NULL);
 			uvmfault_unlockall(ufi, amap, uobj);
 			uvm_anfree(anon);
 			counters_inc(uvmexp_counters, flt_noamap);
