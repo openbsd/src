@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd-auth.c,v 1.1 2024/10/14 01:57:50 djm Exp $ */
+/* $OpenBSD: sshd-auth.c,v 1.2 2024/12/03 22:30:03 jsg Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -669,7 +669,7 @@ main(int ac, char **av)
 		}
 	}
 	if (!have_key)
-		fatal("internal error: recieved no hostkeys");
+		fatal("internal error: received no hostkeys");
 
 	/* Ensure that umask disallows at least group and world write */
 	new_umask = umask(0077) | 0022;
