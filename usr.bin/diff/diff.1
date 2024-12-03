@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff.1,v 1.51 2023/01/05 00:00:44 millert Exp $
+.\" $OpenBSD: diff.1,v 1.52 2024/12/03 07:09:14 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)diff.1	8.1 (Berkeley) 6/30/93
 .\"
-.Dd $Mdocdate: January 5 2023 $
+.Dd $Mdocdate: December 3 2024 $
 .Dt DIFF 1
 .Os
 .Sh NAME
@@ -284,8 +284,8 @@ options may be specified.
 .It Fl x Ar pattern
 Exclude files and subdirectories from comparison whose basenames match
 .Ar pattern .
-Patterns are matched using shell-style globbing via
-.Xr fnmatch 3 .
+Patterns are matched using shell-style globbing as described in
+.Xr glob 7 .
 Multiple
 .Fl x
 options may be specified.

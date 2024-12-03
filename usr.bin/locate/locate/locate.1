@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.33 2022/08/04 06:20:24 jsg Exp $
+.\"	$OpenBSD: locate.1,v 1.34 2024/12/03 07:09:14 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 4 2022 $
+.Dd $Mdocdate: December 3 2024 $
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -171,7 +171,7 @@ locate database
 Zero matches are not considered an error.
 .Sh SEE ALSO
 .Xr find 1 ,
-.Xr fnmatch 3 ,
+.Xr glob 7 ,
 .Xr locate.updatedb 8 ,
 .Xr weekly 8
 .Rs
