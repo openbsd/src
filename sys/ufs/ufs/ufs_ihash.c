@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.30 2024/09/11 08:29:55 claudio Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.31 2024/12/03 14:41:45 claudio Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -109,16 +109,6 @@ loop:
 			* the previously committed vdoom() or this should be
 			* dealt with so this can't happen.
 			*/
-#ifdef FUSE
-			/*
-			 * XXX for whatever stupid reason fuse decided to
-			 * use ufs inodes and with this ufs_ihashget.
-			 * fuse needs to grow up and use its own inode
-			 * structure and hash.
-			 */
-			if (vp->v_tag == VT_FUSEFS)
-				return (vp);
-#endif
 			if (VTOI(vp) != ip ||
 			    ((
 #ifdef EXT2FS
