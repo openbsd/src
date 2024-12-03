@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.104 2024/10/16 06:09:45 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.105 2024/12/03 14:51:09 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -414,6 +414,7 @@ x509_get_pubkey(X509 *x, const char *fn)
 {
 	EVP_PKEY	*pkey;
 	const EC_KEY	*eckey;
+	const EC_GROUP	*ecg;
 	int		 nid;
 	const char	*cname;
 	uint8_t		*pubkey = NULL;
@@ -437,7 +438,21 @@ x509_get_pubkey(X509 *x, const char *fn)
 		goto out;
 	}
 
-	nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+	if ((ecg = EC_KEY_get0_group(eckey)) == NULL) {
+		warnx("%s: EC_KEY_get0_group failed", fn);
+		goto out;
+	}
+
+	if (EC_GROUP_get_asn1_flag(ecg) != OPENSSL_EC_NAMED_CURVE) {
+		warnx("%s: curve encoding issue", fn);
+		goto out;
+	}
+
+	if (EC_GROUP_get_point_conversion_form(ecg) !=
+	    POINT_CONVERSION_UNCOMPRESSED)
+		warnx("%s: unconventional point encoding", fn);
+
+	nid = EC_GROUP_get_curve_name(ecg);
 	if (nid != NID_X9_62_prime256v1) {
 		if ((cname = EC_curve_nid2nist(nid)) == NULL)
 			cname = nid2str(nid);
