@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgd.c,v 1.3 2022/10/17 15:42:19 claudio Exp $ */
+/*	$OpenBSD: bgplgd.c,v 1.4 2024/12/03 10:38:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -25,7 +25,7 @@
 
 #include "bgplgd.h"
 
-#define NCMDARGS	4
+#define NCMDARGS	5
 #define OMETRIC_TYPE	\
 	    "application/openmetrics-text; version=1.0.0; charset=utf-8"
 
@@ -41,6 +41,8 @@ const struct cmd {
 	{ "/neighbors", { "show", "neighbor", NULL }, QS_MASK_NEIGHBOR, 1 },
 	{ "/nexthops", { "show", "nexthop", NULL }, 0 },
 	{ "/rib", { "show", "rib", "detail", NULL }, QS_MASK_RIB },
+	{ "/rib/in", { "show", "rib", "in", "detail", NULL }, QS_MASK_ADJRIB },
+	{ "/rib/out", { "show", "rib", "out", "detail", NULL }, QS_MASK_ADJRIB },
 	{ "/rtr", { "show", "rtr", NULL }, 0 },
 	{ "/sets", { "show", "sets", NULL }, 0 },
 	{ "/summary", { "show", NULL }, 0 },

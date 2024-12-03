@@ -1,4 +1,4 @@
-/*	$OpenBSD: qs.c,v 1.6 2024/08/15 09:13:13 claudio Exp $ */
+/*	$OpenBSD: qs.c,v 1.7 2024/12/03 10:38:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -367,7 +367,7 @@ qs_argv(char **argv, size_t argc, size_t len, struct lg_ctx *ctx, int barenbr)
 	}
 	if (ctx->qs_set & (1 << QS_RIB)) {
 		if (argc < len)
-			argv[argc++] = "rib";
+			argv[argc++] = "table";
 		if (argc < len)
 			argv[argc++] = ctx->qs_args[QS_RIB].string;
 	}
