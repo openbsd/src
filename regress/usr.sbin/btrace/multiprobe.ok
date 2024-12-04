@@ -1,2 +1,1 @@
-multi
-multi
+btrace: Cannot register multiple probes of the same type: 'interval:hz:100'

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2024/09/06 08:00:36 mpi Exp $
+# $OpenBSD: Makefile,v 1.33 2024/12/04 09:33:41 mpi Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 ALLOWDT!=		sysctl -n kern.allowdt 2>/dev/null
@@ -7,7 +7,7 @@ ALLOWDT!=		sysctl -n kern.allowdt 2>/dev/null
 BT_LANG_SCRIPTS=	arithm beginend beginend-argn boolean comments \
 			delete exit histempty if \
 			map mapclear mapempty mapsyntax mapzero map-unnamed \
-			maxoperand min+max+sum multismts nsecs+var \
+			maxoperand min+max+sum multiend multismts nsecs+var \
 			precedence print printf read-map-after-clear \
 			staticv-empty syntaxerror tuple tupleeval vareval
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.93 2024/11/26 10:28:27 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.94 2024/12/04 09:33:41 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -69,6 +69,8 @@ struct dtioc_probe_info	*dtpi_get_by_value(const char *, const char *,
 /*
  * Main loop and rule evaluation.
  */
+void			 probe_bail(struct bt_probe *);
+const char		*probe_name(struct bt_probe *);
 void			 rules_do(int);
 int			 rules_setup(int);
 int			 rules_apply(int, struct dt_evt *);
@@ -106,7 +108,6 @@ int			 ba2dtflags(struct bt_arg *);
 __dead void		 xabort(const char *, ...);
 void			 debug(const char *, ...);
 void			 debugx(const char *, ...);
-const char		*debug_probe_name(struct bt_probe *);
 void			 debug_dump_term(struct bt_arg *);
 void			 debug_dump_expr(struct bt_arg *);
 void			 debug_dump_filter(struct bt_rule *);
@@ -400,6 +401,37 @@ dtpi_get_by_value(const char *prov, const char *func, const char *name)
 }
 
 void
+probe_bail(struct bt_probe *bp)
+{
+	errx(1, "Cannot register multiple probes of the same type: '%s'",
+	    probe_name(bp));
+}
+
+const char *
+probe_name(struct bt_probe *bp)
+{
+	static char buf[64];
+
+	if (bp->bp_type == B_PT_BEGIN)
+		return "BEGIN";
+
+	if (bp->bp_type == B_PT_END)
+		return "END";
+
+	assert(bp->bp_type == B_PT_PROBE);
+
+	if (bp->bp_rate) {
+		snprintf(buf, sizeof(buf), "%s:%s:%u", bp->bp_prov,
+		    bp->bp_unit, bp->bp_rate);
+	} else {
+		snprintf(buf, sizeof(buf), "%s:%s:%s", bp->bp_prov,
+		    bp->bp_unit, bp->bp_name);
+	}
+
+	return buf;
+}
+
+void
 rules_do(int fd)
 {
 	struct sigaction sa;
@@ -497,7 +529,7 @@ rules_setup(int fd)
 {
 	struct dtioc_probe_info *dtpi;
 	struct dtioc_req *dtrq;
-	struct bt_rule *r, *rbegin = NULL;
+	struct bt_rule *r, *rbegin = NULL, *rend = NULL;
 	struct bt_probe *bp;
 	struct bt_stmt *bs;
 	struct bt_arg *ba;
@@ -519,12 +551,20 @@ rules_setup(int fd)
 		evtflags |= rules_action_scan(SLIST_FIRST(&r->br_action));
 
 		SLIST_FOREACH(bp, &r->br_probes, bp_next) {
-			debug("parsed probe '%s'", debug_probe_name(bp));
+			debug("parsed probe '%s'", probe_name(bp));
 			debug_dump_filter(r);
 
 			if (bp->bp_type != B_PT_PROBE) {
-				if (bp->bp_type == B_PT_BEGIN)
+				if (bp->bp_type == B_PT_BEGIN) {
+					if (rbegin != NULL)
+						probe_bail(bp);
 					rbegin = r;
+				}
+				if (bp->bp_type == B_PT_END) {
+					if (rend != NULL)
+						probe_bail(bp);
+					rend = r;
+				}
 				continue;
 			}
 
@@ -570,8 +610,11 @@ rules_setup(int fd)
 				continue;
 
 			dtrq = bp->bp_cookie;
-			if (ioctl(fd, DTIOCPRBENABLE, dtrq))
+			if (ioctl(fd, DTIOCPRBENABLE, dtrq)) {
+				if (errno == EEXIST)
+					probe_bail(bp);
 				err(1, "DTIOCPRBENABLE");
+			}
 		}
 	}
 
@@ -662,7 +705,7 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 	struct bt_probe *bp;
 
 	SLIST_FOREACH(bp, &r->br_probes, bp_next) {
-		debug("eval rule '%s'", debug_probe_name(bp));
+		debug("eval rule '%s'", probe_name(bp));
 		debug_dump_filter(r);
 	}
 
@@ -2039,33 +2082,6 @@ debug_dump_filter(struct bt_rule *r)
 	debugx(" /");
 	debug_dump_expr(SLIST_FIRST(&bs->bs_args));
 	debugx("/\n");
-}
-
-const char *
-debug_probe_name(struct bt_probe *bp)
-{
-	static char buf[64];
-
-	if (verbose < 2)
-		return "";
-
-	if (bp->bp_type == B_PT_BEGIN)
-		return "BEGIN";
-
-	if (bp->bp_type == B_PT_END)
-		return "END";
-
-	assert(bp->bp_type == B_PT_PROBE);
-
-	if (bp->bp_rate) {
-		snprintf(buf, sizeof(buf), "%s:%s:%u", bp->bp_prov,
-		    bp->bp_unit, bp->bp_rate);
-	} else {
-		snprintf(buf, sizeof(buf), "%s:%s:%s", bp->bp_prov,
-		    bp->bp_unit, bp->bp_name);
-	}
-
-	return buf;
 }
 
 unsigned long
