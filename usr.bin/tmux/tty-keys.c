@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.183 2024/11/28 08:49:14 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.184 2024/12/04 19:11:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -894,6 +894,7 @@ first_key:
 	if (onlykey < 0x20 &&
 	    onlykey != C0_HT &&
 	    onlykey != C0_CR &&
+	    onlykey != C0_BS &&
 	    onlykey != C0_ESC) {
 		onlykey |= 0x40;
 		if (onlykey >= 'A' && onlykey <= 'Z')
