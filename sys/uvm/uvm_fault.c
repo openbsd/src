@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.151 2024/12/04 09:19:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.152 2024/12/04 09:21:06 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1412,6 +1412,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			uvm_lock_pageq();
 			uvm_pageactivate(uobjpage);
 			uvm_unlock_pageq();
+			/* done with copied uobjpage. */
 			rw_exit(uobj->vmobjlock);
 			uobj = NULL;
 		} else {
