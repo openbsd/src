@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.33 2024/11/16 15:31:36 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.34 2024/12/04 13:13:33 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -49,7 +49,8 @@ SSLASM+= rc4 rc4-x86_64
 # ripemd
 # sha
 CFLAGS+= -DSHA1_ASM
-SSLASM+= sha sha1-x86_64
+SRCS+= sha1_amd64.c
+SRCS+= sha1_amd64_generic.S
 CFLAGS+= -DSHA256_ASM
 SRCS+= sha256_amd64.c
 SRCS+= sha256_amd64_generic.S
