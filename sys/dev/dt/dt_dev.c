@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.41 2024/11/26 10:28:27 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.42 2024/12/04 09:37:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -589,6 +589,7 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 {
 	struct dt_pcb_list plist;
 	struct dt_probe *dtp;
+	struct dt_pcb *dp;
 	int error;
 
 	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
@@ -597,6 +598,12 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	}
 	if (dtp == NULL)
 		return ENOENT;
+
+	/* Only allow one probe of each type. */
+	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
+		if (dp->dp_dtp->dtp_pbn == dtrq->dtrq_pbn)
+			return EEXIST;
+	}
 
 	TAILQ_INIT(&plist);
 	error = dtp->dtp_prov->dtpv_alloc(dtp, sc, &plist, dtrq);
