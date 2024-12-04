@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.33 2024/03/24 11:30:12 beck Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.34 2024/12/04 07:58:51 tb Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -556,8 +556,7 @@ main(int argc, char **argv)
 	struct source sources[MAX_SERVERS_DNS];
 	int i, ch, staplefd = -1, infd = -1, nonce = 1;
 	ocsp_request *request = NULL;
-	size_t rescount, httphsz = 0, instaplesz = 0;
-	struct httphead	*httph = NULL;
+	size_t rescount, instaplesz = 0;
 	struct httpget *hget;
 	X509_STORE *castore;
 	ssize_t written, w;
@@ -682,8 +681,8 @@ main(int argc, char **argv)
 		}
 
 		dspew("Server at %s returns:\n", host);
-		for (i = 0; i < httphsz; i++)
-			dspew("	  [%s]=[%s]\n", httph[i].key, httph[i].val);
+		for (i = 0; i < hget->headsz; i++)
+			dspew("   [%s]=[%s]\n", hget->head[i].key, hget->head[i].val);
 		dspew("	  [Body]=[%zu bytes]\n", hget->bodypartsz);
 		if (hget->bodypartsz <= 0)
 			errx(1, "No body in reply from %s", host);
