@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.327 2024/11/05 22:44:20 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.328 2024/12/04 22:48:41 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ void	udp_sbappend(struct inpcb *, struct mbuf *, struct ip *,
 	    u_int32_t);
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_notify(struct inpcb *, int);
+int	udp_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 int	udp_sysctl_udpstat(void *, size_t *, void *);
 
 #ifndef	UDB_INITIAL_HASH_SIZE
@@ -1259,11 +1260,42 @@ int
 udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
+
+	switch (name[0]) {
+	case UDPCTL_BADDYNAMIC:
+	case UDPCTL_ROOTONLY: {
+		size_t savelen = *oldlenp;
+		int error;
+
+		if ((error = sysctl_vslock(oldp, savelen)))
+			return (error);
+		error = udp_sysctl_locked(name, namelen, oldp, oldlenp,
+		    newp, newlen);	
+		sysctl_vsunlock(oldp, savelen);
+
+		return (error);
+	}
+	case UDPCTL_STATS:
+		if (newp != NULL)
+			return (EPERM);
+
+		return (udp_sysctl_udpstat(oldp, oldlenp, newp));
+
+	default:
+		return (sysctl_bounded_arr(udpctl_vars, nitems(udpctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
+	}
+	/* NOTREACHED */
+}
+
+int
+udp_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	int error = ENOPROTOOPT;
 
 	switch (name[0]) {
 	case UDPCTL_BADDYNAMIC:
@@ -1271,7 +1303,7 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		error = sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.udp, sizeof(baddynamicports.udp));
 		NET_UNLOCK();
-		return (error);
+		break;
 
 	case UDPCTL_ROOTONLY:
 		if (newp && securelevel > 0)
@@ -1280,20 +1312,10 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		error = sysctl_struct(oldp, oldlenp, newp, newlen,
 		    rootonlyports.udp, sizeof(rootonlyports.udp));
 		NET_UNLOCK();
-		return (error);
-
-	case UDPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-
-		return (udp_sysctl_udpstat(oldp, oldlenp, newp));
-
-	default:
-		error = sysctl_bounded_arr(udpctl_vars, nitems(udpctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
-		return (error);
+		break;
 	}
-	/* NOTREACHED */
+
+	return (error);
 }
 
 int
