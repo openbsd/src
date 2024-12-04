@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.114 2024/12/02 14:55:02 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.115 2024/12/04 16:17:31 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2024 $
+.Dd $Mdocdate: December 4 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -336,7 +336,7 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile
+.%T Internet X.509 Public Key Infrastructure Certificate and CRL Profile
 .%R RFC 5280
 .Re
 .Pp
@@ -426,9 +426,18 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T RPKI Signed Object for Trust Anchor Key
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-signed-tal
-.%D Oct, 2022
+.%T Same-Origin Policy for the RRDP
+.%R RFC 9674
+.Re
+.Pp
+.Rs
+.%T A Profile for RPKI Trust Anchor Keys
+.%R RFC 9691
+.Re
+.Pp
+.Rs
+.%T Detecting RRDP Session Desynchronization
+.%R RFC 9697
 .Re
 .Pp
 .Rs
@@ -441,12 +450,6 @@ agreement regarding ARIN service restrictions.
 .%T Constraining RPKI Trust Anchors
 .%U https://datatracker.ietf.org/doc/html/draft-snijders-constraining-rpki-trust-anchors
 .%D September, 2023
-.Re
-.Pp
-.Rs
-.%T Detecting RRDP Session Desynchronization
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rrdp-desynchronization-00
-.%D April, 2024
 .Re
 .Pp
 .Rs
@@ -464,12 +467,6 @@ agreement regarding ARIN service restrictions.
 .Rs
 .%T RPKI Manifest Number Handling
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-manifest-numbers
-.%D June, 2024
-.Re
-.Pp
-.Rs
-.%T Same-Origin Policy for RRDP
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rrdp-same-origin
 .%D June, 2024
 .Re
 .Pp
