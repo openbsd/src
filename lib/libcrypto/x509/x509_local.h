@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.32 2024/08/31 10:46:40 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.33 2024/12/04 20:07:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -199,7 +199,7 @@ struct x509_st {
 	NAME_CONSTRAINTS *nc;
 #ifndef OPENSSL_NO_RFC3779
 	STACK_OF(IPAddressFamily) *rfc3779_addr;
-	struct ASIdentifiers_st *rfc3779_asid;
+	ASIdentifiers *rfc3779_asid;
 #endif
 	unsigned char hash[X509_CERT_HASH_LEN];
 	X509_CERT_AUX *aux;
