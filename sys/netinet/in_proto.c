@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.113 2024/08/22 10:58:31 mvs Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.114 2024/12/04 18:20:46 mvs Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ const struct protosw inetsw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_GRE,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET|PR_MPSYSCTL,
   .pr_input	= gre_input,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreqs	= &gre_usrreqs,

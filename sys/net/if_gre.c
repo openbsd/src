@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.178 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.179 2024/12/04 18:20:46 mvs Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -99,6 +99,11 @@
 /* for nvgre bridge shizz */
 #include <net/if_bridge.h>
 #include <net/if_etherbridge.h>
+
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
 
 /*
  * packet formats
@@ -545,8 +550,8 @@ struct eoip_tree eoip_tree = RBT_INITIALIZER();
  * allowed as well.
  *
  */
-int gre_allow = 0;
-int gre_wccp = 0;
+int gre_allow = 0;		/* [a] */
+int gre_wccp = 0;		/* [a] */
 
 void
 greattach(int n)
@@ -1009,7 +1014,7 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 	int mcast = 0;
 	uint8_t itos;
 
-	if (!gre_allow)
+	if (!atomic_load_int(&gre_allow))
 		goto decline;
 
 	key->t_rtableid = m->m_pkthdr.ph_rtableid;
@@ -1092,7 +1097,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		 *     draft-wilson-wrec-wccp-v2-01.txt
 		 */
 
-		if (!gre_wccp && !ISSET(ifp->if_flags, IFF_LINK0))
+		if (!atomic_load_int(&gre_wccp) &&
+		    !ISSET(ifp->if_flags, IFF_LINK0))
 			goto decline;
 
 		/*
@@ -1494,7 +1500,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct m_tag *mtag;
 	int error = 0;
 
-	if (!gre_allow) {
+	if (!atomic_load_int(&gre_allow)) {
 		error = EACCES;
 		goto drop;
 	}
@@ -1633,7 +1639,7 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 	sa_family_t af;
 	const void *addr;
 
-	if (!gre_allow) {
+	if (!atomic_load_int(&gre_allow)) {
 		error = EACCES;
 		goto drop;
 	}
@@ -1785,7 +1791,7 @@ egre_start(struct ifnet *ifp)
 	caddr_t if_bpf;
 #endif
 
-	if (!gre_allow) {
+	if (!atomic_load_int(&gre_allow)) {
 		ifq_purge(&ifp->if_snd);
 		return;
 	}
@@ -3642,7 +3648,7 @@ nvgre_start(struct ifnet *ifp)
 	caddr_t if_bpf;
 #endif
 
-	if (!gre_allow) {
+	if (!atomic_load_int(&gre_allow)) {
 		ifq_purge(&ifp->if_snd);
 		return;
 	}
@@ -3833,7 +3839,7 @@ eoip_start(struct ifnet *ifp)
 	caddr_t if_bpf;
 #endif
 
-	if (!gre_allow) {
+	if (!atomic_load_int(&gre_allow)) {
 		ifq_purge(&ifp->if_snd);
 		return;
 	}
@@ -4047,13 +4053,8 @@ int
 gre_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
-	NET_LOCK();
-	error = sysctl_bounded_arr(gre_vars, nitems(gre_vars), name,
+	return sysctl_bounded_arr(gre_vars, nitems(gre_vars), name,
 	    namelen, oldp, oldlenp, newp, newlen);
-	NET_UNLOCK();
-	return error;
 }
 
 static inline int
