@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.39 2024/05/27 16:12:55 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.40 2024/12/04 08:14:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1595,7 +1595,119 @@ callb(int ok, X509_STORE_CTX *ctx)
 	}
 }
 
-/* self sign */
+static int
+key_identifier_hash(EVP_PKEY *pkey, unsigned char *md, unsigned int *md_len)
+{
+	X509_PUBKEY *x509_pubkey = NULL;
+	const unsigned char *der;
+	int der_len;
+	int ret = 0;
+
+	if (*md_len < SHA_DIGEST_LENGTH)
+		goto err;
+
+	if (!X509_PUBKEY_set(&x509_pubkey, pkey))
+		goto err;
+	if (!X509_PUBKEY_get0_param(NULL, &der, &der_len, NULL, x509_pubkey))
+		goto err;
+	if (!EVP_Digest(der, der_len, md, md_len, EVP_sha1(), NULL))
+		goto err;
+
+	ret = 1;
+
+ err:
+	X509_PUBKEY_free(x509_pubkey);
+
+	return ret;
+}
+
+static ASN1_OCTET_STRING *
+compute_key_identifier(EVP_PKEY *pkey)
+{
+	ASN1_OCTET_STRING *ki = NULL;
+	unsigned char md[EVP_MAX_MD_SIZE];
+	unsigned int md_len = EVP_MAX_MD_SIZE;
+
+	if (!key_identifier_hash(pkey, md, &md_len))
+		goto err;
+
+	if ((ki = ASN1_OCTET_STRING_new()) == NULL)
+		goto err;
+	if (!ASN1_STRING_set(ki, md, md_len))
+		goto err;
+
+	return ki;
+
+ err:
+	ASN1_OCTET_STRING_free(ki);
+
+	return NULL;
+}
+
+static ASN1_OCTET_STRING *
+compute_subject_key_identifier(EVP_PKEY *subject_key)
+{
+	return compute_key_identifier(subject_key);
+}
+
+static AUTHORITY_KEYID *
+compute_authority_key_identifier(EVP_PKEY *issuer_key)
+{
+	AUTHORITY_KEYID *aki = NULL;
+
+	if ((aki = AUTHORITY_KEYID_new()) == NULL)
+		goto err;
+	if ((aki->keyid = compute_key_identifier(issuer_key)) == NULL)
+		goto err;
+
+	return aki;
+
+ err:
+	AUTHORITY_KEYID_free(aki);
+
+	return NULL;
+}
+
+static int
+set_key_identifiers(X509 *cert, EVP_PKEY *issuer_key)
+{
+	EVP_PKEY *subject_key;
+	ASN1_OCTET_STRING *ski = NULL;
+	AUTHORITY_KEYID *aki = NULL;
+	int ret = 0;
+
+	if ((subject_key = X509_get0_pubkey(cert)) == NULL)
+		goto err;
+
+	if ((ski = compute_subject_key_identifier(subject_key)) == NULL)
+		goto err;
+	if (!X509_add1_ext_i2d(cert, NID_subject_key_identifier, ski, 0,
+	    X509V3_ADD_REPLACE))
+		goto err;
+
+	/*
+	 * Historical OpenSSL behavior: don't set AKI if we're self-signing.
+	 * RFC 5280 says we MAY omit it, so this is ok.
+	 */
+	if (EVP_PKEY_cmp(subject_key, issuer_key) == 1)
+		goto done;
+
+	if ((aki = compute_authority_key_identifier(issuer_key)) == NULL)
+		goto err;
+	if (!X509_add1_ext_i2d(cert, NID_authority_key_identifier, aki, 0,
+	    X509V3_ADD_REPLACE))
+		goto err;
+
+ done:
+	ret = 1;
+
+ err:
+	ASN1_OCTET_STRING_free(ski);
+	AUTHORITY_KEYID_free(aki);
+
+	return ret;
+}
+
 static int
 sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
     CONF *conf, char *section, X509_NAME *issuer, char *force_pubkey)
@@ -1617,12 +1729,7 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 	if (X509_gmtime_adj(X509_get_notBefore(x), 0) == NULL)
 		goto err;
 
-	/* Lets just make it 12:00am GMT, Jan 1 1970 */
-	/* memcpy(x->cert_info->validity->notBefore,"700101120000Z",13); */
-	/* 28 days to be certified */
-
-	if (X509_gmtime_adj(X509_get_notAfter(x),
-	    (long) 60 * 60 * 24 * days) == NULL)
+	if (X509_gmtime_adj(X509_get_notAfter(x), 60L * 60 * 24 * days) == NULL)
 		goto err;
 
 	if (force_pubkey == NULL) {
@@ -1637,12 +1744,30 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 	}
 	if (conf != NULL) {
 		X509V3_CTX ctx;
+
 		if (!X509_set_version(x, 2))	/* version 3 certificate */
 			goto err;
 		X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
 		X509V3_set_nconf(&ctx, conf);
 		if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))
 			goto err;
+		if (force_pubkey != NULL) {
+			/*
+			 * Set or fix up SKI and AKI.
+			 *
+			 * XXX - Doing this in a fully OpenSSL 3 compatible way
+			 * is extremely nasty: they hang an issuer_pubkey off
+			 * the X509V3_CTX and adjusted v2i_AUTHORITY_KEYID().
+			 * Punt on this and make things work in the specific
+			 * situation we're interested in. Like OpenSSL, we only
+			 * support the keyid form of the AKI, which is what
+			 * RFC 5280 recommends, but unlike OpenSSL we replace
+			 * existing SKI and AKI rather than honoring the most
+			 * likely outdated ones already present in the cert.
+			 */
+			if (!set_key_identifiers(x, pkey))
+				goto err;
+		}
 	}
 	if (!X509_sign(x, pkey, digest))
 		goto err;
