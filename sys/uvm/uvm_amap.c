@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.95 2024/05/20 17:03:36 dv Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.96 2024/12/04 09:19:11 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -621,7 +621,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	amap->am_lock = srcamap->am_lock;
 	rw_obj_hold(amap->am_lock);
 
-	amap_lock(srcamap);
+	amap_lock(srcamap, RW_WRITE);
 
 	/*
 	 * Re-check the reference count with the lock held.  If it has
@@ -749,7 +749,7 @@ amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 	 * am_anon[] array on us while the lock is dropped.
 	 */
 ReStart:
-	amap_lock(amap);
+	amap_lock(amap, RW_WRITE);
 	AMAP_CHUNK_FOREACH(chunk, amap) {
 		int i, map = chunk->ac_usedmap;
 
@@ -849,7 +849,7 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 	if (leftslots == 0)
 		panic("amap_splitref: split at zero offset");
 
-	amap_lock(amap);
+	amap_lock(amap, RW_WRITE);
 
 	if (amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
 		panic("amap_splitref: map size check failed");
@@ -1088,7 +1088,7 @@ amap_swap_off(int startslot, int endslot)
 		int i, map;
 		struct vm_amap_chunk *chunk;
 
-		amap_lock(am);
+		amap_lock(am, RW_WRITE);
 		if (am->am_nused == 0) {
 			amap_unlock(am);
 			am_next = LIST_NEXT(am, am_list);
@@ -1118,7 +1118,7 @@ again:
 				am->am_flags |= AMAP_SWAPOFF;
 
 				rv = uvm_anon_pagein(am, anon);
-				amap_lock(am);
+				amap_lock(am, RW_WRITE);
 
 				am->am_flags &= ~AMAP_SWAPOFF;
 				if (amap_refs(am) == 0) {
@@ -1339,7 +1339,7 @@ amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
 void
 amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 {
-	amap_lock(amap);
+	amap_lock(amap, RW_WRITE);
 	if (flags & AMAP_SHARED)
 		amap->am_flags |= AMAP_SHARED;
 	amap_adjref_anons(amap, offset, len, 1, (flags & AMAP_REFALL) != 0);
@@ -1355,7 +1355,7 @@ amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 void
 amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, boolean_t all)
 {
-	amap_lock(amap);
+	amap_lock(amap, RW_WRITE);
 
 	KASSERT(amap->am_ref > 0);
 

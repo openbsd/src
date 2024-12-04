@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.150 2024/12/03 07:54:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.151 2024/12/04 09:19:11 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -782,7 +782,7 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * if we've got an amap then lock it and extract current anons.
 	 */
 	if (amap) {
-		amap_lock(amap);
+		amap_lock(amap, RW_WRITE);
 		amap_lookups(&ufi->entry->aref,
 		    flt->startva - ufi->entry->start, *ranons, flt->npages);
 	} else {
@@ -974,6 +974,9 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 
 	if ((flt->access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
+		/* promoting requires a write lock. */
+		KASSERT(rw_write_held(amap->am_lock));
+
 		counters_inc(uvmexp_counters, flt_acow);
 		oanon = anon;		/* oanon = old */
 		anon = uvm_analloc();
@@ -1014,7 +1017,10 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		    ufi->orig_rvaddr - ufi->entry->start, anon, 1);
 		KASSERT(ret == 0);
 
+		KASSERT(anon->an_lock == oanon->an_lock);
+
 		/* deref: can not drop to zero here by defn! */
+		KASSERT(oanon->an_ref > 1);
 		oanon->an_ref--;
 
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_PMAP_MPSAFE_ENTER_COW)
@@ -1567,7 +1573,7 @@ uvm_fault_lower_io(
 	/* re-verify the state of the world.  */
 	locked = uvmfault_relock(ufi);
 	if (locked && amap != NULL)
-		amap_lock(amap);
+		amap_lock(amap, RW_WRITE);
 
 	/* might be changed */
 	if (pg != PGO_DONTCARE) {

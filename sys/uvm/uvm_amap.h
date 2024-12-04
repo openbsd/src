@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.34 2024/11/15 02:54:01 jsg Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.35 2024/12/04 09:19:11 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -262,8 +262,8 @@ struct vm_amap {
 #define amap_flags(AMAP)	((AMAP)->am_flags)
 #define amap_refs(AMAP)		((AMAP)->am_ref)
 
-#define amap_lock(AMAP)		rw_enter_write((AMAP)->am_lock)
-#define amap_unlock(AMAP)	rw_exit_write((AMAP)->am_lock)
+#define amap_lock(AMAP, RWLT)	rw_enter((AMAP)->am_lock, (RWLT))
+#define amap_unlock(AMAP)	rw_exit((AMAP)->am_lock)
 
 #endif /* _KERNEL */
 

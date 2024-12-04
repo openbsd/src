@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.334 2024/11/05 08:18:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.335 2024/12/04 09:19:11 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ void
 uvm_map_lock_entry(struct vm_map_entry *entry)
 {
 	if (entry->aref.ar_amap != NULL) {
-		amap_lock(entry->aref.ar_amap);
+		amap_lock(entry->aref.ar_amap, RW_WRITE);
 	}
 	if (UVM_ET_ISOBJ(entry)) {
 		rw_enter(entry->object.uvm_obj->vmobjlock, RW_WRITE);
@@ -4492,7 +4492,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		cp_start = MAX(entry->start, start);
 		cp_end = MIN(entry->end, end);
 
-		amap_lock(amap);
+		amap_lock(amap, RW_WRITE);
 		for (; cp_start != cp_end; cp_start += PAGE_SIZE) {
 			anon = amap_lookup(&entry->aref,
 			    cp_start - entry->start);
