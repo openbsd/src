@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.24 2024/11/27 15:23:58 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.25 2024/12/05 09:55:50 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -50,6 +50,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -13504,9 +13505,9 @@ ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
 
 #if NVLAN > 0
 	if (ISSET(m0->m_flags, M_VLANTAG)) {
-		uint16_t vtag = m0->m_pkthdr.ether_vtag;
+		uint64_t vtag = m0->m_pkthdr.ether_vtag;
 		offload |= (ICE_TX_DESC_CMD_IL2TAG1 << ICE_TXD_QW1_CMD_S) |
-		    (htole16(vtag) << ICE_TXD_QW1_L2TAG1_S);
+		    (vtag << ICE_TXD_QW1_L2TAG1_S);
 	}
 #endif
 	if (!ISSET(m0->m_pkthdr.csum_flags,
