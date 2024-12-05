@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.44 2024/03/02 09:33:14 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.45 2024/12/05 19:29:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,8 +183,6 @@ int	DSA_print_fp(FILE *bp, const DSA *x, int off);
  * This is necessary for keys of size >= 3072.
  */
 #define DSS_prime_checks 64
-#define DSA_is_prime(n, callback, cb_arg) \
-	BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
 
 #ifndef OPENSSL_NO_DH
 /* Convert DSA structure (key or just parameters) into DH structure
