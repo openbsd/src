@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.5 2024/06/22 15:32:51 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.6 2024/12/05 19:57:37 tb Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -566,6 +566,6 @@ int cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned int *out_tag,
 int CBS_asn1_indefinite_to_definite(CBS *in, uint8_t **out, size_t *out_len);
 #endif /* LIBRESSL_INTERNAL */
 
-__END_HIDDEN_DECLS 
+__END_HIDDEN_DECLS
 
 #endif  /* OPENSSL_HEADER_BYTESTRING_H */
