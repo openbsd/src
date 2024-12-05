@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.45 2024/12/05 19:29:08 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.46 2024/12/05 19:34:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,13 +176,6 @@ int	DSA_print(BIO *bp, const DSA *x, int off);
 #endif
 int	DSAparams_print_fp(FILE *fp, const DSA *x);
 int	DSA_print_fp(FILE *bp, const DSA *x, int off);
-
-/*
- * Primality test according to FIPS PUB 186-4, Appendix C.3. Set the number
- * to 64 rounds of Miller-Rabin, which corresponds to 128 bits of security.
- * This is necessary for keys of size >= 3072.
- */
-#define DSS_prime_checks 64
 
 #ifndef OPENSSL_NO_DH
 /* Convert DSA structure (key or just parameters) into DH structure

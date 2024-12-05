@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.32 2024/05/11 06:43:50 tb Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.33 2024/12/05 19:34:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,6 +70,14 @@
 
 #include "bn_local.h"
 #include "dsa_local.h"
+
+/*
+ * Primality test according to FIPS PUB 186-4, Appendix C.3. Set the number
+ * to 64 rounds of Miller-Rabin, which corresponds to 128 bits of security.
+ * This is necessary for keys of size >= 3072.
+ * XXX - now that we do BPSW the recommendation is to do 2 for p and 27 for q.
+ */
+#define DSA_prime_checks 64
 
 int
 DSA_generate_parameters_ex(DSA *ret, int bits, const unsigned char *seed_in,
@@ -207,7 +215,7 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 				goto err;
 
 			/* step 4 */
-			r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
+			r = BN_is_prime_fasttest_ex(q, DSA_prime_checks, ctx,
 			    seed_is_random, cb);
 			if (r > 0)
 				break;
@@ -278,7 +286,7 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 			/* step 10 */
 			if (BN_cmp(p, test) >= 0) {
 				/* step 11 */
-				r = BN_is_prime_fasttest_ex(p, DSS_prime_checks,
+				r = BN_is_prime_fasttest_ex(p, DSA_prime_checks,
 				    ctx, 1, cb);
 				if (r > 0)
 					goto end; /* found it */
