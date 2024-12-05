@@ -224,6 +224,7 @@ try_again:
 
 	if (/^\s*$/ ||
 	    /^DECLARE_STACK_OF\(\w+\)$/ ||
+	    /^DECLARE_PKCS12_STACK_OF\(\w+\)$/ ||
 	    /^TYPEDEF_D2I2D_OF\(\w+\);$/ ||
 	    /^#define __bounded__\(\w+, \w+, \w+\)$/ ||
 	    /^#define HEADER_\w+_H$/ ||
