@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.214 2024/11/28 02:01:57 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.215 2024/12/05 14:53:55 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -479,7 +479,7 @@ sleep_signal_check(struct proc *p, int nostop)
 			SCHED_LOCK();
 			proc_stop(p, 0);
 			SCHED_UNLOCK();
-		} else if (ctx.sig_intr)
+		} else if (ctx.sig_intr && !ctx.sig_ignore)
 			return EINTR;
 		else
 			return ERESTART;
