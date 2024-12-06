@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.40 2024/11/30 21:09:59 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.41 2024/12/06 04:35:03 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -294,7 +294,7 @@ int EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *p,
 int EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
     const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
 
-int ec_group_is_builtin_curve(const EC_GROUP *group);
+int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
 int ec_group_get_field_type(const EC_GROUP *group);
 
 /*
