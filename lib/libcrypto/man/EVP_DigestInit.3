@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.36 2024/12/06 14:27:49 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.37 2024/12/06 15:01:01 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -114,7 +114,7 @@
 .Fo EVP_MD_CTX_free
 .Fa "EVP_MD_CTX *ctx"
 .Fc
-.Ft void
+.Ft int
 .Fo EVP_MD_CTX_init
 .Fa "EVP_MD_CTX *ctx"
 .Fc
@@ -427,7 +427,8 @@ object or
 .Dv NULL
 for failure.
 .Pp
-.Fn EVP_MD_CTX_reset
+.Fn EVP_MD_CTX_reset ,
+.Fn EVP_MD_CTX_init ,
 and
 .Fn EVP_MD_CTX_cleanup
 always return 1.
