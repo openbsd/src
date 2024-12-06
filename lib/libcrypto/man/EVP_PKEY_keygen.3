@@ -1,10 +1,10 @@
-.\" $OpenBSD: EVP_PKEY_keygen.3,v 1.14 2024/07/21 08:02:17 tb Exp $
+.\" $OpenBSD: EVP_PKEY_keygen.3,v 1.15 2024/12/06 14:27:49 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2023, 2024 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 21 2024 $
+.Dd $Mdocdate: December 6 2024 $
 .Dt EVP_PKEY_KEYGEN 3
 .Os
 .Sh NAME
@@ -80,7 +80,9 @@
 .Nm EVP_PKEY_CTX_set0_keygen_info ,
 .Nm EVP_PKEY_CTX_get_keygen_info ,
 .Nm EVP_PKEY_CTX_set_app_data ,
-.Nm EVP_PKEY_CTX_get_app_data
+.Nm EVP_PKEY_CTX_get_app_data ,
+.Nm EVP_PKEY_CTX_set_data ,
+.Nm EVP_PKEY_CTX_get_data
 .Nd key and parameter generation functions
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -129,10 +131,19 @@
 .Ft void
 .Fo EVP_PKEY_CTX_set_app_data
 .Fa "EVP_PKEY_CTX *ctx"
-.Fa "void *data"
+.Fa "void *app_data"
 .Fc
 .Ft void *
 .Fo EVP_PKEY_CTX_get_app_data
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Ft void
+.Fo EVP_PKEY_CTX_set_data
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "void *data"
+.Fc
+.Ft void *
+.Fo EVP_PKEY_CTX_get_data
 .Fa "EVP_PKEY_CTX *ctx"
 .Fc
 .Sh DESCRIPTION
@@ -197,6 +208,14 @@ This can be used to set some application defined value which can be
 retrieved in the callback: for example a handle which is used to update
 a "progress dialog".
 .Pp
+The deprecated functions
+.Fn EVP_PKEY_CTX_set_data
+and
+.Fn EVP_PKEY_CTX_get_data
+set and retrieve a
+.Em different
+opaque pointer that is ignored by the library.
+.Pp
 After the call to
 .Fn EVP_PKEY_keygen_init
 or
@@ -258,6 +277,14 @@ is \-1, one of these parameters if
 .Fa idx
 is greater than or equal to zero but less than the number
 of available parameters, or 0 otherwise.
+.Pp
+.Fn EVP_PKEY_CTX_get_app_data
+and
+.Fn EVP_PKEY_CTX_get_data
+return the pointer that was last passed to the corresponding set function, or
+.Dv NULL
+if the corresponding set function was never called on
+.Fa ctx .
 .Sh EXAMPLES
 Generate a 2048-bit RSA key:
 .Bd -literal -offset indent
@@ -332,7 +359,6 @@ genpkey_cb(EVP_PKEY_CTX *ctx)
 .Xr EVP_PKEY_decrypt 3 ,
 .Xr EVP_PKEY_derive 3 ,
 .Xr EVP_PKEY_encrypt 3 ,
-.Xr EVP_PKEY_meth_set_keygen 3 ,
 .Xr EVP_PKEY_sign 3 ,
 .Xr EVP_PKEY_verify 3 ,
 .Xr EVP_PKEY_verify_recover 3 ,

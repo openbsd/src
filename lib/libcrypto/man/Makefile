@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.298 2024/12/06 13:10:43 schwarze Exp $
+# $OpenBSD: Makefile,v 1.299 2024/12/06 14:27:49 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -184,8 +184,6 @@ MAN=	\
 	EVP_PKEY_encrypt.3 \
 	EVP_PKEY_get_default_digest_nid.3 \
 	EVP_PKEY_keygen.3 \
-	EVP_PKEY_meth_get0_info.3 \
-	EVP_PKEY_meth_new.3 \
 	EVP_PKEY_new.3 \
 	EVP_PKEY_new_CMAC_key.3 \
 	EVP_PKEY_print_private.3 \
