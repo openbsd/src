@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.29 2024/12/05 07:35:46 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.30 2024/12/06 07:10:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,8 @@ PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 		break;
 	case PKCS7_OP_GET_DETACHED_SIGNATURE:
 		if (nid == NID_pkcs7_signed) {
-			if (p7->d.sign  || !p7->d.sign->contents->d.ptr)
+			if (p7->d.sign == NULL ||
+			    p7->d.sign->contents->d.ptr == NULL)
 				ret = 1;
 			else
 				ret = 0;
