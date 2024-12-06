@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.108 2024/12/06 04:35:03 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.109 2024/12/06 05:13:35 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1210,7 +1210,7 @@ ec_key_set_private_key(EC_KEY *ec_key, const ASN1_OCTET_STRING *aos)
 	/*
 	 * XXX - Sec 1, C.4 requires that this octet string be padded to the
 	 * byte length of the group's order. This can't be enforced because
-	 * i2d_ECPrivateKey() produces a semi-compatible ad hoc format.
+	 * i2d_ECPrivateKey() used to produce a semi-compatible ad hoc format.
 	 */
 	if ((priv_key = BN_bin2bn(aos->data, aos->length, NULL)) == NULL)
 		goto err;
