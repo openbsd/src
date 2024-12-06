@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.104 2024/12/06 09:06:56 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.105 2024/12/06 09:07:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -588,9 +588,10 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 		newkey = options_get_number(global_options, "backspace");
 		if (newkey == KEYC_BSPACE)
 			newkey = '\b';
-		log_debug("%s: key 0x%llx is backspace -> 0x%llx", __func__,
-		    key, newkey|(key & KEYC_MASK_FLAGS));
-		key = newkey|(key & KEYC_MASK_FLAGS);
+ 		newkey |= (key & (KEYC_MASK_FLAGS|KEYC_MASK_MODIFIERS));
+		log_debug("%s: key 0x%llx is backspace -> 0x%llx", __func__, key,
+		    newkey);
+		key = newkey;
 	}
 
 	/* Is this backtab? */
