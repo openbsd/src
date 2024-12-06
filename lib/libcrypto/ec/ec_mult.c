@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.51 2024/11/23 12:56:31 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.52 2024/12/06 15:39:59 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -71,6 +71,14 @@
 
 #include "ec_local.h"
 
+/* Holds the wNAF digits of bn and the corresponding odd multiples of point. */
+struct ec_wnaf {
+	signed char *digits;
+	size_t num_digits;
+	EC_POINT **multiples;
+	size_t num_multiples;
+};
+
 static int
 ec_window_bits(const BIGNUM *bn)
 {
@@ -96,22 +104,18 @@ ec_window_bits(const BIGNUM *bn)
  */
 
 static int
-ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
-    size_t *out_len)
+ec_compute_wnaf(const BIGNUM *bn, signed char *digits, size_t num_digits)
 {
-	signed char *wNAF = NULL;
-	size_t i, wNAF_len, len;
 	int digit, bit, next, sign, wbits, window;
+	size_t i;
 	int ret = 0;
 
-	wNAF_len = BN_num_bits(bn) + 1;
-	if ((wNAF = calloc(1, wNAF_len)) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
+	if (num_digits != BN_num_bits(bn) + 1) {
+		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 
 	wbits = ec_window_bits(bn);
-	len = 1 << (wbits - 1);
 
 	sign = BN_is_negative(bn) ? -1 : 1;
 
@@ -126,7 +130,7 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 	}
 
 	/* Instead of bn >>= 1 in each iteration, slide window to the left. */
-	for (i = 0; i < wNAF_len; i++) {
+	for (i = 0; i < num_digits; i++) {
 		digit = 0;
 
 		/*
@@ -142,100 +146,64 @@ ec_compute_wNAF(const BIGNUM *bn, signed char **out_wNAF, size_t *out_wNAF_len,
 			window -= digit;
 		}
 
-		wNAF[i] = sign * digit;
+		digits[i] = sign * digit;
 
 		/* Slide the window to the left. */
 		window >>= 1;
 		window += bit * BN_is_bit_set(bn, i + wbits + 1);
 	}
 
-	*out_wNAF = wNAF;
-	wNAF = NULL;
-	*out_wNAF_len = wNAF_len;
-	*out_len = len;
-
 	ret = 1;
 
  err:
-	free(wNAF);
-
 	return ret;
-}
-
-static void
-free_row(EC_POINT **row, size_t row_len)
-{
-	size_t i;
-
-	if (row == NULL)
-		return;
-
-	for (i = 0; i < row_len; i++)
-		EC_POINT_free(row[i]);
-	free(row);
 }
 
 static int
 ec_compute_odd_multiples(const EC_GROUP *group, const EC_POINT *point,
-    EC_POINT ***out_row, size_t row_len, BN_CTX *ctx)
+    EC_POINT **multiples, size_t num_multiples, BN_CTX *ctx)
 {
-	EC_POINT **row = NULL;
 	EC_POINT *doubled = NULL;
 	size_t i;
 	int ret = 0;
 
-	if (row_len < 1)
+	if (num_multiples < 1)
 		goto err;
 
-	if ((row = calloc(row_len, sizeof(*row))) == NULL)
-		goto err;
-
-	if ((row[0] = EC_POINT_dup(point, group)) == NULL)
+	if ((multiples[0] = EC_POINT_dup(point, group)) == NULL)
 		goto err;
 
 	if ((doubled = EC_POINT_new(group)) == NULL)
 		goto err;
 	if (!EC_POINT_dbl(group, doubled, point, ctx))
 		goto err;
-	for (i = 1; i < row_len; i++) {
-		if ((row[i] = EC_POINT_new(group)) == NULL)
+	for (i = 1; i < num_multiples; i++) {
+		if ((multiples[i] = EC_POINT_new(group)) == NULL)
 			goto err;
-		if (!EC_POINT_add(group, row[i], row[i - 1], doubled, ctx))
+		if (!EC_POINT_add(group, multiples[i], multiples[i - 1], doubled,
+		    ctx))
 			goto err;
 	}
-
-	*out_row = row;
-	row = NULL;
 
 	ret = 1;
 
  err:
 	EC_POINT_free(doubled);
-	free_row(row, row_len);
 
 	return ret;
 }
 
 /*
- * Compute the wNAF representation of m and a list of odd multiples of point.
+ * Bring multiples held in wnaf0 and wnaf1 simultaneously into affine form
+ * so that the operations in the loop in ec_wNAF_mul() can take fast paths.
  */
 
 static int
-ec_compute_row(const EC_GROUP *group, const BIGNUM *m, const EC_POINT *point,
-    signed char **wNAF, size_t *wNAF_len, EC_POINT ***out_row, size_t *out_row_len,
-    BN_CTX *ctx)
+ec_normalize_points(const EC_GROUP *group, struct ec_wnaf *wnaf0,
+    struct ec_wnaf *wnaf1, BN_CTX *ctx)
 {
-	if (!ec_compute_wNAF(m, wNAF, wNAF_len, out_row_len))
-		return 0;
-	if (!ec_compute_odd_multiples(group, point, out_row, *out_row_len, ctx))
-		return 0;
-	return 1;
-}
-
-static int
-ec_normalize_rows(const EC_GROUP *group, EC_POINT **row0, size_t len0,
-    EC_POINT **row1, size_t len1, BN_CTX *ctx)
-{
+	EC_POINT **points0 = wnaf0->multiples, **points1 = wnaf1->multiples;
+	size_t len0 = wnaf0->num_multiples, len1 = wnaf1->num_multiples;
 	EC_POINT **val = NULL;
 	size_t len = 0;
 	int ret = 0;
@@ -248,8 +216,8 @@ ec_normalize_rows(const EC_GROUP *group, EC_POINT **row0, size_t len0,
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	memcpy(&val[0], row0, sizeof(*val) * len0);
-	memcpy(&val[len0], row1, sizeof(*val) * len1);
+	memcpy(&val[0], points0, sizeof(*val) * len0);
+	memcpy(&val[len0], points1, sizeof(*val) * len1);
 
 	if (!EC_POINTs_make_affine(group, len, val, ctx))
 		goto err;
@@ -262,6 +230,88 @@ ec_normalize_rows(const EC_GROUP *group, EC_POINT **row0, size_t len0,
 	return ret;
 }
 
+static void
+ec_points_free(EC_POINT **points, size_t num_points)
+{
+	size_t i;
+
+	if (points == NULL)
+		return;
+
+	for (i = 0; i < num_points; i++)
+		EC_POINT_free(points[i]);
+	free(points);
+}
+
+static void
+ec_wnaf_free(struct ec_wnaf *wnaf)
+{
+	if (wnaf == NULL)
+		return;
+
+	free(wnaf->digits);
+	ec_points_free(wnaf->multiples, wnaf->num_multiples);
+	free(wnaf);
+}
+
+/*
+ * Calculate wNAF splitting of bn and the corresponding odd multiples of point.
+ */
+
+static struct ec_wnaf *
+ec_wnaf_new(const EC_GROUP *group, const EC_POINT *point, const BIGNUM *bn,
+    BN_CTX *ctx)
+{
+	struct ec_wnaf *wnaf;
+
+	if ((wnaf = calloc(1, sizeof(*wnaf))) == NULL)
+		goto err;
+
+	wnaf->num_digits = BN_num_bits(bn) + 1;
+	if ((wnaf->digits = calloc(wnaf->num_digits,
+	    sizeof(*wnaf->digits))) == NULL)
+		goto err;
+
+	if (!ec_compute_wnaf(bn, wnaf->digits, wnaf->num_digits))
+		goto err;
+
+	wnaf->num_multiples = 1 << (ec_window_bits(bn) - 1);
+	if ((wnaf->multiples = calloc(wnaf->num_multiples,
+	    sizeof(*wnaf->multiples))) == NULL)
+		goto err;
+
+	if (!ec_compute_odd_multiples(group, point, wnaf->multiples,
+	    wnaf->num_multiples, ctx))
+		goto err;
+
+	return wnaf;
+
+ err:
+	ec_wnaf_free(wnaf);
+
+	return NULL;
+}
+
+static signed char
+ec_wnaf_digit(struct ec_wnaf *wnaf, size_t idx)
+{
+	if (idx >= wnaf->num_digits)
+		return 0;
+
+	return wnaf->digits[idx];
+}
+
+const EC_POINT *
+ec_wnaf_multiple(struct ec_wnaf *wnaf, signed char digit)
+{
+	if (digit < 0)
+		return NULL;
+	if (digit >= 2 * wnaf->num_multiples)
+		return NULL;
+
+	return wnaf->multiples[digit >> 1];
+}
+
 /*
  * Compute r = generator * m + point * n in non-constant time.
  */
@@ -270,15 +320,12 @@ int
 ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx)
 {
+	struct ec_wnaf *wnaf[2] = { NULL, NULL };
 	const EC_POINT *generator;
-	signed char *wNAF[2] = { 0 };
-	size_t wNAF_len[2] = { 0 };
-	EC_POINT **row[2] = { 0 };
-	size_t row_len[2] = { 0 };
 	size_t i;
 	int k;
 	int r_is_inverted = 0;
-	size_t max_len = 0;
+	size_t num_digits;
 	int ret = 0;
 
 	if (m == NULL || n == NULL) {
@@ -295,18 +342,17 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 		goto err;
 	}
 
-	if (!ec_compute_row(group, m, generator, &wNAF[0], &wNAF_len[0],
-	    &row[0], &row_len[0], ctx))
+	if ((wnaf[0] = ec_wnaf_new(group, generator, m, ctx)) == NULL)
 		goto err;
-	if (!ec_compute_row(group, n, point, &wNAF[1], &wNAF_len[1],
-	    &row[1], &row_len[1], ctx))
-		goto err;
-	if (!ec_normalize_rows(group, row[0], row_len[0], row[1], row_len[1], ctx))
+	if ((wnaf[1] = ec_wnaf_new(group, point, n, ctx)) == NULL)
 		goto err;
 
-	max_len = wNAF_len[0];
-	if (wNAF_len[1] > max_len)
-		max_len = wNAF_len[1];
+	if (!ec_normalize_points(group, wnaf[0], wnaf[1], ctx))
+		goto err;
+
+	num_digits = wnaf[0]->num_digits;
+	if (wnaf[1]->num_digits > num_digits)
+		num_digits = wnaf[1]->num_digits;
 
 	/*
 	 * Set r to the neutral element. Scan through the wNAF representations
@@ -319,18 +365,16 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	if (!EC_POINT_set_to_infinity(group, r))
 		goto err;
 
-	for (k = max_len - 1; k >= 0; k--) {
+	for (k = num_digits - 1; k >= 0; k--) {
 		if (!EC_POINT_dbl(group, r, r, ctx))
 			goto err;
 
 		for (i = 0; i < 2; i++) {
-			int digit;
+			const EC_POINT *multiple;
+			signed char digit;
 			int is_neg = 0;
 
-			if (k >= wNAF_len[i])
-				continue;
-
-			if ((digit = wNAF[i][k]) == 0)
+			if ((digit = ec_wnaf_digit(wnaf[i], k)) == 0)
 				continue;
 
 			if (digit < 0) {
@@ -344,7 +388,10 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 				r_is_inverted = !r_is_inverted;
 			}
 
-			if (!EC_POINT_add(group, r, r, row[i][digit >> 1], ctx))
+			if ((multiple = ec_wnaf_multiple(wnaf[i], digit)) == NULL)
+				goto err;
+
+			if (!EC_POINT_add(group, r, r, multiple, ctx))
 				goto err;
 		}
 	}
@@ -357,10 +404,8 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	ret = 1;
 
  err:
-	free(wNAF[0]);
-	free(wNAF[1]);
-	free_row(row[0], row_len[0]);
-	free_row(row[1], row_len[1]);
+	ec_wnaf_free(wnaf[0]);
+	ec_wnaf_free(wnaf[1]);
 
 	return ret;
 }
