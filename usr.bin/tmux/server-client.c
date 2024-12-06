@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.422 2024/11/27 10:10:20 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.423 2024/12/06 09:06:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2581,7 +2581,7 @@ paste_key:
 	if (c->flags & CLIENT_READONLY)
 		goto out;
 	if (event->buf != NULL)
-		window_pane_paste(wp, event->buf, event->len);
+		window_pane_paste(wp, key, event->buf, event->len);
 	key = KEYC_NONE;
 	goto out;
 

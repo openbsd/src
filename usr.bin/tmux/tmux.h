@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1246 2024/11/25 08:34:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1247 2024/12/06 09:06:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -164,6 +164,10 @@ struct winlink;
 	  ((key) & KEYC_MASK_KEY) >= KEYC_BASE_END) && \
 	 (((key) & KEYC_MASK_KEY) < KEYC_USER || \
 	  ((key) & KEYC_MASK_KEY) >= KEYC_USER_END))
+
+/* Is this a paste key? */
+#define KEYC_IS_PASTE(key) \
+	((key) == KEYC_PASTE_START || (key) == KEYC_PASTE_END)
 
 /* Multiple click timeout. */
 #define KEYC_CLICK_TIMEOUT 300
@@ -3160,7 +3164,8 @@ void		 window_pane_reset_mode_all(struct window_pane *);
 int		 window_pane_key(struct window_pane *, struct client *,
 		     struct session *, struct winlink *, key_code,
 		     struct mouse_event *);
-void		 window_pane_paste(struct window_pane *, char *, size_t);
+void		 window_pane_paste(struct window_pane *, key_code, char *,
+		     size_t);
 int		 window_pane_visible(struct window_pane *);
 int		 window_pane_exited(struct window_pane *);
 u_int		 window_pane_search(struct window_pane *, const char *, int,
