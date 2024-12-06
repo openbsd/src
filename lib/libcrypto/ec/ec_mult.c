@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.52 2024/12/06 15:39:59 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.53 2024/12/06 15:49:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -195,7 +195,7 @@ ec_compute_odd_multiples(const EC_GROUP *group, const EC_POINT *point,
 
 /*
  * Bring multiples held in wnaf0 and wnaf1 simultaneously into affine form
- * so that the operations in the loop in ec_wNAF_mul() can take fast paths.
+ * so that the operations in the loop in ec_wnaf_mul() can take fast paths.
  */
 
 static int
@@ -317,7 +317,7 @@ ec_wnaf_multiple(struct ec_wnaf *wnaf, signed char digit)
  */
 
 int
-ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
+ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx)
 {
 	struct ec_wnaf *wnaf[2] = { NULL, NULL };

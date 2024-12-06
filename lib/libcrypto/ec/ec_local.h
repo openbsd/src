@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.41 2024/12/06 04:35:03 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.42 2024/12/06 15:49:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -238,7 +238,7 @@ struct ec_point_st {
 } /* EC_POINT */;
 
 /* Compute r = generator * m + point * n in non-constant time. */
-int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
+int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx);
 
 int ec_group_simple_order_bits(const EC_GROUP *group);
