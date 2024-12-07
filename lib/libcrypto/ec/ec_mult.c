@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.53 2024/12/06 15:49:37 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.54 2024/12/07 13:32:07 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -115,9 +115,9 @@ ec_compute_wnaf(const BIGNUM *bn, signed char *digits, size_t num_digits)
 		goto err;
 	}
 
-	wbits = ec_window_bits(bn);
-
 	sign = BN_is_negative(bn) ? -1 : 1;
+
+	wbits = ec_window_bits(bn);
 
 	bit = 1 << wbits;
 	next = bit << 1;
