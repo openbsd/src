@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.225 2024/12/01 10:38:47 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.226 2024/12/07 17:23:27 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2051,6 +2051,9 @@ uvideo_vs_start_bulk_thread(void *arg)
 			    DEVNAME(sc), usbd_errstr(error));
 			break;
 		}
+
+		usbd_get_xfer_status(sc->sc_vs_cur->bxfer.xfer,
+		    NULL, NULL, &size, NULL);
 
 		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), size);
 
