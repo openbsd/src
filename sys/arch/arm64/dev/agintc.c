@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.59 2024/07/03 22:37:00 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.60 2024/12/07 20:48:32 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1599,10 +1599,26 @@ struct cfdriver agintcmsi_cd = {
 void	agintc_msi_send_cmd(struct agintc_msi_softc *, struct gits_cmd *);
 void	agintc_msi_wait_cmd(struct agintc_msi_softc *);
 
+#define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
+#define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
+
+#define CPU_IMPL_QCOM		0x51
+#define CPU_PART_ORYON		0x001
+
 int
 agintc_msi_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+
+	/*
+	 * XXX For some reason MSIs don't work on Qualcomm X1E SoCs in
+	 * ACPI mode.  So skip attaching the ITS in that case.  MSIs
+	 * work fine when booting with a DTB.
+	 */
+	if (OF_is_compatible(OF_peer(0), "openbsd,acpi") &&
+	    CPU_IMPL(curcpu()->ci_midr) == CPU_IMPL_QCOM &&
+	    CPU_PART(curcpu()->ci_midr) == CPU_PART_ORYON)
+		return 0;
 
 	return OF_is_compatible(faa->fa_node, "arm,gic-v3-its");
 }
