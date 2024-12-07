@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.363 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.364 2024/12/07 01:14:45 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -138,6 +138,7 @@ struct carp_softc {
 	struct ip_moptions sc_imo;
 #ifdef INET6
 	struct ip6_moptions sc_im6o;
+	struct task sc_itask;
 #endif /* INET6 */
 
 	SRPL_ENTRY(carp_softc) sc_list;
@@ -171,6 +172,9 @@ struct carp_softc {
 	u_int32_t sc_lsmask;		/* load sharing mask */
 	int sc_lscount;			/* # load sharing interfaces (max 32) */
 	int sc_delayed_arp;		/* delayed ARP request countdown */
+#ifdef INET6
+	int sc_send_na;			/* send NA when link state up */
+#endif /* INET6 */
 	int sc_realmac;			/* using real mac */
 
 	struct in_addr sc_peer;
@@ -250,6 +254,7 @@ int	carp_join_multicast(struct carp_softc *);
 void	carp_send_na(struct carp_softc *);
 int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
 int	carp_join_multicast6(struct carp_softc *);
+void	carp_if_linkstate(void *);
 #endif
 int	carp_clone_create(struct if_clone *, int);
 int	carp_clone_destroy(struct ifnet *);
@@ -811,6 +816,9 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	task_set(&sc->sc_atask, carp_addr_updated, sc);
 	task_set(&sc->sc_ltask, carp_carpdev_state, sc);
 	task_set(&sc->sc_dtask, carpdetach, sc);
+#ifdef INET6
+	task_set(&sc->sc_itask, carp_if_linkstate, sc);
+#endif /* INET6 */
 
 	sc->sc_suppress = 0;
 	sc->sc_advbase = CARP_DFLTINTV;
@@ -843,6 +851,9 @@ carp_clone_create(struct if_clone *ifc, int unit)
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
 	if_addrhook_add(&sc->sc_if, &sc->sc_atask);
+#ifdef INET6
+	if_linkstatehook_add(&sc->sc_if, &sc->sc_itask);
+#endif /* INET6 */
 
 	return (0);
 }
@@ -894,6 +905,9 @@ carp_clone_destroy(struct ifnet *ifp)
 	struct carp_softc *sc = ifp->if_softc;
 
 	if_addrhook_del(&sc->sc_if, &sc->sc_atask);
+#ifdef INET6
+	if_linkstatehook_del(&sc->sc_if, &sc->sc_itask);
+#endif /* INET6 */
 
 	NET_LOCK();
 	carpdetach(sc);
@@ -1285,13 +1299,13 @@ void
 carp_send_na(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
-	struct in6_addr *in6;
-	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
+	struct in6_addr *in6, mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 	int flags = ND_NA_FLAG_OVERRIDE;
 
 	if (i_am_router)
 		flags |= ND_NA_FLAG_ROUTER;
+	mcast.s6_addr16[1] = htons(sc->sc_if.if_index);
 
 	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 
@@ -1534,7 +1548,8 @@ carp_master_down(struct carp_vhost_entry *vhe)
 			/* Schedule a delayed ARP to deal w/ some L3 switches */
 			sc->sc_delayed_arp = 2;
 #ifdef INET6
-			carp_send_na(sc);
+			/* routing entry is not ready yet.  do it later */
+			sc->sc_send_na = 1;
 #endif /* INET6 */
 		}
 		carp_setrun(vhe, 0);
@@ -1955,6 +1970,17 @@ carp_join_multicast6(struct carp_softc *sc)
 	return (0);
 }
 
+void
+carp_if_linkstate(void *v)
+{
+	struct carp_softc *sc = v;
+
+	if (sc->sc_send_na) {
+		if (sc->sc_if.if_link_state == LINK_STATE_UP)
+			carp_send_na(sc);
+		sc->sc_send_na = 0;
+	}
+}
 #endif /* INET6 */
 
 int
