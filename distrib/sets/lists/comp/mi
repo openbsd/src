@@ -1936,16 +1936,12 @@
 ./usr/share/man/man3/EVP_PKEY_CTX_set_hkdf_md.3
 ./usr/share/man/man3/EVP_PKEY_CTX_set_tls1_prf_md.3
 ./usr/share/man/man3/EVP_PKEY_asn1_get_count.3
-./usr/share/man/man3/EVP_PKEY_asn1_new.3
-./usr/share/man/man3/EVP_PKEY_check.3
 ./usr/share/man/man3/EVP_PKEY_cmp.3
 ./usr/share/man/man3/EVP_PKEY_decrypt.3
 ./usr/share/man/man3/EVP_PKEY_derive.3
 ./usr/share/man/man3/EVP_PKEY_encrypt.3
 ./usr/share/man/man3/EVP_PKEY_get_default_digest_nid.3
 ./usr/share/man/man3/EVP_PKEY_keygen.3
-./usr/share/man/man3/EVP_PKEY_meth_get0_info.3
-./usr/share/man/man3/EVP_PKEY_meth_new.3
 ./usr/share/man/man3/EVP_PKEY_new.3
 ./usr/share/man/man3/EVP_PKEY_new_CMAC_key.3
 ./usr/share/man/man3/EVP_PKEY_print_private.3
