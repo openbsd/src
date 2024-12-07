@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.54 2024/12/07 13:32:07 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.55 2024/12/07 13:49:43 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -301,7 +301,7 @@ ec_wnaf_digit(struct ec_wnaf *wnaf, size_t idx)
 	return wnaf->digits[idx];
 }
 
-const EC_POINT *
+static const EC_POINT *
 ec_wnaf_multiple(struct ec_wnaf *wnaf, signed char digit)
 {
 	if (digit < 0)
