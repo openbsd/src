@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.60 2024/12/07 20:48:32 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.61 2024/12/07 21:12:22 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1577,6 +1577,7 @@ struct agintc_msi_softc {
 	struct agintc_dmamem		*sc_dtt;
 	size_t				sc_dtt_pgsz;
 	uint8_t				sc_dte_sz;
+	int				sc_dtt_indirect;
 	int				sc_cidbits;
 	struct agintc_dmamem		*sc_ctt;
 	size_t				sc_ctt_pgsz;
@@ -1721,11 +1722,19 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		size = (1ULL << sc->sc_devbits) * sc->sc_dte_sz;
 		size = roundup(size, sc->sc_dtt_pgsz);
 
-		/* FIXME: For now, skip registering MSI controller */
-		if (size / sc->sc_dtt_pgsz > GITS_BASER_SZ_MASK + 1) {
-			printf(": cannot support %u devbits on %lu pgsz\n",
-			    sc->sc_devbits, sc->sc_dtt_pgsz);
-			return;
+		/* Might make sense to go indirect */
+		if (size > 2 * sc->sc_dtt_pgsz) {
+			bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
+			    baser | GITS_BASER_INDIRECT);
+			if (bus_space_read_8(sc->sc_iot, sc->sc_ioh,
+			    GITS_BASER(i)) & GITS_BASER_INDIRECT)
+				sc->sc_dtt_indirect = 1;
+		}
+		if (sc->sc_dtt_indirect) {
+			size = (1ULL << sc->sc_devbits);
+			size /= (sc->sc_dtt_pgsz / sc->sc_dte_sz);
+			size *= sizeof(uint64_t);
+			size = roundup(size, sc->sc_dtt_pgsz);
 		}
 
 		/* Clamp down to maximum configurable num pages */
@@ -1734,6 +1743,9 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 
 		/* Calculate max deviceid based off configured size */
 		sc->sc_deviceid_max = (size / sc->sc_dte_sz) - 1;
+		if (sc->sc_dtt_indirect)
+			sc->sc_deviceid_max = ((size / sizeof(uint64_t)) *
+			    (sc->sc_dtt_pgsz / sc->sc_dte_sz)) - 1;
 
 		/* Allocate table. */
 		sc->sc_dtt = agintc_dmamem_alloc(sc->sc_dmat,
@@ -1748,7 +1760,9 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		KASSERT((dtt_pa & GITS_BASER_PA_MASK) == dtt_pa);
 		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
 		    GITS_BASER_IC_NORM_NC | baser & GITS_BASER_PGSZ_MASK | 
-		    dtt_pa | (size / sc->sc_dtt_pgsz) - 1 | GITS_BASER_VALID);
+		    dtt_pa | (size / sc->sc_dtt_pgsz) - 1 |
+		    (sc->sc_dtt_indirect ? GITS_BASER_INDIRECT : 0) |
+		    GITS_BASER_VALID);
 	}
 
 	/* Set up collection translation table. */
@@ -1884,6 +1898,40 @@ agintc_msi_wait_cmd(struct agintc_msi_softc *sc)
 		printf("%s: command queue timeout\n", sc->sc_dev.dv_xname);
 }
 
+int
+agintc_msi_create_device_table(struct agintc_msi_softc *sc, uint32_t deviceid)
+{
+	uint64_t *table = AGINTC_DMA_KVA(sc->sc_dtt);
+	uint32_t idx = deviceid / (sc->sc_dtt_pgsz / sc->sc_dte_sz);
+	struct agintc_dmamem *dtt;
+	paddr_t dtt_pa;
+
+	/* Out of bounds */
+	if (deviceid > sc->sc_deviceid_max)
+		return ENXIO;
+
+	/* No need to adjust */
+	if (!sc->sc_dtt_indirect)
+		return 0;
+
+	/* Table already allocated */
+	if (table[idx])
+		return 0;
+
+	/* FIXME: leaks */
+	dtt = agintc_dmamem_alloc(sc->sc_dmat,
+	    sc->sc_dtt_pgsz, sc->sc_dtt_pgsz);
+	if (dtt == NULL)
+		return ENOMEM;
+
+	dtt_pa = AGINTC_DMA_DVA(dtt);
+	KASSERT((dtt_pa & GITS_BASER_PA_MASK) == dtt_pa);
+	table[idx] = dtt_pa | GITS_BASER_VALID;
+	cpu_dcache_wb_range((vaddr_t)&table[idx], sizeof(table[idx]));
+	__asm volatile("dsb sy");
+	return 0;
+}
+
 struct agintc_msi_device *
 agintc_msi_create_device(struct agintc_msi_softc *sc, uint32_t deviceid)
 {
@@ -1891,6 +1939,9 @@ agintc_msi_create_device(struct agintc_msi_softc *sc, uint32_t deviceid)
 	struct gits_cmd cmd;
 
 	if (deviceid > sc->sc_deviceid_max)
+		return NULL;
+
+	if (agintc_msi_create_device_table(sc, deviceid) != 0)
 		return NULL;
 
 	md = malloc(sizeof(*md), M_DEVBUF, M_ZERO | M_WAITOK);
