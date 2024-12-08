@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.53 2024/11/09 22:03:49 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.54 2024/12/08 17:41:23 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 9 2024 $
+.Dd $Mdocdate: December 8 2024 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -103,13 +103,6 @@
 .Nm EVP_idea_cfb64 ,
 .Nm EVP_idea_cfb ,
 .Nm EVP_idea_ofb ,
-.Nm EVP_rc2_cbc ,
-.Nm EVP_rc2_ecb ,
-.Nm EVP_rc2_cfb64 ,
-.Nm EVP_rc2_cfb ,
-.Nm EVP_rc2_ofb ,
-.Nm EVP_rc2_40_cbc ,
-.Nm EVP_rc2_64_cbc ,
 .Nm EVP_bf_cbc ,
 .Nm EVP_bf_ecb ,
 .Nm EVP_bf_cfb64 ,
@@ -570,34 +563,6 @@ is an alias for
 .Fn EVP_idea_cfb64 ,
 implemented as a macro.
 .It Xo
-.Fn EVP_rc2_cbc ,
-.Fn EVP_rc2_ecb ,
-.Fn EVP_rc2_cfb64 ,
-.Fn EVP_rc2_ofb
-.Xc
-RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
-RC2 is a block cipher operating on 64 bit blocks using a variable
-.Fa key
-length with an additional parameter called
-"effective key bits" or "effective key length".
-By default both are set to 128 bits.
-.Fn EVP_rc2_cfb
-is an alias for
-.Fn EVP_rc2_cfb64 ,
-implemented as a macro.
-.It Xo
-.Fn EVP_rc2_40_cbc ,
-.Fn EVP_rc2_64_cbc
-.Xc
-RC2 algorithm in CBC mode with a default key length and effective key
-length of 40 and 64 bits.
-These are obsolete and new code should use
-.Fn EVP_rc2_cbc ,
-.Xr EVP_CIPHER_CTX_set_key_length 3 ,
-and
-.Xr EVP_CIPHER_CTX_ctrl 3
-to set the key length and effective key length.
-.It Xo
 .Fn EVP_bf_cbc ,
 .Fn EVP_bf_ecb ,
 .Fn EVP_bf_cfb64 ,
@@ -638,6 +603,7 @@ Some algorithms are documented in separate manual pages:
 .It Xr EVP_camellia_128_cbc 3 Ta 128        Ta 128, 192, 256
 .It Xr EVP_chacha20 3         Ta stream     Ta 256
 .It Xr EVP_des_cbc 3          Ta 64         Ta 64
+.It Xr EVP_rc2_cbc 3          Ta 64         Ta variable, default 128
 .It Xr EVP_rc4 3              Ta stream     Ta variable, default 128
 .It Xr EVP_sm4_cbc 3          Ta 128        Ta 128
 .El
@@ -864,6 +830,7 @@ do_crypt(FILE *in_fileptr, FILE *out_fileptr, int do_encrypt)
 .Xr EVP_CIPHER_nid 3 ,
 .Xr EVP_des_cbc 3 ,
 .Xr EVP_OpenInit 3 ,
+.Xr EVP_rc2_cbc 3 ,
 .Xr EVP_rc4 3 ,
 .Xr EVP_SealInit 3 ,
 .Xr EVP_sm4_cbc 3
@@ -884,12 +851,6 @@ do_crypt(FILE *in_fileptr, FILE *out_fileptr, int do_encrypt)
 and
 .Fn EVP_idea_ofb
 first appeared in SSLeay 0.5.1.
-.Fn EVP_rc2_cbc ,
-.Fn EVP_rc2_ecb ,
-.Fn EVP_rc2_cfb ,
-and
-.Fn EVP_rc2_ofb
-first appeared in SSLeay 0.5.2.
 .Fn EVP_bf_cbc ,
 .Fn EVP_bf_ecb ,
 .Fn EVP_bf_cfb ,
@@ -906,12 +867,6 @@ first appeared in SSLeay 0.8.1.
 All these functions have been available since
 .Ox 2.4 .
 .Pp
-.Fn EVP_rc2_40_cbc
-and
-.Fn EVP_rc2_64_cbc
-first appeared in SSLeay 0.9.1 and have been available since
-.Ox 2.6 .
-.Pp
 .Fn EVP_EncryptInit_ex ,
 .Fn EVP_EncryptFinal_ex ,
 .Fn EVP_DecryptInit_ex ,
@@ -924,9 +879,8 @@ first appeared in OpenSSL 0.9.7 and have been available since
 .Pp
 .Fn EVP_bf_cfb64 ,
 .Fn EVP_cast5_cfb64 ,
-.Fn EVP_idea_cfb64 ,
 and
-.Fn EVP_rc2_cfb64
+.Fn EVP_idea_cfb64
 first appeared in OpenSSL 0.9.7e and have been available since
 .Ox 3.8 .
 .Pp

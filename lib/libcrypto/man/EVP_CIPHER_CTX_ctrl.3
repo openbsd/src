@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_CTX_ctrl.3,v 1.2 2023/10/01 18:23:50 tb Exp $
+.\" $OpenBSD: EVP_CIPHER_CTX_ctrl.3,v 1.3 2024/12/08 17:41:23 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"
 .\" This file is a derived work.
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 1 2023 $
+.Dd $Mdocdate: December 8 2024 $
 .Dt EVP_CIPHER_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -131,7 +131,9 @@
 .Sh DESCRIPTION
 .Fn EVP_CIPHER_CTX_ctrl
 allows various cipher specific parameters to be determined and set.
-Currently only the RC2 effective key length can be set.
+Currently only the RC2 effective key length can be set; see
+.Xr EVP_rc2_cbc 3
+for details.
 .Pp
 .Fn EVP_CIPHER_CTX_set_padding
 enables or disables padding.

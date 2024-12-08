@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.299 2024/12/06 14:27:49 schwarze Exp $
+# $OpenBSD: Makefile,v 1.300 2024/12/08 17:41:23 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -199,6 +199,7 @@ MAN=	\
 	EVP_camellia_128_cbc.3 \
 	EVP_chacha20.3 \
 	EVP_des_cbc.3 \
+	EVP_rc2_cbc.3 \
 	EVP_rc4.3 \
 	EVP_sha1.3 \
 	EVP_sha3_224.3 \
@@ -264,6 +265,7 @@ MAN=	\
 	RAND_bytes.3 \
 	RAND_load_file.3 \
 	RAND_set_rand_method.3 \
+	RC2_encrypt.3 \
 	RC4.3 \
 	RIPEMD160.3 \
 	RSA_PSS_PARAMS_new.3 \
