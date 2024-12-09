@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.6 2024/08/20 21:24:15 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.7 2024/12/09 04:43:15 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -101,7 +101,9 @@ struct ath12k_hal_tcl_to_wbm_rbm_map {
 
 enum hal_rx_buf_return_buf_manager {
 	HAL_RX_BUF_RBM_WBM_IDLE_BUF_LIST,
-	HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST,
+	HAL_RX_BUF_RBM_WBM_DEV0_IDLE_DESC_LIST,
+	HAL_RX_BUF_RBM_WBM_DEV1_IDLE_DESC_LIST,
+	HAL_RX_BUF_RBM_WBM_DEV2_IDLE_DESC_LIST,
 	HAL_RX_BUF_RBM_FW_BM,
 	HAL_RX_BUF_RBM_SW0_BM,
 	HAL_RX_BUF_RBM_SW1_BM,
@@ -485,9 +487,8 @@ enum hal_srng_dir {
 #define HAL_SRNG_FLAGS_DATA_TLV_SWAP		0x00000020
 #define HAL_SRNG_FLAGS_LOW_THRESH_INTR_EN	0x00010000
 #define HAL_SRNG_FLAGS_MSI_INTR			0x00020000
-#define HAL_SRNG_FLAGS_CACHED                   0x20000000
+#define HAL_SRNG_FLAGS_HIGH_THRESH_INTR_EN	0x00080000
 #define HAL_SRNG_FLAGS_LMAC_RING		0x80000000
-#define HAL_SRNG_FLAGS_REMAP_CE_RING        0x10000000
 
 #define HAL_SRNG_TLV_HDR_TAG		GENMASK(9, 1)
 #define HAL_SRNG_TLV_HDR_LEN		GENMASK(25, 10)
@@ -1148,7 +1149,6 @@ struct dp_srng {
 	bus_addr_t paddr;
 	int size;
 	uint32_t ring_id;
-	uint8_t cached;
 };
 
 struct dp_tx_ring {

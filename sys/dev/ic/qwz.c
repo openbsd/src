@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.9 2024/09/01 03:14:48 jsg Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.10 2024/12/09 04:43:15 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -962,7 +962,7 @@ struct cfdriver qwz_cd = {
 };
 
 void
-qwz_init_wmi_config_qca6390(struct qwz_softc *sc,
+qwz_init_wmi_config_wcn7850(struct qwz_softc *sc,
     struct target_resource_config *config)
 {
 	config->num_vdevs = 4;
@@ -1045,25 +1045,13 @@ qwz_hal_reo_hw_setup(struct qwz_softc *sc, uint32_t ring_hash_map)
 }
 
 int
-qwz_hw_mac_id_to_pdev_id_ipq8074(struct ath12k_hw_params *hw, int mac_id)
-{
-	return mac_id;
-}
-
-int
-qwz_hw_mac_id_to_srng_id_ipq8074(struct ath12k_hw_params *hw, int mac_id)
+qwz_hw_mac_id_to_pdev_id_wcn7850(struct ath12k_hw_params *hw, int mac_id)
 {
 	return 0;
 }
 
 int
-qwz_hw_mac_id_to_pdev_id_qca6390(struct ath12k_hw_params *hw, int mac_id)
-{
-	return 0;
-}
-
-int
-qwz_hw_mac_id_to_srng_id_qca6390(struct ath12k_hw_params *hw, int mac_id)
+qwz_hw_mac_id_to_srng_id_wcn7850(struct ath12k_hw_params *hw, int mac_id)
 {
 	return mac_id;
 }
@@ -1692,7 +1680,7 @@ qwz_hw_ipq8074_mac_from_pdev_id(int pdev_idx)
 }
 
 uint8_t
-qwz_hw_ipq6018_mac_from_pdev_id(int pdev_idx)
+qwz_hw_qcn9274_mac_from_pdev_id(int pdev_idx)
 {
 	return pdev_idx;
 }
@@ -1707,9 +1695,9 @@ qwz_hw_get_mac_from_pdev_id(struct qwz_softc *sc, int pdev_idx)
 }
 
 const struct ath12k_hw_ops wcn7850_ops = {
-	.get_hw_mac_from_pdev_id = qwz_hw_ipq6018_mac_from_pdev_id,
-	.mac_id_to_pdev_id = qwz_hw_mac_id_to_pdev_id_qca6390,
-	.mac_id_to_srng_id = qwz_hw_mac_id_to_srng_id_qca6390,
+	.get_hw_mac_from_pdev_id = qwz_hw_qcn9274_mac_from_pdev_id,
+	.mac_id_to_pdev_id = qwz_hw_mac_id_to_pdev_id_wcn7850,
+	.mac_id_to_srng_id = qwz_hw_mac_id_to_srng_id_wcn7850,
 };
 
 #define ATH12K_TX_RING_MASK_0 BIT(0)
@@ -1769,340 +1757,7 @@ const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 };
 
 /* Target firmware's Copy Engine configuration. */
-const struct ce_pipe_config ath12k_target_ce_config_wlan_ipq8074[] = {
-	/* CE0: host->target HTC control and raw streams */
-	{
-		.pipenum = htole32(0),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE1: target->host HTT + HTC control */
-	{
-		.pipenum = htole32(1),
-		.pipedir = htole32(PIPEDIR_IN),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE2: target->host WMI */
-	{
-		.pipenum = htole32(2),
-		.pipedir = htole32(PIPEDIR_IN),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE3: host->target WMI */
-	{
-		.pipenum = htole32(3),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE4: host->target HTT */
-	{
-		.pipenum = htole32(4),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(256),
-		.nbytes_max = htole32(256),
-		.flags = htole32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
-		.reserved = htole32(0),
-	},
-
-	/* CE5: target->host Pktlog */
-	{
-		.pipenum = htole32(5),
-		.pipedir = htole32(PIPEDIR_IN),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(0),
-		.reserved = htole32(0),
-	},
-
-	/* CE6: Reserved for target autonomous hif_memcpy */
-	{
-		.pipenum = htole32(6),
-		.pipedir = htole32(PIPEDIR_INOUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(65535),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE7 used only by Host */
-	{
-		.pipenum = htole32(7),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE8 target->host used only by IPA */
-	{
-		.pipenum = htole32(8),
-		.pipedir = htole32(PIPEDIR_INOUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(65535),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE9 host->target HTT */
-	{
-		.pipenum = htole32(9),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE10 target->host HTT */
-	{
-		.pipenum = htole32(10),
-		.pipedir = htole32(PIPEDIR_INOUT_H2H),
-		.nentries = htole32(0),
-		.nbytes_max = htole32(0),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE11 Not used */
-};
-
-/* Map from service/endpoint to Copy Engine.
- * This table is derived from the CE_PCI TABLE, above.
- * It is passed to the Target at startup for use by firmware.
- */
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_ipq8074[] = {
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BK),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BK),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BE),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BE),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VI),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VI),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(7),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC2),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(9),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC2),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_RSVD_CTRL),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(0),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_RSVD_CTRL),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(1),
-	},
-	{ /* not used */
-		.service_id = htole32(ATH12K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(0),
-	},
-	{ /* not used */
-		.service_id = htole32(ATH12K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(1),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_HTT_DATA_MSG),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(4),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_HTT_DATA_MSG),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(1),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_PKT_LOG),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(5),
-	},
-
-	/* (Additions here) */
-
-	{ /* terminator entry */ }
-};
-
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_ipq6018[] = {
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BK),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BK),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BE),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BE),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VI),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VI),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(3),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(7),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(2),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_RSVD_CTRL),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(0),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_RSVD_CTRL),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(1),
-	},
-	{ /* not used */
-		.service_id = htole32(ATH12K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(0),
-	},
-	{ /* not used */
-		.service_id = htole32(ATH12K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(1),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_HTT_DATA_MSG),
-		.pipedir = htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		.pipenum = htole32(4),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_HTT_DATA_MSG),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(1),
-	},
-	{
-		.service_id = htole32(ATH12K_HTC_SVC_ID_PKT_LOG),
-		.pipedir = htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		.pipenum = htole32(5),
-	},
-
-	/* (Additions here) */
-
-	{ /* terminator entry */ }
-};
-
-/* Target firmware's Copy Engine configuration. */
-const struct ce_pipe_config ath12k_target_ce_config_wlan_qca6390[] = {
+const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[] = {
 	/* CE0: host->target HTC control and raw streams */
 	{
 		.pipenum = htole32(0),
@@ -2199,7 +1854,7 @@ const struct ce_pipe_config ath12k_target_ce_config_wlan_qca6390[] = {
  * This table is derived from the CE_PCI TABLE, above.
  * It is passed to the Target at startup for use by firmware.
  */
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qca6390[] = {
+const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[] = {
 	{
 		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
 		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
@@ -2280,440 +1935,9 @@ const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qca6390[] = {
 	},
 };
 
-/* Target firmware's Copy Engine configuration. */
-const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9074[] = {
-	/* CE0: host->target HTC control and raw streams */
-	{
-		.pipenum = htole32(0),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
+#define QWZ_CE_COUNT_WCN7850	9
 
-	/* CE1: target->host HTT + HTC control */
-	{
-		.pipenum = htole32(1),
-		.pipedir = htole32(PIPEDIR_IN),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE2: target->host WMI */
-	{
-		.pipenum = htole32(2),
-		.pipedir = htole32(PIPEDIR_IN),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE3: host->target WMI */
-	{
-		.pipenum = htole32(3),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE4: host->target HTT */
-	{
-		.pipenum = htole32(4),
-		.pipedir = htole32(PIPEDIR_OUT),
-		.nentries = htole32(256),
-		.nbytes_max = htole32(256),
-		.flags = htole32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
-		.reserved = htole32(0),
-	},
-
-	/* CE5: target->host Pktlog */
-	{
-		.pipenum = htole32(5),
-		.pipedir = htole32(PIPEDIR_IN),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(2048),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE6: Reserved for target autonomous hif_memcpy */
-	{
-		.pipenum = htole32(6),
-		.pipedir = htole32(PIPEDIR_INOUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(16384),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-
-	/* CE7 used only by Host */
-	{
-		.pipenum = htole32(7),
-		.pipedir = htole32(PIPEDIR_INOUT_H2H),
-		.nentries = htole32(0),
-		.nbytes_max = htole32(0),
-		.flags = htole32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
-		.reserved = htole32(0),
-	},
-
-	/* CE8 target->host used only by IPA */
-	{
-		.pipenum = htole32(8),
-		.pipedir = htole32(PIPEDIR_INOUT),
-		.nentries = htole32(32),
-		.nbytes_max = htole32(16384),
-		.flags = htole32(CE_ATTR_FLAGS),
-		.reserved = htole32(0),
-	},
-	/* CE 9, 10, 11 are used by MHI driver */
-};
-
-/* Map from service/endpoint to Copy Engine.
- * This table is derived from the CE_PCI TABLE, above.
- * It is passed to the Target at startup for use by firmware.
- */
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9074[] = {
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(3),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(2),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BK),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(3),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BK),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(2),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BE),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(3),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_BE),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(2),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VI),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(3),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_DATA_VI),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(2),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(3),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_WMI_CONTROL),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(2),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_RSVD_CTRL),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(0),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_RSVD_CTRL),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(1),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(0),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(1),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_HTT_DATA_MSG),
-		htole32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		htole32(4),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_HTT_DATA_MSG),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(1),
-	},
-	{
-		htole32(ATH12K_HTC_SVC_ID_PKT_LOG),
-		htole32(PIPEDIR_IN),	/* in = DL = target -> host */
-		htole32(5),
-	},
-
-	/* (Additions here) */
-
-	{ /* must be last */
-		htole32(0),
-		htole32(0),
-		htole32(0),
-	},
-};
-
-#define QWZ_CE_COUNT_IPQ8074	21
-
-const struct ce_attr qwz_host_ce_config_ipq8074[QWZ_CE_COUNT_IPQ8074] = {
-	/* CE0: host->target HTC control and raw streams */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 16,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE1: target->host HTT + HTC control */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE2: target->host WMI */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE3: host->target WMI (mac0) */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 32,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE4: host->target HTT */
-	{
-		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 2048,
-		.src_sz_max = 256,
-		.dest_nentries = 0,
-	},
-
-	/* CE5: target->host pktlog */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_dp_htt_htc_t2h_msg_handler,
-	},
-
-	/* CE6: target autonomous hif_memcpy */
-	{
-		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 0,
-		.src_sz_max = 0,
-		.dest_nentries = 0,
-	},
-
-	/* CE7: host->target WMI (mac1) */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 32,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE8: target autonomous hif_memcpy */
-	{
-		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 0,
-		.src_sz_max = 0,
-		.dest_nentries = 0,
-	},
-
-	/* CE9: host->target WMI (mac2) */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 32,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE10: target->host HTT */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE11: Not used */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 0,
-		.dest_nentries = 0,
-	},
-};
-
-#define QWZ_CE_COUNT_QCA6390	9
-
-const struct ce_attr qwz_host_ce_config_qca6390[QWZ_CE_COUNT_QCA6390] = {
-	/* CE0: host->target HTC control and raw streams */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 16,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE1: target->host HTT + HTC control */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE2: target->host WMI */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE3: host->target WMI (mac0) */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 32,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE4: host->target HTT */
-	{
-		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 2048,
-		.src_sz_max = 256,
-		.dest_nentries = 0,
-	},
-
-	/* CE5: target->host pktlog */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_dp_htt_htc_t2h_msg_handler,
-	},
-
-	/* CE6: target autonomous hif_memcpy */
-	{
-		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 0,
-		.src_sz_max = 0,
-		.dest_nentries = 0,
-	},
-
-	/* CE7: host->target WMI (mac1) */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 32,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE8: target autonomous hif_memcpy */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 0,
-		.dest_nentries = 0,
-	},
-
-};
-
-#define QWZ_CE_COUNT_QCN9074	6
-
-const struct ce_attr qwz_host_ce_config_qcn9074[QWZ_CE_COUNT_QCN9074] = {
-	/* CE0: host->target HTC control and raw streams */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 16,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE1: target->host HTT + HTC control */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE2: target->host WMI */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 32,
-		.recv_cb = qwz_htc_rx_completion_handler,
-	},
-
-	/* CE3: host->target WMI (mac0) */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 32,
-		.src_sz_max = 2048,
-		.dest_nentries = 0,
-	},
-
-	/* CE4: host->target HTT */
-	{
-		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 2048,
-		.src_sz_max = 256,
-		.dest_nentries = 0,
-	},
-
-	/* CE5: target->host pktlog */
-	{
-		.flags = CE_ATTR_FLAGS,
-		.src_nentries = 0,
-		.src_sz_max = 2048,
-		.dest_nentries = 512,
-		.recv_cb = qwz_dp_htt_htc_t2h_msg_handler,
-	},
-};
-
-const struct ce_attr qwz_host_ce_config_wcn7850[QWZ_CE_COUNT_QCA6390] = {
+const struct ce_attr qwz_host_ce_config_wcn7850[QWZ_CE_COUNT_WCN7850] = {
 	/* CE0: host->target HTC control and raw streams */
 	{
 		.flags = CE_ATTR_FLAGS,
@@ -2834,14 +2058,15 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.regs = &wcn7850_regs,
 		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_WCN7850,
 		.host_ce_config = qwz_host_ce_config_wcn7850,
-		.ce_count = QWZ_CE_COUNT_QCA6390,
-		.target_ce_config = ath12k_target_ce_config_wlan_qca6390,
+		.ce_count = QWZ_CE_COUNT_WCN7850,
+		.target_ce_config = ath12k_target_ce_config_wlan_wcn7850,
 		.target_ce_count = 9,
-		.svc_to_ce_map = ath12k_target_service_to_ce_map_wlan_qca6390,
+		.svc_to_ce_map = ath12k_target_service_to_ce_map_wlan_wcn7850,
 		.svc_to_ce_map_len = 14,
 		.rxdma1_enable = false,
 		.num_rxmda_per_pdev = 2,
 		.num_rxdma_dst_ring = 1,
+		.rx_mac_buf_ring = true,
 		.credit_flow = true,
 		.max_tx_ring = DP_TCL_NUM_RING_MAX,
 		.htt_peer_map_v2 = false,
@@ -7721,7 +6946,7 @@ qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, int regdb)
 		goto out;
 	}
 
-	/* QCA6390/WCN6855 does not support cal data, skip it */
+	/* WCN7850/WCN6855 does not support cal data, skip it */
 	if (bdf_type == ATH12K_QMI_BDF_TYPE_ELF || bdf_type == ATH12K_QMI_BDF_TYPE_REGDB)
 		goto out;
 #ifdef notyet
@@ -7943,11 +7168,6 @@ qwz_hal_srng_dst_get_next_entry(struct qwz_softc *sc, struct hal_srng *srng)
 	/* wrap around to start of ring */
 	if (srng->u.dst_ring.tp == srng->ring_size)
 		srng->u.dst_ring.tp = 0;
-#ifdef notyet
-	/* Try to prefetch the next descriptor in the ring */
-	if (srng->flags & HAL_SRNG_FLAGS_CACHED)
-		ath12k_hal_srng_prefetch_desc(ab, srng);
-#endif
 	return desc;
 }
 
@@ -8231,11 +7451,6 @@ qwz_dp_srng_setup(struct qwz_softc *sc, struct dp_srng *ring,
 		printf("%s: Not a valid ring type in dp :%d\n",
 		    sc->sc_dev.dv_xname, type);
 		return EINVAL;
-	}
-
-	if (cached) {
-		params.flags |= HAL_SRNG_FLAGS_CACHED;
-		ring->cached = 1;
 	}
 
 	ret = qwz_hal_srng_setup(sc, type, ring_num, mac_id, &params);
@@ -8714,12 +7929,7 @@ qwz_dp_srng_cleanup(struct qwz_softc *sc, struct dp_srng *ring)
 	if (ring->mem == NULL)
 		return;
 
-#if 0
-	if (ring->cached)
-		kfree(ring->vaddr_unaligned);
-	else
-#endif
-		qwz_dmamem_free(sc->sc_dmat, ring->mem);
+	qwz_dmamem_free(sc->sc_dmat, ring->mem);
 
 	ring->mem = NULL;
 	ring->vaddr = NULL;
@@ -10590,7 +9800,7 @@ qwz_wmi_tlv_ext_soc_hal_reg_caps_parse(struct qwz_softc *sc, uint16_t len,
 
 		sc->num_radios++;
 
-		/* For QCA6390, save mac_phy capability in the same pdev */
+		/* For WCN7850, save mac_phy capability in the same pdev */
 		if (sc->hw_params.single_pdev_only)
 			pdev_index = 0;
 		else
@@ -10600,7 +9810,7 @@ qwz_wmi_tlv_ext_soc_hal_reg_caps_parse(struct qwz_softc *sc, uint16_t len,
 		phy_id_map >>= 1;
 	}
 
-	/* For QCA6390, set num_radios to 1 because host manages
+	/* For WCN7850, set num_radios to 1 because host manages
 	 * both 2G and 5G radio in one pdev.
 	 * Set pdev_id = 0 and 0 means soc level.
 	 */
@@ -13793,7 +13003,7 @@ qwz_dp_rx_pdev_srng_alloc(struct qwz_softc *sc)
 	/* if rxdma1_enable is false, then it doesn't need
 	 * to setup rxdam_mon_buf_ring, rxdma_mon_dst_ring
 	 * and rxdma_mon_desc_ring.
-	 * init reap timer for QCA6390.
+	 * init reap timer for WCN7850.
 	 */
 	if (!sc->hw_params.rxdma1_enable) {
 		timeout_set(&sc->mon_reap_timer, qwz_dp_service_mon_ring, sc);
@@ -14125,7 +13335,7 @@ qwz_dp_tx_get_ring_id_type(struct qwz_softc *sc, int mac_id, uint32_t ring_id,
 {
 	switch (ring_type) {
 	case HAL_RXDMA_BUF:
-		/* for QCA6390, host fills rx buffer to fw and fw fills to
+		/* for WCN7850, host fills rx buffer to fw and fw fills to
 		 * rxbuf ring for each rxdma
 		 */
 		if (!sc->hw_params.rx_mac_buf_ring) {
@@ -15128,7 +14338,7 @@ qwz_dp_process_rx_err(struct qwz_softc *sc)
 		    (paddr - link_desc_banks[desc_bank].paddr);
 		qwz_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus,
 		    msdu_cookies, &rbm);
-		if (rbm != HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST &&
+		if (rbm != HAL_RX_BUF_RBM_WBM_DEV0_IDLE_DESC_LIST &&
 		    rbm != HAL_RX_BUF_RBM_SW3_BM) {
 #if 0
 			ab->soc_stats.invalid_rbm++;
@@ -20899,6 +20109,9 @@ qwz_ce_init_pipes(struct qwz_softc *sc)
 	struct qwz_ce_pipe *pipe;
 	int i;
 	int ret;
+
+	qwz_ce_get_shadow_config(sc, &sc->qmi_ce_cfg.shadow_reg_v3,
+	    &sc->qmi_ce_cfg.shadow_reg_v3_len);
 
 	for (i = 0; i < sc->hw_params.ce_count; i++) {
 		pipe = &sc->ce.ce_pipe[i];

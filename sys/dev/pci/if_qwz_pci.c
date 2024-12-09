@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.4 2024/08/20 21:24:15 patrick Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.5 2024/12/09 04:43:15 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -196,9 +196,8 @@
 #define MHI_CHAN_CTX_POLLCFG_MASK		GENMASK(15, 10)
 #define MHI_CHAN_CTX_RESERVED_MASK		GENMASK(31, 16)
 
-#define QWZ_MHI_CONFIG_QCA6390_MAX_CHANNELS	128
-#define QWZ_MHI_CONFIG_QCA6390_TIMEOUT_MS	2000
-#define QWZ_MHI_CONFIG_QCA9074_MAX_CHANNELS	30
+#define QWZ_MHI_CONFIG_WCN7850_MAX_CHANNELS	128
+#define QWZ_MHI_CONFIG_WCN7850_TIMEOUT_MS	2000
 
 #define MHI_CHAN_TYPE_INVALID		0
 #define MHI_CHAN_TYPE_OUTBOUND		1 /* to device */
@@ -392,8 +391,7 @@ void	qwz_pci_attach_hook(struct device *);
 void	qwz_pci_free_xfer_rings(struct qwz_pci_softc *);
 int	qwz_pci_alloc_xfer_ring(struct qwz_softc *, struct qwz_pci_xfer_ring *,
 	    uint32_t, uint32_t, uint32_t, size_t);
-int	qwz_pci_alloc_xfer_rings_qca6390(struct qwz_pci_softc *);
-int	qwz_pci_alloc_xfer_rings_qcn9074(struct qwz_pci_softc *);
+int	qwz_pci_alloc_xfer_rings_wcn7850(struct qwz_pci_softc *);
 void	qwz_pci_free_event_rings(struct qwz_pci_softc *);
 int	qwz_pci_alloc_event_ring(struct qwz_softc *,
 	    struct qwz_pci_event_ring *, uint32_t, uint32_t, uint32_t, size_t);
@@ -489,7 +487,7 @@ static const struct qwz_pci_ops qwz_pci_ops_wcn7850 = {
 	.release = qwz_pci_bus_release,
 	.window_write32 = qwz_pci_window_write32,
 	.window_read32 = qwz_pci_window_read32,
-	.alloc_xfer_rings = qwz_pci_alloc_xfer_rings_qca6390,
+	.alloc_xfer_rings = qwz_pci_alloc_xfer_rings_wcn7850,
 };
 
 const struct cfattach qwz_pci_ca = {
@@ -833,12 +831,12 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_hw_rev = ATH12K_HW_WCN7850_HW20;
 			break;
 		default:
-			printf(": unknown hardware version found for WCN785: "
+			printf(": unknown hardware version found for WCN7850: "
 			    "%d\n", soc_hw_version_major);
 			return;
 		}
 
-		psc->max_chan = QWZ_MHI_CONFIG_QCA6390_MAX_CHANNELS;
+		psc->max_chan = QWZ_MHI_CONFIG_WCN7850_MAX_CHANNELS;
 		break;
 	default:
 		printf(": unsupported chip\n");
@@ -1191,7 +1189,7 @@ fail:
 }
 
 int
-qwz_pci_alloc_xfer_rings_qca6390(struct qwz_pci_softc *psc)
+qwz_pci_alloc_xfer_rings_wcn7850(struct qwz_pci_softc *psc)
 {
 	struct qwz_softc *sc = &psc->sc_sc;
 	int ret;
@@ -1205,30 +1203,6 @@ qwz_pci_alloc_xfer_rings_qca6390(struct qwz_pci_softc *psc)
 	ret = qwz_pci_alloc_xfer_ring(sc,
 	    &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_INBOUND],
 	    21, MHI_CHAN_TYPE_INBOUND, 1, 64);
-	if (ret)
-		goto fail;
-
-	return 0;
-fail:
-	qwz_pci_free_xfer_rings(psc);
-	return ret;
-}
-
-int
-qwz_pci_alloc_xfer_rings_qcn9074(struct qwz_pci_softc *psc)
-{
-	struct qwz_softc *sc = &psc->sc_sc;
-	int ret;
-
-	ret = qwz_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_OUTBOUND],
-	    20, MHI_CHAN_TYPE_OUTBOUND, 1, 32);
-	if (ret)
-		goto fail;
-
-	ret = qwz_pci_alloc_xfer_ring(sc,
-	    &psc->xfer_rings[QWZ_PCI_XFER_RING_IPCR_INBOUND],
-	    21, MHI_CHAN_TYPE_INBOUND, 1, 32);
 	if (ret)
 		goto fail;
 
