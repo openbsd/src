@@ -150,6 +150,7 @@ enum {
 	dns_rdatatype_caa = 257,
 	dns_rdatatype_avc = 258,
 	dns_rdatatype_doa = 259,
+	dns_rdatatype_resinfo = 261,
 	dns_rdatatype_ta = 32768,
 	dns_rdatatype_dlv = 32769,
 	dns_rdatatype_keydata = 65533,

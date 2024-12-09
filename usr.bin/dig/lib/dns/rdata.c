@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.36 2024/04/23 13:34:50 jsg Exp $ */
+/* $Id: rdata.c,v 1.37 2024/12/09 12:24:01 florian Exp $ */
 
 /*! \file */
 
@@ -811,6 +811,7 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 		{"ptr",		12},
 		{"px",		26},
 		{"reserved0",	0},
+		{"resinfo",	261},
 		{"rkey",	57},
 		{"rp",		17},
 		{"rrsig",	46},
@@ -1055,6 +1056,8 @@ dns_rdatatype_totext(dns_rdatatype_t type, isc_buffer_t *target) {
 		return (isc_str_tobuffer("AVC", target));
 	case 259:
 		return (isc_str_tobuffer("DOA", target));
+	case 261:
+		return (isc_str_tobuffer("RESINFO", target));
 	case 32768:
 		return (isc_str_tobuffer("TA", target));
 	case 32769:
