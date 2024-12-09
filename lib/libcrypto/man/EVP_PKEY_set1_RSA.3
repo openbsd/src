@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.23 2024/04/18 16:32:22 tb Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.24 2024/12/09 11:25:25 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2024 $
+.Dd $Mdocdate: December 9 2024 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -96,6 +96,11 @@
 .\" The function X509_certificate_type(3) is intentionally undocumented
 .\" and scheduled for deletion from the library.  BoringSSL already
 .\" deleted it and OpenSSL deprecates it in version 3.0.
+.\" The following constants are also intentionally undocumented
+.\" because they are only used by that function:
+.\" EVP_PK_DH EVP_PK_DSA EVP_PK_EC EVP_PK_RSA
+.\" EVP_PKS_DSA EVP_PKS_EC EVP_PKS_RSA
+.\" EVP_PKT_ENC EVP_PKT_EXCH EVP_PKT_EXP EVP_PKT_SIGN
 .Nd EVP_PKEY assignment functions
 .Sh SYNOPSIS
 .In openssl/evp.h
