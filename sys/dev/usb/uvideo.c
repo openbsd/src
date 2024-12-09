@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.226 2024/12/07 17:23:27 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.227 2024/12/09 23:21:26 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1889,6 +1889,10 @@ uvideo_vs_open(struct uvideo_softc *sc)
 			return (error);
 	}
 
+	/* 2.4.3 the bulk endpoint only supports the alternative setting of 0 */
+	if (sc->sc_vs_cur->bulk_endpoint)
+		goto skip_set_alt;
+
 	error = uvideo_vs_set_alt(sc, sc->sc_vs_cur->ifaceh,
 	    UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize));
 	if (error != USBD_NORMAL_COMPLETION) {
@@ -1917,6 +1921,7 @@ uvideo_vs_open(struct uvideo_softc *sc)
 		}
 	}
 
+skip_set_alt:
 	DPRINTF(1, "%s: open pipe for bEndpointAddress=0x%02x\n",
 	    DEVNAME(sc), sc->sc_vs_cur->endpoint);
 	error = usbd_open_pipe(
