@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.312 2024/12/02 15:03:46 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.313 2024/12/09 10:52:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1464,6 +1464,9 @@ print_capability(uint8_t capa_code, struct ibuf *b)
 		break;
 	case CAPA_ENHANCED_RR:
 		printf("enhanced route refresh capability");
+		break;
+	case CAPA_EXT_MSG:
+		printf("extended message capability");
 		break;
 	default:
 		printf("unknown capability %u length %zu",

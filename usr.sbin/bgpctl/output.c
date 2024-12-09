@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.56 2024/10/01 18:33:16 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.57 2024/12/09 10:52:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -342,6 +342,8 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 			printf("    Route Refresh\n");
 		if (p->capa.peer.enhanced_rr)
 			printf("    Enhanced Route Refresh\n");
+		if (p->capa.peer.ext_msg)
+			printf("    Extended message\n");
 		if (p->capa.peer.grestart.restart)
 			show_neighbor_capa_restart(&p->capa.peer);
 		if (hascapaap)
@@ -372,6 +374,8 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 			printf("    Route Refresh\n");
 		if (p->capa.neg.enhanced_rr)
 			printf("    Enhanced Route Refresh\n");
+		if (p->capa.neg.ext_msg)
+			printf("    Extended message\n");
 		if (p->capa.neg.grestart.restart)
 			show_neighbor_capa_restart(&p->capa.neg);
 		if (hascapaap)
