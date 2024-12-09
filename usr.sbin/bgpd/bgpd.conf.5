@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.242 2024/08/14 19:09:51 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.243 2024/12/09 10:51:46 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2024 $
+.Dd $Mdocdate: December 9 2024 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1083,6 +1083,22 @@ The default is
 If set to
 .Ic yes ,
 the enhanced route refresh capability is announced.
+If
+.Ic enforce
+is set, the session will only be established if the neighbor also announces
+the capability.
+The default is
+.Ic no .
+.Pp
+.It Xo
+.Ic announce extended
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
+.Xc
+If set to
+.Ic yes ,
+the extended message capability is announced.
+If negotiated, the default maximum message size is increaded from 4096 to 65535
+bytes.
 If
 .Ic enforce
 is set, the session will only be established if the neighbor also announces

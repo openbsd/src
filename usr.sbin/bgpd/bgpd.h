@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.501 2024/12/02 15:03:17 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.502 2024/12/09 10:51:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,13 +49,14 @@
 #define	SET_NAME_LEN			128
 
 #define	MAX_PKTSIZE			4096
-#define	MIN_HOLDTIME			3
+#define	MAX_EXT_PKTSIZE			65535
 #define	MAX_BGPD_IMSGSIZE		(128 * 1024)
 #define	MAX_SOCK_BUF			(4 * IBUF_READ_SIZE)
 #define	RT_BUF_SIZE			16384
 #define	MAX_RTSOCK_BUF			(2 * 1024 * 1024)
 #define	MAX_COMM_MATCH			3
 #define	MAX_ASPA_SPAS_COUNT		10000
+#define	MIN_HOLDTIME			3
 
 #define	BGPD_OPT_VERBOSE		0x0001
 #define	BGPD_OPT_VERBOSE2		0x0002
@@ -411,12 +412,14 @@ struct capabilities {
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
 	int8_t	policy;			/* Open Policy, RFC 9234, 2 = enforce */
+	int8_t	ext_msg;		/* Extended Msg, RFC8654 */
 };
 
 enum capa_codes {
 	CAPA_NONE = 0,
 	CAPA_MP = 1,
 	CAPA_REFRESH = 2,
+	CAPA_EXT_MSG = 6,
 	CAPA_ROLE = 9,
 	CAPA_RESTART = 64,
 	CAPA_AS4BYTE = 65,

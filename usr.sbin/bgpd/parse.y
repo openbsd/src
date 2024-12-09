@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.470 2024/10/09 10:01:29 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.471 2024/12/09 10:51:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -248,7 +248,7 @@ typedef struct {
 %token	EBGP IBGP
 %token	FLOWSPEC PROTO FLAGS FRAGMENT TOS LENGTH ICMPTYPE CODE
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
-%token	ANNOUNCE REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
+%token	ANNOUNCE REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH EXTENDED
 %token	SEND RECV PLUS POLICY ROLE
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
@@ -2011,6 +2011,9 @@ peeropts	: REMOTEAS as4number	{
 		| ANNOUNCE POLICY yesnoenforce {
 			curpeer->conf.capabilities.policy = $3;
 		}
+		| ANNOUNCE EXTENDED yesnoenforce {
+			curpeer->conf.capabilities.ext_msg = $3;
+		}
 		| ROLE STRING {
 			if (strcmp($2, "provider") == 0) {
 				curpeer->conf.role = ROLE_PROVIDER;
@@ -3536,6 +3539,7 @@ lookup(char *s)
 		{ "export",		EXPORT},
 		{ "export-target",	EXPORTTRGT},
 		{ "ext-community",	EXTCOMMUNITY},
+		{ "extended",		EXTENDED },
 		{ "fib-priority",	FIBPRIORITY},
 		{ "fib-update",		FIBUPDATE},
 		{ "filtered",		FILTERED},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.500 2024/12/02 15:03:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.501 2024/12/09 10:51:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1478,7 +1478,8 @@ session_open(struct peer *p)
 	int			 mpcapa = 0;
 
 
-	if ((opb = ibuf_dynamic(0, UINT16_MAX - 3)) == NULL) {
+	if ((opb = ibuf_dynamic(0, MAX_PKTSIZE - MSGSIZE_OPEN_MIN - 6)) ==
+	    NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL, NULL);
 		return;
 	}
@@ -1494,6 +1495,10 @@ session_open(struct peer *p)
 	/* route refresh, RFC 2918 */
 	if (p->capa.ann.refresh)	/* no data */
 		errs += session_capa_add(opb, CAPA_REFRESH, 0);
+
+	/* extended message support, RFC8654 */
+	if (p->capa.ann.ext_msg)	/* no data */
+		errs += session_capa_add(opb, CAPA_EXT_MSG, 0);
 
 	/* BGP open policy, RFC 9234, only for ebgp sessions */
 	if (p->conf.ebgp && p->capa.ann.policy &&
@@ -1642,19 +1647,28 @@ session_keepalive(struct peer *p)
 void
 session_update(uint32_t peerid, struct ibuf *ibuf)
 {
-	struct peer		*p;
-	struct ibuf		*buf;
+	struct peer	*p;
+	struct ibuf	*buf;
+	size_t		 len, maxsize = MAX_PKTSIZE;
 
 	if ((p = getpeerbyid(conf, peerid)) == NULL) {
-		log_warnx("no such peer: id=%u", peerid);
+		log_warnx("%s: no such peer: id=%u", __func__, peerid);
 		return;
 	}
 
 	if (p->state != STATE_ESTABLISHED)
 		return;
 
-	if ((buf = session_newmsg(UPDATE, MSGSIZE_HEADER + ibuf_size(ibuf))) ==
-	    NULL) {
+	if (p->capa.neg.ext_msg)
+		maxsize = MAX_EXT_PKTSIZE;
+	len = ibuf_size(ibuf);
+	if (len < MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER ||
+	    len > maxsize - MSGSIZE_HEADER) {
+		log_peer_warnx(&p->conf, "bad UDPATE from RDE");
+		return;
+	}
+
+	if ((buf = session_newmsg(UPDATE, MSGSIZE_HEADER + len)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL, NULL);
 		return;
 	}
@@ -2023,7 +2037,7 @@ parse_header(struct ibuf *msg, void *arg, int *fd)
 	struct peer		*peer = arg;
 	struct ibuf		*b;
 	u_char			 m[MSGSIZE_HEADER_MARKER];
-	uint16_t		 len;
+	uint16_t		 len, maxlen = MAX_PKTSIZE;
 	uint8_t			 type;
 
 	if (ibuf_get(msg, m, sizeof(m)) == -1 ||
@@ -2039,7 +2053,10 @@ parse_header(struct ibuf *msg, void *arg, int *fd)
 		return (NULL);
 	}
 
-	if (len < MSGSIZE_HEADER || len > MAX_PKTSIZE) {
+	if (peer->capa.ann.ext_msg)
+		maxlen = MAX_EXT_PKTSIZE;
+
+	if (len < MSGSIZE_HEADER || len > maxlen) {
 		log_peer_warnx(&peer->conf,
 		    "received message: illegal length: %u byte", len);
 		goto badlen;
@@ -2047,7 +2064,7 @@ parse_header(struct ibuf *msg, void *arg, int *fd)
 
 	switch (type) {
 	case OPEN:
-		if (len < MSGSIZE_OPEN_MIN) {
+		if (len < MSGSIZE_OPEN_MIN || len > MAX_PKTSIZE) {
 			log_peer_warnx(&peer->conf,
 			    "received OPEN: illegal len: %u byte", len);
 			goto badlen;
@@ -2465,6 +2482,9 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 		case CAPA_REFRESH:
 			peer->capa.peer.refresh = 1;
 			break;
+		case CAPA_EXT_MSG:
+			peer->capa.peer.ext_msg = 1;
+			break;
 		case CAPA_ROLE:
 			if (capa_len != 1 ||
 			    ibuf_get_n8(&capabuf, &role) == -1) {
@@ -2612,6 +2632,8 @@ capa_neg_calc(struct peer *p)
 	    (p->capa.ann.enhanced_rr && p->capa.peer.enhanced_rr) != 0;
 	p->capa.neg.as4byte =
 	    (p->capa.ann.as4byte && p->capa.peer.as4byte) != 0;
+	p->capa.neg.ext_msg =
+	    (p->capa.ann.ext_msg && p->capa.peer.ext_msg) != 0;
 
 	/* MP: both side must agree on the AFI,SAFI pair */
 	if (p->capa.peer.mp[AID_UNSPEC])
@@ -2750,6 +2772,12 @@ capa_neg_calc(struct peer *p)
 		capa_len = 0;
 		goto fail;
 	}
+	/* enforce presence of other capabilities */
+	if (p->capa.ann.ext_msg == 2 && p->capa.neg.ext_msg == 0) {
+		capa_code = CAPA_EXT_MSG;
+		capa_len = 0;
+		goto fail;
+	}
 	if (p->capa.ann.enhanced_rr == 2 && p->capa.neg.enhanced_rr == 0) {
 		capa_code = CAPA_ENHANCED_RR;
 		capa_len = 0;
@@ -2826,7 +2854,6 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	struct listen_addr	*la, *next, nla;
 	struct session_dependon	 sdon;
 	struct bgpd_config	 tconf;
-	size_t			 len;
 	uint32_t		 peerid;
 	int			 n, fd, depend_ok, restricted;
 	uint16_t		 t;
@@ -3119,11 +3146,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
-			len = imsg_get_len(&imsg);
-			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
-			    len > MAX_PKTSIZE - MSGSIZE_HEADER ||
-			    len < MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER)
-				log_warnx("RDE sent invalid update");
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1)
+				log_warn("RDE sent invalid update");
 			else
 				session_update(peerid, &ibuf);
 			break;

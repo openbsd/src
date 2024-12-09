@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.169 2024/09/25 14:46:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.170 2024/12/09 10:51:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -988,11 +988,14 @@ struct ibuf *
 up_dump_withdraws(struct rde_peer *peer, uint8_t aid)
 {
 	struct ibuf *buf;
-	size_t off;
+	size_t off, pkgsize = MAX_PKTSIZE;
 	uint16_t afi, len;
 	uint8_t safi;
 
-	if ((buf = ibuf_dynamic(4, 4096 - MSGSIZE_HEADER)) == NULL)
+	if (peer->capa.ext_msg)
+		pkgsize = MAX_EXT_PKTSIZE;
+
+	if ((buf = ibuf_dynamic(4, pkgsize - MSGSIZE_HEADER)) == NULL)
 		goto fail;
 
 	/* reserve space for the withdrawn routes length field */
@@ -1136,14 +1139,17 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 	struct ibuf *buf;
 	struct bgpd_addr addr;
 	struct prefix *p;
-	size_t off;
+	size_t off, pkgsize = MAX_PKTSIZE;
 	uint16_t len;
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
 	if (p == NULL)
 		return NULL;
 
-	if ((buf = ibuf_dynamic(4, 4096 - MSGSIZE_HEADER)) == NULL)
+	if (peer->capa.ext_msg)
+		pkgsize = MAX_EXT_PKTSIZE;
+
+	if ((buf = ibuf_dynamic(4, pkgsize - MSGSIZE_HEADER)) == NULL)
 		goto fail;
 
 	/* withdrawn routes length field is 0 */
