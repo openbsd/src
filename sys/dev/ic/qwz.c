@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.11 2024/12/09 04:46:11 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.12 2024/12/09 09:35:33 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -962,8 +962,8 @@ struct cfdriver qwz_cd = {
 };
 
 void
-qwz_init_wmi_config_wcn7850(struct qwz_softc *sc,
-    struct target_resource_config *config)
+qwz_wmi_init_wcn7850(struct qwz_softc *sc,
+    struct wmi_resource_config_arg *config)
 {
 	config->num_vdevs = 4;
 	config->num_peers = 16;
@@ -997,7 +997,7 @@ qwz_init_wmi_config_wcn7850(struct qwz_softc *sc,
 	config->beacon_tx_offload_max_vdev = 2;
 	config->rx_batchmode = TARGET_RX_BATCHMODE;
 
-	config->peer_map_unmap_v2_support = 0;
+	config->peer_map_unmap_version = 0x1;
 	config->use_pdev_id = 1;
 	config->max_frag_entries = 0xa;
 	config->num_tdls_vdevs = 0x1;
@@ -1006,7 +1006,6 @@ qwz_init_wmi_config_wcn7850(struct qwz_softc *sc,
 	config->num_multicast_filter_entries = 0x20;
 	config->num_wow_filters = 0x16;
 	config->num_keep_alive_pattern = 0;
-	config->flag1 |= WMI_RSRC_CFG_FLAG1_BSS_CHANNEL_INFO_64;
 }
 
 void
@@ -1232,7 +1231,7 @@ qwz_hw_ipq8074_rx_desc_set_msdu_len(struct hal_rx_desc *desc, uint16_t len)
 int
 qwz_dp_rx_h_msdu_end_first_msdu(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_first_msdu(desc);
+	return sc->hal_rx_ops->rx_desc_get_first_msdu(desc);
 }
 
 int
@@ -1694,10 +1693,19 @@ qwz_hw_get_mac_from_pdev_id(struct qwz_softc *sc, int pdev_idx)
 	return 0;
 }
 
+static bool qwz_dp_srng_is_comp_ring_wcn7850(int ring_num)
+{
+	if (ring_num == 0 || ring_num == 2 || ring_num == 4)
+		return true;
+
+	return false;
+}
+
 const struct ath12k_hw_ops wcn7850_ops = {
 	.get_hw_mac_from_pdev_id = qwz_hw_qcn9274_mac_from_pdev_id,
 	.mac_id_to_pdev_id = qwz_hw_mac_id_to_pdev_id_wcn7850,
 	.mac_id_to_srng_id = qwz_hw_mac_id_to_srng_id_wcn7850,
+	.dp_srng_is_tx_comp_ring = qwz_dp_srng_is_comp_ring_wcn7850,
 };
 
 #define ATH12K_TX_RING_MASK_0 BIT(0)
@@ -2037,9 +2045,21 @@ static const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN,
 };
 
+uint32_t qwz_hw_wcn7850_get_rx_desc_size(void)
+{
+	return sizeof(struct hal_rx_desc_wcn7850);
+}
+
+const struct hal_rx_ops hal_rx_wcn7850_ops = {
+	.rx_desc_get_desc_size = qwz_hw_wcn7850_get_rx_desc_size,
+};
+
 const struct hal_ops hal_wcn7850_ops = {
 	.create_srng_config = qwz_hal_srng_create_config_wcn7850,
 	.tcl_to_wbm_rbm_map = ath12k_hal_wcn7850_tcl_to_wbm_rbm_map,
+	.rxdma_ring_wmask_rx_mpdu_start = NULL,
+	.rxdma_ring_wmask_rx_msdu_end = NULL,
+	.get_hal_rx_compact_ops = NULL,
 };
 
 static const struct ath12k_hw_params ath12k_hw_params[] = {
@@ -2067,13 +2087,15 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.num_rxmda_per_pdev = 2,
 		.num_rxdma_dst_ring = 1,
 		.rx_mac_buf_ring = true,
-		.credit_flow = true,
-		.max_tx_ring = DP_TCL_NUM_RING_MAX,
+		.num_tcl_banks = 7,
+		.max_tx_ring = 3,
 		.htt_peer_map_v2 = false,
+		.reoq_lut_support = false,
 		.supports_shadow_regs = true,
 		.fix_l1ss = false,
 		.hal_params = &ath12k_hw_hal_params_wcn7850,
 		.hal_ops = &hal_wcn7850_ops,
+		.wmi_init = qwz_wmi_init_wcn7850,
 		.qmi_cnss_feature_bitmap = BIT(CNSS_QDSS_CFG_MISS_V01) |
 					   BIT(CNSS_PCIE_PERST_NO_PULL_V01),
 		.tx_ring_size = DP_TCL_DATA_RING_SIZE,
@@ -7355,42 +7377,16 @@ qwz_dp_srng_setup(struct qwz_softc *sc, struct dp_srng *ring,
 	uint16_t entry_sz = qwz_hal_srng_get_entrysize(sc, type);
 	uint32_t max_entries = qwz_hal_srng_get_max_entries(sc, type);
 	int ret;
-	int cached = 0;
 
 	if (num_entries > max_entries)
 		num_entries = max_entries;
 
 	ring->size = (num_entries * entry_sz) + HAL_RING_BASE_ALIGN - 1;
-
-#ifdef notyet
-	if (sc->hw_params.alloc_cacheable_memory) {
-		/* Allocate the reo dst and tx completion rings from cacheable memory */
-		switch (type) {
-		case HAL_REO_DST:
-		case HAL_WBM2SW_RELEASE:
-			cached = true;
-			break;
-		default:
-			cached = false;
-		}
-
-		if (cached) {
-			ring->vaddr_unaligned = kzalloc(ring->size, GFP_KERNEL);
-			ring->paddr_unaligned = virt_to_phys(ring->vaddr_unaligned);
-		}
-		if (!ring->vaddr_unaligned)
-			return -ENOMEM;
-	}
-#endif
-	if (!cached) {
-		ring->mem = qwz_dmamem_alloc(sc->sc_dmat, ring->size,
-		    PAGE_SIZE);
-		if (ring->mem == NULL) {
-			printf("%s: could not allocate DP SRNG DMA memory\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
-
-		}
+	ring->mem = qwz_dmamem_alloc(sc->sc_dmat, ring->size, PAGE_SIZE);
+	if (ring->mem == NULL) {
+		printf("%s: could not allocate DP SRNG DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
 	}
 
 	ring->vaddr = QWZ_DMA_KVA(ring->mem);
@@ -7422,14 +7418,14 @@ qwz_dp_srng_setup(struct qwz_softc *sc, struct dp_srng *ring,
 		params.intr_timer_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
 		break;
 	case HAL_WBM2SW_RELEASE:
-		if (ring_num < 3) {
+		if (sc->hw_params.hw_ops->dp_srng_is_tx_comp_ring(ring_num)) {
 			params.intr_batch_cntr_thres_entries =
 			    HAL_SRNG_INT_BATCH_THRESHOLD_TX;
 			params.intr_timer_thres_us =
 			    HAL_SRNG_INT_TIMER_THRESHOLD_TX;
 			break;
 		}
-		/* follow through when ring_num >= 3 */
+		/* follow through when ring_num != HAL_WBM2SW_REL_ERR_RING_NUM */
 		/* FALLTHROUGH */
 	case HAL_REO_EXCEPTION:
 	case HAL_REO_REINJECT:
@@ -7685,13 +7681,13 @@ qwz_hal_setup_link_idle_list(struct qwz_softc *sc,
 
 void
 qwz_hal_set_link_desc_addr(struct hal_wbm_link_desc *desc, uint32_t cookie,
-    bus_addr_t paddr)
+    bus_addr_t paddr, enum hal_rx_buf_return_buf_manager rbm)
 {
 	desc->buf_addr_info.info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
 	    (paddr & HAL_ADDR_LSB_REG_MASK));
 	desc->buf_addr_info.info1 = FIELD_PREP(BUFFER_ADDR_INFO1_ADDR,
 	    ((uint64_t)paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
-	    FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR, 1) |
+	    FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR, rbm) |
 	    FIELD_PREP(BUFFER_ADDR_INFO1_SW_COOKIE, cookie);
 }
 
@@ -7730,6 +7726,7 @@ qwz_dp_scatter_idle_link_desc_setup(struct qwz_softc *sc, int size,
 	int ret = 0;
 	uint32_t end_offset;
 	uint32_t cookie;
+	enum hal_rx_buf_return_buf_manager rbm = dp->idle_link_rbm;
 
 	n_entries_per_buf = HAL_WBM_IDLE_SCATTER_BUF_SIZE /
 	    qwz_hal_srng_get_entrysize(sc, HAL_WBM_IDLE_LINK);
@@ -7759,7 +7756,8 @@ qwz_dp_scatter_idle_link_desc_setup(struct qwz_softc *sc, int size,
 		paddr = link_desc_banks[i].paddr;
 		while (n_entries) {
 			cookie = DP_LINK_DESC_COOKIE_SET(n_entries, i);
-			qwz_hal_set_link_desc_addr(scatter_buf, cookie, paddr);
+			qwz_hal_set_link_desc_addr(scatter_buf, cookie, paddr,
+			    rbm);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
 			if (rem_entries) {
@@ -7787,10 +7785,10 @@ err:
 	return ret;
 }
 
-uint32_t *
+void *
 qwz_hal_srng_src_get_next_entry(struct qwz_softc *sc, struct hal_srng *srng)
 {
-	uint32_t *desc;
+	void *desc;
 	uint32_t next_hp;
 #ifdef notyet
 	lockdep_assert_held(&srng->lock);
@@ -7852,6 +7850,8 @@ qwz_dp_link_desc_setup(struct qwz_softc *sc,
 	uint64_t paddr;
 	uint32_t *desc;
 	int i, ret;
+	uint32_t cookie;
+	enum hal_rx_buf_return_buf_manager rbm = sc->dp.idle_link_rbm;
 
 	tot_mem_sz = n_link_desc * HAL_LINK_DESC_SIZE;
 	tot_mem_sz += HAL_LINK_DESC_ALIGN;
@@ -7905,8 +7905,10 @@ qwz_dp_link_desc_setup(struct qwz_softc *sc,
 		paddr = link_desc_banks[i].paddr;
 		while (n_entries &&
 		    (desc = qwz_hal_srng_src_get_next_entry(sc, srng))) {
+			cookie = DP_LINK_DESC_COOKIE_SET(n_entries, i);
 			qwz_hal_set_link_desc_addr(
-			    (struct hal_wbm_link_desc *) desc, i, paddr);
+			    (struct hal_wbm_link_desc *)desc, cookie, paddr,
+			    rbm);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
 		}
@@ -7936,77 +7938,6 @@ qwz_dp_srng_cleanup(struct qwz_softc *sc, struct dp_srng *ring)
 	ring->mem = NULL;
 	ring->vaddr = NULL;
 	ring->paddr = 0;
-}
-
-void
-qwz_dp_shadow_stop_timer(struct qwz_softc *sc,
-    struct qwz_hp_update_timer *update_timer)
-{
-	if (!sc->hw_params.supports_shadow_regs)
-		return;
-
-	timeout_del(&update_timer->timer);
-}
-
-void
-qwz_dp_shadow_start_timer(struct qwz_softc *sc, struct hal_srng *srng,
-    struct qwz_hp_update_timer *update_timer)
-{
-#ifdef notyet
-	lockdep_assert_held(&srng->lock);
-#endif
-	if (!sc->hw_params.supports_shadow_regs)
-		return;
-
-	update_timer->tx_num++;
-	if (update_timer->started)
-		return;
-
-	update_timer->started = 1;
-	update_timer->timer_tx_num = update_timer->tx_num;
-
-	timeout_add_msec(&update_timer->timer, update_timer->interval);
-}
-
-void
-qwz_dp_shadow_timer_handler(void *arg)
-{
-	struct qwz_hp_update_timer *update_timer = arg;
-	struct qwz_softc *sc = update_timer->sc;
-	struct hal_srng	*srng = &sc->hal.srng_list[update_timer->ring_id];
-	int s;
-
-#ifdef notyet
-	spin_lock_bh(&srng->lock);
-#endif
-	s = splnet();
-
-	/*
-	 * Update HP if there were no TX operations during the timeout interval,
-	 * and stop the timer. Timer will be restarted if more TX happens.
-	 */
-	if (update_timer->timer_tx_num != update_timer->tx_num) {
-		update_timer->timer_tx_num = update_timer->tx_num;
-		timeout_add_msec(&update_timer->timer, update_timer->interval);
-	} else {
-		update_timer->started = 0;
-		qwz_hal_srng_shadow_update_hp_tp(sc, srng);
-	}
-#ifdef notyet
-	spin_unlock_bh(&srng->lock);
-#endif
-	splx(s);
-}
-
-void
-qwz_dp_stop_shadow_timers(struct qwz_softc *sc)
-{
-	int i;
-
-	for (i = 0; i < sc->hw_params.max_tx_ring; i++)
-		qwz_dp_shadow_stop_timer(sc, &sc->dp.tx_ring_timer[i]);
-
-	qwz_dp_shadow_stop_timer(sc, &sc->dp.reo_cmd_timer);
 }
 
 void
@@ -8147,24 +8078,6 @@ qwz_hal_tx_set_dscp_tid_map(struct qwz_softc *sc, int id)
 	ctrl_reg_val &= ~HAL_TCL1_RING_CMN_CTRL_DSCP_TID_MAP_PROG_EN;
 	sc->ops.write32(sc, HAL_SEQ_WCSS_UMAC_TCL_REG +
 	    HAL_TCL1_RING_CMN_CTRL_REG, ctrl_reg_val);
-}
-
-void
-qwz_dp_shadow_init_timer(struct qwz_softc *sc,
-    struct qwz_hp_update_timer *update_timer,
-    uint32_t interval, uint32_t ring_id)
-{
-	if (!sc->hw_params.supports_shadow_regs)
-		return;
-
-	update_timer->tx_num = 0;
-	update_timer->timer_tx_num = 0;
-	update_timer->sc = sc;
-	update_timer->ring_id = ring_id;
-	update_timer->interval = interval;
-	update_timer->init = 1;
-	timeout_set(&update_timer->timer, qwz_dp_shadow_timer_handler,
-	    update_timer);
 }
 
 void
@@ -8634,6 +8547,51 @@ qwz_dp_cmem_init(struct qwz_softc *sc, struct qwz_dp *dp,
 	return 0;
 }
 
+void
+qwz_dp_cc_config(struct qwz_softc *sc)
+{
+	uint32_t cmem_base = sc->qmi_dev_mem[ATH12K_QMI_DEVMEM_CMEM_INDEX].start;
+	uint32_t reo_base = HAL_SEQ_WCSS_UMAC_REO_REG;
+	uint32_t wbm_base = HAL_SEQ_WCSS_UMAC_WBM_REG;
+	uint32_t val = 0;
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_SW_COOKIE_CFG0(sc), cmem_base);
+
+	val |= FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB, ATH12K_CMEM_ADDR_MSB) |
+		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_COOKIE_PPT_MSB, ATH12K_CC_PPT_MSB) |
+		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_COOKIE_SPT_MSB, ATH12K_CC_SPT_MSB) |
+		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_ALIGN, 1) |
+		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_ENABLE, 1) |
+		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_GLOBAL_ENABLE, 1);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_SW_COOKIE_CFG1(sc), val);
+
+	/* Enable HW CC for WBM */
+	sc->ops.write32(sc, wbm_base + HAL_WBM_SW_COOKIE_CFG0, cmem_base);
+
+	val = FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB, ATH12K_CMEM_ADDR_MSB) |
+		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_COOKIE_PPT_MSB, ATH12K_CC_PPT_MSB) |
+		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_COOKIE_SPT_MSB, ATH12K_CC_SPT_MSB) |
+		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_ALIGN, 1);
+
+	sc->ops.write32(sc, wbm_base + HAL_WBM_SW_COOKIE_CFG1, val);
+
+	/* Enable conversion complete indication */
+	val = sc->ops.read32(sc, wbm_base + HAL_WBM_SW_COOKIE_CFG2);
+	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_RELEASE_PATH_EN, 1) |
+		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_ERR_PATH_EN, 1) |
+		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_CONV_IND_EN, 1);
+
+	sc->ops.write32(sc, wbm_base + HAL_WBM_SW_COOKIE_CFG2, val);
+
+	/* Enable Cookie conversion for WBM2SW Rings */
+	val = sc->ops.read32(sc, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG);
+	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN, 1) |
+	       sc->hw_params.hal_params->wbm2sw_cc_enable;
+
+	sc->ops.write32(sc, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG, val);
+}
+
 uint32_t qwz_dp_cc_cookie_gen(uint16_t ppt_idx, uint16_t spt_idx)
 {
 	return (uint32_t)ppt_idx << ATH12K_CC_PPT_SHIFT | spt_idx;
@@ -8734,7 +8692,7 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 void
 qwz_dp_cc_cleanup(struct qwz_softc *sc)
 {
-	// FIXME
+	printf("%s:%d\n", __func__, __LINE__);
 }
 
 int
@@ -8815,28 +8773,47 @@ free:
 int
 qwz_dp_init_bank_profiles(struct qwz_softc *sc)
 {
+	struct qwz_dp *dp = &sc->dp;
+
+	dp->num_bank_profiles = sc->hw_params.num_tcl_banks;
+	dp->bank_profiles = mallocarray(dp->num_bank_profiles,
+	    sizeof(struct ath12k_dp_tx_bank_profile), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (!dp->bank_profiles)
+		return ENOMEM;
+
 	return 0;
 }
 
 void
 qwz_dp_deinit_bank_profiles(struct qwz_softc *sc)
 {
-	// FIXME
+	struct qwz_dp *dp = &sc->dp;
+
+	free(dp->bank_profiles, M_DEVBUF, dp->num_bank_profiles *
+	    sizeof(struct ath12k_dp_tx_bank_profile));
+	dp->bank_profiles = NULL;
 }
 
-int qwz_dp_rxdma_ring_buf_setup(struct qwz_softc *, struct dp_rxdma_ring *, uint32_t);
+int qwz_dp_rxdma_mon_ring_buf_setup(struct qwz_softc *, struct dp_rxdma_mon_ring *, uint32_t);
+int qwz_dp_rxdma_ring_buf_setup(struct qwz_softc *, struct dp_rxdma_ring *);
 
 int
 qwz_dp_rxdma_buf_setup(struct qwz_softc *sc)
 {
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
-	struct dp_rxdma_ring *rx_ring;
+	struct qwz_dp *dp = &sc->dp;
 	int ret;
 
-	rx_ring = &dp->rx_refill_buf_ring;
-	ret = qwz_dp_rxdma_ring_buf_setup(sc, rx_ring, HAL_RXDMA_BUF);
+	ret = qwz_dp_rxdma_ring_buf_setup(sc, &dp->rx_refill_buf_ring);
 	if (ret)
 		return ret;
+
+	if (sc->hw_params.rxdma1_enable) {
+		ret = qwz_dp_rxdma_mon_ring_buf_setup(sc,
+		    &dp->rxdma_mon_buf_ring, HAL_RXDMA_MONITOR_BUF);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
@@ -8844,7 +8821,7 @@ qwz_dp_rxdma_buf_setup(struct qwz_softc *sc)
 int
 qwz_dp_rx_alloc(struct qwz_softc *sc)
 {
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
+	struct qwz_dp *dp = &sc->dp;
 	int i, ret;
 
 #if notyet
@@ -8856,7 +8833,7 @@ qwz_dp_rx_alloc(struct qwz_softc *sc)
 #endif
 
 	ret = qwz_dp_srng_setup(sc, &dp->rx_refill_buf_ring.refill_buf_ring,
-	    HAL_RXDMA_BUF, 0, dp->mac_id, DP_RXDMA_BUF_RING_SIZE);
+	    HAL_RXDMA_BUF, 0, 0, DP_RXDMA_BUF_RING_SIZE);
 	if (ret) {
 		printf("%s: failed to setup rx_refill_buf_ring\n",
 		    sc->sc_dev.dv_xname);
@@ -8866,7 +8843,7 @@ qwz_dp_rx_alloc(struct qwz_softc *sc)
 	if (sc->hw_params.rx_mac_buf_ring) {
 		for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 			ret = qwz_dp_srng_setup(sc, &dp->rx_mac_buf_ring[i],
-			    HAL_RXDMA_BUF, 1, dp->mac_id + i, 2048);
+			    HAL_RXDMA_BUF, 1, i, 2048);
 			if (ret) {
 				printf("%s: failed to setup "
 				    "rx_mac_buf_ring %d\n",
@@ -8878,12 +8855,21 @@ qwz_dp_rx_alloc(struct qwz_softc *sc)
 
 	for (i = 0; i < sc->hw_params.num_rxdma_dst_ring; i++) {
 		ret = qwz_dp_srng_setup(sc, &dp->rxdma_err_dst_ring[i],
-		    HAL_RXDMA_BUF, 0, dp->mac_id + i,
-		    DP_RXDMA_ERR_DST_RING_SIZE);
+		    HAL_RXDMA_BUF, 0, i, DP_RXDMA_ERR_DST_RING_SIZE);
 		if (ret) {
 			printf("%s: failed to setup "
-			    "rxdma_err_dst_Ring %d\n",
+			    "rxdma_err_dst_ring %d\n",
 			    sc->sc_dev.dv_xname, i);
+			return ret;
+		}
+	}
+
+	if (sc->hw_params.rxdma1_enable) {
+		ret = qwz_dp_srng_setup(sc, &dp->rxdma_mon_buf_ring.refill_buf_ring,
+		    HAL_RXDMA_MONITOR_BUF, 0, 0, DP_RXDMA_BUF_RING_SIZE);
+		if (ret) {
+			printf("%s: failed to setup HAL_RXDMA_MONITOR_BUF\n",
+			    sc->sc_dev.dv_xname);
 			return ret;
 		}
 	}
@@ -8902,6 +8888,43 @@ void
 qwz_dp_rx_free(struct qwz_softc *sc)
 {
 	/* FIXME */
+}
+
+int
+qwz_dp_reoq_lut_setup(struct qwz_softc *sc)
+{
+	if (!sc->hw_params.reoq_lut_support)
+		return 0;
+
+	printf("%s:%d\n", __func__, __LINE__);
+	return EINVAL;
+}
+
+void
+qwz_dp_reoq_lut_cleanup(struct qwz_softc *sc)
+{
+	if (!sc->hw_params.reoq_lut_support)
+		return;
+
+	printf("%s:%d\n", __func__, __LINE__);
+	return;
+}
+
+enum hal_rx_buf_return_buf_manager
+qwz_dp_get_idle_link_rbm(struct qwz_softc *sc)
+{
+	switch (sc->device_id) {
+	case 0:
+		return HAL_RX_BUF_RBM_WBM_DEV0_IDLE_DESC_LIST;
+	case 1:
+		return HAL_RX_BUF_RBM_WBM_DEV1_IDLE_DESC_LIST;
+	case 2:
+		return HAL_RX_BUF_RBM_WBM_DEV2_IDLE_DESC_LIST;
+	default:
+		printf("%s: invalid %d device id, so choose default rbm\n",
+		    __func__, sc->device_id);
+		return HAL_RX_BUF_RBM_WBM_DEV0_IDLE_DESC_LIST;
+	}
 }
 
 int
@@ -8924,6 +8947,7 @@ qwz_dp_alloc(struct qwz_softc *sc)
 #endif
 
 	dp->reo_cmd_cache_flush_count = 0;
+	dp->idle_link_rbm = qwz_dp_get_idle_link_rbm(sc);
 
 	ret = qwz_wbm_idle_ring_setup(sc, &n_link_desc);
 	if (ret) {
@@ -8956,6 +8980,10 @@ qwz_dp_alloc(struct qwz_softc *sc)
 
 	size = sizeof(struct hal_wbm_release_ring) * DP_TX_COMP_RING_SIZE;
 
+	ret = qwz_dp_reoq_lut_setup(sc);
+	if (ret)
+		goto fail_cmn_srng_cleanup;
+
 	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
 #if 0
 		idr_init(&dp->tx_ring[i].txbuf_idr);
@@ -8963,7 +8991,7 @@ qwz_dp_alloc(struct qwz_softc *sc)
 #endif
 		ret = qwz_dp_tx_ring_alloc_tx_data(sc, &dp->tx_ring[i]);
 		if (ret)
-			goto fail_cmn_srng_cleanup;
+			goto fail_cmn_reoq_cleanup;
 
 		dp->tx_ring[i].cur = 0;
 		dp->tx_ring[i].queued = 0;
@@ -8974,7 +9002,7 @@ qwz_dp_alloc(struct qwz_softc *sc)
 		    M_NOWAIT | M_ZERO);
 		if (!dp->tx_ring[i].tx_status) {
 			ret = ENOMEM;
-			goto fail_cmn_srng_cleanup;
+			goto fail_cmn_reoq_cleanup;
 		}
 	}
 
@@ -8990,6 +9018,8 @@ qwz_dp_alloc(struct qwz_softc *sc)
 	return 0;
 fail_dp_rx_free:
 	qwz_dp_rx_free(sc);
+fail_cmn_reoq_cleanup:
+	qwz_dp_reoq_lut_cleanup(sc);
 fail_cmn_srng_cleanup:
 	qwz_dp_srng_common_cleanup(sc);
 fail_dp_bank_profiles_cleanup:
@@ -9054,7 +9084,10 @@ qwz_dp_free(struct qwz_softc *sc)
 	qwz_dp_link_desc_cleanup(sc, dp->link_desc_banks,
 	    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
 
+	qwz_dp_cc_cleanup(sc);
+	qwz_dp_reoq_lut_cleanup(sc);
 	qwz_dp_srng_common_cleanup(sc);
+	qwz_dp_deinit_bank_profiles(sc);
 	qwz_dp_reo_cmd_list_cleanup(sc);
 	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
 #if 0
@@ -9289,8 +9322,6 @@ qwz_wmi_pdev_attach(struct qwz_softc *sc, uint8_t pdev_id)
 	wmi_handle = &sc->wmi.wmi[pdev_id];
 	wmi_handle->wmi = &sc->wmi;
 
-	wmi_handle->tx_ce_desc = 1;
-
 	return 0;
 }
 
@@ -9314,8 +9345,7 @@ qwz_wmi_attach(struct qwz_softc *sc)
 	sc->wmi.tx_credits = 1;
 
 	/* It's overwritten when service_ext_ready is handled */
-	if (sc->hw_params.single_pdev_only &&
-	    sc->hw_params.num_rxmda_per_pdev > 1)
+	if (sc->hw_params.single_pdev_only)
 		sc->wmi.preferred_hw_mode = WMI_HOST_HW_MODE_SINGLE;
 
 	return 0;
@@ -9324,30 +9354,7 @@ qwz_wmi_attach(struct qwz_softc *sc)
 void
 qwz_wmi_htc_tx_complete(struct qwz_softc *sc, struct mbuf *m)
 {
-	struct qwz_pdev_wmi *wmi = NULL;
-	uint32_t i;
-	uint8_t wmi_ep_count;
-	uint8_t eid;
-
-	eid = (uintptr_t)m->m_pkthdr.ph_cookie;
 	m_freem(m);
-
-	if (eid >= ATH12K_HTC_EP_COUNT)
-		return;
-
-	wmi_ep_count = sc->htc.wmi_ep_count;
-	if (wmi_ep_count > sc->hw_params.max_radios)
-		return;
-
-	for (i = 0; i < sc->htc.wmi_ep_count; i++) {
-		if (sc->wmi.wmi[i].eid == eid) {
-			wmi = &sc->wmi.wmi[i];
-			break;
-		}
-	}
-
-	if (wmi)
-		wakeup(&wmi->tx_ce_desc);
 }
 
 int
@@ -12036,9 +12043,6 @@ qwz_wmi_op_ep_tx_credits(struct qwz_softc *sc)
 	sc->wmi.tx_credits = 1;
 	wakeup(&sc->wmi.tx_credits);
 
-	if (!sc->hw_params.credit_flow)
-		return;
-
 	for (i = ATH12K_HTC_EP_0; i < ATH12K_HTC_EP_COUNT; i++) {
 		struct qwz_htc_ep *ep = &htc->endpoint[i];
 		if (ep->tx_credit_flow_enabled && ep->tx_credits > 0)
@@ -12077,7 +12081,6 @@ qwz_connect_pdev_htc_service(struct qwz_softc *sc, uint32_t pdev_idx)
 	sc->wmi.wmi_endpoint_id[pdev_idx] = conn_resp.eid;
 	sc->wmi.wmi[pdev_idx].eid = conn_resp.eid;
 	sc->wmi.max_msg_len[pdev_idx] = conn_resp.max_msg_len;
-	sc->wmi.wmi[pdev_idx].tx_ce_desc = 0;
 
 	return 0;
 }
@@ -12255,15 +12258,13 @@ qwz_htc_send(struct qwz_htc *htc, enum ath12k_htc_ep_id eid, struct mbuf *m)
 	struct qwz_tx_data *tx_data;
 	int credits = 0;
 	int ret;
-	int credit_flow_enabled = (sc->hw_params.credit_flow &&
-	    ep->tx_credit_flow_enabled);
 
 	if (eid >= ATH12K_HTC_EP_COUNT) {
 		printf("%s: Invalid endpoint id: %d\n", __func__, eid);
 		return ENOENT;
 	}
 
-	if (credit_flow_enabled) {
+	if (ep->tx_credit_flow_enabled) {
 		credits = howmany(m->m_pkthdr.len, htc->target_credit_size);
 #ifdef notyet
 		spin_lock_bh(&htc->tx_lock);
@@ -12326,7 +12327,7 @@ qwz_htc_send(struct qwz_htc *htc, enum ath12k_htc_ep_id eid, struct mbuf *m)
 err_unmap:
 	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
 err_credits:
-	if (credit_flow_enabled) {
+	if (ep->tx_credit_flow_enabled) {
 #ifdef notyet
 		spin_lock_bh(&htc->tx_lock);
 #endif
@@ -12400,11 +12401,6 @@ qwz_htc_connect_service(struct qwz_htc *htc,
 	if (!(conn_req->service_id == ATH12K_HTC_SVC_ID_WMI_CONTROL ||
 	      conn_req->service_id == ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1 ||
 	      conn_req->service_id == ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC2)) {
-		flags |= ATH12K_HTC_CONN_FLAGS_DISABLE_CREDIT_FLOW_CTRL;
-		disable_credit_flow_ctrl = 1;
-	}
-
-	if (!sc->hw_params.credit_flow) {
 		flags |= ATH12K_HTC_CONN_FLAGS_DISABLE_CREDIT_FLOW_CTRL;
 		disable_credit_flow_ctrl = 1;
 	}
@@ -12520,7 +12516,6 @@ qwz_htc_start(struct qwz_htc *htc)
 {
 	struct mbuf *m;
 	int status = 0;
-	struct qwz_softc *sc = htc->sc;
 	struct ath12k_htc_setup_complete_extended *msg;
 
 	m = qwz_htc_build_tx_ctrl_mbuf();
@@ -12535,11 +12530,8 @@ qwz_htc_start(struct qwz_htc *htc)
 	msg->msg_id = FIELD_PREP(HTC_MSG_MESSAGEID,
 	    ATH12K_HTC_MSG_SETUP_COMPLETE_EX_ID);
 
-	if (sc->hw_params.credit_flow)
-		DNPRINTF(QWZ_D_HTC, "%s: using tx credit flow control\n",
-		    __func__);
-	else
-		msg->flags |= ATH12K_GLOBAL_DISABLE_CREDIT_FLOW;
+	DNPRINTF(QWZ_D_HTC, "%s: using tx credit flow control\n",
+	    __func__);
 
 	status = qwz_htc_send(htc, ATH12K_HTC_EP_0, m);
 	if (status) {
@@ -12946,18 +12938,8 @@ qwz_dp_rx_pdev_srng_free(struct qwz_softc *sc, int mac_id)
 	struct qwz_pdev_dp *dp = &sc->pdev_dp;
 	int i;
 
-	qwz_dp_srng_cleanup(sc, &dp->rx_refill_buf_ring.refill_buf_ring);
-
-	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
-		if (sc->hw_params.rx_mac_buf_ring)
-			qwz_dp_srng_cleanup(sc, &dp->rx_mac_buf_ring[i]);
-
-		qwz_dp_srng_cleanup(sc, &dp->rxdma_err_dst_ring[i]);
-		qwz_dp_srng_cleanup(sc,
-		    &dp->rx_mon_status_refill_ring[i].refill_buf_ring);
-	}
-
-	qwz_dp_srng_cleanup(sc, &dp->rxdma_mon_buf_ring.refill_buf_ring);
+	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++)
+		qwz_dp_srng_cleanup(sc, &dp->rxdma_mon_dst_ring[i]);
 }
 
 int
@@ -13044,7 +13026,8 @@ qwz_dp_rx_pdev_srng_alloc(struct qwz_softc *sc)
 }
 
 void
-qwz_dp_rxdma_buf_ring_free(struct qwz_softc *sc, struct dp_rxdma_ring *rx_ring)
+qwz_dp_rxdma_mon_buf_ring_free(struct qwz_softc *sc,
+    struct dp_rxdma_mon_ring *rx_ring)
 {
 	int i;
 
@@ -13069,24 +13052,6 @@ qwz_dp_rxdma_buf_ring_free(struct qwz_softc *sc, struct dp_rxdma_ring *rx_ring)
 	rx_ring->rx_data = NULL;
 	rx_ring->bufs_max = 0;
 	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
-}
-
-void
-qwz_dp_rxdma_pdev_buf_free(struct qwz_softc *sc, int mac_id)
-{
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
-	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
-	int i;
-
-	qwz_dp_rxdma_buf_ring_free(sc, rx_ring);
-
-	rx_ring = &dp->rxdma_mon_buf_ring;
-	qwz_dp_rxdma_buf_ring_free(sc, rx_ring);
-
-	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
-		rx_ring = &dp->rx_mon_status_refill_ring[i];
-		qwz_dp_rxdma_buf_ring_free(sc, rx_ring);
-	}
 }
 
 void
@@ -13118,7 +13083,7 @@ qwz_hal_rx_buf_addr_info_get(void *desc, uint64_t *paddr, uint32_t *cookie,
 }
 
 int
-qwz_next_free_rxbuf_idx(struct dp_rxdma_ring *rx_ring)
+qwz_next_free_rxbuf_idx(struct dp_rxdma_mon_ring *rx_ring)
 {
 	int i, idx;
 
@@ -13132,36 +13097,23 @@ qwz_next_free_rxbuf_idx(struct dp_rxdma_ring *rx_ring)
 }
 
 int
-qwz_dp_rxbufs_replenish(struct qwz_softc *sc, int mac_id,
-    struct dp_rxdma_ring *rx_ring, int req_entries,
-    enum hal_rx_buf_return_buf_manager mgr)
+qwz_dp_mon_buf_replenish(struct qwz_softc *sc,
+    struct dp_rxdma_mon_ring *buf_ring, int req_entries)
 {
 	struct hal_srng *srng;
-	uint32_t *desc;
+	struct hal_mon_buf_ring *mon_buf;
 	struct mbuf *m;
-	int num_free;
-	int num_remain;
 	int ret, idx;
-	uint32_t cookie;
 	uint64_t paddr;
 	struct qwz_rx_data *rx_data;
 
-	req_entries = MIN(req_entries, rx_ring->bufs_max);
-
-	srng = &sc->hal.srng_list[rx_ring->refill_buf_ring.ring_id];
+	srng = &sc->hal.srng_list[buf_ring->refill_buf_ring.ring_id];
 #ifdef notyet
 	spin_lock_bh(&srng->lock);
 #endif
 	qwz_hal_srng_access_begin(sc, srng);
 
-	num_free = qwz_hal_srng_src_num_free(sc, srng, 1);
-	if (!req_entries && (num_free > (rx_ring->bufs_max * 3) / 4))
-		req_entries = num_free;
-
-	req_entries = MIN(num_free, req_entries);
-	num_remain = req_entries;
-
-	while (num_remain > 0) {
+	while (req_entries > 0) {
 		const size_t size = DP_RX_BUFFER_SIZE;
 
 		m = m_gethdr(M_DONTWAIT, MT_DATA);
@@ -13177,11 +13129,11 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc, int mac_id,
 
 		m->m_len = m->m_pkthdr.len = size;
 
-		idx = qwz_next_free_rxbuf_idx(rx_ring);
+		idx = qwz_next_free_rxbuf_idx(buf_ring);
 		if (idx == -1)
 			goto fail_free_mbuf;
 
-		rx_data = &rx_ring->rx_data[idx];
+		rx_data = &buf_ring->rx_data[idx];
 		if (rx_data->map == NULL) {
 			ret = bus_dmamap_create(sc->sc_dmat, size, 1,
 			    size, 0, BUS_DMA_NOWAIT, &rx_data->map);
@@ -13197,21 +13149,20 @@ qwz_dp_rxbufs_replenish(struct qwz_softc *sc, int mac_id,
 			goto fail_free_mbuf;
 		}
 
-		desc = qwz_hal_srng_src_get_next_entry(sc, srng);
-		if (!desc)
+		mon_buf = qwz_hal_srng_src_get_next_entry(sc, srng);
+		if (!mon_buf)
 			goto fail_dma_unmap;
 
 		rx_data->m = m;
 		m = NULL;
 
-		cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_PDEV_ID, mac_id) |
-		    FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, idx);
-
-		clrbit(rx_ring->freemap, idx);
-		num_remain--;
+		clrbit(buf_ring->freemap, idx);
+		req_entries--;
 
 		paddr = rx_data->map->dm_segs[0].ds_addr;
-		qwz_hal_rx_buf_addr_info_set(desc, paddr, cookie, mgr);
+		mon_buf->paddr_lo = htole32(paddr);
+		mon_buf->paddr_hi = htole32(paddr >> 32);
+		mon_buf->cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, idx);
 	}
 
 	qwz_hal_srng_access_end(sc, srng);
@@ -13233,10 +13184,130 @@ fail_free_mbuf:
 }
 
 int
-qwz_dp_rxdma_ring_buf_setup(struct qwz_softc *sc,
-    struct dp_rxdma_ring *rx_ring, uint32_t ringtype)
+qwz_dp_rxbufs_replenish(struct qwz_softc *sc,
+    struct dp_rxdma_ring *rx_ring, void *list,
+    int req_entries)
 {
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
+	struct qwz_dp *dp = &sc->dp;
+	TAILQ_HEAD(, ath12k_rx_desc_info) *used_list = list;
+	struct hal_srng *srng;
+	uint32_t *desc;
+	struct mbuf *m;
+	int num_free;
+	int num_remain;
+	int num_cut;
+	int ret, i;
+	uint32_t cookie;
+	uint64_t paddr;
+	struct ath12k_rx_desc_info *rx_desc;
+	enum hal_rx_buf_return_buf_manager mgr = sc->hw_params.hal_params->rx_buf_rbm;
+
+	req_entries = MIN(req_entries, rx_ring->bufs_max);
+
+	srng = &sc->hal.srng_list[rx_ring->refill_buf_ring.ring_id];
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwz_hal_srng_access_begin(sc, srng);
+
+	num_free = qwz_hal_srng_src_num_free(sc, srng, 1);
+	if (!req_entries && (num_free > (rx_ring->bufs_max * 3) / 4))
+		req_entries = num_free;
+
+	req_entries = MIN(num_free, req_entries);
+	num_remain = req_entries;
+
+	if (!num_remain) {
+		qwz_hal_srng_access_end(sc, srng);
+#ifdef notyet
+		spin_unlock_bh(&srng->lock);
+#endif
+		return 0;
+	}
+
+	for (i = 0, num_cut = 0; i < num_remain; i++) {
+		if (TAILQ_EMPTY(&dp->rx_desc_free_list))
+			break;
+		rx_desc = TAILQ_FIRST(&dp->rx_desc_free_list);
+		TAILQ_REMOVE(&dp->rx_desc_free_list, rx_desc, entry);
+		TAILQ_INSERT_TAIL(used_list, rx_desc, entry);
+		num_cut++;
+	}
+
+	while (num_remain > 0) {
+		const size_t size = DP_RX_BUFFER_SIZE;
+
+		m = m_gethdr(M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			goto fail_free_mbuf;
+
+		if (size <= MCLBYTES)
+			MCLGET(m, M_DONTWAIT);
+		else
+			MCLGETL(m, M_DONTWAIT, size);
+		if ((m->m_flags & M_EXT) == 0)
+			goto fail_free_mbuf;
+
+		m->m_len = m->m_pkthdr.len = size;
+
+		rx_desc = TAILQ_FIRST(used_list);
+		if (rx_desc == NULL)
+			goto fail_free_mbuf;
+
+		if (rx_desc->map == NULL) {
+			ret = bus_dmamap_create(sc->sc_dmat, size, 1,
+			    size, 0, BUS_DMA_NOWAIT, &rx_desc->map);
+			if (ret)
+				goto fail_free_mbuf;
+		}
+
+		ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_desc->map, m,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		if (ret) {
+			printf("%s: can't map mbuf (error %d)\n",
+			    sc->sc_dev.dv_xname, ret);
+			goto fail_free_mbuf;
+		}
+
+		cookie = rx_desc->cookie;
+
+		desc = qwz_hal_srng_src_get_next_entry(sc, srng);
+		if (!desc)
+			goto fail_dma_unmap;
+
+		TAILQ_REMOVE(used_list, rx_desc, entry);
+
+		rx_desc->m = m;
+		m = NULL;
+
+		num_remain--;
+
+		paddr = rx_desc->map->dm_segs[0].ds_addr;
+		qwz_hal_rx_buf_addr_info_set(desc, paddr, cookie, mgr);
+	}
+
+	qwz_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	return 0;
+
+fail_dma_unmap:
+	bus_dmamap_unload(sc->sc_dmat, rx_desc->map);
+fail_free_mbuf:
+	m_free(m);
+
+	qwz_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	return ENOBUFS;
+}
+
+int
+qwz_dp_rxdma_mon_ring_buf_setup(struct qwz_softc *sc,
+    struct dp_rxdma_mon_ring *rx_ring, uint32_t ringtype)
+{
 	int num_entries;
 
 	num_entries = rx_ring->refill_buf_ring.size /
@@ -13250,42 +13321,24 @@ qwz_dp_rxdma_ring_buf_setup(struct qwz_softc *sc,
 
 	rx_ring->bufs_max = num_entries;
 	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
+	qwz_dp_mon_buf_replenish(sc, rx_ring, num_entries);
 
-	return qwz_dp_rxbufs_replenish(sc, dp->mac_id, rx_ring, num_entries,
-	    sc->hw_params.hal_params->rx_buf_rbm);
+	return 0;
 }
 
 int
-qwz_dp_rxdma_pdev_buf_setup(struct qwz_softc *sc)
+qwz_dp_rxdma_ring_buf_setup(struct qwz_softc *sc,
+    struct dp_rxdma_ring *rx_ring)
 {
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
-	struct dp_rxdma_ring *rx_ring;
-	int ret;
-#if 0
-	int i;
-#endif
+	TAILQ_HEAD(, ath12k_rx_desc_info) list;
+	int num_entries;
 
-	rx_ring = &dp->rx_refill_buf_ring;
-	ret = qwz_dp_rxdma_ring_buf_setup(sc, rx_ring, HAL_RXDMA_BUF);
-	if (ret)
-		return ret;
+	TAILQ_INIT(&list);
+	num_entries = rx_ring->refill_buf_ring.size /
+	    qwz_hal_srng_get_entrysize(sc, HAL_RXDMA_BUF);
 
-	if (sc->hw_params.rxdma1_enable) {
-		rx_ring = &dp->rxdma_mon_buf_ring;
-		ret = qwz_dp_rxdma_ring_buf_setup(sc, rx_ring,
-		    HAL_RXDMA_MONITOR_BUF);
-		if (ret)
-			return ret;
-	}
-#if 0
-	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
-		rx_ring = &dp->rx_mon_status_refill_ring[i];
-		ret = qwz_dp_rxdma_ring_buf_setup(sc, rx_ring,
-		    HAL_RXDMA_MONITOR_STATUS);
-		if (ret)
-			return ret;
-	}
-#endif
+	qwz_dp_rxbufs_replenish(sc, rx_ring, &list, 0);
+
 	return 0;
 }
 
@@ -13293,7 +13346,6 @@ void
 qwz_dp_rx_pdev_free(struct qwz_softc *sc, int mac_id)
 {
 	qwz_dp_rx_pdev_srng_free(sc, mac_id);
-	qwz_dp_rxdma_pdev_buf_free(sc, mac_id);
 }
 
 bus_addr_t
@@ -13605,6 +13657,9 @@ qwz_dp_rx_pdev_alloc(struct qwz_softc *sc, int mac_id)
 	int i;
 	int ret;
 
+	if (!sc->hw_params.rxdma1_enable)
+		return 0;
+
 	ret = qwz_dp_rx_pdev_srng_alloc(sc);
 	if (ret) {
 		printf("%s: failed to setup rx srngs: %d\n",
@@ -13612,77 +13667,18 @@ qwz_dp_rx_pdev_alloc(struct qwz_softc *sc, int mac_id)
 		return ret;
 	}
 
-#if 0
-	ret = qwz_dp_rxdma_pdev_buf_setup(sc);
-	if (ret) {
-		printf("%s: failed to setup rxdma ring: %d\n",
-		    sc->sc_dev.dv_xname, ret);
-		return ret;
-	}
-#endif
-
-	ring_id = dp->rx_refill_buf_ring.refill_buf_ring.ring_id;
-	ret = qwz_dp_tx_htt_srng_setup(sc, ring_id, mac_id, HAL_RXDMA_BUF);
-	if (ret) {
-		printf("%s: failed to configure rx_refill_buf_ring: %d\n",
-		    sc->sc_dev.dv_xname, ret);
-		return ret;
-	}
-
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
-		ring_id = dp->rxdma_err_dst_ring[i].ring_id;
+		ring_id = dp->rxdma_mon_dst_ring[i].ring_id;
 		ret = qwz_dp_tx_htt_srng_setup(sc, ring_id, mac_id + i,
-		    HAL_RXDMA_DST);
+		    HAL_RXDMA_MONITOR_DST);
 		if (ret) {
 			printf("%s: failed to configure "
-			    "rxdma_err_dest_ring%d %d\n",
+			    "rxdma_mon_dst_ring %d %d\n",
 			    sc->sc_dev.dv_xname, i, ret);
 			return ret;
 		}
 	}
 
-	if (!sc->hw_params.rxdma1_enable)
-		goto config_refill_ring;
-#if 0
-	ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
-	ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
-					  mac_id, HAL_RXDMA_MONITOR_BUF);
-	if (ret) {
-		ath12k_warn(ab, "failed to configure rxdma_mon_buf_ring %d\n",
-			    ret);
-		return ret;
-	}
-	ret = ath12k_dp_tx_htt_srng_setup(ab,
-					  dp->rxdma_mon_dst_ring.ring_id,
-					  mac_id, HAL_RXDMA_MONITOR_DST);
-	if (ret) {
-		ath12k_warn(ab, "failed to configure rxdma_mon_dst_ring %d\n",
-			    ret);
-		return ret;
-	}
-	ret = ath12k_dp_tx_htt_srng_setup(ab,
-					  dp->rxdma_mon_desc_ring.ring_id,
-					  mac_id, HAL_RXDMA_MONITOR_DESC);
-	if (ret) {
-		ath12k_warn(ab, "failed to configure rxdma_mon_dst_ring %d\n",
-			    ret);
-		return ret;
-	}
-#endif
-config_refill_ring:
-#if 0
-	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
-		ret = qwz_dp_tx_htt_srng_setup(sc,
-		    dp->rx_mon_status_refill_ring[i].refill_buf_ring.ring_id,
-		    mac_id + i, HAL_RXDMA_MONITOR_STATUS);
-		if (ret) {
-			printf("%s: failed to configure "
-			    "mon_status_refill_ring%d %d\n",
-			    sc->sc_dev.dv_xname, i, ret);
-			return ret;
-		}
-	}
-#endif
 	return 0;
 }
 
@@ -14238,13 +14234,14 @@ qwz_dp_rx_frag_h_mpdu(struct qwz_softc *sc, struct mbuf *m,
 static inline uint16_t
 qwz_dp_rx_h_msdu_start_msdu_len(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_msdu_len(desc);
+	return sc->hal_rx_ops->rx_desc_get_msdu_len(desc);
 }
 
 void
 qwz_dp_process_rx_err_buf(struct qwz_softc *sc, uint32_t *ring_desc,
     int buf_id, int drop)
 {
+#if 0
 	struct qwz_pdev_dp *dp = &sc->pdev_dp;
 	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
 	struct mbuf *m;
@@ -14288,11 +14285,14 @@ qwz_dp_process_rx_err_buf(struct qwz_softc *sc, uint32_t *ring_desc,
 	}
 
 	m_freem(m);
+#endif
+	printf("%s:%d\n", __func__, __LINE__);
 }
 
 int
 qwz_dp_process_rx_err(struct qwz_softc *sc)
 {
+#if 0
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
@@ -14395,6 +14395,9 @@ qwz_dp_process_rx_err(struct qwz_softc *sc)
 	ifp->if_ierrors += tot_n_bufs_reaped;
 
 	return tot_n_bufs_reaped;
+#endif
+	printf("%s:%d\n", __func__, __LINE__);
+	return 0;
 }
 
 int
@@ -14541,6 +14544,7 @@ qwz_dp_rx_wbm_err(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 int
 qwz_dp_rx_process_wbm_err(struct qwz_softc *sc)
 {
+#if 0
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct qwz_dp *dp = &sc->dp;
@@ -14640,6 +14644,9 @@ done:
 	ifp->if_ierrors += total_num_buffs_reaped;
 
 	return total_num_buffs_reaped;
+#endif
+	printf("%s:%d\n", __func__, __LINE__);
+	return 0;
 }
 
 struct qwz_rx_msdu *
@@ -14662,7 +14669,7 @@ qwz_dp_rx_get_msdu_last_buf(struct qwz_rx_msdu_list *msdu_list,
 static inline void *
 qwz_dp_rx_get_attention(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_attention(desc);
+	return sc->hal_rx_ops->rx_desc_get_attention(desc);
 }
 
 int
@@ -14678,7 +14685,7 @@ qwz_dp_rx_h_attn_is_mcbc(struct qwz_softc *sc, struct hal_rx_desc *desc)
 static inline uint8_t
 qwz_dp_rx_h_msdu_end_l3pad(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_l3_pad_bytes(desc);
+	return sc->hal_rx_ops->rx_desc_get_l3_pad_bytes(desc);
 }
 
 static inline int
@@ -14690,7 +14697,7 @@ qwz_dp_rx_h_attn_msdu_done(struct rx_attention *attn)
 static inline uint32_t
 qwz_dp_rx_h_msdu_start_freq(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_msdu_freq(desc);
+	return sc->hal_rx_ops->rx_desc_get_msdu_freq(desc);
 }
 
 uint32_t
@@ -14847,22 +14854,22 @@ qwz_dp_rx_h_undecap_raw(struct qwz_softc *sc, struct qwz_rx_msdu *msdu,
 static inline uint8_t *
 qwz_dp_rx_h_80211_hdr(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_hdr_status(desc);
+	return sc->hal_rx_ops->rx_desc_get_hdr_status(desc);
 }
 
 static inline enum hal_encrypt_type
 qwz_dp_rx_h_mpdu_start_enctype(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	if (!sc->hw_params.hw_ops->rx_desc_encrypt_valid(desc))
+	if (!sc->hal_rx_ops->rx_desc_encrypt_valid(desc))
 		return HAL_ENCRYPT_TYPE_OPEN;
 
-	return sc->hw_params.hw_ops->rx_desc_get_encrypt_type(desc);
+	return sc->hal_rx_ops->rx_desc_get_encrypt_type(desc);
 }
 
 static inline uint8_t
 qwz_dp_rx_h_msdu_start_decap_type(struct qwz_softc *sc, struct hal_rx_desc *desc)
 {
-	return sc->hw_params.hw_ops->rx_desc_get_decap_type(desc);
+	return sc->hal_rx_ops->rx_desc_get_decap_type(desc);
 }
 
 void
@@ -15129,6 +15136,7 @@ qwz_dp_rx_process_received_packets(struct qwz_softc *sc,
 int
 qwz_dp_process_rx(struct qwz_softc *sc, int ring_id)
 {
+#if 0
 	struct qwz_dp *dp = &sc->dp;
 	struct qwz_pdev_dp *pdev_dp = &sc->pdev_dp;
 	struct dp_rxdma_ring *rx_ring;
@@ -15248,8 +15256,12 @@ try_again:
 	}
 exit:
 	return total_msdu_reaped;
+#endif
+	printf("%s:%d\n", __func__, __LINE__);
+	return 0;
 }
 
+#if 0
 struct mbuf *
 qwz_dp_rx_alloc_mon_status_buf(struct qwz_softc *sc,
     struct dp_rxdma_ring *rx_ring, int *buf_idx)
@@ -15303,11 +15315,13 @@ fail_free_mbuf:
 	m_freem(m);
 	return NULL;
 }
+#endif
 
 int
 qwz_dp_rx_reap_mon_status_ring(struct qwz_softc *sc, int mac_id,
     struct mbuf_list *ml)
 {
+#if 0
 	const struct ath12k_hw_hal_params *hal_params;
 	struct qwz_pdev_dp *dp;
 	struct dp_rxdma_ring *rx_ring;
@@ -15411,6 +15425,9 @@ move_next:
 	spin_unlock_bh(&srng->lock);
 #endif
 	return num_buffs_reaped;
+#endif
+	printf("%s:%d\n", __func__, __LINE__);
+	return 0;
 }
 
 enum hal_rx_mon_status
@@ -15530,6 +15547,31 @@ qwz_dp_rx_process_mon_rings(struct qwz_softc *sc, int mac_id)
 	return ret;
 }
 
+bool
+qwz_dp_wmask_compaction_rx_tlv_supported(struct qwz_softc *sc)
+{
+	if (isset(sc->wmi.svc_map, WMI_TLV_SERVICE_WMSK_COMPACTION_RX_TLVS) &&
+	    sc->hw_params.hal_ops->rxdma_ring_wmask_rx_mpdu_start &&
+	    sc->hw_params.hal_ops->rxdma_ring_wmask_rx_msdu_end &&
+	    sc->hw_params.hal_ops->get_hal_rx_compact_ops) {
+		return true;
+	}
+	return false;
+}
+
+void
+qwz_dp_hal_rx_desc_init(struct qwz_softc *sc)
+{
+	if (qwz_dp_wmask_compaction_rx_tlv_supported(sc)) {
+		/* RX TLVS compaction is supported, hence change the hal_rx_ops
+		 * to compact hal_rx_ops.
+		 */
+		sc->hal_rx_ops = sc->hw_params.hal_ops->get_hal_rx_compact_ops();
+	}
+	sc->hal.hal_desc_sz =
+	    sc->hal_rx_ops->rx_desc_get_desc_size();
+}
+
 void
 qwz_dp_service_mon_ring(void *arg)
 {
@@ -15545,6 +15587,7 @@ qwz_dp_service_mon_ring(void *arg)
 int
 qwz_dp_process_rxdma_err(struct qwz_softc *sc, int mac_id)
 {
+#if 0
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct dp_srng *err_ring;
@@ -15625,6 +15668,9 @@ qwz_dp_process_rxdma_err(struct qwz_softc *sc, int mac_id)
 	ifp->if_ierrors += num_buf_freed;
 
 	return num_buf_freed;
+#endif
+	printf("%s:%d\n", __func__, __LINE__);
+	return 0;
 }
 
 void
@@ -15927,7 +15973,7 @@ qwz_dp_process_reo_status(struct qwz_softc *sc)
 int
 qwz_dp_service_srng(struct qwz_softc *sc, int grp_id)
 {
-	struct qwz_pdev_dp *dp = &sc->pdev_dp;
+	struct qwz_dp *dp = &sc->dp;
 	int i, j, ret = 0;
 
 	if (sc->hw_params.ring_mask->tx[grp_id]) {
@@ -15967,9 +16013,10 @@ qwz_dp_service_srng(struct qwz_softc *sc, int grp_id)
 		ret = 1;
 
 	if (sc->hw_params.ring_mask->host2rxdma[grp_id]) {
-		qwz_dp_rxbufs_replenish(sc, 0 /* FIXME */,
-		    &dp->rx_refill_buf_ring, 0,
-		    sc->hw_params.hal_params->rx_buf_rbm);
+		TAILQ_HEAD(, ath12k_rx_desc_info) list;
+		TAILQ_INIT(&list);
+		qwz_dp_rxbufs_replenish(sc,
+		    &dp->rx_refill_buf_ring, &list, 0);
 	}
 
 	return ret;
@@ -16062,36 +16109,20 @@ qwz_wmi_cmd_send(struct qwz_pdev_wmi *wmi, struct mbuf *m, uint32_t cmd_id)
 #ifdef notyet
 	might_sleep();
 #endif
-	if (sc->hw_params.credit_flow) {
-		struct qwz_htc *htc = &sc->htc;
-		struct qwz_htc_ep *ep = &htc->endpoint[wmi->eid];
+	struct qwz_htc *htc = &sc->htc;
+	struct qwz_htc_ep *ep = &htc->endpoint[wmi->eid];
 
-		while (!ep->tx_credits) {
-			ret = tsleep_nsec(&ep->tx_credits, 0, "qwztxcrd",
-			    SEC_TO_NSEC(3));
-			if (ret) {
-				printf("%s: tx credits timeout\n",
-				    sc->sc_dev.dv_xname);
-				if (test_bit(ATH12K_FLAG_CRASH_FLUSH,
-				    sc->sc_flags))
-					return ESHUTDOWN;
-				else
-					return EAGAIN;
-			}
-		}
-	} else {
-		while (!wmi->tx_ce_desc) {
-			ret = tsleep_nsec(&wmi->tx_ce_desc, 0, "qwztxce",
-			    SEC_TO_NSEC(3));
-			if (ret) {
-				printf("%s: tx ce desc timeout\n",
-				    sc->sc_dev.dv_xname);
-				if (test_bit(ATH12K_FLAG_CRASH_FLUSH,
-				    sc->sc_flags))
-					return ESHUTDOWN;
-				else
-					return EAGAIN;
-			}
+	while (!ep->tx_credits) {
+		ret = tsleep_nsec(&ep->tx_credits, 0, "qwztxcrd",
+		    SEC_TO_NSEC(3));
+		if (ret) {
+			printf("%s: tx credits timeout\n",
+			    sc->sc_dev.dv_xname);
+			if (test_bit(ATH12K_FLAG_CRASH_FLUSH,
+			    sc->sc_flags))
+				return ESHUTDOWN;
+			else
+				return EAGAIN;
 		}
 	}
 
@@ -17185,7 +17216,7 @@ qwz_wmi_send_peer_assoc_cmd(struct qwz_softc *sc, uint8_t pdev_id,
 
 void
 qwz_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
-    struct target_resource_config *tg_cfg)
+    struct wmi_resource_config_arg *tg_cfg)
 {
 	wmi_cfg->num_vdevs = tg_cfg->num_vdevs;
 	wmi_cfg->num_peers = tg_cfg->num_peers;
@@ -17240,8 +17271,8 @@ qwz_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
 	wmi_cfg->bpf_instruction_size = tg_cfg->bpf_instruction_size;
 	wmi_cfg->max_bssid_rx_filters = tg_cfg->max_bssid_rx_filters;
 	wmi_cfg->use_pdev_id = tg_cfg->use_pdev_id;
-	wmi_cfg->flag1 = tg_cfg->flag1;
-	wmi_cfg->peer_map_unmap_v2_support = tg_cfg->peer_map_unmap_v2_support;
+	wmi_cfg->flag1 = tg_cfg->atf_config | WMI_RSRC_CFG_FLAG1_BSS_CHANNEL_INFO_64;
+	wmi_cfg->peer_map_unmap_version = tg_cfg->peer_map_unmap_version;
 	wmi_cfg->sched_params = tg_cfg->sched_params;
 	wmi_cfg->twt_ap_pdev_count = tg_cfg->twt_ap_pdev_count;
 	wmi_cfg->twt_ap_sta_count = tg_cfg->twt_ap_sta_count;
@@ -17257,7 +17288,7 @@ qwz_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
 }
 
 int
-qwz_init_cmd_send(struct qwz_pdev_wmi *wmi, struct wmi_init_cmd_param *param)
+qwz_init_cmd_send(struct qwz_pdev_wmi *wmi, struct wmi_init_cmd_arg *param)
 {
 	struct mbuf *m;
 	struct wmi_init_cmd *cmd;
@@ -17293,7 +17324,7 @@ qwz_init_cmd_send(struct qwz_pdev_wmi *wmi, struct wmi_init_cmd_param *param)
 	   sizeof(struct wmi_cmd_hdr) + sizeof(*cmd);
 	cfg = ptr;
 
-	qwz_wmi_copy_resource_config(cfg, param->res_cfg);
+	qwz_wmi_copy_resource_config(cfg, &param->res_cfg);
 
 	cfg->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_RESOURCE_CONFIG) |
 	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cfg) - TLV_HDR_SIZE);
@@ -17377,20 +17408,16 @@ int
 qwz_wmi_cmd_init(struct qwz_softc *sc)
 {
 	struct qwz_wmi_base *wmi_sc = &sc->wmi;
-	struct wmi_init_cmd_param init_param;
-	struct target_resource_config  config;
+	struct wmi_init_cmd_arg init_param;
 
 	memset(&init_param, 0, sizeof(init_param));
-	memset(&config, 0, sizeof(config));
-
-	sc->hw_params.hw_ops->wmi_init_config(sc, &config);
 
 	if (isset(sc->wmi.svc_map, WMI_TLV_SERVICE_REG_CC_EXT_EVENT_SUPPORT))
-		config.is_reg_cc_ext_event_supported = 1;
+		init_param.res_cfg.is_reg_cc_ext_event_supported = 1;
 
-	memcpy(&wmi_sc->wlan_resource_config, &config, sizeof(config));
+	sc->hw_params.wmi_init(sc, &init_param.res_cfg);
+	sc->wmi_conf_rx_decap_mode = init_param.res_cfg.rx_decap_mode;
 
-	init_param.res_cfg = &wmi_sc->wlan_resource_config;
 	init_param.num_mem_chunks = wmi_sc->num_mem_chunks;
 	init_param.hw_mode_id = wmi_sc->preferred_hw_mode;
 	init_param.mem_chunks = wmi_sc->mem_chunks;
@@ -17400,6 +17427,8 @@ qwz_wmi_cmd_init(struct qwz_softc *sc)
 
 	init_param.num_band_to_mac = sc->num_radios;
 	qwz_fill_band_to_mac_param(sc, init_param.band_to_mac);
+
+	sc->dp.peer_metadata_ver = init_param.res_cfg.peer_metadata_ver;
 
 	return qwz_init_cmd_send(&wmi_sc->wmi[0], &init_param);
 }
@@ -18021,14 +18050,18 @@ qwz_core_start(struct qwz_softc *sc)
 			   ret);
 		goto err_hif_stop;
 	}
-	ath12k_dp_pdev_pre_alloc(sc);
 #endif
+
+	qwz_dp_cc_config(sc);
+
 	ret = qwz_dp_pdev_reo_setup(sc);
 	if (ret) {
 		printf("%s: failed to initialize reo destination rings: %d\n",
 		    __func__, ret);
 		goto err_mac_destroy;
 	}
+
+	qwz_dp_hal_rx_desc_init(sc);
 
 	ret = qwz_wmi_cmd_init(sc);
 	if (ret) {
@@ -18044,8 +18077,7 @@ qwz_core_start(struct qwz_softc *sc)
 	}
 
 	/* put hardware to DBS mode */
-	if (sc->hw_params.single_pdev_only &&
-	    sc->hw_params.num_rxmda_per_pdev > 1) {
+	if (sc->hw_params.single_pdev_only) {
 		ret = qwz_wmi_set_hw_mode(sc, WMI_HOST_HW_MODE_DBS);
 		if (ret) {
 			printf("%s: failed to send dbs mode: %d\n",
@@ -19456,7 +19488,6 @@ int
 qwz_htc_process_trailer(struct qwz_htc *htc, uint8_t *buffer, int length,
     enum ath12k_htc_ep_id src_eid)
 {
-	struct qwz_softc *sc = htc->sc;
 	int status = 0;
 	struct ath12k_htc_record *record;
 	size_t len;
@@ -19477,25 +19508,23 @@ qwz_htc_process_trailer(struct qwz_htc *htc, uint8_t *buffer, int length,
 			break;
 		}
 
-		if (sc->hw_params.credit_flow) {
-			switch (record->hdr.id) {
-			case ATH12K_HTC_RECORD_CREDITS:
-				len = sizeof(struct ath12k_htc_credit_report);
-				if (record->hdr.len < len) {
-					printf("%s: Credit report too long\n",
-					    __func__);
-					status = EINVAL;
-					break;
-				}
-				qwz_htc_process_credit_report(htc,
-				    record->credit_report,
-				    record->hdr.len, src_eid);
-				break;
-			default:
-				printf("%s: unhandled record: id:%d length:%d\n",
-				    __func__, record->hdr.id, record->hdr.len);
+		switch (record->hdr.id) {
+		case ATH12K_HTC_RECORD_CREDITS:
+			len = sizeof(struct ath12k_htc_credit_report);
+			if (record->hdr.len < len) {
+				printf("%s: Credit report too long\n",
+				    __func__);
+				status = EINVAL;
 				break;
 			}
+			qwz_htc_process_credit_report(htc,
+			    record->credit_report,
+			    record->hdr.len, src_eid);
+			break;
+		default:
+			printf("%s: unhandled record: id:%d length:%d\n",
+			    __func__, record->hdr.id, record->hdr.len);
+			break;
 		}
 
 		if (status)
@@ -19692,26 +19721,6 @@ qwz_ce_free_ring(struct qwz_softc *sc, struct qwz_ce_ring *ring)
 	size = sizeof(*ring) + (ring->nentries *
 	    sizeof(ring->per_transfer_context[0]));
 	free(ring, M_DEVBUF, size);
-}
-
-static inline int
-qwz_ce_need_shadow_fix(int ce_id)
-{
-	/* only ce4 needs shadow workaround */
-	return (ce_id == 4);
-}
-
-void
-qwz_ce_stop_shadow_timers(struct qwz_softc *sc)
-{
-	int i;
-
-	if (!sc->hw_params.supports_shadow_regs)
-		return;
-
-	for (i = 0; i < sc->hw_params.ce_count; i++)
-		if (qwz_ce_need_shadow_fix(i))
-			qwz_dp_shadow_stop_timer(sc, &sc->ce.hp_timer[i]);
 }
 
 void
@@ -20096,11 +20105,6 @@ qwz_ce_init_ring(struct qwz_softc *sc, struct qwz_ce_ring *ce_ring,
 	}
 
 	ce_ring->hal_ring_id = ret;
-
-	if (sc->hw_params.supports_shadow_regs &&
-	    qwz_ce_need_shadow_fix(ce_id))
-		qwz_dp_shadow_init_timer(sc, &sc->ce.hp_timer[ce_id],
-		    ATH12K_SHADOW_CTRL_TIMER_INTERVAL, ce_ring->hal_ring_id);
 
 	return 0;
 }

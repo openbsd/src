@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.6 2024/09/01 03:14:48 jsg Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.7 2024/12/09 09:35:33 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -2189,6 +2189,7 @@ enum wmi_tlv_service {
 	WMI_TLV_SERVICE_REG_CC_EXT_EVENT_SUPPORT = 281,
 	WMI_TLV_SERVICE_BIOS_SAR_SUPPORT = 326,
 	WMI_TLV_SERVICE_SUPPORT_11D_FOR_HOST_SCAN = 357,
+	WMI_TLV_SERVICE_WMSK_COMPACTION_RX_TLVS = 361,
 
 	/* The third 128 bits */
 	WMI_MAX_EXT2_SERVICE = 384
@@ -2351,9 +2352,83 @@ struct wmi_host_mem_chunk {
 	uint32_t req_id;
 };
 
-struct wmi_init_cmd_param {
-	uint32_t tlv_header;
-	struct target_resource_config *res_cfg;
+enum peer_metadata_version {
+	ATH12K_PEER_METADATA_V0,
+	ATH12K_PEER_METADATA_V1,
+	ATH12K_PEER_METADATA_V1A,
+	ATH12K_PEER_METADATA_V1B,
+};
+
+struct wmi_resource_config_arg {
+	uint32_t num_vdevs;
+	uint32_t num_peers;
+	uint32_t num_active_peers;
+	uint32_t num_offload_peers;
+	uint32_t num_offload_reorder_buffs;
+	uint32_t num_peer_keys;
+	uint32_t num_tids;
+	uint32_t ast_skid_limit;
+	uint32_t tx_chain_mask;
+	uint32_t rx_chain_mask;
+	uint32_t rx_timeout_pri[4];
+	uint32_t rx_decap_mode;
+	uint32_t scan_max_pending_req;
+	uint32_t bmiss_offload_max_vdev;
+	uint32_t roam_offload_max_vdev;
+	uint32_t roam_offload_max_ap_profiles;
+	uint32_t num_mcast_groups;
+	uint32_t num_mcast_table_elems;
+	uint32_t mcast2ucast_mode;
+	uint32_t tx_dbg_log_size;
+	uint32_t num_wds_entries;
+	uint32_t dma_burst_size;
+	uint32_t mac_aggr_delim;
+	uint32_t rx_skip_defrag_timeout_dup_detection_check;
+	uint32_t vow_config;
+	uint32_t gtk_offload_max_vdev;
+	uint32_t num_msdu_desc;
+	uint32_t max_frag_entries;
+	uint32_t max_peer_ext_stats;
+	uint32_t smart_ant_cap;
+	uint32_t bk_minfree;
+	uint32_t be_minfree;
+	uint32_t vi_minfree;
+	uint32_t vo_minfree;
+	uint32_t rx_batchmode;
+	uint32_t tt_support;
+	uint32_t atf_config;
+	uint32_t iphdr_pad_config;
+	uint32_t qwrap_config:16,
+		 alloc_frag_desc_for_data_pkt:16;
+	uint32_t num_tdls_vdevs;
+	uint32_t num_tdls_conn_table_entries;
+	uint32_t beacon_tx_offload_max_vdev;
+	uint32_t num_multicast_filter_entries;
+	uint32_t num_wow_filters;
+	uint32_t num_keep_alive_pattern;
+	uint32_t keep_alive_pattern_size;
+	uint32_t max_tdls_concurrent_sleep_sta;
+	uint32_t max_tdls_concurrent_buffer_sta;
+	uint32_t wmi_send_separate;
+	uint32_t num_ocb_vdevs;
+	uint32_t num_ocb_channels;
+	uint32_t num_ocb_schedules;
+	uint32_t num_ns_ext_tuples_cfg;
+	uint32_t bpf_instruction_size;
+	uint32_t max_bssid_rx_filters;
+	uint32_t use_pdev_id;
+	uint32_t peer_map_unmap_version;
+	uint32_t sched_params;
+	uint32_t twt_ap_pdev_count;
+	uint32_t twt_ap_sta_count;
+	enum peer_metadata_version peer_metadata_ver;
+	uint32_t ema_max_vap_cnt;
+	uint32_t ema_max_profile_period;
+	bool is_reg_cc_ext_event_supported;
+} __packed;
+
+struct wmi_init_cmd_arg {
+	struct wmi_resource_config_arg res_cfg;
 	uint8_t num_mem_chunks;
 	struct wmi_host_mem_chunk *mem_chunks;
 	uint32_t hw_mode_id;
@@ -2462,7 +2537,7 @@ struct wmi_resource_config {
 	uint32_t use_pdev_id;
 	uint32_t max_num_dbs_scan_duty_cycle;
 	uint32_t max_num_group_keys;
-	uint32_t peer_map_unmap_v2_support;
+	uint32_t peer_map_unmap_version;
 	uint32_t sched_params;
 	uint32_t twt_ap_pdev_count;
 	uint32_t twt_ap_sta_count;
@@ -5758,7 +5833,7 @@ struct target_resource_config {
 	uint32_t bpf_instruction_size;
 	uint32_t max_bssid_rx_filters;
 	uint32_t use_pdev_id;
-	uint32_t peer_map_unmap_v2_support;
+	uint32_t peer_map_unmap_support;
 	uint32_t sched_params;
 	uint32_t twt_ap_pdev_count;
 	uint32_t twt_ap_sta_count;
@@ -11373,6 +11448,37 @@ struct rx_mpdu_start_wcn6855 {
 	uint32_t ht_ctrl;
 } __packed;
 
+struct rx_mpdu_start_qcn9274 {
+	uint32_t info0;
+	uint32_t reo_queue_desc_lo;
+	uint32_t info1;
+	uint32_t pn[4];
+	uint32_t info2;
+	uint32_t peer_meta_data;
+	uint16_t info3;
+	uint16_t phy_ppdu_id;
+	uint16_t ast_index;
+	uint16_t sw_peer_id;
+	uint32_t info4;
+	uint32_t info5;
+	uint32_t info6;
+	uint16_t frame_ctrl;
+	uint16_t duration;
+	uint8_t addr1[IEEE80211_ADDR_LEN];
+	uint8_t addr2[IEEE80211_ADDR_LEN];
+	uint8_t addr3[IEEE80211_ADDR_LEN];
+	uint16_t seq_ctrl;
+	uint8_t addr4[IEEE80211_ADDR_LEN];
+	uint16_t qos_ctrl;
+	uint32_t ht_ctrl;
+	uint32_t info7;
+	uint8_t multi_link_addr1[IEEE80211_ADDR_LEN];
+	uint8_t multi_link_addr2[IEEE80211_ADDR_LEN];
+	uint32_t info8;
+	uint32_t res0;
+	uint32_t res1;
+} __packed;
+
 /* rx_mpdu_start
  *
  * rxpcu_mpdu_filter_in_category
@@ -11957,6 +12063,52 @@ struct rx_msdu_end_qcn9074 {
 	uint16_t cum_ip_length;
 } __packed;
 
+struct rx_msdu_end_qcn9274 {
+	uint16_t info0;
+	uint16_t phy_ppdu_id;
+	uint16_t ip_hdr_cksum;
+	uint16_t info1;
+	uint16_t info2;
+	uint16_t cumulative_l3_checksum;
+	uint32_t rule_indication0;
+	uint32_t ipv6_options_crc;
+	uint16_t info3;
+	uint16_t l3_type;
+	uint32_t rule_indication1;
+	uint32_t tcp_seq_num;
+	uint32_t tcp_ack_num;
+	uint16_t info4;
+	uint16_t window_size;
+	uint16_t sa_sw_peer_id;
+	uint16_t info5;
+	uint16_t sa_idx;
+	uint16_t da_idx_or_sw_peer_id;
+	uint32_t info6;
+	uint32_t fse_metadata;
+	uint16_t cce_metadata;
+	uint16_t tcp_udp_cksum;
+	uint16_t info7;
+	uint16_t cumulative_ip_length;
+	uint32_t info8;
+	uint32_t info9;
+	uint32_t info10;
+	uint32_t info11;
+	uint16_t vlan_ctag_ci;
+	uint16_t vlan_stag_ci;
+	uint32_t peer_meta_data;
+	uint32_t info12;
+	uint32_t flow_id_toeplitz;
+	uint32_t ppdu_start_timestamp_63_32;
+	uint32_t phy_meta_data;
+	uint32_t ppdu_start_timestamp_31_0;
+	uint32_t toeplitz_hash_2_or_4;
+	uint16_t res0;
+	uint16_t sa_15_0;
+	uint32_t sa_47_16;
+	uint32_t info13;
+	uint32_t info14;
+} __packed;
+
 /* rx_msdu_end
  *
  * rxpcu_mpdu_filter_in_category
@@ -12287,11 +12439,33 @@ struct hal_rx_desc_wcn6855 {
 	uint8_t msdu_payload[];
 } __packed;
 
+#define RX_BE_PADDING0_BYTES 8
+#define RX_BE_PADDING1_BYTES 8
+
+#define HAL_RX_BE_PKT_HDR_TLV_LEN 112
+
+struct rx_pkt_hdr_tlv {
+	uint64_t tag;
+	uint64_t phy_ppdu_id;
+	uint8_t rx_pkt_hdr[HAL_RX_BE_PKT_HDR_TLV_LEN];
+};
+
+struct hal_rx_desc_wcn7850 {
+	uint64_t msdu_end_tag;
+	struct rx_msdu_end_qcn9274 msdu_end;
+	uint8_t rx_padding0[RX_BE_PADDING0_BYTES];
+	uint64_t mpdu_start_tag;
+	struct rx_mpdu_start_qcn9274 mpdu_start;
+	struct rx_pkt_hdr_tlv pkt_hdr_tlv;
+	uint8_t msdu_payload[];
+} __packed;
+
 struct hal_rx_desc {
 	union {
 		struct hal_rx_desc_ipq8074 ipq8074;
 		struct hal_rx_desc_qcn9074 qcn9074;
 		struct hal_rx_desc_wcn6855 wcn6855;
+		struct hal_rx_desc_wcn7850 wcn7850;
 	} u;
 } __packed;
 

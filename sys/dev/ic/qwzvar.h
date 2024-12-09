@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.7 2024/12/09 04:43:15 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.8 2024/12/09 09:35:33 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -169,6 +169,9 @@ struct hal_tx_status {
 
 struct hal_ops {
 	int (*create_srng_config)(struct qwz_softc *);
+	uint16_t (*rxdma_ring_wmask_rx_mpdu_start)(void);
+	uint32_t (*rxdma_ring_wmask_rx_msdu_end)(void);
+	const struct hal_rx_ops *(*get_hal_rx_compact_ops)(void);
 	const struct ath12k_hal_tcl_to_wbm_rbm_map *tcl_to_wbm_rbm_map;
 };
 
@@ -220,6 +223,7 @@ struct ath12k_hw_params {
 	bool supports_monitor;
 	bool full_monitor_mode;
 #endif
+	bool reoq_lut_support;
 	bool supports_shadow_regs;
 	bool idle_ps;
 	bool supports_sta_ps;
@@ -228,9 +232,11 @@ struct ath12k_hw_params {
 	bool supports_suspend;
 	uint32_t hal_desc_sz;
 	bool fix_l1ss;
-	bool credit_flow;
-	uint8_t max_tx_ring;
+	uint32_t num_tcl_banks;
+	uint32_t max_tx_ring;
 	const struct ath12k_hw_hal_params *hal_params;
+	void (*wmi_init)(struct qwz_softc *sc,
+	    struct wmi_resource_config_arg *config);
 	const struct hal_ops *hal_ops;
 	uint64_t qmi_cnss_feature_bitmap;
 #if notyet
@@ -258,10 +264,12 @@ struct ath12k_hw_params {
 
 struct ath12k_hw_ops {
 	uint8_t (*get_hw_mac_from_pdev_id)(int pdev_id);
-	void (*wmi_init_config)(struct qwz_softc *sc,
-	    struct target_resource_config *config);
 	int (*mac_id_to_pdev_id)(struct ath12k_hw_params *hw, int mac_id);
 	int (*mac_id_to_srng_id)(struct ath12k_hw_params *hw, int mac_id);
+	bool (*dp_srng_is_tx_comp_ring)(int ring_num);
+};
+
+struct hal_rx_ops {
 #if notyet
 	void (*tx_mesh_enable)(struct ath12k_base *ab,
 			       struct hal_tcl_data_cmd *tcl_cmd);
@@ -308,7 +316,10 @@ struct ath12k_hw_ops {
 	uint8_t* (*rx_desc_mpdu_start_addr2)(struct hal_rx_desc *desc);
 	uint32_t (*get_ring_selector)(struct sk_buff *skb);
 #endif
+	uint32_t (*rx_desc_get_desc_size)(void);
 };
+
+extern const struct hal_rx_ops hal_rx_wcn7850_ops;
 
 extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850;
 
@@ -785,6 +796,8 @@ struct ath12k_hal {
 #ifdef notyet
 	struct lock_class_key srng_key[HAL_SRNG_RING_ID_MAX];
 #endif
+
+	uint32_t hal_desc_sz;
 };
 
 enum hal_pn_type {
@@ -946,8 +959,7 @@ struct qwz_dp_htt_wbm_tx_status {
 
 #define DP_BA_WIN_SZ_MAX	256
 
-#define DP_TCL_NUM_RING_MAX	3
-#define DP_TCL_NUM_RING_MAX_QCA6390	1
+#define DP_TCL_NUM_RING_MAX	4
 
 #define DP_IDLE_SCATTER_BUFS_MAX 16
 
@@ -1076,7 +1088,8 @@ struct qwz_hp_update_timer {
 
 struct ath12k_rx_desc_info {
 	TAILQ_ENTRY(ath12k_rx_desc_info) entry;
-//	struct sk_buff *skb;
+	struct mbuf	*m;
+	bus_dmamap_t	map;
 	uint32_t cookie;
 	uint32_t magic;
 	uint8_t in_use		: 1,
@@ -1189,8 +1202,31 @@ struct hal_wbm_idle_scatter_list {
 	struct hal_wbm_link_desc *vaddr;
 };
 
+struct dp_rxdma_mon_ring {
+	struct dp_srng refill_buf_ring;
+#if 0
+	struct idr bufs_idr;
+	/* Protects bufs_idr */
+	spinlock_t idr_lock;
+#else
+	struct qwz_rx_data *rx_data;
+#endif
+	int bufs_max;
+	uint8_t freemap[howmany(DP_RXDMA_BUF_RING_SIZE, 8)];
+};
+
+struct dp_rxdma_ring {
+	struct dp_srng refill_buf_ring;
+	struct qwz_rx_data *rx_data;
+	int bufs_max;
+};
+
+#define MAX_RXDMA_PER_PDEV     2
+
 struct qwz_dp {
 	struct qwz_softc *sc;
+	uint8_t num_bank_profiles;
+	struct ath12k_dp_tx_bank_profile *bank_profiles;
 	enum ath12k_htc_ep_id eid;
 	int htt_tgt_version_received;
 	uint8_t htt_tgt_ver_major;
@@ -1203,6 +1239,7 @@ struct qwz_dp {
 	struct dp_srng reo_except_ring;
 	struct dp_srng reo_cmd_ring;
 	struct dp_srng reo_status_ring;
+	enum peer_metadata_version peer_metadata_ver;
 	struct dp_srng reo_dst_ring[DP_REO_DST_RING_MAX];
 	struct dp_tx_ring tx_ring[DP_TCL_NUM_RING_MAX];
 	struct hal_wbm_idle_scatter_list scatter_list[DP_IDLE_SCATTER_BUFS_MAX];
@@ -1212,6 +1249,7 @@ struct qwz_dp {
 	struct list_head dp_full_mon_mpdu_list;
 #endif
 	uint32_t reo_cmd_cache_flush_count;
+	enum hal_rx_buf_return_buf_manager idle_link_rbm;
 #if 0
 	/**
 	 * protects access to below fields,
@@ -1236,6 +1274,10 @@ struct qwz_dp {
 	/* protects the free and used desc lists */
 	spinlock_t tx_desc_lock[ATH12K_HW_MAX_QUEUES];
 #endif
+	struct dp_rxdma_ring rx_refill_buf_ring;
+	struct dp_srng rx_mac_buf_ring[MAX_RXDMA_PER_PDEV];
+	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
+	struct dp_rxdma_mon_ring rxdma_mon_buf_ring;
 };
 
 #define ATH12K_SHADOW_DP_TIMER_INTERVAL 20
@@ -1266,7 +1308,6 @@ struct qwz_ce {
 	/* Protects rings of all ce pipes */
 	spinlock_t ce_lock;
 #endif
-	struct qwz_hp_update_timer hp_timer[CE_COUNT_MAX];
 };
 
 
@@ -1317,7 +1358,6 @@ struct qwz_pdev_wmi {
 	enum ath12k_htc_ep_id eid;
 	const struct wmi_peer_flags_map *peer_flags;
 	uint32_t rx_decap_mode;
-	int tx_ce_desc;
 };
 
 #define QWZ_MAX_RADIOS 3
@@ -1536,19 +1576,6 @@ struct qwz_dbring_cap {
 	uint32_t min_buf_align;
 };
 
-struct dp_rxdma_ring {
-	struct dp_srng refill_buf_ring;
-#if 0
-	struct idr bufs_idr;
-	/* Protects bufs_idr */
-	spinlock_t idr_lock;
-#else
-	struct qwz_rx_data *rx_data;
-#endif
-	int bufs_max;
-	uint8_t freemap[howmany(DP_RXDMA_BUF_RING_SIZE, 8)];
-};
-
 enum hal_rx_mon_status {
 	HAL_RX_MON_STATUS_PPDU_NOT_DONE,
 	HAL_RX_MON_STATUS_PPDU_DONE,
@@ -1729,23 +1756,14 @@ struct qwz_mon_data {
 };
 
 
-#define MAX_RXDMA_PER_PDEV     2
-
 struct qwz_pdev_dp {
 	uint32_t mac_id;
-	uint32_t mon_dest_ring_stuck_cnt;
 #if 0
 	atomic_t num_tx_pending;
 	wait_queue_head_t tx_empty_waitq;
 #endif
-	struct dp_rxdma_ring rx_refill_buf_ring;
-	struct dp_srng rx_mac_buf_ring[MAX_RXDMA_PER_PDEV];
-	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng rxdma_mon_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng tx_mon_dst_ring[MAX_RXDMA_PER_PDEV];
-	struct dp_srng rxdma_mon_desc_ring;
-	struct dp_rxdma_ring rxdma_mon_buf_ring;
-	struct dp_rxdma_ring rx_mon_status_refill_ring[MAX_RXDMA_PER_PDEV];
 #if 0
 	struct ieee80211_rx_status rx_status;
 #endif
@@ -1938,6 +1956,8 @@ struct qwz_softc {
 	struct qwz_pdev_dp		pdev_dp;
 	struct qwz_wmi_base		wmi;
 	struct qwz_htc			htc;
+	const struct hal_rx_ops		*hal_rx_ops;
+	uint32_t			wmi_conf_rx_decap_mode;
 
 	enum ath12k_firmware_mode	fw_mode;
 	enum ath12k_crypt_mode		crypto_mode;
@@ -1952,6 +1972,7 @@ struct qwz_softc {
 	struct qwz_qmi_dev_mem_info	qmi_dev_mem[ATH12K_QMI_WLFW_MAX_DEV_MEM_NUM_V01];
 	struct ath12k_targ_cap		target_caps;
 	int				num_radios;
+	uint8_t				device_id;
 	uint32_t			cc_freq_hz;
 	uint32_t			cfg_tx_chainmask;
 	uint32_t			cfg_rx_chainmask;

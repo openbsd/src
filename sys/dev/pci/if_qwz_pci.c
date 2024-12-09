@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwz_pci.c,v 1.5 2024/12/09 04:43:15 patrick Exp $	*/
+/*	$OpenBSD: if_qwz_pci.c,v 1.6 2024/12/09 09:35:33 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -823,6 +823,7 @@ qwz_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_QUALCOMM_WCN7850:
 		sc->static_window_map = 0;
 		psc->sc_pci_ops = &qwz_pci_ops_wcn7850;
+		sc->hal_rx_ops = &hal_rx_wcn7850_ops;
 		sc->id.bdf_search = ATH12K_BDF_SEARCH_BUS_AND_BOARD;
 		qwz_pci_read_hw_version(sc, &soc_hw_version_major,
 		    &soc_hw_version_minor);
