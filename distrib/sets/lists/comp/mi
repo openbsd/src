@@ -1957,6 +1957,7 @@
 ./usr/share/man/man3/EVP_camellia_128_cbc.3
 ./usr/share/man/man3/EVP_chacha20.3
 ./usr/share/man/man3/EVP_des_cbc.3
+./usr/share/man/man3/EVP_rc2_cbc.3
 ./usr/share/man/man3/EVP_rc4.3
 ./usr/share/man/man3/EVP_sha1.3
 ./usr/share/man/man3/EVP_sha3_224.3
@@ -2026,6 +2027,7 @@
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_load_file.3
 ./usr/share/man/man3/RAND_set_rand_method.3
+./usr/share/man/man3/RC2_encrypt.3
 ./usr/share/man/man3/RC4.3
 ./usr/share/man/man3/RIPEMD160.3
 ./usr/share/man/man3/RMD160Init.3
