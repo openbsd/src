@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.10 2024/12/09 04:43:15 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.11 2024/12/09 04:46:11 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6434,6 +6434,33 @@ qwz_qmi_mem_seg_send(struct qwz_softc *sc)
 }
 
 int
+qwz_loadfirmware(struct qwz_softc *sc, int type, const char *filename,
+    u_char **data, size_t *len)
+{
+	char path[PATH_MAX];
+	int ret;
+
+	if (!sc->fw_img[type].data) {
+		ret = snprintf(path, sizeof(path), "%s-%s-%s",
+		    ATH12K_FW_DIR, sc->hw_params.fw.dir, filename);
+		if (ret < 0 || ret >= sizeof(path))
+			return ENOSPC;
+
+		ret = loadfirmware(path, &sc->fw_img[type].data,
+		    &sc->fw_img[type].size);
+		if (ret) {
+			printf("%s: could not read %s (error %d)\n",
+			    sc->sc_dev.dv_xname, path, ret);
+			return ret;
+		}
+	}
+
+	*data = sc->fw_img[type].data;
+	*len = sc->fw_img[type].size;
+	return 0;
+}
+
+int
 qwz_core_check_smbios(struct qwz_softc *sc)
 {
 	return 0; /* TODO */
@@ -6757,28 +6784,28 @@ next:
 	}
 
 out:
-	if (!*boardfw || !*boardfw_len) {
-		printf("%s: failed to fetch %s for %s from %s\n",
-		    __func__, qwz_bd_ie_type_str(ie_id_match),
-		    boardname, filename);
+	if (!*boardfw || !*boardfw_len)
 		return ENOENT;
-	}
 
 	return 0;
 }
 
 int
-qwz_core_fetch_bdf(struct qwz_softc *sc, u_char **data, size_t *len,
-    const u_char **boardfw, size_t *boardfw_len, const char *filename)
+qwz_core_fetch_bdf(struct qwz_softc *sc, const u_char **boardfw,
+    size_t *boardfw_len)
 {
-	char path[PATH_MAX];
-	char boardname[200];
+	char boardname[200], fallback_boardname[200];
+	u_char *data;
+	size_t len;
 	int ret;
 
-	ret = snprintf(path, sizeof(path), "%s-%s-%s",
-	    ATH12K_FW_DIR, sc->hw_params.fw.dir, filename);
-	if (ret < 0 || ret >= sizeof(path))
-		return ENOSPC;
+	ret = qwz_loadfirmware(sc, QWZ_FW_BOARD, ATH12K_BOARD_API2_FILE,
+	    &data, &len);
+	if (ret) {
+		printf("%s: could not read %s (error %d)\n",
+		    sc->sc_dev.dv_xname, ATH12K_BOARD_API2_FILE, ret);
+		return ret;
+	}
 
 	ret = qwz_core_create_board_name(sc, boardname, sizeof(boardname));
 	if (ret) {
@@ -6787,23 +6814,75 @@ qwz_core_fetch_bdf(struct qwz_softc *sc, u_char **data, size_t *len,
 		return ret;
 	}
 
-	ret = loadfirmware(path, data, len);
+	ret = qwz_core_fetch_board_data_api_n(sc, boardfw, boardfw_len,
+	    data, len, boardname, ATH12K_BD_IE_BOARD,
+	    ATH12K_BD_IE_BOARD_NAME, ATH12K_BD_IE_BOARD_DATA);
+	if (!ret)
+		return 0;
+
+	ret = qwz_core_create_fallback_board_name(sc, fallback_boardname,
+	    sizeof(fallback_boardname));
 	if (ret) {
-		printf("%s: could not read %s (error %d)\n",
-		    sc->sc_dev.dv_xname, path, ret);
+		DPRINTF("%s: failed to create board name: %d",
+		    sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
 
 	ret = qwz_core_fetch_board_data_api_n(sc, boardfw, boardfw_len,
-	    *data, *len, boardname, ATH12K_BD_IE_BOARD,
+	    data, len, fallback_boardname, ATH12K_BD_IE_BOARD,
 	    ATH12K_BD_IE_BOARD_NAME, ATH12K_BD_IE_BOARD_DATA);
+	if (!ret)
+		return 0;
+
+	DPRINTF("%s: failed to fetch board data for %s from %s\n",
+	    sc->sc_dev.dv_xname, boardname, path);
+	return ret;
+}
+
+int
+qwz_core_fetch_regdb(struct qwz_softc *sc, const u_char **boardfw,
+    size_t *boardfw_len)
+{
+	char boardname[200], default_boardname[200];
+	u_char *data;
+	size_t len;
+	int ret;
+
+	ret = qwz_loadfirmware(sc, QWZ_FW_BOARD, ATH12K_BOARD_API2_FILE,
+	    &data, &len);
+	if (ret)
+		return ret;
+
+	ret = qwz_core_create_board_name(sc, boardname, sizeof(boardname));
 	if (ret) {
-		DPRINTF("%s: failed to fetch board data for %s from %s\n",
-		    sc->sc_dev.dv_xname, boardname, path);
+		DPRINTF("%s: failed to create board name: %d",
+		    sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
 
-	return 0;
+	ret = qwz_core_fetch_board_data_api_n(sc, boardfw, boardfw_len,
+	    data, len, boardname, ATH12K_BD_IE_REGDB,
+	    ATH12K_BD_IE_REGDB_NAME, ATH12K_BD_IE_REGDB_DATA);
+	if (!ret)
+		return 0;
+
+	ret = qwz_core_create_bus_type_board_name(sc, default_boardname,
+	    sizeof(default_boardname));
+	if (ret) {
+		DPRINTF("%s: failed to create board name: %d",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ret = qwz_core_fetch_board_data_api_n(sc, boardfw, boardfw_len,
+	    data, len, default_boardname, ATH12K_BD_IE_REGDB,
+	    ATH12K_BD_IE_REGDB_NAME, ATH12K_BD_IE_REGDB_DATA);
+	if (!ret)
+		return 0;
+
+	DPRINTF("%s: failed to fetch regdb data for %s from %s\n",
+	    sc->sc_dev.dv_xname, boardname, path);
+	return ret;
 }
 
 int
@@ -6898,105 +6977,45 @@ err_free_req:
 #define QWZ_SELFMAG	4
 
 int
-qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, int regdb)
+qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, enum ath12k_qmi_bdf_type type)
 {
 	u_char *data = NULL;
 	const u_char *boardfw;
 	size_t len = 0, boardfw_len;
 	uint32_t fw_size;
-	int ret = 0, bdf_type;
-#ifdef notyet
-	const uint8_t *tmp;
-	uint32_t file_type;
-#endif
+	int ret = 0;
 
-	if (sc->fw_img[QWZ_FW_BOARD].data) {
-		boardfw = sc->fw_img[QWZ_FW_BOARD].data;
-		boardfw_len = sc->fw_img[QWZ_FW_BOARD].size;
-	} else {
-		ret = qwz_core_fetch_bdf(sc, &data, &len,
-		    &boardfw, &boardfw_len,
-		    ATH12K_BOARD_API2_FILE);
+	switch (type) {
+	case ATH12K_QMI_BDF_TYPE_ELF:
+		ret = qwz_core_fetch_bdf(sc, &boardfw, &boardfw_len);
 		if (ret)
 			return ret;
-
-		sc->fw_img[QWZ_FW_BOARD].data = malloc(boardfw_len, M_DEVBUF,
-		    M_NOWAIT);
-		if (sc->fw_img[QWZ_FW_BOARD].data) {
-			memcpy(sc->fw_img[QWZ_FW_BOARD].data, boardfw, boardfw_len);
-			sc->fw_img[QWZ_FW_BOARD].size = boardfw_len;
-		}
+		if (boardfw_len >= QWZ_SELFMAG &&
+		    memcmp(boardfw, QWZ_ELFMAG, QWZ_SELFMAG) == 0)
+			type = ATH12K_QMI_BDF_TYPE_ELF;
+		else
+			type = ATH12K_QMI_BDF_TYPE_BIN;
+		break;
+	case ATH12K_QMI_BDF_TYPE_REGDB:
+		ret = qwz_core_fetch_regdb(sc, &boardfw, &boardfw_len);
+		if (ret)
+			return ret;
+		break;
+	default:
+		printf("%s: invalid type %d\n", __func__, type);
+		return EINVAL;
 	}
 
-	if (regdb)
-		bdf_type = ATH12K_QMI_BDF_TYPE_REGDB;
-	else if (boardfw_len >= QWZ_SELFMAG &&
-	    memcmp(boardfw, QWZ_ELFMAG, QWZ_SELFMAG) == 0)
-		bdf_type = ATH12K_QMI_BDF_TYPE_ELF;
-	else
-		bdf_type = ATH12K_QMI_BDF_TYPE_BIN;
-
-	DPRINTF("%s: bdf_type %d\n", __func__, bdf_type);
+	DPRINTF("%s: type %d\n", __func__, type);
 
 	fw_size = MIN(sc->hw_params.fw.board_size, boardfw_len);
 
-	ret = qwz_qmi_load_file_target_mem(sc, boardfw, fw_size, bdf_type);
+	ret = qwz_qmi_load_file_target_mem(sc, boardfw, fw_size, type);
 	if (ret) {
 		printf("%s: failed to load bdf file\n", __func__);
 		goto out;
 	}
 
-	/* WCN7850/WCN6855 does not support cal data, skip it */
-	if (bdf_type == ATH12K_QMI_BDF_TYPE_ELF || bdf_type == ATH12K_QMI_BDF_TYPE_REGDB)
-		goto out;
-#ifdef notyet
-	if (ab->qmi.target.eeprom_caldata) {
-		file_type = ATH12K_QMI_FILE_TYPE_EEPROM;
-		tmp = filename;
-		fw_size = ATH12K_QMI_MAX_BDF_FILE_NAME_SIZE;
-	} else {
-		file_type = ATH12K_QMI_FILE_TYPE_CALDATA;
-
-		/* cal-<bus>-<id>.bin */
-		snprintf(filename, sizeof(filename), "cal-%s-%s.bin",
-			 ath12k_bus_str(ab->hif.bus), dev_name(dev));
-		fw_entry = ath12k_core_firmware_request(ab, filename);
-		if (!IS_ERR(fw_entry))
-			goto success;
-
-		fw_entry = ath12k_core_firmware_request(ab, ATH12K_DEFAULT_CAL_FILE);
-		if (IS_ERR(fw_entry)) {
-			/* Caldata may not be present during first time calibration in
-			 * factory hence allow to boot without loading caldata in ftm mode
-			 */
-			if (ath12k_ftm_mode) {
-				ath12k_info(ab,
-					    "Booting without cal data file in factory test mode\n");
-				return 0;
-			}
-			ret = PTR_ERR(fw_entry);
-			ath12k_warn(ab,
-				    "qmi failed to load CAL data file:%s\n",
-				    filename);
-			goto out;
-		}
-success:
-		fw_size = MIN(ab->hw_params.fw.board_size, fw_entry->size);
-		tmp = fw_entry->data;
-	}
-
-	ret = ath12k_qmi_load_file_target_mem(ab, tmp, fw_size, file_type);
-	if (ret < 0) {
-		ath12k_warn(ab, "qmi failed to load caldata\n");
-		goto out_qmi_cal;
-	}
-
-	ath12k_dbg(ab, ATH12K_DBG_QMI, "caldata type: %u\n", file_type);
-
-out_qmi_cal:
-	if (!ab->qmi.target.eeprom_caldata)
-		release_firmware(fw_entry);
-#endif
 out:
 	free(data, M_DEVBUF, len);
 	if (ret == 0)
@@ -7017,15 +7036,15 @@ qwz_qmi_event_load_bdf(struct qwz_softc *sc)
 		return ret;
 	}
 
-	ret = qwz_qmi_load_bdf_qmi(sc, 1);
-	if (ret < 0) {
+	ret = qwz_qmi_load_bdf_qmi(sc, ATH12K_QMI_BDF_TYPE_REGDB);
+	if (ret) {
 		printf("%s: failed to load regdb file: %d\n",
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
 
-	ret = qwz_qmi_load_bdf_qmi(sc, 0);
-	if (ret < 0) {
+	ret = qwz_qmi_load_bdf_qmi(sc, ATH12K_QMI_BDF_TYPE_ELF);
+	if (ret) {
 		printf("%s: failed to load board data file: %d\n",
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
@@ -7039,28 +7058,11 @@ qwz_qmi_m3_load(struct qwz_softc *sc)
 {
 	u_char *data;
 	size_t len;
-	char path[PATH_MAX];
 	int ret;
 
-	if (sc->fw_img[QWZ_FW_M3].data) {
-		data = sc->fw_img[QWZ_FW_M3].data;
-		len = sc->fw_img[QWZ_FW_M3].size;
-	} else {
-		ret = snprintf(path, sizeof(path), "%s-%s-%s",
-		    ATH12K_FW_DIR, sc->hw_params.fw.dir, ATH12K_M3_FILE);
-		if (ret < 0 || ret >= sizeof(path))
-			return ENOSPC;
-
-		ret = loadfirmware(path, &data, &len);
-		if (ret) {
-			printf("%s: could not read %s (error %d)\n",
-			    sc->sc_dev.dv_xname, path, ret);
-			return ret;
-		}
-
-		sc->fw_img[QWZ_FW_M3].data = data;
-		sc->fw_img[QWZ_FW_M3].size = len;
-	}
+	ret = qwz_loadfirmware(sc, QWZ_FW_M3, ATH12K_M3_FILE, &data, &len);
+	if (ret)
+		return ret;
 
 	if (sc->m3_mem == NULL || QWZ_DMA_LEN(sc->m3_mem) < len) {
 		if (sc->m3_mem)
