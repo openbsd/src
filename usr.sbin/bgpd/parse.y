@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.471 2024/12/09 10:51:46 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.472 2024/12/10 16:29:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1702,7 +1702,7 @@ l3vpnopts	: RD STRING {
 		| network
 		;
 
-neighbor	: {	curpeer = new_peer(); }
+neighbor	: { curpeer = new_peer(); }
 		    NEIGHBOR addrspec {
 			memcpy(&curpeer->conf.remote_addr, &$3.prefix,
 			    sizeof(curpeer->conf.remote_addr));
@@ -1776,7 +1776,7 @@ groupopts_l	: /* empty */
 		| groupopts_l error '\n'
 		;
 
-addpathextra	: /* empty */		{ $$ = 0;	}
+addpathextra	: /* empty */		{ $$ = 0; }
 		| PLUS NUMBER		{
 			if ($2 < 1 || $2 > USHRT_MAX) {
 				yyerror("additional paths must be between "
@@ -1787,7 +1787,7 @@ addpathextra	: /* empty */		{ $$ = 0;	}
 		}
 		;
 
-addpathmax	: /* empty */		{ $$ = 0;	}
+addpathmax	: /* empty */		{ $$ = 0; }
 		| MAX NUMBER		{
 			if ($2 < 1 || $2 > USHRT_MAX) {
 				yyerror("maximum additional paths must be "
@@ -2230,8 +2230,8 @@ safi		: NONE		{ $$ = SAFI_NONE; }
 		| FLOWSPEC	{ $$ = SAFI_FLOWSPEC; }
 		;
 
-nettype		: STATIC { $$ = 1; }
-		| CONNECTED { $$ = 0; }
+nettype		: STATIC	{ $$ = 1; }
+		| CONNECTED	{ $$ = 0; }
 		;
 
 authconf	: TCP MD5SIG PASSWORD string {
@@ -2971,7 +2971,7 @@ filter_elm	: filter_prefix_h	{
 		}
 		;
 
-prefixlenop	: /* empty */			{ memset(&$$, 0, sizeof($$)); }
+prefixlenop	: /* empty */		{ memset(&$$, 0, sizeof($$)); }
 		| LONGER				{
 			memset(&$$, 0, sizeof($$));
 			$$.op = OP_RANGE;
@@ -3054,8 +3054,8 @@ filter_as_type	: AS		{ $$ = AS_ALL; }
 		| PEERAS	{ $$ = AS_PEER; }
 		;
 
-filter_set	: /* empty */					{ $$ = NULL; }
-		| SET filter_set_opt				{
+filter_set	: /* empty */	{ $$ = NULL; }
+		| SET filter_set_opt	{
 			if (($$ = calloc(1, sizeof(struct filter_set_head))) ==
 			    NULL)
 				fatal(NULL);
@@ -3145,7 +3145,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 				$$->action.relative = $2;
 			}
 		}
-		| MED '+' NUMBER			{
+		| MED '+' NUMBER		{
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("bad metric +%lld", $3);
 				YYERROR;
@@ -3155,7 +3155,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			$$->type = ACTION_SET_RELATIVE_MED;
 			$$->action.relative = $3;
 		}
-		| MED '-' NUMBER			{
+		| MED '-' NUMBER		{
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("bad metric -%lld", $3);
 				YYERROR;
@@ -3180,7 +3180,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 				$$->action.relative = $2;
 			}
 		}
-		| METRIC '+' NUMBER			{
+		| METRIC '+' NUMBER		{
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("bad metric +%lld", $3);
 				YYERROR;
@@ -3190,7 +3190,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			$$->type = ACTION_SET_RELATIVE_MED;
 			$$->action.metric = $3;
 		}
-		| METRIC '-' NUMBER			{
+		| METRIC '-' NUMBER		{
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("bad metric -%lld", $3);
 				YYERROR;
@@ -3200,7 +3200,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			$$->type = ACTION_SET_RELATIVE_MED;
 			$$->action.relative = -$3;
 		}
-		| WEIGHT NUMBER				{
+		| WEIGHT NUMBER			{
 			if ($2 < -INT_MAX || $2 > UINT_MAX) {
 				yyerror("bad weight %lld", $2);
 				YYERROR;
@@ -3215,7 +3215,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 				$$->action.relative = $2;
 			}
 		}
-		| WEIGHT '+' NUMBER			{
+		| WEIGHT '+' NUMBER		{
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("bad weight +%lld", $3);
 				YYERROR;
@@ -3225,7 +3225,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			$$->type = ACTION_SET_RELATIVE_WEIGHT;
 			$$->action.relative = $3;
 		}
-		| WEIGHT '-' NUMBER			{
+		| WEIGHT '-' NUMBER		{
 			if ($3 < 0 || $3 > INT_MAX) {
 				yyerror("bad weight -%lld", $3);
 				YYERROR;
@@ -3503,145 +3503,145 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "AS",			AS},
-		{ "IPv4",		IPV4},
-		{ "IPv6",		IPV6},
-		{ "add-path",		ADDPATH},
-		{ "ah",			AH},
-		{ "allow",		ALLOW},
-		{ "announce",		ANNOUNCE},
-		{ "any",		ANY},
+		{ "AS",			AS },
+		{ "IPv4",		IPV4 },
+		{ "IPv6",		IPV6 },
+		{ "add-path",		ADDPATH },
+		{ "ah",			AH },
+		{ "allow",		ALLOW },
+		{ "announce",		ANNOUNCE },
+		{ "any",		ANY },
 		{ "as-4byte",		AS4BYTE },
-		{ "as-override",	ASOVERRIDE},
+		{ "as-override",	ASOVERRIDE },
 		{ "as-set",		ASSET },
-		{ "aspa-set",		ASPASET},
-		{ "avs",		AVS},
-		{ "blackhole",		BLACKHOLE},
-		{ "community",		COMMUNITY},
-		{ "compare",		COMPARE},
-		{ "connect-retry",	CONNECTRETRY},
-		{ "connected",		CONNECTED},
-		{ "customer-as",	CUSTOMERAS},
-		{ "default-route",	DEFAULTROUTE},
-		{ "delete",		DELETE},
-		{ "demote",		DEMOTE},
-		{ "deny",		DENY},
-		{ "depend",		DEPEND},
-		{ "descr",		DESCR},
-		{ "down",		DOWN},
-		{ "dump",		DUMP},
-		{ "ebgp",		EBGP},
-		{ "enforce",		ENFORCE},
+		{ "aspa-set",		ASPASET },
+		{ "avs",		AVS },
+		{ "blackhole",		BLACKHOLE },
+		{ "community",		COMMUNITY },
+		{ "compare",		COMPARE },
+		{ "connect-retry",	CONNECTRETRY },
+		{ "connected",		CONNECTED },
+		{ "customer-as",	CUSTOMERAS },
+		{ "default-route",	DEFAULTROUTE },
+		{ "delete",		DELETE },
+		{ "demote",		DEMOTE },
+		{ "deny",		DENY },
+		{ "depend",		DEPEND },
+		{ "descr",		DESCR },
+		{ "down",		DOWN },
+		{ "dump",		DUMP },
+		{ "ebgp",		EBGP },
+		{ "enforce",		ENFORCE },
 		{ "enhanced",		ENHANCED },
-		{ "esp",		ESP},
-		{ "evaluate",		EVALUATE},
-		{ "expires",		EXPIRES},
-		{ "export",		EXPORT},
-		{ "export-target",	EXPORTTRGT},
-		{ "ext-community",	EXTCOMMUNITY},
+		{ "esp",		ESP },
+		{ "evaluate",		EVALUATE },
+		{ "expires",		EXPIRES },
+		{ "export",		EXPORT },
+		{ "export-target",	EXPORTTRGT },
+		{ "ext-community",	EXTCOMMUNITY },
 		{ "extended",		EXTENDED },
-		{ "fib-priority",	FIBPRIORITY},
-		{ "fib-update",		FIBUPDATE},
-		{ "filtered",		FILTERED},
-		{ "flags",		FLAGS},
-		{ "flowspec",		FLOWSPEC},
-		{ "fragment",		FRAGMENT},
-		{ "from",		FROM},
-		{ "group",		GROUP},
-		{ "holdtime",		HOLDTIME},
-		{ "ibgp",		IBGP},
-		{ "ignore",		IGNORE},
-		{ "ike",		IKE},
-		{ "import-target",	IMPORTTRGT},
-		{ "in",			IN},
-		{ "include",		INCLUDE},
-		{ "inet",		IPV4},
-		{ "inet6",		IPV6},
-		{ "ipsec",		IPSEC},
-		{ "key",		KEY},
-		{ "large-community",	LARGECOMMUNITY},
-		{ "listen",		LISTEN},
-		{ "local-address",	LOCALADDR},
-		{ "local-as",		LOCALAS},
-		{ "localpref",		LOCALPREF},
-		{ "log",		LOG},
-		{ "match",		MATCH},
-		{ "max",		MAX},
-		{ "max-as-len",		MAXASLEN},
-		{ "max-as-seq",		MAXASSEQ},
-		{ "max-communities",	MAXCOMMUNITIES},
-		{ "max-ext-communities",	MAXEXTCOMMUNITIES},
-		{ "max-large-communities",	MAXLARGECOMMUNITIES},
-		{ "max-prefix",		MAXPREFIX},
-		{ "maxlen",		MAXLEN},
-		{ "md5sig",		MD5SIG},
-		{ "med",		MED},
-		{ "metric",		METRIC},
-		{ "min",		YMIN},
-		{ "min-version",	MINVERSION},
-		{ "multihop",		MULTIHOP},
-		{ "neighbor",		NEIGHBOR},
-		{ "neighbor-as",	NEIGHBORAS},
-		{ "network",		NETWORK},
-		{ "nexthop",		NEXTHOP},
-		{ "no-modify",		NOMODIFY},
-		{ "none",		NONE},
-		{ "on",			ON},
-		{ "or-longer",		LONGER},
-		{ "origin",		ORIGIN},
-		{ "origin-set",		ORIGINSET},
-		{ "out",		OUT},
-		{ "ovs",		OVS},
-		{ "passive",		PASSIVE},
-		{ "password",		PASSWORD},
-		{ "peer-as",		PEERAS},
-		{ "pftable",		PFTABLE},
-		{ "plus",		PLUS},
-		{ "policy",		POLICY},
-		{ "port",		PORT},
-		{ "prefix",		PREFIX},
-		{ "prefix-set",		PREFIXSET},
-		{ "prefixlen",		PREFIXLEN},
-		{ "prepend-neighbor",	PREPEND_PEER},
-		{ "prepend-self",	PREPEND_SELF},
-		{ "priority",		PRIORITY},
-		{ "proto",		PROTO},
-		{ "provider-as",	PROVIDERAS},
-		{ "qualify",		QUALIFY},
-		{ "quick",		QUICK},
-		{ "rd",			RD},
-		{ "rde",		RDE},
-		{ "recv",		RECV},
+		{ "fib-priority",	FIBPRIORITY },
+		{ "fib-update",		FIBUPDATE },
+		{ "filtered",		FILTERED },
+		{ "flags",		FLAGS },
+		{ "flowspec",		FLOWSPEC },
+		{ "fragment",		FRAGMENT },
+		{ "from",		FROM },
+		{ "group",		GROUP },
+		{ "holdtime",		HOLDTIME },
+		{ "ibgp",		IBGP },
+		{ "ignore",		IGNORE },
+		{ "ike",		IKE },
+		{ "import-target",	IMPORTTRGT },
+		{ "in",			IN },
+		{ "include",		INCLUDE },
+		{ "inet",		IPV4 },
+		{ "inet6",		IPV6 },
+		{ "ipsec",		IPSEC },
+		{ "key",		KEY },
+		{ "large-community",	LARGECOMMUNITY },
+		{ "listen",		LISTEN },
+		{ "local-address",	LOCALADDR },
+		{ "local-as",		LOCALAS },
+		{ "localpref",		LOCALPREF },
+		{ "log",		LOG },
+		{ "match",		MATCH },
+		{ "max",		MAX },
+		{ "max-as-len",		MAXASLEN },
+		{ "max-as-seq",		MAXASSEQ },
+		{ "max-communities",	MAXCOMMUNITIES },
+		{ "max-ext-communities",	MAXEXTCOMMUNITIES },
+		{ "max-large-communities",	MAXLARGECOMMUNITIES },
+		{ "max-prefix",		MAXPREFIX },
+		{ "maxlen",		MAXLEN },
+		{ "md5sig",		MD5SIG },
+		{ "med",		MED },
+		{ "metric",		METRIC },
+		{ "min",		YMIN },
+		{ "min-version",	MINVERSION },
+		{ "multihop",		MULTIHOP },
+		{ "neighbor",		NEIGHBOR },
+		{ "neighbor-as",	NEIGHBORAS },
+		{ "network",		NETWORK },
+		{ "nexthop",		NEXTHOP },
+		{ "no-modify",		NOMODIFY },
+		{ "none",		NONE },
+		{ "on",			ON },
+		{ "or-longer",		LONGER },
+		{ "origin",		ORIGIN },
+		{ "origin-set",		ORIGINSET },
+		{ "out",		OUT },
+		{ "ovs",		OVS },
+		{ "passive",		PASSIVE },
+		{ "password",		PASSWORD },
+		{ "peer-as",		PEERAS },
+		{ "pftable",		PFTABLE },
+		{ "plus",		PLUS },
+		{ "policy",		POLICY },
+		{ "port",		PORT },
+		{ "prefix",		PREFIX },
+		{ "prefix-set",		PREFIXSET },
+		{ "prefixlen",		PREFIXLEN },
+		{ "prepend-neighbor",	PREPEND_PEER },
+		{ "prepend-self",	PREPEND_SELF },
+		{ "priority",		PRIORITY },
+		{ "proto",		PROTO },
+		{ "provider-as",	PROVIDERAS },
+		{ "qualify",		QUALIFY },
+		{ "quick",		QUICK },
+		{ "rd",			RD },
+		{ "rde",		RDE },
+		{ "recv",		RECV },
 		{ "refresh",		REFRESH },
-		{ "reject",		REJECT},
-		{ "remote-as",		REMOTEAS},
-		{ "restart",		RESTART},
-		{ "restricted",		RESTRICTED},
-		{ "rib",		RIB},
+		{ "reject",		REJECT },
+		{ "remote-as",		REMOTEAS },
+		{ "restart",		RESTART },
+		{ "restricted",		RESTRICTED },
+		{ "rib",		RIB },
 		{ "roa-set",		ROASET },
-		{ "role",		ROLE},
-		{ "route-reflector",	REFLECTOR},
-		{ "router-id",		ROUTERID},
-		{ "rtable",		RTABLE},
-		{ "rtlabel",		RTLABEL},
-		{ "rtr",		RTR},
-		{ "self",		SELF},
-		{ "send",		SEND},
-		{ "set",		SET},
+		{ "role",		ROLE },
+		{ "route-reflector",	REFLECTOR },
+		{ "router-id",		ROUTERID },
+		{ "rtable",		RTABLE },
+		{ "rtlabel",		RTLABEL },
+		{ "rtr",		RTR },
+		{ "self",		SELF },
+		{ "send",		SEND },
+		{ "set",		SET },
 		{ "socket",		SOCKET },
-		{ "source-as",		SOURCEAS},
-		{ "spi",		SPI},
-		{ "static",		STATIC},
-		{ "tcp",		TCP},
-		{ "to",			TO},
-		{ "tos",		TOS},
-		{ "transit-as",		TRANSITAS},
-		{ "transparent-as",	TRANSPARENT},
-		{ "ttl-security",	TTLSECURITY},
-		{ "unicast",		UNICAST},
-		{ "via",		VIA},
-		{ "vpn",		VPN},
-		{ "weight",		WEIGHT}
+		{ "source-as",		SOURCEAS },
+		{ "spi",		SPI },
+		{ "static",		STATIC },
+		{ "tcp",		TCP },
+		{ "to",			TO },
+		{ "tos",		TOS },
+		{ "transit-as",		TRANSITAS },
+		{ "transparent-as",	TRANSPARENT },
+		{ "ttl-security",	TTLSECURITY },
+		{ "unicast",		UNICAST },
+		{ "via",		VIA },
+		{ "vpn",		VPN },
+		{ "weight",		WEIGHT },
 	};
 	const struct keywords	*p;
 
@@ -5541,7 +5541,7 @@ map_tos(char *s, int *val)
 		{ "lowdelay",		IPTOS_LOWDELAY },
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
 		{ "reliability",	IPTOS_RELIABILITY },
-		{ "throughput",		IPTOS_THROUGHPUT }
+		{ "throughput",		IPTOS_THROUGHPUT },
 	};
 	const struct keywords	*p;
 
@@ -5891,7 +5891,7 @@ static const struct icmptypeent icmp_type[] = {
 	{ "mobregreq",	ICMP_MOBILE_REGREQUEST },
 	{ "mobregrep",	ICMP_MOBILE_REGREPLY },
 	{ "skip",	ICMP_SKIP },
-	{ "photuris",	ICMP_PHOTURIS }
+	{ "photuris",	ICMP_PHOTURIS },
 };
 
 static const struct icmptypeent icmp6_type[] = {
@@ -5954,7 +5954,7 @@ static const struct icmpcodeent icmp_code[] = {
 	{ "badlen",		ICMP_PARAMPROB,	ICMP_PARAMPROB_LENGTH },
 	{ "unknown-ind",	ICMP_PHOTURIS,	ICMP_PHOTURIS_UNKNOWN_INDEX },
 	{ "auth-fail",		ICMP_PHOTURIS,	ICMP_PHOTURIS_AUTH_FAILED },
-	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED }
+	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED },
 };
 
 static const struct icmpcodeent icmp6_code[] = {
@@ -5968,7 +5968,7 @@ static const struct icmpcodeent icmp6_code[] = {
 	{ "badhead", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER },
 	{ "nxthdr", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_NEXTHEADER },
 	{ "redironlink", ND_REDIRECT, ND_REDIRECT_ONLINK },
-	{ "redirrouter", ND_REDIRECT, ND_REDIRECT_ROUTER }
+	{ "redirrouter", ND_REDIRECT, ND_REDIRECT_ROUTER },
 };
 
 static int
