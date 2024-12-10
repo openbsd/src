@@ -418,6 +418,9 @@ func TestTLSInfo(t *testing.T) {
 	if _, err := tls.PeerCertSubject(); err == nil {
 		t.Error("PeerCertSubject() returned nil error, want error")
 	}
+	if _, err := tls.PeerCertCommonName(); err == nil {
+		t.Error("PeerCertCommonName() returned nil error, want error")
+	}
 	if _, err := tls.PeerCertHash(); err == nil {
 		t.Error("PeerCertHash() returned nil error, want error")
 	}
@@ -467,6 +470,11 @@ func TestTLSInfo(t *testing.T) {
 		t.Errorf("PeerCertSubject() returned error: %v", err)
 	} else {
 		t.Logf("Subject: %v", subject)
+	}
+	if commonName, err := tls.PeerCertCommonName(); err != nil {
+		t.Errorf("PeerCertCommonName() returned error: %v", err)
+	} else {
+		t.Logf("Subject: %v", commonName)
 	}
 	if hash, err := tls.PeerCertHash(); err != nil {
 		t.Errorf("PeerCertHash() returned error: %v", err)

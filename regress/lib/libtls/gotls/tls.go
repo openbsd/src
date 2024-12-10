@@ -202,6 +202,15 @@ func (t *TLS) PeerCertIssuer() (string, error) {
 	return C.GoString(issuer), nil
 }
 
+// PeerCertCommonName returns the common name of the peer certificate.
+func (t *TLS) PeerCertCommonName() (string, error) {
+	commonName := C.tls_peer_cert_common_name(t.ctx)
+	if commonName == nil {
+		return "", errors.New("no peer cert common name returned")
+	}
+	return C.GoString(commonName), nil
+}
+
 // PeerCertSubject returns the subject of the peer certificate.
 func (t *TLS) PeerCertSubject() (string, error) {
 	subject := C.tls_peer_cert_subject(t.ctx)
