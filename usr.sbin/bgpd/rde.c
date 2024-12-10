@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.643 2024/12/02 16:31:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.644 2024/12/10 13:40:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1349,7 +1349,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 		}
 		switch (rr.subtype) {
 		case ROUTE_REFRESH_REQUEST:
-			peer_dump(peer, rr.aid);
+			peer_blast(peer, rr.aid);
 			break;
 		case ROUTE_REFRESH_BEGIN_RR:
 			/* check if graceful restart EOR was received */

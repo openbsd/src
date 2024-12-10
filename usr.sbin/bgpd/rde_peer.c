@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.39 2024/12/10 12:23:42 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.40 2024/12/10 13:40:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -530,7 +530,7 @@ peer_blast_done(void *ptr, uint8_t aid)
  * Send out the full Adj-RIB-Out by putting all prefixes onto the update
  * queue.
  */
-static void
+void
 peer_blast(struct rde_peer *peer, uint8_t aid)
 {
 	if (peer->capa.enhanced_rr && (peer->sent_eor & (1 << aid)))

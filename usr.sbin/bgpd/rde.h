@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.306 2024/09/25 14:46:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.307 2024/12/10 13:40:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -371,6 +371,7 @@ void		 peer_up(struct rde_peer *, struct session_up *);
 void		 peer_down(struct rde_peer *, void *);
 void		 peer_flush(struct rde_peer *, uint8_t, time_t);
 void		 peer_stale(struct rde_peer *, uint8_t, int);
+void		 peer_blast(struct rde_peer *, uint8_t);
 void		 peer_dump(struct rde_peer *, uint8_t);
 void		 peer_begin_rrefresh(struct rde_peer *, uint8_t);
 
