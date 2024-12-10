@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.38 2024/08/28 14:30:26 millert Exp $	*/
+/*	$OpenBSD: process.c,v 1.39 2024/12/10 23:49:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -124,7 +124,7 @@ redirect:
 				psl = 0;
 				if (cp->a2 == NULL || lastaddr || lastline())
 					(void)fprintf(outfile, "%s", cp->t);
-				break;
+				goto new;
 			case 'd':
 				pd = 1;
 				goto new;

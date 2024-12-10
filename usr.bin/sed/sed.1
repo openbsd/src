@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.63 2022/12/28 13:00:57 jsg Exp $
+.\"	$OpenBSD: sed.1,v 1.64 2024/12/10 23:49:55 millert Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 28 2022 $
+.Dd $Mdocdate: December 10 2024 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -336,7 +336,7 @@ If the label is not specified, branch to the end of the script.
 .br
 .Ar text
 .Xc
-Delete the pattern space.
+Delete the pattern space and start the next cycle.
 With 0 or 1 address or at the end of a 2-address range,
 .Ar text
 is written to the standard output.
