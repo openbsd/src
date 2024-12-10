@@ -69,6 +69,7 @@ tls_init
 tls_load_file
 tls_ocsp_process_response
 tls_peer_cert_chain_pem
+tls_peer_cert_common_name
 tls_peer_cert_contains_name
 tls_peer_cert_hash
 tls_peer_cert_issuer
