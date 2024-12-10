@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.13 2024/12/10 07:33:43 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.14 2024/12/10 07:38:13 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16307,47 +16307,6 @@ qwz_wmi_pdev_set_ps_mode(struct qwz_softc *sc, int vdev_id, uint8_t pdev_id,
 }
 
 int
-qwz_wmi_scan_prob_req_oui(struct qwz_softc *sc, const uint8_t *mac_addr,
-    uint8_t pdev_id)
-{
-	struct qwz_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
-	struct mbuf *m;
-	struct wmi_scan_prob_req_oui_cmd *cmd;
-	uint32_t prob_req_oui;
-	int len, ret;
-
-	prob_req_oui = (((uint32_t)mac_addr[0]) << 16) |
-		       (((uint32_t)mac_addr[1]) << 8) | mac_addr[2];
-
-	len = sizeof(*cmd);
-	m = qwz_wmi_alloc_mbuf(len);
-	if (!m)
-		return ENOMEM;
-
-	cmd = (struct wmi_scan_prob_req_oui_cmd *)(mtod(m, uint8_t *) +
-	    sizeof(struct ath12k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-	    WMI_TAG_SCAN_PROB_REQ_OUI_CMD) |
-	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
-	cmd->prob_req_oui = prob_req_oui;
-
-	DNPRINTF(QWZ_D_WMI, "%s: scan prob req oui %d\n", __func__,
-	    prob_req_oui);
-
-	ret = qwz_wmi_cmd_send(wmi, m, WMI_SCAN_PROB_REQ_OUI_CMDID);
-	if (ret) {
-		if (ret != ESHUTDOWN) {
-			printf("%s: failed to send WMI_SCAN_PROB_REQ_OUI cmd\n",
-			    sc->sc_dev.dv_xname);
-		}
-		m_freem(m);
-		return ret;
-	}
-
-	return 0;
-}
-
-int
 qwz_wmi_send_dfs_phyerr_offload_enable_cmd(struct qwz_softc *sc, uint32_t pdev_id)
 {
 	struct qwz_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
@@ -20864,7 +20823,6 @@ int
 qwz_mac_op_start(struct qwz_pdev *pdev)
 {
 	struct qwz_softc *sc = pdev->sc;
-	struct ieee80211com *ic = &sc->sc_ic;
 	int ret;
 
 	ret = qwz_wmi_pdev_set_param(sc, WMI_PDEV_PARAM_PMF_QOS, 1,
@@ -20881,17 +20839,6 @@ qwz_mac_op_start(struct qwz_pdev *pdev)
 		printf("%s: failed to enable dynamic bw for pdev %d: %d\n",
 		    sc->sc_dev.dv_xname, pdev->pdev_id, ret);
 		goto err;
-	}
-
-	if (isset(sc->wmi.svc_map, WMI_TLV_SERVICE_SPOOF_MAC_SUPPORT)) {
-		ret = qwz_wmi_scan_prob_req_oui(sc, ic->ic_myaddr,
-		    pdev->pdev_id);
-		if (ret) {
-			printf("%s: failed to set prob req oui for "
-			    "pdev %d: %i\n", sc->sc_dev.dv_xname,
-			    pdev->pdev_id, ret);
-			goto err;
-		}
 	}
 
 	ret = qwz_wmi_pdev_set_param(sc, WMI_PDEV_PARAM_ARP_AC_OVERRIDE, 0,

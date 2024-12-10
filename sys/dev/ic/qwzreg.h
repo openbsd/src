@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.7 2024/12/09 09:35:33 patrick Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.8 2024/12/10 07:38:13 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -3919,11 +3919,6 @@ struct wmi_scan_chan_list_cmd {
 	uint32_t flags;
 	uint32_t pdev_id;
 } __packed;
-
-struct wmi_scan_prob_req_oui_cmd {
-	uint32_t tlv_header;
-	uint32_t prob_req_oui;
-}  __packed;
 
 #define WMI_MGMT_SEND_DOWNLD_LEN	64
 
