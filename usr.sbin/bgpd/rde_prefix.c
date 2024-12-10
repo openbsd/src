@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.54 2024/11/21 13:26:49 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.55 2024/12/10 13:29:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -564,7 +564,7 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 			goto fail;
 		break;
 	default:
-		goto fail;
+		fatalx("%s: unknown aid %d", __func__, pte->aid);
 	}
 
 	/* keep 2 bytes reserved in the withdraw case for IPv4 encoding */
