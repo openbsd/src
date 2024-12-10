@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.180 2024/11/21 13:34:30 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.181 2024/12/10 14:34:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,8 +25,8 @@
 #define	INTERVAL_HOLD_INITIAL		240
 #define	INTERVAL_HOLD			90
 #define	INTERVAL_IDLE_HOLD_INITIAL	30
-#define	INTERVAL_HOLD_CLONED		3600
 #define	INTERVAL_HOLD_DEMOTED		60
+#define	INTERVAL_SESSION_DOWN		3600
 #define	MAX_IDLE_HOLD			3600
 #define	MSGSIZE_HEADER			19
 #define	MSGSIZE_HEADER_MARKER		16
@@ -176,6 +176,7 @@ enum Timer {
 	Timer_IdleHoldReset,
 	Timer_CarpUndemote,
 	Timer_RestartTimeout,
+	Timer_SessionDown,
 	Timer_Rtr_Refresh,
 	Timer_Rtr_Retry,
 	Timer_Rtr_Expire,

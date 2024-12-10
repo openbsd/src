@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.501 2024/12/09 10:51:46 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.502 2024/12/10 14:34:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -257,13 +257,6 @@ session_main(int debug, int verbose)
 		/* check for peers to be initialized or deleted */
 		if (!pending_reconf) {
 			RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
-				/* cloned peer that idled out? */
-				if (p->template && (p->state == STATE_IDLE ||
-				    p->state == STATE_ACTIVE) &&
-				    getmonotime() - p->stats.last_updown >=
-				    INTERVAL_HOLD_CLONED)
-					p->reconf_action = RECONF_DELETE;
-
 				/* new peer that needs init? */
 				if (p->state == STATE_NONE)
 					init_peer(p);
@@ -408,6 +401,14 @@ session_main(int debug, int verbose)
 					timer_stop(&p->timers,
 					    Timer_RestartTimeout);
 					session_graceful_stop(p);
+					break;
+				case Timer_SessionDown:
+					timer_stop(&p->timers,
+					    Timer_SessionDown);
+					/* finally delete this cloned peer */
+					if (p->template)
+						p->reconf_action =
+						    RECONF_DELETE;
 					break;
 				default:
 					fatalx("King Bula lost in time");
@@ -2266,7 +2267,11 @@ parse_open(struct peer *peer, struct ibuf *msg)
 		return (-1);
 	}
 
-	/* if remote-as is zero and it's a cloned neighbor, accept any */
+	/*
+	 * if remote-as is zero and it's a cloned neighbor, accept any
+	 * but only on the first connect, after that the remote-as needs
+	 * to remain the same.
+	 */
 	if (peer->template && !peer->conf.remote_as && as != AS_TRANS) {
 		peer->conf.remote_as = as;
 		peer->conf.ebgp = (peer->conf.remote_as != peer->conf.local_as);
@@ -3338,6 +3343,9 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 		newpeer->rpending = 0;
 		newpeer->wbuf = NULL;
 		init_peer(newpeer);
+		/* start delete timer, it is stopped when session goes up. */
+		timer_set(&newpeer->timers, Timer_SessionDown,
+		    INTERVAL_SESSION_DOWN);
 		bgp_fsm(newpeer, EVNT_START, NULL);
 		if (RB_INSERT(peer_head, &c->peers, newpeer) != NULL)
 			fatalx("%s: peer tree is corrupt", __func__);
@@ -3426,6 +3434,9 @@ session_down(struct peer *peer)
 {
 	memset(&peer->capa.neg, 0, sizeof(peer->capa.neg));
 	peer->stats.last_updown = getmonotime();
+
+	timer_set(&peer->timers, Timer_SessionDown, INTERVAL_SESSION_DOWN);
+
 	/*
 	 * session_down is called in the exit code path so check
 	 * if the RDE is still around, if not there is no need to
@@ -3448,6 +3459,8 @@ session_up(struct peer *p)
 	p->stats.last_rcvd_errcode = 0;
 	p->stats.last_rcvd_suberr = 0;
 	memset(p->stats.last_reason, 0, sizeof(p->stats.last_reason));
+
+	timer_stop(&p->timers, Timer_SessionDown);
 
 	if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
 	    &p->conf, sizeof(p->conf)) == -1)

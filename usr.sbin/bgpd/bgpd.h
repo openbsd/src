@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.502 2024/12/09 10:51:46 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.503 2024/12/10 14:34:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1761,6 +1761,7 @@ static const char * const timernames[] = {
 	"IdleHoldResetTimer",
 	"CarpUndemoteTimer",
 	"RestartTimer",
+	"SessionDownTimer",
 	"RTR RefreshTimer",
 	"RTR RetryTimer",
 	"RTR ExpireTimer",
