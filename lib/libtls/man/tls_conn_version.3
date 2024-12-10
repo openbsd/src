@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_conn_version.3,v 1.10 2019/11/02 13:43:14 jsing Exp $
+.\" $OpenBSD: tls_conn_version.3,v 1.11 2024/12/10 08:42:12 tb Exp $
 .\"
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
 .\" Copyright (c) 2016, 2018 Joel Sing <jsing@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2019 $
+.Dd $Mdocdate: December 10 2024 $
 .Dt TLS_CONN_VERSION 3
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@
 .Nm tls_peer_cert_chain_pem ,
 .Nm tls_peer_cert_issuer ,
 .Nm tls_peer_cert_subject ,
+.Nm tls_peer_cert_common_name ,
 .Nm tls_peer_cert_hash ,
 .Nm tls_peer_cert_notbefore ,
 .Nm tls_peer_cert_notafter
@@ -64,6 +65,8 @@
 .Fn tls_peer_cert_issuer "struct tls *ctx"
 .Ft const char *
 .Fn tls_peer_cert_subject "struct tls *ctx"
+.Ft const char *
+.Fn tls_peer_cert_common_name "struct tls *ctx"
 .Ft const char *
 .Fn tls_peer_cert_hash "struct tls *ctx"
 .Ft time_t
@@ -133,6 +136,11 @@ corresponding to the subject of the peer certificate from
 returns a string
 corresponding to the issuer of the peer certificate from
 .Ar ctx .
+.Fn tls_peer_cert_common_name
+returns a string
+corresponding to the common name of the peer certificate from
+.Ar ctx
+or the empty string if no common name is present.
 .Pp
 .Fn tls_peer_cert_hash
 returns a string
@@ -209,6 +217,9 @@ appeared in
 .Fn tls_conn_cipher_strength
 appeared in
 .Ox 6.7 .
+.Fn tls_peer_cert_common_name
+appeared in
+.Ox 7.7 .
 .Sh AUTHORS
 .An Bob Beck Aq Mt beck@openbsd.org
 .An Joel Sing Aq Mt jsing@openbsd.org
