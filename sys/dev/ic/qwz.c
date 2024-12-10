@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.14 2024/12/10 07:38:13 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.15 2024/12/10 07:38:45 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2072,6 +2072,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 			.cal_offset = 256 * 1024,
 		},
 		.max_radios = 1,
+		.single_pdev_only = true,
 		.internal_sleep_clock = true,
 		.hw_ops = &wcn7850_ops,
 		.ring_mask = &ath12k_hw_ring_mask_wcn7850,
@@ -9864,7 +9865,9 @@ qwz_wmi_tlv_ext_soc_hal_reg_caps_parse(struct qwz_softc *sc, uint16_t len,
 
 		sc->num_radios++;
 
-		/* For WCN7850, save mac_phy capability in the same pdev */
+		/* For single_pdev_only targets,
+		 * save mac_phy capability in the same pdev
+		 */
 		if (sc->hw_params.single_pdev_only)
 			pdev_index = 0;
 		else
@@ -9874,10 +9877,6 @@ qwz_wmi_tlv_ext_soc_hal_reg_caps_parse(struct qwz_softc *sc, uint16_t len,
 		phy_id_map >>= 1;
 	}
 
-	/* For WCN7850, set num_radios to 1 because host manages
-	 * both 2G and 5G radio in one pdev.
-	 * Set pdev_id = 0 and 0 means soc level.
-	 */
 	if (sc->hw_params.single_pdev_only) {
 		sc->num_radios = 1;
 		sc->pdevs[0].pdev_id = 0;
