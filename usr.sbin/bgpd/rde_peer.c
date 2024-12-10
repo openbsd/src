@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.38 2024/08/28 13:21:39 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.39 2024/12/10 12:23:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -347,58 +347,6 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 	}
 }
 
-static void
-rde_up_adjout_force_upcall(struct prefix *p, void *ptr)
-{
-	if (p->flags & PREFIX_FLAG_STALE) {
-		/* remove stale entries */
-		prefix_adjout_destroy(p);
-	} else if (p->flags & PREFIX_FLAG_DEAD) {
-		/* ignore dead prefixes, they will go away soon */
-	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
-		/* put entries on the update queue if not allready on a queue */
-		p->flags |= PREFIX_FLAG_UPDATE;
-		if (RB_INSERT(prefix_tree, &prefix_peer(p)->updates[p->pt->aid],
-		    p) != NULL)
-			fatalx("%s: RB tree invariant violated", __func__);
-	}
-}
-
-static void
-rde_up_adjout_force_done(void *ptr, uint8_t aid)
-{
-	struct rde_peer		*peer = ptr;
-
-	/* Adj-RIB-Out ready, unthrottle peer and inject EOR */
-	peer->throttled = 0;
-	if (peer->capa.grestart.restart)
-		prefix_add_eor(peer, aid);
-}
-
-static void
-rde_up_dump_upcall(struct rib_entry *re, void *ptr)
-{
-	struct rde_peer		*peer = ptr;
-	struct prefix		*p;
-
-	if ((p = prefix_best(re)) == NULL)
-		/* no eligible prefix, not even for 'evaluate all' */
-		return;
-
-	peer_generate_update(peer, re, NULL, NULL, 0);
-}
-
-static void
-rde_up_dump_done(void *ptr, uint8_t aid)
-{
-	struct rde_peer		*peer = ptr;
-
-	/* force out all updates of Adj-RIB-Out for this peer */
-	if (prefix_dump_new(peer, aid, 0, peer, rde_up_adjout_force_upcall,
-	    rde_up_adjout_force_done, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
-}
-
 /*
  * Session got established, bring peer up, load RIBs do initial table dump.
  */
@@ -543,32 +491,103 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 }
 
 /*
- * Load the Adj-RIB-Out of a peer normally called when a session is established.
- * Once the Adj-RIB-Out is ready stale routes are removed from the Adj-RIB-Out
- * and all routes are put on the update queue so they will be sent out.
+ * RIB walker callback for peer_blast.
+ * Enqueue a prefix onto the update queue so it can be sent out.
  */
-void
-peer_dump(struct rde_peer *peer, uint8_t aid)
+static void
+peer_blast_upcall(struct prefix *p, void *ptr)
+{
+	if (p->flags & PREFIX_FLAG_STALE) {
+		/* remove stale entries */
+		prefix_adjout_destroy(p);
+	} else if (p->flags & PREFIX_FLAG_DEAD) {
+		/* ignore dead prefixes, they will go away soon */
+	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
+		/* put entries on the update queue if not already on a queue */
+		p->flags |= PREFIX_FLAG_UPDATE;
+		if (RB_INSERT(prefix_tree, &prefix_peer(p)->updates[p->pt->aid],
+		    p) != NULL)
+			fatalx("%s: RB tree invariant violated", __func__);
+	}
+}
+
+/*
+ * Called after all prefixes are put onto the update queue and we are
+ * ready to blast out updates to the peer.
+ */
+static void
+peer_blast_done(void *ptr, uint8_t aid)
+{
+	struct rde_peer		*peer = ptr;
+
+	/* Adj-RIB-Out ready, unthrottle peer and inject EOR */
+	peer->throttled = 0;
+	if (peer->capa.grestart.restart)
+		prefix_add_eor(peer, aid);
+}
+
+/*
+ * Send out the full Adj-RIB-Out by putting all prefixes onto the update
+ * queue.
+ */
+static void
+peer_blast(struct rde_peer *peer, uint8_t aid)
 {
 	if (peer->capa.enhanced_rr && (peer->sent_eor & (1 << aid)))
 		rde_peer_send_rrefresh(peer, aid, ROUTE_REFRESH_BEGIN_RR);
 
+	/* force out all updates from the Adj-RIB-Out */
+	if (prefix_dump_new(peer, aid, 0, peer, peer_blast_upcall,
+	    peer_blast_done, NULL) == -1)
+		fatal("%s: prefix_dump_new", __func__);
+}
+
+/* RIB walker callbacks for peer_dump. */
+static void
+peer_dump_upcall(struct rib_entry *re, void *ptr)
+{
+	struct rde_peer		*peer = ptr;
+	struct prefix		*p;
+
+	if ((p = prefix_best(re)) == NULL)
+		/* no eligible prefix, not even for 'evaluate all' */
+		return;
+
+	peer_generate_update(peer, re, NULL, NULL, 0);
+}
+
+static void
+peer_dump_done(void *ptr, uint8_t aid)
+{
+	struct rde_peer		*peer = ptr;
+
+	/* Adj-RIB-Out is ready, blast it out */
+	peer_blast(peer, aid);
+}
+
+/*
+ * Load the Adj-RIB-Out of a peer normally called when a session comes up
+ * for the first time. Once the Adj-RIB-Out is ready it will blast the
+ * updates out.
+ */
+void
+peer_dump(struct rde_peer *peer, uint8_t aid)
+{
+	/* throttle peer until dump is done */
+	peer->throttled = 1;
+
 	if (peer->export_type == EXPORT_NONE) {
-		/* nothing to send apart from the marker */
-		if (peer->capa.grestart.restart)
-			prefix_add_eor(peer, aid);
+		peer_blast(peer, aid);
 	} else if (peer->export_type == EXPORT_DEFAULT_ROUTE) {
 		up_generate_default(peer, aid);
-		rde_up_dump_done(peer, aid);
+		peer_blast(peer, aid);
 	} else if (aid == AID_FLOWSPECv4 || aid == AID_FLOWSPECv6) {
-		prefix_flowspec_dump(aid, peer, rde_up_dump_upcall,
-		    rde_up_dump_done);
+		prefix_flowspec_dump(aid, peer, peer_dump_upcall,
+		    peer_dump_done);
 	} else {
 		if (rib_dump_new(peer->loc_rib_id, aid, RDE_RUNNER_ROUNDS, peer,
-		    rde_up_dump_upcall, rde_up_dump_done, NULL) == -1)
+		    peer_dump_upcall, peer_dump_done, NULL) == -1)
 			fatal("%s: rib_dump_new", __func__);
-		/* throttle peer until dump is done */
-		peer->throttled = 1;
 	}
 }
 
