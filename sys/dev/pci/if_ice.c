@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.25 2024/12/05 09:55:50 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.26 2024/12/10 16:02:19 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13884,6 +13884,7 @@ ice_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ice_softc *sc = ifp->if_softc;
 	struct ice_link_status *li = &sc->hw.port_info->phy.link_info;
+	uint64_t media;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
@@ -13898,10 +13899,15 @@ ice_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status |= IFM_ACTIVE;
 	ifmr->ifm_active |= IFM_FDX;
 
-	if (li->phy_type_low)
-		ifmr->ifm_active |= ice_get_phy_type_low(li->phy_type_low);
-	else if (li->phy_type_high)
-		ifmr->ifm_active |= ice_get_phy_type_high(li->phy_type_high);
+	if (li->phy_type_low) {
+		media = ice_get_phy_type_low(li->phy_type_low);
+		if (media != IFM_INST_ANY)
+			ifmr->ifm_active |= media;
+	} else if (li->phy_type_high) {
+		media = ice_get_phy_type_high(li->phy_type_high);
+		if (media != IFM_INST_ANY)
+			ifmr->ifm_active |= media;
+	}
 
 	/* Report flow control status as well */
 	if (li->an_info & ICE_AQ_LINK_PAUSE_TX)
