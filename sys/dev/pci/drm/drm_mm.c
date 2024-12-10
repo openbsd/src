@@ -155,7 +155,7 @@ static void show_leaks(struct drm_mm *mm) { }
 #ifdef __linux__
 INTERVAL_TREE_DEFINE(struct drm_mm_node, rb,
 		     u64, __subtree_last,
-		     START, LAST, static inline, drm_mm_interval_tree)
+		     START, LAST, static inline __maybe_unused, drm_mm_interval_tree)
 #else
 static struct drm_mm_node *
 drm_mm_interval_tree_iter_first(const struct rb_root_cached *root,
