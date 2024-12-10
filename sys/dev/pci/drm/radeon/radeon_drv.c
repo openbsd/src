@@ -917,7 +917,7 @@ radeondrm_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 void
 radeondrm_setpal(struct radeon_device *rdev, struct rasops_info *ri)
 {
-	struct drm_device *dev = rdev->ddev;
+	struct drm_device *dev = rdev_to_drm(rdev);
 	struct drm_crtc *crtc;
 	uint16_t *r_base, *g_base, *b_base;
 	int i, index, ret = 0;
@@ -1219,7 +1219,7 @@ void
 radeondrm_attachhook(struct device *self)
 {
 	struct radeon_device *rdev = (struct radeon_device *)self;
-	struct drm_device *dev = rdev->ddev;
+	struct drm_device *dev = rdev_to_drm(rdev);
 	int r, acpi_status;
 
 	/* radeon_device_init should report only fatal error

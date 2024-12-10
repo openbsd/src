@@ -168,7 +168,7 @@ static int radeon_agp_head_acquire(struct radeon_device *rdev)
 	STUB();
 	return -ENOSYS;
 #ifdef notyet
-	struct drm_device *dev = rdev->ddev;
+	struct drm_device *dev = rdev_to_drm(rdev);
 	struct pci_dev *pdev = dev->pdev;
 
 	if (!rdev->agp)
