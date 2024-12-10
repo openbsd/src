@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.263 2024/08/14 19:09:51 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.264 2024/12/10 20:06:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1321,10 +1321,12 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 
 	if (p->flags & PREFIX_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
-	p->flags |= PREFIX_FLAG_UPDATE;
-	if (RB_INSERT(prefix_tree, &peer->updates[pte->aid], p) != NULL)
-		fatalx("%s: RB tree invariant violated", __func__);
-	peer->stats.pending_update++;
+	if (peer_is_up(peer)) {
+		p->flags |= PREFIX_FLAG_UPDATE;
+		if (RB_INSERT(prefix_tree, &peer->updates[pte->aid], p) != NULL)
+			fatalx("%s: RB tree invariant violated", __func__);
+		peer->stats.pending_update++;
+	}
 }
 
 /*
@@ -1360,10 +1362,17 @@ prefix_adjout_withdraw(struct prefix *p)
 	p->flags &= ~PREFIX_FLAG_MASK;
 	p->lastchange = getmonotime();
 
-	p->flags |= PREFIX_FLAG_WITHDRAW;
-	if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid], p) != NULL)
-		fatalx("%s: RB tree invariant violated", __func__);
-	peer->stats.pending_withdraw++;
+	if (peer_is_up(peer)) {
+		p->flags |= PREFIX_FLAG_WITHDRAW;
+		if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid],
+		    p) != NULL)
+			fatalx("%s: RB tree invariant violated", __func__);
+		peer->stats.pending_withdraw++;
+	} else {
+		/* mark prefix dead to skip unlink on destroy */
+		p->flags |= PREFIX_FLAG_DEAD;
+		prefix_adjout_destroy(p);
+	}
 }
 
 void
