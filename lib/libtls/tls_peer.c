@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.8 2017/04/10 17:11:13 jsing Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.9 2024/12/10 08:40:30 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -22,6 +22,14 @@
 
 #include <tls.h>
 #include "tls_internal.h"
+
+const char *
+tls_peer_cert_common_name(struct tls *ctx)
+{
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	return (ctx->conninfo->common_name);
+}
 
 const char *
 tls_peer_cert_hash(struct tls *ctx)
