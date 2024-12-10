@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.8 2024/12/09 09:35:33 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.9 2024/12/10 07:33:43 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1098,7 +1098,8 @@ struct ath12k_rx_desc_info {
 
 struct ath12k_tx_desc_info {
 	TAILQ_ENTRY(ath12k_tx_desc_info) entry;
-//	struct sk_buff *skb;
+	struct mbuf	*m;
+	bus_dmamap_t	map;
 	uint32_t desc_id; /* Cookie */
 	uint8_t mac_id;
 	uint8_t pool_id;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.12 2024/12/09 09:35:33 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.13 2024/12/10 07:33:43 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8692,7 +8692,62 @@ qwz_dp_cc_desc_init(struct qwz_softc *sc)
 void
 qwz_dp_cc_cleanup(struct qwz_softc *sc)
 {
-	printf("%s:%d\n", __func__, __LINE__);
+	struct qwz_dp *dp = &sc->dp;
+	struct ath12k_rx_desc_info *rx_descs;
+	struct ath12k_tx_desc_info *tx_descs;
+	uint32_t i, j, pool_id, tx_spt_page;
+
+	if (!dp->spt_info)
+		return;
+
+#ifdef notyet
+	spin_lock_bh(&dp->rx_desc_lock);
+#endif
+
+	/* First ATH12K_NUM_RX_SPT_PAGES of allocated SPT pages are used for RX */
+	for (i = 0; i < ATH12K_NUM_RX_SPT_PAGES; i++) {
+		rx_descs = dp->spt_info->rxbaddr[i];
+		for (j = 0; j < ATH12K_MAX_SPT_ENTRIES; j++) {
+			if (!rx_descs[j].m)
+				continue;
+			bus_dmamap_unload(sc->sc_dmat, rx_descs[j].map);
+			m_freem(rx_descs[j].m);
+			rx_descs[j].m = NULL;
+		}
+
+		free(dp->spt_info->rxbaddr[i], M_DEVBUF,
+		    ATH12K_MAX_SPT_ENTRIES * sizeof(*rx_descs));
+		dp->spt_info->rxbaddr[i] = NULL;
+	}
+
+#ifdef notyet
+	spin_unlock_bh(&dp->rx_desc_lock);
+#endif
+
+	for (pool_id = 0; pool_id < ATH12K_HW_MAX_QUEUES; pool_id++) {
+#ifdef notyet
+		spin_lock_bh(&dp->tx_desc_lock[pool_id]);
+#endif
+		for (i = 0; i < ATH12K_TX_SPT_PAGES_PER_POOL; i++) {
+			tx_spt_page = i + pool_id * ATH12K_TX_SPT_PAGES_PER_POOL;
+			tx_descs = dp->spt_info->txbaddr[tx_spt_page];
+
+			for (j = 0; j < ATH12K_MAX_SPT_ENTRIES; j++) {
+				if (!tx_descs[j].m)
+					continue;
+				bus_dmamap_unload(sc->sc_dmat, tx_descs[j].map);
+				m_freem(tx_descs[j].m);
+				tx_descs[j].m = NULL;
+			}
+
+			free(dp->spt_info->txbaddr[tx_spt_page], M_DEVBUF,
+			    ATH12K_MAX_SPT_ENTRIES * sizeof(*tx_descs));
+			dp->spt_info->txbaddr[tx_spt_page] = NULL;
+		}
+#ifdef notyet
+		spin_unlock_bh(&dp->tx_desc_lock[pool_id]);
+#endif
+	}
 }
 
 int
