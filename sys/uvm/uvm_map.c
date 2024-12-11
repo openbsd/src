@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.335 2024/12/04 09:19:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.336 2024/12/11 02:00:32 dlg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3008,7 +3008,7 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 		pgl = &uvm.page_inactive;
 	} else if (pg->pg_flags & PQ_ACTIVE) {
 		pgl = &uvm.page_active;
- 	} else {
+	} else {
 		pgl = NULL;
 	}
 
@@ -3730,8 +3730,8 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 				old_entry->etype |= UVM_ET_NEEDSCOPY;
 			}
 
-	  		/* parent must now be write-protected */
-	  		protect_child = FALSE;
+			/* parent must now be write-protected */
+			protect_child = FALSE;
 		} else {
 			/*
 			 * we only need to protect the child if the
@@ -3852,7 +3852,7 @@ uvmspace_fork(struct process *pr)
 			continue;
 		}
 
-	 	/* Update process statistics. */
+		/* Update process statistics. */
 		if (!UVM_ET_ISHOLE(new_entry))
 			new_map->size += new_entry->end - new_entry->start;
 		if (!UVM_ET_ISOBJ(new_entry) && !UVM_ET_ISHOLE(new_entry) &&
@@ -4144,7 +4144,7 @@ check_copyin_add(struct vm_map *map, vaddr_t start, vaddr_t end)
 	map->check_copyin_count++;
 }
 
-/* 
+/*
  * uvm_map_check_copyin_add: remember regions which are X-only for copyin(),
  * copyinstr(), uiomove(), and others
  *
@@ -4166,7 +4166,7 @@ uvm_map_check_copyin_add(struct vm_map *map, vaddr_t start, vaddr_t end)
 }
 #endif /* PMAP_CHECK_COPYIN */
 
-/* 
+/*
  * uvm_map_immutable: block mapping/mprotect for range of addrs in map.
  *
  * => map must be unlocked
@@ -4199,7 +4199,7 @@ uvm_map_immutable(struct vm_map *map, vaddr_t start, vaddr_t end, int imut)
 			goto out;
 		entry1 = RBT_NEXT(uvm_map_addr, entry1);
 	}
-	
+
 	while (entry != NULL && entry->start < end) {
 		UVM_MAP_CLIP_END(map, entry, end);
 		if (imut)
@@ -4381,7 +4381,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		}
 		kernel_map->size += cp_len;
 
-		/* Figure out the best protection */ 
+		/* Figure out the best protection */
 		if ((flags & UVM_EXTRACT_FIXPROT) &&
 		    newentry->protection != PROT_NONE)
 			newentry->protection = newentry->max_protection;
@@ -5108,7 +5108,7 @@ uvm_map_mquery(struct vm_map *map, vaddr_t *addr_p, vsize_t sz, voff_t offset,
 
 	/* Align address to pmap_prefer unless FLAG_FIXED is set. */
 	if (!(flags & UVM_FLAG_FIXED) && offset != UVM_UNKNOWN_OFFSET) {
-	  	tmp = (addr & ~(pmap_align - 1)) | pmap_offset;
+		tmp = (addr & ~(pmap_align - 1)) | pmap_offset;
 		if (tmp < addr)
 			tmp += pmap_align;
 		addr = tmp;
