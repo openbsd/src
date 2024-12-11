@@ -1,4 +1,4 @@
-/* $OpenBSD: x_info.c,v 1.21 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_info.c,v 1.22 2024/12/11 10:28:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,7 @@ X509_INFO_new(void)
 
 	if ((ret = calloc(1, sizeof(X509_INFO))) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (NULL);
+		return NULL;
 	}
 	ret->references = 1;
 
