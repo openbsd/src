@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.264 2024/12/10 20:06:11 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.265 2024/12/11 09:19:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1415,6 +1415,20 @@ prefix_adjout_destroy(struct prefix *p)
 		pt_unref(p->pt);
 		prefix_free(p);
 	}
+}
+
+int
+prefix_adjout_reaper(struct rde_peer *peer)
+{
+	struct prefix *p, *np;
+	int count = RDE_REAPER_ROUNDS;
+
+	RB_FOREACH_SAFE(p, prefix_index, &peer->adj_rib_out, np) {
+		prefix_adjout_destroy(p);
+		if (count-- <= 0)
+			return 0;
+	}
+	return 1;
 }
 
 static struct prefix *

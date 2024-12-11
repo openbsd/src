@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.644 2024/12/10 13:40:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.645 2024/12/11 09:19:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -260,7 +260,7 @@ rde_main(int debug, int verbose)
 			}
 		}
 
-		if (peer_imsg_pending() || rde_update_queue_pending() ||
+		if (peer_work_pending() || rde_update_queue_pending() ||
 		    nexthop_pending() || rib_dump_pending())
 			timeout = 0;
 
@@ -309,6 +309,7 @@ rde_main(int debug, int verbose)
 		}
 
 		peer_foreach(rde_dispatch_imsg_peer, NULL);
+		peer_reaper(NULL);
 		rib_dump_runner();
 		nexthop_runner();
 		if (ibuf_se && imsgbuf_queuelen(ibuf_se) < SESS_MSG_HIGH_MARK) {
@@ -430,7 +431,7 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 				    "IMSG_SESSION_DOWN", peerid);
 				break;
 			}
-			peer_down(peer, NULL);
+			peer_down(peer);
 			break;
 		case IMSG_SESSION_STALE:
 		case IMSG_SESSION_NOGRACE:
@@ -4681,7 +4682,7 @@ rde_shutdown(void)
 	 */
 
 	/* First all peers go down */
-	peer_foreach(peer_down, NULL);
+	peer_shutdown();
 
 	/* free filters */
 	filterlist_free(out_rules);
@@ -4696,7 +4697,6 @@ rde_shutdown(void)
 	path_shutdown();
 	attr_shutdown();
 	pt_shutdown();
-	peer_shutdown();
 }
 
 struct rde_prefixset *

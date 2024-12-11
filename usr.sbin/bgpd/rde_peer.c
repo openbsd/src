@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.40 2024/12/10 13:40:02 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.41 2024/12/11 09:19:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -26,7 +26,8 @@
 #include "bgpd.h"
 #include "rde.h"
 
-struct peer_tree	 peertable;
+struct peer_tree	 peertable = RB_INITIALIZER(&peertable);
+struct peer_tree	 zombietable = RB_INITIALIZER(&zombietable);
 struct rde_peer		*peerself;
 static long		 imsg_pending;
 
@@ -67,8 +68,6 @@ peer_init(struct filter_head *rules)
 {
 	struct peer_config pc;
 
-	RB_INIT(&peertable);
-
 	memset(&pc, 0, sizeof(pc));
 	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
 	pc.id = PEER_ID_SELF;
@@ -80,6 +79,14 @@ peer_init(struct filter_head *rules)
 void
 peer_shutdown(void)
 {
+	struct rde_peer *peer, *np;
+
+	RB_FOREACH_SAFE(peer, peer_tree, &peertable, np)
+		peer_down(peer);
+
+	while (!RB_EMPTY(&zombietable))
+		peer_reaper(NULL);
+
 	if (!RB_EMPTY(&peertable))
 		log_warnx("%s: free non-free table", __func__);
 }
@@ -400,7 +407,7 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
  * this peer and clean up.
  */
 void
-peer_down(struct rde_peer *peer, void *bula)
+peer_down(struct rde_peer *peer)
 {
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
@@ -411,21 +418,21 @@ peer_down(struct rde_peer *peer, void *bula)
 	rib_dump_terminate(peer);
 	peer_imsg_flush(peer);
 
-	/* flush Adj-RIB-Out */
-	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
-	    peer_adjout_clear_upcall, NULL, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
-
 	/* flush Adj-RIB-In */
 	peer_flush(peer, AID_UNSPEC, 0);
 	peer->stats.prefix_cnt = 0;
-	peer->stats.prefix_out_cnt = 0;
 
 	/* free filters */
 	filterlist_free(peer->out_rules);
-
 	RB_REMOVE(peer_tree, &peertable, peer);
-	free(peer);
+
+	while (RB_INSERT(peer_tree, &zombietable, peer) != NULL) {
+		log_warnx("zombie peer conflict");
+		peer->conf.id = arc4random();
+	}
+
+	/* start reaping the zombie */
+	peer_reaper(peer);
 }
 
 /*
@@ -612,6 +619,33 @@ peer_begin_rrefresh(struct rde_peer *peer, uint8_t aid)
 		sleep(1);
 }
 
+void
+peer_reaper(struct rde_peer *peer)
+{
+	if (peer == NULL)
+		peer = RB_ROOT(&zombietable);
+	if (peer == NULL)
+		return;
+
+	if (!prefix_adjout_reaper(peer))
+		return;
+
+	RB_REMOVE(peer_tree, &zombietable, peer);
+	free(peer);
+}
+
+/*
+ * Check if any imsg are pending or any zombie peers are around.
+ * Return 0 if no work is pending.
+ */
+int
+peer_work_pending(void)
+{
+	if (!RB_EMPTY(&zombietable))
+		return 1;
+	return imsg_pending != 0;
+}
+
 /*
  * move an imsg from src to dst, disconnecting any dynamic memory from src.
  */
@@ -657,15 +691,6 @@ peer_imsg_pop(struct rde_peer *peer, struct imsg *imsg)
 	imsg_pending--;
 
 	return 1;
-}
-
-/*
- * Check if any imsg are pending, return 0 if none are pending
- */
-int
-peer_imsg_pending(void)
-{
-	return imsg_pending != 0;
 }
 
 /*

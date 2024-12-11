@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.503 2024/12/10 14:34:51 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.504 2024/12/11 09:19:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -131,6 +131,7 @@
  * IMSG_XON message will be sent and the RDE will produce more messages again.
  */
 #define RDE_RUNNER_ROUNDS	100
+#define RDE_REAPER_ROUNDS	5000
 #define SESS_MSG_HIGH_MARK	2000
 #define SESS_MSG_LOW_MARK	500
 #define CTL_MSG_HIGH_MARK	500

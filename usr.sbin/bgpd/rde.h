@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.307 2024/12/10 13:40:02 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.308 2024/12/11 09:19:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -368,16 +368,17 @@ void		 rde_generate_updates(struct rib_entry *, struct prefix *,
 		    struct prefix *, enum eval_mode);
 
 void		 peer_up(struct rde_peer *, struct session_up *);
-void		 peer_down(struct rde_peer *, void *);
+void		 peer_down(struct rde_peer *);
 void		 peer_flush(struct rde_peer *, uint8_t, time_t);
 void		 peer_stale(struct rde_peer *, uint8_t, int);
 void		 peer_blast(struct rde_peer *, uint8_t);
 void		 peer_dump(struct rde_peer *, uint8_t);
 void		 peer_begin_rrefresh(struct rde_peer *, uint8_t);
+int		 peer_work_pending(void);
+void		 peer_reaper(struct rde_peer *);
 
 void		 peer_imsg_push(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
-int		 peer_imsg_pending(void);
 void		 peer_imsg_flush(struct rde_peer *);
 
 static inline int
@@ -602,6 +603,7 @@ void		 prefix_adjout_update(struct prefix *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t);
 void		 prefix_adjout_withdraw(struct prefix *);
 void		 prefix_adjout_destroy(struct prefix *);
+int		 prefix_adjout_reaper(struct rde_peer *);
 int		 prefix_dump_new(struct rde_peer *, uint8_t, unsigned int,
 		    void *, void (*)(struct prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
