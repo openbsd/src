@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.18 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.19 2024/12/11 12:18:05 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -49,20 +49,6 @@ static const struct option ciphers_options[] = {
 		.opt.flag = &cfg.use_supported,
 	},
 	{
-		.name = "tls1",
-		.desc = "Use TLS protocol version 1",
-		.type = OPTION_VALUE,
-		.opt.value = &cfg.version,
-		.value = TLS1_VERSION,
-	},
-	{
-		.name = "tls1_1",
-		.desc = "Use TLS protocol version 1.1",
-		.type = OPTION_VALUE,
-		.opt.value = &cfg.version,
-		.value = TLS1_1_VERSION,
-	},
-	{
 		.name = "tls1_2",
 		.desc = "Use TLS protocol version 1.2",
 		.type = OPTION_VALUE,
@@ -96,7 +82,7 @@ static const struct option ciphers_options[] = {
 static void
 ciphers_usage(void)
 {
-	fprintf(stderr, "usage: ciphers [-hsVv] [-tls1] [-tls1_1] [-tls1_2] "
+	fprintf(stderr, "usage: ciphers [-hsVv] [-tls1_2] "
 	    "[-tls1_3] [cipherlist]\n");
 	options_usage(ciphers_options);
 }
