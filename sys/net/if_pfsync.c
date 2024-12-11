@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.328 2024/12/11 04:18:52 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.329 2024/12/11 04:22:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -210,7 +210,6 @@ struct pfsync_softc {
 	struct task		 sc_ltask;
 	struct task		 sc_dtask;
 	struct ip		 sc_template;
-	caddr_t			 sc_bpf;
 
 	struct pfsync_slice	 sc_slices[PFSYNC_NSLICES];
 
@@ -454,9 +453,6 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if.if_bpf, ifp, DLT_PFSYNC, PFSYNC_HDRLEN);
-#if 0
-	bpfattach(&sc->sc_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
-#endif
 #endif
 
 	return (0);
@@ -1530,12 +1526,6 @@ pfsync_sendout(struct pfsync_softc *sc, struct mbuf *m)
 	*ip = sc->sc_template;
 	ip->ip_len = htons(m->m_pkthdr.len);
 	ip->ip_id = htons(ip_randomid());
-
-#if NBPFILTER > 0
-	if_bpf = sc->sc_bpf;
-	if (if_bpf)
-		bpf_mtap_af(if_bpf, AF_INET, m, BPF_DIRECTION_OUT);
-#endif
 
 	len = m->m_pkthdr.len;
 
@@ -2660,12 +2650,6 @@ pfsync_input(struct mbuf *m, int af, uint8_t ttl, unsigned int hlen)
 		pfsyncstat_inc(pfsyncs_badttl);
 		goto leave;
 	}
-
-#if NBPFILTER > 0
-	if_bpf = sc->sc_bpf;
-	if (if_bpf)
-		bpf_mtap_af(if_bpf, af, m, BPF_DIRECTION_IN);
-#endif
 
 	m_adj(m, hlen);
 
