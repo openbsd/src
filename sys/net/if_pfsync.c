@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.327 2024/11/19 02:11:03 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.328 2024/12/11 04:18:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -849,28 +849,16 @@ put:
 static struct mbuf *
 pfsync_encap(struct pfsync_softc *sc, struct mbuf *m)
 {
-	struct {
-		struct ip		ip;
-		struct pfsync_header	ph;
-	} __packed __aligned(4) *h;
-	unsigned int mlen = m->m_pkthdr.len;
+	struct pfsync_header *ph;
 
-	m = m_prepend(m, sizeof(*h), M_DONTWAIT);
+	m = m_prepend(m, sizeof(*ph), M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
 
-	h = mtod(m, void *);
-	memset(h, 0, sizeof(*h));
-
-	mlen += sizeof(h->ph);
-	h->ph.version = PFSYNC_VERSION;
-	h->ph.len = htons(mlen);
-	/* h->ph.pfcksum */
-
-	mlen += sizeof(h->ip);
-	h->ip = sc->sc_template;
-	h->ip.ip_len = htons(mlen);
-	h->ip.ip_id = htons(ip_randomid());
+	ph = mtod(m, struct pfsync_header *);
+	memset(ph, 0, sizeof(*ph));
+	ph->version = PFSYNC_VERSION;
+	ph->len = htons(m->m_pkthdr.len);
 
 	return (m);
 }
@@ -1874,10 +1862,7 @@ pfsync_clear_states(u_int32_t creatorid, const char *ifname)
 	if (sc == NULL)
 		return;
 
-	hlen = sizeof(sc->sc_template) +
-	    sizeof(struct pfsync_header) +
-	    sizeof(*h);
-
+	hlen = sizeof(struct pfsync_header) + sizeof(*h);
 	mlen = max_linkhdr + hlen;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
@@ -3069,7 +3054,7 @@ pfsync_upd_req_init(struct pfsync_softc *sc, unsigned int count)
 		return (NULL);
 	}
 
-	mlen = max_linkhdr + sizeof(sc->sc_template) +
+	mlen = max_linkhdr +
 	    sizeof(struct pfsync_header) +
 	    sizeof(struct pfsync_subheader) +
 	    sizeof(struct pfsync_upd_req) * count;
