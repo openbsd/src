@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.9 2024/12/10 07:33:43 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.10 2024/12/11 04:53:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -270,10 +270,6 @@ struct ath12k_hw_ops {
 };
 
 struct hal_rx_ops {
-#if notyet
-	void (*tx_mesh_enable)(struct ath12k_base *ab,
-			       struct hal_tcl_data_cmd *tcl_cmd);
-#endif
 	int (*rx_desc_get_first_msdu)(struct hal_rx_desc *desc);
 #if notyet
 	bool (*rx_desc_get_last_msdu)(struct hal_rx_desc *desc);
@@ -285,7 +281,6 @@ struct hal_rx_ops {
 	uint8_t (*rx_desc_get_decap_type)(struct hal_rx_desc *desc);
 #ifdef notyet
 	uint8_t (*rx_desc_get_mesh_ctl)(struct hal_rx_desc *desc);
-	bool (*rx_desc_get_ldpc_support)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_seq_ctl_vld)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_fc_valid)(struct hal_rx_desc *desc);
 	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
@@ -297,26 +292,42 @@ struct hal_rx_ops {
 	uint8_t (*rx_desc_get_msdu_rx_bw)(struct hal_rx_desc *desc);
 #endif
 	uint32_t (*rx_desc_get_msdu_freq)(struct hal_rx_desc *desc);
-#ifdef notyet
 	uint8_t (*rx_desc_get_msdu_pkt_type)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_nss)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_mpdu_tid)(struct hal_rx_desc *desc);
 	uint16_t (*rx_desc_get_mpdu_peer_id)(struct hal_rx_desc *desc);
-	void (*rx_desc_copy_attn_end_tlv)(struct hal_rx_desc *fdesc,
-					  struct hal_rx_desc *ldesc);
+	void (*rx_desc_copy_end_tlv)(struct hal_rx_desc *fdesc,
+				     struct hal_rx_desc *ldesc);
 	uint32_t (*rx_desc_get_mpdu_start_tag)(struct hal_rx_desc *desc);
 	uint32_t (*rx_desc_get_mpdu_ppdu_id)(struct hal_rx_desc *desc);
 	void (*rx_desc_set_msdu_len)(struct hal_rx_desc *desc, uint16_t len);
-#endif
-	struct rx_attention *(*rx_desc_get_attention)(struct hal_rx_desc *desc);
 #ifdef notyet
 	uint8_t *(*rx_desc_get_msdu_payload)(struct hal_rx_desc *desc);
-	uint16_t (*mpdu_info_get_peerid)(uint8_t *tlv_data);
+	uint32_t (*rx_desc_get_mpdu_start_offset)(void);
+	uint32_t (*rx_desc_get_msdu_end_offset)(void);
 	bool (*rx_desc_mac_addr2_valid)(struct hal_rx_desc *desc);
 	uint8_t* (*rx_desc_mpdu_start_addr2)(struct hal_rx_desc *desc);
-	uint32_t (*get_ring_selector)(struct sk_buff *skb);
 #endif
+	int (*rx_desc_is_da_mcbc)(struct hal_rx_desc *desc);
+#ifdef notyet
+	void (*rx_desc_get_dot11_hdr)(struct hal_rx_desc *desc,
+				      struct ieee80211_hdr *hdr);
+	uint16_t (*rx_desc_get_mpdu_frame_ctl)(struct hal_rx_desc *desc);
+	void (*rx_desc_get_crypto_header)(struct hal_rx_desc *desc,
+					  uint8_t *crypto_hdr,
+					  enum hal_encrypt_type enctype);
+#endif
+	bool (*dp_rx_h_msdu_done)(struct hal_rx_desc *desc);
+#ifdef notyet
+	bool (*dp_rx_h_l4_cksum_fail)(struct hal_rx_desc *desc);
+	bool (*dp_rx_h_ip_cksum_fail)(struct hal_rx_desc *desc);
+#endif
+	int (*dp_rx_h_is_decrypted)(struct hal_rx_desc *desc);
+	uint32_t (*dp_rx_h_mpdu_err)(struct hal_rx_desc *desc);
 	uint32_t (*rx_desc_get_desc_size)(void);
+#ifdef notyet
+	uint8_t (*rx_desc_get_msdu_src_link_id)(struct hal_rx_desc *desc);
+#endif
 };
 
 extern const struct hal_rx_ops hal_rx_wcn7850_ops;
