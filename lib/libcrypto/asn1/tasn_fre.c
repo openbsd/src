@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.23 2023/07/28 10:00:10 tb Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.24 2024/12/11 11:22:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -152,10 +152,9 @@ asn1_item_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		 * determine the type of the field it defines. So
 		 * free up in reverse order.
 		 */
-		tt = it->templates + it->tcount - 1;
-		for (i = 0; i < it->tcount; tt--, i++) {
+		for (i = it->tcount - 1; i >= 0; i--) {
 			ASN1_VALUE **pseqval;
-			seqtt = asn1_do_adb(pval, tt, 0);
+			seqtt = asn1_do_adb(pval, &it->templates[i], 0);
 			if (!seqtt)
 				continue;
 			pseqval = asn1_get_field_ptr(pval, seqtt);
