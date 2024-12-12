@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.89 2024/11/30 21:09:59 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.90 2024/12/12 10:00:15 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -275,8 +275,7 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 	 * If the cofactor is too large, we cannot guess it and default to zero.
 	 * The RHS of below is a strict overestimate of log(4 * sqrt(q)).
 	 */
-	if (BN_num_bits(&group->order) <=
-	    (BN_num_bits(&group->field) + 1) / 2 + 3)
+	if (BN_num_bits(&group->order) <= (BN_num_bits(&group->p) + 1) / 2 + 3)
 		goto done;
 
 	/*
@@ -291,7 +290,7 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 	if (!BN_add_word(cofactor, 1))
 		goto err;
 	/* h = q + 1 + n/2 */
-	if (!BN_add(cofactor, cofactor, &group->field))
+	if (!BN_add(cofactor, cofactor, &group->p))
 		goto err;
 	/* h = (q + 1 + n/2) / n */
 	if (!BN_div_ct(cofactor, NULL, cofactor, &group->order, ctx))
@@ -299,7 +298,7 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 
  done:
 	/* Use Hasse's theorem to bound the cofactor. */
-	if (BN_num_bits(cofactor) > BN_num_bits(&group->field) + 1) {
+	if (BN_num_bits(cofactor) > BN_num_bits(&group->p) + 1) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
@@ -325,8 +324,8 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 		return 0;
 	}
 
-	/* Require group->field >= 1. */
-	if (BN_is_zero(&group->field) || BN_is_negative(&group->field)) {
+	/* Require p >= 1. */
+	if (BN_is_zero(&group->p) || BN_is_negative(&group->p)) {
 		ECerror(EC_R_INVALID_FIELD);
 		return 0;
 	}
@@ -336,7 +335,7 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	 * than the field cardinality due to Hasse's theorem.
 	 */
 	if (order == NULL || BN_cmp(order, BN_value_one()) <= 0 ||
-	    BN_num_bits(order) > BN_num_bits(&group->field) + 1) {
+	    BN_num_bits(order) > BN_num_bits(&group->p) + 1) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.13 2024/12/06 15:49:37 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.14 2024/12/12 10:00:15 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -87,7 +87,7 @@
 static int
 ec_group_init(EC_GROUP *group)
 {
-	BN_init(&group->field);
+	BN_init(&group->p);
 	BN_init(&group->a);
 	BN_init(&group->b);
 	group->a_is_minus3 = 0;
@@ -97,7 +97,7 @@ ec_group_init(EC_GROUP *group)
 static void
 ec_group_finish(EC_GROUP *group)
 {
-	BN_free(&group->field);
+	BN_free(&group->p);
 	BN_free(&group->a);
 	BN_free(&group->b);
 }
@@ -105,7 +105,7 @@ ec_group_finish(EC_GROUP *group)
 static int
 ec_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-	if (!bn_copy(&dest->field, &src->field))
+	if (!bn_copy(&dest->p, &src->p))
 		return 0;
 	if (!bn_copy(&dest->a, &src->a))
 		return 0;
@@ -132,7 +132,7 @@ ec_decode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx
 static int
 ec_encode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx)
 {
-	if (!BN_nnmod(bn, x, &group->field, ctx))
+	if (!BN_nnmod(bn, x, &group->p, ctx))
 		return 0;
 
 	if (group->meth->field_encode != NULL)
@@ -145,7 +145,7 @@ static int
 ec_encode_z_coordinate(const EC_GROUP *group, BIGNUM *bn, int *is_one,
     const BIGNUM *z, BN_CTX *ctx)
 {
-	if (!BN_nnmod(bn, z, &group->field, ctx))
+	if (!BN_nnmod(bn, z, &group->p, ctx))
 		return 0;
 
 	*is_one = BN_is_one(bn);
@@ -176,9 +176,9 @@ ec_group_set_curve(EC_GROUP *group,
 	if ((a_plus_3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!bn_copy(&group->field, p))
+	if (!bn_copy(&group->p, p))
 		goto err;
-	BN_set_negative(&group->field, 0);
+	BN_set_negative(&group->p, 0);
 
 	if (!ec_encode_scalar(group, &group->a, a, ctx))
 		goto err;
@@ -187,7 +187,7 @@ ec_group_set_curve(EC_GROUP *group,
 
 	if (!BN_set_word(a_plus_3, 3))
 		goto err;
-	if (!BN_mod_add(a_plus_3, a_plus_3, a, &group->field, ctx))
+	if (!BN_mod_add(a_plus_3, a_plus_3, a, &group->p, ctx))
 		goto err;
 
 	group->a_is_minus3 = BN_is_zero(a_plus_3);
@@ -205,7 +205,7 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
     BN_CTX *ctx)
 {
 	if (p != NULL) {
-		if (!bn_copy(p, &group->field))
+		if (!bn_copy(p, &group->p))
 			return 0;
 	}
 	if (!ec_decode_scalar(group, a, &group->a, ctx))
@@ -219,7 +219,7 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 static int
 ec_group_get_degree(const EC_GROUP *group)
 {
-	return BN_num_bits(&group->field);
+	return BN_num_bits(&group->p);
 }
 
 static int
@@ -375,7 +375,7 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 		goto done;
 	}
 
-	if (BN_mod_inverse_ct(Z_1, z, &group->field, ctx) == NULL) {
+	if (BN_mod_inverse_ct(Z_1, z, &group->p, ctx) == NULL) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -384,7 +384,7 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 		if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
 			goto err;
 	} else {
-		if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx))
+		if (!BN_mod_sqr(Z_2, Z_1, &group->p, ctx))
 			goto err;
 	}
 
@@ -402,7 +402,7 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 			if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
 				goto err;
 		} else {
-			if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx))
+			if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->p, ctx))
 				goto err;
 		}
 
@@ -427,7 +427,7 @@ static int
 ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *in_x, int y_bit, BN_CTX *ctx)
 {
-	const BIGNUM *p = &group->field, *a = &group->a, *b = &group->b;
+	const BIGNUM *p = &group->p, *a = &group->a, *b = &group->b;
 	BIGNUM *w, *x, *y;
 	int ret = 0;
 
@@ -500,7 +500,7 @@ ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 		ECerror(EC_R_INVALID_COMPRESSION_BIT);
 		goto err;
 	}
-	if (!BN_usub(y, &group->field, y))
+	if (!BN_usub(y, &group->p, y))
 		goto err;
 
 	if (y_bit != BN_is_odd(y)) {
@@ -540,7 +540,7 @@ ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
 
 	field_mul = group->meth->field_mul;
 	field_sqr = group->meth->field_sqr;
-	p = &group->field;
+	p = &group->p;
 
 	BN_CTX_start(ctx);
 
@@ -718,7 +718,7 @@ ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 
 	field_mul = group->meth->field_mul;
 	field_sqr = group->meth->field_sqr;
-	p = &group->field;
+	p = &group->p;
 
 	BN_CTX_start(ctx);
 
@@ -845,7 +845,7 @@ ec_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 		/* point is its own inverse */
 		return 1;
 
-	return BN_usub(&point->Y, &group->field, &point->Y);
+	return BN_usub(&point->Y, &group->p, &point->Y);
 }
 
 static int
@@ -862,7 +862,7 @@ ec_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 
 	field_mul = group->meth->field_mul;
 	field_sqr = group->meth->field_sqr;
-	p = &group->field;
+	p = &group->p;
 
 	BN_CTX_start(ctx);
 
@@ -1130,7 +1130,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 	 * Now use a single explicit inversion to replace every non-zero
 	 * points[i]->Z by its inverse.
 	 */
-	if (!BN_mod_inverse_nonct(tmp, prod_Z[num - 1], &group->field, ctx)) {
+	if (!BN_mod_inverse_nonct(tmp, prod_Z[num - 1], &group->p, ctx)) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -1214,13 +1214,13 @@ static int
 ec_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_CTX *ctx)
 {
-	return BN_mod_mul(r, a, b, &group->field, ctx);
+	return BN_mod_mul(r, a, b, &group->p, ctx);
 }
 
 static int
 ec_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
-	return BN_mod_sqr(r, a, &group->field, ctx);
+	return BN_mod_sqr(r, a, &group->p, ctx);
 }
 
 /*
@@ -1228,7 +1228,7 @@ ec_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
  *
  *	(X, Y, Z) = (lambda^2 * X, lambda^3 * Y, lambda * Z)
  *
- * where lambda is in the interval [1, group->field).
+ * where lambda is in the interval [1, p).
  */
 static int
 ec_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
@@ -1243,8 +1243,8 @@ ec_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* Generate lambda in [1, group->field). */
-	if (!bn_rand_interval(lambda, 1, &group->field))
+	/* Generate lambda in [1, p). */
+	if (!bn_rand_interval(lambda, 1, &group->p))
 		goto err;
 
 	if (group->meth->field_encode != NULL &&
@@ -1392,7 +1392,7 @@ ec_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	if (!BN_swap_ct(kbit, k, lambda, group_top + 2))
 		goto err;
 
-	group_top = group->field.top;
+	group_top = group->p.top;
 	if (!bn_wexpand(&s->X, group_top) ||
 	    !bn_wexpand(&s->Y, group_top) ||
 	    !bn_wexpand(&s->Z, group_top) ||

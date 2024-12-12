@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.42 2024/12/06 15:49:37 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.43 2024/12/12 10:00:15 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -181,16 +181,11 @@ struct ec_group_st {
 	 */
 
 	/*
-	 * Field specification. For GF(p) this is the modulus; for GF(2^m),
-	 * this is the irreducible polynomial defining the field.
+	 * Coefficients of the Weierstrass equation y^2 = x^3 + a*x + b (mod p).
 	 */
-	BIGNUM field;
-
-	/*
-	 * Curve coefficients. In characteristic > 3, the curve is defined by a
-	 * Weierstrass equation of the form y^2 = x^3 + a*x + b.
-	 */
-	BIGNUM a, b;
+	BIGNUM p;
+	BIGNUM a;
+	BIGNUM b;
 
 	/* Enables optimized point arithmetics for special case. */
 	int a_is_minus3;
