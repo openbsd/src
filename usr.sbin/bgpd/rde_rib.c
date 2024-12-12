@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.265 2024/12/11 09:19:44 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.266 2024/12/12 20:19:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1273,7 +1273,6 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 			/* nothing changed */
 			p->validation_state = state->vstate;
 			p->lastchange = getmonotime();
-			p->flags &= ~PREFIX_FLAG_STALE;
 			return;
 		}
 
@@ -1344,7 +1343,6 @@ prefix_adjout_withdraw(struct prefix *p)
 	/* already a withdraw, shortcut */
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
 		p->lastchange = getmonotime();
-		p->flags &= ~PREFIX_FLAG_STALE;
 		return;
 	}
 	/* pending update just got withdrawn */
@@ -1414,6 +1412,24 @@ prefix_adjout_destroy(struct prefix *p)
 		/* remove the last prefix reference before free */
 		pt_unref(p->pt);
 		prefix_free(p);
+	}
+}
+
+void
+prefix_adjout_flush_pending(struct rde_peer *peer)
+{
+	struct prefix *p, *np;
+	uint8_t aid;
+
+	for (aid = AID_MIN; aid < AID_MAX; aid++) {
+		RB_FOREACH_SAFE(p, prefix_tree, &peer->withdraws[aid], np) {
+			prefix_adjout_destroy(p);
+		}
+		RB_FOREACH_SAFE(p, prefix_tree, &peer->updates[aid], np) {
+			p->flags &= ~PREFIX_FLAG_UPDATE;
+			RB_REMOVE(prefix_tree, &peer->updates[aid], p);
+			peer->stats.pending_update--;
+		}
 	}
 }
 

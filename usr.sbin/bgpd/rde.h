@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.308 2024/12/11 09:19:44 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.309 2024/12/12 20:19:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -289,7 +289,7 @@ struct prefix {
 #define	PREFIX_FLAG_WITHDRAW	0x0001	/* enqueued on withdraw queue */
 #define	PREFIX_FLAG_UPDATE	0x0002	/* enqueued on update queue */
 #define	PREFIX_FLAG_DEAD	0x0004	/* locked but removed */
-#define	PREFIX_FLAG_STALE	0x0008	/* stale entry (graceful reload) */
+#define	PREFIX_FLAG_STALE	0x0008	/* stale entry (for addpath) */
 #define	PREFIX_FLAG_MASK	0x000f	/* mask for the prefix types */
 #define	PREFIX_FLAG_ADJOUT	0x0010	/* prefix is in the adj-out rib */
 #define	PREFIX_FLAG_EOR		0x0020	/* prefix is EoR */
@@ -369,6 +369,7 @@ void		 rde_generate_updates(struct rib_entry *, struct prefix *,
 
 void		 peer_up(struct rde_peer *, struct session_up *);
 void		 peer_down(struct rde_peer *);
+void		 peer_delete(struct rde_peer *);
 void		 peer_flush(struct rde_peer *, uint8_t, time_t);
 void		 peer_stale(struct rde_peer *, uint8_t, int);
 void		 peer_blast(struct rde_peer *, uint8_t);
@@ -603,6 +604,7 @@ void		 prefix_adjout_update(struct prefix *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t);
 void		 prefix_adjout_withdraw(struct prefix *);
 void		 prefix_adjout_destroy(struct prefix *);
+void		 prefix_adjout_flush_pending(struct rde_peer *);
 int		 prefix_adjout_reaper(struct rde_peer *);
 int		 prefix_dump_new(struct rde_peer *, uint8_t, unsigned int,
 		    void *, void (*)(struct prefix *, void *),

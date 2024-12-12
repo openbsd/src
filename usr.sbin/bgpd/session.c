@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.502 2024/12/10 14:34:51 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.503 2024/12/12 20:19:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -270,6 +270,9 @@ session_main(int debug, int verbose)
 					    NULL);
 					timer_remove_all(&p->timers);
 					tcp_md5_del_listener(conf, p);
+					if (imsg_rde(IMSG_SESSION_DELETE,
+					    p->conf.id, NULL, 0) == -1)
+						fatalx("imsg_compose error");
 					msgbuf_free(p->wbuf);
 					RB_REMOVE(peer_head, &conf->peers, p);
 					log_peer_warnx(&p->conf, "removed");
@@ -405,6 +408,12 @@ session_main(int debug, int verbose)
 				case Timer_SessionDown:
 					timer_stop(&p->timers,
 					    Timer_SessionDown);
+
+					if (imsg_rde(IMSG_SESSION_DELETE,
+					    p->conf.id, NULL, 0) == -1)
+						fatalx("imsg_compose error");
+					p->rdesession = 0;
+
 					/* finally delete this cloned peer */
 					if (p->template)
 						p->reconf_action =
@@ -3462,9 +3471,13 @@ session_up(struct peer *p)
 
 	timer_stop(&p->timers, Timer_SessionDown);
 
-	if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
-	    &p->conf, sizeof(p->conf)) == -1)
-		fatalx("imsg_compose error");
+	if (!p->rdesession) {
+		/* inform rde about new peer */
+		if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
+		    &p->conf, sizeof(p->conf)) == -1)
+			fatalx("imsg_compose error");
+		p->rdesession = 1;
+	}
 
 	if (p->local.aid == AID_INET) {
 		sup.local_v4_addr = p->local;
@@ -3632,10 +3645,15 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 			imsg_compose(ibuf_main, IMSG_PFKEY_RELOAD,
 			    p->conf.id, 0, -1, NULL, 0);
 
-		/* sync the RDE in case we keep the peer */
-		if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
-		    &p->conf, sizeof(struct peer_config)) == -1)
-			fatalx("imsg_compose error");
+		/*
+		 * If the session is established or the SessionDown timer is
+		 * running sync with the RDE
+		 */
+		if (p->rdesession) {
+			if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
+			    &p->conf, sizeof(struct peer_config)) == -1)
+				fatalx("imsg_compose error");
+		}
 
 		/* apply the config to all clones of a template */
 		if (p->conf.template) {
@@ -3645,9 +3663,13 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 					continue;
 				session_template_clone(xp, NULL, xp->conf.id,
 				    xp->conf.remote_as);
-				if (imsg_rde(IMSG_SESSION_ADD, xp->conf.id,
-				    &xp->conf, sizeof(xp->conf)) == -1)
-					fatalx("imsg_compose error");
+
+				if (p->rdesession) {
+					if (imsg_rde(IMSG_SESSION_ADD,
+					    xp->conf.id, &xp->conf,
+					    sizeof(xp->conf)) == -1)
+						fatalx("imsg_compose error");
+				}
 			}
 		}
 	}

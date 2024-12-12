@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.645 2024/12/11 09:19:44 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.646 2024/12/12 20:19:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -432,6 +432,12 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 				break;
 			}
 			peer_down(peer);
+			break;
+		case IMSG_SESSION_DELETE:
+			/* silently ignore deletes for unknown peers */
+			if ((peer = peer_get(peerid)) == NULL)
+				break;
+			peer_delete(peer);
 			break;
 		case IMSG_SESSION_STALE:
 		case IMSG_SESSION_NOGRACE:

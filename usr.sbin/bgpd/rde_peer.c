@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.41 2024/12/11 09:19:44 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.42 2024/12/12 20:19:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -82,7 +82,7 @@ peer_shutdown(void)
 	struct rde_peer *peer, *np;
 
 	RB_FOREACH_SAFE(peer, peer_tree, &peertable, np)
-		peer_down(peer);
+		peer_delete(peer);
 
 	while (!RB_EMPTY(&zombietable))
 		peer_reaper(NULL);
@@ -241,7 +241,8 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 	/* skip ourself */
 	if (peer == peerself)
 		return;
-	if (!peer_is_up(peer))
+	/* skip peers that never had a session open */
+	if (peer->state == PEER_NONE)
 		return;
 	/* skip peers using a different rib */
 	if (peer->loc_rib_id != re->rib_id)
@@ -286,28 +287,6 @@ rde_generate_updates(struct rib_entry *re, struct prefix *newpath,
 /*
  * Various RIB walker callbacks.
  */
-static void
-peer_adjout_clear_upcall(struct prefix *p, void *arg)
-{
-	prefix_adjout_destroy(p);
-}
-
-static void
-peer_adjout_stale_upcall(struct prefix *p, void *arg)
-{
-	if (p->flags & PREFIX_FLAG_DEAD) {
-		return;
-	} else if (p->flags & PREFIX_FLAG_WITHDRAW) {
-		/* no need to keep stale withdraws, they miss all attributes */
-		prefix_adjout_destroy(p);
-		return;
-	} else if (p->flags & PREFIX_FLAG_UPDATE) {
-		RB_REMOVE(prefix_tree, &prefix_peer(p)->updates[p->pt->aid], p);
-		p->flags &= ~PREFIX_FLAG_UPDATE;
-	}
-	p->flags |= PREFIX_FLAG_STALE;
-}
-
 struct peer_flush {
 	struct rde_peer *peer;
 	time_t		 staletime;
@@ -361,6 +340,7 @@ void
 peer_up(struct rde_peer *peer, struct session_up *sup)
 {
 	uint8_t	 i;
+	int force_sync = 1;
 
 	if (peer->state == PEER_ERR) {
 		/*
@@ -369,21 +349,33 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 		 */
 		rib_dump_terminate(peer);
 		peer_imsg_flush(peer);
-		if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
-		    peer_adjout_clear_upcall, NULL, NULL) == -1)
-			fatal("%s: prefix_dump_new", __func__);
 		peer_flush(peer, AID_UNSPEC, 0);
 		peer->stats.prefix_cnt = 0;
-		peer->stats.prefix_out_cnt = 0;
 		peer->state = PEER_DOWN;
 	}
-	peer->remote_bgpid = sup->remote_bgpid;
-	peer->short_as = sup->short_as;
+
+	/*
+	 * Check if no value changed during flap to decide if the RIB
+	 * is in sync. The capa check is maybe too strict but it should
+	 * not matter for normal operation.
+	 */
+	if (memcmp(&peer->remote_addr, &sup->remote_addr,
+	    sizeof(sup->remote_addr)) == 0 &&
+	    memcmp(&peer->local_v4_addr, &sup->local_v4_addr,
+	    sizeof(sup->local_v4_addr)) == 0 &&
+	    memcmp(&peer->local_v6_addr, &sup->local_v6_addr,
+	    sizeof(sup->local_v6_addr)) == 0 &&
+	    memcmp(&peer->capa, &sup->capa, sizeof(sup->capa)) == 0)
+		force_sync = 0;
+
 	peer->remote_addr = sup->remote_addr;
 	peer->local_v4_addr = sup->local_v4_addr;
 	peer->local_v6_addr = sup->local_v6_addr;
+	memcpy(&peer->capa, &sup->capa, sizeof(sup->capa));
+	/* the Adj-RIB-Out does not depend on those */
+	peer->remote_bgpid = sup->remote_bgpid;
 	peer->local_if_scope = sup->if_scope;
-	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
+	peer->short_as = sup->short_as;
 
 	/* clear eor markers depending on GR flags */
 	if (peer->capa.grestart.restart) {
@@ -396,9 +388,16 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 	}
 	peer->state = PEER_UP;
 
-	for (i = AID_MIN; i < AID_MAX; i++) {
-		if (peer->capa.mp[i])
-			peer_dump(peer, i);
+	if (!force_sync) {
+		for (i = AID_MIN; i < AID_MAX; i++) {
+			if (peer->capa.mp[i])
+				peer_blast(peer, i);
+		}
+	} else {
+		for (i = AID_MIN; i < AID_MAX; i++) {
+			if (peer->capa.mp[i])
+				peer_dump(peer, i);
+		}
 	}
 }
 
@@ -416,16 +415,24 @@ peer_down(struct rde_peer *peer)
 	 * and flush all pending imsg from the SE.
 	 */
 	rib_dump_terminate(peer);
+	prefix_adjout_flush_pending(peer);
 	peer_imsg_flush(peer);
 
 	/* flush Adj-RIB-In */
 	peer_flush(peer, AID_UNSPEC, 0);
 	peer->stats.prefix_cnt = 0;
+}
+
+void
+peer_delete(struct rde_peer *peer)
+{
+	if (peer->state != PEER_DOWN)
+		peer_down(peer);
 
 	/* free filters */
 	filterlist_free(peer->out_rules);
-	RB_REMOVE(peer_tree, &peertable, peer);
 
+	RB_REMOVE(peer_tree, &peertable, peer);
 	while (RB_INSERT(peer_tree, &zombietable, peer) != NULL) {
 		log_warnx("zombie peer conflict");
 		peer->conf.id = arc4random();
@@ -481,16 +488,11 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 	 * and flush all pending imsg from the SE.
 	 */
 	rib_dump_terminate(peer);
+	prefix_adjout_flush_pending(peer);
 	peer_imsg_flush(peer);
 
 	if (flushall)
 		peer_flush(peer, aid, 0);
-
-	/* XXX this is not quite correct */
-	/* mark Adj-RIB-Out stale for this peer */
-	if (prefix_dump_new(peer, aid, 0, NULL,
-	    peer_adjout_stale_upcall, NULL, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
 
 	/* make sure new prefixes start on a higher timestamp */
 	while (now >= getmonotime())
@@ -504,10 +506,7 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 static void
 peer_blast_upcall(struct prefix *p, void *ptr)
 {
-	if (p->flags & PREFIX_FLAG_STALE) {
-		/* remove stale entries */
-		prefix_adjout_destroy(p);
-	} else if (p->flags & PREFIX_FLAG_DEAD) {
+	if (p->flags & PREFIX_FLAG_DEAD) {
 		/* ignore dead prefixes, they will go away soon */
 	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
 		/* put entries on the update queue if not already on a queue */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.504 2024/12/11 09:19:44 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.505 2024/12/12 20:19:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -683,6 +683,7 @@ enum imsg_type {
 	IMSG_SESSION_ADD,
 	IMSG_SESSION_UP,
 	IMSG_SESSION_DOWN,
+	IMSG_SESSION_DELETE,
 	IMSG_SESSION_STALE,
 	IMSG_SESSION_NOGRACE,
 	IMSG_SESSION_FLUSH,
