@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.17 2024/03/28 12:09:09 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.18 2024/12/12 09:54:44 tb Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -77,10 +77,10 @@ sm3_block_data_order(SM3_CTX *ctx, const void *_in, size_t num)
 		G = ctx->G;
 		H = ctx->H;
 
-        	/*
-        	 * We have to load all message bytes immediately since SM3 reads
-        	 * them slightly out of order.
-        	 */
+		/*
+		 * We have to load all message bytes immediately since SM3 reads
+		 * them slightly out of order.
+		 */
 		if ((uintptr_t)in % 4 == 0) {
 			/* Input is 32 bit aligned. */
 			in32 = (const SM3_WORD *)in;
