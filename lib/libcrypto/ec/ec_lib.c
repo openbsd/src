@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.90 2024/12/12 10:00:15 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.91 2024/12/12 10:02:00 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -227,16 +227,16 @@ ec_group_get_field_type(const EC_GROUP *group)
 
 /*
  * If there is a user-provided cofactor, sanity check and use it. Otherwise
- * try computing the cofactor from generator order n and field cardinality q.
+ * try computing the cofactor from generator order n and field cardinality p.
  * This works for all curves of cryptographic interest.
  *
- * Hasse's theorem: | h * n - (q + 1) | <= 2 * sqrt(q)
+ * Hasse's theorem: | h * n - (p + 1) | <= 2 * sqrt(p)
  *
- * So: h_min = (q + 1 - 2*sqrt(q)) / n and h_max = (q + 1 + 2*sqrt(q)) / n and
- * therefore h_max - h_min = 4*sqrt(q) / n. So if n > 4*sqrt(q) holds, there is
+ * So: h_min = (p + 1 - 2*sqrt(p)) / n and h_max = (p + 1 + 2*sqrt(p)) / n and
+ * therefore h_max - h_min = 4*sqrt(p) / n. So if n > 4*sqrt(p) holds, there is
  * only one possible value for h:
  *
- *	h = \lfloor (h_min + h_max)/2 \rceil = \lfloor (q + 1)/n \rceil
+ *	h = \lfloor (h_min + h_max)/2 \rceil = \lfloor (p + 1)/n \rceil
  *
  * Otherwise, zero cofactor and return success.
  */
@@ -273,14 +273,14 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 
 	/*
 	 * If the cofactor is too large, we cannot guess it and default to zero.
-	 * The RHS of below is a strict overestimate of log(4 * sqrt(q)).
+	 * The RHS of below is a strict overestimate of log(4 * sqrt(p)).
 	 */
 	if (BN_num_bits(&group->order) <= (BN_num_bits(&group->p) + 1) / 2 + 3)
 		goto done;
 
 	/*
 	 * Compute
-	 *     h = \lfloor (q + 1)/n \rceil = \lfloor (q + 1 + n/2) / n \rfloor.
+	 *     h = \lfloor (p + 1)/n \rceil = \lfloor (p + 1 + n/2) / n \rfloor.
 	 */
 
 	/* h = n/2 */
@@ -289,10 +289,10 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 	/* h = 1 + n/2 */
 	if (!BN_add_word(cofactor, 1))
 		goto err;
-	/* h = q + 1 + n/2 */
+	/* h = p + 1 + n/2 */
 	if (!BN_add(cofactor, cofactor, &group->p))
 		goto err;
-	/* h = (q + 1 + n/2) / n */
+	/* h = (p + 1 + n/2) / n */
 	if (!BN_div_ct(cofactor, NULL, cofactor, &group->order, ctx))
 		goto err;
 
