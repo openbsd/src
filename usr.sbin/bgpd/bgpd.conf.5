@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.244 2024/12/09 11:38:38 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.245 2024/12/13 19:21:03 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2024 $
+.Dd $Mdocdate: December 13 2024 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -396,6 +396,10 @@ is the routing domain in which
 .Xr bgpd 8
 has been started.
 By default, no restricted socket is created.
+.Pp
+.It Ic staletime Ar seconds
+Set the upper bound in seconds stale routes are kept during graceful restart.
+The default is 180 seconds.
 .Pp
 .It Xo
 .Ic transparent-as
@@ -1107,6 +1111,18 @@ The default is
 .Ic no .
 .Pp
 .It Xo
+.Ic announce graceful notification
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+the graceful notification extension to graceful restart is announced.
+The default is
+.Ic no .
+.Ic announce refresh
+must be enabled to enable graceful notifications.
+.Pp
+.It Xo
 .Ic announce policy
 .Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
@@ -1534,6 +1550,10 @@ and
 .Ic nexthop self .
 These sets are rewritten into filter rules and can be viewed with
 .Dq bgpd -nv .
+.Pp
+.It Ic staletime Ar seconds
+Set the upper bound stale time in seconds for graceful restart.
+Inherited from the global configuration if not given.
 .Pp
 .It Ic tcp md5sig password Ar secret
 .It Ic tcp md5sig key Ar secret

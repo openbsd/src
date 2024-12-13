@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.472 2024/12/10 16:29:07 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.473 2024/12/13 19:21:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,13 +243,13 @@ typedef struct {
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
 %token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
-%token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT MINVERSION
+%token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT MINVERSION STALETIME
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
 %token	FLOWSPEC PROTO FLAGS FRAGMENT TOS LENGTH ICMPTYPE CODE
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH EXTENDED
-%token	SEND RECV PLUS POLICY ROLE
+%token	SEND RECV PLUS POLICY ROLE GRACEFU NOTIFICATIONL
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT FILTERED
@@ -774,6 +774,14 @@ conf_main	: AS as4number		{
 				YYERROR;
 			}
 			conf->min_holdtime = $3;
+		}
+		| STALETIME NUMBER	{
+			if ($2 < MIN_HOLDTIME || $2 > USHRT_MAX) {
+				yyerror("staletime must be between %u and %u",
+				    MIN_HOLDTIME, USHRT_MAX);
+				YYERROR;
+			}
+			conf->staletime = $2;
 		}
 		| LISTEN ON address	{
 			struct listen_addr	*la;
@@ -1913,6 +1921,14 @@ peeropts	: REMOTEAS as4number	{
 			}
 			curpeer->conf.min_holdtime = $3;
 		}
+		| STALETIME NUMBER	{
+			if ($2 < MIN_HOLDTIME || $2 > USHRT_MAX) {
+				yyerror("staletime must be between %u and %u",
+				    MIN_HOLDTIME, USHRT_MAX);
+				YYERROR;
+			}
+			curpeer->conf.staletime = $2;
+		}
 		| ANNOUNCE af safi enforce {
 			uint8_t		aid, safi;
 			uint16_t	afi;
@@ -1943,6 +1959,9 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| ANNOUNCE RESTART yesnoenforce {
 			curpeer->conf.capabilities.grestart.restart = $3;
+		}
+		| ANNOUNCE GRACEFUL NOTIFICATION yesno {
+			curpeer->conf.capabilities.grestart.grnotification = $4;
 		}
 		| ANNOUNCE AS4BYTE yesnoenforce {
 			curpeer->conf.capabilities.as4byte = $3;
@@ -3547,6 +3566,7 @@ lookup(char *s)
 		{ "flowspec",		FLOWSPEC },
 		{ "fragment",		FRAGMENT },
 		{ "from",		FROM },
+		{ "graceful",		GRACEFUL },
 		{ "group",		GROUP },
 		{ "holdtime",		HOLDTIME },
 		{ "ibgp",		IBGP },
@@ -3586,6 +3606,7 @@ lookup(char *s)
 		{ "nexthop",		NEXTHOP },
 		{ "no-modify",		NOMODIFY },
 		{ "none",		NONE },
+		{ "notification",	NOTIFICATION },
 		{ "on",			ON },
 		{ "or-longer",		LONGER },
 		{ "origin",		ORIGIN },
@@ -3631,6 +3652,7 @@ lookup(char *s)
 		{ "socket",		SOCKET },
 		{ "source-as",		SOURCEAS },
 		{ "spi",		SPI },
+		{ "staletime",		STALETIME },
 		{ "static",		STATIC },
 		{ "tcp",		TCP },
 		{ "to",			TO },
@@ -4029,6 +4051,7 @@ init_config(struct bgpd_config *c)
 
 	c->min_holdtime = MIN_HOLDTIME;
 	c->holdtime = INTERVAL_HOLD;
+	c->staletime = INTERVAL_STALE;
 	c->connectretry = INTERVAL_CONNECTRETRY;
 	c->bgpid = get_bgpid();
 	c->fib_priority = kr_default_prio();

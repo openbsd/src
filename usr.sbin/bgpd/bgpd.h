@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.505 2024/12/12 20:19:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.506 2024/12/13 19:21:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -319,6 +319,7 @@ struct bgpd_config {
 	uint16_t				 holdtime;
 	uint16_t				 min_holdtime;
 	uint16_t				 connectretry;
+	uint16_t				 staletime;
 	uint8_t					 fib_priority;
 	uint8_t					 filtered_in_locrib;
 };
@@ -406,6 +407,7 @@ struct capabilities {
 		int16_t	timeout;	/* graceful restart timeout */
 		int8_t	flags[AID_MAX];	/* graceful restart per AID flags */
 		int8_t	restart;	/* graceful restart, RFC 4724 */
+		int8_t	grnotification;	/* graceful notification, RFC 8538 */
 	}	grestart;
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
 	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
@@ -435,6 +437,7 @@ enum capa_codes {
 #define	CAPA_GR_RESTARTING	0x08
 #define	CAPA_GR_TIMEMASK	0x0fff
 #define	CAPA_GR_R_FLAG		0x8000
+#define	CAPA_GR_N_FLAG		0x4000
 #define	CAPA_GR_F_FLAG		0x80
 
 /* flags for RFC 7911 - enhanced router refresh */
@@ -478,6 +481,7 @@ struct peer_config {
 	uint16_t		 max_out_prefix_restart;
 	uint16_t		 holdtime;
 	uint16_t		 min_holdtime;
+	uint16_t		 staletime;
 	uint16_t		 local_short_as;
 	uint16_t		 remote_port;
 	uint8_t			 template;
@@ -1662,7 +1666,8 @@ static const char * const eventnames[] = {
 	"OPEN message received",
 	"KEEPALIVE message received",
 	"UPDATE message received",
-	"NOTIFICATION received"
+	"NOTIFICATION received",
+	"graceful NOTIFICATION received",
 };
 
 static const char * const errnames[] = {

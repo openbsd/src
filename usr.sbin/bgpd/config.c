@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.112 2024/10/01 11:49:24 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.113 2024/12/13 19:21:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -85,6 +85,7 @@ copy_config(struct bgpd_config *to, struct bgpd_config *from)
 	to->short_as = from->short_as;
 	to->holdtime = from->holdtime;
 	to->min_holdtime = from->min_holdtime;
+	to->staletime = from->staletime;
 	to->connectretry = from->connectretry;
 	to->fib_priority = from->fib_priority;
 	to->filtered_in_locrib = from->filtered_in_locrib;

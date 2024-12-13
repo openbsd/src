@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.177 2024/12/09 10:51:46 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.178 2024/12/13 19:21:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -394,6 +394,8 @@ print_mainconf(struct bgpd_config *conf)
 		printf("holdtime min %u\n", conf->min_holdtime);
 	if (conf->connectretry != INTERVAL_CONNECTRETRY)
 		printf("connect-retry %u\n", conf->connectretry);
+	if (conf->staletime != INTERVAL_STALE)
+		printf("staletime %u\n", conf->staletime);
 
 	if (conf->flags & BGPD_FLAG_DECISION_ROUTEAGE)
 		printf("rde route-age evaluate\n");
@@ -817,6 +819,8 @@ print_peer(struct peer *peer, struct bgpd_config *conf, const char *c)
 		printf("%s\tholdtime %u\n", c, p->holdtime);
 	if (p->min_holdtime)
 		printf("%s\tholdtime min %u\n", c, p->min_holdtime);
+	if (p->staletime)
+		printf("%s\tstaletime %u\n", c, p->staletime);
 	if (p->export_type == EXPORT_NONE)
 		printf("%s\texport none\n", c);
 	else if (p->export_type == EXPORT_DEFAULT_ROUTE)
@@ -954,6 +958,10 @@ print_announce(struct peer_config *p, const char *c)
 		printf("%s\tannounce restart enforce\n", c);
 	else if (p->capabilities.grestart.restart == 0)
 		printf("%s\tannounce restart no\n", c);
+
+	if (p->capabilities.grestart.restart != 0 &&
+	    p->capabilities.grestart.grnotification)
+		printf("%s\tannounce graceful notification yes\n", c);
 
 	if (p->capabilities.as4byte == 2)
 		printf("%s\tannounce as4byte enforce\n", c);
