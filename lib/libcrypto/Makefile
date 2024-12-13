@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.228 2024/11/16 10:38:10 tb Exp $
+# $OpenBSD: Makefile,v 1.229 2024/12/13 00:03:57 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -43,6 +43,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/hidden
 CFLAGS+= -I${LCRYPTO_SRC}/hmac
 CFLAGS+= -I${LCRYPTO_SRC}/kdf
 CFLAGS+= -I${LCRYPTO_SRC}/lhash
+CFLAGS+= -I${LCRYPTO_SRC}/mlkem
 CFLAGS+= -I${LCRYPTO_SRC}/modes
 CFLAGS+= -I${LCRYPTO_SRC}/ocsp
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs12
@@ -371,6 +372,9 @@ SRCS+= md4.c
 # md5/
 SRCS+= md5.c
 
+# mlkem/
+SRCS+= mlkem768.c
+
 # modes/
 SRCS+= cbc128.c
 SRCS+= ccm128.c
@@ -607,6 +611,7 @@ SRCS+= x_all.c
 	${LCRYPTO_SRC}/lhash \
 	${LCRYPTO_SRC}/md4 \
 	${LCRYPTO_SRC}/md5 \
+	${LCRYPTO_SRC}/mlkem \
 	${LCRYPTO_SRC}/modes \
 	${LCRYPTO_SRC}/objects \
 	${LCRYPTO_SRC}/ocsp \
@@ -639,6 +644,7 @@ HDRS=\
 	${LCRYPTO_SRC}/bio/bio.h \
 	${LCRYPTO_SRC}/bn/bn.h \
 	${LCRYPTO_SRC}/buffer/buffer.h \
+	${LCRYPTO_SRC}/bytestring/bytestring.h \
 	${LCRYPTO_SRC}/camellia/camellia.h \
 	${LCRYPTO_SRC}/cast/cast.h \
 	${LCRYPTO_SRC}/chacha/chacha.h \
@@ -665,6 +671,7 @@ HDRS=\
 	${LCRYPTO_SRC}/lhash/lhash.h \
 	${LCRYPTO_SRC}/md4/md4.h \
 	${LCRYPTO_SRC}/md5/md5.h \
+	${LCRYPTO_SRC}/mlkem/mlkem.h \
 	${LCRYPTO_SRC}/modes/modes.h \
 	${LCRYPTO_SRC}/objects/objects.h \
 	${LCRYPTO_SRC}/ocsp/ocsp.h \
