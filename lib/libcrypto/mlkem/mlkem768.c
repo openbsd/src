@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.1 2024/12/13 00:03:57 beck Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.2 2024/12/13 00:09:02 beck Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -817,12 +817,14 @@ int
 MLKEM768_private_key_from_seed(struct MLKEM768_private_key *out_private_key,
     const uint8_t *seed, size_t seed_len)
 {
+	uint8_t public_key_bytes[MLKEM768_PUBLIC_KEY_BYTES];
+
 	if (seed_len != MLKEM_SEED_BYTES) {
 		return 0;
 	}
-	uint8_t public_key_bytes[MLKEM768_PUBLIC_KEY_BYTES];
 	MLKEM768_generate_key_external_entropy(public_key_bytes,
 	    out_private_key, seed);
+
 	return 1;
 }
 LCRYPTO_ALIAS(MLKEM768_private_key_from_seed);
