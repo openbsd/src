@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.1 2024/12/13 00:03:57 beck Exp $
+#       $OpenBSD: Makefile,v 1.2 2024/12/13 00:17:18 beck Exp $
 
 PROGS +=        mlkem_unittest
 PROGS +=        mlkem768_nist_keygen_tests
@@ -7,6 +7,12 @@ PROGS +=        mlkem768_nist_decap_tests
 PROGS +=        mlkem768_decap_tests
 PROGS +=        mlkem768_encap_tests
 PROGS +=        mlkem768_iteration_test
+PROGS +=        mlkem1024_nist_keygen_tests
+PROGS +=        mlkem1024_keygen_tests
+PROGS +=        mlkem1024_nist_decap_tests
+PROGS +=        mlkem1024_decap_tests
+PROGS +=        mlkem1024_encap_tests
+PROGS +=        mlkem1024_iteration_test
 
 # Link test programs with mlkem_tests_util.c and use custom target
 .for p in ${PROGS}

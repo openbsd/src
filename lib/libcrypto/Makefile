@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.229 2024/12/13 00:03:57 beck Exp $
+# $OpenBSD: Makefile,v 1.230 2024/12/13 00:17:17 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -374,6 +374,7 @@ SRCS+= md5.c
 
 # mlkem/
 SRCS+= mlkem768.c
+SRCS+= mlkem1024.c
 
 # modes/
 SRCS+= cbc128.c

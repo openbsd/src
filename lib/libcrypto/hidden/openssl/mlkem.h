@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem.h,v 1.1 2024/12/13 00:03:57 beck Exp $ */
+/* $OpenBSD: mlkem.h,v 1.2 2024/12/13 00:17:17 beck Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
  *
@@ -35,6 +35,14 @@ LCRYPTO_USED(MLKEM768_marshal_public_key);
 LCRYPTO_USED(MLKEM768_parse_public_key);
 LCRYPTO_USED(MLKEM768_private_key_from_seed);
 LCRYPTO_USED(MLKEM768_parse_private_key);
+LCRYPTO_USED(MLKEM1024_generate_key);
+LCRYPTO_USED(MLKEM1024_public_from_private);
+LCRYPTO_USED(MLKEM1024_encap);
+LCRYPTO_USED(MLKEM1024_decap);
+LCRYPTO_USED(MLKEM1024_marshal_public_key);
+LCRYPTO_USED(MLKEM1024_parse_public_key);
+LCRYPTO_USED(MLKEM1024_private_key_from_seed);
+LCRYPTO_USED(MLKEM1024_parse_private_key);
 #endif
 
 #endif /* _LIBCRYPTO_MLKEM_H */
