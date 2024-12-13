@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.57 2024/12/09 10:52:27 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.58 2024/12/13 19:22:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -182,9 +182,11 @@ show_neighbor_capa_restart(struct capabilities *capa)
 	int	comma;
 	uint8_t	i;
 
-	printf("    Graceful Restart");
+	printf("    Graceful Restart: ");
 	if (capa->grestart.timeout)
-		printf(": Timeout: %d, ", capa->grestart.timeout);
+		printf("timeout: %d, ", capa->grestart.timeout);
+	if (capa->grestart.grnotification)
+		printf("graceful notification, ");
 	for (i = AID_MIN, comma = 0; i < AID_MAX; i++)
 		if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
 			if (!comma &&

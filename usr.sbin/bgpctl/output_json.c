@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.49 2024/12/09 10:52:27 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.50 2024/12/13 19:22:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -82,6 +82,8 @@ json_neighbor_capabilities(struct capabilities *capa)
 
 		if (capa->grestart.timeout)
 			json_do_uint("timeout", capa->grestart.timeout);
+		if (capa->grestart.grnotification)
+			json_do_bool("graceful_notification", 1);
 
 		if (present) {
 			json_do_array("protocols");
