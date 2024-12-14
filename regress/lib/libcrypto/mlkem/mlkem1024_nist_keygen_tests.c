@@ -1,4 +1,6 @@
-/* Copyright (c) 2024, Google Inc.
+/*	$OpenBSD: mlkem1024_nist_keygen_tests.c,v 1.2 2024/12/14 19:16:24 tb Exp $ */
+/*
+ * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -11,19 +13,18 @@
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
-#include <err.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <openssl/evp.h>
+#include <openssl/bytestring.h>
+#include <openssl/mlkem.h>
 
-#include "bytestring.h"
-#include "mlkem.h"
 #include "mlkem_internal.h"
-#include "sha3_internal.h"
 #include "mlkem_tests_util.h"
 
 static int
