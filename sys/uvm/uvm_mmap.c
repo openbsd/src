@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.192 2024/08/21 03:07:45 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.193 2024/12/14 12:07:38 mvs Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -74,6 +74,11 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 #include <uvm/uvm_vnode.h>
+
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
 
 int uvm_mmapanon(vm_map_t, vaddr_t *, vsize_t, vm_prot_t, vm_prot_t, int,
     vsize_t, struct proc *);
@@ -163,7 +168,7 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	return error;
 }
 
-int	uvm_wxabort;
+int	uvm_wxabort;	/* [a] */
 
 /*
  * W^X violations are only allowed on permitted filesystems.
@@ -178,7 +183,7 @@ uvm_wxcheck(struct proc *p, char *call)
 	if (wxallowed && (pr->ps_flags & PS_WXNEEDED))
 		return 0;
 
-	if (uvm_wxabort) {
+	if (atomic_load_int(&uvm_wxabort)) {
 		KERNEL_LOCK();
 		/* Report W^X failures */
 		if (pr->ps_wxcounter++ == 0)
