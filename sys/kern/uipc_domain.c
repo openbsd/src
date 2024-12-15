@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.68 2024/08/16 09:20:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.69 2024/12/15 11:00:05 dlg Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -41,8 +41,13 @@
 #include <sys/sysctl.h>
 #include <sys/timeout.h>
 
+#include "af_frame.h"
 #include "bpfilter.h"
 #include "pflow.h"
+
+#if NAF_FRAME > 0
+extern const struct domain framedomain;
+#endif
 
 const struct domain *const domains[] = {
 #ifdef MPLS
@@ -57,6 +62,9 @@ const struct domain *const domains[] = {
 	&inetdomain,
 	&unixdomain,
 	&routedomain,
+#if NAF_FRAME > 0
+	&framedomain,
+#endif
 	NULL
 };
 

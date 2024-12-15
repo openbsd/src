@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.105 2022/09/03 21:13:48 mbuhl Exp $	*/
+/*	$OpenBSD: socket.h,v 1.106 2024/12/15 11:00:05 dlg Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -200,7 +200,8 @@ struct	splice {
 #define AF_MPLS         33              /* MPLS */
 #define pseudo_AF_PFLOW 34		/* pflow */
 #define pseudo_AF_PIPEX 35		/* PIPEX */
-#define AF_MAX          36
+#define AF_FRAME        36		/* frame (Ethernet) sockets */
+#define AF_MAX          37
 
 /*
  * Structure used by kernel to store most
@@ -284,6 +285,7 @@ struct sockproto {
 #define PF_MPLS		AF_MPLS
 #define PF_PFLOW	pseudo_AF_PFLOW
 #define PF_PIPEX	pseudo_AF_PIPEX
+#define PF_FRAME	AF_FRAME
 #define	PF_MAX		AF_MAX
 
 /*

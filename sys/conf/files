@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.741 2024/10/31 13:55:21 claudio Exp $
+#	$OpenBSD: files,v 1.742 2024/12/15 11:00:05 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -600,6 +600,9 @@ pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, etherbridge
 pseudo-device wg: ifnet
+
+pseudo-device af_frame
+file	net/af_frame.c			af_frame needs-flag
 
 pseudo-device ksyms
 file	dev/ksyms.c			ksyms needs-flag
