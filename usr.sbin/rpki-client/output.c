@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.34 2024/12/02 14:55:02 job Exp $ */
+/*	$OpenBSD: output.c,v 1.35 2024/12/15 19:40:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -95,18 +95,20 @@ prune_as0_tals(struct vrp_tree *vrps)
 {
 	struct vrp *v, *tv;
 	int talid;
+	int has_vrps[TALSZ_MAX] = { 0 };
 	int is_as0_tal[TALSZ_MAX] = { 0 };
 
 	for (talid = 0; talid < talsz; talid++)
 		is_as0_tal[talid] = 1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
+		has_vrps[v->talid] = 1;
 		if (v->asid != 0)
 			is_as0_tal[v->talid] = 0;
 	}
 
 	for (talid = 0; talid < talsz; talid++) {
-		if (is_as0_tal[talid]) {
+		if (is_as0_tal[talid] && has_vrps[v->talid]) {
 			warnx("%s: Detected AS0 TAL, pruning associated VRPs",
 			    taldescs[talid]);
 		}
