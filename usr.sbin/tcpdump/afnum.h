@@ -1,4 +1,4 @@
-/* $OpenBSD: afnum.h,v 1.1 2006/03/28 15:48:33 reyk Exp $ */
+/* $OpenBSD: afnum.h,v 1.2 2024/12/15 21:37:11 denis Exp $ */
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -68,6 +68,7 @@
 	"Banyan Vines",							\
 	"E.164 with NSAP subaddress",					\
 	"DNS",								\
+	"Distinguished Name",						\
 	"AS Number",							\
 	"XTP over IPv4",						\
 	"XTP over IPv6",						\
