@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.456 2024/12/14 12:07:38 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.457 2024/12/15 18:25:12 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -600,6 +600,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_NPROCS:
 	case KERN_WXABORT:
 	case KERN_NETLIVELOCKS:
+	case KERN_GLOBAL_PTRACE:
 	case KERN_AUTOCONF_SERIAL:
 		return (sysctl_bounded_arr(kern_vars, nitems(kern_vars), name,
 		    namelen, oldp, oldlenp, newp, newlen));

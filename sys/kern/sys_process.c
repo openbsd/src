@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.104 2024/11/27 12:29:14 jsg Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.105 2024/12/15 18:25:12 mvs Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -70,6 +70,11 @@
 
 #ifdef PTRACE
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 static inline int	process_checktracestate(struct process *_curpr,
 			    struct process *_tr, struct proc *_t);
 static inline struct process *process_tprfind(pid_t _tpid, struct proc **_tp);
@@ -78,7 +83,7 @@ int	ptrace_ctrl(struct proc *, int, pid_t, caddr_t, int);
 int	ptrace_ustate(struct proc *, int, pid_t, void *, int, register_t *);
 int	ptrace_kstate(struct proc *, int, pid_t, void *);
 
-int	global_ptrace;	/* permit tracing of not children */
+int	global_ptrace;	/* [a] permit tracing of not children */
 
 
 /*
@@ -411,8 +416,8 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		/*
 		 * 	(5.5) it's not a child of the tracing process.
 		 */
-		if (global_ptrace == 0 && !inferior(tr, p->p_p) &&
-		    (error = suser(p)) != 0)
+		if (atomic_load_int(&global_ptrace) == 0 &&
+		    !inferior(tr, p->p_p) && (error = suser(p)) != 0)
 			goto fail;
 
 		/*
