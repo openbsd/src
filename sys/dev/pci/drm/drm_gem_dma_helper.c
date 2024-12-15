@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_gem_dma_helper.c,v 1.4 2024/11/10 06:51:59 jsg Exp $ */
+/* $OpenBSD: drm_gem_dma_helper.c,v 1.5 2024/12/15 11:02:59 mpi Exp $ */
 /* $NetBSD: drm_gem_dma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -208,7 +208,7 @@ drm_gem_dma_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		paddr = bus_dmamem_mmap(obj->dmat, obj->dmasegs, 1,
 		    offset, access_type, BUS_DMA_NOCACHE);
 		if (paddr == -1) {
-			retval = VM_PAGER_BAD;
+			retval = EACCES;
 			break;
 		}
 
@@ -218,7 +218,7 @@ drm_gem_dma_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj);
 			uvm_wait("drm_gem_dma_fault");
-			return VM_PAGER_REFAULT;
+			return ERESTART;
 		}
 	}
 

@@ -99,19 +99,7 @@ amdgpu_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 
 	ret = ttm_bo_vm_reserve(bo);
 	if (ret) {
-		switch (ret) {
-		case VM_FAULT_NOPAGE:
-			ret = VM_PAGER_OK;
-			break;
-		case VM_FAULT_RETRY:
-			ret = VM_PAGER_REFAULT;
-			break;
-		default:
-			ret = VM_PAGER_BAD;
-			break;
-		}
-		uvmfault_unlockall(ufi, NULL, uobj);
-		return ret;
+		goto out;
 	}
 
 	if (drm_dev_enter(ddev, &idx)) {
@@ -137,18 +125,19 @@ amdgpu_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 #endif
 
 unlock:
+	dma_resv_unlock(bo->base.resv);
+out:
 	switch (ret) {
 	case VM_FAULT_NOPAGE:
-		ret = VM_PAGER_OK;
+		ret = 0;
 		break;
 	case VM_FAULT_RETRY:
-		ret = VM_PAGER_REFAULT;
+		ret = ERESTART;
 		break;
 	default:
-		ret = VM_PAGER_BAD;
+		ret = EACCES;
 		break;
 	}
-	dma_resv_unlock(bo->base.resv);
 	uvmfault_unlockall(ufi, NULL, uobj);
 	return ret;
 }

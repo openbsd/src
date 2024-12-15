@@ -115,13 +115,13 @@ unlock_resv:
 unlock_mclk:
 	switch (ret) {
 	case VM_FAULT_NOPAGE:
-		ret = VM_PAGER_OK;
+		ret = 0;
 		break;
 	case VM_FAULT_RETRY:
-		ret = VM_PAGER_REFAULT;
+		ret = ERESTART;
 		break;
 	default:
-		ret = VM_PAGER_BAD;
+		ret = EACCES;
 		break;
 	}
 	up_read(&rdev->pm.mclk_lock);

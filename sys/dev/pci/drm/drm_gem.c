@@ -102,10 +102,9 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	 * we do not allow device mappings to be mapped copy-on-write
 	 * so we kill any attempt to do so here.
 	 */
-	
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-		return(VM_PAGER_ERROR);
+		return EACCES;
 	}
 
 	/*
@@ -125,7 +124,7 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 			    PZERO, "drmflt", INFSLP);
 		}
 		mtx_leave(&dev->quiesce_mtx);
-		return(VM_PAGER_REFAULT);
+		return ERESTART;
 	}
 	dev->quiesce_count++;
 	mtx_leave(&dev->quiesce_mtx);
@@ -141,7 +140,7 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 		wakeup(&dev->quiesce_count);
 	mtx_leave(&dev->quiesce_mtx);
 
-	return (ret);
+	return ret;
 }
 
 boolean_t	

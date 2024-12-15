@@ -591,10 +591,10 @@ static int i915_error_to_vmf_fault(int err)
 	case -EFAULT: /* purged object */
 	case -ENODEV: /* bad object, how did you get here! */
 	case -ENXIO: /* unable to access backing store (on device) */
-		return VM_PAGER_ERROR;
+		return EACCES;
 
 	case -ENOMEM: /* our allocation failure */
-		return VM_PAGER_ERROR;
+		return EACCES; /* XXX */
 
 	case 0:
 	case -EAGAIN:
@@ -607,7 +607,7 @@ static int i915_error_to_vmf_fault(int err)
 		 * EBUSY is ok: this just means that another thread
 		 * already did the job.
 		 */
-		return VM_PAGER_OK;
+		return 0;
 	}
 }
 
@@ -629,11 +629,11 @@ vm_fault_cpu(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 	/* Sanity check that we allow writing into this object */
 	if (unlikely(i915_gem_object_is_readonly(obj) && write)) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
-		return VM_PAGER_BAD;
+		return EACCES;
 	}
 
 	if (i915_gem_object_lock_interruptible(obj, NULL))
-		return VM_PAGER_ERROR;
+		return EACCES;
 
 	err = i915_gem_object_pin_pages(obj);
 	if (err)
@@ -921,7 +921,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
 	if (!mmo) {
 		uvmfault_unlockall(ufi, NULL, &gem_obj->uobj);
-		return VM_PAGER_BAD;
+		return EACCES;
 	}
 
 	KASSERT(gem_obj == &mmo->obj->base);

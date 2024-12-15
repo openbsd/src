@@ -1240,20 +1240,20 @@ vm_fault_ttm(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	/* Sanity check that we allow writing into this object */
 	if (unlikely(i915_gem_object_is_readonly(obj) && write)) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
-		return VM_PAGER_BAD;
+		return EACCES;
 	}
 
 	ret = ttm_bo_vm_reserve(bo);
 	if (ret) {
 		switch (ret) {
 		case VM_FAULT_NOPAGE:
-			ret = VM_PAGER_OK;
+			ret = 0;
 			break;
 		case VM_FAULT_RETRY:
-			ret = VM_PAGER_REFAULT;
+			ret = ERESTART;
 			break;
 		default:
-			ret = VM_PAGER_BAD;
+			ret = EACCES;
 			break;
 		}
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
@@ -1263,7 +1263,7 @@ vm_fault_ttm(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	if (obj->mm.madv != I915_MADV_WILLNEED) {
 		dma_resv_unlock(bo->base.resv);
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
-		return VM_PAGER_BAD;
+		return EACCES;
 	}
 
 	/*
@@ -1285,7 +1285,7 @@ vm_fault_ttm(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 		if (err) {
 			dma_resv_unlock(bo->base.resv);
 			uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
-			return VM_PAGER_BAD;
+			return EACCES;
 		}
 	} else if (!i915_ttm_resource_mappable(bo->resource)) {
 		int err = -ENODEV;
@@ -1359,13 +1359,13 @@ vm_fault_ttm(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 out_rpm:
 	switch (ret) {
 	case VM_FAULT_NOPAGE:
-		ret = VM_PAGER_OK;
+		ret = 0;
 		break;
 	case VM_FAULT_RETRY:
-		ret = VM_PAGER_REFAULT;
+		ret = ERESTART;
 		break;
 	default:
-		ret = VM_PAGER_BAD;
+		ret = EACCES;
 		break;
 	}
 

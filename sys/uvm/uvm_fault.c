@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.152 2024/12/04 09:21:06 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.153 2024/12/15 11:02:59 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -621,20 +621,13 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 			 * providing a pgo_fault routine.
 			 */
 			if (uobj != NULL && uobj->pgops->pgo_fault != NULL) {
-				KERNEL_LOCK();
 				rw_enter(uobj->vmobjlock, RW_WRITE);
+				KERNEL_LOCK();
 				error = uobj->pgops->pgo_fault(&ufi,
 				    flt.startva, pages, flt.npages,
 				    flt.centeridx, fault_type, flt.access_type,
 				    PGO_LOCKED);
 				KERNEL_UNLOCK();
-
-				if (error == VM_PAGER_OK)
-					error = 0;
-				else if (error == VM_PAGER_REFAULT)
-					error = ERESTART;
-				else
-					error = EACCES;
 			} else {
 				/* case 2: fault on backing obj or zero fill */
 				error = uvm_fault_lower(&ufi, &flt, pages);
