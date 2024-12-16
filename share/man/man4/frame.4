@@ -1,4 +1,4 @@
-.\" $OpenBSD: frame.4,v 1.1 2024/12/15 11:07:08 dlg Exp $
+.\" $OpenBSD: frame.4,v 1.2 2024/12/16 21:39:29 jmc Exp $
 .\"
 .\" Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2024 $
+.Dd $Mdocdate: December 16 2024 $
 .Dt FRAME 4
 .Os
 .Sh NAME
@@ -47,12 +47,12 @@ protocol family sockets are designed as an alternative to
 .Xr bpf 4
 for handling low data and packet rate communication protocols.
 Rather than filtering every frame entering the system before the
-network stack like
+network stack, like
 .Xr bpf 4 ,
-the
+processing of the
 .Nm
-protocol family processing avoids this overhead by running after
-the built in protocol handlers in the kernel.
+protocol family runs after the built in protocol handlers in the kernel,
+thus avoiding the overhead.
 For this reason, it is not possible to handle IPv4 or IPv6 packets
 with
 .Nm
@@ -145,14 +145,14 @@ argument with
 .Xr setsockopt 2
 and
 .Xr getsockopt 2 :
-.Bl -tag
+.Bl -tag -width Ds
 .It Dv FRAME_RECVDSTADDR Ft int
 Enable or disable the reception of the Ethernet destination address as a
 .Vt struct ether_addr
 control message for frames received with
 .Xr recvmsg 2 .
 .It Dv FRAME_RECVPRIO Ft int
-Enable or disable the reception of the mbuf packet priority field as a
+Enable or disable the reception of the mbuf packet priority field as an
 .Vt int
 sized control message for frames received with
 .Xr recvmsg 2 .
@@ -177,7 +177,7 @@ The multicast Ethernet address is specified in the first 6 bytes of
 Configure an Ethernet interface to disable reception of frames destined
 to the specified multicast Ethernet address.
 .It Dv FRAME_SENDPRIO Ft int
-Specify a mbuf priority value between
+Specify an mbuf priority value between
 .Dv IF_HDRPRIO_MIN
 .Pq 0
 and
