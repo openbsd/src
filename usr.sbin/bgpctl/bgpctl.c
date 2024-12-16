@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.313 2024/12/09 10:52:27 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.314 2024/12/16 16:10:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1776,7 +1776,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 	}
 
 	switch (type) {
-	case OPEN:
+	case MSG_OPEN:
 		printf("%s ", msgtypenames[type]);
 		if (len < MSGSIZE_OPEN_MIN) {
 			printf("bad length: %u bytes\n", len);
@@ -1784,7 +1784,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 		}
 		show_mrt_open(b);
 		break;
-	case NOTIFICATION:
+	case MSG_NOTIFICATION:
 		printf("%s ", msgtypenames[type]);
 		if (len < MSGSIZE_NOTIFICATION_MIN) {
 			printf("bad length: %u bytes\n", len);
@@ -1792,7 +1792,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 		}
 		show_mrt_notification(b);
 		break;
-	case UPDATE:
+	case MSG_UPDATE:
 		printf("%s ", msgtypenames[type]);
 		if (len < MSGSIZE_UPDATE_MIN) {
 			printf("bad length: %u bytes\n", len);
@@ -1800,7 +1800,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 		}
 		show_mrt_update(b, req->flags, mm->add_path);
 		break;
-	case KEEPALIVE:
+	case MSG_KEEPALIVE:
 		printf("%s ", msgtypenames[type]);
 		if (len != MSGSIZE_KEEPALIVE) {
 			printf("bad length: %u bytes\n", len);
@@ -1808,7 +1808,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 		}
 		/* nothing */
 		break;
-	case RREFRESH:
+	case MSG_RREFRESH:
 		printf("%s ", msgtypenames[type]);
 		if (len != MSGSIZE_RREFRESH) {
 			printf("bad length: %u bytes\n", len);
