@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.58 2024/12/15 18:23:56 mvs Exp $	*/
+/*	$OpenBSD: video.c,v 1.59 2024/12/16 21:22:51 mvs Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -38,6 +38,7 @@
 
 /*
  * Locks used to protect struct members and global data
+ *	a	atomic
  *	m	sc_mtx
  */
 
@@ -93,7 +94,7 @@ struct cfdriver video_cd = {
 /*
  * Global flag to control if video recording is enabled by kern.video.record.
  */
-int video_record_enable = 0;
+int video_record_enable = 0;	/* [a] */
 
 int
 videoprobe(struct device *parent, void *match, void *aux)
@@ -234,7 +235,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* move no more than 1 frame to userland, as per specification */
 	size = ulmin(uio->uio_resid, sc->sc_fsize);
-	if (!video_record_enable)
+	if (!atomic_load_int(&video_record_enable))
 		bzero(sc->sc_fbuffer, size);
 	error = uiomove(sc->sc_fbuffer, size, uio);
 	if (error)
@@ -371,7 +372,7 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		}
 		error = (sc->hw_if->dqbuf)(sc->hw_hdl,
 		    (struct v4l2_buffer *)data);
-		if (!video_record_enable)
+		if (!atomic_load_int(&video_record_enable))
 			bzero(sc->sc_fbuffer_mmap + vb->m.offset, vb->length);
 		mtx_enter(&sc->sc_mtx);
 		sc->sc_frames_ready--;

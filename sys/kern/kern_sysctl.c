@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.457 2024/12/15 18:25:12 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.458 2024/12/16 21:22:51 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -161,6 +161,10 @@ void fill_kproc(struct process *, struct kinfo_proc *, struct proc *, int);
 
 int kern_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t,
 	struct proc *);
+int kern_sysctl_dirs(int, int *, u_int, void *, size_t *, void *,
+	size_t, struct proc *);
+int kern_sysctl_dirs_locked(int, int *, u_int, void *, size_t *, void *,
+	size_t, struct proc *);
 int hw_sysctl_locked(int *, u_int, void *, size_t *,void *, size_t,
 	struct proc *);
 
@@ -395,6 +399,38 @@ int
 kern_sysctl_dirs(int top_name, int *name, u_int namelen,
     void *oldp, size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
 {
+	size_t savelen;
+	int error;
+
+	switch (top_name) {
+#if NAUDIO > 0
+	case KERN_AUDIO:
+		return (sysctl_audio(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#if NVIDEO > 0
+	case KERN_VIDEO:
+		return (sysctl_video(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+	default:
+		break;
+	}
+
+	savelen = *oldlenp;
+	if ((error = sysctl_vslock(oldp, savelen)))
+		return (error);
+	error = kern_sysctl_dirs_locked(top_name, name, namelen,
+	    oldp, oldlenp, newp, newlen, p);
+	sysctl_vsunlock(oldp, savelen);
+
+	return (error);
+}
+
+int
+kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
+    void *oldp, size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
+{
 	switch (top_name) {
 #ifndef SMALL_KERNEL
 	case KERN_PROC:
@@ -462,11 +498,6 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 		return witness_sysctl(name, namelen, oldp, oldlenp,
 		    newp, newlen);
 #endif
-#if NVIDEO > 0
-	case KERN_VIDEO:
-		return (sysctl_video(name, namelen, oldp, oldlenp,
-		    newp, newlen));
-#endif
 	case KERN_CPUSTATS:
 		return (sysctl_cpustats(name, namelen, oldp, oldlenp,
 		    newp, newlen));
@@ -489,25 +520,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	size_t savelen;
 
 	/* dispatch the non-terminal nodes first */
-	if (namelen != 1) {
-		switch (name[0]) {
-#if NAUDIO > 0
-		case KERN_AUDIO:
-			return (sysctl_audio(name + 1, namelen - 1,
-			    oldp, oldlenp, newp, newlen));
-#endif
-		default:
-			break;
-		}
-
-		savelen = *oldlenp;
-		if ((error = sysctl_vslock(oldp, savelen)))
-			return (error);
-		error = kern_sysctl_dirs(name[0], name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen, p);
-		sysctl_vsunlock(oldp, savelen);
-		return (error);
-	}
+	if (namelen != 1)
+		return (kern_sysctl_dirs(name[0], name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, p));
 
 	switch (name[0]) {
 	case KERN_ALLOWKMEM:
