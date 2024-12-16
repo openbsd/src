@@ -977,6 +977,7 @@
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/ethertypes.h
 ./usr/include/net/fq_codel.h
+./usr/include/net/frame.h
 ./usr/include/net/hfsc.h
 ./usr/include/net/if.h
 ./usr/include/net/if_arp.h
