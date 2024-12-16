@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1247 2024/12/06 09:06:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1248 2024/12/16 09:13:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2013,6 +2013,7 @@ struct client {
 	struct event		 overlay_timer;
 
 	struct client_files	 files;
+	u_int			 source_file_depth;
 
 	u_int			*clipboard_panes;
 	u_int			 clipboard_npanes;
