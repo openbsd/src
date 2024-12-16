@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.56 2024/11/21 13:32:27 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.57 2024/12/16 13:53:37 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -568,7 +568,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	}
 
 	if (expires != NULL) {
-		if (status && aia != NULL)
+		if ((status && aia != NULL) || is_ta)
 			*expires = x509_find_expires(*notafter, a, &crlt);
 
 		switch (type) {
