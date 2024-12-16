@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.183 2024/12/13 19:21:03 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.184 2024/12/16 16:10:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -70,11 +70,11 @@ enum session_events {
 };
 
 enum msg_type {
-	OPEN = 1,
-	UPDATE,
-	NOTIFICATION,
-	KEEPALIVE,
-	RREFRESH
+	MSG_OPEN = 1,
+	MSG_UPDATE,
+	MSG_NOTIFICATION,
+	MSG_KEEPALIVE,
+	MSG_RREFRESH
 };
 
 enum suberr_header {

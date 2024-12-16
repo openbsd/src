@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.122 2024/11/21 13:34:01 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.123 2024/12/16 16:10:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -134,7 +134,7 @@ mrt_bgp_msg_subtype(struct mrt *mrt, struct ibuf *pkg, struct peer *peer,
 	if (peer->capa.neg.as4byte)
 		subtype = BGP4MP_MESSAGE_AS4;
 
-	if (msgtype != UPDATE)
+	if (msgtype != MSG_UPDATE)
 		return subtype;
 
 	/*
