@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem768_nist_keygen_tests.c,v 1.2 2024/12/14 19:16:24 tb Exp $ */
+/*	$OpenBSD: mlkem768_nist_keygen_tests.c,v 1.3 2024/12/17 07:20:10 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -133,5 +133,6 @@ main(int argc, char **argv)
 	}
 
 	free(buf);
+	fclose(fp);
 	exit(failure);
 }

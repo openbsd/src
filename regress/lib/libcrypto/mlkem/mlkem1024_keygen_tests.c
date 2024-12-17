@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem1024_keygen_tests.c,v 1.3 2024/12/17 07:19:10 tb Exp $ */
+/*	$OpenBSD: mlkem1024_keygen_tests.c,v 1.4 2024/12/17 07:20:10 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -125,5 +125,6 @@ main(int argc, char **argv)
 	}
 
 	free(buf);
+	fclose(fp);
 	exit(failure);
 }
