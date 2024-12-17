@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.54 2024/12/08 17:41:23 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.55 2024/12/17 18:11:44 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 8 2024 $
+.Dd $Mdocdate: December 17 2024 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -600,64 +600,13 @@ Some algorithms are documented in separate manual pages:
 .Bl -column "EVP_camellia_128_cbc(3)" "block size" -compact
 .It manual page               Ta block size Ta Fa key No size Pq in bits
 .It Xr EVP_aes_128_cbc 3      Ta 128        Ta 128, 192, 256
+.It Xr EVP_aes_128_gcm 3      Ta 128        Ta 128, 192, 256
 .It Xr EVP_camellia_128_cbc 3 Ta 128        Ta 128, 192, 256
 .It Xr EVP_chacha20 3         Ta stream     Ta 256
 .It Xr EVP_des_cbc 3          Ta 64         Ta 64
 .It Xr EVP_rc2_cbc 3          Ta 64         Ta variable, default 128
 .It Xr EVP_rc4 3              Ta stream     Ta variable, default 128
 .It Xr EVP_sm4_cbc 3          Ta 128        Ta 128
-.El
-.Ss GCM mode
-For GCM mode ciphers, the behaviour of the EVP interface
-is subtly altered and several additional ctrl operations are
-supported.
-.Pp
-To specify any additional authenticated data (AAD), a call to
-.Fn EVP_CipherUpdate ,
-.Fn EVP_EncryptUpdate ,
-or
-.Fn EVP_DecryptUpdate
-should be made with the output parameter
-.Fa out
-set to
-.Dv NULL .
-.Pp
-When decrypting, the return value of
-.Fn EVP_DecryptFinal ,
-.Fn EVP_DecryptFinal_ex ,
-.Fn EVP_CipherFinal ,
-or
-.Fn EVP_CipherFinal_ex
-indicates if the operation was successful.
-If it does not indicate success, the authentication operation has
-failed and any output data MUST NOT be used as it is corrupted.
-.Pp
-The following ctrls are supported in GCM mode:
-.Bl -tag -width Ds
-.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_SET_IVLEN ivlen NULL
-Sets the IV length: this call can only be made before specifying an IV.
-If not called, a default IV length is used.
-For GCM AES the default is 12, i.e. 96 bits.
-.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_GET_TAG taglen tag
-Writes
-.Fa taglen
-bytes of the tag value to the buffer indicated by
-.Fa tag .
-This call can only be made when encrypting data and after all data has
-been processed, e.g. after an
-.Fn EVP_EncryptFinal
-or
-.Fn EVP_EncryptFinal_ex
-call.
-.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_SET_TAG taglen tag
-Sets the expected tag to
-.Fa taglen
-bytes from
-.Fa tag .
-This call is only legal when decrypting data and must be made before
-any data is processed, e.g. before any
-.Fa EVP_DecryptUpdate
-call.
 .El
 .Ss CCM mode
 The behaviour of CCM mode ciphers is similar to GCM mode, but with
@@ -821,6 +770,7 @@ do_crypt(FILE *in_fileptr, FILE *out_fileptr, int do_encrypt)
 .Xr evp 3 ,
 .Xr EVP_AEAD_CTX_init 3 ,
 .Xr EVP_aes_128_cbc 3 ,
+.Xr EVP_aes_128_gcm 3 ,
 .Xr EVP_camellia_128_cbc 3 ,
 .Xr EVP_chacha20 3 ,
 .Xr EVP_CIPHER_CTX_ctrl 3 ,

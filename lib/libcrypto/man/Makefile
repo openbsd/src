@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.300 2024/12/08 17:41:23 schwarze Exp $
+# $OpenBSD: Makefile,v 1.301 2024/12/17 18:11:44 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -196,6 +196,7 @@ MAN=	\
 	EVP_SignInit.3 \
 	EVP_VerifyInit.3 \
 	EVP_aes_128_cbc.3 \
+	EVP_aes_128_gcm.3 \
 	EVP_camellia_128_cbc.3 \
 	EVP_chacha20.3 \
 	EVP_des_cbc.3 \
