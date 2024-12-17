@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.51 2024/11/15 13:12:20 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.52 2024/12/17 08:40:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1101,7 +1101,7 @@ layout_spread_cell(struct window *w, struct layout_cell *parent)
 {
 	struct layout_cell	*lc;
 	struct style		*sb_style = &w->active->scrollbar_style;
-	u_int			 number, each, size, this;
+	u_int			 number, each, size, this, remainder;
 	int			 change, changed, status, scrollbars;
 
 	number = 0;
@@ -1130,20 +1130,31 @@ layout_spread_cell(struct window *w, struct layout_cell *parent)
 	each = (size - (number - 1)) / number;
 	if (each == 0)
 		return (0);
+	/*
+	 * Remaining space after assigning that which can be evenly
+	 * distributed.
+	 */
+	remainder = size - (number * (each + 1)) + 1;
 
 	changed = 0;
 	TAILQ_FOREACH (lc, &parent->cells, entry) {
-		if (TAILQ_NEXT(lc, entry) == NULL)
-			each = size - ((each + 1) * (number - 1));
 		change = 0;
 		if (parent->type == LAYOUT_LEFTRIGHT) {
 			change = each - (int)lc->sx;
+			if (remainder > 0) {
+				change++;
+				remainder--;
+			}
 			layout_resize_adjust(w, lc, LAYOUT_LEFTRIGHT, change);
 		} else if (parent->type == LAYOUT_TOPBOTTOM) {
 			if (layout_add_horizontal_border(w, lc, status))
 				this = each + 1;
 			else
 				this = each;
+			if (remainder > 0) {
+				this++;
+				remainder--;
+			}
 			change = this - (int)lc->sy;
 			layout_resize_adjust(w, lc, LAYOUT_TOPBOTTOM, change);
 		}
