@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.376 2024/10/22 11:54:05 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.377 2024/12/17 14:45:00 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -305,6 +305,7 @@ struct process {
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
 #define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
 #define	PS_STOPPED	0x40000000	/* Stopped process */
+#define	PS_TRAPPED	0x80000000	/* Stopped due to tracing event */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
@@ -313,7 +314,7 @@ struct process {
      "\017NOZOMBIE" "\020STOPPING" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
      "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\036CONTINUED" \
-     "\037STOPPED")
+     "\037STOPPED" "\040TRAPPED")
 
 struct kcov_dev;
 struct lock_list_entry;

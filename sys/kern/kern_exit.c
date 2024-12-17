@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.239 2024/10/15 13:49:26 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.240 2024/12/17 14:45:00 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -543,10 +543,9 @@ loop:
 				proc_finish_wait(q, pr);
 			return (0);
 		}
-		if ((options & WTRAPPED) &&
-		    (pr->ps_flags & PS_TRACED) &&
-		    (pr->ps_flags & PS_WAITED) == 0 && pr->ps_single &&
-		    pr->ps_single->p_stat == SSTOP) {
+		if ((options & WTRAPPED) && (pr->ps_flags & PS_TRACED) &&
+		    (pr->ps_flags & PS_WAITED) == 0 &&
+		    (pr->ps_flags & PS_TRAPPED)) {
 			if (single_thread_wait(pr, 0))
 				goto loop;
 
@@ -570,7 +569,8 @@ loop:
 		}
 		if (((pr->ps_flags & PS_TRACED) || (options & WUNTRACED)) &&
 		    (pr->ps_flags & PS_WAITED) == 0 &&
-		    (pr->ps_flags & PS_STOPPED)) {
+		    (pr->ps_flags & PS_STOPPED) &&
+		    (pr->ps_flags & PS_TRAPPED) == 0) {
 			if ((options & WNOWAIT) == 0)
 				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 

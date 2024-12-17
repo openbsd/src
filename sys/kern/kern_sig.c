@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.352 2024/11/24 12:58:06 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.353 2024/12/17 14:45:00 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1103,7 +1103,7 @@ ptsignal_locked(struct proc *p, int signum, enum signal_type type)
 			 */
 			atomic_setbits_int(&pr->ps_flags, PS_CONTINUED);
 			atomic_clearbits_int(&pr->ps_flags,
-			    PS_WAITED | PS_STOPPED);
+			    PS_WAITED | PS_STOPPED | PS_TRAPPED);
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
@@ -1500,7 +1500,10 @@ proc_trap(struct proc *p, int signum)
 	pr->ps_xsig = signum;
 
 	SCHED_LOCK();
+	atomic_setbits_int(&pr->ps_flags, PS_TRAPPED);
 	proc_stop(p, 1);
+	atomic_clearbits_int(&pr->ps_flags,
+	    PS_WAITED | PS_STOPPED | PS_TRAPPED);
 	SCHED_UNLOCK();
 
 	signum = pr->ps_xsig;
