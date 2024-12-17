@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem768_keygen_tests.c,v 1.2 2024/12/14 19:16:24 tb Exp $ */
+/*	$OpenBSD: mlkem768_keygen_tests.c,v 1.3 2024/12/17 07:19:10 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -112,7 +112,6 @@ main(int argc, char **argv)
 				break;
 			grab_data(&private_key, buf, strlen("private_key: "));
 			state = S_START;
-			break;
 
 			MlkemKeygenFileTest(&seed, &public_key, &private_key);
 			free((void *)CBS_data(&seed));
