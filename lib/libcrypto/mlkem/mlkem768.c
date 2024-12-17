@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.2 2024/12/13 00:09:02 beck Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.3 2024/12/17 07:13:47 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -873,10 +873,12 @@ MLKEM768_generate_key_external_entropy(
 	matrix_mult_transpose(&priv->pub.t, &priv->pub.m, &priv->s);
 	vector_add(&priv->pub.t, &error);
 
+	/* XXX - error checking */
 	CBB_init_fixed(&cbb, out_encoded_public_key, MLKEM768_PUBLIC_KEY_BYTES);
 	if (!mlkem_marshal_public_key(&cbb, &priv->pub)) {
 		abort();
 	}
+	CBB_cleanup(&cbb);
 
 	hash_h(priv->pub.public_key_hash, out_encoded_public_key,
 	    MLKEM768_PUBLIC_KEY_BYTES);
