@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.27 2024/12/10 16:07:17 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.28 2024/12/17 05:32:31 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -27437,6 +27437,11 @@ ice_attach_hook(struct device *self)
 	ifp->if_hardmtu = ice_hardmtu(hw);
 
 	ifq_init_maxlen(&ifp->if_snd, ICE_DEFAULT_DESC_COUNT);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
