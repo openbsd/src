@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.153 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.154 2024/12/18 16:38:40 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1061,6 +1061,72 @@ badcert:
 	return NULL;
 }
 
+/*
+ * Reject TA certificates with an overly long validity period.
+ *
+ * The schedule is as follows:
+ * Before February 2nd, 2026, warn on TA certs valid for longer than 15 years.
+ * After February 2nd, 2026, reject TA certs valid for longer than 15 years.
+ * Before March 3rd, 2027, warn on TA certs valid for longer than 3 years.
+ * After March 3rd, 2027, reject TA certs valid for longer than 3 years.
+ *
+ * Return 1 if the validity period is acceptable and 0 otherwise.
+ */
+static int
+ta_check_validity(const char *fn, const struct cert *p, time_t now)
+{
+	time_t validity = p->notafter - p->notbefore;
+	time_t cutoff_15y = 1769990400; /* 2026-02-02T00:00:00Z */
+	time_t cutoff_3y = 1804032000; /* 2027-03-03T00:00:00Z */
+	time_t cutoff = cutoff_3y;
+	int warn_years = 3;
+	int exceeds_15y = 0, exceeds_3y = 0;
+	int complain = 0, acceptable = 1;
+
+	if (validity >= 15 * 365 * 86400)
+		exceeds_15y = 1;
+	if (validity >= 3 * 365 * 86400)
+		exceeds_3y = 1;
+
+	if (now < cutoff_15y) {
+		warn_years = 15;
+		cutoff = cutoff_15y;
+		if (exceeds_15y)
+			complain = 1;
+	} else if (now < cutoff_3y) {
+		if (exceeds_15y)
+			acceptable = 0;
+		if (exceeds_3y)
+			complain = 1;
+	} else if (exceeds_3y) {
+		acceptable = 0;
+		complain = 1;
+	}
+
+	/*
+	 * Suppress warnings for previously fetched TAs certs.
+	 */
+	if (!verbose && strncmp(fn, "ta/", strlen("ta/")) == 0)
+		goto out;
+
+	if (!acceptable) {
+		warnx("%s: TA cert rejected: validity period exceeds %d years. "
+		    "Ask the TA operator to reissue their TA cert with a "
+		    "shorter validity period.", fn, warn_years);
+		goto out;
+	}
+
+	if (complain) {
+		warnx("%s: TA validity period exceeds %d years. After %s this "
+		    "certificate will be rejected.", fn, warn_years,
+		    time2str(cutoff));
+		goto out;
+	}
+
+ out:
+	return acceptable;
+}
+
 struct cert *
 ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
     size_t pkeysz)
@@ -1086,6 +1152,7 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		    "pubkey does not match TAL pubkey", fn);
 		goto badcert;
 	}
+
 	if (p->notbefore > now) {
 		warnx("%s: certificate not yet valid", fn);
 		goto badcert;
@@ -1094,6 +1161,9 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}
+	if (!ta_check_validity(fn, p, now))
+		goto badcert;
+
 	if (p->aki != NULL && strcmp(p->aki, p->ski)) {
 		warnx("%s: RFC 6487 section 4.8.3: "
 		    "trust anchor AKI, if specified, must match SKI", fn);
