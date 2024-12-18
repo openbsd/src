@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.46 2024/09/04 07:54:52 mglocker Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.47 2024/12/18 01:56:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -744,34 +744,23 @@ aggr_start(struct ifqueue *ifq)
 	smr_read_leave();
 }
 
-static inline int
-aggr_eh_is_slow(const struct ether_header *eh)
+static inline struct mbuf *
+aggr_input_control(struct aggr_port *p, struct mbuf *m)
 {
-	uint64_t dst;
-
-	if (eh->ether_type != htons(ETHERTYPE_SLOW))
-		return (0);
-
-	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
-	return (dst == LACP_ADDR_SLOW_E64);
-}
-
-static void
-aggr_input(struct ifnet *ifp0, struct mbuf *m)
-{
-	struct arpcom *ac0 = (struct arpcom *)ifp0;
-	struct aggr_port *p = ac0->ac_trunkport;
-	struct aggr_softc *sc = p->p_aggr;
-	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
 	int hlen = sizeof(*eh);
+	uint16_t etype;
+	uint64_t dst;
 
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
-		goto drop;
+	if (ISSET(m->m_flags, M_VLANTAG))
+		return (m);
 
 	eh = mtod(m, struct ether_header *);
-	if (!ISSET(m->m_flags, M_VLANTAG) &&
-	    __predict_false(aggr_eh_is_slow(eh))) {
+	etype = eh->ether_type;
+	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
+
+	if (__predict_false(etype == htons(ETHERTYPE_SLOW) &&
+	    dst == LACP_ADDR_SLOW_E64)) {
 		unsigned int rx_proto = AGGR_PROTO_RX_LACP;
 		struct ether_slowproto_hdr *sph;
 		int drop = 0;
@@ -781,7 +770,7 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m)
 			m = m_pullup(m, hlen);
 			if (m == NULL) {
 				/* short++ */
-				return;
+				return (NULL);
 			}
 			eh = mtod(m, struct ether_header *);
 		}
@@ -808,11 +797,45 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m)
 				goto drop;
 			else
 				task_add(systq, &p->p_rxm_task);
-			return;
+			return (NULL);
+		default:
+			break;
+		}
+	} else if (__predict_false(etype == htons(ETHERTYPE_LLDP) &&
+	    ETH64_IS_8021_RSVD(dst))) {
+		/* look at the last nibble of the 802.1 reserved address */
+		switch (dst & 0xf) {
+		case 0x0: /* Nearest Customer Bridge */
+		case 0x3: /* Non-TPMR Bridge */
+		case 0xe: /* Nearest Bridge */
+			p->p_input(p->p_ifp0, m);
+			return (NULL);
 		default:
 			break;
 		}
 	}
+
+	return (m);
+
+drop:
+	m_freem(m);
+	return (NULL);
+}
+
+static void
+aggr_input(struct ifnet *ifp0, struct mbuf *m)
+{
+	struct arpcom *ac0 = (struct arpcom *)ifp0;
+	struct aggr_port *p = ac0->ac_trunkport;
+	struct aggr_softc *sc = p->p_aggr;
+	struct ifnet *ifp = &sc->sc_if;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		goto drop;
+
+	m = aggr_input_control(p, m);
+	if (m == NULL)
+		return;
 
 	if (__predict_false(!p->p_collecting))
 		goto drop;
