@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.4 2024/12/17 17:06:10 beck Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.5 2024/12/18 10:55:21 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -187,7 +187,7 @@ reduce_once(uint16_t x)
 	 * value to transit through a general-purpose register). On AArch64, this
 	 * is a difference of 2x.
 	 *
-	 * We usually add value barriers to selects because Clang turns 
+	 * We usually add value barriers to selects because Clang turns
          * consecutive selects with the same condition into a branch instead of
 	 * CMOV/CSEL. This condition does not occur in ML-KEM, so omitting it
          * seems to be safe so far  but see
@@ -476,6 +476,7 @@ scalar_centered_binomial_distribution_eta_2_with_prf(scalar *out,
 		uint16_t value = (byte & 1) + ((byte >> 1) & 1);
 
 		value -= ((byte >> 2) & 1) + ((byte >> 3) & 1);
+
 		/*
 		 * Add |kPrime| if |value| underflowed. See |reduce_once| for a
 		 * discussion on why the value barrier is omitted. While this
