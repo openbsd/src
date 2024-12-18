@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2024/11/09 18:03:44 op Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2024/12/18 12:33:57 sobrado Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -1728,7 +1728,8 @@ usage(void)
 	extern char *__progname;
 
 	(void) fprintf(stderr,
-		"usage: %s [-78BbFfhIiLlnpsTtVvw+?] [-C[aeFfmr]] [--help]"
+		"usage: %s [-78BbdFfhIiLlnpsTtVvw+?] [-C[aeFfmr]] [--help]"
 		" [--version]\n"
-		"\t[-ooutput] [-Pprefix] [-Sskeleton] [file ...]\n", __progname);
+		"\t[-ooutput] [-Pprefix] [-Sskeleton] [file ...]\n",
+		__progname);
 }
