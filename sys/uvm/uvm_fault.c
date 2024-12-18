@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.153 2024/12/15 11:02:59 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.154 2024/12/18 16:41:27 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1140,14 +1140,13 @@ uvm_fault_lower_lookup(
 		    pages[lcv] == PGO_DONTCARE)
 			continue;
 
+		KASSERT((pages[lcv]->pg_flags & PG_BUSY) == 0);
 		KASSERT((pages[lcv]->pg_flags & PG_RELEASED) == 0);
 
 		/*
-		 * if center page is resident and not
-		 * PG_BUSY, then pgo_get made it PG_BUSY
-		 * for us and gave us a handle to it.
-		 * remember this page as "uobjpage."
-		 * (for later use).
+		 * if center page is resident and not PG_BUSY, then pgo_get
+		 * gave us a handle to it.
+		 * remember this page as "uobjpage." (for later use).
 		 */
 		if (lcv == flt->centeridx) {
 			uobjpage = pages[lcv];
@@ -1155,8 +1154,13 @@ uvm_fault_lower_lookup(
 		}
 
 		if (pmap_extract(ufi->orig_map->pmap, currva, &pa))
-			goto next;
+			continue;
 
+		/*
+		 * calling pgo_get with PGO_LOCKED returns us pages which
+		 * are neither busy nor released, so we don't need to check
+		 * for this.  we can just directly enter the pages.
+		 */
 		if (pages[lcv]->wire_count == 0) {
 			uvm_lock_pageq();
 			uvm_pageactivate(pages[lcv]);
@@ -1168,24 +1172,17 @@ uvm_fault_lower_lookup(
 		KASSERT(flt->wired == FALSE);
 
 		/*
-		 * Since this page isn't the page that's
-		 * actually faulting, ignore pmap_enter()
-		 * failures; it's not critical that we
+		 * Since this page isn't the page that's actually faulting,
+		 * ignore pmap_enter() failures; it's not critical that we
 		 * enter these right now.
+		 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
+		 * held the lock the whole time we've had the handle.
 		 */
 		(void) pmap_enter(ufi->orig_map->pmap, currva,
 		    VM_PAGE_TO_PHYS(pages[lcv]) | flt->pa_flags,
 		    flt->enter_prot & MASK(ufi->entry), PMAP_CANFAIL);
 		entered++;
 
-		/*
-		 * NOTE: page can't be PG_WANTED because
-		 * we've held the lock the whole time
-		 * we've had the handle.
-		 */
-next:
-		atomic_clearbits_int(&pages[lcv]->pg_flags, PG_BUSY);
-		UVM_PAGE_OWN(pages[lcv], NULL);
 	}
 	if (entered > 0)
 		pmap_update(ufi->orig_map->pmap);
@@ -1273,6 +1270,11 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	if (uobjpage) {
 		/* update rusage counters */
 		curproc->p_ru.ru_minflt++;
+		if (uobjpage != PGO_DONTCARE) {
+			uvm_lock_pageq();
+			uvm_pageactivate(uobjpage);
+			uvm_unlock_pageq();
+		}
 	} else {
 		error = uvm_fault_lower_io(ufi, flt, &uobj, &uobjpage);
 		if (error != 0)
@@ -1330,21 +1332,6 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 * out of memory resources?
 		 */
 		if (anon == NULL || pg == NULL) {
-			/*
-			 * arg!  must unbusy our page and fail or sleep.
-			 */
-			if (uobjpage != PGO_DONTCARE) {
-				uvm_lock_pageq();
-				uvm_pageactivate(uobjpage);
-				uvm_unlock_pageq();
-
-				if (uobjpage->pg_flags & PG_WANTED)
-					wakeup(uobjpage);
-				atomic_clearbits_int(&uobjpage->pg_flags,
-				    PG_BUSY|PG_WANTED);
-				UVM_PAGE_OWN(uobjpage, NULL);
-			}
-
 			/* unlock and fail ... */
 			uvmfault_unlockall(ufi, amap, uobj);
 			if (anon == NULL)
@@ -1395,16 +1382,6 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 				pmap_page_protect(uobjpage, PROT_NONE);
 			}
 #endif
-
-			/* dispose of uobjpage. drop handle to uobj as well. */
-			if (uobjpage->pg_flags & PG_WANTED)
-				wakeup(uobjpage);
-			atomic_clearbits_int(&uobjpage->pg_flags,
-			    PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(uobjpage, NULL);
-			uvm_lock_pageq();
-			uvm_pageactivate(uobjpage);
-			uvm_unlock_pageq();
 			/* done with copied uobjpage. */
 			rw_exit(uobj->vmobjlock);
 			uobj = NULL;
@@ -1586,15 +1563,13 @@ uvm_fault_lower_io(
 		locked = FALSE;
 	}
 
-	/* didn't get the lock?   release the page and retry. */
-	if (locked == FALSE && pg != PGO_DONTCARE) {
+	/* release the page now, still holding object lock */
+	if (pg != PGO_DONTCARE) {
 		uvm_lock_pageq();
-		/* make sure it is in queues */
 		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
 
 		if (pg->pg_flags & PG_WANTED)
-			/* still holding object lock */
 			wakeup(pg);
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
@@ -1607,7 +1582,8 @@ uvm_fault_lower_io(
 	}
 
 	/*
-	 * we have the data in pg which is PG_BUSY
+	 * we have the data in pg.  we are holding object lock (so the page
+	 * can't be released on us).
 	 */
 	*ruobj = uobj;
 	*ruobjpage = pg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.135 2024/11/27 10:41:38 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.136 2024/12/18 16:41:27 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -992,8 +992,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * useful page: busy it and plug it in our
 			 * result array
 			 */
-			atomic_setbits_int(&ptmp->pg_flags, PG_BUSY);
-			UVM_PAGE_OWN(ptmp, "uvn_get1");
 			pps[lcv] = ptmp;
 			gotpages++;
 

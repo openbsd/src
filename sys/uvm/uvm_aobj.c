@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.111 2024/11/27 10:41:38 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.112 2024/12/18 16:41:27 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1038,8 +1038,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			/*
 			 * useful page: plug it in our result array
 			 */
-			atomic_setbits_int(&ptmp->pg_flags, PG_BUSY);
-			UVM_PAGE_OWN(ptmp, "uao_get1");
 			pps[lcv] = ptmp;
 			gotpages++;
 		}
