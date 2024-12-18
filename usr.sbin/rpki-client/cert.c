@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.154 2024/12/18 16:38:40 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.155 2024/12/18 21:12:26 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1104,9 +1104,9 @@ ta_check_validity(const char *fn, const struct cert *p, time_t now)
 	}
 
 	/*
-	 * Suppress warnings for previously fetched TAs certs.
+	 * Suppress warnings for previously fetched TA certs.
 	 */
-	if (!verbose && strncmp(fn, "ta/", strlen("ta/")) == 0)
+	if (verbose == 0 && strncmp(fn, "ta/", strlen("ta/")) == 0)
 		goto out;
 
 	if (!acceptable) {
