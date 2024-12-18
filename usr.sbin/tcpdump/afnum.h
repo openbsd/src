@@ -1,4 +1,4 @@
-/* $OpenBSD: afnum.h,v 1.2 2024/12/15 21:37:11 denis Exp $ */
+/* $OpenBSD: afnum.h,v 1.3 2024/12/18 06:36:48 tb Exp $ */
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -51,31 +51,31 @@
 #define AFNUM_RESERVED	65535
 
 #define AFNUM_NAME_STR	{						\
-	"Reserved",							\
-	"IPv4",								\
-	"IPv6",								\
-	"NSAP",								\
-	"HDLC",								\
-	"BBN 1822",							\
-	"802",								\
-	"E.163",							\
-	"E.164",							\
-	"F.69",								\
-	"X.121",							\
-	"IPX",								\
-	"Appletalk",							\
-	"Decnet IV",							\
-	"Banyan Vines",							\
-	"E.164 with NSAP subaddress",					\
-	"DNS",								\
-	"Distinguished Name",						\
-	"AS Number",							\
-	"XTP over IPv4",						\
-	"XTP over IPv6",						\
-	"XTP native mode",						\
-	"Fibre Channel WWPN",						\
-	"Fibre Channel WWNN",						\
-	"GWID"								\
+	[0] = "Reserved",						\
+	[AFNUM_INET] = "IPv4",						\
+	[AFNUM_INET6] = "IPv6",						\
+	[AFNUM_NSAP] = "NSAP",						\
+	[AFNUM_HDLC] = "HDLC",						\
+	[AFNUM_BBN1822] = "BBN 1822",					\
+	[AFNUM_802] = "802",						\
+	[AFNUM_E163] = "E.163",						\
+	[AFNUM_E164] = "E.164",						\
+	[AFNUM_F69] = "F.69",						\
+	[AFNUM_X121] = "X.121",						\
+	[AFNUM_IPX] = "IPX",						\
+	[AFNUM_ATALK] = "Appletalk",					\
+	[AFNUM_DECNET] = "Decnet IV",					\
+	[AFNUM_BANYAN] = "Banyan Vines",				\
+	[AFNUM_E164NSAP] = "E.164 with NSAP subaddress",		\
+	[AFNUM_DNS] = "DNS",						\
+	[AFNUM_DN] = "Distinguished Name",				\
+	[AFNUM_AS] = "AS Number",					\
+	[AFNUM_XTPINET] = "XTP over IPv4",				\
+	[AFNUM_XTPINET6] = "XTP over IPv6",				\
+	[AFNUM_XTP] = "XTP native mode",				\
+	[AFNUM_FCPORT] = "Fibre Channel WWPN",				\
+	[AFNUM_FCNODE] = "Fibre Channel WWNN",				\
+	[AFNUM_GWID] = "GWID",						\
 }
 
 #endif /* _AFNUM_H */
