@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem.h,v 1.2 2024/12/13 00:17:17 beck Exp $ */
+/* $OpenBSD: mlkem.h,v 1.3 2024/12/19 23:53:38 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
  *
@@ -18,6 +18,9 @@
 #ifndef _LIBCRYPTO_MLKEM_H
 #define _LIBCRYPTO_MLKEM_H
 
+/* Undo when making public */
+#ifdef LIBRESSL_HAS_MLKEM
+
 #ifndef _MSC_VER
 #include_next <openssl/mlkem.h>
 #else
@@ -25,8 +28,6 @@
 #endif
 #include "crypto_namespace.h"
 
-/* Undo when making public */
-#ifdef LIBRESSL_HAS_MLKEM
 LCRYPTO_USED(MLKEM768_generate_key);
 LCRYPTO_USED(MLKEM768_public_from_private);
 LCRYPTO_USED(MLKEM768_encap);
