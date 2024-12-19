@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.364 2024/12/07 01:14:45 yasuoka Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.365 2024/12/19 22:10:35 mvs Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -87,6 +87,11 @@
 #endif
 
 #include <netinet/ip_carp.h>
+
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
 
 struct carp_mc_entry {
 	LIST_ENTRY(carp_mc_entry)	mc_entries;
@@ -189,14 +194,23 @@ void	carp_sc_unref(void *, void *);
 struct srpl_rc carp_sc_rc =
     SRPL_RC_INITIALIZER(carp_sc_ref, carp_sc_unref, NULL);
 
-int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, LOG_CRIT };	/* XXX for now */
+int carpctl_allow = 1;		/* [a] */
+int carpctl_preempt = 0;	/* [a] */
+int carpctl_log = LOG_CRIT;	/* [a] */
+
+const struct sysctl_bounded_args carpctl_vars[] = {
+	{CARPCTL_ALLOW, &carpctl_allow, INT_MIN, INT_MAX},
+	{CARPCTL_PREEMPT, &carpctl_preempt, INT_MIN, INT_MAX},
+	{CARPCTL_LOG, &carpctl_log, INT_MIN, INT_MAX},
+};
+
 struct cpumem *carpcounters;
 
 int	carp_send_all_recur = 0;
 
 #define	CARP_LOG(l, sc, s)						\
 	do {								\
-		if (carp_opts[CARPCTL_LOG] >= l) {			\
+		if ((int)atomic_load_int(&carpctl_log) >= l) {		\
 			if (sc)						\
 				log(l, "%s: ",				\
 				    (sc)->sc_if.if_xname);		\
@@ -451,7 +465,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 
 	carpstat_inc(carps_ipackets);
 
-	if (!carp_opts[CARPCTL_ALLOW]) {
+	if (!atomic_load_int(&carpctl_allow)) {
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -550,7 +564,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 
 	carpstat_inc(carps_ipackets6);
 
-	if (!carp_opts[CARPCTL_ALLOW]) {
+	if (!atomic_load_int(&carpctl_allow)) {
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -707,7 +721,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 		 * and do not have a better demote count, treat them as down.
 		 *
 		 */
-		if (carp_opts[CARPCTL_PREEMPT] &&
+		if (atomic_load_int(&carpctl_preempt) &&
 		    timercmp(&sc_tv, &ch_tv, <) &&
 		    ch->carp_demote >= carp_group_demote_count(sc)) {
 			carp_master_down(vhe);
@@ -765,8 +779,6 @@ int
 carp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -775,13 +787,8 @@ carp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case CARPCTL_STATS:
 		return (carp_sysctl_carpstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] <= 0 || name[0] >= CARPCTL_MAXID)
-			return (ENOPROTOOPT);
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &carp_opts[name[0]]);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_bounded_arr(carpctl_vars, nitems(carpctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 }
 
