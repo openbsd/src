@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.3 2024/12/14 19:19:38 tb Exp $
+#       $OpenBSD: Makefile,v 1.4 2024/12/19 23:45:09 tb Exp $
 
 PROGS +=        mlkem_unittest
 PROGS +=        mlkem768_nist_keygen_tests
@@ -27,6 +27,7 @@ LDADD =         ${CRYPTO_INT}
 DPADD =         ${LIBCRYPTO}
 
 CFLAGS +=       -DLIBRESSL_INTERNAL -Wall
+CFLAGS +=       -I${.CURDIR}/../../../../lib/libcrypto/bytestring
 CFLAGS +=       -I${.CURDIR}/../../../../lib/libcrypto/mlkem
 CFLAGS +=       -I${.CURDIR}/../../../../lib/libcrypto/sha
 CFLAGS +=       -DLIBRESSL_INTERNAL
