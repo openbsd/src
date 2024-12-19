@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.30 2024/11/24 22:58:04 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.31 2024/12/19 18:02:47 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
@@ -212,6 +213,7 @@ struct dwmmc_softc {
 
 	uint32_t		sc_gpio[4];
 	int			sc_sdio_irq;
+	uint32_t		sc_vqmmc;
 	uint32_t		sc_pwrseq;
 	uint32_t		sc_vdd;
 
@@ -241,6 +243,7 @@ int	dwmmc_bus_width(sdmmc_chipset_handle_t, int);
 void	dwmmc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 void	dwmmc_card_intr_mask(sdmmc_chipset_handle_t, int);
 void	dwmmc_card_intr_ack(sdmmc_chipset_handle_t);
+int	dwmmc_signal_voltage(sdmmc_chipset_handle_t, int);
 
 struct sdmmc_chip_functions dwmmc_chip_functions = {
 	.host_reset = dwmmc_host_reset,
@@ -253,6 +256,7 @@ struct sdmmc_chip_functions dwmmc_chip_functions = {
 	.exec_command = dwmmc_exec_command,
 	.card_intr_mask = dwmmc_card_intr_mask,
 	.card_intr_ack = dwmmc_card_intr_ack,
+	.signal_voltage = dwmmc_signal_voltage,
 };
 
 void	dwmmc_pio_mode(struct dwmmc_softc *);
@@ -379,6 +383,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
 
 	sc->sc_sdio_irq = (OF_getproplen(sc->sc_node, "cap-sdio-irq") == 0);
+	sc->sc_vqmmc = OF_getpropint(sc->sc_node, "vqmmc-supply", 0);
 	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
 
 	printf(": %d MHz base clock\n", sc->sc_clkbase / 1000000);
@@ -1281,4 +1286,30 @@ dwmmc_pwrseq_post(uint32_t phandle)
 		delay(post_delay * 1000);
 
 	free(gpios, M_TEMP, len);
+}
+
+int
+dwmmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	struct dwmmc_softc *sc = sch;
+	uint32_t vccq;
+
+	if (sc->sc_vqmmc == 0)
+		return ENODEV;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		vccq = 1800000;
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		vccq = 3300000;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (regulator_get_voltage(sc->sc_vqmmc) == vccq)
+		return 0;
+
+	return regulator_set_voltage(sc->sc_vqmmc, vccq);
 }
