@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.5 2024/12/18 10:55:21 tb Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.6 2024/12/19 23:52:26 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -16,13 +16,12 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <openssl/mlkem.h>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "bytestring.h"
+#include "mlkem.h"
 
 #include "sha3_internal.h"
 #include "mlkem_internal.h"

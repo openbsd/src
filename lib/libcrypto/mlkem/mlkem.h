@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.h,v 1.3 2024/12/17 06:43:32 tb Exp $ */
+/*	$OpenBSD: mlkem.h,v 1.4 2024/12/19 23:52:26 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  *
@@ -20,11 +20,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-
-#ifdef LIBRESSL_HAS_MLKEM
-/* This needs to become public */
-#include <openssl/bytestring.h>
-#endif
 
 #if defined(__cplusplus)
 extern "C" {
