@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.55 2024/12/07 13:49:43 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.56 2024/12/19 21:05:46 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -275,7 +275,7 @@ ec_wnaf_new(const EC_GROUP *group, const EC_POINT *point, const BIGNUM *bn,
 	if (!ec_compute_wnaf(bn, wnaf->digits, wnaf->num_digits))
 		goto err;
 
-	wnaf->num_multiples = 1 << (ec_window_bits(bn) - 1);
+	wnaf->num_multiples = 1ULL << (ec_window_bits(bn) - 1);
 	if ((wnaf->multiples = calloc(wnaf->num_multiples,
 	    sizeof(*wnaf->multiples))) == NULL)
 		goto err;
