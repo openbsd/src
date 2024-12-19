@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.145 2024/05/14 09:39:02 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.146 2024/12/19 22:11:35 mvs Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ int
 tcp_output(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
-	long len, win, txmaxseg;
+	long len, win, rcv_hiwat, txmaxseg;
 	int off, flags, error;
 	struct mbuf *m;
 	struct tcphdr *th;
@@ -373,7 +373,10 @@ again:
 	if (off + len < so->so_snd.sb_cc)
 		flags &= ~TH_FIN;
 
-	win = sbspace(so, &so->so_rcv);
+	mtx_enter(&so->so_rcv.sb_mtx);
+	win = sbspace_locked(so, &so->so_rcv);
+	rcv_hiwat = (long) so->so_rcv.sb_hiwat; 
+	mtx_leave(&so->so_rcv.sb_mtx);
 
 	/*
 	 * Sender silly window avoidance.  If connection is idle
@@ -420,7 +423,7 @@ again:
 
 		if (adv >= (long) (2 * tp->t_maxseg))
 			goto send;
-		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
+		if (2 * adv >= rcv_hiwat)
 			goto send;
 	}
 
@@ -854,7 +857,7 @@ send:
 	 * Calculate receive window.  Don't shrink window,
 	 * but avoid silly window syndrome.
 	 */
-	if (win < (long)(so->so_rcv.sb_hiwat / 4) && win < (long)tp->t_maxseg)
+	if (win < (rcv_hiwat / 4) && win < (long)tp->t_maxseg)
 		win = 0;
 	if (win > (long)TCP_MAXWIN << tp->rcv_scale)
 		win = (long)TCP_MAXWIN << tp->rcv_scale;

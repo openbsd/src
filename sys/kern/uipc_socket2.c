@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.159 2024/11/06 14:37:45 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.160 2024/12/19 22:11:35 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -839,8 +839,7 @@ sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 void
 sbappendstream(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 {
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
-	soassertlocked(so);
+	sbmtxassertlocked(so, sb);
 	KDASSERT(m->m_nextpkt == NULL);
 	KASSERT(sb->sb_mb == sb->sb_lastrecord);
 

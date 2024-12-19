@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.232 2024/11/08 15:46:55 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.233 2024/12/19 22:11:35 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -296,10 +296,12 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	ti->tcpi_rfbuf_cnt = tp->rfbuf_cnt;
 	ti->tcpi_rfbuf_ts = (now - tp->rfbuf_ts) * t;
 
+	mtx_enter(&so->so_rcv.sb_mtx);
 	ti->tcpi_so_rcv_sb_cc = so->so_rcv.sb_cc;
 	ti->tcpi_so_rcv_sb_hiwat = so->so_rcv.sb_hiwat;
 	ti->tcpi_so_rcv_sb_lowat = so->so_rcv.sb_lowat;
 	ti->tcpi_so_rcv_sb_wat = so->so_rcv.sb_wat;
+	mtx_leave(&so->so_rcv.sb_mtx);
 	ti->tcpi_so_snd_sb_cc = so->so_snd.sb_cc;
 	ti->tcpi_so_snd_sb_hiwat = so->so_snd.sb_hiwat;
 	ti->tcpi_so_snd_sb_lowat = so->so_snd.sb_lowat;
@@ -1044,7 +1046,9 @@ tcp_dodisconnect(struct tcpcb *tp)
 		tp = tcp_drop(tp, 0);
 	else {
 		soisdisconnecting(so);
+		mtx_enter(&so->so_rcv.sb_mtx);
 		sbflush(so, &so->so_rcv);
+		mtx_leave(&so->so_rcv.sb_mtx);
 		tp = tcp_usrclosed(tp);
 		if (tp)
 			(void) tcp_output(tp);
@@ -1556,7 +1560,11 @@ void
 tcp_update_rcvspace(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
-	u_long nmax = so->so_rcv.sb_hiwat;
+	u_long nmax;
+
+	mtx_enter(&so->so_rcv.sb_mtx);	
+
+	nmax = so->so_rcv.sb_hiwat;
 
 	if (sbchecklowmem()) {
 		/* low on memory try to get rid of some */
@@ -1577,10 +1585,11 @@ tcp_update_rcvspace(struct tcpcb *tp)
 	    nmax < so->so_snd.sb_lowat)
 		nmax = so->so_snd.sb_lowat;
 
-	if (nmax == so->so_rcv.sb_hiwat)
-		return;
+	if (nmax != so->so_rcv.sb_hiwat) {
+		/* round to MSS boundary */
+		nmax = roundup(nmax, tp->t_maxseg);
+		sbreserve(so, &so->so_rcv, nmax);
+	}
 
-	/* round to MSS boundary */
-	nmax = roundup(nmax, tp->t_maxseg);
-	sbreserve(so, &so->so_rcv, nmax);
+	mtx_leave(&so->so_rcv.sb_mtx);	
 }
