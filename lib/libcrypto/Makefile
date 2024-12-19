@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.230 2024/12/13 00:17:17 beck Exp $
+# $OpenBSD: Makefile,v 1.231 2024/12/19 23:56:32 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -645,7 +645,6 @@ HDRS=\
 	${LCRYPTO_SRC}/bio/bio.h \
 	${LCRYPTO_SRC}/bn/bn.h \
 	${LCRYPTO_SRC}/buffer/buffer.h \
-	${LCRYPTO_SRC}/bytestring/bytestring.h \
 	${LCRYPTO_SRC}/camellia/camellia.h \
 	${LCRYPTO_SRC}/cast/cast.h \
 	${LCRYPTO_SRC}/chacha/chacha.h \
@@ -672,7 +671,6 @@ HDRS=\
 	${LCRYPTO_SRC}/lhash/lhash.h \
 	${LCRYPTO_SRC}/md4/md4.h \
 	${LCRYPTO_SRC}/md5/md5.h \
-	${LCRYPTO_SRC}/mlkem/mlkem.h \
 	${LCRYPTO_SRC}/modes/modes.h \
 	${LCRYPTO_SRC}/objects/objects.h \
 	${LCRYPTO_SRC}/ocsp/ocsp.h \
