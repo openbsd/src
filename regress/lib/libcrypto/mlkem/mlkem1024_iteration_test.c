@@ -1,7 +1,8 @@
-/*	$OpenBSD: mlkem1024_iteration_test.c,v 1.2 2024/12/14 19:16:24 tb Exp $ */
+/*	$OpenBSD: mlkem1024_iteration_test.c,v 1.3 2024/12/20 00:07:12 tb Exp $ */
 /*
- * Copyright (c) 2024, Google Inc.
- * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
+ * Copyright (c) 2024 Google Inc.
+ * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
+ * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,31 +17,16 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <openssl/bytestring.h>
-#include <openssl/mlkem.h>
+#include "mlkem.h"
 
 #include "mlkem_internal.h"
 #include "mlkem_tests_util.h"
 #include "sha3_internal.h"
-
-static int
-encode_private_key(const struct MLKEM1024_private_key *priv, uint8_t **out_buf,
-    size_t *out_len)
-{
-	CBB cbb;
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		return 0;
-	if (!MLKEM1024_marshal_private_key(&cbb, priv))
-		return 0;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		return 0;
-	CBB_cleanup(&cbb);
-	return 1;
-}
 
 /*
  * The structure of this test is taken from
@@ -52,8 +38,8 @@ encode_private_key(const struct MLKEM1024_private_key *priv, uint8_t **out_buf,
  * (The RNG stream starts with 7f9c2ba4e88f827d616045507605853e.)
  */
 
-static void
-MlkemIterativeTest()
+static int
+MlkemIterativeTest(void)
 {
 	/* https://github.com/C2SP/CCTV/tree/main/ML-KEM */
 	/*
@@ -101,8 +87,9 @@ MlkemIterativeTest()
 		 */
 		shake_out(&drng, seed, sizeof(seed));
 		if (i == 0) {
-			TEST_DATAEQ(seed, kExpectedSeedStart,
-			    sizeof(kExpectedSeedStart), "seed start");
+			if (compare_data(seed, kExpectedSeedStart,
+			    sizeof(kExpectedSeedStart), 0, "seed start") != 0)
+				errx(1, "compare_data");
 		}
 
 		/* generate ek as encoded_public_key */
@@ -115,8 +102,9 @@ MlkemIterativeTest()
 		    sizeof(encoded_public_key));
 
 		/* marshal priv to dk as encoded_private_key */
-		TEST(!encode_private_key(&priv, &encoded_private_key,
-		    &encoded_private_key_len), "encode_private_key");
+		if (!mlkem1024_encode_private_key(&priv, &encoded_private_key,
+		    &encoded_private_key_len))
+			errx(1, "mlkem1024_encode_private_key");
 
 		/* hash in dk */
 		shake_update(&results, encoded_private_key,
@@ -141,21 +129,21 @@ MlkemIterativeTest()
 		    sizeof(invalid_ciphertext));
 
 		/* generte k as shared secret from invalid ciphertext */
-		TEST(!MLKEM1024_decap(shared_secret, invalid_ciphertext,
-		    sizeof(invalid_ciphertext), &priv), "decap failed!");
+		if (!MLKEM1024_decap(shared_secret, invalid_ciphertext,
+		    sizeof(invalid_ciphertext), &priv))
+			errx(1, "decap failed");
 
 		/* hash in k */
 		shake_update(&results, shared_secret, sizeof(shared_secret));
 	}
 	shake_xof(&results);
-	shake_out(&results, out, 32);
+	shake_out(&results, out, sizeof(out));
 
-	TEST_DATAEQ(out, kExpectedAdam, 32, "final result hash");
+	return compare_data(kExpectedAdam, out, sizeof(out), i, "final result hash");
 }
 
 int
 main(int argc, char **argv)
 {
-	MlkemIterativeTest();
-	exit(failure);
+	return MlkemIterativeTest();
 }

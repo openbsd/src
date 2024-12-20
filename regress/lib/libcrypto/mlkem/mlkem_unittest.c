@@ -1,7 +1,7 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.3 2024/12/14 19:16:24 tb Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.4 2024/12/20 00:07:12 tb Exp $ */
 /*
- * Copyright (c) 2024, Google Inc.
- * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
+ * Copyright (c) 2024 Google Inc.
+ * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,52 +16,22 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bytestring.h>
-#include <openssl/mlkem.h>
+#include "bytestring.h"
+#include "mlkem.h"
 
-#include "mlkem_internal.h"
 #include "mlkem_tests_util.h"
 
 static int
-encode_public_key(const struct MLKEM768_public_key *pub, uint8_t **out_buf,
-    size_t *out_len)
+MlKem768UnitTest(void)
 {
-	CBB cbb;
-	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
-		return 0;
-	if (!MLKEM768_marshal_public_key(&cbb, pub))
-		return 0;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		return 0;
-	CBB_cleanup(&cbb);
-	return 1;
-}
-
-static int
-encode_private_key(const struct MLKEM768_private_key *priv, uint8_t **out_buf,
-    size_t *out_len)
-{
-	CBB cbb;
-	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
-		return 0;
-	if (!MLKEM768_marshal_private_key(&cbb, priv))
-		return 0;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		return 0;
-	CBB_cleanup(&cbb);
-	return 1;
-}
-
-static void
-MlKem768UnitTest()
-{
-	struct MLKEM768_private_key *priv, *priv2;
-	struct MLKEM768_public_key *pub, *pub2;
+	struct MLKEM768_private_key priv = { 0 }, priv2 = { 0 };
+	struct MLKEM768_public_key pub = { 0 }, pub2 = { 0 };
 	uint8_t encoded_public_key[MLKEM768_PUBLIC_KEY_BYTES];
 	uint8_t ciphertext[MLKEM768_CIPHERTEXT_BYTES];
 	uint8_t shared_secret1[MLKEM_SHARED_SECRET_BYTES];
@@ -70,123 +40,138 @@ MlKem768UnitTest()
 	uint8_t *encoded_private_key = NULL, *tmp_buf = NULL;
 	size_t encoded_private_key_len, tmp_buf_len;
 	CBS cbs;
+	int failed = 0;
 
-	fprintf(stderr, "ML-KEM 768...\n");
-
-	MALLOC(priv, sizeof(struct MLKEM768_private_key));
-	MLKEM768_generate_key(encoded_public_key, NULL, priv);
+	MLKEM768_generate_key(encoded_public_key, NULL, &priv);
 
 	memcpy(first_two_bytes, encoded_public_key, sizeof(first_two_bytes));
 	memset(encoded_public_key, 0xff, sizeof(first_two_bytes));
-	CBS_init(&cbs, encoded_public_key,
-	    sizeof(encoded_public_key));
-	MALLOC(pub, sizeof(struct MLKEM768_public_key));
-	/*  Parsing should fail because the first coefficient is >= kPrime; */
-	TEST(MLKEM768_parse_public_key(pub, &cbs),
-	    "Kyber_parse_public_key should have failed");
+
+	CBS_init(&cbs, encoded_public_key, sizeof(encoded_public_key));
+
+	/* Parsing should fail because the first coefficient is >= kPrime. */
+	if (MLKEM768_parse_public_key(&pub, &cbs)) {
+		warnx("MLKEM768_parse_public_key should have failed");
+		failed |= 1;
+	}
 
 	memcpy(encoded_public_key, first_two_bytes, sizeof(first_two_bytes));
 	CBS_init(&cbs, encoded_public_key, sizeof(encoded_public_key));
-	TEST(!MLKEM768_parse_public_key(pub, &cbs),
-	    "MLKEM768_parse_public_key");
-	TEST(CBS_len(&cbs) != 0u, "CBS_len must be 0");
+	if (!MLKEM768_parse_public_key(&pub, &cbs)) {
+		warnx("MLKEM768_parse_public_key");
+		failed |= 1;
+	}
 
-	TEST(!encode_public_key(pub, &tmp_buf, &tmp_buf_len),
-	    "encode_public_key");
-	TEST(sizeof(encoded_public_key) != tmp_buf_len,
-	    "encoded public key lengths differ");
-	TEST_DATAEQ(tmp_buf, encoded_public_key, tmp_buf_len,
-	    "encoded public keys");
+	if (CBS_len(&cbs) != 0u) {
+		warnx("CBS_len must be 0");
+		failed |= 1;
+	}
+
+	if (!mlkem768_encode_public_key(&pub, &tmp_buf, &tmp_buf_len)) {
+		warnx("encode_public_key");
+		failed |= 1;
+	}
+	if (sizeof(encoded_public_key) != tmp_buf_len) {
+		warnx("mlkem768 encoded public key lengths differ");
+		failed |= 1;
+	}
+
+	if (compare_data(encoded_public_key, tmp_buf, tmp_buf_len, 768,
+	    "encoded public keys") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	MALLOC(pub2, sizeof(struct MLKEM768_public_key));
-	MLKEM768_public_from_private(pub2, priv);
-	TEST(!encode_public_key(pub2, &tmp_buf, &tmp_buf_len),
-	    "encode_public_key");
-	TEST(sizeof(encoded_public_key) != tmp_buf_len,
-	    "encoded public key lengths differ");
-	TEST_DATAEQ(tmp_buf, encoded_public_key, tmp_buf_len,
-	    "encoded pubic keys");
+	MLKEM768_public_from_private(&pub2, &priv);
+	if (!mlkem768_encode_public_key(&pub2, &tmp_buf, &tmp_buf_len)) {
+		warnx("mlkem768_encode_public_key");
+		failed |= 1;
+	}
+	if (sizeof(encoded_public_key) != tmp_buf_len) {
+		warnx("mlkem768 encoded public key lengths differ");
+		failed |= 1;
+	}
+
+	if (compare_data(encoded_public_key, tmp_buf, tmp_buf_len, 768,
+	    "encoded public keys") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	TEST(!encode_private_key(priv, &encoded_private_key,
-	    &encoded_private_key_len), "encode_private_key");
+	if (!mlkem768_encode_private_key(&priv, &encoded_private_key,
+	    &encoded_private_key_len)) {
+		warnx("mlkem768_encode_private_key");
+		failed |= 1;
+	}
 
 	memcpy(first_two_bytes, encoded_private_key, sizeof(first_two_bytes));
 	memset(encoded_private_key, 0xff, sizeof(first_two_bytes));
 	CBS_init(&cbs, encoded_private_key, encoded_private_key_len);
-	MALLOC(priv2, sizeof(struct MLKEM768_private_key));
+
 	/*  Parsing should fail because the first coefficient is >= kPrime. */
-	TEST(MLKEM768_parse_private_key(priv2, &cbs), "Should not have parsed");
+	if (MLKEM768_parse_private_key(&priv2, &cbs)) {
+		warnx("MLKEM768_parse_private_key should have failed");
+		failed |= 1;
+	}
 
 	memcpy(encoded_private_key, first_two_bytes, sizeof(first_two_bytes));
 	CBS_init(&cbs, encoded_private_key, encoded_private_key_len);
-	TEST(!MLKEM768_parse_private_key(priv2, &cbs),
-	    "MLKEM768_parse_private_key");
-	TEST(!encode_private_key(priv2, &tmp_buf, &tmp_buf_len),
-	    "encode_private_key");
-	TEST(encoded_private_key_len != tmp_buf_len,
-	    "encoded private key lengths differ");
-	TEST_DATAEQ(tmp_buf, encoded_private_key, encoded_private_key_len,
-	    "encoded private keys");
+
+	if (!MLKEM768_parse_private_key(&priv2, &cbs)) {
+		warnx("MLKEM768_parse_private_key");
+		failed |= 1;
+	}
+
+	if (!mlkem768_encode_private_key(&priv2, &tmp_buf, &tmp_buf_len)) {
+		warnx("mlkem768_encode_private_key");
+		failed |= 1;
+	}
+
+	if (encoded_private_key_len != tmp_buf_len) {
+		warnx("mlkem768 encode private key lengths differ");
+		failed |= 1;
+	}
+
+	if (compare_data(encoded_private_key, tmp_buf, tmp_buf_len, 768,
+	    "encoded private key") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
+
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	MLKEM768_encap(ciphertext, shared_secret1, pub);
+	MLKEM768_encap(ciphertext, shared_secret1, &pub);
 	MLKEM768_decap(shared_secret2, ciphertext, MLKEM768_CIPHERTEXT_BYTES,
-	    priv);
-	TEST_DATAEQ(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
-	    "shared secrets with priv");
+	    &priv);
+	if (compare_data(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
+	    768, "shared secrets with priv") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
+
 	MLKEM768_decap(shared_secret2, ciphertext, MLKEM768_CIPHERTEXT_BYTES,
-	    priv2);
-	TEST_DATAEQ(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
-	    "shared secrets with priv2");
+	    &priv2);
+	if (compare_data(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
+	    768, "shared secrets with priv2") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
 
 	free(encoded_private_key);
-	free(pub);
-	free(pub2);
-	free(priv);
-	free(priv2);
 
+	return failed;
 }
 
 static int
-encode_1024public_key(const struct MLKEM1024_public_key *pub, uint8_t **out_buf,
-    size_t *out_len)
+MlKem1024UnitTest(void)
 {
-	CBB cbb;
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		return 0;
-	if (!MLKEM1024_marshal_public_key(&cbb, pub))
-		return 0;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		return 0;
-	CBB_cleanup(&cbb);
-	return 1;
-}
-
-static int
-encode_1024private_key(const struct MLKEM1024_private_key *priv, uint8_t **out_buf,
-    size_t *out_len)
-{
-	CBB cbb;
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		return 0;
-	if (!MLKEM1024_marshal_private_key(&cbb, priv))
-		return 0;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		return 0;
-	CBB_cleanup(&cbb);
-	return 1;
-}
-
-static void
-MlKem1024UnitTest()
-{
-	struct MLKEM1024_private_key *priv, *priv2;
-	struct MLKEM1024_public_key *pub, *pub2;
+	struct MLKEM1024_private_key priv = { 0 }, priv2 = { 0 };
+	struct MLKEM1024_public_key pub = { 0 }, pub2 = { 0 };
 	uint8_t encoded_public_key[MLKEM1024_PUBLIC_KEY_BYTES];
 	uint8_t ciphertext[MLKEM1024_CIPHERTEXT_BYTES];
 	uint8_t shared_secret1[MLKEM_SHARED_SECRET_BYTES];
@@ -195,92 +180,140 @@ MlKem1024UnitTest()
 	uint8_t *encoded_private_key = NULL, *tmp_buf = NULL;
 	size_t encoded_private_key_len, tmp_buf_len;
 	CBS cbs;
+	int failed = 0;
 
-	fprintf(stderr, "ML-KEM 1024...\n");
-
-	MALLOC(priv, sizeof(struct MLKEM1024_private_key));
-	MLKEM1024_generate_key(encoded_public_key, NULL, priv);
+	MLKEM1024_generate_key(encoded_public_key, NULL, &priv);
 
 	memcpy(first_two_bytes, encoded_public_key, sizeof(first_two_bytes));
 	memset(encoded_public_key, 0xff, sizeof(first_two_bytes));
-	CBS_init(&cbs, encoded_public_key,
-	    sizeof(encoded_public_key));
-	MALLOC(pub, sizeof(struct MLKEM1024_public_key));
-	/*  Parsing should fail because the first coefficient is >= kPrime; */
-	TEST(MLKEM1024_parse_public_key(pub, &cbs),
-	    "Kyber_parse_public_key should have failed");
+
+	CBS_init(&cbs, encoded_public_key, sizeof(encoded_public_key));
+
+	/* Parsing should fail because the first coefficient is >= kPrime. */
+	if (MLKEM1024_parse_public_key(&pub, &cbs)) {
+		warnx("MLKEM1024_parse_public_key should have failed");
+		failed |= 1;
+	}
 
 	memcpy(encoded_public_key, first_two_bytes, sizeof(first_two_bytes));
 	CBS_init(&cbs, encoded_public_key, sizeof(encoded_public_key));
-	TEST(!MLKEM1024_parse_public_key(pub, &cbs),
-	    "MLKEM1024_parse_public_key");
-	TEST(CBS_len(&cbs) != 0u, "CBS_len must be 0");
+	if (!MLKEM1024_parse_public_key(&pub, &cbs)) {
+		warnx("MLKEM1024_parse_public_key");
+		failed |= 1;
+	}
 
-	TEST(!encode_1024public_key(pub, &tmp_buf, &tmp_buf_len),
-	    "encode_1024public_key");
-	TEST(sizeof(encoded_public_key) != tmp_buf_len,
-	    "encoded public key lengths differ");
-	TEST_DATAEQ(tmp_buf, encoded_public_key, tmp_buf_len,
-	    "encoded public keys");
+	if (CBS_len(&cbs) != 0u) {
+		warnx("CBS_len must be 0");
+		failed |= 1;
+	}
+
+	if (!mlkem1024_encode_public_key(&pub, &tmp_buf, &tmp_buf_len)) {
+		warnx("encode_public_key");
+		failed |= 1;
+	}
+	if (sizeof(encoded_public_key) != tmp_buf_len) {
+		warnx("mlkem1024 encoded public key lengths differ");
+		failed |= 1;
+	}
+
+	if (compare_data(encoded_public_key, tmp_buf, tmp_buf_len, 1024,
+	    "encoded public keys") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	MALLOC(pub2, sizeof(struct MLKEM1024_public_key));
-	MLKEM1024_public_from_private(pub2, priv);
-	TEST(!encode_1024public_key(pub2, &tmp_buf, &tmp_buf_len),
-	    "encode_public_key");
-	TEST(sizeof(encoded_public_key) != tmp_buf_len,
-	    "encoded public key lengths differ");
-	TEST_DATAEQ(tmp_buf, encoded_public_key, tmp_buf_len,
-	    "encoded pubic keys");
+	MLKEM1024_public_from_private(&pub2, &priv);
+	if (!mlkem1024_encode_public_key(&pub2, &tmp_buf, &tmp_buf_len)) {
+		warnx("mlkem1024_encode_public_key");
+		failed |= 1;
+	}
+	if (sizeof(encoded_public_key) != tmp_buf_len) {
+		warnx("mlkem1024 encoded public key lengths differ");
+		failed |= 1;
+	}
+
+	if (compare_data(encoded_public_key, tmp_buf, tmp_buf_len, 1024,
+	    "encoded public keys") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	TEST(!encode_1024private_key(priv, &encoded_private_key,
-	    &encoded_private_key_len), "encode_1024private_key");
+	if (!mlkem1024_encode_private_key(&priv, &encoded_private_key,
+	    &encoded_private_key_len)) {
+		warnx("mlkem1024_encode_private_key");
+		failed |= 1;
+	}
 
 	memcpy(first_two_bytes, encoded_private_key, sizeof(first_two_bytes));
 	memset(encoded_private_key, 0xff, sizeof(first_two_bytes));
 	CBS_init(&cbs, encoded_private_key, encoded_private_key_len);
-	MALLOC(priv2, sizeof(struct MLKEM1024_private_key));
+
 	/*  Parsing should fail because the first coefficient is >= kPrime. */
-	TEST(MLKEM1024_parse_private_key(priv2, &cbs), "Should not have parsed");
+	if (MLKEM1024_parse_private_key(&priv2, &cbs)) {
+		warnx("MLKEM1024_parse_private_key should have failed");
+		failed |= 1;
+	}
 
 	memcpy(encoded_private_key, first_two_bytes, sizeof(first_two_bytes));
 	CBS_init(&cbs, encoded_private_key, encoded_private_key_len);
-	TEST(!MLKEM1024_parse_private_key(priv2, &cbs),
-	    "MLKEM1024_parse_private_key");
-	TEST(!encode_1024private_key(priv2, &tmp_buf, &tmp_buf_len),
-	    "encode_private_key");
-	TEST(encoded_private_key_len != tmp_buf_len,
-	    "encoded private key lengths differ");
-	TEST_DATAEQ(tmp_buf, encoded_private_key, encoded_private_key_len,
-	    "encoded private keys");
+
+	if (!MLKEM1024_parse_private_key(&priv2, &cbs)) {
+		warnx("MLKEM1024_parse_private_key");
+		failed |= 1;
+	}
+
+	if (!mlkem1024_encode_private_key(&priv2, &tmp_buf, &tmp_buf_len)) {
+		warnx("mlkem1024_encode_private_key");
+		failed |= 1;
+	}
+
+	if (encoded_private_key_len != tmp_buf_len) {
+		warnx("mlkem1024 encode private key lengths differ");
+		failed |= 1;
+	}
+
+	if (compare_data(encoded_private_key, tmp_buf, tmp_buf_len, 1024,
+	    "encoded private key") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
+
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	MLKEM1024_encap(ciphertext, shared_secret1, pub);
+	MLKEM1024_encap(ciphertext, shared_secret1, &pub);
 	MLKEM1024_decap(shared_secret2, ciphertext, MLKEM1024_CIPHERTEXT_BYTES,
-	    priv);
-	TEST_DATAEQ(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
-	    "shared secrets with priv");
+	    &priv);
+	if (compare_data(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
+	    1024, "shared secrets with priv") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
+
 	MLKEM1024_decap(shared_secret2, ciphertext, MLKEM1024_CIPHERTEXT_BYTES,
-	    priv2);
-	TEST_DATAEQ(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
-	    "shared secrets with priv2");
+	    &priv2);
+	if (compare_data(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
+	    1024, "shared secrets with priv2") != 0) {
+		warnx("compare_data");
+		failed |= 1;
+	}
 
 	free(encoded_private_key);
-	free(pub);
-	free(pub2);
-	free(priv);
-	free(priv2);
+
+	return failed;
 }
 
 int
 main(int argc, char **argv)
 {
-	MlKem768UnitTest();
-	MlKem1024UnitTest();
+	int failed = 0;
 
-	exit(failure);
+	failed |= MlKem768UnitTest();
+	failed |= MlKem1024UnitTest();
+
+	return failed;
 }

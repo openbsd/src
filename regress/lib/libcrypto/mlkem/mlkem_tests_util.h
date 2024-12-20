@@ -1,6 +1,7 @@
-/*	$OpenBSD: mlkem_tests_util.h,v 1.2 2024/12/14 19:16:24 tb Exp $ */
+/*	$OpenBSD: mlkem_tests_util.h,v 1.3 2024/12/20 00:07:12 tb Exp $ */
 /*
- * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
+ * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
+ * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,47 +19,31 @@
 #ifndef MLKEM_TEST_UTIL_H
 #define MLKEM_TEST_UTIL_H
 
+#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include <openssl/bytestring.h>
+#include "bytestring.h"
 
-#define TEST(cond, msg) do {						\
-	if ((cond)) {							\
-		failure = 1;						\
-		fprintf(stderr, "FAIL: %s:%d - Test %d: %s\n",		\
-		    __FILE__, __LINE__, test_number, msg);		\
-	}								\
-} while(0)
+struct MLKEM1024_private_key;
+struct MLKEM1024_public_key;
+struct MLKEM768_private_key;
+struct MLKEM768_public_key;
 
-#define MALLOC(A, B) do {						\
-	if (((A) = malloc(B)) == NULL) {				\
-		failure = 1;						\
-		fprintf(stderr, "FAIL: %s:%d - Test %d: malloc\n",	\
-		    __FILE__, __LINE__, test_number);			\
-		exit(1);						\
-	}								\
-} while(0)
+/* XXX - return values of the two compare functions are inconsistent */
+int compare_data(const uint8_t *want, const uint8_t *got, size_t len,
+    size_t line, const char *msg);
+int compare_length(size_t want, size_t got, size_t line, const char *msg);
 
-#define TEST_DATAEQ(values, expected, len, msg) do {			\
-	if (memcmp((values), (expected), (len)) != 0) {			\
-		failure = 1;						\
-		fprintf(stderr, "FAIL: %s:%d - Test %d: %s differs\n",	\
-		    __FILE__, __LINE__, test_number, msg);		\
-		fprintf(stderr, "values:\n");				\
-		hexdump(values, len, expected);				\
-		fprintf(stderr, "expected:\n");				\
-		hexdump(expected, len, values);				\
-		fprintf(stderr, "\n");					\
-	}								\
-} while(0)
+void hex_decode_cbs(CBS *cbs, CBB *cbb, size_t line, const char *msg);
+int get_string_cbs(CBS *cbs, const char *str, size_t line, const char *msg);
 
-extern int failure, test_number;
+int mlkem768_encode_private_key(const struct MLKEM768_private_key *priv,
+    uint8_t **out_buf, size_t *out_len);
+int mlkem768_encode_public_key(const struct MLKEM768_public_key *pub,
+    uint8_t **out_buf, size_t *out_len);
+int mlkem1024_encode_private_key(const struct MLKEM1024_private_key *priv,
+    uint8_t **out_buf, size_t *out_len);
+int mlkem1024_encode_public_key(const struct MLKEM1024_public_key *pub,
+    uint8_t **out_buf, size_t *out_len);
 
-void hexdump(const uint8_t *buf, size_t len, const uint8_t *compare);
-int hex_decode(char *buf, size_t len, uint8_t **out_buf, size_t *out_len);
-void grab_data(CBS *cbs, char *buf, size_t offset);
-
-#endif
+#endif /* MLKEM_TEST_UTIL_H */
