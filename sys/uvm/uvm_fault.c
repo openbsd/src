@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.154 2024/12/18 16:41:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.155 2024/12/20 18:46:51 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -482,6 +482,68 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 	}
 	/*NOTREACHED*/
+}
+
+/*
+ * uvmfault_promote: promote data to a new anon.  used for 1B and 2B.
+ *
+ *	1. allocate an anon and a page.
+ *	2. fill its contents.
+ *
+ * => if we fail (result != 0) we unlock everything.
+ * => on success, return a new locked anon via 'nanon'.
+ * => it's caller's responsibility to put the promoted nanon->an_page to the
+ *    page queue.
+ */
+int
+uvmfault_promote(struct uvm_faultinfo *ufi,
+    struct vm_page *uobjpage,
+    struct vm_anon **nanon, /* OUT: allocated anon */
+    struct vm_page **npg)
+{
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+	struct vm_anon *anon;
+	struct vm_page *pg = NULL;
+
+	anon = uvm_analloc();
+	if (anon) {
+		anon->an_lock = amap->am_lock;
+		pg = uvm_pagealloc(NULL, 0, anon,
+		    (uobjpage == PGO_DONTCARE) ? UVM_PGA_ZERO : 0);
+	}
+
+	/* check for out of RAM */
+	if (anon == NULL || pg == NULL) {
+		uvmfault_unlockall(ufi, amap, NULL);
+		if (anon == NULL)
+			counters_inc(uvmexp_counters, flt_noanon);
+		else {
+			anon->an_lock = NULL;
+			anon->an_ref--;
+			uvm_anfree(anon);
+			counters_inc(uvmexp_counters, flt_noram);
+		}
+
+		if (uvm_swapisfull())
+			return ENOMEM;
+
+		/* out of RAM, wait for more */
+		if (anon == NULL)
+			uvm_anwait();
+		else
+			uvm_wait("flt_noram3");
+		return ERESTART;
+	}
+
+	/*
+	 * copy the page [pg now dirty]
+	 */
+	if (uobjpage != PGO_DONTCARE)
+		uvm_pagecopy(uobjpage, pg);
+
+	*nanon = anon;
+	*npg = pg;
+	return 0;
 }
 
 /*
@@ -972,37 +1034,11 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 		counters_inc(uvmexp_counters, flt_acow);
 		oanon = anon;		/* oanon = old */
-		anon = uvm_analloc();
-		if (anon) {
-			anon->an_lock = amap->am_lock;
-			pg = uvm_pagealloc(NULL, 0, anon, 0);
-		}
 
-		/* check for out of RAM */
-		if (anon == NULL || pg == NULL) {
-			uvmfault_unlockall(ufi, amap, NULL);
-			if (anon == NULL)
-				counters_inc(uvmexp_counters, flt_noanon);
-			else {
-				anon->an_lock = NULL;
-				anon->an_ref--;
-				uvm_anfree(anon);
-				counters_inc(uvmexp_counters, flt_noram);
-			}
+		error = uvmfault_promote(ufi, oanon->an_page, &anon, &pg);
+		if (error)
+			return error;
 
-			if (uvm_swapisfull())
-				return ENOMEM;
-
-			/* out of RAM, wait for more */
-			if (anon == NULL)
-				uvm_anwait();
-			else
-				uvm_wait("flt_noram3");
-			return ERESTART;
-		}
-
-		/* got all resources, replace anon with nanon */
-		uvm_pagecopy(oanon->an_page, pg);	/* pg now !PG_CLEAN */
 		/* un-busy! new page */
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
@@ -1314,53 +1350,15 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		if (amap == NULL)
 			panic("uvm_fault: want to promote data, but no anon");
 #endif
-
-		anon = uvm_analloc();
-		if (anon) {
-			/*
-			 * In `Fill in data...' below, if
-			 * uobjpage == PGO_DONTCARE, we want
-			 * a zero'd, dirty page, so have
-			 * uvm_pagealloc() do that for us.
-			 */
-			anon->an_lock = amap->am_lock;
-			pg = uvm_pagealloc(NULL, 0, anon,
-			    (uobjpage == PGO_DONTCARE) ? UVM_PGA_ZERO : 0);
-		}
-
-		/*
-		 * out of memory resources?
-		 */
-		if (anon == NULL || pg == NULL) {
-			/* unlock and fail ... */
-			uvmfault_unlockall(ufi, amap, uobj);
-			if (anon == NULL)
-				counters_inc(uvmexp_counters, flt_noanon);
-			else {
-				anon->an_lock = NULL;
-				anon->an_ref--;
-				uvm_anfree(anon);
-				counters_inc(uvmexp_counters, flt_noram);
-			}
-
-			if (uvm_swapisfull())
-				return (ENOMEM);
-
-			/* out of RAM, wait for more */
-			if (anon == NULL)
-				uvm_anwait();
-			else
-				uvm_wait("flt_noram5");
-			return ERESTART;
-		}
+		error = uvmfault_promote(ufi, uobjpage, &anon, &pg);
+		if (error)
+			return error;
 
 		/*
 		 * fill in the data
 		 */
 		if (uobjpage != PGO_DONTCARE) {
 			counters_inc(uvmexp_counters, flt_prcopy);
-			/* copy page [pg now dirty] */
-			uvm_pagecopy(uobjpage, pg);
 
 			/*
 			 * promote to shared amap?  make sure all sharing
@@ -1388,8 +1386,8 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		} else {
 			counters_inc(uvmexp_counters, flt_przero);
 			/*
-			 * Page is zero'd and marked dirty by uvm_pagealloc()
-			 * above.
+			 * Page is zero'd and marked dirty by uvm_pagealloc(),
+			 * called in uvmfault_promote() above.
 			 */
 		}
 
