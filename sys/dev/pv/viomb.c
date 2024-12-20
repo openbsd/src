@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.12 2024/08/27 18:44:12 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.13 2024/12/20 22:18:27 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -135,6 +135,7 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct viomb_softc *sc = (struct viomb_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	struct virtio_attach_args *va = aux;
 	int i;
 
 	if (vsc->sc_child != NULL) {
@@ -219,8 +220,10 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensdev);
 
 	printf("\n");
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto err_dmamap;
 	return;
+
 err_dmamap:
 	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_req.bl_dmamap);
 err:

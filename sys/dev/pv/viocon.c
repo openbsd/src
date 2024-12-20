@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.15 2024/08/27 18:44:12 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.16 2024/12/20 22:18:27 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -179,7 +179,6 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 		panic("already attached to something else");
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_TTY;
-	vsc->sc_config_change = NULL;
 	sc->sc_virtio = vsc;
 	sc->sc_max_ports = maxports;
 
@@ -193,7 +192,8 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	vsc->sc_driver_features = VIRTIO_CONSOLE_F_SIZE;
-	virtio_negotiate_features(vsc, viocon_feature_names);
+	if (virtio_negotiate_features(vsc, viocon_feature_names) != 0)
+		goto err;
 
 	printf("\n");
 	DPRINTF("%s: softc: %p\n", __func__, sc);
@@ -201,10 +201,11 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n%s: viocon_port_create failed\n", __func__);
 		goto err;
 	}
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto err;
 	viocon_rx_fill(sc->sc_ports[0]);
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
-
 	return;
+
 err:
 	vsc->sc_child = VIRTIO_CHILD_ERROR;
 	free(vsc->sc_vqs, M_DEVBUF, 2 * (maxports + 1) * sizeof(struct virtqueue));

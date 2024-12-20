@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.34 2024/08/27 18:44:12 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.35 2024/12/20 22:18:27 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -105,6 +105,7 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	struct vioscsi_softc *sc = (struct vioscsi_softc *)self;
+	struct virtio_attach_args *va = aux;
 	struct scsibus_attach_args saa;
 	int i, rv;
 
@@ -120,7 +121,8 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_vqs = sc->sc_vqs;
 	vsc->sc_nvqs = nitems(sc->sc_vqs);
 
-	virtio_negotiate_features(vsc, NULL);
+	if (virtio_negotiate_features(vsc, NULL) != 0)
+		goto err;
 	uint32_t cmd_per_lun = virtio_read_device_config_4(vsc,
 	    VIRTIO_SCSI_CONFIG_CMD_PER_LUN);
 	uint32_t seg_max = virtio_read_device_config_4(vsc,
@@ -166,7 +168,8 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_quirks = saa.saa_flags = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
 
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto err;
 	config_found(self, &saa, scsiprint);
 	return;
 

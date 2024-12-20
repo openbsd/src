@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.35 2024/12/03 19:14:40 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.36 2024/12/20 22:18:27 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -154,6 +154,25 @@ virtio_reset(struct virtio_softc *sc)
 	sc->sc_active_features = 0;
 }
 
+int
+virtio_attach_finish(struct virtio_softc *sc, struct virtio_attach_args *va)
+{
+	int i, ret;
+
+	ret = sc->sc_ops->attach_finish(sc, va);
+	if (ret != 0)
+		return ret;
+
+	sc->sc_ops->setup_intrs(sc);
+	for (i = 0; i < sc->sc_nvqs; i++) {
+		struct virtqueue *vq = &sc->sc_vqs[i];
+
+		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
+	}
+	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	return 0;
+}
+
 void
 virtio_reinit_start(struct virtio_softc *sc)
 {
@@ -162,6 +181,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 	virtio_negotiate_features(sc, NULL);
+	sc->sc_ops->setup_intrs(sc);
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		int n;
 		struct virtqueue *vq = &sc->sc_vqs[i];
@@ -175,7 +195,6 @@ virtio_reinit_start(struct virtio_softc *sc)
 		virtio_init_vq(sc, vq);
 		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
-	sc->sc_ops->setup_intrs(sc);
 }
 
 void
@@ -421,7 +440,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	}
 
 	virtio_init_vq(sc, vq);
-	virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 
 #if VIRTIO_DEBUG
 	printf("\nallocated %u byte for virtqueue %d for %s, size %d\n",

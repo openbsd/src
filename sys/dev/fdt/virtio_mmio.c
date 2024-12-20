@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.20 2024/12/03 19:14:40 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.21 2024/12/20 22:18:27 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ void		virtio_mmio_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_mmio_read_queue_size(struct virtio_softc *, uint16_t);
 void		virtio_mmio_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
 void		virtio_mmio_setup_intrs(struct virtio_softc *);
+int		virtio_mmio_attach_finish(struct virtio_softc *, struct virtio_attach_args *);
 int		virtio_mmio_get_status(struct virtio_softc *);
 void		virtio_mmio_set_status(struct virtio_softc *, int);
 int		virtio_mmio_negotiate_features(struct virtio_softc *,
@@ -117,6 +118,11 @@ struct virtio_mmio_softc {
 
 	int			sc_config_offset;
 	uint32_t		sc_version;
+};
+
+struct virtio_mmio_attach_args {
+	struct virtio_attach_args	 vma_va;
+	struct fdt_attach_args          *vma_fa;
 };
 
 const struct cfattach virtio_mmio_ca = {
@@ -151,6 +157,7 @@ const struct virtio_ops virtio_mmio_ops = {
 	virtio_mmio_get_status,
 	virtio_mmio_set_status,
 	virtio_mmio_negotiate_features,
+	virtio_mmio_attach_finish,
 	virtio_mmio_intr,
 	virtio_mmio_intr_barrier,
 };
@@ -250,7 +257,7 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)self;
 	struct virtio_softc *vsc = &sc->sc_sc;
 	uint32_t id, magic;
-	struct virtio_attach_args va = { 0 };
+	struct virtio_mmio_attach_args vma = { { 0 }, faa };
 
 	if (faa->fa_nreg < 1) {
 		printf(": no register data\n");
@@ -299,36 +306,43 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_mmio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 
-	va.va_devid = id;
-	va.va_nintr = 1;
+	vma.vma_va.va_devid = id;
+	vma.vma_va.va_nintr = 1;
 	vsc->sc_child = NULL;
-	config_found(self, &va, NULL);
+	config_found(self, &vma, NULL);
 	if (vsc->sc_child == NULL) {
 		printf("%s: no matching child driver; not configured\n",
 		    vsc->sc_dev.dv_xname);
-		goto fail_1;
+		goto fail;
 	}
 	if (vsc->sc_child == VIRTIO_CHILD_ERROR) {
 		printf("%s: virtio configuration failed\n",
 		    vsc->sc_dev.dv_xname);
-		goto fail_1;
-	}
-
-	sc->sc_ih = fdt_intr_establish(faa->fa_node, vsc->sc_ipl,
-	    virtio_mmio_intr, sc, vsc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    vsc->sc_dev.dv_xname);
-		goto fail_2;
+		goto fail;
 	}
 
 	return;
 
-fail_2:
-	config_detach(vsc->sc_child, 0);
-fail_1:
-	/* no mmio_mapreg_unmap() or mmio_intr_unmap() */
+fail:
 	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+}
+
+int
+virtio_mmio_attach_finish(struct virtio_softc *vsc,
+    struct virtio_attach_args *va)
+{
+	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
+	struct virtio_mmio_attach_args *vma =
+	    (struct virtio_mmio_attach_args *)va;
+
+	sc->sc_ih = fdt_intr_establish(vma->vma_fa->fa_node, vsc->sc_ipl,
+	    virtio_mmio_intr, sc, vsc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    vsc->sc_dev.dv_xname);
+		return -EIO;
+	}
+	return 0;
 }
 
 int

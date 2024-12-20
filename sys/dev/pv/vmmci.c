@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.12 2024/08/26 19:37:54 sf Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.13 2024/12/20 22:18:27 sf Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -89,6 +89,7 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmmci_softc *sc = (struct vmmci_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	struct virtio_attach_args *va = aux;
 
 	if (vsc->sc_child != NULL)
 		panic("already attached to something else");
@@ -101,7 +102,8 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 
 	vsc->sc_driver_features = VMMCI_F_TIMESYNC | VMMCI_F_ACK |
 	    VMMCI_F_SYNCRTC;
-	virtio_negotiate_features(vsc, NULL);
+	if (virtio_negotiate_features(vsc, NULL) != 0)
+		goto err;
 
 	if (virtio_has_feature(vsc, VMMCI_F_TIMESYNC)) {
 		strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
@@ -115,7 +117,12 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto err;
+	return;
+
+err:
+	vsc->sc_child = VIRTIO_CHILD_ERROR;
 }
 
 int

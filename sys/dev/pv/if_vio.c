@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.61 2024/12/03 19:14:40 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.62 2024/12/20 22:18:27 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -597,6 +597,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	struct virtio_attach_args *va = aux;
 	int i, tx_max_segments;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
@@ -610,7 +611,6 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_NET | IPL_MPSAFE;
-	vsc->sc_config_change = NULL;
 	vsc->sc_driver_features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
 	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
@@ -623,7 +623,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_TSO4;
 	vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_TSO6;
 
-	virtio_negotiate_features(vsc, virtio_net_feature_names);
+	if (virtio_negotiate_features(vsc, virtio_net_feature_names) != 0)
+		goto err;
 
 	sc->sc_nqueues = 1;
 	vsc->sc_nvqs = 2 * sc->sc_nqueues;
@@ -756,7 +757,9 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_txtick, vio_txtick, sc);
 	timeout_set(&sc->sc_rxtick, vio_rxtick, sc);
 
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto err;
+
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	vio_link_state(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.10 2024/11/04 15:43:10 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.11 2024/12/20 22:18:27 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -150,6 +150,7 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct viogpu_softc *sc = (struct viogpu_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	struct virtio_attach_args *va = aux;
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri = &sc->sc_ri;
 	uint32_t defattr;
@@ -161,10 +162,11 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	vsc->sc_child = self;
 
-	virtio_negotiate_features(vsc, viogpu_feature_names);
+	if (virtio_negotiate_features(vsc, viogpu_feature_names) != 0)
+		goto err;
 	if (!vsc->sc_version_1) {
 		printf(": requires virtio version 1\n");
-		return;
+		goto err;
 	}
 
 	vsc->sc_ipl = IPL_TTY;
@@ -175,13 +177,13 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_vqs = sc->sc_vqs;
 	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCTRL], VQCTRL, 1, "control")) {
 		printf(": alloc_vq failed\n");
-		return;
+		goto err;
 	}
 	sc->sc_vqs[VQCTRL].vq_done = viogpu_vq_done;
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vqs[VQCURS], VQCURS, 1, "cursor")) {
 		printf(": alloc_vq failed\n");
-		return;
+		goto err;
 	}
 	vsc->sc_nvqs = nitems(sc->sc_vqs);
 
@@ -191,7 +193,7 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_dma_size, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &sc->sc_dma_map) != 0) {
 		printf(": create failed");
-		goto err;
+		goto errdma;
 	}
 	if (bus_dmamem_alloc(vsc->sc_dmat, sc->sc_dma_size, 16, 0,
 	    &sc->sc_dma_seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0) {
@@ -209,7 +211,8 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto unmap;
 
 	if (viogpu_get_display_info(sc) != 0)
 		goto unmap;
@@ -302,8 +305,10 @@ free:
 	bus_dmamem_free(vsc->sc_dmat, &sc->sc_dma_seg, 1);
 destroy:
 	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_dma_map);
-err:
+errdma:
 	printf(": DMA setup failed\n");
+err:
+	vsc->sc_child = VIRTIO_CHILD_ERROR;
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.43 2024/08/27 18:44:12 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.44 2024/12/20 22:18:27 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -170,12 +170,12 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vioblk_softc *sc = (struct vioblk_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	struct virtio_attach_args *va = aux;
 	struct scsibus_attach_args saa;
 	int qsize;
 
 	vsc->sc_vqs = &sc->sc_vq[0];
 	vsc->sc_nvqs = 1;
-	vsc->sc_config_change = NULL;
 	if (vsc->sc_child)
 		panic("already attached to something else");
 	vsc->sc_child = self;
@@ -184,7 +184,8 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_driver_features = VIRTIO_BLK_F_RO | VIRTIO_F_NOTIFY_ON_EMPTY |
 	     VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX | VIRTIO_BLK_F_FLUSH;
 
-        virtio_negotiate_features(vsc, vioblk_feature_names);
+        if (virtio_negotiate_features(vsc, vioblk_feature_names) != 0)
+		goto err;
 
 	if (virtio_has_feature(vsc, VIRTIO_BLK_F_SIZE_MAX)) {
 		uint32_t size_max = virtio_read_device_config_4(vsc,
@@ -252,10 +253,11 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_quirks = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
 
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	if (virtio_attach_finish(vsc, va) != 0)
+		goto err;
 	config_found(self, &saa, scsiprint);
-
 	return;
+
 err:
 	vsc->sc_child = VIRTIO_CHILD_ERROR;
 	return;
