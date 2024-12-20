@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.c,v 1.3 2024/12/20 00:07:12 tb Exp $ */
+/*	$OpenBSD: mlkem_tests_util.c,v 1.4 2024/12/20 15:47:26 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -28,9 +28,6 @@
 #include "mlkem_internal.h"
 
 #include "mlkem_tests_util.h"
-
-int failure;
-int test_number;
 
 static void
 hexdump(const uint8_t *buf, size_t len, const uint8_t *compare)
