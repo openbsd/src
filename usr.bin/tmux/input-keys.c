@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.105 2024/12/06 09:07:40 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.106 2024/12/20 07:10:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -596,7 +596,7 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 
 	/* Is this backtab? */
 	if ((key & KEYC_MASK_KEY) == KEYC_BTAB) {
-		if ((s->mode & EXTENDED_KEY_MODES) != 0) {
+		if (s->mode & MODE_KEYS_EXTENDED_2) {
 			/* When in xterm extended mode, remap into S-Tab. */
 			key = '\011' | (key & ~KEYC_MASK_KEY) | KEYC_SHIFT;
 		} else {
