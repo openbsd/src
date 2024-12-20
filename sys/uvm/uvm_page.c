@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.178 2024/11/26 09:51:30 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.179 2024/12/20 18:54:12 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ static vaddr_t      virtual_space_end;
  */
 static void uvm_pageinsert(struct vm_page *);
 static void uvm_pageremove(struct vm_page *);
-int uvm_page_owner_locked_p(struct vm_page *);
+int uvm_page_owner_locked_p(struct vm_page *, boolean_t);
 
 /*
  * inline functions
@@ -700,7 +700,7 @@ uvm_pagealloc_pg(struct vm_page *pg, struct uvm_object *obj, voff_t off,
 	pg->offset = off;
 	pg->uobject = obj;
 	pg->uanon = anon;
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, TRUE));
 	if (anon) {
 		anon->an_page = pg;
 		flags |= PQ_ANON;
@@ -1040,7 +1040,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
-		KASSERT(uvm_page_owner_locked_p(pg));
+		KASSERT(uvm_page_owner_locked_p(pg, TRUE));
 		KASSERT(pg->pg_flags & PG_BUSY);
 
 		if (pg->pg_flags & PG_WANTED) {
@@ -1072,6 +1072,7 @@ uvm_pagewait(struct vm_page *pg, struct rwlock *lock, const char *wmesg)
 {
 	KASSERT(rw_lock_held(lock));
 	KASSERT((pg->pg_flags & PG_BUSY) != 0);
+	KASSERT(uvm_page_owner_locked_p(pg, FALSE));
 
 	atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 	rwsleep_nsec(pg, lock, PVM | PNORELOCK, wmesg, INFSLP);
@@ -1225,7 +1226,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 void
 uvm_pagewire(struct vm_page *pg)
 {
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, TRUE));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	if (pg->wire_count == 0) {
@@ -1244,7 +1245,7 @@ uvm_pagewire(struct vm_page *pg)
 void
 uvm_pageunwire(struct vm_page *pg)
 {
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, TRUE));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	pg->wire_count--;
@@ -1264,7 +1265,7 @@ uvm_pageunwire(struct vm_page *pg)
 void
 uvm_pagedeactivate(struct vm_page *pg)
 {
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, FALSE));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	if (pg->pg_flags & PQ_ACTIVE) {
@@ -1298,7 +1299,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 void
 uvm_pageactivate(struct vm_page *pg)
 {
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, FALSE));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	uvm_pagedequeue(pg);
@@ -1352,12 +1353,14 @@ uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
  * locked.  this is a weak check for runtime assertions only.
  */
 int
-uvm_page_owner_locked_p(struct vm_page *pg)
+uvm_page_owner_locked_p(struct vm_page *pg, boolean_t exclusive)
 {
 	if (pg->uobject != NULL) {
 		if (UVM_OBJ_IS_DUMMY(pg->uobject))
 			return 1;
-		return rw_write_held(pg->uobject->vmobjlock);
+		return exclusive
+		    ? rw_write_held(pg->uobject->vmobjlock)
+		    : rw_lock_held(pg->uobject->vmobjlock);
 	}
 	if (pg->uanon != NULL) {
 		return rw_write_held(pg->uanon->an_lock);
