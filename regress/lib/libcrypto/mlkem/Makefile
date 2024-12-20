@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.5 2024/12/20 00:07:12 tb Exp $
+#       $OpenBSD: Makefile,v 1.6 2024/12/20 01:51:27 tb Exp $
 
 PROGS +=        mlkem_unittest
 PROGS +=        mlkem768_nist_keygen_tests
@@ -32,6 +32,6 @@ CFLAGS +=       -I${.CURDIR}/../../../../lib/libcrypto/mlkem
 CFLAGS +=       -I${.CURDIR}/../../../../lib/libcrypto/sha
 CFLAGS +=       -DLIBRESSL_INTERNAL
 
-WARNINS = Yes
+WARNINGS = Yes
 
 .include <bsd.regress.mk>
