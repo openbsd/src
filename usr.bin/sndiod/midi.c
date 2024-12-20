@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.31 2024/05/19 00:05:43 jsg Exp $	*/
+/*	$OpenBSD: midi.c,v 1.32 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,11 +56,21 @@ struct midithru {
 const unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 const unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
-void
-midi_log(struct midi *ep)
+size_t
+midiev_fmt(char *buf, size_t size, unsigned char *ev, size_t len)
 {
-	log_puts("midi");
-	log_putu(ep - midi_ep);
+	const char *sep = "";
+	char *end = buf + size;
+	char *p = buf;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (i == 1)
+			sep = " ";
+		p += snprintf(p, p < end ? end - p : 0, "%s%02x", sep, ev[i]);
+	}
+
+	return p - buf;
 }
 
 void
@@ -93,6 +103,7 @@ midi_new(struct midiops *ops, void *arg, int mode)
 	ep->st = 0;
 	ep->last_st = 0;
 	ep->txmask = 0;
+	ep->num = i;
 	ep->self = 1 << i;
 	ep->tickets = 0;
 	ep->mode = mode;
@@ -143,8 +154,7 @@ midi_link(struct midi *ep, struct midi *peer)
 	if (ep->mode & MODE_MIDIIN) {
 #ifdef DEBUG
 		if (ep->obuf.used > 0) {
-			midi_log(ep);
-			log_puts(": linked with non-empty buffer\n");
+			logx(0, "midi%u: linked with non-empty buffer", ep->num);
 			panic();
 		}
 #endif
@@ -187,8 +197,7 @@ midi_tag(struct midi *ep, unsigned int tag)
 	if (ep->mode & MODE_MIDIIN) {
 #ifdef DEBUG
 		if (ep->obuf.used > 0) {
-			midi_log(ep);
-			log_puts(": tagged with non-empty buffer\n");
+			logx(0, "midi%u: tagged with non-empty buffer", ep->num);
 			panic();
 		}
 #endif
@@ -230,19 +239,15 @@ midi_tags(struct midi *ep)
 void
 midi_send(struct midi *iep, unsigned char *msg, int size)
 {
+#ifdef DEBUG
+	char str[128];
+#endif
 	struct midi *oep;
 	int i;
 
 #ifdef DEBUG
-	if (log_level >= 4) {
-		midi_log(iep);
-		log_puts(": sending:");
-		for (i = 0; i < size; i++) {
-			log_puts(" ");
-			log_putx(msg[i]);
-		}
-		log_puts("\n");
-	}
+	logx(4, "midi%u: sending: %s", iep->num,
+	    (midiev_fmt(str, sizeof(str), msg, size), str));
 #endif
 	for (i = 0; i < MIDI_NEP ; i++) {
 		if ((iep->txmask & (1 << i)) == 0)
@@ -254,12 +259,7 @@ midi_send(struct midi *iep, unsigned char *msg, int size)
 		} else if (msg[0] <= 0xf7)
 			oep->owner = iep;
 #ifdef DEBUG
-		if (log_level >= 4) {
-			midi_log(iep);
-			log_puts(" -> ");
-			midi_log(oep);
-			log_puts("\n");
-		}
+		logx(4, "midi%u -> midi%u", iep->num, oep->num);
 #endif
 		oep->ops->omsg(oep->arg, msg, size);
 	}
@@ -392,21 +392,17 @@ midi_in(struct midi *iep, unsigned char *idata, int icount)
 void
 midi_out(struct midi *oep, unsigned char *idata, int icount)
 {
+#ifdef DEBUG
+	char str[128];
+#endif
 	unsigned char *odata;
 	int ocount;
-#ifdef DEBUG
-	int i;
-#endif
 
 	while (icount > 0) {
 		if (oep->obuf.used == oep->obuf.len) {
 #ifdef DEBUG
-			if (log_level >= 2) {
-				midi_log(oep);
-				log_puts(": too slow, discarding ");
-				log_putu(oep->obuf.used);
-				log_puts(" bytes\n");
-			}
+			logx(2, "midi%u: too slow, discarding %d bytes",
+			    oep->num, oep->obuf.used);
 #endif
 			abuf_rdiscard(&oep->obuf, oep->obuf.used);
 			oep->owner = NULL;
@@ -417,15 +413,8 @@ midi_out(struct midi *oep, unsigned char *idata, int icount)
 			ocount = icount;
 		memcpy(odata, idata, ocount);
 #ifdef DEBUG
-		if (log_level >= 4) {
-			midi_log(oep);
-			log_puts(": out: ");
-			for (i = 0; i < ocount; i++) {
-				log_puts(" ");
-				log_putx(odata[i]);
-			}
-			log_puts("\n");
-		}
+		logx(4, "midi%u: out: %s", oep->num,
+		    (midiev_fmt(str, sizeof(str), odata, ocount), str));
 #endif
 		abuf_wcommit(&oep->obuf, ocount);
 		icount -= ocount;
@@ -489,12 +478,6 @@ midi_migrate(struct midi *oep, struct midi *nep)
 }
 
 void
-port_log(struct port *p)
-{
-	midi_log(p->midi);
-}
-
-void
 port_imsg(void *arg, unsigned char *msg, int size)
 {
 	struct port *p = arg;
@@ -523,11 +506,8 @@ port_exit(void *arg)
 #ifdef DEBUG
 	struct port *p = arg;
 
-	if (log_level >= 3) {
-		port_log(p);
-		log_puts(": port exit\n");
-		panic();
-	}
+	logx(0, "midi%u: port exit", p->midi->num);
+	panic();
 #endif
 }
 
@@ -565,7 +545,7 @@ port_del(struct port *c)
 	for (p = &port_list; *p != c; p = &(*p)->next) {
 #ifdef DEBUG
 		if (*p == NULL) {
-			log_puts("port to delete not on list\n");
+			logx(0, "port to delete not on list");
 			panic();
 		}
 #endif
@@ -578,10 +558,7 @@ int
 port_ref(struct port *c)
 {
 #ifdef DEBUG
-	if (log_level >= 3) {
-		port_log(c);
-		log_puts(": port requested\n");
-	}
+	logx(3, "midi%u: port requested", c->midi->num);
 #endif
 	if (c->state == PORT_CFG && !port_open(c))
 		return 0;
@@ -594,10 +571,7 @@ port_unref(struct port *c)
 	int i, rxmask;
 
 #ifdef DEBUG
-	if (log_level >= 3) {
-		port_log(c);
-		log_puts(": port released\n");
-	}
+	logx(3, "midi%u: port released", c->midi->num);
 #endif
 	for (rxmask = 0, i = 0; i < MIDI_NEP; i++)
 		rxmask |= midi_ep[i].txmask;
@@ -645,10 +619,7 @@ port_migrate(struct port *op)
 		/* try next one, circulating through the list */
 		np = np->alt_next;
 		if (np == op) {
-			if (log_level >= 2) {
-				port_log(op);
-				log_puts(": no fall-back port found\n");
-			}
+			logx(2, "midi%u: no fall-back port found", op->midi->num);
 			return op;
 		}
 
@@ -656,12 +627,7 @@ port_migrate(struct port *op)
 			break;
 	}
 
-	if (log_level >= 2) {
-		port_log(op);
-		log_puts(": switching to ");
-		port_log(np);
-		log_puts("\n");
-	}
+	logx(2, "midi%u: switching to midi%u", op->midi->num, np->midi->num);
 
 	midi_migrate(op->midi, np->midi);
 	return np;
@@ -683,10 +649,7 @@ int
 port_open(struct port *c)
 {
 	if (!port_mio_open(c)) {
-		if (log_level >= 1) {
-			port_log(c);
-			log_puts(": failed to open midi port\n");
-		}
+		logx(1, "midi%u: failed to open midi port", c->midi->num);
 		return 0;
 	}
 	c->state = PORT_INIT;
@@ -698,13 +661,11 @@ port_close(struct port *c)
 {
 #ifdef DEBUG
 	if (c->state == PORT_CFG) {
-		port_log(c);
-		log_puts(": can't close port (not opened)\n");
+		logx(0, "midi%u: can't close port (not opened)", c->midi->num);
 		panic();
 	}
 #endif
-	port_log(c);
-	log_puts(": closed\n");
+	logx(2, "midi%u: closed", c->midi->num);
 	c->state = PORT_CFG;
 	port_mio_close(c);
 	return 1;
@@ -720,10 +681,7 @@ port_drain(struct port *c)
 	else {
 		c->state = PORT_DRAIN;
 #ifdef DEBUG
-		if (log_level >= 3) {
-			port_log(c);
-			log_puts(": draining\n");
-		}
+		logx(3, "midi%u: draining", c->midi->num);
 #endif
 	}
 }

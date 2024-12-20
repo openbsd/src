@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.49 2024/05/03 05:18:09 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.50 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -489,7 +489,7 @@ start_helper(int background)
 	}
 	pid = fork();
 	if (pid	== -1) {
-		log_puts("can't fork\n");
+		perror("fork");
 		return 0;
 	}
 	if (pid == 0) {

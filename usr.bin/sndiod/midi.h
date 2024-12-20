@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.16 2024/05/03 05:18:09 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.17 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -73,7 +73,8 @@ struct midi {
 	unsigned int idx;		/* current ``msg'' size */
 	unsigned int len;		/* expected ``msg'' length */
 	unsigned int txmask;		/* list of ep we send to */
-	unsigned int self;		/* equal (1 << index) */
+	unsigned int num;		/* index in the midi_ep array */
+	unsigned int self;		/* equal (1 << num) */
 	int tickets;			/* max bytes we can process */
 	struct abuf obuf;		/* output buffer */
 };
@@ -96,7 +97,7 @@ struct port {
 };
 
 /*
- * midi control ports
+ * midi ports
  */
 extern struct port *port_list;
 
@@ -104,7 +105,7 @@ void midi_init(void);
 void midi_done(void);
 struct midi *midi_new(struct midiops *, void *, int);
 void midi_del(struct midi *);
-void midi_log(struct midi *);
+size_t midiev_fmt(char *, size_t, unsigned char *, size_t);
 void midi_tickets(struct midi *);
 void midi_in(struct midi *, unsigned char *, int);
 void midi_out(struct midi *, unsigned char *, int);
@@ -117,7 +118,6 @@ void midi_link(struct midi *, struct midi *);
 void midi_abort(struct midi *);
 void midi_migrate(struct midi *, struct midi *);
 
-void port_log(struct port *);
 struct port *port_new(char *, unsigned int, int);
 struct port *port_bynum(int);
 void port_del(struct port *);

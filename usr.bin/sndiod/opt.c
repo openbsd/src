@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.12 2024/05/24 15:21:35 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.13 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,8 +42,7 @@ opt_midi_imsg(void *arg, unsigned char *msg, int len)
 #ifdef DEBUG
 	struct opt *o = arg;
 
-	log_puts(o->name);
-	log_puts(": can't receive midi messages\n");
+	logx(0, "%s: can't receive midi messages", o->name);
 	panic();
 #endif
 }
@@ -91,10 +90,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 			if (o->mtc == NULL)
 				return;
 			mtc_setdev(o->mtc, o->dev);
-			if (log_level >= 2) {
-				log_puts(o->name);
-				log_puts(": mmc stop\n");
-			}
+			logx(2, "%s: mmc stop", o->name);
 			mtc_stop(o->mtc);
 			break;
 		case SYSEX_MMC_START:
@@ -103,10 +99,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 			if (o->mtc == NULL)
 				return;
 			mtc_setdev(o->mtc, o->dev);
-			if (log_level >= 2) {
-				log_puts(o->name);
-				log_puts(": mmc start\n");
-			}
+			logx(2, "%s: mmc start", o->name);
 			mtc_start(o->mtc);
 			break;
 		case SYSEX_MMC_LOC:
@@ -160,11 +153,7 @@ opt_midi_exit(void *arg)
 {
 	struct opt *o = arg;
 
-	if (log_level >= 1) {
-		log_puts(o->name);
-		log_puts(": midi end point died\n");
-		panic();
-	}
+	logx(1, "%s: midi end point died", o->name);
 }
 
 /*
@@ -177,6 +166,7 @@ opt_new(struct dev *d, char *name,
 {
 	struct dev *a;
 	struct opt *o, **po;
+	char str[64];
 	unsigned int len, num;
 	char c;
 
@@ -186,15 +176,13 @@ opt_new(struct dev *d, char *name,
 	} else {
 		for (len = 0; name[len] != '\0'; len++) {
 			if (len == OPT_NAMEMAX) {
-				log_puts(name);
-				log_puts(": too long\n");
+				logx(0, "%s: too long", name);
 				return NULL;
 			}
 			c = name[len];
 			if ((c < 'a' || c > 'z') &&
 			    (c < 'A' || c > 'Z')) {
-				log_puts(name);
-				log_puts(": only alphabetic chars allowed\n");
+				logx(0, "%s: only alphabetic chars allowed", name);
 				return NULL;
 			}
 		}
@@ -203,28 +191,22 @@ opt_new(struct dev *d, char *name,
 	for (po = &opt_list; *po != NULL; po = &(*po)->next)
 		num++;
 	if (num >= OPT_NMAX) {
-		log_puts(name);
-		log_puts(": too many opts\n");
+		logx(0, "%s: too many opts", name);
 		return NULL;
 	}
 
 	if (opt_byname(name)) {
-		log_puts(name);
-		log_puts(": already defined\n");
+		logx(1, "%s: already defined", name);
 		return NULL;
 	}
 
 	if (mmc) {
 		if (mtc_array[0].dev != NULL && mtc_array[0].dev != d) {
-			log_puts(name);
-			log_puts(": MTC already setup for another device\n");
+			logx(0, "%s: MTC already setup for another device", name);
 			return NULL;
 		}
 		mtc_array[0].dev = d;
-		if (log_level >= 2) {
-			dev_log(d);
-			log_puts(": initial MTC source, controlled by MMC\n");
-		}
+		logx(2, "%s: initial MTC source, controlled by MMC", d->path);
 	}
 
 	if (strcmp(d->name, name) == 0)
@@ -265,39 +247,11 @@ opt_new(struct dev *d, char *name,
 	memcpy(o->name, name, len + 1);
 	o->next = *po;
 	*po = o;
-	if (log_level >= 2) {
-		dev_log(d);
-		log_puts(".");
-		log_puts(o->name);
-		log_puts(":");
-		if (o->mode & MODE_REC) {
-			log_puts(" rec=");
-			log_putu(o->rmin);
-			log_puts(":");
-			log_putu(o->rmax);
-		}
-		if (o->mode & MODE_PLAY) {
-			log_puts(" play=");
-			log_putu(o->pmin);
-			log_puts(":");
-			log_putu(o->pmax);
-			log_puts(" vol=");
-			log_putu(o->maxweight);
-		}
-		if (o->mode & MODE_MON) {
-			log_puts(" mon=");
-			log_putu(o->rmin);
-			log_puts(":");
-			log_putu(o->rmax);
-		}
-		if (o->mode & (MODE_RECMASK | MODE_PLAY)) {
-			if (o->mtc)
-				log_puts(" mtc");
-			if (o->dup)
-				log_puts(" dup");
-		}
-		log_puts("\n");
-	}
+
+	logx(2, "%s: %s%s, vol = %d", o->name, (chans_fmt(str, sizeof(str),
+	    o->mode, o->pmin, o->pmax, o->rmin, o->rmax), str),
+	    (o->dup) ? ", dup" : "", o->maxweight);
+
 	return o;
 }
 
@@ -333,7 +287,7 @@ opt_del(struct opt *o)
 	for (po = &opt_list; *po != o; po = &(*po)->next) {
 #ifdef DEBUG
 		if (*po == NULL) {
-			log_puts("opt_del: not on list\n");
+			logx(0, "%s: not on list", __func__);
 			panic();
 		}
 #endif
@@ -355,8 +309,7 @@ opt_done(struct opt *o)
 
 	if (o->refcnt != 0) {
 		// XXX: all clients are already kicked, so this never happens
-		log_puts(o->name);
-		log_puts(": still has refs\n");
+		logx(0, "%s: still has refs", o->name);
 	}
 	for (d = dev_list; d != NULL; d = d->next)
 		ctl_del(CTL_OPT_DEV, o, d);

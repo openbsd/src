@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.46 2024/05/24 15:16:09 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.47 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -288,8 +288,7 @@ extern struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 extern struct mtc mtc_array[1];
 
 void slot_array_init(void);
-
-void dev_log(struct dev *);
+size_t chans_fmt(char *, size_t, int, int, int, int, int);
 int dev_open(struct dev *);
 void dev_close(struct dev *);
 void dev_abort(struct dev *);
@@ -333,7 +332,6 @@ void mtc_setdev(struct mtc *, struct dev *);
 /*
  * sio_open(3) like interface for clients
  */
-void slot_log(struct slot *);
 struct slot *slot_new(struct opt *, unsigned int, char *,
     struct slotops *, void *, int);
 void slot_del(struct slot *);
@@ -354,7 +352,9 @@ void slot_detach(struct slot *);
 struct ctl *ctl_new(int, void *, void *,
     int, char *, char *, char *, int, char *, char *, int, int, int);
 int ctl_del(int, void *, void *);
-void ctl_log(struct ctl *);
+size_t ctl_node_fmt(char *, size_t, struct ctl_node *);
+size_t ctl_scope_fmt(char *, size_t, struct ctl *);
+size_t ctl_fmt(char *, size_t, struct ctl *);
 int ctl_setval(struct ctl *c, int val);
 int ctl_match(struct ctl *, int, void *, void *);
 struct ctl *ctl_find(int, void *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.27 2024/04/02 05:32:10 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.28 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,12 +59,8 @@ dev_sio_onmove(void *arg, int delta)
 	struct dev *d = arg;
 
 #ifdef DEBUG
-	if (log_level >= 4) {
-		dev_log(d);
-		log_puts(": tick, delta = ");
-		log_puti(delta);
-		log_puts("\n");
-	}
+	logx(4, "%s: tick, delta = %d", d->path, delta);
+
 	d->sio.sum_utime += file_utime - d->sio.utime;
 	d->sio.sum_wtime += file_wtime - d->sio.wtime;
 	d->sio.wtime = file_wtime;
@@ -82,8 +78,7 @@ dev_sio_timeout(void *arg)
 {
 	struct dev *d = arg;
 
-	dev_log(d);
-	log_puts(": watchdog timeout\n");
+	logx(1, "%s: watchdog timeout", d->path);
 	dev_migrate(d);
 	dev_abort(d);
 }
@@ -111,21 +106,14 @@ dev_sio_open(struct dev *d)
 			else
 				return 0;
 		}
-		if (log_level >= 1) {
-			log_puts("warning, device opened in ");
-			log_puts(mode == SIO_PLAY ? "play-only" : "rec-only");
-			log_puts(" mode\n");
-		}
+		logx(1, "%s: warning, device opened in %s mode",
+		    d->path, mode == SIO_PLAY ? "play-only" : "rec-only");
 	}
 	d->mode = mode;
 
 	d->sioctl.hdl = fdpass_sioctl_open(d->num, SIOCTL_READ | SIOCTL_WRITE);
-	if (d->sioctl.hdl == NULL) {
-		if (log_level >= 1) {
-			dev_log(d);
-			log_puts(": no control device\n");
-		}
-	}
+	if (d->sioctl.hdl == NULL)
+		logx(1, "%s: no control device", d->path);
 
 	sio_initpar(&par);
 	par.bits = d->par.bits;
@@ -181,53 +169,32 @@ dev_sio_open(struct dev *d)
 	 */
 
 	if (par.bits > BITS_MAX) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.bits);
-		log_puts(": unsupported number of bits\n");
+		logx(0, "%s: %u: unsupported number of bits", d->path, par.bits);
 		goto bad_close;
 	}
 	if (par.bps > SIO_BPS(BITS_MAX)) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.bps);
-		log_puts(": unsupported sample size\n");
+		logx(0, "%s: %u: unsupported sample size", d->path, par.bps);
 		goto bad_close;
 	}
 	if ((d->mode & SIO_PLAY) && par.pchan > NCHAN_MAX) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.pchan);
-		log_puts(": unsupported number of play channels\n");
+		logx(0, "%s: %u: unsupported number of play channels", d->path, par.pchan);
 		goto bad_close;
 	}
 	if ((d->mode & SIO_REC) && par.rchan > NCHAN_MAX) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.rchan);
-		log_puts(": unsupported number of rec channels\n");
+		logx(0, "%s: %u: unsupported number of rec channels", d->path, par.rchan);
 		goto bad_close;
 	}
 	if (par.bufsz == 0 || par.bufsz > RATE_MAX) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.bufsz);
-		log_puts(": unsupported buffer size\n");
+		logx(0, "%s: %u: unsupported buffer size", d->path, par.bufsz);
 		goto bad_close;
 	}
 	if (par.round == 0 || par.round > par.bufsz ||
 	    par.bufsz % par.round != 0) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.round);
-		log_puts(": unsupported block size\n");
+		logx(0, "%s: %u: unsupported block size", d->path, par.round);
 		goto bad_close;
 	}
 	if (par.rate == 0 || par.rate > RATE_MAX) {
-		dev_log(d);
-		log_puts(": ");
-		log_putu(par.rate);
-		log_puts(": unsupported rate\n");
+		logx(0, "%s: %u: unsupported rate", d->path, par.rate);
 		goto bad_close;
 	}
 #endif
@@ -268,10 +235,7 @@ dev_sio_close(struct dev *d)
 {
 	dev_sioctl_close(d);
 #ifdef DEBUG
-	if (log_level >= 3) {
-		dev_log(d);
-		log_puts(": closed\n");
-	}
+	logx(3, "%s: closed", d->path);
 #endif
 	timo_del(&d->sio.watchdog);
 	file_del(d->sio.file);
@@ -287,10 +251,7 @@ void
 dev_sio_start(struct dev *d)
 {
 	if (!sio_start(d->sio.hdl)) {
-		if (log_level >= 1) {
-			dev_log(d);
-			log_puts(": failed to start device\n");
-		}
+		logx(1, "%s: failed to start device", d->path);
 		return;
 	}
 	if (d->mode & MODE_PLAY) {
@@ -307,10 +268,7 @@ dev_sio_start(struct dev *d)
 	d->sio.sum_wtime = 0;
 	d->sio.wtime = file_wtime;
 	d->sio.utime = file_utime;
-	if (log_level >= 3) {
-		dev_log(d);
-		log_puts(": started\n");
-	}
+	logx(3, "%s: started", d->path);
 #endif
 	timo_add(&d->sio.watchdog, WATCHDOG_USEC);
 }
@@ -319,21 +277,12 @@ void
 dev_sio_stop(struct dev *d)
 {
 	if (!sio_eof(d->sio.hdl) && !sio_flush(d->sio.hdl)) {
-		if (log_level >= 1) {
-			dev_log(d);
-			log_puts(": failed to stop device\n");
-		}
+		logx(1, "%s: failed to stop device", d->path);
 		return;
 	}
 #ifdef DEBUG
-	if (log_level >= 3) {
-		dev_log(d);
-		log_puts(": stopped, load avg = ");
-		log_puti(d->sio.sum_utime / 1000);
-		log_puts(" / ");
-		log_puti(d->sio.sum_wtime / 1000);
-		log_puts("\n");
-	}
+	logx(3, "%s: stopped, load avg = %lld / %lld",
+	    d->path, d->sio.sum_utime / 1000, d->sio.sum_wtime / 1000);
 #endif
 	timo_del(&d->sio.watchdog);
 }
@@ -381,18 +330,15 @@ dev_sio_run(void *arg)
 		case DEV_SIO_READ:
 #ifdef DEBUG
 			if (!(d->sio.events & POLLIN)) {
-				dev_log(d);
-				log_puts(": recording, but POLLIN not set\n");
+				logx(0, "%s: recording, but POLLIN not set", d->path);
 				panic();
 			}
 			if (d->sio.todo == 0) {
-				dev_log(d);
-				log_puts(": can't read data\n");
+				logx(0, "%s: can't read data", d->path);
 				panic();
 			}
 			if (d->prime > 0) {
-				dev_log(d);
-				log_puts(": unexpected data\n");
+				logx(0, "%s: unexpected data", d->path);
 				panic();
 			}
 #endif
@@ -403,39 +349,16 @@ dev_sio_run(void *arg)
 			n = sio_read(d->sio.hdl, data, d->sio.todo);
 			d->sio.todo -= n;
 #ifdef DEBUG
-			if (log_level >= 4) {
-				dev_log(d);
-				log_puts(": read ");
-				log_putu(n);
-				log_puts(": bytes, todo ");
-				log_putu(d->sio.todo);
-				log_puts("/");
-				log_putu(d->round * d->rchan * d->par.bps);
-				log_puts("\n");
-			}
+			logx(4, "%s: read %u bytes, todo %u / %u", d->path,
+			    n, d->sio.todo, d->round * d->rchan * d->par.bps);
 #endif
 			if (d->sio.todo > 0)
 				return;
 #ifdef DEBUG
 			d->sio.rused -= d->round;
-			if (log_level >= 2) {
-				if (d->sio.rused >= d->round) {
-					dev_log(d);
-					log_puts(": rec hw xrun, rused = ");
-					log_puti(d->sio.rused);
-					log_puts("/");
-					log_puti(d->bufsz);
-					log_puts("\n");
-				}
-				if (d->sio.rused < 0 ||
-				    d->sio.rused >= d->bufsz) {
-					dev_log(d);
-					log_puts(": out of bounds rused = ");
-					log_puti(d->sio.rused);
-					log_puts("/");
-					log_puti(d->bufsz);
-					log_puts("\n");
-				}
+			if (d->sio.rused >= d->round) {
+				logx(2, "%s: rec hw xrun, rused = %d / %d",
+				    d->path, d->sio.rused, d->bufsz);
 			}
 #endif
 			d->sio.cstate = DEV_SIO_CYCLE;
@@ -452,8 +375,7 @@ dev_sio_run(void *arg)
 			 */
 			if (!((d->mode & MODE_REC) && d->prime == 0) &&
 			    !(d->sio.events & POLLOUT)) {
-				dev_log(d);
-				log_puts(": cycle not at block boundary\n");
+				logx(0, "%s: cycle not at block boundary", d->path);
 				panic();
 			}
 #endif
@@ -470,8 +392,7 @@ dev_sio_run(void *arg)
 		case DEV_SIO_WRITE:
 #ifdef DEBUG
 			if (d->sio.todo == 0) {
-				dev_log(d);
-				log_puts(": can't write data\n");
+				logx(0, "%s: can't write data", d->path);
 				panic();
 			}
 #endif
@@ -482,41 +403,23 @@ dev_sio_run(void *arg)
 			n = sio_write(d->sio.hdl, data, d->sio.todo);
 			d->sio.todo -= n;
 #ifdef DEBUG
-			if (log_level >= 4) {
-				dev_log(d);
-				log_puts(": wrote ");
-				log_putu(n);
-				log_puts(" bytes, todo ");
-				log_putu(d->sio.todo);
-				log_puts("/");
-				log_putu(d->round * d->pchan * d->par.bps);
-				log_puts("\n");
-			}
+			logx(4, "%s: wrote %u bytes, todo %u / %u",
+			    d->path, n, d->sio.todo, d->round * d->pchan * d->par.bps);
 #endif
 			if (d->sio.todo > 0)
 				return;
 #ifdef DEBUG
 			d->sio.pused += d->round;
-			if (log_level >= 2) {
-				if (d->prime == 0 &&
-				    d->sio.pused <= d->bufsz - d->round) {
-					dev_log(d);
-					log_puts(": play hw xrun, pused = ");
-					log_puti(d->sio.pused);
-					log_puts("/");
-					log_puti(d->bufsz);
-					log_puts("\n");
-				}
-				if (d->sio.pused < 0 ||
-				    d->sio.pused > d->bufsz) {
-					/* device driver or libsndio bug */
-					dev_log(d);
-					log_puts(": out of bounds pused = ");
-					log_puti(d->sio.pused);
-					log_puts("/");
-					log_puti(d->bufsz);
-					log_puts("\n");
-				}
+			if (d->prime == 0 &&
+			    d->sio.pused <= d->bufsz - d->round) {
+				logx(2, "%s: play hw xrun, pused = %d / %d",
+				    d->path, d->sio.pused, d->bufsz);
+			}
+			if (d->sio.pused < 0 ||
+			    d->sio.pused > d->bufsz) {
+				/* device driver or libsndio bug */
+				logx(2, "%s: out of bounds pused = %d / %d",
+				    d->path, d->sio.pused, d->bufsz);
 			}
 #endif
 			d->poffs += d->round;
@@ -538,10 +441,7 @@ dev_sio_hup(void *arg)
 	struct dev *d = arg;
 
 #ifdef DEBUG
-	if (log_level >= 2) {
-		dev_log(d);
-		log_puts(": disconnected\n");
-	}
+	logx(2, "%s: disconnected", d->path);
 #endif
 	dev_migrate(d);
 	dev_abort(d);

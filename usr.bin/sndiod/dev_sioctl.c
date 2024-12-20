@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.10 2024/05/24 15:16:09 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.11 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -78,29 +78,19 @@ dev_sioctl_ondesc(void *arg, struct sioctl_desc *desc, int val)
 void
 dev_sioctl_onval(void *arg, unsigned int addr, unsigned int val)
 {
+	char str[64];
 	struct dev *d = arg;
 	struct ctl *c;
 
-	if (log_level >= 2) {
-		dev_log(d);
-		log_puts(": onctl: addr = ");
-		log_putu(addr);
-		log_puts(", val = ");
-		log_putu(val);
-		log_puts("\n");
-	}
+	logx(2, "%s: onctl: addr = %u, val = %u", d->path, addr, val);
 
 	for (c = ctl_list; c != NULL; c = c->next) {
 		if (c->scope != CTL_HW || c->u.hw.dev != d ||
 		    c->u.hw.addr != addr)
 			continue;
 
-		if (log_level >= 2) {
-			ctl_log(c);
-			log_puts(": new value -> ");
-			log_putu(val);
-			log_puts("\n");
-		}
+		logx(2, "ctl%u: %s -> %u", c->addr,
+		    (ctl_fmt(str, sizeof(str), c), str), val);
 
 		c->val_mask = ~0U;
 		c->curval = val;
@@ -197,13 +187,8 @@ dev_sioctl_out(void *arg)
 		if (c->scope != CTL_HW || c->u.hw.dev != d || !c->dirty)
 			continue;
 		if (!sioctl_setval(d->sioctl.hdl, c->u.hw.addr, c->curval)) {
-			ctl_log(c);
-			log_puts(": set failed\n");
+			logx(1, "ctl%u: set failed", c->addr);
 			break;
-		}
-		if (log_level >= 2) {
-			ctl_log(c);
-			log_puts(": changed\n");
 		}
 		c->dirty = 0;
 		cnt++;

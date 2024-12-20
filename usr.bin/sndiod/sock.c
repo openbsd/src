@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.51 2024/08/25 05:43:36 jsg Exp $	*/
+/*	$OpenBSD: sock.c,v 1.52 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,7 +35,6 @@
 
 #define SOCK_CTLDESC_SIZE	0x800	/* size of s->ctldesc */
 
-void sock_log(struct sock *);
 void sock_close(struct sock *);
 void sock_slot_fill(void *);
 void sock_slot_flush(void *);
@@ -144,32 +143,6 @@ ctlgroup(struct sock *f, struct ctl *c)
 }
 
 void
-sock_log(struct sock *f)
-{
-#ifdef DEBUG
-	static char *rstates[] = { "ridl", "rmsg", "rdat", "rret" };
-	static char *wstates[] = { "widl", "wmsg", "wdat" };
-#endif
-	if (f->slot)
-		slot_log(f->slot);
-	else if (f->midi)
-		midi_log(f->midi);
-	else if (f->ctlslot) {
-		log_puts("ctlslot");
-		log_putu(f->ctlslot - ctlslot_array);
-	} else
-		log_puts("sock");
-#ifdef DEBUG
-	if (log_level >= 3) {
-		log_puts(",");
-		log_puts(rstates[f->rstate]);
-		log_puts(",");
-		log_puts(wstates[f->wstate]);
-	}
-#endif
-}
-
-void
 sock_close(struct sock *f)
 {
 	struct opt *o;
@@ -179,7 +152,7 @@ sock_close(struct sock *f)
 	for (pf = &sock_list; *pf != f; pf = &(*pf)->next) {
 #ifdef DEBUG
 		if (*pf == NULL) {
-			log_puts("sock_close: not on list\n");
+			logx(0, "%s: not on list", __func__);
 			panic();
 		}
 #endif
@@ -187,10 +160,7 @@ sock_close(struct sock *f)
 	*pf = f->next;
 
 #ifdef DEBUG
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": closing\n");
-	}
+	logx(3, "sock %d: closing", f->fd);
 #endif
 	if (f->pstate > SOCK_AUTH)
 		sock_sesrefs -= f->sesrefs;
@@ -230,14 +200,8 @@ sock_slot_fill(void *arg)
 
 	f->fillpending += s->round;
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": fill, rmax -> ");
-		log_puti(f->rmax);
-		log_puts(", pending -> ");
-		log_puti(f->fillpending);
-		log_puts("\n");
-	}
+	logx(4, "%s%u: fill, rmax -> %d, pending -> %d",
+	    s->name, s->unit, f->rmax, f->fillpending);
 #endif
 }
 
@@ -249,12 +213,7 @@ sock_slot_flush(void *arg)
 
 	f->wmax += s->round * s->sub.bpf;
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": flush, wmax -> ");
-		log_puti(f->wmax);
-		log_puts("\n");
-	}
+	logx(4, "%s%u: flush, wmax -> %d", s->name, s->unit, f->wmax);
 #endif
 }
 
@@ -262,12 +221,10 @@ void
 sock_slot_eof(void *arg)
 {
 	struct sock *f = arg;
-
 #ifdef DEBUG
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": stopped\n");
-	}
+	struct slot *s = f->slot;
+
+	logx(3, "%s%u: eof", s->name, s->unit);
 #endif
 	f->stoppending = 1;
 }
@@ -279,12 +236,7 @@ sock_slot_onmove(void *arg)
 	struct slot *s = f->slot;
 
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": onmove: delta -> ");
-		log_puti(s->delta);
-		log_puts("\n");
-	}
+	logx(4, "%s%u: onmove: delta -> %d", s->name, s->unit, s->delta);
 #endif
 	if (s->pstate != SOCK_START)
 		return;
@@ -298,12 +250,7 @@ sock_slot_onvol(void *arg)
 	struct slot *s = f->slot;
 
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": onvol: vol -> ");
-		log_puti(s->vol);
-		log_puts("\n");
-	}
+	logx(4, "%s%u: onvol: vol -> %d", s->name, s->unit, s->vol);
 #endif
 	if (s->pstate != SOCK_START)
 		return;
@@ -381,10 +328,7 @@ sock_exit(void *arg)
 	struct sock *f = (struct sock *)arg;
 
 #ifdef DEBUG
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": exit\n");
-	}
+	logx(3, "sock %d: exit", f->fd);
 #endif
 	sock_close(f);
 }
@@ -401,24 +345,16 @@ sock_fdwrite(struct sock *f, void *data, int count)
 	if (n == -1) {
 #ifdef DEBUG
 		if (errno == EFAULT) {
-			log_puts("sock_fdwrite: fault\n");
+			logx(0, "%s: fault", __func__);
 			panic();
 		}
 #endif
 		if (errno != EAGAIN) {
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": write filed, errno = ");
-				log_puti(errno);
-				log_puts("\n");
-			}
+			logx(1, "sock %d: write failed, errno = %d", f->fd, errno);
 			sock_close(f);
 		} else {
 #ifdef DEBUG
-			if (log_level >= 4) {
-				sock_log(f);
-				log_puts(": write blocked\n");
-			}
+			logx(4, "sock %d: write blocked", f->fd);
 #endif
 		}
 		return 0;
@@ -442,24 +378,16 @@ sock_fdread(struct sock *f, void *data, int count)
 	if (n == -1) {
 #ifdef DEBUG
 		if (errno == EFAULT) {
-			log_puts("sock_fdread: fault\n");
+			logx(0, "%s: fault", __func__);
 			panic();
 		}
 #endif
 		if (errno != EAGAIN) {
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": read failed, errno = ");
-				log_puti(errno);
-				log_puts("\n");
-			}
+			logx(1, "sock %d: read failed, errno = %d", f->fd, errno);
 			sock_close(f);
 		} else {
 #ifdef DEBUG
-			if (log_level >= 4) {
-				sock_log(f);
-				log_puts(": read blocked\n");
-			}
+			logx(4, "sock %d: read blocked", f->fd);
 #endif
 		}
 		return 0;
@@ -482,8 +410,7 @@ sock_rmsg(struct sock *f)
 
 #ifdef DEBUG
 	if (f->rtodo == 0) {
-		sock_log(f);
-		log_puts(": sock_rmsg: nothing to read\n");
+		logx(0, "%s: sock %d: nothing to read", __func__, f->fd);
 		panic();
 	}
 #endif
@@ -497,10 +424,7 @@ sock_rmsg(struct sock *f)
 	}
 	f->rtodo = 0;
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": read full message\n");
-	}
+	logx(4, "sock %d: read full message", f->fd);
 #endif
 	return 1;
 }
@@ -516,8 +440,8 @@ sock_wmsg(struct sock *f)
 
 #ifdef DEBUG
 	if (f->wtodo == 0) {
-		sock_log(f);
-		log_puts(": sock_wmsg: already written\n");
+		logx(0, "%s: sock %d: already written", __func__, f->fd);
+		/* XXX: this is fatal and we should exit here */
 	}
 #endif
 	data = (char *)&f->wmsg + sizeof(struct amsg) - f->wtodo;
@@ -530,10 +454,7 @@ sock_wmsg(struct sock *f)
 	}
 	f->wtodo = 0;
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": wrote full message\n");
-	}
+	logx(4, "sock %d: wrote full message", f->fd);
 #endif
 	return 1;
 }
@@ -550,8 +471,7 @@ sock_rdata(struct sock *f)
 
 #ifdef DEBUG
 	if (f->rtodo == 0) {
-		sock_log(f);
-		log_puts(": data block already read\n");
+		logx(0, "%s: sock %d: data block already read", __func__, f->fd);
 		panic();
 	}
 #endif
@@ -574,10 +494,7 @@ sock_rdata(struct sock *f)
 			midi_in(f->midi, midibuf, n);
 	}
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": read complete block\n");
-	}
+	logx(4, "sock %d: read complete block", f->fd);
 #endif
 	if (f->slot)
 		slot_write(f->slot);
@@ -596,8 +513,7 @@ sock_wdata(struct sock *f)
 
 #ifdef DEBUG
 	if (f->wtodo == 0) {
-		sock_log(f);
-		log_puts(": attempted to write zero-sized data block\n");
+		logx(0, "%s: sock %d: zero-sized data block", __func__, f->fd);
 		panic();
 	}
 #endif
@@ -609,10 +525,7 @@ sock_wdata(struct sock *f)
 			f->wtodo -= n;
 		}
 #ifdef DEBUG
-		if (log_level >= 4) {
-			sock_log(f);
-			log_puts(": zero-filled remaining block\n");
-		}
+		logx(4, "sock %d: zero-filled remaining block", f->fd);
 #endif
 		return 1;
 	}
@@ -645,10 +558,7 @@ sock_wdata(struct sock *f)
 	if (f->midi)
 		midi_fill(f->midi);
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": wrote complete block\n");
-	}
+	logx(4, "sock %d: wrote complete block", f->fd);
 #endif
 	return 1;
 }
@@ -671,24 +581,15 @@ sock_setpar(struct sock *f)
 	if (AMSG_ISSET(p->bits)) {
 		if (p->bits < BITS_MIN || p->bits > BITS_MAX) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": ");
-				log_putu(p->bits);
-				log_puts(": bits out of bounds\n");
-			}
+			logx(1, "sock %d: %d: bits out of bounds", f->fd, p->bits);
 #endif
 			return 0;
 		}
 		if (AMSG_ISSET(p->bps)) {
 			if (p->bps < ((p->bits + 7) / 8) || p->bps > 4) {
 #ifdef DEBUG
-				if (log_level >= 1) {
-					sock_log(f);
-					log_puts(": ");
-					log_putu(p->bps);
-					log_puts(": wrong bytes per sample\n");
-				}
+				logx(1, "sock %d: %d: wrong bytes per sample",
+				    f->fd, p->bps);
 #endif
 				return 0;
 			}
@@ -709,20 +610,6 @@ sock_setpar(struct sock *f)
 		else if (rchan > NCHAN_MAX)
 			rchan = NCHAN_MAX;
 		s->sub.nch = rchan;
-#ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": recording channels ");
-			log_putu(s->opt->rmin);
-			log_puts(":");
-			log_putu(s->opt->rmax);
-			log_puts(" -> ");
-			log_putu(s->opt->rmin);
-			log_puts(":");
-			log_putu(s->opt->rmin + s->sub.nch - 1);
-			log_puts("\n");
-		}
-#endif
 	}
 	if (AMSG_ISSET(pchan) && (s->mode & MODE_PLAY)) {
 		if (pchan < 1)
@@ -730,20 +617,6 @@ sock_setpar(struct sock *f)
 		else if (pchan > NCHAN_MAX)
 			pchan = NCHAN_MAX;
 		s->mix.nch = pchan;
-#ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": playback channels ");
-			log_putu(s->opt->pmin);
-			log_puts(":");
-			log_putu(s->opt->pmin + s->mix.nch - 1);
-			log_puts(" -> ");
-			log_putu(s->opt->pmin);
-			log_puts(":");
-			log_putu(s->opt->pmax);
-			log_puts("\n");
-		}
-#endif
 	}
 	if (AMSG_ISSET(rate)) {
 		if (rate < RATE_MIN)
@@ -752,53 +625,21 @@ sock_setpar(struct sock *f)
 			rate = RATE_MAX;
 		s->round = dev_roundof(d, rate);
 		s->rate = rate;
-		if (!AMSG_ISSET(appbufsz)) {
+		if (!AMSG_ISSET(appbufsz))
 			appbufsz = d->bufsz / d->round * s->round;
-#ifdef DEBUG
-			if (log_level >= 3) {
-				sock_log(f);
-				log_puts(": ");
-				log_putu(appbufsz);
-				log_puts(" frame buffer\n");
-			}
-#endif
-		}
-#ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": ");
-			log_putu(rate);
-			log_puts("Hz sample rate, ");
-			log_putu(s->round);
-			log_puts(" frame blocks\n");
-		}
-#endif
 	}
 	if (AMSG_ISSET(p->xrun)) {
 		if (p->xrun != XRUN_IGNORE &&
 		    p->xrun != XRUN_SYNC &&
 		    p->xrun != XRUN_ERROR) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": ");
-				log_putx(p->xrun);
-				log_puts(": bad xrun policy\n");
-			}
+			logx(1, "sock %d: %u: bad xrun policy", f->fd, p->xrun);
 #endif
 			return 0;
 		}
 		s->xrun = p->xrun;
 		if (s->opt->mtc != NULL && s->xrun == XRUN_IGNORE)
 			s->xrun = XRUN_SYNC;
-#ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": 0x");
-			log_putx(s->xrun);
-			log_puts(" xrun policy\n");
-		}
-#endif
 	}
 	if (AMSG_ISSET(appbufsz)) {
 		rate = s->rate;
@@ -813,14 +654,6 @@ sock_setpar(struct sock *f)
 		if (appbufsz > max)
 			appbufsz = max;
 		s->appbufsz = appbufsz;
-#ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": ");
-			log_putu(s->appbufsz);
-			log_puts(" frame buffer\n");
-		}
-#endif
 	}
 	return 1;
 }
@@ -866,24 +699,11 @@ sock_hello(struct sock *f)
 	mode = ntohs(p->mode);
 	id = ntohl(p->id);
 #ifdef DEBUG
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": hello from <");
-		log_puts(p->who);
-		log_puts(">, mode = ");
-		log_putx(mode);
-		log_puts(", ver ");
-		log_putu(p->version);
-		log_puts("\n");
-	}
+	logx(3, "sock %d: hello from <%s>, mode %x, ver %d",
+	    f->fd, p->who, mode, p->version);
 #endif
 	if (p->version != AMSG_VERSION) {
-		if (log_level >= 1) {
-			sock_log(f);
-			log_puts(": ");
-			log_putu(p->version);
-			log_puts(": unsupported protocol version\n");
-		}
+		logx(1, "sock %d: %u: unsupported version", f->fd, p->version);
 		return 0;
 	}
 	switch (mode) {
@@ -899,12 +719,7 @@ sock_hello(struct sock *f)
 		break;
 	default:
 #ifdef DEBUG
-		if (log_level >= 1) {
-			sock_log(f);
-			log_puts(": ");
-			log_putx(mode);
-			log_puts(": unsupported mode\n");
-		}
+		logx(1, "sock %d: %u: unsupported mode", f->fd, mode);
 #endif
 		return 0;
 	}
@@ -954,10 +769,7 @@ sock_hello(struct sock *f)
 		}
 		f->ctlslot = ctlslot_new(opt, &sock_ctlops, f);
 		if (f->ctlslot == NULL) {
-			if (log_level >= 2) {
-				sock_log(f);
-				log_puts(": couldn't get slot\n");
-			}
+			logx(2, "sock %d: couldn't get ctlslot", f->fd);
 			return 0;
 		}
 		f->ctldesc = xmalloc(SOCK_CTLDESC_SIZE);
@@ -993,17 +805,11 @@ sock_execmsg(struct sock *f)
 	switch (cmd) {
 	case AMSG_DATA:
 #ifdef DEBUG
-		if (log_level >= 4) {
-			sock_log(f);
-			log_puts(": DATA message\n");
-		}
+		logx(4, "sock %d: DATA message", f->fd);
 #endif
 		if (s != NULL && f->pstate != SOCK_START) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": DATA, wrong state\n");
-			}
+			logx(1, "sock %d: DATA, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1011,10 +817,7 @@ sock_execmsg(struct sock *f)
 		if ((f->slot && !(f->slot->mode & MODE_PLAY)) ||
 		    (f->midi && !(f->midi->mode & MODE_MIDIOUT))) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": DATA, input-only mode\n");
-			}
+			logx(1, "sock %d: DATA, input-only mode", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1022,34 +825,22 @@ sock_execmsg(struct sock *f)
 		size = ntohl(m->u.data.size);
 		if (size == 0) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": zero size payload\n");
-			}
+			logx(1, "sock %d: zero size payload", f->fd);
 #endif
 			sock_close(f);
 			return 0;
 		}
 		if (s != NULL && size % s->mix.bpf != 0) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": not aligned to frame\n");
-			}
+			logx(1, "sock %d: not aligned to frame", f->fd);
 #endif
 			sock_close(f);
 			return 0;
 		}
 		if (s != NULL && size > f->ralign) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": size = ");
-				log_puti(size);
-				log_puts(": ralign = ");
-				log_puti(f->ralign);
-				log_puts(": not aligned to block\n");
-			}
+			logx(1, "sock %d: size = %d, ralign = %d: "
+			   "not aligned to block", f->fd, size, f->ralign);
 #endif
 			sock_close(f);
 			return 0;
@@ -1063,14 +854,8 @@ sock_execmsg(struct sock *f)
 		}
 		if (f->rtodo > f->rmax) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": unexpected data, size = ");
-				log_putu(size);
-				log_puts(", rmax = ");
-				log_putu(f->rmax);
-				log_puts("\n");
-			}
+			logx(1, "sock %d: unexpected data, size = %u, rmax = %d",
+			    f->fd, size, f->rmax);
 #endif
 			sock_close(f);
 			return 0;
@@ -1078,10 +863,7 @@ sock_execmsg(struct sock *f)
 		f->rmax -= f->rtodo;
 		if (f->rtodo == 0) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": zero-length data chunk\n");
-			}
+			logx(1, "sock %d: zero-length data chunk", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1089,17 +871,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_START:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": START message\n");
-		}
+		logx(3, "sock %d: START message", f->fd);
 #endif
 		if (f->pstate != SOCK_INIT || s == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": START, wrong state\n");
-			}
+			logx(1, "sock %d: START, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1119,44 +895,14 @@ sock_execmsg(struct sock *f)
 		f->pstate = SOCK_START;
 		f->rstate = SOCK_RMSG;
 		f->rtodo = sizeof(struct amsg);
-		if (log_level >= 2) {
-			slot_log(f->slot);
-			log_puts(": ");
-			log_putu(s->rate);
-			log_puts("Hz, ");
-			aparams_log(&s->par);
-			if (s->mode & MODE_PLAY) {
-				log_puts(", play ");
-				log_puti(s->opt->pmin);
-				log_puts(":");
-				log_puti(s->opt->pmin + s->mix.nch - 1);
-			}
-			if (s->mode & MODE_RECMASK) {
-				log_puts(", rec ");
-				log_puti(s->opt->rmin);
-				log_puts(":");
-				log_puti(s->opt->rmin + s->sub.nch - 1);
-			}
-			log_puts(", ");
-			log_putu(s->appbufsz / s->round);
-			log_puts(" blocks of ");
-			log_putu(s->round);
-			log_puts(" frames\n");
-		}
 		break;
 	case AMSG_STOP:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": STOP message\n");
-		}
+		logx(3, "sock %d: STOP message", f->fd);
 #endif
 		if (f->pstate != SOCK_START) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": STOP, wrong state\n");
-			}
+			logx(1, "sock %d: STOP, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1172,12 +918,9 @@ sock_execmsg(struct sock *f)
 				data = abuf_wgetblk(&s->mix.buf, &size);
 #ifdef DEBUG
 				if (size < f->ralign) {
-					sock_log(f);
-					log_puts(": unaligned stop, size = ");
-					log_putu(size);
-					log_puts(", ralign = ");
-					log_putu(f->ralign);
-					log_puts("\n");
+					logx(0, "sock %d: unaligned stop, "
+					    "size = %u, ralign = %u",
+					    f->fd, size, f->ralign);
 					panic();
 				}
 #endif
@@ -1190,17 +933,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_SETPAR:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": SETPAR message\n");
-		}
+		logx(3, "sock %d: SETPAR message", f->fd);
 #endif
 		if (f->pstate != SOCK_INIT || s == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": SETPAR, wrong state\n");
-			}
+			logx(1, "sock %d: SETPAR, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1214,17 +951,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_GETPAR:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": GETPAR message\n");
-		}
+		logx(3, "sock %d: GETPAR message", f->fd);
 #endif
 		if (f->pstate != SOCK_INIT || s == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": GETPAR, wrong state\n");
-			}
+			logx(1, "sock %d: GETPAR, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1251,17 +982,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_SETVOL:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": SETVOL message\n");
-		}
+		logx(3, "sock %d: SETVOL message", f->fd);
 #endif
 		if (f->pstate < SOCK_INIT || s == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": SETVOL, wrong state\n");
-			}
+			logx(1, "sock %d: SETVOL, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1269,10 +994,7 @@ sock_execmsg(struct sock *f)
 		ctl = ntohl(m->u.vol.ctl);
 		if (ctl > MIDI_MAXCTL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": SETVOL, volume out of range\n");
-			}
+			logx(1, "sock %d: SETVOL, volume out of range", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1287,21 +1009,12 @@ sock_execmsg(struct sock *f)
 	case AMSG_CTLSUB_OLD:
 	case AMSG_CTLSUB:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": CTLSUB message, desc = ");
-			log_putx(m->u.ctlsub.desc);
-			log_puts(", val = ");
-			log_putx(m->u.ctlsub.val);
-			log_puts("\n");
-		}
+		logx(3, "sock %d: CTLSUB message, desc = 0x%x, val = 0x%x",
+		    f->fd, m->u.ctlsub.desc, m->u.ctlsub.val);
 #endif
 		if (f->pstate != SOCK_INIT || f->ctlslot == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": CTLSUB, wrong state\n");
-			}
+			logx(1, "sock %d: CTLSUB, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1332,17 +1045,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_CTLSET:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": CTLSET message\n");
-		}
+		logx(3, "sock %d: CTLSET message", f->fd);
 #endif
 		if (f->pstate < SOCK_INIT || f->ctlslot == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": CTLSET, wrong state\n");
-			}
+			logx(1, "sock %d: CTLSET, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1351,20 +1058,14 @@ sock_execmsg(struct sock *f)
 		c = ctlslot_lookup(f->ctlslot, ntohs(m->u.ctlset.addr));
 		if (c == NULL) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": CTLSET, wrong addr\n");
-			}
+			logx(1, "sock %d: CTLSET, wrong addr", f->fd);
 #endif
 			sock_close(f);
 			return 0;
 		}
 		if (!ctl_setval(c, ntohs(m->u.ctlset.val))) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": CTLSET, bad value\n");
-			}
+			logx(1, "sock %d: CTLSET, bad value", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1374,17 +1075,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_AUTH:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": AUTH message\n");
-		}
+		logx(3, "sock %d: AUTH message", f->fd);
 #endif
 		if (f->pstate != SOCK_AUTH) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": AUTH, wrong state\n");
-			}
+			logx(1, "sock %d: AUTH, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1398,17 +1093,11 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_HELLO:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": HELLO message\n");
-		}
+		logx(3, "sock %d: HELLO message", f->fd);
 #endif
 		if (f->pstate != SOCK_HELLO) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": HELLO, wrong state\n");
-			}
+			logx(1, "sock %d: HELLO, wrong state", f->fd);
 #endif
 			sock_close(f);
 			return 0;
@@ -1424,27 +1113,18 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_BYE:
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": BYE message\n");
-		}
+		logx(3, "sock %d: BYE message", f->fd);
 #endif
 		if (s != NULL && f->pstate != SOCK_INIT) {
 #ifdef DEBUG
-			if (log_level >= 1) {
-				sock_log(f);
-				log_puts(": BYE, wrong state\n");
-			}
+			logx(1, "sock %d: BYE, wrong state", f->fd);
 #endif
 		}
 		sock_close(f);
 		return 0;
 	default:
 #ifdef DEBUG
-		if (log_level >= 1) {
-			sock_log(f);
-			log_puts(": unknown command in message\n");
-		}
+		logx(1, "sock %d: unknown command in message", f->fd);
 #endif
 		sock_close(f);
 		return 0;
@@ -1468,12 +1148,7 @@ sock_buildmsg(struct sock *f)
 	 */
 	if (f->tickpending) {
 #ifdef DEBUG
-		if (log_level >= 4) {
-			sock_log(f);
-			log_puts(": building MOVE message, delta = ");
-			log_puti(f->slot->delta);
-			log_puts("\n");
-		}
+		logx(4, "sock %d: building MOVE message, delta = %d", f->fd, f->slot->delta);
 #endif
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = htonl(AMSG_MOVE);
@@ -1498,14 +1173,8 @@ sock_buildmsg(struct sock *f)
 			size *= f->slot->mix.bpf;
 		f->rmax += size;
 #ifdef DEBUG
-		if (log_level >= 4) {
-			sock_log(f);
-			log_puts(": building FLOWCTL message, count = ");
-			log_puti(f->fillpending);
-			log_puts(", rmax -> ");
-			log_puti(f->rmax);
-			log_puts("\n");
-		}
+		logx(4, "sock %d: building FLOWCTL message, "
+		    "count = %d, rmax -> %d", f->fd, f->fillpending, f->rmax);
 #endif
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
@@ -1518,12 +1187,8 @@ sock_buildmsg(struct sock *f)
 	 */
 	if (f->pstate >= SOCK_START && f->slot->vol != f->lastvol) {
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": building SETVOL message, vol = ");
-			log_puti(f->slot->vol);
-			log_puts("\n");
-		}
+		logx(3, "sock %d: building SETVOL message, vol = %d", f->fd,
+		    f->slot->vol);
 #endif
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = htonl(AMSG_SETVOL);
@@ -1560,8 +1225,7 @@ sock_buildmsg(struct sock *f)
 		size -= size % f->slot->sub.bpf;
 #ifdef DEBUG
 		if (size == 0) {
-			sock_log(f);
-			log_puts(": sock_buildmsg size == 0\n");
+			logx(0, "sock %d: sock_buildmsg size == 0", f->fd);
 			panic();
 		}
 #endif
@@ -1570,12 +1234,7 @@ sock_buildmsg(struct sock *f)
 		if (f->walign == 0)
 			f->walign = f->slot->round * f->slot->sub.bpf;
 #ifdef DEBUG
-		if (log_level >= 4) {
-			sock_log(f);
-			log_puts(": building audio DATA message, size = ");
-			log_puti(size);
-			log_puts("\n");
-		}
+		logx(4, "sock %d: building audio DATA message, size = %d", f->fd, size);
 #endif
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = htonl(AMSG_DATA);
@@ -1587,10 +1246,7 @@ sock_buildmsg(struct sock *f)
 
 	if (f->stoppending) {
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": building STOP message\n");
-		}
+		logx(3, "sock %d: building STOP message", f->fd);
 #endif
 		f->stoppending = 0;
 		f->pstate = SOCK_INIT;
@@ -1664,10 +1320,7 @@ sock_buildmsg(struct sock *f)
 			f->wtodo = sizeof(struct amsg);
 			f->wstate = SOCK_WMSG;
 #ifdef DEBUG
-			if (log_level >= 3) {
-				sock_log(f);
-				log_puts(": building control DATA message\n");
-			}
+			logx(3, "sock %d: building control DATA message", f->fd);
 #endif
 			return 1;
 		}
@@ -1687,10 +1340,7 @@ sock_buildmsg(struct sock *f)
 			f->wtodo = sizeof(struct amsg);
 			f->wstate = SOCK_WMSG;
 #ifdef DEBUG
-			if (log_level >= 3) {
-				sock_log(f);
-				log_puts(": building CTLSET message\n");
-			}
+			logx(3, "sock %d: building CTLSET message", f->fd);
 #endif
 			return 1;
 		}
@@ -1701,18 +1351,12 @@ sock_buildmsg(struct sock *f)
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 #ifdef DEBUG
-		if (log_level >= 3) {
-			sock_log(f);
-			log_puts(": building CTLSYNC message\n");
-		}
+		logx(3, "sock %d: building CTLSYNC message", f->fd);
 #endif
 		return 1;
 	}
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": no messages to build anymore, idling...\n");
-	}
+	logx(4, "sock %d: no messages to build anymore, idling...", f->fd);
 #endif
 	f->wstate = SOCK_WIDLE;
 	return 0;
@@ -1725,12 +1369,7 @@ int
 sock_read(struct sock *f)
 {
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": reading ");
-		log_putu(f->rtodo);
-		log_puts(" todo\n");
-	}
+	logx(4, "sock %d: reading %u todo", f->fd, f->rtodo);
 #endif
 	switch (f->rstate) {
 	case SOCK_RIDLE:
@@ -1750,10 +1389,7 @@ sock_read(struct sock *f)
 	case SOCK_RRET:
 		if (f->wstate != SOCK_WIDLE) {
 #ifdef DEBUG
-			if (log_level >= 4) {
-				sock_log(f);
-				log_puts(": can't reply, write-end blocked\n");
-			}
+			logx(4, "sock %d: can't reply, write-end blocked", f->fd);
 #endif
 			return 0;
 		}
@@ -1763,10 +1399,7 @@ sock_read(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		f->rtodo = sizeof(struct amsg);
 #ifdef DEBUG
-		if (log_level >= 4) {
-			sock_log(f);
-			log_puts(": copied RRET message\n");
-		}
+		logx(4, "sock %d: copied RRET message", f->fd);
 #endif
 	}
 	return 1;
@@ -1779,15 +1412,7 @@ int
 sock_write(struct sock *f)
 {
 #ifdef DEBUG
-	if (log_level >= 4) {
-		sock_log(f);
-		log_puts(": writing");
-		if (f->wstate != SOCK_WIDLE) {
-			log_puts(" todo = ");
-			log_putu(f->wtodo);
-		}
-		log_puts("\n");
-	}
+	logx(4, "sock %d: writing", f->fd);
 #endif
 	switch (f->wstate) {
 	case SOCK_WMSG:
@@ -1817,10 +1442,7 @@ sock_write(struct sock *f)
 			f->pstate = SOCK_INIT;
 			f->wmax = 0;
 #ifdef DEBUG
-			if (log_level >= 4) {
-				sock_log(f);
-				log_puts(": drained, moved to INIT state\n");
-			}
+			logx(4, "sock %d: drained, moved to INIT state", f->fd);
 #endif
 		}
 		/* FALLTHROUGH */
@@ -1832,10 +1454,7 @@ sock_write(struct sock *f)
 			f->rstate = SOCK_RMSG;
 			f->rtodo = sizeof(struct amsg);
 #ifdef DEBUG
-			if (log_level >= 4) {
-				sock_log(f);
-				log_puts(": copied RRET message\n");
-			}
+			logx(4, "sock %d: copied RRET message", f->fd);
 #endif
 		} else {
 			if (!sock_buildmsg(f))
@@ -1844,8 +1463,7 @@ sock_write(struct sock *f)
 		break;
 #ifdef DEBUG
 	default:
-		sock_log(f);
-		log_puts(": bad writing end state\n");
+		logx(0, "sock %d: bad writing end state", f->fd);
 		panic();
 #endif
 	}

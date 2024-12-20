@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.11 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.12 2024/12/20 07:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -69,12 +69,6 @@ struct fdpass {
 	int fd;
 } *fdpass_peer = NULL;
 
-static void
-fdpass_log(struct fdpass *f)
-{
-	log_puts(f->file->name);
-}
-
 static int
 fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
 {
@@ -107,34 +101,18 @@ fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
 	}
 	n = sendmsg(f->fd, &msg, 0);
 	if (n == -1) {
-		if (log_level >= 1) {
-			fdpass_log(f);
-			log_puts(": sendmsg failed\n");
-		}
+		logx(1, "%s: sendmsg failed", f->file->name);
 		fdpass_close(f);
 		return 0;
 	}
 	if (n != sizeof(struct fdpass_msg)) {
-		if (log_level >= 1) {
-			fdpass_log(f);
-			log_puts(": short write\n");
-		}
+		logx(1, "%s: short write", f->file->name);
 		fdpass_close(f);
 		return 0;
 	}
 #ifdef DEBUG
-	if (log_level >= 3) {
-		fdpass_log(f);
-		log_puts(": send: cmd = ");
-		log_puti(cmd);
-		log_puts(", num = ");
-		log_puti(num);
-		log_puts(", mode = ");
-		log_puti(mode);
-		log_puts(", fd = ");
-		log_puti(fd);
-		log_puts("\n");
-	}
+	logx(3, "%s: send: cmd = %d, num = %d, mode = %d, fd = %d",
+	    f->file->name, cmd, num, mode, fd);
 #endif
 	if (fd >= 0)
 		close(fd);
@@ -163,10 +141,7 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 	msg.msg_iovlen = 1;
 	n = recvmsg(f->fd, &msg, MSG_WAITALL);
 	if (n == -1 && errno == EMSGSIZE) {
-		if (log_level >= 1) {
-			fdpass_log(f);
-			log_puts(": out of fds\n");
-		}
+		logx(1, "%s: out of fds", f->file->name);
 		/*
 		 * ancillary data (ie the fd) is discarded,
 		 * retrieve the message
@@ -174,26 +149,17 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 		n = recvmsg(f->fd, &msg, MSG_WAITALL);
 	}
 	if (n == -1) {
-		if (log_level >= 1) {
-			fdpass_log(f);
-			log_puts(": recvmsg failed\n");
-		}
+		logx(1, "%s: recvmsg failed", f->file->name);
 		fdpass_close(f);
 		return 0;
 	}
 	if (n == 0) {
-		if (log_level >= 3) {
-			fdpass_log(f);
-			log_puts(": recvmsg eof\n");
-		}
+		logx(3, "%s: recvmsg eof", f->file->name);
 		fdpass_close(f);
 		return 0;
 	}
 	if (msg.msg_flags & (MSG_TRUNC | MSG_CTRUNC)) {
-		if (log_level >= 1) {
-			fdpass_log(f);
-			log_puts(": truncated\n");
-		}
+		logx(1, "%s: truncated", f->file->name);
 		fdpass_close(f);
 		return 0;
 	}
@@ -215,18 +181,8 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 	*num = data.num;
 	*mode = data.mode;
 #ifdef DEBUG
-	if (log_level >= 3) {
-		fdpass_log(f);
-		log_puts(": recv: cmd = ");
-		log_puti(*cmd);
-		log_puts(", num = ");
-		log_puti(*num);
-		log_puts(", mode = ");
-		log_puti(*mode);
-		log_puts(", fd = ");
-		log_puti(*fd);
-		log_puts("\n");
-	}
+	logx(3, "%s: recv: cmd = %d, num = %d, mode = %d, fd = %d",
+	    f->file->name, *cmd, *num, *mode, *fd);
 #endif
 	return 1;
 }
@@ -239,10 +195,7 @@ fdpass_waitret(struct fdpass *f, int *retfd)
 	if (!fdpass_recv(fdpass_peer, &cmd, &unused, &unused, retfd))
 		return 0;
 	if (cmd != FDPASS_RETURN) {
-		if (log_level >= 1) {
-			fdpass_log(f);
-			log_puts(": expected RETURN message\n");
-		}
+		logx(1, "%s: expected RETURN message", f->file->name);
 		fdpass_close(f);
 		return 0;
 	}
@@ -302,10 +255,7 @@ fdpass_in_worker(void *arg)
 {
 	struct fdpass *f = arg;
 
-	if (log_level >= 3) {
-		fdpass_log(f);
-		log_puts(": exit\n");
-	}
+	logx(3, "%s: exit", f->file->name);
 	fdpass_close(f);
 	return;
 }
@@ -324,10 +274,7 @@ fdpass_in_helper(void *arg)
 	case FDPASS_OPEN_SND:
 		d = dev_bynum(num);
 		if (d == NULL || !(mode & (SIO_PLAY | SIO_REC))) {
-			if (log_level >= 1) {
-				fdpass_log(f);
-				log_puts(": bad audio device or mode\n");
-			}
+			logx(1, "%s: bad audio device or mode", f->file->name);
 			fdpass_close(f);
 			return;
 		}
@@ -336,10 +283,7 @@ fdpass_in_helper(void *arg)
 	case FDPASS_OPEN_MIDI:
 		p = port_bynum(num);
 		if (p == NULL || !(mode & (MIO_IN | MIO_OUT))) {
-			if (log_level >= 1) {
-				fdpass_log(f);
-				log_puts(": bad midi port or mode\n");
-			}
+			logx(1, "%s: bad midi port or mode", f->file->name);
 			fdpass_close(f);
 			return;
 		}
@@ -348,10 +292,7 @@ fdpass_in_helper(void *arg)
 	case FDPASS_OPEN_CTL:
 		d = dev_bynum(num);
 		if (d == NULL || !(mode & (SIOCTL_READ | SIOCTL_WRITE))) {
-			if (log_level >= 1) {
-				fdpass_log(f);
-				log_puts(": bad audio control device\n");
-			}
+			logx(1, "%s: bad control device", f->file->name);
 			fdpass_close(f);
 			return;
 		}
@@ -374,10 +315,7 @@ fdpass_hup(void *arg)
 {
 	struct fdpass *f = arg;
 
-	if (log_level >= 3) {
-		fdpass_log(f);
-		log_puts(": hup\n");
-	}
+	logx(3, "%s: hup", f->file->name);
 	fdpass_close(f);
 }
 
