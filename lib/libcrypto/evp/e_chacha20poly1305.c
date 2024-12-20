@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.36 2024/05/22 14:02:08 tb Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.37 2024/12/20 20:05:29 schwarze Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -592,7 +592,7 @@ chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 		return 1;
 	}
 
-	return 0;
+	return -1;
 }
 
 static const EVP_CIPHER cipher_chacha20_poly1305 = {
