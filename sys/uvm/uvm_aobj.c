@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.112 2024/12/18 16:41:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.113 2024/12/20 18:49:37 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -999,7 +999,9 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	boolean_t done;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
-	KASSERT(rw_write_held(uobj->vmobjlock));
+	KASSERT(rw_lock_held(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock) ||
+	    ((flags & PGO_LOCKED) != 0 && (access_type & PROT_WRITE) == 0));
 
 	/*
  	 * get number of pages

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.136 2024/12/18 16:41:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.137 2024/12/20 18:49:37 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -950,8 +950,9 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	int lcv, result, gotpages;
 	boolean_t done;
 
-	KASSERT(((flags & PGO_LOCKED) != 0 && rw_lock_held(uobj->vmobjlock)) ||
-	    (flags & PGO_LOCKED) == 0);
+	KASSERT(rw_lock_held(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock) ||
+	    ((flags & PGO_LOCKED) != 0 && (access_type & PROT_WRITE) == 0));
 
 	/* step 1: handled the case where fault data structures are locked. */
 	if (flags & PGO_LOCKED) {
