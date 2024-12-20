@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.21 2024/01/29 22:47:13 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.22 2024/12/20 21:30:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
-extern int tcp_backoff[];
+extern const int tcp_backoff[];
 
 void	tcp_timer_init(void);
 #endif /* _KERNEL */
