@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.55 2024/12/17 18:11:44 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.56 2024/12/20 01:54:03 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 17 2024 $
+.Dd $Mdocdate: December 20 2024 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -600,6 +600,7 @@ Some algorithms are documented in separate manual pages:
 .Bl -column "EVP_camellia_128_cbc(3)" "block size" -compact
 .It manual page               Ta block size Ta Fa key No size Pq in bits
 .It Xr EVP_aes_128_cbc 3      Ta 128        Ta 128, 192, 256
+.It Xr EVP_aes_128_ccm 3      Ta 128        Ta 128, 192, 256
 .It Xr EVP_aes_128_gcm 3      Ta 128        Ta 128, 192, 256
 .It Xr EVP_camellia_128_cbc 3 Ta 128        Ta 128, 192, 256
 .It Xr EVP_chacha20 3         Ta stream     Ta 256
@@ -607,54 +608,6 @@ Some algorithms are documented in separate manual pages:
 .It Xr EVP_rc2_cbc 3          Ta 64         Ta variable, default 128
 .It Xr EVP_rc4 3              Ta stream     Ta variable, default 128
 .It Xr EVP_sm4_cbc 3          Ta 128        Ta 128
-.El
-.Ss CCM mode
-The behaviour of CCM mode ciphers is similar to GCM mode, but with
-a few additional requirements and different ctrl values.
-.Pp
-Like GCM mode any additional authenticated data (AAD) is passed
-by calling
-.Fn EVP_CipherUpdate ,
-.Fn EVP_EncryptUpdate ,
-or
-.Fn EVP_DecryptUpdate
-with the output parameter
-.Fa out
-set to
-.Dv NULL .
-Additionally, the total
-plaintext or ciphertext length MUST be passed to
-.Fn EVP_CipherUpdate ,
-.Fn EVP_EncryptUpdate ,
-or
-.Fn EVP_DecryptUpdate
-with the output and input
-parameters
-.Pq Fa in No and Fa out
-set to
-.Dv NULL
-and the length passed in the
-.Fa in_len
-parameter.
-.Pp
-The following ctrls are supported in CCM mode:
-.Bl -tag -width Ds
-.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_CCM_SET_TAG taglen tag
-This call is made to set the expected CCM tag value when decrypting or
-the length of the tag (with the
-.Fa tag
-parameter set to
-.Dv NULL )
-when encrypting.
-The tag length is often referred to as M.
-If not set, a default value is used (12 for AES).
-.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_CCM_SET_L ivlen NULL
-Sets the CCM L value.
-If not set, a default is used (8 for AES).
-.It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_CCM_SET_IVLEN ivlen NULL
-Sets the CCM nonce (IV) length: this call can only be made before
-specifying a nonce value.
-The nonce length is given by 15 - L so it is 7 by default for AES.
 .El
 .Sh EXAMPLES
 Encrypt a string using blowfish:
@@ -770,6 +723,7 @@ do_crypt(FILE *in_fileptr, FILE *out_fileptr, int do_encrypt)
 .Xr evp 3 ,
 .Xr EVP_AEAD_CTX_init 3 ,
 .Xr EVP_aes_128_cbc 3 ,
+.Xr EVP_aes_128_ccm 3 ,
 .Xr EVP_aes_128_gcm 3 ,
 .Xr EVP_camellia_128_cbc 3 ,
 .Xr EVP_chacha20 3 ,
