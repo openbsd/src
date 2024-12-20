@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem768_nist_keygen_tests.c,v 1.4 2024/12/20 00:07:12 tb Exp $ */
+/*	$OpenBSD: mlkem768_nist_keygen_tests.c,v 1.5 2024/12/20 00:32:15 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 	test = argv[1];
 
 	if ((fp = fopen(test, "r")) == NULL)
-		err(1, "cant't open test file");
+		err(1, "can't open test file");
 
 	state = S_Z;
 	line = 0;
