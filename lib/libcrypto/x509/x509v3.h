@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.35 2024/08/31 10:23:13 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.36 2024/12/20 09:40:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -139,6 +139,7 @@ DECLARE_STACK_OF(X509V3_EXT_METHOD)
 #define X509V3_EXT_CTX_DEP	0x2
 #define X509V3_EXT_MULTILINE	0x4
 
+/* Guess who uses this... Yes, of course, it's xca. */
 typedef BIT_STRING_BITNAME ENUMERATED_NAMES;
 
 typedef struct BASIC_CONSTRAINTS_st {
