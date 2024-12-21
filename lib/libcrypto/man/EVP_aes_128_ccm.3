@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_ccm.3,v 1.1 2024/12/20 01:54:03 schwarze Exp $
+.\" $OpenBSD: EVP_aes_128_ccm.3,v 1.2 2024/12/21 00:27:47 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL EVP_EncryptInit.pod 0874d7f2 Oct 11 13:13:47 2022 +0100
 .\" OpenSSL EVP_aes.pod a1ec85c1 Apr 21 10:49:12 2020 +0100
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 20 2024 $
+.Dd $Mdocdate: December 21 2024 $
 .Dt EVP_AES_128_CCM 3
 .Os
 .Sh NAME
@@ -324,6 +324,133 @@ was already consumed by
 These functions return a static constant
 .Vt EVP_CIPHER
 structure that provides the implementation of the respective AEAD cipher mode.
+.Sh EXAMPLES
+The following code encrypts and digests some secret text
+and some additional, public data with AES-CCM.
+Specifically, it implements the Test Vector #1
+given in section 8 of RFC 3610.
+.Bd -literal -offset indent
+/* input data */
+const unsigned char key[] = {
+    0xC0, 0xC1, 0xC2, 0xC3,  0xC4, 0xC5, 0xC6, 0xC7,
+    0xC8, 0xC9, 0xCA, 0xCB,  0xCC, 0xCD, 0xCE, 0xCF
+};
+const unsigned char nonce[] = {
+    0x00, 0x00, 0x00, 0x03,  0x02, 0x01, 0x00, 0xA0,
+    0xA1, 0xA2, 0xA3, 0xA4,  0xA5
+};
+const int nonce_len = sizeof(nonce);
+const int size_len = 15 - nonce_len;
+
+const unsigned char aad[] = {
+    0x00, 0x01, 0x02, 0x03,  0x04, 0x05, 0x06, 0x07
+};
+const int aad_len = sizeof(aad);
+
+const unsigned char plaintext[] = {
+    0x08, 0x09, 0x0A, 0x0B,  0x0C, 0x0D, 0x0E, 0x0F,
+    0x10, 0x11, 0x12, 0x13,  0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1A, 0x1B,  0x1C, 0x1D, 0x1E
+};
+const int text_len = sizeof(plaintext);
+
+/* expected output data */
+const unsigned char ciphertext[] = {
+    0x58, 0x8C, 0x97, 0x9A,  0x61, 0xC6, 0x63, 0xD2,
+    0xF0, 0x66, 0xD0, 0xC2,  0xC0, 0xF9, 0x89, 0x80,
+    0x6D, 0x5F, 0x6B, 0x61,  0xDA, 0xC3, 0x84
+};
+
+const unsigned char wanted_tag[] = {
+    0x17, 0xE8, 0xD1, 0x2C,  0xFD, 0xF9, 0x26, 0xE0
+};
+const int tag_len = sizeof(wanted_tag);
+
+const int out_len = aad_len + text_len + tag_len;
+unsigned char out_buf[out_len];
+unsigned char *out_p = out_buf;
+unsigned char *out_end = out_buf + out_len;
+
+/* auxiliary variables */
+EVP_CIPHER_CTX *ctx;
+int irv, i;
+
+/* configuration */
+ctx = EVP_CIPHER_CTX_new();
+if (ctx == NULL)
+	err(1, "EVP_CIPHER_CTX_new");
+
+if (EVP_EncryptInit(ctx, EVP_aes_128_ccm(), NULL, NULL) != 1)
+	err(1, "EVP_EncryptInit(NULL)");
+
+if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L,
+    size_len, NULL) <= 0)
+	err(1, "EVP_CTRL_CCM_SET_L(%d)", size_len);
+
+if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG,
+    tag_len, NULL) <= 0)
+	err(1, "EVP_CTRL_CCM_SET_TAG(%d)", tag_len);
+
+/* process input data */
+if (EVP_EncryptInit(ctx, NULL, key, nonce) != 1)
+	err(1, "EVP_EncryptInit(key, nonce)");
+
+if (EVP_EncryptUpdate(ctx, NULL, &irv, NULL, text_len) != 1)
+	err(1, "EVP_EncryptUpdate(len = %d)", text_len);
+if (irv != text_len)
+	errx(1, "text length: want %d, got %d", text_len, irv);
+
+irv = -1;
+if (EVP_EncryptUpdate(ctx, NULL, &irv, aad, aad_len) != 1)
+	err(1, "EVP_EncryptUpdate(AAD)");
+memcpy(out_p, aad, aad_len);
+out_p += aad_len;
+
+irv = -1;
+if (EVP_EncryptUpdate(ctx, out_p, &irv, plaintext, text_len) != 1)
+	err(1, "EVP_EncryptUpdate(plaintext)");
+if (irv != text_len)
+	errx(1, "text_len: want %d, got %d", text_len, irv);
+out_p += irv;
+
+/*
+ * EVP_EncryptFinal(3) doesn't really do anything for CCM.
+ * Call it anyway to stay closer to normal EVP_Encrypt*(3) idioms,
+ * to match what the OpenSSL Wiki suggests since 2013, and to ease
+ * later migration of the code to a different AEAD algorithm.
+ */
+irv = -1;
+if (EVP_EncryptFinal(ctx, out_p, &irv) != 1)
+	err(1, "EVP_EncryptFinal");
+if (irv != 0)
+	errx(1, "final_len: want 0, got %d", irv);
+
+/* check output data */
+if (memcmp(out_buf + aad_len, ciphertext, text_len) != 0)
+	errx(1, "ciphertext mismatch");
+
+if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_GET_TAG,
+    tag_len, out_p) <= 0)
+	err(1, "EVP_CTRL_CCM_GET_TAG");
+if (memcmp(out_p, wanted_tag, tag_len) != 0)
+	errx(1, "tag mismatch");
+out_p += tag_len;
+if (out_p != out_end)
+	errx(1, "end of output: want %p, got %p", out_end, out_p);
+
+printf("Total packet length = %d.", out_len);
+printf(" [Authenticated and Encrypted Output]");
+for (i = 0; i < out_len; i++) {
+	if (i % 16 == 0)
+		printf("\en         ");
+	if (i % 4 == 0)
+		putchar(' ');
+	printf(" %02X", out_buf[i]);
+}
+putchar('\en');
+
+EVP_CIPHER_CTX_free(ctx);
+.Ed
 .Sh SEE ALSO
 .Xr AES_encrypt 3 ,
 .Xr evp 3 ,
