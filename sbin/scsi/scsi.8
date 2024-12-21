@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.35 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: scsi.8,v 1.36 2024/12/21 13:15:36 jsg Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -40,7 +40,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: December 21 2024 $
 .Dt SCSI 8
 .Os
 .Sh NAME
@@ -336,8 +336,9 @@ drive (set AWRE and ARRE to 1 to enable bad block remapping):
 .Sh HISTORY
 The
 .Nm
-command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
-and user SCSI commands.
+command appeared in
+.Fx
+to support the new reprobe and user SCSI commands.
 .Sh BUGS
 .Ic scsi\ -f /dev/rsd0c -c \(dq4 0 0 0 0 0\(dq
 permits anyone who can write to
