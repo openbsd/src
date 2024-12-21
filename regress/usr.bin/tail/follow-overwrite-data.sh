@@ -1,8 +1,10 @@
 #!/bin/sh
 #
-# $OpenBSD: follow-overwrite-data.sh,v 1.2 2012/11/03 08:41:25 ajacoutot Exp $
+# $OpenBSD: follow-overwrite-data.sh,v 1.3 2024/12/21 07:49:03 anton Exp $
 
 # test if tail follows a file overwritten by data
+
+. "$(dirname "${0}")/util.sh"
 
 #set TMPDIR to a nfs-based dir for nfs testing
 DIR=$(mktemp -d)
@@ -30,8 +32,7 @@ echo 'baar' > ${DIR}/bar
 # smaller data without delay
 echo 'bar' > ${DIR}/bar
 
-# hey nfs !
-sleep 5
+wait_until "[ `grep -c bar ${OUT}` = 2 ]"
 kill ${PID}
 diff -u ${OUT} ${0%%.sh}.out || exit 1
 [ $(grep -c "tail: ${DIR}/bar has been truncated, resetting." ${ERR}) -eq 3 ] || exit 2
