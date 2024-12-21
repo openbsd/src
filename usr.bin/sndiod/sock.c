@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.52 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.53 2024/12/21 08:57:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -797,6 +797,7 @@ sock_execmsg(struct sock *f)
 	struct ctl *c;
 	struct slot *s = f->slot;
 	struct amsg *m = &f->rmsg;
+	struct conv conv;
 	unsigned char *data;
 	unsigned int size, ctl;
 	int cmd;
@@ -924,7 +925,8 @@ sock_execmsg(struct sock *f)
 					panic();
 				}
 #endif
-				memset(data, 0, f->ralign);
+				enc_init(&conv, &s->par, s->mix.nch);
+				enc_sil_do(&conv, data, f->ralign / s->mix.bpf);
 				abuf_wcommit(&s->mix.buf, f->ralign);
 				f->ralign = s->round * s->mix.bpf;
 			}
