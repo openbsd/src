@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.159 2024/11/05 10:49:23 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.160 2024/12/21 00:10:04 mvs Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
  *	I	immutable after creation
  *	N	net lock
  *	t	inpt_mtx		pcb table mutex
- *	y	inpt_notify		pcb table rwlock for notify
  *	L	pf_inp_mtx		link pf to inp mutex
  *	s	so_lock			socket rwlock
  */
@@ -128,7 +127,6 @@ struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;		/* [t] local and foreign hash */
 	LIST_ENTRY(inpcb) inp_lhash;		/* [t] local port hash */
 	TAILQ_ENTRY(inpcb) inp_queue;		/* [t] inet PCB queue */
-	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [y] notify or udp append */
 	struct	  inpcbtable *inp_table;	/* [I] inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* [t] Foreign address. */
 	union	  inpaddru inp_laddru;		/* [t] Local address. */
@@ -194,7 +192,6 @@ in_pcb_is_iterator(struct inpcb *inp)
 
 struct inpcbtable {
 	struct mutex inpt_mtx;			/* protect queue and hash */
-	struct rwlock inpt_notify;		/* protect inp_notify list */
 	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* [t] inet PCB queue */
 	struct	inpcbhead *inpt_hashtbl;	/* [t] local and foreign hash */
 	struct	inpcbhead *inpt_lhashtbl;	/* [t] local port hash */

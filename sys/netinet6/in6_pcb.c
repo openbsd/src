@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.145 2024/11/05 10:49:23 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.146 2024/12/21 00:10:04 mvs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -427,8 +427,8 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
     uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg,
     u_int rtable, int cmd, void *cmdarg, void (*notify)(struct inpcb *, int))
 {
-	SIMPLEQ_HEAD(, inpcb) inpcblist;
-	struct inpcb *inp;
+	struct inpcb_iterator iter = { .inp_table = NULL };
+	struct inpcb *inp = NULL;
 	u_short fport = fport_arg, lport = lport_arg;
 	struct sockaddr_in6 sa6_src;
 	int errno;
@@ -474,13 +474,9 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
 	if (notify == NULL)
 		return;
 
-	SIMPLEQ_INIT(&inpcblist);
 	rdomain = rtable_l2(rtable);
-	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
-	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
-		if (in_pcb_is_iterator(inp))
-			continue;
+	while ((inp = in_pcb_iterator(table, inp, &iter)) != NULL) {
 		KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 
 		/*
@@ -546,17 +542,11 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
 			continue;
 		}
 	  do_notify:
-		in_pcbref(inp);
-		SIMPLEQ_INSERT_TAIL(&inpcblist, inp, inp_notify);
+		mtx_leave(&table->inpt_mtx);
+		(*notify)(inp, errno);
+		mtx_enter(&table->inpt_mtx);
 	}
 	mtx_leave(&table->inpt_mtx);
-
-	while ((inp = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&inpcblist, inp_notify);
-		(*notify)(inp, errno);
-		in_pcbunref(inp);
-	}
-	rw_exit_write(&table->inpt_notify);
 }
 
 struct rtentry *

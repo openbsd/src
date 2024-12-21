@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.305 2024/11/05 22:44:20 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.306 2024/12/21 00:10:04 mvs Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -179,7 +179,6 @@ void
 in_pcbinit(struct inpcbtable *table, int hashsize)
 {
 	mtx_init(&table->inpt_mtx, IPL_SOFTNET);
-	rw_init(&table->inpt_notify, "inpnotify");
 	TAILQ_INIT(&table->inpt_queue);
 	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_WAITOK,
 	    &table->inpt_mask);
@@ -763,8 +762,8 @@ void
 in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
     u_int rtable, int errno, void (*notify)(struct inpcb *, int))
 {
-	SIMPLEQ_HEAD(, inpcb) inpcblist;
-	struct inpcb *inp;
+	struct inpcb_iterator iter = { .inp_table = NULL };
+	struct inpcb *inp = NULL;
 	u_int rdomain;
 
 	if (dst->sin_addr.s_addr == INADDR_ANY)
@@ -772,39 +771,20 @@ in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
 	if (notify == NULL)
 		return;
 
-	/*
-	 * Use a temporary notify list protected by rwlock to run over
-	 * selected PCB.  This is necessary as the list of all PCB is
-	 * protected by a mutex.  Notify may call ip_output() eventually
-	 * which may sleep as pf lock is a rwlock.  Also the SRP
-	 * implementation of the routing table might sleep.
-	 * The same inp_notify list entry and inpt_notify rwlock are
-	 * used for UDP multicast and raw IP delivery.
-	 */
-	SIMPLEQ_INIT(&inpcblist);
 	rdomain = rtable_l2(rtable);
-	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
-	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
-		if (in_pcb_is_iterator(inp))
-			continue;
+	while ((inp = in_pcb_iterator(table, inp, &iter)) != NULL) {
 		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 
 		if (inp->inp_faddr.s_addr != dst->sin_addr.s_addr ||
 		    rtable_l2(inp->inp_rtableid) != rdomain) {
 			continue;
 		}
-		in_pcbref(inp);
-		SIMPLEQ_INSERT_TAIL(&inpcblist, inp, inp_notify);
+		mtx_leave(&table->inpt_mtx);
+		(*notify)(inp, errno);
+		mtx_enter(&table->inpt_mtx);
 	}
 	mtx_leave(&table->inpt_mtx);
-
-	while ((inp = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&inpcblist, inp_notify);
-		(*notify)(inp, errno);
-		in_pcbunref(inp);
-	}
-	rw_exit_write(&table->inpt_notify);
 }
 
 /*
