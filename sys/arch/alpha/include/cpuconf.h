@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.7 2022/12/10 15:02:29 cheloha Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.8 2024/12/22 20:38:35 miod Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $	*/
 
 /*
@@ -47,8 +47,6 @@
  * to give a hint as to where to start configuring. The likely choices
  * are one of tcasic, lca, apecs, cia, or tlsb.
  */
-
-struct clockframe;
 
 struct platform {
 	/*
