@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.154 2024/02/13 14:00:24 claudio Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.155 2024/12/22 13:51:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1367,6 +1367,11 @@ server_response(struct httpd *httpd, struct client *clt)
 			goto fail;
 		srv_conf = clt->clt_srv_conf;
 	}
+
+
+	/* Set request timeout from matching host configuration. */
+	bufferevent_settimeout(clt->clt_bev,
+	    srv_conf->requesttimeout.tv_sec, srv_conf->requesttimeout.tv_sec);
 
 	if (clt->clt_persist >= srv_conf->maxrequests)
 		clt->clt_persist = 0;
