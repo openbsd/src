@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.9 2024/12/11 04:53:17 patrick Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.10 2024/12/22 23:30:27 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -10768,26 +10768,37 @@ enum ath12k_htc_ep_id {
 /* Target configuration defines */
 
 /* Num VDEVS per radio */
-#define TARGET_NUM_VDEVS(sc)	(sc->hw_params.num_vdevs)
+#define TARGET_NUM_VDEVS	(16 + 1)
 
-#define TARGET_NUM_PEERS_PDEV(sc) (sc->hw_params.num_peers + TARGET_NUM_VDEVS(sc))
+#define TARGET_NUM_PEERS_PDEV_SINGLE	(TARGET_NUM_STATIONS_SINGLE + \
+					 TARGET_NUM_VDEVS)
+#define TARGET_NUM_PEERS_PDEV_DBS	(TARGET_NUM_STATIONS_DBS + \
+					 TARGET_NUM_VDEVS)
+#define TARGET_NUM_PEERS_PDEV_DBS_SBS	(TARGET_NUM_STATIONS_DBS_SBS + \
+					 TARGET_NUM_VDEVS)
 
 /* Num of peers for Single Radio mode */
-#define TARGET_NUM_PEERS_SINGLE(sc) (TARGET_NUM_PEERS_PDEV(sc))
+#define TARGET_NUM_PEERS_SINGLE		(TARGET_NUM_PEERS_PDEV_SINGLE)
 
 /* Num of peers for DBS */
-#define TARGET_NUM_PEERS_DBS(sc) (2 * TARGET_NUM_PEERS_PDEV(sc))
+#define TARGET_NUM_PEERS_DBS		(2 * TARGET_NUM_PEERS_PDEV_DBS)
 
 /* Num of peers for DBS_SBS */
-#define TARGET_NUM_PEERS_DBS_SBS(sc)	(3 * TARGET_NUM_PEERS_PDEV(sc))
+#define TARGET_NUM_PEERS_DBS_SBS	(3 * TARGET_NUM_PEERS_PDEV_DBS_SBS)
 
-/* Max num of stations (per radio) */
-#define TARGET_NUM_STATIONS(sc)	(sc->hw_params.num_peers)
+/* Max num of stations for Single Radio mode */
+#define TARGET_NUM_STATIONS_SINGLE	512
 
-#define TARGET_NUM_PEERS(sc, x)	TARGET_NUM_PEERS_##x(sc)
+/* Max num of stations for DBS */
+#define TARGET_NUM_STATIONS_DBS		128
+
+/* Max num of stations for DBS_SBS */
+#define TARGET_NUM_STATIONS_DBS_SBS	128
+
+#define TARGET_NUM_PEERS(x)	TARGET_NUM_PEERS_##x
 #define TARGET_NUM_PEER_KEYS	2
-#define TARGET_NUM_TIDS(sc, x)	(2 * TARGET_NUM_PEERS(sc, x) +	\
-				 4 * TARGET_NUM_VDEVS(sc) + 8)
+#define TARGET_NUM_TIDS(x)	(2 * TARGET_NUM_PEERS(x) + \
+				 4 * TARGET_NUM_VDEVS + 8)
 
 #define TARGET_AST_SKID_LIMIT	16
 #define TARGET_NUM_OFFLD_PEERS	4

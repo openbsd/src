@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.10 2024/12/11 04:53:17 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.11 2024/12/22 23:30:27 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -227,8 +227,6 @@ struct ath12k_hw_params {
 	bool supports_shadow_regs;
 	bool idle_ps;
 	bool supports_sta_ps;
-	uint32_t num_vdevs;
-	uint32_t num_peers;
 	bool supports_suspend;
 	uint32_t hal_desc_sz;
 	bool fix_l1ss;

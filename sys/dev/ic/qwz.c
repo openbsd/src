@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.16 2024/12/11 04:53:17 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.17 2024/12/22 23:30:27 patrick Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -17580,6 +17580,16 @@ qwz_wmi_vdev_start(struct qwz_softc *sc, struct wmi_vdev_start_req_arg *arg,
 	return ret;
 }
 
+uint32_t
+qwz_core_get_max_peers_per_radio(struct qwz_softc *sc)
+{
+	if (sc->num_radios == 2)
+		return TARGET_NUM_PEERS_PDEV_DBS;
+	else if (sc->num_radios == 3)
+		return TARGET_NUM_PEERS_PDEV_DBS_SBS;
+	return TARGET_NUM_PEERS_PDEV_SINGLE;
+}
+
 int
 qwz_core_start(struct qwz_softc *sc)
 {
@@ -20312,7 +20322,7 @@ qwz_mac_register(struct qwz_softc *sc)
 	/* Initialize channel counters frequency value in hertz */
 	sc->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
 
-	sc->free_vdev_map = (1U << (sc->num_radios * TARGET_NUM_VDEVS(sc))) - 1;
+	sc->free_vdev_map = (1U << (sc->num_radios * TARGET_NUM_VDEVS)) - 1;
 
 	if (IEEE80211_ADDR_EQ(etheranyaddr, sc->sc_ic.ic_myaddr))
 		IEEE80211_ADDR_COPY(sc->sc_ic.ic_myaddr, sc->mac_addr);
@@ -20896,10 +20906,10 @@ qwz_mac_op_add_interface(struct qwz_pdev *pdev)
 		goto err;
 	}
 #endif
-	if (sc->num_created_vdevs > (TARGET_NUM_VDEVS(sc) - 1)) {
+	if (sc->num_created_vdevs > (TARGET_NUM_VDEVS - 1)) {
 		printf("%s: failed to create vdev %u, reached vdev limit %d\n",
 		    sc->sc_dev.dv_xname, sc->num_created_vdevs,
-		    TARGET_NUM_VDEVS(sc));
+		    TARGET_NUM_VDEVS);
 		ret = EBUSY;
 		goto err;
 	}
@@ -21391,7 +21401,7 @@ qwz_peer_create(struct qwz_softc *sc, struct qwz_vif *arvif, uint8_t pdev_id,
 #ifdef notyet
 	lockdep_assert_held(&ar->conf_mutex);
 #endif
-	if (sc->num_peers > (TARGET_NUM_PEERS_PDEV(sc) - 1)) {
+	if (sc->num_peers > (qwz_core_get_max_peers_per_radio(sc) - 1)) {
 		DPRINTF("%s: failed to create peer due to insufficient "
 		    "peer entry resource in firmware\n", __func__);
 		return ENOBUFS;
