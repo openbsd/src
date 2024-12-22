@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.12 2024/12/22 18:00:18 mglocker Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.13 2024/12/22 21:55:20 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -270,7 +270,7 @@ qcgpio_get_pin_count(struct acpi_softc *sc, struct aml_node *node)
 	cmd[3].length = 0;
 
 	if (aml_evalinteger(sc, node, "_DSM", 4, cmd, &npins)) {
-		printf("%s: GPIO _DSM  failed\n", __func__);
+		printf("%s: GPIO _DSM failed\n", __func__);
 		return 0;
 	}
 
