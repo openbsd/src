@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.60 2019/12/08 13:21:21 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.61 2024/12/22 20:30:04 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -449,6 +449,7 @@ struct uvideo_vs_iface {
 struct uvideo_frame_buffer {
 	int		 sample;
 	uint8_t		 fid;
+	uint8_t		 error;
 	int		 offset;
 	int		 buf_size;
 	uint8_t		*buf;

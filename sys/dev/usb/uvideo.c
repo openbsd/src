@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.230 2024/12/22 20:22:53 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.231 2024/12/22 20:30:04 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -168,7 +168,7 @@ usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
 usbd_status	uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
 		    uint8_t *, int);
-int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
+int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 usbd_status	uvideo_usb_control(struct uvideo_softc *, uint8_t, uint8_t,
 		    uint16_t, uint8_t *, size_t);
@@ -2148,18 +2148,9 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	DPRINTF(2, "%s: stream header len = %d\n", DEVNAME(sc), sh->bLength);
 
-	if (sh->bLength > UVIDEO_SH_MAX_LEN || sh->bLength < UVIDEO_SH_MIN_LEN)
+	if (sh->bLength > frame_size || sh->bLength < UVIDEO_SH_MIN_LEN)
 		/* invalid header size */
 		return (USBD_INVAL);
-	if (sh->bLength == frame_size && !(sh->bFlags & UVIDEO_SH_FLAG_EOF)) {
-		/* stream header without payload and no EOF */
-		return (USBD_INVAL);
-	}
-	if (sh->bFlags & UVIDEO_SH_FLAG_ERR) {
-		/* stream error, skip xfer */
-		DPRINTF(1, "%s: %s: stream error!\n", DEVNAME(sc), __func__);
-		return (USBD_CANCELLED);
-	}
 
 	DPRINTF(2, "%s: frame_size = %d\n", DEVNAME(sc), frame_size);
 
@@ -2178,6 +2169,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		fb->sample = 1;
 		fb->fid = sh->bFlags & UVIDEO_SH_FLAG_FID;
 		fb->offset = 0;
+		fb->error = 0;
 	} else {
 		/* continues sample for a frame, check consistency */
 		if (fb->fid != (sh->bFlags & UVIDEO_SH_FLAG_FID)) {
@@ -2186,12 +2178,25 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 			fb->sample = 1;
 			fb->fid = sh->bFlags & UVIDEO_SH_FLAG_FID;
 			fb->offset = 0;
+			fb->error = 0;
 		}
+	}
+
+	if (sh->bFlags & UVIDEO_SH_FLAG_ERR) {
+		/* stream error, skip xfer */
+		DPRINTF(1, "%s: %s: stream error!\n", DEVNAME(sc), __func__);
+		fb->error = 1;
 	}
 
 	/* save sample */
 	sample_len = frame_size - sh->bLength;
-	if ((fb->offset + sample_len) <= fb->buf_size) {
+	if (sample_len > fb->buf_size - fb->offset) {
+		DPRINTF(1, "%s: %s: frame too large, marked as error\n",
+		    DEVNAME(sc), __func__);
+		sample_len = fb->buf_size - fb->offset;
+		fb->error = 1;
+	}
+	if (sample_len > 0) {
 		bcopy(frame + sh->bLength, fb->buf + fb->offset, sample_len);
 		fb->offset += sample_len;
 	}
@@ -2201,31 +2206,34 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		DPRINTF(2, "%s: %s: EOF (frame size = %d bytes)\n",
 		    DEVNAME(sc), __func__, fb->offset);
 
-		if (fb->offset > fb->buf_size) {
-			DPRINTF(1, "%s: %s: frame too large, skipped!\n",
-			    DEVNAME(sc), __func__);
-		} else if (fb->offset < fb->buf_size &&
+		if (fb->offset < fb->buf_size &&
 		    !(fb->fmt_flags & V4L2_FMT_FLAG_COMPRESSED)) {
-			DPRINTF(1, "%s: %s: frame too small, skipped!\n",
+			DPRINTF(1, "%s: %s: frame too small, marked as error\n",
+			    DEVNAME(sc), __func__);
+			fb->error = 1;
+		}
+
+#ifdef UVIDEO_DUMP
+		/* do the file write in process context */
+		usb_rem_task(sc->sc_udev, &sc->sc_task_write);
+		usb_add_task(sc->sc_udev, &sc->sc_task_write);
+#endif
+		if (sc->sc_mmap_flag) {
+			/* mmap */
+			if (uvideo_mmap_queue(sc, fb->buf, fb->offset,
+				    fb->error))
+				return (USBD_NOMEM);
+		} else if (fb->error) {
+			DPRINTF(1, "%s: %s: error frame, skipped!\n",
 			    DEVNAME(sc), __func__);
 		} else {
-#ifdef UVIDEO_DUMP
-			/* do the file write in process context */
-			usb_rem_task(sc->sc_udev, &sc->sc_task_write);
-			usb_add_task(sc->sc_udev, &sc->sc_task_write);
-#endif
-			if (sc->sc_mmap_flag) {
-				/* mmap */
-				if (uvideo_mmap_queue(sc, fb->buf, fb->offset))
-					return (USBD_NOMEM);
-			} else {
-				/* read */
-				uvideo_read(sc, fb->buf, fb->offset);
-			}
+			/* read */
+			uvideo_read(sc, fb->buf, fb->offset);
 		}
 
 		fb->sample = 0;
 		fb->fid = 0;
+		fb->error = 0;
 	}
 
 	return (USBD_NORMAL_COMPLETION);
@@ -2270,7 +2278,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 	if (header) {
 		if (sc->sc_mmap_flag) {
 			/* mmap */
-			if (uvideo_mmap_queue(sc, fb->buf, fb->offset))
+			if (uvideo_mmap_queue(sc, fb->buf, fb->offset, 0))
 				return (USBD_NOMEM);
 		} else {
 			/* read */
@@ -2290,7 +2298,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 }
 
 int
-uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
+uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 {
 	int i;
 
@@ -2314,6 +2322,11 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 
 	/* timestamp it */
 	getmicrotime(&sc->sc_mmap[i].v4l2_buf.timestamp);
+
+	/* forward error bit */
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_ERROR;
+	if (err)
+		sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_ERROR;
 
 	/* queue it */
 	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_DONE;
