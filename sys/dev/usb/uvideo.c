@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.228 2024/12/14 09:58:04 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.229 2024/12/22 20:11:26 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1204,6 +1204,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	uint8_t ep_dir, ep_type;
+	int bulk_endpoint;
 
 	vs = &sc->sc_vs_coll[vs_nr];
 
@@ -1218,6 +1219,9 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 		}
 		desc = usbd_desc_iter_next(&iter);
 	}
+
+	vs->bulk_endpoint = 1;
+
 	while (desc) {
 		/* Crossed device function boundary. */
 		if (desc->bDescriptorType == UDESC_IFACE_ASSOC)
@@ -1248,10 +1252,18 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 		ep_dir = UE_GET_DIR(ed->bEndpointAddress);
 		ep_type = UE_GET_XFERTYPE(ed->bmAttributes);
 		if (ep_dir == UE_DIR_IN && ep_type == UE_ISOCHRONOUS)
-			vs->bulk_endpoint = 0;
+			bulk_endpoint = 0;
 		else if (ep_dir == UE_DIR_IN && ep_type == UE_BULK)
-			vs->bulk_endpoint = 1;
+			bulk_endpoint = 1;
 		else
+			goto next;
+
+		/*
+		 * Section 2.4.3 does not prohibit the mix of bulk and
+		 * isochronous endpoints when the bulk endpoints are
+		 * used solely for still image transfer.
+		 */
+		if (bulk_endpoint && !vs->bulk_endpoint)
 			goto next;
 
 		/* save endpoint with largest bandwidth */
@@ -1262,6 +1274,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 			vs->curalt = id->bAlternateSetting;
 			vs->psize = UGETW(ed->wMaxPacketSize);
 			vs->iface = iface;
+			vs->bulk_endpoint = bulk_endpoint;
 		}
 next:
 		desc = usbd_desc_iter_next(&iter);
@@ -1285,9 +1298,10 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	int diff, best_diff = INT_MAX;
+	int diff, best_diff = INT_MAX, bulk_endpoint;
 	usbd_status error;
 	uint32_t psize;
+	uint8_t ep_type;
 
 	usbd_desc_iter_init(sc->sc_udev, &iter);
 	desc = usbd_desc_iter_next(&iter);
@@ -1318,6 +1332,15 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 		if (desc->bDescriptorType != UDESC_ENDPOINT)
 			goto next;
 		ed = (usb_endpoint_descriptor_t *)(uint8_t *)desc;
+
+		ep_type = UE_GET_XFERTYPE(ed->bmAttributes);
+		if (ep_type == UE_ISOCHRONOUS)
+			bulk_endpoint = 0;
+		else if (ep_type == UE_BULK)
+			bulk_endpoint = 1;
+
+		if (bulk_endpoint && !sc->sc_vs_cur->bulk_endpoint)
+			goto next;
 
 		/* save endpoint with requested bandwidth */
 		psize = UGETW(ed->wMaxPacketSize);
