@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.11 2024/07/15 15:33:54 mglocker Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.12 2024/12/22 18:00:18 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -24,6 +24,14 @@
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
+
+//#define QCGPIO_DEBUG
+#ifdef QCGPIO_DEBUG
+int qcgpio_debug = 1;
+#define DPRINTF(l, x...) do { if ((l) <= qcgpio_debug) printf(x); } while (0)
+#else
+#define DPRINTF(l, x...)
+#endif
 
 /* Registers. */
 #define TLMM_GPIO_IN_OUT(pin)		(0x0004 + 0x1000 * (pin))
@@ -62,6 +70,11 @@ struct qcgpio_intrhand {
 	void *ih_arg;
 };
 
+struct qcgpio_pdcmap {
+	int		pm_pin;
+	uint32_t	pm_irq;
+};
+
 struct qcgpio_softc {
 	struct device		sc_dev;
 	struct acpi_softc	*sc_acpi;
@@ -73,10 +86,15 @@ struct qcgpio_softc {
 	void			*sc_ih;
 
 	uint32_t		sc_npins;
-	int			(*sc_pin_map)(int, bus_size_t *);
+	int			(*sc_pin_map)(struct qcgpio_softc *, int,
+				    bus_size_t *);
 	struct qcgpio_intrhand	*sc_pin_ih;
 
 	struct acpi_gpio sc_gpio;
+
+	struct qcgpio_pdcmap	*sc_pdcmap;
+	uint32_t		 sc_npdcmap;
+	uint32_t		 sc_ipdcmap;
 };
 
 int	qcgpio_acpi_match(struct device *, void *, void *);
@@ -97,9 +115,29 @@ const char *qcgpio_hids[] = {
 	NULL
 };
 
-int	qcgpio_sc7180_pin_map(int, bus_size_t *);
-int	qcgpio_sc8280xp_pin_map(int, bus_size_t *);
-int	qcgpio_x1e80100_pin_map(int, bus_size_t *);
+/* 98b9b2a4-1663-4a5f-82f2-c6c99a394726 */
+static uint8_t qcgpio_gpio_dsm_uuid[] = {
+	0xa4, 0xb2, 0xb9, 0x98, 0x63, 0x16, 0x5f, 0x4a,
+	0x82, 0xf2, 0xc6, 0xc9, 0x9a, 0x39, 0x47, 0x26
+};
+#define QCGPIO_GPIO_DSM_REV		0
+#define QCGPIO_GPIO_DSM_FUNC_NUM_PINS	2
+
+/* 921b0fd4-567c-43a0-bb14-2648f7b2a18c */
+static uint8_t qcgpio_pdc_dsm_uuid[] = {
+	0xd4, 0x0f, 0x1b, 0x92, 0x7c, 0x56, 0xa0, 0x43,
+	0xbb, 0x14, 0x26, 0x48, 0xf7, 0xb2, 0xa1, 0x8c
+};
+#define QCGPIO_PDC_DSM_REV		0
+#define QCGPIO_PDC_DSM_FUNC_CIPR	2
+
+int	qcgpio_get_nirq(int, union acpi_resource *, void *);
+int	qcgpio_get_irqs(int, union acpi_resource *, void *);
+void	qcgpio_fill_pdcmap(struct qcgpio_softc *);
+int	qcgpio_get_pin_count(struct acpi_softc *, struct aml_node *);
+int	qcgpio_sc7180_pin_map(struct qcgpio_softc *, int, bus_size_t *);
+int	qcgpio_sc8280xp_pin_map(struct qcgpio_softc *, int, bus_size_t *);
+int	qcgpio_x1e80100_pin_map(struct qcgpio_softc *, int, bus_size_t *);
 
 int	qcgpio_read_pin(void *, int);
 void	qcgpio_write_pin(void *, int, int);
@@ -107,6 +145,137 @@ void	qcgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 void	qcgpio_intr_enable(void *, int);
 void	qcgpio_intr_disable(void *, int);
 int	qcgpio_intr(void *);
+
+int
+qcgpio_get_nirq(int crsidx, union acpi_resource *crs, void *arg)
+{
+	struct qcgpio_softc *sc = arg;
+	int typ;
+
+	typ = AML_CRSTYPE(crs);
+
+	switch (typ) {
+	case LR_EXTIRQ:
+		sc->sc_npdcmap++;
+		break;
+	}
+
+	return 0;
+}
+
+int
+qcgpio_get_irqs(int crsidx, union acpi_resource *crs, void *arg)
+{
+	struct qcgpio_softc *sc = arg;
+	int typ;
+
+	typ = AML_CRSTYPE(crs);
+
+	switch (typ) {
+	case LR_EXTIRQ:
+		sc->sc_pdcmap[sc->sc_ipdcmap].pm_irq = crs->lr_extirq.irq[0];
+		sc->sc_pdcmap[sc->sc_ipdcmap].pm_pin = -1;
+		DPRINTF(1, "%s: irq index %d: irq %d\n",
+		    __func__, sc->sc_ipdcmap,
+		    sc->sc_pdcmap[sc->sc_ipdcmap].pm_irq);
+		sc->sc_ipdcmap++;
+		break;
+	}
+
+	return 0;
+}
+
+void
+qcgpio_fill_pdcmap(struct qcgpio_softc *sc)
+{
+	struct aml_value cmd[4], res, *ref;
+	int i, j, pin;
+	uint32_t irq;
+
+	bzero(&cmd, sizeof(cmd));
+	cmd[0].type = AML_OBJTYPE_BUFFER;
+	cmd[0].v_buffer = (uint8_t *)&qcgpio_pdc_dsm_uuid;
+	cmd[0].length = sizeof(qcgpio_pdc_dsm_uuid);
+	/* rev */
+	cmd[1].type = AML_OBJTYPE_INTEGER;
+	cmd[1].v_integer = QCGPIO_PDC_DSM_REV;
+	cmd[1].length = 1;
+	/* func */
+	cmd[2].type = AML_OBJTYPE_INTEGER;
+	cmd[2].v_integer = QCGPIO_PDC_DSM_FUNC_CIPR;
+	cmd[2].length = 1;
+	/* not used */
+	cmd[3].type = AML_OBJTYPE_PACKAGE;
+	cmd[3].v_integer = 0;
+	cmd[3].length = 0;
+
+	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_DSM", 4, cmd, &res)) {
+		printf("%s: PDC _DSM failed\n", __func__);
+		return;
+	}
+
+	for (i = 0; i < res.length; i++) {
+		ref = res.v_package[i];
+
+		if (ref->type != AML_OBJTYPE_PACKAGE ||
+		    ref->length < 3 ||
+		    ref->v_package[0]->type != AML_OBJTYPE_INTEGER ||
+		    ref->v_package[1]->type != AML_OBJTYPE_INTEGER ||
+		    ref->v_package[2]->type != AML_OBJTYPE_INTEGER) {
+			continue;
+		}
+
+		irq = ref->v_package[2]->v_integer;
+		pin = ref->v_package[1]->v_integer;
+		DPRINTF(1, "%s: pdc index %d: probing irq %d, pin %d\n",
+		    __func__, i, irq, pin);
+
+		for (j = 0; j < sc->sc_npdcmap; j++) {
+			if (sc->sc_pdcmap[j].pm_irq == irq) {
+				sc->sc_pdcmap[j].pm_pin = pin;
+				break;
+			}
+		}
+	}
+#ifdef QCGPIO_DEBUG
+	for (i = 0; i < sc->sc_npdcmap; i++) {
+		printf("%s: irq index %d: irq=%d, pin=%d\n",
+		    __func__, i, sc->sc_pdcmap[i].pm_irq,
+		    sc->sc_pdcmap[i].pm_pin);
+	}
+#endif
+}
+
+int
+qcgpio_get_pin_count(struct acpi_softc *sc, struct aml_node *node)
+{
+	struct aml_value cmd[4];
+	int64_t npins;
+
+	bzero(&cmd, sizeof(cmd));
+	cmd[0].type = AML_OBJTYPE_BUFFER;
+	cmd[0].v_buffer = (uint8_t *)&qcgpio_gpio_dsm_uuid;
+	cmd[0].length = sizeof(qcgpio_gpio_dsm_uuid);
+	/* rev */
+	cmd[1].type = AML_OBJTYPE_INTEGER;
+	cmd[1].v_integer = QCGPIO_GPIO_DSM_REV;
+	cmd[1].length = 1;
+	/* func */
+	cmd[2].type = AML_OBJTYPE_INTEGER;
+	cmd[2].v_integer = QCGPIO_GPIO_DSM_FUNC_NUM_PINS;
+	cmd[2].length = 1;
+	/* not used */
+	cmd[3].type = AML_OBJTYPE_PACKAGE;
+	cmd[3].v_integer = 0;
+	cmd[3].length = 0;
+
+	if (aml_evalinteger(sc, node, "_DSM", 4, cmd, &npins)) {
+		printf("%s: GPIO _DSM  failed\n", __func__);
+		return 0;
+	}
+
+	return (uint32_t)npins;
+}
 
 int
 qcgpio_acpi_match(struct device *parent, void *match, void *aux)
@@ -124,6 +293,7 @@ qcgpio_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct qcgpio_softc *sc = (struct qcgpio_softc *)self;
+	struct aml_value res;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
@@ -145,7 +315,25 @@ qcgpio_acpi_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_npins = 228;
 		sc->sc_pin_map = qcgpio_sc8280xp_pin_map;
 	} else if (strcmp(aaa->aaa_dev, "QCOM0C0C") == 0) {
-		sc->sc_npins = 239;
+		if (aml_evalname(sc->sc_acpi, sc->sc_node, "_CRS", 0, NULL,
+		    &res)) {
+			printf("no _CRS method\n");
+			return;
+		}
+		if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
+			printf("invalid _CRS object\n");
+			aml_freevalue(&res);
+			return;
+		}
+		aml_parse_resource(&res, qcgpio_get_nirq, sc);
+		DPRINTF(1, "\n%s: npdcmap=%d\n", __func__, sc->sc_npdcmap);
+		sc->sc_pdcmap = mallocarray(sc->sc_npdcmap,
+		    sizeof(*sc->sc_pdcmap), M_DEVBUF, M_WAITOK | M_ZERO);
+		aml_parse_resource(&res, qcgpio_get_irqs, sc);
+		aml_freevalue(&res);
+		qcgpio_fill_pdcmap(sc);
+		sc->sc_npins = qcgpio_get_pin_count(sc->sc_acpi, sc->sc_node);
+		DPRINTF(1, "%s: npins=%d\n", __func__, sc->sc_npins);
 		sc->sc_pin_map = qcgpio_x1e80100_pin_map;
 	}
 	KASSERT(sc->sc_npins != 0);
@@ -180,11 +368,12 @@ unmap:
 	if (sc->sc_ih)
 		acpi_intr_disestablish(sc->sc_ih);
 	free(sc->sc_pin_ih, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_ih));
+	free(sc->sc_pdcmap, M_DEVBUF, sc->sc_npdcmap * sizeof(*sc->sc_pdcmap));
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aaa->aaa_size[0]);
 }
 
 int
-qcgpio_sc7180_pin_map(int pin, bus_size_t *off)
+qcgpio_sc7180_pin_map(struct qcgpio_softc *sc, int pin, bus_size_t *off)
 {
 	switch (pin) {
 	case 30:
@@ -211,7 +400,7 @@ qcgpio_sc7180_pin_map(int pin, bus_size_t *off)
 }
 
 int
-qcgpio_sc8280xp_pin_map(int pin, bus_size_t *off)
+qcgpio_sc8280xp_pin_map(struct qcgpio_softc *sc, int pin, bus_size_t *off)
 {
 	switch (pin) {
 	case 107:
@@ -229,21 +418,19 @@ qcgpio_sc8280xp_pin_map(int pin, bus_size_t *off)
 }
 
 int
-qcgpio_x1e80100_pin_map(int pin, bus_size_t *off)
+qcgpio_x1e80100_pin_map(struct qcgpio_softc *sc, int pin, bus_size_t *off)
 {
-	switch (pin) {
-	case 3:
-	case 51:
-		return pin;
-	case 0x180:
-		return 67;
-	case 0x380:
-		return 33;
-	case 0x3c0:
-		return 3;
-	default:
-		return -1;
+	int real_pin = -1;
+
+	if (pin < sc->sc_npins) {
+		real_pin = pin;
+	} else if (pin / 64 < sc->sc_npdcmap) {
+		real_pin = sc->sc_pdcmap[pin / 64].pm_pin;
 	}
+
+	DPRINTF(2, "%s: map pin %d to real_pin %d\n", __func__, pin, real_pin);
+
+	return real_pin;
 }
 
 int
@@ -253,7 +440,7 @@ qcgpio_read_pin(void *cookie, int pin)
 	bus_size_t off = 0;
 	uint32_t reg;
 
-	pin = sc->sc_pin_map(pin, &off);
+	pin = sc->sc_pin_map(sc, pin, &off);
 	if (pin < 0 || pin >= sc->sc_npins)
 		return 0;
 
@@ -267,7 +454,7 @@ qcgpio_write_pin(void *cookie, int pin, int val)
 	struct qcgpio_softc *sc = cookie;
 	bus_size_t off = 0;
 
-	pin = sc->sc_pin_map(pin, &off);
+	pin = sc->sc_pin_map(sc, pin, &off);
 	if (pin < 0 || pin >= sc->sc_npins)
 		return;
 
@@ -288,7 +475,7 @@ qcgpio_intr_establish(void *cookie, int pin, int flags,
 	bus_size_t off = 0;
 	uint32_t reg;
 
-	pin = sc->sc_pin_map(pin, &off);
+	pin = sc->sc_pin_map(sc, pin, &off);
 	if (pin < 0 || pin >= sc->sc_npins)
 		return;
 
@@ -335,7 +522,7 @@ qcgpio_intr_enable(void *cookie, int pin)
 	struct qcgpio_softc *sc = cookie;
 	bus_size_t off = 0;
 
-	pin = sc->sc_pin_map(pin, &off);
+	pin = sc->sc_pin_map(sc, pin, &off);
 	if (pin < 0 || pin >= sc->sc_npins)
 		return;
 
@@ -349,7 +536,7 @@ qcgpio_intr_disable(void *cookie, int pin)
 	struct qcgpio_softc *sc = cookie;
 	bus_size_t off = 0;
 
-	pin = sc->sc_pin_map(pin, &off);
+	pin = sc->sc_pin_map(sc, pin, &off);
 	if (pin < 0 || pin >= sc->sc_npins)
 		return;
 
@@ -369,7 +556,7 @@ qcgpio_intr(void *arg)
 		if (sc->sc_pin_ih[pin].ih_func == NULL)
 			continue;
 
-		sc->sc_pin_map(pin, &off);
+		sc->sc_pin_map(sc, pin, &off);
 
 		stat = HREAD4(sc, off + TLMM_GPIO_INTR_STATUS(pin));
 		if (stat & TLMM_GPIO_INTR_STATUS_INTR_STATUS) {
