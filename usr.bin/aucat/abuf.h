@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.26 2015/01/21 08:43:55 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.27 2024/12/22 14:17:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,15 +18,14 @@
 #define ABUF_H
 
 struct abuf {
-	int start;	/* offset (frames) where stored data starts */
-	int used;	/* frames stored in the buffer */
-	int len;	/* total size of the buffer (frames) */
+	int start;	        /* offset (frames) where stored data starts */
+	int used;	        /* frames stored in the buffer */
+	unsigned int len;	/* total size of the buffer (frames) */
 	unsigned char *data;
 };
 
 void abuf_init(struct abuf *, unsigned int);
 void abuf_done(struct abuf *);
-void abuf_log(struct abuf *);
 unsigned char *abuf_rgetblk(struct abuf *, int *);
 unsigned char *abuf_wgetblk(struct abuf *, int *);
 void abuf_rdiscard(struct abuf *, int);

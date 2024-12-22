@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.3 2017/01/03 07:25:16 ratchov Exp $	*/
+/*	$OpenBSD: utils.h,v 1.4 2024/12/22 14:17:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,12 +20,15 @@
 
 #include <stddef.h>
 
-void log_puts(char *);
-void log_putx(unsigned long);
-void log_putu(unsigned long);
-void log_puti(long);
+#define logx(n, ...)						\
+	do {							\
+		if (log_level >= (n))				\
+			log_do(__VA_ARGS__);			\
+	} while (0)
+
 void panic(void);
 void log_flush(void);
+void log_do(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 
 void *xmalloc(size_t);
 char *xstrdup(char *);

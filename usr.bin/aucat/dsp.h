@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.12 2024/04/22 12:32:51 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.13 2024/12/22 14:17:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -111,7 +111,6 @@ struct cmap {
 extern const int aparams_ctltovol[128];
 
 void aparams_init(struct aparams *);
-void aparams_log(struct aparams *);
 int aparams_strtoenc(struct aparams *, char *);
 int aparams_enctostr(struct aparams *, char *);
 int aparams_native(struct aparams *);

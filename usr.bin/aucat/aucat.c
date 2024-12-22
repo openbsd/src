@@ -20,6 +20,7 @@
 #include <poll.h>
 #include <signal.h>
 #include <sndio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -150,7 +151,7 @@ allocbuf(int nfr, int nch, int bps)
 	void *ptr;
 
 	if (nch < 0 || nch > NCHAN_MAX || bps < 0 || bps > 4) {
-		log_puts("allocbuf: bogus channels or bytes per sample count\n");
+		logx(1, "allocbuf: bogus channels or bytes per sample count\n");
 		panic();
 	}
 	fsize = nch * bps;
@@ -161,21 +162,64 @@ allocbuf(int nfr, int nch, int bps)
 	return ptr;
 }
 
-static void
-slot_log(struct slot *s)
+static size_t
+chans_fmt(char *buf, size_t size, int mode, int pmin, int pmax, int rmin, int rmax)
 {
-#ifdef DEBUG
-	static char *pstates[] = {
-		"cfg", "ini", "run", "stp"
-	};
-#endif
-	log_puts(s->afile.path);
-#ifdef DEBUG
-	if (log_level >= 3) {
-		log_puts(",pst=");
-		log_puts(pstates[s->pstate]);
+	const char *sep = "";
+	char *end = buf + size;
+	char *p = buf;
+
+	if (mode & SIO_PLAY) {
+		p += snprintf(p, p < end ? end - p : 0, "play %d:%d", pmin, pmax);
+		sep = ", ";
 	}
-#endif
+	if (mode & SIO_REC) {
+		p += snprintf(p, p < end ? end - p : 0, "%srec %d:%d", sep, rmin, rmax);
+	}
+
+	return p - buf;
+}
+
+static size_t
+slot_fmt(char *buf, size_t size, struct slot *s)
+{
+	char enc[ENCMAX];
+	char *end = buf + size;
+	char *p = buf;
+
+	switch (s->afile.fmt) {
+	case AFILE_FMT_PCM:
+		aparams_enctostr(&s->afile.par, enc);
+		break;
+	case AFILE_FMT_ULAW:
+		strlcpy(enc, "ulaw", sizeof(enc));
+		break;
+	case AFILE_FMT_ALAW:
+		strlcpy(enc, "alaw", sizeof(enc));
+		break;
+	case AFILE_FMT_FLOAT:
+		strlcpy(enc, "f32le", sizeof(enc));
+		break;
+	default:
+		enc[0] = 0;
+	}
+
+	p += snprintf(p, p < end ? end - p : 0,
+	    "%s, %uch (%u:%u/%u:%u), %uHz, %s",
+	    s->mode == SIO_PLAY ? "play" : "rec",
+	    s->afile.nch, s->imin, s->imax, s->omin, s->omax,
+	    s->afile.rate, enc);
+
+	if (s->mode == SIO_PLAY) {
+		if (s->afile.endpos >= 0) {
+			p += snprintf(p, p < end ? end - p : 0,
+			    ", bytes %lld..%lld",
+			    s->afile.startpos,
+			    s->afile.endpos);
+		}
+		p += snprintf(p, p < end ? end - p : 0, ", vol %d", s->vol);
+	}
+	return p - buf;
 }
 
 static void
@@ -190,8 +234,7 @@ slot_flush(struct slot *s)
 			break;
 		n = afile_write(&s->afile, data, count);
 		if (n == 0) {
-			slot_log(s);
-			log_puts(": can't write, disabled\n");
+			logx(1, "%s: can't write, disabled", s->afile.path);
 			s->pstate = SLOT_INIT;
 			return;
 		}
@@ -212,10 +255,7 @@ slot_fill(struct slot *s)
 		n = afile_read(&s->afile, data, count);
 		if (n == 0) {
 #ifdef DEBUG
-			if (log_level >= 3) {
-				slot_log(s);
-				log_puts(": eof reached, stopping\n");
-			}
+			logx(3, "%s: eof reached, stopping", s->afile.path);
 #endif
 			s->pstate = SLOT_STOP;
 			break;
@@ -230,6 +270,7 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
     int rate, int dup, int vol, long long pos)
 {
 	struct slot *s, **ps;
+	char str[64];
 
 	s = xmalloc(sizeof(struct slot));
 	if (!afile_open(&s->afile, path, hdr,
@@ -247,49 +288,9 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
 	s->mode = mode;
 	s->pstate = SLOT_CFG;
 	s->pos = pos;
-	if (log_level >= 2) {
-		slot_log(s);
-		log_puts(": ");
-		log_puts(s->mode == SIO_PLAY ? "play" : "rec");
-		log_puts(", ");
-		log_putu(s->afile.nch);
-		log_puts("ch (");
-		log_putu(s->imin);
-		log_puts(":");
-		log_putu(s->imax);
-		log_puts("/");
-		log_putu(s->omin);
-		log_puts(":");
-		log_putu(s->omax);
-		log_puts("), ");
-		log_putu(s->afile.rate);
-		log_puts("Hz, ");
-		switch (s->afile.fmt) {
-		case AFILE_FMT_PCM:
-			aparams_log(&s->afile.par);
-			break;
-		case AFILE_FMT_ULAW:
-			log_puts("ulaw");
-			break;
-		case AFILE_FMT_ALAW:
-			log_puts("alaw");
-			break;
-		case AFILE_FMT_FLOAT:
-			log_puts("f32le");
-			break;
-		}
-		if (s->mode == SIO_PLAY && s->afile.endpos >= 0) {
-			log_puts(", bytes ");
-			log_puti(s->afile.startpos);
-			log_puts("..");
-			log_puti(s->afile.endpos);
-		}
-		if (s->mode == SIO_PLAY) {
-			log_puts(", vol ");
-			log_puti(s->vol);
-		}
-		log_puts("\n");
-	}
+
+	logx(2, "%s: %s", s->afile.path, (slot_fmt(str, sizeof(str), s), str));
+
 	for (ps = &slot_list; *ps != NULL; ps = &(*ps)->next)
 		;
 	s->next = NULL;
@@ -304,8 +305,7 @@ slot_init(struct slot *s)
 
 #ifdef DEBUG
 	if (s->pstate != SLOT_CFG) {
-		slot_log(s);
-		log_puts(": slot_init: wrong state\n");
+		logx(1, "%s: slot_init: wrong state", s->afile.path);
 		panic();
 	}
 #endif
@@ -319,12 +319,7 @@ slot_init(struct slot *s)
 		bufsz = s->round;
 	abuf_init(&s->buf, bufsz * s->bpf);
 #ifdef DEBUG
-	if (log_level >= 3) {
-		slot_log(s);
-		log_puts(": allocated ");
-		log_putu(bufsz);
-		log_puts(" frame buffer\n");
-	}
+	logx(3, "%s: allocated %u frame buffer", s->afile.path, bufsz);
 #endif
 
 	s->convbuf = NULL;
@@ -392,10 +387,7 @@ slot_init(struct slot *s)
 	}
 	s->pstate = SLOT_INIT;
 #ifdef DEBUG
-	if (log_level >= 3) {
-		slot_log(s);
-		log_puts(": chain initialized\n");
-	}
+	logx(3, "%s: chain initialized", s->afile.path);
 #endif
 }
 
@@ -404,8 +396,7 @@ slot_start(struct slot *s, long long pos)
 {
 #ifdef DEBUG
 	if (s->pstate != SLOT_INIT) {
-		slot_log(s);
-		log_puts(": slot_start: wrong state\n");
+		logx(1, "%s: slot_start: wrong state", s->afile.path);
 		panic();
 	}
 #endif
@@ -432,10 +423,7 @@ slot_start(struct slot *s, long long pos)
 	if (s->mode & SIO_PLAY)
 		slot_fill(s);
 #ifdef DEBUG
-	if (log_level >= 2) {
-		slot_log(s);
-		log_puts(": started\n");
-	}
+	logx(2, "%s: started", s->afile.path);
 #endif
 }
 
@@ -450,10 +438,7 @@ slot_stop(struct slot *s)
 		s->buf.used = s->buf.start = 0;
 	s->pstate = SLOT_INIT;
 #ifdef DEBUG
-	if (log_level >= 2) {
-		slot_log(s);
-		log_puts(": stopped\n");
-	}
+	logx(2, "%s: stopped", s->afile.path);
 #endif
 }
 
@@ -466,10 +451,7 @@ slot_del(struct slot *s)
 		slot_stop(s);
 		afile_close(&s->afile);
 #ifdef DEBUG
-		if (log_level >= 3) {
-			slot_log(s);
-			log_puts(": closed\n");
-		}
+		logx(3, "%s: closed", s->afile.path);
 #endif
 		abuf_done(&s->buf);
 		if (s->resampbuf)
@@ -681,15 +663,14 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 {
 	int rate, pmax, rmax;
 	struct sio_par par;
-	char encstr[ENCMAX];
+	char enc_str[ENCMAX], chans_str[64];
 	struct slot *s;
 
 	if (port) {
 		dev_port = port;
 		dev_mh = mio_open(dev_port, MIO_IN, 0);
 		if (dev_mh == NULL) {
-			log_puts(port);
-			log_puts(": couldn't open midi port\n");
+			logx(1, "%s: couldn't open midi port", port);
 			return 0;
 		}
 	} else
@@ -698,8 +679,7 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 	dev_name = dev;
 	dev_sh = sio_open(dev, mode, 0);
 	if (dev_sh == NULL) {
-		log_puts(dev_name);
-		log_puts(": couldn't open audio device\n");
+		logx(1, "%s: couldn't open audio device", dev_name);
 		return 0;
 	}
 
@@ -728,8 +708,7 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 		par.rchan = rmax + 1;
 	par.appbufsz = bufsz > 0 ? bufsz : rate * DEFAULT_BUFSZ_MS / 1000;
 	if (!sio_setpar(dev_sh, &par) || !sio_getpar(dev_sh, &par)) {
-		log_puts(dev_name);
-		log_puts(": couldn't set audio params\n");
+		logx(1, "%s: couldn't set audio params", dev_name);
 		return 0;
 	}
 	dev_par.bits = par.bits;
@@ -760,27 +739,11 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 		}
 	}
 	dev_pstate = DEV_STOP;
-	if (log_level >= 2) {
-		log_puts(dev_name);
-		log_puts(": ");
-		log_putu(dev_rate);
-		log_puts("Hz, ");
-		aparams_enctostr(&dev_par, encstr);
-		log_puts(encstr);
-		if (dev_mode & SIO_PLAY) {
-			log_puts(", play 0:");
-			log_puti(dev_pchan - 1);
-		}
-		if (dev_mode & SIO_REC) {
-			log_puts(", rec 0:");
-			log_puti(dev_rchan - 1);
-		}
-		log_puts(", ");
-		log_putu(dev_bufsz / dev_round);
-		log_puts(" blocks of ");
-		log_putu(dev_round);
-		log_puts(" frames\n");
-	}
+	logx(2, "%s: %uHz, %s, %s, %u blocks of %u frames", dev_name, dev_rate,
+	    (aparams_enctostr(&dev_par, enc_str), enc_str),
+	    (chans_fmt(chans_str, sizeof(chans_str),
+	    dev_mode, 0, dev_pchan - 1, 0, dev_rchan - 1), chans_str),
+	    dev_bufsz / dev_round, dev_round);
 	return 1;
 }
 
@@ -808,11 +771,7 @@ dev_master(int val)
 		s->vol = ADATA_MUL(mastervol, slotvol);
 	}
 #ifdef DEBUG
-	if (log_level >= 3) {
-		log_puts("master volume set to ");
-		log_putu(val);
-		log_puts("\n");
-	}
+	logx(3, "master volume set to %u", val);
 #endif
 }
 
@@ -828,12 +787,7 @@ dev_slotvol(int midich, int val)
 			slotvol = MIDI_TO_ADATA(val);
 			s->vol = ADATA_MUL(mastervol, slotvol);
 #ifdef DEBUG
-			if (log_level >= 3) {
-				slot_log(s);
-				log_puts(": volume set to ");
-				log_putu(val);
-				log_puts("\n");
-			}
+			logx(3, "%s: volume set to %u", s->afile.path, val);
 #endif
 			break;
 		}
@@ -855,12 +809,10 @@ dev_mmcstart(void)
 			slot_start(s, dev_pos);
 		dev_prime = (dev_mode & SIO_PLAY) ? dev_bufsz / dev_round : 0;
 		sio_start(dev_sh);
-		if (log_level >= 2)
-			log_puts("started\n");
+		logx(2, "started");
 	} else {
 #ifdef DEBUG
-		if (log_level >= 3)
-			log_puts("ignoring mmc start\n");
+		logx(3, "ignoring mmc start");
 #endif
 	}
 }
@@ -878,12 +830,10 @@ dev_mmcstop(void)
 		for (s = slot_list; s != NULL; s = s->next)
 			slot_stop(s);
 		sio_stop(dev_sh);
-		if (log_level >= 2)
-			log_puts("stopped\n");
+		logx(2, "stopped");
 	} else {
 #ifdef DEBUG
-		if (log_level >= 3)
-			log_puts("ignored mmc stop\n");
+		logx(3, "ignored mmc stop\n");
 #endif
 	}
 }
@@ -904,21 +854,7 @@ dev_mmcloc(int hr, int min, int sec, int fr, int cent, int fps)
 	if (dev_pos == pos)
 		return;
 	dev_pos = pos;
-	if (log_level >= 2) {
-		log_puts("relocated to ");
-		log_putu(hr);
-		log_puts(":");
-		log_putu(min);
-		log_puts(":");
-		log_putu(sec);
-		log_puts(".");
-		log_putu(fr);
-		log_puts(".");
-		log_putu(cent);
-		log_puts(" at ");
-		log_putu(fps);
-		log_puts("fps\n");
-	}
+	logx(2, "relocated to %u:%u:%u.%u.%u at %u fps", hr, min, sec, fr, cent, fps);
 	if (dev_pstate == DEV_START) {
 		dev_mmcstop();
 		dev_mmcstart();
@@ -1050,10 +986,7 @@ slot_list_mix(unsigned int round, unsigned int pchan, adata_t *pbuf)
 			continue;
 		if (s->pstate == SLOT_STOP && s->buf.used < s->bpf) {
 #ifdef DEBUG
-			if (log_level >= 3) {
-				slot_log(s);
-				log_puts(": drained, done\n");
-			}
+			logx(3, "%s: drained, done", s->afile.path);
 #endif
 			slot_stop(s);
 			continue;
@@ -1151,12 +1084,7 @@ playrec_cycle(void)
 	int pcnt, rcnt;
 
 #ifdef DEBUG
-	if (log_level >= 4) {
-		log_puts(dev_name);
-		log_puts(": cycle, prime = ");
-		log_putu(dev_prime);
-		log_puts("\n");
-	}
+	logx(4, "%s: cycle, prime = %u", dev_name, dev_prime);
 #endif
 	pcnt = rcnt = 0;
 	if (dev_mode & SIO_REC) {
@@ -1168,9 +1096,7 @@ playrec_cycle(void)
 			while (todo > 0) {
 				n = sio_read(dev_sh, p, todo);
 				if (n == 0) {
-					log_puts(dev_name);
-					log_puts(": failed to read "
-					    "from device\n");
+					logx(1, "%s: failed to read", dev_name);
 					return 0;
 				}
 				p += n;
@@ -1196,8 +1122,7 @@ playrec_cycle(void)
 			p = (unsigned char *)dev_pbuf;
 		n = sio_write(dev_sh, p, todo);
 		if (n == 0) {
-			log_puts(dev_name);
-			log_puts(": failed to write to device\n");
+			logx(1, "%s: failed to write to device", dev_name);
 			return 0;
 		}
 	}
@@ -1239,10 +1164,8 @@ playrec(char *dev, int mode, int bufsz, char *port)
 		slot_init(s);
 	if (dev_mh == NULL)
 		dev_mmcstart();
-	else {
-		if (log_level >= 2)
-			log_puts("ready, waiting for mmc messages\n");
-	}
+	else
+		logx(2, "ready, waiting for mmc messages");
 
 	quit_flag = 0;
 	sigfillset(&sa.sa_mask);
@@ -1268,14 +1191,13 @@ playrec(char *dev, int mode, int bufsz, char *port)
 		if (poll(pfds, ns + nm, -1) == -1) {
 			if (errno == EINTR)
 				continue;
-			log_puts("poll failed\n");
+			logx(1, "poll failed");
 			panic();
 		}
 		if (dev_pstate == DEV_START) {
 			ev = sio_revents(dev_sh, pfds);
 			if (ev & POLLHUP) {
-				log_puts(dev);
-				log_puts(": audio device gone, stopping\n");
+				logx(1, "%s: audio device gone, stopping", dev);
 				break;
 			}
 			if (ev & (POLLIN | POLLOUT)) {
@@ -1286,8 +1208,7 @@ playrec(char *dev, int mode, int bufsz, char *port)
 		if (dev_mh) {
 			ev = mio_revents(dev_mh, pfds + ns);
 			if (ev & POLLHUP) {
-				log_puts(dev_port);
-				log_puts(": midi port gone, stopping\n");
+				logx(1, "%s: midi port gone, stopping", dev_port);
 				break;
 			}
 			if (ev & POLLIN) {
@@ -1323,8 +1244,7 @@ opt_onoff(char *s, int *flag)
 		*flag = 1;
 		return 1;
 	}
-	log_puts(s);
-	log_puts(": on/off expected\n");
+	logx(1, "%s: on/off expected", s);
 	return 0;
 }
 
@@ -1335,8 +1255,7 @@ opt_enc(char *s, struct aparams *par)
 
 	len = aparams_strtoenc(par, s);
 	if (len == 0 || s[len] != '\0') {
-		log_puts(s);
-		log_puts(": bad encoding\n");
+		logx(1, "%s: bad encoding", s);
 		return 0;
 	}
 	return 1;
@@ -1365,8 +1284,7 @@ opt_hdr(char *s, int *hdr)
 		*hdr = AFILE_HDR_AU;
 		return 1;
 	}
-	log_puts(s);
-	log_puts(": bad header type\n");
+	logx(1, "%s: bad header type", s);
 	return 0;
 }
 
@@ -1403,8 +1321,7 @@ opt_map(char *str, int *rimin, int *rimax, int *romin, int *romax)
 	*romax = omax;
 	return 1;
 failed:
-	log_puts(str);
-	log_puts(": channel mapping expected\n");
+	logx(1, "%s: channel mapping expected", str);
 	return 0;
 }
 
@@ -1441,8 +1358,7 @@ opt_nch(char *str, int *rnch, int *roff)
 	*roff = off;
 	return 1;
 failed:
-	log_puts(str);
-	log_puts(": channel count expected\n");
+	logx(1, "%s: channel count expected", str);
 	return 0;
 }
 
@@ -1453,12 +1369,7 @@ opt_num(char *s, int min, int max, int *num)
 
 	*num = strtonum(s, min, max, &errstr);
 	if (errstr) {
-		log_puts(s);
-		log_puts(": expected integer between ");
-		log_puti(min);
-		log_puts(" and ");
-		log_puti(max);
-		log_puts("\n");
+		logx(1, "%s: expected integer between %d and %d", s, min, max);
 		return 0;
 	}
 	return 1;
@@ -1471,8 +1382,7 @@ opt_pos(char *s, long long *pos)
 
 	*pos = strtonum(s, 0, LLONG_MAX, &errstr);
 	if (errstr) {
-		log_puts(s);
-		log_puts(": positive number of samples expected\n");
+		logx(1, "%s: positive number of samples expected", s);
 		return 0;
 	}
 	return 1;
@@ -1599,16 +1509,16 @@ main(int argc, char **argv)
 	argv += optind;
 	if (argc != 0) {
 	bad_usage:
-		log_puts(usagestr);
+		logx(1, "%s", usagestr);
 		return 1;
 	}
 	if (n_flag) {
 		if (dev != NULL || port != NULL) {
-			log_puts("-f and -q make no sense in off-line mode\n");
+			logx(1, "-f and -q make no sense in off-line mode");
 			return 1;
 		}
 		if (mode != (SIO_PLAY | SIO_REC)) {
-			log_puts("both -i and -o required\n");
+			logx(1, "both -i and -o required");
 			return 1;
 		}
 		if (!offline())
@@ -1617,7 +1527,7 @@ main(int argc, char **argv)
 		if (dev == NULL)
 			dev = SIO_DEVANY;
 		if (mode == 0) {
-			log_puts("at least -i or -o required\n");
+			logx(1, "at least -i or -o required");
 			return 1;
 		}
 		if (!playrec(dev, mode, bufsz, port))

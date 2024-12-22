@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.31 2022/12/26 19:16:00 jmc Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.32 2024/12/22 14:17:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,22 +22,8 @@
  * as follows: the write starts filling at offset (start + used), once the data
  * is ready, the writer adds to used the count of bytes available.
  */
-#include <stdlib.h>
-
 #include "abuf.h"
 #include "utils.h"
-
-#ifdef DEBUG
-void
-abuf_log(struct abuf *buf)
-{
-	log_putu(buf->start);
-	log_puts("+");
-	log_putu(buf->used);
-	log_puts("/");
-	log_putu(buf->len);
-}
-#endif
 
 void
 abuf_init(struct abuf *buf, unsigned int len)
@@ -52,13 +38,8 @@ void
 abuf_done(struct abuf *buf)
 {
 #ifdef DEBUG
-	if (buf->used > 0) {
-		if (log_level >= 3) {
-			log_puts("deleting non-empty buffer, used = ");
-			log_putu(buf->used);
-			log_puts("\n");
-		}
-	}
+	if (buf->used > 0)
+		logx(3, "deleting non-empty buffer, used = %d", buf->used);
 #endif
 	xfree(buf->data);
 	buf->data = (void *)0xdeadbeef;
@@ -87,9 +68,7 @@ abuf_rdiscard(struct abuf *buf, int count)
 {
 #ifdef DEBUG
 	if (count < 0 || count > buf->used) {
-		log_puts("abuf_rdiscard: bad count = ");
-		log_putu(count);
-		log_puts("\n");
+		logx(0, "%s: bad count = %d", __func__, count);
 		panic();
 	}
 #endif
@@ -107,9 +86,7 @@ abuf_wcommit(struct abuf *buf, int count)
 {
 #ifdef DEBUG
 	if (count < 0 || count > (buf->len - buf->used)) {
-		log_puts("abuf_wcommit: bad count = ");
-		log_putu(count);
-		log_puts("\n");
+		logx(0, "%s: bad count = %d", __func__, count);
 		panic();
 	}
 #endif
