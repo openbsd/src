@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.155 2024/12/20 18:46:51 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.156 2024/12/22 20:02:57 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1503,22 +1503,28 @@ uvm_fault_lower_io(
 	struct uvm_object *uobj = *ruobj;
 	struct vm_page *pg;
 	boolean_t locked;
-	int gotpages;
+	int gotpages, advice;
 	int result;
 	voff_t uoff;
+	vm_prot_t access_type;
+
+	/* grab everything we need from the entry before we unlock */
+	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
+	access_type = flt->access_type & MASK(ufi->entry);
+	advice = ufi->entry->advice;
+
+	uvmfault_unlockall(ufi, amap, NULL);
 
 	/* update rusage counters */
 	curproc->p_ru.ru_majflt++;
 
-	uvmfault_unlockall(ufi, amap, NULL);
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	counters_inc(uvmexp_counters, flt_get);
 	gotpages = 1;
 	pg = NULL;
-	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 	result = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
-	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
-	    PGO_SYNCIO);
+	    0, access_type, advice, PGO_SYNCIO);
 
 	/*
 	 * recover from I/O
