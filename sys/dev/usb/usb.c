@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.133 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.134 2024/12/22 22:36:23 kirill Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -952,7 +952,7 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 		struct usbpcap_iso_hdr_full	uih;
 	} h;
 	struct usbpcap_pkt_hdr *uph = &h.uch.uch_hdr;
-	uint32_t nframes, offset;
+	uint32_t nframes, psize;
 	unsigned int bpfdir;
 	void *data = NULL;
 	size_t flen;
@@ -970,8 +970,13 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 		uph->uph_xfertype = USBPCAP_TRANSFER_CONTROL;
 		break;
 	case UE_ISOCHRONOUS:
-		offset = 0;
 		nframes = xfer->nframes;
+		/*
+		 * All our drivers use a fixed size (psize) for
+		 * ISOCHRONOUS packets. Calculate it to determine the
+		 * correct offset below.
+		 */
+		psize = xfer->length / nframes;
 #ifdef DIAGNOSTIC
 		if (nframes > _USBPCAP_MAX_ISOFRAMES) {
 			printf("%s: too many frames: %d > %d\n", __func__,
@@ -987,11 +992,14 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 		h.uih.uih_nframes = nframes;
 		h.uih.uih_errors = 0; /* we don't have per-frame error */
 		for (i = 0; i < nframes; i++) {
-			h.uih.uih_frames[i].uip_offset = offset;
+			/*
+			 * We can't use length, because IN frame may
+			 * have shorter length of packet whan expected.
+			 */
+			h.uih.uih_frames[i].uip_offset = i * psize;
 			h.uih.uih_frames[i].uip_length = xfer->frlengths[i];
 			/* See above, we don't have per-frame error */
 			h.uih.uih_frames[i].uip_status = 0;
-			offset += xfer->frlengths[i];
 		}
 		break;
 	case UE_BULK:
@@ -1049,6 +1057,12 @@ usb_tap(struct usbd_bus *bus, struct usbd_xfer *xfer, uint8_t dir)
 			if (xfer->rqflags & URQ_REQUEST)
 				h.uch.uch_stage = USBPCAP_CONTROL_STAGE_STATUS;
 		}
+	}
+
+	/* ISOCHRONOUS IN from device may have gaps, use full buffer */
+	if (bpfdir == BPF_DIRECTION_IN && uph->uph_dlen > 0 &&
+	    uph->uph_xfertype == USBPCAP_TRANSFER_ISOCHRONOUS) {
+		uph->uph_dlen = xfer->length;
 	}
 
 	/* Dump bulk/intr/iso data, ctrl DATA or STATUS stage. */
