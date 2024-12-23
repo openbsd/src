@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_EXT_get_nid.3,v 1.5 2024/10/03 03:31:47 tb Exp $
+.\" $OpenBSD: X509V3_EXT_get_nid.3,v 1.6 2024/12/23 03:32:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2024 $
+.Dd $Mdocdate: December 23 2024 $
 .Dt X509V3_EXT_GET_NID 3
 .Os
 .Sh NAME
@@ -83,7 +83,9 @@ These functions first appeared in OpenSSL 0.9.2b and
 have been available since
 .Ox 2.6 .
 .Sh CAVEATS
-LibreSSL only supports built-in extension methods.
+In LibreSSL, these functions only support built-in
+.Fa nid
+values and only return static built-in objects.
 Other implementations have incomplete support for custom extension methods,
 whose API is not threadsafe, does not affect the behavior of
 .Xr X509_verify_cert 3 ,
