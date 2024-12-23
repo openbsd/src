@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2024/11/19 05:50:41 anton Exp $
+# $OpenBSD: Makefile,v 1.2 2024/12/23 21:47:22 bluhm Exp $
 
 .if "${MACHINE_ARCH}" == "amd64"
 
@@ -19,7 +19,7 @@ WARNINGS=	yes
 .else
 
 regress:
-        @echo SKIPPED
+	@echo SKIPPED
 
 .endif
 
