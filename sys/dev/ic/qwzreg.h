@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzreg.h,v 1.10 2024/12/22 23:30:27 patrick Exp $	*/
+/*	$OpenBSD: qwzreg.h,v 1.11 2024/12/23 00:12:44 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -3415,12 +3415,7 @@ struct  wmi_start_scan_cmd {
 #define WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ 0x80000
 #define WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ 0x100000
 
-#define WMI_SCAN_DWELL_MODE_MASK 0x00E00000
-#define WMI_SCAN_DWELL_MODE_SHIFT        21
-#define WMI_SCAN_FLAG_EXT_PASSIVE_SCAN_START_TIME_ENHANCE   0x00000800
-
-#define WMI_SCAN_CONFIG_PER_CHANNEL_MASK	GENMASK(19, 0)
-#define WMI_SCAN_CH_FLAG_SCAN_ONLY_IF_RNR_FOUND	BIT(20)
+#define WMI_SCAN_DWELL_MODE_MASK GENMASK(23, 21)
 
 enum {
 	WMI_SCAN_DWELL_MODE_DEFAULT      = 0,
@@ -3429,10 +3424,6 @@ enum {
 	WMI_SCAN_DWELL_MODE_AGGRESSIVE   = 3,
 	WMI_SCAN_DWELL_MODE_STATIC       = 4,
 };
-
-#define WMI_SCAN_SET_DWELL_MODE(flag, mode) \
-	((flag) |= (((mode) << WMI_SCAN_DWELL_MODE_SHIFT) & \
-		    WMI_SCAN_DWELL_MODE_MASK))
 
 struct hint_short_ssid {
 	uint32_t freq_flags;
