@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.38 2024/12/23 09:53:30 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.39 2024/12/23 09:55:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -341,24 +341,6 @@ struct ISSUING_DIST_POINT_st {
 #define X509V3_set_ctx_test(ctx) \
 			X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
 #define X509V3_set_ctx_nodb(ctx) (ctx)->db = NULL;
-
-#define EXT_BITSTRING(nid, table) { nid, 0, &ASN1_BIT_STRING_it, \
-			0,0,0,0, \
-			0,0, \
-			(X509V3_EXT_I2V)i2v_ASN1_BIT_STRING, \
-			(X509V3_EXT_V2I)v2i_ASN1_BIT_STRING, \
-			NULL, NULL, \
-			table}
-
-#define EXT_IA5STRING(nid) { nid, 0, &ASN1_IA5STRING_it, \
-			0,0,0,0, \
-			(X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
-			(X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \
-			0,0,0,0, \
-			NULL}
-
-#define EXT_END { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
 
 /* X509_PURPOSE stuff */
 
