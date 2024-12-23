@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.39 2024/12/23 09:55:19 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.40 2024/12/23 09:57:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -689,13 +689,6 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
 #define X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS 0x10
 /* Disable checking the CN for a hostname, to support modern validation */
 #define X509_CHECK_FLAG_NEVER_CHECK_SUBJECT 0x20
-
-/*
- * Match reference identifiers starting with "." to any sub-domain.
- * This is a non-public flag, turned on implicitly when the subject
- * reference identity is a DNS name.
- */
-#define _X509_CHECK_FLAG_DOT_SUBDOMAINS 0x8000
 
 int X509_check_host(X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
