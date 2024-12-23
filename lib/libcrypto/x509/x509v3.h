@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.36 2024/12/20 09:40:29 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.37 2024/12/23 09:51:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -134,9 +134,7 @@ typedef struct v3_ext_method X509V3_EXT_METHOD;
 
 DECLARE_STACK_OF(X509V3_EXT_METHOD)
 
-/* ext_flags values */
-#define X509V3_EXT_DYNAMIC	0x1
-#define X509V3_EXT_CTX_DEP	0x2
+/* XXX - can this be made internal? */
 #define X509V3_EXT_MULTILINE	0x4
 
 /* Guess who uses this... Yes, of course, it's xca. */
