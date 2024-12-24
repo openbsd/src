@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.431 2024/08/18 19:44:10 phessler Exp $ */
+/* $OpenBSD: softraid.c,v 1.432 2024/12/24 19:19:18 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -5062,8 +5062,8 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 	 * We share the page with the underlying device's own
 	 * side-effect free I/O function, so we pad our data to
 	 * the end of the page. Presently this does not overlap
-	 * with either of the two other side-effect free i/o
-	 * functions (ahci/wd).
+	 * with the other side-effect free i/o functions
+	 * (ahci/wd/nvme/ufshci/sdmmc).
 	 */
 	struct {
 		char pad[3072];
