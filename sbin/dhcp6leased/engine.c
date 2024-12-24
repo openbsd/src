@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.30 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.31 2024/12/24 17:40:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -135,6 +135,7 @@ void			 request_dhcp_discover(struct dhcp6leased_iface *);
 void			 request_dhcp_request(struct dhcp6leased_iface *);
 void			 configure_interfaces(struct dhcp6leased_iface *);
 void			 deconfigure_interfaces(struct dhcp6leased_iface *);
+void			 deprecate_interfaces(struct dhcp6leased_iface *);
 int			 prefixcmp(struct prefix *, struct prefix *, int);
 void			 send_reconfigure_interface(struct iface_pd_conf *,
 			     struct prefix *, enum reconfigure_action);
@@ -1049,8 +1050,19 @@ state_transition(struct dhcp6leased_iface *iface, enum if_state new_state)
 
 	switch (new_state) {
 	case IF_DOWN:
+		switch (old_state) {
+		case IF_RENEWING:
+		case IF_REBINDING:
+		case IF_REBOOTING:
+		case IF_BOUND:
+			deprecate_interfaces(iface);
+			break;
+		default:
+			break;
+		}
 		/*
-		 * Nothing to do until iface comes up. IP addresses will expire.
+		 * Nothing else to do until iface comes up.
+		 * IP addresses will expire.
 		 */
 		iface->timo.tv_sec = -1;
 		break;
@@ -1385,6 +1397,58 @@ deconfigure_interfaces(struct dhcp6leased_iface *iface)
 		}
 	}
 	memset(iface->pds, 0, sizeof(iface->pds));
+}
+
+void
+deprecate_interfaces(struct dhcp6leased_iface *iface)
+{
+	struct iface_conf	*iface_conf;
+	struct iface_ia_conf	*ia_conf;
+	struct iface_pd_conf	*pd_conf;
+	struct timespec		 now, diff;
+	uint32_t	 	 i;
+	char		 	 ntopbuf[INET6_ADDRSTRLEN];
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
+
+
+	if ((if_name = if_indextoname(iface->if_index, ifnamebuf)) == NULL) {
+		log_debug("%s: unknown interface %d", __func__,
+		    iface->if_index);
+		return;
+	}
+	if ((iface_conf = find_iface_conf(&engine_conf->iface_list, if_name))
+	    == NULL) {
+		log_debug("%s: no interface configuration for %d", __func__,
+		    iface->if_index);
+		return;
+	}
+
+	for (i = 0; i < iface_conf->ia_count; i++) {
+		struct prefix *pd = &iface->pds[i];
+
+		log_info("%s went down, deprecating prefix delegation #%d %s/%d"
+		    " from server %s", if_name, i, inet_ntop(AF_INET6,
+		    &pd->prefix, ntopbuf, INET6_ADDRSTRLEN), pd->prefix_len,
+		    dhcp_duid2str(iface->serverid_len, iface->serverid));
+	}
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecsub(&now, &iface->request_time, &diff);
+
+	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
+		struct prefix	*pd = &iface->pds[ia_conf->id];
+
+		if (pd->vltime > diff.tv_sec)
+			pd->vltime -= diff.tv_sec;
+		else
+			pd->vltime = 0;
+
+		pd->pltime = 0;
+
+		SIMPLEQ_FOREACH(pd_conf, &ia_conf->iface_pd_list, entry) {
+			send_reconfigure_interface(pd_conf, pd, CONFIGURE);
+		}
+	}
 }
 
 int
