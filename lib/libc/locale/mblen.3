@@ -1,4 +1,4 @@
-.\" $OpenBSD: mblen.3,v 1.4 2022/03/29 18:15:52 naddy Exp $
+.\" $OpenBSD: mblen.3,v 1.5 2024/12/24 10:50:00 schwarze Exp $
 .\" $NetBSD: mblen.3,v 1.4 2003/04/16 13:34:40 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: December 24 2024 $
 .Dt MBLEN 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -41,22 +41,22 @@
 .Sh DESCRIPTION
 The
 .Fn mblen
-function usually determines the number of bytes in
-a multibyte character pointed to by
-.Fa s
-and returns it.
-This function shall only examine max n bytes of the array beginning from
+function returns the number of bytes
+in the first multibyte character of the multibyte string
+.Fa s .
+It examines at most the first
+.Fa n
+bytes of
 .Fa s .
 .Pp
 In state-dependent encodings,
 .Fa s
-may point the special sequence bytes to change the shift-state.
-Although such sequence bytes corresponds to no individual
-wide-character code,
-the
+may point to special sequence bytes changing the shift state.
+Although such sequence bytes correspond to no wide character,
+they affect the internal conversion state of the
 .Fn mblen
-changes the own state by them and treats them
-as if they are a part of the subsequent multibyte character.
+function, and are treated
+as if they were part of the subsequent multibyte character.
 .Pp
 Unlike
 .Xr mbrlen 3 ,
@@ -75,19 +75,18 @@ function is not affected:
 mbtowc(NULL, s, n);
 .Ed
 .Pp
-Calling any other functions in
+Calling any other function in
 .Em libc
-never change the internal
-state of the
+never changes the internal state of
 .Fn mblen ,
 except for calling
 .Xr setlocale 3
-with the
+with an
 .Dv LC_CTYPE
-category changed to that of the current locale.
+that differs from the current locale.
 Such
 .Xr setlocale 3
-calls cause the internal state of this function to be indeterminate.
+calls cause the internal state of this function to become indeterminate.
 .Pp
 The behaviour of
 .Fn mblen
@@ -116,17 +115,17 @@ always fails.
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-Normally,
+The
 .Fn mblen
-returns:
+function returns:
 .Bl -tag -width 0123456789
 .It "0"
 .Fa s
-points to a null byte
+points to a NUL byte
 .Pq Sq \e0 .
 .It "positive"
 The value returned is
-a number of bytes for the valid multibyte character pointed to by
+the number of bytes in the valid multibyte character pointed to by
 .Fa s .
 There are no cases when this value is greater than
 .Fa n
