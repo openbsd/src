@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.410 2024/12/20 19:20:34 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.411 2024/12/24 12:22:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2804,17 +2804,13 @@ int
 tcp_mss(struct tcpcb *tp, int offer)
 {
 	struct rtentry *rt;
-	struct ifnet *ifp = NULL;
-	int mss, mssopt;
-	int iphlen;
-	struct inpcb *inp;
+	struct ifnet *ifp;
+	int mss, mssopt, mssdflt, iphlen, do_rfc3390;
+	u_int rtmtu;
 
-	inp = tp->t_inpcb;
+	mss = mssopt = mssdflt = atomic_load_int(&tcp_mssdflt);
 
-	mssopt = mss = tcp_mssdflt;
-
-	rt = in_pcbrtentry(inp);
-
+	rt = in_pcbrtentry(tp->t_inpcb);
 	if (rt == NULL)
 		goto out;
 
@@ -2823,29 +2819,29 @@ tcp_mss(struct tcpcb *tp, int offer)
 		goto out;
 
 	switch (tp->pf) {
+	case AF_INET:
+		iphlen = sizeof(struct ip);
+		break;
 #ifdef INET6
 	case AF_INET6:
 		iphlen = sizeof(struct ip6_hdr);
 		break;
 #endif
-	case AF_INET:
-		iphlen = sizeof(struct ip);
-		break;
 	default:
-		/* the family does not support path MTU discovery */
-		goto out;
+		unhandled_af(tp->pf);
 	}
 
 	/*
 	 * if there's an mtu associated with the route and we support
 	 * path MTU discovery for the underlying protocol family, use it.
 	 */
-	if (rt->rt_mtu) {
+	rtmtu = READ_ONCE(rt->rt_mtu);
+	if (rtmtu) {
 		/*
 		 * One may wish to lower MSS to take into account options,
 		 * especially security-related options.
 		 */
-		if (tp->pf == AF_INET6 && rt->rt_mtu < IPV6_MMTU) {
+		if (tp->pf == AF_INET6 && rtmtu < IPV6_MMTU) {
 			/*
 			 * RFC2460 section 5, last paragraph: if path MTU is
 			 * smaller than 1280, use 1280 as packet size and
@@ -2854,8 +2850,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 			mss = IPV6_MMTU - iphlen - sizeof(struct ip6_frag) -
 			    sizeof(struct tcphdr);
 		} else {
-			mss = rt->rt_mtu - iphlen -
-			    sizeof(struct tcphdr);
+			mss = rtmtu - iphlen - sizeof(struct tcphdr);
 		}
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
@@ -2876,10 +2871,10 @@ tcp_mss(struct tcpcb *tp, int offer)
 	/* Calculate the value that we offer in TCPOPT_MAXSEG */
 	if (offer != -1) {
 		mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
-		mssopt = max(tcp_mssdflt, mssopt);
+		mssopt = imax(mssopt, mssdflt);
 	}
- out:
 	if_put(ifp);
+ out:
 	/*
 	 * The current mss, t_maxseg, is initialized to the default value.
 	 * If we compute a smaller value, reduce the current mss.
@@ -2893,10 +2888,10 @@ tcp_mss(struct tcpcb *tp, int offer)
 	if (offer > 0)
 		tp->t_peermss = offer;
 	if (tp->t_peermss)
-		mss = min(mss, max(tp->t_peermss, 216));
+		mss = imin(mss, max(tp->t_peermss, 216));
 
 	/* sanity - at least max opt. space */
-	mss = max(mss, 64);
+	mss = imax(mss, 64);
 
 	/*
 	 * maxopd stores the maximum length of data AND options
@@ -2915,6 +2910,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 		mss -= TCPOLEN_SIGLEN;
 #endif
 
+	do_rfc3390 = atomic_load_int(&tcp_do_rfc3390);
 	if (offer == -1) {
 		/* mss changed due to Path MTU discovery */
 		tp->t_flags &= ~TF_PMTUD_PEND;
@@ -2929,10 +2925,10 @@ tcp_mss(struct tcpcb *tp, int offer)
 			tp->snd_cwnd = ulmax((tp->snd_cwnd / tp->t_maxseg) *
 			    mss, mss);
 		}
-	} else if (tcp_do_rfc3390 == 2) {
+	} else if (do_rfc3390 == 2) {
 		/* increase initial window  */
 		tp->snd_cwnd = ulmin(10 * mss, ulmax(2 * mss, 14600));
-	} else if (tcp_do_rfc3390) {
+	} else if (do_rfc3390) {
 		/* increase initial window  */
 		tp->snd_cwnd = ulmin(4 * mss, ulmax(2 * mss, 4380));
 	} else
@@ -3020,7 +3016,6 @@ tcp_mss_update(struct tcpcb *tp)
 		(void)sbreserve(so, &so->so_rcv, bufsize);
 	}
 	mtx_leave(&so->so_rcv.sb_mtx);
-
 }
 
 /*
