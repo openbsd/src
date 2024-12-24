@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.156 2024/12/22 20:02:57 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.157 2024/12/24 08:55:48 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -614,6 +614,7 @@ struct uvm_faultctx {
 	boolean_t wired;
 	paddr_t pa_flags;
 	boolean_t promote;
+	int lower_lock_type;
 };
 
 int		uvm_fault_check(
@@ -657,6 +658,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	flt.access_type = access_type;
 	flt.narrow = FALSE;		/* assume normal fault for now */
 	flt.wired = FALSE;		/* assume non-wired fault for now */
+	flt.lower_lock_type = RW_WRITE;	/* exclusive lock for now */
 
 	error = ERESTART;
 	while (error == ERESTART) { /* ReFault: */
@@ -1152,7 +1154,7 @@ uvm_fault_lower_lookup(
 	vaddr_t currva;
 	paddr_t pa;
 
-	rw_enter(uobj->vmobjlock, RW_WRITE);
+	rw_enter(uobj->vmobjlock, flt->lower_lock_type);
 
 	counters_inc(uvmexp_counters, flt_lget);
 	gotpages = flt->npages;
@@ -1278,7 +1280,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	KASSERT(amap == NULL ||
 	    rw_write_held(amap->am_lock));
 	KASSERT(uobj == NULL ||
-	    rw_write_held(uobj->vmobjlock));
+	    rw_status(uobj->vmobjlock) == flt->lower_lock_type);
 
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
@@ -1342,14 +1344,17 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 * we are faulting directly on the page.
 		 */
 	} else {
+		KASSERT(amap != NULL);
+
+		/* promoting requires a write lock. */
+	        KASSERT(rw_write_held(amap->am_lock));
+	        KASSERT(uobj == NULL ||
+	            rw_status(uobj->vmobjlock) == flt->lower_lock_type);
+
 		/*
 		 * if we are going to promote the data to an anon we
 		 * allocate a blank anon here and plug it into our amap.
 		 */
-#ifdef DIAGNOSTIC
-		if (amap == NULL)
-			panic("uvm_fault: want to promote data, but no anon");
-#endif
 		error = uvmfault_promote(ufi, uobjpage, &anon, &pg);
 		if (error)
 			return error;
@@ -1412,17 +1417,21 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		}
 	}
 
-	/* note: pg is either the uobjpage or the new page in the new anon */
+	/*
+	 * anon must be write locked (promotion).  uobj can be either.
+	 *
+	 * Note: pg is either the uobjpage or the new page in the new anon.
+	 */
+	KASSERT(amap == NULL ||
+	    rw_write_held(amap->am_lock));
+	KASSERT(uobj == NULL ||
+	    rw_status(uobj->vmobjlock) == flt->lower_lock_type);
+	KASSERT(anon == NULL || anon->an_lock == amap->am_lock);
+
 	/*
 	 * all resources are present.   we can now map it in and free our
 	 * resources.
 	 */
-	if (amap == NULL)
-		KASSERT(anon == NULL);
-	else {
-		KASSERT(rw_write_held(amap->am_lock));
-		KASSERT(anon == NULL || anon->an_lock == amap->am_lock);
-	}
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
 	    VM_PAGE_TO_PHYS(pg) | flt->pa_flags, flt->enter_prot,
 	    flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
@@ -1553,7 +1562,9 @@ uvm_fault_lower_io(
 	/* might be changed */
 	if (pg != PGO_DONTCARE) {
 		uobj = pg->uobject;
-		rw_enter(uobj->vmobjlock, RW_WRITE);
+		rw_enter(uobj->vmobjlock, flt->lower_lock_type);
+		KASSERT((pg->pg_flags & PG_BUSY) != 0);
+		KASSERT(flt->lower_lock_type == RW_WRITE);
 	}
 
 	/*
