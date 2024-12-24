@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.113 2024/12/20 18:49:37 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.114 2024/12/24 08:39:30 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1411,7 +1411,6 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	/*
 	 * deactivate the page (to put it on a page queue).
 	 */
-	pmap_clear_reference(pg);
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
