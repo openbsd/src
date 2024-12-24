@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.271 2024/09/20 02:00:46 jsg Exp $ */
+/* $OpenBSD: dsdt.c,v 1.272 2024/12/24 12:06:34 mglocker Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2574,6 +2574,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 			buflen = len;
 			break;
 		case 0x0e:	/* AttribRawBytes */
+		case 0x0f:	/* AttribRawProcessBytes */
 			cmdlen = 0;
 			buflen = len;
 			break;
@@ -2664,6 +2665,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 			break;
 		case 0x0b:	/* AttribBytes */
 		case 0x0e:	/* AttribRawBytes */
+		case 0x0f:	/* AttribRawProcessBytes */
 			buflen = len;
 			break;
 		default:
