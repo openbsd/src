@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ocsp.c,v 1.3 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_ocsp.c,v 1.4 2024/12/24 09:14:33 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -118,7 +118,7 @@ x509v3_ext_method_id_pkix_OCSP_CrlID(void)
 	return &x509v3_ext_id_pkix_OCSP_CrlID;
 }
 
-const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_archiveCutoff = {
+static const X509V3_EXT_METHOD x509v3_ext_id_pkix_OCSP_archiveCutoff = {
 	.ext_nid = NID_id_pkix_OCSP_archiveCutoff,
 	.ext_flags = 0,
 	.it = &ASN1_GENERALIZEDTIME_it,
