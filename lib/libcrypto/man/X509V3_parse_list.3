@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_parse_list.3,v 1.1 2024/12/23 08:39:57 schwarze Exp $
+.\" $OpenBSD: X509V3_parse_list.3,v 1.2 2024/12/24 09:48:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2024 $
+.Dd $Mdocdate: December 24 2024 $
 .Dt X509V3_PARSE_LIST 3
 .Os
 .Sh NAME
@@ -91,7 +91,8 @@ or if memory allocation fails.
 .Sh SEE ALSO
 .Xr isspace 3 ,
 .Xr sk_pop_free 3 ,
-.Xr STACK_OF 3
+.Xr STACK_OF 3 ,
+.Xr v2i_ASN1_BIT_STRING 3
 .Sh HISTORY
 .Fn X509V3_parse_list
 and

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.303 2024/12/23 08:39:57 schwarze Exp $
+# $OpenBSD: Makefile,v 1.304 2024/12/24 09:48:56 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -426,6 +426,7 @@ MAN=	\
 	lh_new.3 \
 	openssl.cnf.5 \
 	s2i_ASN1_INTEGER.3 \
+	v2i_ASN1_BIT_STRING.3 \
 	x509v3.cnf.5
 
 all clean cleandir depend includes obj tags:
