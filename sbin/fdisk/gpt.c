@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.94 2024/05/21 05:00:47 jsg Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.95 2024/12/24 21:34:23 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -66,7 +66,7 @@ string_to_name(const unsigned int pn, const char *ch)
 
 	memset(gp[pn].gp_name, 0, sizeof(gp[pn].gp_name));
 
-	for (i = 0; i < sizeof(gp[pn].gp_name) && ch[i] != '\0'; i++)
+	for (i = 0; i < nitems(gp[pn].gp_name) && ch[i] != '\0'; i++)
 		gp[pn].gp_name[i] = htole16((unsigned int)ch[i]);
 }
 
