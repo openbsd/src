@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.120 2024/11/02 12:30:28 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.121 2024/12/24 10:03:59 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -373,6 +373,10 @@ mft_parse_econtent(const char *fn, struct mft *mft, const unsigned char *d,
 		goto out;
 	}
 
+	if (sk_FileAndHash_num(mft_asn1->fileList) <= 0) {
+		warnx("%s: no files in manifest fileList", fn);
+		goto out;
+	}
 	if (sk_FileAndHash_num(mft_asn1->fileList) >= MAX_MANIFEST_ENTRIES) {
 		warnx("%s: %d exceeds manifest entry limit (%d)", fn,
 		    sk_FileAndHash_num(mft_asn1->fileList),
