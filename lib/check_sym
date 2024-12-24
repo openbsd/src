@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.13 2024/09/03 08:49:16 tb Exp $
+#  $OpenBSD: check_sym,v 1.14 2024/12/24 18:14:49 tb Exp $
 #
 # Copyright (c) 2016,2019,2022 Philip Guenther <guenther@openbsd.org>
 #
@@ -45,7 +45,7 @@
 #	/usr/lib if it wasn't present in the current directory.
 #
 #	By default, check_sym places all its intermediate files in a
-#	temporary directory and removed it on exit.  They contain useful
+#	temporary directory and removes it on exit.  They contain useful
 #	details for understanding what changed, so if the -k option is used
 #	they will instead be placed in /tmp/ and left behind.  If any of
 #	them cannot be created by the user, the command will fail.  The
