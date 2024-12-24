@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.411 2024/12/24 12:22:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.412 2024/12/24 19:16:53 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2991,12 +2991,13 @@ tcp_mss_update(struct tcpcb *tp)
 	mss = tp->t_maxseg;
 
 	rt = in_pcbrtentry(tp->t_inpcb);
-
 	if (rt == NULL)
 		return;
 
+	mtx_enter(&so->so_snd.sb_mtx);
 	bufsize = so->so_snd.sb_hiwat;
 	if (bufsize < mss) {
+		mtx_leave(&so->so_snd.sb_mtx);
 		mss = bufsize;
 		/* Update t_maxseg and t_maxopd */
 		tcp_mss(tp, mss);
@@ -3005,6 +3006,7 @@ tcp_mss_update(struct tcpcb *tp)
 		if (bufsize > sb_max)
 			bufsize = sb_max;
 		(void)sbreserve(so, &so->so_snd, bufsize);
+		mtx_leave(&so->so_snd.sb_mtx);
 	}
 
 	mtx_enter(&so->so_rcv.sb_mtx);
