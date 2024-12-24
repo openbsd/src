@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.24 2024/12/23 09:57:23 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.25 2024/12/24 10:52:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -72,9 +72,8 @@
 #include "bytestring.h"
 
 /*
- * Match reference identifiers starting with "." to any sub-domain.
- * This is a non-public flag, turned on implicitly when the subject
- * reference identity is a DNS name.
+ * Match reference identifiers starting with "." to any sub-domain. This
+ * flag is set implicitly when the subject reference identity is a DNS name.
  */
 #define _X509_CHECK_FLAG_DOT_SUBDOMAINS 0x8000
 
