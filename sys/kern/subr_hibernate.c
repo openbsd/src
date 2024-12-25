@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.144 2024/12/24 14:24:58 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.145 2024/12/25 23:14:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1973,7 +1973,7 @@ hibernate_suspend(void)
 	hib->image_offset = ctod(start);
 	hib->image_size = ctod(end - start + 1) -
 	    btodb(HIBERNATE_CHUNK_TABLE_SIZE);
-	hib->chunktable_offset = hib->image_offset + hib->image_size
+	hib->chunktable_offset = hib->image_offset + hib->image_size;
 
 	DPRINTF("hibernate @ block %lld chunks-length %lu blocks, "
 	    "chunktable-length %d blocks\n", hib->image_offset, hib->image_size,
