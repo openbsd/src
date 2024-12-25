@@ -2192,6 +2192,7 @@
 ./usr/share/man/man3/X509V3_EXT_print.3
 ./usr/share/man/man3/X509V3_extensions_print.3
 ./usr/share/man/man3/X509V3_get_d2i.3
+./usr/share/man/man3/X509V3_parse_list.3
 ./usr/share/man/man3/X509_ALGOR_dup.3
 ./usr/share/man/man3/X509_ATTRIBUTE_get0_object.3
 ./usr/share/man/man3/X509_ATTRIBUTE_new.3
@@ -3031,6 +3032,7 @@
 ./usr/share/man/man3/utime.3
 ./usr/share/man/man3/uu_lock.3
 ./usr/share/man/man3/uuid_compare.3
+./usr/share/man/man3/v2i_ASN1_BIT_STRING.3
 ./usr/share/man/man3/va_start.3
 ./usr/share/man/man3/valloc.3
 ./usr/share/man/man3/vis.3
