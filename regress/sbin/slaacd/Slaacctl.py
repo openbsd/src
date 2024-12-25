@@ -1,4 +1,4 @@
-# $OpenBSD: Slaacctl.py,v 1.4 2021/04/14 12:32:56 bluhm Exp $
+# $OpenBSD: Slaacctl.py,v 1.5 2024/12/25 14:57:47 sthen Exp $
 
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -63,33 +63,33 @@ class ShowInterface(object):
 		for line in lines:
 			if self.debug == 1:
 				print(line)
-			if re.match("^\s*$", line):
+			if re.match(r"^\s*$", line):
 				pass
 			elif state == 'START':
-				ifname = re.match("^(\w+):", line).group(1)
+				ifname = re.match(r"^(\w+):", line).group(1)
 				if ifname != self.ifname:
 					raise ValueError("unexpected interface "
 					    + "name: " + ifname)
 				state = 'IFINFO'
 			elif state == 'IFINFO':
-				m = re.match("^\s+index:\s+(\d+)\s+running:"
-				    + "\s+(\w+)\s+temporary:\s+(\w+)", line)
+				m = re.match(r"^\s+index:\s+(\d+)\s+running:"
+				    + r"\s+(\w+)\s+temporary:\s+(\w+)", line)
 				self.index = m.group(1)
 				self.running = m.group(2)
 				self.temporary = m.group(3)
 				state = 'IFLLADDR'
 			elif state == 'IFLLADDR':
-				self.lladdr = re.match("^\s+lladdr:\s+(.*)",
+				self.lladdr = re.match(r"^\s+lladdr:\s+(.*)",
 				    line).group(1)
 				state = 'IFLINKLOCAL'
 			elif state == 'IFLINKLOCAL':
-				self.linklocal = re.match("^\s+inet6:\s+(.*)",
+				self.linklocal = re.match(r"^\s+inet6:\s+(.*)",
 				    line).group(1)
 				state = 'IFDONE'
 			elif state == 'IFDONE':
-				is_ra = re.match("^\s+Router Advertisement "
-				    + "from\s+(.*)", line)
-				is_addr_proposal = re.match("^\s+Address "
+				is_ra = re.match(r"^\s+Router Advertisement "
+				    + r"from\s+(.*)", line)
+				is_addr_proposal = re.match(r"^\s+Address "
 				    + "proposals", line)
 				if is_ra:
 					ra = dict()
@@ -102,39 +102,39 @@ class ShowInterface(object):
 				elif is_addr_proposal:
 					state = 'ADDRESS_PROPOSAL'
 			elif state == 'RASTART':
-				m = re.match("\s+received:\s+(.*);\s+(\d+)s "
+				m = re.match(r"\s+received:\s+(.*);\s+(\d+)s "
 				    + "ago", line)
 				ra['received'] = m.group(1)
 				ra['ago'] = m.group(2)
 				state = 'RARECEIVED'
 			elif state == 'RARECEIVED':
-				m = re.match("\s+Cur Hop Limit:\s+(\d+), M: "
-				    + "(\d+), O: (\d+), "
-				    + "Router Lifetime:\s+(\d+)s", line)
+				m = re.match(r"\s+Cur Hop Limit:\s+(\d+), M: "
+				    + r"(\d+), O: (\d+), "
+				    + r"Router Lifetime:\s+(\d+)s", line)
 				ra['cur_hop_limit'] = m.group(1)
 				ra['M'] = m.group(2)
 				ra['O'] = m.group(3)
 				ra['lifetime'] = m.group(4)
 				state = 'RACURHOPLIMIT'
 			elif state == 'RACURHOPLIMIT':
-				ra['preference'] = re.match("^\s+Default "
-				    + "Router Preference:\s+(.*)",
+				ra['preference'] = re.match(r"^\s+Default "
+				    + r"Router Preference:\s+(.*)",
 				    line).group(1)
 				state = 'RAPREFERENCE'
 			elif state == 'RAPREFERENCE':
-				m = re.match("^\s+Reachable Time:\s+(\d+)ms, "
-				    + "Retrans Timer:\s+(\d+)ms", line)
+				m = re.match(r"^\s+Reachable Time:\s+(\d+)ms, "
+				    + r"Retrans Timer:\s+(\d+)ms", line)
 				ra['reachable_time'] = m.group(1)
 				ra['retrans_timer'] = m.group(2)
 				state = 'RAOPTIONS'
 			elif state == 'RAOPTIONS':
-				is_addr_proposal = re.match("^\s+Address "
+				is_addr_proposal = re.match(r"^\s+Address "
 				    + "proposals", line)
-				is_rdns = re.match("^\s+rdns: (.*), "
-				    + "lifetime:\s+(\d+)", line)
-				is_search = re.match("^\s+search: (.*), "
-				    + "lifetime:\s+(\d+)", line)
-				is_prefix = re.match("^\s+prefix:\s+(.*)", line)
+				is_rdns = re.match(r"^\s+rdns: (.*), "
+				    + r"lifetime:\s+(\d+)", line)
+				is_search = re.match(r"^\s+search: (.*), "
+				    + r"lifetime:\s+(\d+)", line)
+				is_prefix = re.match(r"^\s+prefix:\s+(.*)", line)
 				if is_addr_proposal:
 					state = 'ADDRESS_PROPOSAL'
 				elif is_prefix:
@@ -155,22 +155,22 @@ class ShowInterface(object):
 					search['lifetime'] = is_search.group(2)
 					state = 'RAOPTIONS'
 			elif state == 'PREFIX':
-				m = re.match("^\s+On-link: (\d+), "
+				m = re.match(r"^\s+On-link: (\d+), "
 				    + "Autonomous address-configuration: "
-				    + "(\d+)", line)
+				    + r"(\d+)", line)
 				prefix['on_link'] = m.group(1)
 				prefix['autonomous'] = m.group(2)
 				state = 'PREFIX_ONLINK'
 			elif state == 'PREFIX_ONLINK':
-				m = re.match("^\s+vltime:\s+(\d+|infinity), "
-				    + "pltime:\s+(\d+|infinity)", line)
+				m = re.match(r"^\s+vltime:\s+(\d+|infinity), "
+				    + r"pltime:\s+(\d+|infinity)", line)
 				prefix['vltime'] = m.group(1)
 				prefix['pltime'] = m.group(2)
 				state = 'RAOPTIONS'
 			elif state == 'ADDRESS_PROPOSAL':
-				is_id = re.match("^\s+id:\s+(\d+), "
-				    + "state:\s+(.+), temporary: (.+)", line)
-				is_defrouter = re.match("\s+Default router "
+				is_id = re.match(r"^\s+id:\s+(\d+), "
+				    + r"state:\s+(.+), temporary: (.+)", line)
+				is_defrouter = re.match(r"\s+Default router "
 				    + "proposals", line)
 				if is_id:
 					addr_proposal = dict()
@@ -184,28 +184,28 @@ class ShowInterface(object):
 				elif is_defrouter:
 					state = 'DEFAULT_ROUTER'
 			elif state == 'ADDRESS_PROPOSAL_LIFETIME':
-				m = re.match("^\s+vltime:\s+(\d+), "
-				    + "pltime:\s+(\d+), "
-				    + "timeout:\s+(\d+)s", line)
+				m = re.match(r"^\s+vltime:\s+(\d+), "
+				    + r"pltime:\s+(\d+), "
+				    + r"timeout:\s+(\d+)s", line)
 				addr_proposal['vltime'] = m.group(1)
 				addr_proposal['pltime'] = m.group(2)
 				addr_proposal['timeout'] = m.group(3)
 				state = 'ADDRESS_PROPOSAL_UPDATED'
 			elif state == 'ADDRESS_PROPOSAL_UPDATED':
-				m = re.match("^\s+updated:\s+(.+);\s+(\d+)s "
+				m = re.match(r"^\s+updated:\s+(.+);\s+(\d+)s "
 				    + "ago", line)
 				addr_proposal['updated'] = m.group(1)
 				addr_proposal['updated_ago'] = m.group(2)
 				state = 'ADDRESS_PROPOSAL_ADDR_PREFIX'
 			elif state == 'ADDRESS_PROPOSAL_ADDR_PREFIX':
-				m = re.match("^\s+(.+), (.+)", line)
+				m = re.match(r"^\s+(.+), (.+)", line)
 				addr_proposal['addr'] = m.group(1)
 				addr_proposal['prefix'] = m.group(2)
 				state = 'ADDRESS_PROPOSAL'
 			elif state == 'DEFAULT_ROUTER':
-				is_id = re.match("^\s+id:\s+(\d+), "
-				    + "state:\s+(.+)", line)
-				is_rdns = re.match("\s+rDNS proposals", line)
+				is_id = re.match(r"^\s+id:\s+(\d+), "
+				    + r"state:\s+(.+)", line)
+				is_rdns = re.match(r"\s+rDNS proposals", line)
 				if is_id:
 					def_router_proposal = dict()
 					self.def_router_proposals.append(
@@ -220,28 +220,28 @@ class ShowInterface(object):
 				else:
 					state = 'DONE'
 			elif state == 'DEFAULT_ROUTER_PROPOSAL':
-				m = re.match("^\s+router: (.+)", line)
+				m = re.match(r"^\s+router: (.+)", line)
 				def_router_proposal['router'] = m.group(1)
 				state = 'DEFAULT_ROUTER_PROPOSAL_ROUTER'
 			elif state == 'DEFAULT_ROUTER_PROPOSAL_ROUTER':
-				m = re.match("^\s+router lifetime:\s+(\d)",
+				m = re.match(r"^\s+router lifetime:\s+(\d)",
 				    line)
 				def_router_proposal['lifetime'] = m.group(1)
 				state = 'DEFAULT_ROUTER_PROPOSAL_LIFETIME'
 			elif state == 'DEFAULT_ROUTER_PROPOSAL_LIFETIME':
-				m = re.match("^\s+Preference: (.+)", line)
+				m = re.match(r"^\s+Preference: (.+)", line)
 				def_router_proposal['pref'] = m.group(1)
 				state = 'DEFAULT_ROUTER_PROPOSAL_PREF'
 			elif state == 'DEFAULT_ROUTER_PROPOSAL_PREF':
-				m = re.match("^\s+updated: ([^;]+); (\d+)s ago,"
-				    + " timeout:\s+(\d+)", line)
+				m = re.match(r"^\s+updated: ([^;]+); (\d+)s ago,"
+				    + r" timeout:\s+(\d+)", line)
 				def_router_proposal['updated'] = m.group(1)
 				def_router_proposal['ago'] = m.group(2)
 				def_router_proposal['timeout'] = m.group(3)
 				state = 'DEFAULT_ROUTER'
 			elif state == 'RDNS':
-				is_id = re.match("^\s+id:\s+(\d+), "
-				    + "state:\s+(.+)", line)
+				is_id = re.match(r"^\s+id:\s+(\d+), "
+				    + r"state:\s+(.+)", line)
 				if is_id:
 					rdns_proposal = dict();
 					rdns_proposal['rdns'] = []
@@ -253,22 +253,22 @@ class ShowInterface(object):
 				else:
 					state = 'DONE'
 			elif state == 'RDNS_PROPOSAL':
-				m = re.match("^\s+router: (.+)", line)
+				m = re.match(r"^\s+router: (.+)", line)
 				rdns_proposal['router'] = m.group(1)
 				state = 'RDNS_PROPOSAL_ROUTER'
 			elif state == 'RDNS_PROPOSAL_ROUTER':
-				m = re.match("^\s+rdns lifetime:\s+(\d)",
+				m = re.match(r"^\s+rdns lifetime:\s+(\d)",
 				    line)
 				rdns_proposal['lifetime'] = m.group(1)
 				state = 'RDNS_LIFETIME'
 			elif state == 'RDNS_LIFETIME':
-				m = re.match("^\s+rdns:", line)
+				m = re.match(r"^\s+rdns:", line)
 				if m:
 					state = 'RDNS_RDNS'
 			elif state == 'RDNS_RDNS':
-				is_upd = re.match("^\s+updated: ([^;]+); "
-				    + "(\d+)s ago, timeout:\s+(\d+)", line)
-				is_rdns = re.match("^\s+([0-9a-fA-F]{1,4}.*)",
+				is_upd = re.match(r"^\s+updated: ([^;]+); "
+				    + r"(\d+)s ago, timeout:\s+(\d+)", line)
+				is_rdns = re.match(r"^\s+([0-9a-fA-F]{1,4}.*)",
 				    line)
 				if is_upd:
 					rdns_proposal['updated'] = \

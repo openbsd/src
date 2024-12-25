@@ -1,4 +1,4 @@
-# $OpenBSD: IfInfo.py,v 1.2 2020/12/25 14:25:58 bluhm Exp $
+# $OpenBSD: IfInfo.py,v 1.3 2024/12/25 14:57:47 sthen Exp $
 
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -35,8 +35,8 @@ class IfInfo(object):
 	def parse(self, str):
 		lines = str.splitlines()
 		for line in lines:
-			lladdr = re.match("^\s+lladdr (.+)", line)
-			link_local = re.match("^\s+inet6 ([^%]+)", line)
+			lladdr = re.match(r"^\s+lladdr (.+)", line)
+			link_local = re.match(r"^\s+inet6 ([^%]+)", line)
 			if lladdr:
 				self.mac = lladdr.group(1)
 				continue
