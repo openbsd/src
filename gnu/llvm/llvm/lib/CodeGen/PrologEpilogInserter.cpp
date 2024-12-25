@@ -1353,6 +1353,15 @@ void PEI::insertZeroCallUsedRegs(MachineFunction &MF) {
     for (MCRegister Reg : TRI.sub_and_superregs_inclusive(CSReg))
       RegsToZero.reset(Reg);
 
+  // Don't touch the return protector register if it is used
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  if (MFI.hasReturnProtectorRegister()) {
+    MCRegister RGReg = MCRegister(MFI.getReturnProtectorRegister());
+    for (MCRegister Reg : TRI.sub_and_superregs_inclusive(RGReg)) {
+      RegsToZero.reset(Reg);
+    }
+  }
+
   const TargetFrameLowering &TFI = *MF.getSubtarget().getFrameLowering();
   for (MachineBasicBlock &MBB : MF)
     if (MBB.isReturnBlock())
