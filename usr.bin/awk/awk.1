@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.70 2024/08/11 18:24:43 schwarze Exp $
+.\"	$OpenBSD: awk.1,v 1.71 2024/12/25 13:44:22 naddy Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 11 2024 $
+.Dd $Mdocdate: December 25 2024 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -790,12 +790,11 @@ is omitted.
 .Fa expr
 should match the string that was used to open the file or pipe.
 .It Ic getline
-Sets
-.Va $0
-to the next input record from the current input file.
+Reads the next record from the current input file.
 This form of
 .Ic getline
 sets the variables
+.Va $0 ,
 .Va NF ,
 .Va NR ,
 and
@@ -803,13 +802,11 @@ and
 .Ic getline
 returns 1 for a successful input, 0 for end of file, and \-1 for an error.
 .It Ic getline Va var
-Sets
-.Va $0
-to variable
-.Va var .
+Reads the next record from the current input file.
 This form of
 .Ic getline
 sets the variables
+.Va var ,
 .Va NR
 and
 .Va FNR .
@@ -819,9 +816,7 @@ returns 1 for a successful input, 0 for end of file, and \-1 for an error.
 .Ic getline Op Va var
 .Pf <\ \& Ar file
 .Xc
-Sets
-.Va $0
-to the next record from
+Reads the next record from
 .Ar file .
 If
 .Va var
