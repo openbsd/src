@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.5 2024/12/26 00:04:24 tb Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.6 2024/12/26 12:35:25 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -182,8 +182,8 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 	return failed;
 }
 
-int
-main(void)
+static int
+mlkem768_unittest(void)
 {
 	struct MLKEM768_private_key mlkem768_priv, mlkem768_priv2;
 	struct MLKEM768_public_key mlkem768_pub, mlkem768_pub2;
@@ -207,6 +207,13 @@ main(void)
 		.encode_public_key = mlkem768_encode_public_key,
 		.public_from_private = mlkem768_public_from_private,
 	};
+
+	return MlKemUnitTest(&mlkem768_test);
+}
+
+static int
+mlkem1024_unittest(void)
+{
 	struct MLKEM1024_private_key mlkem1024_priv, mlkem1024_priv2;
 	struct MLKEM1024_public_key mlkem1024_pub, mlkem1024_pub2;
 	uint8_t mlkem1024_encoded_public_key[MLKEM1024_PUBLIC_KEY_BYTES];
@@ -229,10 +236,24 @@ main(void)
 		.encode_public_key = mlkem1024_encode_public_key,
 		.public_from_private = mlkem1024_public_from_private,
 	};
+
+	return MlKemUnitTest(&mlkem1024_test);
+}
+
+int
+main(void)
+{
 	int failed = 0;
 
-	failed |= MlKemUnitTest(&mlkem768_test);
-	failed |= MlKemUnitTest(&mlkem1024_test);
+	/*
+	 * XXX - this is split into two helper functions since having a few
+	 * ML-KEM key blobs on the stack makes Emscripten's stack explode,
+	 * leading to inscrutable silent failures unles ASAN is enabled.
+	 * Go figure.
+	 */
+
+	failed |= mlkem768_unittest();
+	failed |= mlkem1024_unittest();
 
 	return failed;
 }
