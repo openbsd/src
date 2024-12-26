@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.1 2024/12/26 00:04:24 tb Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.2 2024/12/26 00:10:19 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -120,7 +120,7 @@ MlkemDecapFileTest(struct decap_ctx *decap)
 	if (!decap->decap(shared_secret_buf,
 	    CBS_data(&ciphertext), CBS_len(&ciphertext), decap->private_key)) {
 		if ((failed = !should_fail))
-			parse_info(p, decap");
+			parse_info(p, "decap");
 		goto err;
 	}
 
