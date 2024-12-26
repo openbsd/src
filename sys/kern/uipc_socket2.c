@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.160 2024/12/19 22:11:35 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.161 2024/12/26 12:16:17 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  * Primitive routines for operating on sockets and socket buffers
  */
 
-u_long	sb_max = SB_MAX;		/* patchable */
+u_long sb_max = SB_MAX;		/* [I] patchable */
 
 extern struct pool mclpools[];
 extern struct pool mbpool;

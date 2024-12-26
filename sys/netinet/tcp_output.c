@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.146 2024/12/19 22:11:35 mvs Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.147 2024/12/26 12:16:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -102,8 +102,6 @@
 #ifdef notyet
 extern struct mbuf *m_copypack();
 #endif
-
-extern int tcprexmtthresh;
 
 #ifdef TCP_SACK_DEBUG
 void tcp_print_holes(struct tcpcb *tp);
