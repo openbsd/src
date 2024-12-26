@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.5 2024/11/04 02:44:28 dlg Exp $	*/
+/*	$OpenBSD: print.c,v 1.6 2024/12/26 18:25:51 sthen Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Tobias Heider <tobias.heider@stusta.de>
@@ -228,7 +228,9 @@ print_policy(struct iked_policy *pol)
 
 	for (i = 0; i < pol->pol_ncfg; i++) {
 		cfg = &pol->pol_cfg[i];
-		print_verbose(" config %s %s", print_xf(cfg->cfg_type,
+		print_verbose(" %s %s %s",
+		    cfg->cfg_action == IKEV2_CP_REPLY ? "config" : "request",
+		    print_xf(cfg->cfg_type,
 		    cfg->cfg.address.addr_af, cpxfs),
 		    print_addr(&cfg->cfg.address.addr));
 	}
