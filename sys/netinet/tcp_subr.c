@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.201 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.202 2024/12/26 10:15:27 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -437,7 +437,7 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 	if (tp == NULL)
 		return (NULL);
 	TAILQ_INIT(&tp->t_segq);
-	tp->t_maxseg = tcp_mssdflt;
+	tp->t_maxseg = atomic_load_int(&tcp_mssdflt);
 	tp->t_maxopd = 0;
 
 	for (i = 0; i < TCPT_NTIMERS; i++)

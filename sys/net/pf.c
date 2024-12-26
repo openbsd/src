@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1206 2024/11/08 13:22:09 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1207 2024/12/26 10:15:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -212,7 +212,7 @@ int			 pf_icmp_state_lookup(struct pf_pdesc *,
 int			 pf_test_state_icmp(struct pf_pdesc *,
 			    struct pf_state **, u_short *);
 u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t, int,
-			    u_int16_t);
+			    uint16_t, uint16_t);
 static __inline int	 pf_set_rt_ifp(struct pf_state *, struct pf_addr *,
 			    sa_family_t, struct pf_src_node **);
 struct pf_divert	*pf_get_divert(struct mbuf *);
@@ -3926,17 +3926,18 @@ pf_get_wscale(struct pf_pdesc *pd)
 }
 
 u_int16_t
-pf_get_mss(struct pf_pdesc *pd)
+pf_get_mss(struct pf_pdesc *pd, uint16_t mssdflt)
 {
 	int		 olen;
 	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
-	u_int16_t	 mss = tcp_mssdflt;
+	u_int16_t	 mss;
 
 	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
 	if (olen < TCPOLEN_MAXSEG || !pf_pull_hdr(pd->m,
 	    pd->off + sizeof(struct tcphdr), opts, olen, NULL, pd->af))
 		return (0);
 
+	mss = mssdflt;
 	opt = opts;
 	while ((opt = pf_find_tcpopt(opt, opts, olen,
 		    TCPOPT_MAXSEG, TCPOLEN_MAXSEG)) != NULL) {
@@ -3949,7 +3950,8 @@ pf_get_mss(struct pf_pdesc *pd)
 }
 
 u_int16_t
-pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
+pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, uint16_t offer,
+    uint16_t mssdflt)
 {
 	struct ifnet		*ifp;
 	struct sockaddr_in	*dst;
@@ -3958,8 +3960,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 #endif /* INET6 */
 	struct rtentry		*rt = NULL;
 	struct sockaddr_storage	 ss;
-	int			 hlen;
-	u_int16_t		 mss = tcp_mssdflt;
+	int			 hlen, mss;
 
 	memset(&ss, 0, sizeof(ss));
 
@@ -3984,14 +3985,15 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 #endif /* INET6 */
 	}
 
+	mss = mssdflt;
 	if (rt != NULL && (ifp = if_get(rt->rt_ifidx)) != NULL) {
 		mss = ifp->if_mtu - hlen - sizeof(struct tcphdr);
-		mss = max(tcp_mssdflt, mss);
+		mss = imax(mss, mssdflt);
 		if_put(ifp);
 	}
 	rtfree(rt);
-	mss = min(mss, offer);
-	mss = max(mss, 64);		/* sanity - at least max opt space */
+	mss = imin(mss, offer);
+	mss = imax(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
 }
 
@@ -4597,7 +4599,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 {
 	struct pf_state		*st = NULL;
 	struct tcphdr		*th = &pd->hdr.tcp;
-	u_int16_t		 mss = tcp_mssdflt;
 	u_short			 reason;
 	u_int			 i;
 
@@ -4764,15 +4765,17 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	}
 	if (pd->proto == IPPROTO_TCP && (th->th_flags & (TH_SYN|TH_ACK)) ==
 	    TH_SYN && r->keep_state == PF_STATE_SYNPROXY && pd->dir == PF_IN) {
-		int rtid = pd->rdomain;
-		if (act->rtableid >= 0)
-			rtid = act->rtableid;
+		int		rtid;
+		uint16_t	mss, mssdflt;
+
+		rtid = (act->rtableid >= 0) ? act->rtableid : pd->rdomain;
 		pf_set_protostate(st, PF_PEER_SRC, PF_TCPS_PROXY_SRC);
 		st->src.seqhi = arc4random();
 		/* Find mss option */
-		mss = pf_get_mss(pd);
-		mss = pf_calc_mss(pd->src, pd->af, rtid, mss);
-		mss = pf_calc_mss(pd->dst, pd->af, rtid, mss);
+		mssdflt = atomic_load_int(&tcp_mssdflt);
+		mss = pf_get_mss(pd, mssdflt);
+		mss = pf_calc_mss(pd->src, pd->af, rtid, mss, mssdflt);
+		mss = pf_calc_mss(pd->dst, pd->af, rtid, mss, mssdflt);
 		st->src.mss = mss;
 		pf_send_tcp(r, pd->af, pd->dst, pd->src, th->th_dport,
 		    th->th_sport, st->src.seqhi, ntohl(th->th_seq) + 1,

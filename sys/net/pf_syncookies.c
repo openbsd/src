@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.7 2018/09/10 15:54:28 henning Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.8 2024/12/26 10:15:27 bluhm Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -199,10 +199,11 @@ pf_synflood_check(struct pf_pdesc *pd)
 void
 pf_syncookie_send(struct pf_pdesc *pd)
 {
-	uint16_t	mss;
+	uint16_t	mss, mssdflt;
 	uint32_t	iss;
 
-	mss = max(tcp_mssdflt, pf_get_mss(pd));
+	mssdflt = atomic_load_int(&tcp_mssdflt);
+	mss = max(pf_get_mss(pd, mssdflt), mssdflt);
 	iss = pf_syncookie_generate(pd, mss);
 	pf_send_tcp(NULL, pd->af, pd->dst, pd->src, *pd->dport, *pd->sport,
 	    iss, ntohl(pd->hdr.tcp.th_seq) + 1, TH_SYN|TH_ACK, 0, mss,
