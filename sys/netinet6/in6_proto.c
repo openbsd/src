@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.121 2024/12/19 22:10:35 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.122 2024/12/26 10:24:57 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_STREAM,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_TCP,
-  .pr_flags	= PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS|PR_SPLICE,
+  .pr_flags	= PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS|PR_SPLICE|PR_MPSOCKET,
   .pr_input	= tcp_input,
   .pr_ctlinput	= tcp6_ctlinput,
   .pr_ctloutput	= tcp_ctloutput,

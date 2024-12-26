@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.347 2024/12/19 22:11:35 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.348 2024/12/26 10:24:57 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -927,9 +927,9 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags = 0;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
-		solock(so);
+		solock_shared(so);
 		error = pru_rcvoob(so, m, flags & MSG_PEEK);
-		sounlock(so);
+		sounlock_shared(so);
 		if (error)
 			goto bad;
 		do {
