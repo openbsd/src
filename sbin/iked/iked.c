@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.71 2024/07/13 12:22:46 yasuoka Exp $	*/
+/*	$OpenBSD: iked.c,v 1.72 2024/12/26 18:24:54 sthen Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -178,10 +178,6 @@ main(int argc, char *argv[])
 	group_init();
 	policy_init(env);
 
-	/* check for root privileges */
-	if (geteuid())
-		errx(1, "need root privileges");
-
 	if ((ps->ps_pw =  getpwnam(IKED_USER)) == NULL)
 		errx(1, "unknown user %s", IKED_USER);
 
@@ -193,6 +189,11 @@ main(int argc, char *argv[])
 
 	if (opts & IKED_OPT_NOACTION)
 		ps->ps_noaction = 1;
+	else {
+		/* check for root privileges */
+		if (geteuid())
+			errx(1, "need root privileges");
+	}
 
 	ps->ps_instance = proc_instance;
 	if (title != NULL)
