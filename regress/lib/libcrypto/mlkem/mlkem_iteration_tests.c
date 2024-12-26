@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_iteration_tests.c,v 1.1 2024/12/26 00:04:24 tb Exp $ */
+/*	$OpenBSD: mlkem_iteration_tests.c,v 1.2 2024/12/26 07:26:45 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -62,9 +62,6 @@ const uint8_t kExpectedAdam1024[32] = {
 	0xe7, 0x91, 0xff, 0x6d, 0xfc, 0x82, 0xe6, 0x94, 0xe6, 0x38, 0x24,
 	0x04, 0xab, 0xdb, 0x94, 0x8b, 0x90, 0x8b, 0x75, 0xba, 0xd5
 };
-
-typedef void (*mlkem_public_from_private_fn)(void *out_public_key,
-    const void *private_key);
 
 struct iteration_ctx {
 	uint8_t *encoded_public_key;
