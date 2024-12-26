@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_test_file.c,v 1.1 2024/12/26 00:04:24 tb Exp $ */
+/*	$OpenBSD: parse_test_file.c,v 1.2 2024/12/26 05:51:41 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -170,9 +170,11 @@ parse_state_advance(struct parse_state *ps)
 
 struct parse {
 	struct parse_state state;
-	CBS cbs;
-	char *buf;
-	size_t buf_max;
+
+	char	*buf;
+	size_t	 buf_max;
+	CBS	 cbs;
+
 	const struct test_parse *tctx;
 	void *ctx;
 
@@ -391,7 +393,7 @@ parse_state_set_from_cbb(struct parse *p, CBB *cbb)
 {
 	if (parse_line_type(p) != LINE_HEX)
 		parse_errx(p, "%s: want %d, got %d", __func__,
-		    LINE_STRING_MATCH, parse_line_type(p));
+		    LINE_HEX, parse_line_type(p));
 	if (!line_data_set_from_cbb(parse_state_data(p)[parse_cur(p)], cbb))
 		parse_errx(p, "line_data_set_from_cbb");
 }
