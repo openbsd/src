@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.c,v 1.4 2024/12/20 15:47:26 tb Exp $ */
+/*	$OpenBSD: mlkem_tests_util.c,v 1.5 2024/12/26 00:04:24 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -45,13 +45,12 @@ hexdump(const uint8_t *buf, size_t len, const uint8_t *compare)
 }
 
 int
-compare_data(const uint8_t *want, const uint8_t *got, size_t len, size_t line,
-    const char *msg)
+compare_data(const uint8_t *want, const uint8_t *got, size_t len, const char *msg)
 {
 	if (memcmp(want, got, len) == 0)
 		return 0;
 
-	warnx("FAIL: #%zu - %s differs", line, msg);
+	warnx("FAIL: %s differs", msg);
 	fprintf(stderr, "want:\n");
 	hexdump(want, len, got);
 	fprintf(stderr, "got:\n");
@@ -62,154 +61,207 @@ compare_data(const uint8_t *want, const uint8_t *got, size_t len, size_t line,
 }
 
 int
-compare_length(size_t want, size_t got, size_t line, const char *msg)
+mlkem768_encode_private_key(const void *private_key, uint8_t **out_buf,
+    size_t *out_len)
 {
-	if (want == got)
-		return 1;
+	CBB cbb;
+	int ret = 0;
 
-	warnx("#%zu: %s: want %zu, got %zu", line, msg, want, got);
-	return 0;
+	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
+		goto err;
+	if (!MLKEM768_marshal_private_key(&cbb, private_key))
+		goto err;
+	if (!CBB_finish(&cbb, out_buf, out_len))
+		goto err;
+
+	ret = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return ret;
 }
 
-static int
-hex_get_nibble_cbs(CBS *cbs, uint8_t *out_nibble)
+int
+mlkem768_encode_public_key(const void *public_key, uint8_t **out_buf,
+    size_t *out_len)
 {
-	uint8_t c;
+	CBB cbb;
+	int ret = 0;
 
-	if (!CBS_get_u8(cbs, &c))
-		return 0;
+	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
+		goto err;
+	if (!MLKEM768_marshal_public_key(&cbb, public_key))
+		goto err;
+	if (!CBB_finish(&cbb, out_buf, out_len))
+		goto err;
 
-	if (c >= '0' && c <= '9') {
-		*out_nibble = c - '0';
-		return 1;
-	}
-	if (c >= 'a' && c <= 'f') {
-		*out_nibble = c - 'a' + 10;
-		return 1;
-	}
-	if (c >= 'A' && c <= 'F') {
-		*out_nibble = c - 'A' + 10;
-		return 1;
-	}
+	ret = 1;
 
-	return 0;
+ err:
+	CBB_cleanup(&cbb);
+
+	return ret;
+}
+
+int
+mlkem1024_encode_private_key(const void *private_key, uint8_t **out_buf,
+    size_t *out_len)
+{
+	CBB cbb;
+	int ret = 0;
+
+	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
+		goto err;
+	if (!MLKEM1024_marshal_private_key(&cbb, private_key))
+		goto err;
+	if (!CBB_finish(&cbb, out_buf, out_len))
+		goto err;
+
+	ret = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return ret;
+}
+
+int
+mlkem1024_encode_public_key(const void *public_key, uint8_t **out_buf,
+    size_t *out_len)
+{
+	CBB cbb;
+	int ret = 0;
+
+	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
+		goto err;
+	if (!MLKEM1024_marshal_public_key(&cbb, public_key))
+		goto err;
+	if (!CBB_finish(&cbb, out_buf, out_len))
+		goto err;
+
+	ret = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return ret;
+}
+
+int
+mlkem768_decap(uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
+    const uint8_t *ciphertext, size_t ciphertext_len, const void *private_key)
+{
+	return MLKEM768_decap(out_shared_secret, ciphertext, ciphertext_len,
+	    private_key);
 }
 
 void
-hex_decode_cbs(CBS *cbs, CBB *cbb, size_t line, const char *msg)
+mlkem768_encap(uint8_t *out_ciphertext,
+    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
+    const void *public_key)
 {
-	if (!CBB_init(cbb, 0))
-		errx(1, "#%zu %s: %s CBB_init", line, msg, __func__);
+	MLKEM768_encap(out_ciphertext, out_shared_secret, public_key);
+}
 
-	while (CBS_len(cbs) > 0) {
-		uint8_t hi, lo;
+void
+mlkem768_encap_external_entropy(uint8_t *out_ciphertext,
+    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
+    const void *public_key, const uint8_t entropy[MLKEM_ENCAP_ENTROPY])
+{
+	MLKEM768_encap_external_entropy(out_ciphertext, out_shared_secret,
+	    public_key, entropy);
+}
 
-		if (!hex_get_nibble_cbs(cbs, &hi))
-			errx(1, "#%zu %s: %s nibble", line, msg, __func__);
-		if (!hex_get_nibble_cbs(cbs, &lo))
-			errx(1, "#%zu %s: %s nibble", line, msg, __func__);
+void
+mlkem768_generate_key(uint8_t *out_encoded_public_key,
+    uint8_t optional_out_seed[MLKEM_SEED_BYTES], void *out_private_key)
+{
+	MLKEM768_generate_key(out_encoded_public_key, optional_out_seed,
+	    out_private_key);
+}
 
-		if (!CBB_add_u8(cbb, hi << 4 | lo))
-			errx(1, "#%zu %s: %s CBB_add_u8", line, msg, __func__);
-	}
+void
+mlkem768_generate_key_external_entropy(uint8_t *out_encoded_public_key,
+    void *out_private_key, const uint8_t entropy[MLKEM_SEED_BYTES])
+{
+	MLKEM768_generate_key_external_entropy(out_encoded_public_key,
+	    out_private_key, entropy);
 }
 
 int
-get_string_cbs(CBS *cbs_in, const char *str, size_t line, const char *msg)
+mlkem768_parse_private_key(void *out_private_key, CBS *private_key_cbs)
 {
-	CBS cbs;
-	size_t len = strlen(str);
-
-	if (!CBS_get_bytes(cbs_in, &cbs, len))
-		errx(1, "#%zu %s: %s CBB_get_bytes", line, msg, __func__);
-
-	return CBS_mem_equal(&cbs, str, len);
+	return MLKEM768_parse_private_key(out_private_key, private_key_cbs);
 }
 
 int
-mlkem768_encode_private_key(const struct MLKEM768_private_key *priv,
-    uint8_t **out_buf, size_t *out_len)
+mlkem768_parse_public_key(void *out_public_key, CBS *public_key_cbs)
 {
-	CBB cbb;
-	int ret = 0;
+	return MLKEM768_parse_public_key(out_public_key, public_key_cbs);
+}
 
-	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM768_marshal_private_key(&cbb, priv))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return ret;
+void
+mlkem768_public_from_private(void *out_public_key, const void *private_key)
+{
+	MLKEM768_public_from_private(out_public_key, private_key);
 }
 
 int
-mlkem768_encode_public_key(const struct MLKEM768_public_key *pub,
-    uint8_t **out_buf, size_t *out_len)
+mlkem1024_decap(uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
+    const uint8_t *ciphertext, size_t ciphertext_len, const void *private_key)
 {
-	CBB cbb;
-	int ret = 0;
+	return MLKEM1024_decap(out_shared_secret, ciphertext, ciphertext_len,
+	    private_key);
+}
 
-	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM768_marshal_public_key(&cbb, pub))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
+void
+mlkem1024_encap(uint8_t *out_ciphertext,
+    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
+    const void *public_key)
+{
+	MLKEM1024_encap(out_ciphertext, out_shared_secret, public_key);
+}
 
-	ret = 1;
+void
+mlkem1024_encap_external_entropy(uint8_t *out_ciphertext,
+    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
+    const void *public_key, const uint8_t entropy[MLKEM_ENCAP_ENTROPY])
+{
+	MLKEM1024_encap_external_entropy(out_ciphertext, out_shared_secret,
+	    public_key, entropy);
+}
 
- err:
-	CBB_cleanup(&cbb);
+void
+mlkem1024_generate_key(uint8_t *out_encoded_public_key,
+    uint8_t optional_out_seed[MLKEM_SEED_BYTES], void *out_private_key)
+{
+	MLKEM1024_generate_key(out_encoded_public_key, optional_out_seed,
+	    out_private_key);
+}
 
-	return ret;
+void
+mlkem1024_generate_key_external_entropy(uint8_t *out_encoded_public_key,
+    void *out_private_key, const uint8_t entropy[MLKEM_SEED_BYTES])
+{
+	MLKEM1024_generate_key_external_entropy(out_encoded_public_key,
+	    out_private_key, entropy);
 }
 
 int
-mlkem1024_encode_private_key(const struct MLKEM1024_private_key *priv,
-    uint8_t **out_buf, size_t *out_len)
+mlkem1024_parse_private_key(void *out_private_key, CBS *private_key_cbs)
 {
-	CBB cbb;
-	int ret = 0;
+	return MLKEM1024_parse_private_key(out_private_key, private_key_cbs);
+}
 
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM1024_marshal_private_key(&cbb, priv))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return ret;
+void
+mlkem1024_public_from_private(void *out_public_key, const void *private_key)
+{
+	MLKEM1024_public_from_private(out_public_key, private_key);
 }
 
 int
-mlkem1024_encode_public_key(const struct MLKEM1024_public_key *pub,
-    uint8_t **out_buf, size_t *out_len)
+mlkem1024_parse_public_key(void *out_public_key, CBS *public_key_cbs)
 {
-	CBB cbb;
-	int ret = 0;
-
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM1024_marshal_public_key(&cbb, pub))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return ret;
+	return MLKEM1024_parse_public_key(out_public_key, public_key_cbs);
 }

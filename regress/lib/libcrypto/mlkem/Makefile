@@ -1,27 +1,30 @@
-#       $OpenBSD: Makefile,v 1.7 2024/12/20 01:53:46 tb Exp $
+#       $OpenBSD: Makefile,v 1.8 2024/12/26 00:04:24 tb Exp $
 
-PROGS +=	mlkem768_decap_tests
-PROGS +=	mlkem768_encap_tests
-PROGS +=	mlkem768_iteration_test
-PROGS +=	mlkem768_keygen_tests
-PROGS +=	mlkem768_nist_decap_tests
-PROGS +=	mlkem768_nist_keygen_tests
-PROGS +=	mlkem1024_decap_tests
-PROGS +=	mlkem1024_encap_tests
-PROGS +=	mlkem1024_iteration_test
-PROGS +=	mlkem1024_keygen_tests
-PROGS +=	mlkem1024_nist_decap_tests
-PROGS +=	mlkem1024_nist_keygen_tests
+REGRESS_SLOW_TARGETS += run-regress-mlkem_iteration_tests
+
+PROGS +=	mlkem_tests
 PROGS +=	mlkem_unittest
+PROGS +=	mlkem_iteration_tests
 
-# Link test programs with mlkem_tests_util.c and use custom target
-.for p in ${PROGS}
-SRCS_$p +=	$p.c mlkem_tests_util.c
+FILE_TEST +=	mlkem768_decap_tests
+FILE_TEST +=	mlkem768_encap_tests
+FILE_TEST +=	mlkem768_keygen_tests
+FILE_TEST +=	mlkem768_nist_decap_tests
+FILE_TEST +=	mlkem768_nist_keygen_tests
+FILE_TEST +=	mlkem1024_decap_tests
+FILE_TEST +=	mlkem1024_encap_tests
+FILE_TEST +=	mlkem1024_keygen_tests
+FILE_TEST +=	mlkem1024_nist_decap_tests
+FILE_TEST +=	mlkem1024_nist_keygen_tests
 
-REGRESS_TARGETS += run-$p
-run-$p: $p
-	./$p ${.CURDIR}/$p.txt
+run-regress-mlkem_tests: mlkem_tests
+.for f in ${FILE_TEST}
+	./mlkem_tests $f ${.CURDIR}/$f.txt
 .endfor
+
+SRCS_mlkem_tests =	mlkem_tests.c mlkem_tests_util.c parse_test_file.c
+SRCS_mlkem_iteration_tests = mlkem_iteration_tests.c mlkem_tests_util.c
+SRCS_mlkem_unittest =	mlkem_unittest.c mlkem_tests_util.c
 
 LDADD =		${CRYPTO_INT}
 DPADD =		${LIBCRYPTO}
