@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.28 2024/08/22 12:14:33 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.29 2024/12/26 14:10:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -653,8 +653,16 @@ pkcs12_main(int argc, char **argv)
 			    cfg.certfile, FORMAT_PEM, NULL,
 			    "certificates from certfile")) == NULL)
 				goto export_end;
-			while (sk_X509_num(morecerts) > 0)
-				sk_X509_push(certs, sk_X509_shift(morecerts));
+			while (sk_X509_num(morecerts) > 0) {
+				X509 *cert = sk_X509_shift(morecerts);
+
+				if (!sk_X509_push(certs, cert)) {
+					X509_free(cert);
+					sk_X509_pop_free(morecerts, X509_free);
+					goto export_end;
+				}
+			}
+
 			sk_X509_free(morecerts);
 		}
 
@@ -678,11 +686,18 @@ pkcs12_main(int argc, char **argv)
 
 			if (vret == X509_V_OK) {
 				/* Exclude verified certificate */
-				for (i = 1; i < sk_X509_num(chain2); i++)
-					sk_X509_push(certs, sk_X509_value(
-					    chain2, i));
-				/* Free first certificate */
-				X509_free(sk_X509_value(chain2, 0));
+				X509_free(sk_X509_shift(chain2));
+
+				while (sk_X509_num(chain2) > 0) {
+					X509 *cert = sk_X509_shift(chain2);
+
+					if (!sk_X509_push(certs, cert)) {
+						X509_free(cert);
+						sk_X509_pop_free(chain2,
+						    X509_free);
+						goto export_end;
+					}
+				}
 				sk_X509_free(chain2);
 			} else {
 				if (vret != X509_V_ERR_UNSPECIFIED)
@@ -692,6 +707,7 @@ pkcs12_main(int argc, char **argv)
 					    vret));
 				else
 					ERR_print_errors(bio_err);
+				sk_X509_pop_free(chain2, X509_free);
 				goto export_end;
 			}
 		}
