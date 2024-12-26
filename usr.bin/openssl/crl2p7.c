@@ -1,4 +1,4 @@
-/* $OpenBSD: crl2p7.c,v 1.11 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: crl2p7.c,v 1.12 2024/12/26 14:07:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,8 +229,9 @@ crl2pkcs7_main(int argc, char **argv)
 		goto end;
 	p7s->crl = crl_stack;
 	if (crl != NULL) {
-		sk_X509_CRL_push(crl_stack, crl);
-		crl = NULL;	/* now part of p7 for freeing */
+		if (!sk_X509_CRL_push(crl_stack, crl))
+			goto end;
+		crl = NULL;
 	}
 	if ((cert_stack = sk_X509_new_null()) == NULL)
 		goto end;
@@ -247,8 +248,6 @@ crl2pkcs7_main(int argc, char **argv)
 			}
 		}
 	}
-
-	sk_OPENSSL_STRING_free(cfg.certflst);
 
 	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
@@ -273,19 +272,17 @@ crl2pkcs7_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+
 	ret = 0;
 
  end:
-	if (in != NULL)
-		BIO_free(in);
-	if (out != NULL)
-		BIO_free_all(out);
-	if (p7 != NULL)
-		PKCS7_free(p7);
-	if (crl != NULL)
-		X509_CRL_free(crl);
+	BIO_free(in);
+	BIO_free_all(out);
+	PKCS7_free(p7);
+	X509_CRL_free(crl);
+	sk_OPENSSL_STRING_free(cfg.certflst);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -295,7 +292,7 @@ add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 	int count = 0;
 	int ret = -1;
 	STACK_OF(X509_INFO) *sk = NULL;
-	X509_INFO *xi;
+	X509_INFO *xi = NULL;
 
 	in = BIO_new(BIO_s_file());
 	if (in == NULL || BIO_read_filename(in, certfile) <= 0) {
@@ -309,23 +306,24 @@ add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 		goto end;
 	}
 	/* scan over it and pull out the CRL's */
-	while (sk_X509_INFO_num(sk)) {
+	while (sk_X509_INFO_num(sk) > 0) {
 		xi = sk_X509_INFO_shift(sk);
 		if (xi->x509 != NULL) {
-			sk_X509_push(stack, xi->x509);
+			if (!sk_X509_push(stack, xi->x509))
+				goto end;
 			xi->x509 = NULL;
 			count++;
 		}
 		X509_INFO_free(xi);
+		xi = NULL;
 	}
 
 	ret = count;
 
  end:
-	/* never need to free x */
-	if (in != NULL)
-		BIO_free(in);
-	if (sk != NULL)
-		sk_X509_INFO_free(sk);
-	return (ret);
+	BIO_free(in);
+	X509_INFO_free(xi);
+	sk_X509_INFO_free(sk);
+
+	return ret;
 }
