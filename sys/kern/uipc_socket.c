@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.349 2024/12/27 10:18:04 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.350 2024/12/27 13:08:11 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -62,6 +62,8 @@ int	sosplice(struct socket *, int, off_t, struct timeval *);
 void	sounsplice(struct socket *, struct socket *, int);
 void	soidle(void *);
 void	sotask(void *);
+void	soreaper(void *);
+void	soput(void *);
 int	somove(struct socket *, int);
 void	sorflush(struct socket *);
 
@@ -325,14 +327,17 @@ sofree(struct socket *so, int keep_lock)
 			sounlock(head);
 	}
 
-	if (!keep_lock) {
-		/*
-		 * sofree() was called from soclose(). Sleep is safe
-		 * even for tcp(4) sockets.
-		 */
+	switch (so->so_proto->pr_domain->dom_family) {
+	case AF_INET:
+	case AF_INET6:
+		if (so->so_proto->pr_type == SOCK_STREAM)
+			break;
+		/* FALLTHROUGH */
+	default:
 		sounlock(so);
 		refcnt_finalize(&so->so_refcnt, "sofinal");
 		solock(so);
+		break;
 	}
 
 	sigio_free(&so->so_sigio);
@@ -353,20 +358,20 @@ sofree(struct socket *so, int keep_lock)
 		(*so->so_proto->pr_domain->dom_dispose)(so->so_rcv.sb_mb);
 	m_purge(so->so_rcv.sb_mb);
 
-	if (!keep_lock) {
+	if (!keep_lock)
 		sounlock(so);
 
 #ifdef SOCKET_SPLICE
-		if (so->so_sp) {
-			timeout_del_barrier(&so->so_sp->ssp_idleto);
-			task_del(sosplice_taskq, &so->so_sp->ssp_task);
-			taskq_barrier(sosplice_taskq);
-			pool_put(&sosplice_pool, so->so_sp);
-		}
+	if (so->so_sp) {
+		/* Reuse splice idle, sounsplice() has been called before. */
+		timeout_set_flags(&so->so_sp->ssp_idleto, soreaper, so,
+		    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
+		timeout_add(&so->so_sp->ssp_idleto, 0);
+	} else
 #endif /* SOCKET_SPLICE */
+	{
+		pool_put(&socket_pool, so);
 	}
-
-	pool_put(&socket_pool, so);
 }
 
 static inline uint64_t
@@ -445,9 +450,38 @@ drop:
 		}
 	}
 discard:
+	if (so->so_state & SS_NOFDREF)
+		panic("soclose NOFDREF: so %p, so_type %d", so, so->so_type);
+	so->so_state |= SS_NOFDREF;
+
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
 		struct socket *soback;
+
+		if (so->so_proto->pr_flags & PR_WANTRCVD) {
+			/*
+			 * Copy - Paste, but can't relock and sleep in
+			 * sofree() in tcp(4) case. That's why tcp(4)
+			 * still rely on solock() for splicing and
+			 * unsplicing.
+			 */
+
+			if (issplicedback(so)) {
+				int freeing = SOSP_FREEING_WRITE;
+
+				if (so->so_sp->ssp_soback == so)
+					freeing |= SOSP_FREEING_READ;
+				sounsplice(so->so_sp->ssp_soback, so, freeing);
+			}
+			if (isspliced(so)) {
+				int freeing = SOSP_FREEING_READ;
+
+				if (so == so->so_sp->ssp_socket)
+					freeing |= SOSP_FREEING_WRITE;
+				sounsplice(so, so->so_sp->ssp_socket, freeing);
+			}
+			goto free;
+		}
 
 		sounlock(so);
 		mtx_enter(&so->so_snd.sb_mtx);
@@ -496,12 +530,8 @@ notsplicedback:
 
 		solock(so);
 	}
+free:
 #endif /* SOCKET_SPLICE */
-
-	if (so->so_state & SS_NOFDREF)
-		panic("soclose NOFDREF: so %p, so_type %d", so, so->so_type);
-	so->so_state |= SS_NOFDREF;
-
 	/* sofree() calls sounlock(). */
 	sofree(so, 0);
 	return (error);
@@ -1502,7 +1532,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 void
 sounsplice(struct socket *so, struct socket *sosp, int freeing)
 {
-	sbassertlocked(&so->so_rcv);
+	if ((so->so_proto->pr_flags & PR_WANTRCVD) == 0)
+		sbassertlocked(&so->so_rcv);
 	soassertlocked(so);
 
 	task_del(sosplice_taskq, &so->so_splicetask);
@@ -1556,29 +1587,49 @@ sotask(void *arg)
 	 */
 
 	sblock(&so->so_rcv, SBL_WAIT | SBL_NOINTR);
+	if (sockstream)
+		solock(so);
+
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
-		struct socket *sosp = so->so_sp->ssp_socket;
-
-		if (sockstream) {
-			sblock(&sosp->so_snd, SBL_WAIT | SBL_NOINTR);
-			solock(so);
+		if (sockstream)
 			doyield = 1;
-		}
-
 		somove(so, M_DONTWAIT);
-
-		if (sockstream) {
-			sounlock(so);
-			sbunlock(&sosp->so_snd);
-		}
 	}
 
+	if (sockstream)
+		sounlock(so);
 	sbunlock(&so->so_rcv);
 
 	if (doyield) {
 		/* Avoid user land starvation. */
 		yield();
 	}
+}
+
+/*
+ * The socket splicing task or idle timeout may sleep while grabbing the net
+ * lock.  As sofree() can be called anytime, sotask() or soidle() could access
+ * the socket memory of a freed socket after wakeup.  So delay the pool_put()
+ * after all pending socket splicing tasks or timeouts have finished.  Do this
+ * by scheduling it on the same threads.
+ */
+void
+soreaper(void *arg)
+{
+	struct socket *so = arg;
+
+	/* Reuse splice task, sounsplice() has been called before. */
+	task_set(&so->so_sp->ssp_task, soput, so);
+	task_add(sosplice_taskq, &so->so_sp->ssp_task);
+}
+
+void
+soput(void *arg)
+{
+	struct socket *so = arg;
+
+	pool_put(&sosplice_pool, so->so_sp);
+	pool_put(&socket_pool, so);
 }
 
 /*
@@ -1601,10 +1652,8 @@ somove(struct socket *so, int wait)
 
 	if (sockdgram)
 		sbassertlocked(&so->so_rcv);
-	else {
-		sbassertlocked(&sosp->so_snd);
+	else
 		soassertlocked(so);
-	}
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	mtx_enter(&sosp->so_snd.sb_mtx);
