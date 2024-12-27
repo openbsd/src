@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.137 2024/12/20 18:49:37 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.138 2024/12/27 12:04:40 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -683,7 +683,6 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		if (!needs_clean) {
 			if (flags & PGO_DEACTIVATE) {
 				if (pp->wire_count == 0) {
-					pmap_page_protect(pp, PROT_NONE);
 					uvm_pagedeactivate(pp);
 				}
 			} else if (flags & PGO_FREE) {
@@ -809,7 +808,6 @@ ReTry:
 			/* dispose of page */
 			if (flags & PGO_DEACTIVATE) {
 				if (ptmp->wire_count == 0) {
-					pmap_page_protect(ptmp, PROT_NONE);
 					uvm_pagedeactivate(ptmp);
 				}
 			} else if (flags & PGO_FREE &&

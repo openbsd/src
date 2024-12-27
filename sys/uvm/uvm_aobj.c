@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.114 2024/12/24 08:39:30 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.115 2024/12/27 12:04:40 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -930,7 +930,6 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				continue;
 
 			uvm_lock_pageq();
-			pmap_page_protect(pg, PROT_NONE);
 			uvm_pagedeactivate(pg);
 			uvm_unlock_pageq();
 

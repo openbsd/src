@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.336 2024/12/11 02:00:32 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.337 2024/12/27 12:04:40 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4524,11 +4524,6 @@ deactivate_it:
 				uvm_lock_pageq();
 
 				KASSERT(pg->uanon == anon);
-
-				/* zap all mappings for the page. */
-				pmap_page_protect(pg, PROT_NONE);
-
-				/* ...and deactivate the page. */
 				uvm_pagedeactivate(pg);
 
 				uvm_unlock_pageq();

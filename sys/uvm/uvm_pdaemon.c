@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.132 2024/11/25 13:37:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.133 2024/12/27 12:04:40 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -1020,7 +1020,6 @@ uvmpd_scan_active(struct uvm_pmalloc *pma, int swap_shortage,
 		 * inactive pages.
 		 */
 		if (inactive_shortage > 0) {
-			pmap_page_protect(p, PROT_NONE);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;

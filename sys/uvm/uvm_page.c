@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.179 2024/12/20 18:54:12 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.180 2024/12/27 12:04:40 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1256,7 +1256,7 @@ uvm_pageunwire(struct vm_page *pg)
 }
 
 /*
- * uvm_pagedeactivate: deactivate page -- no pmaps have access to page
+ * uvm_pagedeactivate: deactivate page.
  *
  * => caller must lock page queues
  * => caller must check to make sure page is not wired
@@ -1267,6 +1267,8 @@ uvm_pagedeactivate(struct vm_page *pg)
 {
 	KASSERT(uvm_page_owner_locked_p(pg, FALSE));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+
+	pmap_page_protect(pg, PROT_NONE);
 
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
