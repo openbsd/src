@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.21 2022/06/26 09:43:39 florian Exp $ */
+/* $Id: message.c,v 1.22 2024/12/27 09:04:48 florian Exp $ */
 
 /*! \file */
 
@@ -2484,11 +2484,42 @@ ede_info_code2str(uint16_t info_code)
 	}
 }
 
+static const char *
+zoneversion_zone(const char *zone, int labelcount)
+{
+	size_t pos;
+
+	if (zone == NULL || labelcount == 0)
+		return ".";
+
+	pos = strlen(zone);
+	if (pos == 0)
+		return ".";
+
+	pos--; /* go to last char in string */
+	if (zone[pos] == '.')
+		pos--; /* the labelcount does not count the empty root label */
+
+	for (; pos > 0; pos--) {
+		if (zone[pos] == '.') {
+			labelcount--;
+
+			if (labelcount == 0) {
+				pos++;
+				break;
+			}
+		}
+	}
+
+	return (zone + pos);
+}
+
 isc_result_t
 dns_message_pseudosectiontotext(dns_message_t *msg,
 				dns_pseudosection_t section,
 				const dns_master_style_t *style,
 				dns_messagetextflag_t flags,
+				const char *textname,
 				isc_buffer_t *target)
 {
 	dns_rdataset_t *ps = NULL;
@@ -2620,6 +2651,46 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 					ADD_STRING(target,
 					    ede_info_code2str(info_code));
 					ADD_STRING(target, ")");
+				}
+			} else if (optcode == DNS_OPT_ZONEVERSION) {
+				int i;
+
+				ADD_STRING(target, "; ZONEVERSION: ");
+				optdata = isc_buffer_current(&optbuf);
+				for (i = 0; i < optlen; i++) {
+					snprintf(buf, sizeof(buf), "%02x ",
+						 optdata[i]);
+					ADD_STRING(target, buf);
+				}
+
+				if (optlen >= 2) {
+					uint8_t labelcount, type;
+					const char *zone;
+
+					labelcount =
+					    isc_buffer_getuint8(&optbuf);
+					optlen -= 1;
+					type = isc_buffer_getuint8(&optbuf);
+					optlen -= 1;
+					zone = zoneversion_zone(textname,
+					    labelcount);
+
+					if (type == 0 && optlen == 4) {
+						uint32_t serial;
+
+						serial = isc_buffer_getuint32(
+						    &optbuf);
+						optlen -= 4;
+						ADD_STRING(target,
+						    "(\"SOA-SERIAL: ");
+						snprintf(buf, sizeof(buf), "%u",
+						    serial);
+						ADD_STRING(target, buf);
+						ADD_STRING(target, " (");
+						ADD_STRING(target, zone);
+						ADD_STRING(target, ")");
+						ADD_STRING(target, "\")");
+					}
 				}
 			} else {
 				ADD_STRING(target, "; OPT=");

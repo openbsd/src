@@ -105,6 +105,7 @@
 #define DNS_OPT_PAD		12		/*%< PAD opt code */
 #define DNS_OPT_KEY_TAG		14		/*%< Key tag opt code */
 #define DNS_OPT_EDE		15		/* RFC 8914 */
+#define DNS_OPT_ZONEVERSION	19		/* RFC 9660 */
 
 /*%< The number of EDNS options we know about. */
 #define DNS_EDNSOPTIONS	4
@@ -288,6 +289,7 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				dns_pseudosection_t section,
 				const dns_master_style_t *style,
 				dns_messagetextflag_t flags,
+				const char *textname,
 				isc_buffer_t *target);
 /*%<
  * Convert section 'section' or 'pseudosection' of message 'msg' to

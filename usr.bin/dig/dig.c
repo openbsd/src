@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.20 2023/09/06 04:57:28 jsg Exp $ */
+/* $Id: dig.c,v 1.21 2024/12/27 09:04:48 florian Exp $ */
 
 /*! \file */
 #include <sys/types.h>
@@ -498,7 +498,7 @@ repopulate_buffer:
 	if (query->lookup->comments && headers && !short_form) {
 		result = dns_message_pseudosectiontotext(msg,
 			 DNS_PSEUDOSECTION_OPT,
-			 style, flags, buf);
+			 style, flags, query->lookup->textname, buf);
 		if (result == ISC_R_NOSPACE) {
 buftoosmall:
 			len += OUTPUTBUF;
@@ -563,7 +563,9 @@ buftoosmall:
 				result = dns_message_pseudosectiontotext(
 						   msg,
 						   DNS_PSEUDOSECTION_TSIG,
-						   style, flags, buf);
+						   style, flags,
+						   query->lookup->textname,
+						   buf);
 				if (result == ISC_R_NOSPACE)
 					goto buftoosmall;
 				check_result(result,
@@ -571,7 +573,9 @@ buftoosmall:
 				result = dns_message_pseudosectiontotext(
 						   msg,
 						   DNS_PSEUDOSECTION_SIG0,
-						   style, flags, buf);
+						   style, flags,
+						   query->lookup->textname,
+						   buf);
 				if (result == ISC_R_NOSPACE)
 					goto buftoosmall;
 				check_result(result,
@@ -1249,6 +1253,12 @@ plus_option(const char *option, int is_batchfile,
 			lookup->tcp_mode = state;
 			lookup->tcp_mode_set = 1;
 		}
+		break;
+	case 'z':
+		FULLCHECK("zoneversion");
+		if (!state)
+			break;
+		save_opt(lookup, "zoneversion", NULL);
 		break;
 	default:
 	invalid_option:

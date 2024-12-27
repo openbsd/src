@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.39 2024/08/29 07:20:16 florian Exp $ */
+/* $Id: dighost.c,v 1.40 2024/12/27 09:04:48 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1274,6 +1274,7 @@ dig_ednsoptname_t optnames[] = {
 	{ 12, "PAD" },		/* shorthand */
 	{ 13, "CHAIN" },	/* RFC 7901 */
 	{ 14, "KEY-TAG" },	/* RFC 8145 */
+	{ 19, "ZONEVERSION" },	/* RFC 9660 */
 	{ 26946, "DEVICEID" },	/* Brian Hartvigsen */
 };
 
