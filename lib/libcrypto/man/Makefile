@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.304 2024/12/24 09:48:56 schwarze Exp $
+# $OpenBSD: Makefile,v 1.305 2024/12/27 15:30:17 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -385,6 +385,7 @@ MAN=	\
 	X509v3_asid_add_id_or_range.3 \
 	X509v3_get_ext_by_NID.3 \
 	a2d_ASN1_OBJECT.3 \
+	a2i_ipadd.3 \
 	crypto.3 \
 	d2i_ASN1_NULL.3 \
 	d2i_ASN1_OBJECT.3 \

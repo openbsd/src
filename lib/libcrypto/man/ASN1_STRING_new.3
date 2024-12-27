@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_new.3,v 1.26 2024/03/05 18:30:40 tb Exp $
+.\"	$OpenBSD: ASN1_STRING_new.3,v 1.27 2024/12/27 15:30:17 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Mar 24 07:52:24 2015 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 5 2024 $
+.Dd $Mdocdate: December 27 2024 $
 .Dt ASN1_STRING_NEW 3
 .Os
 .Sh NAME
@@ -205,6 +205,7 @@ object if successful; otherwise
 is returned and an error code can be retrieved with
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr a2i_ipadd 3 ,
 .Xr ASN1_BIT_STRING_set 3 ,
 .Xr ASN1_INTEGER_get 3 ,
 .Xr ASN1_item_pack 3 ,
@@ -218,6 +219,7 @@ is returned and an error code can be retrieved with
 .Xr d2i_ASN1_OBJECT 3 ,
 .Xr d2i_ASN1_OCTET_STRING 3 ,
 .Xr i2a_ASN1_STRING 3 ,
+.Xr s2i_ASN1_INTEGER 3 ,
 .Xr X509_cmp_time 3 ,
 .Xr X509_EXTENSION_get_object 3 ,
 .Xr X509_get_ext_by_OBJ 3 ,

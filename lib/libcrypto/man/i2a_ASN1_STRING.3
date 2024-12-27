@@ -1,4 +1,4 @@
-.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.4 2022/09/10 12:36:18 jsg Exp $
+.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.5 2024/12/27 15:30:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2022 $
+.Dd $Mdocdate: December 27 2024 $
 .Dt I2A_ASN1_STRING 3
 .Os
 .Sh NAME
@@ -189,10 +189,12 @@ are intended to return 1 for success or 0 for failure, but see the
 .Sx BUGS
 section for a number of traps.
 .Sh SEE ALSO
+.Xr a2i_ipadd 3 ,
 .Xr ASN1_STRING_length 3 ,
 .Xr ASN1_STRING_new 3 ,
 .Xr ASN1_STRING_print_ex 3 ,
-.Xr i2a_ASN1_OBJECT 3
+.Xr i2a_ASN1_OBJECT 3 ,
+.Xr i2s_ASN1_INTEGER 3
 .Sh HISTORY
 .Fn i2a_ASN1_INTEGER
 and
