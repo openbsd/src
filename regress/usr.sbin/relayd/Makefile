@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2024/10/28 19:57:02 tb Exp $
+#	$OpenBSD: Makefile,v 1.23 2024/12/27 10:53:46 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -71,8 +71,11 @@ run-$a: $a
 # create certificates for TLS
 
 .for ip in ${REMOTE_ADDR} 127.0.0.1
-${ip}.crt: ca.crt
-	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=relayd/CN=${ip}/ -nodes -newkey rsa -keyout ${ip}.key -x509 -out $@
+${ip}.crt: ca.crt client-ca.crt
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=relayd-regress/OU=relayd/CN=${ip}/ \
+	    -nodes -newkey rsa -keyout ${ip}.key -x509 \
+	    -out $@
 .if empty (REMOTE_SSH)
 	${SUDO} cp 127.0.0.1.crt /etc/ssl/
 	${SUDO} cp 127.0.0.1.key /etc/ssl/private/
@@ -80,33 +83,29 @@ ${ip}.crt: ca.crt
 	scp ${REMOTE_ADDR}.crt root@${REMOTE_SSH}:/etc/ssl/
 	scp ${REMOTE_ADDR}.key root@${REMOTE_SSH}:/etc/ssl/private/
 	scp ca.crt ca.key ${REMOTE_SSH}:
+	scp client-ca.crt client-ca.key ${REMOTE_SSH}:
 .endif
 .endfor
 
-ca.crt:
-	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=ca/CN=root/ -nodes -newkey rsa -keyout ca.key -x509 -out ca.crt
+ca.crt client-ca.crt:
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=relayd-regress/OU=${@:R}/CN=root/ \
+	    -nodes -newkey rsa -keyout ${@:R}.key -x509 \
+	    -out $@
 
-server.req:
-	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=server/CN=localhost/ -nodes -newkey rsa -keyout server.key -out server.req
+server.req client.req:
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=relayd-regress/OU=${@:R}/CN=localhost/ \
+	    -nodes -newkey rsa -keyout ${@:R}.key \
+	    -out $@
 
 server.crt: ca.crt server.req
-	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in server.req -out server.crt
-
-client-ca.crt:
-	openssl req -batch -new \
-		-subj /L=OpenBSD/O=relayd-regress/OU=client-ca/CN=root/ \
-		-nodes -newkey rsa -keyout client-ca.key -x509 \
-		-out client-ca.crt
-
-client.req:
-	openssl req -batch -new \
-		-subj /L=OpenBSD/O=relayd-regress/OU=client/CN=localhost/ \
-		-nodes -newkey rsa -keyout client.key \
-		-out client.req
+	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
+	    -req -in server.req -out server.crt
 
 client.crt: client-ca.crt client.req
 	openssl x509 -CAcreateserial -CAkey client-ca.key -CA client-ca.crt \
-		-req -in client.req -out client.crt
+	    -req -in client.req -out client.crt
 
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: server.crt client.crt
 .if empty (REMOTE_SSH)
