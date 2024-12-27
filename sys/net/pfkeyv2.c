@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.262 2024/05/17 19:02:04 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.263 2024/12/27 10:15:09 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1057,7 +1057,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 	switch (satype) {
 #ifdef IPSEC
 	case SADB_SATYPE_AH:
-		if (!ah_enable)
+		if (!atomic_load_int(&ah_enable))
 			return (EOPNOTSUPP);
 
 		*sproto = IPPROTO_AH;
@@ -1087,7 +1087,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 		break;
 
 	case SADB_X_SATYPE_IPCOMP:
-		if (!ipcomp_enable)
+		if (!atomic_load_int(&ipcomp_enable))
 			return (EOPNOTSUPP);
 
 		*sproto = IPPROTO_IPCOMP;

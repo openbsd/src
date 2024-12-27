@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.206 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.207 2024/12/27 10:15:09 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -86,6 +86,11 @@
 
 #include "bpfilter.h"
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 void ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
 
 #ifdef ENCDEBUG
@@ -114,8 +119,8 @@ int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;
 int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
 
 int esp_enable = 1;
-int ah_enable = 1;
-int ipcomp_enable = 0;
+int ah_enable = 1;		/* [a] */
+int ipcomp_enable = 0;		/* [a] */
 
 const struct sysctl_bounded_args espctl_vars[] = {
 	{ESPCTL_ENABLE, &esp_enable, 0, 1},
@@ -673,8 +678,6 @@ int
 ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -683,11 +686,8 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case AHCTL_STATS:
 		return ah_sysctl_ahstat(oldp, oldlenp, newp);
 	default:
-		NET_LOCK();
-		error = sysctl_bounded_arr(ahctl_vars, nitems(ahctl_vars), name,
+		return sysctl_bounded_arr(ahctl_vars, nitems(ahctl_vars), name,
 		    namelen, oldp, oldlenp, newp, newlen);
-		NET_UNLOCK();
-		return (error);
 	}
 }
 
@@ -706,8 +706,6 @@ int
 ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -716,12 +714,9 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCOMPCTL_STATS:
 		return ipcomp_sysctl_ipcompstat(oldp, oldlenp, newp);
 	default:
-		NET_LOCK();
-		error = sysctl_bounded_arr(ipcompctl_vars,
+		return sysctl_bounded_arr(ipcompctl_vars,
 		    nitems(ipcompctl_vars), name, namelen, oldp, oldlenp,
 		    newp, newlen);
-		NET_UNLOCK();
-		return (error);
 	}
 }
 
@@ -775,7 +770,7 @@ ah46_input(struct mbuf **mp, int *offp, int proto, int af)
 #if NPF > 0
 	    ((*mp)->m_pkthdr.pf.flags & PF_TAG_DIVERTED) ||
 #endif
-	    !ah_enable)
+	    !atomic_load_int(&ah_enable))
 		return ipsec_input_disabled(mp, offp, proto, af);
 
 	protoff = ipsec_protoff(*mp, *offp, af);
@@ -832,7 +827,7 @@ ipcomp46_input(struct mbuf **mp, int *offp, int proto, int af)
 #if NPF > 0
 	    ((*mp)->m_pkthdr.pf.flags & PF_TAG_DIVERTED) ||
 #endif
-	    !ipcomp_enable)
+	    !atomic_load_int(&ipcomp_enable))
 		return ipsec_input_disabled(mp, offp, proto, af);
 
 	protoff = ipsec_protoff(*mp, *offp, af);

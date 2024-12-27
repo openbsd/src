@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.122 2024/12/26 10:24:57 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.123 2024/12/27 10:15:09 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_AH,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET|PR_MPSYSCTL,
   .pr_input	= ah46_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreqs	= &rip6_usrreqs,
@@ -225,7 +225,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_IPCOMP,
-  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSOCKET|PR_MPSYSCTL,
   .pr_input	= ipcomp46_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreqs	= &rip6_usrreqs,

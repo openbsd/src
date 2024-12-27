@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.98 2024/02/11 01:27:45 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.99 2024/12/27 10:15:09 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -92,8 +92,9 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Check that the transform is allowed by the administrator. */
 	if ((tdb->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
-	    (tdb->tdb_sproto == IPPROTO_AH && !ah_enable) ||
-	    (tdb->tdb_sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
+	    (tdb->tdb_sproto == IPPROTO_AH && !atomic_load_int(&ah_enable)) ||
+	    (tdb->tdb_sproto == IPPROTO_IPCOMP &&
+	    !atomic_load_int(&ipcomp_enable))) {
 		DPRINTF("IPsec outbound packet dropped due to policy "
 		    "(check your sysctls)");
 		error = EHOSTUNREACH;
