@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_test_file.c,v 1.2 2024/12/26 05:51:41 tb Exp $ */
+/*	$OpenBSD: parse_test_file.c,v 1.3 2024/12/27 11:17:48 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -446,6 +446,13 @@ parse_instruction_get_cbs(struct parse *p, size_t idx, CBS *out)
 	return 1;
 }
 
+static void
+parse_line_skip_to_end(struct parse *p)
+{
+	if (!CBS_skip(&p->cbs, CBS_len(&p->cbs)))
+		parse_errx(p, "CBS_skip");
+}
+
 static int
 CBS_peek_bytes(CBS *cbs, CBS *out, size_t len)
 {
@@ -462,7 +469,7 @@ parse_peek_string_cbs(struct parse *p, const char *str)
 	size_t len = strlen(str);
 
 	if (!CBS_peek_bytes(&p->cbs, &cbs, len))
-		parse_errx(p, "CBS_peek_data");
+		parse_errx(p, "CBS_peek_bytes");
 
 	return CBS_mem_equal(&cbs, (const uint8_t *)str, len);
 }
@@ -526,8 +533,7 @@ parse_empty_or_comment_line(struct parse *p)
 		return 1;
 	}
 	if (parse_peek_string_cbs(p, "#")) {
-		if (!CBS_skip(&p->cbs, CBS_len(&p->cbs)))
-			parse_errx(p, "CBS_skip");
+		parse_line_skip_to_end(p);
 		return 1;
 	}
 	return 0;
@@ -543,10 +549,8 @@ parse_string_match_line(struct parse *p)
 	string_matches = parse_get_string_cbs(p, match(p));
 	parse_state_set_int(p, string_matches);
 
-	if (!string_matches) {
-		if (!CBS_skip(&p->cbs, CBS_len(&p->cbs)))
-			parse_errx(p, "CBS_skip");
-	}
+	if (!string_matches)
+		parse_line_skip_to_end(p);
 }
 
 static int
