@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2020/10/02 19:38:39 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2024/12/27 08:02:27 tb Exp $
 
 PROGS =		verify
 
-.ifdef EOPENSSL11
-LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl11 -L/usr/local/lib/eopenssl11
-CFLAGS +=	-I/usr/local/include/eopenssl11/
+.ifdef EOPENSSL33
+LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl33 -L/usr/local/lib/eopenssl33
+CFLAGS +=	-I/usr/local/include/eopenssl33/
 .endif
 
 LDADD +=	-lcrypto
