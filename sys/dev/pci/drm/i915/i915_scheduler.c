@@ -528,7 +528,7 @@ int __init i915_scheduler_module_init(void)
 	return 0;
 
 err_priorities:
-	kmem_cache_destroy(slab_priorities);
+	kmem_cache_destroy(slab_dependencies);
 	return -ENOMEM;
 #else
 	pool_init(&slab_dependencies, sizeof(struct i915_dependency),
