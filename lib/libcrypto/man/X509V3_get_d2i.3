@@ -1,8 +1,26 @@
-.\" $OpenBSD: X509V3_get_d2i.3,v 1.23 2024/05/15 21:15:28 tb Exp $
+.\" $OpenBSD: X509V3_get_d2i.3,v 1.24 2024/12/28 12:02:35 schwarze Exp $
 .\" full merge up to: OpenSSL ff7fbfd5 Nov 2 11:52:01 2015 +0000
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023, 2024 Theo Buehler <tb@openbsd.org>
+.\" Copyright (c) 2024 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2014, 2015, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 15 2024 $
+.Dd $Mdocdate: December 28 2024 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -267,7 +285,13 @@ parameter is usually
 .Pp
 The
 .Fa flags
-parameter may be one of the following values.
+argument consists of two parts OR'ed together:
+the operation mode and the optional silent flag.
+The operation mode is the bitwise OR of the
+.Fa flags
+and the bitmask
+.Dv X509V3_ADD_OP_MASK .
+The following operation modes are recognized:
 .Pp
 .Dv X509V3_ADD_DEFAULT
 appends a new extension only if the extension does not already exist.
@@ -296,9 +320,11 @@ deletes extension
 if it exists and errors otherwise.
 No new extension is added.
 .Pp
+Any other operation mode results in an error.
+.Pp
 If
 .Dv X509V3_ADD_SILENT
-is OR'd with
+is OR'd into the
 .Fa flags ,
 any error returned will not be added to the error queue.
 .Pp
