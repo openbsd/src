@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.353 2024/12/17 14:45:00 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.354 2024/12/28 20:34:05 mvs Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -68,7 +68,12 @@
 #include <uvm/uvm_extern.h>
 #include <machine/tcb.h>
 
-int nosuidcoredump = 1;
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
+int nosuidcoredump = 1;		/* [a] */
 
 /*
  * The array below categorizes the signals and their default actions.
@@ -1745,6 +1750,7 @@ coredump(struct proc *p)
 	int error, len, incrash = 0;
 	char *name;
 	const char *dir = "/var/crash";
+	int nosuidcoredump_local = atomic_load_int(&nosuidcoredump);
 
 	atomic_setbits_int(&pr->ps_flags, PS_COREDUMP);
 
@@ -1764,8 +1770,8 @@ coredump(struct proc *p)
 	 * determines coredump placement policy.
 	 */
 	if (((pr->ps_flags & PS_SUGID) && (error = suser(p))) ||
-	   ((pr->ps_flags & PS_SUGID) && nosuidcoredump)) {
-		if (nosuidcoredump == 3) {
+	   ((pr->ps_flags & PS_SUGID) && nosuidcoredump_local)) {
+		if (nosuidcoredump_local == 3) {
 			/*
 			 * If the program directory does not exist, dumps of
 			 * that core will silently fail.
@@ -1773,7 +1779,7 @@ coredump(struct proc *p)
 			len = snprintf(name, MAXPATHLEN, "%s/%s/%u.core",
 			    dir, pr->ps_comm, pr->ps_pid);
 			incrash = KERNELPATH;
-		} else if (nosuidcoredump == 2) {
+		} else if (nosuidcoredump_local == 2) {
 			len = snprintf(name, MAXPATHLEN, "%s/%s.core",
 			    dir, pr->ps_comm);
 			incrash = KERNELPATH;
