@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.77 2024/12/20 21:30:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.78 2024/12/28 22:17:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -465,7 +465,7 @@ tcp_timer_keep(void *arg)
 	tcpstat_inc(tcps_keeptimeo);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
-	if ((tcp_always_keepalive ||
+	if ((atomic_load_int(&tcp_always_keepalive) ||
 	    tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE) &&
 	    tp->t_state <= TCPS_CLOSING) {
 		int maxidle;

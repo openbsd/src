@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.147 2024/12/26 12:16:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.148 2024/12/28 22:17:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ again:
 	txmaxseg = ulmin(so->so_snd.sb_hiwat / 2, tp->t_maxseg);
 
 	if (len > txmaxseg) {
-		if (tcp_do_tso &&
+		if (atomic_load_int(&tcp_do_tso) &&
 		    tp->t_inpcb->inp_options == NULL &&
 		    tp->t_inpcb->inp_outputopts6 == NULL &&
 #ifdef TCP_SIGNATURE

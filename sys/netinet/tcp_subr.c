@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.202 2024/12/26 10:15:27 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.203 2024/12/28 22:17:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -443,8 +443,9 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 	for (i = 0; i < TCPT_NTIMERS; i++)
 		TCP_TIMER_INIT(tp, i);
 
-	tp->sack_enable = tcp_do_sack;
-	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+	tp->sack_enable = atomic_load_int(&tcp_do_sack);
+	tp->t_flags = atomic_load_int(&tcp_do_rfc1323) ?
+	    (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
 	/*
 	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no

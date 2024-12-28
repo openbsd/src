@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.22 2024/12/20 21:30:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.23 2024/12/28 22:17:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ extern const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS];
 
 extern int tcp_delack_msecs;		/* delayed ACK timeout in millisecs */
 extern int tcptv_keep_init;
-extern int tcp_always_keepalive;	/* assume SO_KEEPALIVE is always set */
+extern int tcp_always_keepalive;	/* [a] assume SO_KEEPALIVE always set */
 extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_maxidle;			/* time to drop after starting probes */

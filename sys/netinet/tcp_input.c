@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.413 2024/12/26 12:16:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.414 2024/12/28 22:17:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ do { \
 	if (m && (m->m_flags & M_PKTHDR)) \
 		ifp = if_get(m->m_pkthdr.ph_ifidx); \
 	if (TCP_TIMER_ISARMED(tp, TCPT_DELACK) || \
-	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
+	    (atomic_load_int(&tcp_ack_on_push) && (tiflags) & TH_PUSH) || \
 	    (ifp && (ifp->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
@@ -2091,7 +2091,7 @@ dropwithreset_ratelim:
 	 * a port for which we have no socket.
 	 */
 	if (ppsratecheck(&tcp_rst_ppslim_last, &tcp_rst_ppslim_count,
-	    tcp_rst_ppslim) == 0) {
+	    atomic_load_int(&tcp_rst_ppslim)) == 0) {
 		/* XXX stat */
 		goto drop;
 	}
@@ -3809,7 +3809,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    ) {
 		tb.pf = tp->pf;
 		tb.sack_enable = tp->sack_enable;
-		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+		tb.t_flags = atomic_load_int(&tcp_do_rfc1323) ?
+		    (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 #ifdef TCP_SIGNATURE
 		if (tp->t_flags & TF_SIGNATURE)
 			tb.t_flags |= TF_SIGNATURE;
