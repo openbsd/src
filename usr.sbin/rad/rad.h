@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.28 2024/05/31 16:10:42 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.29 2024/12/28 08:58:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -34,7 +34,7 @@
 #define	MAX_RA_DELAY_TIME	500	/* 500 milliseconds */
 #define	MIN_DELAY_BETWEEN_RAS	3	/* 3 seconds */
 #define	MAX_SEARCH		1025	/* MAXDNAME in arpa/nameser.h */
-#define	DEFAULT_RDNS_LIFETIME	600 * 1.5
+#define	DEFAULT_RDNS_LIFETIME	3 * MAX_RTR_ADV_INTERVAL
 #define	PLTIME_DECAYING		1
 #define	VLTIME_DECAYING		2
 

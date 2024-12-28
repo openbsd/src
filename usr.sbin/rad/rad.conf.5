@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.26 2024/11/09 12:40:10 kn Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.27 2024/12/28 08:58:13 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2024 $
+.Dd $Mdocdate: December 28 2024 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ options are as follows:
 .It Ic lifetime Ar seconds
 The number of seconds the dns options are valid after receiving a router
 advertisement message.
-The default is 900 seconds.
+The default is 1800 seconds.
 .It Ic nameserver Pq Ar address Ns | Ns Brq Ar address ...
 IPv6 address or list of IPv6 addresses of DNS name servers.
 .It Ic search Pq Ar domain Ns | Ns Brq Ar domain ...
