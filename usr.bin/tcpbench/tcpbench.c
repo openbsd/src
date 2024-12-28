@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.71 2024/11/05 18:12:55 jan Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.72 2024/12/28 11:51:21 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -123,6 +123,7 @@ static void	tcp_stats_display(unsigned long long, long double, float,
     struct statctx *, struct tcp_info *);
 static void	tcp_process_slice(int, short, void *);
 static void	tcp_server_handle_sc(int, short, void *);
+static int	timeout_tls(int, struct tls *, int (*)(struct tls *));
 static void	tcp_server_accept(int, short, void *);
 static void	server_init(struct addrinfo *);
 static void	client_handle_sc(int, short, void *);
@@ -133,6 +134,7 @@ static void	udp_process_slice(int, short, void *);
 static int	map_tos(char *, int *);
 static void	quit(int, short, void *);
 static void	wrapup(int);
+static int	process_tls_opt(char *);
 
 /*
  * We account the mainstats here, that is the stats
@@ -639,7 +641,7 @@ tcp_server_handle_sc(int fd, short event, void *v_sc)
 	mainstats.total_bytes += n;
 }
 
-int
+static int
 timeout_tls(int s, struct tls *tls_ctx, int (*func)(struct tls *))
 {
 	struct pollfd pfd;
@@ -1065,7 +1067,7 @@ wrapup(int err)
 		exit(err);
 }
 
-int
+static int
 process_tls_opt(char *s)
 {
 	size_t len;
