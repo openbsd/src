@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.29 2024/12/28 16:10:39 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.30 2024/12/28 19:07:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,9 +67,6 @@
 
 #undef MIN_NODES
 #define MIN_NODES	4
-
-#define OBJ_BSEARCH_VALUE_ON_NOMATCH		0x01
-#define OBJ_BSEARCH_FIRST_VALUE_ON_MATCH	0x02
 
 int
 (*sk_set_cmp_func(_STACK *sk, int (*c)(const void *, const void *)))(
@@ -202,7 +199,7 @@ LCRYPTO_ALIAS(sk_delete);
 
 static const void *
 obj_bsearch_ex(const void *key, const void *base_, int num, int size,
-    int (*cmp)(const void *, const void *), int flags)
+    int (*cmp)(const void *, const void *))
 {
 	const char *base = base_;
 	int l, h, i = 0, c = 0;
@@ -223,9 +220,9 @@ obj_bsearch_ex(const void *key, const void *base_, int num, int size,
 		else
 			break;
 	}
-	if (c != 0 && !(flags & OBJ_BSEARCH_VALUE_ON_NOMATCH))
+	if (c != 0)
 		p = NULL;
-	else if (c == 0 && (flags & OBJ_BSEARCH_FIRST_VALUE_ON_MATCH)) {
+	else if (c == 0) {
 		while (i > 0 && (*cmp)(key, &(base[(i - 1) * size])) == 0)
 			i--;
 		p = &(base[i * size]);
@@ -251,8 +248,7 @@ sk_find(_STACK *st, void *data)
 	sk_sort(st);
 	if (data == NULL)
 		return (-1);
-	r = obj_bsearch_ex(&data, st->data, st->num, sizeof(void *), st->comp,
-	    OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
+	r = obj_bsearch_ex(&data, st->data, st->num, sizeof(void *), st->comp);
 	if (r == NULL)
 		return (-1);
 	return (int)((char **)r - st->data);
