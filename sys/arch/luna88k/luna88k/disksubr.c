@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.64 2024/11/08 21:47:10 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.65 2024/12/28 00:00:32 aoyama Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -127,6 +127,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		error = disklabel_om_to_bsd(bp->b_dev, slp, lp);
 		goto done;
 	}
+
+	error = checkdisklabel(bp->b_dev, bp->b_data + LABELOFFSET, lp, 0,
+	    DL_GETDSIZE(lp));
+	if (error == 0)
+		goto done;
 
  doslabel:
 	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
