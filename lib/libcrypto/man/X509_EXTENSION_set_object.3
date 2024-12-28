@@ -1,10 +1,10 @@
-.\" $OpenBSD: X509_EXTENSION_set_object.3,v 1.18 2024/05/12 11:49:47 tb Exp $
+.\" $OpenBSD: X509_EXTENSION_set_object.3,v 1.19 2024/12/28 11:04:09 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021, 2024 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 12 2024 $
+.Dd $Mdocdate: December 28 2024 $
 .Dt X509_EXTENSION_SET_OBJECT 3
 .Os
 .Sh NAME
@@ -79,7 +79,8 @@
 .Nm X509_EXTENSION_set_data ,
 .Nm X509_EXTENSION_get_object ,
 .Nm X509_EXTENSION_get_critical ,
-.Nm X509_EXTENSION_get_data
+.Nm X509_EXTENSION_get_data ,
+.Nm X509_supported_extension
 .\" In the next line, the capital "E" is not a typo.
 .\" The ASN.1 structure is called "Extension", not "extension".
 .Nd create, change, and inspect X.509 Extension objects
@@ -130,6 +131,10 @@
 .Fc
 .Ft ASN1_OCTET_STRING *
 .Fo X509_EXTENSION_get_data
+.Fa "X509_EXTENSION *ex"
+.Fc
+.Ft int
+.Fo X509_supported_extension
 .Fa "X509_EXTENSION *ex"
 .Fc
 .Sh DESCRIPTION
@@ -225,14 +230,22 @@ pointer.
 The returned pointer is an internal value which must not be freed up.
 .Pp
 .Fn X509_EXTENSION_get_critical
-returns the criticality of extension
+tests whether
 .Fa ex
-it returns 1 for critical and 0 for non-critical.
+is critical.
 .Pp
 .Fn X509_EXTENSION_get_data
 returns the data of extension
 .Fa ex .
 The returned pointer is an internal value which must not be freed up.
+.Pp
+.Fn X509_supported_extension
+checks whether
+.Fa ex
+is of a type supported by the verifier.
+The list of supported extension types is hardcoded into the library.
+If an extension is critical but unsupported,
+the certificate will normally be rejected.
 .Pp
 These functions manipulate the contents of an extension directly.
 Most applications will want to parse or encode and add an extension:
@@ -277,6 +290,11 @@ returns 0 for non-critical or 1 for critical.
 returns an
 .Vt ASN1_OCTET_STRING
 pointer.
+.Pp
+.Fn X509_supported_extension
+returns 1 if the type of
+.Fa ex
+is supported by the verifier or 0 otherwise.
 .Sh SEE ALSO
 .Xr ACCESS_DESCRIPTION_new 3 ,
 .Xr AUTHORITY_KEYID_new 3 ,
@@ -324,3 +342,7 @@ and
 in SSLeay 0.8.0.
 These functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn X509_supported_extension
+first appeared in OpenSSL 0.9.7 and has been available since
+.Ox 3.2 .
