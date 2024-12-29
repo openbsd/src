@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_gcm.3,v 1.1 2024/12/17 18:11:44 schwarze Exp $
+.\" $OpenBSD: EVP_aes_128_gcm.3,v 1.2 2024/12/29 12:27:28 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL EVP_EncryptInit.pod 0874d7f2 Oct 11 13:13:47 2022 +0100
 .\" OpenSSL EVP_aes.pod a1ec85c1 Apr 21 10:49:12 2020 +0100
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 17 2024 $
+.Dd $Mdocdate: December 29 2024 $
 .Dt EVP_AES_128_GCM 3
 .Os
 .Sh NAME
@@ -97,6 +97,11 @@ For GCM mode ciphers, the behaviour of the EVP interface is subtly
 altered and several additional
 .Xr EVP_CIPHER_CTX_ctrl 3
 operations are required to function correctly.
+Some of the
+.Dv EVP_CTRL_GCM_*
+control commands are older aliases for corresponding
+.Dv EVP_CTRL_AEAD_*
+constants as indicated below.
 .Pp
 To avoid using the cumbersome and error-prone API documented
 in the present manual page, consider using the functions documented in
@@ -109,7 +114,7 @@ instead.
 .\" EVP_GCM_TLS_EXPLICIT_IV_LEN and EVP_GCM_TLS_TAG_LEN (used internally
 .\" only in aes_gcm_tls_cipher(), which is unused)
 .Bl -tag -width Ds
-.It Dv EVP_CTRL_GCM_SET_IVLEN
+.It Dv EVP_CTRL_AEAD_SET_IVLEN Pq == Dv EVP_CTRL_GCM_SET_IVLEN
 Set the length of the initialization vector to
 .Fa arg
 bytes; the
@@ -124,7 +129,7 @@ Using this control command is discouraged because section 5.2.1.1 of the
 specification explicitly recommends that implementations of GCM restrict
 support to the default IV length of 12 bytes for interoperability,
 efficiency, and simplicity of design.
-.It Dv EVP_CTRL_GCM_SET_IV_FIXED
+.It Dv EVP_CTRL_AEAD_SET_IV_FIXED Pq == Dv EVP_CTRL_GCM_SET_IV_FIXED
 Usually, \-1 is passed for
 .Fa arg .
 In that case, the complete initialization vector is copied from
@@ -158,7 +163,7 @@ that may have been configured earlier and always operates on the
 last eight bytes of the initialization vector.
 It is an error to issue this command
 when no key or no initialization vector is set.
-.It Dv EVP_CTRL_GCM_GET_TAG
+.It Dv EVP_CTRL_AEAD_GET_TAG Pq == Dv EVP_CTRL_GCM_GET_TAG
 Write
 .Fa arg
 bytes of the tag value to the location pointed to by
@@ -194,7 +199,7 @@ When default lengths are in use, pass 8 for
 In that case, this control command sets the invocation field.
 It is an error to issue this command
 when no key or no initialization vector is set, or when encrypting.
-.It Dv EVP_CTRL_GCM_SET_TAG
+.It Dv EVP_CTRL_AEAD_SET_TAG Pq == Dv EVP_CTRL_GCM_SET_TAG
 Set the expected tag to the
 .Fa arg
 bytes located at

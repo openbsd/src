@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_ccm.3,v 1.4 2024/12/23 22:06:00 jsg Exp $
+.\" $OpenBSD: EVP_aes_128_ccm.3,v 1.5 2024/12/29 12:27:28 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL EVP_EncryptInit.pod 0874d7f2 Oct 11 13:13:47 2022 +0100
 .\" OpenSSL EVP_aes.pod a1ec85c1 Apr 21 10:49:12 2020 +0100
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 23 2024 $
+.Dd $Mdocdate: December 29 2024 $
 .Dt EVP_AES_128_CCM 3
 .Os
 .Sh NAME
@@ -105,6 +105,11 @@ For CCM mode ciphers, the behaviour of the EVP interface is subtly
 altered and several additional
 .Xr EVP_CIPHER_CTX_ctrl 3
 operations are required to function correctly.
+Some of the
+.Dv EVP_CTRL_CCM_*
+control commands are older aliases for corresponding
+.Dv EVP_CTRL_AEAD_*
+constants as indicated below.
 .Pp
 The less cumbersome and less error-prone
 .Xr EVP_AEAD_CTX_new 3
@@ -145,7 +150,7 @@ for the length field reduces des maximum size of messages that can be sent,
 but in return allows transmitting more messages with the same key.
 It is an error to pass less than 2 or more than the default value of 8 for
 .Fa arg .
-.It Dv EVP_CTRL_CCM_SET_IVLEN
+.It Dv EVP_CTRL_AEAD_SET_IVLEN Pq == Dv EVP_CTRL_CCM_SET_IVLEN
 Set the size of the nonce to
 .Fa arg
 bytes and the size
@@ -170,7 +175,7 @@ argument, with the other two arguments pointing to the desired AES key
 and to the desired nonce.
 .Ss Encryption controls
 .Bl -tag -width Ds
-.It Dv EVP_CTRL_CCM_SET_TAG
+.It Dv EVP_CTRL_AEAD_SET_TAG Pq == Dv EVP_CTRL_CCM_SET_TAG
 If the
 .Fa ptr
 argument is
@@ -195,7 +200,7 @@ when
 is not configured for encrypting.
 Issuing this control command when an encryption key is already configured
 silently causes data corruption.
-.It Dv EVP_CTRL_CCM_GET_TAG
+.It Dv EVP_CTRL_AEAD_GET_TAG Pq == Dv EVP_CTRL_CCM_GET_TAG
 Store the
 .Fa arg
 bytes of the tag in the memory provided by the caller starting at
@@ -248,7 +253,7 @@ argument set to
 .Dv NULL .
 .Ss Decryption controls
 .Bl -tag -width Ds
-.It Dv EVP_CTRL_CCM_SET_TAG
+.It Dv EVP_CTRL_AEAD_SET_TAG Pq == Dv EVP_CTRL_CCM_SET_TAG
 If the
 .Fa ptr
 argument is not
@@ -453,6 +458,94 @@ for (i = 0; i < out_len; i++) {
 	printf(" %02X", out_buf[i]);
 }
 putchar('\en');
+
+EVP_CIPHER_CTX_free(ctx);
+.Ed
+.Pp
+The reverse operation for the same test vector,
+i.e. decrypting and comparing the digest,
+is implemented by the following code.
+.Pp
+The variable declarations and definitions up to the call of
+.Xr EVP_CIPHER_CTX_new 3
+are the same as above.
+The chief differences are:
+.Bl -dash -width 1n -compact
+.It
+The tag is not part of the output,
+so the total output length is shorter.
+.It
+No
+.Xr memcmp 3
+of the tag takes place.
+Instead, the control command
+.Dv EVP_CTRL_CCM_SET_TAG
+requires the tag that is going to be verified as an additional argument.
+.It
+While
+.Xr EVP_EncryptFinal 3
+is an optional no-op,
+.Xr EVP_DecryptFinal 3
+is not called and would fail.
+.El
+.Bd -literal -offset indent
+const int out_len = aad_len + text_len;
+
+/* configuration */
+ctx = EVP_CIPHER_CTX_new();
+if (ctx == NULL)
+	err(1, "EVP_CIPHER_CTX_new");
+
+if (EVP_DecryptInit(ctx, EVP_aes_128_ccm(), NULL, NULL) != 1)
+	err(1, "EVP_DecryptInit(NULL)");
+
+if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, size_len, NULL) <= 0)
+	err(1, "EVP_CTRL_CCM_SET_L(%d)", size_len);
+
+if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG,
+    tag_len, (void *)wanted_tag) <= 0)
+	err(1, "EVP_CTRL_CCM_SET_TAG(%d)", tag_len);
+
+/* process input data */
+if (EVP_DecryptInit(ctx, NULL, key, nonce) != 1)
+	err(1, "EVP_DecryptInit(key, nonce)");
+
+if (EVP_DecryptUpdate(ctx, NULL, &irv, NULL, text_len) != 1)
+	err(1, "EVP_DecryptUpdate(len = %d)", text_len);
+if (irv != text_len)
+	errx(1, "text length: want %d, got %d", text_len, irv);
+
+irv = -1;
+if (EVP_DecryptUpdate(ctx, NULL, &irv, aad, aad_len) != 1)
+	err(1, "EVP_DecryptUpdate(AAD)");
+memcpy(out_p, aad, aad_len);
+out_p += aad_len;
+
+irv = -1;
+if (EVP_DecryptUpdate(ctx, out_p, &irv, ciphertext, text_len) != 1)
+	err(1, "EVP_DecryptUpdate(ciphertext)");
+if (irv != text_len)
+	errx(1, "text_len: want %d, got %d", text_len, irv);
+out_p += irv;
+
+/* Do not call EVP_DecryptFinal(3); it would fail and do nothing. */
+
+/* check output data */
+if (memcmp(out_buf + aad_len, plaintext, text_len) != 0)
+	errx(1, "plaintext mismatch");
+if (out_p != out_end)
+	errx(1, "end of output: want %p, got %p", out_end, out_p);
+
+printf("Total packet length = %d.", out_len);
+printf(" [Decrypted and Authenticated Input]");
+for (i = 0; i < out_len; i++) {
+	if (i % 16 == 0)
+		printf("\n         ");
+	if (i % 4 == 0)
+		putchar(' ');
+	printf(" %02X", out_buf[i]);
+}
+putchar('\n');
 
 EVP_CIPHER_CTX_free(ctx);
 .Ed
