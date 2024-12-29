@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.231 2024/12/22 20:30:04 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.232 2024/12/29 14:30:46 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2931,9 +2931,9 @@ uvideo_querycap(void *v, struct v4l2_capability *caps)
 	struct uvideo_softc *sc = v;
 
 	bzero(caps, sizeof(*caps));
-	strlcpy(caps->driver, DEVNAME(sc), sizeof(caps->driver));
+	strlcpy(caps->driver, "uvideo", sizeof(caps->driver));
 	strlcpy(caps->card, sc->sc_udev->product, sizeof(caps->card));
-	strlcpy(caps->bus_info, "usb", sizeof(caps->bus_info));
+	strlcpy(caps->bus_info, DEVNAME(sc), sizeof(caps->bus_info));
 
 	caps->version = 1;
 	caps->device_caps = V4L2_CAP_VIDEO_CAPTURE
