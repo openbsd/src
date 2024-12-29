@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.8 2024/12/26 00:04:24 tb Exp $
+#       $OpenBSD: Makefile,v 1.9 2024/12/29 20:14:15 tb Exp $
 
 REGRESS_SLOW_TARGETS += run-regress-mlkem_iteration_tests
 
@@ -33,7 +33,6 @@ CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/mlkem
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/sha
-CFLAGS +=	-DLIBRESSL_INTERNAL
 
 WARNINGS = Yes
 
