@@ -10,6 +10,12 @@
 
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
 #define check_add_overflow(x, y, sum)	__builtin_add_overflow(x, y, sum)
+#define check_mul_overflow(x, y, z)	__builtin_mul_overflow(x, y, z)
+#else
+#define check_mul_overflow(x, y, z) ({		\
+	*(z) = (x) * (y);			\
+	0;					\
+})
 #endif
 
 #endif
