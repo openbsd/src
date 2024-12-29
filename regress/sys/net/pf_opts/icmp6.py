@@ -22,7 +22,6 @@ payload=b"ABCDEFGHIJKLMNOP"
 packet=IPv6(src=ADDR6, dst=ADDR6)/ \
     ICMPv6Unknown(type=6, code=0, msgbody=payload)
 
-# send does not work for some reason, add the bpf loopback layer manually
-#send(packet)
+# send() does not work for some reason, add the bpf loopback layer manually
 bpf=pack('!I', 24) + bytes(packet)
 sendp(bpf, iface=IF)

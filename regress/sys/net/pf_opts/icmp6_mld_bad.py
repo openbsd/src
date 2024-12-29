@@ -22,7 +22,6 @@ packet=IPv6(src=ADDR6, dst="ff02::1", hlim=1)/ \
     IPv6ExtHdrHopByHop(options=HBHOptUnknown(otype=3))/ \
     ICMPv6MLQuery()
 
-# send does not work for some reason, add the bpf loopback layer manually
-#send(packet)
+# send() does not work for some reason, add the bpf loopback layer manually
 bpf=pack('!I', 24) + bytes(packet)
 sendp(bpf, iface=IF)
