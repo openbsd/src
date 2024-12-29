@@ -1,8 +1,10 @@
-# $OpenBSD: Makefile,v 1.3 2023/12/13 12:14:10 kn Exp $
+# $OpenBSD: Makefile,v 1.4 2024/12/29 06:43:33 anton Exp $
 
 REGRESS_TARGETS= \
 		${DASHO_TARGETS:C/^/t-dasho-/} \
 		${REDIRECT_TARGETS:C/^/t-redirect-/}
+
+CLEANFILES=	*.log
 
 dfile=file:../src/-
 xfile=file:../src/X
