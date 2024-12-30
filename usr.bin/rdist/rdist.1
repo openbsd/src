@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.50 2024/11/29 23:46:40 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.51 2024/12/30 07:13:33 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: November 29 2024 $
+.Dd $Mdocdate: December 30 2024 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -416,7 +416,7 @@ to do the updating.
 Each entry has one of the following formats.
 .Bd -literal -offset indent
 <variable name> = <name list>
-[ label: ] <source list> -< <destination list> <command list>
+[ label: ] <source list> -> <destination list> <command list>
 [ label: ] <source list> :: <timestamp file> <command list>
 .Ed
 .Pp
