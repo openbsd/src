@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.66 2024/11/10 13:03:22 bluhm Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.67 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -85,9 +85,6 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	struct socket *so = (struct socket *)fp->f_data;
 
 	switch (cmd) {
-
-	case FIONBIO:
-		break;
 
 	case FIOASYNC:
 		solock(so);

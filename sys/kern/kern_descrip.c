@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.209 2024/08/20 13:29:25 mvs Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.210 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -484,17 +484,8 @@ restart:
 			tmp &= ~FCNTLFLAGS;
 			tmp |= FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
 		} while (atomic_cas_uint(&fp->f_flag, prev, tmp) != prev);
-		tmp = fp->f_flag & FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
-		if (error)
-			break;
 		tmp = fp->f_flag & FASYNC;
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
-		if (!error)
-			break;
-		atomic_clearbits_int(&fp->f_flag, FNONBLOCK);
-		tmp = 0;
-		(void) (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		break;
 
 	case F_GETOWN:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.228 2024/11/26 10:42:58 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.229 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1071,10 +1071,6 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case BIOCSDIRFILT:	/* set direction filter */
 		d->bd_dirfilt = (*(u_int *)addr) &
 		    (BPF_DIRECTION_IN|BPF_DIRECTION_OUT);
-		break;
-
-	case FIONBIO:		/* Non-blocking I/O */
-		/* let vfs to keep track of this */
 		break;
 
 	case FIOASYNC:		/* Send signal on receive packets */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.57 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: midi.c,v 1.58 2024/12/30 02:46:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -410,9 +410,6 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		return ENXIO;
 	error = 0;
 	switch(cmd) {
-	case FIONBIO:
-		/* All handled in the upper FS layer */
-		break;
 	default:
 		error = ENOTTY;
 	}

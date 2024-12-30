@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.108 2024/10/18 05:52:32 miod Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.109 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -303,8 +303,6 @@ fifo_ioctl(void *v)
 	struct file filetmp;
 	int error;
 
-	if (ap->a_command == FIONBIO)
-		return (0);
 	if (ap->a_fflag & FREAD) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.147 2024/10/27 15:42:48 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.148 2024/12/30 02:46:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -673,9 +673,6 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	int error = 0;
 
 	switch (cmd) {
-
-	case FIONBIO:
-		break;
 
 	case FIOASYNC:
 		rw_enter_write(mpipe->pipe_lock);

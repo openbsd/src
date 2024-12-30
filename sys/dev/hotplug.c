@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.24 2023/09/22 22:12:32 mvs Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.25 2024/12/30 02:46:00 guenther Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -193,9 +193,6 @@ hotplugioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case FIOASYNC:
 		/* ignore */
-	case FIONBIO:
-		/* handled in the upper fs layer */
-		break;
 	default:
 		return (ENOTTY);
 	}

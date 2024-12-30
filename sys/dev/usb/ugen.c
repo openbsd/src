@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.118 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: ugen.c,v 1.119 2024/12/30 02:46:00 guenther Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -978,9 +978,6 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 		return (EIO);
 
 	switch (cmd) {
-	case FIONBIO:
-		/* All handled in the upper FS layer. */
-		return (0);
 	case USB_SET_SHORT_XFER:
 		if (endpt == USB_CONTROL_ENDPOINT)
 			return (EINVAL);

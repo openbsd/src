@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.132 2024/10/22 22:05:17 jsg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.133 2024/12/30 02:46:00 guenther Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -443,8 +443,6 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    (struct pipex_session_descr_req *)addr);
 		break;
 
-	case FIONBIO:
-		break;
 	case FIONREAD:
 		*(int *)addr = mq_hdatalen(&pxd->pxd_svcq);
 		break;
@@ -1220,8 +1218,6 @@ pppacioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	int error = 0;
 
 	switch (cmd) {
-	case FIONBIO:
-		break;
 	case FIONREAD:
 		*(int *)data = mq_hdatalen(&sc->sc_mq);
 		break;

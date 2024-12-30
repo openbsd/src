@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.249 2024/11/17 23:31:01 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.250 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -757,8 +757,6 @@ tun_dev_ioctl(dev_t dev, u_long cmd, void *data)
 		error = tun_del_capabilities(sc);
 		break;
 
-	case FIONBIO:
-		break;
 	case FIOASYNC:
 		if (*(int *)data)
 			sc->sc_flags |= TUN_ASYNC;

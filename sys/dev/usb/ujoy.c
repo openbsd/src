@@ -1,4 +1,4 @@
-/*	$OpenBSD: ujoy.c,v 1.5 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: ujoy.c,v 1.6 2024/12/30 02:46:00 guenther Exp $ */
 
 /*
  * Copyright (c) 2021 Thomas Frohwein	<thfr@openbsd.org>
@@ -125,7 +125,6 @@ int
 ujoyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	switch (cmd) {
-	case FIONBIO:
 	case FIOASYNC:
 	case USB_GET_DEVICEINFO:
     	case USB_GET_REPORT:

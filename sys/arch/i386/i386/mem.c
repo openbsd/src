@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.59 2024/11/18 08:42:53 mvs Exp $ */
+/*	$OpenBSD: mem.c,v 1.60 2024/12/30 02:46:00 guenther Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -249,7 +249,6 @@ int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
         switch (cmd) {
-        case FIONBIO:
         case FIOASYNC:
                 /* handled by fd layer */
                 return 0;

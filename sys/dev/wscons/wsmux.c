@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.59 2024/08/16 12:22:17 miod Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.60 2024/12/30 02:46:00 guenther Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -491,10 +491,6 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		DPRINTF(("%s: save rawkbd = %d\n", __func__, sc->sc_rawkbd));
 		break;
 #endif
-	case FIONBIO:
-		DPRINTF(("%s: FIONBIO\n", sc->sc_base.me_dv.dv_xname));
-		return (0);
-
 	case FIOASYNC:
 		DPRINTF(("%s: FIOASYNC\n", sc->sc_base.me_dv.dv_xname));
 		evar = sc->sc_base.me_evp;

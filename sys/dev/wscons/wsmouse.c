@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.73 2024/06/26 01:40:49 jsg Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.74 2024/12/30 02:46:00 guenther Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -492,9 +492,6 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 	}
 
 	switch (cmd) {
-	case FIONBIO:		/* we will remove this someday (soon???) */
-		return (0);
-
 	case FIOASYNC:
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);

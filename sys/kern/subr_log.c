@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.79 2024/07/24 13:37:05 claudio Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.80 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -434,9 +434,6 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 		mtx_enter(&log_mtx);
 		*(int *)data = (int)msgbuf_getlen(msgbufp);
 		mtx_leave(&log_mtx);
-		break;
-
-	case FIONBIO:
 		break;
 
 	case FIOASYNC:

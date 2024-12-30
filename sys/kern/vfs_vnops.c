@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.123 2024/11/05 06:03:19 jsg Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.124 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -515,7 +515,7 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 				break;
 			*(int *)data = vattr.va_size - foffset(fp);
 
-		} else if (com == FIONBIO || com == FIOASYNC)	/* XXX */
+		} else if (com == FIOASYNC)			/* XXX */
 			error = 0;				/* XXX */
 		break;
 

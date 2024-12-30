@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.119 2024/03/25 13:01:49 mvs Exp $ */
+/* $OpenBSD: wskbd.c,v 1.120 2024/12/30 02:46:00 guenther Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1002,9 +1002,6 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 	 * Try the generic ioctls that the wskbd interface supports.
 	 */
 	switch (cmd) {
-	case FIONBIO:		/* we will remove this someday (soon???) */
-		return (0);
-
 	case FIOASYNC:
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);

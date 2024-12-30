@@ -1039,7 +1039,6 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 	    file_priv->authenticated);
 
 	switch (cmd) {
-	case FIONBIO:
 	case FIOASYNC:
 		return 0;
 	}

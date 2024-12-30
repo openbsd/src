@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.177 2024/07/08 13:17:12 claudio Exp $	*/
+/*	$OpenBSD: tty.c,v 1.178 2024/12/30 02:46:00 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -764,8 +764,6 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			CLR(tp->t_state, TS_ASYNC);
 		splx(s);
 		break;
-	case FIONBIO:			/* set/clear non-blocking i/o */
-		break;			/* XXX: delete. */
 	case FIONREAD:			/* get # bytes to read */
 		s = spltty();
 		*(int *)data = ttnread(tp);

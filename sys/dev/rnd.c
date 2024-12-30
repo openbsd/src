@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.229 2024/08/02 01:53:21 guenther Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.230 2024/12/30 02:46:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -798,9 +798,6 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case FIOASYNC:
 		/* No async flag in softc so this is a no-op. */
-		break;
-	case FIONBIO:
-		/* Handled in the upper FS layer. */
 		break;
 	default:
 		return ENOTTY;

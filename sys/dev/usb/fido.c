@@ -1,4 +1,4 @@
-/*	$OpenBSD: fido.c,v 1.6 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: fido.c,v 1.7 2024/12/30 02:46:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2019 Reyk Floeter <reyk@openbsd.org>
@@ -78,7 +78,6 @@ fidoioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	int	 error;
 
 	switch (cmd) {
-	case FIONBIO:
 	case FIOASYNC:
 	case USB_GET_DEVICEINFO:
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.209 2024/10/22 21:50:02 jsg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.210 2024/12/30 02:46:00 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1752,9 +1752,6 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 		tsleep_nsec(&sc->quiesce, 0, "au_qio", INFSLP);
 
 	switch (cmd) {
-	case FIONBIO:
-		/* All handled in the upper FS layer. */
-		break;
 	case AUDIO_GETPOS:
 		mtx_enter(&audio_lock);
 		ap = (struct audio_pos *)addr;
@@ -1907,9 +1904,6 @@ audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr,
 		tsleep_nsec(&sc->quiesce, 0, "mix_qio", INFSLP);
 
 	switch (cmd) {
-	case FIONBIO:
-		/* All handled in the upper FS layer. */
-		break;
 	case AUDIO_MIXER_DEVINFO:
 		return audio_mixer_devinfo(sc, addr);
 	case AUDIO_MIXER_READ:

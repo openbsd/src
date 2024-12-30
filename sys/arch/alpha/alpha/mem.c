@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.37 2024/11/18 08:42:53 mvs Exp $ */
+/* $OpenBSD: mem.c,v 1.38 2024/12/30 02:46:00 guenther Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -246,7 +246,6 @@ int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	switch (cmd) {
-	case FIONBIO:
 	case FIOASYNC:
 		/* handled by fd layer */
 		return 0;
