@@ -2272,6 +2272,7 @@
 ./usr/share/man/man3/__fpending.3
 ./usr/share/man/man3/__tfork_thread.3
 ./usr/share/man/man3/a2d_ASN1_OBJECT.3
+./usr/share/man/man3/a2i_ipadd.3
 ./usr/share/man/man3/a64l.3
 ./usr/share/man/man3/abort.3
 ./usr/share/man/man3/abs.3
