@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.414 2024/12/28 22:17:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.415 2024/12/30 12:20:39 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3103,21 +3103,22 @@ tcp_mss_adv(struct mbuf *m, int af)
 
 /*
  * Locks used to protect global data and struct members:
+ *	a	atomic operations
  *	N	net lock
  *	S	syn_cache_mtx		tcp syn cache global mutex
  */
 
 /* syn hash parameters */
-int	tcp_syn_hash_size = TCP_SYN_HASH_SIZE;	/* [N] size of hash table */
-int	tcp_syn_cache_limit =			/* [N] global entry limit */
+int	tcp_syn_hash_size = TCP_SYN_HASH_SIZE;	/* [S] size of hash table */
+int	tcp_syn_cache_limit =			/* [a] global entry limit */
 	    TCP_SYN_HASH_SIZE * TCP_SYN_BUCKET_SIZE;
-int	tcp_syn_bucket_limit =			/* [N] per bucket limit */
+int	tcp_syn_bucket_limit =			/* [a] per bucket limit */
 	    3 * TCP_SYN_BUCKET_SIZE;
-int	tcp_syn_use_limit = 100000;		/* [N] reseed after uses */
+int	tcp_syn_use_limit = 100000;		/* [S] reseed after uses */
 
 struct pool syn_cache_pool;
-struct syn_cache_set tcp_syn_cache[2];
-int tcp_syn_cache_active;
+struct syn_cache_set tcp_syn_cache[2];		/* [S] */
+int tcp_syn_cache_active;			/* [S] */
 struct mutex syn_cache_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 #define SYN_HASH(sa, sp, dp, rand) \
@@ -3212,13 +3213,15 @@ syn_cache_init(void)
 void
 syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 {
-	struct syn_cache_set *set = &tcp_syn_cache[tcp_syn_cache_active];
+	struct syn_cache_set *set;
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
 	int i;
 
 	NET_ASSERT_LOCKED();
 	MUTEX_ASSERT_LOCKED(&syn_cache_mtx);
+
+	set = &tcp_syn_cache[tcp_syn_cache_active];
 
 	/*
 	 * If there are no entries in the hash table, reinitialize
@@ -3257,7 +3260,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 * Make sure that we don't overflow the per-bucket
 	 * limit or the total cache size limit.
 	 */
-	if (scp->sch_length >= tcp_syn_bucket_limit) {
+	if (scp->sch_length >= atomic_load_int(&tcp_syn_bucket_limit)) {
 		tcpstat_inc(tcps_sc_bucketoverflow);
 		/*
 		 * Someone might attack our bucket hash function.  Reseed
@@ -3279,7 +3282,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 #endif
 		syn_cache_rm(sc2);
 		syn_cache_put(sc2);
-	} else if (set->scs_count >= tcp_syn_cache_limit) {
+	} else if (set->scs_count >= atomic_load_int(&tcp_syn_cache_limit)) {
 		struct syn_cache_head *scp2, *sce;
 
 		tcpstat_inc(tcps_sc_overflowed);

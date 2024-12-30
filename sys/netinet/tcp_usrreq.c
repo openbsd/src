@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.233 2024/12/19 22:11:35 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.234 2024/12/30 12:20:39 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1341,7 +1341,7 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 	set = &tcp_syn_cache[tcp_syn_cache_active];
 	tcpstat.tcps_sc_hash_size = set->scs_size;
 	tcpstat.tcps_sc_entry_count = set->scs_count;
-	tcpstat.tcps_sc_entry_limit = tcp_syn_cache_limit;
+	tcpstat.tcps_sc_entry_limit = atomic_load_int(&tcp_syn_cache_limit);
 	tcpstat.tcps_sc_bucket_maxlen = 0;
 	for (i = 0; i < set->scs_size; i++) {
 		if (tcpstat.tcps_sc_bucket_maxlen <
@@ -1349,7 +1349,7 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 			tcpstat.tcps_sc_bucket_maxlen =
 				set->scs_buckethead[i].sch_length;
 	}
-	tcpstat.tcps_sc_bucket_limit = tcp_syn_bucket_limit;
+	tcpstat.tcps_sc_bucket_limit = atomic_load_int(&tcp_syn_bucket_limit);
 	tcpstat.tcps_sc_uses_left = set->scs_use;
 	mtx_leave(&syn_cache_mtx);
 
@@ -1364,7 +1364,7 @@ int
 tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error, nval;
+	int error, oval, nval;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
@@ -1457,30 +1457,29 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (tcp_sysctl_tcpstat(oldp, oldlenp, newp));
 
 	case TCPCTL_SYN_USE_LIMIT:
-		NET_LOCK();
+		oval = nval = atomic_load_int(&tcp_syn_use_limit);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &tcp_syn_use_limit, 0, INT_MAX);
-		if (!error && newp != NULL) {
+		    &nval, 0, INT_MAX);
+		if (!error && oval != nval) {
 			/*
 			 * Global tcp_syn_use_limit is used when reseeding a
 			 * new cache.  Also update the value in active cache.
 			 */
 			mtx_enter(&syn_cache_mtx);
-			if (tcp_syn_cache[0].scs_use > tcp_syn_use_limit)
-				tcp_syn_cache[0].scs_use = tcp_syn_use_limit;
-			if (tcp_syn_cache[1].scs_use > tcp_syn_use_limit)
-				tcp_syn_cache[1].scs_use = tcp_syn_use_limit;
+			if (tcp_syn_cache[0].scs_use > nval)
+				tcp_syn_cache[0].scs_use = nval;
+			if (tcp_syn_cache[1].scs_use > nval)
+				tcp_syn_cache[1].scs_use = nval;
+			tcp_syn_use_limit = nval;
 			mtx_leave(&syn_cache_mtx);
 		}
-		NET_UNLOCK();
 		return (error);
 
 	case TCPCTL_SYN_HASH_SIZE:
-		NET_LOCK();
-		nval = tcp_syn_hash_size;
+		oval = nval = atomic_load_int(&tcp_syn_hash_size);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &nval, 1, 100000);
-		if (!error && nval != tcp_syn_hash_size) {
+		if (!error && oval != nval) {
 			/*
 			 * If global hash size has been changed,
 			 * switch sets as soon as possible.  Then
@@ -1494,7 +1493,6 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			tcp_syn_hash_size = nval;
 			mtx_leave(&syn_cache_mtx);
 		}
-		NET_UNLOCK();
 		return (error);
 
 	default:
