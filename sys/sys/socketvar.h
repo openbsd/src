@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.134 2024/09/09 07:38:45 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.135 2024/12/30 12:12:35 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -215,12 +215,6 @@ soref(struct socket *so)
 	refcnt_take(&so->so_refcnt);
 }
 
-static inline void
-sorele(struct socket *so)
-{
-	refcnt_rele_wake(&so->so_refcnt);
-}
-
 /*
  * Macros for sockets and socket buffering.
  */
@@ -428,6 +422,7 @@ int	socreate(int, struct socket **, int, int);
 int	sodisconnect(struct socket *);
 struct socket *soalloc(const struct protosw *, int);
 void	sofree(struct socket *, int);
+void	sorele(struct socket *, int);
 int	sogetopt(struct socket *, int, int, struct mbuf *);
 void	sohasoutofband(struct socket *);
 void	soisconnected(struct socket *);

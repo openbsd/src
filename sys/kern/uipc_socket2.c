@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.161 2024/12/26 12:16:17 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.162 2024/12/30 12:12:35 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ soisconnected(struct socket *so)
 		int persocket = solock_persocket(so);
 
 		if (persocket) {
-			soref(so);
 			soref(head);
 
 			sounlock(so);
@@ -111,15 +110,10 @@ soisconnected(struct socket *so)
 			solock(so);
 
 			if (so->so_onq != &head->so_q0) {
-				sounlock(head);
-				sorele(head);
-				sorele(so);
-
+				sorele(head, 0);
 				return;
 			}
 
-			sorele(head);
-			sorele(so);
 		}
 
 		soqremque(so, 0);
@@ -128,7 +122,7 @@ soisconnected(struct socket *so)
 		wakeup_one(&head->so_timeo);
 
 		if (persocket)
-			sounlock(head);
+			sorele(head, 0);
 	} else {
 		wakeup(&so->so_timeo);
 		sorwakeup(so);
