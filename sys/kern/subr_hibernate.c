@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.146 2024/12/26 02:46:38 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.147 2024/12/31 17:16:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1701,8 +1701,9 @@ hibernate_zlib_reset(union hibernate_info *hib, int deflate)
 	hibernate_state->hib_stream.zfree = (free_func)hibernate_zlib_free;
 
 	/* Initialize the hiballoc arena for zlib allocs/frees */
-	hiballoc_init(&hibernate_state->hiballoc_arena,
-	    (caddr_t)hibernate_zlib_start, hibernate_zlib_size);
+	if (hiballoc_init(&hibernate_state->hiballoc_arena,
+	    (caddr_t)hibernate_zlib_start, hibernate_zlib_size))
+		return 1;
 
 	if (deflate) {
 		return deflateInit(&hibernate_state->hib_stream,
@@ -1756,9 +1757,13 @@ hibernate_read_image(union hibernate_info *hib)
 
 	/* Read the chunktable from disk into the piglet chunktable */
 	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE;
-	    i += MAXPHYS, blkctr += btodb(MAXPHYS))
-		hibernate_block_io(hib, blkctr, MAXPHYS,
-		    chunktable + i, 0);
+	    i += MAXPHYS, blkctr += btodb(MAXPHYS)) {
+		if (hibernate_block_io(hib, blkctr, MAXPHYS,
+		    chunktable + i, 0)) {
+			status = 1;
+			goto unmap;
+		}
+	}
 
 	blkctr = hib->image_offset;
 	compressed_size = 0;
@@ -1786,8 +1791,11 @@ hibernate_read_image(union hibernate_info *hib)
 	image_end = pig_end & ~(HIBERNATE_CHUNK_SIZE - 1);
 	image_start = image_end - disk_size;
 
-	hibernate_read_chunks(hib, image_start, image_end, disk_size,
-	    chunks);
+	if (hibernate_read_chunks(hib, image_start, image_end, disk_size,
+	    chunks)) {
+		status = 1;
+		goto unmap;
+	}
 
 	/* Prepare the resume time pmap/page table */
 	hibernate_populate_resume_pt(hib, image_start, image_end);
@@ -1814,7 +1822,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	paddr_t img_cur, piglet_base;
 	daddr_t blkctr;
 	size_t processed, compressed_size, read_size;
-	int nchunks, nfchunks, num_io_pages;
+	int err, nchunks, nfchunks, num_io_pages;
 	vaddr_t tempva, hibernate_fchunk_area;
 	short *fchunks, i, j;
 
@@ -1879,12 +1887,12 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 
 	img_cur = pig_start;
 
-	for (i = 0; i < nfchunks; i++) {
+	for (i = 0, err = 0; i < nfchunks && err == 0; i++) {
 		blkctr = chunks[fchunks[i]].offset + hib->image_offset;
 		processed = 0;
 		compressed_size = chunks[fchunks[i]].compressed_size;
 
-		while (processed < compressed_size) {
+		while (processed < compressed_size && err == 0) {
 			if (compressed_size - processed >= MAXPHYS)
 				read_size = MAXPHYS;
 			else
@@ -1910,7 +1918,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 
 			pmap_update(pmap_kernel());
 
-			hibernate_block_io(hib, blkctr, read_size,
+			err = hibernate_block_io(hib, blkctr, read_size,
 			    tempva + (img_cur & PAGE_MASK), 0);
 
 			blkctr += btodb(read_size);
@@ -1926,7 +1934,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 	pmap_kremove(hibernate_fchunk_area, 24 * PAGE_SIZE);
 	pmap_update(pmap_kernel());
 
-	return (0);
+	return (i != nfchunks);
 }
 
 /*
@@ -2011,8 +2019,10 @@ hibernate_suspend(void)
 	 * Give the device-specific I/O function a notification that we're
 	 * done, and that it can clean up or shutdown as needed.
 	 */
-	hib->io_func(hib->dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib->io_page);
-	return (0);
+	if (hib->io_func(hib->dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib->io_page))
+		return (1);
+	else
+		return (0);
 }
 
 int
