@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.234 2024/12/30 12:20:39 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.235 2024/12/31 12:19:46 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -302,10 +302,12 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	ti->tcpi_so_rcv_sb_lowat = so->so_rcv.sb_lowat;
 	ti->tcpi_so_rcv_sb_wat = so->so_rcv.sb_wat;
 	mtx_leave(&so->so_rcv.sb_mtx);
+	mtx_enter(&so->so_snd.sb_mtx);
 	ti->tcpi_so_snd_sb_cc = so->so_snd.sb_cc;
 	ti->tcpi_so_snd_sb_hiwat = so->so_snd.sb_hiwat;
 	ti->tcpi_so_snd_sb_lowat = so->so_snd.sb_lowat;
 	ti->tcpi_so_snd_sb_wat = so->so_snd.sb_wat;
+	mtx_leave(&so->so_snd.sb_mtx);
 
 	return 0;
 }
@@ -842,7 +844,9 @@ tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	if (so->so_options & SO_DEBUG)
 		ostate = tp->t_state;
 
+	mtx_enter(&so->so_snd.sb_mtx);
 	sbappendstream(so, &so->so_snd, m);
+	mtx_leave(&so->so_snd.sb_mtx);
 	m = NULL;
 
 	error = tcp_output(tp);
@@ -895,7 +899,9 @@ tcp_sense(struct socket *so, struct stat *ub)
 	if ((error = tcp_sogetpcb(so, &inp, &tp)))
 		return (error);
 
+	mtx_enter(&so->so_snd.sb_mtx);
 	ub->st_blksize = so->so_snd.sb_hiwat;
+	mtx_leave(&so->so_snd.sb_mtx);
 
 	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL, PRU_SENSE, 0);
@@ -970,7 +976,9 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	 * of data past the urgent section.
 	 * Otherwise, snd_up should be one lower.
 	 */
+	mtx_enter(&so->so_snd.sb_mtx);
 	sbappendstream(so, &so->so_snd, m);
+	mtx_leave(&so->so_snd.sb_mtx);
 	m = NULL;
 	tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
 	tp->t_force = 1;
@@ -1517,7 +1525,11 @@ void
 tcp_update_sndspace(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
-	u_long nmax = so->so_snd.sb_hiwat;
+	u_long nmax;
+
+	mtx_enter(&so->so_snd.sb_mtx);
+
+	nmax = so->so_snd.sb_hiwat;
 
 	if (sbchecklowmem()) {
 		/* low on memory try to get rid of some */
@@ -1533,7 +1545,7 @@ tcp_update_sndspace(struct tcpcb *tp)
 	}
 
 	/* a writable socket must be preserved because of poll(2) semantics */
-	if (sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat) {
+	if (sbspace_locked(so, &so->so_snd) >= so->so_snd.sb_lowat) {
 		if (nmax < so->so_snd.sb_cc + so->so_snd.sb_lowat)
 			nmax = so->so_snd.sb_cc + so->so_snd.sb_lowat;
 		/* keep in sync with sbreserve() calculation */
@@ -1546,6 +1558,8 @@ tcp_update_sndspace(struct tcpcb *tp)
 
 	if (nmax != so->so_snd.sb_hiwat)
 		sbreserve(so, &so->so_snd, nmax);
+
+	mtx_leave(&so->so_snd.sb_mtx);
 }
 
 /*
@@ -1579,9 +1593,11 @@ tcp_update_rcvspace(struct tcpcb *tp)
 	}
 
 	/* a readable socket must be preserved because of poll(2) semantics */
+	mtx_enter(&so->so_snd.sb_mtx);
 	if (so->so_rcv.sb_cc >= so->so_rcv.sb_lowat &&
 	    nmax < so->so_snd.sb_lowat)
 		nmax = so->so_snd.sb_lowat;
+	mtx_leave(&so->so_snd.sb_mtx);
 
 	if (nmax != so->so_rcv.sb_hiwat) {
 		/* round to MSS boundary */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.351 2024/12/30 12:12:35 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.352 2024/12/31 12:19:46 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -151,27 +151,8 @@ soalloc(const struct protosw *prp, int wait)
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
 
-	switch (dp->dom_family) {
-	case AF_INET:
-	case AF_INET6:
-		switch (prp->pr_type) {
-		case SOCK_RAW:
-		case SOCK_DGRAM:
-			so->so_snd.sb_flags |= SB_MTXLOCK;
-			/* FALLTHROUGH */
-		case SOCK_STREAM:
-			so->so_rcv.sb_flags |= SB_MTXLOCK;
-			break;
-		}
-		break;
-	case AF_KEY:
-	case AF_ROUTE:
-	case AF_UNIX:
-	case AF_FRAME:
-		so->so_snd.sb_flags |= SB_MTXLOCK;
-		so->so_rcv.sb_flags |= SB_MTXLOCK;
-		break;
-	}
+	so->so_snd.sb_flags |= SB_MTXLOCK;
+	so->so_rcv.sb_flags |= SB_MTXLOCK;
 
 	return (so);
 }
@@ -271,9 +252,6 @@ solisten(struct socket *so, int backlog)
 void
 sorele(struct socket *so, int keep_lock)
 {
-	int need_lock = (((so->so_snd.sb_flags & SB_MTXLOCK) == 0) &&
-	    keep_lock == 0);
-
 	if (keep_lock == 0)
 		sounlock(so);
 
@@ -284,13 +262,9 @@ sorele(struct socket *so, int keep_lock)
 	klist_free(&so->so_rcv.sb_klist);
 	klist_free(&so->so_snd.sb_klist);
 
-	if (need_lock)
-		solock(so);
 	mtx_enter(&so->so_snd.sb_mtx);
 	sbrelease(so, &so->so_snd);
 	mtx_leave(&so->so_snd.sb_mtx);
-	if (need_lock)
-		sounlock(so);
 
 	if (so->so_proto->pr_flags & PR_RIGHTS &&
 	    so->so_proto->pr_domain->dom_dispose)

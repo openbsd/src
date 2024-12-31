@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.148 2024/12/28 22:17:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.149 2024/12/31 12:19:46 mvs Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ tcp_output(struct tcpcb *tp)
 	u_int32_t optbuf[howmany(MAX_TCPOPTLEN, sizeof(u_int32_t))];
 	u_char *opt = (u_char *)optbuf;
 	unsigned int optlen, hdrlen, packetlen;
-	int idle, sendalot = 0;
+	int doing_sosend, idle, sendalot = 0;
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
 	uint64_t now;
@@ -225,6 +225,10 @@ tcp_output(struct tcpcb *tp)
 
 	now = tcp_now();
 
+	mtx_enter(&so->so_snd.sb_mtx);
+	doing_sosend = soissending(so);
+	mtx_leave(&so->so_snd.sb_mtx);
+
 	/*
 	 * Determine length of data that should be transmitted,
 	 * and flags that will be used.
@@ -241,7 +245,7 @@ tcp_output(struct tcpcb *tp)
 		tp->snd_cwnd = 2 * tp->t_maxseg;
 
 	/* remember 'idle' for next invocation of tcp_output */
-	if (idle && soissending(so)) {
+	if (idle && doing_sosend) {
 		tp->t_flags |= TF_LASTIDLE;
 		idle = 0;
 	} else
@@ -390,7 +394,7 @@ again:
 		if (len >= txmaxseg)
 			goto send;
 		if ((idle || (tp->t_flags & TF_NODELAY)) &&
-		    len + off >= so->so_snd.sb_cc && !soissending(so) &&
+		    len + off >= so->so_snd.sb_cc && !doing_sosend &&
 		    (tp->t_flags & TF_NOPUSH) == 0)
 			goto send;
 		if (tp->t_force)
@@ -723,7 +727,7 @@ send:
 		 * give data to the user when a buffer fills or
 		 * a PUSH comes in.)
 		 */
-		if (off + len == so->so_snd.sb_cc && !soissending(so))
+		if (off + len == so->so_snd.sb_cc && !doing_sosend)
 			flags |= TH_PUSH;
 		tp->t_sndtime = now;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.415 2024/12/30 12:20:39 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.416 2024/12/31 12:19:46 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -957,7 +957,10 @@ findpcb:
 				    acked);
 				tp->t_rcvacktime = now;
 				ND6_HINT(tp);
+
+				mtx_enter(&so->so_snd.sb_mtx);
 				sbdrop(so, &so->so_snd, acked);
+				mtx_leave(&so->so_snd.sb_mtx);
 
 				/*
 				 * If we had a pending ICMP message that
@@ -1738,10 +1741,14 @@ trimthenstep6:
 				tp->snd_wnd -= so->so_snd.sb_cc;
 			else
 				tp->snd_wnd = 0;
+			mtx_enter(&so->so_snd.sb_mtx);
 			sbdrop(so, &so->so_snd, (int)so->so_snd.sb_cc);
+			mtx_leave(&so->so_snd.sb_mtx);
 			ourfinisacked = 1;
 		} else {
+			mtx_enter(&so->so_snd.sb_mtx);
 			sbdrop(so, &so->so_snd, acked);
+			mtx_leave(&so->so_snd.sb_mtx);
 			if (tp->snd_wnd > acked)
 				tp->snd_wnd -= acked;
 			else
