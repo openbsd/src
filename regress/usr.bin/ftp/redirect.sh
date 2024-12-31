@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: redirect.sh,v 1.8 2024/12/30 06:43:58 anton Exp $
+#	$OpenBSD: redirect.sh,v 1.9 2024/12/31 07:58:12 anton Exp $
 
 : ${FTP:=ftp}
 
@@ -16,7 +16,7 @@ echo "Testing $req1 => $loc => $req2"
 while pkill -fx "nc -4 -l $rport1" && sleep 1; do done
 
 echo "HTTP/1.0 302 Found\r\nLocation: $loc\r\n\r" | \
-     nc -v -4 -l $rport1 &
+     nc -4 -l $rport1 >/dev/null &
 
 # Wait for the "server" to start
 until fstat | egrep 'nc[ ]+.*tcp 0x[0-9a-f]* \*:9000' > /dev/null; do
