@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.16 2025/01/01 09:57:02 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.17 2025/01/01 10:01:31 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -83,14 +83,6 @@
  * assume that if a non-trivial representation is used, it is a Montgomery
  * representation (i.e. 'encoding' means multiplying by some factor R).
  */
-
-static void
-ec_group_finish(EC_GROUP *group)
-{
-	BN_free(&group->p);
-	BN_free(&group->a);
-	BN_free(&group->b);
-}
 
 static int
 ec_group_copy(EC_GROUP *dest, const EC_GROUP *src)
@@ -1526,13 +1518,6 @@ ec_mont_group_clear(EC_GROUP *group)
 	group->mont_one = NULL;
 }
 
-static void
-ec_mont_group_finish(EC_GROUP *group)
-{
-	ec_mont_group_clear(group);
-	ec_group_finish(group);
-}
-
 static int
 ec_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
@@ -1661,7 +1646,6 @@ ec_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 
 static const EC_METHOD ec_GFp_simple_method = {
 	.field_type = NID_X9_62_prime_field,
-	.group_finish = ec_group_finish,
 	.group_copy = ec_group_copy,
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
@@ -1697,7 +1681,6 @@ LCRYPTO_ALIAS(EC_GFp_simple_method);
 
 static const EC_METHOD ec_GFp_mont_method = {
 	.field_type = NID_X9_62_prime_field,
-	.group_finish = ec_mont_group_finish,
 	.group_copy = ec_mont_group_copy,
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,

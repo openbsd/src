@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.92 2025/01/01 09:57:02 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.93 2025/01/01 10:01:31 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -109,8 +109,12 @@ EC_GROUP_free(EC_GROUP *group)
 	if (group == NULL)
 		return;
 
-	if (group->meth->group_finish != NULL)
-		group->meth->group_finish(group);
+	BN_free(&group->p);
+	BN_free(&group->a);
+	BN_free(&group->b);
+
+	BN_MONT_CTX_free(group->mont_ctx);
+	BN_free(group->mont_one);
 
 	EC_POINT_free(group->generator);
 	BN_free(&group->order);
