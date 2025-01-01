@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.88 2024/07/13 13:20:44 bluhm Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.89 2025/01/01 13:44:22 bluhm Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -76,7 +76,7 @@ int
 gre_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
-#ifdef  PIPEX 
+#ifdef PIPEX
 	struct inpcb *inp = sotoinpcb(so);
 
 	if (inp->inp_pipex) {

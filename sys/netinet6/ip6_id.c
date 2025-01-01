@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.18 2024/09/01 03:09:00 jsg Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.19 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -229,4 +229,3 @@ ip6_randomflowlabel(void)
 {
 	return ip6id_randomid(&randomtab_20) & 0xfffff;
 }
-

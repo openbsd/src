@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.47 2020/09/01 01:53:34 gnezdo Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.48 2025/01/01 13:44:22 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -110,10 +110,10 @@ enum espstat_counters {
 					 * IP_MAXPACKET */
 	esps_pdrops,			/* Packet blocked due to policy */
 	esps_crypto,			/* Crypto processing failure */
-	esps_udpencin,  		/* Input ESP-in-UDP packets */
-	esps_udpencout, 		/* Output ESP-in-UDP packets */
-	esps_udpinval,  		/* Invalid input ESP-in-UDP packets */
-	esps_udpneeded, 		/* Trying to use a ESP-in-UDP TDB */
+	esps_udpencin,			/* Input ESP-in-UDP packets */
+	esps_udpencout,			/* Output ESP-in-UDP packets */
+	esps_udpinval,			/* Invalid input ESP-in-UDP packets */
+	esps_udpneeded,			/* Trying to use a ESP-in-UDP TDB */
 	esps_outfail,			/* Packet output failure */
 
 	esps_ncounters

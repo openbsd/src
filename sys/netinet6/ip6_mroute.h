@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.23 2022/05/05 13:57:41 claudio Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.24 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct mif6info {
 	u_int64_t	m6_bytes_out;	/* # bytes out on interface	     */
 	u_int		m6_rate_limit;	/* max rate			     */
 	mifi_t		m6_mifi;
-        u_char		m6_flags;	/* MIFF_ flags defined above         */
+	u_char		m6_flags;	/* MIFF_ flags defined above         */
 };
 
 /* structure used to get all the mf6c entries via sysctl */
@@ -202,7 +202,7 @@ void	mf6c_expire_route(struct rtentry *, u_int);
  */
 struct mif6 {
 	mifi_t		m6_mifi;	/* mif index			     */
-        u_char		m6_flags;	/* MIFF_ flags defined above         */
+	u_char		m6_flags;	/* MIFF_ flags defined above         */
 	u_int		m6_rate_limit;	/* max rate			     */
 #ifdef notyet
 	struct tbf      *m6_tbf;	/* token bucket structure at intf.   */

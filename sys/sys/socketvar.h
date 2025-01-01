@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.135 2024/12/30 12:12:35 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.136 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ struct sosplice {
  * Variables for socket buffering.
  */
 struct sockbuf {
-	struct rwlock sb_lock; 
+	struct rwlock sb_lock;
 	struct mutex  sb_mtx;
 /* The following fields are all zeroed on flush. */
 #define	sb_startzero	sb_cc
@@ -282,7 +282,7 @@ sbspace(struct socket *so, struct sockbuf *sb)
 	sb_mtx_lock(sb);
 	ret = sbspace_locked(so, sb);
 	sb_mtx_unlock(sb);
-	
+
 	return ret;
 }
 
@@ -388,7 +388,7 @@ int	soo_read(struct file *, struct uio *, int);
 int	soo_write(struct file *, struct uio *, int);
 int	soo_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	soo_kqfilter(struct file *, struct knote *);
-int 	soo_close(struct file *, struct proc *);
+int	soo_close(struct file *, struct proc *);
 int	soo_stat(struct file *, struct stat *, struct proc *);
 void	sbappend(struct socket *, struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct socket *, struct sockbuf *, struct mbuf *);

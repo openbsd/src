@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.162 2024/11/08 10:24:13 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.163 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -526,7 +526,7 @@ rip_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 
 	if ((error = in_nam2sin(nam, &addr)))
 		return (error);
-	
+
 	if (!((so->so_options & SO_BINDANY) ||
 	    addr->sin_addr.s_addr == INADDR_ANY ||
 	    addr->sin_addr.s_addr == INADDR_BROADCAST ||
@@ -537,7 +537,7 @@ rip_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 	mtx_enter(&rawcbtable.inpt_mtx);
 	inp->inp_laddr = addr->sin_addr;
 	mtx_leave(&rawcbtable.inpt_mtx);
-	
+
 	return (0);
 }
 
@@ -552,7 +552,7 @@ rip_connect(struct socket *so, struct mbuf *nam)
 
 	if ((error = in_nam2sin(nam, &addr)))
 		return (error);
-	
+
 	mtx_enter(&rawcbtable.inpt_mtx);
 	inp->inp_faddr = addr->sin_addr;
 	mtx_leave(&rawcbtable.inpt_mtx);
@@ -588,7 +588,7 @@ rip_shutdown(struct socket *so)
 
 	soassertlocked(so);
 	socantsendmore(so);
-	
+
 	return (0);
 }
 

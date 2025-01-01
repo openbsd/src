@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.328 2024/12/04 22:48:41 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.329 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1273,7 +1273,7 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if ((error = sysctl_vslock(oldp, savelen)))
 			return (error);
 		error = udp_sysctl_locked(name, namelen, oldp, oldlenp,
-		    newp, newlen);	
+		    newp, newlen);
 		sysctl_vsunlock(oldp, savelen);
 
 		return (error);

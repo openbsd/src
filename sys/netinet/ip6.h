@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.20 2011/04/05 15:14:59 blambert Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.21 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ struct ip6_dest {
 #define IP6OPT_RTALERT_LEN	4
 #define IP6OPT_RTALERT_MLD	0	/* Datagram contains an MLD message */
 #define IP6OPT_RTALERT_RSVP	1	/* Datagram contains an RSVP message */
-#define IP6OPT_RTALERT_ACTNET	2 	/* contains an Active Networks msg */
+#define IP6OPT_RTALERT_ACTNET	2	/* contains an Active Networks msg */
 #define IP6OPT_MINLEN		2
 
 #define IP6OPT_TYPE(o)		((o) & 0xC0)

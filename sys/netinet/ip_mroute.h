@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.32 2024/10/13 02:27:44 jsg Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.33 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -54,9 +54,9 @@ typedef u_int16_t vifi_t;		/* type of a vif index */
  * (MRT_DEL_VIF takes a single vifi_t argument.)
  */
 struct vifctl {
-	vifi_t	  vifc_vifi;	    	/* the index of the vif to be added */
-	u_int8_t  vifc_flags;     	/* VIFF_ flags defined above */
-	u_int8_t  vifc_threshold; 	/* min ttl required to forward on vif */
+	vifi_t	  vifc_vifi;		/* the index of the vif to be added */
+	u_int8_t  vifc_flags;		/* VIFF_ flags defined above */
+	u_int8_t  vifc_threshold;	/* min ttl required to forward on vif */
 	u_int32_t vifc_rate_limit;	/* ignored */
 	struct	  in_addr vifc_lcl_addr;/* local interface address */
 	struct	  in_addr vifc_rmt_addr;/* remote address (tunnels only) */
@@ -82,7 +82,7 @@ struct mfcctl2 {
 	struct in_addr	mfcc_origin;		/* ip origin of mcasts	     */
 	struct in_addr	mfcc_mcastgrp;		/* multicast group associated*/
 	vifi_t		mfcc_parent;		/* incoming vif		     */
-	u_int8_t	mfcc_ttls[MAXVIFS]; 	/* forwarding ttls on vifs   */
+	u_int8_t	mfcc_ttls[MAXVIFS];	/* forwarding ttls on vifs   */
 
 	/* extension fields */
 	u_int8_t	mfcc_flags[MAXVIFS];	/* the MRT_MFC_FLAGS_* flags */
@@ -114,7 +114,7 @@ struct mfcinfo {
 
 /* structure used to get all the vif entries */
 struct vifinfo {
-	vifi_t	  v_vifi;	    	/* the index of the vif to be added */
+	vifi_t	  v_vifi;		/* the index of the vif to be added */
 	u_int8_t  v_flags;		/* VIFF_ flags defined above */
 	u_int8_t  v_threshold;		/* min ttl required to forward on vif */
 	struct	  in_addr v_lcl_addr;	/* local interface address */
@@ -161,9 +161,9 @@ struct mrtstat {
 	u_long	mrts_wrong_if;		/* arrived on wrong interface */
 	u_long	mrts_upq_ovflw;		/* upcall Q overflow */
 	u_long	mrts_cache_cleanups;	/* # entries with no upcalls */
-	u_long	mrts_drop_sel;     	/* pkts dropped selectively */
-	u_long	mrts_q_overflow;    	/* pkts dropped - Q overflow */
-	u_long	mrts_pkt2large;     	/* pkts dropped - size > BKT SIZE */
+	u_long	mrts_drop_sel;		/* pkts dropped selectively */
+	u_long	mrts_q_overflow;	/* pkts dropped - Q overflow */
+	u_long	mrts_pkt2large;		/* pkts dropped - size > BKT SIZE */
 	u_long	mrts_upq_sockfull;	/* upcalls dropped - socket full */
 };
 

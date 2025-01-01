@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.149 2024/12/31 12:19:46 mvs Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.150 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ again:
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	win = sbspace_locked(so, &so->so_rcv);
-	rcv_hiwat = (long) so->so_rcv.sb_hiwat; 
+	rcv_hiwat = (long) so->so_rcv.sb_hiwat;
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.99 2024/04/21 17:32:11 florian Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.100 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
 		    opts->ip6po_pktinfo->ipi6_ifindex) {
 			if (rt != NULL && !ISSET(rt->rt_flags, RTF_LOCAL) &&
 			    rt->rt_ifidx != opts->ip6po_pktinfo->ipi6_ifindex) {
-			    	return (NULL);
+				return (NULL);
 			}
 		}
 
@@ -349,7 +349,7 @@ in6_selectif(const struct in6_addr *dst, struct ip6_pktopts *opts,
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst) &&
 	    mopts != NULL && (*retifp = if_get(mopts->im6o_ifidx)) != NULL)
-	    	return (0);
+		return (0);
 
 	rt = in6_selectroute(dst, opts, ro, rtableid);
 	if (rt == NULL)

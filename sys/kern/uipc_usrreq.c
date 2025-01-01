@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.211 2024/11/05 06:03:19 jsg Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.212 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -1158,7 +1158,7 @@ restart:
 	 * Keep `fdp' locked to prevent concurrent close() of just
 	 * inserted descriptors. Such descriptors could have the only
 	 * `f_count' reference which is now shared between control
-	 * message and `fdp'. 
+	 * message and `fdp'.
 	 */
 
 	/*
@@ -1469,7 +1469,7 @@ unp_gc(void *arg __unused)
 				m = sb->sb_mb;
 				memset(&sb->sb_startzero, 0,
 				    (caddr_t)&sb->sb_endzero -
-				        (caddr_t)&sb->sb_startzero);
+				    (caddr_t)&sb->sb_startzero);
 				sb->sb_timeo_nsecs = INFSLP;
 				mtx_leave(&sb->sb_mtx);
 

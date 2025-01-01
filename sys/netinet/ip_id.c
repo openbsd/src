@@ -1,11 +1,11 @@
-/*	$OpenBSD: ip_id.c,v 1.25 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: ip_id.c,v 1.26 2025/01/01 13:44:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2008 Theo de Raadt, Ryan McBride
- * 
+ *
  * Slightly different algorithm from the one designed by
  * Matthew Dillon <dillon@backplane.com> for The DragonFly Project
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.

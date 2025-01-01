@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.235 2024/12/31 12:19:46 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.236 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1574,7 +1574,7 @@ tcp_update_rcvspace(struct tcpcb *tp)
 	struct socket *so = tp->t_inpcb->inp_socket;
 	u_long nmax;
 
-	mtx_enter(&so->so_rcv.sb_mtx);	
+	mtx_enter(&so->so_rcv.sb_mtx);
 
 	nmax = so->so_rcv.sb_hiwat;
 
@@ -1605,5 +1605,5 @@ tcp_update_rcvspace(struct tcpcb *tp)
 		sbreserve(so, &so->so_rcv, nmax);
 	}
 
-	mtx_leave(&so->so_rcv.sb_mtx);	
+	mtx_leave(&so->so_rcv.sb_mtx);
 }

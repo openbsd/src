@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.245 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.246 2025/01/01 13:44:22 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -364,7 +364,7 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_PFSYNC_RPL		0x80000	/* Replay counter should be bumped */
 #define	TDBF_ESN		0x100000 /* 64-bit sequence numbers (ESN) */
 #define	TDBF_PFSYNC_SNAPPED	0x200000 /* entry is being dispatched to peer */
-#define	TDBF_IFACE		0x400000 /* entry policy is via sec(4) */ 
+#define	TDBF_IFACE		0x400000 /* entry policy is via sec(4) */
 
 #define TDBF_BITS ("\20" \
 	"\1UNIQUE\2TIMER\3BYTES\4ALLOCATIONS" \

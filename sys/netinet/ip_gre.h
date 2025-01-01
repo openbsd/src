@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.19 2024/05/13 01:15:53 jsg Exp $ */
+/*	$OpenBSD: ip_gre.h,v 1.20 2025/01/01 13:44:22 bluhm Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -42,21 +42,21 @@
 /*
  * Names for GRE sysctl objects
  */
-#define GRECTL_ALLOW    1		/* accept incoming GRE packets */
-#define GRECTL_WCCP     2		/* accept WCCPv1-style GRE packets */
-#define GRECTL_MAXID    3
+#define GRECTL_ALLOW	1		/* accept incoming GRE packets */
+#define GRECTL_WCCP	2		/* accept WCCPv1-style GRE packets */
+#define GRECTL_MAXID	3
 
 #define GRECTL_NAMES { \
-        { 0, 0 }, \
-        { "allow", CTLTYPE_INT }, \
-        { "wccp", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ "allow", CTLTYPE_INT }, \
+	{ "wccp", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
 
 extern const struct pr_usrreqs gre_usrreqs;
 
-int     gre_send(struct socket *, struct mbuf *, struct mbuf *,
+int	gre_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_GRE_H_ */

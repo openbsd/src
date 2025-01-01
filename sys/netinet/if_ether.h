@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.92 2024/02/14 22:41:48 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.93 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -85,11 +85,11 @@ struct	ether_header {
  */
 
 struct  ether_vlan_header {
-        u_char  evl_dhost[ETHER_ADDR_LEN];
-        u_char  evl_shost[ETHER_ADDR_LEN];
-        u_int16_t evl_encap_proto;
-        u_int16_t evl_tag;
-        u_int16_t evl_proto;
+	u_char  evl_dhost[ETHER_ADDR_LEN];
+	u_char  evl_shost[ETHER_ADDR_LEN];
+	u_int16_t evl_encap_proto;
+	u_int16_t evl_tag;
+	u_int16_t evl_proto;
 };
 
 #define EVL_VLID_MASK	0xFFF

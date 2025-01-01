@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.97 2024/08/16 09:20:35 mvs Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.98 2025/01/01 13:44:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -236,7 +236,7 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		if_put(ifp);
 	} else {
 		/*
-		 * Calculate IP and protocol checksums for outbound packet 
+		 * Calculate IP and protocol checksums for outbound packet
 		 * diverted to userland.  pf rule diverts before cksum offload.
 		 */
 		in_hdr_cksum_out(m, NULL);

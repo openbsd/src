@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.295 2024/11/06 14:37:45 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.296 2025/01/01 13:44:22 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1489,7 +1489,7 @@ m_pool_init(struct pool *pp, u_int size, u_int align, const char *wmesg)
 u_int
 m_pool_used(void)
 {
-	return ((atomic_load_long(&mbuf_mem_alloc) * 100) / 
+	return ((atomic_load_long(&mbuf_mem_alloc) * 100) /
 	    atomic_load_long(&mbuf_mem_limit));
 }
 
