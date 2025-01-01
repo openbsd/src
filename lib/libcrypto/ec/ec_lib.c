@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.91 2024/12/12 10:02:00 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.92 2025/01/01 09:57:02 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -84,10 +84,6 @@ EC_GROUP_new(const EC_METHOD *meth)
 		ECerror(EC_R_SLOT_FULL);
 		goto err;
 	}
-	if (meth->group_init == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
 	if ((group = calloc(1, sizeof(*group))) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -95,14 +91,8 @@ EC_GROUP_new(const EC_METHOD *meth)
 
 	group->meth = meth;
 
-	BN_init(&group->order);
-	BN_init(&group->cofactor);
-
 	group->asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	group->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
-
-	if (!meth->group_init(group))
-		goto err;
 
 	return group;
 
