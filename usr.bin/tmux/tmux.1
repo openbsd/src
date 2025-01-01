@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.979 2024/12/16 08:51:41 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.980 2025/01/01 15:17:36 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2024 $
+.Dd $Mdocdate: January 1 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4057,6 +4057,14 @@ Note that aliases are expanded when a command is parsed rather than when it is
 executed, so binding an alias with
 .Ic bind-key
 will bind the expanded form.
+.It Ic codepoint-widths[] Ar string
+An array option allowing widths of Unicode codepoints to be overridden.
+Note the new width applies to all clients.
+Each entry is of the form
+.Em codepoint=width ,
+where codepoint may be a UTF-8 character or an identifier of the form
+.Ql U+number
+where the number is a hexadecimal number.
 .It Ic copy-command Ar shell-command
 Give the command to pipe to if the
 .Ic copy-pipe

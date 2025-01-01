@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.73 2024/11/15 13:12:20 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.74 2025/01/01 15:17:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1185,7 +1185,8 @@ options_push_changes(const char *name)
 		RB_FOREACH(w, windows, &windows)
 			layout_fix_panes(w, NULL);
 	}
-
+	if (strcmp(name, "codepoint-widths") == 0)
+		utf8_update_width_cache();
 	if (strcmp(name, "input-buffer-size") == 0)
 		input_set_buffer_size(options_get_number(global_options, name));
 	RB_FOREACH(s, sessions, &sessions)

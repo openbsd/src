@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.187 2024/11/26 15:52:41 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.188 2025/01/01 15:17:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -252,6 +252,15 @@ const struct options_table_entry options_table[] = {
 	  .separator = ",",
 	  .text = "Array of command aliases. "
 		  "Each entry is an alias and a command separated by '='."
+	},
+
+	{ .name = "codepoint-widths",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .flags = OPTIONS_TABLE_IS_ARRAY,
+	  .default_str = "",
+	  .separator = ",",
+	  .text = "Array of override widths for Unicode codepoints."
 	},
 
 	{ .name = "copy-command",
