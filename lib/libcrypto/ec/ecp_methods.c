@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.14 2024/12/12 10:00:15 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.15 2025/01/01 09:31:05 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -500,7 +500,7 @@ ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 		ECerror(EC_R_INVALID_COMPRESSION_BIT);
 		goto err;
 	}
-	if (!BN_usub(y, &group->p, y))
+	if (!BN_usub(y, p, y))
 		goto err;
 
 	if (y_bit != BN_is_odd(y)) {
