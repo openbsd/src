@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.42 2024/03/21 10:58:15 claudio Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.43 2025/01/02 21:37:38 kn Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -113,8 +113,6 @@ main(int argc, char *argv[])
 	/* Start by writing to both console and log. */
 	openlog("nfsd", LOG_PID | LOG_PERROR, LOG_DAEMON);
 
-	if (argc == 1)
-		udpflag = 1;
 	while ((ch = getopt(argc, argv, "n:rtu")) != -1)
 		switch (ch) {
 		case 'n':
@@ -138,6 +136,9 @@ main(int argc, char *argv[])
 		}
 	argv += optind;
 	argc -= optind;
+
+	if (!(tcpflag || udpflag))
+		udpflag = 1;
 
 	/*
 	 * XXX
