@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.33 2024/10/18 12:53:49 tobhe Exp $ */
+/* $OpenBSD: ihidev.c,v 1.34 2025/01/02 23:26:50 mglocker Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -118,31 +118,9 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (ia->ia_intr) {
-		printf(" %s", iic_intr_string(sc->sc_tag, ia->ia_intr));
-
-		sc->sc_ih = iic_intr_establish(sc->sc_tag, ia->ia_intr,
-		    IPL_TTY, ihidev_intr, sc, sc->sc_dev.dv_xname);
-		if (sc->sc_ih == NULL)
-			printf(", can't establish interrupt");
-	}
-
-	if (ia->ia_poll || !sc->sc_ih) {
-		printf(" (polling)");
-		sc->sc_poll = 1;
-		sc->sc_fastpoll = 1;
-	}
-
-	printf(", vendor 0x%x product 0x%x, %s\n",
-	    letoh16(sc->hid_desc.wVendorID), letoh16(sc->hid_desc.wProductID),
-	    (char *)ia->ia_cookie);
-
 	sc->sc_nrepid = ihidev_maxrepid(sc->sc_report, sc->sc_reportlen);
 	if (sc->sc_nrepid < 0)
 		return;
-
-	printf("%s: %d report id%s\n", sc->sc_dev.dv_xname, sc->sc_nrepid,
-	    sc->sc_nrepid > 1 ? "s" : "");
 
 	sc->sc_nrepid++;
 	sc->sc_subdevs = mallocarray(sc->sc_nrepid, sizeof(struct ihidev *),
@@ -161,6 +139,29 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 			    repid, repsz));
 	}
 	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_WAITOK | M_ZERO);
+
+	if (ia->ia_intr) {
+		printf(" %s", iic_intr_string(sc->sc_tag, ia->ia_intr));
+
+		sc->sc_ih = iic_intr_establish(sc->sc_tag, ia->ia_intr,
+		    IPL_TTY, ihidev_intr, sc, sc->sc_dev.dv_xname);
+		if (sc->sc_ih == NULL)
+			printf("%s: can't establish interrupt\n",
+			    sc->sc_dev.dv_xname);
+	}
+
+	if (ia->ia_poll || !sc->sc_ih) {
+		printf(" (polling)");
+		sc->sc_poll = 1;
+		sc->sc_fastpoll = 1;
+	}
+
+	printf(", vendor 0x%x product 0x%x, %s\n",
+	    letoh16(sc->hid_desc.wVendorID), letoh16(sc->hid_desc.wProductID),
+	    (char *)ia->ia_cookie);
+
+	printf("%s: %d report id%s\n", sc->sc_dev.dv_xname, (sc->sc_nrepid - 1),
+	    (sc->sc_nrepid - 1) > 1 ? "s" : "");
 
 	iha.iaa = ia;
 	iha.parent = sc;
