@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.39 2025/01/02 12:31:44 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.40 2025/01/02 12:36:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,6 +127,10 @@
 #endif
 
 #include <unistd.h>
+
+/* numbers in us */
+#define DGRAM_RCV_TIMEOUT         250000
+#define DGRAM_SND_TIMEOUT         250000
 
 extern CONF *config;
 extern char *default_config_file;
