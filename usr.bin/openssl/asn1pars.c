@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.16 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.17 2025/01/02 12:31:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,7 +66,6 @@
 #include <string.h>
 
 #include "apps.h"
-#include "progs.h"
 
 #include <openssl/err.h>
 #include <openssl/evp.h>

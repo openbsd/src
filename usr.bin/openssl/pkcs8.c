@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.17 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.18 2025/01/02 12:31:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -60,7 +60,6 @@
 #include <string.h>
 
 #include "apps.h"
-#include "progs.h"
 
 #include <openssl/err.h>
 #include <openssl/evp.h>

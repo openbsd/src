@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.12 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: sess_id.c,v 1.13 2025/01/02 12:31:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,6 @@
 #include <string.h>
 
 #include "apps.h"
-#include "progs.h"
 
 #include <openssl/bio.h>
 #include <openssl/err.h>

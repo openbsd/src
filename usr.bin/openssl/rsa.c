@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.19 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: rsa.c,v 1.20 2025/01/02 12:31:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,6 @@
 #include <time.h>
 
 #include "apps.h"
-#include "progs.h"
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>

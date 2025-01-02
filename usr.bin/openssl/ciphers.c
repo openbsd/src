@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.19 2024/12/11 12:18:05 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.20 2025/01/02 12:31:44 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -22,7 +22,6 @@
 #include <openssl/ssl.h>
 
 #include "apps.h"
-#include "progs.h"
 
 static struct {
 	int usage;
