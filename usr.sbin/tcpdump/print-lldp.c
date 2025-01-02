@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-lldp.c,v 1.10 2024/12/18 06:33:25 tb Exp $	*/
+/*	$OpenBSD: print-lldp.c,v 1.11 2025/01/02 01:21:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -87,17 +87,23 @@ enum {
 
 static const char *afnumber[] = AFNUM_NAME_STR;
 
-void		 lldp_print_str(u_int8_t *, int);
+void		 lldp_print_str(const u_int8_t *, int);
 const char	*lldp_print_addr(int, const void *);
-void		 lldp_print_id(int, u_int8_t *, int);
+void		 lldp_print_id(int, const u_int8_t *, int);
 
 void
-lldp_print_str(u_int8_t *str, int len)
+lldp_print_str(const u_int8_t *str, int len)
 {
 	int i;
 	printf("\"");
-	for (i = 0; i < len; i++)
-		printf("%c", isprint(str[i]) ? str[i] : '.');
+	for (i = 0; i < len; i++) {
+		int ch = str[i];
+		if (ch == '\r')
+			continue;
+		if (ch == '\n')
+			ch = ' ';
+		printf("%c", isprint(ch) ? ch : '.');
+	}
 	printf("\"");
 }
 
@@ -111,10 +117,10 @@ lldp_print_addr(int af, const void *addr)
 }
 
 void
-lldp_print_id(int type, u_int8_t *ptr, int len)
+lldp_print_id(int type, const u_int8_t *ptr, int len)
 {
 	u_int8_t id;
-	u_int8_t *data;
+	const u_int8_t *data;
 
 	id = *(u_int8_t *)ptr;
 	len -= sizeof(u_int8_t);
@@ -185,16 +191,115 @@ lldp_print_id(int type, u_int8_t *ptr, int len)
 	}
 }
 
+static void
+lldp_print_mgmt_addr(const u_int8_t *ptr, u_int len)
+{
+	u_int alen;
+	u_int afnum;
+	const uint8_t *maddr;
+	uint32_t ifidx;
+
+	if (len < 1) {
+		printf(" unexpected len %u", len);
+		return;
+	}
+	alen = ptr[0];
+
+	ptr++;
+	len--;
+
+	if (alen < 2 || alen > len) {
+		printf(" unexpected address len %u", len);
+		return;
+	}
+	afnum = ptr[0];
+	maddr = ptr + 1;
+
+	ptr += alen;
+	len -= alen;
+
+	alen--;
+	switch (afnum) {
+	case AFNUM_INET:
+		if (alen != sizeof(struct in_addr))
+			goto afnum_default;
+		printf(" %s", lldp_print_addr(AF_INET, maddr));
+		break;
+	case AFNUM_INET6:
+		if (alen != sizeof(struct in6_addr))
+			goto afnum_default;
+		printf(" %s", lldp_print_addr(AF_INET6, maddr));
+		break;
+	case AFNUM_802:
+		if (alen != ETHER_ADDR_LEN)
+			goto afnum_default;
+		printf(" %s", etheraddr_string(maddr));
+		break;
+	default:
+	afnum_default:
+		if (afnum < AFNUM_MAX)
+			printf(" %s", afnumber[afnum]);
+		else
+			printf(" afnum-%u", afnum);
+		printf(" len %u", alen);
+		break;
+	}
+
+	if (len < 5) {
+		printf(" unexpected interface len %u", len);
+		return;
+	}
+
+	ifidx = EXTRACT_32BITS(ptr + 1);
+	if (ifidx != 0) {
+		switch (*ptr) {
+		case LLDP_MGMT_IFACE_UNKNOWN:
+			printf(" Unknown");
+			break;
+		case LLDP_MGMT_IFACE_IFINDEX:
+			printf(" ifIndex");
+			break;
+		case LLDP_MGMT_IFACE_SYSPORT:
+			printf(" sysPort");
+			break;
+		default:
+			printf(" iface-type-%u", *ptr);
+			break;
+		}
+		printf(" %u", ifidx);
+	}
+
+	ptr += 5;
+	len -= 5;
+
+	if (len < 1) {
+		printf(" unexpected oid len %u", len);
+		return;
+	}
+	alen = ptr[0];
+	ptr++;
+	len--;
+
+	if (alen != len) {
+		printf(" unexpected oid len %u/%u", alen, len);
+	}
+	if (alen == 0)
+		return;
+
+	printf(" oid 0x");
+	do {
+		printf("%02X", *ptr++);
+	} while (--alen > 0);
+}
+
 void
 lldp_print(const u_char *p, u_int len)
 {
 	u_int16_t tlv;
-	u_int8_t *ptr = (u_int8_t *)p, v = 0;
-	int n, type, vlen, alen;
+	const u_int8_t *ptr = (u_int8_t *)p;
+	int n, type, vlen;
 
 	printf("LLDP");
-
-#define _ptrinc(_v)	ptr += (_v); vlen -= (_v);
 
 	for (n = 0; n < len;) {
 		TCHECK2(*ptr, sizeof(tlv));
@@ -224,7 +329,10 @@ lldp_print(const u_char *p, u_int len)
 
 		case LLDP_TLV_TTL:
 			printf(", TTL: ");
-			TCHECK2(*ptr, 2);
+			if (vlen != 2) {
+				printf(" unexpected len %d", vlen);
+				break;
+			}
 			printf("%ds", EXTRACT_16BITS(ptr));
 			break;
 
@@ -245,46 +353,28 @@ lldp_print(const u_char *p, u_int len)
 
 		case LLDP_TLV_SYSTEM_CAP:
 			printf(", CAP:");
-			TCHECK2(*ptr, 4);
+			if (vlen != 4) {
+				printf(" unexpected len %d", vlen);
+				break;
+			}
 			printb(" available", EXTRACT_16BITS(ptr),
 			    LLDP_CAP_BITS);
-			_ptrinc(sizeof(u_int16_t));
-			printb(" enabled", EXTRACT_16BITS(ptr),
+			printb(" enabled", EXTRACT_16BITS(ptr + 2),
 			    LLDP_CAP_BITS);
 			break;
 
 		case LLDP_TLV_MANAGEMENT_ADDR:
 			printf(", MgmtAddr:");
-			TCHECK2(*ptr, 2);
-			alen = *ptr - sizeof(u_int8_t);
-			_ptrinc(sizeof(u_int8_t));
-			v = *ptr;
-			_ptrinc(sizeof(u_int8_t));
-			if (v <= AFNUM_MAX)
-				printf(" %s", afnumber[v]);
-			else
-				printf(" type %d", v);
-			TCHECK2(*ptr, alen);
-			switch (v) {
-			case AFNUM_INET:
-				if (alen != sizeof(struct in_addr))
-					goto trunc;
-				printf(" %s",
-				    lldp_print_addr(AF_INET, ptr));
-				break;
-			case AFNUM_INET6:
-				if (alen != sizeof(struct in6_addr))
-					goto trunc;
-				printf(" %s",
-				    lldp_print_addr(AF_INET6, ptr));
-				break;
-			}
-			_ptrinc(alen);
-			v = *(u_int8_t *)ptr;
+			lldp_print_mgmt_addr(ptr, vlen);
 			break;
 
 		case LLDP_TLV_ORG:
-			printf(", Org");
+			printf(", Org:");
+			if (vlen < 4) {
+				printf(" unexpected len %d", vlen);
+			}
+			printf(" %02X-%02X-%02X type %02x len %u",
+			    ptr[0], ptr[1], ptr[2], ptr[3], len - 4);
 			break;
 
 		default:
