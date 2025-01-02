@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.36 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: kroute.c,v 1.37 2025/01/02 06:35:57 anton Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -710,7 +710,8 @@ if_announce(void *msg)
 		break;
 	case IFAN_DEPARTURE:
 		kif = kif_find(ifan->ifan_index);
-		kif_remove(kif);
+		if (kif != NULL)
+			kif_remove(kif);
 		break;
 	}
 }

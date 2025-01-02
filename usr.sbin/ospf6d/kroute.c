@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.69 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.70 2025/01/02 06:35:57 anton Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1099,7 +1099,8 @@ if_announce(void *msg)
 		break;
 	case IFAN_DEPARTURE:
 		iface = if_find(ifan->ifan_index);
-		if_del(iface);
+		if (iface != NULL)
+			if_del(iface);
 		break;
 	}
 }
