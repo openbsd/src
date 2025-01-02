@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.115 2024/12/04 16:17:31 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.116 2025/01/02 12:29:30 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 4 2024 $
+.Dd $Mdocdate: January 2 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -72,11 +72,11 @@ Exclude the ASPA-set from the output files that support it (JSON and
 OpenBGPD).
 .It Fl B
 Create output in the files
-.Pa bird1v4 ,
-.Pa bird1v6 ,
-and
 .Pa bird
 (for bird2)
+and
+.Pa bird3
+(for bird3)
 in the output directory which is suitable for the BIRD internet routing daemon.
 .It Fl b Ar sourceaddr
 Tell the HTTP and rsync clients to use

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.234 2024/12/02 14:55:02 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.235 2025/01/02 12:29:30 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -969,11 +969,9 @@ int		 outputfiles(struct vrp_tree *v, struct brk_tree *b,
 int		 outputheader(FILE *, struct stats *);
 int		 output_bgpd(FILE *, struct vrp_tree *, struct brk_tree *,
 		    struct vap_tree *, struct vsp_tree *, struct stats *);
-int		 output_bird1v4(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
-int		 output_bird1v6(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_bird2(FILE *, struct vrp_tree *, struct brk_tree *,
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
+int		 output_bird3(FILE *, struct vrp_tree *, struct brk_tree *,
 		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_csv(FILE *, struct vrp_tree *, struct brk_tree *,
 		    struct vap_tree *, struct vsp_tree *, struct stats *);

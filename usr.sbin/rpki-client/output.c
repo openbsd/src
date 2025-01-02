@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.36 2024/12/15 19:42:33 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.37 2025/01/02 12:29:30 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -67,9 +67,8 @@ static const struct outputs {
 		    struct vap_tree *, struct vsp_tree *, struct stats *);
 } outputs[] = {
 	{ FORMAT_OPENBGPD, "openbgpd", output_bgpd },
-	{ FORMAT_BIRD, "bird1v4", output_bird1v4 },
-	{ FORMAT_BIRD, "bird1v6", output_bird1v6 },
 	{ FORMAT_BIRD, "bird", output_bird2 },
+	{ FORMAT_BIRD, "bird3", output_bird3 },
 	{ FORMAT_CSV, "csv", output_csv },
 	{ FORMAT_JSON, "json", output_json },
 	{ FORMAT_OMETRIC, "metrics", output_ometric },
