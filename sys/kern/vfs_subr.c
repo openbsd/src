@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.326 2025/01/02 01:19:22 dlg Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.327 2025/01/02 10:07:18 dlg Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ vfs_busy(struct mount *mp, int flags)
 		rwflags |= RW_NOSLEEP;
 
 #ifdef WITNESS
-	if (ISSET(flags, VB_DUPOK)
+	if (ISSET(flags, VB_DUPOK))
 		rwflags |= RW_DUPOK;
 #endif
 
