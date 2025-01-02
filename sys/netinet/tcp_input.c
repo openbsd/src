@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.416 2024/12/31 12:19:46 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.417 2025/01/02 10:55:18 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3173,7 +3173,8 @@ syn_cache_rm(struct syn_cache *sc)
 	KASSERT(!ISSET(sc->sc_dynflags, SCF_DEAD));
 	SET(sc->sc_dynflags, SCF_DEAD);
 	TAILQ_REMOVE(&sc->sc_buckethead->sch_bucket, sc, sc_bucketq);
-	sc->sc_tp = NULL;
+	in_pcbunref(sc->sc_inplisten);
+	sc->sc_inplisten = NULL;
 	LIST_REMOVE(sc, sc_tpq);
 	refcnt_rele(&sc->sc_refcnt);
 	sc->sc_buckethead->sch_length--;
@@ -3369,6 +3370,7 @@ void
 syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
+	struct inpcb *inp;
 	uint64_t now;
 	int lastref;
 
@@ -3397,6 +3399,9 @@ syn_cache_timer(void *arg)
 	    TCPTV_REXMTMAX);
 	if (timeout_add_msec(&sc->sc_timer, sc->sc_rxtcur))
 		refcnt_take(&sc->sc_refcnt);
+	inp = in_pcbref(sc->sc_inplisten);
+	if (inp == NULL)
+		goto freeit;
 	mtx_leave(&syn_cache_mtx);
 
 	NET_LOCK();
@@ -3405,6 +3410,7 @@ syn_cache_timer(void *arg)
 	tcpstat_inc(tcps_sc_retransmitted);
 	NET_UNLOCK();
 
+	in_pcbunref(inp);
 	syn_cache_put(sc);
 	return;
 
@@ -3434,10 +3440,7 @@ syn_cache_cleanup(struct tcpcb *tp)
 
 	mtx_enter(&syn_cache_mtx);
 	LIST_FOREACH_SAFE(sc, &tp->t_sc, sc_tpq, nsc) {
-#ifdef DIAGNOSTIC
-		if (sc->sc_tp != tp)
-			panic("invalid sc_tp in syn_cache_cleanup");
-#endif
+		KASSERT(sc->sc_inplisten == tp->t_inpcb);
 		syn_cache_rm(sc);
 		syn_cache_put(sc);
 	}
@@ -3949,7 +3952,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (tb.t_flags & TF_SIGNATURE)
 		SET(sc->sc_fixflags, SCF_SIGNATURE);
 #endif
-	sc->sc_tp = tp;
+	sc->sc_inplisten = in_pcbref(tp->t_inpcb);
 	if (syn_cache_respond(sc, m, now) == 0) {
 		mtx_enter(&syn_cache_mtx);
 		/*
@@ -3962,6 +3965,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tcpstat_inc(tcps_sndacks);
 		tcpstat_inc(tcps_sndtotal);
 	} else {
+		in_pcbunref(sc->sc_inplisten);
 		syn_cache_put(sc);
 		tcpstat_inc(tcps_sc_dropped);
 	}
@@ -4158,7 +4162,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 
 	/* use IPsec policy and ttl from listening socket, on SYN ACK */
 	mtx_enter(&syn_cache_mtx);
-	inp = sc->sc_tp ? sc->sc_tp->t_inpcb : NULL;
+	inp = in_pcbref(sc->sc_inplisten);
 	mtx_leave(&syn_cache_mtx);
 
 	/*
@@ -4189,5 +4193,6 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 		break;
 #endif
 	}
+	in_pcbunref(inp);
 	return (error);
 }
