@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.152 2024/11/05 17:28:32 mpi Exp $	*/
+/*	$OpenBSD: mount.h,v 1.153 2025/01/02 01:19:22 dlg Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -340,6 +340,7 @@ struct mount {
 	struct vnode    *mnt_syncer;            /* syncer vnode */
 	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct rwlock   mnt_lock;               /* mount structure lock */
+	struct refcnt	mnt_refs;
 	int		mnt_flag;		/* flags */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	void		*mnt_data;		/* private data */
@@ -388,8 +389,8 @@ struct mount {
     "\20\001RDONLY\002SYNCHRONOUS\003NOEXEC\004NOSUID\005NODEV\006NOPERM" \
     "\007ASYNC\010EXRDONLY\011EXPORTED\012DEFEXPORTED\013EXPORTANON" \
     "\014WXALLOWED\015LOCAL\016QUOTA\017ROOTFS\020NOATIME\021UPDATE" \
-    "\022DELEXPORT\023RELOAD\024FORCE\025STALLED\026SWAPPABLE\032WANTRDWR" \
-    "\033SOFTDEP\034DOOMED"
+    "\022DELEXPORT\023RELOAD\024FORCE\025STALLED\026SWAPPABLE\031UNMOUNT" \
+    "\032WANTRDWR\033SOFTDEP\034DOOMED"
 
 /*
  * filesystem control flags.
@@ -400,6 +401,7 @@ struct mount {
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define	MNT_STALLED	0x00100000	/* filesystem stalled */ 
 #define	MNT_SWAPPABLE	0x00200000	/* filesystem can be used for swap */
+#define MNT_UNMOUNT	0x01000000	/* unmount in progress */
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
 #define MNT_SOFTDEP     0x04000000      /* soft dependencies being done - now ignored */
 #define MNT_DOOMED	0x08000000	/* device behind filesystem is gone */
