@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.40 2025/01/02 12:36:21 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.41 2025/01/02 13:10:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,6 +125,8 @@
 #ifndef OPENSSL_NO_OCSP
 #include <openssl/ocsp.h>
 #endif
+
+#include <openssl/ssl.h>
 
 #include <unistd.h>
 
@@ -363,5 +365,43 @@ int ts_main(int argc, char **argv);
 int verify_main(int argc, char **argv);
 int version_main(int argc, char **argv);
 int x509_main(int argc, char **argv);
+
+#define PORT            4433
+#define PORT_STR        "4433"
+#define PROTOCOL        "tcp"
+
+extern int verify_depth;
+extern int verify_return_error;
+
+int do_server(int port, int type, int *ret,
+    int (*cb)(int s, unsigned char *context),
+    unsigned char *context, int naccept);
+#ifdef HEADER_X509_H
+int verify_callback(int ok, X509_STORE_CTX *ctx);
+#endif
+#ifdef HEADER_SSL_H
+int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
+int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key);
+#endif
+int ssl_print_tmp_key(BIO *out, SSL *s);
+int init_client(int *sock, char *server, char *port, int type, int af);
+int extract_port(char *str, short *port_ptr);
+int extract_host_port(char *str, char **host_ptr, unsigned char *ip, char **p);
+
+long bio_dump_callback(BIO *bio, int cmd, const char *argp, int argi,
+    long argl, long ret);
+
+#ifdef HEADER_SSL_H
+void apps_ssl_info_callback(const SSL *s, int where, int ret);
+void msg_cb(int write_p, int version, int content_type, const void *buf,
+    size_t len, SSL *ssl, void *arg);
+void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
+    int len, void *arg);
+#endif
+
+int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
+    unsigned int *cookie_len);
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len);
 
 #endif

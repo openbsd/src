@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.38 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: s_time.c,v 1.39 2025/01/02 13:10:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,8 +77,6 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
-
-#include "s_apps.h"
 
 #define SSL_CONNECT_NAME	"localhost:4433"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.21 2023/04/14 15:27:13 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.22 2025/01/02 13:10:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,8 +123,6 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
-
-#include "s_apps.h"
 
 #define	COOKIE_SECRET_LENGTH	16
 

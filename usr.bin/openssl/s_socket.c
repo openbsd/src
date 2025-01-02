@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.13 2021/12/06 11:06:58 tb Exp $ */
+/* $OpenBSD: s_socket.c,v 1.14 2025/01/02 13:10:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,8 +70,6 @@
 #include "apps.h"
 
 #include <openssl/ssl.h>
-
-#include "s_apps.h"
 
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port, char *ip, int type);

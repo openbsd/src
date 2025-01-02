@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.38 2025/01/02 12:31:44 tb Exp $ */
+/* $OpenBSD: openssl.c,v 1.39 2025/01/02 13:10:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,8 +126,6 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
-
-#include "s_apps.h"
 
 #define FUNC_TYPE_GENERAL       1
 #define FUNC_TYPE_MD            2
