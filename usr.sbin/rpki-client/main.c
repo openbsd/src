@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.276 2024/12/02 14:55:02 job Exp $ */
+/*	$OpenBSD: main.c,v 1.277 2025/01/02 17:04:06 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1086,6 +1086,8 @@ main(int argc, char *argv[])
 			tals[talsz++] = optarg;
 			break;
 		case 'T':
+			warnx("-T is deprecated and will be removed in version"
+			    " 9.5. See -B in the manual for table names.");
 			bird_tablename = optarg;
 			break;
 		case 'v':
