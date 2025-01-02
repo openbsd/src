@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.66 2025/01/02 13:10:03 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.67 2025/01/02 16:07:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,11 +159,7 @@
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
-/*#define SSL_HOST_NAME	"www.netscape.com" */
-/*#define SSL_HOST_NAME	"193.118.187.102" */
 #define SSL_HOST_NAME	"localhost"
-
- /*#define TEST_CERT "client.pem" *//* no default cert. */
 
 #define BUFSIZZ 1024*8
 
