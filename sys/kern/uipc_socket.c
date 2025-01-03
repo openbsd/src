@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.354 2025/01/03 09:59:25 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.355 2025/01/03 12:56:14 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -250,11 +250,8 @@ solisten(struct socket *so, int backlog)
 }
 
 void
-sorele(struct socket *so, int keep_lock)
+sorele(struct socket *so)
 {
-	if (keep_lock == 0)
-		sounlock(so);
-
 	if (refcnt_rele(&so->so_refcnt) == 0)
 		return;
 
@@ -314,18 +311,23 @@ sofree(struct socket *so, int keep_lock)
 
 			if (so->so_onq != &head->so_q0) {
 				sounlock(so);
-				sorele(head, 0);
+				sounlock(head);
+				sorele(head);
 				return;
 			}
 		}
 
 		soqremque(so, 0);
 
-		if (persocket)
-			sorele(head, 0);
+		if (persocket) {
+			sounlock(head);
+			sorele(head);
+		}
 	}
 
-	sorele(so, keep_lock);
+	if (!keep_lock)
+		sounlock(so);
+	sorele(so);
 }
 
 static inline uint64_t
@@ -438,8 +440,7 @@ discard:
 			sounlock(soback);
 		}
 		sbunlock(&soback->so_rcv);
-		solock(soback);
-		sorele(soback, 0);
+		sorele(soback);
 
 notsplicedback:
 		sblock(&so->so_rcv, SBL_WAIT | SBL_NOINTR);

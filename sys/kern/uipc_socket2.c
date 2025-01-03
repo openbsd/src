@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.162 2024/12/30 12:12:35 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.163 2025/01/03 12:56:14 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -110,7 +110,8 @@ soisconnected(struct socket *so)
 			solock(so);
 
 			if (so->so_onq != &head->so_q0) {
-				sorele(head, 0);
+				sounlock(head);
+				sorele(head);
 				return;
 			}
 
@@ -121,8 +122,10 @@ soisconnected(struct socket *so)
 		sorwakeup(head);
 		wakeup_one(&head->so_timeo);
 
-		if (persocket)
-			sorele(head, 0);
+		if (persocket) {
+			sounlock(head);
+			sorele(head);
+		}
 	} else {
 		wakeup(&so->so_timeo);
 		sorwakeup(so);

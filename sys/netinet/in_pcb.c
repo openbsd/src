@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.308 2025/01/03 00:49:26 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.309 2025/01/03 12:56:15 mvs Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ in_pcbsolock(struct inpcb *inp)
 		return NULL;
 
 	rw_enter_write(&so->so_lock);
-	sorele(so, 1);
+	sorele(so);
 
 	return so;
 }
