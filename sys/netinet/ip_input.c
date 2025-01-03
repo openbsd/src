@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.402 2024/11/21 20:15:44 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.403 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1650,8 +1650,11 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 		if (rt != NULL) {
-			if (rt->rt_mtu) {
-				destmtu = rt->rt_mtu;
+			u_int rtmtu;
+
+			rtmtu = atomic_load_int(&rt->rt_mtu);
+			if (rtmtu != 0) {
+				destmtu = rtmtu;
 			} else {
 				struct ifnet *destifp;
 

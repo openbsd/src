@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.9 2022/03/21 05:45:52 visa Exp $ */
+/*	$OpenBSD: atomic.h,v 1.10 2025/01/03 21:27:41 bluhm Exp $ */
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
@@ -202,13 +202,13 @@ atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
  */
 
 static inline unsigned int
-atomic_load_int(volatile unsigned int *p)
+atomic_load_int(volatile const unsigned int *p)
 {
 	return *p;
 }
 
 static inline unsigned long
-atomic_load_long(volatile unsigned long *p)
+atomic_load_long(volatile const unsigned long *p)
 {
 	return *p;
 }

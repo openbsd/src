@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.293 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.294 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -156,8 +156,8 @@ struct idgen32_ctx ip6_id_ctx;
  * The mbuf chain containing the packet will be freed.
  * The mbuf opt, if present, will not be freed.
  *
- * type of "mtu": rt_mtu is u_long, ifnet.ifr_mtu is int.
- * We use u_long to hold largest one, * which is rt_mtu.
+ * type of "mtu": rt_mtu is u_int, ifnet.ifr_mtu is int.
+ * We use u_long to hold largest one.  XXX should be u_int
  */
 int
 ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
@@ -1027,11 +1027,11 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 int
 ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup)
 {
-	u_int32_t mtu = 0;
+	u_int mtu, rtmtu;
 	int error = 0;
 
 	if (rt != NULL) {
-		mtu = rt->rt_mtu;
+		mtu = rtmtu = atomic_load_int(&rt->rt_mtu);
 		if (mtu == 0)
 			mtu = ifp->if_mtu;
 		else if (mtu < IPV6_MMTU) {
@@ -1048,7 +1048,7 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup)
 			 */
 			mtu = ifp->if_mtu;
 			if (!(rt->rt_locks & RTV_MTU))
-				rt->rt_mtu = mtu;
+				atomic_cas_uint(&rt->rt_mtu, rtmtu, mtu);
 		}
 	} else {
 		mtu = ifp->if_mtu;
@@ -2812,7 +2812,7 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 	DPRINTF("spi %08x mtu %d rt %p cloned %d",
 	    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned);
 	if (rt != NULL) {
-		rt->rt_mtu = tdb->tdb_mtu;
+		atomic_store_int(&rt->rt_mtu, tdb->tdb_mtu);
 		if (ro != NULL && ro->ro_rt != NULL) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = rtalloc(&ro->ro_dstsa, RT_RESOLVE,

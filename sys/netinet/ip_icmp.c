@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.197 2024/12/04 22:24:11 mvs Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.198 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1008,6 +1008,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 {
 	struct rtentry *rt;
 	struct ifnet *ifp;
+	u_int rtmtu;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 
 	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid, 0);
@@ -1020,17 +1021,18 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 		return;
 	}
 
+	rtmtu = atomic_load_int(&rt->rt_mtu);
 	if (mtu == 0) {
 		int i = 0;
 
 		mtu = ntohs(icp->icmp_ip.ip_len);
 		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
-		if (mtu > rt->rt_mtu && rt->rt_mtu != 0)
+		if (mtu > rtmtu && rtmtu != 0)
 			mtu -= (icp->icmp_ip.ip_hl << 2);
 
 		/* If we still can't guess a value, try the route */
 		if (mtu == 0) {
-			mtu = rt->rt_mtu;
+			mtu = rtmtu;
 
 			/* If no route mtu, default to the interface mtu */
 
@@ -1055,8 +1057,8 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 	if ((rt->rt_locks & RTV_MTU) == 0) {
 		if (mtu < 296 || mtu > ifp->if_mtu)
 			rt->rt_locks |= RTV_MTU;
-		else if (rt->rt_mtu > mtu || rt->rt_mtu == 0)
-			rt->rt_mtu = mtu;
+		else if (rtmtu > mtu || rtmtu == 0)
+			atomic_cas_uint(&rt->rt_mtu, rtmtu, mtu);
 	}
 
 	if_put(ifp);
@@ -1089,7 +1091,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, u_int rtableid)
 			    rtableid, NULL);
 	} else {
 		if ((rt->rt_locks & RTV_MTU) == 0)
-			rt->rt_mtu = 0;
+			atomic_store_int(&rt->rt_mtu, 0);
 	}
 
 	if_put(ifp);

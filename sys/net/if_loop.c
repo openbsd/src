@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.98 2023/12/29 11:43:04 bluhm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.99 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -277,8 +277,8 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 void
 lortrequest(struct ifnet *ifp, int cmd, struct rtentry *rt)
 {
-	if (rt && rt->rt_mtu == 0)
-		rt->rt_mtu = LOMTU;
+	if (rt != NULL)
+		atomic_cas_uint(&rt->rt_mtu, 0, LOMTU);
 }
 
 /*

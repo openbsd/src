@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.437 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: route.c,v 1.438 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -557,8 +557,14 @@ rt_setgwroute(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 	 * If the MTU of next hop is 0, this will reset the MTU of the
 	 * route to run PMTUD again from scratch.
 	 */
-	if (!ISSET(rt->rt_locks, RTV_MTU) && (rt->rt_mtu > nhrt->rt_mtu))
-		rt->rt_mtu = nhrt->rt_mtu;
+	if (!ISSET(rt->rt_locks, RTV_MTU)) {
+		u_int mtu, nhmtu;
+
+		mtu = atomic_load_int(&rt->rt_mtu);
+		nhmtu = atomic_load_int(&nhrt->rt_mtu);
+		if (mtu > nhmtu)
+			atomic_cas_uint(&rt->rt_mtu, mtu, nhmtu);
+	}
 
 	/*
 	 * To avoid reference counting problems when writing link-layer

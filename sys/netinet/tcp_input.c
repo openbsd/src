@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.418 2025/01/03 00:49:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.419 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2842,7 +2842,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 	 * if there's an mtu associated with the route and we support
 	 * path MTU discovery for the underlying protocol family, use it.
 	 */
-	rtmtu = READ_ONCE(rt->rt_mtu);
+	rtmtu = atomic_load_int(&rt->rt_mtu);
 	if (rtmtu) {
 		/*
 		 * One may wish to lower MSS to take into account options,

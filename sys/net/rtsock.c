@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.375 2024/07/12 17:20:18 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.376 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1345,7 +1345,7 @@ route_cleargateway(struct rtentry *rt, void *arg, unsigned int rtableid)
 
 	if (ISSET(rt->rt_flags, RTF_GATEWAY) && rt->rt_gwroute == nhrt &&
 	    !ISSET(rt->rt_locks, RTV_MTU))
-		rt->rt_mtu = 0;
+		atomic_store_int(&rt->rt_mtu, 0);
 
 	return (0);
 }
@@ -1393,7 +1393,7 @@ rtm_setmetrics(u_long which, const struct rt_metrics *in,
 	int64_t expire;
 
 	if (which & RTV_MTU)
-		out->rmx_mtu = in->rmx_mtu;
+		atomic_store_int(&out->rmx_mtu, in->rmx_mtu);
 	if (which & RTV_EXPIRE) {
 		expire = in->rmx_expire;
 		if (expire != 0) {
@@ -1421,7 +1421,7 @@ rtm_getmetrics(const struct rtentry *rt, struct rt_metrics *out)
 
 	bzero(out, sizeof(*out));
 	out->rmx_locks = in->rmx_locks;
-	out->rmx_mtu = in->rmx_mtu;
+	out->rmx_mtu = atomic_load_int(&in->rmx_mtu);
 	out->rmx_expire = expire;
 	out->rmx_pksent = in->rmx_pksent;
 }

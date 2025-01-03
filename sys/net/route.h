@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.210 2024/03/31 15:53:12 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.211 2025/01/03 21:27:40 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct rt_kmetrics {
 	u_int64_t	rmx_pksent;	/* packets sent using this route */
 	int64_t		rmx_expire;	/* lifetime for route, e.g. redirect */
 	u_int		rmx_locks;	/* Kernel must leave these values */
-	u_int		rmx_mtu;	/* MTU for this path */
+	u_int		rmx_mtu;	/* [a] MTU for this path */
 };
 #endif
 
