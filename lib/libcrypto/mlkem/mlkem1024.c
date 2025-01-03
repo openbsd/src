@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem1024.c,v 1.5 2024/12/19 23:52:26 tb Exp $ */
+/* $OpenBSD: mlkem1024.c,v 1.6 2025/01/03 08:19:24 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -339,14 +339,14 @@ scalar_sub(scalar *lhs, const scalar *rhs)
 }
 
 /*
- * Multiplying two scalars in the number theoretically transformed state. Since
- * 3329 does not have a 512th root of unity, this means we have to interpret
- * the 2*ith and (2*i+1)th entries of the scalar as elements of GF(3329)[X]/(X^2
- * - 17^(2*bitreverse(i)+1)) The value of 17^(2*bitreverse(i)+1) mod 3329 is
- * stored in the precomputed |kModRoots| table. Note that our Barrett transform
- * only allows us to multipy two reduced numbers together, so we need some
- * intermediate reduction steps, even if an uint64_t could hold 3 multiplied
- * numbers.
+ * Multiplying two scalars in the number theoretically transformed state.
+ * Since 3329 does not have a 512th root of unity, this means we have to
+ * interpret the 2*ith and (2*i+1)th entries of the scalar as elements of
+ * GF(3329)[X]/(X^2 - 17^(2*bitreverse(i)+1)).
+ * The value of 17^(2*bitreverse(i)+1) mod 3329 is stored in the precomputed
+ * |kModRoots| table. Our Barrett transform only allows us to multiply two
+ * reduced numbers together, so we need some intermediate reduction steps,
+ * even if an uint64_t could hold 3 multiplied numbers.
  */
 static void
 scalar_mult(scalar *out, const scalar *lhs, const scalar *rhs)
