@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.353 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.354 2025/01/03 09:59:25 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1338,22 +1338,11 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		if ((error = sblock(&so->so_rcv, SBL_WAIT)) != 0)
 			return (error);
 		solock(so);
-		if (so->so_options & SO_ACCEPTCONN) {
-			error = EOPNOTSUPP;
-			goto out;
-		}
-		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0 &&
-		    (so->so_proto->pr_flags & PR_CONNREQUIRED)) {
-			error = ENOTCONN;
-			goto out;
-		}
-
 		if (so->so_sp && so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 0);
- out:
 		sounlock(so);
 		sbunlock(&so->so_rcv);
-		return (error);
+		return (0);
 	}
 
 	if (sosplice_taskq == NULL) {
