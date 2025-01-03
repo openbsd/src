@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.158 2024/12/27 12:04:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.159 2025/01/03 15:31:48 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -501,8 +501,14 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
     struct vm_page **npg)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+	struct uvm_object *uobj = NULL;
 	struct vm_anon *anon;
 	struct vm_page *pg = NULL;
+
+	if (uobjpage != PGO_DONTCARE)
+		uobj = uobjpage->uobject;
+
+	KASSERT(uobj == NULL || rw_lock_held(uobj->vmobjlock));
 
 	anon = uvm_analloc();
 	if (anon) {
@@ -513,7 +519,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 
 	/* check for out of RAM */
 	if (anon == NULL || pg == NULL) {
-		uvmfault_unlockall(ufi, amap, NULL);
+		uvmfault_unlockall(ufi, amap, uobj);
 		if (anon == NULL)
 			counters_inc(uvmexp_counters, flt_noanon);
 		else {
