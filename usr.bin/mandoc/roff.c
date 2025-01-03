@@ -1,6 +1,6 @@
-/* $OpenBSD: roff.c,v 1.272 2023/10/24 20:30:49 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.273 2025/01/03 16:32:21 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2015, 2017-2023 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015, 2017-2024 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -3060,6 +3060,8 @@ roff_getregro(const struct roff *r, const char *name)
 		return 24;
 	case 'j':  /* Always adjust left margin only. */
 		return 0;
+	case 'l':  /* Fixed line width for DocBook. */
+		return 78 * 24;
 	case 'T':  /* Some output device is always defined. */
 		return 1;
 	case 'V':  /* Fixed vertical resolution. */

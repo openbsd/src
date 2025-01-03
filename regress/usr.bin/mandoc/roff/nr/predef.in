@@ -1,5 +1,5 @@
-.\" $OpenBSD: predef.in,v 1.4 2020/10/24 22:52:34 schwarze Exp $
-.TH NR-PREDEF 1 "August 29, 2015"
+.\" $OpenBSD: predef.in,v 1.5 2025/01/03 16:32:21 schwarze Exp $
+.TH NR-PREDEF 1 "January 3, 2025"
 .SH NAME
 nr-predef \- pre-defined read-only integer number registers
 .SH DESCRIPTION
@@ -11,15 +11,17 @@ user defined macro with \\n(.$ arguments: \\$*
 .nr .g 111
 .nr .H 111
 .nr .j 111
+.nr .l 111
 .nr .T 111
 .nr .V 111
 .nr .$ 111
-ascii mode: \n(.A
-groff mode: \n(.g
-horizontal resolution: \n(.H
-adjustment mode: \n(.j
-output device defined: \n(.T \n[.T]
-vertical resolution: \n(.V
+ascii mode: \n(.A = off
+groff mode: \n(.g = on
+horizontal resolution: \n(.H dots per character
+adjustment mode: \n(.j = flush left
+line width: \n(.l dots per line
+output device defined: \n(.T \n[.T] = yes
+vertical resolution: \n(.V dots per line
 .mym
 .mym one
 .mym one two

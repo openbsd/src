@@ -4,14 +4,15 @@ NNAAMMEE
      nr-predef - pre-defined read-only integer number registers
 
 DDEESSCCRRIIPPTTIIOONN
-     ascii mode: 0
-     groff mode: 1
-     horizontal resolution: 24
-     adjustment mode: 0
-     output device defined: 1 1
-     vertical resolution: 40
+     ascii mode: 0 = off
+     groff mode: 1 = on
+     horizontal resolution: 24 dots per character
+     adjustment mode: 0 = flush left
+     line width: 1872 dots per line
+     output device defined: 1 1 = yes
+     vertical resolution: 40 dots per line
      user defined macro with 0 arguments:
      user defined macro with 1 arguments: one
      user defined macro with 2 arguments: one two
 
-OpenBSD                         August 29, 2015                   NR-PREDEF(1)
+OpenBSD                         January 3, 2025                   NR-PREDEF(1)
