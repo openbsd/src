@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpon.c,v 1.5 2024/12/05 21:35:39 kettenis Exp $	*/
+/*	$OpenBSD: qcpon.c,v 1.6 2025/01/03 14:14:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,8 +28,6 @@
 #include <dev/fdt/spmivar.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 /* Registers. */
