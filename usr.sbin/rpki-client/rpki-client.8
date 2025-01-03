@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.117 2025/01/02 17:08:32 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.118 2025/01/03 10:14:32 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2025 $
+.Dd $Mdocdate: January 3 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -29,7 +29,6 @@
 .Op Fl H Ar fqdn
 .Op Fl S Ar skiplist
 .Op Fl s Ar timeout
-.Op Fl T Ar table
 .Op Fl t Ar tal
 .Op Ar outputdir
 .Nm
@@ -71,13 +70,15 @@ The default is not to include them.
 Exclude the ASPA-set from the output files that support it (JSON and
 OpenBGPD).
 .It Fl B
-Create output in the files
+Create output in the file
 .Pa bird
-(for bird2)
+in the output directory suitable for BIRD internet routing daemon version
+2.16 and up.
+The validated payload table names are
+.Em ROAS4 ,
+.Em ROAS6 ,
 and
-.Pa bird3
-(for bird3)
-in the output directory which is suitable for the BIRD internet routing daemon.
+.Em ASPAS .
 .It Fl b Ar sourceaddr
 Tell the HTTP and rsync clients to use
 .Ar sourceaddr
@@ -204,16 +205,6 @@ Individual RSYNC/RRDP repositories are timed out after one fourth of
 .Em timeout .
 All network synchronisation tasks are aborted after seven eights of
 .Em timeout .
-.It Fl T Ar table
-.Em Deprecated ,
-will be removed in
-.Nm
-version 9.5.
-For BIRD output generated with the
-.Fl B
-option use
-.Ar table
-as roa table name instead of the default 'ROAS'.
 .It Fl t Ar tal
 Specify a
 .Em Trust Anchor Location Pq TAL

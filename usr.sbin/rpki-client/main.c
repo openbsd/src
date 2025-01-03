@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.277 2025/01/02 17:04:06 job Exp $ */
+/*	$OpenBSD: main.c,v 1.278 2025/01/03 10:14:32 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -62,8 +62,6 @@ void	suicide(int sig);
 static struct filepath_tree	fpt = RB_INITIALIZER(&fpt);
 static struct msgbuf		*procq, *rsyncq, *httpq, *rrdpq;
 static int			cachefd, outdirfd;
-
-const char	*bird_tablename = "ROAS";
 
 int	verbose;
 int	noop;
@@ -1016,7 +1014,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	while ((c =
-	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmnoP:Rs:S:t:T:vVx")) != -1)
+	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmnoP:Rs:S:t:vVx")) != -1)
 		switch (c) {
 		case '0':
 			excludeas0 = 0;
@@ -1084,11 +1082,6 @@ main(int argc, char *argv[])
 			if (talsz >= TALSZ_MAX)
 				err(1, "too many tal files specified");
 			tals[talsz++] = optarg;
-			break;
-		case 'T':
-			warnx("-T is deprecated and will be removed in version"
-			    " 9.5. See -B in the manual for table names.");
-			bird_tablename = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -1562,8 +1555,8 @@ usage:
 	    "usage: rpki-client [-0ABcjmnoRVvx] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-H fqdn] [-P epoch] [-S skiplist] [-s timeout]"
-	    " [-T table]\n"
-	    "                   [-t tal] [outputdir]\n"
+	    " [-t tal]\n"
+	    "                   [outputdir]\n"
 	    "       rpki-client [-Vv] [-d cachedir] [-j] [-t tal] -f file ..."
 	    "\n");
 	return 1;
