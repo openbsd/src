@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcspmi.c,v 1.6 2024/08/14 10:54:58 mglocker Exp $	*/
+/*	$OpenBSD: qcspmi.c,v 1.7 2025/01/03 14:13:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,8 +25,6 @@
 #include <dev/fdt/spmivar.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 /* Core registers. */
