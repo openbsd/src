@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.21 2025/01/03 10:14:32 job Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.22 2025/01/03 10:32:21 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -29,7 +29,7 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	time_t		 now = get_current_time();
 	size_t		 i;
 
-	if (fprintf(out, "# For BIRD 2.16+\n#\n") < 0)
+	if (fprintf(out, "# For BIRD %s\n#\n", excludeaspa ? "2" : "2.16+") < 0)
 		return -1;
 
 	if (outputheader(out, st) < 0)
@@ -44,8 +44,8 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 			return -1;
 	}
 
-	if (fprintf(out, "\nprotocol static {\n\troa4 { table ROAS4; };\n"
-	    "\n") < 0)
+	if (fprintf(out, "\nprotocol static {\n"
+	    "\troa4 { table ROAS4; };\n\n") < 0)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
@@ -59,8 +59,8 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		}
 	}
 
-	if (fprintf(out, "}\n\nprotocol static {\n\troa6 { table ROAS6; };\n"
-	    "\n") < 0)
+	if (fprintf(out, "}\n\nprotocol static {\n"
+	    "\troa6 { table ROAS6; };\n\n") < 0)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
@@ -87,7 +87,8 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	RB_FOREACH(vap, vap_tree, vaps) {
 		if (vap->overflowed)
 			continue;
-		if (fprintf(out, "\troute aspa %d providers ", vap->custasid) <0)
+		if (fprintf(out, "\troute aspa %d providers ",
+		    vap->custasid) < 0)
 			return -1;
 		for (i = 0; i < vap->num_providers; i++) {
 			if (fprintf(out, "%u", vap->providers[i]) < 0)

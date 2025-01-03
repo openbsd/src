@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.118 2025/01/03 10:14:32 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.119 2025/01/03 10:32:21 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -67,13 +67,15 @@ Include hazardous AS0 TALs in the output files.
 AS0 TALs are not recommended for automatic filtering of BGP routes.
 The default is not to include them.
 .It Fl A
-Exclude the ASPA-set from the output files that support it (JSON and
+Exclude the ASPA-set from the output files that support it (BIRD, JSON, and
 OpenBGPD).
 .It Fl B
 Create output in the file
 .Pa bird
 in the output directory suitable for BIRD internet routing daemon version
 2.16 and up.
+For compatibility with earlier versions, use
+.Fl A .
 The validated payload table names are
 .Em ROAS4 ,
 .Em ROAS6 ,
