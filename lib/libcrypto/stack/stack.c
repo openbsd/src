@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.30 2024/12/28 19:07:24 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.31 2025/01/03 08:00:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,31 +203,27 @@ obj_bsearch_ex(const void *key, const void *base_, int num, int size,
 {
 	const char *base = base_;
 	int l, h, i = 0, c = 0;
-	const char *p = NULL;
 
 	if (num == 0)
-		return (NULL);
+		return NULL;
+
 	l = 0;
 	h = num;
 	while (l < h) {
 		i = (l + h) / 2;
-		p = &(base[i * size]);
-		c = (*cmp)(key, p);
+		if ((c = cmp(key,  &base[i * size])) == 0) {
+			/* Return first match. */
+			while (i > 0 && cmp(key, &base[(i - 1) * size]) == 0)
+				i--;
+			return &base[i * size];
+		}
 		if (c < 0)
 			h = i;
-		else if (c > 0)
-			l = i + 1;
 		else
-			break;
+			l = i + 1;
 	}
-	if (c != 0)
-		p = NULL;
-	else if (c == 0) {
-		while (i > 0 && (*cmp)(key, &(base[(i - 1) * size])) == 0)
-			i--;
-		p = &(base[i * size]);
-	}
-	return (p);
+
+	return NULL;
 }
 
 int
