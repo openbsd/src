@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.417 2025/01/02 10:55:18 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.418 2025/01/03 00:49:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3371,6 +3371,7 @@ syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
 	struct inpcb *inp;
+	struct socket *so;
 	uint64_t now;
 	int lastref;
 
@@ -3404,11 +3405,15 @@ syn_cache_timer(void *arg)
 		goto freeit;
 	mtx_leave(&syn_cache_mtx);
 
-	NET_LOCK();
-	now = tcp_now();
-	(void) syn_cache_respond(sc, NULL, now);
-	tcpstat_inc(tcps_sc_retransmitted);
-	NET_UNLOCK();
+	NET_LOCK_SHARED();
+	so = in_pcbsolock(inp);
+	if (so != NULL) {
+		now = tcp_now();
+		(void) syn_cache_respond(sc, NULL, now);
+		tcpstat_inc(tcps_sc_retransmitted);
+		in_pcbsounlock(inp, so);
+	}
+	NET_UNLOCK_SHARED();
 
 	in_pcbunref(inp);
 	syn_cache_put(sc);

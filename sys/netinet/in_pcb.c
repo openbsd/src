@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.307 2024/12/24 16:27:07 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.308 2025/01/03 00:49:26 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -237,6 +237,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table, int wait)
 		return (ENOBUFS);
 	inp->inp_table = table;
 	inp->inp_socket = so;
+	mtx_init(&inp->inp_sofree_mtx, IPL_SOFTNET);
 	refcnt_init_trace(&inp->inp_refcnt, DT_REFCNT_IDX_INPCB);
 	inp->inp_seclevel.sl_auth = IPSEC_AUTH_LEVEL_DEFAULT;
 	inp->inp_seclevel.sl_esp_trans = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
@@ -584,6 +585,9 @@ in_pcbdetach(struct inpcb *inp)
 	struct inpcbtable *table = inp->inp_table;
 
 	so->so_pcb = NULL;
+	mtx_enter(&inp->inp_sofree_mtx);
+	inp->inp_socket = NULL;
+	mtx_leave(&inp->inp_sofree_mtx);
 	/*
 	 * As long as the NET_LOCK() is the default lock for Internet
 	 * sockets, do not release it to not introduce new sleeping
@@ -616,6 +620,32 @@ in_pcbdetach(struct inpcb *inp)
 	mtx_leave(&table->inpt_mtx);
 
 	in_pcbunref(inp);
+}
+
+struct socket *
+in_pcbsolock(struct inpcb *inp)
+{
+	struct socket *so;
+
+	NET_ASSERT_LOCKED();
+
+	mtx_enter(&inp->inp_sofree_mtx);
+	so = soref(inp->inp_socket);
+	mtx_leave(&inp->inp_sofree_mtx);
+	if (so == NULL)
+		return NULL;
+
+	rw_enter_write(&so->so_lock);
+	sorele(so, 1);
+
+	return so;
+}
+
+void
+in_pcbsounlock(struct inpcb *inp, struct socket *so)
+{
+	KASSERT(inp->inp_socket == so);
+	rw_exit_write(&so->so_lock);
 }
 
 struct inpcb *
