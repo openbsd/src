@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpmic.c,v 1.2 2024/08/14 10:54:58 mglocker Exp $	*/
+/*	$OpenBSD: qcpmic.c,v 1.3 2025/01/03 14:13:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,8 +26,6 @@
 #include <dev/fdt/spmivar.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 /* PMIC Registers. */
