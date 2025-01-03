@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2023/08/21 14:25:22 kn Exp $
+#	$OpenBSD: Makefile,v 1.41 2025/01/03 02:23:20 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -7,9 +7,9 @@ REAL_RUN =		${INSTALLBOOT}
 # see distrib/${MACHINE}/ramdisk/install.md for FORMAT_DISK values
 # default to root on softraid(4) on all architectures that have
 # bootstrap + kernel + installboot(8) support for it
-.if   ${MACHINE} == "amd64" ||	\
-      ${MACHINE} == "i386"	# assume BIOS/MBR
-FORMAT_DISK =		fdisk -iy
+.if   ${MACHINE} == "amd64"	# assume EFI/GPT
+FORMAT_DISK =		fdisk -gy -b 532480
+DISK_BLOCKS =		768
 STAGENAMES =		biosboot boot
 USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "arm64"
@@ -17,6 +17,10 @@ STAGENAMES =		BOOTAA64.EFI
 USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "armv7"
 STAGENAMES =		BOOTARM.EFI
+.elif ${MACHINE} == "i386"
+FORMAT_DISK =		fdisk -iy
+STAGENAMES =		biosboot boot
+USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "macppc"	# assume MBR
 FORMAT_DISK =		fdisk -iy -b '2048@1:06'
 STAGENAMES =		ofwboot
@@ -38,8 +42,9 @@ regress:
 	@echo SKIPPED
 .endif
 
-# how distrib/$(arch -s)/*/install.md:md_prep_disklabel() formats the root disk
+# how distrib/$(arch -s)/*/install.md:md_prep_fdisk() formats the root disk
 FORMAT_DISK ?=		fdisk -iy -b '32768@32768:C'
+DISK_BLOCKS ?=		128
 STAGEDIR =		/usr/mdec
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
 # is installboot(8) built with -DSOFTRAID?
@@ -72,7 +77,7 @@ FILETUPLES !=		{ echo ${DISKFILES}    ${KEYDISKFILE}; \
 				rs -T -- $$((${NDISKS} + 1)) 2
 create-disks:
 .for diskfile devfile in ${FILETUPLES}
-	dd if=/dev/zero  of=${diskfile} bs=1m count=0 seek=128 status=none
+	dd if=/dev/zero  of=${diskfile} bs=1m count=0 seek=${DISK_BLOCKS} status=none
 	${SUDO} vnconfig -- ${diskfile} 1>${devfile}
 	${SUDO} ${FORMAT_DISK} -- "$$(<${devfile})" 1>/dev/null
 .  if ${USE_SOFTRAID:L} == "yes"
