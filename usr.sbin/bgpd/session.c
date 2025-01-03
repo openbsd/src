@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.505 2024/12/16 16:10:10 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.506 2025/01/03 12:57:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -933,12 +933,14 @@ change_state(struct peer *peer, enum session_state state,
 				/* don't punish graceful restart */
 				timer_set(&peer->timers, Timer_IdleHold, 0);
 				session_graceful_restart(peer);
-			} else {
+			} else if (event != EVNT_STOP) {
 				timer_set(&peer->timers, Timer_IdleHold,
 				    peer->IdleHoldTime);
 				if (event != EVNT_NONE &&
 				    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 					peer->IdleHoldTime *= 2;
+				session_down(peer);
+			} else {
 				session_down(peer);
 			}
 		} else if (event != EVNT_STOP) {
