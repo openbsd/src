@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.78 2024/12/28 22:17:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.79 2025/01/03 17:23:51 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -76,7 +76,6 @@ void	tcp_timer_rexmt(void *);
 void	tcp_timer_persist(void *);
 void	tcp_timer_keep(void *);
 void	tcp_timer_2msl(void *);
-void	tcp_timer_reaper(void *);
 void	tcp_timer_delack(void *);
 
 const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
@@ -84,7 +83,6 @@ const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_persist,
 	tcp_timer_keep,
 	tcp_timer_2msl,
-	tcp_timer_reaper,
 	tcp_timer_delack,
 };
 
@@ -114,7 +112,8 @@ tcp_timer_init(void)
 void
 tcp_timer_delack(void *arg)
 {
-	struct tcpcb *otp = NULL, *tp = arg;
+	struct inpcb *inp = arg;
+	struct tcpcb *otp = NULL, *tp;
 	short ostate;
 
 	/*
@@ -123,13 +122,14 @@ tcp_timer_delack(void *arg)
 	 * ACK callout.
 	 */
 	NET_LOCK();
+	tp = intotcpcb(inp);
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
-	if (!ISSET((tp)->t_flags, TF_TMR_DELACK) ||
+	if (tp == NULL || !ISSET(tp->t_flags, TF_TMR_DELACK) ||
 	    timeout_pending(&tp->t_timer[TCPT_DELACK]))
 		goto out;
-	CLR((tp)->t_flags, TF_TMR_DELACK);
+	CLR(tp->t_flags, TF_TMR_DELACK);
 
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+	if (inp->inp_socket->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
 	}
@@ -139,6 +139,7 @@ tcp_timer_delack(void *arg)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_DELACK, 0);
  out:
 	NET_UNLOCK();
+	in_pcbunref(inp);
 }
 
 /*
@@ -197,19 +198,18 @@ tcp_timer_freesack(struct tcpcb *tp)
 void
 tcp_timer_rexmt(void *arg)
 {
-	struct tcpcb *otp = NULL, *tp = arg;
-	struct inpcb *inp;
+	struct inpcb *inp = arg;
+	struct tcpcb *otp = NULL, *tp;
 	uint32_t rto;
 	short ostate;
 
 	NET_LOCK();
-	inp = tp->t_inpcb;
-
+	tp = intotcpcb(inp);
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
-	if (!ISSET((tp)->t_flags, TF_TMR_REXMT) ||
+	if (tp == NULL || !ISSET(tp->t_flags, TF_TMR_REXMT) ||
 	    timeout_pending(&tp->t_timer[TCPT_REXMT]))
 		goto out;
-	CLR((tp)->t_flags, TF_TMR_REXMT);
+	CLR(tp->t_flags, TF_TMR_REXMT);
 
 	if ((tp->t_flags & TF_PMTUD_PEND) && inp &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
@@ -392,27 +392,30 @@ tcp_timer_rexmt(void *arg)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_REXMT, 0);
  out:
 	NET_UNLOCK();
+	in_pcbunref(inp);
 }
 
 void
 tcp_timer_persist(void *arg)
 {
-	struct tcpcb *otp = NULL, *tp = arg;
+	struct inpcb *inp = arg;
+	struct tcpcb *otp = NULL, *tp;
 	uint32_t rto;
 	short ostate;
 	uint64_t now;
 
 	NET_LOCK();
+	tp = intotcpcb(inp);
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
-	if (!ISSET((tp)->t_flags, TF_TMR_PERSIST) ||
+	if (tp == NULL || !ISSET(tp->t_flags, TF_TMR_PERSIST) ||
 	    timeout_pending(&tp->t_timer[TCPT_PERSIST]))
 		goto out;
-	CLR((tp)->t_flags, TF_TMR_PERSIST);
+	CLR(tp->t_flags, TF_TMR_PERSIST);
 
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
 		goto out;
 
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+	if (inp->inp_socket->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
 	}
@@ -443,30 +446,36 @@ tcp_timer_persist(void *arg)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_PERSIST, 0);
  out:
 	NET_UNLOCK();
+	in_pcbunref(inp);
 }
 
 void
 tcp_timer_keep(void *arg)
 {
-	struct tcpcb *otp = NULL, *tp = arg;
+	struct inpcb *inp = arg;
+	struct tcpcb *otp = NULL, *tp;
 	short ostate;
 
 	NET_LOCK();
+	tp = intotcpcb(inp);
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
-	if (!ISSET((tp)->t_flags, TF_TMR_KEEP) ||
+	if (tp == NULL || !ISSET(tp->t_flags, TF_TMR_KEEP) ||
 	    timeout_pending(&tp->t_timer[TCPT_KEEP]))
 		goto out;
-	CLR((tp)->t_flags, TF_TMR_KEEP);
+	CLR(tp->t_flags, TF_TMR_KEEP);
 
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+	if (inp->inp_socket->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
 	}
 	tcpstat_inc(tcps_keeptimeo);
-	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
-		goto dropit;
+	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0) {
+		tcpstat_inc(tcps_keepdrops);
+		tp = tcp_drop(tp, ETIMEDOUT);
+		goto out;
+	}
 	if ((atomic_load_int(&tcp_always_keepalive) ||
-	    tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE) &&
+	    inp->inp_socket->so_options & SO_KEEPALIVE) &&
 	    tp->t_state <= TCPS_CLOSING) {
 		int maxidle;
 		uint64_t now;
@@ -474,8 +483,11 @@ tcp_timer_keep(void *arg)
 		maxidle = READ_ONCE(tcp_maxidle);
 		now = tcp_now();
 		if ((maxidle > 0) &&
-		    ((now - tp->t_rcvtime) >= tcp_keepidle + maxidle))
-			goto dropit;
+		    ((now - tp->t_rcvtime) >= tcp_keepidle + maxidle)) {
+			tcpstat_inc(tcps_keepdrops);
+			tp = tcp_drop(tp, ETIMEDOUT);
+			goto out;
+		}
 		/*
 		 * Send a packet designed to force a response
 		 * if the peer is up and reachable:
@@ -498,30 +510,27 @@ tcp_timer_keep(void *arg)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_KEEP, 0);
  out:
 	NET_UNLOCK();
-	return;
-
- dropit:
-	tcpstat_inc(tcps_keepdrops);
-	tp = tcp_drop(tp, ETIMEDOUT);
-	NET_UNLOCK();
+	in_pcbunref(inp);
 }
 
 void
 tcp_timer_2msl(void *arg)
 {
-	struct tcpcb *otp = NULL, *tp = arg;
+	struct inpcb *inp = arg;
+	struct tcpcb *otp = NULL, *tp;
 	short ostate;
 	int maxidle;
 	uint64_t now;
 
 	NET_LOCK();
+	tp = intotcpcb(inp);
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
-	if (!ISSET((tp)->t_flags, TF_TMR_2MSL) ||
+	if (tp == NULL || !ISSET(tp->t_flags, TF_TMR_2MSL) ||
 	    timeout_pending(&tp->t_timer[TCPT_2MSL]))
 		goto out;
-	CLR((tp)->t_flags, TF_TMR_2MSL);
+	CLR(tp->t_flags, TF_TMR_2MSL);
 
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+	if (inp->inp_socket->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
 	}
@@ -538,6 +547,7 @@ tcp_timer_2msl(void *arg)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_2MSL, 0);
  out:
 	NET_UNLOCK();
+	in_pcbunref(inp);
 }
 
 void
@@ -554,5 +564,4 @@ tcp_timer_reaper(void *arg)
 	 * Freeing may run in parallel as it does not grab the net lock.
 	 */
 	pool_put(&tcpcb_pool, tp);
-	tcpstat_inc(tcps_closed);
 }
