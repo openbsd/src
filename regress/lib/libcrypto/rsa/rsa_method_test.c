@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_method_test.c,v 1.2 2025/01/04 18:18:27 tb Exp $ */
+/*	$OpenBSD: rsa_method_test.c,v 1.3 2025/01/04 21:29:45 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -73,14 +73,14 @@ sign_and_verify(const char *descr, EVP_PKEY *priv, EVP_PKEY *pub)
 	int failed = 1;
 
 	if ((message = ASN1_IA5STRING_new()) == NULL)
-		errx(1, "ASN1_IA5STRING_new");
+		errx(1, "%s: ASN1_IA5STRING_new", __func__);
 	if (!ASN1_STRING_set(message, msg, sizeof(msg)))
-		errx(1, "ASN1_STRING_set");
+		errx(1, "%s: ASN1_STRING_set", __func__);
 
 	if ((signature = ASN1_BIT_STRING_new()) == NULL)
-		errx(1, "ASN1_BIT_STRING_new");
+		errx(1, "%s: ASN1_BIT_STRING_new", __func__);
 	if ((x509_alg = X509_ALGOR_new()) == NULL)
-		errx(1, "X509_ALGOR_new");
+		errx(1, "%s: X509_ALGOR_new", __func__);
 	if ((ret = ASN1_item_sign(&ASN1_IA5STRING_it, x509_alg, NULL, signature,
 	    message, priv, EVP_sha256())) <= 0) {
 		fprintf(stderr, "FAIL: %s (%s): ASN1_item_sign() returned %d\n",
@@ -216,7 +216,6 @@ sign_and_verify_test(void)
 	failed |= sign_and_verify("default method", evp_priv, evp_pub);
 
 	clear_evp_keys(&evp_priv, &evp_pub);
-
 
 	if (!RSA_set_ex_data(rsa_bogus, ex_index, rsa_pub))
 		errx(1, "%s: RSA_set_ex_data", __func__);
