@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_method_test.c,v 1.1 2025/01/04 18:16:37 tb Exp $ */
+/*	$OpenBSD: rsa_method_test.c,v 1.2 2025/01/04 18:18:27 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -252,7 +252,7 @@ sign_and_verify_test(void)
 	rsa_to_evp(rsa_bogus, &evp_priv);
 	rsa_to_evp(rsa_bogus, &evp_pub);
 
-	failed |= sign_and_verify("both sides bous", evp_priv, evp_pub);
+	failed |= sign_and_verify("both sides bogus", evp_priv, evp_pub);
 
 	RSA_free(rsa_priv);
 	RSA_free(rsa_pub);
