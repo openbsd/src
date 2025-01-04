@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.176 2024/09/01 03:09:00 jsg Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.177 2025/01/04 11:45:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,6 +36,8 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
+
+#define UAUDIO_DEBUG
 
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(...)				\
@@ -87,10 +89,20 @@
 #define UAUDIO_AC_RATECONV		0xd
 
 /*
+ * AC class-specific CLKSRC controls
+ */
+#define UAUDIO_CLKSRC_FREQCTL		0x2
+
+/*
  * AS class-specific interface sub-types
  */
 #define UAUDIO_AS_GENERAL		0x1
 #define UAUDIO_AS_FORMAT		0x2
+
+/*
+ * AS class-specific endpoint sub-types
+ */
+#define UAUDIO_AS_EP_GENERAL		0x1
 
 /*
  * AS class-specific endpoint sub-type
@@ -229,6 +241,7 @@ struct uaudio_softc {
 
 		/* sample rates, if this is a clock source */
 		struct uaudio_ranges rates;
+		int cap_freqctl;
 
 		/* mixer(4) bits */
 #define UAUDIO_CLASS_OUT	0
@@ -284,6 +297,7 @@ struct uaudio_softc {
 		int fps;		/* USB (micro-)frames per second */
 		int bps, bits, nch;	/* audio encoding */
 		int v1_rates;		/* if UAC 1.0, bitmap of rates */
+		int v1_cap_freqctl;		/* can set the sample rate */
 	} *alts;
 
 	/*
@@ -1032,10 +1046,10 @@ uaudio_alt_getrates(struct uaudio_softc *sc, struct uaudio_alt *p)
 }
 
 /*
- * return the clock unit of the given terminal unit (v2 only)
+ * return the clock source unit
  */
-int
-uaudio_clock_id(struct uaudio_softc *sc)
+struct uaudio_unit *
+uaudio_clock(struct uaudio_softc *sc)
 {
 	struct uaudio_unit *u;
 
@@ -1043,11 +1057,11 @@ uaudio_clock_id(struct uaudio_softc *sc)
 	while (1) {
 		if (u == NULL) {
 			DPRINTF("%s: NULL clock pointer\n", __func__);
-			return -1;
+			return NULL;
 		}
 		switch (u->type) {
 		case UAUDIO_AC_CLKSRC:
-			return u->id;
+			return u;
 		case UAUDIO_AC_CLKSEL:
 			u = u->clock;
 			break;
@@ -1057,7 +1071,7 @@ uaudio_clock_id(struct uaudio_softc *sc)
 			break;
 		default:
 			DPRINTF("%s: no clock\n", __func__);
-			return -1;
+			return NULL;
 		}
 	}
 }
@@ -1287,6 +1301,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		u->mixent_list = NULL;
 		u->nch = 0;
 		u->name[0] = 0;
+		u->cap_freqctl = 0;
 		uaudio_ranges_init(&u->rates);
 		u->unit_next = sc->unit_list;
 		sc->unit_list = u;
@@ -1494,6 +1509,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 			return 0;
 		DPRINTF("%02u: clock source, attr = 0x%x, ctl = 0x%x\n",
 		    u->id, u->term, ctl);
+		u->cap_freqctl = !!(ctl & UAUDIO_CLKSRC_FREQCTL);
 		break;
 	case UAUDIO_AC_CLKSEL:
 		DPRINTF("%02u: clock sel\n", u->id);
@@ -2222,6 +2238,8 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 			if (uaudio_debug) {
 				printf("%02u: clock rates: ", u->id);
 				uaudio_ranges_print(&u->rates);
+				if (!u->cap_freqctl)
+					printf("%02u: no rate control\n", u->id);
 			}
 #endif
 			break;
@@ -2394,6 +2412,31 @@ uaudio_process_as_ep(struct uaudio_softc *sc,
 }
 
 /*
+ * Parse AS class-specifig endpoint descriptor
+ */
+int
+uaudio_process_as_cs_ep(struct uaudio_softc *sc,
+	struct uaudio_blob *p, struct uaudio_alt *a, int nep)
+{
+	unsigned int subtype, attr;
+
+	if (!uaudio_getnum(p, 1, &subtype))
+		return 0;
+	if (subtype != UAUDIO_AS_EP_GENERAL) {
+		DPRINTF("%s: %d: bad cs ep subtype\n", __func__, subtype);
+		return 0;
+	}
+	if (!uaudio_getnum(p, 1, &attr))
+		return 0;
+	if (sc->version == UAUDIO_V1) {
+		a->v1_cap_freqctl = !!(attr & UAUDIO_EP_FREQCTL);
+		if (!a->v1_cap_freqctl)
+			DPRINTF("alt %d: no rate control\n", a->altnum);
+	}
+	return 1;
+}
+
+/*
  * Parse AS general descriptor. Non-PCM interfaces are skipped. UAC
  * v2.0 report the number of channels. For UAC v1.0 we set the number
  * of channels to zero, it will be determined later from the format
@@ -2546,6 +2589,7 @@ uaudio_process_as(struct uaudio_softc *sc,
 	a = malloc(sizeof(struct uaudio_alt), M_USBDEV, M_WAITOK);
 	a->mode = 0;
 	a->nch = 0;
+	a->v1_cap_freqctl = 0;
 	a->v1_rates = 0;
 	a->data_addr = 0;
 	a->sync_addr = 0;
@@ -2590,14 +2634,16 @@ uaudio_process_as(struct uaudio_softc *sc,
 			goto failed;
 		if (!uaudio_getnum(&dp, 1, &type))
 			goto failed;
-		if (type == UDESC_CS_ENDPOINT)
-			continue;
-		if (type != UDESC_ENDPOINT) {
+		if (type == UDESC_CS_ENDPOINT) {
+			if (!uaudio_process_as_cs_ep(sc, &dp, a, nep))
+				goto failed;
+		} else if (type == UDESC_ENDPOINT) {
+			if (!uaudio_process_as_ep(sc, &dp, a, nep))
+				goto failed;
+		} else {
 			p->rptr = savep;
 			break;
 		}
-		if (!uaudio_process_as_ep(sc, &dp, a, nep))
-			goto failed;
 	}
 
 	if (a->mode == 0) {
@@ -2772,8 +2818,8 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 				break;
 			}
 			if (nep == 0) {
-				DPRINTF("%s: "
-				    "stop altnum %d\n", __func__, altnum);
+				DPRINTF("%s: stop altnum %d, ifnum %d\n",
+				    __func__, altnum, ifnum);
 				break;	/* 0 is "stop sound", skip it */
 			}
 			if (!uaudio_process_as(sc, p, ifnum, altnum, nep))
@@ -2901,10 +2947,11 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 {
 	struct uaudio_stream *s;
 	struct uaudio_alt *a;
+	struct uaudio_unit *clock;
 	struct usbd_interface *iface;
 	unsigned char req_buf[4];
 	unsigned int bpa, spf_max, min_blksz;
-	int err, clock_id, i;
+	int err, i;
 
 	if (dir == AUMODE_PLAY) {
 		s = &sc->pstream;
@@ -3047,23 +3094,21 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 	 *
 	 * Certain devices are able to lock their clock to the data
 	 * rate and expose no frequency control. In this case, the
-	 * request to set the frequency will fail, but this error is
-	 * safe to ignore.
-	 *
-	 * Such devices expose this capability in the class-specific
-	 * endpoint descriptor (UAC v1.0) or in the clock unit
-	 * descriptor (UAC v2.0) but we don't want to use them for now
-	 * as certain devices have them wrong, missing or misplaced.
+	 * request to set the frequency will fail and freeze the device.
 	 */
 	switch (sc->version) {
 	case UAUDIO_V1:
+		if (!a->v1_cap_freqctl) {
+			DPRINTF("%s: not setting endpoint rate\n", __func__);
+			break;
+		}
 		req_buf[0] = sc->rate;
 		req_buf[1] = sc->rate >> 8;
 		req_buf[2] = sc->rate >> 16;
 		if (!uaudio_req(sc, UT_WRITE_CLASS_ENDPOINT,
 			UAUDIO_V1_REQ_SET_CUR, UAUDIO_REQSEL_RATE, 0,
 			a->data_addr, 0, req_buf, 3)) {
-			DPRINTF("%s: not setting endpoint rate\n", __func__);
+			printf("%s: failed to set endpoint rate\n", DEVNAME(sc));
 		}
 		break;
 	case UAUDIO_V2:
@@ -3071,15 +3116,19 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		req_buf[1] = sc->rate >> 8;
 		req_buf[2] = sc->rate >> 16;
 		req_buf[3] = sc->rate >> 24;
-		clock_id = uaudio_clock_id(sc);
-		if (clock_id < 0) {
-			printf("%s: can't get clock id\n", DEVNAME(sc));
+		clock = uaudio_clock(sc);
+		if (clock == NULL) {
+			printf("%s: can't get clock\n", DEVNAME(sc));
 			goto failed;
+		}
+		if (!clock->cap_freqctl) {
+			DPRINTF("%s: not setting clock rate\n", __func__);
+			break;
 		}
 		if (!uaudio_req(sc, UT_WRITE_CLASS_INTERFACE,
 			UAUDIO_V2_REQ_CUR, UAUDIO_REQSEL_RATE, 0,
-			sc->ctl_ifnum, clock_id, req_buf, 4)) {
-			DPRINTF("%s: not setting clock rate\n", __func__);
+			sc->ctl_ifnum, clock->id, req_buf, 4)) {
+			printf("%s: failed to set clock rate\n", DEVNAME(sc));
 		}
 		break;
 	}
