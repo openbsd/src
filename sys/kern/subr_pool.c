@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.236 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.237 2025/01/04 09:26:01 mvs Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -400,6 +400,7 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 	 * Initialize the pool structure.
 	 */
 	memset(pp, 0, sizeof(*pp));
+	refcnt_init(&pp->pr_refcnt);
 	if (ISSET(flags, PR_RWLOCK)) {
 		KASSERT(flags & PR_WAITOK);
 		pp->pr_lock_ops = &pool_lock_ops_rw;
@@ -492,11 +493,6 @@ pool_destroy(struct pool *pp)
 	struct pool_page_header *ph;
 	struct pool *prev, *iter;
 
-#ifdef MULTIPROCESSOR
-	if (pp->pr_cache != NULL)
-		pool_cache_destroy(pp);
-#endif
-
 #ifdef DIAGNOSTIC
 	if (pp->pr_nout != 0)
 		panic("%s: pool busy: still out: %u", __func__, pp->pr_nout);
@@ -519,6 +515,14 @@ pool_destroy(struct pool *pp)
 		}
 	}
 	rw_exit_write(&pool_lock);
+
+	/* Wait for concurrent sysctl_dopool() */
+	refcnt_finalize(&pp->pr_refcnt, "pooldtor");
+
+#ifdef MULTIPROCESSOR
+	if (pp->pr_cache != NULL)
+		pool_cache_destroy(pp);
+#endif
 
 	/* Remove all pages */
 	while ((ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL) {
@@ -1467,7 +1471,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 {
 	struct kinfo_pool pi;
 	struct pool *pp;
-	int rv = ENOENT;
+	int rv = EOPNOTSUPP;
 
 	switch (name[0]) {
 	case KERN_POOL_NPOOLS:
@@ -1488,14 +1492,16 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		return (ENOTDIR);
 
 	rw_enter_read(&pool_lock);
-
 	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist) {
-		if (name[1] == pp->pr_serial)
+		if (name[1] == pp->pr_serial) {
+			refcnt_take(&pp->pr_refcnt);
 			break;
+		}
 	}
+	rw_exit_read(&pool_lock);
 
 	if (pp == NULL)
-		goto done;
+		return (ENOENT);
 
 	switch (name[0]) {
 	case KERN_POOL_NAME:
@@ -1537,8 +1543,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		break;
 	}
 
-done:
-	rw_exit_read(&pool_lock);
+	refcnt_rele_wake(&pp->pr_refcnt);
 
 	return (rv);
 }

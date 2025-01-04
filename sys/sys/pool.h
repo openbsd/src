@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.79 2024/10/26 05:39:03 jsg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.80 2025/01/04 09:26:01 mvs Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -149,6 +149,7 @@ union pool_lock {
 };
 
 struct pool {
+	struct refcnt	pr_refcnt;
 	union pool_lock	pr_lock;
 	const struct pool_lock_ops *
 			pr_lock_ops;

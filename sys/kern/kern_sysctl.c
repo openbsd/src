@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.459 2024/12/28 20:34:05 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.460 2025/01/04 09:26:01 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -403,6 +403,8 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	int error;
 
 	switch (top_name) {
+	case KERN_POOL:
+		return (sysctl_dopool(name, namelen, oldp, oldlenp));
 #if NAUDIO > 0
 	case KERN_AUDIO:
 		return (sysctl_audio(name, namelen, oldp, oldlenp,
@@ -458,8 +460,6 @@ kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
 	case KERN_TTY:
 		return (sysctl_tty(name, namelen, oldp, oldlenp,
 		    newp, newlen));
-	case KERN_POOL:
-		return (sysctl_dopool(name, namelen, oldp, oldlenp));
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name, namelen, oldp, oldlenp));
