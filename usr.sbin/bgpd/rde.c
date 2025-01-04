@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.646 2024/12/12 20:19:03 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.647 2025/01/04 16:58:46 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1598,7 +1598,7 @@ rde_update_dispatch(struct rde_peer *peer, struct ibuf *buf)
 				if (ibuf_skip(&unreachbuf,
 				    ibuf_size(&unreachbuf)) == -1) {
 					log_peer_warnx(&peer->conf,
-					    "bad VPNv6 withdraw prefix");
+					    "bad withdraw prefix");
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR, &unreachbuf);
 					goto done;
@@ -1778,7 +1778,7 @@ rde_update_dispatch(struct rde_peer *peer, struct ibuf *buf)
 				if (ibuf_skip(&reachbuf,
 				    ibuf_size(&reachbuf)) == -1) {
 					log_peer_warnx(&peer->conf,
-					    "bad VPNv6 withdraw prefix");
+					    "bad nlri prefix");
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR, &reachbuf);
 					goto done;
