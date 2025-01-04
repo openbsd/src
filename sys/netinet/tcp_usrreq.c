@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.236 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.237 2025/01/04 15:57:02 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -198,8 +198,10 @@ tcp_sogetpcb(struct socket *so, struct inpcb **rinp, struct tcpcb **rtp)
 	 * structure will point at a subsidiary (struct tcpcb).
 	 */
 	if ((inp = sotoinpcb(so)) == NULL || (tp = intotcpcb(inp)) == NULL) {
-		if (so->so_error)
-			return so->so_error;
+		int error;
+
+		if ((error = READ_ONCE(so->so_error)))
+			return error;
 		return EINVAL;
 	}
 
