@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.9 2024/11/29 07:42:35 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.10 2025/01/05 15:39:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,9 +81,7 @@ struct rsa_meth_st {
 /* New sign and verify functions: some libraries don't allow arbitrary data
  * to be signed/verified: this allows them to be used. Note: for this to work
  * the RSA_public_decrypt() and RSA_private_encrypt() should *NOT* be used
- * RSA_sign(), RSA_verify() should be used instead. Note: for backwards
- * compatibility this functionality is only enabled if the RSA_FLAG_SIGN_VER
- * option is set in 'flags'.
+ * RSA_sign(), RSA_verify() should be used instead.
  */
 	int (*rsa_sign)(int type, const unsigned char *m, unsigned int m_length,
 	    unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
