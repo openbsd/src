@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_method_test.c,v 1.3 2025/01/04 21:29:45 tb Exp $ */
+/*	$OpenBSD: rsa_method_test.c,v 1.4 2025/01/05 15:42:48 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -230,7 +230,6 @@ sign_and_verify_test(void)
 	if (!RSA_meth_set_verify(sign_verify_method, rsa_ex_data_verify))
 		errx(1, "%s: RSA_meth_set_verify", __func__);
 
-	RSA_set_flags(rsa_bogus, RSA_FLAG_SIGN_VER);
 	if (!RSA_set_method(rsa_bogus, sign_verify_method))
 		errx(1, "%s: RSA_set_method", __func__);
 
