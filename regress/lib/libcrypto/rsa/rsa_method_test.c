@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_method_test.c,v 1.4 2025/01/05 15:42:48 tb Exp $ */
+/*	$OpenBSD: rsa_method_test.c,v 1.5 2025/01/05 18:21:36 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -208,7 +208,7 @@ sign_and_verify_test(void)
 	 * OpenSSL's abstractions are leakier than Manneken Pis.
 	 */
 	generate_rsa_keypair(2048, RSA_F4, &rsa_priv, &rsa_pub);
-	generate_rsa_keypair(2048, 3, NULL, &rsa_bogus);
+	generate_rsa_keypair(2048, RSA_3, NULL, &rsa_bogus);
 
 	rsa_to_evp(rsa_priv, &evp_priv);
 	rsa_to_evp(rsa_pub, &evp_pub);
