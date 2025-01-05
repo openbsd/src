@@ -1,4 +1,4 @@
-/* $OpenBSD: libmandoc.h,v 1.65 2021/06/27 17:57:13 schwarze Exp $ */
+/* $OpenBSD: libmandoc.h,v 1.66 2025/01/05 16:56:48 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -78,6 +78,7 @@ void		 roff_userret(struct roff *);
 void		 roff_endparse(struct roff *);
 void		 roff_setreg(struct roff *, const char *, int, char);
 int		 roff_getreg(struct roff *, const char *);
+int		 roff_evalnum(int, const char *, int *, int *, char, int);
 char		*roff_strdup(const struct roff *, const char *);
 char		*roff_getarg(struct roff *, char **, int, int *);
 int		 roff_getcontrol(const struct roff *,
