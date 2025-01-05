@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.45 2025/01/01 10:01:31 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.46 2025/01/05 16:07:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -160,8 +160,8 @@ struct ec_group_st {
 	const EC_METHOD *meth;
 
 	EC_POINT *generator;	/* Optional */
-	BIGNUM order;
-	BIGNUM cofactor;
+	BIGNUM *order;
+	BIGNUM *cofactor;
 
 	int nid;		/* Optional NID for named curve. */
 
@@ -181,9 +181,9 @@ struct ec_group_st {
 	/*
 	 * Coefficients of the Weierstrass equation y^2 = x^3 + a*x + b (mod p).
 	 */
-	BIGNUM p;
-	BIGNUM a;
-	BIGNUM b;
+	BIGNUM *p;
+	BIGNUM *a;
+	BIGNUM *b;
 
 	/* Enables optimized point arithmetics for special case. */
 	int a_is_minus3;
@@ -216,17 +216,12 @@ struct ec_point_st {
 	const EC_METHOD *meth;
 
 	/*
-	 * All members except 'meth' are handled by the method functions,
-	 * even if they appear generic.
-	 */
-
-	/*
 	 * Jacobian projective coordinates: (X, Y, Z) represents (X/Z^2, Y/Z^3)
 	 * if Z != 0
 	 */
-	BIGNUM X;
-	BIGNUM Y;
-	BIGNUM Z;
+	BIGNUM *X;
+	BIGNUM *Y;
+	BIGNUM *Z;
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;
 

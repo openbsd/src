@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.23 2024/10/19 14:41:03 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.24 2025/01/05 16:07:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -323,7 +323,7 @@ pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			if (!ec_key->group)
 				return -2;
 			/* If cofactor is 1 cofactor mode does nothing */
-			if (BN_is_one(&ec_key->group->cofactor))
+			if (BN_is_one(ec_key->group->cofactor))
 				return 1;
 			if (!dctx->co_key) {
 				dctx->co_key = EC_KEY_dup(ec_key);

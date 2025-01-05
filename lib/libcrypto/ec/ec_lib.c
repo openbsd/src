@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.93 2025/01/01 10:01:31 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.94 2025/01/05 16:07:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -94,6 +94,23 @@ EC_GROUP_new(const EC_METHOD *meth)
 	group->asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	group->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
 
+	if ((group->p = BN_new()) == NULL)
+		goto err;
+	if ((group->a = BN_new()) == NULL)
+		goto err;
+	if ((group->b = BN_new()) == NULL)
+		goto err;
+
+	if ((group->order = BN_new()) == NULL)
+		goto err;
+	if ((group->cofactor = BN_new()) == NULL)
+		goto err;
+
+	/*
+	 * generator and seed are optional. mont_ctx, mont_one are only for
+	 * curves using EC_GFp_mont_method()
+	 */
+
 	return group;
 
  err:
@@ -109,16 +126,16 @@ EC_GROUP_free(EC_GROUP *group)
 	if (group == NULL)
 		return;
 
-	BN_free(&group->p);
-	BN_free(&group->a);
-	BN_free(&group->b);
+	BN_free(group->p);
+	BN_free(group->a);
+	BN_free(group->b);
 
 	BN_MONT_CTX_free(group->mont_ctx);
 	BN_free(group->mont_one);
 
 	EC_POINT_free(group->generator);
-	BN_free(&group->order);
-	BN_free(&group->cofactor);
+	BN_free(group->order);
+	BN_free(group->cofactor);
 
 	freezero(group->seed, group->seed_len);
 	freezero(group, sizeof *group);
@@ -152,14 +169,14 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	EC_POINT_free(dest->generator);
 	dest->generator = NULL;
 	if (src->generator != NULL) {
-		if (!EC_GROUP_set_generator(dest, src->generator, &src->order,
-		    &src->cofactor))
+		if (!EC_GROUP_set_generator(dest, src->generator, src->order,
+		    src->cofactor))
 			return 0;
 	} else {
 		/* XXX - should do the sanity checks as in set_generator() */
-		if (!bn_copy(&dest->order, &src->order))
+		if (!bn_copy(dest->order, src->order))
 			return 0;
-		if (!bn_copy(&dest->cofactor, &src->cofactor))
+		if (!bn_copy(dest->cofactor, src->cofactor))
 			return 0;
 	}
 
@@ -241,7 +258,7 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 	BIGNUM *cofactor;
 	int ret = 0;
 
-	BN_zero(&group->cofactor);
+	BN_zero(group->cofactor);
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
@@ -269,7 +286,7 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 	 * If the cofactor is too large, we cannot guess it and default to zero.
 	 * The RHS of below is a strict overestimate of log(4 * sqrt(p)).
 	 */
-	if (BN_num_bits(&group->order) <= (BN_num_bits(&group->p) + 1) / 2 + 3)
+	if (BN_num_bits(group->order) <= (BN_num_bits(group->p) + 1) / 2 + 3)
 		goto done;
 
 	/*
@@ -278,26 +295,26 @@ ec_set_cofactor(EC_GROUP *group, const BIGNUM *in_cofactor)
 	 */
 
 	/* h = n/2 */
-	if (!BN_rshift1(cofactor, &group->order))
+	if (!BN_rshift1(cofactor, group->order))
 		goto err;
 	/* h = 1 + n/2 */
 	if (!BN_add_word(cofactor, 1))
 		goto err;
 	/* h = p + 1 + n/2 */
-	if (!BN_add(cofactor, cofactor, &group->p))
+	if (!BN_add(cofactor, cofactor, group->p))
 		goto err;
 	/* h = (p + 1 + n/2) / n */
-	if (!BN_div_ct(cofactor, NULL, cofactor, &group->order, ctx))
+	if (!BN_div_ct(cofactor, NULL, cofactor, group->order, ctx))
 		goto err;
 
  done:
 	/* Use Hasse's theorem to bound the cofactor. */
-	if (BN_num_bits(cofactor) > BN_num_bits(&group->p) + 1) {
+	if (BN_num_bits(cofactor) > BN_num_bits(group->p) + 1) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 
-	if (!bn_copy(&group->cofactor, cofactor))
+	if (!bn_copy(group->cofactor, cofactor))
 		goto err;
 
 	ret = 1;
@@ -319,7 +336,7 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	}
 
 	/* Require p >= 1. */
-	if (BN_is_zero(&group->p) || BN_is_negative(&group->p)) {
+	if (BN_is_zero(group->p) || BN_is_negative(group->p)) {
 		ECerror(EC_R_INVALID_FIELD);
 		return 0;
 	}
@@ -329,7 +346,7 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	 * than the field cardinality due to Hasse's theorem.
 	 */
 	if (order == NULL || BN_cmp(order, BN_value_one()) <= 0 ||
-	    BN_num_bits(order) > BN_num_bits(&group->p) + 1) {
+	    BN_num_bits(order) > BN_num_bits(group->p) + 1) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		return 0;
 	}
@@ -342,7 +359,7 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	if (!EC_POINT_copy(group->generator, generator))
 		return 0;
 
-	if (!bn_copy(&group->order, order))
+	if (!bn_copy(group->order, order))
 		return 0;
 
 	if (!ec_set_cofactor(group, cofactor))
@@ -362,7 +379,7 @@ LCRYPTO_ALIAS(EC_GROUP_get0_generator);
 int
 EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 {
-	if (!bn_copy(order, &group->order))
+	if (!bn_copy(order, group->order))
 		return 0;
 
 	return !BN_is_zero(order);
@@ -372,7 +389,7 @@ LCRYPTO_ALIAS(EC_GROUP_get_order);
 const BIGNUM *
 EC_GROUP_get0_order(const EC_GROUP *group)
 {
-	return &group->order;
+	return group->order;
 }
 
 int
@@ -385,17 +402,17 @@ LCRYPTO_ALIAS(EC_GROUP_order_bits);
 int
 EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 {
-	if (!bn_copy(cofactor, &group->cofactor))
+	if (!bn_copy(cofactor, group->cofactor))
 		return 0;
 
-	return !BN_is_zero(&group->cofactor);
+	return !BN_is_zero(group->cofactor);
 }
 LCRYPTO_ALIAS(EC_GROUP_get_cofactor);
 
 const BIGNUM *
 EC_GROUP_get0_cofactor(const EC_GROUP *group)
 {
-	return &group->cofactor;
+	return group->cofactor;
 }
 
 void
@@ -784,6 +801,13 @@ EC_POINT_new(const EC_GROUP *group)
 		goto err;
 	}
 
+	if ((point->X = BN_new()) == NULL)
+		goto err;
+	if ((point->Y = BN_new()) == NULL)
+		goto err;
+	if ((point->Z = BN_new()) == NULL)
+		goto err;
+
 	point->meth = group->meth;
 
 	return point;
@@ -801,9 +825,9 @@ EC_POINT_free(EC_POINT *point)
 	if (point == NULL)
 		return;
 
-	BN_free(&point->X);
-	BN_free(&point->Y);
-	BN_free(&point->Z);
+	BN_free(point->X);
+	BN_free(point->Y);
+	BN_free(point->Z);
 
 	freezero(point, sizeof *point);
 }
@@ -826,11 +850,11 @@ EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 	if (dest == src)
 		return 1;
 
-	if (!bn_copy(&dest->X, &src->X))
+	if (!bn_copy(dest->X, src->X))
 		return 0;
-	if (!bn_copy(&dest->Y, &src->Y))
+	if (!bn_copy(dest->Y, src->Y))
 		return 0;
-	if (!bn_copy(&dest->Z, &src->Z))
+	if (!bn_copy(dest->Z, src->Z))
 		return 0;
 	dest->Z_is_one = src->Z_is_one;
 
@@ -876,7 +900,7 @@ EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 		return 0;
 	}
 
-	BN_zero(&point->Z);
+	BN_zero(point->Z);
 	point->Z_is_one = 0;
 
 	return 1;
@@ -1193,7 +1217,7 @@ EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 		return 0;
 	}
 
-	return BN_is_zero(&point->Z);
+	return BN_is_zero(point->Z);
 }
 LCRYPTO_ALIAS(EC_POINT_is_at_infinity);
 
@@ -1440,10 +1464,5 @@ LCRYPTO_ALIAS(EC_GROUP_have_precompute_mult);
 int
 ec_group_simple_order_bits(const EC_GROUP *group)
 {
-	/* XXX change group->order to a pointer? */
-#if 0
-	if (group->order == NULL)
-		return 0;
-#endif
-	return BN_num_bits(&group->order);
+	return BN_num_bits(group->order);
 }

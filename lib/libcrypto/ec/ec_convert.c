@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.13 2024/12/16 06:11:26 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.14 2025/01/05 16:07:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -157,11 +157,11 @@ ec_encoded_length(const EC_GROUP *group, uint8_t form, size_t *out_len)
 		*out_len = 1;
 		return 1;
 	case EC_POINT_COMPRESSED:
-		*out_len = 1 + BN_num_bytes(&group->p);
+		*out_len = 1 + BN_num_bytes(group->p);
 		return 1;
 	case EC_POINT_UNCOMPRESSED:
 	case EC_POINT_HYBRID:
-		*out_len = 1 + 2 * BN_num_bytes(&group->p);
+		*out_len = 1 + 2 * BN_num_bytes(group->p);
 		return 1;
 	default:
 		return 0;
@@ -172,14 +172,14 @@ static int
 ec_field_element_is_valid(const EC_GROUP *group, const BIGNUM *bn)
 {
 	/* Ensure bn is in the range [0, p). */
-	return !BN_is_negative(bn) && BN_cmp(&group->p, bn) > 0;
+	return !BN_is_negative(bn) && BN_cmp(group->p, bn) > 0;
 }
 
 static int
 ec_add_field_element_cbb(CBB *cbb, const EC_GROUP *group, const BIGNUM *bn)
 {
 	uint8_t *buf = NULL;
-	int buf_len = BN_num_bytes(&group->p);
+	int buf_len = BN_num_bytes(group->p);
 
 	if (!ec_field_element_is_valid(group, bn)) {
 		ECerror(EC_R_BIGNUM_OUT_OF_RANGE);
@@ -202,7 +202,7 @@ ec_get_field_element_cbs(CBS *cbs, const EC_GROUP *group, BIGNUM *bn)
 {
 	CBS field_element;
 
-	if (!CBS_get_bytes(cbs, &field_element, BN_num_bytes(&group->p))) {
+	if (!CBS_get_bytes(cbs, &field_element, BN_num_bytes(group->p))) {
 		ECerror(EC_R_INVALID_ENCODING);
 		return 0;
 	}
