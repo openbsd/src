@@ -1,12 +1,76 @@
-.\" $OpenBSD: width.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
-.TH TBL-MOD-WIDTH 1 "June 8, 2017"
+.\" $OpenBSD: width.in,v 1.4 2025/01/05 18:03:51 schwarze Exp $
+.TH TBL-MOD-WIDTH 1 "January 4, 2025"
 .SH NAME
 tbl-mod-width \- width modifier in table layout
 .SH DESCRIPTION
-normal text
+Bare numbers without parentheses use EN units:
 .TS
 box tab(:);
-lw2 | lw(2n) | lw(0.16i) | lw2 .
+Lw2 | Lw3 .
+a:abcd
+.TE
+.PP
+Explicit scaling units and rounding \(en metric:
+.TS
+box tab(:);
+Lw(1c).
+1cm
+.TE
+.PP
+Explicit scaling units and rounding \(en pica:
+.TS
+box tab(:);
+Lw(1P).
+P
+.TE
+.TS
+box tab(:);
+Lw(2P).
+2P
+.TE
+.PP
+Explicit scaling units and rounding \(en points:
+.TS
+box tab(:);
+Lw(25p).
+25p
+.TE
+.TS
+box tab(:);
+Lw(26p).
+26p
+.TE
+.PP
+Explicit scaling units and rounding \(en basic units:
+.TS
+box tab(:);
+Lw(84u).
+84u
+.TE
+.TS
+box tab(:);
+Lw(85u).
+85u
+.TE
+.PP
+Multiplication:
+.TS
+box tab(:);
+Lw(3n*2u) | Lw(3u*2n) | Lw(3u*2) | Cw(3*2u).
+3n*2u:3u*2n:3u*2:3*2u
+.TE
+.PP
+Division:
+.TS
+box tab(:);
+Lw(14n/2u) | Lw(384n/2n) | Lw(12/2u) | Lw(288/2).
+14n/2u:384n/2n:12/2u:288/2
+.TE
+.PP
+Data section containing text blocks:
+.TS
+box tab(:);
+lw2 | lw(2n) | lw(2m) | lw2 .
 a:abcd:T{
 a
 T}:T{

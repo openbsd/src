@@ -4,9 +4,53 @@ NNAAMMEE
      tbl-mod-width - width modifier in table layout
 
 DDEESSCCRRIIPPTTIIOONN
-     normal text
+     Bare numbers without parentheses use EN units:
+     +---+------+
+     |a  | abcd |
+     +---+------+
+
+     Explicit scaling units and rounding - metric:
+     +-----+
+     |1cm  |
+     +-----+
+
+     Explicit scaling units and rounding - pica:
+     +---+
+     |P  |
+     +---+
+     +----+
+     |2P  |
+     +----+
+
+     Explicit scaling units and rounding - points:
+     +----+
+     |25p |
+     +----+
+     +-----+
+     |26p  |
+     +-----+
+
+     Explicit scaling units and rounding - basic units:
+     +----+
+     |84u |
+     +----+
+     +-----+
+     |85u  |
+     +-----+
+
+     Multiplication:
+     +-------+--------+--------+--------+
+     |3n*2u  | 3u*2n  | 3u*2   |  3*2u  |
+     +-------+--------+--------+--------+
+
+     Division:
+     +--------+----------+--------+--------+
+     |14n/2u  | 384n/2n  | 12/2u  | 288/2  |
+     +--------+----------+--------+--------+
+
+     Data section containing text blocks:
      +---+------+----+------+
      |a  | abcd | a  | abcd |
      +---+------+----+------+
 
-OpenBSD                          June 8, 2017                 TBL-MOD-WIDTH(1)
+OpenBSD                         January 4, 2025               TBL-MOD-WIDTH(1)
