@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_meth_new.3,v 1.5 2019/07/13 17:26:38 schwarze Exp $
+.\" $OpenBSD: RSA_meth_new.3,v 1.6 2025/01/05 15:40:42 tb Exp $
 .\" full merge up to: OpenSSL a970b14f Jul 31 18:58:40 2017 -0400
 .\" selective merge up to: OpenSSL 24907560 Sep 17 07:47:42 2018 +1000
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2019 $
+.Dd $Mdocdate: January 5 2025 $
 .Dt RSA_METH_NEW 3
 .Os
 .Sh NAME
@@ -455,26 +455,6 @@ and
 .Fn RSA_meth_set_verify
 get and set the optional functions
 used for creating and verifying an RSA signature.
-If the flag
-.Dv RSA_FLAG_SIGN_VER
-is set on the
-.Vt RSA
-object in question and
-.Fa sign
-or
-.Fa verify
-is not
-.Dv NULL ,
-it will be called from
-.Xr RSA_sign 3
-or
-.Xr RSA_verify 3 ,
-respectively, and take the same parameters as those.
-Otherwise,
-.Xr RSA_private_encrypt 3
-or
-.Xr RSA_public_decrypt 3
-will be used instead.
 .Pp
 .Fn RSA_meth_get_mod_exp
 and
