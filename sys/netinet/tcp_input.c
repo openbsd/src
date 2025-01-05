@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.419 2025/01/03 21:27:40 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.420 2025/01/05 12:18:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -183,17 +183,17 @@ void	 tcp_newreno_partialack(struct tcpcb *, struct tcphdr *);
 
 void	 syn_cache_put(struct syn_cache *);
 void	 syn_cache_rm(struct syn_cache *);
-int	 syn_cache_respond(struct syn_cache *, struct mbuf *, uint64_t);
+int	 syn_cache_respond(struct syn_cache *, struct mbuf *, uint64_t, int);
 void	 syn_cache_timer(void *);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
 void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, u_int);
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *, struct tcphdr *,
 		unsigned int, struct socket *, struct mbuf *, u_char *, int,
-		struct tcp_opt_info *, tcp_seq *, uint64_t);
+		struct tcp_opt_info *, tcp_seq *, uint64_t, int);
 struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int, struct socket *,
-		struct mbuf *, uint64_t);
+		struct mbuf *, uint64_t, int);
 struct syn_cache *syn_cache_lookup(const struct sockaddr *,
 		const struct sockaddr *, struct syn_cache_head **, u_int);
 
@@ -383,6 +383,7 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif /* INET6 */
+	int do_ecn = 0;
 #ifdef TCP_ECN
 	u_char iptos;
 #endif
@@ -392,6 +393,9 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	opti.ts_present = 0;
 	opti.maxseg = 0;
 	now = tcp_now();
+#ifdef TCP_ECN
+	do_ecn = atomic_load_int(&tcp_do_ecn);
+#endif
 
 	/*
 	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
@@ -704,7 +708,7 @@ findpcb:
 
 			case TH_ACK:
 				so = syn_cache_get(&src.sa, &dst.sa,
-				    th, iphlen, tlen, so, m, now);
+				    th, iphlen, tlen, so, m, now, do_ecn);
 				if (so == NULL) {
 					/*
 					 * We don't have a SYN for
@@ -836,8 +840,8 @@ findpcb:
 				 */
 				if (so->so_qlen > so->so_qlimit ||
 				    syn_cache_add(&src.sa, &dst.sa, th, iphlen,
-				    so, m, optp, optlen, &opti, reuse, now)
-				    == -1) {
+				    so, m, optp, optlen, &opti, reuse, now,
+				    do_ecn) == -1) {
 					tcpstat_inc(tcps_dropsyn);
 					goto drop;
 				}
@@ -1131,7 +1135,7 @@ findpcb:
 		if (tiflags & TH_RST) {
 #ifdef TCP_ECN
 			/* if ECN is enabled, fall back to non-ecn at rexmit */
-			if (tcp_do_ecn && !(tp->t_flags & TF_DISABLE_ECN))
+			if (do_ecn && !(tp->t_flags & TF_DISABLE_ECN))
 				goto drop;
 #endif
 			if (tiflags & TH_ACK)
@@ -1166,7 +1170,7 @@ findpcb:
 		 * both ECE and CWR are set for simultaneous open,
 		 * peer is ECN capable.
 		 */
-		if (tcp_do_ecn) {
+		if (do_ecn) {
 			switch (tiflags & (TH_ACK|TH_ECE|TH_CWR)) {
 			case TH_ACK|TH_ECE:
 			case TH_ECE|TH_CWR:
@@ -1412,7 +1416,7 @@ trimthenstep6:
 		case TCPS_SYN_RECEIVED:
 #ifdef TCP_ECN
 			/* if ECN is enabled, fall back to non-ecn at rexmit */
-			if (tcp_do_ecn && !(tp->t_flags & TF_DISABLE_ECN))
+			if (do_ecn && !(tp->t_flags & TF_DISABLE_ECN))
 				goto drop;
 #endif
 			so->so_error = ECONNREFUSED;
@@ -1503,7 +1507,7 @@ trimthenstep6:
 		 * advance snd_last to snd_max not to reduce cwnd again
 		 * until all outstanding packets are acked.
 		 */
-		if (tcp_do_ecn && (tiflags & TH_ECE)) {
+		if (do_ecn && (tiflags & TH_ECE)) {
 			if ((tp->t_flags & TF_ECN_PERMIT) &&
 			    SEQ_GEQ(tp->snd_una, tp->snd_last)) {
 				u_int win;
@@ -3373,7 +3377,7 @@ syn_cache_timer(void *arg)
 	struct inpcb *inp;
 	struct socket *so;
 	uint64_t now;
-	int lastref;
+	int lastref, do_ecn = 0;
 
 	mtx_enter(&syn_cache_mtx);
 	if (ISSET(sc->sc_dynflags, SCF_DEAD))
@@ -3409,7 +3413,10 @@ syn_cache_timer(void *arg)
 	so = in_pcbsolock(inp);
 	if (so != NULL) {
 		now = tcp_now();
-		(void) syn_cache_respond(sc, NULL, now);
+#ifdef TCP_ECN
+		do_ecn = atomic_load_int(&tcp_do_ecn);
+#endif
+		(void) syn_cache_respond(sc, NULL, now, do_ecn);
 		tcpstat_inc(tcps_sc_retransmitted);
 		in_pcbsounlock(inp, so);
 	}
@@ -3516,7 +3523,8 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
  */
 struct socket *
 syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
-    u_int hlen, u_int tlen, struct socket *so, struct mbuf *m, uint64_t now)
+    u_int hlen, u_int tlen, struct socket *so, struct mbuf *m, uint64_t now,
+    int do_ecn)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3544,7 +3552,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    SEQ_GT(th->th_seq, sc->sc_irs + 1 + sc->sc_win)) {
 		refcnt_take(&sc->sc_refcnt);
 		mtx_leave(&syn_cache_mtx);
-		(void) syn_cache_respond(sc, m, now);
+		(void) syn_cache_respond(sc, m, now, do_ecn);
 		syn_cache_put(sc);
 		return ((struct socket *)(-1));
 	}
@@ -3794,7 +3802,7 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
 int
 syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
     u_int iphlen, struct socket *so, struct mbuf *m, u_char *optp, int optlen,
-    struct tcp_opt_info *oi, tcp_seq *issp, uint64_t now)
+    struct tcp_opt_info *oi, tcp_seq *issp, uint64_t now, int do_ecn)
 {
 	struct tcpcb tb, *tp;
 	long win;
@@ -3870,7 +3878,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			sc->sc_ipopts = ipopts;
 		}
 		sc->sc_timestamp = tb.ts_recent;
-		if (syn_cache_respond(sc, m, now) == 0) {
+		if (syn_cache_respond(sc, m, now, do_ecn) == 0) {
 			tcpstat_inc(tcps_sndacks);
 			tcpstat_inc(tcps_sndtotal);
 		}
@@ -3943,8 +3951,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	/*
 	 * if both ECE and CWR flag bits are set, peer is ECN capable.
 	 */
-	if (tcp_do_ecn &&
-	    (th->th_flags & (TH_ECE|TH_CWR)) == (TH_ECE|TH_CWR))
+	if (do_ecn && (th->th_flags & (TH_ECE|TH_CWR)) == (TH_ECE|TH_CWR))
 		SET(sc->sc_fixflags, SCF_ECN_PERMIT);
 #endif
 	/*
@@ -3958,7 +3965,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		SET(sc->sc_fixflags, SCF_SIGNATURE);
 #endif
 	sc->sc_inplisten = in_pcbref(tp->t_inpcb);
-	if (syn_cache_respond(sc, m, now) == 0) {
+	if (syn_cache_respond(sc, m, now, do_ecn) == 0) {
 		mtx_enter(&syn_cache_mtx);
 		/*
 		 * XXXSMP Currently exclusive netlock prevents another insert
@@ -3979,7 +3986,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 }
 
 int
-syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
+syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now,
+    int do_ecn)
 {
 	u_int8_t *optp;
 	int optlen, error;
@@ -4073,7 +4081,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 	th->th_flags = TH_SYN|TH_ACK;
 #ifdef TCP_ECN
 	/* Set ECE for SYN-ACK if peer supports ECN. */
-	if (tcp_do_ecn && ISSET(sc->sc_fixflags, SCF_ECN_PERMIT))
+	if (do_ecn && ISSET(sc->sc_fixflags, SCF_ECN_PERMIT))
 		th->th_flags |= TH_ECE;
 #endif
 	th->th_win = htons(sc->sc_win);

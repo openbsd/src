@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.150 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.151 2025/01/05 12:18:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ tcp_output(struct tcpcb *tp)
 	unsigned int sigoff;
 #endif /* TCP_SIGNATURE */
 #ifdef TCP_ECN
+	int do_ecn = atomic_load_int(&tcp_do_ecn);
 	int needect;
 #endif
 	int tso;
@@ -821,7 +822,7 @@ send:
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
 #ifdef TCP_ECN
-	if (tcp_do_ecn) {
+	if (do_ecn) {
 		/*
 		 * if we have received congestion experienced segs,
 		 * set ECE bit.
@@ -1054,7 +1055,7 @@ send:
 	 * but don't set ECT for a pure ack, a retransmit or a window probe.
 	 */
 	needect = 0;
-	if (tcp_do_ecn && (tp->t_flags & TF_ECN_PERMIT)) {
+	if (do_ecn && (tp->t_flags & TF_ECN_PERMIT)) {
 		if (len == 0 || SEQ_LT(tp->snd_nxt, tp->snd_max) ||
 		    (tp->t_force && len == 1)) {
 			/* don't set ECT */

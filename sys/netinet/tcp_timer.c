@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.79 2025/01/03 17:23:51 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.80 2025/01/05 12:18:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ tcp_timer_rexmt(void *arg)
 	 * blocks ecn packets.  fall back to non-ecn.
 	 */
 	if ((tp->t_state == TCPS_SYN_SENT || tp->t_state == TCPS_SYN_RECEIVED)
-	    && tcp_do_ecn && !(tp->t_flags & TF_DISABLE_ECN))
+	    && atomic_load_int(&tcp_do_ecn) && !(tp->t_flags & TF_DISABLE_ECN))
 		tp->t_flags |= TF_DISABLE_ECN;
 #endif
 	/*
