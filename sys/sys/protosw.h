@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.70 2024/10/29 12:40:17 jsg Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.71 2025/01/05 12:36:48 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -130,7 +130,6 @@ struct protosw {
 					   socket */
 #define PR_SPLICE	0x0040		/* socket splicing is possible */
 #define PR_MPINPUT	0x0080		/* input runs with shared netlock */
-#define PR_MPSOCKET	0x0100		/* socket uses shared netlock */
 #define PR_MPSYSCTL	0x0200		/* mp-safe sysctl(2) handler */
 
 /*

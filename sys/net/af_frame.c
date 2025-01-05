@@ -1,4 +1,4 @@
-/*	$OpenBSD: af_frame.c,v 1.1 2024/12/15 11:00:05 dlg Exp $ */
+/*	$OpenBSD: af_frame.c,v 1.2 2025/01/05 12:36:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -40,7 +40,7 @@ static const struct protosw framesw[] = {
 		.pr_type	= SOCK_DGRAM,
 		.pr_domain	= &framedomain,
 		.pr_protocol	= IFT_ETHER,
-		.pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPINPUT|PR_MPSOCKET,
+		.pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPINPUT,
 
 		.pr_ctloutput	= ether_frm_ctloutput,
 		.pr_usrreqs	= &ether_frm_usrreqs,
