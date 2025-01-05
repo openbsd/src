@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.237 2025/01/04 15:57:02 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.238 2025/01/05 12:23:38 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1506,10 +1506,8 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 
 	default:
-		NET_LOCK();
 		error = sysctl_bounded_arr(tcpctl_vars, nitems(tcpctl_vars),
 		    name, namelen, oldp, oldlenp, newp, newlen);
-		NET_UNLOCK();
 		return (error);
 	}
 	/* NOTREACHED */
