@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.124 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.125 2025/01/06 08:57:23 mpi Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -427,7 +427,13 @@ int
 vn_statfile(struct file *fp, struct stat *sb, struct proc *p)
 {
 	struct vnode *vp = fp->f_data;
-	return vn_stat(vp, sb, p);
+	int error;
+
+	KERNEL_LOCK();
+	error = vn_stat(vp, sb, p);
+	KERNEL_UNLOCK();
+
+	return (error);
 }
 
 /*

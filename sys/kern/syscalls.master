@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.265 2024/08/02 14:34:45 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.266 2025/01/06 08:57:23 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -133,7 +133,7 @@
 51	UNIMPL		acct
 #endif
 52	STD		{ int sys_sigpending(void); }
-53	STD		{ int sys_fstat(int fd, struct stat *sb); }
+53	STD NOLOCK	{ int sys_fstat(int fd, struct stat *sb); }
 54	STD NOLOCK	{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	STD		{ int sys_reboot(int opt); }
