@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.50 2025/01/06 14:10:32 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.51 2025/01/06 14:29:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -95,8 +95,6 @@ struct ec_method_st {
 	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a,
 	    BIGNUM *b, BN_CTX *);
 
-	int (*group_get_degree)(const EC_GROUP *);
-	int (*group_order_bits)(const EC_GROUP *);
 	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
 	int (*point_set_affine_coordinates)(const EC_GROUP *, EC_POINT *,
@@ -201,7 +199,6 @@ struct ec_point_st {
 int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx);
 
-int ec_group_simple_order_bits(const EC_GROUP *group);
 int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
 int ec_group_get_field_type(const EC_GROUP *group);
 

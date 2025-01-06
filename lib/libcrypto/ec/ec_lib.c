@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.100 2025/01/06 14:25:10 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.101 2025/01/06 14:29:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -404,7 +404,7 @@ EC_GROUP_get0_order(const EC_GROUP *group)
 int
 EC_GROUP_order_bits(const EC_GROUP *group)
 {
-	return group->meth->group_order_bits(group);
+	return BN_num_bits(group->order);
 }
 LCRYPTO_ALIAS(EC_GROUP_order_bits);
 
@@ -592,11 +592,7 @@ LCRYPTO_ALIAS(EC_GROUP_new_curve_GFp);
 int
 EC_GROUP_get_degree(const EC_GROUP *group)
 {
-	if (group->meth->group_get_degree == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
-	return group->meth->group_get_degree(group);
+	return BN_num_bits(group->p);
 }
 LCRYPTO_ALIAS(EC_GROUP_get_degree);
 
@@ -1385,9 +1381,3 @@ EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 	return 0;
 }
 LCRYPTO_ALIAS(EC_GROUP_have_precompute_mult);
-
-int
-ec_group_simple_order_bits(const EC_GROUP *group)
-{
-	return BN_num_bits(group->order);
-}

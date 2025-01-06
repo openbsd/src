@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.23 2025/01/06 14:22:55 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.24 2025/01/06 14:29:33 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -164,12 +164,6 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 		return 0;
 
 	return 1;
-}
-
-static int
-ec_group_get_degree(const EC_GROUP *group)
-{
-	return BN_num_bits(group->p);
 }
 
 static int
@@ -1520,8 +1514,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
-	.group_get_degree = ec_group_get_degree,
-	.group_order_bits = ec_group_simple_order_bits,
 	.group_check_discriminant = ec_group_check_discriminant,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
@@ -1551,8 +1543,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
-	.group_get_degree = ec_group_get_degree,
-	.group_order_bits = ec_group_simple_order_bits,
 	.group_check_discriminant = ec_group_check_discriminant,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
