@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.49 2025/01/06 12:35:14 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.50 2025/01/06 14:10:32 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -184,25 +184,6 @@ struct ec_group_st {
 	BN_MONT_CTX *mont_ctx;
 } /* EC_GROUP */;
 
-struct ec_key_st {
-	const EC_KEY_METHOD *meth;
-
-	int version;
-
-	EC_GROUP *group;
-
-	EC_POINT *pub_key;
-	BIGNUM	 *priv_key;
-
-	unsigned int enc_flag;
-	point_conversion_form_t conv_form;
-
-	int	references;
-	int	flags;
-
-	CRYPTO_EX_DATA ex_data;
-} /* EC_KEY */;
-
 struct ec_point_st {
 	const EC_METHOD *meth;
 
@@ -221,8 +202,20 @@ int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx);
 
 int ec_group_simple_order_bits(const EC_GROUP *group);
+int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
+int ec_group_get_field_type(const EC_GROUP *group);
 
-/* EC_METHOD definitions */
+/*
+ * Wrappers around the unergonomic EC_POINT_{oct2point,point2oct}().
+ */
+int ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf,
+    size_t buf_len, EC_POINT **out_point, uint8_t *out_form, BN_CTX *ctx_in);
+int ec_point_to_octets(const EC_GROUP *group, const EC_POINT *point, int form,
+    unsigned char **out_buf, size_t *len, BN_CTX *ctx_in);
+
+/* Public API in OpenSSL */
+const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
+const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
 
 struct ec_key_method_st {
 	const char *name;
@@ -252,6 +245,25 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
+struct ec_key_st {
+	const EC_KEY_METHOD *meth;
+
+	int version;
+
+	EC_GROUP *group;
+
+	EC_POINT *pub_key;
+	BIGNUM	 *priv_key;
+
+	unsigned int enc_flag;
+	point_conversion_form_t conv_form;
+
+	int	references;
+	int	flags;
+
+	CRYPTO_EX_DATA ex_data;
+} /* EC_KEY */;
+
 int eckey_compute_pubkey(EC_KEY *eckey);
 int ec_key_gen(EC_KEY *eckey);
 int ecdh_compute_key(unsigned char **out, size_t *out_len,
@@ -266,20 +278,5 @@ int ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
  */
 int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
     size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
-
-int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
-int ec_group_get_field_type(const EC_GROUP *group);
-
-/*
- * Wrappers around the unergonomic EC_POINT_{oct2point,point2oct}().
- */
-int ec_point_from_octets(const EC_GROUP *group, const unsigned char *buf,
-    size_t buf_len, EC_POINT **out_point, uint8_t *out_form, BN_CTX *ctx_in);
-int ec_point_to_octets(const EC_GROUP *group, const EC_POINT *point, int form,
-    unsigned char **out_buf, size_t *len, BN_CTX *ctx_in);
-
-/* Public API in OpenSSL */
-const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
-const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
 
 __END_HIDDEN_DECLS
