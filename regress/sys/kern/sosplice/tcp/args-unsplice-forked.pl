@@ -17,8 +17,10 @@ our %args = (
 		or die "relay func: fork failed: $!";
 	    if ($pid == 0) {
 		sleep 2;
-		setsplice(\*STDIN)
-		    or die ref($self), " unsplice stdin failed: $!";
+		if ($self->{forward} =~ /splice/) {
+		    setsplice(\*STDIN)
+			or die ref($self), " unsplice stdin failed: $!";
+		}
 		POSIX::_exit(0);
 	    }
 	    sleep 1;
