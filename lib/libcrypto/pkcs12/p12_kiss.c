@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.27 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.28 2025/01/06 23:35:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,7 +77,7 @@ static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 /* Parse and decrypt a PKCS#12 structure returning user key, user cert
  * and other (CA) certs. Note either ca should be NULL, *ca should be NULL,
  * or it should point to a valid STACK structure. pkey and cert can be
- * passed unitialised.
+ * passed uninitialised.
  */
 
 int
