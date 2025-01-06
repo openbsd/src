@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpthread.c,v 1.1.1.1 2025/01/06 00:01:18 bluhm Exp $	*/
+/*	$OpenBSD: tcpthread.c,v 1.2 2025/01/06 22:25:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
@@ -18,9 +18,14 @@
 
 #include <sys/types.h>
 #include <sys/atomic.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 #include <err.h>
 #include <errno.h>
@@ -31,8 +36,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAXIMUM(a, b)	((a) > (b) ? (a) : (b))
-
 static const struct timespec time_1000ns = { 0, 1000 };
 static const struct timeval time_1us = { 0, 1 };
 
@@ -42,20 +45,17 @@ union sockaddr_union {
 	struct sockaddr_in6	su_sin6;
 };
 
-union inaddr_union {
-	struct in_addr	au_inaddr;
-	struct in6_addr	au_in6addr;
-};
-
 unsigned int run_time = 10;
 unsigned int sock_num = 1;
 unsigned int connect_num = 1, accept_num = 1, send_num = 1, recv_num = 1,
-    close_num = 1, splice_num = 0, unsplice_num = 0;
+    close_num = 1, splice_num = 0, unsplice_num = 0, drop_num = 0;
 int max_percent = 0, idle_percent = 0;
 volatile unsigned long max_count = 0, idle_count = 0;
-volatile int *listen_socks, *connect_socks, *accept_socks,
-    *splice_listen_socks, *splice_accept_socks, *splice_connect_socks;
-union sockaddr_union *listen_addrs, *splice_addrs;
+int *listen_socks, *splice_listen_socks;
+volatile int *connect_socks, *accept_socks,
+    *splice_accept_socks, *splice_connect_socks;
+union sockaddr_union *listen_addrs, *splice_listen_addrs;
+struct tcp_ident_mapping *accept_tims, *splice_accept_tims;
 struct sockaddr_in sin_loopback;
 struct sockaddr_in6 sin6_loopback;
 
@@ -63,11 +63,12 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr,
-	    "tcpthread [-a accept] [-c connect] [-I idle] [-M max] [-n num] "
-	    "[-o close] [-r recv] [-S splice] [-s send] [-t time] "
+	    "tcpthread [-a accept] [-c connect] [-D drop] [-I idle] [-M max] "
+	    "[-n num] [-o close] [-r recv] [-S splice] [-s send] [-t time] "
 	    "[-U unsplice]\n"
 	    "    -a accept    threads accepting sockets, default %u\n"
 	    "    -c connect   threads connecting sockets, default %u\n"
+	    "    -D drop      threads dropping TCP connections, default %u\n"
 	    "    -I idle      percent with splice idle time, default %u\n"
 	    "    -M max       percent with splice max lenght, default %d\n"
 	    "    -n num       number of file descriptors, default %d\n"
@@ -77,8 +78,9 @@ usage(void)
 	    "    -s send      threads sending data, default %u\n"
 	    "    -t time      run time in seconds, default %u\n"
 	    "    -U unsplice  threads running unsplice, default %u\n",
-	    accept_num, connect_num, idle_percent, max_percent, sock_num,
-	    close_num, recv_num, splice_num, send_num, run_time, unsplice_num);
+	    accept_num, connect_num, drop_num, idle_percent, max_percent,
+	    sock_num, close_num, recv_num, splice_num, send_num, run_time,
+	    unsplice_num);
 	exit(2);
 }
 
@@ -140,7 +142,8 @@ connect_routine(void *arg)
 	while (*run) {
 		connected = 0;
 		for (n = 0; n < sock_num; n++) {
-			addr = &((splice_num > 0) ? splice_addrs : listen_addrs)
+			addr = &((splice_num > 0) ?
+			    splice_listen_addrs : listen_addrs)
 			    [rand_r(&seed) % sock_num].su_sa;
 			if (!connect_socket(&connect_socks[n], addr))
 				continue;
@@ -158,10 +161,13 @@ connect_routine(void *arg)
 }
 
 static int
-accept_socket(volatile int *acceptp, volatile int *listens)
+accept_socket(volatile int *acceptp, int *listens,
+    struct tcp_ident_mapping *tim, union sockaddr_union *addrs)
 {
 	unsigned int i;
 	int sock;
+	struct sockaddr *sa;
+	socklen_t len;
 
 	if (*acceptp != -1) {
 		/* still accepted, not closed */
@@ -169,7 +175,9 @@ accept_socket(volatile int *acceptp, volatile int *listens)
 	}
 	sock = -1;
 	for (i = 0; i < sock_num; i++) {
-		sock = accept4(listens[i], NULL, NULL, SOCK_NONBLOCK);
+		sa = (struct sockaddr *)&tim->faddr;
+		len = sizeof(tim->faddr);
+		sock = accept4(listens[i], sa, &len, SOCK_NONBLOCK);
 		if (sock < 0) {
 			if (errno == EWOULDBLOCK) {
 				/* no connection to accept */
@@ -177,6 +185,8 @@ accept_socket(volatile int *acceptp, volatile int *listens)
 			}
 			err(1, "%s: accept %d", __func__, listens[i]);
 		}
+		sa = &addrs[i].su_sa;
+		memcpy(&tim->laddr, sa, sa->sa_len);
 		break;
 	}
 	if (sock == -1) {
@@ -185,6 +195,7 @@ accept_socket(volatile int *acceptp, volatile int *listens)
 			err(1, "%s: nanosleep", __func__);
 		return 0;
 	}
+	membar_producer();
 	if ((int)atomic_cas_uint(acceptp, -1, sock) != -1) {
 		/* another thread has accepted slot n */
 		if (close(sock) < 0)
@@ -205,7 +216,8 @@ accept_routine(void *arg)
 	while (*run) {
 		accepted = 0;
 		for (n = 0; n < sock_num; n++) {
-			if (!accept_socket(&accept_socks[n], listen_socks))
+			if (!accept_socket(&accept_socks[n], listen_socks,
+			    &accept_tims[n], listen_addrs))
 				continue;
 			accepted = 1;
 			count++;
@@ -344,7 +356,8 @@ splice_routine(void *arg)
 		spliced = 0;
 		for (n = 0; n < sock_num; n++) {
 			if (!accept_socket(&splice_accept_socks[n],
-			    splice_listen_socks))
+			    splice_listen_socks,
+			    &splice_accept_tims[n], splice_listen_addrs))
 				continue;
 			/* free the matching connect slot */
 			sock = atomic_swap_uint(&splice_connect_socks[n], -1);
@@ -449,23 +462,60 @@ unsplice_routine(void *arg)
 	return (void *)count;
 }
 
+static void *
+drop_routine(void *arg)
+{
+	static const int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_DROP };
+	volatile int *run = arg;
+	unsigned long count = 0;
+	unsigned int seed, n;
+	volatile int *socks;
+	struct tcp_ident_mapping *tims;
+
+	seed = arc4random();
+
+	while (*run) {
+		if (splice_num > 0 && (rand_r(&seed) % 2)) {
+			socks = splice_accept_socks;
+			tims = splice_accept_tims;
+		} else {
+			socks = accept_socks;
+			tims = accept_tims;
+		}
+		n = rand_r(&seed) % sock_num;
+		if (socks[n] == -1)
+			continue;
+		membar_consumer();
+		/* accept_tims is not MP safe, but only ESRCH may happen */
+		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, NULL,
+		    &tims[n], sizeof(tims[0])) < 0) {
+			if (errno == ESRCH)
+				continue;
+			err(1, "sysctl TCPCTL_DROP");
+		}
+		count++;
+	}
+
+	return (void *)count;
+}
+
 int
 main(int argc, char *argv[])
 {
 	pthread_t *connect_thread, *accept_thread, *send_thread, *recv_thread,
-	    *close_thread, *splice_thread, *unsplice_thread;
+	    *close_thread, *splice_thread, *unsplice_thread, *drop_thread;
 	struct sockaddr *sa;
 	const char *errstr;
 	unsigned int seed;
 	int ch, run;
 	unsigned int n;
 	unsigned long connect_count, accept_count, send_count, recv_count,
-	    close_count, splice_count, unsplice_count;
+	    close_count, splice_count, unsplice_count, drop_count;
 	socklen_t len;
 
 	seed = arc4random();
 
-	while ((ch = getopt(argc, argv, "a:c:I:M:n:o:r:S:s:t:U:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:D:I:M:n:o:r:S:s:t:U:")) != -1) {
 		switch (ch) {
 		case 'a':
 			accept_num = strtonum(optarg, 0, UINT_MAX, &errstr);
@@ -476,6 +526,11 @@ main(int argc, char *argv[])
 			connect_num = strtonum(optarg, 0, UINT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "connect is %s: %s", errstr, optarg);
+			break;
+		case 'D':
+			drop_num = strtonum(optarg, 0, UINT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "drop is %s: %s", errstr, optarg);
 			break;
 		case 'I':
 			idle_percent = strtonum(optarg, 0, 100, &errstr);
@@ -556,6 +611,9 @@ main(int argc, char *argv[])
 	listen_addrs = calloc(sock_num, sizeof(listen_addrs[0]));
 	if (listen_addrs == NULL)
 		err(1, "listen_addrs");
+	accept_tims = calloc(sock_num, sizeof(accept_tims[0]));
+	if (accept_tims == NULL)
+		err(1, "accept_tims");
 	if (splice_num > 0) {
 		splice_listen_socks = reallocarray(NULL, sock_num, sizeof(int));
 		if (splice_listen_socks == NULL)
@@ -571,9 +629,14 @@ main(int argc, char *argv[])
 			splice_listen_socks[n] = splice_accept_socks[n] =
 			    splice_connect_socks[n] = -1;
 		}
-		splice_addrs = calloc(sock_num, sizeof(splice_addrs[0]));
-		if (splice_addrs == NULL)
-			err(1, "splice_addrs");
+		splice_listen_addrs = calloc(sock_num,
+		    sizeof(splice_listen_addrs[0]));
+		if (splice_listen_addrs == NULL)
+			err(1, "splice_listen_addrs");
+		splice_accept_tims = calloc(sock_num,
+		    sizeof(splice_accept_tims[0]));
+		if (splice_accept_tims == NULL)
+			err(1, "splice_accept_tims");
 	}
 
 	for (n = 0; n < sock_num; n++) {
@@ -609,9 +672,9 @@ main(int argc, char *argv[])
 				sa = (struct sockaddr *)&sin6_loopback;
 			if (bind(splice_listen_socks[n], sa, sa->sa_len) < 0)
 				err(1, "bind");
-			len = sizeof(splice_addrs[n]);
+			len = sizeof(splice_listen_addrs[n]);
 			if (getsockname(splice_listen_socks[n],
-			    &splice_addrs[n].su_sa, &len) < 0)
+			    &splice_listen_addrs[n].su_sa, &len) < 0)
 				err(1, "getsockname");
 			if (listen(splice_listen_socks[n], 128) < 0)
 				err(1, "listen");
@@ -690,6 +753,15 @@ main(int argc, char *argv[])
 			if (errno)
 				err(1, "pthread_create unsplice %u", n);
 		}
+	}
+	drop_thread = calloc(drop_num, sizeof(pthread_t));
+	if (drop_thread == NULL)
+		err(1, "drop_thread");
+	for (n = 0; n < drop_num; n++) {
+		errno = pthread_create(&drop_thread[n], NULL,
+		    drop_routine, &run);
+		if (errno)
+			err(1, "pthread_create drop %u", n);
 	}
 
 	if (run_time > 0) {
@@ -777,16 +849,28 @@ main(int argc, char *argv[])
 		}
 		free(unsplice_thread);
 	}
+	drop_count = 0;
+	for (n = 0; n < drop_num; n++) {
+		unsigned long count;
+
+		errno = pthread_join(drop_thread[n], (void **)&count);
+		if (errno)
+			err(1, "pthread_join drop %u", n);
+		drop_count += count;
+	}
+	free(drop_thread);
 
 	free((int *)listen_socks);
 	free((int *)connect_socks);
 	free((int *)accept_socks);
 	free(listen_addrs);
+	free(accept_tims);
 	if (splice_num > 0) {
 		free((int *)splice_listen_socks);
 		free((int *)splice_accept_socks);
 		free((int *)splice_connect_socks);
-		free(splice_addrs);
+		free(splice_listen_addrs);
+		free(splice_accept_tims);
 	}
 
 	printf("count: connect %lu, ", connect_count);
@@ -794,8 +878,8 @@ main(int argc, char *argv[])
 		printf("splice %lu, unsplice %lu, max %lu, idle %lu, ",
 		    splice_count, unsplice_count, max_count, idle_count);
 	}
-	printf("accept %lu, send %lu, recv %lu, close %lu\n",
-	    accept_count, send_count, recv_count, close_count);
+	printf("accept %lu, send %lu, recv %lu, close %lu, drop %lu\n",
+	    accept_count, send_count, recv_count, close_count, drop_count);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2025/01/06 00:01:18 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2025/01/06 22:25:38 bluhm Exp $
 
 PROG=		tcpthread
 LDADD=		-lpthread
@@ -19,7 +19,7 @@ run-sock100:
 
 REGRESS_TARGETS +=	run-splice
 run-splice:
-	time ${KTRACE} ./${PROG} -n10 -S1
+	time ${KTRACE} ./${PROG} -n10 -S2
 
 REGRESS_TARGETS +=	run-unsplice
 run-unsplice:
@@ -32,5 +32,15 @@ run-max:
 REGRESS_TARGETS +=	run-idle
 run-idle:
 	time ${KTRACE} ./${PROG} -n10 -S4 -I100 -s2 -r2
+
+REGRESS_ROOT_TARGETS +=	run-drop
+REGRESS_TARGETS +=	run-drop
+run-drop:
+	time ${SUDO} ${KTRACE} ./${PROG} -n10 -D3 -o0
+
+REGRESS_ROOT_TARGETS +=	run-splicedrop
+REGRESS_TARGETS +=	run-splicedrop
+run-splicedrop:
+	time ${SUDO} ${KTRACE} ./${PROG} -n10 -S2 -D3 -o0
 
 .include <bsd.regress.mk>
