@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.19 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.20 2025/01/06 12:35:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,37 +107,35 @@ BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 	return (1);
 }
 
-int
-BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
-    BN_RECP_CTX *recp, BN_CTX *ctx)
+/* len is the expected size of the result
+ * We actually calculate with an extra word of precision, so
+ * we can do faster division if the remainder is not required.
+ */
+/* r := 2^len / m */
+static int
+BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 {
-	int ret = 0;
-	BIGNUM *a;
-	const BIGNUM *ca;
+	int ret = -1;
+	BIGNUM *t;
 
 	BN_CTX_start(ctx);
-	if ((a = BN_CTX_get(ctx)) == NULL)
+	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if (y != NULL) {
-		if (x == y) {
-			if (!BN_sqr(a, x, ctx))
-				goto err;
-		} else {
-			if (!BN_mul(a, x, y, ctx))
-				goto err;
-		}
-		ca = a;
-	} else
-		ca = x; /* Just do the mod */
 
-	ret = BN_div_recp(NULL, r, ca, recp, ctx);
+	if (!BN_set_bit(t, len))
+		goto err;
+
+	if (!BN_div_ct(r, NULL, t,m, ctx))
+		goto err;
+
+	ret = len;
 
 err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
 
-int
+static int
 BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
     BN_CTX *ctx)
 {
@@ -231,28 +229,31 @@ err:
 	return (ret);
 }
 
-/* len is the expected size of the result
- * We actually calculate with an extra word of precision, so
- * we can do faster division if the remainder is not required.
- */
-/* r := 2^len / m */
+
 int
-BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
+BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
+    BN_RECP_CTX *recp, BN_CTX *ctx)
 {
-	int ret = -1;
-	BIGNUM *t;
+	int ret = 0;
+	BIGNUM *a;
+	const BIGNUM *ca;
 
 	BN_CTX_start(ctx);
-	if ((t = BN_CTX_get(ctx)) == NULL)
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
+	if (y != NULL) {
+		if (x == y) {
+			if (!BN_sqr(a, x, ctx))
+				goto err;
+		} else {
+			if (!BN_mul(a, x, y, ctx))
+				goto err;
+		}
+		ca = a;
+	} else
+		ca = x; /* Just do the mod */
 
-	if (!BN_set_bit(t, len))
-		goto err;
-
-	if (!BN_div_ct(r, NULL, t,m, ctx))
-		goto err;
-
-	ret = len;
+	ret = BN_div_recp(NULL, r, ca, recp, ctx);
 
 err:
 	BN_CTX_end(ctx);
