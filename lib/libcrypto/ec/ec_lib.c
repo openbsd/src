@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.101 2025/01/06 14:29:33 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.102 2025/01/06 19:23:25 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -895,24 +895,6 @@ EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 LCRYPTO_ALIAS(EC_POINT_set_to_infinity);
 
 int
-EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINT_set_Jprojective_coordinates_GFp);
-
-int
-EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
-
-int
 EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx_in)
 {
@@ -1381,3 +1363,26 @@ EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 	return 0;
 }
 LCRYPTO_ALIAS(EC_GROUP_have_precompute_mult);
+
+/*
+ * XXX - remove everything below in the next bump
+ */
+
+int
+EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
+{
+	ECerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(EC_POINT_set_Jprojective_coordinates_GFp);
+
+int
+EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
+{
+	ECerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
+
