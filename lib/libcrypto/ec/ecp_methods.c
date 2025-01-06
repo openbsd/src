@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.18 2025/01/05 16:07:08 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.19 2025/01/06 10:56:46 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -116,23 +116,6 @@ ec_encode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx
 {
 	if (!BN_nnmod(bn, x, group->p, ctx))
 		return 0;
-
-	if (group->meth->field_encode != NULL)
-		return group->meth->field_encode(group, bn, bn, ctx);
-
-	return 1;
-}
-
-static int
-ec_encode_z_coordinate(const EC_GROUP *group, BIGNUM *bn, int *is_one,
-    const BIGNUM *z, BN_CTX *ctx)
-{
-	if (!BN_nnmod(bn, z, group->p, ctx))
-		return 0;
-
-	*is_one = BN_is_one(bn);
-	if (*is_one && group->meth->field_set_to_one != NULL)
-		return group->meth->field_set_to_one(group, bn, ctx);
 
 	if (group->meth->field_encode != NULL)
 		return group->meth->field_encode(group, bn, bn, ctx);
@@ -262,66 +245,28 @@ ec_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 }
 
 static int
-ec_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
-{
-	int ret = 0;
-
-	/*
-	 * Setting individual coordinates allows the creation of bad points.
-	 * EC_POINT_set_Jprojective_coordinates() checks at the API boundary.
-	 */
-
-	if (x != NULL) {
-		if (!ec_encode_scalar(group, point->X, x, ctx))
-			goto err;
-	}
-	if (y != NULL) {
-		if (!ec_encode_scalar(group, point->Y, y, ctx))
-			goto err;
-	}
-	if (z != NULL) {
-		if (!ec_encode_z_coordinate(group, point->Z, &point->Z_is_one,
-		    z, ctx))
-			goto err;
-	}
-
-	ret = 1;
-
- err:
-	return ret;
-}
-
-static int
-ec_get_Jprojective_coordinates(const EC_GROUP *group, const EC_POINT *point,
-    BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
-{
-	int ret = 0;
-
-	if (!ec_decode_scalar(group, x, point->X, ctx))
-		goto err;
-	if (!ec_decode_scalar(group, y, point->Y, ctx))
-		goto err;
-	if (!ec_decode_scalar(group, z, point->Z, ctx))
-		goto err;
-
-	ret = 1;
-
- err:
-	return ret;
-}
-
-static int
 ec_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 {
+	int ret = 0;
+
 	if (x == NULL || y == NULL) {
-		/* unlike for projective coordinates, we do not tolerate this */
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		goto err;
 	}
-	return EC_POINT_set_Jprojective_coordinates(group, point, x, y,
-	    BN_value_one(), ctx);
+
+	if (!ec_encode_scalar(group, point->X, x, ctx))
+		goto err;
+	if (!ec_encode_scalar(group, point->Y, y, ctx))
+		goto err;
+	if (!ec_encode_scalar(group, point->Z, BN_value_one(), ctx))
+		goto err;
+	point->Z_is_one = 1;
+
+	ret = 1;
+
+ err:
+	return ret;
 }
 
 static int
@@ -1652,8 +1597,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.group_get_degree = ec_group_get_degree,
 	.group_order_bits = ec_group_simple_order_bits,
 	.group_check_discriminant = ec_group_check_discriminant,
-	.point_set_Jprojective_coordinates = ec_set_Jprojective_coordinates,
-	.point_get_Jprojective_coordinates = ec_get_Jprojective_coordinates,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.point_set_compressed_coordinates = ec_set_compressed_coordinates,
@@ -1687,8 +1630,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.group_get_degree = ec_group_get_degree,
 	.group_order_bits = ec_group_simple_order_bits,
 	.group_check_discriminant = ec_group_check_discriminant,
-	.point_set_Jprojective_coordinates = ec_set_Jprojective_coordinates,
-	.point_get_Jprojective_coordinates = ec_get_Jprojective_coordinates,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.point_set_compressed_coordinates = ec_set_compressed_coordinates,

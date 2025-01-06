@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.94 2025/01/05 16:07:08 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.95 2025/01/06 10:56:46 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -908,78 +908,11 @@ EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 LCRYPTO_ALIAS(EC_POINT_set_to_infinity);
 
 int
-EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx_in)
-{
-	BN_CTX *ctx;
-	int ret = 0;
-
-	if ((ctx = ctx_in) == NULL)
-		ctx = BN_CTX_new();
-	if (ctx == NULL)
-		goto err;
-
-	if (group->meth->point_set_Jprojective_coordinates == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
-	if (group->meth != point->meth) {
-		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		goto err;
-	}
-	if (!group->meth->point_set_Jprojective_coordinates(group, point,
-	    x, y, z, ctx))
-		goto err;
-
-	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
-		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
-		goto err;
-	}
-
-	ret = 1;
-
- err:
-	if (ctx != ctx_in)
-		BN_CTX_free(ctx);
-
-	return ret;
-}
-
-int
-EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx_in)
-{
-	BN_CTX *ctx;
-	int ret = 0;
-
-	if ((ctx = ctx_in) == NULL)
-		ctx = BN_CTX_new();
-	if (ctx == NULL)
-		goto err;
-
-	if (group->meth->point_get_Jprojective_coordinates == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
-	if (group->meth != point->meth) {
-		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		goto err;
-	}
-	ret = group->meth->point_get_Jprojective_coordinates(group, point,
-	    x, y, z, ctx);
-
- err:
-	if (ctx != ctx_in)
-		BN_CTX_free(ctx);
-
-	return ret;
-}
-
-int
 EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
 {
-	return EC_POINT_set_Jprojective_coordinates(group, point, x, y, z, ctx);
+	ECerror(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(EC_POINT_set_Jprojective_coordinates_GFp);
 
@@ -987,7 +920,8 @@ int
 EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
     const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
 {
-	return EC_POINT_get_Jprojective_coordinates(group, point, x, y, z, ctx);
+	ECerror(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
 

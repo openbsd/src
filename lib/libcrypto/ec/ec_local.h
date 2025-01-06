@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.46 2025/01/05 16:07:08 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.47 2025/01/06 10:56:46 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -99,10 +99,6 @@ struct ec_method_st {
 	int (*group_order_bits)(const EC_GROUP *);
 	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
-	int (*point_set_Jprojective_coordinates)(const EC_GROUP *, EC_POINT *,
-	    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
-	int (*point_get_Jprojective_coordinates)(const EC_GROUP *,
-	    const EC_POINT *, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
 	int (*point_set_affine_coordinates)(const EC_GROUP *, EC_POINT *,
 	    const BIGNUM *x, const BIGNUM *y, BN_CTX *);
 	int (*point_get_affine_coordinates)(const EC_GROUP *, const EC_POINT *,
@@ -276,11 +272,6 @@ int ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
  */
 int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
     size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
-
-int EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *p,
-    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
-int EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
-    const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
 
 int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
 int ec_group_get_field_type(const EC_GROUP *group);
