@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.28 2024/11/14 18:47:31 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.29 2025/01/06 17:42:39 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -398,7 +398,7 @@ process_certificate_policies(const X509 *x509, X509_POLICY_LEVEL *level,
 
 	/*
 	 * This does the same thing as RFC 5280, section 6.1.3, step (d),
-	 * though in a slighty different order. |level| currently contains
+	 * though in a slightly different order. |level| currently contains
 	 * "expected_policy_set" values of the previous level.
 	 * See |process_policy_mappings| for details.
 	 */
