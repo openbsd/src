@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.34 2025/01/02 23:26:50 mglocker Exp $ */
+/* $OpenBSD: ihidev.c,v 1.35 2025/01/06 02:13:55 kirill Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -55,6 +55,7 @@ enum {
 
 	/* pseudo commands */
 	I2C_HID_REPORT_DESCR	= 0x100,
+	I2C_HID_RESET_RESPONSE	= 0x101,
 };
 
 static int I2C_HID_POWER_ON	= 0x0;
@@ -516,6 +517,32 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 
 		break;
 	}
+	case I2C_HID_RESET_RESPONSE: {
+		int i;
+		uint8_t buf[2] = { 0xff, 0xff };
+
+		DPRINTF(("%s: HID command I2C_HID_RESET_RESPONSE\n",
+		    sc->sc_dev.dv_xname));
+
+		/*
+		 * 7.2.1 states that a device should response for RESET
+		 * in less than 5 seconds. It uses poll instead of
+		 * tsleep because interrupts are blocked during autoconf.
+		 */
+		for (i = 0; i < 50; i++) {
+			ihidev_sleep(sc, 100);
+			res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, NULL, 0, buf, sizeof(buf), 0);
+			DPRINTF(("%s: read attempt %d: 0x%x, 0x%x, res: %d\n",
+			    sc->sc_dev.dv_xname, i, buf[0], buf[1], res));
+			if (!res)
+				res = (buf[0] != 0x00 || buf[1] != 0x00);
+			if (!res)
+				break;
+		}
+
+		break;
+	}
 	default:
 		printf("%s: unknown command %d\n", sc->sc_dev.dv_xname,
 		    hidcmd);
@@ -557,7 +584,11 @@ ihidev_reset(struct ihidev_softc *sc)
 		return (1);
 	}
 
-	ihidev_sleep(sc, 100);
+	if (ihidev_hid_command(sc, I2C_HID_RESET_RESPONSE, 0)) {
+		printf("%s: unexpected reset response\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
 
 	return (0);
 }
@@ -571,8 +602,6 @@ ihidev_reset(struct ihidev_softc *sc)
 int
 ihidev_hid_desc_parse(struct ihidev_softc *sc)
 {
-	int retries = 3;
-
 	/* must be v01.00 */
 	if (letoh16(sc->hid_desc.bcdVersion) != 0x0100) {
 		printf("%s: bad HID descriptor bcdVersion (0x%x)\n",
@@ -598,16 +627,8 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 		return (1);
 	}
 
-	while (retries-- > 0) {
-		if (ihidev_reset(sc)) {
-			if (retries == 0)
-				return(1);
-
-			ihidev_sleep(sc, 10);
-		}
-		else
-			break;
-	}
+	if (ihidev_reset(sc))
+		return (1);
 
 	sc->sc_reportlen = letoh16(sc->hid_desc.wReportDescLength);
 	sc->sc_report = malloc(sc->sc_reportlen, M_DEVBUF, M_WAITOK | M_ZERO);
