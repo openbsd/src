@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.21 2025/01/06 12:35:14 jsing Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.22 2025/01/06 12:36:41 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -289,7 +289,10 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 	if ((Z_3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* Convert from projective coordinates (X, Y, Z) into (X/Z^2, Y/Z^3). */
+	/*
+	 * Convert from Jacobian projective coordinates (X, Y, Z) into
+	 * (X/Z^2, Y/Z^3).
+	 */
 
 	if (!ec_decode_scalar(group, z, point->Z, ctx))
 		goto err;
@@ -1146,7 +1149,7 @@ ec_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 }
 
 /*
- * Apply randomization of EC point projective coordinates:
+ * Apply randomization of EC point Jacobian projective coordinates:
  *
  *	(X, Y, Z) = (lambda^2 * X, lambda^3 * Y, lambda * Z)
  *
