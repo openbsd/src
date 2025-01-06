@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.24 2025/01/06 14:29:33 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.25 2025/01/06 18:43:27 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1430,13 +1430,6 @@ ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 	return ec_wnaf_mul(group, r, g_scalar, point, p_scalar, ctx);
 }
 
-static void
-ec_mont_group_clear(EC_GROUP *group)
-{
-	BN_MONT_CTX_free(group->mont_ctx);
-	group->mont_ctx = NULL;
-}
-
 static int
 ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
@@ -1444,10 +1437,10 @@ ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	BN_MONT_CTX *mont = NULL;
 	int ret = 0;
 
-	ec_mont_group_clear(group);
+	BN_MONT_CTX_free(group->mont_ctx);
+	group->mont_ctx = NULL;
 
-	mont = BN_MONT_CTX_new();
-	if (mont == NULL)
+	if ((mont = BN_MONT_CTX_new()) == NULL)
 		goto err;
 	if (!BN_MONT_CTX_set(mont, p, ctx)) {
 		ECerror(ERR_R_BN_LIB);
@@ -1456,9 +1449,13 @@ ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	group->mont_ctx = mont;
 	mont = NULL;
 
-	ret = ec_group_set_curve(group, p, a, b, ctx);
-	if (!ret)
-		ec_mont_group_clear(group);
+	if (!ec_group_set_curve(group, p, a, b, ctx)) {
+		BN_MONT_CTX_free(group->mont_ctx);
+		group->mont_ctx = NULL;
+		goto err;
+	}
+
+	ret = 1;
 
  err:
 	BN_MONT_CTX_free(mont);
