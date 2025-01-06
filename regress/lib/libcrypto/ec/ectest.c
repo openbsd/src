@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.24 2024/10/18 19:55:34 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.25 2025/01/06 10:42:28 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -91,9 +91,6 @@
 #define TIMING_BASE_PT 0
 #define TIMING_RAND_PT 1
 #define TIMING_SIMUL 2
-
-int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
 
 /* test multiplication with group order, long and negative scalars */
 static void
@@ -325,14 +322,12 @@ prime_field_tests(void)
 	fprintf(stdout, "\nGenerator as octet string, hybrid form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 
-		if (!EC_POINT_get_Jprojective_coordinates_GFp(group, R, x, y, z, ctx))
+		if (!EC_POINT_get_affine_coordinates(group, R, x, y, ctx))
 			ABORT;
-	fprintf(stdout, "\nA representation of the inverse of that generator in\nJacobian projective coordinates:\n     X = 0x");
+	fprintf(stdout, "\nAn inverse of that generator:\n     X = 0x");
 	BN_print_fp(stdout, x);
 	fprintf(stdout, ", Y = 0x");
 	BN_print_fp(stdout, y);
-	fprintf(stdout, ", Z = 0x");
-	BN_print_fp(stdout, z);
 	fprintf(stdout, "\n");
 
 	if (!EC_POINT_invert(group, P, ctx))
