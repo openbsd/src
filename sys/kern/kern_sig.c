@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.354 2024/12/28 20:34:05 mvs Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.355 2025/01/06 13:17:56 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -124,6 +124,8 @@ int proc_trap(struct proc *, int);
 void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
 void *proc_stop_si;
+
+void process_continue(struct proc *, int);
 
 void setsigctx(struct proc *, int, struct sigctx *);
 void postsig_done(struct proc *, int, sigset_t, int);
@@ -1065,7 +1067,7 @@ ptsignal_locked(struct proc *p, int signum, enum signal_type type)
 	/*
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
 	 */
-	if (prop & (SA_CONT | SA_STOP) && type != SPROPAGATED)
+	if (prop & SA_STOP && type != SPROPAGATED)
 		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link)
 			if (q != p)
 				ptsignal_locked(q, signum, SPROPAGATED);
@@ -1102,15 +1104,12 @@ ptsignal_locked(struct proc *p, int signum, enum signal_type type)
 			 * it has no further action.  If SIGCONT is held, we
 			 * continue the process and leave the signal in
 			 * p_siglist.  If the process catches SIGCONT, let it
-			 * handle the signal itself.  If it isn't waiting on
-			 * an event, then it goes back to run state.
-			 * Otherwise, process goes back to sleep state.
+			 * handle the signal itself.  At the end continue
+			 * the process.
 			 */
 			atomic_setbits_int(&pr->ps_flags, PS_CONTINUED);
 			atomic_clearbits_int(&pr->ps_flags,
-			    PS_WAITED | PS_STOPPED | PS_TRAPPED);
-			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
-			wakeparent = 1;
+			    PS_WAITED | PS_STOPPED | PS_STOPPING | PS_TRAPPED);
 			if (action == SIG_DFL)
 				mask = 0;
 			if (action == SIG_CATCH) {
@@ -1118,14 +1117,10 @@ ptsignal_locked(struct proc *p, int signum, enum signal_type type)
 				if (p->p_usrpri > PUSER)
 					p->p_usrpri = PUSER;
 				unsleep(p);
-				setrunnable(p);
-				goto out;
 			}
-			if (p->p_wchan == NULL) {
-				setrunnable(p);
-				goto out;
-			}
-			p->p_stat = SSLEEP;
+
+			process_continue(p, P_SUSPSIG);
+			wakeparent = 1;
 			goto out;
 		}
 
@@ -1518,6 +1513,48 @@ proc_trap(struct proc *p, int signum)
 	atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);
 
 	return signum;
+}
+
+/*
+ * Continue all threads of a process that were stopped because of `flag'."
+ */
+void
+process_continue(struct proc *p, int flag)
+{
+	struct process *pr = p->p_p;
+	struct proc *q;
+
+	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
+
+	/* wake all if called from a different process */
+	if (curproc != p)
+		p = NULL;
+
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+		if (q == p)
+			continue;
+		if (!ISSET(q->p_flag, flag))
+			continue;
+		atomic_clearbits_int(&q->p_flag, flag);
+
+		/*
+		 * clearing either makes the thread runnable or puts
+		 * it back into some sleep queue
+		 */
+		/*
+		 * XXX in ptsignal the SCHED_LOCK is already held so we can't
+		 * grab it here until that is fixed.
+		 */
+		/* XXX SCHED_LOCK(); */
+		SCHED_ASSERT_LOCKED();
+		if (q->p_wchan == NULL)
+			setrunnable(q);
+		else {
+			atomic_clearbits_int(&q->p_flag, P_WSLEEP);
+			q->p_stat = SSLEEP;
+		}
+		/* XXX SCHED_UNLOCK(); */
+	}
 }
 
 /*
@@ -2250,7 +2287,6 @@ void
 single_thread_clear(struct proc *p, int flag)
 {
 	struct process *pr = p->p_p;
-	struct proc *q;
 
 	KASSERT(pr->ps_single == p);
 	KASSERT(curproc == p);
@@ -2259,27 +2295,10 @@ single_thread_clear(struct proc *p, int flag)
 	pr->ps_single = NULL;
 	atomic_clearbits_int(&pr->ps_flags, PS_SINGLEUNWIND | PS_SINGLEEXIT);
 
-	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
-		if (q == p || (q->p_flag & P_SUSPSINGLE) == 0)
-			continue;
-		atomic_clearbits_int(&q->p_flag, P_SUSPSINGLE);
+	SCHED_LOCK();
+	process_continue(p, P_SUSPSINGLE);
+	SCHED_UNLOCK();
 
-		/*
-		 * if the thread was only stopped for single threading
-		 * then clearing that either makes it runnable or puts
-		 * it back into some sleep queue
-		 */
-		SCHED_LOCK();
-		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
-			if (q->p_wchan == NULL)
-				setrunnable(q);
-			else {
-				atomic_clearbits_int(&q->p_flag, P_WSLEEP);
-				q->p_stat = SSLEEP;
-			}
-		}
-		SCHED_UNLOCK();
-	}
 	mtx_leave(&pr->ps_mtx);
 }
 
