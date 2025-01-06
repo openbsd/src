@@ -1,5 +1,5 @@
-.\" $OpenBSD: scale.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
-.TH NR-INT 1 "January 23, 2015"
+.\" $OpenBSD: scale.in,v 1.3 2025/01/06 18:48:13 schwarze Exp $
+.TH NR-INT 1 "January 6, 2025"
 .SH NAME
 nr-scale \- scaling units in numeric expressions
 .SH DESCRIPTION
@@ -25,3 +25,21 @@ nr-scale \- scaling units in numeric expressions
 \nY
 .nr Y 1X+2
 \nY
+.PP
+.nr Y 0.001f
+0.001f = \nYu;
+.nr Y 0.1i
+0.1i = \nYu;
+.nr Y 0.1c
+0.1c = \nYu;
+.nr Y 0.25P
+0.25P = \nYu;
+.nr Y 0.6p
+0.6p = \nYu
+.PP
+.nr Y 3p
+3p = \nYu;
+.nr Y 1p+1p+1p
+1p+1p+1p = \nYu;
+.nr Y 1p*3
+1p*3 = \nYu

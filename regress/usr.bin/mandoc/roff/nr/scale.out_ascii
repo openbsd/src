@@ -6,4 +6,8 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      65537 241 945 41 41 25 25 34 2 25 1
 
-OpenBSD                        January 23, 2015                      NR-INT(1)
+     0.001f = 65u; 0.1i = 24u; 0.1c = 9u; 0.25P = 10u; 0.6p = 2u
+
+     3p = 10u; 1p+1p+1p = 9u; 1p*3 = 9u
+
+OpenBSD                         January 6, 2025                      NR-INT(1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.275 2025/01/05 16:56:48 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.276 2025/01/06 18:48:13 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2420,7 +2420,7 @@ roff_cond_text(ROFF_ARGS)
 /* --- handling of numeric and conditional expressions -------------------- */
 
 /*
- * Parse a single signed integer number.  Stop at the first non-digit.
+ * Parse a single signed decimal number.  Stop at the first non-digit.
  * If there is at least one digit, return success and advance the
  * parse point, else return failure and let the parse point unchanged.
  * Ignore overflows, treat them just like the C language.
@@ -2428,10 +2428,8 @@ roff_cond_text(ROFF_ARGS)
 static int
 roff_getnum(const char *v, int *pos, int *res, char unit, int skipspace)
 {
-	int	 myres, n, p;
-
-	if (NULL == res)
-		res = &myres;
+	double	 frac, myres;
+	int	 n, p;
 
 	p = *pos;
 	n = v[p] == '-';
@@ -2442,13 +2440,17 @@ roff_getnum(const char *v, int *pos, int *res, char unit, int skipspace)
 		while (isspace((unsigned char)v[p]))
 			p++;
 
-	for (*res = 0; isdigit((unsigned char)v[p]); p++)
-		*res = 10 * *res + v[p] - '0';
+	for (myres = 0.0; isdigit((unsigned char)v[p]); p++)
+		myres = myres * 10.0 + (v[p] - '0');
+	if (v[p] == '.')
+		for (frac = 0.1; isdigit((unsigned char)v[++p]); frac *= 0.1)
+			myres += frac * (v[p] - '0');
+
 	if (p == *pos + n)
 		return 0;
 
 	if (n)
-		*res = -*res;
+		myres *= -1.0;
 
 	/* Each number may be followed by one optional scaling unit. */
 
@@ -2460,36 +2462,35 @@ roff_getnum(const char *v, int *pos, int *res, char unit, int skipspace)
 
 	switch (unit) {
 	case 'f':
-		*res *= 65536;
+		myres *= 65536.0;
 		break;
 	case 'i':
-		*res *= 240;
+		myres *= 240.0;
 		break;
 	case 'c':
-		*res *= 24000;
-		*res /= 254;
+		myres *= 240.0 / 2.54;
 		break;
 	case 'v':
 	case 'P':
-		*res *= 40;
+		myres *= 40.0;
 		break;
 	case 'm':
 	case 'n':
-		*res *= 24;
+		myres *= 24.0;
 		break;
 	case 'p':
-		*res *= 10;
-		*res /= 3;
+		myres *= 40.0 / 12.0;
 		break;
 	case 'u':
 		break;
 	case 'M':
-		*res *= 6;
-		*res /= 25;
+		myres *= 24.0 / 100.0;
 		break;
 	default:
 		break;
 	}
+	if (res != NULL)
+		*res = myres;
 	*pos = p;
 	return 1;
 }
