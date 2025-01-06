@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.400 2024/06/09 16:25:27 jan Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.401 2025/01/06 17:49:29 denis Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 9 2024 $
+.Dd $Mdocdate: January 6 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1841,6 +1841,7 @@ for a complete list of the available protocols.
 .Bk -words
 .Nm ifconfig
 .Ar tunnel-interface
+.Op Oo Fl Oc Ns Cm endpoint Ar dest_address dest_mac
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
 .Op Oo Fl Oc Ns Cm parent Ar parent-interface
 .Op Cm rxprio Ar prio
@@ -1867,6 +1868,20 @@ and
 are all tunnel interfaces.
 The following options are available:
 .Bl -tag -width Ds
+.It Cm endpoint Ar dest_address dest_mac
+When
+.Xr vxlan 4
+is in endpoint mode, set the tunnel endpoint
+.Ar dest_address
+where
+.Ar dest_mac
+MAC address can be reached.
+.It Cm -endpoint Ar dest_mac
+When
+.Xr vxlan 4
+is in endpoint mode, remove the tunnel endpoint for
+.Ar dest_mac
+MAC address.
 .It Cm keepalive Ar period count
 Enable
 .Xr gre 4

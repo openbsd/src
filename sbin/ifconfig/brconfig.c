@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.32 2023/11/23 03:38:34 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.33 2025/01/06 17:49:29 denis Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -690,6 +690,29 @@ bridge_addendpoint(const char *endpoint, const char *addr)
 
 	if (ioctl(sock, SIOCBRDGSADDR, &ifba) == -1)
 		err(1, "%s endpoint %s %s", ifname, endpoint, addr);
+}
+
+void
+bridge_delendpoint(const char *addr, int d)
+{
+	struct ifbareq ifba;
+	struct ether_addr *ea;
+	int ecode;
+
+	ea = ether_aton(addr);
+	if (ea == NULL) {
+		errx(1, "%s -endpoint %s: invalid Ethernet address",
+		    ifname, addr);
+	}
+
+	memset(&ifba, 0, sizeof(ifba));
+	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
+	strlcpy(ifba.ifba_ifsname, ifname, sizeof(ifba.ifba_ifsname));
+	memcpy(&ifba.ifba_dst, ea, sizeof(struct ether_addr));
+	ifba.ifba_flags = IFBAF_STATIC;
+
+	if (ioctl(sock, SIOCBRDGDADDR, &ifba) == -1)
+		err(1, "%s -endpoint %s", ifname, addr);
 }
 
 void

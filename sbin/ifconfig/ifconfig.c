@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.474 2024/06/29 12:09:51 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.475 2025/01/06 17:49:29 denis Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -578,6 +578,7 @@ const struct	cmd {
 	{ "flushall",	0,		0,		bridge_flushall },
 	{ "static",	NEXTARG2,	0,		NULL, bridge_addaddr },
 	{ "endpoint",	NEXTARG2,	0,		NULL, bridge_addendpoint },
+	{ "-endpoint",	NEXTARG,	0,		bridge_delendpoint },
 	{ "deladdr",	NEXTARG,	0,		bridge_deladdr },
 	{ "maxaddr",	NEXTARG,	0,		bridge_maxaddr },
 	{ "addr",	0,		0,		bridge_addrs },
@@ -624,7 +625,7 @@ const struct	cmd {
 	{ "wgpeer",	NEXTARG,	A_WIREGUARD,	setwgpeer},
 	{ "wgdescription", NEXTARG,	A_WIREGUARD,	setwgpeerdesc},
 	{ "wgdescr",	NEXTARG,	A_WIREGUARD,	setwgpeerdesc},
-	{ "wgendpoint",	NEXTARG2,	A_WIREGUARD,	NULL,	setwgpeerep},
+	{ "wgendpoint",	NEXTARG2,	A_WIREGUARD,	NULL, setwgpeerep},
 	{ "wgaip",	NEXTARG,	A_WIREGUARD,	setwgpeeraip},
 	{ "wgpsk",	NEXTARG,	A_WIREGUARD,	setwgpeerpsk},
 	{ "wgpka",	NEXTARG,	A_WIREGUARD,	setwgpeerpka},
