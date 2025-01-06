@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.51 2025/01/06 14:29:33 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.52 2025/01/06 14:34:47 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -87,8 +87,6 @@ __BEGIN_HIDDEN_DECLS
 
 struct ec_method_st {
 	int field_type;
-
-	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
 	int (*group_set_curve)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a,
 	    const BIGNUM *b, BN_CTX *);
