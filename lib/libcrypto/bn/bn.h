@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.78 2024/04/10 14:58:06 beck Exp $ */
+/* $OpenBSD: bn.h,v 1.79 2025/01/06 13:15:08 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -401,8 +401,8 @@ int	BN_set_bit(BIGNUM *a, int n);
 int	BN_clear_bit(BIGNUM *a, int n);
 char *	BN_bn2hex(const BIGNUM *a);
 char *	BN_bn2dec(const BIGNUM *a);
-int 	BN_hex2bn(BIGNUM **a, const char *str);
-int 	BN_dec2bn(BIGNUM **a, const char *str);
+int	BN_hex2bn(BIGNUM **a, const char *str);
+int	BN_dec2bn(BIGNUM **a, const char *str);
 int	BN_asc2bn(BIGNUM **a, const char *str);
 int	BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int	BN_kronecker(const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx); /* returns -2 for error */
@@ -421,7 +421,7 @@ int	BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
 int	BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb);
 
-BN_MONT_CTX *BN_MONT_CTX_new(void );
+BN_MONT_CTX *BN_MONT_CTX_new(void);
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx);
 int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
