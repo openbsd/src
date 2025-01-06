@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.20 2025/01/06 12:35:27 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.21 2025/01/06 13:47:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,7 +135,7 @@ err:
 	return (ret);
 }
 
-static int
+int
 BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
     BN_CTX *ctx)
 {
