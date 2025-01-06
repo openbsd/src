@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.25 2025/01/06 10:42:28 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.26 2025/01/06 10:43:26 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -324,7 +324,7 @@ prime_field_tests(void)
 
 		if (!EC_POINT_get_affine_coordinates(group, R, x, y, ctx))
 			ABORT;
-	fprintf(stdout, "\nAn inverse of that generator:\n     X = 0x");
+	fprintf(stdout, "\nThe inverse of that generator:\n     X = 0x");
 	BN_print_fp(stdout, x);
 	fprintf(stdout, ", Y = 0x");
 	BN_print_fp(stdout, y);
