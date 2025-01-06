@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.99 2025/01/06 14:24:12 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.100 2025/01/06 14:25:10 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -832,22 +832,22 @@ EC_POINT_clear_free(EC_POINT *point)
 LCRYPTO_ALIAS(EC_POINT_clear_free);
 
 int
-EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
+EC_POINT_copy(EC_POINT *dst, const EC_POINT *src)
 {
-	if (dest->meth != src->meth) {
+	if (dst->meth != src->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	if (dest == src)
+	if (dst == src)
 		return 1;
 
-	if (!bn_copy(dest->X, src->X))
+	if (!bn_copy(dst->X, src->X))
 		return 0;
-	if (!bn_copy(dest->Y, src->Y))
+	if (!bn_copy(dst->Y, src->Y))
 		return 0;
-	if (!bn_copy(dest->Z, src->Z))
+	if (!bn_copy(dst->Z, src->Z))
 		return 0;
-	dest->Z_is_one = src->Z_is_one;
+	dst->Z_is_one = src->Z_is_one;
 
 	return 1;
 }
