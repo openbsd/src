@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.95 2025/01/06 10:56:46 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.96 2025/01/06 11:59:02 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -107,8 +107,7 @@ EC_GROUP_new(const EC_METHOD *meth)
 		goto err;
 
 	/*
-	 * generator and seed are optional. mont_ctx, mont_one are only for
-	 * curves using EC_GFp_mont_method()
+	 * generator, seed and mont_ctx are optional.
 	 */
 
 	return group;
@@ -131,7 +130,6 @@ EC_GROUP_free(EC_GROUP *group)
 	BN_free(group->b);
 
 	BN_MONT_CTX_free(group->mont_ctx);
-	BN_free(group->mont_one);
 
 	EC_POINT_free(group->generator);
 	BN_free(group->order);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.19 2025/01/06 10:56:46 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.20 2025/01/06 11:59:02 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1003,7 +1003,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
     BN_CTX *ctx)
 {
 	BIGNUM **prod_Z = NULL;
-	BIGNUM *tmp, *tmp_Z;
+	BIGNUM *one, *tmp, *tmp_Z;
 	size_t i;
 	int ret = 0;
 
@@ -1012,9 +1012,14 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 
 	BN_CTX_start(ctx);
 
+	if ((one = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((tmp_Z = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!ec_encode_scalar(group, one, BN_value_one(), ctx))
 		goto err;
 
 	if ((prod_Z = calloc(num, sizeof *prod_Z)) == NULL)
@@ -1033,13 +1038,8 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 		if (!bn_copy(prod_Z[0], points[0]->Z))
 			goto err;
 	} else {
-		if (group->meth->field_set_to_one != NULL) {
-			if (!group->meth->field_set_to_one(group, prod_Z[0], ctx))
-				goto err;
-		} else {
-			if (!BN_one(prod_Z[0]))
-				goto err;
-		}
+		if (!bn_copy(prod_Z[0], one))
+			goto err;
 	}
 
 	for (i = 1; i < num; i++) {
@@ -1118,13 +1118,8 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 		if (!group->meth->field_mul(group, p->Y, p->Y, tmp, ctx))
 			goto err;
 
-		if (group->meth->field_set_to_one != NULL) {
-			if (!group->meth->field_set_to_one(group, p->Z, ctx))
-				goto err;
-		} else {
-			if (!BN_one(p->Z))
-				goto err;
-		}
+		if (!bn_copy(p->Z, one))
+			goto err;
 		p->Z_is_one = 1;
 	}
 
@@ -1458,9 +1453,6 @@ ec_mont_group_clear(EC_GROUP *group)
 {
 	BN_MONT_CTX_free(group->mont_ctx);
 	group->mont_ctx = NULL;
-
-	BN_free(group->mont_one);
-	group->mont_one = NULL;
 }
 
 static int
@@ -1478,11 +1470,7 @@ ec_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 		if (!BN_MONT_CTX_copy(dest->mont_ctx, src->mont_ctx))
 			goto err;
 	}
-	if (src->mont_one != NULL) {
-		dest->mont_one = BN_dup(src->mont_one);
-		if (dest->mont_one == NULL)
-			goto err;
-	}
+
 	return 1;
 
  err:
@@ -1498,7 +1486,6 @@ ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
 	BN_MONT_CTX *mont = NULL;
-	BIGNUM *one = NULL;
 	int ret = 0;
 
 	ec_mont_group_clear(group);
@@ -1510,16 +1497,8 @@ ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	one = BN_new();
-	if (one == NULL)
-		goto err;
-	if (!BN_to_montgomery(one, BN_value_one(), mont, ctx))
-		goto err;
-
 	group->mont_ctx = mont;
 	mont = NULL;
-	group->mont_one = one;
-	one = NULL;
 
 	ret = ec_group_set_curve(group, p, a, b, ctx);
 	if (!ret)
@@ -1527,7 +1506,6 @@ ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 
  err:
 	BN_MONT_CTX_free(mont);
-	BN_free(one);
 
 	return ret;
 }
@@ -1574,19 +1552,6 @@ ec_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 		return 0;
 	}
 	return BN_from_montgomery(r, a, group->mont_ctx, ctx);
-}
-
-static int
-ec_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
-{
-	if (group->mont_one == NULL) {
-		ECerror(EC_R_NOT_INITIALIZED);
-		return 0;
-	}
-	if (!bn_copy(r, group->mont_one))
-		return 0;
-
-	return 1;
 }
 
 static const EC_METHOD ec_GFp_simple_method = {
@@ -1647,7 +1612,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.field_sqr = ec_mont_field_sqr,
 	.field_encode = ec_mont_field_encode,
 	.field_decode = ec_mont_field_decode,
-	.field_set_to_one = ec_mont_field_set_to_one,
 	.blind_coordinates = ec_blind_coordinates,
 };
 
