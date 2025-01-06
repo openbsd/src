@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.22 2025/01/06 12:36:41 jsing Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.23 2025/01/06 14:22:55 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -83,21 +83,6 @@
  * assume that if a non-trivial representation is used, it is a Montgomery
  * representation (i.e. 'encoding' means multiplying by some factor R).
  */
-
-static int
-ec_group_copy(EC_GROUP *dest, const EC_GROUP *src)
-{
-	if (!bn_copy(dest->p, src->p))
-		return 0;
-	if (!bn_copy(dest->a, src->a))
-		return 0;
-	if (!bn_copy(dest->b, src->b))
-		return 0;
-
-	dest->a_is_minus3 = src->a_is_minus3;
-
-	return 1;
-}
 
 static int
 ec_decode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx)
@@ -1459,32 +1444,6 @@ ec_mont_group_clear(EC_GROUP *group)
 }
 
 static int
-ec_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
-{
-	ec_mont_group_clear(dest);
-
-	if (!ec_group_copy(dest, src))
-		return 0;
-
-	if (src->mont_ctx != NULL) {
-		dest->mont_ctx = BN_MONT_CTX_new();
-		if (dest->mont_ctx == NULL)
-			return 0;
-		if (!BN_MONT_CTX_copy(dest->mont_ctx, src->mont_ctx))
-			goto err;
-	}
-
-	return 1;
-
- err:
-	if (dest->mont_ctx != NULL) {
-		BN_MONT_CTX_free(dest->mont_ctx);
-		dest->mont_ctx = NULL;
-	}
-	return 0;
-}
-
-static int
 ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
@@ -1559,7 +1518,6 @@ ec_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 
 static const EC_METHOD ec_GFp_simple_method = {
 	.field_type = NID_X9_62_prime_field,
-	.group_copy = ec_group_copy,
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
 	.group_get_degree = ec_group_get_degree,
@@ -1591,7 +1549,6 @@ LCRYPTO_ALIAS(EC_GFp_simple_method);
 
 static const EC_METHOD ec_GFp_mont_method = {
 	.field_type = NID_X9_62_prime_field,
-	.group_copy = ec_mont_group_copy,
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
 	.group_get_degree = ec_group_get_degree,

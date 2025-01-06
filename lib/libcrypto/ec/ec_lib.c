@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.97 2025/01/06 12:35:14 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.98 2025/01/06 14:22:55 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -150,10 +150,6 @@ LCRYPTO_ALIAS(EC_GROUP_clear_free);
 int
 EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-	if (dest->meth->group_copy == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-	}
 	if (dest->meth != src->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
@@ -161,8 +157,23 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	if (dest == src)
 		return 1;
 
-	if (!dest->meth->group_copy(dest, src))
+	if (!bn_copy(dest->p, src->p))
 		return 0;
+	if (!bn_copy(dest->a, src->a))
+		return 0;
+	if (!bn_copy(dest->b, src->b))
+		return 0;
+
+	dest->a_is_minus3 = src->a_is_minus3;
+
+	BN_MONT_CTX_free(dest->mont_ctx);
+	dest->mont_ctx = NULL;
+	if (src->mont_ctx != NULL) {
+		if ((dest->mont_ctx = BN_MONT_CTX_new()) == NULL)
+			return 0;
+		if (!BN_MONT_CTX_copy(dest->mont_ctx, src->mont_ctx))
+			return 0;
+	}
 
 	EC_POINT_free(dest->generator);
 	dest->generator = NULL;
@@ -185,7 +196,7 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	if (!EC_GROUP_set_seed(dest, src->seed, src->seed_len))
 		return 0;
 
-	return dest->meth->group_copy(dest, src);
+	return 1;
 }
 LCRYPTO_ALIAS(EC_GROUP_copy);
 
