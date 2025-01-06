@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.62 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.63 2025/01/06 14:23:52 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1056,7 +1056,8 @@ again:
 		r = virtio_enqueue_reserve(vq, slot,
 		    vioq->viq_txdmamaps[slot]->dm_nsegs + 1);
 		if (r != 0) {
-			printf("%s: virtio_enqueue_reserve failed?\n", __func__);
+			printf("%s: virtio_enqueue_reserve failed?\n",
+			    __func__);
 			m_freem(m);
 			viq_ifq->ifq_errors++;
 			bus_dmamap_unload(vsc->sc_dmat,
@@ -1084,8 +1085,9 @@ again:
 	}
 	if (used_slots > 0) {
 		if (used_slots > vioq->viq_txfree_slots)
-			printf("%s: used_slots %d viq_txfree_slots %d free_slots %d\n",
-			    __func__, used_slots, vioq->viq_txfree_slots, free_slots);
+			printf("%s: used_slots %d viq_txfree_slots %d "
+			    "free_slots %d\n", __func__, used_slots,
+			    vioq->viq_txfree_slots, free_slots);
 		vioq->viq_txfree_slots -= used_slots;
 		KASSERT(vioq->viq_txfree_slots >= 0);
 	}
