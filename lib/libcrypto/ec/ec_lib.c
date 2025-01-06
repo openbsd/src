@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.96 2025/01/06 11:59:02 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.97 2025/01/06 12:35:14 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -765,24 +765,6 @@ EC_GROUP_cmp(const EC_GROUP *group1, const EC_GROUP *group2, BN_CTX *ctx_in)
 	return ret;
 }
 LCRYPTO_ALIAS(EC_GROUP_cmp);
-
-/*
- * Coordinate blinding for EC_POINT.
- *
- * The underlying EC_METHOD can optionally implement this function:
- * underlying implementations should return 0 on errors, or 1 on success.
- *
- * This wrapper returns 1 in case the underlying EC_METHOD does not support
- * coordinate blinding.
- */
-int
-ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
-{
-	if (group->meth->blind_coordinates == NULL)
-		return 1;
-
-	return group->meth->blind_coordinates(group, p, ctx);
-}
 
 EC_POINT *
 EC_POINT_new(const EC_GROUP *group)

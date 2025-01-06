@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.20 2025/01/06 11:59:02 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.21 2025/01/06 12:35:14 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1327,7 +1327,7 @@ ec_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	 * Apply coordinate blinding for EC_POINT if the underlying EC_METHOD
 	 * implements it.
 	 */
-	if (!ec_point_blind_coordinates(group, s, ctx))
+	if (!ec_blind_coordinates(group, s, ctx))
 		goto err;
 
 	/* top bit is a 1, in a fixed pos */
@@ -1577,7 +1577,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.mul_double_nonct = ec_mul_double_nonct,
 	.field_mul = ec_field_mul,
 	.field_sqr = ec_field_sqr,
-	.blind_coordinates = ec_blind_coordinates,
 };
 
 const EC_METHOD *
@@ -1612,7 +1611,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.field_sqr = ec_mont_field_sqr,
 	.field_encode = ec_mont_field_encode,
 	.field_decode = ec_mont_field_decode,
-	.blind_coordinates = ec_blind_coordinates,
 };
 
 const EC_METHOD *

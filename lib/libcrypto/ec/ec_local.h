@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.48 2025/01/06 11:59:02 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.49 2025/01/06 12:35:14 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -142,9 +142,6 @@ struct ec_method_st {
 	    BN_CTX *);
 	int (*field_decode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 	    BN_CTX *);
-
-	int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p,
-	    BN_CTX *ctx);
 } /* EC_METHOD */;
 
 struct ec_group_st {
@@ -224,7 +221,6 @@ int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
     const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx);
 
 int ec_group_simple_order_bits(const EC_GROUP *group);
-int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
 /* EC_METHOD definitions */
 
