@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.98 2025/01/06 14:22:55 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.99 2025/01/06 14:24:12 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -148,52 +148,52 @@ EC_GROUP_clear_free(EC_GROUP *group)
 LCRYPTO_ALIAS(EC_GROUP_clear_free);
 
 int
-EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
+EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src)
 {
-	if (dest->meth != src->meth) {
+	if (dst->meth != src->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	if (dest == src)
+	if (dst == src)
 		return 1;
 
-	if (!bn_copy(dest->p, src->p))
+	if (!bn_copy(dst->p, src->p))
 		return 0;
-	if (!bn_copy(dest->a, src->a))
+	if (!bn_copy(dst->a, src->a))
 		return 0;
-	if (!bn_copy(dest->b, src->b))
+	if (!bn_copy(dst->b, src->b))
 		return 0;
 
-	dest->a_is_minus3 = src->a_is_minus3;
+	dst->a_is_minus3 = src->a_is_minus3;
 
-	BN_MONT_CTX_free(dest->mont_ctx);
-	dest->mont_ctx = NULL;
+	BN_MONT_CTX_free(dst->mont_ctx);
+	dst->mont_ctx = NULL;
 	if (src->mont_ctx != NULL) {
-		if ((dest->mont_ctx = BN_MONT_CTX_new()) == NULL)
+		if ((dst->mont_ctx = BN_MONT_CTX_new()) == NULL)
 			return 0;
-		if (!BN_MONT_CTX_copy(dest->mont_ctx, src->mont_ctx))
+		if (!BN_MONT_CTX_copy(dst->mont_ctx, src->mont_ctx))
 			return 0;
 	}
 
-	EC_POINT_free(dest->generator);
-	dest->generator = NULL;
+	EC_POINT_free(dst->generator);
+	dst->generator = NULL;
 	if (src->generator != NULL) {
-		if (!EC_GROUP_set_generator(dest, src->generator, src->order,
+		if (!EC_GROUP_set_generator(dst, src->generator, src->order,
 		    src->cofactor))
 			return 0;
 	} else {
 		/* XXX - should do the sanity checks as in set_generator() */
-		if (!bn_copy(dest->order, src->order))
+		if (!bn_copy(dst->order, src->order))
 			return 0;
-		if (!bn_copy(dest->cofactor, src->cofactor))
+		if (!bn_copy(dst->cofactor, src->cofactor))
 			return 0;
 	}
 
-	dest->nid = src->nid;
-	dest->asn1_flag = src->asn1_flag;
-	dest->asn1_form = src->asn1_form;
+	dst->nid = src->nid;
+	dst->asn1_flag = src->asn1_flag;
+	dst->asn1_form = src->asn1_form;
 
-	if (!EC_GROUP_set_seed(dest, src->seed, src->seed_len))
+	if (!EC_GROUP_set_seed(dst, src->seed, src->seed_len))
 		return 0;
 
 	return 1;
