@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.35 2025/01/06 02:13:55 kirill Exp $ */
+/* $OpenBSD: ihidev.c,v 1.36 2025/01/07 15:25:18 kirill Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -76,6 +76,17 @@ int	ihidev_maxrepid(void *buf, int len);
 int	ihidev_print(void *aux, const char *pnp);
 int	ihidev_submatch(struct device *parent, void *cf, void *aux);
 
+#define IHIDEV_QUIRK_RE_POWER_ON	0x1
+
+const struct ihidev_quirks {
+	uint16_t		ihq_vid;
+	uint16_t		ihq_pid;
+	int			ihq_quirks;
+} ihidev_devs[] = {
+	/* HONOR MagicBook Art 14 Touchpad (QTEC0002) */
+	{ 0x35cc, 0x0104, IHIDEV_QUIRK_RE_POWER_ON },
+};
+
 const struct cfattach ihidev_ca = {
 	sizeof(struct ihidev_softc),
 	ihidev_match,
@@ -95,6 +106,25 @@ ihidev_match(struct device *parent, void *match, void *aux)
 
 	if (strcmp(ia->ia_name, "ihidev") == 0)
 		return (1);
+
+	return (0);
+}
+
+int
+ihidev_quirks(struct ihidev_softc *sc)
+{
+	const struct ihidev_quirks	*q;
+	uint16_t			 vid, pid;
+	int 				 i, nent;
+
+	nent = nitems(ihidev_devs);
+
+	vid = letoh16(sc->hid_desc.wVendorID);
+	pid = letoh16(sc->hid_desc.wProductID);
+
+	for (i = 0, q = ihidev_devs; i < nent; i++, q++)
+		if (vid == q->ihq_vid && pid == q->ihq_pid)
+			return (q->ihq_quirks);
 
 	return (0);
 }
@@ -637,6 +667,23 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 		printf("%s: failed fetching HID report\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
+	}
+
+	if (sc->sc_quirks & IHIDEV_QUIRK_RE_POWER_ON) {
+		if (ihidev_poweron(sc))
+			return (1);
+
+		/*
+		 * 7.2.8 states that a device shall not respond back
+		 * after receiving the power on command, and must ensure
+		 * that it transitions to power on state in less than 1
+		 * second. The ihidev_poweron function uses a shorter
+		 * sleep, sufficient for the ON-RESET sequence. Here,
+		 * however, it sleeps for the full second to accommodate
+		 * cold boot scenarios on affected devices.
+		 */
+
+		ihidev_sleep(sc, 1000);
 	}
 
 	return (0);
