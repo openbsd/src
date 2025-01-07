@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.53 2025/01/07 08:30:52 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.54 2025/01/07 08:52:17 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -158,11 +158,6 @@ struct ec_group_st {
 	/* Optional seed for parameters (appears in ASN.1). */
 	unsigned char *seed;
 	size_t seed_len;
-
-	/*
-	 * Internal methods and members. Handled by the method functions, even
-	 * if they appear to be generic.
-	 */
 
 	/*
 	 * Coefficients of the Weierstrass equation y^2 = x^3 + a*x + b (mod p).
