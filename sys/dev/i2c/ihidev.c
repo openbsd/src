@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.36 2025/01/07 15:25:18 kirill Exp $ */
+/* $OpenBSD: ihidev.c,v 1.37 2025/01/07 19:26:14 mglocker Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -477,17 +477,8 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 
 		cmd[2] = report_id | rreq->type << 4;
 
-		if (rreq->type == I2C_HID_REPORT_TYPE_FEATURE) {
-			cmd[dataoff++] = htole16(sc->hid_desc.wDataRegister)
-			    & 0xff;
-			cmd[dataoff++] = htole16(sc->hid_desc.wDataRegister)
-			    >> 8;
-		} else {
-			cmd[dataoff++] = htole16(sc->hid_desc.wOutputRegister)
-			    & 0xff;
-			cmd[dataoff++] = htole16(sc->hid_desc.wOutputRegister)
-			    >> 8;
-		}
+		cmd[dataoff++] = htole16(sc->hid_desc.wDataRegister) & 0xff;
+		cmd[dataoff++] = htole16(sc->hid_desc.wDataRegister) >> 8;
 
 		cmd[dataoff++] = report_len & 0xff;
 		cmd[dataoff++] = report_len >> 8;
@@ -966,4 +957,35 @@ ihidev_set_report(struct device *dev, int type, int id, void *data, int len)
 	}
 
 	return 0;
+}
+
+int
+ihidev_send_report(struct device *dev, int repid, void *data, int data_len)
+{
+	struct ihidev_softc *sc = (struct ihidev_softc *)dev;
+	uint8_t *finalcmd, cmd[5];
+	int cmd_len, report_len, res;
+
+	cmd_len = sizeof(cmd);
+	report_len = 2 + 1 + data_len;
+
+	cmd[0] = htole16(sc->hid_desc.wOutputRegister) & 0xff;
+	cmd[1] = htole16(sc->hid_desc.wOutputRegister) >> 8;
+	cmd[2] = report_len & 0xff;
+	cmd[3] = report_len >> 8;
+	cmd[4] = repid;
+	
+	finalcmd = malloc(cmd_len + data_len, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (finalcmd == NULL)
+		return ENOMEM;
+
+	memcpy(finalcmd, cmd, cmd_len);
+	memcpy(finalcmd + cmd_len, data, data_len);
+
+	res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+	    finalcmd, cmd_len + data_len, NULL, 0, 0);
+
+	free(finalcmd, M_DEVBUF, cmd_len + data_len);
+
+	return res;
 }

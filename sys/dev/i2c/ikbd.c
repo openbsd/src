@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikbd.c,v 1.2 2022/09/03 15:48:16 kettenis Exp $	*/
+/*	$OpenBSD: ikbd.c,v 1.3 2025/01/07 19:26:14 mglocker Exp $	*/
 /*
  * HID-over-i2c keyboard driver
  *
@@ -36,6 +36,7 @@
 
 struct ikbd_softc {
 	struct ihidev	sc_hdev;
+#define sc_ledsize	sc_hdev.sc_osize
 	struct hidkbd	sc_kbd;
 	int		sc_spl;
 };
@@ -167,6 +168,14 @@ ikbd_enable(void *v, int on)
 void
 ikbd_set_leds(void *v, int leds)
 {
+	struct ikbd_softc *sc = v;
+	struct hidkbd *kbd = &sc->sc_kbd;
+	uint8_t res;
+
+	if (sc->sc_ledsize && hidkbd_set_leds(kbd, leds, &res) != 0) {
+		ihidev_send_report((struct device *)sc->sc_hdev.sc_parent,
+		    sc->sc_hdev.sc_report_id, &res, 1);
+	}
 }
 
 int
@@ -180,6 +189,9 @@ ikbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_GTYPE:
 		/* XXX: should we set something else? */
 		*(u_int *)data = WSKBD_TYPE_USB;
+		return 0;
+	case WSKBDIO_SETLEDS:
+		ikbd_set_leds(v, *(int *)data);
 		return 0;
 	default:
 		rc = ihidev_ioctl(&sc->sc_hdev, cmd, data, flag, p);

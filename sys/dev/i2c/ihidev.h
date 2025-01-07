@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.10 2025/01/07 15:25:18 kirill Exp $ */
+/* $OpenBSD: ihidev.h,v 1.11 2025/01/07 19:26:14 mglocker Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -137,5 +137,6 @@ int ihidev_ioctl(struct ihidev *, u_long, caddr_t, int, struct proc *);
 int ihidev_report_type_conv(int);
 int ihidev_set_report(struct device *, int, int, void *, int);
 int ihidev_get_report(struct device *, int, int, void *, int);
+int ihidev_send_report(struct device *, int, void *, int);
 
 void ihidev_poll(void *);
