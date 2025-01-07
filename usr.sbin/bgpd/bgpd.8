@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.81 2024/12/13 19:21:03 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.82 2025/01/07 12:00:36 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2024 $
+.Dd $Mdocdate: January 7 2025 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -309,6 +309,17 @@ has been started.
 .Re
 .Pp
 .Rs
+.%A S. Sangli
+.%A E. Chen
+.%A R. Fernando
+.%A J. Scudder
+.%A Y. Rekhter
+.%D January 2007
+.%R RFC 4724
+.%T Graceful Restart Mechanism for BGP
+.Re
+.Pp
+.Rs
 .%A T. Bates
 .%A R. Chandra
 .%A D. Katz
@@ -338,11 +349,29 @@ has been started.
 .Re
 .Pp
 .Rs
+.%A Y. Rekhter
+.%A S. Sangli
+.%A D. Tappan
+.%D October 2009
+.%R RFC 5668
+.%T 4-Octet AS Specific BGP Extended Community
+.Re
+.Pp
+.Rs
 .%A E. Chen
 .%A J. Yuan
 .%D June 2011
 .%R RFC 6286
 .%T Autonomous-System-Wide Unique BGP Identifier for BGP-4
+.Re
+.Pp
+.Rs
+.%A J. Dong
+.%A M. Chen
+.%A A. Suryanarayana
+.%D May 2012
+.%R RFC 6608
+.%T Subcodes for BGP Finite State Machine Error
 .Re
 .Pp
 .Rs
@@ -408,6 +437,16 @@ has been started.
 .%D July 2016
 .%R RFC 7911
 .%T Advertisement of Multiple Paths in BGP
+.Re
+.Pp
+.Rs
+.%A E. Jasinska
+.%A N. Hilliard
+.%A R. Raszuk
+.%A N. Bakker
+.%D September 2016
+.%R RFC 7947
+.%T Internet Exchange BGP Route Server
 .Re
 .Pp
 .Rs
