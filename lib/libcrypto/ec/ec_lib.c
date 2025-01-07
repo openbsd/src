@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.102 2025/01/06 19:23:25 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.103 2025/01/07 08:30:52 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -600,6 +600,7 @@ int
 EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx_in)
 {
 	BN_CTX *ctx;
+	BIGNUM *p, *a, *b, *discriminant;
 	int ret = 0;
 
 	if ((ctx = ctx_in) == NULL)
@@ -607,11 +608,50 @@ EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx_in)
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->group_check_discriminant == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	}
-	ret = group->meth->group_check_discriminant(group, ctx);
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((discriminant = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		goto err;
+
+	/*
+	 * Check that the discriminant 4a^3 + 27b^2 is non-zero modulo p.
+	 */
+
+	if (BN_is_zero(a) && BN_is_zero(b))
+		goto err;
+	if (BN_is_zero(a) || BN_is_zero(b))
+		goto done;
+
+	/* Compute the discriminant: first 4a^3, then 27b^2, then their sum. */
+	if (!BN_mod_sqr(discriminant, a, p, ctx))
+		goto err;
+	if (!BN_mod_mul(discriminant, discriminant, a, p, ctx))
+		goto err;
+	if (!BN_lshift(discriminant, discriminant, 2))
+		goto err;
+
+	if (!BN_mod_sqr(b, b, p, ctx))
+		goto err;
+	if (!BN_mul_word(b, 27))
+		goto err;
+
+	if (!BN_mod_add(discriminant, discriminant, b, p, ctx))
+		goto err;
+
+	if (BN_is_zero(discriminant))
+		goto err;
+
+ done:
+	ret = 1;
 
  err:
 	if (ctx != ctx_in)

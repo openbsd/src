@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.52 2025/01/06 14:34:47 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.53 2025/01/07 08:30:52 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -92,8 +92,6 @@ struct ec_method_st {
 	    const BIGNUM *b, BN_CTX *);
 	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a,
 	    BIGNUM *b, BN_CTX *);
-
-	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
 	int (*point_set_affine_coordinates)(const EC_GROUP *, EC_POINT *,
 	    const BIGNUM *x, const BIGNUM *y, BN_CTX *);
