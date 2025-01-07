@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.37 2025/01/07 19:26:14 mglocker Exp $ */
+/* $OpenBSD: ihidev.c,v 1.38 2025/01/07 23:13:56 kirill Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -623,6 +623,8 @@ ihidev_reset(struct ihidev_softc *sc)
 int
 ihidev_hid_desc_parse(struct ihidev_softc *sc)
 {
+	sc->sc_quirks = ihidev_quirks(sc);
+
 	/* must be v01.00 */
 	if (letoh16(sc->hid_desc.bcdVersion) != 0x0100) {
 		printf("%s: bad HID descriptor bcdVersion (0x%x)\n",
