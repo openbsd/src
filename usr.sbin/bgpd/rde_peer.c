@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.42 2024/12/12 20:19:03 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.43 2025/01/07 17:43:31 denis Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -31,8 +31,8 @@ struct peer_tree	 zombietable = RB_INITIALIZER(&zombietable);
 struct rde_peer		*peerself;
 static long		 imsg_pending;
 
-CTASSERT(sizeof(peerself->recv_eor) * 8 > AID_MAX);
-CTASSERT(sizeof(peerself->sent_eor) * 8 > AID_MAX);
+CTASSERT(sizeof(peerself->recv_eor) * 8 >= AID_MAX);
+CTASSERT(sizeof(peerself->sent_eor) * 8 >= AID_MAX);
 
 struct iq {
 	SIMPLEQ_ENTRY(iq)	entry;

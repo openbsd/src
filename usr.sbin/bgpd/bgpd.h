@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.506 2024/12/13 19:21:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.507 2025/01/07 17:43:31 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -156,12 +156,14 @@ enum reconf_action {
 #define	AFI_UNSPEC	0
 #define	AFI_IPv4	1
 #define	AFI_IPv6	2
+#define	AFI_L2VPN	25
 
 /* Subsequent Address Family Identifier as per RFC 4760 */
 #define	SAFI_NONE		0
 #define	SAFI_UNICAST		1
 #define	SAFI_MULTICAST		2
 #define	SAFI_MPLS		4
+#define	SAFI_EVPN		70	/* RFC 7432 */
 #define	SAFI_MPLSVPN		128
 #define	SAFI_FLOWSPEC		133
 #define	SAFI_VPNFLOWSPEC	134
@@ -182,7 +184,8 @@ extern const struct aid aid_vals[];
 #define	AID_VPN_IPv6	4
 #define	AID_FLOWSPECv4	5
 #define	AID_FLOWSPECv6	6
-#define	AID_MAX		7
+#define	AID_EVPN	7
+#define	AID_MAX		8
 #define	AID_MIN		1	/* skip AID_UNSPEC since that is a dummy */
 
 #define AID_VALS	{					\
@@ -194,6 +197,7 @@ extern const struct aid aid_vals[];
 	{ AFI_IPv6, AF_INET6, SAFI_MPLSVPN, "IPv6 vpn" },	\
 	{ AFI_IPv4, AF_INET, SAFI_FLOWSPEC, "IPv4 flowspec" },	\
 	{ AFI_IPv6, AF_INET6, SAFI_FLOWSPEC, "IPv6 flowspec" },	\
+	{ AFI_L2VPN, AF_UNSPEC, SAFI_EVPN, "evpn" },		\
 }
 
 #define BGP_MPLS_BOS	0x01
@@ -1134,6 +1138,7 @@ struct ext_comm_pairs {
 	{ EXT_COMMUNITY_TRANS_IPV4, 0x0b, "vrfri" },		\
 								\
 	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x06, "ort" },		\
+	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x0c, "encap" },		\
 	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x0d, "defgw" },		\
 								\
 	{ EXT_COMMUNITY_NON_TRANS_OPAQUE, EXT_COMMUNITY_SUBTYPE_OVS, "ovs" }, \
