@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.356 2025/01/04 15:57:02 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.357 2025/01/07 23:13:46 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1445,10 +1445,26 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		error = ENOTCONN;
 		goto release;
 	}
-	if (so->so_sp == NULL)
-		so->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
-	if (sosp->so_sp == NULL)
-		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+	if (so->so_sp == NULL) {
+		struct sosplice *so_sp;
+
+		so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+		timeout_set_flags(&so_sp->ssp_idleto, soidle, so,
+		    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
+		task_set(&so_sp->ssp_task, sotask, so);
+
+		so->so_sp = so_sp;
+	}
+	if (sosp->so_sp == NULL) {
+		struct sosplice *so_sp;
+
+		so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+		timeout_set_flags(&so_sp->ssp_idleto, soidle, sosp,
+		    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
+		task_set(&so_sp->ssp_task, sotask, sosp);
+
+		sosp->so_sp = so_sp;
+	}
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
 		error = EBUSY;
 		goto release;
@@ -1460,9 +1476,6 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		so->so_idletv = *tv;
 	else
 		timerclear(&so->so_idletv);
-	timeout_set_flags(&so->so_idleto, soidle, so,
-	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
-	task_set(&so->so_splicetask, sotask, so);
 
 	/*
 	 * To prevent sorwakeup() calling somove() before this somove()
@@ -1507,9 +1520,6 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 {
 	sbassertlocked(&so->so_rcv);
 
-	task_del(sosplice_taskq, &so->so_splicetask);
-	timeout_del(&so->so_idleto);
-
 	mtx_enter(&so->so_rcv.sb_mtx);
 	mtx_enter(&sosp->so_snd.sb_mtx);
 	so->so_rcv.sb_flags &= ~SB_SPLICE;
@@ -1517,6 +1527,9 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 	so->so_sp->ssp_socket = sosp->so_sp->ssp_soback = NULL;
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
+
+	task_del(sosplice_taskq, &so->so_splicetask);
+	timeout_del(&so->so_idleto);
 
 	/* Do not wakeup a socket that is about to be freed. */
 	if ((freeing & SOSP_FREEING_READ) == 0) {
