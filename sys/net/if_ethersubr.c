@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.294 2024/12/15 11:00:05 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.295 2025/01/07 05:36:52 guenther Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1316,8 +1316,6 @@ static int	ether_frm_disconnect(struct socket *);
 static int	ether_frm_shutdown(struct socket *);
 static int	ether_frm_send(struct socket *, struct mbuf *, struct mbuf *,
 		    struct mbuf *);
-static int	ether_frm_control(struct socket *, u_long, caddr_t,
-		    struct ifnet *);
 static int	ether_frm_sockaddr(struct socket *, struct mbuf *);
 static int	ether_frm_peeraddr(struct socket *, struct mbuf *);
 
@@ -1329,7 +1327,6 @@ const struct pr_usrreqs ether_frm_usrreqs = {
 	.pru_disconnect	= ether_frm_disconnect,
 	.pru_shutdown	= ether_frm_shutdown,
 	.pru_send	= ether_frm_send,
-	.pru_control	= ether_frm_control,
 	.pru_sockaddr	= ether_frm_sockaddr,
 	.pru_peeraddr	= ether_frm_peeraddr,
 };
@@ -1750,13 +1747,6 @@ drop:
 	if_put(ifp);
 	m_freem(m);
 	return (error);
-}
-
-static int
-ether_frm_control(struct socket *so, u_long cmd, caddr_t data,
-    struct ifnet *ifp)
-{
-	return (EOPNOTSUPP);
 }
 
 static int
