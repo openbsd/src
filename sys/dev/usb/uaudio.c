@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.177 2025/01/04 11:45:15 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.178 2025/01/07 12:49:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,8 +36,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
-#define UAUDIO_DEBUG
 
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(...)				\
