@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.309 2024/12/12 20:19:03 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.310 2025/01/07 12:08:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -157,7 +157,7 @@ enum attrtypes {
 /* by default mask the reserved bits and the ext len bit */
 #define ATTR_DEFMASK		(ATTR_RESERVED | ATTR_EXTLEN)
 
-/* default attribute flags for well known attributes */
+/* default attribute flags for well-known attributes */
 #define ATTR_WELL_KNOWN		ATTR_TRANSITIVE
 
 struct attr {

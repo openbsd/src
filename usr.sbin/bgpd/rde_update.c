@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.170 2024/12/09 10:51:46 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.171 2025/01/07 12:08:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -90,7 +90,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 			return (0);
 	}
 
-	/* well known communities */
+	/* well-known communities */
 	if (community_match(comm, &comm_no_advertise, NULL))
 		return (0);
 	if (peer->conf.ebgp) {
@@ -159,8 +159,8 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p)
 
 	/*
 	 * up_test_update() needs to run before the output filters
-	 * else the well known communities won't work properly.
-	 * The output filters would not be able to add well known
+	 * else the well-known communities won't work properly.
+	 * The output filters would not be able to add well-known
 	 * communities.
 	 */
 	if (!up_test_update(peer, new))
