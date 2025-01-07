@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.171 2025/01/07 12:08:59 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.172 2025/01/07 12:11:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -89,6 +89,13 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 			/* Do not redistribute updates to ibgp peers */
 			return (0);
 	}
+
+	/*
+	 * With "transparent-as yes" set do not filter based on
+	 * well-known communities. Instead pass them on to the client.
+	 */
+	if (peer->flags & PEERFLAG_TRANS_AS)
+		return (1);
 
 	/* well-known communities */
 	if (community_match(comm, &comm_no_advertise, NULL))

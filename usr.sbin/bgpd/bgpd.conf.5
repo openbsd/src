@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.245 2024/12/13 19:21:03 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.246 2025/01/07 12:11:45 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2024 $
+.Dd $Mdocdate: January 7 2025 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -407,8 +407,16 @@ The default is 180 seconds.
 .Xc
 If set to
 .Ic yes ,
+attribute transparency is enabled.
 .Em AS paths
 to EBGP neighbors are not prepended with the local AS.
+Additionally, the MULTI_EXIT_DISC attribute is passed transparently and
+automatic filtering based on the well-known communities
+.Ic NO_EXPORT ,
+.Ic NO_ADVERTISE ,
+and
+.Ic NO_EXPORT_SUBCONFED
+is disabled.
 The default is
 .Ic no .
 .El
@@ -1571,8 +1579,11 @@ After changing keys, a session needs to be reset to use the new keys.
 .Xc
 If set to
 .Ic yes ,
-.Em AS paths
-to EBGP neighbors are not prepended with the local AS.
+attribute transparency is enabled.
+See also the
+.Ic transparent-as
+setting in
+.Sx GLOBAL CONFIGURATION .
 The default is inherited from the global
 .Ic transparent-as
 setting.
