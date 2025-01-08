@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2094 2024/11/09 10:23:06 miod Exp $
+$OpenBSD: pcidevs,v 1.2095 2025/01/08 02:12:24 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6460,9 +6460,13 @@ product INTEL MTL_U_HB_1	0x7d16	Core Ultra Host
 product INTEL MTL_IPU		0x7d19	Core Ultra IPU
 product INTEL MTL_NPU		0x7d1d	Core Ultra NPU
 product INTEL MTL_U4_GT_1	0x7d40	Graphics
+product INTEL ARL_U_GT_1	0x7d41	Graphics
 product INTEL MTL_U_GT_1	0x7d45	Graphics
+product INTEL ARL_H_GT_1	0x7d51	Graphics
 product INTEL MTL_H_GT_1	0x7d55	Arc Graphics
 product INTEL MTL_U_GT_2	0x7d60	Graphics
+product INTEL ARL_S_GT_1	0x7d67	Graphics
+product INTEL ARL_H_GT_2	0x7dd1	Graphics
 product INTEL MTL_H_GT_2	0x7dd5	Graphics
 product INTEL MTL_H_ESPI	0x7e02	Core Ultra eSPI
 product INTEL MTL_U_ESPI	0x7e03	Core Ultra eSPI
@@ -7349,6 +7353,7 @@ product INTEL LNL_XHCI		0xa87d	Core Ultra xHCI
 product INTEL LNL_SRAM		0xa87f	Core Ultra SRAM
 product INTEL 21152		0xb152	S21152BB
 product INTEL 21154		0xb154	21154AE/BE
+product INTEL ARL_S_GT_2	0xb640	Graphics
 product INTEL CORE_DMI_0	0xd130	Core DMI
 product INTEL CORE_DMI_1	0xd131	Core DMI
 product INTEL CORE_DMI_2	0xd132	Core DMI
