@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.23 2025/01/08 20:13:52 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.24 2025/01/08 20:18:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,11 +77,11 @@ BN_RECP_CTX_new(void)
 	BN_RECP_CTX *ret;
 
 	if ((ret = malloc(sizeof(BN_RECP_CTX))) == NULL)
-		return (NULL);
+		return NULL;
 
 	BN_RECP_CTX_init(ret);
 	ret->flags = BN_FLG_MALLOCED;
-	return (ret);
+	return ret;
 }
 
 void
@@ -104,7 +104,7 @@ BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 	BN_zero(&recp->Nr);
 	recp->num_bits = BN_num_bits(d);
 	recp->shift = 0;
-	return (1);
+	return 1;
 }
 
 /* len is the expected size of the result
@@ -132,7 +132,7 @@ BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 
 err:
 	BN_CTX_end(ctx);
-	return (ret);
+	return ret;
 }
 
 int
@@ -163,7 +163,7 @@ BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 			return 0;
 		}
 		BN_CTX_end(ctx);
-		return (1);
+		return 1;
 	}
 
 	/* We want the remainder
@@ -226,7 +226,7 @@ BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 
 err:
 	BN_CTX_end(ctx);
-	return (ret);
+	return ret;
 }
 
 
@@ -257,5 +257,5 @@ BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
 
 err:
 	BN_CTX_end(ctx);
-	return (ret);
+	return ret;
 }
