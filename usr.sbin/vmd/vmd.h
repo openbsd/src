@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.131 2024/11/06 23:04:45 bluhm Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.132 2025/01/08 15:46:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -424,6 +424,8 @@ enum pipe_msg_type {
 	VIRTIO_THREAD_PAUSE,
 	VIRTIO_THREAD_STOP,
 	VIRTIO_THREAD_ACK,
+	VMMCI_SET_TIMEOUT_SHORT,
+	VMMCI_SET_TIMEOUT_LONG,
 };
 
 static inline struct sockaddr_in *

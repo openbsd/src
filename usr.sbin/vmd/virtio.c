@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.122 2024/11/21 13:39:34 claudio Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.123 2025/01/08 15:46:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -68,6 +68,7 @@ static int virtio_dev_launch(struct vmd_vm *, struct virtio_dev *);
 static void virtio_dispatch_dev(int, short, void *);
 static int handle_dev_msg(struct viodev_msg *, struct virtio_dev *);
 static int virtio_dev_closefds(struct virtio_dev *);
+static void vmmci_pipe_dispatch(int, short, void *);
 
 const char *
 virtio_reg_name(uint8_t reg)
@@ -275,17 +276,29 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	return (0);
 }
 
+/*
+ * vmmci_ctl
+ *
+ * Inject a command into the vmmci device, potentially delivering interrupt.
+ *
+ * Called by the vm process's event(3) loop.
+ */
 int
 vmmci_ctl(unsigned int cmd)
 {
+	int ret = 0;
 	struct timeval tv = { 0, 0 };
 
+	mutex_lock(&vmmci.mutex);
+
 	if ((vmmci.cfg.device_status &
-	    VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK) == 0)
-		return (-1);
+	    VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK) == 0) {
+		ret = -1;
+		goto unlock;
+	}
 
 	if (cmd == vmmci.cmd)
-		return (0);
+		goto unlock;
 
 	switch (cmd) {
 	case VMMCI_NONE:
@@ -307,7 +320,7 @@ vmmci_ctl(unsigned int cmd)
 		vcpu_assert_irq(vmmci.vm_id, 0, vmmci.irq);
 
 		/* Add ACK timeout */
-		tv.tv_sec = VMMCI_TIMEOUT;
+		tv.tv_sec = VMMCI_TIMEOUT_SHORT;
 		evtimer_add(&vmmci.timeout, &tv);
 		break;
 	case VMMCI_SYNCRTC:
@@ -326,14 +339,22 @@ vmmci_ctl(unsigned int cmd)
 		fatalx("invalid vmmci command: %d", cmd);
 	}
 
-	return (0);
+unlock:
+	mutex_unlock(&vmmci.mutex);
+
+	return (ret);
 }
 
+/*
+ * vmmci_ack
+ *
+ * Process a write to the command register.
+ *
+ * Called by the vcpu thread. Must be called with the mutex held.
+ */
 void
 vmmci_ack(unsigned int cmd)
 {
-	struct timeval	 tv = { 0, 0 };
-
 	switch (cmd) {
 	case VMMCI_NONE:
 		break;
@@ -347,8 +368,7 @@ vmmci_ack(unsigned int cmd)
 		if (vmmci.cmd == 0) {
 			log_debug("%s: vm %u requested shutdown", __func__,
 			    vmmci.vm_id);
-			tv.tv_sec = VMMCI_TIMEOUT;
-			evtimer_add(&vmmci.timeout, &tv);
+			vm_pipe_send(&vmmci.dev_pipe, VMMCI_SET_TIMEOUT_SHORT);
 			return;
 		}
 		/* FALLTHROUGH */
@@ -360,12 +380,10 @@ vmmci_ack(unsigned int cmd)
 		 * rc.shutdown on the VM), so increase the timeout before
 		 * killing it forcefully.
 		 */
-		if (cmd == vmmci.cmd &&
-		    evtimer_pending(&vmmci.timeout, NULL)) {
+		if (cmd == vmmci.cmd) {
 			log_debug("%s: vm %u acknowledged shutdown request",
 			    __func__, vmmci.vm_id);
-			tv.tv_sec = VMMCI_SHUTDOWN_TIMEOUT;
-			evtimer_add(&vmmci.timeout, &tv);
+			vm_pipe_send(&vmmci.dev_pipe, VMMCI_SET_TIMEOUT_LONG);
 		}
 		break;
 	case VMMCI_SYNCRTC:
@@ -392,6 +410,7 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 {
 	*intr = 0xFF;
 
+	mutex_lock(&vmmci.mutex);
 	if (dir == 0) {
 		switch (reg) {
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
@@ -466,6 +485,8 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		}
 	}
+	mutex_unlock(&vmmci.mutex);
+
 	return (0);
 }
 
@@ -482,6 +503,27 @@ virtio_get_base(int fd, char *path, size_t npath, int type, const char *dpath)
 	return -1;
 }
 
+static void
+vmmci_pipe_dispatch(int fd, short event, void *arg)
+{
+	enum pipe_msg_type msg;
+	struct timeval tv = { 0, 0 };
+
+	msg = vm_pipe_recv(&vmmci.dev_pipe);
+	switch (msg) {
+	case VMMCI_SET_TIMEOUT_SHORT:
+		tv.tv_sec = VMMCI_TIMEOUT_SHORT;
+		evtimer_add(&vmmci.timeout, &tv);
+		break;
+	case VMMCI_SET_TIMEOUT_LONG:
+		tv.tv_sec = VMMCI_TIMEOUT_LONG;
+		evtimer_add(&vmmci.timeout, &tv);
+		break;
+	default:
+		log_warnx("%s: invalid pipe message type %d", __func__, msg);
+	}
+}
+
 void
 virtio_init(struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
@@ -491,6 +533,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	struct virtio_dev *dev;
 	uint8_t id;
 	uint8_t i, j;
+	int ret = 0;
 
 	/* Virtio entropy device */
 	if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
@@ -745,8 +788,15 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	vmmci.vm_id = vcp->vcp_id;
 	vmmci.irq = pci_get_dev_irq(id);
 	vmmci.pci_id = id;
+	ret = pthread_mutex_init(&vmmci.mutex, NULL);
+	if (ret) {
+		errno = ret;
+		fatal("could not initialize vmmci mutex");
+	}
 
 	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+	vm_pipe_init(&vmmci.dev_pipe, vmmci_pipe_dispatch);
+	event_add(&vmmci.dev_pipe.read_ev, NULL);
 }
 
 /*

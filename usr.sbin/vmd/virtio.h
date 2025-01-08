@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.52 2024/07/10 09:27:33 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.53 2025/01/08 15:46:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -53,8 +53,8 @@
 #define VIONET_MAX_TXLEN	VIONET_HARD_MTU + ETHER_HDR_LEN
 
 /* VMM Control Interface shutdown timeout (in seconds) */
-#define VMMCI_TIMEOUT		3
-#define VMMCI_SHUTDOWN_TIMEOUT	120
+#define VMMCI_TIMEOUT_SHORT	3
+#define VMMCI_TIMEOUT_LONG	120
 
 /* All the devices we support have either 1, 2 or 3 queues */
 /* viornd - 1 queue
@@ -321,8 +321,10 @@ struct vmmci_dev {
 	enum vmmci_cmd cmd;
 	uint32_t vm_id;
 	int irq;
-
 	uint8_t pci_id;
+
+	pthread_mutex_t mutex;
+	struct vm_dev_pipe dev_pipe;
 };
 
 /* XXX to be removed once vioscsi is adapted to vectorized io. */
