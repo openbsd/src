@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2094 2024/11/09 10:23:06 miod Exp 
+ *	OpenBSD: pcidevs,v 1.2095 2025/01/08 02:12:24 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6465,9 +6465,13 @@
 #define	PCI_PRODUCT_INTEL_MTL_IPU	0x7d19		/* Core Ultra IPU */
 #define	PCI_PRODUCT_INTEL_MTL_NPU	0x7d1d		/* Core Ultra NPU */
 #define	PCI_PRODUCT_INTEL_MTL_U4_GT_1	0x7d40		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ARL_U_GT_1	0x7d41		/* Graphics */
 #define	PCI_PRODUCT_INTEL_MTL_U_GT_1	0x7d45		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ARL_H_GT_1	0x7d51		/* Graphics */
 #define	PCI_PRODUCT_INTEL_MTL_H_GT_1	0x7d55		/* Arc Graphics */
 #define	PCI_PRODUCT_INTEL_MTL_U_GT_2	0x7d60		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ARL_S_GT_1	0x7d67		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ARL_H_GT_2	0x7dd1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_MTL_H_GT_2	0x7dd5		/* Graphics */
 #define	PCI_PRODUCT_INTEL_MTL_H_ESPI	0x7e02		/* Core Ultra eSPI */
 #define	PCI_PRODUCT_INTEL_MTL_U_ESPI	0x7e03		/* Core Ultra eSPI */
@@ -7354,6 +7358,7 @@
 #define	PCI_PRODUCT_INTEL_LNL_SRAM	0xa87f		/* Core Ultra SRAM */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE */
+#define	PCI_PRODUCT_INTEL_ARL_S_GT_2	0xb640		/* Graphics */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_1	0xd131		/* Core DMI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_2	0xd132		/* Core DMI */
