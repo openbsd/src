@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.24 2025/01/08 20:18:12 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.25 2025/01/08 20:21:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,9 +101,11 @@ BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 {
 	if (!bn_copy(&recp->N, d))
 		return 0;
+	recp->num_bits = BN_num_bits(&recp->N);
+
 	BN_zero(&recp->Nr);
-	recp->num_bits = BN_num_bits(d);
 	recp->shift = 0;
+
 	return 1;
 }
 
@@ -228,7 +230,6 @@ err:
 	BN_CTX_end(ctx);
 	return ret;
 }
-
 
 int
 BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
