@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.432 2024/12/24 19:19:18 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.433 2025/01/08 23:40:40 lucas Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -5148,7 +5148,8 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		/* Initialize the sub-device */
 		return my->subfn(my->subdev, sub_raidoff + blkno,
 		    addr, size, op, page);
-	}
+	} else if (op == HIB_DONE)
+		return my->subfn(my->subdev, blkno, addr, size, op, page);
 
 	/* Hibernate only uses (and we only support) writes */
 	if (op != HIB_W)
