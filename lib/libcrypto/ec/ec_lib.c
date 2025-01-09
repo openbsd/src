@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.103 2025/01/07 08:30:52 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.104 2025/01/09 06:51:11 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -623,7 +623,8 @@ EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx_in)
 		goto err;
 
 	/*
-	 * Check that the discriminant 4a^3 + 27b^2 is non-zero modulo p.
+	 * Check that the discriminant 4a^3 + 27b^2 is non-zero modulo p
+	 * assuming that p > 3 is prime and that a and b are in [0, p).
 	 */
 
 	if (BN_is_zero(a) && BN_is_zero(b))
