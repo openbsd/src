@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.47 2024/11/26 13:59:54 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.48 2025/01/09 12:07:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,7 @@ struct rtr_header {
 	uint32_t	length;
 } __packed;
 
-#define RTR_MAX_PDU_SIZE	49152	/* XXX < IBUF_READ_SIZE */
+#define RTR_MAX_PDU_SIZE	65535
 #define RTR_MAX_PDU_ERROR_SIZE	256
 #define RTR_DEFAULT_REFRESH	3600
 #define RTR_DEFAULT_RETRY	600
