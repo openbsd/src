@@ -1,4 +1,4 @@
-# test EBADF for splicing with non existing fileno
+# test EPROTO for unsplicing non-spliced sockets
 
 use strict;
 use warnings;
