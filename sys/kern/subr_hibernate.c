@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.149 2025/01/06 21:37:16 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.150 2025/01/09 19:22:39 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -2019,7 +2019,8 @@ hibernate_suspend(void)
 	 * Give the device-specific I/O function a notification that we're
 	 * done, and that it can clean up or shutdown as needed.
 	 */
-	hib->io_func(hib->dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib->io_page);
+	if (hib->io_func(hib->dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib->io_page))
+		printf("Warning: hibernate done failed\n");
 	return (0);
 }
 
