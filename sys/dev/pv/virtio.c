@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.36 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.37 2025/01/09 10:55:22 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -167,6 +167,8 @@ virtio_attach_finish(struct virtio_softc *sc, struct virtio_attach_args *va)
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		struct virtqueue *vq = &sc->sc_vqs[i];
 
+		if (vq->vq_num == 0)
+			continue;
 		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
@@ -185,9 +187,9 @@ virtio_reinit_start(struct virtio_softc *sc)
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		int n;
 		struct virtqueue *vq = &sc->sc_vqs[i];
-		n = virtio_read_queue_size(sc, vq->vq_index);
-		if (n == 0)	/* vq disappeared */
+		if (vq->vq_num == 0)	/* not used */
 			continue;
+		n = virtio_read_queue_size(sc, vq->vq_index);
 		if (n != vq->vq_num) {
 			panic("%s: virtqueue size changed, vq index %d",
 			    sc->sc_dev.dv_xname, vq->vq_index);
@@ -274,8 +276,11 @@ virtio_check_vqs(struct virtio_softc *sc)
 	int i, r = 0;
 
 	/* going backwards is better for if_vio */
-	for (i = sc->sc_nvqs - 1; i >= 0; i--)
+	for (i = sc->sc_nvqs - 1; i >= 0; i--) {
+		if (sc->sc_vqs[i].vq_num == 0)	/* not used */
+			continue;
 		r |= virtio_check_vq(sc, &sc->sc_vqs[i]);
+	}
 
 	return r;
 }
@@ -305,6 +310,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	int i, j;
 	int vq_size = vq->vq_num;
 
+	VIRTIO_ASSERT(vq_size > 0);
 	memset(vq->vq_vaddr, 0, vq->vq_bytesize);
 
 	/* build the indirect descriptor chain */
@@ -467,6 +473,11 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	struct vq_entry *qe;
 	int i = 0;
+
+	if (vq->vq_num == 0) {
+		/* virtio_alloc_vq() was never called */
+		return 0;
+	}
 
 	/* device must be already deactivated */
 	/* confirm the vq is empty */
@@ -1017,6 +1028,10 @@ virtio_vq_dump(struct virtqueue *vq)
 #endif
 	/* Common fields */
 	printf(" + addr: %p\n", vq);
+	if (vq->vq_num == 0) {
+		printf(" + vq is unused\n");
+		return;
+	}
 	printf(" + vq num: %d\n", vq->vq_num);
 	printf(" + vq mask: 0x%X\n", vq->vq_mask);
 	printf(" + vq index: %d\n", vq->vq_index);
