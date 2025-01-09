@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.104 2025/01/09 06:51:11 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.105 2025/01/09 11:35:46 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1426,4 +1426,3 @@ EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 	return 0;
 }
 LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
-
