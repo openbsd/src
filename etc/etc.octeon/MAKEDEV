@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.octeon/MAKEDEV.md,v 1.22 2021/11/11 09:47:33 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.120 2023/01/28 11:04:47 phessler Exp 
+#	OpenBSD: MAKEDEV.common,v 1.122 2025/01/08 23:09:25 kirill Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -454,9 +454,9 @@ all)
 	R sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3
 	R bio pty0 pty1 pty2 diskmap vscsi0 ch0 audio0 audio1 audio2
 	R audio3 kstat dt bpf fuse pppac pppx hotplug ptm local wscons
-	R pci0 pci1 pci2 pci3 uall video0 video1 uk0 random tty00
-	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
-	R tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R pci0 pci1 pci2 pci3 uall video0 video1 video2 video3 uk0
+	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 octcf*|wd*|sd*)
