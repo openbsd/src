@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiokeys.c,v 1.4 2025/01/09 20:11:20 kettenis Exp $	*/
+/*	$OpenBSD: gpiokeys.c,v 1.5 2025/01/09 22:03:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -55,6 +55,8 @@ struct gpiokeys_key {
 	uint32_t			 key_code;
 	struct ksensor			 key_sensor;
 	SLIST_ENTRY(gpiokeys_key)	 key_next;
+	void				 (*key_func)(void *);
+	void				*key_ih;
 };
 
 struct gpiokeys_softc {
@@ -75,6 +77,7 @@ struct cfdriver gpiokeys_cd = {
 };
 
 void	 gpiokeys_update_key(void *);
+int	 gpiokeys_intr(void *);
 
 int
 gpiokeys_match(struct device *parent, void *match, void *aux)
@@ -132,8 +135,7 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 				key->key_sensor.type = SENSOR_INDICATOR;
 				sensor_attach(&sc->sc_sensordev,
 				    &key->key_sensor);
-				sensor_task_register(key,
-				    gpiokeys_update_key, 1);
+				key->key_func = gpiokeys_update_key;
 				have_sensors = 1;
 				break;
 			}
@@ -147,6 +149,20 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		SLIST_INSERT_HEAD(&sc->sc_keys, key, key_next);
+	}
+
+	SLIST_FOREACH(key, &sc->sc_keys, key_next) {
+		if (!key->key_func)
+			continue;
+
+		if (OF_is_compatible(faa->fa_node, "gpio-keys")) {
+		    key->key_ih = gpio_controller_intr_establish(key->key_pin,
+			IPL_BIO, NULL, gpiokeys_intr, key, DEVNAME(sc));
+		}
+		if (key->key_ih == NULL)
+			sensor_task_register(key, gpiokeys_update_key, 1);
+		else
+			gpiokeys_update_key(key);
 	}
 
 	if (have_sensors) {
@@ -181,4 +197,13 @@ gpiokeys_update_key(void *arg)
 		}
 		break;
 	}
+}
+
+int
+gpiokeys_intr(void *arg)
+{
+	struct gpiokeys_key *key = arg;
+
+	key->key_func(key);
+	return 1;
 }
