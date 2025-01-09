@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_gpio.h,v 1.5 2020/12/18 22:14:13 kettenis Exp $	*/
+/*	$OpenBSD: ofw_gpio.h,v 1.6 2025/01/09 19:38:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -34,6 +34,8 @@ struct gpio_controller {
 	void	(*gc_config_pin)(void *, uint32_t *, int);
 	int	(*gc_get_pin)(void *, uint32_t *);
 	void	(*gc_set_pin)(void *, uint32_t *, int);
+	void	*(*gc_intr_establish)(void *, uint32_t *, int,
+		    struct cpu_info *, int (*)(void *), void *, char *);
 
 	LIST_ENTRY(gpio_controller) gc_list;
 	uint32_t gc_phandle;
@@ -55,5 +57,9 @@ void	gpio_controller_config_pin(uint32_t *, int);
 int	gpio_controller_get_pin(uint32_t *);
 void	gpio_controller_set_pin(uint32_t *, int);
 uint32_t *gpio_controller_next_pin(uint32_t *);
+
+void	*gpio_controller_intr_establish(uint32_t *, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
+void	gpio_controller_intr_disestablish(void *);
 
 #endif /* _DEV_OFW_GPIO_H_ */

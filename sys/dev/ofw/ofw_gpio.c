@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_gpio.c,v 1.3 2019/08/26 09:22:27 kettenis Exp $	*/
+/*	$OpenBSD: ofw_gpio.c,v 1.4 2025/01/09 19:38:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2016, 2019 Mark Kettenis
  *
@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+
+#include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
@@ -140,4 +142,30 @@ gpio_controller_next_pin(uint32_t *cells)
 			return cells + gc->gc_cells + 1;
 
 	return NULL;
+}
+
+void *
+gpio_controller_intr_establish(uint32_t *cells, int ipl, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
+{
+	struct gpio_controller *gc;
+	uint32_t phandle = cells[0];
+
+	LIST_FOREACH(gc, &gpio_controllers, gc_list) {
+		if (gc->gc_phandle == phandle)
+			break;
+	}
+
+	if (gc && gc->gc_intr_establish) {
+		return gc->gc_intr_establish(gc->gc_cookie, &cells[1], ipl,
+		    ci, func, arg, name);
+	}
+
+	return NULL;
+}
+
+void
+gpio_controller_intr_disestablish(void *ih)
+{
+	fdt_intr_disestablish(ih);
 }
