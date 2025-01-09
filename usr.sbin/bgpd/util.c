@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.90 2025/01/07 19:24:53 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.91 2025/01/09 12:16:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -323,6 +323,8 @@ log_capability(uint8_t capa)
 		return "Multiprotocol Extensions";
 	case CAPA_REFRESH:
 		return "Route Refresh";
+	case CAPA_EXT_NEXTHOP:
+		return "Extended Nexhop Encoding";
 	case CAPA_EXT_MSG:
 		return "Extended Message";
 	case CAPA_ROLE:

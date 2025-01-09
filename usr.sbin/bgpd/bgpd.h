@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.507 2025/01/07 17:43:31 denis Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.508 2025/01/09 12:16:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -415,17 +415,19 @@ struct capabilities {
 	}	grestart;
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
 	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
+	int8_t	ext_nexthop[AID_MAX];	/* Ext Nexthop Encoding, RFC 8950 */
 	int8_t	refresh;		/* route refresh, RFC 2918 */
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
 	int8_t	policy;			/* Open Policy, RFC 9234, 2 = enforce */
-	int8_t	ext_msg;		/* Extended Msg, RFC8654 */
+	int8_t	ext_msg;		/* Extended Msg, RFC 8654 */
 };
 
 enum capa_codes {
 	CAPA_NONE = 0,
 	CAPA_MP = 1,
 	CAPA_REFRESH = 2,
+	CAPA_EXT_NEXTHOP = 5,
 	CAPA_EXT_MSG = 6,
 	CAPA_ROLE = 9,
 	CAPA_RESTART = 64,

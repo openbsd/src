@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.172 2025/01/07 12:11:45 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.173 2025/01/09 12:16:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -877,7 +877,7 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
     struct nexthop *nh, uint8_t aid)
 {
 	struct bgpd_addr *nexthop;
-	size_t off;
+	size_t off, nhoff;
 	uint16_t len, afi;
 	uint8_t safi;
 
@@ -898,58 +898,58 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 		return -1;
 	if (ibuf_add_n8(buf, safi) == -1)
 		return -1;
+	nhoff = ibuf_size(buf);
+	if (ibuf_add_zero(buf, 1) == -1)
+		return -1;
+
+	if (aid == AID_VPN_IPv4 || aid == AID_VPN_IPv6) {
+		/* write zero rd */
+		if (ibuf_add_zero(buf, sizeof(uint64_t)) == -1)
+			return -1;
+	}
 
 	switch (aid) {
-	case AID_INET6:
-		if (nh == NULL)
-			return -1;
-		/* NH LEN */
-		if (ibuf_add_n8(buf, sizeof(struct in6_addr)) == -1)
-			return -1;
-		/* write nexthop */
-		nexthop = &nh->exit_nexthop;
-		if (ibuf_add(buf, &nexthop->v6, sizeof(struct in6_addr)) == -1)
-			return -1;
-		break;
+	case AID_INET:
 	case AID_VPN_IPv4:
 		if (nh == NULL)
 			return -1;
-		/* NH LEN */
-		if (ibuf_add_n8(buf,
-		    sizeof(uint64_t) + sizeof(struct in_addr)) == -1)
-			return -1;
-		/* write zero rd */
-		if (ibuf_add_zero(buf, sizeof(uint64_t)) == -1)
-			return -1;
-		/* write nexthop */
 		nexthop = &nh->exit_nexthop;
-		if (ibuf_add(buf, &nexthop->v4, sizeof(struct in_addr)) == -1)
+		/* AID_INET must only use this path with an IPv6 nexthop */
+		if (nexthop->aid == AID_INET && aid != AID_INET) {
+			if (ibuf_add(buf, &nexthop->v4,
+			    sizeof(nexthop->v4)) == -1)
+				return -1;
+			break;
+		} else if (nexthop->aid == AID_INET6 &&
+		    peer_has_ext_nexthop(peer, aid)) {
+			if (ibuf_add(buf, &nexthop->v6,
+			    sizeof(nexthop->v6)) == -1)
+				return -1;
+		} else {
+			/* can't encode nexthop, give up and withdraw prefix */
 			return -1;
+		}
 		break;
+	case AID_INET6:
 	case AID_VPN_IPv6:
 		if (nh == NULL)
 			return -1;
-		/* NH LEN */
-		if (ibuf_add_n8(buf,
-		    sizeof(uint64_t) + sizeof(struct in6_addr)) == -1)
-			return -1;
-		/* write zero rd */
-		if (ibuf_add_zero(buf, sizeof(uint64_t)) == -1)
-			return -1;
-		/* write nexthop */
 		nexthop = &nh->exit_nexthop;
-		if (ibuf_add(buf, &nexthop->v6, sizeof(struct in6_addr)) == -1)
+		if (ibuf_add(buf, &nexthop->v6, sizeof(nexthop->v6)) == -1)
 			return -1;
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
-		if (ibuf_add_zero(buf, 1) == -1) /* NH LEN MUST be 0 */
-			return -1;
 		/* no NH */
 		break;
 	default:
 		fatalx("up_generate_mp_reach: unknown AID");
 	}
+
+	/* update nexthop len */
+	len = ibuf_size(buf) - nhoff - 1;
+	if (ibuf_set_n8(buf, nhoff, len) == -1)
+		return -1;
 
 	if (ibuf_add_zero(buf, 1) == -1) /* Reserved must be 0 */
 		return -1;
@@ -999,7 +999,7 @@ up_dump_withdraws(struct rde_peer *peer, uint8_t aid)
 	uint16_t afi, len;
 	uint8_t safi;
 
-	if (peer->capa.ext_msg)
+	if (peer_has_ext_msg(peer))
 		pkgsize = MAX_EXT_PKTSIZE;
 
 	if ((buf = ibuf_dynamic(4, pkgsize - MSGSIZE_HEADER)) == NULL)
@@ -1148,13 +1148,20 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 	struct prefix *p;
 	size_t off, pkgsize = MAX_PKTSIZE;
 	uint16_t len;
+	int force_ip4mp = 0;
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
 	if (p == NULL)
 		return NULL;
 
-	if (peer->capa.ext_msg)
+	if (peer_has_ext_msg(peer))
 		pkgsize = MAX_EXT_PKTSIZE;
+
+	if (aid == AID_INET && peer_has_ext_nexthop(peer, AID_INET)) {
+		struct nexthop *nh = prefix_nexthop(p);
+		if (nh != NULL && nh->exit_nexthop.aid == AID_INET6)
+			force_ip4mp = 1;
+	}
 
 	if ((buf = ibuf_dynamic(4, pkgsize - MSGSIZE_HEADER)) == NULL)
 		goto fail;
@@ -1172,7 +1179,7 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 	    prefix_communities(p), prefix_nexthop(p), aid) == -1)
 		goto drop;
 
-	if (aid != AID_INET) {
+	if (aid != AID_INET || force_ip4mp) {
 		/* write mp attribute including nlri */
 
 		/*
@@ -1191,7 +1198,7 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 	if (ibuf_set_n16(buf, off, len) == -1)
 		goto fail;
 
-	if (aid == AID_INET) {
+	if (aid == AID_INET && !force_ip4mp) {
 		/* last but not least dump the IPv4 nlri */
 		if (up_dump_prefix(buf, &peer->updates[aid], peer, 0) == -1)
 			goto drop;
