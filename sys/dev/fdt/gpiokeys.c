@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiokeys.c,v 1.3 2023/03/31 12:07:54 kn Exp $	*/
+/*	$OpenBSD: gpiokeys.c,v 1.4 2025/01/09 20:11:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -54,12 +54,11 @@ struct gpiokeys_key {
 	uint32_t			 key_input_type;
 	uint32_t			 key_code;
 	struct ksensor			 key_sensor;
-	SLIST_ENTRY(gpiokeys_key)	 entries;
+	SLIST_ENTRY(gpiokeys_key)	 key_next;
 };
 
 struct gpiokeys_softc {
 	struct device			 sc_dev;
-	int				 sc_node;
 	struct ksensordev		 sc_sensordev;
 	SLIST_HEAD(, gpiokeys_key)	 sc_keys;
 };
@@ -131,8 +130,10 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 				strlcpy(key->key_sensor.desc, "lid open",
 				    sizeof(key->key_sensor.desc));
 				key->key_sensor.type = SENSOR_INDICATOR;
-				sensor_attach(&sc->sc_sensordev, &key->key_sensor);
-				sensor_task_register(key, gpiokeys_update_key, 1);
+				sensor_attach(&sc->sc_sensordev,
+				    &key->key_sensor);
+				sensor_task_register(key,
+				    gpiokeys_update_key, 1);
 				have_sensors = 1;
 				break;
 			}
@@ -145,7 +146,7 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 			have_labels = 1;
 		}
 
-		SLIST_INSERT_HEAD(&sc->sc_keys, key, entries);
+		SLIST_INSERT_HEAD(&sc->sc_keys, key, key_next);
 	}
 
 	if (have_sensors) {
