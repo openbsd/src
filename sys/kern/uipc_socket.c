@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.358 2025/01/09 17:42:38 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.359 2025/01/09 17:43:33 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ soalloc(const struct protosw *prp, int wait)
 	}
 #endif
 
-	refcnt_init(&so->so_refcnt);
+	refcnt_init_trace(&so->so_refcnt, DT_REFCNT_IDX_SOCKET);
 	rw_init_flags(&so->so_lock, dom_name, RWL_DUPOK);
 	rw_init(&so->so_rcv.sb_lock, "sbufrcv");
 	rw_init(&so->so_snd.sb_lock, "sbufsnd");
