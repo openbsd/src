@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.357 2025/01/07 23:13:46 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.358 2025/01/09 17:42:38 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1388,9 +1388,10 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 			sosp = soref(so->so_sp->ssp_socket);
 			sounsplice(so, so->so_sp->ssp_socket, 0);
 			sorele(sosp);
-		}
+		} else
+			error = EPROTO;
 		sbunlock(&so->so_rcv);
-		return (0);
+		return (error);
 	}
 
 	if (sosplice_taskq == NULL) {

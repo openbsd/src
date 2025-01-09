@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.10 2019/07/04 17:42:17 bluhm Exp $
+.\"	$OpenBSD: sosplice.9,v 1.11 2025/01/09 17:42:38 mvs Exp $
 .\"
 .\" Copyright (c) 2011-2013 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2019 $
+.Dd $Mdocdate: January 9 2025 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -238,6 +238,8 @@ nor in the process of connecting to a peer.
 .It Bq Er ENOTCONN
 The drain socket is neither connected nor in the process of connecting
 to a peer.
+.It Bq Er EPROTO
+The source socket is not spliced with the drain socket.
 .It Bq Er ENOTSOCK
 The given file descriptor
 .Fa fd
