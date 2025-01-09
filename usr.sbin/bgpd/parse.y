@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.474 2024/12/14 21:24:31 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.475 2025/01/09 15:57:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -249,7 +249,7 @@ typedef struct {
 %token	FLOWSPEC PROTO FLAGS FRAGMENT TOS LENGTH ICMPTYPE CODE
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH EXTENDED
-%token	SEND RECV PLUS POLICY ROLE GRACEFUL NOTIFICATION
+%token	SEND RECV PLUS POLICY ROLE GRACEFUL NOTIFICATION MESSAGE
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT FILTERED
@@ -2030,8 +2030,8 @@ peeropts	: REMOTEAS as4number	{
 		| ANNOUNCE POLICY yesnoenforce {
 			curpeer->conf.capabilities.policy = $3;
 		}
-		| ANNOUNCE EXTENDED yesnoenforce {
-			curpeer->conf.capabilities.ext_msg = $3;
+		| ANNOUNCE EXTENDED MESSAGE yesnoenforce {
+			curpeer->conf.capabilities.ext_msg = $4;
 		}
 		| ROLE STRING {
 			if (strcmp($2, "provider") == 0) {
@@ -3596,6 +3596,7 @@ lookup(char *s)
 		{ "maxlen",		MAXLEN },
 		{ "md5sig",		MD5SIG },
 		{ "med",		MED },
+		{ "message",		MESSAGE },
 		{ "metric",		METRIC },
 		{ "min",		YMIN },
 		{ "min-version",	MINVERSION },
