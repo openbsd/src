@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.4 2024/07/02 19:43:52 patrick Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.5 2025/01/09 21:52:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -86,6 +86,8 @@ const struct cfattach qcgpio_fdt_ca = {
 void	qcgpio_fdt_config_pin(void *, uint32_t *, int);
 int	qcgpio_fdt_get_pin(void *, uint32_t *);
 void	qcgpio_fdt_set_pin(void *, uint32_t *, int);
+void	*qcgpio_fdt_intr_establish_pin(void *, uint32_t *, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
 
 void	*qcgpio_fdt_intr_establish(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
@@ -136,6 +138,7 @@ qcgpio_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gc.gc_config_pin = qcgpio_fdt_config_pin;
 	sc->sc_gc.gc_get_pin = qcgpio_fdt_get_pin;
 	sc->sc_gc.gc_set_pin = qcgpio_fdt_set_pin;
+	sc->sc_gc.gc_intr_establish = qcgpio_fdt_intr_establish_pin;
 	gpio_controller_register(&sc->sc_gc);
 
 	sc->sc_ic.ic_node = faa->fa_node;
@@ -211,6 +214,19 @@ qcgpio_fdt_set_pin(void *cookie, uint32_t *cells, int val)
 		HCLR4(sc, TLMM_GPIO_IN_OUT(pin),
 		    TLMM_GPIO_IN_OUT_GPIO_OUT);
 	}
+}
+
+void *
+qcgpio_fdt_intr_establish_pin(void *cookie, uint32_t *cells, int ipl,
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
+{
+	struct qcgpio_softc *sc = cookie;
+	uint32_t icells[2];
+
+	icells[0] = cells[0];
+	icells[1] = 3; /* both edges */
+
+	return qcgpio_fdt_intr_establish(sc, icells, ipl, ci, func, arg, name);
 }
 
 void *
