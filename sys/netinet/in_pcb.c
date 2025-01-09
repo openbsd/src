@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.309 2025/01/03 12:56:15 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.310 2025/01/09 16:47:24 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ in_pcbdetach(struct inpcb *inp)
 }
 
 struct socket *
-in_pcbsolock(struct inpcb *inp)
+in_pcbsolock_ref(struct inpcb *inp)
 {
 	struct socket *so;
 
@@ -634,18 +634,18 @@ in_pcbsolock(struct inpcb *inp)
 	mtx_leave(&inp->inp_sofree_mtx);
 	if (so == NULL)
 		return NULL;
-
 	rw_enter_write(&so->so_lock);
-	sorele(so);
-
 	return so;
 }
 
 void
-in_pcbsounlock(struct inpcb *inp, struct socket *so)
+in_pcbsounlock_rele(struct inpcb *inp, struct socket *so)
 {
-	KASSERT(inp->inp_socket == so);
+	if (so == NULL)
+		return;
+	KASSERT(inp->inp_socket == NULL || inp->inp_socket == so);
 	rw_exit_write(&so->so_lock);
+	sorele(so);
 }
 
 struct inpcb *

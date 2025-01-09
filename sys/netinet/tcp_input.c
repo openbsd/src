@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.420 2025/01/05 12:18:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.421 2025/01/09 16:47:24 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3410,7 +3410,7 @@ syn_cache_timer(void *arg)
 	mtx_leave(&syn_cache_mtx);
 
 	NET_LOCK_SHARED();
-	so = in_pcbsolock(inp);
+	so = in_pcbsolock_ref(inp);
 	if (so != NULL) {
 		now = tcp_now();
 #ifdef TCP_ECN
@@ -3418,8 +3418,8 @@ syn_cache_timer(void *arg)
 #endif
 		(void) syn_cache_respond(sc, NULL, now, do_ecn);
 		tcpstat_inc(tcps_sc_retransmitted);
-		in_pcbsounlock(inp, so);
 	}
+	in_pcbsounlock_rele(inp, so);
 	NET_UNLOCK_SHARED();
 
 	in_pcbunref(inp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.238 2025/01/05 12:23:38 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.239 2025/01/09 16:47:24 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1122,14 +1122,12 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 	int error = 0;
 	struct tcp_ident_mapping tir;
 	struct inpcb *inp;
-	struct tcpcb *tp = NULL;
+	struct socket *so = NULL;
 	struct sockaddr_in *fin, *lin;
 #ifdef INET6
 	struct sockaddr_in6 *fin6, *lin6;
 	struct in6_addr f6, l6;
 #endif
-
-	NET_ASSERT_LOCKED();
 
 	if (dodrop) {
 		if (oldp != NULL || *oldlenp != 0)
@@ -1150,25 +1148,41 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 		if ((error = copyin(oldp, &tir, sizeof (tir))) != 0 )
 			return (error);
 	}
+
+	NET_LOCK_SHARED();
+
 	switch (tir.faddr.ss_family) {
 #ifdef INET6
 	case AF_INET6:
+		if (tir.laddr.ss_family != AF_INET6) {
+			NET_UNLOCK_SHARED();
+			return (EAFNOSUPPORT);
+		}
 		fin6 = (struct sockaddr_in6 *)&tir.faddr;
 		error = in6_embedscope(&f6, fin6, NULL, NULL);
-		if (error)
+		if (error) {
+			NET_UNLOCK_SHARED();
 			return EINVAL;	/*?*/
+		}
 		lin6 = (struct sockaddr_in6 *)&tir.laddr;
 		error = in6_embedscope(&l6, lin6, NULL, NULL);
-		if (error)
+		if (error) {
+			NET_UNLOCK_SHARED();
 			return EINVAL;	/*?*/
+		}
 		break;
 #endif
 	case AF_INET:
+		if (tir.laddr.ss_family != AF_INET) {
+			NET_UNLOCK_SHARED();
+			return (EAFNOSUPPORT);
+		}
 		fin = (struct sockaddr_in *)&tir.faddr;
 		lin = (struct sockaddr_in *)&tir.laddr;
 		break;
 	default:
-		return (EINVAL);
+		NET_UNLOCK_SHARED();
+		return (EAFNOSUPPORT);
 	}
 
 	switch (tir.faddr.ss_family) {
@@ -1187,11 +1201,20 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 	}
 
 	if (dodrop) {
-		if (inp && (tp = intotcpcb(inp)) &&
-		    ((inp->inp_socket->so_options & SO_ACCEPTCONN) == 0))
+		struct tcpcb *tp = NULL;
+
+		if (inp != NULL) {
+			so = in_pcbsolock_ref(inp);
+			if (so != NULL)
+				tp = intotcpcb(inp);
+		}
+		if (tp != NULL && !ISSET(so->so_options, SO_ACCEPTCONN))
 			tp = tcp_drop(tp, ECONNABORTED);
 		else
 			error = ESRCH;
+
+		in_pcbsounlock_rele(inp, so);
+		NET_UNLOCK_SHARED();
 		in_pcbunref(inp);
 		return (error);
 	}
@@ -1212,18 +1235,23 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 		}
 	}
 
-	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {
-		tir.ruid = inp->inp_socket->so_ruid;
-		tir.euid = inp->inp_socket->so_euid;
+	if (inp != NULL)
+		so = in_pcbsolock_ref(inp);
+
+	if (so != NULL && ISSET(so->so_state, SS_CONNECTOUT)) {
+		tir.ruid = so->so_ruid;
+		tir.euid = so->so_euid;
 	} else {
 		tir.ruid = -1;
 		tir.euid = -1;
 	}
 
-	*oldlenp = sizeof (tir);
-	error = copyout((void *)&tir, oldp, sizeof (tir));
+	in_pcbsounlock_rele(inp, so);
+	NET_UNLOCK_SHARED();
 	in_pcbunref(inp);
-	return (error);
+
+	*oldlenp = sizeof(tir);
+	return copyout(&tir, oldp, sizeof(tir));
 }
 
 int
@@ -1428,16 +1456,10 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 
 	case TCPCTL_IDENT:
-		NET_LOCK();
-		error = tcp_ident(oldp, oldlenp, newp, newlen, 0);
-		NET_UNLOCK();
-		return (error);
+		return tcp_ident(oldp, oldlenp, newp, newlen, 0);
 
 	case TCPCTL_DROP:
-		NET_LOCK();
-		error = tcp_ident(oldp, oldlenp, newp, newlen, 1);
-		NET_UNLOCK();
-		return (error);
+		return tcp_ident(oldp, oldlenp, newp, newlen, 1);
 
 	case TCPCTL_REASS_LIMIT:
 		NET_LOCK();
@@ -1506,9 +1528,8 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 
 	default:
-		error = sysctl_bounded_arr(tcpctl_vars, nitems(tcpctl_vars),
+		return sysctl_bounded_arr(tcpctl_vars, nitems(tcpctl_vars),
 		    name, namelen, oldp, oldlenp, newp, newlen);
-		return (error);
 	}
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.163 2025/01/05 12:10:39 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.164 2025/01/09 16:47:24 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -311,8 +311,8 @@ int	 in_pcbaddrisavail(const struct inpcb *, struct sockaddr_in *, int,
 int	 in_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in_pcbdetach(struct inpcb *);
 struct socket *
-	 in_pcbsolock(struct inpcb *);
-void	 in_pcbsounlock(struct inpcb *, struct socket *);
+	 in_pcbsolock_ref(struct inpcb *);
+void	 in_pcbsounlock_rele(struct inpcb *, struct socket *);
 struct inpcb *
 	 in_pcbref(struct inpcb *);
 void	 in_pcbunref(struct inpcb *);
