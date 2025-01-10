@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.43 2024/11/09 22:41:34 jsg Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.44 2025/01/10 16:43:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -108,7 +108,7 @@ void			 ufshci_scsi_io_done(struct ufshci_softc *,
 void			 ufshci_scsi_done(struct ufshci_softc *,
 			     struct ufshci_ccb *);
 
-#if HIBERNATE
+#ifdef HIBERNATE
 int			 ufshci_hibernate_io(dev_t, daddr_t, vaddr_t, size_t,
 			     int, void *);
 #endif
@@ -1892,7 +1892,7 @@ ufshci_scsi_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 	scsi_done(xs);
 }
 
-#if HIBERNATE
+#ifdef HIBERNATE
 int
 ufshci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
     int op, void *page)
