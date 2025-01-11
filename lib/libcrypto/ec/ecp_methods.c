@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.33 2025/01/11 15:26:07 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.34 2025/01/11 21:07:25 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -194,12 +194,10 @@ ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 		goto err;
 
 	/*
-	 * We have a curve defined by a Weierstrass equation y^2 = x^3 + a*x
-	 * + b. The point to consider is given in Jacobian projective
-	 * coordinates where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
-	 * Substituting this and multiplying by  Z^6  transforms the above
-	 * equation into Y^2 = X^3 + a*X*Z^4 + b*Z^6. To test this, we add up
-	 * the right-hand side in 'rh'.
+	 * The curve is defined by a Weierstrass equation y^2 = x^3 + a*x + b.
+	 * The point is given in Jacobian projective coordinates where (X, Y, Z)
+	 * represents (x, y) = (X/Z^2, Y/Z^3). Substituting this and multiplying
+	 * by Z^6 transforms the above into Y^2 = X^3 + a*X*Z^4 + b*Z^6.
 	 */
 
 	/* rh := X^2 */
