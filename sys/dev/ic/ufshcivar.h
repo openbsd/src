@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcivar.h,v 1.10 2024/10/08 00:46:29 jsg Exp $ */
+/*	$OpenBSD: ufshcivar.h,v 1.11 2025/01/11 20:48:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -15,6 +15,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* #define UFSHCI_DEBUG */
+#ifdef UFSHCI_DEBUG
+extern int ufshci_debug;
+#define DPRINTF(l, x...)        do { if ((l) <= ufshci_debug) printf(x); } \
+                                    while (0)
+#else
+#define DPRINTF(l, x...)
+#endif
 
 #define UFSHCI_READ_4(sc, x) \
     bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (x))
@@ -79,6 +88,12 @@ struct ufshci_softc {
 	struct mutex		 sc_ccb_mtx;
 	struct ufshci_ccb_list	 sc_ccb_list;
 	struct ufshci_ccb	*sc_ccbs;
+
+#ifdef UFSHCI_DEBUG
+	/* Debugging statistics */
+	struct timeout		 sc_stats_timo;
+	int			*sc_stats_slots;
+#endif
 };
 
 int	ufshci_intr(void *);
