@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.108 2025/01/11 13:58:31 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.109 2025/01/11 14:38:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1262,25 +1262,6 @@ EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx_in)
 LCRYPTO_ALIAS(EC_POINT_make_affine);
 
 int
-EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
-    BN_CTX *ctx_in)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINTs_make_affine);
-
-int
-EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-    size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
-    BN_CTX *ctx_in)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINTs_mul);
-
-int
 EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
     const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx_in)
 {
@@ -1377,3 +1358,22 @@ EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 	return 0;
 }
 LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
+
+int
+EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
+    BN_CTX *ctx_in)
+{
+	ECerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(EC_POINTs_make_affine);
+
+int
+EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+    size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
+    BN_CTX *ctx_in)
+{
+	ECerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(EC_POINTs_mul);
