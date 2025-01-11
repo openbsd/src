@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.29 2025/01/11 14:48:20 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.30 2025/01/11 14:53:46 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -279,14 +279,19 @@ static int
 ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *in_x, int y_bit, BN_CTX *ctx)
 {
-	const BIGNUM *p = group->p, *a = group->a, *b = group->b;
-	BIGNUM *w, *x, *y;
+	BIGNUM *p, *a, *b, *w, *x, *y;
 	int ret = 0;
 
 	y_bit = (y_bit != 0);
 
 	BN_CTX_start(ctx);
 
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	if ((w = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((x = BN_CTX_get(ctx)) == NULL)
@@ -299,19 +304,17 @@ ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 	 * square roots of x^3 + ax + b. The y-bit indicates which one.
 	 */
 
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		goto err;
+
 	/* XXX - should we not insist on 0 <= x < p instead? */
 	if (!BN_nnmod(x, in_x, p, ctx))
 		goto err;
 
-	if (group->meth->field_encode != NULL) {
-		if (!group->meth->field_encode(group, x, x, ctx))
-			goto err;
-	}
-
 	/* y = x^3 */
-	if (!group->meth->field_sqr(group, y, x, ctx))
+	if (!BN_mod_sqr(y, x, p, ctx))
 		goto err;
-	if (!group->meth->field_mul(group, y, y, x, ctx))
+	if (!BN_mod_mul(y, y, x, p, ctx))
 		goto err;
 
 	/* y += ax */
@@ -323,7 +326,7 @@ ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 		if (!BN_mod_sub_quick(y, y, w, p))
 			goto err;
 	} else {
-		if (!group->meth->field_mul(group, w, a, x, ctx))
+		if (!BN_mod_mul(w, a, x, p, ctx))
 			goto err;
 		if (!BN_mod_add_quick(y, y, w, p))
 			goto err;
@@ -332,13 +335,6 @@ ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 	/* y += b */
 	if (!BN_mod_add_quick(y, y, b, p))
 		goto err;
-
-	if (group->meth->field_decode != NULL) {
-		if (!group->meth->field_decode(group, x, x, ctx))
-			goto err;
-		if (!group->meth->field_decode(group, y, y, ctx))
-			goto err;
-	}
 
 	if (!BN_mod_sqrt(y, y, p, ctx)) {
 		ECerror(EC_R_INVALID_COMPRESSED_POINT);
