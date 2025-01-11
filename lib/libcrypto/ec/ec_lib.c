@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.110 2025/01/11 15:02:42 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.111 2025/01/11 15:26:07 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1250,7 +1250,7 @@ EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->is_on_curve == NULL) {
+	if (group->meth->point_is_on_curve == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		goto err;
 	}
@@ -1258,7 +1258,7 @@ EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
-	ret = group->meth->is_on_curve(group, point, ctx);
+	ret = group->meth->point_is_on_curve(group, point, ctx);
 
  err:
 	if (ctx != ctx_in)

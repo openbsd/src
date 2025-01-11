@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.32 2025/01/11 15:20:23 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.33 2025/01/11 15:26:07 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -167,7 +167,7 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 }
 
 static int
-ec_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
+ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 {
 	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
@@ -268,7 +268,8 @@ ec_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
  */
 
 static int
-ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
+ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
+    BN_CTX *ctx)
 {
 	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
@@ -1324,8 +1325,8 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
-	.is_on_curve = ec_is_on_curve,
-	.point_cmp = ec_cmp,
+	.point_is_on_curve = ec_point_is_on_curve,
+	.point_cmp = ec_point_cmp,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.points_make_affine = ec_points_make_affine,
@@ -1350,8 +1351,8 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
-	.is_on_curve = ec_is_on_curve,
-	.point_cmp = ec_cmp,
+	.point_is_on_curve = ec_point_is_on_curve,
+	.point_cmp = ec_point_cmp,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.points_make_affine = ec_points_make_affine,
