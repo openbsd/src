@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.57 2025/01/11 15:02:42 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.58 2025/01/11 15:20:23 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -87,6 +87,10 @@ struct ec_method_st {
 	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a,
 	    BIGNUM *b, BN_CTX *);
 
+	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b,
+	    BN_CTX *);
+
 	int (*point_set_affine_coordinates)(const EC_GROUP *, EC_POINT *,
 	    const BIGNUM *x, const BIGNUM *y, BN_CTX *);
 	int (*point_get_affine_coordinates)(const EC_GROUP *, const EC_POINT *,
@@ -100,10 +104,6 @@ struct ec_method_st {
 	    const EC_POINT *b, BN_CTX *);
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 	int (*invert)(const EC_GROUP *, EC_POINT *, BN_CTX *);
-
-	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
-	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b,
-	    BN_CTX *);
 
 	int (*mul_generator_ct)(const EC_GROUP *, EC_POINT *r,
 	    const BIGNUM *scalar, BN_CTX *);

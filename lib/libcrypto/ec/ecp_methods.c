@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.31 2025/01/11 15:02:42 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.32 2025/01/11 15:20:23 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -164,6 +164,197 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 		return 0;
 
 	return 1;
+}
+
+static int
+ec_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
+{
+	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
+	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
+	const BIGNUM *p;
+	BIGNUM *rh, *tmp, *Z4, *Z6;
+	int ret = -1;
+
+	if (EC_POINT_is_at_infinity(group, point))
+		return 1;
+
+	field_mul = group->meth->field_mul;
+	field_sqr = group->meth->field_sqr;
+	p = group->p;
+
+	BN_CTX_start(ctx);
+
+	if ((rh = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z4 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((Z6 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/*
+	 * We have a curve defined by a Weierstrass equation y^2 = x^3 + a*x
+	 * + b. The point to consider is given in Jacobian projective
+	 * coordinates where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
+	 * Substituting this and multiplying by  Z^6  transforms the above
+	 * equation into Y^2 = X^3 + a*X*Z^4 + b*Z^6. To test this, we add up
+	 * the right-hand side in 'rh'.
+	 */
+
+	/* rh := X^2 */
+	if (!field_sqr(group, rh, point->X, ctx))
+		goto err;
+
+	if (!point->Z_is_one) {
+		if (!field_sqr(group, tmp, point->Z, ctx))
+			goto err;
+		if (!field_sqr(group, Z4, tmp, ctx))
+			goto err;
+		if (!field_mul(group, Z6, Z4, tmp, ctx))
+			goto err;
+
+		/* rh := (rh + a*Z^4)*X */
+		if (group->a_is_minus3) {
+			if (!BN_mod_lshift1_quick(tmp, Z4, p))
+				goto err;
+			if (!BN_mod_add_quick(tmp, tmp, Z4, p))
+				goto err;
+			if (!BN_mod_sub_quick(rh, rh, tmp, p))
+				goto err;
+			if (!field_mul(group, rh, rh, point->X, ctx))
+				goto err;
+		} else {
+			if (!field_mul(group, tmp, Z4, group->a, ctx))
+				goto err;
+			if (!BN_mod_add_quick(rh, rh, tmp, p))
+				goto err;
+			if (!field_mul(group, rh, rh, point->X, ctx))
+				goto err;
+		}
+
+		/* rh := rh + b*Z^6 */
+		if (!field_mul(group, tmp, group->b, Z6, ctx))
+			goto err;
+		if (!BN_mod_add_quick(rh, rh, tmp, p))
+			goto err;
+	} else {
+		/* point->Z_is_one */
+
+		/* rh := (rh + a)*X */
+		if (!BN_mod_add_quick(rh, rh, group->a, p))
+			goto err;
+		if (!field_mul(group, rh, rh, point->X, ctx))
+			goto err;
+		/* rh := rh + b */
+		if (!BN_mod_add_quick(rh, rh, group->b, p))
+			goto err;
+	}
+
+	/* 'lh' := Y^2 */
+	if (!field_sqr(group, tmp, point->Y, ctx))
+		goto err;
+
+	ret = (0 == BN_ucmp(tmp, rh));
+
+ err:
+	BN_CTX_end(ctx);
+
+	return ret;
+}
+
+/*
+ * Returns -1 on error, 0 if the points are equal, 1 if the points are distinct.
+ */
+
+static int
+ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
+{
+	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
+	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
+	BIGNUM *tmp1, *tmp2, *Za23, *Zb23;
+	const BIGNUM *tmp1_, *tmp2_;
+	int ret = -1;
+
+	if (EC_POINT_is_at_infinity(group, a) && EC_POINT_is_at_infinity(group, b))
+		return 0;
+	if (EC_POINT_is_at_infinity(group, a) || EC_POINT_is_at_infinity(group, b))
+		return 1;
+
+	if (a->Z_is_one && b->Z_is_one)
+		return BN_cmp(a->X, b->X) != 0 || BN_cmp(a->Y, b->Y) != 0;
+
+	field_mul = group->meth->field_mul;
+	field_sqr = group->meth->field_sqr;
+
+	BN_CTX_start(ctx);
+
+	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((tmp2 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((Za23 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+	if ((Zb23 = BN_CTX_get(ctx)) == NULL)
+		goto end;
+
+	/*
+	 * We have to decide whether (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2,
+	 * Y_b/Z_b^3), or equivalently, whether (X_a*Z_b^2, Y_a*Z_b^3) =
+	 * (X_b*Z_a^2, Y_b*Z_a^3).
+	 */
+
+	if (!b->Z_is_one) {
+		if (!field_sqr(group, Zb23, b->Z, ctx))
+			goto end;
+		if (!field_mul(group, tmp1, a->X, Zb23, ctx))
+			goto end;
+		tmp1_ = tmp1;
+	} else
+		tmp1_ = a->X;
+	if (!a->Z_is_one) {
+		if (!field_sqr(group, Za23, a->Z, ctx))
+			goto end;
+		if (!field_mul(group, tmp2, b->X, Za23, ctx))
+			goto end;
+		tmp2_ = tmp2;
+	} else
+		tmp2_ = b->X;
+
+	/* compare  X_a*Z_b^2  with  X_b*Z_a^2 */
+	if (BN_cmp(tmp1_, tmp2_) != 0) {
+		ret = 1;	/* points differ */
+		goto end;
+	}
+	if (!b->Z_is_one) {
+		if (!field_mul(group, Zb23, Zb23, b->Z, ctx))
+			goto end;
+		if (!field_mul(group, tmp1, a->Y, Zb23, ctx))
+			goto end;
+		/* tmp1_ = tmp1 */
+	} else
+		tmp1_ = a->Y;
+	if (!a->Z_is_one) {
+		if (!field_mul(group, Za23, Za23, a->Z, ctx))
+			goto end;
+		if (!field_mul(group, tmp2, b->Y, Za23, ctx))
+			goto end;
+		/* tmp2_ = tmp2 */
+	} else
+		tmp2_ = b->Y;
+
+	/* compare  Y_a*Z_b^3  with  Y_b*Z_a^3 */
+	if (BN_cmp(tmp1_, tmp2_) != 0) {
+		ret = 1;	/* points differ */
+		goto end;
+	}
+	/* points are equal */
+	ret = 0;
+
+ end:
+	BN_CTX_end(ctx);
+
+	return ret;
 }
 
 static int
@@ -737,197 +928,6 @@ ec_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 }
 
 static int
-ec_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
-{
-	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
-	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
-	const BIGNUM *p;
-	BIGNUM *rh, *tmp, *Z4, *Z6;
-	int ret = -1;
-
-	if (EC_POINT_is_at_infinity(group, point))
-		return 1;
-
-	field_mul = group->meth->field_mul;
-	field_sqr = group->meth->field_sqr;
-	p = group->p;
-
-	BN_CTX_start(ctx);
-
-	if ((rh = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((tmp = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((Z4 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((Z6 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	/*
-	 * We have a curve defined by a Weierstrass equation y^2 = x^3 + a*x
-	 * + b. The point to consider is given in Jacobian projective
-	 * coordinates where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
-	 * Substituting this and multiplying by  Z^6  transforms the above
-	 * equation into Y^2 = X^3 + a*X*Z^4 + b*Z^6. To test this, we add up
-	 * the right-hand side in 'rh'.
-	 */
-
-	/* rh := X^2 */
-	if (!field_sqr(group, rh, point->X, ctx))
-		goto err;
-
-	if (!point->Z_is_one) {
-		if (!field_sqr(group, tmp, point->Z, ctx))
-			goto err;
-		if (!field_sqr(group, Z4, tmp, ctx))
-			goto err;
-		if (!field_mul(group, Z6, Z4, tmp, ctx))
-			goto err;
-
-		/* rh := (rh + a*Z^4)*X */
-		if (group->a_is_minus3) {
-			if (!BN_mod_lshift1_quick(tmp, Z4, p))
-				goto err;
-			if (!BN_mod_add_quick(tmp, tmp, Z4, p))
-				goto err;
-			if (!BN_mod_sub_quick(rh, rh, tmp, p))
-				goto err;
-			if (!field_mul(group, rh, rh, point->X, ctx))
-				goto err;
-		} else {
-			if (!field_mul(group, tmp, Z4, group->a, ctx))
-				goto err;
-			if (!BN_mod_add_quick(rh, rh, tmp, p))
-				goto err;
-			if (!field_mul(group, rh, rh, point->X, ctx))
-				goto err;
-		}
-
-		/* rh := rh + b*Z^6 */
-		if (!field_mul(group, tmp, group->b, Z6, ctx))
-			goto err;
-		if (!BN_mod_add_quick(rh, rh, tmp, p))
-			goto err;
-	} else {
-		/* point->Z_is_one */
-
-		/* rh := (rh + a)*X */
-		if (!BN_mod_add_quick(rh, rh, group->a, p))
-			goto err;
-		if (!field_mul(group, rh, rh, point->X, ctx))
-			goto err;
-		/* rh := rh + b */
-		if (!BN_mod_add_quick(rh, rh, group->b, p))
-			goto err;
-	}
-
-	/* 'lh' := Y^2 */
-	if (!field_sqr(group, tmp, point->Y, ctx))
-		goto err;
-
-	ret = (0 == BN_ucmp(tmp, rh));
-
- err:
-	BN_CTX_end(ctx);
-
-	return ret;
-}
-
-/*
- * Returns -1 on error, 0 if the points are equal, 1 if the points are distinct.
- */
-
-static int
-ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
-{
-	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
-	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
-	BIGNUM *tmp1, *tmp2, *Za23, *Zb23;
-	const BIGNUM *tmp1_, *tmp2_;
-	int ret = -1;
-
-	if (EC_POINT_is_at_infinity(group, a) && EC_POINT_is_at_infinity(group, b))
-		return 0;
-	if (EC_POINT_is_at_infinity(group, a) || EC_POINT_is_at_infinity(group, b))
-		return 1;
-
-	if (a->Z_is_one && b->Z_is_one)
-		return BN_cmp(a->X, b->X) != 0 || BN_cmp(a->Y, b->Y) != 0;
-
-	field_mul = group->meth->field_mul;
-	field_sqr = group->meth->field_sqr;
-
-	BN_CTX_start(ctx);
-
-	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-	if ((tmp2 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-	if ((Za23 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-	if ((Zb23 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-
-	/*
-	 * We have to decide whether (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2,
-	 * Y_b/Z_b^3), or equivalently, whether (X_a*Z_b^2, Y_a*Z_b^3) =
-	 * (X_b*Z_a^2, Y_b*Z_a^3).
-	 */
-
-	if (!b->Z_is_one) {
-		if (!field_sqr(group, Zb23, b->Z, ctx))
-			goto end;
-		if (!field_mul(group, tmp1, a->X, Zb23, ctx))
-			goto end;
-		tmp1_ = tmp1;
-	} else
-		tmp1_ = a->X;
-	if (!a->Z_is_one) {
-		if (!field_sqr(group, Za23, a->Z, ctx))
-			goto end;
-		if (!field_mul(group, tmp2, b->X, Za23, ctx))
-			goto end;
-		tmp2_ = tmp2;
-	} else
-		tmp2_ = b->X;
-
-	/* compare  X_a*Z_b^2  with  X_b*Z_a^2 */
-	if (BN_cmp(tmp1_, tmp2_) != 0) {
-		ret = 1;	/* points differ */
-		goto end;
-	}
-	if (!b->Z_is_one) {
-		if (!field_mul(group, Zb23, Zb23, b->Z, ctx))
-			goto end;
-		if (!field_mul(group, tmp1, a->Y, Zb23, ctx))
-			goto end;
-		/* tmp1_ = tmp1 */
-	} else
-		tmp1_ = a->Y;
-	if (!a->Z_is_one) {
-		if (!field_mul(group, Za23, Za23, a->Z, ctx))
-			goto end;
-		if (!field_mul(group, tmp2, b->Y, Za23, ctx))
-			goto end;
-		/* tmp2_ = tmp2 */
-	} else
-		tmp2_ = b->Y;
-
-	/* compare  Y_a*Z_b^3  with  Y_b*Z_a^3 */
-	if (BN_cmp(tmp1_, tmp2_) != 0) {
-		ret = 1;	/* points differ */
-		goto end;
-	}
-	/* points are equal */
-	ret = 0;
-
- end:
-	BN_CTX_end(ctx);
-
-	return ret;
-}
-
-static int
 ec_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_CTX *ctx)
 {
@@ -1324,14 +1324,14 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
+	.is_on_curve = ec_is_on_curve,
+	.point_cmp = ec_cmp,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.points_make_affine = ec_points_make_affine,
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
-	.is_on_curve = ec_is_on_curve,
-	.point_cmp = ec_cmp,
 	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
 	.mul_double_nonct = ec_mul_double_nonct,
@@ -1350,14 +1350,14 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
+	.is_on_curve = ec_is_on_curve,
+	.point_cmp = ec_cmp,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.points_make_affine = ec_points_make_affine,
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
-	.is_on_curve = ec_is_on_curve,
-	.point_cmp = ec_cmp,
 	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
 	.mul_double_nonct = ec_mul_double_nonct,
