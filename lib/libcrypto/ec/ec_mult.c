@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.56 2024/12/19 21:05:46 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.57 2025/01/11 13:58:31 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -219,7 +219,7 @@ ec_normalize_points(const EC_GROUP *group, struct ec_wnaf *wnaf0,
 	memcpy(&val[0], points0, sizeof(*val) * len0);
 	memcpy(&val[len0], points1, sizeof(*val) * len1);
 
-	if (!EC_POINTs_make_affine(group, len, val, ctx))
+	if (!group->meth->points_make_affine(group, len, val, ctx))
 		goto err;
 
 	ret = 1;

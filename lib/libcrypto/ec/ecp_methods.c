@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.27 2025/01/11 13:38:42 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.28 2025/01/11 13:58:31 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -892,7 +892,7 @@ ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 }
 
 static int
-ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
+ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT **points,
     BN_CTX *ctx)
 {
 	BIGNUM **prod_Z = NULL;
@@ -1425,12 +1425,12 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.point_set_compressed_coordinates = ec_set_compressed_coordinates,
+	.points_make_affine = ec_points_make_affine,
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
 	.is_on_curve = ec_is_on_curve,
 	.point_cmp = ec_cmp,
-	.points_make_affine = ec_points_make_affine,
 	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
 	.mul_double_nonct = ec_mul_double_nonct,
@@ -1452,12 +1452,12 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
 	.point_set_compressed_coordinates = ec_set_compressed_coordinates,
+	.points_make_affine = ec_points_make_affine,
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
 	.is_on_curve = ec_is_on_curve,
 	.point_cmp = ec_cmp,
-	.points_make_affine = ec_points_make_affine,
 	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
 	.mul_double_nonct = ec_mul_double_nonct,

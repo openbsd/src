@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.107 2025/01/11 13:41:17 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.108 2025/01/11 13:58:31 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1265,32 +1265,8 @@ int
 EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
     BN_CTX *ctx_in)
 {
-	BN_CTX *ctx;
-	size_t i;
-	int ret = 0;
-
-	if ((ctx = ctx_in) == NULL)
-		ctx = BN_CTX_new();
-	if (ctx == NULL)
-		goto err;
-
-	if (group->meth->points_make_affine == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
-	for (i = 0; i < num; i++) {
-		if (group->meth != points[i]->meth) {
-			ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-			goto err;
-		}
-	}
-	ret = group->meth->points_make_affine(group, num, points, ctx);
-
- err:
-	if (ctx != ctx_in)
-		BN_CTX_free(ctx);
-
-	return ret;
+	ECerror(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(EC_POINTs_make_affine);
 
@@ -1299,40 +1275,8 @@ EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
     BN_CTX *ctx_in)
 {
-	BN_CTX *ctx;
-	int ret = 0;
-
-	if ((ctx = ctx_in) == NULL)
-		ctx = BN_CTX_new();
-	if (ctx == NULL)
-		goto err;
-
-	/* Only num == 0 and num == 1 is supported. */
-	if (group->meth->mul_generator_ct == NULL ||
-	    group->meth->mul_single_ct == NULL ||
-	    group->meth->mul_double_nonct == NULL ||
-	    num > 1) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		goto err;
-	}
-
-	if (num == 1 && points != NULL && scalars != NULL) {
-		/* Either bP or aG + bP, this is sane. */
-		ret = EC_POINT_mul(group, r, scalar, points[0], scalars[0], ctx);
-	} else if (scalar != NULL && points == NULL && scalars == NULL) {
-		/* aG, this is sane */
-		ret = EC_POINT_mul(group, r, scalar, NULL, NULL, ctx);
-	} else {
-		/* anything else is an error */
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-
- err:
-	if (ctx != ctx_in)
-		BN_CTX_free(ctx);
-
-	return ret;
+	ECerror(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(EC_POINTs_mul);
 

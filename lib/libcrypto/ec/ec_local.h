@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.55 2025/01/11 13:38:42 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.56 2025/01/11 13:58:31 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -79,12 +79,6 @@
 
 __BEGIN_HIDDEN_DECLS
 
-#if defined(__SUNPRO_C)
-# if __SUNPRO_C >= 0x520
-# pragma error_messages (off,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
-# endif
-#endif
-
 struct ec_method_st {
 	int field_type;
 
@@ -100,6 +94,10 @@ struct ec_method_st {
 	int (*point_set_compressed_coordinates)(const EC_GROUP *, EC_POINT *,
 	    const BIGNUM *x, int y_bit, BN_CTX *);
 
+	/* Only used by the wNAF code. */
+	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT **,
+	    BN_CTX *);
+
 	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a,
 	    const EC_POINT *b, BN_CTX *);
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
@@ -107,9 +105,6 @@ struct ec_method_st {
 
 	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b,
-	    BN_CTX *);
-
-	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[],
 	    BN_CTX *);
 
 	int (*mul_generator_ct)(const EC_GROUP *, EC_POINT *r,
