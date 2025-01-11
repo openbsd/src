@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.46 2024/08/28 06:17:06 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.47 2025/01/11 03:00:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -508,10 +508,10 @@ X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 
 	c = s;
 	for (;;) {
-		if (((*s == '/') &&
-		    ((s[1] >= 'A') && (s[1] <= 'Z') &&
-		    ((s[2] == '=') || ((s[2] >= 'A') && (s[2] <= 'Z') &&
-		    (s[3] == '='))))) || (*s == '\0')) {
+		if ((s[0] == '/' &&
+		    (s[1] >= 'A' && s[1] <= 'Z' &&
+		    (s[2] == '=' || (s[2] >= 'A' && s[2] <= 'Z' &&
+		    s[3] == '=')))) || s[0] == '\0') {
 			i = s - c;
 			if (BIO_write(bp, c, i) != i)
 				goto err;
