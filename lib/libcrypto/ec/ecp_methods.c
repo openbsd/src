@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.35 2025/01/11 21:13:21 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.36 2025/01/11 21:20:39 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -298,9 +298,8 @@ ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
 		goto end;
 
 	/*
-	 * We have to decide whether (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2,
-	 * Y_b/Z_b^3), or equivalently, whether (X_a*Z_b^2, Y_a*Z_b^3) =
-	 * (X_b*Z_a^2, Y_b*Z_a^3).
+	 * Decide whether (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3), or
+	 * equivalently, (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
 	 */
 
 	if (!b->Z_is_one) {
