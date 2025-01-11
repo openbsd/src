@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.109 2025/01/11 14:38:57 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.110 2025/01/11 15:02:42 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1026,8 +1026,9 @@ LCRYPTO_ALIAS(EC_POINT_get_affine_coordinates_GFp);
 
 int
 EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, int y_bit, BN_CTX *ctx_in)
+    const BIGNUM *in_x, int y_bit, BN_CTX *ctx_in)
 {
+	BIGNUM *p, *a, *b, *w, *x, *y;
 	BN_CTX *ctx;
 	int ret = 0;
 
@@ -1036,18 +1037,90 @@ EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->point_set_compressed_coordinates == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	y_bit = (y_bit != 0);
+
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((w = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/*
+	 * Weierstrass equation: y^2 = x^3 + ax + b, so y is one of the
+	 * square roots of x^3 + ax + b. The y-bit indicates which one.
+	 */
+
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		goto err;
+
+	/* XXX - should we not insist on 0 <= x < p instead? */
+	if (!BN_nnmod(x, in_x, p, ctx))
+		goto err;
+
+	/* y = x^3 */
+	if (!BN_mod_sqr(y, x, p, ctx))
+		goto err;
+	if (!BN_mod_mul(y, y, x, p, ctx))
+		goto err;
+
+	/* y += ax */
+	if (group->a_is_minus3) {
+		if (!BN_mod_lshift1_quick(w, x, p))
+			goto err;
+		if (!BN_mod_add_quick(w, w, x, p))
+			goto err;
+		if (!BN_mod_sub_quick(y, y, w, p))
+			goto err;
+	} else {
+		if (!BN_mod_mul(w, a, x, p, ctx))
+			goto err;
+		if (!BN_mod_add_quick(y, y, w, p))
+			goto err;
+	}
+
+	/* y += b */
+	if (!BN_mod_add_quick(y, y, b, p))
+		goto err;
+
+	if (!BN_mod_sqrt(y, y, p, ctx)) {
+		ECerror(EC_R_INVALID_COMPRESSED_POINT);
 		goto err;
 	}
-	if (group->meth != point->meth) {
-		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
+
+	if (y_bit == BN_is_odd(y))
+		goto done;
+
+	if (BN_is_zero(y)) {
+		ECerror(EC_R_INVALID_COMPRESSION_BIT);
 		goto err;
 	}
-	ret = group->meth->point_set_compressed_coordinates(group, point,
-	    x, y_bit, ctx);
+	if (!BN_usub(y, p, y))
+		goto err;
+
+	if (y_bit != BN_is_odd(y)) {
+		/* Can only happen if p is even and should not be reachable. */
+		ECerror(ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+ done:
+	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
+		goto err;
+
+	ret = 1;
 
  err:
+	BN_CTX_end(ctx);
+
 	if (ctx != ctx_in)
 		BN_CTX_free(ctx);
 

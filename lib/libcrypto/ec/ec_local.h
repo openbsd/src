@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.56 2025/01/11 13:58:31 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.57 2025/01/11 15:02:42 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -91,8 +91,6 @@ struct ec_method_st {
 	    const BIGNUM *x, const BIGNUM *y, BN_CTX *);
 	int (*point_get_affine_coordinates)(const EC_GROUP *, const EC_POINT *,
 	    BIGNUM *x, BIGNUM *y, BN_CTX *);
-	int (*point_set_compressed_coordinates)(const EC_GROUP *, EC_POINT *,
-	    const BIGNUM *x, int y_bit, BN_CTX *);
 
 	/* Only used by the wNAF code. */
 	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT **,

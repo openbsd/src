@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.30 2025/01/11 14:53:46 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.31 2025/01/11 15:02:42 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -267,100 +267,6 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 	}
 
  done:
-	ret = 1;
-
- err:
-	BN_CTX_end(ctx);
-
-	return ret;
-}
-
-static int
-ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *in_x, int y_bit, BN_CTX *ctx)
-{
-	BIGNUM *p, *a, *b, *w, *x, *y;
-	int ret = 0;
-
-	y_bit = (y_bit != 0);
-
-	BN_CTX_start(ctx);
-
-	if ((p = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((a = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((b = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((w = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((x = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((y = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	/*
-	 * Weierstrass equation: y^2 = x^3 + ax + b, so y is one of the
-	 * square roots of x^3 + ax + b. The y-bit indicates which one.
-	 */
-
-	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
-		goto err;
-
-	/* XXX - should we not insist on 0 <= x < p instead? */
-	if (!BN_nnmod(x, in_x, p, ctx))
-		goto err;
-
-	/* y = x^3 */
-	if (!BN_mod_sqr(y, x, p, ctx))
-		goto err;
-	if (!BN_mod_mul(y, y, x, p, ctx))
-		goto err;
-
-	/* y += ax */
-	if (group->a_is_minus3) {
-		if (!BN_mod_lshift1_quick(w, x, p))
-			goto err;
-		if (!BN_mod_add_quick(w, w, x, p))
-			goto err;
-		if (!BN_mod_sub_quick(y, y, w, p))
-			goto err;
-	} else {
-		if (!BN_mod_mul(w, a, x, p, ctx))
-			goto err;
-		if (!BN_mod_add_quick(y, y, w, p))
-			goto err;
-	}
-
-	/* y += b */
-	if (!BN_mod_add_quick(y, y, b, p))
-		goto err;
-
-	if (!BN_mod_sqrt(y, y, p, ctx)) {
-		ECerror(EC_R_INVALID_COMPRESSED_POINT);
-		goto err;
-	}
-
-	if (y_bit == BN_is_odd(y))
-		goto done;
-
-	if (BN_is_zero(y)) {
-		ECerror(EC_R_INVALID_COMPRESSION_BIT);
-		goto err;
-	}
-	if (!BN_usub(y, p, y))
-		goto err;
-
-	if (y_bit != BN_is_odd(y)) {
-		/* Can only happen if p is even and should not be reachable. */
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-
- done:
-	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
-		goto err;
-
 	ret = 1;
 
  err:
@@ -1420,7 +1326,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.group_get_curve = ec_group_get_curve,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
-	.point_set_compressed_coordinates = ec_set_compressed_coordinates,
 	.points_make_affine = ec_points_make_affine,
 	.add = ec_add,
 	.dbl = ec_dbl,
@@ -1447,7 +1352,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.group_get_curve = ec_group_get_curve,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
 	.point_get_affine_coordinates = ec_point_get_affine_coordinates,
-	.point_set_compressed_coordinates = ec_set_compressed_coordinates,
 	.points_make_affine = ec_points_make_affine,
 	.add = ec_add,
 	.dbl = ec_dbl,
