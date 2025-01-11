@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.28 2025/01/11 13:58:31 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.29 2025/01/11 14:48:20 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -369,6 +369,140 @@ ec_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 
  err:
 	BN_CTX_end(ctx);
+
+	return ret;
+}
+
+static int
+ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT **points,
+    BN_CTX *ctx)
+{
+	BIGNUM **prod_Z = NULL;
+	BIGNUM *one, *tmp, *tmp_Z;
+	size_t i;
+	int ret = 0;
+
+	if (num == 0)
+		return 1;
+
+	BN_CTX_start(ctx);
+
+	if ((one = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp_Z = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!ec_encode_scalar(group, one, BN_value_one(), ctx))
+		goto err;
+
+	if ((prod_Z = calloc(num, sizeof *prod_Z)) == NULL)
+		goto err;
+	for (i = 0; i < num; i++) {
+		if ((prod_Z[i] = BN_CTX_get(ctx)) == NULL)
+			goto err;
+	}
+
+	/*
+	 * Set prod_Z[i] to the product of points[0]->Z, ..., points[i]->Z,
+	 * skipping any zero-valued inputs (pretend that they're 1).
+	 */
+
+	if (!BN_is_zero(points[0]->Z)) {
+		if (!bn_copy(prod_Z[0], points[0]->Z))
+			goto err;
+	} else {
+		if (!bn_copy(prod_Z[0], one))
+			goto err;
+	}
+
+	for (i = 1; i < num; i++) {
+		if (!BN_is_zero(points[i]->Z)) {
+			if (!group->meth->field_mul(group, prod_Z[i],
+			    prod_Z[i - 1], points[i]->Z, ctx))
+				goto err;
+		} else {
+			if (!bn_copy(prod_Z[i], prod_Z[i - 1]))
+				goto err;
+		}
+	}
+
+	/*
+	 * Now use a single explicit inversion to replace every non-zero
+	 * points[i]->Z by its inverse.
+	 */
+	if (!BN_mod_inverse_nonct(tmp, prod_Z[num - 1], group->p, ctx)) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+
+	if (group->meth->field_encode != NULL) {
+		/*
+		 * In the Montgomery case we just turned R*H (representing H)
+		 * into 1/(R*H), but we need R*(1/H) (representing 1/H); i.e.,
+		 * we need to multiply by the Montgomery factor twice.
+		 */
+		if (!group->meth->field_encode(group, tmp, tmp, ctx))
+			goto err;
+		if (!group->meth->field_encode(group, tmp, tmp, ctx))
+			goto err;
+	}
+
+	for (i = num - 1; i > 0; i--) {
+		/*
+		 * Loop invariant: tmp is the product of the inverses of
+		 * points[0]->Z, ..., points[i]->Z (zero-valued inputs skipped).
+		 */
+		if (BN_is_zero(points[i]->Z))
+			continue;
+
+		/* Set tmp_Z to the inverse of points[i]->Z. */
+		if (!group->meth->field_mul(group, tmp_Z, prod_Z[i - 1], tmp, ctx))
+			goto err;
+		/* Adjust tmp to satisfy loop invariant. */
+		if (!group->meth->field_mul(group, tmp, tmp, points[i]->Z, ctx))
+			goto err;
+		/* Replace points[i]->Z by its inverse. */
+		if (!bn_copy(points[i]->Z, tmp_Z))
+			goto err;
+	}
+
+	if (!BN_is_zero(points[0]->Z)) {
+		/* Replace points[0]->Z by its inverse. */
+		if (!bn_copy(points[0]->Z, tmp))
+			goto err;
+	}
+
+	/* Finally, fix up the X and Y coordinates for all points. */
+	for (i = 0; i < num; i++) {
+		EC_POINT *p = points[i];
+
+		if (BN_is_zero(p->Z))
+			continue;
+
+		/* turn  (X, Y, 1/Z)  into  (X/Z^2, Y/Z^3, 1) */
+
+		if (!group->meth->field_sqr(group, tmp, p->Z, ctx))
+			goto err;
+		if (!group->meth->field_mul(group, p->X, p->X, tmp, ctx))
+			goto err;
+
+		if (!group->meth->field_mul(group, tmp, tmp, p->Z, ctx))
+			goto err;
+		if (!group->meth->field_mul(group, p->Y, p->Y, tmp, ctx))
+			goto err;
+
+		if (!bn_copy(p->Z, one))
+			goto err;
+		p->Z_is_one = 1;
+	}
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	free(prod_Z);
 
 	return ret;
 }
@@ -887,140 +1021,6 @@ ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 
  end:
 	BN_CTX_end(ctx);
-
-	return ret;
-}
-
-static int
-ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT **points,
-    BN_CTX *ctx)
-{
-	BIGNUM **prod_Z = NULL;
-	BIGNUM *one, *tmp, *tmp_Z;
-	size_t i;
-	int ret = 0;
-
-	if (num == 0)
-		return 1;
-
-	BN_CTX_start(ctx);
-
-	if ((one = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((tmp = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((tmp_Z = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	if (!ec_encode_scalar(group, one, BN_value_one(), ctx))
-		goto err;
-
-	if ((prod_Z = calloc(num, sizeof *prod_Z)) == NULL)
-		goto err;
-	for (i = 0; i < num; i++) {
-		if ((prod_Z[i] = BN_CTX_get(ctx)) == NULL)
-			goto err;
-	}
-
-	/*
-	 * Set prod_Z[i] to the product of points[0]->Z, ..., points[i]->Z,
-	 * skipping any zero-valued inputs (pretend that they're 1).
-	 */
-
-	if (!BN_is_zero(points[0]->Z)) {
-		if (!bn_copy(prod_Z[0], points[0]->Z))
-			goto err;
-	} else {
-		if (!bn_copy(prod_Z[0], one))
-			goto err;
-	}
-
-	for (i = 1; i < num; i++) {
-		if (!BN_is_zero(points[i]->Z)) {
-			if (!group->meth->field_mul(group, prod_Z[i],
-			    prod_Z[i - 1], points[i]->Z, ctx))
-				goto err;
-		} else {
-			if (!bn_copy(prod_Z[i], prod_Z[i - 1]))
-				goto err;
-		}
-	}
-
-	/*
-	 * Now use a single explicit inversion to replace every non-zero
-	 * points[i]->Z by its inverse.
-	 */
-	if (!BN_mod_inverse_nonct(tmp, prod_Z[num - 1], group->p, ctx)) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-
-	if (group->meth->field_encode != NULL) {
-		/*
-		 * In the Montgomery case we just turned R*H (representing H)
-		 * into 1/(R*H), but we need R*(1/H) (representing 1/H); i.e.,
-		 * we need to multiply by the Montgomery factor twice.
-		 */
-		if (!group->meth->field_encode(group, tmp, tmp, ctx))
-			goto err;
-		if (!group->meth->field_encode(group, tmp, tmp, ctx))
-			goto err;
-	}
-
-	for (i = num - 1; i > 0; i--) {
-		/*
-		 * Loop invariant: tmp is the product of the inverses of
-		 * points[0]->Z, ..., points[i]->Z (zero-valued inputs skipped).
-		 */
-		if (BN_is_zero(points[i]->Z))
-			continue;
-
-		/* Set tmp_Z to the inverse of points[i]->Z. */
-		if (!group->meth->field_mul(group, tmp_Z, prod_Z[i - 1], tmp, ctx))
-			goto err;
-		/* Adjust tmp to satisfy loop invariant. */
-		if (!group->meth->field_mul(group, tmp, tmp, points[i]->Z, ctx))
-			goto err;
-		/* Replace points[i]->Z by its inverse. */
-		if (!bn_copy(points[i]->Z, tmp_Z))
-			goto err;
-	}
-
-	if (!BN_is_zero(points[0]->Z)) {
-		/* Replace points[0]->Z by its inverse. */
-		if (!bn_copy(points[0]->Z, tmp))
-			goto err;
-	}
-
-	/* Finally, fix up the X and Y coordinates for all points. */
-	for (i = 0; i < num; i++) {
-		EC_POINT *p = points[i];
-
-		if (BN_is_zero(p->Z))
-			continue;
-
-		/* turn  (X, Y, 1/Z)  into  (X/Z^2, Y/Z^3, 1) */
-
-		if (!group->meth->field_sqr(group, tmp, p->Z, ctx))
-			goto err;
-		if (!group->meth->field_mul(group, p->X, p->X, tmp, ctx))
-			goto err;
-
-		if (!group->meth->field_mul(group, tmp, tmp, p->Z, ctx))
-			goto err;
-		if (!group->meth->field_mul(group, p->Y, p->Y, tmp, ctx))
-			goto err;
-
-		if (!bn_copy(p->Z, one))
-			goto err;
-		p->Z_is_one = 1;
-	}
-
-	ret = 1;
-
- err:
-	BN_CTX_end(ctx);
-	free(prod_Z);
 
 	return ret;
 }
