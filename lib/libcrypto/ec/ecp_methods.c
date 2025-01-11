@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.26 2025/01/07 08:30:52 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.27 2025/01/11 13:38:42 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -892,38 +892,6 @@ ec_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 }
 
 static int
-ec_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
-{
-	BIGNUM *x, *y;
-	int ret = 0;
-
-	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point))
-		return 1;
-
-	BN_CTX_start(ctx);
-
-	if ((x = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((y = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
-		goto err;
-	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
-		goto err;
-	if (!point->Z_is_one) {
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-	ret = 1;
-
- err:
-	BN_CTX_end(ctx);
-
-	return ret;
-}
-
-static int
 ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
     BN_CTX *ctx)
 {
@@ -1462,7 +1430,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.invert = ec_invert,
 	.is_on_curve = ec_is_on_curve,
 	.point_cmp = ec_cmp,
-	.make_affine = ec_make_affine,
 	.points_make_affine = ec_points_make_affine,
 	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
@@ -1490,7 +1457,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.invert = ec_invert,
 	.is_on_curve = ec_is_on_curve,
 	.point_cmp = ec_cmp,
-	.make_affine = ec_make_affine,
 	.points_make_affine = ec_points_make_affine,
 	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,

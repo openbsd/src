@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.105 2025/01/09 11:35:46 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.106 2025/01/11 13:38:42 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1229,6 +1229,7 @@ int
 EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx_in)
 {
 	BN_CTX *ctx;
+	BIGNUM *x, *y;
 	int ret = 0;
 
 	if ((ctx = ctx_in) == NULL)
@@ -1236,17 +1237,29 @@ EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx_in)
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->make_affine == NULL) {
-		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	BN_CTX_start(ctx);
+
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
+		goto err;
+	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
+		goto err;
+
+	/* XXX - is this the right spot for this check? */
+	if (!point->Z_is_one) {
+		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if (group->meth != point->meth) {
-		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		goto err;
-	}
-	ret = group->meth->make_affine(group, point, ctx);
+
+	ret = 1;
 
  err:
+	BN_CTX_end(ctx);
+
 	if (ctx != ctx_in)
 		BN_CTX_free(ctx);
 

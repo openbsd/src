@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.54 2025/01/07 08:52:17 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.55 2025/01/11 13:38:42 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -109,7 +109,6 @@ struct ec_method_st {
 	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b,
 	    BN_CTX *);
 
-	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[],
 	    BN_CTX *);
 
