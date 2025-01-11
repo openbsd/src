@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.59 2025/01/11 15:26:07 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.60 2025/01/11 15:32:36 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -131,10 +131,6 @@ struct ec_method_st {
 } /* EC_METHOD */;
 
 struct ec_group_st {
-	/*
-	 * Methods and members exposed via the public API.
-	 */
-
 	const EC_METHOD *meth;
 
 	EC_POINT *generator;	/* Optional */
