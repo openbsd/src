@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.34 2025/01/11 21:07:25 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.35 2025/01/11 21:13:21 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1006,7 +1006,7 @@ ec_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 #define EC_POINT_CSWAP(c, a, b, w, t) do {				\
 	if (!BN_swap_ct(c, (a)->X, (b)->X, w)	||			\
 	    !BN_swap_ct(c, (a)->Y, (b)->Y, w)	||			\
-	    !BN_swap_ct(c, (a)->Z, (b)->Z, w))			\
+	    !BN_swap_ct(c, (a)->Z, (b)->Z, w))				\
 		goto err;						\
 	t = ((a)->Z_is_one ^ (b)->Z_is_one) & (c);			\
 	(a)->Z_is_one ^= (t);						\
