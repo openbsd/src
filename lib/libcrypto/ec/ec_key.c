@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.49 2025/01/11 20:55:08 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.50 2025/01/11 20:57:03 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -235,7 +235,7 @@ EC_KEY_generate_key(EC_KEY *eckey)
 }
 LCRYPTO_ALIAS(EC_KEY_generate_key);
 
-int
+static int
 ec_key_gen(EC_KEY *eckey)
 {
 	BIGNUM *priv_key = NULL;

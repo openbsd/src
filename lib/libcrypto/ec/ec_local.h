@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.61 2025/01/11 20:55:08 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.62 2025/01/11 20:57:03 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -239,7 +239,6 @@ struct ec_key_st {
 } /* EC_KEY */;
 
 int eckey_compute_pubkey(EC_KEY *eckey);
-int ec_key_gen(EC_KEY *eckey);
 int ecdh_compute_key(unsigned char **out, size_t *out_len,
     const EC_POINT *pub_key, const EC_KEY *ecdh);
 int ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
