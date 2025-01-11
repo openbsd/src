@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.43 2025/01/02 21:37:38 kn Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.44 2025/01/11 18:21:02 kn Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 {
 	struct nfsd_args nfsdargs;
 	struct sockaddr_in inetaddr;
-	int ch, connect_type_cnt, i;
+	int ch, i;
 	int nfsdcnt = DEFNFSDCNT, on, reregister = 0, sock;
 	int udpflag = 0, tcpflag = 0, tcpsock;
 	const char *errstr = NULL;
@@ -238,39 +238,35 @@ main(int argc, char *argv[])
 
 	/* Now set up the master server socket waiting for tcp connections. */
 	on = 1;
-	connect_type_cnt = 0;
-	if (tcpflag) {
-		if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-			syslog(LOG_ERR, "can't create tcp socket");
-			return (1);
-		}
-		if (setsockopt(tcpsock,
-		    SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1)
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %s", strerror(errno));
-		memset(&inetaddr, 0, sizeof inetaddr);
-		inetaddr.sin_family = AF_INET;
-		inetaddr.sin_addr.s_addr = INADDR_ANY;
-		inetaddr.sin_port = htons(NFS_PORT);
-		inetaddr.sin_len = sizeof(inetaddr);
-		if (bind(tcpsock, (struct sockaddr *)&inetaddr,
-		    sizeof (inetaddr)) == -1) {
-			syslog(LOG_ERR, "can't bind tcp addr");
-			return (1);
-		}
-		if (listen(tcpsock, 5) == -1) {
-			syslog(LOG_ERR, "listen failed");
-			return (1);
-		}
-		if (!pmap_set(RPCPROG_NFS, 2, IPPROTO_TCP, NFS_PORT) ||
-		    !pmap_set(RPCPROG_NFS, 3, IPPROTO_TCP, NFS_PORT)) {
-			syslog(LOG_ERR, "can't register tcp with portmap");
-			return (1);
-		}
-		connect_type_cnt++;
-	}
-
-	if (connect_type_cnt == 0)
+	if (!tcpflag)
 		return (0);
+
+	if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		syslog(LOG_ERR, "can't create tcp socket");
+		return (1);
+	}
+	if (setsockopt(tcpsock,
+	    SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1)
+		syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %s", strerror(errno));
+	memset(&inetaddr, 0, sizeof inetaddr);
+	inetaddr.sin_family = AF_INET;
+	inetaddr.sin_addr.s_addr = INADDR_ANY;
+	inetaddr.sin_port = htons(NFS_PORT);
+	inetaddr.sin_len = sizeof(inetaddr);
+	if (bind(tcpsock, (struct sockaddr *)&inetaddr,
+	    sizeof (inetaddr)) == -1) {
+		syslog(LOG_ERR, "can't bind tcp addr");
+		return (1);
+	}
+	if (listen(tcpsock, 5) == -1) {
+		syslog(LOG_ERR, "listen failed");
+		return (1);
+	}
+	if (!pmap_set(RPCPROG_NFS, 2, IPPROTO_TCP, NFS_PORT) ||
+	    !pmap_set(RPCPROG_NFS, 3, IPPROTO_TCP, NFS_PORT)) {
+		syslog(LOG_ERR, "can't register tcp with portmap");
+		return (1);
+	}
 
 	setproctitle("master");
 
@@ -279,45 +275,30 @@ main(int argc, char *argv[])
 	 * into the kernel for the mounts.
 	 */
 	for (;;) {
-		struct pollfd		pfd;
 		struct sockaddr_in	inetpeer;
 		int ret, msgsock;
-		socklen_t len;
+		socklen_t len = sizeof(inetpeer);
 
-		pfd.fd = tcpsock;
-		pfd.events = POLLIN;
-
-		if (connect_type_cnt > 1) {
-			ret = poll(&pfd, 1, INFTIM);
-			if (ret < 1) {
-				syslog(LOG_ERR, "poll failed: %s", strerror(errno));
-				return (1);
-			}
+		if ((msgsock = accept(tcpsock,
+		    (struct sockaddr *)&inetpeer, &len)) == -1) {
+			if (errno == EWOULDBLOCK || errno == EINTR ||
+			    errno == ECONNABORTED)
+				continue;
+			syslog(LOG_ERR, "accept failed: %s", strerror(errno));
+			return (1);
 		}
-		
-		if (tcpflag) {
-			len = sizeof(inetpeer);
-			if ((msgsock = accept(tcpsock,
-			    (struct sockaddr *)&inetpeer, &len)) == -1) {
-				if (errno == EWOULDBLOCK || errno == EINTR ||
-				    errno == ECONNABORTED)
-					continue;
-				syslog(LOG_ERR, "accept failed: %s", strerror(errno));
-				return (1);
-			}
-			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
-			if (setsockopt(msgsock, SOL_SOCKET,
-			    SO_KEEPALIVE, &on, sizeof(on)) == -1)
-				syslog(LOG_ERR,
-				    "setsockopt SO_KEEPALIVE: %s", strerror(errno));
-			nfsdargs.sock = msgsock;
-			nfsdargs.name = (caddr_t)&inetpeer;
-			nfsdargs.namelen = sizeof(inetpeer);
-			if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) == -1) {
-				syslog(LOG_ERR, "can't Add TCP socket");
-			}
-			(void)close(msgsock);
+		memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
+		if (setsockopt(msgsock, SOL_SOCKET,
+		    SO_KEEPALIVE, &on, sizeof(on)) == -1)
+			syslog(LOG_ERR,
+			    "setsockopt SO_KEEPALIVE: %s", strerror(errno));
+		nfsdargs.sock = msgsock;
+		nfsdargs.name = (caddr_t)&inetpeer;
+		nfsdargs.namelen = len;
+		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) == -1) {
+			syslog(LOG_ERR, "can't Add TCP socket");
 		}
+		(void)close(msgsock);
 	}
 }
 
