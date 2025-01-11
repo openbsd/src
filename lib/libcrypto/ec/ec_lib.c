@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.106 2025/01/11 13:38:42 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.107 2025/01/11 13:41:17 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1248,12 +1248,6 @@ EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx_in)
 		goto err;
 	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 		goto err;
-
-	/* XXX - is this the right spot for this check? */
-	if (!point->Z_is_one) {
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
 
 	ret = 1;
 
