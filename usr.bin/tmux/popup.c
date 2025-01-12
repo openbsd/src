@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.56 2024/11/25 08:36:46 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.57 2025/01/12 14:36:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -353,9 +353,11 @@ popup_make_pane(struct popup_data *pd, enum layout_type type)
 	new_wp = window_add_pane(wp->window, NULL, hlimit, 0);
 	layout_assign_pane(lc, new_wp, 0);
 
-	new_wp->fd = job_transfer(pd->job, &new_wp->pid, new_wp->tty,
-	    sizeof new_wp->tty);
-	pd->job = NULL;
+	if (pd->job != NULL) {
+		new_wp->fd = job_transfer(pd->job, &new_wp->pid, new_wp->tty,
+		    sizeof new_wp->tty);
+		pd->job = NULL;
+	}
 
 	screen_set_title(&pd->s, new_wp->base.title);
 	screen_free(&new_wp->base);
