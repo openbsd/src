@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.45 2025/01/10 10:16:48 schwarze Exp $
+# $OpenBSD: security,v 1.46 2025/01/12 00:18:15 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -256,7 +256,8 @@ sub check_sh {
 		$umaskset ||= check_umask($filename);
 
 		nag !(open my $fh, '-|', qw(/bin/sh -c),
-			". $filename; echo ENV=\$ENV; echo PATH=\$PATH"),
+			". $filename > /dev/null; " .
+			"echo ENV=\$ENV; echo PATH=\$PATH"),
 		    "cannot spawn /bin/sh: $!"
 		    and next;
 		my @output = <$fh>;
@@ -290,7 +291,7 @@ sub check_ksh {
 		check_umask($filename);
 
 		nag !(open my $fh, '-|', qw(/bin/ksh -c),
-			". $filename; echo PATH=\$PATH"),
+			". $filename > /dev/null; echo PATH=\$PATH"),
 		    "cannot spawn /bin/ksh: $!"
 		    and next;
 		my @output = <$fh>;
