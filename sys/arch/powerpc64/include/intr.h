@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2021/05/30 15:06:53 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.15 2025/01/12 21:54:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -128,5 +128,6 @@ void	*fdt_intr_establish_imap(int, int *, int, int, int (*)(void *),
 	    void *, char *);
 void	*fdt_intr_establish_imap_cpu(int, int *, int, int,
 	    struct cpu_info *, int (*)(void *), void *, char *);
+void	fdt_intr_disestablish(void *);
 
 #endif /* _MACHINE_INTR_H_ */

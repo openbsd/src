@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.11 2022/08/09 04:40:08 cheloha Exp $	*/
+/*	$OpenBSD: intr.c,v 1.12 2025/01/12 21:54:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -398,6 +398,12 @@ fdt_intr_establish_imap_cpu(int node, int *reg, int nreg, int level,
 
 	free(map, M_DEVBUF, len);
 	return ih;
+}
+
+void
+fdt_intr_disestablish(void *cookie)
+{
+	panic("%s: not implemented", __func__);
 }
 
 #ifdef MULTIPROCESSOR
