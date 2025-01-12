@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.h,v 1.5 2021/11/24 22:03:05 mglocker Exp $ */
+/*	$OpenBSD: utvfu.h,v 1.6 2025/01/12 16:39:39 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <sys/rwlock.h>
 #include <sys/queue.h>
+#include <sys/audioio.h>
 #include <sys/videoio.h>
 
 /* Hardware. */

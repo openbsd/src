@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.20 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.21 2025/01/12 16:39:39 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -50,23 +50,21 @@
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/audioio.h>
-#include <sys/videoio.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
-#include <dev/audio_if.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/video_if.h>
+#include <dev/usb/utvfu.h>
 
-#include "utvfu.h"
+#include <dev/audio_if.h>
+#include <dev/video_if.h>
 
 #ifdef UTVFU_DEBUG
 int utvfu_debug = 1;
