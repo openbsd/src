@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.62 2024/11/12 20:49:42 tobhe Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.63 2025/01/13 16:58:09 kirill Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1134,6 +1134,8 @@ struct smbios_dtb {
 	/* Keep the list below sorted by vendor */
 	{ "ASUS", "ASUS Vivobook S 15 S5507",
 	  "qcom/x1e80100-asus-vivobook-s15.dtb" },
+	{ "HONOR", "MRO-XXX",
+	  "qcom/x1e80100-honor-magicbook-art-14.dtb" },
 	{ "HP", "HP OmniBook X Laptop 14-fe0xxx",
 	  "qcom/x1e80100-hp-omnibook-x14.dtb" },
 	{ "LENOVO", "21BX",
