@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.173 2025/01/09 12:16:21 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.174 2025/01/13 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -467,7 +467,10 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 	switch (aid) {
 	case AID_INET:
 	case AID_VPN_IPv4:
-		if (peer->local_v4_addr.aid == AID_INET)
+		if (peer_has_ext_nexthop(peer, aid) &&
+		    peer->remote_addr.aid == AID_INET6)
+			peer_local = &peer->local_v6_addr;
+		else if (peer->local_v4_addr.aid == AID_INET)
 			peer_local = &peer->local_v4_addr;
 		break;
 	case AID_INET6:
@@ -625,6 +628,11 @@ up_generate_attr(struct ibuf *buf, struct rde_peer *peer,
 			case AID_INET:
 				if (nh == NULL)
 					return -1;
+				if (nh->exit_nexthop.aid != AID_INET) {
+					if (peer_has_ext_nexthop(peer, aid))
+						break;
+					return -1;
+				}
 				if (attr_writebuf(buf, ATTR_WELL_KNOWN,
 				    ATTR_NEXTHOP, &nh->exit_nexthop.v4,
 				    sizeof(nh->exit_nexthop.v4)) == -1)

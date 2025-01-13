@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.44 2025/01/09 12:16:21 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.45 2025/01/13 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -68,7 +68,7 @@ peer_has_ext_nexthop(struct rde_peer *peer, uint8_t aid)
 {
 	if (aid >= AID_MAX)
 		return 0;
-	return peer->capa.ext_nexthop[aid];
+	return peer->capa.ext_nh[aid];
 }
 
 int

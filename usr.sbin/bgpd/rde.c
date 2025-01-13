@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.648 2025/01/09 12:16:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.649 2025/01/13 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3345,6 +3345,10 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 
 	switch (kf.prefix.aid) {
 	case AID_VPN_IPv4:
+		/* XXX FIB can not handle non-IPv4 nexthop */
+		if (kf.nexthop.aid != AID_INET)
+			type = IMSG_KROUTE_DELETE;
+		/* FALLTHROUGH */
 	case AID_VPN_IPv6:
 		if (!(rib->flags & F_RIB_LOCAL))
 			/* not Loc-RIB, no update for VPNs */
@@ -3361,6 +3365,11 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 				    __LINE__);
 		}
 		break;
+	case AID_INET:
+		/* XXX FIB can not handle non-IPv4 nexthop */
+		if (kf.nexthop.aid != AID_INET)
+			type = IMSG_KROUTE_DELETE;
+		/* FALLTHROUGH */
 	default:
 		if (imsg_compose(ibuf_main, type, rib->rtableid, 0, -1,
 		    &kf, sizeof(kf)) == -1)

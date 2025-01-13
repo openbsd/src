@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.508 2025/01/09 12:16:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.509 2025/01/13 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -415,7 +415,7 @@ struct capabilities {
 	}	grestart;
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
 	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
-	int8_t	ext_nexthop[AID_MAX];	/* Ext Nexthop Encoding, RFC 8950 */
+	int8_t	ext_nh[AID_MAX];	/* Ext Nexthop Encoding, RFC 8950 */
 	int8_t	refresh;		/* route refresh, RFC 2918 */
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.506 2025/01/03 12:57:49 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.507 2025/01/13 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -67,8 +67,6 @@ void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
 int	session_capa_add(struct ibuf *, uint8_t, uint8_t);
-int	session_capa_add_mp(struct ibuf *, uint8_t);
-int	session_capa_add_afi(struct ibuf *, uint8_t, uint8_t);
 struct ibuf	*session_newmsg(enum msg_type, uint16_t);
 void	session_sendmsg(struct ibuf *, struct peer *, enum msg_type);
 void	session_open(struct peer *);
@@ -1364,7 +1362,7 @@ session_capa_add(struct ibuf *opb, uint8_t capa_code, uint8_t capa_len)
 	return (errs);
 }
 
-int
+static int
 session_capa_add_mp(struct ibuf *buf, uint8_t aid)
 {
 	uint16_t		 afi;
@@ -1383,10 +1381,10 @@ session_capa_add_mp(struct ibuf *buf, uint8_t aid)
 	return (errs);
 }
 
-int
+static int
 session_capa_add_afi(struct ibuf *b, uint8_t aid, uint8_t flags)
 {
-	u_int		errs = 0;
+	int		errs = 0;
 	uint16_t	afi;
 	uint8_t		safi;
 
@@ -1398,6 +1396,25 @@ session_capa_add_afi(struct ibuf *b, uint8_t aid, uint8_t flags)
 	errs += ibuf_add_n16(b, afi);
 	errs += ibuf_add_n8(b, safi);
 	errs += ibuf_add_n8(b, flags);
+
+	return (errs);
+}
+
+static int
+session_capa_add_ext_nh(struct ibuf *b, uint8_t aid)
+{
+	int		errs = 0;
+	uint16_t	afi;
+	uint8_t		safi;
+
+	if (aid2afi(aid, &afi, &safi)) {
+		log_warn("%s: bad AID", __func__);
+		return (-1);
+	}
+
+	errs += ibuf_add_n16(b, afi);
+	errs += ibuf_add_n16(b, safi);
+	errs += ibuf_add_n16(b, AFI_IPv6);
 
 	return (errs);
 }
@@ -1517,7 +1534,22 @@ session_open(struct peer *p)
 	if (p->capa.ann.refresh)	/* no data */
 		errs += session_capa_add(opb, CAPA_REFRESH, 0);
 
-	/* extended message support, RFC8654 */
+	/* extended nexthop encoding, RFC 8950 */
+	if (p->capa.ann.ext_nh[AID_INET]) {
+		uint8_t enhlen = 0;
+
+		if (p->capa.ann.mp[AID_INET])
+			enhlen += 6;
+		if (p->capa.ann.mp[AID_VPN_IPv4])
+			enhlen += 6;
+		errs += session_capa_add(opb, CAPA_EXT_NEXTHOP, enhlen);
+		if (p->capa.ann.mp[AID_INET])
+			errs += session_capa_add_ext_nh(opb, AID_INET);
+		if (p->capa.ann.mp[AID_VPN_IPv4])
+			errs += session_capa_add_ext_nh(opb, AID_VPN_IPv4);
+	}
+
+	/* extended message support, RFC 8654 */
 	if (p->capa.ann.ext_msg)	/* no data */
 		errs += session_capa_add(opb, CAPA_EXT_MSG, 0);
 
@@ -2540,7 +2572,7 @@ int
 parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 {
 	struct ibuf	 capabuf;
-	uint16_t	 afi, gr_header;
+	uint16_t	 afi, nhafi, tmp16, gr_header;
 	uint8_t		 capa_code, capa_len;
 	uint8_t		 safi, aid, role, flags;
 
@@ -2581,6 +2613,38 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 			break;
 		case CAPA_REFRESH:
 			peer->capa.peer.refresh = 1;
+			break;
+		case CAPA_EXT_NEXTHOP:
+			while (ibuf_size(&capabuf) > 0) {
+				if (ibuf_get_n16(&capabuf, &afi) == -1 ||
+				    ibuf_get_n16(&capabuf, &tmp16) == -1 ||
+				    ibuf_get_n16(&capabuf, &nhafi) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "Received bad %s capability",
+					    log_capability(CAPA_EXT_NEXTHOP));
+					memset(peer->capa.peer.ext_nh, 0,
+					    sizeof(peer->capa.peer.ext_nh));
+					break;
+				}
+				if (afi2aid(afi, tmp16, &aid) == -1 ||
+				    !(aid == AID_INET || aid == AID_VPN_IPv4)) {
+					log_peer_warnx(&peer->conf,
+					    "Received %s capability: "
+					    " unsupported AFI %u, safi %u pair",
+					    log_capability(CAPA_EXT_NEXTHOP),
+					    afi, safi);
+					continue;
+				}
+				if (nhafi != AFI_IPv6) {
+					log_peer_warnx(&peer->conf,
+					    "Received %s capability: "
+					    " unsupported nexthop AFI %u",
+					    log_capability(CAPA_EXT_NEXTHOP),
+					    nhafi);
+					continue;
+				}
+				peer->capa.peer.ext_nh[aid] = 1;
+			}
 			break;
 		case CAPA_EXT_MSG:
 			peer->capa.peer.ext_msg = 1;
@@ -2798,6 +2862,16 @@ capa_neg_calc(struct peer *p)
 	    (p->capa.ann.grestart.grnotification &&
 	    p->capa.peer.grestart.grnotification) != 0;
 
+	/* RFC 8950 extended nexthop encoding: both sides need to agree */
+	memset(p->capa.neg.add_path, 0, sizeof(p->capa.neg.add_path));
+	for (i = AID_MIN; i < AID_MAX; i++) {
+		if (p->capa.neg.mp[i] == 0)
+			continue;
+		if (p->capa.ann.ext_nh[i] && p->capa.peer.ext_nh[i]) {
+			p->capa.neg.ext_nh[i] = 1;
+		}
+	}
+
 	/*
 	 * ADD-PATH: set only those bits where both sides agree.
 	 * For this compare our send bit with the recv bit from the peer
@@ -2929,6 +3003,17 @@ capa_neg_calc(struct peer *p)
 		}
 	}
 
+	for (i = AID_MIN; i < AID_MAX; i++) {
+		if (p->capa.neg.mp[i] == 0)
+			continue;
+		if (p->capa.ann.ext_nh[i] == 2 &&
+		    p->capa.neg.ext_nh[i] == 0) {
+			capa_code = CAPA_EXT_NEXTHOP;
+			capa_len = 6;
+			capa_aid = i;
+			goto fail;
+		}
+	}
 	return (0);
 
  fail:
@@ -2940,6 +3025,8 @@ capa_neg_calc(struct peer *p)
 		session_capa_add_mp(ebuf, capa_aid);
 	else if (capa_code == CAPA_ADD_PATH)
 		session_capa_add_afi(ebuf, capa_aid, 0);
+	else if (capa_code == CAPA_EXT_NEXTHOP)
+		session_capa_add_ext_nh(ebuf, capa_aid);
 	else if (capa_len > 0)
 		ibuf_add_zero(ebuf, capa_len);
 

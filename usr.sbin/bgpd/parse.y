@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.475 2025/01/09 15:57:31 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.476 2025/01/13 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2032,6 +2032,10 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| ANNOUNCE EXTENDED MESSAGE yesnoenforce {
 			curpeer->conf.capabilities.ext_msg = $4;
+		}
+		| ANNOUNCE EXTENDED NEXTHOP yesnoenforce {
+			curpeer->conf.capabilities.ext_nh[AID_VPN_IPv4] =
+			    curpeer->conf.capabilities.ext_nh[AID_INET] = $4;
 		}
 		| ROLE STRING {
 			if (strcmp($2, "provider") == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.179 2025/01/09 15:57:31 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.180 2025/01/13 13:50:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -972,6 +972,11 @@ print_announce(struct peer_config *p, const char *c)
 		printf("%s\tannounce extended message enforce\n", c);
 	else if (p->capabilities.ext_msg == 1)
 		printf("%s\tannounce extended message yes\n", c);
+
+	if (p->capabilities.ext_nh[AID_INET] == 2)
+		printf("%s\tannounce extended nexthop enforce\n", c);
+	else if (p->capabilities.ext_nh[AID_INET] == 1)
+		printf("%s\tannounce extended nexthop yes\n", c);
 
 	if (p->capabilities.add_path[AID_MIN] & CAPA_AP_RECV_ENFORCE)
 		printf("%s\tannounce add-path recv enforce\n", c);
