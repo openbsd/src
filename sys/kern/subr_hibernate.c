@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.150 2025/01/09 19:22:39 mglocker Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.151 2025/01/13 17:50:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -406,48 +406,10 @@ hiballoc_init(struct hiballoc_arena *arena, void *p_ptr, size_t p_len)
 }
 
 /*
- * Zero all free memory.
- */
-void
-uvm_pmr_zero_everything(void)
-{
-	struct uvm_pmemrange	*pmr;
-	struct vm_page		*pg;
-	int			 i;
-
-	uvm_lock_fpageq();
-	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
-		/* Zero single pages. */
-		while ((pg = TAILQ_FIRST(&pmr->single[UVM_PMR_MEMTYPE_DIRTY]))
-		    != NULL) {
-			uvm_pmr_remove(pmr, pg);
-			uvm_pagezero(pg);
-			atomic_setbits_int(&pg->pg_flags, PG_ZERO);
-			uvmexp.zeropages++;
-			uvm_pmr_insert(pmr, pg, 0);
-		}
-
-		/* Zero multi page ranges. */
-		while ((pg = RBT_ROOT(uvm_pmr_size,
-		    &pmr->size[UVM_PMR_MEMTYPE_DIRTY])) != NULL) {
-			pg--; /* Size tree always has second page. */
-			uvm_pmr_remove(pmr, pg);
-			for (i = 0; i < pg->fpgsz; i++) {
-				uvm_pagezero(&pg[i]);
-				atomic_setbits_int(&pg[i].pg_flags, PG_ZERO);
-				uvmexp.zeropages++;
-			}
-			uvm_pmr_insert(pmr, pg, 0);
-		}
-	}
-	uvm_unlock_fpageq();
-}
-
-/*
  * Mark all memory as dirty.
  *
- * Used to inform the system that the clean memory isn't clean for some
- * reason, for example because we just came back from hibernate.
+ * Used to inform the system that there are no pre-zero'd (PG_ZERO) free pages
+ * when we came back from hibernate.
  */
 void
 uvm_pmr_dirty_everything(void)
@@ -1534,7 +1496,6 @@ hibernate_write_chunks(union hibernate_info *hib)
 	}
 
 	uvm_pmr_dirty_everything();
-	uvm_pmr_zero_everything();
 
 	/* Compress and write the chunks in the chunktable */
 	for (i = 0; i < hib->chunk_ctr; i++) {
