@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.35 2024/05/14 08:26:13 jsg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.36 2025/01/13 03:21:10 mvs Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -333,9 +333,7 @@ taskq_del_barrier(struct taskq *tq, struct task *t)
 {
 	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
 
-	if (task_del(tq, t))
-		return;
-
+	task_del(tq, t);
 	taskq_do_barrier(tq);
 }
 
