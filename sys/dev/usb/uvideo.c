@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.233 2025/01/01 11:42:07 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.234 2025/01/13 15:32:36 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -382,6 +382,18 @@ const struct uvideo_devs {
 };
 #define uvideo_lookup(v, p) \
 	((const struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
+
+const struct uvideo_map_fmts {
+	uint8_t		guidFormat[16];
+	uint32_t	pixelformat;
+} uvideo_map_fmts[] = {
+	{ UVIDEO_FORMAT_GUID_YUY2, V4L2_PIX_FMT_YUYV },
+	{ UVIDEO_FORMAT_GUID_YV12, V4L2_PIX_FMT_YVU420 },
+	{ UVIDEO_FORMAT_GUID_I420, V4L2_PIX_FMT_YUV420 },
+	{ UVIDEO_FORMAT_GUID_Y800, V4L2_PIX_FMT_GREY },
+	{ UVIDEO_FORMAT_GUID_Y8, V4L2_PIX_FMT_GREY },
+	{ UVIDEO_FORMAT_GUID_KSMEDIA_L8_IR, V4L2_PIX_FMT_GREY },
+};
 
 int
 uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
@@ -1048,8 +1060,7 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
 	struct usb_video_format_uncompressed_desc *d;
-	uint8_t guid_8bit_ir[16] = UVIDEO_FORMAT_GUID_KSMEDIA_L8_IR;
-	int i;
+	int i, j, nent;
 
 	d = (struct usb_video_format_uncompressed_desc *)(uint8_t *)desc;
 
@@ -1074,19 +1085,23 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
 		    d->bDefaultFrameIndex;
 	}
+
 	i = sc->sc_fmtgrp_idx;
-	if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "YUY2")) {
-		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_YUYV;
-	} else if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "NV12")) {
-		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_NV12;
-	} else if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "UYVY")) {
-		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_UYVY;
-	} else if (!memcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat,
-	    guid_8bit_ir, 16)) {
-		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_GREY;
-	} else {
-		sc->sc_fmtgrp[i].pixelformat = 0;
+
+	/* map GUID to pixel format if a matching entry is found */
+	for (j = 0, nent = nitems(uvideo_map_fmts); j < nent; j++) {
+		if (!memcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat,
+		    uvideo_map_fmts[j].guidFormat, 16)) {
+			sc->sc_fmtgrp[i].pixelformat =
+			    uvideo_map_fmts[j].pixelformat;
+			break;
+		}
 	}
+	/* default to using GUID start as the pixel format */
+	if (j == nent)
+		memcpy(&sc->sc_fmtgrp[i].pixelformat,
+		    sc->sc_fmtgrp[i].format->u.uc.guidFormat,
+		    sizeof(uint32_t));
 
 	if (sc->sc_fmtgrp_cur == NULL)
 		/* set UNCOMPRESSED format */
@@ -2992,26 +3007,10 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 		break;
 	case UDESCSUB_VS_FORMAT_UNCOMPRESSED:
 		fmtdesc->flags = 0;
-		if (sc->sc_fmtgrp[idx].pixelformat ==
-		    V4L2_PIX_FMT_YUYV) {
-			(void)strlcpy(fmtdesc->description, "YUYV",
-			    sizeof(fmtdesc->description));
-			fmtdesc->pixelformat = V4L2_PIX_FMT_YUYV;
-		} else if (sc->sc_fmtgrp[idx].pixelformat ==
-		    V4L2_PIX_FMT_NV12) {
-			(void)strlcpy(fmtdesc->description, "NV12",
-			    sizeof(fmtdesc->description));
-			fmtdesc->pixelformat = V4L2_PIX_FMT_NV12;
-		} else if (sc->sc_fmtgrp[idx].pixelformat ==
-		    V4L2_PIX_FMT_UYVY) {
-			(void)strlcpy(fmtdesc->description, "UYVY",
-			    sizeof(fmtdesc->description));
-			fmtdesc->pixelformat = V4L2_PIX_FMT_UYVY;
-		} else {
-			(void)strlcpy(fmtdesc->description, "Unknown UC Format",
-			    sizeof(fmtdesc->description));
-			fmtdesc->pixelformat = 0;
-		}
+		fmtdesc->pixelformat = sc->sc_fmtgrp[idx].pixelformat;
+		(void)strlcpy(fmtdesc->description,
+		    (char *) &fmtdesc->pixelformat,
+		    sizeof(fmtdesc->description));
 		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
 		break;
 	default:
