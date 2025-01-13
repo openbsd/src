@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.52 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.53 2025/01/13 13:58:41 claudio Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -388,15 +388,14 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp)
 
 	DPRINTF("ntfs_ntlookup: looking for ntnode %u\n", ino);
 
-	do {
-		if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
-			ntfs_ntget(ip);
-			DPRINTF("ntfs_ntlookup: ntnode %u: %p, usecount: %d\n",
-			    ino, ip, ip->i_usecount);
-			*ipp = ip;
-			return (0);
-		}
-	} while (rw_enter(&ntfs_hashlock, RW_WRITE | RW_SLEEPFAIL));
+ retry:
+	if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+		ntfs_ntget(ip);
+		DPRINTF("ntfs_ntlookup: ntnode %u: %p, usecount: %d\n",
+		    ino, ip, ip->i_usecount);
+		*ipp = ip;
+		return (0);
+	}
 
 	ip = malloc(sizeof(*ip), M_NTFSNTNODE, M_WAITOK | M_ZERO);
 	DDPRINTF("ntfs_ntlookup: allocating ntnode: %u: %p\n", ino, ip);
@@ -408,15 +407,17 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp)
 	ip->i_mp = ntmp;
 
 	LIST_INIT(&ip->i_fnlist);
+	LIST_INIT(&ip->i_valist);
 	vref(ip->i_devvp);
 
 	/* init lock and lock the newborn ntnode */
 	rw_init(&ip->i_lock, "ntnode");
 	ntfs_ntget(ip);
 
-	ntfs_nthashins(ip);
-
-	rw_exit(&ntfs_hashlock);
+	if (ntfs_nthashins(ip) != 0) {
+		ntfs_ntput(ip);
+		goto retry;
+	}
 
 	*ipp = ip;
 

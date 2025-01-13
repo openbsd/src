@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.21 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.22 2025/01/13 13:58:41 claudio Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -54,7 +54,6 @@ static LIST_HEAD(nthashhead, ntnode) *ntfs_nthashtbl;
 static SIPHASH_KEY ntfs_nthashkey;
 static u_long	ntfs_nthash;		/* size of hash table - 1 */
 #define	NTNOHASH(device, inum) ntfs_hash((device), (inum))
-struct rwlock ntfs_hashlock = RWLOCK_INITIALIZER("ntfs_nthashlock");
 
 /*
  * Initialize inode hash table.
@@ -115,16 +114,25 @@ ntfs_nthashlookup(dev_t dev, ntfsino_t inum)
 /*
  * Insert the ntnode into the hash table.
  */
-void
+int
 ntfs_nthashins(struct ntnode *ip)
 {
 	struct nthashhead *ipp;
+	struct ntnode *curip;
 
 	/* XXXLOCKING lock hash list? */
 	ipp = &ntfs_nthashtbl[NTNOHASH(ip->i_dev, ip->i_number)];
-	LIST_INSERT_HEAD(ipp, ip, i_hash);
+	LIST_FOREACH(curip, ipp, i_hash) {
+		if (ip->i_number == curip->i_number &&
+		    ip->i_dev == curip->i_dev)
+			return (EEXIST);
+	}
+
 	ip->i_flag |= IN_HASHED;
+	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	/* XXXLOCKING unlock hash list? */
+
+	return (0);
 }
 
 /*
