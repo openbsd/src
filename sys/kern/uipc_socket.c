@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.359 2025/01/09 17:43:33 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.360 2025/01/13 18:10:20 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1604,15 +1604,11 @@ somove(struct socket *so, int wait)
 	long		 space;
 	int		 error = 0, maxreached = 0, unsplice = 0;
 	unsigned int	 rcvstate;
-	int		 sockdgram = ((so->so_proto->pr_flags &
-			     PR_WANTRCVD) == 0);
 
 	sbassertlocked(&so->so_rcv);
 
-	if (!sockdgram) {
+	if (so->so_proto->pr_flags & PR_WANTRCVD)
 		sblock(&so->so_snd, SBL_WAIT | SBL_NOINTR);
-		solock(so);
-	}
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	mtx_enter(&sosp->so_snd.sb_mtx);
@@ -1682,7 +1678,9 @@ somove(struct socket *so, int wait)
 		if (so->so_proto->pr_flags & PR_WANTRCVD) {
 			mtx_leave(&sosp->so_snd.sb_mtx);
 			mtx_leave(&so->so_rcv.sb_mtx);
+			solock_shared(so);
 			pru_rcvd(so);
+			sounlock_shared(so);
 			mtx_enter(&so->so_rcv.sb_mtx);
 			mtx_enter(&sosp->so_snd.sb_mtx);
 		}
@@ -1793,7 +1791,9 @@ somove(struct socket *so, int wait)
 	if (so->so_proto->pr_flags & PR_WANTRCVD) {
 		mtx_leave(&sosp->so_snd.sb_mtx);
 		mtx_leave(&so->so_rcv.sb_mtx);
+		solock_shared(so);
 		pru_rcvd(so);
+		sounlock_shared(so);
 		mtx_enter(&so->so_rcv.sb_mtx);
 		mtx_enter(&sosp->so_snd.sb_mtx);
 	}
@@ -1826,7 +1826,9 @@ somove(struct socket *so, int wait)
 			if (o) {
 				mtx_leave(&sosp->so_snd.sb_mtx);
 				mtx_leave(&so->so_rcv.sb_mtx);
+				solock_shared(sosp);
 				error = pru_send(sosp, m, NULL, NULL);
+				sounlock_shared(sosp);
 				mtx_enter(&so->so_rcv.sb_mtx);
 				mtx_enter(&sosp->so_snd.sb_mtx);
 
@@ -1850,7 +1852,9 @@ somove(struct socket *so, int wait)
 
 			mtx_leave(&sosp->so_snd.sb_mtx);
 			mtx_leave(&so->so_rcv.sb_mtx);
+			solock_shared(sosp);
 			error = pru_sendoob(sosp, o, NULL, NULL);
+			sounlock_shared(sosp);
 			mtx_enter(&so->so_rcv.sb_mtx);
 			mtx_enter(&sosp->so_snd.sb_mtx);
 
@@ -1877,13 +1881,9 @@ somove(struct socket *so, int wait)
 
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
-
-	if (sockdgram)
-		solock_shared(sosp);
+	solock_shared(sosp);
 	error = pru_send(sosp, m, NULL, NULL);
-	if (sockdgram)
-		sounlock_shared(sosp);
-
+	sounlock_shared(sosp);
 	mtx_enter(&so->so_rcv.sb_mtx);
 	mtx_enter(&sosp->so_snd.sb_mtx);
 
@@ -1916,10 +1916,8 @@ somove(struct socket *so, int wait)
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
-	if (!sockdgram) {
+	if (so->so_proto->pr_flags & PR_WANTRCVD)
 		sbunlock(&so->so_snd);
-		sounlock(so);
-	}
 
 	if (unsplice) {
 		soref(sosp);
