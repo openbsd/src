@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpthread.c,v 1.2 2025/01/06 22:25:38 bluhm Exp $	*/
+/*	$OpenBSD: tcpthread.c,v 1.3 2025/01/13 12:55:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
@@ -181,6 +181,10 @@ accept_socket(volatile int *acceptp, int *listens,
 		if (sock < 0) {
 			if (errno == EWOULDBLOCK) {
 				/* no connection to accept */
+				continue;
+			}
+			if (errno == ECONNABORTED) {
+				/* accepted socket was disconnected */
 				continue;
 			}
 			err(1, "%s: accept %d", __func__, listens[i]);
