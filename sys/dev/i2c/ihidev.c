@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.38 2025/01/07 23:13:56 kirill Exp $ */
+/* $OpenBSD: ihidev.c,v 1.39 2025/01/13 15:33:34 kirill Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -577,8 +577,6 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 int
 ihidev_poweron(struct ihidev_softc *sc)
 {
-	DPRINTF(("%s: resetting\n", sc->sc_dev.dv_xname));
-
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER, &I2C_HID_POWER_ON)) {
 		printf("%s: failed to power on\n", sc->sc_dev.dv_xname);
 		return (1);
@@ -593,6 +591,8 @@ ihidev_poweron(struct ihidev_softc *sc)
 int
 ihidev_reset(struct ihidev_softc *sc)
 {
+	DPRINTF(("%s: resetting\n", sc->sc_dev.dv_xname));
+
 	if (ihidev_poweron(sc))
 		return (1);
 
