@@ -404,7 +404,7 @@ intel_context_init(struct intel_context *ce, struct intel_engine_cs *engine)
 
 	rw_init(&ce->pin_mutex, "cepin");
 
-	mtx_init(&ce->guc_state.lock, IPL_NONE);
+	mtx_init(&ce->guc_state.lock, IPL_TTY);
 	INIT_LIST_HEAD(&ce->guc_state.fences);
 	INIT_LIST_HEAD(&ce->guc_state.requests);
 
