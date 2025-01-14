@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.266 2024/12/12 20:19:03 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.267 2025/01/14 12:24:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1273,6 +1273,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 			/* nothing changed */
 			p->validation_state = state->vstate;
 			p->lastchange = getmonotime();
+			p->flags &= ~PREFIX_FLAG_STALE;
 			return;
 		}
 
@@ -1343,6 +1344,7 @@ prefix_adjout_withdraw(struct prefix *p)
 	/* already a withdraw, shortcut */
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
 		p->lastchange = getmonotime();
+		p->flags &= ~PREFIX_FLAG_STALE;
 		return;
 	}
 	/* pending update just got withdrawn */
