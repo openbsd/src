@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2025/01/13 14:18:07 claudio Exp $
+# $OpenBSD: Makefile,v 1.27 2025/01/14 13:15:18 claudio Exp $
 
 REGRESS_TARGETS	= 	network_statement md5 ovs capa policy pftable \
 			mrt maxprefix maxprefixout maxcomm maxattr \
@@ -49,6 +49,9 @@ l3vpn:
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12 13 14
 
 ixp:
+	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
+
+addpath:
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 lladdr:
