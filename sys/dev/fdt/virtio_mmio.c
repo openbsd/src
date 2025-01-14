@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.21 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.22 2025/01/14 12:30:57 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -105,6 +105,8 @@ int		virtio_mmio_negotiate_features(struct virtio_softc *,
     const struct virtio_feature_name *);
 int		virtio_mmio_intr(void *);
 void		virtio_mmio_intr_barrier(struct virtio_softc *);
+int		virtio_mmio_intr_establish(struct virtio_softc *, struct virtio_attach_args *,
+    int, struct cpu_info *, int (*)(void *), void *);
 
 struct virtio_mmio_softc {
 	struct virtio_softc	sc_sc;
@@ -160,6 +162,7 @@ const struct virtio_ops virtio_mmio_ops = {
 	virtio_mmio_attach_finish,
 	virtio_mmio_intr,
 	virtio_mmio_intr_barrier,
+	virtio_mmio_intr_establish,
 };
 
 uint16_t
@@ -545,4 +548,12 @@ virtio_mmio_intr_barrier(struct virtio_softc *vsc)
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	if (sc->sc_ih)
 		intr_barrier(sc->sc_ih);
+}
+
+int
+virtio_mmio_intr_establish(struct virtio_softc *vsc,
+    struct virtio_attach_args *va, int vec, struct cpu_info *ci,
+    int (*func)(void *), void *arg)
+{
+	return ENXIO;
 }

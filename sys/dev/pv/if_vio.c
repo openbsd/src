@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.63 2025/01/06 14:23:52 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.64 2025/01/14 12:30:57 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -32,8 +32,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/intrmap.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
+#include <sys/percpu.h>	/* for CACHELINESIZE */
 #include <sys/sockio.h>
 #include <sys/timeout.h>
 
@@ -64,8 +66,15 @@
  * if_vioreg.h:
  */
 /* Configuration registers */
-#define VIRTIO_NET_CONFIG_MAC		0 /* 8bit x 6byte */
-#define VIRTIO_NET_CONFIG_STATUS	6 /* 16bit */
+#define VIRTIO_NET_CONFIG_MAC		 0 /*  8 bit x 6 byte */
+#define VIRTIO_NET_CONFIG_STATUS	 6 /* 16 bit */
+#define VIRTIO_NET_CONFIG_MAX_QUEUES	 8 /* 16 bit */
+#define VIRTIO_NET_CONFIG_MTU		10 /* 16 bit */
+#define VIRTIO_NET_CONFIG_SPEED		12 /* 32 bit */
+#define VIRTIO_NET_CONFIG_DUPLEX	16 /*  8 bit */
+#define VIRTIO_NET_CONFIG_RSS_SIZE	17 /*  8 bit */
+#define VIRTIO_NET_CONFIG_RSS_LEN	18 /* 16 bit */
+#define VIRTIO_NET_CONFIG_HASH_TYPES	20 /* 16 bit */
 
 /* Feature bits */
 #define VIRTIO_NET_F_CSUM			(1ULL<<0)
@@ -183,6 +192,11 @@ struct virtio_net_ctrl_cmd {
 # define VIRTIO_NET_CTRL_VLAN_ADD	0
 # define VIRTIO_NET_CTRL_VLAN_DEL	1
 
+#define VIRTIO_NET_CTRL_MQ		4
+# define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_SET	0
+# define VIRTIO_NET_CTRL_MQ_RSS_CONFIG		1
+# define VIRTIO_NET_CTRL_MQ_HASH_CONFIG		2
+
 #define VIRTIO_NET_CTRL_GUEST_OFFLOADS	5
 # define VIRTIO_NET_CTRL_GUEST_OFFLOADS_SET	0
 
@@ -195,6 +209,12 @@ struct virtio_net_ctrl_status {
 struct virtio_net_ctrl_rx {
 	uint8_t	onoff;
 } __packed;
+
+struct virtio_net_ctrl_mq_pairs_set {
+	uint16_t virtqueue_pairs;
+};
+#define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MIN	1
+#define VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MAX	0x8000
 
 struct virtio_net_ctrl_guest_offloads {
 	uint64_t offloads;
@@ -231,7 +251,7 @@ struct vio_queue {
 	struct virtqueue	 *viq_txvq;
 	struct mutex		  viq_txmtx, viq_rxmtx;
 	int			  viq_txfree_slots;
-};
+} __aligned(CACHELINESIZE);
 
 struct vio_softc {
 	struct device		sc_dev;
@@ -251,14 +271,16 @@ struct vio_softc {
 	caddr_t			sc_dma_kva;
 
 	int			sc_hdr_size;
-	struct virtio_net_ctrl_cmd *sc_ctrl_cmd;
-	struct virtio_net_ctrl_status *sc_ctrl_status;
-	struct virtio_net_ctrl_rx *sc_ctrl_rx;
-	struct virtio_net_ctrl_guest_offloads *sc_ctrl_guest_offloads;
-	struct virtio_net_ctrl_mac_tbl *sc_ctrl_mac_tbl_uc;
+	struct virtio_net_ctrl_cmd		*sc_ctrl_cmd;
+	struct virtio_net_ctrl_status		*sc_ctrl_status;
+	struct virtio_net_ctrl_rx		*sc_ctrl_rx;
+	struct virtio_net_ctrl_mq_pairs_set	*sc_ctrl_mq_pairs;
+	struct virtio_net_ctrl_guest_offloads	*sc_ctrl_guest_offloads;
+	struct virtio_net_ctrl_mac_tbl		*sc_ctrl_mac_tbl_uc;
 #define sc_ctrl_mac_info sc_ctrl_mac_tbl_uc
-	struct virtio_net_ctrl_mac_tbl *sc_ctrl_mac_tbl_mc;
+	struct virtio_net_ctrl_mac_tbl		*sc_ctrl_mac_tbl_mc;
 
+	struct intrmap		*sc_intrmap;
 	struct vio_queue	*sc_q;
 	uint16_t		sc_nqueues;
 	int			sc_tx_slots_per_req;
@@ -317,10 +339,15 @@ void	vio_tx_drain(struct vio_softc *);
 int	vio_encap(struct vio_queue *, int, struct mbuf *);
 void	vio_txtick(void *);
 
+int	vio_queue_intr(void *);
+int	vio_config_intr(void *);
+int	vio_ctrl_intr(void *);
+
 /* other control */
 void	vio_link_state(struct ifnet *);
 int	vio_config_change(struct virtio_softc *);
 int	vio_ctrl_rx(struct vio_softc *, int, int);
+int	vio_ctrl_mq(struct vio_softc *);
 int	vio_ctrl_guest_offloads(struct vio_softc *, uint64_t);
 int	vio_set_rx_filter(struct vio_softc *);
 void	vio_iff(struct vio_softc *);
@@ -408,6 +435,8 @@ vio_free_dmamem(struct vio_softc *sc)
  *   sc_ctrl_status:	 return value for a command via ctrl vq (READ)
  *   sc_ctrl_rx:	 parameter for a VIRTIO_NET_CTRL_RX class command
  *			 (WRITE)
+ *   sc_ctrl_mq_pairs_set: set number of rx/tx queue pais (WRITE)
+ *   sc_ctrl_guest_offloads: configure offload features (WRITE)
  *   sc_ctrl_mac_tbl_uc: unicast MAC address filter for a VIRTIO_NET_CTRL_MAC
  *			 class command (WRITE)
  *   sc_ctrl_mac_tbl_mc: multicast MAC address filter for a VIRTIO_NET_CTRL_MAC
@@ -449,6 +478,7 @@ vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 		allocsize += sizeof(struct virtio_net_ctrl_cmd) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_status) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_rx) * 1;
+		allocsize += sizeof(struct virtio_net_ctrl_mq_pairs_set) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_guest_offloads) * 1;
 		allocsize += VIO_CTRL_MAC_INFO_SIZE;
 	}
@@ -474,6 +504,8 @@ vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 		offset += sizeof(*sc->sc_ctrl_status);
 		sc->sc_ctrl_rx = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_rx);
+		sc->sc_ctrl_mq_pairs = (void *)(kva + offset);
+		offset += sizeof(*sc->sc_ctrl_mq_pairs);
 		sc->sc_ctrl_guest_offloads = (void *)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_guest_offloads);
 		sc->sc_ctrl_mac_tbl_uc = (void *)(kva + offset);
@@ -598,7 +630,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	struct virtio_attach_args *va = aux;
-	int i, tx_max_segments;
+	int i, r, tx_max_segments;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (vsc->sc_child != NULL) {
@@ -616,6 +648,9 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
 	    VIRTIO_F_RING_EVENT_IDX | VIRTIO_NET_F_GUEST_CSUM;
 
+	if (va->va_nintr > 3 && ncpus > 1)
+		vsc->sc_driver_features |= VIRTIO_NET_F_MQ;
+
 	vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO4;
 	vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO6;
 
@@ -626,10 +661,23 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	if (virtio_negotiate_features(vsc, virtio_net_feature_names) != 0)
 		goto err;
 
-	sc->sc_nqueues = 1;
-	vsc->sc_nvqs = 2 * sc->sc_nqueues;
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
-		vsc->sc_nvqs++;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ)) {
+		i = virtio_read_device_config_2(vsc,
+		    VIRTIO_NET_CONFIG_MAX_QUEUES);
+		vsc->sc_nvqs = 2 * i + 1;
+		i = MIN(i, VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MAX);
+		sc->sc_intrmap = intrmap_create(&sc->sc_dev, i,
+		    va->va_nintr - 2, 0);
+		sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
+		printf(": %u queue%s", sc->sc_nqueues,
+		    sc->sc_nqueues > 1 ? "s"  : "");
+	} else {
+		sc->sc_nqueues = 1;
+		printf(": 1 queue");
+		vsc->sc_nvqs = 2;
+		if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
+			vsc->sc_nvqs++;
+	}
 
 	vsc->sc_vqs = mallocarray(vsc->sc_nvqs, sizeof(*vsc->sc_vqs), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
@@ -729,16 +777,64 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		else
 			virtio_stop_vq_intr(vsc, vioq->viq_txvq);
 		vioq->viq_txfree_slots = vioq->viq_txvq->vq_num - 1;
+		KASSERT(vioq->viq_txfree_slots > sc->sc_tx_slots_per_req);
+		if (vioq->viq_txvq->vq_num != sc->sc_q[0].viq_txvq->vq_num) {
+			printf("inequal tx queue size %d: %d != %d\n", i,
+			    vioq->viq_txvq->vq_num,
+			    sc->sc_q[0].viq_txvq->vq_num);
+			goto err;
+		}
+		DPRINTF("%d: q %p rx %p tx %p\n", i, vioq, vioq->viq_rxvq,
+		    vioq->viq_txvq);
+
+		if (sc->sc_intrmap != NULL) {
+			vioq->viq_rxvq->vq_intr_vec = i + 2;
+			vioq->viq_txvq->vq_intr_vec = i + 2;
+		}
 	}
 
 	/* control queue */
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)) {
-		sc->sc_ctl_vq = &vsc->sc_vqs[2];
-		if (virtio_alloc_vq(vsc, sc->sc_ctl_vq, 2, 1,
-		    "control") != 0)
+		i = 2;
+		if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ)) {
+			i = 2 * virtio_read_device_config_2(vsc,
+			    VIRTIO_NET_CONFIG_MAX_QUEUES);
+		}
+		sc->sc_ctl_vq =  &vsc->sc_vqs[i];
+		if (virtio_alloc_vq(vsc, sc->sc_ctl_vq, i, 1, "control") != 0)
 			goto err;
 		sc->sc_ctl_vq->vq_done = vio_ctrleof;
+		if (sc->sc_intrmap != NULL)
+			sc->sc_ctl_vq->vq_intr_vec = 1;
 		virtio_start_vq_intr(vsc, sc->sc_ctl_vq);
+	}
+
+	if (sc->sc_intrmap) {
+		r = virtio_intr_establish(vsc, va, 0, NULL, vio_config_intr,
+		    vsc);
+		if (r != 0) {
+			printf("%s: cannot alloc config intr: %d\n",
+			    sc->sc_dev.dv_xname, r);
+			goto err;
+		}
+		r = virtio_intr_establish(vsc, va, 1, NULL, vio_ctrl_intr,
+		    sc->sc_ctl_vq);
+		if (r != 0) {
+			printf("%s: cannot alloc ctrl intr: %d\n",
+			    sc->sc_dev.dv_xname, r);
+			goto err;
+		}
+		for (i = 0; i < sc->sc_nqueues; i++) {
+			struct cpu_info *ci = NULL;
+			ci = intrmap_cpu(sc->sc_intrmap, i);
+			r = virtio_intr_establish(vsc, va, i + 2, ci,
+			    vio_queue_intr, &sc->sc_q[i]);
+			if (r != 0) {
+				printf("%s: cannot alloc q%d intr: %d\n",
+				    sc->sc_dev.dv_xname, i, r);
+				goto err;
+			}
+		}
 	}
 
 	if (vio_alloc_mem(sc, tx_max_segments) < 0)
@@ -759,6 +855,11 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (virtio_attach_finish(vsc, va) != 0)
 		goto err;
+
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ)) {
+		/* ctrl queue works only after DRIVER_OK */
+		vio_ctrl_mq(sc);
+	}
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -804,6 +905,33 @@ vio_link_state(struct ifnet *ifp)
 		if_link_state_change(ifp);
 	}
 }
+
+/* interrupt handlers for multi-queue */
+int
+vio_queue_intr(void *arg)
+{
+	struct vio_queue *vioq = arg;
+	struct virtio_softc *vsc = vioq->viq_sc->sc_virtio;
+	int r;
+	r = virtio_check_vq(vsc, vioq->viq_txvq);
+	r |= virtio_check_vq(vsc, vioq->viq_rxvq);
+	return r;
+}
+
+int
+vio_config_intr(void *arg)
+{
+	struct virtio_softc *vsc = arg;
+	return vio_config_change(vsc);
+}
+
+int
+vio_ctrl_intr(void *arg)
+{
+	struct virtqueue *vq = arg;
+	return virtio_check_vq(vq->vq_owner, vq);
+}
+
 
 int
 vio_config_change(struct virtio_softc *vsc)
@@ -913,6 +1041,8 @@ vio_stop(struct ifnet *ifp, int disable)
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		virtio_start_vq_intr(vsc, sc->sc_ctl_vq);
 	virtio_reinit_end(vsc);
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ))
+		vio_ctrl_mq(sc);
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ))
 		vio_ctrl_wakeup(sc, FREE);
 }
@@ -1137,6 +1267,33 @@ vio_dump(struct vio_softc *sc)
 }
 #endif
 
+static int
+vio_rxr_info(struct vio_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info *ifrs, *ifr;
+	int error;
+	unsigned int i;
+
+	ifrs = mallocarray(sc->sc_nqueues, sizeof(*ifrs),
+	    M_TEMP, M_WAITOK|M_ZERO|M_CANFAIL);
+	if (ifrs == NULL)
+		return (ENOMEM);
+
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		ifr = &ifrs[i];
+
+		ifr->ifr_size = sc->sc_rx_mbuf_size;
+		snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%u", i);
+		ifr->ifr_info = sc->sc_q[i].viq_rxring;
+	}
+
+	error = if_rxr_info_ioctl(ifri, i, ifrs);
+
+	free(ifrs, M_TEMP, i * sizeof(*ifrs));
+
+	return (error);
+}
+
 int
 vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -1171,8 +1328,7 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		r = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCGIFRXR:
-		r = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, sc->sc_rx_mbuf_size, &sc->sc_q[0].viq_rxring);
+		r = vio_rxr_info(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 	default:
 		r = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
@@ -1666,6 +1822,8 @@ vio_ctrl_submit(struct vio_softc *sc, int slot)
 			vio_ctrl_wakeup(sc, RESET);
 			return ENXIO;
 		}
+		if (cold)
+			virtio_check_vq(sc->sc_virtio, sc->sc_ctl_vq);
 	}
 
 	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_cmd,
@@ -1718,6 +1876,41 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 		printf("%s: ctrl cmd %d failed\n", sc->sc_dev.dv_xname, cmd);
 
 	DPRINTF("%s: cmd %d %d: %d\n", __func__, cmd, onoff, r);
+
+	vio_ctrl_finish(sc);
+	return r;
+}
+
+/* issue a VIRTIO_NET_CTRL_MQ class command and wait for completion */
+int
+vio_ctrl_mq(struct vio_softc *sc)
+{
+	struct virtio_softc *vsc = sc->sc_virtio;
+	struct virtqueue *vq = sc->sc_ctl_vq;
+	int r, slot;
+
+
+	r = vio_ctrl_start(sc, VIRTIO_NET_CTRL_MQ,
+	    VIRTIO_NET_CTRL_MQ_VQ_PAIRS_SET, 1, &slot);
+	if (r != 0)
+		return r;
+
+	sc->sc_ctrl_mq_pairs->virtqueue_pairs = sc->sc_nqueues;
+
+	vio_dmamem_enqueue(vsc, sc, vq, slot, sc->sc_ctrl_mq_pairs,
+	    sizeof(*sc->sc_ctrl_mq_pairs), 1);
+
+	r = vio_ctrl_submit(sc, slot);
+
+	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_mq_pairs,
+	    sizeof(*sc->sc_ctrl_mq_pairs), BUS_DMASYNC_POSTWRITE);
+
+	if (r != 0)
+		printf("%s: ctrl cmd %d failed\n", sc->sc_dev.dv_xname,
+		    VIRTIO_NET_CTRL_MQ_VQ_PAIRS_SET);
+
+	DPRINTF("%s: cmd %d %d: %d\n", __func__,
+	    VIRTIO_NET_CTRL_MQ_VQ_PAIRS_SET, sc->sc_nqueues, r);
 
 	vio_ctrl_finish(sc);
 	return r;
