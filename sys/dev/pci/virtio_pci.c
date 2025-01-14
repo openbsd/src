@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.49 2025/01/14 12:30:57 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.50 2025/01/14 14:28:38 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ virtio_pci_find_cap(struct virtio_pci_softc *sc, int cfg_type, void *buf, int bu
 			printf("%s: cap too large\n", __func__);
 			return ERANGE;
 		}
-		for (i = 4; i < len / sizeof(pcireg_t);  i++)
+		for (i = 4; i < len / sizeof(pcireg_t); i++)
 			v->reg[i] = pci_conf_read(pc, tag, offset + i * 4);
 	}
 

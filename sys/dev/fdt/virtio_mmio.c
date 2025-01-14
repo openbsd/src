@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.22 2025/01/14 12:30:57 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.23 2025/01/14 14:28:38 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ struct virtio_mmio_softc {
 
 struct virtio_mmio_attach_args {
 	struct virtio_attach_args	 vma_va;
-	struct fdt_attach_args          *vma_fa;
+	struct fdt_attach_args		*vma_fa;
 };
 
 const struct cfattach virtio_mmio_ca = {
@@ -237,7 +237,7 @@ virtio_mmio_set_status(struct virtio_softc *vsc, int status)
 		    VIRTIO_MMIO_STATUS) != 0) {
 			CPU_BUSY_CYCLE();
 		}
-	} else  {
+	} else {
 		old = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    VIRTIO_MMIO_STATUS);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_STATUS,

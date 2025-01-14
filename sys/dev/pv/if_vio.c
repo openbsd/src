@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.64 2025/01/14 12:30:57 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.65 2025/01/14 14:28:38 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -79,8 +79,8 @@
 /* Feature bits */
 #define VIRTIO_NET_F_CSUM			(1ULL<<0)
 #define VIRTIO_NET_F_GUEST_CSUM			(1ULL<<1)
-#define VIRTIO_NET_F_CTRL_GUEST_OFFLOADS        (1ULL<<2)
-#define VIRTIO_NET_F_MTU                        (1ULL<<3)
+#define VIRTIO_NET_F_CTRL_GUEST_OFFLOADS	(1ULL<<2)
+#define VIRTIO_NET_F_MTU			(1ULL<<3)
 #define VIRTIO_NET_F_MAC			(1ULL<<5)
 #define VIRTIO_NET_F_GSO			(1ULL<<6)
 #define VIRTIO_NET_F_GUEST_TSO4			(1ULL<<7)
@@ -670,7 +670,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		    va->va_nintr - 2, 0);
 		sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
 		printf(": %u queue%s", sc->sc_nqueues,
-		    sc->sc_nqueues > 1 ? "s"  : "");
+		    sc->sc_nqueues > 1 ? "s" : "");
 	} else {
 		sc->sc_nqueues = 1;
 		printf(": 1 queue");
@@ -800,7 +800,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 			i = 2 * virtio_read_device_config_2(vsc,
 			    VIRTIO_NET_CONFIG_MAX_QUEUES);
 		}
-		sc->sc_ctl_vq =  &vsc->sc_vqs[i];
+		sc->sc_ctl_vq = &vsc->sc_vqs[i];
 		if (virtio_alloc_vq(vsc, sc->sc_ctl_vq, i, 1, "control") != 0)
 			goto err;
 		sc->sc_ctl_vq->vq_done = vio_ctrleof;
