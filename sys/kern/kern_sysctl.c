@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.461 2025/01/13 18:09:24 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.462 2025/01/14 18:37:51 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -403,6 +403,9 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	int error;
 
 	switch (top_name) {
+	case KERN_MALLOCSTATS:
+		return (sysctl_malloc(name, namelen, oldp, oldlenp,
+		    newp, newlen, p));
 	case KERN_POOL:
 		return (sysctl_dopool(name, namelen, oldp, oldlenp));
 #if NAUDIO > 0
@@ -454,9 +457,6 @@ kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
 		return (sysctl_doprof(name, namelen, oldp, oldlenp,
 		    newp, newlen));
 #endif
-	case KERN_MALLOCSTATS:
-		return (sysctl_malloc(name, namelen, oldp, oldlenp,
-		    newp, newlen, p));
 	case KERN_TTY:
 		return (sysctl_tty(name, namelen, oldp, oldlenp,
 		    newp, newlen));

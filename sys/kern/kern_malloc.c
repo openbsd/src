@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.152 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.153 2025/01/14 18:37:51 mvs Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -50,6 +50,11 @@
 #include <ddb/db_output.h>
 #endif
 
+/*
+ * Locks used to protect data:
+ *	I	Immutable data
+ */
+ 
 static
 #ifndef SMALL_KERNEL
 __inline__
@@ -95,12 +100,11 @@ struct kmemstats kmemstats[M_LAST];
 #endif
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
-char buckstring[16 * sizeof("123456,")];
+char buckstring[16 * sizeof("123456,")];	/* [I] */
 int buckstring_init = 0;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC)
 char *memname[] = INITKMEMNAMES;
-char *memall = NULL;
-struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER("sysctlklk");
+char *memall;					/* [I] */
 #endif
 
 /*
@@ -540,6 +544,10 @@ kmeminit(void)
 	vaddr_t base, limit;
 	long indx;
 
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
+	int i, siz, totlen;
+#endif
+
 #ifdef DIAGNOSTIC
 	if (sizeof(struct kmem_freelist) > (1 << MINBUCKET))
 		panic("kmeminit: minbucket too small/struct freelist too big");
@@ -577,6 +585,38 @@ kmeminit(void)
 	for (indx = 0; indx < M_LAST; indx++)
 		kmemstats[indx].ks_limit =
 		    (long)nkmempages * PAGE_SIZE * 6 / 10;
+
+	memset(buckstring, 0, sizeof(buckstring));
+	for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++) {
+		snprintf(buckstring + siz, sizeof buckstring - siz,
+		    "%d,", (u_int)(1<<i));
+		siz += strlen(buckstring + siz);
+	}
+	/* Remove trailing comma */
+	if (siz)
+		buckstring[siz - 1] = '\0';
+#endif
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
+	/* Figure out how large a buffer we need */
+	for (totlen = 0, i = 0; i < M_LAST; i++) {
+		if (memname[i])
+			totlen += strlen(memname[i]);
+		totlen++;
+	}
+	memall = malloc(totlen + M_LAST, M_SYSCTL, M_WAITOK|M_ZERO);
+	for (siz = 0, i = 0; i < M_LAST; i++) {
+		snprintf(memall + siz, totlen + M_LAST - siz, "%s,",
+		    memname[i] ? memname[i] : "");
+		siz += strlen(memall + siz);
+	}
+	/* Remove trailing comma */
+	if (siz)
+		memall[siz - 1] = '\0';
+	/* Now, convert all spaces to underscores */
+	for (i = 0; i < totlen; i++) {
+		if (memall[i] == ' ')
+			memall[i] = '_';
+	}
 #endif
 }
 
@@ -591,10 +631,6 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #ifdef KMEMSTATS
 	struct kmemstats km;
 #endif
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
-	int error;
-#endif
-	int i, siz;
 
 	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS &&
 	    name[0] != KERN_MALLOC_KMEMNAMES)
@@ -602,20 +638,6 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case KERN_MALLOC_BUCKETS:
-		/* Initialize the first time */
-		if (buckstring_init == 0) {
-			buckstring_init = 1;
-			memset(buckstring, 0, sizeof(buckstring));
-			for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++) {
-				snprintf(buckstring + siz,
-				    sizeof buckstring - siz,
-				    "%d,", (u_int)(1<<i));
-				siz += strlen(buckstring + siz);
-			}
-			/* Remove trailing comma */
-			if (siz)
-				buckstring[siz - 1] = '\0';
-		}
 		return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
 
 	case KERN_MALLOC_BUCKET:
@@ -635,41 +657,9 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #else
 		return (EOPNOTSUPP);
 #endif
-	case KERN_MALLOC_KMEMNAMES:
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC)
-		error = rw_enter(&sysctl_kmemlock, RW_WRITE|RW_INTR);
-		if (error)
-			return (error);
-		if (memall == NULL) {
-			int totlen;
-
-			/* Figure out how large a buffer we need */
-			for (totlen = 0, i = 0; i < M_LAST; i++) {
-				if (memname[i])
-					totlen += strlen(memname[i]);
-				totlen++;
-			}
-			memall = malloc(totlen + M_LAST, M_SYSCTL,
-			    M_WAITOK|M_ZERO);
-			for (siz = 0, i = 0; i < M_LAST; i++) {
-				snprintf(memall + siz,
-				    totlen + M_LAST - siz,
-				    "%s,", memname[i] ? memname[i] : "");
-				siz += strlen(memall + siz);
-			}
-			/* Remove trailing comma */
-			if (siz)
-				memall[siz - 1] = '\0';
-
-			/* Now, convert all spaces to underscores */
-			for (i = 0; i < totlen; i++)
-				if (memall[i] == ' ')
-					memall[i] = '_';
-		}
-		rw_exit_write(&sysctl_kmemlock);
+	case KERN_MALLOC_KMEMNAMES:
 		return (sysctl_rdstring(oldp, oldlenp, newp, memall));
-#else
-		return (EOPNOTSUPP);
 #endif
 	default:
 		return (EOPNOTSUPP);
