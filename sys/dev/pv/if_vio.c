@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.65 2025/01/14 14:28:38 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.66 2025/01/14 14:32:32 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1938,7 +1938,7 @@ vio_ctrl_guest_offloads(struct vio_softc *sc, uint64_t features)
 	VIO_DMAMEM_SYNC(vsc, sc, sc->sc_ctrl_guest_offloads,
 	    sizeof(*sc->sc_ctrl_guest_offloads), BUS_DMASYNC_POSTWRITE);
 
-	if (r != 0) {
+	if (r != 0 && features != 0) {
 		printf("%s: offload features 0x%llx failed\n",
 		    sc->sc_dev.dv_xname, features);
 	}
