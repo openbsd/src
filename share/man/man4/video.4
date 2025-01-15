@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.20 2022/03/31 17:27:21 naddy Exp $
+.\" $OpenBSD: video.4,v 1.21 2025/01/15 20:34:50 kirill Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: January 15 2025 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -80,7 +80,8 @@ struct v4l2_fmtdesc {
 	u_int32_t	flags;
 	u_int8_t	description[32];
 	u_int32_t	pixelformat;
-	u_int32_t	reserved[4];
+	u_int32_t	mbus_code;
+	u_int32_t	reserved[3];
 };
 .Ed
 .It Dv VIDIOC_S_FMT Fa "struct v4l2_format *"
@@ -95,6 +96,7 @@ struct v4l2_format {
 		struct v4l2_vbi_format		vbi;
 		struct v4l2_sliced_vbi_format	sliced;
 		struct v4l2_sdr_format		sdr;
+		struct v4l2_meta_format		meta;
 		u_int8_t			raw_data[200];
         } fmt;
 };
@@ -130,7 +132,9 @@ struct v4l2_requestbuffers {
 	u_int32_t	count;
 	u_int32_t	type;
 	u_int32_t	memory;
-	u_int32_t	reserved[2];
+	u_int32_t	capabilities;
+	u_Int32_t	flags;
+	u_int32_t	reserved[3];
 };
 .Ed
 .It Dv VIDIOC_QUERYBUF Fa "struct v4l2_buffer *"
@@ -154,7 +158,10 @@ struct v4l2_buffer {
 	} m;
 	u_int32_t		length;
 	u_int32_t		reserved2;
-	u_int32_t		reserved;
+	union {
+		int32_t		request_fd;
+		u_int32_t	reserved;
+	}
 };
 .Ed
 .It Dv VIDIOC_QBUF Fa "struct v4l2_buffer *"
@@ -265,6 +272,9 @@ enum v4l2_buf_type {
 	V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE = 10,
 	V4L2_BUF_TYPE_SDR_CAPTURE = 11,
 	V4L2_BUF_TYPE_SDR_OUTPUT = 12,
+	V4L2_BUF_TYPE_META_CAPTURE = 13,
+	V4L2_BUF_TYPE_META_OUTPUT = 14,
+	/* Deprecated, do not use */
 	V4L2_BUF_TYPE_PRIVATE = 0x80,
 };
 
@@ -289,6 +299,40 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_U8 = 0x0100,
 	V4L2_CTRL_TYPE_U16 = 0x0101,
 	V4L2_CTRL_TYPE_U32 = 0x0102,
+	V4L2_CTRL_TYPE_AREA = 0x0106,
+
+	/* Compound types are >= 0x0100 */
+	V4L2_CTRL_TYPE_HDR10_CLL_INFO = 0x0110,
+	V4L2_CTRL_TYPE_HDR10_MASTERING_DISPLAY = 0x0111,
+
+	V4L2_CTRL_TYPE_H264_SPS = 0x0200,
+	V4L2_CTRL_TYPE_H264_PPS = 0x0201,
+	V4L2_CTRL_TYPE_H264_SCALING_MATRIX = 0x0202,
+	V4L2_CTRL_TYPE_H264_SLICE_PARAMS = 0x0203,
+	V4L2_CTRL_TYPE_H264_DECODE_PARAMS = 0x0204,
+	V4L2_CTRL_TYPE_H264_PRED_WEIGHTS = 0x0205,
+
+	V4L2_CTRL_TYPE_FWHT_PARAMS = 0x0220,
+
+	V4L2_CTRL_TYPE_VP8_FRAME = 0x0240,
+
+	V4L2_CTRL_TYPE_MPEG2_QUANTISATION = 0x0250,
+	V4L2_CTRL_TYPE_MPEG2_SEQUENCE = 0x0251,
+	V4L2_CTRL_TYPE_MPEG2_PICTURE = 0x0252,
+
+	V4L2_CTRL_TYPE_VP9_COMPRESSED_HDR = 0x0260,
+	V4L2_CTRL_TYPE_VP9_FRAME = 0x0261,
+
+	V4L2_CTRL_TYPE_HEVC_SPS = 0x0270,
+	V4L2_CTRL_TYPE_HEVC_PPS = 0x0271,
+	V4L2_CTRL_TYPE_HEVC_SLICE_PARAMS = 0x0272,
+	V4L2_CTRL_TYPE_HEVC_SCALING_MATRIX = 0x0273,
+	V4L2_CTRL_TYPE_HEVC_DECODE_PARAMS = 0x0274,
+
+	V4L2_CTRL_TYPE_AV1_SEQUENCE = 0x280,
+	V4L2_CTRL_TYPE_AV1_TILE_GROUP_ENTRY = 0x281,
+	V4L2_CTRL_TYPE_AV1_FRAME = 0x282,
+	V4L2_CTRL_TYPE_AV1_FILM_GRAIN = 0x283,
 };
 
 enum v4l2_frmivaltypes {
@@ -310,7 +354,6 @@ struct v4l2_pix_format {
 	u_int32_t	colorspace;
 	u_int32_t	priv;
 	u_int32_t	flags;
-	u_int32_t	ycbcr_enc;
 	union {
 		u_int32_t	ycbcr_enc;
 		u_int32_t	hsv_enc;
@@ -323,7 +366,7 @@ struct v4l2_window {
 	struct v4l2_rect	w;
 	u_int32_t		field;
 	u_int32_t		chromakey;
-	struct v4l2_clip	__user *clips;
+	struct v4l2_clip	*clips;
 	u_int32_t		clipcount;
 	void			__user *bitmap;
 	u_int8_t		global_alpha;

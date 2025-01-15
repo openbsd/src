@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.234 2025/01/13 15:32:36 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.235 2025/01/15 20:34:50 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3346,6 +3346,8 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* tell how many buffers we have really allocated */
 	rb->count = sc->sc_mmap_count;
+
+	rb->capabilities = V4L2_BUF_CAP_SUPPORTS_MMAP;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.21 2025/01/12 16:39:39 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.22 2025/01/15 20:34:50 kirill Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -1692,6 +1692,8 @@ utvfu_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* tell how many buffers we have really allocated */
 	rb->count = sc->sc_mmap_count;
+
+	rb->capabilities = V4L2_BUF_CAP_SUPPORTS_MMAP;
 
 	return (0);
 }
