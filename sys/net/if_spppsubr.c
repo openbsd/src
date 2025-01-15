@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.194 2024/06/22 10:22:29 jsg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.195 2025/01/15 06:15:44 dlg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -413,6 +413,30 @@ static const struct cp *cps[IDX_COUNT] = {
 void
 spppattach(struct ifnet *ifp)
 {
+}
+
+int
+sppp_proto_up(struct ifnet *ifp, uint16_t proto)
+{
+	struct sppp *sp = (struct sppp *)ifp;
+	int af = AF_UNSPEC;
+
+	switch (ntohs(proto)) {
+	case PPP_IP:
+		if (sp->state[IDX_IPCP] == STATE_OPENED)
+			af = AF_INET;
+		break;
+#ifdef INET6
+	case PPP_IPV6:
+		if (sp->state[IDX_IPV6CP] == STATE_OPENED)
+			af = AF_INET6;
+		break;
+#endif
+	default:
+		break;
+	}
+
+	return (af);
 }
 
 /*

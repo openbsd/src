@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.295 2025/01/07 05:36:52 guenther Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.296 2025/01/15 06:15:44 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -569,7 +569,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			if (mq_enqueue(&pppoediscinq, m) == 0)
 				schednetisr(NETISR_PPPOE);
 		} else {
-			if (mq_enqueue(&pppoeinq, m) == 0)
+			m = pppoe_vinput(ifp, m);
+			if (m != NULL && mq_enqueue(&pppoeinq, m) == 0)
 				schednetisr(NETISR_PPPOE);
 		}
 		return;
