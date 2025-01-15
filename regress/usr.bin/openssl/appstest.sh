@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.65 2024/08/23 04:57:12 tb Exp $
+# $OpenBSD: appstest.sh,v 1.66 2025/01/15 05:02:01 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1883,7 +1883,7 @@ function test_version {
 #---------#---------#---------#---------#---------#---------#---------#---------
 
 openssl_bin=${OPENSSL:-/usr/bin/openssl}
-other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
+other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl33}
 other_openssl_version=`$other_openssl_bin version | cut -b 1-10`
 
 ecdsa_tests=0
