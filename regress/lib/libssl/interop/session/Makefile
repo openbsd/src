@@ -1,20 +1,14 @@
-# $OpenBSD: Makefile,v 1.11 2024/08/18 10:02:10 tb Exp $
+# $OpenBSD: Makefile,v 1.12 2025/01/15 10:54:17 tb Exp $
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl11)
-LIBRARIES +=		openssl11
+.if exists(/usr/local/bin/eopenssl33)
+#LIBRARIES +=		openssl33
 .endif
-.if exists(/usr/local/bin/eopenssl31)
-#LIBRARIES +=		openssl31
-.endif
-.if exists(/usr/local/bin/eopenssl32)
-#LIBRARIES +=		openssl32
+.if exists(/usr/local/bin/eopenssl34)
+#LIBRARIES +=		openssl34
 .endif
 
-run-session-client-libressl-server-libressl \
-run-session-client-libressl-server-openssl11 \
-run-session-client-openssl11-server-libressl \
-run-session-client-openssl11-server-openssl11:
+run-session-client-libressl-server-libressl:
 	# TLS 1.3 needs some extra setup for session reuse
 	@echo DISABLED
 

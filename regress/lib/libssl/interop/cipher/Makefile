@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2024/08/18 10:02:10 tb Exp $
+# $OpenBSD: Makefile,v 1.17 2025/01/15 10:54:17 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create lists of supported ciphers
@@ -7,14 +7,11 @@
 # have used correct cipher by grepping in their session print out.
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl11)
-LIBRARIES +=		openssl11
+.if exists(/usr/local/bin/eopenssl33)
+LIBRARIES +=		openssl33
 .endif
-.if exists(/usr/local/bin/eopenssl31)
-LIBRARIES +=		openssl31
-.endif
-.if exists(/usr/local/bin/eopenssl32)
-LIBRARIES +=		openssl32
+.if exists(/usr/local/bin/eopenssl34)
+LIBRARIES +=		openssl34
 .endif
 
 CLEANFILES =	*.tmp *.ciphers ciphers.mk
@@ -44,9 +41,8 @@ client-${clib}-server-${slib}.ciphers: \
 	uniq -d <$@.tmp >$@
 	# we are only interested in ciphers supported by libressl
 	sort $@ client-libressl.ciphers >$@.tmp
-. if "${clib}" == "openssl11" || "${slib}" == "openssl11" || \
-	"${clib}" == "openssl31" || "${slib}" == "openssl31" || \
-	"${clib}" == "openssl32" || "${slib}" == "openssl32"
+. if "${clib}" == "openssl33" || "${slib}" == "openssl33" || \
+	"${clib}" == "openssl34" || "${slib}" == "openssl34"
 	# OpenSSL's SSL_CTX_set_cipher_list doesn't accept TLSv1.3 ciphers
 	sed -i '/^TLS_/d' $@.tmp
 . endif
@@ -74,9 +70,8 @@ regress: ciphers.mk
 .endif
 
 LEVEL_libressl =
-LEVEL_openssl11 = ,@SECLEVEL=0
-LEVEL_openssl31 = ,@SECLEVEL=0
-LEVEL_openssl32 = ,@SECLEVEL=0
+LEVEL_openssl33 = ,@SECLEVEL=0
+LEVEL_openssl34 = ,@SECLEVEL=0
 
 .for clib in ${LIBRARIES}
 .for slib in ${LIBRARIES}
@@ -137,7 +132,7 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
 . endif
 . if "${clib}" == "libressl"
 	# libressl client may prefer chacha-poly if aes-ni is not supported
-.  if "${slib}" == "openssl11" || "${slib}" == "openssl31" || "${slib}" == "openssl32"
+.  if "${slib}" == "openssl33" || "${slib}" == "openssl34"
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
 .  else
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
