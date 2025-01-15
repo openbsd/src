@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.12 2024/02/11 03:57:10 gkoehler Exp $
+# $OpenBSD: PkgConfig.pm,v 1.13 2025/01/15 11:54:36 jca Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -19,6 +19,7 @@ use v5.36;
 
 # interface to the *.pc file format of pkg-config.
 package OpenBSD::PkgConfig;
+use File::Basename;
 
 # specific properties may have specific needs.
 
@@ -106,6 +107,8 @@ sub read_fh($class, $fh, $name = '')
 {
 	my $cfg = $class->new;
 
+	$cfg->add_variable('pcfiledir', dirname($name));
+
 	while (<$fh>) {
 		chomp;
 		# continuation lines
@@ -145,6 +148,8 @@ sub read_file($class, $filename)
 sub write_fh($self, $fh)
 {
 	foreach my $variable (@{$self->{vlist}}) {
+		# writing out pcfiledir makes no sense
+		next if $variable eq 'pcfiledir';
 		say $fh "$variable=", $self->{variables}{$variable};
 	}
 	print $fh "\n\n";
