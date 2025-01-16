@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.9 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: session.c,v 1.10 2025/01/16 16:17:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -430,7 +430,6 @@ sess_do_reinstatement(struct session *s, struct sessev *sev)
 
 		if (c->state & CONN_FAILED) {
 			conn_fsm(c, CONN_EV_FREE);
-			TAILQ_REMOVE(&s->connections, c, entry);
 			conn_free(c);
 		}
 	}
