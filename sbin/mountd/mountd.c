@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.96 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.97 2025/01/16 12:48:45 kn Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -372,6 +372,19 @@ privchild(int sock)
 	FILE *fp;
 	char *path;
 	int error, size;
+
+	if (unveil("/", "r") == -1) {
+		syslog(LOG_ERR, "unveil /: %m");
+		_exit(1);
+	}
+	if (unveil(_PATH_RMOUNTLIST, "rwc") == -1) {
+		syslog(LOG_ERR, "unveil %s: %m", _PATH_RMOUNTLIST);
+		_exit(1);
+	}
+	if (unveil(NULL, NULL) == -1) {
+		syslog(LOG_ERR, "unveil: %m");
+		_exit(1);
+	}
 
 	if (imsgbuf_init(&ibuf, sock) == -1) {
 		syslog(LOG_ERR, "imsgbuf_init: %m");
