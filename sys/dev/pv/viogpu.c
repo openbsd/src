@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.11 2024/12/20 22:18:27 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.12 2025/01/16 10:33:27 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -93,7 +93,7 @@ struct viogpu_softc {
 	struct timeout		sc_timo;
 };
 
-struct virtio_feature_name viogpu_feature_names[] = {
+static const struct virtio_feature_name viogpu_feature_names[] = {
 #if VIRTIO_DEBUG
 	{ VIRTIO_GPU_F_VIRGL,		"VirGL" },
 	{ VIRTIO_GPU_F_EDID,		"EDID" },

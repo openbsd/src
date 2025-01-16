@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.16 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.17 2025/01/16 10:33:27 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -46,7 +46,7 @@
 #define DPRINTF(x...)
 #endif
 
-struct virtio_feature_name viocon_feature_names[] = {
+static const struct virtio_feature_name viocon_feature_names[] = {
 #if VIRTIO_DEBUG
 	{ VIRTIO_CONSOLE_F_SIZE,	"Size" },
 	{ VIRTIO_CONSOLE_F_MULTIPORT,	"MultiPort" },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.44 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.45 2025/01/16 10:33:27 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -67,7 +67,7 @@
 /* In the virtqueue, we need space for header and footer, too */
 #define ALLOC_SEGS	(SEG_MAX + 2)
 
-struct virtio_feature_name vioblk_feature_names[] = {
+static const struct virtio_feature_name vioblk_feature_names[] = {
 #if VIRTIO_DEBUG
 	{ VIRTIO_BLK_F_BARRIER,		"Barrier" },
 	{ VIRTIO_BLK_F_SIZE_MAX,	"SizeMax" },
