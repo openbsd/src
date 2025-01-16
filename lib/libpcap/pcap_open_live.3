@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap_open_live.3,v 1.4 2020/05/29 05:51:19 jmc Exp $
+.\"	$OpenBSD: pcap_open_live.3,v 1.5 2025/01/16 04:02:08 dlg Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 29 2020 $
+.Dd $Mdocdate: January 16 2025 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -169,7 +169,7 @@
 .Fn pcap_list_datalinks "pcap_t *p" "int **dlt_buffer"
 .Ft void
 .Fn pcap_free_datalinks "int *dlt_list"
-.Ft pcap_t
+.Ft pcap_t *
 .Fn pcap_open_dead "int linktype" "int snaplen"
 .Ft pcap_t
 .Fn pcap_fopen_offline "FILE *fp" "char *errbuf"
