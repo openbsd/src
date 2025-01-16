@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.164 2025/01/05 12:36:48 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.165 2025/01/16 16:35:01 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -186,14 +186,8 @@ struct socket *
 sonewconn(struct socket *head, int connstatus, int wait)
 {
 	struct socket *so;
-	int persocket = solock_persocket(head);
 	int soqueue = connstatus ? 1 : 0;
 
-	/*
-	 * XXXSMP as long as `so' and `head' share the same lock, we
-	 * can call soreserve() and pr_attach() below w/o explicitly
-	 * locking `so'.
-	 */
 	soassertlocked(head);
 
 	if (m_pool_used() > 95)
@@ -218,8 +212,7 @@ sonewconn(struct socket *head, int connstatus, int wait)
 	/*
 	 * Lock order will be `head' -> `so' while these sockets are linked.
 	 */
-	if (persocket)
-		solock(so);
+	solock_nonet(so);
 
 	/*
 	 * Inherit watermarks but those may get clamped in low mem situations.
@@ -252,14 +245,12 @@ sonewconn(struct socket *head, int connstatus, int wait)
 		wakeup(&head->so_timeo);
 	}
 
-	if (persocket)
-		sounlock(so);
+	sounlock_nonet(so);
 
 	return (so);
 
 fail:
-	if (persocket)
-		sounlock(so);
+	sounlock_nonet(so);
 	sigio_free(&so->so_sigio);
 	klist_free(&so->so_rcv.sb_klist);
 	klist_free(&so->so_snd.sb_klist);
@@ -363,12 +354,21 @@ solock_shared(struct socket *so)
 	case PF_INET:
 	case PF_INET6:
 		NET_LOCK_SHARED();
-		rw_enter_write(&so->so_lock);
-		break;
-	default:
-		rw_enter_write(&so->so_lock);
 		break;
 	}
+	rw_enter_write(&so->so_lock);
+}
+
+void
+solock_nonet(struct socket *so)
+{
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		NET_ASSERT_LOCKED();
+		break;
+	}
+	rw_enter_write(&so->so_lock);
 }
 
 int
@@ -416,16 +416,19 @@ sounlock(struct socket *so)
 void
 sounlock_shared(struct socket *so)
 {
+	rw_exit_write(&so->so_lock);
 	switch (so->so_proto->pr_domain->dom_family) {
 	case PF_INET:
 	case PF_INET6:
-		rw_exit_write(&so->so_lock);
 		NET_UNLOCK_SHARED();
 		break;
-	default:
-		rw_exit_write(&so->so_lock);
-		break;
 	}
+}
+
+void
+sounlock_nonet(struct socket *so)
+{
+	rw_exit_write(&so->so_lock);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.221 2025/01/05 11:33:45 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.222 2025/01/16 16:35:01 bluhm Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -247,34 +247,6 @@ sys_accept4(struct proc *p, void *v, register_t *retval)
 	    SCARG(uap, anamelen), SCARG(uap, flags), retval));
 }
 
-void
-doaccept_solock(struct socket *so, int take_netlock)
-{
-	if (take_netlock) {
-		switch (so->so_proto->pr_domain->dom_family) {
-		case PF_INET:
-		case PF_INET6:
-			NET_LOCK_SHARED();
-		}
-	}
-
-	rw_enter_write(&so->so_lock);
-}
-
-void
-doaccept_sounlock(struct socket *so, int release_netlock)
-{
-	rw_exit_write(&so->so_lock);
-
-	if (release_netlock) {
-		switch (so->so_proto->pr_domain->dom_family) {
-		case PF_INET:
-		case PF_INET6:
-			NET_UNLOCK_SHARED();
-		}
-	}
-}
-
 int
 doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
     int flags, register_t *retval)
@@ -307,7 +279,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	nam = m_get(M_WAIT, MT_SONAME);
 
 	head = headfp->f_data;
-	doaccept_solock(head, 1);
+	solock_shared(head);
 
 	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
@@ -341,7 +313,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	 */
 	so = TAILQ_FIRST(&head->so_q);
 
-	doaccept_solock(so, 0);
+	solock_nonet(so);
 
 	if (soqremque(so, 1) == 0)
 		panic("accept");
@@ -353,7 +325,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	/* connection has been removed from the listen queue */
 	knote(&head->so_rcv.sb_klist, 0);
 
-	doaccept_sounlock(head, 0);
+	sounlock_nonet(head);
 
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD | FWRITE | nflag;
@@ -362,7 +334,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 
 	error = soaccept(so, nam);
 
-	doaccept_sounlock(so, 1);
+	sounlock_shared(so);
 
 	if (error)
 		goto out;
@@ -385,7 +357,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	return 0;
 
 out_unlock:
-	doaccept_sounlock(head, 1);
+	sounlock_shared(head);
 out:
 	fdplock(fdp);
 	fdremove(fdp, tmpfd);

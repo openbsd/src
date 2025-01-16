@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.138 2025/01/03 12:56:15 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.139 2025/01/16 16:35:01 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -451,10 +451,12 @@ int	sockargs(struct mbuf **, const void *, size_t, int);
 int	sosleep_nsec(struct socket *, void *, int, const char *, uint64_t);
 void	solock(struct socket *);
 void	solock_shared(struct socket *);
+void	solock_nonet(struct socket *);
 int	solock_persocket(struct socket *);
 void	solock_pair(struct socket *, struct socket *);
 void	sounlock(struct socket *);
 void	sounlock_shared(struct socket *);
+void	sounlock_nonet(struct socket *);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
