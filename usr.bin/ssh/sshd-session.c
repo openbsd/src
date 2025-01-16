@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd-session.c,v 1.10 2024/10/14 01:57:50 djm Exp $ */
+/* $OpenBSD: sshd-session.c,v 1.11 2025/01/16 06:37:10 dtucker Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -892,8 +892,6 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
-
 	if (!rexeced_flag)
 		fatal("sshd-session should not be executed directly");
 
@@ -935,8 +933,6 @@ main(int ac, char **av)
 	    SYSLOG_FACILITY_AUTH : options.log_facility,
 	    log_stderr || !inetd_flag || debug_flag);
 
-	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
-
 	/* Fetch our configuration */
 	if ((cfg = sshbuf_new()) == NULL)
 		fatal("sshbuf_new config buf failed");
@@ -949,6 +945,12 @@ main(int ac, char **av)
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
 	options.timing_secret = timing_secret;
+
+	/* Reinit logging in case config set Level, Facility or Verbose. */
+	log_init(__progname, options.log_level, options.log_facility,
+	    log_stderr || !inetd_flag || debug_flag);
+
+	debug("sshd-session version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
 	if (!debug_flag && !inetd_flag) {
 		if ((startup_pipe = dup(REEXEC_STARTUP_PIPE_FD)) == -1)

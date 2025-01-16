@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd-auth.c,v 1.2 2024/12/03 22:30:03 jsg Exp $ */
+/* $OpenBSD: sshd-auth.c,v 1.3 2025/01/16 06:37:10 dtucker Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -602,8 +602,6 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
-
 	/* Connection passed by stdin/out */
 	if (inetd_flag) {
 		/*
@@ -640,6 +638,11 @@ main(int ac, char **av)
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
 	options.timing_secret = timing_secret; /* XXX eliminate from unpriv */
+
+	/* Reinit logging in case config set Level, Facility or Verbose. */
+	log_init(__progname, options.log_level, options.log_facility, 1);
+
+	debug("sshd-auth version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
 #ifdef WITH_OPENSSL
 	if (options.moduli_file != NULL)
