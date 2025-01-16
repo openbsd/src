@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.15 2015/01/16 15:57:06 deraadt Exp $ */
+/*	$OpenBSD: initiator.c,v 1.16 2025/01/16 16:19:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -280,7 +280,7 @@ initiator_login_kvp(struct connection *c, u_int8_t stage)
 		if (!(kvp = calloc(nkvp, sizeof(*kvp))))
 			return NULL;
 		if (conn_gen_kvp(c, kvp, &nkvp) == -1) {
-			free(kvp);
+			kvp_free(kvp);
 			return NULL;
 		}
 		break;
@@ -327,10 +327,10 @@ initiator_login_build(struct connection *c, struct task_login *tl)
 		return NULL;
 	}
 	if ((n = text_to_pdu(kvp, p)) == -1) {
-		free(kvp);
+		kvp_free(kvp);
 		return NULL;
 	}
-	free(kvp);
+	kvp_free(kvp);
 
 	if (n > 8192) {
 		log_warn("initiator_login_build: help, I'm too verbose");
@@ -409,11 +409,11 @@ initiator_login_cb(struct connection *c, void *arg, struct pdu *p)
 		}
 
 		if (conn_parse_kvp(c, kvp) == -1) {
-			free(kvp);
+			kvp_free(kvp);
 			conn_fail(c);
 			goto done;
 		}
-		free(kvp);
+		kvp_free(kvp);
 	}
 
 	/* advance FSM if possible */
@@ -480,7 +480,7 @@ initiator_discovery_cb(struct connection *c, void *arg, struct pdu *p)
 		for (k = kvp; k->key; k++) {
 			log_debug("%s\t=>\t%s", k->key, k->value);
 		}
-		free(kvp);
+		kvp_free(kvp);
 		session_shutdown(c->session);
 		break;
 	default:

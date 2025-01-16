@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2021/04/12 10:03:33 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.10 2025/01/16 16:19:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -188,4 +188,20 @@ control_build(void *ch, u_int16_t type, int argc, struct ctrldata *argv)
 fail:
 	pdu_free(pdu);
 	return -1;
+}
+
+void
+kvp_free(struct kvp *kvp)
+{
+	struct kvp *k;
+
+	if (kvp == NULL)
+		return;
+	for (k = kvp; k->key; k++) {
+		if (k->flags & KVP_KEY_ALLOCED)
+			free(k->key);
+		if (k->flags & KVP_VALUE_ALLOCED)
+			free(k->value);
+	}
+	free(kvp);
 }
