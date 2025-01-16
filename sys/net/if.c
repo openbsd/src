@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.721 2024/10/17 05:02:12 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.722 2025/01/16 17:20:23 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2493,8 +2493,6 @@ ifioctl_get(u_long cmd, caddr_t data)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
-	char ifdescrbuf[IFDESCRSIZE];
-	char ifrtlabelbuf[RTLABEL_LEN];
 	int error = 0;
 	size_t bytesdone;
 
@@ -2525,14 +2523,11 @@ ifioctl_get(u_long cmd, caddr_t data)
 	}
 
 	KERNEL_LOCK();
-
 	ifp = if_unit(ifr->ifr_name);
-	if (ifp == NULL) {
-		KERNEL_UNLOCK();
-		return (ENXIO);
-	}
+	KERNEL_UNLOCK();
 
-	NET_LOCK_SHARED();
+	if (ifp == NULL)
+		return (ENXIO);
 
 	switch(cmd) {
 	case SIOCGIFFLAGS:
@@ -2559,26 +2554,39 @@ ifioctl_get(u_long cmd, caddr_t data)
 
 	case SIOCGIFDATA: {
 		struct if_data ifdata;
+
+		NET_LOCK_SHARED();
+		KERNEL_LOCK();
 		if_getdata(ifp, &ifdata);
+		KERNEL_UNLOCK();
+		NET_UNLOCK_SHARED();
+
 		error = copyout(&ifdata, ifr->ifr_data, sizeof(ifdata));
 		break;
 	}
 
-	case SIOCGIFDESCR:
+	case SIOCGIFDESCR: {
+		char ifdescrbuf[IFDESCRSIZE];
+		KERNEL_LOCK();
 		strlcpy(ifdescrbuf, ifp->if_description, IFDESCRSIZE);
+		KERNEL_UNLOCK();
+
 		error = copyoutstr(ifdescrbuf, ifr->ifr_data, IFDESCRSIZE,
 		    &bytesdone);
 		break;
+	}
+	case SIOCGIFRTLABEL: {
+		char ifrtlabelbuf[RTLABEL_LEN];
+		u_short rtlabelid = READ_ONCE(ifp->if_rtlabelid);
 
-	case SIOCGIFRTLABEL:
-		if (ifp->if_rtlabelid && rtlabel_id2name(ifp->if_rtlabelid,
+		if (rtlabelid && rtlabel_id2name(rtlabelid,
 		    ifrtlabelbuf, RTLABEL_LEN) != NULL) {
 			error = copyoutstr(ifrtlabelbuf, ifr->ifr_data,
 			    RTLABEL_LEN, &bytesdone);
 		} else
 			error = ENOENT;
 		break;
-
+	}
 	case SIOCGIFPRIORITY:
 		ifr->ifr_metric = ifp->if_priority;
 		break;
@@ -2588,7 +2596,9 @@ ifioctl_get(u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGIFGROUP:
+		NET_LOCK_SHARED();
 		error = if_getgroup(data, ifp);
+		NET_UNLOCK_SHARED();
 		break;
 
 	case SIOCGIFLLPRIO:
@@ -2598,10 +2608,6 @@ ifioctl_get(u_long cmd, caddr_t data)
 	default:
 		panic("invalid ioctl %lu", cmd);
 	}
-
-	NET_UNLOCK_SHARED();
-
-	KERNEL_UNLOCK();
 
 	if_put(ifp);
 
