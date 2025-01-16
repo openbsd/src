@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.71 2023/11/27 11:30:49 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.72 2025/01/16 14:06:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,6 +29,7 @@
 #include <util.h>
 
 #include "extern.h"
+#include "version.h"
 
 int verbose;
 int poll_contimeout;
@@ -423,8 +424,8 @@ main(int argc, char *argv[])
 			verbose++;
 			break;
 		case 'V':
-			fprintf(stderr, "openrsync: protocol version %u\n",
-			    RSYNC_PROTOCOL);
+			fprintf(stderr, "openrsync %s (protocol version %u)\n",
+			    RSYNC_VERSION, RSYNC_PROTOCOL);
 			exit(0);
 		case 'x':
 			opts.one_file_system++;
