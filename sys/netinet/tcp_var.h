@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.184 2025/01/05 12:18:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.185 2025/01/16 11:59:20 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -679,7 +679,6 @@ extern	struct pool tcpcb_pool;
 extern	struct inpcbtable tcbtable, tcb6table;	/* queue of active tcpcb's */
 extern	int tcp_do_rfc1323;	/* [a] enabled/disabled? */
 extern	const int tcprexmtthresh;
-extern	int tcptv_keep_init;	/* [N] time to keep alive initial SYN packet */
 extern	int tcp_mssdflt;	/* [a] default maximum segment size */
 extern	int tcp_rst_ppslim;	/* [a] maximum outgoing RST packet per second */
 extern	int tcp_ack_on_push;	/* [a] ACK immediately on PUSH */

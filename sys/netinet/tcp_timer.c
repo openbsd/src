@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.81 2025/01/14 13:49:44 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.82 2025/01/16 11:59:20 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -61,16 +61,14 @@
  */
 
 int	tcp_always_keepalive;
-int	tcp_keepidle;
-int	tcp_keepintvl;
-int	tcp_maxpersistidle;	/* max idle time in persist */
-int	tcp_maxidle;		/* [T] max idle time for keep alive */
-
-/*
- * Time to delay the ACK.  This is initialized in tcp_init(), unless
- * its patched.
- */
-int	tcp_delack_msecs;
+int	tcp_keepinit = TCPTV_KEEPINIT;
+int	tcp_keepidle = TCPTV_KEEPIDLE;
+int	tcp_keepintvl = TCPTV_KEEPINTVL;
+int	tcp_keepinit_sec = TCPTV_KEEPINIT / TCP_TIME(1);
+int	tcp_keepidle_sec = TCPTV_KEEPIDLE / TCP_TIME(1);
+int	tcp_keepintvl_sec = TCPTV_KEEPINTVL / TCP_TIME(1);
+int	tcp_maxpersistidle = TCPTV_KEEPIDLE;	/* max idle time in persist */
+int	tcp_delack_msecs = TCP_DELACK_MSECS;	/* time to delay the ACK */
 
 void	tcp_timer_rexmt(void *);
 void	tcp_timer_persist(void *);
@@ -85,26 +83,6 @@ const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_2msl,
 	tcp_timer_delack,
 };
-
-/*
- * Timer state initialization, called from tcp_init().
- */
-void
-tcp_timer_init(void)
-{
-
-	if (tcp_keepidle == 0)
-		tcp_keepidle = TCPTV_KEEP_IDLE;
-
-	if (tcp_keepintvl == 0)
-		tcp_keepintvl = TCPTV_KEEPINTVL;
-
-	if (tcp_maxpersistidle == 0)
-		tcp_maxpersistidle = TCPTV_KEEP_IDLE;
-
-	if (tcp_delack_msecs == 0)
-		tcp_delack_msecs = TCP_DELACK_MSECS;
-}
 
 static inline int
 tcp_timer_enter(struct inpcb *inp, struct socket **so, struct tcpcb **tp,
@@ -176,7 +154,6 @@ void
 tcp_slowtimo(void)
 {
 	mtx_enter(&tcp_timer_mtx);
-	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	tcp_iss += TCP_ISSINCR2/PR_SLOWHZ;		/* increment iss */
 	mtx_leave(&tcp_timer_mtx);
 }
@@ -488,13 +465,14 @@ tcp_timer_keep(void *arg)
 	if ((atomic_load_int(&tcp_always_keepalive) ||
 	    so->so_options & SO_KEEPALIVE) &&
 	    tp->t_state <= TCPS_CLOSING) {
-		int maxidle;
+		int keepidle, maxidle;
 		uint64_t now;
 
-		maxidle = READ_ONCE(tcp_maxidle);
+		keepidle = atomic_load_int(&tcp_keepidle);
+		maxidle = TCPTV_KEEPCNT * keepidle;
 		now = tcp_now();
 		if ((maxidle > 0) &&
-		    ((now - tp->t_rcvtime) >= tcp_keepidle + maxidle)) {
+		    ((now - tp->t_rcvtime) >= keepidle + maxidle)) {
 			tcpstat_inc(tcps_keepdrops);
 			tp = tcp_drop(tp, ETIMEDOUT);
 			goto out;
@@ -514,9 +492,9 @@ tcp_timer_keep(void *arg)
 		tcpstat_inc(tcps_keepprobe);
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
 		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0, now);
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, atomic_load_int(&tcp_keepintvl));
 	} else
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, atomic_load_int(&tcp_keepidle));
 	if (otp)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_KEEP, 0);
  out:
@@ -542,11 +520,11 @@ tcp_timer_2msl(void *arg)
 	}
 	tcp_timer_freesack(tp);
 
-	maxidle = READ_ONCE(tcp_maxidle);
+	maxidle = TCPTV_KEEPCNT * atomic_load_int(&tcp_keepidle);
 	now = tcp_now();
 	if (tp->t_state != TCPS_TIME_WAIT &&
 	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= maxidle)))
-		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
+		TCP_TIMER_ARM(tp, TCPT_2MSL, atomic_load_int(&tcp_keepintvl));
 	else
 		tp = tcp_close(tp);
 	if (otp)
