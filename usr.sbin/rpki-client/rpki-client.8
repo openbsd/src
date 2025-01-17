@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.119 2025/01/03 10:32:21 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.120 2025/01/17 00:20:15 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2025 $
+.Dd $Mdocdate: January 17 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -303,6 +303,7 @@ URL of HTTP proxy to use.
 default TAL files used unless
 .Fl t Ar tal
 is specified.
+The TAL files of the five Regional Internet Registries are included.
 .It Pa /etc/rpki/*.constraints
 files containing registry-specific constraints to restrict what IP addresses
 and AS identifiers may or may not appear in EE certificates subordinate to the
@@ -316,11 +317,6 @@ cached repository data.
 .It Pa /var/db/rpki-client/openbgpd
 default roa-set output file.
 .El
-.Pp
-All the top-level TAL are included, except the ARIN TAL which is not
-made available with terms compatible with open source.
-That public key is treated as a proprietary object in a lengthy legal
-agreement regarding ARIN service restrictions.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO

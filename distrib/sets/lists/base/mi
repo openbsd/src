@@ -297,6 +297,7 @@
 ./etc/rpki/apnic.constraints
 ./etc/rpki/apnic.tal
 ./etc/rpki/arin.constraints
+./etc/rpki/arin.tal
 ./etc/rpki/lacnic.constraints
 ./etc/rpki/lacnic.tal
 ./etc/rpki/ripe.constraints
