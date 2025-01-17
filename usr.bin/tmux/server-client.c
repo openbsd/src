@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.423 2024/12/06 09:06:56 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.424 2025/01/17 15:53:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,7 +159,8 @@ server_client_clear_overlay(struct client *c)
 	c->overlay_data = NULL;
 
 	c->tty.flags &= ~(TTY_FREEZE|TTY_NOCURSOR);
-	window_update_focus(c->session->curw->window);
+	if (c->session != NULL)
+		window_update_focus(c->session->curw->window);
 	server_redraw_client(c);
 }
 
