@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.37 2025/01/17 10:41:31 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.38 2025/01/17 10:54:03 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -182,7 +182,6 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 static int
 ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 {
-	const BIGNUM *p = group->p;
 	BIGNUM *rh, *tmp, *Z4, *Z6;
 	int ret = -1;
 
@@ -221,18 +220,18 @@ ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 
 		/* rh := (rh + a*Z^4)*X */
 		if (group->a_is_minus3) {
-			if (!BN_mod_lshift1_quick(tmp, Z4, p))
+			if (!BN_mod_lshift1_quick(tmp, Z4, group->p))
 				goto err;
-			if (!BN_mod_add_quick(tmp, tmp, Z4, p))
+			if (!BN_mod_add_quick(tmp, tmp, Z4, group->p))
 				goto err;
-			if (!BN_mod_sub_quick(rh, rh, tmp, p))
+			if (!BN_mod_sub_quick(rh, rh, tmp, group->p))
 				goto err;
 			if (!ec_field_mul(group, rh, rh, point->X, ctx))
 				goto err;
 		} else {
 			if (!ec_field_mul(group, tmp, Z4, group->a, ctx))
 				goto err;
-			if (!BN_mod_add_quick(rh, rh, tmp, p))
+			if (!BN_mod_add_quick(rh, rh, tmp, group->p))
 				goto err;
 			if (!ec_field_mul(group, rh, rh, point->X, ctx))
 				goto err;
@@ -241,18 +240,18 @@ ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 		/* rh := rh + b*Z^6 */
 		if (!ec_field_mul(group, tmp, group->b, Z6, ctx))
 			goto err;
-		if (!BN_mod_add_quick(rh, rh, tmp, p))
+		if (!BN_mod_add_quick(rh, rh, tmp, group->p))
 			goto err;
 	} else {
 		/* point->Z_is_one */
 
 		/* rh := (rh + a)*X */
-		if (!BN_mod_add_quick(rh, rh, group->a, p))
+		if (!BN_mod_add_quick(rh, rh, group->a, group->p))
 			goto err;
 		if (!ec_field_mul(group, rh, rh, point->X, ctx))
 			goto err;
 		/* rh := rh + b */
-		if (!BN_mod_add_quick(rh, rh, group->b, p))
+		if (!BN_mod_add_quick(rh, rh, group->b, group->p))
 			goto err;
 	}
 
@@ -604,7 +603,6 @@ static int
 ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
     BN_CTX *ctx)
 {
-	const BIGNUM *p = group->p;
 	BIGNUM *n0, *n1, *n2, *n3, *n4, *n5, *n6;
 	int ret = 0;
 
@@ -683,9 +681,9 @@ ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
 	}
 
 	/* n5, n6 */
-	if (!BN_mod_sub_quick(n5, n1, n3, p))
+	if (!BN_mod_sub_quick(n5, n1, n3, group->p))
 		goto end;
-	if (!BN_mod_sub_quick(n6, n2, n4, p))
+	if (!BN_mod_sub_quick(n6, n2, n4, group->p))
 		goto end;
 	/* n5 = n1 - n3 */
 	/* n6 = n2 - n4 */
@@ -706,9 +704,9 @@ ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
 		}
 	}
 	/* 'n7', 'n8' */
-	if (!BN_mod_add_quick(n1, n1, n3, p))
+	if (!BN_mod_add_quick(n1, n1, n3, group->p))
 		goto end;
-	if (!BN_mod_add_quick(n2, n2, n4, p))
+	if (!BN_mod_add_quick(n2, n2, n4, group->p))
 		goto end;
 	/* 'n7' = n1 + n3 */
 	/* 'n8' = n2 + n4 */
@@ -741,14 +739,14 @@ ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
 		goto end;
 	if (!ec_field_mul(group, n3, n1, n4, ctx))
 		goto end;
-	if (!BN_mod_sub_quick(r->X, n0, n3, p))
+	if (!BN_mod_sub_quick(r->X, n0, n3, group->p))
 		goto end;
 	/* X_r = n6^2 - n5^2 * 'n7' */
 
 	/* 'n9' */
-	if (!BN_mod_lshift1_quick(n0, r->X, p))
+	if (!BN_mod_lshift1_quick(n0, r->X, group->p))
 		goto end;
-	if (!BN_mod_sub_quick(n0, n3, n0, p))
+	if (!BN_mod_sub_quick(n0, n3, n0, group->p))
 		goto end;
 	/* n9 = n5^2 * 'n7' - 2 * X_r */
 
@@ -759,10 +757,10 @@ ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
 		goto end;	/* now n5 is n5^3 */
 	if (!ec_field_mul(group, n1, n2, n5, ctx))
 		goto end;
-	if (!BN_mod_sub_quick(n0, n0, n1, p))
+	if (!BN_mod_sub_quick(n0, n0, n1, group->p))
 		goto end;
 	if (BN_is_odd(n0))
-		if (!BN_add(n0, n0, p))
+		if (!BN_add(n0, n0, group->p))
 			goto end;
 	/* now  0 <= n0 < 2*p,  and n0 is even */
 	if (!BN_rshift1(r->Y, n0))
@@ -780,7 +778,6 @@ ec_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b,
 static int
 ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 {
-	const BIGNUM *p = group->p;
 	BIGNUM *n0, *n1, *n2, *n3;
 	int ret = 0;
 
@@ -808,25 +805,25 @@ ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 	if (a->Z_is_one) {
 		if (!ec_field_sqr(group, n0, a->X, ctx))
 			goto err;
-		if (!BN_mod_lshift1_quick(n1, n0, p))
+		if (!BN_mod_lshift1_quick(n1, n0, group->p))
 			goto err;
-		if (!BN_mod_add_quick(n0, n0, n1, p))
+		if (!BN_mod_add_quick(n0, n0, n1, group->p))
 			goto err;
-		if (!BN_mod_add_quick(n1, n0, group->a, p))
+		if (!BN_mod_add_quick(n1, n0, group->a, group->p))
 			goto err;
 		/* n1 = 3 * X_a^2 + a_curve */
 	} else if (group->a_is_minus3) {
 		if (!ec_field_sqr(group, n1, a->Z, ctx))
 			goto err;
-		if (!BN_mod_add_quick(n0, a->X, n1, p))
+		if (!BN_mod_add_quick(n0, a->X, n1, group->p))
 			goto err;
-		if (!BN_mod_sub_quick(n2, a->X, n1, p))
+		if (!BN_mod_sub_quick(n2, a->X, n1, group->p))
 			goto err;
 		if (!ec_field_mul(group, n1, n0, n2, ctx))
 			goto err;
-		if (!BN_mod_lshift1_quick(n0, n1, p))
+		if (!BN_mod_lshift1_quick(n0, n1, group->p))
 			goto err;
-		if (!BN_mod_add_quick(n1, n0, n1, p))
+		if (!BN_mod_add_quick(n1, n0, n1, group->p))
 			goto err;
 		/*
 		 * n1 = 3 * (X_a + Z_a^2) * (X_a - Z_a^2) = 3 * X_a^2 - 3 *
@@ -835,9 +832,9 @@ ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 	} else {
 		if (!ec_field_sqr(group, n0, a->X, ctx))
 			goto err;
-		if (!BN_mod_lshift1_quick(n1, n0, p))
+		if (!BN_mod_lshift1_quick(n1, n0, group->p))
 			goto err;
-		if (!BN_mod_add_quick(n0, n0, n1, p))
+		if (!BN_mod_add_quick(n0, n0, n1, group->p))
 			goto err;
 		if (!ec_field_sqr(group, n1, a->Z, ctx))
 			goto err;
@@ -845,7 +842,7 @@ ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 			goto err;
 		if (!ec_field_mul(group, n1, n1, group->a, ctx))
 			goto err;
-		if (!BN_mod_add_quick(n1, n1, n0, p))
+		if (!BN_mod_add_quick(n1, n1, n0, group->p))
 			goto err;
 		/* n1 = 3 * X_a^2 + a_curve * Z_a^4 */
 	}
@@ -858,7 +855,7 @@ ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 		if (!ec_field_mul(group, n0, a->Y, a->Z, ctx))
 			goto err;
 	}
-	if (!BN_mod_lshift1_quick(r->Z, n0, p))
+	if (!BN_mod_lshift1_quick(r->Z, n0, group->p))
 		goto err;
 	r->Z_is_one = 0;
 	/* Z_r = 2 * Y_a * Z_a */
@@ -868,32 +865,32 @@ ec_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
 		goto err;
 	if (!ec_field_mul(group, n2, a->X, n3, ctx))
 		goto err;
-	if (!BN_mod_lshift_quick(n2, n2, 2, p))
+	if (!BN_mod_lshift_quick(n2, n2, 2, group->p))
 		goto err;
 	/* n2 = 4 * X_a * Y_a^2 */
 
 	/* X_r */
-	if (!BN_mod_lshift1_quick(n0, n2, p))
+	if (!BN_mod_lshift1_quick(n0, n2, group->p))
 		goto err;
 	if (!ec_field_sqr(group, r->X, n1, ctx))
 		goto err;
-	if (!BN_mod_sub_quick(r->X, r->X, n0, p))
+	if (!BN_mod_sub_quick(r->X, r->X, n0, group->p))
 		goto err;
 	/* X_r = n1^2 - 2 * n2 */
 
 	/* n3 */
 	if (!ec_field_sqr(group, n0, n3, ctx))
 		goto err;
-	if (!BN_mod_lshift_quick(n3, n0, 3, p))
+	if (!BN_mod_lshift_quick(n3, n0, 3, group->p))
 		goto err;
 	/* n3 = 8 * Y_a^4 */
 
 	/* Y_r */
-	if (!BN_mod_sub_quick(n0, n2, r->X, p))
+	if (!BN_mod_sub_quick(n0, n2, r->X, group->p))
 		goto err;
 	if (!ec_field_mul(group, n0, n1, n0, ctx))
 		goto err;
-	if (!BN_mod_sub_quick(r->Y, n0, n3, p))
+	if (!BN_mod_sub_quick(r->Y, n0, n3, group->p))
 		goto err;
 	/* Y_r = n1 * (n2 - X_r) - n3 */
 
