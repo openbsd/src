@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.34 2024/03/29 04:35:42 tb Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.35 2025/01/17 05:02:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -379,7 +379,8 @@ asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
 	ASN1_STREAM_ARG sarg;
 	int rv = 1;
 
-	/* If data is not deteched or resigning then the output BIO is
+	/*
+	 * If data is not detached or resigning then the output BIO is
 	 * already set up to finalise when it is written through.
 	 */
 	if (!(flags & SMIME_DETACHED) || (flags & PKCS7_REUSE_DIGEST)) {
