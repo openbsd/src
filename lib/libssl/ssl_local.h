@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.23 2024/07/23 14:40:54 jsing Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.24 2025/01/17 22:39:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,7 +155,6 @@
 
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
-#include <openssl/dsa.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
