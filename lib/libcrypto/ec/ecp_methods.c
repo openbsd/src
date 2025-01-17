@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.38 2025/01/17 10:54:03 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.39 2025/01/17 11:11:27 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -423,7 +423,7 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 	}
 	if (group->meth->field_encode == NULL) {
 		/* field_sqr works on standard representation */
-		if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
+		if (!ec_field_sqr(group, Z_2, Z_1, ctx))
 			goto err;
 	} else {
 		if (!BN_mod_sqr(Z_2, Z_1, group->p, ctx))
@@ -435,13 +435,13 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 		 * in the Montgomery case, field_mul will cancel out
 		 * Montgomery factor in X:
 		 */
-		if (!group->meth->field_mul(group, x, point->X, Z_2, ctx))
+		if (!ec_field_mul(group, x, point->X, Z_2, ctx))
 			goto err;
 	}
 	if (y != NULL) {
 		if (group->meth->field_encode == NULL) {
 			/* field_mul works on standard representation */
-			if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
+			if (!ec_field_mul(group, Z_3, Z_2, Z_1, ctx))
 				goto err;
 		} else {
 			if (!BN_mod_mul(Z_3, Z_2, Z_1, group->p, ctx))
@@ -452,7 +452,7 @@ ec_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 		 * in the Montgomery case, field_mul will cancel out
 		 * Montgomery factor in Y:
 		 */
-		if (!group->meth->field_mul(group, y, point->Y, Z_3, ctx))
+		if (!ec_field_mul(group, y, point->Y, Z_3, ctx))
 			goto err;
 	}
 
@@ -511,7 +511,7 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT **points,
 
 	for (i = 1; i < num; i++) {
 		if (!BN_is_zero(points[i]->Z)) {
-			if (!group->meth->field_mul(group, prod_Z[i],
+			if (!ec_field_mul(group, prod_Z[i],
 			    prod_Z[i - 1], points[i]->Z, ctx))
 				goto err;
 		} else {
@@ -550,10 +550,10 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT **points,
 			continue;
 
 		/* Set tmp_Z to the inverse of points[i]->Z. */
-		if (!group->meth->field_mul(group, tmp_Z, prod_Z[i - 1], tmp, ctx))
+		if (!ec_field_mul(group, tmp_Z, prod_Z[i - 1], tmp, ctx))
 			goto err;
 		/* Adjust tmp to satisfy loop invariant. */
-		if (!group->meth->field_mul(group, tmp, tmp, points[i]->Z, ctx))
+		if (!ec_field_mul(group, tmp, tmp, points[i]->Z, ctx))
 			goto err;
 		/* Replace points[i]->Z by its inverse. */
 		if (!bn_copy(points[i]->Z, tmp_Z))
@@ -575,14 +575,14 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT **points,
 
 		/* turn  (X, Y, 1/Z)  into  (X/Z^2, Y/Z^3, 1) */
 
-		if (!group->meth->field_sqr(group, tmp, p->Z, ctx))
+		if (!ec_field_sqr(group, tmp, p->Z, ctx))
 			goto err;
-		if (!group->meth->field_mul(group, p->X, p->X, tmp, ctx))
+		if (!ec_field_mul(group, p->X, p->X, tmp, ctx))
 			goto err;
 
-		if (!group->meth->field_mul(group, tmp, tmp, p->Z, ctx))
+		if (!ec_field_mul(group, tmp, tmp, p->Z, ctx))
 			goto err;
-		if (!group->meth->field_mul(group, p->Y, p->Y, tmp, ctx))
+		if (!ec_field_mul(group, p->Y, p->Y, tmp, ctx))
 			goto err;
 
 		if (!bn_copy(p->Z, one))
@@ -945,7 +945,7 @@ ec_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 		goto err;
 
 	/* tmp = lambda^2 */
-	if (!group->meth->field_sqr(group, tmp, lambda, ctx))
+	if (!ec_field_sqr(group, tmp, lambda, ctx))
 		goto err;
 
 	/* X = lambda^2 * X */
