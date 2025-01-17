@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.41 2024/08/29 16:58:19 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.42 2025/01/17 05:04:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -185,7 +185,7 @@ dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 /*
  * PKCS#8 DH is defined in PKCS#11 of all places. It is similar to DH in
  * that the AlgorithmIdentifier contains the parameters, the private key
- * is explcitly included and the pubkey must be recalculated.
+ * is explicitly included and the pubkey must be recalculated.
  */
 
 static int
