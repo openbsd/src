@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.41 2024/08/26 22:01:28 op Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.42 2025/01/17 08:50:07 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -668,7 +668,12 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		else if (!strcmp(value, "auto"))
 			saltlen = RSA_PSS_SALTLEN_AUTO;
 		else {
-			saltlen = strtonum(value, 0, INT_MAX, &errstr);
+			/*
+			 * Accept the special values -1, -2, -3 since that's
+			 * what atoi() historically did. Lower values are later
+			 * rejected in EVP_PKEY_CTRL_RSA_PSS_SALTLEN anyway.
+			 */
+			saltlen = strtonum(value, -3, INT_MAX, &errstr);
 			if (errstr != NULL) {
 				RSAerror(RSA_R_INVALID_PSS_SALTLEN);
 				return -2;
@@ -718,7 +723,12 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		if (strcmp(type, "rsa_pss_keygen_saltlen") == 0) {
 			int saltlen;
 
-			saltlen = strtonum(value, 0, INT_MAX, &errstr);
+			/*
+			 * Accept the special values -1, -2, -3 since that's
+			 * what atoi() historically did. Lower values are later
+			 * rejected in EVP_PKEY_CTRL_RSA_PSS_SALTLEN anyway.
+			 */
+			saltlen = strtonum(value, -3, INT_MAX, &errstr);
 			if (errstr != NULL) {
 				RSAerror(RSA_R_INVALID_PSS_SALTLEN);
 				return -2;
