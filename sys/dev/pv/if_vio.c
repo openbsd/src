@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.66 2025/01/14 14:32:32 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.67 2025/01/17 08:58:38 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -517,7 +517,11 @@ vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 	}
 	KASSERT(offset == allocsize);
 
-	txsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4) ||
+	    virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
+		txsize = MAXMCLBYTES + sc->sc_hdr_size + ETHER_HDR_LEN;
+	else
+		txsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
 
 	for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 		struct vio_queue *vioq = &sc->sc_q[qidx];
