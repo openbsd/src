@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.198 2023/11/18 10:51:09 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.199 2025/01/18 13:03:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -645,9 +645,8 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 
 	/* Determine group ID. */
 	nid = EC_GROUP_get_curve_name(grp);
-	/* If we have an ID set it, otherwise set arbitrary explicit group. */
 	if (!tls1_ec_nid2group_id(nid, group_id))
-		*group_id = prime_field ? 0xff01 : 0xff02;
+		return (0);
 
 	if (comp_id == NULL)
 		return (1);
