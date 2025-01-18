@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.203 2025/01/18 13:26:51 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.204 2025/01/18 14:17:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -652,7 +652,7 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 
 /* Check that an EC key is compatible with extensions. */
 static int
-tls1_check_ec_key(SSL *s, const uint16_t *group_id, const uint8_t *comp_id)
+tls1_check_ec_key(SSL *s, const uint16_t group_id, const uint8_t comp_id)
 {
 	size_t groupslen, formatslen, i;
 	const uint16_t *groups;
@@ -663,9 +663,9 @@ tls1_check_ec_key(SSL *s, const uint16_t *group_id, const uint8_t *comp_id)
 	 * is supported (see RFC4492).
 	 */
 	tls1_get_formatlist(s, 1, &formats, &formatslen);
-	if (comp_id != NULL && formats != NULL) {
+	if (formats != NULL) {
 		for (i = 0; i < formatslen; i++) {
-			if (formats[i] == *comp_id)
+			if (formats[i] == comp_id)
 				break;
 		}
 		if (i == formatslen)
@@ -676,9 +676,9 @@ tls1_check_ec_key(SSL *s, const uint16_t *group_id, const uint8_t *comp_id)
 	 * Check group list if present, otherwise everything is supported.
 	 */
 	tls1_get_group_list(s, 1, &groups, &groupslen);
-	if (group_id != NULL && groups != NULL) {
+	if (groups != NULL) {
 		for (i = 0; i < groupslen; i++) {
-			if (groups[i] == *group_id)
+			if (groups[i] == group_id)
 				break;
 		}
 		if (i == groupslen)
@@ -707,7 +707,7 @@ tls1_check_ec_server_key(SSL *s)
 	if (!tls1_set_ec_id(&group_id, &comp_id, eckey))
 		return 0;
 
-	return tls1_check_ec_key(s, &group_id, &comp_id);
+	return tls1_check_ec_key(s, group_id, comp_id);
 }
 
 int
