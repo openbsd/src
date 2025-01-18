@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.29 2024/10/17 06:19:06 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.30 2025/01/18 10:52:09 tb Exp $ */
 /*
  * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -308,11 +308,6 @@ ssl_cert_pubkey_security_bits(const X509 *x509)
 
 	if ((pkey = X509_get0_pubkey(x509)) == NULL)
 		return -1;
-
-	/*
-	 * XXX: DSA_security_bits() returns -1 on keys without parameters and
-	 * makes the default security callback fail.
-	 */
 
 	return EVP_PKEY_security_bits(pkey);
 }
