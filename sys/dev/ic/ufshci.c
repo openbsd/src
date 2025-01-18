@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.45 2025/01/11 20:48:27 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.46 2025/01/18 19:42:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -21,6 +21,8 @@
  * on the JEDEC JESD223C.pdf and JESD220C-2_1.pdf specifications.
  */
 
+#include "kstat.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -30,6 +32,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+#include <sys/kstat.h>
 
 #include <sys/atomic.h>
 
@@ -109,8 +112,10 @@ int			 ufshci_hibernate_io(dev_t, daddr_t, vaddr_t, size_t,
 			     int, void *);
 #endif
 
-#ifdef UFSHCI_DEBUG
-void			 ufshci_stats_print(void *);
+#if NKSTAT > 0
+void			 ufshci_kstat_attach(struct ufshci_softc *);
+int			 ufshci_kstat_read_ccb(struct kstat *);
+int			 ufshci_kstat_read_slot(struct kstat *);
 #endif
 
 const struct scsi_adapter ufshci_switch = {
@@ -263,17 +268,8 @@ ufshci_attach(struct ufshci_softc *sc)
 	saa.saa_pool = &sc->sc_iopool;
 	saa.saa_quirks = saa.saa_flags = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
-
-#ifdef UFSHCI_DEBUG
-	/* Collect some debugging statistics */
-	sc->sc_stats_slots = mallocarray(sc->sc_nutrs, sizeof(int), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	if (sc->sc_stats_slots == NULL)
-		printf("%s: Can't allocate stats array\n", sc->sc_dev.dv_xname);
-	else if (ufshci_debug > 2) {
-		timeout_set(&sc->sc_stats_timo, ufshci_stats_print, sc);
-		timeout_add_sec(&sc->sc_stats_timo, 5);
-	}
+#if NKSTAT > 0
+	ufshci_kstat_attach(sc);
 #endif
 	config_found(&sc->sc_dev, &saa, scsiprint);
 
@@ -1198,8 +1194,7 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
 	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
-
-#ifdef UFSHCI_DEBUG
+#if NKSTAT > 0
 	if (sc->sc_stats_slots)
 		sc->sc_stats_slots[slot]++;
 #endif
@@ -2017,16 +2012,113 @@ ufshci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 }
 #endif /* HIBERNATE */
 
-#ifdef UFSHCI_DEBUG
-void
-ufshci_stats_print(void *arg)
-{
-	struct ufshci_softc *sc = arg;
-	struct ufshci_ccb *ccb;
-	int i;
-	int ready2free, inprogress, free;
+#if NKSTAT > 0
+struct kstat_kv ufshci_counters_slot[CCB_STATUS_COUNT] = {
+	KSTAT_KV_UNIT_INITIALIZER("slots free", KSTAT_KV_T_COUNTER16,
+	    KSTAT_KV_U_NONE),
+	KSTAT_KV_UNIT_INITIALIZER("slots inpr", KSTAT_KV_T_COUNTER16,
+	    KSTAT_KV_U_NONE),
+	KSTAT_KV_UNIT_INITIALIZER("slots r2fr", KSTAT_KV_T_COUNTER16,
+	    KSTAT_KV_U_NONE),
+};
 
-	ready2free = inprogress = free = 0;
+void
+ufshci_kstat_attach(struct ufshci_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	char name[KSTAT_KV_NAMELEN];
+	int i;
+
+	/*
+	 * Allocate array to count ccb slot utilization.
+	 */
+	sc->sc_stats_slots = mallocarray(sc->sc_nutrs, sizeof(uint64_t),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	if (sc->sc_stats_slots == NULL) {
+		printf("%s: can't allocate stats_slots array\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/*
+	 * Setup 'ccbs' kstat.
+	 */
+	kvs = mallocarray(sc->sc_nutrs, sizeof(*kvs), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	if (kvs == NULL) {
+		printf("%s: can't allocate kvs ccbs array\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	for (i = 0; i < sc->sc_nutrs; i++) {
+		snprintf(name, sizeof(name), "slot %d ccbs", i);
+		kstat_kv_unit_init(&kvs[i], name, KSTAT_KV_T_COUNTER64,
+		    KSTAT_KV_U_NONE);
+	}
+
+	mtx_init(&sc->sc_kstat_mtx_ccb, IPL_SOFTCLOCK);
+
+	ks = kstat_create(sc->sc_dev.dv_xname, 0, "ccbs", 0, KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("%s: can't create ccbs kstats\n", sc->sc_dev.dv_xname);
+		free(kvs, M_DEVBUF, sc->sc_nutrs * sizeof(*kvs));
+		return;
+	}
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx_ccb);
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = sc->sc_nutrs * sizeof(*kvs);
+	ks->ks_read = ufshci_kstat_read_ccb;
+
+	sc->sc_kstat_ccb = ks;
+	kstat_install(ks);
+
+	/*
+	 * Setup 'slots' kstat.
+	 */
+	mtx_init(&sc->sc_kstat_mtx_slot, IPL_SOFTCLOCK);
+
+	ks = kstat_create(sc->sc_dev.dv_xname, 0, "slots", 0, KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("%s: can't create slots kstats\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx_slot);
+	ks->ks_softc = sc;
+	ks->ks_data = ufshci_counters_slot;
+	ks->ks_datalen = CCB_STATUS_COUNT * sizeof(*kvs);
+	ks->ks_read = ufshci_kstat_read_slot;
+
+	sc->sc_kstat_slot = ks;
+	kstat_install(ks);
+}
+
+int
+ufshci_kstat_read_ccb(struct kstat *ks)
+{
+	struct ufshci_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	int i;
+
+	for (i = 0; i < sc->sc_nutrs; i++)
+		kstat_kv_u64(&kvs[i]) = sc->sc_stats_slots[i];
+
+	return 0;
+}
+
+int
+ufshci_kstat_read_slot(struct kstat *ks)
+{
+	struct ufshci_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	struct ufshci_ccb *ccb;
+	uint16_t free, inprogress, ready2free;
+	int i;
+
+	free = inprogress = ready2free = 0;
 
 	for (i = 0; i < sc->sc_nutrs; i++) {
 		ccb = &sc->sc_ccbs[i];
@@ -2041,20 +2133,13 @@ ufshci_stats_print(void *arg)
 		case CCB_STATUS_READY2FREE:
 			ready2free++;
 			break;
-		default:
-			printf("unknown ccb status 0x%x!\n", ccb->ccb_status);
-			break;
 		}
 	}
-	printf("ccbs free                  : %02d\n", free);
-	printf("ccbs in-progress           : %02d\n", inprogress);
-	printf("ccbs ready2free            : %02d\n", ready2free);
 
-	for (i = 0; i < sc->sc_nutrs; i++) {
-		printf("ccb slot %02d i/o operations : %d\n",
-		    i, sc->sc_stats_slots[i]);
-	}
+	kstat_kv_u16(&kvs[0]) = free;
+	kstat_kv_u16(&kvs[1]) = inprogress;
+	kstat_kv_u16(&kvs[2]) = ready2free;
 
-	timeout_add_sec(&sc->sc_stats_timo, 5);
+	return 0;
 }
-#endif /* UFSHCI_DEBUG */
+#endif /* NKSTAT > 0 */
