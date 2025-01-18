@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.4 2024/09/04 07:54:52 mglocker Exp $ */
+/* $OpenBSD: kstat.c,v 1.5 2025/01/18 12:31:49 mglocker Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -685,10 +685,13 @@ kstat_kv_unit_init(struct kstat_kv *kv, const char *name,
 	switch (type) {
 	case KSTAT_KV_T_COUNTER64:
 	case KSTAT_KV_T_COUNTER32:
+	case KSTAT_KV_T_COUNTER16:
 	case KSTAT_KV_T_UINT64:
 	case KSTAT_KV_T_INT64:
 	case KSTAT_KV_T_UINT32:
 	case KSTAT_KV_T_INT32:
+	case KSTAT_KV_T_UINT16:
+	case KSTAT_KV_T_INT16:
 		break;
 	default:
 		panic("kv unit init %s: unit for non-integer type", name);
