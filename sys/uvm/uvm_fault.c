@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.159 2025/01/03 15:31:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.160 2025/01/18 16:35:30 kettenis Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1105,8 +1105,12 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			/* XXX instrumentation */
 			return ENOMEM;
 		}
+#ifdef __HAVE_PMAP_POPULATE
+		pmap_populate(ufi->orig_map->pmap, ufi->orig_rvaddr);
+#else
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail1");
+#endif
 		return ERESTART;
 	}
 
@@ -1457,8 +1461,12 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			/* XXX instrumentation */
 			return (ENOMEM);
 		}
+#ifdef __HAVE_PMAP_POPULATE
+		pmap_populate(ufi->orig_map->pmap, ufi->orig_rvaddr);
+#else
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail2");
+#endif
 		return ERESTART;
 	}
 
