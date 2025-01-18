@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.202 2025/01/18 13:15:31 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.203 2025/01/18 13:26:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -628,14 +628,14 @@ tls1_check_group(SSL *s, uint16_t group_id)
 static int
 tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 {
-	const EC_GROUP *grp;
+	const EC_GROUP *group;
 	int nid;
 
-	if ((grp = EC_KEY_get0_group(ec)) == NULL)
+	if ((group = EC_KEY_get0_group(ec)) == NULL)
 		return 0;
 
 	/* Determine group ID. */
-	nid = EC_GROUP_get_curve_name(grp);
+	nid = EC_GROUP_get_curve_name(group);
 	if (!tls1_ec_nid2group_id(nid, group_id))
 		return 0;
 
