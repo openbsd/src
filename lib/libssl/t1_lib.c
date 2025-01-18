@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.199 2025/01/18 13:03:02 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.200 2025/01/18 13:07:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -629,8 +629,6 @@ static int
 tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 {
 	const EC_GROUP *grp;
-	const EC_METHOD *meth;
-	int prime_field;
 	int nid;
 
 	if (ec == NULL)
@@ -639,9 +637,6 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 	/* Determine whether the group is defined over a prime field. */
 	if ((grp = EC_KEY_get0_group(ec)) == NULL)
 		return (0);
-	if ((meth = EC_GROUP_method_of(grp)) == NULL)
-		return (0);
-	prime_field = (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field);
 
 	/* Determine group ID. */
 	nid = EC_GROUP_get_curve_name(grp);
@@ -656,9 +651,7 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 		return (0);
 	*comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
 	if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_COMPRESSED) {
-		*comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-		if (prime_field)
-			*comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+		*comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
 	}
 
 	return (1);
