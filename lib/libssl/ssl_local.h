@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.24 2025/01/17 22:39:42 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.25 2025/01/18 10:53:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -202,7 +202,6 @@ __BEGIN_HIDDEN_DECLS
 
 /* Bits for algorithm_auth (server authentication) */
 #define SSL_aRSA		0x00000001L /* RSA auth */
-#define SSL_aDSS		0x00000002L /* DSS auth */
 #define SSL_aNULL		0x00000004L /* no auth (i.e. use ADH or AECDH) */
 #define SSL_aECDSA              0x00000040L /* ECDSA auth*/
 #define SSL_aTLS1_3		0x00000400L /* TLSv1.3 authentication */
