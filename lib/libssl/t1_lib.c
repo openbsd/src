@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.201 2025/01/18 13:11:58 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.202 2025/01/18 13:15:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,9 +128,9 @@ int
 tls1_new(SSL *s)
 {
 	if (!ssl3_new(s))
-		return (0);
+		return 0;
 	s->method->ssl_clear(s);
-	return (1);
+	return 1;
 }
 
 void
@@ -632,22 +632,22 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 	int nid;
 
 	if ((grp = EC_KEY_get0_group(ec)) == NULL)
-		return (0);
+		return 0;
 
 	/* Determine group ID. */
 	nid = EC_GROUP_get_curve_name(grp);
 	if (!tls1_ec_nid2group_id(nid, group_id))
-		return (0);
+		return 0;
 
 	/* Specify the compression identifier. */
 	if (EC_KEY_get0_public_key(ec) == NULL)
-		return (0);
+		return 0;
 	*comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
 	if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_COMPRESSED) {
 		*comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
 	}
 
-	return (1);
+	return 1;
 }
 
 /* Check that an EC key is compatible with extensions. */
@@ -669,7 +669,7 @@ tls1_check_ec_key(SSL *s, const uint16_t *group_id, const uint8_t *comp_id)
 				break;
 		}
 		if (i == formatslen)
-			return (0);
+			return 0;
 	}
 
 	/*
@@ -682,10 +682,10 @@ tls1_check_ec_key(SSL *s, const uint16_t *group_id, const uint8_t *comp_id)
 				break;
 		}
 		if (i == groupslen)
-			return (0);
+			return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
 /* Check EC server key is compatible with client extensions. */
@@ -699,13 +699,13 @@ tls1_check_ec_server_key(SSL *s)
 	EVP_PKEY *pkey;
 
 	if (cpk->x509 == NULL || cpk->privatekey == NULL)
-		return (0);
+		return 0;
 	if ((pkey = X509_get0_pubkey(cpk->x509)) == NULL)
-		return (0);
+		return 0;
 	if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
-		return (0);
+		return 0;
 	if (!tls1_set_ec_id(&group_id, &comp_id, eckey))
-		return (0);
+		return 0;
 
 	return tls1_check_ec_key(s, &group_id, &comp_id);
 }
