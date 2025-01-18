@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.165 2025/01/16 16:35:01 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.166 2025/01/18 10:44:52 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -100,21 +100,17 @@ soisconnected(struct socket *so)
 	so->so_state |= SS_ISCONNECTED;
 
 	if (head != NULL && so->so_onq == &head->so_q0) {
-		int persocket = solock_persocket(so);
+		KASSERT(solock_persocket(so));
 
-		if (persocket) {
-			soref(head);
+		soref(head);
+		sounlock(so);
+		solock(head);
+		solock(so);
 
-			sounlock(so);
-			solock(head);
-			solock(so);
-
-			if (so->so_onq != &head->so_q0) {
-				sounlock(head);
-				sorele(head);
-				return;
-			}
-
+		if (so->so_onq != &head->so_q0) {
+			sounlock(head);
+			sorele(head);
+			return;
 		}
 
 		soqremque(so, 0);
@@ -122,10 +118,8 @@ soisconnected(struct socket *so)
 		sorwakeup(head);
 		wakeup_one(&head->so_timeo);
 
-		if (persocket) {
-			sounlock(head);
-			sorele(head);
-		}
+		sounlock(head);
+		sorele(head);
 	} else {
 		wakeup(&so->so_timeo);
 		sorwakeup(so);
