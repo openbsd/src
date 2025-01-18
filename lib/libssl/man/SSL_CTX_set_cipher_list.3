@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.17 2025/01/18 10:45:12 tb Exp $
+.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.18 2025/01/18 12:20:02 tb Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -310,16 +310,6 @@ The full words returned by the
 .Xr openssl 1
 .Cm ciphers
 command can be used to select individual cipher suites.
-.Pp
-The following words do not match anything because
-LibreSSL no longer provides any such cipher suites:
-.Pp
-.Bl -tag -width Ds -compact
-.It Cm DES
-Cipher suites using single DES for symmetric encryption.
-.It Cm IDEA
-Cipher suites using IDEA for symmetric encryption.
-.El
 .Pp
 The following are deprecated aliases:
 .Pp
