@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.150 2025/01/18 10:53:04 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.151 2025/01/18 12:20:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1535,8 +1535,6 @@ SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
 		return NID_camellia_256_cbc;
 	case SSL_CHACHA20POLY1305:
 		return NID_chacha20_poly1305;
-	case SSL_DES:
-		return NID_des_cbc;
 	case SSL_RC4:
 		return NID_rc4;
 	default:

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.25 2025/01/18 10:53:04 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.26 2025/01/18 12:20:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,10 +207,8 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_aTLS1_3		0x00000400L /* TLSv1.3 authentication */
 
 /* Bits for algorithm_enc (symmetric encryption) */
-#define SSL_DES			0x00000001L
 #define SSL_3DES		0x00000002L
 #define SSL_RC4			0x00000004L
-#define SSL_IDEA		0x00000008L
 #define SSL_eNULL		0x00000010L
 #define SSL_AES128		0x00000020L
 #define SSL_AES256		0x00000040L
