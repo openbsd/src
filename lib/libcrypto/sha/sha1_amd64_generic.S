@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_generic.S,v 1.1 2024/12/04 13:13:33 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_generic.S,v 1.2 2025/01/18 02:56:07 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -180,9 +180,9 @@ sha1_block_generic:
 	andq	$~63, %rsp
 	movq	%rax, (64+0*8)(%rsp)
 
-	/* Compute and store end of message. */
+	/* Compute end of message. */
 	shlq	$6, num
-	leaq	(in, num, 1), %rbp
+	leaq	(in, num, 1), end
 
 	/* Load current hash state from context. */
 	movl	(0*4)(ctx), hs0
