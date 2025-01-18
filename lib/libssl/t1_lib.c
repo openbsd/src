@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.200 2025/01/18 13:07:47 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.201 2025/01/18 13:11:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -631,10 +631,6 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 	const EC_GROUP *grp;
 	int nid;
 
-	if (ec == NULL)
-		return (0);
-
-	/* Determine whether the group is defined over a prime field. */
 	if ((grp = EC_KEY_get0_group(ec)) == NULL)
 		return (0);
 
@@ -642,9 +638,6 @@ tls1_set_ec_id(uint16_t *group_id, uint8_t *comp_id, EC_KEY *ec)
 	nid = EC_GROUP_get_curve_name(grp);
 	if (!tls1_ec_nid2group_id(nid, group_id))
 		return (0);
-
-	if (comp_id == NULL)
-		return (1);
 
 	/* Specify the compression identifier. */
 	if (EC_KEY_get0_public_key(ec) == NULL)
