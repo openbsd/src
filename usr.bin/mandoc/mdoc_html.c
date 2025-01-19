@@ -1,6 +1,6 @@
-/* $OpenBSD: mdoc_html.c,v 1.225 2022/07/06 16:02:52 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.226 2025/01/19 16:36:24 schwarze Exp $ */
 /*
- * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2022 Anna Vyalkova <cyber@sysrq.in>
  *
@@ -1492,10 +1492,13 @@ static int
 mdoc__x_pre(MDOC_ARGS)
 {
 	struct roff_node	*nn;
-	const char		*cattr;
+	const unsigned char	*cp;
+	const char		*cattr, *arg;
+	char			*url;
 	enum htmltag		 t;
 
 	t = TAG_SPAN;
+	arg = n->child->string;
 
 	switch (n->tok) {
 	case MDOC__A:
@@ -1535,13 +1538,25 @@ mdoc__x_pre(MDOC_ARGS)
 		cattr = "RsQ";
 		break;
 	case MDOC__R:
+		if (strncmp(arg, "RFC ", 4) == 0) {
+			cp = arg += 4;
+			while (isdigit(*cp))
+				cp++;
+			if (*cp == '\0') {
+				mandoc_asprintf(&url, "https://www.rfc-"
+				    "editor.org/rfc/rfc%s.html", arg);
+				print_otag(h, TAG_A, "ch", "RsR", url);
+				free(url);
+				return 1;
+			}
+		}
 		cattr = "RsR";
 		break;
 	case MDOC__T:
 		cattr = "RsT";
 		break;
 	case MDOC__U:
-		print_otag(h, TAG_A, "ch", "RsU", n->child->string);
+		print_otag(h, TAG_A, "ch", "RsU", arg);
 		return 1;
 	case MDOC__V:
 		cattr = "RsV";
