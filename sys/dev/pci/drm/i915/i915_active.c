@@ -27,7 +27,7 @@ struct active_node {
 	struct rb_node node;
 	struct i915_active_fence base;
 	struct i915_active *ref;
-	u64 timeline;
+	u64 timeline __aligned(8);
 };
 
 #define fetch_node(x) rb_entry(READ_ONCE(x), typeof(struct active_node), node)
