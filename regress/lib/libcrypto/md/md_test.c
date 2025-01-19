@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_test.c,v 1.2 2025/01/19 07:40:57 jsing Exp $ */
+/*	$OpenBSD: md_test.c,v 1.3 2025/01/19 10:17:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -327,7 +327,7 @@ md5_large_test(void)
 
 	MD5_Init(&ctx);
 
-	for (i = 0; i < (2<<28) + 1; i += in_len) {
+	for (i = 0; i < (1<<29) + 1; i += in_len) {
 		if (!MD5_Update(&ctx, in, in_len)) {
 			fprintf(stderr, "FAIL (%s): MD5_Update failed\n", label);
 			goto failed;
