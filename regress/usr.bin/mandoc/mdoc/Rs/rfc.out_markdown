@@ -1,0 +1,18 @@
+RS-RFC(1) - General Commands Manual
+
+# NAME
+
+**Rs-RFC** - reference an RFC
+
+# STANDARDS
+
+BEGINTEST
+
+David Waitzman,
+*A Standard for the Transmission of IP Datagrams on Avian Carriers*,
+RFC 1149,
+April 1990.
+
+ENDTEST
+
+OpenBSD - January 19, 2025

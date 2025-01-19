@@ -1,0 +1,18 @@
+.\" $OpenBSD: rfc.in,v 1.1 2025/01/19 23:01:27 schwarze Exp $
+.Dd $Mdocdate: January 19 2025 $
+.Dt RS-RFC 1
+.Os
+.Sh NAME
+.Nm Rs-RFC
+.Nd reference an RFC
+.Sh STANDARDS
+BEGINTEST
+.Pp
+.Rs
+.%A David Waitzman
+.%T A Standard for the Transmission of IP Datagrams on Avian Carriers
+.%R RFC 1149
+.%D April 1990
+.Re
+.Pp
+ENDTEST

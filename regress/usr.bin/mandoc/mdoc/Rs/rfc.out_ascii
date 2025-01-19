@@ -1,0 +1,14 @@
+RS-RFC(1)                   General Commands Manual                  RS-RFC(1)
+
+NNAAMMEE
+     RRss--RRFFCC - reference an RFC
+
+SSTTAANNDDAARRDDSS
+     BEGINTEST
+
+     David Waitzman, _A _S_t_a_n_d_a_r_d _f_o_r _t_h_e _T_r_a_n_s_m_i_s_s_i_o_n _o_f _I_P _D_a_t_a_g_r_a_m_s _o_n _A_v_i_a_n
+     _C_a_r_r_i_e_r_s, RFC 1149, April 1990.
+
+     ENDTEST
+
+OpenBSD                        January 19, 2025                        OpenBSD
