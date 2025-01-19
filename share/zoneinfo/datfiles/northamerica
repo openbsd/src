@@ -1,4 +1,4 @@
-# $OpenBSD: northamerica,v 1.87 2024/10/02 17:08:47 millert Exp $
+# $OpenBSD: northamerica,v 1.88 2025/01/19 22:03:27 millert Exp $
 # tzdb data for North and Central America and environs
 
 # This file is in the public domain, so clarified as of
@@ -28,9 +28,12 @@
 # in New York City (1869-10).  His 1870 proposal was based on Washington, DC,
 # but in 1872-05 he moved the proposed origin to Greenwich.
 
-# From Paul Eggert (2018-03-20):
+# From Paul Eggert (2024-11-18):
 # Dowd's proposal left many details unresolved, such as where to draw
-# lines between time zones.  The key individual who made time zones
+# lines between time zones.  Sandford Fleming of the Canadian Pacific Railway
+# argued for Dowd's proposal in 1876, and Cleveland Abbe of the American
+# Meteorology Society published a report in 1879 recommending four US time
+# zones based on GMT.  However, the key individual who made time zones
 # work in the US was William Frederick Allen - railway engineer,
 # managing editor of the Travelers' Guide, and secretary of the
 # General Time Convention, a railway standardization group.  Allen

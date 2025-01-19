@@ -1,4 +1,4 @@
-# $OpenBSD: europe,v 1.93 2024/10/02 17:08:47 millert Exp $
+# $OpenBSD: europe,v 1.94 2025/01/19 22:03:27 millert Exp $
 # tzdb data for Europe and environs
 
 # This file is in the public domain, so clarified as of
@@ -1209,7 +1209,7 @@ Zone Atlantic/Faroe	-0:27:04 -	LMT	1908 Jan 11 # Tórshavn
 # However, Greenland will change to Daylight Saving Time again in 2024
 # and onwards.
 
-# From a contributor who wishes to remain anonymous for now (2023-10-29):
+# From Jule Dabars (2023-10-29):
 # https://www.dr.dk/nyheder/seneste/i-nat-skal-uret-stilles-en-time-tilbage-men-foerste-gang-sker-det-ikke-i-groenland
 # with a link to that page:
 # https://naalakkersuisut.gl/Nyheder/2023/10/2710_sommertid

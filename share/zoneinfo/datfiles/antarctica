@@ -1,4 +1,4 @@
-# $OpenBSD: antarctica,v 1.49 2024/10/02 17:08:47 millert Exp $
+# $OpenBSD: antarctica,v 1.50 2025/01/19 22:03:27 millert Exp $
 # tzdb data for Antarctica and environs
 
 # This file is in the public domain, so clarified as of
@@ -184,6 +184,8 @@ Zone Antarctica/DumontDUrville 0 -	-00	1947
 
 # France & Italy - year-round base
 # Concordia, -750600+1232000, since 2005
+# https://en.wikipedia.org/wiki/Concordia_Station
+# Can use Asia/Singapore, which it has agreed with since inception.
 
 # Germany - year-round base
 # Neumayer III, -704080-0081602, since 2009
