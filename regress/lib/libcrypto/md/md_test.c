@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_test.c,v 1.1.1.1 2022/09/02 13:34:48 tb Exp $ */
+/*	$OpenBSD: md_test.c,v 1.2 2025/01/19 07:40:57 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -200,6 +200,17 @@ md_hash_from_algorithm(int algorithm, const char **out_label,
 	return 1;
 }
 
+static void
+hexdump(const unsigned char *buf, size_t len)
+{
+	size_t i;
+
+	for (i = 1; i <= len; i++)
+		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+
+	fprintf(stderr, "\n");
+}
+
 static int
 md_test(void)
 {
@@ -290,12 +301,66 @@ md_test(void)
 	return failed;
 }
 
+static int
+md5_large_test(void)
+{
+	MD5_CTX ctx;
+	uint8_t in[1024];
+	uint8_t out[EVP_MAX_MD_SIZE];
+	unsigned int out_len;
+	size_t in_len;
+	size_t i;
+	const char *label;
+	uint8_t want[] = {
+		0xd8, 0xbc, 0xae, 0x13, 0xb5, 0x5a, 0xb0, 0xfc,
+		0x7f, 0x8a, 0xe1, 0x78, 0x27, 0x8d, 0x44, 0x1b,
+	};
+	int failed = 1;
+
+	memset(in, 'A', sizeof(in));
+	in_len = sizeof(in);
+
+	memset(out, 0, sizeof(out));
+	out_len = 16;
+
+	label = "md5";
+
+	MD5_Init(&ctx);
+
+	for (i = 0; i < (2<<28) + 1; i += in_len) {
+		if (!MD5_Update(&ctx, in, in_len)) {
+			fprintf(stderr, "FAIL (%s): MD5_Update failed\n", label);
+			goto failed;
+		}
+	}
+	if (!MD5_Final(out, &ctx)) {
+		fprintf(stderr, "FAIL (%s): MD5_Final failed\n", label);
+		goto failed;
+	}
+
+	if (memcmp(out, want, out_len) != 0) {
+		fprintf(stderr, "FAIL (%s): MD5 mismatch\n", label);
+		hexdump(out, out_len);
+		goto failed;
+	}
+	if (ctx.Nh != 0x1 || ctx.Nl != 0x2000) {
+		fprintf(stderr, "FAIL (%s): MD5 incorrect bit length\n", label);
+		goto failed;
+	}
+
+	failed = 0;
+
+ failed:
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
 	int failed = 0;
 
 	failed |= md_test();
+	failed |= md5_large_test();
 
 	return failed;
 }
