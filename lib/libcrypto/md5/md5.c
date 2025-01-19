@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.23 2024/06/01 07:36:16 tb Exp $ */
+/* $OpenBSD: md5.c,v 1.24 2025/01/19 07:51:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,19 +278,13 @@ MD5_Update(MD5_CTX *c, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
 	unsigned char *p;
-	MD5_LONG l;
 	size_t n;
 
 	if (len == 0)
 		return 1;
 
-	l = (c->Nl + (((MD5_LONG)len) << 3))&0xffffffffUL;
-	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
-	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh+=(MD5_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
-	c->Nl = l;
+	/* Update message bit counter. */
+	crypto_add_u32dw_u64(&c->Nh, &c->Nl, (uint64_t)len << 3);
 
 	n = c->num;
 	if (n != 0) {

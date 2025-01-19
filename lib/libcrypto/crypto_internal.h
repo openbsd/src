@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.14 2024/11/08 14:05:43 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.15 2025/01/19 07:51:41 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -253,6 +253,16 @@ crypto_store_htole32(uint8_t *dst, uint32_t v)
 {
 	v = htole32(v);
 	memcpy(dst, &v, sizeof(v));
+}
+#endif
+
+#ifndef HAVE_CRYPTO_ADD_U32DW_U64
+static inline void
+crypto_add_u32dw_u64(uint32_t *h, uint32_t *l, uint64_t v)
+{
+	v += ((uint64_t)*h << 32) | *l;
+	*h = v >> 32;
+	*l = v;
 }
 #endif
 
