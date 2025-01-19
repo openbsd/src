@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.41 2025/01/19 10:24:17 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.42 2025/01/19 13:14:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -755,7 +755,7 @@ static void
 x509_usage(void)
 {
 	fprintf(stderr, "usage: x509 "
-	    " [-addreject arg] [-addtrust arg] [-alias] [-CA file]\n"
+	    "[-addreject arg] [-addtrust arg] [-alias] [-CA file]\n"
 	    "    [-CAcreateserial] [-CAform der | pem] [-CAkey file]\n"
 	    "    [-CAkeyform der | pem] [-CAserial file] [-certopt option]\n"
 	    "    [-checkend arg] [-clrext] [-clrreject] [-clrtrust] [-dates]\n"
