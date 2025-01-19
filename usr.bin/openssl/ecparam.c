@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.23 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: ecparam.c,v 1.24 2025/01/19 07:41:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -406,8 +406,7 @@ ecparam_main(int argc, char **argv)
 	if (cfg.C) {
 		size_t buf_len = 0, tmp_len = 0;
 		const EC_POINT *point;
-		int is_prime, len = 0;
-		const EC_METHOD *meth = EC_GROUP_method_of(group);
+		int len = 0;
 
 		if ((ec_p = BN_new()) == NULL || (ec_a = BN_new()) == NULL ||
 		    (ec_b = BN_new()) == NULL || (ec_gen = BN_new()) == NULL ||
@@ -416,8 +415,6 @@ ecparam_main(int argc, char **argv)
 			perror("malloc");
 			goto end;
 		}
-		is_prime = (EC_METHOD_get_field_type(meth) ==
-		    NID_X9_62_prime_field);
 
 		if (!EC_GROUP_get_curve(group, ec_p, ec_a, ec_b, NULL))
 			goto end;
@@ -479,15 +476,8 @@ ecparam_main(int argc, char **argv)
 		BIO_printf(out, "\tif ((tmp_3 = BN_bin2bn(ec_b_%d, "
 		    "sizeof(ec_b_%d), NULL)) == NULL)\n\t\t"
 		    "goto err;\n", len, len);
-		if (is_prime) {
-			BIO_printf(out, "\tif ((group = EC_GROUP_new_curve_"
-			    "GFp(tmp_1, tmp_2, tmp_3, NULL)) == NULL)"
-			    "\n\t\tgoto err;\n\n");
-		} else {
-			BIO_printf(out, "\tif ((group = EC_GROUP_new_curve_"
-			    "GF2m(tmp_1, tmp_2, tmp_3, NULL)) == NULL)"
-			    "\n\t\tgoto err;\n\n");
-		}
+		BIO_printf(out, "\tif ((group = EC_GROUP_new_curve_GFp"
+		    "(tmp_1, tmp_2, tmp_3, NULL)) == NULL)\n\t\tgoto err;\n\n");
 		BIO_printf(out, "\t/* build generator */\n");
 		BIO_printf(out, "\tif ((tmp_1 = BN_bin2bn(ec_gen_%d, "
 		    "sizeof(ec_gen_%d), tmp_1)) == NULL)"
