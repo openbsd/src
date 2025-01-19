@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.229 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.230 2025/01/19 03:27:27 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1277,7 +1277,7 @@ filt_bpfread(struct knote *kn, long hint)
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 
 	kn->kn_data = d->bd_hlen;
-	if (d->bd_wtout == 0)
+	if (d->bd_state == BPF_S_DONE)
 		kn->kn_data += d->bd_slen;
 
 	return (kn->kn_data > 0);
