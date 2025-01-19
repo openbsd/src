@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.24 2025/01/19 07:41:52 tb Exp $ */
+/* $OpenBSD: ecparam.c,v 1.25 2025/01/19 10:24:17 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -87,11 +87,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-static int ecparam_print_var(BIO *, BIGNUM *, const char *, int,
-    unsigned char *);
-
 static struct {
-	int C;
 	int asn1_flag;
 	int check;
 	char *curve_name;
@@ -140,12 +136,6 @@ ecparam_opt_enctype(char *arg)
 }
 
 static const struct option ecparam_options[] = {
-	{
-		.name = "C",
-		.desc = "Convert the EC parameters into C code",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.C,
-	},
 	{
 		.name = "check",
 		.desc = "Validate the elliptic curve parameters",
@@ -241,7 +231,7 @@ static const struct option ecparam_options[] = {
 static void
 ecparam_usage(void)
 {
-	fprintf(stderr, "usage: ecparam [-C] [-check] [-conv_form arg] "
+	fprintf(stderr, "usage: ecparam [-check] [-conv_form arg] "
 	    " [-genkey]\n"
 	    "    [-in file] [-inform DER | PEM] [-list_curves] [-name arg]\n"
 	    "    [-no_seed] [-noout] [-out file] [-outform DER | PEM]\n"
@@ -252,10 +242,7 @@ ecparam_usage(void)
 int
 ecparam_main(int argc, char **argv)
 {
-	BIGNUM *ec_p = NULL, *ec_a = NULL, *ec_b = NULL, *ec_gen = NULL;
-	BIGNUM *ec_order = NULL, *ec_cofactor = NULL;
 	EC_GROUP *group = NULL;
-	unsigned char *buffer = NULL;
 	BIO *in = NULL, *out = NULL;
 	int i, ret = 1;
 
@@ -403,109 +390,6 @@ ecparam_main(int argc, char **argv)
 			BIO_printf(bio_err, "ok\n");
 
 	}
-	if (cfg.C) {
-		size_t buf_len = 0, tmp_len = 0;
-		const EC_POINT *point;
-		int len = 0;
-
-		if ((ec_p = BN_new()) == NULL || (ec_a = BN_new()) == NULL ||
-		    (ec_b = BN_new()) == NULL || (ec_gen = BN_new()) == NULL ||
-		    (ec_order = BN_new()) == NULL ||
-		    (ec_cofactor = BN_new()) == NULL) {
-			perror("malloc");
-			goto end;
-		}
-
-		if (!EC_GROUP_get_curve(group, ec_p, ec_a, ec_b, NULL))
-			goto end;
-
-		if ((point = EC_GROUP_get0_generator(group)) == NULL)
-			goto end;
-		if (!EC_POINT_point2bn(group, point,
-			EC_GROUP_get_point_conversion_form(group), ec_gen,
-			NULL))
-			goto end;
-		if (!EC_GROUP_get_order(group, ec_order, NULL))
-			goto end;
-		if (!EC_GROUP_get_cofactor(group, ec_cofactor, NULL))
-			goto end;
-
-		len = BN_num_bits(ec_order);
-
-		if ((tmp_len = (size_t) BN_num_bytes(ec_p)) > buf_len)
-			buf_len = tmp_len;
-		if ((tmp_len = (size_t) BN_num_bytes(ec_a)) > buf_len)
-			buf_len = tmp_len;
-		if ((tmp_len = (size_t) BN_num_bytes(ec_b)) > buf_len)
-			buf_len = tmp_len;
-		if ((tmp_len = (size_t) BN_num_bytes(ec_gen)) > buf_len)
-			buf_len = tmp_len;
-		if ((tmp_len = (size_t) BN_num_bytes(ec_order)) > buf_len)
-			buf_len = tmp_len;
-		if ((tmp_len = (size_t) BN_num_bytes(ec_cofactor)) > buf_len)
-			buf_len = tmp_len;
-
-		buffer = malloc(buf_len);
-
-		if (buffer == NULL) {
-			perror("malloc");
-			goto end;
-		}
-		ecparam_print_var(out, ec_p, "ec_p", len, buffer);
-		ecparam_print_var(out, ec_a, "ec_a", len, buffer);
-		ecparam_print_var(out, ec_b, "ec_b", len, buffer);
-		ecparam_print_var(out, ec_gen, "ec_gen", len, buffer);
-		ecparam_print_var(out, ec_order, "ec_order", len, buffer);
-		ecparam_print_var(out, ec_cofactor, "ec_cofactor", len,
-		    buffer);
-
-		BIO_printf(out, "\n\n");
-
-		BIO_printf(out, "EC_GROUP *get_ec_group_%d(void)\n\t{\n", len);
-		BIO_printf(out, "\tint ok=0;\n");
-		BIO_printf(out, "\tEC_GROUP *group = NULL;\n");
-		BIO_printf(out, "\tEC_POINT *point = NULL;\n");
-		BIO_printf(out, "\tBIGNUM   *tmp_1 = NULL, *tmp_2 = NULL, "
-		    "*tmp_3 = NULL;\n\n");
-		BIO_printf(out, "\tif ((tmp_1 = BN_bin2bn(ec_p_%d, "
-		    "sizeof(ec_p_%d), NULL)) == NULL)\n\t\t"
-		    "goto err;\n", len, len);
-		BIO_printf(out, "\tif ((tmp_2 = BN_bin2bn(ec_a_%d, "
-		    "sizeof(ec_a_%d), NULL)) == NULL)\n\t\t"
-		    "goto err;\n", len, len);
-		BIO_printf(out, "\tif ((tmp_3 = BN_bin2bn(ec_b_%d, "
-		    "sizeof(ec_b_%d), NULL)) == NULL)\n\t\t"
-		    "goto err;\n", len, len);
-		BIO_printf(out, "\tif ((group = EC_GROUP_new_curve_GFp"
-		    "(tmp_1, tmp_2, tmp_3, NULL)) == NULL)\n\t\tgoto err;\n\n");
-		BIO_printf(out, "\t/* build generator */\n");
-		BIO_printf(out, "\tif ((tmp_1 = BN_bin2bn(ec_gen_%d, "
-		    "sizeof(ec_gen_%d), tmp_1)) == NULL)"
-		    "\n\t\tgoto err;\n", len, len);
-		BIO_printf(out, "\tpoint = EC_POINT_bn2point(group, tmp_1, "
-		    "NULL, NULL);\n");
-		BIO_printf(out, "\tif (point == NULL)\n\t\tgoto err;\n");
-		BIO_printf(out, "\tif ((tmp_2 = BN_bin2bn(ec_order_%d, "
-		    "sizeof(ec_order_%d), tmp_2)) == NULL)"
-		    "\n\t\tgoto err;\n", len, len);
-		BIO_printf(out, "\tif ((tmp_3 = BN_bin2bn(ec_cofactor_%d, "
-		    "sizeof(ec_cofactor_%d), tmp_3)) == NULL)"
-		    "\n\t\tgoto err;\n", len, len);
-		BIO_printf(out, "\tif (!EC_GROUP_set_generator(group, point,"
-		    " tmp_2, tmp_3))\n\t\tgoto err;\n");
-		BIO_printf(out, "\n\tok=1;\n");
-		BIO_printf(out, "err:\n");
-		BIO_printf(out, "\tif (tmp_1)\n\t\tBN_free(tmp_1);\n");
-		BIO_printf(out, "\tif (tmp_2)\n\t\tBN_free(tmp_2);\n");
-		BIO_printf(out, "\tif (tmp_3)\n\t\tBN_free(tmp_3);\n");
-		BIO_printf(out, "\tif (point)\n\t\tEC_POINT_free(point);\n");
-		BIO_printf(out, "\tif (!ok)\n");
-		BIO_printf(out, "\t\t{\n");
-		BIO_printf(out, "\t\tEC_GROUP_free(group);\n");
-		BIO_printf(out, "\t\tgroup = NULL;\n");
-		BIO_printf(out, "\t\t}\n");
-		BIO_printf(out, "\treturn(group);\n\t}\n");
-	}
 	if (!cfg.noout) {
 		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_ECPKParameters_bio(out, group);
@@ -554,15 +438,6 @@ ecparam_main(int argc, char **argv)
 	ret = 0;
 
  end:
-	BN_free(ec_p);
-	BN_free(ec_a);
-	BN_free(ec_b);
-	BN_free(ec_gen);
-	BN_free(ec_order);
-	BN_free(ec_cofactor);
-
-	free(buffer);
-
 	BIO_free(in);
 	BIO_free_all(out);
 	EC_GROUP_free(group);
@@ -570,27 +445,4 @@ ecparam_main(int argc, char **argv)
 	return (ret);
 }
 
-static int
-ecparam_print_var(BIO * out, BIGNUM * in, const char *var,
-    int len, unsigned char *buffer)
-{
-	BIO_printf(out, "static unsigned char %s_%d[] = {", var, len);
-	if (BN_is_zero(in))
-		BIO_printf(out, "\n\t0x00");
-	else {
-		int i, l;
-
-		l = BN_bn2bin(in, buffer);
-		for (i = 0; i < l - 1; i++) {
-			if ((i % 12) == 0)
-				BIO_printf(out, "\n\t");
-			BIO_printf(out, "0x%02X,", buffer[i]);
-		}
-		if ((i % 12) == 0)
-			BIO_printf(out, "\n\t");
-		BIO_printf(out, "0x%02X", buffer[i]);
-	}
-	BIO_printf(out, "\n\t};\n\n");
-	return 1;
-}
 #endif

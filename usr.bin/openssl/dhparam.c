@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.18 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: dhparam.c,v 1.19 2025/01/19 10:24:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,6 @@
 #define DEFBITS	2048
 
 static struct {
-	int C;
 	int check;
 	int dsaparam;
 	int g;
@@ -159,12 +158,6 @@ static const struct option dhparam_options[] = {
 		.type = OPTION_VALUE,
 		.opt.value = &cfg.g,
 		.value = 5,
-	},
-	{
-		.name = "C",
-		.desc = "Convert DH parameters into C code",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.C,
 	},
 	{
 		.name = "check",
@@ -225,7 +218,7 @@ static void
 dhparam_usage(void)
 {
 	fprintf(stderr,
-	    "usage: dhparam [-2 | -5] [-C] [-check] [-dsaparam]\n"
+	    "usage: dhparam [-2 | -5] [-check] [-dsaparam]\n"
 	    "    [-in file] [-inform DER | PEM] [-noout] [-out file]\n"
 	    "    [-outform DER | PEM] [-text] [numbits]\n\n");
 	options_usage(dhparam_options);
@@ -404,55 +397,6 @@ dhparam_main(int argc, char **argv)
 			printf("the g value is not a generator\n");
 		if (i == 0)
 			printf("DH parameters appear to be ok.\n");
-	}
-	if (cfg.C) {
-		unsigned char *data;
-		int len, l, bits;
-
-		len = BN_num_bytes(DH_get0_p(dh));
-		bits = BN_num_bits(DH_get0_p(dh));
-		data = malloc(len);
-		if (data == NULL) {
-			perror("malloc");
-			goto end;
-		}
-		printf("#ifndef HEADER_DH_H\n"
-		    "#include <openssl/dh.h>\n"
-		    "#endif\n");
-		printf("DH *get_dh%d()\n\t{\n", bits);
-
-		l = BN_bn2bin(DH_get0_p(dh), data);
-		printf("\tstatic unsigned char dh%d_p[] = {", bits);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t\t");
-			printf("0x%02X, ", data[i]);
-		}
-		printf("\n\t\t};\n");
-
-		l = BN_bn2bin(DH_get0_g(dh), data);
-		printf("\tstatic unsigned char dh%d_g[] = {", bits);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t\t");
-			printf("0x%02X, ", data[i]);
-		}
-		printf("\n\t\t};\n");
-
-		printf("\tDH *dh;\n");
-		printf("\tBIGNUM *p = NULL, *g = NULL;\n\n");
-		printf("\tif ((dh = DH_new()) == NULL) return(NULL);\n");
-		printf("\tp = BN_bin2bn(dh%d_p, sizeof(dh%d_p), NULL);\n",
-		    bits, bits);
-		printf("\tg = BN_bin2bn(dh%d_g, sizeof(dh%d_g), NULL);\n",
-		    bits, bits);
-		printf("\tif (p == NULL || g == NULL)\n");
-		printf("\t\t{ BN_free(p); BN_free(g); DH_free(dh); return(NULL); }\n");
-		printf("\tDH_set0_pqg(dh, p, NULL, g);\n");
-		if (DH_get_length(dh) > 0)
-			printf("\tDH_set_length(dh, %ld);\n", DH_get_length(dh));
-		printf("\treturn(dh);\n\t}\n");
-		free(data);
 	}
 	if (!cfg.noout) {
 		if (cfg.outformat == FORMAT_ASN1)

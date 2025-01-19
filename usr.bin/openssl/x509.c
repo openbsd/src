@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.40 2024/12/04 08:14:34 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.41 2025/01/19 10:24:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,7 +93,6 @@ static struct {
 	char *alias;
 	int aliasout;
 	int badops;
-	int C;
 	int CA_createserial;
 	int CA_flag;
 	char *CAfile;
@@ -327,13 +326,6 @@ x509_opt_utf8(void)
 }
 
 static const struct option x509_options[] = {
-	{
-		.name = "C",
-		.desc = "Convert the certificate into C code",
-		.type = OPTION_ORDER,
-		.opt.order = &cfg.C,
-		.order = &cfg.num,
-	},
 	{
 		.name = "addreject",
 		.argname = "arg",
@@ -763,7 +755,7 @@ static void
 x509_usage(void)
 {
 	fprintf(stderr, "usage: x509 "
-	    "[-C] [-addreject arg] [-addtrust arg] [-alias] [-CA file]\n"
+	    " [-addreject arg] [-addtrust arg] [-alias] [-CA file]\n"
 	    "    [-CAcreateserial] [-CAform der | pem] [-CAkey file]\n"
 	    "    [-CAkeyform der | pem] [-CAserial file] [-certopt option]\n"
 	    "    [-checkend arg] [-clrext] [-clrreject] [-clrtrust] [-dates]\n"
@@ -798,7 +790,6 @@ x509_main(int argc, char **argv)
 	BIO *STDout = NULL;
 	X509_STORE *ctx = NULL;
 	X509_REQ *rq = NULL;
-	char buf[256];
 	CONF *extconf = NULL;
 	char *passin = NULL;
 
@@ -1178,85 +1169,6 @@ x509_main(int argc, char **argv)
 					goto end;
 				}
 				PEM_write_bio_PUBKEY(STDout, pubkey);
-			} else if (cfg.C == i) {
-				unsigned char *d;
-				char *m;
-				int y, z;
-
-				m = X509_NAME_oneline(X509_get_subject_name(x),
-				    buf, sizeof buf);
-				if (m == NULL)
-					goto end;
-				BIO_printf(STDout, "/* subject:%s */\n", buf);
-				m = X509_NAME_oneline(X509_get_issuer_name(x),
-				    buf, sizeof buf);
-				if (m == NULL)
-					goto end;
-				BIO_printf(STDout, "/* issuer :%s */\n", buf);
-
-				z = i2d_X509(x, NULL);
-				if (z < 0)
-					goto end;
-
-				m = malloc(z);
-				if (m == NULL) {
-					BIO_printf(bio_err, "out of mem\n");
-					goto end;
-				}
-
-				d = (unsigned char *) m;
-				z = i2d_X509_NAME(X509_get_subject_name(x), &d);
-				if (z < 0) {
-					free(m);
-					goto end;
-				}
-				BIO_printf(STDout,
-				    "unsigned char XXX_subject_name[%d]={\n", z);
-				d = (unsigned char *) m;
-				for (y = 0; y < z; y++) {
-					BIO_printf(STDout, "0x%02X,", d[y]);
-					if ((y & 0x0f) == 0x0f)
-						BIO_printf(STDout, "\n");
-				}
-				if (y % 16 != 0)
-					BIO_printf(STDout, "\n");
-				BIO_printf(STDout, "};\n");
-
-				z = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(x), &d);
-				if (z < 0) {
-					free(m);
-					goto end;
-				}
-				BIO_printf(STDout,
-				    "unsigned char XXX_public_key[%d]={\n", z);
-				d = (unsigned char *) m;
-				for (y = 0; y < z; y++) {
-					BIO_printf(STDout, "0x%02X,", d[y]);
-					if ((y & 0x0f) == 0x0f)
-						BIO_printf(STDout, "\n");
-				}
-				if (y % 16 != 0)
-					BIO_printf(STDout, "\n");
-				BIO_printf(STDout, "};\n");
-
-				z = i2d_X509(x, &d);
-				if (z < 0) {
-					free(m);
-					goto end;
-				}
-				BIO_printf(STDout,
-				    "unsigned char XXX_certificate[%d]={\n", z);
-				d = (unsigned char *) m;
-				for (y = 0; y < z; y++) {
-					BIO_printf(STDout, "0x%02X,", d[y]);
-					if ((y & 0x0f) == 0x0f)
-						BIO_printf(STDout, "\n");
-				}
-				if (y % 16 != 0)
-					BIO_printf(STDout, "\n");
-				BIO_printf(STDout, "};\n");
-
-				free(m);
 			} else if (cfg.text == i) {
 				if(!X509_print_ex(STDout, x, cfg.nmflag,
 				    cfg.certflag))

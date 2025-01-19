@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.161 2024/08/30 06:05:10 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.162 2025/01/19 10:24:17 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: August 30 2024 $
+.Dd $Mdocdate: January 19 2025 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1697,7 +1697,6 @@ If no files are specified then standard input is used.
 .It Nm openssl dhparam
 .Bk -words
 .Op Fl 2 | 5
-.Op Fl C
 .Op Fl check
 .Op Fl dsaparam
 .Op Fl in Ar file
@@ -1722,11 +1721,6 @@ The options are as follows:
 The generator to use;
 2 is the default.
 If present, the input file is ignored and parameters are generated instead.
-.It Fl C
-Convert the parameters into C code.
-The parameters can then be loaded by calling the
-.No get_dh Ns Ar numbits
-function.
 .It Fl check
 Check the DH parameters.
 .It Fl dsaparam
@@ -1862,7 +1856,6 @@ Print the public/private key in plain text.
 .Bl -hang -width "openssl dsaparam"
 .It Nm openssl dsaparam
 .Bk -words
-.Op Fl C
 .Op Fl genkey
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
@@ -1880,11 +1873,6 @@ command is used to manipulate or generate DSA parameter files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl C
-Convert the parameters into C code.
-The parameters can then be loaded by calling the
-.No get_dsa Ns Ar XXX
-function.
 .It Fl genkey
 Generate a DSA key either using the specified or generated
 parameters.
@@ -2028,7 +2016,6 @@ Print the public/private key in plain text.
 .Bl -hang -width "openssl ecparam"
 .It Nm openssl ecparam
 .Bk -words
-.Op Fl C
 .Op Fl check
 .Op Fl conv_form Ar arg
 .Op Fl genkey
@@ -2055,11 +2042,6 @@ can only create EC parameters from known (named) curves.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl C
-Convert the EC parameters into C code.
-The parameters can then be loaded by calling the
-.No get_ec_group_ Ns Ar XXX
-function.
 .It Fl check
 Validate the elliptic curve parameters.
 .It Fl conv_form Ar arg
@@ -5984,7 +5966,6 @@ version.
 .Bl -hang -width "openssl x509"
 .It Nm openssl x509
 .Bk -words
-.Op Fl C
 .Op Fl addreject Ar arg
 .Op Fl addtrust Ar arg
 .Op Fl alias
@@ -6091,8 +6072,6 @@ The key password source.
 .Pp
 The following are x509 display options:
 .Bl -tag -width "XXXX"
-.It Fl C
-Output the certificate in the form of a C source file.
 .It Fl certopt Ar option
 Customise the output format used with
 .Fl text ,

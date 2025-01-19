@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.15 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: dh.c,v 1.16 2025/01/19 10:24:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,6 @@
 #include <openssl/x509.h>
 
 static struct {
-	int C;
 	int check;
 	char *infile;
 	int informat;
@@ -86,12 +85,6 @@ static struct {
 } cfg;
 
 static const struct option dh_options[] = {
-	{
-		.name = "C",
-		.desc = "Convert DH parameters into C code",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.C,
-	},
 	{
 		.name = "check",
 		.desc = "Check the DH parameters",
@@ -145,7 +138,7 @@ static void
 dh_usage(void)
 {
 	fprintf(stderr,
-	    "usage: dh [-C] [-check] [-in file] [-inform format]\n"
+	    "usage: dh [-check] [-in file] [-inform format]\n"
 	    "    [-noout] [-out file] [-outform format] [-text]\n\n");
 	options_usage(dh_options);
 }
@@ -227,49 +220,6 @@ dh_main(int argc, char **argv)
 			printf("the g value is not a generator\n");
 		if (i == 0)
 			printf("DH parameters appear to be ok.\n");
-	}
-	if (cfg.C) {
-		unsigned char *data;
-		int len, l, bits;
-
-		len = BN_num_bytes(DH_get0_p(dh));
-		bits = BN_num_bits(DH_get0_p(dh));
-		data = malloc(len);
-		if (data == NULL) {
-			perror("malloc");
-			goto end;
-		}
-		l = BN_bn2bin(DH_get0_p(dh), data);
-		printf("static unsigned char dh%d_p[] = {", bits);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t");
-			printf("0x%02X, ", data[i]);
-		}
-		printf("\n\t};\n");
-
-		l = BN_bn2bin(DH_get0_g(dh), data);
-		printf("static unsigned char dh%d_g[] = {", bits);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t");
-			printf("0x%02X, ", data[i]);
-		}
-		printf("\n\t};\n\n");
-
-		printf("DH *get_dh%d()\n\t{\n", bits);
-		printf("\tDH *dh;\n");
-		printf("\tBIGNUM *p = NULL, *g = NULL;\n\n");
-		printf("\tif ((dh = DH_new()) == NULL) return(NULL);\n");
-		printf("\tp = BN_bin2bn(dh%d_p, sizeof(dh%d_p), NULL);\n",
-		    bits, bits);
-		printf("\tg = BN_bin2bn(dh%d_g, sizeof(dh%d_g), NULL);\n",
-		    bits, bits);
-		printf("\tif (p == NULL || g == NULL)\n");
-		printf("\t\t{ BN_free(p); BN_free(q); DH_free(dh); return(NULL); }\n");
-		printf("\tDH_set0_pqg(dh, p, NULL, g);\n");
-		printf("\treturn(dh);\n\t}\n");
-		free(data);
 	}
 	if (!cfg.noout) {
 		if (cfg.outformat == FORMAT_ASN1)

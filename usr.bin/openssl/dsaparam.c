@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.15 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.16 2025/01/19 10:24:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,6 @@
 #include <openssl/x509.h>
 
 static struct {
-	int C;
 	int genkey;
 	char *infile;
 	int informat;
@@ -91,12 +90,6 @@ static struct {
 } cfg;
 
 static const struct option dsaparam_options[] = {
-	{
-		.name = "C",
-		.desc = "Convert DSA parameters into C code",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.C,
-	},
 	{
 		.name = "genkey",
 		.desc = "Generate a DSA key",
@@ -150,7 +143,7 @@ static void
 dsaparam_usage(void)
 {
 	fprintf(stderr,
-	    "usage: dsaparam [-C] [-genkey] [-in file]\n"
+	    "usage: dsaparam [-genkey] [-in file]\n"
 	    "    [-inform format] [-noout] [-out file] [-outform format]\n"
 	    "    [-text] [numbits]\n\n");
 	options_usage(dsaparam_options);
@@ -252,60 +245,6 @@ dsaparam_main(int argc, char **argv)
 	}
 	if (cfg.text) {
 		DSAparams_print(out, dsa);
-	}
-	if (cfg.C) {
-		unsigned char *data;
-		int l, len, bits_p;
-
-		len = BN_num_bytes(DSA_get0_p(dsa));
-		bits_p = BN_num_bits(DSA_get0_p(dsa));
-		data = malloc(len + 20);
-		if (data == NULL) {
-			perror("malloc");
-			goto end;
-		}
-		l = BN_bn2bin(DSA_get0_p(dsa), data);
-		printf("static unsigned char dsa%d_p[] = {", bits_p);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t");
-			printf("0x%02X, ", data[i]);
-		}
-		printf("\n\t};\n");
-
-		l = BN_bn2bin(DSA_get0_q(dsa), data);
-		printf("static unsigned char dsa%d_q[] = {", bits_p);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t");
-			printf("0x%02X, ", data[i]);
-		}
-		printf("\n\t};\n");
-
-		l = BN_bn2bin(DSA_get0_g(dsa), data);
-		printf("static unsigned char dsa%d_g[] = {", bits_p);
-		for (i = 0; i < l; i++) {
-			if ((i % 12) == 0)
-				printf("\n\t");
-			printf("0x%02X, ", data[i]);
-		}
-		free(data);
-		printf("\n\t};\n\n");
-
-		printf("DSA *get_dsa%d()\n\t{\n", bits_p);
-		printf("\tBIGNUM *p = NULL, *q = NULL, *g = NULL;\n");
-		printf("\tDSA *dsa;\n\n");
-		printf("\tif ((dsa = DSA_new()) == NULL) return(NULL);\n");
-		printf("\tp = BN_bin2bn(dsa%d_p, sizeof(dsa%d_p), NULL);\n",
-		    bits_p, bits_p);
-		printf("\tq = BN_bin2bn(dsa%d_q, sizeof(dsa%d_q), NULL);\n",
-		    bits_p, bits_p);
-		printf("\tg = BN_bin2bn(dsa%d_g, sizeof(dsa%d_g), NULL);\n",
-		    bits_p, bits_p);
-		printf("\tif (p == NULL || q == NULL || g == NULL)\n");
-		printf("\t\t{ BN_free(p); BN_free(q); BN_free(g); DSA_free(dsa); return(NULL); }\n");
-		printf("\tDSA_set0_pqg(dsa, p, q, g);\n");
-		printf("\treturn(dsa);\n\t}\n");
 	}
 	if (!cfg.noout) {
 		if (cfg.outformat == FORMAT_ASN1)
