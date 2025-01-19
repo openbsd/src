@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2024/11/20 22:25:38 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2025/01/19 20:18:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -390,6 +390,53 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	return 0;
 }
 
+void
+pmap_vp_populate(pmap_t pm, vaddr_t va)
+{
+	struct pte_desc *pted;
+	struct pmapvp1 *vp1;
+	struct pmapvp2 *vp2;
+	struct pmapvp3 *vp3;
+	void *vp;
+
+	pted = pool_get(&pmap_pted_pool, PR_WAITOK | PR_ZERO);
+	vp = pool_get(&pmap_vp_pool, PR_WAITOK | PR_ZERO);
+
+	pmap_lock(pm);
+
+	vp1 = pm->pm_vp.l1;
+
+	vp2 = vp1->vp[VP_IDX1(va)];
+	if (vp2 == NULL) {
+		vp2 = vp; vp = NULL;
+		pmap_set_l2(pm, va, vp2, 0);
+	}
+	
+	if (vp == NULL) {
+		pmap_unlock(pm);
+		vp = pool_get(&pmap_vp_pool, PR_WAITOK | PR_ZERO);
+		pmap_lock(pm);
+	}
+
+	vp3 = vp2->vp[VP_IDX2(va)];
+	if (vp3 == NULL) {
+		vp3 = vp; vp = NULL;
+		pmap_set_l3(pm, va, vp3, 0);
+	}
+
+	if (vp3->vp[VP_IDX3(va)] == NULL) {
+		vp3->vp[VP_IDX3(va)] = pted;
+		pted = NULL;
+	}
+
+	pmap_unlock(pm);
+
+	if (vp)
+		pool_put(&pmap_vp_pool, vp);
+	if (pted)
+		pool_put(&pmap_pted_pool, pted);
+}
+
 void *
 pmap_vp_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
@@ -563,6 +610,11 @@ out:
 	return error;
 }
 
+void
+pmap_populate(pmap_t pm, vaddr_t va)
+{
+	pmap_vp_populate(pm, va);
+}
 
 /*
  * Remove the given range of mapping entries.

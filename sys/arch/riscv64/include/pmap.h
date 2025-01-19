@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.12 2024/04/06 18:33:54 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.13 2025/01/19 20:18:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -113,6 +113,8 @@ struct pv_entry;
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t);
 void	pmap_postinit(void);
 void	pmap_init_percpu(void);
+
+#define __HAVE_PMAP_POPULATE
 
 #endif /* _KERNEL && !_LOCORE */
 
