@@ -10,7 +10,7 @@ BEGINTEST
 
 David Waitzman,
 *A Standard for the Transmission of IP Datagrams on Avian Carriers*,
-RFC 1149,
+[RFC 1149](http://www.rfc-editor.org/rfc/rfc1149.html),
 April 1990.
 
 ENDTEST
