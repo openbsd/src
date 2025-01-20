@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.57 2021/05/16 03:39:27 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.58 2025/01/20 20:13:29 kettenis Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -392,7 +392,6 @@ armv7_setup(void)
 	    | CPU_CONTROL_AFE;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE
-	    | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_IC_ENABLE
