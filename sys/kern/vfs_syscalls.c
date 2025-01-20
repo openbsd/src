@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.370 2024/11/05 06:03:19 jsg Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.371 2025/01/20 09:02:17 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2066,10 +2066,14 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH;
 	nd.ni_unveil = UNVEIL_READ;
-	if ((error = namei(&nd)) != 0)
+	KERNEL_LOCK();
+	if ((error = namei(&nd)) != 0) {
+		KERNEL_UNLOCK();
 		return (error);
+	}
 	error = vn_stat(nd.ni_vp, &sb, p);
 	vput(nd.ni_vp);
+	KERNEL_UNLOCK();
 	if (error)
 		return (error);
 	/* Don't let non-root see generation numbers (for NFS security) */

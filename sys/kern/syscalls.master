@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.266 2025/01/06 08:57:23 mpi Exp $
+;	$OpenBSD: syscalls.master,v 1.267 2025/01/20 09:02:17 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -104,11 +104,11 @@
 35	STD		{ int sys_fchflags(int fd, u_int flags); }
 36	STD		{ void sys_sync(void); }
 37	OBSOL		msyscall
-38	STD		{ int sys_stat(const char *path, struct stat *ub); }
+38	STD NOLOCK	{ int sys_stat(const char *path, struct stat *ub); }
 39	STD NOLOCK	{ pid_t sys_getppid(void); }
-40	STD		{ int sys_lstat(const char *path, struct stat *ub); }
+40	STD NOLOCK	{ int sys_lstat(const char *path, struct stat *ub); }
 41	STD NOLOCK	{ int sys_dup(int fd); }
-42	STD		{ int sys_fstatat(int fd, const char *path, \
+42	STD NOLOCK	{ int sys_fstatat(int fd, const char *path, \
 			    struct stat *buf, int flag); }
 43	STD NOLOCK	{ gid_t sys_getegid(void); }
 44	STD		{ int sys_profil(caddr_t samples, size_t size, \
