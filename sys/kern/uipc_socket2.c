@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.166 2025/01/18 10:44:52 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.167 2025/01/20 16:34:48 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -100,8 +100,6 @@ soisconnected(struct socket *so)
 	so->so_state |= SS_ISCONNECTED;
 
 	if (head != NULL && so->so_onq == &head->so_q0) {
-		KASSERT(solock_persocket(so));
-
 		soref(head);
 		sounlock(so);
 		solock(head);

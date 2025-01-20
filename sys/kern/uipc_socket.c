@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.360 2025/01/13 18:10:20 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.361 2025/01/20 16:34:48 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -400,22 +400,24 @@ drop:
 		int persocket = solock_persocket(so);
 
 		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
-			if (persocket)
-				solock(so2);
+			soref(so2);
+			solock(so2);
 			(void) soqremque(so2, 0);
-			if (persocket)
-				sounlock(so);
+			sounlock(so);
 			soabort(so2);
-			if (persocket)
-				solock(so);
+			sounlock(so2);
+			sorele(so2);
+			solock(so);
 		}
 		while ((so2 = TAILQ_FIRST(&so->so_q)) != NULL) {
-			if (persocket)
-				solock(so2);
+			soref(so2);
+			solock_nonet(so2);
 			(void) soqremque(so2, 1);
 			if (persocket)
 				sounlock(so);
 			soabort(so2);
+			sounlock_nonet(so2);
+			sorele(so2);
 			if (persocket)
 				solock(so);
 		}
