@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.76 2024/10/03 03:47:40 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.77 2025/01/20 17:50:12 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -182,7 +182,7 @@ extern "C" {
 #define CRYPTO_LOCK_ECDSA               32
 #define CRYPTO_LOCK_EC			33
 #define CRYPTO_LOCK_ECDH		34
-#define CRYPTO_LOCK_BN  		35
+#define CRYPTO_LOCK_BN			35
 #define CRYPTO_LOCK_EC_PRE_COMP		36
 #define CRYPTO_LOCK_STORE		37
 #define CRYPTO_LOCK_COMP		38
