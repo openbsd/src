@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2015/06/15 01:10:19 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2025/01/21 19:14:28 anton Exp $
 
 .include <bsd.obj.mk>
 
@@ -29,6 +29,6 @@ LDADD+=-lab
 LDFLAGS=-L$(AA_OBJDIR) -L$(AB_OBJDIR)
 LDFLAGS+= -Wl,-rpath,$(AA_OBJDIR)  -Wl,-rpath,$(AB_OBJDIR) 
 NOMAN=
-CC=c++
+CC=${CXX}
 
 .include <bsd.regress.mk>

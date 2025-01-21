@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/03/18 16:58:22 kettenis Exp $
+# $OpenBSD: Makefile,v 1.3 2025/01/21 19:14:28 anton Exp $
 
 .include <bsd.obj.mk>
 
@@ -50,7 +50,7 @@ LDFLAGS+= -Wl,-rpath,$(AC_OBJDIR)
 LDFLAGS+= -Wl,-rpath,$(AD_OBJDIR) 
 LDFLAGS+= -Wl,-rpath,$(AE_OBJDIR) 
 NOMAN=
-CC=c++
+CC=${CXX}
 
 run-regress-${PROG}: ${PROG}
 	[ "`./${PROG}`" = "DBECAacebd" ]
