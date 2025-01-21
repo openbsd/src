@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.53 2024/04/10 14:58:06 beck Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.54 2025/01/21 15:44:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -972,7 +972,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	BIGNUM *aa, *q;
 	/* Table of variables obtained from 'ctx' */
 	BIGNUM *val[TABLE_SIZE];
-	BN_RECP_CTX recp;
+	BN_RECP_CTX *recp = NULL;
 	int ret = 0;
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
@@ -992,8 +992,6 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		return ret;
 	}
 
-	BN_RECP_CTX_init(&recp);
-
 	BN_CTX_start(ctx);
 	if ((aa = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -1007,10 +1005,10 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		if (!bn_copy(aa, m))
 			goto err;
 		aa->neg = 0;
-		if (BN_RECP_CTX_set(&recp, aa, ctx) <= 0)
+		if ((recp = BN_RECP_CTX_create(aa)) == 0)
 			goto err;
 	} else {
-		if (BN_RECP_CTX_set(&recp, m, ctx) <= 0)
+		if ((recp = BN_RECP_CTX_create(m)) == 0)
 			goto err;
 	}
 
@@ -1025,13 +1023,13 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1) {
-		if (!BN_mod_mul_reciprocal(aa, val[0], val[0], &recp, ctx))
+		if (!BN_mod_mul_reciprocal(aa, val[0], val[0], recp, ctx))
 			goto err;
 		j = 1 << (window - 1);
 		for (i = 1; i < j; i++) {
 			if (((val[i] = BN_CTX_get(ctx)) == NULL) ||
 			    !BN_mod_mul_reciprocal(val[i], val[i - 1],
-			    aa, &recp, ctx))
+			    aa, recp, ctx))
 				goto err;
 		}
 	}
@@ -1049,7 +1047,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	for (;;) {
 		if (BN_is_bit_set(q, wstart) == 0) {
 			if (!start)
-				if (!BN_mod_mul_reciprocal(r, r, r, &recp, ctx))
+				if (!BN_mod_mul_reciprocal(r, r, r, recp, ctx))
 					goto err;
 			if (wstart == 0)
 				break;
@@ -1078,12 +1076,12 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		/* add the 'bytes above' */
 		if (!start)
 			for (i = 0; i < j; i++) {
-				if (!BN_mod_mul_reciprocal(r, r, r, &recp, ctx))
+				if (!BN_mod_mul_reciprocal(r, r, r, recp, ctx))
 					goto err;
 			}
 
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul_reciprocal(r, r, val[wvalue >> 1], &recp, ctx))
+		if (!BN_mod_mul_reciprocal(r, r, val[wvalue >> 1], recp, ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -1099,7 +1097,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
  err:
 	BN_CTX_end(ctx);
-	BN_RECP_CTX_free(&recp);
+	BN_RECP_CTX_free(recp);
 
 	return ret;
 }
