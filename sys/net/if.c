@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.722 2025/01/16 17:20:23 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.723 2025/01/21 17:40:57 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2798,7 +2798,29 @@ if_getdata(struct ifnet *ifp, struct if_data *data)
 {
 	unsigned int i;
 
-	*data = ifp->if_data;
+	data->ifi_type = ifp->if_type;
+	data->ifi_addrlen = ifp->if_addrlen;
+	data->ifi_hdrlen = ifp->if_hdrlen;
+	data->ifi_link_state = ifp->if_link_state;
+	data->ifi_mtu = ifp->if_mtu;
+	data->ifi_metric = ifp->if_metric;
+	data->ifi_baudrate = ifp->if_baudrate;
+	data->ifi_capabilities = ifp->if_capabilities;
+	data->ifi_rdomain = ifp->if_rdomain;
+	data->ifi_lastchange = ifp->if_lastchange;
+
+	data->ifi_ipackets = ifp->if_data_counters[ifc_ipackets];
+	data->ifi_ierrors = ifp->if_data_counters[ifc_ierrors];
+	data->ifi_opackets = ifp->if_data_counters[ifc_opackets];
+	data->ifi_oerrors = ifp->if_data_counters[ifc_oerrors];
+	data->ifi_collisions = ifp->if_data_counters[ifc_collisions];
+	data->ifi_ibytes = ifp->if_data_counters[ifc_ibytes];
+	data->ifi_obytes = ifp->if_data_counters[ifc_obytes];
+	data->ifi_imcasts = ifp->if_data_counters[ifc_imcasts];
+	data->ifi_omcasts = ifp->if_data_counters[ifc_omcasts];
+	data->ifi_iqdrops = ifp->if_data_counters[ifc_iqdrops];
+	data->ifi_oqdrops = ifp->if_data_counters[ifc_oqdrops];
+	data->ifi_noproto = ifp->if_data_counters[ifc_noproto];
 
 	if (ifp->if_counters != NULL) {
 		uint64_t counters[ifc_ncounters];
