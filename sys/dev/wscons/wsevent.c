@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.28 2024/03/25 13:01:49 mvs Exp $ */
+/* $OpenBSD: wsevent.c,v 1.29 2025/01/21 20:13:19 mvs Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -85,19 +85,61 @@
 
 void	filt_wseventdetach(struct knote *);
 int	filt_wseventread(struct knote *, long);
+int	filt_wseventmodify(struct kevent *, struct knote *);
+int	filt_wseventprocess(struct knote *, struct kevent *);
+
+static void
+wsevent_klist_assertlk(void *arg)
+{
+	struct wseventvar *ev = arg;
+
+	if((ev->ws_flags & WSEVENT_MPSAFE) == 0)
+		KERNEL_ASSERT_LOCKED();
+	MUTEX_ASSERT_LOCKED(&ev->ws_mtx);
+}
+
+static int
+wsevent_klist_lock(void *arg)
+{
+	struct wseventvar *ev = arg;
+
+	if((ev->ws_flags & WSEVENT_MPSAFE) == 0)
+		KERNEL_LOCK();
+	mtx_enter(&ev->ws_mtx);
+
+	return (0);
+}
+
+static void
+wsevent_klist_unlock(void *arg, int s)
+{
+	struct wseventvar *ev = arg;
+
+	mtx_leave(&ev->ws_mtx);
+	if ((ev->ws_flags & WSEVENT_MPSAFE) == 0)
+		KERNEL_UNLOCK();
+}
+
+static const struct klistops wsevent_klistops = {
+	.klo_assertlk	= wsevent_klist_assertlk,
+	.klo_lock	= wsevent_klist_lock,
+	.klo_unlock	= wsevent_klist_unlock,
+};
 
 const struct filterops wsevent_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_wseventdetach,
 	.f_event	= filt_wseventread,
+	.f_modify	= filt_wseventmodify,
+	.f_process	= filt_wseventprocess,
 };
 
 /*
  * Initialize a wscons_event queue.
  */
 int
-wsevent_init(struct wseventvar *ev)
+wsevent_init_flags(struct wseventvar *ev, int flags)
 {
 	struct wscons_event *queue;
 
@@ -112,6 +154,10 @@ wsevent_init(struct wseventvar *ev)
 		return (1);
 	}
 
+	mtx_init_flags(&ev->ws_mtx, IPL_TTY, "wsmtx", 0);
+	klist_init(&ev->ws_klist, &wsevent_klistops, ev);
+
+	ev->ws_flags = flags;
 	ev->ws_q = queue;
 	ev->ws_get = ev->ws_put = 0;
 
@@ -135,7 +181,7 @@ wsevent_fini(struct wseventvar *ev)
 	free(ev->ws_q, M_DEVBUF, WSEVENT_QSIZE * sizeof(struct wscons_event));
 	ev->ws_q = NULL;
 
-	klist_invalidate(&ev->ws_sel.si_note);
+	klist_invalidate(&ev->ws_klist);
 
 	sigio_free(&ev->ws_sigio);
 }
@@ -147,8 +193,8 @@ wsevent_fini(struct wseventvar *ev)
 int
 wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 {
-	int s, error;
-	u_int cnt;
+	int error, wrap = 0;
+	u_int cnt, tcnt, get;
 	size_t n;
 
 	/*
@@ -156,17 +202,20 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	 */
 	if (uio->uio_resid < sizeof(struct wscons_event))
 		return (EMSGSIZE);	/* ??? */
-	s = splwsevent();
+	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
+
+	mtx_enter(&ev->ws_mtx);
+
 	while (ev->ws_get == ev->ws_put) {
 		if (flags & IO_NDELAY) {
-			splx(s);
+			mtx_leave(&ev->ws_mtx);
 			return (EWOULDBLOCK);
 		}
 		ev->ws_wanted = 1;
-		error = tsleep_nsec(ev, PWSEVENT | PCATCH,
+		error = msleep_nsec(ev, &ev->ws_mtx, PWSEVENT | PCATCH,
 		    "wsevent_read", INFSLP);
 		if (error) {
-			splx(s);
+			mtx_leave(&ev->ws_mtx);
 			return (error);
 		}
 	}
@@ -178,37 +227,43 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 		cnt = WSEVENT_QSIZE - ev->ws_get; /* events in [get..QSIZE) */
 	else
 		cnt = ev->ws_put - ev->ws_get;    /* events in [get..put) */
-	splx(s);
-	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
+
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->ws_q[ev->ws_get],
-	    cnt * sizeof(struct wscons_event), uio);
+
+	get = ev->ws_get;
+	tcnt = ev->ws_put;
 	n -= cnt;
-	/*
-	 * If we do not wrap to 0, used up all our space, or had an error,
-	 * stop.  Otherwise move from front of queue to put index, if there
-	 * is anything there to move.
-	 */
-	if ((ev->ws_get = (ev->ws_get + cnt) % WSEVENT_QSIZE) != 0 ||
-	    n == 0 || error || (cnt = ev->ws_put) == 0)
-		return (error);
-	if (cnt > n)
-		cnt = n;
-	error = uiomove((caddr_t)&ev->ws_q[0],
+
+	ev->ws_get = (get + cnt) % WSEVENT_QSIZE;
+	if (!(ev->ws_get != 0 || n == 0 || tcnt == 0)) {
+		wrap = 1;
+
+		if (tcnt > n)
+			tcnt = n;
+		ev->ws_get = tcnt;
+	}
+
+	mtx_leave(&ev->ws_mtx);
+
+	error = uiomove((caddr_t)&ev->ws_q[get],
 	    cnt * sizeof(struct wscons_event), uio);
-	ev->ws_get = cnt;
+
+	/*
+	 * If we do wrap to 0, move from front of queue to put index, if
+	 * there is anything there to move.
+	 */
+	if (wrap && error == 0) {
+		error = uiomove((caddr_t)&ev->ws_q[0],
+		    tcnt * sizeof(struct wscons_event), uio);
+	}
+
 	return (error);
 }
 
 int
 wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 {
-	struct klist *klist;
-	int s;
-
-	klist = &ev->ws_sel.si_note;
-
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &wsevent_filtops;
@@ -218,10 +273,7 @@ wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 	}
 
 	kn->kn_hook = ev;
-
-	s = splwsevent();
-	klist_insert_locked(klist, kn);
-	splx(s);
+	klist_insert(&ev->ws_klist, kn);
 
 	return (0);
 }
@@ -230,18 +282,18 @@ void
 filt_wseventdetach(struct knote *kn)
 {
 	struct wseventvar *ev = kn->kn_hook;
-	struct klist *klist = &ev->ws_sel.si_note;
-	int s;
 
-	s = splwsevent();
-	klist_remove_locked(klist, kn);
-	splx(s);
+	klist_remove(&ev->ws_klist, kn);
 }
 
 int
 filt_wseventread(struct knote *kn, long hint)
 {
 	struct wseventvar *ev = kn->kn_hook;
+
+	if((ev->ws_flags & WSEVENT_MPSAFE) == 0)
+		KERNEL_ASSERT_LOCKED();
+	MUTEX_ASSERT_LOCKED(&ev->ws_mtx);
 
 	if (ev->ws_get == ev->ws_put)
 		return (0);
@@ -252,4 +304,39 @@ filt_wseventread(struct knote *kn, long hint)
 		kn->kn_data = (WSEVENT_QSIZE - ev->ws_get) + ev->ws_put;
 
 	return (1);
+}
+
+int
+filt_wseventmodify(struct kevent *kev, struct knote *kn)
+{
+	struct wseventvar *ev = kn->kn_hook;
+	int active, dolock = ((ev->ws_flags & WSEVENT_MPSAFE) == 0);
+
+	if (dolock)
+		KERNEL_LOCK();
+	mtx_enter(&ev->ws_mtx);
+	active = knote_modify(kev, kn);
+	mtx_leave(&ev->ws_mtx);
+	if (dolock)
+		KERNEL_UNLOCK();
+
+	return (active);
+}
+
+int
+filt_wseventprocess(struct knote *kn, struct kevent *kev)
+{
+	struct wseventvar *ev = kn->kn_hook;
+	int active, dolock = ((ev->ws_flags & WSEVENT_MPSAFE) == 0);
+
+	if (dolock)
+		KERNEL_LOCK();
+	mtx_enter(&ev->ws_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&ev->ws_mtx);
+	if (dolock)
+		KERNEL_UNLOCK();
+
+	return (active);
+	
 }
