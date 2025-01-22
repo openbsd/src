@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.31 2025/01/22 15:20:06 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.32 2025/01/22 15:20:47 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -87,10 +87,6 @@
 	ERR_print_errors_fp(stderr); \
 	exit(1); \
 } while (0)
-
-#define TIMING_BASE_PT 0
-#define TIMING_RAND_PT 1
-#define TIMING_SIMUL 2
 
 /* test multiplication with group order, long and negative scalars */
 static void
