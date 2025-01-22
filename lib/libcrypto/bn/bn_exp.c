@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.54 2025/01/21 15:44:22 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.55 2025/01/22 10:08:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1023,7 +1023,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1) {
-		if (!BN_mod_mul_reciprocal(aa, val[0], val[0], recp, ctx))
+		if (!BN_mod_sqr_reciprocal(aa, val[0], recp, ctx))
 			goto err;
 		j = 1 << (window - 1);
 		for (i = 1; i < j; i++) {
@@ -1047,7 +1047,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	for (;;) {
 		if (BN_is_bit_set(q, wstart) == 0) {
 			if (!start)
-				if (!BN_mod_mul_reciprocal(r, r, r, recp, ctx))
+				if (!BN_mod_sqr_reciprocal(r, r, recp, ctx))
 					goto err;
 			if (wstart == 0)
 				break;
@@ -1076,7 +1076,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		/* add the 'bytes above' */
 		if (!start)
 			for (i = 0; i < j; i++) {
-				if (!BN_mod_mul_reciprocal(r, r, r, recp, ctx))
+				if (!BN_mod_sqr_reciprocal(r, r, recp, ctx))
 					goto err;
 			}
 
