@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.33 2025/01/22 15:23:25 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.34 2025/01/22 15:38:25 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -274,7 +274,7 @@ prime_field_tests(void)
 	} while (!EC_POINT_is_at_infinity(group, P));
 
 	if (k != 7) {
-		fprintf(stderr, "cycled in %d iterations, want 7\n", k); 
+		fprintf(stderr, "cycled in %d iterations, want 7\n", k);
 		ABORT;
 	}
 
