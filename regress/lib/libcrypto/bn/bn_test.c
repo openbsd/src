@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.20 2025/01/21 15:45:13 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.21 2025/01/22 10:12:28 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 		goto err;
 	(void)BIO_flush(out);
 
-	message(out, "BN_div_recp");
+	message(out, "BN_div_reciprocal");
 	if (!test_div_recp(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
@@ -593,7 +593,7 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 		BN_set_negative(b, rand_neg());
 		BN_RECP_CTX_free(recp);
 		CHECK_GOTO(recp = BN_RECP_CTX_create(b));
-		CHECK_GOTO(BN_div_recp(d, c, a, recp, ctx));
+		CHECK_GOTO(BN_div_reciprocal(d, c, a, recp, ctx));
 		if (bp != NULL) {
 			if (!results) {
 				CHECK_GOTO(BN_print(bp, a));
