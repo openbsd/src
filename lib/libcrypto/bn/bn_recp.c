@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.26 2025/01/21 15:44:22 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.27 2025/01/22 09:39:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -225,30 +225,27 @@ err:
 	return ret;
 }
 
+/* Compute r = (x * y) % m. */
 int
 BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
     BN_RECP_CTX *recp, BN_CTX *ctx)
 {
 	int ret = 0;
 	BIGNUM *a;
-	const BIGNUM *ca;
 
 	BN_CTX_start(ctx);
 	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if (y != NULL) {
-		if (x == y) {
-			if (!BN_sqr(a, x, ctx))
-				goto err;
-		} else {
-			if (!BN_mul(a, x, y, ctx))
-				goto err;
-		}
-		ca = a;
-	} else
-		ca = x; /* Just do the mod */
 
-	ret = BN_div_recp(NULL, r, ca, recp, ctx);
+	if (x == y) {
+		if (!BN_sqr(a, x, ctx))
+			goto err;
+	} else {
+		if (!BN_mul(a, x, y, ctx))
+			goto err;
+	}
+
+	ret = BN_div_recp(NULL, r, a, recp, ctx);
 
 err:
 	BN_CTX_end(ctx);
