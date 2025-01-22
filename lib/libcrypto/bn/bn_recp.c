@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.29 2025/01/22 10:12:01 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.30 2025/01/22 12:53:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,6 +79,7 @@ BN_RECP_CTX_create(const BIGNUM *N)
 
 	if ((recp->N = BN_dup(N)) == NULL)
 		goto err;
+	BN_set_negative(recp->N, 0);
 	recp->num_bits = BN_num_bits(recp->N);
 
 	if ((recp->Nr = BN_new()) == NULL)
