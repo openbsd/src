@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm4.c,v 1.4 2025/01/22 09:42:27 jsing Exp $	*/
+/*	$OpenBSD: sm4.c,v 1.5 2025/01/22 09:46:26 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -101,24 +101,6 @@ static const uint32_t SM4_SBOX_T[256] = {
 };
 
 static inline uint32_t
-load_u32_be(const uint8_t *b, uint32_t n)
-{
-	return ((uint32_t)b[4 * n] << 24) |
-	    ((uint32_t)b[4 * n + 1] << 16) |
-	    ((uint32_t)b[4 * n + 2] << 8) |
-	    ((uint32_t)b[4 * n + 3]);
-}
-
-static inline void
-store_u32_be(uint32_t v, uint8_t *b)
-{
-	b[0] = (uint8_t)(v >> 24);
-	b[1] = (uint8_t)(v >> 16);
-	b[2] = (uint8_t)(v >> 8);
-	b[3] = (uint8_t)(v);
-}
-
-static inline uint32_t
 SM4_T_slow(uint32_t X)
 {
 	uint32_t t = 0;
@@ -170,10 +152,10 @@ SM4_set_key(const uint8_t *key, SM4_KEY *k)
 	uint32_t K[4];
 	int i;
 
-	K[0] = load_u32_be(key, 0) ^ SM4_FK[0];
-	K[1] = load_u32_be(key, 1) ^ SM4_FK[1];
-	K[2] = load_u32_be(key, 2) ^ SM4_FK[2];
-	K[3] = load_u32_be(key, 3) ^ SM4_FK[3];
+	K[0] = crypto_load_be32toh(&key[0 * 4]) ^ SM4_FK[0];
+	K[1] = crypto_load_be32toh(&key[1 * 4]) ^ SM4_FK[1];
+	K[2] = crypto_load_be32toh(&key[2 * 4]) ^ SM4_FK[2];
+	K[3] = crypto_load_be32toh(&key[3 * 4]) ^ SM4_FK[3];
 
 	for (i = 0; i < SM4_KEY_SCHEDULE; i++) {
 		uint32_t X;
@@ -207,10 +189,12 @@ void
 SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 {
 	struct sm4_key *ks = (struct sm4_key *)k;
-	uint32_t B0 = load_u32_be(in, 0);
-	uint32_t B1 = load_u32_be(in, 1);
-	uint32_t B2 = load_u32_be(in, 2);
-	uint32_t B3 = load_u32_be(in, 3);
+	uint32_t B0, B1, B2, B3;
+
+	B0 = crypto_load_be32toh(&in[0 * 4]);
+	B1 = crypto_load_be32toh(&in[1 * 4]);
+	B2 = crypto_load_be32toh(&in[2 * 4]);
+	B3 = crypto_load_be32toh(&in[3 * 4]);
 
 	/*
 	 * Uses byte-wise sbox in the first and last rounds to provide some
@@ -225,10 +209,10 @@ SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 	SM4_ROUNDS(24, 25, 26, 27, SM4_T);
 	SM4_ROUNDS(28, 29, 30, 31, SM4_T_slow);
 
-	store_u32_be(B3, out);
-	store_u32_be(B2, out + 4);
-	store_u32_be(B1, out + 8);
-	store_u32_be(B0, out + 12);
+	crypto_store_htobe32(&out[0 * 4], B3);
+	crypto_store_htobe32(&out[1 * 4], B2);
+	crypto_store_htobe32(&out[2 * 4], B1);
+	crypto_store_htobe32(&out[3 * 4], B0);
 }
 LCRYPTO_ALIAS(SM4_encrypt);
 
@@ -236,10 +220,12 @@ void
 SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 {
 	struct sm4_key *ks = (struct sm4_key *)k;
-	uint32_t B0 = load_u32_be(in, 0);
-	uint32_t B1 = load_u32_be(in, 1);
-	uint32_t B2 = load_u32_be(in, 2);
-	uint32_t B3 = load_u32_be(in, 3);
+	uint32_t B0, B1, B2, B3;
+
+	B0 = crypto_load_be32toh(&in[0 * 4]);
+	B1 = crypto_load_be32toh(&in[1 * 4]);
+	B2 = crypto_load_be32toh(&in[2 * 4]);
+	B3 = crypto_load_be32toh(&in[3 * 4]);
 
 	SM4_ROUNDS(31, 30, 29, 28, SM4_T_slow);
 	SM4_ROUNDS(27, 26, 25, 24, SM4_T);
@@ -250,10 +236,10 @@ SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 	SM4_ROUNDS( 7,  6,  5,  4, SM4_T);
 	SM4_ROUNDS( 3,  2,  1,  0, SM4_T_slow);
 
-	store_u32_be(B3, out);
-	store_u32_be(B2, out + 4);
-	store_u32_be(B1, out + 8);
-	store_u32_be(B0, out + 12);
+	crypto_store_htobe32(&out[0 * 4], B3);
+	crypto_store_htobe32(&out[1 * 4], B2);
+	crypto_store_htobe32(&out[2 * 4], B1);
+	crypto_store_htobe32(&out[3 * 4], B0);
 }
 LCRYPTO_ALIAS(SM4_decrypt);
 
