@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.217 2025/01/22 13:30:41 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.218 2025/01/22 16:14:22 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -376,15 +376,6 @@ sleep_finish(int timo, int do_sleep)
 	}
 
 	if (catch != 0) {
-		/*
-		 * We put ourselves on the sleep queue and start our
-		 * timeout before calling sleep_signal_check(), as we could
-		 * stop there, and a wakeup or a SIGCONT (or both) could
-		 * occur while we were stopped.  A SIGCONT would cause
-		 * us to be marked as SSLEEP without resuming us, thus
-		 * we must be ready for sleep when sleep_signal_check() is
-		 * called.
-		 */
 		if ((error = sleep_signal_check(p, 0)) != 0) {
 			catch = 0;
 			do_sleep = 0;
@@ -459,12 +450,13 @@ sleep_finish(int timo, int do_sleep)
 
 /*
  * Check and handle signals and suspensions around a sleep cycle.
- * The 2nd call in sleep_finish() sets nostop = 1 and then stop
- * signals can be ignored since the sleep is over and the process
- * will stop in userret.
+ * The 2nd call in sleep_finish() sets after_sleep = 1. In this case
+ * any pending suspend event came in after the wakeup / unsleep and
+ * can therefor be ignored. Once the process hits userret the event
+ * will be picked up again.
  */
 int
-sleep_signal_check(struct proc *p, int nostop)
+sleep_signal_check(struct proc *p, int after_sleep)
 {
 	struct sigctx ctx;
 	int err, sig;
@@ -474,7 +466,7 @@ sleep_signal_check(struct proc *p, int nostop)
 			return err;
 
 		/* requested to stop */
-		if (!nostop) {
+		if (!after_sleep) {
 			mtx_enter(&p->p_p->ps_mtx);
 			if (--p->p_p->ps_singlecnt == 0)
 				wakeup(&p->p_p->ps_singlecnt);
@@ -488,7 +480,7 @@ sleep_signal_check(struct proc *p, int nostop)
 
 	if ((sig = cursig(p, &ctx, 1)) != 0) {
 		if (ctx.sig_stop) {
-			if (!nostop) {
+			if (!after_sleep) {
 				p->p_p->ps_xsig = sig;
 				SCHED_LOCK();
 				proc_stop(p, 0);
