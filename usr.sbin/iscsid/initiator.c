@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.17 2025/01/22 09:33:40 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.18 2025/01/22 10:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -57,7 +57,6 @@ struct pdu	*initiator_text_build(struct task *, struct session *,
 void	initiator_login_cb(struct connection *, void *, struct pdu *);
 void	initiator_discovery_cb(struct connection *, void *, struct pdu *);
 void	initiator_logout_cb(struct connection *, void *, struct pdu *);
-
 
 struct session_params		initiator_sess_defaults;
 struct connection_params	initiator_conn_defaults;

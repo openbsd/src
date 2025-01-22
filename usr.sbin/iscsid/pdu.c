@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.13 2021/04/12 10:03:33 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.14 2025/01/22 10:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -193,23 +193,42 @@ text_to_bool(const char *buf, const char **errstrp)
 {
 	int val = 0;
 
-	if (!strcmp(buf, "Yes")) {
+	if (strcmp(buf, "Yes") == 0)
 		val = 1;
-		errno = 0;
-	} else if (!strcmp(buf, "No"))
-		errno = 0;
-	else 
-		errno = EINVAL;
-
-	if (errstrp != NULL) {
-		if (errno == 0)
-			*errstrp = NULL;
-		else
+	else if (strcmp(buf, "No") != 0) {
+		if (errstrp != NULL)
 			*errstrp = "invalid";
 	}
 	return val;
 }
 
+int
+text_to_digest(const char *buf, const char **errstrp)
+{
+	int val = 0;
+	size_t len;
+	const char *p;
+
+	while (buf != NULL) {
+		p = strchr(buf, ',');
+		if (p == NULL)
+			len = strlen(buf);
+		else
+			len = p++ - buf;
+
+		if (strncmp(buf, "None", len) == 0)
+			val |= DIGEST_NONE;
+		else if (strncmp(buf, "CRC32C", len) == 0)
+			val |= DIGEST_CRC32C;
+		else {
+			if (errstrp != NULL)
+				*errstrp = "invalid";
+			return 0;
+		}
+		buf = p;
+	}
+	return val;
+}
 
 /*
  * Internal functions to send/recv pdus.

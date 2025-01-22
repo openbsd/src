@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.21 2025/01/22 09:33:40 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.22 2025/01/22 10:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -180,6 +180,9 @@ struct session_config {
 				 /* Normal, (Discovery|Normal): LS */
 	u_int8_t		 disabled;
 };
+
+#define DIGEST_NONE		0x1
+#define DIGEST_CRC32C		0x2
 
 #define SESSION_TYPE_NORMAL	0
 #define SESSION_TYPE_DISCOVERY	1
@@ -372,6 +375,7 @@ int	text_to_pdu(struct kvp *, struct pdu *);
 struct kvp *pdu_to_text(char *, size_t);
 u_int64_t	text_to_num(const char *, u_int64_t, u_int64_t, const char **);
 int		text_to_bool(const char *, const char **);
+int		text_to_digest(const char *, const char **);
 void	pdu_free_queue(struct pduq *);
 ssize_t	pdu_read(struct connection *);
 ssize_t	pdu_write(struct connection *);

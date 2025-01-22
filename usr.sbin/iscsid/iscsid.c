@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.23 2025/01/22 09:33:40 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.24 2025/01/22 10:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -54,11 +54,13 @@ const struct session_params	iscsi_sess_defaults = {
 	.ImmediateData = 1,
 	.DataPDUInOrder = 1,
 	.DataSequenceInOrder = 1,
-	.ErrorRecoveryLevel = 0
+	.ErrorRecoveryLevel = 0,
 };
 
 const struct connection_params	iscsi_conn_defaults = {
-	.MaxRecvDataSegmentLength = 8192
+	.MaxRecvDataSegmentLength = 8192,
+	.HeaderDigest = DIGEST_NONE,
+	.DataDigest = DIGEST_NONE,
 };
 
 int
@@ -334,6 +336,8 @@ void
 iscsi_merge_sess_params(struct session_params *res,
     struct session_params *mine, struct session_params *his)
 {
+	memset(res, 0, sizeof(*res));
+
 	MERGE_MIN(res, mine, his, MaxBurstLength);
 	MERGE_MIN(res, mine, his, FirstBurstLength);
 	MERGE_MAX(res, mine, his, DefaultTime2Wait);
@@ -353,8 +357,26 @@ void
 iscsi_merge_conn_params(struct connection_params *res,
     struct connection_params *mine, struct connection_params *his)
 {
+	int mask;
+
+	memset(res, 0, sizeof(*res));
+
 	res->MaxRecvDataSegmentLength = his->MaxRecvDataSegmentLength;
-	/* XXX HeaderDigest and DataDigest */
+
+	/* for digest select first bit that is set in both his and mine */
+	mask = mine->HeaderDigest & his->HeaderDigest;
+	mask = ffs(mask) - 1;
+	if (mask == -1)
+		res->HeaderDigest = 0;
+	else
+		res->HeaderDigest = 1 << mask;
+		
+	mask = mine->DataDigest & his->DataDigest;
+	mask = ffs(mask) - 1;
+	if (mask == -1)
+		res->DataDigest = 0;
+	else
+		res->DataDigest = 1 << mask;
 }
 
 #undef MERGE_MIN

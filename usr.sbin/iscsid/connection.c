@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.23 2025/01/22 09:33:40 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.24 2025/01/22 10:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -66,10 +66,11 @@ conn_new(struct session *s, struct connection_config *cc)
 	c->cid = arc4random();
 	c->config = *cc;
 	c->mine = initiator_conn_defaults;
-	c->mine.HeaderDigest = s->config.HeaderDigest;
-	c->mine.DataDigest = s->config.DataDigest;
+	if (s->config.HeaderDigest != 0)
+		c->mine.HeaderDigest = s->config.HeaderDigest;
+	if (s->config.DataDigest != 0)
+		c->mine.DataDigest = s->config.DataDigest;
 	c->his = iscsi_conn_defaults;
-	c->active = iscsi_conn_defaults;
 
 	c->sev.sess = s;
 	c->sev.conn = c;
@@ -267,7 +268,6 @@ do {								\
 			    (p)->key, (p)->value, err);		\
 			errors++;				\
 		}						\
-log_debug("SET_NUM: %s = %llu", #v, (u_int64_t)(x)->his.v);	\
 	}							\
 } while (0)
 
@@ -280,7 +280,18 @@ do {								\
 			    (p)->key, (p)->value, err);		\
 			errors++;				\
 		}						\
-log_debug("SET_BOOL: %s = %u", #v, (int)(x)->his.v);		\
+	}							\
+} while (0)
+
+#define SET_DIGEST(p, x, v)					\
+do {								\
+	if (!strcmp((p)->key, #v)) {				\
+		(x)->his.v = text_to_digest((p)->value, &err);	\
+		if (err) {					\
+			log_warnx("bad param %s=%s: %s",	\
+			    (p)->key, (p)->value, err);		\
+			errors++;				\
+		}						\
 	}							\
 } while (0)
 
@@ -309,6 +320,8 @@ log_debug("conn_parse_kvp: %s = %s", k->key, k->value);
 		SET_BOOL(k, s, DataSequenceInOrder);
 		SET_NUM(k, s, ErrorRecoveryLevel, 0, 2);
 		SET_NUM(k, c, MaxRecvDataSegmentLength, 512, 16777215);
+		SET_DIGEST(k, c, HeaderDigest);
+		SET_DIGEST(k, c, DataDigest);
 	}
 
 	if (errors) {
@@ -320,6 +333,7 @@ log_debug("conn_parse_kvp: %s = %s", k->key, k->value);
 
 #undef SET_NUM
 #undef SET_BOOL
+#undef SET_DIGEST
 
 int
 conn_gen_kvp(struct connection *c, struct kvp *kvp, size_t *nkvp)

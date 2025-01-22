@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.11 2025/01/22 09:33:40 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.12 2025/01/22 10:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -281,7 +281,7 @@ sess_do_start(struct session *s, struct sessev *sev)
 	log_debug("new connection to %s",
 	    log_sockaddr(&s->config.connection.TargetAddr));
 
-	/* initialize the session params */
+	/* initialize the session params, and reset the active state */
 	s->mine = initiator_sess_defaults;
 	s->his = iscsi_sess_defaults;
 	s->active = iscsi_sess_defaults;
