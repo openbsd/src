@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.30 2025/01/22 15:15:21 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.31 2025/01/22 15:20:06 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -94,21 +94,22 @@
 
 /* test multiplication with group order, long and negative scalars */
 static void
-group_order_tests(EC_GROUP *group)
+group_order_tests(EC_GROUP *group, BN_CTX *ctx)
 {
 	BIGNUM *n1, *n2, *order;
 	EC_POINT *P = EC_POINT_new(group);
 	EC_POINT *Q = EC_POINT_new(group);
-	BN_CTX *ctx;
 
-	if ((ctx = BN_CTX_new()) == NULL)
+	if (P == NULL || Q == NULL)
 		ABORT;
 
-	if ((n1 = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((n1 = BN_CTX_get(ctx)) == NULL)
 		ABORT;
-	if ((n2 = BN_new()) == NULL)
+	if ((n2 = BN_CTX_get(ctx)) == NULL)
 		ABORT;
-	if ((order = BN_new()) == NULL)
+	if ((order = BN_CTX_get(ctx)) == NULL)
 		ABORT;
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
@@ -154,10 +155,7 @@ group_order_tests(EC_GROUP *group)
 	fprintf(stdout, "ok\n");
 	EC_POINT_free(P);
 	EC_POINT_free(Q);
-	BN_free(n1);
-	BN_free(n2);
-	BN_free(order);
-	BN_CTX_free(ctx);
+	BN_CTX_end(ctx);
 }
 
 static void
@@ -378,7 +376,7 @@ prime_field_tests(void)
 		ABORT;
 	fprintf(stdout, " ok\n");
 
-	group_order_tests(group);
+	group_order_tests(group, ctx);
 
 	if ((P_160 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
@@ -425,7 +423,7 @@ prime_field_tests(void)
 		ABORT;
 	fprintf(stdout, " ok\n");
 
-	group_order_tests(group);
+	group_order_tests(group, ctx);
 
 	if ((P_192 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
@@ -472,7 +470,7 @@ prime_field_tests(void)
 		ABORT;
 	fprintf(stdout, " ok\n");
 
-	group_order_tests(group);
+	group_order_tests(group, ctx);
 
 	if ((P_224 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
@@ -519,7 +517,7 @@ prime_field_tests(void)
 		ABORT;
 	fprintf(stdout, " ok\n");
 
-	group_order_tests(group);
+	group_order_tests(group, ctx);
 
 	if ((P_256 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
@@ -566,7 +564,7 @@ prime_field_tests(void)
 		ABORT;
 	fprintf(stdout, " ok\n");
 
-	group_order_tests(group);
+	group_order_tests(group, ctx);
 
 	if ((P_384 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
@@ -619,7 +617,7 @@ prime_field_tests(void)
 		ABORT;
 	fprintf(stdout, " ok\n");
 
-	group_order_tests(group);
+	group_order_tests(group, ctx);
 
 	if ((P_521 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
