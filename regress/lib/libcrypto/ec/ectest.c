@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.26 2025/01/06 10:43:26 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.27 2025/01/22 06:46:08 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -128,8 +128,7 @@ group_order_tests(EC_GROUP *group)
 		ABORT;
 	fprintf(stdout, " ok\n");
 	fprintf(stdout, "long/negative scalar tests ... ");
-	/* XXX - switch back to BN_one() after next bump. */
-	if (!BN_set_word(n1, 1))
+	if (!BN_one(n1))
 		ABORT;
 	/* n1 = 1 - order */
 	if (!BN_sub(n1, n1, order))
