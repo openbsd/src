@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.28 2025/01/22 10:08:10 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.29 2025/01/22 10:12:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,7 @@ err:
 }
 
 int
-BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
+BN_div_reciprocal(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
     BN_CTX *ctx)
 {
 	int i, j, ret = 0;
@@ -233,7 +233,7 @@ BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
 	if (!BN_mul(r, x, y, ctx))
 		return 0;
 
-	return BN_div_recp(NULL, r, r, recp, ctx);
+	return BN_div_reciprocal(NULL, r, r, recp, ctx);
 }
 
 /* Compute r = x^2 % m. */
@@ -243,5 +243,5 @@ BN_mod_sqr_reciprocal(BIGNUM *r, const BIGNUM *x, BN_RECP_CTX *recp, BN_CTX *ctx
 	if (!BN_sqr(r, x, ctx))
 		return 0;
 
-	return BN_div_recp(NULL, r, r, recp, ctx);
+	return BN_div_reciprocal(NULL, r, r, recp, ctx);
 }
