@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.18 2025/01/22 10:14:54 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.19 2025/01/22 10:30:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -257,7 +257,7 @@ initiator_login_kvp(struct connection *c, u_int8_t stage)
 
 	switch (stage) {
 	case ISCSI_LOGIN_STG_SECNEG:
-		if (!(kvp = calloc(4, sizeof(*kvp))))
+		if (!(kvp = calloc(5, sizeof(*kvp))))
 			return NULL;
 		kvp[0].key = "AuthMethod";
 		kvp[0].value = "None";
@@ -268,8 +268,10 @@ initiator_login_kvp(struct connection *c, u_int8_t stage)
 			kvp[2].key = "SessionType";
 			kvp[2].value = "Discovery";
 		} else {
-			kvp[2].key = "TargetName";
-			kvp[2].value = c->session->config.TargetName;
+			kvp[2].key = "SessionType";
+			kvp[2].value = "Normal";
+			kvp[3].key = "TargetName";
+			kvp[3].value = c->session->config.TargetName;
 		}
 		break;
 	case ISCSI_LOGIN_STG_OPNEG:
