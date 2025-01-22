@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.29 2025/01/22 15:10:30 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.30 2025/01/22 15:15:21 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -190,12 +190,7 @@ prime_field_tests(void)
 	if (!BN_hex2bn(&b, "1"))
 		ABORT;
 
-	group = EC_GROUP_new(EC_GFp_mont_method()); /* applications should use EC_GROUP_new_curve_GFp
-	                                             * so that the library gets to choose the EC_METHOD */
-	if (!group)
-		ABORT;
-
-	if (!EC_GROUP_set_curve(group, p, a, b, ctx))
+	if ((group = EC_GROUP_new_curve_GFp(p, a, b, ctx)) == NULL)
 		ABORT;
 
 	{
@@ -526,7 +521,7 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if ((P_256 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
+	if ((P_256 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
 
 	/* Curve P-384 (FIPS PUB 186-2, App. 6) */
