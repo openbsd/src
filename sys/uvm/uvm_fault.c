@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.161 2025/01/22 10:39:55 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.162 2025/01/22 10:52:09 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -460,8 +460,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 * the anon on us.
 		 */
 		if (ufi != NULL && amap_lookup(&ufi->entry->aref,
-				ufi->orig_rvaddr - ufi->entry->start) != anon) {
-
+		    ufi->orig_rvaddr - ufi->entry->start) != anon) {
 			uvmfault_unlockall(ufi, amap, NULL);
 			return ERESTART;
 		}
