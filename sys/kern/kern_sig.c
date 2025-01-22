@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.355 2025/01/06 13:17:56 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.356 2025/01/22 12:42:46 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1549,10 +1549,8 @@ process_continue(struct proc *p, int flag)
 		SCHED_ASSERT_LOCKED();
 		if (q->p_wchan == NULL)
 			setrunnable(q);
-		else {
-			atomic_clearbits_int(&q->p_flag, P_WSLEEP);
+		else
 			q->p_stat = SSLEEP;
-		}
 		/* XXX SCHED_UNLOCK(); */
 	}
 }
@@ -2126,10 +2124,16 @@ single_thread_check_locked(struct proc *p, int deep)
 	do {
 		/* if we're in deep, we need to unwind to the edge */
 		if (deep) {
-			if (pr->ps_flags & PS_SINGLEUNWIND)
+			int err = 0;
+
+			if (pr->ps_flags & PS_SINGLEUNWIND ||
+			    pr->ps_flags & PS_SINGLEEXIT)
 				return (ERESTART);
-			if (pr->ps_flags & PS_SINGLEEXIT)
-				return (EINTR);
+			SCHED_LOCK();
+			if (p->p_stat != SSTOP)
+				err = EWOULDBLOCK;
+			SCHED_UNLOCK();
+			return (err);
 		}
 
 		if (pr->ps_flags & PS_SINGLEEXIT) {

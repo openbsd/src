@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.215 2024/12/05 14:53:55 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.216 2025/01/22 12:42:46 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -469,21 +469,37 @@ sleep_signal_check(struct proc *p, int nostop)
 	struct sigctx ctx;
 	int err, sig;
 
-	if ((err = single_thread_check(p, 1)) != 0)
-		return err;
-	if ((sig = cursig(p, &ctx, 1)) != 0) {
-		if (ctx.sig_stop) {
-			if (nostop)
-				return 0;
-			p->p_p->ps_xsig = sig;
+	if ((err = single_thread_check(p, 1)) != 0) {
+		if (err != EWOULDBLOCK)
+			return err;
+
+		/* requested to stop */
+		if (!nostop) {
+			mtx_enter(&p->p_p->ps_mtx);
+			if (--p->p_p->ps_singlecnt == 0)
+				wakeup(&p->p_p->ps_singlecnt);
+			mtx_leave(&p->p_p->ps_mtx);
+
 			SCHED_LOCK();
 			proc_stop(p, 0);
 			SCHED_UNLOCK();
+		}
+	}
+
+	if ((sig = cursig(p, &ctx, 1)) != 0) {
+		if (ctx.sig_stop) {
+			if (!nostop) {
+				p->p_p->ps_xsig = sig;
+				SCHED_LOCK();
+				proc_stop(p, 0);
+				SCHED_UNLOCK();
+			}
 		} else if (ctx.sig_intr && !ctx.sig_ignore)
 			return EINTR;
 		else
 			return ERESTART;
 	}
+
 	return 0;
 }
 
