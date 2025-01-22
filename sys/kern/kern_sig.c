@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.356 2025/01/22 12:42:46 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.357 2025/01/22 16:13:09 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2121,21 +2121,21 @@ single_thread_check_locked(struct proc *p, int deep)
 	if (pr->ps_single == NULL || pr->ps_single == p)
 		return (0);
 
+	/* if we're in deep, we need to unwind to the edge */
+	if (deep) {
+		int err = 0;
+
+		if (pr->ps_flags & PS_SINGLEUNWIND ||
+		    pr->ps_flags & PS_SINGLEEXIT)
+			return (ERESTART);
+		SCHED_LOCK();
+		if (p->p_stat != SSTOP)
+			err = EWOULDBLOCK;
+		SCHED_UNLOCK();
+		return (err);
+	}
+
 	do {
-		/* if we're in deep, we need to unwind to the edge */
-		if (deep) {
-			int err = 0;
-
-			if (pr->ps_flags & PS_SINGLEUNWIND ||
-			    pr->ps_flags & PS_SINGLEEXIT)
-				return (ERESTART);
-			SCHED_LOCK();
-			if (p->p_stat != SSTOP)
-				err = EWOULDBLOCK;
-			SCHED_UNLOCK();
-			return (err);
-		}
-
 		if (pr->ps_flags & PS_SINGLEEXIT) {
 			mtx_leave(&pr->ps_mtx);
 			KERNEL_LOCK();
