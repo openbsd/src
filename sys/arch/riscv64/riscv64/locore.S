@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2024/04/06 18:33:54 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2025/01/22 18:15:48 jca Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -211,9 +211,9 @@ esigcode:
 sigfill:
 	unimp
 esigfill:
+	.data
 	.globl	sigfillsiz
 sigfillsiz:
-	.data
 	.word	esigfill - sigfill
 
 	.data
