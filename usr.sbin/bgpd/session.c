@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.507 2025/01/13 13:50:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.508 2025/01/22 12:19:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2572,7 +2572,7 @@ int
 parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 {
 	struct ibuf	 capabuf;
-	uint16_t	 afi, nhafi, tmp16, gr_header;
+	uint16_t	 afi, nhafi, gr_header;
 	uint8_t		 capa_code, capa_len;
 	uint8_t		 safi, aid, role, flags;
 
@@ -2616,6 +2616,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 			break;
 		case CAPA_EXT_NEXTHOP:
 			while (ibuf_size(&capabuf) > 0) {
+				uint16_t tmp16;
 				if (ibuf_get_n16(&capabuf, &afi) == -1 ||
 				    ibuf_get_n16(&capabuf, &tmp16) == -1 ||
 				    ibuf_get_n16(&capabuf, &nhafi) == -1) {
@@ -2626,7 +2627,8 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 					    sizeof(peer->capa.peer.ext_nh));
 					break;
 				}
-				if (afi2aid(afi, tmp16, &aid) == -1 ||
+				safi = tmp16;
+				if (afi2aid(afi, safi, &aid) == -1 ||
 				    !(aid == AID_INET || aid == AID_VPN_IPv4)) {
 					log_peer_warnx(&peer->conf,
 					    "Received %s capability: "
