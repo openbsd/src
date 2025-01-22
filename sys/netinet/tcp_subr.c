@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.205 2025/01/16 11:59:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.206 2025/01/22 09:37:06 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -331,11 +331,11 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		th = (struct tcphdr *)(ip6 + 1);
 		tlen = sizeof(*ip6) + sizeof(*th);
 		if (th0) {
-			bcopy(template, ip6, sizeof(*ip6));
-			bcopy(th0, th, sizeof(*th));
+			memcpy(ip6, template, sizeof(*ip6));
+			memcpy(th, th0, sizeof(*th));
 			xchg(ip6->ip6_dst, ip6->ip6_src, struct in6_addr);
 		} else {
-			bcopy(template, ip6, tlen);
+			memcpy(ip6, template, tlen);
 		}
 		break;
 #endif /* INET6 */
@@ -344,11 +344,11 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		th = (struct tcphdr *)(ip + 1);
 		tlen = sizeof(*ip) + sizeof(*th);
 		if (th0) {
-			bcopy(template, ip, sizeof(*ip));
-			bcopy(th0, th, sizeof(*th));
+			memcpy(ip, template, sizeof(*ip));
+			memcpy(th, th0, sizeof(*th));
 			xchg(ip->ip_dst.s_addr, ip->ip_src.s_addr, u_int32_t);
 		} else {
-			bcopy(template, ip, tlen);
+			memcpy(ip, template, tlen);
 		}
 		break;
 	}
