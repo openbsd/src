@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.160 2025/01/18 16:35:30 kettenis Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.161 2025/01/22 10:39:55 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -321,16 +321,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * The last unlock must be an atomic unlock and wait
 			 * on the owner of page.
 			 */
-			if (pg->uobject) {
-				/* Owner of page is UVM object. */
-				uvmfault_unlockall(ufi, amap, NULL);
-				uvm_pagewait(pg, pg->uobject->vmobjlock,
-				    "anonget1");
-			} else {
-				/* Owner of page is anon. */
-				uvmfault_unlockall(ufi, NULL, NULL);
-				uvm_pagewait(pg, anon->an_lock, "anonget2");
-			}
+			KASSERT(pg->uobject == NULL);
+			uvmfault_unlockall(ufi, NULL, NULL);
+			uvm_pagewait(pg, anon->an_lock, "anonget");
 		} else {
 			/*
 			 * No page, therefore allocate one.
@@ -1004,8 +997,6 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * if it fails (!OK) it will unlock everything for us.
 	 * if it succeeds, locks are still valid and locked.
 	 * also, if it is OK, then the anon's page is on the queues.
-	 * if the page is on loan from a uvm_object, then anonget will
-	 * lock that object for us if it does not fail.
 	 */
 	error = uvmfault_anonget(ufi, amap, anon);
 	switch (error) {
