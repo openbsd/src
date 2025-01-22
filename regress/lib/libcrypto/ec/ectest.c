@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.27 2025/01/22 06:46:08 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.28 2025/01/22 09:25:02 jsing Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -262,18 +262,16 @@ prime_field_tests(void)
 	}
 
 	fprintf(stdout, "A cyclic subgroup:\n");
-	k = 100;
+	k = 0;
 	do {
-		if (k-- == 0)
-			ABORT;
-
+		fprintf(stderr, "     %d - ", k);
 		if (EC_POINT_is_at_infinity(group, P))
-			fprintf(stdout, "     point at infinity\n");
+			fprintf(stdout, "point at infinity\n");
 		else {
 			if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx))
 				ABORT;
 
-			fprintf(stdout, "     x = 0x");
+			fprintf(stdout, "x = 0x");
 			BN_print_fp(stdout, x);
 			fprintf(stdout, ", y = 0x");
 			BN_print_fp(stdout, y);
@@ -284,7 +282,14 @@ prime_field_tests(void)
 			ABORT;
 		if (!EC_POINT_add(group, P, P, Q, ctx))
 			ABORT;
+		if (k++ > 99)
+			ABORT;
 	} while (!EC_POINT_is_at_infinity(group, P));
+
+	if (k != 7) {
+		fprintf(stderr, "cycled in %d iterations, want 7\n", k); 
+		ABORT;
+	}
 
 	if (!EC_POINT_add(group, P, Q, R, ctx))
 		ABORT;
@@ -321,8 +326,8 @@ prime_field_tests(void)
 	fprintf(stdout, "\nGenerator as octet string, hybrid form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 
-		if (!EC_POINT_get_affine_coordinates(group, R, x, y, ctx))
-			ABORT;
+	if (!EC_POINT_get_affine_coordinates(group, R, x, y, ctx))
+		ABORT;
 	fprintf(stdout, "\nThe inverse of that generator:\n     X = 0x");
 	BN_print_fp(stdout, x);
 	fprintf(stdout, ", Y = 0x");
