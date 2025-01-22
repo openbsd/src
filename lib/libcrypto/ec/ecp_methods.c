@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.40 2025/01/22 09:56:58 jsing Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.41 2025/01/22 12:54:40 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1020,10 +1020,7 @@ ec_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	BN_CTX_start(ctx);
 
-	if ((s = EC_POINT_new(group)) == NULL)
-		goto err;
-
-	if (!EC_POINT_copy(s, point))
+	if ((s = EC_POINT_dup(point, group)) == NULL)
 		goto err;
 
 	EC_POINT_BN_set_flags(s, BN_FLG_CONSTTIME);
