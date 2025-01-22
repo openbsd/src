@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.22 2025/01/16 16:19:39 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.23 2025/01/22 09:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -71,6 +71,10 @@ conn_new(struct session *s, struct connection_config *cc)
 	c->his = iscsi_conn_defaults;
 	c->active = iscsi_conn_defaults;
 
+	c->sev.sess = s;
+	c->sev.conn = c;
+	evtimer_set(&c->sev.ev, session_fsm_callback, &c->sev);
+
 	TAILQ_INIT(&c->pdu_w);
 	TAILQ_INIT(&c->tasks);
 	TAILQ_INSERT_TAIL(&s->connections, c, entry);
@@ -113,6 +117,7 @@ conn_free(struct connection *c)
 	pdu_readbuf_free(&c->prbuf);
 	pdu_free_queue(&c->pdu_w);
 
+	event_del(&c->sev.ev);
 	event_del(&c->ev);
 	event_del(&c->wev);
 	if (c->fd != -1)
@@ -435,7 +440,7 @@ c_do_connect(struct connection *c, enum c_event ev)
 	if (c->fd == -1) {
 		log_warnx("connect(%s), lost socket",
 		    log_sockaddr(&c->config.TargetAddr));
-		session_fsm(c->session, SESS_EV_CONN_FAIL, c, 0);
+		session_fsm(&c->sev, SESS_EV_CONN_FAIL, 0);
 		return CONN_FREE;
 	}
 	if (c->config.LocalAddr.ss_len != 0) {
@@ -443,7 +448,7 @@ c_do_connect(struct connection *c, enum c_event ev)
 		    c->config.LocalAddr.ss_len) == -1) {
 			log_warn("bind(%s)",
 			    log_sockaddr(&c->config.LocalAddr));
-			session_fsm(c->session, SESS_EV_CONN_FAIL, c, 0);
+			session_fsm(&c->sev, SESS_EV_CONN_FAIL, 0);
 			return CONN_FREE;
 		}
 	}
@@ -456,7 +461,7 @@ c_do_connect(struct connection *c, enum c_event ev)
 		} else {
 			log_warn("connect(%s)",
 			    log_sockaddr(&c->config.TargetAddr));
-			session_fsm(c->session, SESS_EV_CONN_FAIL, c, 0);
+			session_fsm(&c->sev, SESS_EV_CONN_FAIL, 0);
 			return CONN_FREE;
 		}
 	}
@@ -477,7 +482,7 @@ int
 c_do_loggedin(struct connection *c, enum c_event ev)
 {
 	iscsi_merge_conn_params(&c->active, &c->mine, &c->his);
-	session_fsm(c->session, SESS_EV_CONN_LOGGED_IN, c, 0);
+	session_fsm(&c->sev, SESS_EV_CONN_LOGGED_IN, 0);
 
 	return CONN_LOGGED_IN;
 }
@@ -525,7 +530,7 @@ c_do_fail(struct connection *c, enum c_event ev)
 	taskq_cleanup(&c->tasks);
 
 	/* session will take care of cleaning up the mess */
-	session_fsm(c->session, SESS_EV_CONN_FAIL, c, 0);
+	session_fsm(&c->sev, SESS_EV_CONN_FAIL, 0);
 
 	if (ev == CONN_EV_FREE || c->state & CONN_NEVER_LOGGED_IN)
 		return CONN_FREE;

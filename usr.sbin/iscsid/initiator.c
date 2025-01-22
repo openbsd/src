@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.16 2025/01/16 16:19:39 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.17 2025/01/22 09:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -512,10 +512,10 @@ initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
 	case ISCSI_LOGOUT_RESP_SUCCESS:
 		if (tl->reason == ISCSI_LOGOUT_CLOSE_SESS) {
 			conn_fsm(c, CONN_EV_LOGGED_OUT);
-			session_fsm(c->session, SESS_EV_CLOSED, NULL, 0);
+			session_fsm(&c->session->sev, SESS_EV_CLOSED, 0);
 		} else {
 			conn_fsm(tl->c, CONN_EV_LOGGED_OUT);
-			session_fsm(c->session, SESS_EV_CONN_CLOSED, tl->c, 0);
+			session_fsm(&tl->c->sev, SESS_EV_CONN_CLOSED, 0);
 		}
 		break;
 	case ISCSI_LOGOUT_RESP_UNKN_CID:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.22 2021/04/16 14:37:06 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.23 2025/01/22 09:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -259,7 +259,7 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 
 		session_config(s, sc);
 		if (s->state == SESS_INIT)
-			session_fsm(s, SESS_EV_START, NULL, 0);
+			session_fsm(&s->sev, SESS_EV_START, 0);
 
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.20 2025/01/16 16:19:39 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.21 2025/01/22 09:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -226,6 +226,7 @@ struct initiator {
 };
 
 struct sessev {
+	struct event		 ev;
 	struct session		*sess;
 	struct connection	*conn;
 	enum s_event		 event;
@@ -233,6 +234,7 @@ struct sessev {
 
 struct session {
 	TAILQ_ENTRY(session)	 entry;
+	struct sessev		 sev;
 	struct connection_head	 connections;
 	struct taskq		 tasks;
 	struct session_config	 config;
@@ -264,6 +266,7 @@ struct session_poll {
 struct connection {
 	struct event		 ev;
 	struct event		 wev;
+	struct sessev		 sev;
 	TAILQ_ENTRY(connection)	 entry;
 	struct connection_params mine;
 	struct connection_params his;
@@ -349,8 +352,8 @@ void	session_config(struct session *, struct session_config *);
 void	session_task_issue(struct session *, struct task *);
 void	session_logout_issue(struct session *, struct task *);
 void	session_schedule(struct session *);
-void	session_fsm(struct session *, enum s_event, struct connection *,
-	    unsigned int);
+void	session_fsm(struct sessev *, enum s_event, unsigned int);
+void	session_fsm_callback(int, short, void *);
 
 void	conn_new(struct session *, struct connection_config *);
 void	conn_free(struct connection *);

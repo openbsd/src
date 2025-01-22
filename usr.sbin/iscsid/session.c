@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.10 2025/01/16 16:17:32 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.11 2025/01/22 09:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -35,7 +35,6 @@
 #include "iscsid.h"
 #include "log.h"
 
-void	session_fsm_callback(int, short, void *);
 int	sess_do_start(struct session *, struct sessev *);
 int	sess_do_conn_loggedin(struct session *, struct sessev *);
 int	sess_do_conn_fail(struct session *, struct sessev *);
@@ -74,6 +73,9 @@ session_new(struct initiator *i, u_int8_t st)
 	s->itt = arc4random();
 	s->initiator = i;
 	s->state = SESS_INIT;
+
+	s->sev.sess = s;
+	evtimer_set(&s->sev.ev, session_fsm_callback, &s->sev);
 
 	if (st == SESSION_TYPE_DISCOVERY)
 		s->target = 0;
@@ -204,25 +206,20 @@ session_schedule(struct session *s)
  * The session FSM runs from a callback so that the connection FSM can finish.
  */
 void
-session_fsm(struct session *s, enum s_event ev, struct connection *c,
-    unsigned int timeout)
+session_fsm(struct sessev *sev, enum s_event event, unsigned int timeout)
 {
+	struct session *s = sev->sess;
 	struct timeval tv;
-	struct sessev *sev;
 
 	log_debug("session_fsm[%s]: %s ev %s timeout %d",
 	    s->config.SessionName, sess_state(s->state),
-	    sess_event(ev), timeout);
+	    sess_event(event), timeout);
 
-	if ((sev = malloc(sizeof(*sev))) == NULL)
-		fatal("session_fsm");
-	sev->conn = c;
-	sev->sess = s;
-	sev->event = ev;
+	sev->event = event;
 
 	timerclear(&tv);
 	tv.tv_sec = timeout;
-	if (event_once(-1, EV_TIMEOUT, session_fsm_callback, sev, &tv) == -1)
+	if (evtimer_add(&sev->ev, &tv) == -1)
 		fatal("session_fsm");
 }
 
@@ -276,8 +273,6 @@ session_fsm_callback(int fd, short event, void *arg)
 		    sess_state(s->state), sess_event(sev->event));
 		fatalx("bjork bjork bjork");
 	}
-	free(sev);
-log_debug("sess_fsm: done");
 }
 
 int
@@ -360,7 +355,7 @@ sess_do_conn_fail(struct session *s, struct sessev *sev)
 			state = SESS_LOGGED_IN;
 	}
 
-	session_fsm(s, SESS_EV_START, NULL, s->holdTimer);
+	session_fsm(&s->sev, SESS_EV_START, s->holdTimer);
 	/* exponential back-off on constant failure */
 	if (s->holdTimer < ISCSID_HOLD_TIME_MAX)
 		s->holdTimer = s->holdTimer ? s->holdTimer * 2 : 1;
