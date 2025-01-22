@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.112 2025/01/21 17:01:25 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.113 2025/01/22 09:56:58 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1347,8 +1347,7 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->mul_generator_ct == NULL ||
-	    group->meth->mul_single_ct == NULL ||
+	if (group->meth->mul_single_ct == NULL ||
 	    group->meth->mul_double_nonct == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		goto err;
@@ -1363,7 +1362,8 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 		 * secret. This is why we ignore if BN_FLG_CONSTTIME is actually
 		 * set and we always call the constant time version.
 		 */
-		ret = group->meth->mul_generator_ct(group, r, g_scalar, ctx);
+		ret = group->meth->mul_single_ct(group, r, g_scalar,
+		    group->generator, ctx);
 	} else if (g_scalar == NULL && point != NULL && p_scalar != NULL) {
 		/*
 		 * In this case we want to compute p_scalar * GenericPoint:

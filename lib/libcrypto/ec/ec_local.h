@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.62 2025/01/11 20:57:03 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.63 2025/01/22 09:56:58 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -105,8 +105,6 @@ struct ec_method_st {
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 	int (*invert)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
-	int (*mul_generator_ct)(const EC_GROUP *, EC_POINT *r,
-	    const BIGNUM *scalar, BN_CTX *);
 	int (*mul_single_ct)(const EC_GROUP *group, EC_POINT *r,
 	    const BIGNUM *scalar, const EC_POINT *point, BN_CTX *);
 	int (*mul_double_nonct)(const EC_GROUP *group, EC_POINT *r,

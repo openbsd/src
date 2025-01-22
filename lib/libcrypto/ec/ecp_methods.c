@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.39 2025/01/17 11:11:27 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.40 2025/01/22 09:56:58 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1023,13 +1023,8 @@ ec_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	if ((s = EC_POINT_new(group)) == NULL)
 		goto err;
 
-	if (point == NULL) {
-		if (!EC_POINT_copy(s, group->generator))
-			goto err;
-	} else {
-		if (!EC_POINT_copy(s, point))
-			goto err;
-	}
+	if (!EC_POINT_copy(s, point))
+		goto err;
 
 	EC_POINT_BN_set_flags(s, BN_FLG_CONSTTIME);
 
@@ -1195,13 +1190,6 @@ ec_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #undef EC_POINT_CSWAP
 
 static int
-ec_mul_generator_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-    BN_CTX *ctx)
-{
-	return ec_mul_ct(group, r, scalar, NULL, ctx);
-}
-
-static int
 ec_mul_single_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     const EC_POINT *point, BN_CTX *ctx)
 {
@@ -1317,7 +1305,6 @@ static const EC_METHOD ec_GFp_simple_method = {
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
-	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
 	.mul_double_nonct = ec_mul_double_nonct,
 	.field_mul = ec_simple_field_mul,
@@ -1343,7 +1330,6 @@ static const EC_METHOD ec_GFp_mont_method = {
 	.add = ec_add,
 	.dbl = ec_dbl,
 	.invert = ec_invert,
-	.mul_generator_ct = ec_mul_generator_ct,
 	.mul_single_ct = ec_mul_single_ct,
 	.mul_double_nonct = ec_mul_double_nonct,
 	.field_mul = ec_mont_field_mul,
