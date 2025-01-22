@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.216 2025/01/22 12:42:46 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.217 2025/01/22 13:30:41 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -481,7 +481,7 @@ sleep_signal_check(struct proc *p, int nostop)
 			mtx_leave(&p->p_p->ps_mtx);
 
 			SCHED_LOCK();
-			proc_stop(p, 0);
+			p->p_stat = SSTOP;
 			SCHED_UNLOCK();
 		}
 	}
