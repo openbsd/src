@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.139 2025/01/16 16:35:01 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.140 2025/01/22 15:05:49 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -112,7 +112,6 @@ struct sockbuf {
 #define SB_ASYNC	0x0002		/* ASYNC I/O, need signals */
 #define SB_SPLICE	0x0004		/* buffer is splice source or drain */
 #define SB_NOINTR	0x0008		/* operations not interruptible */
-#define SB_MTXLOCK	0x0010		/* sblock() doesn't need solock() */
 
 /*
  * Kernel structure per socket.
@@ -225,21 +224,7 @@ soref(struct socket *so)
 #define isspliced(so)		((so)->so_sp && (so)->so_sp->ssp_socket)
 #define issplicedback(so)	((so)->so_sp && (so)->so_sp->ssp_soback)
 
-static inline void
-sb_mtx_lock(struct sockbuf *sb)
-{
-	if (sb->sb_flags & SB_MTXLOCK)
-		mtx_enter(&sb->sb_mtx);
-}
-
-static inline void
-sb_mtx_unlock(struct sockbuf *sb)
-{
-	if (sb->sb_flags & SB_MTXLOCK)
-		mtx_leave(&sb->sb_mtx);
-}
-
-void	sbmtxassertlocked(struct socket *so, struct sockbuf *);
+void	sbmtxassertlocked(struct sockbuf *);
 
 /*
  * Do we need to notify the other side when I/O is possible?
@@ -248,8 +233,6 @@ static inline int
 sb_notify(struct socket *so, struct sockbuf *sb)
 {
 	int rv;
-
-	soassertlocked(so);
 
 	mtx_enter(&sb->sb_mtx);
 	rv = ((sb->sb_flags & (SB_WAIT|SB_ASYNC|SB_SPLICE)) != 0 ||
@@ -269,10 +252,7 @@ sb_notify(struct socket *so, struct sockbuf *sb)
 static inline long
 sbspace_locked(struct socket *so, struct sockbuf *sb)
 {
-	if (sb->sb_flags & SB_MTXLOCK)
-		sbmtxassertlocked(so, sb);
-	else
-		soassertlocked_readonly(so);
+	sbmtxassertlocked(sb);
 
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
@@ -282,9 +262,9 @@ sbspace(struct socket *so, struct sockbuf *sb)
 {
 	long ret;
 
-	sb_mtx_lock(sb);
+	mtx_enter(&sb->sb_mtx);
 	ret = sbspace_locked(so, sb);
-	sb_mtx_unlock(sb);
+	mtx_leave(&sb->sb_mtx);
 
 	return ret;
 }
@@ -411,7 +391,7 @@ void	sbrelease(struct socket *, struct sockbuf *);
 int	sbcheckreserve(u_long, u_long);
 int	sbchecklowmem(void);
 int	sbreserve(struct socket *, struct sockbuf *, u_long);
-int	sbwait(struct socket *, struct sockbuf *);
+int	sbwait(struct sockbuf *);
 void	soinit(void);
 void	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);

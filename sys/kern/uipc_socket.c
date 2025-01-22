@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.362 2025/01/21 17:41:39 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.363 2025/01/22 15:05:49 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -165,9 +165,6 @@ soalloc(const struct protosw *prp, int wait)
 	sigio_init(&so->so_sigio);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
-
-	so->so_snd.sb_flags |= SB_MTXLOCK;
-	so->so_rcv.sb_flags |= SB_MTXLOCK;
 
 	return (so);
 }
@@ -666,7 +663,7 @@ restart:
 			if (flags & MSG_DONTWAIT)
 				snderr(EWOULDBLOCK);
 			sbunlock(&so->so_snd);
-			error = sbwait(so, &so->so_snd);
+			error = sbwait(&so->so_snd);
 			so->so_snd.sb_state &= ~SS_ISSENDING;
 			mtx_leave(&so->so_snd.sb_mtx);
 			if (error)
@@ -949,7 +946,7 @@ restart:
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 
 		sbunlock(&so->so_rcv);
-		error = sbwait(so, &so->so_rcv);
+		error = sbwait(&so->so_rcv);
 		mtx_leave(&so->so_rcv.sb_mtx);
 		if (error)
 			return (error);
@@ -1184,7 +1181,7 @@ dontblock:
 				break;
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
-			if (sbwait(so, &so->so_rcv)) {
+			if (sbwait(&so->so_rcv)) {
 				mtx_leave(&so->so_rcv.sb_mtx);
 				sbunlock(&so->so_rcv);
 				return (0);
