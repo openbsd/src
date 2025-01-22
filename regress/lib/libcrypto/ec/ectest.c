@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.28 2025/01/22 09:25:02 jsing Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.29 2025/01/22 15:10:30 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -200,10 +200,8 @@ prime_field_tests(void)
 
 	{
 		EC_GROUP *tmp;
-		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
-		if (!tmp)
-			ABORT;
-		if (!EC_GROUP_copy(tmp, group))
+
+		if ((tmp = EC_GROUP_dup(group)) == NULL)
 			ABORT;
 		EC_GROUP_free(group);
 		group = tmp;
@@ -387,11 +385,8 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if (!(P_160 = EC_GROUP_new(EC_GROUP_method_of(group))))
+	if ((P_160 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
-	if (!EC_GROUP_copy(P_160, group))
-		ABORT;
-
 
 	/* Curve P-192 (FIPS PUB 186-2, App. 6) */
 
@@ -437,11 +432,8 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if (!(P_192 = EC_GROUP_new(EC_GROUP_method_of(group))))
+	if ((P_192 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
-	if (!EC_GROUP_copy(P_192, group))
-		ABORT;
-
 
 	/* Curve P-224 (FIPS PUB 186-2, App. 6) */
 
@@ -487,11 +479,8 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if (!(P_224 = EC_GROUP_new(EC_GROUP_method_of(group))))
+	if ((P_224 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
-	if (!EC_GROUP_copy(P_224, group))
-		ABORT;
-
 
 	/* Curve P-256 (FIPS PUB 186-2, App. 6) */
 
@@ -537,11 +526,8 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if (!(P_256 = EC_GROUP_new(EC_GROUP_method_of(group))))
+	if ((P_256 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
 		ABORT;
-	if (!EC_GROUP_copy(P_256, group))
-		ABORT;
-
 
 	/* Curve P-384 (FIPS PUB 186-2, App. 6) */
 
@@ -587,11 +573,8 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if (!(P_384 = EC_GROUP_new(EC_GROUP_method_of(group))))
+	if ((P_384 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
-	if (!EC_GROUP_copy(P_384, group))
-		ABORT;
-
 
 	/* Curve P-521 (FIPS PUB 186-2, App. 6) */
 
@@ -643,11 +626,8 @@ prime_field_tests(void)
 
 	group_order_tests(group);
 
-	if (!(P_521 = EC_GROUP_new(EC_GROUP_method_of(group))))
+	if ((P_521 = EC_GROUP_dup(group)) == NULL)
 		ABORT;
-	if (!EC_GROUP_copy(P_521, group))
-		ABORT;
-
 
 	/* more tests using the last curve */
 	fprintf(stdout, "infinity tests ...");
@@ -687,19 +667,12 @@ prime_field_tests(void)
 	BN_free(y);
 	BN_free(z);
 
-	if (P_160)
-		EC_GROUP_free(P_160);
-	if (P_192)
-		EC_GROUP_free(P_192);
-	if (P_224)
-		EC_GROUP_free(P_224);
-	if (P_256)
-		EC_GROUP_free(P_256);
-	if (P_384)
-		EC_GROUP_free(P_384);
-	if (P_521)
-		EC_GROUP_free(P_521);
-
+	EC_GROUP_free(P_160);
+	EC_GROUP_free(P_192);
+	EC_GROUP_free(P_224);
+	EC_GROUP_free(P_256);
+	EC_GROUP_free(P_384);
+	EC_GROUP_free(P_521);
 }
 
 int
