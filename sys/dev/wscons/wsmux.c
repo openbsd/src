@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.60 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.61 2025/01/22 15:06:56 mvs Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -208,7 +208,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	if (wsevent_init(evar))
+	if (wsevent_init_flags(evar, WSEVENT_MPSAFE))
 		return (EBUSY);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
@@ -385,7 +385,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsevsrc *me;
 	int error, ok;
-	int s, put, get, n;
+	int put, get, n;
 	struct wseventvar *evar;
 	struct wscons_event *ev;
 	struct wsmux_device_list *l;
@@ -415,13 +415,12 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			return (0);
 		}
 
-		s = spltty();
+		mtx_enter(&evar->ws_mtx);
 		get = evar->ws_get;
 		put = evar->ws_put;
 		ev = &evar->ws_q[put];
 		if (++put % WSEVENT_QSIZE == get) {
-			put--;
-			splx(s);
+			mtx_leave(&evar->ws_mtx);
 			return (ENOSPC);
 		}
 		if (put >= WSEVENT_QSIZE)
@@ -429,8 +428,8 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		*ev = *(struct wscons_event *)data;
 		nanotime(&ev->time);
 		evar->ws_put = put;
-		WSEVENT_WAKEUP(evar);
-		splx(s);
+		mtx_leave(&evar->ws_mtx);
+		wsevent_wakeup(evar);
 		return (0);
 	case WSMUXIO_ADD_DEVICE:
 #define d ((struct wsmux_device *)data)
@@ -496,7 +495,9 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
+		mtx_enter(&evar->ws_mtx);
 		evar->ws_async = *(int *)data != 0;
+		mtx_leave(&evar->ws_mtx);
 		return (0);
 	case FIOGETOWN:
 	case TIOCGPGRP:
