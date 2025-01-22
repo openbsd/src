@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.24 2025/01/22 10:14:54 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.25 2025/01/22 16:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -38,7 +38,6 @@ void		main_sig_handler(int, short, void *);
 __dead void	usage(void);
 void		shutdown_cb(int, short, void *);
 
-extern struct initiator *initiator;
 struct event exit_ev;
 int exit_rounds;
 #define ISCSI_EXIT_WAIT 5
@@ -148,13 +147,13 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	control_event_init();
-	initiator = initiator_init();
+	initiator_init();
 
 	event_dispatch();
 
 	/* do some cleanup on the way out */
 	control_cleanup(ctrlsock);
-	initiator_cleanup(initiator);
+	initiator_cleanup();
 	log_info("exiting.");
 	return 0;
 }
@@ -164,7 +163,7 @@ shutdown_cb(int fd, short event, void *arg)
 {
 	struct timeval tv;
 
-	if (exit_rounds++ >= ISCSI_EXIT_WAIT || initiator_isdown(initiator))
+	if (exit_rounds++ >= ISCSI_EXIT_WAIT || initiator_isdown())
 		event_loopexit(NULL);
 
 	timerclear(&tv);
@@ -184,7 +183,7 @@ main_sig_handler(int sig, short event, void *arg)
 	case SIGTERM:
 	case SIGINT:
 	case SIGHUP:
-		initiator_shutdown(initiator);
+		initiator_shutdown();
 		evtimer_set(&exit_ev, shutdown_cb, NULL);
 		timerclear(&tv);
 		if (evtimer_add(&exit_ev, &tv) == -1)
@@ -211,6 +210,7 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 {
 	struct ctrlmsghdr *cmh;
 	struct initiator_config *ic;
+	struct session_head *sh;
 	struct session_config *sc;
 	struct session *s;
 	struct session_poll p = { 0 };
@@ -228,7 +228,7 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 			break;
 		}
 		ic = pdu_getbuf(pdu, NULL, 1);
-		memcpy(&initiator->config, ic, sizeof(initiator->config));
+		initiator_set_config(ic);
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
 	case CTRL_SESSION_CONFIG:
@@ -250,9 +250,9 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		else
 			sc->InitiatorName = NULL;
 
-		s = session_find(initiator, sc->SessionName);
+		s = initiator_find_session(sc->SessionName);
 		if (s == NULL) {
-			s = session_new(initiator, sc->SessionType);
+			s = initiator_new_session(sc->SessionType);
 			if (s == NULL) {
 				control_compose(ch, CTRL_FAILURE, NULL, 0);
 				goto done;
@@ -280,10 +280,11 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		    sizeof(struct vscsi_stats));
 		break;
 	case CTRL_SHOW_SUM:
-		control_compose(ch, CTRL_INITIATOR_CONFIG, &initiator->config,
-		    sizeof(initiator->config));
+		ic = initiator_get_config();
+		control_compose(ch, CTRL_INITIATOR_CONFIG, ic, sizeof(*ic));
 
-		TAILQ_FOREACH(s, &initiator->sessions, entry) {
+		sh = initiator_get_sessions();
+		TAILQ_FOREACH(s, sh, entry) {
 			struct ctrldata cdv[3];
 			bzero(cdv, sizeof(cdv));
 
@@ -308,7 +309,8 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
 	case CTRL_SESS_POLL:
-		TAILQ_FOREACH(s, &initiator->sessions, entry)
+		sh = initiator_get_sessions();
+		TAILQ_FOREACH(s, sh, entry)
 			poll_session(&p, s);
 		poll_finalize(&p);
 		control_compose(ch, CTRL_SESS_POLL, &p, sizeof(p));

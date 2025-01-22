@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.22 2025/01/22 10:14:54 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.23 2025/01/22 16:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -244,7 +244,6 @@ struct session {
 	struct session_params	 mine;
 	struct session_params	 his;
 	struct session_params	 active;
-	struct initiator	*initiator;
 	u_int32_t		 cmdseqnum;
 	u_int32_t		 itt;
 	u_int32_t		 isid_base;	/* only 24 bits */
@@ -329,11 +328,16 @@ void	iscsi_merge_sess_params(struct session_params *,
 void	iscsi_merge_conn_params(struct connection_params *,
 	    struct connection_params *, struct connection_params *);
 
-struct initiator *initiator_init(void);
-void	initiator_cleanup(struct initiator *);
-void	initiator_shutdown(struct initiator *);
-int	initiator_isdown(struct initiator *);
-struct session *initiator_t2s(u_int);
+void	initiator_init(void);
+void	initiator_cleanup(void);
+void	initiator_set_config(struct initiator_config *);
+struct initiator_config *initiator_get_config(void);
+void	initiator_shutdown(void);
+int	initiator_isdown(void);
+struct session	*initiator_new_session(u_int8_t);
+struct session	*initiator_find_session(char *);
+struct session	*initiator_t2s(u_int);
+struct session_head	*initiator_get_sessions(void);
 void	initiator_login(struct connection *);
 void	initiator_discovery(struct session *);
 void	initiator_logout(struct session *, struct connection *, u_int8_t);
@@ -347,8 +351,6 @@ void	control_queue(void *, struct pdu *);
 int	control_compose(void *, u_int16_t, void *, size_t);
 int	control_build(void *, u_int16_t, int, struct ctrldata *);
 
-struct session	*session_find(struct initiator *, char *);
-struct session	*session_new(struct initiator *, u_int8_t);
 void	session_cleanup(struct session *);
 int	session_shutdown(struct session *);
 void	session_config(struct session *, struct session_config *);

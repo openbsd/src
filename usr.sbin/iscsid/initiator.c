@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.19 2025/01/22 10:30:55 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.20 2025/01/22 16:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -33,7 +33,7 @@
 #include "iscsid.h"
 #include "log.h"
 
-struct initiator *initiator;
+static struct initiator *initiator;
 
 struct task_login {
 	struct task		 task;
@@ -61,7 +61,7 @@ void	initiator_logout_cb(struct connection *, void *, struct pdu *);
 struct session_params		initiator_sess_defaults;
 struct connection_params	initiator_conn_defaults;
 
-struct initiator *
+void
 initiator_init(void)
 {
 	if (!(initiator = calloc(1, sizeof(*initiator))))
@@ -77,24 +77,34 @@ initiator_init(void)
 	initiator_conn_defaults = iscsi_conn_defaults;
 	initiator_sess_defaults.MaxConnections = ISCSID_DEF_CONNS;
 	initiator_conn_defaults.MaxRecvDataSegmentLength = 65536;
-
-	return initiator;
 }
 
 void
-initiator_cleanup(struct initiator *i)
+initiator_cleanup(void)
 {
 	struct session *s;
 
-	while ((s = TAILQ_FIRST(&i->sessions)) != NULL) {
-		TAILQ_REMOVE(&i->sessions, s, entry);
+	while ((s = TAILQ_FIRST(&initiator->sessions)) != NULL) {
+		TAILQ_REMOVE(&initiator->sessions, s, entry);
 		session_cleanup(s);
 	}
 	free(initiator);
 }
 
 void
-initiator_shutdown(struct initiator *i)
+initiator_set_config(struct initiator_config *ic)
+{
+	initiator->config = *ic;
+}
+
+struct initiator_config *
+initiator_get_config(void)
+{
+	return &initiator->config;
+}
+
+void
+initiator_shutdown(void)
 {
 	struct session *s;
 
@@ -105,7 +115,7 @@ initiator_shutdown(struct initiator *i)
 }
 
 int
-initiator_isdown(struct initiator *i)
+initiator_isdown(void)
 {
 	struct session *s;
 	int inprogres = 0;
@@ -118,6 +128,49 @@ initiator_isdown(struct initiator *i)
 }
 
 struct session *
+initiator_new_session(u_int8_t st)
+{
+	struct session *s;
+
+	if (!(s = calloc(1, sizeof(*s))))
+		return NULL;
+
+	/* use the same qualifier unless there is a conflict */
+	s->isid_base = initiator->config.isid_base;
+	s->isid_qual = initiator->config.isid_qual;
+	s->cmdseqnum = arc4random();
+	s->itt = arc4random();
+	s->state = SESS_INIT;
+
+	s->sev.sess = s;
+	evtimer_set(&s->sev.ev, session_fsm_callback, &s->sev);
+
+	if (st == SESSION_TYPE_DISCOVERY)
+		s->target = 0;
+	else
+		s->target = initiator->target++;
+
+	TAILQ_INIT(&s->connections);
+	TAILQ_INIT(&s->tasks);
+
+	TAILQ_INSERT_HEAD(&initiator->sessions, s, entry);
+
+	return s;
+}
+
+struct session *
+initiator_find_session(char *name)
+{
+	struct session *s;
+
+	TAILQ_FOREACH(s, &initiator->sessions, entry) {
+		if (strcmp(s->config.SessionName, name) == 0)
+			return s;
+	}
+	return NULL;
+}
+
+struct session *
 initiator_t2s(u_int target)
 {
 	struct session *s;
@@ -127,6 +180,12 @@ initiator_t2s(u_int target)
 			return s;
 	}
 	return NULL;
+}
+
+struct session_head *
+initiator_get_sessions(void)
+{
+	return &initiator->sessions;
 }
 
 void

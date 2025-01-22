@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.12 2025/01/22 10:14:54 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.13 2025/01/22 16:06:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -45,49 +45,6 @@ int	sess_do_reinstatement(struct session *, struct sessev *);
 
 const char *sess_state(int);
 const char *sess_event(enum s_event);
-
-struct session *
-session_find(struct initiator *i, char *name)
-{
-	struct session *s;
-
-	TAILQ_FOREACH(s, &i->sessions, entry) {
-		if (strcmp(s->config.SessionName, name) == 0)
-			return s;
-	}
-	return NULL;
-}
-
-struct session *
-session_new(struct initiator *i, u_int8_t st)
-{
-	struct session *s;
-
-	if (!(s = calloc(1, sizeof(*s))))
-		return NULL;
-
-	/* use the same qualifier unless there is a conflict */
-	s->isid_base = i->config.isid_base;
-	s->isid_qual = i->config.isid_qual;
-	s->cmdseqnum = arc4random();
-	s->itt = arc4random();
-	s->initiator = i;
-	s->state = SESS_INIT;
-
-	s->sev.sess = s;
-	evtimer_set(&s->sev.ev, session_fsm_callback, &s->sev);
-
-	if (st == SESSION_TYPE_DISCOVERY)
-		s->target = 0;
-	else
-		s->target = s->initiator->target++;
-
-	TAILQ_INSERT_HEAD(&i->sessions, s, entry);
-	TAILQ_INIT(&s->connections);
-	TAILQ_INIT(&s->tasks);
-
-	return s;
-}
 
 void
 session_cleanup(struct session *s)
