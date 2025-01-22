@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm4.c,v 1.2 2023/07/07 12:01:32 beck Exp $	*/
+/*	$OpenBSD: sm4.c,v 1.3 2025/01/22 09:37:07 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -19,6 +19,8 @@
 
 #ifndef OPENSSL_NO_SM4
 #include <openssl/sm4.h>
+
+#include "crypto_internal.h"
 
 struct sm4_key {
         uint32_t rk[SM4_KEY_SCHEDULE];
@@ -99,12 +101,6 @@ static const uint32_t SM4_SBOX_T[256] = {
 };
 
 static inline uint32_t
-rotl(uint32_t a, uint8_t n)
-{
-	return (a << n) | (a >> (32 - n));
-}
-
-static inline uint32_t
 load_u32_be(const uint8_t *b, uint32_t n)
 {
 	return ((uint32_t)b[4 * n] << 24) |
@@ -132,19 +128,18 @@ SM4_T_slow(uint32_t X)
 	t |= ((uint32_t)SM4_S[(uint8_t)(X >> 8)]) << 8;
 	t |= SM4_S[(uint8_t)X];
 
-	/*
-	 * L linear transform
-	 */
-	return t ^ rotl(t, 2) ^ rotl(t, 10) ^ rotl(t, 18) ^ rotl(t, 24);
+	/* L linear transform. */
+	return t ^ crypto_rol_u32(t, 2) ^ crypto_rol_u32(t, 10) ^
+	    crypto_rol_u32(t, 18) ^ crypto_rol_u32(t, 24);
 }
 
 static inline uint32_t
 SM4_T(uint32_t X)
 {
 	return SM4_SBOX_T[(uint8_t)(X >> 24)] ^
-	    rotl(SM4_SBOX_T[(uint8_t)(X >> 16)], 24) ^
-	    rotl(SM4_SBOX_T[(uint8_t)(X >> 8)], 16) ^
-	    rotl(SM4_SBOX_T[(uint8_t)X], 8);
+	    crypto_rol_u32(SM4_SBOX_T[(uint8_t)(X >> 16)], 24) ^
+	    crypto_rol_u32(SM4_SBOX_T[(uint8_t)(X >> 8)], 16) ^
+	    crypto_rol_u32(SM4_SBOX_T[(uint8_t)X], 8);
 }
 
 int
@@ -192,7 +187,7 @@ SM4_set_key(const uint8_t *key, SM4_KEY *k)
 		t |= ((uint32_t)SM4_S[(uint8_t)(X >> 8)]) << 8;
 		t |= SM4_S[(uint8_t)X];
 
-		t = t ^ rotl(t, 13) ^ rotl(t, 23);
+		t = t ^ crypto_rol_u32(t, 13) ^ crypto_rol_u32(t, 23);
 		K[i % 4] ^= t;
 		ks->rk[i] = K[i % 4];
 	}
