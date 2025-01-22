@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm4.c,v 1.3 2025/01/22 09:37:07 jsing Exp $	*/
+/*	$OpenBSD: sm4.c,v 1.4 2025/01/22 09:42:27 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -142,45 +142,44 @@ SM4_T(uint32_t X)
 	    crypto_rol_u32(SM4_SBOX_T[(uint8_t)X], 8);
 }
 
+/*
+ * SM4 Family Key
+ */
+static const uint32_t SM4_FK[4] = {
+	0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
+};
+
+/*
+ * SM4 Constant Key
+ */
+static const uint32_t SM4_CK[32] = {
+	0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269,
+	0x70777E85, 0x8C939AA1, 0xA8AFB6BD, 0xC4CBD2D9,
+	0xE0E7EEF5, 0xFC030A11, 0x181F262D, 0x343B4249,
+	0x50575E65, 0x6C737A81, 0x888F969D, 0xA4ABB2B9,
+	0xC0C7CED5, 0xDCE3EAF1, 0xF8FF060D, 0x141B2229,
+	0x30373E45, 0x4C535A61, 0x686F767D, 0x848B9299,
+	0xA0A7AEB5, 0xBCC3CAD1, 0xD8DFE6ED, 0xF4FB0209,
+	0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279,
+};
+
 int
 SM4_set_key(const uint8_t *key, SM4_KEY *k)
 {
 	struct sm4_key *ks = (struct sm4_key *)k;
-
-	/*
-	 * Family Key
-	 */
-	static const uint32_t FK[4] = {
-		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
-	};
-
-	/*
-	 * Constant Key
-	 */
-	static const uint32_t CK[32] = {
-		0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269,
-		0x70777E85, 0x8C939AA1, 0xA8AFB6BD, 0xC4CBD2D9,
-		0xE0E7EEF5, 0xFC030A11, 0x181F262D, 0x343B4249,
-		0x50575E65, 0x6C737A81, 0x888F969D, 0xA4ABB2B9,
-		0xC0C7CED5, 0xDCE3EAF1, 0xF8FF060D, 0x141B2229,
-		0x30373E45, 0x4C535A61, 0x686F767D, 0x848B9299,
-		0xA0A7AEB5, 0xBCC3CAD1, 0xD8DFE6ED, 0xF4FB0209,
-		0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279,
-	};
-
 	uint32_t K[4];
 	int i;
 
-	K[0] = load_u32_be(key, 0) ^ FK[0];
-	K[1] = load_u32_be(key, 1) ^ FK[1];
-	K[2] = load_u32_be(key, 2) ^ FK[2];
-	K[3] = load_u32_be(key, 3) ^ FK[3];
+	K[0] = load_u32_be(key, 0) ^ SM4_FK[0];
+	K[1] = load_u32_be(key, 1) ^ SM4_FK[1];
+	K[2] = load_u32_be(key, 2) ^ SM4_FK[2];
+	K[3] = load_u32_be(key, 3) ^ SM4_FK[3];
 
 	for (i = 0; i < SM4_KEY_SCHEDULE; i++) {
 		uint32_t X;
 		uint32_t t = 0;
 
-		X = K[(i + 1) % 4] ^ K[(i + 2) % 4] ^ K[(i + 3) % 4] ^ CK[i];
+		X = K[(i + 1) % 4] ^ K[(i + 2) % 4] ^ K[(i + 3) % 4] ^ SM4_CK[i];
 
 		t |= ((uint32_t)SM4_S[(uint8_t)(X >> 24)]) << 24;
 		t |= ((uint32_t)SM4_S[(uint8_t)(X >> 16)]) << 16;
