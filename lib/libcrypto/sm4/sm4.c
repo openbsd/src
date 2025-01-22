@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm4.c,v 1.5 2025/01/22 09:46:26 jsing Exp $	*/
+/*	$OpenBSD: sm4.c,v 1.6 2025/01/22 09:53:16 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -177,14 +177,6 @@ SM4_set_key(const uint8_t *key, SM4_KEY *k)
 }
 LCRYPTO_ALIAS(SM4_set_key);
 
-#define SM4_ROUNDS(k0, k1, k2, k3, F)			\
-	  do {						\
-		 B0 ^= F(B1 ^ B2 ^ B3 ^ ks->rk[k0]);	\
-		 B1 ^= F(B0 ^ B2 ^ B3 ^ ks->rk[k1]);	\
-		 B2 ^= F(B0 ^ B1 ^ B3 ^ ks->rk[k2]);	\
-		 B3 ^= F(B0 ^ B1 ^ B2 ^ ks->rk[k3]);	\
-	  } while(0)
-
 void
 SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 {
@@ -200,14 +192,45 @@ SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 	 * Uses byte-wise sbox in the first and last rounds to provide some
 	 * protection from cache based side channels.
 	 */
-	SM4_ROUNDS( 0,  1,  2,  3, SM4_T_slow);
-	SM4_ROUNDS( 4,  5,  6,  7, SM4_T);
-	SM4_ROUNDS( 8,  9, 10, 11, SM4_T);
-	SM4_ROUNDS(12, 13, 14, 15, SM4_T);
-	SM4_ROUNDS(16, 17, 18, 19, SM4_T);
-	SM4_ROUNDS(20, 21, 22, 23, SM4_T);
-	SM4_ROUNDS(24, 25, 26, 27, SM4_T);
-	SM4_ROUNDS(28, 29, 30, 31, SM4_T_slow);
+	B0 ^= SM4_T_slow(B1 ^ B2 ^ B3 ^ ks->rk[0]);
+	B1 ^= SM4_T_slow(B0 ^ B2 ^ B3 ^ ks->rk[1]);
+	B2 ^= SM4_T_slow(B0 ^ B1 ^ B3 ^ ks->rk[2]);
+	B3 ^= SM4_T_slow(B0 ^ B1 ^ B2 ^ ks->rk[3]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[4]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[5]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[6]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[7]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[8]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[9]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[10]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[11]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[12]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[13]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[14]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[15]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[16]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[17]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[18]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[19]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[20]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[21]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[22]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[23]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[24]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[25]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[26]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[27]);
+
+	B0 ^= SM4_T_slow(B1 ^ B2 ^ B3 ^ ks->rk[28]);
+	B1 ^= SM4_T_slow(B0 ^ B2 ^ B3 ^ ks->rk[29]);
+	B2 ^= SM4_T_slow(B0 ^ B1 ^ B3 ^ ks->rk[30]);
+	B3 ^= SM4_T_slow(B0 ^ B1 ^ B2 ^ ks->rk[31]);
 
 	crypto_store_htobe32(&out[0 * 4], B3);
 	crypto_store_htobe32(&out[1 * 4], B2);
@@ -227,14 +250,49 @@ SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 	B2 = crypto_load_be32toh(&in[2 * 4]);
 	B3 = crypto_load_be32toh(&in[3 * 4]);
 
-	SM4_ROUNDS(31, 30, 29, 28, SM4_T_slow);
-	SM4_ROUNDS(27, 26, 25, 24, SM4_T);
-	SM4_ROUNDS(23, 22, 21, 20, SM4_T);
-	SM4_ROUNDS(19, 18, 17, 16, SM4_T);
-	SM4_ROUNDS(15, 14, 13, 12, SM4_T);
-	SM4_ROUNDS(11, 10,  9,  8, SM4_T);
-	SM4_ROUNDS( 7,  6,  5,  4, SM4_T);
-	SM4_ROUNDS( 3,  2,  1,  0, SM4_T_slow);
+	/*
+	 * Uses byte-wise sbox in the first and last rounds to provide some
+	 * protection from cache based side channels.
+	 */
+	B0 ^= SM4_T_slow(B1 ^ B2 ^ B3 ^ ks->rk[31]);
+	B1 ^= SM4_T_slow(B0 ^ B2 ^ B3 ^ ks->rk[30]);
+	B2 ^= SM4_T_slow(B0 ^ B1 ^ B3 ^ ks->rk[29]);
+	B3 ^= SM4_T_slow(B0 ^ B1 ^ B2 ^ ks->rk[28]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[27]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[26]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[25]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[24]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[23]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[22]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[21]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[20]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[19]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[18]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[17]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[16]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[15]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[14]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[13]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[12]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[11]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[10]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[9]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[8]);
+
+	B0 ^= SM4_T(B1 ^ B2 ^ B3 ^ ks->rk[7]);
+	B1 ^= SM4_T(B0 ^ B2 ^ B3 ^ ks->rk[6]);
+	B2 ^= SM4_T(B0 ^ B1 ^ B3 ^ ks->rk[5]);
+	B3 ^= SM4_T(B0 ^ B1 ^ B2 ^ ks->rk[4]);
+
+	B0 ^= SM4_T_slow(B1 ^ B2 ^ B3 ^ ks->rk[3]);
+	B1 ^= SM4_T_slow(B0 ^ B2 ^ B3 ^ ks->rk[2]);
+	B2 ^= SM4_T_slow(B0 ^ B1 ^ B3 ^ ks->rk[1]);
+	B3 ^= SM4_T_slow(B0 ^ B1 ^ B2 ^ ks->rk[0]);
 
 	crypto_store_htobe32(&out[0 * 4], B3);
 	crypto_store_htobe32(&out[1 * 4], B2);
