@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.32 2025/01/22 15:20:47 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.33 2025/01/22 15:23:25 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -291,9 +291,10 @@ prime_field_tests(void)
 	if (0 != EC_POINT_cmp(group, P, Q, ctx))
 		ABORT;
 	fprintf(stdout, "Generator as octet string, compressed form:\n     ");
-	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
+	for (i = 0; i < len; i++)
+		fprintf(stdout, "%02X", buf[i]);
 
-		len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED, buf, sizeof buf, ctx);
+	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED, buf, sizeof buf, ctx);
 	if (len == 0)
 		ABORT;
 	if (!EC_POINT_oct2point(group, P, buf, len, ctx))
@@ -301,9 +302,10 @@ prime_field_tests(void)
 	if (0 != EC_POINT_cmp(group, P, Q, ctx))
 		ABORT;
 	fprintf(stdout, "\nGenerator as octet string, uncompressed form:\n     ");
-	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
+	for (i = 0; i < len; i++)
+		fprintf(stdout, "%02X", buf[i]);
 
-		len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof buf, ctx);
+	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof buf, ctx);
 	if (len == 0)
 		ABORT;
 	if (!EC_POINT_oct2point(group, P, buf, len, ctx))
