@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.98 2025/01/01 13:44:22 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.99 2025/01/23 12:51:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -272,12 +272,11 @@ divert_attach(struct socket *so, int proto, int wait)
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
-	error = in_pcballoc(so, &divbtable, wait);
-	if (error)
-		return error;
-
 	error = soreserve(so, atomic_load_int(&divert_sendspace),
 	    atomic_load_int(&divert_recvspace));
+	if (error)
+		return error;
+	error = in_pcballoc(so, &divbtable, wait);
 	if (error)
 		return error;
 

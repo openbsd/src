@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.97 2024/08/16 09:20:35 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.98 2025/01/23 12:51:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -280,12 +280,11 @@ divert6_attach(struct socket *so, int proto, int wait)
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
-	error = in_pcballoc(so, &divb6table, wait);
-	if (error)
-		return (error);
-
 	error = soreserve(so, atomic_load_int(&divert6_sendspace),
 	    atomic_load_int(&divert6_recvspace));
+	if (error)
+		return (error);
+	error = in_pcballoc(so, &divb6table, wait);
 	if (error)
 		return (error);
 
