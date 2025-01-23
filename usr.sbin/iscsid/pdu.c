@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.14 2025/01/22 10:14:54 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.15 2025/01/23 12:17:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -191,14 +191,19 @@ text_to_num(const char *numstr, u_int64_t minval, u_int64_t maxval,
 int
 text_to_bool(const char *buf, const char **errstrp)
 {
-	int val = 0;
+	int val;
 
 	if (strcmp(buf, "Yes") == 0)
 		val = 1;
-	else if (strcmp(buf, "No") != 0) {
+	else if (strcmp(buf, "No") == 0)
+		val = 0;
+	else {
 		if (errstrp != NULL)
 			*errstrp = "invalid";
+		return 0;
 	}
+	if (errstrp != NULL)
+		*errstrp = NULL;
 	return val;
 }
 
@@ -227,6 +232,8 @@ text_to_digest(const char *buf, const char **errstrp)
 		}
 		buf = p;
 	}
+	if (errstrp != NULL)
+		*errstrp = NULL;
 	return val;
 }
 
