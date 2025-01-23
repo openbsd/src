@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.272 2024/12/24 12:06:34 mglocker Exp $ */
+/* $OpenBSD: dsdt.c,v 1.273 2025/01/23 13:40:26 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2574,7 +2574,16 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 			buflen = len;
 			break;
 		case 0x0e:	/* AttribRawBytes */
+			cmdlen = 0;
+			buflen = len;
+			break;
 		case 0x0f:	/* AttribRawProcessBytes */
+			/*
+			 * XXX Not implemented yet but used by various
+			 * WoA laptops.  Force an error status instead
+			 * of a panic for now.
+			 */
+			node = NULL;
 			cmdlen = 0;
 			buflen = len;
 			break;
