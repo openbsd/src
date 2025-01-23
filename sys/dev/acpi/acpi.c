@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.439 2024/09/04 21:39:18 hastings Exp $ */
+/* $OpenBSD: acpi.c,v 1.440 2025/01/23 11:24:34 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -324,7 +324,8 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			return (0);
 		}
 
-		pc = pci_lookup_segment(ACPI_PCI_SEG(address));
+		pc = pci_lookup_segment(ACPI_PCI_SEG(address),
+		    ACPI_PCI_BUS(address));
 		tag = pci_make_tag(pc,
 		    ACPI_PCI_BUS(address), ACPI_PCI_DEV(address),
 		    ACPI_PCI_FN(address));
@@ -642,7 +643,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 		free(pci, M_DEVBUF, sizeof(*pci));
 		return (1);
 	}
-	pc = pci_lookup_segment(pci->seg);
+	pc = pci_lookup_segment(pci->seg, pci->bus);
 	tag = pci_make_tag(pc, pci->bus, pci->dev, pci->fun);
 	reg = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID) {
@@ -839,7 +840,7 @@ acpi_pci_notify(struct aml_node *node, int ntype, void *arg)
 	if (ntype != 2)
 		return (0);
 
-	pc = pci_lookup_segment(pdev->seg);
+	pc = pci_lookup_segment(pdev->seg, pdev->bus);
 	tag = pci_make_tag(pc, pdev->bus, pdev->dev, pdev->fun);
 	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, 0)) {
 		/* Clear the PME Status bit if it is set. */

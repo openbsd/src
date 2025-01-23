@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.80 2024/05/13 10:01:53 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.81 2025/01/23 11:24:34 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ pci_mcfg_init(bus_space_tag_t iot, bus_addr_t addr, int segment,
 }
 
 pci_chipset_tag_t
-pci_lookup_segment(int segment)
+pci_lookup_segment(int segment, int bus)
 {
 	KASSERT(segment == 0);
 	return NULL;

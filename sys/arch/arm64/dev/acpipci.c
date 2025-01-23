@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.42 2024/02/03 10:37:25 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.43 2025/01/23 11:24:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -199,7 +199,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_msi_ic = ic;
 
-	sc->sc_pc = pci_lookup_segment(seg);
+	sc->sc_pc = pci_lookup_segment(sc->sc_seg, sc->sc_bus);
 	KASSERT(sc->sc_pc->pc_intr_v == NULL);
 
 	sc->sc_pc->pc_probe_device_hook = acpipci_probe_device_hook;
@@ -784,12 +784,13 @@ struct machine_pci_chipset acpipci_dummy_chipset = {
 };
 
 pci_chipset_tag_t
-pci_lookup_segment(int segment)
+pci_lookup_segment(int segment, int bus)
 {
 	struct acpipci_mcfg *am;
 
 	SLIST_FOREACH(am, &acpipci_mcfgs, am_list) {
-		if (am->am_segment == segment)
+		if (segment == am->am_segment &&
+		    bus >= am->am_min_bus && bus <= am->am_max_bus)
 			return &am->am_pc;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.32 2020/06/17 06:17:19 dlg Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.33 2025/01/23 11:24:34 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ pcireg_t	pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void		pci_set_powerstate_md(pci_chipset_tag_t, pcitag_t, int, int);
 
 void		pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
-pci_chipset_tag_t pci_lookup_segment(int);
+pci_chipset_tag_t pci_lookup_segment(int, int);
 
 static inline int
 pci_intr_map_msix(struct pci_attach_args *pa, int vec, pci_intr_handle_t *ihp)
