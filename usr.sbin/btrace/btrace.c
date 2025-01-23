@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.94 2024/12/04 09:33:41 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.95 2025/01/23 11:17:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -363,12 +363,6 @@ dtpi_func(struct dtioc_probe_info *dtpi)
 	return syscallnames[idx];
 }
 
-int
-dtpi_is_unit(const char *unit)
-{
-	return !strncmp("hz", unit, sizeof("hz"));
-}
-
 struct dtioc_probe_info *
 dtpi_get_by_value(const char *prov, const char *func, const char *name)
 {
@@ -377,20 +371,16 @@ dtpi_get_by_value(const char *prov, const char *func, const char *name)
 
 	dtpi = dt_dtpis;
 	for (i = 0; i < dt_ndtpi; i++, dtpi++) {
-		if (prov != NULL &&
-		    strncmp(prov, dtpi->dtpi_prov, DTNAMESIZE))
-			continue;
-
-		if (func != NULL) {
-			if (dtpi_is_unit(func))
-				return dtpi;
-
-			if (strncmp(func, dtpi_func(dtpi), DTNAMESIZE))
+		if (prov != NULL) {
+			if (strncmp(prov, dtpi->dtpi_prov, DTNAMESIZE))
 				continue;
 		}
-
-		if (strncmp(name, dtpi->dtpi_name, DTNAMESIZE))
-			continue;
+		if (func != NULL && name != NULL) {
+			if (strncmp(func, dtpi_func(dtpi), DTNAMESIZE))
+				continue;
+			if (strncmp(name, dtpi->dtpi_name, DTNAMESIZE))
+				continue;
+		}
 
 		debug("matched probe %s:%s:%s\n", dtpi->dtpi_prov,
 		    dtpi_func(dtpi), dtpi->dtpi_name);
@@ -398,6 +388,37 @@ dtpi_get_by_value(const char *prov, const char *func, const char *name)
 	}
 
 	return NULL;
+}
+
+static uint64_t
+bp_nsecs_to_unit(struct bt_probe *bp)
+{
+	static const struct {
+		const char *name;
+		enum { UNIT_HZ, UNIT_US, UNIT_MS, UNIT_S } id;
+	} units[] = {
+		{ .name = "hz", .id = UNIT_HZ },
+		{ .name = "us", .id = UNIT_US },
+		{ .name = "ms", .id = UNIT_MS },
+		{ .name = "s", .id = UNIT_S },
+	};
+	size_t i;
+
+	for (i = 0; i < nitems(units); i++) {
+		if (strcmp(units[i].name, bp->bp_unit) == 0) {
+			switch (units[i].id) {
+			case UNIT_HZ:
+				return (1000000000LLU / bp->bp_nsecs);
+			case UNIT_US:
+				return (bp->bp_nsecs / 1000LLU);
+			case UNIT_MS:
+				return (bp->bp_nsecs / 1000000LLU);
+			case UNIT_S:
+				return (bp->bp_nsecs / 1000000000LLU);
+			}
+		}
+	}
+	return 0;
 }
 
 void
@@ -420,9 +441,9 @@ probe_name(struct bt_probe *bp)
 
 	assert(bp->bp_type == B_PT_PROBE);
 
-	if (bp->bp_rate) {
-		snprintf(buf, sizeof(buf), "%s:%s:%u", bp->bp_prov,
-		    bp->bp_unit, bp->bp_rate);
+	if (bp->bp_nsecs) {
+		snprintf(buf, sizeof(buf), "%s:%s:%llu", bp->bp_prov,
+		    bp->bp_unit, bp_nsecs_to_unit(bp));
 	} else {
 		snprintf(buf, sizeof(buf), "%s:%s:%s", bp->bp_prov,
 		    bp->bp_unit, bp->bp_name);
@@ -582,7 +603,7 @@ rules_setup(int fd)
 
 			bp->bp_pbn = dtpi->dtpi_pbn;
 			dtrq->dtrq_pbn = dtpi->dtpi_pbn;
-			dtrq->dtrq_rate = bp->bp_rate;
+			dtrq->dtrq_nsecs = bp->bp_nsecs;
 			dtrq->dtrq_evtflags = evtflags;
 			if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
 				dokstack = 1;

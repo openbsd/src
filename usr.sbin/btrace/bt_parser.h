@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.26 2024/03/30 07:41:45 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.27 2025/01/23 11:17:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -31,7 +31,7 @@
  *
  *	"provider:function:name"
  * or
- *	"provider:time_unit:rate"
+ *	"provider:time_unit:number"
  *
  * Multiple probes can be associated to the same action.
  */
@@ -40,7 +40,7 @@ struct bt_probe {
 	const char		*bp_prov;	/* provider */
 	const char		*bp_func;	/* function or time unit */
 	const char		*bp_name;
-	uint32_t		 bp_rate;
+	uint64_t		 bp_nsecs;
 #define bp_unit	bp_func
 	enum bt_ptype {
 		 B_PT_BEGIN = 1,

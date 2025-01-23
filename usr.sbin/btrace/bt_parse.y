@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.61 2024/11/07 09:20:09 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.62 2025/01/23 11:17:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
@@ -62,7 +62,7 @@ struct bt_arg		g_maxba = BA_INITIALIZER(LONG_MAX, B_AT_LONG);
 
 struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *,
 		     struct bt_stmt *);
-struct bt_probe	*bp_new(const char *, const char *, const char *, int32_t);
+struct bt_probe	*bp_new(const char *, const char *, const char *, long);
 struct bt_arg	*ba_append(struct bt_arg *, struct bt_arg *);
 struct bt_arg	*ba_op(enum bt_argtype, struct bt_arg *, struct bt_arg *);
 struct bt_stmt	*bs_new(enum bt_action, struct bt_arg *, struct bt_var *);
@@ -119,7 +119,7 @@ static int 	 beflag = 0;		/* BEGIN/END parsing context flag */
 %token	<v.i>		ERROR ENDFILT
 %token	<v.i>		OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
 /* Builtins */
-%token	<v.i>		BUILTIN BEGIN ELSE END HZ IF STR
+%token	<v.i>		BUILTIN BEGIN ELSE END IF STR
 /* Functions and Map operators */
 %token  <v.i>		F_DELETE F_PRINT
 %token	<v.i>		MFUNC FUNC0 FUNC1 FUNCN OP1 OP2 OP4 MOP0 MOP1
@@ -155,7 +155,7 @@ probe	: { pflag = 1; } pname		{ $$ = $2; pflag = 0; }
 	;
 
 pname	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
-	| STRING ':' HZ ':' NUMBER	{ $$ = bp_new($1, "hz", NULL, $5); }
+	| STRING ':' STRING ':' NUMBER	{ $$ = bp_new($1, $3, NULL, $5); }
 	;
 
 mentry	: GVAR '[' vargs ']'		{ $$ = bm_find($1, $3); }
@@ -358,18 +358,55 @@ bt_new(struct bt_arg *ba, struct bt_stmt *condbs, struct bt_stmt *elsebs)
 	return bs_new(B_AC_TEST, bop, (struct bt_var *)bc);
 }
 
+/*
+ * interval and profile support the same units.
+ */
+static uint64_t
+bp_unit_to_nsec(const char *unit, long value)
+{
+	static const struct {
+		const char *name;
+		enum { UNIT_HZ, UNIT_US, UNIT_MS, UNIT_S } id;
+		long long max;
+	} units[] = {
+		{ .name = "hz", .id = UNIT_HZ, .max = 1000000LL },
+		{ .name = "us", .id = UNIT_US, .max = LLONG_MAX / 1000 },
+		{ .name = "ms", .id = UNIT_MS, .max = LLONG_MAX / 1000000 },
+		{ .name = "s", .id = UNIT_S, .max = LLONG_MAX / 1000000000 },
+	};
+	size_t i;
+
+	for (i = 0; i < nitems(units); i++) {
+		if (strcmp(units[i].name, unit) == 0) {
+			if (value < 1)
+				yyerror("Number is invalid: %ld", value);
+			if (value > units[i].max)
+				yyerror("Number is too large: %ld", value);
+			switch (units[i].id) {
+			case UNIT_HZ:
+				return (1000000000LLU / value);
+			case UNIT_US:
+				return (value * 1000LLU);
+			case UNIT_MS:
+				return (value * 1000000LLU);
+			case UNIT_S:
+				return (value * 1000000000LLU);
+			}
+		}
+	}
+	yyerror("Invalid unit: %s", unit);
+	return 0;
+}
+
 /* Create a new probe */
 struct bt_probe *
-bp_new(const char *prov, const char *func, const char *name, int32_t rate)
+bp_new(const char *prov, const char *func, const char *name, long number)
 {
 	struct bt_probe *bp;
 	enum bt_ptype ptype;
 
-	if (rate < 0 || rate > INT32_MAX)
-		errx(1, "only positive values permitted");
-
 	if (prov == NULL && func == NULL && name == NULL)
-		ptype = rate; /* BEGIN or END */
+		ptype = number; /* BEGIN or END */
 	else
 		ptype = B_PT_PROBE;
 
@@ -379,7 +416,8 @@ bp_new(const char *prov, const char *func, const char *name, int32_t rate)
 	bp->bp_prov = prov;
 	bp->bp_func = func;
 	bp->bp_name = name;
-	bp->bp_rate = rate;
+	if (ptype == B_PT_PROBE && name == NULL)
+		bp->bp_nsecs = bp_unit_to_nsec(func, number);
 	bp->bp_type = ptype;
 
 	return bp;
@@ -726,7 +764,6 @@ lookup(char *s)
 		{ "else",	ELSE,		0 },
 		{ "exit",	FUNC0,		B_AC_EXIT },
 		{ "hist",	OP1,		0 },
-		{ "hz",		HZ,		0 },
 		{ "if",		IF,		0 },
 		{ "kstack",	BUILTIN,	B_AT_BI_KSTACK },
 		{ "lhist",	OP4,		0 },
@@ -1077,14 +1114,10 @@ again:
 			/*
 			 * Probe lexer backdoor, interpret the token as a string
 			 * rather than a keyword. Otherwise, reserved keywords
-			 * would conflict with syscall names. The exception to
-			 * this is 'hz', which hopefully will never be a
-			 * syscall.
+			 * would conflict with syscall names.
 			 */
-			if (kwp->token != HZ) {
-				yylval.v.string = kwp->word;
-				return STRING;
-			}
+			yylval.v.string = kwp->word;
+			return STRING;
 		} else if (beflag) {
 			/* Interpret tokens in a BEGIN/END context. */
 			if (kwp->type >= B_AT_BI_ARG0 &&

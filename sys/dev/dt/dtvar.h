@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.21 2024/11/26 10:28:27 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.22 2025/01/23 11:17:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -109,8 +109,9 @@ struct dtioc_arg {
 
 struct dtioc_req {
 	uint32_t		 dtrq_pbn;	/* probe number */
-	uint32_t		 dtrq_rate;	/* number of ticks */
+	uint32_t		 __unused1;
 	uint64_t		 dtrq_evtflags;	/* states to record */
+	uint64_t		 dtrq_nsecs;	/* execution period */
 };
 
 struct dtioc_stat {
