@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.283 2024/11/07 10:12:18 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.284 2025/01/23 12:27:42 henning Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1214,8 +1214,26 @@ void
 tls_handshakecb(struct bufferevent *bufev, void *arg)
 {
 	struct peer *p = arg;
+	const char *cn;
+	char *cntmp;
 
 	log_debug("Completed tls handshake");
+
+	if (tls_peer_cert_provided(p->p_ctx)) {
+		if ((cn = tls_peer_cert_common_name(p->p_ctx)) != NULL &&
+		    strlen(cn) > 0) {
+			if (stravis(&cntmp, cn, VIS_WHITE) == -1)
+				log_warn("tls_handshakecb stravis");
+			else {
+				log_info(LOG_INFO, "%s using hostname \"%s\" "
+				    "from certificate", p->p_hostname, cntmp);
+				free(p->p_hostname);
+				p->p_hostname = cntmp;
+			}
+		} else
+			log_info(LOG_NOTICE,
+			    "cannot get hostname from peer certificate");
+	}
 
 	bufferevent_setcb(bufev, tcp_readcb, NULL, tcp_closecb, p);
 }
