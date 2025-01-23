@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2023/10/12 16:59:24 anton Exp $
+#	$OpenBSD: Makefile,v 1.37 2025/01/23 15:23:28 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -94,7 +94,10 @@ ca.crt fake-ca.crt:
 client.req server.req:
 	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=${@:R}/CN=localhost/ -nodes -newkey rsa -keyout ${@:R}.key -out $@
 
-client.crt server.crt: ca.crt ${@:R}.req
+myhost-client.req:
+	openssl req -batch -new -subj /L=OpenBSD/O=syslogd-regress/OU=${@:R}/CN=myhost/ -nodes -newkey rsa -keyout ${@:R}.key -out $@
+
+client.crt server.crt myhost-client.crt: ca.crt ${@:R}.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt -req -in ${@:R}.req -out $@
 
 empty:
@@ -141,6 +144,7 @@ ${REGRESS_TARGETS:M*multilisten*}: 127.0.0.1.crt
 ${REGRESS_TARGETS:M*empty*}: empty
 ${REGRESS_TARGETS:M*toobig*}: toobig
 ${REGRESS_TARGETS:M*fake*}: fake-ca.crt
+${REGRESS_TARGETS:M*myhost*}: myhost-client.crt
 ${REGRESS_TARGETS:M*sendsyslog*}: sys/syscall.ph
 ${REGRESS_TARGETS}: ttylog logflush
 
