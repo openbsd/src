@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.134 2025/01/21 17:40:57 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.135 2025/01/24 09:19:07 mvs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
  *	c	only used in ioctl or routing socket contexts (kernel lock)
  *	K	kernel lock
  *	N	net lock
+ *	T	if_tmplist_lock
  *
  *  For SRP related structures that allow lock-free reads, the write lock
  *  is indicated below.
@@ -138,6 +139,7 @@ struct ifnet {				/* and the entries */
 	void	*if_softc;		/* [I] lower-level data for this if */
 	struct	refcnt if_refcnt;
 	TAILQ_ENTRY(ifnet) if_list;	/* [NK] all struct ifnets are chained */
+	TAILQ_ENTRY(ifnet) if_tmplist;	/* [T] temporary list */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* [N] list of addresses per if */
 	TAILQ_HEAD(, ifmaddr) if_maddrlist; /* [N] list of multicast records */
 	TAILQ_HEAD(, ifg_list) if_groups; /* [N] list of groups per if */
@@ -273,6 +275,9 @@ struct ifg_group {
 	int			 ifg_carp_demoted; /* [K] carp demotion counter */
 	TAILQ_HEAD(, ifg_member) ifg_members; /* [N] list of members per group */
 	TAILQ_ENTRY(ifg_group)	 ifg_next;    /* [N] all groups are chained */
+
+	struct refcnt		 ifg_tmprefcnt;
+	TAILQ_ENTRY(ifg_group)	 ifg_tmplist;   /* [T] temporary list */
 };
 
 struct ifg_member {
