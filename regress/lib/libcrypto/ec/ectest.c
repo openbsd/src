@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.34 2025/01/22 15:38:25 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.35 2025/01/24 11:49:13 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -117,8 +117,6 @@ group_order_tests(EC_GROUP *group, BN_CTX *ctx)
 		ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx))
-		ABORT;
 	if (!EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
 		ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q))
