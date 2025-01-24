@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.24 2025/01/19 07:51:41 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.25 2025/01/24 13:35:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,8 +71,7 @@
 CTASSERT(sizeof(MD5_LONG) == sizeof(uint32_t));
 
 #ifdef MD5_ASM
-void md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);
-#define md5_block_data_order md5_block_asm_data_order
+void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 #endif
 
 #ifndef MD5_ASM

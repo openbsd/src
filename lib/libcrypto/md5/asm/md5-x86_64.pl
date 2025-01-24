@@ -125,9 +125,9 @@ $code .= <<EOF;
 .text
 .align 16
 
-.globl md5_block_asm_data_order
-.type md5_block_asm_data_order,\@function,3
-md5_block_asm_data_order:
+.globl md5_block_data_order
+.type md5_block_data_order,\@function,3
+md5_block_data_order:
 	_CET_ENDBR
 	push	%rbp
 	push	%rbx
@@ -257,7 +257,7 @@ $code .= <<EOF;
 	add	\$40,%rsp
 .Lepilogue:
 	ret
-.size md5_block_asm_data_order,.-md5_block_asm_data_order
+.size md5_block_data_order,.-md5_block_data_order
 EOF
 
 print $code;
