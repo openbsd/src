@@ -1,0 +1,21 @@
+RS-JOURNAL(1) - General Commands Manual
+
+# NAME
+
+**Rs-journal** - reference to a journal article
+
+# DESCRIPTION
+
+BEGINTEST
+
+Brian W. Kernighan,
+Lorinda L. Cherry,
+"System for Typesetting Mathematics",
+*Communications of the ACM*,
+18,
+pp. 151&#8211;157,
+March 1975.
+
+ENDTEST
+
+OpenBSD - January 25, 2025

@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.226 2025/01/19 16:36:24 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.227 2025/01/24 23:22:13 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1553,7 +1553,13 @@ mdoc__x_pre(MDOC_ARGS)
 		cattr = "RsR";
 		break;
 	case MDOC__T:
-		cattr = "RsT";
+		if (n->parent != NULL && n->parent->tok == MDOC_Rs &&
+		    n->parent->norm->Rs.quote_T) {
+			print_text(h, "\\(lq");
+			h->flags |= HTML_NOSPACE;
+			cattr = "RsT";
+		} else
+			cattr = "RsB";
 		break;
 	case MDOC__U:
 		print_otag(h, TAG_A, "ch", "RsU", arg);
@@ -1574,14 +1580,23 @@ mdoc__x_post(MDOC_ARGS)
 {
 	struct roff_node *nn;
 
-	if (n->tok == MDOC__A &&
-	    (nn = roff_node_next(n)) != NULL && nn->tok == MDOC__A &&
-	    ((nn = roff_node_next(nn)) == NULL || nn->tok != MDOC__A) &&
-	    ((nn = roff_node_prev(n)) == NULL || nn->tok != MDOC__A))
-		return;
-
-	/* TODO: %U */
-
+	switch (n->tok) {
+	case MDOC__A:
+		if ((nn = roff_node_next(n)) != NULL && nn->tok == MDOC__A &&
+		    ((nn = roff_node_next(nn)) == NULL || nn->tok != MDOC__A) &&
+		    ((nn = roff_node_prev(n)) == NULL || nn->tok != MDOC__A))
+			return;
+		break;
+	case MDOC__T:
+		if (n->parent != NULL && n->parent->tok == MDOC_Rs &&
+		    n->parent->norm->Rs.quote_T) {
+			h->flags |= HTML_NOSPACE;
+			print_text(h, "\\(rq");
+		}
+		break;
+	default:
+		break;
+	}
 	if (n->parent == NULL || n->parent->tok != MDOC_Rs)
 		return;
 

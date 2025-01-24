@@ -1,0 +1,21 @@
+.\" $OpenBSD: journal.in,v 1.1 2025/01/24 23:22:13 schwarze Exp $
+.Dd $Mdocdate: January 24 2025 $
+.Dt RS-JOURNAL 1
+.Os
+.Sh NAME
+.Nm Rs-journal
+.Nd reference to a journal article
+.Sh DESCRIPTION
+BEGINTEST
+.Pp
+.Rs
+.%A Brian W. Kernighan
+.%A Lorinda L. Cherry
+.%T System for Typesetting Mathematics
+.%J Communications of the ACM
+.%V 18
+.%P pp. 151\(en157
+.%D March 1975
+.Re
+.Pp
+ENDTEST

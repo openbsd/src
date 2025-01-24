@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.13 2025/01/19 23:01:27 schwarze Exp $
+# $OpenBSD: Makefile,v 1.14 2025/01/24 23:22:13 schwarze Exp $
 
-REGRESS_TARGETS	 = allch args break empty paragraph three_authors rfc transp
+REGRESS_TARGETS	 = allch args break empty journal outside paragraph
+REGRESS_TARGETS	+= rfc three_authors transp
 UTF8_TARGETS	 = allch break empty three_authors
 LINT_TARGETS	 = allch args empty
-HTML_TARGETS	 = paragraph rfc
+HTML_TARGETS	 = journal outside paragraph rfc
 
 # groff-1.22.3 defect:
 # - arguments after .Rs cause the macro to be ignored

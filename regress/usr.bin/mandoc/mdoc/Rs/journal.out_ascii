@@ -1,0 +1,14 @@
+RS-JOURNAL(1)               General Commands Manual              RS-JOURNAL(1)
+
+NNAAMMEE
+     RRss--jjoouurrnnaall - reference to a journal article
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     Brian W. Kernighan and Lorinda L. Cherry, "System for Typesetting
+     Mathematics", _C_o_m_m_u_n_i_c_a_t_i_o_n_s _o_f _t_h_e _A_C_M, 18, pp. 151-157, March 1975.
+
+     ENDTEST
+
+OpenBSD                        January 25, 2025                        OpenBSD

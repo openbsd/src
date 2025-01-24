@@ -1,0 +1,15 @@
+RS-OUTSIDE(1)               General Commands Manual              RS-OUTSIDE(1)
+
+NNAAMMEE
+     RRss--oouuttssiiddee - reference macros outside reference blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     Some percent-macros can be used outside reference blocks.  For example,
+     let's study _T_h_e _B_o_o_k _o_f _P_F and relax reading _A _S_t_a_n_d_a_r_d _f_o_r _t_h_e
+     _T_r_a_n_s_m_i_s_s_i_o_n _o_f _I_P _D_a_t_a_g_r_a_m_s _o_n _A_v_i_a_n _C_a_r_r_i_e_r_s afterwards.
+
+     ENDTEST
+
+OpenBSD                        January 25, 2025                        OpenBSD

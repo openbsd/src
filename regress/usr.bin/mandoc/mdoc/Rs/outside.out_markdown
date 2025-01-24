@@ -1,0 +1,20 @@
+RS-OUTSIDE(1) - General Commands Manual
+
+# NAME
+
+**Rs-outside** - reference macros outside reference blocks
+
+# DESCRIPTION
+
+BEGINTEST
+
+Some percent-macros can be used outside reference blocks.
+For example, let's study
+*The Book of PF*
+and relax reading
+*A Standard for the Transmission of IP Datagrams on Avian Carriers*
+afterwards.
+
+ENDTEST
+
+OpenBSD - January 25, 2025
