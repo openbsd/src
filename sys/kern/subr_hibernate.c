@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.151 2025/01/13 17:50:54 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.152 2025/01/24 18:13:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -98,8 +98,6 @@ int	hib_debug = 99;
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
 #endif
-
-#define	ROUNDUP(_x, _y)	((((_x)+(_y)-1)/(_y))*(_y))
 
 #ifndef NO_PROPOLICE
 extern long __guard_local;
@@ -1609,7 +1607,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
 		/* Round up to next sector if needed */
-		used = ROUNDUP(2 * PAGE_SIZE - out_remaining, hib->sec_size);
+		used = roundup(2 * PAGE_SIZE - out_remaining, hib->sec_size);
 
 		/* Write final block(s) for this chunk */
 		if ((err = hibernate_write(hib, blkctr,
