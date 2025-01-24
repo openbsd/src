@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.136 2022/12/26 19:16:02 jmc Exp $ */
+/* $OpenBSD: mdoc_man.c,v 1.137 2025/01/24 22:36:51 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2021, 2025 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -793,6 +793,9 @@ post_percent(DECL_ARGS)
 
 	if (mdoc_man_act(n->tok)->pre == pre_em)
 		font_pop();
+
+	if (n->parent == NULL || n->parent->tok != MDOC_Rs)
+		return;
 
 	if ((nn = roff_node_next(n)) != NULL) {
 		np = roff_node_prev(n);
