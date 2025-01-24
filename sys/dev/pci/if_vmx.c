@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.89 2024/09/01 03:08:59 jsg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.90 2025/01/24 10:29:43 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1621,10 +1621,8 @@ vmxnet3_start(struct ifqueue *ifq)
 	for (;;) {
 		int hdrlen;
 
-		if (free <= NTXSEGS) {
-			ifq_set_oactive(ifq);
+		if (free <= NTXSEGS)
 			break;
-		}
 
 		m = ifq_dequeue(ifq);
 		if (m == NULL)
@@ -1672,6 +1670,11 @@ vmxnet3_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+		free -= map->dm_nsegs;
+		/* set oactive here since txintr may be triggered in parallel */
+		if (free <= NTXSEGS)
+			ifq_set_oactive(ifq);
+
 		gen = rgen ^ VMX_TX_GEN;
 		sop = &ring->txd[prod];
 		for (i = 0; i < map->dm_nsegs; i++) {
@@ -1699,7 +1702,6 @@ vmxnet3_start(struct ifqueue *ifq)
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE);
 		sop->tx_word2 ^= VMX_TX_GEN;
 
-		free -= i;
 		post = 1;
 	}
 
