@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.61 2024/12/07 21:12:22 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.62 2025/01/24 20:17:28 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -163,7 +163,7 @@ struct agintc_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh;
 	bus_space_handle_t	*sc_r_ioh;
-	bus_space_handle_t	 sc_redist_base;
+	bus_space_handle_t	*sc_rbase_ioh;
 	bus_dma_tag_t		 sc_dmat;
 	uint16_t		*sc_processor;
 	int			 sc_cpuremap[MAXCPUS];
@@ -178,6 +178,7 @@ struct agintc_softc {
 	struct evcount		 sc_spur;
 	int			 sc_ncells;
 	int			 sc_num_redist;
+	int			 sc_num_redist_regions;
 	struct agintc_dmamem	*sc_prop;
 	struct agintc_dmamem	*sc_pend;
 	struct interrupt_controller sc_ic;
@@ -314,7 +315,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t		 affinity;
 	uint64_t		 redist_stride;
 	int			 i, nbits, nintr;
-	int			 offset, nredist;
+	int			 idx, offset, nredist;
 #ifdef MULTIPROCESSOR
 	int			 nipi, ipiirq[3];
 #endif
@@ -325,15 +326,23 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_dmat = faa->fa_dmat;
 
-	/* First row: distributor */
+	sc->sc_num_redist_regions =
+	    OF_getpropint(faa->fa_node, "#redistributor-regions", 1);
+
+	if (faa->fa_nreg < sc->sc_num_redist_regions + 1)
+		panic("%s: missing registers", __func__);
+
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_d_ioh))
-		panic("%s: ICD bus_space_map failed!", __func__);
+		panic("%s: GICD bus_space_map failed", __func__);
 
-	/* Second row: redistributor */
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
-	    faa->fa_reg[1].size, 0, &sc->sc_redist_base))
-		panic("%s: ICP bus_space_map failed!", __func__);
+	sc->sc_rbase_ioh = mallocarray(sc->sc_num_redist_regions,
+	    sizeof(*sc->sc_rbase_ioh), M_DEVBUF, M_WAITOK);
+	for (idx = 0; idx < sc->sc_num_redist_regions; idx++) {
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[1 + idx].addr,
+		    faa->fa_reg[1 + idx].size, 0, &sc->sc_rbase_ioh[idx]))
+			panic("%s: GICR bus_space_map failed", __func__);
+	}
 
 	typer = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_TYPER);
 
@@ -434,13 +443,14 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	agintc_sc = sc; /* save this for global access */
 
 	/* find the redistributors. */
+	idx = 0;
 	offset = 0;
 	redist_stride = OF_getpropint64(faa->fa_node, "redistributor-stride", 0);
-	for (nredist = 0; ; nredist++) {
+	for (nredist = 0; idx < sc->sc_num_redist_regions; nredist++) {
 		uint64_t typer;
 		int32_t sz;
 
-		typer = bus_space_read_8(sc->sc_iot, sc->sc_redist_base,
+		typer = bus_space_read_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
 		    offset + GICR_TYPER);
 
 		if (redist_stride == 0) {
@@ -455,13 +465,14 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 		offset += sz;
-
-		if (typer & GICR_TYPER_LAST) {
-			sc->sc_num_redist = nredist + 1;
-			break;
+		if (offset >= faa->fa_reg[1 + idx].size ||
+		    typer & GICR_TYPER_LAST) {
+			offset = 0;
+			idx++;
 		}
 	}
 
+	sc->sc_num_redist = nredist;
 	printf(" nirq %d nredist %d", nintr, sc->sc_num_redist);
 	
 	sc->sc_r_ioh = mallocarray(sc->sc_num_redist,
@@ -470,12 +481,13 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(*sc->sc_processor), M_DEVBUF, M_WAITOK);
 
 	/* submap and configure the redistributors. */
+	idx = 0;
 	offset = 0;
 	for (nredist = 0; nredist < sc->sc_num_redist; nredist++) {
 		uint64_t typer;
 		int32_t sz;
 
-		typer = bus_space_read_8(sc->sc_iot, sc->sc_redist_base,
+		typer = bus_space_read_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
 		    offset + GICR_TYPER);
 
 		if (redist_stride == 0) {
@@ -486,7 +498,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 			sz = redist_stride;
 
 		affinity = bus_space_read_8(sc->sc_iot,
-		    sc->sc_redist_base, offset + GICR_TYPER) >> 32;
+		    sc->sc_rbase_ioh[idx], offset + GICR_TYPER) >> 32;
 		CPU_INFO_FOREACH(cii, ci) {
 			if (affinity == (((ci->ci_mpidr >> 8) & 0xff000000) |
 			    (ci->ci_mpidr & 0x00ffffff)))
@@ -496,27 +508,32 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_cpuremap[ci->ci_cpuid] = nredist;
 
 		sc->sc_processor[nredist] = bus_space_read_8(sc->sc_iot,
-		    sc->sc_redist_base, offset + GICR_TYPER) >> 8;
+		    sc->sc_rbase_ioh[idx], offset + GICR_TYPER) >> 8;
 
-		bus_space_subregion(sc->sc_iot, sc->sc_redist_base,
+		bus_space_subregion(sc->sc_iot, sc->sc_rbase_ioh[idx],
 		    offset, sz, &sc->sc_r_ioh[nredist]);
 
 		if (sc->sc_nlpi > 0) {
-			bus_space_write_8(sc->sc_iot, sc->sc_redist_base,
+			bus_space_write_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
 			    offset + GICR_PROPBASER,
 			    AGINTC_DMA_DVA(sc->sc_prop) |
 			    GICR_PROPBASER_ISH | GICR_PROPBASER_IC_NORM_NC |
 			    fls(LPI_BASE + sc->sc_nlpi - 1) - 1);
-			bus_space_write_8(sc->sc_iot, sc->sc_redist_base,
+			bus_space_write_8(sc->sc_iot, sc->sc_rbase_ioh[idx],
 			    offset + GICR_PENDBASER,
 			    AGINTC_DMA_DVA(sc->sc_pend) |
 			    GICR_PENDBASER_ISH | GICR_PENDBASER_IC_NORM_NC |
 			    GICR_PENDBASER_PTZ);
-			bus_space_write_4(sc->sc_iot, sc->sc_redist_base,
+			bus_space_write_4(sc->sc_iot, sc->sc_rbase_ioh[idx],
 			    offset + GICR_CTLR, GICR_CTLR_ENABLE_LPIS);
 		}
 
 		offset += sz;
+		if (offset >= faa->fa_reg[1 + idx].size ||
+		    typer & GICR_TYPER_LAST) {
+			offset = 0;
+			idx++;
+		}
 	}
 
 	/* Disable all interrupts, clear all pending */
@@ -696,7 +713,13 @@ unmap:
 	if (sc->sc_prop)
 		agintc_dmamem_free(sc->sc_dmat, sc->sc_prop);
 
-	bus_space_unmap(sc->sc_iot, sc->sc_redist_base, faa->fa_reg[1].size);
+	for (idx = 0; idx < sc->sc_num_redist_regions; idx++) {
+		bus_space_unmap(sc->sc_iot, sc->sc_rbase_ioh[idx],
+		     faa->fa_reg[1 + idx].size);
+	}
+	free(sc->sc_rbase_ioh, M_DEVBUF,
+	    sc->sc_num_redist_regions * sizeof(*sc->sc_rbase_ioh));
+
 	bus_space_unmap(sc->sc_iot, sc->sc_d_ioh, faa->fa_reg[0].size);
 }
 
