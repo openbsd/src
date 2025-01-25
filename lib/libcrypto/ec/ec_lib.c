@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.114 2025/01/25 10:36:50 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.115 2025/01/25 10:37:50 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -235,15 +235,6 @@ EC_METHOD_get_field_type(const EC_METHOD *meth)
 	return meth->field_type;
 }
 LCRYPTO_ALIAS(EC_METHOD_get_field_type);
-
-int
-ec_group_get_field_type(const EC_GROUP *group)
-{
-	if (group == NULL || group->meth == NULL)
-		return NID_undef;
-
-	return group->meth->field_type;
-}
 
 /*
  * If there is a user-provided cofactor, sanity check and use it. Otherwise
