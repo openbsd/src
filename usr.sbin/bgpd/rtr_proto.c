@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.48 2025/01/09 12:07:49 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.49 2025/01/25 07:23:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -827,8 +827,10 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 			return -1;
 		}
 		for (i = 0; i < cnt; i++) {
-			if (ibuf_get_n32(pdu, &aspa->tas[i]) == -1)
+			if (ibuf_get_n32(pdu, &aspa->tas[i]) == -1) {
+				free_aspa(aspa);
 				goto badlen;
+			}
 		}
 	}
 
