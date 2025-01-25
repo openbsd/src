@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.213 2025/01/20 16:34:48 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.214 2025/01/25 22:06:41 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -890,18 +890,17 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    (so3 = sonewconn(so2, 0, M_WAIT)) == NULL) {
+			sounlock(so2);
 			error = ECONNREFUSED;
-		}
-
-		sounlock(so2);
-
-		if (error != 0)
 			goto put;
+		}
 
 		/*
 		 * Since `so2' is protected by vnode(9) lock, `so3'
 		 * can't be PRU_ABORT'ed here.
 		 */
+		sounlock(so2);
+		sounlock(so3);
 		solock_pair(so, so3);
 
 		unp2 = sotounpcb(so2);

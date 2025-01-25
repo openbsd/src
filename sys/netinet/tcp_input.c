@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.423 2025/01/16 11:59:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.424 2025/01/25 22:06:41 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3535,13 +3535,15 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct inpcb *inp, *oldinp;
 	struct tcpcb *tp = NULL;
 	struct mbuf *am;
-	struct socket *oso;
+	struct socket *oldso;
 	u_int rtableid;
 
 	NET_ASSERT_LOCKED();
 
+	inp = sotoinpcb(so);
+
 	mtx_enter(&syn_cache_mtx);
-	sc = syn_cache_lookup(src, dst, &scp, sotoinpcb(so)->inp_rtableid);
+	sc = syn_cache_lookup(src, dst, &scp, inp->inp_rtableid);
 	if (sc == NULL) {
 		mtx_leave(&syn_cache_mtx);
 		return (NULL);
@@ -3571,12 +3573,13 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * connection when the SYN arrived.  If we can't create
 	 * the connection, abort it.
 	 */
-	oso = so;
+	oldso = so;
+	oldinp = inp;
 	so = sonewconn(so, SS_ISCONNECTED, M_DONTWAIT);
 	if (so == NULL)
 		goto resetandabort;
-
-	oldinp = sotoinpcb(oso);
+	soassertlocked(so);
+	soref(so);
 	inp = sotoinpcb(so);
 
 #ifdef IPSEC
@@ -3637,7 +3640,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	(void) m_free(am);
 
 	tp = intotcpcb(inp);
-	tp->t_flags = sototcpcb(oso)->t_flags & (TF_NOPUSH|TF_NODELAY);
+	tp->t_flags = sototcpcb(oldso)->t_flags & (TF_NOPUSH|TF_NODELAY);
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;
@@ -3649,7 +3652,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
 		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
-		so = NULL;
 		goto abort;
 	}
 	tp->sack_enable = ISSET(sc->sc_fixflags, SCF_SACK_PERMIT);
@@ -3700,6 +3702,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tp->rcv_adv = tp->rcv_nxt + sc->sc_win;
 	tp->last_ack_sent = tp->rcv_nxt;
 
+	in_pcbsounlock_rele(inp, so);
 	tcpstat_inc(tcps_sc_completed);
 	syn_cache_put(sc);
 	return (so);
@@ -3707,10 +3710,11 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 resetandabort:
 	tcp_respond(NULL, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack, TH_RST,
 	    m->m_pkthdr.ph_rtableid, now);
-abort:
-	m_freem(m);
 	if (so != NULL)
 		soabort(so);
+abort:
+	m_freem(m);
+	in_pcbsounlock_rele(inp, so);
 	syn_cache_put(sc);
 	tcpstat_inc(tcps_sc_aborted);
 	return ((struct socket *)(-1));

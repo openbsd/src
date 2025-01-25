@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.168 2025/01/22 15:05:49 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.169 2025/01/25 22:06:41 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -236,8 +236,6 @@ sonewconn(struct socket *head, int connstatus, int wait)
 		sorwakeup(head);
 		wakeup(&head->so_timeo);
 	}
-
-	sounlock_nonet(so);
 
 	return (so);
 
