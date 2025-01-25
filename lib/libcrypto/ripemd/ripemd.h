@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.h,v 1.19 2024/06/01 18:42:49 tb Exp $ */
+/* $OpenBSD: ripemd.h,v 1.20 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,10 +69,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_RIPEMD
-#error RIPEMD is disabled.
 #endif
 
 #if defined(__LP32__)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.48 2024/04/15 15:42:23 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.49 2025/01/25 17:59:44 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -72,10 +72,6 @@
 #define HEADER_EC_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_EC
-#error EC is disabled.
-#endif
 
 #include <openssl/asn1.h>
 #include <openssl/bn.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.h,v 1.15 2023/07/31 05:04:06 tb Exp $ */
+/* $OpenBSD: aes.h,v 1.16 2025/01/25 17:59:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,10 +53,6 @@
 #define HEADER_AES_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_AES
-#error AES is disabled.
-#endif
 
 #include <stddef.h>
 

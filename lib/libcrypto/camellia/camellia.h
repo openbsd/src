@@ -1,4 +1,4 @@
-/* $OpenBSD: camellia.h,v 1.5 2014/11/13 20:01:58 miod Exp $ */
+/* $OpenBSD: camellia.h,v 1.6 2025/01/25 17:59:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -53,10 +53,6 @@
 #define HEADER_CAMELLIA_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_CAMELLIA
-#error CAMELLIA is disabled.
-#endif
 
 #include <stddef.h>
 

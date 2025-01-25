@@ -1,4 +1,4 @@
-/* $OpenBSD: des.h,v 1.22 2024/08/31 10:30:16 tb Exp $ */
+/* $OpenBSD: des.h,v 1.23 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,6 @@
 #define HEADER_NEW_DES_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_DES
-#error DES is disabled.
-#endif
 
 #ifdef  __cplusplus
 extern "C" {

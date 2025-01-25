@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.h,v 1.17 2023/07/31 05:04:06 tb Exp $ */
+/* $OpenBSD: blowfish.h,v 1.18 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,10 +63,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_BF
-#error BF is disabled.
 #endif
 
 #define BF_ENCRYPT	1

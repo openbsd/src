@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm4.h,v 1.1 2019/03/17 17:42:37 tb Exp $	*/
+/*	$OpenBSD: sm4.h,v 1.2 2025/01/25 17:59:44 tb Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -24,10 +24,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_SM4
-#error SM4 is disabled.
 #endif
 
 #define SM4_DECRYPT     0

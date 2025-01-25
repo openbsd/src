@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.h,v 1.21 2024/06/01 18:42:49 tb Exp $ */
+/* $OpenBSD: md4.h,v 1.22 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,10 +69,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_MD4
-#error MD4 is disabled.
 #endif
 
 /*

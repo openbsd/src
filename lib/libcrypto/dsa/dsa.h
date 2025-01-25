@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.46 2024/12/05 19:34:46 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.47 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,10 +66,6 @@
 #define HEADER_DSA_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_DSA
-#error DSA is disabled.
-#endif
 
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>

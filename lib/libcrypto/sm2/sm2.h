@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2.h,v 1.3 2023/07/28 15:50:33 tb Exp $ */
+/*	$OpenBSD: sm2.h,v 1.4 2025/01/25 17:59:44 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -21,10 +21,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/ec.h>
-
-#ifdef OPENSSL_NO_SM2
-#error SM2 is disabled.
-#endif
 
 #ifdef  __cplusplus
 extern "C" {

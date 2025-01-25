@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.h,v 1.24 2025/01/19 07:51:41 jsing Exp $ */
+/* $OpenBSD: md5.h,v 1.25 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,10 +69,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_MD5
-#error MD5 is disabled.
 #endif
 
 #define MD5_LONG unsigned int

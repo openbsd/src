@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.37 2023/04/18 08:33:43 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.38 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,6 @@
 #define HEADER_DH_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_DH
-#error DH is disabled.
-#endif
 
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>

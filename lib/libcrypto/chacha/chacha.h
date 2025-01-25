@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha.h,v 1.8 2019/01/22 00:59:21 dlg Exp $ */
+/* $OpenBSD: chacha.h,v 1.9 2025/01/25 17:59:44 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,6 @@
 #define HEADER_CHACHA_H
 
 #include <openssl/opensslconf.h>
-
-#if defined(OPENSSL_NO_CHACHA)
-#error ChaCha is disabled.
-#endif
 
 #include <stddef.h>
 #include <stdint.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha.h,v 1.25 2024/06/01 08:11:44 tb Exp $ */
+/* $OpenBSD: sha.h,v 1.26 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,10 +68,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#if defined(OPENSSL_NO_SHA) || defined(OPENSSL_NO_SHA1)
-#error SHA is disabled.
 #endif
 
 /*

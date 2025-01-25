@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_local.h,v 1.3 2024/03/27 11:15:44 jsing Exp $ */
+/* $OpenBSD: aes_local.h,v 1.4 2025/01/25 17:59:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,10 +53,6 @@
 #define HEADER_AES_LOCAL_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_AES
-#error AES is disabled.
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

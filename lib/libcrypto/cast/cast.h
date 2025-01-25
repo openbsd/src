@@ -1,4 +1,4 @@
-/* $OpenBSD: cast.h,v 1.13 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: cast.h,v 1.14 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,10 +63,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_CAST
-#error CAST is disabled.
 #endif
 
 #define CAST_ENCRYPT	1

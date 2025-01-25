@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.h,v 1.20 2024/08/31 10:42:21 tb Exp $ */
+/* $OpenBSD: hmac.h,v 1.21 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,10 +62,6 @@
 
 #if !defined(HAVE_ATTRIBUTE__BOUNDED__) && !defined(__OpenBSD__)
 #define __bounded__(x, y, z)
-#endif
-
-#ifdef OPENSSL_NO_HMAC
-#error HMAC is disabled.
 #endif
 
 #include <openssl/evp.h>

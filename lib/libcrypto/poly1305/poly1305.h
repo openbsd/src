@@ -1,4 +1,4 @@
-/* $OpenBSD: poly1305.h,v 1.3 2014/07/25 14:04:51 jsing Exp $ */
+/* $OpenBSD: poly1305.h,v 1.4 2025/01/25 17:59:44 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,6 @@
 #define HEADER_POLY1305_H
 
 #include <openssl/opensslconf.h>
-
-#if defined(OPENSSL_NO_POLY1305)
-#error Poly1305 is disabled.
-#endif
 
 #include <stddef.h>
 

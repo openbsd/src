@@ -1,4 +1,4 @@
-/* $OpenBSD: idea.h,v 1.12 2024/05/19 07:12:50 jsg Exp $ */
+/* $OpenBSD: idea.h,v 1.13 2025/01/25 17:59:44 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,6 @@
 #define HEADER_IDEA_H
 
 #include <openssl/opensslconf.h> /* IDEA_INT, OPENSSL_NO_IDEA */
-
-#ifdef OPENSSL_NO_IDEA
-#error IDEA is disabled.
-#endif
 
 #define IDEA_ENCRYPT	1
 #define IDEA_DECRYPT	0

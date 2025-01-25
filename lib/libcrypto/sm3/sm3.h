@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.h,v 1.1 2018/11/11 06:53:31 tb Exp $	*/
+/*	$OpenBSD: sm3.h,v 1.2 2025/01/25 17:59:44 tb Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -23,10 +23,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifdef OPENSSL_NO_SM3
-#error SM3 is disabled.
 #endif
 
 #define SM3_DIGEST_LENGTH 32
