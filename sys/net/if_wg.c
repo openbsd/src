@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.39 2024/10/31 12:33:11 claudio Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.40 2025/01/25 14:51:34 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -30,6 +30,7 @@
 #include <sys/percpu.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -70,8 +71,16 @@
 #define NEW_HANDSHAKE_TIMEOUT	(REKEY_TIMEOUT + KEEPALIVE_TIMEOUT)
 #define UNDERLOAD_TIMEOUT	1
 
-#define DPRINTF(sc, str, ...) do { if (ISSET((sc)->sc_if.if_flags, IFF_DEBUG))\
-    printf("%s: " str, (sc)->sc_if.if_xname, ##__VA_ARGS__); } while (0)
+#define WGPRINTF(loglevel, sc, mtx, fmt, ...) do {		\
+	if (ISSET((sc)->sc_if.if_flags, IFF_DEBUG)) {		\
+		if (mtx)					\
+			mtx_enter(mtx);				\
+		log(loglevel, "%s: " fmt, (sc)->sc_if.if_xname, \
+		    ##__VA_ARGS__);				\
+		if (mtx)					\
+			mtx_leave(mtx);				\
+	}							\
+} while (0)
 
 #define CONTAINER_OF(ptr, type, member) ({			\
 	const __typeof( ((type *)0)->member ) *__mptr = (ptr);	\
@@ -448,7 +457,7 @@ wg_peer_create(struct wg_softc *sc, uint8_t public[WG_KEY_SIZE])
 	sc->sc_peer_num++;
 	rw_exit_write(&sc->sc_peer_lock);
 
-	DPRINTF(sc, "Peer %llu created\n", peer->p_id);
+	WGPRINTF(LOG_INFO, sc, NULL, "Peer %llu created\n", peer->p_id);
 	return peer;
 }
 
@@ -530,7 +539,7 @@ wg_peer_destroy(struct wg_peer *peer)
 	if (!mq_empty(&peer->p_stage_queue))
 		mq_purge(&peer->p_stage_queue);
 
-	DPRINTF(sc, "Peer %llu destroyed\n", peer->p_id);
+	WGPRINTF(LOG_INFO, sc, NULL, "Peer %llu destroyed\n", peer->p_id);
 	explicit_bzero(peer, sizeof(*peer));
 	pool_put(&wg_peer_pool, peer);
 }
@@ -883,7 +892,8 @@ retry:
 	} else {
 		ret = wg_send(sc, e, m);
 		if (ret != 0)
-			DPRINTF(sc, "Unable to send packet\n");
+			WGPRINTF(LOG_DEBUG, sc, NULL,
+			    "Unable to send packet\n");
 	}
 }
 
@@ -1144,23 +1154,29 @@ wg_timers_run_retry_handshake(void *_t)
 {
 	struct wg_timers *t = _t;
 	struct wg_peer	 *peer = CONTAINER_OF(t, struct wg_peer, p_timers);
+	char		  ipaddr[INET6_ADDRSTRLEN];
 
 	mtx_enter(&t->t_handshake_mtx);
 	if (t->t_handshake_retries <= MAX_TIMER_HANDSHAKES) {
 		t->t_handshake_retries++;
 		mtx_leave(&t->t_handshake_mtx);
 
-		DPRINTF(peer->p_sc, "Handshake for peer %llu did not complete "
-		    "after %d seconds, retrying (try %d)\n", peer->p_id,
+		WGPRINTF(LOG_INFO, peer->p_sc, &peer->p_endpoint_mtx,
+		    "Handshake for peer %llu (%s) did not complete after %d "
+		    "seconds, retrying (try %d)\n", peer->p_id,
+		    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+		        sizeof(ipaddr)),
 		    REKEY_TIMEOUT, t->t_handshake_retries + 1);
 		wg_peer_clear_src(peer);
 		wg_timers_run_send_initiation(t, 1);
 	} else {
 		mtx_leave(&t->t_handshake_mtx);
 
-		DPRINTF(peer->p_sc, "Handshake for peer %llu did not complete "
-		    "after %d retries, giving up\n", peer->p_id,
-		    MAX_TIMER_HANDSHAKES + 2);
+		WGPRINTF(LOG_INFO, peer->p_sc, &peer->p_endpoint_mtx,
+		    "Handshake for peer %llu (%s) did not complete after %d "
+		    "retries, giving up\n", peer->p_id,
+		    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+		        sizeof(ipaddr)), MAX_TIMER_HANDSHAKES + 2);
 
 		timeout_del(&t->t_send_keepalive);
 		mq_purge(&peer->p_stage_queue);
@@ -1188,10 +1204,13 @@ wg_timers_run_new_handshake(void *_t)
 {
 	struct wg_timers *t = _t;
 	struct wg_peer	 *peer = CONTAINER_OF(t, struct wg_peer, p_timers);
+	char		  ipaddr[INET6_ADDRSTRLEN];
 
-	DPRINTF(peer->p_sc, "Retrying handshake with peer %llu because we "
-	    "stopped hearing back after %d seconds\n",
-	    peer->p_id, NEW_HANDSHAKE_TIMEOUT);
+	WGPRINTF(LOG_INFO, peer->p_sc, &peer->p_endpoint_mtx,
+	    "Retrying handshake with peer %llu (%s) because we "
+	    "stopped hearing back after %d seconds\n", peer->p_id,
+	    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+	        sizeof(ipaddr)), NEW_HANDSHAKE_TIMEOUT);
 	wg_peer_clear_src(peer);
 
 	wg_timers_run_send_initiation(t, 0);
@@ -1202,8 +1221,12 @@ wg_timers_run_zero_key_material(void *_t)
 {
 	struct wg_timers *t = _t;
 	struct wg_peer	 *peer = CONTAINER_OF(t, struct wg_peer, p_timers);
+	char		  ipaddr[INET6_ADDRSTRLEN];
 
-	DPRINTF(peer->p_sc, "Zeroing out keys for peer %llu\n", peer->p_id);
+	WGPRINTF(LOG_INFO, peer->p_sc, &peer->p_endpoint_mtx, "Zeroing out "
+	    "keys for peer %llu (%s)\n", peer->p_id,
+	    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+	        sizeof(ipaddr)));
 	task_add(wg_handshake_taskq, &peer->p_clear_secrets);
 }
 
@@ -1234,12 +1257,15 @@ wg_send_initiation(void *_peer)
 {
 	struct wg_peer			*peer = _peer;
 	struct wg_pkt_initiation	 pkt;
+	char				 ipaddr[INET6_ADDRSTRLEN];
 
 	if (wg_timers_check_handshake_last_sent(&peer->p_timers) != ETIMEDOUT)
 		return;
 
-	DPRINTF(peer->p_sc, "Sending handshake initiation to peer %llu\n",
-	    peer->p_id);
+	WGPRINTF(LOG_INFO, peer->p_sc, &peer->p_endpoint_mtx, "Sending "
+	    "handshake initiation to peer %llu (%s)\n", peer->p_id,
+	    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+	        sizeof(ipaddr)));
 
 	if (noise_create_initiation(&peer->p_remote, &pkt.s_idx, pkt.ue, pkt.es,
 				    pkt.ets) != 0)
@@ -1255,9 +1281,12 @@ void
 wg_send_response(struct wg_peer *peer)
 {
 	struct wg_pkt_response	 pkt;
+	char			 ipaddr[INET6_ADDRSTRLEN];
 
-	DPRINTF(peer->p_sc, "Sending handshake response to peer %llu\n",
-	    peer->p_id);
+	WGPRINTF(LOG_INFO, peer->p_sc, &peer->p_endpoint_mtx, "Sending "
+	    "handshake response to peer %llu (%s)\n", peer->p_id,
+	    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+	        sizeof(ipaddr)));
 
 	if (noise_create_response(&peer->p_remote, &pkt.s_idx, &pkt.r_idx,
 				  pkt.ue, pkt.en) != 0)
@@ -1278,7 +1307,8 @@ wg_send_cookie(struct wg_softc *sc, struct cookie_macs *cm, uint32_t idx,
 {
 	struct wg_pkt_cookie	pkt;
 
-	DPRINTF(sc, "Sending cookie response for denied handshake message\n");
+	WGPRINTF(LOG_DEBUG, sc, NULL, "Sending cookie response for denied "
+	    "handshake message\n");
 
 	pkt.t = WG_PKT_COOKIE;
 	pkt.r_idx = idx;
@@ -1341,6 +1371,7 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 	struct noise_remote		*remote;
 	int				 res, underload = 0;
 	static struct timeval		 wg_last_underload; /* microuptime */
+	char				 ipaddr[INET6_ADDRSTRLEN];
 
 	if (mq_len(&sc->sc_handshake_queue) >= MAX_QUEUED_HANDSHAKES/8) {
 		getmicrouptime(&wg_last_underload);
@@ -1363,10 +1394,16 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 				underload, &t->t_endpoint.e_remote.r_sa);
 
 		if (res == EINVAL) {
-			DPRINTF(sc, "Invalid initiation MAC\n");
+			WGPRINTF(LOG_INFO, sc, NULL, "Invalid initiation "
+			    "MAC from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		} else if (res == ECONNREFUSED) {
-			DPRINTF(sc, "Handshake ratelimited\n");
+			WGPRINTF(LOG_DEBUG, sc, NULL, "Handshake "
+			    "ratelimited from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		} else if (res == EAGAIN) {
 			wg_send_cookie(sc, &init->m, init->s_idx,
@@ -1378,14 +1415,19 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 
 		if (noise_consume_initiation(&sc->sc_local, &remote,
 		    init->s_idx, init->ue, init->es, init->ets) != 0) {
-			DPRINTF(sc, "Invalid handshake initiation\n");
+			WGPRINTF(LOG_INFO, sc, NULL, "Invalid handshake "
+			    "initiation from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		}
 
 		peer = CONTAINER_OF(remote, struct wg_peer, p_remote);
 
-		DPRINTF(sc, "Receiving handshake initiation from peer %llu\n",
-		    peer->p_id);
+		WGPRINTF(LOG_INFO, sc, NULL, "Receiving handshake initiation "
+		    "from peer %llu (%s)\n", peer->p_id,
+		    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+		        sizeof(ipaddr)));
 
 		wg_peer_counters_add(peer, 0, sizeof(*init));
 		wg_peer_set_endpoint_from_tag(peer, t);
@@ -1399,10 +1441,16 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 				underload, &t->t_endpoint.e_remote.r_sa);
 
 		if (res == EINVAL) {
-			DPRINTF(sc, "Invalid response MAC\n");
+			WGPRINTF(LOG_INFO, sc, NULL, "Invalid response "
+			    "MAC from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		} else if (res == ECONNREFUSED) {
-			DPRINTF(sc, "Handshake ratelimited\n");
+			WGPRINTF(LOG_DEBUG, sc, NULL, "Handshake "
+			    "ratelimited from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		} else if (res == EAGAIN) {
 			wg_send_cookie(sc, &resp->m, resp->s_idx,
@@ -1413,7 +1461,10 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 		}
 
 		if ((remote = wg_index_get(sc, resp->r_idx)) == NULL) {
-			DPRINTF(sc, "Unknown handshake response\n");
+			WGPRINTF(LOG_INFO, sc, NULL, "Unknown "
+			    "handshake response from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		}
 
@@ -1421,12 +1472,17 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 
 		if (noise_consume_response(remote, resp->s_idx, resp->r_idx,
 					   resp->ue, resp->en) != 0) {
-			DPRINTF(sc, "Invalid handshake response\n");
+			WGPRINTF(LOG_INFO, sc, NULL, "Invalid handshake "
+			    "response from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		}
 
-		DPRINTF(sc, "Receiving handshake response from peer %llu\n",
-				peer->p_id);
+		WGPRINTF(LOG_INFO, sc, NULL, "Receiving handshake response "
+		    "from peer %llu (%s)\n", peer->p_id,
+		    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+		        sizeof(ipaddr)));
 
 		wg_peer_counters_add(peer, 0, sizeof(*resp));
 		wg_peer_set_endpoint_from_tag(peer, t);
@@ -1439,7 +1495,10 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 		cook = mtod(m, struct wg_pkt_cookie *);
 
 		if ((remote = wg_index_get(sc, cook->r_idx)) == NULL) {
-			DPRINTF(sc, "Unknown cookie index\n");
+			WGPRINTF(LOG_DEBUG, sc, NULL, "Unknown cookie "
+			    "index from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		}
 
@@ -1447,11 +1506,17 @@ wg_handshake(struct wg_softc *sc, struct mbuf *m)
 
 		if (cookie_maker_consume_payload(&peer->p_cookie,
 		    cook->nonce, cook->ec) != 0) {
-			DPRINTF(sc, "Could not decrypt cookie response\n");
+			WGPRINTF(LOG_DEBUG, sc, NULL, "Could not decrypt "
+			    "cookie response from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 			goto error;
 		}
 
-		DPRINTF(sc, "Receiving cookie response\n");
+		WGPRINTF(LOG_DEBUG, sc, NULL, "Receiving cookie response "
+		    "from %s\n",
+		    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+		        sizeof(ipaddr)));
 		goto error;
 	default:
 		panic("invalid packet in handshake queue");
@@ -1505,6 +1570,7 @@ wg_encap(struct wg_softc *sc, struct mbuf *m)
 	struct mbuf		*mc;
 	size_t			 padding_len, plaintext_len, out_len;
 	uint64_t		 nonce;
+	char			 ipaddr[INET6_ADDRSTRLEN];
 
 	t = wg_tag_get(m);
 	peer = t->t_peer;
@@ -1558,8 +1624,10 @@ wg_encap(struct wg_softc *sc, struct mbuf *m)
 
 	/* A packet with length 0 is a keepalive packet */
 	if (__predict_false(m->m_pkthdr.len == 0))
-		DPRINTF(sc, "Sending keepalive packet to peer %llu\n",
-		    peer->p_id);
+		WGPRINTF(LOG_DEBUG, sc, &peer->p_endpoint_mtx, "Sending "
+		    "keepalive packet to peer %llu (%s)\n", peer->p_id,
+		    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa, ipaddr,
+		        sizeof(ipaddr)));
 
 	mc->m_pkthdr.ph_loopcnt = m->m_pkthdr.ph_loopcnt;
 	mc->m_flags &= ~(M_MCAST | M_BCAST);
@@ -1590,6 +1658,7 @@ wg_decap(struct wg_softc *sc, struct mbuf *m)
 	struct wg_tag		*t;
 	size_t			 payload_len;
 	uint64_t		 nonce;
+	char			 ipaddr[INET6_ADDRSTRLEN];
 
 	t = wg_tag_get(m);
 	peer = t->t_peer;
@@ -1631,8 +1700,10 @@ wg_decap(struct wg_softc *sc, struct mbuf *m)
 
 	/* A packet with length 0 is a keepalive packet */
 	if (__predict_false(m->m_pkthdr.len == 0)) {
-		DPRINTF(sc, "Receiving keepalive packet from peer "
-		    "%llu\n", peer->p_id);
+		WGPRINTF(LOG_DEBUG, sc, &peer->p_endpoint_mtx, "Receiving "
+		    "keepalive packet from peer %llu (%s)\n", peer->p_id,
+		    sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa,
+		        ipaddr, sizeof(ipaddr)));
 		goto done;
 	}
 
@@ -1670,14 +1741,18 @@ wg_decap(struct wg_softc *sc, struct mbuf *m)
 		allowed_peer = wg_aip_lookup(sc->sc_aip6, &ip6->ip6_src);
 #endif
 	} else {
-		DPRINTF(sc, "Packet is neither ipv4 nor ipv6 from "
-		    "peer %llu\n", peer->p_id);
+		WGPRINTF(LOG_WARNING, sc, &peer->p_endpoint_mtx, "Packet "
+		    "is neither IPv4 nor IPv6 from peer %llu (%s)\n",
+		    peer->p_id, sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa,
+		        ipaddr, sizeof(ipaddr)));
 		goto error;
 	}
 
 	if (__predict_false(peer != allowed_peer)) {
-		DPRINTF(sc, "Packet has unallowed src IP from peer "
-		    "%llu\n", peer->p_id);
+		WGPRINTF(LOG_WARNING, sc, &peer->p_endpoint_mtx, "Packet "
+                    "has unallowed source IP from peer %llu (%s)\n",
+                    peer->p_id, sockaddr_ntop(&peer->p_endpoint.e_remote.r_sa,
+                        ipaddr, sizeof(ipaddr)));
 		goto error;
 	}
 
@@ -2012,6 +2087,7 @@ wg_input(void *_sc, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 	struct wg_tag		*t;
 	struct wg_softc		*sc = _sc;
 	struct udphdr		*uh = _uh;
+	char			 ipaddr[INET6_ADDRSTRLEN];
 
 	NET_ASSERT_LOCKED();
 
@@ -2059,7 +2135,10 @@ wg_input(void *_sc, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 		*mtod(m, uint32_t *) == WG_PKT_COOKIE)) {
 
 		if (mq_enqueue(&sc->sc_handshake_queue, m) != 0)
-			DPRINTF(sc, "Dropping handshake packet\n");
+			WGPRINTF(LOG_DEBUG, sc, NULL, "Dropping handshake"
+			    "packet from %s\n",
+			    sockaddr_ntop(&t->t_endpoint.e_remote.r_sa, ipaddr,
+			        sizeof(ipaddr)));
 		task_add(wg_handshake_taskq, &sc->sc_handshake);
 
 	} else if (m->m_pkthdr.len >= sizeof(struct wg_pkt_data) +
@@ -2169,14 +2248,14 @@ wg_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 
 	af = peer->p_endpoint.e_remote.r_sa.sa_family;
 	if (af != AF_INET && af != AF_INET6) {
-		DPRINTF(sc, "No valid endpoint has been configured or "
-				"discovered for peer %llu\n", peer->p_id);
+		WGPRINTF(LOG_DEBUG, sc, NULL, "No valid endpoint has been "
+		    "configured or discovered for peer %llu\n", peer->p_id);
 		ret = EDESTADDRREQ;
 		goto error;
 	}
 
 	if (m->m_pkthdr.ph_loopcnt++ > M_MAXLOOP) {
-		DPRINTF(sc, "Packet looped\n");
+		WGPRINTF(LOG_DEBUG, sc, NULL, "Packet looped\n");
 		ret = ELOOP;
 		goto error;
 	}
@@ -2189,7 +2268,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	 * another aip_lookup in wg_qstart, or refcnting as mentioned before.
 	 */
 	if (m->m_pkthdr.pf.delay > 0) {
-		DPRINTF(sc, "PF delay unsupported\n");
+		WGPRINTF(LOG_DEBUG, sc, NULL, "PF delay unsupported\n");
 		ret = EOPNOTSUPP;
 		goto error;
 	}
@@ -2702,7 +2781,7 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
 
-	DPRINTF(sc, "Interface created\n");
+	WGPRINTF(LOG_INFO, sc, NULL, "Interface created\n");
 
 	return 0;
 ret_05:
@@ -2745,7 +2824,7 @@ wg_clone_destroy(struct ifnet *ifp)
 		wg_crypt_taskq = NULL;
 	}
 
-	DPRINTF(sc, "Destroyed interface\n");
+	WGPRINTF(LOG_INFO, sc, NULL, "Interface destroyed\n");
 
 	hashfree(sc->sc_index, HASHTABLE_INDEX_SIZE, M_DEVBUF);
 	hashfree(sc->sc_peer, HASHTABLE_PEER_SIZE, M_DEVBUF);
