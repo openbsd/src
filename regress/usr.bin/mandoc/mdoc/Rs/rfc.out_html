@@ -1,5 +1,5 @@
-<p class="Pp"><cite class="Rs"><span class="RsA">David Waitzman</span>,
-    <span class="RsB">A Standard for the Transmission of IP Datagrams on Avian
-    Carriers</span>,
+<p class="Pp"><span class="Rs"><span class="RsA">David Waitzman</span>,
+    <cite class="RsB">A Standard for the Transmission of IP Datagrams on Avian
+    Carriers</cite>,
     <a class="RsR" href="https://www.rfc-editor.org/rfc/rfc1149.html">RFC
-    1149</a>, <span class="RsD">April 1990</span>.</cite></p>
+    1149</a>, <span class="RsD">April 1990</span>.</span></p>

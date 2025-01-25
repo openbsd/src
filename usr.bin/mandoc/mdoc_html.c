@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.227 2025/01/24 23:22:13 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.228 2025/01/25 00:19:23 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1454,7 +1454,7 @@ mdoc_rs_pre(MDOC_ARGS)
 	case ROFFT_BODY:
 		if (n->sec == SEC_SEE_ALSO)
 			print_otag(h, TAG_P, "c", "Pp");
-		print_otag(h, TAG_CITE, "c", "Rs");
+		print_otag(h, TAG_SPAN, "c", "Rs");
 		break;
 	default:
 		abort();
@@ -1508,7 +1508,7 @@ mdoc__x_pre(MDOC_ARGS)
 			print_text(h, "and");
 		break;
 	case MDOC__B:
-		t = TAG_I;
+		t = TAG_CITE;
 		cattr = "RsB";
 		break;
 	case MDOC__C:
@@ -1553,6 +1553,7 @@ mdoc__x_pre(MDOC_ARGS)
 		cattr = "RsR";
 		break;
 	case MDOC__T:
+		t = TAG_CITE;
 		if (n->parent != NULL && n->parent->tok == MDOC_Rs &&
 		    n->parent->norm->Rs.quote_T) {
 			print_text(h, "\\(lq");

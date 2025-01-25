@@ -1,4 +1,4 @@
 <p class="Pp">Some percent-macros can be used outside reference blocks. For
-    example, let's study <i class="RsB">The Book of PF</i> and relax reading
-    <span class="RsB">A Standard for the Transmission of IP Datagrams on Avian
-    Carriers</span> afterwards.</p>
+    example, let's study <cite class="RsB">The Book of PF</cite> and relax
+    reading <cite class="RsB">A Standard for the Transmission of IP Datagrams on
+    Avian Carriers</cite> afterwards.</p>
