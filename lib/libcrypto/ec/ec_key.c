@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.50 2025/01/11 20:57:03 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.51 2025/01/25 10:34:36 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -513,7 +513,7 @@ EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 {
 	if (key->group == NULL)
 		return 0;
-	return EC_GROUP_precompute_mult(key->group, ctx);
+	return 1;
 }
 LCRYPTO_ALIAS(EC_KEY_precompute_mult);
 
