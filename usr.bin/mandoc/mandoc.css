@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.40 2025/01/24 23:22:13 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.41 2025/01/25 03:17:11 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -179,7 +179,8 @@ h3.Ss {		margin-top: 1.2em;
 .RsP { }
 .RsQ { }
 .RsR { }
-.RsT { }
+.RsT {		font-style: normal;
+		font-weight: normal; }
 .RsU { }
 .RsV { }
 
