@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.133 2024/12/27 12:04:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.134 2025/01/25 08:55:52 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -848,7 +848,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				anon->an_page = NULL;
 				p->uanon = NULL;
 
-				rw_exit(anon->an_lock);
 				uvm_anfree(anon);	/* kills anon */
 				pmap_page_protect(p, PROT_NONE);
 				anon = NULL;
