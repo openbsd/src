@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.259 2024/09/30 11:49:44 claudio Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.260 2025/01/25 19:21:40 claudio Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -748,7 +748,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		atomic_clearbits_int(&p->p_p->ps_flags, PS_WXNEEDED);
 
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
-	single_thread_clear(p, P_SUSPSIG);
+	single_thread_clear(p);
 
 	/* setregs() sets up all the registers, so just 'return' */
 	return EJUSTRETURN;
@@ -775,7 +775,7 @@ bad:
 freehdr:
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
-	single_thread_clear(p, P_SUSPSIG);
+	single_thread_clear(p);
 
 	return (error);
 

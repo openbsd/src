@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.358 2025/01/24 19:29:54 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.359 2025/01/25 19:21:40 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1509,7 +1509,7 @@ proc_trap(struct proc *p, int signum)
 	signum = pr->ps_xsig;
 	pr->ps_xsig = 0;
 	if ((p->p_flag & P_TRACESINGLE) == 0)
-		single_thread_clear(p, 0);
+		single_thread_clear(p);
 	atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);
 
 	return signum;
@@ -2294,7 +2294,7 @@ single_thread_wait(struct process *pr, int recheck)
 }
 
 void
-single_thread_clear(struct proc *p, int flag)
+single_thread_clear(struct proc *p)
 {
 	struct process *pr = p->p_p;
 
