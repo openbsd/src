@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.33 2022/07/12 08:58:53 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.34 2025/01/25 02:06:40 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -171,28 +171,38 @@ extern int	pipex_enable;
 struct pipex_session;
 
 __BEGIN_DECLS
-void                  pipex_init (void);
+void			 pipex_init(void);
 
-struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
-struct mbuf           *pipex_pppoe_input (struct mbuf *, struct pipex_session *);
-struct pipex_session  *pipex_pptp_lookup_session (struct mbuf *);
-struct mbuf           *pipex_pptp_input (struct mbuf *, struct pipex_session *);
-struct pipex_session  *pipex_pptp_userland_lookup_session_ipv4 (struct mbuf *, struct in_addr);
-struct pipex_session  *pipex_pptp_userland_lookup_session_ipv6 (struct mbuf *, struct in6_addr);
-struct pipex_session  *pipex_l2tp_userland_lookup_session(struct mbuf *, struct sockaddr *);
-struct mbuf           *pipex_pptp_userland_output (struct mbuf *, struct pipex_session *);
-struct pipex_session  *pipex_l2tp_lookup_session (struct mbuf *, int);
-struct mbuf           *pipex_l2tp_input (struct mbuf *, int off, struct pipex_session *, uint32_t);
-struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv4 (struct mbuf *, struct in_addr);
-struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv6 (struct mbuf *, struct in6_addr);
-struct mbuf           *pipex_l2tp_userland_output (struct mbuf *, struct pipex_session *);
-void                  pipex_rele_session(struct pipex_session *);
-int                   pipex_ioctl (void *, u_long, caddr_t);
-void                  pipex_session_init_mppe_recv(struct pipex_session *, int,
-int, u_char *);
-void                  pipex_session_init_mppe_send(struct pipex_session *, int,
-int, u_char *);
-
+struct pipex_session	*pipex_pppoe_lookup_session(struct mbuf *);
+struct mbuf		*pipex_pppoe_input(struct mbuf *,
+			    struct pipex_session *);
+struct pipex_session	*pipex_pptp_lookup_session(struct mbuf *);
+struct mbuf		*pipex_pptp_input(struct mbuf *,
+			    struct pipex_session *);
+struct pipex_session	*pipex_pptp_userland_lookup_session_ipv4(struct mbuf *,
+			    struct in_addr);
+struct pipex_session	*pipex_pptp_userland_lookup_session_ipv6(struct mbuf *,
+			    struct in6_addr);
+struct pipex_session	*pipex_l2tp_userland_lookup_session(struct mbuf *,
+			    struct sockaddr *);
+struct mbuf		*pipex_pptp_userland_output(struct mbuf *,
+			    struct pipex_session *);
+struct pipex_session	*pipex_l2tp_lookup_session(struct mbuf *, int,
+			    struct sockaddr *);
+struct mbuf		*pipex_l2tp_input(struct mbuf *, int off,
+			    struct pipex_session *, uint32_t);
+struct pipex_session	*pipex_l2tp_userland_lookup_session_ipv4(struct mbuf *,
+			    struct in_addr);
+struct pipex_session	*pipex_l2tp_userland_lookup_session_ipv6(struct mbuf *,
+			    struct in6_addr);
+struct mbuf		 *pipex_l2tp_userland_output(struct mbuf *,
+			    struct pipex_session *);
+void			 pipex_rele_session(struct pipex_session *);
+int			 pipex_ioctl(void *, u_long, caddr_t);
+void			 pipex_session_init_mppe_recv(struct pipex_session *,
+			    int, int, u_char *);
+void			 pipex_session_init_mppe_send(struct pipex_session *,
+			    int, int, u_char *);
 __END_DECLS
 
 #endif /* _KERNEL */

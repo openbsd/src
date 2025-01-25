@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.329 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.330 2025/01/25 02:06:40 yasuoka Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -619,7 +619,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		struct pipex_session *session;
 		int off = iphlen + sizeof(struct udphdr);
 
-		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
+		if ((session = pipex_l2tp_lookup_session(m, off, &srcsa.sa))
+		    != NULL) {
 			m = *mp = pipex_l2tp_input(m, off, session,
 			    ipsecflowinfo);
 			pipex_rele_session(session);

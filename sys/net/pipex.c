@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.156 2024/09/27 00:38:49 yasuoka Exp $ */
+/*	$OpenBSD: pipex.c,v 1.157 2025/01/25 02:06:40 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1507,13 +1507,19 @@ pipex_pptp_lookup_session(struct mbuf *m0)
 	/* lookup pipex session table */
 	id = ntohs(gre.call_id);
 	session = pipex_lookup_by_session_id(PIPEX_PROTO_PPTP, id);
-#ifdef PIPEX_DEBUG
 	if (session == NULL) {
 		PIPEX_DBG((NULL, LOG_DEBUG,
 		    "<%s> session not found (id=%d)", __func__, id));
 		goto not_ours;
 	}
-#endif
+
+	if (!(session->peer.sa.sa_family == AF_INET &&
+	    session->peer.sin4.sin_addr.s_addr == ip.ip_src.s_addr)) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> the source address of the session is not matched",
+		    __func__));
+		goto not_ours;
+	}
 
 	return (session);
 
@@ -1970,11 +1976,12 @@ drop:
 }
 
 struct pipex_session *
-pipex_l2tp_lookup_session(struct mbuf *m0, int off)
+pipex_l2tp_lookup_session(struct mbuf *m0, int off, struct sockaddr *sasrc)
 {
 	struct pipex_session *session;
 	uint16_t flags, session_id, ver;
 	u_char *cp, buf[PIPEX_L2TP_MINLEN];
+	int srcmatch = 0;
 
 	if (m0->m_pkthdr.len < off + PIPEX_L2TP_MINLEN) {
 		PIPEX_DBG((NULL, LOG_DEBUG,
@@ -2004,13 +2011,33 @@ pipex_l2tp_lookup_session(struct mbuf *m0, int off)
 
 	/* lookup pipex session table */
 	session = pipex_lookup_by_session_id(PIPEX_PROTO_L2TP, session_id);
-#ifdef PIPEX_DEBUG
 	if (session == NULL) {
 		PIPEX_DBG((NULL, LOG_DEBUG,
 		    "<%s> session not found (id=%d)", __func__, session_id));
 		goto not_ours;
 	}
+	switch (sasrc->sa_family) {
+	case AF_INET:
+		if (session->peer.sa.sa_family == AF_INET &&
+		    session->peer.sin4.sin_addr.s_addr ==
+		    ((struct sockaddr_in *)sasrc)->sin_addr.s_addr)
+			srcmatch = 1;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (session->peer.sa.sa_family == AF_INET6 &&
+		    IN6_ARE_ADDR_EQUAL(&session->peer.sin6.sin6_addr,
+		    &((struct sockaddr_in6 *)sasrc)->sin6_addr))
+			srcmatch = 1;
+		break;
 #endif
+	}
+	if (!srcmatch) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> the source address of the session is not matched",
+		    __func__));
+		goto not_ours;
+	}
 
 	return (session);
 
