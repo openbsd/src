@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.41 2025/01/22 12:54:40 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.42 2025/01/25 13:15:21 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1291,7 +1291,6 @@ ec_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 }
 
 static const EC_METHOD ec_GFp_simple_method = {
-	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
 	.point_is_on_curve = ec_point_is_on_curve,
@@ -1316,7 +1315,6 @@ EC_GFp_simple_method(void)
 LCRYPTO_ALIAS(EC_GFp_simple_method);
 
 static const EC_METHOD ec_GFp_mont_method = {
-	.field_type = NID_X9_62_prime_field,
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
 	.point_is_on_curve = ec_point_is_on_curve,
