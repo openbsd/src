@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.113 2025/01/22 09:56:58 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.114 2025/01/25 10:36:50 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -738,8 +738,6 @@ EC_GROUP_cmp(const EC_GROUP *group1, const EC_GROUP *group2, BN_CTX *ctx_in)
 
 	BN_CTX_start(ctx);
 
-	if (ec_group_get_field_type(group1) != ec_group_get_field_type(group2))
-		goto distinct;
 	if ((nid1 = EC_GROUP_get_curve_name(group1)) != NID_undef &&
 	    (nid2 = EC_GROUP_get_curve_name(group2)) != NID_undef) {
 		if (nid1 != nid2)
