@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.724 2025/01/24 09:19:07 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.725 2025/01/25 10:53:36 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3195,7 +3195,7 @@ if_getgrouplist(caddr_t data)
 		NET_LOCK_SHARED();
 		TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
 			ifgr->ifgr_len += sizeof(ifgrq);
-		NET_LOCK_SHARED();
+		NET_UNLOCK_SHARED();
 		return (0);
 	}
 
