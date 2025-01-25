@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.40 2024/11/25 06:51:39 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.41 2025/01/25 10:30:17 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -208,7 +208,6 @@ ecpk_print_explicit_parameters(BIO *bio, const EC_GROUP *group, int off)
 	const unsigned char *seed;
 	size_t seed_len;
 	point_conversion_form_t form;
-	int nid;
 	int ret = 0;
 
 	if ((ctx = BN_CTX_new()) == NULL) {
@@ -256,8 +255,7 @@ ecpk_print_explicit_parameters(BIO *bio, const EC_GROUP *group, int off)
 	if (!BIO_indent(bio, off, 128))
 		goto err;
 
-	nid = ec_group_get_field_type(group);
-	if (BIO_printf(bio, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
+	if (BIO_printf(bio, "Field Type: %s\n", SN_X9_62_prime_field) <= 0)
 		goto err;
 
 	if (!bn_printf(bio, p, off, "Prime:"))
