@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.109 2024/12/06 05:13:35 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.110 2025/01/25 10:27:58 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -651,36 +651,16 @@ ec_point_to_asn1_octet_string(const EC_GROUP *group, const EC_POINT *point,
 static int
 ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 {
-	BIGNUM *p = NULL;
-	int nid;
 	int ret = 0;
 
 	if (group == NULL || field == NULL)
 		goto err;
 
-	nid = ec_group_get_field_type(group);
-	if (nid == NID_X9_62_characteristic_two_field) {
-		ECerror(EC_R_GF2M_NOT_SUPPORTED);
-		goto err;
-	}
-	if (nid != NID_X9_62_prime_field) {
-		ECerror(EC_R_INVALID_FIELD);
-		goto err;
-	}
-
-	if ((field->fieldType = OBJ_nid2obj(nid)) == NULL) {
+	if ((field->fieldType = OBJ_nid2obj(NID_X9_62_prime_field)) == NULL) {
 		ECerror(ERR_R_OBJ_LIB);
 		goto err;
 	}
-	if ((p = BN_new()) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (!EC_GROUP_get_curve(group, p, NULL, NULL, NULL)) {
-		ECerror(ERR_R_EC_LIB);
-		goto err;
-	}
-	if ((field->p.prime = BN_to_ASN1_INTEGER(p, NULL)) == NULL) {
+	if ((field->p.prime = BN_to_ASN1_INTEGER(group->p, NULL)) == NULL) {
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
@@ -688,8 +668,6 @@ ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 	ret = 1;
 
  err:
-	BN_free(p);
-
 	return ret;
 }
 
