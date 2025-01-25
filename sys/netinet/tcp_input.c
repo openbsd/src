@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.424 2025/01/25 22:06:41 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.425 2025/01/25 23:55:32 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3532,10 +3532,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
-	struct inpcb *inp, *oldinp;
+	struct socket *listenso;
+	struct inpcb *inp, *listeninp;
 	struct tcpcb *tp = NULL;
 	struct mbuf *am;
-	struct socket *oldso;
 	u_int rtableid;
 
 	NET_ASSERT_LOCKED();
@@ -3573,35 +3573,35 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * connection when the SYN arrived.  If we can't create
 	 * the connection, abort it.
 	 */
-	oldso = so;
-	oldinp = inp;
-	so = sonewconn(so, SS_ISCONNECTED, M_DONTWAIT);
+	listenso = so;
+	listeninp = inp;
+	so = sonewconn(listenso, SS_ISCONNECTED, M_DONTWAIT);
 	if (so == NULL)
 		goto resetandabort;
 	soassertlocked(so);
 	soref(so);
 	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 #ifdef IPSEC
 	/*
-	 * We need to copy the required security levels
-	 * from the old pcb. Ditto for any other
-	 * IPsec-related information.
+	 * We need to copy the required security levels from the listen pcb.
+	 * Ditto for any other IPsec-related information.
 	 */
-	inp->inp_seclevel = oldinp->inp_seclevel;
+	inp->inp_seclevel = listeninp->inp_seclevel;
 #endif /* IPSEC */
 #ifdef INET6
 	if (ISSET(inp->inp_flags, INP_IPV6)) {
-		KASSERT(ISSET(oldinp->inp_flags, INP_IPV6));
+		KASSERT(ISSET(listeninp->inp_flags, INP_IPV6));
 
-		inp->inp_ipv6.ip6_hlim = oldinp->inp_ipv6.ip6_hlim;
-		inp->inp_hops = oldinp->inp_hops;
+		inp->inp_ipv6.ip6_hlim = listeninp->inp_ipv6.ip6_hlim;
+		inp->inp_hops = listeninp->inp_hops;
 	} else
 #endif
 	{
-		KASSERT(!ISSET(oldinp->inp_flags, INP_IPV6));
+		KASSERT(!ISSET(listeninp->inp_flags, INP_IPV6));
 
-		inp->inp_ip.ip_ttl = oldinp->inp_ip.ip_ttl;
+		inp->inp_ip.ip_ttl = listeninp->inp_ip.ip_ttl;
 		inp->inp_options = ip_srcroute(m);
 		if (inp->inp_options == NULL) {
 			inp->inp_options = sc->sc_ipopts;
@@ -3639,8 +3639,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 	(void) m_free(am);
 
-	tp = intotcpcb(inp);
-	tp->t_flags = sototcpcb(oldso)->t_flags & (TF_NOPUSH|TF_NODELAY);
+	tp->t_flags = intotcpcb(listeninp)->t_flags & (TF_NOPUSH|TF_NODELAY);
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;
