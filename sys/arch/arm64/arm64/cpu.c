@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.134 2024/11/10 06:51:59 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.135 2025/01/25 12:29:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -868,19 +868,31 @@ cpu_identify(struct cpu_info *ci)
 		sep = ",";
 	}
 
-	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_BASE) {
+	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_PAC) {
 		printf("%sAPI", sep);
 		sep = ",";
 	}
-	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_PAC)
-		printf("+PAC");
+	if (ID_AA64ISAR1_API(id) == ID_AA64ISAR1_API_EPAC)
+		printf("+EPAC");
+	else if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_EPAC2)
+		printf("+EPAC2");
+	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_FPAC)
+		printf("+FPAC");
+	if (ID_AA64ISAR1_API(id) >= ID_AA64ISAR1_API_FPAC_COMBINED)
+		printf("+COMBINED");
 
-	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_BASE) {
+	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_PAC) {
 		printf("%sAPA", sep);
 		sep = ",";
 	}
-	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_PAC)
-		printf("+PAC");
+	if (ID_AA64ISAR1_APA(id) == ID_AA64ISAR1_APA_EPAC)
+		printf("+EPAC");
+	else if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_EPAC2)
+		printf("+EPAC2");
+	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_FPAC)
+		printf("+FPAC");
+	if (ID_AA64ISAR1_APA(id) >= ID_AA64ISAR1_APA_FPAC_COMBINED)
+		printf("+COMBINED");
 
 	if (ID_AA64ISAR1_DPB(id) >= ID_AA64ISAR1_DPB_IMPL) {
 		printf("%sDPB", sep);
@@ -918,6 +930,24 @@ cpu_identify(struct cpu_info *ci)
 		printf("%sMOPS", sep);
 		sep = ",";
 	}
+
+	if (ID_AA64ISAR2_GPA3(id) >= ID_AA64ISAR2_GPA3_IMPL) {
+		printf("%sGPA3", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR2_APA3(id) >= ID_AA64ISAR2_APA3_PAC) {
+		printf("%sAPA3", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR2_APA3(id) == ID_AA64ISAR2_APA3_EPAC)
+		printf("+EPAC");
+	else if (ID_AA64ISAR2_APA3(id) >= ID_AA64ISAR2_APA3_EPAC2)
+		printf("+EPAC2");
+	if (ID_AA64ISAR2_APA3(id) >= ID_AA64ISAR2_APA3_FPAC)
+		printf("+FPAC");
+	if (ID_AA64ISAR2_APA3(id) >= ID_AA64ISAR2_APA3_FPAC_COMBINED)
+		printf("+COMBINED");
 
 	if (ID_AA64ISAR2_RPRES(id) >= ID_AA64ISAR2_RPRES_IMPL) {
 		printf("%sRPRES", sep);
@@ -1220,8 +1250,8 @@ cpu_identify_cleanup(void)
 		hwcap |= HWCAP_SSBS;
 	if (ID_AA64ISAR1_SB(cpu_id_aa64isar1) >= ID_AA64ISAR1_SB_IMPL)
 		hwcap |= HWCAP_SB;
-	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
-	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE)
+	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_PAC ||
+	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_PAC)
 		hwcap |= HWCAP_PACA;
 	if (ID_AA64ISAR1_GPA(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPA_IMPL ||
 	    ID_AA64ISAR1_GPI(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPI_IMPL)
@@ -1493,8 +1523,8 @@ cpu_init(void)
 		__asm volatile (".arch armv8.4-a; msr dit, #1");
 
 	/* Enable PAuth. */
-	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
-	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
+	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_PAC ||
+	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_PAC) {
 		sctlr = READ_SPECIALREG(sctlr_el1);
 		sctlr |= SCTLR_EnIA | SCTLR_EnDA;
 		sctlr |= SCTLR_EnIB | SCTLR_EnDB;

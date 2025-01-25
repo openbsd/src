@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.106 2025/01/18 16:35:30 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.107 2025/01/25 12:29:35 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2316,8 +2316,8 @@ __attribute__((target("+pauth")))
 void
 pmap_setpauthkeys(struct pmap *pm)
 {
-	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
-	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
+	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_PAC ||
+	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_PAC) {
 		__asm volatile ("msr apiakeylo_el1, %0"
 		    :: "r"(pm->pm_apiakey[0]));
 		__asm volatile ("msr apiakeyhi_el1, %0"
