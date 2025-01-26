@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_obj.c,v 1.23 2025/01/26 20:01:58 tb Exp $ */
+/* $OpenBSD: x509_obj.c,v 1.24 2025/01/26 21:05:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,14 +57,15 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <openssl/buffer.h>
-#include <openssl/err.h>
-#include <openssl/lhash.h>
+#include <openssl/asn1.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+#include "bytestring.h"
 #include "x509_local.h"
 
 static int
