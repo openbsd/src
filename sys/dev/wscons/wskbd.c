@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.121 2025/01/21 20:13:19 mvs Exp $ */
+/* $OpenBSD: wskbd.c,v 1.122 2025/01/26 08:50:02 jsg Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -768,6 +768,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	ev = &evar->ws_q[put];
 	put = (put + 1) % WSEVENT_QSIZE;
 	if (put == evar->ws_get) {
+		mtx_leave(&evar->ws_mtx);
 		log(LOG_WARNING, "%s: event queue overflow\n",
 		    sc->sc_base.me_dv.dv_xname);
 		return;
