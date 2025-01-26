@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.28 2024/05/24 06:02:53 jsg Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.29 2025/01/26 23:09:48 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -2820,7 +2820,7 @@ aq_init_rss(struct aq_softc *sc)
 	/* rss key is composed of 32 bit registers */
 	stoeplitz_to_key(rss_key, sizeof(rss_key));
 	for (i = 0; i < nitems(rss_key); i++) {
-		AQ_WRITE_REG(sc, RPF_RSS_KEY_WR_DATA_REG, htole32(rss_key[i]));
+		AQ_WRITE_REG(sc, RPF_RSS_KEY_WR_DATA_REG, htobe32(rss_key[i]));
 		AQ_WRITE_REG_BIT(sc, RPF_RSS_KEY_ADDR_REG, RPF_RSS_KEY_ADDR,
 		    nitems(rss_key) - 1 - i);
 		AQ_WRITE_REG_BIT(sc, RPF_RSS_KEY_ADDR_REG, RPF_RSS_KEY_WR_EN,
