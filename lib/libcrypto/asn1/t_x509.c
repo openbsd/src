@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.47 2025/01/11 03:00:04 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.48 2025/01/26 20:18:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +78,7 @@
 #include <openssl/rsa.h>
 #endif
 
+#include "bytestring.h"
 #include "evp_local.h"
 #include "x509_local.h"
 
@@ -490,48 +491,79 @@ ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 }
 LCRYPTO_ALIAS(ASN1_UTCTIME_print);
 
-int
-X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
+/* NID with SN of 1-2 letters, which X509_NAME_print() historically included. */
+static int
+x509_name_entry_include(const X509_NAME_ENTRY *ne)
 {
-	char *s, *c, *b;
-	int i;
-	int ret = 0;
+	int nid;
 
-	b = X509_NAME_oneline(name, NULL, 0);
-	if (b == NULL)
+	if ((nid = OBJ_obj2nid(ne->object)) == NID_undef)
 		return 0;
-	if (*b == '\0') {
-		free(b);
+
+	switch (nid) {
+	case NID_commonName:
+	case NID_surname:
+	case NID_countryName:
+	case NID_localityName:
+	case NID_stateOrProvinceName:
+	case NID_organizationName:
+	case NID_organizationalUnitName:
+	case NID_givenName:
+	case NID_domainComponent: /* XXX - doesn't really belong here */
 		return 1;
 	}
-	s = b + 1; /* skip the first slash */
 
-	c = s;
-	for (;;) {
-		if ((s[0] == '/' &&
-		    (s[1] >= 'A' && s[1] <= 'Z' &&
-		    (s[2] == '=' || (s[2] >= 'A' && s[2] <= 'Z' &&
-		    s[3] == '=')))) || s[0] == '\0') {
-			i = s - c;
-			if (BIO_write(bp, c, i) != i)
+	return 0;
+}
+
+int
+X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
+{
+	CBB cbb;
+	uint8_t *buf = NULL;
+	size_t buf_len;
+	const X509_NAME_ENTRY *ne;
+	int i;
+	int started = 0;
+	int ret = 0;
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+
+	for (i = 0; i < sk_X509_NAME_ENTRY_num(name->entries); i++) {
+		ne = sk_X509_NAME_ENTRY_value(name->entries, i);
+
+		if (!x509_name_entry_include(ne))
+			continue;
+
+		if (started) {
+			if (!CBB_add_u8(&cbb, ','))
 				goto err;
-			c = s + 1;	/* skip following slash */
-			if (*s != '\0') {
-				if (BIO_write(bp, ", ", 2) != 2)
-					goto err;
-			}
+			if (!CBB_add_u8(&cbb, ' '))
+				goto err;
 		}
-		if (*s == '\0')
-			break;
-		s++;
+
+		if (!X509_NAME_ENTRY_add_cbb(&cbb, ne))
+			goto err;
+
+		started = 1;
 	}
+
+	if (!CBB_finish(&cbb, &buf, &buf_len))
+		goto err;
+
+	if (buf_len > INT_MAX)
+		goto err;
+
+	if (BIO_write(bio, buf, buf_len) <= 0)
+		goto err;
 
 	ret = 1;
-	if (0) {
+
  err:
-		X509error(ERR_R_BUF_LIB);
-	}
-	free(b);
-	return (ret);
+	CBB_cleanup(&cbb);
+	free(buf);
+
+	return ret;
 }
 LCRYPTO_ALIAS(X509_NAME_print);
