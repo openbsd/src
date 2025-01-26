@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_obj.c,v 1.22 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_obj.c,v 1.23 2025/01/26 20:01:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,116 +67,131 @@
 
 #include "x509_local.h"
 
+static int
+X509_NAME_ENTRY_add_object_cbb(CBB *cbb, const ASN1_OBJECT *aobj)
+{
+	const char *str;
+	char buf[80];
+	int nid;
+
+	/* Prefer SN over LN, and fall back to textual representation of OID. */
+	if ((nid = OBJ_obj2nid(aobj)) != NID_undef) {
+		if ((str = OBJ_nid2sn(nid)) != NULL)
+			return CBB_add_bytes(cbb, str, strlen(str));
+		if ((str = OBJ_nid2ln(nid)) != NULL)
+			return CBB_add_bytes(cbb, str, strlen(str));
+	}
+	if (OBJ_obj2txt(buf, sizeof(buf), aobj, 1) == 0)
+		return 0;
+	return CBB_add_bytes(cbb, buf, strlen(buf));
+}
+
+static int
+X509_NAME_ENTRY_add_u8_cbb(CBB *cbb, uint8_t u8)
+{
+	static const char hex[] = "0123456789ABCDEF";
+
+	if (' ' <= u8 && u8 <= '~')
+		return CBB_add_u8(cbb, u8);
+
+	if (!CBB_add_u8(cbb, '\\'))
+		return 0;
+	if (!CBB_add_u8(cbb, 'x'))
+		return 0;
+	if (!CBB_add_u8(cbb, hex[u8 >> 4]))
+		return 0;
+	if (!CBB_add_u8(cbb, hex[u8 & 0xf]))
+		return 0;
+	return 1;
+}
+
+static int
+X509_NAME_ENTRY_add_value_cbb(CBB *cbb, const ASN1_STRING *astr)
+{
+	CBS cbs;
+	uint8_t u8;
+	size_t i;
+	int mask[4] = { 1, 1, 1, 1 };
+
+	if (astr->type == V_ASN1_GENERALSTRING && astr->length % 4 == 0) {
+		int gs_mask[4] = { 0, 0, 0, 0 };
+
+		i = 0;
+		CBS_init(&cbs, astr->data, astr->length);
+		while (CBS_len(&cbs) > 0) {
+			if (!CBS_get_u8(&cbs, &u8))
+				return 0;
+
+			gs_mask[i++ & 0x3] |= u8;
+		}
+
+		if (gs_mask[0] == 0 && gs_mask[1] == 0 && gs_mask[2] == 0)
+			mask[0] = mask[1] = mask[2] = 0;
+	}
+
+	i = 0;
+	CBS_init(&cbs, astr->data, astr->length);
+	while (CBS_len(&cbs) > 0) {
+		if (!CBS_get_u8(&cbs, &u8))
+			return 0;
+		if (mask[i++ & 0x3] == 0)
+			continue;
+		if (!X509_NAME_ENTRY_add_u8_cbb(cbb, u8))
+			return 0;
+	}
+
+	return 1;
+}
+
+int
+X509_NAME_ENTRY_add_cbb(CBB *cbb, const X509_NAME_ENTRY *ne)
+{
+	if (!X509_NAME_ENTRY_add_object_cbb(cbb, ne->object))
+		return 0;
+	if (!CBB_add_u8(cbb, '='))
+		return 0;
+	if (!X509_NAME_ENTRY_add_value_cbb(cbb, ne->value))
+		return 0;
+	return 1;
+}
+
 char *
 X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
 {
-	X509_NAME_ENTRY *ne;
+	CBB cbb;
+	const X509_NAME_ENTRY *ne;
+	uint8_t *line = NULL;
+	size_t line_len = 0;
 	int i;
-	int n, lold, l, l1, l2, num, j, type;
-	const char *s;
-	char *p;
-	unsigned char *q;
-	BUF_MEM *b = NULL;
-	static const char hex[17] = "0123456789ABCDEF";
-	int gs_doit[4];
-	char tmp_buf[80];
 
-	if (buf == NULL) {
-		if ((b = BUF_MEM_new()) == NULL)
-			goto err;
-		if (!BUF_MEM_grow(b, 200))
-			goto err;
-		b->data[0] = '\0';
-		len = 200;
-	}
-	if (a == NULL) {
-		if (b) {
-			buf = b->data;
-			free(b);
-		}
-		strlcpy(buf, "NO X509_NAME", len);
-		return buf;
-	}
+	if (!CBB_init(&cbb, 0))
+		goto err;
 
-	len--; /* space for '\0' */
-	l = 0;
 	for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
 		ne = sk_X509_NAME_ENTRY_value(a->entries, i);
-		n = OBJ_obj2nid(ne->object);
-		if ((n == NID_undef) || ((s = OBJ_nid2sn(n)) == NULL)) {
-			i2t_ASN1_OBJECT(tmp_buf, sizeof(tmp_buf), ne->object);
-			s = tmp_buf;
-		}
-		l1 = strlen(s);
-
-		type = ne->value->type;
-		num = ne->value->length;
-		q = ne->value->data;
-		if ((type == V_ASN1_GENERALSTRING) && ((num % 4) == 0)) {
-			gs_doit[0] = gs_doit[1] = gs_doit[2] = gs_doit[3] = 0;
-			for (j = 0; j < num; j++)
-				if (q[j] != 0)
-					gs_doit[j & 3] = 1;
-
-			if (gs_doit[0]|gs_doit[1]|gs_doit[2])
-				gs_doit[0] = gs_doit[1] = gs_doit[2] = gs_doit[3] = 1;
-			else {
-				gs_doit[0] = gs_doit[1] = gs_doit[2] = 0;
-				gs_doit[3] = 1;
-			}
-		} else
-			gs_doit[0] = gs_doit[1] = gs_doit[2] = gs_doit[3] = 1;
-
-		for (l2 = j=0; j < num; j++) {
-			if (!gs_doit[j&3])
-				continue;
-			l2++;
-			if ((q[j] < ' ') || (q[j] > '~'))
-				l2 += 3;
-		}
-
-		lold = l;
-		l += 1 + l1 + 1 + l2;
-		if (b != NULL) {
-			if (!BUF_MEM_grow(b, l + 1))
-				goto err;
-			p = &(b->data[lold]);
-		} else if (l > len) {
-			break;
-		} else
-			p = &(buf[lold]);
-		*(p++) = '/';
-		memcpy(p, s, l1);
-		p += l1;
-		*(p++) = '=';
-		q = ne->value->data;
-		for (j = 0; j < num; j++) {
-			if (!gs_doit[j & 3])
-				continue;
-			n = q[j];
-			if ((n < ' ') || (n > '~')) {
-				*(p++) = '\\';
-				*(p++) = 'x';
-				*(p++) = hex[(n >> 4) & 0x0f];
-				*(p++) = hex[n & 0x0f];
-			} else
-				*(p++) = n;
-		}
-		*p = '\0';
+		if (!CBB_add_u8(&cbb, '/'))
+			goto err;
+		if (!X509_NAME_ENTRY_add_cbb(&cbb, ne))
+			goto err;
 	}
-	if (b != NULL) {
-		p = b->data;
-		free(b);
-	} else
-		p = buf;
-	if (i == 0)
-		*p = '\0';
-	return (p);
 
-err:
-	X509error(ERR_R_MALLOC_FAILURE);
-	if (b != NULL)
-		BUF_MEM_free(b);
-	return (NULL);
+	if (!CBB_add_u8(&cbb, '\0'))
+		goto err;
+
+	if (!CBB_finish(&cbb, &line, &line_len))
+		goto err;
+
+	if (buf == NULL)
+		return line;
+
+	strlcpy(buf, line, len);
+	free(line);
+
+	return buf;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(X509_NAME_oneline);

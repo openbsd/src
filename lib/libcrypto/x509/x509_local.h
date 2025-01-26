@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.33 2024/12/04 20:07:16 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.34 2025/01/26 20:01:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -60,6 +60,8 @@
 #define HEADER_X509_LOCAL_H
 
 #include <openssl/x509v3.h>
+
+#include "bytestring.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -438,6 +440,8 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
     const char *attrname, int type, const unsigned char *bytes, int len);
 void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
     const ASN1_OBJECT *obj, int lastpos, int type);
+
+int X509_NAME_ENTRY_add_cbb(CBB *cbb, const X509_NAME_ENTRY *ne);
 
 int X509V3_add_value(const char *name, const char *value,
     STACK_OF(CONF_VALUE) **extlist);
