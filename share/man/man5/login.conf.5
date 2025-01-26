@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.72 2024/01/22 19:26:55 deraadt Exp $
+.\" $OpenBSD: login.conf.5,v 1.73 2025/01/26 05:47:17 semarie Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: January 22 2024 $
+.Dd $Mdocdate: January 26 2025 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -379,7 +379,9 @@ Path name to a text file.
 A comma-separated list of values.
 .\"
 .It number
-A number.
+A number, or
+.Cm infinity
+for no limit.
 A leading
 .Li 0x
 implies the number is expressed in hexadecimal.
@@ -400,9 +402,9 @@ is only expanded at the beginning of a path name.
 A path name to program.
 .\"
 .It size
-A
-.Va number
-which expresses a size.
+A number which expresses a size, or
+.Cm infinity
+for no limit.
 By default, the size is specified in bytes.
 It may have a trailing
 .Li b ,
@@ -415,7 +417,9 @@ to indicate that the value is in 512-byte blocks,
 kilobytes, megabytes, gigabytes, or terabytes, respectively.
 .\"
 .It time
-A time in seconds.
+A time in seconds, or
+.Cm infinity
+for no limit.
 A time may be expressed as a series of numbers which are added together.
 Each number may have a trailing character to represent time units:
 .Bl -tag -width xxx
