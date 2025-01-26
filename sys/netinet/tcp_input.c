@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.425 2025/01/25 23:55:32 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.426 2025/01/26 17:21:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3649,10 +3649,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tp->t_flags |= TF_REQ_TSTMP|TF_RCVD_TSTMP;
 
 	tp->t_template = tcp_template(tp);
-	if (tp->t_template == 0) {
-		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
+	if (tp->t_template == NULL)
 		goto abort;
-	}
 	tp->sack_enable = ISSET(sc->sc_fixflags, SCF_SACK_PERMIT);
 	tp->ts_modulate = sc->sc_modulate;
 	tp->ts_recent = sc->sc_timestamp;
@@ -3709,9 +3707,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 resetandabort:
 	tcp_respond(NULL, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack, TH_RST,
 	    m->m_pkthdr.ph_rtableid, now);
-	if (so != NULL)
-		soabort(so);
 abort:
+	if (tp != NULL)
+		tp = tcp_drop(tp, ECONNABORTED);	/* destroys socket */
 	m_freem(m);
 	in_pcbsounlock_rele(inp, so);
 	syn_cache_put(sc);
