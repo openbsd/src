@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.364 2025/01/23 10:44:13 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.365 2025/01/27 08:20:01 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1278,13 +1278,13 @@ sorflush(struct socket *so)
 
 	solock_shared(so);
 	socantrcvmore(so);
+	sounlock_shared(so);
 	mtx_enter(&sb->sb_mtx);
 	m = sb->sb_mb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
 	sb->sb_timeo_nsecs = INFSLP;
 	mtx_leave(&sb->sb_mtx);
-	sounlock_shared(so);
 	sbunlock(sb);
 
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
