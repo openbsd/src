@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_obj.c,v 1.24 2025/01/26 21:05:19 tb Exp $ */
+/* $OpenBSD: x509_obj.c,v 1.25 2025/01/27 04:24:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
