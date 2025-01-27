@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.187 2025/01/02 13:52:17 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.188 2025/01/27 03:15:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2025 $
+.Dd $Mdocdate: January 27 2025 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2310,13 +2310,14 @@ Close single-quoted context opened by
 Begin a new section.
 For a list of conventional manual sections, see
 .Sx MANUAL STRUCTURE .
-These sections should be used unless it's absolutely necessary that
-custom sections be used.
+Use the conventional sections where applicable.
+For unusually long and complicated manual pages,
+adding custom sections is occasionally useful.
 .Pp
-Section names should be unique so that they may be keyed by
-.Ic \&Sx .
-Although this macro is parsed, it should not consist of child node or it
-may not be linked with
+Avoid using macros inside the
+.Ar TITLE LINE
+and keep that line unique within the manual page,
+such that it can be pointed to with
 .Ic \&Sx .
 .Pp
 See also
@@ -2366,10 +2367,10 @@ the conventional sections described in
 .Sx MANUAL STRUCTURE
 rarely have subsections.
 .Pp
-Sub-section names should be unique so that they may be keyed by
-.Ic \&Sx .
-Although this macro is parsed, it should not consist of child node or it
-may not be linked with
+Avoid using macros inside the
+.Ar Title line
+and keep that line unique within the manual page,
+such that it can be pointed to with
 .Ic \&Sx .
 .Pp
 See also
