@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.169 2025/01/25 22:06:41 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.170 2025/01/27 08:20:56 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -1078,12 +1078,12 @@ sbdrop(struct socket *so, struct sockbuf *sb, int len)
 			break;
 		}
 		len -= m->m_len;
-		sbfree(so, sb, m);
+		sbfree(sb, m);
 		mn = m_free(m);
 		m = mn;
 	}
 	while (m && m->m_len == 0) {
-		sbfree(so, sb, m);
+		sbfree(sb, m);
 		mn = m_free(m);
 		m = mn;
 	}
@@ -1118,7 +1118,7 @@ sbdroprecord(struct socket *so, struct sockbuf *sb)
 	if (m) {
 		sb->sb_mb = m->m_nextpkt;
 		do {
-			sbfree(so, sb, m);
+			sbfree(sb, m);
 			mn = m_free(m);
 		} while ((m = mn) != NULL);
 	}

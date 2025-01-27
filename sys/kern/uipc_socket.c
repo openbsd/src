@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.365 2025/01/27 08:20:01 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.366 2025/01/27 08:20:56 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -984,7 +984,7 @@ dontblock:
 				*paddr = m_copym(m, 0, m->m_len, M_NOWAIT);
 			m = m->m_next;
 		} else {
-			sbfree(so, &so->so_rcv, m);
+			sbfree(&so->so_rcv, m);
 			if (paddr) {
 				*paddr = m;
 				so->so_rcv.sb_mb = m->m_next;
@@ -1008,7 +1008,7 @@ dontblock:
 				*controlp = m_copym(m, 0, m->m_len, M_NOWAIT);
 			m = m->m_next;
 		} else {
-			sbfree(so, &so->so_rcv, m);
+			sbfree(&so->so_rcv, m);
 			so->so_rcv.sb_mb = m->m_next;
 			m->m_nextpkt = m->m_next = NULL;
 			cm = m;
@@ -1113,7 +1113,7 @@ dontblock:
 				orig_resid = 0;
 			} else {
 				nextrecord = m->m_nextpkt;
-				sbfree(so, &so->so_rcv, m);
+				sbfree(&so->so_rcv, m);
 				if (mp) {
 					*mp = m;
 					mp = &m->m_next;
@@ -1687,7 +1687,7 @@ somove(struct socket *so, int wait)
 		 * that the whole first record can be processed.
 		 */
 		m = so->so_rcv.sb_mb;
-		sbfree(so, &so->so_rcv, m);
+		sbfree(&so->so_rcv, m);
 		so->so_rcv.sb_mb = m_free(m);
 		sbsync(&so->so_rcv, nextrecord);
 	}
@@ -1697,7 +1697,7 @@ somove(struct socket *so, int wait)
 	 */
 	m = so->so_rcv.sb_mb;
 	while (m && m->m_type == MT_CONTROL) {
-		sbfree(so, &so->so_rcv, m);
+		sbfree(&so->so_rcv, m);
 		so->so_rcv.sb_mb = m_free(m);
 		m = so->so_rcv.sb_mb;
 		sbsync(&so->so_rcv, nextrecord);
@@ -1736,7 +1736,7 @@ somove(struct socket *so, int wait)
 			so->so_rcv.sb_datacc -= size;
 		} else {
 			*mp = so->so_rcv.sb_mb;
-			sbfree(so, &so->so_rcv, *mp);
+			sbfree(&so->so_rcv, *mp);
 			so->so_rcv.sb_mb = (*mp)->m_next;
 			sbsync(&so->so_rcv, nextrecord);
 		}
