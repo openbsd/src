@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.176 2024/05/18 08:50:11 jsg Exp $ */
+/* $OpenBSD: cmd.c,v 1.177 2025/01/27 09:16:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -445,7 +445,7 @@ cmd_get_alias(const char *name)
 }
 
 /* Look up a command entry by name. */
-static const struct cmd_entry *
+const struct cmd_entry *
 cmd_find(const char *name, char **cause)
 {
 	const struct cmd_entry	**loop, *entry, *found = NULL;

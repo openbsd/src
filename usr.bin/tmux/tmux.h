@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1249 2025/01/01 15:17:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1250 2025/01/27 09:16:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2597,6 +2597,7 @@ int		 cmd_find_from_nothing(struct cmd_find_state *, int);
 
 /* cmd.c */
 extern const struct cmd_entry *cmd_table[];
+const struct cmd_entry *cmd_find(const char *, char **);
 void printflike(3, 4) cmd_log_argv(int, char **, const char *, ...);
 void		 cmd_prepend_argv(int *, char ***, const char *);
 void		 cmd_append_argv(int *, char ***, const char *);
