@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.509 2025/01/13 13:50:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.510 2025/01/27 15:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,7 @@
 #define	BGPD_FLAG_DECISION_TRANS_AS	0x0200
 #define	BGPD_FLAG_DECISION_MED_ALWAYS	0x0400
 #define	BGPD_FLAG_DECISION_ALL_PATHS	0x0800
-#define	BGPD_FLAG_NO_AS_SET		0x1000
+#define	BGPD_FLAG_PERMIT_AS_SET		0x1000
 
 #define	BGPD_LOG_UPDATES		0x0001
 
@@ -510,7 +510,7 @@ struct peer_config {
 #define PEERFLAG_TRANS_AS	0x01
 #define PEERFLAG_LOG_UPDATES	0x02
 #define PEERFLAG_EVALUATE_ALL	0x04
-#define PEERFLAG_NO_AS_SET	0x08
+#define PEERFLAG_PERMIT_AS_SET	0x08
 
 struct rde_peer_stats {
 	uint64_t			 prefix_rcvd_update;

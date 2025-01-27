@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.649 2025/01/13 13:50:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.650 2025/01/27 15:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2035,7 +2035,7 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		if (a->flags & F_ATTR_ASPATH)
 			goto bad_list;
 		error = aspath_verify(&attrbuf, peer_has_as4byte(peer),
-		    peer_accept_no_as_set(peer));
+		    peer_permit_as_set(peer));
 		if (error != 0 && error != AS_ERR_SOFT) {
 			log_peer_warnx(&peer->conf, "bad ASPATH, %s",
 			    log_aspath_error(error));
@@ -2292,7 +2292,7 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		    ATTR_PARTIAL))
 			goto bad_flags;
 		if ((error = aspath_verify(&attrbuf, 1,
-		    peer_accept_no_as_set(peer))) != 0) {
+		    peer_permit_as_set(peer))) != 0) {
 			/* As per RFC6793 use "attribute discard" here. */
 			log_peer_warnx(&peer->conf, "bad AS4_PATH, "
 			    "attribute discarded");

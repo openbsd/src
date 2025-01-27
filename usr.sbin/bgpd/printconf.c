@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.180 2025/01/13 13:50:34 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.181 2025/01/27 15:22:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -404,8 +404,8 @@ print_mainconf(struct bgpd_config *conf)
 	if (conf->flags & BGPD_FLAG_DECISION_ALL_PATHS)
 		printf("rde evaluate all\n");
 
-	if (conf->flags & BGPD_FLAG_NO_AS_SET)
-		printf("reject as-set yes\n");
+	if (conf->flags & BGPD_FLAG_PERMIT_AS_SET)
+		printf("reject as-set no\n");
 
 	if (conf->log & BGPD_LOG_UPDATES)
 		printf("log updates\n");
@@ -857,12 +857,12 @@ print_peer(struct peer *peer, struct bgpd_config *conf, const char *c)
 			printf("%s\trde evaluate all\n", c);
 	}
 
-	if (conf->flags & BGPD_FLAG_NO_AS_SET) {
-		if (!(p->flags & PEERFLAG_NO_AS_SET))
-			printf("%s\treject as-set no\n", c);
-	} else {
-		if (p->flags & PEERFLAG_NO_AS_SET)
+	if (conf->flags & BGPD_FLAG_PERMIT_AS_SET) {
+		if (!(p->flags & PEERFLAG_PERMIT_AS_SET))
 			printf("%s\treject as-set yes\n", c);
+	} else {
+		if (p->flags & PEERFLAG_PERMIT_AS_SET)
+			printf("%s\treject as-set no\n", c);
 	}
 
 	if (p->flags & PEERFLAG_LOG_UPDATES)

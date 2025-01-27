@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.476 2025/01/13 13:50:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.477 2025/01/27 15:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -837,9 +837,9 @@ conf_main	: AS as4number		{
 		}
 		| REJECT ASSET yesno	{
 			if ($3 == 1)
-				conf->flags |= BGPD_FLAG_NO_AS_SET;
+				conf->flags &= ~BGPD_FLAG_PERMIT_AS_SET;
 			else
-				conf->flags &= ~BGPD_FLAG_NO_AS_SET;
+				conf->flags |= BGPD_FLAG_PERMIT_AS_SET;
 		}
 		| LOG STRING		{
 			if (!strcmp($2, "updates"))
@@ -2210,9 +2210,9 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| REJECT ASSET yesno	{
 			if ($3 == 1)
-				curpeer->conf.flags |= PEERFLAG_NO_AS_SET;
+				curpeer->conf.flags &= ~PEERFLAG_PERMIT_AS_SET;
 			else
-				curpeer->conf.flags &= ~PEERFLAG_NO_AS_SET;
+				curpeer->conf.flags |= PEERFLAG_PERMIT_AS_SET;
 		}
 		| PORT port {
 			curpeer->conf.remote_port = $2;
@@ -4672,8 +4672,8 @@ alloc_peer(void)
 		p->conf.flags |= PEERFLAG_TRANS_AS;
 	if (conf->flags & BGPD_FLAG_DECISION_ALL_PATHS)
 		p->conf.flags |= PEERFLAG_EVALUATE_ALL;
-	if (conf->flags & BGPD_FLAG_NO_AS_SET)
-		p->conf.flags |= PEERFLAG_NO_AS_SET;
+	if (conf->flags & BGPD_FLAG_PERMIT_AS_SET)
+		p->conf.flags |= PEERFLAG_PERMIT_AS_SET;
 
 	return (p);
 }

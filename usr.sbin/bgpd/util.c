@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.91 2025/01/09 12:16:21 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.92 2025/01/27 15:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -504,7 +504,7 @@ aspath_extract(const void *seg, int pos)
  * Verify that the aspath is correctly encoded.
  */
 int
-aspath_verify(struct ibuf *in, int as4byte, int noset)
+aspath_verify(struct ibuf *in, int as4byte, int permit_set)
 {
 	struct ibuf	 buf;
 	int		 pos, error = 0;
@@ -541,7 +541,7 @@ aspath_verify(struct ibuf *in, int as4byte, int noset)
 		 * If AS_SET filtering (RFC6472) is on, error out on AS_SET
 		 * as well.
 		 */
-		if (noset && seg_type == AS_SET)
+		if (!permit_set && seg_type == AS_SET)
 			error = AS_ERR_SOFT;
 		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
 		    seg_type != AS_CONFED_SEQUENCE &&

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.248 2025/01/13 13:50:34 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.249 2025/01/27 15:22:11 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2025 $
+.Dd $Mdocdate: January 27 2025 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -358,7 +358,7 @@ attributes containing
 path segments will be rejected and
 all prefixes will be treated as withdraws.
 The default is
-.Ic no .
+.Ic yes .
 .Pp
 .It Ic router-id Ar dotted-quad
 Set the BGP router ID, which must be non-zero and should be unique

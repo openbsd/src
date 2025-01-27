@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.45 2025/01/13 13:50:34 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.46 2025/01/27 15:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -72,9 +72,9 @@ peer_has_ext_nexthop(struct rde_peer *peer, uint8_t aid)
 }
 
 int
-peer_accept_no_as_set(struct rde_peer *peer)
+peer_permit_as_set(struct rde_peer *peer)
 {
-	return peer->flags & PEERFLAG_NO_AS_SET;
+	return peer->flags & PEERFLAG_PERMIT_AS_SET;
 }
 
 void
