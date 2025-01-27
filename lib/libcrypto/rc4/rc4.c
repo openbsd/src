@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.c,v 1.12 2024/08/11 13:02:39 jsing Exp $ */
+/* $OpenBSD: rc4.c,v 1.13 2025/01/27 14:02:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,7 +196,7 @@ rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
 #endif
 	}
 #endif
-#define LOOP(in,out) \
+#define RC4_LOOP(in,out) \
 		x=((x+1)&0xff); \
 		tx=d[x]; \
 		y=(tx+y)&0xff; \
@@ -204,27 +204,21 @@ rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
 		d[y]=tx; \
 		(out) = d[(tx+ty)&0xff]^ (in);
 
-#ifndef RC4_INDEX
-#define RC4_LOOP(a,b,i)	LOOP(*((a)++),*((b)++))
-#else
-#define RC4_LOOP(a,b,i)	LOOP(a[i],b[i])
-#endif
-
 	i = len >> 3;
 	if (i) {
 		for (;;) {
-			RC4_LOOP(indata, outdata, 0);
-			RC4_LOOP(indata, outdata, 1);
-			RC4_LOOP(indata, outdata, 2);
-			RC4_LOOP(indata, outdata, 3);
-			RC4_LOOP(indata, outdata, 4);
-			RC4_LOOP(indata, outdata, 5);
-			RC4_LOOP(indata, outdata, 6);
-			RC4_LOOP(indata, outdata, 7);
-#ifdef RC4_INDEX
+			RC4_LOOP(indata[0], outdata[0]);
+			RC4_LOOP(indata[1], outdata[1]);
+			RC4_LOOP(indata[2], outdata[2]);
+			RC4_LOOP(indata[3], outdata[3]);
+			RC4_LOOP(indata[4], outdata[4]);
+			RC4_LOOP(indata[5], outdata[5]);
+			RC4_LOOP(indata[6], outdata[6]);
+			RC4_LOOP(indata[7], outdata[7]);
+
 			indata += 8;
 			outdata += 8;
-#endif
+
 			if (--i == 0)
 				break;
 		}
@@ -232,25 +226,25 @@ rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
 	i = len&0x07;
 	if (i) {
 		for (;;) {
-			RC4_LOOP(indata, outdata, 0);
+			RC4_LOOP(indata[0], outdata[0]);
 			if (--i == 0)
 				break;
-			RC4_LOOP(indata, outdata, 1);
+			RC4_LOOP(indata[1], outdata[1]);
 			if (--i == 0)
 				break;
-			RC4_LOOP(indata, outdata, 2);
+			RC4_LOOP(indata[2], outdata[2]);
 			if (--i == 0)
 				break;
-			RC4_LOOP(indata, outdata, 3);
+			RC4_LOOP(indata[3], outdata[3]);
 			if (--i == 0)
 				break;
-			RC4_LOOP(indata, outdata, 4);
+			RC4_LOOP(indata[4], outdata[4]);
 			if (--i == 0)
 				break;
-			RC4_LOOP(indata, outdata, 5);
+			RC4_LOOP(indata[5], outdata[5]);
 			if (--i == 0)
 				break;
-			RC4_LOOP(indata, outdata, 6);
+			RC4_LOOP(indata[6], outdata[6]);
 			if (--i == 0)
 				break;
 		}
