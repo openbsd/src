@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.114 2024/03/06 21:32:39 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.115 2025/01/27 09:05:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_split_window_entry = {
 	.args = { "bc:de:fF:hIl:p:Pt:vZ", 0, -1, NULL },
 	.usage = "[-bdefhIPvZ] [-c start-directory] [-e environment] "
 		 "[-F format] [-l size] " CMD_TARGET_PANE_USAGE
-		 "[shell-command]",
+		 " [shell-command]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
