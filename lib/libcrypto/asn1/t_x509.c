@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.49 2025/01/27 08:05:02 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.50 2025/01/27 10:29:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -553,9 +553,6 @@ X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
 		goto err;
 
 	if (!CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
-
-	if (buf_len > INT_MAX)
 		goto err;
 
 	if (BIO_printf(bio, "%s", buf) < 0)
