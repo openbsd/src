@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2023/07/09 13:30:03 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2025/01/28 13:12:48 anton Exp $
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 NCPU !=		/sbin/sysctl -n hw.ncpuonline
@@ -16,14 +16,13 @@ permissions:
 	# Match expectations of cpan/Test-Harness/t/source_handler.t for
 	# cpan/Test-Harness/t/source_tests/source*.sh executalbe bits.
 	# Remove symlink and fix permissions of copy in obj directory.
-	# cpan/autodie/t/chmod.t and cpan/autodie/t/chown.t modify themself,
-	# and cpan/autodie/t/utime.t touches touch_me.  Replace symlink.
+	# cpan/autodie/t/chmod.t and cpan/autodie/t/chown.t modify themself.
+	# Replace symlink.
 .for f in \
     cpan/Test-Harness/t/source_tests/source.sh \
     cpan/Test-Harness/t/source_tests/source_args.sh \
     cpan/autodie/t/chmod.t \
-    cpan/autodie/t/chown.t \
-    cpan/autodie/t/touch_me
+    cpan/autodie/t/chown.t
 	rm -f ${BSDOBJDIR}/gnu/usr.bin/perl/$f
 	cp ${BSDSRCDIR}/gnu/usr.bin/perl/$f ${BSDOBJDIR}/gnu/usr.bin/perl/$f
 	chmod +x ${BSDOBJDIR}/gnu/usr.bin/perl/$f
