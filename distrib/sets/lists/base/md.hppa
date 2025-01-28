@@ -48,6 +48,7 @@
 ./usr/libdata/perl5/hppa-openbsd/CORE/iperlsys.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/keywords.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/l1_char_class_tab.h
+./usr/libdata/perl5/hppa-openbsd/CORE/locale_table.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/malloc_ctl.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/metaconfig.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/mg.h
@@ -97,7 +98,6 @@
 ./usr/libdata/perl5/hppa-openbsd/CORE/thread.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/time64.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/time64_config.h
-./usr/libdata/perl5/hppa-openbsd/CORE/uconfig.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/unixish.h
@@ -259,7 +259,6 @@
 ./usr/libdata/perl5/hppa-openbsd/PerlIO
 ./usr/libdata/perl5/hppa-openbsd/PerlIO/encoding.pm
 ./usr/libdata/perl5/hppa-openbsd/PerlIO/mmap.pm
-./usr/libdata/perl5/hppa-openbsd/PerlIO/scalar.pm
 ./usr/libdata/perl5/hppa-openbsd/PerlIO/via.pm
 ./usr/libdata/perl5/hppa-openbsd/SDBM_File.pm
 ./usr/libdata/perl5/hppa-openbsd/Scalar
@@ -377,8 +376,6 @@
 ./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/encoding/encoding.so
 ./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/mmap
 ./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/mmap/mmap.so
-./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/scalar
-./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/scalar/scalar.so
 ./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/via
 ./usr/libdata/perl5/hppa-openbsd/auto/PerlIO/via/via.so
 ./usr/libdata/perl5/hppa-openbsd/auto/SDBM_File

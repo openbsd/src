@@ -46,6 +46,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/iperlsys.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/keywords.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/l1_char_class_tab.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/locale_table.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/malloc_ctl.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/metaconfig.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/mg.h
@@ -95,7 +96,6 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/thread.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/time64.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/time64_config.h
-./usr/libdata/perl5/mips64el-openbsd/CORE/uconfig.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/unixish.h
@@ -257,7 +257,6 @@
 ./usr/libdata/perl5/mips64el-openbsd/PerlIO
 ./usr/libdata/perl5/mips64el-openbsd/PerlIO/encoding.pm
 ./usr/libdata/perl5/mips64el-openbsd/PerlIO/mmap.pm
-./usr/libdata/perl5/mips64el-openbsd/PerlIO/scalar.pm
 ./usr/libdata/perl5/mips64el-openbsd/PerlIO/via.pm
 ./usr/libdata/perl5/mips64el-openbsd/SDBM_File.pm
 ./usr/libdata/perl5/mips64el-openbsd/Scalar
@@ -375,8 +374,6 @@
 ./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/encoding/encoding.so
 ./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/mmap
 ./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/mmap/mmap.so
-./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/scalar
-./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/scalar/scalar.so
 ./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/via
 ./usr/libdata/perl5/mips64el-openbsd/auto/PerlIO/via/via.so
 ./usr/libdata/perl5/mips64el-openbsd/auto/SDBM_File

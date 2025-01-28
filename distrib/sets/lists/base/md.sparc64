@@ -57,6 +57,7 @@
 ./usr/libdata/perl5/sparc64-openbsd/CORE/iperlsys.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/keywords.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/l1_char_class_tab.h
+./usr/libdata/perl5/sparc64-openbsd/CORE/locale_table.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/malloc_ctl.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/metaconfig.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/mg.h
@@ -106,7 +107,6 @@
 ./usr/libdata/perl5/sparc64-openbsd/CORE/thread.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/time64.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/time64_config.h
-./usr/libdata/perl5/sparc64-openbsd/CORE/uconfig.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/sparc64-openbsd/CORE/unixish.h
@@ -268,7 +268,6 @@
 ./usr/libdata/perl5/sparc64-openbsd/PerlIO
 ./usr/libdata/perl5/sparc64-openbsd/PerlIO/encoding.pm
 ./usr/libdata/perl5/sparc64-openbsd/PerlIO/mmap.pm
-./usr/libdata/perl5/sparc64-openbsd/PerlIO/scalar.pm
 ./usr/libdata/perl5/sparc64-openbsd/PerlIO/via.pm
 ./usr/libdata/perl5/sparc64-openbsd/SDBM_File.pm
 ./usr/libdata/perl5/sparc64-openbsd/Scalar
@@ -386,8 +385,6 @@
 ./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/encoding/encoding.so
 ./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/mmap
 ./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/mmap/mmap.so
-./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/scalar
-./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/scalar/scalar.so
 ./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/via
 ./usr/libdata/perl5/sparc64-openbsd/auto/PerlIO/via/via.so
 ./usr/libdata/perl5/sparc64-openbsd/auto/SDBM_File
