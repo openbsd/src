@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.67 2025/01/17 08:58:38 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.68 2025/01/28 19:53:06 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1514,6 +1514,11 @@ vio_rxeof(struct vio_queue *vioq)
 			hdr = mtod(m, struct virtio_net_hdr *);
 			m_adj(m, sc->sc_hdr_size);
 			m0 = mlast = m;
+			if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ)) {
+				m->m_pkthdr.ph_flowid =
+				    vioq->viq_ifiq->ifiq_idx;
+				SET(m->m_pkthdr.csum_flags, M_FLOWID);
+			}
 			if (VIO_HAVE_MRG_RXBUF(sc))
 				bufs_left = hdr->num_buffers - 1;
 			else
