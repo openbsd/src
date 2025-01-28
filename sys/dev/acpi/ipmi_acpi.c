@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi_acpi.c,v 1.6 2024/10/09 00:38:25 jsg Exp $ */
+/* $OpenBSD: ipmi_acpi.c,v 1.7 2025/01/28 02:20:49 yasuoka Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -137,6 +137,9 @@ ipmi_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 	char iotype;
 
 	switch (type) {
+	case SR_IRQ:
+		/* Ignore for now. */
+		return 0;
 	case SR_IOPORT:
 		addr = crs->sr_ioport._max;
 		iotype = 'i';
