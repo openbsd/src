@@ -12,44 +12,48 @@ use feature 'class';
 no warnings 'experimental::class';
 
 {
-    class Test1 {
+    class Testcase1 {
         method hello { return "hello, world"; }
+
+        method classname { return __CLASS__; }
     }
 
-    my $obj = Test1->new;
-    isa_ok($obj, "Test1", '$obj');
+    my $obj = Testcase1->new;
+    isa_ok($obj, "Testcase1", '$obj');
 
     is($obj->hello, "hello, world", '$obj->hello');
+
+    is($obj->classname, "Testcase1", '$obj->classname yields __CLASS__');
 }
 
 # Classes are still regular packages
 {
-    class Test2 {
+    class Testcase2 {
         my $ok = "OK";
         sub NotAMethod { return $ok }
     }
 
-    is(Test2::NotAMethod(), "OK", 'Class can contain regular subs');
+    is(Testcase2::NotAMethod(), "OK", 'Class can contain regular subs');
 }
 
 # Classes accept full package names
 {
-    class Test3::Foo {
+    class Testcase3::Foo {
         method hello { return "This" }
     }
-    is(Test3::Foo->new->hello, "This", 'Class supports fully-qualified package names');
+    is(Testcase3::Foo->new->hello, "This", 'Class supports fully-qualified package names');
 }
 
 # Unit class
 {
-    class Test4::A;
+    class Testcase4::A;
     method m { return "unit-A" }
 
-    class Test4::B;
+    class Testcase4::B;
     method m { return "unit-B" }
 
     package main;
-    ok(eq_array([Test4::A->new->m, Test4::B->new->m], ["unit-A", "unit-B"]),
+    ok(eq_array([Testcase4::A->new->m, Testcase4::B->new->m], ["unit-A", "unit-B"]),
         'Unit class syntax works');
 }
 
@@ -58,14 +62,14 @@ no warnings 'experimental::class';
     my $result = "";
     eval q{
         $result .= "a(" . __PACKAGE__ . "/" . eval("__PACKAGE__") . ")\n";
-        class Test5 1.23 {
+        class Testcase5 1.23 {
             $result .= "b(" . __PACKAGE__ . "/" . eval("__PACKAGE__") . ")\n";
         }
         $result .= "c(" . __PACKAGE__ . "/" . eval("__PACKAGE__") . ")\n";
     } or die $@;
-    is($result, "a(main/main)\nb(Test5/Test5)\nc(main/main)\n",
+    is($result, "a(main/main)\nb(Testcase5/Testcase5)\nc(main/main)\n",
         'class sets __PACKAGE__ correctly');
-    is($Test5::VERSION, 1.23, 'class NAME VERSION { BLOCK } sets $VERSION');
+    is($Testcase5::VERSION, 1.23, 'class NAME VERSION { BLOCK } sets $VERSION');
 }
 
 # Unit class syntax parses like package
@@ -73,14 +77,14 @@ no warnings 'experimental::class';
     my $result = "";
     eval q{
         $result .= "a(" . __PACKAGE__ . "/" . eval("__PACKAGE__") . ")\n";
-        class Test6 4.56;
+        class Testcase6 4.56;
         $result .= "b(" . __PACKAGE__ . "/" . eval("__PACKAGE__") . ")\n";
         package main;
         $result .= "c(" . __PACKAGE__ . "/" . eval("__PACKAGE__") . ")\n";
     } or die $@;
-    is($result, "a(main/main)\nb(Test6/Test6)\nc(main/main)\n",
+    is($result, "a(main/main)\nb(Testcase6/Testcase6)\nc(main/main)\n",
         'class sets __PACKAGE__ correctly');
-    is($Test6::VERSION, 4.56, 'class NAME VERSION; sets $VERSION');
+    is($Testcase6::VERSION, 4.56, 'class NAME VERSION; sets $VERSION');
 }
 
 done_testing;

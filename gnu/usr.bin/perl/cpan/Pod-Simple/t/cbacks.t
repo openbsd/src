@@ -1,19 +1,9 @@
-BEGIN {
-    if($ENV{PERL_CORE}) {
-        chdir 't';
-        @INC = '../lib';
-    }
-}
-
 use strict;
 use warnings;
-use Test;
-BEGIN { plan tests => 8 };
+use Test::More tests => 6;
 
 my $d;
 #use Pod::Simple::Debug (\$d, 0);
-
-ok 1;
 
 use Pod::Simple::XMLOutStream;
 use Pod::Simple::DumpAsXML;
@@ -22,10 +12,10 @@ use Pod::Simple::DumpAsText;
 my @from = (
  'Pod::Simple::XMLOutStream'
   => '<Document><head1>I LIKE PIE</head1></Document>',
-   
+
  'Pod::Simple::DumpAsXML'
   => "<Document>\n  <head1>\n    I LIKE PIE\n  </head1>\n</Document>\n",
-   
+
  'Pod::Simple::DumpAsText'
   => "++Document\n  ++head1\n    * \"I LIKE PIE\"\n  --head1\n--Document\n",
 
@@ -39,13 +29,13 @@ while(@from) {
   print "#Testing via class $x, version ", $x->VERSION(), "\n";
   my $p = $x->new;
   my($got, $exp);
-  ok scalar($got = $x->_out(
+  is scalar($got = $x->_out(
     # Mutor:
     sub {
      $_[0]->code_handler(sub { $more .= $_[1] . ":" . $_[0] . "\n"       } );
      $_[0]->cut_handler( sub { $more .= "~" . $_[1] . ":" .  $_[0]. "\n" } );
      $_[0]->pod_handler( sub { $more .= "+" . $_[1] . ":" .  $_[0]. "\n" } );
-     $_[0]->whiteline_handler( 
+     $_[0]->whiteline_handler(
                          sub { $more .= "=" . $_[1] . ":" .  $_[0]. "\n" } );
     } => join "\n",
     " ", # space outside pod
@@ -70,8 +60,8 @@ while(@from) {
     print '# Got vs exp:\n# ', Pod::Simple::BlackBox::pretty($got),
      "\n# ",Pod::Simple::BlackBox::pretty($exp),"\n";
   }
-  
-  ok scalar($got = $more), scalar($exp = join "\n" =>
+
+  is scalar($got = $more), scalar($exp = join "\n" =>
    "1: ",
    "2:\t# This is handy...",
    "=4:\t",
@@ -92,9 +82,3 @@ while(@from) {
     "\n# ",Pod::Simple::BlackBox::pretty($exp),"\n";
   }
 }
-
-
-print "# Wrapping up... one for the road...\n";
-ok 1;
-print "# --- Done with ", __FILE__, " --- \n";
-

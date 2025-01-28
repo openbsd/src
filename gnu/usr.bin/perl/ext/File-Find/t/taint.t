@@ -1,4 +1,5 @@
 #!./perl -T
+
 use strict;
 use lib qw( ./t/lib );
 
@@ -15,9 +16,8 @@ BEGIN {
         require File::Spec::Unix;
         @File::Spec::ISA = 'File::Spec::Unix';
     }
-    require File::Find;
-    import File::Find;
 }
+
 use Test::More;
 use File::Find;
 use File::Spec;

@@ -12,29 +12,6 @@ use warnings;
 use feature 'try';
 
 {
-    my $warnings;
-    BEGIN { $SIG{__WARN__} = sub { $warnings .= shift; }; }
-
-    my $x;
-    my ($ltry, $lcatch) = (__LINE__+1, __LINE__+4);
-    try {
-        $x .= "try";
-    }
-    catch ($e) {
-        $x .= "catch";
-    }
-    is($x, "try", 'successful try/catch runs try but not catch');
-
-    is($warnings, "try/catch is experimental at $0 line $ltry.\n" .
-                  "try/catch is experimental at $0 line $lcatch.\n",
-        'compiletime warnings');
-    BEGIN { undef $SIG{__WARN__}; }
-}
-
-
-no warnings 'experimental::try';
-
-{
     my $x;
     try {
         $x .= "try";
@@ -282,6 +259,27 @@ no warnings 'experimental::try';
 }
 
 # try/catch/finally
+
+# experimental warnings
+{
+    my $warnings;
+    BEGIN { $SIG{__WARN__} = sub { $warnings .= shift; }; }
+
+    my ($lfinally) = (__LINE__+5);
+    try {
+    }
+    catch ($e) {
+    }
+    finally {
+    }
+
+    is($warnings, "try/catch/finally is experimental at $0 line $lfinally.\n",
+        'compiletime warnings');
+    BEGIN { undef $SIG{__WARN__}; }
+}
+
+no warnings 'experimental::try';
+
 {
     my $x;
     try {

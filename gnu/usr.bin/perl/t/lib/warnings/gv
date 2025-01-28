@@ -292,3 +292,18 @@ if ($ㄒ) {
 EXPECT
 Name "팣칵ぇ::ʎ" used only once: possible typo at - line 11.
 Use of uninitialized value $팣칵ぇ::ʎ in print at - line 11.
+########
+# https://github.com/Perl/perl5/issues/21271
+use v5.36;
+no strict;
+my $x = $i;
+EXPECT
+Name "main::i" used only once: possible typo at - line 4.
+########
+# https://github.com/Perl/perl5/issues/13814
+use warnings FATAL => qw(once);
+print @Foo::bar, "\n";
+print "still alive\n";
+EXPECT
+OPTION fatal
+Name "Foo::bar" used only once: possible typo at - line 3.

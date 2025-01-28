@@ -200,6 +200,7 @@ SKIP: {
 ### bug #78030
 ### tests for symlinks with relative paths
 ### seen on MSWin32
+if ($^O ne 'msys') # symlink tests fail on Windows/msys2
 {   ok( 1,                      "Testing bug 78030" );
 		my $archname = 'tmp-symlink.tar.gz';
 		{	#build archive

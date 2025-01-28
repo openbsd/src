@@ -33,7 +33,7 @@ ok $b->have_cplusplus, "have_cplusplus";
 $source_file = File::Spec->catfile('t', 'cplust.cc');
 {
   open my $FH, '>', $source_file or die "Can't create $source_file: $!";
-  print $FH "class Bogus { public: int boot_cplust() { return 1; } };\n";
+  print $FH q<namespace Bogus { extern "C" int boot_cplust() { return 1; } };> . "\n";
   close $FH;
 }
 ok -e $source_file, "source file '$source_file' created";

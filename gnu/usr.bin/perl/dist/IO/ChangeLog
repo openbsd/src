@@ -1,3 +1,12 @@
+IO 1.55
+    * XS changes for getline/getlines to support reference counted stacks
+    * moved the binmode method from IO::File to IO::Handle, since all types
+      of IO handle support layers https://github.com/Perl/perl5/issues/17457
+    * IO::Select documentation updates
+
+IO 1.54
+    * fix the blocking() method on Windows https://github.com/Perl/perl5/issues/17455
+
 IO 1.52
     * Replace "define<tab>" with "define<space>" in poll.h
 

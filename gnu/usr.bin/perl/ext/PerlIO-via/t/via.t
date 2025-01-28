@@ -13,7 +13,7 @@ use warnings;
 
 my $tmp = "via$$";
 
-use Test::More tests => 26;
+use Test::More tests => 32;
 
 my $fh;
 my $a = join("", map { chr } 0..255) x 10;
@@ -131,6 +131,48 @@ is( $obj, 'PerlIO::via::Bar', 'search for package PerlIO::via::Bar' );
 
     sub GETARG {
         "XXX";
+    }
+}
+
+{
+    my $read_buf = "x" x 10;
+    my $read_res;
+
+    open my $fh, "<:via(BadRead)", $tmp
+      or die "Cannot open via BadRead";
+    my $buf;
+    my $warn = '';
+    local $SIG{__WARN__} = sub { $warn .= "@_\n" };
+    # this would segfault
+    $warn = '';
+    $read_res = -1;
+    ok(!eval { read($fh, $buf, 10) }, "READ returns -1");
+    like($warn, qr/Invalid return from PerlIO::via::BadRead::READ = -1, expected undef or 0 to 10/,
+         "check warning");
+
+    $warn = '';
+    $read_res = 11;
+    ok(!eval { read($fh, $buf, 10) }, "READ returns 11 when 10 requested");
+    like($warn, qr/Invalid return from PerlIO::via::BadRead::READ = 11, expected undef or 0 to 10/,
+         "check warning");
+
+    $warn = '';
+    $read_res = 10;
+    $read_buf = "x" x 9;
+    ok(!eval { read($fh, $buf, 10) }, "READ returns 10 when 9 in buffer");
+    like($warn, qr/Invalid return from PerlIO::via::BadRead::READ = 10, beyond end of the returned buffer at 9/,
+         "check warning");
+
+    package PerlIO::via::BadRead;
+
+    sub PUSHED {
+        bless {}, shift;
+    }
+
+    sub READ {
+        $_[1] = $read_buf;
+
+        return $read_res;
     }
 }
 

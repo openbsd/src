@@ -492,11 +492,11 @@ how the membership has changed over time.
 
 =over
 
+=item * Graham Knop
+
 =item * Paul Evans
 
 =item * Philippe Bruhat
-
-=item * Ricardo Signes
 
 =back
 

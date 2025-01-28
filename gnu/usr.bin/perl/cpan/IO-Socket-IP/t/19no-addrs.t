@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -14,7 +13,7 @@ use Socket qw( SOCK_STREAM AF_INET );
 
 {
    my $sock = IO::Socket::IP->new( Family => AF_INET );
-   my $save_exc = $@;
+   my $save_exc = $IO::Socket::errstr;
    ok( defined $sock, 'Constructor yields handle for Family => AF_INET' ) or
       diag( "Exception was $save_exc" );
 
@@ -31,7 +30,7 @@ SKIP: {
       skip "Unable to bind to ::1", 4;
 
    my $sock = IO::Socket::IP->new( Family => $AF_INET6 );
-   my $save_exc = $@;
+   my $save_exc = $IO::Socket::errstr;
    ok( defined $sock, 'Constructor yields handle for Family => AF_INET6' ) or
       diag( "Exception was $save_exc" );
 
@@ -44,7 +43,7 @@ SKIP: {
 # what family
 {
    my $sock = IO::Socket::IP->new( Type => SOCK_STREAM );
-   my $save_exc = $@;
+   my $save_exc = $IO::Socket::errstr;
    ok( defined $sock, 'Constructor yields handle for Type => SOCK_STREAM' ) or
       diag( "Exception was $save_exc" );
 

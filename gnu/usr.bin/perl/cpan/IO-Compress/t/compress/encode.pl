@@ -19,7 +19,7 @@ BEGIN
     # use Test::NoWarnings, if available
     my $extra = 0 ;
 
-    my $st = eval { require Test::NoWarnings ;  import Test::NoWarnings; 1; };
+    my $st = eval { require Test::NoWarnings ;  Test::NoWarnings->import; 1; };
     $extra = 1
         if $st ;
 

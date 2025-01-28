@@ -1,4 +1,3 @@
-use 5;
 package Pod::Simple::JustPod;
 # ABSTRACT: Pod::Simple formatter that extracts POD from a file containing
 #           other things as well
@@ -326,7 +325,7 @@ L<mailto:pod-people-subscribe@perl.org> to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+to clone L<https://github.com/theory/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 L<mailto:<bug-pod-simple@rt.cpan.org>.

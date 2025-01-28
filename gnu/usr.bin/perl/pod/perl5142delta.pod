@@ -19,7 +19,7 @@ No changes since 5.14.0.
 
 =head1 Security
 
-=head2 C<File::Glob::bsd_glob()> memory error with GLOB_ALTDIRFUNC (CVE-2011-2728).
+=head2 C<File::Glob::bsd_glob()> memory error with GLOB_ALTDIRFUNC (CVE-2011-2728)
 
 Calling C<File::Glob::bsd_glob> with the unsupported flag GLOB_ALTDIRFUNC would
 cause an access violation / segfault.  A Perl program that accepts a flags value from

@@ -21,7 +21,7 @@ scheme.
 
 =head1 Incompatible Changes
 
-=head2 WARNING:  This version is not binary compatible with Perl 5.004.
+=head2 WARNING:  This version is not binary compatible with Perl 5.004
 
 Starting with Perl 5.004_50 there were many deep and far-reaching changes
 to the language internals.  If you have dynamically loaded extensions

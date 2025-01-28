@@ -1,16 +1,7 @@
-#!/usr/bin/perl -w
-
 # t/xhtml01.t - check basic output from Pod::Simple::XHTML
-
-BEGIN {
-    chdir 't' if -d 't';
-}
-
 use strict;
 use warnings;
-use lib '../lib';
 use Test::More tests => 62;
-#use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
 
@@ -745,11 +736,11 @@ is $results, <<EOF, 'anchor and h1 use same section id for complex sections';
 EOF
 
 sub initialize {
-	$_[0] = Pod::Simple::XHTML->new;
+    $_[0] = Pod::Simple::XHTML->new;
         $_[0]->html_header('');
         $_[0]->html_footer('');
         $_[0]->index(1);
-	$_[0]->output_string( \$results ); # Send the resulting output to a string
-	$_[1] = '';
-	return;
+    $_[0]->output_string( \$results ); # Send the resulting output to a string
+    $_[1] = '';
+    return;
 }

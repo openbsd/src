@@ -13,9 +13,9 @@
 
 use Test::More;
 use Config;
-use XS::APItest qw(test_EXTEND);
+use XS::APItest qw(test_EXTEND hwm_checks_enabled bad_EXTEND);
 
-plan tests => 48;
+plan tests => 50;
 
 my $uvsize   = $Config::Config{uvsize};   # sizeof(UV)
 my $sizesize = $Config::Config{sizesize}; # sizeof(Size_t)
@@ -65,4 +65,16 @@ for my $offset (-1, 0, 1) {
 
         }
     }
+}
+
+SKIP:
+{
+    # we've extended the stack a fair bit above so the actual bad_EXTEND*() should
+    # be safe in terms of UB *here*
+    skip "HWM checks not enabled", 2
+      unless hwm_checks_enabled();
+
+    ok(!eval { bad_EXTEND(); 1 }, "bad_EXTEND() should throw");
+    like($@, qr/^panic: XSUB XS::APItest::bad_EXTEND \(APItest\.c\) failed to extend arg stack/,
+         "check panic message");
 }

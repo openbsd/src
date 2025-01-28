@@ -31,9 +31,9 @@ BEGIN {
 
 $_ = "op/*.t";
 my @r = glob;
-is($_, "op/*.t");
+is($_, "op/*.t", 'pattern intact after use of core glob function');
 
-cmp_ok(scalar @r, '>=', 3);
+cmp_ok(scalar @r, '>=', 3, 'check if core glob function works');
 
 @r = <*/*.t>;
 # at least t/global.t t/basic.t, t/taint.t

@@ -16,7 +16,7 @@ no warnings 'experimental::class';
 
 use threads;
 
-class Test1 {
+class Testcase1 {
     field $x :param;
     method x { return $x }
 }
@@ -31,7 +31,7 @@ class Test1 {
 }
 
 {
-    my $obj = Test1->new(x => 10);
+    my $obj = Testcase1->new(x => 10);
     threads->create(sub {
         is($obj->x, 10, '$obj->x inside thread created before');
     })->join;
@@ -39,7 +39,7 @@ class Test1 {
 }
 
 threads->create(sub {
-    my $obj = Test1->new(x => 20);
+    my $obj = Testcase1->new(x => 20);
     is($obj->x, 20, '$obj->x created inside thread');
 })->join;
 next_test(); # account for is() inside thread

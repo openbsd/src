@@ -264,3 +264,20 @@ ok(!$nz, 'previously stringified -0.0 is boolean false');
 $nz = -0.0;
 is sprintf("%+.f", - -$nz), sprintf("%+.f", - -$nz),
   "negation does not coerce negative zeroes";
+
+# Test implicit IV <-> NV conversions in arithmetic operators.
+BEGIN { $::additional_tests += 2 }
+
+# Following 2 tests should pass regardless of NV_PRESERVES_UV_BITS.
+# If NV_PRESERVES_UV_BITS > 60, both of LHS and RHS should be integer,
+# otherwise both should be floating-point value (NV).
+sub plus_one { (shift) + 1 }
+{
+    my $first = plus_one(0x1p60);
+    my $second = plus_one(0x1p60);
+    is $second, $first,
+        "repeated evaluation of (0x1p60 + 1) should be identical";
+}
+
+is 0x1p60 - 1.0, 0x1p60 - 1,
+    "(0x1p60 - 1) and (0x1p60 - 1.0) should be identical";

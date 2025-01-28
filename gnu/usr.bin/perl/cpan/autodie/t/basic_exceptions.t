@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-use Test::More tests => 19;
+use Test::More tests => 24;
 
 use constant NO_SUCH_FILE => "this_file_had_better_not_exist";
 
@@ -46,3 +46,21 @@ eval { xyzzy(); };
 isa_ok($@, 'autodie::exception');
 is($@->caller, __PACKAGE__."::xyzzy", "Subroutine caller test");
 is($@->line, $line2, "Subroutine line test");
+
+eval {
+    no warnings 'once';    # To prevent the following close from complaining.
+    close(THIS_FILEHANDLE_AINT_OPEN);
+};
+
+ok(! $@, "Close without autodie should fail silent");
+
+eval {
+    use autodie ':io';
+    close(THIS_FILEHANDLE_AINT_OPEN);
+};
+
+like($@, qr{Can't close filehandle 'THIS_FILEHANDLE_AINT_OPEN'},"Nice msg from close");
+
+ok($@, 'boolean overload works');
+ok $@ eq $@.'',                 "string overloading is complete (eq)";
+ok( ($@ cmp $@.'') == 0,        "string overloading is complete (cmp)" );

@@ -18,7 +18,7 @@
 #include "unicode_constants.h"
 #include "regcomp_internal.h"
 
-
+#ifdef PERL_RE_BUILD_AUX
 void
 Perl_populate_bitmap_from_invlist(pTHX_ SV * invlist, const UV offset, const U8 * bitmap, const Size_t len)
 {
@@ -70,6 +70,7 @@ Perl_populate_invlist_from_bitmap(pTHX_ const U8 * bitmap, const Size_t bitmap_l
         }
     }
 }
+#endif /* PERL_RE_BUILD_AUX */
 
 /* This section of code defines the inversion list object and its methods.  The
  * interfaces are highly subject to change, so as much as possible is static to

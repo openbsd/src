@@ -39,7 +39,7 @@ is($one->about->{uuid}, 123, "Set uuid in about facet");
 $one = $CLASS->new(about => { uuid => 123 });
 is($one->uuid, 123, "set uuid attribute");
 
-my $trace = {frame => ['main', 'file.t', 42, 'foo'], tid => 0, pid => $$};
+my $trace = {frame => ['main', 'file.t', 42, 'foo'], tid => 0, pid => $$, stamp => 123};
 $one = $CLASS->new(trace => $trace);
 ok($trace != $one->trace, "Did not keep or modify the original trace ref");
 ok($one->trace->isa('Test2::EventFacet::Trace'), "Blessed the trace");

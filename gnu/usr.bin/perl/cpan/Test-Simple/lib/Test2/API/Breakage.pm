@@ -2,7 +2,7 @@ package Test2::API::Breakage;
 use strict;
 use warnings;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 
 use Test2::Util qw/pkg_to_file/;
@@ -75,7 +75,7 @@ sub report {
         next if eval { $mod->VERSION($want); 1 };
         my $error = $@;
         chomp $error;
-        push @warn => " * Module '$mod' is outdated, we recommed updating above $want. error was: '$error'; INC is $INC{$file}";
+        push @warn => " * Module '$mod' is outdated, we recommend updating above $want. error was: '$error'; INC is $INC{$file}";
     }
 
     for my $mod (keys %required) {
@@ -150,7 +150,7 @@ not tested or verified.
 =head1 SOURCE
 
 The source code repository for Test2 can be found at
-F<http://github.com/Test-More/test-more/>.
+L<https://github.com/Test-More/test-more/>.
 
 =head1 MAINTAINERS
 
@@ -175,6 +175,6 @@ Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-See F<http://dev.perl.org/licenses/>
+See L<https://dev.perl.org/licenses/>
 
 =cut

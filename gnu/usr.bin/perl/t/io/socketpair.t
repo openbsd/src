@@ -4,7 +4,7 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    require Config; import Config;
+    require Config; Config->import;
     skip_all_if_miniperl();
     for my $needed (qw(d_socket)) {
 	if ($Config{$needed} ne 'define') {

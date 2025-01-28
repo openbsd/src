@@ -118,8 +118,11 @@ my @test_types = qw(SCALAR ARRAY HASH GLOB);
 {
     my %h;
     Hash::Util::FieldHash::_fieldhash \ %h, $fieldhash_mode;
-    $h{ []} = 123;
-    is( keys %h, 0, "blip");
+    my $ar = [];
+    $h{$ar} = 123;
+    is( keys %h, 1, "blip");
+    undef $ar;
+    is( keys %h, 0, "blop");
 }
 
 for my $preload ( [], [ map {}, 1 .. 3] ) {

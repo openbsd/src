@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -11,7 +10,7 @@ use Socket qw( AF_INET SOCK_STREAM );
 
 socket( my $tmph, AF_INET, SOCK_STREAM, 0 ) or die "Cannot socket() - $!";
 
-my $socket = IO::Socket::IP->new or die "Cannot create IO::Socket::IP - $@";
+my $socket = IO::Socket::IP->new or die "Cannot create IO::Socket::IP - $IO::Socket::errstr";
 
 $socket->socket( AF_INET, SOCK_STREAM, 0 ) or die "Cannot socket() - $!";
 my $fileno = $socket->fileno;

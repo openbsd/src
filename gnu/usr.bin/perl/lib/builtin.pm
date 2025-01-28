@@ -1,10 +1,10 @@
-package builtin 0.008;
+package builtin 0.014;
 
 use strict;
 use warnings;
 
-# All code, including &import, is implemented by always-present functions in
-# the perl interpreter itself.
+# All code, including &import, is implemented by always-present
+# functions in the perl interpreter itself.
 # See also `builtin.c` in perl source
 
 1;
@@ -18,15 +18,20 @@ builtin - Perl pragma to import built-in utility functions
 
     use builtin qw(
         true false is_bool
+        inf nan
         weaken unweaken is_weak
         blessed refaddr reftype
         created_as_string created_as_number
+        stringify
         ceil floor
         indexed
         trim
         is_tainted
         export_lexically
+        load_module
     );
+
+    use builtin ':5.40';  # most of the above
 
 =head1 DESCRIPTION
 
@@ -40,12 +45,9 @@ can be requested for convenience.
 Individual named functions can be imported by listing them as import
 parameters on the C<use> statement for this pragma.
 
-The overall C<builtin> mechanism, as well as every individual function it
-provides, are currently B<experimental>.
-
-B<Warning>:  At present, the entire C<builtin> namespace is experimental.
-Calling functions in it will trigger warnings of the C<experimental::builtin>
-category.
+B<Warning>:  At present, many of the functions in the C<builtin> namespace are
+experimental.  Calling them will trigger warnings of the
+C<experimental::builtin> category.
 
 =head2 Lexical Import
 
@@ -79,6 +81,33 @@ don't accidentally appear as object methods from a class.
     # Can't locate object method "true" via package "An::Object::Class"
     #   at ...
 
+Once imported, a lexical function is much like any other lexical symbol
+(such as a variable) in that it cannot be removed again.  If you wish to
+limit the visiblity of an imported C<builtin> function, put it inside its
+own scope:
+
+    {
+      use builtin 'refaddr';
+      ...
+    }
+
+=head2 Version Bundles
+
+The entire set of builtin functions that were considered non-experimental by a
+version of perl can be imported all at once, by requesting a version bundle.
+This is done by giving the perl release version (without its subversion
+suffix) after a colon character:
+
+    use builtin ':5.40';
+
+The following bundles currently exist:
+
+    Version    Includes
+    -------    --------
+
+    :5.40      true false weaken unweaken is_weak blessed refaddr reftype
+               ceil floor is_tainted trim indexed
+
 =head1 FUNCTIONS
 
 =head2 true
@@ -106,6 +135,8 @@ This gives an equivalent value to expressions like C<!!0> or C<!1>.
 
     $bool = is_bool($val);
 
+This function is currently B<experimental>.
+
 Returns true when given a distinguished boolean value, or false if not. A
 distinguished boolean value is the result of any boolean-returning builtin
 function (such as C<true> or C<is_bool> itself), boolean-returning operator
@@ -114,6 +145,22 @@ or any variable containing one of these results.
 
 This function used to be named C<isbool>. A compatibility alias is provided
 currently but will be removed in a later version.
+
+=head2 inf
+
+    $num = inf;
+
+This function is currently B<experimental>.
+
+Returns the floating-point infinity value.
+
+=head2 nan
+
+    $num = nan;
+
+This function is currently B<experimental>.
+
+Returns the floating-point "Not-a-Number" value.
 
 =head2 weaken
 
@@ -167,6 +214,8 @@ C<ARRAY> for array references, or C<HASH> for hash references.
 
     $bool = created_as_string($val);
 
+This function is currently B<experimental>.
+
 Returns a boolean representing if the argument value was originally created as
 a string. It will return true for any scalar expression whose most recent
 assignment or modification was of a string-like nature - such as assignment
@@ -187,6 +236,8 @@ strings. For example
 =head2 created_as_number
 
     $bool = created_as_number($val);
+
+This function is currently B<experimental>.
 
 Returns a boolean representing if the argument value was originally created as
 a number. It will return true for any scalar expression whose most recent
@@ -210,6 +261,26 @@ their creation history, these two functions are intended to be used by data
 serialisation modules such as JSON encoders or similar situations, where
 language interoperability concerns require making a distinction between values
 that are fundamentally stringlike versus numberlike in nature.
+
+=head2 stringify
+
+    $str = stringify($val);
+
+Returns a new plain perl string that represents the given argument.
+
+When given a value that is already a string, a copy of this value is returned
+unchanged. False booleans are treated like the empty string.
+
+Numbers are turned into a decimal representation. True booleans are treated
+like the number 1.
+
+References to objects in classes that have L<overload> and define the C<"">
+overload entry will use the delegated method to provide a value here.
+
+Non-object references, or references to objects in classes without a C<"">
+overload will return a string that names the underlying container type of
+the reference, its memory address, and possibly its class name if it is an
+object.
 
 =head2 ceil
 
@@ -293,6 +364,8 @@ Returns true when given a tainted variable.
 
     export_lexically($name1, $ref1, $name2, $ref2, ...)
 
+This function is currently B<experimental>.
+
 Exports new lexical names into the scope currently being compiled. Names given
 by the first of each pair of values will refer to the corresponding item whose
 reference is given by the second. Types of item that are permitted are
@@ -317,6 +390,25 @@ Z<>
 This must be called at compile time; which typically means during a C<BEGIN>
 block. Usually this would be used as part of an C<import> method of a module,
 when invoked as part of a C<use ...> statement.
+
+=head2 load_module
+
+    load_module($module_name);
+
+This function is currently B<experimental>.
+
+Loads a named module from the inclusion paths (C<@INC>).  C<$module_name> must
+be a string that provides a module name.  It cannot be omitted, and providing
+an invalid module name will result in an exception.  Not providing any argument
+results in a compilation error.  Returns the loaded module's name on success.
+
+The effect of C<load_module>-ing a module is mostly the same as C<require>-ing,
+down to the same error conditions when the module does not exist, does not
+compile, or does not evaluate to a true value.  See also
+L<the C<module_true> feature|feature/"The 'module_true' feature">.
+
+C<load_module> can't be used to require a particular version of Perl, nor can
+it be given a bareword module name as an argument.
 
 =head1 SEE ALSO
 

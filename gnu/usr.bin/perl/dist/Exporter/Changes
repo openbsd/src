@@ -1,5 +1,10 @@
 Revision history for Perl extension Exporter.
 
+5.78 Sat December 30 2023
+     - Minor tweaks to Makefile.PL to reflect that the file require 5.006,
+     - Fixed the LICENSE field to be 'perl_5' and not 'perl'.
+     - Whitespace cleanup on Changes
+
 5.77 Mon January 23 2023
      - Document non-inheriting as default mechanism
      - Make Exporter strict and warnings compliant

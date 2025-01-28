@@ -25,9 +25,6 @@ like(exn('my $h = { "x" x 2**31, undef }'),
      qr/^\QSorry, hash keys must be smaller than 2**31 bytes\E\b/,
      "hash constructed with huge key");
 
-TODO: {
-    local $TODO = "Doesn't yet work with OP_MULTIDEREF";
-    like(exn('my %h; %h{ "x" x 2**31 } = undef'),
-         qr/^\QSorry, hash keys must be smaller than 2**31 bytes\E\b/,
-         "assign to huge hash key");
-}
+like(exn('my %h; $h{ "x" x 2**31 } = undef'),
+     qr/^\QSorry, hash keys must be smaller than 2**31 bytes\E\b/,
+     "assign to huge hash key");

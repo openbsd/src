@@ -1,18 +1,7 @@
-#!/usr/bin/perl -w
-
 # t/rtf_utf8.t - Check that RTF works with UTF-8 input
-
-BEGIN {
-    chdir 't' if -d 't';
-}
-
-my $expected = join "", <DATA>;
-
 use strict;
 use warnings;
-use lib '../lib';
 use Test::More;
-use File::Spec;
 
 if ($] < 5.008) {
     plan skip_all => "Doesn't work before 5.8";
@@ -21,6 +10,14 @@ else {
     plan tests => 5;
 }
 
+use File::Spec;
+use Cwd ();
+use File::Basename ();
+
+my $t_dir = File::Basename::dirname(Cwd::abs_path(__FILE__));
+
+my $expected = join "", <DATA>;
+
 for my $format (qw(RTF)) {
     my $class = "Pod::Simple::RTF";
     use_ok $class or next;
@@ -28,7 +25,7 @@ for my $format (qw(RTF)) {
 
     my $output = '';
     ok $parser->output_string(\$output), "Set RTF output string";
-    ok $parser->parse_file(File::Spec->catfile(qw(corpus polish_utf8.txt))),
+    ok $parser->parse_file(File::Spec->catfile($t_dir, qw(corpus polish_utf8.txt))),
         "Parse to RTF via parse_file()";
     $output =~ s/\\info.*?author \[see doc\]\}/VARIANT TEXT DELETED/s;
     $output =~ s/$/\n/;

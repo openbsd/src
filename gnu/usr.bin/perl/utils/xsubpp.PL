@@ -1,4 +1,15 @@
 #!/usr/local/bin/perl
+#
+# xsubpp.PL: this script's normal purpose is to copy
+#
+#     dist/ExtUtils-ParseXS/lib/ExtUtils/xsubpp
+# to
+#     utils/xsubpp
+#
+# while prepending the standard "eval 'exec ...'" interpreter invocation
+# boilerplate.
+# This script belongs to the perl distribution, rather than belonging to
+# ExtUtils-ParseXS.
 
 use Config;
 use File::Basename qw(&basename &dirname);

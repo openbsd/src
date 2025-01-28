@@ -26,7 +26,7 @@ package main;
 
 
 my $TB = Test::Builder->create;
-$TB->plan(tests => 102);
+$TB->plan(tests => 110);
 
 # Utility testing functions.
 sub ok ($;$) {
@@ -427,4 +427,32 @@ ERR
     my $version2 = v1.2.4;
     ok !is_deeply( [\\$version1], [\\$version2], "version objects");
     is( $out, "not ok 42 - version objects\n" );
+}
+
+{
+    my $version1 = v1.2.3;
+    my $version2 = '' . v1.2.3;
+    ok is_deeply( [\$version1], [\$version2], "version objects");
+    is( $out, "ok 43 - version objects\n" );
+}
+
+{
+    my $version1 = v1.2.3;
+    my $version2 = v1.2.3;
+    ok !is_deeply( [$version1], [\$version2], "version objects");
+    is( $out, "not ok 44 - version objects\n" );
+}
+
+{
+    my $string = "abc";
+    my $string2 = "b";
+    ok is_deeply( [\substr($string, 1, 1)], [\$string2], "lvalue ref");
+    is( $out, "ok 45 - lvalue ref\n" );
+}
+
+{
+    my $string = "b";
+    my $string2 = "b";
+    ok !is_deeply( [\substr($string, 1, 1)], ["b"], "lvalue ref");
+    is( $out, "not ok 46 - lvalue ref\n" );
 }

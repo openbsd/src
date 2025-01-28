@@ -190,7 +190,10 @@ is_deeply( [ uniqnum @in],
 # Hard to know for sure what an Inf is going to be. Lets make one
 my $Inf = 0 + 1E1000;
 my $NaN;
-$Inf **= 1000 while ( $NaN = $Inf - $Inf ) == $NaN;
+for (1..10) {
+    $Inf **= 1000;
+    last unless ( $NaN = $Inf - $Inf ) == $NaN;
+}
 
 is_deeply( [ uniqnum 0, 1, 12345, $Inf, -$Inf, $NaN, 0, $Inf, $NaN ],
            [ 0, 1, 12345, $Inf, -$Inf, $NaN ],

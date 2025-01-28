@@ -1,34 +1,16 @@
-BEGIN {
-    chdir 't' if -d 't';
-    if($ENV{PERL_CORE}) {
-        @INC = '../lib';
-    }
-}
-
-use lib '../lib';
-
 use strict;
 use warnings;
-use Test;
-BEGIN { plan tests => 5 };
+use Test::More tests => 5;
 
-sub source_path {
-    my $file = shift;
-    if ($ENV{PERL_CORE}) {
-        require File::Spec;
-        my $updir = File::Spec->updir;
-        my $dir = File::Spec->catdir ($updir, 'lib', 'Pod', 'Simple', 't');
-        return File::Spec->catfile ($dir, $file);
-    } else {
-        return $file;
-    }
-}
+use File::Spec;
+use Cwd ();
+use File::Basename ();
 
 use Pod::Simple::Text;
 $Pod::Simple::Text::FREAKYMODE = 1;
 
 my $parser  = Pod::Simple::Text->new();
- 
+
 foreach my $file (
   "junk1.pod",
   "junk2.pod",
@@ -36,20 +18,21 @@ foreach my $file (
   "perlfaq.pod",
   "perlvar.pod",
 ) {
+    my $full_file = File::Spec->catfile(File::Basename::dirname(Cwd::abs_path(__FILE__)), $file);
 
-  unless(-e source_path($file)) {
-    ok 0;
-    print "# But $file doesn't exist!!\n";
-    next;
-  }
+    unless(-e $full_file) {
+        ok 0;
+        print "# But $full_file doesn't exist!!\n";
+        next;
+    }
 
-    my $precooked = $file;
+    my $precooked = $full_file;
     my $outstring;
     my $compstring;
     $precooked =~ s<\.pod><o.txt>s;
     $parser->reinit;
     $parser->output_string(\$outstring);
-    $parser->parse_file(source_path($file));
+    $parser->parse_file($full_file);
 
     open(IN, $precooked) or die "Can't read-open $precooked: $!";
     {
@@ -71,7 +54,7 @@ foreach my $file (
       ok 1;
       next;
     } else {
-    
+
       my $x = $outstring ^ $compstring;
       $x =~ m/^(\x00*)/s or die;
       my $at = length($1);
@@ -84,7 +67,7 @@ foreach my $file (
         print "# ", substr($compstring,$at,20), "\n";
         print "#      ^...";
       }
-    
+
       ok 0;
       printf "# Unequal lengths %s and %s\n", length($outstring), length($compstring);
       next;

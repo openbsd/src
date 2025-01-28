@@ -22,6 +22,7 @@ my @OPTSPEC= qw(
     man
     authors_file=s
     mailmap_file=s
+    source_dir=s
 
     validate|tap
     verbose+
@@ -362,7 +363,7 @@ To resolve this you can perform one or more of these steps:
        Make sure the conributor is ok with the decisions you make before
        you merge.
 
-    3. You are already an author but your git config is broken or
+    4. You are already an author but your git config is broken or
        different from what you expect, or you are a new author but you
        havent configured your git details properly, in which case you
        can use something like the following commands:
@@ -374,7 +375,7 @@ To resolve this you can perform one or more of these steps:
        do. If you are not then you should perform option 2 or 4 as well
        afterwards.
 
-    4. You do not want to be listed in AUTHORS: commit the changes,
+    5. You do not want to be listed in AUTHORS: commit the changes,
        including any untracked unignored files, and then run
 
             Porting/updateAUTHORS.pl --exclude

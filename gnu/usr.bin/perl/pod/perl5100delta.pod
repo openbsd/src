@@ -663,6 +663,13 @@ On 5.10.0 and newer, the code warns when main contains C<use warnings;>
 It does not matter if Foo::Base or Foo::Bar have warnings enabled
 to disable the warning one has to modify main.
 
+=head2 Removal of C<package;> (C<package> without arguments)
+
+The C<package;> syntax that would let code switch out of any package (and thus
+require the use of either lexical or fully-qualified names) has been removed.
+Its semantics were never that clear and its implementation even less so. (It
+was previously deprecated in perl 5.8.0.)
+
 =head1 Modules and Pragmata
 
 =head2 Upgrading individual core modules

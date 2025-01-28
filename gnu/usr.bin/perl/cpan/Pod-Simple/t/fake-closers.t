@@ -1,16 +1,7 @@
-BEGIN {
-    if($ENV{PERL_CORE}) {
-        chdir 't';
-        @INC = '../lib';
-    }
-}
-
 use strict;
-use Test::More;
+use warnings;
+use Test::More tests => 7;
 use Data::Dumper;
-BEGIN { plan tests => 9 };
-
-ok 1;
 
 my $i = 0;
 
@@ -38,14 +29,6 @@ for my $pod ("=begin html\n\ntag=cut",
     $parser->parse_string_document($pod);
     is($parser->{'closer-flag'}, 1, "fake closer ". ++$i);
 }
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-print "# Wrapping up... one for the road...\n";
-ok 1;
-print "# --- Done with ", __FILE__, " --- \n";
-
-1;
 
 package Pod::Simple::Blurb;
 use warnings;

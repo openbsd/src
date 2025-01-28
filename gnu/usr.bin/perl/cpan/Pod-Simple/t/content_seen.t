@@ -1,14 +1,6 @@
-BEGIN {
-    if($ENV{PERL_CORE}) {
-        chdir 't';
-        @INC = '../lib';
-    }
-}
-
 use strict;
 use warnings;
-use Test;
-BEGIN { plan tests => 2 };
+use Test::More tests => 2;
 
 use Pod::Simple::Text;
 

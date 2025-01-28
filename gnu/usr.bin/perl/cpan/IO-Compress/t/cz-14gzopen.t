@@ -18,7 +18,7 @@ BEGIN {
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
-        if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
+        if eval { require Test::NoWarnings ;  Test::NoWarnings->import; 1 };
 
     plan tests => 264 + $extra ;
 
@@ -500,6 +500,17 @@ foreach my $stdio ( ['-', '-'], [*STDIN, *STDOUT])
         skip "Cannot create non-writable file", 3
             if -w $name ;
 
+        # double check non-writable for AFS
+        my $written = do {
+                        no warnings;
+                        my $fh;
+                        open $fh, '>', $name &&
+                        print $fh "hello world"
+                    };
+
+        skip "Cannot create non-writable file", 3
+            if $written ;
+
         ok ! -w $name, "  input file not writable";
 
         my $fil = gzopen($name, "wb") ;
@@ -521,6 +532,17 @@ foreach my $stdio ( ['-', '-'], [*STDIN, *STDOUT])
 
         skip "Cannot create non-readable file", 3
             if -r $name ;
+
+        # double check non-readable for AFS
+        my $readable = do {
+                        no warnings;
+                        my $fh;
+                        open $fh, '<', $name &&
+                        read $fh, my $data, 1
+                    };
+
+        skip "Cannot create non-writable file", 3
+            if $readable ;
 
         ok ! -r $name, "  input file not readable";
         $gzerrno = 0;

@@ -45,4 +45,26 @@ foreach my $func (qw(printf sprintf)) {
 	 "POSIX::$func for 0 arguments gives expected error");
 }
 
+foreach my $func (qw(cos exp fabs log sin sqrt)) {
+    local $_ = 3;
+    is(
+        eval "POSIX::$func(); 1",
+        undef,
+        "POSIX::$func() fails; needs explicit argument"
+    );
+}
+
+{
+    my ($current_umask, $umask_is_now);
+    $current_umask = umask();
+    $umask_is_now  = POSIX::umask($current_umask);
+    is($umask_is_now, $current_umask,
+        "POSIX::umask, when provided with current umask, returns same as builtin umask()");
+    is(
+        eval "$umask_is_now  = POSIX::umask($current_umask); 1",
+        undef,
+        "POSIX::umask() fails; needs explicit argument"
+    );
+}
+
 done_testing();

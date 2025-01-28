@@ -23,25 +23,28 @@ perlclass - Perl class syntax reference
 
 =head1 DESCRIPTION
 
-This document describes the syntax of the Perl's C<class> feature, which
-provides native keywords supporting object-oriented programming paradigm.
+This document describes the syntax of Perl's C<class> feature, which provides
+native keywords for object-oriented programming.
 
 =head2 History
 
 Since Perl 5, support for objects revolved around the concept of I<blessing>
-references with a package name. Such reference could then be used to call
-subroutines from the package it was blessed with (or any of its parents). This
-system, while bare-bones, was flexible enough to allow creation of multiple
-more advanced, community-driven systems for object orientation.
+references with a package name (see L<perlfunc/"bless REF,CLASSNAME">). Such a
+reference could then be used to call subroutines from the package it was
+blessed with (or any of its parents). This system, while bare-bones, was
+flexible enough to allow creation of multiple more advanced, community-driven
+systems for object orientation. For more information, see L<perlmod> and
+L<perlobj>.
 
-Class feature is a core implementation of class syntax which is familiar to
-what one would find in other programming languages. It isn't a C<bless>
-wrapper, but a completely new system built right into the perl interpreter.
+The C<class> feature is a core implementation of a class syntax that is similar
+to what one would find in other programming languages. It is not a wrapper
+around C<bless>, but a completely new system built right into the perl
+interpreter.
 
 =head1 KEYWORDS
 
 Enabling the C<class> feature allows the usage of the following new keywords in
-the scope of current package:
+the current lexical scope:
 
 =head2 class
 
@@ -49,13 +52,17 @@ the scope of current package:
 
     class NAME VERSION BLOCK
 
+    class NAME VERSION : ATTRIBUTES... BLOCK
+
     class NAME;
 
     class NAME VERSION;
 
-The C<class> keyword declares a new package which is intended to be a class.
-All other keywords from the C<class> feature should be used in scope of this
-declaration.
+    class NAME VERSION : ATTRIBUTES...;
+
+The C<class> keyword declares a new package (see L<perlmod/Packages>) that is
+intended to be a class. All other keywords from the C<class> feature should be
+used within the scope of this declaration.
 
     class WithVersion 1.000 {
         # class definition goes here
@@ -66,8 +73,12 @@ used, the body of the block contains the implementation of the class. If the
 statement form is used, the remainder of the file is used up until the next
 C<class> or C<package> statement.
 
+A C<class> declaration can optionally have a version number, similar to the
+C<package> keyword. It can also optionally have attributes. If both are
+specified, the version number must come first, before the attributes.
+
 C<class> and C<package> declarations are similar, but classes automatically get
-a constructor named C<new> - You don't have to (and should not) write one.
+a constructor named C<new> - you don't have to (and should not) write one.
 Additionally, in the class BLOCK you are allowed to declare fields and methods.
 
 =head2 field
@@ -80,9 +91,9 @@ Additionally, in the class BLOCK you are allowed to declare fields and methods.
 
     field VARIABLE_NAME : ATTRIBUTES = EXPR;
 
-Fields are variables which are visible in the scope of the class - more
-specifically within L</method> and C<ADJUST> blocks. Each class instance get
-their own storage of fields, independent of each other.
+Fields are variables that are visible in the scope of the class - more
+specifically within L</method> and L<ADJUST|/Adjustment> blocks. Each class
+instance gets its own storage of fields, independent of other instances.
 
 A field behaves like a normal lexically scoped variable. It has a sigil and is
 private to the class (though creation of an accessor method will make it
@@ -98,7 +109,7 @@ access different values in the same scope.
 Fields may optionally have initializing expressions. If present, the expression
 will be evaluated within the constructor of each object instance. During each
 evaluation, the expression can use the value of any previously-set field, as
-well as see any other variables in scope.
+well as any other variables in scope.
 
     class WithACounter {
         my $next_count = 1;
@@ -111,6 +122,27 @@ apply whenever the caller did not pass the corresponding parameter to the
 constructor at all. Expressions using C<//=> will also apply if the caller did
 pass the parameter but the value was undefined, and expressions using C<||=>
 will apply if the value was false.
+
+During a field initializing expression, the instance is not yet constructed
+and so the C<$self> lexical is not available.  However, the special
+C<__CLASS__> token may be used to obtain the name of the class being
+constructed, for example in order to invoke class methods on it to help in
+constructing values for fields.
+
+    class WithCustomField {
+        use constant DEFAULT_X => 10;
+        field $x = __CLASS__->DEFAULT_X;
+    }
+
+This allows subclasses to override the method with different behaviour.
+
+    class DifferentCustomField :isa(WithCustomField) {
+        sub DEFAULT_X { rand > 0.5 ? 20 : 30 }
+    }
+
+When an instance of C<DifferentCustomField> is constructed, the C<__CLASS__>
+expression in the base will yield the correct class name, and so invoke this
+overridden method instead.
 
 =head2 method
 
@@ -173,9 +205,9 @@ attribute.
 Inherited methods are visible and may be invoked. Fields are always lexical
 and therefore not visible by inheritance.
 
-The C<:isa> attribute may request a minimum version of the base class; it is
-applied similar to C<use> - if the provided version is too low it will fail at
-compile time.
+The C<:isa> attribute may request a minimum version of the base class. As with
+C<use MODULE VERSION>, if the actual version of the base class is too low,
+compilation will fail.
 
     class Example::Subclass :isa(Example::Base 2.345) { ... }
 
@@ -194,9 +226,39 @@ can be specified in the attribute.
     field $x :param;
     field $y :param(the_y_value);
 
-If there is no defaulting expression then the parameter is required by the
+If there is no defaulting expression, then the parameter is required by the
 constructor; the caller must pass it or an exception is thrown. With a
 defaulting expression this becomes optional.
+
+=head3 :reader
+
+A field with a C<:reader> attribute will generate a reader accessor method
+automatically.  The generated method will have an empty (i.e. zero-argument)
+signature, and its body will simply return the value of the field variable.
+
+    field $s :reader;
+
+    # Equivalent to
+    field $s;
+    method s () { return $s; }
+
+By default the accessor method will have the same name as the field (minus the
+leading sigil), but a different name can be specified in the attribute's value.
+
+    field $x :reader(get_x);
+
+    # Generates a method
+    method get_x () { return $x; }
+
+Reader methods can be applied to non-scalar fields. When invoked in list
+context, they yield the contents of the field; in scalar context they yield
+the count of elements, as if the field variable had been placed in scalar
+context.
+
+    field @users :reader;
+    ...
+
+    scalar $instance->users;
 
 =head2 Method attributes
 
@@ -211,22 +273,40 @@ named C<new> and is invoked like a method call on the class name:
 
     my $object = My::Class->new(%arguments);
 
-During the construction, class fields are compared to C<%arguments> hash and
-populated where possible.
+During object construction, class fields are looked up in the C<%arguments>
+hash and populated where possible.
 
 =head2 Adjustment
 
-Object adjustment can be performed during the construction to run user-defined
-code. It is done with the help of C<ADJUST> blocks, which are called in order
-of declaration.
+Object adjustment is a way to run arbitrary user-defined code during object
+construction. This is done by placing code in C<ADJUST> blocks. Every time an
+object is constructed, its C<ADJUST> blocks are executed (in the order in which
+they are declared).
 
-They are similar to C<BEGIN> blocks, which run during the compilation of a
-package. However, they also have access to C<$self> lexical (object instance)
-and all object fields created up to that point.
+    class WellAdjusted {
+        field $x :param;
+        ADJUST {
+            say "Hello!";
+        }
+        ADJUST {
+            say "x = $x";
+        }
+    }
+
+    my $object = WellAdjusted->new(x => 42);
+    # Output:
+    #   Hello!
+    #   x = 42
+
+C<ADJUST> blocks are syntactically similar to L<C<BEGIN> or C<INIT>
+blocks|perlmod/BEGIN, UNITCHECK, CHECK, INIT and END>, which only run once.
+However, C<ADJUST> blocks, like methods, have access to C<$self> (a lexical
+variable holding the object being constructed) as well as all object fields
+created up to that point.
 
 =head2 Lifetime
 
-After the construction phase, object is ready to be used.
+After the construction phase, the object is ready to be used.
 
 Using C<blessed> (C<Scalar::Util::blessed> or C<builtin::blessed>) on the
 object will return the name of the class, while C<reftype>
@@ -235,13 +315,13 @@ C<'OBJECT'>.
 
 =head2 Destruction
 
-Just like with other references, when object reference count reaches zero it
-will automatically be destroyed.
+An object is destroyed when the last reference to it goes away, just as with
+other data structures in Perl.
 
 =head1 TODO
 
 This feature is still experimental and very incomplete. The following list
-gives some overview of the kinds of work still to be added or changed:
+gives an overview of features still to be added or changed:
 
 =over 4
 
@@ -266,38 +346,70 @@ inspired by a similar plan to add named arguments to subroutine signatures.
 
 =item * ADJUST blocks as true blocks
 
-Currently, every ADJUST block is wrapped in its own CV that gets invoked with
-the full ENTERSUB overhead. It should be possible to use the same mechanism
-that makes all field initializer expressions appear within the same CV on
-ADJUST blocks as well, merging them all into a single CV per class. This will
-make it faster to invoke if a class has more than one of them.
+Currently, every ADJUST block is wrapped in its own CV (subroutine) that gets
+invoked with the full ENTERSUB overhead. It should be possible to use the same
+mechanism that makes all field initializer expressions appear within the same
+CV on ADJUST blocks as well, merging them all into a single CV per class. This
+will make it faster to invoke if a class has more than one of them.
 
-=item * Accessor generator attributes
+=item * More accessor generator attributes
 
-Attributes to request that accessor methods be generated for fields. Likely
-C<:reader> and C<:writer>.
+Attributes to request that other kinds of accessor methods be generated for
+fields. Likely C<:writer>.
 
     class X {
-        field $name :reader;
+        field $name :writer;
     }
 
 Equivalent to
 
     class X {
         field $name;
-        method name { return $name; }
+        method set_name ($new) { $name = $new; return $self; }
     }
 
 =item * Metaprogramming
 
 An extension of the metaprogramming API (currently proposed by
-L<RFC0022|https://github.com/Perl/RFCs/pull/25>) which adds knowledge of
+L<PPC0022|https://github.com/Perl/PPCs/pull/25>) which adds knowledge of
 classes, methods, fields, ADJUST blocks, and other such class-related details.
 
 =item * Extension Customisation
 
 Ways in which out-of-core modules can interact with the class system,
 including an ability for them to provide new class or field attributes.
+
+=back
+
+=head1 KNOWN BUGS
+
+The following bugs have been found in the experimental C<class> feature:
+
+=over 4
+
+=item *
+
+Since Perl v5.38, inheriting from a parent class which is declared in the same
+file and which hadn't already been sealed can cause a segmentation fault.
+[L<GH #20890|https://github.com/Perl/perl5/issues/20890>]
+
+=item *
+
+Since Perl v5.38 and with the experimental C<refaliasing> feature, trying to
+replace a field variable causes a segmentation fault.
+[L<GH #20947|https://github.com/Perl/perl5/issues/20947>]
+
+=item *
+
+Since Perl v5.38, it's possible to craft a class with leaky encapsulation,
+which can cause a segmentation fault.
+[L<GH #20956|https://github.com/Perl/perl5/issues/20956>]
+
+=item *
+
+In Perl v5.38, inheriting from a class would not always attempt to load the
+parent class (fixed in Perl v5.40).
+[L<GH #21332|https://github.com/Perl/perl5/issues/21332>]
 
 =back
 

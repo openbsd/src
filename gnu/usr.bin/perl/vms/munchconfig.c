@@ -32,7 +32,7 @@
 #endif
 
 /* The biggest line we can read in from a file */
-#define LINEBUFFERSIZE 1024
+#define LINEBUFFERSIZE 8192
 #define NUMTILDESUBS 30
 #define NUMCONFIGSUBS 1500
 #define TOKENBUFFERSIZE 80

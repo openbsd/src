@@ -5,14 +5,14 @@ use Test2::Event::Bail;
 use Test2::EventFacet::Trace;
 
 my $bail = Test2::Event::Bail->new(
-    trace => Test2::EventFacet::Trace->new(frame => ['foo', 'foo.t', 42]),
+    trace  => Test2::EventFacet::Trace->new(frame => ['foo', 'foo.t', 42]),
     reason => 'evil',
 );
 
 ok($bail->causes_fail, "bailout always causes fail.");
 
 is($bail->terminate, 255, "Bail will cause the test to exit.");
-is($bail->global, 1, "Bail is global, everything should bail");
+is($bail->global,    1,   "Bail is global, everything should bail");
 
 is($bail->summary, "Bail out!  evil", "Summary includes reason");
 $bail->set_reason("");
@@ -39,8 +39,8 @@ is_deeply(
                 'foo.t',
                 '42',
             ],
-            pid => $$,
-            tid => 0
+            pid   => $$,
+            tid   => 0,
         },
     },
     "Got facet data",
@@ -66,8 +66,8 @@ is_deeply(
                 'foo.t',
                 '42',
             ],
-            pid => $$,
-            tid => 0
+            pid   => $$,
+            tid   => 0,
         },
     },
     "Got facet data with reason",

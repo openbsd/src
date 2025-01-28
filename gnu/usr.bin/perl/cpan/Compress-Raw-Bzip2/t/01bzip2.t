@@ -350,11 +350,17 @@ for my $consume ( 0 .. 1)
 
 }
 
+SKIP:
 foreach (1 .. 2)
 {
     next if $] < 5.005 ;
 
     title 'test bzinflate/bzdeflate with a substr';
+
+    # temp workaround for
+    # https://github.com/pmqs/Compress-Raw-Bzip2/issues/13
+    skip "skipping substr tests for Perl 5.6.*", 15
+        if $] < 5.008 ;
 
     my $contents = '' ;
     foreach (1 .. 5000)
@@ -433,9 +439,15 @@ foreach (1 .. 2)
 
 }
 
+SKIP: {
 if ($] >= 5.005)
 {
     title 'test bzinflate input parameter via substr';
+
+    # temp workaround for
+    # https://github.com/pmqs/Compress-Raw-Bzip2/issues/13
+    skip "skipping substr tests for Perl 5.6.*", 11
+        if $] < 5.008 ;
 
     my $hello = "I am a HAL 9000 computer" ;
     my $data = $hello ;
@@ -470,6 +482,7 @@ if ($] >= 5.005)
     ok $hello eq $Z ;
     is $X, $keep;
 
+}
 }
 
 

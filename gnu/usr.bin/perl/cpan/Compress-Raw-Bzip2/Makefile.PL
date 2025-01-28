@@ -8,11 +8,12 @@ use private::MakeUtil;
 use ExtUtils::MakeMaker 5.16 ;
 
 my $WALL= '';
-$WALL = ' -Wall -Wno-comment ' if $Config{'cc'} =~ /gcc/ ;
+$WALL = ' -Wall -Wno-comment '
+    if $Config{'cc'} =~ /gcc/ ;
 my $USE_PPPORT_H = ($ENV{PERL_CORE}) ? '' : '-DUSE_PPPORT_H';
 
 
-my $BUILD_BZIP2 = defined($ENV{BUILD_BZIP2}) ? $ENV{BUILD_BZIP2} : 1;
+my $BUILD_BZIP2 = getBoolean('BUILD_BZIP2');
 my $BZIP2_LIB = defined($ENV{BZIP2_LIB}) ? $ENV{BZIP2_LIB} : 'bzip2-src';
 my $BZIP2_INCLUDE = defined($ENV{BZIP2_INCLUDE}) ? $ENV{BZIP2_INCLUDE} : '.';
 
@@ -26,10 +27,11 @@ WriteMakefile(
     VERSION_FROM => 'lib/Compress/Raw/Bzip2.pm',
     INC          => "-I$BZIP2_INCLUDE" ,
     DEFINE       => "$WALL -DBZ_NO_STDIO $USE_PPPORT_H" ,
-    XS           => { 'Bzip2.xs' => 'Bzip2.c'},
-    'clean'      => { FILES      => '*.c bzip2.h bzlib.h bzlib_private.h constants.h constants.xs' },
-   #'depend'     => { 'Makefile'   => 'config.in' },
-    'dist'       => { COMPRESS     => 'gzip',
+    XS           => { 'Bzip2.xs'   => 'Bzip2.c'},
+    clean        => { FILES        => '*.c bzip2.h bzlib.h bzlib_private.h constants.h constants.xs' },
+    depend       => { manifypods   => 'READMEmd' },
+    postamble    => { name         => 'Bzip2'},
+    dist         => { COMPRESS     => 'gzip',
                       TARFLAGS     => '-chvf',
                       SUFFIX       => 'gz',
                       DIST_DEFAULT => 'MyTrebleCheck tardist',
@@ -173,11 +175,18 @@ sub bzip2_files
     push @c_files, 'Bzip2.c' ;
 
     return (
-        #'H'         =>  [ @h_files ],
-    	'C'         =>  [ @c_files ] ,
-        #'OBJECT'    => qq[ @o_files ],
-        'OBJECT'    => q[ $(O_FILES) ],
-
-
+            'C'         =>  [ @c_files ] ,
+            'OBJECT'    => q[ $(O_FILES) ],
            ) ;
+}
+
+sub getBoolean
+{
+    my $name = shift ;
+
+    # default is TRUE
+    return 1
+        if ! defined $ENV{$name};
+
+    return ($ENV{$name} =~ /^yes|on|true|1$/i) ? 1 : 0;
 }

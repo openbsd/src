@@ -53,6 +53,7 @@ push @file_only_archives, [qw( src short foo.txz )]
 
 my @file_and_directory_archives = (
     [qw( src long bar.tar )],
+    [qw( src long prefix-directory-concat.tar )],
     [qw( src linktest linktest_with_dir.tar )],
 );
 push @file_and_directory_archives, [qw( src long foo.tgz )]

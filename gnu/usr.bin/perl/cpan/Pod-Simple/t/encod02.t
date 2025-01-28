@@ -1,19 +1,10 @@
 # encoding not error
-BEGIN {
-    if($ENV{PERL_CORE}) {
-        chdir 't';
-        @INC = '../lib';
-    }
-}
-
 use strict;
 use warnings;
-use Test;
-BEGIN { plan tests => 4 };
+
+use Test::More tests => 2;
 
 #use Pod::Simple::Debug (5);
-
-ok 1;
 
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
@@ -46,7 +37,7 @@ if(grep m/Unknown directive/i, @output_lines ) {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 print "# Now a control group, to make sure that =fishbladder DOES\n",
       "#  cause an 'unknown directive' error...\n";
-      
+
 {
 my @output_lines = split m/[\cm\cj]+/, Pod::Simple::XMLOutStream->_out( q{
 
@@ -70,9 +61,3 @@ if(grep m/Unknown directive/i, @output_lines ) {
 }
 
 }
-
-
-
-print "#\n# And one for the road...\n";
-ok 1;
-

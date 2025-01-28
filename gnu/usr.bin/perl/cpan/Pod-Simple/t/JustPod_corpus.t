@@ -3,11 +3,6 @@ use strict;
 use warnings;
 
 BEGIN {
-  if($ENV{PERL_CORE}) {
-    chdir 't';
-    @INC = '../lib';
-  }
-
   use Config;
   if ($Config::Config{'extensions'} !~ /\bEncode\b/) {
     print "1..0 # Skip: Encode was not built\n";
@@ -24,35 +19,16 @@ use Pod::Simple::JustPod;
 my @test_files;
 
 BEGIN {
-  sub source_path {
-    my $file = shift;
-    if ($ENV{PERL_CORE}) {
-      require File::Spec;
-      my $updir = File::Spec->updir;
-      my $dir   = File::Spec->catdir($updir, 'lib', 'Pod', 'Simple', 't');
-      return File::Spec->catdir($dir, $file);
-    }
-    else {
-      return $file;
-    }
-  }
+  my $test_dir = File::Basename::dirname(Cwd::abs_path(__FILE__));
 
-  my @test_dirs = (
-    File::Spec->catdir( source_path('t') ) ,
-    File::Spec->catdir( File::Spec->updir, 't') ,
-  );
-
-  my $test_dir;
-  foreach( @test_dirs ) {
-    $test_dir = $_ and last if -e;
-  }
-
-  die "Can't find the test dir" unless $test_dir;
   print "# TESTDIR: $test_dir\n";
 
   sub wanted {
     push @test_files, $File::Find::name
-      if $File::Find::name =~ /\.pod$/;
+      if $File::Find::name =~ /\.pod$/
+      && $File::Find::name !~ /temp/; # ignore any files named temp,
+                                      # a different test file may have
+                                      # created it
   }
   find(\&wanted , $test_dir );
 
@@ -62,32 +38,35 @@ BEGIN {
 @test_files = sort @test_files;
 
 my @skip_on_windows = qw{
-  t/corpus/8859_7.pod
-  t/corpus/laozi38p.pod
-  t/junk2.pod
-  t/perlcyg.pod
-  t/perlfaq.pod
-  t/perlvar.pod
-  t/search60/A/x.pod
-  t/search60/B/X.pod
-  t/testlib1/hinkhonk/Glunk.pod
-  t/testlib1/pod/perlflif.pod
-  t/testlib1/pod/perlthng.pod
-  t/testlib1/squaa/Glunk.pod
-  t/testlib1/zikzik.pod
-  t/testlib2/hinkhonk/Glunk.pod
-  t/testlib2/pod/perlthng.pod
-  t/testlib2/pod/perlzuk.pod
-  t/testlib2/pods/perlzoned.pod
-  t/testlib2/squaa/Wowo.pod
+  corpus/8859_7.pod
+  corpus/laozi38p.pod
+  junk2.pod
+  perlcyg.pod
+  perlfaq.pod
+  perlvar.pod
+  search60/A/x.pod
+  search60/B/X.pod
+  testlib1/hinkhonk/Glunk.pod
+  testlib1/pod/perlflif.pod
+  testlib1/pod/perlthng.pod
+  testlib1/squaa/Glunk.pod
+  testlib1/zikzik.pod
+  testlib2/hinkhonk/Glunk.pod
+  testlib2/pod/perlthng.pod
+  testlib2/pod/perlzuk.pod
+  testlib2/pods/perlzoned.pod
+  testlib2/squaa/Wowo.pod
 };
 
 my $is_windows = $^O eq 'MSWin32';
 foreach my $file (@test_files) {
   SKIP: {
-    if ( $is_windows && grep { $_ eq $file } @skip_on_windows ) {
-      skip "$file needs investigation on windows", 1;  
-    }    
+    if ( $is_windows ) {
+        my $check_path = join '/', File::Spec->splitdir($file);
+        if (grep { $check_path =~ m{/\Q$_\E\z} } @skip_on_windows ) {
+            skip "$file needs investigation on windows", 1;
+        }
+    }
 
     my $parser = Pod::Simple::JustPod->new();
     $parser->complain_stderr(0);

@@ -11,6 +11,7 @@ Perl_set_context(void *t)
 #if defined(USE_ITHREADS)
 #  ifdef USE_DECLSPEC_THREAD
     Perl_current_context = t;
+    PERL_SET_NON_tTHX_CONTEXT(t);
 #  else
     DWORD err = GetLastError();
     TlsSetValue(PL_thr_key,t);

@@ -1,17 +1,14 @@
-#!/usr/bin/perl -w
-
 # t/output.t - Check output_string.
-
-BEGIN {
-    chdir 't' if -d 't';
-}
-
+#
 use strict;
 use warnings;
-use lib '../lib';
 use Test::More tests => 36;
-#use Test::More 'no_plan';
+
 use File::Spec;
+use Cwd ();
+use File::Basename ();
+
+my $t_dir = File::Basename::dirname(Cwd::abs_path(__FILE__));
 
 for my $format (qw(XHTML HTML Text RTF)) {
     my $class = "Pod::Simple::$format";
@@ -30,7 +27,7 @@ for my $format (qw(XHTML HTML Text RTF)) {
     ok $parser = $class->new, "Construct another $format parser";
     $output = '';
     ok $parser->output_string(\$output), "Set $format output string again";
-    ok $parser->parse_file(File::Spec->catfile(qw(testlib1 zikzik.pod))),
+    ok $parser->parse_file(File::Spec->catfile($t_dir, qw(testlib1 zikzik.pod))),
         "Parse to $format via parse_file()";
     like $output, qr{This is just a test file},
         "Should have $format output from parse_file";

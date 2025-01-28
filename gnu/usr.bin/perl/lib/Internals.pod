@@ -7,6 +7,7 @@ Internals - Reserved special namespace for internals related functions
     $is_ro= Internals::SvREADONLY($x)
     $refcnt= Internals::SvREFCNT($x)
     hv_clear_placeholders(%hash);
+    if (Internals::stack_refcounted & 1) { .... }
 
 =head1 DESCRIPTION
 
@@ -61,6 +62,13 @@ each internal variable type.
 Clear any placeholders from a locked hash. Should not be used directly.
 You should use the wrapper functions provided by Hash::Util instead.
 As of 5.25 also available as C< Hash::Util::_clear_placeholders(%hash) >
+
+=item stack_refcounted
+
+Returns an integer indicating whether the perl binary has been configured
+and built with an argument stack which reference-counts any items pushed
+onto it. The value should be treated as flag bits. Currently only bit 0 is
+used, indicating that C<PERL_RC_STACK> was enabled during the build.
 
 =back
 

@@ -6,7 +6,7 @@ use Test2::Hub::Interceptor;
 
 my $one = Test2::Hub::Interceptor->new();
 
-ok($one->isa('Test2::Hub'), "inheritence");;
+ok($one->isa('Test2::Hub'), "inheritance");;
 
 my $e = exception { $one->terminate(55) };
 ok($e->isa('Test2::Hub::Interceptor::Terminator'), "exception type");

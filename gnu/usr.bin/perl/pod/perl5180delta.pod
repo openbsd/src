@@ -141,8 +141,8 @@ Perl now supports Unicode 6.2.  A list of changes from Unicode
 =head2 Character name aliases may now include non-Latin1-range characters
 
 It is possible to define your own names for characters for use in
-C<\N{...}>, C<charnames::vianame()>, etc.  These names can now be
-comprised of characters from the whole Unicode range.  This allows for
+C<\N{...}>, C<charnames::vianame()>, etc.  These names can now
+consist of characters from the whole Unicode range.  This allows for
 names to be in your native language, and not just English.  Certain
 restrictions apply to the characters that may be used (you can't define
 a name that has punctuation in it, for example).  See L<charnames/CUSTOM
@@ -290,7 +290,7 @@ behaviors, and since the REPLACEMENT CHARACTER has no use other than as
 a stand-in for some unknown character, any code that has this problem is
 buggy.
 
-=head2 Formerly deprecated characters in C<\N{}> character name aliases are now errors.
+=head2 Formerly deprecated characters in C<\N{}> character name aliases are now errors
 
 Since v5.12.0, it has been deprecated to use certain characters in
 user-defined C<\N{...}> character names.  These now cause a syntax

@@ -13,11 +13,11 @@ no warnings 'experimental::class';
 
 # $self in method
 {
-    class Test1 {
+    class Testcase1 {
         method retself { return $self }
     }
 
-    my $obj = Test1->new;
+    my $obj = Testcase1->new;
     is($obj->retself, $obj, '$self inside method');
 }
 
@@ -27,44 +27,44 @@ no warnings 'experimental::class';
     # signatured even without it
     no feature 'signatures';
 
-    class Test2 {
+    class Testcase2 {
         method retfirst ( $x = 123 ) { return $x; }
     }
 
-    my $obj = Test2->new;
+    my $obj = Testcase2->new;
     is($obj->retfirst,      123, 'method signature params work');
     is($obj->retfirst(456), 456, 'method signature params skip $self');
 }
 
 # methods can still capture regular package lexicals
 {
-    class Test3 {
+    class Testcase3 {
         my $count;
         method inc { return $count++ }
     }
 
-    my $obj1 = Test3->new;
+    my $obj1 = Testcase3->new;
     $obj1->inc;
 
     is($obj1->inc, 1, '$obj1->inc sees 1');
 
-    my $obj2 = Test3->new;
+    my $obj2 = Testcase3->new;
     is($obj2->inc, 2, '$obj2->inc sees 2');
 }
 
 # $self is shifted from @_
 {
-    class Test4 {
+    class Testcase4 {
         method args { return @_ }
     }
 
-    my $obj = Test4->new;
+    my $obj = Testcase4->new;
     ok(eq_array([$obj->args("a", "b")], ["a", "b"]), '$self is shifted from @_');
 }
 
 # anon methods
 {
-    class Test5 {
+    class Testcase5 {
         method anonmeth {
             return method {
                 return "Result";
@@ -72,7 +72,7 @@ no warnings 'experimental::class';
         }
     }
 
-    my $obj = Test5->new;
+    my $obj = Testcase5->new;
     my $mref = $obj->anonmeth;
 
     is($obj->$mref, "Result", 'anon method can be invoked');
@@ -80,13 +80,13 @@ no warnings 'experimental::class';
 
 # methods can be forward declared without a body
 {
-    class Test6 {
+    class Testcase6 {
         method forwarded;
 
         method forwarded { return "OK" }
     }
 
-    is(Test6->new->forwarded, "OK", 'forward-declared method works');
+    is(Testcase6->new->forwarded, "OK", 'forward-declared method works');
 }
 
 done_testing;

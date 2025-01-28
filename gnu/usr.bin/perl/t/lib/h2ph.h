@@ -16,6 +16,15 @@
 #define ERROR(x) fprintf(stderr, "%s\n", x[2][3][0])
 #endif /* ERROR */
 
+/* check for correct order of definitions vs. conditionals */
+#ifdef NOT_DEFINED_HERE()
+    /* handle indented directives */
+    #error "NOT_DEFINED_HERE should not be defined at this point!"
+#endif
+
+/* function-like macro with no parameters, outside of any conditional */
+#define NOT_DEFINED_HERE() 42
+
 #ifndef _H2PH_H_
 #define _H2PH_H_
 

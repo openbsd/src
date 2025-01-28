@@ -2,7 +2,7 @@ package Test2::Event::Ok;
 use strict;
 use warnings;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 
 BEGIN { require Test2::Event; our @ISA = qw(Test2::Event) }
@@ -68,13 +68,13 @@ sub facet_data {
         details  => $self->{+NAME},
     };
 
-    if (my @exra_amnesty = $self->extra_amnesty) {
+    if (my @extra_amnesty = $self->extra_amnesty) {
         my %seen;
 
         # It is possible the extra amnesty can be a duplicate, so filter it.
         $out->{amnesty} = [
             grep { !$seen{defined($_->{tag}) ? $_->{tag} : ''}->{defined($_->{details}) ? $_->{details} : ''}++ }
-                @exra_amnesty,
+                @extra_amnesty,
                 @{$out->{amnesty}},
         ];
     }
@@ -139,7 +139,7 @@ taken into account.
 =head1 SOURCE
 
 The source code repository for Test2 can be found at
-F<http://github.com/Test-More/test-more/>.
+L<https://github.com/Test-More/test-more/>.
 
 =head1 MAINTAINERS
 
@@ -164,6 +164,6 @@ Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-See F<http://dev.perl.org/licenses/>
+See L<https://dev.perl.org/licenses/>
 
 =cut

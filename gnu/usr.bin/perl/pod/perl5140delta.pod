@@ -113,7 +113,7 @@ as the latter returns a single code point.
 
 See L<charnames> for details on all these changes.
 
-=head3 New warnings categories for problematic (non-)Unicode code points.
+=head3 New warnings categories for problematic (non-)Unicode code points
 
 Three new warnings subcategories of "utf8" have been added.  These
 allow you to turn off some "utf8" warnings, while allowing

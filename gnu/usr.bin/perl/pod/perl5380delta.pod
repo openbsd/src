@@ -78,7 +78,7 @@ the case these warnings are automatically enabled with
 =head2 %{^HOOK} API introduced
 
 For various reasons it can be difficult to create subroutine wrappers
-for some of perls keywords. Any keyword which has an undefined
+for some of perl's keywords. Any keyword which has an undefined
 prototype simply cannot be wrapped with a subroutine, and some keywords
 which perl permits to be wrapped are in practice very tricky to wrap.
 For example C<require> is tricky to wrap, it is possible but doing so
@@ -1616,7 +1616,7 @@ Update Synology Readme for DSM 7.
 Fix win32 memory alignment needed for gcc-12 from vmem.h.
 
 utimes() on Win32 would print a message to stderr if it failed to
-convert a supplied C<time_t> to to a C<FILETIME>.
+convert a supplied C<time_t> to a C<FILETIME>.
 [L<GH #19668|https://github.com/Perl/perl5/issues/19668>]
 
 In some cases, timestamps returned by L<stat()|perlfunc/stat> and

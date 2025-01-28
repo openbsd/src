@@ -1,0 +1,4 @@
+root = true
+
+[*.{pm,pl,t}]
+indent_size = 3

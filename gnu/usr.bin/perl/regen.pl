@@ -33,3 +33,4 @@ regcomp.pl
 scope_types.pl
 tidy_embed.pl
 warnings.pl
+locale.pl

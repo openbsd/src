@@ -55,7 +55,7 @@ tests _upgrade => sub {
 
     $up->facet_data->{trace}->{frame}->[2] = 43;
     is($up->trace_line, 43, "Modified the facet data in the upgraded clone");
-    is($event->facet_data->{trace}->{frame}->[2], 42, "Did nto modify the original");
+    is($event->facet_data->{trace}->{frame}->[2], 42, "Did not modify the original");
 
     my $up2 = $one->_upgrade($up);
     is("$up2", "$up", "Returned the ref unmodified because it is already an upgraded item");

@@ -103,7 +103,7 @@ if (-e ".git") {
     goto LABEL;
     DONE:
     like($warning,
-        qr/Use of "goto" to jump into a construct is deprecated/,
+        qr/Use of "goto" to jump into a construct is deprecated, and will become fatal in Perl 5\.42/,
         "Got expected deprecation warning");
 }
 # Test that we can silence deprecation warnings with "no warnings 'deprecated'"

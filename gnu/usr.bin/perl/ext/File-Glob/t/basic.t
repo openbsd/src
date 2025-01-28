@@ -10,7 +10,7 @@ BEGIN {
     }
 }
 use strict;
-use Test::More tests => 49;
+use Test::More tests => 56;
 BEGIN {use_ok('File::Glob', ':glob')};
 use Cwd ();
 
@@ -59,14 +59,14 @@ my @a;
 
 SKIP: {
     my ($name, $home);
-    skip $^O, 1 if $^O eq 'MSWin32' || $^O eq 'VMS'
-	|| $^O eq 'os2';
-    skip "Can't find user for $>: $@", 1 unless eval {
-	($name, $home) = (getpwuid($>))[0,7];
-	1;
+    skip $^O, 2 if $^O eq 'MSWin32' || $^O eq 'VMS'
+        || $^O eq 'os2';
+    skip "Can't find user for $>: $@", 2 unless eval {
+        ($name, $home) = (getpwuid($>))[0,7];
+        1;
     };
-    skip "$> has no home directory", 1
-	unless defined $home && defined $name && -d $home;
+    skip "$> has no home directory", 2
+        unless defined $home && defined $name && -d $home;
 
     @a = bsd_glob("~$name", GLOB_TILDE);
 
@@ -75,6 +75,16 @@ SKIP: {
     } else {
         is_deeply (\@a, [$home],
             "GLOB_TILDE expands patterns that start with '~' to user name home directories"
+        );
+    }
+
+    my @b = bsd_glob("~$name", GLOB_TILDE | GLOB_MARK);
+
+    if (GLOB_ERROR) {
+        fail(GLOB_ERROR);
+    } else {
+        is_deeply (\@b, ["$home/"],
+            "GLOB_MARK matches directories with path separator attached"
         );
     }
 }
@@ -131,10 +141,23 @@ if (GLOB_ERROR) {
 # check nonexistent checks
 # should return an empty list
 # XXX since errfunc is NULL on win32, this test is not valid there
-@a = bsd_glob("asdfasdf", 0);
 SKIP: {
-    skip $^O, 1 if $^O eq 'MSWin32';
+    skip $^O, 5 if $^O eq 'MSWin32';
+    my @a = bsd_glob("asdfasdf", 0);
     is_deeply(\@a, [], "bsd_glob() works as expected for unmatched pattern and 0 flag");
+
+    my $pattern = "asdfasdf";
+    @a = bsd_glob($pattern, GLOB_NOCHECK);
+    is(scalar @a, 1,
+        "unmatched pattern with GLOB_NOCHECK returned single-item list");
+    cmp_ok($a[0], 'eq', $pattern,
+        "bsd_glob() works as expected for unmatched pattern and GLOB_NOCHECK flag");
+
+    my @b = bsd_glob($pattern, GLOB_NOCHECK | GLOB_QUOTE);
+    is(scalar @b, 1,
+        "unmatched pattern with GLOB_NOCHECK and GLOB_QUOTE returned single-item list");
+    cmp_ok($b[0], 'eq', $pattern,
+        "bsd_glob() works as expected for unmatched pattern and GLOB_NOCHECK and GLOB_QUOTE flags");
 }
 
 # check bad protections
@@ -212,6 +235,18 @@ print "# f_alpha = @f_alpha\n";
 print "# g_alpha = @g_alpha\n";
 is_deeply(\@g_alpha, \@f_alpha, "Got expected case-insensitive list of filenames");
 
+my @h_alpha = bsd_glob($pat, GLOB_ALPHASORT);
+print "# f_alpha = @f_alpha\n";
+print "# h_alpha = @h_alpha\n";
+is_deeply(\@h_alpha, \@f_alpha,
+    "Got expected case-insensitive list of filenames (explicit GLOB_ALPHASORT)");
+
+my (%h_seen, %i_seen);
+map { $h_seen{$_} => 1 } @h_alpha;
+map { $i_seen{$_} => 1 } bsd_glob($pat, GLOB_NOSORT);
+is_deeply(\%h_seen, \%i_seen,
+    "GLOB_NOSORT saw same names as default (though probably not in same order)");
+
 unlink @f_names;
 chdir "..";
 rmdir "pteerslo";
@@ -272,7 +307,7 @@ use File::Glob ':bsd_glob';
 use Test::More;
 for (qw[
         GLOB_ABEND
-	GLOB_ALPHASORT
+        GLOB_ALPHASORT
         GLOB_ALTDIRFUNC
         GLOB_BRACE
         GLOB_CSH

@@ -17,7 +17,7 @@ BEGIN {
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
-        if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
+        if eval { require Test::NoWarnings ;  Test::NoWarnings->import; 1 };
 
     plan tests => 108 + $extra ;
 
@@ -26,9 +26,9 @@ BEGIN {
 
     eval {
            require IO::Compress::Bzip2 ;
-           IO::Compress::Bzip2->import( 2.010 );
+           IO::Compress::Bzip2->VERSION( 2.010 );
            require IO::Uncompress::Bunzip2 ;
-           IO::Uncompress::Bunzip2->import( 2.010 );
+           IO::Uncompress::Bunzip2->VERSION( 2.010 );
          } ;
 
 }

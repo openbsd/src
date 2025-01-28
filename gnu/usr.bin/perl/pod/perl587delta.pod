@@ -35,7 +35,7 @@ script. By default this is not enabled, to be consistent with previous perl
 releases. To use this, add C<-Dusesitecustomize> to the command line flags
 when running the C<Configure> script. See also L<perlrun/-f>.
 
-=head2 C<Config.pm> is now much smaller.
+=head2 C<Config.pm> is now much smaller
 
 C<Config.pm> is now about 3K rather than 32K, with the infrequently used
 code and C<%Config> values loaded on demand. This is transparent to the

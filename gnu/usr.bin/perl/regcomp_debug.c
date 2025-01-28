@@ -18,8 +18,7 @@
 #include "unicode_constants.h"
 #include "regcomp_internal.h"
 
-#ifdef DEBUGGING
-
+#ifdef PERL_RE_BUILD_DEBUG
 int
 Perl_re_printf(pTHX_ const char *fmt, ...)
 {
@@ -159,22 +158,169 @@ Perl_debug_peep(pTHX_ const char *str, const RExC_state_t *pRExC_state,
    });
 }
 
-#endif /* DEBUGGING */
+const regnode *
+Perl_dumpuntil(pTHX_ const regexp *r, const regnode *start, const regnode *node,
+            const regnode *last, const regnode *plast,
+            SV* sv, I32 indent, U32 depth)
+{
+    const regnode *next;
+    const regnode *optstart= NULL;
+
+    RXi_GET_DECL(r, ri);
+    DECLARE_AND_GET_RE_DEBUG_FLAGS;
+
+    PERL_ARGS_ASSERT_DUMPUNTIL;
+
+#ifdef DEBUG_DUMPUNTIL
+    Perl_re_printf( aTHX_  "--- %d : %d - %d - %d\n", indent, node-start,
+        last ? last-start : 0, plast ? plast-start : 0);
+#endif
+
+    if (plast && plast < last)
+        last= plast;
+
+    while (node && (!last || node < last)) {
+        const U8 op = OP(node);
+
+        if (op == CLOSE || op == SRCLOSE || op == WHILEM)
+            indent--;
+        next = regnext((regnode *)node);
+        const regnode *after = regnode_after((regnode *)node,0);
+
+        /* Where, what. */
+        if (op == OPTIMIZED) {
+            if (!optstart && RE_DEBUG_FLAG(RE_DEBUG_COMPILE_OPTIMISE))
+                optstart = node;
+            else
+                goto after_print;
+        } else
+            CLEAR_OPTSTART;
+
+        regprop(r, sv, node, NULL, NULL);
+        Perl_re_printf( aTHX_  "%4" IVdf ":%*s%s", (IV)(node - start),
+                      (int)(2*indent + 1), "", SvPVX_const(sv));
+
+        if (op != OPTIMIZED) {
+            if (next == NULL)           /* Next ptr. */
+                Perl_re_printf( aTHX_  " (0)");
+            else if (REGNODE_TYPE(op) == BRANCH
+                     && REGNODE_TYPE(OP(next)) != BRANCH )
+                Perl_re_printf( aTHX_  " (FAIL)");
+            else
+                Perl_re_printf( aTHX_  " (%" IVdf ")", (IV)(next - start));
+            Perl_re_printf( aTHX_ "\n");
+        }
+
+      after_print:
+        if (REGNODE_TYPE(op) == BRANCHJ) {
+            assert(next);
+            const regnode *nnode = (OP(next) == LONGJMP
+                                   ? regnext((regnode *)next)
+                                   : next);
+            if (last && nnode > last)
+                nnode = last;
+            DUMPUNTIL(after, nnode);
+        }
+        else if (REGNODE_TYPE(op) == BRANCH) {
+            assert(next);
+            DUMPUNTIL(after, next);
+        }
+        else if ( REGNODE_TYPE(op)  == TRIE ) {
+            const regnode *this_trie = node;
+            const U32 n = ARG1u(node);
+            const reg_ac_data * const ac = op>=AHOCORASICK ?
+               (reg_ac_data *)ri->data->data[n] :
+               NULL;
+            const reg_trie_data * const trie =
+                (reg_trie_data*)ri->data->data[op<AHOCORASICK ? n : ac->trie];
+#ifdef DEBUGGING
+            AV *const trie_words
+                           = MUTABLE_AV(ri->data->data[n + TRIE_WORDS_OFFSET]);
+#endif
+            const regnode *nextbranch= NULL;
+            I32 word_idx;
+            SvPVCLEAR(sv);
+            for (word_idx= 0; word_idx < (I32)trie->wordcount; word_idx++) {
+                SV ** const elem_ptr = av_fetch_simple(trie_words, word_idx, 0);
+
+                Perl_re_indentf( aTHX_  "%s ",
+                    indent+3,
+                    elem_ptr
+                    ? pv_pretty(sv, SvPV_nolen_const(*elem_ptr),
+                                SvCUR(*elem_ptr), PL_dump_re_max_len,
+                                PL_colors[0], PL_colors[1],
+                                (SvUTF8(*elem_ptr)
+                                 ? PERL_PV_ESCAPE_UNI
+                                 : 0)
+                                | PERL_PV_PRETTY_ELLIPSES
+                                | PERL_PV_PRETTY_LTGT
+                            )
+                    : "???"
+                );
+                if (trie->jump) {
+                    U16 dist= trie->jump[word_idx+1];
+                    Perl_re_printf( aTHX_  "(%" UVuf ")\n",
+                               (UV)((dist ? this_trie + dist : next) - start));
+                    if (dist) {
+                        if (!nextbranch)
+                            nextbranch= this_trie + trie->jump[0];
+                        DUMPUNTIL(this_trie + dist, nextbranch);
+                    }
+                    if (nextbranch && REGNODE_TYPE(OP(nextbranch))==BRANCH)
+                        nextbranch= regnext((regnode *)nextbranch);
+                } else {
+                    Perl_re_printf( aTHX_  "\n");
+                }
+            }
+            if (last && next > last)
+                node= last;
+            else
+                node= next;
+        }
+        else if ( op == CURLY ) {   /* "next" might be very big: optimizer */
+            DUMPUNTIL(after, after + 1); /* +1 is NOT a REGNODE_AFTER */
+        }
+        else if (REGNODE_TYPE(op) == CURLY && op != CURLYX) {
+            assert(next);
+            DUMPUNTIL(after, next);
+        }
+        else if ( op == PLUS || op == STAR) {
+            DUMPUNTIL(after, after + 1); /* +1 NOT a REGNODE_AFTER */
+        }
+        else if (REGNODE_TYPE(op) == EXACT || op == ANYOFHs) {
+            /* Literal string, where present. */
+            node = (const regnode *)REGNODE_AFTER_varies(node);
+        }
+        else {
+            node = REGNODE_AFTER_opcode(node,op);
+        }
+        if (op == CURLYX || op == OPEN || op == SROPEN)
+            indent++;
+        if (REGNODE_TYPE(op) == END)
+            break;
+    }
+    CLEAR_OPTSTART;
+#ifdef DEBUG_DUMPUNTIL
+    Perl_re_printf( aTHX_  "--- %d\n", (int)indent);
+#endif
+    return node;
+}
+
+#endif  /* PERL_RE_BUILD_DEBUG */
 
 /*
  - regdump - dump a regexp onto Perl_debug_log in vaguely comprehensible form
  */
 #ifdef DEBUGGING
-
 static void
 S_regdump_intflags(pTHX_ const char *lead, const U32 flags)
 {
     int bit;
     int set=0;
 
-    ASSUME(REG_INTFLAGS_NAME_SIZE <= sizeof(flags)*8);
+    STATIC_ASSERT_STMT(REG_INTFLAGS_NAME_SIZE <= sizeof(flags) * CHARBITS);
 
-    for (bit=0; bit<=REG_INTFLAGS_NAME_SIZE; bit++) {
+    for (bit=0; bit < REG_INTFLAGS_NAME_SIZE; bit++) {
         if (flags & (1<<bit)) {
             if (!set++ && lead)
                 Perl_re_printf( aTHX_  "%s", lead);
@@ -196,7 +342,7 @@ S_regdump_extflags(pTHX_ const char *lead, const U32 flags)
     int set=0;
     regex_charset cs;
 
-    ASSUME(REG_EXTFLAGS_NAME_SIZE <= sizeof(flags)*8);
+    STATIC_ASSERT_STMT(REG_EXTFLAGS_NAME_SIZE <= sizeof(flags) * CHARBITS);
 
     for (bit=0; bit<REG_EXTFLAGS_NAME_SIZE; bit++) {
         if (flags & (1U<<bit)) {
@@ -907,8 +1053,8 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
 #endif  /* DEBUGGING */
 }
 
-#ifdef DEBUGGING
 
+#ifdef DEBUGGING
 STATIC void
 S_put_code_point(pTHX_ SV *sv, UV c)
 {
@@ -1517,154 +1663,4 @@ S_put_charclass_bitmap_innards(pTHX_ SV *sv,
 
     return did_output_something;
 }
-
-
-const regnode *
-Perl_dumpuntil(pTHX_ const regexp *r, const regnode *start, const regnode *node,
-            const regnode *last, const regnode *plast,
-            SV* sv, I32 indent, U32 depth)
-{
-    const regnode *next;
-    const regnode *optstart= NULL;
-
-    RXi_GET_DECL(r, ri);
-    DECLARE_AND_GET_RE_DEBUG_FLAGS;
-
-    PERL_ARGS_ASSERT_DUMPUNTIL;
-
-#ifdef DEBUG_DUMPUNTIL
-    Perl_re_printf( aTHX_  "--- %d : %d - %d - %d\n", indent, node-start,
-        last ? last-start : 0, plast ? plast-start : 0);
-#endif
-
-    if (plast && plast < last)
-        last= plast;
-
-    while (node && (!last || node < last)) {
-        const U8 op = OP(node);
-
-        if (op == CLOSE || op == SRCLOSE || op == WHILEM)
-            indent--;
-        next = regnext((regnode *)node);
-        const regnode *after = regnode_after((regnode *)node,0);
-
-        /* Where, what. */
-        if (op == OPTIMIZED) {
-            if (!optstart && RE_DEBUG_FLAG(RE_DEBUG_COMPILE_OPTIMISE))
-                optstart = node;
-            else
-                goto after_print;
-        } else
-            CLEAR_OPTSTART;
-
-        regprop(r, sv, node, NULL, NULL);
-        Perl_re_printf( aTHX_  "%4" IVdf ":%*s%s", (IV)(node - start),
-                      (int)(2*indent + 1), "", SvPVX_const(sv));
-
-        if (op != OPTIMIZED) {
-            if (next == NULL)           /* Next ptr. */
-                Perl_re_printf( aTHX_  " (0)");
-            else if (REGNODE_TYPE(op) == BRANCH
-                     && REGNODE_TYPE(OP(next)) != BRANCH )
-                Perl_re_printf( aTHX_  " (FAIL)");
-            else
-                Perl_re_printf( aTHX_  " (%" IVdf ")", (IV)(next - start));
-            Perl_re_printf( aTHX_ "\n");
-        }
-
-      after_print:
-        if (REGNODE_TYPE(op) == BRANCHJ) {
-            assert(next);
-            const regnode *nnode = (OP(next) == LONGJMP
-                                   ? regnext((regnode *)next)
-                                   : next);
-            if (last && nnode > last)
-                nnode = last;
-            DUMPUNTIL(after, nnode);
-        }
-        else if (REGNODE_TYPE(op) == BRANCH) {
-            assert(next);
-            DUMPUNTIL(after, next);
-        }
-        else if ( REGNODE_TYPE(op)  == TRIE ) {
-            const regnode *this_trie = node;
-            const U32 n = ARG1u(node);
-            const reg_ac_data * const ac = op>=AHOCORASICK ?
-               (reg_ac_data *)ri->data->data[n] :
-               NULL;
-            const reg_trie_data * const trie =
-                (reg_trie_data*)ri->data->data[op<AHOCORASICK ? n : ac->trie];
-#ifdef DEBUGGING
-            AV *const trie_words
-                           = MUTABLE_AV(ri->data->data[n + TRIE_WORDS_OFFSET]);
-#endif
-            const regnode *nextbranch= NULL;
-            I32 word_idx;
-            SvPVCLEAR(sv);
-            for (word_idx= 0; word_idx < (I32)trie->wordcount; word_idx++) {
-                SV ** const elem_ptr = av_fetch_simple(trie_words, word_idx, 0);
-
-                Perl_re_indentf( aTHX_  "%s ",
-                    indent+3,
-                    elem_ptr
-                    ? pv_pretty(sv, SvPV_nolen_const(*elem_ptr),
-                                SvCUR(*elem_ptr), PL_dump_re_max_len,
-                                PL_colors[0], PL_colors[1],
-                                (SvUTF8(*elem_ptr)
-                                 ? PERL_PV_ESCAPE_UNI
-                                 : 0)
-                                | PERL_PV_PRETTY_ELLIPSES
-                                | PERL_PV_PRETTY_LTGT
-                            )
-                    : "???"
-                );
-                if (trie->jump) {
-                    U16 dist= trie->jump[word_idx+1];
-                    Perl_re_printf( aTHX_  "(%" UVuf ")\n",
-                               (UV)((dist ? this_trie + dist : next) - start));
-                    if (dist) {
-                        if (!nextbranch)
-                            nextbranch= this_trie + trie->jump[0];
-                        DUMPUNTIL(this_trie + dist, nextbranch);
-                    }
-                    if (nextbranch && REGNODE_TYPE(OP(nextbranch))==BRANCH)
-                        nextbranch= regnext((regnode *)nextbranch);
-                } else {
-                    Perl_re_printf( aTHX_  "\n");
-                }
-            }
-            if (last && next > last)
-                node= last;
-            else
-                node= next;
-        }
-        else if ( op == CURLY ) {   /* "next" might be very big: optimizer */
-            DUMPUNTIL(after, after + 1); /* +1 is NOT a REGNODE_AFTER */
-        }
-        else if (REGNODE_TYPE(op) == CURLY && op != CURLYX) {
-            assert(next);
-            DUMPUNTIL(after, next);
-        }
-        else if ( op == PLUS || op == STAR) {
-            DUMPUNTIL(after, after + 1); /* +1 NOT a REGNODE_AFTER */
-        }
-        else if (REGNODE_TYPE(op) == EXACT || op == ANYOFHs) {
-            /* Literal string, where present. */
-            node = (const regnode *)REGNODE_AFTER_varies(node);
-        }
-        else {
-            node = REGNODE_AFTER_opcode(node,op);
-        }
-        if (op == CURLYX || op == OPEN || op == SROPEN)
-            indent++;
-        if (REGNODE_TYPE(op) == END)
-            break;
-    }
-    CLEAR_OPTSTART;
-#ifdef DEBUG_DUMPUNTIL
-    Perl_re_printf( aTHX_  "--- %d\n", (int)indent);
-#endif
-    return node;
-}
-
-#endif  /* DEBUGGING */
+#endif /* DEBUGGING */

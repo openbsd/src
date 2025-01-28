@@ -18,7 +18,7 @@ BEGIN {
 use strict;
 use Test::More;
 use Safe;
-plan(tests => 3);
+plan(tests => 4);
 
 my $c = new Safe;
 $c->permit(qw(require caller entereval unpack rand));
@@ -35,3 +35,8 @@ $r or diag $@;
 # perl version in 5.10-.
 ok !$c->reval(q{use 5.012; $undeclared; 1}),
    'reval does not prevent use 5.012 from enabling strict';
+
+# "use Tie::Scalar" depends on UNIVERSAL::import as Tie::Scalar does not have
+# its own import method.
+$r = $c->reval(q{ use Tie::Scalar; 1 });
+ok( defined $r, "Can load Tie::Scalar.pm in a Safe compartment" ) or diag $@;

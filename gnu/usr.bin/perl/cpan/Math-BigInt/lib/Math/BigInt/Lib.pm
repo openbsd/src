@@ -4,7 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '1.999837';
+our $VERSION = '2.003002';
 $VERSION =~ tr/_//d;
 
 use Carp;
@@ -710,19 +710,22 @@ sub _log_int {
 
     # X == 1 => 0 (is exact)
     if ($class -> _is_one($x)) {
-        return $class -> _zero(), 1;
+        return $class -> _zero(), 1 if wantarray;
+        return $class -> _zero();
     }
 
     my $cmp = $class -> _acmp($x, $base);
 
     # X == BASE => 1 (is exact)
     if ($cmp == 0) {
-        return $class -> _one(), 1;
+        return $class -> _one(), 1 if wantarray;
+        return $class -> _one();
     }
 
     # 1 < X < BASE => 0 (is truncated)
     if ($cmp < 0) {
-        return $class -> _zero(), 0;
+        return $class -> _zero(), 0 if wantarray;
+        return $class -> _zero();
     }
 
     my $y;
@@ -745,10 +748,6 @@ sub _log_int {
     my $trial = $class -> _pow($class -> _copy($base), $y);
     my $acmp  = $class -> _acmp($trial, $x);
 
-    # Did we get the exact result?
-
-    return $y, 1 if $acmp == 0;
-
     # Too small?
 
     while ($acmp < 0) {
@@ -765,8 +764,93 @@ sub _log_int {
         $acmp  = $class -> _acmp($trial, $x);
     }
 
-    return $y, 1 if $acmp == 0;         # result is exact
-    return $y, 0;                       # result is too small
+    return wantarray ? ($y, 1) : $y if $acmp == 0;      # result is exact
+    return wantarray ? ($y, 0) : $y;                    # result is too small
+}
+
+sub _ilog2 {
+    my ($class, $x) = @_;
+
+    return if $class -> _is_zero($x);
+
+    my $str = $class -> _to_hex($x);
+
+    # First do the bits in all but the most significant hex digit.
+
+    my $y = $class -> _new(length($str) - 1);
+    $y = $class -> _mul($y, $class -> _new(4));
+
+    # Now add the number of bits in the most significant hex digit.
+
+    my $n = int log(hex(substr($str, 0, 1))) / log(2);
+    $y = $class -> _add($y, $class -> _new($n));
+    return $y unless wantarray;
+
+    my $pow2 = $class -> _lsft($class -> _one(), $y, 2);
+    my $is_exact = $class -> _acmp($x, $pow2) == 0 ? 1 : 0;
+    return $y, $is_exact;
+}
+
+sub _ilog10 {
+    my ($class, $x) = @_;
+
+    return if $class -> _is_zero($x);
+
+    my $str = $class -> _str($x);
+    my $len = length($str);
+    my $y = $class -> _new($len - 1);
+    return $y unless wantarray;
+
+    #my $pow10 = $class -> _1ex($y);
+    #my $is_exact = $class -> _acmp($x, $pow10) ? 1 : 0;
+
+    my $is_exact = $str =~ /^10*$/ ? 1 : 0;
+    return $y, $is_exact;
+}
+
+sub _clog2 {
+    my ($class, $x) = @_;
+
+    return if $class -> _is_zero($x);
+
+    my $str = $class -> _to_hex($x);
+
+    # First do the bits in all but the most significant hex digit.
+
+    my $y = $class -> _new(length($str) - 1);
+    $y = $class -> _mul($y, $class -> _new(4));
+
+    # Now add the number of bits in the most significant hex digit.
+
+    my $n = int log(hex(substr($str, 0, 1))) / log(2);
+    $y = $class -> _add($y, $class -> _new($n));
+
+    # $y is now 1 too small unless $y is an exact power of 2.
+
+    my $pow2 = $class -> _lsft($class -> _one(), $y, 2);
+    my $is_exact = $class -> _acmp($x, $pow2) == 0 ? 1 : 0;
+    $y = $class -> _inc($y) if $is_exact == 0;
+    return $y, $is_exact if wantarray;
+    return $y;
+}
+
+sub _clog10 {
+    my ($class, $x) = @_;
+
+    return if $class -> _is_zero($x);
+
+    my $str = $class -> _str($x);
+    my $len = length($str);
+
+    if ($str =~ /^10*$/) {
+        my $y = $class -> _new($len - 1);
+        return $y, 1 if wantarray;
+        return $y;
+    }
+
+    my $y = $class -> _new($len);
+    return $y, 0 if wantarray;
+    return $y;
 }
 
 sub _sqrt {
@@ -2303,6 +2387,47 @@ has two output arguments, the OBJECT and a STATUS. The STATUS is Perl scalar;
 it is 1 if OBJ is the exact result, 0 if the result was truncted to give OBJ,
 and undef if it is unknown whether OBJ is the exact result.
 
+=item CLASS-E<gt>_ilog2(OBJ)
+
+Returns the base 2 logarithm of OBJ rounded downwards to the nearest integer,
+i.e., C<int(log2(OBJ))>. In list context, this method returns two output
+arguments, the OBJECT and a STATUS. The STATUS is Perl scalar; it is 1 if OBJ
+is the exact result, 0 if the result was truncted to give OBJ, and undef if it
+is unknown whether OBJ is the exact result.
+
+This method is equivalent to the more general method _log_int() when it is used
+with base 2 argument, but _ilog2() method might be faster.
+
+=item CLASS-E<gt>_ilog10(OBJ)
+
+Returns the base 10 logarithm of OBJ rounded downwards to the nearest integer,
+i.e., C<int(log2(OBJ))>. In list context, this method returns two output
+arguments, the OBJECT and a STATUS. The STATUS is Perl scalar; it is 1 if OBJ
+is the exact result, 0 if the result was truncted to give OBJ, and undef if it
+is unknown whether OBJ is the exact result.
+
+This method is equivalent to the more general method _log_int() when it is used
+with base 10 argument, but _ilog10() method might be faster.
+
+Also, the output from _ilog10() is always 1 smaller than the output from
+_len().
+
+=item CLASS-E<gt>_clog2(OBJ)
+
+Returns the base 2 logarithm of OBJ rounded upwards to the nearest integer,
+i.e., C<ceil(log2(OBJ))>. In list context, this method returns two output
+arguments, the OBJECT and a STATUS. The STATUS is Perl scalar; it is 1 if OBJ
+is the exact result, 0 if the result was truncted to give OBJ, and undef if it
+is unknown whether OBJ is the exact result.
+
+=item CLASS-E<gt>_clog10(OBJ)
+
+Returns the base 10 logarithm of OBJ rounded upnwards to the nearest integer,
+i.e., C<ceil(log2(OBJ))>. In list context, this method returns two output
+arguments, the OBJECT and a STATUS. The STATUS is Perl scalar; it is 1 if OBJ
+is the exact result, 0 if the result was truncted to give OBJ, and undef if it
+is unknown whether OBJ is the exact result.
+
 =item CLASS-E<gt>_gcd(OBJ1, OBJ2)
 
 Returns the greatest common divisor of OBJ1 and OBJ2.
@@ -2585,17 +2710,13 @@ You can also look for information at:
 
 =over 4
 
+=item * GitHub Source Repository
+
+L<https://github.com/pjacklam/p5-Math-BigInt>
+
 =item * RT: CPAN's request tracker
 
 L<https://rt.cpan.org/Public/Dist/Display.html?Name=Math-BigInt>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Math-BigInt>
-
-=item * CPAN Ratings
-
-L<https://cpanratings.perl.org/dist/Math-BigInt>
 
 =item * MetaCPAN
 
@@ -2604,24 +2725,6 @@ L<https://metacpan.org/release/Math-BigInt>
 =item * CPAN Testers Matrix
 
 L<http://matrix.cpantesters.org/?dist=Math-BigInt>
-
-=item * The Bignum mailing list
-
-=over 4
-
-=item * Post to mailing list
-
-C<bignum at lists.scsys.co.uk>
-
-=item * View mailing list
-
-L<http://lists.scsys.co.uk/pipermail/bignum/>
-
-=item * Subscribe/Unsubscribe
-
-L<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/bignum>
-
-=back
 
 =back
 

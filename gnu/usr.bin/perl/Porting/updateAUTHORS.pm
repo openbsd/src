@@ -6,6 +6,7 @@ use Encode qw(encode_utf8 decode_utf8 decode);
 use Digest::SHA qw(sha256_base64);
 use Text::Wrap qw(wrap);
 use Unicode::Collate;
+use Cwd qw(getcwd);
 use feature 'fc';
 $Text::Wrap::columns= 80;
 
@@ -213,8 +214,27 @@ sub read_commit_log {
     my $last_commit_info;
     my $cmd= qq(git -c diff.algorithm=myers log @args);
     $cmd =~ s/'/"/g if $^O =~ /Win/;
+
+    # If we run under -Dmksymlinks git might not have access to the
+    # .mailmap unless we chdir into the git working tree. Ideally we
+    # would prefer to pass in the location of the .mailmap file to git,
+    # but it doesn't support that as a command line option. We can't
+    # just chdir into the source_dir as that would break scalar PerlIO
+    # layer operations which are loaded late. So we chdir before we
+    # read the git log, and then chdir right back after we have opened
+    # the handle. Note there is related code in read_mailmap_file(),
+    # if you change this also change that.
+
+    my $cwd = getcwd();
+    if ($self->{source_dir}) {
+        chdir $self->{source_dir};
+    }
+
     open my $fh, "-|", $cmd
         or die "Failed to open git log pipe: $!";
+
+    chdir $cwd;
+
     binmode($fh);
     while (defined(my $line= <$fh>)) {
         chomp $line;
@@ -472,8 +492,23 @@ sub read_mailmap_file {
     my ($self)= @_;
     my $mailmap_file= $self->{mailmap_file};
 
+    # If we run under -Dmksymlinks the .mailmap might actually be
+    # located in a different directory than the one we are running from.
+    # We could munge the $mailmap_file to be relative to source_dir if
+    # it was not already an absolute path, but that would require
+    # loading File::Spec, and doing THAT wouldn't help us when we read
+    # the git log (see the related code for doing that in the
+    # read_commit_log() sub), so we use the same strategy of remembering
+    # our current working directory, chdir'ing into the source dir,
+    # opening the file, and then chdir'ing back in both cases.
+
+    my $cwd = getcwd();
+    if ($self->{source_dir}) {
+        chdir $self->{source_dir};
+    }
     open my $in, "<", $mailmap_file
         or die "Failed to read '$mailmap_file': $!";
+    chdir $cwd;
     my %mailmap_hash;
     my @mailmap_preamble;
     my $line_num= 0;
@@ -536,6 +571,7 @@ sub update_mailmap_file {
 
     my $new_raw_text= "";
     {
+        my $cwd = getcwd();
         open my $out, ">", \$new_raw_text
             or die "Failed to open scalar buffer for write: $!";
         foreach

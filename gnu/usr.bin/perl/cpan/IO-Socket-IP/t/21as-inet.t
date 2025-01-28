@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -12,12 +11,12 @@ my $server = IO::Socket::IP->new(
    Listen    => 1,
    LocalHost => "127.0.0.1",
    LocalPort => 0,
-) or die "Cannot listen on PF_INET - $!";
+) or die "Cannot listen on PF_INET - $IO::Socket::errstr";
 
 my $client = IO::Socket::IP->new(
    PeerHost => $server->sockhost,
    PeerPort => $server->sockport,
-) or die "Cannot connect on PF_INET - $!";
+) or die "Cannot connect on PF_INET - $IO::Socket::errstr";
 
 my $accepted = $server->accept
    or die "Cannot accept - $!";

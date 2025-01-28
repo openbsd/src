@@ -1,7 +1,7 @@
 #!./perl
 
 #
-# test the logical operators '&&', '||', '!', 'and', 'or', , 'xor', 'not'
+# test the logical operators '&&', '||', '^^', '!', 'and', 'or', , 'xor', 'not'
 #
 
 BEGIN {
@@ -10,7 +10,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 33;
+plan tests => 47;
 
 for my $i (undef, 0 .. 2, "", "0 but true") {
     my $true = 1;
@@ -104,4 +104,11 @@ for my $test (
 ) {
     my ($a,$b, $exp) = @$test;
     is(($a xor $b), $exp, "($a xor $b) == '$exp'");
+    is(($a ^^ $b), $exp, "($a ^^ $b) == '$exp'");
 }
+
+# precedence
+is((1 xor 1 and 0), 1, '(1 xor 1 and 0) == 1');
+is((1 xor 0 or 1), 1, "(1 xor 0 or 1) == 1");
+is((1 ^^ 1 && 0), 1, '(1 ^^ 1 && 0) == 1');
+is((1 ^^ 0 || 1), 1, "(1 ^^ 0 || 1) == 1");

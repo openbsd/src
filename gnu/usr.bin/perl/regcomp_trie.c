@@ -517,21 +517,33 @@ is the recommended Unicode-aware way of saying
            : ( state==1 ? special : 0 )                                 \
       )
 
-#define TRIE_BITMAP_SET_FOLDED(trie, uvc, folder)           \
-STMT_START {                                                \
-    TRIE_BITMAP_SET(trie, uvc);                             \
-    /* store the folded codepoint */                        \
-    if ( folder )                                           \
-        TRIE_BITMAP_SET(trie, folder[(U8) uvc ]);           \
-                                                            \
-    if ( !UTF ) {                                           \
-        /* store first byte of utf8 representation of */    \
-        /* variant codepoints */                            \
-        if (! UVCHR_IS_INVARIANT(uvc)) {                    \
-            TRIE_BITMAP_SET(trie, UTF8_TWO_BYTE_HI(uvc));   \
-        }                                                   \
-    }                                                       \
-} STMT_END
+/* Helper function for make_trie(): set a trie bit for both the character
+ * and its folded variant, and for the first byte of a variant codepoint,
+ * if any */
+
+STATIC void
+S_trie_bitmap_set_folded(pTHX_ RExC_state_t *pRExC_state,
+    reg_trie_data *trie, U8 ch, const U8 * folder)
+{
+    TRIE_BITMAP_SET(trie, ch);
+    /* store the folded codepoint */
+    if ( folder )
+        TRIE_BITMAP_SET(trie, folder[ch]);
+
+    if ( !UTF ) {
+        /* store first byte of utf8 representation of */
+        /* variant codepoints */
+        if (! UVCHR_IS_INVARIANT(ch)) {
+            U8 hi = UTF8_TWO_BYTE_HI(ch);
+            /* Note that hi will be either 0xc2 or 0xc3 (apart from EBCDIC
+             * systems), and TRIE_BITMAP_SET() will do >>3 to get the byte
+             * offset within the bit table, which is constant, and
+             * Coverity complained about this (CID 488118). */
+            TRIE_BITMAP_SET(trie, hi);
+        }
+    }
+}
+
 
 I32
 Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
@@ -657,6 +669,14 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
         STRLEN maxchars = 0;
         bool set_bit = trie->bitmap ? 1 : 0; /*store the first char in the
                                                bitmap?*/
+
+        /* wordlen is needed for the TRIE_READ_CHAR() macro, but we don't use its
+           value in this scope, we only modify it.  clang 17 warns about this.
+           The later definitions of wordlen in this function do have their values
+           used.
+        */
+        PERL_UNUSED_VAR(wordlen);
+
         lastbranch = cur;
 
         if (OP(noper) == NOTHING) {
@@ -777,7 +797,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                 if ( set_bit ) {
                     /* store the codepoint in the bitmap, and its folded
                      * equivalent. */
-                    TRIE_BITMAP_SET_FOLDED(trie, uvc, folder);
+                    S_trie_bitmap_set_folded(aTHX_ pRExC_state, trie, uvc, folder);
                     set_bit = 0; /* We've done our bit :-) */
                 }
             } else {
@@ -1400,14 +1420,14 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                                     SV ** const tmp = av_fetch_simple( revcharmap, first_ofs, 0);
                                     const U8 * const ch = (U8*)SvPV_nolen_const( *tmp );
 
-                                    TRIE_BITMAP_SET_FOLDED(trie,*ch, folder);
+                                    S_trie_bitmap_set_folded(aTHX_ pRExC_state, trie, *ch, folder);
                                     DEBUG_OPTIMISE_r(
                                         Perl_re_printf( aTHX_  "%s", (char*)ch)
                                     );
                                 }
                             }
                             /* store the current firstchar in the bitmap */
-                            TRIE_BITMAP_SET_FOLDED(trie,*ch, folder);
+                            S_trie_bitmap_set_folded(aTHX_ pRExC_state, trie, *ch, folder);
                             DEBUG_OPTIMISE_r(Perl_re_printf( aTHX_ "%s", ch));
                         }
                         first_ofs = ofs;

@@ -10,7 +10,7 @@ use Math::BigRat;
 
 our @ISA = qw(Exporter Math::BigRat);
 
-our $VERSION = '0.66';
+our $VERSION = '0.67';
 
 use overload;                   # inherit overload from Math::BigRat
 

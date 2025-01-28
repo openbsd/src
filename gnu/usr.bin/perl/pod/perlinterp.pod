@@ -497,7 +497,7 @@ macro which gives us the end of the string, so that needs to be a
 C<"\0">.
 
 Line 13 manipulates the flags; since we've changed the PV, any IV or NV
-values will no longer be valid: if we have C<$a=10; $a.="6";> we don't
+values will no longer be valid: if we have C<$x=10; $x.="6";> we don't
 want to use the old IV of 10. C<SvPOK_only_utf8> is a special
 UTF-8-aware version of C<SvPOK_only>, a macro which turns off the IOK
 and NOK flags and turns on POK. The final C<SvTAINT> is a macro which
@@ -532,27 +532,27 @@ finished parsing, and get it to dump out the tree. This is exactly what
 the compiler backends L<B::Terse|B::Terse>, L<B::Concise|B::Concise>
 and CPAN module <B::Debug do.
 
-Let's have a look at how Perl sees C<$a = $b + $c>:
+Let's have a look at how Perl sees C<$x = $y + $z>:
 
-     % perl -MO=Terse -e '$a=$b+$c'
+     % perl -MO=Terse -e '$x=$y+$z'
      1  LISTOP (0x8179888) leave
      2      OP (0x81798b0) enter
      3      COP (0x8179850) nextstate
      4      BINOP (0x8179828) sassign
      5          BINOP (0x8179800) add [1]
      6              UNOP (0x81796e0) null [15]
-     7                  SVOP (0x80fafe0) gvsv  GV (0x80fa4cc) *b
+     7                  SVOP (0x80fafe0) gvsv  GV (0x80fa4cc) *y
      8              UNOP (0x81797e0) null [15]
-     9                  SVOP (0x8179700) gvsv  GV (0x80efeb0) *c
+     9                  SVOP (0x8179700) gvsv  GV (0x80efeb0) *z
     10          UNOP (0x816b4f0) null [15]
-    11              SVOP (0x816dcf0) gvsv  GV (0x80fa460) *a
+    11              SVOP (0x816dcf0) gvsv  GV (0x80fa460) *x
 
 Let's start in the middle, at line 4. This is a BINOP, a binary
 operator, which is at location C<0x8179828>. The specific operator in
 question is C<sassign> - scalar assignment - and you can find the code
 which implements it in the function C<pp_sassign> in F<pp_hot.c>. As a
 binary operator, it has two children: the add operator, providing the
-result of C<$b+$c>, is uppermost on line 5, and the left hand side is
+result of C<$y+$z>, is uppermost on line 5, and the left hand side is
 on line 10.
 
 Line 10 is the null op: this does exactly nothing. What is that doing
@@ -565,7 +565,7 @@ easier just to replace the redundant operation with the null op.
 Originally, the tree would have looked like this:
 
     10          SVOP (0x816b4f0) rv2sv [15]
-    11              SVOP (0x816dcf0) gv  GV (0x80fa460) *a
+    11              SVOP (0x816dcf0) gv  GV (0x80fa460) *x
 
 That is, fetch the C<a> entry from the main symbol table, and then look
 at the scalar component of it: C<gvsv> (C<pp_gvsv> in F<pp_hot.c>)
@@ -599,36 +599,36 @@ That's how Perl parsed the program, from top to bottom:
                            =
                           / \
                          /   \
-                        $a   +
+                        $x   +
                             / \
-                          $b   $c
+                          $y   $z
 
 However, it's impossible to B<perform> the operations in this order:
-you have to find the values of C<$b> and C<$c> before you add them
+you have to find the values of C<$y> and C<$z> before you add them
 together, for instance. So, the other thread that runs through the op
 tree is the execution order: each op has a field C<op_next> which
 points to the next op to be run, so following these pointers tells us
 how perl executes the code. We can traverse the tree in this order
 using the C<exec> option to C<B::Terse>:
 
-     % perl -MO=Terse,exec -e '$a=$b+$c'
+     % perl -MO=Terse,exec -e '$x=$y+$z'
      1  OP (0x8179928) enter
      2  COP (0x81798c8) nextstate
-     3  SVOP (0x81796c8) gvsv  GV (0x80fa4d4) *b
-     4  SVOP (0x8179798) gvsv  GV (0x80efeb0) *c
+     3  SVOP (0x81796c8) gvsv  GV (0x80fa4d4) *y
+     4  SVOP (0x8179798) gvsv  GV (0x80efeb0) *z
      5  BINOP (0x8179878) add [1]
-     6  SVOP (0x816dd38) gvsv  GV (0x80fa468) *a
+     6  SVOP (0x816dd38) gvsv  GV (0x80fa468) *x
      7  BINOP (0x81798a0) sassign
      8  LISTOP (0x8179900) leave
 
 This probably makes more sense for a human: enter a block, start a
-statement. Get the values of C<$b> and C<$c>, and add them together.
-Find C<$a>, and assign one to the other. Then leave.
+statement. Get the values of C<$y> and C<$z>, and add them together.
+Find C<$x>, and assign one to the other. Then leave.
 
 The way Perl builds up these op trees in the parsing process can be
 unravelled by examining F<toke.c>, the lexer, and F<perly.y>, the YACC
-grammar. Let's look at the code that constructs the tree for C<$a = $b +
-$c>.
+grammar. Let's look at the code that constructs the tree for C<$x = $y +
+$z>.
 
 First, we'll look at the C<Perl_yylex> function in the lexer. We want to
 look for C<case 'x'>, where x is the first character of the operator.
@@ -664,7 +664,7 @@ returns an C<ADDOP> token.
 
 Now that we know the two token types we want to look for in the parser,
 let's take the piece of F<perly.y> we need to construct the tree for
-C<$a = $b + $c>
+C<$x = $y + $z>
 
     1 term    :   term ASSIGNOP term
     2                { $$ = newASSIGNOP(OPf_STACKED, $1, $2, $3); }

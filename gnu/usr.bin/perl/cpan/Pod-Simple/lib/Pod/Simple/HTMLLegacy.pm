@@ -1,25 +1,23 @@
-
-require 5;
 package Pod::Simple::HTMLLegacy;
 use strict;
+use warnings;
 
-use vars qw($VERSION);
 use Getopt::Long;
 
-$VERSION = "5.01";
+our $VERSION = "5.02";
 
 #--------------------------------------------------------------------------
-# 
+#
 # This class is meant to thinly emulate bad old Pod::Html
 #
 # TODO: some basic docs
 
 sub pod2html {
   my @args = (@_);
-  
+
   my( $verbose, $infile, $outfile, $title );
   my $index = 1;
- 
+
   {
     my($help);
 
@@ -40,7 +38,7 @@ sub pod2html {
   }
 
   for($infile, $outfile) { $_ = undef unless defined and length }
-  
+
   if($verbose) {
     warn sprintf "%s version %s\n", __PACKAGE__, $VERSION;
     warn "OK, processed args [@args] ...\n";
@@ -53,11 +51,11 @@ sub pod2html {
   }
   require Pod::Simple::HTML;
   Pod::Simple::HTML->VERSION(3);
-  
+
   die "No such input file as $infile\n"
    if defined $infile and ! -e $infile;
 
-  
+
   my $pod = Pod::Simple::HTML->new;
   $pod->force_title($title) if defined $title;
   $pod->index($index);

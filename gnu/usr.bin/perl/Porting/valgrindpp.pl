@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+
 use IO::File ();
 use File::Find qw(find);
 use Text::Wrap qw(wrap);
@@ -49,7 +50,7 @@ my $hidden = do { local $"='|'; $opt{hide} ? qr/^(?:@{$opt{hide}})$/o : '' };
 # (do it early, as it may fail)
 my $fh = \*STDOUT;
 if (exists $opt{'output-file'}) {
-  $fh = new IO::File ">$opt{'output-file'}"
+  $fh = IO::File->new($opt{'output-file'}, 'w')
         or die "$0: cannot open $opt{'output-file'} ($!)\n";
 }
 
@@ -197,7 +198,7 @@ sub filter {
 
   # Get all the valgrind output lines
   my @l = do {
-    my $fh = new IO::File $_ or die "$0: cannot open $_ ($!)\n";
+    my $fh = IO::File->new($_, 'r') or die "$0: cannot open $_ ($!)\n";
     # Process outputs can interrupt each other, so sort by pid first
     my %pid; local $_;
     while (<$fh>) {
@@ -269,7 +270,7 @@ __END__
 
 =head1 NAME
 
-valgrindpp.pl - A post processor for make test.valgrind
+valgrindpp.pl - A post processor for C<make test.valgrind>
 
 =head1 SYNOPSIS
 
@@ -281,7 +282,7 @@ valgrindpp.pl [B<--dir>=I<dir>] [B<--frames>=I<number>]
 =head1 DESCRIPTION
 
 B<valgrindpp.pl> is a post processor for I<.valgrind> files
-created during I<make test.valgrind>. It collects all these
+created during C<make test.valgrind>. It collects all these
 files, extracts most of the information and produces a
 significantly shorter summary of all detected memory access
 errors and memory leaks.

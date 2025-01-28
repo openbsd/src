@@ -249,8 +249,9 @@ EXPECT
 ########
 # pp_ctl.c
 use warnings;
-eval 'use 5.006; use 5.10.0';
+eval 'use 5.012; use 5.14.0';
 EXPECT
+Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at (eval 1) line 1.
 ########
 # SKIP ? !$Config{default_inc_includes_dot}
 # NAME check warning for do with no . in @INC

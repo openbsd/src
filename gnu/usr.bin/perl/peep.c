@@ -997,6 +997,23 @@ S_maybe_multiconcat(pTHX_ OP *o)
     o->op_type         = OP_MULTICONCAT;
     o->op_ppaddr       = PL_ppaddr[OP_MULTICONCAT];
     cUNOP_AUXo->op_aux = aux;
+
+
+    /* add some PADTMPs, as needed, for the 'fallback to OP_CONCAT
+     * behaviour if magic / overloaded etc present' code path */
+
+    /* general PADTMP for the target of each concat */
+    aux[PERL_MULTICONCAT_IX_PADTMP0].pad_offset =
+                            pad_alloc(OP_MULTICONCAT, SVs_PADTMP);
+
+    /* PADTMP for recreating OP_CONST return values */
+    aux[PERL_MULTICONCAT_IX_PADTMP1].pad_offset =
+        (is_sprintf || nconst) ? pad_alloc(OP_MULTICONCAT, SVs_PADTMP) : 0;
+
+    /* PADTMP for stringifying the result */
+    aux[PERL_MULTICONCAT_IX_PADTMP2].pad_offset =
+    (o->op_private &OPpMULTICONCAT_STRINGIFY)
+            ? pad_alloc(OP_MULTICONCAT, SVs_PADTMP) : 0;
 }
 
 
@@ -3151,62 +3168,6 @@ Perl_rpeep(pTHX_ OP *o)
                 }
             }
 
-            /* If the pushmark is associated with an empty anonhash
-             * or anonlist, null out the pushmark and swap in a
-             * specialised op for the parent.
-             *     4        <@> anonhash sK* ->5
-             *     3           <0> pushmark s ->4
-             * becomes:
-             *     3        <@> emptyavhv sK* ->4
-             *     -           <0> pushmark s ->3
-             */
-            if (!OpHAS_SIBLING(o) && (o->op_next == o->op_sibparent) && (
-                (o->op_next->op_type == OP_ANONHASH) ||
-                (o->op_next->op_type == OP_ANONLIST) ) &&
-                (o->op_next->op_flags & OPf_SPECIAL) ) {
-
-                OP* anon = o->op_next;
-                /* These next two are _potentially_ a padsv and an sassign */
-                OP* padsv = anon->op_next;
-                OP* sassign = (padsv) ? padsv->op_next: NULL;
-
-                anon->op_private = (anon->op_type == OP_ANONLIST) ?
-                                                0 : OPpEMPTYAVHV_IS_HV;
-                OpTYPE_set(anon, OP_EMPTYAVHV);
-                op_null(o);
-                o = anon;
-                if (oldop) /* A previous optimization may have NULLED it */
-                    oldop->op_next = anon;
-
-                /* Further optimise scalar assignment of an empty anonhash
-                 * or anonlist by subsuming the padsv & sassign OPs. */
-                if ((padsv->op_type == OP_PADSV) &&
-                    !(padsv->op_private & OPpDEREF) &&
-                    sassign && (sassign->op_type == OP_SASSIGN) ){
-
-                    /* Take some public flags from the sassign */
-                    anon->op_flags = OPf_KIDS | OPf_SPECIAL |
-                        (anon->op_flags & OPf_PARENS) |
-                        (sassign->op_flags & (OPf_WANT|OPf_PARENS));
-
-                    /* Take some private flags from the padsv */
-                    anon->op_private |= OPpTARGET_MY |
-                        (padsv->op_private & (OPpLVAL_INTRO|OPpPAD_STATE));
-
-                    /* Take the targ slot from the padsv*/
-                    anon->op_targ = padsv->op_targ;
-                    padsv->op_targ = 0;
-
-                    /* Clean up */
-                    anon->op_next = sassign->op_next;
-                    op_null(padsv);
-                    op_null(sassign);
-                }
-                break;
-
-            }
-
-
             /* Convert a series of PAD ops for my vars plus support into a
              * single padrange op. Basically
              *
@@ -4019,6 +3980,11 @@ Perl_rpeep(pTHX_ OP *o)
             if (!(o->op_private & (OPpASSIGN_BACKWARDS|OPpASSIGN_CV_TO_GV))
                 && (lval->op_type == OP_NULL) && (lval->op_private == 2) &&
                 (cBINOPx(lval)->op_first->op_type == OP_AELEMFAST_LEX)
+                 /* For efficiency, pp_aelemfastlex_store() doesn't push its
+                  * result onto the stack. For the relatively rare case of
+                  * the array assignment not in void context, we just do it
+                  * the old slow way. */
+                 && OP_GIMME(o,0) == G_VOID
             ) {
                 OP * lex = cBINOPx(lval)->op_first;
                 /* SASSIGN's bitfield flags, such as op_moresib and

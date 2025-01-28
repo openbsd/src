@@ -87,3 +87,8 @@ case "$cc" in
   d_dlopen='define'
   ;;
 esac
+
+# Dragonfly leaks with a newlocale/freelocale combination.  See
+# https://bugs.dragonflybsd.org/issues/3361
+ccflags="$ccflags -DNO_POSIX_2008_LOCALE"
+

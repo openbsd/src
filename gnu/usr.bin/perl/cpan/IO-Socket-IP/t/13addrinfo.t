@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -16,7 +15,7 @@ use Socket qw( SOCK_STREAM unpack_sockaddr_in getaddrinfo );
       Listen    => 1,
       LocalHost => "127.0.0.1",
       Type      => SOCK_STREAM,
-   ) or die "Cannot listen on PF_INET - $@";
+   ) or die "Cannot listen on PF_INET - $IO::Socket::errstr";
 
    my ( $err, @peeraddrinfo ) = getaddrinfo( "127.0.0.1", $testserver->sockport, { socktype => SOCK_STREAM } );
    $err and die "Cannot getaddrinfo 127.0.0.1 - $err";
@@ -26,7 +25,7 @@ use Socket qw( SOCK_STREAM unpack_sockaddr_in getaddrinfo );
    );
 
    ok( defined $socket, 'IO::Socket::IP->new( PeerAddrInfo => ... ) constructs a new socket' ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    is_deeply( [ unpack_sockaddr_in $socket->peername ],
               [ unpack_sockaddr_in $testserver->sockname ],
@@ -43,12 +42,12 @@ use Socket qw( SOCK_STREAM unpack_sockaddr_in getaddrinfo );
    );
 
    ok( defined $socket, 'IO::Socket::IP->new( LocalAddrInfo => ... ) constructs a new socket' ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    my $testclient = IO::Socket::INET->new(
       PeerHost => "127.0.0.1",
       PeerPort => $socket->sockport,
-   ) or die "Cannot connect to localhost - $@";
+   ) or die "Cannot connect to localhost - $IO::Socket::errstr";
 
    is_deeply( [ unpack_sockaddr_in $socket->sockname ],
               [ unpack_sockaddr_in $testclient->peername ],

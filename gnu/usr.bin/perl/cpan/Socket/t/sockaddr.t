@@ -173,7 +173,7 @@ SKIP: {
 {
     my $w = 0;
     local $SIG{__WARN__} = sub {
-	++ $w if $_[0] =~ /^6-ARG sockaddr_in call is deprecated/ ;
+        ++$w if $_[0] =~ /^6-ARG sockaddr_in call is deprecated/ ;
     };
 
     no warnings 'Socket';

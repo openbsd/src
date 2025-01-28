@@ -33,11 +33,16 @@ EOM
 
 my $len   = length $hello ;
 
-
+SKIP:
 {
 
     title  "bzdeflate/bzinflate - non-PV buffers";
     # ==============================
+
+    # temp workaround for
+    # https://github.com/pmqs/Compress-Raw-Bzip2/issues/13
+    skip "skipping tests for Perl 5.6.*", 19
+        if $] < 5.008 ;
 
     my $hello = *hello;
     $hello = *hello;

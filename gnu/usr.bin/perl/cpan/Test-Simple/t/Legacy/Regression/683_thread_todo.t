@@ -25,7 +25,7 @@ my $t = threads->create(
 is(
     $t->join,
     42,
-    "Thread exitted successfully"
+    "Thread exited successfully"
 );
 
 done_testing;

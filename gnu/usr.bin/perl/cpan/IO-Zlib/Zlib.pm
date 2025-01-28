@@ -291,7 +291,7 @@ use Fcntl qw(SEEK_SET);
 use Symbol;
 use Tie::Handle;
 
-our $VERSION = "1.14";
+our $VERSION = "1.15";
 our $AUTOLOAD;
 our @ISA = qw(Tie::Handle);
 

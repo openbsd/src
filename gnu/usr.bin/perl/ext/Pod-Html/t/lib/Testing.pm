@@ -2,7 +2,7 @@ package Testing;
 use 5.10.0;
 use warnings;
 use Exporter 'import';
-our $VERSION = 1.34; # Let's keep this same as lib/Pod/Html.pm
+our $VERSION = 1.35; # Let's keep this same as lib/Pod/Html.pm
 $VERSION = eval $VERSION;
 our @EXPORT_OK = qw(
     setup_testing_dir

@@ -450,7 +450,7 @@ The fundamentally unsafe C<tmpnam()> interface was deprecated in
 Perl 5.22 and has now been removed.  In its place, you can use,
 for example, the L<File::Temp> interfaces.
 
-=head2 require ::Foo::Bar is now illegal.
+=head2 require ::Foo::Bar is now illegal
 
 Formerly, C<require ::Foo::Bar> would try to read F</Foo/Bar.pm>.  Now any
 bareword require which starts with a double colon dies instead.

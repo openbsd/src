@@ -325,7 +325,7 @@ strings.
 
 Full details are in L<perlfunc/fc>.
 
-=head3 The Unicode C<Script_Extensions> property is now supported.
+=head3 The Unicode C<Script_Extensions> property is now supported
 
 New in Unicode 6.0, this is an improved C<Script> property.  Details
 are in L<perlunicode/Scripts>.
@@ -514,7 +514,7 @@ C<utf8_to_uvuni_buf()> are now available to prevent this, and the Perl
 core has been converted to use them.
 See L</Internal Changes>.
 
-=head2 C<File::Glob::bsd_glob()> memory error with GLOB_ALTDIRFUNC (CVE-2011-2728).
+=head2 C<File::Glob::bsd_glob()> memory error with GLOB_ALTDIRFUNC (CVE-2011-2728)
 
 Calling C<File::Glob::bsd_glob> with the unsupported flag
 GLOB_ALTDIRFUNC would cause an access violation / segfault.  A Perl

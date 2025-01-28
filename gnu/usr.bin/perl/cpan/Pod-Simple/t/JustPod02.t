@@ -1,9 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More;
-
-BEGIN { plan tests => 1 }
+use Test::More tests => 1;
 
 use Pod::Simple::JustPod;
 
@@ -28,15 +26,15 @@ elsif ($ENV{PERL_TEST_DIFF}) {
     chomp $orig;
     print $orig_file $orig, "\n";
     close $orig_file || die "Can't close orig_file: $!";
-  
+
     chomp $parsed;
     my $parsed_file = File::Temp->new();
     print $parsed_file $parsed, "\n";
     close $parsed_file || die "Can't close parsed_file";
-  
+
     my $diff = File::Temp->new();
     system("$ENV{PERL_TEST_DIFF} $orig_file $parsed_file > $diff");
-  
+
     open my $fh, "<", $diff || die "Can't open $diff";
     my @diffs = <$fh>;
     diag(@diffs);

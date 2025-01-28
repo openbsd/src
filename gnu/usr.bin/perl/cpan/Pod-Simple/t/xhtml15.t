@@ -1,5 +1,3 @@
-#!/usr/bin/perl -w
-
 # t/xhtml15.t - test compatibility between Pod::Simple::XHTML and
 # Pod::Simple::HtmlBatch
 

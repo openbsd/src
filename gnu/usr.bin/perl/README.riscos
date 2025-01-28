@@ -11,19 +11,18 @@ perlriscos - Perl version 5 for RISC OS
 =head1 DESCRIPTION
 
 This document gives instructions for building Perl for RISC OS. It is
-complicated by the need to cross compile. There is a binary version of
-perl available from L<http://www.cp15.org/perl/> which you may wish to
+complicated by the need to cross-compile. There is a binary version of
+perl available from L<https://www.cp15.org/perl/> which you may wish to
 use instead of trying to compile it yourself.
 
 =head1 BUILD
 
-You need an installed and working gccsdk cross compiler
-L<http://gccsdk.riscos.info/> and REXEN
-L<http://www.cp15.org/programming/>
+You need an installed and working
+L<GCCSDK|https://www.riscos.info/downloads/gccsdk/latest/> cross-compiler
+and L<REXEN|https://www.cp15.org/programming/>.
 
-Firstly, copy the source and build a native copy of perl for your host
-system.
-Then, in the source to be cross compiled:
+First, copy the source and build a native copy of perl for your host system.
+Then, in the source to be cross-compiled:
 
 =over 4
 
@@ -33,13 +32,13 @@ Then, in the source to be cross compiled:
 
 =item 2.
 
-Select the riscos hint file. The default answers for the rest of the
-questions are usually sufficient.
+Select the RISC OS hint file (F<hints/riscos.sh>).
+The default answers for the rest of the questions are usually sufficient.
 
-Note that, if you wish to run Configure non-interactively (see the INSTALL
-document for details), to have it select the correct hint file, you'll
-need to provide the argument -Dhintfile=riscos on the Configure
-command-line.
+Note that, if you wish to run C<Configure> non-interactively
+(see the F<INSTALL> document for details), to have it select the correct hint
+file, you'll need to provide the argument C<-Dhintfile=riscos> on the
+C<Configure> command-line.
 
 =item 3.
 
@@ -47,12 +46,12 @@ command-line.
 
 =item 4.
 
-This should build miniperl and then fail when it tries to run it.
+This should build C<miniperl> and then fail when it tries to run it.
 
 =item 5.
 
-Copy the miniperl executable from the native build done earlier to
-replace the cross compiled miniperl.
+Copy the F<miniperl> executable from the native build done earlier to
+replace the cross-compiled F<miniperl>.
 
 =item 6.
 
@@ -60,7 +59,7 @@ replace the cross compiled miniperl.
 
 =item 7.
 
-This will use miniperl to complete the rest of the build.
+This will use C<miniperl> to complete the rest of the build.
 
 =back
 

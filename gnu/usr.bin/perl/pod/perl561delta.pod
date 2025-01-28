@@ -3174,7 +3174,7 @@ C</"Support for CHECK blocks"> for more information.
 =item Treatment of list slices of undef has changed
 
 There is a potential incompatibility in the behavior of list slices
-that are comprised entirely of undefined values.
+that consist entirely of undefined values.
 See L</"Behavior of list slices is more consistent">.
 
 =item Format of $English::PERL_VERSION is different

@@ -7,7 +7,7 @@ BEGIN {
 use strict;
 use warnings;
 
-use Test::More tests => 79;
+use Test::More tests => 82;
 
 use Config;
 use IO::File;
@@ -147,6 +147,15 @@ my %file = map { $_ => File::Spec->catfile( $dir, $_ ) }
                 },
                 vote => 0.8,
             },
+            {   name => '.t (no shebang)',
+                meta => {
+                    is_file => 1,
+                    file    => {
+                        lc_ext => '.t', dir => '', shebang => 'use strict;'
+                    }
+                },
+                vote => 0.8,
+            },
             {   name => '.pl',
                 meta => {
                     is_file => 1,
@@ -169,6 +178,24 @@ my %file = map { $_ => File::Spec->catfile( $dir, $_ ) }
                     }
                 },
                 vote => 0.9,
+            },
+            {   name => '#!...sh',
+                meta => {
+                    is_file => 1,
+                    file    => {
+                        lc_ext => '', dir => '', shebang => '#!/bin/sh'
+                    }
+                },
+                vote => 0.3,
+            },
+            {   name => 'use strict;  # first line not shebang',
+                meta => {
+                    is_file => 1,
+                    file    => {
+                        lc_ext => '', dir => '', shebang => 'use strict;'
+                    }
+                },
+                vote => 0.25,
             },
             {   name => 'file default',
                 meta => {

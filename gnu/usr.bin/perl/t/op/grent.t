@@ -11,7 +11,7 @@ if ($@ =~ /(The \w+ function is unimplemented)/) {
     skip_all "getgrgid unimplemented";
 }
 
-eval { require Config; import Config; };
+eval { require Config; Config->import; };
 my $reason;
 if ($Config{'i_grp'} ne 'define') {
 	$reason = '$Config{i_grp} not defined';

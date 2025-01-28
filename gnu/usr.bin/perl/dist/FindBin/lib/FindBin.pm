@@ -6,14 +6,12 @@
 
 =head1 NAME
 
-FindBin - Locate directory of original perl script
+FindBin - Locate directory of original Perl script
 
 =head1 SYNOPSIS
 
  use FindBin;
  use lib "$FindBin::Bin/../lib";
-
- or
 
  use FindBin qw($Bin);
  use lib "$Bin/../lib";
@@ -28,40 +26,58 @@ directories C<< <root>/bin >> and C<< <root>/lib >>, and then the above
 example will allow the use of modules in the lib directory without knowing
 where the software tree is installed.
 
-If perl is invoked using the B<-e> option or the perl script is read from
-C<STDIN> then FindBin sets both C<$Bin> and C<$RealBin> to the current
+If C<perl> is invoked using the C<-e> option or the Perl script is read from
+C<STDIN>, then C<FindBin> sets both C<$Bin> and C<$RealBin> to the current
 directory.
 
 =head1 EXPORTABLE VARIABLES
 
- $Bin         - path to bin directory from where script was invoked
- $Script      - basename of script from which perl was invoked
- $RealBin     - $Bin with all links resolved
- $RealScript  - $Script with all links resolved
+=over
+
+=item C<$Bin> or C<$Dir>
+
+Path to the bin B<directory> from where script was invoked
+
+=item C<$Script>
+
+B<Basename> of the script from which C<perl> was invoked
+
+=item C<$RealBin> or C<$RealDir>
+
+C<$Bin> with all links resolved
+
+=item C<$RealScript>
+
+C<$Script> with all links resolved
+
+=back
+
+You can also use the C<ALL> tag to export all of the above variables together:
+
+  use FindBin ':ALL';
 
 =head1 KNOWN ISSUES
 
 If there are two modules using C<FindBin> from different directories
 under the same interpreter, this won't work. Since C<FindBin> uses a
 C<BEGIN> block, it'll be executed only once, and only the first caller
-will get it right. This is a problem under mod_perl and other persistent
+will get it right. This is a problem under C<mod_perl> and other persistent
 Perl environments, where you shouldn't use this module. Which also means
 that you should avoid using C<FindBin> in modules that you plan to put
-on CPAN. To make sure that C<FindBin> will work is to call the C<again>
-function:
+on CPAN. Call the C<again> function to make sure that C<FindBin> will work:
 
   use FindBin;
   FindBin::again(); # or FindBin->again;
 
-In former versions of FindBin there was no C<again> function. The
-workaround was to force the C<BEGIN> block to be executed again:
+In former versions of C<FindBin> there was no C<again> function.
+The workaround was to force the C<BEGIN> block to be executed again:
 
   delete $INC{'FindBin.pm'};
   require FindBin;
 
 =head1 AUTHORS
 
-FindBin is supported as part of the core perl distribution.  Please submit bug
+C<FindBin> is supported as part of the core perl distribution.  Please submit bug
 reports at L<https://github.com/Perl/perl5/issues>.
 
 Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
@@ -90,7 +106,7 @@ our @EXPORT_OK = qw($Bin $Script $RealBin $RealScript $Dir $RealDir);
 our %EXPORT_TAGS = (ALL => [qw($Bin $Script $RealBin $RealScript $Dir $RealDir)]);
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.53";
+our $VERSION = "1.54";
 
 # needed for VMS-specific filename translation
 if( $^O eq 'VMS' ) {

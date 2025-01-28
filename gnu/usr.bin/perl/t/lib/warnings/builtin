@@ -27,14 +27,8 @@ $true->();
 $false->();
 EXPECT
 Built-in function 'builtin::is_bool' is experimental at - line 6.
-Built-in function 'builtin::true' is experimental at - line 7.
-Built-in function 'builtin::false' is experimental at - line 8.
 Built-in function 'builtin::is_bool' is experimental at - line 9.
-Built-in function 'builtin::true' is experimental at - line 10.
-Built-in function 'builtin::false' is experimental at - line 11.
 Built-in function 'builtin::is_bool' is experimental at - line 12.
-Built-in function 'builtin::true' is experimental at - line 13.
-Built-in function 'builtin::false' is experimental at - line 14.
 ########
 # builtin.c - weakrefs
 use strict;
@@ -62,15 +56,6 @@ $is_weak->($ref);
 $weaken->($ref);
 $unweaken->($ref);
 EXPECT
-Built-in function 'builtin::is_weak' is experimental at - line 7.
-Built-in function 'builtin::weaken' is experimental at - line 8.
-Built-in function 'builtin::unweaken' is experimental at - line 9.
-Built-in function 'builtin::is_weak' is experimental at - line 10.
-Built-in function 'builtin::weaken' is experimental at - line 11.
-Built-in function 'builtin::unweaken' is experimental at - line 12.
-Built-in function 'builtin::is_weak' is experimental at - line 13.
-Built-in function 'builtin::weaken' is experimental at - line 14.
-Built-in function 'builtin::unweaken' is experimental at - line 15.
 ########
 # builtin.c - blessed refs
 use strict;
@@ -98,15 +83,6 @@ $blessed->($ref);
 $refaddr->($ref);
 $reftype->($ref);
 EXPECT
-Built-in function 'builtin::blessed' is experimental at - line 7.
-Built-in function 'builtin::refaddr' is experimental at - line 8.
-Built-in function 'builtin::reftype' is experimental at - line 9.
-Built-in function 'builtin::blessed' is experimental at - line 10.
-Built-in function 'builtin::refaddr' is experimental at - line 11.
-Built-in function 'builtin::reftype' is experimental at - line 12.
-Built-in function 'builtin::blessed' is experimental at - line 13.
-Built-in function 'builtin::refaddr' is experimental at - line 14.
-Built-in function 'builtin::reftype' is experimental at - line 15.
 ########
 # builtin.c - indexed
 use strict;
@@ -116,8 +92,11 @@ my @array = indexed 1..3;
 my $scalar = indexed 1..3;
 indexed 1..3;
 EXPECT
-Built-in function 'builtin::indexed' is experimental at - line 5.
-Built-in function 'builtin::indexed' is experimental at - line 6.
-Built-in function 'builtin::indexed' is experimental at - line 7.
 Useless use of builtin::indexed in scalar context at - line 6.
 Useless use of builtin::indexed in void context at - line 7.
+########
+# builtin.c - import from bundles is idempotent
+use builtin qw(true false);
+use builtin ':5.39';
+use builtin ':5.39';
+EXPECT

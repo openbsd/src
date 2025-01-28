@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -32,7 +31,7 @@ SKIP: {
    );
 
    ok( defined $socket, "defined \$socket for $test_host:$test_good_port" ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    ok( defined $socket->fileno, '$socket has fileno' );
 
@@ -71,7 +70,7 @@ SKIP: {
    );
 
    ok( defined $socket, "defined \$socket for $test_host:$test_bad_port" ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    ok( defined $socket->fileno, '$socket has fileno' );
 

@@ -1,4 +1,4 @@
-#!./perl -T
+#!./perl
 
 BEGIN {
     chdir 't' if -d 't';
@@ -49,6 +49,25 @@ package FetchStoreCounter {
     is($storecount, 1, 'is_bool() invokes STORE magic');
 
     is(prototype(\&builtin::is_bool), '$', 'is_bool prototype');
+}
+
+# float constants
+{
+    use builtin qw( inf nan );
+
+    ok(inf, 'inf is true');
+    ok(inf > 1E10, 'inf is bigger than 1E10');
+    ok(inf == inf, 'inf is equal to inf');
+    ok(inf == inf + 1, 'inf is equal to inf + 1');
+
+    # Invoke the real XSUB
+    my $inf = ( \&builtin::inf )->();
+    ok($inf == $inf + 1, 'inf returned by real xsub');
+
+    ok(nan != nan, 'NaN is not equal to NaN');
+
+    my $nan = ( \&builtin::nan )->();
+    ok($nan != $nan, 'NaN returned by real xsub');
 }
 
 # weakrefs
@@ -173,6 +192,27 @@ package FetchStoreCounter {
     is(prototype(\&builtin::created_as_number), '$', 'created_as_number prototype');
 }
 
+# stringify
+{
+    use builtin qw( stringify );
+
+    is(stringify("abc"), "abc", 'stringify a plain string');
+    is(stringify(123),   "123", 'stringify a number');
+
+    my $aref = [];
+    is(stringify($aref), "$aref", 'stringify an array ref');
+
+    use builtin qw( created_as_string );
+    ok(!ref stringify($aref),               'stringified arrayref is not a ref');
+    ok(created_as_string(stringify($aref)), 'stringified arrayref is created as string');
+
+    package WithOverloadedStringify {
+        use overload '""' => sub { return "STRING" };
+    }
+
+    is(stringify(bless [], "WithOverloadedStringify"), "STRING", 'stringify invokes "" overload');
+}
+
 # ceil, floor
 {
     use builtin qw( ceil floor );
@@ -237,8 +277,14 @@ package FetchStoreCounter {
     }
     ok(recursefunc("rec"), 'true in self-recursive sub');
 
+    my sub recurselexicalfunc {
+        use builtin 'true';
+        return __SUB__->() if @_;
+        return true;
+    }
+    ok(recurselexicalfunc("rec"), 'true in self-recursive lexical sub');
+
     my $recursecoderef = sub {
-        use feature 'current_sub';
         use builtin 'true';
         return __SUB__->() if @_;
         return true;
@@ -278,8 +324,6 @@ package FetchStoreCounter {
     ok(eq_array(\@orig, [1 .. 3]), 'indexed copies values, does not alias');
 
     {
-        no warnings 'experimental::for_list';
-
         my $ok = 1;
         foreach my ($len, $s) (indexed "", "x", "xx") {
             length($s) == $len or undef $ok;
@@ -299,6 +343,8 @@ package FetchStoreCounter {
         my $count = indexed 'i', 'ii', 'iii', 'iv';
         is($count, 8, 'indexed in scalar context yields size of list it would return');
     }
+
+    is(prototype(\&builtin::indexed), '@', 'indexed prototype');
 }
 
 # Vanilla trim tests
@@ -359,25 +405,6 @@ TODO: {
     is(trim($str2), "Hello world!", "trim on an our \$var");
 }
 
-# is_tainted
-{
-    use builtin qw( is_tainted );
-
-    is(is_tainted($0), !!${^TAINT}, "\$0 is tainted (if tainting is supported)");
-    ok(!is_tainted($1), "\$1 isn't tainted");
-
-    # Invokes magic
-    tie my $tied, FetchStoreCounter => (\my $fetchcount, \my $storecount);
-
-    my $_dummy = is_tainted($tied);
-    is($fetchcount, 1, 'is_tainted() invokes FETCH magic');
-
-    $tied = is_tainted($0);
-    is($storecount, 1, 'is_tainted() invokes STORE magic');
-
-    is(prototype(\&builtin::is_tainted), '$', 'is_tainted prototype');
-}
-
 # Lexical export
 {
     my $name;
@@ -411,6 +438,211 @@ TODO: {
 
     %::hash = (key => "val");
     is($HASH{key}, "val", 'Lexically exported hash is accessible');
+}
+
+# load_module
+{
+    use builtin qw( load_module );
+    use feature qw( try );
+    my ($ok, $e);
+
+    # Can't really test this sans string eval, as it's a compilation error:
+    eval 'load_module();';
+    $e = $@;
+    ok($e, 'load_module(); fails');
+    like($e, qr/^Not enough arguments for builtin::load_module at/, 'load_module(); fails with correct error');
+    eval 'load_module;';
+    $e = $@;
+    ok($e, 'load_module; fails');
+    like($e, qr/^Not enough arguments for builtin::load_module at/, 'load_module; fails with correct error');
+
+    # Failure to load module croaks
+    try {
+        load_module(undef);
+    } catch ($e) {
+        ok($e, 'load_module(undef) fails');
+        like($e, qr/^Usage: builtin::load_module\(defined string\)/, 'load_module(undef) fails with correct error');
+    };
+    try {
+        load_module(\"Foo");
+    } catch ($e) {
+        ok($e, 'load_module(\"Foo") fails');
+        like($e, qr/^Usage: builtin::load_module\(defined string\)/, 'load_module(\"Foo") fails with correct error');
+    };
+    try {
+        load_module(["Foo"]);
+    } catch ($e) {
+        ok($e, 'load_module(["Foo"]) fails');
+        like($e, qr/^Usage: builtin::load_module\(defined string\)/, 'load_module(["Foo"]) fails with correct error');
+    };
+    try {
+        load_module('5.36');
+    }
+    catch ($e) {
+        ok($e, 'load_module("5.36") fails');
+        like($e, qr/^Can't locate 5[.]36[.]pm in \@INC/, 'load_module("5.36") fails with correct error');
+    };
+    try {
+        load_module('v5.36');
+    }
+    catch ($e) {
+        ok($e, 'load_module("v5.36") fails');
+        like($e, qr/^Can't locate v5[.]36[.]pm in \@INC/, 'load_module("v5.36") fails with correct error');
+    };
+    try {
+        load_module("Dies");
+        fail('load_module("Dies") succeeded!');
+    }
+    catch ($e) {
+        ok($e, 'load_module("Dies") fails');
+        like($e, qr/^Can't locate Dies[.]pm in \@INC/, 'load_module("Dies") fails with correct error');
+    }
+    my $module_name = 'Dies';
+    try {
+        load_module($module_name);
+        fail('load_module($module_name) $module_name=Dies succeeded!');
+    }
+    catch ($e) {
+        ok($e, 'load_module($module_name) $module_name=Dies fails');
+        like($e, qr/^Can't locate Dies[.]pm in \@INC/, 'load_module($module_name) $module_name=Dies fails with correct error');
+    }
+    $module_name =~ m!(\w+)!;
+    try {
+        load_module($1);
+        fail('load_module($1) from $module_name=Dies succeeded!');
+    }
+    catch ($e) {
+        ok($e, 'load_module($1) from $module_name=Dies fails');
+        like($e, qr/^Can't locate Dies[.]pm in \@INC/, 'load_module($1) from $module_name=Dies fails with correct error');
+    }
+    "Dies" =~ m!(\w+)!;
+    try {
+        load_module($1);
+        fail('load_module($1) from "Dies" succeeded!');
+    }
+    catch ($e) {
+        ok($e, 'load_module($1) from "Dies" fails');
+        like($e, qr/^Can't locate Dies[.]pm in \@INC/, 'load_module($1) from "Dies" fails with correct error');
+    }
+
+    # Loading module goes well
+    my $ret;
+    try {
+        $ret = load_module("strict");
+        pass('load_module("strict") worked');
+        is($ret, "strict", 'load_module("strict") returned "strict"');
+    }
+    catch ($e) {
+        fail('load_module("strict") errored: ' . $e);
+    }
+    $module_name = 'strict';
+    try {
+        $ret = load_module($module_name);
+        pass('load_module($module_name) $module_name=strict worked');
+        is($ret, "strict", 'load_module($module_name) returned "strict"');
+    }
+    catch ($e) {
+        fail('load_module($module_name) $module_name=strict errored: ' . $e);
+    }
+    $module_name =~ m!(\w+)!;
+    try {
+        $ret = load_module($1);
+        pass('load_module($1) from $module_name=strict worked');
+        is($ret, "strict", 'load_module($1) from $module_name=strict returned "strict"');
+    }
+    catch ($e) {
+        fail('load_module($1) from $module_name=strict errored: ' . $e);
+    }
+    "strict" =~ m!(\w+)!;
+    try {
+        $ret = load_module($1);
+        pass('load_module($1) from "strict" worked');
+        is($ret, "strict", 'load_module($1) from "strict" returned "strict"');
+    }
+    catch ($e) {
+        fail('load_module($1) from "strict" errored: ' . $e);
+    }
+
+    # Slightly more complex, based on tie
+    {
+        package BuiltinTestTie {
+            sub TIESCALAR {
+                bless $_[1], $_[0];
+            }
+            sub FETCH {
+                ${$_[0]}
+            }
+        }
+        my $x;
+        tie my $y, BuiltinTestTie => \$x;
+        $x = "strict";
+        try {
+            $ret = load_module($y);
+            pass('load_module($y) from $y tied to $x=strict worked');
+            is($ret, "strict", 'load_module($y) from $y tied to $x=strict worked and returned "strict"');
+        }
+        catch ($e) {
+            fail('load_module($y) from $y tied to $x=strict failed: ' . $e);
+        };
+    }
+
+    # Can be used to import a symbol to the current namespace, too:
+    {
+        my $aref = [];
+        my $aref_stringified = "$aref";
+        my $got = eval '
+            BEGIN {
+                load_module("builtin")->import("stringify");
+            }
+            stringify($aref);
+        ';
+        if (my $error = $@) {
+            fail('load_module("builtin")->import("stringify") failed: ' . $error);
+        }
+        is($got, $aref_stringified, 'load_module("builtin")->import("stringify") works, stringifying $aref');
+    }
+}
+
+# version bundles
+{
+    use builtin ':5.39';
+    ok(true, 'true() is available from :5.39 bundle');
+
+    # parse errors
+    foreach my $bundle (qw( :x :5.x :5.36x :5.36.1000 :5.1000 :5.36.1.2 ),
+                        ":  +5.+39", ":  +5.+40. -10", ": 5.40", ":5 .40", ":5.+40",
+                        ":5.40 .0", ":5.40.-10", ":5.40\0") {
+        (my $pretty_bundle = $bundle) =~ s/([^[:print:]])/ sprintf("\\%o", ord $1) /ge;
+        ok(!defined eval "use builtin '$bundle';", $pretty_bundle.' is invalid bundle');
+        like($@, qr/^Invalid version bundle "\Q$pretty_bundle\E" at /);
+    }
+}
+
+# github #21981
+{
+    fresh_perl_is(<<'EOS', "", {}, "github 21981: panic in intro_my");
+use B;
+BEGIN { B::save_BEGINs; }
+use v5.39;
+EOS
+}
+
+# github #22542
+{
+    # some of these functions don't error at this point, but they might be updated
+    # and see the same problem we fix here
+    for my $func (qw(is_bool is_weak blessed refaddr reftype ceil floor is_tainted
+                     trim stringify created_as_string created_as_number)) {
+        my $arg =
+          $func =~ /ceil|floor|created_as/ ? "1.1" :
+          $func =~ /(^ref|blessed|is_weak)/ ? "\\1" : '"abc"';
+        fresh_perl_is(<<"EOS", "ok", {}, "goto $func");
+no warnings "experimental";
+sub f { goto &builtin::$func }
+f($arg);
+print "ok";
+EOS
+    }
 }
 
 # vim: tabstop=4 shiftwidth=4 expandtab autoindent softtabstop=4

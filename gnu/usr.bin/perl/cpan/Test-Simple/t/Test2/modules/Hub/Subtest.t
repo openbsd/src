@@ -43,7 +43,7 @@ my $one = Test2::Hub::Subtest->new(
     nested => 3,
 );
 
-ok($one->isa('Test2::Hub'), "inheritence");
+ok($one->isa('Test2::Hub'), "inheritance");
 
 {
     no warnings 'redefine';

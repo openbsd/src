@@ -5,7 +5,7 @@ BEGIN {
 
   require "./test.pl";
   set_up_inc( '../lib' ) if -d '../lib' && -d '../ext';
-  require Config; import Config;
+  require Config; Config->import;
 
   if ($ENV{'PERL_CORE'} && $Config{'extensions'} !~ m[\bIPC/SysV\b]) {
     skip_all('-- IPC::SysV was not built');

@@ -75,6 +75,17 @@ my $expected;
     undef %opt;
 }
 
+# GH21466: Test `\my %opt` syntax with getopts()
+
+{
+    local @ARGV = ( '-a', '-b', 'foo', '-c' );
+    getopts('ab:c:', \my %opt);
+    $expected = { 'a' => 1, 'b' => 'foo', 'c' => undef };
+    is_deeply(\%opt, $expected,
+        "getopts (scoped): multiple switches; switch expected argument, none provided; value undef");
+    undef %opt;
+}
+
 {
     local @ARGV = ( '-b', 'foo', '-c' );
     getopt('bc', \%opt);
@@ -90,6 +101,17 @@ my $expected;
     $expected = { 'c' => undef };
     is_deeply(\%opt, $expected,
         "getopt: single switch; switch expected argument, none provided; value undef");
+    undef %opt;
+}
+
+# GH21466: Test `\my %opt` syntax with getopt()
+
+{
+    local @ARGV = ( '-b', 'foo', '-c' );
+    getopt('bc', \my %opt);
+    $expected = { 'b' => 'foo', 'c' => undef };
+    is_deeply(\%opt, $expected,
+        "getopt (scoped): multiple switches; switch expected argument, none provided; value undef");
     undef %opt;
 }
 

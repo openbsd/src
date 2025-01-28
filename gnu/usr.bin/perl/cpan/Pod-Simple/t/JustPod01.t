@@ -1,16 +1,10 @@
-#! user/bin/perl -w
-
 # t/JustPod01.t - check basics of Pod::Simple::JustPod
 
-BEGIN {
-  chdir 't' if -d 't';
-}
-
 use strict;
-use lib '../lib';
+use warnings;
+
 use Test::More tests => 2;
 
-use warnings;
 use utf8;
 
 use_ok('Pod::Simple::JustPod') or exit;

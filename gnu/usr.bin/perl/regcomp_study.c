@@ -906,102 +906,7 @@ S_ssc_clear_locale(regnode_ssc *ssc)
     ANYOF_FLAGS(ssc) &= ~ANYOF_LOCALE_FLAGS;
 }
 
-bool
-Perl_is_ssc_worth_it(const RExC_state_t * pRExC_state, const regnode_ssc * ssc)
-{
-    /* The synthetic start class is used to hopefully quickly winnow down
-     * places where a pattern could start a match in the target string.  If it
-     * doesn't really narrow things down that much, there isn't much point to
-     * having the overhead of using it.  This function uses some very crude
-     * heuristics to decide if to use the ssc or not.
-     *
-     * It returns TRUE if 'ssc' rules out more than half what it considers to
-     * be the "likely" possible matches, but of course it doesn't know what the
-     * actual things being matched are going to be; these are only guesses
-     *
-     * For /l matches, it assumes that the only likely matches are going to be
-     *      in the 0-255 range, uniformly distributed, so half of that is 127
-     * For /a and /d matches, it assumes that the likely matches will be just
-     *      the ASCII range, so half of that is 63
-     * For /u and there isn't anything matching above the Latin1 range, it
-     *      assumes that that is the only range likely to be matched, and uses
-     *      half that as the cut-off: 127.  If anything matches above Latin1,
-     *      it assumes that all of Unicode could match (uniformly), except for
-     *      non-Unicode code points and things in the General Category "Other"
-     *      (unassigned, private use, surrogates, controls and formats).  This
-     *      is a much large number. */
 
-    U32 count = 0;      /* Running total of number of code points matched by
-                           'ssc' */
-    UV start, end;      /* Start and end points of current range in inversion
-                           XXX outdated.  UTF-8 locales are common, what about invert? list */
-    const U32 max_code_points = (LOC)
-                                ?  256
-                                : ((  ! UNI_SEMANTICS
-                                    ||  invlist_highest(ssc->invlist) < 256)
-                                  ? 128
-                                  : NON_OTHER_COUNT);
-    const U32 max_match = max_code_points / 2;
-
-    PERL_ARGS_ASSERT_IS_SSC_WORTH_IT;
-
-    invlist_iterinit(ssc->invlist);
-    while (invlist_iternext(ssc->invlist, &start, &end)) {
-        if (start >= max_code_points) {
-            break;
-        }
-        end = MIN(end, max_code_points - 1);
-        count += end - start + 1;
-        if (count >= max_match) {
-            invlist_iterfinish(ssc->invlist);
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-
-void
-Perl_ssc_finalize(pTHX_ RExC_state_t *pRExC_state, regnode_ssc *ssc)
-{
-    /* The inversion list in the SSC is marked mortal; now we need a more
-     * permanent copy, which is stored the same way that is done in a regular
-     * ANYOF node, with the first NUM_ANYOF_CODE_POINTS code points in a bit
-     * map */
-
-    SV* invlist = invlist_clone(ssc->invlist, NULL);
-
-    PERL_ARGS_ASSERT_SSC_FINALIZE;
-
-    assert(is_ANYOF_SYNTHETIC(ssc));
-
-    /* The code in this file assumes that all but these flags aren't relevant
-     * to the SSC, except SSC_MATCHES_EMPTY_STRING, which should be cleared
-     * by the time we reach here */
-    assert(! (ANYOF_FLAGS(ssc)
-        & ~( ANYOF_COMMON_FLAGS
-            |ANYOFD_NON_UTF8_MATCHES_ALL_NON_ASCII__shared
-            |ANYOF_HAS_EXTRA_RUNTIME_MATCHES)));
-
-    populate_anyof_bitmap_from_invlist( (regnode *) ssc, &invlist);
-
-    set_ANYOF_arg(pRExC_state, (regnode *) ssc, invlist, NULL, NULL);
-    SvREFCNT_dec(invlist);
-
-    /* Make sure is clone-safe */
-    ssc->invlist = NULL;
-
-    if (ANYOF_POSIXL_SSC_TEST_ANY_SET(ssc)) {
-        ANYOF_FLAGS(ssc) |= ANYOF_MATCHES_POSIXL;
-        OP(ssc) = ANYOFPOSIXL;
-    }
-    else if (RExC_contains_locale) {
-        OP(ssc) = ANYOFL;
-    }
-
-    assert(! (ANYOF_FLAGS(ssc) & ANYOF_LOCALE_FLAGS) || RExC_contains_locale);
-}
 
 /* The below joins as many adjacent EXACTish nodes as possible into a single
  * one.  The regop may be changed if the node(s) contain certain sequences that
@@ -1159,9 +1064,9 @@ Perl_join_exact(pTHX_ RExC_state_t *pRExC_state, regnode *scan,
     regnode *n = regnext(scan);
     U32 stringok = 1;
     regnode *next = REGNODE_AFTER_varies(scan);
-    U32 merged = 0;
     U32 stopnow = 0;
 #ifdef DEBUGGING
+    U32 merged = 0;
     regnode *stop = scan;
     DECLARE_AND_GET_RE_DEBUG_FLAGS;
 #else
@@ -1309,7 +1214,9 @@ Perl_join_exact(pTHX_ RExC_state_t *pRExC_state, regnode *scan,
             }
 
             DEBUG_PEEP("merg", n, depth, 0);
+#ifdef DEBUGGING
             merged++;
+#endif
 
             next = REGNODE_AFTER_varies(n);
             NEXT_OFF(scan) += NEXT_OFF(n);

@@ -68,6 +68,10 @@ Print a brief help message and exit.
 
 Print the manual page and exit.
 
+=item B<-quiet>
+
+Do not print a success message.
+
 =item B<-warnings> B<-nowarnings>
 
 Turn on/off printing of warnings. Repeating B<-warnings> increases the
@@ -133,7 +137,7 @@ use Getopt::Long;
 my %options;
 
 ## Parse options
-GetOptions(\%options, qw(help man warnings+ nowarnings))  ||  pod2usage(2);
+GetOptions(\%options, qw(help man quiet warnings+ nowarnings))  ||  pod2usage(2);
 pod2usage(1)  if ($options{help});
 pod2usage(-verbose => 2)  if ($options{man});
 
@@ -173,7 +177,7 @@ for my $podfile (@ARGV) {
         print STDERR "$podfile does not contain any pod commands.\n";
     }
     else {
-        print STDERR "$podfile pod syntax OK.\n";
+        print "$podfile pod syntax OK.\n" unless $options{quiet};
     }
 }
 exit $status;

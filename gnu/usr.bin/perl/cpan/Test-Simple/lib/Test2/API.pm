@@ -10,7 +10,7 @@ BEGIN {
     $ENV{TEST2_ACTIVE} = 1;
 }
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 
 my $INST;
@@ -171,6 +171,10 @@ our @EXPORT_OK = qw{
     test2_stdout
     test2_stderr
     test2_reset_io
+
+    test2_enable_trace_stamps
+    test2_disable_trace_stamps
+    test2_trace_stamps_enabled
 };
 BEGIN { require Exporter; our @ISA = qw(Exporter) }
 
@@ -209,6 +213,10 @@ sub test2_ipc_wait_enable  { $INST->set_no_wait(0) }
 sub test2_ipc_wait_disable { $INST->set_no_wait(1) }
 sub test2_ipc_wait_enabled { !$INST->no_wait }
 
+sub test2_enable_trace_stamps  { $INST->test2_enable_trace_stamps }
+sub test2_disable_trace_stamps { $INST->test2_disable_trace_stamps }
+sub test2_trace_stamps_enabled { $INST->test2_trace_stamps_enabled }
+
 sub test2_is_testing_done {
     # No instance? VERY DONE!
     return 1 unless $INST;
@@ -240,7 +248,7 @@ sub test2_add_callback_testing_done {
 
     test2_add_callback_post_load(sub {
         my $stack = test2_stack();
-        $stack->top; # Insure we have a hub
+        $stack->top; # Ensure we have a hub
         my ($hub) = Test2::API::test2_stack->all;
 
         $hub->set_active(1);
@@ -380,8 +388,15 @@ sub context {
     # Catch an edge case where we try to get context after the root hub has
     # been garbage collected resulting in a stack that has a single undef
     # hub
-    if (!$hub && !exists($params{hub}) && @$stack) {
-        my $msg = Carp::longmess("Attempt to get Test2 context after testing has completed (did you attempt a testing event after done_testing?)");
+    if (!($hub && $hub->{hid}) && !exists($params{hub}) && @$stack) {
+        my $msg;
+
+        if ($hub && !$hub->{hid}) {
+            $msg = Carp::longmess("$hub has no hid! (did you attempt a testing event after done_testing?). You may be relying on a tool or plugin that was based off an old Test2 that did not require hids.");
+        }
+        else {
+            $msg = Carp::longmess("Attempt to get Test2 context after testing has completed (did you attempt a testing event after done_testing?)");
+        }
 
         # The error message is usually masked by the global destruction, so we have to print to STDER
         print STDERR $msg;
@@ -462,6 +477,8 @@ sub context {
             buffered => $hub->{buffered},
 
             full_caller => [$pkg, $file, $line, $sub, @other],
+
+            $INST->{trace_stamps} ? (stamp => time()) : (),
 
             $$UUID_VIA ? (
                 huuid => $hub->{uuid},
@@ -920,7 +937,7 @@ what you can and cannot do with a context once it is obtained.
 B<Note> This function will throw an exception if you ignore the context object
 it returns.
 
-B<Note> On perls 5.14+ a depth check is used to insure there are no context
+B<Note> On perls 5.14+ a depth check is used to ensure there are no context
 leaks. This cannot be safely done on older perls due to
 L<https://rt.perl.org/Public/Bug/Display.html?id=127774>
 You can forcefully enable it either by setting C<$ENV{T2_CHECK_DEPTH} = 1> or
@@ -1088,8 +1105,8 @@ Usage:
 
 Using this inside your test tool takes care of a lot of boilerplate for you. It
 will ensure a context is acquired. It will capture and rethrow any exception. It
-will insure the context is released when you are done. It preserves the
-subroutine call context (array, scalar, void).
+will ensure the context is released when you are done. It preserves the
+subroutine call context (list, scalar, void).
 
 This is the safest way to write a test tool. The only two downsides to this are a
 slight performance decrease, and some extra indentation in your source. If the
@@ -1229,7 +1246,7 @@ formatter being used.
 
 =over 4
 
-=item Things not effected by this flag
+=item Things not affected by this flag
 
 In both cases events are generated and stored in an array. This array is
 eventually used to populate the C<subevents> attribute on the
@@ -1239,13 +1256,13 @@ This flag has no effect on this part, it always happens.
 At the end of the subtest, the final L<Test2::Event::Subtest> event is sent to
 the formatter.
 
-=item Things that are effected by this flag
+=item Things that are affected by this flag
 
 The C<buffered> attribute of the L<Test2::Event::Subtest> event will be set to
 the value of this flag. This means any formatter, listener, etc which looks at
 the event will know if it was buffered.
 
-=item Things that are formatter dependant
+=item Things that are formatter dependent
 
 Events within a buffered subtest may or may not be sent to the formatter as
 they happen. If a formatter fails to specify then the default is to B<NOT SEND>
@@ -1343,7 +1360,7 @@ when testing is done.
 
 Disable IPC.
 
-=item $bool = test2_ipc_diabled
+=item $bool = test2_ipc_disabled
 
 Check if IPC is disabled.
 
@@ -1432,7 +1449,7 @@ This is essentially a helper to do the following:
 
     test2_add_callback_post_load(sub {
         my $stack = test2_stack();
-        $stack->top; # Insure we have a hub
+        $stack->top; # Ensure we have a hub
         my ($hub) = Test2::API::test2_stack->all;
 
         $hub->set_active(1);
@@ -1624,6 +1641,27 @@ this is called after initialization a warning will be issued.
 
 =back
 
+=head2 TIME STAMPS
+
+You can enable or disable timestamps in trace facets. They are disabled by
+default for compatibility and performance reasons.
+
+=over 4
+
+=item test2_enable_trace_stamps()
+
+Enable stamps in traces.
+
+=item test2_disable_trace_stamps()
+
+Disable stamps in traces.
+
+=item $bool = test2_trace_stamps_enabled()
+
+Check status of trace stamps.
+
+=back
+
 =head1 OTHER EXAMPLES
 
 See the C</Examples/> directory included in this distribution.
@@ -1650,7 +1688,7 @@ can be added to this package.
 =head1 SOURCE
 
 The source code repository for Test2 can be found at
-F<http://github.com/Test-More/test-more/>.
+L<https://github.com/Test-More/test-more/>.
 
 =head1 MAINTAINERS
 
@@ -1675,6 +1713,6 @@ Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-See F<http://dev.perl.org/licenses/>
+See L<https://dev.perl.org/licenses/>
 
 =cut

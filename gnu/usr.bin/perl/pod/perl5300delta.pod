@@ -90,7 +90,7 @@ rules for use with Turkic languages.  Previously, Perl ignored these,
 but now, it uses them when it detects that it is operating under a
 Turkic UTF-8 locale.
 
-=head2 It is now possible to compile perl to always use thread-safe locale operations.
+=head2 It is now possible to compile perl to always use thread-safe locale operations
 
 Previously, these calls were only used when the perl was compiled to be
 multi-threaded.  To always enable them, add
@@ -211,7 +211,7 @@ by default, JSON::PP also enabled allow_nonref by default.
 
 =head1 Deprecations
 
-=head2 In XS code, use of various macros dealing with UTF-8.
+=head2 In XS code, use of various macros dealing with UTF-8
 
 This deprecation was scheduled to become fatal in 5.30, but has been
 delayed to 5.32 due to problems that showed up with some CPAN modules.
@@ -664,6 +664,14 @@ necessity to bootstrapping a fully functional, CPAN-capable Perl installation,
 not usually on concerns over their design.
 
 =over 4
+
+=item *
+
+arybase has been removed. It used to provide the implementation of the C<$[>
+variable (also known as the C<array_base> feature), letting array and string
+indices start at a non-zero value. As the feature has been removed (see
+L</Assigning non-zero to C<$[> is fatal>), this internal module is gone as
+well.
 
 =item *
 

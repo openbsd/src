@@ -11,6 +11,7 @@ use TestInit qw(T);    # T is chdir to the top level
 use strict;
 
 my $source_dir = find_git_or_skip('all');
+
 skip_all(
     "This distro may have modified some files in cpan/. Skipping validation.")
   if $ENV{'PERL_BUILD_PACKAGING'};
@@ -42,5 +43,5 @@ elsif( $ENV{GITHUB_ACTIONS} && length $ENV{GITHUB_BASE_REF} ) {
         if $branch_head;
 }
 
-exec("$^X Porting/updateAUTHORS.pl --validate $revision_range");
+exec("$^X Porting/updateAUTHORS.pl --source_dir=$source_dir --validate $revision_range");
 # EOF

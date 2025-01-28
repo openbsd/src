@@ -58,7 +58,7 @@ without C<eval> the way MM-E<gt>parse_version does for C<$VERSION = ...>
 =back
 
 It does not break old code with only C<package NAME>, but code that uses
-C<package NAME VERSION> will need to be restricted to perl 5.12.0 or newer
+C<package NAME VERSION> will need to be restricted to perl 5.12.0 or newer.
 This is analogous to the change to C<open> from two-args to three-args.
 Users requiring the latest Perl will benefit, and perhaps after several
 years, it will become a standard practice.

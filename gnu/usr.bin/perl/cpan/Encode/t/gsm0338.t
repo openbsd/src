@@ -3,7 +3,7 @@ BEGIN {
         chdir 't';
         unshift @INC, '../lib';
     }
-    require Config; import Config;
+    require Config; Config->import();
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
       exit 0;
@@ -16,6 +16,10 @@ use utf8;
 use Test::More tests => 777;
 use Encode;
 use Encode::GSM0338;
+use PerlIO::encoding;
+
+# perl < 5.8.8 didn't enable STOP_AT_PARTIAL by default
+$PerlIO::encoding::fallback |= Encode::STOP_AT_PARTIAL;
 
 my $chk = Encode::LEAVE_SRC();
 

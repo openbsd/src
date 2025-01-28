@@ -2,6 +2,16 @@ package HeaderParser;
 use strict;
 use warnings;
 
+BEGIN {
+    if ($] < 5.010) {
+        die <<EOFMSG;
+The regen code in the perl repo needs at least version 5.10 to run.
+You are currently using $], we recommend you install a more modern
+version of perl before you try to build this version of perl.
+EOFMSG
+    }
+}
+
 # these are required below in BEGIN statements, we cant have a
 # hard dependency on them as they might not be available when
 # we run as part of autodoc.pl

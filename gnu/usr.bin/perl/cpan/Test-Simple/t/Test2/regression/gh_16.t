@@ -7,7 +7,7 @@ use warnings;
 # less likely to fail for an unrelated reason) and when I have AUTHOR_TESTING
 # set.
 BEGIN {
-    unless($ENV{AUTHOR_TESTING} || eval "no warnings 'portable'; require 5.20; 1") {
+    unless($ENV{AUTHOR_TESTING} || eval "no warnings 'portable'; require v5.20; 1") {
         print "1..0 # Skip Crazy test, only run on 5.20+, or when AUTHOR_TESTING is set\n";
         exit 0;
     }
@@ -16,7 +16,7 @@ BEGIN {
 # This test is for gh #16
 # Also see https://rt.perl.org/Public/Bug/Display.html?id=127774
 
-# Ceate this END before anything else so that $? gets set to 0
+# Create this END before anything else so that $? gets set to 0
 END { $? = 0 }
 
 BEGIN {

@@ -35,7 +35,7 @@ for my $file (`$^X t/TEST -dumptests`) {
 
 is(0+keys(%th), 0, "t/harness will not test anything that t/TEST does not")
     or print STDERR map { "# t/harness: $_\n" } sort keys %th;
-is(0+keys(%tt), 0, "t/TEST will not test aything that t/harness does not")
+is(0+keys(%tt), 0, "t/TEST will not test anything that t/harness does not")
     or print STDERR map { "# tTEST: $_\n" } sort keys %tt;
 
 sub get_extensions {
@@ -50,7 +50,7 @@ sub get_extensions {
                 $name = "PathTools" if $name eq "Cwd";
                 $name = "Scalar/List/Utils" if $name eq "List/Util";
                 my $sub_dir = $name;
-                $sub_dir =~ s!/!-!g;
+                $sub_dir =~ s!/!-!g unless $sub_dir =~ /^Encode/;
                 foreach my $dir (qw(cpan dist ext)) {
                     if (-e "$dir/$sub_dir") {
                         $extensions{"$dir/$sub_dir"} = $name;

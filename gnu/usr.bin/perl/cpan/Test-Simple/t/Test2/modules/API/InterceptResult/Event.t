@@ -168,20 +168,24 @@ tests trace => sub {
     is($one->trace_subname, undef, "No trace to get trace_subname from");
     is($one->trace_tool,    undef, "No trace to get trace_tool from");
 
-    my $two = $CLASS->new(
+    my $stamp = 123;
+    my $two   = $CLASS->new(
         facet_data => {
             trace => {
-                frame => [],
+                frame   => [],
                 details => 'xxx',
-                pid => 1,
-                tid => 1,
+                pid     => 1,
+                tid     => 1,
+                stamp   => $stamp,
             },
         }
     );
-    is_deeply($two->the_trace, {details => 'xxx', frame => [], pid => 1, tid => 1}, "Got trace");
-    is_deeply([$two->trace], [{details => 'xxx', frame => [], pid => 1, tid => 1}], "Got trace");
-    is($two->trace_details, 'xxx', "get trace_details");
-    is_deeply($two->frame,         [], "No frame to get");
+
+    is_deeply($two->the_trace, {details => 'xxx', frame => [], pid => 1, tid => 1, stamp => $stamp},   "Got trace");
+    is_deeply([$two->trace],   [{details => 'xxx', frame => [], pid => 1, tid => 1, stamp => $stamp}], "Got trace");
+    is($two->trace_details, 'xxx',  "get trace_details");
+    is($two->trace_stamp,   $stamp, "get trace_stamp");
+    is_deeply($two->frame, [], "No frame to get");
     is($two->trace_file,    undef, "No frame to get trace_file from");
     is($two->trace_line,    undef, "No frame to get trace_line from");
     is($two->trace_package, undef, "No frame to get trace_package from");
@@ -193,13 +197,15 @@ tests trace => sub {
             trace => {
                 details => 'xxx',
                 frame   => ['Foo::Bar', 'Foo/Bar.pm', 42, 'ok'],
-                pid => 1,
-                tid => 1,
+                pid     => 1,
+                tid     => 1,
+                stamp   => $stamp,
             },
         }
     );
-    is_deeply($three->the_trace, {details => 'xxx', frame => ['Foo::Bar', 'Foo/Bar.pm', 42, 'ok'], pid => 1, tid => 1}, "Got trace");
-    is($three->trace_details, 'xxx', "get trace_details");
+    is_deeply($three->the_trace, {details => 'xxx', frame => ['Foo::Bar', 'Foo/Bar.pm', 42, 'ok'], pid => 1, tid => 1, stamp => $stamp}, "Got trace");
+    is($three->trace_details, 'xxx',  "get trace_details");
+    is($three->trace_stamp,   $stamp, "get trace_stamp");
     is_deeply($three->frame, ['Foo::Bar', 'Foo/Bar.pm', 42, 'ok'], "Got frame");
     is($three->trace_file,    'Foo/Bar.pm', "Got trace_file");
     is($three->trace_line,    42,           "Got trace_line");

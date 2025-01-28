@@ -10,22 +10,22 @@ my $Is_EBCDIC = ord('A') == 193;
 my $testno = 0;
 while (<DATA>) {
     if (!$Is_EBCDIC) {
-	next if /^EBCDIC/;
+        next if /^EBCDIC/;
     }
     else {
-	next if !/^EBCDIC/;
-	s/^EBCDIC,\w+#//;
-   }
-   my($hexdigest, $message) = split;
-   $message =~ s/\"//g;
+        next if !/^EBCDIC/;
+        s/^EBCDIC,\w+#//;
+    }
+    my($hexdigest, $message) = split;
+    $message =~ s/\"//g;
 
-   my $failed;
-   $failed++ unless md5_hex($message) eq $hexdigest;
-   $failed++ unless Digest::MD5->new->add(split(//, $message))->digest
-                                              eq pack("H*", $hexdigest);
+    my $failed;
+    $failed++ unless md5_hex($message) eq $hexdigest;
+    $failed++ unless Digest::MD5->new->add(split(//, $message))->digest
+                                                eq pack("H*", $hexdigest);
 
-   print "not " if $failed;
-   print "ok ", ++$testno, "\n";
+    print "not " if $failed;
+    print "ok ", ++$testno, "\n";
 }
 
 

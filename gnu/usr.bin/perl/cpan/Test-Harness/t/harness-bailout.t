@@ -195,7 +195,7 @@ package main;
 use strict;
 use warnings;
 
-use Test::More;
+use Test::More tests => 4;
 use TAP::Harness;
 
 sub create_harness {
@@ -235,5 +235,3 @@ is_deeply(
 	[ 'no-bailout', 'bailout', 'no-bailout-parallel', 'bailout-parallel', ],
 	'Jobs finished OK'
 );
-
-done_testing();

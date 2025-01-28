@@ -1,5 +1,5 @@
 BEGIN {
-    require Config; import Config;
+    require Config; Config->import();
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
       exit 0;
@@ -46,7 +46,7 @@ for my $charset (sort keys %Charset){
     my $src_enc = File::Spec->catfile($dir,"$charset.enc");
     my $src_utf = File::Spec->catfile($dir,"$charset.utf");
     my $dst_enc = File::Spec->catfile($dir,"$$.enc");
-    my $dst_utf = File::Spec->catfile($dir,"$$.utf");
+    my $dst_utf = File::Spec->catfile($dir,"$$.utf8");
 
     open $src, "<$src_enc" or die "$src_enc : $!";
     

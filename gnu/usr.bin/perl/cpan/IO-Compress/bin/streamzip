@@ -136,7 +136,7 @@ OPTIONS
                     zstd     Use LZMA compression [needs IO::Compress::Zstd]
   -version        Display version number [$VERSION]
 
-Copyright (c) 2019-2022 Paul Marquess. All rights reserved.
+Copyright (c) 2019-2024 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -292,7 +292,7 @@ Paul Marquess F<pmqs@cpan.org>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2019-2022 Paul Marquess. All rights reserved.
+Copyright (c) 2019-2024 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

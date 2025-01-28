@@ -2,7 +2,7 @@ package Test2::API::InterceptResult;
 use strict;
 use warnings;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 use Scalar::Util qw/blessed/;
 use Test2::Util  qw/pkg_to_file/;
@@ -370,7 +370,7 @@ L<Test2::API::InterceptResult::Event> instances. There is no way to avoid this,
 the squash operation requires the upgraded event class.
 
 L<Test::More> and many other legacy tools would send notes, diags, and
-assertions as seperate events. A subtest in L<Test::More> would send a note
+assertions as separate events. A subtest in L<Test::More> would send a note
 with the subtest name, the subtest assertion, and finally a diagnostics event
 if the subtest failed. This method will normalize things by squashing the note
 and diag into the same event as the subtest (This is different from putting
@@ -604,7 +604,7 @@ C<error_messages()> returns.
 =head1 SOURCE
 
 The source code repository for Test2 can be found at
-F<http://github.com/Test-More/test-more/>.
+L<https://github.com/Test-More/test-more/>.
 
 =head1 MAINTAINERS
 
@@ -629,6 +629,6 @@ Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-See F<http://dev.perl.org/licenses/>
+See L<https://dev.perl.org/licenses/>
 
 =cut

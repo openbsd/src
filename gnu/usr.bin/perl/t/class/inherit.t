@@ -12,15 +12,17 @@ use feature 'class';
 no warnings 'experimental::class';
 
 {
-    class Test1A {
+    class Testcase1A {
         field $inita = "base";
         method inita { return $inita; }
         field $adja;
         ADJUST { $adja = "base class" }
         method adja { return $adja; }
+
+        method classname { return __CLASS__; }
     }
 
-    class Test1B :isa(Test1A) {
+    class Testcase1B :isa(Testcase1A) {
         field $initb = "derived";
         method initb { return $initb; }
         field $adjb;
@@ -28,11 +30,11 @@ no warnings 'experimental::class';
         method adjb { return $adjb; }
     }
 
-    my $obj = Test1B->new;
-    ok($obj isa Test1B, 'Object is its own class');
-    ok($obj isa Test1A, 'Object is also its base class');
+    my $obj = Testcase1B->new;
+    ok($obj isa Testcase1B, 'Object is its own class');
+    ok($obj isa Testcase1A, 'Object is also its base class');
 
-    ok(eq_array(\@Test1B::ISA, ["Test1A"]), '@Test1B::ISA is set correctly');
+    ok(eq_array(\@Testcase1B::ISA, ["Testcase1A"]), '@Testcase1B::ISA is set correctly');
 
     is($obj->initb, "derived",       'Object has derived class initialised field');
     is($obj->adjb,  "derived class", 'Object has derived class ADJUSTed field');
@@ -42,43 +44,74 @@ no warnings 'experimental::class';
     can_ok($obj, "adja");
     is($obj->adja, "base class", 'Object has base class ADJUSTed field');
 
-    class Test1C :isa(    Test1A    ) { }
+    is($obj->classname, "Testcase1B", '__CLASS__ yields runtime instance class name');
 
-    my $objc = Test1C->new;
-    ok($objc isa Test1A, ':isa attribute trims whitespace');
+    class Testcase1C :isa(    Testcase1A    ) { }
+
+    my $objc = Testcase1C->new;
+    ok($objc isa Testcase1A, ':isa attribute trims whitespace');
 }
 
 {
-    class Test2A 1.23 { }
+    class Testcase2A 1.23 { }
 
-    class Test2B :isa(Test2A 1.0) { } # OK
+    class Testcase2B :isa(Testcase2A 1.0) { } # OK
 
-    ok(!defined eval "class Test2C :isa(Test2A 2.0) {}; 1",
+    ok(!defined eval "class Testcase2C :isa(Testcase2A 2.0) {}; 1",
         ':isa() version test can throw');
-    like($@, qr/^Test2A version 2\.0 required--this is only version 1\.23 at /,
+    like($@, qr/^Testcase2A version 2\.0 required--this is only version 1\.23 at /,
         'Exception thrown from :isa version test');
 }
 
 {
-    class Test3A {
+    class Testcase3A {
         field $x :param;
         method x { return $x; }
     }
 
-    class Test3B :isa(Test3A) {}
+    class Testcase3B :isa(Testcase3A) {}
 
-    my $obj = Test3B->new(x => "X");
+    my $obj = Testcase3B->new(x => "X");
     is($obj->x, "X", 'Constructor params passed through to superclass');
 }
 
 {
-    class Test4A { }
+    class Testcase4A { }
 
-    class Test4B :isa(Test4A);
+    class Testcase4B :isa(Testcase4A);
 
     package main;
-    my $obj = Test4B->new;
-    ok($obj isa Test4A, 'Unit class syntax allows :isa');
+    my $obj = Testcase4B->new;
+    ok($obj isa Testcase4A, 'Unit class syntax allows :isa');
+}
+
+{
+    class Testcase5A {
+        field $classname = __CLASS__;
+        method classname { return $classname }
+    }
+
+    class Testcase5B :isa(Testcase5A) { }
+
+    is(Testcase5B->new->classname, "Testcase5B", '__CLASS__ yields correct class name for subclass');
+}
+
+{
+    # https://github.com/Perl/perl5/issues/21332
+    use lib 'lib/class';
+    ok(eval <<'EOS', "hierarchical base class loaded");
+use A::B;
+1;
+EOS
+}
+
+{
+    # https://github.com/Perl/perl5/issues/20891
+    class Testcase6A 1.23 {}
+    class Testcase6B 1.23 :isa(Testcase6A) {}
+
+    ok(Testcase6B->new isa Testcase6A, 'Testcase6B inherits Testcase6B');
+    is(Testcase6B->VERSION, 1.23, 'Testcase6B sets VERSION');
 }
 
 done_testing;

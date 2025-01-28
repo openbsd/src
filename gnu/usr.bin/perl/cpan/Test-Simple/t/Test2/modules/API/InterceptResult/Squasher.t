@@ -68,7 +68,7 @@ my @raw = (
 
 my @events;
 my $squasher = $CLASS->new(events => \@events);
-ok($squasher->isa($CLASS), "Got an instanct");
+ok($squasher->isa($CLASS), "Got an instance");
 $squasher->process($_) for @raw;
 $squasher = undef;
 

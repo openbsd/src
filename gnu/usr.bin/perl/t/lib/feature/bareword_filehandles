@@ -528,3 +528,31 @@ say main->foo;
 -x main->foo();
 -x main->foo;
 EXPECT
+########
+# NAME bareword method calls resolving to bareword filehandles
+# https://github.com/Perl/perl5/issues/19426
+use feature "say";
+my $x = "Foo";
+*Foo = *STDOUT; # make Foo an IO
+sub Foo::say {
+  say ">", @_[1..$#_];
+}
+Foo->say("Hello"); # calls IO::File->say()
+no feature "bareword_filehandles";
+"Foo"->say("Alpha"); # calls IO::File::say();
+$x->say("Beta"); # calls IO::File::say()
+Foo->say("Goodbye"); # calls Foo->say(), Foo now in stash cache
+"Foo"->say("Gamma"); # calls Foo->say()
+STDOUT->say("stdout"); # calls IO::File->say
+use feature "bareword_filehandles";
+Foo->say("Delta"); # calls Foo->say()
+$x->say("Epsilon"); # calls Foo->say()
+EXPECT
+Hello
+Alpha
+Beta
+>Goodbye
+>Gamma
+stdout
+>Delta
+>Epsilon

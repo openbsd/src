@@ -1,14 +1,6 @@
-BEGIN {
-    if($ENV{PERL_CORE}) {
-        chdir 't';
-        @INC = '../lib';
-    }
-}
-
 use strict;
 use warnings;
-use Test;
-BEGIN { plan tests => 6 };
+use Test::More tests => 4;
 
 BEGIN {
   require FindBin;
@@ -18,8 +10,6 @@ BEGIN {
 }
 #my $d;
 #use Pod::Simple::Debug (3);
-
-ok 1;
 
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
@@ -46,12 +36,3 @@ ok( $x->_out("\n=over 10\n\n=item * Stuff\n\n=cut\n\nStuff\n\n=item *\n\nBar I<b
 ok( $x->_out("\n=over\n\n=item * Stuff I<things\num> hoo!\n=cut\nStuff\n\n=item *\n\nBar I<baz>!\n\n=back"),
     '<Document><over-bullet indent="4"><item-bullet>Stuff <I>things um</I> hoo!</item-bullet><item-bullet>Bar <I>baz</I>!</item-bullet></over-bullet></Document>'
 );
-
-
-
-
-print "# Wrapping up... one for the road...\n";
-ok 1;
-print "# --- Done with ", __FILE__, " --- \n";
-
-

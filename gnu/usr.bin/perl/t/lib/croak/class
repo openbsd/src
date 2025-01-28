@@ -98,11 +98,7 @@ EXPECT
 Global symbol "$self" requires explicit package name (did you forget to declare "my $self"?) at - line 5.
 Execution of - aborted due to compilation errors.
 ########
-# This test is known to leak: see GH #20812. Skip it for now so that ASAN
-# smokes don't fail. Start failing again on the next development branch so
-# that the issue isn't forgotten
-# SKIP ? $] < 5.039
-use strict;
+# This test is known to leak: see GH #20812.
 no warnings 'experimental::class';
 use feature 'class';
 class XXX {
@@ -132,3 +128,30 @@ class YYY :isa(XXX) {
 }
 EXPECT
 Cannot assign :param(p) to field $y because that name is already in use at - line 8.
+########
+use strict;
+no warnings 'experimental::class';
+use feature 'class';
+class XXX {
+  my $classname = __CLASS__;
+}
+EXPECT
+Cannot use __CLASS__ outside of a method or field initializer expression at - line 5.
+########
+# NAME try to create an object of incomplete class (error)
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+eval "class C {";
+C->new;
+EXPECT
+Cannot create an object of incomplete class "C" at - line 5.
+########
+# NAME try to create an object of incomplete class (compile-time)
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+class C { BEGIN { C->new; } };
+EXPECT
+Cannot create an object of incomplete class "C" at - line 4.
+BEGIN failed--compilation aborted at - line 4.

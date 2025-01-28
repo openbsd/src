@@ -2,7 +2,7 @@ package Test2::EventFacet::Control;
 use strict;
 use warnings;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
 use Test2::Util::HashBase qw{ -global -terminate -halt -has_callback -encoding -phase };
@@ -77,7 +77,7 @@ phase is signaled.
 =head1 SOURCE
 
 The source code repository for Test2 can be found at
-F<http://github.com/Test-More/test-more/>.
+L<https://github.com/Test-More/test-more/>.
 
 =head1 MAINTAINERS
 
@@ -102,6 +102,6 @@ Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-See F<http://dev.perl.org/licenses/>
+See L<https://dev.perl.org/licenses/>
 
 =cut

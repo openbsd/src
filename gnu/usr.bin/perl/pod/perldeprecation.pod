@@ -18,22 +18,67 @@ which they will be removed.
 
 =head3 Unicode Delimiter Will be Paired
 
-Some unicode delimiters used to be allowed as single characters but
-in the future will be part of a ballanced pair. This deprecation category
-is used to mark the ones that will change from being unpaired, to paired.
+Some unicode delimiters used to be allowed as single characters, but
+in the future will be part of a balanced pair. This deprecation category
+is used to mark the ones that will change from being unpaired to paired.
 
 Category: "deprecated::delimiter_will_be_paired"
 
 =head3 Dot In Inc
 
-The current working direct C<"."> used to be automatically included in
+The current working directory C<.> used to be automatically included in
 C<@INC>, but in Perl 5.26 this was removed for security reasons. Ever
 since then we have produced a warning when a user uses C<do EXPR> and
 C<EXPR> does not include a path, and the file was not found in any
-directory in @INC but I<was> located C<".">. The file will not be loaded
+directory in C<@INC> but I<was> located in C<.>. The file will not be loaded
 but a deprecated warning will be generated.
 
 Category: "deprecated::dot_in_inc"
+
+=head3 Unicode Property Name
+
+Various types of unicode property name will generate deprecated warnings
+when used in a regex pattern. For instance surrogate characters will result
+in deprecation warnings.
+
+Category: "deprecated::unicode_property_name"
+
+=head2 Perl 5.44
+
+=head3 Calling a missing C<import()> or C<unimport()> method with an argument
+
+Historically calling C<import()> or C<unimport()> on any class which did
+not define such a method would be silently ignored. Effectively Perl
+behaved as though there was an empty method defined in the C<UNIVERSAL>
+package (even when there was no such method actually defined). As of
+Perl version 5.39.2 calling such a method I<with> an argument will
+trigger a warning, and in Perl version 5.44 this warning will be
+upgraded to an error. (Calling such a method with no arguments at all
+will always be safe.)
+
+Category: "deprecated::missing_import_called_with_args"
+
+=head3 Changing C<use VERSION> while another C<use VERSION> is in scope
+
+A C<use VERSION> declaration has many implicit effects on the surrounding
+scope, such as L<strict> and L<feature> flags, or importing L<builtin>
+functions. Once you have a C<use VERSION> statement in scope, another
+C<use VERSION> statement with a different version is now deprecated since
+Perl 5.39.8, due to the increasing complexity of swapping from one
+prevailing version to another.
+
+Category: "deprecated::subsequent_use_version"
+
+=head2 Perl 5.42
+
+=head3 Smartmatch
+
+Smartmatch is now seen as a failed experiment and was marked as deprecated
+in Perl 5.37.10. This includes the C<when> and C<given> keywords, as well
+as the smartmatch operator C<~~>. The feature will be removed entirely in the
+Perl 5.42.0 production release.
+
+Category: "deprecated::smartmatch"
 
 =head3 Goto Block Construct
 
@@ -47,31 +92,12 @@ of a loop or other block construct from outside. For instance
     goto LABEL;
 
 will produce a warning that this behavior is deprecated. In general you should
-just avoid doing this, the people that maintain your code will be grateful for
+just avoid doing this; the people that maintain your code will be grateful for
 your restraint.
 
 Category: "deprecated::goto_construct"
 
-=head3 Unicode Property Name
-
-Various types of unicode property name will generate deprecated warnings
-when used in a regex pattern. For instance surrogate characters will result
-in deprecation warnings.
-
-Category: "deprecated::unicode_property_name"
-
-=head2 Perl 5.42
-
-=head3 Smartmatch
-
-Smartmatch is now seen as a failed experiment and was marked as deprecated
-in Perl 5.37.10. This includes the C<when> and C<given> keywords, as well
-as the smartmatch operator C<~~>. The feature will be removed entirely in the
-Perl 5.42.0 production release.
-
-Category: "deprecated::smartmatch"
-
-=head3 Use of C<'> as a global name separator.
+=head3 Use of C<'> as a global name separator
 
 Perl allows use of C<'> instead of C<::> to replace the parts of a
 package or global variable name, for example C<A::B> and C<A'B> are
@@ -94,8 +120,7 @@ version will print a deprecation warning. For example,
 
     use v5.10;        # This prints a warning
 
-This behaviour will be removed in Perl 5.40; such a subsequent request will
-become a compile-time error.
+This was deprecated in Perl 5.36 and is now fatal.
 
 This is because of an intended related change to the interaction between
 C<use VERSION> and C<use strict>. If you specify a version >= 5.11, strict is
@@ -112,8 +137,8 @@ Category: "deprecated::version_downgrade"
 
 The definition and documentation of three utility functions previously
 importable from L<Pod::Html> were moved to new package L<Pod::Html::Util> in
-Perl 5.36.  While they remain importable from L<Pod::Html> in Perl 5.36, as of
-Perl 5.38 they will only be importable, on request, from L<Pod::Html::Util>.
+Perl 5.36.  While they remained importable from L<Pod::Html> in Perl 5.36, as
+of Perl 5.38 they are only importable, on request, from L<Pod::Html::Util>.
 
 =head2 Perl 5.34
 
@@ -128,7 +153,7 @@ You wrote something like
     my $var;
     $sub = sub () { $var };
 
-but $var is referenced elsewhere and could be modified after the C<sub>
+but C<$var> is referenced elsewhere and could be modified after the C<sub>
 expression is evaluated.  Either it is explicitly modified elsewhere
 (C<$var = 3>) or it is passed to a subroutine or to an operator like
 C<printf> or C<map>, which may or may not modify the variable.
@@ -204,7 +229,7 @@ Forcing literal C<{> characters to be escaped will enable the Perl
 language to be extended in various ways in future releases.  To avoid
 needlessly breaking existing code, the restriction is not enforced in
 contexts where there are unlikely to ever be extensions that could
-conflict with the use there of C<{> as a literal.  A non-deprecation
+conflict with the use of C<{> as a literal.  A non-deprecation
 warning that the left brace is being taken literally is raised in
 contexts where there could be confusion about it.
 
@@ -215,9 +240,9 @@ C<{> got a deprecation warning.  Some cases started warning in Perl 5.26,
 and were made fatal in Perl 5.30.  Other cases started in Perl 5.28,
 and were made fatal in 5.32.
 
-=head3 In XS code, use of various macros dealing with UTF-8.
+=head3 In XS code, use of various macros dealing with UTF-8
 
-The macros below now require an extra parameter than in versions prior
+The macros below now require an extra parameter compared to versions prior
 to Perl 5.32.  The final parameter in each one is a pointer into the
 string supplied by the first parameter beyond which the input will not
 be read.  This prevents potential reading beyond the end of the buffer.
@@ -268,7 +293,7 @@ This change was originally scheduled for 5.30, but was delayed until
 
 =head3 C<< File::Glob::glob() >> was removed
 
-C<< File::Glob >> has a function called C<< glob >>, which just calls
+C<< File::Glob >> had a function called C<< glob >>, which just called
 C<< bsd_glob >>.
 
 C<< File::Glob::glob() >> was deprecated in Perl 5.8. A deprecation
@@ -283,13 +308,13 @@ C<< File::Glob::bsd_glob() >> instead.
 =head3 C<< $* >> is no longer supported
 
 Before Perl 5.10, setting C<< $* >> to a true value globally enabled
-multi-line matching within a string. This relique from the past lost
+multi-line matching within a string. This relic from the past lost
 its special meaning in 5.10. Use of this variable became a fatal error
 in Perl 5.30, freeing the variable up for a future special meaning.
 
 To enable multiline matching one should use the C<< /m >> regexp
 modifier (possibly in combination with C<< /s >>). This can be set
-on a per match bases, or can be enabled per lexical scope (including
+on a per match basis, or can be enabled per lexical scope (including
 a whole file) with C<< use re '/m' >>.
 
 =head3 C<< $# >> is no longer supported
@@ -312,24 +337,6 @@ indexing operations.
 Setting this to a non-zero value has been deprecated since Perl 5.12 and
 throws a fatal error as of Perl 5.30.
 
-=head3 C<< File::Glob::glob() >> will disappear
-
-C<< File::Glob >> has a function called C<< glob >>, which just calls
-C<< bsd_glob >>. However, its prototype is different from the prototype
-of C<< CORE::glob >>, and hence, C<< File::Glob::glob >> should not
-be used.
-
-C<< File::Glob::glob() >> was deprecated in Perl 5.8. A deprecation
-message was issued from Perl 5.26 onwards, and in Perl 5.30 this was
-turned into a fatal error.
-
-Code using C<< File::Glob::glob() >> should call
-C<< File::Glob::bsd_glob() >> instead.
-
-=head3 Unescaped left braces in regular expressions (for 5.30)
-
-See L</Unescaped left braces in regular expressions> above.
-
 =head3 Unqualified C<dump()>
 
 Use of C<dump()> instead of C<CORE::dump()> was deprecated in Perl 5.8,
@@ -338,7 +345,7 @@ and an unqualified C<dump()> is no longer available as of Perl 5.30.
 See L<perlfunc/dump>.
 
 
-=head3 Using my() in false conditional.
+=head3 Using my() in false conditional
 
 There has been a long-standing bug in Perl that causes a lexical variable
 not to be cleared at scope exit when its declaration includes a false
@@ -369,7 +376,7 @@ The use of C<my()> in a false conditional has been deprecated in
 Perl 5.10, and became a fatal error in Perl 5.30.
 
 
-=head3 Reading/writing bytes from/to :utf8 handles.
+=head3 Reading/writing bytes from/to :utf8 handles
 
 The sysread(), recv(), syswrite() and send() operators are
 deprecated on handles that have the C<:utf8> layer, either explicitly, or
@@ -381,21 +388,21 @@ validation they can end up creating invalidly encoded scalars.
 
 Similarly, syswrite() and send() use only the C<:utf8> flag, otherwise ignoring
 any layers.  If the flag is set, both write the value UTF-8 encoded, even if
-the layer is some different encoding, such as the example above.
+the layer is some different encoding, such as the UTF-16LE example above.
 
 Ideally, all of these operators would completely ignore the C<:utf8> state,
 working only with bytes, but this would result in silently breaking existing
 code.  To avoid this a future version of perl will throw an exception when
-any of sysread(), recv(), syswrite() or send() are called on handle with the
+any of sysread(), recv(), syswrite() or send() are called on handles with the
 C<:utf8> layer.
 
-As of Perl 5.30, it is no longer be possible to use sysread(), recv(),
-syswrite() or send() to read or send bytes from/to :utf8 handles.
+As of Perl 5.30, it is no longer possible to use sysread(), recv(),
+syswrite() or send() to read or send bytes from/to C<:utf8> handles.
 
 
-=head3 Use of unassigned code point or non-standalone grapheme for a delimiter.
+=head3 Use of unassigned code point or non-standalone grapheme for a delimiter
 
-A grapheme is what appears to a native-speaker of a language to be a
+A grapheme is what appears to a native speaker of a language to be a
 character.  In Unicode (and hence Perl) a grapheme may actually be
 several adjacent characters that together form a complete grapheme.  For
 example, there can be a base character, like "R" and an accent, like a
@@ -432,10 +439,10 @@ of your code.
 
 =head3 Bare here-document terminators
 
-Perl has allowed you to use a bare here-document terminator to have the
-here-document end at the first empty line. This practise was deprecated
-in Perl 5.000; as of Perl 5.28, using a bare here-document terminator
-throws a fatal error.
+Perl has allowed you to use a bare here-document terminator C<<< << >>> to
+have the here-document end at the first empty line. This practise was
+deprecated in Perl 5.000; as of Perl 5.28, using a bare here-document
+terminator throws a fatal error.
 
 You are encouraged to use the explicitly quoted form if you wish to
 use an empty line as the terminator of the here-document:
@@ -455,17 +462,17 @@ different, less efficient and with very bad luck could have resulted in
 your file being split by a stringified form of the reference.
 
 In Perl 5.20.0 this was changed so that it would be B<exactly> the same as
-setting C<$/> to undef, with the exception that this warning would be
+setting C<$/> to C<undef>, with the exception that this warning would be
 thrown.
 
-As of Perl 5.28, setting C<$/> to a reference of a non-positive
+As of Perl 5.28, setting C<$/> to a reference to a non-positive
 integer throws a fatal error.
 
 You are recommended to change your code to set C<$/> to C<undef> explicitly
 if you wish to slurp the file.
 
 
-=head3 Limit on the value of Unicode code points.
+=head3 Limit on the value of Unicode code points
 
 Unicode only allows code points up to 0x10FFFF, but Perl allows
 much larger ones. Up till Perl 5.28, it was allowed to use code
@@ -482,11 +489,11 @@ Perl 5.28 using a code point exceeding C<IV_MAX> throws a fatal error.
 
 If your code is to run on various platforms, keep in mind that the upper
 limit depends on the platform. It is much larger on 64-bit word sizes
-than 32-bit ones. For 32-bit integers, C<IV_MAX> equals C<0x7FFFFFFF>,
+than 32-bit ones. For 32-bit integers, C<IV_MAX> equals C<0x7FFFFFFF>;
 for 64-bit integers, C<IV_MAX> equals C<0x7FFFFFFFFFFFFFFF>.
 
 
-=head3 Use of comma-less variable list in formats.
+=head3 Use of comma-less variable list in formats
 
 It was allowed to use a list of variables in a format, without
 separating them with commas. This usage has been deprecated
@@ -512,7 +519,7 @@ throws a fatal error as of Perl 5.28.
 
 You should be using two different symbols instead.
 
-=head3 ${^ENCODING} is no longer supported.
+=head3 ${^ENCODING} is no longer supported
 
 The special variable C<${^ENCODING}> was used to implement
 the C<encoding> pragma. Setting this variable to anything other
@@ -527,7 +534,7 @@ throws a fatal error as of Perl 5.28.
 
 This method, which just calls C<< B::Concise::b_terse >>, has been
 deprecated, and disappeared in Perl 5.28. Please use 
-C<< B::Concise >> instead.
+L<B::Concise> instead.
 
 
 
@@ -538,7 +545,7 @@ up as methods (using the C<@ISA> hierarchy) even when the subroutines
 to be autoloaded were called as plain functions (e.g. C<Foo::bar()>),
 not as methods (e.g. C<< Foo->bar() >> or C<< $obj->bar() >>).
 
-This bug was deprecated in Perl 5.004, has been rectified in Perl 5.28
+This bug was deprecated in Perl 5.004 and has been rectified in Perl 5.28
 by using method lookup only for methods' C<AUTOLOAD>s.
 
 The simple rule is:  Inheritance will not work when autoloading
@@ -548,16 +555,9 @@ named C<BaseClass>, execute C<*AUTOLOAD = \&BaseClass::AUTOLOAD> during
 startup.
 
 In code that currently says C<use AutoLoader; @ISA = qw(AutoLoader);>
-you should remove AutoLoader from @ISA and change C<use AutoLoader;> to
+you should remove AutoLoader from C<@ISA> and change C<use AutoLoader;> to
 C<use AutoLoader 'AUTOLOAD';>.
 
-
-=head3 Use of code points over 0xFF in string bitwise operators
-
-The string bitwise operators, C<&>, C<|>, C<^>, and C<~>, treat
-their operands as strings of bytes. As such, values above 0xFF 
-are nonsensical. Using such code points with these operators
-was deprecated in Perl 5.24, and is fatal as of Perl 5.28.
 
 =head3 In XS code, use of C<to_utf8_case()>
 
@@ -585,7 +585,7 @@ These old, perl3-era utilities have been deprecated in favour of
 C<< h2xs >> for a long time. As of Perl 5.26, they have been removed.
 
 
-=head3 Trapping C<< $SIG {__DIE__} >> other than during program exit.
+=head3 Trapping C<< $SIG{__DIE__} >> other than during program exit
 
 The C<$SIG{__DIE__}> hook is called even inside an C<eval()>. It was
 never intended to happen this way, but an implementation glitch made

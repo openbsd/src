@@ -1,5 +1,8 @@
 Revision history for Perl dual life module FindBin.
 
+1.54 2023-08-31
+ - Improve documentation.
+
 1.53 2023-01-23
  - Update bug reporting location.
 

@@ -155,14 +155,6 @@ struct RExC_state_t {
     AV         *warn_text;
     HV         *unlexed_names;
     SV          *runtime_code_qr;       /* qr with the runtime code blocks */
-#ifdef DEBUGGING
-    const char  *lastparse;
-    I32         lastnum;
-    U32         study_chunk_recursed_count;
-    AV          *paren_name_list;       /* idx -> name */
-    SV          *mysv1;
-    SV          *mysv2;
-#endif
     bool        seen_d_op;
     bool        strict;
     bool        study_started;
@@ -170,6 +162,22 @@ struct RExC_state_t {
     bool        use_BRANCHJ;
     bool        sWARN_EXPERIMENTAL__VLB;
     bool        sWARN_EXPERIMENTAL__REGEX_SETS;
+    /* DEBUGGING only fields, keep these LAST so that we do not
+     * have any weirdness with static builds.
+     *
+     * We include these if we are building a DEBUGGING perl OR if we
+     * are not using dynamic linking (USE_DYNAMIC_LOADING).
+     *
+     * See GH Issue #21558 and also ba6e2c38aafc23cf114f3ba0d0ff3baead34328b
+     */
+#if defined(DEBUGGING) || !defined(USE_DYNAMIC_LOADING)
+    const char  *lastparse;
+    I32         lastnum;
+    U32         study_chunk_recursed_count;
+    AV          *paren_name_list;       /* idx -> name */
+    SV          *mysv1;
+    SV          *mysv2;
+#endif
 };
 
 #ifdef DEBUGGING
@@ -886,7 +894,6 @@ static const scan_data_t zero_scan_data = {
     const char *ellipses = "";                                          \
     IV len = RExC_precomp_end - RExC_precomp;                           \
                                                                         \
-    PREPARE_TO_DIE;                                                     \
     if (len > RegexLengthToShowInErrorMessages) {                       \
         /* chop 10 shorter than the max, to ensure meaning of "..." */  \
         len = RegexLengthToShowInErrorMessages - 10;                    \
@@ -919,7 +926,6 @@ static const scan_data_t zero_scan_data = {
  * Calls SAVEDESTRUCTOR_X if needed, then Simple_vFAIL()
  */
 #define vFAIL(m) STMT_START {                           \
-    PREPARE_TO_DIE;                                     \
     Simple_vFAIL(m);                                    \
 } STMT_END
 
@@ -935,7 +941,6 @@ static const scan_data_t zero_scan_data = {
  * Calls SAVEDESTRUCTOR_X if needed, then Simple_vFAIL2().
  */
 #define vFAIL2(m,a1) STMT_START {                       \
-    PREPARE_TO_DIE;                                     \
     Simple_vFAIL2(m, a1);                               \
 } STMT_END
 
@@ -952,7 +957,6 @@ static const scan_data_t zero_scan_data = {
  * Calls SAVEDESTRUCTOR_X if needed, then Simple_vFAIL3().
  */
 #define vFAIL3(m,a1,a2) STMT_START {                    \
-    PREPARE_TO_DIE;                                     \
     Simple_vFAIL3(m, a1, a2);                           \
 } STMT_END
 
@@ -965,19 +969,16 @@ static const scan_data_t zero_scan_data = {
 } STMT_END
 
 #define vFAIL4(m,a1,a2,a3) STMT_START {                 \
-    PREPARE_TO_DIE;                                     \
     Simple_vFAIL4(m, a1, a2, a3);                       \
 } STMT_END
 
 /* A specialized version of vFAIL2 that works with UTF8f */
 #define vFAIL2utf8f(m, a1) STMT_START {             \
-    PREPARE_TO_DIE;                                 \
     S_re_croak(aTHX_ UTF, m REPORT_LOCATION, a1,  \
             REPORT_LOCATION_ARGS(RExC_parse));      \
 } STMT_END
 
 #define vFAIL3utf8f(m, a1, a2) STMT_START {             \
-    PREPARE_TO_DIE;                                     \
     S_re_croak(aTHX_ UTF, m REPORT_LOCATION, a1, a2,  \
             REPORT_LOCATION_ARGS(RExC_parse));          \
 } STMT_END
@@ -1018,8 +1019,6 @@ static const scan_data_t zero_scan_data = {
                               __FILE__, __LINE__, loc);                 \
         }                                                               \
         if (TO_OUTPUT_WARNINGS(loc)) {                                  \
-            if (ckDEAD(warns))                                          \
-                PREPARE_TO_DIE;                                         \
             code;                                                       \
             UPDATE_WARNINGS_LOC(loc);                                   \
         }                                                               \

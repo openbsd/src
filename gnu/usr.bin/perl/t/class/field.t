@@ -17,22 +17,22 @@ no warnings 'experimental::class';
 
 # field in method
 {
-    class Test1 {
+    class Testcase1 {
         field $f;
         method incr { return ++$f; }
     }
 
-    my $obj = Test1->new;
+    my $obj = Testcase1->new;
     $obj->incr;
     is($obj->incr, 2, 'Field $f incremented twice');
 
-    my $obj2 = Test1->new;
+    my $obj2 = Testcase1->new;
     is($obj2->incr, 1, 'Fields are distinct between instances');
 }
 
 # fields are distinct
 {
-    class Test2 {
+    class Testcase2 {
         field $x;
         field $y;
 
@@ -41,7 +41,7 @@ no warnings 'experimental::class';
         method y      { return $y; }
     }
 
-    my $obj = Test2->new;
+    my $obj = Testcase2->new;
     $obj->setpos(10, 20);
     is($obj->x, 10, '$pos->x');
     is($obj->y, 20, '$pos->y');
@@ -49,7 +49,7 @@ no warnings 'experimental::class';
 
 # fields of all variable types
 {
-    class Test3 {
+    class Testcase3 {
         field $s;
         field @a;
         field %h;
@@ -67,12 +67,12 @@ no warnings 'experimental::class';
         }
     }
 
-    Test3->new->setup->test;
+    Testcase3->new->setup->test;
 }
 
 # fields can be captured by anon subs
 {
-    class Test4 {
+    class Testcase4 {
         field $count;
 
         method make_incrsub {
@@ -82,7 +82,7 @@ no warnings 'experimental::class';
         method count { return $count }
     }
 
-    my $obj = Test4->new;
+    my $obj = Testcase4->new;
     my $incr = $obj->make_incrsub;
 
     $incr->();
@@ -94,7 +94,7 @@ no warnings 'experimental::class';
 
 # fields can be captured by anon methods
 {
-    class Test5 {
+    class Testcase5 {
         field $count;
 
         method make_incrmeth {
@@ -104,7 +104,7 @@ no warnings 'experimental::class';
         method count { return $count }
     }
 
-    my $obj = Test5->new;
+    my $obj = Testcase5->new;
     my $incr = $obj->make_incrmeth;
 
     $obj->$incr;
@@ -116,22 +116,22 @@ no warnings 'experimental::class';
 
 # fields of multiple unit classes are distinct
 {
-    class Test6::A;
+    class Testcase6::A;
     field $x = "A";
     method m { return "unit-$x" }
 
-    class Test6::B;
+    class Testcase6::B;
     field $x = "B";
     method m { return "unit-$x" }
 
     package main;
-    ok(eq_array([Test6::A->new->m, Test6::B->new->m], ["unit-A", "unit-B"]),
+    ok(eq_array([Testcase6::A->new->m, Testcase6::B->new->m], ["unit-A", "unit-B"]),
         'Fields of multiple unit classes remain distinct');
 }
 
 # fields can be initialised with constant expressions
 {
-    class Test7 {
+    class Testcase7 {
         field $scalar = 123;
         method scalar { return $scalar; }
 
@@ -142,7 +142,7 @@ no warnings 'experimental::class';
         method hash { return %hash; }
     }
 
-    my $obj = Test7->new;
+    my $obj = Testcase7->new;
 
     is($obj->scalar, 123, 'Scalar field can be constant initialised');
 
@@ -158,7 +158,7 @@ no warnings 'experimental::class';
     my @items;
     my %mappings;
 
-    class Test8 {
+    class Testcase8 {
         field $x = $next_x++;
         method x { return $x; }
 
@@ -174,8 +174,8 @@ no warnings 'experimental::class';
     @items = ("values");
     $mappings{second} = "here";
 
-    my $obj1 = Test8->new;
-    my $obj2 = Test8->new;
+    my $obj1 = Testcase8->new;
+    my $obj2 = Testcase8->new;
 
     is($obj1->x, 1, 'Object 1 has x == 1');
     is($obj2->x, 2, 'Object 2 has x == 2');
@@ -190,7 +190,7 @@ no warnings 'experimental::class';
 
 # fields are visible during initialiser expressions of later fields
 {
-    class Test9 {
+    class Testcase9 {
         field $one   = 1;
         field $two   = $one + 1;
         field $three = $two + 1;
@@ -204,7 +204,7 @@ no warnings 'experimental::class';
         method six { return @six; }
     }
 
-    my $obj = Test9->new;
+    my $obj = Testcase9->new;
     is($obj->three, 3, 'Scalar fields initialised from earlier fields');
     ok(eq_array([$obj->six], [2, 3]), 'Array fields initialised from earlier fields');
 }
@@ -213,7 +213,7 @@ no warnings 'experimental::class';
 {
     my $next_gamma = 4;
 
-    class Test10 {
+    class Testcase10 {
         field $alpha :param        = undef;
         field $beta  :param        = 123;
         field $gamma :param(delta) = $next_gamma++;
@@ -221,7 +221,7 @@ no warnings 'experimental::class';
         method values { return ($alpha, $beta, $gamma); }
     }
 
-    my $obj = Test10->new(
+    my $obj = Testcase10->new(
         alpha => "A",
         beta  => "B",
         delta => "G",
@@ -230,7 +230,7 @@ no warnings 'experimental::class';
         'Field initialised by :params');
     is($next_gamma, 4, 'Defaulting expression not evaluated for passed value');
 
-    $obj = Test10->new();
+    $obj = Testcase10->new();
     ok(eq_array([$obj->values], [undef, 123, 4]),
         'Field initialised by defaulting expressions');
     is($next_gamma, 5, 'Defaulting expression evaluated for missing value');
@@ -238,22 +238,22 @@ no warnings 'experimental::class';
 
 # fields can be made non-optional
 {
-    class Test11 {
+    class Testcase11 {
         field $x :param;
         field $y :param;
     }
 
-    Test11->new(x => 1, y => 1);
+    Testcase11->new(x => 1, y => 1);
 
-    ok(!eval { Test11->new(x => 2) },
+    ok(!eval { Testcase11->new(x => 2) },
         'Constructor fails without y');
-    like($@, qr/^Required parameter 'y' is missing for "Test11" constructor at /,
+    like($@, qr/^Required parameter 'y' is missing for "Testcase11" constructor at /,
         'Failure from missing y argument');
 }
 
 # field assignment expressions on :param can use //= and ||=
 {
-    class Test12 {
+    class Testcase12 {
         field $if_exists  :param(e)   = "DEF";
         field $if_defined :param(d) //= "DEF";
         field $if_true    :param(t) ||= "DEF";
@@ -262,29 +262,29 @@ no warnings 'experimental::class';
     }
 
     ok(eq_array(
-        [Test12->new(e => "yes", d => "yes", t => "yes")->values],
+        [Testcase12->new(e => "yes", d => "yes", t => "yes")->values],
         ["yes", "yes", "yes"]),
         'Values for "yes"');
 
     ok(eq_array(
-        [Test12->new(e => 0, d => 0, t => 0)->values],
+        [Testcase12->new(e => 0, d => 0, t => 0)->values],
         [0, 0, "DEF"]),
         'Values for 0');
 
     ok(eq_array(
-        [Test12->new(e => undef, d => undef, t => undef)->values],
+        [Testcase12->new(e => undef, d => undef, t => undef)->values],
         [undef, "DEF", "DEF"]),
         'Values for undef');
 
     ok(eq_array(
-        [Test12->new()->values],
+        [Testcase12->new()->values],
         ["DEF", "DEF", "DEF"]),
         'Values for missing');
 }
 
 # field initialiser expressions permit `goto` in do {} blocks
 {
-    class Test13 {
+    class Testcase13 {
         field $forwards = do { goto HERE; HERE: 1 };
         field $backwards = do { my $x; HERE: ; goto HERE if !$x++; 2 };
 
@@ -292,9 +292,20 @@ no warnings 'experimental::class';
     }
 
     ok(eq_array(
-        [Test13->new->values],
+        [Testcase13->new->values],
         [1, 2],
         'Values for goto inside do {} blocks in field initialisers'));
+}
+
+# field initialiser expressions permit a __CLASS__
+{
+    class Testcase14 {
+        field $classname = __CLASS__;
+
+        method classname { return $classname }
+    }
+
+    is(Testcase14->new->classname, "Testcase14", '__CLASS__ in field initialisers');
 }
 
 done_testing;

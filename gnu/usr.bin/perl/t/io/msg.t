@@ -5,7 +5,7 @@ BEGIN {
 
   require "./test.pl";
   set_up_inc( '../lib' ) if -d '../lib' && -d '../ext';
-  require Config; import Config;
+  require Config; Config->import;
 
   if ($ENV{'PERL_CORE'} && $Config{'extensions'} !~ m[\bIPC/SysV\b]) {
     skip_all('-- IPC::SysV was not built');
@@ -22,6 +22,7 @@ our $TODO;
 
 use sigtrap qw/die normal-signals error-signals/;
 use IPC::SysV qw/ IPC_PRIVATE S_IRUSR S_IWUSR IPC_RMID IPC_CREAT IPC_STAT IPC_CREAT IPC_NOWAIT/;
+use Errno qw(EINVAL);
 
 my $id;
 END { msgctl $id, IPC_RMID, 0 if defined $id }
@@ -71,6 +72,38 @@ else {
         ok(msgrcv($id, $rcvbuf, 1024, 0, IPC_NOWAIT), "receive it (upgraded receiver)");
         is($rcvbuf, $msg, "received should match sent (upgraded receiver)");
     }
+}
+
+{
+    # receive to magic
+    my $x;
+    my $fetch = 0;
+    my $store = 0;
+    package MyScalar {
+        sub TIESCALAR { bless {}, shift }
+        sub FETCH { ++$fetch; $x }
+        sub STORE { ++$store; $x = $_[1]; }
+    };
+    tie my $rcvbuf, "MyScalar";
+    my $msg = pack("l! a*", 1, "Hello");
+    my $warn = "";
+    if (ok(msgsnd($id, $msg, IPC_NOWAIT), "send to magic receive")) {
+        {
+            local $SIG{__WARN__} = sub { $warn .= "@_\n" };
+            ok(msgrcv($id, $rcvbuf, 1024, 0, IPC_NOWAIT), "receive it (magic receiver)");
+        }
+        is($x, $msg, "magic properly triggered");
+        is($fetch, 0, "should be no fetch");
+        is($store, 1, "should be one store");
+        unlike($warn, qr/uninitialized/, "shouldn't be uninitialized warning");
+    }
+}
+
+{
+    # this resulted in a panic
+    my $buf;
+    ok(!msgrcv($id, $buf, -10, 0, IPC_NOWAIT), "fail with negative length");
+    is(0+$!, &Errno::EINVAL, "check proper error");
 }
 
 done_testing();

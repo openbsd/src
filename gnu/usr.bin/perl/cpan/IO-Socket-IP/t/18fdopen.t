@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -13,7 +12,7 @@ my $s1 = IO::Socket::IP->new(
    LocalHost => "127.0.0.1",
    Type      => SOCK_STREAM,
    Listen    => 1,
-) or die "Cannot listen on AF_INET - $@";
+) or die "Cannot listen on AF_INET - $IO::Socket::errstr";
 
 my $s2 = IO::Socket::IP->new;
 $s2->fdopen( $s1->fileno, 'r' ) or die "Cannot fdopen - $!";
