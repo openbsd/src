@@ -13,7 +13,7 @@ BEGIN {
 }
 chdir 't';
 
-use Test::More tests => 98;
+use Test::More tests => 101;
 use Cwd;
 
 use File::Spec;
@@ -132,14 +132,14 @@ like( $warn, qr/^Skipping MANIFEST\.SKIP/i, 'got skipping warning' );
 
 my @skipped;
 catch_warning( sub {
-	@skipped = skipcheck()
+    @skipped = skipcheck()
 });
 
 is( join( ' ', @skipped ), 'MANIFEST.SKIP', 'listed skipped files' );
 
 {
-	local $ExtUtils::Manifest::Quiet = 1;
-	is( join(' ', filecheck() ), 'bar', 'listing skipped with filecheck()' );
+    local $ExtUtils::Manifest::Quiet = 1;
+    is( join(' ', filecheck() ), 'bar', 'listing skipped with filecheck()' );
 }
 
 # add a subdirectory and a file there that should be found
@@ -185,7 +185,7 @@ is( ExtUtils::Manifest::maniread()->{none}, '#none',
 ok( mkdir( 'copy', 0777 ), 'made copy directory' );
 $files = maniread();
 eval { (undef, $warn) = catch_warning( sub {
-		manicopy( $files, 'copy', 'cp' ) })
+    manicopy( $files, 'copy', 'cp' ) })
 };
 
 # a newline comes through, so get rid of it
@@ -197,12 +197,12 @@ like($warn, qr/^Skipping MANIFEST.SKIP/i, 'warned about MANIFEST.SKIP' );
 
 # tell ExtUtils::Manifest to use a different file
 {
-	local $ExtUtils::Manifest::MANIFEST = 'albatross';
-	($res, $warn) = catch_warning( \&mkmanifest );
-	like( $warn, qr/Added to albatross: /, 'using a new manifest file' );
+    local $ExtUtils::Manifest::MANIFEST = 'albatross';
+    ($res, $warn) = catch_warning( \&mkmanifest );
+    like( $warn, qr/Added to albatross: /, 'using a new manifest file' );
 
-	# add the new file to the list of files to be deleted
-	$Files{'albatross'}++;
+    # add the new file to the list of files to be deleted
+    $Files{'albatross'}++;
 }
 
 
@@ -233,10 +233,10 @@ is( $files->{yarrow}, 'hock','          with comment' );
 is( $files->{foobar}, '',    '          preserved old entries' );
 
 my $manicontents = do {
-  local $/;
-  open my $fh, "MANIFEST" or die;
-  binmode $fh, ':raw';
-  <$fh>
+    local $/;
+    open my $fh, "MANIFEST" or die;
+    binmode $fh, ':raw';
+    <$fh>
 };
 is index($manicontents, "\015\012"), -1, 'MANIFEST no CRLF';
 
@@ -291,11 +291,11 @@ SKIP: {
     local $ExtUtils::Manifest::MANIFEST = "albatross";
     maniadd({ 'foo bar' => "contains space"});
     is( maniread()->{'foo bar'}, "contains space",
-	'spaced manifest filename' );
+        'spaced manifest filename' );
     add_file( 'albatross.bak', '' );
     ($res, $warn) = catch_warning( \&mkmanifest );
     like( $warn, qr/\A(Added to.*\n)+\z/m,
-	  'no warnings about funky filename' );
+        'no warnings about funky filename' );
     $funky_files{'space'} = 'foo bar';
 }
 
@@ -306,7 +306,7 @@ SKIP: {
     local $ExtUtils::Manifest::MANIFEST = "albatross";
     maniadd({ 'foo\' baz\'quux' => "contains quote"});
     is( maniread()->{'foo\' baz\'quux'}, "contains quote",
-	'quoted manifest filename' );
+        'quoted manifest filename' );
     $funky_files{'space_quote'} = 'foo\' baz\'quux';
 }
 
@@ -317,7 +317,7 @@ SKIP: {
     local $ExtUtils::Manifest::MANIFEST = "albatross";
     maniadd({ 'foo bar\\baz' => "contains backslash"});
     is( maniread()->{'foo bar\\baz'}, "contains backslash",
-	'backslashed manifest filename' );
+        'backslashed manifest filename' );
     $funky_files{'space_backslash'} = 'foo bar\\baz';
 }
 
@@ -328,7 +328,7 @@ SKIP: {
     local $ExtUtils::Manifest::MANIFEST = "albatross";
     maniadd({ 'foo bar\\baz\'quux' => "backslash and quote"});
     is( maniread()->{'foo bar\\baz\'quux'}, "backslash and quote",
-	'backslashed and quoted manifest filename' );
+        'backslashed and quoted manifest filename' );
     $funky_files{'space_quote_backslash'} = 'foo bar\\baz\'quux';
 }
 
@@ -342,14 +342,16 @@ SKIP: {
     local $ExtUtils::Manifest::MANIFEST = "albatross";
     maniadd({ $quoted_filename => $description });
     is( maniread()->{$quoted_filename}, $description,
-     'file whose name starts and ends with quotes' );
+        'file whose name starts and ends with quotes' );
     $funky_files{$description} = $quoted_filename;
 }
 
 my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
 # test including an external manifest.skip file in MANIFEST.SKIP
 {
-    maniadd({ foo => undef , albatross => undef,
+    local $ENV{HOME} = File::Spec->catdir($cwd, qw(mantest));
+
+    maniadd({ foo => undef, orange => undef, albatross => undef,
               'mymanifest.skip' => undef, 'mydefault.skip' => undef});
     for (@funky_keys) {
         maniadd( {$funky_files{$_} => $_} ) if defined $funky_files{$_};
@@ -360,8 +362,9 @@ my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
     local $ExtUtils::Manifest::DEFAULT_MSKIP =
          File::Spec->catfile($cwd, qw(mantest mydefault.skip));
     my $skip = File::Spec->catfile($cwd, qw(mantest mymanifest.skip));
+    add_file('global.skip' => "^orange\n");
     add_file('MANIFEST.SKIP' =>
-             "albatross\n#!include $skip\n#!include_default");
+             "albatross\n#!include $skip\n#!include_default\n#!include ~/global.skip");
     my ($res, $warn) = catch_warning( \&skipcheck );
     for (qw(albatross foo foobar mymanifest.skip mydefault.skip)) {
         like( $warn, qr/Skipping \b$_\b/,
@@ -370,23 +373,23 @@ my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
     for my $funky_key (@funky_keys) {
         SKIP: {
             my $funky_file = $funky_files{$funky_key};
-	    skip "'$funky_key' not created", 1 unless $funky_file;
-	    like( $warn, qr/Skipping \b\Q$funky_file\E\b/,
-	      "Skipping $funky_file");
-	}
+            skip "'$funky_key' not created", 1 unless $funky_file;
+            like( $warn, qr/Skipping \b\Q$funky_file\E\b/,
+              "Skipping $funky_file");
+        }
     }
     ($res, $warn) = catch_warning( \&mkmanifest );
-    for (qw(albatross foo foobar mymanifest.skip mydefault.skip)) {
+    for (qw(albatross foo foobar mymanifest.skip mydefault.skip orange)) {
         like( $warn, qr/Removed from MANIFEST: \b$_\b/,
               "Removed $_ from MANIFEST" );
     }
     for my $funky_key (@funky_keys) {
         SKIP: {
             my $funky_file = $funky_files{$funky_key};
-	    skip "'$funky_key' not created", 1 unless $funky_file;
-	    like( $warn, qr/Removed from MANIFEST: \b\Q$funky_file\E\b/,
-	      "Removed $funky_file from MANIFEST");
-	}
+            skip "'$funky_key' not created", 1 unless $funky_file;
+            like( $warn, qr/Removed from MANIFEST: \b\Q$funky_file\E\b/,
+              "Removed $funky_file from MANIFEST");
+        }
     }
     my $files = maniread;
     ok( ! exists $files->{albatross}, 'albatross excluded via MANIFEST.SKIP' );
@@ -394,6 +397,7 @@ my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
     ok( exists $files->{bar},         'bar included in MANIFEST' );
     ok( ! exists $files->{foobar},    'foobar excluded via mymanifest.skip' );
     ok( ! exists $files->{foo},       'foo excluded via mymanifest.skip' );
+    ok( ! exists $files->{orange},    'orange excluded via global.skip' );
     ok( ! exists $files->{'mymanifest.skip'},
         'mymanifest.skip excluded via mydefault.skip' );
     ok( ! exists $files->{'mydefault.skip'},
@@ -403,34 +407,34 @@ my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
     for my $funky_key (@funky_keys) {
         SKIP: {
             my $funky_file = $funky_files{$funky_key};
-	    skip "'$funky_key' not created", 1 unless $funky_file;
-	    ok( ! exists $files->{$funky_file},
-		  "'$funky_file' excluded via mymanifest.skip" );
-	}
+            skip "'$funky_key' not created", 1 unless $funky_file;
+            ok( ! exists $files->{$funky_file},
+                "'$funky_file' excluded via mymanifest.skip" );
+        }
     }
 
     # tests for maniskip
     my $skipchk = maniskip();
     is ( $skipchk->('albatross'), 1,
-	'albatross excluded via MANIFEST.SKIP' );
+        'albatross excluded via MANIFEST.SKIP' );
     is( $skipchk->('yarrow'), '',
-	'yarrow included in MANIFEST' );
+        'yarrow included in MANIFEST' );
     is( $skipchk->('bar'), '',
-	'bar included in MANIFEST' );
+        'bar included in MANIFEST' );
     $skipchk = maniskip('mymanifest.skip');
     is( $skipchk->('foobar'), 1,
-	'foobar excluded via mymanifest.skip' );
+        'foobar excluded via mymanifest.skip' );
     is( $skipchk->('foo'), 1,
-	'foo excluded via mymanifest.skip' );
+        'foo excluded via mymanifest.skip' );
     is( $skipchk->('mymanifest.skip'), '',
         'mymanifest.skip included via mydefault.skip' );
     is( $skipchk->('mydefault.skip'), '',
         'mydefault.skip included via mydefault.skip' );
     $skipchk = maniskip('mydefault.skip');
     is( $skipchk->('foobar'), '',
-	'foobar included via mydefault.skip' );
+        'foobar included via mydefault.skip' );
     is( $skipchk->('foo'), '',
-	'foo included via mydefault.skip' );
+        'foo included via mydefault.skip' );
     is( $skipchk->('mymanifest.skip'), 1,
         'mymanifest.skip excluded via mydefault.skip' );
     is( $skipchk->('mydefault.skip'), 1,
@@ -438,6 +442,13 @@ my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
 
     my $extsep = $Is_VMS_noefs ? '_' : '.';
     $Files{"$_.bak"}++ for ('MANIFEST', "MANIFEST${extsep}SKIP");
+
+    my $mskip_contents = do {
+        local $/;
+        open my $fh, '<', "MANIFEST${extsep}SKIP" or return;
+        <$fh>;
+    };
+    unlike $mskip_contents, qr{^\Q^my\E}m, 'include_default memory-only';
 }
 
 add_file('MANIFEST'   => 'Makefile.PL');
@@ -473,11 +484,11 @@ SKIP: {
 
 
 END {
-	is( unlink( keys %Files ), keys %Files, 'remove all added files' );
-	for my $file ( keys %Files ) { 1 while unlink $file; } # all versions
-	remove_dir( 'moretest', 'copy' );
+    is( unlink( keys %Files ), keys %Files, 'remove all added files' );
+    for my $file ( keys %Files ) { 1 while unlink $file; } # all versions
+    remove_dir( 'moretest', 'copy' );
 
-	# now get rid of the parent directory
-	ok( chdir( $cwd ), 'return to parent directory' );
-	remove_dir( 'mantest' );
+    # now get rid of the parent directory
+    ok( chdir( $cwd ), 'return to parent directory' );
+    remove_dir( 'mantest' );
 }

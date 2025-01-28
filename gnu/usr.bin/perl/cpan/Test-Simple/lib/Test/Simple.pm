@@ -4,7 +4,7 @@ use 5.006;
 
 use strict;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 use Test::Builder::Module;
 our @ISA    = qw(Test::Builder::Module);
@@ -213,7 +213,7 @@ Copyright 2001-2008 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.
 
-See F<http://www.perl.com/perl/misc/Artistic.html>
+See L<https://dev.perl.org/licenses/>
 
 =cut
 

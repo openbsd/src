@@ -106,7 +106,7 @@ sub configure
         },
         repository => {
           type => 'git',
-          url  => 'git://github.com/Dual-Life/Devel-PPPort.git',
+          url  => 'https://github.com/Dual-Life/Devel-PPPort.git',
           web  => 'https://github.com/Dual-Life/Devel-PPPort',
         },
       },

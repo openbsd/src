@@ -292,7 +292,6 @@ return FALSE
 #define getcwd_sv(a) Perl_getcwd_sv(aTHX_ a)
 int Perl_getcwd_sv(pTHX_ SV *sv)
 {
-#ifndef PERL_MICRO
 
     SvTAINTED_on(sv);
 
@@ -430,9 +429,6 @@ int Perl_getcwd_sv(pTHX_ SV *sv)
   }
 #endif
 
-#else
-    return FALSE;
-#endif
 }
 
 #endif

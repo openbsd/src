@@ -1,6 +1,6 @@
 package ExtUtils::CBuilder::Platform::Windows::MSVC;
 
-our $VERSION = '0.280238'; # VERSION
+our $VERSION = '0.280240'; # VERSION
 
 use warnings;
 use strict;

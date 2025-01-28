@@ -12,7 +12,7 @@ Do you want to:
 
 =item B<Use C from Perl?>
 
-Read L<perlxstut>, L<perlxs>, L<h2xs>, L<perlguts>, and L<perlapi>.
+Read L<perlxstut>, L<perlxs>, L<perlclib>, L<h2xs>, L<perlguts>, and L<perlapi>.
 
 =item B<Use a Unix program from Perl?>
 
@@ -339,18 +339,18 @@ the first, a C<float> from the second, and a C<char *> from the third.
      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
      perl_run(my_perl);
 
-     /** Treat $a as an integer **/
-     eval_pv("$a = 3; $a **= 2", TRUE);
-     printf("a = %d\n", SvIV(get_sv("a", 0)));
+     /** Treat $x as an integer **/
+     eval_pv("$x = 3; $x **= 2", TRUE);
+     printf("x = %d\n", SvIV(get_sv("x", 0)));
 
-     /** Treat $a as a float **/
-     eval_pv("$a = 3.14; $a **= 2", TRUE);
-     printf("a = %f\n", SvNV(get_sv("a", 0)));
+     /** Treat $x as a float **/
+     eval_pv("$x = 3.14; $x **= 2", TRUE);
+     printf("x = %f\n", SvNV(get_sv("x", 0)));
 
-     /** Treat $a as a string **/
+     /** Treat $x as a string **/
      eval_pv(
-       "$a = 'rekcaH lreP rehtonA tsuJ'; $a = reverse($a);", TRUE);
-     printf("a = %s\n", SvPV_nolen(get_sv("a", 0)));
+       "$x = 'rekcaH lreP rehtonA tsuJ'; $x = reverse($x);", TRUE);
+     printf("x = %s\n", SvPV_nolen(get_sv("x", 0)));
 
      perl_destruct(my_perl);
      perl_free(my_perl);
@@ -614,8 +614,8 @@ sounds, because Perl implements ** with C's I<pow()> function).  First
 I'll create a stub exponentiation function in I<power.pl>:
 
     sub expo {
-        my ($a, $b) = @_;
-        return $a ** $b;
+        my ($x, $y) = @_;
+        return $x ** $y;
     }
 
 Now I'll create a C program, I<power.c>, with a function
@@ -938,7 +938,7 @@ C<-Dusemultiplicity> option otherwise some interpreter variables may
 not be initialized correctly between consecutive runs and your
 application may crash.
 
-See also L<perlxs/Thread-aware system interfaces>.
+See also L<perlclib/Dealing with embedded perls and threads>.
 
 Using C<-Dusethreads -Duseithreads> rather than C<-Dusemultiplicity>
 is more appropriate if you intend to run multiple interpreters
@@ -1091,7 +1091,7 @@ B<ExtUtils::Embed> can also automate writing the I<xs_init> glue code.
  % cc -c interp.c  `perl -MExtUtils::Embed -e ccopts`
  % cc -o interp perlxsi.o interp.o `perl -MExtUtils::Embed -e ldopts`
 
-Consult L<perlxs>, L<perlguts>, and L<perlapi> for more details.
+Consult L<perlxs>, L<perlclib>, L<perlguts>, and L<perlapi> for more details.
 
 =head2 Using embedded Perl with POSIX locales
 
@@ -1151,7 +1151,8 @@ Jon Orwant <F<orwant@media.mit.edu>> and Doug MacEachern
 Christiansen, Guy Decoux, Hallvard Furuseth, Dov Grobgeld, and Ilya
 Zakharevich.
 
-Doug MacEachern has an article on embedding in Volume 1, Issue 4 of
+Doug MacEachern has an article on embedding in Volume 1,
+L<Issue 4|https://www.foo.be/docs/tpj/issues/vol1_4/ewtoc.html> of
 The Perl Journal ( L<http://www.tpj.com/> ).  Doug is also the developer of the
 most widely-used Perl embedding: the mod_perl system
 (perl.apache.org), which embeds Perl in the Apache web server.

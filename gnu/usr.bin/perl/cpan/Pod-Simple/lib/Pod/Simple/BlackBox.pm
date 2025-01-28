@@ -20,9 +20,9 @@ package Pod::Simple::BlackBox;
 
 use integer; # vroom!
 use strict;
+use warnings;
 use Carp ();
-use vars qw($VERSION );
-$VERSION = '3.43';
+our $VERSION = '3.45';
 #use constant DEBUG => 7;
 
 sub my_qr ($$) {
@@ -1770,9 +1770,10 @@ sub _ponder_Verbatim {
     # Fix illegal settings for expand_verbatim_tabs()
     # This is because this module doesn't do input error checking, but khw
     # doesn't want to add yet another instance of that.
-    $self->expand_verbatim_tabs(8)
-                            if ! defined $self->expand_verbatim_tabs()
-                            ||   $self->expand_verbatim_tabs() =~ /\D/;
+    my $tab_width = $self->expand_verbatim_tabs;
+    $tab_width = $self->expand_verbatim_tabs(8)
+        if ! defined $tab_width
+        ||   $tab_width =~ /\D/;
 
     my $indent = $self->strip_verbatim_indent;
     if ($indent && ref $indent eq 'CODE') {
@@ -1785,7 +1786,7 @@ sub _ponder_Verbatim {
       foreach my $line ($para->[$i]) { # just for aliasing
         # Strip indentation.
         $line =~ s/^\Q$indent// if $indent;
-        next unless $self->expand_verbatim_tabs;
+        next unless $tab_width;
 
             # This is commented out because of github issue #85, and the
             # current maintainers don't know why it was there in the first
@@ -1794,8 +1795,8 @@ sub _ponder_Verbatim {
         while( $line =~
           # Sort of adapted from Text::Tabs.
           s/^([^\t]*)(\t+)/$1.(" " x ((length($2)
-                                       * $self->expand_verbatim_tabs)
-                                       -(length($1)&7)))/e
+                                       * $tab_width)
+                                       -(length($1) % $tab_width)))/e
         ) {}
 
         # TODO: whinge about (or otherwise treat) unindented or overlong lines

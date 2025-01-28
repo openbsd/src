@@ -1,9 +1,9 @@
 #
-# $Id: Encoder.t,v 2.1 2013/09/14 07:51:59 dankogai Exp $
+# $Id: Encoder.t,v 2.2 2023/11/10 01:10:50 dankogai Exp $
 #
 
 BEGIN {
-    require Config; import Config;
+    require Config; Config->import();
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
       exit 0;

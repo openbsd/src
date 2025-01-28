@@ -106,12 +106,29 @@ case "`${cc:-cc} -V 2>&1`" in
     '') optimize='-O3' ;;
     esac
     ;;
+
+# the new Intel C/C++ compiler, LLVM based, replaces ICC which
+# is no longer maintained from around October 2023
+*"Intel(R) oneAPI DPC++/C++ Compiler"*)
+    # version from end of first line, like:
+    # Intel(R) oneAPI DPC++/C++ Compiler 2024.1.0 (2024.1.0.20240308)
+    ccversion=`${cc:-cc} --version | sed -n -e 's/^Intel.*(\(.*\))/\1/p'`
+    # If we're using ICX, we usually want the best performance
+    case "$optimize" in
+    '') optimize='-O3' ;;
+    esac
+    # fp-model defaults to "fast" which mis-handles NaNs
+    ccflags="-fp-model=precise $ccflags"
+    ;;
+
 *" Sun "*"C"*)
     # Sun's C compiler, which might have a 'tag' name between
     # 'Sun' and the 'C':  Examples:
     # cc: Sun C 5.9 Linux_i386 Patch 124871-01 2007/07/31
     # cc: Sun Ceres C 5.10 Linux_i386 2008/07/10
-    test "$optimize" || optimize='-xO2'
+    # cc: Studio 12.6 Sun C 5.15 Linux_i386 2017/05/30
+    # GH #21535 - apparent optimization bug in workshop cc
+    test "$optimize" || optimize='-O1'
     cccdlflags='-KPIC'
     lddlflags='-G -Bdynamic'
     # Sun C doesn't support gcc attributes, but, in many cases, doesn't
@@ -123,6 +140,15 @@ case "`${cc:-cc} -V 2>&1`" in
     d_attribute_pure='undef'
     d_attribute_unused='undef'
     d_attribute_warn_unused_result='undef'
+    case "$cc" in
+    *c99)   # Without -Xa c99 errors on some Linux system headers
+            # in particular zero sized arrays at the end of structs
+	    case "$ccflags" in
+		*-Xa*)	;;
+		*) ccflags="$ccflags -Xa" ;;
+	    esac
+	    ;;
+    esac
     ;;
 esac
 
@@ -166,7 +192,7 @@ esac
 if [ -x /usr/bin/gcc ] ; then
     gcc=/usr/bin/gcc
 # clang also provides -print-search-dirs
-elif ${cc:-cc} --version 2>/dev/null | grep -q '^clang ' ; then
+elif ${cc:-cc} --version 2>/dev/null | grep -q -e '^clang version' -e ' clang version'; then
     gcc=${cc:-cc}
 else
     gcc=gcc

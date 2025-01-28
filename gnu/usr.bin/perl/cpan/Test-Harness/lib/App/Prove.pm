@@ -18,11 +18,11 @@ App::Prove - Implements the C<prove> command.
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =cut
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 =head1 DESCRIPTION
 
@@ -412,7 +412,6 @@ sub _load_extension {
     }
 
     if ( my $class = $self->_find_module( $name, @search ) ) {
-        $class->import(@args);
         if ( $class->can('load') ) {
             $class->load( { app_prove => $self, args => [@args] } );
         }
@@ -771,17 +770,6 @@ along with a reference to the C<App::Prove> object that is invoking your plugin:
       $p->{app_prove}->do_something;
       ...
   }
-
-Note that the user's arguments are also passed to your plugin's C<import()>
-function as a list, eg:
-
-  sub import {
-      my ($class, @args) = @_;
-      # @args will contain ( 'foo', 'bar', 'baz' )
-      ...
-  }
-
-This is for backwards compatibility, and may be deprecated in the future.
 
 =head2 Sample Plugin
 

@@ -707,7 +707,6 @@ d_nexttoward=''
 d_nice=''
 d_nl_langinfo=''
 d_nl_langinfo_l=''
-d_thread_safe_nl_langinfo_l=''
 d_off64_t=''
 d_open3=''
 d_fpathconf=''
@@ -954,6 +953,11 @@ d_wcsxfrm=''
 d_wctomb=''
 d_writev=''
 default_inc_excludes_dot=''
+d_perl_lc_all_category_positions_init=''
+d_perl_lc_all_separator=''
+d_perl_lc_all_uses_name_value_pairs=''
+perl_lc_all_category_positions_init=''
+perl_lc_all_separator=''
 dlext=''
 bin_ELF=''
 cccdlflags=''
@@ -2608,6 +2612,11 @@ for file in $loclist; do
 	*)
 		echo "I don't know where '$file' is, and my life depends on it." >&4
 		echo "Go find a public domain implementation or fix your PATH setting!" >&4
+
+		test -f /etc/debian_version && echo "Run \"apt install build-essential\" to install make and friends" >&4
+		test -f /etc/SUSE-brand     && echo "Run \"zypper install 'pattern:devel_C_C++'\" to install make and friends" >&4
+		test -f /etc/redhat-release && echo "Run \"yum groupinstall 'Development Tools'\" to install make and friends" >&4
+		test -f /etc/fedora-release && echo "Run \"dnf group install 'Development Tools'\" to install make and friends" >&4
 		exit 1
 		;;
 	esac
@@ -5450,25 +5459,6 @@ default|recommended)
 	2.[0-8]*) ;;
 	?*)	set strict-aliasing -fno-strict-aliasing
 		eval $checkccflag
-		;;
-	esac
-	case "$gccversion" in
-	1*) ;;
-	2*) ;;
-	?*) 	echo " "
-		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
-		echo 'int main(void) { return 0; }' > gcctest.c
-		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
-			echo "Yes, it does." 2>&1
-			case "$ccflags" in
-			*delete-null-pointer-checks*)
-				echo "Leaving current flags $ccflags alone." 2>&1
-				;;
-			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
-			esac
-		else
-			echo "Nope, it doesn't, but that's ok." 2>&1
-		fi
 		;;
 	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
@@ -10994,7 +10984,6 @@ set atoll d_atoll
 eval $inlibc
 
 : See if a file contains compiler warnings
-: See if a file contains compiler warnings
 case "$osname" in
   'aix')
 	cat >compiler_warning <<EOSS
@@ -16116,6 +16105,8 @@ EOCP
 	fi;
 	$rm_try
 	;;
+*)	d_lc_monetary_2008="$undef"
+	;;
 esac
 
 : see if lchown exists
@@ -16705,102 +16696,11 @@ eval $inlibc
 set langinfo.h i_langinfo
 eval $inhdr
 
-: see if nl_langinfo exists
+: see if nl_langinfo and/or nl_langinfo_l exist
 set nl_langinfo d_nl_langinfo
 eval $inlibc
-
-: see if locale.h is available
-set locale.h i_locale
-eval $inhdr
-
-: check for nl_langinfo_l item
-$cat <<EOM
-
-Checking to see if you have nl_langinfo_l(), and that it is thread-safe
-EOM
-$cat >try.c <<EOCP
-#$i_stdlib I_STDLIB
-#ifdef I_STDLIB
-#  include <stdlib.h>
-#endif
-#include <string.h>
-#$i_langinfo I_LANGINFO
-#ifdef I_LANGINFO
-#  include <langinfo.h>
-#endif
-#$i_pthread I_PTHREAD
-#ifdef I_PTHREAD
-#  include <pthread.h>
-#endif
-#$i_locale I_LOCALE
-#ifdef I_LOCALE
-#  include <locale.h>
-#endif
-
-void *
-thread_start(void * arg)
-{
-    nl_langinfo(RADIXCHAR);
-}
-
-int main() {
-    char * main_buffer;
-    char save_main_buffer[1000];
-    pthread_t subthread;
-    pthread_attr_t attr;
-
-    main_buffer = nl_langinfo_l(CODESET, newlocale(LC_ALL_MASK, "C", 0));
-
-    /* If too large for our generous allowance, just assume we don't have
-     * it. */
-    if (strlen(main_buffer) >= sizeof(save_main_buffer)) {
-        exit(1);
-    }
-
-    strcpy(save_main_buffer, main_buffer);
-
-    if (pthread_attr_init(&attr) != 0) {
-        exit(1);
-    }
-
-    if (pthread_create(&subthread, &attr, thread_start, NULL) != 0) {
-        exit(1);
-    }
-
-    if (pthread_join(subthread, NULL) != 0) {
-        exit(1);
-    }
-
-    exit(! (strcmp(main_buffer, save_main_buffer) == 0));
-}
-EOCP
-case "$usethreads" in
-    define)
-        set try
-        if eval $compile; then
-            echo "Your system has nl_langinfo_l()..." >&4
-            d_nl_langinfo_l="$define"
-            echo "$d_nl_langinfo_l" >&4
-            if $run ./try; then
-                echo "and it is thread-safe (just as I'd hoped)." >&4
-                d_thread_safe_nl_langinfo_l="$define"
-                echo "$d_thread_safe_nl_langinfo_l" >&4
-            else
-                echo "but it isn't thread-safe." >&4
-            fi
-        else
-            echo "your system does not have nl_langinfo_l()" >&4
-        fi
-        ;;
-    *) echo "Since threads aren't selected, we won't bother looking for nl_langinfo_l()" >&4
-esac
-if test X"$d_nl_langinfo_l" = X; then
-	d_nl_langinfo_l="$undef"
-fi
-if test X"$d_thread_safe_nl_langinfo_l" = X; then
-	d_thread_safe_nl_langinfo_l="$undef"
-fi
-$rm_try
+set nl_langinfo_l d_nl_langinfo_l
+eval $inlibc
 
 : Look for non 'int'-sized bitfields
 case "$d_non_int_bitfields" in
@@ -17402,6 +17302,551 @@ fi
 : see if pause exists
 set pause d_pause
 eval $inlibc
+
+: see if locale.h is available
+set locale.h i_locale
+eval $inhdr
+
+: see if this system has wctype.h
+set wctype.h i_wctype
+eval $inhdr
+
+: see if towupper exists
+set towupper d_towupper
+eval $inlibc
+
+: check for setlocale function and behavior
+case "$d_setlocale" in
+'')
+$cat >&4 <<EOM
+
+Checking to see if you have setlocale() and its behavior
+EOM
+$cat >try.c <<EOCP
+#include <stdlib.h>
+#include <string.h>
+#$i_locale I_LOCALE
+#ifdef I_LOCALE
+#  include <locale.h>
+#endif
+#$i_wctype I_WCTYPE
+#ifdef I_WCTYPE
+#  include <wctype.h>
+#endif
+
+int main() {
+    const char * invalid_name = "\a";   /* This is really invalid! */
+    int accepts_any_locale_name = 0;
+    int has_C_UTF8 = 0;
+    unsigned char bad_setlocale = 255;
+
+    /* If LC_CTYPE isn't defined the compilation will fail, and locales will be
+     * disabled.  It's hard to imagine an instance where meaningful locale
+     * handling could be done without LC_CTYPE */
+    const char *  name = setlocale(LC_CTYPE, "C");
+
+    if (name == NULL || strcmp(name, "C") != 0) {
+        exit(bad_setlocale);
+    }
+
+    name = setlocale(LC_CTYPE, invalid_name);
+    if (name != NULL) {
+
+        /* Let it pass if it accepts the name but gives back one of the C
+         * locales */
+        if (strcmp(name, "C") != 0 && strcmp(name, "C.UTF-8") != 0) {
+            accepts_any_locale_name = 1;
+        }
+    }
+
+    name = setlocale(LC_CTYPE, "C.UTF-8");
+    if (name != NULL) {
+        unsigned char y_with_diaeresis = ('A' == 193) ? 0xDF : 0xFF;
+
+#$d_towupper HAS_TOWUPPER
+#ifdef HAS_TOWUPPER
+
+        /* We assume that if the machine doesn't have the C99 towupper, it
+         * doesn't have C.UTF-8, even if we successfully changed locales to
+         * include it.  This seems safer even on platforms that didn't accept
+         * the really invalid name */
+
+        if (towupper(y_with_diaeresis) == 0x178) {
+            has_C_UTF8 = 1;
+        }
+
+#endif
+
+    }
+
+    exit( 0 /* (separator - min_separator) << 3
+        | uses_name_value_pair_names      << 2
+          */
+        | has_C_UTF8                      << 1
+        | accepts_any_locale_name);
+
+}
+EOCP
+val=
+set d_setlocale
+eval $setvar
+case $d_setlocale in
+    $undef) d_setlocale_accepts_any_locale_name="$undef"
+            d_has_C_UTF8="false"
+            ;;
+    *) set try
+       if eval $compile; then
+           echo "Your system has setlocale()..." >&4
+           $run ./try
+           case $? in
+               0) echo "and it seems sane; you don't have a C.UTF-8 locale" >&4
+                  d_setlocale="$define"
+                  d_setlocale_accepts_any_locale_name="$undef"
+                  d_has_C_UTF8="false"
+                  ;;
+               1) echo "and it seems sane, but accepts any locale name as valid" >&4
+                  d_setlocale="$define"
+                  d_setlocale_accepts_any_locale_name="$define"
+                  d_has_C_UTF8="false"
+                  ;;
+               2) echo "and it seems sane; you have a C.UTF-8 locale" >&4
+                  d_setlocale="$define"
+                  d_setlocale_accepts_any_locale_name="$undef"
+                  d_has_C_UTF8="true"
+                  ;;
+               3) echo "and it seems sane, but accepts any locale name as valid" >&4
+                  d_setlocale="$define"
+                  d_setlocale_accepts_any_locale_name="$define"
+                  d_has_C_UTF8="true"
+                  ;;
+               *) echo "but it doesn't seem to work, so we won't use it." >&4
+                  d_setlocale="$undef"
+                  d_setlocale_accepts_any_locale_name="$undef"
+                  d_has_C_UTF8="false"
+                  ;;
+           esac
+       else
+           echo "your system does not have setlocale()" >&4
+           d_setlocale="$undef"
+           d_setlocale_accepts_any_locale_name="$undef"
+           d_has_C_UTF8="false"
+       fi
+esac
+$rm_try
+;;
+*) val="$d_setlocale"
+    set d_setlocale
+    eval $setvar
+    case "$d_setlocale" in
+        $undef) echo "There may be other ways to set the locale on your system, so we need to ask:" >&4
+        ;;
+    esac
+    rp="Does your system have the C.UTF-8 locale?"
+    dflt=n
+    . ./myread
+    case "$ans" in
+        [Yy]*) d_has_C_UTF8="true"
+               c_utf8_locale=" or C.UTF-8"
+               ;;
+        *)     d_has_C_UTF8="false"
+               c_utf8_locale=""
+               ;;
+    esac
+    case "$d_setlocale" in
+        $define)
+            rp="When you set your locale to something besides C$c_utf8_locale, does it actually do so? (Answer no if it just pretends to set it)" >&4
+            dflt=n
+            . ./myread
+            case "$ans" in
+                true|[Yy]*)
+		   d_setlocale_accepts_any_locale_name="$define"
+		   ;;
+		*) d_setlocale_accepts_any_locale_name="$undef"
+		   ;;
+            esac
+            ;;
+        *) d_setlocale_accepts_any_locale_name="$undef"
+	   ;;
+    esac
+esac
+
+: Check the syntax of LC_ALL when categories are set to different locales
+echo " "
+$echo "Checking the syntax of LC_ALL when categories are set to different locales..." >&4
+
+case $d_setlocale in
+    $define)
+$rm -f try try.*
+$cat >try.c <<'EOF'
+#include <limits.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#ifndef LC_ALL
+
+int
+main (const int argc, const char ** argv)
+{
+}
+
+#else
+#  define C_ARRAY_LENGTH(a)  (sizeof(a)/sizeof((a)[0]))
+#  define strEQ(s1,s2) (strcmp(s1,s2) == 0)
+#  define strNE(s1,s2) (strcmp(s1,s2) != 0)
+#  define Copy(s,d,n,t) (void)memcpy((char*)(d),(const char*)(s), (n) * sizeof(t))
+#  define memEQ(s1,s2,l) (memcmp(((const void *) (s1)), ((const void *) (s2)), l) == 0)
+#  define memNE(s1,s2,l) (! memEQ(s1,s2,l))
+
+int
+main (const int argc, const char ** argv)
+{
+
+    int debug = 0;
+
+    /* All categories Perl knows about on any system.  If any are missing, this
+     * won't work for that system, and they must be added here and in perl.h,
+     * locale.c */
+    const int categories[] = {
+
+#  ifdef LC_CTYPE
+        LC_CTYPE,
+#  endif
+#  ifdef LC_NUMERIC
+        LC_NUMERIC,
+#  endif
+#  ifdef LC_COLLATE
+        LC_COLLATE,
+#  endif
+#  ifdef LC_TIME
+        LC_TIME,
+#  endif
+#  ifdef LC_MESSAGES
+        LC_MESSAGES,
+#  endif
+#  ifdef LC_MONETARY
+        LC_MONETARY,
+#  endif
+#  ifdef LC_ADDRESS
+        LC_ADDRESS,
+#  endif
+#  ifdef LC_IDENTIFICATION
+        LC_IDENTIFICATION,
+#  endif
+#  ifdef LC_MEASUREMENT
+        LC_MEASUREMENT,
+#  endif
+#  ifdef LC_PAPER
+        LC_PAPER,
+#  endif
+#  ifdef LC_TELEPHONE
+        LC_TELEPHONE,
+#  endif
+#  ifdef LC_NAME
+        LC_NAME,
+#  endif
+#  ifdef LC_SYNTAX
+        LC_SYNTAX,
+#  endif
+#  ifdef LC_TOD
+        LC_TOD
+#  endif
+
+    };
+
+    const char * category_names[] = {
+
+#  ifdef LC_CTYPE
+        "LC_CTYPE",
+#  endif
+#  ifdef LC_NUMERIC
+        "LC_NUMERIC",
+#  endif
+#  ifdef LC_COLLATE
+        "LC_COLLATE",
+#  endif
+#  ifdef LC_TIME
+        "LC_TIME",
+#  endif
+#  ifdef LC_MESSAGES
+        "LC_MESSAGES",
+#  endif
+#  ifdef LC_MONETARY
+        "LC_MONETARY",
+#  endif
+#  ifdef LC_ADDRESS
+        "LC_ADDRESS",
+#  endif
+#  ifdef LC_IDENTIFICATION
+        "LC_IDENTIFICATION",
+#  endif
+#  ifdef LC_MEASUREMENT
+        "LC_MEASUREMENT",
+#  endif
+#  ifdef LC_PAPER
+        "LC_PAPER",
+#  endif
+#  ifdef LC_TELEPHONE
+        "LC_TELEPHONE",
+#  endif
+#  ifdef LC_NAME
+        "LC_NAME",
+#  endif
+#  ifdef LC_SYNTAX
+        "LC_SYNTAX",
+#  endif
+#  ifdef LC_TOD
+        "LC_TOD"
+#  endif
+
+    };
+
+    char alternate[1024] = { '\0' } ;
+
+    /* This is a list of locales that are likely to be found on any machine
+     * (Windows and non-Windows) */
+    const char * candidates[] = {
+                                  "POSIX",
+                                  "C.UTF-8",
+                                  "en_US",
+                                  "en_US.UTF-8",
+                                  "American",
+                                  "English"
+                                };
+    char separator[1024];
+    size_t separator_len = 0;
+    unsigned int distincts_count = 0;
+
+    /* We look through the candidates for one which returns the same non-C
+     * locale for every category */
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(candidates); i++) {
+        const char * candidate = candidates[i];
+        distincts_count = 0;
+        alternate[0] = '\0';
+
+        for (unsigned int j = 0; j < C_ARRAY_LENGTH(categories); j++) {
+            const int category = categories[j];
+            const char * locale_name = setlocale(category, candidate);
+
+            if (locale_name == NULL) {  /* Not on this system */
+                break;
+            }
+
+            if (debug) fprintf(stderr,
+                               "i=%d,j=%d;"
+                               " Return of setlocale(%d=%s, '%s') is '%s'\n",
+                               i, j,
+                               category, category_names[j],
+                               candidate, locale_name);
+
+            /* If the candidate is indistinguishable from C, break to try the
+             * next candidate */
+            if (strEQ(locale_name, "C")) {
+                break;
+            }
+
+            /* Save the name the first time through, and on subsequent ones */
+            /* make sure the name is the same as before, so the code below can
+             * be assured of finding it when searching */
+            if (j == 0) {
+                strncpy(alternate, locale_name, sizeof(alternate));
+            }
+            else if (strNE(alternate, locale_name)) {
+                break;
+            }
+
+            distincts_count++;
+        }
+
+        /* Done with this candidate.  If every category returned the same non-C
+         * name, this candidate works.  It not, loop to try the next candidate
+         * */
+        if (distincts_count == C_ARRAY_LENGTH(categories)) {
+            break;
+        }
+    }
+
+    /* Here, either found a suitable candidate, or exhausted the possibilities.
+     * In the latter case, give up */
+    if (distincts_count < C_ARRAY_LENGTH(categories)) {
+        fprintf(stderr, "Couldn't find a locale distinguishable from C\n");
+        return 1;
+    }
+
+    /* An example syntax, from cygwin, is:
+     *     LC_COLLATE/LC_CTYPE/LC_MONETARY/LC_NUMERIC/LC_TIME/LC_MESSAGES
+     * The locales for a given category are always in the same position,
+     * indicated above, with a slash separating them */
+
+    int map_LC_ALL_position_to_category[C_ARRAY_LENGTH(categories)];
+
+    /* Initialize */
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(categories); i++) {
+        map_LC_ALL_position_to_category[i] = INT_MAX;
+    }
+
+    const char * lc_all = NULL;
+
+    /* We need to find the category that goes in each position */
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(categories); i++) {
+
+        /* First set everything to 'C' */
+        if (! setlocale(LC_ALL, "C")) {
+            fprintf(stderr, "Failed to set LC_ALL to C\n");
+            return 1;
+        }
+
+        /* Then set this category to the alternate */
+        if (! setlocale(categories[i], alternate)) {
+            fprintf(stderr, "Failed to set %d to to '%s'\n",
+                            categories[i], alternate);
+            return 1;
+        }
+
+        /* Then find what the system says LC_ALL looks like with just this one
+         * category not set to 'C' */
+        lc_all = setlocale(LC_ALL, NULL);
+        if (! lc_all) {
+            fprintf(stderr, "Failed to retrieve LC_ALL\n");
+            return 1;
+        }
+
+        if (debug) fprintf(stderr, "LC_ALL is '%s'\n", lc_all);
+
+        /* Assume is name=value pairs if the result contains both an equals and
+         * a semi-colon. */
+        if (strchr(lc_all, '=') && strchr(lc_all, ';')) {
+            fprintf(stdout, "\"=;\"\n\n");
+            return 0;
+        }
+
+        /* Here isn't name=value pairs.  Find the position of the alternate */
+        const char * alt_pos = strstr(lc_all, alternate);
+        if (! alt_pos) {
+            fprintf(stderr, "Couldn't find '%s' in '%s'\n", alternate, lc_all);
+            return 1;
+        }
+
+        /* Parse the LC_ALL string from the beginning up to where the alternate
+         * locale is */
+        const char * s = lc_all;
+        int count = 0;
+        while (s < alt_pos) {
+
+            /* Count the 'C' locales before the non-C one.  (Note the letter
+             * 'C' can only occur as the entire 'C' locale, since all of them
+             * are that locale before 'alt_pos') */
+            const char * next_C = (const char *) memchr(s, 'C', alt_pos - s);
+            if (next_C) {
+                count++;
+                s = next_C + 1;
+                continue;
+            }
+
+            /* Here, there is no 'C' between 's' and the alternate locale, so
+             * 'count' gives the total number of occurrences of 'C' in that
+             * span.  If count is 0, this is the first category in an LC_ALL
+             * string, and we know its position, but not the separator. */
+            if (count == 0) {
+                break;
+            }
+
+            /* When 'count' isn't 0,  's' points to one past the previous 'C'.
+             * The separator starts here, ending just before the non-C locale.
+             */
+
+            const char * new_sep = s;
+            unsigned int new_sep_len = alt_pos - s;
+
+            /* If we don't already have a separator saved, save this as it */
+            if (separator_len == 0) {
+                separator_len = new_sep_len;
+                Copy(s, separator, separator_len, char);
+                separator[separator_len] = '\0';
+            }
+            else {  /* Otherwise make sure it's the same string as previously
+                     * calculated */
+                if (   new_sep_len != separator_len
+                    || memNE(separator, new_sep, separator_len))
+                {
+                    fprintf(stderr, "Unexpectedly got distinct separators"
+                                    " '%s' vs '%s\n", separator, new_sep);
+                    return 1;
+                }
+            }
+
+            /* Here, we have found the position of category[i] in LC_ALL. */
+            break;
+
+        } /* End of loop parsing the LC_ALL string */
+
+        if (map_LC_ALL_position_to_category[count] != INT_MAX) {
+            fprintf(stderr, "Categories %d and %d both appear to occupy"
+                            " position %d in LC_ALL; there is something"
+                            " wrong with the calculation\n",
+                            categories[count], categories[i],
+                            count);
+            return 1;
+        }
+
+        /* Save the position of this category */
+        map_LC_ALL_position_to_category[count] = categories[i];
+
+    } /* End of loop through all the categories */
+
+    fprintf(stdout, "\"%s\"\n{", separator);
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(categories) - 1; i++) {
+        fprintf(stdout, " %d,", map_LC_ALL_position_to_category[i]);
+    }
+    fprintf(stdout, " %d }\n", map_LC_ALL_position_to_category[
+                                                C_ARRAY_LENGTH(categories) - 1]);
+    return 0;
+
+}
+
+#endif
+EOF
+set try
+if eval $compile_ok; then
+    output=`$run ./try 2>/dev/null`
+    separator=`echo "$output" | $sed 1q`
+    case $separator in
+	"\"=;\"")
+          d_perl_lc_all_uses_name_value_pairs="$define"
+          d_perl_lc_all_separator="$undef"
+            perl_lc_all_separator=
+	  d_perl_lc_all_category_positions_init="$undef"
+	    perl_lc_all_category_positions_init=
+	    ;;
+	"") d_perl_lc_all_uses_name_value_pairs="$undef"
+            d_perl_lc_all_separator="$undef"
+              perl_lc_all_separator=
+	    d_perl_lc_all_category_positions_init="$undef"
+	      perl_lc_all_category_positions_init=
+	    ;;
+        *)  d_perl_lc_all_uses_name_value_pairs="$undef"
+            d_perl_lc_all_separator="$define"
+              perl_lc_all_separator="$separator"
+	    d_perl_lc_all_category_positions_init="$define"
+	      perl_lc_all_category_positions_init=`echo "$output" | sed -n 2p`
+	    ;;
+    esac
+else
+    $echo "Failed to compile lc_all probe" >&4
+fi
+$rm -f try try.*
+;;
+*)        d_perl_lc_all_separator="$undef"
+            perl_lc_all_separator=
+	  d_perl_lc_all_category_positions_init="$undef"
+	    perl_lc_all_category_positions_init=
+
+          # No setlocale(), but using this default allows our code to compile
+          # and run without having to have a bunch more #ifdef's
+          d_perl_lc_all_uses_name_value_pairs="$define"
+;;
+esac
 
 : see if pipe2 exists
 set pipe2 d_pipe2
@@ -18237,230 +18682,6 @@ eval $inlibc
 : see if setlinebuf exists
 set setlinebuf d_setlinebuf
 eval $inlibc
-
-: see if this system has wctype.h
-set wctype.h i_wctype
-eval $inhdr
-
-: see if towupper exists
-set towupper d_towupper
-eval $inlibc
-
-: check for setlocale function and behavior
-case "$d_setlocale" in
-'')
-$cat >&4 <<EOM
-
-Checking to see if you have setlocale() and its behavior
-EOM
-$cat >try.c <<EOCP
-#include <stdlib.h>
-#include <string.h>
-#$i_locale I_LOCALE
-#ifdef I_LOCALE
-#  include <locale.h>
-#endif
-#$i_wctype I_WCTYPE
-#ifdef I_WCTYPE
-#  include <wctype.h>
-#endif
-
-int main() {
-    const char * invalid_name = "\a";   /* This is really invalid! */
-    int accepts_any_locale_name = 0;
-    int has_C_UTF8 = 0;
-    unsigned char bad_setlocale = 255;
-
-    /* If LC_CTYPE isn't defined the compilation will fail, and locales will be
-     * disabled.  It's hard to imagine an instance where meaningful locale
-     * handling could be done without LC_CTYPE */
-    const char *  name = setlocale(LC_CTYPE, "C");
-
-    if (name == NULL || strcmp(name, "C") != 0) {
-        exit(bad_setlocale);
-    }
-
-    name = setlocale(LC_CTYPE, invalid_name);
-    if (name != NULL) {
-
-        /* Let it pass if it accepts the name but gives back one of the C
-         * locales */
-        if (strcmp(name, "C") != 0 && strcmp(name, "C.UTF-8") != 0) {
-            accepts_any_locale_name = 1;
-        }
-    }
-
-    name = setlocale(LC_CTYPE, "C.UTF-8");
-    if (name != NULL) {
-        unsigned char y_with_diaeresis = ('A' == 193) ? 0xDF : 0xFF;
-
-#$d_towupper HAS_TOWUPPER
-#ifdef HAS_TOWUPPER
-
-        /* We assume that if the machine doesn't have the C99 towupper, it
-         * doesn't have C.UTF-8, even if we successfully changed locales to
-         * include it.  This seems safer even on platforms that didn't accept
-         * the really invalid name */
-
-        if (towupper(y_with_diaeresis) == 0x178) {
-            has_C_UTF8 = 1;
-        }
-
-#endif
-
-    }
-
-#if 0
-
-    /* Currently unused code to determine if LC_ALL with disparate values uses
-     * category = value pairs or positional, and to determine the separator
-     * between the categories.  We could add code so that if the separator were
-     * > '9', we subtract 10; similarly for 'Z' and 'z', and then just about
-     * every possible ASCII separator would fit in the 5 bits available in the
-     * exit code.  This would not be true in EBCDIC.  And then if LC_ALL is
-     * positional, we probably would want to know the order of the categories.
-     * Using a file between the C program and the shell script would really be
-     * require to do that */
-#ifdef LC_ALL
-
-    unsigned char min_separator = ' ' - 1;
-    unsigned char separator = min_separator;
-    int uses_name_value_pair_names = 0;
-
-    name = setlocale(LC_ALL, "C");
-    if (name == NULL || strcmp(name, "C") != 0) {
-        exit(bad_setlocale);
-    }
-
-    if (has_C_UTF8) {
-        char * pos;
-
-        name = setlocale(LC_CTYPE, "C.UTF-8");
-        if (name == NULL) {
-            exit(bad_setlocale);
-        }
-        name = setlocale(LC_ALL, NULL);
-        if (name == NULL) {
-            exit(bad_setlocale);
-        }
-
-        pos = strstr(name, "LC_CTYPE" "=C.UTF-8");
-        if (pos != NULL) {
-            uses_name_value_pair_names = 1;
-            if (pos == name) {
-                separator = name[sizeof("LC_CTYPE=C.UTF-8") - 1];
-            }
-            else {
-                separator = *(pos - 1);
-            }
-        }
-        else {
-            pos = strstr(name, "C.UTF-8");
-            if (pos == NULL) {
-                /* bad */
-            }
-            else if (pos == name) {
-                separator = name[sizeof("C.UTF-8") - 1];
-            }
-            else {
-                separator = *(pos - 1);
-            }
-        }
-    }
-
-#endif
-#endif
-
-    exit( 0 /* (separator - min_separator) << 3
-        | uses_name_value_pair_names      << 2
-          */
-        | has_C_UTF8                      << 1
-        | accepts_any_locale_name);
-
-}
-EOCP
-val=
-set d_setlocale
-eval $setvar
-case $d_setlocale in
-    $undef) d_setlocale_accepts_any_locale_name="$undef"
-            d_has_C_UTF8="false"
-            ;;
-    *) set try
-       if eval $compile; then
-           echo "Your system has setlocale()..." >&4
-           $run ./try
-           case $? in
-               0) echo "and it seems sane; you don't have a C.UTF-8 locale" >&4
-                  d_setlocale="$define"
-                  d_setlocale_accepts_any_locale_name="$undef"
-                  d_has_C_UTF8="false"
-                  ;;
-               1) echo "and it seems sane, but accepts any locale name as valid" >&4
-                  d_setlocale="$define"
-                  d_setlocale_accepts_any_locale_name="$define"
-                  d_has_C_UTF8="false"
-                  ;;
-               2) echo "and it seems sane; you have a C.UTF-8 locale" >&4
-                  d_setlocale="$define"
-                  d_setlocale_accepts_any_locale_name="$undef"
-                  d_has_C_UTF8="true"
-                  ;;
-               3) echo "and it seems sane, but accepts any locale name as valid" >&4
-                  d_setlocale="$define"
-                  d_setlocale_accepts_any_locale_name="$define"
-                  d_has_C_UTF8="true"
-                  ;;
-               *) echo "but it doesn't seem to work, so we won't use it." >&4
-                  d_setlocale="$undef"
-                  d_setlocale_accepts_any_locale_name="$undef"
-                  d_has_C_UTF8="false"
-                  ;;
-           esac
-       else
-           echo "your system does not have setlocale()" >&4
-           d_setlocale="$undef"
-           d_setlocale_accepts_any_locale_name="$undef"
-           d_has_C_UTF8="false"
-       fi
-esac
-$rm_try
-;;
-*) val="$d_setlocale"
-    set d_setlocale
-    eval $setvar
-    case "$d_setlocale" in
-        $undef) echo "There may be other ways to set the locale on your system, so we need to ask:" >&4
-        ;;
-    esac
-    rp="Does your system have the C.UTF-8 locale?"
-    dflt=n
-    . ./myread
-    case "$ans" in
-        [Yy]*) d_has_C_UTF8="true"
-               c_utf8_locale=" or C.UTF-8"
-               ;;
-        *)     d_has_C_UTF8="false"
-               c_utf8_locale=""
-               ;;
-    esac
-    case "$d_setlocale" in
-        $define)
-            rp="When you set your locale to something besides C$c_utf8_locale, does it do so, or just pretend to?" >&4
-            dflt=n
-            . ./myread
-            case "$ans" in
-                true|[Yy]*)
-		   d_setlocale_accepts_any_locale_name="$undef"
-		   ;;
-		*) d_setlocale_accepts_any_locale_name="$define"
-		   ;;
-            esac
-            ;;
-        *) d_setlocale_accepts_any_locale_name="$undef"
-	   ;;
-    esac
-esac
 
 : see if setlocale_r exists
 set setlocale_r d_setlocale_r
@@ -21122,9 +21343,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=drand48
-drand01="drand48()"
-seedfunc="srand48"
+randfunc=Perl_drand48
+drand01="Perl_drand48()"
+seedfunc="Perl_drand48_init"
 randbits=48
 randseedtype=U32
 
@@ -21281,8 +21502,8 @@ int main() {
 		STDIO_STREAM_ARRAY[i]._flag)
 		fflush(&STDIO_STREAM_ARRAY[i]);
     }
-  }
 # endif
+  }
 #endif
   _exit(42);
 }
@@ -21693,28 +21914,6 @@ EOCP
 	fi
 fi
 
-if $test X"$sPRId64" = X -a X"$quadtype" != X; then
-	$cat >try.c <<EOCP
-#include <sys/types.h>
-#include <stdio.h>
-int main() {
-  $quadtype q = 12345678901;
-  printf("%Ld\n", q);
-}
-EOCP
-	set try
-	if eval $compile; then
-		yyy=`$run ./try`
-		case "$yyy" in
-		12345678901)
-			sPRId64='"Ld"'; sPRIi64='"Li"'; sPRIu64='"Lu"';
-			sPRIo64='"Lo"'; sPRIx64='"Lx"'; sPRIXU64='"LX"';
-			echo "We will use %Ld."
-			;;
-		esac
-	fi
-fi
-
 if $test X"$sPRId64" = X -a X"$quadtype" = X"long long"; then
 	$cat >try.c <<'EOCP'
 #include <sys/types.h>
@@ -21754,6 +21953,28 @@ EOCP
 			sPRId64='"qd"'; sPRIi64='"qi"'; sPRIu64='"qu"';
 			sPRIo64='"qo"'; sPRIx64='"qx"'; sPRIXU64='"qX"';
 			echo "We will use %qd."
+			;;
+		esac
+	fi
+fi
+
+if $test X"$sPRId64" = X -a X"$quadtype" != X; then
+	$cat >try.c <<EOCP
+#include <sys/types.h>
+#include <stdio.h>
+int main() {
+  $quadtype q = 12345678901;
+  printf("%Ld\n", q);
+}
+EOCP
+	set try
+	if eval $compile; then
+		yyy=`$run ./try`
+		case "$yyy" in
+		12345678901)
+			sPRId64='"Ld"'; sPRIi64='"Li"'; sPRIu64='"Lu"';
+			sPRIo64='"Lo"'; sPRIx64='"Lx"'; sPRIXU64='"LX"';
+			echo "We will use %Ld."
 			;;
 		esac
 	fi
@@ -23825,7 +24046,7 @@ else
     mv ccsym1.raw ccsym.raw
 fi
 
-$awk '/\=/ { print $0; next }
+$awk '/=/ { print $0; next }
 	{ print $0"=1" }' ccsym.raw >ccsym.list
 $comm -13 Cppsym.true ccsym.list >ccsym.own
 $comm -12 Cppsym.true ccsym.list >ccsym.com
@@ -24119,7 +24340,6 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
-	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo "$xxx" | $sed -e s/-/\\\//g`;
@@ -24349,8 +24569,6 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
-	CVS|RCS|SCCS|.svn)
-		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"
@@ -25039,6 +25257,9 @@ d_open3='$d_open3'
 d_openat='$d_openat'
 d_pathconf='$d_pathconf'
 d_pause='$d_pause'
+d_perl_lc_all_category_positions_init='$d_perl_lc_all_category_positions_init'
+d_perl_lc_all_separator='$d_perl_lc_all_separator'
+d_perl_lc_all_uses_name_value_pairs='$d_perl_lc_all_uses_name_value_pairs'
 d_perl_otherlibdirs='$d_perl_otherlibdirs'
 d_phostname='$d_phostname'
 d_pipe2='$d_pipe2'
@@ -25212,7 +25433,6 @@ d_telldir='$d_telldir'
 d_telldirproto='$d_telldirproto'
 d_tgamma='$d_tgamma'
 d_thread_local='$d_thread_local'
-d_thread_safe_nl_langinfo_l='$d_thread_safe_nl_langinfo_l'
 d_time='$d_time'
 d_timegm='$d_timegm'
 d_times='$d_times'
@@ -25587,6 +25807,8 @@ patchlevel='$patchlevel'
 path_sep='$path_sep'
 perl5='$perl5'
 perl='$perl'
+perl_lc_all_category_positions_init='$perl_lc_all_category_positions_init'
+perl_lc_all_separator='$perl_lc_all_separator'
 perl_patchlevel='$perl_patchlevel'
 perl_static_inline='$perl_static_inline'
 perl_thread_local='$perl_thread_local'

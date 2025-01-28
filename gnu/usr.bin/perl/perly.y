@@ -1056,7 +1056,9 @@ optsigsubbody
 	;
 
 /* Subroutine body with optional signature */
-sigsubbody:	remember optsubsignature PERLY_BRACE_OPEN stmtseq PERLY_BRACE_CLOSE
+sigsubbody:	remember optsubsignature PERLY_BRACE_OPEN 
+			{ PL_parser->sig_seen = FALSE; }
+		stmtseq PERLY_BRACE_CLOSE
 			{
 			  if (parser->copline > (line_t)$PERLY_BRACE_OPEN)
 			      parser->copline = (line_t)$PERLY_BRACE_OPEN;
@@ -1129,7 +1131,10 @@ listop	:	LSTOP indirob listexpr /* map {...} @args or print $fh @args */
 			{ $$ = op_convert_list($FUNC, 0, $optexpr); }
 	|	LSTOPSUB startanonsub block /* sub f(&@);   f { foo } ... */
 			{ SvREFCNT_inc_simple_void(PL_compcv);
-			  $<opval>$ = newANONATTRSUB($startanonsub, 0, NULL, $block); }[anonattrsub]
+                          $<opval>$ = newANONATTRSUB($startanonsub, 0, NULL, $block);
+                          /* prevent double op_free() if the following fails to parse */
+                          $block = NULL;
+                        }[anonattrsub]
 		    optlistexpr		%prec LSTOP  /* ... @bar */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				 op_append_elem(OP_LIST,
@@ -1245,7 +1250,7 @@ termbinop:	term[lhs] PLUGIN_HIGH_OP[op] term[rhs]
 	|	term[lhs] PLUGIN_LOGICAL_AND_OP[op] term[rhs]
 			{ $$ = build_infix_plugin($lhs, $rhs, $op); }
 	|	term[lhs] OROR term[rhs]                         /* $x || $y */
-			{ $$ = newLOGOP(OP_OR, 0, $lhs, $rhs); }
+			{ $$ = newLOGOP($OROR, 0, $lhs, $rhs); }
 	|	term[lhs] PLUGIN_LOGICAL_OR_OP[op] term[rhs]
 			{ $$ = build_infix_plugin($lhs, $rhs, $op); }
 	|	term[lhs] DORDOR term[rhs]                       /* $x // $y */

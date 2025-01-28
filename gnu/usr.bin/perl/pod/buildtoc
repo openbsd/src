@@ -149,7 +149,7 @@ EOH
     | perl -ne 'map { -r && print "$_ " } split'`
 
     # Bypass internal shell buffer limit -- can't use case
-    if perl -e '$a = shift; exit($a =~ m|/|)' $toroff; then
+    if perl -e '$x = shift; exit($x =~ m|/|)' $toroff; then
 	echo "$me: empty file list -- did you run install?" >&2
 	exit 1
     fi

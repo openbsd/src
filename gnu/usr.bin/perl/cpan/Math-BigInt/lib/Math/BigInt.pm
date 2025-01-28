@@ -8,10 +8,11 @@ package Math::BigInt;
 #
 
 # The following hash values are used:
-#   value: unsigned int with actual value (as a Math::BigInt::Calc or similar)
-#   sign : +, -, NaN, +inf, -inf
-#   _a   : accuracy
-#   _p   : precision
+#
+#          sign : "+", "-", "+inf", "-inf", or "NaN"
+#         value : unsigned int with actual value ($LIB thingy)
+#      accuracy : accuracy (scalar)
+#     precision : precision (scalar)
 
 # Remember not to take shortcuts ala $xs = $x->{value}; $LIB->foo($xs); since
 # underlying lib might change the reference!
@@ -23,7 +24,7 @@ use warnings;
 use Carp          qw< carp croak >;
 use Scalar::Util  qw< blessed refaddr >;
 
-our $VERSION = '1.999837';
+our $VERSION = '2.003002';
 $VERSION =~ tr/_//d;
 
 require Exporter;
@@ -58,14 +59,15 @@ use overload
 
   '%'     =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> bmod($_[0])
                               : $_[0] -> copy() -> bmod($_[1]); },
+
   '**'    =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> bpow($_[0])
                               : $_[0] -> copy() -> bpow($_[1]); },
 
-  '<<'    =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> blsft($_[0])
-                              : $_[0] -> copy() -> blsft($_[1]); },
+  '<<'    =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> bblsft($_[0])
+                              : $_[0] -> copy() -> bblsft($_[1]); },
 
-  '>>'    =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> brsft($_[0])
-                              : $_[0] -> copy() -> brsft($_[1]); },
+  '>>'    =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> bbrsft($_[0])
+                              : $_[0] -> copy() -> bbrsft($_[1]); },
 
   # overload key: assign
 
@@ -81,9 +83,9 @@ use overload
 
   '**='   =>      sub { $_[0] -> bpow($_[1]); },
 
-  '<<='   =>      sub { $_[0] -> blsft($_[1]); },
+  '<<='   =>      sub { $_[0] -> bblsft($_[1]); },
 
-  '>>='   =>      sub { $_[0] -> brsft($_[1]); },
+  '>>='   =>      sub { $_[0] -> bbrsft($_[1]); },
 
 #  'x='    =>      sub { },
 
@@ -235,7 +237,7 @@ my $nan = 'NaN';                        # constants for easier life
 my $DEFAULT_LIB = 'Math::BigInt::Calc';
 my $LIB;
 
-# Has import() been called yet? Needed to make "require" work.
+# Has import() been called yet? This variable is needed to make "require" work.
 
 my $IMPORT = 0;
 
@@ -254,7 +256,7 @@ sub FETCH {
 }
 
 sub STORE {
-    $rnd_mode = $_[0]->round_mode($_[1]);
+    $rnd_mode = (ref $_[0]) -> round_mode($_[1]);
 }
 
 BEGIN {
@@ -275,216 +277,355 @@ sub round_mode {
     my $self = shift;
     my $class = ref($self) || $self || __PACKAGE__;
 
-    if (@_) {                           # setter
+    # setter/mutator
+
+    if (@_) {
         my $m = shift;
         croak("The value for 'round_mode' must be defined")
           unless defined $m;
         croak("Unknown round mode '$m'")
           unless $m =~ /^(even|odd|\+inf|\-inf|zero|trunc|common)$/;
-        no strict 'refs';
-        ${"${class}::round_mode"} = $m;
+
+        if (ref($self) && exists $self -> {round_mode}) {
+            $self->{round_mode} = $m;
+        } else {
+            no strict 'refs';
+            ${"${class}::round_mode"}  = $m;
+        }
     }
 
-    else {                              # getter
-        no strict 'refs';
-        my $m = ${"${class}::round_mode"};
-        defined($m) ? $m : $round_mode;
+    # getter/accessor
+
+    else {
+        if (ref($self) && exists $self -> {round_mode}) {
+            return $self->{round_mode};
+        } else {
+            no strict 'refs';
+            my $m = ${"${class}::round_mode"};
+            return defined($m) ? $m : $round_mode;
+        }
     }
 }
 
 sub upgrade {
-    no strict 'refs';
-    # make Class->upgrade() work
     my $self = shift;
     my $class = ref($self) || $self || __PACKAGE__;
 
-    # need to set new value?
-    if (@_ > 0) {
-        return ${"${class}::upgrade"} = $_[0];
+    # setter/mutator
+
+    if (@_) {
+        my $u = shift;
+        if (ref($self) && exists $self -> {upgrade}) {
+            $self -> {upgrade} = $u;
+        } else {
+            no strict 'refs';
+            ${"${class}::upgrade"} = $u;
+        }
     }
-    ${"${class}::upgrade"};
+
+    # getter/accessor
+
+    else {
+        if (ref($self) && exists $self -> {upgrade}) {
+            return $self -> {upgrade};
+        } else {
+            no strict 'refs';
+            return ${"${class}::upgrade"};
+        }
+    }
 }
 
 sub downgrade {
-    no strict 'refs';
-    # make Class->downgrade() work
     my $self = shift;
     my $class = ref($self) || $self || __PACKAGE__;
-    # need to set new value?
-    if (@_ > 0) {
-        return ${"${class}::downgrade"} = $_[0];
+
+    # setter/mutator
+
+    if (@_) {
+        my $d = shift;
+        if (ref($self) && exists $self -> {downgrade}) {
+            $self -> {downgrade} = $d;
+        } else {
+            no strict 'refs';
+            ${"${class}::downgrade"} = $d;
+        }
     }
-    ${"${class}::downgrade"};
+
+    # getter/accessor
+
+    else {
+        if (ref($self) && exists $self -> {downgrade}) {
+            return $self -> {downgrade};
+        } else {
+            no strict 'refs';
+            return ${"${class}::downgrade"};
+        }
+    }
 }
 
 sub div_scale {
     my $self = shift;
     my $class = ref($self) || $self || __PACKAGE__;
 
-    if (@_) {                           # setter
-        my $ds = shift;
-        croak("The value for 'div_scale' must be defined") unless defined $ds;
-        croak("The value for 'div_scale' must be positive") unless $ds > 0;
-        $ds = $ds -> numify() if defined(blessed($ds));
-        no strict 'refs';
-        ${"${class}::div_scale"} = $ds;
+    # setter/mutator
+
+    if (@_) {
+        my $f = shift;
+        croak("The value for 'div_scale' must be defined") unless defined $f;
+        $f = $f -> can('numify') ? $f -> numify() : 0 + "$f" if ref($f);
+        # also croak on non-numerical
+        croak "div_scale must be a number, not '$f'"
+          unless $f =~/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?\z/;
+        croak "div_scale must be an integer, not '$f'"
+          if $f != int $f;
+        # It is not documented what div_scale <= 0 means, but Astro::Units sets
+        # div_scale to 0 and fails its tests if this is not supported. So we
+        # silently support div_scale = 0.
+        croak "div_scale must be positive, not '$f'" if $f < 0;
+
+        if (ref($self) && exists $self -> {div_scale}) {
+            $self -> {div_scale} = $f;
+        } else {
+            no strict 'refs';
+            ${"${class}::div_scale"} = $f;
+        }
     }
 
-    else {                              # getter
-        no strict 'refs';
-        my $ds = ${"${class}::div_scale"};
-        defined($ds) ? $ds : $div_scale;
+    # getter/accessor
+
+    else {
+        if (ref($self) && exists $self -> {div_scale}) {
+            return $self -> {div_scale};
+        } else {
+            no strict 'refs';
+            my $f = ${"${class}::div_scale"};
+            return defined($f) ? $f : $div_scale;
+        }
     }
 }
 
 sub accuracy {
-    # $x->accuracy($a);           ref($x) $a
-    # $x->accuracy();             ref($x)
-    # Class->accuracy();          class
-    # Class->accuracy($a);        class $a
-
     my $x = shift;
     my $class = ref($x) || $x || __PACKAGE__;
 
-    no strict 'refs';
-    if (@_ > 0) {
+    # setter/mutator
+
+    if (@_) {
         my $a = shift;
+
         if (defined $a) {
-            $a = $a->numify() if ref($a) && $a->can('numify');
-            # also croak on non-numerical
-            if (!$a || $a <= 0) {
-                croak('Argument to accuracy must be greater than zero');
-            }
-            if (int($a) != $a) {
-                croak('Argument to accuracy must be an integer');
-            }
+            $a = $a -> can('numify') ? $a -> numify() : 0 + "$a" if ref($a);
+            croak "accuracy must be a number, not '$a'"
+              if $a !~ /^\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?\s*\z/;
+            croak "accuracy must be an integer, not '$a'"
+              if $a != int $a;
         }
 
         if (ref($x)) {
-            # Set instance variable.
-            $x = $x->bround($a) if $a; # not for undef, 0
-            $x->{_a} = $a;        # set/overwrite, even if not rounded
-            delete $x->{_p};      # clear P
-            # Why return class variable here? Fixme!
-            $a = ${"${class}::accuracy"} unless defined $a;
+            $x = $x -> bround($a) if defined $a;
+            $x -> {precision} = undef;          # clear instance P
+            $x -> {accuracy}  = $a;             # set instance A
         } else {
-            # Set class variable.
-            ${"${class}::accuracy"} = $a; # set global A
-            ${"${class}::precision"} = undef; # clear global P
+            no strict 'refs';
+            ${"${class}::precision"} = undef;   # clear class P
+            ${"${class}::accuracy"}  = $a;      # set class A
         }
-
-        return $a;              # shortcut
     }
 
-    # Return instance variable.
-    return $x->{_a} if ref($x) && (defined($x->{_a}) || defined($x->{_p}));
+    # getter/accessor
 
-    # Return class variable.
-    return ${"${class}::accuracy"};
+    else {
+        if (ref($x)) {
+            return $x -> {accuracy};
+        } else {
+            no strict 'refs';
+            return ${"${class}::accuracy"};
+        }
+    }
 }
 
 sub precision {
-    # $x->precision($p);          ref($x) $p
-    # $x->precision();            ref($x)
-    # Class->precision();         class
-    # Class->precision($p);       class $p
-
     my $x = shift;
     my $class = ref($x) || $x || __PACKAGE__;
 
-    no strict 'refs';
-    if (@_ > 0) {
+    # setter/mutator
+
+    if (@_) {
         my $p = shift;
+
         if (defined $p) {
-            $p = $p->numify() if ref($p) && $p->can('numify');
-            if ($p != int $p) {
-                croak('Argument to precision must be an integer');
-            }
+            $p = $p -> can('numify') ? $p -> numify() : 0 + "$p" if ref($p);
+            croak "precision must be a number, not '$p'"
+              if $p !~ /^\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?\s*\z/;
+            croak "precision must be an integer, not '$p'"
+              if $p != int $p;
         }
 
         if (ref($x)) {
-            # Set instance variable.
-            $x = $x->bfround($p) if $p; # not for undef, 0
-            $x->{_p} = $p;         # set/overwrite, even if not rounded
-            delete $x->{_a};       # clear A
-            # Why return class variable here? Fixme!
-            $p = ${"${class}::precision"} unless defined $p;
+            $x = $x -> bfround($p) if defined $p;
+            $x -> {accuracy}  = undef;          # clear instance A
+            $x -> {precision} = $p;             # set instance P
         } else {
-            # Set class variable.
-            ${"${class}::precision"} = $p; # set global P
-            ${"${class}::accuracy"} = undef; # clear global A
+            no strict 'refs';
+            ${"${class}::accuracy"}  = undef;   # clear class A
+            ${"${class}::precision"} = $p;      # set class P
         }
-
-        return $p;              # shortcut
     }
 
-    # Return instance variable.
-    return $x->{_p} if ref($x) && (defined($x->{_a}) || defined($x->{_p}));
+    # getter/accessor
 
-    # Return class variable.
-    return ${"${class}::precision"};
+    else {
+        if (ref($x)) {
+            return $x -> {precision};
+        } else {
+            no strict 'refs';
+            return ${"${class}::precision"};
+        }
+    }
+}
+
+sub trap_inf {
+    my $self = shift;
+    my $class = ref($self) || $self || __PACKAGE__;
+
+    # setter/mutator
+
+    if (@_) {
+        my $b = shift() ? 1 : 0;
+        if (ref($self) && exists $self -> {trap_inf}) {
+            $self -> {trap_inf} = $b;
+        } else {
+            no strict 'refs';
+            ${"${class}::_trap_inf"} = $b;
+        }
+    }
+
+    # getter/accessor
+
+    else {
+        if (ref($self) && exists $self -> {trap_inf}) {
+            return $self -> {trap_inf};
+        } else {
+            no strict 'refs';
+            return ${"${class}::_trap_inf"};
+        }
+    }
+}
+
+sub trap_nan {
+    my $self = shift;
+    my $class = ref($self) || $self || __PACKAGE__;
+
+    # setter/mutator
+
+    if (@_) {
+        my $b = shift() ? 1 : 0;
+        if (ref($self) && exists $self -> {trap_nan}) {
+            $self -> {trap_nan} = $b;
+        } else {
+            no strict 'refs';
+            ${"${class}::_trap_nan"} = $b;
+        }
+    }
+
+    # getter/accessor
+
+    else {
+        if (ref($self) && exists $self -> {trap_nan}) {
+            return $self -> {trap_nan};
+        } else {
+            no strict 'refs';
+            return ${"${class}::_trap_nan"};
+        }
+    }
 }
 
 sub config {
     # return (or set) configuration data.
     my $class = shift || __PACKAGE__;
 
-    no strict 'refs';
+    # setter/mutator
+    #
+    # $class -> config(var => value, ...)
+    # $class -> config({ var => value, ... })
+
     if (@_ > 1 || (@_ == 1 && (ref($_[0]) eq 'HASH'))) {
         # try to set given options as arguments from hash
 
-        my $args = $_[0];
-        if (ref($args) ne 'HASH') {
-            $args = { @_ };
+        # If the argument is a hash ref, make a copy of it, since keys will be
+        # deleted below and we don't want to modify the input hash.
+
+        my $args = ref($_[0]) eq 'HASH' ? { %{ $_[0] } }: { @_ };
+
+        # We use this special handling of accuracy and precision because
+        # accuracy() always sets precision to undef and precision() always sets
+        # accuracy to undef. With out this special treatment, the following
+        # would result in both accuracy and precision being undef.
+        #
+        #   $x -> config(accuracy => 3, precision => undef)
+
+        croak "config(): both accuracy and precision are defined"
+          if defined($args -> {accuracy}) && defined ($args -> {precision});
+
+        if (defined $args -> {accuracy}) {
+            $class -> accuracy($args -> {accuracy});
+        } elsif (defined $args -> {precision}) {
+            $class -> precision($args -> {precision});
+        } else {
+            $class -> accuracy(undef);  # also sets precision to undef
         }
-        # these values can be "set"
-        my $set_args = {};
+
+        delete $args->{accuracy};
+        delete $args->{precision};
+
+        # Set any remaining keys.
+
         foreach my $key (qw/
-                               accuracy precision
                                round_mode div_scale
                                upgrade downgrade
                                trap_inf trap_nan
                            /)
         {
-            $set_args->{$key} = $args->{$key} if exists $args->{$key};
+            # use a method call to check argument
+            $class->$key($args->{$key}) if exists $args->{$key};
             delete $args->{$key};
         }
-        if (keys %$args > 0) {
+
+        # If there are any keys left, they are invalid.
+
+        if (keys %$args) {
             croak("Illegal key(s) '", join("', '", keys %$args),
                         "' passed to $class\->config()");
         }
-        foreach my $key (keys %$set_args) {
-            if ($key =~ /^trap_(inf|nan)\z/) {
-                ${"${class}::_trap_$1"} = ($set_args->{"trap_$1"} ? 1 : 0);
-                next;
-            }
-            # use a call instead of just setting the $variable to check argument
-            $class->$key($set_args->{$key});
-        }
     }
 
-    # now return actual configuration
+    # Now build the full configuration.
 
     my $cfg = {
                lib         => $LIB,
-               lib_version => ${"${LIB}::VERSION"},
+               lib_version => $LIB -> VERSION(),
                class       => $class,
-               trap_nan    => ${"${class}::_trap_nan"},
-               trap_inf    => ${"${class}::_trap_inf"},
-               version     => ${"${class}::VERSION"},
+               version     => $class -> VERSION(),
               };
+
     foreach my $key (qw/
                            accuracy precision
                            round_mode div_scale
                            upgrade downgrade
+                           trap_inf trap_nan
                        /)
     {
-        $cfg->{$key} = ${"${class}::$key"};
+        $cfg->{$key} = $class -> $key();
     }
+
+    # getter/accessor
+    #
+    # $class -> config("var")
+
     if (@_ == 1 && (ref($_[0]) ne 'HASH')) {
-        # calls of the style config('lib') return just this value
         return $cfg->{$_[0]};
     }
+
     $cfg;
 }
 
@@ -493,13 +634,12 @@ sub _scale_a {
     # used by bround() and bfround(), may return undef for scale (means no op)
     my ($x, $scale, $mode) = @_;
 
-    $scale = $x->{_a} unless defined $scale;
+    $scale = $x->{accuracy} unless defined $scale;
 
-    no strict 'refs';
     my $class = ref($x);
 
-    $scale = ${ $class . '::accuracy' } unless defined $scale;
-    $mode = ${ $class . '::round_mode' } unless defined $mode;
+    $scale = $class -> accuracy() unless defined $scale;
+    $mode = $class -> round_mode() unless defined $mode;
 
     if (defined $scale) {
         $scale = $scale->can('numify') ? $scale->numify()
@@ -515,13 +655,12 @@ sub _scale_p {
     # used by bround() and bfround(), may return undef for scale (means no op)
     my ($x, $scale, $mode) = @_;
 
-    $scale = $x->{_p} unless defined $scale;
+    $scale = $x->{precision} unless defined $scale;
 
-    no strict 'refs';
     my $class = ref($x);
 
-    $scale = ${ $class . '::precision' } unless defined $scale;
-    $mode = ${ $class . '::round_mode' } unless defined $mode;
+    $scale = $class -> precision() unless defined $scale;
+    $mode = $class -> round_mode() unless defined $mode;
 
     if (defined $scale) {
         $scale = $scale->can('numify') ? $scale->numify()
@@ -578,7 +717,7 @@ sub new {
 
     # Math::BigInt or subclass
 
-    if (defined(blessed($wanted)) && $wanted -> isa($class)) {
+    if (defined(blessed($wanted)) && $wanted -> isa(__PACKAGE__)) {
 
         # Don't copy the accuracy and precision, because a new object should get
         # them from the global configuration.
@@ -710,6 +849,10 @@ sub from_dec {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
+
     # Don't modify constant (read-only) objects.
 
     return $self if $selfref && $self->modify('from_dec');
@@ -745,6 +888,10 @@ sub from_hex {
     my $self    = shift;
     my $selfref = ref $self;
     my $class   = $selfref || $self;
+
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -782,6 +929,10 @@ sub from_oct {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
+
     # Don't modify constant (read-only) objects.
 
     return $self if $selfref && $self->modify('from_oct');
@@ -817,6 +968,10 @@ sub from_bin {
     my $self    = shift;
     my $selfref = ref $self;
     my $class   = $selfref || $self;
+
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -854,6 +1009,10 @@ sub from_bytes {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
+
     # Don't modify constant (read-only) objects.
 
     return $self if $selfref && $self->modify('from_bytes');
@@ -876,6 +1035,10 @@ sub from_base {
     my $self    = shift;
     my $selfref = ref $self;
     my $class   = $selfref || $self;
+
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -921,6 +1084,10 @@ sub from_base_num {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
+
     # Don't modify constant (read-only) objects.
 
     return $self if $selfref && $self->modify('from_base_num');
@@ -933,14 +1100,16 @@ sub from_base_num {
     for my $i (0 .. $#$nums) {
         # Make sure we have an object.
         $nums -> [$i] = $class -> new($nums -> [$i])
-          unless ref($nums -> [$i]) && $nums -> [$i] -> isa($class);
+          unless defined(blessed($nums -> [$i]))
+                   && $nums -> [$i] -> isa(__PACKAGE__);
         # Make sure we have a finite, non-negative integer.
         croak "the elements must be finite non-negative integers"
           if $nums -> [$i] -> is_neg() || ! $nums -> [$i] -> is_int();
     }
 
     my $base = shift;
-    $base = $class -> new($base) unless ref($base) && $base -> isa($class);
+    $base = $class -> new($base)
+      unless defined(blessed($base)) && $base -> isa(__PACKAGE__);
 
     my @r = @_;
 
@@ -974,7 +1143,9 @@ sub bzero {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    $self->import() if $IMPORT == 0;            # make require work
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -996,13 +1167,15 @@ sub bzero {
     # instance with the class variables.
 
     if (@r) {
-        croak "can't specify both accuracy and precision"
-          if @r >= 2 && defined($r[0]) && defined($r[1]);
-        $self->{_a} = $_[0];
-        $self->{_p} = $_[1];
+        if (@r >= 2 && defined($r[0]) && defined($r[1])) {
+            carp "can't specify both accuracy and precision";
+            return $self -> bnan();
+        }
+        $self->{accuracy} = $_[0];
+        $self->{precision} = $_[1];
     } elsif (!$selfref) {
-        $self->{_a} = $class -> accuracy();
-        $self->{_p} = $class -> precision();
+        $self->{accuracy} = $class -> accuracy();
+        $self->{precision} = $class -> precision();
     }
 
     return $self;
@@ -1024,7 +1197,9 @@ sub bone {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    $self->import() if $IMPORT == 0;            # make require work
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -1053,13 +1228,15 @@ sub bone {
     # instance with the class variables.
 
     if (@r) {
-        croak "can't specify both accuracy and precision"
-          if @r >= 2 && defined($r[0]) && defined($r[1]);
-        $self->{_a} = $_[0];
-        $self->{_p} = $_[1];
+        if (@r >= 2 && defined($r[0]) && defined($r[1])) {
+            carp "can't specify both accuracy and precision";
+            return $self -> bnan();
+        }
+        $self->{accuracy} = $_[0];
+        $self->{precision} = $_[1];
     } elsif (!$selfref) {
-        $self->{_a} = $class -> accuracy();
-        $self->{_p} = $class -> precision();
+        $self->{accuracy} = $class -> accuracy();
+        $self->{precision} = $class -> precision();
     }
 
     return $self;
@@ -1088,7 +1265,9 @@ sub binf {
         }
     }
 
-    $self->import() if $IMPORT == 0;            # make require work
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -1118,13 +1297,15 @@ sub binf {
     # instance with the class variables.
 
     if (@r) {
-        croak "can't specify both accuracy and precision"
-          if @r >= 2 && defined($r[0]) && defined($r[1]);
-        $self->{_a} = $_[0];
-        $self->{_p} = $_[1];
+        if (@r >= 2 && defined($r[0]) && defined($r[1])) {
+            carp "can't specify both accuracy and precision";
+            return $self -> bnan();
+        }
+        $self->{accuracy} = $_[0];
+        $self->{precision} = $_[1];
     } elsif (!$selfref) {
-        $self->{_a} = $class -> accuracy();
-        $self->{_p} = $class -> precision();
+        $self->{accuracy} = $class -> accuracy();
+        $self->{precision} = $class -> precision();
     }
 
     return $self;
@@ -1153,7 +1334,9 @@ sub bnan {
         }
     }
 
-    $self->import() if $IMPORT == 0;            # make require work
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
 
     # Don't modify constant (read-only) objects.
 
@@ -1173,13 +1356,15 @@ sub bnan {
     # instance with the class variables.
 
     if (@r) {
-        croak "can't specify both accuracy and precision"
-          if @r >= 2 && defined($r[0]) && defined($r[1]);
-        $self->{_a} = $_[0];
-        $self->{_p} = $_[1];
+        if (@r >= 2 && defined($r[0]) && defined($r[1])) {
+            carp "can't specify both accuracy and precision";
+            return $self -> bnan();
+        }
+        $self->{accuracy} = $_[0];
+        $self->{precision} = $_[1];
     } elsif (!$selfref) {
-        $self->{_a} = $class -> accuracy();
-        $self->{_p} = $class -> precision();
+        $self->{accuracy} = $class -> accuracy();
+        $self->{precision} = $class -> precision();
     }
 
     return $self;
@@ -1219,6 +1404,10 @@ sub bpi {
     my $class   = $selfref || $self;
     my @r       = @_;                   # rounding paramters
 
+    # Make "require" work.
+
+    $class -> import() if $IMPORT == 0;
+
     if ($selfref) {                     # bpi() called as an instance method
         return $self if $self -> modify('bpi');
     } else {                            # bpi() called as a class method
@@ -1250,8 +1439,8 @@ sub copy {
 
     $copy->{sign}  = $x->{sign};
     $copy->{value} = $LIB->_copy($x->{value});
-    $copy->{_a}    = $x->{_a} if exists $x->{_a};
-    $copy->{_p}    = $x->{_p} if exists $x->{_p};
+    $copy->{accuracy}    = $x->{accuracy} if exists $x->{accuracy};
+    $copy->{precision}    = $x->{precision} if exists $x->{precision};
 
     return $copy;
 }
@@ -1260,21 +1449,24 @@ sub as_int {
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
-    # If called as an instance method, and the instance class is something we
-    # upgrade to, $x might not be a Math::BigInt, so don't just call copy().
-
     return $x -> copy() if $x -> isa("Math::BigInt");
 
-    # disable upgrading and downgrading
+    # Disable upgrading and downgrading.
 
     my $upg = Math::BigInt -> upgrade();
     my $dng = Math::BigInt -> downgrade();
     Math::BigInt -> upgrade(undef);
     Math::BigInt -> downgrade(undef);
 
+    # Copy the value.
+
     my $y = Math::BigInt -> new($x);
 
-    # reset upgrading and downgrading
+    # Copy the remaining instance variables.
+
+    ($y->{accuracy}, $y->{precision}) = ($x->{accuracy}, $x->{precision});
+
+    # Restore upgrading and downgrading
 
     Math::BigInt -> upgrade($upg);
     Math::BigInt -> downgrade($dng);
@@ -1286,7 +1478,7 @@ sub as_float {
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
-    # disable upgrading and downgrading
+    # Disable upgrading and downgrading.
 
     require Math::BigFloat;
     my $upg = Math::BigFloat -> upgrade();
@@ -1294,9 +1486,15 @@ sub as_float {
     Math::BigFloat -> upgrade(undef);
     Math::BigFloat -> downgrade(undef);
 
+    # Copy the value.
+
     my $y = Math::BigFloat -> new($x);
 
-    # reset upgrading and downgrading
+    # Copy the remaining instance variables.
+
+    ($y->{accuracy}, $y->{precision}) = ($x->{accuracy}, $x->{precision});
+
+    # Restore upgrading and downgrading..
 
     Math::BigFloat -> upgrade($upg);
     Math::BigFloat -> downgrade($dng);
@@ -1308,7 +1506,7 @@ sub as_rat {
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
-    # disable upgrading and downgrading
+    # Disable upgrading and downgrading.
 
     require Math::BigRat;
     my $upg = Math::BigRat -> upgrade();
@@ -1318,7 +1516,11 @@ sub as_rat {
 
     my $y = Math::BigRat -> new($x);
 
-    # reset upgrading and downgrading
+    # Copy the remaining instance variables.
+
+    ($y->{accuracy}, $y->{precision}) = ($x->{accuracy}, $x->{precision});
+
+    # Restore upgrading and downgrading.
 
     Math::BigRat -> upgrade($upg);
     Math::BigRat -> downgrade($dng);
@@ -1446,7 +1648,7 @@ sub bcmp {
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
     return $upgrade->bcmp($x, $y)
-      if defined($upgrade) && (!$x->isa($class) || !$y->isa($class));
+      if defined($upgrade) && (!$x->isa(__PACKAGE__) || !$y->isa(__PACKAGE__));
 
     if (($x->{sign} !~ /^[+-]$/) || ($y->{sign} !~ /^[+-]$/)) {
         # handle +-inf and NaN
@@ -1489,7 +1691,7 @@ sub bacmp {
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
     return $upgrade->bacmp($x, $y)
-      if defined($upgrade) && (!$x->isa($class) || !$y->isa($class));
+      if defined($upgrade) && (!$x->isa(__PACKAGE__) || !$y->isa(__PACKAGE__));
 
     if (($x->{sign} !~ /^[+-]$/) || ($y->{sign} !~ /^[+-]$/)) {
         # handle +-inf and NaN
@@ -1578,7 +1780,8 @@ sub bneg {
 
     return $x if $x->modify('bneg');
 
-    return $upgrade -> bneg($x, @r) if defined($upgrade) && !$x->isa($class);
+    return $upgrade -> bneg($x, @r)
+      if defined($upgrade) && !$x->isa(__PACKAGE__);
 
     # Don't negate +0 so we always have the normalized form +0. Does nothing for
     # 'NaN'.
@@ -1595,7 +1798,12 @@ sub babs {
 
     return $x if $x->modify('babs');
 
-    return $upgrade -> babs($x, @r) if defined($upgrade) && !$x->isa($class);
+    # This call to the upgrade class must either be commented out or the method
+    # must be implemented in the upgrade class(es) to avoid infinite recursion.
+    # It doesn't help to check whether $x isa $upgrade, because there might be
+    # several levels of upgrading. Also see the test file t/upgrade2.t
+    #return $upgrade -> babs($x, @r)
+    #  if defined($upgrade) && !$x->isa(__PACKAGE__);
 
     $x->{sign} =~ s/^-/+/;
 
@@ -1608,7 +1816,12 @@ sub bsgn {
 
     return $x if $x->modify('bsgn');
 
-    return $upgrade -> bsgn($x, @r) if defined($upgrade) && !$x->isa($class);
+    # This call to the upgrade class must either be commented out or the method
+    # must be implemented in the upgrade class(es) to avoid infinite recursion.
+    # It doesn't help to check whether $x isa $upgrade, because there might be
+    # several levels of upgrading. Also see the test file t/upgrade2.t
+    #return $upgrade -> bsgn($x, @r)
+    #  if defined($upgrade) && !$x->isa(__PACKAGE__);
 
     return $x -> bone("+", @r) if $x -> is_pos();
     return $x -> bone("-", @r) if $x -> is_neg();
@@ -1638,7 +1851,8 @@ sub binc {
 
     return $x->round(@r) if $x -> is_inf() || $x -> is_nan();
 
-    return $upgrade -> binc($x, @r) if defined($upgrade) && !$x -> isa($class);
+    return $upgrade -> binc($x, @r)
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     if ($x->{sign} eq '+') {
         $x->{value} = $LIB->_inc($x->{value});
@@ -1658,7 +1872,8 @@ sub bdec {
 
     return $x->round(@r) if $x -> is_inf() || $x -> is_nan();
 
-    return $upgrade -> bdec($x, @r) if defined($upgrade) && !$x -> isa($class);;
+    return $upgrade -> bdec($x, @r)
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);;
 
     if ($x->{sign} eq '-') {
         $x->{value} = $LIB->_inc($x->{value});
@@ -1778,7 +1993,7 @@ sub badd {
     $r[3] = $y;                 # no push!
 
     return $upgrade->badd($x, $y, @r)
-      if defined($upgrade) && (!$x->isa($class) || !$y->isa($class));
+      if defined($upgrade) && (!$x->isa(__PACKAGE__) || !$y->isa(__PACKAGE__));
 
     # Inf and NaN handling
     if ($x->{sign} !~ /^[+-]$/ || $y->{sign} !~ /^[+-]$/) {
@@ -1815,7 +2030,7 @@ sub bsub {
     return $x if $x -> modify('bsub');
 
     return $upgrade -> bsub($x, $y, @r)
-      if defined($upgrade) && (!$x->isa($class) || !$y->isa($class));
+      if defined($upgrade) && (!$x->isa(__PACKAGE__) || !$y->isa(__PACKAGE__));
 
     return $x -> round(@r) if $y -> is_zero();
 
@@ -1861,7 +2076,7 @@ sub bmul {
     }
 
     return $upgrade->bmul($x, $y, @r)
-      if defined($upgrade) && (!$x->isa($class) || !$y->isa($class));
+      if defined($upgrade) && (!$x->isa(__PACKAGE__) || !$y->isa(__PACKAGE__));
 
     $r[3] = $y;                 # no push here
 
@@ -1892,8 +2107,9 @@ sub bmuladd {
         $z->{sign} =~ /^[+-]$/)
     {
         return $upgrade->bmuladd($x, $y, $z, @r)
-          if defined($upgrade)
-               && (!$x->isa($class) || !$y->isa($class) || !$z->isa($class));
+          if defined($upgrade) && (!$x->isa(__PACKAGE__) ||
+                                   !$y->isa(__PACKAGE__) ||
+                                   !$z->isa(__PACKAGE__));
 
         # TODO: what if $y and $z have A or P set?
         $r[3] = $z;             # no push here
@@ -2179,8 +2395,8 @@ sub bdiv {
             }
             $rem -> {sign} = $ysign;
         }
-        $rem -> {_a} = $x -> {_a};
-        $rem -> {_p} = $x -> {_p};
+        $rem -> {accuracy} = $x -> {accuracy};
+        $rem -> {precision} = $x -> {precision};
         $rem = $rem -> round(@r);
         return ($x, $rem);
     }
@@ -2323,8 +2539,8 @@ sub btdiv {
     if (wantarray) {
         $rem -> {sign} = $xsign;
         $rem -> {sign} = '+' if $LIB -> _is_zero($rem -> {value});
-        $rem -> {_a} = $x -> {_a};
-        $rem -> {_p} = $x -> {_p};
+        $rem -> {accuracy} = $x -> {accuracy};
+        $rem -> {precision} = $x -> {precision};
         $rem = $rem -> round(@r);
         return ($x, $rem);
     }
@@ -2373,7 +2589,8 @@ sub bmod {
     }
 
     return $upgrade -> bmod($x, $y, @r)
-      if defined($upgrade) && (!$x -> isa($class) || !$y -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__));
 
     # Calc new sign and in case $y == +/- 1, return $x.
 
@@ -2424,7 +2641,8 @@ sub btmod {
     }
 
     return $upgrade -> btmod($x, $y, @r)
-      if defined($upgrade) && (!$x -> isa($class) || !$y -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__));
 
     $r[3] = $y;                 # no push!
 
@@ -2472,7 +2690,8 @@ sub bmodinv {
                              $y->is_one('-'));
 
     return $upgrade -> bmodinv($x, $y, @r)
-      if defined($upgrade) && (!$x -> isa($class) || !$y -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__));
 
     # Return NaN if $x = 0, or $x modulo $y is zero. The only valid case when
     # $x = 0 is when $y = 1 or $y = -1, but that was covered above.
@@ -2554,8 +2773,8 @@ sub bmodpow {
     }
 
     return $upgrade -> bmodinv($num, $exp, $mod, @r)
-      if defined($upgrade) && (!$num -> isa($class) ||
-                               !$exp -> isa($class) ||
+      if defined($upgrade) && (!$num -> isa(__PACKAGE__) ||
+                               !$exp -> isa(__PACKAGE__) ||
                                !$mod -> ($class));
 
     # Compute 'a (mod m)', ignoring the signs on 'a' and 'm'. If the resulting
@@ -2682,7 +2901,7 @@ sub bpow {
     # returning zero, not NaN, is that all output is in the open interval (0,1),
     # and truncating that to integer gives zero.
 
-    if ($y->{sign} eq '-' || !$y -> isa($class)) {
+    if ($y->{sign} eq '-' || !$y -> isa(__PACKAGE__)) {
         return $x -> bzero(@r);
     }
 
@@ -2693,6 +2912,20 @@ sub bpow {
     $x -> round(@r);
 }
 
+sub binv {
+    my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), $_[0]) : objectify(1, @_);
+
+    return $x if $x -> modify('binv');
+
+    return $x -> binf("+", @r)  if $x -> is_zero();
+    return $x -> bzero(@r)      if $x -> is_inf();
+    return $x -> bnan(@r)       if $x -> is_nan();
+    return $x -> round(@r)      if $x -> is_one("+") || $x -> is_one("-");
+
+    return $upgrade -> binv($x, @r) if defined $upgrade;
+    $x -> bzero(@r);
+}
+
 sub blog {
     # Return the logarithm of the operand. If a second operand is defined, that
     # value is used as the base, otherwise the base is assumed to be Euler's
@@ -2700,10 +2933,11 @@ sub blog {
 
     my ($class, $x, $base, @r);
 
-    # Don't objectify the base, since an undefined base, as in $x->blog() or
-    # $x->blog(undef) signals that the base is Euler's number.
+    # Only objectify the base if it is defined, since an undefined base, as in
+    # $x->blog() or $x->blog(undef) signals that the base is Euler's number =
+    # 2.718281828...
 
-    if (!ref($_[0]) && $_[0] =~ /^[a-z]\w*(?:::[a-z]\w*)*$/i) {
+    if (!ref($_[0]) && $_[0] =~ /^[a-z]\w*(?:::\w+)*$/i) {
         # E.g., Math::BigInt->blog(256, 2)
         ($class, $x, $base, @r) =
           defined $_[2] ? objectify(2, @_) : objectify(1, @_);
@@ -2721,7 +2955,8 @@ sub blog {
     return $x -> bnan(@r) if $x -> is_nan();
 
     if (defined $base) {
-        $base = $class -> new($base) unless ref $base;
+        $base = $class -> new($base)
+          unless defined(blessed($base)) && $base -> isa(__PACKAGE__);
         if ($base -> is_nan() || $base -> is_one()) {
             return $x -> bnan(@r);
         } elsif ($base -> is_inf() || $base -> is_zero()) {
@@ -2729,18 +2964,26 @@ sub blog {
             return $x -> bzero(@r);
         } elsif ($base -> is_negative()) {              # -inf < base < 0
             return $x -> bzero(@r) if $x -> is_one();   #     x = 1
-            return $x -> bone(@r)  if $x == $base;      #     x = base
-            return $x -> bnan(@r);                      #     otherwise
+            return $x -> bone('+', @r)  if $x == $base; #     x = base
+            # we can't handle these cases, so upgrade, if we can
+            return $upgrade -> blog($x, $base, @r) if defined $upgrade;
+            return $x -> bnan(@r);
         }
         return $x -> bone(@r) if $x == $base;   # 0 < base && 0 < x < inf
     }
 
     # We now know that the base is either undefined or >= 2 and finite.
 
-    return $x -> binf('+', @r) if $x -> is_inf();       #   x = +/-inf
-    return $x -> bnan(@r)      if $x -> is_neg();       #   -inf < x < 0
-    return $x -> bzero(@r)     if $x -> is_one();       #   x = 1
-    return $x -> binf('-', @r) if $x -> is_zero();      #   x = 0
+    if ($x -> is_inf()) {                       # x = +/-inf
+        return $x -> binf('+', @r);
+    } elsif ($x -> is_neg()) {                  # -inf < x < 0
+        return $upgrade -> blog($x, $base, @r) if defined $upgrade;
+        return $x -> bnan(@r);
+    } elsif ($x -> is_one()) {                  # x = 1
+        return $x -> bzero(@r);
+    } elsif ($x -> is_zero()) {                 # x = 0
+        return $x -> binf('-', @r);
+    }
 
     # At this point we are done handling all exception cases and trivial cases.
 
@@ -2750,15 +2993,31 @@ sub blog {
     # the default base is e (Euler's number) which is not an integer
     if (!defined $base) {
         require Math::BigFloat;
-        my $u = Math::BigFloat->blog($x)->as_int();
+
+        # disable upgrading and downgrading
+
+        my $upg = Math::BigFloat -> upgrade();
+        my $dng = Math::BigFloat -> downgrade();
+        Math::BigFloat -> upgrade(undef);
+        Math::BigFloat -> downgrade(undef);
+
+        my $u = Math::BigFloat -> blog($x) -> as_int();
+
+        # reset upgrading and downgrading
+
+        Math::BigFloat -> upgrade($upg);
+        Math::BigFloat -> downgrade($dng);
+
         # modify $x in place
+
         $x->{value} = $u->{value};
-        $x->{sign} = $u->{sign};
+        $x->{sign}  = $u->{sign};
+
         return $x -> round(@r);
     }
 
-    my ($rc) = $LIB->_log_int($x->{value}, $base->{value});
-    return $x->bnan(@r) unless defined $rc; # not possible to take log?
+    my ($rc) = $LIB -> _log_int($x->{value}, $base->{value});
+    return $x -> bnan(@r) unless defined $rc;   # not possible to take log?
     $x->{value} = $rc;
     $x = $x -> round(@r);
 }
@@ -2781,6 +3040,82 @@ sub bexp {
     require Math::BigFloat;
     my $tmp = Math::BigFloat -> bexp($x, @r) -> as_int();
     $x->{value} = $tmp->{value};
+    return $x -> round(@r);
+}
+
+sub bilog2 {
+    my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
+
+    return $x if $x -> modify('bilog2');
+
+    return $upgrade -> new($x, @r) unless $x -> isa(__PACKAGE__);
+
+    return $x -> bnan(@r)        if $x -> is_nan();
+    return $x -> binf("+", @r)   if $x -> is_inf("+");
+    return $x -> binf("-", @r)   if $x -> is_zero();
+    if ($x -> is_neg()) {
+        return $upgrade -> bilog2($x, @r) if $upgrade;
+        return $x -> bnan(@r);
+    }
+
+    $x -> {value} = $LIB -> _ilog2($x -> {value});
+    return $x -> round(@r);
+}
+
+sub bilog10 {
+    my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
+
+    return $x if $x -> modify('bilog10');
+
+    return $upgrade -> new($x, @r) unless $x -> isa(__PACKAGE__);
+
+    return $x -> bnan(@r)        if $x -> is_nan();
+    return $x -> binf("+", @r)   if $x -> is_inf("+");
+    return $x -> binf("-", @r)   if $x -> is_zero();
+    if ($x -> is_neg()) {
+        return $upgrade -> bilog2($x, @r) if $upgrade;
+        return $x -> bnan(@r);
+    }
+
+    $x -> {value} = $LIB -> _ilog10($x -> {value});
+    return $x -> round(@r);
+}
+
+sub bclog2 {
+    my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
+
+    return $x if $x -> modify('bclog2');
+
+    return $upgrade -> new($x, @r) unless $x -> isa(__PACKAGE__);
+
+    return $x -> bnan(@r)        if $x -> is_nan();
+    return $x -> binf("+", @r)   if $x -> is_inf("+");
+    return $x -> binf("-", @r)   if $x -> is_zero();
+    if ($x -> is_neg()) {
+        return $upgrade -> bilog2($x, @r) if $upgrade;
+        return $x -> bnan(@r);
+    }
+
+    $x -> {value} = $LIB -> _clog2($x -> {value});
+    return $x -> round(@r);
+}
+
+sub bclog10 {
+    my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
+
+    return $x if $x -> modify('bclog10');
+
+    return $upgrade -> new($x, @r) unless $x -> isa(__PACKAGE__);
+
+    return $x -> bnan(@r)        if $x -> is_nan();
+    return $x -> binf("+", @r)   if $x -> is_inf("+");
+    return $x -> binf("-", @r)   if $x -> is_zero();
+    if ($x -> is_neg()) {
+        return $upgrade -> bilog2($x, @r) if $upgrade;
+        return $x -> bnan(@r);
+    }
+
+    $x -> {value} = $LIB -> _clog10($x -> {value});
     return $x -> round(@r);
 }
 
@@ -2827,7 +3162,8 @@ sub bnok {
     # At this point, both n and k are real numbers.
 
     return $upgrade -> bnok($n, $k, @r)
-      if defined($upgrade) && (!$n -> isa($class) || !$k -> isa($class));
+      if defined($upgrade) && (!$n -> isa(__PACKAGE__) ||
+                               !$k -> isa(__PACKAGE__));
 
     my $sign = 1;
 
@@ -2862,7 +3198,19 @@ sub bnok {
         }
     }
 
-    $n->{value} = $LIB->_nok($n->{value}, $k->{value});
+    # Some backends, e.g., Math::BigInt::GMP do not allow values of n and k
+    # that are larger than the largest unsigned integer, so check for this, and
+    # use the simpler and slower generic method in the superclass if n and/or k
+    # are larger than the largest unsigned integer.
+
+    my $uintmax = $LIB -> _new(~0);
+    if ($LIB -> _acmp($n->{value}, $uintmax) > 0 ||
+        $LIB -> _acmp($k->{value}, $uintmax) > 0)
+    {
+        $n->{value} = $LIB -> SUPER::_nok($n->{value}, $k->{value});
+    } else {
+        $n->{value} = $LIB -> _nok($n->{value}, $k->{value});
+    }
     $n = $n -> bneg() if $sign == -1;
 
     $n -> round(@r);
@@ -2989,42 +3337,58 @@ sub ackermann {
 }
 
 sub bsin {
-    # Calculate sin(x) to N digits. Unless upgrading is in effect, returns the
-    # result truncated to an integer.
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
-    return $x if $x->modify('bsin');
+    return $x if $x -> modify('bsin');
 
-    return $x->bnan(@r) if $x->{sign} !~ /^[+-]\z/; # -inf +inf or NaN => NaN
-    return $x->bzero(@r) if $x->is_zero();
+    # Trivial cases.
 
-    return $upgrade -> bsin($x, @r) if defined $upgrade;
+    return $x -> bzero(@r) if $x -> is_zero();
+    return $x -> bnan(@r)  if $x -> is_inf() || $x -> is_nan();
 
-    require Math::BigFloat;
-    # calculate the result and truncate it to integer
-    my $t = Math::BigFloat->new($x)->bsin(@r)->as_int();
+    if ($upgrade) {
+        my $xtmp = $upgrade -> bsin($x, @r);
+        if ($xtmp -> is_int()) {
+            $xtmp = $xtmp -> as_int();
+            %$x = %$xtmp;
+        } else {
+            %$x = %$xtmp;
+            bless $x, $upgrade;
+        }
+        return $x;
+    }
 
-    $x = $x->bone(@r)  if $t->is_one();
-    $x = $x->bzero(@r) if $t->is_zero();
-    $x->round(@r);
+    # When x is an integer, sin(x) truncated to an integer is always zero.
+
+    $x -> bzero(@r);
 }
 
 sub bcos {
-    # Calculate cos(x) to N digits. Unless upgrading is in effect, returns the
-    # result truncated to an integer.
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
-    return $x if $x->modify('bcos');
+    return $x if $x -> modify('bcos');
 
-    return $x->bnan(@r) if $x->{sign} !~ /^[+-]\z/; # -inf +inf or NaN => NaN
-    return $x->bone(@r) if $x->is_zero();
+    # Trivial cases.
 
-    return $upgrade -> bcos($x, @r) if defined $upgrade;
+    return $x -> bone(@r) if $x -> is_zero();
+    return $x -> bnan(@r) if $x -> is_inf() || $x -> is_nan();
 
-    require Math::BigFloat;
-    my $tmp = Math::BigFloat -> bcos($x, @r) -> as_int();
-    $x->{value} = $tmp->{value};
-    return $x -> round(@r);
+    if ($upgrade) {
+        my $xtmp = $upgrade -> bcos($x, @r);
+        if ($xtmp -> is_int()) {
+            $xtmp = $xtmp -> as_int();
+            %$x = %$xtmp;
+        } else {
+            %$x = %$xtmp;
+            bless $x, $upgrade;
+        }
+        return $x;
+    }
+
+    # When x is a non-zero integer, cos(x) truncated to an integer is always
+    # zero.
+
+    $x -> bzero(@r);
 }
 
 sub batan {
@@ -3100,15 +3464,21 @@ sub bsqrt {
     # calculate square root of $x
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
-    return $x if $x->modify('bsqrt');
+    return $x if $x -> modify('bsqrt');
 
-    return $x->bnan(@r)  if $x->{sign} !~ /^\+/;    # -x or -inf or NaN => NaN
-    return $x->round(@r) if $x->{sign} eq '+inf';   # sqrt(+inf) == inf
+    return $x -> bnan(@r)  if $x -> is_nan();
+    return $x -> round(@r) if $x -> is_zero() || $x -> is_inf("+");
 
-    return $upgrade->bsqrt($x, @r) if defined $upgrade;
+    if ($upgrade) {
+        $x = $upgrade -> bsqrt($x, @r);
+        $x = $x -> as_int() if $x -> is_int();
+        return $x;
+    }
 
-    $x->{value} = $LIB->_sqrt($x->{value});
-    $x->round(@r);
+    return $x -> bnan(@r) if $x -> is_neg();
+
+    $x->{value} = $LIB -> _sqrt($x->{value});
+    return $x -> round(@r);
 }
 
 sub broot {
@@ -3146,7 +3516,7 @@ sub bfac {
     return $x->bnan(@r) if $x->{sign} ne '+'; # NaN, <0 => NaN
 
     return $upgrade -> bfac($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     $x->{value} = $LIB->_fac($x->{value});
     $x->round(@r);
@@ -3162,7 +3532,7 @@ sub bdfac {
     return $x->bone(@r) if $x <= 1;
 
     return $upgrade -> bdfac($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     croak("bdfac() requires a newer version of the $LIB library.")
         unless $LIB->can('_dfac');
@@ -3179,7 +3549,8 @@ sub btfac {
 
     return $x->bnan(@r) if $x->is_nan();
 
-    return $upgrade -> btfac($x, @r) if defined($upgrade) && !$x -> isa($class);
+    return $upgrade -> btfac($x, @r)
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     my $k = $class -> new("3");
     return $x->bnan(@r) if $x <= -$k;
@@ -3204,7 +3575,7 @@ sub bmfac {
     return $x->bnan(@r) if $x->is_nan() || $k->is_nan() || $k < 1 || $x <= -$k;
 
     return $upgrade -> bmfac($x, $k, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     my $one = $class -> bone();
     return $x->bone(@r) if $x <= $one;
@@ -3226,7 +3597,7 @@ sub bfib {
     return $x if $x->modify('bfib');
 
     return $upgrade -> bfib($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # List context.
 
@@ -3235,43 +3606,50 @@ sub bfib {
         croak("bfib() can't return an infinitely long list of numbers")
           if $x -> is_inf();
 
-        # Use the backend library to compute the first $x Fibonacci numbers.
+        my $n = $x -> numify();
 
-        my @values = $LIB->_fib($x->{value});
+        my @y;
 
-        # Make objects out of them. The last element in the array is the
-        # invocand.
+        $y[0] = $x -> copy() -> babs();
+        $y[0]{value} = $LIB -> _zero();
+        return @y if $n == 0;
 
-        for (my $i = 0 ; $i < $#values ; ++ $i) {
-            my $fib = $class -> bzero();
-            $fib -> {value} = $values[$i];
-            $values[$i] = $fib;
+        $y[1] = $y[0] -> copy();
+        $y[1]{value} = $LIB -> _one();
+        return @y if $n == 1;
+
+        for (my $i = 2 ; $i <= abs($n) ; $i++) {
+            $y[$i] = $y[$i - 1] -> copy();
+            $y[$i]{value} = $LIB -> _add($LIB -> _copy($y[$i - 1]{value}),
+                                           $y[$i - 2]{value});
         }
 
-        $x -> {value} = $values[-1];
-        $values[-1] = $x;
+        # The last element in the array is the invocand.
+
+        $x->{value} = $y[-1]{value};
+        $y[-1] = $x;
 
         # If negative, insert sign as appropriate.
 
         if ($x -> is_neg()) {
-            for (my $i = 2 ; $i <= $#values ; $i += 2) {
-                $values[$i]{sign} = '-';
+            for (my $i = 2 ; $i <= $#y ; $i += 2) {
+                $y[$i]{sign} = '-';
             }
         }
 
-        @values = map { $_ -> round(@r) } @values;
-        return @values;
+        @y = map { $_ -> round(@r) } @y;
+        return @y;
     }
 
     # Scalar context.
 
     else {
-        return $x if $x->modify('bdfac') || $x ->  is_inf('+');
-        return $x->bnan() if $x -> is_nan() || $x -> is_inf('-');
+        return $x if $x -> is_inf('+');
+        return $x -> bnan() if $x -> is_nan() || $x -> is_inf('-');
 
         $x->{sign}  = $x -> is_neg() && $x -> is_even() ? '-' : '+';
-        $x->{value} = $LIB->_fib($x->{value});
-        return $x->round(@r);
+        $x->{value} = $LIB -> _fib($x->{value});
+        return $x -> round(@r);
     }
 }
 
@@ -3285,58 +3663,65 @@ sub blucas {
     return $x if $x->modify('blucas');
 
     return $upgrade -> blucas($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # List context.
 
     if (wantarray) {
         return () if $x -> is_nan();
-        croak("blucas() can't return an infinitely long list of numbers")
-            if $x -> is_inf();
+        croak("bfib() can't return an infinitely long list of numbers")
+          if $x -> is_inf();
 
-        # Use the backend library to compute the first $x Lucas numbers.
+        my $n = $x -> numify();
 
-        my @values = $LIB->_lucas($x->{value});
+        my @y;
 
-        # Make objects out of them. The last element in the array is the
-        # invocand.
+        $y[0] = $x -> copy() -> babs();
+        $y[0]{value} = $LIB -> _two();
+        return @y if $n == 0;
 
-        for (my $i = 0 ; $i < $#values ; ++ $i) {
-            my $lucas =  $class -> bzero();
-            $lucas -> {value} = $values[$i];
-            $values[$i] = $lucas;
+        $y[1] = $y[0] -> copy();
+        $y[1]{value} = $LIB -> _one();
+        return @y if $n == 1;
+
+        for (my $i = 2 ; $i <= abs($n) ; $i++) {
+            $y[$i] = $y[$i - 1] -> copy();
+            $y[$i]{value} = $LIB -> _add($LIB -> _copy($y[$i - 1]{value}),
+                                           $y[$i - 2]{value});
         }
 
-        $x -> {value} = $values[-1];
-        $values[-1] = $x;
+        # The last element in the array is the invocand.
+
+        $x->{value} = $y[-1]{value};
+        $y[-1] = $x;
 
         # If negative, insert sign as appropriate.
 
         if ($x -> is_neg()) {
-            for (my $i = 2 ; $i <= $#values ; $i += 2) {
-                $values[$i]{sign} = '-';
+            for (my $i = 2 ; $i <= $#y ; $i += 2) {
+                $y[$i]{sign} = '-';
             }
         }
 
-        @values = map { $_ -> round(@r) } @values;
-        return @values;
+        @y = map { $_ -> round(@r) } @y;
+        return @y;
     }
 
     # Scalar context.
 
     else {
-        return $x if $x ->  is_inf('+');
-        return $x->bnan() if $x -> is_nan() || $x -> is_inf('-');
+        return $x if $x -> is_inf('+');
+        return $x -> bnan() if $x -> is_nan() || $x -> is_inf('-');
 
         $x->{sign}  = $x -> is_neg() && $x -> is_even() ? '-' : '+';
-        $x->{value} = $LIB->_lucas($x->{value});
-        return $x->round(@r);
+        $x->{value} = $LIB -> _lucas($x->{value});
+        return $x -> round(@r);
     }
 }
 
 sub blsft {
     # (BINT or num_str, BINT or num_str) return BINT
-    # compute x << y, base n, y >= 0
+    # compute $x << $y, base $n
 
     my ($class, $x, $y, $b, @r);
 
@@ -3354,43 +3739,119 @@ sub blsft {
     }
 
     return $x if $x -> modify('blsft');
-    return $x -> bnan() if ($x -> {sign} !~ /^[+-]$/ ||
-                            $y -> {sign} !~ /^[+-]$/);
-    return $x -> round(@r) if $y -> is_zero();
-    return $x -> bzero(@r) if $x -> is_zero(); # 0 => 0
 
-    $b = 2 if !defined $b;
-    return $x -> bnan(@r) if $b <= 0 || $y -> {sign} eq '-';
+    # The default base is 2.
+
+    $b = 2 unless defined $b;
     $b = $class -> new($b) unless defined(blessed($b));
 
-    #return $upgrade -> blsft($x, $y, $b, @r)
-    #  if defined($upgrade) && (!$x -> isa($class) ||
-    #                           !$y -> isa($class) ||
-    #                           !$b -> isa($class));
+    # Handle "foreign" objects.
 
-    # shift by a negative amount?
-    #return $x -> brsft($y -> copy() -> babs(), $b) if $y -> {sign} =~ /^-/;
+    return $upgrade -> blsft($x, $y, $b, @r)
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__) ||
+                               !$b -> isa(__PACKAGE__));
+
+    # Handle NaN cases.
+
+    return $x -> bnan(@r)
+      if $x -> is_nan() || $y -> is_nan() || $b -> is_nan();
+
+    # blsft($x, -$y, $b) = brsft($x, $y, $b)
+
+    return $x -> brsft($y -> copy() -> bneg(), $b, @r) if $y -> is_neg();
+
+    # Now handle all cases where at least one operand is ±Inf or the result
+    # will be ±Inf or NaN.
+
+    if ($y -> is_inf("+")) {
+       if ($b -> is_one("-")) {
+            return $x -> bnan(@r);
+        } elsif ($b -> is_one("+")) {
+            return $x -> round(@r);
+        } elsif ($b -> is_zero()) {
+            return $x -> bnan(@r) if $x -> is_inf();
+            return $x -> bzero(@r);
+        } else {
+            return $x -> binf("-", @r) if $x -> is_negative();
+            return $x -> binf("+", @r) if $x -> is_positive();
+            return $x -> bnan(@r);
+        }
+    }
+
+    if ($b -> is_inf()) {
+        return $x -> bnan(@r) if $x -> is_zero() || $y -> is_zero();
+        if ($b -> is_inf("-")) {
+            return $x -> binf("+", @r)
+              if ($x -> is_negative() && $y -> is_odd() ||
+                  $x -> is_positive() && $y -> is_even());
+            return $x -> binf("-", @r);
+       } else {
+           return $x -> binf("-", @r) if $x -> is_negative();
+           return $x -> binf("+", @r);
+        }
+    }
+
+    if ($b -> is_zero()) {
+        return $x -> round(@r) if $y -> is_zero();
+        return $x -> bnan(@r)  if $x -> is_inf();
+        return $x -> bzero(@r);
+    }
+
+    if ($x -> is_inf()) {
+        if ($b -> is_negative()) {
+            if ($x -> is_inf("-")) {
+                if ($y -> is_even()) {
+                    return $x -> round(@r);
+                } else {
+                    return $x -> binf("+", @r);
+                }
+            } else {
+                if ($y -> is_even()) {
+                    return $x -> round(@r);
+                } else {
+                    return $x -> binf("-", @r);
+                }
+            }
+        } else {
+            return $x -> round(@r);
+        }
+    }
+
+    # At this point, we know that both the input and the output is finite.
+    # Handle some trivial cases.
+
+    return $x -> round(@r) if $x -> is_zero() || $y -> is_zero()
+                              || $b -> is_one("+")
+                              || $b -> is_one("-") && $y -> is_even();
+
+    return $x -> bneg(@r) if $b -> is_one("-") && $y -> is_odd();
 
     # While some of the libraries support an arbitrarily large base, not all of
     # them do, so rather than returning an incorrect result in those cases,
     # disallow bases that don't work with all libraries.
 
     my $uintmax = ~0;
-    croak("Base is too large.") if $b > $uintmax;
-
-    $b = $b -> numify();
-
-    return $x -> bnan() if $b <= 0 || $y -> {sign} eq '-';
-
-    $x -> {value} = $LIB -> _lsft($x -> {value}, $y -> {value}, $b);
+    if ($x -> bcmp($uintmax) > 0) {
+        $x = $x -> bmul($b -> bpow($y));
+    } else {
+        my $neg = 0;
+        if ($b -> is_negative()) {
+            $neg = 1 if $y -> is_odd();
+            $b = $b -> babs();
+        }
+        $b = $b -> numify();
+        $x -> {value} = $LIB -> _lsft($x -> {value}, $y -> {value}, $b);
+        $x -> {sign} =~ tr/+-/-+/ if $neg;
+    }
     $x -> round(@r);
 }
 
 sub brsft {
     # (BINT or num_str, BINT or num_str) return BINT
-    # compute x >> y, base n, y >= 0
+    # compute $x >> $y, base $n
 
-    my ($class, $x, $y, $b, @r) = (ref($_[0]), @_);
+    my ($class, $x, $y, $b, @r);
 
     # Objectify the base only when it is defined, since an undefined base, as
     # in $x->blsft(3) or $x->blog(3, undef) means use the default base 2.
@@ -3406,74 +3867,262 @@ sub brsft {
     }
 
     return $x if $x -> modify('brsft');
-    return $x -> bnan(@r)  if $x -> {sign} !~ /^[+-]$/ ||
-                              $y -> {sign} !~ /^[+-]$/;
-    return $x -> round(@r) if $y -> is_zero();
-    return $x -> bzero(@r) if $x -> is_zero(); # 0 => 0
 
-    $b = 2 if !defined $b;
-    return $x -> bnan(@r) if $b <= 0 || $y -> {sign} eq '-';
+    # The default base is 2.
+
+    $b = 2 unless defined $b;
     $b = $class -> new($b) unless defined(blessed($b));
 
-    # Shifting right by a positive amount might lead to a non-integer result, so
-    # include this case in the test.
+    # Handle "foreign" objects.
 
     return $upgrade -> brsft($x, $y, $b, @r)
-      if defined($upgrade) && (!$x -> isa($class) ||
-                               !$y -> isa($class) ||
-                               !$b -> isa($class) ||
-                               $y -> is_pos());
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__) ||
+                               !$b -> isa(__PACKAGE__));
 
-    # While some of the libraries support an arbitrarily large base, not all of
-    # them do, so rather than returning an incorrect result in those cases,
-    # disallow bases that don't work with all libraries.
+    # Handle NaN cases.
 
-    my $uintmax = ~0;
-    croak("Base is too large.") if $b > $uintmax;
+    return $x -> bnan(@r)
+      if $x -> is_nan() || $y -> is_nan() || $b -> is_nan();
 
-    $b = $b -> numify();
+    # brsft($x, -$y, $b) = blsft($x, $y, $b)
 
-    # this only works for negative numbers when shifting in base 2
-    if (($x -> {sign} eq '-') && ($b == 2)) {
-        return $x -> round(@r) if $x -> is_one('-'); # -1 => -1
-        if (!$y -> is_one()) {
-            # although this is O(N*N) in calc (as_bin!) it is O(N) in Pari et
-            # al but perhaps there is a better emulation for two's complement
-            # shift...
-            # if $y != 1, we must simulate it by doing:
-            # convert to bin, flip all bits, shift, and be done
-            $x = $x -> binc();           # -3 => -2
-            my $bin = $x -> as_bin();
-            $bin =~ s/^-0b//;       # strip '-0b' prefix
-            $bin =~ tr/10/01/;      # flip bits
-            # now shift
-            if ($y >= CORE::length($bin)) {
-                $bin = '0';         # shifting to far right creates -1
-                                    # 0, because later increment makes
-                                    # that 1, attached '-' makes it '-1'
-                                    # because -1 >> x == -1 !
+    return $x -> blsft($y -> copy() -> bneg(), $b, @r) if $y -> is_neg();
+
+    # Now handle all cases where at least one operand is ±Inf or the result
+    # will be ±Inf or NaN.
+
+    if ($b -> is_inf()) {
+        return $x -> bnan(@r) if $x -> is_inf() || $y -> is_zero();
+        if ($b -> is_inf("+")) {
+            if ($x -> is_negative()) {
+                return $x -> bone("-", @r);
             } else {
-                $bin =~ s/.{$y}$//; # cut off at the right side
-                $bin = '1' . $bin;  # extend left side by one dummy '1'
-                $bin =~ tr/10/01/;  # flip bits back
+                return $x -> bzero(@r);
             }
-            my $res = $class -> new('0b' . $bin); # add prefix and convert back
-            $res = $res -> binc();                       # remember to increment
-            $x -> {value} = $res -> {value};      # take over value
-            return $x -> round(@r); # we are done now, magic, isn't?
+        } else {
+            if ($x -> is_negative()) {
+                return $y -> is_odd() ? $x -> bzero(@r)
+                                      : $x -> bone("-", @r);
+            } elsif ($x -> is_positive()) {
+                return $y -> is_odd() ? $x -> bone("-", @r)
+                                      : $x -> bzero(@r);
+            } else {
+                return $x -> bzero(@r);
+            }
         }
-
-        # x < 0, n == 2, y == 1
-        $x = $x -> bdec();           # n == 2, but $y == 1: this fixes it
     }
 
-    $x -> {value} = $LIB -> _rsft($x -> {value}, $y -> {value}, $b);
-    $x -> round(@r);
+    if ($b -> is_zero()) {
+        return $x -> round(@r) if $y -> is_zero();
+        return $x -> bnan(@r)  if $x -> is_zero();
+        return $x -> is_negative() ? $x -> binf("-", @r)
+                                   : $x -> binf("+", @r);
+    }
+
+    if ($y -> is_inf("+")) {
+        if ($b -> is_one("-")) {
+            return $x -> bnan(@r);
+        } elsif ($b -> is_one("+")) {
+            return $x -> round(@r);
+        } else {
+            return $x -> bnan(@r) if $x -> is_inf();
+            return $x -> is_negative() ? $x -> bone("-", @r)
+                                       : $x -> bzero(@r);
+        }
+    }
+
+    if ($x -> is_inf()) {
+        if ($b -> is_negative()) {
+            if ($x -> is_inf("-")) {
+                if ($y -> is_even()) {
+                    return $x -> round(@r);
+                } else {
+                    return $x -> binf("+", @r);
+                }
+            } else {
+                if ($y -> is_even()) {
+                    return $x -> round(@r);
+                } else {
+                    return $x -> binf("-", @r);
+                }
+            }
+        } else {
+            return $x -> round(@r);
+        }
+    }
+
+    # At this point, we know that both the input and the output is finite.
+    # Handle some trivial cases.
+
+    return $x -> round(@r) if $x -> is_zero() || $y -> is_zero()
+                              || $b -> is_one("+")
+                              || $b -> is_one("-") && $y -> is_even();
+
+    return $x -> bneg(@r) if $b -> is_one("-") && $y -> is_odd();
+
+    # We know that $y is positive. Shifting right by a positive amount might
+    # lead to a non-integer result.
+
+    return $upgrade -> brsft($x, $y, $b, @r) if defined($upgrade);
+
+    # This only works for negative numbers when shifting in base 2.
+    if ($x -> is_neg() && $b -> bcmp("2") == 0) {
+        return $x -> round(@r) if $x -> is_one('-'); # -1 => -1
+        # Although this is O(N*N) in Math::BigInt::Calc->_as_bin(), it is O(N)
+        # in Pari et al., but perhaps there is a better emulation for two's
+        # complement shift ... if $y != 1, we must simulate it by doing:
+        # convert to bin, flip all bits, shift, and be done
+        $x = $x -> binc();                      # -3 => -2
+        my $bin = $x -> to_bin();               # convert to string
+        $bin =~ s/^-//;                         # strip leading minus
+        $bin =~ tr/10/01/;                      # flip bits
+        my $nbits = CORE::length($bin);
+        return $x -> bone("-", @r) if $y >= $nbits;
+        $bin = substr $bin, 0, $nbits - $y;     # keep most significant bits
+        $bin = '1' . $bin;                      # prepend one dummy '1'
+        $bin =~ tr/10/01/;                      # flip bits back
+        my $res = $class -> from_bin($bin);     # convert back from string
+        $res = $res -> binc();                  # remember to increment
+        $x -> {value} = $res -> {value};        # take over value
+        return $x -> round(@r);
+    }
+
+    # While some of the libraries support an arbitrarily large base, not all of
+    # them do, so rather than returning an incorrect result in those cases, use
+    # division.
+
+    my $uintmax = ~0;
+    if ($x -> bcmp($uintmax) > 0 || $x -> is_neg() || $b -> is_negative()) {
+        $x = $x -> bdiv($b -> bpow($y));
+    } else {
+        $b = $b -> numify();
+        $x -> {value} = $LIB -> _rsft($x -> {value}, $y -> {value}, $b);
+    }
+
+    return $x -> round(@r);
 }
 
 ###############################################################################
 # Bitwise methods
 ###############################################################################
+
+# Bitwise left shift.
+
+sub bblsft {
+    # We don't call objectify(), because the bitwise methods should not
+    # upgrade/downgrade, even when upgrading/downgrading is enabled.
+
+    my ($class, $x, $y, @r);
+
+    # $x -> bblsft($y)
+
+    if (ref($_[0])) {
+        ($class, $x, $y, @r) = (ref($_[0]), @_);
+        $y = $y -> as_int()
+          if ref($y) && !$y -> isa(__PACKAGE__) && $y -> can('as_int');
+        $y = $class -> new(int($y)) unless ref($y);
+    }
+
+    # $class -> bblsft($x, $y)
+
+    else {
+        ($class, $x, $y, @r) = @_;
+        for ($x, $y) {
+            $_ = $_ -> as_int()
+              if ref($_) && !$_ -> isa(__PACKAGE__) && $_ -> can('as_int');
+            $_ = $class -> new(int($_)) unless ref($_);
+        }
+    }
+
+    return $x if $x -> modify('bblsft');
+
+    return $x -> bnan(@r) if $x -> is_nan() || $y -> is_nan();
+
+    # bblsft($x, -$y) = bbrsft($x, $y)
+
+    return $x -> bbrsft($y -> copy() -> bneg()) if $y -> is_neg();
+
+    # Shifting infinitely far to the left.
+
+    if ($y -> is_inf("+")) {
+        return $x -> binf("+", @r) if $x -> is_pos();
+        return $x -> binf("-", @r) if $x -> is_neg();
+        return $x -> bnan(@r);
+    }
+
+    # These cases change nothing.
+
+    return $x -> round(@r) if $x -> is_zero() || $x -> is_inf() ||
+                              $y -> is_zero();
+
+    $x -> {value} = $LIB -> _lsft($x -> {value}, $y -> {value}, 2);
+    $x -> round(@r);
+}
+
+# Bitwise right shift.
+
+sub bbrsft {
+    # We don't call objectify(), because the bitwise methods should not
+    # upgrade/downgrade, even when upgrading/downgrading is enabled.
+
+    my ($class, $x, $y, @r);
+
+    # $x -> bblsft($y)
+
+    if (ref($_[0])) {
+        ($class, $x, $y, @r) = (ref($_[0]), @_);
+        $y = $y -> as_int()
+          if ref($y) && !$y -> isa(__PACKAGE__) && $y -> can('as_int');
+        $y = $class -> new(int($y)) unless ref($y);
+    }
+
+    # $class -> bblsft($x, $y)
+
+    else {
+        ($class, $x, $y, @r) = @_;
+        for ($x, $y) {
+            $_ = $_ -> as_int()
+              if ref($_) && !$_ -> isa(__PACKAGE__) && $_ -> can('as_int');
+            $_ = $class -> new(int($_)) unless ref($_);
+        }
+    }
+
+    return $x if $x -> modify('bbrsft');
+
+    return $x -> bnan(@r) if $x -> is_nan() || $y -> is_nan();
+
+    # bbrsft($x, -$y) = bblsft($x, $y)
+
+    return $x -> bblsft($y -> copy() -> bneg()) if $y -> is_neg();
+
+    # Shifting infinitely far to the right.
+
+    if ($y -> is_inf("+")) {
+        return $x -> bnan(@r)      if $x -> is_inf();
+        return $x -> bone("-", @r) if $x -> is_neg();
+        return $x -> bzero(@r);
+    }
+
+    # These cases change nothing.
+
+    return $x -> round(@r) if $x -> is_zero() || $x -> is_inf() ||
+                              $y -> is_zero();
+
+    # At this point, $x is either positive or negative, not zero.
+
+    if ($x -> is_pos()) {
+        $x -> {value} = $LIB -> _rsft($x -> {value}, $y -> {value}, 2);
+    } else {
+        my $n = $x -> {value};
+        my $d = $LIB -> _pow($LIB -> _new("2"), $y -> {value});
+        my ($p, $q) = $LIB -> _div($n, $d);
+        $p = $LIB -> _inc($p) unless $LIB -> _is_zero($q);
+        $x -> {value} = $p;
+    }
+
+    $x -> round(@r);
+}
 
 sub band {
     #(BINT or num_str, BINT or num_str) return BINT
@@ -3485,8 +4134,8 @@ sub band {
     return $x if $x->modify('band');
 
     return $upgrade -> band($x, $y, @r)
-      if defined($upgrade) && (!$x -> isa($class) ||
-                               !$y -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__));
 
     $r[3] = $y;                 # no push!
 
@@ -3511,8 +4160,8 @@ sub bior {
     return $x if $x->modify('bior');
 
     return $upgrade -> bior($x, $y, @r)
-      if defined($upgrade) && (!$x -> isa($class) ||
-                               !$y -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__));
 
     $r[3] = $y;                 # no push!
 
@@ -3537,8 +4186,8 @@ sub bxor {
     return $x if $x->modify('bxor');
 
     return $upgrade -> bxor($x, $y, @r)
-      if defined($upgrade) && (!$x -> isa($class) ||
-                               !$y -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$y -> isa(__PACKAGE__));
 
     $r[3] = $y;                 # no push!
 
@@ -3561,7 +4210,7 @@ sub bnot {
     return $x if $x->modify('bnot');
 
     return $upgrade -> bnot($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     $x -> binc() -> bneg(@r);
 }
@@ -3576,11 +4225,19 @@ sub round {
 
     my ($class, $self, @args) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
-    # $x->round(undef, undef) signals no rounding
+    # These signal no rounding:
+    #
+    #   $x->round(undef)
+    #   $x->round(undef, undef, ...)
+    #
+    # The "@args <= 3" is necessary because the final set of parameters that
+    # will be used for rounding depend on the "extra arguments", if any.
 
-    if (@args >= 2 && @args <= 3 && !defined($args[0]) && !defined($args[1])) {
-        $self->{_a} = undef;
-        $self->{_p} = undef;
+    if (@args == 1 && !defined($args[0]) ||
+        @args >= 2 && @args <= 3 && !defined($args[0]) && !defined($args[1]))
+    {
+        $self->{accuracy} = undef;
+        $self->{precision} = undef;
         return $self;
     }
 
@@ -3605,8 +4262,8 @@ sub round {
     if (!defined $a) {
         foreach ($self, @args) {
             # take the defined one, or if both defined, the one that is smaller
-            $a = $_->{_a}
-              if (defined $_->{_a}) && (!defined $a || $_->{_a} < $a);
+            $a = $_->{accuracy}
+              if (defined $_->{accuracy}) && (!defined $a || $_->{accuracy} < $a);
         }
     }
     if (!defined $p) {
@@ -3614,17 +4271,15 @@ sub round {
         foreach ($self, @args) {
             # take the defined one, or if both defined, the one that is bigger
             # -2 > -3, and 3 > 2
-            $p = $_->{_p}
-              if (defined $_->{_p}) && (!defined $p || $_->{_p} > $p);
+            $p = $_->{precision}
+              if (defined $_->{precision}) && (!defined $p || $_->{precision} > $p);
         }
     }
 
-    no strict 'refs';
-
     # if still none defined, use globals
     unless (defined $a || defined $p) {
-        $a = ${"$class\::accuracy"};
-        $p = ${"$class\::precision"};
+        $a = $class -> accuracy();
+        $p = $class -> precision();
     }
 
     # A == 0 is useless, so undef it to signal no rounding
@@ -3636,7 +4291,7 @@ sub round {
     # set A and set P is an fatal error
     return $self->bnan() if defined $a && defined $p;
 
-    $r = ${"$class\::round_mode"} unless defined $r;
+    $r = $class -> round_mode() unless defined $r;
     if ($r !~ /^(even|odd|[+-]inf|zero|trunc|common)$/) {
         croak("Unknown round mode '$r'");
     }
@@ -3644,10 +4299,10 @@ sub round {
     # now round, by calling either bround or bfround:
     if (defined $a) {
         $self = $self->bround(int($a), $r)
-          if !defined $self->{_a} || $self->{_a} >= $a;
+          if !defined $self->{accuracy} || $self->{accuracy} >= $a;
     } else {                  # both can't be undefined due to early out
         $self = $self->bfround(int($p), $r)
-          if !defined $self->{_p} || $self->{_p} <= $p;
+          if !defined $self->{precision} || $self->{precision} <= $p;
     }
 
     # bround() or bfround() already called bnorm() if nec.
@@ -3667,7 +4322,7 @@ sub bround {
     return $x if !defined $scale || $x->modify('bround'); # no-op
 
     if ($x->is_zero() || $scale == 0) {
-        $x->{_a} = $scale if !defined $x->{_a} || $x->{_a} > $scale; # 3 > 2
+        $x->{accuracy} = $scale if !defined $x->{accuracy} || $x->{accuracy} > $scale; # 3 > 2
         return $x;
     }
     return $x if $x->{sign} !~ /^[+-]$/; # inf, NaN
@@ -3681,7 +4336,7 @@ sub bround {
 
     # scale < 0, but > -len (not >=!)
     if (($scale < 0 && $scale < -$len-1) || ($scale >= $len)) {
-        $x->{_a} = $scale if !defined $x->{_a} || $x->{_a} > $scale; # 3 > 2
+        $x->{accuracy} = $scale if !defined $x->{accuracy} || $x->{accuracy} > $scale; # 3 > 2
         return $x;
     }
 
@@ -3749,10 +4404,10 @@ sub bround {
     }
     $x->{value} = $LIB->_new($xs) if $put_back == 1; # put back, if needed
 
-    $x->{_a} = $scale if $scale >= 0;
+    $x->{accuracy} = $scale if $scale >= 0;
     if ($scale < 0) {
-        $x->{_a} = $len+$scale;
-        $x->{_a} = 0 if $scale < -$len;
+        $x->{accuracy} = $len+$scale;
+        $x->{accuracy} = 0 if $scale < -$len;
     }
     $x;
 }
@@ -3770,8 +4425,8 @@ sub bfround {
     # no-op for Math::BigInt objects if $n <= 0
     $x = $x->bround($x->length()-$scale, $mode) if $scale > 0;
 
-    delete $x->{_a};            # delete to save memory
-    $x->{_p} = $scale;          # store new _p
+    $x->{accuracy} = undef;
+    $x->{precision} = $scale;          # store new precision
     $x;
 }
 
@@ -3788,7 +4443,7 @@ sub bfloor {
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
     return $upgrade -> bfloor($x)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     $x->round(@r);
 }
@@ -3798,7 +4453,7 @@ sub bceil {
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
     return $upgrade -> bceil($x)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     $x->round(@r);
 }
@@ -3808,7 +4463,7 @@ sub bint {
     my ($class, $x, @r) = ref($_[0]) ? (ref($_[0]), @_) : objectify(1, @_);
 
     return $upgrade -> bint($x)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     $x->round(@r);
 }
@@ -3838,7 +4493,7 @@ sub bgcd {
     if (defined $upgrade) {
         my $do_upgrade = 0;
         for my $arg (@args) {
-            unless ($arg -> isa($class)) {
+            unless ($arg -> isa(__PACKAGE__)) {
                 $do_upgrade = 1;
                 last;
             }
@@ -3847,13 +4502,15 @@ sub bgcd {
     }
 
     my $x = shift @args;
-    $x = ref($x) && $x -> isa($class) ? $x -> copy() : $class -> new($x);
+    $x = defined(blessed($x)) && $x -> isa(__PACKAGE__) ? $x -> copy()
+                                                        : $class -> new($x);
 
     return $class->bnan() if $x->{sign} !~ /^[+-]$/;    # x NaN?
 
     while (@args) {
         my $y = shift @args;
-        $y = $class->new($y) unless ref($y) && $y -> isa($class);
+        $y = $class->new($y)
+          unless defined(blessed($y)) && $y -> isa(__PACKAGE__);
         return $class->bnan() if $y->{sign} !~ /^[+-]$/;    # y NaN?
         $x->{value} = $LIB->_gcd($x->{value}, $y->{value});
         last if $LIB->_is_one($x->{value});
@@ -3883,7 +4540,7 @@ sub blcm {
     if (defined $upgrade) {
         my $do_upgrade = 0;
         for my $arg (@args) {
-            unless ($arg -> isa($class)) {
+            unless ($arg -> isa(__PACKAGE__)) {
                 $do_upgrade = 1;
                 last;
             }
@@ -3892,12 +4549,14 @@ sub blcm {
     }
 
     my $x = shift @args;
-    $x = ref($x) && $x -> isa($class) ? $x -> copy() : $class -> new($x);
+    $x = defined(blessed($x)) && $x -> isa(__PACKAGE__) ? $x -> copy()
+                                                        : $class -> new($x);
     return $class->bnan() if $x->{sign} !~ /^[+-]$/;    # x NaN?
 
     while (@args) {
         my $y = shift @args;
-        $y = $class -> new($y) unless ref($y) && $y -> isa($class);
+        $y = $class -> new($y)
+          unless defined(blessed($y)) && $y -> isa(__PACKAGE__);
         return $x->bnan() if $y->{sign} !~ /^[+-]$/;     # y not integer
         $x -> {value} = $LIB->_lcm($x -> {value}, $y -> {value});
     }
@@ -3974,7 +4633,7 @@ sub exponent {
     # Upgrade?
 
     return $upgrade -> exponent($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     if ($x->{sign} !~ /^[+-]$/) {
         my $s = $x->{sign};
@@ -3996,15 +4655,15 @@ sub mantissa {
     # Upgrade?
 
     return $upgrade -> mantissa($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     if ($x->{sign} !~ /^[+-]$/) {
         # for NaN, +inf, -inf: keep the sign
         return $class->new($x->{sign}, @r);
     }
     my $m = $x->copy();
-    delete $m->{_p};
-    delete $m->{_a};
+    $m -> precision(undef);
+    $m -> accuracy(undef);
 
     # that's a bit inefficient:
     my $zeros = $LIB->_zeros($m->{value});
@@ -4021,7 +4680,7 @@ sub parts {
     # Upgrade?
 
     return $upgrade -> parts($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     ($x->mantissa(@r), $x->exponent(@r));
 }
@@ -4056,7 +4715,7 @@ sub sparts {
     # Upgrade?
 
     return $upgrade -> sparts($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number.
 
@@ -4088,7 +4747,7 @@ sub nparts {
     # Upgrade?
 
     return $upgrade -> nparts($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number.
 
@@ -4126,7 +4785,7 @@ sub eparts {
     # Upgrade?
 
     return $upgrade -> eparts($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number.
 
@@ -4185,7 +4844,7 @@ sub dparts {
     # Upgrade?
 
     return $upgrade -> dparts($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number.
 
@@ -4223,7 +4882,7 @@ sub fparts {
     # Upgrade?
 
     return $upgrade -> fparts($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # N => N/1
 
@@ -4239,7 +4898,7 @@ sub numerator {
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
     return $upgrade -> numerator($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     return $x -> copy() -> round(@r);
 }
@@ -4250,7 +4909,7 @@ sub denominator {
     carp "Rounding is not supported for ", (caller(0))[3], "()" if @r;
 
     return $upgrade -> denominator($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     return $x -> is_nan() ? $class -> bnan(@r) : $class -> bone(@r);
 }
@@ -4274,7 +4933,7 @@ sub bstr {
     # Upgrade?
 
     return $upgrade -> bstr($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4300,7 +4959,7 @@ sub bsstr {
     # Upgrade?
 
     return $upgrade -> bsstr($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4328,7 +4987,7 @@ sub bnstr {
     # Upgrade?
 
     return $upgrade -> bnstr($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4362,7 +5021,7 @@ sub bestr {
     # Upgrade?
 
     return $upgrade -> bestr($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4401,7 +5060,7 @@ sub bdstr {
     # Upgrade?
 
     return $upgrade -> bdstr($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4426,7 +5085,7 @@ sub bfstr {
     # Upgrade?
 
     return $upgrade -> bfstr($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4450,7 +5109,7 @@ sub to_hex {
     # Upgrade?
 
     return $upgrade -> to_hex($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4475,7 +5134,7 @@ sub to_oct {
     # Upgrade?
 
     return $upgrade -> to_oct($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4500,7 +5159,7 @@ sub to_bin {
     # Upgrade?
 
     return $upgrade -> to_bin($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     # Finite number
 
@@ -4519,7 +5178,7 @@ sub to_bytes {
         if $x -> is_neg() || ! $x -> is_int();
 
     return $upgrade -> to_bytes($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     croak("to_bytes() requires a newer version of the $LIB library.")
         unless $LIB->can('_to_bytes');
@@ -4556,7 +5215,8 @@ sub to_base {
       unless $LIB->can('_to_base');
 
     return $upgrade -> to_base($x, $base, $cs, @r)
-      if defined($upgrade) && (!$x -> isa($class) || !$base -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$base -> isa(__PACKAGE__));
 
     return $LIB->_to_base($x->{value}, $base -> {value},
                           defined($cs) ? $cs : ());
@@ -4582,7 +5242,8 @@ sub to_base_num {
       unless $LIB->can('_to_base');
 
     return $upgrade -> to_base_num($x, $base, @r)
-      if defined($upgrade) && (!$x -> isa($class) || !$base -> isa($class));
+      if defined($upgrade) && (!$x -> isa(__PACKAGE__) ||
+                               !$base -> isa(__PACKAGE__));
 
     # Get a reference to an array of library thingies, and replace each element
     # with a Math::BigInt object using that thingy.
@@ -4608,7 +5269,7 @@ sub as_hex {
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
     return $upgrade -> as_hex($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     my $hex = $LIB->_as_hex($x->{value});
     return $x->{sign} eq '-' ? "-$hex" : $hex;
@@ -4624,7 +5285,7 @@ sub as_oct {
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
     return $upgrade -> as_oct($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     my $oct = $LIB->_as_oct($x->{value});
     return $x->{sign} eq '-' ? "-$oct" : $oct;
@@ -4640,7 +5301,7 @@ sub as_bin {
     return $x->bstr() if $x->{sign} !~ /^[+-]$/; # inf, nan etc
 
     return $upgrade -> as_bin($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     my $bin = $LIB->_as_bin($x->{value});
     return $x->{sign} eq '-' ? "-$bin" : $bin;
@@ -4671,7 +5332,7 @@ sub numify {
     }
 
     return $upgrade -> numify($x, @r)
-      if defined($upgrade) && !$x -> isa($class);
+      if defined($upgrade) && !$x -> isa(__PACKAGE__);
 
     my $num = 0 + $LIB->_num($x->{value});
     return $x->{sign} eq '-' ? -$num : $num;
@@ -4735,8 +5396,6 @@ sub objectify {
     $count ||= @a;
     unshift @a, $class;
 
-    no strict 'refs';
-
     # What we upgrade to, if anything. Note that we need the whole upgrade
     # chain, since there might be multiple levels of upgrading. E.g., class A
     # upgrades to class B, which upgrades to class C. Delay getting the chain
@@ -4748,11 +5407,8 @@ sub objectify {
     # Disable downgrading, because Math::BigFloat -> foo('1.0', '2.0') needs
     # floats.
 
-    my $down;
-    if (defined ${"$a[0]::downgrade"}) {
-        $down = ${"$a[0]::downgrade"};
-        ${"$a[0]::downgrade"} = undef;
-    }
+    my $dng = $class -> downgrade();
+    $class -> downgrade(undef);
 
   ARG: for my $i (1 .. $count) {
 
@@ -4761,13 +5417,13 @@ sub objectify {
         # Perl scalars are fed to the appropriate constructor.
 
         unless ($ref) {
-            $a[$i] = $a[0] -> new($a[$i]);
+            $a[$i] = $class -> new($a[$i]);
             next;
         }
 
         # If it is an object of the right class, all is fine.
 
-        next if $ref -> isa($a[0]);
+        next if $ref -> isa($class);
 
         # Upgrading is OK, so skip further tests if the argument is upgraded,
         # but first get the whole upgrade chain if we haven't got it yet.
@@ -4794,7 +5450,7 @@ sub objectify {
 
         my $recheck = 0;
 
-        if ($a[0] -> isa('Math::BigInt')) {
+        if ($class -> isa('Math::BigInt')) {
             if ($a[$i] -> can('as_int')) {
                 $a[$i] = $a[$i] -> as_int();
                 $recheck = 1;
@@ -4804,10 +5460,17 @@ sub objectify {
             }
         }
 
-        elsif ($a[0] -> isa('Math::BigFloat')) {
+        elsif ($class -> isa('Math::BigRat')) {
+            if ($a[$i] -> can('as_rat')) {
+                $a[$i] = $a[$i] -> as_rat();
+                $recheck = 1;
+            }
+        }
+
+        elsif ($class -> isa('Math::BigFloat')) {
             if ($a[$i] -> can('as_float')) {
                 $a[$i] = $a[$i] -> as_float();
-                $recheck = $1;
+                $recheck = 1;
             }
         }
 
@@ -4819,23 +5482,23 @@ sub objectify {
             # Perl scalars are fed to the appropriate constructor.
 
             unless ($ref) {
-                $a[$i] = $a[0] -> new($a[$i]);
+                $a[$i] = $class -> new($a[$i]);
                 next;
             }
 
             # If it is an object of the right class, all is fine.
 
-            next if $ref -> isa($a[0]);
+            next if $ref -> isa($class);
         }
 
         # Last resort.
 
-        $a[$i] = $a[0] -> new($a[$i]);
+        $a[$i] = $class -> new($a[$i]);
     }
 
-    # Reset the downgrading.
+    # Restore the downgrading.
 
-    ${"$a[0]::downgrade"} = $down;
+    $class -> downgrade($dng);
 
     return @a;
 }
@@ -4902,6 +5565,13 @@ sub import {
 
         if ($param eq 'round_mode') {
             $class -> round_mode(shift);
+            next;
+        }
+
+        # Fall-back accuracy.
+
+        if ($param eq 'div_scale') {
+            $class -> div_scale(shift);
             next;
         }
 
@@ -5009,10 +5679,8 @@ sub import {
 
     # Any non-':constant' stuff is handled by our parent, Exporter
 
-    if (@a) {
-        $class->SUPER::import(@a);              # need it for subclasses
-        $class->export_to_level(1, $class, @a); # need it for Math::BigFloat
-    }
+    $class -> SUPER::import(@a);                        # for subclasses
+    $class -> export_to_level(1, $class, @a) if @a;     # need this, too
 
     # We might not have loaded any backend library yet, either because the user
     # didn't specify any, or because the specified libraries failed to load and
@@ -5072,7 +5740,6 @@ sub _find_round_parameters {
     # @args all 'other' arguments (0 for unary, 1 for binary ops)
 
     my $class = ref($self);       # find out class of argument(s)
-    no strict 'refs';
 
     # convert to normal scalar for speed and correctness in inner parts
     $a = $a->can('numify') ? $a->numify() : "$a" if defined $a && ref($a);
@@ -5082,8 +5749,8 @@ sub _find_round_parameters {
     if (!defined $a) {
         foreach ($self, @args) {
             # take the defined one, or if both defined, the one that is smaller
-            $a = $_->{_a}
-              if (defined $_->{_a}) && (!defined $a || $_->{_a} < $a);
+            $a = $_->{accuracy}
+              if (defined $_->{accuracy}) && (!defined $a || $_->{accuracy} < $a);
         }
     }
     if (!defined $p) {
@@ -5091,14 +5758,14 @@ sub _find_round_parameters {
         foreach ($self, @args) {
             # take the defined one, or if both defined, the one that is bigger
             # -2 > -3, and 3 > 2
-            $p = $_->{_p}
-              if (defined $_->{_p}) && (!defined $p || $_->{_p} > $p);
+            $p = $_->{precision}
+              if (defined $_->{precision}) && (!defined $p || $_->{precision} > $p);
         }
     }
 
     # if still none defined, use globals (#2)
-    $a = ${"$class\::accuracy"}  unless defined $a;
-    $p = ${"$class\::precision"} unless defined $p;
+    $a = $class -> accuracy()  unless defined $a;
+    $p = $class -> precision() unless defined $p;
 
     # A == 0 is useless, so undef it to signal no rounding
     $a = undef if defined $a && $a == 0;
@@ -5109,7 +5776,7 @@ sub _find_round_parameters {
     # set A and set P is an fatal error
     return ($self->bnan()) if defined $a && defined $p; # error
 
-    $r = ${"$class\::round_mode"} unless defined $r;
+    $r = $class -> round_mode() unless defined $r;
     if ($r !~ /^(even|odd|[+-]inf|zero|trunc|common)$/) {
         croak("Unknown round mode '$r'");
     }
@@ -5858,6 +6525,9 @@ Math::BigInt - arbitrary size integer math package
   Math::BigInt->round_mode($m); # set global round mode, must be one of
                                 # 'even', 'odd', '+inf', '-inf', 'zero',
                                 # 'trunc', or 'common'
+  Math::BigInt->div_scale($n);  # set fallback accuracy
+  Math::BigInt->trap_inf($b);   # trap infinities or not
+  Math::BigInt->trap_nan($b);   # trap NaNs or not
   Math::BigInt->config();       # return hash with configuration
 
   # Constructor methods (when the class methods below are used as instance
@@ -5935,10 +6605,15 @@ Math::BigInt - arbitrary size integer math package
   $x->btmod($y);          # modulus (truncated)
   $x->bmodinv($mod);      # modular multiplicative inverse
   $x->bmodpow($y,$mod);   # modular exponentiation (($x ** $y) % $mod)
+  $x->binv()              # inverse (1/$x)
   $x->bpow($y);           # power of arguments (x ** y)
   $x->blog();             # logarithm of $x to base e (Euler's number)
   $x->blog($base);        # logarithm of $x to base $base (e.g., base 2)
   $x->bexp();             # calculate e ** $x where e is Euler's number
+  $x->bilog2();           # log2($x) rounded down to nearest int
+  $x->bilog10();          # log10($x) rounded down to nearest int
+  $x->bclog2();           # log2($x) rounded up to nearest int
+  $x->bclog10();          # log19($x) rounded up to nearest int
   $x->bnok($y);           # x over y (binomial coefficient n over k)
   $x->buparrow($n, $y);   # Knuth's up-arrow notation
   $x->backermann($y);     # the Ackermann function
@@ -5962,6 +6637,8 @@ Math::BigInt - arbitrary size integer math package
 
   # Bitwise methods
 
+  $x->bblsft($y);         # bitwise left shift
+  $x->bbrsft($y);         # bitwise right shift
   $x->band($y);           # bitwise and
   $x->bior($y);           # bitwise inclusive or
   $x->bxor($y);           # bitwise exclusive or
@@ -6229,6 +6906,15 @@ attempt to return an infinite number of digits.
 =item round_mode()
 
 Set/get the rounding mode.
+
+=item trap_inf()
+
+Set/get the value determining whether infinities should cause a fatal error or
+not.
+
+=item trap_nan()
+
+Set/get the value determining whether NaNs should cause a fatal error or not.
 
 =item upgrade()
 
@@ -6740,6 +7426,12 @@ Multiply $x by $y, and then add $z to the result,
 
 This method was added in v1.87 of Math::BigInt (June 2007).
 
+=item binv()
+
+    $x->binv();
+
+Invert the value of $x, i.e., compute 1/$x.
+
 =item bdiv()
 
     $x->bdiv($y);               # divide, set $x to quotient
@@ -6868,6 +7560,42 @@ Calculates the expression C<e ** $x> where C<e> is Euler's number.
 This method was added in v1.82 of Math::BigInt (April 2007).
 
 See also L</blog()>.
+
+=item bilog2()
+
+Base 2 logarithm rounded down towards the nearest integer.
+
+    $x->bilog2();               # int(log2(x)) = int(log(x)/log(2))
+
+In list context a second argument is returned. This is 1 if the result is
+exact, i.e., the input is an exact power of 2, and 0 otherwise.
+
+=item bilog10()
+
+Base 10 logarithm rounded down towards the nearest integer.
+
+    $x->bilog10();              # int(log10(x)) = int(log(x)/log(10))
+
+In list context a second argument is returned. This is 1 if the result is
+exact, i.e., the input is an exact power of 10, and 0 otherwise.
+
+=item bclog2()
+
+Base 2 logarithm rounded up towards the nearest integer.
+
+    $x->bclog2();               # ceil(log2(x)) = ceil(log(x)/log(2))
+
+In list context a second argument is returned. This is 1 if the result is
+exact, i.e., the input is an exact power of 2, and 0 otherwise.
+
+=item bclog10()
+
+Base 10 logarithm rounded up towards the nearest integer.
+
+    $x->bclog10();              # ceil(log10(x)) = ceil(log(x)/log(10))
+
+In list context a second argument is returned. This is 1 if the result is
+exact, i.e., the input is an exact power of 10, and 0 otherwise.
 
 =item bnok()
 
@@ -7103,27 +7831,69 @@ If $n is -12, the following values, L(0) to L(-12), are returned:
 
 =item brsft()
 
+Right shift.
+
     $x->brsft($n);              # right shift $n places in base 2
     $x->brsft($n, $b);          # right shift $n places in base $b
 
 The latter is equivalent to
 
-    $x -> bdiv($b -> copy() -> bpow($n))
+    $x -> bdiv($b -> copy() -> bpow($n));
 
 =item blsft()
+
+Left shift.
 
     $x->blsft($n);              # left shift $n places in base 2
     $x->blsft($n, $b);          # left shift $n places in base $b
 
 The latter is equivalent to
 
-    $x -> bmul($b -> copy() -> bpow($n))
+    $x -> bmul($b -> copy() -> bpow($n));
 
 =back
 
 =head2 Bitwise methods
 
+For all bitwise methods, the operands are truncated to integers, i.e., rounded
+towards zero, if necessary, before the method is applied. The bitwise methods
+never upgrade, and they always return an integer.
+
 =over
+
+=item bbrsft()
+
+Bitwise right shift. This is equivalent to Perl's C<E<gt>E<gt>> operator.
+
+    $x -> bbrsft($n);           # right shift $n places in base 2
+
+If C<$n> is negative, the shifting is done in the opposite direction, so these
+two are equivalent for all C<$x> and C<$n>
+
+    $y = $x -> bbrsft($n);
+    $y = $x -> bblsft(-$n);
+
+and also equivalent to
+
+    $y = $x -> bdiv(ref($x) -> new(2) -> bpow($n));   # if $n > 0
+    $y = $x -> bmul(ref($x) -> new(2) -> bpow(-$n));  # if $n < 0
+
+=item bblsft()
+
+Bitwise left shift. This is equivalent to Perl's C<E<lt>E<lt>> operator.
+
+    $x -> bblsft($n);           # left shift $n places in base 2
+
+If C<$n> is negative, the shifting is done in the opposite direction, so these
+two are equivalent for all C<$x> and C<$n>
+
+    $y = $x -> bblsft($n);
+    $y = $x -> bbrsft(-$n);
+
+and also equivalent to
+
+    $y = $x -> bmul(ref($x) -> new(2) -> bpow($n));   # if $n > 0
+    $y = $x -> bdiv(ref($x) -> new(2) -> bpow($n));   # if $n < 0
 
 =item band()
 
@@ -8270,20 +9040,21 @@ store additional hash keys in the object. There are also some package globals
 that must be defined, e.g.:
 
     # Globals
-    $accuracy = undef;
-    $precision = -2;       # round to 2 decimal places
-    $round_mode = 'even';
-    $div_scale = 40;
+    our $accuracy = 2;          # round to 2 decimal places
+    our $precision = undef;
+    our $round_mode = 'even';
+    our $div_scale = 40;
 
 Additionally, you might want to provide the following two globals to allow
-auto-upgrading and auto-downgrading to work correctly:
+auto-upgrading and auto-downgrading:
 
-    $upgrade = undef;
-    $downgrade = undef;
+    our $upgrade = undef;
+    our $downgrade = undef;
 
 This allows Math::BigInt to correctly retrieve package globals from the
-subclass, like C<$SubClass::precision>. See t/Math/BigInt/Subclass.pm or
-t/Math/BigFloat/SubClass.pm completely functional subclass examples.
+subclass, like C<$SubClass::precision>. See C<t/Math/BigInt/Subclass.pm>,
+C<t/Math/BigFloat/SubClass.pm>, or C<t/Math/BigRat/SubClass.pm> for subclass
+examples.
 
 Don't forget to
 
@@ -8299,16 +9070,22 @@ When used like this:
 
     use Math::BigInt upgrade => 'Foo::Bar';
 
-certain operations 'upgrade' their calculation and thus the result to the class
-Foo::Bar. Usually this is used in conjunction with Math::BigFloat:
+any operation whose result cannot be represented as an integer is upgraded to
+the class Foo::Bar. Usually this is used in conjunction with Math::BigFloat:
 
     use Math::BigInt upgrade => 'Math::BigFloat';
+
+For example, the following returns 3 as a Math::BigInt when no upgrading is
+defined, and 3.125 as a Math::BigFloat if Math::BigInt is set to upgrade to
+Math::BigFloat:
+
+    $x = Math::BigInt -> new(25) -> bdiv(8);
 
 As a shortcut, you can use the module L<bignum>:
 
     use bignum;
 
-Also good for one-liners:
+which is also good for one-liners:
 
     perl -Mbignum -le 'print 2 ** 255'
 
@@ -8546,28 +9323,6 @@ L<https://metacpan.org/release/Math-BigInt>
 
 L<http://matrix.cpantesters.org/?dist=Math-BigInt>
 
-=item * CPAN Ratings
-
-L<https://cpanratings.perl.org/dist/Math-BigInt>
-
-=item * The Bignum mailing list
-
-=over 4
-
-=item * Post to mailing list
-
-C<bignum at lists.scsys.co.uk>
-
-=item * View mailing list
-
-L<http://lists.scsys.co.uk/pipermail/bignum/>
-
-=item * Subscribe/Unsubscribe
-
-L<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/bignum>
-
-=back
-
 =back
 
 =head1 LICENSE
@@ -8577,11 +9332,12 @@ the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Math::BigFloat> and L<Math::BigRat> as well as the backends
-L<Math::BigInt::FastCalc>, L<Math::BigInt::GMP>, and L<Math::BigInt::Pari>.
+L<Math::BigFloat> and L<Math::BigRat> as well as the backend libraries
+L<Math::BigInt::FastCalc>, L<Math::BigInt::GMP>, and L<Math::BigInt::Pari>,
+L<Math::BigInt::GMPz>, and L<Math::BigInt::BitVect>.
 
-The pragmas L<bignum>, L<bigint> and L<bigrat> also might be of interest
-because they solve the autoupgrading/downgrading issue, at least partly.
+The pragmas L<bigint>, L<bigfloat>, and L<bigrat> might also be of interest. In
+addition there is the L<bignum> pragma which does upgrading and downgrading.
 
 =head1 AUTHORS
 

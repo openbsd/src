@@ -235,7 +235,7 @@ EOM
 if [ "$xxOsRevMajor" -lt 11 ]; then
     d_longdbl="$undef"
     longdblsize=8 # Make it double.
-fi
+    fi
 
 case "$archname" in
     IA64*)
@@ -789,17 +789,10 @@ d_isnan='define'
 d_isinf='define'
 d_isfinite='define'
 d_unordered='define'
-# Next one(s) need the leading tab.  These are special 'hint' symbols that
-# are not to be propagated to config.sh, all related to pthreads draft 4
-# interfaces.
-case "$d_oldpthreads" in
-    ''|$undef)
-	d_crypt_r_proto='undef'
-	d_getgrent_r_proto='undef'
-	d_getpwent_r_proto='undef'
-	d_strerror_r_proto='undef'
-	;;
-    esac
+# Old versions of pthreads (Draft 4) might require the following variables
+# set to 'undef'. Having C99 as requirement invalidates forcing those
+#   d_crypt_r_proto, d_getgrent_r_proto, d_getpwent_r_proto, and
+#   d_strerror_r_proto
 
 # H.Merijn says it's not 1998 anymore: ODBM is not needed,
 # and it seems to be buggy in HP-UX anyway.
@@ -812,15 +805,15 @@ if [ "$xxOsRevMajor" -lt 11 ] || [ "$xxOsRevMajor" -eq 11 ] && [ "$xxOsRevMinor"
         *"long double strtold"*) ;; # strtold should be safe.
         *) echo "Looks like your strtold() is non-standard..." >&4
         d_strtold=undef ;;
-    esac
-fi
+	esac
+    fi
 
 # In pre-11 HP-UXes there really isn't isfinite(), despite what
 # Configure might think. (There is finite(), though.)
 case "`grep 'isfinite' /usr/include/math.h`" in
-*"isfinite"*) ;;
-*) d_isfinite=undef ;;
-esac
+    *"isfinite"*) ;;
+    *) d_isfinite=undef ;;
+    esac
 
 # 11.23 says it has mbrlen and mbrtowc, but compiling them fails as it can't
 # find the type definition for mbstate_t which one of the parameters is.  It's
@@ -828,7 +821,7 @@ esac
 # needed, but for now simply undefine them
 d_mbrlen='undef'
 d_mbrtowc='undef'
-# And this one is not know on 11.11 (with HP C-ANSI-C)
+# And this one is not known on 11.11 (with HP C-ANSI-C)
 if [ "$xxOsRevMajor" -lt 11 ] || [ "$xxOsRevMinor" -lt 12 ]; then
-d_wcrtomb='undef'
-fi
+    d_wcrtomb='undef'
+    fi

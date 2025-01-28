@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan(tests => 167);
+plan(tests => 169);
 
 eval 'pass();';
 
@@ -377,6 +377,18 @@ our $x = 1;
     is(DB::db4(),  3);
     is(DB::db5(),  3);
     is(db6(),      4);
+
+    # [GH #19370]
+    my sub d6 {
+        DB::db3();
+    }
+    is(d6(), 3);
+    my $y;
+    my $d7 = sub {
+        $y;
+        DB::db3();
+    };
+    is($d7->(), 3);
 }
 
 # [perl #19022] used to end up with shared hash warnings

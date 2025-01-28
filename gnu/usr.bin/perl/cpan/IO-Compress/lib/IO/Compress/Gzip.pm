@@ -8,12 +8,12 @@ use bytes;
 
 require Exporter ;
 
-use IO::Compress::RawDeflate 2.204 () ;
-use IO::Compress::Adapter::Deflate 2.204 ;
+use IO::Compress::RawDeflate 2.212 () ;
+use IO::Compress::Adapter::Deflate 2.212 ;
 
-use IO::Compress::Base::Common  2.204 qw(:Status );
-use IO::Compress::Gzip::Constants 2.204 ;
-use IO::Compress::Zlib::Extra 2.204 ;
+use IO::Compress::Base::Common  2.212 qw(:Status );
+use IO::Compress::Gzip::Constants 2.212 ;
+use IO::Compress::Zlib::Extra 2.212 ;
 
 BEGIN
 {
@@ -25,7 +25,7 @@ BEGIN
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $GzipError);
 
-$VERSION = '2.204';
+$VERSION = '2.212';
 $GzipError = '' ;
 
 @ISA    = qw(IO::Compress::RawDeflate Exporter);
@@ -535,7 +535,7 @@ Defaults to 0.
 
 =back
 
-=head2 Examples
+=head2 Oneshot Examples
 
 Here are a few example that show the capabilities of the module.
 
@@ -614,7 +614,10 @@ The format of the constructor for C<IO::Compress::Gzip> is shown below
     my $z = IO::Compress::Gzip->new( $output [,OPTS] )
         or die "IO::Compress::Gzip failed: $GzipError\n";
 
-It returns an C<IO::Compress::Gzip> object on success and undef on failure.
+The constructor takes one mandatory parameter, C<$output>, defined below and
+zero or more C<OPTS>, defined in L<Constructor Options>.
+
+It returns an C<IO::Compress::Gzip> object on success and C<undef> on failure.
 The variable C<$GzipError> will contain an error message on failure.
 
 If you are running Perl 5.005 or better the object, C<$z>, returned from
@@ -626,6 +629,18 @@ these forms
 
     $z->print("hello world\n");
     print $z "hello world\n";
+
+Below is a simple exaple of using the OO interface to create an output file
+C<myfile.gz> and write some data to it.
+
+    my $filename = "myfile.gz";
+    my $z = IO::Compress::Gzip->new($filename)
+        or die "IO::Compress::Gzip failed: $GzipError\n";
+
+    $z->print("abcde");
+    $z->close();
+
+See the L</Examples> for more.
 
 The mandatory parameter C<$output> is used to control the destination
 of the compressed data. This parameter can take one of these forms.
@@ -960,7 +975,52 @@ The ID header in an C<ExtraField> sub-field can consist of any two bytes.
 
 =head2 Examples
 
-TODO
+=head3 Streaming
+
+This very simple command line example demonstrates the streaming capabilities
+of the module. The code reads data from STDIN or all the files given on the
+commandline, compresses it, and writes the compressed data to STDOUT.
+
+    use strict ;
+    use warnings ;
+    use IO::Compress::Gzip qw(gzip $GzipError) ;
+
+    my $z = IO::Compress::Gzip->new("-", Stream => 1)
+        or die "IO::Compress::Gzip failed: $GzipError\n";
+
+    while (<>) {
+        $z->print("abcde");
+    }
+    $z->close();
+
+Note the use of C<"-"> to means C<STDOUT>. Alternatively you can use C<\*STDOUT>.
+
+=head3 Compressing a file from the filesystem
+
+To read the contents of the file C<file1.txt> and write the compressed
+data to the file C<file1.txt.gz> there are a few options
+
+Start by creating the compression object and opening the input file
+
+    use strict ;
+    use warnings ;
+    use IO::Compress::Gzip qw(gzip $GzipError) ;
+
+    my $input = "file1.txt";
+    my $z = IO::Compress::Gzip->new("file1.txt.gz")
+        or die "IO::Compress::Gzip failed: $GzipError\n";
+
+    # open the input file
+    open my $fh, "<", "file1.txt"
+        or die "Cannot open file1.txt: $!\n";
+
+    # loop through the input file & write to the compressed file
+    while (<$fh>) {
+        $z->print($_);
+    }
+
+    # not forgetting to close the compressed file
+    $z->close();
 
 =head1 Methods
 
@@ -1267,7 +1327,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2023 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

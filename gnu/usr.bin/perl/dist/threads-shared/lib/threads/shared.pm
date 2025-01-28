@@ -8,7 +8,7 @@ use Config;
 
 use Scalar::Util qw(reftype refaddr blessed);
 
-our $VERSION = '1.68'; # Please update the pod, too.
+our $VERSION = '1.69'; # Please update the pod, too.
 my $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 

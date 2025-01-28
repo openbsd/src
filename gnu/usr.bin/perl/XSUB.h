@@ -37,12 +37,12 @@ Variable which is setup by C<xsubpp> to designate the object in a C++
 XSUB.  This is always the proper type for the C++ object.  See C<L</CLASS>> and
 L<perlxs/"Using XS With C++">.
 
-=for apidoc Amn|I32|ax
+=for apidoc Amn|Stack_off_t|ax
 Variable which is setup by C<xsubpp> to indicate the stack base offset,
 used by the C<ST>, C<XSprePUSH> and C<XSRETURN> macros.  The C<dMARK> macro
 must be called prior to setup the C<MARK> variable.
 
-=for apidoc Amn|I32|items
+=for apidoc Amn|Stack_off_t|items
 Variable which is setup by C<xsubpp> to indicate the number of
 items on the stack.  See L<perlxs/"Variable-length Parameter Lists">.
 
@@ -157,13 +157,13 @@ is a lexical C<$_> in scope.
  * Try explicitly using XS_INTERNAL/XS_EXTERNAL instead, please. */
 #define XS(name) XS_EXTERNAL(name)
 
-#define dAX const I32 ax = (I32)(MARK - PL_stack_base + 1)
+#define dAX const Stack_off_t ax = (Stack_off_t)(MARK - PL_stack_base + 1)
 
 #define dAXMARK				\
-        I32 ax = POPMARK;	\
+        Stack_off_t ax = POPMARK;	\
         SV **mark = PL_stack_base + ax++
 
-#define dITEMS I32 items = (I32)(SP - MARK)
+#define dITEMS Stack_off_t items = (Stack_off_t)(SP - MARK)
 
 #define dXSARGS \
         dSP; dAXMARK; dITEMS
@@ -174,16 +174,16 @@ is a lexical C<$_> in scope.
    Note these macros are not drop in replacements for dXSARGS since they set
    PL_xsubfilename. */
 #define dXSBOOTARGSXSAPIVERCHK  \
-        I32 ax = XS_BOTHVERSION_SETXSUBFN_POPMARK_BOOTCHECK;	\
+        Stack_off_t ax = XS_BOTHVERSION_SETXSUBFN_POPMARK_BOOTCHECK;	\
         SV **mark = PL_stack_base + ax - 1; dSP; dITEMS
 #define dXSBOOTARGSAPIVERCHK  \
-        I32 ax = XS_APIVERSION_SETXSUBFN_POPMARK_BOOTCHECK;	\
+        Stack_off_t ax = XS_APIVERSION_SETXSUBFN_POPMARK_BOOTCHECK;	\
         SV **mark = PL_stack_base + ax - 1; dSP; dITEMS
 /* dXSBOOTARGSNOVERCHK has no API in xsubpp to choose it so do
 #undef dXSBOOTARGSXSAPIVERCHK
 #define dXSBOOTARGSXSAPIVERCHK dXSBOOTARGSNOVERCHK */
 #define dXSBOOTARGSNOVERCHK  \
-        I32 ax = XS_SETXSUBFN_POPMARK;  \
+        Stack_off_t ax = XS_SETXSUBFN_POPMARK;  \
         SV **mark = PL_stack_base + ax - 1; dSP; dITEMS
 
 #define dXSTARG SV * const targ = ((PL_op->op_private & OPpENTERSUB_HASTARG) \
@@ -504,7 +504,6 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #    undef fgetpos
 #    undef ioctl
 #    undef getlogin
-#    undef setjmp
 #    undef getc
 #    undef ungetc
 #    undef fileno
@@ -609,8 +608,6 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #    define sleep		PerlProc_sleep
 #    define times		PerlProc_times
 #    define wait		PerlProc_wait
-#    define setjmp		PerlProc_setjmp
-#    define longjmp		PerlProc_longjmp
 #    define signal		PerlProc_signal
 #    define getpid		PerlProc_getpid
 #    define gettimeofday	PerlProc_gettimeofday

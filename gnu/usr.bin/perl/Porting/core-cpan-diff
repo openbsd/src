@@ -9,7 +9,7 @@ use warnings;
 
 use 5.010;
 
-use Getopt::Long;
+use Getopt::Long qw(:config bundling);
 use File::Basename ();
 use File::Copy     ();
 use File::Temp     ();
@@ -30,7 +30,7 @@ use Archive::Tar;
 use Cwd qw[cwd chdir];
 use IPC::Open3;
 use IO::Select;
-local $Archive::Tar::WARN=0;
+local $Archive::Tar::WARN = 0;
 
 # where, under the cache dir, to download tarballs to
 use constant SRC_DIR => 'tarballs';
@@ -45,34 +45,34 @@ sub usage {
     print STDERR <<HERE;
 Usage: $0 [opts] [ -d | -v | -x ] [ -a | module ... ]
 
--a/--all      Scan all dual-life modules.
+-a/--all        Scan all dual-life modules.
 
--c/--cachedir Where to save downloaded CPAN tarball files
-              (defaults to /tmp/something/ with deletion after each run).
+-c/--cachedir   Where to save downloaded CPAN tarball files
+                (defaults to /tmp/something/ with deletion after each run).
 
--d/--diff     Display file differences using diff(1), rather than just
-              listing which files have changed.
+-d/--diff       Display file differences using diff(1), rather than just
+                listing which files have changed.
 
---diffopts    Options to pass to the diff command. Defaults to '-u --text'
-              (except on *BSD, where it's just '-u').
+--diffopts      Options to pass to the diff command. Defaults to '-u --text'
+                (except on *BSD, where it's just '-u').
 
--f|force      Force download from CPAN of new 02packages.details.txt file
-              (with --crosscheck only).
+-f/--force      Force download from CPAN of new 02packages.details.txt file
+                (with --crosscheck only).
 
--m|mirror     Preferred CPAN mirror URI (http:// or file:///)
-              (Local mirror must be a complete mirror, not minicpan)
+-m/--mirror     Preferred CPAN mirror URI (http:// or file:///)
+                (Local mirror must be a complete mirror, not minicpan)
 
--o/--output   File name to write output to (defaults to STDOUT).
+-o/--output     File name to write output to (defaults to STDOUT).
 
--r/--reverse  Reverses the diff (perl to CPAN).
+-r/--reverse    Reverses the diff (perl to CPAN).
 
--u/--upstream only print modules with the given upstream (defaults to all)
+-u/--upstream   Only print modules with the given upstream (defaults to all)
 
--v/--verbose  List the fate of *all* files in the tarball, not just those
-              that differ or are missing.
+-v/--verbose    List the fate of *all* files in the tarball, not just those
+                that differ or are missing.
 
--x|crosscheck List the distributions whose current CPAN version differs from
-              that in blead (i.e. the DISTRIBUTION field in Maintainers.pl).
+-x/--crosscheck List the distributions whose current CPAN version differs from
+                that in blead (i.e. the DISTRIBUTION field in Maintainers.pl).
 
 By default (i.e. without the --crosscheck option),  for each listed module
 (or with -a, all CPAN modules listed in Maintainers.pl), grab the tarball
@@ -435,9 +435,8 @@ sub relatively_mapped {
 
 sub distro_base {
     my $d = shift;
-    $d =~ s/\.tar\.gz$//;
-    $d =~ s/\.gip$//;
-    $d =~ s/[\d\-_\.]+$//;
+    my $tail_pat = qr/\.(?:tar\.(?:g?z|bz2|Z)|zip|tgz|tbz)/;
+    $d =~ s{-v?([0-9._]+(?:-TRIAL[0-9]*)?)$tail_pat\z}{};
     return $d;
 }
 

@@ -14,11 +14,11 @@ BEGIN {
 use utf8;
 require Config;
 
-plan tests => 315;
+plan tests => 317;
 
 # Test this first before we extend the stack with other operations.
 # This caused an asan failure due to a bad write past the end of the stack.
-eval { my $x; die  1..127, $x =~ y/// };
+eval { no warnings 'uninitialized'; my $x; die  1..127, $x =~ y/// };
 
 $_ = "abcdefghijklmnopqrstuvwxyz";
 
@@ -33,8 +33,14 @@ is($_, "abcdefghijklmnopqrstuvwxyz",    'lc');
 tr/b-y/B-Y/;
 is($_, "aBCDEFGHIJKLMNOPQRSTUVWXYz",    'partial uc');
 
-tr/a-a/AB/;
-is($_, "ABCDEFGHIJKLMNOPQRSTUVWXYz",    'single char range a-a');
+{
+    # AB is 2 characters, longer than single char source, so otherwise gets
+    # warned about
+    no warnings 'misc';
+
+    tr/a-a/AB/;
+    is($_, "ABCDEFGHIJKLMNOPQRSTUVWXYz",    'single char range a-a');
+}
 
 eval 'tr/a/\N{KATAKANA LETTER AINU P}/;';
 like $@,
@@ -1195,6 +1201,14 @@ for ("", nullrocow) {
     my $c = "cb";
     eval '$c =~ tr{aabc}{d\x{d0000}}';
     is($c, "\x{d0000}\x{d0000}", "Shouldn't generate valgrind errors");
+}
+
+{   # GH #21748
+    my $c;
+    my $x = "\xcb";
+    $c = $x =~ tr[\N{U+00CB}\N{U+00EB}\N{U+2010}][\N{U+0401}\N{U+0451}\-];
+    is $x, "\x{401}", 'Latin1 \N{} followed by above Latin1 work properly';
+    is $c, 1, "Count for the above test";
 }
 
 1;

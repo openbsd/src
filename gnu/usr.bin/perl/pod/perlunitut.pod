@@ -20,7 +20,7 @@ that there are many different character sets and encodings, and that your
 program has to be explicit about them. Recommended reading is "The Absolute
 Minimum Every Software Developer Absolutely, Positively Must Know About Unicode
 and Character Sets (No Excuses!)" by Joel Spolsky, at
-L<http://joelonsoftware.com/articles/Unicode.html>.
+L<https://joelonsoftware.com/articles/Unicode.html>.
 
 This tutorial speaks in rather absolute terms, and provides only a limited view
 of the wealth of character string related features that Perl has to offer. For

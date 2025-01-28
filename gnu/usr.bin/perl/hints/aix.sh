@@ -694,5 +694,10 @@ EOF
   ;;
 esac # not gcc
 
+case "$osvers" in
+    [1-6].*)    # The setlocale() return can be wrongly truncated
+        ccflags="$ccflags -DHAS_BROKEN_SETLOCALE_QUERY_LC_ALL"
+    ;;
+esac
 
 # EOF

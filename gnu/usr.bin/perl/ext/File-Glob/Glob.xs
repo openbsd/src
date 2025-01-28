@@ -240,7 +240,7 @@ csh_glob(pTHX_ AV *entries, const char *pat, STRLEN len, bool is_utf8)
 			else sv_catpvn(word, piece, s-piece);
 		    }
 		    if (!word) break;
-		    if (!patav) patav = (AV *)sv_2mortal((SV *)newAV());
+		    if (!patav) patav = newAV_mortal();
 		    av_push(patav, word);
 		    word = NULL;
 		    piece = NULL;

@@ -1,7 +1,6 @@
-
-require 5;
 package Pod::Simple;
 use strict;
+use warnings;
 use Carp ();
 BEGIN           { *DEBUG = sub () {0} unless defined &DEBUG }
 use integer;
@@ -11,21 +10,14 @@ use Pod::Simple::BlackBox ();
 use Pod::Simple::TiedOutFH;
 #use utf8;
 
-use vars qw(
-  $VERSION @ISA
-  @Known_formatting_codes  @Known_directives
-  %Known_formatting_codes  %Known_directives
-  $NL
-);
+our @ISA = ('Pod::Simple::BlackBox');
+our $VERSION = '3.45';
 
-@ISA = ('Pod::Simple::BlackBox');
-$VERSION = '3.43';
-
-@Known_formatting_codes = qw(I B C L E F S X Z); 
-%Known_formatting_codes = map(($_=>1), @Known_formatting_codes);
-@Known_directives       = qw(head1 head2 head3 head4 head5 head6 item over back); 
-%Known_directives       = map(($_=>'Plain'), @Known_directives);
-$NL = $/ unless defined $NL;
+our @Known_formatting_codes = qw(I B C L E F S X Z);
+our %Known_formatting_codes = map(($_=>1), @Known_formatting_codes);
+our @Known_directives       = qw(head1 head2 head3 head4 head5 head6 item over back);
+our %Known_directives       = map(($_=>'Plain'), @Known_directives);
+our $NL = $/ unless defined $NL;
 
 #-----------------------------------------------------------------------------
 # Set up some constants:
@@ -202,7 +194,7 @@ sub output_string {
   #
   my $this = shift;
   return $this->{'output_string'} unless @_;  # GET.
-  
+
   my $x = (defined($_[0]) and ref($_[0])) ? $_[0] : \( $_[0] );
   $$x = '' unless defined $$x;
   DEBUG > 4 and print STDERR "# Output string set to $x ($$x)\n";
@@ -277,7 +269,7 @@ sub _accept_directives {
   }
   DEBUG > 6 and print STDERR "$this\'s accept_directives : ",
    pretty($this->{'accept_directives'}), "\n";
-  
+
   return sort keys %{ $this->{'accept_directives'} } if wantarray;
   return;
 }
@@ -322,7 +314,7 @@ sub _accept_targets {
     # TODO: enforce some limitations on what a target name can be?
     $this->{'accept_targets'}{$t} = $type;
     DEBUG > 2 and print STDERR "Learning to accept \"$t\" as target of type $type\n";
-  }    
+  }
   return sort keys %{ $this->{'accept_targets'} } if wantarray;
   return;
 }
@@ -337,7 +329,7 @@ sub unaccept_targets {
     # TODO: enforce some limitations on what a target name can be?
     delete $this->{'accept_targets'}{$t};
     DEBUG > 2 and print STDERR "OK, won't accept \"$t\" as target.\n";
-  }    
+  }
   return sort keys %{ $this->{'accept_targets'} } if wantarray;
   return;
 }
@@ -356,7 +348,7 @@ sub accept_code { shift->accept_codes(@_) } # alias
 
 sub accept_codes {  # Add some codes
   my $this = shift;
-  
+
   foreach my $new_code (@_) {
     next unless defined $new_code and length $new_code;
     # A good-enough check that it's good as an XML Name symbol:
@@ -379,7 +371,7 @@ sub accept_codes {  # Add some codes
     # If we say we accept "W", then a "W" in the treelet simply turns
     #  into "W".
   }
-  
+
   return;
 }
 
@@ -388,7 +380,7 @@ sub unaccept_code { shift->unaccept_codes(@_) }
 
 sub unaccept_codes { # remove some codes
   my $this = shift;
-  
+
   foreach my $new_code (@_) {
     next unless defined $new_code and length $new_code;
     # A good-enough check that it's good as an XML Name symbol:
@@ -407,7 +399,7 @@ sub unaccept_codes { # remove some codes
 
     DEBUG > 2 and print STDERR "OK, won't accept the code $new_code<...>.\n";
   }
-  
+
   return;
 }
 
@@ -490,7 +482,7 @@ sub parse_file {
 
     # be eol agnostic
     s/\r\n?/\n/g for @lines;
- 
+
     # make sure there are only one line elements for parse_lines
     @lines = split(/(?<=\n)/, join('', @lines));
 
@@ -511,13 +503,13 @@ sub parse_from_file {
 
   my($self, $source, $to) = @_;
   $self = $self->new unless ref($self); # so we tolerate being a class method
-  
+
   if(!defined $source)             { $source = *STDIN{IO}
   } elsif(ref(\$source) eq 'GLOB') { # stet
   } elsif(ref($source)           ) { # stet
   } elsif(!length $source
      or $source eq '-' or $source =~ m/^<&(?:STDIN|0)$/i
-  ) { 
+  ) {
     $source = *STDIN{IO};
   }
 
@@ -606,7 +598,7 @@ sub _get_item_type {       # mutates the item!!
 
 
   # Otherwise we haven't yet been to this node.  Maybe alter it...
-  
+
   my $content = join "\n", @{$para}[2 .. $#$para];
 
   if($content =~ m/^\s*\*\s*$/s or $content =~ m/^\s*$/s) {
@@ -616,7 +608,7 @@ sub _get_item_type {       # mutates the item!!
     return $para->[1]{'~type'} = 'bullet';
 
   } elsif($content =~ m/^\s*\*\s+(.+)/s) {  # tolerance
-  
+
     # Like: "=item * Foo bar baz";
     $para->[1]{'~orig_content'}      = $content;
     $para->[1]{'~_freaky_para_hack'} = $1;
@@ -626,13 +618,13 @@ sub _get_item_type {       # mutates the item!!
 
   } elsif($content =~ m/^\s*(\d+)\.?\s*$/s) {
     # Like: "=item 1.", "=item    123412"
-    
+
     $para->[1]{'~orig_content'} = $content;
     $para->[1]{'number'} = $1;  # Yes, stores the number there!
 
     splice @$para, 2; # so it ends up just being ['=item', { attrhash } ]
     return $para->[1]{'~type'} = 'number';
-    
+
   } else {
     # It's anything else.
     return $para->[1]{'~type'} = 'text';
@@ -659,7 +651,7 @@ sub _make_treelet {
   } else {
     $treelet = $self->_treelet_from_formatting_codes(@_);
   }
-  
+
   if( ! $self->{'_output_is_for_JustPod'}   # Retain these as-is for pod output
      && $self->_remap_sequences($treelet) )
   {
@@ -668,12 +660,12 @@ sub _make_treelet {
     $self->_treat_Es($treelet);
     $self->_treat_Ss($treelet);  # S has to come after E
     $self->_wrap_up($treelet); # Nix X's and merge texties
-    
+
   } else {
     DEBUG and print STDERR "Formatless treelet gets fast-tracked.\n";
      # Very common case!
   }
-  
+
   splice @$treelet, 0, 2;  # lop the top off
 
   return $treelet;
@@ -690,8 +682,8 @@ sub _wrap_up {
   DEBUG > 2 and print STDERR "\nStarting _wrap_up traversal.\n",
    $merge ? (" Merge mode on\n") : (),
    $nixx  ? (" Nix-X mode on\n") : (),
-  ;    
-  
+  ;
+
 
   my($i, $treelet);
   while($treelet = shift @stack) {
@@ -712,7 +704,7 @@ sub _wrap_up {
         $treelet->[$i-1] .= ( splice(@$treelet, $i, 1) )[0];
         DEBUG > 4 and print STDERR "    Now: ", $i-1, ":[$treelet->[$i-1]]\n";
         --$i;
-        next; 
+        next;
         # since we just pulled the possibly last node out from under
         #  ourselves, we can't just redo()
 
@@ -722,7 +714,7 @@ sub _wrap_up {
 
         if($treelet->[$i][0] eq 'L') {
           my $thing;
-          foreach my $attrname ('section', 'to') {        
+          foreach my $attrname ('section', 'to') {
             if(defined($thing = $treelet->[$i][1]{$attrname}) and ref $thing) {
               unshift @stack, $thing;
               DEBUG > 4 and print STDERR "  +Enqueuing ",
@@ -743,13 +735,13 @@ sub _wrap_up {
 
 sub _remap_sequences {
   my($self,@stack) = @_;
-  
+
   if(@stack == 1 and @{ $stack[0] } == 3 and !ref $stack[0][2]) {
     # VERY common case: abort it.
     DEBUG and print STDERR "Skipping _remap_sequences: formatless treelet.\n";
     return 0;
   }
-  
+
   my $map = ($self->{'accept_codes'} || die "NO accept_codes in $self?!?");
 
   my $start_line = $stack[0][1]{'start_line'};
@@ -767,15 +759,15 @@ sub _remap_sequences {
   ;
 
   # A recursive algorithm implemented iteratively!  Whee!
-  
+
   my($is, $was, $i, $treelet); # scratch
   while($treelet = shift @stack) {
     DEBUG > 3 and print STDERR " Considering children of this $treelet->[0] node...\n";
     for($i = 2; $i < @$treelet; ++$i) { # iterate over children
       next unless ref $treelet->[$i];  # text nodes are uninteresting
-      
+
       DEBUG > 4 and print STDERR "  Noting child $i : $treelet->[$i][0]<...>\n";
-      
+
       $is = $treelet->[$i][0] = $map->{ $was = $treelet->[$i][0] };
       if( DEBUG > 3 ) {
         if(!defined $is) {
@@ -789,7 +781,7 @@ sub _remap_sequences {
             : "tag $is<...>.\n";
         }
       }
-      
+
       if(!defined $is) {
         $self->whine($start_line, "Deleting unknown formatting code $was<>");
         $is = $treelet->[$i][0] = '1';  # But saving the children!
@@ -804,9 +796,9 @@ sub _remap_sequences {
         while(@dynasty) {
           DEBUG > 4 and printf
            "    Grafting a new %s node between %s and %s\n",
-           $dynasty[-1], $treelet->[0], $treelet->[$i][0], 
+           $dynasty[-1], $treelet->[0], $treelet->[$i][0],
           ;
-          
+
           #$nugget = ;
           splice @$treelet, $i, 1, [pop(@dynasty), {}, $treelet->[$i]];
             # relace node with a new parent
@@ -826,7 +818,7 @@ sub _remap_sequences {
       }
     }
   }
-  
+
   DEBUG > 2 and print STDERR "End of _remap_sequences traversal.\n\n";
 
   if(@_ == 2 and @{ $_[1] } == 3 and !ref $_[1][2]) {
@@ -842,7 +834,7 @@ sub _ponder_extend {
 
   # "Go to an extreme, move back to a more comfortable place"
   #  -- /Oblique Strategies/,  Brian Eno and Peter Schmidt
-  
+
   my($self, $para) = @_;
   my $content = join ' ', splice @$para, 2;
   $content =~ s/^\s+//s;
@@ -875,16 +867,16 @@ sub _ponder_extend {
       );
       return;
     }
-    
+
     if(grep $new_letter eq $_, @Known_formatting_codes) {
       DEBUG > 2 and print STDERR " $new_letter isn't a good thing to extend, because known.\n";
       $self->whine(
         $para->[1]{'start_line'},
         "You can't extend an established code like \"$new_letter\""
       );
-      
+
       #TODO: or allow if last bit is same?
-      
+
       return;
     }
 
@@ -899,7 +891,7 @@ sub _ponder_extend {
       );
       return;
     }
-    
+
     unless($elements_one =~ m/^[^ ,]+(,[^ ,]+)*$/s) { # like "B", "M,I", etc.
       $self->whine(
         $para->[1]{'start_line'},
@@ -978,22 +970,22 @@ sub _treat_Zs {  # Nix Z<...>'s
         unshift @stack, $treelet->[$i]; # recurse
         next;
       }
-        
+
       DEBUG > 1 and print STDERR "Nixing Z node @{$treelet->[$i]}\n";
-        
+
       # bitch UNLESS it's empty
       unless(  @{$treelet->[$i]} == 2
            or (@{$treelet->[$i]} == 3 and $treelet->[$i][2] eq '')
       ) {
         $self->whine( $start_line, "A non-empty Z<>" );
       }      # but kill it anyway
-        
+
       splice(@$treelet, $i, 1); # thereby just nix this node.
       --$i;
-        
+
     }
   }
-  
+
   return;
 }
 
@@ -1011,7 +1003,7 @@ sub _treat_Zs {  # Nix Z<...>'s
 # Functions|perlfunc>", the link-text is "Perl Functions". In
 # "L<Time::HiRes>" and even "L<|Time::HiRes>", there is no link text. Note
 # that link text may contain formatting.)
-# 
+#
 
 ############# The element children
 # Second:
@@ -1025,7 +1017,7 @@ sub _treat_Zs {  # Nix Z<...>'s
 # The name or URL, or undef if none. (E.g., in "L<Perl
 # Functions|perlfunc>", the name -- also sometimes called the page -- is
 # "perlfunc". In "L</CAVEATS>", the name is undef.)
-# 
+#
 
 ############# The "section" attribute (which might be next, or a treelet)
 # Fourth:
@@ -1034,7 +1026,7 @@ sub _treat_Zs {  # Nix Z<...>'s
 # is not the same as a manpage section like the "5" in "man 5 crontab".
 # "Section Foo" in the Pod sense means the part of the text that's
 # introduced by the heading or item whose text is "Foo".)
-# 
+#
 # Pod parsers may also note additional attributes including:
 #
 
@@ -1085,12 +1077,12 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
         unshift @stack, $treelet->[$i]; # recurse
         next;
       }
-      
-      
+
+
       # By here, $treelet->[$i] is definitely an L node
       my $ell = $treelet->[$i];
       DEBUG > 1 and print STDERR "Ogling L node " . pretty($ell) . "\n";
-        
+
       # bitch if it's empty or is just '/'
       if (@{$ell} == 3 and $ell->[2] =~ m!\A\s*/\s*\z!) {
         $self->whine( $start_line, "L<> contains only '/'" );
@@ -1110,7 +1102,7 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
       ) {
         $self->whine( $start_line, "L<> starts or ends with whitespace" );
       }
-     
+
       # Catch URLs:
 
       # there are a number of possible cases:
@@ -1165,7 +1157,7 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
 
         next;
       }
-      
+
       # Catch some very simple and/or common cases
       if(@{$ell} == 3 and ! ref $ell->[2]) {
         my $it = $ell->[2];
@@ -1192,15 +1184,15 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
         }
         # else fall thru...
       }
-      
-      
+
+
 
       # ...Uhoh, here's the real L<...> parsing stuff...
       # "With the ill behavior, with the ill behavior, with the ill behavior..."
 
       DEBUG > 1 and print STDERR "Running a real parse on this non-trivial L\n";
-      
-      
+
+
       my $link_text; # set to an arrayref if found
       my @ell_content = @$ell;
       splice @ell_content,0,2; # Knock off the 'L' and {} bits
@@ -1242,8 +1234,8 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
           last;
         }
       }
-      
-      
+
+
       # Now look for the "/" -- only in CHILDREN (not all underlings!)
       # And afterward, anything left in @ell_content will be the raw name
       # Like L<Foo::Bar/Object Methods>
@@ -1264,7 +1256,7 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
 
           push @section_name, splice @ell_content, 1+$j;
             # leaving only things before and including J
-          
+
           @ell_content  = grep ref($_)||length($_), @ell_content  ;
           @section_name = grep ref($_)||length($_), @section_name ;
 
@@ -1358,10 +1350,10 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
         );
         DEBUG > 3 and print STDERR "L-to content: ", pretty($ell->[1]{'to'}), "\n";
       }
-      
+
       # And update children to be the link-text:
       @$ell = (@$ell[0,1], defined($link_text) ? splice(@$link_text) : '');
-      
+
       DEBUG > 2 and print STDERR "End of L-parsing for this node " . pretty($treelet->[$i]) . "\n";
 
       unshift @stack, $treelet->[$i]; # might as well recurse
@@ -1391,9 +1383,9 @@ sub _treat_Es {
       next unless ref $treelet->[$i];  # text nodes are uninteresting
       if($treelet->[$i][0] eq 'L') {
         # SPECIAL STUFF for semi-processed L<>'s
-        
+
         my $thing;
-        foreach my $attrname ('section', 'to') {        
+        foreach my $attrname ('section', 'to') {
           if(defined($thing = $treelet->[$i][1]{$attrname}) and ref $thing) {
             unshift @stack, $thing;
             DEBUG > 2 and print STDERR "  Enqueuing ",
@@ -1401,14 +1393,14 @@ sub _treat_Es {
              " as an attribute value to tweak.\n";
           }
         }
-        
+
         unshift @stack, $treelet->[$i]; # recurse
         next;
       } elsif($treelet->[$i][0] ne 'E') {
         unshift @stack, $treelet->[$i]; # recurse
         next;
       }
-      
+
       DEBUG > 1 and print STDERR "Ogling E node ", pretty($treelet->[$i]), "\n";
 
       # bitch if it's empty
@@ -1419,7 +1411,7 @@ sub _treat_Es {
         $treelet->[$i] = 'E<>'; # splice in a literal
         next;
       }
-        
+
       # bitch if content is weird
       unless(@{$treelet->[$i]} == 3 and !ref($content = $treelet->[$i][2])) {
         $self->whine( $start_line, "An E<...> surrounding strange content" );
@@ -1468,7 +1460,7 @@ sub _treat_Es {
 
 sub _treat_Ss {
   my($self,$treelet) = @_;
-  
+
   _change_S_to_nbsp($treelet,0) if $self->{'nbsp_for_S'};
 
   # TODO: or a change_nbsp_to_S
@@ -1482,7 +1474,7 @@ sub _treat_Ss {
 sub _change_S_to_nbsp { #  a recursive function
   # Sanely assumes that the top node in the excursion won't be an S node.
   my($treelet, $in_s) = @_;
-  
+
   my $is_s = ('S' eq $treelet->[0]);
   $in_s ||= $is_s; # So in_s is on either by this being an S element,
                    #  or by an ancestor being an S element.
@@ -1497,7 +1489,7 @@ sub _change_S_to_nbsp { #  a recursive function
       }
     } else {
       $treelet->[$i] =~ s/\s/$Pod::Simple::nbsp/g if $in_s;
-       
+
        # Note that if you apply nbsp_for_S to text, and so turn
        # "foo S<bar baz> quux" into "foo bar&#160;faz quux", you
        # end up with something that fails to say "and don't hyphenate
@@ -1539,7 +1531,7 @@ sub filter {
   my($class, $source) = @_;
   my $new = $class->new;
   $new->output_fh(*STDOUT{IO});
-  
+
   if(ref($source || '') eq 'SCALAR') {
     $new->parse_string_document( $$source );
   } elsif(ref($source)) {  # it's a file handle
@@ -1547,7 +1539,7 @@ sub filter {
   } else {  # it's a filename
     $new->parse_file($source);
   }
-  
+
   return $new;
 }
 
@@ -1557,22 +1549,22 @@ sub filter {
 sub _out {
   # For use in testing: Class->_out($source)
   #  returns the transformation of $source
-  
+
   my $class = shift(@_);
 
   my $mutor = shift(@_) if @_ and ref($_[0] || '') eq 'CODE';
 
   DEBUG and print STDERR "\n\n", '#' x 76,
    "\nAbout to parse source: {{\n$_[0]\n}}\n\n";
-  
-  
+
+
   my $parser = ref $class && $class->isa(__PACKAGE__) ? $class : $class->new;
   $parser->hide_line_numbers(1);
 
   my $out = '';
   $parser->output_string( \$out );
   DEBUG and print STDERR " _out to ", \$out, "\n";
-  
+
   $mutor->($parser) if $mutor;
 
   $parser->parse_string_document( $_[0] );
@@ -1585,9 +1577,9 @@ sub _duo {
   # For use in testing: Class->_duo($source1, $source2)
   #  returns the parse trees of $source1 and $source2.
   # Good in things like: &ok( Class->duo(... , ...) );
-  
+
   my $class = shift(@_);
-  
+
   Carp::croak "But $class->_duo is useful only in list context!"
    unless wantarray;
 
@@ -1597,7 +1589,7 @@ sub _duo {
    unless @_ == 2;
 
   my(@out);
-  
+
   while( @_ ) {
     my $parser = $class->new;
 

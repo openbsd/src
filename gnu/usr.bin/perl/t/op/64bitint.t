@@ -460,4 +460,13 @@ cmp_ok -0x8000000000000000 % -0x8000000000000000, '==',  0, 'IV_MIN % IV_MIN';
     }
 }
 
+# Attempts to generate (IV_MIN - 1)
+
+# Note that -0x8000000000000002 cannot be represented in 64-bit IV,
+# but both LHS and RHS are equally converted to (maybe rounded) NV
+# and thus these tests should still pass.
+cmp_ok  0x3ffffffffffffffe % -0xc000000000000000, '==', -0x8000000000000002, 'modulo is (IV_MIN-2)';
+cmp_ok  0x3fffffffffffffff % -0xc000000000000000, '==', -0x8000000000000001, 'modulo is (IV_MIN-1)';
+cmp_ok  0x4000000000000000 % -0xc000000000000000, '==', -0x8000000000000000, 'modulo is IV_MIN';
+
 done_testing();

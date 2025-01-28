@@ -33,6 +33,7 @@ __DEPARSE_FAILURES__
 
 base/lex.t                # checks regexp stringification
 # class/*.t generally failing because OP_METHSTART not recognised
+class/accessor.t
 class/class.t
 class/construct.t
 class/destruct.t
@@ -41,6 +42,8 @@ class/inherit.t
 class/method.t
 class/phasers.t
 class/threads.t
+class/utf8.t
+
 #
 comp/final_line_num.t     # tests syntax error after BEGIN block
 comp/fold.t               # mutability of folded constants
@@ -51,7 +54,6 @@ mro/complex_c3_utf8.t
 mro/isarev.t
 mro/isarev_utf8.t
 op/attrhand.t             # Custom attrs ignored; also AH provides none
-op/caller.t
 op/goto.t
 op/gv.t                   # glob copy constants
 op/index.t
@@ -122,7 +124,7 @@ uni/variables.t
 ../cpan/autodie/t/eval_error.t
 ../cpan/autodie/t/exception_class.t
 ../cpan/autodie/t/exception_nonref.t
-../cpan/autodie/t/exceptions.t
+../cpan/autodie/t/exceptions-smartmatch.t
 ../cpan/autodie/t/exec.t
 ../cpan/autodie/t/filehandles.t
 ../cpan/autodie/t/fileno.t
@@ -214,10 +216,6 @@ uni/variables.t
 # of the test file from being compiled
 ../cpan/ExtUtils-MakeMaker/t/MM_VMS.t
 
-# see comment above about bignum failures
-../cpan/Math-BigRat/t/const-mbr.t
-
-
 ../cpan/Scalar-List-Utils/t/uniq.t
 ../cpan/Term-Cap/test.pl
 ../cpan/Test-Simple/t/Legacy/Builder/carp.t
@@ -230,6 +228,25 @@ uni/variables.t
 ../cpan/Test-Simple/t/Legacy/subtest/predicate.t
 ../cpan/Test-Simple/t/regression/684-nested_todo_diag.t
 ../cpan/Test-Simple/t/Test2/behavior/run_subtest_inherit.t
+
+# These three are very sensitive to line numbers, and in particular
+# to wrong line numbers being output for the closing braces of a function,
+# e.g.
+#
+#    sub foo { .... } # all on line 30
+#
+# becomes
+#
+#    #line 30 ....
+#    sub foo {
+#        ...
+#    #line 10 ....
+#    }
+#
+../cpan/Test2-Suite/t/behavior/filtering.t
+../cpan/Test2-Suite/t/modules/Tools/Compare.t
+../cpan/Test2-Suite/t/modules/Tools/Subtest.t
+
 ../dist/Attribute-Handlers/t/constants.t
 ../dist/Attribute-Handlers/t/data_convert.t
 ../dist/Attribute-Handlers/t/linerep.t
@@ -261,6 +278,7 @@ uni/variables.t
 ../lib/charnames.t
 ../lib/dumpvar.t
 ../lib/English.t
+
 ../lib/overload.t
 
 

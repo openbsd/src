@@ -4,7 +4,7 @@ perlfaq - Frequently asked questions about Perl
 
 =head1 VERSION
 
-version 5.20210520
+version 5.20240218
 
 =head1 DESCRIPTION
 
@@ -85,10 +85,6 @@ Who supports Perl? Who develops it? Why is it free?
 =item *
 
 Which version of Perl should I use?
-
-=item *
-
-What are Perl 4, Perl 5, or Raku (Perl 6)?
 
 =item *
 
@@ -720,7 +716,7 @@ How can I translate tildes (~) in a filename?
 
 =item *
 
-How come when I open a file read-write it wipes it out?
+When I open a file read-write, why does it wipe it out?
 
 =item *
 
@@ -1079,7 +1075,7 @@ How do I find out which operating system I'm running under?
 
 =item *
 
-How come exec() doesn't return?
+Why does exec() not return?
 
 =item *
 

@@ -23,7 +23,7 @@ prove - Run tests through a TAP harness.
 
 Boolean options:
 
- -v,  --verbose         Print all test lines.
+ -v,  --verbose         Print all test lines.  Also sets TEST_VERBOSE
  -l,  --lib             Add 'lib' to the path for your tests (-Ilib).
  -b,  --blib            Add 'blib/lib' and 'blib/arch' to the path for
                         your tests
@@ -396,7 +396,7 @@ Please check individual plugin documentation for more details.
 
 For an up-to-date list of plugins available, please check CPAN:
 
-L<http://search.cpan.org/search?query=App%3A%3AProve+Plugin>
+L<https://metacpan.org/search?q=App%3A%3AProve+Plugin>
 
 =head2 Writing Plugins
 

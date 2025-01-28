@@ -41,7 +41,7 @@ additional software to run (other than what came with your operating
 system).  Currently, this port is capable of using one of the
 following compilers on the Intel x86 and x86_64 architectures:
 
-      Microsoft Visual C++    version 12.0 or later
+      Microsoft Visual C++    Visual C++ 2015 (version 14.0) or later
       Intel C++ Compiler      (experimental)
       Gcc by mingw.org        gcc version 3.4.5-5.3.0
       Gcc by mingw-w64.org    gcc version 4.4.3 or later
@@ -65,14 +65,8 @@ that are also supported by perl's makefile.
 =back
 
 The Microsoft Visual C++ compilers are also now being given away free. They
-are available as "Visual C++ 2013-2022 Community Edition" and are the same
-compilers that ship with "Visual C++ 2013-2022 Professional".
-
-Visual C++ 2013 is capable of B<targeting> XP and Windows Server 2003 but the
-build host requirement is Windows 7/Windows Server 2012. For more details see
-https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-compatibility-vs
-and
-https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
+are available as "Visual C++ 2015-2022 Community Edition" and are the same
+compilers that ship with "Visual C++ 2015-2022 Professional".
 
 The MinGW64 compiler is available at L<https://mingw-w64.org>.
 The latter is actually a cross-compiler targeting Win64. There's also a trimmed
@@ -129,23 +123,23 @@ console already set up for your target architecture (x86-32 or x86-64 or IA64).
 With the newer compilers, you may also use the older batch files if you choose
 so.
 
-=item Microsoft Visual C++ 2013-2022 Community Edition
+=item Microsoft Visual C++ 2015-2022 Community Edition
 
-These free versions of Visual C++ 2013-2022 Professional contain the same
+These free versions of Visual C++ 2015-2022 Professional contain the same
 compilers and linkers that ship with the full versions, and also contain
 everything necessary to build Perl.
 
 These packages can be downloaded from L<https://visualstudio.microsoft.com/>.
 
-Install Visual C++ 2013-2022 Community, then setup your environment
+Install Visual C++ 2015-2022 Community, then setup your environment
 using, e.g.
 
-F<C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat>
+F<C:\Program Files\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat>
 
 (assuming the default installation location was chosen).
 
 Perl should now build using the F<win32/Makefile>.  You will need to edit that
-file to set C<CCTYPE> to one of C<MSVC120>-C<MSVC143> first.
+file to set C<CCTYPE> to one of C<MSVC140>-C<MSVC143> first.
 
 =item Microsoft C++ Build Tools
 
@@ -239,7 +233,7 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type C<gmake> (or C<nmake> if you are using that version of C<make>).
 
 This should build everything.  Specifically, it will create F<perl.exe>,
-F<perl538.dll> at the perl toplevel, and various other extension DLL's
+F<perl540.dll> at the perl toplevel, and various other extension DLL's
 under the F<lib\auto> directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
@@ -263,15 +257,6 @@ Type "gmake test" (or "nmake test").  This will run most
 of the tests from the testsuite (many tests will be skipped).
 
 There should be no test failures.
-
-If you build with Visual C++ 2013 then three tests currently may fail with
-Daylight Saving Time related problems: F<t/io/fs.t>,
-F<cpan/HTTP-Tiny/t/110_mirror.t> and F<lib/File/Copy.t>. The failures are
-caused by bugs in the CRT in VC++ 2013 which are fixed in VC++2015 and
-later, as explained by Microsoft here:
-L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>. In the meantime,
-if you need fixed C<stat> and C<utime> functions then have a look at the
-CPAN distribution Win32::UTCFileTime.
 
 If you build with Visual C++ 2015 or later then F<ext/XS-APItest/t/locale.t>
 may crash (after all its tests have passed). This is due to a regression in the

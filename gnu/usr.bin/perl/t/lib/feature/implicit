@@ -62,37 +62,37 @@ EXPECT
 # lower version after higher version
 sub evalbytes { print "evalbytes sub\n" }
 sub say { print "say sub\n" }
+use 5;
+say "no";
 use 5.015;
 evalbytes "say 'yes'";
 use 5.014;
 evalbytes;
-use 5;
-say "no"
 EXPECT
-Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at - line 8.
+Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at - line 8.
+say sub
 yes
 evalbytes sub
-say sub
 ########
 # Implicit unicode_string feature
-use v5.14;
+use v5.10;
 my $sharp_s = chr utf8::unicode_to_native(0xdf);
 print 'ss' =~ /$sharp_s/i ? "ok\n" : "nok\n";
-use v5.8.8;
+use v5.14;
 print 'ss' =~ /$sharp_s/i ? "ok\n" : "nok\n";
 EXPECT
-Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at - line 5.
-ok
+Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at - line 5.
 nok
+ok
 ########
 # Implicit unicode_eval feature
-use v5.15;
 require '../../t/charset_tools.pl';
 my $long_s = byte_utf8a_to_utf8n("\xc5\xbf");
-print eval "use utf8; q|$long_s|" eq $long_s ? "ok\n" : "nok\n";
-use v5.8.8;
+use v5.10;
 print eval "use utf8; q|$long_s|" eq "\x{17f}" ? "ok\n" : "nok\n";
+use v5.15;
+print eval "use utf8; q|$long_s|" eq $long_s ? "ok\n" : "nok\n";
 EXPECT
-Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at - line 6.
+Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at - line 6.
 ok
 ok

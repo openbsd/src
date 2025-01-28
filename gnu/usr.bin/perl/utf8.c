@@ -935,7 +935,7 @@ Perl_is_utf8_FF_helper_(const U8 * const s0, const U8 * const e,
     return (require_partial) ? 0 : UTF8_MAXBYTES;
 }
 
-char *
+const char *
 Perl__byte_dump_string(pTHX_ const U8 * const start, const STRLEN len, const bool format)
 {
     /* Returns a mortalized C string that is a displayable copy of the 'len'
@@ -944,6 +944,10 @@ Perl__byte_dump_string(pTHX_ const U8 * const start, const STRLEN len, const boo
      *      0   \xab
      *      1    ab         (that is a space between two hex digit bytes)
      */
+
+    if (start == NULL) {
+        return "(nil)";
+    }
 
     const STRLEN output_len = 4 * len + 1;  /* 4 bytes per each input, plus a
                                                trailing NUL */
@@ -2255,7 +2259,7 @@ Perl_utf8_length(pTHX_ const U8 * const s0, const U8 * const e)
     do { /* Process per-word */
 
         /* The idea for counting continuation bytes came from
-         * http://www.daemonology.net/blog/2008-06-05-faster-utf8-strlen.html
+         * https://www.daemonology.net/blog/2008-06-05-faster-utf8-strlen.html
          * One thing it does that this doesn't is to prefetch the buffer
          *      __builtin_prefetch(&s[256], 0, 0);
          *

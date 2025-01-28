@@ -50,7 +50,7 @@ our @EXPORT_OK = qw (usleep sleep ualarm alarm gettimeofday time tv_interval
                  stat lstat utime
                 );
 
-our $VERSION = '1.9775';
+our $VERSION = '1.9777';
 our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -143,8 +143,8 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
   getitimer ($which);
 
   use Time::HiRes qw( clock_gettime clock_getres clock_nanosleep
-                      ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF
-                      ITIMER_REALPROF );
+            CLOCK_REALTIME ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF
+            ITIMER_REALPROF );
 
   $realtime   = clock_gettime(CLOCK_REALTIME);
   $resolution = clock_getres(CLOCK_REALTIME);

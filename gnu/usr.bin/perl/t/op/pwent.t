@@ -38,12 +38,7 @@ $where //= try_prog('NIS+', 'passwd.org_dir', '/bin/niscat');
 # Try dscl
 DSCL: {
 my @dscl = qw(/usr/bin/dscl);
-if (!defined $where && $Config::Config{useperlio} && grep { -x } @dscl) {
-    eval { require PerlIO::scalar; }; # Beware miniperl.
-    if ($@) {
-        print "# No PerlIO::scalar, will not try dscl\n";
-        last DSCL;
-    }
+if (!defined $where && grep { -x } @dscl) {
     # Map dscl items to passwd fields, and provide support for
     # mucking with the dscl output if we need to (and we do).
     my %want = do {
@@ -108,7 +103,7 @@ if (!defined $where && $Config::Config{useperlio} && grep { -x } @dscl) {
 	    push @lines, join (':', @rec) . "\n";
 	}
 	my $data = join '', @lines;
-	if (open PW, '<', \$data) { # Needs PerlIO::scalar.
+	if (open PW, '<', \$data) {
 	    $where = "dscl . -readall /Users";
 	    last;
 	}

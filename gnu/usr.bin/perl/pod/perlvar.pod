@@ -967,6 +967,7 @@ documented as behaving otherwise.  See the following section for more
 details.
 
 =head3 Scoping Rules of Regex Variables
+X<Scoping Rules of Regex Variables>
 
 Regular expression variables allow the programmer to access the state of
 the most recent I<successful> regex match in the current dynamic scope.
@@ -1095,8 +1096,8 @@ An array which exposes the contents of the capture buffers, if any, of
 the last successful pattern match, not counting patterns matched
 in nested blocks that have been exited already.
 
-Note that the 0 index of @{^CAPTURE} is equivalent to $1, the 1 index
-is equivalent to $2, etc.
+Note that the 0 index of C<@{^CAPTURE}> is equivalent to C<$1>, the 1 index
+is equivalent to C<$2>, etc.
 
     if ("foal"=~/(.)(.)(.)(.)/) {
         print join "-", @{^CAPTURE};
@@ -1118,6 +1119,19 @@ see L<perldata/"Demarcated variable names using braces"> for more
 information on this form and its uses.
 
 This variable was added in 5.25.7
+
+If you need access to this functionality in older Perls you can use this
+function immediately after your regexp.
+
+    sub get_captures {
+        no strict 'refs';
+
+        my $last_idx = scalar(@-) - 1;
+        my @arr      = 1 .. $last_idx;
+        my @ret      = map { $$_; } @arr;
+
+        return @ret;
+    }
 
 =item $MATCH
 
@@ -1142,7 +1156,7 @@ compiled or executed with the C</p> modifier.
 
 This is similar to C<$&> (C<$MATCH>) except that to use it you must
 use the C</p> modifier when executing the pattern, and it does not incur
-and performance penalty associated with that variable.
+the performance penalty associated with that variable.
 
 See L</Performance issues> above.
 
@@ -1173,7 +1187,7 @@ executed with the C</p> modifier.
 
 This is similar to C<$`> ($PREMATCH) except that to use it you must
 use the C</p> modifier when executing the pattern, and it does not incur
-and performance penalty associated with that variable.
+the performance penalty associated with that variable.
 
 See L</Performance issues> above.
 
@@ -1209,7 +1223,7 @@ compiled or executed with the C</p> modifier.
 
 This is similar to C<$'> (C<$POSTMATCH>) except that to use it you must
 use the C</p> modifier when executing the pattern, and it does not incur
-and performance penalty associated with that variable.
+the performance penalty associated with that variable.
 
 See L</Performance issues> above.
 
@@ -1344,7 +1358,7 @@ match and any capture buffers it contains.
 
 The number of elements it contains will be one more than the number of
 the highest capture buffers (also called a subgroup) that actually
-matched something. (As opposed to C<@+> which may have fewer elements.)
+matched something. (As opposed to C<@+> which may have more elements.)
 
 C<$-[0]> is the offset of the start of the last successful match.
 C<$-[I<n>]> is the offset of the start of the substring matched by

@@ -2,7 +2,7 @@ BEGIN {
 	chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-	require Config; import Config;
+	require Config; Config->import;
 	skip_all_without_perlio();
 }
 
@@ -155,11 +155,7 @@ sub find_filename {
 }
 
 # in-memory open
-SKIP: {
-    eval { require PerlIO::scalar };
-    unless (find PerlIO::Layer 'scalar') {
-	skip("PerlIO::scalar not found", 11);
-    }
+{
     my $var;
     ok( open(my $x,"+<",\$var), 'magic in-memory file via 3 arg open with \\$var');
     ok( defined fileno($x),     '       fileno' );
@@ -232,7 +228,7 @@ SKIP: {
     fresh_perl_like(<<'EOP',
 unshift @INC, sub {
     return undef unless caller eq "main";
-    open my $fh, "<", \1;
+    open my $fh, "<:encoding(utf-8)", "MANIFEST";
     $fh;
 };
 require Symbol; # doesn't matter whether it exists or not

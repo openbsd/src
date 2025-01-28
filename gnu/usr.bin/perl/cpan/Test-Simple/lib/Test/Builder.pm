@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 BEGIN {
     if( $] < 5.008 ) {
@@ -1670,7 +1670,7 @@ sub _ending {
     return unless $plan || $count || $failed;
 
     # Ran tests but never declared a plan or hit done_testing
-    if( !$hub->plan and $hub->count ) {
+    if( !defined($hub->plan) and $hub->count ) {
         $self->diag("Tests were run but no plan was declared and done_testing() was not seen.");
 
         if($real_exit_code) {
@@ -2647,4 +2647,4 @@ Copyright 2002-2008 by chromatic E<lt>chromatic@wgz.orgE<gt> and
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-See F<http://www.perl.com/perl/misc/Artistic.html>
+See L<https://dev.perl.org/licenses/>

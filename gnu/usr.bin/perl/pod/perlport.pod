@@ -398,6 +398,10 @@ directory if their names are lowercased and truncated to eight
 characters before the C<.>, if any, and to three characters after the
 C<.>, if any).  (And do not use C<.>s in directory names.)
 
+On Windows extra C<.>s at the end of a file or directory name are
+ignored in most circumstances, and a directory name containing only
+three or more C<.>s are treated as the current directory by some APIs.
+
 =head2 System Interaction
 
 Not all platforms provide a command line.  These are usually platforms
@@ -1508,7 +1512,10 @@ C<-R>, C<-W>, C<-X>, C<-O> are indistinguishable from C<-r>, C<-w>,
 C<-x>, C<-o>.
 
 (Win32, VMS, S<RISC OS>)
-C<-g>, C<-k>, C<-l>, C<-u>, C<-A> are not particularly meaningful.
+C<-g>, C<-k>, C<-u>, C<-A> are not particularly meaningful.
+
+(VMS, S<RISC OS>)
+C<-l> is not particularly meaningful.
 
 (Win32)
 C<-l> returns true for both symlinks and directory junctions.
@@ -1521,7 +1528,7 @@ C<-d> is true if passed a device spec without an explicit directory.
 
 (Win32)
 C<-x> (or C<-X>) determine if a file ends in one of the executable
-suffixes.  C<-S> is meaningless.
+suffixes.
 
 (S<RISC OS>)
 C<-x> (or C<-X>) determine if a file has an executable file type.

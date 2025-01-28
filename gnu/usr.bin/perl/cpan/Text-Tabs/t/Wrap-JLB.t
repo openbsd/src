@@ -1,7 +1,5 @@
 use strict; use warnings FATAL => 'all';
 
-BEGIN { eval sprintf 'sub NEED_REPEATED_DECODE () { %d }', $] lt '5.008' }
-
 use Text::Wrap;
 
 $Text::Wrap::columns = 72;
@@ -109,7 +107,6 @@ sub check_data {
 	my $nl = "\n" x chomp;
 
 	$_ = wrap("", "", $_) . $nl;
-	$_ = pack "U0a*", $_ if NEED_REPEATED_DECODE;
 
 	$byte_count  = bytes::length($_);
 	$char_count  = length();

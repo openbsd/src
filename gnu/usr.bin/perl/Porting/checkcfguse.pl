@@ -78,7 +78,7 @@ while (<$mani>) {
     # Skip matches from the config files themselves,
     # from metaconfig generated files that refer to
     # the config symbols, and from pods.
-    next if $fn =~ m{^(?:config_h.SH|Configure|configure\.com|Porting/(?:config|Glossary)|(?:plan9|win32)/(?:config|(?:GNU)?[Mm]akefile)|uconfig)|\.pod$};
+    next if $fn =~ m{^(?:config_h.SH|Configure|configure\.com|Porting/(?:config|Glossary)|(?:plan9|win32)/(?:config|(?:GNU)?[Mm]akefile))|\.pod$};
     open my $fh, '<', $fn or die qq[$0: Failed to open $fn: $!];
     while (<$fh>) {
       while (/\b($SYM)\b/go) {

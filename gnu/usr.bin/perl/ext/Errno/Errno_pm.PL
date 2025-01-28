@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.37";
+our $VERSION = "1.38";
 
 my %err = ();
 
@@ -271,9 +271,9 @@ sub write_errno_pm {
 	close(CPPO);
     }
 
-    # escape $Config{'archname'}
-    my $archname = $Config{'archname'};
-    $archname =~ s/([@%\$])/\\$1/g;
+    # escape $Config{'archname'}, $Config{'osvers'}
+    my ($archname, $osvers) = @Config{'archname', 'osvers'};
+    $_ = quotemeta for $archname, $osvers;
 
     # Write Errno.pm
 
@@ -297,8 +297,8 @@ EDQ
         print <<"CONFIG_CHECK_END";
 use Config;
 "\$Config{'archname'}-\$Config{'osvers'}" eq
-"$archname-$Config{'osvers'}" or
-	die "Errno architecture ($archname-$Config{'osvers'}) does not match executable architecture (\$Config{'archname'}-\$Config{'osvers'})";
+"$archname-$osvers" or
+	die "Errno architecture ($archname-$osvers) does not match executable architecture (\$Config{'archname'}-\$Config{'osvers'})";
 
 CONFIG_CHECK_END
 }

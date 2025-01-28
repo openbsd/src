@@ -21,7 +21,8 @@ use POSIX ();
 use Term::Cap;
 
 our @ISA = qw(Pod::Text);
-our $VERSION = '5.01';
+our $VERSION = '5.01_02';
+$VERSION =~ tr/_//d;
 
 ##############################################################################
 # Overrides

@@ -3,7 +3,7 @@ BEGIN {
     # @INC poking  no longer needed w/ new MakeMaker and Makefile.PL's
     # with $ENV{PERL_CORE} set
     # In case we need it in future...
-    require Config; import Config;
+    require Config; Config->import();
     pop @INC if $INC[-1] eq '.';
 }
 use strict;
@@ -11,7 +11,7 @@ use warnings;
 use Getopt::Std;
 use Config;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.24 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.25 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -213,7 +213,7 @@ if (exists $opt{f}) {
 }
 
 my $cname = $opt{o} ? $opt{o} : shift(@ARGV);
-unless ($cname) { #debuging a win32 nmake error-only. works via cmdline
+unless ($cname) { # Debugging a Win32 nmake error-only; works via cmdline.
     print "\nARGV:";
     print "$_ " for @ARGV;
     print "\nopt:";

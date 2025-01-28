@@ -620,6 +620,7 @@ The REGEXP struct is defined in F<regexp.h>.
 All regex engines must be able to
 correctly build such a structure in their L</comp> routine.
 
+=for apidoc Ayh||struct regexp
 =for apidoc Ayh||REGEXP
 
 The REGEXP structure contains all the data that Perl needs to be aware of
@@ -637,63 +638,86 @@ an arbitrary structure, whose use and management is the responsibility
 of the compiling engine.  Perl will never modify either of these
 values.
 
+    /* copied from: regexp.h */
     typedef struct regexp {
-        /* what engine created this regexp? */
-        const struct regexp_engine* engine;
+        /*----------------------------------------------------------------------
+         * Fields required for compatibility with SV types
+         */
+        _XPV_HEAD;
 
-        /* what re is this a lightweight copy of? */
-        struct regexp* mother_re;
+        /*----------------------------------------------------------------------
+         * Operational fields
+         */
+        const struct regexp_engine* engine; /* what engine created this regexp? */
+        REGEXP *mother_re; /* what re is this a lightweight copy of? */
+        HV *paren_names;   /* Optional hash of paren names */
 
-        /* Information about the match that the Perl core uses to manage
-         * things */
-        U32 extflags;   /* Flags used both externally and internally */
-	I32 minlen;	/* mininum possible number of chars in */
-                           string to match */
-	I32 minlenret;	/* mininum possible number of chars in $& */
-        U32 gofs;       /* chars left of pos that we search from */
+        /*----------------------------------------------------------------------
+         * Information about the match that the perl core uses to manage things
+         */
 
-        /* substring data about strings that must appear
-           in the final match, used for optimisations */
+        /* see comment in regcomp_internal.h about branch reset to understand
+           the distinction between physical and logical capture buffers */
+        U32 nparens;                    /* physical number of capture buffers */
+        U32 logical_nparens;            /* logical_number of capture buffers */
+        I32 *logical_to_parno;          /* map logical parno to first physcial */
+        I32 *parno_to_logical;          /* map every physical parno to logical */
+        I32 *parno_to_logical_next;     /* map every physical parno to the next
+                                           physical with the same logical id */
+
+        SSize_t maxlen;    /* maximum possible number of chars in string to match */
+        SSize_t minlen;    /* minimum possible number of chars in string to match */
+        SSize_t minlenret; /* minimum possible number of chars in $& */
+        STRLEN gofs;       /* chars left of pos that we search from */
+                           /* substring data about strings that must appear in
+                            * the final match, used for optimisations */
+
         struct reg_substr_data *substrs;
 
-        U32 nparens;  /* number of capture groups */
-
         /* private engine specific data */
-        U32 intflags;   /* Engine Specific Internal flags */
-        void *pprivate; /* Data private to the regex engine which 
-                           created this object. */
 
-        /* Data about the last/current match. These are modified during
-         * matching*/
-        U32 lastparen;            /* highest close paren matched ($+) */
-        U32 lastcloseparen;       /* last close paren matched ($^N) */
-        regexp_paren_pair *offs;  /* Array of offsets for (@-) and
-                                     (@+) */
+        void *pprivate;    /* Data private to the regex engine which
+                            * created this object. */
+        U32 extflags;      /* Flags used both externally and internally */
+        U32 intflags;      /* Engine Specific Internal flags */
 
-        char *subbeg;  /* saved or original string so \digit works
-                          forever. */
-        SV_SAVED_COPY  /* If non-NULL, SV which is COW from original */
-        I32 sublen;    /* Length of string pointed by subbeg */
-        I32 suboffset;	/* byte offset of subbeg from logical start of
-                           str */
-	I32 subcoffset;	/* suboffset equiv, but in chars (for @-/@+) */
+        /*----------------------------------------------------------------------
+         * Data about the last/current match. These are modified during matching
+         */
 
-        /* Information about the match that isn't often used */
-        I32 prelen;           /* length of precomp */
-        const char *precomp;  /* pre-compilation regular expression */
+        U32 lastparen;           /* highest close paren matched ($+) */
+        U32 lastcloseparen;      /* last close paren matched ($^N) */
+        regexp_paren_pair *offs; /* Array of offsets for (@-) and (@+) */
+        char **recurse_locinput; /* used to detect infinite recursion, XXX: move to internal */
 
-        char *wrapped;  /* wrapped version of the pattern */
-        I32 wraplen;    /* length of wrapped */
 
-        I32 seen_evals;   /* number of eval groups in the pattern - for
-                             security checks */
-        HV *paren_names;  /* Optional hash of paren names */
+        /*---------------------------------------------------------------------- */
 
-        /* Refcount of this regexp */
-        I32 refcnt;             /* Refcount of this regexp */
+        /* offset from wrapped to the start of precomp */
+        PERL_BITFIELD32 pre_prefix:4;
+
+        /* original flags used to compile the pattern, may differ from
+         * extflags in various ways */
+        PERL_BITFIELD32 compflags:9;
+
+        /*---------------------------------------------------------------------- */
+
+        char *subbeg;       /* saved or original string so \digit works forever. */
+        SV_SAVED_COPY       /* If non-NULL, SV which is COW from original */
+        SSize_t sublen;     /* Length of string pointed by subbeg */
+        SSize_t suboffset;  /* byte offset of subbeg from logical start of str */
+        SSize_t subcoffset; /* suboffset equiv, but in chars (for @-/@+) */
+
+        /*----------------------------------------------------------------------
+         * More Operational fields
+         */
+
+        CV *qr_anoncv;      /* the anon sub wrapped round qr/(?{..})/ */
     } regexp;
 
-The fields are discussed in more detail below:
+Most of the fields contained in this structure are accessed via macros
+with a prefix of C<RX_> or C<RXp_>. The fields are discussed in more detail
+below:
 
 =head2 C<engine>
 
@@ -710,7 +734,14 @@ pointed to by C<RE_ENGINE_PTR>.
 
 =head2 C<mother_re>
 
-TODO, see commit 28d8d7f41a.
+This is a pointer to another struct regexp which this one was derived
+from. C<qr//> objects means that the same regexp pattern can be used in
+different contexts at the same time, and as long as match status
+information is stored in the structure (there are plans to change this
+eventually) we need to support having multiple copies of the structure
+in use at the same time. The fields related to the regexp program itself
+are copied from the mother_re, and owned by the mother_re, whereas the
+match state variables are owned by the struct itself.
 
 =head2 C<extflags>
 
@@ -753,12 +784,49 @@ Substring data about strings that must appear in the final match.  This
 is currently only used internally by Perl's engine, but might be
 used in the future for all engines for optimisations.
 
-=head2 C<nparens>, C<lastparen>, and C<lastcloseparen>
+=head2 C<nparens>, C<logical_nparens>
 
-These fields are used to keep track of: how many paren capture groups
-there are in the pattern; which was the highest paren to be closed (see
-L<perlvar/$+>); and which was the most recent paren to be closed (see
-L<perlvar/$^N>).
+
+These fields are used to keep track of the number of physical and logical
+paren capture groups there are in the pattern, which may differ if the
+pattern includes the use of the branch reset construct C<(?| ... | ... )>.
+For instance the pattern C</(?|(foo)|(bar))/> contains two physical capture
+buffers, but only one logical capture buffer. Most internals logic in the
+regex engine uses the physical capture buffer ids, but the user exposed
+logic uses logical capture buffer ids. See the next section for data-structures
+that allow mapping from one to the other.
+
+=head2 C<logical_to_parno>, C<parno_to_logical>, C<parno_to_logical_next>
+
+These fields facilitate mapping between logical and physical capture
+buffer numbers. C<logical_to_parno> is an array whose Kth element
+contains the lowest physical capture buffer id for the Kth logical
+capture buffer. C<parno_to_logical> is an array whose Kth element
+contains the logical capture buffer associated with the Kth physical
+capture buffer. C<parno_to_logical_next> is an array whose Kth element
+contains the next physical capture buffer with the same logical id, or 0
+if there is none.
+
+Note that all three of these arrays are ONLY populated when the pattern
+includes the use of the branch reset concept. Patterns which do not use
+branch-reset effectively have a 1:1 to mapping between logical and
+physical so there is no need for this meta-data.
+
+The following table gives an example of how this works.
+
+     Pattern /(a) (?| (b) (c) (d) | (e) (f) | (g) ) (h)/
+     Logical: $1      $2  $3  $4    $2  $3    $2    $5
+     Physical: 1       2   3   4     5   6     7     8
+     Next:     0       5   6   0     7   0     0     0
+
+Also note that the 0th element of any of these arrays is not used as it
+represents the "entire pattern".
+
+=head2 C<lastparen>, and C<lastcloseparen>
+
+These fields are used to keep track of: which was the highest paren to
+be closed (see L<perlvar/$+>); and which was the most recent paren to be
+closed (see L<perlvar/$^N>).
 
 =head2 C<intflags>
 
@@ -791,20 +859,17 @@ C<< ->offs[0].start/end >> represents C<$&> (or
 C<${^MATCH}> under C</p>) and C<< ->offs[paren].end >> matches C<$$paren> where
 C<$paren >= 1>.
 
-=head2 C<precomp> C<prelen>
+=head2 C<RX_PRECOMP> C<RX_PRELEN>
 
-Used for optimisations.  C<precomp> holds a copy of the pattern that
-was compiled and C<prelen> its length.  When a new pattern is to be
+Used for optimisations.  C<RX_PRECOMP> holds a copy of the pattern that
+was compiled and C<RX_PRELEN> its length.  When a new pattern is to be
 compiled (such as inside a loop) the internal C<regcomp> operator
-checks if the last compiled C<REGEXP>'s C<precomp> and C<prelen>
+checks if the last compiled C<REGEXP>'s C<RX_PRECOMP> and C<RX_PRELEN>
 are equivalent to the new one, and if so uses the old pattern instead
 of compiling a new one.
 
-The relevant snippet from C<Perl_pp_regcomp>:
-
-	if (!re || !re->precomp || re->prelen != (I32)len ||
-	    memNE(re->precomp, t, len))
-        /* Compile a new pattern */
+In older perls these two macros were actually fields in the structure
+with the names C<precomp> and C<prelen> respectively.
 
 =head2 C<paren_names>
 
@@ -828,11 +893,12 @@ the regex engine at all, and if so where in the string to search.
 Used during the execution phase for managing search and replace patterns,
 and for providing the text for C<$&>, C<$1> etc. C<subbeg> points to a
 buffer (either the original string, or a copy in the case of
-C<RX_MATCH_COPIED(rx)>), and C<sublen> is the length of the buffer.  The
-C<RX_OFFS> start and end indices index into this buffer.
+C<RX_MATCH_COPIED(rx_sv)>), and C<sublen> is the length of the buffer.  The
+C<RX_OFFS_START(rx_sv,n)> and C<RX_OFFS_END(rx_sv,n)> macros index into this
+buffer. as does the data structure returned by C<RX_OFFSp(rx_sv)> but you
+should not use that directly.
 
-=for apidoc Amh||RX_MATCH_COPIED|const REGEXP * rx
-=for apidoc Amh||RX_OFFS|const REGEXP * rx_sv
+=for apidoc Amh||RX_MATCH_COPIED|const REGEXP * rx_sv
 
 In the presence of the C<REXEC_COPY_STR> flag, but with the addition of
 the C<REXEC_COPY_SKIP_PRE> or C<REXEC_COPY_SKIP_POST> flags, an engine
@@ -848,10 +914,10 @@ which work in characters, not bytes.
 =for apidoc_item ||REXEC_COPY_SKIP_PRE
 =for apidoc_item ||REXEC_COPY_STR
 
-=head2 C<wrapped> C<wraplen>
+=head2 C<RX_WRAPPED> C<RX_WRAPLEN>
 
-Stores the string C<qr//> stringifies to. The Perl engine for example
-stores C<(?^:eek)> in the case of C<qr/eek/>.
+Macros which access the string the C<qr//> stringifies to. The Perl
+engine for example stores C<(?^:eek)> in the case of C<qr/eek/>.
 
 When using a custom engine that doesn't support the C<(?:)> construct
 for inline modifiers, it's probably best to have C<qr//> stringify to
@@ -865,18 +931,14 @@ cases such as:
 There's no solution for this problem other than making the custom
 engine understand a construct like C<(?:)>.
 
-=head2 C<seen_evals>
+=head2 C<RX_REFCNT()>
 
-This stores the number of eval groups in
-the pattern.  This is used for security
-purposes when embedding compiled regexes into larger patterns with C<qr//>.
-
-=head2 C<refcnt>
-
-The number of times the structure is referenced.  When
-this falls to 0, the regexp is automatically freed
-by a call to C<pregfree>.  This should be set to 1 in
-each engine's L</comp> routine.
+The number of times the structure is referenced. When this falls to 0,
+the regexp is automatically freed by a call to C<pregfree>. This should
+be set to 1 in each engine's L</comp> routine. Note that in older perls
+this was a member in the struct called C<refcnt> but in more modern
+perls where the regexp structure was unified with the SV structure this
+is an alias to SvREFCNT().
 
 =head1 HISTORY
 

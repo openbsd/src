@@ -220,6 +220,22 @@ really needed for the public at large to know about, you should use
 instead.  To avoid name space conflicts, follow what's in L</Helper macros>,
 below.
 
+=item __REDEFINE__
+
+If you add the line C<__REDEFINE__> to the C<=provides> section, you can use
+lines like this in the C<=implementation> section:
+
+  __REDEFINE__ macro    some definition
+
+to both redefine C<macro> and indicate that it is provided by F<ppport.h>.  This
+replaces these C<=implementation> section lines:
+
+  #undef macro
+  #ifndef macro
+  #  define macro    some definition
+  #endif
+
+
 =item Helper macros
 
 If you need to define a helper macro which is not part of C<Devel::PPPort> API

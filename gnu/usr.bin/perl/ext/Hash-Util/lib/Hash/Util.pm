@@ -42,7 +42,7 @@ our @EXPORT_OK  = qw(
 BEGIN {
     # make sure all our XS routines are available early so their prototypes
     # are correctly applied in the following code.
-    our $VERSION = '0.30';
+    our $VERSION = '0.32';
     require XSLoader;
     XSLoader::load();
 }
@@ -782,7 +782,7 @@ may not be allocated even though this value will be non-zero.)
 
 =back
 
-=head2 Operating on references to hashes.
+=head2 Operating on references to hashes
 
 Most subroutines documented in this module have equivalent versions
 that operate on references to hashes instead of native hashes.

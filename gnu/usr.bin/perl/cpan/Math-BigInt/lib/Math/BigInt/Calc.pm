@@ -7,7 +7,7 @@ use warnings;
 use Carp qw< carp croak >;
 use Math::BigInt::Lib;
 
-our $VERSION = '1.999837';
+our $VERSION = '2.003002';
 $VERSION =~ tr/_//d;
 
 our @ISA = ('Math::BigInt::Lib');
@@ -1712,6 +1712,156 @@ sub _log_int {
 
     return $x, 1 if $acmp == 0;         # result is exact
     return $x, 0;                       # result is too small
+}
+
+sub _ilog2 {
+    # calculate int(log2($x))
+
+    # There is virtually nothing to gain from computing this any differently
+    # than _log_int(), but it is important that we don't use the method
+    # inherited from the parent, because that method is very slow for backend
+    # libraries whose internal representation uses base 10.
+
+    my ($c, $x) = @_;
+    ($x, my $is_exact) = $c -> _log_int($x, $c -> _two());
+    return wantarray ? ($x, $is_exact) : $x;
+}
+
+sub _ilog10 {
+    # calculate int(log10($x))
+
+    my ($c, $x) = @_;
+
+    # X == 0 => NaN
+    return if @$x == 1 && $x->[0] == 0;
+
+    # X == 1 => 0 (is exact)
+    if (@$x == 1 && $x->[0] == 1) {
+        @$x = 0;
+        return wantarray ? ($x, 1) : $x;
+    }
+
+    my $x_orig = $c -> _copy($x);
+    my $nm1 = $c -> _len($x) - 1;
+
+    my $xtmp = $c -> _new($nm1);
+    @$x = @$xtmp;
+
+    return $x unless wantarray;
+
+    # See if the original $x is an exact power of 10, in which case all but the
+    # most significan chunks are 0, and the most significant chunk is a power
+    # of 10.
+
+    my $is_pow10 = 1;
+    for my $i (0 .. $#$x_orig - 1) {
+        last unless $is_pow10 = $x_orig->[$i] == 0;
+    }
+    $is_pow10 &&= $x_orig->[-1] == 10**int(0.5 + log($x_orig->[-1]) / log(10));
+
+    return wantarray ? ($x, 1) : $x if $is_pow10;
+    return wantarray ? ($x, 0) : $x;
+}
+
+sub _clog2 {
+    # calculate ceil(log2($x))
+
+    my ($c, $x) = @_;
+
+    # X == 0 => NaN
+
+    return if @$x == 1 && $x->[0] == 0;
+
+    # X == 1 => 0 (is exact)
+
+    if (@$x == 1 && $x->[0] == 1) {
+        @$x = 0;
+        return wantarray ? ($x, 1) : $x;
+    }
+
+    my $base = $c -> _two();
+    my $acmp = $c -> _acmp($x, $base);
+
+    # X == BASE => 1 (is exact)
+
+    if ($acmp == 0) {
+        @$x = 1;
+        return wantarray ? ($x, 1) : $x;
+    }
+
+    # 1 < X < BASE => 0 (is truncated)
+
+    if ($acmp < 0) {
+        @$x = 0;
+        return wantarray ? ($x, 0) : $x;
+    }
+
+    # Compute a guess for the result based on:
+    # $guess = int( length_in_base_10(X) / (log(base) / log(10)) )
+
+    my $len    = $c -> _len($x);
+    my $log    = log(2) / log(10);
+    my $guess  = $c -> _new(int($len / $log));
+    my $x_orig = $c -> _copy($x);
+    @$x = @$guess;
+
+    my $trial = $c -> _pow($c -> _copy($base), $x);
+    $acmp = $c -> _acmp($trial, $x_orig);
+
+    # Too big?
+
+    while ($acmp > 0) {
+        $c -> _div($trial, $base);
+        $c -> _dec($x);
+        $acmp = $c -> _acmp($trial, $x_orig);
+    }
+
+    # Too small?
+
+    while ($acmp < 0) {
+        $c -> _mul($trial, $base);
+        $c -> _inc($x);
+        $acmp = $c -> _acmp($trial, $x_orig);
+    }
+
+    return wantarray ? ($x, 1) : $x if $acmp == 0;      # result is exact
+    return wantarray ? ($x, 0) : $x;                    # result is too small
+}
+
+sub _clog10 {
+    # calculate ceil(log2($x))
+    my ($c, $x) = @_;
+
+    # X == 0 => NaN
+    return if @$x == 1 && $x->[0] == 0;
+
+    # X == 1 => 0 (is exact)
+    if (@$x == 1 && $x->[0] == 1) {
+        @$x = 0;
+        return wantarray ? ($x, 1) : $x;
+    }
+
+    # Get the number of base 10 digits. $n is the desired output, except when
+    # $x is an exact power of 10, in which case $n is 1 too big.
+
+    my $n = $c -> _len($x);
+
+    # See if $x is an exact power of 10, in which case all but the most
+    # significan chunks are 0, and the most significant chunk is a power of 10.
+
+    my $is_pow10 = 1;
+    for my $i (0 .. $#$x - 1) {
+        last unless $is_pow10 = $x->[$i] == 0;
+    }
+    $is_pow10 &&= $x->[-1] == 10**int(0.5 + log($x->[-1]) / log(10));
+
+    $n-- if $is_pow10;
+
+    my $xtmp = $c ->_new($n);
+    @$x = @$xtmp;
+
+    return wantarray ? ($x, 1) : $x if $is_pow10;       # result is exact
+    return wantarray ? ($x, 0) : $x;                    # result is too small
 }
 
 # for debugging:

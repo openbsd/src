@@ -4,7 +4,7 @@ perlfaq5 - Files and Formats
 
 =head1 VERSION
 
-version 5.20210520
+version 5.20240218
 
 =head1 DESCRIPTION
 
@@ -708,12 +708,38 @@ X<number, commify>
 
 (contributed by brian d foy and Benjamin Goldberg)
 
-You can use L<Number::Format> to separate places in a number.
-It handles locale information for those of you who want to insert
-full stops instead (or anything else that they want to use,
-really).
+The L<CLDR::Number> module (the Unicode Common Locale Data Repository)
+knows how to format numbers based on a locale to use its
+digit grouping and separator:
 
-This subroutine will add commas to your number:
+    use CLDR::Number;
+
+    my $number = 1234567890;
+
+    foreach my $locale ( qw(en-US de-DE en-IN) ) {
+        my $cldr = CLDR::Number->new( locale => $locale );
+        my $decimal = $cldr->decimal_formatter;
+        printf "%-5s %s\n", $locale, $decimal->format( $number );
+        }
+
+The output shows the same number formatted according to each locale's
+rules. The bare C<en> uses commas between groups of three, the C<de>
+uses dots and groups of three, and the C<en-IN> uses the 3:2:2 rule with
+commas:
+
+    en-US 1,234,567,890
+    de-DE 1.234.567.890
+    en-IN 1,23,45,67,890
+
+L<CLDR::Number> has many more advanced features to handle just about
+anything that you might want. Olaf Alders' article "Stop Writing Your Own
+Commify Functions" has more examples
+(L<https://www.olafalders.com/2015/09/04/stop-writing-your-own-commify-
+functions/>).
+
+If you know exactly what you want, a simple subroutine might suffice.
+This example will add separators to your number between groups of three
+digits (or whatever grouping). This uses groups of three and a comma:
 
     sub commify {
         local $_  = shift;
@@ -721,7 +747,7 @@ This subroutine will add commas to your number:
         return $_;
     }
 
-This regex from Benjamin Goldberg will add commas to numbers:
+This regex from Benjamin Goldberg does the same thing without the loop:
 
     s/(^[-+]?\d+?(?=(?>(?:\d{3})+)(?!\d))|\G\d{3}(?=\d))/$1,/g;
 
@@ -762,7 +788,7 @@ Within Perl, you may use this directly:
           : ( $ENV{HOME} || $ENV{LOGDIR} )
     }ex;
 
-=head2 How come when I open a file read-write it wipes it out?
+=head2 When I open a file read-write, why does it wipe it out?
 X<clobber> X<read-write> X<clobbering> X<truncate> X<truncating>
 
 Because you're using something like this, which truncates the file
@@ -1494,7 +1520,7 @@ array in double quotes. You can send it to print without them:
 (contributed by brian d foy)
 
 The L<File::Find> module, which comes with Perl, does all of the hard
-work to traverse a directory structure. It comes with Perl. You simply
+work to traverse a directory structure. You simply
 call the C<find> subroutine with a callback subroutine and the
 directories you want to traverse:
 

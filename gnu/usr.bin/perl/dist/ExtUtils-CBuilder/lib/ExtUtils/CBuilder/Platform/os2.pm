@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use ExtUtils::CBuilder::Platform::Unix;
 
-our $VERSION = '0.280238'; # VERSION
+our $VERSION = '0.280240'; # VERSION
 our @ISA = qw(ExtUtils::CBuilder::Platform::Unix);
 
 sub need_prelink { 1 }

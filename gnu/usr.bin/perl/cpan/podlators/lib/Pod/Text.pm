@@ -24,7 +24,8 @@ use Exporter ();
 use Pod::Simple ();
 
 our @ISA = qw(Pod::Simple Exporter);
-our $VERSION = '5.01';
+our $VERSION = '5.01_02';
+$VERSION =~ tr/_//d;
 
 # We have to export pod2text for backward compatibility.
 our @EXPORT = qw(pod2text);
@@ -363,6 +364,7 @@ sub start_document {
     # disable encoding.
     $$self{ENCODE} = 1;
     eval {
+        require PerlIO;
         my @options = (output => 1, details => 1);
         my $flag = (PerlIO::get_layers ($$self{output_fh}, @options))[-1];
         if ($flag && ($flag & PerlIO::F_UTF8 ())) {

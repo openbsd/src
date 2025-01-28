@@ -266,7 +266,7 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
 
     /* not in cache, make a new one */
 
-    retval = MUTABLE_AV(newSV_type_mortal(SVt_PVAV));
+    retval = newAV_mortal();
     /* We use this later in this function, but don't need a reference to it
        beyond the end of this function, so reference count is fine.  */
     our_name = newSVhek(stashhek);

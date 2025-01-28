@@ -600,14 +600,14 @@ abc:abc:NaN
 +2:+2:8
 +1:+32:4294967296
 +1:+48:281474976710656
-+8:-2:NaN
++8:-2:2
 # exercise base 10
 +12345:4:10:123450000
 -1234:0:10:-1234
 +1234:0:10:1234
 +2:2:10:200
 +12:2:10:1200
-+1234:-3:10:NaN
++1234:-3:10:1.234
 1234567890123:12:10:1234567890123000000000000
 
 &brsft
@@ -615,14 +615,14 @@ abc:abc:NaN
 +8:+2:2
 +4294967296:+32:1
 +281474976710656:+48:1
-+2:-2:NaN
++2:-2:8
 # exercise base 10
 -1234:0:10:-1234
 +1234:0:10:1234
 +200:2:10:2
 +1234:3:10:1.234
 +1234:2:10:12.34
-+1234:-3:10:NaN
++1234:-3:10:1234000
 310000:4:10:31
 12300000:5:10:123
 1230000000000:10:10:123
@@ -1108,6 +1108,8 @@ abc:0:NaN
 -7:-4:-8
 -7:4:0
 -4:7:4
+1:0.5:0
+
 # equal arguments are treated special, so also do some test with unequal ones
 0xFFFF:0xFFFF:0x0xFFFF
 0xFFFFFF:0xFFFFFF:0x0xFFFFFF
@@ -1140,6 +1142,8 @@ abc:0:NaN
 -6:-6:-6
 -7:4:-3
 -4:7:-1
+1:0.5:1
+
 # equal arguments are treated special, so also do some test with unequal ones
 0xFFFF:0xFFFF:0x0xFFFF
 0xFFFFFF:0xFFFFFF:0x0xFFFFFF
@@ -1189,6 +1193,8 @@ abc:0:NaN
 -4:7:-5
 4:-7:-3
 -4:-7:5
+1:0.5:1
+
 # equal arguments are treated special, so also do some test with unequal ones
 0xFFFF:0xFFFF:0
 0xFFFFFF:0xFFFFFF:0
@@ -1363,11 +1369,9 @@ abc:12:NaN
 &broot
 144:2:12^
 123:2:11.09053650640941716205160010260993291846^
-# bsqrt always upgrades
 
 &bsqrt
 145:12.04159457879229548012824103037860805243^
-144:12^
 143:11.95826074310139802112984075619561661399^
 16:4
 170:13.03840481040529742916594311485836883306^

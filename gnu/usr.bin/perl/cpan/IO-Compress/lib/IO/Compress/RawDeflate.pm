@@ -6,16 +6,16 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base 2.204 ;
-use IO::Compress::Base::Common  2.204 qw(:Status :Parse);
-use IO::Compress::Adapter::Deflate 2.204 ;
-use Compress::Raw::Zlib  2.204 qw(Z_DEFLATED Z_DEFAULT_COMPRESSION Z_DEFAULT_STRATEGY);
+use IO::Compress::Base 2.212 ;
+use IO::Compress::Base::Common  2.212 qw(:Status :Parse);
+use IO::Compress::Adapter::Deflate 2.212 ;
+use Compress::Raw::Zlib  2.212 qw(Z_DEFLATED Z_DEFAULT_COMPRESSION Z_DEFAULT_STRATEGY);
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %DEFLATE_CONSTANTS, %EXPORT_TAGS, $RawDeflateError);
 
-$VERSION = '2.204';
+$VERSION = '2.212';
 $RawDeflateError = '';
 
 @ISA = qw(IO::Compress::Base Exporter);
@@ -472,7 +472,7 @@ Defaults to 0.
 
 =back
 
-=head2 Examples
+=head2 Oneshot Examples
 
 Here are a few example that show the capabilities of the module.
 
@@ -551,7 +551,10 @@ The format of the constructor for C<IO::Compress::RawDeflate> is shown below
     my $z = IO::Compress::RawDeflate->new( $output [,OPTS] )
         or die "IO::Compress::RawDeflate failed: $RawDeflateError\n";
 
-It returns an C<IO::Compress::RawDeflate> object on success and undef on failure.
+The constructor takes one mandatory parameter, C<$output>, defined below and
+zero or more C<OPTS>, defined in L<Constructor Options>.
+
+It returns an C<IO::Compress::RawDeflate> object on success and C<undef> on failure.
 The variable C<$RawDeflateError> will contain an error message on failure.
 
 If you are running Perl 5.005 or better the object, C<$z>, returned from
@@ -563,6 +566,18 @@ these forms
 
     $z->print("hello world\n");
     print $z "hello world\n";
+
+Below is a simple exaple of using the OO interface to create an output file
+C<myfile.1951> and write some data to it.
+
+    my $filename = "myfile.1951";
+    my $z = IO::Compress::RawDeflate->new($filename)
+        or die "IO::Compress::RawDeflate failed: $RawDeflateError\n";
+
+    $z->print("abcde");
+    $z->close();
+
+See the L</Examples> for more.
 
 The mandatory parameter C<$output> is used to control the destination
 of the compressed data. This parameter can take one of these forms.
@@ -703,7 +718,52 @@ This is a placeholder option.
 
 =head2 Examples
 
-TODO
+=head3 Streaming
+
+This very simple command line example demonstrates the streaming capabilities
+of the module. The code reads data from STDIN or all the files given on the
+commandline, compresses it, and writes the compressed data to STDOUT.
+
+    use strict ;
+    use warnings ;
+    use IO::Compress::RawDeflate qw(rawdeflate $RawDeflateError) ;
+
+    my $z = IO::Compress::RawDeflate->new("-", Stream => 1)
+        or die "IO::Compress::RawDeflate failed: $RawDeflateError\n";
+
+    while (<>) {
+        $z->print("abcde");
+    }
+    $z->close();
+
+Note the use of C<"-"> to means C<STDOUT>. Alternatively you can use C<\*STDOUT>.
+
+=head3 Compressing a file from the filesystem
+
+To read the contents of the file C<file1.txt> and write the compressed
+data to the file C<file1.txt.1951> there are a few options
+
+Start by creating the compression object and opening the input file
+
+    use strict ;
+    use warnings ;
+    use IO::Compress::RawDeflate qw(rawdeflate $RawDeflateError) ;
+
+    my $input = "file1.txt";
+    my $z = IO::Compress::RawDeflate->new("file1.txt.1951")
+        or die "IO::Compress::RawDeflate failed: $RawDeflateError\n";
+
+    # open the input file
+    open my $fh, "<", "file1.txt"
+        or die "Cannot open file1.txt: $!\n";
+
+    # loop through the input file & write to the compressed file
+    while (<$fh>) {
+        $z->print($_);
+    }
+
+    # not forgetting to close the compressed file
+    $z->close();
 
 =head1 Methods
 
@@ -1010,7 +1070,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2023 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

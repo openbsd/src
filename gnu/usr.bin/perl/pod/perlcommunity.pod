@@ -66,7 +66,7 @@ websites, so only a few of the community's largest are mentioned here.
 Originally run by O'Reilly Media (the publisher of L<the Camel Book|perlbook>,
 this site provides quality articles mostly about technical details of Perl.
 
-=item L<http://blogs.perl.org/>
+=item L<https://blogs.perl.org/>
 
 Many members of the community have a Perl-related blog on this site. If
 you'd like to join them, you can sign up for free.

@@ -144,7 +144,7 @@ functions which call stdio. In this case I<only> PerlIO * is a FILE *.
 This has been the default implementation since the abstraction was
 introduced in perl5.003_02.
 
-=for apidoc Amnh||USE_STDIO
+=for apidoc Amnh#||USE_STDIO
 
 =item 2. USE_PERLIO
 

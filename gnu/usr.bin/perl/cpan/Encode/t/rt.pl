@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: rt.pl,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: rt.pl,v 2.2 2023/11/10 01:10:50 dankogai Exp $
 #
 
 BEGIN {
@@ -10,7 +10,7 @@ BEGIN {
         unshift @INC, '../lib';
         $ucmdir = "../ext/Encode/ucm";
     }
-    require Config; import Config;
+    require Config; Config->import();
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
       exit 0;

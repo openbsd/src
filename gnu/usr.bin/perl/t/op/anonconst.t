@@ -6,17 +6,6 @@ BEGIN {
     set_up_inc("../lib");
 }
 
-plan 8;
-
-{
-    my $w;
-    local $SIG{__WARN__} = sub { $w .= shift };
-    eval '+sub : const {}';
-    like $w, qr/^:const is experimental at /, 'experimental warning';
-}
-
-no warnings 'experimental::const_attr';
-
 push @subs, sub :const{$_} for 1..10;
 is join(" ", map &$_, @subs), "1 2 3 4 5 6 7 8 9 10",
   ':const capturing global $_';
@@ -49,3 +38,5 @@ like $@, qr/^:const is not permitted on named subroutines at /,
 eval 'sub baz : const { }';
 like $@, qr/^:const is not permitted on named subroutines at /,
     ':const on named sub';
+
+done_testing;

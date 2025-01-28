@@ -1,5 +1,5 @@
 #
-# $Id: Encode.pm,v 3.19 2022/08/04 04:42:30 dankogai Exp $
+# $Id: Encode.pm,v 3.21 2024/02/25 22:17:32 dankogai Exp $
 #
 package Encode;
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 our $VERSION;
 BEGIN {
-    $VERSION = sprintf "%d.%02d", q$Revision: 3.19 $ =~ /(\d+)/g;
+    $VERSION = sprintf "%d.%02d", q$Revision: 3.21 $ =~ /(\d+)/g;
     require XSLoader;
     XSLoader::load( __PACKAGE__, $VERSION );
 }
@@ -431,10 +431,10 @@ same as C<find_encoding()> but C<mime_name()> of returned object must
 match to I<MIME_ENCODING>.  So as opposite of C<find_encoding()>
 canonical names and aliases are not used when searching for object.
 
-    find_mime_encoding("utf8"); # returns undef because "utf8" is not valid I<MIME_ENCODING>
+    find_mime_encoding("utf8"); # returns undef because "utf8" is not a valid MIME_ENCODING
     find_mime_encoding("utf-8"); # returns encode object "utf-8-strict"
-    find_mime_encoding("UTF-8"); # same as "utf-8" because I<MIME_ENCODING> is case insensitive
-    find_mime_encoding("utf-8-strict"); returns undef because "utf-8-strict" is not valid I<MIME_ENCODING>
+    find_mime_encoding("UTF-8"); # same as "utf-8" because MIME_ENCODING is case insensitive
+    find_mime_encoding("utf-8-strict"); returns undef because "utf-8-strict" is not a valid MIME_ENCODING
 
 =head3 from_to
 
@@ -645,7 +645,7 @@ L<Encode::Unicode> ignores I<CHECK> and it always croaks on error.
 
 =head3 FB_DEFAULT
 
-  I<CHECK> = Encode::FB_DEFAULT ( == 0)
+  CHECK = Encode::FB_DEFAULT ( == 0)
 
 If I<CHECK> is 0, encoding and decoding replace any malformed character
 with a I<substitution character>.  When you encode, I<SUBCHAR> is used.
@@ -655,7 +655,7 @@ warning category C<"utf8"> is given.
 
 =head3 FB_CROAK
 
-  I<CHECK> = Encode::FB_CROAK ( == 1)
+  CHECK = Encode::FB_CROAK ( == 1)
 
 If I<CHECK> is 1, methods immediately die with an error
 message.  Therefore, when I<CHECK> is 1, you should trap
@@ -663,7 +663,7 @@ exceptions with C<eval{}>, unless you really want to let it C<die>.
 
 =head3 FB_QUIET
 
-  I<CHECK> = Encode::FB_QUIET
+  CHECK = Encode::FB_QUIET
 
 If I<CHECK> is set to C<Encode::FB_QUIET>, encoding and decoding immediately
 return the portion of the data that has been processed so far when an
@@ -682,7 +682,7 @@ code to do exactly that:
 
 =head3 FB_WARN
 
-  I<CHECK> = Encode::FB_WARN
+  CHECK = Encode::FB_WARN
 
 This is the same as C<FB_QUIET> above, except that instead of being silent
 on errors, it issues a warning.  This is handy for when you are debugging.
@@ -780,7 +780,7 @@ See L<Encode::Encoding> for details.
 
 =head1 The UTF8 flag
 
-Before the introduction of Unicode support in Perl, The C<eq> operator
+Before the introduction of Unicode support in Perl, the C<eq> operator
 just compared the strings represented by two scalars. Beginning with
 Perl 5.8, C<eq> compares two strings with simultaneous consideration of
 I<the UTF8 flag>. To explain why we made it so, I quote from page 402 of

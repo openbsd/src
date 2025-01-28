@@ -17,7 +17,7 @@
  * debugging support added, which makes "use re 'debug'" work.
  */
 
-/* NOTE: this is derived from Henry Spencer's regexp code, and should not
+/* NOTE: this is derived from Henry Spencer's regexp code, and should not be
  * confused with the original package (see point 3 below).  Thanks, Henry!
  */
 
@@ -290,6 +290,7 @@ S_edit_distance(const UV* src,
 /* END of edit_distance() stuff
  * ========================================================= */
 
+#ifdef PERL_RE_BUILD_AUX
 /* add a data member to the struct reg_data attached to this regex, it should
  * always return a non-zero return. the 's' argument is the type of the items
  * being added and the n is the number of items. The length of 's' should match
@@ -340,6 +341,7 @@ Perl_reg_add_data(RExC_state_t* const pRExC_state, const char* const s, const U3
     assert(count>0);
     return count;
 }
+#endif /* PERL_RE_BUILD_AUX */
 
 /*XXX: todo make this not included in a non debugging perl, but appears to be
  * used anyway there, in 'use re' */
@@ -387,17 +389,9 @@ Perl_reginitcolors(pTHX)
 #define CHECK_RESTUDY_GOTO_butfirst
 #endif
 
-/*
- * pregcomp - compile a regular expression into internal code
- *
- * Decides which engine's compiler to call based on the hint currently in
- * scope
- */
-
 #ifndef PERL_IN_XSUB_RE
 
 /* return the currently in-scope regex engine (or the default if none)  */
-
 regexp_engine const *
 Perl_current_re_engine(pTHX)
 {
@@ -423,6 +417,13 @@ Perl_current_re_engine(pTHX)
     }
 }
 
+
+/*
+ * pregcomp - compile a regular expression into internal code
+ *
+ * Decides which engine's compiler to call based on the hint currently in
+ * scope
+ */
 
 REGEXP *
 Perl_pregcomp(pTHX_ SV * const pattern, const U32 flags)
@@ -688,7 +689,7 @@ S_concat_pat(pTHX_ RExC_state_t * const pRExC_state,
                 oplist = OpSIBLING(oplist); /* skip CONST */
                 assert(oplist);
             }
-            oplist = OpSIBLING(oplist);;
+            oplist = OpSIBLING(oplist);
         }
 
         /* apply magic and QR overloading to arg */
@@ -1211,6 +1212,120 @@ S_set_regex_pv(pTHX_ RExC_state_t *pRExC_state, REGEXP *Rx)
     SvCUR_set(Rx, p - RX_WRAPPED(Rx));
 }
 
+STATIC void
+S_ssc_finalize(pTHX_ RExC_state_t *pRExC_state, regnode_ssc *ssc)
+{
+    /* The inversion list in the SSC is marked mortal; now we need a more
+     * permanent copy, which is stored the same way that is done in a regular
+     * ANYOF node, with the first NUM_ANYOF_CODE_POINTS code points in a bit
+     * map */
+
+    SV* invlist = invlist_clone(ssc->invlist, NULL);
+
+    PERL_ARGS_ASSERT_SSC_FINALIZE;
+
+    assert(is_ANYOF_SYNTHETIC(ssc));
+
+    /* The code in this file assumes that all but these flags aren't relevant
+     * to the SSC, except SSC_MATCHES_EMPTY_STRING, which should be cleared
+     * by the time we reach here */
+    assert(! (ANYOF_FLAGS(ssc)
+        & ~( ANYOF_COMMON_FLAGS
+            |ANYOFD_NON_UTF8_MATCHES_ALL_NON_ASCII__shared
+            |ANYOF_HAS_EXTRA_RUNTIME_MATCHES)));
+
+    populate_anyof_bitmap_from_invlist( (regnode *) ssc, &invlist);
+
+    set_ANYOF_arg(pRExC_state, (regnode *) ssc, invlist, NULL, NULL);
+    SvREFCNT_dec(invlist);
+
+    /* Make sure is clone-safe */
+    ssc->invlist = NULL;
+
+    if (ANYOF_POSIXL_SSC_TEST_ANY_SET(ssc)) {
+        ANYOF_FLAGS(ssc) |= ANYOF_MATCHES_POSIXL;
+        OP(ssc) = ANYOFPOSIXL;
+    }
+    else if (RExC_contains_locale) {
+        OP(ssc) = ANYOFL;
+    }
+
+    assert(! (ANYOF_FLAGS(ssc) & ANYOF_LOCALE_FLAGS) || RExC_contains_locale);
+}
+
+STATIC bool
+S_is_ssc_worth_it(const RExC_state_t * pRExC_state, const regnode_ssc * ssc)
+{
+    /* The synthetic start class is used to hopefully quickly winnow down
+     * places where a pattern could start a match in the target string.  If it
+     * doesn't really narrow things down that much, there isn't much point to
+     * having the overhead of using it.  This function uses some very crude
+     * heuristics to decide if to use the ssc or not.
+     *
+     * It returns TRUE if 'ssc' rules out more than half what it considers to
+     * be the "likely" possible matches, but of course it doesn't know what the
+     * actual things being matched are going to be; these are only guesses
+     *
+     * For /l matches, it assumes that the only likely matches are going to be
+     *      in the 0-255 range, uniformly distributed, so half of that is 127
+     * For /a and /d matches, it assumes that the likely matches will be just
+     *      the ASCII range, so half of that is 63
+     * For /u and there isn't anything matching above the Latin1 range, it
+     *      assumes that that is the only range likely to be matched, and uses
+     *      half that as the cut-off: 127.  If anything matches above Latin1,
+     *      it assumes that all of Unicode could match (uniformly), except for
+     *      non-Unicode code points and things in the General Category "Other"
+     *      (unassigned, private use, surrogates, controls and formats).  This
+     *      is a much large number. */
+
+    U32 count = 0;      /* Running total of number of code points matched by
+                           'ssc' */
+    UV start, end;      /* Start and end points of current range in inversion
+                           XXX outdated.  UTF-8 locales are common, what about invert? list */
+    const U32 max_code_points = (LOC)
+                                ?  256
+                                : ((  ! UNI_SEMANTICS
+                                    ||  invlist_highest(ssc->invlist) < 256)
+                                  ? 128
+                                  : NON_OTHER_COUNT);
+    const U32 max_match = max_code_points / 2;
+
+    PERL_ARGS_ASSERT_IS_SSC_WORTH_IT;
+
+    invlist_iterinit(ssc->invlist);
+    while (invlist_iternext(ssc->invlist, &start, &end)) {
+        if (start >= max_code_points) {
+            break;
+        }
+        end = MIN(end, max_code_points - 1);
+        count += end - start + 1;
+        if (count >= max_match) {
+            invlist_iterfinish(ssc->invlist);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static void
+release_RExC_state(pTHX_ void *vstate) {
+    RExC_state_t *pRExC_state = (RExC_state_t *)vstate;
+
+    /* Any or all of these might be NULL.
+
+       There's no point in setting them to NULL after the free, since
+       pRExC_state is about to be released.
+     */
+    SvREFCNT_dec(RExC_rx_sv);
+    Safefree(RExC_open_parens);
+    Safefree(RExC_close_parens);
+    Safefree(RExC_logical_to_parno);
+    Safefree(RExC_parno_to_logical);
+
+    Safefree(pRExC_state);
+}
+
 /*
  * Perl_re_op_compile - the perl internal RE engine's function to compile a
  * regular expression into internal code.
@@ -1292,8 +1407,7 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
     bool recompile = 0;
     bool runtime_code = 0;
     scan_data_t data;
-    RExC_state_t RExC_state;
-    RExC_state_t * const pRExC_state = &RExC_state;
+
 #ifdef TRIE_STUDY_OPT
     /* search for "restudy" in this file for a detailed explanation */
     int restudied = 0;
@@ -1305,10 +1419,25 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
 
     DEBUG_r(if (!PL_colorset) reginitcolors());
 
+    RExC_state_t *pRExC_state = NULL;
+    /* Ensure that all members of the pRExC_state is initialized to 0
+     * at the start of regex compilation. Historically we have had issues
+     * with people remembering to zero specific members or zeroing them
+     * too late, etc. Doing it in one place is saner and avoid oversight
+     * or error. */
+    Newxz(pRExC_state, 1, RExC_state_t);
 
-    pRExC_state->warn_text = NULL;
-    pRExC_state->unlexed_names = NULL;
-    pRExC_state->code_blocks = NULL;
+    SAVEDESTRUCTOR_X(release_RExC_state, pRExC_state);
+
+    DEBUG_r({
+        /* and then initialize RExC_mysv1 and RExC_mysv2 early so if
+         * something calls regprop we don't have issues. These variables
+         * not being set up properly motivated the use of Newxz() to initalize
+         * the pRExC_state structure, as there were codepaths under -Uusedl
+         * that left these unitialized, and non-null as well. */
+        RExC_mysv1 = sv_newmortal();
+        RExC_mysv2 = sv_newmortal();
+    });
 
     if (is_bare_re)
         *is_bare_re = FALSE;
@@ -1414,40 +1543,11 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
 
     /* ignore the utf8ness if the pattern is 0 length */
     RExC_utf8 = RExC_orig_utf8 = (plen == 0 || IN_BYTES) ? 0 : SvUTF8(pat);
-    RExC_uni_semantics = 0;
-    RExC_contains_locale = 0;
     RExC_strict = cBOOL(pm_flags & RXf_PMf_STRICT);
-    RExC_in_script_run = 0;
-    RExC_study_started = 0;
-    pRExC_state->runtime_code_qr = NULL;
-    RExC_frame_head= NULL;
-    RExC_frame_last= NULL;
-    RExC_frame_count= 0;
-    RExC_latest_warn_offset = 0;
-    RExC_use_BRANCHJ = 0;
-    RExC_warned_WARN_EXPERIMENTAL__VLB = 0;
-    RExC_warned_WARN_EXPERIMENTAL__REGEX_SETS = 0;
-    RExC_logical_total_parens = 0;
-    RExC_total_parens = 0;
-    RExC_logical_to_parno = NULL;
-    RExC_parno_to_logical = NULL;
-    RExC_open_parens = NULL;
-    RExC_close_parens = NULL;
-    RExC_paren_names = NULL;
-    RExC_size = 0;
-    RExC_seen_d_op = FALSE;
-#ifdef DEBUGGING
-    RExC_paren_name_list = NULL;
-#endif
 
-    DEBUG_r({
-        RExC_mysv1= sv_newmortal();
-        RExC_mysv2= sv_newmortal();
-    });
 
     DEBUG_COMPILE_r({
-            SV *dsv= sv_newmortal();
-            RE_PV_QUOTED_DECL(s, RExC_utf8, dsv, exp, plen, PL_dump_re_max_len);
+            RE_PV_QUOTED_DECL(s, RExC_utf8, RExC_mysv, exp, plen, PL_dump_re_max_len);
             Perl_re_printf( aTHX_  "%sCompiling REx%s %s\n",
                           PL_colors[4], PL_colors[5], s);
         });
@@ -1468,7 +1568,12 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
      * pattern.
      *
      * Things get a touch tricky as we have to compare the utf8 flag
-     * independently from the compile flags.  */
+     * independently from the compile flags.
+     *
+     * ALSO NOTE: After this point we may need to zero members of pRExC_state
+     * explicitly. Prior to this point they should all be zeroed as part of
+     * a struct wide Zero instruction.
+     */
 
     if (   old_re
         && !recompile
@@ -1479,8 +1584,7 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
         && !runtime_code /* with runtime code, always recompile */ )
     {
         DEBUG_COMPILE_r({
-            SV *dsv= sv_newmortal();
-            RE_PV_QUOTED_DECL(s, RExC_utf8, dsv, exp, plen, PL_dump_re_max_len);
+            RE_PV_QUOTED_DECL(s, RExC_utf8, RExC_mysv, exp, plen, PL_dump_re_max_len);
             Perl_re_printf( aTHX_  "%sSkipping recompilation of unchanged REx%s %s\n",
                           PL_colors[4], PL_colors[5], s);
         });
@@ -1494,6 +1598,8 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
         FAIL("Regexp out of space");
 
     rx_flags = orig_rx_flags;
+    if (rx_flags & RXf_SPLIT)
+        rx_flags &= ~(RXf_PMf_EXTENDED|RXf_PMf_EXTENDED_MORE);
 
     if (   toUSE_UNI_CHARSET_NOT_DEPENDS
         && initial_charset == REGEX_DEPENDS_CHARSET)
@@ -1706,6 +1812,7 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
 
         /* Clean up what we did in this parse */
         SvREFCNT_dec_NN(RExC_rx_sv);
+        RExC_rx_sv = NULL;
 
         goto redo_parse;
     }
@@ -1734,7 +1841,7 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
     SetProgLen(RExC_rxi,RExC_size);
 
     DEBUG_DUMP_PRE_OPTIMIZE_r({
-        SV * const sv = sv_newmortal();
+        SV * const sv = sv_newmortal(); /* can this use RExC_mysv? */
         RXi_GET_DECL(RExC_rx, ri);
         DEBUG_RExC_seen();
         Perl_re_printf( aTHX_ "Program before optimization:\n");
@@ -1781,12 +1888,12 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
     /* search for "restudy" in this file for a detailed explanation */
     if (!restudied) {
         StructCopy(&zero_scan_data, &data, scan_data_t);
-        copyRExC_state = RExC_state;
+        copyRExC_state = *pRExC_state;
     } else {
         U32 seen=RExC_seen;
         DEBUG_OPTIMISE_r(Perl_re_printf( aTHX_ "Restudying\n"));
 
-        RExC_state = copyRExC_state;
+        *pRExC_state = copyRExC_state;
         if (seen & REG_TOP_LEVEL_BRANCHES_SEEN)
             RExC_seen |= REG_TOP_LEVEL_BRANCHES_SEEN;
         else
@@ -2305,22 +2412,10 @@ Perl_re_op_compile(pTHX_ SV ** const patternp, int pat_count,
         regdump(RExC_rx);
     });
 
-    if (RExC_open_parens) {
-        Safefree(RExC_open_parens);
-        RExC_open_parens = NULL;
-    }
-    if (RExC_close_parens) {
-        Safefree(RExC_close_parens);
-        RExC_close_parens = NULL;
-    }
-    if (RExC_logical_to_parno) {
-        Safefree(RExC_logical_to_parno);
-        RExC_logical_to_parno = NULL;
-    }
-    if (RExC_parno_to_logical) {
-        Safefree(RExC_parno_to_logical);
-        RExC_parno_to_logical = NULL;
-    }
+    /* we're returning ownership of the SV to the caller, ensure the cleanup
+     * doesn't release it
+     */
+    RExC_rx_sv = NULL;
 
 #ifdef USE_ITHREADS
     /* under ithreads the ?pat? PMf_USED flag on the pmop is simulated
@@ -7443,6 +7538,7 @@ S_regatom(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth)
 }
 
 
+#ifdef PERL_RE_BUILD_AUX
 void
 Perl_populate_anyof_bitmap_from_invlist(pTHX_ regnode *node, SV** invlist_ptr)
 {
@@ -7502,6 +7598,7 @@ Perl_populate_anyof_bitmap_from_invlist(pTHX_ regnode *node, SV** invlist_ptr)
         }
     }
 }
+#endif /* PERL_RE_BUILD_AUX */
 
 /* Parse POSIX character classes: [[:foo:]], [[=foo=]], [[.foo.]].
    Character classes ([:foo:]) can also be negated ([:^foo:]).
@@ -7712,7 +7809,7 @@ S_handle_possible_posix(pTHX_ RExC_state_t *pRExC_state,
         /* These two constructs are not handled by perl, and if we find a
          * syntactically valid one, we croak.  khw, who wrote this code, finds
          * this explanation of them very unclear:
-         * http://pubs.opengroup.org/onlinepubs/009696899/basedefs/xbd_chap09.html
+         * https://pubs.opengroup.org/onlinepubs/009696899/basedefs/xbd_chap09.html
          * And searching the rest of the internet wasn't very helpful either.
          * It looks like just about any byte can be in these constructs,
          * depending on the locale.  But unless the pattern is being compiled
@@ -9095,6 +9192,7 @@ S_dump_regex_sets_structures(pTHX_ RExC_state_t *pRExC_state,
 #undef IS_OPERATOR
 #undef IS_OPERAND
 
+#ifdef PERL_RE_BUILD_AUX
 void
 Perl_add_above_Latin1_folds(pTHX_ RExC_state_t *pRExC_state, const U8 cp, SV** invlist)
 {
@@ -9182,6 +9280,8 @@ Perl_add_above_Latin1_folds(pTHX_ RExC_state_t *pRExC_state, const U8 cp, SV** i
          }
     }
 }
+#endif /* PERL_RE_BUILD_AUX */
+
 
 STATIC void
 S_output_posix_warnings(pTHX_ RExC_state_t *pRExC_state, AV* posix_warnings)
@@ -9205,7 +9305,6 @@ S_output_posix_warnings(pTHX_ RExC_state_t *pRExC_state, AV* posix_warnings)
                                             array is mortal, but is a
                                             fail-safe */
             (void) sv_2mortal(msg);
-            PREPARE_TO_DIE;
         }
         Perl_warner(aTHX_ packWARN(WARN_REGEXP), "%s", SvPVX(msg));
         SvREFCNT_dec_NN(msg);
@@ -11091,7 +11190,7 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth,
 
         /* If optimized to something else and emitted, clean up and return */
         if (ret >= 0) {
-            SvREFCNT_dec(cp_list);;
+            SvREFCNT_dec(cp_list);
             SvREFCNT_dec(only_utf8_locale_list);
             SvREFCNT_dec(upper_latin1_only_utf8_matches);
             return ret;
@@ -11161,7 +11260,7 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth,
                    : NULL,
                   only_utf8_locale_list);
 
-    SvREFCNT_dec(cp_list);;
+    SvREFCNT_dec(cp_list);
     SvREFCNT_dec(only_utf8_locale_list);
     return ret;
 }
@@ -11632,7 +11731,7 @@ S_optimize_regclass(pTHX_
              * convert to UTF-8 if not already there */
             if (value > 255) {
                 if (! UTF) {
-                    SvREFCNT_dec(cp_list);;
+                    SvREFCNT_dec(cp_list);
                     REQUIRE_UTF8(flagp);
                 }
 
@@ -11760,7 +11859,7 @@ S_optimize_regclass(pTHX_
             {
                 U8 ANYOFM_mask;
 
-                op = ANYOFM + inverted;;
+                op = ANYOFM + inverted;
 
                 /* We need to make the bits that differ be 0's */
                 ANYOFM_mask = ~ bits_differing; /* This goes into FLAGS */
@@ -12093,6 +12192,7 @@ S_optimize_regclass(pTHX_
 
   return_OPFAIL:
     op = OPFAIL;
+    *flagp &= ~(SIMPLE|HASWIDTH);
     *ret = reg1node(pRExC_state, op, 0);
     return op;
 
@@ -12105,6 +12205,7 @@ S_optimize_regclass(pTHX_
 
 #undef HAS_NONLOCALE_RUNTIME_PROPERTY_DEFINITION
 
+#ifdef PERL_RE_BUILD_AUX
 void
 Perl_set_ANYOF_arg(pTHX_ RExC_state_t* const pRExC_state,
                 regnode* const node,
@@ -12261,6 +12362,7 @@ Perl_set_ANYOF_arg(pTHX_ RExC_state_t* const pRExC_state,
     RExC_rxi->data->data[n] = (void*)rv;
     ARG1u_SET(node, n);
 }
+#endif /* PERL_RE_BUILD_AUX */
 
 SV *
 
@@ -12999,6 +13101,8 @@ S_regtail_study(pTHX_ RExC_state_t *pRExC_state, regnode_offset p,
 }
 #endif
 
+
+#ifdef PERL_RE_BUILD_AUX
 SV*
 Perl_get_ANYOFM_contents(pTHX_ const regnode * n) {
 
@@ -13047,7 +13151,7 @@ Perl_get_ANYOFHbbm_contents(pTHX_ const regnode * n) {
                                       UTF_CONTINUATION_MARK | 0));
     return cp_list;
 }
-
+#endif /* PERL_RE_BUILD_AUX */
 
 
 SV *
@@ -15496,7 +15600,7 @@ S_parse_uniprop_string(pTHX_
                  * property hasn't been encountered yet, but at runtime, it's
                  * an error to try to use an undefined one */
                 if (! deferrable) {
-                    goto unknown_user_defined;;
+                    goto unknown_user_defined;
                 }
 
                 goto definition_deferred;
@@ -15617,7 +15721,7 @@ S_parse_uniprop_string(pTHX_
                 }
 
                 /* Get the greatest common denominator using
-                   http://en.wikipedia.org/wiki/Euclidean_algorithm */
+                   https://en.wikipedia.org/wiki/Euclidean_algorithm */
                 gcd = numerator;
                 trial = denominator;
                 while (trial != 0) {

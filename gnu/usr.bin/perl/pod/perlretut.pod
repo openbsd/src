@@ -2118,9 +2118,9 @@ Unicode standard, or the Unicode Consortium's website L<https://www.unicode.org>
 As if all those classes weren't enough, Perl also defines POSIX-style
 character classes.  These have the form C<[:I<name>:]>, with I<name> the
 name of the POSIX class.  The POSIX classes are C<alpha>, C<alnum>,
-C<ascii>, C<cntrl>, C<digit>, C<graph>, C<lower>, C<print>, C<punct>,
-C<space>, C<upper>, and C<xdigit>, and two extensions, C<word> (a Perl
-extension to match C<\w>), and C<blank> (a GNU extension).  The C</a>
+C<ascii>, C<blank>, C<cntrl>, C<digit>, C<graph>, C<lower>, C<print>,
+C<punct>, C<space>, C<upper>, C<xdigit>, and C<word> (a Perl extension to
+match C<\w>).  The C</a>
 modifier restricts these to matching just in the ASCII range; otherwise
 they can match the same as their corresponding Perl Unicode classes:
 C<[:upper:]> is the same as C<\p{IsUpper}>, I<etc>.  (There are some

@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use CPAN::Meta::Requirements;
+use CPAN::Meta::Requirements::Range;
 
 use Test::More 0.88;
 
@@ -18,6 +19,14 @@ sub dies_ok (&@) {
     like($@, $qr, $comment);
   }
 }
+
+{
+  my $range = CPAN::Meta::Requirements::Range->with_minimum(2);
+  $range = $range->with_maximum(9);
+  $range = $range->with_exclusion(7);
+  is($range->as_string, '>= 2, <= 9, != 7');
+}
+
 
 {
   my $req_1 = CPAN::Meta::Requirements->new;

@@ -243,6 +243,8 @@ my $specialformats_re = qr/%$format_modifiers"\s*($specialformats)(\s*(?:"|\z))?
 # We skip the bodies of most XS functions, but not within these files
 my @include_xs_files = (
   "builtin.c",
+  "class.c",
+  "universal.c",
 );
 
 if (@ARGV) {
@@ -360,7 +362,7 @@ sub check_file {
     s/ (?<!%) % $format_modifiers ( [dioxXucsfeEgGp] ) /%$1/xg;
 
     # The %"foo" thing needs to happen *before* this regex.
-    # diag(">$_<");
+    # diag("$first_line:>$_<");
     # DIE is just return Perl_die
     my ($name, $category, $routine, $wrapper);
     if (/\b$source_msg_call_re/) {
@@ -426,7 +428,7 @@ sub check_file {
                  :  $routine =~ /ckWARN\d*reg_d/? 'S'
                  :  $routine =~ /ckWARN\d*reg/ ?  'W'
                  :  $routine =~ /vWARN\d/      ? '[WDS]'
-                 :  $routine =~ /^deprecate/   ? '[WDS]'
+                 :  $routine =~ /^deprecate/   ? '[DS]'
                  :                             '[PFX]';
     my $categories;
     if (defined $category) {
@@ -530,7 +532,12 @@ sub check_message {
         like($entries{$key}{severity}, $qr,
           ($severity =~ /\[/
             ? "severity is one of $severity"
-            : "severity is $severity") . "for '$name' at $codefn line $.$pod_line");
+            : "severity is $severity") . " for '$name' at $codefn line $.$pod_line")
+        or do {
+            if ($severity=~/D/ and $entries{$key}{severity}=~/W/) {
+                diag("You should change W to D if this is a deprecation");
+            }
+        };
 
         is($entries{$key}{category}, $categories,
            ($categories ? "categories are [$categories]" : "no category")

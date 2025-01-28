@@ -5,9 +5,17 @@ use Test::More tests => 44;
 
 BEGIN { require_ok('Module::CoreList'); }
 
+# Check that there is a release entry for the current perl version
+my $released = $Module::CoreList::released{ $] };
+# duplicate fetch to avoid 'used only once: possible typo' warning
+$released = $Module::CoreList::released{ $] };
+
 # Check default perl
 
-ok(Module::CoreList::is_core('IO::File', $Module::CoreList::version{$]}{'IO::File'}), "is_core is self-consistent");
+SKIP: {
+  skip 'CPAN release being tested aginst blead', 1 unless $released;
+  ok(Module::CoreList::is_core('IO::File', $Module::CoreList::version{$]}{'IO::File'}), "is_core is self-consistent");
+}
 
 ok(!Module::CoreList::is_core('Module::Path'), 'Module::Path has never been in core');
 ok(!Module::CoreList::is_core('Module::Path', undef, '5.016003'), 'Module::Path has never been in core');
@@ -21,7 +29,11 @@ ok(!Module::CoreList::is_core('List::Util::PP', undef, '5.018001'), 'List::Util:
 # Carp has always been a core module
 ok(Module::CoreList::is_core('Carp', undef, '5'), 'Carp was a core module in first release of perl 5');
 ok(Module::CoreList::is_core('Carp', undef, '5.019004'), 'Carp was still a core module in 5.19.4');
-ok(Module::CoreList::is_core('Carp'), "Carp should be a core module whatever version of perl you're running");
+
+SKIP: {
+  skip 'CPAN release being tested aginst blead', 1 unless $released;
+  ok(Module::CoreList::is_core('Carp'), "Carp should be a core module whatever version of perl you're running");
+}
 
 ok(Module::CoreList::is_core('attributes', undef, '5.00503') == 0, "attributes weren't in 5.00503");
 ok(Module::CoreList::is_core('attributes', undef, '5.006001') == 1, "attributes were in 5.6.1");

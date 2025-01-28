@@ -228,16 +228,16 @@ coerced to a scalar - the number of elements in the array.
 (F) Each subroutine signature parameter declaration must start with a valid
 sigil; for example:
 
-    sub foo ($a, $, $b = 1, @c) {}
+    sub foo ($x, $, $y = 1, @z) {}
 
 =item A slurpy parameter may not have a default value
 
 (F) Only scalar subroutine signature parameters may have a default value;
 for example:
 
-    sub foo ($a = 1)        {} # legal
-    sub foo (@a = (1))      {} # invalid
-    sub foo (%a = (a => b)) {} # invalid
+    sub foo ($x = 1)        {} # legal
+    sub foo (@x = (1))      {} # invalid
+    sub foo (%x = (a => b)) {} # invalid
 
 =item assertion botched: %s
 
@@ -657,6 +657,12 @@ is currently being compiled. Since this method is used to introduce new
 lexical subroutines into the scope currently being compiled, this is not
 going to have any effect.
 
+=item Builtin version bundle "%s" is not supported by Perl
+
+(F) You attempted to C<use builtin :ver> for a version number that is either
+older than 5.39 (when the ability was added), or newer than the current perl
+version.
+
 =item Callback called exit
 
 (F) A subroutine invoked from an external package via call_sv()
@@ -725,6 +731,18 @@ be directly assigned to.
 an C<@ISA> array, and the array is not empty.  This is not permitted, as it
 would lead to a class with inconsistent inheritance.
 
+=item Cannot create an object of incomplete class "%s"
+
+(F) An attempt was made to create an object of a class where the start
+of the class definition has been seen, but the class has not been
+completed.
+
+This can happen for a failed eval, or if you attempt to create an
+object at compile time before the class is complete:
+
+  eval "class Foo {"; Foo->new; # error
+  class Bar { BEGIN { Bar->new } }; # error
+
 =item Cannot find encoding "%s"
 
 (S io) You tried to apply an encoding that did not exist to a filehandle,
@@ -787,6 +805,13 @@ is not supported.  (Before this error was added, it used to crash.)
 keep a reference count on its arguments and cannot be made to
 do so.  Such arrays are not even supposed to be accessible to
 Perl code, but are only used internally.
+
+=item Cannot use __CLASS__ outside of a method or field initializer expression
+
+(F) A C<__CLASS__> expression yields the class name of the object instance
+executing the current method, and therefore it can only be placed inside an
+actual method (or method-like expression, such as a field initializer
+expression).
 
 =item Cannot yet reorder sv_vcatpvfn() arguments from va_list
 
@@ -1256,6 +1281,21 @@ a string overload and is also not a blessed CODE reference. In short the
 C<require> function does not know what to do with the object.
 See also L<perlfunc/require>.
 
+=item Attempt to call undefined %s method with arguments ("%s"%s)
+via package "%s" (Perhaps you forgot to load the package?)
+
+(D deprecated::missing_import_called_with_args) You called the
+C<import()> or C<unimport()> method of a class that has no import method
+defined in its inheritance graph, and passed an argument to the method.
+This is very often the sign of a misspelled package name in a use or
+require statement that has silently succeded due to a case insensitive
+file system.
+
+Another common reason this may happen is when mistakenly attempting to
+import or unimport a symbol from a class definition or package which
+does not use C<Exporter> or otherwise define its own C<import> or
+C<unimport> method.
+
 =item Can't locate package %s for @%s::ISA
 
 (W syntax) The @ISA array contained the name of another package that
@@ -1666,6 +1706,31 @@ The required syntax is
     try { ... }
     catch ($var) { ... }
 
+=item Changing use VERSION while another use VERSION is in scope is now deprecated
+
+(W deprecated) Once you have a C<use VERSION> statement in scope, any
+C<use VERSION> statement that requests a different version is now deprecated,
+due to the increasing complexity of swapping from one prevailing version to
+another.
+
+It is suggested that you do not try to mix multiple different version
+declarations within the same file as it leads to complex behaviours about the
+visibility of features and builtin functions, as well as confusing human
+readers.
+
+If it is essential to have different C<use VERSION> declarations in different
+regions of the same file, you should surround each one by its own enclosing
+scope so the two do not mix.
+
+  {
+    use v5.20;
+    ...
+  }
+  {
+    use v5.36;
+    ...
+  }
+
 =item Character following "\c" must be printable ASCII
 
 (F) In C<\cI<X>>, I<X> must be a printable (non-control) ASCII character.
@@ -1988,13 +2053,6 @@ to define an overloaded constant, or when trying to find the
 character name specified in the C<\N{...}> escape.  Perhaps you
 forgot to load the corresponding L<overload> pragma?
 
-=item :const is experimental
-
-(S experimental::const_attr) The "const" attribute is experimental.
-If you want to use the feature, disable the warning with C<no warnings
-'experimental::const_attr'>, but know that in doing so you are taking
-the risk that your code may break in a future Perl version.
-
 =item :const is not permitted on named subroutines
 
 (F) The "const" attribute causes an anonymous subroutine to be run and
@@ -2174,6 +2232,13 @@ has been removed from C<@INC> by default, so this is no longer true. To
 search the current directory (and only the current directory) you can
 write C< do "./somefile"; >.
 
+=item '%s' does not appear to be an imported builtin function
+
+(F) An attempt was made to remove a previously-imported lexical from
+L<builtin> by using the C<unimport> method (likely via C<no builtin ...>
+syntax), but the requested function has not been imported into the current
+scope.
+
 =item Don't know how to get file name
 
 (P) C<PerlIO_getname>, a perl internal I/O function specific to VMS, was
@@ -2183,14 +2248,14 @@ somehow called on another platform.  This should not happen.
 
 (P) The internal handling of magical variables has been cursed.
 
-=item Downgrading a use VERSION declaration to below v5.11 is deprecated
+=item Downgrading a use VERSION declaration to below v5.11 is not permitted
 
-(S deprecated::version_downgrade) This warning is emitted on a
-C<use VERSION> statement that requests a version below v5.11 (when the
-effects of C<use strict> would be disabled), after a previous
-declaration of one having a larger number (which would have enabled
-these effects). Because of a change to the way that C<use VERSION>
-interacts with the strictness flags, this is no longer supported.
+(F) A C<use VERSION> statement that requests a version below v5.11
+(when the effects of C<use strict> would be disabled) has been found
+after a previous declaration of one having a larger number (which would
+have enabled these effects).  Because of a change to the way that
+C<use VERSION> interacts with the strictness flags, this is no longer
+supported.
 
 =item (Do you need to predeclare %s?)
 
@@ -2604,6 +2669,13 @@ same name?
 iterate multiple values at a time. This syntax is currently experimental
 and its behaviour may change in future releases of Perl.
 
+=item Forked open '%s' not meaningful in <>
+
+(S inplace) You had C<|-> or C<-|> in C<@ARGV> and tried to use C<< <>
+>> to read from it.
+
+Previously this would fork and produce a confusing error message.
+
 =item Format not terminated
 
 (F) A format must be terminated by a line with a solitary dot.  Perl got
@@ -2662,6 +2734,12 @@ C<getpwnam> operator returned an invalid UIC.
 (W closed) You tried to get a socket option on a closed socket.  Did you
 forget to check the return value of your socket() call?  See
 L<perlfunc/getsockopt>.
+
+=item get_layers: unknown argument '%s'
+
+(F) You called PerlIO::get_layers() with an unknown argument. Legal
+arguments are provided in key/value pairs, with the keys being one
+of C<input>, C<output> or C<detail>, followed by a boolean.
 
 =item given is deprecated
 
@@ -2855,7 +2933,7 @@ For example:
 
     use feature 'signatures;
     sub foo ($$) {}            # illegal - was expecting a signature
-    sub foo ($a, $b)
+    sub foo ($x, $y)
             :prototype($$) {}  # legal
 
 
@@ -2903,9 +2981,9 @@ other than C<=> introducing a default, C<,> or C<)>.
 
     use feature 'signatures';
     sub foo ($=1) {}           # legal
-    sub foo ($a = 1) {}        # legal
-    sub foo ($a += 1) {}       # illegal
-    sub foo ($a == 1) {}       # illegal
+    sub foo ($x = 1) {}        # legal
+    sub foo ($x += 1) {}       # illegal
+    sub foo ($x == 1) {}       # illegal
 
 =item Illegal pattern in regex; marked by S<<-- HERE> in m/%s/
 
@@ -3029,8 +3107,8 @@ throwing an exception.
 =item Initialization of state variables in list currently forbidden
 
 (F) C<state> only permits initializing a single variable, specified
-without parentheses.  So C<state $a = 42> and C<state @a = qw(a b c)> are
-allowed, but not C<state ($a) = 42> or C<(state $a) = 42>.  To initialize
+without parentheses.  So C<state $x = 42> and C<state @x = qw(a b c)> are
+allowed, but not C<state ($x) = 42> or C<(state $x) = 42>.  To initialize
 more than one C<state> variable, initialize them one at a time.
 
 =item %%s[%s] in scalar context better written as $%s[%s]
@@ -3318,6 +3396,14 @@ See L<perlfunc/pack>.
 (W) The given character is not a valid pack or unpack type but used to be
 silently ignored.
 
+=item Invalid version bundle "%s"
+
+(F) A version number that is used to specify an import bundle during a
+C<use builtin ...> statement must be formatted as C<:MAJOR.MINOR> with an
+optional third component, which is ignored.  Each component must be a number
+of 1 to 3 digits. No other characters are permitted.  The value that was
+specified does not conform to these rules.
+
 =item Invalid version format (%s)
 
 (F) A version number did not meet the "lax" criteria for versions.
@@ -3597,7 +3683,7 @@ the first approach, not using C<ispunct()> at all (see L<Note [5] in
 perlrecharclass|perlrecharclass/[5]>), and this message is raised to notify you that you
 are getting Perl's approach, not the locale's.
 
-=item Locale '%s' is unsupported, and may crash the interpreter.
+=item Locale '%s' is unsupported, and may crash the interpreter
 
 (S locale) The named locale is not supported by Perl, and using it leads
 to undefined behavior, including potentially crashing the computer.
@@ -3795,8 +3881,8 @@ doing it Perl met a malformed Unicode surrogate.
 
 =item Mandatory parameter follows optional parameter
 
-(F) In a subroutine signature, you wrote something like "$a = undef,
-$b", making an earlier parameter optional and a later one mandatory.
+(F) In a subroutine signature, you wrote something like "$x = undef,
+$y", making an earlier parameter optional and a later one mandatory.
 Parameters are filled from left to right, so it's impossible for the
 caller to omit an earlier one and pass a later one.  If you want to act
 as if the parameters are filled from right to left, declare the rightmost
@@ -3939,6 +4025,12 @@ follow the C<\N>.
 
 (F) While certain functions allow you to specify a filehandle or an
 "indirect object" before the argument list, this ain't one of them.
+
+=item Missing comma after first argument to return
+
+(F) While certain operators allow you to specify a filehandle or an
+"indirect object" before the argument list, C<return> isn't one of
+them.
 
 =item Missing command in piped open
 
@@ -4127,8 +4219,8 @@ They're written like C<$foo[1][2][3]>, as in C.
 the last parameter, and there must not be more than one of them; for
 example:
 
-    sub foo ($a, @b)    {} # legal
-    sub foo ($a, @b, %) {} # invalid
+    sub foo ($x, @y)    {} # legal
+    sub foo ($x, @y, %) {} # invalid
 
 =item '/' must follow a numeric type in unpack
 
@@ -4533,10 +4625,10 @@ particular to avoid confusion with the C<$#> variable.  For example:
 
     # bad
     sub f ($# ignore first arg
-           , $b) {}
+           , $y) {}
     # good
     sub f ($, # ignore first arg
-           $b) {}
+           $y) {}
 
 =item Not an ARRAY reference
 
@@ -4649,6 +4741,14 @@ regardless of what name the caller used.
 (W overload) The call to overload::constant contained an odd number of
 arguments.  The arguments should come in pairs.
 
+=item Odd number of arguments passed to "%s" constructor
+
+(S) The constructor for the given class was called with an odd
+number of arguments.
+
+Class constructors accept named arguments as a list and expect pairs
+of name followed by value as if you were initialising a hash.
+
 =item Odd number of elements in anonymous hash
 
 (W misc) You specified an odd number of elements to initialize a hash,
@@ -4674,7 +4774,7 @@ missing value will be filled in with undef instead.
 
 =item Offset outside string
 
-(F)(W layer) You tried to do a read/write/send/recv/seek operation
+(W layer) You tried to do a read/write/send/recv/seek operation
 with an offset pointing outside the buffer.  This is difficult to
 imagine.  The sole exceptions to this are that zero padding will
 take place when going past the end of the string when either
@@ -4684,13 +4784,13 @@ with real files).
 
 =item Old package separator "'" deprecated
 
-(W deprecated::apostrophe_as_package_separator, syntax) You used the old package
+(D deprecated::apostrophe_as_package_separator, syntax) You used the old package
 separator "'" in a variable, subroutine or package name. Support for the
 old package separator will be removed in Perl 5.42.
 
 =item Old package separator used in string
 
-(W deprecated::apostrophe_as_package_separator, syntax) You used the old package
+(D deprecated::apostrophe_as_package_separator, syntax) You used the old package
 separator, "'", in a variable named inside a double-quoted string; e.g.,
 C<"In $name's house">. This is equivalent to C<"In $name::s house">. If
 you meant the former, put a backslash before the apostrophe
@@ -4776,10 +4876,10 @@ example, if you say "*foo *foo" it will be interpreted as if you said
 
 =item Optional parameter lacks default expression
 
-(F) In a subroutine signature, you wrote something like "$a =", making a
+(F) In a subroutine signature, you wrote something like "$x =", making a
 named optional parameter without a default value.  A nameless optional
 parameter is permitted to have no default value, but a named one must
-have a specific default.  You probably want "$a = undef".
+have a specific default.  You probably want "$x = undef".
 
 =item "our" variable %s redeclared
 
@@ -4829,11 +4929,27 @@ where the failed request happened.
 is most likely to be caused by a typo in the Perl program. e.g.,
 C<$arr[time]> instead of C<$arr[$time]>.
 
+=item Out of memory during vec in lvalue context
+
+(F) An attempt was made to extend a string beyond the largest possible memory
+allocation by assigning to C<vec()> called with a large second argument.
+
 =item Out of memory for yacc stack
 
 (F) The yacc parser wanted to grow its stack so it could continue
 parsing, but realloc() wouldn't give it more memory, virtual or
 otherwise.
+
+=item Out of memory in perl:%s
+
+(X) A low-level memory allocation routine failed, indicating there was
+insufficient remaining (virtual) memory to satisfy the request.  Perl has no
+option but to exit immediately.
+
+At least in Unix you may be able to get past this by increasing your process
+datasize limits: in csh/tcsh use C<limit> and C<limit datasize n> (where C<n>
+is the number of kilobytes) to check the current limits and change them, and in
+ksh/bash/zsh use C<ulimit -a> and C<ulimit -d n>, respectively.
 
 =item '.' outside of string in pack
 
@@ -5329,21 +5445,21 @@ Perl guesses a reasonable buffer size, but puts a sentinel byte at the
 end of the buffer just in case.  This sentinel byte got clobbered, and
 Perl assumes that memory is now corrupted.  See L<perlfunc/ioctl>.
 
-=item Possible precedence issue with control flow operator
+=item Possible precedence issue with control flow operator (%s)
 
 (W syntax) There is a possible problem with the mixing of a control
 flow operator (e.g. C<return>) and a low-precedence operator like
 C<or>.  Consider:
 
-    sub { return $a or $b; }
+    sub { return $x or $y; }
 
 This is parsed as:
 
-    sub { (return $a) or $b; }
+    sub { (return $x) or $y; }
 
 Which is effectively just:
 
-    sub { return $a; }
+    sub { return $x; }
 
 Either use parentheses or the high-precedence variant of the operator.
 
@@ -6155,8 +6271,8 @@ C<can> may break this.
 come before the signature. Note that this order was the opposite in
 versions 5.22..5.26. So:
 
-    sub foo :lvalue ($a, $b) { ... }  # 5.20 and 5.28 +
-    sub foo ($a, $b) :lvalue { ... }  # 5.22 .. 5.26
+    sub foo :lvalue ($x, $y) { ... }  # 5.20 and 5.28 +
+    sub foo ($x, $y) :lvalue { ... }  # 5.22 .. 5.26
 
 =item Subroutine "&%s" is not available
 
@@ -6652,12 +6768,6 @@ disallowed.  See L<Safe>.
 (F) Your machine doesn't implement a file truncation mechanism that
 Configure knows about.
 
-=item try/catch is experimental
-
-(S experimental::try) This warning is emitted if you use the C<try> and
-C<catch> syntax. This syntax is currently experimental and its behaviour may
-change in future releases of Perl.
-
 =item try/catch/finally is experimental
 
 (S experimental::try) This warning is emitted if you use the C<try> and
@@ -6682,6 +6792,11 @@ certain type.  Arrays must be @NAME or C<@{EXPR}>.  Hashes must be
 
 (F) Your machine doesn't implement the umask function and you tried to
 use it to restrict permissions for yourself (EXPR & 0700).
+
+=item UNIVERSAL does not export anything
+
+(F) You asked UNIVERSAL to export something, but UNIVERSAL is the
+base class for all classes and contains no exportable symbols.
 
 =item Unbalanced context: %d more PUSHes than POPs
 
@@ -6975,7 +7090,7 @@ regex; marked by <-- HERE in m/%s/
 
 (F) A Unicode string property is one which expands to a sequence of
 multiple characters.  An example is C<\p{name=KATAKANA LETTER AINU P}>,
-which is comprised of the sequence C<\N{KATAKANA LETTER SMALL H}>
+which consists of the sequence C<\N{KATAKANA LETTER SMALL H}>
 followed by C<\N{COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK}>.
 Extended character classes, C<(?[...])> currently cannot handle these.
 
@@ -7065,12 +7180,12 @@ flags for the regex.  One of the ones you specified is invalid.  One way
 this can happen is if you didn't put in white space between the end of
 the regex and a following alphanumeric operator:
 
- if ($a =~ /foo/and $bar == 3) { ... }
+ if ($x =~ /foo/and $bar == 3) { ... }
 
 The C<"a"> is a valid modifier flag, but the C<"n"> is not, and raises
 this error.  Likely what was meant instead was:
 
- if ($a =~ /foo/ and $bar == 3) { ... }
+ if ($x =~ /foo/ and $bar == 3) { ... }
 
 =item Unknown "re" subpragma '%s' (known ones are: %s)
 
@@ -7212,6 +7327,11 @@ whereabouts in the regular expression the escape was discovered.
 
 (F) You attempted to add a named attribute to a C<field> definition, but
 perl does not recognise the name of the requested attribute.
+
+=item Unrecognised parameters for "%s" constructor: %s
+
+(F) You called new on a class but supplied a parameter name that
+didn't match a class field name.
 
 =item Unrecognized signal name "%s"
 
@@ -7596,7 +7716,7 @@ repeatedly, the C</g> has no effect.
 =item Use of "goto" to jump into a construct is deprecated
 
 (D deprecated::goto_construct) Using C<goto> to jump from an outer scope into an inner
-scope is deprecated and should be avoided.
+scope is deprecated and will be removed completely in Perl 5.42.
 
 This was deprecated in Perl 5.12.
 
@@ -7744,6 +7864,18 @@ in future Perl releases in incompatible ways.  This means that a pattern
 that compiles today may not in a future Perl release.  This warning is
 to alert you to that risk.
 
+=item use VERSION is not permitted while another use VERSION of 5.39 or above is in scope
+
+(F) Once you have a C<use VERSION> declaration that calls for a Perl version
+of at least 5.39, you cannot have a subsequent one while the first is visible,
+even if it requests a later version.
+
+=item use VERSION of 5.39 or above is not permitted while another use VERSION is in scope
+
+(F) Once you have a C<use VERSION> declaration in scope, you cannot have a
+subsequent one that calls for a Perl version of at least 5.39 while the first
+is visible.
+
 =item Use \x{...} for more than two hex characters in regex; marked by
 S<<-- HERE> in m/%s/
 
@@ -7841,26 +7973,26 @@ declared in an outer anonymous subroutine that has not yet been created.
 (Remember that named subs are created at compile time, while anonymous
 subs are created at run-time.)  For example,
 
-    sub { my $a; sub f { $a } }
+    sub { my $x; sub f { $x } }
 
-At the time that f is created, it can't capture the current value of $a,
+At the time that f is created, it can't capture the current value of $x,
 since the anonymous subroutine hasn't been created yet.  Conversely,
 the following won't give a warning since the anonymous subroutine has by
 now been created and is live:
 
-    sub { my $a; eval 'sub f { $a }' }->();
+    sub { my $x; eval 'sub f { $x }' }->();
 
 The second situation is caused by an eval accessing a variable that has
 gone out of scope, for example,
 
     sub f {
-	my $a;
-	sub { eval '$a' }
+	my $x;
+	sub { eval '$x' }
     }
     f()->();
 
-Here, when the '$a' in the eval is being compiled, f() is not currently
-being executed, so its $a is not available for capture.
+Here, when the '$x' in the eval is being compiled, f() is not currently
+being executed, so its $x is not available for capture.
 
 =item Variable "%s" is not imported%s
 
@@ -7944,8 +8076,8 @@ for details. You may silence this warning with the following:
 
 =item "%s" variable %s masks earlier declaration in same %s
 
-(W shadow) A "my", "our" or "state" variable has been redeclared in the
-current scope or statement, effectively eliminating all access to the
+(W shadow) A "my", "our", "state" or "field" variable has been redeclared in
+the current scope or statement, effectively eliminating all access to the
 previous instance.  This is almost always a typographical error.  Note
 that the earlier variable will still exist until the end of the scope
 or until all closure references to it are destroyed.
@@ -8157,11 +8289,19 @@ set-id, your best bet is to put a set-id C wrapper around your script.
 
 =item You need to quote "%s"
 
-(W syntax) You assigned a bareword as a signal handler name.
-Unfortunately, you already have a subroutine of that name declared,
-which means that Perl 5 will try to call the subroutine when the
-assignment is executed, which is probably not what you want.  (If it IS
-what you want, put an & in front.)
+(W syntax) You assigned a bareword as a signal handler name:
+
+    $SIG{...} = foo;
+
+However, this will not make C<sub foo> the signal handler. Instead, Perl
+will call the subroutine when the assignment is executed and use the
+returned value as the signal handler, which is probably not what you want.
+(If it I<is> what you want, put C<()> after the subroutine name to avoid
+the warning.)
+
+To register the subroutine as the signal handler, take a reference to it:
+
+    $SIG{...} = \&foo;
 
 =item Your random numbers are not that random
 

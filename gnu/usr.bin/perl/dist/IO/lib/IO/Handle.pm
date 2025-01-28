@@ -191,6 +191,14 @@ current setting if C<BOOL> is not given.
 
 If an error occurs C<blocking> will return undef and C<$!> will be set.
 
+=item binmode( [LAYER] )
+
+C<binmode> sets C<binmode> on the underlying C<IO> object, as documented
+in C<perldoc -f binmode>.
+
+C<binmode> accepts one optional parameter, which is the layer to be
+passed on to the C<binmode> call.
+
 =back
 
 
@@ -270,7 +278,7 @@ use IO ();	# Load the XS module
 require Exporter;
 our @ISA = qw(Exporter);
 
-our $VERSION = "1.52";
+our $VERSION = "1.55";
 
 our @EXPORT_OK = qw(
     autoflush
@@ -626,6 +634,19 @@ sub printflush {
     else {
 	print @_;
     }
+}
+
+################################################
+## Binmode
+##
+
+sub binmode {
+    ( @_ == 1 or @_ == 2 ) or croak 'usage $fh->binmode([LAYER])';
+
+    my($fh, $layer) = @_;
+
+    return binmode $$fh unless $layer;
+    return binmode $$fh, $layer;
 }
 
 1;

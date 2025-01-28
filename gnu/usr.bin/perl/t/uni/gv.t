@@ -715,8 +715,7 @@ EOF
    'PVLV: coderef assignment when the glob is detached from the symtab'
     or diag $@;
 
-SKIP: {
-    skip_if_miniperl("no dynamic loading on miniperl, so can't load PerlIO::scalar", 1);
+{
     # open should accept a PVLV as its first argument
     $_ = *hòn;
     ok eval { open $_,'<', \my $thlext }, 'PVLV can be the first arg to open'

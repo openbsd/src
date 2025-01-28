@@ -102,6 +102,10 @@ is $@, "", 'PERL_MAGIC_ext is permitted on read-only things';
             my_av_store(\@a,0,$j);
         };
 
+        # what extra refcount is added to the SV by virtue of being on the
+        # stack?
+        my $extra = (Internals::stack_refcounted() & 1) ? 1 : 0;
+
         # Evaluate this boolean as a separate statement, so the two
         # temporary \ refs are freed before we start comparing reference
         # counts
@@ -110,7 +114,7 @@ is $@, "", 'PERL_MAGIC_ext is permitted on read-only things';
         if ($is_same_SV) {
             # in this case we expect to have 2 refcounts,
             # one from $a[0] and one from $j itself.
-            is( sv_refcnt($j), 2,
+            is( sv_refcnt($j), 2 + $extra,
                 "\$a[0] is \$j, so refcount(\$j) should be 2");
         } else {
             # Note this branch isn't exercised. Whether by design
@@ -122,7 +126,7 @@ is $@, "", 'PERL_MAGIC_ext is permitted on read-only things';
                 local $TODO = "av_store bug stores even if it dies during magic";
                 # in this case we expect to have only 1 refcount,
                 # from $j itself.
-                is( sv_refcnt($j), 1,
+                is( sv_refcnt($j), 1 + $extra,
                     "\$a[0] is not \$j, so refcount(\$j) should be 1");
             }
         }

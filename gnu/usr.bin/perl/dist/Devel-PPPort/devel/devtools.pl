@@ -148,6 +148,14 @@ sub eta
   return sprintf "%02d:%02d:%02d", $h, $m, $s;
 }
 
+# Devel releases are odd numbered ones 5.6 and above, but use every
+# release for below 5.6
+sub is_devel_release ($) {
+    my (undef, $major, $minor) = parse_version(shift);
+    return $major >= 6 && $major % 2 != 0;
+}
+
+
 sub get_and_sort_perls($)
 {
     my $opt = shift;
@@ -180,12 +188,8 @@ sub get_and_sort_perls($)
         $version = format_version($version);
 
         if ($skip_devels) {
-            my ($super, $major, $minor) = parse_version($version);
-
             # If skipping development releases, we still use blead (0th entry).
-            # Devel releases are odd numbered ones 5.6 and above, but use every
-            # release for below 5.6
-            if ($i != 0 && $major >= 6 && $major % 2 != 0) {
+            if ($i != 0 && is_devel_release($version)) {
                 splice @perls, $i, 1;
                 last if $i >= @perls;
                 redo;

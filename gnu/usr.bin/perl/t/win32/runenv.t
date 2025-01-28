@@ -8,7 +8,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
+    require Config; Config->import;
     require File::Temp; import File::Temp qw/:POSIX/;
 
     require Win32;

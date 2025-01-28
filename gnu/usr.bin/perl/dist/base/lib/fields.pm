@@ -12,7 +12,7 @@ unless( eval q{require warnings::register; warnings::register->import; 1} ) {
 }
 our %attr;
 
-our $VERSION = '2.24';
+our $VERSION = '2.25';
 $VERSION =~ tr/_//d;
 
 # constant.pm is slow
@@ -261,7 +261,7 @@ The following functions are supported:
 
 =item new
 
-fields::new() creates and blesses a hash comprised of the fields declared
+fields::new() creates and blesses a hash of the fields declared
 using the C<fields> pragma into the specified class.  It is the
 recommended way to construct a fields-based object.
 

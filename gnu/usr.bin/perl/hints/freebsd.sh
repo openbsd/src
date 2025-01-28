@@ -330,10 +330,16 @@ FREEBSD_KERNEL_VERSION=`uname -U`
 #if  [ $FREEBSD_KERNEL_VERSION -lt 1003507 ] || \
 #    [ $FREEBSD_KERNEL_VERSION -ge 1100000 ] && [ $FREEBSD_KERNEL_VERSION -lt 1100502 ] || \
 #    [ $FREEBSD_KERNEL_VERSION -ge 1200000 ] && [ $FREEBSD_KERNEL_VERSION -lt 1200004 ]
-if  [ $FREEBSD_KERNEL_VERSION -lt 1200056 ]
+if  [ $FREEBSD_KERNEL_VERSION -lt 1200056 ]     # But other bugs remain; see below
 then
     d_uselocale='undef'
 fi
+
+# See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=265950
+# localeconv() is supposed to be thread-safe when used with this, so when
+# freebsd fixes this, may want to find a way to tell that to the code in
+# locale.c that assumes that function isn't thread-safe.
+ccflags="${ccflags} -DNO_POSIX_2008_LOCALE"
 
 # https://github.com/Perl/perl5/issues/15984
 # Reported in 11.0-CURRENT with g++-4.8.5:
@@ -370,7 +376,6 @@ esac
 
 # This function on this box has weird behavior.  See
 # https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=255646
-d_querylocale='undef'
-
-# See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=265950
-d_duplocale='undef'
+# This has allegedly been fixed, but we can't be sure because of
+# https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=265950
+#d_querylocale='undef'

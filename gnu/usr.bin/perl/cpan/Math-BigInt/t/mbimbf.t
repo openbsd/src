@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use Test::More tests => 712             # tests in require'd file
-                        + 26;           # tests in this file
+                        + 52;           # tests in this file
 
 use Math::BigInt only => 'Calc';
 use Math::BigFloat;
@@ -58,24 +58,71 @@ foreach my $class (qw/Math::BigInt Math::BigFloat/) {
 }
 
 foreach my $class (qw/Math::BigInt Math::BigFloat/)  {
-    $class->accuracy(42);
+    my $x;
 
-    # $x gets A of 42, too!
-    my $x = $class->new(123);
+    # Accuracy
 
-    # really?
-    is($x->accuracy(), 42, '$x has A of 42');
+    # set and check the class accuracy
+    $class->accuracy(1);
+    is($class->accuracy(), 1, "$class has A of 1");
 
-    # $x has no A, but the global is still in effect for $x so the return value
-    # of that operation should be 42, not undef
-    is($x->accuracy(undef), 42, '$x has A from global');
+    # a new instance gets the class accuracy
+    $x = $class->new(123);
+    is($x->accuracy(), 1, '$x has A of 1');
 
-    # so $x should still have A = 42
-    is($x->accuracy(), 42, '$x has still A of 42');
+    # set and check the instance accuracy
+    $x->accuracy(2);
+    is($x->accuracy(), 2, '$x has A of 2');
 
-    # reset for further tests
+    # change the class accuracy
+    $class->accuracy(3);
+    is($class->accuracy(), 3, "$class has A of 3");
+
+    # verify that the instance accuracy hasn't changed
+    is($x->accuracy(), 2, '$x still has A of 2');
+
+    # change the instance accuracy
+    $x->accuracy(undef);
+    is($x->accuracy(), undef, '$x now has A of undef');
+
+    # check the class accuracy
+    is($class->accuracy(), 3, "$class still has A of 3");
+
+    # change the class accuracy again
     $class->accuracy(undef);
+    is($class->accuracy(), undef, "$class now has A of undef");
+
+    # Precision
+
+    # set and check the class precision
+    $class->precision(1);
+    is($class->precision(), 1, "$class has A of 1");
+
+    # a new instance gets the class precision
+    $x = $class->new(123);
+    is($x->precision(), 1, '$x has A of 1');
+
+    # set and check the instance precision
+    $x->precision(2);
+    is($x->precision(), 2, '$x has A of 2');
+
+    # change the class precision
+    $class->precision(3);
+    is($class->precision(), 3, "$class has A of 3");
+
+    # verify that the instance precision hasn't changed
+    is($x->precision(), 2, '$x still has A of 2');
+
+    # change the instance precision
+    $x->precision(undef);
+    is($x->precision(), undef, '$x now has A of undef');
+
+    # check the class precision
+    is($class->precision(), 3, "$class still has A of 3");
+
+    # change the class precision again
     $class->precision(undef);
+    is($class->precision(), undef, "$class now has A of undef");
 }
 
 # bug with blog(Math::BigFloat, Math::BigInt)

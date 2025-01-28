@@ -1,15 +1,14 @@
-
-require 5;
 package Pod::Simple::RTF;
+use strict;
+use warnings;
 
 #sub DEBUG () {4};
 #sub Pod::Simple::DEBUG () {4};
 #sub Pod::Simple::PullParser::DEBUG () {4};
 
-use strict;
-use vars qw($VERSION @ISA %Escape $WRAP %Tagmap);
-$VERSION = '3.43';
+our $VERSION = '3.45';
 use Pod::Simple::PullParser ();
+our @ISA;
 BEGIN {@ISA = ('Pod::Simple::PullParser')}
 
 use Carp ();
@@ -29,8 +28,9 @@ sub to_uni ($) {    # Convert native code point to Unicode
 # We also escape '\', '{', '}', and '_'
 my $map_to_self = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEGHIJKLMNOPQRSTUVWXYZ[]^`abcdefghijklmnopqrstuvwxyz|~';
 
+our $WRAP;
 $WRAP = 1 unless defined $WRAP;
-%Escape = (
+our %Escape = (
 
   # Start with every character mapping to its hex equivalent
   map( (chr($_) => sprintf("\\'%02x", $_)), 0 .. 0xFF),
@@ -81,7 +81,7 @@ sub _openclose {
 
 my @_to_accept;
 
-%Tagmap = (
+our %Tagmap = (
  # 'foo=bar' means ('foo' => '{\bar'."\n", '/foo' => '}')
  _openclose(
   'B=cs18\b',
@@ -97,9 +97,9 @@ my @_to_accept;
    qw[
        underline=ul         smallcaps=scaps  shadow=shad
        superscript=super    subscript=sub    strikethrough=strike
-       outline=outl         emboss=embo      engrave=impr   
+       outline=outl         emboss=embo      engrave=impr
        dotted-underline=uld          dash-underline=uldash
-       dot-dash-underline=uldashd    dot-dot-dash-underline=uldashdd     
+       dot-dash-underline=uldashd    dot-dot-dash-underline=uldashdd
        double-underline=uldb         thick-underline=ulth
        word-underline=ulw            wave-underline=ulwave
    ]
@@ -211,14 +211,14 @@ $id_re = qr/['_a-zA-Z]['a-zA-Z0-9_]+/ unless $id_re;
 sub do_middle {      # the main work
   my $self = $_[0];
   my $fh = $self->{'output_fh'};
-  
+
   my($token, $type, $tagname, $scratch);
   my @stack;
   my @indent_stack;
   $self->{'rtfindent'} = 0 unless defined $self->{'rtfindent'};
-  
+
   while($token = $self->get_token) {
-  
+
     if( ($type = $token->type) eq 'text' ) {
       if( $self->{'rtfverbatim'} ) {
         DEBUG > 1 and print STDERR "  $type " , $token->text, " in verbatim!\n";
@@ -228,10 +228,10 @@ sub do_middle {      # the main work
       }
 
       DEBUG > 1 and print STDERR "  $type " , $token->text, "\n";
-      
+
       $scratch = $token->text;
       $scratch =~ tr/\t\cb\cc/ /d;
-      
+
       $self->{'no_proofing_exemptions'} or $scratch =~
        s/(?:
            ^
@@ -250,7 +250,7 @@ sub do_middle {      # the main work
          )
         /\cb$1\cc/xsg
       ;
-      
+
       rtf_esc(1, $scratch);     # 1 => escape hyphen
       $scratch =~
          s/(
@@ -261,7 +261,7 @@ sub do_middle {      # the main work
           /$1$2\n/gx     # and put a NL before those spaces
         if $WRAP;
         # This may wrap at well past the 65th column, but not past the 120th.
-      
+
       print $fh $scratch;
 
     } elsif( $type eq 'start' ) {
@@ -283,7 +283,7 @@ sub do_middle {      # the main work
           DEBUG > 3 and print STDERR "    verbatim line count: $line_count\n";
         }
         $self->unget_token($next);
-        $self->{'rtfkeep'} = ($line_count > 15) ? '' : '\keepn' ;     
+        $self->{'rtfkeep'} = ($line_count > 15) ? '' : '\keepn' ;
 
       } elsif( $tagname =~ m/^item-/s ) {
         my @to_unget;
@@ -299,7 +299,7 @@ sub do_middle {      # the main work
           pop(@to_unget), last unless defined $to_unget[-1];
            # Erroneously used to be "unshift" instead of pop!  Adds instead
            # of removes, and operates on the beginning instead of the end!
-          
+
           if($to_unget[-1]->type eq 'text') {
             if( ($text_count_here += length ${$to_unget[-1]->text_r}) > 150 ){
               DEBUG > 1 and print STDERR "    item-* is too long to be keepn'd.\n";
@@ -310,7 +310,7 @@ sub do_middle {      # the main work
             $to_unget[-2]->tagname =~ m/^item-/s
           ) {
             # Bail out here, after setting rtfitemkeepn yea or nay.
-            $self->{'rtfitemkeepn'} = '\keepn' if 
+            $self->{'rtfitemkeepn'} = '\keepn' if
               $to_unget[-1]->type eq 'start' and
               $to_unget[-1]->tagname eq 'Para';
 
@@ -337,10 +337,10 @@ sub do_middle {      # the main work
          int($token->attr('indent') * 4 * $self->normal_halfpoint_size);
         DEBUG and print STDERR "Indenting over $indent_stack[-1] twips.\n";
         $self->{'rtfindent'} += $indent_stack[-1];
-        
+
       } elsif ($tagname eq 'L') {
         $tagname .= '=' . ($token->attr('type') || 'pod');
-        
+
       } elsif ($tagname eq 'Data') {
         my $next = $self->get_token;
         next unless defined $next;
@@ -356,7 +356,7 @@ sub do_middle {      # the main work
       defined($scratch = $self->{'Tagmap'}{$tagname}) or next;
       $scratch =~ s/\#([^\#]+)\#/${$self}{$1}/g; # interpolate
       print $fh $scratch;
-      
+
       if ($tagname eq 'item-number') {
         print $fh $token->attr('number'), ". \n";
       } elsif ($tagname eq 'item-bullet') {
@@ -474,7 +474,7 @@ sub doc_info {
    my $class = ref($self) || $self;
 
    my $tag = __PACKAGE__ . ' ' . $VERSION;
-   
+
    unless($class eq __PACKAGE__) {
      $tag = " ($tag)";
      $tag = " v" . $self->VERSION . $tag   if   defined $self->VERSION;
@@ -492,7 +492,7 @@ sub doc_info {
 END
 
   # None of the following things should need escaping, I dare say!
-    $tag, 
+    $tag,
     $ISA[0], $ISA[0]->VERSION(),
     $], scalar(gmtime($ENV{SOURCE_DATE_EPOCH} || time)),
   ;
@@ -503,7 +503,7 @@ sub doc_start {
   my $title = $self->get_short_title();
   DEBUG and print STDERR "Short Title: <$title>\n";
   $title .= ' ' if length $title;
-  
+
   $title =~ s/ *$/ /s;
   $title =~ s/^ //s;
   $title =~ s/ $/, /s;
@@ -520,7 +520,7 @@ sub doc_start {
   $title = '\lang1024\noproof ' . $title
    if $is_obviously_module_name;
 
-  return sprintf <<'END', 
+  return sprintf <<'END',
 \deflang%s\plain\lang%s\widowctrl
 {\header\pard\qr\plain\f2\fs%s
 %s
@@ -707,7 +707,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

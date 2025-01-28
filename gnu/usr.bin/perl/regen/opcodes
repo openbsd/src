@@ -171,8 +171,8 @@ sbit_and	string bitwise and (&.)	ck_bitop	fst2	S S|
 sbit_xor	string bitwise xor (^.)	ck_bitop	fst2	S S|
 sbit_or		string bitwise or (|.)	ck_bitop	fst2	S S|
 
-negate		negation (-)		ck_null		Ifst1	S
-i_negate	integer negation (-)	ck_null		ifst1	S
+negate		negation (-)		ck_null		IfsT1	S
+i_negate	integer negation (-)	ck_null		ifsT1	S
 not		not			ck_null		ifs1	S
 complement	1's complement (~)	ck_bitop	fst1	S
 ncomplement	numeric 1's complement (~)	ck_bitop	fsT1	S
@@ -261,7 +261,7 @@ list		list			ck_null		m@	L
 lslice		list slice		ck_null		2	H L L
 anonlist	anonymous array ([])	ck_fun		ms@	L
 anonhash	anonymous hash ({})	ck_fun		ms@	L
-emptyavhv	empty anon hash/array	ck_fun		sT@	L
+emptyavhv	empty anon hash/array	ck_fun		sT0
 
 splice		splice			ck_fun		m@	A S? S? L
 push		push			ck_fun		imsT@	A L
@@ -603,3 +603,5 @@ helemexistsor	hash element exists or	ck_helemexistsor	|	S S
 
 methstart	method start		ck_null		+
 initfield	initialise field	ck_null		+
+
+classname	class name		ck_classname		0t

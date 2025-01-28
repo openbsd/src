@@ -1244,7 +1244,7 @@ aux_list(o, cv)
                 /* return (nargs, const string, segment len 0, 1, 2, ...) */
 
                 /* if this changes, this block of code probably needs fixing */
-                assert(PERL_MULTICONCAT_HEADER_SIZE == 5);
+                assert(PERL_MULTICONCAT_HEADER_SIZE == 8);
                 nargs = aux[PERL_MULTICONCAT_IX_NARGS].ssize;
                 EXTEND(SP, ((SSize_t)(2 + (nargs+1))));
                 PUSHs(sv_2mortal(newSViv((IV)nargs)));

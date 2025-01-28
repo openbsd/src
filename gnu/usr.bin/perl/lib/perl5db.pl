@@ -532,7 +532,7 @@ BEGIN {
 use vars qw($VERSION $header);
 
 # bump to X.XX in blead, only use X.XX_XX in maint
-$VERSION = '1.77';
+$VERSION = '1.80';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -871,7 +871,7 @@ BEGIN {
     if ($ENV{PERL5DB_THREADED}) {
         require threads;
         require threads::shared;
-        import threads::shared qw(share);
+        threads::shared->import('share');
         $DBGR;
         share(\$DBGR);
         lock($DBGR);
@@ -1799,17 +1799,6 @@ our (
     @old_watch,
 );
 
-sub _DB__use_full_path
-{
-	# If running in the perl test suite, don't use old system libs
-	return &{$_[0]} if $ENV{PERL_CORE};
-	local @INC = @INC;
-	eval { require Config; };
-	unshift(@INC, 
-	    @Config::Config{qw(archlibexp privlibexp sitearchexp sitelibexp)});
-	&{$_[0]};
-}
-
 sub _DB__determine_if_we_should_break
 {
     # if we have something here, see if we should break.
@@ -1972,10 +1961,7 @@ sub _DB__handle_y_command {
         if (!eval {
             local @INC = @INC;
             pop @INC if $INC[-1] eq '.';
-	    _DB__use_full_path(sub {
-	    	require PadWalker;
-	    });
-	    PadWalker->VERSION(0.08) }) {
+            require PadWalker; PadWalker->VERSION(0.08) }) {
             my $Err = $@;
             _db_warn(
                 $Err =~ /locate/
@@ -2623,7 +2609,7 @@ sub _cmd_l_handle_var_name {
 
 sub _cmd_l_handle_subname {
 
-    my $s = $subname;
+    my $s = my $subname = shift;
 
     # De-Perl4.
     $subname =~ s/\'/::/;
@@ -2634,9 +2620,9 @@ sub _cmd_l_handle_subname {
     # Put it in CORE::GLOBAL if t doesn't start with :: and
     # it doesn't live in this package and it lives in CORE::GLOBAL.
     $subname = "CORE::GLOBAL::$s"
-    if not defined &$subname
-        and $s !~ /::/
-        and defined &{"CORE::GLOBAL::$s"};
+        if not defined &$subname
+           and $s !~ /::/
+           and defined &{"CORE::GLOBAL::$s"};
 
     # Put leading '::' names into 'main::'.
     $subname = "main" . $subname if substr( $subname, 0, 2 ) eq "::";
@@ -2705,34 +2691,25 @@ sub _cmd_l_plus {
 }
 
 sub _cmd_l_calc_initial_end_and_i {
-    my ($spec, $start_match, $end_match) = @_;
+    my ($current_line, $start_match, $end_match) = @_;
 
-    # Determine end point; use end of file if not specified.
-    my $end = ( !defined $start_match ) ? $max :
-    ( $end_match ? $end_match : $start_match );
-
-    # Go on to the end, and then stop.
+    my $end = $end_match // $start_match // $max;
+    # Clean up the end spec if needed.
+    $end = $current_line if $end eq '.';
     _minify_to_max(\$end);
 
-    # Determine start line.
-    my $i = $start_match;
-
-    if ($i eq '.') {
-        $i = $spec;
-    }
-
-    $i = _max($i, 1);
-
-    $incr = $end - $i;
+    # Determine the loop start point.
+    my $i = $start_match // 1;
+    $i = $current_line if $i eq '.';
 
     return ($end, $i);
 }
 
 sub _cmd_l_range {
-    my ($spec, $current_line, $start_match, $end_match) = @_;
+    my ($current_line, $start_match, $end_match) = @_;
 
     my ($end, $i) =
-        _cmd_l_calc_initial_end_and_i($spec, $start_match, $end_match);
+        _cmd_l_calc_initial_end_and_i($current_line, $start_match, $end_match);
 
     # If we're running under a client editor, force it to show the lines.
     if ($client_editor) {
@@ -2794,18 +2771,15 @@ sub _cmd_l_range {
 sub _cmd_l_main {
     my $spec = shift;
 
-    # If this is '-something', delete any spaces after the dash.
-    $spec =~ s/\A-\s*\z/-/;
-
     # If the line is '$something', assume this is a scalar containing a
     # line number.
     # Set up for DB::eval() - evaluate in *user* context.
-    if ( my ($var_name) = $spec =~ /\A(\$.*)/s ) {
-        return _cmd_l_handle_var_name($var_name);
+    if ( $spec =~ /\A(\$(?:[0-9]+|[^\W\d]\w*))\z/ ) {
+        return _cmd_l_handle_var_name($spec);
     }
     # l name. Try to find a sub by that name.
     elsif ( ($subname) = $spec =~ /\A([\':A-Za-z_][\':\w]*(?:\[.*\])?)/s ) {
-        return _cmd_l_handle_subname();
+        return _cmd_l_handle_subname($subname);
     }
     # Bare 'l' command.
     elsif ( $spec !~ /\S/ ) {
@@ -2816,8 +2790,13 @@ sub _cmd_l_main {
         return _cmd_l_plus($new_start, $new_incr);
     }
     # l start-stop or l start,stop
-    elsif (my ($s, $e) = $spec =~ /^(?:(-?[\d\$\.]+)(?:[-,]([\d\$\.]+))?)?/ ) {
-        return _cmd_l_range($spec, $line, $s, $e);
+    # Purposefully limited to ASCII; UTF-8 support would be nice sometime.
+    elsif (my ($s, $e) = $spec =~ /\A(?:(\.|\d+)(?:[-,](\.|\d+))?)?\z/a ) {
+        return _cmd_l_range($line, $s, $e);
+    }
+    # Protest at bizarre and incorrect specs.
+    else {
+        print {$OUT} "Invalid line specification '$spec'.\n";
     }
 
     return;
@@ -3248,7 +3227,7 @@ Just uses C<DB::methods> to determine what methods are available.
 
 Switch to a different filename.
 
-=head4 C<.> - return to last-executed line.
+=head4 C<.> - return to last-executed line
 
 We set C<$incr> to -1 to indicate that the debugger shouldn't move ahead,
 and then we look up the line in the magical C<%dbline> hash.
@@ -3314,11 +3293,11 @@ appropriately, and force us out of the command loop.
 
 Just calls C<DB::print_trace>.
 
-=head4 C<w> - List window around current line.
+=head4 C<w> - List window around current line
 
 Just calls C<DB::cmd_w>.
 
-=head4 C<W> - watch-expression processing.
+=head4 C<W> - watch-expression processing
 
 Just calls C<DB::cmd_W>.
 
@@ -3402,7 +3381,7 @@ the bottom of the loop.
 
 Manipulates C<%alias> to add or list command aliases.
 
-=head4 C<source> - read commands from a file.
+=head4 C<source> - read commands from a file
 
 Opens a lexical filehandle and stacks it on C<@cmdfhs>; C<DB::readline> will
 pick it up.
@@ -3426,7 +3405,7 @@ Restart the debugger session.
 
 Return to any given position in the B<true>-history list
 
-=head4 C<|, ||> - pipe output through the pager.
+=head4 C<|, ||> - pipe output through the pager
 
 For C<|>, we save C<OUT> (the debugger's output filehandle) and C<STDOUT>
 (the program's standard output). For C<||>, we only save C<OUT>. We open a
@@ -6047,8 +6026,9 @@ sub cmd_v {
         # Set the start to the argument given (if there was one).
         $start = $1 if $1;
 
-        # Back up by the context amount.
+        # Back up by the context amount. Don't back up past line 1.
         $start -= $preview;
+        $start = 1  unless $start > 0;
 
         # Put together a linespec that _cmd_l_main will like.
         $line = $start . '-' . ( $start + $incr );
@@ -6843,15 +6823,13 @@ the appropriate attributes. We then
 
 use vars qw($ornaments);
 use vars qw($rl_attribs);
+
 sub setterm {
 
     # Load Term::Readline, but quietly; don't debug it and don't trace it.
     local $frame = 0;
     local $doret = -2;
-    _DB__use_full_path(sub {
-	require Term::ReadLine;
-    });
-    
+    require Term::ReadLine;
 
     # If noTTY is set, but we have a TTY name, go ahead and hook up to it.
     if ($notty) {
@@ -7026,9 +7004,7 @@ qq[3>&1 xterm -title "Daughter Perl debugger $pids $name" -e sh -c 'tty 1>&3;\
 
     # We need $term defined or we can not switch to the newly created xterm
     if ($tty ne '' && !defined $term) {
-    	_DB__use_full_path(sub {
-	    require Term::ReadLine;
-	});
+        require Term::ReadLine;
         if ( !$rl ) {
             $term = Term::ReadLine::Stub->new( 'perldb', $IN, $OUT );
         }
@@ -8861,7 +8837,7 @@ sub CvGV_name_or_bust {
     return if $skipCvGV;    # Backdoor to avoid problems if XS broken...
     return unless ref $in;
     $in = \&$in;            # Hard reference...
-    eval { _DB__use_full_path(sub { require Devel::Peek; 1; }); } or return;
+    eval { require Devel::Peek; 1 } or return;
     my $gv = Devel::Peek::CvGV($in) or return;
     *$gv{PACKAGE} . '::' . *$gv{NAME};
 } ## end sub CvGV_name_or_bust
@@ -9437,7 +9413,7 @@ If there's only one hit, and it's a package qualifier, and it's not equal to the
 
 =back
 
-=head3 Symbol completion: current package or package C<main>.
+=head3 Symbol completion: current package or package C<main>
 
 =cut
 
@@ -9997,7 +9973,7 @@ sub cmd_pre580_null {
     # do nothing...
 }
 
-=head2 Old C<a> command.
+=head2 Old C<a> command
 
 This version added actions if you supplied them, and deleted them
 if you didn't.
@@ -10106,7 +10082,7 @@ sub cmd_pre580_b {
     }
 } ## end sub cmd_pre580_b
 
-=head2 Old C<D> command.
+=head2 Old C<D> command
 
 Delete all breakpoints unconditionally.
 

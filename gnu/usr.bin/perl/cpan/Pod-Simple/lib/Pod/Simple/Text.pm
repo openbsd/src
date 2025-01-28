@@ -1,20 +1,19 @@
-
-require 5;
 package Pod::Simple::Text;
 use strict;
+use warnings;
 use Carp ();
 use Pod::Simple::Methody ();
 use Pod::Simple ();
-use vars qw( @ISA $VERSION $FREAKYMODE);
-$VERSION = '3.43';
-@ISA = ('Pod::Simple::Methody');
+our $VERSION = '3.45';
+our @ISA = ('Pod::Simple::Methody');
 BEGIN { *DEBUG = defined(&Pod::Simple::DEBUG)
           ? \&Pod::Simple::DEBUG
           : sub() {0}
       }
 
+our $FREAKYMODE;
+
 use Text::Wrap 98.112902 ();
-$Text::Wrap::huge = 'overflow';
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -82,11 +81,12 @@ sub emit_par {
    # Yes, 'STRING' x NEGATIVE gives '', same as 'STRING' x 0
 
   $self->{'Thispara'} =~ s/$Pod::Simple::shy//g;
+  local $Text::Wrap::huge = 'overflow';
   my $out = Text::Wrap::wrap($indent, $indent, $self->{'Thispara'} .= "\n");
   $out =~ s/$Pod::Simple::nbsp/ /g;
   print {$self->{'output_fh'}} $out, "\n";
   $self->{'Thispara'} = '';
-  
+
   return;
 }
 
@@ -99,10 +99,10 @@ sub end_Verbatim  {
 
   my $i = ' ' x ( 2 * $self->{'Indent'} + 4);
   #my $i = ' ' x (4 + $self->{'Indent'});
-  
+
   $self->{'Thispara'} =~ s/^/$i/mg;
-  
-  print { $self->{'output_fh'} }   '', 
+
+  print { $self->{'output_fh'} }   '',
     $self->{'Thispara'},
     "\n\n"
   ;
@@ -148,7 +148,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

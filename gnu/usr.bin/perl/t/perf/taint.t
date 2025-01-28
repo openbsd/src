@@ -17,7 +17,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = ('../lib');
-    require Config; import Config;
+    require Config; Config->import;
     require './test.pl';
     skip_all_if_miniperl("No Scalar::Util under miniperl");
     if (exists($Config{taint_support}) && !$Config{taint_support}) {

@@ -21,16 +21,17 @@ my %skip = map { ("PL_$_", 1) }
 $skip{PL_hash_rand_bits}= $skip{PL_hash_rand_bits_enabled}= 1; # we can be compiled without these, so skip testing them
 $skip{PL_warn_locale}= 1; # we can be compiled without locales, so skip testing them
 
-
-my $trial = "$Config{nm} globals$Config{_o} 2>&1";
+# -P is POSIX and defines an expected format, while the default
+# output will vary from platform to platform
+my $trial = "$Config{nm} -P globals$Config{_o} 2>&1";
 my $yes = `$trial`;
 
 skip_all("Could not run `$trial`") if $?;
 
-my $defined = $^O eq "hpux" ? qr/\|/ : qr/^[0-9a-fA-F]{8,16}\s+[^Uu]\s+_?/m;
+my $defined = qr/\s+[^Uu]\s+/m;
 
 skip_all("Could not spot definition of PL_Yes in output of `$trial`")
-    unless $yes =~ /${defined}PL_Yes/m;
+    unless $yes =~ /^_?PL_Yes${defined}/m;
 
 my %exported;
 open my $fh, '-|', $^X, '-Ilib', './makedef.pl', 'PLATFORM=test'
@@ -44,21 +45,27 @@ while (<$fh>) {
 
 close $fh or die "Problem running makedef.pl";
 
-my %unexported;
-
+# AIX can list a symbol as both a local and a global symbol
+# so collect all of the symbols *then* process them
+my %defined;
 foreach my $file (map {$_ . $Config{_o}} qw(globals regcomp)) {
-    open $fh, '-|', $Config{nm}, $file
+    open $fh, '-|', $Config{nm}, "-P", $file
 	or die "Can't run nm $file";
 
     while (<$fh>) {
-	next unless /$defined(PL_\S+)/;
-	if (delete $exported{$1}) {
-	    note("Seen definition of $1");
-	    next;
-	}
-	++$unexported{$1};
+	next unless /^_?(PL_\S+)${defined}/;
+        $defined{$1} = 1;
     }
     close $fh or die "Problem running nm $file";
+}
+
+my %unexported;
+for my $name (sort keys %defined) {
+    if (delete $exported{$name}) {
+        note("Seen definition of $name");
+        next;
+    }
+    ++$unexported{$name};
 }
 
 unless ($Config{d_double_has_inf}) {

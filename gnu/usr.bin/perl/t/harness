@@ -21,8 +21,16 @@ BEGIN {
 #
 # Example: ../cpan/IO-Zlib/t/basic.t
 #
-my @_must_be_executed_serially = qw(
+my @_must_be_executed_serially = (
+    # These two both create temporary subdirectories which they delete
+    # at the end. If one deletes while the other is running a recursive
+    # find in that subdir, bad things can happen. This was showing as
+    # random crashes in find.t and taint.t in smokes, with errors like:
+    # "Can't cd to .. from ./FF_find_t_RKdkBE/for_find/fb: Stale file handle"
+    '../ext/File-Find/t/taint.t',
+    '../ext/File-Find/t/find.t',
 );
+
 my %must_be_executed_serially = map { $_ => 1 } @_must_be_executed_serially;
 ##############################################################################
 
@@ -178,7 +186,7 @@ sub _compute_tests_and_ordering($) {
 
             $all_dirs{$path} = 1;
             $map_file_to_dir{$file} = $path;
-            # is this is a file that requires we do special processing
+            # is this a file that requires we do special processing
             # on the directory as a whole?
             if ($must_be_executed_serially{$file}) {
                 $partial_serials{$path} = 1;
@@ -495,4 +503,4 @@ $h->callback(
 my $agg = $h->runtests(@tests);
 _cleanup_valgrind(\$htoolnm, \$hgrind_ct);
 printf "Finished test run at %s.\n", scalar(localtime);
-exit $agg->has_errors ? 1 : 0;
+exit($agg->has_errors ? 1 : 0);

@@ -10,7 +10,7 @@ BEGIN {
     set_up_inc( qw(. ../lib) );
 }
 
-plan( tests => 67 );
+plan( tests => 77 );
 
 {
     my @lol = ([qw(a b c)], [], [qw(1 2 3)]);
@@ -237,4 +237,60 @@ pass 'no double frees with grep/map { undef *_ }';
 {
     my @a = map { 1; "$_" } 1,2;
     is("@a", "1 2", "PADTMP");
+}
+
+
+package FOO {
+    my $count;
+    sub DESTROY { $count++ }
+    my @a;
+
+    # check all grep arguments are immediately released
+
+    $count = 0;
+    @a = (bless([]), bless([]), bless([]));
+    grep 1, @a;
+    ::is ($count, 0, "grep void pre");
+    @a = ();
+    ::is ($count, 3, "grep void post");
+
+    $count = 0;
+    @a = (bless([]), bless([]), bless([]));
+    my $x = grep 1, @a;
+    ::is ($count, 0, "grep scalar pre");
+    @a = ();
+    ::is ($count, 3, "grep scalar post");
+
+    $count = 0;
+    @a = (bless([]), bless([]), bless([]));
+    () = grep 1, @a;
+    ::is ($count, 0, "grep list pre");
+    @a = ();
+    ::is ($count, 3, "grep list post");
+
+    # check check map expression results are immediately released
+    # in void context
+
+    $count = 1;
+    map {
+            ::is ($count, 1, "block map void $_");
+            $count = 0;
+            bless[];
+        } 1,2,3;
+}
+
+# At one point during development, this code SEGVed on PERL_RC_STACK
+# builds, as NULL filler pointers on the stack during a map were getting
+# copied to the tmps stack, and the tmps stack can't handle NULL pointers.
+# The bug only occurred in IO::Socket::SSL rather than core. It required
+# perl doing a call_sv(.., G_EVAL) to call the sub containing the map. In
+# the original bug this was triggered by a use/require, but here we use a
+# BEGIN within an eval as simpler variant.
+
+{
+    my @res;
+    eval q{
+        BEGIN { @res = map { $_ => eval {die} || -1 } qw( ABC XYZ); }
+    };
+    is("@res", "ABC -1 XYZ -1", "no NULL tmps");
 }

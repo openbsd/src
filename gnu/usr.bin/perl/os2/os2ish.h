@@ -192,7 +192,8 @@ extern int rc;
 #  define pthread_setspecific(k,v)	(*(k)=(v),0)
 #  define pthread_key_create(keyp,flag)			\
         ( DosAllocThreadLocalMemory(1,(unsigned long**)keyp)	\
-          ? Perl_croak_nocontext("Out of memory!"), 1        \
+          /* diag_listed_as: Out of memory in perl:%s */ \
+          ? Perl_croak_nocontext("Out of memory in perl:os2:pthread_key_create"), 1        \
           : 0						\
         )
 #endif /* USE_SLOW_THREAD_SPECIFIC */

@@ -61,7 +61,7 @@ sub errors { Pod::Simple::ErrorFinder->errors_for_input(@_) }
       "warning for nested L<>",
   );
 }
-    
+
 {
   my $input = "=pod\n\nLE<lt>E<sol>E<gt> containing only slash: L< / >\n";
   my $errors = errors("$input");

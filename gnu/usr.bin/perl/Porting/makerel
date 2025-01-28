@@ -224,6 +224,8 @@ system("chmod +x @exe") == 0
     or die "system: $!";
 
 # MANIFEST may be resorted, so needs to be writable
+# This list of files is parsed from this source code
+# by t/porting/makerel.t
 my @writables = qw(
     feature.h
     lib/feature.pm
@@ -241,7 +243,6 @@ my @writables = qw(
     mg_vtable.h
     dist/Devel-PPPort/module2.c
     dist/Devel-PPPort/module3.c
-    cpan/autodie/t/touch_me
     reentr.c
     reentr.h
     regcharclass.h
@@ -252,7 +253,6 @@ my @writables = qw(
     win32/Makefile
     win32/config_H.gc
     win32/config_H.vc
-    uconfig.h
 );
 
 my $out = `chmod u+w @writables 2>&1`;

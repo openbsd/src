@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -33,7 +32,7 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
    );
 
    ok( defined $testserver, "IO::Socket::IP->new constructs a $socktype socket" ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    is( $testserver->sockdomain, AF_INET,           "\$testserver->sockdomain for $socktype" );
    is( $testserver->socktype,   Socket->$socktype, "\$testserver->socktype for $socktype" );
@@ -53,7 +52,7 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
       PeerPort => $testserver->sockport,
       Type     => Socket->$socktype,
       Proto    => ( $socktype eq "SOCK_STREAM" ? "tcp" : "udp" ), # Because IO::Socket::INET is stupid and always presumes tcp
-   ) or die "Cannot connect to PF_INET - $@";
+   ) or die "Cannot connect to PF_INET - $IO::Socket::errstr";
 
    my $testclient = ( $socktype eq "SOCK_STREAM" ) ? 
       $testserver->accept : 

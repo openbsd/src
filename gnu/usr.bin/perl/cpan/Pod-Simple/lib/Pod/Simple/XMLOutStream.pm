@@ -1,19 +1,19 @@
-
-require 5;
 package Pod::Simple::XMLOutStream;
 use strict;
+use warnings;
 use Carp ();
 use Pod::Simple ();
-use vars qw( $ATTR_PAD @ISA $VERSION $SORT_ATTRS);
-$VERSION = '3.43';
+our $VERSION = '3.45';
 BEGIN {
-  @ISA = ('Pod::Simple');
+  our @ISA = ('Pod::Simple');
   *DEBUG = \&Pod::Simple::DEBUG unless defined &DEBUG;
 }
 
+our $ATTR_PAD;
 $ATTR_PAD = "\n" unless defined $ATTR_PAD;
  # Don't mess with this unless you know what you're doing.
 
+our $SORT_ATTRS;
 $SORT_ATTRS = 0 unless defined $SORT_ATTRS;
 
 sub new {
@@ -139,7 +139,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

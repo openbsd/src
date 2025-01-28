@@ -71,7 +71,7 @@ package main;
 
 $| = 1;
 BEGIN { require './test.pl'; require './charset_tools.pl' }
-plan tests => 5363;
+plan tests => 5367;
 
 use Scalar::Util qw(tainted);
 
@@ -3227,4 +3227,30 @@ package RT33789 {
         my $result = '1' . ( '2' . ( '3' . ( '4' . ( '5' . $o ) ) ) );
     }
     ::is($destroy, 1, "RT #133789: delayed destroy");
+}
+
+# GH #21477: with an overloaded object $obj, ($obj ~~ $scalar) wasn't
+# popping the original args off the stack. So in list context, rather than
+# returning (Y/N), it was returning ($obj, $scalar, Y/N)
+
+
+package GH21477 {
+    use overload
+        '""'  => sub { $_[0][0]; },
+        '~~'  => sub { $_[0][0] eq $_[1] },
+        'eq'  => sub { $_[0][0] eq $_[1] },
+    ;
+
+    my $o = bless ['cat'];
+
+    # smartmatch is deprecated and will be removed in 5.042
+    no warnings 'deprecated';
+
+    my @result = ($o ~~ 'cat');
+    ::is(scalar(@result), 1, "GH #21477: return one result");
+    ::is($result[0], 1, "GH #21477: return true");
+
+    @result = ($o ~~ 'dog');
+    ::is(scalar(@result), 1, "GH #21477: return one result - part 2");
+    ::is($result[0], "", "GH #21477: return false");
 }

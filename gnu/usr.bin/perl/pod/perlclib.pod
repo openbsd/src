@@ -1,8 +1,13 @@
 =head1 NAME
 
-perlclib - Internal replacements for standard C library functions
+perlclib - Interacting with standard C library functions
 
 =head1 DESCRIPTION
+
+The perl interpreter is written in C; XS code also expands to C.
+Inevitably, this code will call some functions from the C library,
+C<libc>.  This document gives some guidance on interfacing with that
+library.
 
 One thing Perl porters should note is that F<perl> doesn't tend to use that
 much of the C standard library internally; you'll see very little use of, 
@@ -10,15 +15,70 @@ for example, the F<ctype.h> functions in there. This is because Perl
 tends to reimplement or abstract standard library functions, so that we
 know exactly how they're going to operate.
 
-This is a reference card for people who are familiar with the C library
-and who want to do things the Perl way; to tell them which functions
-they ought to use instead of the more normal C functions. 
+=head1 libc functions to avoid
+
+There are many many libc functions.  Most of them are fair game to use,
+but some are not.  Some of the possible reasons are:
+
+=over
+
+=item *
+
+They likely will interfere with the perl interpreter's functioning,
+such as its bookkeeping, or signal handling, or memory allocation,
+or any number of harmful things.
+
+=item *
+
+They aren't implemented on all platforms, but there is an alternative
+that is.
+
+Or they may be buggy or deprecated on some or all platforms.
+
+=item *
+
+They aren't suitable for multi-threaded operation, but there is an
+alternative that is, and is just as easily usable.
+
+You may not expect your code to ever be used under threads, but code has
+a way of being adapted beyond our initial expectations.  If it is just
+as easy to use something that can be used under threads, it's better to
+use that now, just in case.
+
+=item *
+
+In functions that deal with strings, complications may arise because the
+string may be encoded in different ways, for example in UTF-8.  For
+these, it is likely better to place the string in a SV and use the Perl
+SV string handling functions that contain extensive logic to deal with
+this.
+
+=item *
+
+In functions that deal with numbers, complications may arise because the
+numbers get too big or small, and what those limits are depends on the
+current platform.  Again, the Perl SV numeric data types have extensive
+logic to take care of these kinds of issues.
+
+=item *
+
+They are locale-aware, and your caller may not want this.
+
+=back
+
+The following commentary and tables give some functions in the first
+column that shouldn't be used in C or XS code, with the preferred
+alternative (if any) in the second column.
 
 =head2 Conventions
 
 In the following tables:
 
 =over 3
+
+=item C<~>
+
+marks the function as deprecated; it should not be used regardless.
 
 =item C<t>
 
@@ -48,79 +108,80 @@ types.  Don't forget that with the new PerlIO layered I/O abstraction
 C<FILE*> types may not even be available. See also the C<perlapio>
 documentation for more information about the following functions:
 
- Instead Of:                 Use:
+  Instead Of:                 Use:
 
- stdin                       PerlIO_stdin()
- stdout                      PerlIO_stdout()
- stderr                      PerlIO_stderr()
+  stdin                       PerlIO_stdin()
+  stdout                      PerlIO_stdout()
+  stderr                      PerlIO_stderr()
 
- fopen(fn, mode)             PerlIO_open(fn, mode)
- freopen(fn, mode, stream)   PerlIO_reopen(fn, mode, perlio) (Dep-
-                               recated)
- fflush(stream)              PerlIO_flush(perlio)
- fclose(stream)              PerlIO_close(perlio)
+  fopen(fn, mode)             PerlIO_open(fn, mode)
+  freopen(fn, mode, stream)   PerlIO_reopen(fn, mode, perlio) (Dep-
+                                recated)
+  fflush(stream)              PerlIO_flush(perlio)
+  fclose(stream)              PerlIO_close(perlio)
 
 =head2 File Input and Output
 
- Instead Of:                 Use:
+  Instead Of:                 Use:
 
- fprintf(stream, fmt, ...)   PerlIO_printf(perlio, fmt, ...)
+  fprintf(stream, fmt, ...)   PerlIO_printf(perlio, fmt, ...)
 
- [f]getc(stream)             PerlIO_getc(perlio)
- [f]putc(stream, n)          PerlIO_putc(perlio, n)
- ungetc(n, stream)           PerlIO_ungetc(perlio, n)
+  [f]getc(stream)             PerlIO_getc(perlio)
+  [f]putc(stream, n)          PerlIO_putc(perlio, n)
+  ungetc(n, stream)           PerlIO_ungetc(perlio, n)
 
 Note that the PerlIO equivalents of C<fread> and C<fwrite> are slightly
 different from their C library counterparts:
 
- fread(p, size, n, stream)   PerlIO_read(perlio, buf, numbytes)
- fwrite(p, size, n, stream)  PerlIO_write(perlio, buf, numbytes)
+  fread(p, size, n, stream)   PerlIO_read(perlio, buf, numbytes)
+  fwrite(p, size, n, stream)  PerlIO_write(perlio, buf, numbytes)
 
- fputs(s, stream)            PerlIO_puts(perlio, s)
+  fputs(s, stream)            PerlIO_puts(perlio, s)
 
 There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
 
- fgets(s, n, stream)         sv_gets(sv, perlio, append)
+  fgets(s, n, stream)         sv_gets(sv, perlio, append)
 
 =head2 File Positioning
 
- Instead Of:                 Use:
+  Instead Of:                 Use:
 
- feof(stream)                PerlIO_eof(perlio)
- fseek(stream, n, whence)    PerlIO_seek(perlio, n, whence)
- rewind(stream)              PerlIO_rewind(perlio)
+  feof(stream)                PerlIO_eof(perlio)
+  fseek(stream, n, whence)    PerlIO_seek(perlio, n, whence)
+  rewind(stream)              PerlIO_rewind(perlio)
 
- fgetpos(stream, p)          PerlIO_getpos(perlio, sv)
- fsetpos(stream, p)          PerlIO_setpos(perlio, sv)
+  fgetpos(stream, p)          PerlIO_getpos(perlio, sv)
+  fsetpos(stream, p)          PerlIO_setpos(perlio, sv)
 
- ferror(stream)              PerlIO_error(perlio)
- clearerr(stream)            PerlIO_clearerr(perlio)
+  ferror(stream)              PerlIO_error(perlio)
+  clearerr(stream)            PerlIO_clearerr(perlio)
 
 =head2 Memory Management and String Handling
 
- Instead Of:                    Use:
+  Instead Of:                    Use:
 
- t* p = malloc(n)               Newx(p, n, t)
- t* p = calloc(n, s)            Newxz(p, n, t)
- p = realloc(p, n)              Renew(p, n, t)
- memcpy(dst, src, n)            Copy(src, dst, n, t)
- memmove(dst, src, n)           Move(src, dst, n, t)
- memcpy(dst, src, sizeof(t))    StructCopy(src, dst, t)
- memset(dst, 0, n * sizeof(t))  Zero(dst, n, t)
- memzero(dst, 0)                Zero(dst, n, char)
- free(p)                        Safefree(p)
+  t* p = malloc(n)               Newx(p, n, t)
+  t* p = calloc(n, s)            Newxz(p, n, t)
+  p = realloc(p, n)              Renew(p, n, t)
+  memcpy(dst, src, n)            Copy(src, dst, n, t)
+  memmove(dst, src, n)           Move(src, dst, n, t)
+  memcpy(dst, src, sizeof(t))    StructCopy(src, dst, t)
+  memset(dst, 0, n * sizeof(t))  Zero(dst, n, t)
+  memzero(dst, 0)                Zero(dst, n, char)
+  free(p)                        Safefree(p)
 
- strdup(p)                      savepv(p)
- strndup(p, n)                  savepvn(p, n) (Hey, strndup doesn't
-                                               exist!)
+  strdup(p)                      savepv(p)
+  strndup(p, n)                  savepvn(p, n) (Hey, strndup doesn't
+                                                exist!)
 
- strstr(big, little)            instr(big, little)
- strcmp(s1, s2)                 strLE(s1, s2) / strEQ(s1, s2)
-                                              / strGT(s1,s2)
- strncmp(s1, s2, n)             strnNE(s1, s2, n) / strnEQ(s1, s2, n)
+  strstr(big, little)            instr(big, little)
+  memmem(big, blen, little, len) ninstr(big, bigend, little, little_end)
+  strcmp(s1, s2)                 strLE(s1, s2) / strEQ(s1, s2)
+                                               / strGT(s1,s2)
+  strncmp(s1, s2, n)             strnNE(s1, s2, n) / strnEQ(s1, s2, n)
 
- memcmp(p1, p2, n)              memNE(p1, p2, n)
- !memcmp(p1, p2, n)             memEQ(p1, p2, n)
+  memcmp(p1, p2, n)              memNE(p1, p2, n)
+  !memcmp(p1, p2, n)             memEQ(p1, p2, n)
 
 Notice the different order of arguments to C<Copy> and C<Move> than used
 in C<memcpy> and C<memmove>.
@@ -128,12 +189,19 @@ in C<memcpy> and C<memmove>.
 Most of the time, though, you'll want to be dealing with SVs internally
 instead of raw C<char *> strings:
 
- strlen(s)                   sv_len(sv)
- strcpy(dt, src)             sv_setpv(sv, s)
- strncpy(dt, src, n)         sv_setpvn(sv, s, n)
- strcat(dt, src)             sv_catpv(sv, s)
- strncat(dt, src)            sv_catpvn(sv, s)
- sprintf(s, fmt, ...)        sv_setpvf(sv, fmt, ...)
+  strlen(s)                   sv_len(sv)
+  strcpy(dt, src)             sv_setpv(sv, s)
+  strncpy(dt, src, n)         sv_setpvn(sv, s, n)
+  strcat(dt, src)             sv_catpv(sv, s)
+  strncat(dt, src)            sv_catpvn(sv, s)
+  sprintf(s, fmt, ...)        sv_setpvf(sv, fmt, ...)
+
+If you do need raw strings, some platforms have safer interfaces, and
+Perl makes sure a version of these are available on all platforms:
+
+  strlcat(dt, src, sizeof(dt)) my_strlcat(dt, src, sizeof(dt))
+  strlcpy(dt, src, sizeof(dt)) my_strlcpy(dt, src, sizeof(dt))
+  strnlen(s)                   my_strnlen(s, maxlen)
 
 Note also the existence of C<sv_catpvf> and C<sv_vcatpvfn>, combining
 concatenation with formatting.
@@ -146,17 +214,14 @@ any code attempting to use the data without forethought will break
 sooner rather than later.  Poisoning can be done using the Poison()
 macros, which have similar arguments to Zero():
 
- PoisonWith(dst, n, t, b)    scribble memory with byte b
- PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)
- PoisonFree(dst, n, t)       equal to PoisonWith(dst, n, t, 0xEF)
- Poison(dst, n, t)           equal to PoisonFree(dst, n, t)
+  PoisonWith(dst, n, t, b)    scribble memory with byte b
+  PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)
+  PoisonFree(dst, n, t)       equal to PoisonWith(dst, n, t, 0xEF)
+  Poison(dst, n, t)           equal to PoisonFree(dst, n, t)
 
 =head2 Character Class Tests
 
 There are several types of character class tests that Perl implements.
-The only ones described here are those that directly correspond to C
-library functions that operate on 8-bit characters, but there are
-equivalents that operate on wide characters, and UTF-8 encoded strings.
 All are more fully described in L<perlapi/Character classification> and
 L<perlapi/Character case changing>.
 
@@ -166,27 +231,35 @@ functionality.  The other two columns always assume a POSIX (or C)
 locale.  The entries in the ASCII column are only meaningful for ASCII
 inputs, returning FALSE for anything else.  Use these only when you
 B<know> that is what you want.  The entries in the Latin1 column assume
-that the non-ASCII 8-bit characters are as Unicode defines, them, the
+that the non-ASCII 8-bit characters are as Unicode defines them, the
 same as ISO-8859-1, often called Latin 1.
 
- Instead Of:  Use for ASCII:   Use for Latin1:      Use for locale:
+  Instead Of:  Use for ASCII:   Use for Latin1:      Use for locale:
 
- isalnum(c)  isALPHANUMERIC(c) isALPHANUMERIC_L1(c) isALPHANUMERIC_LC(c)
- isalpha(c)  isALPHA(c)        isALPHA_L1(c)        isALPHA_LC(u )
- isascii(c)  isASCII(c)                             isASCII_LC(c)
- isblank(c)  isBLANK(c)        isBLANK_L1(c)        isBLANK_LC(c)
- iscntrl(c)  isCNTRL(c)        isCNTRL_L1(c)        isCNTRL_LC(c)
- isdigit(c)  isDIGIT(c)        isDIGIT_L1(c)        isDIGIT_LC(c)
- isgraph(c)  isGRAPH(c)        isGRAPH_L1(c)        isGRAPH_LC(c)
- islower(c)  isLOWER(c)        isLOWER_L1(c)        isLOWER_LC(c)
- isprint(c)  isPRINT(c)        isPRINT_L1(c)        isPRINT_LC(c)
- ispunct(c)  isPUNCT(c)        isPUNCT_L1(c)        isPUNCT_LC(c)
- isspace(c)  isSPACE(c)        isSPACE_L1(c)        isSPACE_LC(c)
- isupper(c)  isUPPER(c)        isUPPER_L1(c)        isUPPER_LC(c)
- isxdigit(c) isXDIGIT(c)       isXDIGIT_L1(c)       isXDIGIT_LC(c)
+  isalnum(c)  isALPHANUMERIC(c) isALPHANUMERIC_L1(c) isALPHANUMERIC_LC(c)
+  isalpha(c)  isALPHA(c)        isALPHA_L1(c)        isALPHA_LC(u )
+  isascii(c)  isASCII(c)                             isASCII_LC(c)
+  isblank(c)  isBLANK(c)        isBLANK_L1(c)        isBLANK_LC(c)
+  iscntrl(c)  isCNTRL(c)        isCNTRL_L1(c)        isCNTRL_LC(c)
+  isdigit(c)  isDIGIT(c)        isDIGIT_L1(c)        isDIGIT_LC(c)
+  isgraph(c)  isGRAPH(c)        isGRAPH_L1(c)        isGRAPH_LC(c)
+  islower(c)  isLOWER(c)        isLOWER_L1(c)        isLOWER_LC(c)
+  isprint(c)  isPRINT(c)        isPRINT_L1(c)        isPRINT_LC(c)
+  ispunct(c)  isPUNCT(c)        isPUNCT_L1(c)        isPUNCT_LC(c)
+  isspace(c)  isSPACE(c)        isSPACE_L1(c)        isSPACE_LC(c)
+  isupper(c)  isUPPER(c)        isUPPER_L1(c)        isUPPER_LC(c)
+  isxdigit(c) isXDIGIT(c)       isXDIGIT_L1(c)       isXDIGIT_LC(c)
 
- tolower(c)  toLOWER(c)        toLOWER_L1(c)
- toupper(c)  toUPPER(c)
+  tolower(c)  toLOWER(c)        toLOWER_L1(c)
+  toupper(c)  toUPPER(c)
+
+For the corresponding functions like C<iswupper()>, I<etc.>, use
+C<isUPPER_uvchr()> for non-locale; or C<isUPPER_LC_uvchr()> for locale.
+And use C<toLOWER_uvchr()> instead of C<towlower()>, I<etc.>.  There are
+no direct equivalents for locale; best to put the string into an SV.
+
+Don't use any of the functions like C<isalnum_l()>.  Those are
+non-portable, and interfere with Perl's internal handling.
 
 To emphasize that you are operating only on ASCII characters, you can
 append C<_A> to each of the macros in the ASCII column: C<isALPHA_A>,
@@ -198,60 +271,925 @@ latter name is clearer.  There is no entry in the Latin1 column for
 C<toupper> because the result can be non-Latin1.  You have to use
 C<toUPPER_uvchr>, as described in L<perlapi/Character case changing>.)
 
+Note that the libc caseless comparisons are crippled; Unicode
+provides a richer set, using the concept of folding.  If you need
+more than equality/non-equality, it's probably best to store your
+strings in an SV and use SV functions to do the comparision.  Similarly
+for collation.
+
 =head2 F<stdlib.h> functions
 
- Instead Of:                 Use:
+  Instead Of:                 Use:
 
- atof(s)                     Atof(s)
- atoi(s)                     grok_atoUV(s, &uv, &e)
- atol(s)                     grok_atoUV(s, &uv, &e)
- strtod(s, &p)               Strtod(s, &p)
- strtol(s, &p, n)            Strtol(s, &p, b)
- strtoul(s, &p, n)           Strtoul(s, &p, b)
+  atof(s)                     my_atof(s) or Atof(s)
+  atoi(s)                     grok_atoUV(s, &uv, &e)
+  atol(s)                     grok_atoUV(s, &uv, &e)
+  strtod(s, &p)               Strtod(s, &p)
+  strtol(s, &p, n)            Strtol(s, &p, b)
+  strtoul(s, &p, n)           Strtoul(s, &p, b)
+
+But note that these are subject to locale; see L</Dealing with locales>.
 
 Typical use is to do range checks on C<uv> before casting:
 
-  int i; UV uv;
-  char* end_ptr = input_end;
-  if (grok_atoUV(input, &uv, &end_ptr)
-      && uv <= INT_MAX)
-    i = (int)uv;
-    ... /* continue parsing from end_ptr */
-  } else {
-    ... /* parse error: not a decimal integer in range 0 .. MAX_IV */
-  }
+   int i; UV uv;
+   char* end_ptr = input_end;
+   if (grok_atoUV(input, &uv, &end_ptr)
+       && uv <= INT_MAX)
+     i = (int)uv;
+     ... /* continue parsing from end_ptr */
+   } else {
+     ... /* parse error: not a decimal integer in range 0 .. MAX_IV */
+   }
 
 Notice also the C<grok_bin>, C<grok_hex>, and C<grok_oct> functions in
 F<numeric.c> for converting strings representing numbers in the respective
 bases into C<NV>s.  Note that grok_atoUV() doesn't handle negative inputs,
 or leading whitespace (being purposefully strict).
 
-Note that strtol() and strtoul() may be disguised as Strtol(), Strtoul(),
-Atol(), Atoul().  Avoid those, too.
-
-In theory C<Strtol> and C<Strtoul> may not be defined if the machine perl is
-built on doesn't actually have strtol and strtoul. But as those 2
-functions are part of the 1989 ANSI C spec we suspect you'll find them
-everywhere by now.
-
- int rand()                  double Drand01()
- srand(n)                    { seedDrand01((Rand_seed_t)n);
-                               PL_srand_called = TRUE; }
-
- exit(n)                     my_exit(n)
- system(s)                   Don't. Look at pp_system or use my_popen.
-
- getenv(s)                   PerlEnv_getenv(s)
- setenv(s, val)              my_setenv(s, val)
-
 =head2 Miscellaneous functions
 
 You should not even B<want> to use F<setjmp.h> functions, but if you
 think you do, use the C<JMPENV> stack in F<scope.h> instead.
 
-For C<signal>/C<sigaction>, use C<rsignal(signo, handler)>.
+ ~asctime()              Perl_sv_strftime_tm()
+ ~asctime_r()            Perl_sv_strftime_tm()
+  chsize()               my_chsize()
+ ~ctime()                Perl_sv_strftime_tm()
+ ~ctime_r()              Perl_sv_strftime_tm()
+ ~cuserid()              DO NOT USE; see its man page
+  dirfd()                my_dirfd()
+  duplocale()            Perl_setlocale()
+ ~ecvt()                 my_snprintf()
+ ~endgrent_r()           endgrent()
+ ~endhostent_r()         endhostent()
+ ~endnetent_r()          endnetent()
+ ~endprotoent_r()        endprotoent()
+ ~endpwent_r()           endpwent()
+ ~endservent_r()         endservent()
+ ~endutent()             endutxent()
+  exit(n)                my_exit(n)
+ ~fcvt()                 my_snprintf()
+  freelocale()           Perl_setlocale()
+ ~ftw()                  nftw()
+  getenv(s)              PerlEnv_getenv(s)
+ ~gethostbyaddr()        getaddrinfo()
+ ~gethostbyname()        getnameinfo()
+ ~getpass()              DO NOT USE; see its man page
+ ~getpw()                getpwuid()
+ ~getutent()             getutxent()
+ ~getutid()              getutxid()
+ ~getutline()            getutxline()
+ ~gsignal()              DO NOT USE; see its man page
+  localeconv()           Perl_localeconv()
+  mblen()                mbrlen()
+  mbtowc()               mbrtowc()
+  newlocale()            Perl_setlocale()
+  pclose()               my_pclose()
+  popen()                my_popen()
+ ~pututline()            pututxline()
+ ~qecvt()                my_snprintf()
+ ~qfcvt()                my_snprintf()
+  querylocale()          Perl_setlocale()
+  int rand()             double Drand01()
+  srand(n)               { seedDrand01((Rand_seed_t)n);
+                           PL_srand_called = TRUE; }
+ ~readdir_r()            readdir()
+  realloc()              saferealloc(), Renew() or Renewc()
+ ~re_comp()              regcomp()
+ ~re_exec()              regexec()
+ ~rexec()                rcmd()
+ ~rexec_af()             rcmd()
+  setenv(s, val)         my_setenv(s, val)
+ ~setgrent_r()           setgrent()
+ ~sethostent_r()         sethostent()
+  setlocale()            Perl_setlocale()
+  setlocale_r()          Perl_setlocale()
+ ~setnetent_r()          setnetent()
+ ~setprotoent_r()        setprotoent()
+ ~setpwent_r()           setpwent()
+ ~setservent_r()         setservent()
+ ~setutent()             setutxent()
+  sigaction()            rsignal(signo, handler)
+ ~siginterrupt()         rsignal() with the SA_RESTART flag instead
+  signal(signo, handler) rsignal(signo, handler)
+ ~ssignal()              DO NOT USE; see its man page
+  strcasecmp()           a Perl foldEQ-family function
+  strerror()             sv_string_from_errnum()
+  strerror_l()           sv_string_from_errnum()
+  strerror_r()           sv_string_from_errnum()
+  strftime()             Perl_sv_strftime_tm()
+  strtod()               my_strtod() or Strtod()
+  system(s)              Don't. Look at pp_system or use my_popen.
+ ~tempnam()              mkstemp() or tmpfile()
+ ~tmpnam()               mkstemp() or tmpfile()
+  tmpnam_r()             mkstemp() or tmpfile()
+  uselocale()            Perl_setlocale()
+  vsnprintf()            my_vsnprintf()
+  wctob()                wcrtomb()
+  wctomb()               wcrtomb()
+  wsetlocale()           Perl_setlocale()
+
+The Perl-furnished alternatives are documented in L<perlapi>, which you
+should peruse anyway to see what all is available to you.
+
+The lists are incomplete.  Think when using an unlisted function if it
+seems likely to interfere with Perl.
+
+=head1 Dealing with locales
+
+Like it or not, your code will be executed in the context of a locale,
+as are all C language programs.  See L<perllocale>.  Most libc calls are
+not affected by the locale, but a surprising number are:
+
+ addmntent()           getspent_r()        sethostent()
+ alphasort()           getspnam()          sethostent_r()
+ asctime()             getspnam_r()        setnetent()
+ asctime_r()           getwc()             setnetent_r()
+ asprintf()            getwchar()          setnetgrent()
+ atof()                glob()              setprotoent()
+ atoi()                gmtime()            setprotoent_r()
+ atol()                gmtime_r()          setpwent()
+ atoll()               grantpt()           setpwent_r()
+ btowc()               iconv_open()        setrpcent()
+ catopen()             inet_addr()         setservent()
+ ctime()               inet_aton()         setservent_r()
+ ctime_r()             inet_network()      setspent()
+ cuserid()             inet_ntoa()         sgetspent_r()
+ daylight              inet_ntop()         shm_open()
+ dirname()             inet_pton()         shm_unlink()
+ dprintf()             initgroups()        snprintf()
+ endaliasent()         innetgr()           sprintf()
+ endgrent()            iruserok()          sscanf()
+ endgrent_r()          iruserok_af()       strcasecmp()
+ endhostent()          isalnum()           strcasestr()
+ endhostent_r()        isalnum_l()         strcoll()
+ endnetent()           isalpha()           strerror()
+ endnetent_r()         isalpha_l()         strerror_l()
+ endprotoent()         isascii()           strerror_r()
+ endprotoent_r()       isascii_l()         strfmon()
+ endpwent()            isblank()           strfmon_l()
+ endpwent_r()          isblank_l()         strfromd()
+ endrpcent()           iscntrl()           strfromf()
+ endservent()          iscntrl_l()         strfroml()
+ endservent_r()        isdigit()           strftime()
+ endspent()            isdigit_l()         strftime_l()
+ err()                 isgraph()           strncasecmp()
+ error()               isgraph_l()         strptime()
+ error_at_line()       islower()           strsignal()
+ errx()                islower_l()         strtod()
+ fgetwc()              isprint()           strtof()
+ fgetwc_unlocked()     isprint_l()         strtoimax()
+ fgetws()              ispunct()           strtol()
+ fgetws_unlocked()     ispunct_l()         strtold()
+ fnmatch()             isspace()           strtoll()
+ forkpty()             isspace_l()         strtoq()
+ fprintf()             isupper()           strtoul()
+ fputwc()              isupper_l()         strtoull()
+ fputwc_unlocked()     iswalnum()          strtoumax()
+ fputws()              iswalnum_l()        strtouq()
+ fputws_unlocked()     iswalpha()          strverscmp()
+ fscanf()              iswalpha_l()        strxfrm()
+ fwprintf()            iswblank()          swprintf()
+ fwscanf()             iswblank_l()        swscanf()
+ getaddrinfo()         iswcntrl()          syslog()
+ getaliasbyname_r()    iswcntrl_l()        timegm()
+ getaliasent_r()       iswdigit()          timelocal()
+ getdate()             iswdigit_l()        timezone
+ getdate_r()           iswgraph()          tolower()
+ getfsent()            iswgraph_l()        tolower_l()
+ getfsfile()           iswlower()          toupper()
+ getfsspec()           iswlower_l()        toupper_l()
+ getgrent()            iswprint()          towctrans()
+ getgrent_r()          iswprint_l()        towlower()
+ getgrgid()            iswpunct()          towlower_l()
+ getgrgid_r()          iswpunct_l()        towupper()
+ getgrnam()            iswspace()          towupper_l()
+ getgrnam_r()          iswspace_l()        tzname
+ getgrouplist()        iswupper()          tzset()
+ gethostbyaddr()       iswupper_l()        ungetwc()
+ gethostbyaddr_r()     iswxdigit()         vasprintf()
+ gethostbyname()       iswxdigit_l()       vdprintf()
+ gethostbyname2()      isxdigit()          verr()
+ gethostbyname2_r()    isxdigit_l()        verrx()
+ gethostbyname_r()     localeconv()        versionsort()
+ gethostent()          localtime()         vfprintf()
+ gethostent_r()        localtime_r()       vfscanf()
+ gethostid()           MB_CUR_MAX          vfwprintf()
+ getlogin()            mblen()             vprintf()
+ getlogin_r()          mbrlen()            vscanf()
+ getmntent()           mbrtowc()           vsnprintf()
+ getmntent_r()         mbsinit()           vsprintf()
+ getnameinfo()         mbsnrtowcs()        vsscanf()
+ getnetbyaddr()        mbsrtowcs()         vswprintf()
+ getnetbyaddr_r()      mbstowcs()          vsyslog()
+ getnetbyname()        mbtowc()            vwarn()
+ getnetbyname_r()      mktime()            vwarnx()
+ getnetent()           nan()               vwprintf()
+ getnetent_r()         nanf()              warn()
+ getnetgrent()         nanl()              warnx()
+ getnetgrent_r()       nl_langinfo()       wcrtomb()
+ getprotobyname()      openpty()           wcscasecmp()
+ getprotobyname_r()    printf()            wcschr()
+ getprotobynumber()    psiginfo()          wcscoll()
+ getprotobynumber_r()  psignal()           wcsftime()
+ getprotoent()         putpwent()          wcsncasecmp()
+ getprotoent_r()       putspent()          wcsnrtombs()
+ getpw()               putwc()             wcsrchr()
+ getpwent()            putwchar()          wcsrtombs()
+ getpwent_r()          regcomp()           wcstod()
+ getpwnam()            regexec()           wcstof()
+ getpwnam_r()          res_nclose()        wcstoimax()
+ getpwuid()            res_ninit()         wcstold()
+ getpwuid_r()          res_nquery()        wcstombs()
+ getrpcbyname_r()      res_nquerydomain()  wcstoumax()
+ getrpcbynumber_r()    res_nsearch()       wcswidth()
+ getrpcent_r()         res_nsend()         wcsxfrm()
+ getrpcport()          rpmatch()           wctob()
+ getservbyname()       ruserok()           wctomb()
+ getservbyname_r()     ruserok_af()        wctrans()
+ getservbyport()       scandir()           wctype()
+ getservbyport_r()     scanf()             wcwidth()
+ getservent()          setaliasent()       wordexp()
+ getservent_r()        setgrent()          wprintf()
+ getspent()            setgrent_r()        wscanf()
+
+(The list doesn't include functions that manipulate the locale, such as
+C<setlocale()>.)
+
+If any of these functions are called directly or indirectly from your
+code, you are affected by the current locale.
+
+The first thing to know about this list is that there are better
+alternatives to many of the functions, which it's highly likely that you
+should be using instead.  See L</libc functions to avoid> above.
+This includes using Perl IO L<perlapio>.
+
+The second thing to know is that Perl is documented to not pay attention
+to the current locale except for code executed within the scope of a
+S<C<use locale>> statement.  If you violate that, you may be creating
+bugs, depending on the application.
+
+The next thing to know is that many of these functions depend only on
+the locale in regards to numeric values.  Your code is likely to have
+been written expecting that the decimal point (radix) character is a dot
+(U+002E: FULL STOP), and that strings of integer numbers are not
+separated into groups (1,000,000 in an American locale means a million;
+your code is likely not expecting the commas.)  The good news is that
+normally (as of Perl v5.22), your code will get called with the locale
+set so those expectations are met.  Explicit action has to be taken to
+change this (described a little ways below).  This is accomplished by
+Perl not actually switching into a locale that doesn't conform to these
+expectations, except when explicitly told to do so.  The Perl
+input/output and formatting routines do this switching for you
+automatically, if appropriate, and then switch back.  If, for some
+reason, you need to do it yourself, the easiest way from C and XS code
+is to use the macro L<perlapi/C<WITH_LC_NUMERIC_SET_TO_NEEDED>>.  You
+can wrap this macro around an entire block of code that you want to be
+executed in the correct environment.  The bottom line is that your code
+is likely to work as expected in this regard without you having to take
+any action.
+
+This leaves the remaining functions.  Your code will get called with all
+but the numeric locale portions set to the underlying locale.  Often,
+the locale is of not much import to your code, and you also won't have
+to take any action; things will just work out.  But you should examine
+the man pages of the ones you use to verify this.  Often, Perl has
+better ways of doing the same functionality.  Consider using SVs and
+their access routines rather than calling the low level functions that,
+for example, find how many bytes are in a UTF-8 encoded character.
+
+You can determine if you have been called from within the scope of a
+S<C<use locale>> by using the boolen macro L<perlapi/C<IN_LOCALE>>.
+
+If you need to not be in the underlying locale, you can call
+L<perlapi/C<Perl_setlocale>> to change it temporarily to the one you
+need (likely the "C" locale), and then change it back before returning.
+This can be B<very> problematic on threaded perls on some platforms. See
+L</Dealing with embedded perls and threads>.
+
+A problem with changing the locale of a single category is that mojibake
+can arise on some platforms if the C<LC_CTYPE> category and the changed one
+are not the same.  On the platforms that that isn't an issue, the
+preprocessor directive C<LIBC_HANDLES_MISMATCHED_CTYPE> will be defined.
+Otherwise, you may have to change more than one category to correctly
+accomplish your task.  And, there will be many locale combinations where
+the mojibake likely won't happen, so you won't be confronted with this
+until the code gets executed in the field by someone who doesn't speak
+your language very well.
+
+Earlier we mentioned that explicit action is required to have your code
+get called with the numeric portions of the locale not meeting the
+the typical expectations of having a dot for the radix character and no
+punctuation separating groups of digits.  That action is to call the
+function L<perlapi/C<switch_to_global_locale>>.
+
+C<switch_to_global_locale()> was written initially to cope with the
+C<Tk> library, but is general enough for other similar situations.  C<Tk>
+changes the global locale to match its expectations (later versions of
+it allow this to be turned off).  This presents a conflict with Perl
+thinking it also controls the locale.  Calling this function tells Perl to
+yield control.  Calling L<perlapi/C<sync_locale>> tells Perl to take
+control again, accepting whatever the locale has been changed to in the
+interim.  If your code is called during that interim, all portions of
+the locale will be the raw underlying values.  Should you need to
+manipulate numbers, you are on your own with regard to the radix
+character and grouping.  If you find yourself in this situation, it is
+generally best to make the interval between the calls to these two
+functions as short as possible, and avoid calculations until after perl
+has control again.
+
+It is important for perl to know about all the possible locale
+categories on the platform, even if they aren't apparently used in your
+program.  Perl knows all of the Linux ones.  If your platform has
+others, you can submit an issue at
+L<https://github.com/Perl/perl5/issues> for inclusion of it in the next
+release.  In the meantime, it is possible to edit the Perl source to
+teach it about the category, and then recompile.  Search for instances
+of, say, C<LC_PAPER> in the source, and use that as a template to add
+the omitted one.
+
+There are further complications under multi-threaded operation.  Keep on
+reading.
+
+=head1 Dealing with embedded perls and threads
+
+It is possible to embed a Perl interpreter within a larger program.  See
+L<perlembed>.
+
+MULTIPLICITY is the way this is accomplished internally; it is described in
+L<perlguts/How multiple interpreters and concurrency are supported>.
+Multiple Perl interpreters may be embedded.
+
+It is also possible to compile perl to support threading.  See
+L<perlthrtut>.  Perl's implementation of threading requires
+MULTIPLICITY, but not the other way around.
+
+MULTIPLICITY without threading means that only one thing runs at a time,
+so there are no concurrency issues, but each component or instance can
+affect the global state, potentially interfering with the execution of
+other instance.  This can happen if one instance:
+
+=over
+
+=item *
+
+changes the current working directory
+
+=item *
+
+changes the process's environment
+
+=item *
+
+changes the global locale the process is operating under
+
+=item *
+
+writes to shared memory or to a shared file
+
+=item *
+
+uses a shared file descriptor (including a database iterator)
+
+=item *
+
+raises a signal that functions in other instances are sensitive to
+
+=back
+
+If your code doesn't do any of these things, nor depends on any of their
+values, then Congratulations!!, you don't have to worry about MULTIPLICITY
+or threading.  But wait, a surprising number of libc functions do
+depend on data global to the process in some way that may not be
+immediately obvious.  For example, calling C<L<strtok(3)>> changes the
+global state of a process, and thus needs special attention.
+
+The section 3 libc uses that we know about that have MULTIPLICITY and/or
+multi-thread issues are:
+
+ addmntent()             getrpcent_r()        re_exec()
+ alphasort()             getrpcport()         regcomp()
+ asctime()               getservbyname()      regerror()
+ asctime_r()             getservbyname_r()    regexec()
+ asprintf()              getservbyport()      res_nclose()
+ atof()                  getservbyport_r()    res_ninit()
+ atoi()                  getservent()         res_nquery()
+ atol()                  getservent_r()       res_nquerydomain()
+ atoll()                 getspent()           res_nsearch()
+ basename()              getspent_r()         res_nsend()
+ btowc()                 getspnam()           rexec()
+ catgets()               getspnam_r()         rexec_af()
+ catopen()               getttyent()          rpmatch()
+ clearenv()              getttynam()          ruserok()
+ clearerr_unlocked()     getusershell()       ruserok_af()
+ crypt()                 getutent()           scandir()
+ crypt_gensalt()         getutid()            scanf()
+ crypt_r()               getutline()          secure_getenv()
+ ctermid()               getutxent()          seed48()
+ ctermid_r()             getutxid()           seed48_r()
+ ctime()                 getutxline()         setaliasent()
+ ctime_r()               getwc()              setcontext()
+ cuserid()               getwchar()           setenv()
+ daylight                getwchar_unlocked()  setfsent()
+ dbm_clearerr()          getwc_unlocked()     setgrent()
+ dbm_close()             glob()               setgrent_r()
+ dbm_delete()            gmtime()             sethostent()
+ dbm_error()             gmtime_r()           sethostent_r()
+ dbm_fetch()             grantpt()            sethostid()
+ dbm_firstkey()          hcreate()            setkey()
+ dbm_nextkey()           hcreate_r()          setlocale()
+ dbm_open()              hdestroy()           setlocale_r()
+ dbm_store()             hdestroy_r()         setlogmask()
+ dirname()               hsearch()            setnetent()
+ dlerror()               hsearch_r()          setnetent_r()
+ dprintf()               iconv()              setnetgrent()
+ drand48()               iconv_open()         setprotoent()
+ drand48_r()             inet_addr()          setprotoent_r()
+ ecvt()                  inet_aton()          setpwent()
+ encrypt()               inet_network()       setpwent_r()
+ endaliasent()           inet_ntoa()          setrpcent()
+ endfsent()              inet_ntop()          setservent()
+ endgrent()              inet_pton()          setservent_r()
+ endgrent_r()            initgroups()         setspent()
+ endhostent()            initstate_r()        setstate_r()
+ endhostent_r()          innetgr()            setttyent()
+ endnetent()             iruserok()           setusershell()
+ endnetent_r()           iruserok_af()        setutent()
+ endnetgrent()           isalnum()            setutxent()
+ endprotoent()           isalnum_l()          sgetspent()
+ endprotoent_r()         isalpha()            sgetspent_r()
+ endpwent()              isalpha_l()          shm_open()
+ endpwent_r()            isascii()            shm_unlink()
+ endrpcent()             isascii_l()          siginterrupt()
+ endservent()            isblank()            sleep()
+ endservent_r()          isblank_l()          snprintf()
+ endspent()              iscntrl()            sprintf()
+ endttyent()             iscntrl_l()          srand48()
+ endusershell()          isdigit()            srand48_r()
+ endutent()              isdigit_l()          srandom_r()
+ endutxent()             isgraph()            sscanf()
+ erand48()               isgraph_l()          ssignal()
+ erand48_r()             islower()            strcasecmp()
+ err()                   islower_l()          strcasestr()
+ error()                 isprint()            strcoll()
+ error_at_line()         isprint_l()          strerror()
+ errx()                  ispunct()            strerror_l()
+ ether_aton()            ispunct_l()          strerror_r()
+ ether_ntoa()            isspace()            strfmon()
+ execlp()                isspace_l()          strfmon_l()
+ execvp()                isupper()            strfromd()
+ execvpe()               isupper_l()          strfromf()
+ exit()                  iswalnum()           strfroml()
+ __fbufsize()            iswalnum_l()         strftime()
+ fcloseall()             iswalpha()           strftime_l()
+ fcvt()                  iswalpha_l()         strncasecmp()
+ fflush_unlocked()       iswblank()           strptime()
+ fgetc_unlocked()        iswblank_l()         strsignal()
+ fgetgrent()             iswcntrl()           strtod()
+ fgetpwent()             iswcntrl_l()         strtof()
+ fgetspent()             iswdigit()           strtoimax()
+ fgets_unlocked()        iswdigit_l()         strtok()
+ fgetwc()                iswgraph()           strtol()
+ fgetwc_unlocked()       iswgraph_l()         strtold()
+ fgetws()                iswlower()           strtoll()
+ fgetws_unlocked()       iswlower_l()         strtoq()
+ fnmatch()               iswprint()           strtoul()
+ forkpty()               iswprint_l()         strtoull()
+ __fpending()            iswpunct()           strtoumax()
+ fprintf()               iswpunct_l()         strtouq()
+ __fpurge()              iswspace()           strverscmp()
+ fputc_unlocked()        iswspace_l()         strxfrm()
+ fputs_unlocked()        iswupper()           swapcontext()
+ fputwc()                iswupper_l()         swprintf()
+ fputwc_unlocked()       iswxdigit()          swscanf()
+ fputws()                iswxdigit_l()        sysconf()
+ fputws_unlocked()       isxdigit()           syslog()
+ fread_unlocked()        isxdigit_l()         system()
+ fscanf()                jrand48()            tdelete()
+ __fsetlocking()         jrand48_r()          tempnam()
+ fts_children()          l64a()               tfind()
+ fts_read()              lcong48()            timegm()
+ ftw()                   lcong48_r()          timelocal()
+ fwprintf()              lgamma()             timezone
+ fwrite_unlocked()       lgammaf()            tmpnam()
+ fwscanf()               lgammal()            tmpnam_r()
+ gamma()                 localeconv()         tolower()
+ gammaf()                localtime()          tolower_l()
+ gammal()                localtime_r()        toupper()
+ getaddrinfo()           login()              toupper_l()
+ getaliasbyname()        login_tty()          towctrans()
+ getaliasbyname_r()      logout()             towlower()
+ getaliasent()           logwtmp()            towlower_l()
+ getaliasent_r()         lrand48()            towupper()
+ getchar_unlocked()      lrand48_r()          towupper_l()
+ getcontext()            makecontext()        tsearch()
+ getc_unlocked()         mallinfo()           ttyname()
+ get_current_dir_name()  MB_CUR_MAX           ttyname_r()
+ getdate()               mblen()              ttyslot()
+ getdate_r()             mbrlen()             twalk()
+ getenv()                mbrtowc()            twalk_r()
+ getfsent()              mbsinit()            tzname
+ getfsfile()             mbsnrtowcs()         tzset()
+ getfsspec()             mbsrtowcs()          ungetwc()
+ getgrent()              mbstowcs()           unsetenv()
+ getgrent_r()            mbtowc()             updwtmp()
+ getgrgid()              mcheck()             utmpname()
+ getgrgid_r()            mcheck_check_all()   va_arg()
+ getgrnam()              mcheck_pedantic()    valloc()
+ getgrnam_r()            mktime()             vasprintf()
+ getgrouplist()          mprobe()             vdprintf()
+ gethostbyaddr()         mrand48()            verr()
+ gethostbyaddr_r()       mrand48_r()          verrx()
+ gethostbyname()         mtrace()             versionsort()
+ gethostbyname2()        muntrace()           vfprintf()
+ gethostbyname2_r()      nan()                vfscanf()
+ gethostbyname_r()       nanf()               vfwprintf()
+ gethostent()            nanl()               vprintf()
+ gethostent_r()          newlocale()          vscanf()
+ gethostid()             nftw()               vsnprintf()
+ getlogin()              nl_langinfo()        vsprintf()
+ getlogin_r()            nrand48()            vsscanf()
+ getmntent()             nrand48_r()          vswprintf()
+ getmntent_r()           openpty()            vsyslog()
+ getnameinfo()           perror()             vwarn()
+ getnetbyaddr()          posix_fallocate()    vwarnx()
+ getnetbyaddr_r()        printf()             vwprintf()
+ getnetbyname()          profil()             warn()
+ getnetbyname_r()        psiginfo()           warnx()
+ getnetent()             psignal()            wcrtomb()
+ getnetent_r()           ptsname()            wcscasecmp()
+ getnetgrent()           putchar_unlocked()   wcschr()
+ getnetgrent_r()         putc_unlocked()      wcscoll()
+ getopt()                putenv()             wcsftime()
+ getopt_long()           putpwent()           wcsncasecmp()
+ getopt_long_only()      putspent()           wcsnrtombs()
+ getpass()               pututline()          wcsrchr()
+ getprotobyname()        pututxline()         wcsrtombs()
+ getprotobyname_r()      putwc()              wcstod()
+ getprotobynumber()      putwchar()           wcstof()
+ getprotobynumber_r()    putwchar_unlocked()  wcstoimax()
+ getprotoent()           putwc_unlocked()     wcstold()
+ getprotoent_r()         pvalloc()            wcstombs()
+ getpw()                 qecvt()              wcstoumax()
+ getpwent()              qfcvt()              wcswidth()
+ getpwent_r()            querylocale()        wcsxfrm()
+ getpwnam()              rand()               wctob()
+ getpwnam_r()            random_r()           wctomb()
+ getpwuid()              rcmd()               wctrans()
+ getpwuid_r()            rcmd_af()            wctype()
+ getrpcbyname()          readdir()            wcwidth()
+ getrpcbyname_r()        readdir64()          wordexp()
+ getrpcbynumber()        readdir64_r()        wprintf()
+ getrpcbynumber_r()      readdir_r()          wscanf()
+ getrpcent()             re_comp()            wsetlocale()
+
+(If you know of additional functions that are unsafe on some platform or
+another, notify us via filing a bug report at
+L<https://github.com/Perl/perl5/issues>.)
+
+Some of these are safe under MULTIPLICITY, problematic only under threading.
+If a use doesn't appear in the above list, we think it is MULTIPLICITY
+and thread-safe on all platforms.
+
+All the uses listed above are function calls, except for these:
+
+ daylight  MB_CUR_MAX  timezone  tzname
+
+There are three main approaches to coping with issues involving these
+constructs, each suitable for different circumstances:
+
+=over
+
+=item *
+
+Don't use them.  Some of them have preferred alternatives.  Use the list
+above in L</libc functions to avoid> to replace your uses with ones
+that are thread-friendly.  For example I/O, should be done via
+L<perlapio>.
+
+If you must use them, many, but not all, of them will be ok as long as
+their use is confined to a single thread that has no interaction with
+conflicting uses in other threads.  You will need to closely examine
+their man pages for this, and be aware that vendor documentation is
+often imprecise.
+
+=item *
+
+Do all your business before any other code can change things.  If you
+make changes, change back before returning.
+
+=item *
+
+Save the result of a query of global information to a per-instance area
+before allowing another instance to execute.  Then you can work on it at
+your leisure.  This might be an automatic C variable for non-pointers,
+or something as described above in
+C<L<perlxs/Safely Storing Static Data in XS>>.
+
+=back
+
+Without threading, you don't have to worry about being interrupted by
+the system giving control to another thread.  With threading, you will
+have to uses mutexes, and be concerned with the possibility of deadlock.
+
+=head2 Functions always unsuitable for use under multi-threads
+
+A few functions are considered totally unsuited for use in a multi-thread
+environment.  These must be called only during single-thread operation.
+
+  endusershell()    @getaliasent()      muntrace()   rexec()
+  ether_aton()      @getrpcbyname()     profil()     rexec_af()
+  ether_ntoa()      @getrpcbynumber()   rcmd()       setusershell()
+  fts_children()    @getrpcent()        rcmd_af()    ttyslot()
+  fts_read()         getusershell()     re_comp()
+ @getaliasbyname()   mtrace()           re_exec()
+
+C<@> above marks the functions for which there are preferred alternatives
+available on some platforms, and those alternatives may be suitable for
+multi-thread use.
+
+=head2 Functions which must be called at least once before starting threads
+
+Some functions perform initialization on their first call that must be done
+while still in a single-thread environment, but subsequent calls are
+thread-safe when executed in a critical section.
+Therefore, they must be called at least once before switching to
+multi-threads:
+
+ getutent()  getutline()  getutxid()    mallinfo()  valloc()
+ getutid()   getutxent()  getutxline()  pvalloc()
+
+=head2 Functions that are thread-safe when called with appropriate arguments
+
+Some of the functions are thread-safe if called with arguments that
+comply with certain (easily met) restrictions.  These are:
+
+ ctermid()        mbrlen()      mbsrtowcs()  wcrtomb()
+ cuserid()        mbrtowc()     tmpnam()     wcsnrtombs()
+ error_at_line()  mbsnrtowcs()  va_arg()     wcsrtombs()
+
+See the man pages of each for details.  (For completeness, the list
+includes functions that you shouldn't be using anyway because of other
+reasons.)
+
+=head2 Functions vulnerable to signals
+
+Some functions are vulnerable to asynchronous signals.  These are:
+
+ getlogin()    getutid()    getutxid()    login()   pututline()  updwtmp()
+ getlogin_r()  getutline()  getutxline()  logout()  pututxline() wordexp()
+ getutent()    getutxent()  glob()        logwtmp() sleep()
+
+Some libc's implement 'system()' thread-safely.  But in others, it also
+has signal issues.
+
+=head2 General issues with thread-safety
+
+Some libc functions use and/or modify a global state, such as a database.
+The libc functions presume that there is only one instance at a time
+operating on that database.  Unpredictable results occur if more than one
+does, even if the database is not changed.  For example, typically there is
+a global iterator for such a data base and that iterator is maintained by
+libc, so that each new read from any instance advances it, meaning that no
+instance will see all the entries.  The only way to make these thread-safe
+is to have an exclusive lock on a mutex from the open call through the
+close.  You are advised to not use such databases from more than one
+instance at a time.
+
+Other examples of functions that use a global state include pseudo-random
+number generators.  Some libc implementations of 'rand()', for example, may
+share the data across threads; and others may have per-thread data.  The
+shared ones will have unreproducible results, as the threads will vary in
+their timings and interactions.  This may be what you want; or it may not
+be.  (This particular function is a candidate to be removed from the POSIX
+Standard because of these issues.)
+
+Functions that output to a stream also are considered thread-unsafe when
+locking is not done.  But the typical consequences are just that the data
+is output in an unpredictable order; that outcome may be totally
+acceptable to you.
+
+Since the current working directory is global to a process, all
+instances depend on it.  One instance doing a chdir(2) affects all the
+other instances.  In a multi-threaded environment, any libc call that
+expects the directory to not change for the duration of its execution
+will have undefined results if another thread interrupts it at just the
+wrong time and changes the directory.  The man pages only list one such
+call, nftw().  But there may be other issues lurking.
+
+=head2 Reentrant equivalent functions
+
+Some functions that are problematic with regard to MULTIPLICITY have
+reentrant versions (on some or all platforms) that are better suited,
+with fewer (perhaps no) races when run under threads.
+
+Some of these reentrant functions that are available on all platforms
+should always be used anyway; they are in the lists directly under
+L<libc functions to avoid>.
+
+Others may not be available on some platforms, or have issues that makes
+them undesirable to use even when they are available.  Or it may just be
+more complicated and tedious to use the reentrant version.  For these,
+perl has a mechanism for automatically substituting that reentrant
+version when available and desirable, while hiding the complications
+from your code.  This feature is enabled by default for code in the Perl
+core and its extensions.  To enable it in other XS modules,
+
+   #define PERL_REENTRANT
+
+It is simpler for you to use the unpreferred version in your code, and
+rely on this feature to do the better thing, in part because no
+substitution is done if the alternative is not available or desirable on
+the platform, nor if threads aren't enabled.  You just write as if there
+weren't threads, and you get the better behavior without having to think
+about it.
+
+On some platforms the safer library functions may fail if the result
+buffer is too small (for example the user group databases may be rather
+large, and the reentrant functions may have to carry around a full
+snapshot of those databases).  Perl will start with a small buffer, but
+keep retrying and growing the result buffer until the result fits.  If
+this limitless growing sounds bad for security or memory consumption
+reasons you can recompile Perl with C<PERL_REENTRANT_MAXSIZE> #defined
+to the maximum number of bytes you will allow.
+
+Below is a list of the non-reentrant functions and their reentrant
+alternatives.  This substitution is done even on functions that you
+shouldn't be using in the first place.  These are marked by a C<*>.  You
+should instead use the alternate given in the lists directly under
+L<libc functions to avoid>.
+
+Even so, some of the preferred alternatives are considered obsolete or
+otherwise unwise to use on some platforms.  These are marked with a '?'.
+Also, some alternatives aren't Perl-defined functions and aren't in in
+the POSIX Standard, so won't be widely available.  These are marked with
+'~'.  (Remember that the automatic substitution only happens when they
+are available and desirable, so you can just use the unpreferred
+alternative.)
+
+ *asctime()             ?asctime_r()
+  crypt()               ~crypt_r()
+  ctermid()             ~ctermid_r()
+ *ctime()               ?ctime_r()
+  endgrent()           ?~endgrent_r()
+  endhostent()         ?~endhostent_r()
+  endnetent()          ?~endnetent_r()
+  endprotoent()        ?~endprotoent_r()
+  endpwent()           ?~endpwent_r()
+  endservent()         ?~endservent_r()
+  getgrent()            ~getgrent_r()
+  getgrgid()             getgrgid_r()
+  getgrnam()             getgrnam_r()
+  gethostbyaddr()       ~gethostbyaddr_r()
+  gethostbyname()       ~gethostbyname_r()
+  gethostent()          ~gethostent_r()
+  getlogin()             getlogin_r()
+  getnetbyaddr()        ~getnetbyaddr_r()
+  getnetbyname()        ~getnetbyname_r()
+  getnetent()           ~getnetent_r()
+  getprotobyname()      ~getprotobyname_r()
+  getprotobynumber()    ~getprotobynumber_r()
+  getprotoent()         ~getprotoent_r()
+  getpwent()            ~getpwent_r()
+  getpwnam()             getpwnam_r()
+  getpwuid()             getpwuid_r()
+  getservbyname()       ~getservbyname_r()
+  getservbyport()       ~getservbyport_r()
+  getservent()          ~getservent_r()
+  getspnam()            ~getspnam_r()
+  gmtime()               gmtime_r()
+  localtime()            localtime_r()
+  readdir()             ?readdir_r()
+  readdir64()           ~readdir64_r()
+  setgrent()           ?~setgrent_r()
+  sethostent()         ?~sethostent_r()
+ *setlocale()          ?~setlocale_r()
+  setnetent()          ?~setnetent_r()
+  setprotoent()        ?~setprotoent_r()
+  setpwent()           ?~setpwent_r()
+  setservent()         ?~setservent_r()
+ *strerror()             strerror_r()
+ *tmpnam()              ~tmpnam_r()
+  ttyname()              ttyname_r()
+
+The Perl-furnished items are documented in perlapi.
+
+The bottom line is:
+
+=over
+
+=item For items marked C<*>
+
+Replace all uses of these with the preferred alternative given in the
+lists directly under L<libc functions to avoid>.
+
+=item For the remaining items
+
+If you really need to use these functions, you have two choices:
+
+=over
+
+=item If you #define PERL_REENTRANT
+
+Use the function in the first column as-is, and let perl do the work of
+substituting the function in the right column if available on the
+platform, and it is deemed suitable for use.
+
+You should look at the man pages for both versions to find any other
+gotchas.
+
+=item If you don't enable automatic substitution
+
+You should examine the application's code to determine if the column 1
+function presents a real problem under threads given the circumstances
+it is used in.  You can go directly to the column 2 replacement, but
+beware of the ones that are marked.  Some of those may be nonexistent or
+flaky on some platforms.
+
+=back
+
+=back
+
+=head2 Functions that need the environment to be constant
+
+Since the environment is global to a process, all instances depend on
+it.  One instance changing the environment affects all the other
+instances.  Under threads, any libc call that expects the environment to
+not change for the duration of its execution will have undefined results
+if another thread interrupts it at just the wrong time and changes it.
+These are the functions that the man pages list as being sensitive to
+that.
+
+ catopen()               gethostbyname2()    newlocale()
+ ctime()                 gethostbyname2_r()  regerror()
+ ctime_r()               gethostbyname_r()   secure_getenv()
+ endhostent()            gethostent()        sethostent()
+ endhostent_r()          gethostent_r()      sethostent_r()
+ endnetent()             gethostid()         setlocale()
+ endnetent_r()           getnameinfo()       setlocale_r()
+ execlp()                getnetbyname()      setnetent()
+ execvp()                getnetent()         setnetent_r()
+ execvpe()               getopt()            strftime()
+ fnmatch()               getopt_long()       strptime()
+ getaddrinfo()           getopt_long_only()  sysconf()
+ get_current_dir_name()  getrpcport()        syslog()
+ getdate()               glob()              tempnam()
+ getdate_r()             gmtime()            timegm()
+ getenv()                gmtime_r()          timelocal()
+ gethostbyaddr()         localtime()         tzset()
+ gethostbyaddr_r()       localtime_r()       vsyslog()
+ gethostbyname()         mktime()
+
+Many of these functions are problematic under threads for other reasons
+as well.  See the man pages for any you use.
+
+Perl defines mutexes C<ENV_READ_LOCK> and C<ENV_READ_UNLOCK> with which
+to wrap calls to these functions.  You need to consider the possibility
+of deadlock.  It is expected that a different mechanism will be in place
+and preferred for Perl v5.42.
+
+=head2 Locale-specific issues
+
+C language programs originally had a single locale global to the entire
+process.  This was later found to be inadequate for many purposes, so later
+extensions changed that, first with Windows, and then POSIX 2008.  In
+Windows, you can change any thread at any time to operate either with a
+per-thread locale, or with the global one, using a special new libc
+function.  In POSIX, the original API operates only on the global
+locale, but there is an entirely new API to manipulate either per-thread
+locales or the global one.  As with Windows (but using the new API), a
+thread can be switched at any time to operate on the global locale, or a
+per-thread one.
+
+When one instance changes the global locale, all other instances using
+the global locale are affected.  Almost all the locale-related functions
+in the list directly under L</Dealing with embedded perls and threads>
+have undefined behavior if another thread interrupts their execution and
+changes the locale.  Under threads, another thread could do exactly that.
+
+But, on systems that have per-thread locales, starting with Perl v5.28,
+perl uses them after initialization; the global locale is not used
+except if XS code has called C<switch_to_global_locale()>.  Doing so
+affects only the thread that called it.  If a maximum of one instance is
+using the global locale, no other instances are affected, the locale of
+concurrently executing functions in other threads is not changed, and
+this becomes a non-issue.  The C preprocessor symbol
+C<USE_THREAD_SAFE_LOCALE> will be defined if per-thread locales are
+available and perl has been compiled to use them.  The implementation of
+per-thread locales on some platforms, like most *BSD-based ones, is so
+buggy that the perl hints files for them deliberately turn off the
+possibility of using them.
+
+The converse is that on systems with only a global locale, having
+different threads using different locales is not likely to work well;
+and changing the locale is dangerous, often leading to crashes.
+
+Perl has extensive code to work as well as possible on both types of
+systems.  You should always use C<Perl_setlocale()> to change and query
+the locale, as it portably works across the range of possibilities.
 
 =head1 SEE ALSO
 
-L<perlapi>, L<perlapio>, L<perlguts>
+L<perlapi>, L<perlapio>, L<perlguts>, L<perlxs>
 

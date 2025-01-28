@@ -1,5 +1,5 @@
 package PerlIO::via;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 require XSLoader;
 XSLoader::load();
 1;
@@ -123,8 +123,10 @@ there isn't one.  Optional.  Default is fileno($fh).
 
 =item $obj->READ($buffer,$len,$fh)
 
-Returns the number of octets placed in $buffer (must be less than or
-equal to $len).  Optional.  Default is to use FILL instead.
+Returns the number of octets placed in $buffer (must be undef to
+indicate an error or a non-negative integer less than or equal to the
+minimum of $len and the length of the updated $buffer).  Optional.
+Default is to use FILL instead.
 
 =item $obj->WRITE($buffer,$fh)
 

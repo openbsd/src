@@ -702,7 +702,7 @@ dl_load_file(filename, flags=0)
 	    Perl_warn(aTHX_ "Can't make loaded symbols global on this platform while loading %s",filename);
 	retv = dlopen(filename, RTLD_GLOBAL|RTLD_LAZY) ;
 	DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", retv));
-	ST(0) = sv_newmortal() ;
+	ST(0) = newSV_type_mortal(SVt_IV);
 	if (retv == NULL)
 	    SaveError(aTHX_ "%s",dlerror()) ;
 	else
@@ -733,7 +733,7 @@ dl_find_symbol(libhandle, symbolname, ign_err=0)
 		libhandle, symbolname));
 	retv = dlsym(libhandle, symbolname);
 	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref = %x\n", retv));
-	ST(0) = sv_newmortal();
+	ST(0) = newSV_type_mortal(SVt_IV);
 	if (retv == NULL) {
             if (!ign_err)
 	        SaveError(aTHX_ "%s", dlerror());

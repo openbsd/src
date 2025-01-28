@@ -198,11 +198,7 @@ EXT_MGVTBL PL_magic_vtables[magic_vtable_max] = {
   { Perl_magic_regdatum_get, Perl_magic_regdatum_set, 0, 0, 0, 0, 0, 0 },
   { 0, Perl_magic_setregexp, 0, 0, 0, 0, 0, 0 },
   { 0, Perl_magic_setsigall, 0, 0, 0, 0, 0, 0 },
-#ifndef PERL_MICRO
   { Perl_magic_getsig, Perl_magic_setsig, 0, Perl_magic_clearsig, 0, 0, 0, 0 },
-#else
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-#endif
   { Perl_magic_getsubstr, Perl_magic_setsubstr, 0, 0, 0, 0, 0, 0 },
   { Perl_magic_get, Perl_magic_set, 0, 0, 0, 0, 0, 0 },
   { Perl_magic_gettaint, Perl_magic_settaint, 0, 0, 0, 0, 0, 0 },

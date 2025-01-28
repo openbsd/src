@@ -570,7 +570,7 @@ SKIP: {
 	    or diag $@;
 	$_112478::VERSION = 1;
 	eval { _112478->VERSION(9e99) };
-	unlike $@, qr/panic/, '->VERSION(9e99) does not panic';
+	unlike $@, qr/^panic: /, '->VERSION(9e99) does not panic';
     }
 
     { # https://rt.cpan.org/Ticket/Display.html?id=79259

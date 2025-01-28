@@ -434,8 +434,8 @@ capture group in the regex.
 
 The C<\gI<N>> form can be equivalently written as C<\g{I<N>}>
 which avoids ambiguity when building a regex by concatenating shorter
-strings.  Otherwise if you had a regex C<qr/$a$b/>, and C<$a> contained
-C<"\g1">, and C<$b> contained C<"37">, you would get C</\g137/> which is
+strings.  Otherwise if you had a regex C<qr/$x$y/>, and C<$x> contained
+C<"\g1">, and C<$y> contained C<"37">, you would get C</\g137/> which is
 probably not what you intended.
 
 In the C<\I<N>> form, I<N> must not begin with a "0", and there must be at

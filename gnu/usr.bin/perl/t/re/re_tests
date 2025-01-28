@@ -2157,6 +2157,13 @@ AB\s+\x{100}	AB \x{100}X	y	-	-
 /^(xa|(?:[Z=])*\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
 /^(xa|(?:[Z=]|zzzz)*\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
 
+# GH 22094 - a character class optimized to OPFAIL shouldn't panic when quantified
+[^\W\S]{6}	a	n	-	-
+[^\W\S]{1,3}	a	n	-	-
+[^\W\S]+	a	n	-	-
+[^\W\S]*	a	y	$&	
+[^\W\S]?	a	y	$&	
+
 # Keep these lines at the end of the file
 # pat	string	y/n/etc	expr	expected-expr	skip-reason	comment
 # vim: softtabstop=0 noexpandtab

@@ -1,4 +1,4 @@
-package Opcode 1.64;
+package Opcode 1.65;
 
 use strict;
 
@@ -567,7 +567,7 @@ This tag holds opcodes related to loading modules and getting information
 about calling environment and args.
 
     require dofile 
-    caller runcv
+    caller runcv classname
 
 =item :still_to_be_decided
 

@@ -72,7 +72,6 @@ no_index:
     - ext/ODBM_File/t
     - ext/Opcode/t
     - ext/PerlIO-encoding/t
-    - ext/PerlIO-scalar/t
     - ext/PerlIO-via/t
     - ext/Pod-Functions/t
     - ext/Pod-Html/t
@@ -106,5 +105,5 @@ resources:
   homepage: https://www.perl.org/
   license: https://dev.perl.org/licenses/
   repository: https://github.com/Perl/perl5
-version: '5.038002'
+version: '5.040001'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

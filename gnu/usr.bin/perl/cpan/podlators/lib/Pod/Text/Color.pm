@@ -20,7 +20,8 @@ use Pod::Text ();
 use Term::ANSIColor qw(color colored);
 
 our @ISA = qw(Pod::Text);
-our $VERSION = '5.01';
+our $VERSION = '5.01_02';
+$VERSION =~ tr/_//d;
 
 ##############################################################################
 # Overrides

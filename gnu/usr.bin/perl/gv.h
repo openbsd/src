@@ -158,6 +158,15 @@ Return the CV from the GV.
 /* GVf_INTRO is one-shot flag which indicates that the next assignment
    of a reference to the glob is to be localised; it distinguishes
    'local *g = $ref' from '*g = $ref'.
+
+   GVf_MULTI is used to implement the "used only once" warning.  It is
+   always set on a glob when an existing name is referenced, and when
+   a name is created when the warning is disabled.  A post parse scan
+   in gv_check() then reports any names where this isn't set.
+
+   GVf_ONCE_FATAL is set on a glob when it is created and fatal "used
+   only once" warnings are enabled, since PL_curcop no longer has the
+   fatal flag set at the point where the warnings are reported.
 */
 #define GVf_INTRO	0x01
 #define GVf_MULTI	0x02
@@ -168,6 +177,7 @@ Return the CV from the GV.
 #define GVf_IMPORTED_AV	  0x20
 #define GVf_IMPORTED_HV	  0x40
 #define GVf_IMPORTED_CV	  0x80
+#define GVf_ONCE_FATAL	0x100
 
 #define GvINTRO(gv)		(GvFLAGS(gv) & GVf_INTRO)
 #define GvINTRO_on(gv)		(GvFLAGS(gv) |= GVf_INTRO)
@@ -200,6 +210,10 @@ Return the CV from the GV.
 #define GvIMPORTED_CV(gv)	(GvFLAGS(gv) & GVf_IMPORTED_CV)
 #define GvIMPORTED_CV_on(gv)	(GvFLAGS(gv) |= GVf_IMPORTED_CV)
 #define GvIMPORTED_CV_off(gv)	(GvFLAGS(gv) &= ~GVf_IMPORTED_CV)
+
+#define GvONCE_FATAL(gv)	(GvFLAGS(gv) & GVf_ONCE_FATAL)
+#define GvONCE_FATAL_on(gv)	(GvFLAGS(gv) |= GVf_ONCE_FATAL)
+#define GvONCE_FATAL_off(gv)	(GvFLAGS(gv) &= ~GVf_ONCE_FATAL)
 
 #ifndef PERL_CORE
 #  define GvIN_PAD(gv)		0

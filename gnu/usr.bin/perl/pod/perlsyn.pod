@@ -1,7 +1,7 @@
 =head1 NAME
 X<syntax>
 
-perlsyn - Perl syntax
+perlsyn - Perl syntax: declarations, statements, comments
 
 =head1 DESCRIPTION
 
@@ -42,14 +42,14 @@ you'll be notified of an uninitialized value whenever you treat
 C<undef> as a string or a number.  Well, usually.  Boolean contexts,
 such as:
 
-    if ($a) {}
+    if ($x) {}
 
 are exempt from warnings (because they care about truth rather than
 definedness).  Operators such as C<++>, C<-->, C<+=>,
 C<-=>, and C<.=>, that operate on undefined variables such as:
 
-    undef $a;
-    $a++;
+    undef $x;
+    $x++;
 
 are also always exempt from such warnings.
 
@@ -285,13 +285,12 @@ The following compound statements may be used to control flow:
 As of Perl 5.36, you can iterate over multiple values at a time by specifying
 a list of lexicals within parentheses:
 
-    no warnings "experimental::for_list";
     LABEL for my (VAR, VAR) (LIST) BLOCK
     LABEL for my (VAR, VAR) (LIST) BLOCK continue BLOCK
     LABEL foreach my (VAR, VAR) (LIST) BLOCK
     LABEL foreach my (VAR, VAR) (LIST) BLOCK continue BLOCK
 
-If enabled by the experimental C<try> feature, the following may also be used
+If enabled by the C<try> feature, the following may also be used
 
     try BLOCK catch (VAR) BLOCK
     try BLOCK catch (VAR) BLOCK finally BLOCK
@@ -657,6 +656,10 @@ handling. The C<try> keyword introduces a block which will be executed when it
 is encountered, and the C<catch> block provides code to handle any exception
 that may be thrown by the first.
 
+This syntax must first be enabled with C<use feature 'try'>.
+
+    use feature 'try';
+
     try {
         my $x = call_a_function();
         $x < 100 or die "Too big";
@@ -736,8 +739,8 @@ C<return>, C<goto> or use any loop controls. The final expression value is
 ignored, and does not affect the return value of the containing function even
 if it is placed last in the function.
 
-This syntax is currently experimental and must be enabled with
-C<use feature 'try'>. It emits a warning in the C<experimental::try> category.
+Use of this C<finally> block syntax is currently experimental and will emit a
+warning in the C<experimental::try> category.
 
 =head2 Basic BLOCKs
 X<block>
@@ -787,8 +790,8 @@ is executed on the way past. It provides a means of deferring execution until
 a later time. This acts similarly to syntax provided by some other languages,
 often using keywords named C<try / finally>.
 
-This syntax is available if enabled by the C<defer> named feature, and is
-currently experimental. If experimental warnings are enabled it will emit a
+This syntax is available since Perl 5.36 if enabled by the C<defer> named feature,
+and is currently experimental. If experimental warnings are enabled it will emit a
 warning when used.
 
     use feature 'defer';
@@ -1036,7 +1039,7 @@ These examples of attempts to use an ellipsis are syntax errors:
     print ...;
     open(my $fh, ">", "/dev/passwd") or ...;
     if ($condition && ... ) { say "Howdy" };
-    ... if $a > $b;
+    ... if $x > $y;
     say "Cromulent" if ...;
     $flub = 5 + ...;
 
@@ -1087,11 +1090,11 @@ actually knows to look for pod escapes even in the middle of a
 paragraph.  This means that the following secret stuff will be
 ignored by both the compiler and the translators.
 
-    $a=3;
+    $x=3;
     =secret stuff
      warn "Neither POD nor CODE!?"
     =cut back
-    print "got $a\n";
+    print "got $x\n";
 
 You probably shouldn't rely upon the C<warn()> being podded out forever.
 Not all pod translators are well-behaved in this regard, and perhaps
@@ -1446,7 +1449,7 @@ because Perl 5 would parse the expression
 as though the argument to C<given> were an element of the hash
 C<%foo>, interpreting the braces as hash-element syntax.
 
-However, their are many, many other differences.  For example,
+However, there are many, many other differences.  For example,
 this works in Perl 5:
 
     use v5.12;

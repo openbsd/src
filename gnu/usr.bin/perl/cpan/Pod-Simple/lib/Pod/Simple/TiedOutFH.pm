@@ -1,27 +1,26 @@
-
-use strict;
 package Pod::Simple::TiedOutFH;
+use strict;
+use warnings;
 use Symbol ('gensym');
 use Carp ();
-use vars qw($VERSION );
-$VERSION = '3.43';
+our $VERSION = '3.45';
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub handle_on { # some horrible frightening things are encapsulated in here
   my $class = shift;
   $class = ref($class) || $class;
-  
+
   Carp::croak "Usage: ${class}->handle_on(\$somescalar)" unless @_;
-  
+
   my $x = (defined($_[0]) and ref($_[0]))
     ? $_[0]
     : ( \( $_[0] ) )[0]
   ;
   $$x = '' unless defined $$x;
-  
+
   #Pod::Simple::DEBUG and print STDERR "New $class handle on $x = \"$$x\"\n";
-  
+
   my $new = gensym();
   tie *$new, $class, $x;
   return $new;
@@ -70,7 +69,7 @@ Chole
  * 4 or 5 roma tomatoes (optionally with the pulp discarded)
  * 1 tablespoons chopped ginger root (or more, to taste)
  * 2 tablespoons canola oil (or vegetable oil)
- 
+
  * 1 tablespoon garam masala
  * 1/2 teaspoon red chili powder, or to taste
  * Salt, to taste (probably quite a bit)

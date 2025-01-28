@@ -267,8 +267,7 @@ my %vtable_conf =
      'env' => {set => 'set_all_env', clear => 'clear_all_env'},
      'envelem' => {set => 'setenv', clear => 'clearenv'},
      'sig' => { set => 'setsigall' },
-     'sigelem' => {get => 'getsig', set => 'setsig', clear => 'clearsig',
-                   cond => '#ifndef PERL_MICRO'},
+     'sigelem' => {get => 'getsig', set => 'setsig', clear => 'clearsig'},
 
      'hook' => { set => 'sethookall', clear => 'clearhookall' },
      'hookelem' => {set => 'sethook', clear => 'clearhook'},

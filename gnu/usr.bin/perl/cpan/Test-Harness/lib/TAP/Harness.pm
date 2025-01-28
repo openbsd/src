@@ -16,11 +16,11 @@ TAP::Harness - Run test scripts with statistics
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =cut
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 $ENV{HARNESS_ACTIVE}  = 1;
 $ENV{HARNESS_VERSION} = $VERSION;
@@ -561,6 +561,10 @@ sub runtests {
         $finish->();
         die $bailout if defined $bailout;
     };
+    $self->{bail_summary} = sub{
+        print "\n";
+        $finish->(1);
+    };
 
     if ( $self->trap ) {
         local $SIG{INT} = sub {
@@ -605,6 +609,7 @@ sub _bailout {
     $job->finish;
 
     my $explanation = $result->explanation;
+    $self->{bail_summary}();
     die "FAILED--Further testing stopped"
       . ( $explanation ? ": $explanation\n" : ".\n" );
 }

@@ -5,7 +5,7 @@ use strict;
 use ExtUtils::CBuilder::Platform::Unix;
 use Config;
 
-our $VERSION = '0.280238'; # VERSION
+our $VERSION = '0.280240'; # VERSION
 our @ISA = qw(ExtUtils::CBuilder::Platform::Unix);
 
 my ($osver) = split /\./, $Config{osvers};

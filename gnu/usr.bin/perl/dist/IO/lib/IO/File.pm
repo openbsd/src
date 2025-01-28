@@ -93,14 +93,6 @@ it passes all the three arguments to the three-argument C<open> operator.
 For convenience, C<IO::File> exports the O_XXX constants from the
 Fcntl module, if this module is available.
 
-=item binmode( [LAYER] )
-
-C<binmode> sets C<binmode> on the underlying C<IO> object, as documented
-in C<perldoc -f binmode>.
-
-C<binmode> accepts one optional parameter, which is the layer to be
-passed on to the C<binmode> call.
-
 =back
 
 =head1 NOTE
@@ -135,7 +127,7 @@ require Exporter;
 
 our @ISA = qw(IO::Handle IO::Seekable Exporter);
 
-our $VERSION = "1.52";
+our $VERSION = "1.55";
 
 our @EXPORT = @IO::Seekable::EXPORT;
 
@@ -184,19 +176,6 @@ sub open {
         }
     }
     open($fh, $file);
-}
-
-################################################
-## Binmode
-##
-
-sub binmode {
-    ( @_ == 1 or @_ == 2 ) or croak 'usage $fh->binmode([LAYER])';
-
-    my($fh, $layer) = @_;
-
-    return binmode $$fh unless $layer;
-    return binmode $$fh, $layer;
 }
 
 1;

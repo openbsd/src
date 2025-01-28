@@ -74,7 +74,6 @@
          "ext/ODBM_File/t",
          "ext/Opcode/t",
          "ext/PerlIO-encoding/t",
-         "ext/PerlIO-scalar/t",
          "ext/PerlIO-via/t",
          "ext/Pod-Functions/t",
          "ext/Pod-Html/t",
@@ -119,6 +118,6 @@
          "url" : "https://github.com/Perl/perl5"
       }
    },
-   "version" : "5.038002",
+   "version" : "5.040001",
    "x_serialization_backend" : "JSON::PP version 4.16"
 }

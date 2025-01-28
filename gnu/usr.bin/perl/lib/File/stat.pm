@@ -1,19 +1,12 @@
-package File::stat;
-use 5.006;
+package File::stat 1.14;
+use v5.38;
 
-use strict;
-use warnings;
 use warnings::register;
 use Carp;
 use constant _IS_CYGWIN => $^O eq "cygwin";
 
 BEGIN { *warnif = \&warnings::warnif }
 
-our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-
-our $VERSION = '1.13';
-
-our @fields;
 our ( $st_dev, $st_ino, $st_mode,
     $st_nlink, $st_uid, $st_gid,
     $st_rdev, $st_size,
@@ -21,18 +14,16 @@ our ( $st_dev, $st_ino, $st_mode,
     $st_blksize, $st_blocks
 );
 
-BEGIN { 
-    use Exporter   ();
-    @EXPORT      = qw(stat lstat);
-    @fields      = qw( $st_dev	   $st_ino    $st_mode 
+use Exporter 'import';
+our @EXPORT      = qw(stat lstat);
+our @fields      = qw( $st_dev	   $st_ino    $st_mode
 		       $st_nlink   $st_uid    $st_gid 
 		       $st_rdev    $st_size 
 		       $st_atime   $st_mtime  $st_ctime 
 		       $st_blksize $st_blocks
 		    );
-    @EXPORT_OK   = ( @fields, "stat_cando" );
-    %EXPORT_TAGS = ( FIELDS => [ @fields, @EXPORT ] );
-}
+our @EXPORT_OK   = ( @fields, "stat_cando" );
+our %EXPORT_TAGS = ( FIELDS => [ @fields, @EXPORT ] );
 
 use Fcntl qw(S_IRUSR S_IWUSR S_IXUSR);
 
@@ -185,9 +176,6 @@ use overload
         }
     };
 
-# Class::Struct forbids use of @ISA
-sub import { goto &Exporter::import }
-
 use Class::Struct qw(struct);
 struct 'File::stat' => [
      map { $_ => '$' } qw{
@@ -196,7 +184,7 @@ struct 'File::stat' => [
      }
 ];
 
-sub populate (@) {
+sub populate {
     return unless @_;
     my $stob = new();
     @$stob = (
@@ -206,9 +194,9 @@ sub populate (@) {
     return $stob;
 } 
 
-sub lstat ($)  { populate(CORE::lstat(shift)) }
+sub lstat :prototype($) { populate(CORE::lstat(shift)) }
 
-sub stat ($) {
+sub stat :prototype($) {
     my $arg = shift;
     my $st = populate(CORE::stat $arg);
     return $st if defined $st;
@@ -223,7 +211,6 @@ sub stat ($) {
     return populate(CORE::stat $fh);
 }
 
-1;
 __END__
 
 =head1 NAME

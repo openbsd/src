@@ -230,6 +230,7 @@ sub read_only_bottom_close_and_rename {
 }
 
 sub tab {
+    no warnings 'numeric';
     my ($l, $t) = @_;
     $t .= "\t" x ($l - (length($t) + 1) / 8);
     $t;
@@ -252,6 +253,112 @@ sub wrap {
     local $Text::Wrap::columns = shift;
     local $Text::Wrap::unexpand = 0;
     Text::Wrap::wrap(@_);
+}
+
+sub columnarize_list {
+    my $listp = shift;
+    my $max_width = shift;
+
+    # Returns the list (pointed to by 'listp') of text items, but arranged
+    # tabularly, like the default output of the 'ls' command.  The first few
+    # items of the list will be in the first column; the next batch in the
+    # second, etc, for as many columns as can fit in 'maxwidth' bytes, and as
+    # many rows as necessary.
+
+    use integer;
+
+    # Real data is unlikely to be able to fit more columns than this in a
+    # typical 80 byte window.  But obviously this could be changed or passed
+    # in.
+    my $max_columns = 7;
+
+    my $min_spacer = 2;     # Need this much space between columns
+    my $columns;
+    my $rows;
+    my @col_widths;
+
+  COLUMN:
+    # We start with more columns, and work down until we find a number that
+    # can accommodate all the data.  This algorithm doesn't require the
+    # resulting columns to all have the same width.  This can allow for
+    # as tight of packing as the data will possibly allow.
+    for ($columns = 7; $columns >= 1; $columns--) {
+
+        # For this many columns, we will need this many rows (final row might
+        # not be completely filled)
+        $rows = ($listp->@* + $columns - 1) / $columns;
+
+        # We only need to execute this final iteration to calculate the number
+        # of rows, as we can't get fewer than a single column.
+        last if $columns == 1;
+
+        my $row_width = 0;
+        my $i = 0;  # Which element of the input list
+
+        # For each column ...
+        for my $col (0 .. $columns - 1) {
+
+            # Calculate how wide the column needs to be, which is based on the
+            # widest element in it
+            $col_widths[$col] = 0;
+
+            # Look through all the rows to find the widest element
+            for my $row (0 .. $rows - 1) {
+
+                # Skip if this row doesn't have an entry for this column
+                last if $i >= $listp->@*;
+
+                # This entry occupies this many bytes.
+                my $this_width = length $listp->[$i];
+
+                # All but the final column need a spacer between it and the
+                # next column over.
+                $this_width += $min_spacer if $col < $columns - 1;
+
+
+                # This column will need to have enough width to accommodate
+                # this element
+                if ($this_width > $col_widths[$col]) {
+
+                    # We can't have this many columns if the total width
+                    # exceeds the available; bail now and try fewer columns
+                    next COLUMN if $row_width + $this_width > $max_width;
+
+                    $col_widths[$col] = $this_width;
+                }
+
+                $i++;   # The next row will contain the next item
+            }
+
+            $row_width += $col_widths[$col];
+            next COLUMN if $row_width > $max_width;
+        }
+
+        # If we get this far, this many columns works
+        last;
+    }
+
+    # Assemble the output
+    my $text = "";
+    for my $row (0 .. $rows - 1) {
+        for my $col (0 .. $columns - 1) {
+            my $index = $row + $rows * $col;  # Convert 2 dimensions to 1
+
+            # Skip if this row doesn't have an entry for this column
+            next if $index >= $listp->@*;
+
+            my $element = $listp->[$index];
+            $text .= $element;
+
+            # Add alignment spaces for all but final column
+            $text .= " " x ($col_widths[$col] - length $element)
+                                                        if $col < $columns - 1;
+        }
+
+        $text .= "\n";  # End of row
+    }
+
+    return $text;
 }
 
 # return the perl version as defined in patchlevel.h.

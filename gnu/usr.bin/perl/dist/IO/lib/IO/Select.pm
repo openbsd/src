@@ -10,7 +10,7 @@ use     strict;
 use warnings::register;
 require Exporter;
 
-our $VERSION = "1.52";
+our $VERSION = "1.55";
 
 our @ISA = qw(Exporter); # This is only so we can do version checking
 
@@ -265,20 +265,20 @@ __END__
 
 =head1 NAME
 
-IO::Select - OO interface to the select system call
+IO::Select - OO interface to the C<select> system call
 
 =head1 SYNOPSIS
 
     use IO::Select;
 
-    $s = IO::Select->new();
+    my $s = IO::Select->new();
 
     $s->add(\*STDIN);
     $s->add($some_handle);
 
-    @ready = $s->can_read($timeout);
+    my @ready1 = $s->can_read($timeout);
 
-    @ready = IO::Select->new(@handles)->can_read(0);
+    my @ready2 = IO::Select->new(@handles)->can_read(0);
 
 =head1 DESCRIPTION
 
@@ -382,14 +382,14 @@ listening for more connections on a listen socket
     use IO::Select;
     use IO::Socket;
 
-    $lsn = IO::Socket::INET->new(Listen => 1, LocalPort => 8080);
-    $sel = IO::Select->new( $lsn );
+    my $lsn = IO::Socket::INET->new(Listen => 1, LocalPort => 8080);
+    my $sel = IO::Select->new( $lsn );
 
-    while(@ready = $sel->can_read) {
-        foreach $fh (@ready) {
+    while(my @ready = $sel->can_read) {
+        foreach my $fh (@ready) {
             if($fh == $lsn) {
                 # Create a new socket
-                $new = $lsn->accept;
+                my $new = $lsn->accept;
                 $sel->add($new);
             }
             else {

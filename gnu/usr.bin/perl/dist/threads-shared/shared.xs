@@ -697,7 +697,7 @@ Perl_sharedsv_cond_timedwait(perl_cond *cond, perl_mutex *mut, double abs)
     struct timespec ts;
     int got_it = 0;
 
-    ts.tv_sec = (long)abs;
+    ts.tv_sec = (time_t)abs;
     abs -= (NV)ts.tv_sec;
     ts.tv_nsec = (long)(abs * 1000000000.0);
 

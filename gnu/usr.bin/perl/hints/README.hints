@@ -14,7 +14,7 @@ over from perl4.
 Please report any problems or suggested changes at
 L<https://github.com/Perl/perl5/issues>.
 
-=head1 Hint file naming convention.
+=head1 Hint file naming convention
 
 Each hint file name should have only
 one '.'.  (This is for portability to non-unix file systems.)  Names

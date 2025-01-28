@@ -5,7 +5,7 @@ use warnings;
 
 use Carp qw< carp croak >;
 
-our $VERSION = '0.66';
+our $VERSION = '0.67';
 
 use Exporter;
 our @ISA            = qw( Exporter );
@@ -263,16 +263,16 @@ sub _override {
 }
 
 sub unimport {
-    $^H{bigint} = undef;        # no longer in effect
+    delete $^H{bigint};         # no longer in effect
     overload::remove_constant('binary', '', 'float', '', 'integer');
 }
 
 sub import {
     my $class = shift;
 
-    $^H{bigint}   = 1;                  # we are in effect
-    $^H{bigfloat} = undef;
-    $^H{bigrat}   = undef;
+    $^H{bigint} = 1;            # we are in effect
+    delete $^H{bigfloat};
+    delete $^H{bigrat};
 
     # for newer Perls always override hex() and oct() with a lexical version:
     if (LEXICAL) {
@@ -838,10 +838,6 @@ L<https://metacpan.org/release/bignum>
 =item * CPAN Testers Matrix
 
 L<http://matrix.cpantesters.org/?dist=bignum>
-
-=item * CPAN Ratings
-
-L<https://cpanratings.perl.org/dist/bignum>
 
 =back
 

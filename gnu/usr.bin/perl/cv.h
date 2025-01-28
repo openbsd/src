@@ -129,7 +129,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #endif
 #define CVf_DYNFILE	0x1000	/* The filename is malloced  */
 #define CVf_AUTOLOAD	0x2000	/* SvPVX contains AUTOLOADed sub name  */
-#define CVf_HASEVAL	0x4000	/* contains string eval  */
+/* 0x4000 previously CVf_HASEVAL  */
 #define CVf_NAMED	0x8000  /* Has a name HEK */
 #define CVf_LEXICAL	0x10000 /* Omit package from name */
 #define CVf_ANONCONST	0x20000 /* :const - create anonconst op */
@@ -138,6 +138,8 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_IsMETHOD    0x100000 /* CV is a (real) method of a real class. Not
                                    to be confused with what used to be called
                                    CVf_METHOD; now CVf_NOWARN_AMBIGUOUS */
+#define CVf_XS_RCSTACK  0x200000 /* the XS function understands a
+                                    reference-counted stack */
 
 /* This symbol for optimised communication between toke.c and op.c: */
 #define CVf_BUILTIN_ATTRS	(CVf_NOWARN_AMBIGUOUS|CVf_LVALUE|CVf_ANONCONST)
@@ -211,10 +213,6 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvAUTOLOAD_on(cv)	(CvFLAGS(cv) |= CVf_AUTOLOAD)
 #define CvAUTOLOAD_off(cv)	(CvFLAGS(cv) &= ~CVf_AUTOLOAD)
 
-#define CvHASEVAL(cv)		(CvFLAGS(cv) & CVf_HASEVAL)
-#define CvHASEVAL_on(cv)	(CvFLAGS(cv) |= CVf_HASEVAL)
-#define CvHASEVAL_off(cv)	(CvFLAGS(cv) &= ~CVf_HASEVAL)
-
 #define CvNAMED(cv)		(CvFLAGS(cv) & CVf_NAMED)
 #define CvNAMED_on(cv)		(CvFLAGS(cv) |= CVf_NAMED)
 #define CvNAMED_off(cv)		(CvFLAGS(cv) &= ~CVf_NAMED)
@@ -263,6 +261,10 @@ Helper macro to turn off the C<CvREFCOUNTED_ANYSV> flag.
 #define CvIsMETHOD(cv)		(CvFLAGS(cv) & CVf_IsMETHOD)
 #define CvIsMETHOD_on(cv)	(CvFLAGS(cv) |= CVf_IsMETHOD)
 #define CvIsMETHOD_off(cv)	(CvFLAGS(cv) &= ~CVf_IsMETHOD)
+
+#define CvXS_RCSTACK(cv)        (CvFLAGS(cv) & CVf_XS_RCSTACK)
+#define CvXS_RCSTACK_on(cv)     (CvFLAGS(cv) |= CVf_XS_RCSTACK)
+#define CvXS_RCSTACK_off(cv)    (CvFLAGS(cv) &= ~CVf_XS_RCSTACK)
 
 /* Back-compat */
 #ifndef PERL_CORE

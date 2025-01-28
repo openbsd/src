@@ -73,7 +73,7 @@ S_mro_get_linear_isa_c3(pTHX_ HV* stash, U32 level)
         SV** seqs_ptr;
         I32 seqs_items;
         HV *tails;
-        AV *const seqs = MUTABLE_AV(sv_2mortal(MUTABLE_SV(newAV())));
+        AV *const seqs = newAV_mortal();
         I32* heads;
 
         /* This builds @seqs, which is an array of arrays.
@@ -89,9 +89,9 @@ S_mro_get_linear_isa_c3(pTHX_ HV* stash, U32 level)
             if(!isa_item_stash) {
                 /* if no stash, make a temporary fake MRO
                    containing just itself */
-                AV* const isa_lin = newAV();
-                av_push(isa_lin, newSVsv(isa_item));
-                av_push(seqs, MUTABLE_SV(isa_lin));
+                AV* const isa_lin = newAV_alloc_xz(4);
+                av_push_simple(isa_lin, newSVsv(isa_item));
+                av_push_simple(seqs, MUTABLE_SV(isa_lin));
             }
             else {
                 /* recursion */
@@ -135,11 +135,11 @@ S_mro_get_linear_isa_c3(pTHX_ HV* stash, U32 level)
 
 		    goto done;
 		}
-                av_push(seqs, SvREFCNT_inc_simple_NN(MUTABLE_SV(isa_lin)));
+                av_push_simple(seqs, SvREFCNT_inc_simple_NN(MUTABLE_SV(isa_lin)));
             }
         }
-        av_push(seqs, SvREFCNT_inc_simple_NN(MUTABLE_SV(isa)));
-	tails = MUTABLE_HV(sv_2mortal(MUTABLE_SV(newHV())));
+        av_push_simple(seqs, SvREFCNT_inc_simple_NN(MUTABLE_SV(isa)));
+	tails = MUTABLE_HV(newSV_type_mortal(SVt_PVHV));
 
         /* This builds "heads", which as an array of integer array
            indices, one per seq, which point at the virtual "head"
@@ -171,8 +171,8 @@ S_mro_get_linear_isa_c3(pTHX_ HV* stash, U32 level)
         }
 
         /* Initialize retval to build the return value in */
-        retval = newAV();
-        av_push(retval, newSVhek(stashhek)); /* us first */
+        retval = newAV_alloc_xz(4);
+        av_push_simple(retval, newSVhek(stashhek)); /* us first */
 
         /* This loop won't terminate until we either finish building
            the MRO, or get an exception. */
@@ -204,7 +204,7 @@ S_mro_get_linear_isa_c3(pTHX_ HV* stash, U32 level)
                        && (SvIVX(val) > 0))
                            continue;
                     winner = newSVsv(cand);
-                    av_push(retval, winner);
+                    av_push_simple(retval, winner);
                     /* note however that even when we find a winner,
                        we continue looping over @seqs to do housekeeping */
                 }
@@ -269,8 +269,8 @@ S_mro_get_linear_isa_c3(pTHX_ HV* stash, U32 level)
     }
     else { /* @ISA was undefined or empty */
         /* build a retval containing only ourselves */
-        retval = newAV();
-        av_push(retval, newSVhek(stashhek));
+        retval = newAV_alloc_xz(4);
+        av_push_simple(retval, newSVhek(stashhek));
     }
 
  done:
@@ -315,8 +315,8 @@ mro_get_linear_isa(...)
 
     if(!class_stash) {
         /* No stash exists yet, give them just the classname */
-        AV* isalin = newAV();
-        av_push(isalin, newSVsv(classname));
+        AV* isalin = newAV_alloc_xz(4);
+        av_push_simple(isalin, newSVsv(classname));
         ST(0) = sv_2mortal(newRV_noinc(MUTABLE_SV(isalin)));
         XSRETURN(1);
     }
@@ -398,7 +398,7 @@ mro_get_isarev(...)
         HE* iter;
         hv_iterinit(isarev);
         while((iter = hv_iternext(isarev)))
-            av_push(ret_array, newSVsv(hv_iterkeysv(iter)));
+            av_push_simple(ret_array, newSVsv(hv_iterkeysv(iter)));
     }
     mXPUSHs(newRV_noinc(MUTABLE_SV(ret_array)));
 
@@ -539,7 +539,7 @@ mro__nextcan(...)
             }
 
             /* we found a real sub here */
-            sv = sv_newmortal();
+            sv = newSV_type_mortal(SVt_PV);
 
             gv_efullname3(sv, cvgv, NULL);
 

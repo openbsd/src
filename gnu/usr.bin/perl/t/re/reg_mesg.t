@@ -20,6 +20,19 @@ use open qw(:utf8 :std);
 use warnings;
 BEGIN { ${^WARNING_BITS} = undef }  # Kludge to restore default warnings
 
+# NOTE:
+# This file uses display_rx() from t/test.pl, which escapes
+# non-printable codepoints and percentage symbols as non-standard
+# "%x{01+aa+bc+02}" style sequences.  We do this as we may be testing
+# malformed utf8 sequences or other non-printable characters which we
+# want to distinguish from any actual regex pattern escape sequences,
+# while at the same time we don't want to emit any non-printable
+# sequences to a terminal as literals where they may cause problems.
+# Thus "\x{01}" means the string contained six codepoints making up a
+# normal "\x{...}" style escape sequence whereas "%x{01}" means the string
+# contained a single codepoint and "%x{01+02}" means it contained two
+# codepoints, etc. - Yves
+
 # Kind of a kludge to mark warnings to be expected only if we are testing
 # under "use re 'strict'"
 my $only_strict_marker = ':expected_only_under_strict';
@@ -804,14 +817,14 @@ for my $strict ("", "use re 'strict';") {
                     my $eval_string = "$strict $regex";
                     $_ = "x";
                     eval "$eval_string; \$meaning_of_life = 42";
-                    ok (! defined $meaning_of_life, "$eval_string died");
+                    ok(! defined $meaning_of_life, display_rx("$eval_string died"));
                     my $error= $@;
                     if ($error =~ qr/\Q$expect/) {
                         ok(1, "... and gave expected message");
                     } else {
-                        ok(0,$eval_string);
-                        diag("Have: " . _q(add_markers($error)));
-                        diag("Want: " . _q($death[$i+1]));
+                        ok(0, display_rx($eval_string));
+                        diag("Have: " . display_rx(add_markers($error)));
+                        diag("Want: " . display_rx($death[$i+1]));
                     }
                 }, undef, "... and no other warnings");
         }
@@ -895,7 +908,8 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                 #print STDERR __LINE__, ": ", "eval '$strict no warnings; $regex'", "\n";
                 eval "$strict no warnings; $regex";
             }
-            if (is($@, "", "$strict $regex did not die")) {
+            my $display = display_rx($regex); # used in the test names.
+            if (is($@, "", "$strict $display did not die")) {
                 my @got = capture_warnings(sub {
                                         $_ = "x";
                                         eval "$strict $regex" });
@@ -905,12 +919,12 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                 {
                     if (@got < @expect) {
                         $count = @got;
-                        note "Expected warnings not gotten:\n\t" . join "\n\t",
-                                                    @expect[$count .. $#expect];
+                        note display_rx("Expected warnings not gotten:\n\t"
+                                        . join("\n\t", @expect[$count .. $#expect]));
                     }
                     else {
-                        note "Unexpected warnings gotten:\n\t" . join("\n\t",
-                                                         @got[$count .. $#got]);
+                        note display_rx("Unexpected warnings gotten:\n\t"
+                                        . join("\n\t", @got[$count .. $#got]));
                     }
                 }
                 foreach my $i (0 .. $count - 1) {
@@ -919,7 +933,7 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                     {
                         chomp($got[$i]);
                         chomp($expect[$i]);
-                        diag("GOT\n'$got[$i]'\nEXPECT\n'$expect[$i]'");
+                        diag(display_rx("GOT\n'$got[$i]'\nEXPECT\n'$expect[$i]'"));
                     }
                     else {
                             # Turning off this type of warning should make the
@@ -949,7 +963,7 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                         elsif (! (ok @warns == 0,
                                      "... and the warning is off by default"))
                         {
-                               diag("GOT\n" . join "\n", @warns);
+                               diag(display_rx("GOT\n" . join "\n", @warns));
                         }
                     }
                 }

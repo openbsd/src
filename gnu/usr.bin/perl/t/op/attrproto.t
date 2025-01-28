@@ -121,13 +121,13 @@ is @warnings, 0, "Malformed prototype isn't just a warning";
 {
     use feature "lexical_subs";
     no warnings "experimental::lexical_subs";
-    $ret = eval 'my sub foo(bar) : prototype(baz) {}; prototype \&foo;';
-    is $ret, "baz", "my sub foo honors the prototype attribute";
-    like shift @warnings, qr/Illegal character in prototype for foo : bar/,
+    $ret = eval 'my sub lexsub1(bar) : prototype(baz) {}; prototype \&lexsub1;';
+    is $ret, "baz", "my sub lexsub1 honors the prototype attribute";
+    like shift @warnings, qr/Illegal character in prototype for lexsub1 : bar/,
         "(lexical) bar triggers illegal proto warnings";
-    like shift @warnings, qr/Illegal character in prototype for foo : baz/,
+    like shift @warnings, qr/Illegal character in prototype for lexsub1 : baz/,
         "(lexical) baz triggers illegal proto warnings";
-    like shift @warnings, qr/Prototype \'bar\' overridden by attribute \'prototype\(baz\)\' in foo/,
+    like shift @warnings, qr/Prototype \'bar\' overridden by attribute \'prototype\(baz\)\' in lexsub1/,
         "(lexical) overridden warning triggered in anonymous sub";
     is @warnings, 0, "No more warnings";
 }

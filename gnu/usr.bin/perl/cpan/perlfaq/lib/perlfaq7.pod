@@ -4,7 +4,7 @@ perlfaq7 - General Perl Language Issues
 
 =head1 VERSION
 
-version 5.20210520
+version 5.20240218
 
 =head1 DESCRIPTION
 
@@ -266,10 +266,10 @@ binding).
 Closures are most often used in programming languages where you can
 have the return value of a function be itself a function, as you can
 in Perl. Note that some languages provide anonymous functions but are
-not capable of providing proper closures: the Python language, for
-example. For more information on closures, check out any textbook on
-functional programming. Scheme is a language that not only supports
-but encourages closures.
+not capable of providing proper closures: for example Python 2. For
+more information on closures, check out any textbook on functional
+programming. Scheme is a language that not only supports but
+encourages closures.
 
 Here's a classic non-closure function-generating function:
 
@@ -696,7 +696,7 @@ details, see L<perlsub>.
 =head2 How do I create a switch or case statement?
 
 There is a given/when statement in Perl, but it is experimental and
-likely to change in future. See L<perlsyn> for more details.
+will be removed in Perl 5.42. See L<perlsyn> for more details.
 
 The general answer is to use a CPAN module such as L<Switch::Plain>:
 

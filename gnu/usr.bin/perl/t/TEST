@@ -938,7 +938,7 @@ SHRDLU_1
 ###   ./perl harness
 ### in the 't' directory since most (>=80%) of the tests succeeded.
 SHRDLU_2
-	if (eval {require Config; import Config; 1}) {
+	if (eval {require Config; Config->import; 1}) {
 	    if ($::Config{usedl} && (my $p = $::Config{ldlibpthname})) {
 		warn <<SHRDLU_3;
 ### You may have to set your dynamic library search path,

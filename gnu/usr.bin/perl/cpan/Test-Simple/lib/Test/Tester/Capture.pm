@@ -2,7 +2,7 @@ use strict;
 
 package Test::Tester::Capture;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 
 use Test::Builder;
@@ -236,6 +236,6 @@ chunks removed by Fergal Daly <fergal@esatclear.ie>.
 
 Under the same license as Perl itself
 
-See http://www.perl.com/perl/misc/Artistic.html
+See L<https://dev.perl.org/licenses/>
 
 =cut

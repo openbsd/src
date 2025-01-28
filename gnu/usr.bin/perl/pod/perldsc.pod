@@ -105,7 +105,7 @@ That's because Perl doesn't (ever) implicitly dereference your variables.
 If you want to get at the thing a reference is referring to, then you have
 to do this yourself using either prefix typing indicators, like
 C<${$blah}>, C<@{$blah}>, C<@{$blah[$i]}>, or else postfix pointer arrows,
-like C<$a-E<gt>[3]>, C<$h-E<gt>{fred}>, or even C<$ob-E<gt>method()-E<gt>[3]>.
+like C<< $arr->[3] >>, C<< $hash->{fred} >>, or even C<< $obj->method()->[3] >>.
 
 =head1 COMMON MISTAKES
 
@@ -256,7 +256,7 @@ In summary:
 
     $AoA[$i] = [ @array ];     # usually best
     $AoA[$i] = \@array;        # perilous; just how my() was that array?
-    $AoA[$i]->@*  = @array;    # way too tricky for most programmers
+    $AoA[$i]->@* = @array;     # way too tricky for most programmers
     @{ $AoA[$i] } = @array;    # just as tricky, and also harder to read
 
 =head1 CAVEAT ON PRECEDENCE
@@ -535,7 +535,7 @@ X<array of hashes> X<AoH>
      push @AoH, { split /[\s+=]/ };
  }
 
- # calling a function  that returns a key/value pair list, like
+ # calling a function that returns a key/value pair list, like
  # "lead","fred","daughter","pebbles"
  while ( my %fields = getnextpairset() ) {
      push @AoH, { %fields };
@@ -631,7 +631,7 @@ X<hash of hashes> X<HoH>
      }
  }
 
- # calling a function  that returns a key,value hash
+ # calling a function that returns a key,value hash
  for my $group ( "simpsons", "jetsons", "flintstones" ) {
      $HoH{$group} = { get_family($group) };
  }
@@ -652,6 +652,12 @@ X<hash of hashes> X<HoH>
      $HoH{flintstones}{$what} = $new_folks{$what};
  }
 
+ # same, but using a hash slice
+ @{ $HoH{flintstones} }{ keys %new_folks } = values %new_folks;
+
+ # same, but without a %new_folks variable
+ @{ $HoH{flintstones} }{ "wife", "pet" } = ( "wilma", "dino" );
+
 =head2 Access and Printing of a HASH OF HASHES
 
  # one element
@@ -669,7 +675,7 @@ X<hash of hashes> X<HoH>
      print "}\n";
  }
 
- # print the whole thing  somewhat sorted
+ # print the whole thing somewhat sorted
  foreach my $family ( sort keys %HoH ) {
      print "$family: { ";
      for my $role ( sort keys $HoH{$family}->%* ) {

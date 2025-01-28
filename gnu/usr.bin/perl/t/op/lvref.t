@@ -5,7 +5,7 @@ BEGIN {
     set_up_inc("../lib");
 }
 
-plan 167;
+plan 201;
 
 eval '\$x = \$y';
 like $@, qr/^Experimental aliasing via reference not enabled/,
@@ -76,13 +76,32 @@ for (1,2) {
   \my($y) = \3,
   \state $a = \3,
   \state($b) = \3 if $_ == 1;
+  \state $c = \$_;
   if ($_ == 2) {
     is $x, undef, '\my $x = ... clears $x on scope exit';
     is $y, undef, '\my($x) = ... clears $x on scope exit';
     is $a, 3, '\state $x = ... does not clear $x on scope exit';
     is $b, 3, '\state($x) = ... does not clear $x on scope exit';
+    is $c, 1, '\state $x = ... can be used with refaliasing';
   }
 }
+
+# Scalars in lvalue context
+
+{
+    my $s = 3;
+    my $t = 5;
+
+    sub foo1 {
+        ok ref($_[0]),   "foo1(alias) passes ref";
+        is ${$_[0]}, 5,  "foo1(alias) passes ref to t";
+        ${$_[0]} = 7;
+    }
+    foo1(\$s = \$t);
+    is $s, 7,  "foo1(alias) passes ref to t"
+}
+
+
 
 # Array Elements
 
@@ -205,16 +224,101 @@ package ArrayTest {
   }
   is \@i, $old, '(\local @a) unwound';
 }
+
+# Test list assignments in both lval and rval list context
+#
+# Note that these tests essentially just codify current behaviour.
+# Whether that behaviour is sane is a debatable point. (See
+# http://nntp.perl.org/group/perl.perl5.porters/267074
+# "refaliasing list assignment in list context")
+
+{
+    # First, confirm behaviour in void context
+
+    {
+        my (@a, @b, $p);
+        my ($x, $y, $z) = qw(X Y Z);
+
+        (\$p, \(@a)) = (\$x, \$y, \$z);
+
+        is \$p,    \$x, '(\$p, \(@a)) = ...;    $p    is alias';
+        is \$a[0], \$y, '(\$p, \(@a)) = ...;    $a[0] is alias';
+        is \$a[1], \$z, '(\$p, \(@a)) = ...;    $a[1] is alias';
+    }
+
+    # then confirm behaviour in scalar context
+
+    {
+        my (@a, @b, $p);
+        my ($x, $y, $z) = qw(X Y Z);
+
+        my $n = ((\$p, \(@a)) = (\$x, \$y, \$z));
+
+        is \$p,    \$x, '$n = (\$p, \(@a)) = ...;    $p    is alias';
+        is \$a[0], \$y, '$n = (\$p, \(@a)) = ...;    $a[0] is alias';
+        is \$a[1], \$z, '$n = (\$p, \(@a)) = ...;    $a[1] is alias';
+        is $n, 3,       '$n = (\$p, \(@a)) = ...;    n is 3';
+    }
+
+    # Now the real tests, first in rvalue list context
+
+    {
+        my (@a, @b, $p);
+        my ($x, $y, $z) = qw(X Y Z);
+
+        @b = ((\$p, \(@a)) = (\$x, \$y, \$z));
+
+        is \$p,    \$x, '@b = (\$p, \(@a) = ...);    $p    is alias';
+        is \$a[0], \$y, '@b = (\$p, \(@a) = ...);    $a[0] is alias';
+        is \$a[1], \$z, '@b = (\$p, \(@a) = ...);    $a[1] is alias';
+        ok ref $b[0],   '@b = (\$p, \(@a) = ...);    $b[0] is ref';
+        ok ref $b[1],   '@b = (\$p, \(@a) = ...);    $b[1] is ref';
+        ok ref $b[2],   '@b = (\$p, \(@a) = ...);    $b[2] is ref';
+        is $b[0], \$x,  '@b = (\$p, \(@a) = ...);    $b[0] is ref to alias';
+        is $b[1], \$y,  '@b = (\$p, \(@a) = ...);    $b[1] is ref to alias';
+        is $b[2], \$z,  '@b = (\$p, \(@a) = ...);    $b[2] is ref to alias';
+    }
+
+    # The same, now in lvalue list context
+    #
+    # Note that the outer assign just (uselessly) modifies temporary
+    # references to $x etc; it doesn't do any aliasing.
+
+    {
+        my (@a, @b, $p);
+        my ($x, $y, $z) = qw(X Y Z);
+        my ($rx, $ry, $rz) = \($x, $y, $z);
+
+        ((\$p, \(@a)) = ($rx, $ry, $rz)) = \(qw(A B C));
+
+        is \$p,    \$x, '(\$p, \(@a) = ...) = @b;    $p    is alias';
+        is \$a[0], \$y, '(\$p, \(@a) = ...) = @b;    $a[0] is alias';
+        is \$a[1], \$z, '(\$p, \(@a) = ...) = @b;    $a[1] is alias';
+        ok ref $rx,     '(\$p, \(@a) = ...) = @b;    $rx   is still ref';
+        ok ref $ry,     '(\$p, \(@a) = ...) = @b;    $ry   is still ref';
+        ok ref $rz,     '(\$p, \(@a) = ...) = @b;    $ry   is still ref';
+        is $rx, \$x,    '(\$p, \(@a) = ...) = @b;    $rx   is still ref to $x';
+        is $ry, \$y,    '(\$p, \(@a) = ...) = @b;    $ry   is still ref to $y';
+        is $rz, \$z,    '(\$p, \(@a) = ...) = @b;    $rz   is still ref to $z';
+        is $x, 'X',     '(\$p, \(@a) = ...) = @b;    $x    is still X';
+        is $y, 'Y',     '(\$p, \(@a) = ...) = @b;    $y    is still Y';
+        is $z, 'Z',     '(\$p, \(@a) = ...) = @b;    $z    is still Z';
+    }
+}
+
+
 for (1,2) {
   \my @x = [1..3],
   \my(@y) = \3,
   \state @a = [1..3],
   \state(@b) = \3 if $_ == 1;
+  \state @c = [$_];
   if ($_ == 2) {
     is @x, 0, '\my @x = ... clears @x on scope exit';
     is @y, 0, '\my(@x) = ... clears @x on scope exit';
     is "@a", "1 2 3", '\state @x = ... does not clear @x on scope exit';
     is "@b", 3, '\state(@x) = ... does not clear @x on scope exit';
+    is $c[0], 1, '\state @x = ... can be used with refaliasing';
   }
 }
 
@@ -254,9 +358,11 @@ package HashTest {
 for (1,2) {
   \state %y = {1,2},
   \my %x = {1,2} if $_ == 1;
+  \state %c = {X => $_};
   if ($_ == 2) {
     is %x, 0, '\my %x = ... clears %x on scope exit';
     is "@{[%y]}", "1 2", '\state %x = ... does not clear %x on scope exit';
+    is $c{X}, 1, '\state %x = ... can be used with refaliasing';
   }
 }
 

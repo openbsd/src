@@ -1,19 +1,12 @@
-package Net::servent;
-use strict;
+package Net::servent 1.04;
+use v5.38;
 
-use 5.006_001;
-our $VERSION = '1.03';
-our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 our ( $s_name, @s_aliases, $s_port, $s_proto );
-BEGIN {
-    use Exporter   ();
-    @EXPORT      = qw(getservbyname getservbyport getservent getserv);
-    @EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
-    %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-}
 
-# Class::Struct forbids use of @ISA
-sub import { goto &Exporter::import }
+use Exporter 'import';
+our @EXPORT      = qw(getservbyname getservbyport getservent getserv);
+our @EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+our %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 
 use Class::Struct qw(struct);
 struct 'Net::servent' => [
@@ -23,7 +16,7 @@ struct 'Net::servent' => [
    proto	=> '$',
 ];
 
-sub populate (@) {
+sub populate {
     return unless @_;
     my $sob = new();
     $s_name 	 =    $sob->[0]     	     = $_[0];
@@ -33,16 +26,14 @@ sub populate (@) {
     return $sob;
 }
 
-sub getservent    (   ) { populate(CORE::getservent()) }
-sub getservbyname ($;$) { populate(CORE::getservbyname(shift,shift||'tcp')) }
-sub getservbyport ($;$) { populate(CORE::getservbyport(shift,shift||'tcp')) }
+sub getservent    :prototype(   ) { populate(CORE::getservent()) }
+sub getservbyname :prototype($;$) { populate(CORE::getservbyname(shift,shift||'tcp')) }
+sub getservbyport :prototype($;$) { populate(CORE::getservbyport(shift,shift||'tcp')) }
 
-sub getserv ($;$) {
+sub getserv :prototype($;$) {
     no strict 'refs';
     return &{'getservby' . ($_[0]=~/^\d+$/ ? 'port' : 'name')}(@_);
 }
-
-1;
 
 __END__
 

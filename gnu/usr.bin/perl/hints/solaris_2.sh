@@ -365,17 +365,17 @@ EOM
 			d_attribute_unused='undef'
 			d_attribute_warn_unused_result='undef'
 			case "$cc" in
-			*c99)	# c99 rejects bare '-O'.
-				case "$optimize" in
-				''|-O) optimize=-O3 ;;
-				esac
-				# Without -Xa c99 doesn't see
+			*c99)	# Without -Xa c99 doesn't see
 				# many OS interfaces.
 				case "$ccflags" in
 				*-Xa*)	;;
 				*) ccflags="$ccflags -Xa" ;;
 				esac
 				;;
+			esac
+                        # GH #21535 - apparent optimization bug in workshop cc
+			case "$optimize" in
+			''|-O) optimize=-O1 ;;
 			esac
 			;;
 		esac

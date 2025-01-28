@@ -315,7 +315,7 @@ See L<perlebcdic> for details.
   posix-bc
   ----------------------------------------------------------------
 
-=item Encode::Symbols
+=item Encode::Symbol
 
 For symbols  and dingbats.
 

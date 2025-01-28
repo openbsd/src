@@ -1713,6 +1713,18 @@ while(<$kh>) {
     is($warnings, "", 'No warnings emitted within scope of  no warnings "experimental"');
 }
 
+SKIP: {
+    skip_if_miniperl("miniperl can't load attributes.pm", 1);
+
+    # GH #21158
+    #   The :baz attribute is unrecognised but in the current implementation that
+    #   is only checked at runtime, and we never invoke the function so this
+    #   should be fine.
+    ok(defined eval 'sub gh21158 ($x) { my $bar :baz; } "ok"',
+        'Signatured subroutine permits attributed scalar') or
+        diag("Error was $@");
+}
+
 done_testing;
 
 1;

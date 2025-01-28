@@ -20,16 +20,16 @@ if ($^O eq 'VMS') {
 
 
 WriteMakefile(
-    'NAME'	   => 'Digest::MD5',
+    'NAME'         => 'Digest::MD5',
     'VERSION_FROM' => 'MD5.pm',
     'ABSTRACT'     => 'Perl interface to the MD-5 algorithm',
     'AUTHOR'       => 'Gisle Aas <gisle@activestate.com>',
     'LICENSE'      => 'perl',
     'MIN_PERL_VERSION' => 5.006,
     'PREREQ_PM'    => {
-			'Digest::base' => '1.00',
-			'XSLoader' => 0,
-		      },
+        'Digest::base' => '1.00',
+        'XSLoader' => 0,
+    },
     'META_MERGE'   => {
         resources  => {
             license    => 'http://dev.perl.org/licenses/',

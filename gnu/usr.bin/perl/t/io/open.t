@@ -401,7 +401,6 @@ fresh_perl_is(
 
 # [perl #77684] Opening a reference to a glob copy.
 SKIP: {
-    skip_if_miniperl("no dynamic loading on miniperl, so can't load PerlIO::scalar", 1);
     my $var = *STDOUT;
     open my $fh, ">", \$var;
     print $fh "hello";
@@ -528,8 +527,6 @@ pass("no crash when open autovivifies glob in freed package");
 SKIP: {
     # The bug doesn't depend on perlio, but perlio provides this nice
     # way of discerning when a handle actually closes.
-    skip("These tests use perlio", 5) unless $Config{useperlio};
-    skip_if_miniperl("miniperl can't load PerlIO::scalar", 5);
     my($a, $b, $s, $t);
     $s = "";
     open($a, ">:scalar:perlio", \$s) or die;

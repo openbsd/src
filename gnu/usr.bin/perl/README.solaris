@@ -75,7 +75,7 @@ Note also that the perl command-line utilities (e.g. perldoc) and any
 that are added by modules that you install will be under
 /usr/perl5/bin, so that directory should be added to your PATH.
 
-=head2 Solaris Version Numbers.
+=head2 Solaris Version Numbers
 
 For consistency with common usage, perl's Configure script performs
 some minor manipulations on the operating system name and version
@@ -122,7 +122,7 @@ All Solaris documentation is available on-line at L<http://docs.sun.com/>.
 
 =head1 SETTING UP
 
-=head2 File Extraction Problems on Solaris.
+=head2 File Extraction Problems on Solaris
 
 Be sure to use a tar program compiled under Solaris (not SunOS 4.x)
 to extract the perl-5.x.x.tar.gz file.  Do not use GNU tar compiled
@@ -134,13 +134,13 @@ If you found this advice too late and used a SunOS4-compiled tar
 anyway, you must find the incorrectly renamed file and move it back
 to lib/locale.pm.
 
-=head2 Compiler and Related Tools on Solaris.
+=head2 Compiler and Related Tools on Solaris
 
 You must use an ANSI C compiler to build perl.  Perl can be compiled
 with either Sun's add-on C compiler or with gcc.  The C compiler that
 shipped with SunOS4 will not do.
 
-=head3 Include /usr/ccs/bin/ in your PATH.
+=head3 Include /usr/ccs/bin/ in your PATH
 
 Several tools needed to build perl are located in /usr/ccs/bin/:  ar,
 as, ld, and make.  Make sure that /usr/ccs/bin/ is in your PATH.
@@ -175,7 +175,7 @@ This will display a line like this:
 
 The last item listed (SUNWhea in this example) is the package you need.
 
-=head3 Avoid /usr/ucb/cc.
+=head3 Avoid /usr/ucb/cc
 
 You don't need to have /usr/ucb/ in your PATH to build perl.  If you
 want /usr/ucb/ in your PATH anyway, make sure that /usr/ucb/ is NOT
@@ -279,7 +279,7 @@ the set-group-id bit is not set.  If it is, then arrange your PATH so
 that /usr/ccs/bin/make is before GNU make or else have the system
 administrator disable the set-group-id bit on GNU make.
 
-=head3 Avoid libucb.
+=head3 Avoid libucb
 
 Solaris provides some BSD-compatibility functions in /usr/ucblib/libucb.a.
 Perl will not build and run correctly if linked against -lucb since it
@@ -319,13 +319,13 @@ interception failed' errors!  The runtime linker intercepts links to
 "/usr/lib/libdl.so.1.0" and links in internal implementations of those
 functions instead.  [Thanks to Tim Bunce for this explanation.]
 
-=head1 RUN CONFIGURE.
+=head1 RUN CONFIGURE
 
 See the INSTALL file for general information regarding Configure.
 Only Solaris-specific issues are discussed here.  Usually, the
 defaults should be fine.
 
-=head2 64-bit perl on Solaris.
+=head2 64-bit perl on Solaris
 
 See the INSTALL file for general information regarding 64-bit compiles.
 In general, the defaults should be fine for most people.
@@ -333,7 +333,7 @@ In general, the defaults should be fine for most people.
 By default, perl-5.6.0 (or later) is compiled as a 32-bit application
 with largefile and long-long support.
 
-=head3 General 32-bit vs. 64-bit issues.
+=head3 General 32-bit vs. 64-bit issues
 
 Solaris 7 and above will run in either 32 bit or 64 bit mode on SPARC
 CPUs, via a reboot. You can build 64 bit apps whilst running 32 bit
@@ -450,17 +450,17 @@ in that release:
 All this should be handled automatically by the hints file, if
 requested.
 
-=head3 Long Doubles.
+=head3 Long Doubles
 
 As of 5.8.1, long doubles are working if you use the Sun compilers
 (needed for additional math routines not included in libm).
 
-=head2 Threads in perl on Solaris.
+=head2 Threads in perl on Solaris
 
 It is possible to build a threaded version of perl on Solaris.  The entire
 perl thread implementation is still experimental, however, so beware.
 
-=head2 Malloc Issues with perl on Solaris.
+=head2 Malloc Issues with perl on Solaris
 
 Starting from perl 5.7.1 perl uses the Solaris malloc, since the perl
 malloc breaks when dealing with more than 2GB of memory, and the Solaris
@@ -478,7 +478,7 @@ appears to go away under -DDEBUGGING, so it has been difficult to
 track down.  Sun's compiler appears to be okay with or without perl's
 malloc. [XXX further investigation is needed here.]
 
-=head1 MAKE PROBLEMS.
+=head1 MAKE PROBLEMS
 
 =over 4
 
@@ -546,7 +546,7 @@ Solaris x86 looks something like this:
 
 The lddlflags addition is the only abnormal bit.
 
-=head1 PREBUILT BINARIES OF PERL FOR SOLARIS.
+=head1 PREBUILT BINARIES OF PERL FOR SOLARIS
 
 You can pick up prebuilt binaries for Solaris from
 L<http://www.sunfreeware.com/>, L<http://www.blastwave.org>,
@@ -556,9 +556,9 @@ page.  There are probably other sources as well.  Please note that
 these sites are under the control of their respective owners, not the
 perl developers.
 
-=head1 RUNTIME ISSUES FOR PERL ON SOLARIS.
+=head1 RUNTIME ISSUES FOR PERL ON SOLARIS
 
-=head2 Limits on Numbers of Open Files on Solaris.
+=head2 Limits on Numbers of Open Files on Solaris
 
 The stdio(3C) manpage notes that for LP32 applications, only 255
 files may be opened using fopen(), and only file descriptors 0
@@ -571,13 +571,13 @@ also that the default resource limit for open file descriptors on
 Solaris is 255, so you will have to modify your ulimit or rctl
 (Solaris 9 onwards) appropriately.
 
-=head1 SOLARIS-SPECIFIC MODULES.
+=head1 SOLARIS-SPECIFIC MODULES
 
 See the modules under the Solaris:: and Sun::Solaris namespaces on CPAN,
 see L<http://www.cpan.org/modules/by-module/Solaris/> and
 L<http://www.cpan.org/modules/by-module/Sun/>.
 
-=head1 SOLARIS-SPECIFIC PROBLEMS WITH MODULES.
+=head1 SOLARIS-SPECIFIC PROBLEMS WITH MODULES
 
 =head2 Proc::ProcessTable on Solaris
 

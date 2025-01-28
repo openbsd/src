@@ -10,14 +10,14 @@ BEGIN
 {
     if ($] < 5.006)
     {
-        require File::BSDGlob; import File::BSDGlob qw(:glob) ;
-        $CSH_GLOB = File::BSDGlob::GLOB_CSH() ;
+        require File::BSDGlob; File::BSDGlob->import(':glob');
+        $CSH_GLOB = File::BSDGlob::GLOB_CSH();
         *globber = \&File::BSDGlob::csh_glob;
     }
     else
     {
-        require File::Glob; import File::Glob qw(:glob) ;
-        $CSH_GLOB = File::Glob::GLOB_CSH() ;
+        require File::Glob; File::Glob->import(':glob');
+        $CSH_GLOB = File::Glob::GLOB_CSH();
         #*globber = \&File::Glob::bsd_glob;
         *globber = \&File::Glob::csh_glob;
     }

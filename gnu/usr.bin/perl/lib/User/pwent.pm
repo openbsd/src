@@ -1,25 +1,19 @@
-package User::pwent;
-
-use 5.006;
-our $VERSION = '1.02';
-
-use strict;
-use warnings;
+package User::pwent 1.03;
+use v5.38;
 
 use Config;
 use Carp;
 
-our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 our ( $pw_name,    $pw_passwd,  $pw_uid,  $pw_gid,
     $pw_gecos,   $pw_dir,     $pw_shell,
     $pw_expire,  $pw_change,  $pw_class,
     $pw_age,
     $pw_quota,   $pw_comment,
     );
-BEGIN {
-    use Exporter   ();
-    @EXPORT      = qw(getpwent getpwuid getpwnam getpw);
-    @EXPORT_OK   = qw(
+
+use Exporter 'import';
+our @EXPORT      = qw(getpwent getpwuid getpwnam getpw);
+our @EXPORT_OK   = qw(
                         pw_has
 
                         $pw_name    $pw_passwd  $pw_uid  $pw_gid
@@ -28,20 +22,16 @@ BEGIN {
                         $pw_age
                         $pw_quota   $pw_comment
                    );
-    %EXPORT_TAGS = (
+our %EXPORT_TAGS = (
         FIELDS => [ grep(/^\$pw_/, @EXPORT_OK), @EXPORT ],
         ALL    => [ @EXPORT, @EXPORT_OK ],
     );
-}
 
 #
 # XXX: these mean somebody hacked this module's source
 #      without understanding the underlying assumptions.
 #
 my $IE = "[INTERNAL ERROR]";
-
-# Class::Struct forbids use of @ISA
-sub import { goto &Exporter::import }
 
 use Class::Struct qw(struct);
 struct 'User::pwent' => [
@@ -131,7 +121,7 @@ sub pw_has {
     return $cando;
 }
 
-sub _populate (@) {
+sub _populate {
     return unless @_;
     my $pwob = new();
 
@@ -172,14 +162,13 @@ sub _populate (@) {
     return $pwob;
 }
 
-sub getpwent ( ) { _populate(CORE::getpwent()) }
-sub getpwnam ($) { _populate(CORE::getpwnam(shift)) }
-sub getpwuid ($) { _populate(CORE::getpwuid(shift)) }
-sub getpw    ($) { ($_[0] =~ /^\d+\z/s) ? &getpwuid : &getpwnam }
+sub getpwent :prototype( ) { _populate(CORE::getpwent()) }
+sub getpwnam :prototype($) { _populate(CORE::getpwnam(shift)) }
+sub getpwuid :prototype($) { _populate(CORE::getpwuid(shift)) }
+sub getpw    :prototype($) { ($_[0] =~ /^\d+\z/s) ? &getpwuid : &getpwnam }
 
 _feature_init();
 
-1;
 __END__
 
 =head1 NAME

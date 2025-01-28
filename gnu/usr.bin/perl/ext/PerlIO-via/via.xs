@@ -433,11 +433,31 @@ PerlIOVia_read(pTHX_ PerlIO * f, void *vbuf, Size_t count)
 	    SV *result =
 		PerlIOVia_method(aTHX_ f, MYMethod(READ), G_SCALAR, buf, n,
 				 Nullsv);
-	    if (result) {
+            /* QP appears to use undef to indicate an error here */
+            if (result && SvOK(result)) {
 		rd = (SSize_t) SvIV(result);
+                STRLEN buflen = SvCUR(buf);
+                STRLEN max = buflen < count ? buflen : count;
+                if (rd < 0 || (STRLEN)rd > max) {
+                    PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
+                    if (rd > 0 && (STRLEN)rd <= count && (STRLEN)rd > buflen) {
+                        Perl_warn(aTHX_ "Invalid return from %s::READ = %zd, beyond end of the returned buffer at %zu",
+                                  HvNAME(s->stash), rd, buflen);
+                    }
+                    else {
+                        Perl_warn(aTHX_ "Invalid return from %s::READ = %zd, expected undef or 0 to %zu",
+                                  HvNAME(s->stash), rd, count);
+                    }
+                    SETERRNO(EINVAL,LIB_INVARG);
+                    return -1;
+                }
+
 		Move(SvPVX(buf), vbuf, rd, char);
 		return rd;
 	    }
+            else {
+                return -1;
+            }
 	}
     }
     return rd;

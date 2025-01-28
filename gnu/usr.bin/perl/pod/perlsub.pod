@@ -1,7 +1,7 @@
 =head1 NAME
 X<subroutine> X<function>
 
-perlsub - Perl subroutines
+perlsub - Perl subroutines (user-defined functions)
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ X<import>
 To call subroutines:
 X<subroutine, call> X<call>
 
-    NAME(LIST);     # & is optional with parentheses.
+    NAME(LIST);     # Regular subroutine call.
     NAME LIST;      # Parentheses optional if predeclared/imported.
     &NAME(LIST);    # Circumvent prototypes.
     &NAME;          # Makes current @_ visible to called subroutine.
@@ -223,10 +223,10 @@ X<recursion>
     &foo(1,2,3);        # pass three arguments
     foo(1,2,3);         # the same
 
-    foo();              # pass a null list
+    foo();              # pass an empty argument list
     &foo();             # the same
 
-    &foo;               # foo() get current args, like foo(@_) !!
+    &foo;               # foo() gets current args, like foo(@_)!
     use strict 'subs';
     foo;                # like foo() iff sub foo predeclared, else
                         # a compile-time error
@@ -581,13 +581,12 @@ or C<do>/C<require>/C<use>'d file.  If more than one value is listed, the
 list must be placed in parentheses.  All listed elements must be
 legal lvalues.  Only alphanumeric identifiers may be lexically
 scoped--magical built-ins like C<$/> must currently be C<local>ized
-with C<local> instead.
+with C<local> instead to limit their scope dynamically.
 
-Unlike dynamic variables created by the C<local> operator, lexical
-variables declared with C<my> are totally hidden from the outside
-world, including any called subroutines.  This is true if it's the
-same subroutine called from itself or elsewhere--every call gets
-its own copy.
+Unlike global or package variables localized by the C<local> operator,
+lexical variables declared with C<my> are totally hidden from the outside
+world, including any called subroutines.  This is true if it's the same
+subroutine called from itself or elsewhere--every call gets its own copy.
 X<local>
 
 This doesn't mean that a C<my> variable declared in a statically
@@ -721,13 +720,13 @@ allowed to try to make a package variable (or other global) lexical:
 
     my $pack::var;      # ERROR!  Illegal syntax
 
-In fact, a dynamic variable (also known as package or global variables)
-are still accessible using the fully qualified C<::> notation even while a
-lexical of the same name is also visible:
+In fact, a package or global variable is still accessible using the
+fully qualified C<::> notation even while a lexical of the same name
+is also visible:
 
     package main;
-    local $x = 10;
-    my    $x = 20;
+    our $x = 10;
+    my  $x = 20;
     print "$x and $::x\n";
 
 That will print out C<20> and C<10>.
@@ -743,7 +742,7 @@ an anonymous sub reference:
 
     my $secret_version = '1.001-beta';
     my $secret_sub = sub { print $secret_version };
-    &$secret_sub();
+    $secret_sub->();
 
 As long as the reference is never returned by any function within the
 module, no outside module can see the subroutine, because its name is not in
@@ -877,7 +876,7 @@ Synopsis:
     local $foo;                # make $foo dynamically local
     local (@wid, %get);        # make list of variables local
     local $foo = "flurp";      # make $foo dynamic, and init it
-    local @oof = @bar;        # make @oof dynamic, and init it
+    local @oof = @bar;         # make @oof dynamic, and init it
 
     local $hash{key} = "val";  # sets a local value for this hash entry
     delete local $hash{key};   # delete this entry for the current block
@@ -1488,14 +1487,14 @@ of an attribute.
 
 The
 function declaration must be visible at compile time.  The prototype
-affects only interpretation of new-style calls to the function,
-where new-style is defined as not using the C<&> character.  In
+affects only interpretation of regular calls to the function,
+where regular is defined as not using the C<&> sigil.  In
 other words, if you call it like a built-in function, then it behaves
-like a built-in function.  If you call it like an old-fashioned
+like a built-in function.  If you call it like an old-fashioned (perl4)
 subroutine, then it behaves like an old-fashioned subroutine.  It
 naturally falls out from this rule that prototypes have no influence
 on subroutine references like C<\&foo> or on indirect subroutine
-calls like C<&{$subref}> or C<< $subref->() >>.
+calls like C<&{$subref}()> or C<< $subref->() >>.
 
 Method calls are not influenced by prototypes either, because the
 function to be called is indeterminate at compile time, since
@@ -1510,7 +1509,7 @@ corresponding built-in.
 
     sub mylink ($$)         mylink $old, $new
     sub myvec ($$$)         myvec $var, $offset, 1
-    sub myindex ($$;$)      myindex &getstring, "substr"
+    sub myindex ($$;$)      myindex getstring(), "substr"
     sub mysyswrite ($$$;$)  mysyswrite $buf, 0, length($buf) - $off, $off
     sub myreverse (@)       myreverse $x, $y, $z
     sub myjoin ($@)         myjoin ":", $x, $y, $z
@@ -1545,13 +1544,14 @@ will allow calling myref() as
     myref *glob
 
 and the first argument of myref() will be a reference to
-a scalar, an array, a hash, a code, or a glob.
+a scalar, an array, a hash, a subroutine, or a glob.
 
 Unbackslashed prototype characters have special meanings.  Any
 unbackslashed C<@> or C<%> eats all remaining arguments, and forces
 list context.  An argument represented by C<$> forces scalar context.  An
 C<&> requires an anonymous subroutine, which, if passed as the first
-argument, does not require the C<sub> keyword or a subsequent comma.
+argument, may look like a bare block:  It does not require the C<sub> keyword
+or a subsequent comma.
 
 A C<*> allows the subroutine to accept a bareword, constant, scalar expression,
 typeglob, or a reference to a typeglob in that slot.  The value will be
@@ -1785,11 +1785,11 @@ aside from where it is declared.
         *ALSO_INLINED = sub () { $x };
     }
 
-Perl 5.22 also introduces the experimental "const" attribute as an
-alternative.  (Disable the "experimental::const_attr" warnings if you want
-to use it.)  When applied to an anonymous subroutine, it forces the sub to
-be called when the C<sub> expression is evaluated.  The return value is
-captured and turned into a constant subroutine:
+Perl 5.22 also introduced the "const" attribute as an alternative.  It was
+initially experimental, but made stable in Perl 5.40.  When applied to an
+anonymous subroutine, it forces the sub to be called when the C<sub>
+expression is evaluated.  The return value is captured and turned into a
+constant subroutine:
 
     my $x = 54321;
     *INLINED = sub : const { $x };

@@ -1,4 +1,4 @@
-package warnings::register 1.05;
+package warnings::register 1.06;
 
 require warnings;
 
@@ -40,6 +40,7 @@ warnings::register - warnings import function
 
 Creates a warnings category with the same name as the current package.
 
-See L<warnings> for more information on this module's usage.
+See L<warnings/"Reporting Warnings from a Module"> for more information
+on this module's usage.
 
 =cut

@@ -37,7 +37,7 @@
 
 package TestInit;
 
-$VERSION = 1.04;
+our $VERSION = 1.05;
 
 # Let tests know they're running in the perl core.  Useful for modules
 # which live dual lives on CPAN.

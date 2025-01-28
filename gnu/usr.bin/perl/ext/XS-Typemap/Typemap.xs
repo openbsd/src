@@ -917,7 +917,7 @@ T_ARRAY( dummy, array, ... )
  PREINIT:
   U32 size_RETVAL;
  CODE:
-  dummy += 0; /* Fix -Wall */
+  PERL_UNUSED_VAR(dummy); /* GH 21505 */
   size_RETVAL = ix_array;
   RETVAL = array;
  OUTPUT:

@@ -844,7 +844,8 @@ described in the remainder of this section.
 The C<L<use re 'E<sol>foo'|re/"'/flags' mode">> pragma can be used to set
 default modifiers (including these) for regular expressions compiled
 within its scope.  This pragma has precedence over the other pragmas
-listed below that also change the defaults.
+listed below that also change the defaults. Note that the /x modifier does
+NOT affect C<split STR> patterns.
 
 Otherwise, C<L<use locale|perllocale>> sets the default modifier to C</l>;
 and C<L<use feature 'unicode_strings|feature>>, or
@@ -1217,8 +1218,8 @@ using C<"$+{I<name>}">.
 
 Braces are required in referring to named capture groups, but are optional for
 absolute or relative numbered ones.  Braces are safer when creating a regex by
-concatenating smaller strings.  For example if you have C<qr/$a$b/>, and C<$a>
-contained C<"\g1">, and C<$b> contained C<"37">, you would get C</\g137/> which
+concatenating smaller strings.  For example if you have C<qr/$x$y/>, and C<$x>
+contained C<"\g1">, and C<$y> contained C<"37">, you would get C</\g137/> which
 is probably not what you intended.
 
 If you use braces, you may also optionally add any number of blank
@@ -1269,14 +1270,14 @@ Examples:
     /((.)(.)(.)(.)(.)(.)(.)(.)(.))\10/  # \10 is a backreference
     /((.)(.)(.)(.)(.)(.)(.)(.)(.))\010/ # \010 is octal
 
-    $a = '(.)\1';        # Creates problems when concatenated.
-    $b = '(.)\g{1}';     # Avoids the problems.
-    "aa" =~ /${a}/;      # True
-    "aa" =~ /${b}/;      # True
-    "aa0" =~ /${a}0/;    # False!
-    "aa0" =~ /${b}0/;    # True
-    "aa\x08" =~ /${a}0/;  # True!
-    "aa\x08" =~ /${b}0/;  # False
+    $x = '(.)\1';        # Creates problems when concatenated.
+    $y = '(.)\g{1}';     # Avoids the problems.
+    "aa" =~ /${x}/;      # True
+    "aa" =~ /${y}/;      # True
+    "aa0" =~ /${x}0/;    # False!
+    "aa0" =~ /${y}0/;    # True
+    "aa\x08" =~ /${x}0/;  # True!
+    "aa\x08" =~ /${y}0/;  # False
 
 Several special variables also refer back to portions of the previous
 match.  C<$+> returns whatever the last bracket match matched.
@@ -1308,7 +1309,7 @@ C<@captured> array.
 Be aware that when interpolating a subscript of the C<@{^CAPTURE}>
 array you must use demarcated curly brace notation:
 
-    print "@{^CAPTURE[0]}";
+    print "${^CAPTURE[0]}";
 
 See L<perldata/"Demarcated variable names using braces"> for more on
 this notation.
@@ -1344,8 +1345,7 @@ and C<$'>, B<except> that they are only guaranteed to be defined after a
 successful match that was executed with the C</p> (preserve) modifier.
 The use of these variables incurs no global performance penalty, unlike
 their punctuation character equivalents, however at the trade-off that you
-have to tell perl when you want to use them.  As of Perl 5.20, these three
-variables are equivalent to C<$`>, C<$&> and C<$'>, and C</p> is ignored.
+have to tell perl when you want to use them.
 X</p> X<p modifier>
 
 =head2 Quoting metacharacters

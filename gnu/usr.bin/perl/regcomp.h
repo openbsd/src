@@ -1554,7 +1554,19 @@ typedef enum {
 #define EVAL_OPTIMISTIC_FLAG    128
 #define EVAL_FLAGS_MASK         (EVAL_OPTIMISTIC_FLAG-1)
 
-
+/* We define PERL_RE_BUILD_DEBUG if we are NOT compiling the re extension and
+ * we are under DEBUGGING, or if we are ARE compiling the re extension
+ * and this is not a DEBUGGING enabled build (identified by
+ * DEBUGGING_RE_ONLY being defined)
+ */
+#if ( !defined(PERL_EXT_RE_STATIC) && defined(DEBUGGING)) ||       \
+    ( defined(PERL_EXT_RE_BUILD) && defined(DEBUGGING_RE_ONLY)) || \
+    (!defined(PERL_EXT_RE_BUILD) && defined(DEBUGGING))
+#define PERL_RE_BUILD_DEBUG
+#endif
+#if !defined(PERL_EXT_RE_STATIC)
+#define PERL_RE_BUILD_AUX
+#endif
 
 #endif /* PERL_REGCOMP_H_ */
 

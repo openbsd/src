@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.44";
+our $VERSION     = "0.47";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = qw{
 	is_regexp regexp_pattern
@@ -500,6 +500,11 @@ example:
     use re "/l";
     no re "/l"; # reverts to unicode_strings behaviour
 
+Default flags are applied to wherever a pattern is compiled with the exception
+of the C</x> flag, which is not applied to patterns compiled from string arguments
+to C<split>. Thus `use re "/x";` does not affect the behaviour of C<split " "> but
+B<does> affect the behavior of C<split / />.
+
 =head2 'debug' mode
 
 When C<use re 'debug'> is in effect, perl emits debugging messages when
@@ -706,9 +711,8 @@ compile-time and run-time effects.
 
 =head2 Exportable Functions
 
-As of perl 5.9.5 're' debug contains a number of utility functions that
-may be optionally exported into the caller's namespace. They are listed
-below.
+As of perl 5.9.5, the C<re> module contains a number of utility functions that
+may be optionally exported into the caller's namespace. They are listed below.
 
 =over 4
 

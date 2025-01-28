@@ -35,8 +35,7 @@ sub MY::libscan
     my $path = shift;
 
     return undef
-        if $path =~ /^(?:RCS|CVS|SCCS|\.svn|_darcs)$/ ||
-           $path =~ /(~|\.bak|_bak)$/ ||
+        if $path =~ /(~|\.bak|_bak)$/ ||
            $path =~ /\..*\.sw(o|p)$/  ||
            $path =~ /\B\.svn\b/;
 
@@ -45,8 +44,18 @@ sub MY::libscan
 
 sub MY::postamble
 {
-    return ''
-        if $ENV{PERL_CORE} ;
+    my $self = shift ;
+    my %params = @_ ;
+
+    if ($ENV{PERL_CORE} )
+    {
+        return <<EOM;
+
+READMEmd:
+
+EOM
+
+    }
 
     my @files = getPerlFiles('MANIFEST');
 
@@ -66,6 +75,28 @@ MyTrebleCheck:
 	@echo All is ok.
 
 ';
+
+    if (-e '.github' && exists $params{name})
+    {
+        my $name = $params{name};
+        $postamble .= <<"EOM";
+
+READMEmd: .github/$name.pod
+
+.github/$name.pod: lib/Compress/Raw/$name.pm
+	\@echo Creating .github/$name.pod from $name.pm
+	\$(NOECHO) perl -ne 'print unless 1 .. /^__END__/' lib/Compress/Raw/$name.pm >.github/$name.pod
+
+EOM
+    }
+    else
+    {
+        $postamble .= <<"EOM";
+
+READMEmd:
+
+EOM
+    }
 
     return $postamble;
 }

@@ -490,9 +490,9 @@ detail.)
 
 Many operators can be combined with a C<=> as follows:
 
- $a += 1;        # same as $a = $a + 1
- $a -= 1;        # same as $a = $a - 1
- $a .= "\n";     # same as $a = $a . "\n";
+ $x += 1;        # same as $x = $x + 1
+ $x -= 1;        # same as $x = $x - 1
+ $x .= "\n";     # same as $x = $x . "\n";
 
 =head2 Files and I/O
 
@@ -546,7 +546,7 @@ elsewhere.  However, in short:
 =item Simple matching
 
  if (/foo/)       { ... }  # true if $_ contains "foo"
- if ($a =~ /foo/) { ... }  # true if $a contains "foo"
+ if ($x =~ /foo/) { ... }  # true if $x contains "foo"
 
 The C<//> matching operator is documented in L<perlop>.  It operates on
 C<$_> by default, or can be bound to another variable using the C<=~>
@@ -555,9 +555,9 @@ binding operator (also documented in L<perlop>).
 =item Simple substitution
 
  s/foo/bar/;               # replaces foo with bar in $_
- $a =~ s/foo/bar/;         # replaces foo with bar in $a
- $a =~ s/foo/bar/g;        # replaces ALL INSTANCES of foo with bar
-                           # in $a
+ $x =~ s/foo/bar/;         # replaces foo with bar in $x
+ $x =~ s/foo/bar/g;        # replaces ALL INSTANCES of foo with bar
+                           # in $x
 
 The C<s///> substitution operator is documented in L<perlop>.
 
@@ -685,7 +685,7 @@ in using third-party modules, which are documented below.
 =head2 Using Perl modules
 
 Perl modules provide a range of features to help you avoid reinventing
-the wheel, and can be downloaded from CPAN ( L<http://www.cpan.org/> ).  A
+the wheel, and can be downloaded from L<CPAN|https://www.cpan.org/>.  A
 number of popular modules are included with the Perl distribution
 itself.
 

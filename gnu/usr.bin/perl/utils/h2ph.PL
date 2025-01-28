@@ -392,7 +392,6 @@ sub EMIT {
 
     $new = reindent($new);
     $args = reindent($args);
-    if ($t ne '') {
     $new =~ s/(['\\])/\\$1/g;   #']);
     if ($opt_h) {
         print OUT $t,
@@ -401,9 +400,6 @@ sub EMIT {
     } else {
         print OUT $t,
                     "eval 'sub $name $proto\{\n$t    ${args}eval q($new);\n$t}' unless defined(\&$name);\n";
-    }
-    } else {
-              print OUT "unless(defined(\&$name)) {\n    sub $name $proto\{\n\t${args}eval q($new);\n    }\n}\n";
     }
     %curargs = ();
     return;
@@ -576,7 +572,7 @@ sub next_line
                 $in =~ s/\?\?</{/g;                         # | ??<|  {|
                 $in =~ s/\?\?>/}/g;                         # | ??>|  }|
             }
-	    if ($in =~ s/^\#ifdef __LANGUAGE_PASCAL__//) {
+	    if ($in =~ /^\#ifdef __LANGUAGE_PASCAL__/) {
 		# Tru64 disassembler.h evilness: mixed C and Pascal.
 		while (<IN>) {
 		    last if /^\#endif/;
@@ -584,8 +580,8 @@ sub next_line
 		$in = "";
 		next READ;
 	    }
-	    # Skip inlined functions in headers
-	    if ($in =~ s/^(extern|static) (__inline__|inline) .*[^;]\s*$//) {
+	    if ($in =~ /^extern inline / && # Inlined assembler.
+		$^O eq 'linux' && $file =~ m!(?:^|/)asm/[^/]+\.h$!) {
 		while (<IN>) {
 		    last if /^}/;
 		}
@@ -774,7 +770,7 @@ sub inc_dirs
 sub build_preamble_if_necessary
 {
     # Increment $VERSION every time this function is modified:
-    my $VERSION     = 4;
+    my $VERSION     = 5;
     my $preamble    = "$Dest_dir/_h2ph_pre.ph";
 
     # Can we skip building the preamble file?
@@ -812,18 +808,16 @@ sub build_preamble_if_necessary
 		my $def = $define{$_};
 		$def =~ s/$arg/\$\{$arg\}/g;
 		print PREAMBLE <<DEFINE;
-unless (defined &$macro) { sub $macro(\$) { my (\$$arg) = \@_; \"$def\" } }
+sub $macro(\$) { my (\$$arg) = \@_; \"$def\" }
 
 DEFINE
 	    } elsif
 		($define{$_} =~ /^([+-]?(\d+)?\.\d+([eE][+-]?\d+)?)[FL]?$/) {
 		# float:
-		print PREAMBLE
-		    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+		print PREAMBLE "sub $_() { $1 }\n\n";
 	    } elsif ($define{$_} =~ /^([+-]?\d+)U?L{0,2}$/i) {
 		# integer:
-		print PREAMBLE
-		    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+		print PREAMBLE "sub $_() { $1 }\n\n";
             } elsif ($define{$_} =~ /^([+-]?0x[\da-f]+)U?L{0,2}$/i) {
                 # hex integer
                 # Special cased, since perl warns on hex integers
@@ -834,21 +828,16 @@ DEFINE
                 # platform-specific definition.
                 my $code = $1;
                 $code = "hex('$code')" if length $code > 10;
-                print PREAMBLE
-                    "unless (defined &$_) { sub $_() { $code } }\n\n";
+                print PREAMBLE "sub $_() { $code }\n\n";
 	    } elsif ($define{$_} =~ /^\w+$/) {
 		my $def = $define{$_};
 		if ($isatype{$def}) {
-		  print PREAMBLE
-		    "unless (defined &$_) { sub $_() { \"$def\" } }\n\n";
+		  print PREAMBLE "sub $_() { \"$def\" }\n\n";
 		} else {
-		  print PREAMBLE
-		    "unless (defined &$_) { sub $_() { &$def } }\n\n";
+		  print PREAMBLE "sub $_() { &$def }\n\n";
 	        }
 	    } else {
-		print PREAMBLE
-		    "unless (defined &$_) { sub $_() { \"",
-		    quotemeta($define{$_}), "\" } }\n\n";
+		print PREAMBLE "sub $_() { \"\Q$define{$_}\E\" }\n\n";
 	    }
 	}
 	print PREAMBLE "\n1;\n";  # avoid 'did not return a true value' when empty

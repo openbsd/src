@@ -10,6 +10,44 @@
 #include "perl.h"
 #include "XSUB.h"
 
+/* PERL_VERSION_xx sanity checks */
+#if !PERL_VERSION_EQ(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, PERL_VERSION_PATCH)
+#  error PERL_VERSION_EQ(major, minor, patch) is false; expected true
+#endif
+#if !PERL_VERSION_EQ(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, '*')
+#  error PERL_VERSION_EQ(major, minor, '*') is false; expected true
+#endif
+#if PERL_VERSION_NE(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, PERL_VERSION_PATCH)
+#  error PERL_VERSION_NE(major, minor, patch) is true; expected false
+#endif
+#if PERL_VERSION_NE(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, '*')
+#  error PERL_VERSION_NE(major, minor, '*') is true; expected false
+#endif
+#if PERL_VERSION_LT(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, PERL_VERSION_PATCH)
+#  error PERL_VERSION_LT(major, minor, patch) is true; expected false
+#endif
+#if PERL_VERSION_LT(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, '*')
+#  error PERL_VERSION_LT(major, minor, '*') is true; expected false
+#endif
+#if !PERL_VERSION_LE(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, PERL_VERSION_PATCH)
+#  error PERL_VERSION_LE(major, minor, patch) is false; expected true
+#endif
+#if !PERL_VERSION_LE(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, '*')
+#  error PERL_VERSION_LE(major, minor, '*') is false; expected true
+#endif
+#if PERL_VERSION_GT(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, PERL_VERSION_PATCH)
+#  error PERL_VERSION_GT(major, minor, patch) is true; expected false
+#endif
+#if PERL_VERSION_GT(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, '*')
+#  error PERL_VERSION_GT(major, minor, '*') is true; expected false
+#endif
+#if !PERL_VERSION_GE(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, PERL_VERSION_PATCH)
+#  error PERL_VERSION_GE(major, minor, patch) is false; expected true
+#endif
+#if !PERL_VERSION_GE(PERL_VERSION_MAJOR, PERL_VERSION_MINOR, '*')
+#  error PERL_VERSION_GE(major, minor, '*') is false; expected true
+#endif
+
 typedef FILE NativeFile;
 
 #include "fakesdio.h"   /* Causes us to use PerlIO below */
@@ -416,10 +454,12 @@ blockhook_csc_start(pTHX_ int full)
 
     if (cur) {
         Size_t i;
-        AV *const new_av = newAV();
+        AV *const new_av = av_count(cur)
+                        ? newAV_alloc_x(av_count(cur))
+                        : newAV();
 
         for (i = 0; i < av_count(cur); i++) {
-            av_store(new_av, i, newSVsv(*av_fetch(cur, i, 0)));
+            av_store_simple(new_av, i, newSVsv(*av_fetch(cur, i, 0)));
         }
 
         GvAV(MY_CXT.cscgv) = new_av;
@@ -447,10 +487,10 @@ blockhook_test_start(pTHX_ int full)
     AV *av;
 
     if (MY_CXT.bhk_record) {
-        av = newAV();
-        av_push(av, newSVpvs("start"));
-        av_push(av, newSViv(full));
-        av_push(MY_CXT.bhkav, newRV_noinc(MUTABLE_SV(av)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVpvs("start"));
+        av_push_simple(av, newSViv(full));
+        av_push_simple(MY_CXT.bhkav, newRV_noinc(MUTABLE_SV(av)));
     }
 }
 
@@ -481,10 +521,10 @@ blockhook_test_eval(pTHX_ OP *const o)
     AV *av;
 
     if (MY_CXT.bhk_record) {
-        av = newAV();
-        av_push(av, newSVpvs("eval"));
-        av_push(av, newSVpv(OP_NAME(o), 0));
-        av_push(MY_CXT.bhkav, newRV_noinc(MUTABLE_SV(av)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVpvs("eval"));
+        av_push_simple(av, newSVpv(OP_NAME(o), 0));
+        av_push_simple(MY_CXT.bhkav, newRV_noinc(MUTABLE_SV(av)));
     }
 }
 
@@ -690,16 +730,20 @@ THX_run_cleanup(pTHX_ void *cleanup_code_ref)
     POPSTACK;
 }
 
+/* Note that this is a pp function attached to an OP */
+
 STATIC OP *
 THX_pp_establish_cleanup(pTHX)
 {
-    dSP;
     SV *cleanup_code_ref;
-    cleanup_code_ref = newSVsv(POPs);
+    cleanup_code_ref = newSVsv(*PL_stack_sp);
+    rpp_popfree_1();
     SAVEFREESV(cleanup_code_ref);
     SAVEDESTRUCTOR_X(THX_run_cleanup, cleanup_code_ref);
-    if(GIMME_V != G_VOID) PUSHs(&PL_sv_undef);
-    RETURN;
+    if(GIMME_V != G_VOID)
+        rpp_push_1(&PL_sv_undef);
+    return NORMAL;
+    ;
 }
 
 STATIC OP *
@@ -1411,7 +1455,7 @@ myget_linear_isa(pTHX_ HV *stash, U32 level) {
     PERL_UNUSED_ARG(level);
     return gvp && *gvp && GvAV(*gvp)
          ? GvAV(*gvp)
-         : (AV *)sv_2mortal((SV *)newAV());
+         : newAV_mortal();
 }
 
 
@@ -1513,12 +1557,55 @@ test_bool_internals_func(SV *true_sv, SV *false_sv, const char *msg) {
     SvREFCNT_dec(false_sv);
     return failed;
 }
+
+
+/* A simplified/fake replacement for pp_add, which tests the pp
+ * function wrapping API, XSPP_wrapped() for a fixed number of args*/
+
+XSPP_wrapped(my_pp_add, 2, 0)
+{
+    SV *ret;
+    dSP;
+    SV *r = POPs;
+    SV *l = TOPs;
+    if (SvROK(l))
+        l = SvRV(l);
+    if (SvROK(r))
+        r = SvRV(r);
+    ret = newSViv( SvIV(l) + SvIV(r));
+    sv_2mortal(ret);
+    SETs(ret);
+    RETURN;
+}
+
+
+/* A copy of pp_anonlist, which tests the pp
+ * function wrapping API, XSPP_wrapped()  for a list*/
+
+XSPP_wrapped(my_pp_anonlist, 0, 1)
+{
+    dSP; dMARK;
+    const I32 items = SP - MARK;
+    SV * const av = MUTABLE_SV(av_make(items, MARK+1));
+    SP = MARK;
+    mXPUSHs((PL_op->op_flags & OPf_SPECIAL)
+            ? newRV_noinc(av) : av);
+    RETURN;
+}
+
+
 #include "const-c.inc"
 
 void
 destruct_test(pTHX_ void *p) {
     warn("In destruct_test: %" SVf "\n", (SV*)p);
 }
+
+#ifdef PERL_USE_HWM
+#  define hwm_checks_enabled() true
+#else
+#  define hwm_checks_enabled() false
+#endif
 
 MODULE = XS::APItest            PACKAGE = XS::APItest
 
@@ -1559,17 +1646,16 @@ test_utf8_to_bytes(bytes, len)
     PREINIT:
         char * ret;
     CODE:
-        RETVAL = newAV();
-        sv_2mortal((SV*)RETVAL);
+        RETVAL = newAV_mortal();
 
         ret = (char *) utf8_to_bytes(bytes, &len);
-        av_push(RETVAL, newSVpv(ret, 0));
+        av_push_simple(RETVAL, newSVpv(ret, 0));
 
         /* utf8_to_bytes uses (STRLEN)-1 to signal errors, and we want to
          * return that as -1 to perl, so cast to SSize_t in case
          * sizeof(IV) > sizeof(STRLEN) */
-        av_push(RETVAL, newSViv((SSize_t)len));
-        av_push(RETVAL, newSVpv((const char *) bytes, 0));
+        av_push_simple(RETVAL, newSViv((SSize_t)len));
+        av_push_simple(RETVAL, newSVpv((const char *) bytes, 0));
 
     OUTPUT:
         RETVAL
@@ -1586,8 +1672,7 @@ test_utf8n_to_uvchr_msgs(s, len, flags)
         AV *msgs = NULL;
 
     CODE:
-        RETVAL = newAV();
-        sv_2mortal((SV*)RETVAL);
+        RETVAL = newAV_mortal();
 
         ret = utf8n_to_uvchr_msgs((U8*)  s,
                                          len,
@@ -1597,18 +1682,18 @@ test_utf8n_to_uvchr_msgs(s, len, flags)
                                          &msgs);
 
         /* Returns the return value in [0]; <retlen> in [1], <errors> in [2] */
-        av_push(RETVAL, newSVuv(ret));
+        av_push_simple(RETVAL, newSVuv(ret));
         if (retlen == (STRLEN) -1) {
-            av_push(RETVAL, newSViv(-1));
+            av_push_simple(RETVAL, newSViv(-1));
         }
         else {
-            av_push(RETVAL, newSVuv(retlen));
+            av_push_simple(RETVAL, newSVuv(retlen));
         }
-        av_push(RETVAL, newSVuv(errors));
+        av_push_simple(RETVAL, newSVuv(errors));
 
         /* And any messages in [3] */
         if (msgs) {
-            av_push(RETVAL, newRV_noinc((SV*)msgs));
+            av_push_simple(RETVAL, newRV_noinc((SV*)msgs));
         }
 
     OUTPUT:
@@ -1632,8 +1717,7 @@ test_utf8n_to_uvchr_error(s, len, flags)
          *
          * Length to assume <s> is; not checked, so could have buffer overflow
          */
-        RETVAL = newAV();
-        sv_2mortal((SV*)RETVAL);
+        RETVAL = newAV_mortal();
 
         ret = utf8n_to_uvchr_error((U8*) s,
                                          len,
@@ -1642,14 +1726,14 @@ test_utf8n_to_uvchr_error(s, len, flags)
                                          &errors);
 
         /* Returns the return value in [0]; <retlen> in [1], <errors> in [2] */
-        av_push(RETVAL, newSVuv(ret));
+        av_push_simple(RETVAL, newSVuv(ret));
         if (retlen == (STRLEN) -1) {
-            av_push(RETVAL, newSViv(-1));
+            av_push_simple(RETVAL, newSViv(-1));
         }
         else {
-            av_push(RETVAL, newSVuv(retlen));
+            av_push_simple(RETVAL, newSVuv(retlen));
         }
-        av_push(RETVAL, newSVuv(errors));
+        av_push_simple(RETVAL, newSVuv(errors));
 
     OUTPUT:
         RETVAL
@@ -1668,14 +1752,13 @@ test_valid_utf8_to_uvchr(s)
          *
          * Length to assume <s> is; not checked, so could have buffer overflow
          */
-        RETVAL = newAV();
-        sv_2mortal((SV*)RETVAL);
+        RETVAL = newAV_mortal();
 
         ret = valid_utf8_to_uvchr((U8*) SvPV_nolen(s), &retlen);
 
         /* Returns the return value in [0]; <retlen> in [1] */
-        av_push(RETVAL, newSVuv(ret));
-        av_push(RETVAL, newSVuv(retlen));
+        av_push_simple(RETVAL, newSVuv(ret));
+        av_push_simple(RETVAL, newSVuv(retlen));
 
     OUTPUT:
         RETVAL
@@ -1711,20 +1794,19 @@ test_uvchr_to_utf8_flags_msgs(uv, flags)
 
     CODE:
         HV *msgs = NULL;
-        RETVAL = newAV();
-        sv_2mortal((SV*)RETVAL);
+        RETVAL = newAV_mortal();
 
         ret = uvchr_to_utf8_flags_msgs(dest, SvUV(uv), SvUV(flags), &msgs);
 
         if (ret) {
-            av_push(RETVAL, newSVpvn((char *) dest, ret - dest));
+            av_push_simple(RETVAL, newSVpvn((char *) dest, ret - dest));
         }
         else {
-            av_push(RETVAL,  &PL_sv_undef);
+            av_push_simple(RETVAL,  &PL_sv_undef);
         }
 
         if (msgs) {
-            av_push(RETVAL, newRV_noinc((SV*)msgs));
+            av_push_simple(RETVAL, newRV_noinc((SV*)msgs));
         }
 
     OUTPUT:
@@ -2327,7 +2409,7 @@ xop_build_optree ()
         UNOP *unop;
         OP *kid;
 
-        MY_CXT.xop_record = newAV();
+        MY_CXT.xop_record = newAV_alloc_x(5);
 
         kid = newSVOP(OP_CONST, 0, newSViv(42));
 
@@ -2337,12 +2419,12 @@ xop_build_optree ()
         unop->op_next       = NULL;
         kid->op_next        = (OP*)unop;
 
-        av_push(MY_CXT.xop_record, newSVpvf("unop:%" UVxf, PTR2UV(unop)));
-        av_push(MY_CXT.xop_record, newSVpvf("kid:%" UVxf, PTR2UV(kid)));
+        av_push_simple(MY_CXT.xop_record, newSVpvf("unop:%" UVxf, PTR2UV(unop)));
+        av_push_simple(MY_CXT.xop_record, newSVpvf("kid:%" UVxf, PTR2UV(kid)));
 
-        av_push(MY_CXT.xop_record, newSVpvf("NAME:%s", OP_NAME((OP*)unop)));
-        av_push(MY_CXT.xop_record, newSVpvf("DESC:%s", OP_DESC((OP*)unop)));
-        av_push(MY_CXT.xop_record, newSVpvf("CLASS:%d", (int)OP_CLASS((OP*)unop)));
+        av_push_simple(MY_CXT.xop_record, newSVpvf("NAME:%s", OP_NAME((OP*)unop)));
+        av_push_simple(MY_CXT.xop_record, newSVpvf("DESC:%s", OP_DESC((OP*)unop)));
+        av_push_simple(MY_CXT.xop_record, newSVpvf("CLASS:%d", (int)OP_CLASS((OP*)unop)));
 
         PL_rpeepp(aTHX_ kid);
 
@@ -2595,6 +2677,17 @@ PPCODE:
 
 
 void
+bad_EXTEND()
+    PPCODE:
+        /* testing failure to extend the stack, do not extend the stack */
+        PUSHs(&PL_sv_yes);
+        PUSHs(&PL_sv_no);
+        XSRETURN(2);
+
+bool
+hwm_checks_enabled()
+
+void
 call_sv_C()
 PREINIT:
     CV * i_sub;
@@ -2604,7 +2697,7 @@ PREINIT:
     char * errstr;
     STRLEN errlen;
     SV * miscsv = sv_newmortal();
-    HV * hv = (HV*)sv_2mortal((SV*)newHV());
+    HV * hv = MUTABLE_HV(newSV_type_mortal(SVt_PVHV));
 CODE:
     i_sub = get_cv("i", 0);
     PUSHMARK(SP);
@@ -2681,7 +2774,7 @@ call_sv(sv, flags, ...)
     SV* sv
     I32 flags
     PREINIT:
-        I32 i;
+        SSize_t i;
     PPCODE:
         for (i=0; i<items-2; i++)
             ST(i) = ST(i+2); /* pop first two args */
@@ -2967,7 +3060,7 @@ eval_sv(sv, flags)
     SV* sv
     I32 flags
     PREINIT:
-        I32 i;
+        SSize_t i;
     PPCODE:
         PUTBACK;
         i = eval_sv(sv, flags);
@@ -3246,6 +3339,22 @@ sv_count()
         OUTPUT:
             RETVAL
 
+IV
+xs_items(...)
+        CODE:
+            RETVAL = items;
+        OUTPUT:
+            RETVAL
+
+void
+wide_marks(...)
+        PPCODE:
+#ifdef PERL_STACK_OFFSET_SSIZET
+          XSRETURN_YES;
+#else
+          XSRETURN_NO;
+#endif
+
 void
 bhk_record(bool on)
     CODE:
@@ -3260,7 +3369,7 @@ test_magic_chain()
         SV *sv;
         MAGIC *callmg, *uvarmg;
     CODE:
-        sv = sv_2mortal(newSV(0));
+        sv = newSV_type_mortal(SVt_NULL);
         if (SvTYPE(sv) >= SVt_PVMG) croak_fail();
         if (SvMAGICAL(sv)) croak_fail();
         sv_magic(sv, &PL_sv_yes, PERL_MAGIC_checkcall, (char*)&callmg, 0);
@@ -4052,7 +4161,7 @@ CODE:
     HV *stash;
     I32 gimme = context;
     CV *cv;
-    AV *av;
+    AV *av = NULL;
     SV **p;
     SSize_t i, size;
 
@@ -4067,21 +4176,28 @@ CODE:
     /* copy returned values into an array so they're not freed during
      * POP_MULTICALL */
 
-    av = newAV();
     SPAGAIN;
 
     switch (context) {
     case G_VOID:
+        av = newAV();
         break;
 
     case G_SCALAR:
-        av_push(av, SvREFCNT_inc(TOPs));
+        av = newAV_alloc_x(1);
+        av_push_simple(av, SvREFCNT_inc(TOPs));
         break;
 
     case G_LIST:
+        av = (SP - PL_stack_base)
+                ? newAV_alloc_xz(SP - PL_stack_base)
+                : newAV();
         for (p = PL_stack_base + 1; p <= SP; p++)
-            av_push(av, SvREFCNT_inc(*p));
+            av_push_simple(av, SvREFCNT_inc(*p));
         break;
+
+    default:
+        croak("multicall_return: invalid context %" I32df, context);
     }
 
     POP_MULTICALL;
@@ -4089,7 +4205,7 @@ CODE:
     size = AvFILLp(av) + 1;
     EXTEND(SP, size);
     for (i = 0; i < size; i++)
-        ST(i) = *av_fetch(av, i, FALSE);
+        ST(i) = *av_fetch_simple(av, i, FALSE);
     sv_2mortal((SV*)av);
     XSRETURN(size);
 }
@@ -4104,6 +4220,10 @@ CODE:
     PerlInterpreter *interp = aTHX; /* The original interpreter */
     PerlInterpreter *interp_dup;    /* The duplicate interpreter */
     int oldscope = 1; /* We are responsible for all scopes */
+
+    /* push a ref-counted and non-RC stackinfo to see how they get cloned */
+    push_stackinfo(PERLSI_UNKNOWN, 1);
+    push_stackinfo(PERLSI_UNKNOWN, 0);
 
     interp_dup = perl_clone(interp, CLONEf_COPY_STACKS | CLONEf_CLONE_HOST );
 
@@ -4125,12 +4245,22 @@ CODE:
     /* switch to new perl */
     PERL_SET_CONTEXT(interp_dup);
 
+    /* check and pop the stackinfo's pushed above */
+#ifdef PERL_RC_STACK
+    assert(!AvREAL(PL_curstack));
+#endif
+    pop_stackinfo();
+#ifdef PERL_RC_STACK
+    assert(AvREAL(PL_curstack));
+#endif
+    pop_stackinfo();
+
     /* continue after 'clone_with_stack' */
     if (interp_dup->Iop)
         interp_dup->Iop = interp_dup->Iop->op_next;
 
     /* run with new perl */
-    Perl_runops_standard(interp_dup);
+    CALLRUNOPS(interp_dup);
 
     /* We may have additional unclosed scopes if fork() was called
      * from within a BEGIN block.  See perlfork.pod for more details.
@@ -4143,6 +4273,11 @@ CODE:
         PL_scopestack_ix = oldscope;
     }
 
+    /* the COP which PL_curcop points to is about to be freed, but might
+     * still be accessed when destructors, END() blocks etc are called.
+     * So point it somewhere safe.
+     */
+    PL_curcop = &PL_compiling;
     perl_destruct(interp_dup);
     perl_free(interp_dup);
 
@@ -4317,7 +4452,7 @@ CV* cv
     PADNAME* name = PadnamelistARRAY(pad_namelist)[i];
 
     if (PadnameLEN(name)) {
-        av_push(retav, newSVpadname(name));
+        av_push_simple(retav, newSVpadname(name));
     }
   }
   RETVAL = newRV_noinc((SV*)retav);
@@ -4748,6 +4883,53 @@ sv_streq_flags(SV *sv1, SV *sv2, U32 flags)
         RETVAL = sv_streq_flags(sv1, sv2, flags);
     OUTPUT:
         RETVAL
+
+void
+set_custom_pp_func(sv)
+    SV *sv;
+    PPCODE:
+        /* replace the pp func of the next op */
+        OP* o = PL_op->op_next;
+        if (o->op_type == OP_ADD)
+            o->op_ppaddr = my_pp_add;
+        else if (o->op_type == OP_ANONLIST)
+            o->op_ppaddr = my_pp_anonlist;
+        else
+            croak("set_custom_pp_func: op_next is not an OP_ADD\n");
+
+        /* the single SV arg is passed through */
+        PERL_UNUSED_ARG(sv);
+        XSRETURN(1);
+
+void
+set_xs_rc_stack(cv, sv)
+    CV *cv;
+    SV *sv;
+    PPCODE:
+        /* set or undet the CVf_XS_RCSTACK flag on the CV */
+        assert(SvTYPE(cv) == SVt_PVCV);
+        if (SvTRUE(sv))
+            CvXS_RCSTACK_on(cv);
+        else
+            CvXS_RCSTACK_off(cv);
+        XSRETURN(0);
+
+void
+rc_add(sv1, sv2)
+    SV *sv1;
+    SV *sv2;
+    PPCODE:
+        /* Do the XS equivalent of pp_add(), while expecting a
+         * reference-counted stack */
+
+        /* manipulate the stack directly */
+        PERL_UNUSED_ARG(sv1);
+        PERL_UNUSED_ARG(sv2);
+        SV *r = newSViv(SvIV(PL_stack_sp[-1]) + SvIV(PL_stack_sp[0]));
+        rpp_replace_2_1(r);
+        return;
+
+
 
 MODULE = XS::APItest PACKAGE = XS::APItest::AUTOLOADtest
 
@@ -6552,9 +6734,9 @@ test_is_utf8_invariant_string_loc(U8 *s, STRLEN offset, STRLEN len)
          * tested function with that position */
         Newx(copy, 1 + ((len + WORDSIZE - 1) / WORDSIZE), PERL_UINTMAX_T);
         Copy(s, (U8 *) copy + offset, len, U8);
-        av = newAV();
-        av_push(av, newSViv(is_utf8_invariant_string_loc((U8 *) copy + offset, len, &ep)));
-        av_push(av, newSViv(ep - ((U8 *) copy + offset)));
+        av = newAV_alloc_x(2);
+        av_push_simple(av, newSViv(is_utf8_invariant_string_loc((U8 *) copy + offset, len, &ep)));
+        av_push_simple(av, newSViv(ep - ((U8 *) copy + offset)));
         RETVAL = av;
         Safefree(copy);
     OUTPUT:
@@ -6585,9 +6767,9 @@ test_is_utf8_string_loc(char *s, STRLEN len)
         AV *av;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_utf8_string_loc((U8 *) s, len, &ep)));
-        av_push(av, newSViv(ep - (U8 *) s));
+        av = newAV_alloc_x(2);
+        av_push_simple(av, newSViv(is_utf8_string_loc((U8 *) s, len, &ep)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6599,10 +6781,10 @@ test_is_utf8_string_loclen(char *s, STRLEN len)
         STRLEN ret_len;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_utf8_string_loclen((U8 *) s, len, &ep, &ret_len)));
-        av_push(av, newSViv(ep - (U8 *) s));
-        av_push(av, newSVuv(ret_len));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSViv(is_utf8_string_loclen((U8 *) s, len, &ep, &ret_len)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
+        av_push_simple(av, newSVuv(ret_len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6620,9 +6802,9 @@ test_is_utf8_string_loc_flags(char *s, STRLEN len, U32 flags)
         AV *av;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_utf8_string_loc_flags((U8 *) s, len, &ep, flags)));
-        av_push(av, newSViv(ep - (U8 *) s));
+        av = newAV_alloc_x(2);
+        av_push_simple(av, newSViv(is_utf8_string_loc_flags((U8 *) s, len, &ep, flags)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6634,10 +6816,10 @@ test_is_utf8_string_loclen_flags(char *s, STRLEN len, U32 flags)
         STRLEN ret_len;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_utf8_string_loclen_flags((U8 *) s, len, &ep, &ret_len, flags)));
-        av_push(av, newSViv(ep - (U8 *) s));
-        av_push(av, newSVuv(ret_len));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSViv(is_utf8_string_loclen_flags((U8 *) s, len, &ep, &ret_len, flags)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
+        av_push_simple(av, newSVuv(ret_len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6655,9 +6837,9 @@ test_is_strict_utf8_string_loc(char *s, STRLEN len)
         AV *av;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_strict_utf8_string_loc((U8 *) s, len, &ep)));
-        av_push(av, newSViv(ep - (U8 *) s));
+        av = newAV_alloc_x(2);
+        av_push_simple(av, newSViv(is_strict_utf8_string_loc((U8 *) s, len, &ep)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6669,10 +6851,10 @@ test_is_strict_utf8_string_loclen(char *s, STRLEN len)
         STRLEN ret_len;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_strict_utf8_string_loclen((U8 *) s, len, &ep, &ret_len)));
-        av_push(av, newSViv(ep - (U8 *) s));
-        av_push(av, newSVuv(ret_len));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSViv(is_strict_utf8_string_loclen((U8 *) s, len, &ep, &ret_len)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
+        av_push_simple(av, newSVuv(ret_len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6690,9 +6872,9 @@ test_is_c9strict_utf8_string_loc(char *s, STRLEN len)
         AV *av;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_c9strict_utf8_string_loc((U8 *) s, len, &ep)));
-        av_push(av, newSViv(ep - (U8 *) s));
+        av = newAV_alloc_x(2);
+        av_push_simple(av, newSViv(is_c9strict_utf8_string_loc((U8 *) s, len, &ep)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6704,10 +6886,10 @@ test_is_c9strict_utf8_string_loclen(char *s, STRLEN len)
         STRLEN ret_len;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_c9strict_utf8_string_loclen((U8 *) s, len, &ep, &ret_len)));
-        av_push(av, newSViv(ep - (U8 *) s));
-        av_push(av, newSVuv(ret_len));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSViv(is_c9strict_utf8_string_loclen((U8 *) s, len, &ep, &ret_len)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
+        av_push_simple(av, newSVuv(ret_len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6725,9 +6907,9 @@ test_is_utf8_fixed_width_buf_loc_flags(char *s, STRLEN len, U32 flags)
         AV *av;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_utf8_fixed_width_buf_loc_flags((U8 *) s, len, &ep, flags)));
-        av_push(av, newSViv(ep - (U8 *) s));
+        av = newAV_alloc_x(2);
+        av_push_simple(av, newSViv(is_utf8_fixed_width_buf_loc_flags((U8 *) s, len, &ep, flags)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6739,10 +6921,10 @@ test_is_utf8_fixed_width_buf_loclen_flags(char *s, STRLEN len, U32 flags)
         STRLEN ret_len;
         const U8 * ep;
     CODE:
-        av = newAV();
-        av_push(av, newSViv(is_utf8_fixed_width_buf_loclen_flags((U8 *) s, len, &ep, &ret_len, flags)));
-        av_push(av, newSViv(ep - (U8 *) s));
-        av_push(av, newSVuv(ret_len));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSViv(is_utf8_fixed_width_buf_loclen_flags((U8 *) s, len, &ep, &ret_len, flags)));
+        av_push_simple(av, newSViv(ep - (U8 *) s));
+        av_push_simple(av, newSVuv(ret_len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6789,14 +6971,14 @@ test_toLOWER_uni(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toLOWER_uni(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toLOWER_uni(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6809,14 +6991,14 @@ test_toLOWER_uvchr(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toLOWER_uvchr(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toLOWER_uvchr(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6833,17 +7015,17 @@ test_toLOWER_utf8(SV * p, int type)
         UV resultant_cp = UV_MAX;   /* Initialized because of dumb compilers */
     CODE:
         input = (U8 *) SvPV(p, len);
-        av = newAV();
         if (type >= 0) {
+           av = newAV_alloc_x(3);
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toLOWER_utf8_safe(input, e, s, &len);
-            av_push(av, newSVuv(resultant_cp));
+            av_push_simple(av, newSVuv(resultant_cp));
 
             utf8 = newSVpvn((char *) s, len);
             SvUTF8_on(utf8);
-            av_push(av, utf8);
+            av_push_simple(av, utf8);
 
-            av_push(av, newSVuv(len));
+            av_push_simple(av, newSVuv(len));
             RETVAL = av;
         }
         else {
@@ -6874,14 +7056,14 @@ test_toFOLD_uni(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toFOLD_uni(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toFOLD_uni(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6894,14 +7076,14 @@ test_toFOLD_uvchr(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toFOLD_uvchr(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toFOLD_uvchr(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6918,17 +7100,17 @@ test_toFOLD_utf8(SV * p, int type)
         UV resultant_cp = UV_MAX;
     CODE:
         input = (U8 *) SvPV(p, len);
-        av = newAV();
         if (type >= 0) {
+            av = newAV_alloc_x(3);
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toFOLD_utf8_safe(input, e, s, &len);
-            av_push(av, newSVuv(resultant_cp));
+            av_push_simple(av, newSVuv(resultant_cp));
 
             utf8 = newSVpvn((char *) s, len);
             SvUTF8_on(utf8);
-            av_push(av, utf8);
+            av_push_simple(av, utf8);
 
-            av_push(av, newSVuv(len));
+            av_push_simple(av, newSVuv(len));
             RETVAL = av;
         }
         else {
@@ -6959,14 +7141,14 @@ test_toUPPER_uni(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toUPPER_uni(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toUPPER_uni(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -6979,14 +7161,14 @@ test_toUPPER_uvchr(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toUPPER_uvchr(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toUPPER_uvchr(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -7003,17 +7185,17 @@ test_toUPPER_utf8(SV * p, int type)
         UV resultant_cp = UV_MAX;
     CODE:
         input = (U8 *) SvPV(p, len);
-        av = newAV();
         if (type >= 0) {
+            av = newAV_alloc_x(3);
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toUPPER_utf8_safe(input, e, s, &len);
-            av_push(av, newSVuv(resultant_cp));
+            av_push_simple(av, newSVuv(resultant_cp));
 
             utf8 = newSVpvn((char *) s, len);
             SvUTF8_on(utf8);
-            av_push(av, utf8);
+            av_push_simple(av, utf8);
 
-            av_push(av, newSVuv(len));
+            av_push_simple(av, newSVuv(len));
             RETVAL = av;
         }
         else {
@@ -7037,14 +7219,14 @@ test_toTITLE_uni(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toTITLE_uni(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toTITLE_uni(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -7057,14 +7239,14 @@ test_toTITLE_uvchr(UV ord)
         AV *av;
         SV *utf8;
     CODE:
-        av = newAV();
-        av_push(av, newSVuv(toTITLE_uvchr(ord, s, &len)));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVuv(toTITLE_uvchr(ord, s, &len)));
 
         utf8 = newSVpvn((char *) s, len);
         SvUTF8_on(utf8);
-        av_push(av, utf8);
+        av_push_simple(av, utf8);
 
-        av_push(av, newSVuv(len));
+        av_push_simple(av, newSVuv(len));
         RETVAL = av;
     OUTPUT:
         RETVAL
@@ -7081,17 +7263,17 @@ test_toTITLE_utf8(SV * p, int type)
         UV resultant_cp = UV_MAX;
     CODE:
         input = (U8 *) SvPV(p, len);
-        av = newAV();
         if (type >= 0) {
+            av = newAV_alloc_x(3);
             e = input + UTF8SKIP(input) - type;
             resultant_cp = toTITLE_utf8_safe(input, e, s, &len);
-            av_push(av, newSVuv(resultant_cp));
+            av_push_simple(av, newSVuv(resultant_cp));
 
             utf8 = newSVpvn((char *) s, len);
             SvUTF8_on(utf8);
-            av_push(av, utf8);
+            av_push_simple(av, utf8);
 
-            av_push(av, newSVuv(len));
+            av_push_simple(av, newSVuv(len));
             RETVAL = av;
         }
         else {
@@ -7117,11 +7299,10 @@ test_delimcpy(SV * from_sv, STRLEN trunc_from, char delim, STRLEN to_len, STRLEN
         from_pos_after_copy = delimcpy(to, to + trunc_to,
                                        from, from + trunc_from,
                                        delim, &retlen);
-        RETVAL = newAV();
-        sv_2mortal((SV*)RETVAL);
-        av_push(RETVAL, newSVpvn(to, to_len));
-        av_push(RETVAL, newSVuv(retlen));
-        av_push(RETVAL, newSVuv(from_pos_after_copy - from));
+        RETVAL = newAV_mortal();
+        av_push_simple(RETVAL, newSVpvn(to, to_len));
+        av_push_simple(RETVAL, newSVuv(retlen));
+        av_push_simple(RETVAL, newSVuv(from_pos_after_copy - from));
         Safefree(to);
     OUTPUT:
         RETVAL
@@ -7144,10 +7325,10 @@ test_delimcpy_no_escape(SV * from_sv, STRLEN trunc_from, char delim, STRLEN to_l
         from_pos_after_copy = delimcpy_no_escape(to, to + trunc_to,
                                        from, from + trunc_from,
                                        delim, &retlen);
-        av = newAV();
-        av_push(av, newSVpvn(to, to_len));
-        av_push(av, newSVuv(retlen));
-        av_push(av, newSVuv(from_pos_after_copy - from));
+        av = newAV_alloc_x(3);
+        av_push_simple(av, newSVpvn(to, to_len));
+        av_push_simple(av, newSVuv(retlen));
+        av_push_simple(av, newSVuv(from_pos_after_copy - from));
         Safefree(to);
         RETVAL = av;
     OUTPUT:

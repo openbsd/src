@@ -3,7 +3,7 @@ package File::Spec::Functions;
 use File::Spec;
 use strict;
 
-our $VERSION = '3.88';
+our $VERSION = '3.91';
 $VERSION =~ tr/_//d;
 
 require Exporter;
@@ -72,7 +72,7 @@ File::Spec::Functions - portably perform operations on file names
 =head1 SYNOPSIS
 
 	use File::Spec::Functions;
-	$x = catfile('a','b');
+	my $x = catfile('a', 'b');
 
 =head1 DESCRIPTION
 

@@ -1,12 +1,12 @@
 #
-# $Id: Unicode.t,v 2.4 2021/07/23 02:26:54 dankogai Exp $
+# $Id: Unicode.t,v 2.5 2023/11/10 01:10:50 dankogai Exp $
 #
 # This script is written entirely in ASCII, even though quoted literals
 # do include non-BMP unicode characters -- Are you happy, jhi?
 #
 
 BEGIN {
-    require Config; import Config;
+    require Config; Config->import();
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
       exit 0;

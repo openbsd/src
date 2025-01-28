@@ -69,6 +69,12 @@ my %extra_input_pods = ( 'dist/ExtUtils-ParseXS/lib/perlxs.pod' => 1 );
 use strict;
 use warnings;
 
+my $config_h = 'config.h';
+if (@ARGV >= 2 && $ARGV[0] eq "-c") {
+    shift;
+    $config_h = shift;
+}
+
 my $nroff_min_indent = 4;   # for non-heading lines
 # 80 column terminal - 2 for pager adding 2 columns;
 my $max_width = 80 - 2 - $nroff_min_indent;
@@ -138,6 +144,7 @@ my $memory_scn = 'Memory Management';
 my $MRO_scn = 'MRO';
 my $multicall_scn = 'Multicall Functions';
 my $numeric_scn = 'Numeric Functions';
+my $rpp_scn = 'Reference-counted stack manipulation';
 
 # Now combined, as unclear which functions go where, but separate names kept
 # to avoid 1) other code changes; 2) in case it seems better to split again
@@ -318,6 +325,14 @@ my %valid_sections = (
         header => <<~"EOT",
             These are used in the simple report generation feature of Perl.
             See L<perlform>.
+            EOT
+      },
+    $rpp_scn => {
+        header => <<~'EOT',
+            Functions for pushing and pulling items on the stack when the
+            stack is reference counted. They are intended as replacements
+            for the old PUSHs, POPi, EXTEND etc pp macros within pp
+            functions.
             EOT
       },
     $signals_scn => {},
@@ -505,7 +520,7 @@ sub autodoc ($$) { # parse a file and extract documentation info
         }
         elsif ($in=~ /^ =for [ ]+ apidoc \B /x) {   # Otherwise better be a
                                                     # plain apidoc line
-            die "Unkown apidoc-type line '$in'" unless $in=~ /^=for apidoc_item/;
+            die "Unknown apidoc-type line '$in'" unless $in=~ /^=for apidoc_item/;
             die "apidoc_item doesn't immediately follow an apidoc entry: '$in'";
         }
         else {  # Plain apidoc
@@ -529,12 +544,13 @@ sub autodoc ($$) { # parse a file and extract documentation info
             }
 
             die "flag '$1' is not legal (for function $element_name (from $file))"
-                        if $flags =~ / ( [^AabCDdEeFfGhiIMmNnTOoPpRrSsUuWXxy;#] ) /x;
+                        if $flags =~ / ( [^AabCDdEeFfGhiIMmNnTOoPpRrSsUuvWXxy;#] ) /x;
 
             die "'u' flag must also have 'm' or 'y' flags' for $element_name"
                                             if $flags =~ /u/ && $flags !~ /[my]/;
             warn ("'$element_name' not \\w+ in '$proto_in_file' in $file")
-                        if $flags !~ /N/ && $element_name !~ / ^ [_[:alpha:]] \w* $ /x;
+                        if $flags !~ /N/ &&
+                           $element_name !~ / ^ (?:struct\s+)? [_[:alpha:]] \w* $ /x;
 
             if ($flags =~ /#/) {
                 die "Return type must be empty for '$element_name'"
@@ -703,11 +719,9 @@ my @has_r_defs;     # Reentrant symbols
 my @include_defs;
 
 sub parse_config_h {
-    use re '/aa';   # Everthing is ASCII in this file
+    use re '/aa';   # Everything is ASCII in this file
 
     # Process config.h
-    my $config_h = 'config.h';
-    $config_h = 'win32/config.h' unless -e $config_h;
     die "Can't find $config_h" unless -e $config_h;
     open my $fh, '<', $config_h or die "Can't open $config_h: $!";
     while (<$fh>) {
@@ -978,11 +992,15 @@ sub parse_config_h {
                 chomp $was;
                 if ($was ne "" && $was !~ m/$link_text/) {
                     die "Multiple descriptions for $name\n"
-                        . "$section contained '$was'";
+                        . "The '$section' section contained\n'$was'";
                 }
                 $docs{'api'}{$section}{$name}->{pod} = $configs{$name}{pod};
                 $configs{$name}{section} = $section;
                 last;
+            }
+            elsif (exists $docs{'intern'}{$section}{$name}) {
+                die "'$name' is in 'config.h' meaning it is part of the API,\n"
+                  . " but it is also in 'perlintern', meaning it isn't API\n";
             }
         }
 
@@ -1014,7 +1032,7 @@ sub parse_config_h {
             # things in config.h, and should be adjusted as necessary as
             # deficiencies are found.
             #
-            # This is the default section for macros with a definiton but
+            # This is the default section for macros with a definition but
             # no arguments, meaning it is replaced unconditionally
             #
             my $sb = qr/ _ | \b /x; # segment boundary
@@ -1145,7 +1163,7 @@ sub parse_config_h {
                 # and there is no verbatim text in the pod or links to/from it
                 # (which would add value).  That means that it is likely the
                 # intent of the variable can be gleaned from just its name,
-                # and unlikely the description adds signficant value, so just
+                # and unlikely the description adds significant value, so just
                 # listing them suffices.  Giving their descriptions would
                 # expand this pod significantly with little added value.
                 if (   ! $has_defn
@@ -1531,107 +1549,13 @@ sub construct_missings_section {
     # Sort the elements.
     my @missings = sort dictionary_order $missings_ref->@*;
 
+    # Make a table of the missings in columns.  Give the subroutine a width
+    # one less than you might expect, as we indent each line by one, to mark
+    # it as verbatim.
+    my $table .= columnarize_list(\@missings, $max_width - 1);
+    $table =~ s/^/ /gm;
 
-    $text .= "\n";
-
-    use integer;
-
-    # Look through all the elements in the list and see how many columns we
-    # could place them in the output what will fit in the available width.
-    my $min_spacer = 2;     # Need this much space between columns
-    my $columns;
-    my $rows;
-    my @col_widths;
-
-  COLUMN:
-    # We start with more columns, and work down until we find a number that
-    # can accommodate all the data.  This algorithm doesn't require the
-    # resulting columns to all have the same width.  This can allow for
-    # as tight of packing as the data will possibly allow.
-    for ($columns = 7; $columns >= 1; $columns--) {
-
-        # For this many columns, we will need this many rows (final row might
-        # not be completely filled)
-        $rows = (@missings + $columns - 1) / $columns;
-
-        # We only need to execute this final iteration to calculate the number
-        # of rows, as we can't get fewer than a single column.
-        last if $columns == 1;
-
-        my $row_width = 1;  # For 1 space indent
-        my $i = 0;  # Which missing element
-
-        # For each column ...
-        for my $col (0 .. $columns - 1) {
-
-            # Calculate how wide the column needs to be, which is based on the
-            # widest element in it
-            $col_widths[$col] = 0;
-
-            # Look through all the rows to find the widest element
-            for my $row (0 .. $rows - 1) {
-
-                # Skip if this row doesn't have an entry for this column
-                last if $i >= @missings;
-
-                # This entry occupies this many bytes.
-                my $this_width = length $missings[$i];
-
-                # All but the final column need a spacer between it and the
-                # next column over.
-                $this_width += $min_spacer if $col < $columns - 1;
-
-
-                # This column will need to have enough width to accommodate
-                # this element
-                if ($this_width > $col_widths[$col]) {
-
-                    # We can't have this many columns if the total width
-                    # exceeds the available; bail now and try fewer columns
-                    next COLUMN if $row_width + $this_width > $max_width;
-
-                    $col_widths[$col] = $this_width;
-                }
-
-                $i++;   # The next row will contain the next item
-            }
-
-            $row_width += $col_widths[$col];
-            next COLUMN if $row_width > $max_width;
-        }
-
-        # If we get this far, this many columns works
-        last;
-    }
-
-    # Here, have calculated the number of rows ($rows) and columns ($columns)
-    # required to list the elements.  @col_widths contains the width of each
-    # column.
-
-    $text .= "\n";
-
-    # Assemble the output
-    for my $row (0 .. $rows - 1) {
-        for my $col (0 .. $columns - 1) {
-            $text .= " " if $col == 0;  # Indent one to mark as verbatim
-
-            my $index = $row + $rows * $col;  # Convert 2 dimensions to 1
-
-            # Skip if this row doesn't have an entry for this column
-            next if $index >= @missings;
-
-            my $element = $missings[$index];
-            $text .= $element;
-
-            # Add alignment spaces for all but final column
-            $text .= " " x ($col_widths[$col] - length $element)
-                                                        if $col < $columns - 1;
-        }
-
-        $text .= "\n";  # End of row
-    }
-
-    return $text;
+    return $text . "\n\n" . $table;
 }
 
 sub dictionary_order {
@@ -1715,7 +1639,7 @@ sub output {
 
         # We allow empty sections in perlintern.
         if (! $section_info && $podname eq 'perlapi') {
-            warn "Empty section '$section_name'; skipped";
+            warn "Empty section '$section_name' for $podname; skipped";
             next;
         }
 

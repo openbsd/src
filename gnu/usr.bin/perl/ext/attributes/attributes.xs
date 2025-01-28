@@ -95,7 +95,7 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		    if (name[len-1] != ')')
 			Perl_croak(aTHX_ "Unterminated attribute parameter in attribute list");
 		    if (hek)
-			subname = sv_2mortal(newSVhek(hek));
+			subname = newSVhek_mortal(hek);
 		    else
 			subname=(SV *)CvGV((const CV *)sv);
 		    if (ckWARN(WARN_ILLEGALPROTO))

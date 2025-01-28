@@ -687,7 +687,7 @@ $r = \$x
     isnt($s[0], $s[1], "cloneable with //ee");
 }
 
-# [perl #89544]
+# [perl #89544] aka [GH #11286]
 {
    sub trace::DESTROY {
        push @trace::trace, "destroyed";
@@ -711,6 +711,7 @@ $r = \$x
    };
 
    my $inner = $outer2->();
+   local $TODO = "we need outside links for debugger behaviour";
    is "@trace::trace", "destroyed",
       'closures only close over named variables, not entire subs';
 }

@@ -1,6 +1,6 @@
 package strict;
 
-$strict::VERSION = "1.12";
+$strict::VERSION = "1.13";
 
 my ( %bitmask, %explicit_bitmask );
 
@@ -181,5 +181,11 @@ if unknown restrictions are used, the strict pragma will abort with
 As of version 1.04 (Perl 5.10), strict verifies that it is used as
 "strict" to avoid the dreaded Strict trap on case insensitive file
 systems.
+
+Beginning with Perl 5.12, use of "use VERSION" (where VERSION >= 5.11.0) now
+lexically enables strictures just like "use strict" (in addition to the normal
+"use VERSION" effects and features.)  In other words, "use v5.011" or higher
+now implies "use strict" automatically, as noted in
+L<perl5120delta/"Implicit strictures"> and L<C<use VERSION>|perlfunc/use VERSION>.
 
 =cut

@@ -1,11 +1,8 @@
-
-require 5;
 package Pod::Simple::DumpAsText;
-$VERSION = '3.43';
-use Pod::Simple ();
-BEGIN {@ISA = ('Pod::Simple')}
-
 use strict;
+our $VERSION = '3.45';
+use Pod::Simple ();
+BEGIN { our @ISA = ('Pod::Simple')}
 
 use Carp ();
 
@@ -27,7 +24,7 @@ sub _handle_element_start {
   my $fh = $_[0]{'output_fh'};
   my($key, $value);
   DEBUG and print STDERR "++ $_[1]\n";
-  
+
   print $fh   '  ' x ($_[0]{'indent'} || 0),  "++", $_[1], "\n";
   $_[0]{'indent'}++;
   while(($key,$value) = each %{$_[2]}) {
@@ -44,7 +41,7 @@ sub _handle_element_start {
 
 sub _handle_text {
   DEBUG and print STDERR "== \"$_[1]\"\n";
-  
+
   if(length $_[1]) {
     my $indent = '  ' x $_[0]{'indent'};
     my $text = $_[1];
@@ -57,7 +54,7 @@ sub _handle_text {
         \ {1,10}(?!\n)     # capture some spaces not at line-end
        /$1"\n$indent . "/gx     # => line-break here
     ;
-    
+
     print {$_[0]{'output_fh'}} $indent, '* "', $text, "\"\n";
   }
   return;
@@ -120,7 +117,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.
@@ -154,3 +151,4 @@ Pod::Simple is maintained by:
 =back
 
 =cut
+use warnings;

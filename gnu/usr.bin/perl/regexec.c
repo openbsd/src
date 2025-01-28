@@ -1934,13 +1934,16 @@ STMT_START {                                                                    
         s++;                                                   \
     }
 
+#define LAST_REGTRY_SKIPPED_FORWARD(reginfo) (reginfo->cutpoint)
+
 /* We keep track of where the next character should start after an occurrence
  * of the one we're looking for.  Knowing that, we can see right away if the
  * next occurrence is adjacent to the previous.  When 'doevery' is FALSE, we
  * don't accept the 2nd and succeeding adjacent occurrences */
 #define FBC_CHECK_AND_TRY                                           \
         if (   (   doevery                                          \
-                || s != previous_occurrence_end)                    \
+                || s != previous_occurrence_end                     \
+                || LAST_REGTRY_SKIPPED_FORWARD(reginfo) )           \
             && (   reginfo->intuit                                  \
                 || (s <= reginfo->strend && regtry(reginfo, &s))))  \
         {                                                           \
@@ -3545,6 +3548,10 @@ S_reg_set_capture_string(pTHX_ REGEXP * const rx,
             SSize_t max = strend - strbeg;
             SSize_t sublen;
 
+            /* NOTE: the following if block is not used or tested
+             * in standard builds. It is only used when PERL_SAWAMPERSAND is
+             * defined */
+
             if (    (flags & REXEC_COPY_SKIP_POST)
                 && !(prog->extflags & RXf_PMf_KEEPCOPY) /* //p */
                 && !(PL_sawampersand & SAWAMPERSAND_RIGHT)
@@ -3567,6 +3574,9 @@ S_reg_set_capture_string(pTHX_ REGEXP * const rx,
                 assert(max >= 0 && max <= strend - strbeg);
             }
 
+            /* NOTE: the following if block is not used or tested
+             * in standard builds. It is only used when PERL_SAWAMPERSAND is
+             * defined */
             if (    (flags & REXEC_COPY_SKIP_PRE)
                 && !(prog->extflags & RXf_PMf_KEEPCOPY) /* //p */
                 && !(PL_sawampersand & SAWAMPERSAND_LEFT)
@@ -3577,7 +3587,7 @@ S_reg_set_capture_string(pTHX_ REGEXP * const rx,
                  * by a capture. Due to lookbehind, this may be to
                  * the left of $&, so we have to scan all captures */
                 while (min && n <= RXp_LASTPAREN(prog)) {
-                    I32 start = RXp_OFFS_START(prog,n);
+                    SSize_t start = RXp_OFFS_START(prog,n);
                     if (   start != -1
                         && start < min)
                     {
@@ -3585,11 +3595,11 @@ S_reg_set_capture_string(pTHX_ REGEXP * const rx,
                     }
                     n++;
                 }
-                if ((PL_sawampersand & SAWAMPERSAND_RIGHT)
-                    && min >  RXp_OFFS_END(prog,0)
-                )
-                    min = RXp_OFFS_END(prog,0);
-
+                if (PL_sawampersand & SAWAMPERSAND_RIGHT) {
+                    SSize_t end = RXp_OFFS_END(prog,0);
+                    if ( min > end )
+                        min = end;
+                }
             }
 
             assert(min >= 0 && min <= max && min <= strend - strbeg);
@@ -4349,6 +4359,12 @@ Perl_regexec_flags(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
 
 /*
  - regtry - try match at specific point
+
+ NOTE: *startpos may be modifed by regtry() to signal to the caller
+       that the next match should start at a specific position in the
+       string. The macro LAST_REGTRY_SKIPPED_FORWARD(reginfo) can be
+       used to detect when this has happened.
+
  */
 STATIC bool			/* 0 failure, 1 success */
 S_regtry(pTHX_ regmatch_info *reginfo, char **startposp)
@@ -4421,7 +4437,8 @@ S_regtry(pTHX_ regmatch_info *reginfo, char **startposp)
 */
 #define REPORT_CODE_OFF 29
 #define INDENT_CHARS(depth) ((int)(depth) % 20)
-#ifdef DEBUGGING
+
+#ifdef PERL_RE_BUILD_DEBUG
 int
 Perl_re_exec_indentf(pTHX_ const char *fmt, U32 depth, ...)
 {
@@ -5664,7 +5681,7 @@ S_isSB(pTHX_ SB_enum before,
         SB5.  X (Extend | Format)*  →  X */
     if (after == SB_Extend || after == SB_Format) {
 
-        /* Implied is that the these characters attach to everything
+        /* Implied is that these characters attach to everything
          * immediately prior to them except for those separator-type
          * characters.  And the rules earlier have already handled the case
          * when one of those immediately precedes the extend char */
@@ -5913,7 +5930,7 @@ S_isWB(pTHX_ WB_enum previous,
      *  should be set to WB_UNKNOWN.  The other input parameters give the
      *  boundaries and current position in the matching of the string.  That
      *  is, 'curpos' marks the position where the character whose wb value is
-     *  'after' begins.  See http://www.unicode.org/reports/tr29/ */
+     *  'after' begins.  See https://www.unicode.org/reports/tr29/ */
 
     U8 * before_pos = (U8 *) curpos;
     U8 * after_pos = (U8 *) curpos;
@@ -11146,26 +11163,7 @@ S_reghop4(U8 *s, SSize_t off, const U8* llim, const U8* rlim)
 {
     PERL_ARGS_ASSERT_REGHOP4;
 
-    if (off >= 0) {
-        while (off-- && s < rlim) {
-            /* XXX could check well-formedness here */
-            s += UTF8SKIP(s);
-        }
-    }
-    else {
-        while (off++ && s > llim) {
-            s--;
-            if (UTF8_IS_CONTINUED(*s)) {
-                while (s > llim && UTF8_IS_CONTINUATION(*s))
-                    s--;
-                if (! UTF8_IS_START(*s)) {
-                    Perl_croak_nocontext("Malformed UTF-8 character (fatal)");
-                }
-            }
-            /* XXX could check well-formedness here */
-        }
-    }
-    return s;
+    return utf8_hop_safe(s, off, llim, rlim);
 }
 
 /* like reghop3, but returns NULL on overrun, rather than returning last

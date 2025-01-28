@@ -1802,3 +1802,8 @@ EXPECT
 warn: Bareword found where operator expected (Do you need to predeclare "foo"?) at - line 3, near "foo bar"
 syntax error at - line 3, near "foo bar"
 Execution of - aborted due to compilation errors.
+########
+# NAME SIG assign heuristic warning [github #22145]
+use warnings;
+$SIG{INT} = uc'default';
+EXPECT

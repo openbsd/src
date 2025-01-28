@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -14,13 +13,13 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
       LocalHost => "127.0.0.1",
       LocalPort => "0",
       Type      => Socket->$socktype,
-   ) or die "Cannot listen on PF_INET - $@";
+   ) or die "Cannot listen on PF_INET - $IO::Socket::errstr";
 
    my $socket = IO::Socket::IP->new(
       PeerHost    => "127.0.0.1",
       PeerService => $testserver->sockport,
       Type        => Socket->$socktype,
-   ) or die "Cannot connect on PF_INET - $@";
+   ) or die "Cannot connect on PF_INET - $IO::Socket::errstr";
 
    my $testclient = ( $socktype eq "SOCK_STREAM" ) ? 
       $testserver->accept : 

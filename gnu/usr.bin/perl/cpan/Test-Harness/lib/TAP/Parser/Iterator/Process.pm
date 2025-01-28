@@ -16,11 +16,11 @@ TAP::Parser::Iterator::Process - Iterator for process-based TAP sources
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =cut
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 =head1 SYNOPSIS
 
@@ -169,8 +169,10 @@ sub _initialize {
     }
     else {
         $err = '';
+        my $exec = shift @command;
+        $exec = qq{"$exec"} if $exec =~ /\s/ and -x $exec;
         my $command
-          = join( ' ', map { $_ =~ /\s/ ? qq{"$_"} : $_ } @command );
+          = join( ' ', $exec, map { $_ =~ /\s/ ? qq{"$_"} : $_ } @command );
         open( $out, "$command|" )
           or die "Could not execute ($command): $!";
     }
@@ -286,6 +288,7 @@ sub _next {
         }
         else {
             return sub {
+                local $/ = "\n"; # to ensure lines
                 if ( defined( my $line = <$out> ) ) {
                     chomp $line;
                     return $line;

@@ -47,16 +47,16 @@ Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
         128;
 #endif
     /* If the total might wrap, panic instead. This is really testing
-     * that (current + n + extra < SSize_t_MAX), but done in a way that
+     * that (current + n + extra < Stack_off_t_MAX), but done in a way that
      * can't wrap */
-    if (UNLIKELY(   current         > SSize_t_MAX - extra
-                 || current + extra > SSize_t_MAX - n
+    if (UNLIKELY(   current         > Stack_off_t_MAX - extra
+                 || current + extra > Stack_off_t_MAX - n
     ))
         /* diag_listed_as: Out of memory during %s extend */
         Perl_croak(aTHX_ "Out of memory during stack extend");
 
     av_extend(PL_curstack, current + n + extra);
-#ifdef DEBUGGING
+#ifdef PERL_USE_HWM
         PL_curstackinfo->si_stack_hwm = current + n + extra;
 #endif
 
@@ -69,16 +69,31 @@ Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
 #define GROW(old) ((old) * 3 / 2)
 #endif
 
+/* for backcomp */
 PERL_SI *
 Perl_new_stackinfo(pTHX_ I32 stitems, I32 cxitems)
+{
+    return new_stackinfo_flags(stitems, cxitems, 0);
+}
+
+/* current flag meanings:
+ *   1 make the new arg stack AvREAL
+ */
+
+PERL_SI *
+Perl_new_stackinfo_flags(pTHX_ I32 stitems, I32 cxitems, UV flags)
 {
     PERL_SI *si;
     Newx(si, 1, PERL_SI);
     si->si_stack = newAV();
-    AvREAL_off(si->si_stack);
+    if (!(flags & 1))
+        AvREAL_off(si->si_stack);
     av_extend(si->si_stack, stitems > 0 ? stitems-1 : 0);
     AvALLOC(si->si_stack)[0] = &PL_sv_undef;
     AvFILLp(si->si_stack) = 0;
+#ifdef PERL_RC_STACK
+    si->si_stack_nonrc_base = 0;
+#endif
     si->si_prev = 0;
     si->si_next = 0;
     si->si_cxmax = cxitems - 1;
@@ -148,13 +163,13 @@ Perl_pop_scope(pTHX)
     LEAVE_SCOPE(oldsave);
 }
 
-I32 *
+Stack_off_t *
 Perl_markstack_grow(pTHX)
 {
     const I32 oldmax = PL_markstack_max - PL_markstack;
     const I32 newmax = GROW(oldmax);
 
-    Renew(PL_markstack, newmax, I32);
+    Renew(PL_markstack, newmax, Stack_off_t);
     PL_markstack_max = PL_markstack + newmax;
     PL_markstack_ptr = PL_markstack + oldmax;
     DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,
@@ -231,8 +246,12 @@ Perl_tmps_grow_p(pTHX_ SSize_t ix)
 {
     SSize_t extend_to = ix;
 #ifndef STRESS_REALLOC
-    if (ix - PL_tmps_max < 128)
-        extend_to += (PL_tmps_max < 512) ? 128 : 512;
+    SSize_t grow_size = PL_tmps_max < 512 ? 128 : PL_tmps_max / 2;
+    if (extend_to > SSize_t_MAX - grow_size - 1)
+        /* trigger memwrap message or fail allocation */
+        extend_to = SSize_t_MAX-1;
+    else
+        extend_to += grow_size;
 #endif
     Renew(PL_tmps_stack, extend_to + 1, SV*);
     PL_tmps_max = extend_to + 1;
@@ -1525,6 +1544,14 @@ Perl_leave_scope(pTHX_ I32 base)
             break;
 
         case SAVEt_STACK_POS:		/* Position on Perl stack */
+#ifdef PERL_RC_STACK
+            /* DAPM Jan 2023. I don't think this save type is used any
+             * more, but if some XS code uses it, fail it for now, as
+             * it's not clear to me what perl should be doing to stack ref
+             * counts when arbitrarily resetting the stack pointer.
+             */
+            assert(0);
+#endif
             a0 = ap[0];
             PL_stack_sp = PL_stack_base + a0.any_i32;
             break;
@@ -1879,7 +1906,7 @@ Be aware that there is a signficant difference in timing between the
 I<end of the current statement> and the I<end of the current pseudo
 block>. If you are looking for a mechanism to trigger a function at the
 end of the B<current pseudo block> you should look at
-C<SAVEDESTRUCTORX()> instead of this function.
+L<perlapi/C<SAVEDESTRUCTOR_X>> instead of this function.
 
 =for apidoc mortal_svfunc_x
 
@@ -1892,7 +1919,7 @@ Be aware that there is a signficant difference in timing between the
 I<end of the current statement> and the I<end of the current pseudo
 block>. If you are looking for a mechanism to trigger a function at the
 end of the B<current pseudo block> you should look at
-C<SAVEDESTRUCTORX()> instead of this function.
+L<perlapi/C<SAVEDESTRUCTOR_X>> instead of this function.
 
 =for apidoc magic_freedestruct
 

@@ -303,6 +303,7 @@ undef *_;
 $tests++;
 pass('no crash with &CORE::foo when *_{ARRAY} is undef');
 
+test_proto '__CLASS__';
 test_proto '__FILE__';
 test_proto '__LINE__';
 test_proto '__PACKAGE__';

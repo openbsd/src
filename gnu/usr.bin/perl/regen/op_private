@@ -362,7 +362,7 @@ addbits($_, 7 => qw(OPpLVAL_INTRO LVINTRO))
 #	  before other args are processed.
 #
 #	Suspicious wrt "additional mode of failure" (and only it):
-#	schop, chop, postinc/dec, bit_and etc, negate, complement.
+#	schop, chop, postinc/dec, bit_and etc, complement.
 #
 #	Also suspicious: 4-arg substr, sprintf, uc/lc (POK_only), reverse, pack.
 #
@@ -482,7 +482,8 @@ addbits($_, 7 => qw(OPpOFFBYONE  +1)) for qw(caller wantarray runcv);
 # label is in UTF8 */
 addbits($_, 7 => qw(OPpPV_IS_UTF8 UTF)) for qw(last redo next goto dump);
 
-
+# suppress looking up a class name as an IO handle in a method call
+addbits($_, 1  => qw(OPpMETH_NO_BAREWORD_IO NO_BAREWORD_IO)) for ops_with_flag('.');
 
 # ====================================================================
 #
@@ -590,6 +591,29 @@ addbits('entersub',
     # 7    => OPpLVAL_INTRO, already defined above
 );
 
+# OpENTERSUB_HASTARG is checked by dXSTARG, used by many XSUBs, to see if
+# a TARG is available.
+#
+# A normal entersub, or these builtin:: ops allocate the  TARG and sets this
+# flag in their ck functions.  entersub allocates it since it will be the active
+# op during execution of the XSUB and this saves creating a new mortal.
+#
+# goto never allocates the targ and never sets the flag, but it can call
+# XSUBs that check the flag (see github #22542)
+#
+# call_sv() can create an entersub that has neither the TARG nor the
+# flag set (and it would be difficult to do so), so we do need the
+# flag or an equivalent.
+#
+# The listed builtin:: pp_ functions need this flag (rather than
+# assuming a TARG) because their XSUB implementations just call the
+# pp_ func, which may be called from goto or call_sv() and not have a
+# TARG allocated.
+
+addbits($_,
+        2      => qw(OPpENTERSUB_HASTARG  TARG  ),
+) for qw(refaddr reftype ceil floor goto);
+
 # note that some of these flags are just left-over from when an entersub
 # is converted into an rv2cv, and could probably be cleared/re-assigned
 
@@ -660,7 +684,18 @@ addbits('const',
     2 => qw(OPpCONST_SHORTCIRCUIT SHORT),   # e.g. the constant 5 in (5 || foo)
     3 => qw(OPpCONST_STRICT       STRICT),  # bareword subject to strict 'subs'
     4 => qw(OPpCONST_ENTERED      ENTERED), # Has been entered as symbol
-    6 => qw(OPpCONST_BARE         BARE),    # Was a bare word (filehandle?)
+    5 => qw(OPpCONST_BARE         BARE),    # Was a bare word (filehandle?)
+    '6..7' => {                             # value derived from __LINE__ etc
+        mask_def      => 'OPpCONST_TOKEN_MASK',
+        baseshift_def => 'OPpCONST_TOKEN_SHIFT',
+        bitcount_def  => 'OPpCONST_TOKEN_BITS',
+        label         => 'TOKEN',
+        enum          => [ qw(
+                             1   OPpCONST_TOKEN_LINE    LINE
+                             2   OPpCONST_TOKEN_FILE    FILE
+                             3   OPpCONST_TOKEN_PACKAGE PACKAGE
+                         )],
+    },
 );
 
 

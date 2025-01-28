@@ -5,7 +5,7 @@ use strict;
 use Cwd ();
 require File::Spec::Unix;
 
-our $VERSION = '3.88';
+our $VERSION = '3.91';
 $VERSION =~ tr/_//d;
 
 our @ISA = qw(File::Spec::Unix);
@@ -249,7 +249,7 @@ Unlike just splitting the directories on the separator, leading empty and
 trailing directory entries can be returned, because these are significant
 on some OSs. So,
 
-    File::Spec->splitdir( "/a/b/c" );
+    File::Spec->splitdir( "/a/b//c/" );
 
 Yields:
 

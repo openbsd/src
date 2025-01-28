@@ -1,5 +1,5 @@
 package ok;
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 use strict;
 use Test::More ();
@@ -40,10 +40,10 @@ Please see L<Test::use::ok> for the full description.
 =head1 CC0 1.0 Universal
 
 To the extent possible under law, 唐鳳 has waived all copyright and related
-or neighboring rights to L<Test-use-ok>.
+or neighboring rights to L<Test::use::ok>.
 
 This work is published from Taiwan.
 
-L<http://creativecommons.org/publicdomain/zero/1.0>
+L<https://creativecommons.org/publicdomain/zero/1.0/>
 
 =cut

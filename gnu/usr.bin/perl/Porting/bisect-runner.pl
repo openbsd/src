@@ -1102,6 +1102,48 @@ L<Commit 125e1a3|https://github.com/Perl/perl5/commit/125e1a36a939>
 
 =back
 
+=head2 When did a one-liner start to emit warnings?
+
+=over 4
+
+=item * Problem
+
+In L<GH issue 21555|https://github.com/Perl/perl5/issues/21555>, it was
+reported that the following one-liner was not emitting warnings in perl-5.16
+but was in perl-5.26 and later releases.
+
+    perl -we '"ab" =~ /.{-1,4}/;'
+
+The reporter's concern was the negative repeat in this (generated) regular
+expression.  The warning being emitted was:
+
+    Unescaped left brace in regex is passed through in regex;
+      marked by <-- HERE in m/.{ <-- HERE -1,4}/ at -e line 1.
+
+At what commit was that warning first emitted?
+
+=item * Solution
+
+We used F<perlbrew> to narrow down the range needing testing to the 5.25
+development cycle.  We then bisected with the C<--one-liner> switch and the
+following invocation:
+
+    export ERR=/tmp/err; rm $ERR
+
+    perl Porting/bisect.pl \
+      --start=v5.24.0 \
+      --end=v5.26.0 \
+      --one-liner 'system(qq|./perl -we "q{ab} =~ /.{-1,4}/" 2>$ENV{ERR}|);
+                  die "See $ENV{ERR} for warnings thrown" if -s $ENV{ERR};'
+
+Bisection pointed to a commit where a modification had been made to a warning.
+
+=item * Reference
+
+L<Commit 8e84dec|https://github.com/Perl/perl5/commit/8e84dec289>
+
+=back
+
 =head2 When did perl stop segfaulting on certain code?
 
 =over 4
@@ -1183,6 +1225,50 @@ But it was observed that there was no warning in perl-5.36.
 =item * Reference
 
 L<GH issue 20685|https://github.com/Perl/perl5/issues/20685>
+
+=item * Problem
+
+An issue was identified during use of the Perl debugger, but soon a change in
+C-level code became suspected.  Identifying the breaking commit entailed
+writing a Perl program which used a dummy C<Devel::*> module.
+
+=item * Solution
+
+=over 4
+
+=item *
+
+Create this file:
+
+    $ cat /tmp/21564.pl
+    #!/usr/bin/perl
+
+    use strict; no strict 'refs';
+    use warnings;
+    use B qw(svref_2object SVf_IOK);
+
+    use v5.10;
+
+    my $b = svref_2object(\(${"_</tmp/21564b.pl"}[4]));
+    unless ($b->FLAGS & SVf_IOK) {
+      die "Fail!";
+    }
+    say "Ok";
+
+=item *
+
+Bisect with an invocation which calls a `perl` debugger program.
+
+    $ PERL5DB='sub DB::DB {}' perl Porting/bisect.pl \
+      --start=v5.35.5 \
+      --end=v5.35.6 \
+      -- ./perl -Ilib -d /tmp/21564b.pl
+
+=back
+
+=item * Reference
+
+L<GH issue 21564|https://github.com/Perl/perl5/issues/21564>
 
 =back
 
@@ -1520,23 +1606,27 @@ sub apply_patch {
     die_255("Can't $what$files: $?, $!");
 }
 
+sub patch_from_commit {
+    my ($revert, $commit, @files) = @_;
+    my $flags = $revert ? '-R ' : '';
+    my $patch = `git show --src-prefix=a/ --dst-prefix=b/ $flags$commit @files`;
+    if (!defined $patch) {
+        my $thing = $revert ? 'revert commit' : 'commit';
+        die_255("Can't get $thing $commit for @files: $?") if @files;
+        die_255("Can't get $thing $commit: $?");
+    }
+    return $patch;
+}
+
 sub apply_commit {
     my ($commit, @files) = @_;
-    my $patch = `git show $commit @files`;
-    if (!defined $patch) {
-        die_255("Can't get commit $commit for @files: $?") if @files;
-        die_255("Can't get commit $commit: $?");
-    }
+    my $patch = patch_from_commit(undef, $commit, @files);
     apply_patch($patch, "patch $commit", @files ? " for @files" : '');
 }
 
 sub revert_commit {
     my ($commit, @files) = @_;
-    my $patch = `git show -R $commit @files`;
-    if (!defined $patch) {
-        die_255("Can't get revert commit $commit for @files: $?") if @files;
-        die_255("Can't get revert commit $commit: $?");
-    }
+    my $patch = patch_from_commit('revert', $commit, @files);
     apply_patch($patch, "revert $commit", @files ? " for @files" : '');
 }
 
@@ -3909,7 +3999,7 @@ EOPATCH
         }
         if (my $token = extract_from_file('doio.c',
                                           qr!^#if (defined\(__sun(?:__)?\)) && defined\(__svr4__\) /\* XXX Need metaconfig test \*/$!)) {
-            my $patch = `git show -R 9b599b2a63d2324d doio.c`;
+            my $patch = patch_from_commit('revert', '9b599b2a63d2324d', 'doio.c');
             $patch =~ s/defined\(__sun__\)/$token/g;
             apply_patch($patch);
         }

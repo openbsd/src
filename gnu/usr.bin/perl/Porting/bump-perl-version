@@ -188,14 +188,6 @@ my @maps =  (
 	"$oldx$oldy",
 	qr/win32|hints/,      # README.win32, win32/*, hints/*
     ],
-
-    # microperl locations should be bumped for major versions
-    [
-        qr{(/)(\d\.\d{2})(["'/])},
-        sub { $2, "$1$newx.$newy$3" },
-        "$oldx.$oldy",
-        qr/uconfig/,
-    ],
 );
 
 

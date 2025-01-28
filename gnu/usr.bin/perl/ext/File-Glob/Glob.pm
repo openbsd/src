@@ -33,7 +33,7 @@ $EXPORT_TAGS{bsd_glob} = [@{$EXPORT_TAGS{glob}}];
 
 our @EXPORT_OK   = (@{$EXPORT_TAGS{'glob'}}, 'csh_glob');
 
-our $VERSION = '1.40';
+our $VERSION = '1.42';
 
 sub import {
     require Exporter;
@@ -190,7 +190,7 @@ uses this internally.
 
 =head2 POSIX FLAGS
 
-If no flags argument is give then C<GLOB_CSH> is set, and on VMS and
+If no flags argument is given then C<GLOB_CSH> is set, and on VMS and
 Windows systems, C<GLOB_NOCASE> too.  Otherwise the flags to use are
 determined solely by the flags argument.  The POSIX defined flags are:
 

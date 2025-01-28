@@ -2415,7 +2415,17 @@ that already have a PV buffer allocated, but no SvTHINKFIRST.
 
 #ifdef DEBUGGING
    /* exercise the immortal resurrection code in sv_free2() */
-#  define SvREFCNT_IMMORTAL 1000
+#  ifdef PERL_RC_STACK
+     /* When the stack is ref-counted, the code tends to take a lot of
+      * short cuts with immortals, such as skipping the bump of the ref
+      * count of PL_sv_undef when pushing it on the stack. Exercise that
+      * this doesn't cause problems, especially on code which
+      * special-cases RC==1 etc.
+      */
+#    define SvREFCNT_IMMORTAL 10
+#  else
+#    define SvREFCNT_IMMORTAL 1000
+#  endif
 #else
 #  define SvREFCNT_IMMORTAL ((~(U32)0)/2)
 #endif

@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -31,7 +30,7 @@ my $ECONNREFUSED_STR = "$!";
       Type      => SOCK_STREAM,
       V6Only    => 1,
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
-   ) or die "Cannot listen on PF_INET6 - $@";
+   ) or die "Cannot listen on PF_INET6 - $IO::Socket::errstr";
 
    is( $listensock->getsockopt( IPPROTO_IPV6, IPV6_V6ONLY ), 1, 'IPV6_V6ONLY is 1 on $listensock' );
 
@@ -42,7 +41,7 @@ my $ECONNREFUSED_STR = "$!";
       Type     => SOCK_STREAM,
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
-   my $err = "$@";
+   my $err = "$IO::Socket::errstr";
 
    ok( !defined $testsock, 'Unable to connect PF_INET socket to PF_INET6 socket with V6Only true' );
    like( $err, qr/\Q$ECONNREFUSED_STR/, 'Socket creation fails with connection refused' );
@@ -60,7 +59,7 @@ SKIP: {
       Type      => SOCK_STREAM,
       V6Only    => 0,
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
-   ) or die "Cannot listen on PF_INET6 - $@";
+   ) or die "Cannot listen on PF_INET6 - $IO::Socket::errstr";
 
    is( $listensock->getsockopt( IPPROTO_IPV6, IPV6_V6ONLY ), 0, 'IPV6_V6ONLY is 0 on $listensock' );
 
@@ -71,7 +70,7 @@ SKIP: {
       Type     => SOCK_STREAM,
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
-   my $err = "$@";
+   my $err = "$IO::Socket::errstr";
 
    ok( defined $testsock, 'Connected PF_INET socket to PF_INET6 socket with V6Only false' ) or
       diag( "IO::Socket::IP->new failed - $err" );

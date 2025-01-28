@@ -300,3 +300,29 @@ LOOP: {
 }
 EXPECT
 Can't "last" out of a "finally" block at - line 4.
+########
+# NAME return HANDLE LIST isn't valid [github #21716]
+sub xx {
+  return sum map { $_+1} 1 .. 5;
+}
+EXPECT
+Missing comma after first argument to return at - line 2, near "5;"
+Execution of - aborted due to compilation errors.
+########
+# subsequent use VERSION to 5.39
+use v5.20;
+use v5.39;
+EXPECT
+use VERSION of 5.39 or above is not permitted while another use VERSION is in scope at - line 3.
+########
+# subsequent use VERSION from 5.39
+use v5.39;
+use v5.20;
+EXPECT
+use VERSION is not permitted while another use VERSION of 5.39 or above is in scope at - line 3.
+########
+# use VERSION across the 5.11 boundary
+use 5.012;
+use 5.010;
+EXPECT
+Downgrading a use VERSION declaration to below v5.11 is not permitted at - line 3.

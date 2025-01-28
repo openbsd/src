@@ -214,6 +214,22 @@
 #  define NEED_sv_2pv_nolen
 #  define NEED_sv_pvn_force_flags
 #  include "ppport.h"
+
+/* Proposed fix for https://github.com/Dual-Life/Devel-PPPort/issues/231 */
+
+#  if PERL_VERSION < 18
+#    ifdef sv_2pv
+#   undef sv_2pv
+#  endif
+
+#  if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#    define sv_2pv(sv, lp) ({ SV *_sv_2pv = (sv); SvPOKp(_sv_2pv) ? ((*(lp) = SvCUR(_sv_2pv)), SvPVX(_sv_2pv)) : Perl_sv_2pv(aTHX_ _sv_2pv, (lp)); })
+#  else
+#    define sv_2pv(sv, lp) (SvPOKp(sv) ? ((*(lp) = SvCUR(sv)), SvPVX(sv)) : Perl_sv_2pv(aTHX_ (sv), (lp)))
+#  endif
+
+#endif
+
 #endif
 
 #if PERL_REVISION == 5 && PERL_VERSION == 9
@@ -640,7 +656,7 @@ voidpf my_zcalloc (voidpf opaque, unsigned items, unsigned size)
     PERL_UNUSED_VAR(opaque);
     /* TODO - put back to calloc */
     /* return safecalloc(items, size); */
-    return safemalloc(items* size);
+    return (voidpf)safemalloc(items* size);
 }
 
 
@@ -951,6 +967,17 @@ ZLIB_VERNUM()
 uLong
 Zip_zlibCompileFlags()
 
+const char*
+ZLIBNG_VER_STATUS()
+    CODE:
+#ifdef ZLIBNG_VER_STATUS
+        RETVAL = STRINGIFY(ZLIBNG_VER_STATUS);
+#else
+        RETVAL = "0";
+#endif
+    OUTPUT:
+        RETVAL
+
 MODULE = Compress::Raw::Zlib	PACKAGE = Compress::Raw::Zlib	PREFIX = Zip_
 
 #define Zip_adler32(buf, adler) CRZ_adler32(adler, buf, (uInt)len)
@@ -1216,6 +1243,15 @@ deflate (s, buf, output)
   CODE:
     bufinc = s->bufsize;
 
+    /*
+    if (trace) {
+        printf("\nDEFLATE Before deRef of input buffer\n");
+        printf("\nPerl_sv_dump\n");
+        Perl_sv_dump(buf);
+        printf("\n");
+    }
+    */
+
     /* If the input buffer is a reference, dereference it */
     buf = deRef(buf, "deflate") ;
 
@@ -1226,6 +1262,16 @@ deflate (s, buf, output)
 #endif
     s->stream.next_in = (Bytef*)SvPV_nomg(buf, origlen) ;
     s->stream.avail_in = origlen;
+
+    if (trace) {
+        printf("\nDEFLATE Starts\n");
+        DispStream(s, "START");
+        /*
+        printf("\nPerl_sv_dump\n");
+        Perl_sv_dump(buf);
+        printf("\n");
+        */
+    }
 
     if (s->flags & FLAG_CRC32)
         s->crc32 = CRZ_crc32(s->crc32, s->stream.next_in, s->stream.avail_in) ;

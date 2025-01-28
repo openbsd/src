@@ -62,7 +62,7 @@ while (<DATA>) {
     # parse options if necessary
     my $deparse = $meta{options}
 	? $deparse{$meta{options}} ||=
-	    new B::Deparse split /,/, $meta{options}
+	    B::Deparse->new(split /,/, $meta{options})
 	: $deparse;
 
     my $code = "$meta{context};\n" . <<'EOC' . "sub {$input\n}";
@@ -289,7 +289,7 @@ SKIP: {
 	    # Clear out all hints
 	    %^H = ();
 	    $^H = 0;
-	    new B::Deparse -> ambient_pragmas(strict => 'all');
+	    B::Deparse->new->ambient_pragmas(strict => 'all');
 	}
 	use 5.011;  # should enable strict
 	ok !eval '$do_noT_create_a_variable_with_this_name = 1',
@@ -887,7 +887,6 @@ my $f = sub {
 } ;
 ####
 # anonconst
-# CONTEXT no warnings 'experimental::const_attr';
 my $f = sub : const {
     123;
 }
@@ -1857,7 +1856,7 @@ package foo;
 CORE::do({});
 CORE::do({});
 ####
-# [perl #77096] functions that do not follow the llafr
+# [perl #77096] functions that do not follow the looks-like-a-function rule
 () = (return 1) + time;
 () = (return ($1 + $2) * $3) + time;
 () = (return ($a xor $b)) + time;
@@ -1871,6 +1870,26 @@ CORE::do({});
 () = (last 1) + 3;
 () = (next 1) + 3;
 () = (redo 1) + 3;
+() = (-R $_) + 3;
+() = (-W $_) + 3;
+() = (-X $_) + 3;
+() = (-r $_) + 3;
+() = (-w $_) + 3;
+() = (-x $_) + 3;
+>>>>
+() = (return 1);
+() = (return ($1 + $2) * $3);
+() = (return ($a xor $b));
+() = (do 'file') + time;
+() = (do ($1 + $2) * $3) + time;
+() = (do ($1 xor $2)) + time;
+() = (goto 1);
+() = (require 'foo') + 3;
+() = (require foo) + 3;
+() = (CORE::dump 1);
+() = (last 1);
+() = (next 1);
+() = (redo 1);
 () = (-R $_) + 3;
 () = (-W $_) + 3;
 () = (-X $_) + 3;
@@ -1900,6 +1919,13 @@ $_ = ($a xor not +($1 || 2) ** 2);
 () = warn;
 () = warn() + 1;
 () = setpgrp() + 1;
+>>>>
+() = (eof) + 1;
+() = (return);
+() = (return, 1);
+() = warn;
+() = warn() + 1;
+() = setpgrp() + 1;
 ####
 # loopexes have assignment prec
 () = (CORE::dump a) | 'b';
@@ -1907,6 +1933,12 @@ $_ = ($a xor not +($1 || 2) ** 2);
 () = (last a) | 'b';
 () = (next a) | 'b';
 () = (redo a) | 'b';
+>>>>
+() = (CORE::dump a);
+() = (goto a);
+() = (last a);
+() = (next a);
+() = (redo a);
 ####
 # [perl #63558] open local(*FH)
 open local *FH;
@@ -2171,7 +2203,6 @@ my sub g {
     sub f { }
 }
 ####
-# TODO only partially fixed
 # lexical state subroutine with outer declaration and inner definition
 # CONTEXT use feature 'lexical_subs', 'state'; no warnings 'experimental::lexical_subs';
 ();
@@ -2627,13 +2658,11 @@ foreach \&a (sub { 9; } , sub { 10; } ) {
     die;
 }
 ####
-# CONTEXT no warnings 'experimental::for_list';
 my %hash;
 foreach my ($key, $value) (%hash) {
     study $_;
 }
 ####
-# CONTEXT no warnings 'experimental::for_list';
 my @ducks;
 foreach my ($tick, $trick, $track) (@ducks) {
     study $_;
@@ -3289,7 +3318,7 @@ $a = $b == ($c == $d != $e);
 $a = $b & $c == $d != $e;
 ####
 # try/catch
-# CONTEXT use feature 'try'; no warnings 'experimental::try';
+# CONTEXT use feature 'try';
 try {
     FIRST();
 }
@@ -3297,7 +3326,7 @@ catch($var) {
     SECOND();
 }
 ####
-# CONTEXT use feature 'try'; no warnings 'experimental::try';
+# CONTEXT use feature 'try';
 try {
     FIRST();
 }
@@ -3352,3 +3381,19 @@ my(@x) = (-2.0, -1.0, -0.0, 0.0, 1.0, 2.0);
 # PADSV_STORE optimised state should be handled
 # CONTEXT use feature "state";
 () = (state $s = 1);
+####
+# control transfer in RHS of assignment
+my $x;
+$x = (return 'ok');
+$x //= (return 'ok');
+$x = exit 42;
+$x //= exit 42;
+####
+# preserve __LINE__ etc
+my $x = __LINE__;
+my $y = __FILE__;
+my $z = __PACKAGE__;
+####
+# CONTEXT use feature "state";
+state sub FOO () { 42 }
+print 42, "\n";

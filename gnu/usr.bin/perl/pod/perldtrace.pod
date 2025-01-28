@@ -210,7 +210,7 @@ C<Module::Name>-style names.
 
 =item DTrace Dynamic Tracing Guide
 
-L<http://dtrace.org/guide/preface.html>
+L<https://illumos.org/books/dtrace/preface.html>
 
 =item DTrace: Dynamic Tracing in Oracle Solaris, Mac OS X and FreeBSD
 

@@ -1,29 +1,23 @@
-package Time::gmtime;
-use strict;
-use 5.006_001;
+package Time::gmtime 1.05;
+use v5.38;
 
-use Time::tm;
+use parent 'Time::tm';
 
-our (@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 our (   $tm_sec, $tm_min, $tm_hour, $tm_mday,
         $tm_mon, $tm_year, $tm_wday, $tm_yday, 
 		$tm_isdst,
 );
- 
-BEGIN { 
-    use Exporter   ();
-    @ISA         = qw(Exporter Time::tm);
-    @EXPORT      = qw(gmtime gmctime);
-    @EXPORT_OK   = qw(  
+
+use Exporter 'import';
+our @EXPORT      = qw(gmtime gmctime);
+our @EXPORT_OK   = qw(
 			$tm_sec $tm_min $tm_hour $tm_mday 
 			$tm_mon $tm_year $tm_wday $tm_yday 
 			$tm_isdst
 		    );
-    %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-    $VERSION     = 1.04;
-}
+our %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 
-sub populate (@) {
+sub populate {
     return unless @_;
     my $tmob = Time::tm->new();
     @$tmob = (
@@ -34,10 +28,9 @@ sub populate (@) {
     return $tmob;
 } 
 
-sub gmtime (;$)    { populate CORE::gmtime(@_ ? shift : time)}
-sub gmctime (;$)   { scalar   CORE::gmtime(@_ ? shift : time)} 
+sub gmtime  :prototype(;$) { populate CORE::gmtime(@_ ? shift : time) }
+sub gmctime :prototype(;$) { scalar   CORE::gmtime(@_ ? shift : time) }
 
-1;
 __END__
 
 =head1 NAME

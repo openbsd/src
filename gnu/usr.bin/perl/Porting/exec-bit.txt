@@ -35,7 +35,6 @@ regen/feature.pl
 regen/keywords.pl
 regen/opcode.pl
 regen/regcharclass.pl
-regen/uconfig_h.pl
 runtests.SH
 t/TEST
 Porting/Maintainers.pl
@@ -52,6 +51,7 @@ Porting/checkcfgvar.pl
 Porting/checkpodencoding.pl
 Porting/cmpVERSION.pl
 Porting/config_h.pl
+Porting/core-cpan-diff
 Porting/corecpan.pl
 Porting/corelist-perldelta.pl
 Porting/corelist.pl

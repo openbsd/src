@@ -49,10 +49,10 @@ PERLVARI(I, tmps_ix,	SSize_t,	-1)
 PERLVARI(I, tmps_floor,	SSize_t,	-1)
 PERLVAR(I, tmps_max,	SSize_t)        /* first unalloced slot in tmps stack */
 
-PERLVAR(I, markstack,	I32 *)		/* stack_sp locations we're
+PERLVAR(I, markstack,	Stack_off_t *)	/* stack_sp locations we're
                                            remembering */
-PERLVAR(I, markstack_ptr, I32 *)
-PERLVAR(I, markstack_max, I32 *)
+PERLVAR(I, markstack_ptr, Stack_off_t *)
+PERLVAR(I, markstack_max, Stack_off_t *)
 
 PERLVARI(I, sub_generation, U32, 1)	/* incr to invalidate method cache */
 
@@ -395,8 +395,8 @@ PERLVARI(I, locale_mutex_depth, int, 0)     /* Emulate general semaphore */
 
 #ifdef USE_LOCALE_CTYPE
 PERLVAR(I, warn_locale, SV *)
-PERLVAR(I, in_utf8_CTYPE_locale, bool)
-PERLVAR(I, in_utf8_turkic_locale, bool)
+PERLVARI(I, in_utf8_CTYPE_locale, bool, false)
+PERLVARI(I, in_utf8_turkic_locale, bool, false)
 #endif
 
 PERLVARA(I, colors,6,	char *)		/* values from PERL_RE_COLORS env var */
@@ -746,23 +746,25 @@ PERLVAR(I, constpadix,	PADOFFSET)	/* lowest unused for constants */
 PERLVAR(I, padix_floor,	PADOFFSET)	/* how low may inner block reset padix */
 
 #if defined(USE_POSIX_2008_LOCALE) && defined(MULTIPLICITY)
-PERLVARI(I, cur_locale_obj, locale_t, NULL)
+PERLVARI(I, cur_locale_obj, locale_t, LC_GLOBAL_LOCALE)
 #endif
 #ifdef USE_PL_CURLOCALES
 
-/* This is the most number of categories we've encountered so far on any
- * platform, doesn't include LC_ALL */
-PERLVARA(I, curlocales, 12, const char *)
+/* Some configurations do not allow perl to query libc to find out what the
+ * locale for a given category is.  On such platforms this array contains that
+ * information, indexed by the perl-defined category index.
+ * Note that this array keeps the actual locale for each category.  LC_NUMERIC
+ * is almost always toggled into the C locale, and the locale it nominally is
+ * is stored as PL_numeric_name. */
+PERLVARA(I, curlocales, LOCALE_CATEGORIES_COUNT_ + 1, const char *)
 
 #endif
 #ifdef USE_PL_CUR_LC_ALL
-
 PERLVARI(I, cur_LC_ALL, const char *, NULL)
-
 #endif
 #ifdef USE_LOCALE_COLLATE
 
-/* The emory needed to store the collxfrm transformation of a string with
+/* The memory needed to store the collxfrm transformation of a string with
  * length 'x' is predicted by the linear equation mx+b; m=mult, b=base */
 PERLVARI(I, collxfrm_mult,Size_t, 0)	/* Expansion factor in *xfrm();
                                            0 => unknown or bad, depending on
@@ -772,7 +774,7 @@ PERLVAR(I, collxfrm_base, Size_t)	/* Basic overhead in *xfrm();
                                            mult == 0, base != 0 => ill-formed;
                                          */
 PERLVAR(I, collation_name, char *)	/* Name of current collation */
-PERLVARI(I, collation_ix, U32,	0)	/* Collation generation index */
+PERLVARI(I, collation_ix, PERL_UINTMAX_T, 0)	/* Collation generation index */
 PERLVARI(I, strxfrm_NUL_replacement, U8, 0)  /* Code point to replace NULs */
 PERLVARI(I, strxfrm_is_behaved, bool, TRUE)
                             /* Assume until proven otherwise that it works */
@@ -782,12 +784,15 @@ PERLVARI(I, collation_standard, bool, TRUE)
 PERLVAR(I, in_utf8_COLLATE_locale, bool)
 #endif /* USE_LOCALE_COLLATE */
 
-PERLVARI(I, langinfo_buf, const char *, NULL)
-PERLVARI(I, langinfo_bufsize, Size_t, 0)
-PERLVARI(I, setlocale_buf, const char *, NULL)
+PERLVARI(I, langinfo_sv, SV *, NULL)         /* For Perl_langinfo8? */
+PERLVARI(I, scratch_langinfo, SV *, NULL)     /* For internal use */
+PERLVARI(I, setlocale_buf, char *, NULL)
 PERLVARI(I, setlocale_bufsize, Size_t, 0)
-PERLVARI(I, stdize_locale_buf, const char *, NULL)
-PERLVARI(I, stdize_locale_bufsize, Size_t, 0)
+
+#if   defined(USE_LOCALE_THREADS) && ! defined(USE_THREAD_SAFE_LOCALE)
+PERLVARI(I, less_dicey_locale_buf, char *, NULL)
+PERLVARI(I, less_dicey_locale_bufsize, Size_t, 0)
+#endif
 
 #ifdef PERL_SAWAMPERSAND
 PERLVAR(I, sawampersand, U8)		/* must save all match strings */
@@ -850,11 +855,6 @@ PERLVAR(I, numeric_name, char *)     /* Name of current numeric locale */
 PERLVAR(I, numeric_radix_sv, SV *)	/* The radix separator */
 PERLVAR(I, underlying_radix_sv, SV *)	/* The radix in the program's current underlying locale */
 
-#if defined(USE_LOCALE_NUMERIC) && defined(USE_POSIX_2008_LOCALE)
-
-PERLVARI(I, underlying_numeric_obj, locale_t, NULL)
-
-#endif
 #ifdef USE_POSIX_2008_LOCALE
 PERLVARI(I, scratch_locale_obj, locale_t, 0)
 #endif
@@ -952,9 +952,7 @@ PERLVARI(I, threadhook,	thrhook_proc_t,	Perl_nothreadhook)
 /* Can shared object be destroyed */
 PERLVARI(I, destroyhook, destroyable_proc_t, Perl_sv_destroyable)
 
-#ifndef PERL_MICRO
 PERLVARI(I, signalhook,	despatch_signals_proc_t, Perl_despatch_signals)
-#endif
 
 PERLVARI(I, isarev, HV *, NULL)		/* Reverse map of @ISA dependencies */
 

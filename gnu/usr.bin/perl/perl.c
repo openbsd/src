@@ -4,6 +4,7 @@
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
  *    2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
  *    2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023
+ *    2024, 2025
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -408,11 +409,9 @@ perl_construct(pTHXx)
 
     Zero(PL_sv_consts, SV_CONSTS_COUNT, SV*);
 
-#ifndef PERL_MICRO
-#   ifdef  USE_ENVIRON_ARRAY
+#ifdef  USE_ENVIRON_ARRAY
     if (!PL_origenviron)
         PL_origenviron = environ;
-#   endif
 #endif
 
     /* Use sysconf(_SC_CLK_TCK) if available, if not
@@ -1128,7 +1127,7 @@ perl_destruct(pTHXx)
         PL_curlocales[i] = NULL;
     }
 #endif
-#ifdef USE_POSIX_2008_LOCALE
+#if defined(USE_POSIX_2008_LOCALE) && defined(MULTIPLICITY)
     {
         /* This also makes sure we aren't using a locale object that gets freed
          * below */
@@ -1160,15 +1159,6 @@ perl_destruct(pTHXx)
         freelocale(PL_scratch_locale_obj);
         PL_scratch_locale_obj = NULL;
     }
-#  ifdef USE_LOCALE_NUMERIC
-    if (PL_underlying_numeric_obj) {
-        DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                    "%s:%d: Freeing %p\n", __FILE__, __LINE__,
-                    PL_underlying_numeric_obj));
-        freelocale(PL_underlying_numeric_obj);
-        PL_underlying_numeric_obj = (locale_t) NULL;
-    }
-#  endif
 #endif
 #ifdef USE_LOCALE_NUMERIC
     Safefree(PL_numeric_name);
@@ -1188,15 +1178,17 @@ perl_destruct(pTHXx)
         PL_setlocale_buf = NULL;
     }
 
-    if (PL_langinfo_buf) {
-        Safefree(PL_langinfo_buf);
-        PL_langinfo_buf = NULL;
-    }
+    SvREFCNT_dec(PL_langinfo_sv);
+    PL_langinfo_sv = NULL;
+    SvREFCNT_dec(PL_scratch_langinfo);
+    PL_scratch_langinfo = NULL;
 
-    if (PL_stdize_locale_buf) {
-        Safefree(PL_stdize_locale_buf);
-        PL_stdize_locale_buf = NULL;
+#if defined(USE_LOCALE_THREADS) && ! defined(USE_THREAD_SAFE_LOCALE)
+    if (PL_less_dicey_locale_buf) {
+        Safefree(PL_less_dicey_locale_buf);
+        PL_less_dicey_locale_buf = NULL;
     }
+#endif
 
 #ifdef USE_LOCALE_CTYPE
     SvREFCNT_dec(PL_warn_locale);
@@ -1903,10 +1895,9 @@ perl_parse(pTHXx_ XSINIT_t xsinit, int argc, char **argv, char **env)
         return 0;
     }
 
-    if (PL_main_root) {
-        op_free(PL_main_root);
-        PL_main_root = NULL;
-    }
+    op_free(PL_main_root);
+    PL_main_root = NULL;
+
     PL_main_start = NULL;
     SvREFCNT_dec(PL_main_cv);
     PL_main_cv = NULL;
@@ -2043,6 +2034,9 @@ S_Internals_V(pTHX_ CV *cv)
 #  ifdef PERL_PRESERVE_IVUV
                              " PERL_PRESERVE_IVUV"
 #  endif
+#  ifdef PERL_RC_STACK
+                             " PERL_RC_STACK"
+#  endif
 #  ifdef PERL_RELOCATABLE_INCPUSH
                              " PERL_RELOCATABLE_INCPUSH"
 #  endif
@@ -2108,8 +2102,6 @@ S_Internals_V(pTHX_ CV *cv)
 #  endif
 #endif
 
-#undef PERL_BUILD_DATE
-
 #ifdef PERL_BUILD_DATE
     PUSHs(Perl_newSVpvn_flags(aTHX_
                               STR_WITH_LEN("Compiled at " PERL_BUILD_DATE),
@@ -2126,6 +2118,56 @@ S_Internals_V(pTHX_ CV *cv)
     }
 
     XSRETURN(entries);
+}
+
+static const char *
+S_moreswitch_m(pTHX_ char option, const char *s)
+{
+    const char *start;
+    const char *end;
+    SV *sv;
+    const char *use = "use ";
+    bool colon = FALSE;
+    /* -M-foo == 'no foo'	*/
+    /* Leading space on " no " is deliberate, to make both
+       possibilities the same length.  */
+    if (*s == '-') { use = " no "; ++s; }
+    sv = newSVpvn(use,4);
+    start = s;
+    /* We allow -M'Module qw(Foo Bar)'	*/
+    while(isWORDCHAR(*s) || *s==':') {
+        if( *s++ == ':' ) {
+            if( *s == ':' )
+                s++;
+            else
+                colon = TRUE;
+        }
+    }
+    if (s == start)
+        Perl_croak(aTHX_ "Module name required with -%c option",
+                            option);
+    if (colon)
+        Perl_croak(aTHX_ "Invalid module name %.*s with -%c option: "
+                            "contains single ':'",
+                            (int)(s - start), start, option);
+    end = s + strlen(s);
+    if (*s != '=') {
+        sv_catpvn(sv, start, end - start);
+        if (option == 'm') {
+            if (*s != '\0')
+                Perl_croak(aTHX_ "Can't use '%c' after -mname", *s);
+            sv_catpvs( sv, " ()");
+        }
+    } else {
+        sv_catpvn(sv, start, s-start);
+        /* Use NUL as q''-delimiter.  */
+        sv_catpvs(sv, " split(/,/,q\0");
+        ++s;
+        sv_catpvn(sv, s, end - s);
+        sv_catpvs(sv,  "\0)");
+    }
+    Perl_av_create_and_push(aTHX_ &PL_preambleav, sv);
+    return end;
 }
 
 #define INCPUSH_UNSHIFT			0x01
@@ -2184,8 +2226,6 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
         case 'h':
         case 'i':
         case 'l':
-        case 'M':
-        case 'm':
         case 'n':
         case 'p':
         case 's':
@@ -2197,6 +2237,21 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
         case 'w':
             if ((s = moreswitches(s)))
                 goto reswitch;
+            break;
+
+        case 'M':
+            forbid_setid('M', FALSE);   /* XXX ? */
+            /* FALLTHROUGH */
+        case 'm':
+            forbid_setid('m', FALSE);   /* XXX ? */
+            if (*++s)                   /* -MModule */
+                s = S_moreswitch_m(aTHX_ c, s);
+            else if(argc && argv[1]) {  /* -M Module */
+                argc--; argv++;
+                s = S_moreswitch_m(aTHX_ c, *argv);
+            }
+            else
+                croak("Missing argument to -%c", c);
             break;
 
         case 't':
@@ -2479,12 +2534,11 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 
         validate_suid(rsfp);
 
-#ifndef PERL_MICRO
-#  if defined(SIGCHLD) || defined(SIGCLD)
+#if defined(SIGCHLD) || defined(SIGCLD)
         {
-#  ifndef SIGCHLD
-#    define SIGCHLD SIGCLD
-#  endif
+#ifndef SIGCHLD
+#  define SIGCHLD SIGCLD
+#endif
             Sighandler_t sigstate = rsignal_state(SIGCHLD);
             if (sigstate == (Sighandler_t) SIG_IGN) {
                 Perl_ck_warner(aTHX_ packWARN(WARN_SIGNAL),
@@ -2492,7 +2546,6 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
                 (void)rsignal(SIGCHLD, (Sighandler_t)SIG_DFL);
             }
         }
-#  endif
 #endif
 
         if (doextract) {
@@ -2525,10 +2578,8 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 
     if (xsinit)
         (*xsinit)(aTHX);	/* in case linked C routines want magical variables */
-#ifndef PERL_MICRO
 #if defined(VMS) || defined(WIN32) || defined(__CYGWIN__)
     init_os_extras();
-#endif
 #endif
 
 #ifdef USE_SOCKS
@@ -2975,22 +3026,29 @@ Approximate Perl equivalent: C<&{"$sub_name"}(@$argv)>.
 =cut
 */
 
-I32
+SSize_t
 Perl_call_argv(pTHX_ const char *sub_name, I32 flags, char **argv)
 
                         /* See G_* flags in cop.h */
                         /* null terminated arg list */
 {
-    dSP;
-
     PERL_ARGS_ASSERT_CALL_ARGV;
 
-    PUSHMARK(SP);
+    bool is_rc =
+#ifdef PERL_RC_STACK
+                rpp_stack_is_rc();
+#else
+                0;
+#endif
+    PUSHMARK(PL_stack_sp);
     while (*argv) {
-        mXPUSHs(newSVpv(*argv,0));
+        SV *newsv = newSVpv(*argv,0);
+        rpp_extend(1);
+        *++PL_stack_sp = newsv;
+        if (!is_rc)
+            sv_2mortal(newsv);
         argv++;
     }
-    PUTBACK;
     return call_pv(sub_name, flags);
 }
 
@@ -3002,7 +3060,7 @@ Performs a callback to the specified Perl sub.  See L<perlcall>.
 =cut
 */
 
-I32
+SSize_t
 Perl_call_pv(pTHX_ const char *sub_name, I32 flags)
                         /* name of the subroutine */
                         /* See G_* flags in cop.h */
@@ -3021,7 +3079,7 @@ be on the stack.  See L<perlcall>.
 =cut
 */
 
-I32
+SSize_t
 Perl_call_method(pTHX_ const char *methname, I32 flags)
                         /* name of the subroutine */
                         /* See G_* flags in cop.h */
@@ -3065,17 +3123,21 @@ See L<perlcall>.
 =cut
 */
 
-I32
-Perl_call_sv(pTHX_ SV *sv, volatile I32 flags)
+SSize_t
+Perl_call_sv(pTHX_ SV *sv, I32 arg_flags)
                         /* See G_* flags in cop.h */
 {
     LOGOP myop;		/* fake syntax tree node */
     METHOP method_op;
-    I32 oldmark;
-    volatile I32 retval = 0;
+    SSize_t oldmark;
+    volatile SSize_t retval = 0;
     bool oldcatch = CATCH_GET;
     int ret;
     OP* const oldop = PL_op;
+    /* Since we don't modify flags after setjmp() we don't really need to make
+       flags volatile, but gcc complains that it could be clobbered anyway.
+     */
+    volatile I32 flags = arg_flags;
     dJMPENV;
 
     PERL_ARGS_ASSERT_CALL_SV;
@@ -3100,10 +3162,12 @@ Perl_call_sv(pTHX_ SV *sv, volatile I32 flags)
     PL_op = (OP*)&myop;
 
     if (!(flags & G_METHOD_NAMED)) {
-        dSP;
-        EXTEND(SP, 1);
-        PUSHs(sv);
-        PUTBACK;
+        rpp_extend(1);
+        *++PL_stack_sp = sv;
+#ifdef PERL_RC_STACK
+        if (rpp_stack_is_rc())
+            SvREFCNT_inc_simple_void_NN(sv);
+#endif
     }
     oldmark = TOPMARK;
 
@@ -3141,7 +3205,7 @@ Perl_call_sv(pTHX_ SV *sv, volatile I32 flags)
         myop.op_other = (OP*)&myop;
         (void)POPMARK;
         old_cxix = cxstack_ix;
-        create_eval_scope(NULL, flags|G_FAKINGEVAL);
+        create_eval_scope( NULL, PL_stack_base + oldmark, flags|G_FAKINGEVAL);
         INCMARK;
 
         JMPENV_PUSH(ret);
@@ -3172,6 +3236,11 @@ Perl_call_sv(pTHX_ SV *sv, volatile I32 flags)
                 PL_restartop = 0;
                 goto redo_body;
             }
+            /* Should be nothing left in stack frame apart from a possible
+             * scalar context undef. Assert it's safe to reset the stack */
+            assert(     PL_stack_sp == PL_stack_base + oldmark
+                    || (PL_stack_sp == PL_stack_base + oldmark + 1
+                        && *PL_stack_sp == &PL_sv_undef));
             PL_stack_sp = PL_stack_base + oldmark;
             if ((flags & G_WANT) == G_LIST)
                 retval = 0;
@@ -3193,7 +3262,12 @@ Perl_call_sv(pTHX_ SV *sv, volatile I32 flags)
     }
 
     if (flags & G_DISCARD) {
-        PL_stack_sp = PL_stack_base + oldmark;
+#ifdef PERL_RC_STACK
+        if (rpp_stack_is_rc())
+            rpp_popfree_to(PL_stack_base + oldmark);
+        else
+#endif
+            PL_stack_sp = PL_stack_base + oldmark;
         retval = 0;
         FREETMPS;
         LEAVE;
@@ -3213,18 +3287,23 @@ as C<call_sv>, with the obvious exception of C<G_EVAL>.  See L<perlcall>.
 The C<G_RETHROW> flag can be used if you only need eval_sv() to
 execute code specified by a string, but not catch any errors.
 
+By default the code is compiled and executed with the default hints,
+such as strict and features.  Set C<G_USEHINTS> in flags to use the
+current hints from C<PL_curcop>.
+
 =for apidoc Amnh||G_RETHROW
+=for apidoc Amnh||G_USEHINTS
 =cut
 */
 
-I32
+SSize_t
 Perl_eval_sv(pTHX_ SV *sv, I32 flags)
 
                         /* See G_* flags in cop.h */
 {
     UNOP myop;		/* fake syntax tree node */
-    volatile I32 oldmark;
-    volatile I32 retval = 0;
+    volatile SSize_t oldmark;
+    volatile SSize_t retval = 0;
     int ret;
     OP* const oldop = PL_op;
     dJMPENV;
@@ -3242,13 +3321,13 @@ Perl_eval_sv(pTHX_ SV *sv, I32 flags)
     myop.op_ppaddr = PL_ppaddr[OP_ENTEREVAL];
     myop.op_type = OP_ENTEREVAL;
 
-    {
-        dSP;
-        oldmark = SP - PL_stack_base;
-        EXTEND(SP, 1);
-        PUSHs(sv);
-        PUTBACK;
-    }
+    oldmark = PL_stack_sp - PL_stack_base;
+    rpp_extend(1);
+    *++PL_stack_sp = sv;
+#ifdef PERL_RC_STACK
+    if (rpp_stack_is_rc())
+        SvREFCNT_inc_simple_void_NN(sv);
+#endif
 
     if (!(flags & G_NOARGS))
         myop.op_flags = OPf_STACKED;
@@ -3260,6 +3339,9 @@ Perl_eval_sv(pTHX_ SV *sv, I32 flags)
     myop.op_private = (OPpEVAL_EVALSV); /* tell pp_entereval we're the caller */
     if (flags & G_RE_REPARSING)
         myop.op_private |= (OPpEVAL_COPHH | OPpEVAL_RE_REPARSING);
+
+    if (flags & G_USEHINTS)
+        myop.op_private |= OPpEVAL_COPHH;
 
     /* fail now; otherwise we could fail after the JMPENV_PUSH but
      * before a cx_pusheval(), which corrupts the stack after a croak */
@@ -3329,7 +3411,12 @@ Perl_eval_sv(pTHX_ SV *sv, I32 flags)
 
     JMPENV_POP;
     if (flags & G_DISCARD) {
-        PL_stack_sp = PL_stack_base + oldmark;
+#ifdef PERL_RC_STACK
+        if (rpp_stack_is_rc())
+            rpp_popfree_to(PL_stack_base + oldmark);
+        else
+#endif
+            PL_stack_sp = PL_stack_base + oldmark;
         retval = 0;
         FREETMPS;
         LEAVE;
@@ -3362,11 +3449,16 @@ Perl_eval_pv(pTHX_ const char *p, I32 croak_on_error)
         SvREFCNT_dec(sv);
     }
 
-    {
-        dSP;
-        sv = POPs;
-        PUTBACK;
+    sv = *PL_stack_sp;
+
+#ifdef PERL_RC_STACK
+    if (rpp_stack_is_rc()) {
+        SvREFCNT_inc_NN(sv_2mortal(sv));
+        rpp_popfree_1();
     }
+    else
+#endif
+        PL_stack_sp--;
 
     return sv;
 }
@@ -3759,53 +3851,8 @@ Perl_moreswitches(pTHX_ const char *s)
         /* FALLTHROUGH */
     case 'm':
         forbid_setid('m', FALSE);	/* XXX ? */
-        if (*++s) {
-            const char *start;
-            const char *end;
-            SV *sv;
-            const char *use = "use ";
-            bool colon = FALSE;
-            /* -M-foo == 'no foo'	*/
-            /* Leading space on " no " is deliberate, to make both
-               possibilities the same length.  */
-            if (*s == '-') { use = " no "; ++s; }
-            sv = newSVpvn(use,4);
-            start = s;
-            /* We allow -M'Module qw(Foo Bar)'	*/
-            while(isWORDCHAR(*s) || *s==':') {
-                if( *s++ == ':' ) {
-                    if( *s == ':' )
-                        s++;
-                    else
-                        colon = TRUE;
-                }
-            }
-            if (s == start)
-                Perl_croak(aTHX_ "Module name required with -%c option",
-                                    option);
-            if (colon)
-                Perl_croak(aTHX_ "Invalid module name %.*s with -%c option: "
-                                    "contains single ':'",
-                                    (int)(s - start), start, option);
-            end = s + strlen(s);
-            if (*s != '=') {
-                sv_catpvn(sv, start, end - start);
-                if (option == 'm') {
-                    if (*s != '\0')
-                        Perl_croak(aTHX_ "Can't use '%c' after -mname", *s);
-                    sv_catpvs( sv, " ()");
-                }
-            } else {
-                sv_catpvn(sv, start, s-start);
-                /* Use NUL as q''-delimiter.  */
-                sv_catpvs(sv, " split(/,/,q\0");
-                ++s;
-                sv_catpvn(sv, s, end - s);
-                sv_catpvs(sv,  "\0)");
-            }
-            s = end;
-            Perl_av_create_and_push(aTHX_ &PL_preambleav, sv);
-        }
+        if (*++s)
+            s = S_moreswitch_m(aTHX_ option, s);
         else
             Perl_croak(aTHX_ "Missing argument to -%c", option);
         return s;
@@ -3947,7 +3994,7 @@ S_minus_v(pTHX)
 #endif
 
         PerlIO_printf(PIO_stdout,
-		      "\n\nCopyright 1987-2023, Larry Wall\n");
+		      "\n\nCopyright 1987-2025, Larry Wall\n");
 #ifdef OS2
         PerlIO_printf(PIO_stdout,
                       "\n\nOS/2 port Copyright (c) 1990, 1991, Raymond Chen, Kai Uwe Rommel\n"
@@ -4457,11 +4504,17 @@ Perl_init_stacks(pTHX)
 {
     SSize_t size;
 
+#ifdef PERL_RC_STACK
+    const UV make_real = 1;
+#else
+    const UV make_real = 0;
+#endif
     /* start with 128-item stack and 8K cxstack */
-    PL_curstackinfo = new_stackinfo(REASONABLE(128),
-                                 REASONABLE(8192/sizeof(PERL_CONTEXT) - 1));
+    PL_curstackinfo = new_stackinfo_flags(REASONABLE(128),
+                                 REASONABLE(8192/sizeof(PERL_CONTEXT) - 1),
+                                 make_real);
     PL_curstackinfo->si_type = PERLSI_MAIN;
-#if defined DEBUGGING && !defined DEBUGGING_RE_ONLY
+#ifdef PERL_USE_HWM
     PL_curstackinfo->si_stack_hwm = 0;
 #endif
     PL_curstack = PL_curstackinfo->si_stack;
@@ -4476,7 +4529,7 @@ Perl_init_stacks(pTHX)
     PL_tmps_ix = -1;
     PL_tmps_max = REASONABLE(128);
 
-    Newxz(PL_markstack,REASONABLE(32),I32);
+    Newxz(PL_markstack, REASONABLE(32), Stack_off_t);
     PL_markstack_ptr = PL_markstack;
     PL_markstack_max = PL_markstack + REASONABLE(32);
 
@@ -4686,7 +4739,6 @@ S_init_postdump_symbols(pTHX_ int argc, char **argv, char **env)
         GvMULTI_on(PL_envgv);
         hv = GvHVn(PL_envgv);
         hv_magic(hv, NULL, PERL_MAGIC_env);
-#ifndef PERL_MICRO
 #if defined(USE_ENVIRON_ARRAY) || defined(WIN32)
         /* Note that if the supplied env parameter is actually a copy
            of the global environ then it may now point to free'd memory
@@ -4799,7 +4851,6 @@ S_init_postdump_symbols(pTHX_ int argc, char **argv, char **env)
           SvREFCNT_dec_NN(dups);
       }
 #endif /* USE_ENVIRON_ARRAY */
-#endif /* !PERL_MICRO */
     }
     TAINT_NOT;
 
@@ -5442,8 +5493,8 @@ S_my_exit_jump(pTHX)
     POPSTACK_TO(PL_mainstack);
     if (cxstack_ix >= 0) {
         dounwind(-1);
-        cx_popblock(cxstack);
     }
+    rpp_obliterate_stack_to(0);
     LEAVE_SCOPE(0);
 
     JMPENV_JUMP(2);
@@ -5471,7 +5522,7 @@ read_e_script(pTHX_ int idx, SV *buf_sv, int maxlen)
 
 /* removes boilerplate code at the end of each boot_Module xsub */
 void
-Perl_xs_boot_epilog(pTHX_ const I32 ax)
+Perl_xs_boot_epilog(pTHX_ const SSize_t ax)
 {
   if (PL_unitcheckav)
         call_list(PL_scopestack_ix, PL_unitcheckav);

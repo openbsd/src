@@ -400,7 +400,11 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 #
 # It might be easier to use the xml versions of the UCD if this program ever
 # would need heavy revision, and the ability to handle old versions was not
-# required.
+# required.  Also, it turns out to be risky to rely on this, as in early 2024,
+# Unicode decided to drop the xml version.  It was news to many that this was
+# not considered to be an official product that needs to be maintained going
+# forward.  Someone acceptable to the Unicode management volunteered to take
+# over from the retiring volunteer, and so it continues, but beware.
 #
 # There is the potential for name collisions, in that Perl has chosen names
 # that Unicode could decide it also likes.  There have been such collisions in
@@ -9450,7 +9454,7 @@ sub simple_fold( $line, $prefix="", $hanging_indent=0, $right_margin=0) {
 
     # $prefix Optional string to prepend to each output line
     # $hanging_indent Optional number of spaces to indent
-	# continuation lines
+    # continuation lines
     # $right_margin  Optional number of spaces to narrow the
     # total width by.
 

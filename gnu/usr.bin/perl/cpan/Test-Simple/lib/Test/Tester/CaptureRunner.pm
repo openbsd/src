@@ -3,7 +3,7 @@ use strict;
 
 package Test::Tester::CaptureRunner;
 
-our $VERSION = '1.302194';
+our $VERSION = '1.302199';
 
 
 use Test::Tester::Capture;
@@ -74,6 +74,6 @@ Copyright 2003 by Fergal Daly <fergal@esatclear.ie>.
 
 Under the same license as Perl itself
 
-See http://www.perl.com/perl/misc/Artistic.html
+See L<https://dev.perl.org/licenses/>
 
 =cut

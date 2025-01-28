@@ -782,7 +782,7 @@ to iterate through the hash, such as via a keys(), values(), or each() call.
     sub FIRSTKEY {
 	carp &whowasi if $DEBUG;
 	my $self = shift;
-	my $a = keys $self->{LIST}->%*;  # reset each() iterator
+	my $x = keys $self->{LIST}->%*;  # reset each() iterator
 	each $self->{LIST}->%*
     }
 
@@ -1047,8 +1047,8 @@ Here's how to use our little example:
 
     tie(*FOO,'Shout');
     print FOO "hello\n";
-    $a = 4; $b = 6;
-    print FOO $a, " plus ", $b, " equals ", $a + $b, "\n";
+    $x = 4; $y = 6;
+    print FOO $x, " plus ", $y, " equals ", $x + $y, "\n";
     print <FOO>;
 
 =head2 UNTIE this

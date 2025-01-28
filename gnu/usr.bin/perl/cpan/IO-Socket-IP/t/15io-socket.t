@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
-use v5;
-use strict;
+use v5.14;
 use warnings;
 
 use Test::More;
@@ -20,7 +19,7 @@ use IO::Socket::IP -register;
    );
 
    isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET )' ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    $sock = IO::Socket->new(
       Domain    => AF_INET,
@@ -47,7 +46,7 @@ SKIP: {
    );
 
    isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET6 )' ) or
-      diag( "  error was $@" );
+      diag( "  error was $IO::Socket::errstr" );
 
    $sock = IO::Socket->new(
       Domain    => $AF_INET6,

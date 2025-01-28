@@ -11,15 +11,20 @@ release schedules for the next, current and previous stable versions
 of Perl.  Dates with two or more question marks will only be releases if
 deemed necessary by the Steering Council.
 
-=head2 Perl 5.36
+=head2 Perl 5.42
 
-  2022-05-27  5.36.0  ✓       Ricardo Signes
-  2023-04-23  5.36.1  ✓       Steve Hay
+  2025-??-??  5.42.0
 
-=head2 Perl 5.34
+=head2 Perl 5.40
 
-  2021-05-20  5.34.0  ✓       Sawyer X
-  2022-03-13  5.34.1  ✓       Steve Hay
+  2024-06-09  5.40.0  ✓       Graham Knop
+  2025-01-18  5.40.1          Steve Hay
+
+=head2 Perl 5.38
+
+  2023-07-01  5.38.0  ✓       Ricardo Signes
+  2023-11-29  5.38.2  ✓       Paul Evans
+  2025-01-18  5.38.3          Steve Hay
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -35,23 +40,23 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.37
+=head2 Perl 5.41
 
-  2022-05-27  5.37.0  ✓       Ricardo Signes
-  2022-06-20  5.37.1  ✓       Matthew Horsfall
-  2022-07-20  5.37.2  ✓       Nicolas R
-  2022-08-20  5.37.3  ✓       Neil Bowers
-  2022-09-20  5.37.4  ✓       Karen Etheridge
-  2022-10-20  5.37.5  ✓       Todd Rinaldo
-  2022-11-20  5.37.6  ✓       Max Maischein
-  2022-12-20  5.37.7  ✓       Richard Leach
-  2023-01-20  5.37.8  ✓       Renée Bäcker
-  2023-02-20  5.37.9  ✓       Karen Etheridge   Contentious changes freeze
-  2023-03-20  5.37.10 ✓       Yves Orton        User-visible changes to
+  2024-06-10  5.41.0  ✓       Graham K          (tag only)
+  2024-06-20  5.41.1  ✓       Graham K
+  2024-07-20  5.41.2  ✓       Karen Etheridge
+  2024-08-20  5.41.3  ✓       Philippe Bruhat
+  2024-09-20  5.41.4  ✓       Thibault Duponchelle
+  2024-10-20  5.41.5  ✓       Richard Leach
+  2024-11-20  5.41.6  ✓       Thibault Duponchelle
+  2024-12-20  5.41.7  ✓       Max Maischein
+  2025-01-20  5.41.8          Steve Hay
+  2025-02-20  5.41.9          Paul Evans        Contentious changes freeze
+  2025-03-20  5.41.10         ?                 User-visible changes to
                                                 correctly functioning
                                                 programs freeze
-  2023-04-20  5.37.11 ✓       Steve Hay         Full code freeze
-  2023-05-20  5.38.0           Ricardo Signes   New perl!
+  2025-04-20  5.41.11         ?                 Full program freeze
+  2025-05-20  5.42.0          ?                 New perl!
 
 =head1 VICTIMS
 
@@ -76,6 +81,7 @@ consent of the Steering Council.)
   Matt Trout <mst@shadowcat.co.uk>
   Matthew Horsfall <wolfsage@gmail.com>
   Max Maischein <corion@cpan.org>
+  Paul Evans <leonerd@leonerd.org.uk>
   Peter Martini <petercmartini@gmail.com>
   Philippe Bruhat <book@cpan.org>
   Ricardo Signes <rjbs@cpan.org>

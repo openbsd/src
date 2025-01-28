@@ -38,7 +38,6 @@ use warnings;
 my $fold;
 my %ARGS;
 my %define;
-
 BEGIN {
     %ARGS = (CCTYPE => 'MSVC', TARG_DIR => '');
 
@@ -52,7 +51,7 @@ BEGIN {
 	my $flag = shift;
 	if ($flag =~ /^(?:CC_FLAGS=)?(-D\w.*)/) {
 	    process_cc_flags($1);
-	} elsif ($flag =~ /^(CCTYPE|FILETYPE|PLATFORM|TARG_DIR)=(.+)$/) {
+	} elsif ($flag =~ /^(CCTYPE|FILETYPE|PLATFORM|TARG_DIR|CONFIG_H)=(.+)$/) {
 	    $ARGS{$1} = $2;
 	} elsif ($flag eq '--sort-fold') {
 	    ++$fold;
@@ -104,7 +103,7 @@ my %exportperlmalloc =
 
 my $exportperlmalloc = PLATFORM eq 'os2';
 
-my $config_h = 'config.h';
+my $config_h = $ARGS{CONFIG_H} || "config.h";
 open(CFG, '<', $config_h) || die "Cannot open $config_h: $!\n";
 while (<CFG>) {
     $define{$1} = 1 if /^\s*\#\s*define\s+(MYMALLOC|MULTIPLICITY
@@ -113,21 +112,23 @@ while (<CFG>) {
 }
 close(CFG);
 
+if ($define{WIN32_USE_FAKE_OLD_MINGW_LOCALES}) {
+    $define{NO_POSIX_2008_LOCALE} = 1;
+}
+
 #==========================================================================
 # perl.h logic duplication begins
 
 
-if ($define{USE_ITHREADS}) {
+if ($define{USE_THREADS}) {
     if (!$define{MULTIPLICITY}) {
         $define{MULTIPLICITY} = 1;
     }
 }
 
-$define{MULTIPLICITY} ||=
-    $define{USE_ITHREADS} ||
-    $define{PERL_IMPLICIT_CONTEXT} ;
+$define{MULTIPLICITY} ||= $define{PERL_IMPLICIT_CONTEXT} ;
 
-if ($define{USE_ITHREADS} && ! $define{WIN32}) {
+if ($define{MULTIPLICITY} && ! $define{WIN32}) {
     $define{USE_REENTRANT_API} = 1;
 }
 
@@ -148,19 +149,23 @@ if (! $define{NO_LOCALE}) {
 
 # https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
 my $cctype = $ARGS{CCTYPE} =~ s/MSVC//r;
-if ($define{USE_ITHREADS} && ! $define{NO_LOCALE_THREADS}) {
+if (   $define{USE_THREADS}
+    && $define{USE_LOCALE}
+    && ! $define{NO_LOCALE_THREADS})
+{
     $define{USE_LOCALE_THREADS} = 1;
 }
 
 if (   $define{HAS_POSIX_2008_LOCALE}
-    && (  ! $define{HAS_SETLOCALE} || (     $define{USE_LOCALE_THREADS}
-                                       && ! $define{NO_POSIX_2008_LOCALE})))
+    && $define{USE_LOCALE}
+    && (! $define{HAS_SETLOCALE} || (     $define{USE_LOCALE_THREADS}
+                                     && ! $define{NO_POSIX_2008_LOCALE})
+                                     && ! $define{NO_THREAD_SAFE_LOCALE}))
 {
     $define{USE_POSIX_2008_LOCALE} = 1;
 }
 
-if ($define{USE_LOCALE_THREADS} && ! $define{NO_THREAD_SAFE_LOCALE})
-{
+if ($define{USE_LOCALE_THREADS} && ! $define{NO_THREAD_SAFE_LOCALE}) {
     if (    $define{USE_POSIX_2008_LOCALE}
         || ($define{WIN32} && (   $cctype !~ /\D/
                                && $cctype >= 80)))
@@ -169,22 +174,26 @@ if ($define{USE_LOCALE_THREADS} && ! $define{NO_THREAD_SAFE_LOCALE})
     }
 }
 
-if ($define{USE_POSIX_2008_LOCALE} && $define{HAS_QUERYLOCALE})
+if (    $define{USE_POSIX_2008_LOCALE}
+    && (   $define{HAS_QUERYLOCALE}
+        || (     $Config{cppsymbols} =~ /__GLIBC__/
+            &&   $define{HAS_NL_LANGINFO_L}
+            && ! $define{SETLOCALE_ACCEPTS_ANY_LOCALE_NAME})))
 {
     $define{USE_QUERYLOCALE} = 1;
-
-    # Don't need glibc only code from perl.h
 }
 
 if ($define{USE_POSIX_2008_LOCALE} && ! $define{USE_QUERYLOCALE})
 {
     $define{USE_PL_CURLOCALES} = 1;
-    $define{USE_PL_CUR_LC_ALL} = 1;
 }
 
-if ($define{WIN32} && $define{USE_THREAD_SAFE_LOCALE})
+if ($define{WIN32})
 {
-    $define{USE_PL_CUR_LC_ALL} = 1;
+    if ($define{USE_THREAD_SAFE_LOCALE})
+    {
+        $define{USE_PL_CUR_LC_ALL} = 1;
+    }
 
     if ($cctype < 140) {
         $define{TS_W32_BROKEN_LOCALECONV} = 1;
@@ -403,7 +412,6 @@ unless ($define{'USE_ITHREADS'}) {
     ++$skip{$_} foreach qw(
                     PL_keyword_plugin_mutex
 		    PL_check_mutex
-                    PL_cur_locale_obj
 		    PL_op_mutex
 		    PL_regex_pad
 		    PL_regex_padav
@@ -446,12 +454,17 @@ unless ($define{'USE_ITHREADS'}) {
 			 );
 }
 
+unless ($define{'USE_THREADS'}) {
+    ++$skip{Perl_thread_locale_init};
+    ++$skip{Perl_thread_locale_term};
+}
+
 unless ($define{USE_POSIX_2008_LOCALE})
 {
     ++$skip{$_} foreach qw(
         PL_C_locale_obj
         PL_scratch_locale_obj
-        PL_underlying_numeric_obj
+        PL_cur_locale_obj
     );
 }
 unless ($define{USE_PL_CURLOCALES})
@@ -477,6 +490,7 @@ unless ($define{USE_PERL_SWITCH_LOCALE_CONTEXT})
 
 unless ($define{'MULTIPLICITY'}) {
     ++$skip{$_} foreach qw(
+                    PL_cur_locale_obj
 		    PL_my_cxt_index
 		    PL_my_cxt_list
 		    PL_my_cxt_size
@@ -595,10 +609,11 @@ unless ($define{USE_LOCALE_COLLATE}) {
 			 );
 }
 
-unless ($define{USE_LOCALE_NUMERIC}) {
+unless ($define{USE_LOCALE_THREADS} && ! $define{USE_THREAD_SAFE_LOCALE}) {
     ++$skip{$_} foreach qw(
-                    PL_underlying_numeric_obj
-			 );
+                           PL_less_dicey_locale_buf
+                           PL_less_dicey_locale_bufsize
+			  );
 }
 
 unless ($define{USE_LOCALE_CTYPE}) {
@@ -608,6 +623,17 @@ unless ($define{USE_LOCALE_CTYPE}) {
                     PL_in_utf8_turkic_locale
 			 );
 }
+
+unless (   ! $define{HAS_NL_LANGINFO}
+        &&   $define{USE_LOCALE_CTYPE}
+        && ! $define{WIN32}
+        && ! $define{HAS_MBTOWC}
+        && ! $define{HAS_MBRTOWC})
+    {
+        ++$skip{$_} foreach qw(
+                                PL_langinfo_recursed
+                              );
+    }
 
 unless ($define{'USE_C_BACKTRACE'}) {
     ++$skip{Perl_get_c_backtrace_dump};
@@ -632,6 +658,14 @@ if ($define{HAS_SIGNBIT}) {
 
 ++$skip{PL_hash_chars}
     unless $define{PERL_USE_SINGLE_CHAR_HASH_CACHE};
+
+unless ($define{PERL_RC_STACK}) {
+    ++$skip{$_} foreach qw(
+		    Perl_pp_wrap
+		    Perl_xs_wrap
+                    Perl_runops_wrap
+			 );
+}
 
 # functions from *.sym files
 

@@ -127,26 +127,14 @@ $/ = "\n";
  # binary-incompatible previously-installed version. The eval won’t help in
  # intercepting a SIGTRAP.
  local @INC = ("../lib", "lib", @INC);
- if (not eval q/use PerlIO::scalar; 1/) {
-  # In-memory files necessitate PerlIO::scalar, thus a perl with
-  # perlio and dynaloading enabled. miniperl won't be able to run this
-  # test, so skip it
+ # Test if a file in memory behaves the same as a real file (= re-run the test with a file in memory)
+ open TESTFILE, "<", \$teststring;
+ test_string(*TESTFILE);
+ close TESTFILE;
 
-  for $test ($test_count .. $test_count + ($test_count_end - $test_count_start - 1)) {
-    print "ok $test # skipped - Can't test in memory file with miniperl/without PerlIO::Scalar\n";
-    $test_count++;
-  }
- }
- else {
-  # Test if a file in memory behaves the same as a real file (= re-run the test with a file in memory)
-  open TESTFILE, "<", \$teststring;
-  test_string(*TESTFILE);
-  close TESTFILE;
-
-  open TESTFILE, "<", \$teststring2;
-  test_record(*TESTFILE);
-  close TESTFILE;
- }
+ open TESTFILE, "<", \$teststring2;
+ test_record(*TESTFILE);
+ close TESTFILE;
 }
 
 # Get rid of the temp file

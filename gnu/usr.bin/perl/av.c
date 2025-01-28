@@ -42,8 +42,8 @@ Perl_av_reify(pTHX_ AV *av)
             SvREFCNT_inc_simple_void(sv);
     }
     key = AvARRAY(av) - AvALLOC(av);
-    while (key)
-        AvALLOC(av)[--key] = NULL;
+    if (key)
+        Zero(AvALLOC(av), key, SV*);
     AvREIFY_off(av);
     AvREAL_on(av);
 }
@@ -633,7 +633,6 @@ to it.
 void
 Perl_av_clear(pTHX_ AV *av)
 {
-    SSize_t extra;
     bool real;
     SSize_t orig_ix = 0;
 
@@ -678,12 +677,9 @@ Perl_av_clear(pTHX_ AV *av)
             SvREFCNT_dec(sv);
         }
     }
-    extra = AvARRAY(av) - AvALLOC(av);
-    if (extra) {
-        AvMAX(av) += extra;
-        AvARRAY(av) = AvALLOC(av);
-    }
     AvFILLp(av) = -1;
+    av_remove_offset(av);
+
     if (real) {
         /* disarm av's premature free guard */
         if (LIKELY(PL_tmps_ix == orig_ix))
@@ -902,6 +898,9 @@ Perl_av_unshift(pTHX_ AV *av, SSize_t num)
         AvMAX(av) += i;
         AvFILLp(av) += i;
         AvARRAY(av) = AvARRAY(av) - i;
+#ifdef PERL_RC_STACK
+        Zero(AvARRAY(av), i, SV*);
+#endif
     }
     if (num) {
         SV **ary;
@@ -955,8 +954,10 @@ Perl_av_shift(pTHX_ AV *av)
     if (AvFILL(av) < 0)
       return &PL_sv_undef;
     retval = *AvARRAY(av);
+#ifndef PERL_RC_STACK
     if (AvREAL(av))
         *AvARRAY(av) = NULL;
+#endif
     AvARRAY(av) = AvARRAY(av) + 1;
     AvMAX(av)--;
     AvFILLp(av)--;

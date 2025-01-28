@@ -24,9 +24,7 @@
 #include "perl.h"
 #include "invlist_inline.h"
 
-#ifndef PERL_MICRO
 #include <signal.h>
-#endif
 
 
 /* Helper function for do_trans().
@@ -635,6 +633,13 @@ Perl_do_trans(pTHX_ SV *sv)
     }
 }
 
+#ifdef DEBUGGING
+/* make it small to exercise the logic */
+#  define JOIN_DELIM_BUFSIZE 2
+#else
+#  define JOIN_DELIM_BUFSIZE 40
+#endif
+
 /*
 =for apidoc_section $string
 =for apidoc do_join
@@ -660,13 +665,30 @@ Magic and tainting are handled.
 void
 Perl_do_join(pTHX_ SV *sv, SV *delim, SV **mark, SV **sp)
 {
+    PERL_ARGS_ASSERT_DO_JOIN;
+
     SV ** const oldmark = mark;
-    I32 items = sp - mark;
+    SSize_t items = sp - mark;
     STRLEN len;
     STRLEN delimlen;
-    const char * const delims = SvPV_const(delim, delimlen);
+    const char * delimpv = SvPV_const(delim, delimlen);
+    char delim_buf[JOIN_DELIM_BUFSIZE];
+    bool delim_do_utf8 = DO_UTF8(delim);
 
-    PERL_ARGS_ASSERT_DO_JOIN;
+    if (items >= 2) {
+        /* Make a copy of the delim, since G or A magic may modify the delim SV.
+           Use a local buffer if possible to avoid the cost of allocation and
+           clean up.
+        */
+        if (delimlen <= JOIN_DELIM_BUFSIZE) {
+            Copy(delimpv, delim_buf, delimlen, char);
+            delimpv = delim_buf;
+        }
+        else {
+            delimpv = savepvn(delimpv, delimlen);
+            SAVEFREEPV(delimpv);
+        }
+    }
 
     mark++;
     len = (items > 0 ? (delimlen * (items - 1) ) : 0);
@@ -701,11 +723,11 @@ Perl_do_join(pTHX_ SV *sv, SV *delim, SV **mark, SV **sp)
     }
 
     if (delimlen) {
-        const U32 delimflag = DO_UTF8(delim) ? SV_CATUTF8 : SV_CATBYTES;
+        const U32 delimflag = delim_do_utf8 ? SV_CATUTF8 : SV_CATBYTES;
         for (; items > 0; items--,mark++) {
             STRLEN len;
             const char *s;
-            sv_catpvn_flags(sv,delims,delimlen,delimflag);
+            sv_catpvn_flags(sv, delimpv, delimlen, delimflag);
             s = SvPV_const(*mark,len);
             sv_catpvn_flags(sv,s,len,
                             DO_UTF8(*mark) ? SV_CATUTF8 : SV_CATBYTES);
@@ -886,7 +908,7 @@ Perl_do_vecset(pTHX_ SV *sv)
         assert(!(errflags & ~(LVf_NEG_OFF|LVf_OUT_OF_RANGE)));
         if (errflags & LVf_NEG_OFF)
             Perl_croak_nocontext("Negative offset to vec in lvalue context");
-        Perl_croak_nocontext("Out of memory!");
+        Perl_croak_nocontext("Out of memory during vec in lvalue context");
     }
 
     if (!targ)
@@ -916,7 +938,7 @@ Perl_do_vecset(pTHX_ SV *sv)
     else if (size > 8) {
         int n = size/8;
         if (offset > Size_t_MAX / n - 1) /* would overflow */
-            Perl_croak_nocontext("Out of memory!");
+            Perl_croak_nocontext("Out of memory during vec in lvalue context");
         offset *= n;
     }
 
@@ -1185,8 +1207,7 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 
 PP(do_kv)
 {
-    dSP;
-    HV * const keys = MUTABLE_HV(POPs);
+    HV * const keys = MUTABLE_HV(*PL_stack_sp);
     const U8 gimme = GIMME_V;
 
     const I32 dokeys   =     (PL_op->op_type == OP_KEYS)
@@ -1208,8 +1229,10 @@ PP(do_kv)
 
     (void)hv_iterinit(keys);	/* always reset iterator regardless */
 
-    if (gimme == G_VOID)
-        RETURN;
+    if (gimme == G_VOID) {
+        rpp_popfree_1();
+        return NORMAL;
+    }
 
     if (gimme == G_SCALAR) {
         if (PL_op->op_flags & OPf_MOD || LVRET) {	/* lvalue */
@@ -1217,7 +1240,7 @@ PP(do_kv)
             sv_magic(ret, NULL, PERL_MAGIC_nkeys, NULL, 0);
             LvTYPE(ret) = 'k';
             LvTARG(ret) = SvREFCNT_inc_simple(keys);
-            PUSHs(ret);
+            rpp_replace_1_1(ret);
         }
         else {
             IV i;
@@ -1235,10 +1258,13 @@ PP(do_kv)
                 i = 0;
                 while (hv_iternext(keys)) i++;
             }
-            PUSHi( i );
+            TARGi(i,1);
+            rpp_replace_1_1(targ);
         }
-        RETURN;
+        return NORMAL;
     }
+
+    /* list context only here */
 
     if (UNLIKELY(PL_op->op_private & OPpMAYBE_LVSUB)) {
         const I32 flags = is_lvalue_sub();
@@ -1247,8 +1273,23 @@ PP(do_kv)
             Perl_croak(aTHX_ "Can't modify keys in list assignment");
     }
 
-    PUTBACK;
+    /* push all keys and/or values onto stack */
+#ifdef PERL_RC_STACK
+    SSize_t sp_base = PL_stack_sp - PL_stack_base;
     hv_pushkv(keys, (dokeys | (dovalues << 1)));
+    /* Now safe to free the original arg on the stack and shuffle
+     * down one place anything pushed on top of it */
+    SSize_t nitems = PL_stack_sp - (PL_stack_base + sp_base);
+    SV *old_sv = PL_stack_sp[-nitems];
+    if (nitems)
+        Move(PL_stack_sp - nitems + 1,
+             PL_stack_sp - nitems,    nitems, SV*);
+    PL_stack_sp--;
+    SvREFCNT_dec_NN(old_sv);
+#else
+    rpp_popfree_1();
+    hv_pushkv(keys, (dokeys | (dovalues << 1)));
+#endif
     return NORMAL;
 }
 

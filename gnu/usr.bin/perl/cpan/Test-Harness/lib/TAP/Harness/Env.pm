@@ -7,7 +7,7 @@ use constant IS_VMS => ( $^O eq 'VMS' );
 use TAP::Object;
 use Text::ParseWords qw/shellwords/;
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 # Get the parts of @INC which are changed from the stock list AND
 # preserve reordering of stock directories.
@@ -57,7 +57,7 @@ sub create {
 	my $package = shift;
     my %input = %{ shift || {} };
 
-    my @libs         = @{ delete $input{libs}     || [] };
+    my @libs         = @{ delete $input{lib}      || [] };
     my @raw_switches = @{ delete $input{switches} || [] };
     my @opt
       = ( @raw_switches, shellwords( $ENV{HARNESS_PERL_SWITCHES} || '' ) );
@@ -126,7 +126,7 @@ TAP::Harness::Env - Parsing harness related environmental variables where approp
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =head1 SYNOPSIS
 

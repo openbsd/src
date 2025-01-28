@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    plan( tests => 111 ); # some tests are run in a BEGIN block
+    plan( tests => 112 ); # some tests are run in a BEGIN block
 }
 
 my @c;
@@ -375,4 +375,21 @@ do './op/caller.pl' or die $@;
 #line 12345 "virtually/op/caller.t"
     }
 
+}
+
+{
+    # Try to avoid copying pointers to freed SVs into @DB::args.
+    # previously this caused "panic: attempt to copy freed scalar"
+    my @a = 'A';
+    sub {
+        my $i = shift;
+        my $j = shift;
+        @a = (); # free the 'A' scalar
+        package DB;
+        () = caller(0);
+        my $x = $DB::args[0];
+        my $y = $DB::args[1];
+        ::is("$x-$y", "-B", "no freed scalars");
+    }
+    ->($a[0], 'B');
 }

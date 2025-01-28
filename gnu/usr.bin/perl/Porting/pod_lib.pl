@@ -394,7 +394,6 @@ sub pods_to_install {
 my %state = (
              # Don't copy these top level READMEs
              ignore => {
-                        micro => 1,
                         # vms => 1,
                        },
             );

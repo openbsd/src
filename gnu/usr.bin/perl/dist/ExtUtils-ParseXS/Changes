@@ -1,5 +1,26 @@
 Revision history for Perl extension ExtUtils::ParseXS.
 
+3.51 - Tue May 9 09:32:04 2023 AEST
+  - Initialize $self correctly in EU::PXS::Utilities::death()
+  - C++ builds: avoid generating C<< extern "C" extern "C" >>
+
+3.50 - Mon May 8 23:12:28 2023 CEST
+  - Silence warnings about unreached code in generated XS code
+  - Correct colon translation of $type in OUTPUT section
+  - Make versions in ExtUtils-ParseXS consistent
+
+ 3.49 - Wed Nov 16 11:14:55 2022 CET
+  - Disable alias value collision warnings by default
+
+ 3.48 - Tue Nov 8 17:44:11 2022 CET
+  - handle #else and #endif without blank line prefixes
+  - better support for duplicate ALIASes
+  - allow symbolic alias of default function
+  - add support for elifdef and elifndef
+
+3.47 - Sat Oct 22 10:36:38 2022 CET
+  -  fix ExtUtils::ParseXS compatibility with perl < 5.8.8
+
 3.45 - Fri Mar  4 22:42:03 2022
   - GH #19320: Fix OVERLOAD and FALLBACK handling.
 

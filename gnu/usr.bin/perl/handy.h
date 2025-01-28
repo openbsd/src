@@ -507,8 +507,8 @@ Perl_xxx(aTHX_ ...) form for any API calls where it's used.
 #endif
 
 #define PERL_JNP_TO_DECIMAL_(maJor,miNor,Patch)                             \
-            /* '10*' leaves room for things like alpha, beta, releases */   \
-                    (10 * ((maJor) * 1000000) + ((miNor) * 1000) + (Patch))
+    /* '10*' leaves room for things like alpha, beta, releases */           \
+    (10 * (((maJor) * 1000000) + ((miNor) * 1000) + (Patch)))
 #define PERL_DECIMAL_VERSION_                                               \
         PERL_JNP_TO_DECIMAL_(PERL_VERSION_MAJOR, PERL_VERSION_MINOR,        \
                                                         PERL_VERSION_PATCH)
@@ -574,13 +574,13 @@ becomes
 # define PERL_VERSION_LT(j,n,p) /* < '*' effectively means < 0 */           \
     (PERL_DECIMAL_VERSION_ < PERL_JNP_TO_DECIMAL_( (j),                     \
                                                    (n),                     \
-                                                 (((p) == '*') ? 0 : p)))
+                                                 (((p) == '*') ? 0 : (p))))
 # define PERL_VERSION_GE(j,n,p)  (! PERL_VERSION_LT(j,n,p))
 
-# define PERL_VERSION_LE(j,n,p)  /* <= '*' effectively means < n+1 */       \
-    (PERL_DECIMAL_VERSION_ < PERL_JNP_TO_DECIMAL_(                  (j),    \
-                                          (((p) == '*') ? ((n)+1) : (n)),   \
-                                          (((p) == '*') ? 0 : p)))
+# define PERL_VERSION_LE(j,n,p)  /* <= '*' effectively means <= 999 */      \
+    (PERL_DECIMAL_VERSION_ <= PERL_JNP_TO_DECIMAL_( (j),                    \
+                                                    (n),                    \
+                                                  (((p) == '*') ? 999 : (p))))
 # define PERL_VERSION_GT(j,n,p) (! PERL_VERSION_LE(j,n,p))
 
 /*
@@ -2628,7 +2628,7 @@ Memory obtained by this should B<ONLY> be freed with L</"Safefree">.
 =for apidoc Am|void|Newxz|void* ptr|int nitems|type
 =for apidoc_item |void*|safecalloc|size_t nitems|size_t item_size
 
-The XSUB-writer's interface to the C C<malloc> function.  The allocated
+The XSUB-writer's interface to the C C<calloc> function.  The allocated
 memory is zeroed with C<memzero>.  See also C<L</Newx>>.
 
 Memory obtained by this should B<ONLY> be freed with L</"Safefree">.
@@ -2688,7 +2688,8 @@ optimise.
 
 =for apidoc_section $utility
 =for apidoc Amu|void|StructCopy|type *src|type *dest|type
-This is an architecture-independent macro to copy one structure to another.
+This is an architecture-independent macro that does a shallow copy of one
+structure to another.
 
 =for apidoc Am|void|PoisonWith|void* dest|int nitems|type|U8 byte
 
@@ -3110,6 +3111,35 @@ STMT_START {                    \
     (x) ^= ((x) << 26);         \
 } STMT_END
 
+#ifdef PERL_CORE
+/* Convenience macros for dealing with IV_MIN:
+   In two's complement system, the absolute value of IV_MIN (i.e. -IV_MIN)
+   cannot be represented in IV.  Thus we cannot use simple negation
+   (like "-iv") if "iv" might be IV_MIN or -IV_MIN.
+   Note that expressions like "iv = -(UV)iv;" is also not portable
+   as "-(UV)iv" may not fit in IV range and attempt to convert such value
+   to IV might get implementation-defined result or raise a signal.  */
+
+/* Negate IV in the range [IV_MIN, 0) to positive (absolute) UV value.
+   Written this way to avoid every subexpression never cause signed integer
+   overflow (even for two's complement), and make it possible to be compiled
+   into single negation by optimizing compilers. */
+#  define NEGATE_2UV(iv) (ASSUME((iv) < 0), (UV)-((iv) + 1) + 1U)
+
+/* Absolute value of IV_MIN as UV.  */
+#  define ABS_IV_MIN    NEGATE_2UV(IV_MIN)
+
+/* Negate UV in the range [0, abs(IV_MIN)] to zero or negative IV value
+   in the range [IV_MIN, 0].  Written this way to avoid casting non-IV value
+   into IV (which is either the result is implementation-defined or an
+   implementation-defined signal is raised).  Note that "8" below is an
+   arbitrary value to force both branches of conditional operator to be
+   non-constant and eventually make it possible to be compiled into
+   single negation by optimizing compilers. */
+#  define NEGATE_2IV(uv) (ASSUME((uv) <= ABS_IV_MIN), \
+                          (uv) < 8U ? -(IV)(uv) : -(IV)((uv) - 8U) - 8)
+
+#endif  /* PERL_CORE */
 
 #endif  /* PERL_HANDY_H_ */
 

@@ -4,7 +4,7 @@
 #	Microsoft Visual C++ 12.0 or later
 #
 # This is set up to build a perl.exe that runs off a shared library
-# (perl538.dll).  Also makes individual DLLs for the XS extensions.
+# (perl540.dll).  Also makes individual DLLs for the XS extensions.
 #
 
 ##
@@ -37,7 +37,7 @@ INST_TOP	= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	= \5.38.2
+#INST_VER	= \5.40.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -102,8 +102,6 @@ DEFAULT_INC_EXCLUDES_DOT = define
 #
 # uncomment exactly one of the following
 #
-# Visual C++ 2013 (aka Visual C++ 12.0) (full version or Express Edition)
-#CCTYPE		= MSVC120
 # Visual C++ 2015 (aka Visual C++ 14.0) (full version or Express Edition)
 #CCTYPE		= MSVC140
 # Visual C++ 2017 (aka Visual C++ 14.1) (full version or Community Edition)
@@ -172,7 +170,7 @@ DEFAULT_INC_EXCLUDES_DOT = define
 # set this to additionally provide a statically linked perl-static.exe.
 # Note that dynamic loading will not work with this perl, so you must
 # include required modules statically using the STATIC_EXT or ALL_STATIC
-# variables below. A static library perl538s.lib will also be created.
+# variables below. A static library perl540s.lib will also be created.
 # Ordinary perl.exe is not affected by this option.
 #
 #BUILD_STATIC	= define
@@ -193,7 +191,7 @@ DEFAULT_INC_EXCLUDES_DOT = define
 # Versions of Visual C++ up to VC++ 14.0 define $(VCINSTALLDIR), but from
 # VC++ 14.1 we need the subfolder given by $(VCToolsInstallDir).
 #
-!IF "$(CCTYPE)" == "MSVC120" || "$(CCTYPE)" == "MSVC140"
+!IF "$(CCTYPE)" == "MSVC140"
 CCHOME		= $(VCINSTALLDIR)
 !ELSE
 CCHOME		= $(VCTOOLSINSTALLDIR)
@@ -371,7 +369,7 @@ MINIDELAYLOAD	= -DELAYLOAD:advapi32.dll
 # Set the install location of the compiler headers/libraries.
 # These are saved into $Config{incpath} and $Config{libpth}.
 CCINCDIR	= $(CCHOME)\include
-!IF "$(CCTYPE)" == "MSVC120" || "$(CCTYPE)" == "MSVC140"
+!IF "$(CCTYPE)" == "MSVC140"
 !  IF "$(WIN64)" == "define"
 CCLIBDIR	= $(CCHOME)\lib\amd64
 !  ELSE
@@ -428,7 +426,7 @@ RSC		= rc
 # Options
 #
 
-INCLUDES	= -I$(COREDIR) -I.\include -I. -I..
+INCLUDES	= -I.\include -I. -I..
 #PCHFLAGS	= -Fpc:\temp\vcmoduls.pch -YX
 DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT
 LOCDEFS		= -DPERLDLL -DPERL_CORE
@@ -438,11 +436,7 @@ CXX_FLAG	= $(CXX_FLAG) -std:c++20
 !ENDIF
 EXTRACFLAGS	= -nologo -GF -W3
 
-!IF "$(CCTYPE)" == "MSVC120"
-LIBC		= msvcrt.lib
-!ELSE
 LIBC		= ucrt.lib
-!ENDIF
 
 !IF  "$(CFG)" == "Debug"
 OPTIMIZE	= -Od -Zi
@@ -454,11 +448,7 @@ OPTIMIZE	= -Od -Zi
 LINK_DBG	= -debug
 EXTRACFLAGS	= $(EXTRACFLAGS) -MD
 !ELSEIF  "$(CFG)" == "DebugFull"
-!  IF "$(CCTYPE)" == "MSVC120"
-LIBC		= msvcrtd.lib
-!  ELSE
 LIBC		= ucrtd.lib
-!  ENDIF
 OPTIMIZE	= -Od -Zi
 LINK_DBG	= -debug
 DEFINES		= $(DEFINES) -D_DEBUG -DDEBUGGING
@@ -486,12 +476,9 @@ OPTIMIZE	= $(OPTIMIZE) -fp:precise
 
 # For now, silence warnings about "unsafe" CRT functions
 # and POSIX CRT function names being deprecated.
-DEFINES		= $(DEFINES) -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
-
-# Likewise for deprecated Winsock APIs in VC++ 14.0 onwards for now.
-!IF "$(CCTYPE)" != "MSVC120"
-DEFINES		= $(DEFINES) -D_WINSOCK_DEPRECATED_NO_WARNINGS
-!ENDIF
+# Likewise for deprecated Winsock APIs
+DEFINES		= $(DEFINES) -D_CRT_SECURE_NO_DEPRECATE \
+                  -D_CRT_NONSTDC_NO_DEPRECATE -D_WINSOCK_DEPRECATED_NO_WARNINGS
 
 LIBBASEFILES	= \
 		oldnames.lib kernel32.lib user32.lib gdi32.lib winspool.lib \
@@ -499,12 +486,10 @@ LIBBASEFILES	= \
 		netapi32.lib uuid.lib ws2_32.lib mpr.lib winmm.lib \
 		version.lib odbc32.lib odbccp32.lib comctl32.lib
 
-!IF "$(CCTYPE)" != "MSVC120"
-!  IF  "$(CFG)" == "DebugFull"
+!IF  "$(CFG)" == "DebugFull"
 LIBBASEFILES	= $(LIBBASEFILES) msvcrtd.lib vcruntimed.lib
-!  ELSE
+!ELSE
 LIBBASEFILES	= $(LIBBASEFILES) msvcrt.lib vcruntime.lib
-!  ENDIF
 !ENDIF
 
 # Avoid __intel_new_proc_init link error for libircmt.
@@ -563,10 +548,10 @@ o = .obj
 .SUFFIXES : .c $(o) .cpp .asm .dll .lib .exe .rc .res
 
 .c$(o):
-	$(CC) -c -I$(<D) $(CFLAGS_O) $(OBJOUT_FLAG)$@ $<
+	$(CC) -c -I$(FULLDIR) -I$(<D) $(CFLAGS_O) $(OBJOUT_FLAG)$@ $<
 
 .c.i:
-	$(CC) -c -I$(<D) $(CFLAGS_O) -P $(OBJOUT_FLAG)$@ $<
+	$(CC) -c -I$(FULLDIR) -I$(<D) $(CFLAGS_O) -P $(OBJOUT_FLAG)$@ $<
 
 .y.c:
 	$(NOOP)
@@ -583,11 +568,13 @@ $(o).dll:
 
 # makedef.pl must be updated if this changes, and this should normally
 # only change when there is an incompatible revision of the public API.
-PERLIMPLIB	= ..\perl538.lib
-PERLSTATICLIB	= ..\perl538s.lib
-PERLDLL		= ..\perl538.dll
+PERLIMPLIB	= ..\perl540.lib
+PERLSTATICLIB	= ..\perl540s.lib
+PERLDLL		= ..\perl540.dll
 
 MINIPERL	= ..\miniperl.exe
+# contains config.h for the full perl build
+FULLDIR		= .\full
 MINIDIR		= .\mini
 PERLEXE		= ..\perl.exe
 WPERLEXE	= ..\wperl.exe
@@ -775,7 +762,9 @@ CORE_NOCFG_H	=		\
 		.\include\sys\socket.h	\
 		.\win32.h
 
-CORE_H		= $(CORE_NOCFG_H) .\config.h ..\git_version.h
+CONFIG_H	= $(FULLDIR)\config.h
+MINI_CONFIG_H	= $(MINIDIR)\config.h
+CORE_H		= $(CORE_NOCFG_H) $(CONFIG_H) ..\git_version.h
 
 UUDMAP_H	= ..\uudmap.h
 BITCOUNT_H	= ..\bitcount.h
@@ -870,7 +859,7 @@ regnodes : ..\regnodes.h
 
 ..\regexec$(o) : ..\regnodes.h ..\regcharclass.h
 
-reonly : regnodes .\config.h ..\git_version.h $(GLOBEXE) $(CONFIGPM) \
+reonly : regnodes $(CONFIG_H) ..\git_version.h $(GLOBEXE) $(CONFIGPM) \
 	$(UNIDATAFILES) $(PERLEXE) Extensions_reonly
 	@echo	Perl and 're' are up to date.
 
@@ -891,9 +880,7 @@ perlglob$(o)  : perlglob.c
 ..\perl$(o) : ..\git_version.h
 
 ..\config.sh : $(CFGSH_TMPL) config_sh.PL FindExt.pm $(MINIPERL)
-	$(MINIPERL) -I..\lib config_sh.PL $(CFG_VARS) $(CFGSH_TMPL) > ..\config.sh.tmp
-	if exist ..\config.sh del /f ..\config.sh
-	rename ..\config.sh.tmp config.sh
+	$(MINIPERL) -I..\lib config_sh.PL -o ..\config.sh $(CFG_VARS) $(CFGSH_TMPL)
 
 # This target is for when changes to the main config.sh happen.
 # Edit config.vc, then make perl in a minimal configuration (i.e. with MULTI,
@@ -911,10 +898,10 @@ $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL ..\git_version.h
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
 	$(XCOPY) *.h $(COREDIR)\*.*
 	$(RCOPY) include $(COREDIR)\*.*
-	-$(MINIPERL) -I..\lib config_h.PL
-	if errorlevel 1 $(MAKE) /$(MAKEFLAGS) $(CONFIGPM)
+	if not exist "$(FULLDIR)" mkdir "$(FULLDIR)"
+	$(MINIPERL) -I..\lib config_h.PL "CONFIG_H=$(CONFIG_H)" 
 
-.\config.h : $(CONFIGPM)
+$(CONFIG_H) : $(CONFIGPM)
 
 # See the comment in Makefile.SH explaining this seemingly cranky ordering
 $(MINIPERL) : ..\lib\buildcustomize.pl
@@ -932,11 +919,11 @@ $(MINIDIR)\.exists : $(CFGH_TMPL)
 # as per the options chosen and compiler used.
 # Note: This config.h is only used to build miniperl.exe anyway, but
 # it's as well to have its options correct to be sure that it builds
-# and so that it's "-V" options are correct for use by makedef.pl. The
+# and so that its "-V" options are correct for use by makedef.pl. The
 # real config.h used to build perl.exe is generated from the top-level
 # config_h.SH by config_h.PL (run by miniperl.exe).
 #
-	copy $(CFGH_TMPL) config.h
+	copy $(CFGH_TMPL) $(MINI_CONFIG_H)
 	@(echo.&& \
 	echo #ifndef _config_h_footer_&& \
 	echo #define _config_h_footer_&& \
@@ -959,8 +946,7 @@ $(MINIDIR)\.exists : $(CFGH_TMPL)
 	echo #undef UVXf&& \
 	echo #undef USE_64_BIT_INT&& \
 	echo #undef USE_LONG_DOUBLE&& \
-	echo #undef USE_CPLUSPLUS)>> config.h
-!IF "$(CCTYPE)" != "MSVC120"
+	echo #undef USE_CPLUSPLUS)>> $(MINI_CONFIG_H)
 	@(echo #undef FILE_ptr&& \
 	echo #undef FILE_cnt&& \
 	echo #undef FILE_base&& \
@@ -969,22 +955,21 @@ $(MINIDIR)\.exists : $(CFGH_TMPL)
 	echo #define FILE_cnt^(fp^) PERLIO_FILE_cnt^(fp^)&& \
 	echo #define FILE_base^(fp^) PERLIO_FILE_base^(fp^)&& \
 	echo #define FILE_bufsiz^(fp^) ^(PERLIO_FILE_cnt^(fp^) + PERLIO_FILE_ptr^(fp^) - PERLIO_FILE_base^(fp^)^)&& \
-	echo #define I_STDBOOL)>> config.h
-!ENDIF
+	echo #define I_STDBOOL)>> $(MINI_CONFIG_H)
 !IF "$(WIN64)"=="define"
 	@(echo #define PTRSIZE ^8&& \
 	echo #define SSize_t $(INT64)&& \
 	echo #define HAS_ATOLL&& \
 	echo #define HAS_STRTOLL&& \
 	echo #define HAS_STRTOULL&& \
-	echo #define Size_t_size ^8)>> config.h
+	echo #define Size_t_size ^8)>> $(MINI_CONFIG_H)
 !ELSE
 	@(echo #define PTRSIZE ^4&& \
 	echo #define SSize_t int&& \
 	echo #undef HAS_ATOLL&& \
 	echo #undef HAS_STRTOLL&& \
 	echo #undef HAS_STRTOULL&& \
-	echo #define Size_t_size ^4)>> config.h
+	echo #define Size_t_size ^4)>> $(MINI_CONFIG_H)
 !ENDIF
 !IF "$(USE_64_BIT_INT)"=="define"
 	@(echo #define IVTYPE $(INT64)&& \
@@ -998,7 +983,7 @@ $(MINIDIR)\.exists : $(CFGH_TMPL)
 	echo #define UVof "I64o"&& \
 	echo #define UVxf "I64x"&& \
 	echo #define UVXf "I64X"&& \
-	echo #define USE_64_BIT_INT)>> config.h
+	echo #define USE_64_BIT_INT)>> $(MINI_CONFIG_H)
 !ELSE
 	@(echo #define IVTYPE long&& \
 	echo #define UVTYPE unsigned long&& \
@@ -1011,34 +996,36 @@ $(MINIDIR)\.exists : $(CFGH_TMPL)
 	echo #define UVof "lo"&& \
 	echo #define UVxf "lx"&& \
 	echo #define UVXf "lX"&& \
-	echo #undef USE_64_BIT_INT)>> config.h
+	echo #undef USE_64_BIT_INT)>> $(MINI_CONFIG_H)
 !ENDIF
 !IF "$(USE_CPLUSPLUS)"=="define"
 	@(echo #define USE_CPLUSPLUS&& \
-	echo #endif)>> config.h
+	echo #endif)>> $(MINI_CONFIG_H)
 !ELSE
 	@(echo #undef USE_CPLUSPLUS&& \
-	echo #endif)>> config.h
+	echo #endif)>> $(MINI_CONFIG_H)
 !ENDIF
 #separate line since this is sentinal that this target is done
 	@rem. > $(MINIDIR)\.exists
 
+.c{$(MINIDIR)}$(o):
+	$(CC) -c -Imini $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $<
+
+{..\}.c{$(MINIDIR)}$(o):
+	$(CC) -c -Imini $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $<
+
 $(MINICORE_OBJ) : $(CORE_NOCFG_H)
-	$(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ ..\$(*F).c
 
 $(MINIWIN32_OBJ) : $(CORE_NOCFG_H)
-	$(CC) -c $(CFLAGS) -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $(*F).c
 
 # -DPERL_IMPLICIT_SYS needs C++ for perllib.c
 # This is the only file that depends on perlhost.h, vmem.h, and vdir.h
 !IF "$(USE_IMP_SYS)" == "define"
 perllib$(o)	: perllib.c .\perlhost.h .\vdir.h .\vmem.h
-	$(CC) -c -I. $(CFLAGS_O) $(CXX_FLAG) $(OBJOUT_FLAG)$@ perllib.c
+	$(CC) -c -I$(FULLDIR) -I. $(CFLAGS_O) $(CXX_FLAG) $(OBJOUT_FLAG)$@ perllib.c
 !ENDIF
 
-# 1. we don't want to rebuild miniperl.exe when config.h changes
-# 2. we don't want to rebuild miniperl.exe with non-default config.h
-# 3. we can't have miniperl.exe depend on git_version.h, as miniperl creates it
+# We can't have miniperl.exe depend on git_version.h, as miniperl creates it
 $(MINI_OBJ)	: $(MINIDIR)\.exists $(CORE_NOCFG_H)
 
 $(WIN32_OBJ)	: $(CORE_H)
@@ -1047,7 +1034,7 @@ $(DLL_OBJ)	: $(CORE_H)
 
 perldll.def : $(MINIPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl create_perllibst_h.pl ..\git_version.h
 	$(MINIPERL) -I..\lib create_perllibst_h.pl
-	$(MINIPERL) -I..\lib -w ..\makedef.pl PLATFORM=win32 $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
+	$(MINIPERL) -I..\lib -w ..\makedef.pl PLATFORM=win32 CONFIG_H=$(CONFIG_H) $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
 	    CCTYPE=$(CCTYPE) TARG_DIR=..\ > perldll.def
 
 $(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_static
@@ -1082,13 +1069,13 @@ perlmain.c : runperl.c
 	copy runperl.c perlmain.c
 
 perlmain$(o) : perlmain.c
-	$(CC) $(CFLAGS_O:-DPERLDLL=-UPERLDLL) $(OBJOUT_FLAG)$@ -c perlmain.c
+	$(CC) -I$(FULLDIR) $(CFLAGS_O:-DPERLDLL=-UPERLDLL) $(OBJOUT_FLAG)$@ -c perlmain.c
 
 perlmainst.c : runperl.c
 	copy runperl.c perlmainst.c
 
 perlmainst$(o) : perlmainst.c
-	$(CC) $(CFLAGS_O) $(OBJOUT_FLAG)$@ -c perlmainst.c
+	$(CC) -I$(FULLDIR) $(CFLAGS_O) $(OBJOUT_FLAG)$@ -c perlmainst.c
 
 $(PERLEXE): $(PERLDLL) $(CONFIGPM) $(PERLEXE_OBJ) $(PERLEXE_RES)
 	$(LINK32) -out:$@ $(BLINK_FLAGS) \
@@ -1117,7 +1104,7 @@ Extensions_reonly: ..\make_ext.pl ..\lib\buildcustomize.pl $(PERLDEP) $(CONFIGPM
 Extensions_static : ..\make_ext.pl ..\lib\buildcustomize.pl list_static_libs.pl $(PERLDEP) $(CONFIGPM) Extensions_nonxs
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
 	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --static
-	$(MINIPERL) -I..\lib list_static_libs.pl > Extensions_static
+	$(MINIPERL) -I..\lib list_static_libs.pl -o Extensions_static
 
 Extensions_nonxs: ..\make_ext.pl ..\lib\buildcustomize.pl $(PERLDEP) $(CONFIGPM) ..\pod\perlfunc.pod
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
@@ -1178,10 +1165,10 @@ utils: $(PERLEXE) ..\utils\Makefile
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5382delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5401delta.pod
 	cd ..\win32
 	$(PERLEXE) $(PL2BAT) $(UTILS)
-	$(MINIPERL) -I..\lib ..\autodoc.pl ..
+	$(MINIPERL) -I..\lib ..\autodoc.pl -c "win32\$(CONFIG_H)" ..
 	$(MINIPERL) -I..\lib ..\pod\perlmodlib.PL -q ..
 
 ..\pod\perltoc.pod: $(PERLEXE) Extensions Extensions_nonxs
@@ -1237,6 +1224,7 @@ distclean: realclean
 	-if exist $(LIBDIR)\ExtUtils\Typemaps rmdir /s /q $(LIBDIR)\ExtUtils\Typemaps
 	-if exist $(LIBDIR)\File\Spec rmdir /s /q $(LIBDIR)\File\Spec
 	-if exist $(LIBDIR)\Filter rmdir /s /q $(LIBDIR)\Filter
+	-if exist $(LIBDIR)\Getopt\Long rmdir /s /q $(LIBDIR)\Getopt\Long
 	-if exist $(LIBDIR)\Hash rmdir /s /q $(LIBDIR)\Hash
 	-if exist $(LIBDIR)\HTTP rmdir /s /q $(LIBDIR)\HTTP
 	-if exist $(LIBDIR)\I18N rmdir /s /q $(LIBDIR)\I18N
@@ -1251,7 +1239,6 @@ distclean: realclean
 	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
 	-if exist $(LIBDIR)\Module rmdir /s /q $(LIBDIR)\Module
 	-if exist $(LIBDIR)\Net\FTP rmdir /s /q $(LIBDIR)\Net\FTP
-	-if exist $(LIBDIR)\OpenBSD rmdir /s /q $(LIBDIR)\OpenBSD
 	-if exist $(LIBDIR)\Params rmdir /s /q $(LIBDIR)\Params
 	-if exist $(LIBDIR)\Parse rmdir /s /q $(LIBDIR)\Parse
 	-if exist $(LIBDIR)\Perl rmdir /s /q $(LIBDIR)\Perl
@@ -1279,14 +1266,15 @@ distclean: realclean
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5382delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
+	    perl5401delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
 	    perlapi.pod perlbs2000.pod perlcn.pod perlcygwin.pod \
 	    perlfreebsd.pod perlhaiku.pod perlhpux.pod perlhurd.pod \
 	    perlintern.pod perlirix.pod perljp.pod perlko.pod perllinux.pod \
 	    perlmacosx.pod perlmodlib.pod perlopenbsd.pod perlos2.pod \
 	    perlos390.pod perlos400.pod perlplan9.pod perlqnx.pod \
 	    perlriscos.pod perlsolaris.pod perlsynology.pod perltoc.pod \
-	    perltru64.pod perltw.pod perlvos.pod perlwin32.pod
+	    perltru64.pod perltw.pod perluniprops.pod perlvos.pod \
+	    perlwin32.pod
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm h2xs \
 	    perldoc perlivp libnetcfg enc2xs encguess piconv cpan streamzip *.bat \
 	    xsubpp pod2html instmodsh json_pp prove ptar ptardiff ptargrep shasum corelist zipdetails
@@ -1328,7 +1316,7 @@ $(UNIDATAFILES) ..\pod\perluniprops.pod : $(MINIPERL) $(CONFIGPM) ..\lib\unicore
 	cd ..\lib\unicore && \
 	..\$(MINIPERL) -I.. mktables -P ..\..\pod -maketest -makelist -p -check $@ $(FIRSTUNIFILE)
 
-minitest : .\config.h $(MINIPERL) ..\git_version.h $(GLOBEXE) $(CONFIGPM) $(UNIDATAFILES)
+minitest : $(CONFIG_H) $(MINIPERL) ..\git_version.h $(GLOBEXE) $(CONFIGPM) $(UNIDATAFILES)
 	$(XCOPY) $(MINIPERL) ..\t\$(NULL)
 	if exist ..\t\perl.exe del /f ..\t\perl.exe
 	rename ..\t\miniperl.exe perl.exe

@@ -101,7 +101,7 @@ sub generate_proto_h {
         my $inner_ind= $ind ? "  " : " ";
 
         my ($flags,$retval,$plain_func,$args) = @{$embed}{qw(flags return_type name args)};
-        if ($flags =~ / ( [^AabCDdEefFGhIiMmNnOoPpRrSsTUuWXx;] ) /x) {
+        if ($flags =~ / ( [^AabCDdEefFGhIiMmNnOoPpRrSsTUuvWXx;] ) /x) {
             die_at_end "flag $1 is not legal (for function $plain_func)";
         }
         my @nonnull;
@@ -493,9 +493,11 @@ sub embed_h {
                     }
                 }
                 $ret .= ")\n";
-                if($use_va_list) {
-                    # Make them available to !MULTIPLICITY or PERL_CORE
-                    $ret = "#${ind}if !defined(MULTIPLICITY) || defined(PERL_CORE)\n" .
+                if($use_va_list and $flags =~ /v/) {
+                    # Make older ones available only when !MULTIPLICITY or PERL_CORE or PERL_WANT_VARARGS
+                    # These should not be done uncondtionally because existing
+                    # code might call e.g. warn() without aTHX in scope.
+                    $ret = "#${ind}if !defined(MULTIPLICITY) || defined(PERL_CORE) || defined(PERL_WANT_VARARGS)\n" .
                            $ret .
                            "#${ind}endif\n";
                 }
@@ -590,10 +592,9 @@ sub generate_embed_h {
 
     print $em <<~'END';
 
-    /* varargs functions can't be handled with CPP macros. :-(
-       This provides a set of compatibility functions that don't take
-       an extra argument but grab the context pointer using the macro
-       dTHX.
+    /* Before C99, macros could not wrap varargs functions. This
+       provides a set of compatibility functions that don't take an
+       extra argument but grab the context pointer using the macro dTHX.
      */
     #if defined(MULTIPLICITY) && !defined(PERL_NO_SHORT_NAMES)
     END

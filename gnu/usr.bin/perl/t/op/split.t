@@ -7,7 +7,7 @@ BEGIN {
     require './charset_tools.pl';
 }
 
-plan tests => 197;
+plan tests => 219;
 
 $FS = ':';
 
@@ -724,4 +724,42 @@ SKIP: {
 			switches => [ '-Mre=Debug,COMPILE', '-c' ],
 		}, "special-case pattern for $prog");
 	}
+}
+
+# gh18032: check that `split " "` does not get converted to `split ""`
+SKIP: {
+    my @skipwhite= ('split " "', 'split "\x20"', 'split "\N{SPACE}"',
+        'split "$e$sp$e"', 'split');
+    my @noskipwhite= (
+        'split / /', 'split m/ /', 'split qr/ /',
+        'split /$e$sp$e/', 'split m/$e$sp$e/', 'split qr/$e$sp$e/'
+    );
+    skip_if_miniperl("special-case patterns: need dynamic loading",
+        2*(@skipwhite+@noskipwhite));
+
+    my $modifiers = "x"; # the original bug report used /aansx
+
+    for my $prog ( @skipwhite ) {
+        fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq(); $prog;",
+            qr{^r->extflags:.*\bSKIPWHITE\b\s\bWHITE\b}m,
+            {switches => [ '-Mre=Debug,COMPILE' ]},
+            "$prog sets SKIPWHITE|WHITE under `use re qw(/$modifiers)`");
+
+        fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq();"
+                       ."\$_=qq( 1  1 ); \@c=$prog; print 0+\@c, qq(<\@c>)",
+            qr{^2<1 1>}m,
+            {},
+            "$prog matches as expected `use re qw(/$modifiers)`");
+    }
+    for my $prog ( @noskipwhite) {
+        fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq(); $prog;",
+            qr{^r->extflags:.*\bNULL\b}m,
+            {switches => [ '-Mre=Debug,COMPILE' ]},
+            "$prog does not set SKIPWHITE|WHITE under `use re qw(/$modifiers)`");
+        fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq();"
+                       ."\$_=qq( 1  1 ); \@c=$prog; print 0+\@c, qq(<\@c>)",
+            qr{^6<  1     1  >}m,
+            {},
+            "$prog matches expected under `use re qw(/$modifiers)`");
+    }
 }

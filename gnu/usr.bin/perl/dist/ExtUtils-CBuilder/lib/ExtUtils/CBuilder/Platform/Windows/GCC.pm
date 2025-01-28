@@ -1,6 +1,6 @@
 package ExtUtils::CBuilder::Platform::Windows::GCC;
 
-our $VERSION = '0.280238'; # VERSION
+our $VERSION = '0.280240'; # VERSION
 
 use warnings;
 use strict;
@@ -47,42 +47,12 @@ sub format_linker_cmd {
     $path = "-L$path";
   }
 
-  my @cmds; # Stores the series of commands needed to build the module.
-
-  my $DLLTOOL = $cf->{dlltool} || 'dlltool';
-
-  push @cmds, [
-    $DLLTOOL, '--def'        , $spec{def_file},
-              '--output-exp' , $spec{explib}
-  ];
-
   # split off any -arguments included in ld
   my @ld = split / (?=-)/, $spec{ld};
 
-  push @cmds, [ grep {defined && length} (
+  return [ grep {defined && length} (
     @ld                       ,
-    '-o', $spec{output}       ,
-    "-Wl,--base-file,$spec{base_file}"   ,
-    "-Wl,--enable-auto-image-base" ,
-    @{$spec{lddlflags}}       ,
-    @{$spec{libpath}}         ,
-    @{$spec{startup}}         ,
-    @{$spec{objects}}         ,
-    @{$spec{other_ldflags}}   ,
-    $spec{libperl}            ,
-    @{$spec{perllibs}}        ,
-    $spec{explib}             ,
-    $spec{map_file} ? ('-Map', $spec{map_file}) : ''
-  ) ];
-
-  push @cmds, [
-    $DLLTOOL, '--def'        , $spec{def_file},
-              '--output-exp' , $spec{explib},
-              '--base-file'  , $spec{base_file}
-  ];
-
-  push @cmds, [ grep {defined && length} (
-    @ld                       ,
+    $spec{def_file}           ,
     '-o', $spec{output}       ,
     "-Wl,--enable-auto-image-base" ,
     @{$spec{lddlflags}}       ,
@@ -92,11 +62,8 @@ sub format_linker_cmd {
     @{$spec{other_ldflags}}   ,
     $spec{libperl}            ,
     @{$spec{perllibs}}        ,
-    $spec{explib}             ,
     $spec{map_file} ? ('-Map', $spec{map_file}) : ''
   ) ];
-
-  return @cmds;
 }
 
 sub write_linker_script {

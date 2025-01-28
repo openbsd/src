@@ -1,18 +1,16 @@
-
-require 5;
 package Pod::Simple::LinkSection;
   # Based somewhat dimly on Array::Autojoin
 
 use strict;
+use warnings;
 use Pod::Simple::BlackBox;
-use vars qw($VERSION );
-$VERSION = '3.43';
+our $VERSION = '3.45';
 
 use overload( # So it'll stringify nice
   '""'   => \&Pod::Simple::BlackBox::stringify_lol,
   'bool' => \&Pod::Simple::BlackBox::stringify_lol,
   # '.='   => \&tack_on,  # grudgingly support
-  
+
   'fallback' => 1,         # turn on cleverness
 );
 
@@ -87,7 +85,7 @@ Pod::Simple uses this class for representing the value of the
 can just use the normal stringification of objects of this class;
 they stringify to just the text content of the section,
 such as "foo" for
-C<< LZ<><Stuff/foo> >>, and "bar" for 
+C<< LZ<><Stuff/foo> >>, and "bar" for
 C<< LZ<><Stuff/bIZ<><ar>> >>.
 
 However, anyone particularly interested in getting the full value of
@@ -136,7 +134,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

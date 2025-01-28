@@ -34,6 +34,7 @@ BEGIN {
     }
 }
 
+use warnings;
 use strict;
 use Test::More;
 
@@ -83,8 +84,7 @@ sub testit {
             package lexsubtest;
             no warnings 'experimental::lexical_subs';
             use feature 'lexical_subs';
-            no strict 'vars';
-            $code = "sub { state sub $keyword; ${vars}() = $expr }";
+            $code = "no warnings 'syntax'; no strict 'vars'; sub { state sub $keyword; ${vars}() = $expr }";
             $code = "use feature 'isa';\n$code" if $keyword eq "isa";
             $code = "use feature 'switch';\n$code" if $keyword eq "break";
             $code_ref = eval $code or die "$@ in $expr";
@@ -93,7 +93,7 @@ sub testit {
             package test;
             use subs ();
             import subs $keyword;
-            $code = "no strict 'vars'; sub { ${vars}() = $expr }";
+            $code = "no warnings 'syntax'; no strict 'vars'; sub { ${vars}() = $expr }";
             $code = "use feature 'isa';\n$code" if $keyword eq "isa";
             $code = "use feature 'switch';\n$code" if $keyword eq "break";
             $code_ref = eval $code or die "$@ in $expr";
@@ -132,9 +132,7 @@ my %infix_map = qw(and && or ||);
 sub do_infix_keyword {
     my ($keyword, $parens, $strong) = @_;
     $SEEN_STRENGTH{$keyword} = $strong;
-    my $expr = "(\$a $keyword \$b)";
     my $nkey = $infix_map{$keyword} // $keyword;
-    my $expr = "(\$a $keyword \$b)";
     my $exp = "\$a $nkey \$b";
     $exp = "($exp)" if $parens;
     $exp .= ";";
@@ -354,6 +352,7 @@ my %not_tested = map { $_ => 1} qw(
     __FILE__
     __LINE__
     __PACKAGE__
+    __CLASS__
     ADJUST
     AUTOLOAD
     BEGIN

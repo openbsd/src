@@ -3,8 +3,8 @@
 use strict ;
 require 5.006 ;
 
-$::VERSION = '2.204' ;
-$::DEP_VERSION = '2.204';
+$::VERSION = '2.212' ;
+$::DEP_VERSION = '2.212';
 
 use lib '.';
 use private::MakeUtil;

@@ -733,12 +733,12 @@ are merged (double-quoted interpolation, explicit concatenation, or
 printf/sprintf parameter substitution), the result will be UTF-8 encoded
 as if copies of the byte strings were upgraded to UTF-8: for example,
 
-    $a = "ab\x80c";
-    $b = "\x{100}";
-    print "$a = $b\n";
+    $x = "ab\x80c";
+    $y = "\x{100}";
+    print "$x = $y\n";
 
 the output string will be UTF-8-encoded C<ab\x80c = \x{100}\n>, but
-C<$a> will stay byte-encoded.
+C<$x> will stay byte-encoded.
 
 Sometimes you might really need to know the byte length of a string
 instead of the character length. For that use the C<bytes> pragma

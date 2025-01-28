@@ -159,10 +159,9 @@ static SV *
 HUF_new_trigger(pTHX_ SV *obj, SV *ob_id) {
     dMY_CXT;
     SV* trigger = sv_rvweaken(newRV_inc(SvRV(obj)));
-    AV* cont = newAV();
-    sv_2mortal((SV*)cont);
-    av_store(cont, 0, SvREFCNT_inc(ob_id));
-    av_store(cont, 1, (SV*)newHV());
+    AV* cont = newAV_mortal();
+    av_store_simple(cont, 0, SvREFCNT_inc(ob_id));
+    av_store_simple(cont, 1, (SV*)newHV());
     HUF_add_uvar_magic(aTHX_ trigger, NULL, &HUF_destroy_obj, 0, (SV*)cont);
     (void) hv_store_ent(MY_CXT.ob_reg, ob_id, trigger, 0);
     return trigger;
@@ -315,13 +314,13 @@ HUF_fix_objects(pTHX) {
     dMY_CXT;
     I32 i, len;
     HE* ent;
-    AV* oblist = (AV*)sv_2mortal((SV*)newAV());
+    AV* oblist = newAV_mortal();
     hv_iterinit(MY_CXT.ob_reg);
     while((ent = hv_iternext(MY_CXT.ob_reg)))
-        av_push(oblist, SvREFCNT_inc(hv_iterkeysv(ent)));
+        av_push_simple(oblist, SvREFCNT_inc(hv_iterkeysv(ent)));
     len = av_count(oblist);
     for (i = 0; i < len; ++i) {
-        SV* old_id = *av_fetch(oblist, i, 0);
+        SV* old_id = *av_fetch_simple(oblist, i, 0);
         SV* trigger = hv_delete_ent(MY_CXT.ob_reg, old_id, 0, 0);
         SV* obj = SvRV(trigger);
         MAGIC *mg;

@@ -1,11 +1,8 @@
-
-require 5;
 package Pod::Simple::DumpAsXML;
-$VERSION = '3.43';
-use Pod::Simple ();
-BEGIN {@ISA = ('Pod::Simple')}
-
 use strict;
+our $VERSION = '3.45';
+use Pod::Simple ();
+BEGIN {our @ISA = ('Pod::Simple')}
 
 use Carp ();
 use Text::Wrap qw(wrap);
@@ -28,7 +25,7 @@ sub _handle_element_start {
   my $fh = $_[0]{'output_fh'};
   my($key, $value);
   DEBUG and print STDERR "++ $_[1]\n";
-  
+
   print $fh   '  ' x ($_[0]{'indent'} || 0),  "<", $_[1];
 
   foreach my $key (sort keys %{$_[2]}) {
@@ -131,7 +128,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.
@@ -165,3 +162,4 @@ Pod::Simple is maintained by:
 =back
 
 =cut
+use warnings;

@@ -1,26 +1,18 @@
-package Net::netent;
-use strict;
+package Net::netent 1.02;
+use v5.38;
 
-use 5.006_001;
-our $VERSION = '1.01';
-our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 our (
     $n_name, @n_aliases,
     $n_addrtype, $n_net
 );
  
-BEGIN { 
-    use Exporter   ();
-    @EXPORT      = qw(getnetbyname getnetbyaddr getnet);
-    @EXPORT_OK   = qw(
+use Exporter 'import';
+our @EXPORT      = qw(getnetbyname getnetbyaddr getnet);
+our @EXPORT_OK   = qw(
 			$n_name	    	@n_aliases
 			$n_addrtype 	$n_net
 		   );
-    %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-}
-
-# Class::Struct forbids use of @ISA
-sub import { goto &Exporter::import }
+our %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 
 use Class::Struct qw(struct);
 struct 'Net::netent' => [
@@ -30,7 +22,7 @@ struct 'Net::netent' => [
    net		=> '$',
 ];
 
-sub populate (@) {
+sub populate {
     return unless @_;
     my $nob = new();
     $n_name 	 =    $nob->[0]     	     = $_[0];
@@ -40,9 +32,9 @@ sub populate (@) {
     return $nob;
 } 
 
-sub getnetbyname ($)  { populate(CORE::getnetbyname(shift)) } 
+sub getnetbyname :prototype($) { populate(CORE::getnetbyname(shift)) }
 
-sub getnetbyaddr ($;$) { 
+sub getnetbyaddr :prototype($;$) {
     my ($net, $addrtype);
     $net = shift;
     require Socket if @_;
@@ -50,7 +42,7 @@ sub getnetbyaddr ($;$) {
     populate(CORE::getnetbyaddr($net, $addrtype)) 
 } 
 
-sub getnet($) {
+sub getnet :prototype($) {
     if ($_[0] =~ /^\d+(?:\.\d+(?:\.\d+(?:\.\d+)?)?)?$/) {
 	require Socket;
 	&getnetbyaddr(Socket::inet_aton(shift));
@@ -59,7 +51,6 @@ sub getnet($) {
     } 
 } 
 
-1;
 __END__
 
 =head1 NAME

@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan(tests => 37);
+plan(tests => 53);
 
 my ($devnull, $no_devnull);
 
@@ -251,6 +251,20 @@ while (<>) {
 close IN;
 unlink "tmpIo_argv3.tmp";
 **PROG**
+
+{
+    my $warn;
+    local $SIG{__WARN__} = sub { $warn = "@_" };
+    for my $op ("|-", "-|", "| -", "- |") {
+        for my $forked ($op, " $op", "$op ", " $op ") {
+            @ARGV = ( $forked );
+            undef $warn;
+            while (<>) {}
+            like($warn, qr/^Forked open '\Q$forked\E' not meaningful in <>/,
+                 "check for warning for $forked");
+        }
+    }
+}
 
 # This used to fail an assertion.
 # The tricks with *x and $x are to make PL_argvgv point to a freed SV when

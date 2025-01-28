@@ -9,18 +9,22 @@ BEGIN { require Exporter; *import = \&Exporter::import }
 our @EXPORT = qw( wrap fill );
 our @EXPORT_OK = qw( $columns $break $huge );
 
-our $VERSION = '2021.0814';
+our $VERSION = '2024.001';
 our $SUBVERSION = 'modern'; # back-compat vestige
 
+BEGIN { eval sprintf 'sub REGEXPS_USE_BYTES () { %d }', scalar( pack('U*', 0x80) =~ /\xc2/ ) }
+
+my $brkspc = "\x{a0}\x{202f}" =~ /\s/ ? '[^\x{a0}\x{202f}\S]' : '\s';
+
 our $columns = 76;  # <= screen width
-our $break = '(?=\s)(?:\r\n|\PM\pM*)';
+our $break = '(?>\n|\r\n|'.$brkspc.'\pM*)';
 our $huge = 'wrap'; # alternatively: 'die' or 'overflow'
 our $unexpand = 1;
 our $tabstop = 8;
 our $separator = "\n";
 our $separator2 = undef;
 
-sub _xlen { () = $_[0] =~ /\PM/g }
+sub _xlen { $_[0] =~ /^\pM/ + ( () = $_[0] =~ /\PM/g ) }
 
 use Text::Tabs qw(expand unexpand);
 
@@ -49,17 +53,17 @@ sub wrap
 
 	pos($t) = 0;
 	while ($t !~ /\G(?:$break)*\Z/gc) {
-		if ($t =~ /\G((?:(?!\n)\PM\pM*){0,$ll})($break|\n+|\z)/xmgc) {
+		if ($t =~ /\G((?>(?!\n)\PM\pM*|(?<![^\n])\pM+){0,$ll})($break|\n+|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = $2;
-		} elsif ($huge eq 'wrap' && $t =~ /\G((?:(?!\n)\PM\pM*){$ll})/gc) {
+		} elsif ($huge eq 'wrap' && $t =~ /\G((?>(?!\n)\PM\pM*|(?<![^\n])\pM+){$ll})/gc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = defined($separator2) ? $separator2 : $separator;
-		} elsif ($huge eq 'overflow' && $t =~ /\G((?:(?!\n)\PM\pM*)*?)($break|\n+|\z)/xmgc) {
+		} elsif ($huge eq 'overflow' && $t =~ /\G([^\n]*?)(?!(?<![^\n])\pM)($break|\n+|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
@@ -87,7 +91,10 @@ sub wrap
 	$r .= $lead . substr($t, pos($t), length($t) - pos($t))
 		if pos($t) ne length($t);
 
-	return $r;
+	# the 5.6 regexp engine ignores the UTF8 flag, so using capture buffers acts as an implicit _utf8_off
+	# that means on 5.6 we now have to manually set UTF8=on on the output if the input had it, for which
+	# we extract just the UTF8 flag from the input and check if it forces chr(0x80) to become multibyte
+	return REGEXPS_USE_BYTES && (substr($t,0,0)."\x80") =~ /\xc2/ ? pack('U0a*', $r) : $r;
 }
 
 sub fill 

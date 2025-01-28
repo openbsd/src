@@ -747,7 +747,7 @@ particularly for constructors, so you may still find it in the wild.
 However, we encourage you to avoid using it in new code.
 
 You can force Perl to interpret the bareword as a class name by
-appending "::" to it, like we saw earlier:
+appending C<::> to it, like we saw earlier:
 
   my $file = new File:: $path, $data;
 

@@ -162,14 +162,14 @@ sub corelist_delta {
                             I18N::Langinfo IPC::Open3 NDBM_File ODBM_File Opcode PerlIO PerlIO::encoding PerlIO::mmap PerlIO::scalar PerlIO::via
                             Pod::Functions Pod::Html POSIX SDBM_File SelectSaver Symbol Sys::Hostname Thread Tie::Array Tie::Handle Tie::Hash
                             Tie::Hash::NamedCapture Tie::Memoize Tie::Scalar Tie::StdHandle Tie::SubstrHash Time::gmtime Time::localtime Time::tm
-                            Unicode::UCD UNIVERSAL User::grent User::pwent VMS::DCLsym VMS::Filespec VMS::Stdio XS::Typemap XS::APItest Win32CORE/;
+                            Unicode::UCD UNIVERSAL User::grent User::pwent VMS::DCLsym VMS::Filespec VMS::Stdio XS::Typemap XS::APItest Win32CORE builtin/;
   my @unclaimedPragmata = qw/arybase attributes blib bytes charnames deprecate diagnostics encoding feature fields filetest inc::latest integer less locale mro open ops overload overloading re sigtrap sort strict subs utf8 vars vmsish/;
   my @unclaimed = (@unclaimedModules, @unclaimedPragmata);
 
   my %distToModules = (
     'IO-Compress' => [
       {
-        'name'         => 'IO-Compress',
+        'name'         => 'IO::Compress',
         'modification' => $getModifyType->( $changes{'IO::Compress::Base'} ),
         'data'         => $changes{'IO::Compress::Base'}
       }

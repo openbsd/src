@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 
-plan tests => 164;
+plan tests => 166;
 
 # Before loading feature.pm, test it with CORE::
 ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
@@ -502,6 +502,21 @@ for (1,2) {
     state $s = "-$_-";
     is($s, "-1-", "state with multiconcat pass $_");
 }
+
+# This caused 'Attempt to free unreferenced scalar' because the SV holding
+# the value of the const state sub wasn't having its ref count incremented
+# when the sub was cloned.
+
+{
+    my @warnings;
+    local $SIG{__WARN__} = sub { push @warnings, @_ };
+    my $e = eval 'my $s = sub { state sub FOO () { 42 } }; 1;';
+    is($e, 1, "const state sub ran ok");
+    ok(!@warnings, "no 'Attempt to free unreferenced scalar'")
+        or diag "got these warnings:\n@warnings";
+}
+
+
 
 __DATA__
 (state $a) = 1;

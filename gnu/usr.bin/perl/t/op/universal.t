@@ -11,7 +11,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan tests => 143;
+plan tests => 144;
 
 $a = {};
 bless $a, "Bob";
@@ -139,9 +139,9 @@ like $@, qr/^Invalid version format/;
 
 my $subs = join ' ', sort grep { defined &{"UNIVERSAL::$_"} } keys %UNIVERSAL::;
 if ('a' lt 'A') {
-    is $subs, "can isa DOES VERSION";
+    is $subs, "can import isa unimport DOES VERSION";
 } else {
-    is $subs, "DOES VERSION can isa";
+    is $subs, "DOES VERSION can import isa unimport";
 }
 
 ok $a->isa("UNIVERSAL");
@@ -160,11 +160,10 @@ eval "use UNIVERSAL";
 ok $a->isa("UNIVERSAL");
 
 my $sub2 = join ' ', sort grep { defined &{"UNIVERSAL::$_"} } keys %UNIVERSAL::;
-# XXX import being here is really a bug
 if ('a' lt 'A') {
-    is $sub2, "can import isa DOES VERSION";
+    is $sub2, "can import isa unimport DOES VERSION";
 } else {
-    is $sub2, "DOES VERSION can import isa";
+    is $sub2, "DOES VERSION can import isa unimport";
 }
 
 eval 'sub UNIVERSAL::sleep {}';
@@ -198,11 +197,23 @@ ok $x->isa('UNIVERSAL');
 ok $x->isa('UNIVERSAL');
 
 
-# Check that the "historical accident" of UNIVERSAL having an import()
-# method doesn't effect anyone else.
-eval { Some::Package->import("bar") };
-is $@, '';
+{
+    my $err;
+    $SIG{__WARN__}= sub { die $_[0] };
+    eval { Some::Package->import("bar") };
+    my $err = $@;
+    $err=~s!t/op!op!;
+    is $err, "Attempt to call undefined import method with arguments (\"bar\")"
+           . " via package \"Some::Package\" (Perhaps you forgot to load"
+           . " the package?) at op/universal.t line 203.\n";
+    eval { Some::Package->unimport(1.234) };
+    $err = $@;
+    $err=~s!t/op!op!;
+    is $err, "Attempt to call undefined unimport method with arguments (\"1.234\")"
+           . " via package \"Some::Package\" (Perhaps you forgot to load"
+           . " the package?) at op/universal.t line 209.\n";
 
+}
 
 # This segfaulted in a blead.
 fresh_perl_is('package Foo; Foo->VERSION;  print "ok"', 'ok');

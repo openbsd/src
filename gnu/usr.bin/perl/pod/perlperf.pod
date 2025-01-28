@@ -86,7 +86,7 @@ combinations can slow the C<GRT> down, by just being too plain complex for its
 own good.
 
 For applications using database backends, the standard C<DBIx> namespace has
-tries to help with keeping things nippy, not least because it tries to I<not>
+tried to help with keeping things nippy, not least because it tries to I<not>
 query the database until the latest possible moment, but always read the docs
 which come with your choice of libraries.  Among the many issues facing
 developers dealing with databases should remain aware of is to always use
@@ -106,7 +106,7 @@ exact science, and why we love using Perl so much - TMTOWTDI.
 
 Here are a few examples to demonstrate usage of Perl's benchmarking tools.
 
-=head2  Assigning and Dereferencing Variables.
+=head2  Assigning and Dereferencing Variables
 
 I'm sure most of us have seen code which looks like, (or worse than), this:
 

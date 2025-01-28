@@ -155,18 +155,14 @@ typedef enum {
  * whether PL_comppad and PL_curpad are consistent and whether they have
  * active values */
 
-#  define pad_peg(label)
-
 #ifdef DEBUGGING
 #  define ASSERT_CURPAD_LEGAL(label) \
-    pad_peg(label); \
     if (PL_comppad ? (AvARRAY(PL_comppad) != PL_curpad) : (PL_curpad != 0))  \
         Perl_croak(aTHX_ "panic: illegal pad in %s: 0x%" UVxf "[0x%" UVxf "]",\
             label, PTR2UV(PL_comppad), PTR2UV(PL_curpad));
 
 
 #  define ASSERT_CURPAD_ACTIVE(label) \
-    pad_peg(label); \
     if (!PL_comppad || (AvARRAY(PL_comppad) != PL_curpad))		  \
         Perl_croak(aTHX_ "panic: invalid pad in %s: 0x%" UVxf "[0x%" UVxf "]",\
             label, PTR2UV(PL_comppad), PTR2UV(PL_curpad));
@@ -359,15 +355,15 @@ Restore the old pad saved into the local variable C<opad> by C<PAD_SAVE_LOCAL()>
 #define PadnameLVALUE(pn)	(PadnameFLAGS(pn) & PADNAMEf_LVALUE)
 #define PadnameIsFIELD(pn)	(PadnameFLAGS(pn) & PADNAMEf_FIELD)
 
-#define PadnameLVALUE_on(pn)	(PadnameFLAGS(pn) |= PADNAMEf_LVALUE)
-#define PadnameIsSTATE_on(pn)	(PadnameFLAGS(pn) |= PADNAMEf_STATE)
+#define PadnameLVALUE_on(pn)    (PadnameFLAGS(pn) |= PADNAMEf_LVALUE)
+#define PadnameIsSTATE_on(pn)   (PadnameFLAGS(pn) |= PADNAMEf_STATE)
 
-#define PADNAMEf_OUTER	0x01	/* outer lexical var */
-#define PADNAMEf_STATE	0x02	/* state var */
-#define PADNAMEf_LVALUE	0x04	/* used as lvalue */
-#define PADNAMEf_TYPED	0x08	/* for B; unused by core */
-#define PADNAMEf_OUR	0x10	/* for B; unused by core */
-#define PADNAMEf_FIELD  0x20    /* field var */
+#define PADNAMEf_OUTER      0x01    /* outer lexical var */
+#define PADNAMEf_STATE      0x02    /* state var */
+#define PADNAMEf_LVALUE     0x04    /* used as lvalue */
+#define PADNAMEf_TYPED      0x08    /* for B; unused by core */
+#define PADNAMEf_OUR        0x10    /* for B; unused by core */
+#define PADNAMEf_FIELD      0x20    /* field var */
 
 /* backward compatibility */
 #ifndef PERL_CORE

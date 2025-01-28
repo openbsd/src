@@ -32,8 +32,8 @@ my $octal_first = "c\377Ć";
 my $octal_last = "cĆ\377";
 
 sub fixup (@) {
-    # @_ is a list of strings.  Each string is comprised of the digits that
-    # form a byte of the UTF-8 representation of a character, or sequence of
+    # @_ is a list of strings.  Each string consists of the digits that form
+    # a byte of the UTF-8 representation of a character, or sequence of
     # characters
 
     my $string = join "", map { chr 0 + $_ } @_;

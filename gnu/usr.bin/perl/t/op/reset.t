@@ -7,7 +7,7 @@ BEGIN {
 }
 use strict;
 
-plan tests => 40;
+plan tests => 45;
 
 package aiieee;
 
@@ -188,6 +188,30 @@ SKIP:
 			  "first pattern $eight$eight, second $nine$nine");
 	}
     }
+}
+
+# magic reset #20763
+{
+    {
+        local $^W = 1; # we're resetting this
+        my $warn = '';
+        local $SIG{__WARN__} = sub { $warn .= "@_\n" };
+        reset "\cW";
+        like($warn, qr/uninitialized/, "magic tries to SvIV() the new value");
+        $warn = '';
+        is($^W, 0, q"check $^W has been zeroed");
+        is($warn, '', "should be no more warnings");
+    }
+    {
+        local $| = 1;
+        no warnings 'uninitialized';
+        reset '|';
+        is($|, 0, q"check magic applied to $|");
+    }
+
+    eval { reset "1" };
+    like($@, qr/Modification of a read-only value attempted/,
+         "\$1 isn't marked read-only, but throws on set magic");
 }
 
 __DATA__

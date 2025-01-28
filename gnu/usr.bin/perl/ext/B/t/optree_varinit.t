@@ -9,7 +9,7 @@ BEGIN {
     }
 }
 use OptreeCheck;
-plan tests	=> 42;
+plan tests	=> 46;
 
 pass("OPTIMIZER TESTS - VAR INITIALIZATION");
 
@@ -391,4 +391,58 @@ EOT_EOT
 # 4  <0> padrange[$a:1,2; $b:1,2] RM/LVINTRO,range=2
 # 5  <2> aassign[t3] vKS
 # 6  <@> leave[1 ref] vKP/REFC
+EONT_EONT
+
+checkOptree ( name	=> 'void context state',
+	      prog	=> 'use feature qw(state); state $x = 1; 1',
+	      bcopts	=> '-exec',
+	      strip_open_hints => 1,
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 1  <0> enter v
+# 2  <;> nextstate(main 2 -e:1) v:%,{,fea=15
+# 3  <|> once(other->4)[$:2,3] vK/1
+# 4      <$> const[IV 1] s
+# 5      <1> padsv_store[$x:2,3] vKS/LVINTRO,STATE
+#            goto 6
+# 8  <0> padsv[$x:2,3] vRM*/STATE
+# 6  <;> nextstate(main 3 -e:1) v:%,{,fea=15
+# 7  <@> leave[1 ref] vKP/REFC
+EOT_EOT
+# 1  <0> enter v
+# 2  <;> nextstate(main 2 -e:1) v:%,{,fea=15
+# 3  <|> once(other->4)[$:2,3] vK/1
+# 4      <$> const(IV 1) s
+# 5      <1> padsv_store[$x:2,3] vKS/LVINTRO,STATE
+#            goto 6
+# 8  <0> padsv[$x:2,3] vRM*/STATE
+# 6  <;> nextstate(main 3 -e:1) v:%,{,fea=15
+# 7  <@> leave[1 ref] vKP/REFC
+EONT_EONT
+
+checkOptree ( name	=> 'scalar context state',
+	      prog	=> 'use feature qw(state); my $y = state $x = 1; 1',
+	      bcopts	=> '-exec',
+	      strip_open_hints => 1,
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 1  <0> enter v
+# 2  <;> nextstate(main 2 -e:1) v:%,{,fea=15
+# 3  <|> once(other->4)[$:2,3] sK/1
+# 4      <$> const[IV 1] s
+# 5      <1> padsv_store[$x:2,3] sKS/LVINTRO,STATE
+#            goto 6
+# 9  <0> padsv[$x:2,3] sRM*/STATE
+# 6  <1> padsv_store[$y:2,3] vKS/LVINTRO
+# 7  <;> nextstate(main 3 -e:1) v:%,{,fea=15
+# 8  <@> leave[1 ref] vKP/REFC
+EOT_EOT
+# 1  <0> enter v
+# 2  <;> nextstate(main 2 -e:1) v:%,{,fea=15
+# 3  <|> once(other->4)[$:2,3] sK/1
+# 4      <$> const(IV 1) s
+# 5      <1> padsv_store[$x:2,3] sKS/LVINTRO,STATE
+#            goto 6
+# 9  <0> padsv[$x:2,3] sRM*/STATE
+# 6  <1> padsv_store[$y:2,3] vKS/LVINTRO
+# 7  <;> nextstate(main 3 -e:1) v:%,{,fea=15
+# 8  <@> leave[1 ref] vKP/REFC
 EONT_EONT

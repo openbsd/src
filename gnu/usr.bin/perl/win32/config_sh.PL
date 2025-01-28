@@ -62,6 +62,36 @@ sub loadopts {
     }
 }
 
+sub replace_template {
+    my ($template, %opt) = @_;
+
+    open my $fh, "<", $template
+        or die "$0: Cannot open $template: $!\n";
+    my $result = '';
+    local $_;
+    while (<$fh>) {
+        s/~([\w_]+)~/exists $opt{$1} ? $opt{$1} : ''/eg;
+        if (/^([\w_]+)=(.*)$/) {
+            my($k,$v) = ($1,$2);
+            # this depends on cf_time being empty in the template (or we'll
+            # get a loop)
+            if (exists $opt{$k}) {
+                $_ = "$k='$opt{$k}'\n";
+            }
+        }
+        $result .= $_;
+    }
+    close $fh;
+
+    $result;
+}
+
+my $out = '-';
+if (@ARGV >= 2 && $ARGV[0] eq '-o') {
+    shift;
+    $out = shift;
+}
+
 my $prebuilt; # are we making the prebuilt config used to bootstrap?
 if (@ARGV && $ARGV[0] eq '--prebuilt') {
     ++$prebuilt;
@@ -125,6 +155,9 @@ if (exists $opt{cc}) {
     }
     elsif ($opt{cc} =~ /\bgcc\b/) {
         chomp($opt{gccversion} = `$opt{cc} -dumpversion`);
+        chomp($opt{libc} = `$opt{cc} -o rt.exe configure/rt.c 1>nul 2>&1 && rt`);
+        if(-e 'rt.exe') { unlink 'rt.exe' } # rt.exe no longer needed
+        else { die "Failed to identify default runtime" }
     }
 }
 
@@ -323,10 +356,6 @@ if ($opt{cc} =~ /\bcl/ and $opt{ccversion} =~ /^(\d+)/) {
 	$opt{i_stdint} = 'define';
     }
     if ($ccversion >= 19) { # VC14+
-	$opt{stdio_base} = 'PERLIO_FILE_base(fp)';
-	$opt{stdio_bufsiz} = '(PERLIO_FILE_cnt(fp) + PERLIO_FILE_ptr(fp) - PERLIO_FILE_base(fp))';
-	$opt{stdio_cnt} = 'PERLIO_FILE_cnt(fp)';
-	$opt{stdio_ptr} = 'PERLIO_FILE_ptr(fp)';
 	$opt{i_stdbool} = 'define' unless $prebuilt;
     }
 }
@@ -342,14 +371,17 @@ elsif ($opt{cc} =~ /\bicl/) {
 	$opt{i_stdint} = 'define';
     }
     if ($num_ver =~ /^(\d+)/ && $1 >= 19) { # VC14+
-	$opt{stdio_base} = 'PERLIO_FILE_base(fp)';
-	$opt{stdio_bufsiz} = '(PERLIO_FILE_cnt(fp) + PERLIO_FILE_ptr(fp) - PERLIO_FILE_base(fp))';
-	$opt{stdio_cnt} = 'PERLIO_FILE_cnt(fp)';
-	$opt{stdio_ptr} = 'PERLIO_FILE_ptr(fp)';
 	$opt{i_stdbool} = 'define';
     }
     $opt{ar} ='xilib';
 }
+
+# win32.h always defines these, and those definitions
+# depend on the current CRT
+$opt{stdio_base} = 'PERLIO_FILE_base(fp)';
+$opt{stdio_bufsiz} = '(PERLIO_FILE_cnt(fp) + PERLIO_FILE_ptr(fp) - PERLIO_FILE_base(fp))';
+$opt{stdio_cnt} = 'PERLIO_FILE_cnt(fp)';
+$opt{stdio_ptr} = 'PERLIO_FILE_ptr(fp)';
 
 if ($opt{useithreads} eq 'define' && $opt{ccflags} =~ /-DPERL_IMPLICIT_SYS\b/) {
     $opt{d_pseudofork} = 'define';
@@ -362,18 +394,35 @@ if ($opt{usecplusplus} eq 'define') {
 
 #if the fields above are defined, they override the defaults in the premade
 #config file
-while (<>) {
-    s/~([\w_]+)~/exists $opt{$1} ? $opt{$1} : ''/eg;
-    if (/^([\w_]+)=(.*)$/) {
-	my($k,$v) = ($1,$2);
-	# this depends on cf_time being empty in the template (or we'll
-	# get a loop)
-	if ($k eq 'cf_time') {
-	    $_ = "$k='" . localtime(time) . "'\n" if $v =~ /^\s*'\s*'/;
-	}
-	elsif (exists $opt{$k}) {
-	    $_ = "$k='$opt{$k}'\n";
-	}
+my $template = shift
+    or die "$0: No template supplied\n";
+if ($out ne '-') {
+    # preserve cf_time to avoid generating a new config.sh with no changes
+    my $cf_time;
+    if (open my $fh, "<", $out) {
+        my $old = '';
+        # scan for cf_time while reading in the whole file
+        while (<$fh>) {
+            $old .= $_;
+            if (/^cf_time='(.*)'/) {
+                $cf_time = $1;
+            }
+        }
+        close $fh;
+
+        my $replaced = replace_template($template, %opt, cf_time => $cf_time);
+        if ($replaced eq $old) {
+            # no configuration change, skip updating
+            print "$0: No changes for $out\n";
+            exit;
+        }
     }
-    print;
+    open my $fh, ">", $out
+        or die "$0: Cannot create $out: $!\n";
+    print $fh replace_template($template, %opt, cf_time => scalar localtime);
+    close $fh
+        or die "$0: Failed to close $template: $!\n";
+}
+else {
+    print replace_template($template, %opt, cf_time => scalar localtime);
 }

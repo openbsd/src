@@ -1,5 +1,5 @@
 /* zconf.h -- configuration of the zlib compression library
- * Copyright (C) 1995-2016 Jean-loup Gailly, Mark Adler
+ * Copyright (C) 1995-2024 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -38,6 +38,9 @@
 #  define crc32                 Perl_crz_crc32
 #  define crc32_combine         Perl_crz_crc32_combine
 #  define crc32_combine64       Perl_crz_crc32_combine64
+#  define crc32_combine_gen     Perl_crz_crc32_combine_gen
+#  define crc32_combine_gen64   Perl_crz_crc32_combine_gen64
+#  define crc32_combine_op      Perl_crz_crc32_combine_op
 #  define crc32_z               Perl_crz_crc32_z
 #  define deflate               Perl_crz_deflate
 #  define deflateBound          Perl_crz_deflateBound
@@ -238,7 +241,11 @@
 #endif
 
 #ifdef Z_SOLO
-   typedef unsigned long z_size_t;
+#  ifdef _WIN64
+     typedef unsigned long long z_size_t;
+#  else
+     typedef unsigned long z_size_t;
+#  endif
 #else
 #  define z_longlong long long
 #  if defined(NO_SIZE_T)
@@ -290,14 +297,6 @@
 #    define OF(args)  args
 #  else
 #    define OF(args)  ()
-#  endif
-#endif
-
-#ifndef Z_ARG /* function prototypes for stdarg */
-#  if defined(STDC) || defined(Z_HAVE_STDARG_H)
-#    define Z_ARG(args)  args
-#  else
-#    define Z_ARG(args)  ()
 #  endif
 #endif
 
@@ -409,12 +408,12 @@ typedef uLong FAR uLongf;
 
 #ifdef STDC
    typedef void const *voidpc;
-   typedef void FAR   *voidpf;
-   typedef void       *voidp;
+   typedef Bytef      *voidpf;
+   typedef Bytef      *voidp;
 #else
    typedef Byte const *voidpc;
-   typedef Byte FAR   *voidpf;
-   typedef Byte       *voidp;
+   typedef Bytef      *voidpf;
+   typedef Bytef      *voidp;
 #endif
 
 #if !defined(Z_U4) && !defined(Z_SOLO) && defined(STDC)
@@ -517,7 +516,7 @@ typedef uLong FAR uLongf;
 #if !defined(_WIN32) && defined(Z_LARGE64)
 #  define z_off64_t off64_t
 #else
-#  if defined(_WIN32) && !defined(__GNUC__) && !defined(Z_SOLO)
+#  if defined(_WIN32) && !defined(__GNUC__)
 #    define z_off64_t __int64
 #  else
 #    define z_off64_t z_off_t

@@ -198,13 +198,13 @@ C<\w> matches [a-zA-Z0-9_].
 Which rules apply are determined as described in L<perlre/Which character set modifier is in effect?>.
 
 There are a number of security issues with the full Unicode list of word
-characters.  See L<http://unicode.org/reports/tr36>.
+characters.  See L<https://unicode.org/reports/tr36>.
 
 Also, for a somewhat finer-grained set of characters that are in programming
 language identifiers beyond the ASCII range, you may wish to instead use the
 more customized L</Unicode Properties>, C<\p{ID_Start}>,
 C<\p{ID_Continue}>, C<\p{XID_Start}>, and C<\p{XID_Continue}>.  See
-L<http://unicode.org/reports/tr31>.
+L<https://unicode.org/reports/tr31>.
 
 Any character not matched by C<\w> is matched by C<\W>.
 
@@ -527,9 +527,9 @@ evaluated in single-quotish context, variable interpolation will take
 place before the bracketed class is parsed:
 
  $, = "\t| ";
- $a =~ m'[$,]';        # single-quotish: matches '$' or ','
- $a =~ q{[$,]}'        # same
- $a =~ m/[$,]/;        # double-quotish: Because we made an
+ $x =~ m'[$,]';        # single-quotish: matches '$' or ','
+ $x =~ q{[$,]}'        # same
+ $x =~ m/[$,]/;        # double-quotish: Because we made an
                        #   assignment to $, above, this now
                        #   matches "\t", "|", or " "
 
@@ -795,7 +795,8 @@ Perl recognizes the following POSIX character classes:
  alpha  Any alphabetical character (e.g., [A-Za-z]).
  alnum  Any alphanumeric character (e.g., [A-Za-z0-9]).
  ascii  Any character in the ASCII character set.
- blank  A GNU extension, equal to a space or a horizontal tab ("\t").
+ blank  Any horizontal whitespace character (e.g. space or horizontal
+        tab ("\t")).
  cntrl  Any control character.  See Note [2] below.
  digit  Any decimal digit (e.g., [0-9]), equivalent to "\d".
  graph  Any printable character, excluding a space.  See Note [3] below.

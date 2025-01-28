@@ -21,7 +21,7 @@
 
 /*
 =head1 GV Handling and Stashes
-A GV is a structure which corresponds to to a Perl typeglob, ie *foo.
+A GV is a structure which corresponds to a Perl typeglob, ie *foo.
 It is a structure that holds a pointer to a scalar, an array, a hash etc,
 corresponding to $foo, @foo, %foo.
 
@@ -1212,13 +1212,7 @@ Perl_gv_fetchmethod_pvn_flags(pTHX_ HV *stash, const char *name, const STRLEN le
 
     gv = gv_fetchmeth_pvn(stash, name, name_end - name, 0, flags);
     if (!gv) {
-        /* This is the special case that exempts Foo->import and
-           Foo->unimport from being an error even if there's no
-          import/unimport subroutine */
-        if (strEQ(name,"import") || strEQ(name,"unimport")) {
-            gv = (GV*)sv_2mortal((SV*)newCONSTSUB_flags(NULL,
-                                                NULL, 0, 0, NULL));
-        } else if (autoload)
+        if (autoload)
             gv = gv_autoload_pvn(
                 ostash, name, name_end - name, GV_AUTOLOAD_ISMETHOD|flags
             );
@@ -2691,10 +2685,14 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
     gv_init_pvn(gv, stash, name, len, (add & GV_ADDMULTI)|is_utf8);
 
     if (   full_len != 0
-        && isIDFIRST_lazy_if_safe(name, name + full_len, is_utf8)
-        && !ckWARN(WARN_ONCE) )
-    {
-        GvMULTI_on(gv) ;
+           && isIDFIRST_lazy_if_safe(name, name + full_len, is_utf8)) {
+        if (ckWARN(WARN_ONCE)) {
+            if (ckDEAD(WARN_ONCE))
+                GvONCE_FATAL_on(gv);
+        }
+        else {
+            GvMULTI_on(gv) ;
+        }
     }
 
     /* set up magic where warranted */
@@ -2825,11 +2823,20 @@ Perl_gv_check(pTHX_ HV *stash)
                 CopFILEGV(PL_curcop)
                     = gv_fetchfile_flags(file, HEK_LEN(GvFILE_HEK(gv)), 0);
 #endif
-                Perl_warner(aTHX_ packWARN(WARN_ONCE),
-                        "Name \"%" HEKf "::%" HEKf
-                        "\" used only once: possible typo",
-                            HEKfARG(HvNAME_HEK(stash)),
-                            HEKfARG(GvNAME_HEK(gv)));
+                if (GvONCE_FATAL(gv)) {
+                    fatal_warner(packWARN(WARN_ONCE),
+                                 "Name \"%" HEKf "::%" HEKf
+                                 "\" used only once: possible typo",
+                                 HEKfARG(HvNAME_HEK(stash)),
+                                 HEKfARG(GvNAME_HEK(gv)));
+                }
+                else {
+                    warner(packWARN(WARN_ONCE),
+                           "Name \"%" HEKf "::%" HEKf
+                           "\" used only once: possible typo",
+                           HEKfARG(HvNAME_HEK(stash)),
+                           HEKfARG(GvNAME_HEK(gv)));
+                }
             }
         }
     }
@@ -3362,10 +3369,11 @@ Perl_gv_handler(pTHX_ HV *stash, I32 id)
 */
 
 bool
-Perl_try_amagic_un(pTHX_ int method, int flags) {
-    dSP;
+Perl_try_amagic_un(pTHX_ int method, int flags)
+{
     SV* tmpsv;
-    SV* const arg = TOPs;
+    SV* const arg = PL_stack_sp[0];
+    bool is_rc = rpp_stack_is_rc();
 
     SvGETMAGIC(arg);
 
@@ -3378,22 +3386,33 @@ Perl_try_amagic_un(pTHX_ int method, int flags) {
          * then assign the returned value to targ and return that;
          * otherwise return the value directly
          */
+        SV *targ = tmpsv;
         if (   (PL_opargs[PL_op->op_type] & OA_TARGLEX)
             && (PL_op->op_private & OPpTARGET_MY))
         {
-            dTARGET;
-            sv_setsv(TARG, tmpsv);
-            SETTARG;
+            targ = PAD_SV(PL_op->op_targ);
+            sv_setsv(targ, tmpsv);
+            SvSETMAGIC(targ);
         }
-        else
-            SETs(tmpsv);
+        if (targ != arg) {
+            *PL_stack_sp = targ;
+            if (is_rc) {
+                SvREFCNT_inc_NN(targ);
+                SvREFCNT_dec_NN(arg);
+            }
+        }
 
-        PUTBACK;
         return TRUE;
     }
 
-    if ((flags & AMGf_numeric) && SvROK(arg))
-        *sp = sv_2num(arg);
+    if ((flags & AMGf_numeric) && SvROK(arg)) {
+        PL_stack_sp[0] = tmpsv = sv_2num(arg);
+        if (is_rc) {
+            SvREFCNT_inc_NN(tmpsv);
+            SvREFCNT_dec_NN(arg);
+        }
+    }
+
     return FALSE;
 }
 
@@ -3554,10 +3573,11 @@ Perl_amagic_applies(pTHX_ SV *sv, int method, int flags)
 */
 
 bool
-Perl_try_amagic_bin(pTHX_ int method, int flags) {
-    dSP;
-    SV* const left = TOPm1s;
-    SV* const right = TOPs;
+Perl_try_amagic_bin(pTHX_ int method, int flags)
+{
+    SV* left  = PL_stack_sp[-1];
+    SV* right = PL_stack_sp[0];
+    bool is_rc = rpp_stack_is_rc();
 
     SvGETMAGIC(left);
     if (left != right)
@@ -3572,50 +3592,77 @@ Perl_try_amagic_bin(pTHX_ int method, int flags) {
                     (mutator ? AMGf_assign: 0)
                   | (flags & AMGf_numarg));
         if (tmpsv) {
-            (void)POPs;
+            PL_stack_sp--;
+            if (is_rc)
+                SvREFCNT_dec_NN(right);
             /* where the op is one of the two forms:
              *    $x op= $y
              *    $lex = $x op $y (where the assign is optimised away)
              * then assign the returned value to targ and return that;
              * otherwise return the value directly
              */
+            SV *targ = tmpsv;;
             if (   mutator
                 || (   (PL_opargs[PL_op->op_type] & OA_TARGLEX)
                     && (PL_op->op_private & OPpTARGET_MY)))
             {
-                dTARG;
-                TARG = mutator ? *SP : PAD_SV(PL_op->op_targ);
-                sv_setsv(TARG, tmpsv);
-                SETTARG;
+                targ = mutator ? left : PAD_SV(PL_op->op_targ);
+                sv_setsv(targ, tmpsv);
+                SvSETMAGIC(targ);
             }
-            else
-                SETs(tmpsv);
+            if (targ != left) {
+                *PL_stack_sp = targ;
+                if (is_rc) {
+                    SvREFCNT_inc_NN(targ);
+                    SvREFCNT_dec_NN(left);
+                }
+            }
 
-            PUTBACK;
             return TRUE;
         }
     }
 
-    if(left==right && SvGMAGICAL(left)) {
-        SV * const left = sv_newmortal();
-        *(sp-1) = left;
+    /* if the same magic value appears on both sides, replace the LH one
+     * with a copy and call get magic on the RH one, so that magic gets
+     * called twice with possibly two different returned values */
+    if (left == right && SvGMAGICAL(left)) {
+        SV * const tmpsv = is_rc ? newSV_type(SVt_NULL) : sv_newmortal();
         /* Print the uninitialized warning now, so it includes the vari-
            able name. */
         if (!SvOK(right)) {
-            if (ckWARN(WARN_UNINITIALIZED)) report_uninit(right);
-            sv_setbool(left, FALSE);
+            if (ckWARN(WARN_UNINITIALIZED))
+                report_uninit(right);
+            sv_setbool(tmpsv, FALSE);
         }
-        else sv_setsv_flags(left, right, 0);
+        else
+            sv_setsv_flags(tmpsv, right, 0);
+        if (is_rc)
+            SvREFCNT_dec_NN(left);
+        left = PL_stack_sp[-1] = tmpsv;
         SvGETMAGIC(right);
     }
+
     if (flags & AMGf_numeric) {
-        if (SvROK(TOPm1s))
-            *(sp-1) = sv_2num(TOPm1s);
-        if (SvROK(right))
-            *sp     = sv_2num(right);
+        SV *tmpsv;
+        if (SvROK(left)) {
+            PL_stack_sp[-1] = tmpsv = sv_2num(left);
+            if (is_rc) {
+                SvREFCNT_inc_NN(tmpsv);
+                SvREFCNT_dec_NN(left);
+            }
+        }
+        if (SvROK(right)) {
+            PL_stack_sp[0]  = tmpsv = sv_2num(right);
+            if (is_rc) {
+                SvREFCNT_inc_NN(tmpsv);
+                SvREFCNT_dec_NN(right);
+            }
+        }
     }
+
     return FALSE;
 }
+
 
 /*
 =for apidoc amagic_deref_call
@@ -3971,6 +4018,15 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
     }
   }
 
+  /* If there's an optimised-away assignment such as $lex = $a + $b, where
+   * the  operator sets the targ lexical directly and skips the sassign,
+   * treat the op as scalar even if its marked as void */
+  if (   PL_op
+      && (PL_opargs[PL_op->op_type] & OA_TARGLEX)
+      && (PL_op->op_private & OPpTARGET_MY)
+  )
+      force_scalar = 1;
+
   switch (method) {
     /* in these cases, we're calling '+' or '-' as a fallback for a ++ or --
      * operation. we need this to return a value, so that it can be assigned
@@ -4095,7 +4151,7 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
                  * with the context of individual concats being scalar,
                  * regardless of the overall context of the multiconcat op
                  */
-    U8 gimme = (force_scalar || PL_op->op_type == OP_MULTICONCAT)
+    U8 gimme = (force_scalar || (PL_op && PL_op->op_type == OP_MULTICONCAT))
                     ? G_SCALAR : GIMME_V;
 
     CATCH_SET(TRUE);
@@ -4161,6 +4217,13 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
                 res = newSV_type_mortal(SVt_PVAV);
                 av_extend((AV *)res, nret);
                 while (nret--)
+                    /* Naughtily, we don't increment the ref counts
+                     * of the items we push onto the temporary array.
+                     * So we rely on the caller knowing not to decrement them,
+                     * and to empty the array before there's any chance of
+                     * it being freed. (Probably should either turn off
+                     * AvREAL or actually increment.)
+                     */
                     av_store((AV *)res, nret, POPs);
                 break;
             }

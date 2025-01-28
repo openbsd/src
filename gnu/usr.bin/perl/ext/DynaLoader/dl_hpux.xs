@@ -97,7 +97,7 @@ dl_load_file(filename, flags=0)
 
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%p\n", (void*)obj));
 end:
-    ST(0) = sv_newmortal() ;
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (obj == NULL)
         SaveError(aTHX_ "%s",Strerror(errno));
     else
@@ -134,7 +134,7 @@ dl_find_symbol(libhandle, symbolname, ign_err=0)
 			     "dl_find_symbol(handle=%lx, symbol=%s)\n",
 			     (unsigned long) libhandle, symbolname));
 
-    ST(0) = sv_newmortal() ;
+    ST(0) = newSV_type_mortal(SVt_IV);
     errno = 0;
 
     status = shl_findsym(&obj, symbolname, TYPE_PROCEDURE, &symaddr);

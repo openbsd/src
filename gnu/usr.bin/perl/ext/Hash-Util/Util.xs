@@ -241,10 +241,10 @@ bucket_array(rhv)
                     if (!key_av) {
                         key_av= newAV();
                         if (empty_count) {
-                            av_push(info_av, newSViv(empty_count));
+                            av_push_simple(info_av, newSViv(empty_count));
                             empty_count= 0;
                         }
-                        av_push(info_av, (SV *)newRV_noinc((SV *)key_av));
+                        av_push_simple(info_av, (SV *)newRV_noinc((SV *)key_av));
                     }
                     if (HeKLEN(he) == HEf_SVKEY) {
                         SV *sv= HeSVKEY(he);
@@ -257,7 +257,7 @@ bucket_array(rhv)
                         mode= HeKUTF8(he) ? 1 : 0;
                     }
                     key_sv= newSVpvn(str,len);
-                    av_push(key_av,key_sv);
+                    av_push_simple(key_av,key_sv);
                     if (mode) {
                         SvUTF8_on(key_sv);
                     }
@@ -266,7 +266,7 @@ bucket_array(rhv)
                     empty_count++;
             }
             if (empty_count) {
-                av_push(info_av, newSViv(empty_count));
+                av_push_simple(info_av, newSViv(empty_count));
                 empty_count++;
             }
         }

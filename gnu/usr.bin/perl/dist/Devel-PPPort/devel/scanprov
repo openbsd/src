@@ -62,7 +62,10 @@ our %opt = (
  'debug-start' => "",
 );
 
-GetOptions(\%opt, qw( install=s mode=s blead=s debug=i debug-start=s)) or die;
+GetOptions(\%opt, qw( install=s mode=s
+                      blead=s debug=i
+                      debug-start=s
+                      skip-devels)) or die;
 
 my $clean = $opt{mode} eq 'clean';
 my $write = $clean || $opt{mode} eq 'write';
@@ -166,6 +169,12 @@ if ($write) {
 
     # Only a few files will have exceptions that apply to them.  Rewrite each
     foreach my $version (keys %add_by_version) {
+        if (is_devel_release($version)) {
+            my ($super, $major, $minor) = parse_version($version);
+            $major++;   # Go to next highest version that isn't a devel
+            $version = "$super.$major.0";
+        }
+
         my $file = "$todo_dir/" . int_parse_version($version);
         print "-- Adding known exceptions to $file --\n";
         open my $fh, "+<", $file or die "$file: $!\n";

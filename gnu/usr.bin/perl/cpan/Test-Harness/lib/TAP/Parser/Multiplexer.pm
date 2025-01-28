@@ -18,11 +18,11 @@ TAP::Parser::Multiplexer - Multiplex multiple TAP::Parsers
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =cut
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 =head1 SYNOPSIS
 
@@ -134,7 +134,7 @@ sub _iter {
         until (@ready) {
             return unless $sel->count;
             @ready = $sel->can_read;
-            last if @ready || $! != Errno::EINTR;
+            last if @ready || !$!{EINTR};
         }
 
         my ( $h, $parser, $stash, @handles ) = @{ shift @ready };

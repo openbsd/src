@@ -62,7 +62,8 @@ my $b3 = ExtUtils::CBuilder->new(quiet => 1);
 configure_fake_present_compilers($b3);
 is( $b3->have_compiler, 1, "have_compiler: fake present cc" );
 }
-{
+SKIP: {
+skip 'C++ test is broken on windows', 1 if $^O eq 'MSWin32';
 my $b4 = ExtUtils::CBuilder->new(quiet => 1);
 configure_fake_present_compilers($b4);
 is( $b4->have_cplusplus, 1, "have_cpp_compiler: fake present c++" );

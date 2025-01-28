@@ -355,6 +355,38 @@ our $VERSION = '1.23_00_00';
   all_versions => { Simple => 'v1.2_3' },
 },
 {
+  name => 'class NAME VERSION',
+  code => <<'---',
+  class Simple 1.23;
+---
+  vers => '1.23',
+  all_versions => { Simple => '1.23' },
+},
+{
+  name => 'class NAME VERSION',
+  code => <<'---',
+  class Simple 1.23_01;
+---
+  vers => '1.23_01',
+  all_versions => { Simple => '1.23_01' },
+},
+{
+  name => 'class NAME VERSION',
+  code => <<'---',
+  class Simple v1.2.3;
+---
+  vers => 'v1.2.3',
+  all_versions => { Simple => 'v1.2.3' },
+},
+{
+  name => 'class NAME VERSION',
+  code => <<'---',
+  class Simple v1.2_3;
+---
+  vers => 'v1.2_3',
+  all_versions => { Simple => 'v1.2_3' },
+},
+{
   name => 'trailing crud',
   code => <<'---',
   package Simple;
@@ -428,6 +460,46 @@ package Simple 1.23 {
   name => 'package NAME VERSION BLOCK (2)',
   code => <<'---',
 package Simple v1.2.3_4 {
+  1;
+}
+---
+  vers => 'v1.2.3_4',
+  all_versions => { Simple => 'v1.2.3_4' },
+},
+{
+  name => 'class NAME BLOCK, undef $VERSION',
+  code => <<'---',
+class Simple {
+  our $VERSION;
+}
+---
+  vers => $undef,
+  all_versions => {},
+},
+{
+  name => 'class NAME BLOCK, with $VERSION',
+  code => <<'---',
+class Simple {
+  our $VERSION = '1.23';
+}
+---
+  vers => '1.23',
+  all_versions => { Simple => '1.23' },
+},
+{
+  name => 'class NAME VERSION BLOCK (1)',
+  code => <<'---',
+class Simple 1.23 {
+  1;
+}
+---
+  vers => '1.23',
+  all_versions => { Simple => '1.23' },
+},
+{
+  name => 'class NAME VERSION BLOCK (2)',
+  code => <<'---',
+class Simple v1.2.3_4 {
   1;
 }
 ---
@@ -619,6 +691,7 @@ my $tmpdir = GeneratePackage::tmpdir();
 
 # iterate through @modules
 foreach my $test_case (@modules) {
+  note '';
   note '-------';
   note $test_case->{name};
   my $code = $test_case->{code};

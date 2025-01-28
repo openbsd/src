@@ -5,7 +5,7 @@ use warnings;
 no warnings 'experimental::builtin';
 use builtin qw(reftype);
 
-our $VERSION = '1.26';
+our $VERSION = '1.27';
 
 use Exporter 'import';
 our %EXPORT_TAGS = (

@@ -116,7 +116,11 @@ Do things we normally would refuse to do.
 
 =item C<--tarball>
 
-Use a predownloaded tarball and not one from CPAN.
+Use a predownloaded tarball and not one from CPAN.  Example:
+
+    perl Porting/sync-with-cpan Text-Tabs+Wrap \
+        --tarball /tmp/Text-Tabs+Wrap-2024.001.tar.gz \
+        --yes
 
 =item C<--version>
 
@@ -209,7 +213,7 @@ my $package_file = "$tmpdir/$package"; # this is a cache
 my $type_dir     = "cpan";
 
 my @problematic = (
-    # no current entries as of perl-5.38.2 (Jun 2023)
+    # no current entries as of perl-5.40.1 (Jan 2025)
 );
 
 
@@ -380,7 +384,7 @@ pause_for_input("\n");
 # in the way, or other issues that might come up if the user bails out of the sync
 # script and then runs it again.
 my $clean_out= `git clean -dfx $type_dir`; # use backticks to hide the output
-system git => 'checkout -f',
+system git => 'checkout', '-f',
               $type_dir,
               'MANIFEST',
               'Porting/Maintainers.pl'; # let the user see the output
@@ -406,9 +410,10 @@ chdir "$type_dir";
 my  $pkg_dir      = $files[0];
     $pkg_dir      =~ s!.*/!!;
 
-my $tail_pat = qr/(?:\.tar\.gz|\.tgz|\.zip)\z/;
+my $tail_pat = qr/\.(?:tar\.(?:g?z|bz2|Z)|zip|tgz|tbz)/;
+my $version_pat = qr/-v?([0-9._]+(?:-TRIAL[0-9]*)?)$tail_pat\z/;
 
-my ($old_version) = $distribution =~ /-([0-9._]+(?:-TRIAL[0-9]*)?)$tail_pat/;
+my ($old_version) = $distribution =~ $version_pat;
 
 if (!$old_version) {
     die "WTF: failed to parse old version from '$distribution'\n";
@@ -453,7 +458,7 @@ if (defined $tarball) {
     die "Tarball $tarball does not exist\n" if !-e $tarball;
     die "Tarball $tarball is not a plain file\n" if !-f _;
     $new_file     = $tarball;
-    $new_version  = $version // ($new_file =~ /-([0-9._]+(?:-TRIAL[0-9]*)?)$tail_pat/) [0];
+    $new_version  = $version // ($new_file =~ $version_pat) [0];
     die "Blead and that tarball both have version $new_version of $module\n"
         if $new_version eq $old_version;
 }
@@ -500,7 +505,7 @@ system git => 'clean', '-dfxq', $pkg_dir;
 say "Unpacking $new_file";
 Archive::Tar->extract_archive( $new_file );
 
-(my $new_dir = basename($new_file)) =~ s/$tail_pat//;
+(my $new_dir = basename($new_file)) =~ s/$tail_pat\z//;
 # ensure 'make' will update all files
 my $t= time;
 for my $file (find_type_f($new_dir)) {

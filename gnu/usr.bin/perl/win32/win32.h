@@ -259,8 +259,10 @@ union PerlNan { unsigned __int64 __q; double __d; };
 extern const __declspec(selectany) union PerlNan __PL_nan_u = { 0x7FF8000000000000UI64 };
 #define NV_NAN ((NV)__PL_nan_u.__d)
 
+#endif /* ifdef _MSC_VER */
+
 /* The CRT was rewritten in VS2015. */
-#if _MSC_VER >= 1900
+#ifdef _UCRT
 
 /* No longer declared in stdio.h */
 EXTERN_C char *gets(char* buffer);
@@ -274,7 +276,7 @@ typedef struct
     {
         FILE  _public_file;
         char* _ptr;
-    };
+    } u;
 
     char*            _base;
     int              _cnt;
@@ -289,17 +291,13 @@ typedef struct
 #define PERLIO_FILE_flag_RD 0x0001 /* _IOREAD   */
 #define PERLIO_FILE_flag_WR 0x0002 /* _IOWRITE  */
 #define PERLIO_FILE_flag_RW 0x0004 /* _IOUPDATE */
-#define PERLIO_FILE_ptr(f)  (((__crt_stdio_stream_data*)(f))->_ptr)
+#define PERLIO_FILE_ptr(f)  (((__crt_stdio_stream_data*)(f))->u._ptr)
 #define PERLIO_FILE_base(f) (((__crt_stdio_stream_data*)(f))->_base)
 #define PERLIO_FILE_cnt(f)  (((__crt_stdio_stream_data*)(f))->_cnt)
 #define PERLIO_FILE_flag(f) ((int)(((__crt_stdio_stream_data*)(f))->_flags))
 #define PERLIO_FILE_file(f) (*(int*)(&((__crt_stdio_stream_data*)(f))->_file))
 
-#endif
-
-#endif /* _MSC_VER */
-
-#if (!defined(_MSC_VER)) || (defined(_MSC_VER) && _MSC_VER < 1900)
+#else /* ifdef _UCRT */
 
 /* Note: PERLIO_FILE_ptr/base/cnt are not actually used for GCC or <VS2015
  * since FILE_ptr/base/cnt do the same thing anyway but it doesn't hurt to

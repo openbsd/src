@@ -1,5 +1,5 @@
 #
-# $Id: mime-name.t,v 1.3 2017/10/06 22:21:53 dankogai Exp $
+# $Id: mime-name.t,v 1.4 2023/11/10 01:10:50 dankogai Exp $
 # This script is written in utf8
 #
 BEGIN {
@@ -7,7 +7,7 @@ BEGIN {
         chdir 't';
         unshift @INC, '../lib';
     }
-    require Config; import Config;
+    require Config; Config->import();
     if ($Config{'extensions'} !~ /\bEncode\b/) {
       print "1..0 # Skip: Encode was not built\n";
       exit 0;

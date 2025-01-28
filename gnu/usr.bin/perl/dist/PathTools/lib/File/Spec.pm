@@ -2,7 +2,9 @@ package File::Spec;
 
 use strict;
 
-our $VERSION = '3.88';
+# Keep $VERSION consistent in all *.pm files in this distribution, including
+# Cwd.pm.
+our $VERSION = '3.91';
 $VERSION =~ tr/_//d;
 
 my %module = (

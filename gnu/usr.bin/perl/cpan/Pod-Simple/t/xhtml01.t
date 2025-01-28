@@ -1,16 +1,7 @@
-#!/usr/bin/perl -w
-
 # t/xhtml01.t - check basic output from Pod::Simple::XHTML
-
-BEGIN {
-    chdir 't' if -d 't';
-}
-
 use strict;
 use warnings;
-use lib '../lib';
 use Test::More tests => 64;
-#use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
 
@@ -780,10 +771,10 @@ is $parser->batch_mode_current_level, 6,
 ######################################
 
 sub initialize {
-	$_[0] = Pod::Simple::XHTML->new ();
+    $_[0] = Pod::Simple::XHTML->new ();
         $_[0]->html_header("");
         $_[0]->html_footer("");
-	$_[0]->output_string( \$results ); # Send the resulting output to a string
-	$_[1] = '';
-	return;
+    $_[0]->output_string( \$results ); # Send the resulting output to a string
+    $_[1] = '';
+    return;
 }

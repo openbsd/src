@@ -367,7 +367,6 @@ SKIP: {
 pop @INC;
 
 if ($can_fork) {
-    require PerlIO::scalar;
     # This little bundle of joy generates n more recursive use statements,
     # with each module chaining the next one down to 0. If it works, then we
     # can safely nest subprocesses

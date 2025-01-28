@@ -133,6 +133,24 @@ EXPECT
 Use of '«' is deprecated as a string delimiter at - line 3.
 Can't find string terminator "«" anywhere before EOF at - line 5.
 ########
+# NAME mirrored delimiters in R-to-L scripts are invalid
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+use feature 'extra_paired_delimiters';
+my $good = q܈this string is delimitted by a symbol in a R-to-L script܈;
+$good = q܇this string is delimitted by a symbol in a R-to-L script܇;
+my $bad = q܈Can't use mirrored R-to-L script delimiters܇;
+EXPECT
+Can't find string terminator "܈" anywhere before EOF at - line 6.
+########
+# NAME mirrored delimiters in R-to-L scripts are invalid in the other order too
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+use feature 'extra_paired_delimiters';
+my $bad = q܇Can't use mirrored R-to-L script delimiters܈;
+EXPECT
+Can't find string terminator "܇" anywhere before EOF at - line 4.
+########
 # NAME paired above Latin1 delimiters need feature enabled
 BEGIN { binmode STDERR, ":utf8" }
 use utf8;

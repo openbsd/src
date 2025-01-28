@@ -337,8 +337,9 @@ dereferenced to get the original C<SV*>.
 
 They differ only in how the hash key is specified.
 
-In C<hv_stores>, the key is a C language string literal, enclosed in double
-quotes.  It is never treated as being in UTF-8.
+In C<hv_stores>, the key must be a C language string literal, enclosed in
+double quotes.  It is never treated as being in UTF-8.  There is no
+length_parameter.
 
 In C<hv_store>, C<key> is either NULL or points to the first byte of the string
 specifying the key, and its length in bytes is given by the absolute value of
@@ -397,21 +398,34 @@ See L<perlguts/"Understanding the Magic of Tied Hashes and Arrays"> for more
 information on how to use this function on tied hashes.
 
 =for apidoc hv_exists
+=for apidoc_item ||hv_existss|HV *hv|"key"
 
-Returns a boolean indicating whether the specified hash key exists.  The
-absolute value of C<klen> is the length of the key.  If C<klen> is
-negative the key is assumed to be in UTF-8-encoded Unicode.
+These return a boolean indicating whether the specified hash key exists.
+
+In C<hv_existss>, the key must be a C language string literal, enclosed in
+double quotes.  It is never treated as being in UTF-8.  There is no
+length_parameter.
+
+In C<hv_exists>, the absolute value of C<klen> is the length of the key.  If
+C<klen> is negative the key is assumed to be in UTF-8-encoded Unicode.
 
 =for apidoc hv_fetch
+=for apidoc_item ||hv_fetchs|HV *hv|"key"|I32 lval
 
-Returns the SV which corresponds to the specified key in the hash.
-The absolute value of C<klen> is the length of the key.  If C<klen> is
-negative the key is assumed to be in UTF-8-encoded Unicode.  If
-C<lval> is set then the fetch will be part of a store.  This means that if
-there is no value in the hash associated with the given key, then one is
-created and a pointer to it is returned.  The C<SV*> it points to can be
-assigned to.  But always check that the
-return value is non-null before dereferencing it to an C<SV*>.
+These return the SV which corresponds to the specified key in the hash.
+
+In C<hv_fetchs>, the key must be a C language string literal, enclosed in
+double quotes.  It is never treated as being in UTF-8.  There is no
+length_parameter.
+
+In C<hv_fetch>, the absolute value of C<klen> is the length of the key.  If
+C<klen> is negative the key is assumed to be in UTF-8-encoded Unicode.
+
+In both, if C<lval> is set, then the fetch will be part of a store.  This means
+that if there is no value in the hash associated with the given key, then one
+is created and a pointer to it is returned.  The C<SV*> it points to can be
+assigned to.  But always check that the return value is non-null before
+dereferencing it to an C<SV*>.
 
 See L<perlguts/"Understanding the Magic of Tied Hashes and Arrays"> for more
 information on how to use this function on tied hashes.
@@ -1151,8 +1165,6 @@ Perl_hv_pushkv(pTHX_ HV *hv, U32 flags)
                                    || mg_find(MUTABLE_SV(hv), PERL_MAGIC_env)
 #endif
                                   );
-    dSP;
-
     PERL_ARGS_ASSERT_HV_PUSHKV;
     assert(flags); /* must be pushing at least one of keys and values */
 
@@ -1161,11 +1173,11 @@ Perl_hv_pushkv(pTHX_ HV *hv, U32 flags)
     if (tied) {
         SSize_t ext = (flags == 3) ? 2 : 1;
         while ((entry = hv_iternext(hv))) {
-            EXTEND(SP, ext);
+            rpp_extend(ext);
             if (flags & 1)
-                PUSHs(hv_iterkeysv(entry));
+                rpp_push_1(hv_iterkeysv(entry));
             if (flags & 2)
-                PUSHs(hv_iterval(hv, entry));
+                rpp_push_1(hv_iterval(hv, entry));
         }
     }
     else {
@@ -1180,21 +1192,19 @@ Perl_hv_pushkv(pTHX_ HV *hv, U32 flags)
         ext = nkeys * ((flags == 3) ? 2 : 1);
 
         EXTEND_MORTAL(nkeys);
-        EXTEND(SP, ext);
+        rpp_extend(ext);
 
         while ((entry = hv_iternext(hv))) {
             if (flags & 1) {
                 SV *keysv = newSVhek(HeKEY_hek(entry));
                 SvTEMP_on(keysv);
                 PL_tmps_stack[++PL_tmps_ix] = keysv;
-                PUSHs(keysv);
+                rpp_push_1(keysv);
             }
             if (flags & 2)
-                PUSHs(HeVAL(entry));
+                rpp_push_1(HeVAL(entry));
         }
     }
-
-    PUTBACK;
 }
 
 
@@ -1239,13 +1249,21 @@ Perl_hv_bucket_ratio(pTHX_ HV *hv)
 
 /*
 =for apidoc hv_delete
+=for apidoc_item ||hv_deletes|HV *hv|"key"|U32 flags
 
-Deletes a key/value pair in the hash.  The value's SV is removed from
-the hash, made mortal, and returned to the caller.  The absolute
-value of C<klen> is the length of the key.  If C<klen> is negative the
-key is assumed to be in UTF-8-encoded Unicode.  The C<flags> value
-will normally be zero; if set to C<G_DISCARD> then C<NULL> will be returned.
-C<NULL> will also be returned if the key is not found.
+These delete a key/value pair in the hash.  The value's SV is removed from
+the hash, made mortal, and returned to the caller.
+
+In C<hv_deletes>, the key must be a C language string literal, enclosed in
+double quotes.  It is never treated as being in UTF-8.  There is no
+length_parameter.
+
+In C<hv_delete>, the absolute value of C<klen> is the length of the key.  If
+C<klen> is negative the key is assumed to be in UTF-8-encoded Unicode.
+
+In both, the C<flags> value will normally be zero; if set to C<G_DISCARD> then
+C<NULL> will be returned.  C<NULL> will also be returned if the key is not
+found.
 
 =for apidoc hv_delete_ent
 
@@ -2245,9 +2263,10 @@ Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
      * in sv_clear(), and changes here should be done there too */
     if (PL_phase != PERL_PHASE_DESTRUCT && HvHasNAME(hv)) {
         if (PL_stashcache) {
+            HEK *hek = HvNAME_HEK(hv);
             DEBUG_o(Perl_deb(aTHX_ "hv_undef_flags clearing PL_stashcache for '%"
-                             HEKf "'\n", HEKfARG(HvNAME_HEK(hv))));
-            (void)hv_deletehek(PL_stashcache, HvNAME_HEK(hv), G_DISCARD);
+                             HEKf "'\n", HEKfARG(hek)));
+            (void)hv_deletehek(PL_stashcache, hek, G_DISCARD);
         }
         hv_name_set(hv, NULL, 0, 0);
     }

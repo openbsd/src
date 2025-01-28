@@ -4,7 +4,7 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    require Config; import Config;
+    require Config; Config->import;
     require constant;
     constant->import(constcow => *Config::{NAME});
     require './charset_tools.pl';

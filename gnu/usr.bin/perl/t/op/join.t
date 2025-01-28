@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 29;
+plan tests => 43;
 
 @x = (1, 2, 3);
 is( join(':',@x), '1:2:3', 'join an array with character');
@@ -128,3 +128,90 @@ package o { use overload q|""| => sub { ${$_[0]}++ } }
 for(1,2) { push @_, \join "x", 1 }
 isnt $_[1], $_[0],
     'join(const, const) still returns a new scalar each time';
+
+# tests from GH #21458
+# simple tied variable
+{
+    package S;
+    our $fetched;
+    sub TIESCALAR { my $x = '-';   $fetched = 0; bless \$x }
+    sub FETCH     { my $y = shift; $fetched++;   $$y }
+
+    package main;
+    my $t;
+
+    tie $t, 'S';
+    is( join( $t, a .. c ), 'a-b-c', 'tied separator' );
+    is( $S::fetched,    1,       'FETCH called once' );
+
+    tie $t, 'S';
+    is( join( $t, 'a' ), 'a', 'tied separator on single item join' );
+    is( $S::fetched,     0,   'FETCH not called' );
+
+    tie $t, 'S';
+    is( join( $t, 'a', $t, 'b', $t, 'c' ),
+        'a---b---c', 'tied separator also in the join arguments' );
+    is( $S::fetched, 3, 'FETCH called 1 + 2 times' );
+}
+# self-modifying tied variable
+{
+
+    package SM;
+    our $fetched;
+    sub TIESCALAR { my $x = "1";   $fetched = 0; bless \$x }
+    sub FETCH     { my $y = shift; $fetched++;   $$y += 3 }
+
+    package main;
+    my $t;
+
+    tie $t, "SM";
+    is( join( $t, a .. c ), 'a4b4c', 'tied separator' );
+    is( $SM::fetched,   1,       'FETCH called once' );
+
+    tie $t, "SM";
+    is( join( $t, 'a' ), 'a', 'tied separator on single item join' );
+    is( $SM::fetched,    0,   'FETCH not called' );
+
+    tie $t, "SM";
+    is( join( $t, "a", $t, "b", $t, "c" ),
+        'a474b4104c', 'tied separator also in the join arguments' );
+    is( $SM::fetched, 3, 'FETCH called 1 + 2 times' );
+}
+{
+    # see GH #21484
+    my $expect = "a\x{100}\x{100}x\x{100}\x{100}b\n";
+    utf8::encode($expect);
+    fresh_perl_is(<<'CODE', $expect, {}, "modifications delim from magic should be ignored");
+# The x $n here is to ensure the PV of $sep isn't a COW of some other SV
+# so the PV of $sep is unlikely to change when the overload assigns to $sep.
+my $n = 2;
+my $sep = "\x{100}" x $n;
+package MyOver {
+    use overload '""' => sub { $sep = "\xFF" x $n; "x" };
+}
+
+my $x = bless {}, "MyOver";
+binmode STDOUT, ":utf8";
+print join($sep, "a", $x, "b"), "\n";
+CODE
+}
+{
+    # see GH #21484
+    my $expect = "x\x{100}\x{100}a\n";
+    utf8::encode($expect); # fresh_perl() does bytes
+    fresh_perl_is(<<'CODE', $expect, {}, "modifications to delim PVX shouldn't crash");
+# the x $n here is to ensure $sep has it's own PV rather than sharing it
+# in a COW sense,  This means that when the expanded version ($n+20) is assigned
+# the origin PV has been released and valgrind or ASAN can pick up the use
+# of the freed buffer.
+my $n = 2;
+my $sep = "\x{100}" x $n;
+package MyOver {
+  use overload '""' => sub { $sep = "\xFF" x ($n+20); "x" };
+}
+
+my $x = bless {}, "MyOver";
+binmode STDOUT, ":utf8";
+print join($sep, $x, "a"), "\n";
+CODE
+}

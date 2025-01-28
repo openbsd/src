@@ -233,7 +233,7 @@ thus:
 In this way (as for perl's scalars) a pointer to a PerlIOBuf can be
 treated as a pointer to a PerlIOl.
 
-=head2 Layers in action.
+=head2 Layers in action
 
                 table           perlio          unix
             |           |

@@ -4,7 +4,7 @@
 # functions imported from t/test.pl or Test::More, as those programs/libraries
 # use operators which are what is being tested in this file.
 
-print "1..180\n";
+print "1..183\n";
 
 sub try ($$$) {
    print +($_[1] ? "ok" : "not ok") . " $_[0] - $_[2]\n";
@@ -438,3 +438,7 @@ tryeq $T++, -0x80000000 /  0x80000000, -1, 'IV_MIN / (IV_MAX+1)';
 tryeq $T++,  0x80000000 / -1, -0x80000000, '(IV_MAX+1) / -1';
 tryeq $T++,           0 % -0x80000000,  0, '0 % IV_MIN';
 tryeq $T++, -0x80000000 % -0x80000000,  0, 'IV_MIN % IV_MIN';
+
+tryeq $T++,  0x3ffffffe % -0xc0000000, -0x80000002, 'modulo is (IV_MIN-2)';
+tryeq $T++,  0x3fffffff % -0xc0000000, -0x80000001, 'modulo is (IV_MIN-1)';
+tryeq $T++,  0x40000000 % -0xc0000000, -0x80000000, 'modulo is IV_MIN';

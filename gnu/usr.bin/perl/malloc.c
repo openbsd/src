@@ -239,13 +239,9 @@
 #define PERL_IN_MALLOC_C
 #include "perl.h"
 #if defined(MULTIPLICITY)
-#    define croak	Perl_croak_nocontext
 #    define croak2	Perl_croak_nocontext
-#    define warn	Perl_warn_nocontext
-#    define warn2	Perl_warn_nocontext
 #else
 #    define croak2	croak
-#    define warn2	warn
 #endif
 #ifdef USE_ITHREADS
 #     define PERL_MAYBE_ALIVE	PL_thr_key
@@ -1708,7 +1704,7 @@ morecore(int bucket)
 #endif
         if (bucket == sizeof(MEM_SIZE)*8*BUCKETS_PER_POW2) {
             MALLOC_UNLOCK;
-            croak("%s", "Out of memory during ridiculously large request");
+            croak2("%s", "Out of memory during ridiculously large request");
         }
         if (bucket > max_bucket)
             max_bucket = bucket;

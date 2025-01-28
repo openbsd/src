@@ -1,19 +1,12 @@
-package User::grent;
-use strict;
+package User::grent 1.05;
+use v5.38;
 
-use 5.006_001;
-our $VERSION = '1.04';
-our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 our ($gr_name, $gr_gid, $gr_passwd, @gr_members);
-BEGIN { 
-    use Exporter   ();
-    @EXPORT      = qw(getgrent getgrgid getgrnam getgr);
-    @EXPORT_OK   = qw($gr_name $gr_gid $gr_passwd @gr_members);
-    %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-}
 
-# Class::Struct forbids use of @ISA
-sub import { goto &Exporter::import }
+use Exporter 'import';
+our @EXPORT      = qw(getgrent getgrgid getgrnam getgr);
+our @EXPORT_OK   = qw($gr_name $gr_gid $gr_passwd @gr_members);
+our %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 
 use Class::Struct qw(struct);
 struct 'User::grent' => [
@@ -23,7 +16,7 @@ struct 'User::grent' => [
     members => '@',
 ];
 
-sub populate (@) {
+sub populate {
     return unless @_;
     my $gob = new();
     ($gr_name, $gr_passwd, $gr_gid) = @$gob[0,1,2] = @_[0,1,2];
@@ -31,12 +24,11 @@ sub populate (@) {
     return $gob;
 } 
 
-sub getgrent ( ) { populate(CORE::getgrent()) } 
-sub getgrnam ($) { populate(CORE::getgrnam(shift)) } 
-sub getgrgid ($) { populate(CORE::getgrgid(shift)) } 
-sub getgr    ($) { ($_[0] =~ /^\d+/) ? &getgrgid : &getgrnam } 
+sub getgrent :prototype( ) { populate(CORE::getgrent()) }
+sub getgrnam :prototype($) { populate(CORE::getgrnam(shift)) }
+sub getgrgid :prototype($) { populate(CORE::getgrgid(shift)) }
+sub getgr    :prototype($) { ($_[0] =~ /^\d+/) ? &getgrgid : &getgrnam }
 
-1;
 __END__
 
 =head1 NAME

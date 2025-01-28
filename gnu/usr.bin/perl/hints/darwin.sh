@@ -287,14 +287,14 @@ case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
    ldflags="${ldflags} -flat_namespace"
    lddlflags="${ldflags} -bundle -undefined suppress"
    ;;
-[7-9].*)   # OS X 10.3.x - 10.5.x
+[7-8].*)   # OS X 10.3.x - 10.4.x
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    case "$ld" in
        *MACOSX_DEPLOYMENT_TARGET*) ;;
        *) ld="env MACOSX_DEPLOYMENT_TARGET=10.3 ${ld}" ;;
    esac
    ;;
-*)        # OS X 10.6.x - current
+*)        # OS X 10.5.x - current
    # The MACOSX_DEPLOYMENT_TARGET is not needed,
    # but the -mmacosx-version-min option is always used.
 
@@ -357,12 +357,16 @@ EOM
         esac
     fi
 
-    # The OS is buggy with respect to this.
-    ccflags="$ccflags -DNO_POSIX_2008_LOCALE"
-
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    ;;
 esac
+
+# Darwin's querylocale() has races
+ccflags="$ccflags -DNO_THREAD_SAFE_QUERYLOCALE"
+
+# But it doesn't much matter because the whole implementation has bugs [GH
+# #21556]
+ccflags="$ccflags -DNO_POSIX_2008_LOCALE"
 
 ldlibpthname='DYLD_LIBRARY_PATH';
 

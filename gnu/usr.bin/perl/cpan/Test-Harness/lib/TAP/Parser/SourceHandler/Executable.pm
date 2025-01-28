@@ -3,6 +3,8 @@ package TAP::Parser::SourceHandler::Executable;
 use strict;
 use warnings;
 
+use File::Spec;
+
 use TAP::Parser::IteratorFactory   ();
 use TAP::Parser::Iterator::Process ();
 
@@ -16,11 +18,11 @@ TAP::Parser::SourceHandler::Executable - Stream output from an executable TAP so
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =cut
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 =head1 SYNOPSIS
 
@@ -107,7 +109,8 @@ sub make_iterator {
         @command = @{ $source->raw->{exec} || [] };
     }
     elsif ( $meta->{is_scalar} ) {
-        @command = ${ $source->raw };
+        @command = File::Spec->rel2abs( ${ $source->raw } )
+          if ${ $source->raw };
     }
     elsif ( $meta->{is_array} ) {
         @command = @{ $source->raw };

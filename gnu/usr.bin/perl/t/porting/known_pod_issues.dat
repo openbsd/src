@@ -1,4 +1,4 @@
-# This file is the data file for porting/podcheck.t.
+# This file is the data file for t/porting/podcheck.t.
 # There are three types of lines.
 # Comment lines are white-space only or begin with a '#', like this one.  Any
 #   changes you make to the comment lines will be lost when the file is
@@ -20,6 +20,7 @@ AnyEvent
 Apache::DProf
 Apache::MP3
 Apache::SmallProf
+App::find2perl
 Archive::Extract
 Array::Base
 arybase
@@ -28,6 +29,7 @@ atof(3)
 atoi(3)
 Attribute::Constant
 autobox
+B::Debug
 B::Generate
 B::Lint
 B::Lint::Debug
@@ -55,6 +57,7 @@ Class::PseudoHash
 Class::Tiny
 Class::Tiny::Antlers
 Classic::Perl
+CLDR::Number
 clearerr(3)
 clock(3)
 clock_getres(3)
@@ -87,6 +90,7 @@ Data::Util
 Date::Parse
 Date::Pcalc
 DateTime
+DateTime::Format::CLDR
 DB_File(3)
 DBI
 DBIx::Profile
@@ -122,6 +126,7 @@ fchdir(2)
 fchmod(2)
 fchown(2)
 fcntl(2)
+fdatasync(2)
 fdopen(3)
 fetch(1)
 FFI::Platypus
@@ -135,12 +140,14 @@ File::MMagic
 File::ShareDir
 Filter::Encoding
 find(1)
+find2perl
 flock(2)
 flock(3)
 fopen(3)
 fork(2)
 fread(3)
 fseek(3)
+fsync(2)
 fsync(3c)
 Function::Parameters
 futimes(2)
@@ -160,6 +167,7 @@ HTML::StripScripts
 HTTP::Lite
 iconv(1)
 iconv(3)
+Importer
 indirect
 inetd(8)
 invoker
@@ -184,6 +192,8 @@ Lingua::ZH::Romanize::Pinyin
 List::Gather
 listen(2)
 local::lib
+locale(7)
+Locale::CLDR
 Locale::Codes
 Locale::Country
 Locale::Language
@@ -278,6 +288,7 @@ printf(3)
 provide
 ptar(1)
 ptargrep(1)
+pthreads(7)
 pwd_mkdb(8)
 querylocale(3)
 RDF::Trine
@@ -290,6 +301,7 @@ Role::Tiny
 RPerl
 s2p
 Scalar::Readonly
+Scope::Guard
 Scope::Upper
 sdbm(3)
 select(2)
@@ -332,6 +344,7 @@ String::Base
 String::Scanf
 String::Util
 strstr(3)
+strtok(3)
 strtol(3)
 Switch
 tar(1)
@@ -401,7 +414,6 @@ install	? Should you be using F<...> or maybe L<...> instead of	1
 install	Verbatim line length including indents exceeds 78 by	2
 pod/perl.pod	Verbatim line length including indents exceeds 78 by	5
 pod/perlandroid.pod	Verbatim line length including indents exceeds 78 by	3
-pod/perlbook.pod	Verbatim line length including indents exceeds 78 by	1
 pod/perldebguts.pod	Verbatim line length including indents exceeds 78 by	-1
 pod/perldebtut.pod	Verbatim line length including indents exceeds 78 by	2
 pod/perldtrace.pod	Verbatim line length including indents exceeds 78 by	-1
@@ -420,6 +432,7 @@ pod/perlrun.pod	Verbatim line length including indents exceeds 78 by	3
 pod/perlsolaris.pod	Verbatim line length including indents exceeds 78 by	-1
 pod/perltie.pod	Verbatim line length including indents exceeds 78 by	3
 pod/perltru64.pod	Verbatim line length including indents exceeds 78 by	1
+porting/bisect-runner.pl	Verbatim line length including indents exceeds 78 by	2
 porting/epigraphs.pod	Verbatim line length including indents exceeds 78 by	-1
 porting/release_managers_guide.pod	Verbatim line length including indents exceeds 78 by	1
 lib/benchmark.pm	Verbatim line length including indents exceeds 78 by	2

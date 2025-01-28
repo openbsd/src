@@ -47,6 +47,14 @@
 #  define GCC_DIAG_RESTORE_STMT GCC_DIAG_RESTORE NOOP
 #endif
 
+#ifdef __cplusplus
+#  define GCC_DIAG_IGNORE_CPP_COMPAT_STMT NOOP
+#  define GCC_DIAG_IGNORE_CPP_COMPAT_RESTORE_STMT NOOP
+#else
+#  define GCC_DIAG_IGNORE_CPP_COMPAT_STMT GCC_DIAG_IGNORE_STMT(-Wc++-compat)
+#  define GCC_DIAG_IGNORE_CPP_COMPAT_RESTORE_STMT GCC_DIAG_RESTORE_STMT
+#endif
+
 #if PERL_VERSION_GE(5,7,3) && !PERL_VERSION_GE(5,10,1)
 #  undef SAVEOP
 #  define SAVEOP() SAVEVPTR(PL_op)
@@ -1238,7 +1246,7 @@ setitimer(which, seconds, interval = 0)
         /* on some platforms the 1st arg to setitimer is an enum, which
          * causes -Wc++-compat to complain about passing an int instead
          */
-        GCC_DIAG_IGNORE_STMT(-Wc++-compat);
+        GCC_DIAG_IGNORE_CPP_COMPAT_STMT;
         if (setitimer(which, &newit, &oldit) == 0) {
             EXTEND(sp, 1);
             PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_value))));
@@ -1247,7 +1255,7 @@ setitimer(which, seconds, interval = 0)
                 PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_interval))));
             }
         }
-        GCC_DIAG_RESTORE_STMT;
+        GCC_DIAG_IGNORE_CPP_COMPAT_RESTORE_STMT;
 
 void
 getitimer(which)
@@ -1258,7 +1266,7 @@ getitimer(which)
         /* on some platforms the 1st arg to getitimer is an enum, which
          * causes -Wc++-compat to complain about passing an int instead
          */
-        GCC_DIAG_IGNORE_STMT(-Wc++-compat);
+        GCC_DIAG_IGNORE_CPP_COMPAT_STMT;
         if (getitimer(which, &nowit) == 0) {
             EXTEND(sp, 1);
             PUSHs(sv_2mortal(newSVnv(TV2NV(nowit.it_value))));
@@ -1267,7 +1275,7 @@ getitimer(which)
                 PUSHs(sv_2mortal(newSVnv(TV2NV(nowit.it_interval))));
             }
         }
-        GCC_DIAG_RESTORE_STMT;
+        GCC_DIAG_IGNORE_CPP_COMPAT_RESTORE_STMT;
 
 #endif /* #if defined(HAS_GETITIMER) && defined(HAS_SETITIMER) */
 

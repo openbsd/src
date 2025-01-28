@@ -4,15 +4,15 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common 2.204 qw(:Status );
+use IO::Compress::Base::Common 2.212 qw(:Status );
 
-use IO::Uncompress::Base 2.204 ;
-use IO::Uncompress::Adapter::Bunzip2 2.204 ;
+use IO::Uncompress::Base 2.212 ;
+use IO::Uncompress::Adapter::Bunzip2 2.212 ;
 
 require Exporter ;
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $Bunzip2Error);
 
-$VERSION = '2.204';
+$VERSION = '2.212';
 $Bunzip2Error = '';
 
 @ISA    = qw(IO::Uncompress::Base Exporter);
@@ -420,7 +420,7 @@ C<InputLength> option.
 
 =back
 
-=head2 Examples
+=head2 OneShot Examples
 
 To read the contents of the file C<file1.txt.bz2> and write the
 uncompressed data to the file C<file1.txt>.
@@ -480,6 +480,9 @@ The format of the constructor for IO::Uncompress::Bunzip2 is shown below
     my $z = IO::Uncompress::Bunzip2->new( $input [OPTS] )
         or die "IO::Uncompress::Bunzip2 failed: $Bunzip2Error\n";
 
+The constructor takes one mandatory parameter, C<$input>, defined below, and
+zero or more C<OPTS>, defined in L<Constructor Options>.
+
 Returns an C<IO::Uncompress::Bunzip2> object on success and undef on failure.
 The variable C<$Bunzip2Error> will contain an error message on failure.
 
@@ -491,6 +494,20 @@ use either of these forms
 
     $line = $z->getline();
     $line = <$z>;
+
+Below is a simple exaple of using the OO interface to read the compressed file
+C<myfile.bz2> and write its contents to stdout.
+
+    my $filename = "myfile.bz2";
+    my $z = IO::Uncompress::Bunzip2->new($filename)
+        or die "IO::Uncompress::Bunzip2 failed: $Bunzip2Error\n";
+
+    while (<$z>) {
+        print $_;
+    }
+    $z->close();
+
+See L</EXAMPLES> for further examples
 
 The mandatory parameter C<$input> is used to determine the source of the
 compressed data. This parameter can take one of three forms.
@@ -616,10 +633,6 @@ taken for decompression.
 Default is 0.
 
 =back
-
-=head2 Examples
-
-TODO
 
 =head1 Methods
 
@@ -909,7 +922,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2023 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2024 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

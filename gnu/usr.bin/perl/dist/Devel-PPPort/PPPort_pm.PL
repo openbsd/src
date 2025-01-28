@@ -124,7 +124,7 @@ my @todo_list = reverse sort keys %todo;
 # directories are empty (which should only happen during regeneration of the
 # base and todo files).).  Actually the final element is for blead (at the
 # time things were regenerated), which is 1 beyond the max version supported.
-my $INT_MAX_PERL = (@todo_list) ? $todo_list[0] - 1 : '5034000'; # used for __MAX_PERL__
+my $INT_MAX_PERL = (@todo_list) ? $todo_list[0] - 1 : '5038000'; # used for __MAX_PERL__
 my $MAX_PERL = format_version($INT_MAX_PERL);
 my $INT_MIN_PERL = (@todo_list) ? $todo_list[-1] : 5003007;
 my $MIN_PERL = format_version($INT_MIN_PERL);
@@ -756,7 +756,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = '3.71';
+$VERSION = '3.72';
 
 sub _init_data
 {

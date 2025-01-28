@@ -5,9 +5,9 @@ use 5.008;
 use strict;
 use warnings;
 
-our $VERSION = '2.36';      # remember to update version in POD!
+our $VERSION = '2.40';      # remember to update version in POD!
 my $XS_VERSION = $VERSION;
-$VERSION = eval $VERSION;
+#$VERSION = eval $VERSION;
 
 # Verify this Perl supports threads
 require Config;
@@ -134,7 +134,7 @@ threads - Perl interpreter-based threads
 
 =head1 VERSION
 
-This document describes threads version 2.36
+This document describes threads version 2.40
 
 =head1 WARNING
 

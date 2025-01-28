@@ -5,7 +5,7 @@ use Exporter 'import';
 use ExtUtils::Embed 1.31, qw(xsi_header xsi_protos xsi_body);
 
 our @EXPORT = qw(writemain);
-our $VERSION = '1.13';
+our $VERSION = '1.14';
 
 # blead will run this with miniperl, hence we can't use autodie or File::Temp
 my $temp;
@@ -159,14 +159,12 @@ main(int argc, char **argv, char **env)
         perl_run(my_perl);
     }
 
-#ifndef PERL_MICRO
     /* Unregister our signal handler before destroying my_perl */
     for (i = 1; PL_sig_name[i]; i++) {
 	if (rsignal_state(PL_sig_num[i]) == (Sighandler_t) PL_csighandlerp) {
 	    rsignal(PL_sig_num[i], (Sighandler_t) SIG_DFL);
 	}
     }
-#endif
 
     exitstatus = perl_destruct(my_perl);
 

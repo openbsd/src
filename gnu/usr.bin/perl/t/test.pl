@@ -342,6 +342,50 @@ sub display {
     return @result;
 }
 
+
+# Escape a string in a similar (but not identical) fashion to how the
+# regex debugger does, using "x" style escapes in the form
+# "%x{01+bc+02+cd}" to show the codepoint of the escaped values.  Like
+# the regex debugger we use percentage instead of backslash so that it
+# is trivial to distinguish backslash based sequences that are commonly
+# found in regex patterns from escaped octets that are in the pattern.
+# To reduce the output length and improve clarity if there are multiple
+# escaped codepoints in a row we bundle them together into one "%x{...}"
+# structure.
+#
+# Implementation note: This code should work fine on all platforms as we
+# use utf8::native_to_unicode() to map native codepoints to unicode
+# (thanks Karl!) and back again, also we deliberately avoid using the
+# regex engine to do the escaping as this function is intended for cases
+# where we are testing the regex engine.
+#
+# WARNING: This function should only be used for diagnostic purposes, it
+# does not output valid code!
+
+sub display_rx {
+    my ($str) = @_;
+    my $escaped = "";
+    my @cp; # codepoints
+    for my $i (0 .. length($str)-1) {
+        my $char = substr($str,$i,1);
+        push @cp, utf8::native_to_unicode(ord($char));
+    }
+    while (@cp) {
+        my $ord = shift @cp;
+        if (32 <= $ord <= 126 and $ord != 37) {
+            $escaped .= chr(utf8::unicode_to_native($ord));
+        }
+        else {
+            my @cp_hex = sprintf "%02x", $ord;
+            while (@cp and $cp[0] != 37 and ($cp[0]<32 or $cp[0]>126)) {
+                push @cp_hex, sprintf "%02x", shift @cp;
+            }
+            $escaped .= sprintf "%%x{%s}", join "+", @cp_hex;
+        }
+    }
+    return $escaped;
+}
+
 sub is ($$@) {
     my ($got, $expected, $name, @mess) = @_;
 
@@ -363,7 +407,8 @@ sub is ($$@) {
             my $p = 0;
             $p++ while substr($got,$p,1) eq substr($expected,$p,1);
             push @mess,"#  diff at $p\n";
-            push @mess,"#    after "._qq(substr($got,$p-40<0 ? 0 : $p-40,40))."\n";
+            push @mess,"#    after "._qq(substr($got,$p < 40 ? 0  : $p - 40,
+                                                     $p < 40 ? $p : 40)) . "\n";
             push @mess,"#     have "._qq(substr($got,$p,40))."\n";
             push @mess,"#     want "._qq(substr($expected,$p,40))."\n";
         }
@@ -466,21 +511,17 @@ sub like_yn ($$$@) {
     # definitely not like(..., '/.../') like
     # Test::Builder::maybe_regex() does.
     unless (re::is_regexp($expected)) {
-	die "PANIC: The value '$expected' isn't a regexp. The like() function needs a qr// pattern, not a string";
+        die "PANIC: The value '$expected' isn't a regexp. The like() function needs a qr// pattern, not a string";
     }
 
-    my $pass;
-    $pass = $_[1] =~ /$expected/ if !$flip;
-    $pass = $_[1] !~ /$expected/ if $flip;
-    my $display_got = $_[1];
-    $display_got = display($display_got);
-    my $display_expected = $expected;
-    $display_expected = display($display_expected);
+    my $pass = ($flip) ? $_[1] !~ /$expected/ : $_[1] =~ /$expected/;
     unless ($pass) {
-	unshift(@mess, "#      got '$display_got'\n",
-		$flip
-		? "# expected !~ /$display_expected/\n"
-                : "# expected /$display_expected/\n");
+        my $display_got = display($_[1]);
+        my $display_expected = display($expected);
+        unshift(@mess, "#      got '$display_got'\n",
+            $flip
+            ? "# expected !~ /$display_expected/\n"
+            : "# expected /$display_expected/\n");
     }
     local $Level = $Level + 1;
     _ok($pass, _where(), $name, @mess);
@@ -1017,7 +1058,7 @@ sub _num_to_alpha {
 my %tmpfiles;
 sub unlink_tempfiles {
     unlink_all keys %tmpfiles;
-    %tempfiles = ();
+    %tmpfiles = ();
 }
 
 END { unlink_tempfiles(); }
@@ -1762,10 +1803,27 @@ sub warning_like {
     }
 }
 
-# Set a watchdog to timeout the entire test file.  The input seconds is
-# multiplied by $ENV{PERL_TEST_TIME_OUT_FACTOR} (default 1; minimum 1).
-# Set this in your profile for slow boxes, or use it to override the timeout
-# temporarily for debugging.
+# Set or clear a watchdog timer.  The input seconds is:
+#   zero      to clear;
+#   non-zero  to set
+# and is multiplied by $ENV{PERL_TEST_TIME_OUT_FACTOR} (default 1; minimum 1).
+# Set this variable in your profile for slow boxes, or use it to override the
+# timeout temporarily for debugging.
+#
+# This will figure out a suitable method to implement the timer, but you can
+# force it to use an alarm by setting the optional second parameter to
+# 'alarm', or to use a separate process (if available on this platform) by
+# setting that parameter to 'process'.
+#
+# It is good practice to CLEAR EVERY WATCHDOG timer.  Otherwise the timer
+# applies to the entire rest of the file.  Even if that works now, new tests
+# tend to get added to the end of the file, and people may not notice that
+# they are being timed.  Those tests may all complete before the timer kills
+# them, but then more new tests get added, even further away from the timer
+# setting code, with less likelihood of noticing that.  Those tests may also
+# generally work, but flap on heavily loaded smokers, leading to debugging
+# effort that wouldn't have had to be expended if the timer had been cancelled
+# in the first place
 #
 # NOTE:  If the test file uses 'threads', then call the watchdog() function
 #        _AFTER_ the 'threads' module is loaded.
@@ -1782,11 +1840,11 @@ sub watchdog ($;$)
     if ($timeout == 0) {
         if ($watchdog_thread) {
             $watchdog_thread->kill('KILL');
-            undef $watch_dog_thread;
+            undef $watchdog_thread;
         }
         elsif ($watchdog) {
             kill('KILL', $watchdog);
-            undef $watch_dog;
+            undef $watchdog;
         }
         else {
             alarm(0);
@@ -1965,8 +2023,8 @@ sub watchdog ($;$)
 
         # Don't proceed until the watchdog has set up its signal handler.
         # (Otherwise there is a possibility that we will exit with threads
-        # running.)  The watchdog tells us the handler is set by detaching
-        # itself.  (The 'is_running()' is a fail-safe.)
+        # running.)  The watchdog tells us that the handler is set by
+        # detaching itself.  (The 'is_running()' is a fail-safe.)
         while (     $watchdog_thread->is_running()
                && ! $watchdog_thread->is_detached())
         {

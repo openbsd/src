@@ -58,7 +58,76 @@ BEGIN {
 }
 
 use feature 'fc';
-use I18N::Langinfo qw(langinfo CODESET CRNCYSTR RADIXCHAR);
+my @langinfo;
+BEGIN {
+    @langinfo = qw(
+                    CODESET
+                    RADIXCHAR
+                    THOUSEP
+                    CRNCYSTR
+                    ALT_DIGITS
+                    YESEXPR
+                    YESSTR
+                    NOEXPR
+                    NOSTR
+                    ERA
+                    ABDAY_1
+                    DAY_1
+                    ABMON_1
+                    MON_1
+                    AM_STR
+                    PM_STR
+                    D_FMT
+                    D_T_FMT
+                    ERA_D_FMT
+                    ERA_D_T_FMT
+                    ERA_T_FMT
+                    T_FMT
+                    T_FMT_AMPM
+                    _NL_ADDRESS_POSTAL_FMT
+                    _NL_ADDRESS_COUNTRY_NAME
+                    _NL_ADDRESS_COUNTRY_POST
+                    _NL_ADDRESS_COUNTRY_AB2
+                    _NL_ADDRESS_COUNTRY_AB3
+                    _NL_ADDRESS_COUNTRY_CAR
+                    _NL_ADDRESS_COUNTRY_NUM
+                    _NL_ADDRESS_COUNTRY_ISBN
+                    _NL_ADDRESS_LANG_NAME
+                    _NL_ADDRESS_LANG_AB
+                    _NL_ADDRESS_LANG_TERM
+                    _NL_ADDRESS_LANG_LIB
+                    _NL_IDENTIFICATION_TITLE
+                    _NL_IDENTIFICATION_SOURCE
+                    _NL_IDENTIFICATION_ADDRESS
+                    _NL_IDENTIFICATION_CONTACT
+                    _NL_IDENTIFICATION_EMAIL
+                    _NL_IDENTIFICATION_TEL
+                    _NL_IDENTIFICATION_FAX
+                    _NL_IDENTIFICATION_LANGUAGE
+                    _NL_IDENTIFICATION_TERRITORY
+                    _NL_IDENTIFICATION_AUDIENCE
+                    _NL_IDENTIFICATION_APPLICATION
+                    _NL_IDENTIFICATION_ABBREVIATION
+                    _NL_IDENTIFICATION_REVISION
+                    _NL_IDENTIFICATION_DATE
+                    _NL_IDENTIFICATION_CATEGORY
+                    _NL_MEASUREMENT_MEASUREMENT
+                    _NL_NAME_NAME_FMT
+                    _NL_NAME_NAME_GEN
+                    _NL_NAME_NAME_MR
+                    _NL_NAME_NAME_MRS
+                    _NL_NAME_NAME_MISS
+                    _NL_NAME_NAME_MS
+                    _NL_PAPER_HEIGHT
+                    _NL_PAPER_WIDTH
+                    _NL_TELEPHONE_TEL_INT_FMT
+                    _NL_TELEPHONE_TEL_DOM_FMT
+                    _NL_TELEPHONE_INT_SELECT
+                    _NL_TELEPHONE_INT_PREFIX
+                  );
+}
+
+use I18N::Langinfo 'langinfo', @langinfo;
 
 # =1 adds debugging output; =2 increases the verbosity somewhat
 our $debug = $ENV{PERL_DEBUG_FULL_TEST} // 0;
@@ -789,24 +858,22 @@ my $final_without_setlocale = $test_num;
 debug "Scanning for locales...\n";
 
 require POSIX; import POSIX ':locale_h';
-my $categories = [ 'LC_CTYPE', 'LC_NUMERIC', 'LC_ALL' ];
-my @Locale;
-my @include_incompatible_locales;
-if ($^O eq "aix"
-    and version->new(($Config{osvers} =~ /^(\d+(\.\d+))/)[0]) < 7) {
-    # https://www.ibm.com/support/pages/apar/IV22097
-    skip("setlocale broken on old AIX");
+
+debug "Scanning for just perl-compatible locales";
+my $category = 'LC_CTYPE';
+my @Locale = find_locales($category);
+if (! @Locale) {
+    $category = 'LC_ALL';
+    @Locale = find_locales($category);
 }
-else {
-    debug "Scanning for just compatible";
-    @Locale = find_locales($categories);
-    debug "Scanning for even incompatible";
-    @include_incompatible_locales = find_locales($categories,
-                                              'even incompatible locales');
-}
+debug "Scanning for even incompatible locales";
+my @include_incompatible_locales = find_locales($category,
+                                                'even incompatible locales');
+
 # The locales included in the incompatible list that aren't in the compatible
 # one.
 my @incompatible_locales;
+
 if (@Locale < @include_incompatible_locales) {
     my %seen;
     @seen{@Locale} = ();
@@ -1039,6 +1106,8 @@ my $locales_test_number;
 my $not_necessarily_a_problem_test_number;
 my $first_casing_test_number;
 my %setlocale_failed;   # List of locales that setlocale() didn't work on
+my $has_glibc_extra_categories = grep { $_ =~ /^ _NL /x }
+                                                    valid_locale_categories();
 
 foreach my $Locale (@Locale) {
     $locales_test_number = $first_locales_test_number - 1;
@@ -1062,10 +1131,19 @@ foreach my $Locale (@Locale) {
     my $is_utf8_locale = is_locale_utf8($Locale);
 
     if ($debug) {
-        debug "code set = " . langinfo(CODESET);
         debug "is utf8 locale? = $is_utf8_locale\n";
-        debug "radix = " . disp_str(langinfo(RADIXCHAR)) . "\n";
-        debug "currency = " . disp_str(langinfo(CRNCYSTR));
+        for my $item (@langinfo) {
+            my $numeric_item = eval $item;
+            my $value = langinfo($numeric_item);
+
+            # All items should return a value; if not, this will warn.  But on
+            # platforms without the extra categories, almost all items will be
+            # empty.  Skip reporting such.
+            next if $value eq ""
+                 && $item =~ / ^ _NL_ / && ! $has_glibc_extra_categories;
+
+            debug "$item = " . disp_str($value);
+        }
     }
 
     if (! $is_utf8_locale) {
@@ -2470,6 +2548,54 @@ foreach my $Locale (@Locale) {
             print "# failed $locales_test_number locale '$Locale' numbers @f\n"
 	}
     }
+
+    {
+        my @f = ();
+        ++$locales_test_number;
+        $test_names{$locales_test_number} =
+                 'Verify ALT_DIGITS returns nothing, or else non-ASCII and'
+               . ' the single char digits evaluate to consecutive integers'
+               . ' starting at 0; 0 is accepted for alt-0 for locales without'
+               . ' a zero';
+
+        my $alts = langinfo(ALT_DIGITS);
+        if ($alts) {
+            my @alts = split ';', $alts;
+            my $prev = -1;
+            foreach my $num (@alts) {
+                if ($num =~ /[[:ascii:]]/) {
+                    if ($prev != -1 || $num != 0) {
+                        push @f, disp_str($num);
+                        last;
+                    }
+                }
+
+                # We only look at single character strings; likely locales
+                # that have alternate digits have a different mechanism for
+                # representing larger numbers.  Japanese for example, has a
+                # single character for the number 10, which is prefixed to the
+                # '1' symbol for '11', etc.  And 21 is represented by 3
+                # characters, the '2' symbol, followed by the '10' symbol,
+                # then the '1' symbol.  (There is nothing to say that a locale
+                # even has to use base 10.)
+                last if length $num > 1;
+
+                use Unicode::UCD 'num';
+                my $value = num($num);
+                if ($value != $prev + 1) {
+                    push @f, disp_str($num);
+                    last;
+                }
+
+                $prev = $value;
+            }
+        }
+
+        report_result($Locale, $locales_test_number, @f == 0);
+        if (@f) {
+            print "# failed $locales_test_number locale '$Locale' numbers @f\n"
+	}
+    }
 }
 
 my $final_locales_test_number = $locales_test_number;
@@ -2481,7 +2607,7 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
     my $has_non_global_failure = $Problem{$test_num}
                             || ! defined $Okay{$test_num}
                             || ! @{$Okay{$test_num}};
-    print "not " if %setlocale_failed || $has_non_global_failure;
+    print "not " if $has_non_global_failure;
     print "ok $test_num";
     $test_names{$test_num} = "" unless defined $test_names{$test_num};
 
@@ -2491,7 +2617,7 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
     if ($todo) {
         print " # TODO\n";
     }
-    elsif (%setlocale_failed || ! $has_non_global_failure) {
+    elsif (! $has_non_global_failure) {
         print "\n";
     }
     elsif ($has_non_global_failure) {
@@ -2702,6 +2828,15 @@ setlocale(&POSIX::LC_ALL, "C");
 # Give final advice.
 
 my $didwarn = 0;
+
+if (%setlocale_failed) {
+    print "#\nsetlocale() failed for these locales:\n";
+    for my $locale (keys %setlocale_failed) {
+        print "#\t$locale\n";
+    }
+    print "#\n";
+    $didwarn = 1;
+}
 
 foreach ($first_locales_test_number..$final_locales_test_number) {
     if ($Problem{$_}) {

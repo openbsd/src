@@ -109,7 +109,7 @@ to know I<in advance> what you decide.
 
 =head2 Why is it called the patch pumpkin?
 
-Chip Salzenberg gets credit for that, with a nod to his cow orker,
+Chip Salzenberg gets credit for that, with a nod to his coworker,
 David Croy.  We had passed around various names (baton, token, hot
 potato) but none caught on.  Then, Chip asked:
 
@@ -272,7 +272,7 @@ should be updated?)]
 We should never release a main version without testing it as a
 subversion first.
 
-=head2 Test popular applications and modules.
+=head2 Test popular applications and modules
 
 We should never release a main version without testing whether or not
 it breaks various popular modules and applications.  A partial list of
@@ -542,9 +542,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xf -
+	gzip -d -c perl5.004_07.tar.gz | tar -xof -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xf -
+	gzip -d -c perl5.004_08.tar.gz | tar -xof -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove

@@ -7,17 +7,17 @@ use Carp ;
 use IO::Handle ;
 use Scalar::Util qw(dualvar);
 
-use IO::Compress::Base::Common 2.204 ;
-use Compress::Raw::Zlib 2.204 ;
-use IO::Compress::Gzip 2.204 ;
-use IO::Uncompress::Gunzip 2.204 ;
+use IO::Compress::Base::Common 2.212 ;
+use Compress::Raw::Zlib 2.212 ;
+use IO::Compress::Gzip 2.212 ;
+use IO::Uncompress::Gunzip 2.212 ;
 
 use strict ;
 use warnings ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
-$VERSION = '2.204';
+$VERSION = '2.212';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -461,7 +461,7 @@ sub inflate
 
 package Compress::Zlib ;
 
-use IO::Compress::Gzip::Constants 2.204 ;
+use IO::Compress::Gzip::Constants 2.212 ;
 
 sub memGzip($)
 {
@@ -1509,7 +1509,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 1995-2023 Paul Marquess. All rights reserved.
+Copyright (c) 1995-2024 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

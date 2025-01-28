@@ -207,7 +207,7 @@ dl_load_file(filename, flags=0)
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,flags));
     handle = dlopen(filename, mode) ;
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%lx\n", (unsigned long) handle));
-    ST(0) = sv_newmortal() ;
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (handle == NULL)
 	SaveError(aTHX_ "%s",dlerror()) ;
     else
@@ -245,7 +245,7 @@ dl_find_symbol(libhandle, symbolname, ign_err=0)
     sym = dlsym(libhandle, symbolname);
     DLDEBUG(2, PerlIO_printf(Perl_debug_log,
 			     "  symbolref = %lx\n", (unsigned long) sym));
-    ST(0) = sv_newmortal();
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (sym == NULL) {
         if (!ign_err)
 	    SaveError(aTHX_ "%s", dlerror());

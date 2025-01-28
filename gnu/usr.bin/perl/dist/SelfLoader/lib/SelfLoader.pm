@@ -2,7 +2,7 @@ package SelfLoader;
 use 5.008;
 use strict;
 use IO::Handle;
-our $VERSION = "1.26";
+our $VERSION = "1.27";
 
 # The following bit of eval-magic is necessary to make this work on
 # perls < 5.009005.
@@ -294,7 +294,7 @@ to parse the code after the C<__DATA__>. Details of the B<AutoLoader> and
 another view of these distinctions can be found in that module's
 documentation.
 
-=head2 __DATA__, __END__, and the FOOBAR::DATA filehandle.
+=head2 __DATA__, __END__, and the FOOBAR::DATA filehandle
 
 This section is only relevant if you want to use
 the C<FOOBAR::DATA> together with the B<SelfLoader>.
@@ -328,7 +328,7 @@ declarations.
 
 You could conceivably do both.
 
-=head2 Classes and inherited methods.
+=head2 Classes and inherited methods
 
 For modules which are not classes, this section is not relevant.
 This section is only relevant if you have methods which could

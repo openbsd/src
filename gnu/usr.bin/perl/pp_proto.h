@@ -43,6 +43,7 @@ PERL_CALLCONV PP(pp_chop) __attribute__visibility__("hidden");
 PERL_CALLCONV PP(pp_chown) __attribute__visibility__("hidden");
 PERL_CALLCONV PP(pp_chr) __attribute__visibility__("hidden");
 PERL_CALLCONV PP(pp_chroot) __attribute__visibility__("hidden");
+PERL_CALLCONV PP(pp_classname) __attribute__visibility__("hidden");
 PERL_CALLCONV PP(pp_clonecv) __attribute__visibility__("hidden");
 PERL_CALLCONV PP(pp_close) __attribute__visibility__("hidden");
 PERL_CALLCONV PP(pp_closedir) __attribute__visibility__("hidden");

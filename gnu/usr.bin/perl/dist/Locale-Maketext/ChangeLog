@@ -1,5 +1,8 @@
 Revision history for Perl suite Locale::Maketext
 
+2023-12-30
+   * PHONY not portable in Makefile.PL for VMS
+
 2022-08-22
    * Release 1.32 to CPAN
    * Fix Makefile.PL logic for default install destination on 5.008 up to 5.011

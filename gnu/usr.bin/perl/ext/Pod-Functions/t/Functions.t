@@ -133,8 +133,8 @@ Keywords related to Perl modules:
      do, import, no, package, require, use
 
 Keywords related to classes and object-orientation:
-     bless, class, dbmclose, dbmopen, field, method, package,
-     ref, tie, tied, untie, use
+     __CLASS__, bless, class, dbmclose, dbmopen, field, method,
+     package, ref, tie, tied, untie, use
 
 Low-level socket functions:
      accept, bind, connect, getpeername, getsockname,

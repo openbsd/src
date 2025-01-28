@@ -14,11 +14,11 @@ TAP::Parser::Grammar - A grammar for the Test Anything Protocol.
 
 =head1 VERSION
 
-Version 3.44
+Version 3.48
 
 =cut
 
-our $VERSION = '3.44';
+our $VERSION = '3.48';
 
 =head1 SYNOPSIS
 
@@ -217,6 +217,12 @@ my %language_for;
             tokens => \%v12,
         },
         '13' => {
+            tokens => \%v13,
+            setup  => sub {
+                shift->{iterator}->handle_unicode;
+            },
+        },
+        '14' => {
             tokens => \%v13,
             setup  => sub {
                 shift->{iterator}->handle_unicode;

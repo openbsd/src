@@ -405,9 +405,6 @@ my %excluded_files = (
                         canonicalize("configpm") => 1,
                         canonicalize("miniperl") => 1,
                         canonicalize("perl") => 1,
-                        canonicalize('cpan/Pod-Perldoc/corpus/no-head.pod') => 1,
-                        canonicalize('cpan/Pod-Perldoc/corpus/perlfunc.pod') => 1,
-                        canonicalize('cpan/Pod-Perldoc/corpus/utf8.pod') => 1,
                         canonicalize("lib/unicore/mktables") => 1,
                         canonicalize("dist/devel-ppport/parts/inc/ppphdoc") => 1,
                     );
@@ -1125,19 +1122,68 @@ package My::Pod::Checker {      # Extend Pod::Checker
 
         my $indent = $self->get_current_indent;
 
-        # Look at each line to verify it is short enough
+        # split the code by line.
         my @lines = split /^/, $running_simple_text{$addr};
-        for my $i (0 .. @lines - 1) {
-            $lines[$i] =~ s/\s+$//;
-            my $exceeds = length(Text::Tabs::expand($lines[$i]))
-                        + $indent - $MAX_LINE_LENGTH;
-            next unless $exceeds > 0;
 
-            $self->poderror({ -line => $start_line{$addr} + $i,
-                -msg => $line_length,
-                parameter => "+$exceeds (including " . ($indent - $INDENT) .
-                             " from =over's and $INDENT as base indent)",
-            });
+        # We have two cases here. The verbatim text may be copied from
+        # one of our files, in which case we check to make sure that the
+        # code in the documentation matches that of the code in the
+        # file, OR, we check the line lengths are appropriate. Copied text
+        # is identified by the first line containing one of the following
+        # strings: "file source: FILENAME" or "copied from: FILENAME" where
+        # the FILENAME actually exists.
+        #
+        # Yes, this implies that where we are copying code verbatim from
+        # one of our source files we do not check its length. This is
+        # because it is a copy, and we shouldn't require the code to be
+        # munged to be placed in the docs. This should only be used in
+        # pod files which are used to document the internals for other
+        # developers, as it may result in unpleasant to view HTML docs.
+
+        my $copied = 0;
+        if ($lines[0] =~ /(?:file source|copied from):\s*([\/\w.]+)/i and -e $1) {
+            # this text was copied from a source file. Make sure that it still
+            # matches the source. This is a whitespace insensitive match.
+
+            my $file = $1;
+            $copied = 1;
+            my $pat = "";
+            foreach my $line (@lines[1..$#lines]) {
+                # convert each line into a pattern fragment
+                $line =~ s/(?:(\s+)|(\S+))/$1 ? "\\s++" : quotemeta($2)/ge;
+                $pat .= $line;
+            }
+            # merge adjacent \s+ sequences
+            $pat =~ s/(?:\\s\+\+){2,}/\\s++/g;
+            # slurp the file
+            my $slurped = do {
+                open my $ifh, "<", $file
+                    or die "Failed to open '$file' for read: $!";
+                local $/;
+                <$ifh>;
+            };
+            if ($slurped !~ /$pat/) {
+                $self->poderror({ -line => $start_line{$addr},
+                    -msg => "Copied verbatim text is out of sync with source file",
+                    parameter => $file,
+                });
+            }
+        }
+        if (!$copied) {
+            # if the verbatim text has not been copied from one of our
+            # source files we look at each line to verify it is short enough
+            for my $i (0 .. @lines - 1) {
+                $lines[$i] =~ s/\s+$//;
+                my $exceeds = length(Text::Tabs::expand($lines[$i]))
+                            + $indent - $MAX_LINE_LENGTH;
+                next unless $exceeds > 0;
+
+                $self->poderror({ -line => $start_line{$addr} + $i,
+                    -msg => $line_length,
+                    parameter => "+$exceeds (including " . ($indent - $INDENT) .
+                                 " from =over's and $INDENT as base indent)",
+                });
+            }
         }
 
         undef $running_simple_text{$addr};

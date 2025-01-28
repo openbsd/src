@@ -56,10 +56,6 @@ typedef FILE * OutputStream;
 # define NORETURN_FUNCTION_END /* NOT REACHED */ return 0
 #endif
 
-#ifndef OpSIBLING
-#  define OpSIBLING(o) (o)->op_sibling
-#endif
-
 static int not_here(const char *s) __attribute__noreturn__;
 static int
 not_here(const char *s)
@@ -76,8 +72,6 @@ static int
 io_blocking(pTHX_ InputStream f, int block)
 {
     int fd = -1;
-#if defined(HAS_FCNTL)
-    int RETVAL;
     if (!f) {
 	errno = EBADF;
 	return -1;
@@ -87,16 +81,17 @@ io_blocking(pTHX_ InputStream f, int block)
       errno = EBADF;
       return -1;
     }
-    RETVAL = fcntl(fd, F_GETFL, 0);
+#if defined(HAS_FCNTL)
+    int RETVAL = fcntl(fd, F_GETFL, 0);
     if (RETVAL >= 0) {
 	int mode = RETVAL;
 	int newmode = mode;
-#ifdef O_NONBLOCK
+#  ifdef O_NONBLOCK
 	/* POSIX style */
 
-# ifndef O_NDELAY
-#  define O_NDELAY O_NONBLOCK
-# endif
+#    ifndef O_NDELAY
+#      define O_NDELAY O_NONBLOCK
+#    endif
 	/* Note: UNICOS and UNICOS/mk a F_GETFL returns an O_NDELAY
 	 * after a successful F_SETFL of an O_NONBLOCK. */
 	RETVAL = RETVAL & (O_NONBLOCK | O_NDELAY) ? 0 : 1;
@@ -107,7 +102,7 @@ io_blocking(pTHX_ InputStream f, int block)
 	} else if (block > 0) {
 	    newmode &= ~(O_NDELAY|O_NONBLOCK);
 	}
-#else
+#  else
 	/* Not POSIX - better have O_NDELAY or we can't cope.
 	 * for BSD-ish machines this is an acceptable alternative
 	 * for SysV we can't tell "would block" from EOF but that is
@@ -120,7 +115,7 @@ io_blocking(pTHX_ InputStream f, int block)
 	} else if (block > 0) {
 	    newmode &= ~O_NDELAY;
 	}
-#endif
+#  endif
 	if (newmode != mode) {
             const int ret = fcntl(fd, F_SETFL, newmode);
 	    if (ret < 0)
@@ -128,13 +123,12 @@ io_blocking(pTHX_ InputStream f, int block)
 	}
     }
     return RETVAL;
-#else
-#   ifdef WIN32
+#elif defined(WIN32)
     if (block >= 0) {
 	unsigned long flags = !block;
 	/* ioctl claims to take char* but really needs a u_long sized buffer */
-	const int ret = ioctl(fd, FIONBIO, (char*)&flags);
-	if (ret != 0)
+
+	if (ioctl(fd, FIONBIO, (char*)&flags) != 0)
 	    return -1;
 	/* Win32 has no way to get the current blocking status of a socket.
 	 * However, we don't want to just return undef, because there's no way
@@ -144,9 +138,8 @@ io_blocking(pTHX_ InputStream f, int block)
     }
     /* TODO: Perhaps set $! to ENOTSUP? */
     return -1;
-#   else
+#else
     return -1;
-#   endif
 #endif
 }
 
@@ -560,25 +553,32 @@ PPCODE:
     if (!ix && GIMME_V != G_LIST)
         Perl_croak(aTHX_ "Can't call $io->getlines in a scalar context, use $io->getline");
     Zero(&myop, 1, UNOP);
+#if PERL_VERSION_GE(5,39,6)
+    myop.op_flags = (ix ? (OPf_WANT_SCALAR | OPf_STACKED) : OPf_WANT_LIST);
+#else
     myop.op_flags = (ix ? OPf_WANT_SCALAR : OPf_WANT_LIST ) | OPf_STACKED;
+#endif
     myop.op_ppaddr = PL_ppaddr[OP_READLINE];
     myop.op_type = OP_READLINE;
-    /* I don't know if we need this, but it's correct as far as the control flow
-       goes. However, if we *do* need it, do we need to set anything else up? */
-    myop.op_next = PL_op->op_next;
+    myop.op_next = NULL; /* return from the runops loop below after 1 op */
     /* Sigh, because pp_readline calls pp_rv2gv, and *it* has this wonderful
        state check for PL_op->op_type == OP_READLINE */
     PL_op = (OP *) &myop;
     io = ST(0);
-    /* Our target (which we need to provide, as we don't have a pad entry.
-       I think that this is only needed for G_SCALAR - maybe we can get away
-       with NULL for list context? */
-    PUSHs(sv_newmortal());
+    /* For scalar functions (getline/gets), provide a target on the stack,
+     * as we don't have a pad entry. */
+#if PERL_VERSION_GE(5,39,6)
+    if (ix)
+#endif
+        PUSHs(sv_newmortal());
     XPUSHs(io);
     PUTBACK;
+    /* call a new runops loop for just the one op rather than just calling
+     * pp_readline directly, as the former will handle the call coming
+     * from a ref-counted stack */
     /* And effectively we get away with tail calling pp_readline, as it stacks
        exactly the return value(s) we need to return. */
-    PL_ppaddr[OP_READLINE](aTHX);
+    CALLRUNOPS(aTHX);
     PL_op = was;
     /* And we don't want to reach the line
        PL_stack_sp = sp;

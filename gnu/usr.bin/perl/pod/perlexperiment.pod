@@ -55,18 +55,6 @@ L<[perl #14150]|https://github.com/Perl/perl5/issues/14150>.
 
 See also: L<perlref/Assigning to References>
 
-=item The "const" attribute
-
-Introduced in Perl 5.22.0
-
-Using this feature triggers warnings in the category
-C<experimental::const_attr>.
-
-The ticket for this experiment is
-L<[perl #14428]|https://github.com/Perl/perl5/issues/14428>.
-
-See also: L<perlsub/Constant Functions>
-
 =item use re 'strict';
 
 Introduced in Perl 5.22.0
@@ -141,7 +129,8 @@ L<[perl #18759]|https://github.com/Perl/perl5/issues/18759>.
 
 Introduced in Perl 5.34.0.
 
-Using this feature triggers warnings in the category C<experimental::try>.
+Using the optional C<finally> block part of this feature triggers warnings in
+the category C<experimental::try>.
 
 The ticket for this experiment is
 L<[perl #18760]|https://github.com/Perl/perl5/issues/18760>
@@ -158,28 +147,17 @@ elements of it such as C<$_[$index]>, or situations where the default
 arguments array is accessed implicitly such as C<shift> or C<pop> without
 arguments.
 
-=item for loop with multiple iteration variables
-
-Introduced in Perl 5.36.0.
-
-Using this feature triggers warnings in the category C<experimental::for_list>.
-
-This feature enables a parenthesized list of iteration variables for C<for>
-rather than a single variable.
-
-The ticket for this experiment is
-L<[perl #18744]|https://github.com/Perl/perl5/issues/18744>.
-
 =item The builtin namespace
 
 Introduced in Perl 5.36.0.
 
-Using this feature triggers warnings in the category C<experimental::builtin>.
+Using certain functions of this feature triggers warnings in the category
+C<experimental::builtin>.
 
 In Perl 5.36.0, a new namespace, C<builtin>, was created for new core functions
 that will not be present in every namespace, but will be available for
-importing.  The namespace itself is considered an experiment.  Specific
-functions within it may also be experimental.
+importing.  The namespace itself was considered experimental until Perl 5.39.2.
+Some specific functions within it remain experimental.
 
 The ticket for this experiment is
 L<[perl #19764]|https://github.com/Perl/perl5/issues/19764>.
@@ -206,7 +184,7 @@ C<experimental::extra_paired_delimiters>.
 This feature allows for many non-ASCII pairs of mirroring delimiters, for
 example:
 
-    my @array = qw« tinker tailer soldier spy »;
+    my @array = qw« tinker tailor soldier spy »;
 
 The ticket for this experiment is
 L<[perl #19765]|https://github.com/Perl/perl5/issues/19765>.
@@ -364,6 +342,29 @@ Introduced in Perl 5.18
 Accepted in Perl 5.36
 
 See : L<perlrecharclass/Extended Bracketed Character Classes>
+
+=item try/catch control structure
+
+Introduced in Perl 5.34.0.
+
+Accepted in Perl 5.40 when not using the optional C<finally> block.
+
+=item The "const" attribute
+
+Introduced in Perl 5.22.0
+
+Accepted in Perl 5.40
+
+See also: L<perlsub/Constant Functions>
+
+=item for loop with multiple iteration variables
+
+Introduced in Perl 5.36.0.
+
+Accepted in Perl 5.40.
+
+This feature enables a parenthesized list of iteration variables for C<for>
+rather than a single variable.
 
 =back
 

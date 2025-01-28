@@ -13,6 +13,7 @@ t/safenamedcap.t
 t/safeops.t
 t/saferegexp.t
 t/safesecurity.t
+t/safesig.t
 t/safesort.t
 t/safeuniversal.t
 t/safeutf8.t

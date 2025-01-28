@@ -1,49 +1,47 @@
 # -*- mode: perl; -*-
 
-# for testing subclassing Math::BigFloat
+# test subclassing Math::BigFloat
 
 package Math::BigFloat::Subclass;
-
-require 5.006;
 
 use strict;
 use warnings;
 
-use Exporter;
 use Math::BigFloat;
 
-our @ISA = qw(Math::BigFloat Exporter);
+our @ISA = qw(Math::BigFloat);
 
-our $VERSION = "0.08";
+our $VERSION = "0.09";
 
-use overload;                   # inherit overload from BigInt
+use overload;                   # inherit overload
 
-# Globals
-our $accuracy   = undef;
-our $precision  = undef;
-our $round_mode = Math::BigFloat::Subclass -> round_mode();
-our $div_scale  = Math::BigFloat::Subclass -> div_scale();
-our $lib = '';
+# Global variables. The values can be specified explicitly or obtained from the
+# superclass.
+
+our $accuracy   = undef;        # or Math::BigFloat::Subclass -> accuracy();
+our $precision  = undef;        # or Math::BigFloat::Subclass -> precision();
+our $round_mode = "even";       # or Math::BigFloat::Subclass -> round_mode();
+our $div_scale  = 40;           # or Math::BigFloat::Subclass -> div_scale();
+
+BEGIN {
+    *objectify = \&Math::BigInt::objectify;
+}
+
+# We override new()
 
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
 
-    my $value = shift;
-    my $a = $accuracy;  $a = $_[0] if defined $_[0];
-    my $p = $precision; $p = $_[1] if defined $_[1];
-    # Store the floating point value
-    my $self = Math::BigFloat->new($value, $a, $p, $round_mode);
+    my $self = $class -> SUPER::new(@_);
+    $self->{'_custom'} = 1;     # attribute specific to this subclass
     bless $self, $class;
-    $self->{'_custom'} = 1;     # make sure this never goes away
-    return $self;
 }
 
-BEGIN {
-    *objectify = \&Math::BigInt::objectify;
-    # to allow Math::BigFloat::Subclass::bgcd( ... ) style calls
-    *bgcd = \&Math::BigFloat::bgcd;
-    *blcm = \&Math::BigFloat::blcm;
-}
+# Any other methods to override can go here:
+
+# sub method {
+#     ...
+# }
 
 1;

@@ -37,7 +37,7 @@ SKIP:
     skip "Not github", 7
         if ! (defined $ENV{GITHUB_ACTION} && defined $ENV{ZLIB_VERSION}) ;
 
-    my $expected_version =  $ENV{ZLIB_VERSION} ;
+    my $expected_version = $ENV{ZLIB_VERSION} ;
     # zlib prefixes tags with a "v", so remove
     $expected_version =~ s/^v//i;
 
@@ -67,6 +67,12 @@ SKIP:
             '2.0.4' => '1.2.11.zlib-ng',
             '2.0.5' => '1.2.11.zlib-ng',
             '2.0.6' => '1.2.11.zlib-ng',
+            '2.0.7' => '1.2.11.zlib-ng',
+            '2.1.2' => '1.2.13.zlib-ng',
+            '2.1.3' => '1.2.13.zlib-ng',
+            '2.1.4' => '1.3.0.zlib-ng',
+            '2.1.5' => '1.3.0.zlib-ng',
+            '2.1.6' => '1.3.0.zlib-ng',
         );
 
         my $zv = Compress::Raw::Zlib::zlibng_version();

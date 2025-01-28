@@ -61,7 +61,7 @@ encguess - guess character encodings of files
 
 =head1 VERSION
 
-$Id: encguess,v 0.3 2020/12/02 01:28:17 dankogai Exp $
+$Id: encguess,v 0.4 2023/11/10 01:10:50 dankogai Exp $
 
 =head1 SYNOPSIS
 
@@ -138,7 +138,7 @@ L<Encode::Guess>, L<Encode::Detect>
 Copyright 2015 Michael LaGrasta and Dan Kogai.
 
 This program is free software; you can redistribute it and/or modify it
-under the terms of the the Artistic License (2.0). You may obtain a
+under the terms of the Artistic License (2.0). You may obtain a
 copy of the full license at:
 
 L<http://www.perlfoundation.org/artistic_license_2_0>

@@ -73,9 +73,15 @@ for ("-3" .. "0") {
 print $loop_count == 4 ? "ok" : "not ok", " 12\n";
 
 # modifying arrays in loops is a no-no
+#  - unless the stack is reference-counted
 @a = (3,4);
 eval { @a = () for (1,2,@a) };
-print $@ =~ /Use of freed value in iteration/ ? "ok" : "not ok", " 13\n";
+print $@ =~   ((Internals::stack_refcounted() & 1)
+                  ?  qr/^$/
+                  : qr/Use of freed value in iteration/
+              )
+            ? "ok" : "not ok",
+            " 13 - freed value in iteration\n";
 
 # [perl #30061] double destory when same iterator variable (eg $_) used in
 # DESTROY as used in for loop that triggered the destroy

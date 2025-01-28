@@ -635,11 +635,17 @@ SKIP:
 
 }
 
+SKIP:
 foreach (1 .. 2)
 {
     next if $] < 5.005 ;
 
     title 'test inflate/deflate with a substr';
+
+    # # temp workaround for
+    # # https://github.com/pmqs/Compress-Raw-Zlib/issues/27
+    # skip "skipping substr tests for Perl 5.6.*", 15
+    #     if $] < 5.008 ;
 
     my $contents = '' ;
     foreach (1 .. 5000)
@@ -647,6 +653,8 @@ foreach (1 .. 2)
     ok  my $x = new Compress::Raw::Zlib::Deflate(-AppendOutput => 1) ;
 
     my $X ;
+    # my $data = substr($contents,0) ;
+    # my $status = $x->deflate($data, $X);
     my $status = $x->deflate(substr($contents,0), $X);
     cmp_ok $status, '==', Z_OK ;
 
@@ -718,9 +726,15 @@ foreach (1 .. 2)
 
 }
 
+SKIP: {
 if ($] >= 5.005)
 {
     title 'test inflate input parameter via substr';
+
+    # # temp workaround for
+    # # https://github.com/pmqs/Compress-Raw-Zlib/issues/27
+    # skip "skipping substr tests for Perl 5.6.*", 11
+    #     if $] < 5.008 ;
 
     my $hello = "I am a HAL 9000 computer" ;
     my $data = $hello ;
@@ -750,12 +764,14 @@ if ($] >= 5.005)
     ok $k = new Compress::Raw::Zlib::Inflate ( -AppendOutput => 1,
                                           -ConsumeInput => 0 ) ;
 
-    cmp_ok $k->inflate(substr($X, 0, -1), $Z), '==', Z_STREAM_END ; ;
-    #cmp_ok $k->inflate(substr($X, 0), $Z), '==', Z_STREAM_END ; ;
+    # my $data = substr($X, 0, -1);
+    # cmp_ok $k->inflate($data, $Z), '==', Z_STREAM_END ; ;
+    cmp_ok $k->inflate(substr($X, 0), $Z), '==', Z_STREAM_END ; ;
 
     ok $hello eq $Z ;
     is $X, $keep;
 
+}
 }
 
 {

@@ -31,8 +31,8 @@ values, including such things as replacements for the OS's atof() function
 PERL_STATIC_INLINE NV
 S_strtod(pTHX_ const char * const s, char ** e)
 {
-    NV result;
     DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+    NV result;
 
     STORE_LC_NUMERIC_SET_TO_NEEDED();
 

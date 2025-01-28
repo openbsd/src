@@ -1818,55 +1818,60 @@ sub do_warn_7  { exit $a or $b; }
 sub do_warn_8  { exit $a and $b; }
 sub do_warn_9  { exit $a xor $b; }
 
-# Since exit is an unary operator, it is even stronger than
-# || and &&.
+# Since exit is a unary operator, it is even stronger than
+# ||, &&, ?:, and !=.
 sub do_warn_10 { exit $a || $b; }
 sub do_warn_11 { exit $a && $b; }
+sub do_warn_12 { exit $a ? 0 : $b; }
+sub do_warn_13 { exit $a != $b; }
 
-sub do_warn_12 { goto $a or $b; }
-sub do_warn_13 { goto $a and $b; }
-sub do_warn_14 { goto $a xor $b; }
-sub do_warn_15 { next $a or $b while(1);  }
-sub do_warn_16 { next $a and $b while(1); }
-sub do_warn_17 { next $a xor $b while(1); }
-sub do_warn_18 { last $a or $b while(1);  }
-sub do_warn_19 { last $a and $b while(1); }
-sub do_warn_20 { last $a xor $b while(1); }
-sub do_warn_21 { redo $a or $b while(1); }
-sub do_warn_22 { redo $a and $b while(1); }
-sub do_warn_23 { redo $a xor $b while(1); }
+sub do_warn_14 { goto $a or $b; }
+sub do_warn_15 { goto $a and $b; }
+sub do_warn_16 { goto $a xor $b; }
+sub do_warn_17 { next $a or $b while(1);  }
+sub do_warn_18 { next $a and $b while(1); }
+sub do_warn_19 { next $a xor $b while(1); }
+sub do_warn_20 { last $a or $b while(1);  }
+sub do_warn_21 { last $a and $b while(1); }
+sub do_warn_22 { last $a xor $b while(1); }
+sub do_warn_23 { redo $a or $b while(1); }
+sub do_warn_24 { redo $a and $b while(1); }
+sub do_warn_25 { redo $a xor $b while(1); }
 # These get re-written to "(return/die $a) and $b"
-sub do_warn_24 { $b if return $a; }
-sub do_warn_25 { $b if die $a; }
+sub do_warn_26 { $b if return $a; }
+sub do_warn_27 { $b if die $a; }
 EXPECT
-Possible precedence issue with control flow operator at - line 3.
-Possible precedence issue with control flow operator at - line 4.
-Possible precedence issue with control flow operator at - line 5.
-Possible precedence issue with control flow operator at - line 6.
-Possible precedence issue with control flow operator at - line 7.
-Possible precedence issue with control flow operator at - line 8.
-Possible precedence issue with control flow operator at - line 9.
-Possible precedence issue with control flow operator at - line 10.
-Possible precedence issue with control flow operator at - line 11.
-Possible precedence issue with control flow operator at - line 15.
-Possible precedence issue with control flow operator at - line 16.
-Possible precedence issue with control flow operator at - line 18.
-Possible precedence issue with control flow operator at - line 19.
-Possible precedence issue with control flow operator at - line 20.
-Possible precedence issue with control flow operator at - line 21.
-Possible precedence issue with control flow operator at - line 22.
-Possible precedence issue with control flow operator at - line 23.
-Possible precedence issue with control flow operator at - line 24.
-Possible precedence issue with control flow operator at - line 25.
-Possible precedence issue with control flow operator at - line 26.
-Possible precedence issue with control flow operator at - line 27.
-Possible precedence issue with control flow operator at - line 28.
-Possible precedence issue with control flow operator at - line 29.
-Possible precedence issue with control flow operator at - line 31.
-Possible precedence issue with control flow operator at - line 32.
+Possible precedence issue with control flow operator (return) at - line 3.
+Possible precedence issue with control flow operator (return) at - line 4.
+Possible precedence issue with control flow operator (return) at - line 5.
+Possible precedence issue with control flow operator (die) at - line 6.
+Possible precedence issue with control flow operator (die) at - line 7.
+Possible precedence issue with control flow operator (die) at - line 8.
+Possible precedence issue with control flow operator (exit) at - line 9.
+Possible precedence issue with control flow operator (exit) at - line 10.
+Possible precedence issue with control flow operator (exit) at - line 11.
+Possible precedence issue with control flow operator (exit) at - line 15.
+Possible precedence issue with control flow operator (exit) at - line 16.
+Possible precedence issue with control flow operator (exit) at - line 17.
+Possible precedence issue with control flow operator (exit) at - line 18.
+Possible precedence issue with control flow operator (goto) at - line 20.
+Possible precedence issue with control flow operator (goto) at - line 21.
+Possible precedence issue with control flow operator (goto) at - line 22.
+Possible precedence issue with control flow operator (next) at - line 23.
+Possible precedence issue with control flow operator (next) at - line 24.
+Possible precedence issue with control flow operator (next) at - line 25.
+Possible precedence issue with control flow operator (last) at - line 26.
+Possible precedence issue with control flow operator (last) at - line 27.
+Possible precedence issue with control flow operator (last) at - line 28.
+Possible precedence issue with control flow operator (redo) at - line 29.
+Possible precedence issue with control flow operator (redo) at - line 30.
+Possible precedence issue with control flow operator (redo) at - line 31.
+Possible precedence issue with control flow operator (return) at - line 33.
+Possible precedence issue with control flow operator (die) at - line 34.
 ########
 # op.c
 #  (same as above, except these should not warn)
+use warnings;
 use constant FEATURE => 1;
 use constant MISSING_FEATURE => 0;
 
@@ -1920,6 +1925,12 @@ sub dont_warn_43 { last ($a xor $b) while(1); }
 sub dont_warn_44 { redo ($a or $b) while(1);  }
 sub dont_warn_45 { redo ($a and $b) while(1); }
 sub dont_warn_46 { redo ($a xor $b) while(1); }
+
+# These are not operator precedence issues (even though assignment internally
+# stores its RHS as the first operand)
+sub dont_warn_47 { $a = return $b; }
+sub dont_warn_48 { $a //= return $b; }
+sub dont_warn_49 { $a &&= exit $b; }
 EXPECT
 ########
 use feature "signatures";
@@ -2146,3 +2157,32 @@ c
 a
 d
 b
+########
+use warnings;
+use v5.12;
+use v5.20;
+EXPECT
+Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at - line 3.
+########
+use warnings;
+use v5.8;
+use v5.10;
+EXPECT
+########
+use warnings;
+use v5.10;
+use v5.8;
+EXPECT
+Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at - line 3.
+########
+use warnings;
+use v5.12;
+use v5.12;
+# expect no warning because same version
+EXPECT
+########
+# GH #22121
+use v5.20;
+use test_22121;
+# expect no warning because different scope
+EXPECT

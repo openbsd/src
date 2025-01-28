@@ -391,7 +391,6 @@ is($failed, undef);
 # getc should reset the utf8 flag and not be affected by previous
 # return values
 SKIP: {
-    skip "no PerlIO::scalar on miniperl", 2, if is_miniperl();
     open my $fh, "<:raw",  \($buf = chr 255);
     open my $uh, "<:utf8", \($uuf = $U_100);
     for([$uh,chr 256], [$fh,chr 255]) {

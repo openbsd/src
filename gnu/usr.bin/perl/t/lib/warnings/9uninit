@@ -1673,6 +1673,13 @@ Use of uninitialized value in addition (+) at - line 4.
 use warnings 'uninitialized';
 my $nofile = '/no/such/file';
 my $v;
+$v = 1 + readline($nofile);
+EXPECT
+Use of uninitialized value in addition (+) at - line 4.
+########
+use warnings 'uninitialized';
+my $nofile = '/no/such/file';
+my $v;
 $v = 1 + eval { send($nofile, $buf,0) };
 EXPECT
 Use of uninitialized value in addition (+) at - line 4.
@@ -2148,7 +2155,7 @@ Use of uninitialized value $i in addition (+) at - line 11.
 Use of uninitialized value $k in hash element at - line 11.
 Use of uninitialized value $i in array element at - line 12.
 Use of uninitialized value $k in hash element at - line 12.
-Use of uninitialized value $i in array element at - line 13.
+Use of uninitialized value length($i) in array element at - line 13.
 Use of uninitialized value $k in hash element at - line 13.
 ########
 # perl #127877
@@ -2246,3 +2253,52 @@ Use of uninitialized value $arr[0] in substitution (s///) at - line 13.
 Use of uninitialized value $arr[0] in substitution (s///) at - line 14.
 Use of uninitialized value $hash{"foo"} in substitution (s///) at - line 15.
 Use of uninitialized value $hash{"foo"} in substitution (s///) at - line 16.
+########
+# GH #21930
+use warnings 'uninitialized';
+my $x;
+our $x_pkg;
+
+$_ = length do {} == 0;
+$_ = length $x == 0;
+$_ = length $x_pkg == 0;
+$_ = length length length $x == 0;
+$_ = length length length $x_pkg == 0;
+
+my @arr;
+my $ref = [];
+$_ = shift @arr == 0;
+$_ = pop @arr == 0;
+$_ = shift @$ref == 0;
+$_ = pop @$ref == 0;
+$_ = length shift @arr == 0;
+$_ = length pop @arr == 0;
+$_ = length shift @$ref == 0;
+$_ = length pop @$ref == 0;
+
+$_ = splice(@arr, 0, 0) == 0;
+
+# GH #21960
+$_ = lc shift;
+$_ = sub { lc shift }->();
+$_ = lc pop;
+$_ = sub { lc pop }->();
+EXPECT
+Use of uninitialized value in numeric eq (==) at - line 6.
+Use of uninitialized value length($x) in numeric eq (==) at - line 7.
+Use of uninitialized value length($x_pkg) in numeric eq (==) at - line 8.
+Use of uninitialized value length(length(length($x))) in numeric eq (==) at - line 9.
+Use of uninitialized value length(length(length($x_pkg))) in numeric eq (==) at - line 10.
+Use of uninitialized value shift(@arr) in numeric eq (==) at - line 14.
+Use of uninitialized value pop(@arr) in numeric eq (==) at - line 15.
+Use of uninitialized value in numeric eq (==) at - line 16.
+Use of uninitialized value in numeric eq (==) at - line 17.
+Use of uninitialized value length(shift(@arr)) in numeric eq (==) at - line 18.
+Use of uninitialized value length(pop(@arr)) in numeric eq (==) at - line 19.
+Use of uninitialized value in numeric eq (==) at - line 20.
+Use of uninitialized value in numeric eq (==) at - line 21.
+Use of uninitialized value in numeric eq (==) at - line 23.
+Use of uninitialized value shift(@ARGV) in lc at - line 26.
+Use of uninitialized value shift() in lc at - line 27.
+Use of uninitialized value pop(@ARGV) in lc at - line 28.
+Use of uninitialized value pop() in lc at - line 29.

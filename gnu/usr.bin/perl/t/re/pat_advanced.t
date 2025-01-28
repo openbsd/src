@@ -1235,6 +1235,10 @@ sub run_tests {
         1 while /(a+b?)(*SKIP)(?{$count++; push @res,$1})(*FAIL)/g;
         is($count, 2, "Expect 2 with (*SKIP)");
         is("@res", "aaab aaab", "Adjacent (*SKIP) works as expected");
+
+        $_ = "dir/file.mp3";
+        my $got = m{ ( ([^/]+) (?: / (*SKIP)(*FAIL) | \z ) ) }x ? $1 : undef;
+        is($got, "file.mp3", "(*SKIP) and find_byclass() work together");
     }
 
     {   # Test the (*SKIP) pattern

@@ -97,7 +97,7 @@ ndbm_FETCH(db, key)
 	NDBM_File	db
 	datum_key	key
 
-#define ndbm_EXISTS(db,key)			dbm_fetch(db->dbp,key).dptr
+#define ndbm_EXISTS(db,key)			cBOOL(dbm_fetch(db->dbp,key).dptr)
 bool
 ndbm_EXISTS(db, key)
 	NDBM_File	db

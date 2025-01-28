@@ -11,7 +11,7 @@ use Archive::Tar::Constant;
 
 use vars qw[@ISA $VERSION];
 #@ISA        = qw[Archive::Tar];
-$VERSION    = '2.40';
+$VERSION    = '3.02_001';
 
 ### set value to 1 to oct() it during the unpack ###
 
@@ -71,7 +71,7 @@ Archive::Tar::File - a subclass for in-memory extracted file from Archive::Tar
 
 =head1 DESCRIPTION
 
-Archive::Tar::Files provides a neat little object layer for in-memory
+Archive::Tar::File provides a neat little object layer for in-memory
 extracted files. It's mostly used internally in Archive::Tar to tidy
 up the code, but there's no reason users shouldn't use this API as
 well.
@@ -486,7 +486,9 @@ sub full_path {
     return $self->name unless defined $self->prefix and length $self->prefix;
 
     ### or otherwise, catfile'd
-    return File::Spec::Unix->catfile( $self->prefix, $self->name );
+    my $path = File::Spec::Unix->catfile( $self->prefix, $self->name );
+    $path .= "/" if $self->name =~ m{/$};   # Re-add trailing slash if necessary, as catfile() strips them off.
+    return $path;
 }
 
 
@@ -601,7 +603,7 @@ sub rename {
 	return 1;
 }
 
-=head2 $bool = $file->chmod $mode)
+=head2 $bool = $file->chmod( $mode )
 
 Change mode of $file to $mode. The mode can be a string or a number
 which is interpreted as octal whether or not a leading 0 is given.

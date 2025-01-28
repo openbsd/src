@@ -15,7 +15,7 @@ BEGIN {
 
 use Config;
 
-plan tests => 151;
+plan tests => 156;
 
 # run some code N times. If the number of SVs at the end of loop N is
 # greater than (N-1)*delta at the end of loop 1, we've got a leak
@@ -645,3 +645,41 @@ my $refcount;
 }
 PERL
 }
+
+{
+    # smartmatch is deprecated and will be removed in 5.042
+    no warnings 'deprecated';
+    my $one = 1;
+    leak 2, 0, sub { 1 ~~ sub { 1 + $one } }, 'Smartmatch doesn\'t leak';
+}
+
+# the initial implementation of the require hook had some leaks
+
+sub hook::before  { $_[0] = "NoSuchFile2" if $_[0] =~/ NoSuch/;
+                        return \&hook::before2 }
+sub hook::before2 { return }
+sub hook::after   { return }
+
+{
+    local ${^HOOK}{require__before} =  \&hook::before;
+    local ${^HOOK}{require__after}  =  \&hook::after;
+
+    leak(5, 0, sub { require strict; }, "require hook");
+    leak(5, 0, sub { eval { require "NoSuchFile" } }, "require hook no file");
+}
+
+# at one point compiling this code leaked an AV and its children on
+# PERL_RC_STACK builds
+
+eleak(2, 0, '\(1..3)', 'folded const AV');
+
+# a sort block with a nested scope leaked the return value on each call
+
+leak 2, 0,  sub {
+                () = sort { for (1) {
+                                     if ($a > $b) { return -1 }
+                                     elsif ($a < $b) { return 1 }
+                                     else { return 0 }
+                                } } 1..2;
+            },
+            'sort block return';

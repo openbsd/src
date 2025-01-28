@@ -53,6 +53,7 @@ push @toolchain, qw(
 	dist/ExtUtils-ParseXS/lib
 	cpan/parent/lib
 	cpan/ExtUtils-Constant/lib
+    dist/base/lib
 ) if $^O eq 'MSWin32';
 push @toolchain, 'ext/VMS-Filespec/lib' if $^O eq 'VMS';
 

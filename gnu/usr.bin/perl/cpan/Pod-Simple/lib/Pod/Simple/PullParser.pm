@@ -1,10 +1,9 @@
-require 5;
 package Pod::Simple::PullParser;
-$VERSION = '3.43';
-use Pod::Simple ();
-BEGIN {@ISA = ('Pod::Simple')}
-
 use strict;
+our $VERSION = '3.45';
+use Pod::Simple ();
+BEGIN {our @ISA = ('Pod::Simple')}
+
 use Carp ();
 
 use Pod::Simple::PullParserStartToken;
@@ -54,7 +53,7 @@ sub parse_file {
 
 sub run {
   use Carp ();
-  if( __PACKAGE__ eq ref($_[0]) || $_[0]) { # I'm not being subclassed!
+  if( __PACKAGE__ eq (ref($_[0]) || $_[0])) { # I'm not being subclassed!
     Carp::croak "You can call run() only on subclasses of "
      . __PACKAGE__;
   } else {
@@ -116,7 +115,7 @@ sub get_token {
       my @lines;
       my $fh = $self->{'source_fh'}
        || Carp::croak('You have to call set_source before you can call get_token');
-       
+
       DEBUG and print STDERR "$self 's source is filehandle $fh.\n";
       # Read those many lines at a time
       for(my $i = Pod::Simple::MANY_LINES; $i--;) {
@@ -136,7 +135,7 @@ sub get_token {
         # do horribly magic things
 
       }
-      
+
       if(DEBUG > 8) {
         print STDERR "* I've gotten ", scalar(@lines), " lines:\n";
         foreach my $l (@lines) {
@@ -150,7 +149,7 @@ sub get_token {
       }
 
       $self->SUPER::parse_lines(@lines);
-      
+
     } elsif(exists $self->{'source_arrayref'}) {
       DEBUG and print STDERR "$self 's source is arrayref $self->{'source_arrayref'}, with ",
        scalar(@{$self->{'source_arrayref'}}), " items left in it.\n";
@@ -192,7 +191,7 @@ sub get_token {
         DEBUG and print STDERR "That's it for that source scalarref!  Killing.\n";
       }
 
-      
+
     } else {
       die "What source??";
     }
@@ -216,7 +215,7 @@ sub unget_token {
     Carp::croak "Can't unget $t, because it's not a token object!"
      unless UNIVERSAL::can($t, 'type');
   }
-  
+
   unshift @{$self->{'token_buffer'}}, @_;
   DEBUG > 1 and print STDERR "Token buffer now has ",
    scalar(@{$self->{'token_buffer'}}), " items in it.\n";
@@ -238,7 +237,7 @@ sub set_source {
   } elsif(ref(\( $_[0] )) eq 'GLOB') {
     $self->{'source_filename'} = '' . ($handle = $_[0]);
     DEBUG and print STDERR "$self 's source is glob $_[0]\n";
-    # and fall thru   
+    # and fall thru
   } elsif(ref( $_[0] ) eq 'SCALAR') {
     $self->{'source_scalar_ref'} = $_[0];
     DEBUG and print STDERR "$self 's source is scalar ref $_[0]\n";
@@ -314,7 +313,7 @@ sub get_author      {
 sub _get_titled_section {
   # Based on a get_title originally contributed by Graham Barr
   my($self, $titlename, %options) = (@_);
-  
+
   my $max_token            = delete $options{'max_token'};
   my $desperate_for_title  = delete $options{'desperate'};
   my $accept_verbatim      = delete $options{'accept_verbatim'};
@@ -409,7 +408,7 @@ sub _get_titled_section {
         }
       }
     }
-    
+
     elsif($state == 2) {
       # seeking start of para (which must immediately follow)
       if($token->is_start and $content_containers{ $token->tagname }) {
@@ -422,14 +421,14 @@ sub _get_titled_section {
         $state = 0;
       }
     }
-    
+
     elsif($state == 3) {
       # accumulating text until end of Para
       if( $token->is_text ) {
         DEBUG and print STDERR "   Adding \"", $token->text, "\" to para-content.\n";
         $para_text_content .= $token->text;
         # and keep looking
-        
+
       } elsif( $token->is_end and $content_containers{ $token->tagname } ) {
         DEBUG and print STDERR "  Found end of Para.  Considering content: ",
           $para_text_content, "\n";
@@ -450,21 +449,21 @@ sub _get_titled_section {
         }
       }
     }
-    
+
     else {
       die "IMPOSSIBLE STATE $state!\n";  # should never happen
     }
-    
+
   }
-  
+
   # Put it all back!
   $self->unget_token(@to_unget);
-  
+
   if(DEBUG) {
     if(defined $title) { print STDERR "  Returning title <$title>\n" }
     else { print STDERR "Returning title <>\n" }
   }
-  
+
   return '' unless defined $title;
   $title =~ s/^\s+//;
   return $title;
@@ -477,7 +476,7 @@ sub _get_titled_section {
 sub _handle_element_start {
   my $self = shift;   # leaving ($element_name, $attr_hash_r)
   DEBUG > 2 and print STDERR "++ $_[0] (", map("<$_> ", %{$_[1]}), ")\n";
-  
+
   push @{ $self->{'token_buffer'} },
        $self->{'start_token_class'}->new(@_);
   return;
@@ -494,7 +493,7 @@ sub _handle_text {
 sub _handle_element_end {
   my $self = shift;   # leaving ($element_name);
   DEBUG > 2 and print STDERR "-- $_[0]\n";
-  push @{ $self->{'token_buffer'} }, 
+  push @{ $self->{'token_buffer'} },
        $self->{'end_token_class'}->new(@_);
   return;
 }
@@ -743,7 +742,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.
@@ -796,7 +795,7 @@ sub _old_get_title {  # some witchery in here
 
     (DEBUG and print STDERR "Too much in the buffer.\n"),
      last if @to_unget > 25; # sanity
-    
+
     my $pattern = '';
     if( #$to_unget[-1]->type eq 'end'
         #and $to_unget[-1]->tagname eq 'Para'
@@ -832,21 +831,22 @@ sub _old_get_title {  # some witchery in here
       }
       undef $title if $title =~ m<^\s*$>; # make sure it's contentful!
       last;
-      
+
     } else {
       DEBUG and $pattern and print STDERR "Leading pattern: $pattern\n";
     }
   }
-  
+
   # Put it all back:
   $self->unget_token(@to_unget);
-  
+
   if(DEBUG) {
     if(defined $title) { print STDERR "  Returning title <$title>\n" }
     else { print STDERR "Returning title <>\n" }
   }
-  
+
   return '' unless defined $title;
   return $title;
 }
 
+use warnings;

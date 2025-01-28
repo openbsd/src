@@ -97,8 +97,8 @@ Taking a reference to an enumerated list is not the same
 as using square brackets--instead it's the same as creating
 a list of references!
 
-    @list = (\$a, \@b, \%c);
-    @list = \($a, @b, %c);      # same thing!
+    @list = (\$x, \@y, \%z);
+    @list = \($x, @y, %z);      # same thing!
 
 As a special case, C<\(@foo)> returns a list of references to the contents
 of C<@foo>, not a reference to C<@foo> itself.  Likewise for C<%foo>,
@@ -787,7 +787,7 @@ performs an aliasing operation, so that the variable name referenced on the
 left-hand side becomes an alias for the thing referenced on the right-hand
 side:
 
-    \$a = \$b; # $a and $b now point to the same scalar
+    \$x = \$y; # $x and $y now point to the same scalar
     \&foo = \&bar; # foo() now means bar()
 
 This syntax must be enabled with C<use feature 'refaliasing'>.  It is
@@ -840,11 +840,11 @@ right type.  Parentheses immediately surrounding an array (and possibly
 also C<my>/C<state>/C<our>/C<local>) will make each element of the array an
 alias to the corresponding scalar referenced on the right-hand side:
 
-    \(@a) = \(@b); # @a and @b now have the same elements
-    \my(@a) = \(@b); # likewise
-    \(my @a) = \(@b); # likewise
-    push @a, 3; # but now @a has an extra element that @b lacks
-    \(@a) = (\$a, \$b, \$c); # @a now contains $a, $b, and $c
+    \(@x) = \(@y); # @x and @y now have the same elements
+    \my(@x) = \(@y); # likewise
+    \(my @x) = \(@y); # likewise
+    push @x, 3; # but now @x has an extra element that @y lacks
+    \(@x) = (\$x, \$y, \$z); # @x now contains $x, $y, and $z
 
 Combining that form with C<local> and putting parentheses immediately
 around a hash are forbidden (because it is not clear what they should do):
@@ -864,6 +864,16 @@ for obfuscated code:
 
     my $type = ref $thingy;
     ($type ? $type eq 'ARRAY' ? \@foo : \$bar : $baz) = $thingy;
+
+A reference assignment in list context returns a list of references to
+each left-hand value. So for example
+
+    @b = ((\$l1, \$l2, \(@a)) = (\$r1, \$r2, $\r3, \$4));
+
+is equivalent to
+
+    (\$l1, \$l2, \(@a)) = (\$r1, \$r2, $\r3, \$4);
+    @b = (\$l1, \$l2, \$a[0], \$a[1]);
 
 The C<foreach> loop can also take a reference constructor for its loop
 variable, though the syntax is limited to one of the following, with an
@@ -920,7 +930,7 @@ X<reference, string context> X<reference, use as hash key>
 You may not (usefully) use a reference as the key to a hash.  It will be
 converted into a string:
 
-    $x{ \$a } = $a;
+    $x{ \$x } = $x;
 
 If you try to dereference the key, it won't do a hard dereference, and
 you won't accomplish what you're attempting.  You might want to do something

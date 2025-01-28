@@ -1,13 +1,9 @@
-Mode_t			T_NV
-pid_t			T_NV
-Uid_t			T_NV
-Time_t			T_NV
-Gid_t			T_NV
-Uid_t			T_NV
+Mode_t			T_IV
+pid_t			T_IV
+Uid_t			T_UV
+Time_t			T_IV
+Gid_t			T_UV
 Off_t			T_NV
-Dev_t			T_NV
-NV			T_NV
-fd			T_IV
 speed_t			T_IV
 tcflag_t		T_IV
 cc_t			T_IV
@@ -30,14 +26,14 @@ T_OPAQUEPTROBJ
 	}
 
 T_SIGNO
-	if ((sig = SvIV($arg)) < 0) {
+	if (($var = SvIV($arg)) < 0) {
 	   croak(\"%s: Negative signals are not allowed %d\",
 		${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-                                   sig);
+                                   $var);
 	}
 
 T_FD
-	if ((fd = (int)SvIV($arg)) < 0) {
+	if (($var = (int)SvIV($arg)) < 0) {
 	     SETERRNO(EBADF, RMS_IFI);
 	     XSRETURN_IV(-1);
 	}

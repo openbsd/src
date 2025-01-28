@@ -25,9 +25,6 @@ if ($Config{'gccversion'} and $OPTIMIZE =~ /-g (gdb)? 3/x) {
 # Windows uses a different name for the zlib library
 my $ZLIB_LIBRARY_NAME = $^O eq 'MSWin32' ? 'zlib' : 'z' ;
 
-#$WALL = ' -pedantic ' if $Config{'cc'} =~ /gcc/ ;
-#$WALL = ' -Wall -Wno-comment ' if $Config{'cc'} =~ /gcc/ ;
-
 # Ticket #18986 says that ExtUtils::Install 1.39 fixes the in-use issue
 # on win32/cygwin, so make the code below conditional on the version of
 # ExtUtils::Install.
@@ -56,14 +53,13 @@ EOM
 
     if ($answer =~ /^yes|y/i)
     {
-	print "continuing...\n"
+        print "continuing...\n"
     }
     else
     {
-	print "exiting...\n" ;
-	exit 1 ;
+        print "exiting...\n" ;
+        exit 1 ;
     }
-
 
 }
 
@@ -78,9 +74,12 @@ my $OPT_ZLIB_LIB = "-L$ZLIB_LIB" ;
 my $OPT_SOLO = '-DZ_SOLO';
 my $OPT_USE_ZLIB_NG = "";
 
-if (! $BUILD_ZLIB)
+# For C++ only
+my $OPT_CXX_DEFINES = '-Dregister=' ; # for https://github.com/pmqs/Compress-Raw-Zlib/issues/23
+
+if (!$BUILD_ZLIB)
 {
-    # When using  the system supplied zlib, we don't want to use our bespoke prefix
+    # When using the system supplied zlib, we don't want to use our bespoke prefix
     $OPT_Z_PREFIX =  '';
 
     $OPT_ZLIB_INCLUDE = ''
@@ -98,15 +97,23 @@ if ( $USE_ZLIB_NG)
     $ZLIB_LIBRARY_NAME = $^O eq 'MSWin32' ? 'zlib-ng' : 'z-ng' ;
 }
 
-WriteMakefile(
+my %WriteMakefileArgs = (
+
     NAME         => 'Compress::Raw::Zlib',
     VERSION_FROM => 'lib/Compress/Raw/Zlib.pm',
     INC          => $OPT_ZLIB_INCLUDE ,
-    DEFINE       => "-DNO_VIZ $OPT_SOLO $OLD_ZLIB $WALL $OPT_Z_PREFIX $OPT_USE_ZLIB_NG -DGZIP_OS_CODE=$GZIP_OS_CODE $USE_PPPORT_H -DPerl_crz_BUILD_ZLIB=$BUILD_ZLIB" ,
+    DEFINE       => "-DNO_VIZ $OPT_SOLO $OLD_ZLIB $WALL $OPT_Z_PREFIX $OPT_USE_ZLIB_NG -DGZIP_OS_CODE=$GZIP_OS_CODE $USE_PPPORT_H -DPerl_crz_BUILD_ZLIB=$BUILD_ZLIB $OPT_CXX_DEFINES" ,
     XS           => { 'Zlib.xs' => 'Zlib.c'},
-    'depend'     => { 'Makefile'   => 'config.in' },
-    'clean'      => { FILES        => '*.c constants.h constants.xs' },
-    'dist'       => { COMPRESS     => 'gzip',
+    OPTIMIZE     => $OPTIMIZE,
+    LICENSE      => 'perl',
+    ABSTRACT     => 'Perl interface to zlib/zlib-ng compression libraries',
+    AUTHOR       => 'Paul Marquess <pmqs@cpan.org>',
+    depend       => { Makefile     => 'config.in',
+                      manifypods   => 'READMEmd'
+                    },
+    postamble    => { name => 'Zlib' },
+    clean        => { FILES        => '*.c constants.h constants.xs' },
+    dist         => { COMPRESS     => 'gzip',
                       TARFLAGS     => '-chvf',
                       SUFFIX       => 'gz',
                       DIST_DEFAULT => 'MyTrebleCheck tardist',
@@ -117,14 +124,12 @@ WriteMakefile(
         ? zlib_files($ZLIB_LIB)
         : (LIBS => [ "$OPT_ZLIB_LIB -l$ZLIB_LIBRARY_NAME " ])
     ),
-    OPTIMIZE => $OPTIMIZE,
 
-    INSTALLDIRS => ($] >= 5.009 && $] < 5.011 ? 'perl' : 'site'),
+    INSTALLDIRS  => ($] >= 5.009 && $] < 5.011 ? 'perl' : 'site'),
 
-     ( eval { ExtUtils::MakeMaker->VERSION(6.46) }
-        ? ( META_MERGE  => {
+     META_MERGE  => {
 
-                "meta-spec" => { version => 2 },
+                'meta-spec' => { version => 2 },
 
                 no_index => {
                     directory => [ 't', 'private' ],
@@ -144,15 +149,20 @@ WriteMakefile(
                         web     => 'https://github.com/pmqs/Compress-Raw-Zlib',
                     },
                 },
-              }
-            )
-        : ()
-    ),
-
-    ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
-        ('LICENSE'  => 'perl')         : ()),
+              },
 
 ) ;
+
+delete $WriteMakefileArgs{LICENSE}
+    unless eval { ExtUtils::MakeMaker->VERSION(6.30) } ;
+
+delete $WriteMakefileArgs{META_MERGE}
+    unless eval { ExtUtils::MakeMaker->VERSION(6.46) } ;
+
+delete $WriteMakefileArgs{BUILD_REQUIRES}
+    unless eval { ExtUtils::MakeMaker->VERSION(6.55_03) } ;
+
+WriteMakefile(%WriteMakefileArgs);
 
 sub version_Macro
 {
@@ -201,7 +211,6 @@ my @names = qw(
     ZLIBNG_VER_MAJOR
     ZLIBNG_VER_MINOR
     ZLIBNG_VER_REVISION
-    ZLIBNG_VER_STATUS
     ZLIBNG_VER_MODIFIED
 );
 
@@ -267,11 +276,22 @@ sub getBoolean
     my $name = shift ;
     my $info = shift;
 
+    my $x = getConfigValue($name, $info);
+
+    return ($x =~ /^yes|on|true|1$/i) ? 1 : 0;
+}
+
+sub getConfigValue
+{
+    my $name = shift ;
+    my $info = shift;
+
+    # Environment variable takes priority
     my $x = defined $ENV{$name}
                 ? $ENV{$name}
                 : $info->{$name} ;
 
-    return ($x =~ /^yes|on|true|1$/i) ? 1 : 0;
+    return $x;
 }
 
 sub ParseCONFIG
@@ -279,7 +299,7 @@ sub ParseCONFIG
     my ($k, $v) ;
     my @badkey = () ;
     my %Info = () ;
-    my @Options = qw( INCLUDE LIB BUILD_ZLIB OLD_ZLIB GZIP_OS_CODE USE_ZLIB_NG) ;
+    my @Options = qw( ZLIB_INCLUDE ZLIB_LIB BUILD_ZLIB OLD_ZLIB GZIP_OS_CODE USE_ZLIB_NG) ;
     my %ValidOption = map {$_, 1} @Options ;
     my %Parsed = %ValidOption ;
     my $CONFIG = 'config.in' ;
@@ -288,84 +308,72 @@ sub ParseCONFIG
 
     open(F, "<$CONFIG") or die "Cannot open file $CONFIG: $!\n" ;
     while (<F>) {
-	s/^\s*|\s*$//g ;
-	next if /^\s*$/ or /^\s*#/ ;
-	s/\s*#\s*$// ;
+        s/^\s*|\s*$//g ;
+        next if /^\s*$/ or /^\s*#/ ;
+        s/\s*#\s*$// ;
 
-	($k, $v) = split(/\s+=\s+/, $_, 2) ;
-	$k = uc $k ;
-	if ($ValidOption{$k}) {
-	    delete $Parsed{$k} ;
-	    $Info{$k} = $v ;
-	}
-	else {
-	    push(@badkey, $k) ;
-	}
+        ($k, $v) = split(/\s+=\s+/, $_, 2) ;
+        $k = uc $k ;
+        if ($ValidOption{$k}) {
+            delete $Parsed{$k} ;
+            $Info{$k} = $v ;
+        }
+        else {
+            push(@badkey, $k) ;
+        }
     }
     close F ;
 
     print "Unknown keys in $CONFIG ignored [@badkey]\n"
-	if @badkey ;
+        if @badkey ;
 
     # check parsed values
     my @missing = () ;
     die "The following keys are missing from $CONFIG  [@missing]\n"
         if @missing = keys %Parsed ;
 
-    $ZLIB_INCLUDE = defined $ENV{'ZLIB_INCLUDE'}
-                        ? $ENV{'ZLIB_INCLUDE'}
-                        : $Info{'INCLUDE'} ;
+    $ZLIB_INCLUDE = getConfigValue('ZLIB_INCLUDE',  \%Info);
+    $ZLIB_LIB     = getConfigValue('ZLIB_LIB',      \%Info);
+    $GZIP_OS_CODE = getConfigValue('GZIP_OS_CODE',  \%Info);
 
-    $ZLIB_LIB = defined $ENV{'ZLIB_LIB'}
-                    ?$ENV{'ZLIB_LIB'}
-                    : $Info{'LIB'} ;
-
-    $USE_ZLIB_NG = getBoolean('USE_ZLIB_NG', \%Info);
+    $BUILD_ZLIB   = getBoolean('BUILD_ZLIB',        \%Info);
+    $USE_ZLIB_NG  = getBoolean('USE_ZLIB_NG',       \%Info);
+    $OLD_ZLIB     = getBoolean('OLD_ZLIB',          \%Info);
 
     if ($^O eq 'VMS') {
         $ZLIB_INCLUDE = VMS::Filespec::vmspath($ZLIB_INCLUDE);
         $ZLIB_LIB = VMS::Filespec::vmspath($ZLIB_LIB);
     }
 
-    $OLD_ZLIB = '-DOLD_ZLIB'
-        if getBoolean('OLD_ZLIB', \%Info);
-
-    $BUILD_ZLIB = getBoolean('BUILD_ZLIB', \%Info);
+    $OLD_ZLIB = $OLD_ZLIB
+                    ?'-DOLD_ZLIB'
+                    : '';
 
     if ($BUILD_ZLIB ) {
 
+        die "Cannot have USE_ZLIB_NG when BUILD_ZLIBis true\n"
+            if $USE_ZLIB_NG ;
+
         # ZLIB_LIB & ZLIB_INCLUDE must point to the same place when
         # BUILD_ZLIB is specified.
-        die "INCLUDE & LIB must be the same when BUILD_ZLIB is True\n"
+        die "ZLIB_INCLUDE & ZLIB_LIB must be the same when BUILD_ZLIB is True\n"
             if $ZLIB_LIB ne $ZLIB_INCLUDE ;
 
         # Check the zlib source directory exists
-        die "LIB/INCLUDE directory '$ZLIB_LIB' does not exits\n"
+        die "ZLIB_LIB/ZLIB_INCLUDE directory '$ZLIB_LIB' does not exits\n"
             unless -d $ZLIB_LIB ;
 
         # check for a well known file
-        if ($USE_ZLIB_NG)
-        {
-            die "LIB/INCLUDE directory, '$ZLIB_LIB', doesn't seem to have the zlib-ng source files\n"
-                unless -e catfile($ZLIB_LIB, 'zlib-ng.h') ;
-        }
-        else
-        {
-            die "LIB/INCLUDE directory, '$ZLIB_LIB', doesn't seem to have the zlib source files\n"
-                unless -e catfile($ZLIB_LIB, 'zlib.h') ;
-        }
+        die "ZLIB_LIB/ZLIB_INCLUDE directory, '$ZLIB_LIB', doesn't seem to have the zlib source files\n"
+            unless -e catfile($ZLIB_LIB, 'zlib.h') ;
 
         # write the Makefile
-        print "Building Zlib enabled\n" ;
+        print "Building Zlib is enabled\n" ;
     }
 
-    $GZIP_OS_CODE = defined $ENV{'GZIP_OS_CODE'}
-                          ? $ENV{'GZIP_OS_CODE'}
-                          : $Info{'GZIP_OS_CODE'} ;
-
-	die "GZIP_OS_CODE not 'AUTO_DETECT' or a number between 0 and 255\n"
-	   unless uc $GZIP_OS_CODE eq 'AUTO_DETECT'
-                    || ( $GZIP_OS_CODE =~ /^(\d+)$/ && $1 >= 0 && $1 <= 255) ;
+    die "GZIP_OS_CODE not 'AUTO_DETECT' or a number between 0 and 255\n"
+       unless uc $GZIP_OS_CODE eq 'AUTO_DETECT'
+                || ( $GZIP_OS_CODE =~ /^(\d+)$/ && $1 >= 0 && $1 <= 255) ;
 
     if (uc $GZIP_OS_CODE eq 'AUTO_DETECT')
     {
@@ -403,24 +411,24 @@ sub zlib_files
         # zlib 1.2.0 or greater
         #
         @h_files = qw(crc32.h    inffast.h inflate.h  trees.h    zconf.in.h
-    	              zutil.h    deflate.h inffixed.h inftrees.h zconf.h
-    		      zlib.h
-    		 );
+                      zutil.h    deflate.h inffixed.h inftrees.h zconf.h
+                      zlib.h
+                    );
         @c_files = qw(adler32  crc32   infback  inflate  uncompr
-    		      compress deflate inffast  inftrees
-    		      trees    zutil
-    		 );
+                     compress deflate inffast  inftrees
+                     trees    zutil
+                    );
     }
     else {
         # zlib 1.1.x
 
         @h_files = qw(deflate.h  infcodes.h inftrees.h zconf.h zutil.h
-    		      infblock.h inffast.h  infutil.h  zlib.h
-    		 );
+                     infblock.h inffast.h  infutil.h  zlib.h
+             );
         @c_files = qw(adler32  compress crc32    uncompr
-    		      deflate  trees    zutil    inflate infblock
-    		      inftrees infcodes infutil  inffast
-    		 );
+                      deflate  trees    zutil    inflate infblock
+                      inftrees infcodes infutil  inffast
+                  );
     }
 
     @h_files = map { catfile($dir, $_)  } @h_files ;
@@ -431,12 +439,8 @@ sub zlib_files
       { copy(catfile($dir, $file), '.') }
 
     return (
-        #'H'         =>  [ @h_files ],
-    	'C'         =>  [ @c_files ] ,
-        #'OBJECT'    => qq[ @o_files ],
-        'OBJECT'    => q[ $(O_FILES) ],
-
-
+            'C'         =>  [ @c_files ] ,
+            'OBJECT'    => q[ $(O_FILES) ],
            ) ;
 }
 

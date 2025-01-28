@@ -695,14 +695,6 @@ perl.gcov: perl.config.gcov
 	$(MAKE) PERL_SUFFIX=.gcov PERL_PROFILE_LDFLAGS='' perl
 	@echo "Now you may run perl.gcov and then run gcov some.c."
 
-# Microperl.  This is just a convenience thing if one happens to
-# build also the full Perl and therefore the real big Makefile:
-# usually one should manually explicitly issue the below command.
-
-.PHONY: microperl
-microperl:
-	$(MAKE) -f Makefile.micro
-
 !NO!SUBS!
 
 fi
@@ -949,7 +941,7 @@ _mopup:
 	-rm -f perl.pixie lib*.so.perl.pixie lib*.so.Addrs
 	-rm -f perl.Addrs perl.Counts t/perl.Addrs t/perl.Counts *perl.xok
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
-	-rm -f perl$(EXE_EXT) miniperl$(EXE_EXT) $(LIBPERL) libperl.* microperl
+	-rm -f perl$(EXE_EXT) miniperl$(EXE_EXT) $(LIBPERL) libperl.*
 	-rm -f config.over
 
 # Do not 'make _tidy' directly.

@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use Scalar::Util qw(reftype refaddr);
 
-$Safe::VERSION = "2.44";
+$Safe::VERSION = "2.46";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -21,7 +21,7 @@ sub lexless_anon_sub {
     # Uses a closure (on $__ExPr__) to pass in the code to be executed.
     # (eval on one line to keep line numbers as expected by caller)
     eval sprintf
-    'package %s; %s sub { @_=(); eval q[local *SIG; my $__ExPr__;] . $__ExPr__; }',
+    'package %s; %s sub { @_=(); local *SIG; eval q[my $__ExPr__;] . $__ExPr__; }',
                 $_[0], $_[1] ? 'use strict;' : '';
 }
 
@@ -77,8 +77,10 @@ my $default_root  = 0;
 my $default_share = [qw[
     *_
     &PerlIO::get_layers
+    &UNIVERSAL::import
     &UNIVERSAL::isa
     &UNIVERSAL::can
+    &UNIVERSAL::unimport
     &UNIVERSAL::VERSION
     &utf8::is_utf8
     &utf8::valid
@@ -822,4 +824,3 @@ Reworked to use the Opcode module and other changes added by Tim Bunce.
 Currently maintained by the Perl 5 Porters, <perl5-porters@perl.org>.
 
 =cut
-

@@ -47,12 +47,7 @@ while (<$fh>) {
 }
 close $fh or die $!;
 
-# regen/uconfig_h.pl is here because it's not possible to test it by running
-# it on non-*nix platforms, as it requires a Bourne shell. As it's the only file
-# in regen/ which we can syntax check but can't run, it's simpler to add it to
-# the list here, than copy-paste the entire syntax-checking logic to
-# t/porting/regen.t
-my @victims = (qw(installman installperl regen_perly.pl regen/uconfig_h.pl));
+my @victims = (qw(installman installperl regen_perly.pl));
 my %excuses = (
                'Porting/git-deltatool' => 'Git::Wrapper',
                'Porting/podtidy' => 'Pod::Tidy',

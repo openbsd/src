@@ -7,11 +7,11 @@ use warnings;
 use strict;
 
 # Test::More doesn't have fresh_perl_is() yet
-# use Test::More tests => 342;
+# use Test::More tests => 344;
 
 BEGIN {
     require '../../t/test.pl';
-    plan(538);
+    plan(542);
     use_ok('XS::APItest')
 };
 use Config;
@@ -338,6 +338,23 @@ for my $fn_type (qw(eval_pv eval_sv call_sv)) {
 	    like($@, $expected_err_qr, "$desc - the correct error message");
 	}
     }
+}
+
+{
+    use feature "fc";
+    use strict;
+    # the XS eval_sv() returns the count of results
+    is(eval_sv('my $z = fc("A") eq fc("a"); 1', G_LIST), 0,
+       "don't inherit hints by default (so the eval fails)");
+    is(eval_sv('my $z = fc("A") eq fc("a"); 1', G_LIST | G_USEHINTS), 1,
+       "inherit hints when requested (so the eval succeeds)")
+      or diag($@);
+    # prevent Variable "$z" is not imported
+    no warnings 'misc';
+    is(eval_sv('$z = 1', G_LIST), 1,
+       "don't inherit hints (strict) by default, so the eval succeeds");
+    is(eval_sv('$z = 1', G_LIST | G_USEHINTS), 0,
+       "inherit hints (strict) when requested, so the eval fails");
 }
 
 # DAPM 9-Aug-04. A taint test in eval_sv() could die after setting up

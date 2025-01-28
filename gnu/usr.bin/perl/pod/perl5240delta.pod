@@ -205,7 +205,7 @@ L<[GH #14799]|https://github.com/Perl/perl5/issues/14799>
 
 L<[GH #13548]|https://github.com/Perl/perl5/issues/13548>
 
-=head2 The C</\C/> character class has been removed.
+=head2 The C</\C/> character class has been removed
 
 This regular expression character class was deprecated in v5.20.0 and has
 produced a deprecation warning since v5.22.0. It is now a compile-time
@@ -241,7 +241,7 @@ C<$Carp::MaxArgNums> is supposed to be the number of arguments to display.
 Prior to this version, it was instead showing C<$Carp::MaxArgNums> + 1 arguments,
 contrary to the documentation.
 
-=head2 Only blanks and tabs are now allowed within C<[...]> within C<(?[...])>.
+=head2 Only blanks and tabs are now allowed within C<[...]> within C<(?[...])>
 
 The experimental Extended Bracketed Character Classes can contain regular
 bracketed character classes within them.  These differ from regular ones in

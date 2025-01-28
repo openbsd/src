@@ -675,7 +675,6 @@ test_opcount(0, "multiconcat: local assign",
 
 {
     use feature 'try';
-    no warnings 'experimental::try';
 
     test_opcount(0, "try/catch: catch block is optimized",
                     sub { my @a; try {} catch($e) { $a[0] } },
@@ -889,7 +888,7 @@ test_opcount(0, 'my $y= 1; my @x= \($y= undef);',
 
 # aelemfast_lex + sassign are replaced by a combined OP
 test_opcount(0, "simple aelemfast_lex + sassign replacement",
-                sub { my @x; $x[0] = "foo" },
+                sub { my @x; $x[0] = "foo"; 1 },
                 {
                     aelemfast_lex      => 0,
                     aelemfastlex_store => 1,
@@ -900,7 +899,7 @@ test_opcount(0, "simple aelemfast_lex + sassign replacement",
 # aelemfast_lex + sassign are not replaced by a combined OP
 # when key <0 (not handled, to keep the pp_ function simple
 test_opcount(0, "aelemfast_lex + sassign replacement with neg key",
-                sub { my @x = (1,2); $x[-1] = 7 },
+                sub { my @x = (1,2); $x[-1] = 7; 1 },
                 {
                     aelemfast_lex      => 0,
                     aelemfastlex_store => 1,

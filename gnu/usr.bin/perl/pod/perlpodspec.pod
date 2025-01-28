@@ -82,11 +82,11 @@ no C<m/\A=cut/> line.
    actually knows to look for pod escapes even in the middle of a
    paragraph.  This means that the following secret stuff will be ignored
    by both the compiler and the translators.
-      $a=3;
+      $x=3;
       =secret stuff
        warn "Neither POD nor CODE!?"
       =cut back
-      print "got $a\n";
+      print "got $x\n";
    You probably shouldn't rely upon the warn() being podded out forever.
    Not all pod translators are well-behaved in this regard, and perhaps
    the compiler will become pickier.

@@ -17,6 +17,257 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.41.7 - Martha Wells
+
+L<Announced on 2024-12-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2024/12/msg269316.html>
+
+   Indah glared at me, but it was more wry than angry. "Is that what you think?
+   Because you keep insisting it's a mysterious ultra-hacker."
+   Okay, that one stung. "I didn't use the words 'mysteriious' or 'ultra.'"
+   Aylen watched like it was one of those human games where they threw
+   balls at each other.
+
+=head2 v5.41.6 - Jon Postel
+
+L<Announced on 2024-11-20 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2024/11/msg269167.html>
+
+  Be conservative in what you do, and liberal in what you accept.
+
+=head2 v5.41.5 - Great P.I. of the Universe, Under A Killing Moon
+
+L<Announced on 2024-10-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2024/10/msg268977.html>
+
+  PI: So, they've found it again, have they? I thought we'd taken care of it.
+  A:  The forces of evil are persistent, Sir.
+  PI: I'm getting too old for this....
+  PI: Who have we got lined up to deal with this problem?
+  A:  Murphy, sir.
+  PI: Oh no! Not Murphy!
+
+=head2 v5.41.4 - Theodor Seuss Geisel
+
+L<Announced on 2024-09-20 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2024/09/msg268800.html>
+
+  Sometimes you will never know the value of a moment
+  until it becomes a memory.
+
+=head2 v5.41.3 - Jasper Fforde, The Constant Rabbit
+
+L<Announced on 2024-08-29 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/group/perl.perl5.porters/2024/08/msg268756.html>
+
+  Somebody once said that the library is actually the dominant life
+  form on the planet. Humans simply exist as the reproductive means to
+  achieve more libraries.
+
+=head2 v5.41.2 - John Dryden
+
+L<Announced on 2024-07-20 by Karen Etheridge (Ether)|https://www.nntp.perl.org/group/perl.perl5.porters/2024/07/msg268542.html>
+
+  Errors, like straws, upon the surface flow; He who would search for
+  pearls must dive down below.
+
+=head2 v5.41.1 - Charles F. Kettering
+
+L<Announced on 2024-07-02 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/group/perl.perl5.porters/2024/07/msg268328.html>
+
+  We find that in research a certain amount of intelligent ignorance
+  is essential to progress; for, if you know too much, you won't try
+  the thing.
+
+=head2 v5.40.1-RC1 - E. H. Gombrich, trans. Caroline Mustill, "A Little History of the World"
+
+L<Announced on 2025-01-05 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/01/msg269400.html>
+
+Unlike Egypt, Mesopotamia was rarely ruled by just one king.  Nor did
+any single empire survive long within firm frontiers.  Many tribes and
+many kings held power at different times.  The most important of these
+were the Sumerians, the Babylonians and the Assyrians.  For a long time
+it was thought that the Egyptians were the first people to have
+everything that goes to make up what we call a culture: towns and
+tradesmen, noblemen and kings, temples and priests, administrators and
+artists, writing and technical skills.  Yet we now know that, in some
+respects, the Sumerians were ahead of the Egyptians.
+
+=head2 v5.40.0 - Neil Gaiman, Coraline
+
+L<Announced on 2024-06-09 by Graham Knop|https://www.nntp.perl.org/group/perl.perl5.porters/2024/06/msg268252.html>
+
+  “What’s your name,” Coraline asked the cat. “Look, I’m Coraline. Okay?”
+  “Cats don’t have names,” it said.
+  “No?” said Coraline.
+  “No,” said the cat. “Now you people have names. That’s because you
+  don’t know who you are. We know who we are, so we don’t need names.”
+
+=head2 v5.39.10 - Fernando Pessoa
+
+L<Announced on 2024-04-28 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2024/04/msg268159.html>
+
+  The value of things is not the time they last, but the intensity
+  with which they occur. That is why there are unforgettable moments
+  and unique people!
+
+=head2 v5.39.9 - Terry Pratchett, Sourcery
+
+L<Announced on 2024-03-20 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2024/03/msg268073.html>
+
+  "I meant," said Ipslore bitterly, "what is there in this world that
+  truly makes living worthwhile?"
+  Death thought about it.
+  CATS, he said eventually. CATS ARE NICE.
+
+=head2 v5.39.8 - Friedrich Schiller, "Ode to joy"
+
+L<Announced on 2024-02-23 by Renee Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2024/02/msg267978.html>
+
+  Be embraced, all ye millions!
+  With a kiss for all the world!
+  Brothers, beyond the stars
+  Surely dwells a loving Father.
+  Do you kneel before Him, oh millions?
+  Do you feel the Creator's presence?
+  Seek Him beyond the stars!
+  He must dwell beyond the stars
+
+=head2 v5.39.7 - PJ Caldas
+
+L<Announced on 2024-01-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2024/01/msg267736.html>
+
+  On the screen the image of a frail-looking bigwig from Yale.
+  Between a mahogany desk and a wall filled with thick
+  books of all colors, he warns uus that the underpinnings
+  of the entire planet rely on the internet.
+  Food and water supply, electricity grid, defense systems...
+  "If the failure continues fo a few days, we go back to the
+  nineteen nineties. A couple extra weeks, and we are back to
+  the nineteenth century."
+
+=head2 v5.39.6 - Jasper Fforde
+
+L<Announced on 2023-12-30 by Philippe Bruhat (BooK)|https://www.nntp.perl.org/group/perl.perl5.porters/2023/12/msg267566.html>
+
+"Do I have to talk to insane people?"
+
+"You're a librarian now. I'm afraid it's mandatory."
+
+=head2 v5.39.5 - Epictetus
+
+L<Announced on 2023-11-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2023/11/msg267331.html>
+
+It is impossible for a man to learn what he thinks he already knows.
+
+=head2 v5.39.4 - None
+
+L<Announced on 2023-10-25 by Graham Knop|https://www.nntp.perl.org/group/perl.perl5.porters/2023/10/msg267222.html>
+
+This release does not have an epigraph.
+
+=head2 v5.39.3 - Porter Robinson and Madeon, "Shelter"
+
+L<Announced on 2023-09-20 by Matthew Horsfall|https://www.nntp.perl.org/group/perl.perl5.porters/2023/09/msg267064.html>
+
+  I could never find the right way to tell you
+  Have you noticed I've been gone?
+  'Cause I left behind the home that you made me
+  But I will carry it along
+
+  And it's a long way forward, so trust in me
+  I'll give them shelter, like you've done for me
+  And I know, I'm not alone, you'll be watching over us
+  Until you're gone
+
+  When I'm older, I'll be silent beside you
+  I know words won't be enough
+  And they won't need to know the names or our faces
+  But they will carry on for us
+
+  And it's a long way forward, so trust in me
+  I'll give them shelter, like you've done for me
+  And I know, I'm not alone, you'll be watching over us
+  Until you're gone
+
+  Oh it's a long way forward, trust in me
+  I'll give them shelter, like you've done for me
+  And I know, I'm not alone, you'll be watching over us
+  Until
+
+=head2 v5.39.2 - U2, "The Fly"
+
+L<Announced on 2023-08-20 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2023/08/msg266915.html>
+
+    It's no secret that a conscience can sometimes be a pest
+    It's no secret ambition bites the nails of success
+    Every artist is a cannibal, every poet is a thief
+    All kill their inspiration and sing about the grief
+
+=head2 v5.39.1 - Ben Aaronovitch, "Whispers Under Ground"
+
+L<Announced on 2023-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/07/msg266737.html>
+
+The British have always been madly over-ambitious and from one angle it
+can seem like bravery, but from another it looks suspiciously like a
+lack of foresight.  The London Underground was no exception and was
+built by a breed of entrepreneurs whose grasp was matched only by the
+size of their sideburns.  While their equally gloriously bewhiskered
+counterparts across the Atlantic were busy blowing each other to pieces
+in a Civil War, they embarked on the construction of the Metropolitan
+Line knowing only one thing for certain - there was no way they were
+going to be able to run steam trains through it.
+
+=head2 v5.38.3-RC1 - E. H. Gombrich, trans. Caroline Mustill, "A Little History of the World"
+
+L<Announced on 2025-01-05 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2025/01/msg269399.html>
+
+Because the Egyptians were so wise and so powerful their empire lasted
+for a very long time.  Longer than any empire the world has ever known:
+nearly three thousand years.  And they took just as much care as they
+did with their corpses, when they preserved them from rotting away, in
+preserving all their ancient traditions over the centuries.  Their
+priests made quite sure that no son did anything his father had not
+done before him.  To them, everything old was sacred.
+
+=head2 v5.38.2 - Kim Stanley Robinson
+
+(Same epigraph as for v5.34.3 and v5.36.3, as it was a joint release.)
+
+L<Announced on 2023-11-29 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2023/11/msg267400.html>
+
+You can never properly predict the future as it really turns out. So
+you are doing something a little different when you write science
+fiction. You are trying to take a different perspective on now.
+
+=head2 v5.38.1 - Kim Stanley Robinson, Blue Mars
+
+L<Announced on 2023-11-25 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2023/11/msg267354.html>
+
+Michel had a curious expression on his face. “You’re a very accurate
+person, Sax.” “It’s just statistics,” Sax said defensively. “Every once
+in a while language allows you to say things precisely.”
+
+=head2 v5.38.0 - Miguel de Cervantes, "Don Quixote"
+
+L<Announced on 2023-07-02 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2023/07/msg266602.html>
+
+Take my advice and live for a long, long time. Because the maddest thing
+a man can do in this life is to let himself die.
+
+=head2 v5.38.0-RC2 - They Might Be Giants, "O Do Not Forsake Me"
+
+L<Announced on 2023-06-23 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2023/06/msg266559.html>
+
+    Oh, do not forsake me, my indolent friends
+    Oh, do not forsake me though you know I must spend
+    All my darkest hours talking like this
+    For I am one thousand years old
+
+=head2 v5.38.0-RC1 - Kurt Vonnegut, "Good Bless You, Mr. Rosewater"
+
+L<Announced on 2023-06-15 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2023/06/msg266521.html>
+
+Welcome to Earth. It's hot in the summer and cold in the winter. It's
+round and wet and crowded. On the outside, babies, you've got a hundred
+years here. There's only one rule that I know of, babies—"God damn it,
+you've got to be kind."
+
 =head2 v5.37.11 - Ben Aaronovitch, "Moon Over Soho"
 
 L<Announced on 2023-04-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266242.html>
@@ -117,6 +368,13 @@ Remember: Rip it! Roll it! And punch it!
 L<Announced on 2022-05-27 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2022/05/msg263786.html>
 
 I have nothing to say, and I am saying it.
+
+=head2 v5.36.2 - Kim Stanley Robinson, Green Mars
+
+L<Announced on 2023-11-25 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2023/11/msg267353.html>
+
+Any physical action, properly studied and practiced, could no doubt be
+accomplished with a reasonable amount of skill, if not flair.
 
 =head2 v5.36.1 - Louis Kentner, "Piano"
 
@@ -361,6 +619,13 @@ L<Announced on 2021-05-20 by Ricardo Signes|https://www.nntp.perl.org/group/perl
 
 We should try to be the parents of our future rather than the offspring of our
 past.
+
+=head2 v5.34.2 - Kim Stanley Robinson, Red Mars
+
+L<Announced on 2023-11-25 by Paul Evans|https://www.nntp.perl.org/group/perl.perl5.porters/2023/11/msg267352.html>
+
+Each of us have a gift, you see, given us freely by the universe. And
+each of us with every breath gives something back
 
 =head2 v5.34.1 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": Limericks published in "More Nonsense"
 
@@ -730,8 +995,8 @@ L<Announced on 2019-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl
 
 L<Announced on 2019-06-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2019/06/msg255243.html>
 
-On Tuesday, January 20, 2004, I sent Joel Bleifuss, my editor at _In These
-Times_, this fax:
+On Tuesday, January 20, 2004, I sent Joel Bleifuss, my editor at I<In These
+Times>, this fax:
 
     ON ORANGE ALERT HERE.
     ECONOMIC TERRORIST ATTACK
@@ -991,7 +1256,7 @@ L<Announced on 2019-03-21 by Zak Elep|https://www.nntp.perl.org/group/perl.perl5
 
 L<Announced on 2019-02-20 by Atoomic|https://www.nntp.perl.org/group/perl.perl5.porters/2019/02/msg253750.html>
 
-=head2 v5.29.7 - Edsger W. Dijkstra: "Programming Considered as a Human Activity", IFIP Congress, New York, 1965.
+=head2 v5.29.7 - Edsger W. Dijkstra: "Programming Considered as a Human Activity", IFIP Congress, New York, 1965
 
 L<Announced on 2019-01-20 by Abigail|https://www.nntp.perl.org/group/perl.perl5.porters/2019/01/msg253444.html>
 
@@ -2328,7 +2593,7 @@ L<Announced on 2015-12-21 by David Golden|http://www.nntp.perl.org/group/perl.pe
    that could splinter the Republic forever and usher in
   a new Empire of gradual typing....
 
-=head2 v5.23.5 - utastro!nather (Ed Nather), "The Story of Mel", in net.jokes, May 21, 1983.
+=head2 v5.23.5 - utastro!nather (Ed Nather), "The Story of Mel", in net.jokes, May 21, 1983
 
 L<Announced on 2015-11-20 by Abigail|http://www.nntp.perl.org/group/perl.perl5.porters/2015/11/msg232758.html>
 

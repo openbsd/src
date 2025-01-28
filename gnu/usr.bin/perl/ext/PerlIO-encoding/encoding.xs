@@ -286,8 +286,8 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	e->base.ptr = e->base.end = (STDCHAR *) NULL;
 	(void) PerlIOEncode_get_base(aTHX_ f);
 	if (!e->dataSV)
-	    e->dataSV = newSV(0);
-	if (SvTYPE(e->dataSV) < SVt_PV) {
+	    e->dataSV = newSV_type(SVt_PV);
+	else if (SvTYPE(e->dataSV) < SVt_PV) {
 	    sv_upgrade(e->dataSV,SVt_PV);
 	}
 	if (e->flags & NEEDS_LINES) {
@@ -480,8 +480,7 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 		PUSHSTACKi(PERLSI_MAGIC);
 		ENTER;
 		SAVETMPS;
-		str = sv_newmortal();
-		sv_upgrade(str, SVt_PV);
+		str = newSV_type_mortal(SVt_PV);
 		SvPV_set(str, (char*)e->base.ptr);
 		SvLEN_set(str, 0);
 		SvCUR_set(str, e->base.end - e->base.ptr);

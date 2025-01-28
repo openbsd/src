@@ -1,7 +1,5 @@
 use strict; use warnings FATAL => 'all';
 
-BEGIN { eval sprintf 'sub NEED_REPEATED_DECODE () { %d }', $] lt '5.008' }
-
 use Text::Tabs;
 
 require bytes;
@@ -125,7 +123,6 @@ sub check_data {
 	$bad++ unless check($tab_count,   $., "OLD", "TABS");
 
 	$_ = expand($_);
-	$_ = pack "U0a*", $_ if NEED_REPEATED_DECODE;
 
 	$DATA[$.]{NEW}{DATA} = $_;
 
@@ -142,7 +139,6 @@ sub check_data {
 	$bad++ unless check($tab_count,   $., "NEW", "TABS");
 
 	$_ = unexpand($_);
-	$_ = pack "U0a*", $_ if NEED_REPEATED_DECODE;
 
 	if ($_ ne $DATA[$.]{OLD}{DATA}) {
 	    warn "expand/unexpand round-trip equivalency failed at line $.";

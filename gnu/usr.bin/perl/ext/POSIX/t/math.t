@@ -83,9 +83,6 @@ SKIP: {
     if ($^O =~ /VMS/) {
         skip "running in $^O, C99 math support uneven";
     }
-    if ($Config{cc} =~ /\b(?:cl|icl)/) {
-        skip "Microsoft compiler - C99 math support uneven";
-    }
 
     near(M_SQRT2, 1.4142135623731, "M_SQRT2", 1e-9);
     near(M_E, 2.71828182845905, "M_E", 1e-9);
@@ -293,7 +290,10 @@ SKIP: {
     like(NAN, qr/^NaN/, "NAN is Perl's NaN");
     cmp_ok(NAN, '!=', NAN, "NAN != NAN");
     ok(!(NAN == NAN), "NAN == NAN");
-    ok(!signbit(NAN), "signbit(NAN)");
+    # we have a fallback copysign(), but it doesn't work for NaN
+    skip('no copysign', 2) unless $Config{d_copysign};
+    ok(!signbit(copysign(NAN, 1.0)), "signbit(copysign(NAN, 1.0)))");
+    ok(signbit(copysign(NAN, -1.0)), "signbit(copysign(NAN, -1.0)))");
 }
 
 done_testing();

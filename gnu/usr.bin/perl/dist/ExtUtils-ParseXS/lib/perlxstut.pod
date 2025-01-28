@@ -6,7 +6,7 @@ perlxstut - Tutorial for writing XSUBs
 
 This tutorial will educate the reader on the steps involved in creating
 a Perl extension.  The reader is assumed to have access to L<perlguts>,
-L<perlapi> and L<perlxs>.
+L<perlclib>, L<perlapi>, and L<perlxs>.
 
 This tutorial starts with very simple examples and becomes more complex,
 with each new example adding new features.  Certain concepts may not be
@@ -1403,7 +1403,8 @@ Some systems may have installed Perl version 5 as "perl5".
 
 =head1 See also
 
-For more information, consult L<perlguts>, L<perlapi>, L<perlxs>, L<perlmod>,
+For more information, consult L<perlguts>, L<perlapi>, L<perlclib>,
+L<perlxs>, L<perlmod>,
 L<perlapio>, and L<perlpod>
 
 =head1 Author

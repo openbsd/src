@@ -265,21 +265,29 @@ is ($got, '');
 }
 
 sub test_arylen {
-    my $ref = shift;
+    my ($ref, $fixed, $desc) = @_;
     local $^W = 1;
-    is ($$ref, undef, "\$# on freed array is undef");
+    # on RC builds, the temp [] array isn't prematurely freed:
+    # the \$# magic var keeps it alive.
+    my $is_rc = $fixed && (Internals::stack_refcounted() & 1);
+    is ($$ref, ($is_rc ? - 1 : undef), "$desc: \$# on freed array is undef");
     my @warn;
     local $SIG{__WARN__} = sub {push @warn, "@_"};
     $$ref = 1000;
-    is (scalar @warn, 1);
-    like ($warn[0], qr/^Attempt to set length of freed array/);
+    is (scalar @warn, ($is_rc ? 0 : 1), "$desc: number of warnings");
+    if ($is_rc) {
+        pass("$desc: pass");
+    }
+    else {
+        like ($warn[0], qr/^Attempt to set length of freed array/, "$desc: msg");
+    }
 }
 
 {
     my $a = \$#{[]};
     # Need a new statement to make it go out of scope
-    test_arylen ($a);
-    test_arylen (do {my @a; \$#a});
+    test_arylen ($a, 1, "\$a");
+    test_arylen (do {my @a; \$#a}, 0, "do {}");
 }
 
 {
@@ -490,9 +498,17 @@ sub {
          'error when setting alias to -1 elem of empty array';
 }->($plink[0], $plink[-2], $plink[-5], $plunk[-1]);
 
-$_ = \$#{[]};
-$$_ = \1;
-"$$_";
+unless (Internals::stack_refcounted() & 1) {
+    # Skip this test on RC stack builds. The test assumes that the temp
+    # array has been freed - and so it is just checking that the code
+    # doesn't crash. But on RC builds the array (correctly) lives on while
+    # the arylen magic var lives. The assignment ends up using the address
+    # of \1 as a random number to set the array length to, which can use
+    # lots of memory!
+    $_ = \$#{[]};
+    $$_ = \1;
+    "$$_";
+}
 pass "no assertion failure after assigning ref to arylen when ary is gone";
 
 

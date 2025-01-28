@@ -37,7 +37,6 @@ PL_no_dir_func
 PL_no_func
 PL_no_helem_sv
 PL_no_localize_ref
-PL_no_mem
 PL_no_modify
 PL_no_myglob
 PL_no_security

@@ -471,6 +471,7 @@ PerlEnvGetenv_len(struct IPerlEnv* piPerl, const char* varname, unsigned long* l
 int
 PerlEnvUname(struct IPerlEnv* piPerl, struct utsname *name)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_uname(name);
 }
 
@@ -507,18 +508,21 @@ PerlEnvFreeChilddir(struct IPerlEnv* piPerl, char* childDir)
 unsigned long
 PerlEnvOsId(struct IPerlEnv* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_os_id();
 }
 
 char*
 PerlEnvLibPath(struct IPerlEnv* piPerl, WIN32_NO_REGISTRY_M_(const char *pl) STRLEN *const len)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_get_privlib(WIN32_NO_REGISTRY_M_(pl) len);
 }
 
 char*
 PerlEnvSiteLibPath(struct IPerlEnv* piPerl, const char *pl, STRLEN *const len)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_get_sitelib(pl, len);
 }
 
@@ -526,12 +530,14 @@ char*
 PerlEnvVendorLibPath(struct IPerlEnv* piPerl, const char *pl,
                      STRLEN *const len)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_get_vendorlib(pl, len);
 }
 
 void
 PerlEnvGetChildIO(struct IPerlEnv* piPerl, child_IO_table* ptr)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_get_child_IO(ptr);
 }
 
@@ -560,60 +566,70 @@ const struct IPerlEnv perlEnv =
 FILE*
 PerlStdIOStdin(struct IPerlStdIO* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_stdin();
 }
 
 FILE*
 PerlStdIOStdout(struct IPerlStdIO* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_stdout();
 }
 
 FILE*
 PerlStdIOStderr(struct IPerlStdIO* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_stderr();
 }
 
 FILE*
 PerlStdIOOpen(struct IPerlStdIO* piPerl, const char *path, const char *mode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fopen(path, mode);
 }
 
 int
 PerlStdIOClose(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fclose((pf));
 }
 
 int
 PerlStdIOEof(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_feof(pf);
 }
 
 int
 PerlStdIOError(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_ferror(pf);
 }
 
 void
 PerlStdIOClearerr(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_clearerr(pf);
 }
 
 int
 PerlStdIOGetc(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getc(pf);
 }
 
 STDCHAR*
 PerlStdIOGetBase(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef FILE_base
     FILE *f = pf;
     return FILE_base(f);
@@ -625,6 +641,7 @@ PerlStdIOGetBase(struct IPerlStdIO* piPerl, FILE* pf)
 int
 PerlStdIOGetBufsiz(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef FILE_bufsiz
     FILE *f = pf;
     return FILE_bufsiz(f);
@@ -636,6 +653,7 @@ PerlStdIOGetBufsiz(struct IPerlStdIO* piPerl, FILE* pf)
 int
 PerlStdIOGetCnt(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef USE_STDIO_PTR
     FILE *f = pf;
     return FILE_cnt(f);
@@ -647,6 +665,7 @@ PerlStdIOGetCnt(struct IPerlStdIO* piPerl, FILE* pf)
 STDCHAR*
 PerlStdIOGetPtr(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef USE_STDIO_PTR
     FILE *f = pf;
     return FILE_ptr(f);
@@ -658,168 +677,201 @@ PerlStdIOGetPtr(struct IPerlStdIO* piPerl, FILE* pf)
 char*
 PerlStdIOGets(struct IPerlStdIO* piPerl, char* s, int n, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fgets(s, n, pf);
 }
 
 int
 PerlStdIOPutc(struct IPerlStdIO* piPerl, int c, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fputc(c, pf);
 }
 
 int
 PerlStdIOPuts(struct IPerlStdIO* piPerl, const char *s, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fputs(s, pf);
 }
 
 int
 PerlStdIOFlush(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fflush(pf);
 }
 
 int
 PerlStdIOUngetc(struct IPerlStdIO* piPerl,int c, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_ungetc(c, pf);
 }
 
 int
 PerlStdIOFileno(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fileno(pf);
 }
 
 FILE*
 PerlStdIOFdopen(struct IPerlStdIO* piPerl, int fd, const char *mode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fdopen(fd, mode);
 }
 
 FILE*
 PerlStdIOReopen(struct IPerlStdIO* piPerl, const char*path, const char*mode, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_freopen(path, mode, (FILE*)pf);
 }
 
 SSize_t
 PerlStdIORead(struct IPerlStdIO* piPerl, void *buffer, Size_t size, Size_t count, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fread(buffer, size, count, pf);
 }
 
 SSize_t
 PerlStdIOWrite(struct IPerlStdIO* piPerl, const void *buffer, Size_t size, Size_t count, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fwrite(buffer, size, count, pf);
 }
 
 void
 PerlStdIOSetBuf(struct IPerlStdIO* piPerl, FILE* pf, char* buffer)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_setbuf(pf, buffer);
 }
 
 int
 PerlStdIOSetVBuf(struct IPerlStdIO* piPerl, FILE* pf, char* buffer, int type, Size_t size)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_setvbuf(pf, buffer, type, size);
 }
 
 void
 PerlStdIOSetCnt(struct IPerlStdIO* piPerl, FILE* pf, int n)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef STDIO_CNT_LVALUE
     FILE *f = pf;
     FILE_cnt(f) = n;
+#else
+    PERL_UNUSED_ARG(pf);
+    PERL_UNUSED_ARG(n);
 #endif
 }
 
 void
 PerlStdIOSetPtr(struct IPerlStdIO* piPerl, FILE* pf, STDCHAR * ptr)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef STDIO_PTR_LVALUE
     FILE *f = pf;
     FILE_ptr(f) = ptr;
+#else
+    PERL_UNUSED_ARG(pf);
+    PERL_UNUSED_ARG(ptr);
 #endif
 }
 
 void
 PerlStdIOSetlinebuf(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_setvbuf(pf, NULL, _IOLBF, 0);
 }
 
 int
 PerlStdIOPrintf(struct IPerlStdIO* piPerl, FILE* pf, const char *format,...)
 {
-    va_list(arglist);
+    va_list arglist;
     va_start(arglist, format);
+    PERL_UNUSED_ARG(piPerl);
     return win32_vfprintf(pf, format, arglist);
 }
 
 int
 PerlStdIOVprintf(struct IPerlStdIO* piPerl, FILE* pf, const char *format, va_list arglist)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_vfprintf(pf, format, arglist);
 }
 
 Off_t
 PerlStdIOTell(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_ftell(pf);
 }
 
 int
 PerlStdIOSeek(struct IPerlStdIO* piPerl, FILE* pf, Off_t offset, int origin)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fseek(pf, offset, origin);
 }
 
 void
 PerlStdIORewind(struct IPerlStdIO* piPerl, FILE* pf)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_rewind(pf);
 }
 
 FILE*
 PerlStdIOTmpfile(struct IPerlStdIO* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_tmpfile();
 }
 
 int
 PerlStdIOGetpos(struct IPerlStdIO* piPerl, FILE* pf, Fpos_t *p)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fgetpos(pf, p);
 }
 
 int
 PerlStdIOSetpos(struct IPerlStdIO* piPerl, FILE* pf, const Fpos_t *p)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fsetpos(pf, p);
 }
 void
 PerlStdIOInit(struct IPerlStdIO* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
 }
 
 void
 PerlStdIOInitOSExtras(struct IPerlStdIO* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     Perl_init_os_extras();
 }
 
 int
 PerlStdIOOpenOSfhandle(struct IPerlStdIO* piPerl, intptr_t osfhandle, int flags)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_open_osfhandle(osfhandle, flags);
 }
 
 intptr_t
 PerlStdIOGetOSfhandle(struct IPerlStdIO* piPerl, int filenum)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_get_osfhandle(filenum);
 }
 
@@ -830,6 +882,7 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
     fpos_t pos;
     char mode[3];
     int fileno = win32_dup(win32_fileno(pf));
+    PERL_UNUSED_ARG(piPerl);
 
     /* open the file in the same mode */
     if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_RD) {
@@ -910,54 +963,63 @@ const struct IPerlStdIO perlStdIO =
 int
 PerlLIOAccess(struct IPerlLIO* piPerl, const char *path, int mode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_access(path, mode);
 }
 
 int
 PerlLIOChmod(struct IPerlLIO* piPerl, const char *filename, int pmode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_chmod(filename, pmode);
 }
 
 int
 PerlLIOChown(struct IPerlLIO* piPerl, const char *filename, uid_t owner, gid_t group)
 {
+    PERL_UNUSED_ARG(piPerl);
     return chown(filename, owner, group);
 }
 
 int
 PerlLIOChsize(struct IPerlLIO* piPerl, int handle, Off_t size)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_chsize(handle, size);
 }
 
 int
 PerlLIOClose(struct IPerlLIO* piPerl, int handle)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_close(handle);
 }
 
 int
 PerlLIODup(struct IPerlLIO* piPerl, int handle)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_dup(handle);
 }
 
 int
 PerlLIODup2(struct IPerlLIO* piPerl, int handle1, int handle2)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_dup2(handle1, handle2);
 }
 
 int
 PerlLIOFlock(struct IPerlLIO* piPerl, int fd, int oper)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_flock(fd, oper);
 }
 
 int
 PerlLIOFileStat(struct IPerlLIO* piPerl, int handle, Stat_t *buffer)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_fstat(handle, buffer);
 }
 
@@ -966,6 +1028,7 @@ PerlLIOIOCtl(struct IPerlLIO* piPerl, int i, unsigned int u, char *data)
 {
     u_long u_long_arg;
     int retval;
+    PERL_UNUSED_ARG(piPerl);
 
     /* mauke says using memcpy avoids alignment issues */
     memcpy(&u_long_arg, data, sizeof u_long_arg); 
@@ -977,108 +1040,126 @@ PerlLIOIOCtl(struct IPerlLIO* piPerl, int i, unsigned int u, char *data)
 int
 PerlLIOIsatty(struct IPerlLIO* piPerl, int fd)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_isatty(fd);
 }
 
 int
 PerlLIOLink(struct IPerlLIO* piPerl, const char*oldname, const char *newname)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_link(oldname, newname);
 }
 
 int
 PerlLIOSymLink(struct IPerlLIO* piPerl, const char*oldname, const char *newname)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_symlink(oldname, newname);
 }
 
 int
 PerlLIOReadLink(struct IPerlLIO* piPerl, const char *path, char *buf, size_t bufsiz)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_readlink(path, buf, bufsiz);
 }
 
 Off_t
 PerlLIOLseek(struct IPerlLIO* piPerl, int handle, Off_t offset, int origin)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_lseek(handle, offset, origin);
 }
 
 int
 PerlLIOLstat(struct IPerlLIO* piPerl, const char *path, Stat_t *buffer)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_lstat(path, buffer);
 }
 
 char*
 PerlLIOMktemp(struct IPerlLIO* piPerl, char *Template)
 {
+    PERL_UNUSED_ARG(piPerl);
     return mktemp(Template);
 }
 
 int
 PerlLIOOpen(struct IPerlLIO* piPerl, const char *filename, int oflag)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_open(filename, oflag);
 }
 
 int
 PerlLIOOpen3(struct IPerlLIO* piPerl, const char *filename, int oflag, int pmode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_open(filename, oflag, pmode);
 }
 
 int
 PerlLIORead(struct IPerlLIO* piPerl, int handle, void *buffer, unsigned int count)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_read(handle, buffer, count);
 }
 
 int
 PerlLIORename(struct IPerlLIO* piPerl, const char *OldFileName, const char *newname)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_rename(OldFileName, newname);
 }
 
 int
 PerlLIOSetmode(struct IPerlLIO* piPerl, int handle, int mode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_setmode(handle, mode);
 }
 
 int
 PerlLIONameStat(struct IPerlLIO* piPerl, const char *path, Stat_t *buffer)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_stat(path, buffer);
 }
 
 char*
 PerlLIOTmpnam(struct IPerlLIO* piPerl, char *string)
 {
+    PERL_UNUSED_ARG(piPerl);
     return tmpnam(string);
 }
 
 int
 PerlLIOUmask(struct IPerlLIO* piPerl, int pmode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return umask(pmode);
 }
 
 int
 PerlLIOUnlink(struct IPerlLIO* piPerl, const char *filename)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_unlink(filename);
 }
 
 int
 PerlLIOUtime(struct IPerlLIO* piPerl, const char *filename, struct utimbuf *times)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_utime(filename, times);
 }
 
 int
 PerlLIOWrite(struct IPerlLIO* piPerl, int handle, const void *buffer, unsigned int count)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_write(handle, buffer, count);
 }
 
@@ -1122,54 +1203,63 @@ const struct IPerlLIO perlLIO =
 int
 PerlDirMakedir(struct IPerlDir* piPerl, const char *dirname, int mode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_mkdir(dirname, mode);
 }
 
 int
 PerlDirChdir(struct IPerlDir* piPerl, const char *dirname)
 {
+    PERL_UNUSED_ARG(piPerl);
     return IPERL2HOST(piPerl)->Chdir(dirname);
 }
 
 int
 PerlDirRmdir(struct IPerlDir* piPerl, const char *dirname)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_rmdir(dirname);
 }
 
 int
 PerlDirClose(struct IPerlDir* piPerl, DIR *dirp)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_closedir(dirp);
 }
 
 DIR*
 PerlDirOpen(struct IPerlDir* piPerl, const char *filename)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_opendir(filename);
 }
 
 struct direct *
 PerlDirRead(struct IPerlDir* piPerl, DIR *dirp)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_readdir(dirp);
 }
 
 void
 PerlDirRewind(struct IPerlDir* piPerl, DIR *dirp)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_rewinddir(dirp);
 }
 
 void
 PerlDirSeek(struct IPerlDir* piPerl, DIR *dirp, long loc)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_seekdir(dirp, loc);
 }
 
 long
 PerlDirTell(struct IPerlDir* piPerl, DIR *dirp)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_telldir(dirp);
 }
 
@@ -1205,83 +1295,97 @@ const struct IPerlDir perlDir =
 u_long
 PerlSockHtonl(struct IPerlSock* piPerl, u_long hostlong)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_htonl(hostlong);
 }
 
 u_short
 PerlSockHtons(struct IPerlSock* piPerl, u_short hostshort)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_htons(hostshort);
 }
 
 u_long
 PerlSockNtohl(struct IPerlSock* piPerl, u_long netlong)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_ntohl(netlong);
 }
 
 u_short
 PerlSockNtohs(struct IPerlSock* piPerl, u_short netshort)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_ntohs(netshort);
 }
 
 SOCKET PerlSockAccept(struct IPerlSock* piPerl, SOCKET s, struct sockaddr* addr, int* addrlen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_accept(s, addr, addrlen);
 }
 
 int
 PerlSockBind(struct IPerlSock* piPerl, SOCKET s, const struct sockaddr* name, int namelen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_bind(s, name, namelen);
 }
 
 int
 PerlSockConnect(struct IPerlSock* piPerl, SOCKET s, const struct sockaddr* name, int namelen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_connect(s, name, namelen);
 }
 
 void
 PerlSockEndhostent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_endhostent();
 }
 
 void
 PerlSockEndnetent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_endnetent();
 }
 
 void
 PerlSockEndprotoent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_endprotoent();
 }
 
 void
 PerlSockEndservent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_endservent();
 }
 
 struct hostent*
 PerlSockGethostbyaddr(struct IPerlSock* piPerl, const char* addr, int len, int type)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_gethostbyaddr(addr, len, type);
 }
 
 struct hostent*
 PerlSockGethostbyname(struct IPerlSock* piPerl, const char* name)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_gethostbyname(name);
 }
 
 struct hostent*
 PerlSockGethostent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_croak_not_implemented("gethostent");
     return NULL;
 }
@@ -1289,185 +1393,216 @@ PerlSockGethostent(struct IPerlSock* piPerl)
 int
 PerlSockGethostname(struct IPerlSock* piPerl, char* name, int namelen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_gethostname(name, namelen);
 }
 
 struct netent *
 PerlSockGetnetbyaddr(struct IPerlSock* piPerl, long net, int type)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getnetbyaddr(net, type);
 }
 
 struct netent *
 PerlSockGetnetbyname(struct IPerlSock* piPerl, const char *name)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getnetbyname((char*)name);
 }
 
 struct netent *
 PerlSockGetnetent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getnetent();
 }
 
 int PerlSockGetpeername(struct IPerlSock* piPerl, SOCKET s, struct sockaddr* name, int* namelen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getpeername(s, name, namelen);
 }
 
 struct protoent*
 PerlSockGetprotobyname(struct IPerlSock* piPerl, const char* name)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getprotobyname(name);
 }
 
 struct protoent*
 PerlSockGetprotobynumber(struct IPerlSock* piPerl, int number)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getprotobynumber(number);
 }
 
 struct protoent*
 PerlSockGetprotoent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getprotoent();
 }
 
 struct servent*
 PerlSockGetservbyname(struct IPerlSock* piPerl, const char* name, const char* proto)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getservbyname(name, proto);
 }
 
 struct servent*
 PerlSockGetservbyport(struct IPerlSock* piPerl, int port, const char* proto)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getservbyport(port, proto);
 }
 
 struct servent*
 PerlSockGetservent(struct IPerlSock* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getservent();
 }
 
 int
 PerlSockGetsockname(struct IPerlSock* piPerl, SOCKET s, struct sockaddr* name, int* namelen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getsockname(s, name, namelen);
 }
 
 int
 PerlSockGetsockopt(struct IPerlSock* piPerl, SOCKET s, int level, int optname, char* optval, int* optlen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getsockopt(s, level, optname, optval, optlen);
 }
 
 unsigned long
 PerlSockInetAddr(struct IPerlSock* piPerl, const char* cp)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_inet_addr(cp);
 }
 
 char*
 PerlSockInetNtoa(struct IPerlSock* piPerl, struct in_addr in)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_inet_ntoa(in);
 }
 
 int
 PerlSockListen(struct IPerlSock* piPerl, SOCKET s, int backlog)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_listen(s, backlog);
 }
 
 int
 PerlSockRecv(struct IPerlSock* piPerl, SOCKET s, char* buffer, int len, int flags)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_recv(s, buffer, len, flags);
 }
 
 int
 PerlSockRecvfrom(struct IPerlSock* piPerl, SOCKET s, char* buffer, int len, int flags, struct sockaddr* from, int* fromlen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_recvfrom(s, buffer, len, flags, from, fromlen);
 }
 
 int
 PerlSockSelect(struct IPerlSock* piPerl, int nfds, char* readfds, char* writefds, char* exceptfds, const struct timeval* timeout)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_select(nfds, (Perl_fd_set*)readfds, (Perl_fd_set*)writefds, (Perl_fd_set*)exceptfds, timeout);
 }
 
 int
 PerlSockSend(struct IPerlSock* piPerl, SOCKET s, const char* buffer, int len, int flags)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_send(s, buffer, len, flags);
 }
 
 int
 PerlSockSendto(struct IPerlSock* piPerl, SOCKET s, const char* buffer, int len, int flags, const struct sockaddr* to, int tolen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_sendto(s, buffer, len, flags, to, tolen);
 }
 
 void
 PerlSockSethostent(struct IPerlSock* piPerl, int stayopen)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_sethostent(stayopen);
 }
 
 void
 PerlSockSetnetent(struct IPerlSock* piPerl, int stayopen)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_setnetent(stayopen);
 }
 
 void
 PerlSockSetprotoent(struct IPerlSock* piPerl, int stayopen)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_setprotoent(stayopen);
 }
 
 void
 PerlSockSetservent(struct IPerlSock* piPerl, int stayopen)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_setservent(stayopen);
 }
 
 int
 PerlSockSetsockopt(struct IPerlSock* piPerl, SOCKET s, int level, int optname, const char* optval, int optlen)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_setsockopt(s, level, optname, optval, optlen);
 }
 
 int
 PerlSockShutdown(struct IPerlSock* piPerl, SOCKET s, int how)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_shutdown(s, how);
 }
 
 SOCKET
 PerlSockSocket(struct IPerlSock* piPerl, int af, int type, int protocol)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_socket(af, type, protocol);
 }
 
 int
 PerlSockSocketpair(struct IPerlSock* piPerl, int domain, int type, int protocol, int* fds)
 {
+    PERL_UNUSED_ARG(piPerl);
     return Perl_my_socketpair(domain, type, protocol, fds);
 }
 
 int
 PerlSockClosesocket(struct IPerlSock* piPerl, SOCKET s)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_closesocket(s);
 }
 
 int
 PerlSockIoctlsocket(struct IPerlSock* piPerl, SOCKET s, long cmd, u_long *argp)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_ioctlsocket(s, cmd, argp);
 }
 
@@ -1528,90 +1663,105 @@ const struct IPerlSock perlSock =
 void
 PerlProcAbort(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_abort();
 }
 
 char *
 PerlProcCrypt(struct IPerlProc* piPerl, const char* clear, const char* salt)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_crypt(clear, salt);
 }
 
 PERL_CALLCONV_NO_RET void
 PerlProcExit(struct IPerlProc* piPerl, int status)
 {
+    PERL_UNUSED_ARG(piPerl);
     exit(status);
 }
 
 PERL_CALLCONV_NO_RET void
 PerlProc_Exit(struct IPerlProc* piPerl, int status)
 {
+    PERL_UNUSED_ARG(piPerl);
     _exit(status);
 }
 
 int
 PerlProcExecl(struct IPerlProc* piPerl, const char *cmdname, const char *arg0, const char *arg1, const char *arg2, const char *arg3)
 {
+    PERL_UNUSED_ARG(piPerl);
     return execl(cmdname, arg0, arg1, arg2, arg3);
 }
 
 int
 PerlProcExecv(struct IPerlProc* piPerl, const char *cmdname, const char *const *argv)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_execvp(cmdname, argv);
 }
 
 int
 PerlProcExecvp(struct IPerlProc* piPerl, const char *cmdname, const char *const *argv)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_execvp(cmdname, argv);
 }
 
 uid_t
 PerlProcGetuid(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return getuid();
 }
 
 uid_t
 PerlProcGeteuid(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return geteuid();
 }
 
 gid_t
 PerlProcGetgid(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return getgid();
 }
 
 gid_t
 PerlProcGetegid(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return getegid();
 }
 
 char *
 PerlProcGetlogin(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return g_getlogin();
 }
 
 int
 PerlProcKill(struct IPerlProc* piPerl, int pid, int sig)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_kill(pid, sig);
 }
 
 int
 PerlProcKillpg(struct IPerlProc* piPerl, int pid, int sig)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_kill(pid, -sig);
 }
 
 int
 PerlProcPauseProc(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_pause();
 }
 
@@ -1620,6 +1770,7 @@ PerlProcPopen(struct IPerlProc* piPerl, const char *command, const char *mode)
 {
     dTHX;
     PERL_FLUSHALL_FOR_CHILD;
+    PERL_UNUSED_ARG(piPerl);
     return win32_popen(command, mode);
 }
 
@@ -1628,70 +1779,82 @@ PerlProcPopenList(struct IPerlProc* piPerl, const char *mode, IV narg, SV **args
 {
     dTHX;
     PERL_FLUSHALL_FOR_CHILD;
+    PERL_UNUSED_ARG(piPerl);
     return win32_popenlist(mode, narg, args);
 }
 
 int
 PerlProcPclose(struct IPerlProc* piPerl, PerlIO *stream)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_pclose(stream);
 }
 
 int
 PerlProcPipe(struct IPerlProc* piPerl, int *phandles)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_pipe(phandles, 512, O_BINARY);
 }
 
 int
 PerlProcSetuid(struct IPerlProc* piPerl, uid_t u)
 {
+    PERL_UNUSED_ARG(piPerl);
     return setuid(u);
 }
 
 int
 PerlProcSetgid(struct IPerlProc* piPerl, gid_t g)
 {
+    PERL_UNUSED_ARG(piPerl);
     return setgid(g);
 }
 
 int
 PerlProcSleep(struct IPerlProc* piPerl, unsigned int s)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_sleep(s);
 }
 
 int
 PerlProcTimes(struct IPerlProc* piPerl, struct tms *timebuf)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_times(timebuf);
 }
 
 int
 PerlProcWait(struct IPerlProc* piPerl, int *status)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_wait(status);
 }
 
 int
 PerlProcWaitpid(struct IPerlProc* piPerl, int pid, int *status, int flags)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_waitpid(pid, status, flags);
 }
 
 Sighandler_t
 PerlProcSignal(struct IPerlProc* piPerl, int sig, Sighandler_t subcode)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_signal(sig, subcode);
 }
 
 int
 PerlProcGetTimeOfDay(struct IPerlProc* piPerl, struct timeval *t, void *z)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_gettimeofday(t, z);
 }
 
 #ifdef USE_ITHREADS
+PERL_STACK_REALIGN
 static THREAD_RET_TYPE
 win32_start_child(LPVOID arg)
 {
@@ -1813,6 +1976,7 @@ restart:
 int
 PerlProcFork(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
 #ifdef USE_ITHREADS
     dTHX;
     DWORD id;
@@ -1874,24 +2038,28 @@ PerlProcFork(struct IPerlProc* piPerl)
 int
 PerlProcGetpid(struct IPerlProc* piPerl)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_getpid();
 }
 
 void*
 PerlProcDynaLoader(struct IPerlProc* piPerl, const char* filename)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_dynaload(filename);
 }
 
 void
 PerlProcGetOSError(struct IPerlProc* piPerl, SV* sv, DWORD dwErr)
 {
+    PERL_UNUSED_ARG(piPerl);
     win32_str_os_error(sv, dwErr);
 }
 
 int
 PerlProcSpawnvp(struct IPerlProc* piPerl, int mode, const char *cmdname, const char *const *argv)
 {
+    PERL_UNUSED_ARG(piPerl);
     return win32_spawnvp(mode, cmdname, argv);
 }
 
@@ -1900,9 +2068,10 @@ PerlProcLastHost(struct IPerlProc* piPerl)
 {
  /* this dTHX is unused in an optimized build since CPerlHost::num_hosts
     is a static */
- dTHX;
- CPerlHost *h = (CPerlHost*)w32_internal_host;
- return h->LastHost();
+    dTHX;
+    CPerlHost *h = (CPerlHost*)w32_internal_host;
+    PERL_UNUSED_ARG(piPerl);
+    return h->LastHost();
 }
 
 const struct IPerlProc perlProc =
@@ -2072,7 +2241,7 @@ CPerlHost::CPerlHost(CPerlHost& host)
     /* duplicate environment info */
     LPSTR lpPtr;
     DWORD dwIndex = 0;
-    while(lpPtr = host.GetIndex(dwIndex))
+    while((lpPtr = host.GetIndex(dwIndex)))
         Add(lpPtr);
 }
 

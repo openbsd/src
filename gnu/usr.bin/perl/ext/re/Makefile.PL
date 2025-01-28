@@ -28,6 +28,13 @@ foreach my $tuple (@files) {
 }
 
 my $defines = '-DPERL_EXT_RE_BUILD -DPERL_EXT_RE_DEBUG -DPERL_EXT';
+my %args;
+for my $arg (@ARGV) {
+    $args{$1} = $2 if $arg =~ /^(\w+)=(.*)$/;
+}
+if ($args{LINKTYPE} eq "static") {
+    $defines .= ' -DPERL_EXT_RE_STATIC';
+}
 
 my @libs;
 if ($^O eq 'cygwin' && $Config{usequadmath}) {

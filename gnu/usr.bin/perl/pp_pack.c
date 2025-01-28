@@ -1849,7 +1849,7 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
     return SP - PL_stack_base - start_sp_offset;
 }
 
-PP(pp_unpack)
+PP_wrapped(pp_unpack, 2, 0)
 {
     dSP;
     dPOPPOPssrl;
@@ -3064,7 +3064,13 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
                      * of pack() (and all copies of the result) are
                      * gone.
                      */
-                    if (((SvTEMP(fromstr) && SvREFCNT(fromstr) == 1)
+                    if (((SvTEMP(fromstr) && SvREFCNT(fromstr) <=
+#ifdef PERL_RC_STACK
+                            2
+#else
+                            1
+#endif
+                        )
                          || (SvPADTMP(fromstr) &&
                              !SvREADONLY(fromstr)))) {
                         Perl_ck_warner(aTHX_ packWARN(WARN_PACK),
@@ -3137,7 +3143,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
 #undef NEXTFROM
 
 
-PP(pp_pack)
+PP_wrapped(pp_pack, 0, 1)
 {
     dSP; dMARK; dORIGMARK; dTARGET;
     SV *cat = TARG;

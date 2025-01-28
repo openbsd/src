@@ -1,7 +1,5 @@
 package PerlIO::scalar;
-our $VERSION = '0.31';
-require XSLoader;
-XSLoader::load();
+our $VERSION = '0.32';
 1;
 __END__
 
@@ -37,8 +35,7 @@ warnings are enabled, produce a warning.
 
 =head1 IMPLEMENTATION NOTE
 
-C<PerlIO::scalar> only exists to use XSLoader to load C code that
-provides support for treating a scalar as an "in memory" file.
-One does not need to explicitly C<use PerlIO::scalar>.
+C<PerlIO::scalar> only exists as a stub. One does not need to explicitly
+C<use PerlIO::scalar>.
 
 =cut

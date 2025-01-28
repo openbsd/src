@@ -1,6 +1,6 @@
 #!./perl
-use strict;
-use Cwd;
+
+use strict; # Affects the BEGIN block below it
 
 my $warn_msg;
 
@@ -19,14 +19,13 @@ BEGIN {
         require File::Spec::Unix;
         @File::Spec::ISA = 'File::Spec::Unix';
     }
-    require File::Find;
-    import File::Find;
 }
 
-my $symlink_exists = eval { symlink("",""); 1 };
+my $symlink_exists = eval { symlink("", ""); 1 };
+
+use lib qw( ./t/lib );
 
 use Test::More;
-use lib qw( ./t/lib );
 use Testing qw(
     create_file_ok
     mkdir_ok
@@ -35,8 +34,10 @@ use Testing qw(
     file_path
     _cleanup_start
 );
+use Cwd;
 use Errno ();
 use File::Temp qw(tempdir);
+use File::Find;
 
 my %Expect_File = (); # what we expect for $_
 my %Expect_Name = (); # what we expect for $File::Find::name/fullname

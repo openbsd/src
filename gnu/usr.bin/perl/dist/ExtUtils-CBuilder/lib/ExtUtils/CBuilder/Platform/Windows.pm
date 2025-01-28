@@ -8,7 +8,7 @@ use File::Spec;
 use ExtUtils::CBuilder::Base;
 use IO::File;
 
-our $VERSION = '0.280238'; # VERSION
+our $VERSION = '0.280240'; # VERSION
 our @ISA = qw(ExtUtils::CBuilder::Base);
 
 =begin comment
@@ -238,7 +238,7 @@ sub link {
 
   my @cmds = $self->format_linker_cmd(%spec);
   while ( my $cmd = shift @cmds ) {
-    $self->do_system( @$cmd );
+    $self->do_system( @$cmd ) or die "error building $output from @objects"
   }
 
   $spec{output} =~ tr/'"//d;

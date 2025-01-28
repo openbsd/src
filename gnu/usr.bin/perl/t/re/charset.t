@@ -163,7 +163,7 @@ foreach my $charset (@charsets) {
                                             ? "C"
                                             : $utf8_locale
                            );
-        die "Couldn't change locale" unless $locale;
+        die "Couldn't change to locale " . (($charset eq 'l') ? "C" : $utf8_locale) unless $locale;
         $charset_display = $charset_mod . " ($locale)";
     }
     else {

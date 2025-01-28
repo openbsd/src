@@ -601,8 +601,8 @@ and simply returns their sum.
 
     sub Adder
     {
-        my($a, $b) = @_;
-        $a + $b;
+        my($x, $y) = @_;
+        $x + $y;
     }
 
 Because we are now concerned with the return value from I<Adder>, the C
@@ -728,8 +728,8 @@ Here is the Perl subroutine
 
     sub AddSubtract
     {
-       my($a, $b) = @_;
-       ($a+$b, $a-$b);
+       my($x, $y) = @_;
+       ($x+$y, $x-$y);
     }
 
 and this is the C function
@@ -916,11 +916,11 @@ result, the subroutine calls I<die>.
 
     sub Subtract
     {
-        my ($a, $b) = @_;
+        my ($x, $y) = @_;
 
-        die "death can be fatal\n" if $a < $b;
+        die "death can be fatal\n" if $x < $y;
 
-        $a - $b;
+        $x - $y;
     }
 
 and some C to call it
@@ -1030,9 +1030,9 @@ version of the call_Subtract example above inside a destructor:
     package Foo;
     sub new { bless {}, $_[0] }
     sub Subtract {
-        my($a,$b) = @_;
-        die "death can be fatal" if $a < $b;
-        $a - $b;
+        my($x,$y) = @_;
+        die "death can be fatal" if $x < $y;
+        $x - $y;
     }
     sub DESTROY { call_Subtract(5, 4); }
     sub foo { die "foo dies"; }
@@ -1278,8 +1278,8 @@ virtual. The static method, C<PrintID>, prints out simply the class
 name and a version number. The virtual method, C<Display>, prints out a
 single element of the array.  Here is an all-Perl example of using it.
 
-    $a = Mine->new('red', 'green', 'blue');
-    $a->Display(1);
+    $x = Mine->new('red', 'green', 'blue');
+    $x->Display(1);
     Mine->PrintID;
 
 will print
@@ -1338,8 +1338,8 @@ the C<PrintID> and C<Display> methods from C.
 
 So the methods C<PrintID> and C<Display> can be invoked like this:
 
-    $a = Mine->new('red', 'green', 'blue');
-    call_Method($a, 'Display', 1);
+    $x = Mine->new('red', 'green', 'blue');
+    call_Method($x, 'Display', 1);
     call_PrintID('Mine', 'PrintID');
 
 The only thing to note is that, in both the static and virtual methods,
@@ -1365,7 +1365,7 @@ currently executing.
 And here is some Perl to test it.
 
     PrintContext;
-    $a = PrintContext;
+    $x = PrintContext;
     @a = PrintContext;
 
 The output from that will be

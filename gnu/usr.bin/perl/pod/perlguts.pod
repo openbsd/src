@@ -563,12 +563,16 @@ to these new elements.
 
 Here are some other functions:
 
+    Size_t  av_count(AV*);
     SSize_t av_top_index(AV*);
     SV**    av_fetch(AV*, SSize_t key, I32 lval);
     SV**    av_store(AV*, SSize_t key, SV* val);
 
+C<av_count> returns the number of elements in the array (including
+any empty slots (undefined ones) that are intermixed with filled-in ones).
 The C<av_top_index> function returns the highest index value in an array (just
-like $#array in Perl).  If the array is empty, -1 is returned.  The
+like $#array in Perl).  If the array is empty, -1 is returned.  It is
+always equal to S<C<av_count() - 1>>.  The
 C<av_fetch> function returns the value at index C<key>, but if C<lval>
 is non-zero, then C<av_fetch> will store an undef value at that index.
 The C<av_store> function stores the value C<val> at index C<key>, and does
@@ -1763,6 +1767,7 @@ to do this.
         stash = gv_stashpv("MyTie", GV_ADD);
         sv_bless(tie, stash);
         hv_magic(hash, (GV*)tie, PERL_MAGIC_tied);
+        SvREFCNT_dec(tie); /* hv_magic() increases tie ref count */
         RETVAL = newRV_noinc(hash);
     OUTPUT:
         RETVAL
@@ -1996,7 +2001,7 @@ implicit context argument (if any), and C<p> which may be NULL.
 
 Note the I<end of the current pseudo-block> may occur much later than
 the I<end of the current statement>. You may wish to look at the
-C<MORTALDESTRUCTOR_X()> macro instead.
+C<MORTALSVFUNC_X()> macro instead.
 
 =for apidoc Ayh||DESTRUCTORFUNC_t
 =for apidoc Amh||SAVEDESTRUCTOR_X|DESTRUCTORFUNC_t f|void *p
@@ -2014,7 +2019,7 @@ Note the I<end of the current statement> may occur much before the
 the I<end of the current pseudo-block>.  You may wish to look at the
 C<SAVEDESTRUCTOR_X()> macro instead.
 
-=for apidoc Amh||MORTALDESTRUCTOR_X|DESTRUCTORFUNC_t f|SV *sv
+=for apidoc Amh||MORTALSVFUNC_X|SVFUNC_t f|SV *sv
 
 =item C<MORTALDESTRUCTOR_SV(SV *coderef, SV *args)>
 
@@ -2904,6 +2909,8 @@ to be a no-op.
 
 =head2 How do I use all this in extensions?
 
+See also L<perlclib/Dealing with embedded perls and threads>.
+
 When Perl is built with MULTIPLICITY, extensions that call
 any functions in the Perl API will need to pass the initial context
 argument somehow.  The kicker is that you will need to write it in
@@ -2970,7 +2977,7 @@ are needed for the XSUBs themselves, because the XS() macro is
 correctly defined to pass in the implicit context if needed.
 
 =for apidoc_section $concurrency
-=for apidoc AmnhU||PERL_NO_GET_CONTEXT
+=for apidoc AmnhU#||PERL_NO_GET_CONTEXT
 
 The third, even more efficient way is to ape how it is done within
 the Perl guts:
@@ -4422,6 +4429,560 @@ C<PL_stack_sp> like C<nextstate>, it also resets C<PL_markstack_ptr>,
 C<PL_scopestack_ix> and C<PL_curpm>. Note that it doesn't do a
 C<FREETMPS>.
 
+
+=head1 Reference-counted argument stack
+
+=head2 Introduction
+
+As of perl 5.40, there is a build option, C<PERL_RC_STACK>, not enabled by
+default, which requires that items pushed onto, or popped off the argument
+stack have their reference counts adjusted. It is intended that eventually
+this will be the default way (and finally the only way) to configure perl.
+
+The macros which manipulate the stack such as PUSHs() and POPs() don't
+adjust the reference count of the SV. Most of the time this is fine, since
+something else is keeping the SV alive while on the argument stack,  such
+a pointer from the TEMPs stack, or from the pad (e.g. a lexical variable
+or a C<PADTMP>). Occasionally this can go horribly wrong. For example,
+this code:
+
+    my @a = (1,2,3);
+    sub f { @a = (); print "(@_)\n" };
+    f(@a, 4);
+
+may print undefined or random freed values, since some of the elements of
+@_, which have been aliased to the elements of @a, have been freed.
+C<PERL_RC_STACK> is intended to fix this by making each SV pointer on the
+argument stack increment the reference count (RC) of the SV  by one.
+
+In this new environment, unmodified existing PP and XS functions, which
+have been written assuming a non reference-counted stack (non-RC for
+short), are called via special wrapper functions which adjust the stack
+before and after. At the moment there is no API to write an RC XS
+function, so all XS code will continue to be called via a wrapper (which
+makes them slightly slower), but means that in general, CPAN distributions
+containing XS code code continue to work without modification.
+
+However, PP functions, either in perl core, or those in XS functions used
+to implement custom ops or to override the PP functions for built-in ops,
+need dealing with specially. For the latter, they can just be wrapped;
+this involves the least work, but has a performance impact. In the longer
+term, and for core PP functions, they need unwrapping and rewriting using
+a new API. With this, the old macros such as PUSHs() have been replaced
+with a new set of (mostly inline) functions with a common prefix, such as
+rpp_push_1(). "RPP" stands for "reference-counted push and pop functions".
+The new functions modify the reference count on C<PERL_RC_STACK> builds,
+while leaving them unadjusted otherwise. Thus in core they generally work
+in both cases, while in XS code they are portable to older perl versions
+via C<PPPort> (XXX assuming that they get been added to C<PPPort>).
+
+The rest of this section is mainly concerned with how to convert existing
+PP functions, and how to write new PP functions to use the new C<rpp_>
+API.
+
+A reference-counted perl can be built using the PERL_RC_STACK define.
+For development and debugging purposes, it is best to enable leaking
+scalar debugging too, as that displays extra information about scalars
+that have leaked or been prematurely freed.
+
+    Configure -DDEBUGGING \
+      -Accflags='-DPERL_RC_STACK -DDEBUG_LEAKING_SCALARS'
+
+=head2 Reference counted stack states
+
+In the new regime, the current argument stack can be in one of three
+states, which can be determined by the shown expression.
+
+=over
+
+=item * not reference-counted
+
+    !AvREAL(PL_curstack)
+
+In this case, perl will assume when emptying the stack (such as during a
+croak()) that the items on it don't need freeing. This is the traditional
+perl behaviour. On C<PERL_RC_STACK> builds, such stacks will be rarely
+encountered.
+
+=item * fully reference-counted
+
+    AvREAL(PL_curstack) && !PL_curstackinfo->si_stack_nonrc_base
+
+All the items on the stack are reference counted, and will be freed by
+functions like rpp_popfree_1() or if perl croak()s. This is the normal
+state of the stack in C<PERL_RC_STACK> builds.
+
+=item * partially reference-counted (split)
+
+    AvREAL(PL_curstack) && PL_curstackinfo->si_stack_nonrc_base > 0
+
+In this case, items on the stack from the index C<si_stack_nonrc_base>
+upwards are non-RC; those below are RC. This state occurs when a PP or XS
+function has been wrapped. In this case, the wrapper function pushes a
+non-RC copy of the arg pointers above the cut then calls the real
+function. When that returns, the wrapper function bumps up the RC of any
+returned args. See below for more details.
+
+=back
+
+Note that perl uses a stack-of-stacks, and the AvREAL() and
+C<si_stack_nonrc_base> states are per stack. When perl starts up, the main
+stack is RC, but by default, new stacks pushed in XS code via PUSHSTACKi()
+are non-RC, so it is quite possible to get a mixture. The perl core itself
+uses the new push_stackinfo() function which replaces PUSHSTACKi() and
+allows you to specify that the new stack should be RC by default.
+(XXX core mostly hasn't actually been updated yet to use push_stackinfo())
+
+Most places in the core assume a particular RC environment. In particular,
+it is assumed that within a runops loop, all the PP functions are
+RC-aware, either because they have been (re)written to be aware, or
+because they have been wrapped. Whenever a runops loop is entered via
+CALLRUNOPS(), it will check the current state of the stack, and if it's
+not fully RC, will temporarily update its contents to be fully RC before
+entering the main runops loop. Then if necessary it will restore the stack
+to its old state on return. This means that functions like call_sv(),
+which can be called from any environment (e.g. RC core or wrapped and
+temporarily non-RC XS code) will always do the Right Thing when invoking
+the runops loop, no matter what the current stack state is.
+
+Similarly, croaks and the like (which can occur anywhere) have to be able
+to handle both stack types. So there are a few places in core - call_sv(),
+eval_sv() etc, Perl_die_unwind() and S_my_exit_jump() - which have been
+specially crafted to handle both cases; everything else can assume a fixed
+environment.
+
+=head2 Wrapping
+
+Normally a core PP function is declared like this:
+
+    PP(pp_foo)
+    {
+        ...
+    }
+
+This expands to something like:
+
+    OP* Perl_pp_foo(pTHX)
+    {
+        ...
+    }
+
+When such a function needs to be wrapped, it is instead declared as:
+
+    PP_wrapped(pp_foo, nargs, nlists)
+    {
+        ...
+    }
+
+which on non-RC builds, expands to the same as PP() (the extra args are
+ignored). On RC builds it expands to something like
+
+    OP* Perl_pp_foo(pTHX)
+    {
+        return Perl_pp_wrap(aTHX_ S_Perl_pp_foo_norc, nargs, nlists);
+    }
+
+    STATIC OP* S_Perl_pp_foo_norc(pTHX)
+    {
+        ...
+    }
+
+Here the externally visible PP function calls pp_wrap(), which adjusts
+the stack contents, then calls the hidden real body of the PP function,
+then on return, adjusts the stack back.
+
+There is an API macro, XSPP_wrapped(), intended for use on PP functions
+declared in XS code, It is identical to PP_wrapped(), except that it
+doesn't prepend a C<Perl_> prefix to the function name.
+
+The C<nargs> and C<nlists> parameters to the macro are numeric constants
+or simple expressions which specify how many arguments the PP function
+expects, or how many lists it expects. For example,
+
+    PP_wrapped(pp_add, 2, 0);     /* consumes two args off the stack */
+
+    PP_wrapped(pp_readline,       /* consumes one or two args */
+            ((PL_op->op_flags & OPf_STACKED) ? 2 : 1), 0);
+
+    PP_wrapped(pp_push, 0, 1);    /* consumes one list */
+
+    PP_wrapped(pp_aassign, 0, 2); /* consumes two lists */
+
+To understand what pp_wrap() does, consider calling Perl_pp_foo() which
+expects three arguments. On entry the stack may look like:
+
+    ... A+ B+ C+
+
+(where the C<+> indicates that the pointers to A, B and C are each
+reference counted). The wrapper function pp_wrap() marks a cut at the
+current stack position using C<si_stack_nonrc_base>, then, based on the
+value of C<nargs>, pushes a copy of those three pointers above the cut:
+
+    ... A+ B+ C+ | A0 B0 C0
+
+(where the C<0> indicates that the pointers aren't RC), then calls the
+real PP function, S_Perl_pp_foo_norc(). That function processes A, B and C,
+pops them off the stack, and pushes some result SVs. None of this
+manipulation adjusts any RCs. On return to pp_wrap(), the stack may look
+something like:
+
+    ... A+ B+ C+ | X0 Y0
+
+The wrapper function bumps up the RCs of X and Y, decrements A B C,
+shifts the results down and sets C<si_stack_nonrc_base> to zero, leaving
+the stack as:
+
+    ... X+ Y+
+
+In places like pp_entersub(), a similar wrapping (via the functions
+rpp_invoke_xs() and then xs_wrap()) is done when calling XS subs.
+
+When C<nlists> is positive, a similar action takes place, except that the
+mark stack is examined (and adjusted) in order to determine the number of
+args that need copying.
+
+A complex calling environment might have multiple nested stacks with
+different RC states. Perl starts off with an RC stack. Then for example,
+pp_entersub() is called, which (via xs_wrap()) splits the stack and
+executes the XS function in a non-RC environment. That function may call
+PUSHSTACKi(), which creates a new non-RC stack, then calls call_sv(), which
+does CALLRUNOPS(), which causes the new stack to temporarily become RC.
+Then a tied method is called, which pushes a new RC stack, and so on. (XXX
+currently tied methods actually push a non-RC stack. To be fixed soon).
+
+=head2 (Re)writing a PP function using the rpp_() API
+
+Wrapping a PP function has a performance overhead, and is there mainly as
+a temporary crutch. Eventually, PP functions should be updated to use
+rpp_() functions, and any new PP functions should be written this way from
+scratch and thus not ever need wrapping.
+
+A couple examples of core PP functions being converted can be seen in the
+commits C<v5.39.1-304-g205fcd8410> and C<v5.39.1-303-g2fe263a83a>, which
+demonstrate a unary and a binary op being converted (pp_not() and
+pp_and()).
+
+The traditional PP stack API consisted of a C<dSP> declaration, plus a
+number of macros to push, pop and extend the stack. A I<very simplified>
+pp_add() function might look something like:
+
+    PP(pp_add)
+    {
+        dSP;
+        dTARGET;
+        IV right = SvIV(POPs);
+        IV left  = SvIV(POPs);
+        TARGi(left + right, 1);
+        PUSHs(TARG);
+        PUTBACK;
+        return NORMAL;
+    }
+
+which expands to something like:
+
+    {
+        SV **sp = PL_stack_sp;
+        SV *targ = PAD_SV(PL_op->op_targ);
+        IV right = SvIV(*sp--);
+        IV left  = SvIV(*sp--);
+        sv_setiv(targ, left + right);
+        *++sp = targ;
+        PL_stack_sp = sp;
+        return PL_op->op_next;
+    }
+
+The whole C<dSP> thing harks back to the days before decent optimising
+compilers. It was always error-prone, e.g. if you forgot a C<PUTBACK> or
+C<SPAGAIN>. The new API always just accesses C<PL_stack_sp> directly. In
+fact the first step of upgrading a PP function is always to remove the
+C<dSP> declaration. This has the happy side effect that any old-style
+macros left in the pp function which implicitly use C<sp> will become
+compile errors. The existence of a C<dSP> somewhere in core is a good sign
+that that function still needs updating.
+
+An obvious question is: why not just modify the definitions of the PUSHs()
+etc macros to modify reference counts on RC builds? The basic problem is
+that an SV may now be kept alive only by a single reference count from
+the stack (formerly, they tended to be on the TEMPs stack too). So in code
+like:
+
+    SV *sv = POPs;
+    IV i = SvIV(sv);
+
+including an SvREFCNT_dec() in the C<POPs> macro definition would cause
+C<sv> to be freed immediately, before its integer value can be read.
+
+A potential issue with the new regime is that perl can croak at basically
+any point in execution (e.g. the SvIV() above might call FETCH() on a tied
+variable which then croaks). Thus at all times, the RC of each SV must be
+properly accounted for. In the example above, a naive approach to avoiding
+a premature free of C<sv> might be:
+
+    SV *sv = *PL_stack_sp--;
+    IV i = SvIV(sv);
+    SvREFCNT_dec(sv); // got i, so ok to free sv now
+
+but that means that C<sv> leaks if SvIV() triggers a croak.
+
+To avoid that, the new regime has the general outline that arguments are
+left on the stack I<until they are finished with>, then removed and their
+reference count adjusted at that point. With the new API, the pp_add()
+function looks something like:
+
+    {
+        dTARGET;
+        IV right = SvIV(PL_stack_sp[ 0]); // NB: arguments left on stack
+        IV left  = SvIV(PL_stack_sp[-1]);
+        TARGi(left + right, 1);
+        rpp_replace_2_1(targ);
+        return NORMAL;
+    }
+
+The rpp_replace_2_1() function pops two values off the stack and pushes
+one new value on, while adjusting reference counts as appropriate
+(depending on whether built with C<PERL_RC_STACK> or not).
+
+The rpp_() functions in the new API will be described in detail below, but
+in summary:
+
+ new function            approximate old equivant
+ ------------            -----------------------
+
+ rpp_extend(n)           EXTEND(SP, n)
+
+ rpp_push_1(sv)          PUSHs(sv)
+ rpp_push_2(sv1, sv2))   PUSHs(sv1); PUSHs(sv2)
+ rpp_xpush_1(sv)         XPUSHs(sv)
+ rpp_xpush_2(sv1, sv2))  EXTEND(SP,2); PUSHs(sv1); PUSHs(sv2);
+
+ rpp_push_1_norc(sv)     mPUSHs(sv)     // on RC bulds, skips RC++;
+                                        // on non-RC builds, mortalises
+ rpp_popfree_1()         (void)POPs;
+ rpp_popfree_2()         (void)POPs; (void)POPs;
+ rpp_popfree_to(svp)     PL_stack_sp = svp;
+ rpp_obliterate_stack_to(ix)           // see description below
+
+ sv = rpp_pop_1_norc()   sv = SvREFCNT_inc(POPs)
+
+ rpp_replace_1_1(sv)     (void)POPs; PUSHs(sv);
+ rpp_replace_2_1(sv)     (void)POPs; (void)POPs; PUSHs(sv);
+ rpp_replace_at(sp, sv)  *sp = sv;
+ rpp_replace_at_norc(sp, sv) *sp = sv_2mortal(sv);
+
+ rpp_context(mark, gimme,
+             extra)      SP -= extra;
+                         // impose void/scalar/list context on return args
+                         SP = (gimme == G_VOID) ? mark : ....
+
+ rpp_try_AMAGIC_1()      tryAMAGICun_MG()
+ rpp_try_AMAGIC_2()      tryAMAGICbin_MG()
+
+ rpp_is_lone(sv)         SvTEMP(sv) && SvREFCNT(sv) == 1
+ rpp_stack_is_rc()       no equivalent
+
+ rpp_invoke_xs(cv)       CvXSUB(cv)(aTHX_ cv);
+
+
+ (no replacement)        dATARGET   // just write the macro body in full
+
+There are also some C<_NN> variants which assume that any items being
+removed from the stack are non-NULL, and so are slightly more efficient:
+
+ rpp_popfree_1_NN()
+ rpp_popfree_2_NN()
+ rpp_popfree_to_NN(svp)
+
+ rpp_replace_1_1_NN(sv)
+ rpp_replace_2_1_NN(sv)
+ rpp_replace_at_NN(sp, sv)
+ rpp_replace_at_norc_NN(sp, sv)
+
+There are also a few C<_IMM> variants, which expect the single pushed or
+replacement value to be an immortal, such as C<&PL_sv_undef> - this skips
+incrementing the ref count of the immortal SV. It doesn't matter if the
+ref count of the SV prematurely reaches zero, as sv_free2() will just
+resurrect it. Not every variant is provided; if a suitable one
+doesn't exist, just using a standard C<_1> version is fine, albeit
+slightly slower.
+
+ rpp_push_IMM(&PL_sv_undef)
+ rpp_xpush_IMM(&PL_sv_zero)
+ rpp_replace_1_IMM_NN(&PL_sv_yes)
+ rpp_replace_2_IMM_NN(&PL_sv_no)
+
+Other new C and perl functions related to reference-counted stacks are:
+
+ push_stackinfo(type,rc) PUSHSTACKi(type)
+ pop_stackinfo()         POPSTACK()
+ switch_argstack(to)     SWITCHSTACK(from,to)
+
+ (Internals::stack_refcounted() & 1) # perl built with PERL_RC_STACK
+
+Some of these new functions are trivial, but should be used in preference
+to writing direct code because they will work on both RC and non-RC
+builds, and may do extra checks and assertions on C<DEBUGGING> builds.
+
+Note that rpp_popfree_1() etc aren't direct replacements for C<POPs>. The
+rpp_() variants don't return a value and are intended to be called when
+the SV is finished with. So
+
+    SV *sv = POPs;
+    ... do stuff with sv ...
+
+becomes
+
+    SV *sv = *PL_stack_sp;
+    ... do stuff with sv ...
+    rpp_popfree_1(); /* does SvREFCNT_dec(*PL_stack_sp--) */
+
+The rpp_replace_M_N() functions are shortcuts for popping and freeing C<M>
+items then pushing and bumping up the RCs of C<N> items. Note that they
+handle edge cases such as an old and new SV being the same.
+
+rpp_replace_at(sp, sv) is similar to rpp_replace_1_1(), except that
+it replaces an SV at an address in the stack rather than at the top.
+
+rpp_replace_at_norc(sp, sv) is similar to rpp_replace_at(), except that
+it assumes that C<sv> already has a bumped reference count. So, a bit
+like rpp_push_1_norc() (see below), it doesn't bother increasing C<sv>'s
+reference count, or on non-RC builds it mortalises it instead.
+
+rpp_popfree_to(svp) is designed to replace code like
+
+    PL_stack_sp = PL_stack_base + cx->blk_oldsp;
+
+which typically appears in list ops or scope exits when the arguments are
+finished with. Left unaltered, all the SVs above C<oldsp> would leak. The
+new approach is
+
+    rpp_popfree_to(PL_stack_base + cx->blk_oldsp);
+
+There is a rarely-used variant of this, rpp_obliterate_stack_to(), which
+pops the stack back to the specified index regardless of the current RC
+state of the stack. So for example if the stack is split, it will only
+adjust the RCs of any SVs which are below the split point, while
+rpp_popfree_to() would mindlessly free I<all> SVs (on RC builds anyway).
+For normal PP functions you should only ever use rpp_popfree_to(), which
+is faster.
+
+There are no new equivalents for all the convenience macros like POPi()
+and (shudder) dPOPPOPiirl(). These should be replaced with the rpp_()
+functions above and with the conversions and variable declarations being
+made explicit, e.g. dPOPPOPiirl() becomes:
+
+    IV right = SvIV(PL_stack_sp[ 0]);
+    IV left  = SvIV(PL_stack_sp[-1]);
+    rpp_popfree_2();
+
+A couple of the rpp_() functions with C<norc> in their names don't adjust
+the reference count on RC builds (but, conversely, do on non-RC builds).
+
+rpp_push_1_norc(sv) does a simple C<*++PL_stack_sp = sv> on RC builds. It
+is typically used to "root" a newly-created SV, which already has an RC of
+1. On non-RC builds it mortalises the SV instead. So for example, code
+which used to look like
+
+    mPUSHs(newSViv(i));
+
+and which expanded to the equivalent of:
+
+    PUSHs(sv_2mortal(newSViv(i));
+
+should be rewritten as:
+
+    rpp_push_1_norc(newSViv(i));
+
+This is because newSViv() and similar create a new SV with a reference
+count one too high (1 rather than 0). This count is then "donated" to the
+stack by pushing it. Conversely on non-RC builds, the count is donated to
+the TEMPs stack.
+
+Similarly, on RC builds, C<sv = rpp_pop_1_norc()> does a simple
+C<sv = *PL_stack_sv--> without adjusting the reference count, while on
+non-RC builds it actually increments the SV's reference count. It is
+intended for cases where you immediately want to increment the reference
+count again after popping, e.g. where the SV is to be immediately embedded
+somewhere. For example this code:
+
+    SV *sv = PL_stack_sp[0];
+    SvREFCNT_inc(sv);
+    av_store(av, i, sv); /* in real life should check return value */
+    rpp_popfree_1();
+
+can be more efficiently written as
+
+    av_store(av, i, rpp_pop_1_norc());
+
+By using this function, the code works correctly on both RC and non-RC
+builds.
+
+A common operation on list ops is to impose void, scalar or list context
+on the return arguments, possibly discarding all, or all except one, of
+them. rpp_context(mark, gimme, extra) does this. As a first step (for
+convenience and efficiency) it notionally pops C<extra> args off the
+stack. Then for list context, leaves things as is. For void context, the
+stack pointer is reset to mark, and everything above is popped. For
+scalar, the top argument (or &PL_sv_undef) is moved from the top to
+mark+1 and everything above is discarded.
+
+The macros which appear at the start of many PP functions to check for
+unary or binary op overloading (among other things) have been replaced
+with rpp_try_AMAGIC_1() and _2() inline functions, which now rely on the
+calling PP function to choose whether to return immediately rather than
+the return being hidden away in the macro.
+
+The rpp_invoke_xs() function calls the XS function associated with the CV,
+but may do so via a wrapper function to adjust the stack as necessary.
+
+In the spirit of hiding away less in macros, C<dATARGET> hasn't been given
+a replacement; where its effect is needed, it is now written out in full;
+see pp_add() for an example.
+
+Finally, a couple of rpp() functions provide information rather than
+manipulate the stack.
+
+rpp_is_lone(sv) indicates whether C<sv>, assumed to be still on the stack,
+it kept alive only by a single reference-counted pointer from the argument
+and/or temps stacks, and thus is a candidate for some optimisations (like
+skipping the copying of return arguments from a subroutine call).
+
+rpp_stack_is_rc() indicates whether the current stack is currently
+reference-counted. It's used mainly in a few places like call_sv() which
+can be called from anywhere, and thus have to deal with both cases.
+
+So for example, rather than using rpp_xpush_1(), call_sv() has lines like:
+
+        rpp_extend(1);
+        *++PL_stack_sp = sv;
+    #ifdef PERL_RC_STACK
+        if (rpp_stack_is_rc())
+            SvREFCNT_inc_simple_void_NN(sv);
+    #endif
+
+which works on both standard builds and RC builds, and works whether
+call_sv() is called from a standard PP function (rpp_stack_is_rc() is
+true) or from a wrapped PP or XS function (rpp_stack_is_rc() is false).
+Note that you're unlikely to need to use this function, as in most places,
+such as PP or XS functions, it is always RC or non-RC respectively. In
+fact on debugging builds under C<PERL_RC_STACK>, PUSHs() and similar
+macros include an C<assert(!rpp_stack_is_rc())>, while rpp_push_1() and
+similar functions have C<assert(rpp_stack_is_rc())>.
+
+The macros for pushing new stackinfos have been replaced with inline
+functions which don't rely on C<dSP> being in scope, and which have less
+ambiguous names: they make it clear that a new I<stackinfo> is being
+pushed, rather than just some sort of I<stack>. push_stackinfo() also has
+a boolean argument indicating whether the new argument stack should be
+reference-counted or not. For backwards compatibility, PUSHSTACKi(type) is
+defined to be push_stackinfo(type, 0).
+
+Some test scripts check for things like leaks by testing that the
+reference count of a particular variable has an expected value. If this
+is different on a perl built with C<PERL_RC_STACK>, then the perl
+function Internals::stack_refcounted() can be used. This returns an
+integer, the lowest bit of which indicates that perl was built with
+C<PERL_RC_STACK>. Other bits are reserved for future use and should be
+masked out.
 
 =head1 Slab-based operator allocation
 

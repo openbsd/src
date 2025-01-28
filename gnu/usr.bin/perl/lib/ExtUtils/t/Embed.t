@@ -89,6 +89,8 @@ if ($^O eq 'VMS') {
    if ($^O eq 'MSWin32') {
     $inc = File::Spec->catdir($inc,'win32');
     push(@cmd,"-I$inc");
+    my $full = File::Spec->catdir($inc,'full');
+    push(@cmd,"-I$full");
     $inc = File::Spec->catdir($inc,'include');
     push(@cmd,"-I$inc");
     if ($cc eq 'cl') {

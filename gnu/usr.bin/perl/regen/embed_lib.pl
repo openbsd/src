@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 BEGIN {
-    for $n (qw(lib regen)) {
+    for my $n (qw(lib regen)) {
         if (-e "../$n") {
             push @INC, "../$n";
         } elsif (-e "./$n") {
@@ -55,7 +55,7 @@ sub setup_embed {
 
             # These are all indirectly referenced by globals.c.
             my $new= HeaderLine->new(
-                cond => [["defined(PERL_IN_GLOBALS_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_PEEP_C)"]],
+                cond => [["defined(PERL_IN_GLOBALS_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_PEEP_C) || defined(PERL_IN_CLASS_C)"]],
                 raw => "pR|OP *|$check|NN OP *o",
                 line => "pR|OP *|$check|NN OP *o",
                 type => "content",

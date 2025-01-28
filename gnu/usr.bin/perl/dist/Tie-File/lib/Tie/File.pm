@@ -1,17 +1,15 @@
 package Tie::File;
 
-require 5.005;
-
 use strict;
 use warnings;
 
 use Carp ':DEFAULT', 'confess';
 use POSIX 'SEEK_SET';
 use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
-sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
+use constant O_ACCMODE => O_RDONLY | O_RDWR | O_WRONLY;
 
 
-our $VERSION = "1.07";
+our $VERSION = "1.09";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
@@ -106,21 +104,14 @@ sub TIEARRAY {
   } elsif (ref $file) {
     croak "usage: tie \@array, $pack, filename, [option => value]...";
   } else {
-    # $fh = \do { local *FH };  # XXX this is buggy
-    if ($] < 5.006) {
-	# perl 5.005 and earlier don't autovivify filehandles
-	require Symbol;
-	$fh = Symbol::gensym();
-    }
     sysopen $fh, $file, $opts{mode}, 0666 or return;
     binmode $fh;
     ++$opts{ourfh};
   }
   { my $ofh = select $fh; $| = 1; select $ofh } # autoflush on write
-  if (defined $opts{discipline} && $] >= 5.006) {
-    # This avoids a compile-time warning under 5.005
-    eval 'binmode($fh, $opts{discipline})';
-    croak $@ if $@ =~ /unknown discipline/i;
+  if (defined $opts{discipline}) {
+    eval { binmode($fh, $opts{discipline}) };
+    croak $@ if $@ =~ /Unknown discipline|IO layers .* unavailable/;
     die if $@;
   }
   $opts{fh} = $fh;
@@ -1451,14 +1442,15 @@ package Tie::File::Cache;
 $Tie::File::Cache::VERSION = $Tie::File::VERSION;
 use Carp ':DEFAULT', 'confess';
 
-sub HEAP () { 0 }
-sub HASH () { 1 }
-sub MAX  () { 2 }
-sub BYTES() { 3 }
-#sub STAT () { 4 } # Array with request statistics for each record
-#sub MISS () { 5 } # Total number of cache misses
-#sub REQ  () { 6 } # Total number of cache requests 
-use strict 'vars';
+use constant {
+    HEAP  => 0,
+    HASH  => 1,
+    MAX   => 2,
+    BYTES => 3,
+    #STAT  => 4, # Array with request statistics for each record
+    #MISS  => 5, # Total number of cache misses
+    #REQ   => 6, # Total number of cache requests
+};
 
 sub new {
   my ($pack, $max) = @_;
@@ -1740,9 +1732,11 @@ sub delink {
 package Tie::File::Heap;
 use Carp ':DEFAULT', 'confess';
 $Tie::File::Heap::VERSION = $Tie::File::Cache::VERSION;
-sub SEQ () { 0 };
-sub KEY () { 1 };
-sub DAT () { 2 };
+use constant {
+    SEQ => 0,
+    KEY => 1,
+    DAT => 2,
+};
 
 sub new {
   my ($pack, $cache) = @_;
@@ -2050,6 +2044,13 @@ gigantic files.
 Changes to the array are reflected in the file immediately.
 
 Lazy people and beginners may now stop reading the manual.
+
+=head2 C<unicode>
+
+You can read a unicode (UTF-8) file by providing a file handle opened with
+the desired encoding. It is not safe to write to one because
+the length in bytes and in characters is often different, Tie::File
+will miscalculate the length of writes, overwriting parts of other records.
 
 =head2 C<recsep>
 

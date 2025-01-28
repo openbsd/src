@@ -1470,7 +1470,6 @@ Perl_magic_clear_all_env(pTHX_ SV *sv, MAGIC *mg)
     return 0;
 }
 
-#ifndef PERL_MICRO
 #ifdef HAS_SIGPROCMASK
 static void
 restore_sigmask(pTHX_ SV *save_sv)
@@ -1527,6 +1526,7 @@ Perl_magic_clearsig(pTHX_ SV *sv, MAGIC *mg)
 }
 
 
+PERL_STACK_REALIGN
 #ifdef PERL_USE_3ARG_SIGHANDLER
 Signal_t
 Perl_csighandler(int sig, Siginfo_t *sip, void *uap)
@@ -1870,7 +1870,6 @@ Perl_magic_setsig(pTHX_ SV *sv, MAGIC *mg)
     SvREFCNT_dec(to_dec);
     return 0;
 }
-#endif /* !PERL_MICRO */
 
 int
 Perl_magic_setsigall(pTHX_ SV* sv, MAGIC* mg)
@@ -3789,7 +3788,6 @@ Perl_perly_sighandler(int sig, Siginfo_t *sip PERL_UNUSED_DECL,
         if (SvTRUE_NN(errsv)) {
             SvREFCNT_dec(errsv_save);
 
-#ifndef PERL_MICRO
             /* Handler "died", for example to get out of a restart-able read().
              * Before we re-do that on its behalf re-enable the signal which was
              * blocked by the system when we entered.
@@ -3815,7 +3813,6 @@ Perl_perly_sighandler(int sig, Siginfo_t *sip PERL_UNUSED_DECL,
             (void)rsignal(sig, SIG_IGN);
             (void)rsignal(sig, PL_csighandlerp);
 #  endif
-#endif /* !PERL_MICRO */
 
             die_sv(errsv);
         }

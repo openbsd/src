@@ -4,14 +4,14 @@
    Any changes made here will be lost!
  */
 
-#define PERL_BISON_VERSION  30003
+#define PERL_BISON_VERSION  30007
 
 #ifdef PERL_CORE
-/* A Bison parser, made by GNU Bison 3.3.  */
+/* A Bison parser, made by GNU Bison 3.7.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -40,8 +40,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 /* Debug traces.  */
 #ifndef YYDEBUG
@@ -51,140 +52,145 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    GRAMPROG = 258,
-    GRAMEXPR = 259,
-    GRAMBLOCK = 260,
-    GRAMBARESTMT = 261,
-    GRAMFULLSTMT = 262,
-    GRAMSTMTSEQ = 263,
-    GRAMSUBSIGNATURE = 264,
-    PERLY_AMPERSAND = 265,
-    PERLY_BRACE_OPEN = 266,
-    PERLY_BRACE_CLOSE = 267,
-    PERLY_BRACKET_OPEN = 268,
-    PERLY_BRACKET_CLOSE = 269,
-    PERLY_COMMA = 270,
-    PERLY_DOLLAR = 271,
-    PERLY_DOT = 272,
-    PERLY_EQUAL_SIGN = 273,
-    PERLY_MINUS = 274,
-    PERLY_PERCENT_SIGN = 275,
-    PERLY_PLUS = 276,
-    PERLY_SEMICOLON = 277,
-    PERLY_SLASH = 278,
-    PERLY_SNAIL = 279,
-    PERLY_STAR = 280,
-    KW_FORMAT = 281,
-    KW_PACKAGE = 282,
-    KW_CLASS = 283,
-    KW_LOCAL = 284,
-    KW_MY = 285,
-    KW_FIELD = 286,
-    KW_IF = 287,
-    KW_ELSE = 288,
-    KW_ELSIF = 289,
-    KW_UNLESS = 290,
-    KW_FOR = 291,
-    KW_UNTIL = 292,
-    KW_WHILE = 293,
-    KW_CONTINUE = 294,
-    KW_GIVEN = 295,
-    KW_WHEN = 296,
-    KW_DEFAULT = 297,
-    KW_TRY = 298,
-    KW_CATCH = 299,
-    KW_FINALLY = 300,
-    KW_DEFER = 301,
-    KW_REQUIRE = 302,
-    KW_DO = 303,
-    KW_USE_or_NO = 304,
-    KW_SUB_named = 305,
-    KW_SUB_named_sig = 306,
-    KW_SUB_anon = 307,
-    KW_SUB_anon_sig = 308,
-    KW_METHOD_named = 309,
-    KW_METHOD_anon = 310,
-    BAREWORD = 311,
-    METHCALL0 = 312,
-    METHCALL = 313,
-    THING = 314,
-    PMFUNC = 315,
-    PRIVATEREF = 316,
-    QWLIST = 317,
-    FUNC0OP = 318,
-    FUNC0SUB = 319,
-    UNIOPSUB = 320,
-    LSTOPSUB = 321,
-    PLUGEXPR = 322,
-    PLUGSTMT = 323,
-    LABEL = 324,
-    LOOPEX = 325,
-    DOTDOT = 326,
-    YADAYADA = 327,
-    FUNC0 = 328,
-    FUNC1 = 329,
-    FUNC = 330,
-    UNIOP = 331,
-    LSTOP = 332,
-    POWOP = 333,
-    MULOP = 334,
-    ADDOP = 335,
-    DOLSHARP = 336,
-    HASHBRACK = 337,
-    NOAMP = 338,
-    COLONATTR = 339,
-    FORMLBRACK = 340,
-    FORMRBRACK = 341,
-    SUBLEXSTART = 342,
-    SUBLEXEND = 343,
-    PHASER = 344,
-    PREC_LOW = 345,
-    PLUGIN_LOW_OP = 346,
-    OROP = 347,
-    PLUGIN_LOGICAL_OR_LOW_OP = 348,
-    ANDOP = 349,
-    PLUGIN_LOGICAL_AND_LOW_OP = 350,
-    NOTOP = 351,
-    ASSIGNOP = 352,
-    PLUGIN_ASSIGN_OP = 353,
-    PERLY_QUESTION_MARK = 354,
-    PERLY_COLON = 355,
-    OROR = 356,
-    DORDOR = 357,
-    PLUGIN_LOGICAL_OR_OP = 358,
-    ANDAND = 359,
-    PLUGIN_LOGICAL_AND_OP = 360,
-    BITOROP = 361,
-    BITANDOP = 362,
-    CHEQOP = 363,
-    NCEQOP = 364,
-    CHRELOP = 365,
-    NCRELOP = 366,
-    PLUGIN_REL_OP = 367,
-    SHIFTOP = 368,
-    PLUGIN_ADD_OP = 369,
-    PLUGIN_MUL_OP = 370,
-    MATCHOP = 371,
-    PERLY_EXCLAMATION_MARK = 372,
-    PERLY_TILDE = 373,
-    UMINUS = 374,
-    REFGEN = 375,
-    PLUGIN_POW_OP = 376,
-    PREINC = 377,
-    PREDEC = 378,
-    POSTINC = 379,
-    POSTDEC = 380,
-    POSTJOIN = 381,
-    PLUGIN_HIGH_OP = 382,
-    ARROW = 383,
-    PERLY_PAREN_CLOSE = 384,
-    PERLY_PAREN_OPEN = 385
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    GRAMPROG = 258,                /* GRAMPROG  */
+    GRAMEXPR = 259,                /* GRAMEXPR  */
+    GRAMBLOCK = 260,               /* GRAMBLOCK  */
+    GRAMBARESTMT = 261,            /* GRAMBARESTMT  */
+    GRAMFULLSTMT = 262,            /* GRAMFULLSTMT  */
+    GRAMSTMTSEQ = 263,             /* GRAMSTMTSEQ  */
+    GRAMSUBSIGNATURE = 264,        /* GRAMSUBSIGNATURE  */
+    PERLY_AMPERSAND = 265,         /* PERLY_AMPERSAND  */
+    PERLY_BRACE_OPEN = 266,        /* PERLY_BRACE_OPEN  */
+    PERLY_BRACE_CLOSE = 267,       /* PERLY_BRACE_CLOSE  */
+    PERLY_BRACKET_OPEN = 268,      /* PERLY_BRACKET_OPEN  */
+    PERLY_BRACKET_CLOSE = 269,     /* PERLY_BRACKET_CLOSE  */
+    PERLY_COMMA = 270,             /* PERLY_COMMA  */
+    PERLY_DOLLAR = 271,            /* PERLY_DOLLAR  */
+    PERLY_DOT = 272,               /* PERLY_DOT  */
+    PERLY_EQUAL_SIGN = 273,        /* PERLY_EQUAL_SIGN  */
+    PERLY_MINUS = 274,             /* PERLY_MINUS  */
+    PERLY_PERCENT_SIGN = 275,      /* PERLY_PERCENT_SIGN  */
+    PERLY_PLUS = 276,              /* PERLY_PLUS  */
+    PERLY_SEMICOLON = 277,         /* PERLY_SEMICOLON  */
+    PERLY_SLASH = 278,             /* PERLY_SLASH  */
+    PERLY_SNAIL = 279,             /* PERLY_SNAIL  */
+    PERLY_STAR = 280,              /* PERLY_STAR  */
+    KW_FORMAT = 281,               /* KW_FORMAT  */
+    KW_PACKAGE = 282,              /* KW_PACKAGE  */
+    KW_CLASS = 283,                /* KW_CLASS  */
+    KW_LOCAL = 284,                /* KW_LOCAL  */
+    KW_MY = 285,                   /* KW_MY  */
+    KW_FIELD = 286,                /* KW_FIELD  */
+    KW_IF = 287,                   /* KW_IF  */
+    KW_ELSE = 288,                 /* KW_ELSE  */
+    KW_ELSIF = 289,                /* KW_ELSIF  */
+    KW_UNLESS = 290,               /* KW_UNLESS  */
+    KW_FOR = 291,                  /* KW_FOR  */
+    KW_UNTIL = 292,                /* KW_UNTIL  */
+    KW_WHILE = 293,                /* KW_WHILE  */
+    KW_CONTINUE = 294,             /* KW_CONTINUE  */
+    KW_GIVEN = 295,                /* KW_GIVEN  */
+    KW_WHEN = 296,                 /* KW_WHEN  */
+    KW_DEFAULT = 297,              /* KW_DEFAULT  */
+    KW_TRY = 298,                  /* KW_TRY  */
+    KW_CATCH = 299,                /* KW_CATCH  */
+    KW_FINALLY = 300,              /* KW_FINALLY  */
+    KW_DEFER = 301,                /* KW_DEFER  */
+    KW_REQUIRE = 302,              /* KW_REQUIRE  */
+    KW_DO = 303,                   /* KW_DO  */
+    KW_USE_or_NO = 304,            /* KW_USE_or_NO  */
+    KW_SUB_named = 305,            /* KW_SUB_named  */
+    KW_SUB_named_sig = 306,        /* KW_SUB_named_sig  */
+    KW_SUB_anon = 307,             /* KW_SUB_anon  */
+    KW_SUB_anon_sig = 308,         /* KW_SUB_anon_sig  */
+    KW_METHOD_named = 309,         /* KW_METHOD_named  */
+    KW_METHOD_anon = 310,          /* KW_METHOD_anon  */
+    BAREWORD = 311,                /* BAREWORD  */
+    METHCALL0 = 312,               /* METHCALL0  */
+    METHCALL = 313,                /* METHCALL  */
+    THING = 314,                   /* THING  */
+    PMFUNC = 315,                  /* PMFUNC  */
+    PRIVATEREF = 316,              /* PRIVATEREF  */
+    QWLIST = 317,                  /* QWLIST  */
+    FUNC0OP = 318,                 /* FUNC0OP  */
+    FUNC0SUB = 319,                /* FUNC0SUB  */
+    UNIOPSUB = 320,                /* UNIOPSUB  */
+    LSTOPSUB = 321,                /* LSTOPSUB  */
+    PLUGEXPR = 322,                /* PLUGEXPR  */
+    PLUGSTMT = 323,                /* PLUGSTMT  */
+    LABEL = 324,                   /* LABEL  */
+    LOOPEX = 325,                  /* LOOPEX  */
+    DOTDOT = 326,                  /* DOTDOT  */
+    YADAYADA = 327,                /* YADAYADA  */
+    FUNC0 = 328,                   /* FUNC0  */
+    FUNC1 = 329,                   /* FUNC1  */
+    FUNC = 330,                    /* FUNC  */
+    UNIOP = 331,                   /* UNIOP  */
+    LSTOP = 332,                   /* LSTOP  */
+    POWOP = 333,                   /* POWOP  */
+    MULOP = 334,                   /* MULOP  */
+    ADDOP = 335,                   /* ADDOP  */
+    DOLSHARP = 336,                /* DOLSHARP  */
+    HASHBRACK = 337,               /* HASHBRACK  */
+    NOAMP = 338,                   /* NOAMP  */
+    COLONATTR = 339,               /* COLONATTR  */
+    FORMLBRACK = 340,              /* FORMLBRACK  */
+    FORMRBRACK = 341,              /* FORMRBRACK  */
+    SUBLEXSTART = 342,             /* SUBLEXSTART  */
+    SUBLEXEND = 343,               /* SUBLEXEND  */
+    PHASER = 344,                  /* PHASER  */
+    PREC_LOW = 345,                /* PREC_LOW  */
+    PLUGIN_LOW_OP = 346,           /* PLUGIN_LOW_OP  */
+    OROP = 347,                    /* OROP  */
+    PLUGIN_LOGICAL_OR_LOW_OP = 348, /* PLUGIN_LOGICAL_OR_LOW_OP  */
+    ANDOP = 349,                   /* ANDOP  */
+    PLUGIN_LOGICAL_AND_LOW_OP = 350, /* PLUGIN_LOGICAL_AND_LOW_OP  */
+    NOTOP = 351,                   /* NOTOP  */
+    ASSIGNOP = 352,                /* ASSIGNOP  */
+    PLUGIN_ASSIGN_OP = 353,        /* PLUGIN_ASSIGN_OP  */
+    PERLY_QUESTION_MARK = 354,     /* PERLY_QUESTION_MARK  */
+    PERLY_COLON = 355,             /* PERLY_COLON  */
+    OROR = 356,                    /* OROR  */
+    DORDOR = 357,                  /* DORDOR  */
+    PLUGIN_LOGICAL_OR_OP = 358,    /* PLUGIN_LOGICAL_OR_OP  */
+    ANDAND = 359,                  /* ANDAND  */
+    PLUGIN_LOGICAL_AND_OP = 360,   /* PLUGIN_LOGICAL_AND_OP  */
+    BITOROP = 361,                 /* BITOROP  */
+    BITANDOP = 362,                /* BITANDOP  */
+    CHEQOP = 363,                  /* CHEQOP  */
+    NCEQOP = 364,                  /* NCEQOP  */
+    CHRELOP = 365,                 /* CHRELOP  */
+    NCRELOP = 366,                 /* NCRELOP  */
+    PLUGIN_REL_OP = 367,           /* PLUGIN_REL_OP  */
+    SHIFTOP = 368,                 /* SHIFTOP  */
+    PLUGIN_ADD_OP = 369,           /* PLUGIN_ADD_OP  */
+    PLUGIN_MUL_OP = 370,           /* PLUGIN_MUL_OP  */
+    MATCHOP = 371,                 /* MATCHOP  */
+    PERLY_EXCLAMATION_MARK = 372,  /* PERLY_EXCLAMATION_MARK  */
+    PERLY_TILDE = 373,             /* PERLY_TILDE  */
+    UMINUS = 374,                  /* UMINUS  */
+    REFGEN = 375,                  /* REFGEN  */
+    PLUGIN_POW_OP = 376,           /* PLUGIN_POW_OP  */
+    PREINC = 377,                  /* PREINC  */
+    PREDEC = 378,                  /* PREDEC  */
+    POSTINC = 379,                 /* POSTINC  */
+    POSTDEC = 380,                 /* POSTDEC  */
+    POSTJOIN = 381,                /* POSTJOIN  */
+    PLUGIN_HIGH_OP = 382,          /* PLUGIN_HIGH_OP  */
+    ARROW = 383,                   /* ARROW  */
+    PERLY_PAREN_CLOSE = 384,       /* PERLY_PAREN_CLOSE  */
+    PERLY_PAREN_OPEN = 385         /* PERLY_PAREN_OPEN  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
@@ -213,7 +219,6 @@ S_is_opval_token(int type) {
 #endif /* PERL_IN_TOKE_C */
 #endif /* PERL_CORE */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
 
@@ -223,8 +228,8 @@ union YYSTYPE
     OP *opval;
     GV *gvval;
 
-};
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -236,6 +241,6 @@ int yyparse (void);
 
 
 /* Generated from:
- * 0a5fcd15cf0b7afb57ade6ceaf68037a38dd194acd9d60d3e4ad99c15233af75 perly.y
+ * 823630846fc59cc2a19502726ec723b568eabded55fdc5e9722c600e1098779e perly.y
  * acf1cbfd2545faeaaa58b1cf0cf9d7f98b5be0752eb7a54528ef904a9e2e1ca7 regen_perly.pl
  * ex: set ro ft=c: */

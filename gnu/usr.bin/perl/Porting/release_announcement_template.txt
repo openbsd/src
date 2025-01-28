@@ -2,8 +2,8 @@
 
     -- [ATTRIBUTION]
 
-We are [SYNONYM FOR 'pleased'] to announce version [VERSION.SUBVERSION],
-the [N-TH] development release of version [VERSION] of Perl 5.
+We are [SYNONYM FOR 'pleased'] to announce version 5.[VERSION.SUBVERSION],
+the [N-TH] development release of version 5.[VERSION] of Perl.
 
 You will soon be able to download Perl 5.[VERSION.SUBVERSION] from your
 favorite CPAN mirror or find it at:
@@ -18,11 +18,11 @@ SHA256 digests for this release are:
 You can find a full list of changes in the file "perldelta.pod" located in
 the "pod" directory inside the release and on the web at
 
-https://metacpan.org/pod/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/pod/perldelta.pod
+https://metacpan.org/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/view/pod/perldelta.pod
 
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
-We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE DATE].
-The next major stable release of Perl should appear in the first half of 2023.
+We expect to release version 5.[NEXT BLEAD VERSION.SUBVERSION] on [FUTURE DATE].
+The next major stable release of Perl should appear in the first half of 2024.
 
 [YOUR SALUTATION HERE]

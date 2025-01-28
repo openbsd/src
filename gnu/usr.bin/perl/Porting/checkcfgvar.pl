@@ -44,8 +44,6 @@ my @CFG = (
 	   # perl that we are running, not the version of the source tree.
 	   "Cross/config.sh-arm-linux",
 	   "Cross/config.sh-arm-linux-n770",
-	   "uconfig.sh",
-	   "uconfig64.sh",
 	   "plan9/config_sh.sample",
 	   "win32/config.gc",
 	   "win32/config.vc",

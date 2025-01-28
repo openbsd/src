@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq2 - Obtaining and Learning about Perl
 
 =head1 VERSION
 
-version 5.20210520
+version 5.20240218
 
 =head1 DESCRIPTION
 
@@ -172,12 +176,16 @@ There are many good L<books on Perl|http://www.perl.org/books/library.html>.
 
 =head2 Which magazines have Perl content?
 
-There's also I<$foo Magazin>, a German magazine dedicated to Perl, at
-( L<http://www.foo-magazin.de> ). The I<Perl-Zeitung> is another
-German-speaking magazine for Perl beginners (see
-L<http://perl-zeitung.at.tf> ).
+There are no current magazines that focus on Perl, although you sometimes
+will find Perl content in more general interest programming titles.
 
-Several Unix/Linux related magazines frequently include articles on Perl.
+In the distant past, there have been a few Perl magazines. The first was I<The Perl
+Journal>, published by Jon Orwant. After that, there was I<The Perl Review>,
+published by brian d foy, and  I<$foo Magazin>, published by Renée Bäcker
+(L<http://www.foo-magazin.de>).
+
+The closest you might find today is Perl Weekly, (L<https://perlweekly.com>),
+an online newsletter with a magazine-like format.
 
 =head2 Which Perl blogs should I read?
 
@@ -213,25 +221,46 @@ First, ensure that you've found an actual bug. Second, ensure you've
 found an actual bug.
 
 If you've found a bug with the perl interpreter or one of the modules
-in the standard library (those that come with Perl), you can submit a
+in the standard library (those that come with Perl), submit a
 bug report to the GitHub issue tracker at
 L<https://github.com/Perl/perl5/issues>.
 
 To determine if a module came with your version of Perl, you can
-install and use the L<Module::CoreList> module. It has the information
-about the modules (with their versions) included with each release
-of Perl.
+install and use L<Module::CoreList>. It knows the modules (with their
+versions) included with each release of Perl:
 
-Every CPAN module has a bug tracker set up in RT, L<http://rt.cpan.org>.
-You can submit bugs to RT either through its web interface or by
-email. To email a bug report, send it to
-bug-E<lt>distribution-nameE<gt>@rt.cpan.org . For example, if you
-wanted to report a bug in L<Business::ISBN>, you could send a message to
-bug-Business-ISBN@rt.cpan.org .
+	$ corelist File::Copy
+	Data for 2023-07-02
+	File::Copy was first released with perl 5.002
 
-Some modules might have special reporting requirements, such as a
-GitHub or Google Code tracking system, so you should check the
-module documentation too.
+	$ corelist Business::ISBN
+	Data for 2023-07-02
+	Business::ISBN was not in CORE (or so I think)
+
+If the module does not come with Perl, report its issues
+using the tool that the particular module author decided to use, such as
+a GitHub or Google Code. The quickest way may be to check the MetaCPAN
+page for the module (for example,
+L<https://metacpan.org/pod/Business::ISBN>), which shows the denoted
+bugtracker in the left sidebar as the "Issues" link.
+
+Also check the module's documentation, F<README>, the build files
+(F<Makefile.PL> or C<Build.PL>), or F<META.{json,yml}> files. Although
+many module authors follow the same pattern, some have their own way.
+Use the directions you find.
+
+Sometimes the module author does not declare a bugtracker. For a long
+time, everyone assumed that the CPAN Request Tracker
+(L<https://rt.cpan.org>) was the bugtracker since every distribution had
+an RT queue generated automatically. In somes cases, the author might
+use CPAN RT. They also might have not declared a different
+bugtracker but don't use CPAN RT.
+
+Submit bugs to RT either through its web interface,
+L<https://rt.cpan.org>, or by email. Send email to I<<
+bug-E<lt>distribution-nameE<gt>@rt.cpan.org >>. For example, if you
+wanted to report a bug in the example module L<Foo::Bar>, you could send
+a message to I<bug-Foo-Bar@rt.cpan.org>.
 
 =head1 AUTHOR AND COPYRIGHT
 

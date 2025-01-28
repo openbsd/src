@@ -1823,7 +1823,7 @@ The IO::Socket(3) manpage describes the object library, and the Socket(3)
 manpage describes the low-level interface to sockets.  Besides the obvious
 functions in L<perlfunc>, you should also check out the F<modules> file at
 your nearest CPAN site, especially
-L<http://www.cpan.org/modules/00modlist.long.html#ID5_Networking_>.
+L<https://www.cpan.org/modules/00modlist.long.html#ID5_Networking_>.
 See L<perlmodlib> or best yet, the F<Perl FAQ> for a description
 of what CPAN is and where to get it if the previous link doesn't work
 for you.

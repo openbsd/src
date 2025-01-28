@@ -4,7 +4,7 @@ perlfaq1 - General Questions About Perl
 
 =head1 VERSION
 
-version 5.20210520
+version 5.20240218
 
 =head1 DESCRIPTION
 
@@ -122,28 +122,6 @@ You can consult L<releases|http://dev.perl.org/perl5> to determine the
 current stable release of Perl.
 
 =back
-
-=head2 What are Perl 4, Perl 5, or Raku (Perl 6)?
-
-In short, Perl 4 is the parent to both Perl 5 and Raku (formerly known as
-Perl 6). Perl 5 is the older sibling, and though they are different languages,
-someone who knows one will spot many similarities in the other.
-
-The number after Perl (i.e. the 5 after Perl 5) is the major release
-of the perl interpreter as well as the version of the language. Each
-major version has significant differences that earlier versions cannot
-support.
-
-The current major release of Perl is Perl 5, first released in
-1994. It can run scripts from the previous major release, Perl 4
-(March 1991), but has significant differences.
-
-Raku is a reinvention of Perl, a language in the same lineage but
-not compatible. The two are complementary, not mutually exclusive. Raku is
-not meant to replace Perl, and vice versa. See L</"What is Raku (Perl 6)?">
-below to find out more.
-
-See L<perlhist> for a history of Perl revisions.
 
 =head2 What is Raku (Perl 6)?
 

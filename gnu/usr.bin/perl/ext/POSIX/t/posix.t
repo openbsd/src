@@ -365,7 +365,6 @@ unlike( $@, qr/Can't use string .* as a symbol ref/, "Can import autoloaded cons
 
 SKIP: {
     skip("locales not available", 26) unless locales_enabled([ qw(NUMERIC MONETARY) ]);
-    skip("localeconv() not available", 26) unless $Config{d_locconv};
     my $conv = localeconv;
     is(ref $conv, 'HASH', 'localeconv returns a hash reference');
 

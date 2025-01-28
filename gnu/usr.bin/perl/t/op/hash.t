@@ -259,6 +259,27 @@ package Magic {
     ::is(join( ':', %inner), "x:y", "magic keys");
 }
 
+# Make sure PL_sv_undef is copied, and not stored directly, when assigning
+# to a hash. This failed on DEBUGGING + PERL_RC_STACK builds because the
+# test for a lone SV assumed that an SV on the stack with a ref count of 1
+# could be used directly rather than copied. However, PL_sv_undef and
+# friends could reach a ref count of 1 but still not be stealable.
+#
+# A DEBUGGING build sets the initial ref count of the immortals to 1000
+# rather than I32_MAX, making such problems easier to reproduce.
+
+{
+    my $bad = 0;
+    for (1..1001) {
+        # Each iteration may leave the RC of PL_sv_undef one lower.
+        my %h  = ('a', undef);
+        # this could fail with
+        # "Modification of non-creatable hash value attempted ..."
+        eval { $h{a} = 1; };
+        $bad = 1 if $@ ne "";
+    }
+    ok(!$bad, "PL_sv_undef RC 1");
+}
 
 
 done_testing();

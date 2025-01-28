@@ -374,7 +374,8 @@ are in the character. */
 
 /* For use in UTF8_IS_CONTINUATION().  This turns out to be 0xC0 in UTF-8,
  * E0 in UTF-EBCDIC */
-#define UTF_IS_CONTINUATION_MASK    ((U8) (0xFF << UTF_ACCUMULATION_SHIFT))
+#define UTF_IS_CONTINUATION_MASK \
+    ((U8) ((0xFF << UTF_ACCUMULATION_SHIFT) & 0xFF))
 
 /* This defines the bits that are to be in the continuation bytes of a
  * multi-byte UTF-8 encoded character that mark it is a continuation byte.
@@ -408,12 +409,7 @@ C<cp> is Unicode if above 255; otherwise is platform-native.
 
 =cut
  */
-#if defined(__m88k__)
-/* XXX workaround: m88k gcc3 produces wrong code with NATIVE_TO_UNI() */
-#define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(cp))
-#else	/* the original one */
 #define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(NATIVE_TO_UNI(cp)))
-#endif
 
 /* This defines the 1-bits that are to be in the first byte of a multi-byte
  * UTF-8 encoded character that mark it as a start byte and give the number of

@@ -6,7 +6,7 @@ BEGIN {
     $INC{"feature.pm"} = 1; # so we don't attempt to load feature.pm
 }
 
-print "1..85\n";
+print "1..87\n";
 
 # Can't require test.pl, as we're testing the use/require mechanism here.
 
@@ -149,14 +149,6 @@ like $@, qr/^Can't use string/,
 eval 'use strict "subs"; use 5.012; ${"foo"} = "bar"';
 like $@, qr/^Can't use string/,
     'explicit use strict "subs" does not stop ver decl from enabling refs';
-{
-    my $warnings = "";
-    local $SIG{__WARN__} = sub { $warnings .= $_[0] };
-    eval 'use 5.012; use 5.01; ${"foo"} = "bar"';
-    is $@, "", 'use 5.01 overrides implicit strict from prev ver decl';
-    like $warnings, qr/^Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at /,
-        'use 5.01 after use 5.012 provokes deprecation warning';
-}
 eval 'no strict "subs"; use 5.012; ${"foo"} = "bar"';
 ok $@, 'no strict subs allows ver decl to enable refs';
 eval 'no strict "subs"; use 5.012; $nonexistent_pack_var';
@@ -170,6 +162,22 @@ ok $@, 'no strict vars allows ver decl to enable refs';
 eval 'no strict "vars"; use 5.012; ursine_word';
 ok $@, 'no strict vars allows ver decl to enable subs';
 
+# check that "use 5.39.0" and higher imports builtins
+{
+    my $result;
+
+    $result = eval 'use 5.39.0; my $t = true; $t eq "1"';
+    is ($@, "", 'builtin funcs available after use 5.39.0');
+    ok ($result, 'imported true is eq "1"');
+}
+
+{
+    my $result;
+
+    $result = eval 'use builtin "true"; use v5.36; my $t = true; $t eq "1"';
+    is ($@, "", 'builtin funcs not removed after use v5.36');
+    ok ($result, 'imported true is eq "1"');
+}
 
 { use test_use }	# check that subparse saves pending tokens
 

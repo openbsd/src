@@ -1204,7 +1204,7 @@ wanting to go about Perl development.
 
 =head1 CPAN TESTERS AND PERL SMOKERS
 
-The CPAN testers ( L<http://cpantesters.org/> ) are a group of volunteers
+The CPAN testers ( L<https://cpantesters.org/> ) are a group of volunteers
 who test CPAN modules on a variety of platforms.
 
 Perl Smokers ( L<https://www.nntp.perl.org/group/perl.daily-build/> and

@@ -8,6 +8,8 @@
 
 package Maintainers;
 
+use strict;
+use warnings;
 use utf8;
 use File::Glob qw(:case);
 
@@ -15,7 +17,7 @@ use File::Glob qw(:case);
 # distribution, need not appear in core (i.e. core-cpan-diff won't
 # complain if it can't find them)
 
-@IGNORABLE = qw(
+our @IGNORABLE = qw(
     .cvsignore .dualLivedDiffConfig .gitignore .github .perlcriticrc .perltidyrc
     .travis.yml ANNOUNCE Announce Artistic AUTHORS BENCHMARK BUGS Build.PL
     CHANGELOG ChangeLog Changelog CHANGES Changes CONTRIBUTING CONTRIBUTING.md
@@ -124,15 +126,17 @@ use File::Glob qw(:case);
 #     ''     => 'lib/Foo/Bar/',
 #   }
 
-%Modules = (
+our %Modules = (
 
     'Archive::Tar' => {
-        'DISTRIBUTION' => 'BINGOS/Archive-Tar-2.40.tar.gz',
+        'DISTRIBUTION' => 'BINGOS/Archive-Tar-3.02_001.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Tue Dec  5 07:32:24 2023',
         'FILES'        => q[cpan/Archive-Tar],
         'BUGS'         => 'bug-archive-tar@rt.cpan.org',
         'EXCLUDED'     => [
             qw(t/07_ptardiff.t),
             qr{t/src/(long|short)/foo.txz},
+            qw(t/90_symlink.t),
         ],
     },
 
@@ -142,7 +146,8 @@ use File::Glob qw(:case);
     },
 
     'autodie' => {
-        'DISTRIBUTION' => 'TODDR/autodie-2.36.tar.gz',
+        'DISTRIBUTION' => 'TODDR/autodie-2.37.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sat Dec 30 15:24:00 2023',
         'FILES'        => q[cpan/autodie],
         'EXCLUDED'     => [
             qr{benchmarks},
@@ -187,7 +192,8 @@ use File::Glob qw(:case);
     },
 
     'bignum' => {
-        'DISTRIBUTION' => 'PJACKLAM/bignum-0.66.tar.gz',
+        'DISTRIBUTION' => 'PJACKLAM/bignum-0.67.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sat Dec 30 15:32:11 2023',
         'FILES'        => q[cpan/bignum],
         'EXCLUDED'     => [
             qr{^xt/},
@@ -205,7 +211,8 @@ use File::Glob qw(:case);
     },
 
     'Compress::Raw::Bzip2' => {
-        'DISTRIBUTION' => 'PMQS/Compress-Raw-Bzip2-2.204.tar.gz',
+        'DISTRIBUTION' => 'PMQS/Compress-Raw-Bzip2-2.212.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 14:06:26 2024',
         'FILES'        => q[cpan/Compress-Raw-Bzip2],
         'EXCLUDED'     => [
             qr{^t/Test/},
@@ -214,15 +221,11 @@ use File::Glob qw(:case);
             'bzip2-src/bzip2-cpp.patch',
             'bzip2-src/bzip2-unsigned.patch',
         ],
-        'CUSTOMIZED'   => [
-            # https://github.com/pmqs/Compress-Raw-Bzip2/issues/11
-            'Bzip2.xs',
-            'lib/Compress/Raw/Bzip.pm'
-        ],
     },
 
     'Compress::Raw::Zlib' => {
-        'DISTRIBUTION' => 'PMQS/Compress-Raw-Zlib-2.204.tar.gz',
+        'DISTRIBUTION' => 'PMQS/Compress-Raw-Zlib-2.212.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 14:15:07 2024',
         'FILES'    => q[cpan/Compress-Raw-Zlib],
         'EXCLUDED' => [
             qr{^examples/},
@@ -231,11 +234,6 @@ use File::Glob qw(:case);
             qw( t/000prereq.t
                 t/99pod.t
                 ),
-        ],
-        'CUSTOMIZED' => [
-            # https://github.com/pmqs/Compress-Raw-Zlib/issues/23
-            'lib/Compress/Raw/Zlib.pm',
-            'Zlib.xs'
         ],
     },
 
@@ -316,7 +314,7 @@ use File::Glob qw(:case);
     },
 
     'CPAN::Meta::Requirements' => {
-        'DISTRIBUTION' => 'DAGOLDEN/CPAN-Meta-Requirements-2.140.tar.gz',
+        'DISTRIBUTION' => 'RJBS/CPAN-Meta-Requirements-2.143.tar.gz',
         'FILES'        => q[cpan/CPAN-Meta-Requirements],
         'EXCLUDED'     => [
             qw(t/00-report-prereqs.t),
@@ -342,7 +340,8 @@ use File::Glob qw(:case);
     },
 
     'DB_File' => {
-        'DISTRIBUTION' => 'PMQS/DB_File-1.858.tar.gz',
+        'DISTRIBUTION' => 'PMQS/DB_File-1.859.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Tue Sep  5 20:46:44 2023',
         'FILES'        => q[cpan/DB_File],
         'EXCLUDED'     => [
             qr{^patches/},
@@ -376,14 +375,10 @@ use File::Glob qw(:case);
     },
 
     'Digest::MD5' => {
-        'DISTRIBUTION' => 'TODDR/Digest-MD5-2.58.tar.gz',
+        'DISTRIBUTION' => 'TODDR/Digest-MD5-2.59.tar.gz',
+        'SYNCINFO'     => 'root on Sat Dec 30 21:42:47 2023',
         'FILES'        => q[cpan/Digest-MD5],
         'EXCLUDED'     => [ 'rfc1321.txt', 'bin/md5sum.pl' ],
-        'CUSTOMIZED'   => [
-            # https://github.com/Dual-Life/digest-md5/pull/24
-            'MD5.pm',
-            'MD5.xs'
-        ],
     },
 
     'Digest::SHA' => {
@@ -404,7 +399,9 @@ use File::Glob qw(:case);
     },
 
     'Encode' => {
-        'DISTRIBUTION' => 'DANKOGAI/Encode-3.19.tar.gz',
+        'DISTRIBUTION' => 'DANKOGAI/Encode-3.21.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sun Feb 25 19:56:46 2024',
+        'SYNCINFO'     => 'jkeenan on Fri Nov 10 15:12:07 2023',
         'FILES'        => q[cpan/Encode],
         'EXCLUDED'     => [
             qw( t/whatwg-aliases.json
@@ -429,13 +426,14 @@ use File::Glob qw(:case);
     },
 
     'experimental' => {
-        'DISTRIBUTION' => 'LEONT/experimental-0.031.tar.gz',
+        'DISTRIBUTION' => 'LEONT/experimental-0.032.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 09:43:20 2024',
         'FILES'        => q[cpan/experimental],
         'EXCLUDED'     => [qr{^xt/}],
     },
 
     'Exporter' => {
-        'DISTRIBUTION' => 'TODDR/Exporter-5.77.tar.gz',
+        'DISTRIBUTION' => 'TODDR/Exporter-5.78.tar.gz',
         'FILES'        => q[dist/Exporter],
         'EXCLUDED' => [
             qw( t/pod.t
@@ -513,7 +511,7 @@ use File::Glob qw(:case);
     },
 
     'ExtUtils::Manifest' => {
-        'DISTRIBUTION' => 'ETHER/ExtUtils-Manifest-1.73.tar.gz',
+        'DISTRIBUTION' => 'ETHER/ExtUtils-Manifest-1.75.tar.gz',
         'FILES'        => q[cpan/ExtUtils-Manifest],
         'EXCLUDED'     => [
             qr(^t/00-report-prereqs),
@@ -522,7 +520,7 @@ use File::Glob qw(:case);
     },
 
     'ExtUtils::ParseXS' => {
-        'DISTRIBUTION' => 'XSAWYERX/ExtUtils-ParseXS-3.44.tar.gz',
+        'DISTRIBUTION' => 'LEONT/ExtUtils-ParseXS-3.51.tar.gz',
         'FILES'        => q[dist/ExtUtils-ParseXS],
     },
 
@@ -607,12 +605,13 @@ use File::Glob qw(:case);
     },
 
     'FindBin' => {
-        'DISTRIBUTION' => 'TODDR/FindBin-1.53.tar.gz',
+        'DISTRIBUTION' => 'TODDR/FindBin-1.54.tar.gz',
         'FILES'        => q[dist/FindBin],
     },
 
     'Getopt::Long' => {
-        'DISTRIBUTION' => 'JV/Getopt-Long-2.54.tar.gz',
+        'DISTRIBUTION' => 'JV/Getopt-Long-2.57.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sat Nov 11 13:09:21 2023',
         'FILES'        => q[cpan/Getopt-Long],
         'EXCLUDED'     => [
             qr{^examples/},
@@ -623,7 +622,8 @@ use File::Glob qw(:case);
     },
 
     'HTTP::Tiny' => {
-        'DISTRIBUTION' => 'DAGOLDEN/HTTP-Tiny-0.086.tar.gz',
+        'DISTRIBUTION' => 'DAGOLDEN/HTTP-Tiny-0.088.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sat Aug 12 14:49:17 2023',
         'FILES'        => q[cpan/HTTP-Tiny],
         'EXCLUDED'     => [
             'corpus/snake-oil.crt', # only used by 210_live_ssl.t
@@ -653,19 +653,21 @@ use File::Glob qw(:case);
     },
 
     'IO' => {
-        'DISTRIBUTION' => 'TODDR/IO-1.51.tar.gz',
+        'DISTRIBUTION' => 'TODDR/IO-1.55.tar.gz',
         'FILES'        => q[dist/IO],
         'EXCLUDED'     => ['t/test.pl'],
     },
 
     'IO-Compress' => {
-        'DISTRIBUTION' => 'PMQS/IO-Compress-2.204.tar.gz',
+        'DISTRIBUTION' => 'PMQS/IO-Compress-2.212.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 14:31:39 2024',
         'MAIN_MODULE'  => 'IO::Compress::Base',
         'FILES'        => q[cpan/IO-Compress],
         'EXCLUDED'     => [
             qr{^examples/},
             qr{^t/Test/},
             qr{^t/999meta-},
+            't/000prereq.t',
             't/010examples-bzip2.t',
             't/010examples-zlib.t',
             't/cz-05examples.t',
@@ -673,19 +675,17 @@ use File::Glob qw(:case);
     },
 
     'IO::Socket::IP' => {
-        'DISTRIBUTION' => 'PEVANS/IO-Socket-IP-0.41.tar.gz',
+        'DISTRIBUTION' => 'PEVANS/IO-Socket-IP-0.42.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Wed Aug 16 21:34:20 2023',
         'FILES'        => q[cpan/IO-Socket-IP],
         'EXCLUDED'     => [
             qr{^examples/},
         ],
-        'CUSTOMIZED' => [
-            # https://rt.cpan.org/Ticket/Display.html?id=148293
-            'lib/IO/Socket/IP.pm'
-        ],
     },
 
     'IO::Zlib' => {
-        'DISTRIBUTION' => 'TOMHUGHES/IO-Zlib-1.14.tar.gz',
+        'DISTRIBUTION' => 'TOMHUGHES/IO-Zlib-1.15.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Mon Mar  4 19:30:34 2024',
         'FILES'        => q[cpan/IO-Zlib],
     },
 
@@ -737,7 +737,7 @@ use File::Glob qw(:case);
     },
 
     'Locale::Maketext' => {
-        'DISTRIBUTION' => 'TODDR/Locale-Maketext-1.32.tar.gz',
+        'DISTRIBUTION' => 'TODDR/Locale-Maketext-1.33.tar.gz',
         'FILES'        => q[dist/Locale-Maketext],
         'EXCLUDED'     => [
             qw(
@@ -758,13 +758,13 @@ use File::Glob qw(:case);
     },
 
     'Math::BigInt' => {
-        'DISTRIBUTION' => 'PJACKLAM/Math-BigInt-1.999837.tar.gz',
+        'DISTRIBUTION' => 'PJACKLAM/Math-BigInt-2.003002.tar.gz',
+        'SYNCINFO'     => 'corion on Thu Jan 11 20:23:12 2024',
+        'SYNCINFO'     => 'book on Tue Dec 26 22:44:58 2023',
         'FILES'        => q[cpan/Math-BigInt],
         'EXCLUDED'     => [
             qr{^xt/},
             qr{^examples/},
-            qr{^t/author-},
-            qr{^t/release-},
             qw( t/00sig.t
                 t/01load.t
                 ),
@@ -772,13 +772,14 @@ use File::Glob qw(:case);
     },
 
     'Math::BigInt::FastCalc' => {
-        'DISTRIBUTION' => 'PJACKLAM/Math-BigInt-FastCalc-0.5013.tar.gz',
+        'DISTRIBUTION' => 'PJACKLAM/Math-BigInt-FastCalc-0.5018.tar.gz',
+        'SYNCINFO'     => 'corion on Thu Jan 11 20:24:21 2024',
+        'SYNCINFO'     => 'jkeenan on Sat Dec 30 14:31:28 2023',
+        'SYNCINFO'     => 'jkeenan on Sun Sep 24 08:29:56 2023',
         'FILES'        => q[cpan/Math-BigInt-FastCalc],
         'EXCLUDED'     => [
             qr{^inc/},
             qr{^xt/},
-            qr{^t/author-},
-            qr{^t/release-},
             qr{^t/Math/BigInt/Lib/TestUtil.pm},
             qw( t/00sig.t
                 t/01load.t
@@ -792,20 +793,6 @@ use File::Glob qw(:case);
                 t/bigintpm.t
                 t/mbimbf.inc
                 t/mbimbf.t
-                ),
-        ],
-    },
-
-    'Math::BigRat' => {
-        'DISTRIBUTION' => 'PJACKLAM/Math-BigRat-0.2624.tar.gz',
-        'FILES'        => q[cpan/Math-BigRat],
-        'EXCLUDED'     => [
-            qr{^xt/},
-            qr{^math-bigrat-pod.diff},
-            qr{^t/author-},
-            qr{^t/release-},
-            qw( t/00sig.t
-                t/01load.t
                 ),
         ],
     },
@@ -833,13 +820,14 @@ use File::Glob qw(:case);
         'CUSTOMIZED'   => [
             # https://github.com/Dual-Life/mime-base64/pull/17
             'Base64.xs',
-            'lib/MIME/Base64.pm'
+            'lib/MIME/Base64.pm',
+
+            'lib/MIME/QuotedPrint.pm'
         ],
     },
 
     'Module::CoreList' => {
-        'DISTRIBUTION' => 'BINGOS/Module-CoreList-5.20230320.tar.gz',
-        'SYNCINFO'     => 'yorton on Tue Mar 21 11:46:02 2023',
+        'DISTRIBUTION' => 'BINGOS/Module-CoreList-5.20240420.tar.gz',
         'FILES'        => q[dist/Module-CoreList],
     },
 
@@ -859,7 +847,7 @@ use File::Glob qw(:case);
     },
 
     'Module::Metadata' => {
-        'DISTRIBUTION' => 'ETHER/Module-Metadata-1.000037.tar.gz',
+        'DISTRIBUTION' => 'ETHER/Module-Metadata-1.000038.tar.gz',
         'FILES'        => q[cpan/Module-Metadata],
         'EXCLUDED'     => [
             qw(t/00-report-prereqs.t),
@@ -922,7 +910,7 @@ use File::Glob qw(:case);
     },
 
     'perlfaq' => {
-        'DISTRIBUTION' => 'ETHER/perlfaq-5.20210520.tar.gz',
+        'DISTRIBUTION' => 'ETHER/perlfaq-5.20240218.tar.gz',
         'FILES'        => q[cpan/perlfaq],
         'EXCLUDED'     => [ qr/^inc/, qr/^xt/, qr{^t/00-} ],
     },
@@ -933,7 +921,9 @@ use File::Glob qw(:case);
     },
 
     'Pod::Checker' => {
-        'DISTRIBUTION' => 'MAREKR/Pod-Checker-1.75.tar.gz',
+        'DISTRIBUTION' => 'MAREKR/Pod-Checker-1.77.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Mon Feb  5 16:37:53 2024',
+        'SYNCINFO'     => 'corion on Tue Jan  9 20:34:18 2024',
         'FILES'        => q[cpan/Pod-Checker],
     },
 
@@ -956,6 +946,9 @@ use File::Glob qw(:case);
             # utils first
             'perldoc',
 
+            # files only used for manual testing
+            qr[^corpus/],
+
             # https://rt.cpan.org/Ticket/Display.html?id=116827
             't/02_module_pod_output.t'
         ],
@@ -967,7 +960,8 @@ use File::Glob qw(:case);
     },
 
     'Pod::Simple' => {
-        'DISTRIBUTION' => 'KHW/Pod-Simple-3.43.tar.gz',
+        'DISTRIBUTION' => 'KHW/Pod-Simple-3.45.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Wed Aug  2 19:32:39 2023',
         'FILES'        => q[cpan/Pod-Simple],
         'EXCLUDED' => [
             qw{.ChangeLog.swp},
@@ -992,7 +986,15 @@ use File::Glob qw(:case);
             qr{^\.github/dependabot\.yml},
             qr{^\.github/workflows/build\.yaml},
         ],
-
+        'CUSTOMIZED'   => [
+            # https://github.com/rra/podlators/pull/28
+            'lib/Pod/Man.pm',
+            'lib/Pod/ParseLink.pm',
+            'lib/Pod/Text.pm',
+            'lib/Pod/Text/Color.pm',
+            'lib/Pod/Text/Overstrike.pm',
+            'lib/Pod/Text/Termcap.pm'
+        ],
         'MAP' => {
             ''                 => 'cpan/podlators/',
             # this file lives outside the cpan/ directory
@@ -1008,6 +1010,10 @@ use File::Glob qw(:case);
     'Scalar::Util' => {
         'DISTRIBUTION' => 'PEVANS/Scalar-List-Utils-1.63.tar.gz',
         'FILES'        => q[cpan/Scalar-List-Utils],
+        'CUSTOMIZED'   => [
+            # https://github.com/Dual-Life/Scalar-List-Utils/pull/130
+            't/uniqnum.t'
+         ],
     },
 
     'Search::Dict' => {
@@ -1022,8 +1028,10 @@ use File::Glob qw(:case);
     },
 
     'Socket' => {
-        'DISTRIBUTION' => 'PEVANS/Socket-2.036.tar.gz',
+        'DISTRIBUTION' => 'PEVANS/Socket-2.038.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 09:57:02 2024',
         'FILES'        => q[cpan/Socket],
+        'EXCLUDED'     => ['.editorconfig'],
     },
 
     'Storable' => {
@@ -1081,13 +1089,23 @@ use File::Glob qw(:case);
         'EXCLUDED'     => [qr{^t/release-.*\.t}],
     },
 
+    'Term::Table' => {
+        'DISTRIBUTION' => 'EXODIST/Term-Table-0.018.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Wed Nov  1 19:16:24 2023',
+        'FILES'        => q[cpan/Term-Table],
+        'EXCLUDED'     => [
+            qw( appveyor.yml ),
+        ],
+    },
+
     'Test' => {
         'DISTRIBUTION' => 'JESSE/Test-1.26.tar.gz',
         'FILES'        => q[dist/Test],
     },
 
     'Test::Harness' => {
-        'DISTRIBUTION' => 'LEONT/Test-Harness-3.44.tar.gz',
+        'DISTRIBUTION' => 'LEONT/Test-Harness-3.48.tar.gz',
+        'SYNCINFO'     => 'gknop on Sat Oct 21 15:01:02 2023',
         'FILES'        => q[cpan/Test-Harness],
         'EXCLUDED'     => [
             qr{^examples/},
@@ -1100,15 +1118,12 @@ use File::Glob qw(:case);
                 t/lib/if.pm
                 ),
         ],
-        'CUSTOMIZED' => [
-            't/harness.t'
-        ]
     },
 
     'Test::Simple' => {
-        'DISTRIBUTION' => 'EXODIST/Test-Simple-1.302194.tar.gz',
-        'SYNCINFO'     => 'yorton on Tue Mar 14 13:43:38 2023',
-        'SYNCINFO'     => 'yorton on Mon Mar  6 19:16:42 2023',
+        'DISTRIBUTION' => 'EXODIST/Test-Simple-1.302199.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 10:20:58 2024',
+        'SYNCINFO'     => 'jkeenan on Fri Dec  1 07:01:54 2023',
         'FILES'        => q[cpan/Test-Simple],
         'EXCLUDED'     => [
             qr{^examples/},
@@ -1118,6 +1133,21 @@ use File::Glob qw(:case);
                 t/00-report.t
                 t/zzz-check-breaks.t
                 ),
+        ],
+    },
+
+    'Test2::Suite' => {
+        'DISTRIBUTION' => 'EXODIST/Test2-Suite-0.000162.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Sat Apr 27 10:12:36 2024',
+        'SYNCINFO'     => 'jkeenan on Wed Nov  1 20:18:33 2023',
+        'FILES'        => q[cpan/Test2-Suite],
+        'EXCLUDED'     => [
+            qw( appveyor.yml
+                perltidyrc
+                t/00-report.t ),
+
+            # https://github.com/Test-More/Test2-Suite/issues/208
+            't/acceptance/Workflow-Acceptance.t',
         ],
     },
 
@@ -1138,7 +1168,8 @@ use File::Glob qw(:case);
     },
 
     'Text-Tabs+Wrap' => {
-        'DISTRIBUTION' => 'ARISTOTLE/Text-Tabs+Wrap-2021.0814.tar.gz',
+        'DISTRIBUTION' => 'ARISTOTLE/Text-Tabs+Wrap-2024.001.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sun Feb 25 20:37:52 2024',
         'MAIN_MODULE'  => 'Text::Tabs',
         'FILES'        => q[cpan/Text-Tabs],
         'EXCLUDED'   => [
@@ -1222,15 +1253,17 @@ use File::Glob qw(:case);
     },
 
     'Time::Local' => {
-        'DISTRIBUTION' => 'DROLSKY/Time-Local-1.30.tar.gz',
+        'DISTRIBUTION' => 'DROLSKY/Time-Local-1.35.tar.gz',
         'FILES'        => q[cpan/Time-Local],
         'EXCLUDED'     => [
+            qr{^dev-bin/},
+            qr{^git/},
             qr{^xt/},
             qw( CODE_OF_CONDUCT.md
                 azure-pipelines.yml
                 perlcriticrc
                 perltidyrc
-                tidyall.ini
+                precious.toml
                 t/00-report-prereqs.t
                 t/00-report-prereqs.dd
                 ),
@@ -1275,7 +1308,8 @@ use File::Glob qw(:case);
     },
 
     'version' => {
-        'DISTRIBUTION' => 'LEONT/version-0.9929.tar.gz',
+        'DISTRIBUTION' => 'LEONT/version-0.9930.tar.gz',
+        'SYNCINFO'     => 'LeoNerd on Mon Sep 18 21:49:09 2023',
         'FILES'        => q[cpan/version vutil.c vutil.h vxs.inc],
         'EXCLUDED' => [
             qr{^vutil/lib/},
@@ -1292,8 +1326,6 @@ use File::Glob qw(:case);
         # only necessary with the CPAN release.
         'CUSTOMIZED'   => [
             'lib/version.pm',
-
-            't/07locale.t'
          ],
 
         'MAP' => {
@@ -1312,7 +1344,7 @@ use File::Glob qw(:case);
     },
 
     'Win32' => {
-        'DISTRIBUTION' => "JDB/Win32-0.59.tar.gz",
+        'DISTRIBUTION' => 'JDB/Win32-0.59.tar.gz',
         'FILES'        => q[cpan/Win32],
     },
 
@@ -1452,8 +1484,8 @@ use File::Glob qw(:case);
                 lib/_charnames.pm
                 lib/blib.{pm,t}
                 lib/builtin.{pm,t}
+                lib/builtin-taint.t
                 lib/bytes.{pm,t}
-                lib/bytes_heavy.pl
                 lib/charnames.{pm,t}
                 lib/dbm_filter_util.pl
                 lib/deprecate.pm
@@ -1485,12 +1517,9 @@ use File::Glob qw(:case);
                 lib/vmsish.{pm,t}
                 ],
     },
-    'openbsd' => {
-        'FILES'      => q[lib/Config_git.pl],
-    },
 );
 
-
+our %DistName;
 # legacy CPAN flag
 for my $mod_name ( keys %Modules ) {
     my $data = $Modules{$mod_name};
@@ -1518,6 +1547,7 @@ for ( keys %Modules ) {
     }
 }
 
+our %Maintainers;
 # legacy MAINTAINER field
 for ( keys %Modules ) {
     # Keep any existing MAINTAINER flag so that "overrides" can be applied

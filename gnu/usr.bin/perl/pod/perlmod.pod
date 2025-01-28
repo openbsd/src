@@ -426,13 +426,14 @@ The B<begincheck> program makes it all clear, eventually:
 =head2 Perl Classes
 X<class> X<@ISA>
 
-There is no special class syntax in Perl, but a package may act
+There is no stable class syntax in Perl, but a package may act
 as a class if it provides subroutines to act as methods.  Such a
 package may also derive some of its methods from another class (package)
 by listing the other package name(s) in its global @ISA array (which
 must be a package global, not a lexical).
 
-For more on this, see L<perlootut> and L<perlobj>.
+For more on packages acting as classes, see L<perlootut> and L<perlobj>.
+For more on the not-yet-stable class syntax, see L<perlclass>.
 
 =head2 Perl Modules
 X<module>

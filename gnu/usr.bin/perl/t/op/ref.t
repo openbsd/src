@@ -8,7 +8,7 @@ BEGIN {
 
 use strict qw(refs subs);
 
-plan(254);
+plan(257);
 
 # Test this first before we extend the stack with other operations.
 # This caused an asan failure due to a bad write past the end of the stack.
@@ -259,6 +259,13 @@ like (*STDOUT{IO}, qr/^IO::File=IO\(0x[0-9a-f]+\)$/,
 
 $anonhash = {};
 is (ref $anonhash, 'HASH');
+
+# GH #21478
+$anonhash = { 'one' };
+is scalar keys %$anonhash, 1, 'single value in anonhash creates a key (count)';
+ok exists $anonhash->{one},   'single value in anonhash creates a key (existence)';
+is $anonhash->{one}, undef,   'single value in anonhash creates a key (value)';
+
 $anonhash2 = {FOO => 'BAR', ABC => 'XYZ',};
 is (join('', sort values %$anonhash2), 'BARXYZ');
 

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
 
-our $VERSION = '0.086';
+our $VERSION = '0.088';
 
 sub _croak { require Carp; Carp::croak(@_) }
 
@@ -1727,7 +1727,7 @@ HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.086
+version 0.088
 
 =head1 SYNOPSIS
 
@@ -2351,7 +2351,7 @@ L<Net::SSLeay> - Required for SSL support
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<https://github.com/chansen/p5-http-tiny/issues>.
+at L<https://github.com/Perl-Toolchain-Gang/HTTP-Tiny/issues>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -2359,9 +2359,9 @@ You will be notified automatically of any progress on your issue.
 This is open source software.  The code repository is available for
 public review and contribution under the terms of the license.
 
-L<https://github.com/chansen/p5-http-tiny>
+L<https://github.com/Perl-Toolchain-Gang/HTTP-Tiny>
 
-  git clone https://github.com/chansen/p5-http-tiny.git
+  git clone https://github.com/Perl-Toolchain-Gang/HTTP-Tiny.git
 
 =head1 AUTHORS
 

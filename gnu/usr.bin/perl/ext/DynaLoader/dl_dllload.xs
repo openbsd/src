@@ -119,7 +119,7 @@ dl_load_file(filename, flags=0)
     /* add a (void *) dllload(filename) ; cast if needed */
     retv = dllload(filename) ;
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%lx\n", (unsigned long) retv));
-    ST(0) = sv_newmortal() ;
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (retv == NULL)
 	SaveError(aTHX_ "%s",strerror(errno)) ;
     else
@@ -156,7 +156,7 @@ dl_find_symbol(libhandle, symbolname, ign_err=0)
     retv  = dllqueryvar(libhandle, symbolname);
     DLDEBUG(2, PerlIO_printf(Perl_debug_log,
 			     "  symbolref = %lx\n", (unsigned long) retv));
-    ST(0) = sv_newmortal();
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (retv == NULL) {
 	if (!ign_err) SaveError(aTHX_ "%s", strerror(errno));
     }

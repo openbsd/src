@@ -14,11 +14,11 @@ Getopt::Std - Process single-character switches with switch clustering
     use Getopt::Std;
 
     getopts('oif:');  # -o & -i are boolean flags, -f takes an argument
-		      # Sets $opt_* as a side effect.
-    getopts('oif:', \%opts);  # options as above. Values in %opts
-    getopt('oDI');    # -o, -D & -I take arg.
-                      # Sets $opt_* as a side effect.
-    getopt('oDI', \%opts);    # -o, -D & -I take arg.  Values in %opts
+		      # Sets $opt_* global variables as a side effect
+    getopts('oif:', \my %opts);  # Options as above, values in %opts
+    getopt('oDI');    # -o, -D & -I take arguments
+                      # Sets $opt_* global variables as a side effect
+    getopt('oDI', \my %opts);    # -o, -D & -I take arg, values in %opts
 
 =head1 DESCRIPTION
 
@@ -39,8 +39,8 @@ The C<getopts()> function returns true unless an invalid option was found.
 The C<getopt()> function is similar, but its argument is a string containing
 all switches that take an argument.  If no argument is provided for a switch,
 say, C<y>, the corresponding C<$opt_y> will be set to an undefined value.
-Unspecified switches are silently accepted.  Use of C<getopt()> is not
-recommended.
+Unspecified switches are silently accepted.  Use of C<getopt()> is B<not
+recommended>.
 
 Note that, if your code is running under the recommended C<use strict
 vars> pragma, you will need to declare these package variables
@@ -55,36 +55,36 @@ key values the value of the argument or C<1> if no argument is specified.
 
 To allow programs to process arguments that look like switches, but aren't,
 both functions will stop processing switches when they see the argument
-C<-->.  The C<--> will be removed from @ARGV.
+C<-->.  The C<--> will be removed from C<@ARGV>.
 
 =head1 C<--help> and C<--version>
 
-If C<-> is not a recognized switch letter, getopts() supports arguments
+If C<-> is not a recognized switch letter, C<getopts()> supports arguments
 C<--help> and C<--version>.  If C<main::HELP_MESSAGE()> and/or
 C<main::VERSION_MESSAGE()> are defined, they are called; the arguments are
 the output file handle, the name of option-processing package, its version,
 and the switches string.  If the subroutines are not defined, an attempt is
-made to generate intelligent messages; for best results, define $main::VERSION.
+made to generate intelligent messages; for best results, define C<$main::VERSION>.
 
 If embedded documentation (in pod format, see L<perlpod>) is detected
 in the script, C<--help> will also show how to access the documentation.
 
-Note that due to excessive paranoia, if $Getopt::Std::STANDARD_HELP_VERSION
-isn't true (the default is false), then the messages are printed on STDERR,
+Note that due to excessive paranoia, if C<$Getopt::Std::STANDARD_HELP_VERSION>
+isn't true (the default is false), then the messages are printed on C<STDERR>,
 and the processing continues after the messages are printed.  This being
 the opposite of the standard-conforming behaviour, it is strongly recommended
-to set $Getopt::Std::STANDARD_HELP_VERSION to true.
+to set C<$Getopt::Std::STANDARD_HELP_VERSION> to true.
 
 One can change the output file handle of the messages by setting
-$Getopt::Std::OUTPUT_HELP_VERSION.  One can print the messages of C<--help>
-(without the C<Usage:> line) and C<--version> by calling functions help_mess()
-and version_mess() with the switches string as an argument.
+C<$Getopt::Std::OUTPUT_HELP_VERSION>.  One can print the messages of C<--help>
+(without the C<Usage:> line) and C<--version> by calling functions C<help_mess()>
+and C<version_mess()> with the switches string as an argument.
 
 =cut
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(getopt getopts);
-our $VERSION = '1.13';
+our $VERSION = '1.14';
 # uncomment the next line to disable 1.03-backward compatibility paranoia
 # $STANDARD_HELP_VERSION = 1;
 
@@ -100,17 +100,17 @@ our $VERSION = '1.13';
 sub getopt (;$$) {
     my ($argumentative, $hash) = @_;
     $argumentative = '' if !defined $argumentative;
-    my ($first,$rest);
+    my ($first, $rest);
     local $_;
     local @EXPORT;
 
     while (@ARGV && ($_ = $ARGV[0]) =~ /^-(.)(.*)/) {
-	($first,$rest) = ($1,$2);
+	($first, $rest) = ($1, $2);
 	if (/^--$/) {	# early exit if --
 	    shift @ARGV;
 	    last;
 	}
-	if (index($argumentative,$first) >= 0) {
+	if (index($argumentative, $first) >= 0) {
 	    if ($rest ne '') {
 		shift(@ARGV);
 	    }
@@ -146,7 +146,7 @@ sub getopt (;$$) {
     }
     unless (ref $hash) { 
 	local $Exporter::ExportLevel = 1;
-	import Getopt::Std;
+	Getopt::Std->import;
     }
 }
 
@@ -233,19 +233,19 @@ EOH
 
 sub getopts ($;$) {
     my ($argumentative, $hash) = @_;
-    my (@args,$first,$rest,$exit);
+    my (@args, $first, $rest, $exit);
     my $errs = 0;
     local $_;
     local @EXPORT;
 
     @args = split( / */, $argumentative );
     while(@ARGV && ($_ = $ARGV[0]) =~ /^-(.)(.*)/s) {
-	($first,$rest) = ($1,$2);
+	($first, $rest) = ($1, $2);
 	if (/^--$/) {	# early exit if --
 	    shift @ARGV;
 	    last;
 	}
-	my $pos = index($argumentative,$first);
+	my $pos = index($argumentative, $first);
 	if ($pos >= 0) {
 	    if (defined($args[$pos+1]) and ($args[$pos+1] eq ':')) {
 		shift(@ARGV);
@@ -304,7 +304,7 @@ sub getopts ($;$) {
     }
     unless (ref $hash) { 
 	local $Exporter::ExportLevel = 1;
-	import Getopt::Std;
+	Getopt::Std->import;
     }
     $errs == 0;
 }

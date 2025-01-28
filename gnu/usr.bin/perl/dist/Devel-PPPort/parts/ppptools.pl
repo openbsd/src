@@ -158,9 +158,16 @@ sub parse_partspec
         @tmp or warn "no matches for regex $p in $file\n";
         push @prov, do { my %h; grep !$h{$_}++, @tmp };
       }
-      elsif ($p eq '__UNDEFINED__') {
-        my @tmp = $data{implementation} =~ /^\s*__UNDEFINED__[^\r\n\S]+(\w+)/gm;
-        @tmp or warn "no __UNDEFINED__ macros in $file\n";
+      elsif ($p eq '__UNDEFINED__' || $p eq '__REDEFINE__') {
+
+        my @tmp = $data{implementation} =~ /^\s*$p[^\r\n\S]+(\w+)/gm;
+
+        if ( $p eq '__REDEFINE__' ) {
+          # relies on expand_undefined logic
+          $data{implementation} =~ s/^\s*__REDEFINE__[^\r\n\S]+(\w+)/#undef $1\n__UNDEFINED__ $1/gm;
+        }
+
+        @tmp or warn "no $p macros in $file\n";
         push @prov, @tmp;
       }
       else {

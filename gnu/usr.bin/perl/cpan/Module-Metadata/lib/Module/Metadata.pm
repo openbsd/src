@@ -1,6 +1,6 @@
 # -*- mode: cperl; tab-width: 8; indent-tabs-mode: nil; basic-offset: 2 -*-
 # vim:ts=8:sw=2:et:sta:sts=2:tw=78
-package Module::Metadata; # git description: v1.000036-4-g435a294
+package Module::Metadata; # git description: v1.000037-8-g92dec6c
 # ABSTRACT: Gather package and POD information from perl module files
 
 # Adapted from Perl-licensed code originally distributed with
@@ -14,7 +14,7 @@ sub __clean_eval { eval $_[0] }
 use strict;
 use warnings;
 
-our $VERSION = '1.000037';
+our $VERSION = '1.000038';
 
 use Carp qw/croak/;
 use File::Spec;
@@ -74,9 +74,20 @@ my $PKG_REGEXP  = qr{   # match a package declaration
   \s+                   # whitespace
   ($PKG_NAME_REGEXP)    # a package name
   \s*                   # optional whitespace
-  ($V_NUM_REGEXP)?        # optional version number
-  \s*                   # optional whitesapce
+  ($V_NUM_REGEXP)?      # optional version number
+  \s*                   # optional whitespace
   [;\{]                 # semicolon line terminator or block start (since 5.16)
+}x;
+
+my $CLASS_REGEXP = qr{  # match a class declaration (core since 5.38)
+  ^[\s\{;]*             # intro chars on a line
+  class                 # the word 'class'
+  \s+                   # whitespace
+  ($PKG_NAME_REGEXP)    # a package name
+  \s*                   # optional whitespace
+  ($V_NUM_REGEXP)?      # optional version number
+  \s*                   # optional whitespace
+  [;\{]                 # semicolon line terminator or block start
 }x;
 
 my $VARNAME_REGEXP = qr{ # match fully-qualified VERSION name
@@ -607,7 +618,7 @@ sub _parse_fh {
         ? $self->_parse_version_expression( $line )
         : ();
 
-    if ( $line =~ /$PKG_REGEXP/o ) {
+    if ( $line =~ /$PKG_REGEXP/o or $line =~ /$CLASS_REGEXP/ ) {
       $package = $1;
       my $version = $2;
       push( @packages, $package ) unless grep( $package eq $_, @packages );
@@ -850,7 +861,7 @@ Module::Metadata - Gather package and POD information from perl module files
 
 =head1 VERSION
 
-version 1.000037
+version 1.000038
 
 =head1 SYNOPSIS
 
@@ -1082,7 +1093,7 @@ assistance from David Golden (xdg) <dagolden@cpan.org>.
 
 =head1 CONTRIBUTORS
 
-=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Tomas Doran Olivier Mengué Graham Knop tokuhirom Tatsuhiko Miyagawa Christian Walde Leon Timmermans Peter Rabbitson Steve Hay Jerry D. Hedden Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass 'BinGOs' Williams Josh Jore Kent Fredric
+=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Graham Knop Olivier Mengué Tomas Doran Christian Walde Craig A. Berry Tatsuhiko Miyagawa tokuhirom 'BinGOs' Williams Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass Jerry D. Hedden Josh Jore Kent Fredric Leon Timmermans Peter Rabbitson Steve Hay
 
 =over 4
 
@@ -1108,7 +1119,7 @@ Chris Nehren <apeiron@cpan.org>
 
 =item *
 
-Tomas Doran <bobtfish@bobtfish.net>
+Graham Knop <haarg@haarg.org>
 
 =item *
 
@@ -1116,15 +1127,7 @@ Olivier Mengué <dolmen@cpan.org>
 
 =item *
 
-Graham Knop <haarg@haarg.org>
-
-=item *
-
-tokuhirom <tokuhirom@gmail.com>
-
-=item *
-
-Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+Tomas Doran <bobtfish@bobtfish.net>
 
 =item *
 
@@ -1132,27 +1135,19 @@ Christian Walde <walde.christian@googlemail.com>
 
 =item *
 
-Leon Timmermans <fawaka@gmail.com>
-
-=item *
-
-Peter Rabbitson <ribasushi@cpan.org>
-
-=item *
-
-Steve Hay <steve.m.hay@googlemail.com>
-
-=item *
-
-Jerry D. Hedden <jdhedden@cpan.org>
-
-=item *
-
 Craig A. Berry <cberry@cpan.org>
 
 =item *
 
-Craig A. Berry <craigberry@mac.com>
+Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+
+=item *
+
+tokuhirom <tokuhirom@gmail.com>
+
+=item *
+
+Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
 =item *
 
@@ -1176,7 +1171,7 @@ James Raspass <jraspass@gmail.com>
 
 =item *
 
-Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
+Jerry D. Hedden <jdhedden@cpan.org>
 
 =item *
 
@@ -1185,6 +1180,18 @@ Josh Jore <jjore@cpan.org>
 =item *
 
 Kent Fredric <kentnl@cpan.org>
+
+=item *
+
+Leon Timmermans <fawaka@gmail.com>
+
+=item *
+
+Peter Rabbitson <ribasushi@cpan.org>
+
+=item *
+
+Steve Hay <steve.m.hay@googlemail.com>
 
 =back
 

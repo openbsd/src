@@ -206,6 +206,7 @@ line.  The tilde will be translated to a space upon output.
 X<format, repeating lines>
 
 If you put two contiguous tilde characters "~~" anywhere into a line,
+then in addition to suppressing the line if all fields are blank,
 the line will be repeated until all the fields on the line are exhausted,
 i.e. undefined. For special (caret) text fields this will occur sooner or
 later, but if you use a text field of the at variety, the  expression you

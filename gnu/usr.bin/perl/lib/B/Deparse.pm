@@ -7,7 +7,7 @@
 # This is based on the module of the same name by Malcolm Beattie,
 # but essentially none of his code remains.
 
-package B::Deparse 1.74;
+package B::Deparse 1.76;
 use strict;
 use Carp;
 use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
@@ -15,6 +15,8 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
 	 OPf_KIDS OPf_REF OPf_STACKED OPf_SPECIAL OPf_MOD OPf_PARENS
 	 OPpLVAL_INTRO OPpOUR_INTRO OPpENTERSUB_AMPER OPpSLICE OPpKVSLICE
          OPpCONST_BARE OPpEMPTYAVHV_IS_HV
+         OPpCONST_TOKEN_MASK
+         OPpCONST_TOKEN_LINE OPpCONST_TOKEN_FILE OPpCONST_TOKEN_PACKAGE
 	 OPpTRANS_SQUASH OPpTRANS_DELETE OPpTRANS_COMPLEMENT OPpTARGET_MY
 	 OPpEXISTS_SUB OPpSORT_NUMERIC OPpSORT_INTEGER OPpREPEAT_DOLIST
 	 OPpSORT_REVERSE OPpMULTIDEREF_EXISTS OPpMULTIDEREF_DELETE
@@ -464,7 +466,7 @@ sub next_todo {
             my $globname;
             my $gv = $cv->GV;
             if (
-                   $gv
+                   $gv && $gv->isa('B::GV')
                 && defined (($globname = $gv->object_2svref))
                 && $$globname =~ /^\*builtin::/
             ) {
@@ -5721,6 +5723,20 @@ sub pp_const {
 #	return $self->const_sv($op)->PV;
 #    }
     my $sv = $self->const_sv($op);
+
+    my $token = ($op->private & OPpCONST_TOKEN_MASK);
+    if ($token) { # handle __LINE__ etc
+        if ($token == OPpCONST_TOKEN_LINE) {
+            return "__LINE__";
+        }
+        elsif ($token == OPpCONST_TOKEN_FILE) {
+            return "__FILE__";
+        }
+        elsif ($token == OPpCONST_TOKEN_PACKAGE) {
+            return "__PACKAGE__";
+        }
+    }
+
     return $self->const($sv, $cx);
 }
 

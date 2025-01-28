@@ -9,7 +9,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 24;
+plan tests => 29;
 
 my $a = chr(0x100);
 
@@ -73,8 +73,5 @@ utf8::encode(my $c2_utf8 = $c2);
     is(ucfirst($c2), $c2_utf8, "unfirst under use bytes returns bytes");
 }
 
-{
-    fresh_perl_like ('use bytes; bytes::moo()',
-		     qr/Undefined subroutine bytes::moo/, {stderr=>1},
-		    "Check Carp is loaded for AUTOLOADing errors")
-}
+is(prototype bytes->can($_), prototype CORE->can($_), "bytes::$_ proto matches CORE::$_")
+    for qw( chr index length ord rindex substr );

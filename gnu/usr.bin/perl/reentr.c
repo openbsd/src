@@ -2,7 +2,9 @@
  *
  *    reentr.c
  *
- *    Copyright (C) 2002, 2003, 2005, 2006, 2007 by Larry Wall and others
+ *    Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+ *    2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023,
+ *    2024 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -155,7 +157,7 @@ Perl_reentrant_size(pTHX) {
 #  endif /* HAS_SETLOCALE_R */
 
 #  ifdef HAS_STRERROR_R
-        PL_reentrant_buffer->_strerror_size = REENTRANTSMALLSIZE;
+        PL_reentrant_buffer->_strerror_size = 1024;
 #  endif /* HAS_STRERROR_R */
 
 #  ifdef HAS_TTYNAME_R

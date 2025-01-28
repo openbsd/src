@@ -363,7 +363,7 @@ C<a{n,}> = match at least C<n> or more times
 
 =item *
 
-C<a{,n}> = match C<n> times or fewer
+C<a{,n}> = match C<n> times or fewer  (Added in v5.34)
 
 =item *
 

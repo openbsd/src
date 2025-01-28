@@ -30,7 +30,7 @@ our ( $Indent, $Trailingcomma, $Purity, $Pad, $Varname, $Useqq, $Terse, $Freezer
 our ( @ISA, @EXPORT, @EXPORT_OK, $VERSION );
 
 BEGIN {
-    $VERSION = '2.188'; # Don't forget to set version and release
+    $VERSION = '2.189'; # Don't forget to set version and release
                         # date in POD below!
 
     @ISA = qw(Exporter);
@@ -924,7 +924,7 @@ for details.
 Returns a newly created C<Data::Dumper> object.  The first argument is an
 anonymous array of values to be dumped.  The optional second argument is an
 anonymous array of names for the values.  The names need not have a leading
-C<$> sign, and must be comprised of alphanumeric characters.  You can begin
+C<$> sign, and must be composed of alphanumeric characters.  You can begin
 a name with a C<*> to specify that the dereferenced type must be dumped
 instead of the reference itself, for ARRAY and HASH references.
 
@@ -1455,7 +1455,7 @@ modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.188
+Version 2.189
 
 =head1 SEE ALSO
 

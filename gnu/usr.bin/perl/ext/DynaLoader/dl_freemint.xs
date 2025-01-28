@@ -138,7 +138,7 @@ dl_load_file(filename, flags=0)
     }
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, "libref=%s\n", filename));
 haverror:
-    ST(0) = sv_newmortal() ;
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (dlderr == 0)
 	sv_setiv(ST(0), PTR2IV(filename));
     XSRETURN(1);
@@ -156,7 +156,7 @@ dl_find_symbol(libhandle, symbolname, ign_err=0)
 	    libhandle, symbolname));
     retv = (void *)dld_get_func(symbolname);
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref = %x\n", (unsigned int)retv));
-    ST(0) = sv_newmortal() ;
+    ST(0) = newSV_type_mortal(SVt_IV);
     if (retv == NULL) {
         if (!ign_err)
 	    SaveError(aTHX_ "dl_find_symbol: Unable to find '%s' symbol", symbolname) ;

@@ -1145,7 +1145,7 @@ use only, and as such are subject to change without notice.
 
 As shipped, the only command-line history supplied is a simplistic one
 that checks for leading exclamation points.  However, if you install
-the L<Term::ReadKey> and L<Term::ReadLine> modules from CPAN (such as
+the L<Term::ReadKey> and one of the C<Term::ReadLine::*> modules from CPAN (such as
 L<Term::ReadLine::Gnu>, L<Term::ReadLine::Perl>, ...) you will
 have full editing capabilities much like those GNU I<readline>(3) provides.
 Look for these in the F<modules/by-module/Term> directory on CPAN.

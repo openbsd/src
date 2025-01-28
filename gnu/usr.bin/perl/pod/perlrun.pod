@@ -355,6 +355,10 @@ or C<CHECK> blocks and any C<use> statements: these are considered as
 occurring outside the execution of your program.  C<INIT> and C<END>
 blocks, however, will be skipped.
 
+If the syntax check is successful perl will exit with a status of zero
+and report C<I<yourprogram> syntax OK>.  On failure perl will print
+any detected errors and exit with a non-zero status.
+
 =item B<-d>
 X<-d> X<-dt>
 
@@ -470,8 +474,8 @@ to use semicolons where you would in a normal program.
 X<-E>
 
 behaves just like L<-e|/-e commandline>, except that it implicitly
-enables all optional features (in the main compilation unit). See
-L<feature>.
+enables all optional features and builtin functions (in the main
+compilation unit). See L<feature> and L<builtin>.
 
 =item B<-f>
 X<-f> X<sitecustomize> X<sitecustomize.pl>
@@ -704,6 +708,12 @@ e.g., C<'-MI<MODULE> qw(foo bar)'>.
 If the first character after the B<-M> or B<-m> is a dash (B<->)
 then the 'use' is replaced with 'no'.
 This makes no difference for B<-m>.
+
+Since Perl version 5.39.8, the C<-M> switch and the module name can now
+be passed in separate command-line arguments:
+
+  perl -M MODULE ...            # like perl -MMODULE ...
+  perl -M MODULE=arg1,arg2,...  # like perl -MMODULE=arg1,arg2,...
 
 A little builtin syntactic sugar means you can also say
 B<-mI<MODULE>=foo,bar> or B<-MI<MODULE>=foo,bar> as a shortcut for

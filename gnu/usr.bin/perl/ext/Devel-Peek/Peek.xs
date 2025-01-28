@@ -339,11 +339,14 @@ S_do_dump(pTHX_ SV *const sv, I32 lim)
 static OP *
 S_pp_dump(pTHX)
 {
-    dSP;
-    const I32 lim = PL_op->op_private == 2 ? (I32)POPi : 4;
-    dPOPss;
-    S_do_dump(aTHX_ sv, lim);
-    RETPUSHUNDEF;
+    I32 lim = 4;
+    if (PL_op->op_private == 2) {
+        lim = (I32)SvIVx(*PL_stack_sp);
+        rpp_popfree_1();
+    }
+    S_do_dump(aTHX_ *PL_stack_sp, lim);
+    rpp_replace_1_1(&PL_sv_undef);
+    return NORMAL;
 }
 
 static OP *

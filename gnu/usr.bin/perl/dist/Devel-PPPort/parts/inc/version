@@ -26,7 +26,7 @@ PERL_BCDVERSION
 
 =implementation
 
-#define D_PPP_RELEASE_DATE 1647561600 /* 2022-03-18 */
+#define D_PPP_RELEASE_DATE 1693785600 /* 2023-09-04 */
 
 #if ! defined(PERL_REVISION) && ! defined(PERL_VERSION_MAJOR)
 #  if   !   defined(__PATCHLEVEL_H_INCLUDED__)                                  \
@@ -137,19 +137,60 @@ PERL_BCDVERSION
 /* N.B. These don't work if the patch number is 42 or 92, as those are what '*'
  * is in ASCII and EBCDIC respectively */
 __UNDEFINED__ PERL_VERSION_EQ(j,n,p)                                        \
-              (((p) == '*') ? (   (j) == D_PPP_VERSION_MAJOR                \
-                               && (n) == D_PPP_VERSION_MINOR)               \
+              (((p) == '*') ? (   (j) == D_PPP_MAJOR                        \
+                               && (n) == D_PPP_MINOR)                       \
                             : (PERL_BCDVERSION == D_PPP_JNP_TO_BCD(j,n,p)))
 __UNDEFINED__ PERL_VERSION_NE(j,n,p) (! PERL_VERSION_EQ(j,n,p))
 
 __UNDEFINED__ PERL_VERSION_LT(j,n,p)      /* p=='*' means _LT(j,n,0) */     \
-    (PERL_BCDVERSION < D_PPP_JNP_TO_BCD(                    (j),            \
+    (PERL_BCDVERSION < D_PPP_JNP_TO_BCD(                     (j),           \
                                                              (n),           \
                                          (((p) == '*') ? 0 : (p))))
 __UNDEFINED__ PERL_VERSION_GE(j,n,p) (! PERL_VERSION_LT(j,n,p))
 
-__UNDEFINED__ PERL_VERSION_LE(j,n,p)      /* p=='*' means _LT(j,n+1,0) */   \
-    (PERL_BCDVERSION < D_PPP_JNP_TO_BCD(                          (j),      \
-                                         (((p) == '*') ? ((n)+1) : (n)),    \
-                                         (((p) == '*') ?   0     : (p))))
+__UNDEFINED__ PERL_VERSION_LE(j,n,p)      /* p=='*' means _LE(j,n,999) */   \
+    (PERL_BCDVERSION <= D_PPP_JNP_TO_BCD(                      (j),         \
+                                                               (n),         \
+                                         (((p) == '*') ? 999 : (p))))
 __UNDEFINED__ PERL_VERSION_GT(j,n,p) (! PERL_VERSION_LE(j,n,p))
+
+=xsmisc
+
+/* PERL_VERSION_xx sanity checks */
+
+#if !PERL_VERSION_EQ(D_PPP_MAJOR, D_PPP_MINOR, D_PPP_PATCH)
+#  error PERL_VERSION_EQ(major, minor, patch) is false; expected true
+#endif
+#if !PERL_VERSION_EQ(D_PPP_MAJOR, D_PPP_MINOR, '*')
+#  error PERL_VERSION_EQ(major, minor, '*') is false; expected true
+#endif
+#if PERL_VERSION_NE(D_PPP_MAJOR, D_PPP_MINOR, D_PPP_PATCH)
+#  error PERL_VERSION_NE(major, minor, patch) is true; expected false
+#endif
+#if PERL_VERSION_NE(D_PPP_MAJOR, D_PPP_MINOR, '*')
+#  error PERL_VERSION_NE(major, minor, '*') is true; expected false
+#endif
+#if PERL_VERSION_LT(D_PPP_MAJOR, D_PPP_MINOR, D_PPP_PATCH)
+#  error PERL_VERSION_LT(major, minor, patch) is true; expected false
+#endif
+#if PERL_VERSION_LT(D_PPP_MAJOR, D_PPP_MINOR, '*')
+#  error PERL_VERSION_LT(major, minor, '*') is true; expected false
+#endif
+#if !PERL_VERSION_LE(D_PPP_MAJOR, D_PPP_MINOR, D_PPP_PATCH)
+#  error PERL_VERSION_LE(major, minor, patch) is false; expected true
+#endif
+#if !PERL_VERSION_LE(D_PPP_MAJOR, D_PPP_MINOR, '*')
+#  error PERL_VERSION_LE(major, minor, '*') is false; expected true
+#endif
+#if PERL_VERSION_GT(D_PPP_MAJOR, D_PPP_MINOR, D_PPP_PATCH)
+#  error PERL_VERSION_GT(major, minor, patch) is true; expected false
+#endif
+#if PERL_VERSION_GT(D_PPP_MAJOR, D_PPP_MINOR, '*')
+#  error PERL_VERSION_GT(major, minor, '*') is true; expected false
+#endif
+#if !PERL_VERSION_GE(D_PPP_MAJOR, D_PPP_MINOR, D_PPP_PATCH)
+#  error PERL_VERSION_GE(major, minor, patch) is false; expected true
+#endif
+#if !PERL_VERSION_GE(D_PPP_MAJOR, D_PPP_MINOR, '*')
+#  error PERL_VERSION_GE(major, minor, '*') is false; expected true
+#endif

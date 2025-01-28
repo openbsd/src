@@ -9,6 +9,8 @@
 \B\.gitignore\b
 \b_darcs\b
 \B\.cvsignore$
+\B\.bzr\b
+\B\.bzrignore$
 
 # Avoid VMS specific MakeMaker generated files
 \bDescrip.MMS$
@@ -46,6 +48,7 @@
 \.#
 \.rej$
 \..*\.sw.?$
+\.~\d+~$
 
 # Avoid OS-specific files/dirs
 # Mac OSX metadata

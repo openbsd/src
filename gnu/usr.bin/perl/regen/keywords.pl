@@ -55,6 +55,7 @@ my %feature_kw = (
     field     => 'class',
     method    => 'class',
     ADJUST    => 'class',
+    __CLASS__ => 'class',
 );
 
 my %pos = map { ($_ => 1) } @{$by_strength{'+'}};
@@ -120,6 +121,7 @@ __END__
 -__FILE__
 -__LINE__
 -__PACKAGE__
+-__CLASS__
 +__DATA__
 +__END__
 -__SUB__

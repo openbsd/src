@@ -56,7 +56,7 @@ sub open_print_header {
                     { by => 'regen/reentr.pl',
                       from => 'data in regen/reentr.pl',
                       file => $file, style => '*',
-                      copyright => [2002, 2003, 2005 .. 2007],
+                      copyright => [2002, 2003, 2005 .. 2024],
                       quote => $quote });
 }
 
@@ -297,6 +297,8 @@ EOF
         define)
 EOF
     }
+
+    # Process the prototypes
     for my $p (@p) {
         my ($r, $a) = ($p =~ /^(.)_(.+)/);
         my $v = join(", ", map { $m{$_} } split '', $a);
@@ -483,21 +485,39 @@ define('ERRNO', 'E',
 # The loop also contains a lot of intrinsic logic about groups of
 # functions (since functions of certain kind operate the same way).
 
+my %small_bufsizes = (
+                        asctime   => 26,
+                        ctime     => 26,
+                        setlocale => "REENTRANTSMALLSIZE",
+
+                        # POSIX specifies that the symbol LOGIN_NAME_MAX gives
+                        # this value; but not all systems have that;
+                        # L_cuserid is another possibility; XXX but both would
+                        # need Configure probes
+                        getlogin  => "REENTRANTSMALLSIZE",
+
+                        # glibc documents this size as being enough; assume
+                        # they know what they're doing
+                        strerror  => 1024,
+
+                        # This value might be L_ctermid, but XXX would need a
+                        # Configure probe.
+                        ttyname   => "REENTRANTSMALLSIZE",
+                     );
+
 for my $func (@seenf) {
     my $FUNC = uc $func;
     my $ifdef = "#  ifdef HAS_${FUNC}_R\n";
     my $endif = "#  endif /* HAS_${FUNC}_R */\n\n";
     if (exists $seena{$func}) {
         my @p = @{$seena{$func}};
-        if ($func =~ /^(asctime|ctime|getlogin|setlocale|strerror|ttyname)$/) {
+        if (exists $small_bufsizes{$func}) {
             pushssif $ifdef;
             push @struct, <<EOF;
         char*	_${func}_buffer;
         size_t	_${func}_size;
 EOF
-            my $size = ($func =~ /^(asctime|ctime)$/)
-                       ? 26
-                       : "REENTRANTSMALLSIZE";
+            my $size = $small_bufsizes{$func};
             push @size, <<EOF;
         PL_reentrant_buffer->_${func}_size = $size;
 EOF
@@ -744,13 +764,14 @@ EOF
 #      endif
 EOF
         }
-                    push @wrap, <<EOF;
+
+        push @wrap, <<EOF;
 #      if defined($func)
 #        define PERL_REENTR_USING_${FUNC}_R
 #      endif
 EOF
 
-            push @wrap, <<EOF;  #  defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
+        push @wrap, <<EOF;  #  defined(PERL_REENTR_API) && (PERL_REENTR_API+0 == 1)
 #    endif
 EOF
 
@@ -782,7 +803,7 @@ typedef struct {
 
 #endif /* USE_REENTRANT_API */
 
-#endif
+#endif /* File hasn't already been #included */
 EOF
 
 read_only_bottom_close_and_rename($h);
@@ -1182,12 +1203,16 @@ EOF
 
 read_only_bottom_close_and_rename($c);
 
-# As of March 2020, the config.h entries that have reentrant prototypes that
+# As of February 2024, the config.h entries that have reentrant prototypes that
 # aren't in this file are:
 #       drand48
 #       random
 #       srand48
 #       srandom
+# Additionally, these are the POSIX defined _r functions that aren't defined
+#       getgrid_r
+#       rand_r
+#       strtok_r
 
 # The meanings of the flags are derivable from %map above
 # Fnc, arg flags| hdr   | ? struct type | prototypes...

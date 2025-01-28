@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc( qw(. ../lib) );
 }
 
-plan( tests => 18 );
+plan( tests => 20 );
 
 use strict;
 use warnings;
@@ -49,6 +49,12 @@ my $fail_not_hr   = 'Not a HASH reference at ';
     %hash = sub { print "fenice" };
     cmp_ok(scalar(@warnings),'==',1,'coderef count');
     cmp_ok(substr($warnings[0],0,length($fail_odd)),'eq',$fail_odd,'coderef msg');
+
+    # GH #21478
+    @warnings = ();
+    my $hashref = { 1 };
+    is(scalar(@warnings), 1, 'anon singleton count');
+    is(substr($warnings[0], 0, length($fail_odd_anon)), $fail_odd_anon, 'anon singleton msg');
 
     @warnings = ();
     $_ = { 1..10 };

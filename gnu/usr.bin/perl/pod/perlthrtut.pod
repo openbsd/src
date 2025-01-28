@@ -1046,27 +1046,10 @@ threads.  See L<threads/THREAD SIGNALLING> for more details.)
 
 =head1 Thread-Safety of System Libraries
 
-Whether various library calls are thread-safe is outside the control
-of Perl.  Calls often suffering from not being thread-safe include:
-C<localtime()>, C<gmtime()>,  functions fetching user, group and
-network information (such as C<getgrent()>, C<gethostent()>,
-C<getnetent()> and so on), C<readdir()>, C<rand()>, and C<srand()>. In
-general, calls that depend on some global external state.
-
-If the system Perl is compiled in has thread-safe variants of such
-calls, they will be used.  Beyond that, Perl is at the mercy of
-the thread-safety or -unsafety of the calls.  Please consult your
-C library call documentation.
-
-On some platforms the thread-safe library interfaces may fail if the
-result buffer is too small (for example the user group databases may
-be rather large, and the reentrant interfaces may have to carry around
-a full snapshot of those databases).  Perl will start with a small
-buffer, but keep retrying and growing the result buffer
-until the result fits.  If this limitless growing sounds bad for
-security or memory consumption reasons you can recompile Perl with
-C<PERL_REENTRANT_MAXSIZE> defined to the maximum number of bytes you will
-allow.
+Whether C library calls are thread-safe is outside the control of Perl.
+Undefined behavior will happen if unsafe ones are used during
+multi-thread operation.  See
+L<perlclib/Dealing with embedded perls and threads>.
 
 =head1 Conclusion
 

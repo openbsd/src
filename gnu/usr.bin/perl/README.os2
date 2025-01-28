@@ -475,7 +475,7 @@ should be done "correctly".
 
 =back
 
-=head2 C<``> and pipe-C<open> do not work under DOS.
+=head2 C<``> and pipe-C<open> do not work under DOS
 
 This may a variant of just L</"I cannot run external programs">, or a
 deeper problem. Basically: you I<need> RSX (see L</Prerequisites>)
@@ -621,7 +621,7 @@ C<set PERLLIB_PREFIX> in F<Config.sys>, see L</"C<PERLLIB_PREFIX>">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.38.2/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.40.1/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -1549,7 +1549,7 @@ Here is the sample C file:
 
 =head1 Build FAQ
 
-=head2 Some C</> became C<\> in pdksh.
+=head2 Some C</> became C<\> in pdksh
 
 You have a very old pdksh. See L</Prerequisites>.
 

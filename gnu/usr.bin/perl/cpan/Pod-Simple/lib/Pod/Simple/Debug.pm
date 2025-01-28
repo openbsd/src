@@ -1,22 +1,20 @@
-require 5;
 package Pod::Simple::Debug;
 use strict;
-use vars qw($VERSION );
-$VERSION = '3.43';
+our $VERSION = '3.45';
 
 sub import {
   my($value,$variable);
-  
+
   if(@_ == 2) {
     $value = $_[1];
   } elsif(@_ == 3) {
     ($variable, $value) = @_[1,2];
-    
+
     ($variable, $value) = ($value, $variable)
        if     defined $value    and ref($value)    eq 'SCALAR'
       and not(defined $variable and ref($variable) eq 'SCALAR')
     ; # tolerate getting it backwards
-    
+
     unless( defined $variable and ref($variable) eq 'SCALAR') {
       require Carp;
       Carp::croak("Usage:\n use Pod::Simple::Debug (NUMVAL)\nor"
@@ -33,7 +31,7 @@ sub import {
     Carp::croak("It's too late to call Pod::Simple::Debug -- "
               . "Pod::Simple has already loaded\nAborting");
   }
-  
+
   $value = 0 unless defined $value;
 
   unless($value =~ m/^-?\d+$/) {
@@ -52,7 +50,7 @@ sub import {
     *Pod::Simple::DEBUG = eval " sub () { $value } ";
     print STDERR "# Starting Pod::Simple::DEBUG = $value\n";
   }
-  
+
   require Pod::Simple;
   return;
 }
@@ -141,7 +139,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.
@@ -175,3 +173,4 @@ Pod::Simple is maintained by:
 =back
 
 =cut
+use warnings;

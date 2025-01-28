@@ -1,5 +1,11 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280239
+
+ - make the definition of boot_compilet() in the probe code generated
+   by have_compiler() a prototype to prevent warnings.
+   https://github.com/Perl/perl5/issues/21109
+
 0.280238
 
   Fix:

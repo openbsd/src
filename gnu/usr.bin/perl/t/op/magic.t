@@ -427,9 +427,12 @@ EOP
     chomp(my $argv0 = $maybe_ps->("ps h $$"));
     chomp(my $prctl = $maybe_ps->("ps hc $$"));
 
-    like($argv0, qr/$name/, "Set process name through argv[0] ($argv0)");
     my $name_substr = substr($name, 0, 15);
-    like($prctl, qr/$name_substr/, "Set process name through prctl() ($prctl)");
+    my $argv0_match = (grep(/$name/, split /\n/, $argv0), "")[0];
+    my $prctl_match = (grep(/$name_substr/, split /\n/, $prctl), "")[0];
+
+    like($argv0, qr/$name/, "Set process name through argv[0] ($argv0_match)");
+    like($prctl, qr/$name_substr/, "Set process name through prctl() ($prctl_match)");
   }
 }
 
@@ -927,7 +930,7 @@ SKIP: {
             $0 = $arg if defined $arg;
             # In FreeBSD the ps -o command= will cause
             # an empty header line, grab only the last line.
-            my $ps = (`ps -o command= -p $$`)[-1];
+            my $ps = (`ps -o command= -p $$ 2>&1`)[-1];
             return if $?;
             chomp $ps;
             $ps;

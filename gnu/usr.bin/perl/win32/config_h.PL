@@ -23,6 +23,7 @@ while (@ARGV && $ARGV[0] =~ /^([\w_]+)=(.*)$/)
 
 $opt{CONFIG_H} ||= 'config.h';
 $opt{CORE_DIR} ||= '../lib/CORE';
+$opt{CORE_CONFIG_H} ||= $opt{CORE_DIR} . '/config.h';
 
 warn "Writing $opt{CONFIG_H}\n";
 
@@ -84,11 +85,11 @@ while (<SH>)
 close(H);
 close(SH);
 
-my $core_config_h = "$opt{CORE_DIR}/$opt{CONFIG_H}";
+my $core_config_h = $opt{CORE_CONFIG_H};
 if (compare("$file.new", $core_config_h)) {
     mkdir $opt{CORE_DIR} unless -d $opt{CORE_DIR};
     chmod(0666,$core_config_h);
-    copy("$file.new",$core_config_h) || die "Cannot copy:$!";
+    copy("$file.new",$core_config_h) || die "Cannot copy $file.new $core_config_h:$!";
     chmod(0444,$core_config_h);
 }
 

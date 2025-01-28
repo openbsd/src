@@ -229,6 +229,12 @@ fresh_perl_is(
 like runperl(prog => 'sub ub(){0} ub ub', stderr=>1), qr/Bareword found/,
  '[perl #126482] Assert failure when mentioning a constant twice in a row';
 
+# Other test file(s) (I'm not sure which) can create and then fail to
+# unlink the file t/0 under some circumstances (possibly running under
+# minitest). The next test does the equivalent of "do '0'", which can trip
+# up if there's a real '0' file to load.
+unlink "0";
+
 fresh_perl_is(
     "do\0"."000000",
     "",

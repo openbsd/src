@@ -227,7 +227,7 @@ Hmm... that's still a bit ugly.  How about this:
 	}
     }
 
-When you get tired of writing a custom print for your data structures,
+When you get tired of writing a custom C<print> for your data structures,
 you might look at the standard L<Dumpvalue> or L<Data::Dumper> modules.
 The former is what the Perl debugger uses, while the latter generates
 parsable Perl code.  For example:
@@ -236,14 +236,12 @@ parsable Perl code.  For example:
 
  sub show(+) {
 	require Dumpvalue;
-	state $prettily = new Dumpvalue::
-			    tick        => q("),
-			    compactDump => 1,  # comment these two lines
-                                               # out
-			    veryCompact => 1,  # if you want a bigger
-                                               # dump
-			;
-	dumpValue $prettily @_;
+    state $prettify = Dumpvalue->new(
+        tick        => q("),
+        compactDump => 1,  # comment these two lines out
+        veryCompact => 1,  # if you want a bigger dump
+    );
+	$prettify->dumpValue(@_);
  }
 
  # Assign a list of array references to an array.

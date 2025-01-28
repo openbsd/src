@@ -1,11 +1,9 @@
-
-require 5;
 package Pod::Simple::Methody;
 use strict;
+use warnings;
 use Pod::Simple ();
-use vars qw(@ISA $VERSION);
-$VERSION = '3.43';
-@ISA = ('Pod::Simple');
+our $VERSION = '3.45';
+our @ISA = ('Pod::Simple');
 
 # Yes, we could use named variables, but I want this to be impose
 # as little an additional performance hit as possible.
@@ -116,7 +114,7 @@ pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
 L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
+to clone L<https://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

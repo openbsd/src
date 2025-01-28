@@ -375,7 +375,7 @@ S_sv_add_arena(pTHX_ char *const ptr, const U32 size, const U32 flags)
 /* visit(): call the named function for each non-free SV in the arenas
  * whose flags field matches the flags/mask args. */
 
-STATIC I32
+STATIC SSize_t
 S_visit(pTHX_ SVFUNC_t f, const U32 flags, const U32 mask)
 {
     SV* sva;
@@ -587,14 +587,66 @@ SVs which are in complex self-referential hierarchies.
 =cut
 */
 
-I32
+SSize_t
 Perl_sv_clean_all(pTHX)
 {
-    I32 cleaned;
+    SSize_t cleaned;
     PL_in_clean_all = TRUE;
     cleaned = visit(do_clean_all, 0,0);
     return cleaned;
 }
+
+
+#ifdef DEBUGGING
+
+/* Called by sv_mark_arenas() for each live SV: set SVf_BREAK */
+
+static void
+S_do_sv_mark_arenas(pTHX_ SV *const sv)
+{
+        sv->sv_flags |= SVf_BREAK;
+}
+
+/* sv_mark_arenas(): for leak debugging: mark all live SVs with SVf_BREAK.
+ * Then later, use sv_sweep_arenas() to list any SVs not so marked.
+ */
+
+void
+Perl_sv_mark_arenas(pTHX)
+{
+    visit(S_do_sv_mark_arenas, 0, 0);
+}
+
+/* Called by sv_sweep_arenas() for each live SV, to list any SVs without
+ * SVf_BREAK set */
+
+static void
+S_do_sv_sweep_arenas(pTHX_ SV *const sv)
+{
+        if (sv->sv_flags & SVf_BREAK) {
+            sv->sv_flags &= ~SVf_BREAK;
+            return;
+        }
+        PerlIO_printf(Perl_debug_log, "Unmarked SV: 0x%p: %s\n",
+                        sv, SvPEEK(sv));
+}
+
+
+/* sv_sweep_arenas(): for debugging: list all live SVs that don't have
+ * SVf_BREAK set, then turn off all SVf_BREAK flags.  Typically used some
+ * time after sv_mark_arenas(), to find SVs which have been created since
+ * the marking but not yet freed (they may have leaked, or been stored in
+ * an array, or whatever).
+ */
+
+void
+Perl_sv_sweep_arenas(pTHX)
+{
+    visit(S_do_sv_sweep_arenas, 0, 0);
+}
+
+#endif
+
 
 /*
   ARENASETS: a meta-arena implementation which separates arena-info
@@ -2014,6 +2066,15 @@ S_sv_setnv(pTHX_ SV* sv, int numtype)
     }
 }
 
+#ifndef NV_PRESERVES_UV
+#  define MAX_UV_PRESERVED_IN_NV (((UV)1 << NV_PRESERVES_UV_BITS) - 1)
+#  define MAX_IV_PRESERVED_IN_NV ((IV)MAX_UV_PRESERVED_IN_NV)
+#  define MIN_IV_PRESERVED_IN_NV (-MAX_IV_PRESERVED_IN_NV)
+/* We presume that (IV)MAX_UV_PRESERVED_IN_NV and (-MAX_IV_PRESERVED_IN_NV)
+   above will not overflow if the condition below holds true:  */
+STATIC_ASSERT_DECL(MAX_UV_PRESERVED_IN_NV <= (UV)IV_MAX);
+#endif
+
 STATIC bool
 S_sv_2iuv_common(pTHX_ SV *const sv)
 {
@@ -2046,9 +2107,10 @@ S_sv_2iuv_common(pTHX_ SV *const sv)
             SvIV_set(sv, I_V(SvNVX(sv)));
             if (SvNVX(sv) == (NV) SvIVX(sv)
 #ifndef NV_PRESERVES_UV
-                && SvIVX(sv) != IV_MIN /* avoid negating IV_MIN below */
-                && (((UV)1 << NV_PRESERVES_UV_BITS) >
-                    (UV)(SvIVX(sv) > 0 ? SvIVX(sv) : -SvIVX(sv)))
+                /* Optimizing compilers might merge two comparisons below
+                   into single comparison */
+                && MIN_IV_PRESERVED_IN_NV <= SvIVX(sv)
+                && SvIVX(sv) <= MAX_IV_PRESERVED_IN_NV
                 /* Don't flag it as "accurately an integer" if the number
                    came from a (by definition imprecise) NV operation, and
                    we're outside the range of NV integer precision */
@@ -3669,7 +3731,7 @@ Perl_sv_utf8_decode(pTHX_ SV *const sv)
             /* adjust pos to the start of a UTF8 char sequence */
             MAGIC * mg = mg_find(sv, PERL_MAGIC_regex_global);
             if (mg) {
-                I32 pos = mg->mg_len;
+                SSize_t pos = mg->mg_len;
                 if (pos > 0) {
                     for (c = start + pos; c > start; c--) {
                         if (UTF8_IS_START(*c))
@@ -4920,9 +4982,14 @@ Perl_sv_setsv_cow(pTHX_ SV *dsv, SV *ssv)
 /*
 =for apidoc sv_setpv_bufsize
 
-Sets the SV to be a string of cur bytes length, with at least
-len bytes available. Ensures that there is a null byte at SvEND.
+Sets the SV to be a string of C<cur> bytes length, with at least
+C<len> bytes available.   Ensures that there is a null byte at C<SvEND>.
+
 Returns a char * pointer to the SvPV buffer.
+
+The caller must set the first C<cur> bytes of C<sv> before the first use of its
+contents.  This means that if C<cur> is zero, the SV is immediately fully
+formed and ready to use, just like any other SV containing an empty string.
 
 =cut
 */
@@ -4971,8 +5038,9 @@ first encountered C<NUL> byte.
 In the forms that take a C<ptr> argument, if it is NULL, the SV will become
 undefined.
 
-The UTF-8 flag is not changed by these functions.  A terminating NUL byte is
-guaranteed in the result.
+B<The UTF-8 flag is not changed by these functions.>
+
+A terminating NUL byte is guaranteed in the result.
 
 The C<_mg> forms handle 'set' magic; the other forms skip all magic.
 
@@ -6400,17 +6468,17 @@ Perl_sv_kill_backrefs(pTHX_ SV *const sv, AV *const av)
 }
 
 /*
-=for apidoc sv_insert
+=for apidoc      sv_insert
+=for apidoc_item sv_insert_flags
 
-Inserts and/or replaces a string at the specified offset/length within the SV.
-Similar to the Perl C<substr()> function, with C<littlelen> bytes starting at
-C<little> replacing C<len> bytes of the string in C<bigstr> starting at
-C<offset>.  Handles get magic.
+These insert and/or replace a string at the specified offset/length within the
+SV.  Similar to the Perl C<substr()> function, with C<littlelen> bytes starting
+at C<little> replacing C<len> bytes of the string in C<bigstr> starting at
+C<offset>.  They handle get magic.
 
-=for apidoc sv_insert_flags
-
-Same as C<sv_insert>, but the extra C<flags> are passed to the
-C<SvPV_force_flags> that applies to C<bigstr>.
+C<sv_insert_flags> is identical to plain C<sv_insert>, but the extra C<flags>
+are passed to the C<SvPV_force_flags> operation that is internally applied to
+C<bigstr>.
 
 =cut
 */
@@ -7033,6 +7101,12 @@ Perl_sv_clear(pTHX_ SV *const orig_sv)
             }
             if (--(SvREFCNT(sv)))
                 continue;
+            if (SvIMMORTAL(sv)) {
+                /* make sure SvREFCNT(sv)==0 happens very seldom */
+                SvREFCNT(sv) = SvREFCNT_IMMORTAL;
+                SvTEMP_off(sv);
+                continue;
+            }
 #ifdef DEBUGGING
             if (SvTEMP(sv)) {
                 Perl_ck_warner_d(aTHX_ packWARN(WARN_DEBUGGING),
@@ -7041,11 +7115,6 @@ Perl_sv_clear(pTHX_ SV *const orig_sv)
                 continue;
             }
 #endif
-            if (SvIMMORTAL(sv)) {
-                /* make sure SvREFCNT(sv)==0 happens very seldom */
-                SvREFCNT(sv) = SvREFCNT_IMMORTAL;
-                continue;
-            }
             break;
         } /* while 1 */
 
@@ -7228,6 +7297,12 @@ Perl_sv_free2(pTHX_ SV *const sv, const U32 rc)
         /* normal case */
         SvREFCNT(sv) = 0;
 
+        if (SvIMMORTAL(sv)) {
+            /* make sure SvREFCNT(sv)==0 happens very seldom */
+            SvREFCNT(sv) = SvREFCNT_IMMORTAL;
+            SvTEMP_off(sv);
+            return;
+        }
 #ifdef DEBUGGING
         if (SvTEMP(sv)) {
             Perl_ck_warner_d(aTHX_ packWARN(WARN_DEBUGGING),
@@ -7236,11 +7311,6 @@ Perl_sv_free2(pTHX_ SV *const sv, const U32 rc)
             return;
         }
 #endif
-        if (SvIMMORTAL(sv)) {
-            /* make sure SvREFCNT(sv)==0 happens very seldom */
-            SvREFCNT(sv) = SvREFCNT_IMMORTAL;
-            return;
-        }
         sv_clear(sv);
         if (! SvREFCNT(sv)) /* may have have been resurrected */
             del_SV(sv);
@@ -7424,24 +7494,20 @@ S_sv_pos_u2b_midway(const U8 *const start, const U8 *send,
     PERL_ARGS_ASSERT_SV_POS_U2B_MIDWAY;
 
     if (uoffset < 2 * backw) {
-        /* The assumption is that going forwards is twice the speed of going
-           forward (that's where the 2 * backw comes from).
-           (The real figure of course depends on the UTF-8 data.)  */
+        /* The assumption is that the average size of a character is 2 bytes,
+         * so going forwards is twice the speed of going backwards (that's
+         * where the 2 * backw comes from).  (The real figure of course depends
+         * on the UTF-8 data.)  */
         const U8 *s = start;
 
-        while (s < send && uoffset--)
-            s += UTF8SKIP(s);
+        s = utf8_hop_forward(s, uoffset, send);
         assert (s <= send);
         if (s > send)
             s = send;
         return s - start;
     }
 
-    while (backw--) {
-        send--;
-        while (UTF8_IS_CONTINUATION(*send))
-            send--;
-    }
+    send = utf8_hop_back(send, -backw, start);
     return send - start;
 }
 
@@ -7836,10 +7902,7 @@ S_sv_pos_b2u_midway(pTHX_ const U8 *const s, const U8 *const target,
     }
 
     while (end > target) {
-        end--;
-        while (UTF8_IS_CONTINUATION(*end)) {
-            end--;
-        }
+        end = utf8_hop_back(end, -1, target);
         endu--;
     }
     return endu;
@@ -8000,23 +8063,20 @@ S_assert_uft8_cache_coherent(pTHX_ const char *const func, STRLEN from_cache,
 }
 
 /*
-=for apidoc sv_eq
+=for apidoc      sv_eq
+=for apidoc_item sv_eq_flags
 
-Returns a boolean indicating whether the strings in the two SVs are
-identical.  Is UTF-8 and S<C<'use bytes'>> aware, handles get magic, and will
-coerce its args to strings if necessary.
+These each return a boolean indicating whether or not the strings in the two
+SVs are equal.  If S<C<'use bytes'>> is in effect, the comparison is
+byte-by-byte; otherwise character-by-character.  Each will coerce its args to
+strings if necessary.
 
-This function does not handle operator overloading. For a version that does,
-see instead C<sv_streq>.
+They differ only in that C<sv_eq> always processes get magic, while
+C<sv_eq_flags> processes get magic only when the C<flags> parameter has the
+C<SV_GMAGIC> bit set.
 
-=for apidoc sv_eq_flags
-
-Returns a boolean indicating whether the strings in the two SVs are
-identical.  Is UTF-8 and S<C<'use bytes'>> aware and coerces its args to strings
-if necessary.  If the flags has the C<SV_GMAGIC> bit set, it handles get-magic, too.
-
-This function does not handle operator overloading. For a version that does,
-see instead C<sv_streq_flags>.
+These functions do not handle operator overloading.  For versions that do,
+see instead C<L</sv_streq>> or C<L</sv_streq_flags>>.
 
 =cut
 */
@@ -8286,7 +8346,7 @@ Perl_sv_cmp_flags(pTHX_ SV *const sv1, SV *const sv2,
                     * at the beginning of a character.  But neither or both are
                     * (or else earlier bytes would have been different).  And
                     * if we are in the middle of a character, the two
-                    * characters are comprised of the same number of bytes
+                    * characters have the same number of bytes
                     * (because in this case the start bytes are the same, and
                     * the start bytes encode the character's length). */
                  if (UTF8_IS_INVARIANT(*pv1))
@@ -10137,7 +10197,10 @@ Perl_sv_resetpvn(pTHX_ const char *s, STRLEN len, HV * const stash)
                 sv = GvSV(gv);
                 if (sv && !SvREADONLY(sv)) {
                     SV_CHECK_THINKFIRST_COW_DROP(sv);
-                    if (!isGV(sv)) SvOK_off(sv);
+                    if (!isGV(sv)) {
+                        SvOK_off(sv);
+                        SvSETMAGIC(sv);
+                    }
                 }
                 if (GvAV(gv)) {
                     av_clear(GvAV(gv));
@@ -11016,6 +11079,8 @@ C<sv_setpvf_nocontext> and C<sv_setpvf_mg_nocontext> do not take a thread
 context (C<aTHX>) parameter, so are used in situations where the caller
 doesn't already have the thread context.
 
+B<The UTF-8 flag is not changed by these functions.>
+
 =cut
 */
 
@@ -11043,6 +11108,8 @@ C<sv_vsetpvf> skips all magic.
 
 They are usually used via their frontends, C<L</sv_setpvf>> and
 C<L</sv_setpvf_mg>>.
+
+B<The UTF-8 flag is not changed by these functions.>
 
 =cut
 */
@@ -11209,6 +11276,8 @@ Perl_sv_vcatpvf_mg(pTHX_ SV *const sv, const char *const pat, va_list *const arg
 
 Works like C<sv_vcatpvfn> but copies the text into the SV instead of
 appending it.
+
+B<The UTF-8 flag is not changed by this function.>
 
 Usually used via one of its frontends L</C<sv_vsetpvf>> and
 L</C<sv_vsetpvf_mg>>.
@@ -15087,7 +15156,10 @@ Perl_si_dup(pTHX_ PERL_SI *si, CLONE_PARAMS* param)
     nsi->si_prev	= si_dup(si->si_prev, param);
     nsi->si_next	= si_dup(si->si_next, param);
     nsi->si_markoff	= si->si_markoff;
-#if defined DEBUGGING && !defined DEBUGGING_RE_ONLY
+#ifdef PERL_RC_STACK
+    nsi->si_stack_nonrc_base = si->si_stack_nonrc_base;
+#endif
+#ifdef PERL_USE_HWM
     nsi->si_stack_hwm   = 0;
 #endif
 
@@ -16095,9 +16167,6 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
     PL_numeric_underlying = true;
     PL_numeric_underlying_is_standard = true;
 
-#  if defined(USE_POSIX_2008_LOCALE)
-    PL_underlying_numeric_obj = NULL;
-#  endif
 #endif /* !USE_LOCALE_NUMERIC */
 #if defined(USE_POSIX_2008_LOCALE)
     PL_scratch_locale_obj = NULL;
@@ -16114,14 +16183,16 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
     PL_wcrtomb_ps = proto_perl->Iwcrtomb_ps;
 #endif
 
-    PL_langinfo_buf = NULL;
-    PL_langinfo_bufsize = 0;
+    PL_langinfo_sv = newSVpvs("");
+    PL_scratch_langinfo = newSVpvs("");
 
     PL_setlocale_buf = NULL;
     PL_setlocale_bufsize = 0;
 
-    PL_stdize_locale_buf = NULL;
-    PL_stdize_locale_bufsize = 0;
+#if defined(USE_LOCALE_THREADS) && ! defined(USE_THREAD_SAFE_LOCALE)
+    PL_less_dicey_locale_buf = NULL;
+    PL_less_dicey_locale_bufsize = 0;
+#endif
 
     /* Unicode inversion lists */
 
@@ -16194,13 +16265,13 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
 
         /* next PUSHMARK() sets *(PL_markstack_ptr+1) */
         i = proto_perl->Imarkstack_max - proto_perl->Imarkstack;
-        Newx(PL_markstack, i, I32);
+        Newx(PL_markstack, i, Stack_off_t);
         PL_markstack_max	= PL_markstack + (proto_perl->Imarkstack_max
                                                   - proto_perl->Imarkstack);
         PL_markstack_ptr	= PL_markstack + (proto_perl->Imarkstack_ptr
                                                   - proto_perl->Imarkstack);
         Copy(proto_perl->Imarkstack, PL_markstack,
-             PL_markstack_ptr - PL_markstack + 1, I32);
+             PL_markstack_ptr - PL_markstack + 1, Stack_off_t);
 
         /* next push_scope()/ENTER sets PL_scopestack[PL_scopestack_ix]
          * NOTE: unlike the others! */
@@ -16275,12 +16346,14 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
         HV* const stash = MUTABLE_HV(av_shift(param->stashes));
         GV* const cloner = gv_fetchmethod_autoload(stash, "CLONE", 0);
         if (cloner && GvCV(cloner)) {
-            dSP;
             ENTER;
             SAVETMPS;
-            PUSHMARK(SP);
-            mXPUSHs(newSVhek(HvNAME_HEK(stash)));
-            PUTBACK;
+            PUSHMARK(PL_stack_sp);
+            rpp_extend(1);
+            SV *newsv = newSVhek(HvNAME_HEK(stash));
+            *++PL_stack_sp = newsv;
+            if (!rpp_stack_is_rc())
+                sv_2mortal(newsv);
             call_sv(MUTABLE_SV(GvCV(cloner)), G_DISCARD);
             FREETMPS;
             LEAVE;
@@ -16737,6 +16810,9 @@ Perl_varname(pTHX_ const GV *const gv, const char gvtype, PADOFFSET targ,
     else if (subscript_type == FUV_SUBSCRIPT_WITHIN) {
         /* We know that name has no magic, so can use 0 instead of SV_GMAGIC */
         Perl_sv_insert_flags(aTHX_ name, 0, 0,  STR_WITH_LEN("within "), 0);
+    }
+    else {
+        assert(subscript_type == FUV_SUBSCRIPT_NONE);
     }
 
     return name;
@@ -17347,6 +17423,7 @@ S_find_uninit_var(pTHX_ const OP *const obase, const SV *const uninit_sv,
     case OP_TIED:
     case OP_GETC:
     case OP_SYSREAD:
+    case OP_READLINE:
     case OP_SEND:
     case OP_IOCTL:
     case OP_SOCKET:
@@ -17408,6 +17485,7 @@ S_find_uninit_var(pTHX_ const OP *const obase, const SV *const uninit_sv,
     case OP_UNPACK:
     case OP_SYSOPEN:
     case OP_SYSSEEK:
+    case OP_SPLICE: /* scalar splice(@x, $i, 0) ==> undef */
         match = 1;
         goto do_op;
 
@@ -17428,6 +17506,51 @@ S_find_uninit_var(pTHX_ const OP *const obase, const SV *const uninit_sv,
             return newSVpvs_flags("$.", SVs_TEMP);
         goto do_op;
     }
+
+    case OP_LENGTH:
+        o = cUNOPx(obase)->op_first;
+        sv = find_uninit_var(o, uninit_sv, match, desc_p);
+        if (sv) {
+            Perl_sv_insert_flags(aTHX_ sv, 0, 0, STR_WITH_LEN("length("), 0);
+            sv_catpvs_nomg(sv, ")");
+        }
+        return sv;
+
+    case OP_SHIFT:
+    case OP_POP:
+        if (match) {
+            break;
+        }
+        if (!(obase->op_flags & OPf_KIDS)) {
+            sv = newSVpvn_flags("", 0, SVs_TEMP);
+        }
+        else {
+            o = cUNOPx(obase)->op_first;
+            if (o->op_type == OP_RV2AV) {
+                o2 = cUNOPx(o)->op_first;
+                if (o2->op_type != OP_GV) {
+                    break;
+                }
+                gv = cGVOPx_gv(o2);
+                if (!gv) {
+                    break;
+                }
+            }
+            else if (o->op_type == OP_PADAV) {
+                gv = NULL;
+            }
+            else {
+                break;
+            }
+            sv = varname(gv, '@', o->op_targ, NULL, 0, FUV_SUBSCRIPT_NONE);
+        }
+        if (sv) {
+            const char *name = OP_NAME(obase);
+            Perl_sv_insert_flags(aTHX_ sv, 0, 0, STR_WITH_LEN("("), 0);
+            Perl_sv_insert_flags(aTHX_ sv, 0, 0, name, strlen(name), 0);
+            sv_catpvs_nomg(sv, ")");
+        }
+        return sv;
 
     case OP_POS:
         /* def-ness of rval pos() is independent of the def-ness of its arg */

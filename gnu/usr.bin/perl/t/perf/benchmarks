@@ -1348,6 +1348,199 @@
     },
 
 
+    # concatenation with magic vars;
+    # quite possibly optimised to OP_MULTICONCAT
+
+    'expr::concat::mg::cM' => {
+        setup   => '"abcd" =~ /(.*)/',
+        code    => '"foo" . $1',
+    },
+    'expr::concat::mg::Mc' => {
+        setup   => '"abcd" =~ /(.*)/',
+        code    => '$1 . "foo"',
+    },
+    'expr::concat::mg::MM' => {
+        setup   => '"abcd" =~ /(.*)/',
+        code    => '$1 . $1',
+    },
+
+    'expr::concat::mg::l_append_M' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        pre     => '$lex = "abcd"',
+        code    => '$lex .= $1',
+    },
+    'expr::concat::mg::l_append_MM' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        pre     => '$lex = "abcd"',
+        code    => '$lex .= $1 .$1',
+    },
+    'expr::concat::mg::l_append_cMcMc' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        pre     => '$lex = "abcd"',
+        code    => '$lex .= "-foo-$1-foo-$1-foo"',
+    },
+    'expr::concat::mg::l_append_MMM' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        pre     => '$lex = "abcd"',
+        code    => '$lex .= $1 .$1 . $1',
+    },
+
+    'expr::concat::mg::m_MM' => {
+        setup   => '"abcd" =~ /(.*)/;',
+        code    => 'my $lex = $1 . $1',
+    },
+    'expr::concat::mg::m_MMM' => {
+        setup   => '"abcd" =~ /(.*)/;',
+        code    => 'my $lex = $1 . $1 . $1',
+    },
+    'expr::concat::mg::m_cL' => {
+        setup   => '"abcd" =~ /(.*)/;',
+        code    => 'my $lex = "const$1"',
+    },
+    'expr::concat::mg::m_cMcMc' => {
+        setup   => '"abcd" =~ /(.*)/;',
+        code    => 'my $lex = "foo=$1 bar=$1\n"',
+    },
+    'expr::concat::mg::m_cMcMc_long' => {
+        desc    => 'my $lex = "foooooooooo=$1 baaaaaaaaar=$1\n" where $1 is 400 chars',
+        setup   => 'my $s = "abcd" x 100; $s =~ /(.*)/;',
+        code    => 'my $lex = "foooooooooo=$1 baaaaaaaaar=$1\n"',
+    },
+
+    'expr::concat::mg::l_MM' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        code    => '$lex = $1 . $1',
+    },
+    'expr::concat::mg::l_lM_ldup' => {
+        setup   => 'my $lex1; "abcd" =~ /(.*)/;',
+        pre     => '$lex1 = "abcd"',
+        code    => '$lex1 = $lex1 . $1',
+    },
+    'expr::concat::mg::l_Ml_rdup' => {
+        setup   => 'my $lex1; "abcd" =~ /(.*)/;',
+        pre     => '$lex1 = "abcd"',
+        code    => '$lex1 = $1 . $lex1',
+    },
+    'expr::concat::mg::l_MMM' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        code    => '$lex = $1 . $1 . $1',
+    },
+    'expr::concat::mg::l_MMMMM' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        code    => '$lex = $1 . $1 . $1 . $1 . $1',
+    },
+    'expr::concat::mg::l_cM' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        code    => '$lex = "const$1"',
+    },
+    'expr::concat::mg::l_cMcMc' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        code    => '$lex = "foo=$1 bar=$1\n"',
+    },
+    'expr::concat::mg::l_cMcMc_long' => {
+        desc    => '$lex = "foooooooooo=$1 baaaaaaaaar=$1\n" where $1 is 400 chars',
+        setup   => 'my $s = "abcd" x 100; $s =~ /(.*)/;',
+        code    => '$lex = "foooooooooo=$1 baaaaaaaaar=$1\n"',
+    },
+    'expr::concat::mg::l_cMcMcMcMcMc' => {
+        setup   => 'my $lex; "abcd" =~ /(.*)/;',
+        code    => '$lex = "foo1=$1 foo2=$1 foo3=$1 foo4=$1\n"',
+    },
+
+    'expr::concat::mg::g_append_M' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        pre     => '$pkg = "abcd"',
+        code    => '$pkg .= $1',
+    },
+    'expr::concat::mg::g_append_MM' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        pre     => '$pkg = "abcd"',
+        code    => '$pkg .= $1',
+        code    => '$pkg .= $1 . $1',
+    },
+    'expr::concat::mg::g_append_cMcMc' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        pre     => '$pkg = "abcd"',
+        code    => '$pkg .= "-foo-$1-foo-$1-foo-"',
+    },
+
+    'expr::concat::mg::g_MM' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        code    => '$pkg = $1 . $1',
+    },
+    'expr::concat::mg::g_gM_ldup' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        pre     => '$pkg = "abcd"',
+        code    => '$pkg = $pkg . $1',
+    },
+    'expr::concat::mg::g_Mg_rdup' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        pre     => '$pkg = "abcd"',
+        code    => '$pkg = $1 . $pkg',
+    },
+    'expr::concat::mg::g_MMM' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        code    => '$pkg = $1 . $1 . $1',
+    },
+    'expr::concat::mg::g_cM' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        code    => '$pkg = "const$1"',
+    },
+    'expr::concat::mg::g_cMcMc' => {
+        setup   => 'our $pkg; "abcd" =~ /(.*)/;',
+        code    => '$pkg = "foo=$1 bar=$1\n"',
+    },
+    'expr::concat::mg::g_cMcMc_long' => {
+        desc    => '$lex = "foooooooooo=$1 baaaaaaaaar=$1\n" where $1 is 400 chars',
+        setup   => 'our $pkg; my $s = "abcd" x 100; $s =~ /(.*)/;',
+        code    => '$pkg = "foooooooooo=$1 baaaaaaaaar=$1\n"',
+    },
+
+    'expr::concat::mg::utf8_uuu' => {
+        desc    => 'my $s = $1.$1.$1 where $1 utf8',
+        setup   => 'my $s; "ab\x{100}cde" =~ /(.*)/;',
+        code    => '$s = $1.$1.$1',
+    },
+    'expr::concat::mg::utf8_suu' => {
+        desc    => 'my $s = "foo=$a bar=$1 baz=$1" where $1 is utf8',
+        setup   => 'my $s; my $a = "abcde"; "ab\x{100}cde" =~ /(.*)/;',
+        code    => '$s = "foo=$a bar=$1 baz=$1"',
+    },
+
+    # OP_MULTICONCAT with magic within s///g - see GH #21360
+
+    'expr::concat::mg::subst1_1' => {
+        desc    => 's/(.)/$1-/g, 1 iteration',
+        pre     => '$_  = "a"',
+        code    => 's/(.)/$1-/g',
+    },
+
+    'expr::concat::mg::subst1_2' => {
+        desc    => 's/(.)/$1-/g, 2 iterations',
+        pre     => '$_  = "aa"',
+        code    => 's/(.)/$1-/g',
+    },
+
+    'expr::concat::mg::subst1_5' => {
+        desc    => 's/(.)/$1-/g, 5 iterations',
+        pre     => '$_  = "aaaaa"',
+        code    => 's/(.)/$1-/g',
+    },
+
+    'expr::concat::mg::subst2_1' => {
+        desc    => 's/(.)/$1-$1/g, 1 iteration',
+        pre     => '$_  = "a"',
+        code    => 's/(.)/$1-/g',
+    },
+
+    'expr::concat::mg::subst3_1' => {
+        desc    => 's/(.)/$1-$1-$1/g, 1 iteration',
+        pre     => '$_  = "a"',
+        code    => 's/(.)/$1-$1-$1/g',
+    },
+
+
+
     # scalar assign, OP_SASSIGN
    
     'expr::sassign::undef_lex' => {

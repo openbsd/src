@@ -1903,10 +1903,9 @@ d_nl_langinfo (d_nl_langinfo.U):
 	This variable conditionally defines the HAS_NL_LANGINFO symbol, which
 	indicates to the C program that the nl_langinfo() routine is available.
 
-d_nl_langinfo_l (d_nl_langinfo_l.U):
-	This variable contains the eventual value of the
-	HAS_NL_LANGINFO_L symbol, which indicates if the
-	nl_langinfo_l() function exists.
+d_nl_langinfo_l (d_nl_langinfo.U):
+	This variable conditionally defines the HAS_NL_LANGINFO_L symbol, which
+	indicates to the C program that the nl_langinfo_l() routine is available.
 
 d_non_int_bitfields (d_bitfield.U):
 	This variable conditionally defines HAS_NON_INT_BITFIELDS
@@ -1957,6 +1956,19 @@ d_pause (d_pause.U):
 	This variable conditionally defines the HAS_PAUSE symbol, which
 	indicates to the C program that the pause() routine is available
 	to suspend a process until a signal is received.
+
+d_perl_lc_all_category_positions_init (disparate_lc_all.U):
+	This symbol, if defined, indicates that $lc_all_category_positions_init
+	is valid
+
+d_perl_lc_all_separator (disparate_lc_all.U):
+	This symbol, if defined, indicates that $perl_lc_all_separator is valid
+
+d_perl_lc_all_uses_name_value_pairs (disparate_lc_all.U):
+	This symbol, if defined, indicates that the string returned by
+	setlocale(LC_ALL, NULL) uses 'name=value;' pairs to indicate what each
+	category's locale is when they aren't all set to the same locale.
+	When not defined, the platform uses positional notation.
 
 d_perl_otherlibdirs (otherlibdirs.U):
 	This variable conditionally defines PERL_OTHERLIBDIRS, which
@@ -2798,11 +2810,6 @@ d_tgamma (d_tgamma.U):
 d_thread_local (d_thread_local.U):
 	This variable conditionally defines the PERL_THREAD_LOCAL symbol. In
 	turn that gives a linkage specification for thread-local storage.
-
-d_thread_safe_nl_langinfo_l (d_nl_langinfo_l.U):
-	This variable contains the eventual value of the
-	HAS_THREAD_SAFE_NL_LANGINFO_L symbol, which indicates if the
-	nl_langinfo_l() function exists and is thread-safe.
 
 d_time (d_time.U):
 	This variable conditionally defines the HAS_TIME symbol, which indicates
@@ -4689,6 +4696,19 @@ PERL_API_VERSION (patchlevel.h):
 PERL_CONFIG_SH (Oldsyms.U):
 	This is set to 'true' in config.sh so that a shell script
 	sourcing config.sh can tell if it has been sourced already.
+
+perl_lc_all_category_positions_init (disparate_lc_all.U):
+	This symbol, when defined, gives the C initializer for an array whose
+	element [0] is the first category in the string returned by
+	setlocale(LC_ALL, NULL) when not all categories are the same, on
+	systems that use a positional notation.  After element [0] is
+	$lc_all_separator_init, then the category given by element [1], and so on.
+
+perl_lc_all_separator (disparate_lc_all.U):
+	This symbol, when defined, gives the substring used to separate
+	categories in the aggregated string returned by setlocale(LC_ALL, NULL)
+	when not all categories are in the same locale.  This is for systems
+	that use a positional notation as opposed to 'name=value' pairs.
 
 PERL_PATCHLEVEL (Oldsyms.U):
 	This symbol reflects the patchlevel, if available. Will usually

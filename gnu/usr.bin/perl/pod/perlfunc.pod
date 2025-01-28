@@ -352,6 +352,7 @@ X<object> X<class> X<package>
 
 L<C<bless>|/bless REF,CLASSNAME>,
 L<C<class>|/class NAMESPACE>,
+L<C<__CLASS__>|/__CLASS__>,
 L<C<dbmclose>|/dbmclose HASH>,
 L<C<dbmopen>|/dbmopen HASH,DBNAME,MASK>,
 L<C<field>|/field VARNAME>,
@@ -695,7 +696,7 @@ the stat buffer was filled by an L<C<lstat>|/lstat FILEHANDLE> call,
 C<-T> and C<-B> will reset it with the results of C<stat _>).
 Example:
 
-    print "Can do.\n" if -r $a || -w _ || -x _;
+    print "Can do.\n" if -r $x || -w _ || -x _;
 
     stat($filename);
     print "Readable\n" if -r _;
@@ -997,7 +998,7 @@ for Perl builtin types and pragmas, respectively. Avoid creating
 all-uppercase or all-lowercase package names to prevent
 confusion.
 
-Also avoid <Cbless>ing things into the class name C<0>; this
+Also avoid C<bless>ing things into the class name C<0>; this
 will cause code which (erroneously) checks the result of
 L<C<ref>|/ref EXPR> to see if a reference is C<bless>ed to fail,
 as "0", a falsy value, is returned.
@@ -1028,7 +1029,7 @@ Returns the context of the current pure perl subroutine call.  In scalar
 context, returns the caller's package name if there I<is> a caller (that is, if
 we're in a subroutine or L<C<eval>|/eval EXPR> or
 L<C<require>|/require VERSION>) and the undefined value otherwise.
-caller never returns XS subs and they are skipped.  The next pure perl
+C<caller> never returns XS subs and they are skipped.  The next pure perl
 sub will appear instead of the XS sub in caller's return values.  In
 list context, caller returns
 
@@ -1215,8 +1216,8 @@ Note that parentheses are necessary when you're chomping anything
 that is not a simple variable.  This is because C<chomp $cwd = `pwd`;>
 is interpreted as C<(chomp $cwd) = `pwd`;>, rather than as
 C<chomp( $cwd = `pwd` )> which you might expect.  Similarly,
-C<chomp $a, $b> is interpreted as C<chomp($a), $b> rather than
-as C<chomp($a, $b)>.
+C<chomp $x, $y> is interpreted as C<chomp($x), $y> rather than
+as C<chomp($x, $y)>.
 
 =item chop VARIABLE
 X<chop>
@@ -1282,8 +1283,9 @@ the group to any of your secondary groups.  On insecure systems, these
 restrictions may be relaxed, but this is not a portable assumption.
 On POSIX systems, you can detect this condition this way:
 
-    use POSIX qw(sysconf _PC_CHOWN_RESTRICTED);
-    my $can_chown_giveaway = ! sysconf(_PC_CHOWN_RESTRICTED);
+    use POSIX qw(pathconf _PC_CHOWN_RESTRICTED);
+    my $can_chown_giveaway =
+        ! pathconf($path_of_interest, _PC_CHOWN_RESTRICTED);
 
 Portability issues: L<perlport/chown>.
 
@@ -1296,9 +1298,9 @@ X<chr> X<character> X<ASCII> X<Unicode>
 
 Returns the character represented by that NUMBER in the character set.
 For example, C<chr(65)> is C<"A"> in either ASCII or Unicode, and
-chr(0x263a) is a Unicode smiley face.
+C<chr(0x263a)> is a Unicode smiley face.
 
-Negative values give the Unicode replacement character (chr(0xfffd)),
+Negative values give the Unicode replacement character (C<chr(0xfffd)>),
 except under the L<bytes> pragma, where the low eight bits of the value
 (truncated to an integer) are used.
 
@@ -1356,8 +1358,15 @@ X<close>
 
 Closes the file or pipe associated with the filehandle, flushes the IO
 buffers, and closes the system file descriptor.  Returns true if those
-operations succeed and if no error was reported by any PerlIO
-layer.  Closes the currently selected filehandle if the argument is
+operations succeed, and if no error was reported by any PerlIO layer,
+and there was no existing error on the filehandle.
+
+If there was an existing error on the filehandle, close will return
+false and L<C<$!>|perlvar/$!> will be set to the error from the
+failing operation, so you can safely use its value when reporting the
+error.
+
+Closes the currently selected filehandle if the argument is
 omitted.
 
 You don't have to close FILEHANDLE if you are immediately going to do
@@ -1401,6 +1410,11 @@ Example:
 
 FILEHANDLE may be an expression whose value can be used as an indirect
 filehandle, usually the real filehandle name or an autovivified handle.
+
+If an error occurs when perl implicitly closes a handle, perl will
+produce a L<warning|perldiag/"Warning: unable to close filehandle %s
+properly: %s">.  Explicitly calling close on the handle prevents that
+warning.
 
 =item closedir DIRHANDLE
 X<closedir>
@@ -1450,7 +1464,7 @@ L<C<continue>|/continue BLOCK> block, it may be more entertaining.
     } continue {
         ### next always comes here
         do_something_else;
-        # then back the top to re-check EXPR
+        # then back to the top to re-check EXPR
     }
     ### last always comes here
 
@@ -2426,10 +2440,10 @@ L<C<$@>|perlvar/$@>.
 Examples:
 
     # make divide-by-zero nonfatal
-    eval { $answer = $a / $b; }; warn $@ if $@;
+    eval { $answer = $x / $y; }; warn $@ if $@;
 
     # same thing, but less efficient
-    eval '$answer = $a / $b'; warn $@ if $@;
+    eval '$answer = $x / $y'; warn $@ if $@;
 
     # a compile-time error
     eval { $answer = }; # WRONG
@@ -2449,7 +2463,7 @@ You can use the C<local $SIG{__DIE__}> construct for this purpose,
 as this example shows:
 
     # a private exception trap for divide-by-zero
-    eval { local $SIG{'__DIE__'}; $answer = $a / $b; };
+    eval { local $SIG{'__DIE__'}; $answer = $x / $y; };
     warn $@ if $@;
 
 This is especially significant, given that C<__DIE__> hooks can call
@@ -3128,9 +3142,10 @@ Returns the current process group for the specified PID.  Use
 a PID of C<0> to get the current process group for the
 current process.  Will raise an exception if used on a machine that
 doesn't implement L<getpgrp(2)>.  If PID is omitted, returns the process
-group of the current process.  Note that the POSIX version of
-L<C<getpgrp>|/getpgrp PID> does not accept a PID argument, so only
-C<PID==0> is truly portable.
+group of the current process.
+
+Some very old machines may not support C<PID != 0> and will throw an
+exception if C<PID != 0>.
 
 Portability issues: L<perlport/getpgrp>.
 
@@ -3403,7 +3418,7 @@ each field.  For example:
 
    use File::stat;
    use User::pwent;
-   my $is_his = (stat($filename)->uid == pwent($whoever)->uid);
+   my $is_theirs = (stat($filename)->uid == getpwnam($whoever)->uid);
 
 Even though it looks as though they're the same method calls (uid),
 they aren't, because a C<File::stat> object is different from
@@ -3612,7 +3627,8 @@ Also, unlike most named operators, this has the same precedence as
 assignment.
 
 Use of C<goto LABEL> or C<goto EXPR> to jump into a construct is
-deprecated and will issue a warning.  Even then, it may not be used to
+deprecated and will issue a warning; it will become a fatal error in
+Perl 5.42. While still available, it may not be used to
 go into any construct that requires initialization, such as a
 subroutine, a C<foreach> loop, or a C<given>
 block.  In general, it may not be used to jump into the parameter
@@ -4162,6 +4178,24 @@ block, file, or eval.  If more than one value is listed, the list must
 be placed in parentheses.  See L<perlsub/"Temporary Values via local()">
 for details, including issues with tied arrays and hashes.
 
+Like L<C<my>|/my VARLIST>, L<C<state>|/state VARLIST>, and
+L<C<our>|/our VARLIST>, L<C<local>|/local EXPR> can operate on a variable
+anywhere it appears in an expression (aside from interpolation in strings).
+Unlike the other declarations, the effect of L<C<local>|/local EXPR> happens
+at runtime, and so it will apply to additional uses of the same variable
+executed after the declaration, even within the same statement. Note that
+this does not include uses within an expression assigned to the variable
+when it is localized, because the assigned expression is evaluated before
+the localization.
+
+    package main;
+    our $x = 2;
+    {
+      foo($x, local $x = $x + 1, $x); # foo() receives (2, 3, 3)
+      # $main::x is 3 within the call to foo()
+    }
+    foo($x); # foo() receives (2) and $main::x is 2
+
 The C<delete local EXPR> construct can also be used to localize the deletion
 of array/hash elements to the current block.
 See L<perlsub/"Localized deletion of elements of composite types">.
@@ -4181,7 +4215,7 @@ follows:
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
                                                 localtime(time);
 
-All list elements are numeric and come straight out of the C `struct
+All list elements are numeric and come straight out of the C 'struct
 tm'.  C<$sec>, C<$min>, and C<$hour> are the seconds, minutes, and hours
 of the specified time.
 
@@ -4225,7 +4259,7 @@ To get similar but locale-dependent date strings, try for example:
  # or for GMT formatted appropriately for your locale:
  my $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
 
-C$now_string> will be formatted according to the current LC_TIME locale
+C<$now_string> will be formatted according to the current LC_TIME locale
 the program or thread is running in.  See L<perllocale> for how to set
 up and change that locale.  Note that C<%a> and C<%b>, the short forms
 of the day of the week and the month of the year, may not necessarily be
@@ -4518,6 +4552,19 @@ as a dummy placeholder, for example to skip assignment of initial
 values:
 
     my ( undef, $min, $hour ) = localtime;
+
+Like L<C<state>|/state VARLIST>, L<C<local>|/local EXPR>, and
+L<C<our>|/our VARLIST>, L<C<my>|/my VARLIST> can operate on a variable
+anywhere it appears in an expression (aside from interpolation in strings).
+The declaration will not apply to additional uses of the same variable until
+the next statement. This means additional uses of that variable within the
+same statement will act as they would have before that declaration occurred,
+or result in a strict 'vars' error, as appropriate.
+
+    package main;
+    our $x = 2;
+    foo($x, my $x = $x + 1, $x); # foo() receives (2, 3, 2)
+    foo($x, $main::x);           # foo() receives (3, 2)
 
 Redeclaring a variable in the same scope or statement will "shadow" the
 previous declaration, creating a new instance and preventing access to
@@ -5017,18 +5064,6 @@ New code should favor the three-argument form of C<open> over this older
 form. Declaring the mode and the filename as two distinct arguments
 avoids any confusion between the two.
 
-=item Calling C<open> with one argument via global variables
-
-As a shortcut, a one-argument call takes the filename from the global
-scalar variable of the same name as the filehandle:
-
-    $ARTICLE = 100;
-    open(ARTICLE)
-        or die "Can't find article $ARTICLE: $!\n";
-
-Here C<$ARTICLE> must be a global (package) scalar variable - not one
-declared with L<C<my>|/my VARLIST> or L<C<state>|/state VARLIST>.
-
 =item Assigning a filehandle to a bareword
 
 An older style is to use a bareword as the filehandle, as
@@ -5040,9 +5075,23 @@ Then you can use C<FH> as the filehandle, in C<< close FH >> and C<<
 <FH> >> and so on.  Note that it's a global variable, so this form is
 not recommended when dealing with filehandles other than Perl's built-in ones
 (e.g. STDOUT and STDIN).  In fact, using a bareword for the filehandle is
-an error when the C<bareword_filehandles> feature has been disabled.  This
-feature is disabled by default when in the scope of C<use v5.36.0> or later.
+an error when the
+L<C<"bareword_filehandles"> feature|feature/"The 'bareword_filehandles' feature">
+has been disabled.  This feature is disabled automatically when in the
+scope of C<use v5.36.0> or later.
 
+=item Calling C<open> with one argument via global variables
+
+As a shortcut, a one-argument call takes the filename from the global
+scalar variable of the same name as the bareword filehandle:
+
+    $ARTICLE = 100;
+    open(ARTICLE)
+        or die "Can't find article $ARTICLE: $!\n";
+
+Here C<$ARTICLE> must be a global scalar variable in the same package
+as the filehandle - not one declared with L<C<my>|/my VARLIST> or
+L<C<state>|/state VARLIST>.
 
 =back
 
@@ -5180,9 +5229,9 @@ X<ord> X<encoding>
 
 =item ord
 
-=for Pod::Functions find a character's numeric representation
+=for Pod::Functions find a character's code point
 
-Returns the numeric value of the first character of EXPR.
+Returns the code point of the first character of EXPR.
 If EXPR is an empty string, returns 0.  If EXPR is omitted, uses
 L<C<$_>|perlvar/$_>.
 (Note I<character>, not byte.)
@@ -5256,6 +5305,21 @@ If more than one variable is listed, the list must be placed
 in parentheses.
 
     our($bar, $baz);
+
+Like L<C<my>|/my VARLIST>, L<C<state>|/state VARLIST>, and
+L<C<local>|/local EXPR>, L<C<our>|/our VARLIST> can operate on a variable
+anywhere it appears in an expression (aside from interpolation in strings).
+The declaration will not apply to additional uses of the same variable until
+the next statement. This means additional uses of that variable within the
+same statement will act as they would have before that declaration occurred,
+with the exception that it will still satisfy strict 'vars' and interpret that
+variable as the newly aliased package variable if it was not yet declared in
+that scope.
+
+    package main;
+    my $x = 2;
+    foo($x, our $x = $x + 1, $x); # foo() receives (2, 3, 2)
+    foo($x, our $z = 5, $z);      # foo() receives (3, 5, 5)
 
 An L<C<our>|/our VARLIST> declaration declares an alias for a package
 variable that will be visible
@@ -6055,6 +6119,37 @@ X<__PACKAGE__>
 =for Pod::Functions +5.004 the current package
 
 A special token that returns the name of the package in which it occurs.
+
+=item __CLASS__
+X<__CLASS__>
+
+=for Pod::Functions the class name of the current instance.
+
+Invoked within a L<C<method>|/method NAME BLOCK>, or similar location, such as
+a field initializer expression, this token returns the name of the class of
+the invoking instance.  Essentially it is equivalent to C<ref($self)> except
+that it can additionally be used in a field initializer to gain access to
+class methods, before the instance is fully constructed.
+
+    use feature 'class';
+
+    class Example1 {
+	field $f = __CLASS__->default_f;
+
+	sub default_f { 10 }
+    }
+
+In a basic class, this value will be the same as
+L<C<__PACKAGE__>|/__PACKAGE__>.  The distinction can be seen when a subclass
+is constructed; it will give the class name of the instance being constructed,
+rather than just the package name that the actual code belongs to.
+
+    class Example2 :isa(Example1) {
+	sub default_f { 20 }
+    }
+
+    my $obj = Example2->new;
+    # The $f field now has the value 20
 
 =item pipe READHANDLE,WRITEHANDLE
 X<pipe>
@@ -7410,7 +7505,7 @@ Returns the currently selected filehandle.  If FILEHANDLE is supplied,
 sets the new current default filehandle for output.  This has two
 effects: first, a L<C<write>|/write FILEHANDLE>,  L<C<print>|/print
 FILEHANDLE LIST>, or L<C<say>|/say FILEHANDLE LIST> without a
-filehandle default to this FILEHANDLE.  Second, references to variables
+filehandle will default to this FILEHANDLE.  Second, references to variables
 related to output will refer to this output channel.
 
 For example, to set the top-of-form format for more than one
@@ -8269,6 +8364,13 @@ whitespace according to Unicode rules but not according to ASCII rules can be
 treated as part of fields rather than as field separators, depending on the
 string's internal encoding.
 
+As of Perl 5.39.9 the C</x> default modifier does NOT affect
+C<split STRING> but does affect C<split PATTERN>, this means that
+C<split " "> will produces the expected I<awk> emulation regardless as
+to whether it is used in the scope of a C<use re "/x"> statement. If you
+want to split by spaces under C<use re "/x"> you must do something like
+C<split /(?-x: )/> or C<split /\x{20}/> instead of C<split / />.
+
 If omitted, PATTERN defaults to a single space, S<C<" ">>, triggering
 the previously described I<awk> emulation.
 
@@ -8279,10 +8381,10 @@ the LIMIT value C<1> means that EXPR may be split a maximum of zero
 times, producing a maximum of one field (namely, the entire value of
 EXPR).  For instance:
 
-    my @x = split(//, "abc", 1); # ("abc")
-    my @x = split(//, "abc", 2); # ("a", "bc")
-    my @x = split(//, "abc", 3); # ("a", "b", "c")
-    my @x = split(//, "abc", 4); # ("a", "b", "c")
+    my @x = split(/,/, "a,b,c", 1); # ("a,b,c")
+    my @x = split(/,/, "a,b,c", 2); # ("a", "b,c")
+    my @x = split(/,/, "a,b,c", 3); # ("a", "b", "c")
+    my @x = split(/,/, "a,b,c", 4); # ("a", "b", "c")
 
 If LIMIT is negative, it is treated as if it were instead arbitrarily
 large; as many fields as possible are produced.
@@ -8419,10 +8521,6 @@ In addition, Perl permits the following widely-supported conversions:
          into the next argument in the parameter list
    %a    hexadecimal floating point
    %A    like %a, but using upper-case letters
-
-Finally, for backward (and we do mean "backward") compatibility, Perl
-permits these unnecessary but widely-supported conversions:
-
    %i    a synonym for %d
    %D    a synonym for %ld
    %U    a synonym for %lu
@@ -8543,11 +8641,12 @@ how many places right of the decimal point to show (the default being 6).
 For example:
 
   # these examples are subject to system-specific variation
-  printf '<%f>', 1;    # prints "<1.000000>"
-  printf '<%.1f>', 1;  # prints "<1.0>"
-  printf '<%.0f>', 1;  # prints "<1>"
-  printf '<%e>', 10;   # prints "<1.000000e+01>"
-  printf '<%.1e>', 10; # prints "<1.0e+01>"
+  printf '<%f>', 1;       # prints "<1.000000>"
+  printf '<%.1f>', 1;     # prints "<1.0>"
+  printf '<%.0f>', 1;     # prints "<1>"
+  printf '<%07.2f>', 1.3; # prints "<0001.30>"
+  printf '<%e>', 10;      # prints "<1.000000e+01>"
+  printf '<%.1e>', 10;    # prints "<1.0e+01>"
 
 For "g" and "G", this specifies the maximum number of significant digits to
 show; for example:
@@ -8624,8 +8723,9 @@ as supported by the compiler used to build Perl:
    h           interpret integer as C type "short" or
                "unsigned short"
    j           interpret integer as C type "intmax_t" on Perl
-               5.14 or later; and prior to Perl 5.30, only with
-               a C99 compiler (unportable)
+               5.14 or later.  Prior to Perl 5.30 this worked only
+               with a C99 compiler, hence was unportable before
+               that release.
    l           interpret integer as C type "long" or
                "unsigned long"
    q, L, or ll interpret integer as C type "long long",
@@ -8702,14 +8802,14 @@ would have been the next argument.
 
 So:
 
-    printf "<%*.*s>", $a, $b, $c;
+    printf "<%*.*s>", $x, $y, $z;
 
-uses C<$a> for the width, C<$b> for the precision, and C<$c>
+uses C<$x> for the width, C<$y> for the precision, and C<$z>
 as the value to format; while:
 
-  printf '<%*1$.*s>', $a, $b;
+  printf '<%*1$.*s>', $x, $y;
 
-would use C<$a> for the width and precision, and C<$b> as the
+would use C<$x> for the width and precision, and C<$y> as the
 value to format.
 
 Here are some more examples; be aware that when using an explicit
@@ -8898,8 +8998,8 @@ The L<File::stat> module provides a convenient, by-name access mechanism:
            $filename, $sb->size, $sb->mode & 07777,
            scalar localtime $sb->mtime;
 
-You can import symbolic mode constants (C<S_IF*>) and functions
-(C<S_IS*>) from the L<Fcntl> module:
+You can import symbolic mode constants and functions
+(C<S_I*>) from the L<Fcntl> module:
 
     use Fcntl ':mode';
 
@@ -8915,7 +9015,7 @@ You can import symbolic mode constants (C<S_IF*>) and functions
     my $is_directory  =  S_ISDIR($mode);
 
 You could write the last two using the C<-u> and C<-d> operators.
-Commonly available C<S_IF*> constants are:
+Commonly available C<S_I*> constants are:
 
     # Permissions: read, write, execute, for user, group, others.
 
@@ -8923,30 +9023,31 @@ Commonly available C<S_IF*> constants are:
     S_IRWXG S_IRGRP S_IWGRP S_IXGRP
     S_IRWXO S_IROTH S_IWOTH S_IXOTH
 
-    # Setuid/Setgid/Stickiness/SaveText.
+    # Setuid/Setgid/Stickiness/SaveText/EnforcedLocks.
     # Note that the exact meaning of these is system-dependent.
 
-    S_ISUID S_ISGID S_ISVTX S_ISTXT
+    S_ISUID S_ISGID S_ISVTX S_ISTXT S_ENFMT
 
     # File types.  Not all are necessarily available on
     # your system.
 
     S_IFREG S_IFDIR S_IFLNK S_IFBLK S_IFCHR
-    S_IFIFO S_IFSOCK S_IFWHT S_ENFMT
+    S_IFIFO S_IFSOCK S_IFWHT
 
     # The following are compatibility aliases for S_IRUSR,
     # S_IWUSR, and S_IXUSR.
 
     S_IREAD S_IWRITE S_IEXEC
 
-and the C<S_IF*> functions are
+and the C<S_I*> functions are
 
     S_IMODE($mode)    the part of $mode containing the permission
                       bits and the setuid/setgid/sticky bits
 
-    S_IFMT($mode)     the part of $mode containing the file type
-                      which can be bit-anded with (for example)
-                      S_IFREG or with the following functions
+    S_IFMT($mode)     the part of $mode containing the file type,
+                      which will match one of the S_IF* constants
+                      (e.g. S_IFMT($mode) == S_IFDIR for directories),
+                      but see the following helper functions
 
     # The operators -f, -d, -l, -b, -c, -p, and -S.
 
@@ -8960,7 +9061,7 @@ and the C<S_IF*> functions are
     S_ISENFMT($mode) S_ISWHT($mode)
 
 See your native L<chmod(2)> and L<stat(2)> documentation for more details
-about the C<S_*> constants.  To get status info for a symbolic link
+about the C<S_I*> constants.  To get status info for a symbolic link
 instead of the target file behind the link, use the
 L<C<lstat>|/lstat FILEHANDLE> function.
 
@@ -8989,6 +9090,20 @@ parentheses.  With a parenthesised list, L<C<undef>|/undef EXPR> can be
 used as a
 dummy placeholder.  However, since initialization of state variables in
 such lists is currently not possible this would serve no purpose.
+
+Like L<C<my>|/my VARLIST>, L<C<local>|/local EXPR>, and
+L<C<our>|/our VARLIST>, L<C<state>|/state VARLIST> can operate on a variable
+anywhere it appears in an expression (aside from interpolation in strings).
+The declaration will not apply to additional uses of the same variable until
+the next statement. This means additional uses of that variable within the
+same statement will act as they would have before that declaration occurred,
+or result in a strict 'vars' error, as appropriate.
+
+    package main;
+    use feature 'state';
+    our $x = 2;
+    foo($x, state $x = $x + 1, $x); # foo() receives (2, 3, 2)
+    foo($x, $main::x);              # foo() receives (3, 2)
 
 Redeclaring a variable in the same scope or statement will "shadow" the
 previous declaration, creating a new instance and preventing access to
@@ -9212,7 +9327,7 @@ Returns true on success and L<C<undef>|/undef EXPR> otherwise.
 L<PerlIO> layers will be applied to the handle the same way they would in an
 L<C<open>|/open FILEHANDLE,MODE,EXPR> call that does not specify layers. That is,
 the current value of L<C<${^OPEN}>|perlvar/${^OPEN}> as set by the L<open>
-pragma in a lexical scope, or the C<-C> commandline option or C<PERL_UNICODE>
+pragma in a lexical scope, or the C<-C> command-line option or C<PERL_UNICODE>
 environment variable in the main program scope, falling back to the platform
 defaults as described in L<PerlIO/Defaults and how to override them>. If you
 want to remove any layers that may transform the byte stream, use
@@ -10112,21 +10227,33 @@ Compare with L<C<require>|/require VERSION>, which can do a similar check
 at run time.
 
 If the specified Perl version is 5.12 or higher, strictures are enabled
-lexically as with L<C<use strict>|strict>.  Similarly, if the specified
-Perl version is 5.35.0 or higher, L<warnings> are enabled.  Later use of
-C<use VERSION> will override all behavior of a previous C<use VERSION>,
-possibly removing the C<strict>, C<warnings>, and C<feature> added by it.
-C<use VERSION> does not load the F<feature.pm>, F<strict.pm>, or
-F<warnings.pm> files.
+lexically as with L<C<use strict>|strict>.
 
-In the current implementation, any explicit use of C<use strict> or
-C<no strict> overrides C<use VERSION>, even if it comes before it.
-However, this may be subject to change in a future release of Perl, so new
-code should not rely on this fact.  It is recommended that a
-C<use VERSION> declaration be the first significant statement within a
-file (possibly after a C<package> statement or any amount of whitespace or
-comment), so that its effects happen first, and other pragmata are applied
-after it.
+If the specified Perl version is 5.35.0 or higher, L<warnings> are enabled.
+
+If the specified Perl version is 5.39.0 or higher, builtin functions are
+imported lexically as with L<C<use builtin>|builtin> with a corresponding
+version bundle.
+
+Use of C<use VERSION> while another is in effect is not allowed with a
+C<use v5.39;> or greater version.  For lower versions, C<use VERSION> will
+override most behavior of a previous C<use VERSION>, possibly removing
+C<warnings> and C<feature> effects added by it. This behavior is deprecated,
+and a future release of perl will disallow changing the version once one has
+been declared.  Additionally, a C<use VERSION> with a version less than 5.11
+is not allowed after a C<use VERSION> with a version greater than 5.11.
+
+C<use VERSION> does not load the F<feature.pm>, F<strict.pm>, F<warnings.pm>
+or F<builtin.pm> files, but instead implements the equivalent functionality
+directly.
+
+In the current implementation, any explicit use of C<no strict> overrides
+C<use VERSION>, even if it comes before it. However, this may be subject to
+change in a future release of Perl, so new code should not rely on this fact.
+It is recommended that a C<use VERSION> declaration be the first significant
+statement within a file (possibly after a C<package> statement or any amount
+of whitespace or comment), so that its effects happen first, and other pragmata
+are applied after it.
 
 Specifying VERSION as a numeric argument of the form 5.024001 should
 generally be avoided as older less readable syntax compared to
@@ -10530,6 +10657,8 @@ If you use L<C<wait>|/wait> in your handler for
 L<C<$SIG{CHLD}>|perlvar/%SIG>, it may accidentally wait for the child
 created by L<C<qx>|/qxE<sol>STRINGE<sol>> or L<C<system>|/system LIST>.
 See L<perlipc> for details.
+
+Equivalent to L<C<waitpid(-1, 0)>|/waitpid PID,FLAGS>.
 
 Portability issues: L<perlport/wait>.
 

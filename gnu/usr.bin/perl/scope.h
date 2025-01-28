@@ -256,13 +256,14 @@ scope has the given name. C<name> must be a literal string.
 /*
 =for apidoc_section $stack
 =for apidoc    Am|SSize_t|SSNEW  |Size_t size
-=for apidoc_item |       |SSNEWa |Size_t_size|Size_t align
-=for apidoc_item |       |SSNEWat|Size_t_size|type|Size_t align
+=for apidoc_item |       |SSNEWa |Size_t size|Size_t align
+=for apidoc_item |       |SSNEWat|Size_t size|type|Size_t align
 =for apidoc_item |       |SSNEWt |Size_t size|type
 
-These temporarily allocates data on the savestack, returning an SSize_t index into
-the savestack, because a pointer would get broken if the savestack is moved on
-reallocation.  Use L</C<SSPTR>> to convert the returned index into a pointer.
+These each temporarily allocate data on the savestack, returning an SSize_t
+index into the savestack, because a pointer would get broken if the savestack
+is moved on reallocation.  Use L</C<SSPTR>> to convert the returned index into
+a pointer.
 
 The forms differ in that plain C<SSNEW> allocates C<size> bytes;
 C<SSNEWt> and C<SSNEWat> allocate C<size> objects, each of which is type

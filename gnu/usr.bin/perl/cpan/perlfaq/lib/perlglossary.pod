@@ -7,7 +7,7 @@ perlglossary - Perl Glossary
 
 =head1 VERSION
 
-version 5.20210520
+version 5.20240218
 
 =head1 DESCRIPTION
 
@@ -604,7 +604,7 @@ generator>.
 
 The X<codepoints, about>integer a computer uses to represent a given
 character. ASCII codepoints are in the range 0 to 127; Unicode codepoints
-are in the range 0 to 0x1F_FFFF; and Perl codepoints are in the range 0 to
+are in the range 0 to 0x10_FFFF; and Perl codepoints are in the range 0 to
 2³²−1 or 0 to 2⁶⁴−1, depending on your native integer size. In Perl Culture,
 sometimes called B<ordinals>.
 
@@ -3298,6 +3298,9 @@ called a “case structure”, named after the similar Pascal construct. Most
 switch statements in Perl are spelled C<given>. See “The C<given>
 statement” in Camel chapter 4, “Statements and Declarations”.
 
+The C<given>, C<when> keywords and the smartmatch (C<~~>) operator will
+be removed in Perl 5.42.
+
 =item symbol
 
 Generally, X<symbols>X<symbols>any B<token> or B<metasymbol>. Often used
@@ -3612,6 +3615,15 @@ In Unicode, X<uppercase characters>X<characters, uppercase>not just
 characters with the General Category of Uppercase Letter, but any character
 with the Uppercase property, including some Letter Numbers and Symbols. Not
 to be confused with B<titlecase>.
+
+=item UTF-8 string
+
+A L</string> whose ordinals represent a valid sequence of UTF-8 bytes.
+Sometimes called a "UTF-8 encoded string".
+
+(B<IMPORTANT:> This is unrelated to Perl’s internal
+L<“UTF8 flag”|perlunifaq/What is "the UTF8 flag"?>, which only Perl itself
+should usually care about. UTF-8 strings may have that flag set or unset.)
 
 =back
 

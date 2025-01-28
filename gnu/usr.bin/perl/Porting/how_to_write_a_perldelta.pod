@@ -42,7 +42,9 @@ Whilst modules could also be links, usually in the context of the perldelta
 the reference is to code C<use>ing them, rather than something within their
 documentation.
 
-Be consistent in how bugs are referenced. One style is
+Be consistent in how bugs are referenced. One common style, which is
+expected by some commands given in the Release Manager's Guide, is as
+follows:
 
 =over 4
 

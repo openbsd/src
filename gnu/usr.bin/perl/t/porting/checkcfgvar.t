@@ -19,7 +19,6 @@
 #   perl Porting/checkcfgvar.pl --regen --default=undef
 # (the correct default might not always be undef) to do most of the work, and
 # then hand-edit configure.com (as that's not automated).
-# If this changes uconfig.sh, you'll also need to run perl regen/uconfig_h.pl
 
 use Config;
 BEGIN {
