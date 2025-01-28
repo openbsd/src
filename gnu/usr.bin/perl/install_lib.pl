@@ -6,7 +6,7 @@
 use strict;
 use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_AmigaOS
 	    %opts $packlist);
-use subs qw(unlink link chmod);
+use subs qw(unlink link chmod chown);
 require File::Path;
 require File::Copy;
 
@@ -98,6 +98,9 @@ sub link {
 		unless -f $to and (chmod(0666, $to), unlink $to)
 			and File::Copy::copy($from, $to) and ++$success;
 	}
+	if (defined($opts{uid}) || defined($opts{gid})) {
+	    chown($opts{uid}, $opts{gid}, $to) if $success;
+	}
 	$packlist->{$xto} = { type => 'file' };
     }
     $success;
@@ -109,6 +112,16 @@ sub chmod {
     printf "  chmod %o %s\n", $mode, $name if $opts{verbose};
     CORE::chmod($mode,$name)
 	|| warn sprintf("Couldn't chmod %o %s: $!\n", $mode, $name)
+      unless $opts{notify};
+}
+
+sub chown {
+    my($uid,$gid,$name) = @_;
+
+    return if ($^O eq 'dos');
+    printf "  chown %s:%s %s\n", $uid, $gid, $name if $opts{verbose};
+    CORE::chown($uid,$gid,$name)
+	|| warn sprintf("Couldn't chown %s:%s %s: $!\n", $uid, $gid, $name)
       unless $opts{notify};
 }
 
@@ -143,7 +156,8 @@ sub safe_rename {
 }
 
 sub mkpath {
-    File::Path::mkpath(shift , $opts{verbose}, 0777) unless $opts{notify};
+    File::Path::make_path(shift, {owner=>$opts{uid}, group=>$opts{gid},
+        mode=>0777, verbose=>$opts{verbose}}) unless $opts{notify};
 }
 
 sub unixtoamiga

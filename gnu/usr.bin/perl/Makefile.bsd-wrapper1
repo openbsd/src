@@ -95,6 +95,7 @@ _quick3p=
     perl5380delta 1			pod/perl5380delta.pod \
     perl5381delta 1			pod/perl5381delta.pod \
     perl5382delta 1			pod/perl5382delta.pod \
+    perl5400delta 1			pod/perl5400delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -298,6 +299,7 @@ _quick3p=
     CPAN::Meta::Merge 3p		lib/CPAN/Meta/Merge.pm \
     CPAN::Meta::Prereqs 3p		lib/CPAN/Meta/Prereqs.pm \
     CPAN::Meta::Requirements 3p		lib/CPAN/Meta/Requirements.pm \
+    CPAN::Meta::Requirements::Range 3p	lib/CPAN/Meta/Requirements/Range.pm \
     CPAN::Meta::Spec 3p			lib/CPAN/Meta/Spec.pm \
     CPAN::Meta::Validator 3p		lib/CPAN/Meta/Validator.pm \
     CPAN::Meta::YAML 3p			lib/CPAN/Meta/YAML.pm \
@@ -448,6 +450,7 @@ _quick3p=
     Filter::Util::Call 3p		lib/Filter/Util/Call.pm \
     FindBin 3p				lib/FindBin.pm \
     Getopt::Long 3p			lib/Getopt/Long.pm \
+    Getopt::Long::Parser 3p		lib/Getopt/Long/Parser.pm \
     Getopt::Std 3p			lib/Getopt/Std.pm \
     Hash::Util 3p			lib/Hash/Util.pm \
     Hash::Util::FieldHash 3p		lib/Hash/Util/FieldHash.pm \
@@ -686,6 +689,12 @@ _quick3p=
     Term::Complete 3p			lib/Term/Complete.pm \
     Term::ReadKey 3p			lib/Term/ReadKey.pm \
     Term::ReadLine 3p			lib/Term/ReadLine.pm \
+    Term::Table 3p			lib/Term/Table.pm \
+    Term::Table::Cell 3p		lib/Term/Table/Cell.pm \
+    Term::Table::CellStack 3p		lib/Term/Table/CellStack.pm \
+    Term::Table::HashBase 3p		lib/Term/Table/HashBase.pm \
+    Term::Table::LineBreak 3p		lib/Term/Table/LineBreak.pm \
+    Term::Table::Util 3p		lib/Term/Table/Util.pm \
     Test 3p				lib/Test.pm \
     Test2 3p				lib/Test2.pm \
     Test2::API 3p			lib/Test2/API.pm \
@@ -697,6 +706,40 @@ _quick3p=
     Test2::API::InterceptResult::Hub 3p	lib/Test2/API/InterceptResult/Hub.pm \
     Test2::API::InterceptResult::Squasher 3p	lib/Test2/API/InterceptResult/Squasher.pm \
     Test2::API::Stack 3p		lib/Test2/API/Stack.pm \
+    Test2::AsyncSubtest 3p		lib/Test2/AsyncSubtest.pm \
+    Test2::AsyncSubtest::Event::Attach 3p	lib/Test2/AsyncSubtest/Event/Attach.pm \
+    Test2::AsyncSubtest::Event::Detach 3p	lib/Test2/AsyncSubtest/Event/Detach.pm \
+    Test2::AsyncSubtest::Hub 3p		lib/Test2/AsyncSubtest/Hub.pm \
+    Test2::Bundle 3p			lib/Test2/Bundle.pm \
+    Test2::Bundle::Extended 3p		lib/Test2/Bundle/Extended.pm \
+    Test2::Bundle::More 3p		lib/Test2/Bundle/More.pm \
+    Test2::Bundle::Simple 3p		lib/Test2/Bundle/Simple.pm \
+    Test2::Compare 3p			lib/Test2/Compare.pm \
+    Test2::Compare::Array 3p		lib/Test2/Compare/Array.pm \
+    Test2::Compare::Bag 3p		lib/Test2/Compare/Bag.pm \
+    Test2::Compare::Base 3p		lib/Test2/Compare/Base.pm \
+    Test2::Compare::Bool 3p		lib/Test2/Compare/Bool.pm \
+    Test2::Compare::Custom 3p		lib/Test2/Compare/Custom.pm \
+    Test2::Compare::DeepRef 3p		lib/Test2/Compare/DeepRef.pm \
+    Test2::Compare::Delta 3p		lib/Test2/Compare/Delta.pm \
+    Test2::Compare::Event 3p		lib/Test2/Compare/Event.pm \
+    Test2::Compare::EventMeta 3p	lib/Test2/Compare/EventMeta.pm \
+    Test2::Compare::Float 3p		lib/Test2/Compare/Float.pm \
+    Test2::Compare::Hash 3p		lib/Test2/Compare/Hash.pm \
+    Test2::Compare::Isa 3p		lib/Test2/Compare/Isa.pm \
+    Test2::Compare::Meta 3p		lib/Test2/Compare/Meta.pm \
+    Test2::Compare::Negatable 3p	lib/Test2/Compare/Negatable.pm \
+    Test2::Compare::Number 3p		lib/Test2/Compare/Number.pm \
+    Test2::Compare::Object 3p		lib/Test2/Compare/Object.pm \
+    Test2::Compare::OrderedSubset 3p	lib/Test2/Compare/OrderedSubset.pm \
+    Test2::Compare::Pattern 3p		lib/Test2/Compare/Pattern.pm \
+    Test2::Compare::Ref 3p		lib/Test2/Compare/Ref.pm \
+    Test2::Compare::Regex 3p		lib/Test2/Compare/Regex.pm \
+    Test2::Compare::Scalar 3p		lib/Test2/Compare/Scalar.pm \
+    Test2::Compare::Set 3p		lib/Test2/Compare/Set.pm \
+    Test2::Compare::String 3p		lib/Test2/Compare/String.pm \
+    Test2::Compare::Undef 3p		lib/Test2/Compare/Undef.pm \
+    Test2::Compare::Wildcard 3p		lib/Test2/Compare/Wildcard.pm \
     Test2::Event 3p			lib/Test2/Event.pm \
     Test2::Event::Bail 3p		lib/Test2/Event/Bail.pm \
     Test2::Event::Diag 3p		lib/Test2/Event/Diag.pm \
@@ -736,13 +779,100 @@ _quick3p=
     Test2::IPC 3p			lib/Test2/IPC.pm \
     Test2::IPC::Driver 3p		lib/Test2/IPC/Driver.pm \
     Test2::IPC::Driver::Files 3p	lib/Test2/IPC/Driver/Files.pm \
+    Test2::Manual 3p			lib/Test2/Manual.pm \
+    Test2::Manual::Anatomy 3p		lib/Test2/Manual/Anatomy.pm \
+    Test2::Manual::Anatomy::API 3p	lib/Test2/Manual/Anatomy/API.pm \
+    Test2::Manual::Anatomy::Context 3p	lib/Test2/Manual/Anatomy/Context.pm \
+    Test2::Manual::Anatomy::Event 3p	lib/Test2/Manual/Anatomy/Event.pm \
+    Test2::Manual::Anatomy::Hubs 3p	lib/Test2/Manual/Anatomy/Hubs.pm \
+    Test2::Manual::Anatomy::IPC 3p	lib/Test2/Manual/Anatomy/IPC.pm \
+    Test2::Manual::Anatomy::Utilities 3p	lib/Test2/Manual/Anatomy/Utilities.pm \
+    Test2::Manual::Concurrency 3p	lib/Test2/Manual/Concurrency.pm \
+    Test2::Manual::Contributing 3p	lib/Test2/Manual/Contributing.pm \
+    Test2::Manual::EndToEnd 3p		lib/Test2/Manual/Anatomy/EndToEnd.pm \
+    Test2::Manual::Testing 3p		lib/Test2/Manual/Testing.pm \
+    Test2::Manual::Testing::Introduction 3p	lib/Test2/Manual/Testing/Introduction.pm \
+    Test2::Manual::Testing::Migrating 3p	lib/Test2/Manual/Testing/Migrating.pm \
+    Test2::Manual::Testing::Planning 3p	lib/Test2/Manual/Testing/Planning.pm \
+    Test2::Manual::Testing::Todo 3p	lib/Test2/Manual/Testing/Todo.pm \
+    Test2::Manual::Tooling 3p		lib/Test2/Manual/Tooling.pm \
+    Test2::Manual::Tooling::FirstTool 3p	lib/Test2/Manual/Tooling/FirstTool.pm \
+    Test2::Manual::Tooling::Formatter 3p	lib/Test2/Manual/Tooling/Formatter.pm \
+    Test2::Manual::Tooling::Nesting 3p	lib/Test2/Manual/Tooling/Nesting.pm \
+    Test2::Manual::Tooling::Plugin::TestExit 3p	lib/Test2/Manual/Tooling/Plugin/TestExit.pm \
+    Test2::Manual::Tooling::Plugin::TestingDone 3p	lib/Test2/Manual/Tooling/Plugin/TestingDone.pm \
+    Test2::Manual::Tooling::Plugin::ToolCompletes 3p	lib/Test2/Manual/Tooling/Plugin/ToolCompletes.pm \
+    Test2::Manual::Tooling::Plugin::ToolStarts 3p	lib/Test2/Manual/Tooling/Plugin/ToolStarts.pm \
+    Test2::Manual::Tooling::Subtest 3p	lib/Test2/Manual/Tooling/Subtest.pm \
+    Test2::Manual::Tooling::TestBuilder 3p	lib/Test2/Manual/Tooling/TestBuilder.pm \
+    Test2::Manual::Tooling::Testing 3p	lib/Test2/Manual/Tooling/Testing.pm \
+    Test2::Mock 3p			lib/Test2/Mock.pm \
+    Test2::Plugin 3p			lib/Test2/Plugin.pm \
+    Test2::Plugin::BailOnFail 3p	lib/Test2/Plugin/BailOnFail.pm \
+    Test2::Plugin::DieOnFail 3p		lib/Test2/Plugin/DieOnFail.pm \
+    Test2::Plugin::ExitSummary 3p	lib/Test2/Plugin/ExitSummary.pm \
+    Test2::Plugin::SRand 3p		lib/Test2/Plugin/SRand.pm \
+    Test2::Plugin::Times 3p		lib/Test2/Plugin/Times.pm \
+    Test2::Plugin::UTF8 3p		lib/Test2/Plugin/UTF8.pm \
+    Test2::Require 3p			lib/Test2/Require.pm \
+    Test2::Require::AuthorTesting 3p	lib/Test2/Require/AuthorTesting.pm \
+    Test2::Require::AutomatedTesting 3p	lib/Test2/Require/AutomatedTesting.pm \
+    Test2::Require::EnvVar 3p		lib/Test2/Require/EnvVar.pm \
+    Test2::Require::ExtendedTesting 3p	lib/Test2/Require/ExtendedTesting.pm \
+    Test2::Require::Fork 3p		lib/Test2/Require/Fork.pm \
+    Test2::Require::Module 3p		lib/Test2/Require/Module.pm \
+    Test2::Require::NonInteractiveTesting 3p	lib/Test2/Require/NonInteractiveTesting.pm \
+    Test2::Require::Perl 3p		lib/Test2/Require/Perl.pm \
+    Test2::Require::RealFork 3p		lib/Test2/Require/RealFork.pm \
+    Test2::Require::ReleaseTesting 3p	lib/Test2/Require/ReleaseTesting.pm \
+    Test2::Require::Threads 3p		lib/Test2/Require/Threads.pm \
+    Test2::Suite 3p			lib/Test2/Suite.pm \
+    Test2::Todo 3p			lib/Test2/Todo.pm \
+    Test2::Tools 3p			lib/Test2/Tools.pm \
+    Test2::Tools::AsyncSubtest 3p	lib/Test2/Tools/AsyncSubtest.pm \
+    Test2::Tools::Basic 3p		lib/Test2/Tools/Basic.pm \
+    Test2::Tools::Class 3p		lib/Test2/Tools/Class.pm \
+    Test2::Tools::ClassicCompare 3p	lib/Test2/Tools/ClassicCompare.pm \
+    Test2::Tools::Compare 3p		lib/Test2/Tools/Compare.pm \
+    Test2::Tools::Defer 3p		lib/Test2/Tools/Defer.pm \
+    Test2::Tools::Encoding 3p		lib/Test2/Tools/Encoding.pm \
+    Test2::Tools::Event 3p		lib/Test2/Tools/Event.pm \
+    Test2::Tools::Exception 3p		lib/Test2/Tools/Exception.pm \
+    Test2::Tools::Exports 3p		lib/Test2/Tools/Exports.pm \
+    Test2::Tools::GenTemp 3p		lib/Test2/Tools/GenTemp.pm \
+    Test2::Tools::Grab 3p		lib/Test2/Tools/Grab.pm \
+    Test2::Tools::Mock 3p		lib/Test2/Tools/Mock.pm \
+    Test2::Tools::Ref 3p		lib/Test2/Tools/Ref.pm \
+    Test2::Tools::Refcount 3p		lib/Test2/Tools/Refcount.pm \
+    Test2::Tools::Spec 3p		lib/Test2/Tools/Spec.pm \
+    Test2::Tools::Subtest 3p		lib/Test2/Tools/Subtest.pm \
+    Test2::Tools::Target 3p		lib/Test2/Tools/Target.pm \
+    Test2::Tools::Tester 3p		lib/Test2/Tools/Tester.pm \
     Test2::Tools::Tiny 3p		lib/Test2/Tools/Tiny.pm \
+    Test2::Tools::Warnings 3p		lib/Test2/Tools/Warnings.pm \
     Test2::Transition 3p		lib/Test2/Transition.pod \
     Test2::Util 3p			lib/Test2/Util.pm \
     Test2::Util::ExternalMeta 3p	lib/Test2/Util/ExternalMeta.pm \
     Test2::Util::Facets2Legacy 3p	lib/Test2/Util/Facets2Legacy.pm \
+    Test2::Util::Grabber 3p		lib/Test2/Util/Grabber.pm \
+    Test2::Util::Guard 3p		lib/Test2/Util/Guard.pm \
     Test2::Util::HashBase 3p		lib/Test2/Util/HashBase.pm \
+    Test2::Util::Importer 3p		lib/Test2/Util/Importer.pm \
+    Test2::Util::Ref 3p			lib/Test2/Util/Ref.pm \
+    Test2::Util::Stash 3p		lib/Test2/Util/Stash.pm \
+    Test2::Util::Sub 3p			lib/Test2/Util/Sub.pm \
+    Test2::Util::Table 3p		lib/Test2/Util/Table.pm \
+    Test2::Util::Table::LineBreak 3p	lib/Test2/Util/Table/LineBreak.pm \
+    Test2::Util::Times 3p		lib/Test2/Util/Times.pm \
     Test2::Util::Trace 3p		lib/Test2/Util/Trace.pm \
+    Test2::V0 3p			lib/Test2/V0.pm \
+    Test2::Workflow 3p			lib/Test2/Workflow.pm \
+    Test2::Workflow::BlockBase 3p	lib/Test2/Workflow/BlockBase.pm \
+    Test2::Workflow::Build 3p		lib/Test2/Workflow/Build.pm \
+    Test2::Workflow::Runner 3p		lib/Test2/Workflow/Runner.pm \
+    Test2::Workflow::Task 3p		lib/Test2/Workflow/Task.pm \
+    Test2::Workflow::Task::Action 3p	lib/Test2/Workflow/Task/Action.pm \
+    Test2::Workflow::Task::Group 3p	lib/Test2/Workflow/Task/Group.pm \
     Test::Builder 3p			lib/Test/Builder.pm \
     Test::Builder::Formatter 3p		lib/Test/Builder/Formatter.pm \
     Test::Builder::IO::Scalar 3p	lib/Test/Builder/IO/Scalar.pm \
@@ -807,7 +937,7 @@ _quick3p=
     warnings 3p				lib/warnings.pm \
     warnings::register 3p		lib/warnings/register.pm \
     XS::APItest 3p			lib/XS/APItest.pm \
-    XS::Typemap 3p			ext/XS-Typemap/Typemap.pm \
+    XS::Typemap 3p			lib/XS/Typemap.pm \
     XSLoader 3p				lib/XSLoader.pm
 .  ifndef NOMAN
 MAN+= ${page}.${sect}

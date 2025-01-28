@@ -17,7 +17,6 @@ sub croak
 use strict;
 
 use vars qw($VERSION $VMS_TERMCAP);
-use vars qw($termpat $state $first $entry);
 
 $VERSION = '1.18';
 
@@ -170,8 +169,8 @@ sub Tgetent
     $self = {} unless defined $self;
     bless $self, $class;
 
-    my ( $term, $cap, $search, $field, $max, $tmp_term, $TERMCAP );
-    local ( $termpat, $state, $first, $entry );    # used inside eval
+    my ( $term, $cap, $search, $field, $tmp_term, $TERMCAP );
+    my ( $state, $first, $entry ); 
     local $_;
 
     # Compute PADDING factor from OSPEED (to be used by Tpad)
@@ -221,66 +220,24 @@ sub Tgetent
 
     # $tmp_term is always the next term (possibly :tc=...:) we are looking for
     $tmp_term = $self->{TERM};
+    my $seen = {};
 
-    # protect any pattern metacharacters in $tmp_term
-    $termpat = $tmp_term;
-    $termpat =~ s/(\W)/\\$1/g;
-
-    my $foo = ( exists $ENV{TERMCAP} ? $ENV{TERMCAP} : '' );
-
-    # $entry is the extracted termcap entry
-    if ( ( $foo !~ m:^/:s ) && ( $foo =~ m/(^|\|)${termpat}[:|]/s ) )
-    {
-        $entry = $foo;
+    if (exists $ENV{TERMCAP}) {
+    	local $_ = $ENV{TERMCAP};
+	if ( !m:^/:s && m/(^|\|)\Q$tmp_term\E[:|]/s ) {
+	    $entry = $_;
+	    $seen->{$tmp_term} = 1;
+	}
     }
 
     my @termcap_path = termcap_path();
 
-    if ( !@termcap_path && !$entry )
-    {
-
-        # last resort--fake up a termcap from terminfo
-        local $ENV{TERM} = $term;
-
-        if ( $^O eq 'VMS' )
-        {
-            $entry = $VMS_TERMCAP;
-        }
-        else
-        {
-            if ( grep { -x "$_/infocmp" } split /:/, $ENV{PATH} )
-            {
-                eval {
-                    my $tmp = `infocmp -C 2>/dev/null`;
-                    $tmp =~ s/^#.*\n//gm;    # remove comments
-                    if (   ( $tmp !~ m%^/%s )
-                        && ( $tmp =~ /(^|\|)${termpat}[:|]/s ) )
-                    {
-                        $entry = $tmp;
-                    }
-                };
-                warn "Can't run infocmp to get a termcap entry: $@" if $@;
-            }
-            else
-            {
-               # this is getting desperate now
-               if ( $self->{TERM} eq 'dumb' )
-               {
-                  $entry = 'dumb|80-column dumb tty::am::co#80::bl=^G:cr=^M:do=^J:sf=^J:';
-               }
-            }
-        }
-    }
-
-    croak "Can't find a valid termcap file" unless @termcap_path || $entry;
-
     $state = 1;    # 0 == finished
                    # 1 == next file
                    # 2 == search again
+		   # 3 == try infocmp
 
     $first = 0;    # first entry (keeps term name)
-
-    $max = 32;     # max :tc=...:'s
 
     if ($entry)
     {
@@ -291,10 +248,6 @@ sub Tgetent
         if ( $entry =~ s/:tc=([^:]+):/:/ )
         {
             $tmp_term = $1;
-
-            # protect any pattern metacharacters in $tmp_term
-            $termpat = $tmp_term;
-            $termpat =~ s/(\W)/\\$1/g;
         }
         else
         {
@@ -302,57 +255,76 @@ sub Tgetent
         }
     }
 
-    # This is eval'ed inside the while loop for each file
-    $search = q{
-	while (<TERMCAP>) {
-	    next if /^\\t/ || /^#/;
-	    if ($_ =~ m/(^|\\|)${termpat}[:|]/o) {
+
+    while ( $state != 0 )
+    {
+        if ( $state == 1 ) {
+            # get the next TERMCAP
+            $TERMCAP = shift @termcap_path or $state = 3;
+	} elsif ($state == 3) {
+	    croak "failed termcap lookup on $tmp_term";
+        } else {
+            # do the same file again
+            $state = 1;    # ok, maybe do a new file next time
+        }
+
+	my ($fh, $child);
+	if ($state == 3) {
+	    # need to do a proper fork, so that we can pass tmp_term
+	    # without having to quote it.
+	    $child = open($fh, "-|");
+	    warn "cannot run infocmp: $!" if !defined $child;
+	    if (!$child) {
+	    	open(STDERR, ">", "/dev/null");
+		exec('infocmp', '-CTrx', '--', $tmp_term);
+		exit(1);
+	    }
+	} else {
+	    open($fh, '<', $TERMCAP) || croak "open $TERMCAP: $!";
+	}
+	while (<$fh>) {
+	    next if /^\t/ || /^#/;
+	    if (m/(^|\|)\Q$tmp_term\E[:|]/) {
 		chomp;
 		s/^[^:]*:// if $first++;
 		$state = 0;
-		while ($_ =~ s/\\\\$//) {
-		    defined(my $x = <TERMCAP>) or last;
+		$seen->{$tmp_term} = 1;
+		while (s/\\$//) {
+		    defined(my $x = <$fh>) or last;
 		    $_ .= $x; chomp;
+		}
+		if (defined $entry) {
+		    $entry .= $_;
+		} else {
+		    $entry = $_;
 		}
 		last;
 	    }
 	}
-	defined $entry or $entry = '';
-	$entry .= $_ if $_;
-    };
+        close $fh;
+	waitpid($child, 0) if defined $child;
 
-    while ( $state != 0 )
-    {
-        if ( $state == 1 )
-        {
-
-            # get the next TERMCAP
-            $TERMCAP = shift @termcap_path
-              || croak "failed termcap lookup on $tmp_term";
-        }
-        else
-        {
-
-            # do the same file again
-            # prevent endless recursion
-            $max-- || croak "failed termcap loop at $tmp_term";
-            $state = 1;    # ok, maybe do a new file next time
-        }
-
-        open( TERMCAP, "< $TERMCAP\0" ) || croak "open $TERMCAP: $!";
-        eval $search;
-        die $@ if $@;
-        close TERMCAP;
+	next if $state != 0;
 
         # If :tc=...: found then search this file again
-        $entry =~ s/:tc=([^:]+):/:/ && ( $tmp_term = $1, $state = 2 );
-
-        # protect any pattern metacharacters in $tmp_term
-        $termpat = $tmp_term;
-        $termpat =~ s/(\W)/\\$1/g;
+	while ($entry =~ s/:tc=([^:]+):/:/) {
+	    $tmp_term = $1;
+	    next if $seen->{$tmp_term};
+	    $state = 2;
+	    last;
+	}
     }
 
-    croak "Can't find $term" if $entry eq '';
+    if ( !defined $entry ) {
+        if ( $^O eq 'VMS' ) {
+            $entry = $VMS_TERMCAP;
+       # this is getting desperate now
+        } elsif ( $self->{TERM} eq 'dumb' ){
+	  $entry = 'dumb|80-column dumb tty::am::co#80::bl=^G:cr=^M:do=^J:sf=^J:';
+	}
+    }
+
+    croak "Can't find $term" if !defined $entry;
     $entry =~ s/:+\s*:+/:/g;    # cleanup $entry
     $entry =~ s/:+/:/g;         # cleanup $entry
     $self->{TERMCAP} = $entry;  # save it

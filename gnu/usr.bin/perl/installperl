@@ -72,7 +72,7 @@ $opts{destdir} = '';
     my $usage = 0;
     if (!GetOptions(\%opts, 'notify|n', 'strip|s', 'silent|S',
                     'skip-otherperls|o', 'force|f', 'verbose|V', 'archname|A',
-                    'nopods|p', 'destdir:s', 'help|h|?',
+                    'nopods|p', 'destdir:s', 'help|h|?', 'user|u:s', 'group|g:s',
                     'versiononly|v' => \$versiononly, '<>' => sub {
                         if ($_[0] eq '+v') {
                             $versiononly = 0;
@@ -102,12 +102,16 @@ Usage $0: [switches]
   -A        Also install perl with the architecture's name in the perl binary's
             name.
   -p        Don't install the pod files. [This will break use diagnostics;]
+  -g group  install files with the specified group
+  -u user   install files with the specified user 
   -destdir  Prefix installation directories by this string.
   -h        Display this help message.
 EOT
         exit $usage;
     }
 }
+$opts{'uid'} = getpwnam($opts{'user'}) if exists($opts{'user'});
+$opts{'gid'} = getgrnam($opts{'group'}) if exists($opts{'group'});
 
 $versiononly = 1 if $Config{versiononly} && !defined $versiononly;
 my (@scripts, @tolink);
@@ -142,7 +146,7 @@ if ((-e "testcompile") && (defined($ENV{'COMPILE'}))) {
 }
 
 # Exclude nonxs extensions that are not architecture dependent
-my @nonxs = grep(!/^Errno$/, split(' ', $Config{'nonxs_ext'}));
+my @nonxs = grep(!/^(Errno|IO\/Compress)$/, split(' ', $Config{'nonxs_ext'}));
 
 my @ext_dirs = qw(cpan dist ext);
 foreach my $ext_dir (@ext_dirs) {
@@ -188,7 +192,7 @@ my $installprivlib = "$opts{destdir}$Config{installprivlib}";
 my $installarchlib = "$opts{destdir}$Config{installarchlib}";
 my $installsitelib = "$opts{destdir}$Config{installsitelib}";
 my $installsitearch = "$opts{destdir}$Config{installsitearch}";
-my $installman1dir = "$opts{destdir}$Config{installman1dir}";
+my $installman1dir = "none";
 my $man1ext = $Config{man1ext};
 my $libperl = $Config{libperl};
 # Shared library and dynamic loading suffixes.
@@ -220,8 +224,6 @@ if ($Is_VMS) {  # Hang in there until File::Spec hits the big time
    $installbin		|| die "No installbin directory in config.sh\n";
 -d $installbin	        || mkpath($installbin);
 -d $installbin		|| $opts{notify} || die "$installbin is not a directory\n";
--w $installbin		|| $opts{notify} || die "$installbin is not writable by you\n"
-	unless $installbin =~ m#^/afs/# || $opts{notify};
 
 if (!$Is_VMS) {
 -x 'perl' . $exe_ext	|| die "perl isn't executable!\n";
@@ -233,9 +235,9 @@ else {
     }
 }
 
--f 't/rantests'		|| $Is_W32
-			|| warn "WARNING: You've never run 'make test' or",
-				" some tests failed! (Installing anyway.)\n";
+#-f 't/rantests'		|| $Is_W32
+#			|| warn "WARNING: You've never run 'make test' or",
+#				" some tests failed! (Installing anyway.)\n";
 
 # This will be used to store the packlist
 $packlist = ExtUtils::Packlist->new("$installarchlib/.packlist");
@@ -260,6 +262,10 @@ if ($Is_W32 or $Is_Cygwin) {
     $packlist->{"$Config{installbin}/$perldll"} = { type => 'file' };
 } # if ($Is_W32 or $Is_Cygwin)
 
+# Get the install command and flags from the environment
+my @installcmd = $ENV{"INSTALL"} || "install";
+push(@installcmd, $ENV{"INSTALL_COPY"} || "-c");
+
 # First we install the version-numbered executables.
 
 if ($Is_VMS) {
@@ -279,11 +285,8 @@ if ($Is_VMS) {
     }
 }
 else {
-    safe_unlink("$installbin/$perl_verbase$ver$exe_ext");
-    copy("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext");
-    strip("$installbin/$perl_verbase$ver$exe_ext");
-    fix_dep_names("$installbin/$perl_verbase$ver$exe_ext");
-    chmod(0755, "$installbin/$perl_verbase$ver$exe_ext");
+    my $ver = ''; # don't install a versioned perl binary
+    install("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext", "0755");
     `chtag -r "$installbin/$perl_verbase$ver$exe_ext"` if ($^O eq 'os390');
 }
 
@@ -339,7 +342,9 @@ elsif ($Is_Cygwin) { # On Cygwin symlink it to CORE to make Makefile happy
     @corefiles = <*.h>;
 } else {
     # [als] hard-coded 'libperl' name... not good!
-    @corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
+    #@corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
+    @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
+    install($libperl, "$opts{destdir}$Config{glibpth}/$libperl", "0444");
 
     # AIX needs perl.exp installed as well.
     push(@corefiles,'perl.exp') if $^O eq 'aix';
@@ -369,7 +374,8 @@ if ($Is_W32) { #linking lib isn't made in root but in CORE on Win32
 # Install main perl executables
 # Make links to ordinary names if installbin directory isn't current directory.
 
-if (! $versiononly && ! samepath($installbin, '.') && ! $Is_VMS) {
+if (0) { # don't install a versioned perl binary
+#if (! $versiononly && ! samepath($installbin, '.') && ! $Is_VMS) {
     safe_unlink("$installbin/$perl$exe_ext", "$installbin/suid$perl$exe_ext");
     if ($^O eq 'vos') {
 	# VOS doesn't support hard links, so use a symlink.
@@ -508,6 +514,9 @@ if (!$opts{nopods} && (!$versiononly || ($installprivlib =~ m/\Q$vershort/))) {
 
 
 $packlist->write() unless $opts{notify};
+if (defined($opts{uid}) || defined($opts{gid})) {
+    chown($opts{uid}, $opts{gid}, $packlist->packlist_file());
+}
 print "  Installation complete\n" if $opts{verbose};
 
 exit 0;
@@ -546,6 +555,7 @@ sub safe_unlink {
 
 sub copy {
     my($from,$to) = @_;
+    my($success) = 0;
 
     my $xto = $to;
     $xto =~ s/^\Q$opts{destdir}\E//;
@@ -553,12 +563,32 @@ sub copy {
 	unless $opts{silent};
     print "  creating new version of $xto\n"
 	if $Is_VMS and -e $to and !$opts{silent};
-    unless ($opts{notify} or File::Copy::copy($from, $to)) {
+    unless ($opts{notify} or File::Copy::copy($from, $to) and ++$success) {
 	# Might have been that F::C::c can't overwrite the target
 	warn "Couldn't copy $from to $to: $!\n"
 	    unless -f $to and (chmod(0666, $to), unlink $to)
-		   and File::Copy::copy($from, $to);
+		   and File::Copy::copy($from, $to) and ++$success;
     }
+    if (defined($opts{uid}) || defined($opts{gid})) {
+	chown($opts{uid}, $opts{gid}, $to) if $success;
+    }
+    $packlist->{$xto} = { type => 'file' };
+}
+
+sub install {
+    my($from,$to,$mode) = @_;
+
+    my $xto = $to;
+    my $cmd = join(' ', @installcmd);
+    $cmd .= " -m $mode" if $mode;
+    $cmd .= " -s" if $opts{strip};
+    $cmd .= " -o $opts{uid}" if defined($opts{uid});
+    $cmd .= " -g $opts{gid}" if defined($opts{gid});
+    $cmd .= " $from $to";
+    $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
+    print $opts{verbose} ? "  install $from $xto\n" : "  $xto\n" unless $opts{silent};
+    system($cmd);
+    warn "Couldn't $cmd\n" if $?;
     $packlist->{$xto} = { type => 'file' };
 }
 
@@ -589,6 +619,10 @@ sub installlib {
 	$File::Find::prune = 1;
 	return;
     }
+
+    # If we have different install version, install that instead
+    return if -e "$_.install";
+    $name =~ s/\.install$//;
 
     # ignore patch backups, RCS files, emacs backup & temp files and the
     # .exists files, .PL files, and test files.
