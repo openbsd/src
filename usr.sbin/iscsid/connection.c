@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.24 2025/01/22 10:14:54 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.25 2025/01/28 20:41:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -335,41 +335,107 @@ log_debug("conn_parse_kvp: %s = %s", k->key, k->value);
 #undef SET_BOOL
 #undef SET_DIGEST
 
+#define GET_BOOL_P(dst, req, k, src, f)				\
+do {								\
+	if (f == 0 && !strcmp(req, #k)) {			\
+	(dst)->key = #k;					\
+	(dst)->value = ((src)->mine.k) ? "Yes" : "No";		\
+	f++;							\
+	}							\
+} while (0)
+
+#define GET_DIGEST_P(dst, req, k, src, f)				\
+do {									\
+	if (f == 0 && !strcmp(req, #k)) {				\
+		(dst)->key = #k;					\
+		(dst)->value =						\
+		    ((src)->mine.k == DIGEST_NONE) ? "None" : "CRC32C,None";\
+		f++;							\
+	}								\
+} while (0)
+
+#define GET_NUM_P(dst, req, k, src, f, e)				\
+do {									\
+	if (f == 0 && !strcmp(req, #k)) {				\
+		(dst)->key = #k;					\
+		if (asprintf(&((dst)->value), "%u", (src)->mine.k) == -1)\
+			e++;						\
+		else							\
+			(dst)->flags |= KVP_VALUE_ALLOCED;		\
+		f++;							\
+	}								\
+} while (0)
+
+#define GET_STR_C(dst, req, k, src, f)				\
+do {								\
+	if (f == 0 && !strcmp(req, #k)) {			\
+		(dst)->key = #k;				\
+		(dst)->value = (src)->config.k;			\
+		f++;						\
+	}							\
+} while (0)
+
+#define GET_STYPE_C(dst, req, k, src, f)				\
+do {									\
+	if (f == 0 && !strcmp(req, #k)) {				\
+		(dst)->key = #k;					\
+		(dst)->value = ((src)->config.k == SESSION_TYPE_DISCOVERY)\
+		    ? "Discovery" : "Normal";				\
+		f++;							\
+	}								\
+} while (0)
+
 int
-conn_gen_kvp(struct connection *c, struct kvp *kvp, size_t *nkvp)
+kvp_set_from_mine(struct kvp *kvp, const char *key, struct connection *c)
 {
-	struct session *s = c->session;
-	size_t i = 0;
+	int e = 0, f = 0;
 
-	if (s->mine.MaxConnections != iscsi_sess_defaults.MaxConnections) {
-		if (kvp && i < *nkvp) {
-			kvp[i].key = "MaxConnections";
-			if (asprintf(&kvp[i].value, "%hu",
-			    s->mine.MaxConnections) == -1) {
-				kvp[i].value = NULL;
-				return -1;
-			}
-			kvp[i].flags |= KVP_VALUE_ALLOCED;
-		}
-		i++;
+	if (kvp->flags & KVP_KEY_ALLOCED)
+		free(kvp->key);
+	kvp->key = NULL;
+	if (kvp->flags & KVP_VALUE_ALLOCED)
+		free(kvp->value);
+	kvp->value = NULL;
+	kvp->flags = 0;
+
+	/* XXX handle at least CHAP */
+	if (!strcmp(key, "AuthMethod")) {
+		kvp->key = "AuthMethod";
+		kvp->value = "None";
+		return 0;
 	}
-	if (c->mine.MaxRecvDataSegmentLength !=
-	    iscsi_conn_defaults.MaxRecvDataSegmentLength) {
-		if (kvp && i < *nkvp) {
-			kvp[i].key = "MaxRecvDataSegmentLength";
-			if (asprintf(&kvp[i].value, "%u",
-			    c->mine.MaxRecvDataSegmentLength) == -1) {
-				kvp[i].value = NULL;
-				return -1;
-			}
-			kvp[i].flags |= KVP_VALUE_ALLOCED;
-		}
-		i++;
+	GET_DIGEST_P(kvp, key, HeaderDigest, c, f);
+	GET_DIGEST_P(kvp, key, DataDigest, c, f);
+	GET_NUM_P(kvp, key, MaxConnections, c->session, f, e);
+	GET_STR_C(kvp, key, TargetName, c->session, f);
+	GET_STR_C(kvp, key, InitiatorName, c->session, f);
+	GET_BOOL_P(kvp, key, InitialR2T, c->session, f);
+	GET_BOOL_P(kvp, key, ImmediateData, c->session, f);
+	GET_NUM_P(kvp, key, MaxRecvDataSegmentLength, c, f, e);
+	GET_NUM_P(kvp, key, MaxBurstLength, c->session, f, e);
+	GET_NUM_P(kvp, key, FirstBurstLength, c->session, f, e);
+	GET_NUM_P(kvp, key, DefaultTime2Wait, c->session, f, e);
+	GET_NUM_P(kvp, key, DefaultTime2Retain, c->session, f, e);
+	GET_NUM_P(kvp, key, MaxOutstandingR2T, c->session, f, e);
+	GET_BOOL_P(kvp, key, DataPDUInOrder, c->session, f);
+	GET_BOOL_P(kvp, key, DataSequenceInOrder, c->session, f);
+	GET_NUM_P(kvp, key, ErrorRecoveryLevel, c->session, f, e);
+	GET_STYPE_C(kvp, key, SessionType, c->session, f);
+	/* XXX handle TaskReporting */
+
+	if (f == 0) {
+		errno = EINVAL;
+		return 1;
 	}
 
-	*nkvp = i;
-	return 0;
+	return e;
 }
+
+#undef GET_BOOL_P
+#undef GET_DIGEST_P
+#undef GET_NUM_P
+#undef GET_STR_C
+#undef GET_STYPE_C
 
 void
 conn_pdu_write(struct connection *c, struct pdu *p)

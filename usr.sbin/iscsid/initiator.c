@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.20 2025/01/22 16:06:36 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.21 2025/01/28 20:41:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,7 @@ struct task_logout {
 	u_int8_t		 reason;
 };
 
+int		 conn_is_leading(struct connection *);
 struct kvp	*initiator_login_kvp(struct connection *, u_int8_t);
 struct pdu	*initiator_login_build(struct connection *,
 		    struct task_login *);
@@ -308,49 +309,76 @@ initiator_nop_in_imm(struct connection *c, struct pdu *p)
 	conn_task_issue(c, t);
 }
 
+int
+conn_is_leading(struct connection *c)
+{
+	return c == TAILQ_FIRST(&c->session->connections);
+}
+
+#define MINE_NOT_DEFAULT(c, k) ((c)->mine.k != iscsi_conn_defaults.k)
+
 struct kvp *
 initiator_login_kvp(struct connection *c, u_int8_t stage)
 {
-	struct kvp *kvp;
-	size_t nkvp;
+	struct kvp *kvp = NULL;
+	size_t i = 0, len;
+	const char *discovery[] = {"SessionType", "InitiatorName",
+	    "AuthMethod", NULL};
+	const char *leading_only[] = {"MaxConnections", "InitialR2T",
+	    "ImmediateData", "MaxBurstLength", "FirstBurstLength",
+	    "DefaultTime2Wait", "DefaultTime2Retain", "MaxOutstandingR2T",
+	    "DataPDUInOrder", "DataSequenceInOrder", "ErrorRecoveryLevel",
+	    NULL};
+	const char *opneg_always[] = {"HeaderDigest", "DataDigest", NULL};
+	const char *secneg[] = {"SessionType", "InitiatorName", "TargetName",
+	    "AuthMethod", NULL};
+	const char **p, **q;
 
 	switch (stage) {
 	case ISCSI_LOGIN_STG_SECNEG:
-		if (!(kvp = calloc(5, sizeof(*kvp))))
-			return NULL;
-		kvp[0].key = "AuthMethod";
-		kvp[0].value = "None";
-		kvp[1].key = "InitiatorName";
-		kvp[1].value = c->session->config.InitiatorName;
-
 		if (c->session->config.SessionType == SESSION_TYPE_DISCOVERY) {
-			kvp[2].key = "SessionType";
-			kvp[2].value = "Discovery";
+			len = sizeof(discovery) / sizeof(*discovery);
+			q = discovery;
 		} else {
-			kvp[2].key = "SessionType";
-			kvp[2].value = "Normal";
-			kvp[3].key = "TargetName";
-			kvp[3].value = c->session->config.TargetName;
+			len = sizeof(secneg) / sizeof(*secneg);
+			q = secneg;
 		}
+		if (!(kvp = calloc(len + 1, sizeof(*kvp))))
+			return NULL;
+		for (p = q; *p != NULL; i++, p++)
+			if (kvp_set_from_mine(&kvp[i], *p, c))
+				goto fail;
 		break;
 	case ISCSI_LOGIN_STG_OPNEG:
-		if (conn_gen_kvp(c, NULL, &nkvp) == -1)
+		len = sizeof(opneg_always) / sizeof(*opneg_always);
+		if (conn_is_leading(c))
+			len += sizeof(leading_only) / sizeof(*leading_only);
+		if (MINE_NOT_DEFAULT(c, MaxRecvDataSegmentLength))
+			len++;
+		if (!(kvp = calloc(len + 1, sizeof(*kvp))))
 			return NULL;
-		nkvp += 1; /* add slot for terminator */
-		if (!(kvp = calloc(nkvp, sizeof(*kvp))))
-			return NULL;
-		if (conn_gen_kvp(c, kvp, &nkvp) == -1) {
-			kvp_free(kvp);
-			return NULL;
-		}
+		for (p = opneg_always; *p != NULL; i++, p++)
+			if (kvp_set_from_mine(&kvp[i], *p, c))
+				goto fail;
+		if (conn_is_leading(c))
+			for (p = leading_only; *p != NULL; i++, p++)
+				if (kvp_set_from_mine(&kvp[i], *p, c))
+					goto fail;
+		if (MINE_NOT_DEFAULT(c, MaxRecvDataSegmentLength) &&
+		    kvp_set_from_mine(&kvp[i], "MaxRecvDataSegmentLength", c))
+			goto fail;
 		break;
 	default:
 		log_warnx("initiator_login_kvp: exit stage left");
 		return NULL;
 	} 
 	return kvp;
+fail:
+	kvp_free(kvp);
+	return NULL;
 }
 
+#undef MINE_NOT_DEFAULT
 struct pdu *
 initiator_login_build(struct connection *c, struct task_login *tl)
 {

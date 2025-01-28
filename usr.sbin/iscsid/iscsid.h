@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.23 2025/01/22 16:06:36 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.24 2025/01/28 20:41:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -367,7 +367,7 @@ void	conn_task_issue(struct connection *, struct task *);
 void	conn_task_schedule(struct connection *);
 void	conn_task_cleanup(struct connection *, struct task *);
 int	conn_parse_kvp(struct connection *, struct kvp *);
-int	conn_gen_kvp(struct connection *, struct kvp *, size_t *);
+int	kvp_set_from_mine(struct kvp *, const char *, struct connection *);
 void	conn_pdu_write(struct connection *, struct pdu *);
 void	conn_fail(struct connection *);
 void	conn_fsm(struct connection *, enum c_event);
