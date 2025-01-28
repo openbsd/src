@@ -1,4 +1,4 @@
-#	$OpenBSD: arin.constraints,v 1.5 2024/04/17 14:31:59 job Exp $
+#	$OpenBSD: arin.constraints,v 1.6 2025/01/28 19:43:10 job Exp $
 
 # From https://www.iana.org/assignments/ipv6-unicast-address-assignments
 allow 2001:400::/23
@@ -8,6 +8,9 @@ allow 2600::/12
 allow 2610::/23
 allow 2620::/23
 allow 2630::/12
+
+# AS112 Project
+allow 2001:4:112::/48
 
 # LACNIC ASNs cannot be transferred to ARIN
 # From https://www.iana.org/assignments/as-numbers/as-numbers.xhtml
