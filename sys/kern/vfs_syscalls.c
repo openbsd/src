@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.371 2025/01/20 09:02:17 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.372 2025/01/29 14:57:19 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1120,23 +1120,20 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		localtrunc = 1;
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
 	}
+	KERNEL_LOCK();
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		fdplock(fdp);
 		if (error == ENODEV &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
 			dupfdopen(p, indx, flags)) == 0) {
-			fdpunlock(fdp);
-			closef(fp, p);
 			*retval = indx;
-			return (error);
+			goto error;
 		}
 		if (error == ERESTART)
 			error = EINTR;
 		fdremove(fdp, indx);
-		fdpunlock(fdp);
-		closef(fp, p);
-		return (error);
+		goto error;
 	}
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
@@ -1161,9 +1158,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			fdplock(fdp);
 			/* closef will vn_close the file for us. */
 			fdremove(fdp, indx);
-			fdpunlock(fdp);
-			closef(fp, p);
-			return (error);
+			goto error;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		atomic_setbits_int(&fp->f_iflags, FIF_HASLOCK);
@@ -1185,17 +1180,21 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			fdplock(fdp);
 			/* closef will close the file for us. */
 			fdremove(fdp, indx);
-			fdpunlock(fdp);
-			closef(fp, p);
-			return (error);
+			goto error;
 		}
 	}
 	VOP_UNLOCK(vp);
+	KERNEL_UNLOCK();
 	*retval = indx;
 	fdplock(fdp);
 	fdinsert(fdp, indx, cloexec, fp);
 	fdpunlock(fdp);
 	FRELE(fp, p);
+	return (error);
+error:
+	KERNEL_UNLOCK();
+	fdpunlock(fdp);
+	closef(fp, p);
 	return (error);
 }
 
