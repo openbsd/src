@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.21 2024/11/28 11:51:45 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.22 2025/01/29 10:14:44 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -937,7 +937,7 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 		    RADIUS_VTYPE_MS_SECONDARY_NBNS_SERVER,
 		    self->netbios_server[1]);
 	}
-	if (!self->no_session_timeout &&
+	if (!self->no_session_timeout && assigned != NULL &&
 	    radius_has_attr(radres, RADIUS_TYPE_SESSION_TIMEOUT)) {
 		radius_get_uint32_attr(radres, RADIUS_TYPE_SESSION_TIMEOUT,
 		    &assigned->session_timeout);
