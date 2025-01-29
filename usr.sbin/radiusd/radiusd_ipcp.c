@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.22 2025/01/29 10:14:44 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.23 2025/01/29 10:16:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -897,6 +897,13 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 		else if (radius_has_attr(radreq, RADIUS_TYPE_EAP_MESSAGE))
 			strlcpy(assigned->auth_method, "EAP",
 			    sizeof(assigned->auth_method));
+
+		radius_get_ipv4_attr(radreq, RADIUS_TYPE_NAS_IP_ADDRESS,
+		    &assigned->nas_ipv4);
+		radius_get_ipv6_attr(radreq, RADIUS_TYPE_NAS_IPV6_ADDRESS,
+		    &assigned->nas_ipv6);
+		radius_get_string_attr(radreq, RADIUS_TYPE_NAS_IDENTIFIER,
+		    assigned->nas_id, sizeof(assigned->nas_id));
 	}
 
 	if (self->name_server[0].s_addr != 0) {
