@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.337 2024/12/27 12:04:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.338 2025/01/29 15:25:31 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2954,7 +2954,7 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 	(*pr)("PAGE %p:\n", pg);
 	(*pr)("  flags=%b, vers=%d, wire_count=%d, pa=0x%llx\n",
 	    pg->pg_flags, page_flagbits, pg->pg_version, pg->wire_count,
-	    (long long)pg->phys_addr);
+	    (long long)VM_PAGE_TO_PHYS(pg));
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx\n",
 	    pg->uobject, pg->uanon, (long long)pg->offset);
 #if defined(UVM_PAGE_TRKOWN)
