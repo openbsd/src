@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.c,v 1.12 2024/02/26 08:47:28 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.c,v 1.13 2025/01/29 10:21:03 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius(3) and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.12 2024/02/26 08:47:28 yasuoka Exp $
+ * $Id: radius_req.c,v 1.13 2025/01/29 10:21:03 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -329,7 +329,7 @@ radius_cancel_request(RADIUS_REQUEST_CTX ctx)
 	}
 	radius_req_setting_unref(lap->setting);
 
-	memset(lap->secret, 0x41, sizeof(lap->secret));
+	explicit_bzero(lap->secret, sizeof(lap->secret));
 
 	free(lap);
 }
