@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.28 2025/01/14 12:30:57 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.29 2025/01/29 14:03:19 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -82,8 +82,7 @@
 /* flags for config(8) */
 #define VIRTIO_CF_NO_INDIRECT		1
 #define VIRTIO_CF_NO_EVENT_IDX		2
-#define VIRTIO_CF_PREFER_VERSION_1	4
-#define VIRTIO_CF_NO_VERSION_1		8
+#define VIRTIO_CF_PREFER_VERSION_09	8
 
 struct virtio_attach_args {
 	int			 va_devid;	/* virtio device id */

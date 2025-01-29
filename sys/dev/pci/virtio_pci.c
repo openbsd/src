@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.50 2025/01/14 14:28:38 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.51 2025/01/29 14:03:18 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -362,8 +362,7 @@ virtio_pci_match(struct device *parent, void *match, void *aux)
 		return 1;
 	/* virtio 1.0 */
 	if (PCI_PRODUCT(pa->pa_id) >= 0x1040 &&
-	    PCI_PRODUCT(pa->pa_id) <= 0x107f &&
-	    PCI_REVISION(pa->pa_class) == 1)
+	    PCI_PRODUCT(pa->pa_id) <= 0x107f)
 		return 1;
 	return 0;
 }
@@ -595,21 +594,24 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
-	int revision, ret = ENODEV;
+	int revision, product, vendor, ret = ENODEV, flags;
 	pcireg_t id;
 	struct virtio_pci_attach_args vpa = { { 0 }, pa };
 
 	revision = PCI_REVISION(pa->pa_class);
-	switch (revision) {
-	case 0:
-		/* subsystem ID shows what I am */
+	product = PCI_PRODUCT(pa->pa_id);
+	vendor = PCI_VENDOR(pa->pa_id);
+	if (vendor == PCI_VENDOR_OPENBSD ||
+	    (product >= 0x1000 && product <= 0x103f && revision == 0)) {
+		/* OpenBSD VMMCI and virtio 0.9 */
 		id = PCI_PRODUCT(pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG));
-		break;
-	case 1:
-		id = PCI_PRODUCT(pa->pa_id) - 0x1040;
-		break;
-	default:
-		printf("unknown revision 0x%02x; giving up\n", revision);
+	} else if (product >= 0x1040 && product <= 0x107f) {
+		/* virtio 1.0 */
+		id = product - 0x1040;
+		revision = 1;
+	} else {
+		printf("unknown device prod 0x%04x rev 0x%02x; giving up\n",
+		    product, revision);
 		return;
 	}
 
@@ -637,15 +639,15 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	vsc->sc_ops = &virtio_pci_ops;
-	if ((vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_VERSION_1) == 0 &&
-	    (revision == 1 ||
-	     (vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_PREFER_VERSION_1))) {
+	flags = vsc->sc_dev.dv_cfdata->cf_flags;
+	if ((flags & VIRTIO_CF_PREFER_VERSION_09) == 0)
 		ret = virtio_pci_attach_10(sc, pa);
-	}
 	if (ret != 0 && revision == 0) {
 		/* revision 0 means 0.9 only or both 0.9 and 1.0 */
 		ret = virtio_pci_attach_09(sc, pa);
 	}
+	if (ret != 0 && (flags & VIRTIO_CF_PREFER_VERSION_09))
+		ret = virtio_pci_attach_10(sc, pa);
 	if (ret != 0) {
 		printf(": Cannot attach (%d)\n", ret);
 		goto free;
