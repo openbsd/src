@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.61 2024/11/21 13:43:10 claudio Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.62 2025/01/29 10:12:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -946,11 +946,11 @@ radiusd_on_sigchld(int fd, short evmask, void *ctx)
 		}
 		if (!module) {
 			if (WIFEXITED(status))
-				log_warnx("unkown child process pid=%d exited "
+				log_warnx("unknown child process pid=%d exited "
 				    "with status %d", (int)pid,
 				     WEXITSTATUS(status));
 			else
-				log_warnx("unkown child process pid=%d exited "
+				log_warnx("unknown child process pid=%d exited "
 				    "by signal %d", (int)pid,
 				    WTERMSIG(status));
 		}
