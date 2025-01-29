@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.58 2024/12/13 19:22:01 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.59 2025/01/29 13:14:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,7 @@ show_head(struct parse_result *res)
 			break;
 		printf("flags: "
 		    "* = Valid, > = Selected, I = via IBGP, A = Announced,\n"
-		    "       S = Stale, E = Error, F = Filtered\n");
+		    "       S = Stale, E = Error, F = Filtered, L = Leaked\n");
 		printf("origin validation state: "
 		    "N = not-found, V = valid, ! = invalid\n");
 		printf("aspa validation state: "
