@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.162 2025/01/22 10:52:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.163 2025/01/29 15:22:33 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -655,7 +655,11 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	flt.access_type = access_type;
 	flt.narrow = FALSE;		/* assume normal fault for now */
 	flt.wired = FALSE;		/* assume non-wired fault for now */
+#if notyet
+	flt.lower_lock_type = RW_READ;	/* shared lock for now */
+#else
 	flt.lower_lock_type = RW_WRITE;	/* exclusive lock for now */
+#endif
 
 	error = ERESTART;
 	while (error == ERESTART) { /* ReFault: */
@@ -757,6 +761,8 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		flt->access_type = flt->enter_prot; /* full access for wired */
 		/*  don't look for neighborhood * pages on "wire" fault */
 		flt->narrow = TRUE;
+		/* wiring pages requires a write lock. */
+		flt->lower_lock_type = RW_WRITE;
 	}
 
 	/* handle "needs_copy" case. */
@@ -843,6 +849,14 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		*ranons = NULL;	/* to be safe */
 	}
 
+	if ((flt->access_type & PROT_WRITE) != 0) {
+		/*
+		 * we are about to dirty the object and that
+		 * requires a write lock.
+		 */
+		flt->lower_lock_type = RW_WRITE;
+	}
+
 	/*
 	 * for MADV_SEQUENTIAL mappings we want to deactivate the back pages
 	 * now and then forget about them (for the rest of the fault).
@@ -853,12 +867,15 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			uvmfault_anonflush(*ranons, nback);
 
 		/*
-		 * flush object?
+		 * flush object?  change lock type to RW_WRITE, to avoid
+		 * excessive competition between read/write locks if many
+		 * threads doing "sequential access".
 		 */
 		if (uobj) {
 			voff_t uoff;
 
 			uoff = (flt->startva - ufi->entry->start) + ufi->entry->offset;
+			flt->lower_lock_type = RW_WRITE;
 			rw_enter(uobj->vmobjlock, RW_WRITE);
 			(void) uobj->pgops->pgo_flush(uobj, uoff, uoff +
 			    ((vsize_t)nback << PAGE_SHIFT), PGO_DEACTIVATE);
@@ -1228,6 +1245,35 @@ uvm_fault_lower_lookup(
 }
 
 /*
+ * uvm_fault_lower_upgrade: upgrade lower lock, reader -> writer
+ */
+static inline int
+uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+    struct vm_amap *amap, struct uvm_object *uobj)
+{
+	KASSERT(uobj != NULL);
+	KASSERT(flt->lower_lock_type == rw_status(uobj->vmobjlock));
+
+	/*
+	 * fast path.
+	 */
+	if (flt->lower_lock_type == RW_WRITE)
+		return 0;
+
+	/*
+	 * otherwise try for the upgrade.  if we don't get it, unlock
+	 * everything, restart the fault and next time around get a writer
+	 * lock.
+	 */
+	flt->lower_lock_type = RW_WRITE;
+	if (rw_enter(uobj->vmobjlock, RW_UPGRADE|RW_NOSLEEP)) {
+		uvmfault_unlockall(ufi, amap, uobj);
+		return ERESTART;
+	}
+	KASSERT(flt->lower_lock_type == rw_status(uobj->vmobjlock));
+	return 0;
+}
+/*
  * uvm_fault_lower: handle lower fault.
  *
  *	1. check uobj
@@ -1516,7 +1562,7 @@ uvm_fault_lower_io(
 	struct vm_page *pg;
 	boolean_t locked;
 	int gotpages, advice;
-	int result;
+	int error, result;
 	voff_t uoff;
 	vm_prot_t access_type;
 
@@ -1525,6 +1571,10 @@ uvm_fault_lower_io(
 	access_type = flt->access_type & MASK(ufi->entry);
 	advice = ufi->entry->advice;
 
+	/* Upgrade to a write lock if needed. */
+	error = uvm_fault_lower_upgrade(ufi, flt, amap, uobj);
+	if (error != 0)
+		return error;
 	uvmfault_unlockall(ufi, amap, NULL);
 
 	/* update rusage counters */
