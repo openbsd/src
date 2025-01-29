@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.31 2025/01/04 02:34:11 dlg Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.32 2025/01/29 15:10:09 mpi Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -110,6 +110,7 @@ struct rwlock {
 #define RW_WRITE		0x0001UL /* exclusive lock */
 #define RW_READ			0x0002UL /* shared lock */
 #define RW_DOWNGRADE		0x0004UL /* downgrade exclusive to shared */
+#define RW_UPGRADE		0x0005UL
 #define RW_OPMASK		0x0007UL
 
 #define RW_INTR			0x0010UL /* interruptible sleep */
