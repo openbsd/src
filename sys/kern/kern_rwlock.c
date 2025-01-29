@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.53 2025/01/04 02:34:11 dlg Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.54 2025/01/29 15:01:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -246,6 +246,7 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 	 * can progress. Hence no spinning if we hold the kernel lock.
 	 */
 	if (!_kernel_lock_held()) {
+		struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 		int spins;
 
 		/*
@@ -253,6 +254,7 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 		 * is acquired by writer.
 		 */
 
+		spc->spc_spinning++;
 		for (spins = 0; spins < RW_SPINS; spins++) {
 			CPU_BUSY_CYCLE();
 			owner = atomic_load_long(&rwl->rwl_owner);
@@ -261,10 +263,12 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 
 			owner = rw_cas(&rwl->rwl_owner, 0, self);
 			if (owner == 0) {
+				spc->spc_spinning--;
 				/* ok, we won now. */
 				goto locked;
 			}
 		}
+		spc->spc_spinning--;
 	}
 #endif
 
