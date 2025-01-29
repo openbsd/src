@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.26 2021/01/16 15:02:40 mvs Exp $
+.\" $OpenBSD: rwlock.9,v 1.27 2025/01/29 15:10:35 mpi Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2021 $
+.Dd $Mdocdate: January 29 2025 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -139,6 +139,10 @@ Acquire an exclusive lock.
 .It Dv RW_DOWNGRADE
 Safely release an exclusive lock and acquire a shared lock without
 letting other exclusive locks in between.
+.It Dv RW_UPGRADE
+Upgrade a shared lock into an exclusive one.
+Must be combined with
+.Dv RW_NOSLEEP .
 .It Dv RW_INTR
 When waiting for a lock, allow signals to interrupt the sleep.
 .It Dv RW_NOSLEEP
