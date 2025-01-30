@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.366 2025/01/27 08:20:56 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.367 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ restart:
 			} else if (addr == NULL)
 				snderr(EDESTADDRREQ);
 		}
-		space = sbspace_locked(so, &so->so_snd);
+		space = sbspace_locked(&so->so_snd);
 		if (flags & MSG_OOB)
 			space += 1024;
 		if (so->so_proto->pr_domain->dom_family == AF_UNIX) {
@@ -1606,7 +1606,7 @@ somove(struct socket *so, int wait)
 			maxreached = 1;
 		}
 	}
-	space = sbspace_locked(sosp, &sosp->so_snd);
+	space = sbspace_locked(&sosp->so_snd);
 	if (so->so_oobmark && so->so_oobmark < len &&
 	    so->so_oobmark < space + 1024)
 		space += 1024;
@@ -2420,7 +2420,7 @@ filt_sowrite(struct knote *kn, long hint)
 
 	MUTEX_ASSERT_LOCKED(&so->so_snd.sb_mtx);
 
-	kn->kn_data = sbspace_locked(so, &so->so_snd);
+	kn->kn_data = sbspace_locked(&so->so_snd);
 	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.151 2025/01/05 12:18:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.152 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ again:
 		flags &= ~TH_FIN;
 
 	mtx_enter(&so->so_rcv.sb_mtx);
-	win = sbspace_locked(so, &so->so_rcv);
+	win = sbspace_locked(&so->so_rcv);
 	rcv_hiwat = (long) so->so_rcv.sb_hiwat;
 	mtx_leave(&so->so_rcv.sb_mtx);
 

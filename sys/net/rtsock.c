@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.378 2025/01/24 09:16:55 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.379 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ route_rcvd(struct socket *so)
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	if (((rop->rop_flags & ROUTECB_FLAG_FLUSH) != 0) &&
-	    ((sbspace_locked(so, &so->so_rcv) == so->so_rcv.sb_hiwat)))
+	    ((sbspace_locked(&so->so_rcv) == so->so_rcv.sb_hiwat)))
 		rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
 	mtx_leave(&so->so_rcv.sb_mtx);
 }
@@ -603,7 +603,7 @@ rtm_sendup(struct socket *so, struct mbuf *m0)
 		return (ENOMEM);
 
 	mtx_enter(&so->so_rcv.sb_mtx);
-	if (sbspace_locked(so, &so->so_rcv) < (2 * MSIZE) ||
+	if (sbspace_locked(&so->so_rcv) < (2 * MSIZE) ||
 	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0)
 		send_desync = 1;
 	mtx_leave(&so->so_rcv.sb_mtx);

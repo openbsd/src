@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.109 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.110 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ filt_fifowrite(struct knote *kn, long hint)
 
 	MUTEX_ASSERT_LOCKED(&so->so_snd.sb_mtx);
 
-	kn->kn_data = sbspace_locked(so, &so->so_snd);
+	kn->kn_data = sbspace_locked(&so->so_snd);
 	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		rv = 1;

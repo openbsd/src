@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.206 2025/01/22 09:37:06 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.207 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 
 	if (tp) {
 		struct socket *so = tp->t_inpcb->inp_socket;
-		win = sbspace(so, &so->so_rcv);
+		win = sbspace(&so->so_rcv);
 		/*
 		 * If this is called with an unconnected
 		 * socket/tp/pcb (tp->pf is 0), we lose.

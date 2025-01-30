@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.240 2025/01/16 11:59:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.241 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -971,7 +971,7 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	if (so->so_options & SO_DEBUG)
 		ostate = tp->t_state;
 
-	if (sbspace(so, &so->so_snd) < -512) {
+	if (sbspace(&so->so_snd) < -512) {
 		error = ENOBUFS;
 		goto out;
 	}
@@ -1562,7 +1562,7 @@ tcp_update_sndspace(struct tcpcb *tp)
 	}
 
 	/* a writable socket must be preserved because of poll(2) semantics */
-	if (sbspace_locked(so, &so->so_snd) >= so->so_snd.sb_lowat) {
+	if (sbspace_locked(&so->so_snd) >= so->so_snd.sb_lowat) {
 		if (nmax < so->so_snd.sb_cc + so->so_snd.sb_lowat)
 			nmax = so->so_snd.sb_cc + so->so_snd.sb_lowat;
 		/* keep in sync with sbreserve() calculation */

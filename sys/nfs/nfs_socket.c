@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.154 2024/09/18 05:21:19 jsg Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.155 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1196,7 +1196,7 @@ nfs_timer(void *arg)
 		 * Set r_rtt to -1 in case we fail to send it now.
 		 */
 		rep->r_rtt = -1;
-		if (sbspace(so, &so->so_snd) >= rep->r_mreq->m_pkthdr.len &&
+		if (sbspace(&so->so_snd) >= rep->r_mreq->m_pkthdr.len &&
 		   ((nmp->nm_flag & NFSMNT_DUMBTIMR) ||
 		    (rep->r_flags & R_SENT) ||
 		    nmp->nm_sent < nmp->nm_cwnd) &&

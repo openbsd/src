@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.427 2025/01/30 08:52:33 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.428 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1024,7 +1024,7 @@ findpcb:
 			}
 		} else if (th->th_ack == tp->snd_una &&
 		    TAILQ_EMPTY(&tp->t_segq) &&
-		    tlen <= sbspace(so, &so->so_rcv)) {
+		    tlen <= sbspace(&so->so_rcv)) {
 			/*
 			 * This is a pure, in-sequence data packet
 			 * with nothing on the reassembly queue and
@@ -1088,7 +1088,7 @@ findpcb:
 	{
 		int win;
 
-		win = sbspace(so, &so->so_rcv);
+		win = sbspace(&so->so_rcv);
 		if (win < 0)
 			win = 0;
 		tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
@@ -3828,7 +3828,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	/*
 	 * Initialize some local state.
 	 */
-	win = sbspace(so, &so->so_rcv);
+	win = sbspace(&so->so_rcv);
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
 

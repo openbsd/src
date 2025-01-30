@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.143 2025/01/30 08:52:33 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.144 2025/01/30 14:40:50 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -250,7 +250,7 @@ sb_notify(struct sockbuf *sb)
  */
 
 static inline long
-sbspace_locked(struct socket *so, struct sockbuf *sb)
+sbspace_locked(struct sockbuf *sb)
 {
 	sbmtxassertlocked(sb);
 
@@ -258,12 +258,12 @@ sbspace_locked(struct socket *so, struct sockbuf *sb)
 }
 
 static inline long
-sbspace(struct socket *so, struct sockbuf *sb)
+sbspace(struct sockbuf *sb)
 {
 	long ret;
 
 	mtx_enter(&sb->sb_mtx);
-	ret = sbspace_locked(so, sb);
+	ret = sbspace_locked(sb);
 	mtx_leave(&sb->sb_mtx);
 
 	return ret;
@@ -293,7 +293,7 @@ static inline int
 sowriteable(struct socket *so)
 {
 	soassertlocked_readonly(so);
-	return ((sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat &&
+	return ((sbspace(&so->so_snd) >= so->so_snd.sb_lowat &&
 	    ((so->so_state & SS_ISCONNECTED) ||
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED)==0)) ||
 	    (so->so_snd.sb_state & SS_CANTSENDMORE) || so->so_error);
