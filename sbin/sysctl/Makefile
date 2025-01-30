@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.14 2019/07/03 10:32:57 dlg Exp $
+#	$OpenBSD: Makefile,v 1.15 2025/01/30 20:02:13 kn Exp $
 
 PROG=	sysctl
 MAN=	sysctl.8
-
-CPPFLAGS+=	-D_LIBKVM
 
 afterinstall:
 	ln -sf ../../sbin/sysctl ${DESTDIR}/usr/sbin
