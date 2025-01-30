@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.219 2024/08/14 14:40:46 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.220 2025/01/30 07:32:04 hastings Exp $
 
 machine		arm64
 maxusers	4
@@ -203,6 +203,9 @@ amlusbphy*	at fdt?
 hiclock*	at fdt? early 1
 hidwusb*	at fdt?
 hireset*	at fdt? early 1
+
+# MediaTek SoCs
+mtintc*		at fdt?
 
 # Marvell SoCs
 mvclock*	at fdt? early 1

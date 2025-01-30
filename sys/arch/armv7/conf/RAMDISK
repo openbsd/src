@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.130 2023/03/02 09:59:29 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.131 2025/01/30 07:32:17 hastings Exp $
 
 machine		armv7 arm
 
@@ -169,6 +169,9 @@ bcmsdhost*	at fdt?
 sdmmc*		at bcmsdhost?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+
+# MediaTek SoCs
+mtintc*		at fdt?
 
 # Marvell SoC
 mvacc*		at fdt? early 1

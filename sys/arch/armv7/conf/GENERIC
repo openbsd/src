@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.142 2023/03/12 10:50:06 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.143 2025/01/30 07:32:17 hastings Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -183,6 +183,9 @@ sdmmc*		at bcmsdhost?
 bcmtemp*	at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+
+# MediaTek SoCs
+mtintc*		at fdt?
 
 # Marvell SoC
 mvacc*		at fdt? early 1
