@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.192 2024/10/28 19:56:18 tb Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.193 2025/01/30 17:00:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <agentx.h>
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
@@ -224,6 +225,13 @@ main(int argc, char *argv[])
 
 	if (unveil("/", "rx") == -1)
 		err(1, "unveil /");
+	if (env->sc_conf.flags & F_AGENTX) {
+		if (unveil(env->sc_conf.agentx_path, "w") == -1)
+			err(1, "unveil %s", env->sc_conf.agentx_path);
+	} else {
+		if (unveil(AGENTX_MASTER_PATH, "w") == -1)
+			err(1, "unveil %s", env->sc_conf.agentx_path);
+	}
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 
