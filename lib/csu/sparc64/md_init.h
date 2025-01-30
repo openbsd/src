@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.10 2023/11/18 16:26:16 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.11 2025/01/30 21:41:37 kurt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #define MD_SECT_CALL_FUNC(section, func) \
 	__asm (".section "#section", \"ax\"	\n" \
-	"	call " #func ", 0		\n" \
+	"	call " #func "			\n" \
 	"	 nop				\n" \
 	"	.previous")
 
