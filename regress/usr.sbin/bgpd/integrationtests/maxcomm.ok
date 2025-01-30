@@ -1,5 +1,5 @@
 flags: * = Valid, > = Selected, I = via IBGP, A = Announced,
-       S = Stale, E = Error, F = Filtered
+       S = Stale, E = Error, F = Filtered, L = Leaked
 origin validation state: N = not-found, V = valid, ! = invalid
 aspa validation state: ? = unknown, V = valid, ! = invalid
 origin: i = IGP, e = EGP, ? = Incomplete
