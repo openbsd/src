@@ -1854,6 +1854,7 @@
 ./usr/share/man/man4/msts.4
 ./usr/share/man/man4/mtd.4
 ./usr/share/man/man4/mtdphy.4
+./usr/share/man/man4/mtintc.4
 ./usr/share/man/man4/mtio.4
 ./usr/share/man/man4/mtw.4
 ./usr/share/man/man4/mue.4
