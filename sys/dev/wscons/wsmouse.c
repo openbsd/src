@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.74 2024/12/30 02:46:00 guenther Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.75 2025/01/30 08:53:29 mvs Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -249,7 +249,6 @@ wsmouse_detach(struct device *self, int flags)
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wseventvar *evar;
 	int maj, mn;
-	int s;
 
 #if NWSMUX > 0
 	/* Tell parent mux we're leaving. */
@@ -262,18 +261,18 @@ wsmouse_detach(struct device *self, int flags)
 	/* If we're open ... */
 	evar = sc->sc_base.me_evp;
 	if (evar != NULL) {
-		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
+			mtx_enter(&evar->ws_mtx);
 			/* Wake everyone by generating a dummy event. */
 			if (++evar->ws_put >= WSEVENT_QSIZE)
 				evar->ws_put = 0;
-			WSEVENT_WAKEUP(evar);
+			mtx_leave(&evar->ws_mtx);
+			wsevent_wakeup(evar);
 			/* Wait for processes to go away. */
 			if (tsleep_nsec(sc, PZERO, "wsmdet", SEC_TO_NSEC(60)))
 				printf("wsmouse_detach: %s didn't detach\n",
 				       sc->sc_base.me_dv.dv_xname);
 		}
-		splx(s);
 	}
 
 	/* locate the major number */
@@ -326,7 +325,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	if (wsevent_init(evar))
+	if (wsevent_init_flags(evar, WSEVENT_MPSAFE))
 		return (EBUSY);
 
 	error = wsmousedoopen(sc, evar);
@@ -495,7 +494,9 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 	case FIOASYNC:
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
+		mtx_enter(&sc->sc_base.me_evp->ws_mtx);
 		sc->sc_base.me_evp->ws_async = *(int *)data != 0;
+		mtx_leave(&sc->sc_base.me_evp->ws_mtx);
 		return (0);
 
 	case FIOGETOWN:
@@ -955,7 +956,10 @@ wsmouse_evq_put(struct evq_access *evq, int ev_type, int ev_value)
 	struct wscons_event *ev;
 	int space;
 
+	mtx_enter(&evq->evar->ws_mtx);
 	space = evq->evar->ws_get - evq->put;
+	mtx_leave(&evq->evar->ws_mtx);
+
 	if (space != 1 && space != 1 - WSEVENT_QSIZE) {
 		ev = &evq->evar->ws_q[evq->put++];
 		evq->put %= WSEVENT_QSIZE;
@@ -1099,7 +1103,11 @@ void
 wsmouse_log_events(struct wsmouseinput *input, struct evq_access *evq)
 {
 	struct wscons_event *ev;
-	int n = evq->evar->ws_put;
+	int n;
+
+	mtx_enter(&evq->evar->ws_mtx);
+	n = evq->evar->ws_put;
+	mtx_leave(&evq->evar->ws_mtx);
 
 	if (n != evq->put) {
 		printf("[%s-ev][%04d]", DEVNAME(input), LOGTIME(&evq->ts));
@@ -1138,7 +1146,9 @@ wsmouse_input_sync(struct device *sc)
 	evq.evar = *input->evar;
 	if (evq.evar == NULL)
 		return;
+	mtx_enter(&evq.evar->ws_mtx);
 	evq.put = evq.evar->ws_put;
+	mtx_leave(&evq.evar->ws_mtx);
 	evq.result = EVQ_RESULT_NONE;
 	getnanotime(&evq.ts);
 
@@ -1181,8 +1191,10 @@ wsmouse_input_sync(struct device *sc)
 			if (input->flags & LOG_EVENTS) {
 				wsmouse_log_events(input, &evq);
 			}
+			mtx_enter(&evq.evar->ws_mtx);
 			evq.evar->ws_put = evq.put;
-			WSEVENT_WAKEUP(evq.evar);
+			mtx_leave(&evq.evar->ws_mtx);
+			wsevent_wakeup(evq.evar);
 		}
 	}
 
