@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.142 2025/01/27 14:57:13 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.143 2025/01/30 08:52:33 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ void	sbmtxassertlocked(struct sockbuf *);
  * Do we need to notify the other side when I/O is possible?
  */
 static inline int
-sb_notify(struct socket *so, struct sockbuf *sb)
+sb_notify(struct sockbuf *sb)
 {
 	int rv;
 

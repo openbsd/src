@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.426 2025/01/26 17:21:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.427 2025/01/30 08:52:33 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1011,7 +1011,7 @@ findpcb:
 					TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
 				tcp_update_sndspace(tp);
-				if (sb_notify(so, &so->so_snd)) {
+				if (sb_notify(&so->so_snd)) {
 					tp->t_flags |= TF_BLOCKOUTPUT;
 					sowwakeup(so);
 					tp->t_flags &= ~TF_BLOCKOUTPUT;
@@ -1761,7 +1761,7 @@ trimthenstep6:
 		}
 
 		tcp_update_sndspace(tp);
-		if (sb_notify(so, &so->so_snd)) {
+		if (sb_notify(&so->so_snd)) {
 			tp->t_flags |= TF_BLOCKOUTPUT;
 			sowwakeup(so);
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
