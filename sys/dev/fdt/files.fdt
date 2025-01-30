@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.204 2024/11/16 21:17:54 tobhe Exp $
+#	$OpenBSD: files.fdt,v 1.205 2025/01/30 00:26:44 hastings Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -335,6 +335,10 @@ file	dev/fdt/hireset.c		hireset
 device	hitemp
 attach	hitemp at fdt
 file	dev/fdt/hitemp.c		hitemp
+
+device	mtintc
+attach	mtintc at fdt
+file	dev/fdt/mtintc.c		mtintc
 
 device	rkanxdp
 attach	rkanxdp at fdt
