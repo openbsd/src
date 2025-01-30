@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.19 2024/05/24 13:32:03 op Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.20 2025/01/30 02:22:59 jsg Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -114,8 +114,10 @@ pwd_check(login_cap_t *lc, char *password)
 	switch (child = fork()) {
 	case -1:
 		warn("fork");
-		close(pipefds[0]);
-		close(pipefds[1]);
+		if (checker != NULL) {
+			close(pipefds[0]);
+			close(pipefds[1]);
+		}
 		goto out;
 	case 0:
 		(void)signal(SIGINT, SIG_DFL);
