@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.510 2025/01/27 15:22:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.511 2025/01/31 13:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,7 +197,7 @@ extern const struct aid aid_vals[];
 	{ AFI_IPv6, AF_INET6, SAFI_MPLSVPN, "IPv6 vpn" },	\
 	{ AFI_IPv4, AF_INET, SAFI_FLOWSPEC, "IPv4 flowspec" },	\
 	{ AFI_IPv6, AF_INET6, SAFI_FLOWSPEC, "IPv6 flowspec" },	\
-	{ AFI_L2VPN, AF_UNSPEC, SAFI_EVPN, "evpn" },		\
+	{ AFI_L2VPN, AF_UNSPEC, SAFI_EVPN, "L2VPN evpn" }	\
 }
 
 #define BGP_MPLS_BOS	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.477 2025/01/27 15:22:11 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.478 2025/01/31 13:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1718,14 +1718,14 @@ neighbor	: { curpeer = new_peer(); }
 			if (($3.prefix.aid == AID_INET && $3.len != 32) ||
 			    ($3.prefix.aid == AID_INET6 && $3.len != 128))
 				curpeer->conf.template = 1;
-			curpeer->conf.capabilities.mp[
-			    curpeer->conf.remote_addr.aid] = 1;
 			if (get_id(curpeer)) {
 				yyerror("get_id failed");
 				YYERROR;
 			}
 		}
 		    peeropts_h {
+			uint8_t		aid;
+
 			if (curpeer_filter[0] != NULL)
 				TAILQ_INSERT_TAIL(peerfilter_l,
 				    curpeer_filter[0], entry);
@@ -1734,6 +1734,25 @@ neighbor	: { curpeer = new_peer(); }
 				    curpeer_filter[1], entry);
 			curpeer_filter[0] = NULL;
 			curpeer_filter[1] = NULL;
+
+			/*
+			 * Check if any MP capa is set, if none is set and
+			 * and the default AID was not disabled via none then
+			 * enable it. Finally fixup the disabled AID.
+			 */
+			for (aid = AID_MIN; aid < AID_MAX; aid++) {
+				if (curpeer->conf.capabilities.mp[aid] > 0)
+					break;
+			}
+			if (aid == AID_MAX &&
+			    curpeer->conf.capabilities.mp[
+			    curpeer->conf.remote_addr.aid] != -1)
+				curpeer->conf.capabilities.mp[
+				    curpeer->conf.remote_addr.aid] = 1;
+			for (aid = AID_MIN; aid < AID_MAX; aid++) {
+				if (curpeer->conf.capabilities.mp[aid] == -1)
+					curpeer->conf.capabilities.mp[aid] = 0;
+			}
 
 			if (neighbor_consistent(curpeer) == -1) {
 				free(curpeer);
@@ -1938,7 +1957,7 @@ peeropts	: REMOTEAS as4number	{
 					if (aid2afi(aid, &afi, &safi) == -1 ||
 					    afi != $2)
 						continue;
-					curpeer->conf.capabilities.mp[aid] = 0;
+					curpeer->conf.capabilities.mp[aid] = -1;
 				}
 			} else {
 				if (afi2aid($2, $3, &aid) == -1) {
@@ -4686,7 +4705,8 @@ new_peer(void)
 	p = alloc_peer();
 
 	if (curgroup != NULL) {
-		memcpy(p, curgroup, sizeof(struct peer));
+		p->conf = curgroup->conf;
+		p->auth_conf = curgroup->auth_conf;
 		p->conf.groupid = curgroup->conf.id;
 	}
 	return (p);
