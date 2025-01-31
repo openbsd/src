@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.28 2023/09/17 14:50:51 cheloha Exp $ */
+/* $OpenBSD: agtimer.c,v 1.29 2025/01/31 16:46:41 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -324,7 +324,6 @@ void
 agtimer_startclock(void)
 {
 	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
-	uint64_t kctl;
 	uint32_t reg;
 
 	if (!CPU_IS_PRIMARY(curcpu()))
@@ -341,8 +340,7 @@ agtimer_startclock(void)
 	clockintr_trigger();
 
 	/* enable userland access to virtual counter */
-	kctl = READ_SPECIALREG(CNTKCTL_EL1);
-	WRITE_SPECIALREG(CNTKCTL_EL1, kctl | CNTKCTL_EL0VCTEN);
+	WRITE_SPECIALREG(CNTKCTL_EL1, CNTKCTL_EL0VCTEN);
 }
 
 void
