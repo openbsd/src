@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.175 2025/01/31 13:40:33 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.176 2025/01/31 13:49:18 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -1135,7 +1135,7 @@ sbdrop(struct sockbuf *sb, int len)
  * and move the next record to the front.
  */
 void
-sbdroprecord(struct socket *so, struct sockbuf *sb)
+sbdroprecord(struct sockbuf *sb)
 {
 	struct mbuf *m, *mn;
 

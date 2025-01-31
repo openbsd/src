@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.368 2025/01/31 13:40:33 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.369 2025/01/31 13:49:18 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1188,7 +1188,7 @@ dontblock:
 	if (m && pr->pr_flags & PR_ATOMIC) {
 		flags |= MSG_TRUNC;
 		if ((flags & MSG_PEEK) == 0)
-			(void) sbdroprecord(so, &so->so_rcv);
+			sbdroprecord(&so->so_rcv);
 	}
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == NULL) {
@@ -1603,7 +1603,7 @@ somove(struct socket *so, int wait)
 	while (m && m->m_type == MT_CONTROL)
 		m = m->m_next;
 	if (m == NULL) {
-		sbdroprecord(so, &so->so_rcv);
+		sbdroprecord(&so->so_rcv);
 		if (so->so_proto->pr_flags & PR_WANTRCVD) {
 			mtx_leave(&sosp->so_snd.sb_mtx);
 			mtx_leave(&so->so_rcv.sb_mtx);
