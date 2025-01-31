@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.428 2025/01/30 14:40:50 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.429 2025/01/31 11:48:18 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -962,7 +962,7 @@ findpcb:
 				ND6_HINT(tp);
 
 				mtx_enter(&so->so_snd.sb_mtx);
-				sbdrop(so, &so->so_snd, acked);
+				sbdrop(&so->so_snd, acked);
 				mtx_leave(&so->so_snd.sb_mtx);
 
 				/*
@@ -1746,12 +1746,12 @@ trimthenstep6:
 			else
 				tp->snd_wnd = 0;
 			mtx_enter(&so->so_snd.sb_mtx);
-			sbdrop(so, &so->so_snd, (int)so->so_snd.sb_cc);
+			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
 			mtx_leave(&so->so_snd.sb_mtx);
 			ourfinisacked = 1;
 		} else {
 			mtx_enter(&so->so_snd.sb_mtx);
-			sbdrop(so, &so->so_snd, acked);
+			sbdrop(&so->so_snd, acked);
 			mtx_leave(&so->so_snd.sb_mtx);
 			if (tp->snd_wnd > acked)
 				tp->snd_wnd -= acked;

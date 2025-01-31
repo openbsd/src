@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.173 2025/01/31 07:53:10 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.174 2025/01/31 11:48:18 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -1039,7 +1039,7 @@ sbflush(struct socket *so, struct sockbuf *sb)
 	rw_assert_unlocked(&sb->sb_lock);
 
 	while (sb->sb_mbcnt)
-		sbdrop(so, sb, (int)sb->sb_cc);
+		sbdrop(sb, (int)sb->sb_cc);
 
 	KASSERT(sb->sb_cc == 0);
 	KASSERT(sb->sb_datacc == 0);
@@ -1052,7 +1052,7 @@ sbflush(struct socket *so, struct sockbuf *sb)
  * Drop data from (the front of) a sockbuf.
  */
 void
-sbdrop(struct socket *so, struct sockbuf *sb, int len)
+sbdrop(struct sockbuf *sb, int len)
 {
 	struct mbuf *m, *mn;
 	struct mbuf *next;
