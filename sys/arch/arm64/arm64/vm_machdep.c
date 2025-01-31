@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2023/06/10 19:30:48 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2025/01/31 20:49:25 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -88,6 +88,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
+
+	pmap_activate(p2);
 
 	tf = (struct trapframe *)((u_long)p2->p_addr
 	    + USPACE

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.26 2025/01/18 16:35:30 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.27 2025/01/31 20:49:25 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -69,6 +69,7 @@ struct pmap {
 	uint64_t pm_guarded;
 	int have_4_level_pt;
 	int pm_privileged;
+	volatile int pm_active;
 	int pm_refs;				/* ref count */
 	struct pmap_statistics  pm_stats;	/* pmap statistics */
 	uint64_t pm_apiakey[2];

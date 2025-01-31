@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.107 2025/01/25 12:29:35 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.108 2025/01/31 20:49:25 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -41,6 +41,9 @@ static inline void
 ttlb_flush(pmap_t pm, vaddr_t va)
 {
 	vaddr_t resva;
+
+	if (!pm->pm_active)
+		return;
 
 	resva = ((va >> PAGE_SHIFT) & ((1ULL << 44) - 1));
 	if (pm == pmap_kernel()) {
@@ -1300,12 +1303,14 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	vp1 = (struct pmapvp1 *)pt1pa;
 	pmap_kernel()->pm_vp.l1 = (struct pmapvp1 *)va;
 	pmap_kernel()->pm_privileged = 1;
+	pmap_kernel()->pm_active = 1;
 	pmap_kernel()->pm_guarded = ATTR_GP;
 	pmap_kernel()->pm_asid = 0;
 
 	mtx_init(&pmap_tramp.pm_mtx, IPL_VM);
 	pmap_tramp.pm_vp.l1 = (struct pmapvp1 *)va + 1;
 	pmap_tramp.pm_privileged = 1;
+	pmap_tramp.pm_active = 1;
 	pmap_tramp.pm_guarded = ATTR_GP;
 	pmap_tramp.pm_asid = 0;
 
@@ -1478,6 +1483,7 @@ pmap_activate(struct proc *p)
 {
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
+	atomic_inc_int(&pm->pm_active);
 	if (p == curproc && pm != curcpu()->ci_curpm)
 		pmap_setttb(p);
 }
@@ -1488,6 +1494,18 @@ pmap_activate(struct proc *p)
 void
 pmap_deactivate(struct proc *p)
 {
+	pmap_t pm = p->p_vmspace->vm_map.pmap;
+
+	KASSERT(p == curproc);
+
+	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
+	__asm volatile("isb");
+
+	if (atomic_dec_int_nv(&pm->pm_active) > 0)
+		return;
+
+	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
+	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
 }
 
 /*
