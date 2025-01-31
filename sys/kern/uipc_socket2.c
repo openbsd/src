@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.172 2025/01/30 14:40:50 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.173 2025/01/31 07:53:10 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -789,7 +789,7 @@ sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 		 */
 		sb->sb_lastrecord = m;
 	}
-	sbcompress(so, sb, m, n);
+	sbcompress(sb, m, n);
 	SBLASTRECORDCHK(sb, "sbappend 2");
 }
 
@@ -807,7 +807,7 @@ sbappendstream(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 
 	SBLASTMBUFCHK(sb, __func__);
 
-	sbcompress(so, sb, m, sb->sb_mbtail);
+	sbcompress(sb, m, sb->sb_mbtail);
 
 	sb->sb_lastrecord = sb->sb_mb;
 	SBLASTRECORDCHK(sb, __func__);
@@ -865,7 +865,7 @@ sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
 		m0->m_flags &= ~M_EOR;
 		m->m_flags |= M_EOR;
 	}
-	sbcompress(so, sb, m, m0);
+	sbcompress(sb, m, m0);
 	SBLASTRECORDCHK(sb, "sbappendrecord 2");
 }
 
@@ -977,8 +977,7 @@ sbappendcontrol(struct socket *so, struct sockbuf *sb, struct mbuf *m0,
  * is null, the buffer is presumed empty.
  */
 void
-sbcompress(struct socket *so, struct sockbuf *sb, struct mbuf *m,
-    struct mbuf *n)
+sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 {
 	int eor = 0;
 	struct mbuf *o;
