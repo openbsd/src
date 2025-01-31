@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.146 2025/01/31 11:48:18 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.147 2025/01/31 13:40:33 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -436,6 +436,7 @@ void	solock_pair(struct socket *, struct socket *);
 void	sounlock(struct socket *);
 void	sounlock_shared(struct socket *);
 void	sounlock_nonet(struct socket *);
+void	sounlock_pair(struct socket *, struct socket *);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);

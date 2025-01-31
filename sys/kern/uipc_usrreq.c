@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.214 2025/01/25 22:06:41 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.215 2025/01/31 13:40:33 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -924,22 +924,15 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 		}
 
 		so2 = so3;
-	} else {
-		if (so2 != so)
-			solock_pair(so, so2);
-		else
-			solock(so);
-	}
+	} else
+		solock_pair(so, so2);
 
 	error = unp_connect2(so, so2);
-
-	sounlock(so);
 
 	/*
 	 * `so2' can't be PRU_ABORT'ed concurrently
 	 */
-	if (so2 != so)
-		sounlock(so2);
+	sounlock_pair(so, so2);
 put:
 	vput(vp);
 unlock:
