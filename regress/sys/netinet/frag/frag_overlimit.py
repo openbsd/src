@@ -11,8 +11,6 @@ print("ping fragment at index boundary that cannot be requeued")
 #                                              |XXXX-----|
 #                                    |--------------|
 
-# this should trigger "fragment requeue limit exceeded" log in kernel
-
 import os
 from itertools import chain
 from addr import *

@@ -9,8 +9,6 @@ print("ping fragment that overlaps the first fragment at index boundary")
 #                                              |XXXX-----|
 #                                    |--------------|
 
-# this should trigger "frag index %d, new %d" log in kernel
-
 import os
 from addr import *
 from scapy.all import *
@@ -25,6 +23,7 @@ fragnum=int(boundary/fragsize)
 packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     ICMP(type='echo-request', id=eid)/ \
     (int((boundary+8)/len(payload)) * payload)
+packet_length=len(packet)
 frag=[]
 fid=pid & 0xffff
 for i in range(fragnum-1):
@@ -60,6 +59,15 @@ for a in ans:
 		if id != eid:
 			print("WRONG ECHO REPLY ID")
 			exit(2)
+	if a and a.type == ETH_P_IP and \
+	    a.payload.proto == 1 and \
+	    a.payload.frag > 0 and \
+	    a.payload.flags == '':
+		len=(a.payload.frag<<3)+a.payload.len
+		print("len=%d" % (len))
+		if len != packet_length:
+			print("WRONG ECHO REPLY LENGTH")
+			exit(1)
 		exit(0)
 print("NO ECHO REPLY")
 exit(1)

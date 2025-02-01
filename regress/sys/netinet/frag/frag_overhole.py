@@ -1,14 +1,15 @@
 #!/usr/local/bin/python3
 
-print("ping fragment that overlaps fragment at index boundary and replace it")
+print("ping fragment at index boundary which modifies pf hole counter")
 
 #                               index boundary 4096 |
 # |--------------|
 #                 ....
 #                     |--------------|
-#                                              |XXXX-----|
-#                                    |--------------|
-#                                                   |--------------|
+#                                    |----------|
+#                                               |XXXX----------|
+#                                          |XXXX----|
+#                                                               |---|
 
 # this should trigger "frag tail overlap %d" and "frag head overlap %d"
 
@@ -25,7 +26,7 @@ boundary=4096
 fragnum=int(boundary/fragsize)
 packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     ICMP(type='echo-request', id=eid)/ \
-    (int((boundary+fragsize)/len(payload)) * payload)
+    ((int((boundary+fragsize)/len(payload)) + 1) * payload)
 packet_length=len(packet)
 frag=[]
 fid=pid & 0xffff
@@ -34,13 +35,16 @@ for i in range(fragnum-1):
 	    frag=(i*fragsize)>>3, flags='MF')/
 	    bytes(packet)[20+i*fragsize:20+(i+1)*fragsize])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=(boundary-8)>>3, flags='MF')/
-    (dummy+bytes(packet)[20+boundary:20+boundary+8]))
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
     frag=(boundary-fragsize)>>3, flags='MF')/
-    bytes(packet)[20+boundary-fragsize:20+boundary])
+    bytes(packet)[20+boundary-fragsize:20+boundary-len(dummy)])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=(boundary)>>3)/bytes(packet)[20+boundary:])
+    frag=(boundary-len(dummy))>>3, flags='MF')/
+    (dummy+bytes(packet)[20+boundary:20+boundary+fragsize]))
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+    frag=(boundary-8-len(dummy))>>3, flags='MF')/
+    (dummy+bytes(packet)[20+boundary-8:20+boundary]))
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+    frag=(boundary+fragsize)>>3)/bytes(packet)[20+boundary+fragsize:])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)
