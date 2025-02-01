@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2025/02/01 12:21:52 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2025/02/01 12:26:50 jsing Exp $
 
 PROG=	renegotiation_test
 LDADD=	-lssl -lcrypto
@@ -11,8 +11,8 @@ REGRESS_TARGETS= \
 
 regress-renegotiation-test: ${PROG}
 	./renegotiation_test \
-	    ${.CURDIR}/../../libssl/certs/server.pem \
-	    ${.CURDIR}/../../libssl/certs/server.pem \
-	    ${.CURDIR}/../../libssl/certs/ca.pem
+	    ${.CURDIR}/../../libssl/certs/server1-rsa.pem \
+	    ${.CURDIR}/../../libssl/certs/server1-rsa-chain.pem \
+	    ${.CURDIR}/../../libssl/certs/ca-root-rsa.pem
 
 .include <bsd.regress.mk>
