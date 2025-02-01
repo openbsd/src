@@ -1,4 +1,4 @@
-/* $OpenBSD: renegotiation_test.c,v 1.1 2025/02/01 12:21:52 jsing Exp $ */
+/* $OpenBSD: renegotiation_test.c,v 1.2 2025/02/01 14:13:17 jsing Exp $ */
 /*
  * Copyright (c) 2020,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,7 @@ const char *server_key_file;
 int debug = 0;
 
 int tls_client_alert;
+int tls_server_alert;
 
 static void
 hexdump(const unsigned char *buf, size_t len)
@@ -113,9 +114,16 @@ ssl_error(SSL *ssl, const char *name, const char *desc, int ssl_ret)
 	} else if (ssl_err == SSL_ERROR_SYSCALL && errno == 0) {
 		/* Yup, this is apparently a thing... */
 	} else {
-		if (tls_client_alert != 0 &&
-		    ERR_GET_REASON(ERR_peek_error()) >= SSL_AD_REASON_OFFSET)
+		if (tls_client_alert >> 8 == SSL3_AL_FATAL ||
+		    tls_server_alert >> 8 == SSL3_AL_FATAL) {
+			ERR_clear_error();
 			return 0;
+		}
+		if (tls_client_alert >> 8 == SSL3_AL_WARNING ||
+		    tls_server_alert >> 8 == SSL3_AL_WARNING) {
+			ERR_clear_error();
+			return 1;
+		}
 		fprintf(stderr, "FAIL: %s %s failed - ssl err = %d, errno = %d\n",
 		    name, desc, ssl_err, errno);
 		ERR_print_errors_fp(stderr);
@@ -236,7 +244,9 @@ struct tls_reneg_test {
 	long ssl_server_options;
 	int renegotiate_client;
 	int renegotiate_server;
-	int want_alert;
+	int client_ignored;
+	int want_client_alert;
+	int want_server_alert;
 	int want_failure;
 };
 
@@ -270,7 +280,7 @@ static const struct tls_reneg_test tls_reneg_tests[] = {
 		.ssl_max_proto_version = TLS1_2_VERSION,
 		.ssl_server_options = SSL_OP_NO_CLIENT_RENEGOTIATION,
 		.renegotiate_server = 1,
-		.want_alert = 1,
+		.want_client_alert = SSL3_AL_FATAL << 8 | SSL_AD_NO_RENEGOTIATION,
 	},
 	{
 		.desc = "TLSv1.2 - Client renegotiation not permitted, client "
@@ -278,7 +288,7 @@ static const struct tls_reneg_test tls_reneg_tests[] = {
 		.ssl_max_proto_version = TLS1_2_VERSION,
 		.ssl_server_options = SSL_OP_NO_CLIENT_RENEGOTIATION,
 		.renegotiate_client = 1,
-		.want_alert = 1,
+		.want_client_alert = SSL3_AL_FATAL << 8 | SSL_AD_NO_RENEGOTIATION,
 	},
 	{
 		.desc = "TLSv1.3 - No renegotiation supported, no renegotiation",
@@ -310,6 +320,17 @@ tls_client_info_callback(const SSL *ssl, int where, int value)
 		    SSL_alert_type_string_long(value),
 		    SSL_alert_desc_string_long(value));
 		tls_client_alert = value;
+	}
+}
+
+static void
+tls_server_info_callback(const SSL *ssl, int where, int value)
+{
+	if (where == SSL_CB_READ_ALERT) {
+		fprintf(stderr, "INFO: server read %s alert - %s\n",
+		    SSL_alert_type_string_long(value),
+		    SSL_alert_desc_string_long(value));
+		tls_server_alert = value;
 	}
 }
 
@@ -370,15 +391,19 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 		goto failure;
 
 	SSL_set_options(client, trt->ssl_client_options);
+	SSL_set_info_callback(client, tls_client_info_callback);
 
 	if ((server = tls_server(client_wbio, server_wbio)) == NULL)
 		goto failure;
 
 	SSL_set_options(server, trt->ssl_server_options);
+	SSL_set_info_callback(server, tls_server_info_callback);
+
 	if (!SSL_set_max_proto_version(server, trt->ssl_max_proto_version))
 		goto failure;
 
-	SSL_set_info_callback(client, tls_client_info_callback);
+	tls_client_alert = 0;
+	tls_server_alert = 0;
 
 	if (!do_client_server_loop(client, do_connect, server, do_accept)) {
 		fprintf(stderr, "FAIL: client and server handshake failed\n");
@@ -424,33 +449,48 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 			goto failure;
 		}
 
-		if (!tls_check_reneg(client, server, 1, 1, 1, 1))
+		if (!tls_check_reneg(client, server, (trt->client_ignored == 0), 1,
+		    (trt->client_ignored == 0), 1))
 			goto failure;
 
 		if (!do_client_server_loop(client, do_write, server, do_read)) {
-			if (!trt->want_alert) {
+			if (!trt->want_client_alert && !trt->want_server_alert) {
 				fprintf(stderr, "FAIL: client write and server read failed\n");
 				goto failure;
 			}
-			if (tls_client_alert != (SSL3_AL_FATAL << 8 |
-			    SSL_AD_NO_RENEGOTIATION)) {
+			if (tls_client_alert != trt->want_client_alert) {
 				fprintf(stderr, "FAIL: client alert = %x, want %x\n",
-				    tls_client_alert, SSL3_AL_FATAL << 8 |
-				    SSL_AD_NO_RENEGOTIATION);
+				    tls_client_alert, trt->want_client_alert);
+				goto failure;
+			}
+			if (tls_server_alert != trt->want_server_alert) {
+				fprintf(stderr, "FAIL: server alert = %x, want %x\n",
+				    tls_server_alert, trt->want_server_alert);
+				goto failure;
 			}
 			goto done;
 		}
-		if (trt->want_alert) {
-			fprintf(stderr, "FAIL: server renegotiation should have alerted\n");
+		if (tls_client_alert != trt->want_client_alert) {
+			fprintf(stderr, "FAIL: client alert = %x, want %x\n",
+			    tls_client_alert, trt->want_client_alert);
+			goto failure;
+		}
+		if (tls_server_alert != trt->want_server_alert) {
+			fprintf(stderr, "FAIL: server alert = %x, want %x\n",
+			    tls_server_alert, trt->want_server_alert);
 			goto failure;
 		}
 
-		if (!tls_check_reneg(client, server, 0, 0, 1, 1))
+		if (!tls_check_reneg(client, server, 0, (trt->client_ignored != 0),
+		    (trt->client_ignored == 0), 1))
 			goto failure;
 	}
 
 	SSL_clear_num_renegotiations(client);
 	SSL_clear_num_renegotiations(server);
+
+	tls_client_alert = 0;
+	tls_server_alert = 0;
 
 	if (trt->renegotiate_client) {
 		/*
@@ -469,6 +509,9 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 			goto failure;
 		}
 
+		if (!tls_check_reneg(client, server, 1, 0, 0, 0))
+			goto failure;
+
 		if (!do_client_server_loop(client, do_read, server, do_write)) {
 			fprintf(stderr, "FAIL: client read and server write failed\n");
 			goto failure;
@@ -478,20 +521,30 @@ tls_reneg_test(const struct tls_reneg_test *trt)
 			goto failure;
 
 		if (!do_client_server_loop(client, do_write, server, do_read)) {
-			if (!trt->want_alert) {
+			if (!trt->want_client_alert && !trt->want_server_alert) {
 				fprintf(stderr, "FAIL: client write and server read failed\n");
 				goto failure;
 			}
-			if (tls_client_alert != (SSL3_AL_FATAL << 8 |
-			    SSL_AD_NO_RENEGOTIATION)) {
+			if (tls_client_alert != trt->want_client_alert) {
 				fprintf(stderr, "FAIL: client alert = %x, want %x\n",
-				    tls_client_alert, SSL3_AL_FATAL << 8 |
-				    SSL_AD_NO_RENEGOTIATION);
+				    tls_client_alert, trt->want_client_alert);
+				goto failure;
+			}
+			if (tls_server_alert != trt->want_server_alert) {
+				fprintf(stderr, "FAIL: server alert = %x, want %x\n",
+				    tls_server_alert, trt->want_server_alert);
+				goto failure;
 			}
 			goto done;
 		}
-		if (trt->want_alert) {
-			fprintf(stderr, "FAIL: server renegotiation should have alerted\n");
+		if (tls_client_alert != trt->want_client_alert) {
+			fprintf(stderr, "FAIL: client alert = %x, want %x\n",
+			    tls_client_alert, trt->want_client_alert);
+			goto failure;
+		}
+		if (tls_server_alert != trt->want_server_alert) {
+			fprintf(stderr, "FAIL: server alert = %x, want %x\n",
+			    tls_server_alert, trt->want_server_alert);
 			goto failure;
 		}
 
