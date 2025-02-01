@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2024/04/22 07:31:54 anton Exp $
+#	$OpenBSD: Makefile,v 1.58 2025/02/01 12:27:11 jsing Exp $
 
 SUBDIR += api
 SUBDIR += asn1
@@ -13,6 +13,7 @@ SUBDIR += pqueue
 SUBDIR += quic
 SUBDIR += record
 SUBDIR += record_layer
+SUBDIR += renegotiation
 SUBDIR += server
 SUBDIR += shutdown
 SUBDIR += ssl
