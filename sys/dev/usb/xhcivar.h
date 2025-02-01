@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.16 2024/08/17 01:55:03 jsg Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.17 2025/02/01 22:46:34 patrick Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -133,8 +133,24 @@ int	xhci_intr(void *);
 int	xhci_detach(struct device *, int);
 int	xhci_activate(struct device *, int);
 
-#define	XREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
-#define	XREAD2(sc, a) bus_space_read_2((sc)->iot, (sc)->ioh, (a))
+static inline uint8_t
+xhci_read_1(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
+{
+	uint32_t reg;
+	reg = bus_space_read_4(iot, ioh, offset & ~3);
+	return (reg >> ((offset & 3) * 8)) & 0xff;
+}
+
+static inline uint16_t
+xhci_read_2(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
+{
+	uint32_t reg;
+	reg = bus_space_read_4(iot, ioh, offset & ~2);
+	return (reg >> ((offset & 2) * 8)) & 0xffff;
+}
+
+#define	XREAD1(sc, a) xhci_read_1((sc)->iot, (sc)->ioh, (a))
+#define	XREAD2(sc, a) xhci_read_2((sc)->iot, (sc)->ioh, (a))
 #define	XREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (a))
 #define	XWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (a), (x))
 #define	XWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (a), (x))
