@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.136 2025/02/02 11:21:45 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.137 2025/02/02 13:36:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -673,7 +673,10 @@ cpu_identify(struct cpu_info *ci)
 		printf("\n%s: mismatched ID_AA64MMFR0_EL1",
 		    ci->ci_dev->dv_xname);
 	}
-	if (READ_SPECIALREG(id_aa64mmfr1_el1) != cpu_id_aa64mmfr1) {
+	id = READ_SPECIALREG(id_aa64mmfr1_el1);
+	/* Allow SpecSEI to be different. */
+	id &= ~ID_AA64MMFR1_SPECSEI_MASK;
+	if (id != cpu_id_aa64mmfr1) {
 		printf("\n%s: mismatched ID_AA64MMFR1_EL1",
 		    ci->ci_dev->dv_xname);
 	}
@@ -1431,6 +1434,14 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		cpu_id_aa64mmfr2 = READ_SPECIALREG(id_aa64mmfr2_el1);
 		cpu_id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
 		cpu_id_aa64pfr1 = READ_SPECIALREG(id_aa64pfr1_el1);
+
+		/*
+		 * The SpecSEI "feature" isn't relevant for userland.
+		 * So it is fine if this field differs between CPU
+		 * cores.  Mask off this field to prevent exporting it
+		 * to userland.
+		 */
+		cpu_id_aa64mmfr1 &= ~ID_AA64MMFR1_SPECSEI_MASK;
 
 		/*
 		 * The CSV2/CSV3 "features" are handled on a
