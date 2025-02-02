@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.29 2025/01/26 23:09:48 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.30 2025/02/02 08:28:14 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -365,6 +365,7 @@
 #define  TPB_TX_BUF_SCP_INS_EN			(1 << 2)
 #define  TPB_TX_BUF_CLK_GATE_EN			(1 << 5)
 #define  TPB_TX_BUF_TC_MODE_EN			(1 << 8)
+#define  TPB_TX_BUF_TC_Q_RAND_MAP_EN		(1 << 9)
 
 
 /* TPB_TXB_BUFSIZE_REG[AQ_TRAFFICCLASS_NUM] 0x7910-7990 */
@@ -467,7 +468,7 @@
 
 #define AQ2_RPF_REDIR2_REG			0x54c8
 #define  AQ2_RPF_REDIR2_INDEX			(1 << 12)
-#define  AQ2_RPF_REDIR2_HASHTYPE		0x00000100
+#define  AQ2_RPF_REDIR2_HASHTYPE		0x000001FF
 #define  AQ2_RPF_REDIR2_HASHTYPE_NONE		0
 #define  AQ2_RPF_REDIR2_HASHTYPE_IP		(1 << 0)
 #define  AQ2_RPF_REDIR2_HASHTYPE_TCP4		(1 << 1)
@@ -478,7 +479,16 @@
 #define  AQ2_RPF_REDIR2_HASHTYPE_IP6EX		(1 << 6)
 #define  AQ2_RPF_REDIR2_HASHTYPE_TCP6EX		(1 << 7)
 #define  AQ2_RPF_REDIR2_HASHTYPE_UDP6EX		(1 << 8)
-#define  AQ2_RPF_REDIR2_HASHTYPE_ALL		0x00000100
+#define  AQ2_RPF_REDIR2_HASHTYPE_ALL		0x000001FF
+
+#define AQ2_RX_Q_TC_MAP_REG(i)			(0x5900 + (i) * 4)
+#define AQ2_TX_Q_TC_MAP_REG(i)			(0x799c + (i) * 4)
+
+#define AQ2_RPF_RSS_REDIR_MAX			64
+#define AQ2_RPF_RSS_REDIR_REG(tc, i)		\
+	 (0x6200 + (0x100 * ((tc) >> 2)) + (i) * 4)
+#define AQ2_RPF_RSS_REDIR_TC_MASK(tc)		\
+	 (0x1f << (5 * ((tc) & 3)))
 
 #define AQ2_RPF_REC_TAB_ENABLE_REG		0x6ff0
 #define  AQ2_RPF_REC_TAB_ENABLE_MASK		0x0000ffff
@@ -1282,8 +1292,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map_msix(pa, 0, &ih) == 0) {
 		int nmsix = pci_intr_msix_count(pa);
-		/* don't do rss on aq2 yet */
-		if (aqp->aq_hwtype == HWTYPE_AQ1 && nmsix > 1) {
+		if (nmsix > 1) {
 			nmsix--;
 			sc->sc_intrmap = intrmap_create(&sc->sc_dev,
 			    nmsix, AQ_MAXQ, INTRMAP_POWEROF2);
@@ -2803,6 +2812,26 @@ aq_hw_qos_set(struct aq_softc *sc)
 		AQ_WRITE_REG_BIT(sc, RPF_RPB_RX_TC_UPT_REG,
 		    RPF_RPB_RX_TC_UPT_MASK(i_priority), 0);
 	}
+
+	/* ring to TC mapping */
+	if (HWTYPE_AQ2_P(sc)) {
+		AQ_WRITE_REG_BIT(sc, TPB_TX_BUF_REG,
+		    TPB_TX_BUF_TC_Q_RAND_MAP_EN, 1);
+
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(0), 0x00000000);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(1), 0x00000000);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(2), 0x01010101);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(3), 0x01010101);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(4), 0x02020202);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(5), 0x02020202);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(6), 0x03030303);
+		AQ_WRITE_REG(sc, AQ2_TX_Q_TC_MAP_REG(7), 0x03030303);
+
+		AQ_WRITE_REG(sc, AQ2_RX_Q_TC_MAP_REG(0), 0x00000000);
+		AQ_WRITE_REG(sc, AQ2_RX_Q_TC_MAP_REG(1), 0x11111111);
+		AQ_WRITE_REG(sc, AQ2_RX_Q_TC_MAP_REG(2), 0x22222222);
+		AQ_WRITE_REG(sc, AQ2_RX_Q_TC_MAP_REG(3), 0x33333333);
+	}
 }
 
 int
@@ -2816,6 +2845,19 @@ aq_init_rss(struct aq_softc *sc)
 	
 	if (sc->sc_nqueues == 1)
 		return 0;
+
+	if (HWTYPE_AQ2_P(sc)) {
+		AQ_WRITE_REG_BIT(sc, AQ2_RPF_REDIR2_REG, AQ2_RPF_REDIR2_INDEX, 0);
+		for (i = 0; i < AQ2_RPF_RSS_REDIR_MAX; i++) {
+			int tc;
+			int q;
+			for (tc = 0; tc < 4; tc++) {
+				q = (tc * 8) + (i % sc->sc_nqueues);
+				AQ_WRITE_REG_BIT(sc, AQ2_RPF_RSS_REDIR_REG(tc, i),
+				    AQ2_RPF_RSS_REDIR_TC_MASK(tc), q);
+			}
+		}
+	}
 
 	/* rss key is composed of 32 bit registers */
 	stoeplitz_to_key(rss_key, sizeof(rss_key));
