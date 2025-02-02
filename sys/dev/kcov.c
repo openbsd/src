@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.50 2024/11/10 10:04:33 jsg Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.51 2025/02/02 21:05:12 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -34,7 +34,7 @@
 #include <uvm/uvm_extern.h>
 
 #define KCOV_BUF_MEMB_SIZE	sizeof(uintptr_t)
-#define KCOV_BUF_MAX_NMEMB	(256 << 10)
+#define KCOV_BUF_MAX_NMEMB	(512 << 10)
 
 #define KCOV_CMP_CONST		0x1
 #define KCOV_CMP_SIZE(x)	((x) << 1)
