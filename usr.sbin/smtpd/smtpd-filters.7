@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.13 2024/11/05 19:36:53 jmc Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.14 2025/02/02 18:19:42 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 5 2024 $
+.Dd $Mdocdate: February 2 2025 $
 .Dt SMTPD-FILTERS 7
 .Os
 .Sh NAME
@@ -465,7 +465,7 @@ Fields are separated by the
 .Dq |
 character.
 .Bd -literal -offset indent
-filter|0.7|1576146008.006099|smtp-in|connect|7641df9771b4ed00|1ef1c203cc576e5d|mail.openbsd.org|pass|199.185.178.25:33174|45.77.67.80:25
+filter|0.7|1576146008.006099|smtp-in|connect|7641df9771b4ed00|1ef1c203cc576e5d|mail.openbsd.org|199.185.178.25
 .Ed
 .Pp
 The format consists of a protocol prefix containing the stream,
@@ -484,7 +484,7 @@ filter request,
 also separated by
 .Dq | :
 .Bd -literal -offset indent
-mail.openbsd.org|pass|199.185.178.25:33174|45.77.67.80:25
+mail.openbsd.org|199.185.178.25
 .Ed
 .Pp
 Unlike with report events,
@@ -553,9 +553,16 @@ filter-dataline|7641df9771b4ed00|1ef1c203cc576e5d|.
 .Pp
 The list of events and event-specific parameters for smtp-in are as follows:
 .Bl -tag -width Ds
-.It Ic connect : Ar rdns fcrdns src dest
+.It Ic connect : Ar rdns src
 This request is emitted after connection,
 before the banner is displayed.
+.Pp
+.Ar src
+contains either the IP address of the source
+(a.b.c.d for IPv4 or [x:x:x:x:x:x:x:x] IPv6)
+or
+.Dq local
+(for UNIX sockets).
 .It Ic helo : Ar identity
 This request is emitted after the client has emitted
 .Dq HELO .
