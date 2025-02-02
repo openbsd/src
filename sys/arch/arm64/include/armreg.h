@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.40 2025/01/25 12:29:35 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.41 2025/02/02 11:21:45 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -453,7 +453,7 @@
 #define	 ID_AA64ISAR1_LS64_ACCDATA	(0x3ULL << ID_AA64ISAR1_LS64_SHIFT)
 
 /* ID_AA64ISAR2_EL1 */
-#define	ID_AA64ISAR2_MASK		0x00ff0000f0ff00ffULL
+#define	ID_AA64ISAR2_MASK		0x00ff0000f0ffffffULL
 #define	ID_AA64ISAR2_WFXT_SHIFT		0
 #define	ID_AA64ISAR2_WFXT_MASK		(0xfULL << ID_AA64ISAR2_WFXT_SHIFT)
 #define	ID_AA64ISAR2_WFXT(x)		((x) & ID_AA64ISAR2_WFXT_MASK)
