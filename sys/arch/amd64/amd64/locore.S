@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.149 2025/02/02 05:41:16 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.150 2025/02/02 05:45:20 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -902,8 +902,8 @@ KTEXT_PAGE_START
 	 * checks the compiled locore.o to verify that the iretq instructions
 	 * line up (that being the most critical part of what matters).  If
 	 * the intr_user_exit sequence changes such that the correct value is
-	 * _not_ two and builds fail, then appending that chunk above and get
-	 * the correct new value do use here.  :(
+	 * _not_ "2" and builds fail, then append that chunk above and get the
+	 * correct new value to use here.  :(
 	 */
 	.space	2, 0xcc
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
