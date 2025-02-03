@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.57 2024/10/25 03:42:06 deraadt Exp $
+# $OpenBSD: sysupgrade.sh,v 1.58 2025/02/03 18:55:55 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -220,7 +220,7 @@ Directory does not contain SHA256.sig. Continue without verification = yes
 __EOT
 
 if ! ${KEEP}; then
-	CLEAN=$(echo SHA256 ${SETS} | sed -e 's/ /,/g')
+	CLEAN=$(echo BUILDINFO SHA256 ${SETS} | sed -e 's/ /,/g')
 	cat <<__EOT > /etc/rc.firsttime
 rm -f ${SETSDIR}/{${CLEAN}}
 __EOT
