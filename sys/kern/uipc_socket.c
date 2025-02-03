@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.369 2025/01/31 13:49:18 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.370 2025/02/03 09:00:55 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2444,9 +2444,9 @@ filt_sowmodify(struct kevent *kev, struct knote *kn)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv;
 
-	sofilt_lock(so, &so->so_snd);
+	mtx_enter(&so->so_snd.sb_mtx);
 	rv = knote_modify(kev, kn);
-	sofilt_unlock(so, &so->so_snd);
+	mtx_leave(&so->so_snd.sb_mtx);
 
 	return (rv);
 }
@@ -2457,9 +2457,9 @@ filt_sowprocess(struct knote *kn, struct kevent *kev)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv;
 
-	sofilt_lock(so, &so->so_snd);
+	mtx_enter(&so->so_snd.sb_mtx);
 	rv = knote_process(kn, kev);
-	sofilt_unlock(so, &so->so_snd);
+	mtx_leave(&so->so_snd.sb_mtx);
 
 	return (rv);
 }
