@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.157 2025/01/25 02:06:40 yasuoka Exp $ */
+/*	$OpenBSD: pipex.c,v 1.158 2025/02/03 09:44:30 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1274,6 +1274,7 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 {
 	struct pipex_session *session;
 	struct pipex_pppoe_header pppoe;
+	struct ether_header eh;
 
 	/* short packet */
 	if (m0->m_pkthdr.len < (sizeof(struct ether_header) + sizeof(pppoe)))
@@ -1289,8 +1290,14 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found (id=%d)",
 		    __func__, pppoe.session_id));
 #endif
-	if (session && session->proto.pppoe.over_ifidx !=
-	    m0->m_pkthdr.ph_ifidx) {
+	m_copydata(m0, 0, sizeof(struct ether_header), &eh);
+	if (session && (session->proto.pppoe.over_ifidx !=
+	    m0->m_pkthdr.ph_ifidx || memcmp(
+	    ((struct ether_header *)session->peer.sa.sa_data)->ether_dhost,
+	    eh.ether_shost, ETHER_ADDR_LEN) != 0)) {
+		PIPEX_DBG((NULL, LOG_DEBUG,
+		    "<%s> received packet from wrong host (id=%d)", __func__,
+		    pppoe.session_id));
 		pipex_rele_session(session);
 		session = NULL;
 	}
@@ -1518,7 +1525,8 @@ pipex_pptp_lookup_session(struct mbuf *m0)
 		PIPEX_DBG((NULL, LOG_DEBUG,
 		    "<%s> the source address of the session is not matched",
 		    __func__));
-		goto not_ours;
+		pipex_rele_session(session);
+		session = NULL;
 	}
 
 	return (session);
@@ -2036,7 +2044,8 @@ pipex_l2tp_lookup_session(struct mbuf *m0, int off, struct sockaddr *sasrc)
 		PIPEX_DBG((NULL, LOG_DEBUG,
 		    "<%s> the source address of the session is not matched",
 		    __func__));
-		goto not_ours;
+		pipex_rele_session(session);
+		session = NULL;
 	}
 
 	return (session);
