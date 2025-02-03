@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.25 2021/03/29 03:54:40 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.26 2025/02/03 07:46:06 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementation.
- * $Id: pppoed.c,v 1.25 2021/03/29 03:54:40 yasuoka Exp $
+ * $Id: pppoed.c,v 1.26 2025/02/03 07:46:06 yasuoka Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -671,8 +671,14 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	if (session_id != 0) {
 		hl = hash_lookup(_this->self->session_hash,
 		    (void *)(intptr_t)session_id);
-		if (hl != NULL)
+		if (hl != NULL) {
+			if (memcmp(((pppoe_session *)hl->item)->ether_addr,
+			    shost, ETHER_ADDR_LEN) != 0) {
+				reason = "received packet from wrong host.";
+				goto bad_packet;
+			}
 			session = (pppoe_session *)hl->item;
+		}
 	}
 	if (!is_disc) {
 		if (session != NULL)

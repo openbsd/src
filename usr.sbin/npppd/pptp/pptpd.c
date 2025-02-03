@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.34 2022/12/28 21:30:17 jmc Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.35 2025/02/03 07:46:06 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.34 2022/12/28 21:30:17 jmc Exp $ */
+/* $Id: pptpd.c,v 1.35 2025/02/03 07:46:06 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.34 2022/12/28 21:30:17 jmc Exp $
+ * $Id: pptpd.c,v 1.35 2025/02/03 07:46:06 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -786,12 +786,22 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 	/* route to pptp_call */
 	call_id = grehdr->call_id;
 
-	hl = hash_lookup(_this->call_id_map, CALL_ID_KEY(call_id, listener->index));
+	hl = hash_lookup(_this->call_id_map, CALL_ID_KEY(call_id,
+	    listener->index));
 	if (hl == NULL) {
 		reason = "Received GRE packet has unknown call_id";
 		goto bad_gre;
 	}
 	call = hl->item;
+
+	if (!(peer->sa_family == AF_INET &&
+	    call->ctrl->peer.ss_family == AF_INET &&
+	    ((struct sockaddr_in *)peer)->sin_addr.s_addr ==
+	    ((struct sockaddr_in *)&call->ctrl->peer)->sin_addr.s_addr)) {
+		reason = "Received GRE packet from invalid host";
+		goto bad_gre;
+	}
+
 	pptp_call_gre_input(call, seq, ack, input_flags, pkt, lpkt);
 
 	return;
