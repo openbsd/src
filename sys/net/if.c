@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.725 2025/01/25 10:53:36 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.726 2025/02/03 08:58:52 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -975,7 +975,7 @@ if_output_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 
 	ifiq = ifp->if_iqs[flow % ifp->if_niqs];
 
-	return (ifiq_enqueue(ifiq, m) == 0 ? 0 : ENOBUFS);
+	return (ifiq_enqueue_qlim(ifiq, m, 8192) == 0 ? 0 : ENOBUFS);
 }
 
 void
