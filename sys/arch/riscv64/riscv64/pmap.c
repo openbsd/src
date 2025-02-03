@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2025/01/19 20:18:38 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2025/02/03 17:59:40 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -659,10 +659,6 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 	pmap_pte_remove(pted, pm != pmap_kernel());
 	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
 
-	if (pted->pted_va & PTED_VA_EXEC_M) {
-		pted->pted_va &= ~PTED_VA_EXEC_M;
-	}
-
 	if (PTED_MANAGED(pted))
 		pmap_remove_pv(pted);
 
@@ -761,9 +757,6 @@ pmap_kremove_pg(vaddr_t va)
 	 */
 	pmap_pte_remove(pted, 0);
 	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
-
-	if (pted->pted_va & PTED_VA_EXEC_M)
-		pted->pted_va &= ~PTED_VA_EXEC_M;
 
 	if (PTED_MANAGED(pted))
 		pmap_remove_pv(pted);

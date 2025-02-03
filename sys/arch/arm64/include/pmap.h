@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.27 2025/01/31 20:49:25 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.28 2025/02/03 17:59:40 jca Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -48,7 +48,6 @@
 
 #define PTED_VA_MANAGED_M	(PMAP_MD3)
 #define PTED_VA_WIRED_M		(PMAP_MD3 << 1)
-#define PTED_VA_EXEC_M		(PMAP_MD3 << 2)
 
 
 #if defined(_KERNEL) && !defined(_LOCORE)
