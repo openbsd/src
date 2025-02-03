@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.32 2024/07/01 07:09:07 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.33 2025/02/03 08:26:51 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.32 2024/07/01 07:09:07 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.33 2025/02/03 08:26:51 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -192,11 +192,16 @@ ppp_set_tunnel_label(npppd_ppp *_this, char *buf, int lbuf)
 {
 	int flag, af;
 	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+	u_char *ea;
 
 	hbuf[0] = 0;
 	sbuf[0] = 0;
 	af = ((struct sockaddr *)&_this->phy_info)->sa_family;
-	if (af < AF_MAX) {
+	if (af == AF_LINK) {
+		ea = LLADDR((struct sockaddr_dl *)&_this->phy_info);
+		snprintf(buf, lbuf, "%02x:%02x:%02x:%02x:%02x:%02x", *ea,
+		    *(ea + 1), *(ea + 2), *(ea + 3), *(ea + 4), *(ea + 5));
+	} else if (af < AF_MAX) {
 		flag = NI_NUMERICHOST;
 		if (af == AF_INET || af == AF_INET6)
 			flag |= NI_NUMERICSERV;
