@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.32 2025/02/04 12:47:58 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.33 2025/02/04 20:22:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,10 +156,11 @@ BN_div_reciprocal(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 		recp->shift = i;
 	}
 
-	/* d := |round(round(m / 2^BN_num_bits(N)) * recp->Nr / 2^(i - BN_num_bits(N)))|
-	 *    = |round(round(m / 2^BN_num_bits(N)) * round(2^i / N) / 2^(i - BN_num_bits(N)))|
-	 *   <= |(m / 2^BN_num_bits(N)) * (2^i / N) * (2^BN_num_bits(N) / 2^i)|
-	 *    = |m/N|
+	/*
+	 * d := |((m >> BN_num_bits(N)) * recp->Nr)     >> (i - BN_num_bits(N))|
+	 *    = |((m >> BN_num_bits(N)) * (1 << i) / N) >> (i - BN_num_bits(N))|
+	 *   <= |(m / 2^BN_num_bits(N)) * (2^i / N) * 2^BN_num_bits(N) / 2^i |
+	 *    = |m / N|
 	 */
 	if (!BN_rshift(a, m, recp->num_bits))
 		goto err;
