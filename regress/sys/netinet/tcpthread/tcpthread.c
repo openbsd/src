@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpthread.c,v 1.3 2025/01/13 12:55:13 bluhm Exp $	*/
+/*	$OpenBSD: tcpthread.c,v 1.4 2025/02/04 22:00:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
@@ -114,9 +114,15 @@ connect_socket(volatile int *connectp, struct sockaddr *addr)
 	    IPPROTO_TCP);
 	if (sock < 0)
 		err(1, "%s: socket", __func__);
-	if (connect(sock, addr, addr->sa_len) < 0 &&
-	    errno != EINPROGRESS) {
-		err(1, "%s: connect %d", __func__, sock);
+	if (connect(sock, addr, addr->sa_len) < 0) {
+		if (errno == EADDRNOTAVAIL) {
+			/* kernel did run out of ports, ignore error */
+			if (close(sock) < 0)
+				err(1, "%s: close %d", __func__, sock);
+			return 0;
+		}
+		if (errno != EINPROGRESS)
+			err(1, "%s: connect %d", __func__, sock);
 	}
 	if ((int)atomic_cas_uint(connectp, -1, sock) != -1) {
 		/* another thread has connect slot n */
