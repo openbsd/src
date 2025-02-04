@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.30 2025/01/22 12:53:16 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.31 2025/02/04 05:09:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,34 +139,33 @@ BN_div_reciprocal(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 	int i, j, ret = 0;
 	BIGNUM *a, *b, *d, *r;
 
-	BN_CTX_start(ctx);
-	a = BN_CTX_get(ctx);
-	b = BN_CTX_get(ctx);
-	if (dv != NULL)
-		d = dv;
-	else
-		d = BN_CTX_get(ctx);
-	if (rem != NULL)
-		r = rem;
-	else
-		r = BN_CTX_get(ctx);
-	if (a == NULL || b == NULL || d == NULL || r == NULL)
-		goto err;
-
 	if (BN_ucmp(m, recp->N) < 0) {
-		BN_zero(d);
-		if (!bn_copy(r, m)) {
-			BN_CTX_end(ctx);
-			return 0;
-		}
-		BN_CTX_end(ctx);
+		if (dv != NULL)
+			BN_zero(dv);
+		if (rem != NULL)
+			return bn_copy(rem, m);
 		return 1;
 	}
 
-	/* We want the remainder
-	 * Given input of ABCDEF / ab
-	 * we need multiply ABCDEF by 3 digests of the reciprocal of ab
-	 *
+	BN_CTX_start(ctx);
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if ((d = dv) == NULL)
+		d = BN_CTX_get(ctx);
+	if (d == NULL)
+		goto err;
+
+	if ((r = rem) == NULL)
+		r = BN_CTX_get(ctx);
+	if (r == NULL)
+		goto err;
+
+	/*
+	 * We want the remainder. Given input of ABCDEF / ab we need to
+	 * multiply ABCDEF by 3 digits of the reciprocal of ab.
 	 */
 
 	/* i := max(BN_num_bits(m), 2*BN_num_bits(N)) */
