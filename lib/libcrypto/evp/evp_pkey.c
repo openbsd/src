@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.32 2024/08/31 10:25:38 tb Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.33 2025/02/04 04:51:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/x509.h>
@@ -84,7 +85,8 @@ EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
 
 	if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid))) {
 		EVPerror(EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
-		i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
+		if (i2t_ASN1_OBJECT(obj_tmp, sizeof(obj_tmp), algoid) == 0)
+			(void)strlcpy(obj_tmp, "unknown", sizeof(obj_tmp));
 		ERR_asprintf_error_data("TYPE=%s", obj_tmp);
 		goto error;
 	}
