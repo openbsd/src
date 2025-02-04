@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.92 2025/01/27 15:22:11 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.93 2025/02/04 18:16:56 denis Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -49,8 +49,76 @@ log_addr(const struct bgpd_addr *addr)
 		snprintf(buf, sizeof(buf), "%s %s", log_rd(addr->rd),
 		    log_sockaddr(sa, len));
 		return (buf);
+	case AID_EVPN:
+		return log_evpnaddr(addr, sa, len);
+		break;
 	}
 	return ("???");
+}
+
+static const char *
+log_mac(const uint8_t mac[ETHER_ADDR_LEN])
+{
+	static char buf[18];
+
+	snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x", mac[0],
+	    mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+	return (buf);
+}
+
+static const uint8_t zero_esi[ESI_ADDR_LEN];
+
+static const char *
+log_esi(const uint8_t esi[ESI_ADDR_LEN])
+{
+	static char buf[30];
+
+	if (memcmp(esi, zero_esi, sizeof(zero_esi)) == 0)
+		return ("");
+
+	snprintf(buf, sizeof(buf),
+	    "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x", esi[0],
+	    esi[1], esi[2], esi[3], esi[4], esi[5], esi[6], esi[7], esi[8],
+	    esi[9]);
+
+	return (buf);
+}
+
+const char *
+log_evpnaddr(const struct bgpd_addr *addr, struct sockaddr *sa,
+    socklen_t salen)
+{
+	static char	buf[138];
+	uint32_t	vni;
+	uint8_t		len;
+
+	switch(addr->evpn.type) {
+	case EVPN_ROUTE_TYPE_2:
+		memcpy(&vni, addr->labelstack, addr->labellen);
+		snprintf(buf, sizeof(buf), "[2]:[%s]:[%s]:[%d]:[48]:[%s]",
+		    log_rd(addr->rd),log_esi(addr->evpn.esi), htonl(vni)>>8,
+		    log_mac(addr->evpn.mac));
+		if (sa != NULL) {
+			len = strlen(buf);
+			snprintf(buf+len, sizeof(buf)-len, ":[%d]:[%s]",
+			    sa->sa_family == AF_INET ? 32 : 128,
+			    log_sockaddr(sa, salen));
+		}
+		break;
+	case EVPN_ROUTE_TYPE_3:
+		if (sa != NULL) {
+	  		memcpy(&vni, addr->labelstack, addr->labellen);
+			snprintf(buf, sizeof(buf), "[3]:[%s]:[%d]:[%s]",
+			    log_rd(addr->rd),
+			    sa->sa_family == AF_INET ? 32 : 128,
+			    log_sockaddr(sa, salen));
+		}
+		break;
+	default:
+		break;
+	}
+	return (buf);
 }
 
 const char *
@@ -818,6 +886,108 @@ nlri_get_vpn6(struct ibuf *buf, struct bgpd_addr *prefix,
 	return (0);
 }
 
+int
+nlri_get_evpn(struct ibuf *buf, struct bgpd_addr *prefix,
+    uint8_t *prefixlen)
+{
+	struct ibuf	evpnbuf;
+	uint8_t		nlrilen, type, pfxlen = 0, maclen = 0;
+
+	if (ibuf_get_n8(buf, &type) == -1)
+		return (-1);
+	if (ibuf_get_n8(buf, &nlrilen) == -1)
+		return (-1);
+
+	memset(prefix, 0, sizeof(struct bgpd_addr));
+	prefix->aid = AID_EVPN;
+
+	switch (type) {
+	case EVPN_ROUTE_TYPE_2:
+        	if (ibuf_get_ibuf(buf, nlrilen, &evpnbuf) == -1)
+	                return (-1); 
+		prefix->evpn.type = EVPN_ROUTE_TYPE_2;
+		/* RD */
+		if (ibuf_get_h64(&evpnbuf, &prefix->rd) == -1)
+			return (-1);
+		/* ESI */
+		if (ibuf_get(&evpnbuf, &prefix->evpn.esi,
+		    sizeof(prefix->evpn.esi)) == -1)
+			return (-1);
+		/* Ethernet Tag */
+		if (ibuf_get_h32(&evpnbuf, &prefix->evpn.ethtag) == -1)
+			return (-1);
+		/* MAC length */
+		if (ibuf_get_n8(&evpnbuf, &maclen) == -1)
+			return (-1);
+		if (maclen != 48)
+			return (-1);
+		/* MAC address */
+		if (ibuf_get(&evpnbuf, &prefix->evpn.mac,
+		    sizeof(prefix->evpn.mac)) == -1)
+			return (-1);
+		/* Prefix length */
+		if (ibuf_get_n8(&evpnbuf, &pfxlen) == -1)
+			return (-1);
+		/* Destination */
+		if (pfxlen == 0) {
+			/* nothing */
+		} else if (pfxlen == 32) {
+			prefix->evpn.aid = AID_INET;
+			if (ibuf_get(&evpnbuf, &prefix->evpn.v4,
+			    sizeof(prefix->evpn.v4)) == -1)
+				return (-1);
+		} else if (pfxlen == 128) {
+			prefix->evpn.aid = AID_INET6;
+			if (ibuf_get(&evpnbuf, &prefix->evpn.v6,
+			    sizeof(prefix->evpn.v6)) == -1)
+				return (-1);
+		} else
+			return (-1);
+		/* VNI */
+		if (ibuf_size(&evpnbuf) != 3 && ibuf_size(&evpnbuf) != 6)
+			return (-1);
+		prefix->labellen = ibuf_size(&evpnbuf);
+		if (ibuf_get(&evpnbuf, prefix->labelstack,
+		    prefix->labellen) == -1)
+			return (-1);
+		break;
+	case EVPN_ROUTE_TYPE_3:
+        	if (ibuf_get_ibuf(buf, nlrilen, &evpnbuf) == -1)
+	                return (-1); 
+		prefix->evpn.type = EVPN_ROUTE_TYPE_3;
+		/* RD */
+		if (ibuf_get_h64(&evpnbuf, &prefix->rd) == -1)
+			return (-1);
+		/* Ethernet Tag */
+		if (ibuf_get_h32(&evpnbuf, &prefix->evpn.ethtag) == -1)
+			return (-1);
+		/* Prefix length */
+		if (ibuf_get_n8(&evpnbuf, &pfxlen) == -1)
+			return (-1);
+		/* Destination */
+		if (pfxlen == 32) {
+			prefix->evpn.aid = AID_INET;
+			if (ibuf_get(&evpnbuf, &prefix->evpn.v4,
+			    sizeof(prefix->evpn.v4)) == -1)
+				return (-1);
+		} else if (pfxlen == 128) {
+			prefix->evpn.aid = AID_INET6;
+			if (ibuf_get(&evpnbuf, &prefix->evpn.v6,
+			    sizeof(prefix->evpn.v6)) == -1)
+				return (-1);
+		} else
+			return (-1);
+		if (ibuf_size(&evpnbuf) != 0)
+			return (-1);
+		break;
+	default:
+		return (-1);
+	}
+
+	*prefixlen = pfxlen;
+	return (0);
+}
+
 static in_addr_t
 prefixlen2mask(uint8_t prefixlen)
 {
@@ -1003,6 +1173,26 @@ af2aid(sa_family_t af, uint8_t safi, uint8_t *aid)
 	return (-1);
 }
 
+static socklen_t
+addr2sa_in6(struct sockaddr_in6 *sin6, struct in6_addr in6, uint16_t port,
+    uint32_t scope_id)
+{
+	sin6->sin6_family = AF_INET6;
+	memcpy(&sin6->sin6_addr, &in6, sizeof(sin6->sin6_addr));
+	sin6->sin6_port = htons(port);
+	sin6->sin6_scope_id = scope_id;
+	return (sizeof(struct sockaddr_in6));
+}
+
+static socklen_t
+addr2sa_in(struct sockaddr_in *sin, struct in_addr in, uint16_t port)
+{
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = in.s_addr;
+	sin->sin_port = htons(port);
+	return (sizeof(struct sockaddr_in));
+}
+
 /*
  * Convert a struct bgpd_addr into a struct sockaddr. For VPN addresses
  * the included label stack is ignored and needs to be handled by the caller.
@@ -1021,22 +1211,26 @@ addr2sa(const struct bgpd_addr *addr, uint16_t port, socklen_t *len)
 	switch (addr->aid) {
 	case AID_INET:
 	case AID_VPN_IPv4:
-		sa_in->sin_family = AF_INET;
-		sa_in->sin_addr.s_addr = addr->v4.s_addr;
-		sa_in->sin_port = htons(port);
-		*len = sizeof(struct sockaddr_in);
+		*len = addr2sa_in(sa_in, addr->v4, port);
 		break;
 	case AID_INET6:
 	case AID_VPN_IPv6:
-		sa_in6->sin6_family = AF_INET6;
-		memcpy(&sa_in6->sin6_addr, &addr->v6,
-		    sizeof(sa_in6->sin6_addr));
-		sa_in6->sin6_port = htons(port);
-		sa_in6->sin6_scope_id = addr->scope_id;
-		*len = sizeof(struct sockaddr_in6);
+		*len = addr2sa_in6(sa_in6, addr->v6, port, addr->scope_id);
+		break;
+	case AID_EVPN:
+		if (addr->evpn.aid == AID_INET)
+			*len = addr2sa_in(sa_in, addr->evpn.v4, port);
+		else if (addr->evpn.aid == AID_INET6)
+			*len = addr2sa_in6(sa_in6, addr->evpn.v6, port,
+			    addr->scope_id);
+		else {
+			*len = 0;
+			return (NULL);
+		}
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
+	default:
 		return (NULL);
 	}
 

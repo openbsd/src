@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.56 2024/12/30 17:14:02 denis Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.57 2025/02/04 18:16:56 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -95,6 +95,26 @@ struct pt_entry_vpn6 {
 	uint8_t				pad2;
 };
 
+struct pt_entry_evpn {
+	RB_ENTRY(pt_entry)		pt_e;
+	uint8_t				aid;
+	uint8_t				prefixlen;
+	uint16_t			len;
+	uint32_t			refcnt;
+	uint64_t			rd;
+	uint32_t			ethtag;
+	uint8_t				esi[ESI_ADDR_LEN];
+	uint8_t				mac[ETHER_ADDR_LEN];
+	uint8_t				labelstack[6];
+	uint8_t				labellen;
+	uint8_t				type;
+	uint8_t				vpnaid;
+	union {
+		struct in_addr	prefix4;
+		struct in6_addr	prefix6;
+	};
+};
+
 struct pt_entry_flow {
 	RB_ENTRY(pt_entry)		pt_e;
 	uint8_t				aid;
@@ -130,6 +150,7 @@ void
 pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 {
 	struct pt_entry_flow	*pflow;
+	struct pt_entry_evpn	*evpn;
 
 	memset(addr, 0, sizeof(struct bgpd_addr));
 	addr->aid = pte->aid;
@@ -156,6 +177,25 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 		memcpy(addr->labelstack,
 		    ((struct pt_entry_vpn6 *)pte)->labelstack,
 		    addr->labellen);
+		break;
+	case AID_EVPN:
+		evpn = (struct pt_entry_evpn *)pte;
+		addr->evpn.type = evpn->type;
+		addr->rd = evpn->rd;
+		addr->evpn.ethtag = evpn->ethtag;
+		addr->labellen = evpn->labellen;
+		addr->evpn.aid = evpn->vpnaid;
+		memcpy(addr->labelstack, evpn->labelstack, addr->labellen);
+		memcpy(addr->evpn.esi, evpn->esi, sizeof(evpn->esi));
+		memcpy(addr->evpn.mac, evpn->mac, sizeof(evpn->mac));
+		switch (evpn->vpnaid) {
+		case AID_INET:
+			addr->evpn.v4 = evpn->prefix4;
+			break;
+		case AID_INET6:
+			addr->evpn.v6 = evpn->prefix6;
+			break;
+		}
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
@@ -192,6 +232,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 	static struct pt_entry6		pte6;
 	static struct pt_entry_vpn4	pte_vpn4;
 	static struct pt_entry_vpn6	pte_vpn6;
+	static struct pt_entry_evpn	pte_evpn;
 
 	switch (prefix->aid) {
 	case AID_INET:
@@ -242,6 +283,37 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		memcpy(pte_vpn6.labelstack, prefix->labelstack,
 		    prefix->labellen);
 		return ((struct pt_entry *)&pte_vpn6);
+	case AID_EVPN:
+		memset(&pte_evpn, 0, sizeof(pte_evpn));
+		pte_evpn.len = sizeof(pte_evpn);
+		pte_evpn.refcnt = UINT32_MAX;
+		switch (prefix->evpn.aid) {
+		case AID_UNSPEC:
+			/* See rfc7432 section 7.2 */
+			break;
+		case AID_INET:
+			pte_evpn.prefix4 = prefix->evpn.v4;
+			break;
+		case AID_INET6:
+			pte_evpn.prefix6 = prefix->evpn.v6;
+			break;
+		default:
+			fatalx("pt_fill: bad EVPN prefixlen");
+		}
+		pte_evpn.aid = prefix->aid;
+		pte_evpn.vpnaid = prefix->evpn.aid;
+		pte_evpn.prefixlen = prefixlen;
+		pte_evpn.type = prefix->evpn.type;
+		pte_evpn.rd = prefix->rd;
+		pte_evpn.ethtag = prefix->evpn.ethtag;
+		pte_evpn.labellen = prefix->labellen;
+		memcpy(pte_evpn.labelstack, prefix->labelstack,
+		    pte_evpn.labellen);
+		memcpy(pte_evpn.esi, prefix->evpn.esi,
+		    sizeof(prefix->evpn.esi));
+		memcpy(pte_evpn.mac, prefix->evpn.mac,
+		    sizeof(prefix->evpn.mac));
+		return ((struct pt_entry *)&pte_evpn);
 	default:
 		fatalx("pt_fill: unknown af");
 	}
@@ -357,6 +429,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	const struct pt_entry_vpn4	*va4, *vb4;
 	const struct pt_entry_vpn6	*va6, *vb6;
 	const struct pt_entry_flow	*af, *bf;
+	const struct pt_entry_evpn	*ea, *eb;
 	int				 i;
 
 	if (a->aid > b->aid)
@@ -425,6 +498,47 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 		if (va6->prefixlen < vb6->prefixlen)
 			return (-1);
 		return (0);
+	case AID_EVPN:
+		/* XXXX Need different comparator for different types */
+		ea = (const struct pt_entry_evpn *)a;
+		eb = (const struct pt_entry_evpn *)b;
+		if (ea->ethtag > eb->ethtag)
+			return (1);
+		if (ea->ethtag < eb->ethtag)
+			return (-1);
+		/* MAC length is always 48 */
+		i = memcmp(&ea->mac, &eb->mac, sizeof(ea->mac));
+		if (i > 0)
+			return (1);
+		if (i < 0)
+			return (-1);
+		if (ea->prefixlen > eb->prefixlen)
+			return (1);
+		if (ea->prefixlen < eb->prefixlen)
+			return (-1);
+		switch (ea->vpnaid) {
+		case AID_UNSPEC:
+			break;
+		case AID_INET:
+			i = memcmp(&ea->prefix4, &eb->prefix4,
+			    sizeof(struct in_addr));
+			if (i > 0)
+				return (1);
+			if (i < 0)
+				return (-1);
+			break;
+		case AID_INET6:
+			i = memcmp(&ea->prefix6, &eb->prefix6,
+			    sizeof(struct in6_addr));
+			if (i > 0)
+				return (1);
+			if (i < 0)
+				return (-1);
+			break;
+		default:
+			fatalx("pt_prefix_cmp: unknown evpn af %d", ea->vpnaid);
+		}
+		return (0);
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
 		af = (const struct pt_entry_flow *)a;
@@ -433,7 +547,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 		    bf->flow, bf->len - PT_FLOW_SIZE,
 		    a->aid == AID_FLOWSPECv6);
 	default:
-		fatalx("pt_prefix_cmp: unknown af");
+		fatalx("pt_prefix_cmp: unknown af %d", a->aid);
 	}
 	return (-1);
 }
@@ -474,9 +588,10 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 	struct pt_entry_vpn4	*pvpn4 = (struct pt_entry_vpn4 *)pte;
 	struct pt_entry_vpn6	*pvpn6 = (struct pt_entry_vpn6 *)pte;
 	struct pt_entry_flow	*pflow = (struct pt_entry_flow *)pte;
+	struct pt_entry_evpn	*pevpn = (struct pt_entry_evpn *)pte;
 	struct ibuf		*tmp;
 	int			 flowlen, psize;
-	uint8_t			 plen;
+	uint16_t		 plen;
 
 	if ((tmp = ibuf_dynamic(32, UINT16_MAX)) == NULL)
 		goto fail;
@@ -548,6 +663,80 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 		if (ibuf_add(tmp, &pvpn6->rd, sizeof(pvpn6->rd)) == -1 ||
 		    ibuf_add(tmp, &pvpn6->prefix6, psize) == -1)
 			goto fail;
+		break;
+	case AID_EVPN:
+		if (ibuf_add_n8(tmp, pevpn->type) == -1)
+			goto fail;
+		switch (pevpn->type) {
+		case EVPN_ROUTE_TYPE_2:
+			plen = sizeof(pevpn->rd) * 8;
+			plen += sizeof(pevpn->esi) * 8;
+			plen += sizeof(pevpn->ethtag) * 8;
+			plen += 8;	/* MAC length */
+			plen += sizeof(pevpn->mac) * 8;
+			plen += 8;	/* IP length */
+			plen += pevpn->prefixlen;
+			plen += pevpn->labellen * 8;
+			if (ibuf_add_n8(tmp, PREFIX_SIZE(plen) - 1) == -1)
+				goto fail;
+			if (ibuf_add_h64(tmp, pevpn->rd) == -1 ||
+			    ibuf_add(tmp, pevpn->esi,
+			    sizeof(pevpn->esi)) == -1 ||
+			    ibuf_add_h32(tmp, pevpn->ethtag) == -1)
+				goto fail;
+			if (ibuf_add_n8(tmp, sizeof(pevpn->mac) * 8) == -1 ||
+			    ibuf_add(tmp, pevpn->mac, sizeof(pevpn->mac)) == -1)
+				goto fail;
+			if (ibuf_add_n8(tmp, pevpn->prefixlen) == -1)
+				goto fail;
+			switch(pevpn->vpnaid) {
+			case AID_UNSPEC:
+				/* See rfc7432 section 7.2 */
+				break;
+			case AID_INET:
+				if (ibuf_add(tmp, &pevpn->prefix4,
+				    sizeof(pevpn->prefix4)) == -1)
+					goto fail;
+				break;
+			case AID_INET6:
+				if (ibuf_add(tmp, &pevpn->prefix6,
+				sizeof(pevpn->prefix6)) == -1)
+					goto fail;
+				break;
+			default:
+				goto fail;
+			}
+			if (ibuf_add(tmp, pevpn->labelstack,
+			    pevpn->labellen) == -1)
+			       goto fail;
+			break;
+		case EVPN_ROUTE_TYPE_3:
+			plen = sizeof(pevpn->rd) * 8;
+			plen += sizeof(pevpn->ethtag) * 8;
+			plen += 8;	/* IP length */
+			plen += pevpn->prefixlen;
+			if (ibuf_add_n8(tmp, PREFIX_SIZE(plen) - 1) == -1)
+				goto fail;
+			if (ibuf_add_h64(tmp, pevpn->rd) == -1 ||
+			    ibuf_add_h32(tmp, pevpn->ethtag) == -1)
+			       goto fail;
+			if (ibuf_add_n8(tmp, pevpn->prefixlen) == -1)
+				goto fail;
+			switch(pevpn->vpnaid) {
+			case AID_INET:
+				if (ibuf_add(tmp, &pevpn->prefix4,
+				    sizeof(pevpn->prefix4)) == -1)
+					goto fail;
+				break;
+			case AID_INET6:
+				if (ibuf_add(tmp, &pevpn->prefix6,
+				    sizeof(pevpn->prefix6)) == -1)
+					goto fail;
+				break;
+			default:
+				goto fail;
+			}
+		}
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.174 2025/01/13 13:50:34 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.175 2025/02/04 18:16:56 denis Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -478,6 +478,12 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 		if (peer->local_v6_addr.aid == AID_INET6)
 			peer_local = &peer->local_v6_addr;
 		break;
+	case AID_EVPN:
+		if (peer->local_v4_addr.aid == AID_INET)
+			peer_local = &peer->local_v4_addr;
+		else if (peer->local_v6_addr.aid == AID_INET6)
+			peer_local = &peer->local_v6_addr;
+		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
 		/* flowspec has no nexthop */
@@ -945,6 +951,24 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 		nexthop = &nh->exit_nexthop;
 		if (ibuf_add(buf, &nexthop->v6, sizeof(nexthop->v6)) == -1)
 			return -1;
+		break;
+	case AID_EVPN:
+		if (nh == NULL)
+			return -1;
+		nexthop = &nh->exit_nexthop;
+		if (nexthop->aid == AID_INET) {
+			if (ibuf_add(buf, &nexthop->v4,
+			    sizeof(nexthop->v4)) == -1)
+				return -1;
+			break;
+		} else if (nexthop->aid == AID_INET6) {
+			if (ibuf_add(buf, &nexthop->v6,
+			    sizeof(nexthop->v6)) == -1)
+				return -1;
+		} else {
+			/* can't encode nexthop, give up and withdraw prefix */
+			return -1;
+		}
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.511 2025/01/31 13:40:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.512 2025/02/04 18:16:56 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <netinet/if_ether.h>
 
 #include <poll.h>
 #include <stdarg.h>
@@ -197,15 +198,33 @@ extern const struct aid aid_vals[];
 	{ AFI_IPv6, AF_INET6, SAFI_MPLSVPN, "IPv6 vpn" },	\
 	{ AFI_IPv4, AF_INET, SAFI_FLOWSPEC, "IPv4 flowspec" },	\
 	{ AFI_IPv6, AF_INET6, SAFI_FLOWSPEC, "IPv6 flowspec" },	\
-	{ AFI_L2VPN, AF_UNSPEC, SAFI_EVPN, "L2VPN evpn" }	\
+	{ AFI_L2VPN, AF_UNSPEC, SAFI_EVPN, "EVPN" },		\
 }
 
 #define BGP_MPLS_BOS	0x01
+#define ESI_ADDR_LEN	10
+
+#define EVPN_ROUTE_TYPE_2	0x02
+#define EVPN_ROUTE_TYPE_3	0x03
+#define EVPN_ROUTE_TYPE_5	0x05
+
+struct evpn_addr {
+	union {
+		struct in_addr	v4;
+		struct in6_addr	v6;
+	};
+	uint32_t	ethtag;
+	uint8_t		mac[ETHER_ADDR_LEN];
+	uint8_t		esi[ESI_ADDR_LEN];
+	uint8_t		aid;
+	uint8_t		type;
+};
 
 struct bgpd_addr {
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
+		struct evpn_addr	evpn;
 		/* maximum size for a prefix is 256 bits */
 	};		    /* 128-bit address */
 	uint64_t	rd;		/* route distinguisher for VPN addrs */
@@ -1578,6 +1597,8 @@ time_t			 getmonotime(void);
 /* util.c */
 char		*ibuf_get_string(struct ibuf *, size_t);
 const char	*log_addr(const struct bgpd_addr *);
+const char	*log_evpnaddr(const struct bgpd_addr *, struct sockaddr *,
+		    socklen_t);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *, socklen_t);
 const char	*log_as(uint32_t);
@@ -1605,6 +1626,7 @@ int		 nlri_get_vpn4(struct ibuf *, struct bgpd_addr *, uint8_t *,
 		    int);
 int		 nlri_get_vpn6(struct ibuf *, struct bgpd_addr *, uint8_t *,
 		    int);
+int		 nlri_get_evpn(struct ibuf *, struct bgpd_addr *, uint8_t *);
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
 void		 inet4applymask(struct in_addr *, const struct in_addr *, int);

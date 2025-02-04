@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.650 2025/01/27 15:22:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.651 2025/02/04 18:16:56 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1596,6 +1596,16 @@ rde_update_dispatch(struct rde_peer *peer, struct ibuf *buf)
 					goto done;
 				}
 				break;
+			case AID_EVPN:
+				if (nlri_get_evpn(&unreachbuf,
+				    &prefix, &prefixlen) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad EVPN withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR, &unreachbuf);
+					goto done;
+				}
+				break;
 			case AID_FLOWSPECv4:
 			case AID_FLOWSPECv6:
 				/* ignore flowspec for now */
@@ -1785,6 +1795,16 @@ rde_update_dispatch(struct rde_peer *peer, struct ibuf *buf)
 				    &prefix, &prefixlen, 0) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv6 nlri prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR, &reachbuf);
+					goto done;
+				}
+				break;
+			case AID_EVPN:
+				if (nlri_get_evpn(&reachbuf,
+				    &prefix, &prefixlen) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad EVPN nlri prefix");
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR, &reachbuf);
 					goto done;
@@ -2515,6 +2535,36 @@ rde_get_mp_nexthop(struct ibuf *buf, uint8_t aid,
 				    log_addr(&nexthop));
 				return (-1);
 			}
+		}
+		break;
+	case AID_EVPN:
+		switch (nhlen) {
+		case 4:
+			if (ibuf_get_h32(&nhbuf, &nexthop.v4.s_addr) == -1)
+				return (-1);
+			nexthop.aid = AID_INET;
+			break;
+		case 16:
+		case 32:
+			if (ibuf_get(&nhbuf, &nexthop.v6,
+			    sizeof(nexthop.v6)) == -1)
+				return (-1);
+			nexthop.aid = AID_INET6;
+			if (IN6_IS_ADDR_LINKLOCAL(&nexthop.v6)) {
+				if (peer->local_if_scope != 0) {
+					nexthop.scope_id = peer->local_if_scope;
+				} else {
+					log_peer_warnx(&peer->conf,
+					    "unexpected link-local nexthop: %s",
+					    log_addr(&nexthop));
+					return (-1);
+				}
+			}
+			break;
+		default:
+			log_peer_warnx(&peer->conf, "bad %s nexthop, "
+			    "bad size %d", aid2str(aid), nhlen);
+			return (-1);
 		}
 		break;
 	case AID_FLOWSPECv4:

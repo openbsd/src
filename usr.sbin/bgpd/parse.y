@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.478 2025/01/31 13:40:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.479 2025/02/04 18:16:56 denis Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -267,7 +267,7 @@ typedef struct {
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
 %token	ERROR INCLUDE
 %token	IPSEC ESP AH SPI IKE
-%token	IPV4 IPV6
+%token	IPV4 IPV6 EVPN
 %token	QUALIFY VIA
 %token	NE LE GE XRANGE LONGER MAXLEN MAX
 %token	<v.string>		STRING
@@ -1970,6 +1970,12 @@ peeropts	: REMOTEAS as4number	{
 					curpeer->conf.capabilities.mp[aid] = 1;
 			}
 		}
+		| ANNOUNCE EVPN enforce {
+			if ($3)
+				curpeer->conf.capabilities.mp[AID_EVPN] = 2;
+			else
+				curpeer->conf.capabilities.mp[AID_EVPN] = 1;
+		}
 		| ANNOUNCE REFRESH yesnoenforce {
 			curpeer->conf.capabilities.refresh = $3;
 		}
@@ -3546,6 +3552,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "AS",			AS },
+		{ "EVPN",		EVPN },
 		{ "IPv4",		IPV4 },
 		{ "IPv6",		IPV6 },
 		{ "add-path",		ADDPATH },
