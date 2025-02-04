@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.263 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.264 2025/02/04 09:15:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5356,7 +5356,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 		 * The current mode might have been fixed during association.
 		 * Ensure all channels get scanned.
 		 */
-		if (IFM_SUBTYPE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+		if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
 			ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
 
 		sc->sc_flags |= IWN_FLAG_SCANNING;
