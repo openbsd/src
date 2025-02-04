@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.312 2025/01/27 15:22:11 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.313 2025/02/04 16:07:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1338,13 +1338,8 @@ ktable_postload(void)
 		if (kt->state == RECONF_DELETE) {
 			ktable_free(i - 1);
 			continue;
-		} else if (kt->state == RECONF_REINIT) {
-			if (kt->fib_sync != kt->fib_conf) {
-				kt->fib_sync = kt->fib_conf;
-				if (kt->fib_sync)
-					fetchtable(kt);
-			}
-		}
+		} else if (kt->state == RECONF_REINIT)
+			kt->fib_sync = kt->fib_conf;
 
 		/* cleanup old networks */
 		TAILQ_FOREACH_SAFE(n, &kt->krn, entry, xn) {
