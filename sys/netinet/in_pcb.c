@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.310 2025/01/09 16:47:24 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.311 2025/02/05 10:15:10 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -635,6 +635,13 @@ in_pcbsolock_ref(struct inpcb *inp)
 	if (so == NULL)
 		return NULL;
 	rw_enter_write(&so->so_lock);
+	/* between mutex and rwlock inpcb could be detached */
+	if (so->so_pcb == NULL) {
+		rw_exit_write(&so->so_lock);
+		sorele(so);
+		return NULL;
+	}
+	KASSERT(inp->inp_socket == so && sotoinpcb(so) == inp);
 	return so;
 }
 
@@ -643,7 +650,6 @@ in_pcbsounlock_rele(struct inpcb *inp, struct socket *so)
 {
 	if (so == NULL)
 		return;
-	KASSERT(inp->inp_socket == NULL || inp->inp_socket == so);
 	rw_exit_write(&so->so_lock);
 	sorele(so);
 }
