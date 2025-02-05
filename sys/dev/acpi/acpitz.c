@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.60 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: acpitz.c,v 1.61 2025/02/05 11:03:36 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -196,6 +196,8 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < ACPITZ_MAX_AC; i++)
 		TAILQ_INIT(&sc->sc_alx[i]);
 
+	printf("\n");
+
 	/*
 	 * Preread the trip points (discard/ignore values read here as we will
 	 * re-read them later)
@@ -207,19 +209,18 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 		snprintf(name, sizeof(name), "_AC%d", i);
 		acpitz_getreading(sc, name);
 	}
-	acpitz_gettempreading(sc, "_TMP");
 
 	sc->sc_lasttmp = -1;
 	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
-		dnprintf(10, ": failed to read _TMP");
-		printf("\n");
+		dnprintf(10, "%s: failed to read _TMP\n", DEVNAME(sc));
 		return;
 	}
 
 	if ((sc->sc_crt = acpitz_gettempreading(sc, "_CRT")) == -1)
-		printf(": no critical temperature defined\n");
+		printf("%s: no critical temperature defined\n", DEVNAME(sc));
 	else
-		printf(": critical temperature is %d degC\n", KTOC(sc->sc_crt));
+		printf("%s: critical temperature is %d degC\n", DEVNAME(sc),
+		    KTOC(sc->sc_crt));
 
 	sc->sc_hot = acpitz_gettempreading(sc, "_HOT");
 	sc->sc_tc1 = acpitz_getreading(sc, "_TC1");
