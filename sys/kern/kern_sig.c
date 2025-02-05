@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.359 2025/01/25 19:21:40 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.360 2025/02/05 12:21:27 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2081,7 +2081,7 @@ userret(struct proc *p)
 	int signum;
 
 	if (p->p_flag & P_SUSPSINGLE)
-		single_thread_check(p, 0);
+		proc_suspend_check(p, 0);
 
 	/* send SIGPROF or SIGVTALRM if their timers interrupted this thread */
 	if (p->p_flag & P_PROFPEND) {
@@ -2118,7 +2118,7 @@ userret(struct proc *p)
 }
 
 int
-single_thread_check_locked(struct proc *p, int deep)
+proc_suspend_check_locked(struct proc *p, int deep)
 {
 	struct process *pr = p->p_p;
 
@@ -2166,12 +2166,12 @@ single_thread_check_locked(struct proc *p, int deep)
 }
 
 int
-single_thread_check(struct proc *p, int deep)
+proc_suspend_check(struct proc *p, int deep)
 {
 	int error;
 
 	mtx_enter(&p->p_p->ps_mtx);
-	error = single_thread_check_locked(p, deep);
+	error = proc_suspend_check_locked(p, deep);
 	mtx_leave(&p->p_p->ps_mtx);
 
 	return error;
@@ -2196,7 +2196,7 @@ single_thread_set(struct proc *p, int flags)
 	KASSERT(curproc == p);
 
 	mtx_enter(&pr->ps_mtx);
-	error = single_thread_check_locked(p, flags & SINGLE_DEEP);
+	error = proc_suspend_check_locked(p, flags & SINGLE_DEEP);
 	if (error) {
 		mtx_leave(&pr->ps_mtx);
 		return error;

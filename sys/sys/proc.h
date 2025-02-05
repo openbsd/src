@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.378 2025/01/25 19:21:40 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.379 2025/02/05 12:21:27 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -601,7 +601,8 @@ refreshcreds(struct proc *p)
 int	single_thread_set(struct proc *, int);
 int	single_thread_wait(struct process *, int);
 void	single_thread_clear(struct proc *);
-int	single_thread_check(struct proc *, int);
+
+int	proc_suspend_check(struct proc *, int);
 
 void	child_return(void *);
 

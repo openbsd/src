@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.218 2025/01/22 16:14:22 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.219 2025/02/05 12:21:27 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ sleep_signal_check(struct proc *p, int after_sleep)
 	struct sigctx ctx;
 	int err, sig;
 
-	if ((err = single_thread_check(p, 1)) != 0) {
+	if ((err = proc_suspend_check(p, 1)) != 0) {
 		if (err != EWOULDBLOCK)
 			return err;
 
