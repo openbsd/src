@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.126 2023/12/19 14:40:04 deraadt Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.127 2025/02/05 18:29:17 mvs Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -369,6 +369,7 @@ struct kmembuckets {
 
 #define	MINALLOCSIZE	(1 << MINBUCKET)
 #define	MAXALLOCSAVE	(2 * PAGE_SIZE)
+#define	MALLOC_MAX	(65535 * PAGE_SIZE)
 
 /*
  * Turn virtual addresses into kmem map indices

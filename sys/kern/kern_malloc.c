@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.153 2025/01/14 18:37:51 mvs Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.154 2025/02/05 18:29:17 mvs Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ malloc(size_t size, int type, int flags)
 	}
 #endif
 
-	if (size > 65535 * PAGE_SIZE) {
+	if (size > MALLOC_MAX) {
 		if (flags & M_CANFAIL) {
 #ifndef SMALL_KERNEL
 			if (ratecheck(&malloc_lasterr, &malloc_errintvl))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.230 2025/01/19 03:27:27 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.231 2025/02/05 18:29:17 mvs Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1813,7 +1813,7 @@ bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    atomic_load_int(&bpf_maxbufsize));
 	case NET_BPF_MAXBUFSIZE:
 		return sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &bpf_maxbufsize, BPF_MINBUFSIZE, INT_MAX);
+		    &bpf_maxbufsize, BPF_MINBUFSIZE, MALLOC_MAX);
 	default:
 		return (EOPNOTSUPP);
 	}
