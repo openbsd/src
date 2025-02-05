@@ -2704,8 +2704,8 @@
 ./usr/libexec/ssh-keysign
 ./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/ssh-sk-helper
-./usr/libexec/sshd-session
 ./usr/libexec/sshd-auth
+./usr/libexec/sshd-session
 ./usr/libexec/tradcpp
 ./usr/libexec/vi.recover
 ./usr/local
