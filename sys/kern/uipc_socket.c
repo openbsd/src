@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.370 2025/02/03 09:00:55 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.371 2025/02/05 08:28:25 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -77,6 +77,9 @@ int	filt_sowprocess(struct knote *kn, struct kevent *kev);
 int	filt_sormodify(struct kevent *kev, struct knote *kn);
 int	filt_sorprocess(struct knote *kn, struct kevent *kev);
 
+int	filt_soemodify(struct kevent *kev, struct knote *kn);
+int	filt_soeprocess(struct knote *kn, struct kevent *kev);
+
 const struct filterops soread_filtops = {
 	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
@@ -100,8 +103,8 @@ const struct filterops soexcept_filtops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_sordetach,
 	.f_event	= filt_soexcept,
-	.f_modify	= filt_sormodify,
-	.f_process	= filt_sorprocess,
+	.f_modify	= filt_soemodify,
+	.f_process	= filt_soeprocess,
 };
 
 #ifndef SOMINCONN
@@ -2241,38 +2244,6 @@ sohasoutofband(struct socket *so)
 	knote(&so->so_rcv.sb_klist, 0);
 }
 
-void
-sofilt_lock(struct socket *so, struct sockbuf *sb)
-{
-	switch (so->so_proto->pr_domain->dom_family) {
-	case PF_INET:
-	case PF_INET6:
-		NET_LOCK_SHARED();
-		break;
-	default:
-		rw_enter_write(&so->so_lock);
-		break;
-	}
-
-	mtx_enter(&sb->sb_mtx);
-}
-
-void
-sofilt_unlock(struct socket *so, struct sockbuf *sb)
-{
-	mtx_leave(&sb->sb_mtx);
-
-	switch (so->so_proto->pr_domain->dom_family) {
-	case PF_INET:
-	case PF_INET6:
-		NET_UNLOCK_SHARED();
-		break;
-	default:
-		rw_exit_write(&so->so_lock);
-		break;
-	}
-}
-
 int
 soo_kqfilter(struct file *fp, struct knote *kn)
 {
@@ -2470,9 +2441,13 @@ filt_sormodify(struct kevent *kev, struct knote *kn)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv;
 
-	sofilt_lock(so, &so->so_rcv);
+	if (so->so_proto->pr_flags & PR_WANTRCVD)
+		solock_shared(so);
+	mtx_enter(&so->so_rcv.sb_mtx);
 	rv = knote_modify(kev, kn);
-	sofilt_unlock(so, &so->so_rcv);
+	mtx_leave(&so->so_rcv.sb_mtx);
+	if (so->so_proto->pr_flags & PR_WANTRCVD)
+		sounlock_shared(so);
 
 	return (rv);
 }
@@ -2483,9 +2458,39 @@ filt_sorprocess(struct knote *kn, struct kevent *kev)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv;
 
-	sofilt_lock(so, &so->so_rcv);
+	if (so->so_proto->pr_flags & PR_WANTRCVD)
+		solock_shared(so);
+	mtx_enter(&so->so_rcv.sb_mtx);
 	rv = knote_process(kn, kev);
-	sofilt_unlock(so, &so->so_rcv);
+	mtx_leave(&so->so_rcv.sb_mtx);
+	if (so->so_proto->pr_flags & PR_WANTRCVD)
+		sounlock_shared(so);
+
+	return (rv);
+}
+
+int
+filt_soemodify(struct kevent *kev, struct knote *kn)
+{
+	struct socket *so = kn->kn_fp->f_data;
+	int rv;
+
+	mtx_enter(&so->so_rcv.sb_mtx);
+	rv = knote_modify(kev, kn);
+	mtx_leave(&so->so_rcv.sb_mtx);
+
+	return (rv);
+}
+
+int
+filt_soeprocess(struct knote *kn, struct kevent *kev)
+{
+	struct socket *so = kn->kn_fp->f_data;
+	int rv;
+
+	mtx_enter(&so->so_rcv.sb_mtx);
+	rv = knote_process(kn, kev);
+	mtx_leave(&so->so_rcv.sb_mtx);
 
 	return (rv);
 }
