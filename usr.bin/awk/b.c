@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.54 2024/08/03 21:12:16 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.55 2025/02/05 20:32:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -619,7 +619,7 @@ static void resize_gototab(fa *f, int state)
 	if (p == NULL)
 		overflo(__func__);
 
-	// need to initialized the new memory to zero
+	// need to initialize the new memory to zero
 	size_t orig_size = f->gototab[state].allocated;		// 2nd half of new mem is this size
 	memset(p + orig_size, 0, orig_size * sizeof(gtte));	// clean it out
 

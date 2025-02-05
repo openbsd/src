@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.59 2024/08/03 21:12:16 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.60 2025/02/05 20:32:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -887,7 +887,7 @@ bool is_valid_number(const char *s, bool trailing_stuff_ok,
 		s++;
 
 	/* no hex floating point, sorry */
-	if (s[0] == '0' && tolower((uschar)s[1]) == 'x')
+	if (s[0] == '0' && tolower((uschar)s[1]) == 'x' && isxdigit((uschar)s[2]))
 		return false;
 
 	/* allow +nan, -nan, +inf, -inf, any other letter, no */
