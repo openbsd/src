@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.773 2024/12/14 10:02:47 kirill Exp $
+$OpenBSD: usbdevs,v 1.774 2025/02/06 13:13:25 kirill Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -692,6 +692,7 @@ vendor DATAAPEX		0xdaae	DataApex
 vendor EVOLUTION	0xdeee	Evolution Robotics
 vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
+vendor ELGATO		0x0fd9	Elgato
 
 /*
  * List of known products.  Grouped by vendor.
@@ -1783,6 +1784,9 @@ product EICON DIVA852		0x4905	Diva 852 ISDN TA
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
+
+/* Elgato products */
+product ELGATO HD60		0x006a	Game Capture HD60 S+
 
 /* Elan Microelectronics products */
 product ELAN BARCODE		0x0001	Barcode Scanner
