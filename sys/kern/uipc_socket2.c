@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.176 2025/01/31 13:49:18 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.177 2025/02/06 13:39:31 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -695,7 +695,7 @@ void
 sbrelease(struct socket *so, struct sockbuf *sb)
 {
 
-	sbflush(so, sb);
+	sbflush(sb);
 	sb->sb_hiwat = sb->sb_mbmax = 0;
 }
 
@@ -1059,9 +1059,8 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
  * Check that all resources are reclaimed.
  */
 void
-sbflush(struct socket *so, struct sockbuf *sb)
+sbflush(struct sockbuf *sb)
 {
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	rw_assert_unlocked(&sb->sb_lock);
 
 	while (sb->sb_mbcnt)

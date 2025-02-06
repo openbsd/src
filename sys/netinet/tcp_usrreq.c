@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.241 2025/01/30 14:40:50 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.242 2025/02/06 13:39:31 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1063,7 +1063,7 @@ tcp_dodisconnect(struct tcpcb *tp)
 	else {
 		soisdisconnecting(so);
 		mtx_enter(&so->so_rcv.sb_mtx);
-		sbflush(so, &so->so_rcv);
+		sbflush(&so->so_rcv);
 		mtx_leave(&so->so_rcv.sb_mtx);
 		tp = tcp_usrclosed(tp);
 		if (tp)
