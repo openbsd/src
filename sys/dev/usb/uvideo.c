@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.236 2025/01/16 22:58:19 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.237 2025/02/06 13:15:50 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -294,10 +294,11 @@ const struct video_hw_if uvideo_hw_if = {
  * Devices which either fail to declare themselves as UICLASS_VIDEO,
  * or which need firmware uploads or other quirk handling later on.
  */
-#define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
-#define UVIDEO_FLAG_REATTACH			0x2
-#define UVIDEO_FLAG_VENDOR_CLASS		0x4
-#define UVIDEO_FLAG_NOATTACH			0x8
+#define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x01
+#define UVIDEO_FLAG_REATTACH			0x02
+#define UVIDEO_FLAG_VENDOR_CLASS		0x04
+#define UVIDEO_FLAG_NOATTACH			0x08
+#define UVIDEO_FLAG_FORMAT_INDEX_IN_BMHINT	0x10
 const struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
@@ -378,6 +379,12 @@ const struct uvideo_devs {
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_NOATTACH
+	},
+	{   /* Has incorrect control response */
+	    { USB_VENDOR_ELGATO, USB_PRODUCT_ELGATO_HD60 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_FORMAT_INDEX_IN_BMHINT
 	},
 };
 #define uvideo_lookup(v, p) \
@@ -1725,6 +1732,21 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 		    DEVNAME(sc), usbd_errstr(error));
 		return (USBD_INVAL);
 	}
+
+	if (sc->sc_quirk &&
+	    sc->sc_quirk->flags & UVIDEO_FLAG_FORMAT_INDEX_IN_BMHINT &&
+	    UGETW(pc->bmHint) > 255) {
+		/*
+		 * Some devices such as the Elgato Cam Link 4K or Elgato
+		 * Game Capture HD60 returns an invalid bmHint response,
+		 * which contains the bFormatIndex in the second byte.
+		 * But it should be always zero since it's a reserved
+		 * bit field.
+		 */
+		pc->bFormatIndex = UGETW(pc->bmHint) >> 8;
+		USETW(pc->bmHint, 1);
+	}
+
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
 
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
