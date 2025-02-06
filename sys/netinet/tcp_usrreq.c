@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.242 2025/02/06 13:39:31 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.243 2025/02/06 13:40:58 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -487,7 +487,6 @@ tcp_attach(struct socket *so, int proto, int wait)
 			return (error);
 	}
 
-	NET_ASSERT_LOCKED();
 #ifdef INET6
 	if (so->so_proto->pr_domain->dom_family == PF_INET6)
 		table = &tcb6table;

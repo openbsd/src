@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.371 2025/02/05 08:28:25 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.372 2025/02/06 13:40:57 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -208,15 +208,18 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_snd.sb_timeo_nsecs = INFSLP;
 	so->so_rcv.sb_timeo_nsecs = INFSLP;
 
-	solock(so);
+	solock_shared(so);
 	error = pru_attach(so, proto, M_WAIT);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		/* sofree() calls sounlock(). */
-		sofree(so, 0);
+		soref(so);
+		sofree(so, 1);
+		sounlock_shared(so);
+		sorele(so);
 		return (error);
 	}
-	sounlock(so);
+	sounlock_shared(so);
 	*aso = so;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.163 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.164 2025/02/06 13:40:58 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -488,7 +488,6 @@ rip_attach(struct socket *so, int proto, int wait)
 
 	if ((error = soreserve(so, rip_sendspace, rip_recvspace)))
 		return error;
-	NET_ASSERT_LOCKED();
 	if ((error = in_pcballoc(so, &rawcbtable, wait)))
 		return error;
 	inp = sotoinpcb(so);

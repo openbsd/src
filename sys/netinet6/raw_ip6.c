@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.186 2024/11/08 10:24:13 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.187 2025/02/06 13:40:58 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -606,7 +606,6 @@ rip6_attach(struct socket *so, int proto, int wait)
 
 	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)))
 		return error;
-	NET_ASSERT_LOCKED();
 	if ((error = in_pcballoc(so, &rawin6pcbtable, wait)))
 		return error;
 

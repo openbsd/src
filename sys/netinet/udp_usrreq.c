@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.330 2025/01/25 02:06:40 yasuoka Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.331 2025/02/06 13:40:58 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1107,7 +1107,6 @@ udp_attach(struct socket *so, int proto, int wait)
 	    atomic_load_int(&udp_recvspace))))
 		return error;
 
-	NET_ASSERT_LOCKED();
 #ifdef INET6
 	if (so->so_proto->pr_domain->dom_family == PF_INET6)
 		table = &udb6table;
