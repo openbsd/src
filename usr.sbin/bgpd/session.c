@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.509 2025/01/31 20:07:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.510 2025/02/06 12:38:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1739,6 +1739,7 @@ session_update(uint32_t peerid, struct ibuf *ibuf)
 	p->stats.msg_sent_update++;
 }
 
+/* Return 1 if a hard reset should be issued, 0 for a graceful notification */
 static int
 session_req_hard_reset(enum err_codes errcode, uint8_t subcode)
 {
@@ -1753,7 +1754,7 @@ session_req_hard_reset(enum err_codes errcode, uint8_t subcode)
 		 * is not trustworthy and so there is no realistic
 		 * hope that forwarding can continue.
 		 */
-		return 1;
+		break;
 	case ERR_HOLDTIMEREXPIRED:
 	case ERR_SENDHOLDTIMEREXPIRED:
 		/* Keep forwarding and hope the other side is back soon. */
@@ -1767,8 +1768,9 @@ session_req_hard_reset(enum err_codes errcode, uint8_t subcode)
 			/* Per RFC8538 suggestion make these graceful. */
 			return 0;
 		}
-		return 1;
+		break;
 	}
+	return 1;
 }
 
 void
