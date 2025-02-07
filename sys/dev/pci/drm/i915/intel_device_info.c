@@ -25,9 +25,8 @@
 #include <linux/string_helpers.h>
 
 #include <drm/drm_print.h>
-#include <drm/i915_pciids.h>
+#include <drm/intel/i915_pciids.h>
 
-#include "display/intel_display_device.h"
 #include "gt/intel_gt_regs.h"
 #include "i915_drv.h"
 #include "i915_reg.h"
@@ -71,9 +70,7 @@ static const char * const platform_names[] = {
 	PLATFORM_NAME(DG1),
 	PLATFORM_NAME(ALDERLAKE_S),
 	PLATFORM_NAME(ALDERLAKE_P),
-	PLATFORM_NAME(XEHPSDV),
 	PLATFORM_NAME(DG2),
-	PLATFORM_NAME(PONTEVECCHIO),
 	PLATFORM_NAME(METEORLAKE),
 };
 #undef PLATFORM_NAME
@@ -111,8 +108,6 @@ void intel_device_info_print(const struct intel_device_info *info,
 
 	drm_printf(p, "graphics stepping: %s\n", intel_step_name(runtime->step.graphics_step));
 	drm_printf(p, "media stepping: %s\n", intel_step_name(runtime->step.media_step));
-	drm_printf(p, "display stepping: %s\n", intel_step_name(runtime->step.display_step));
-	drm_printf(p, "base die stepping: %s\n", intel_step_name(runtime->step.basedie_step));
 
 	drm_printf(p, "gt: %d\n", info->gt);
 	drm_printf(p, "memory-regions: 0x%x\n", info->memory_regions);
@@ -127,91 +122,94 @@ void intel_device_info_print(const struct intel_device_info *info,
 #undef PRINT_FLAG
 
 	drm_printf(p, "has_pooled_eu: %s\n", str_yes_no(runtime->has_pooled_eu));
-	drm_printf(p, "rawclk rate: %u kHz\n", runtime->rawclk_freq);
 }
 
-#undef INTEL_VGA_DEVICE
-#define INTEL_VGA_DEVICE(id, info) (id)
+#define ID(id) (id)
 
 static const u16 subplatform_ult_ids[] = {
-	INTEL_HSW_ULT_GT1_IDS(0),
-	INTEL_HSW_ULT_GT2_IDS(0),
-	INTEL_HSW_ULT_GT3_IDS(0),
-	INTEL_BDW_ULT_GT1_IDS(0),
-	INTEL_BDW_ULT_GT2_IDS(0),
-	INTEL_BDW_ULT_GT3_IDS(0),
-	INTEL_BDW_ULT_RSVD_IDS(0),
-	INTEL_SKL_ULT_GT1_IDS(0),
-	INTEL_SKL_ULT_GT2_IDS(0),
-	INTEL_SKL_ULT_GT3_IDS(0),
-	INTEL_KBL_ULT_GT1_IDS(0),
-	INTEL_KBL_ULT_GT2_IDS(0),
-	INTEL_KBL_ULT_GT3_IDS(0),
-	INTEL_CFL_U_GT2_IDS(0),
-	INTEL_CFL_U_GT3_IDS(0),
-	INTEL_WHL_U_GT1_IDS(0),
-	INTEL_WHL_U_GT2_IDS(0),
-	INTEL_WHL_U_GT3_IDS(0),
-	INTEL_CML_U_GT1_IDS(0),
-	INTEL_CML_U_GT2_IDS(0),
+	INTEL_HSW_ULT_GT1_IDS(ID),
+	INTEL_HSW_ULT_GT2_IDS(ID),
+	INTEL_HSW_ULT_GT3_IDS(ID),
+	INTEL_BDW_ULT_GT1_IDS(ID),
+	INTEL_BDW_ULT_GT2_IDS(ID),
+	INTEL_BDW_ULT_GT3_IDS(ID),
+	INTEL_BDW_ULT_RSVD_IDS(ID),
+	INTEL_SKL_ULT_GT1_IDS(ID),
+	INTEL_SKL_ULT_GT2_IDS(ID),
+	INTEL_SKL_ULT_GT3_IDS(ID),
+	INTEL_KBL_ULT_GT1_IDS(ID),
+	INTEL_KBL_ULT_GT2_IDS(ID),
+	INTEL_KBL_ULT_GT3_IDS(ID),
+	INTEL_CFL_U_GT2_IDS(ID),
+	INTEL_CFL_U_GT3_IDS(ID),
+	INTEL_WHL_U_GT1_IDS(ID),
+	INTEL_WHL_U_GT2_IDS(ID),
+	INTEL_WHL_U_GT3_IDS(ID),
+	INTEL_CML_U_GT1_IDS(ID),
+	INTEL_CML_U_GT2_IDS(ID),
 };
 
 static const u16 subplatform_ulx_ids[] = {
-	INTEL_HSW_ULX_GT1_IDS(0),
-	INTEL_HSW_ULX_GT2_IDS(0),
-	INTEL_BDW_ULX_GT1_IDS(0),
-	INTEL_BDW_ULX_GT2_IDS(0),
-	INTEL_BDW_ULX_GT3_IDS(0),
-	INTEL_BDW_ULX_RSVD_IDS(0),
-	INTEL_SKL_ULX_GT1_IDS(0),
-	INTEL_SKL_ULX_GT2_IDS(0),
-	INTEL_KBL_ULX_GT1_IDS(0),
-	INTEL_KBL_ULX_GT2_IDS(0),
-	INTEL_AML_KBL_GT2_IDS(0),
-	INTEL_AML_CFL_GT2_IDS(0),
+	INTEL_HSW_ULX_GT1_IDS(ID),
+	INTEL_HSW_ULX_GT2_IDS(ID),
+	INTEL_BDW_ULX_GT1_IDS(ID),
+	INTEL_BDW_ULX_GT2_IDS(ID),
+	INTEL_BDW_ULX_GT3_IDS(ID),
+	INTEL_BDW_ULX_RSVD_IDS(ID),
+	INTEL_SKL_ULX_GT1_IDS(ID),
+	INTEL_SKL_ULX_GT2_IDS(ID),
+	INTEL_KBL_ULX_GT1_IDS(ID),
+	INTEL_KBL_ULX_GT2_IDS(ID),
+	INTEL_AML_KBL_GT2_IDS(ID),
+	INTEL_AML_CFL_GT2_IDS(ID),
 };
 
 static const u16 subplatform_portf_ids[] = {
-	INTEL_ICL_PORT_F_IDS(0),
+	INTEL_ICL_PORT_F_IDS(ID),
 };
 
 static const u16 subplatform_uy_ids[] = {
-	INTEL_TGL_12_GT2_IDS(0),
+	INTEL_TGL_GT2_IDS(ID),
 };
 
 static const u16 subplatform_n_ids[] = {
-	INTEL_ADLN_IDS(0),
+	INTEL_ADLN_IDS(ID),
 };
 
 static const u16 subplatform_rpl_ids[] = {
-	INTEL_RPLS_IDS(0),
-	INTEL_RPLP_IDS(0),
+	INTEL_RPLS_IDS(ID),
+	INTEL_RPLU_IDS(ID),
+	INTEL_RPLP_IDS(ID),
 };
 
 static const u16 subplatform_rplu_ids[] = {
-	INTEL_RPLU_IDS(0),
+	INTEL_RPLU_IDS(ID),
 };
 
 static const u16 subplatform_g10_ids[] = {
-	INTEL_DG2_G10_IDS(0),
-	INTEL_ATS_M150_IDS(0),
+	INTEL_DG2_G10_IDS(ID),
+	INTEL_ATS_M150_IDS(ID),
 };
 
 static const u16 subplatform_g11_ids[] = {
-	INTEL_DG2_G11_IDS(0),
-	INTEL_ATS_M75_IDS(0),
+	INTEL_DG2_G11_IDS(ID),
+	INTEL_ATS_M75_IDS(ID),
 };
 
 static const u16 subplatform_g12_ids[] = {
-	INTEL_DG2_G12_IDS(0),
+	INTEL_DG2_G12_IDS(ID),
 };
 
-static const u16 subplatform_m_ids[] = {
-	INTEL_MTL_M_IDS(0),
+static const u16 subplatform_arl_h_ids[] = {
+	INTEL_ARL_H_IDS(ID),
 };
 
-static const u16 subplatform_p_ids[] = {
-	INTEL_MTL_P_IDS(0),
+static const u16 subplatform_arl_u_ids[] = {
+	INTEL_ARL_U_IDS(ID),
+};
+
+static const u16 subplatform_arl_s_ids[] = {
+	INTEL_ARL_S_IDS(ID),
 };
 
 static bool find_devid(u16 id, const u16 *p, unsigned int num)
@@ -240,19 +238,15 @@ static void intel_device_info_subplatform_init(struct drm_i915_private *i915)
 	if (find_devid(devid, subplatform_ult_ids,
 		       ARRAY_SIZE(subplatform_ult_ids))) {
 		mask = BIT(INTEL_SUBPLATFORM_ULT);
-		if (IS_HASWELL(i915) || IS_BROADWELL(i915))
-			DISPLAY_RUNTIME_INFO(i915)->port_mask &= ~BIT(PORT_D);
 	} else if (find_devid(devid, subplatform_ulx_ids,
 			      ARRAY_SIZE(subplatform_ulx_ids))) {
 		mask = BIT(INTEL_SUBPLATFORM_ULX);
 		if (IS_HASWELL(i915) || IS_BROADWELL(i915)) {
 			/* ULX machines are also considered ULT. */
 			mask |= BIT(INTEL_SUBPLATFORM_ULT);
-			DISPLAY_RUNTIME_INFO(i915)->port_mask &= ~BIT(PORT_D);
 		}
 	} else if (find_devid(devid, subplatform_portf_ids,
 			      ARRAY_SIZE(subplatform_portf_ids))) {
-		DISPLAY_RUNTIME_INFO(i915)->port_mask |= BIT(PORT_F);
 		mask = BIT(INTEL_SUBPLATFORM_PORTF);
 	} else if (find_devid(devid, subplatform_uy_ids,
 			   ARRAY_SIZE(subplatform_uy_ids))) {
@@ -275,12 +269,15 @@ static void intel_device_info_subplatform_init(struct drm_i915_private *i915)
 	} else if (find_devid(devid, subplatform_g12_ids,
 			      ARRAY_SIZE(subplatform_g12_ids))) {
 		mask = BIT(INTEL_SUBPLATFORM_G12);
-	} else if (find_devid(devid, subplatform_m_ids,
-			      ARRAY_SIZE(subplatform_m_ids))) {
-		mask = BIT(INTEL_SUBPLATFORM_M);
-	} else if (find_devid(devid, subplatform_p_ids,
-			      ARRAY_SIZE(subplatform_p_ids))) {
-		mask = BIT(INTEL_SUBPLATFORM_P);
+	} else if (find_devid(devid, subplatform_arl_h_ids,
+			      ARRAY_SIZE(subplatform_arl_h_ids))) {
+		mask = BIT(INTEL_SUBPLATFORM_ARL_H);
+	} else if (find_devid(devid, subplatform_arl_u_ids,
+			      ARRAY_SIZE(subplatform_arl_u_ids))) {
+		mask = BIT(INTEL_SUBPLATFORM_ARL_U);
+	} else if (find_devid(devid, subplatform_arl_s_ids,
+			      ARRAY_SIZE(subplatform_arl_s_ids))) {
+		mask = BIT(INTEL_SUBPLATFORM_ARL_S);
 	}
 
 	GEM_BUG_ON(mask & ~INTEL_SUBPLATFORM_MASK);
@@ -371,8 +368,6 @@ void intel_device_info_runtime_init_early(struct drm_i915_private *i915)
 	intel_device_info_subplatform_init(i915);
 }
 
-static const struct intel_display_device_info no_display = {};
-
 /**
  * intel_device_info_runtime_init - initialize runtime info
  * @dev_priv: the i915 device
@@ -393,21 +388,6 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 {
 	struct intel_runtime_info *runtime = RUNTIME_INFO(dev_priv);
 
-	if (HAS_DISPLAY(dev_priv))
-		intel_display_device_info_runtime_init(dev_priv);
-
-	/* Display may have been disabled by runtime init */
-	if (!HAS_DISPLAY(dev_priv)) {
-		dev_priv->drm.driver_features &= ~(DRIVER_MODESET |
-						   DRIVER_ATOMIC);
-		dev_priv->display.info.__device_info = &no_display;
-	}
-
-	/* Disable nuclear pageflip by default on pre-g4x */
-	if (!dev_priv->params.nuclear_pageflip &&
-	    DISPLAY_VER(dev_priv) < 5 && !IS_G4X(dev_priv))
-		dev_priv->drm.driver_features &= ~DRIVER_ATOMIC;
-
 	BUILD_BUG_ON(BITS_PER_TYPE(intel_engine_mask_t) < I915_NUM_ENGINES);
 
 	if (GRAPHICS_VER(dev_priv) == 6 && i915_vtd_active(dev_priv)) {
@@ -415,10 +395,6 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 			 "Disabling ppGTT for VT-d support\n");
 		runtime->ppgtt_type = INTEL_PPGTT_NONE;
 	}
-
-	runtime->rawclk_freq = intel_read_rawclk(dev_priv);
-	drm_dbg(&dev_priv->drm, "rawclk rate: %d kHz\n", runtime->rawclk_freq);
-
 }
 
 /*
@@ -431,7 +407,6 @@ void intel_device_info_driver_create(struct drm_i915_private *i915,
 				     const struct intel_device_info *match_info)
 {
 	struct intel_runtime_info *runtime;
-	u16 ver, rel, step;
 
 	/* Setup INTEL_INFO() */
 	i915->__info = match_info;
@@ -439,19 +414,6 @@ void intel_device_info_driver_create(struct drm_i915_private *i915,
 	/* Initialize initial runtime info from static const data and pdev. */
 	runtime = RUNTIME_INFO(i915);
 	memcpy(runtime, &INTEL_INFO(i915)->__runtime, sizeof(*runtime));
-
-	/* Probe display support */
-	i915->display.info.__device_info = intel_display_device_probe(i915, HAS_GMD_ID(i915),
-								      &ver, &rel, &step);
-	memcpy(DISPLAY_RUNTIME_INFO(i915),
-	       &DISPLAY_INFO(i915)->__runtime_defaults,
-	       sizeof(*DISPLAY_RUNTIME_INFO(i915)));
-
-	if (HAS_GMD_ID(i915)) {
-		DISPLAY_RUNTIME_INFO(i915)->ip.ver = ver;
-		DISPLAY_RUNTIME_INFO(i915)->ip.rel = rel;
-		DISPLAY_RUNTIME_INFO(i915)->ip.step = step;
-	}
 
 	runtime->device_id = device_id;
 }

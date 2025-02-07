@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.864 2023/01/17 10:10:11 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.865 2025/02/07 03:03:08 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -386,6 +386,7 @@ agp*		at viaagp?	# AGP bridges
 #agp*		at mmuagp?	
 
 inteldrm*	at pci?		# Intel i915, i945 DRM driver
+option		I915
 intagp*		at inteldrm?
 agp*		at intagp?
 drm0		at inteldrm? primary 1

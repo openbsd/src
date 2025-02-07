@@ -21,14 +21,12 @@
 #include <linux/math.h>
 #include <linux/limits.h>
 #include <asm/byteorder.h>
+#include <linux/wordpart.h>
 
 #define swap(a, b) \
 	do { __typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while(0)
 
 #define ARRAY_SIZE nitems
-
-#define lower_32_bits(n)	((u32)(n))
-#define upper_32_bits(_val)	((u32)(((_val) >> 16) >> 16))
 
 #define scnprintf(str, size, fmt, arg...) snprintf(str, size, fmt, ## arg)
 
@@ -41,6 +39,9 @@
 	t __max_a = (a); \
 	t __max_b = (b); \
 	__max_a > __max_b ? __max_a : __max_b; })
+
+#define MIN_T(t, a, b) min_t(t, a, b)
+#define MAX_T(t, a, b) max_t(t, a, b)
 
 #define clamp_t(t, x, a, b) min_t(t, max_t(t, x, a), b)
 #define clamp(x, a, b) clamp_t(__typeof(x), x, a, b)
@@ -102,6 +103,7 @@ vscnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 	if (x)				\
 		assertwaitok();		\
 } while (0)
+#define might_fault()
 
 #define add_taint(x, y)
 #define TAINT_MACHINE_CHECK	0
@@ -111,6 +113,7 @@ vscnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 #define u64_to_user_ptr(x)	((void *)(uintptr_t)(x))
 
 #define _RET_IP_		__builtin_return_address(0)
+#define _THIS_IP_		0
 
 #define STUB() do { printf("%s: stub\n", __func__); } while(0)
 

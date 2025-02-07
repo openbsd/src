@@ -37,6 +37,9 @@
 #include "dce/dce_i2c.h"
 struct dc_link *dc_get_link_at_index(struct dc *dc, uint32_t link_index)
 {
+	if (link_index >= MAX_LINKS)
+		return NULL;
+
 	return dc->links[link_index];
 }
 
@@ -465,6 +468,13 @@ bool dc_link_setup_psr(struct dc_link *link,
 		struct psr_context *psr_context)
 {
 	return link->dc->link_srv->edp_setup_psr(link, stream, psr_config, psr_context);
+}
+
+bool dc_link_set_replay_allow_active(struct dc_link *link, const bool *allow_active,
+		bool wait, bool force_static, const unsigned int *power_opts)
+{
+	return link->dc->link_srv->edp_set_replay_allow_active(link, allow_active, wait,
+			force_static, power_opts);
 }
 
 bool dc_link_get_replay_state(const struct dc_link *link, uint64_t *state)

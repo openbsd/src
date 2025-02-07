@@ -40,4 +40,10 @@ refcount_dec_and_lock_irqsave(volatile int *v, struct mutex *lock,
 	return false;
 }
 
+static inline uint32_t
+refcount_read(uint32_t *p)
+{
+	return atomic_read(p);
+}
+
 #endif

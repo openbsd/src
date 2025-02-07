@@ -13,6 +13,12 @@
 
 void *memchr_inv(const void *, int, size_t);
 
+static inline bool
+mem_is_zero(const void *b, size_t len)
+{
+	return (memchr_inv(b, 0, len) == NULL);
+}
+
 static inline void *
 memset32(uint32_t *b, uint32_t c, size_t len)
 {
@@ -51,6 +57,15 @@ kmemdup(const void *src, size_t len, int flags)
 }
 
 static inline void *
+kmemdup_array(const void *src, size_t nemb, size_t size, int flags)
+{
+	void *p = mallocarray(nemb, size, M_DRM, flags);
+	if (p)
+		memcpy(p, src, nemb * size);
+	return (p);
+}
+
+static inline void *
 kstrdup(const char *str, int flags)
 {
 	size_t len;
@@ -65,6 +80,14 @@ kstrdup(const char *str, int flags)
 		memcpy(p, str, len);
 	return (p);
 }
+
+static inline const char *
+kstrdup_const(const char *str, int flags)
+{
+	return kstrdup(str, flags);
+}
+
+void kfree_const(const void *);
 
 static inline int
 match_string(const char * const *array,  size_t n, const char *str)

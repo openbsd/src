@@ -16,8 +16,6 @@
 
 #include "../i915_drv.h"
 
-#include <drm/drm_legacy.h> /* for agp */
-
 /* MCH IFP BARs */
 #define I915_IFPADDR	0x60
 #define I965_IFPADDR	0x70

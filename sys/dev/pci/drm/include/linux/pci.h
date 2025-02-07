@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.18 2024/08/28 04:55:45 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.19 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -116,13 +116,16 @@ struct pci_dev {
 #define pci_dev_put(x)
 
 #define PCI_EXP_DEVSTA		0x0a
-#define PCI_EXP_DEVSTA_TRPND	0x0020
+#define PCI_EXP_DEVSTA_TRPND	(1 << 5)
 #define PCI_EXP_LNKCAP		0x0c
-#define PCI_EXP_LNKCAP_CLKPM	0x00040000
+#define PCI_EXP_LNKCAP_CLKPM	(1 << 18)
 #define PCI_EXP_LNKCTL		0x10
-#define PCI_EXP_LNKCTL_HAWD	0x0200
+#define PCI_EXP_LNKCTL_HAWD	(1 << 9)
+#define PCI_EXP_LNKSTA		0x12
+#define PCI_EXP_DEVCTL2		0x28
+#define PCI_EXP_DEVCTL2_LTR_EN	(1 << 10)
 #define PCI_EXP_LNKCTL2		0x30
-#define PCI_EXP_LNKCTL2_ENTER_COMP	0x0010
+#define PCI_EXP_LNKCTL2_ENTER_COMP	(1 << 4)
 #define PCI_EXP_LNKCTL2_TX_MARGIN	0x0380
 #define PCI_EXP_LNKCTL2_TLS		PCI_PCIE_LCSR2_TLS
 #define PCI_EXP_LNKCTL2_TLS_2_5GT	PCI_PCIE_LCSR2_TLS_2_5
@@ -131,6 +134,8 @@ struct pci_dev {
 
 #define PCI_COMMAND		PCI_COMMAND_STATUS_REG
 #define PCI_COMMAND_MEMORY	PCI_COMMAND_MEM_ENABLE
+
+#define PCI_PRIMARY_BUS		PCI_PRIBUS_1
 
 static inline int
 pci_read_config_dword(struct pci_dev *pdev, int reg, u32 *val)
@@ -313,6 +318,16 @@ pcie_capability_set_word(struct pci_dev *pdev, int off, u16 val)
 	u16 r;
 	pcie_capability_read_word(pdev, off, &r);
 	r |= val;
+	pcie_capability_write_word(pdev, off, r);
+	return 0;
+}
+
+static inline int
+pcie_capability_clear_word(struct pci_dev *pdev, int off, u16 c)
+{
+	u16 r;
+	pcie_capability_read_word(pdev, off, &r);
+	r &= ~c;
 	pcie_capability_write_word(pdev, off, r);
 	return 0;
 }
@@ -539,4 +554,9 @@ pci_device_is_present(struct pci_dev *pdev)
 	return 1;
 }
 
+static inline int
+dev_is_pci(struct device *dev)
+{
+	return 1;
+}
 #endif /* _LINUX_PCI_H_ */

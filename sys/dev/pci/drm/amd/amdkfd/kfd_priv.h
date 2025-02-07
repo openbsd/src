@@ -99,11 +99,11 @@
 /*
  * Size of the per-process TBA+TMA buffer: 2 pages
  *
- * The first page is the TBA used for the CWSR ISA code. The second
- * page is used as TMA for user-mode trap handler setup in daisy-chain mode.
+ * The first chunk is the TBA used for the CWSR ISA code. The second
+ * chunk is used as TMA for user-mode trap handler setup in daisy-chain mode.
  */
 #define KFD_CWSR_TBA_TMA_SIZE (PAGE_SIZE * 2)
-#define KFD_CWSR_TMA_OFFSET PAGE_SIZE
+#define KFD_CWSR_TMA_OFFSET (PAGE_SIZE + 2048)
 
 #define KFD_MAX_NUM_OF_QUEUES_PER_DEVICE		\
 	(KFD_MAX_NUM_OF_PROCESSES *			\
@@ -202,11 +202,12 @@ enum cache_policy {
 	cache_policy_noncoherent
 };
 
-#define KFD_GC_VERSION(dev) ((dev)->adev->ip_versions[GC_HWIP][0])
+#define KFD_GC_VERSION(dev) (amdgpu_ip_version((dev)->adev, GC_HWIP, 0))
 #define KFD_IS_SOC15(dev)   ((KFD_GC_VERSION(dev)) >= (IP_VERSION(9, 0, 1)))
 #define KFD_SUPPORT_XNACK_PER_PROCESS(dev)\
 	((KFD_GC_VERSION(dev) == IP_VERSION(9, 4, 2)) ||	\
-	 (KFD_GC_VERSION(dev) == IP_VERSION(9, 4, 3)))
+	 (KFD_GC_VERSION(dev) == IP_VERSION(9, 4, 3)) ||	\
+	 (KFD_GC_VERSION(dev) == IP_VERSION(9, 4, 4)))
 
 struct kfd_node;
 
@@ -309,6 +310,10 @@ struct kfd_node {
 	struct kfd_local_mem_info local_mem_info;
 
 	struct kfd_dev *kfd;
+
+	/* Track per device allocated watch points */
+	uint32_t alloc_watch_ids;
+	spinlock_t watch_points_lock;
 };
 
 struct kfd_dev {
@@ -361,10 +366,6 @@ struct kfd_dev {
 	struct kfd_node *nodes[MAX_KFD_NODES];
 	unsigned int num_nodes;
 
-	/* Track per device allocated watch points */
-	uint32_t alloc_watch_ids;
-	spinlock_t watch_points_lock;
-
 	/* Kernel doorbells for KFD device */
 	struct amdgpu_bo *doorbells;
 
@@ -413,13 +414,16 @@ enum kfd_unmap_queues_filter {
  * @KFD_QUEUE_TYPE_DIQ: DIQ queue type.
  *
  * @KFD_QUEUE_TYPE_SDMA_XGMI: Special SDMA queue for XGMI interface.
+ *
+ * @KFD_QUEUE_TYPE_SDMA_BY_ENG_ID:  SDMA user mode queue with target SDMA engine ID.
  */
 enum kfd_queue_type  {
 	KFD_QUEUE_TYPE_COMPUTE,
 	KFD_QUEUE_TYPE_SDMA,
 	KFD_QUEUE_TYPE_HIQ,
 	KFD_QUEUE_TYPE_DIQ,
-	KFD_QUEUE_TYPE_SDMA_XGMI
+	KFD_QUEUE_TYPE_SDMA_XGMI,
+	KFD_QUEUE_TYPE_SDMA_BY_ENG_ID
 };
 
 enum kfd_queue_format {
@@ -493,8 +497,8 @@ struct queue_properties {
 	uint64_t  queue_size;
 	uint32_t priority;
 	uint32_t queue_percent;
-	uint32_t *read_ptr;
-	uint32_t *write_ptr;
+	void __user *read_ptr;
+	void __user *write_ptr;
 	void __iomem *doorbell_ptr;
 	uint32_t doorbell_off;
 	bool is_interop;
@@ -521,6 +525,12 @@ struct queue_properties {
 	uint64_t tba_addr;
 	uint64_t tma_addr;
 	uint64_t exception_status;
+
+	struct amdgpu_bo *wptr_bo;
+	struct amdgpu_bo *rptr_bo;
+	struct amdgpu_bo *ring_bo;
+	struct amdgpu_bo *eop_buf_bo;
+	struct amdgpu_bo *cwsr_bo;
 };
 
 #define QUEUE_IS_ACTIVE(q) ((q).queue_size > 0 &&	\
@@ -532,6 +542,7 @@ struct queue_properties {
 enum mqd_update_flag {
 	UPDATE_FLAG_DBG_WA_ENABLE = 1,
 	UPDATE_FLAG_DBG_WA_DISABLE = 2,
+	UPDATE_FLAG_IS_GWS = 4, /* quirk for gfx9 IP */
 };
 
 struct mqd_update_info {
@@ -602,7 +613,7 @@ struct queue {
 	uint64_t gang_ctx_gpu_addr;
 	void *gang_ctx_cpu_ptr;
 
-	struct amdgpu_bo *wptr_bo;
+	struct amdgpu_bo *wptr_bo_gart;
 };
 
 enum KFD_MQD_TYPE {
@@ -748,7 +759,6 @@ struct kfd_process_device {
 	/* VM context for GPUVM allocations */
 	struct file *drm_file;
 	void *drm_priv;
-	atomic64_t tlb_seq;
 
 	/* GPUVM allocations storage */
 	struct idr alloc_idr;
@@ -836,6 +846,9 @@ struct kfd_process_device {
 	void *proc_ctx_bo;
 	uint64_t proc_ctx_gpu_addr;
 	void *proc_ctx_cpu_ptr;
+
+	/* Tracks queue reset status */
+	bool has_reset_queue;
 };
 
 #define qpd_to_pdd(x) container_of(x, struct kfd_process_device, qpd)
@@ -853,6 +866,14 @@ struct svm_range_list {
 	struct delayed_work		restore_work;
 	DECLARE_BITMAP(bitmap_supported, MAX_GPU_INSTANCE);
 	struct task_struct		*faulting_task;
+	/* check point ts decides if page fault recovery need be dropped */
+	uint64_t			checkpoint_ts[MAX_GPU_INSTANCE];
+
+	/* Default granularity to use in buffer migration
+	 * and restoration of backing memory while handling
+	 * recoverable page faults
+	 */
+	uint8_t default_granularity;
 };
 
 /* Process data */
@@ -918,7 +939,7 @@ struct kfd_process {
 	 * fence will be triggered during eviction and new one will be created
 	 * during restore
 	 */
-	struct dma_fence *ef;
+	struct dma_fence __rcu *ef;
 
 	/* Work items for evicting and restoring BOs */
 	struct delayed_work eviction_work;
@@ -1128,7 +1149,8 @@ static inline struct kfd_node *kfd_node_by_irq_ids(struct amdgpu_device *adev,
 	struct kfd_dev *dev = adev->kfd.dev;
 	uint32_t i;
 
-	if (KFD_GC_VERSION(dev) != IP_VERSION(9, 4, 3))
+	if (KFD_GC_VERSION(dev) != IP_VERSION(9, 4, 3) &&
+	    KFD_GC_VERSION(dev) != IP_VERSION(9, 4, 4))
 		return dev->nodes[0];
 
 	for (i = 0; i < dev->num_nodes; i++)
@@ -1282,6 +1304,15 @@ int init_queue(struct queue **q, const struct queue_properties *properties);
 void uninit_queue(struct queue *q);
 void print_queue_properties(struct queue_properties *q);
 void print_queue(struct queue *q);
+int kfd_queue_buffer_get(struct amdgpu_vm *vm, void __user *addr, struct amdgpu_bo **pbo,
+			 u64 expected_size);
+void kfd_queue_buffer_put(struct amdgpu_bo **bo);
+int kfd_queue_acquire_buffers(struct kfd_process_device *pdd, struct queue_properties *properties);
+int kfd_queue_release_buffers(struct kfd_process_device *pdd, struct queue_properties *properties);
+void kfd_queue_unref_bo_va(struct amdgpu_vm *vm, struct amdgpu_bo **bo);
+int kfd_queue_unref_bo_vas(struct kfd_process_device *pdd,
+			   struct queue_properties *properties);
+void kfd_queue_ctx_save_restore_size(struct kfd_topology_device *dev);
 
 struct mqd_manager *mqd_manager_init_cik(enum KFD_MQD_TYPE type,
 		struct kfd_node *dev);
@@ -1293,12 +1324,15 @@ struct mqd_manager *mqd_manager_init_v10(enum KFD_MQD_TYPE type,
 		struct kfd_node *dev);
 struct mqd_manager *mqd_manager_init_v11(enum KFD_MQD_TYPE type,
 		struct kfd_node *dev);
+struct mqd_manager *mqd_manager_init_v12(enum KFD_MQD_TYPE type,
+		struct kfd_node *dev);
 struct device_queue_manager *device_queue_manager_init(struct kfd_node *dev);
 void device_queue_manager_uninit(struct device_queue_manager *dqm);
 struct kernel_queue *kernel_queue_init(struct kfd_node *dev,
 					enum kfd_queue_type type);
-void kernel_queue_uninit(struct kernel_queue *kq, bool hanging);
+void kernel_queue_uninit(struct kernel_queue *kq);
 int kfd_dqm_evict_pasid(struct device_queue_manager *dqm, u32 pasid);
+int kfd_dqm_suspend_bad_queue_mes(struct kfd_node *knode, u32 pasid, u32 doorbell_id);
 
 /* Process Queue Manager */
 struct process_queue_node {
@@ -1316,7 +1350,6 @@ int pqm_create_queue(struct process_queue_manager *pqm,
 			    struct file *f,
 			    struct queue_properties *properties,
 			    unsigned int *qid,
-			    struct amdgpu_bo *wptr_bo,
 			    const struct kfd_criu_queue_priv_data *q_data,
 			    const void *restore_mqd,
 			    const void *restore_ctl_stack,
@@ -1343,7 +1376,7 @@ int pqm_get_queue_snapshot(struct process_queue_manager *pqm,
 			   int *num_qss_entries,
 			   uint32_t *entry_size);
 
-int amdkfd_fence_wait_timeout(uint64_t *fence_addr,
+int amdkfd_fence_wait_timeout(struct device_queue_manager *dqm,
 			      uint64_t fence_value,
 			      unsigned int timeout_ms);
 
@@ -1403,7 +1436,7 @@ extern const struct packet_manager_funcs kfd_v9_pm_funcs;
 extern const struct packet_manager_funcs kfd_aldebaran_pm_funcs;
 
 int pm_init(struct packet_manager *pm, struct device_queue_manager *dqm);
-void pm_uninit(struct packet_manager *pm, bool hanging);
+void pm_uninit(struct packet_manager *pm);
 int pm_send_set_resources(struct packet_manager *pm,
 				struct scheduling_resources *res);
 int pm_send_runlist(struct packet_manager *pm, struct list_head *dqm_queues);
@@ -1462,7 +1495,14 @@ void kfd_signal_reset_event(struct kfd_node *dev);
 
 void kfd_signal_poison_consumed_event(struct kfd_node *dev, u32 pasid);
 
-void kfd_flush_tlb(struct kfd_process_device *pdd, enum TLB_FLUSH_TYPE type);
+static inline void kfd_flush_tlb(struct kfd_process_device *pdd,
+				 enum TLB_FLUSH_TYPE type)
+{
+	struct amdgpu_device *adev = pdd->dev->adev;
+	struct amdgpu_vm *vm = drm_priv_to_vm(pdd->drm_priv);
+
+	amdgpu_vm_flush_compute_tlb(adev, vm, type, pdd->dev->xcc_mask);
+}
 
 static inline bool kfd_flush_tlb_after_unmap(struct kfd_dev *dev)
 {

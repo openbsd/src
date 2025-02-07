@@ -38,6 +38,8 @@
 #include "dm_helpers.h"
 #include "atomfirmware.h"
 
+#define DC_LOGGER \
+	ddc_service->ctx->logger
 #define DC_LOGGER_INIT(logger)
 
 static const uint8_t DP_VGA_DONGLE_BRANCH_DEV_NAME[] = "DpVga";
@@ -46,10 +48,6 @@ static const uint8_t DP_DVI_CONVERTER_ID_4[] = "m2DVIa";
 static const uint8_t DP_DVI_CONVERTER_ID_5[] = "3393N2";
 
 struct i2c_payloads {
-	struct vector payloads;
-};
-
-struct aux_payloads {
 	struct vector payloads;
 };
 

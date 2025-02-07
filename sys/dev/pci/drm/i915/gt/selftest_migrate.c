@@ -336,7 +336,7 @@ static int clear(struct intel_migrate *migrate,
 
 			if (vaddr[x] != val) {
 				pr_err("%ps failed, (%u != %u), offset: %zu\n",
-				       fn, vaddr[x], val,  x * sizeof(u32));
+				       fn, vaddr[x], val, x * sizeof(u32));
 				igt_hexdump(vaddr + i * 1024, 4096);
 				err = -EINVAL;
 			}
@@ -710,7 +710,7 @@ static int threaded_migrate(struct intel_migrate *migrate,
 		thread[i].tsk = tsk;
 	}
 
-	drm_msleep(10); /* start all threads before we kthread_stop() */
+	drm_msleep(10 * n_cpus); /* start all threads before we kthread_stop() */
 
 	for (i = 0; i < n_cpus; ++i) {
 		struct task_struct *tsk = thread[i].tsk;

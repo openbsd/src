@@ -34,4 +34,8 @@ accel_core_exit(void)
 {
 }
 
+static inline void
+accel_debugfs_register(struct drm_device *dev)
+{
+}
 #endif

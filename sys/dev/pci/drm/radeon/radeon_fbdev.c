@@ -507,7 +507,7 @@ void
 radeondrm_burner_cb(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
-	struct drm_fb_helper *helper = rdev->ddev->fb_helper;
+	struct drm_fb_helper *helper = rdev_to_drm(rdev)->fb_helper;
 
 	drm_fb_helper_blank(rdev->burner_fblank, helper->info);
 }

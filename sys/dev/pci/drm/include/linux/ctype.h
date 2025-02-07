@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.2 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -43,4 +43,9 @@ isprint(int c)
 	return (0);
 }
 
+static inline int
+isspace(int c)
+{
+	return (c == ' ' || c == '\t');
+}
 #endif

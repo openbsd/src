@@ -35,7 +35,8 @@ int remap_io_mapping(struct vm_area_struct *vma,
 #ifdef __linux__
 int remap_io_sg(struct vm_area_struct *vma,
 		unsigned long addr, unsigned long size,
-		struct scatterlist *sgl, resource_size_t iobase);
+		struct scatterlist *sgl, unsigned long offset,
+		resource_size_t iobase);
 #endif
 
 #endif /* __I915_MM_H__ */

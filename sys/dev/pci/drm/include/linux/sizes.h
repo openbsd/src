@@ -3,6 +3,8 @@
 #ifndef _LINUX_SIZES_H
 #define _LINUX_SIZES_H
 
+#define SZ_4	4
+
 #define SZ_1K	(1 << 10)
 #define SZ_2K	(2 << 10)
 #define SZ_4K	(4 << 10)

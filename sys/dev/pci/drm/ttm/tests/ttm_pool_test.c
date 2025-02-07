@@ -48,7 +48,7 @@ static void ttm_pool_test_fini(struct kunit *test)
 }
 
 static struct ttm_tt *ttm_tt_kunit_init(struct kunit *test,
-					uint32_t page_flags,
+					u32 page_flags,
 					enum ttm_caching caching,
 					size_t size)
 {
@@ -57,7 +57,7 @@ static struct ttm_tt *ttm_tt_kunit_init(struct kunit *test,
 	struct ttm_tt *tt;
 	int err;
 
-	bo = ttm_bo_kunit_init(test, priv->devs, size);
+	bo = ttm_bo_kunit_init(test, priv->devs, size, NULL);
 	KUNIT_ASSERT_NOT_NULL(test, bo);
 	priv->mock_bo = bo;
 
@@ -78,10 +78,9 @@ static struct ttm_pool *ttm_pool_pre_populated(struct kunit *test,
 	struct ttm_test_devices *devs = priv->devs;
 	struct ttm_pool *pool;
 	struct ttm_tt *tt;
-	unsigned long order = __fls(size / PAGE_SIZE);
 	int err;
 
-	tt = ttm_tt_kunit_init(test, order, caching, size);
+	tt = ttm_tt_kunit_init(test, 0, caching, size);
 	KUNIT_ASSERT_NOT_NULL(test, tt);
 
 	pool = kunit_kzalloc(test, sizeof(*pool), GFP_KERNEL);
@@ -109,7 +108,7 @@ static const struct ttm_pool_test_case ttm_pool_basic_cases[] = {
 	},
 	{
 		.description = "Above the allocation limit",
-		.order = MAX_ORDER + 1,
+		.order = MAX_PAGE_ORDER + 1,
 	},
 	{
 		.description = "One page, with coherent DMA mappings enabled",
@@ -118,7 +117,7 @@ static const struct ttm_pool_test_case ttm_pool_basic_cases[] = {
 	},
 	{
 		.description = "Above the allocation limit, with coherent DMA mappings enabled",
-		.order = MAX_ORDER + 1,
+		.order = MAX_PAGE_ORDER + 1,
 		.use_dma_alloc = true,
 	},
 };
@@ -165,7 +164,7 @@ static void ttm_pool_alloc_basic(struct kunit *test)
 	fst_page = tt->pages[0];
 	last_page = tt->pages[tt->num_pages - 1];
 
-	if (params->order <= MAX_ORDER) {
+	if (params->order <= MAX_PAGE_ORDER) {
 		if (params->use_dma_alloc) {
 			KUNIT_ASSERT_NOT_NULL(test, (void *)fst_page->private);
 			KUNIT_ASSERT_NOT_NULL(test, (void *)last_page->private);
@@ -182,7 +181,7 @@ static void ttm_pool_alloc_basic(struct kunit *test)
 			 * order 0 blocks
 			 */
 			KUNIT_ASSERT_EQ(test, fst_page->private,
-					min_t(unsigned int, MAX_ORDER,
+					min_t(unsigned int, MAX_PAGE_ORDER,
 					      params->order));
 			KUNIT_ASSERT_EQ(test, last_page->private, 0);
 		}
@@ -210,7 +209,7 @@ static void ttm_pool_alloc_basic_dma_addr(struct kunit *test)
 	tt = kunit_kzalloc(test, sizeof(*tt), GFP_KERNEL);
 	KUNIT_ASSERT_NOT_NULL(test, tt);
 
-	bo = ttm_bo_kunit_init(test, devs, size);
+	bo = ttm_bo_kunit_init(test, devs, size, NULL);
 	KUNIT_ASSERT_NOT_NULL(test, bo);
 
 	err = ttm_sg_tt_init(tt, bo, 0, caching);
@@ -434,4 +433,5 @@ static struct kunit_suite ttm_pool_test_suite = {
 
 kunit_test_suites(&ttm_pool_test_suite);
 
-MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("KUnit tests for ttm_pool APIs");
+MODULE_LICENSE("GPL and additional rights");

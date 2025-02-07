@@ -425,6 +425,18 @@ static const struct intel_vgpu_regops intel_vgpu_regops_opregion = {
 	.release = intel_vgpu_reg_release_opregion,
 };
 
+static bool edid_valid(const void *edid, size_t size)
+{
+	const struct drm_edid *drm_edid;
+	bool is_valid;
+
+	drm_edid = drm_edid_alloc(edid, size);
+	is_valid = drm_edid_valid(drm_edid);
+	drm_edid_free(drm_edid);
+
+	return is_valid;
+}
+
 static int handle_edid_regs(struct intel_vgpu *vgpu,
 			struct vfio_edid_region *region, char *buf,
 			size_t count, u16 offset, bool is_write)
@@ -443,11 +455,7 @@ static int handle_edid_regs(struct intel_vgpu *vgpu,
 		switch (offset) {
 		case offsetof(struct vfio_region_gfx_edid, link_state):
 			if (data == VFIO_DEVICE_GFX_LINK_STATE_UP) {
-				if (!drm_edid_block_valid(
-					(u8 *)region->edid_blob,
-					0,
-					true,
-					NULL)) {
+				if (!edid_valid(region->edid_blob, EDID_SIZE)) {
 					gvt_vgpu_err("invalid EDID blob\n");
 					return -EINVAL;
 				}
@@ -574,7 +582,7 @@ int intel_gvt_set_opregion(struct intel_vgpu *vgpu)
 	ret = intel_vgpu_register_reg(vgpu,
 			PCI_VENDOR_ID_INTEL | VFIO_REGION_TYPE_PCI_VENDOR_TYPE,
 			VFIO_REGION_SUBTYPE_INTEL_IGD_OPREGION,
-			&intel_vgpu_regops_opregion, OPREGION_SIZE,
+			&intel_vgpu_regops_opregion, INTEL_GVT_OPREGION_SIZE,
 			VFIO_REGION_INFO_FLAG_READ, base);
 
 	return ret;
@@ -1379,7 +1387,7 @@ static long intel_vgpu_ioctl(struct vfio_device *vfio_dev, unsigned int cmd,
 		intel_gvt_reset_vgpu(vgpu);
 		return 0;
 	} else if (cmd == VFIO_DEVICE_QUERY_GFX_PLANE) {
-		struct vfio_device_gfx_plane_info dmabuf;
+		struct vfio_device_gfx_plane_info dmabuf = {};
 		int ret = 0;
 
 		minsz = offsetofend(struct vfio_device_gfx_plane_info,
@@ -1985,5 +1993,6 @@ static void __exit kvmgt_exit(void)
 module_init(kvmgt_init);
 module_exit(kvmgt_exit);
 
+MODULE_DESCRIPTION("Intel mediated pass-through framework for KVM");
 MODULE_LICENSE("GPL and additional rights");
 MODULE_AUTHOR("Intel Corporation");

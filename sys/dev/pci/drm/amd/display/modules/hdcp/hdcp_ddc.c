@@ -25,7 +25,7 @@
 
 #include "hdcp.h"
 
-#ifdef __linux__
+#ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 #define HDCP_I2C_ADDR 0x3a	/* 0x74 >> 1*/
@@ -163,8 +163,7 @@ static enum mod_hdcp_status read(struct mod_hdcp *hdcp,
 		return MOD_HDCP_STATUS_DDC_FAILURE;
 
 	if (is_dp_hdcp(hdcp)) {
-		int num_dpcd_addrs = sizeof(hdcp_dpcd_addrs) /
-			sizeof(hdcp_dpcd_addrs[0]);
+		int num_dpcd_addrs = ARRAY_SIZE(hdcp_dpcd_addrs);
 		if (msg_id >= num_dpcd_addrs)
 			return MOD_HDCP_STATUS_DDC_FAILURE;
 
@@ -182,8 +181,7 @@ static enum mod_hdcp_status read(struct mod_hdcp *hdcp,
 			data_offset += cur_size;
 		}
 	} else {
-		int num_i2c_offsets = sizeof(hdcp_i2c_offsets) /
-			sizeof(hdcp_i2c_offsets[0]);
+		int num_i2c_offsets = ARRAY_SIZE(hdcp_i2c_offsets);
 		if (msg_id >= num_i2c_offsets)
 			return MOD_HDCP_STATUS_DDC_FAILURE;
 
@@ -236,8 +234,7 @@ static enum mod_hdcp_status write(struct mod_hdcp *hdcp,
 		return MOD_HDCP_STATUS_DDC_FAILURE;
 
 	if (is_dp_hdcp(hdcp)) {
-		int num_dpcd_addrs = sizeof(hdcp_dpcd_addrs) /
-			sizeof(hdcp_dpcd_addrs[0]);
+		int num_dpcd_addrs = ARRAY_SIZE(hdcp_dpcd_addrs);
 		if (msg_id >= num_dpcd_addrs)
 			return MOD_HDCP_STATUS_DDC_FAILURE;
 
@@ -256,8 +253,7 @@ static enum mod_hdcp_status write(struct mod_hdcp *hdcp,
 			data_offset += cur_size;
 		}
 	} else {
-		int num_i2c_offsets = sizeof(hdcp_i2c_offsets) /
-			sizeof(hdcp_i2c_offsets[0]);
+		int num_i2c_offsets = ARRAY_SIZE(hdcp_i2c_offsets);
 		if (msg_id >= num_i2c_offsets)
 			return MOD_HDCP_STATUS_DDC_FAILURE;
 

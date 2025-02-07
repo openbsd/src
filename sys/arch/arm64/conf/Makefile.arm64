@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.49 2024/07/11 12:07:40 kettenis Exp $
+#	$OpenBSD: Makefile.arm64,v 1.50 2025/02/07 03:03:08 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,6 +38,7 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu11 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu12 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu13 \
+		-I$S/dev/pci/drm/amd/pm/swsmu/smu14 \
 		-I$S/dev/pci/drm/amd/pm/powerplay/inc \
 		-I$S/dev/pci/drm/amd/pm/powerplay/hwmgr \
 		-I$S/dev/pci/drm/amd/pm/powerplay/smumgr \
@@ -46,6 +47,30 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/display/dc/inc \
 		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
 		-I$S/dev/pci/drm/amd/display/dc/clk_mgr \
+		-I$S/dev/pci/drm/amd/display/dc/dccg \
+		-I$S/dev/pci/drm/amd/display/dc/dio \
+		-I$S/dev/pci/drm/amd/display/dc/dpp \
+		-I$S/dev/pci/drm/amd/display/dc/dsc \
+		-I$S/dev/pci/drm/amd/display/dc/dwb \
+		-I$S/dev/pci/drm/amd/display/dc/hubbub \
+		-I$S/dev/pci/drm/amd/display/dc/hpo \
+		-I$S/dev/pci/drm/amd/display/dc/hwss \
+		-I$S/dev/pci/drm/amd/display/dc/hubp \
+		-I$S/dev/pci/drm/amd/display/dc/dml2 \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21 \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/inc \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_core \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_dpmm \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_mcg \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_pmo \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_standalone_libraries \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/inc \
+		-I$S/dev/pci/drm/amd/display/dc/mmhubbub \
+		-I$S/dev/pci/drm/amd/display/dc/mpc \
+		-I$S/dev/pci/drm/amd/display/dc/opp \
+		-I$S/dev/pci/drm/amd/display/dc/optc \
+		-I$S/dev/pci/drm/amd/display/dc/pg \
+		-I$S/dev/pci/drm/amd/display/dc/resource \
 		-I$S/dev/pci/drm/amd/display/modules/inc \
 		-I$S/dev/pci/drm/amd/display/modules/hdcp \
 		-I$S/dev/pci/drm/amd/display/dmub/inc

@@ -23,8 +23,6 @@
  *
  */
 
-#include <linux/slab.h>
-
 #include "dm_services.h"
 #include "dm_helpers.h"
 #include "include/hdcp_msg_types.h"
@@ -72,7 +70,7 @@ static const bool hdcp_cmd_is_read[HDCP_MESSAGE_ID_MAX] = {
 	[HDCP_MESSAGE_ID_WRITE_REPEATER_AUTH_STREAM_MANAGE] = false,
 	[HDCP_MESSAGE_ID_READ_REPEATER_AUTH_STREAM_READY] = true,
 	[HDCP_MESSAGE_ID_READ_RXSTATUS] = true,
-	[HDCP_MESSAGE_ID_WRITE_CONTENT_STREAM_TYPE] = false
+	[HDCP_MESSAGE_ID_WRITE_CONTENT_STREAM_TYPE] = false,
 };
 
 static const uint8_t hdcp_i2c_offsets[HDCP_MESSAGE_ID_MAX] = {

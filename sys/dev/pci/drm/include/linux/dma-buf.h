@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma-buf.h,v 1.4 2022/03/01 04:08:04 jsg Exp $	*/
+/*	$OpenBSD: dma-buf.h,v 1.5 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -22,6 +22,7 @@
 #include <sys/systm.h>
 #include <linux/dma-resv.h>
 #include <linux/list.h>
+#include <linux/file.h>
 
 struct dma_buf_ops;
 struct device;
@@ -36,6 +37,7 @@ struct dma_buf {
 };
 
 struct dma_buf_attachment {
+	struct dma_buf *dmabuf;
 	void *importer_priv;
 };
 
@@ -77,4 +79,9 @@ dma_buf_detach(struct dma_buf *buf, struct dma_buf_attachment *dba)
 	panic("dma_buf_detach");
 }
 
+static inline bool
+dma_buf_is_dynamic(struct dma_buf *buf)
+{
+	return false;
+}
 #endif

@@ -9,11 +9,12 @@
 #include <linux/swap.h>
 
 #include <drm/drm_cache.h>
-#include <drm/drm_legacy.h>	/* for drm_dmamem_alloc() */
+#include <drm/drm_drv.h>	/* for drm_dmamem_alloc() */
 
 #include "gt/intel_gt.h"
 #include "i915_drv.h"
 #include "i915_gem_object.h"
+#include "i915_gem_object_frontbuffer.h"
 #include "i915_gem_region.h"
 #include "i915_gem_tiling.h"
 #include "i915_scatterlist.h"
@@ -85,9 +86,8 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	dst = vaddr;
 	for (i = 0; i < obj->base.size / PAGE_SIZE; i++) {
 		struct vm_page *page;
-		void *src;
 
-#ifdef  __linux__
+#ifdef __linux__
 		page = shmem_read_mapping_page(mapping, i);
 		if (IS_ERR(page))
 			goto err_st;
@@ -95,21 +95,19 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 		struct pglist plist;
 		TAILQ_INIT(&plist);
 		if (uvm_obj_wire(obj->base.uao, i * PAGE_SIZE,
-				(i + 1) * PAGE_SIZE, &plist))
+		    (i + 1) * PAGE_SIZE, &plist))
 			goto err_st;
 		page = TAILQ_FIRST(&plist);
 #endif
 
-		src = kmap_atomic(page);
-		memcpy(dst, src, PAGE_SIZE);
+		memcpy_from_page(dst, page, 0, PAGE_SIZE);
 		drm_clflush_virt_range(dst, PAGE_SIZE);
-		kunmap_atomic(src);
 
 #ifdef __linux__
 		put_page(page);
 #else
 		uvm_obj_unwire(obj->base.uao, i * PAGE_SIZE,
-			      (i + 1) * PAGE_SIZE);
+		    (i + 1) * PAGE_SIZE);
 #endif
 		dst += PAGE_SIZE;
 	}
@@ -159,7 +157,6 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 
 		for (i = 0; i < obj->base.size / PAGE_SIZE; i++) {
 			struct vm_page *page;
-			char *dst;
 
 #ifdef __linux__
 			page = shmem_read_mapping_page(mapping, i);
@@ -169,15 +166,13 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 			struct pglist plist;
 			TAILQ_INIT(&plist);
 			if (uvm_obj_wire(obj->base.uao, i * PAGE_SIZE,
-					(i + 1) * PAGE_SIZE, &plist))
+			    (i + 1) * PAGE_SIZE, &plist))
 				continue;
 			page = TAILQ_FIRST(&plist);
 #endif
 
-			dst = kmap_atomic(page);
 			drm_clflush_virt_range(src, PAGE_SIZE);
-			memcpy(dst, src, PAGE_SIZE);
-			kunmap_atomic(dst);
+			memcpy_to_page(page, 0, src, PAGE_SIZE);
 
 			set_page_dirty(page);
 #ifdef __linux__

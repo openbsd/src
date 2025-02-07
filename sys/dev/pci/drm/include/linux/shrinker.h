@@ -13,6 +13,7 @@ struct shrinker {
 	u_long	(*scan_objects)(struct shrinker *, struct shrink_control *);
 	long	batch;
 	int	seeks;
+	void	*private_data;
 	TAILQ_ENTRY(shrinker) next;
 };
 
@@ -20,12 +21,14 @@ struct shrinker {
 
 #define DEFAULT_SEEKS	2
 
-int register_shrinker(struct shrinker *, const char *format, ...);
-void unregister_shrinker(struct shrinker *);
-
 static inline void
 synchronize_shrinkers(void)
 {
 }
+
+struct shrinker *shrinker_alloc(u_int, const char *, ...);
+void shrinker_free(struct shrinker *);
+
+void shrinker_register(struct shrinker *);
 
 #endif

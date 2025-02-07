@@ -17,6 +17,8 @@ struct backlight_properties {
 	int max_brightness;
 	int brightness;
 	int power;
+#define BACKLIGHT_POWER_ON	0
+#define BACKLIGHT_POWER_OFF	1
 	int scale;
 #define BACKLIGHT_SCALE_LINEAR	0
 	int state;

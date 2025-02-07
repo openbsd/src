@@ -28,6 +28,7 @@ struct mipi_dsi_device {
 	uint32_t mode_flags;
 #define MIPI_DSI_MODE_LPM	(1 << 0)
 	bool attached;
+	struct device dev;
 };
 
 struct mipi_dsi_msg {
@@ -57,6 +58,15 @@ enum mipi_dsi_pixel_format {
 	MIPI_DSI_FMT_RGB666,
 	MIPI_DSI_FMT_RGB666_PACKED,
 	MIPI_DSI_FMT_RGB565,
+};
+
+enum mipi_dsi_compression_algo {
+	MIPI_DSI_COMPRESSION_DSC
+};
+
+struct mipi_dsi_multi_context {
+	struct mipi_dsi_device *dsi;
+	int accum_err;
 };
 
 int mipi_dsi_attach(struct mipi_dsi_device *);

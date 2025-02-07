@@ -244,14 +244,12 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.0.4, DCN 3.1.4, APU, Ryzen 8040, "Hawk Point" */
 	{0x1002, 0x1901 },	/* Radeon 740M */
 
-#ifdef notyet
-	/* GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 300, "Strix Point", linux 6.7 */
+	/* GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 300, "Strix Point" */
 	{0x1002, 0x150e },	/* Radeon 880M / 890M */
 
-	/* GC 11.5.1, DCN 3.5.1, APU, linux 6.9 */
-	/* GC 11.5.2, DCN 3.5.1, APU, linux 6.11 */
+	/* GC 11.5.1, DCN 3.5.1, APU */
+	/* GC 11.5.2, DCN 3.5.1, APU */
 
-	/* GC 12.0.0, DCN 4.0.1, dGPU, linux 6.11 */
-	/* GC 12.0.1, DCN 4.0.1, dGPU, linux 6.11 */
-#endif
+	/* GC 12.0.0, DCN 4.0.1, dGPU */
+	/* GC 12.0.1, DCN 4.0.1, dGPU */
 };

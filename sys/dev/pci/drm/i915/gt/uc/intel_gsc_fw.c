@@ -80,6 +80,7 @@ int intel_gsc_fw_get_binary_info(struct intel_uc_fw *gsc_fw, const void *data, s
 	const struct intel_gsc_cpd_header_v2 *cpd_header = NULL;
 	const struct intel_gsc_cpd_entry *cpd_entry = NULL;
 	const struct intel_gsc_manifest_header *manifest;
+	struct intel_uc_fw_ver min_ver = { 0 };
 	size_t min_size = sizeof(*layout);
 	int i;
 
@@ -212,6 +213,50 @@ int intel_gsc_fw_get_binary_info(struct intel_uc_fw *gsc_fw, const void *data, s
 		}
 	}
 
+	/*
+	 * ARL SKUs require newer firmwares, but the blob is actually common
+	 * across all MTL and ARL SKUs, so we need to do an explicit version check
+	 * here rather than using a separate table entry. If a too old version
+	 * is found, then just don't use GSC rather than aborting the driver load.
+	 * Note that the major number in the GSC FW version is used to indicate
+	 * the platform, so we expect it to always be 102 for MTL/ARL binaries.
+	 */
+	if (IS_ARROWLAKE_S(gt->i915))
+		min_ver = (struct intel_uc_fw_ver){ 102, 0, 10, 1878 };
+	else if (IS_ARROWLAKE_H(gt->i915) || IS_ARROWLAKE_U(gt->i915))
+		min_ver = (struct intel_uc_fw_ver){ 102, 1, 15, 1926 };
+
+	if (IS_METEORLAKE(gt->i915) && gsc->release.major != 102) {
+		gt_info(gt, "Invalid GSC firmware for MTL/ARL, got %d.%d.%d.%d but need 102.x.x.x",
+			gsc->release.major, gsc->release.minor,
+			gsc->release.patch, gsc->release.build);
+			return -EINVAL;
+	}
+
+	if (min_ver.major) {
+		bool too_old = false;
+
+		if (gsc->release.minor < min_ver.minor) {
+			too_old = true;
+		} else if (gsc->release.minor == min_ver.minor) {
+			if (gsc->release.patch < min_ver.patch) {
+				too_old = true;
+			} else if (gsc->release.patch == min_ver.patch) {
+				if (gsc->release.build < min_ver.build)
+					too_old = true;
+			}
+		}
+
+		if (too_old) {
+			gt_info(gt, "GSC firmware too old for ARL, got %d.%d.%d.%d but need at least %d.%d.%d.%d",
+				gsc->release.major, gsc->release.minor,
+				gsc->release.patch, gsc->release.build,
+				min_ver.major, min_ver.minor,
+				min_ver.patch, min_ver.build);
+			return -EINVAL;
+		}
+	}
+
 	return 0;
 }
 
@@ -298,7 +343,7 @@ static int gsc_fw_load_prepare(struct intel_gsc_uc *gsc)
 	memcpy_toio(gsc->local_vaddr, src, gsc->fw.size);
 	memset_io(gsc->local_vaddr + gsc->fw.size, 0, gsc->local->size - gsc->fw.size);
 
-	intel_guc_write_barrier(&gt->uc.guc);
+	intel_guc_write_barrier(gt_to_guc(gt));
 
 	i915_gem_object_unpin_map(gsc->fw.obj);
 
@@ -351,7 +396,7 @@ static int gsc_fw_query_compatibility_version(struct intel_gsc_uc *gsc)
 	void *vaddr;
 	int err;
 
-	err = intel_guc_allocate_and_map_vma(&gt->uc.guc, GSC_VER_PKT_SZ * 2,
+	err = intel_guc_allocate_and_map_vma(gt_to_guc(gt), GSC_VER_PKT_SZ * 2,
 					     &vma, &vaddr);
 	if (err) {
 		gt_err(gt, "failed to allocate vma for GSC version query\n");

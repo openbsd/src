@@ -220,6 +220,22 @@ static int intel_memory_region_memtest(struct intel_memory_region *mem,
 	return err;
 }
 
+static const char *region_type_str(u16 type)
+{
+	switch (type) {
+	case INTEL_MEMORY_SYSTEM:
+		return "system";
+	case INTEL_MEMORY_LOCAL:
+		return "local";
+	case INTEL_MEMORY_STOLEN_LOCAL:
+		return "stolen-local";
+	case INTEL_MEMORY_STOLEN_SYSTEM:
+		return "stolen-system";
+	default:
+		return "unknown";
+	}
+}
+
 struct intel_memory_region *
 intel_memory_region_create(struct drm_i915_private *i915,
 			   resource_size_t start,
@@ -246,6 +262,9 @@ intel_memory_region_create(struct drm_i915_private *i915,
 	mem->total = size;
 	mem->type = type;
 	mem->instance = instance;
+
+	snprintf(mem->uabi_name, sizeof(mem->uabi_name), "%s%u",
+		 region_type_str(type), instance);
 
 	rw_init(&mem->objects.lock, "memobj");
 	INIT_LIST_HEAD(&mem->objects.list);
@@ -319,7 +338,7 @@ int intel_memory_regions_hw_probe(struct drm_i915_private *i915)
 		struct intel_memory_region *mem = ERR_PTR(-ENODEV);
 		u16 type, instance;
 
-		if (!HAS_REGION(i915, BIT(i)))
+		if (!HAS_REGION(i915, i))
 			continue;
 
 		type = intel_region_map[i].class;
@@ -355,8 +374,10 @@ int intel_memory_regions_hw_probe(struct drm_i915_private *i915)
 			goto out_cleanup;
 		}
 
-		mem->id = i;
-		i915->mm.regions[i] = mem;
+		if (mem) { /* Skip on non-fatal errors */
+			mem->id = i;
+			i915->mm.regions[i] = mem;
+		}
 	}
 
 	for (i = 0; i < ARRAY_SIZE(i915->mm.regions); i++) {

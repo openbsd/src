@@ -39,7 +39,7 @@
 
 #include <asm/kvm_page_track.h>
 
-#include "i915_drv.h"
+#include "gt/intel_gt.h"
 #include "intel_gvt.h"
 
 #include "debug.h"
@@ -59,6 +59,8 @@
 #include "page_track.h"
 
 #define GVT_MAX_VGPU 8
+
+struct engine_mmio;
 
 /* Describe per-platform limitations. */
 struct intel_gvt_device_info {
@@ -87,7 +89,6 @@ struct intel_vgpu_gm {
 /* Fences owned by a vGPU */
 struct intel_vgpu_fence {
 	struct i915_fence_reg *regs[INTEL_GVT_MAX_NUM_FENCES];
-	u32 base;
 	u32 size;
 };
 
@@ -117,7 +118,6 @@ struct intel_vgpu_irq {
 };
 
 struct intel_vgpu_opregion {
-	bool mapped;
 	void *va;
 	u32 gfn[INTEL_GVT_OPREGION_PAGES];
 };
@@ -221,7 +221,6 @@ struct intel_vgpu {
 
 	struct vfio_region *region;
 	int num_regions;
-	struct eventfd_ctx *intx_trigger;
 	struct eventfd_ctx *msi_trigger;
 
 	/*
@@ -254,7 +253,6 @@ struct intel_gvt_fence {
 
 /* Special MMIO blocks. */
 struct gvt_mmio_block {
-	unsigned int device;
 	i915_reg_t   offset;
 	unsigned int size;
 	gvt_mmio_func read;
@@ -368,11 +366,6 @@ struct intel_gvt {
 	struct dentry *debugfs_root;
 };
 
-static inline struct intel_gvt *to_gvt(struct drm_i915_private *i915)
-{
-	return i915->gvt;
-}
-
 enum {
 	/* Scheduling trigger by timer */
 	INTEL_GVT_REQUEST_SCHED = 0,
@@ -447,7 +440,6 @@ int intel_gvt_load_firmware(struct intel_gvt *gvt);
 #define vgpu_hidden_gmadr_end(vgpu) \
 	(vgpu_hidden_gmadr_base(vgpu) + vgpu_hidden_sz(vgpu) - 1)
 
-#define vgpu_fence_base(vgpu) (vgpu->fence.base)
 #define vgpu_fence_sz(vgpu) (vgpu->fence.size)
 
 /* ring context size i.e. the first 0x50 dwords*/

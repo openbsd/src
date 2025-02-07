@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.11 2023/07/28 09:46:13 claudio Exp $	*/
+/*	$OpenBSD: wait.h,v 1.12 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -292,6 +292,12 @@ wake_up_all_locked(wait_queue_head_t *wqh)
 		.private = curproc,			\
 		.func = autoremove_wake_function,	\
 		.entry = LIST_HEAD_INIT((name).entry),	\
-	}						
+	}
 
+#define	DEFINE_WAIT_FUNC(name, fn)			\
+	struct wait_queue_entry name = {		\
+		.private = curproc,			\
+		.func = fn,				\
+		.entry = LIST_HEAD_INIT((name).entry),	\
+	}
 #endif

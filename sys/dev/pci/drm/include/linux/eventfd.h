@@ -9,7 +9,7 @@ struct eventfd_ctx {
 };
 
 static inline void
-eventfd_signal(struct eventfd_ctx *c, uint64_t v)
+eventfd_signal(struct eventfd_ctx *c)
 {
 }
 

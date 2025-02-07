@@ -10,4 +10,7 @@
 typedef struct mutex spinlock_t;
 #define DEFINE_SPINLOCK(x)	struct mutex x = MUTEX_INITIALIZER(IPL_TTY)
 
+struct raw_spinlock {
+};
+
 #endif

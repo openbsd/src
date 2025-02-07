@@ -45,6 +45,7 @@ typedef off_t loff_t;
 
 typedef __ptrdiff_t ptrdiff_t;
 
+typedef unsigned int umode_t;
 typedef unsigned int gfp_t;
 
 typedef unsigned long pgoff_t;

@@ -35,9 +35,9 @@
 #define I915_GFP_ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
 
 #if IS_ENABLED(CONFIG_DRM_I915_TRACE_GTT)
-#define DBG(...) trace_printk(__VA_ARGS__)
+#define GTT_TRACE(...) trace_printk(__VA_ARGS__)
 #else
-#define DBG(...)
+#define GTT_TRACE(...)
 #endif
 
 #define NALLOC 3 /* 1 normal, 1 for concurrent threads, 1 for preallocation */
@@ -249,8 +249,13 @@ struct i915_address_space {
 	struct work_struct release_work;
 
 	struct drm_mm mm;
+	struct {
+		struct drm_i915_gem_object *obj;
+		struct i915_vma *vma;
+	} rsvd;
 	struct intel_gt *gt;
 	struct drm_i915_private *i915;
+	struct drm_i915_file_private *fpriv;
 	struct device *dma;
 	u64 total;		/* size addr space maps (ex. 2GB for ggtt) */
 	u64 reserved;		/* size addr space reserved */

@@ -475,11 +475,9 @@ static int ring_context_init_default_state(struct intel_context *ce,
 		return PTR_ERR(vaddr);
 
 #ifdef __linux__
-	shmem_read(ce->engine->default_state, 0,
-		   vaddr, ce->engine->context_size);
+	shmem_read(ce->default_state, 0, vaddr, ce->engine->context_size);
 #else
-	uao_read(ce->engine->default_state, 0,
-		   vaddr, ce->engine->context_size);
+	uao_read(ce->default_state, 0, vaddr, ce->engine->context_size);
 #endif
 
 	i915_gem_object_flush_map(obj);
@@ -496,7 +494,7 @@ static int ring_context_pre_pin(struct intel_context *ce,
 	struct i915_address_space *vm;
 	int err = 0;
 
-	if (ce->engine->default_state &&
+	if (ce->default_state &&
 	    !test_bit(CONTEXT_VALID_BIT, &ce->flags)) {
 		err = ring_context_init_default_state(ce, ww);
 		if (err)
@@ -574,6 +572,9 @@ err_obj:
 static int ring_context_alloc(struct intel_context *ce)
 {
 	struct intel_engine_cs *engine = ce->engine;
+
+	if (!intel_context_has_own_state(ce))
+		ce->default_state = engine->default_state;
 
 	/* One ringbuffer to rule them all */
 	GEM_BUG_ON(!engine->legacy.ring);

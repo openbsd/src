@@ -63,7 +63,6 @@ EXPORT_SYMBOL(__drm_crtc_commit_free);
  * hardware and flipped to.
  *
  * Returns:
- *
  * 0 on success, a negative error code otherwise.
  */
 int drm_crtc_commit_wait(struct drm_crtc_commit *commit)
@@ -337,7 +336,6 @@ EXPORT_SYMBOL(__drm_atomic_state_free);
  * not created by userspace through an IOCTL call.
  *
  * Returns:
- *
  * Either the allocated state or the error code encoded into the pointer. When
  * the error is EDEADLK then the w/w mutex code has detected a deadlock and the
  * entire atomic sequence must be restarted. All other errors are fatal.
@@ -518,7 +516,6 @@ static int drm_atomic_connector_check(struct drm_connector *connector,
  * is consistent.
  *
  * Returns:
- *
  * Either the allocated state or the error code encoded into the pointer. When
  * the error is EDEADLK then the w/w mutex code has detected a deadlock and the
  * entire atomic sequence must be restarted. All other errors are fatal.
@@ -608,7 +605,6 @@ static int drm_atomic_plane_check(const struct drm_plane_state *old_plane_state,
 	unsigned int fb_width, fb_height;
 	struct drm_mode_rect *clips;
 	uint32_t num_clips;
-	int ret;
 
 	/* either *both* CRTC and FB must be set, or neither */
 	if (crtc && !fb) {
@@ -635,14 +631,12 @@ static int drm_atomic_plane_check(const struct drm_plane_state *old_plane_state,
 	}
 
 	/* Check whether this plane supports the fb pixel format. */
-	ret = drm_plane_check_pixel_format(plane, fb->format->format,
-					   fb->modifier);
-	if (ret) {
+	if (!drm_plane_has_format(plane, fb->format->format, fb->modifier)) {
 		drm_dbg_atomic(plane->dev,
 			       "[PLANE:%d:%s] invalid pixel format %p4cc, modifier 0x%llx\n",
 			       plane->base.id, plane->name,
 			       &fb->format->format, fb->modifier);
-		return ret;
+		return -EINVAL;
 	}
 
 	/* Give drivers some help against integer overflows */
@@ -733,6 +727,7 @@ static void drm_atomic_plane_print_state(struct drm_printer *p,
 		   drm_get_color_encoding_name(state->color_encoding));
 	drm_printf(p, "\tcolor-range=%s\n",
 		   drm_get_color_range_name(state->color_range));
+	drm_printf(p, "\tcolor_mgmt_changed=%d\n", state->color_mgmt_changed);
 
 	if (plane->funcs->atomic_print_state)
 		plane->funcs->atomic_print_state(p, state);
@@ -830,7 +825,6 @@ EXPORT_SYMBOL(drm_atomic_private_obj_fini);
  * object lock to make sure that the state is consistent.
  *
  * RETURNS:
- *
  * Either the allocated state or the error code encoded into a pointer.
  */
 struct drm_private_state *
@@ -1072,7 +1066,6 @@ EXPORT_SYMBOL(drm_atomic_get_new_crtc_for_encoder);
  * make sure that the state is consistent.
  *
  * Returns:
- *
  * Either the allocated state or the error code encoded into the pointer. When
  * the error is EDEADLK then the w/w mutex code has detected a deadlock and the
  * entire atomic sequence must be restarted. All other errors are fatal.
@@ -1161,6 +1154,17 @@ static void drm_atomic_connector_print_state(struct drm_printer *p,
 	drm_printf(p, "\tmax_requested_bpc=%d\n", state->max_requested_bpc);
 	drm_printf(p, "\tcolorspace=%s\n", drm_get_colorspace_name(state->colorspace));
 
+	if (connector->connector_type == DRM_MODE_CONNECTOR_HDMIA ||
+	    connector->connector_type == DRM_MODE_CONNECTOR_HDMIB) {
+		drm_printf(p, "\tbroadcast_rgb=%s\n",
+			   drm_hdmi_connector_get_broadcast_rgb_name(state->hdmi.broadcast_rgb));
+		drm_printf(p, "\tis_limited_range=%c\n", state->hdmi.is_limited_range ? 'y' : 'n');
+		drm_printf(p, "\toutput_bpc=%u\n", state->hdmi.output_bpc);
+		drm_printf(p, "\toutput_format=%s\n",
+			   drm_hdmi_connector_get_output_format_name(state->hdmi.output_format));
+		drm_printf(p, "\ttmds_char_rate=%llu\n", state->hdmi.tmds_char_rate);
+	}
+
 	if (connector->connector_type == DRM_MODE_CONNECTOR_WRITEBACK)
 		if (state->writeback_job && state->writeback_job->fb)
 			drm_printf(p, "\tfb=%d\n", state->writeback_job->fb->base.id);
@@ -1179,7 +1183,6 @@ static void drm_atomic_connector_print_state(struct drm_printer *p,
  * state is consistent.
  *
  * Returns:
- *
  * Either the allocated state or the error code encoded into the pointer. When
  * the error is EDEADLK then the w/w mutex code has detected a deadlock and the
  * entire atomic sequence must be restarted.
@@ -1792,6 +1795,7 @@ static void __drm_state_dump(struct drm_device *dev, struct drm_printer *p,
 	struct drm_crtc *crtc;
 	struct drm_connector *connector;
 	struct drm_connector_list_iter conn_iter;
+	struct drm_private_obj *obj;
 
 	if (!drm_drv_uses_atomic_modeset(dev))
 		return;
@@ -1820,6 +1824,14 @@ static void __drm_state_dump(struct drm_device *dev, struct drm_printer *p,
 	if (take_locks)
 		drm_modeset_unlock(&dev->mode_config.connection_mutex);
 	drm_connector_list_iter_end(&conn_iter);
+
+	list_for_each_entry(obj, &config->privobj_list, head) {
+		if (take_locks)
+			drm_modeset_lock(&obj->lock, NULL);
+		drm_atomic_private_obj_print_state(p, obj->state);
+		if (take_locks)
+			drm_modeset_unlock(&obj->lock);
+	}
 }
 
 /**
@@ -1860,9 +1872,9 @@ static const struct drm_debugfs_info drm_atomic_debugfs_list[] = {
 	{"state", drm_state_info, 0},
 };
 
-void drm_atomic_debugfs_init(struct drm_minor *minor)
+void drm_atomic_debugfs_init(struct drm_device *dev)
 {
-	drm_debugfs_add_files(minor->dev, drm_atomic_debugfs_list,
+	drm_debugfs_add_files(dev, drm_atomic_debugfs_list,
 			      ARRAY_SIZE(drm_atomic_debugfs_list));
 }
 #endif

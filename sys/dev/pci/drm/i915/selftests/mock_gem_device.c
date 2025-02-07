@@ -114,7 +114,6 @@ static struct dev_pm_domain pm_domain = {
 
 static void mock_gt_probe(struct drm_i915_private *i915)
 {
-	i915->gt[0] = to_gt(i915);
 	i915->gt[0]->name = "Mock GT";
 }
 
@@ -123,7 +122,7 @@ static const struct intel_device_info mock_info = {
 	.__runtime.page_sizes = (I915_GTT_PAGE_SIZE_4K |
 				 I915_GTT_PAGE_SIZE_64K |
 				 I915_GTT_PAGE_SIZE_2M),
-	.memory_regions = REGION_SMEM,
+	.memory_regions = BIT(INTEL_REGION_SMEM),
 	.platform_engine_mask = BIT(0),
 
 	/* simply use legacy cache level for mock device */
@@ -173,13 +172,15 @@ struct drm_i915_private *mock_gem_device(void)
 		return NULL;
 	}
 
-	pci_set_drvdata(pdev, i915);
+	pci_set_drvdata(pdev, &i915->drm);
 
 	/* Device parameters start as a copy of module parameters. */
 	i915_params_copy(&i915->params, &i915_modparams);
 
 	/* Set up device info and initial runtime info. */
 	intel_device_info_driver_create(i915, pdev->device, &mock_info);
+
+	intel_display_device_probe(i915);
 
 	dev_pm_domain_set(&pdev->dev, &pm_domain);
 	pm_runtime_enable(&pdev->dev);

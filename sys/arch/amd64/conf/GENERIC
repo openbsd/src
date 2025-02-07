@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.530 2024/11/26 21:45:35 stsp Exp $
+#	$OpenBSD: GENERIC,v 1.531 2025/02/07 03:03:08 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -392,6 +392,7 @@ wsmouse*	at pms? mux 0
 #agp*		at mmuagp?
 
 inteldrm*	at pci? 	# Intel i915, i945 DRM driver
+option		I915
 intagp*		at inteldrm?
 agp*		at intagp?
 drm0		at inteldrm? primary 1

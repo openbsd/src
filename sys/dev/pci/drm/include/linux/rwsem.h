@@ -12,4 +12,9 @@
 #define up_write(rwl)			rw_exit_write(rwl)
 #define downgrade_write(rwl)		rw_enter(rwl, RW_DOWNGRADE)
 
+#define DECLARE_RWSEM(rwl) \
+	struct rwlock rwl = RWLOCK_INITIALIZER(#rwl)
+/* no interface to check if another caller wants the lock */
+#define rwsem_is_contended(rwl)		0
+
 #endif

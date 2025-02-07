@@ -64,6 +64,9 @@ struct drm_i915_gem_object *alloc_pt_lmem(struct i915_address_space *vm, int sz)
 	if (!IS_ERR(obj)) {
 		obj->base.resv = i915_vm_resv_get(vm);
 		obj->shares_resv_from = vm;
+
+		if (vm->fpriv)
+			i915_drm_client_add_object(vm->fpriv->client, obj);
 	}
 
 	return obj;
@@ -85,6 +88,9 @@ struct drm_i915_gem_object *alloc_pt_dma(struct i915_address_space *vm, int sz)
 	if (!IS_ERR(obj)) {
 		obj->base.resv = i915_vm_resv_get(vm);
 		obj->shares_resv_from = vm;
+
+		if (vm->fpriv)
+			i915_drm_client_add_object(vm->fpriv->client, obj);
 	}
 
 	return obj;
@@ -96,6 +102,16 @@ int map_pt_dma(struct i915_address_space *vm, struct drm_i915_gem_object *obj)
 	void *vaddr;
 
 	type = intel_gt_coherent_map_type(vm->gt, obj, true);
+	/*
+	 * FIXME: It is suspected that some Address Translation Service (ATS)
+	 * issue on IOMMU is causing CAT errors to occur on some MTL workloads.
+	 * Applying a write barrier to the ppgtt set entry functions appeared
+	 * to have no effect, so we must temporarily use I915_MAP_WC here on
+	 * MTL until a proper ATS solution is found.
+	 */
+	if (IS_METEORLAKE(vm->i915))
+		type = I915_MAP_WC;
+
 	vaddr = i915_gem_object_pin_map_unlocked(obj, type);
 	if (IS_ERR(vaddr))
 		return PTR_ERR(vaddr);
@@ -110,6 +126,16 @@ int map_pt_dma_locked(struct i915_address_space *vm, struct drm_i915_gem_object 
 	void *vaddr;
 
 	type = intel_gt_coherent_map_type(vm->gt, obj, true);
+	/*
+	 * FIXME: It is suspected that some Address Translation Service (ATS)
+	 * issue on IOMMU is causing CAT errors to occur on some MTL workloads.
+	 * Applying a write barrier to the ppgtt set entry functions appeared
+	 * to have no effect, so we must temporarily use I915_MAP_WC here on
+	 * MTL until a proper ATS solution is found.
+	 */
+	if (IS_METEORLAKE(vm->i915))
+		type = I915_MAP_WC;
+
 	vaddr = i915_gem_object_pin_map(obj, type);
 	if (IS_ERR(vaddr))
 		return PTR_ERR(vaddr);
@@ -654,7 +680,7 @@ void setup_private_pat(struct intel_gt *gt)
 
 	if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 70))
 		xelpg_setup_private_ppat(gt);
-	else if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 50))
+	else if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 55))
 		xehp_setup_private_ppat(gt);
 	else if (GRAPHICS_VER(i915) >= 12)
 		tgl_setup_private_ppat(uncore);

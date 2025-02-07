@@ -197,4 +197,14 @@ xa_init(struct xarray *xa)
 	xa_init_flags(xa, 0);
 }
 
+static inline int
+xa_alloc_cyclic_irq(struct xarray *xa, u32 *id, void *entry,
+    struct xarray_range xr, u32 *next, gfp_t gfp)    
+{
+	int r;
+	mtx_enter(&xa->xa_lock);
+	r = __xa_alloc_cyclic(xa, id, entry, xr, next, gfp);
+	mtx_leave(&xa->xa_lock);
+	return r;
+}
 #endif

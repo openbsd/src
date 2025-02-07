@@ -8,7 +8,7 @@
 #include <linux/mutex.h>
 
 #include <drm/drm_mm.h>
-#include <drm/i915_drm.h>
+#include <drm/intel/i915_drm.h>
 
 #include "gem/i915_gem_lmem.h"
 #include "gem/i915_gem_region.h"
@@ -873,6 +873,7 @@ static int init_stolen_lmem(struct intel_memory_region *mem)
 #endif
 
 	return 0;
+
 #ifdef __linux__
 err_cleanup:
 	i915_gem_cleanup_stolen(mem->i915);
@@ -985,16 +986,20 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 	} else {
 		/* Use DSM base address instead for stolen memory */
 		dsm_base = intel_uncore_read64(uncore, GEN6_DSMBASE) & GEN11_BDSM_MASK;
-		if (WARN_ON(lmem_size < dsm_base))
-			return ERR_PTR(-ENODEV);
+		if (lmem_size < dsm_base) {
+			drm_dbg(&i915->drm,
+				"Disabling stolen memory support due to OOB placement: lmem_size = %pa vs dsm_base = %pa\n",
+				&lmem_size, &dsm_base);
+			return NULL;
+		}
 		dsm_size = ALIGN_DOWN(lmem_size - dsm_base, SZ_1M);
 	}
 
+#ifdef __linux__
 	if (i915_direct_stolen_access(i915)) {
 		drm_dbg(&i915->drm, "Using direct DSM access\n");
 		io_start = intel_uncore_read64(uncore, GEN6_DSMBASE) & GEN11_BDSM_MASK;
 		io_size = dsm_size;
-#ifdef __linux__
 	} else if (pci_resource_len(pdev, GEN12_LMEM_BAR) < lmem_size) {
 		io_start = 0;
 		io_size = 0;
@@ -1003,6 +1008,10 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 		io_size = dsm_size;
 	}
 #else
+	if (i915_direct_stolen_access(i915)) {
+		drm_dbg(&i915->drm, "Using direct DSM access\n");
+		io_start = intel_uncore_read64(uncore, GEN6_DSMBASE) & GEN11_BDSM_MASK;
+		io_size = dsm_size;
 	} else if (lmem_len < lmem_size) {
 		io_start = 0;
 		io_size = 0;

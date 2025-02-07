@@ -57,18 +57,22 @@ static unsigned int abm_feature_support(struct abm *abm, unsigned int panel_inst
 	return ret;
 }
 
-static void dmub_abm_init_ex(struct abm *abm, uint32_t backlight)
+static void dmub_abm_init_ex(struct abm *abm, uint32_t backlight, uint32_t user_level)
 {
-	dmub_abm_init(abm, backlight);
+	dmub_abm_init(abm, backlight, user_level);
 }
 
 static unsigned int dmub_abm_get_current_backlight_ex(struct abm *abm)
 {
+	dc_allow_idle_optimizations(abm->ctx->dc, false);
+
 	return dmub_abm_get_current_backlight(abm);
 }
 
 static unsigned int dmub_abm_get_target_backlight_ex(struct abm *abm)
 {
+	dc_allow_idle_optimizations(abm->ctx->dc, false);
+
 	return dmub_abm_get_target_backlight(abm);
 }
 

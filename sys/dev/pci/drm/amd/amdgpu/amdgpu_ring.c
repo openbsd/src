@@ -144,8 +144,10 @@ void amdgpu_ring_commit(struct amdgpu_ring *ring)
 	/* We pad to match fetch size */
 	count = ring->funcs->align_mask + 1 -
 		(ring->wptr & ring->funcs->align_mask);
-	count %= ring->funcs->align_mask + 1;
-	ring->funcs->insert_nop(ring, count);
+	count &= ring->funcs->align_mask;
+
+	if (count != 0)
+		ring->funcs->insert_nop(ring, count);
 
 	mb();
 	amdgpu_ring_set_wptr(ring);
@@ -212,6 +214,8 @@ int amdgpu_ring_init(struct amdgpu_device *adev, struct amdgpu_ring *ring,
 	 */
 	if (ring->funcs->type == AMDGPU_RING_TYPE_KIQ)
 		sched_hw_submission = max(sched_hw_submission, 256);
+	if (ring->funcs->type == AMDGPU_RING_TYPE_MES)
+		sched_hw_submission = 8;
 	else if (ring == &adev->sdma.instance[0].page)
 		sched_hw_submission = 256;
 
@@ -434,8 +438,12 @@ bool amdgpu_ring_soft_recovery(struct amdgpu_ring *ring, unsigned int vmid,
 			       struct dma_fence *fence)
 {
 	unsigned long flags;
+	ktime_t deadline;
 
-	ktime_t deadline = ktime_add_us(ktime_get(), 10000);
+	if (unlikely(ring->adev->debug_disable_soft_recovery))
+		return false;
+
+	deadline = ktime_add_us(ktime_get(), 10000);
 
 	if (amdgpu_sriov_vf(ring->adev) || !ring->funcs->soft_recovery || !fence)
 		return false;
@@ -644,6 +652,7 @@ int amdgpu_ring_test_helper(struct amdgpu_ring *ring)
 			      ring->name);
 
 	ring->sched.ready = !r;
+
 	return r;
 }
 
@@ -651,6 +660,10 @@ static void amdgpu_ring_to_mqd_prop(struct amdgpu_ring *ring,
 				    struct amdgpu_mqd_prop *prop)
 {
 	struct amdgpu_device *adev = ring->adev;
+	bool is_high_prio_compute = ring->funcs->type == AMDGPU_RING_TYPE_COMPUTE &&
+				    amdgpu_gfx_is_high_priority_compute_queue(adev, ring);
+	bool is_high_prio_gfx = ring->funcs->type == AMDGPU_RING_TYPE_GFX &&
+				amdgpu_gfx_is_high_priority_graphics_queue(adev, ring);
 
 	memset(prop, 0, sizeof(*prop));
 
@@ -668,10 +681,8 @@ static void amdgpu_ring_to_mqd_prop(struct amdgpu_ring *ring,
 	 */
 	prop->hqd_active = ring->funcs->type == AMDGPU_RING_TYPE_KIQ;
 
-	if ((ring->funcs->type == AMDGPU_RING_TYPE_COMPUTE &&
-	     amdgpu_gfx_is_high_priority_compute_queue(adev, ring)) ||
-	    (ring->funcs->type == AMDGPU_RING_TYPE_GFX &&
-	     amdgpu_gfx_is_high_priority_graphics_queue(adev, ring))) {
+	prop->allow_tunneling = is_high_prio_compute;
+	if (is_high_prio_compute || is_high_prio_gfx) {
 		prop->hqd_pipe_priority = AMDGPU_GFX_PIPE_PRIO_HIGH;
 		prop->hqd_queue_priority = AMDGPU_GFX_QUEUE_PRIORITY_MAXIMUM;
 	}
@@ -723,4 +734,15 @@ void amdgpu_ring_ib_on_emit_de(struct amdgpu_ring *ring)
 {
 	if (ring->is_sw_ring)
 		amdgpu_sw_ring_ib_mark_offset(ring, AMDGPU_MUX_OFFSET_TYPE_DE);
+}
+
+bool amdgpu_ring_sched_ready(struct amdgpu_ring *ring)
+{
+	if (!ring)
+		return false;
+
+	if (ring->no_scheduler || !drm_sched_wqueue_ready(&ring->sched))
+		return false;
+
+	return true;
 }

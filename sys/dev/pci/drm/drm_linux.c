@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.119 2024/09/30 12:21:17 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.120 2025/02/07 03:03:08 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -52,10 +52,12 @@
 #include <linux/processor.h>
 #include <linux/sync_file.h>
 #include <linux/suspend.h>
+#include <linux/slab.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_print.h>
+#include <drm/drm_drv.h>
 
 #if defined(__amd64__) || defined(__i386__)
 #include "bios.h"
@@ -805,6 +807,7 @@ idr_preload(unsigned int gfp_mask)
 		idr_entry_cache = pool_get(&idr_pool, flags);
 }
 
+/* [start, end) */
 int
 idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
 {
@@ -949,6 +952,13 @@ void
 ida_simple_remove(struct ida *ida, unsigned int id)
 {
 	idr_remove(&ida->idr, id);
+}
+
+/* [start, end] */
+int
+ida_alloc_range(struct ida *ida, unsigned int start, unsigned int end, gfp_t gfp)
+{
+	return idr_alloc(&ida->idr, NULL, start, end + 1, gfp);
 }
 
 int
@@ -2931,17 +2941,27 @@ pci_resize_resource(struct pci_dev *pdev, int bar, int nsize)
 
 TAILQ_HEAD(, shrinker) shrinkers = TAILQ_HEAD_INITIALIZER(shrinkers);
 
-int
-register_shrinker(struct shrinker *shrinker, const char *format, ...)
+struct shrinker *
+shrinker_alloc(u_int flags, const char *format, ...)
 {
-	TAILQ_INSERT_TAIL(&shrinkers, shrinker, next);
-	return 0;
+	struct shrinker *s;
+
+	s = kzalloc(sizeof(*s), GFP_KERNEL);
+	s->seeks = DEFAULT_SEEKS;
+	return s;
 }
 
 void
-unregister_shrinker(struct shrinker *shrinker)
+shrinker_register(struct shrinker *shrinker)
+{
+	TAILQ_INSERT_TAIL(&shrinkers, shrinker, next);
+}
+
+void
+shrinker_free(struct shrinker *shrinker)
 {
 	TAILQ_REMOVE(&shrinkers, shrinker, next);
+	kfree(shrinker);
 }
 
 unsigned long
@@ -3143,9 +3163,6 @@ fd_install(int fd, struct file *fp)
 	struct proc *p = curproc;
 	struct filedesc *fdp = p->p_fd;
 
-	if (fp->f_type != DTYPE_SYNC)
-		return;
-
 	fdplock(fdp);
 	/* all callers use get_unused_fd_flags(O_CLOEXEC) */
 	fdinsert(fdp, fd, UF_EXCLOSE, fp);
@@ -3155,9 +3172,6 @@ fd_install(int fd, struct file *fp)
 void
 fput(struct file *fp)
 {
-	if (fp->f_type != DTYPE_SYNC)
-		return;
-	
 	FRELE(fp, curproc);
 }
 
@@ -3236,13 +3250,6 @@ sync_file_create(struct dma_fence *fence)
 	return sf;
 }
 
-bool
-drm_firmware_drivers_only(void)
-{
-	return false;
-}
-
-
 void *
 memremap(phys_addr_t phys_addr, size_t size, int flags)
 {
@@ -3254,6 +3261,12 @@ void
 memunmap(void *addr)
 {
 	STUB();
+}
+
+void
+kfree_const(const void *addr)
+{
+        kfree(addr);
 }
 
 #include <linux/platform_device.h>

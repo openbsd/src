@@ -57,9 +57,6 @@ struct intel_dsi {
 		u16 phys;	/* ICL DSI */
 	};
 
-	/* if true, use HS mode, otherwise LP */
-	bool hs;
-
 	/* virtual channel */
 	int channel;
 
@@ -69,7 +66,7 @@ struct intel_dsi {
 	/* number of DSI lanes */
 	unsigned int lane_count;
 
-	/* i2c bus associated with the slave device */
+	/* i2c bus associated with the target device */
 	int i2c_bus_num;
 
 	/*
@@ -93,7 +90,6 @@ struct intel_dsi {
 	bool bgr_enabled;
 
 	u8 pixel_overlap;
-	u32 port_bits;
 	u32 bw_timer;
 	u32 dphy_reg;
 

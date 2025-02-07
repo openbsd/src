@@ -30,7 +30,7 @@
 
 struct abm_save_restore;
 
-void dmub_abm_init(struct abm *abm, uint32_t backlight);
+void dmub_abm_init(struct abm *abm, uint32_t backlight, uint32_t user_level);
 bool dmub_abm_set_level(struct abm *abm, uint32_t level, uint8_t panel_mask);
 unsigned int dmub_abm_get_current_backlight(struct abm *abm);
 unsigned int dmub_abm_get_target_backlight(struct abm *abm);
@@ -48,5 +48,7 @@ bool dmub_abm_set_pipe(struct abm *abm, uint32_t otg_inst, uint32_t option, uint
 bool dmub_abm_set_backlight_level(struct abm *abm,
 		unsigned int backlight_pwm_u16_16,
 		unsigned int frame_ramp,
+		unsigned int panel_inst);
+bool dmub_abm_set_event(struct abm *abm, unsigned int scaling_enable, unsigned int scaling_strength_map,
 		unsigned int panel_inst);
 #endif

@@ -6,8 +6,8 @@
 #include <linux/mm_types.h>
 #include <linux/nodemask.h>
 
-#define MAX_ORDER	11
-#define NR_PAGE_ORDERS	(MAX_ORDER + 1)
+#define MAX_PAGE_ORDER	10
+#define NR_PAGE_ORDERS	(MAX_PAGE_ORDER + 1)
 #define pfn_to_nid(x)	0
 
 #endif

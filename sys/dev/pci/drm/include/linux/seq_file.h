@@ -18,6 +18,11 @@ seq_printf(struct seq_file *m, const char *fmt, ...)
 }
 
 static inline void
+seq_putc(struct seq_file *m, char c)
+{
+}
+
+static inline void
 seq_puts(struct seq_file *m, const char *s)
 {
 }

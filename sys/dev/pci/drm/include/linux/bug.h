@@ -1,4 +1,4 @@
-/*	$OpenBSD: bug.h,v 1.2 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: bug.h,v 1.3 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -50,6 +50,8 @@ do {									\
 	}								\
 	unlikely(__ret);						\
 })
+
+#define WARN_RATELIMIT(condition, fmt...)	WARN_ONCE(condition, ##fmt)
 
 #define _WARN_STR(x) #x
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.137 2024/06/07 05:17:34 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.138 2025/02/07 03:03:08 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,6 +38,7 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu11 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu12 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu13 \
+		-I$S/dev/pci/drm/amd/pm/swsmu/smu14 \
 		-I$S/dev/pci/drm/amd/pm/powerplay/inc \
 		-I$S/dev/pci/drm/amd/pm/powerplay/hwmgr \
 		-I$S/dev/pci/drm/amd/pm/powerplay/smumgr \
@@ -46,6 +47,30 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/display/dc/inc \
 		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
 		-I$S/dev/pci/drm/amd/display/dc/clk_mgr \
+		-I$S/dev/pci/drm/amd/display/dc/dccg \
+		-I$S/dev/pci/drm/amd/display/dc/dio \
+		-I$S/dev/pci/drm/amd/display/dc/dpp \
+		-I$S/dev/pci/drm/amd/display/dc/dsc \
+		-I$S/dev/pci/drm/amd/display/dc/dwb \
+		-I$S/dev/pci/drm/amd/display/dc/hubbub \
+		-I$S/dev/pci/drm/amd/display/dc/hpo \
+		-I$S/dev/pci/drm/amd/display/dc/hwss \
+		-I$S/dev/pci/drm/amd/display/dc/hubp \
+		-I$S/dev/pci/drm/amd/display/dc/dml2 \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21 \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/inc \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_core \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_dpmm \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_mcg \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_pmo \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_standalone_libraries \
+		-I$S/dev/pci/drm/amd/display/dc/dml2/dml21/src/inc \
+		-I$S/dev/pci/drm/amd/display/dc/mmhubbub \
+		-I$S/dev/pci/drm/amd/display/dc/mpc \
+		-I$S/dev/pci/drm/amd/display/dc/opp \
+		-I$S/dev/pci/drm/amd/display/dc/optc \
+		-I$S/dev/pci/drm/amd/display/dc/pg \
+		-I$S/dev/pci/drm/amd/display/dc/resource \
 		-I$S/dev/pci/drm/amd/display/modules/inc \
 		-I$S/dev/pci/drm/amd/display/modules/hdcp \
 		-I$S/dev/pci/drm/amd/display/dmub/inc \
@@ -259,6 +284,32 @@ dcn_calc_math.o: $S/dev/pci/drm/amd/display/dc/dml/calcs/dcn_calc_math.c
 dml1_display_rq_dlg_calc.o: $S/dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 display_rq_dlg_helpers.o: $S/dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn35_fpu.o: $S/dev/pci/drm/amd/display/dc/dml/dcn35/dcn35_fpu.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn351_fpu.o: $S/dev/pci/drm/amd/display/dc/dml/dcn351/dcn351_fpu.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_core.o: $S/dev/pci/drm/amd/display/dc/dml2/display_mode_core.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_util.o:  $S/dev/pci/drm/amd/display/dc/dml2/display_mode_util.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml2_core_dcn4.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_core/dml2_core_dcn4.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml2_core_dcn4_calcs.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_core/dml2_core_dcn4_calcs.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml2_core_utils.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_core/dml2_core_utils.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml2_dpmm_dcn4.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_dpmm/dml2_dpmm_dcn4.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml2_pmo_dcn4_fams2.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_pmo/dml2_pmo_dcn4_fams2.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+lib_float_math.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_standalone_libraries/lib_float_math.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml_top_mcache.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_top/dml_top_mcache.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml2_utils.o: $S/dev/pci/drm/amd/display/dc/dml2/dml2_utils.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml_display_rq_dlg_calc.o: $S/dev/pci/drm/amd/display/dc/dml2/dml_display_rq_dlg_calc.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 
 clean:

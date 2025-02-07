@@ -114,10 +114,6 @@ static bool icl_verify_procmon_ref_values(struct drm_i915_private *dev_priv,
 
 	procmon = icl_get_procmon_ref_values(dev_priv, phy);
 
-	drm_dbg_kms(&dev_priv->drm,
-		    "Combo PHY %c Voltage/Process Info : %s\n",
-		    phy_name(phy), procmon->name);
-
 	ret = check_phy_reg(dev_priv, phy, ICL_PORT_COMP_DW1(phy),
 			    (0xff << 16) | 0xff, procmon->dw1);
 	ret &= check_phy_reg(dev_priv, phy, ICL_PORT_COMP_DW9(phy),
@@ -163,9 +159,11 @@ static bool icl_combo_phy_enabled(struct drm_i915_private *dev_priv,
 
 static bool ehl_vbt_ddi_d_present(struct drm_i915_private *i915)
 {
-	bool ddi_a_present = intel_bios_is_port_present(i915, PORT_A);
-	bool ddi_d_present = intel_bios_is_port_present(i915, PORT_D);
-	bool dsi_present = intel_bios_is_dsi_present(i915, NULL);
+	struct intel_display *display = &i915->display;
+
+	bool ddi_a_present = intel_bios_is_port_present(display, PORT_A);
+	bool ddi_d_present = intel_bios_is_port_present(display, PORT_D);
+	bool dsi_present = intel_bios_is_dsi_present(display, NULL);
 
 	/*
 	 * VBT's 'dvo port' field for child devices references the DDI, not
@@ -312,14 +310,17 @@ static void icl_combo_phys_init(struct drm_i915_private *dev_priv)
 	enum phy phy;
 
 	for_each_combo_phy(dev_priv, phy) {
+		const struct icl_procmon *procmon;
 		u32 val;
 
-		if (icl_combo_phy_verify_state(dev_priv, phy)) {
-			drm_dbg(&dev_priv->drm,
-				"Combo PHY %c already enabled, won't reprogram it.\n",
-				phy_name(phy));
+		if (icl_combo_phy_verify_state(dev_priv, phy))
 			continue;
-		}
+
+		procmon = icl_get_procmon_ref_values(dev_priv, phy);
+
+		drm_dbg(&dev_priv->drm,
+			"Initializing combo PHY %c (Voltage/Process Info : %s)\n",
+			phy_name(phy), procmon->name);
 
 		if (!has_phy_misc(dev_priv, phy))
 			goto skip_phy_misc;

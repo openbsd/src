@@ -42,6 +42,7 @@ const unsigned int amdgpu_ctx_num_entities[AMDGPU_HW_IP_NUM] = {
 	[AMDGPU_HW_IP_VCN_DEC]	=	1,
 	[AMDGPU_HW_IP_VCN_ENC]	=	1,
 	[AMDGPU_HW_IP_VCN_JPEG]	=	1,
+	[AMDGPU_HW_IP_VPE]	=	1,
 };
 
 bool amdgpu_ctx_priority_is_valid(int32_t ctx_prio)
@@ -72,10 +73,10 @@ amdgpu_ctx_to_drm_sched_prio(int32_t ctx_prio)
 		return DRM_SCHED_PRIORITY_NORMAL;
 
 	case AMDGPU_CTX_PRIORITY_VERY_LOW:
-		return DRM_SCHED_PRIORITY_MIN;
+		return DRM_SCHED_PRIORITY_LOW;
 
 	case AMDGPU_CTX_PRIORITY_LOW:
-		return DRM_SCHED_PRIORITY_MIN;
+		return DRM_SCHED_PRIORITY_LOW;
 
 	case AMDGPU_CTX_PRIORITY_NORMAL:
 		return DRM_SCHED_PRIORITY_NORMAL;

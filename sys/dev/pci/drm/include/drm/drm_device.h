@@ -10,7 +10,6 @@
 #include <linux/idr.h>
 #include <linux/pci.h>
 
-#include <drm/drm_legacy.h>
 #include <drm/drm_mode_config.h>
 
 #include <sys/pool.h>
@@ -46,6 +45,28 @@ enum switch_power_state {
 	/** @DRM_SWITCH_POWER_DYNAMIC_OFF: Suspended */
 	DRM_SWITCH_POWER_DYNAMIC_OFF = 3,
 };
+
+#ifdef __OpenBSD__
+#include <dev/pci/pcivar.h>
+#include <dev/pci/agpvar.h>
+
+struct drm_agp_head {
+	struct agp_softc			*agpdev;
+	const char				*chipset;
+	TAILQ_HEAD(agp_memlist, drm_agp_mem)	 memory;
+	struct agp_info				 info;
+	unsigned long				 base;
+	unsigned long				 mode;
+	unsigned long				 page_mask;
+	int					 acquired;
+	int					 cant_use_aperture;
+	int					 enabled;
+   	int					 mtrr;
+};
+#if IS_ENABLED(CONFIG_AGP)
+struct drm_agp_head *drm_legacy_agp_init(struct drm_device *dev);
+#endif
+#endif /* __OpenBSD__ */
 
 /**
  * struct drm_device - DRM device structure
@@ -174,8 +195,8 @@ struct drm_device {
 	 *
 	 * Lock for others (not &drm_minor.master and &drm_file.is_master)
 	 *
-	 * WARNING:
-	 * Only drivers annotated with DRIVER_LEGACY should be using this.
+	 * TODO: This lock used to be the BKL of the DRM subsystem. Move the
+	 *       lock into i915, which is the only remaining user.
 	 */
 	struct rwlock struct_mutex;
 
@@ -239,8 +260,9 @@ struct drm_device {
 	 * This can be set to true it the hardware has a working vblank counter
 	 * with high-precision timestamping (otherwise there are races) and the
 	 * driver uses drm_crtc_vblank_on() and drm_crtc_vblank_off()
-	 * appropriately. See also @max_vblank_count and
-	 * &drm_crtc_funcs.get_vblank_counter.
+	 * appropriately. Also, see @max_vblank_count,
+	 * &drm_crtc_funcs.get_vblank_counter and
+	 * &drm_vblank_crtc_config.disable_immediate.
 	 */
 	bool vblank_disable_immediate;
 
@@ -339,87 +361,13 @@ struct drm_device {
 	struct drm_fb_helper *fb_helper;
 
 	/**
-	 * @debugfs_mutex:
+	 * @debugfs_root:
 	 *
-	 * Protects &debugfs_list access.
+	 * Root directory for debugfs files.
 	 */
-	struct mutex debugfs_mutex;
+	struct dentry *debugfs_root;
 
-	/**
-	 * @debugfs_list:
-	 *
-	 * List of debugfs files to be created by the DRM device. The files
-	 * must be added during drm_dev_register().
-	 */
-	struct list_head debugfs_list;
-
-	/* Everything below here is for legacy driver, never use! */
-	/* private: */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-	/* List of devices per driver for stealth attach cleanup */
-	struct list_head legacy_dev_list;
-
-#ifdef __alpha__
-	/** @hose: PCI hose, only used on ALPHA platforms. */
-	struct pci_controller *hose;
-#endif
-
-	/* AGP data */
 	struct drm_agp_head *agp;
-
-	/* Context handle management - linked list of context handles */
-	struct list_head ctxlist;
-
-	/* Context handle management - mutex for &ctxlist */
-	struct rwlock ctxlist_mutex;
-
-	/* Context handle management */
-	struct idr ctx_idr;
-
-	/* Memory management - linked list of regions */
-	struct list_head maplist;
-
-	/* Memory management - user token hash table for maps */
-	struct drm_open_hash map_hash;
-
-	/* Context handle management - list of vmas (for debugging) */
-	struct list_head vmalist;
-
-	/* Optional pointer for DMA support */
-	struct drm_device_dma *dma;
-
-	/* Context swapping flag */
-	__volatile__ long context_flag;
-
-	/* Last current context */
-	int last_context;
-
-	/* Lock for &buf_use and a few other things. */
-	spinlock_t buf_lock;
-
-	/* Usage counter for buffers in use -- cannot alloc */
-	int buf_use;
-
-	/* Buffer allocation in progress */
-	atomic_t buf_alloc;
-
-	struct {
-		int context;
-		struct drm_hw_lock *lock;
-	} sigdata;
-
-	struct drm_local_map *agp_buffer_map;
-	unsigned int agp_buffer_token;
-
-	/* Scatter gather memory */
-	struct drm_sg_mem *sg;
-
-	/* IRQs */
-	bool irq_enabled;
-	int irq;
-#else
-	struct drm_agp_head *agp;
-#endif
 };
 
 #endif

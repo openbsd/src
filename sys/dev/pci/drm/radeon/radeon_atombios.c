@@ -27,6 +27,7 @@
 #include <linux/pci.h>
 
 #include <drm/drm_device.h>
+#include <drm/drm_edid.h>
 #include <drm/radeon_drm.h>
 
 #include "radeon.h"
@@ -1719,23 +1720,18 @@ struct radeon_encoder_atom_dig *radeon_atombios_get_lvds_info(struct
 				case LCD_FAKE_EDID_PATCH_RECORD_TYPE:
 					fake_edid_record = (ATOM_FAKE_EDID_PATCH_RECORD *)record;
 					if (fake_edid_record->ucFakeEDIDLength) {
-						struct edid *edid;
+						const struct drm_edid *edid;
 						int edid_size;
 
 						if (fake_edid_record->ucFakeEDIDLength == 128)
 							edid_size = fake_edid_record->ucFakeEDIDLength;
 						else
 							edid_size = fake_edid_record->ucFakeEDIDLength * 128;
-						edid = kmemdup(&fake_edid_record->ucFakeEDIDString[0],
-							       edid_size, GFP_KERNEL);
-						if (edid) {
-							if (drm_edid_is_valid(edid)) {
-								rdev->mode_info.bios_hardcoded_edid = edid;
-								rdev->mode_info.bios_hardcoded_edid_size = edid_size;
-							} else {
-								kfree(edid);
-							}
-						}
+						edid = drm_edid_alloc(fake_edid_record->ucFakeEDIDString, edid_size);
+						if (drm_edid_valid(edid))
+							rdev->mode_info.bios_hardcoded_edid = edid;
+						else
+							drm_edid_free(edid);
 						record += struct_size(fake_edid_record,
 								      ucFakeEDIDString,
 								      edid_size);
@@ -2866,7 +2862,7 @@ int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
 		args.v1.ucAction = clock_type;
 		args.v1.ulClock = cpu_to_le32(clock);	/* 10 khz */
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		dividers->post_div = args.v1.ucPostDiv;
 		dividers->fb_div = args.v1.ucFbDiv;
@@ -2880,7 +2876,7 @@ int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
 			args.v2.ucAction = clock_type;
 			args.v2.ulClock = cpu_to_le32(clock);	/* 10 khz */
 
-			atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+			atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 			dividers->post_div = args.v2.ucPostDiv;
 			dividers->fb_div = le16_to_cpu(args.v2.usFbDiv);
@@ -2895,7 +2891,7 @@ int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
 			if (clock_type == COMPUTE_ENGINE_PLL_PARAM) {
 				args.v3.ulClockParams = cpu_to_le32((clock_type << 24) | clock);
 
-				atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+				atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 				dividers->post_div = args.v3.ucPostDiv;
 				dividers->enable_post_div = (args.v3.ucCntlFlag &
@@ -2915,7 +2911,7 @@ int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
 				if (strobe_mode)
 					args.v5.ucInputFlag = ATOM_PLL_INPUT_FLAG_PLL_STROBE_MODE_EN;
 
-				atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+				atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 				dividers->post_div = args.v5.ucPostDiv;
 				dividers->enable_post_div = (args.v5.ucCntlFlag &
@@ -2934,7 +2930,7 @@ int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
 		/* fusion */
 		args.v4.ulClock = cpu_to_le32(clock);	/* 10 khz */
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		dividers->post_divider = dividers->post_div = args.v4.ucPostDiv;
 		dividers->real_clock = le32_to_cpu(args.v4.ulClock);
@@ -2945,7 +2941,7 @@ int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
 		args.v6_in.ulClock.ulComputeClockFlag = clock_type;
 		args.v6_in.ulClock.ulClockFreq = cpu_to_le32(clock);	/* 10 khz */
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		dividers->whole_fb_div = le16_to_cpu(args.v6_out.ulFbDiv.usFbDiv);
 		dividers->frac_fb_div = le16_to_cpu(args.v6_out.ulFbDiv.usFbDivFrac);
@@ -2986,7 +2982,7 @@ int radeon_atom_get_memory_pll_dividers(struct radeon_device *rdev,
 			if (strobe_mode)
 				args.ucInputFlag |= MPLL_INPUT_FLAG_STROBE_MODE_EN;
 
-			atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+			atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 			mpll_param->clkfrac = le16_to_cpu(args.ulFbDiv.usFbDivFrac);
 			mpll_param->clkf = le16_to_cpu(args.ulFbDiv.usFbDiv);
@@ -3019,7 +3015,7 @@ void radeon_atom_set_clock_gating(struct radeon_device *rdev, int enable)
 
 	args.ucEnable = enable;
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 uint32_t radeon_atom_get_engine_clock(struct radeon_device *rdev)
@@ -3027,7 +3023,7 @@ uint32_t radeon_atom_get_engine_clock(struct radeon_device *rdev)
 	GET_ENGINE_CLOCK_PS_ALLOCATION args;
 	int index = GetIndexIntoMasterTable(COMMAND, GetEngineClock);
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 	return le32_to_cpu(args.ulReturnEngineClock);
 }
 
@@ -3036,7 +3032,7 @@ uint32_t radeon_atom_get_memory_clock(struct radeon_device *rdev)
 	GET_MEMORY_CLOCK_PS_ALLOCATION args;
 	int index = GetIndexIntoMasterTable(COMMAND, GetMemoryClock);
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 	return le32_to_cpu(args.ulReturnMemoryClock);
 }
 
@@ -3048,7 +3044,7 @@ void radeon_atom_set_engine_clock(struct radeon_device *rdev,
 
 	args.ulTargetEngineClock = cpu_to_le32(eng_clock);	/* 10 khz */
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 void radeon_atom_set_memory_clock(struct radeon_device *rdev,
@@ -3062,7 +3058,7 @@ void radeon_atom_set_memory_clock(struct radeon_device *rdev,
 
 	args.ulTargetMemoryClock = cpu_to_le32(mem_clock);	/* 10 khz */
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 void radeon_atom_set_engine_dram_timings(struct radeon_device *rdev,
@@ -3081,7 +3077,7 @@ void radeon_atom_set_engine_dram_timings(struct radeon_device *rdev,
 	if (mem_clock)
 		args.sReserved.ulClock = cpu_to_le32(mem_clock & SET_CLOCK_FREQ_MASK);
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 void radeon_atom_update_memory_dll(struct radeon_device *rdev,
@@ -3092,7 +3088,7 @@ void radeon_atom_update_memory_dll(struct radeon_device *rdev,
 
 	args = cpu_to_le32(mem_clock);	/* 10 khz */
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 void radeon_atom_set_ac_timing(struct radeon_device *rdev,
@@ -3104,7 +3100,7 @@ void radeon_atom_set_ac_timing(struct radeon_device *rdev,
 
 	args.ulTargetMemoryClock = cpu_to_le32(tmp);	/* 10 khz */
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 union set_voltage {
@@ -3148,7 +3144,7 @@ void radeon_atom_set_voltage(struct radeon_device *rdev, u16 voltage_level, u8 v
 		return;
 	}
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 }
 
 int radeon_atom_get_max_vddc(struct radeon_device *rdev, u8 voltage_type,
@@ -3169,7 +3165,7 @@ int radeon_atom_get_max_vddc(struct radeon_device *rdev, u8 voltage_type,
 		args.v2.ucVoltageMode = 0;
 		args.v2.usVoltageLevel = 0;
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		*voltage = le16_to_cpu(args.v2.usVoltageLevel);
 		break;
@@ -3178,7 +3174,7 @@ int radeon_atom_get_max_vddc(struct radeon_device *rdev, u8 voltage_type,
 		args.v3.ucVoltageMode = ATOM_GET_VOLTAGE_LEVEL;
 		args.v3.usVoltageLevel = cpu_to_le16(voltage_id);
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		*voltage = le16_to_cpu(args.v3.usVoltageLevel);
 		break;
@@ -3214,7 +3210,7 @@ int radeon_atom_get_leakage_id_from_vbios(struct radeon_device *rdev,
 		args.v3.ucVoltageMode = ATOM_GET_LEAKAGE_ID;
 		args.v3.usVoltageLevel = 0;
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		*leakage_id = le16_to_cpu(args.v3.usVoltageLevel);
 		break;
@@ -3341,7 +3337,7 @@ int radeon_atom_get_voltage_evv(struct radeon_device *rdev,
 	args.in.ulSCLKFreq =
 		cpu_to_le32(rdev->pm.dpm.dyn_state.vddc_dependency_on_sclk.entries[entry_id].clk);
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 	*voltage = le16_to_cpu(args.evv_out.usVoltageLevel);
 
@@ -3367,7 +3363,7 @@ int radeon_atom_get_voltage_gpio_settings(struct radeon_device *rdev,
 		args.v2.ucVoltageMode = SET_ASIC_VOLTAGE_MODE_GET_GPIOMASK;
 		args.v2.usVoltageLevel = cpu_to_le16(voltage_level);
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		*gpio_mask = le32_to_cpu(*(u32 *)&args.v2);
 
@@ -3375,7 +3371,7 @@ int radeon_atom_get_voltage_gpio_settings(struct radeon_device *rdev,
 		args.v2.ucVoltageMode = SET_ASIC_VOLTAGE_MODE_GET_GPIOVAL;
 		args.v2.usVoltageLevel = cpu_to_le16(voltage_level);
 
-		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args, sizeof(args));
 
 		*gpio_value = le32_to_cpu(*(u32 *)&args.v2);
 		break;

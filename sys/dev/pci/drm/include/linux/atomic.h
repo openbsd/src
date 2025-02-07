@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.24 2025/01/19 11:15:52 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.25 2025/02/07 03:03:31 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitops.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: bitops.h,v 1.6 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -124,4 +124,12 @@ ror32(uint32_t word, unsigned int shift)
 	return (word >> shift) | (word << (32 - shift));
 }
 
+static inline void
+__assign_bit(u_int b, volatile void *p, bool set)
+{
+	if (set)
+		__set_bit(b, p);
+	else
+		__clear_bit(b, p);
+}
 #endif

@@ -7,6 +7,7 @@
 #include <linux/mm.h>
 #include <linux/pagemap.h>
 #include <linux/shmem_fs.h>
+#include <linux/vmalloc.h>
 
 #include "i915_drv.h"
 #include "gem/i915_gem_object.h"
@@ -172,7 +173,7 @@ int shmem_write(struct file *file, loff_t off, void *src, size_t len)
 #endif /* __linux__ */
 
 struct uvm_object *
-uao_create_from_data(void *data, size_t len)
+uao_create_from_data(const char *name, void *data, size_t len)
 {
 	struct uvm_object *uao;
 	int err;
@@ -207,7 +208,7 @@ uao_create_from_object(struct drm_i915_gem_object *obj)
 	if (IS_ERR(ptr))
 		return ERR_CAST(ptr);
 
-	uao = uao_create_from_data(ptr, obj->base.size);
+	uao = uao_create_from_data("", ptr, obj->base.size);
 	i915_gem_object_unpin_map(obj);
 
 	return uao;

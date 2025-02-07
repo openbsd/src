@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.11 2024/01/06 09:33:08 kettenis Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.12 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -92,6 +92,12 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 	return task_add(work->tq, &work->task);
 }
 
+static inline bool
+queue_work_node(int node, struct workqueue_struct *wq, struct work_struct *work)
+{
+	return queue_work(wq, work);
+}
+
 static inline void
 cancel_work(struct work_struct *work)
 {
@@ -99,11 +105,12 @@ cancel_work(struct work_struct *work)
 		task_del(work->tq, &work->task);
 }
 
-static inline void
+static inline bool
 cancel_work_sync(struct work_struct *work)
 {
 	if (work->tq != NULL)
-		task_del(work->tq, &work->task);
+		return task_del(work->tq, &work->task);
+	return false;
 }
 
 #define work_pending(work)	task_pending(&(work)->task)

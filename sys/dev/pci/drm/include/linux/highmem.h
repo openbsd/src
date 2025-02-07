@@ -1,4 +1,4 @@
-/*	$OpenBSD: highmem.h,v 1.4 2021/07/28 13:28:05 kettenis Exp $	*/
+/*	$OpenBSD: highmem.h,v 1.5 2025/02/07 03:03:31 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -35,6 +35,34 @@ static inline void *
 kmap_atomic(struct vm_page *pg)
 {
 	return kmap_atomic_prot(pg, PAGE_KERNEL);
+}
+
+static inline void *
+kmap_local_page(struct vm_page *pg)
+{
+	return kmap_atomic(pg);
+}
+
+static inline void
+kunmap_local(void *addr)
+{
+	kunmap_atomic(addr);
+}
+
+static inline void
+memcpy_from_page(char *dst, struct vm_page *page, size_t off, size_t len)
+{
+	void *src = kmap_atomic(page);
+	memcpy(dst, src + off, len);
+	kunmap_atomic(src);
+}
+
+static inline void
+memcpy_to_page(struct vm_page *page, size_t off, const char *src, size_t len)
+{
+	char *dst = kmap_atomic(page);
+	memcpy(dst + off, src, len);
+	kunmap_atomic(dst);
 }
 
 #endif

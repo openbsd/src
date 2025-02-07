@@ -18,6 +18,8 @@
 
 #define KERN_CONT	"\001c"
 
+#define HW_ERR		"HW_ERR: "
+
 #ifndef pr_fmt
 #define pr_fmt(fmt) fmt
 #endif

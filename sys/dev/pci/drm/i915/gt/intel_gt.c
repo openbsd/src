@@ -4,7 +4,7 @@
  */
 
 #include <drm/drm_managed.h>
-#include <drm/intel-gtt.h>
+#include <drm/intel/intel-gtt.h>
 
 #include "gem/i915_gem_internal.h"
 #include "gem/i915_gem_lmem.h"
@@ -62,7 +62,13 @@ void intel_gt_common_init_early(struct intel_gt *gt)
 /* Preliminary initialization of Tile 0 */
 int intel_root_gt_init_early(struct drm_i915_private *i915)
 {
-	struct intel_gt *gt = to_gt(i915);
+	struct intel_gt *gt;
+
+	gt = drmm_kzalloc(&i915->drm, sizeof(*gt), GFP_KERNEL);
+	if (!gt)
+		return -ENOMEM;
+
+	i915->gt[0] = gt;
 
 	gt->i915 = i915;
 	gt->uncore = &i915->uncore;
@@ -262,10 +268,21 @@ intel_gt_clear_error_registers(struct intel_gt *gt,
 				   I915_MASTER_ERROR_INTERRUPT);
 	}
 
-	if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 50)) {
+	/*
+	 * For the media GT, this ring fault register is not replicated,
+	 * so don't do multicast/replicated register read/write operation on it.
+	 */
+	if (MEDIA_VER(i915) >= 13 && gt->type == GT_MEDIA) {
+		intel_uncore_rmw(uncore, XELPMP_RING_FAULT_REG,
+				 RING_FAULT_VALID, 0);
+		intel_uncore_posting_read(uncore,
+					  XELPMP_RING_FAULT_REG);
+
+	} else if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 55)) {
 		intel_gt_mcr_multicast_rmw(gt, XEHP_RING_FAULT_REG,
 					   RING_FAULT_VALID, 0);
 		intel_gt_mcr_read_any(gt, XEHP_RING_FAULT_REG);
+
 	} else if (GRAPHICS_VER(i915) >= 12) {
 		intel_uncore_rmw(uncore, GEN12_RING_FAULT_REG, RING_FAULT_VALID, 0);
 		intel_uncore_posting_read(uncore, GEN12_RING_FAULT_REG);
@@ -386,7 +403,7 @@ void intel_gt_check_and_clear_faults(struct intel_gt *gt)
 	struct drm_i915_private *i915 = gt->i915;
 
 	/* From GEN8 onwards we only have one 'All Engine Fault Register' */
-	if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 50))
+	if (GRAPHICS_VER_FULL(i915) >= IP_VER(12, 55))
 		xehp_check_faults(gt);
 	else if (GRAPHICS_VER(i915) >= 8)
 		gen8_check_faults(gt);
@@ -434,7 +451,7 @@ void intel_gt_flush_ggtt_writes(struct intel_gt *gt)
 
 		spin_lock_irqsave(&uncore->lock, flags);
 		intel_uncore_posting_read_fw(uncore,
-					     RING_HEAD(RENDER_RING_BASE));
+					     RING_TAIL(RENDER_RING_BASE));
 		spin_unlock_irqrestore(&uncore->lock, flags);
 	}
 }
@@ -819,7 +836,7 @@ void intel_gt_driver_unregister(struct intel_gt *gt)
 
 	/* Scrub all HW state upon release */
 	with_intel_runtime_pm(gt->uncore->rpm, wakeref)
-		__intel_gt_reset(gt, ALL_ENGINES);
+		intel_gt_reset_all_engines(gt);
 }
 
 void intel_gt_driver_release(struct intel_gt *gt)
@@ -916,8 +933,6 @@ int intel_gt_probe_all(struct drm_i915_private *i915)
 	ret = intel_gt_tile_setup(gt, phys_addr);
 	if (ret)
 		return ret;
-
-	i915->gt[0] = gt;
 
 	if (!HAS_EXTRA_GT_LIST(i915))
 		return 0;
@@ -1073,6 +1088,56 @@ err:
 
 #endif
 
+int intel_gt_tiles_init(struct drm_i915_private *i915)
+{
+	struct intel_gt *gt;
+	unsigned int id;
+	int ret;
+
+	for_each_gt(gt, i915, id) {
+		ret = intel_gt_probe_lmem(gt);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+void intel_gt_info_print(const struct intel_gt_info *info,
+			 struct drm_printer *p)
+{
+	drm_printf(p, "available engines: %x\n", info->engine_mask);
+
+	intel_sseu_dump(&info->sseu, p);
+}
+
+enum i915_map_type intel_gt_coherent_map_type(struct intel_gt *gt,
+					      struct drm_i915_gem_object *obj,
+					      bool always_coherent)
+{
+	/*
+	 * Wa_22016122933: always return I915_MAP_WC for Media
+	 * version 13.0 when the object is on the Media GT
+	 */
+	if (i915_gem_object_is_lmem(obj) || intel_gt_needs_wa_22016122933(gt))
+		return I915_MAP_WC;
+	if (HAS_LLC(gt->i915) || always_coherent)
+		return I915_MAP_WB;
+	else
+		return I915_MAP_WC;
+}
+
+bool intel_gt_needs_wa_16018031267(struct intel_gt *gt)
+{
+	/* Wa_16018031267, Wa_16018063123 */
+	return IS_GFX_GT_IP_RANGE(gt, IP_VER(12, 55), IP_VER(12, 71));
+}
+
+bool intel_gt_needs_wa_22016122933(struct intel_gt *gt)
+{
+	return MEDIA_VER_FULL(gt->i915) == IP_VER(13, 0) && gt->type == GT_MEDIA;
+}
+
 static void __intel_gt_bind_context_set_ready(struct intel_gt *gt, bool ready)
 {
 	struct intel_engine_cs *engine = gt->engine[BCS0];
@@ -1120,43 +1185,4 @@ bool intel_gt_is_bind_context_ready(struct intel_gt *gt)
 		return engine->bind_context_ready;
 
 	return false;
-}
-
-int intel_gt_tiles_init(struct drm_i915_private *i915)
-{
-	struct intel_gt *gt;
-	unsigned int id;
-	int ret;
-
-	for_each_gt(gt, i915, id) {
-		ret = intel_gt_probe_lmem(gt);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
-void intel_gt_info_print(const struct intel_gt_info *info,
-			 struct drm_printer *p)
-{
-	drm_printf(p, "available engines: %x\n", info->engine_mask);
-
-	intel_sseu_dump(&info->sseu, p);
-}
-
-enum i915_map_type intel_gt_coherent_map_type(struct intel_gt *gt,
-					      struct drm_i915_gem_object *obj,
-					      bool always_coherent)
-{
-	/*
-	 * Wa_22016122933: always return I915_MAP_WC for Media
-	 * version 13.0 when the object is on the Media GT
-	 */
-	if (i915_gem_object_is_lmem(obj) || intel_gt_needs_wa_22016122933(gt))
-		return I915_MAP_WC;
-	if (HAS_LLC(gt->i915) || always_coherent)
-		return I915_MAP_WB;
-	else
-		return I915_MAP_WC;
 }

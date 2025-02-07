@@ -5,4 +5,10 @@
 
 #define NUMA_NO_NODE	(-1)
 
+static inline int
+dev_to_node(struct device *dev)
+{
+	return NUMA_NO_NODE;
+}
+
 #endif

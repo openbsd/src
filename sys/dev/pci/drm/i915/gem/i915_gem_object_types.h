@@ -306,6 +306,18 @@ struct drm_i915_gem_object {
 	 */
 	struct i915_address_space *shares_resv_from;
 
+#ifdef CONFIG_PROC_FS
+	/**
+	 * @client: @i915_drm_client which created the object
+	 */
+	struct i915_drm_client *client;
+
+	/**
+	 * @client_link: Link into @i915_drm_client.objects_list
+	 */
+	struct list_head client_link;
+#endif
+
 	union {
 		struct rcu_head rcu;
 		struct llist_node freed;
@@ -378,7 +390,7 @@ struct drm_i915_gem_object {
 	 * and kernel mode driver for caching policy control after GEN12.
 	 * In the meantime platform specific tables are created to translate
 	 * i915_cache_level into pat index, for more details check the macros
-	 * defined i915/i915_pci.c, e.g. PVC_CACHELEVEL.
+	 * defined i915/i915_pci.c, e.g. TGL_CACHELEVEL.
 	 * For backward compatibility, this field contains values exactly match
 	 * the entries of enum i915_cache_level for pre-GEN12 platforms (See
 	 * LEGACY_CACHELEVEL), so that the PTE encode functions for these
@@ -527,7 +539,7 @@ struct drm_i915_gem_object {
 	 *   I915_CACHE_NONE. The only exception is userptr objects, where we
 	 *   instead force I915_CACHE_LLC, but we also don't allow userspace to
 	 *   ever change the @cache_level for such objects. Another special case
-	 *   is dma-buf, which doesn't rely on @cache_dirty,  but there we
+	 *   is dma-buf, which doesn't rely on @cache_dirty, but there we
 	 *   always do a forced flush when acquiring the pages, if there is a
 	 *   chance that the pages can be read directly from main memory with
 	 *   the GPU.

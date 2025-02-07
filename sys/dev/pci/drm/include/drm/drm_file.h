@@ -84,10 +84,8 @@ struct drm_minor {
 	struct device *kdev;		/* Linux device */
 	struct drm_device *dev;
 
+	struct dentry *debugfs_symlink;
 	struct dentry *debugfs_root;
-
-	struct list_head debugfs_list;
-	struct rwlock debugfs_lock; /* Protects debugfs_list. */
 };
 
 /**
@@ -396,13 +394,10 @@ struct drm_file {
 	 */
 	struct drm_prime_file_private prime;
 
-	/* private: */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-	unsigned long lock_count; /* DRI1 legacy lock count */
-#endif
-
+#ifdef __OpenBSD__
 	struct selinfo rsel;
 	SPLAY_ENTRY(drm_file) link;
+#endif
 };
 
 /**

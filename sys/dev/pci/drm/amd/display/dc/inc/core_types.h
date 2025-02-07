@@ -38,6 +38,8 @@
 #include "mcif_wb.h"
 #include "panel_cntl.h"
 #include "dmub/inc/dmub_cmd.h"
+#include "pg_cntl.h"
+#include "spl/dc_spl.h"
 
 #define MAX_CLOCK_SOURCES 7
 #define MAX_SVP_PHANTOM_STREAMS 2
@@ -58,6 +60,9 @@ void enable_surface_flip_reporting(struct dc_plane_state *plane_state,
 /********** DAL Core*********************/
 #include "transform.h"
 #include "dpp.h"
+
+#include "dml2/dml21/inc/dml_top_dchub_registers.h"
+#include "dml2/dml21/inc/dml_top_types.h"
 
 struct resource_pool;
 struct dc_state;
@@ -89,6 +94,12 @@ struct resource_funcs {
 	void (*update_soc_for_wm_a)(
 				struct dc *dc, struct dc_state *context);
 
+	unsigned int (*calculate_mall_ways_from_bytes)(
+				const struct dc *dc,
+				unsigned int total_size_in_mall_bytes);
+	void (*prepare_mcache_programming)(
+					struct dc *dc,
+					struct dc_state *context);
 	/**
 	 * @populate_dml_pipes - Populate pipe data struct
 	 *
@@ -132,6 +143,16 @@ struct resource_funcs {
 			const struct resource_pool *pool,
 			const struct pipe_ctx *opp_head_pipe);
 
+	struct pipe_ctx *(*acquire_free_pipe_as_secondary_opp_head)(
+			const struct dc_state *cur_ctx,
+			struct dc_state *new_ctx,
+			const struct resource_pool *pool,
+			const struct pipe_ctx *otg_master);
+
+	void (*release_pipe)(struct dc_state *context,
+			struct pipe_ctx *pipe,
+			const struct resource_pool *pool);
+
 	enum dc_status (*validate_plane)(
 			const struct dc_plane_state *plane_state,
 			struct dc_caps *caps);
@@ -145,6 +166,7 @@ struct resource_funcs {
 				struct dc *dc,
 				struct dc_state *new_ctx,
 				struct dc_stream_state *stream);
+
 	enum dc_status (*patch_unknown_plane_state)(
 			struct dc_plane_state *plane_state);
 
@@ -152,6 +174,7 @@ struct resource_funcs {
 			struct resource_context *res_ctx,
 			const struct resource_pool *pool,
 			struct dc_stream_state *stream);
+
 	void (*populate_dml_writeback_from_context)(
 			struct dc *dc,
 			struct resource_context *res_ctx,
@@ -162,6 +185,7 @@ struct resource_funcs {
 			struct dc_state *context,
 			display_e2e_pipe_params_st *pipes,
 			int pipe_cnt);
+
 	void (*update_bw_bounding_box)(
 			struct dc *dc,
 			struct clk_bw_params *bw_params);
@@ -189,11 +213,9 @@ struct resource_funcs {
 			unsigned int pipe_cnt,
             unsigned int index);
 
-	bool (*remove_phantom_pipes)(struct dc *dc, struct dc_state *context, bool fast_update);
-	void (*retain_phantom_pipes)(struct dc *dc, struct dc_state *context);
 	void (*get_panel_config_defaults)(struct dc_panel_config *panel_config);
-	void (*save_mall_state)(struct dc *dc, struct dc_state *context, struct mall_temp_config *temp_config);
-	void (*restore_mall_state)(struct dc *dc, struct dc_state *context, struct mall_temp_config *temp_config);
+	void (*build_pipe_pix_clk_params)(struct pipe_ctx *pipe_ctx);
+	unsigned int (*get_det_buffer_size)(const struct dc_state *context);
 };
 
 struct audio_support{
@@ -275,12 +297,12 @@ struct resource_pool {
 	struct audio_support audio_support;
 
 	struct dccg *dccg;
+	struct pg_cntl *pg_cntl;
 	struct irq_service *irqs;
 
 	struct abm *abm;
 	struct dmcu *dmcu;
 	struct dmub_psr *psr;
-
 	struct dmub_replay *replay;
 
 	struct abm *multiple_abms[MAX_PIPES];
@@ -294,6 +316,16 @@ struct resource_pool {
 struct dcn_fe_bandwidth {
 	int dppclk_khz;
 
+};
+
+/* Parameters needed to call set_disp_pattern_generator */
+struct test_pattern_params {
+	enum controller_dp_test_pattern test_pattern;
+	enum controller_dp_color_space color_space;
+	enum dc_color_depth color_depth;
+	int width;
+	int height;
+	int offset;
 };
 
 struct stream_resource {
@@ -312,10 +344,21 @@ struct stream_resource {
 	 * otherwise it's using group number 'gsl_group-1'
 	 */
 	uint8_t gsl_group;
+
+	struct test_pattern_params test_pattern_params;
 };
 
 struct plane_resource {
+	/* scl_data is scratch space required to program a plane */
 	struct scaler_data scl_data;
+	/* Below pointers to hw objects are required to enable the plane */
+	/* spl_in and spl_out are the input and output structures for SPL
+	 * which are required when using Scaler Programming Library
+	 * these are scratch spaces needed when programming a plane
+	 */
+	struct spl_in spl_in;
+	struct spl_out spl_out;
+	/* Below pointers to hw objects are required to enable the plane */
 	struct hubp *hubp;
 	struct mem_input *mi;
 	struct input_pixel_processor *ipp;
@@ -355,8 +398,24 @@ union pipe_update_flags {
 		uint32_t plane_changed : 1;
 		uint32_t det_size : 1;
 		uint32_t unbounded_req : 1;
+		uint32_t test_pattern_changed : 1;
 	} bits;
 	uint32_t raw;
+};
+
+struct pixel_rate_divider {
+	uint32_t div_factor1;
+	uint32_t div_factor2;
+};
+
+enum p_state_switch_method {
+	P_STATE_UNKNOWN						= 0,
+	P_STATE_V_BLANK						= 1,
+	P_STATE_FPO,
+	P_STATE_V_ACTIVE,
+	P_STATE_SUB_VP,
+	P_STATE_DRR_SUB_VP,
+	P_STATE_V_BLANK_SUB_VP
 };
 
 struct pipe_ctx {
@@ -403,12 +462,18 @@ struct pipe_ctx {
 	int det_buffer_size_kb;
 	bool unbounded_req;
 	unsigned int surface_size_in_mall_bytes;
+	struct dml2_dchub_per_pipe_register_set hubp_regs;
+	struct dml2_hubp_pipe_mcache_regs mcache_regs;
 
 	struct dwbc *dwbc;
 	struct mcif_wb *mcif_wb;
 	union pipe_update_flags update_flags;
+	enum p_state_switch_method p_state_type;
 	struct tg_color visual_confirm_color;
 	bool has_vactive_margin;
+	/* subvp_index: only valid if the pipe is a SUBVP_MAIN*/
+	uint8_t subvp_index;
+	struct pixel_rate_divider pixel_rate_divider;
 };
 
 /* Data used for dynamic link encoder assignment.
@@ -434,6 +499,8 @@ struct resource_context {
 	unsigned int hpo_dp_link_enc_to_link_idx[MAX_HPO_DP2_LINK_ENCODERS];
 	int hpo_dp_link_enc_ref_cnts[MAX_HPO_DP2_LINK_ENCODERS];
 	bool is_mpc_3dlut_acquired[MAX_PIPES];
+	/* solely used for build scalar data in dml2 */
+	struct pipe_ctx temp_pipe;
 };
 
 struct dce_bw_output {
@@ -459,7 +526,7 @@ struct dcn_bw_writeback {
 
 struct dcn_bw_output {
 	struct dc_clocks clk;
-	struct dcn_watermark_set watermarks;
+	union dcn_watermark_set watermarks;
 	struct dcn_bw_writeback bw_writeback;
 	int compbuf_size_kb;
 	unsigned int mall_ss_size_bytes;
@@ -467,6 +534,10 @@ struct dcn_bw_output {
 	unsigned int mall_subvp_size_bytes;
 	unsigned int legacy_svp_drr_stream_index;
 	bool legacy_svp_drr_stream_index_valid;
+	struct dml2_mcache_surface_allocation mcache_allocations[DML2_MAX_PLANES];
+	struct dmub_cmd_fams2_global_config fams2_global_config;
+	struct dmub_fams2_stream_static_state fams2_stream_params[DML2_MAX_PLANES];
+	struct dml2_display_arb_regs arb_regs;
 };
 
 union bw_output {
@@ -477,6 +548,8 @@ union bw_output {
 struct bw_context {
 	union bw_output bw;
 	struct display_mode_lib dml;
+	struct dml2_context *dml2;
+	struct dml2_context *dml2_dc_power_source;
 };
 
 struct dc_dmub_cmd {
@@ -497,6 +570,14 @@ struct dc_state {
 	 * @stream_status: Planes status on a given stream
 	 */
 	struct dc_stream_status stream_status[MAX_PIPES];
+	/**
+	 * @phantom_streams: Stream state properties for phantoms
+	 */
+	struct dc_stream_state *phantom_streams[MAX_PHANTOM_PIPES];
+	/**
+	 * @phantom_planes: Planes state properties for phantoms
+	 */
+	struct dc_plane_state *phantom_planes[MAX_PHANTOM_PIPES];
 
 	/**
 	 * @stream_count: Total of streams in use
@@ -504,6 +585,14 @@ struct dc_state {
 	uint8_t stream_count;
 	uint8_t stream_mask;
 
+	/**
+	 * @stream_count: Total phantom streams in use
+	 */
+	uint8_t phantom_stream_count;
+	/**
+	 * @stream_count: Total phantom planes in use
+	 */
+	uint8_t phantom_plane_count;
 	/**
 	 * @res_ctx: Persistent state of resources
 	 */
@@ -549,6 +638,8 @@ struct dc_state {
 	struct {
 		unsigned int stutter_period_us;
 	} perf_params;
+
+	enum dc_power_source_type power_source;
 };
 
 struct replay_context {

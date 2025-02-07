@@ -62,9 +62,7 @@ static struct pool amdgpu_fence_slab;
 int amdgpu_fence_slab_init(void)
 {
 #ifdef __linux__
-	amdgpu_fence_slab = kmem_cache_create(
-		"amdgpu_fence", sizeof(struct amdgpu_fence), 0,
-		SLAB_HWCACHE_ALIGN, NULL);
+	amdgpu_fence_slab = KMEM_CACHE(amdgpu_fence, SLAB_HWCACHE_ALIGN);
 	if (!amdgpu_fence_slab)
 		return -ENOMEM;
 #else
@@ -587,7 +585,8 @@ static bool amdgpu_fence_need_ring_interrupt_restore(struct amdgpu_ring *ring)
 	switch (ring->funcs->type) {
 	case AMDGPU_RING_TYPE_SDMA:
 	/* SDMA 5.x+ is part of GFX power domain so it's covered by GFXOFF */
-		if (adev->ip_versions[SDMA0_HWIP][0] >= IP_VERSION(5, 0, 0))
+		if (amdgpu_ip_version(adev, SDMA0_HWIP, 0) >=
+		    IP_VERSION(5, 0, 0))
 			is_gfx_power_domain = true;
 		break;
 	case AMDGPU_RING_TYPE_GFX:
@@ -1003,7 +1002,9 @@ static void amdgpu_debugfs_reset_work(struct work_struct *work)
 
 	reset_context.method = AMD_RESET_METHOD_NONE;
 	reset_context.reset_req_dev = adev;
+	reset_context.src = AMDGPU_RESET_SRC_USER;
 	set_bit(AMDGPU_NEED_FULL_RESET, &reset_context.flags);
+	set_bit(AMDGPU_SKIP_COREDUMP, &reset_context.flags);
 
 	amdgpu_device_gpu_recover(adev, NULL, &reset_context);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_agpsupport.c,v 1.29 2022/01/14 06:52:58 jsg Exp $ */
+/* $OpenBSD: drm_agpsupport.c,v 1.30 2025/02/07 03:03:08 jsg Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -43,8 +43,6 @@
 #include <drm/drm_drv.h>
 #include <drm/drm_file.h>
 #include <drm/drm_print.h>
-
-#include "drm_legacy.h"
 
 #if IS_ENABLED(CONFIG_AGP)
 

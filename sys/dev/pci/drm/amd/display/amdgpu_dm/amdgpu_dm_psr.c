@@ -51,6 +51,9 @@ static bool link_supports_psrsu(struct dc_link *link)
 	    !link->dpcd_caps.psr_info.psr2_su_y_granularity_cap)
 		return false;
 
+	if (amdgpu_dc_debug_mask & DC_DISABLE_PSR_SU)
+		return false;
+
 	return dc_dmub_check_min_version(dc->ctx->dmub_srv->dmub);
 }
 
@@ -138,9 +141,8 @@ bool amdgpu_dm_link_setup_psr(struct dc_stream_state *stream)
  * amdgpu_dm_psr_enable() - enable psr f/w
  * @stream: stream state
  *
- * Return: true if success
  */
-bool amdgpu_dm_psr_enable(struct dc_stream_state *stream)
+void amdgpu_dm_psr_enable(struct dc_stream_state *stream)
 {
 	struct dc_link *link = stream->link;
 	unsigned int vsync_rate_hz = 0;
@@ -156,7 +158,7 @@ bool amdgpu_dm_psr_enable(struct dc_stream_state *stream)
 	DRM_DEBUG_DRIVER("Enabling psr...\n");
 
 	vsync_rate_hz = div64_u64(div64_u64((
-			stream->timing.pix_clk_100hz * 100),
+			stream->timing.pix_clk_100hz * (uint64_t)100),
 			stream->timing.v_total),
 			stream->timing.h_total);
 
@@ -187,7 +189,10 @@ bool amdgpu_dm_psr_enable(struct dc_stream_state *stream)
 	if (link->psr_settings.psr_version < DC_PSR_VERSION_SU_1)
 		power_opt |= psr_power_opt_z10_static_screen;
 
-	return dc_link_set_psr_allow_active(link, &psr_enable, false, false, &power_opt);
+	dc_link_set_psr_allow_active(link, &psr_enable, false, false, &power_opt);
+
+	if (link->ctx->dc->caps.ips_support)
+		dc_allow_idle_optimizations(link->ctx->dc, true);
 }
 
 /*
@@ -196,18 +201,17 @@ bool amdgpu_dm_psr_enable(struct dc_stream_state *stream)
  *
  * Return: true if success
  */
-bool amdgpu_dm_psr_disable(struct dc_stream_state *stream)
+bool amdgpu_dm_psr_disable(struct dc_stream_state *stream, bool wait)
 {
-	unsigned int power_opt = 0;
 	bool psr_enable = false;
 
 	DRM_DEBUG_DRIVER("Disabling psr...\n");
 
-	return dc_link_set_psr_allow_active(stream->link, &psr_enable, true, false, &power_opt);
+	return dc_link_set_psr_allow_active(stream->link, &psr_enable, wait, false, NULL);
 }
 
 /*
- * amdgpu_dm_psr_disable() - disable psr f/w
+ * amdgpu_dm_psr_disable_all() - disable psr f/w for all streams
  * if psr is enabled on any stream
  *
  * Return: true if success
@@ -218,3 +222,61 @@ bool amdgpu_dm_psr_disable_all(struct amdgpu_display_manager *dm)
 	return dc_set_psr_allow_active(dm->dc, false);
 }
 
+/*
+ * amdgpu_dm_psr_is_active_allowed() - check if psr is allowed on any stream
+ * @dm:  pointer to amdgpu_display_manager
+ *
+ * Return: true if allowed
+ */
+
+bool amdgpu_dm_psr_is_active_allowed(struct amdgpu_display_manager *dm)
+{
+	unsigned int i;
+	bool allow_active = false;
+
+	for (i = 0; i < dm->dc->current_state->stream_count ; i++) {
+		struct dc_link *link;
+		struct dc_stream_state *stream = dm->dc->current_state->streams[i];
+
+		link = stream->link;
+		if (!link)
+			continue;
+		if (link->psr_settings.psr_feature_enabled &&
+		    link->psr_settings.psr_allow_active) {
+			allow_active = true;
+			break;
+		}
+	}
+
+	return allow_active;
+}
+
+/**
+ * amdgpu_dm_psr_wait_disable() - Wait for eDP panel to exit PSR
+ * @stream: stream state attached to the eDP link
+ *
+ * Waits for a max of 500ms for the eDP panel to exit PSR.
+ *
+ * Return: true if panel exited PSR, false otherwise.
+ */
+bool amdgpu_dm_psr_wait_disable(struct dc_stream_state *stream)
+{
+	enum dc_psr_state psr_state = PSR_STATE0;
+	struct dc_link *link = stream->link;
+	int retry_count;
+
+	if (link == NULL)
+		return false;
+
+	for (retry_count = 0; retry_count <= 1000; retry_count++) {
+		dc_link_get_psr_state(link, &psr_state);
+		if (psr_state == PSR_STATE0)
+			break;
+		udelay(500);
+	}
+
+	if (retry_count == 1000)
+		return false;
+
+	return true;
+}

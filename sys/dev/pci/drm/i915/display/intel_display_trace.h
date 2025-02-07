@@ -9,6 +9,7 @@
 
 #define trace_g4x_wm(a, b)
 #define trace_intel_cpu_fifo_underrun(a, b)
+#define trace_intel_crtc_flip_done(a)
 #define trace_intel_crtc_vblank_work_end(a)
 #define trace_intel_crtc_vblank_work_start(a)
 #define trace_intel_fbc_activate(a)
@@ -24,6 +25,7 @@
 #define trace_intel_pipe_update_end(a, b, c)
 #define trace_intel_pipe_update_start(a)
 #define trace_intel_pipe_update_vblank_evaded(a)
+#define trace_intel_plane_async_flip(a, b, c)
 #define trace_intel_plane_disable_arm(a, b)
 #define trace_intel_plane_update_arm(a, b)
 #define trace_intel_plane_update_noarm(a, b)
