@@ -1588,9 +1588,7 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 
 	ggtt->vm.gt = gt;
 	ggtt->vm.i915 = i915;
-#ifdef notyet
 	ggtt->vm.dma = i915->drm.dev;
-#endif
 	dma_resv_init(&ggtt->vm._resv);
 
 	if (GRAPHICS_VER(i915) >= 8)

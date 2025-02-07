@@ -1775,11 +1775,7 @@ static u32 vlv_wa_c0_ei(struct intel_rps *rps, u32 pm_iir)
 
 	vlv_c0_read(uncore, &now);
 
-#ifdef __linux__
 	if (prev->ktime) {
-#else
-	if (ktime_to_ns(prev->ktime)) {
-#endif
 		u64 time, c0;
 		u32 render, media;
 
