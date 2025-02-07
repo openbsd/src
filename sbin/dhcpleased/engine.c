@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.55 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.56 2025/02/07 21:56:04 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -744,7 +744,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	struct in_addr		 nameservers[MAX_RDNS_COUNT];
 	struct dhcp_route	 routes[MAX_DHCP_ROUTES];
 	size_t			 rem, i;
-	uint32_t		 sum, usum, lease_time = 0, renewal_time = 0;
+	uint32_t		 lease_time = 0, renewal_time = 0;
 	uint32_t		 rebinding_time = 0;
 	uint32_t		 ipv6_only_time = 0;
 	uint8_t			*p, dho = DHO_PAD, dho_len, slen;
@@ -850,16 +850,14 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	p += sizeof(*udp);
 	rem -= sizeof(*udp);
 
-	if ((dhcp->csumflags & M_UDP_CSUM_IN_OK) == 0) {
-		usum = udp->uh_sum;
-		udp->uh_sum = 0;
-
-		sum = wrapsum(checksum((uint8_t *)udp, sizeof(*udp),
+	if ((dhcp->csumflags & M_UDP_CSUM_IN_OK) == 0 &&
+	    udp->uh_sum != 0) {
+		udp->uh_sum = wrapsum(checksum((uint8_t *)udp, sizeof(*udp),
 		    checksum(p, rem,
 		    checksum((uint8_t *)&ip->ip_src, 2 * sizeof(ip->ip_src),
 		    IPPROTO_UDP + ntohs(udp->uh_ulen)))));
 
-		if (usum != 0 && usum != sum) {
+		if (udp->uh_sum != 0) {
 			log_warnx("%s: bad UDP checksum", __func__);
 			return;
 		}
