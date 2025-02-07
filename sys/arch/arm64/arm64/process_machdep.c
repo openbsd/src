@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.9 2024/10/14 12:02:16 jsg Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.10 2025/02/07 13:37:11 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -98,7 +98,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct proc *p,  struct fpreg *regs)
+process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
 	memcpy(&p->p_addr->u_pcb.pcb_fpstate, regs,
 	    sizeof(p->p_addr->u_pcb.pcb_fpstate));
