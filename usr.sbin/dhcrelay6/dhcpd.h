@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.2 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.3 2025/02/07 23:08:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2017 Rafael Zalamena <rzalamena@openbsd.org>
@@ -164,7 +164,7 @@ void assemble_udp_ip6_header(unsigned char *, int *, struct packet_ctx *,
     unsigned char *, int);
 ssize_t decode_hw_header(unsigned char *, int, struct packet_ctx *);
 ssize_t decode_udp_ip6_header(unsigned char *, int, struct packet_ctx *,
-    size_t);
+    size_t, u_int16_t);
 
 /* dhcrelay6.c */
 const char *v6addr2str(struct in6_addr *);

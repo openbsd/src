@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2017/03/17 14:45:16 rzalamena Exp $	*/
+/*	$OpenBSD: packet.c,v 1.2 2025/02/07 23:08:48 bluhm Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -42,6 +42,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/mbuf.h>
 
 #include <arpa/inet.h>
 
@@ -160,13 +161,12 @@ decode_hw_header(unsigned char *buf, int bufix, struct packet_ctx *pc)
 
 ssize_t
 decode_udp_ip6_header(unsigned char *p, int off, struct packet_ctx *pc,
-   size_t plen)
+   size_t plen, u_int16_t csumflags)
 {
 	struct ip6_hdr		*ip6;
 	struct udphdr		*uh;
 	struct in6_addr		*asrc, *adst;
 	size_t			 ptotal, poff = 0;
-	uint16_t		 ocksum, cksum;
 
 	/* Check the IPv6 header. */
 	if (plen < sizeof(*ip6)) {
@@ -208,23 +208,21 @@ decode_udp_ip6_header(unsigned char *p, int off, struct packet_ctx *pc,
 	uh = (struct udphdr *)((uint8_t *)ip6 + sizeof(*ip6));
 	ss2sin6(&pc->pc_src)->sin6_port = uh->uh_sport;
 	ss2sin6(&pc->pc_dst)->sin6_port = uh->uh_dport;
-	ocksum = uh->uh_sum;
-	uh->uh_sum = 0;
 	poff += sizeof(*uh);
 
 	/* Validate the packet. */
-	cksum = wrapsum(
-	    checksum((unsigned char *)asrc, sizeof(*asrc),
-	    checksum((unsigned char *)adst, sizeof(*adst),
-	    checksum((unsigned char *)uh, sizeof(*uh),
-	    checksum(p + off + poff, ptotal - sizeof(*uh),
-	    IPPROTO_UDP + ntohs(uh->uh_ulen)))))
-	);
+	if ((csumflags & M_UDP_CSUM_IN_OK) == 0) {
+		uh->uh_sum = wrapsum(
+		    checksum((unsigned char *)asrc, sizeof(*asrc),
+		    checksum((unsigned char *)adst, sizeof(*adst),
+		    checksum((unsigned char *)uh, sizeof(*uh),
+		    checksum(p + off + poff, ptotal - sizeof(*uh),
+		    IPPROTO_UDP + ntohs(uh->uh_ulen))))));
 
-	if (ocksum != cksum) {
-		log_debug("checksum invalid (%#04x != %#04x)",
-		    ocksum, cksum);
-		return -1;
+		if (uh->uh_sum != 0) {
+			log_debug("checksum invalid");
+			return -1;
+		}
 	}
 
 	return poff;

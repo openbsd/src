@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.14 2017/04/05 14:40:56 reyk Exp $	*/
+/*	$OpenBSD: packet.c,v 1.15 2025/02/07 23:08:48 bluhm Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -42,6 +42,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/mbuf.h>
 
 #include <arpa/inet.h>
 
@@ -214,13 +215,12 @@ decode_hw_header(unsigned char *buf, size_t buflen,
 
 ssize_t
 decode_udp_ip_header(unsigned char *buf, size_t buflen,
-    size_t offset, struct packet_ctx *pc)
+    size_t offset, struct packet_ctx *pc, u_int16_t csumflags)
 {
 	struct ip *ip;
 	struct udphdr *udp;
 	unsigned char *data;
 	u_int32_t ip_len;
-	u_int32_t sum, usum;
 	static unsigned int ip_packets_seen;
 	static unsigned int ip_packets_bad_checksum;
 	static unsigned int udp_packets_seen;
@@ -240,7 +240,8 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	ip_packets_seen++;
 
 	/* Check the IP header checksum - it should be zero. */
-	if (wrapsum(checksum(buf + offset, ip_len, 0)) != 0) {
+	if ((csumflags & M_IPV4_CSUM_IN_OK) == 0 &&
+	    wrapsum(checksum(buf + offset, ip_len, 0)) != 0) {
 		ip_packets_bad_checksum++;
 		if (ip_packets_seen > 4 && ip_packets_bad_checksum != 0 &&
 		    (ip_packets_seen / ip_packets_bad_checksum) < 2) {
@@ -306,24 +307,26 @@ decode_udp_ip_header(unsigned char *buf, size_t buflen,
 	if (len + data != buf + buflen)
 		log_debug("accepting packet with data after udp payload.");
 
-	usum = udp->uh_sum;
-	udp->uh_sum = 0;
-
-	sum = wrapsum(checksum((unsigned char *)udp, sizeof(*udp),
-	    checksum(data, len, checksum((unsigned char *)&ip->ip_src,
-	    2 * sizeof(ip->ip_src),
-	    IPPROTO_UDP + (u_int32_t)ntohs(udp->uh_ulen)))));
-
 	udp_packets_seen++;
-	if (usum && usum != sum) {
-		udp_packets_bad_checksum++;
-		if (udp_packets_seen > 4 && udp_packets_bad_checksum != 0 &&
-		    (udp_packets_seen / udp_packets_bad_checksum) < 2) {
-			log_info("%u bad udp checksums in %u packets",
-			    udp_packets_bad_checksum, udp_packets_seen);
-			udp_packets_seen = udp_packets_bad_checksum = 0;
+
+	if ((csumflags & M_UDP_CSUM_IN_OK) == 0 &&
+	    udp->uh_sum != 0) {
+		udp->uh_sum = wrapsum(checksum((uint8_t *)udp, sizeof(*udp),
+		    checksum(data, len,
+		    checksum((uint8_t *)&ip->ip_src, 2 * sizeof(ip->ip_src),
+		    IPPROTO_UDP + ntohs(udp->uh_ulen)))));
+
+		if (udp->uh_sum != 0) {
+			udp_packets_bad_checksum++;
+			if (udp_packets_seen > 4 &&
+			    udp_packets_bad_checksum != 0 &&
+			    (udp_packets_seen / udp_packets_bad_checksum) < 2) {
+				log_info("%u bad udp checksums in %u packets",
+				    udp_packets_bad_checksum, udp_packets_seen);
+				udp_packets_seen = udp_packets_bad_checksum = 0;
+			}
+			return (-1);
 		}
-		return (-1);
 	}
 
 	ss2sin(&pc->pc_src)->sin_port = udp->uh_sport;
