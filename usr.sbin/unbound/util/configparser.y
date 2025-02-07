@@ -4006,45 +4006,45 @@ server_cookie_secret_file: VAR_COOKIE_SECRET_FILE STRING_ARG
 		cfg_parser->cfg->cookie_secret_file = $2;
 	}
 	;
-	ipsetstart: VAR_IPSET
-		{
-			OUTYY(("\nP(ipset:)\n"));
-			cfg_parser->started_toplevel = 1;
-		}
-		;
-	contents_ipset: contents_ipset content_ipset
-		| ;
-	content_ipset: ipset_name_v4 | ipset_name_v6
-		;
-	ipset_name_v4: VAR_IPSET_NAME_V4 STRING_ARG
-		{
-		#ifdef USE_IPSET
-			OUTYY(("P(name-v4:%s)\n", $2));
-			if(cfg_parser->cfg->ipset_name_v4)
-				yyerror("ipset name v4 override, there must be one "
-					"name for ip v4");
-			free(cfg_parser->cfg->ipset_name_v4);
-			cfg_parser->cfg->ipset_name_v4 = $2;
-		#else
-			OUTYY(("P(Compiled without ipset, ignoring)\n"));
-			free($2);
-		#endif
-		}
-	;
-	ipset_name_v6: VAR_IPSET_NAME_V6 STRING_ARG
+ipsetstart: VAR_IPSET
 	{
-		#ifdef USE_IPSET
-			OUTYY(("P(name-v6:%s)\n", $2));
-			if(cfg_parser->cfg->ipset_name_v6)
-				yyerror("ipset name v6 override, there must be one "
-					"name for ip v6");
-			free(cfg_parser->cfg->ipset_name_v6);
-			cfg_parser->cfg->ipset_name_v6 = $2;
-		#else
-			OUTYY(("P(Compiled without ipset, ignoring)\n"));
-			free($2);
-		#endif
-		}
+		OUTYY(("\nP(ipset:)\n"));
+		cfg_parser->started_toplevel = 1;
+	}
+	;
+contents_ipset: contents_ipset content_ipset
+	| ;
+content_ipset: ipset_name_v4 | ipset_name_v6
+	;
+ipset_name_v4: VAR_IPSET_NAME_V4 STRING_ARG
+	{
+	#ifdef USE_IPSET
+		OUTYY(("P(name-v4:%s)\n", $2));
+		if(cfg_parser->cfg->ipset_name_v4)
+			yyerror("ipset name v4 override, there must be one "
+				"name for ip v4");
+		free(cfg_parser->cfg->ipset_name_v4);
+		cfg_parser->cfg->ipset_name_v4 = $2;
+	#else
+		OUTYY(("P(Compiled without ipset, ignoring)\n"));
+		free($2);
+	#endif
+	}
+	;
+ipset_name_v6: VAR_IPSET_NAME_V6 STRING_ARG
+	{
+	#ifdef USE_IPSET
+		OUTYY(("P(name-v6:%s)\n", $2));
+		if(cfg_parser->cfg->ipset_name_v6)
+			yyerror("ipset name v6 override, there must be one "
+				"name for ip v6");
+		free(cfg_parser->cfg->ipset_name_v6);
+		cfg_parser->cfg->ipset_name_v6 = $2;
+	#else
+		OUTYY(("P(Compiled without ipset, ignoring)\n"));
+		free($2);
+	#endif
+	}
 	;
 %%
 
