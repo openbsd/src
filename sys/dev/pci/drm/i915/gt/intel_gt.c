@@ -1027,8 +1027,6 @@ int intel_gt_probe_all(struct drm_i915_private *i915)
 	if (ret)
 		return ret;
 
-	i915->gt[0] = gt;
-
 	if (!HAS_EXTRA_GT_LIST(i915))
 		return 0;
 
