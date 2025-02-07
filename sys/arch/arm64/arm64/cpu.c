@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.137 2025/02/02 13:36:09 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.138 2025/02/07 22:05:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1070,6 +1070,18 @@ cpu_identify(struct cpu_info *ci)
 
 	if (ID_AA64PFR0_DIT(id) >= ID_AA64PFR0_DIT_IMPL) {
 		printf("%sDIT", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64PFR0_RAS(id) >= ID_AA64PFR0_RAS_IMPL) {
+		printf("%sRAS", sep);
+		if (ID_AA64PFR0_RAS(id) >= ID_AA64PFR0_RAS_IMPL_V1P1)
+			printf("v1p1");
+		sep = ",";
+	}
+
+	if (ID_AA64PFR0_SVE(id) >= ID_AA64PFR0_SVE_IMPL) {
+		printf("%sSVE", sep);
 		sep = ",";
 	}
 
