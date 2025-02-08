@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.70 2024/06/07 06:21:40 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.71 2025/02/08 01:01:31 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -539,8 +539,11 @@ x509_verify_parent_signature(X509 *parent, X509 *child, int *error)
 	int ret = 0;
 
 	/* Use cached value if we have it */
-	if ((cached = x509_issuer_cache_find(parent->hash, child->hash)) >= 0)
+	if ((cached = x509_issuer_cache_find(parent->hash, child->hash)) >= 0) {
+		if (cached == 0)
+			*error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
 		return cached;
+	}
 
 	/* Check signature. Did parent sign child? */
 	if ((pkey = X509_get_pubkey(parent)) == NULL) {
