@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.145 2024/08/28 07:37:50 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.146 2025/02/08 10:12:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,6 +76,7 @@
 
 #include "asn1_local.h"
 #include "x509_internal.h"
+#include "x509_issuer_cache.h"
 #include "x509_local.h"
 
 /* CRL score values */
@@ -1551,12 +1552,42 @@ done:
 	return 0;
 }
 
+/* Matches x509_verify_parent_signature() */
+static int
+x509_crl_verify_parent_signature(X509 *parent, X509_CRL *crl, int *error)
+{
+	EVP_PKEY *pkey;
+	int cached;
+	int ret = 0;
+
+	/* Use cached value if we have it */
+	if ((cached = x509_issuer_cache_find(parent->hash, crl->hash)) >= 0) {
+		if (cached == 0)
+			*error = X509_V_ERR_CRL_SIGNATURE_FAILURE;
+		return cached;
+	}
+
+	/* Check signature. Did parent sign crl? */
+	if ((pkey = X509_get0_pubkey(parent)) == NULL) {
+		*error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
+		return 0;
+	}
+	if (X509_CRL_verify(crl, pkey) <= 0)
+		*error = X509_V_ERR_CRL_SIGNATURE_FAILURE;
+	else
+		ret = 1;
+
+	/* Add result to cache */
+	x509_issuer_cache_add(parent->hash, crl->hash, ret);
+
+	return ret;
+}
+
 /* Check CRL validity */
 static int
 x509_vfy_check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 {
 	X509 *issuer = NULL;
-	EVP_PKEY *ikey = NULL;
 	int ok = 0, chnum, cnum;
 
 	cnum = ctx->error_depth;
@@ -1628,29 +1659,16 @@ x509_vfy_check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 				goto err;
 		}
 
-		/* Attempt to get issuer certificate public key */
-		ikey = X509_get_pubkey(issuer);
-
-		if (!ikey) {
-			ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
+		if (!x509_crl_verify_parent_signature(issuer, crl, &ctx->error)) {
 			ok = ctx->verify_cb(0, ctx);
 			if (!ok)
 				goto err;
-		} else {
-			/* Verify CRL signature */
-			if (X509_CRL_verify(crl, ikey) <= 0) {
-				ctx->error = X509_V_ERR_CRL_SIGNATURE_FAILURE;
-				ok = ctx->verify_cb(0, ctx);
-				if (!ok)
-					goto err;
-			}
 		}
 	}
 
 	ok = 1;
 
-err:
-	EVP_PKEY_free(ikey);
+ err:
 	return ok;
 }
 

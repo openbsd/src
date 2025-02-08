@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.72 2025/02/08 01:04:56 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.73 2025/02/08 10:12:00 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -531,6 +531,7 @@ x509_verify_potential_parent(struct x509_verify_ctx *ctx, X509 *parent,
 	return X509_check_issued(parent, child) == X509_V_OK;
 }
 
+/* Matches x509_crl_verify_parent_signature() */
 static int
 x509_verify_parent_signature(X509 *parent, X509 *child, int *error)
 {
