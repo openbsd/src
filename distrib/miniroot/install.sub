@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1266 2024/07/09 14:47:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.1267 2025/02/08 01:11:55 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1146,7 +1146,7 @@ v6_info() {
 # in the /etc/mygate file. Ask the user to either select from a list of default
 # router candidates or to enter a router IPv6 address.
 v6_defroute() {
-	local _if _v6ifs _prompt _resp _routers _dr PS3
+	local _if _v6ifs _prompt _resp _routers _dr
 
 	# Only configure a default route if an IPv6 address was manually configured.
 	for _if in $(get_ifs); do
@@ -1179,14 +1179,30 @@ v6_defroute() {
 			route -n add -inet6 -host default $resp &&
 			echo $resp >>/tmp/i/mygate
 	else
-		PS3="$_prompt (list #, IPv6 address or 'none') "
-		select _resp in none $_routers; do
-			[[ $REPLY == none || $_resp == none ]] && break
-			[[ -z $_resp ]] && _resp=$REPLY
+		set -A _routers -- $_routers
+		while :; do
+			ask_until "$_prompt (IPv6 address, list#, 'none' or '?')"
+			case $resp in
+			none)	return
+				;;
+			'?')	for _dr in ${_routers[@]}; do
+					echo $_dr
+				done | cat -n
+				continue
+				;;
+			+([0-9]))
+				if ((resp < 1 || resp > ${#_routers[@]})); then
+					echo "$resp is not a valid choice."
+					continue
+				fi
+				resp=${_routers[$((--resp))]}
+				;;
+			esac
+
 			# Avoid possible "file exists" errors
-			route -n -q delete -inet6 -host default $_resp
-			if route -n add -inet6 -host default $_resp; then
-				echo $_resp >>/tmp/i/mygate
+			route -n -q delete -inet6 -host default "$resp"
+			if route -n add -inet6 -host default "$resp"; then
+				echo "$resp" >>/tmp/i/mygate
 				break
 			fi
 		done
