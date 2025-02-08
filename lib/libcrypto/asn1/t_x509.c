@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.50 2025/01/27 10:29:41 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.51 2025/02/08 03:41:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,28 +57,21 @@
  */
 
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/bn.h>
-#include <openssl/buffer.h>
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/sha.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-
-#include "bytestring.h"
 #include "evp_local.h"
 #include "x509_local.h"
 
@@ -490,80 +483,3 @@ ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 	return (0);
 }
 LCRYPTO_ALIAS(ASN1_UTCTIME_print);
-
-/* NID with SN of 1-2 letters, which X509_NAME_print() historically included. */
-static int
-x509_name_entry_include(const X509_NAME_ENTRY *ne)
-{
-	int nid;
-
-	if ((nid = OBJ_obj2nid(ne->object)) == NID_undef)
-		return 0;
-
-	switch (nid) {
-	case NID_commonName:
-	case NID_surname:
-	case NID_countryName:
-	case NID_localityName:
-	case NID_stateOrProvinceName:
-	case NID_organizationName:
-	case NID_organizationalUnitName:
-	case NID_givenName:
-	case NID_domainComponent: /* XXX - doesn't really belong here */
-		return 1;
-	}
-
-	return 0;
-}
-
-int
-X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
-{
-	CBB cbb;
-	uint8_t *buf = NULL;
-	size_t buf_len;
-	const X509_NAME_ENTRY *ne;
-	int i;
-	int started = 0;
-	int ret = 0;
-
-	if (!CBB_init(&cbb, 0))
-		goto err;
-
-	for (i = 0; i < sk_X509_NAME_ENTRY_num(name->entries); i++) {
-		ne = sk_X509_NAME_ENTRY_value(name->entries, i);
-
-		if (!x509_name_entry_include(ne))
-			continue;
-
-		if (started) {
-			if (!CBB_add_u8(&cbb, ','))
-				goto err;
-			if (!CBB_add_u8(&cbb, ' '))
-				goto err;
-		}
-
-		if (!X509_NAME_ENTRY_add_cbb(&cbb, ne))
-			goto err;
-
-		started = 1;
-	}
-
-	if (!CBB_add_u8(&cbb, '\0'))
-		goto err;
-
-	if (!CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
-
-	if (BIO_printf(bio, "%s", buf) < 0)
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-	free(buf);
-
-	return ret;
-}
-LCRYPTO_ALIAS(X509_NAME_print);
