@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.71 2025/02/08 01:01:31 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.72 2025/02/08 01:04:56 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -546,7 +546,7 @@ x509_verify_parent_signature(X509 *parent, X509 *child, int *error)
 	}
 
 	/* Check signature. Did parent sign child? */
-	if ((pkey = X509_get_pubkey(parent)) == NULL) {
+	if ((pkey = X509_get0_pubkey(parent)) == NULL) {
 		*error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
 		return 0;
 	}
@@ -557,8 +557,6 @@ x509_verify_parent_signature(X509 *parent, X509 *child, int *error)
 
 	/* Add result to cache */
 	x509_issuer_cache_add(parent->hash, child->hash, ret);
-
-	EVP_PKEY_free(pkey);
 
 	return ret;
 }
