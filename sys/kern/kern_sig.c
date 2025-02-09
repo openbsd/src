@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.360 2025/02/05 12:21:27 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.361 2025/02/09 12:14:13 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ void proc_stop_sweep(void *);
 void *proc_stop_si;
 
 void process_continue(struct process *, int);
+void process_stop(struct process *, int, int);
 
 void setsigctx(struct proc *, int, struct sigctx *);
 void postsig_done(struct proc *, int, sigset_t, int);
@@ -1562,6 +1563,70 @@ process_continue(struct process *pr, int flag)
 }
 
 /*
+ * Signal all but p threads of a process pr to stop because of `flag'.
+ * Depending on `mode' stopped and sleeping threads may be woken up.
+ */
+void
+process_stop(struct process *pr, int flag, int mode)
+{
+	struct proc *q, *p = NULL;
+
+	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
+
+	/* skip curproc if it is part of pr, caller takes care of that */
+	if (curproc->p_p == pr) {
+		p = curproc;
+		KASSERT(ISSET(p->p_flag, P_SUSPSINGLE) == 0);
+	}
+
+	pr->ps_singlecnt = pr->ps_threadcnt;
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+		if (q == p)
+			continue;
+		atomic_setbits_int(&q->p_flag, flag);
+
+		/*
+		 * XXX in ptsignal the SCHED_LOCK is already held so we can't
+		 * grab it here until that is fixed.
+		 */
+		/* XXX SCHED_LOCK(); */
+		SCHED_ASSERT_LOCKED();
+
+		switch (q->p_stat) {
+		case SSTOP:
+			if (mode == SINGLE_EXIT) {
+				unsleep(q);
+				setrunnable(q);
+			} else
+				--pr->ps_singlecnt;
+			break;
+		case SSLEEP:
+			/* if it's not interruptible, then just have to wait */
+			if (q->p_flag & P_SINTR) {
+				/* merely need to suspend?  just stop it */
+				if (mode == SINGLE_SUSPEND) {
+					q->p_stat = SSTOP;
+					--pr->ps_singlecnt;
+				} else {
+					/* need to unwind or exit, so wake it */
+					unsleep(q);
+					setrunnable(q);
+				}
+			}
+			break;
+		case SONPROC:
+			signotify(q);
+			break;
+		case SRUN:
+		case SIDL:
+		case SDEAD:
+			break;
+		}
+		/* XXX SCHED_UNLOCK(); */
+	}
+}
+
+/*
  * Put the argument process into the stopped state and notify the parent
  * via wakeup.  Signals are handled elsewhere.  The process must not be
  * on the run queue.
@@ -2190,7 +2255,6 @@ int
 single_thread_set(struct proc *p, int flags)
 {
 	struct process *pr = p->p_p;
-	struct proc *q;
 	int error, mode = flags & SINGLE_MASK;
 
 	KASSERT(curproc == p);
@@ -2217,47 +2281,11 @@ single_thread_set(struct proc *p, int flags)
 		panic("single_thread_mode = %d", mode);
 #endif
 	}
-	KASSERT((p->p_flag & P_SUSPSINGLE) == 0);
 	pr->ps_single = p;
-	pr->ps_singlecnt = pr->ps_threadcnt;
 
-	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
-		if (q == p)
-			continue;
-		SCHED_LOCK();
-		atomic_setbits_int(&q->p_flag, P_SUSPSINGLE);
-		switch (q->p_stat) {
-		case SSTOP:
-			if (mode == SINGLE_EXIT) {
-				unsleep(q);
-				setrunnable(q);
-			} else
-				--pr->ps_singlecnt;
-			break;
-		case SSLEEP:
-			/* if it's not interruptible, then just have to wait */
-			if (q->p_flag & P_SINTR) {
-				/* merely need to suspend?  just stop it */
-				if (mode == SINGLE_SUSPEND) {
-					q->p_stat = SSTOP;
-					--pr->ps_singlecnt;
-					break;
-				}
-				/* need to unwind or exit, so wake it */
-				unsleep(q);
-				setrunnable(q);
-			}
-			break;
-		case SONPROC:
-			signotify(q);
-			break;
-		case SRUN:
-		case SIDL:
-		case SDEAD:
-			break;
-		}
-		SCHED_UNLOCK();
-	}
+	SCHED_LOCK();
+	process_stop(pr, P_SUSPSINGLE, mode);
+	SCHED_UNLOCK();
 
 	/* count ourself out */
 	--pr->ps_singlecnt;
