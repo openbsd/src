@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.200 2024/08/06 08:44:54 claudio Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.201 2025/02/10 16:45:46 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -343,7 +343,7 @@ filt_procattach(struct knote *kn)
 	int nolock;
 
 	if ((curproc->p_p->ps_flags & PS_PLEDGE) &&
-	    (curproc->p_p->ps_pledge & PLEDGE_PROC) == 0)
+	    (curproc->p_pledge & PLEDGE_PROC) == 0)
 		return pledge_fail(curproc, EPERM, PLEDGE_PROC);
 
 	if (kn->kn_id > PID_MAX)
