@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.18 2025/01/29 22:50:16 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.19 2025/02/10 20:40:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -417,7 +417,7 @@ efi_acpi_gtdt(struct acpi_table_header *hdr)
 	interrupts[8] = htobe32(map[gtdt->virt_flags & mask]);
 	interrupts[9] = htobe32(1);
 	interrupts[10] = htobe32(gtdt->nonsec_el2_interrupt - 16);
-	interrupts[11] = htobe32(map[gtdt->virt_flags & mask]);
+	interrupts[11] = htobe32(map[gtdt->nonsec_el2_flags & mask]);
 
 	node = fdt_find_node("/timer");
 	fdt_node_set_property(node, "interrupts",
