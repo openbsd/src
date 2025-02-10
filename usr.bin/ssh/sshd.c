@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.614 2024/12/07 10:12:19 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.615 2025/02/10 23:19:26 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  * Copyright (c) 2002 Niels Provos.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+#include <sys/utsname.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1138,12 +1139,13 @@ main(int ac, char **av)
 	int r, opt, do_dump_cfg = 0, keytype, already_daemon, have_agent = 0;
 	int sock_in = -1, sock_out = -1, newsock = -1, rexec_argc = 0;
 	int devnull, config_s[2] = { -1 , -1 }, have_connection_info = 0;
-	char *fp, *line, *logfile = NULL, **rexec_argv = NULL;
+	char *args, *fp, *line, *logfile = NULL, **rexec_argv = NULL;
 	struct stat sb;
 	u_int i, j;
 	mode_t new_umask;
 	struct sshkey *key;
 	struct sshkey *pubkey;
+	struct utsname utsname;
 	struct connection_info connection_info;
 	sigset_t sigmask;
 
@@ -1163,6 +1165,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
+	args = argv_assemble(ac, av); /* logged later */
 	while ((opt = getopt(ac, av,
 	    "C:E:b:c:f:g:h:k:o:p:u:46DGQRTdeiqrtV")) != -1) {
 		switch (opt) {
@@ -1327,6 +1330,16 @@ main(int ac, char **av)
 		fatal("Config test connection parameter (-C) provided without "
 		    "test mode (-T)");
 
+	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
+	if (uname(&utsname) != 0) {
+		memset(&utsname, 0, sizeof(utsname));
+		strlcpy(utsname.sysname, "UNKNOWN", sizeof(utsname.sysname));
+	}
+	debug3("Running on %s %s %s %s", utsname.sysname, utsname.release,
+	    utsname.version, utsname.machine);
+	debug3("Started with: %s", args);
+	free(args);
+
 	/* Fetch our configuration */
 	if ((cfg = sshbuf_new()) == NULL)
 		fatal("sshbuf_new config failed");
@@ -1373,8 +1386,6 @@ main(int ac, char **av)
 		fprintf(stderr, "Extra argument %s.\n", av[optind]);
 		exit(1);
 	}
-
-	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
 	if (do_dump_cfg)
 		print_config(&connection_info);
