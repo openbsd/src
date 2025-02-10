@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbc.4,v 1.18 2010/09/26 20:39:08 miod Exp $
+.\" $OpenBSD: pckbc.4,v 1.19 2025/02/10 11:41:19 miod Exp $
 .\" $NetBSD: pckbc.4,v 1.2 2000/06/16 06:42:31 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2010 $
+.Dd $Mdocdate: February 10 2025 $
 .Dt PCKBC 4
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Nd PC (ISA) keyboard controller driver
 .Sh SYNOPSIS
 .Cd "pckbc* at isa? flags 0x00           " Pq "alpha, amd64, i386, loongson"
+.Cd "pckbc* at acpi? flags 0x00          " Pq "amd64"
 .Cd "pckbc* at ebus?                     " Pq "sparc64"
 .Cd "pckbd* at pckbc?"
 .Cd "pms*   at pckbc?"
@@ -40,21 +41,17 @@
 The
 .Nm
 driver handles resource allocation and device attachment for the
-traditional PC/AT keyboard controller.
-It provides two logical connections for child devices, the
+traditional PC/AT keyboard controller, or emulations thereof.
+It provides up to two logical connections for child devices, the
 .Dq keyboard
 slot for a keyboard and the
 .Dq auxiliary
-slot for mice (the latter might be missing in older keyboard controllers).
-.\" .Pp
-.\" The optional
-.\" .Dq slot
-.\" locator argument can be used to force unusual connections of devices to
-.\" logical slots.
-.\" This feature is for experimentation only, it will not be
-.\" useful in normal operation.
+slot for mice (the latter might be missing in older keyboard controllers,
+or recent emulations).
 .Pp
 To avoid attaching a phantom PS/2 keyboard device, the
+.Xr isa 4
+attachment of the
 .Nm
 driver will attempt to detect USB legacy keyboard emulation on amd64 and i386
 systems.
@@ -62,7 +59,18 @@ Unfortunately, the detection heuristics may fail on older systems with a real
 PS/2 keyboard.
 The keyboard can be forced to attach on these systems, by changing the
 device flags to 1.
+.Pp
+The
+.Xr acpi 4
+attachment of the
+.Nm
+driver defaults to attach only where it would perform better than its legacy
+.Xr isa 4
+attachment.
+Should this logic be insufficient, it is possible to force it to always attach,
+by changing its device flags to 1.
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr ebus 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.440 2025/01/23 11:24:34 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.441 2025/02/10 11:41:19 miod Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3037,12 +3037,9 @@ const char *acpi_skip_hids[] = {
 
 /* ISA devices for which we attach a driver later */
 const char *acpi_isa_hids[] = {
-	"PNP0303",	/* IBM Enhanced Keyboard (101/102-key, PS/2 Mouse) */
 	"PNP0400",	/* Standard LPT Parallel Port */
 	"PNP0401",	/* ECP Parallel Port */
 	"PNP0700",	/* PC-class Floppy Disk Controller */
-	"PNP0F03",	/* Microsoft PS/2-style Mouse */
-	"PNP0F13",	/* PS/2 Mouse */
 	NULL
 };
 

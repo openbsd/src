@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.87 2024/08/12 18:43:41 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.88 2025/02/10 11:41:19 miod Exp $
 
 machine		amd64
 maxusers	4
@@ -37,6 +37,7 @@ acpimadt0	at acpi?
 com0		at acpi? addr 0x3f8
 com1		at acpi? addr 0x2f8
 com*		at acpi?
+pckbc*		at acpi?
 
 mpbios0		at bios0
 
