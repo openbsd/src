@@ -193,20 +193,13 @@ static void __drm_dev_vprintk(const struct device *dev, const char *level,
 		prefix = "";
 
 	if (dev) {
-		if (origin)
-			dev_printk(level, dev, "[" DRM_NAME ":%ps]%s%s %pV",
-				   origin, prefix_pad, prefix, vaf);
-		else
-			dev_printk(level, dev, "[" DRM_NAME "]%s%s %pV",
-				   prefix_pad, prefix, vaf);
+		dev_printk(level, dev, "[" DRM_NAME "]%s%s ",
+			   prefix_pad, prefix);
 	} else {
-		if (origin)
-			printk("%s" "[" DRM_NAME ":%ps]%s%s %pV",
-			       level, origin, prefix_pad, prefix, vaf);
-		else
-			printk("%s" "[" DRM_NAME "]%s%s %pV",
-			       level, prefix_pad, prefix, vaf);
+		printk("%s" "[" DRM_NAME "]%s%s ",
+		       level, prefix_pad, prefix);
 	}
+	vprintf(vaf->fmt, *vaf->va);
 }
 
 #ifdef __linux__
