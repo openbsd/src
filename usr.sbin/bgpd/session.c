@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.510 2025/02/06 12:38:58 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.511 2025/02/10 14:42:13 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1719,7 +1719,7 @@ session_update(uint32_t peerid, struct ibuf *ibuf)
 	len = ibuf_size(ibuf);
 	if (len < MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER ||
 	    len > maxsize - MSGSIZE_HEADER) {
-		log_peer_warnx(&p->conf, "bad UDPATE from RDE");
+		log_peer_warnx(&p->conf, "bad UPDATE from RDE");
 		return;
 	}
 

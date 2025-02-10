@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.49 2025/01/25 07:23:30 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.50 2025/02/10 14:42:13 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -802,7 +802,7 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 		needle.as = ntohl(rtr_aspa.cas);
 
 		log_warnx("rtr %s: oversized ASPA PDU: "
-		    "imlicit withdraw of customerAS %s",
+		    "implicit withdraw of customerAS %s",
 		    log_rtr(rs), log_as(needle.as));
 		a = RB_FIND(aspa_tree, &rs->aspa, &needle);
 		if (a != NULL) {
