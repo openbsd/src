@@ -68,8 +68,7 @@ devm_device_add_group(struct device *dev, const struct attribute_group *g)
 	printf("drm:pid%d:%s *EMERGENCY* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #define dev_printk(level, dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *PRINTK* " fmt, curproc->p_p->ps_pid,	\
-	    __func__ , ## arg)
+	printf(fmt, ## arg)
 
 #define dev_warn_ratelimited(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
