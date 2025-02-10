@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.429 2025/01/31 11:48:18 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.430 2025/02/10 15:06:57 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@
 #include <net/pfvar.h>
 #endif
 
-int tcp_mss_adv(struct mbuf *, int);
+int tcp_mss_adv(struct rtentry *, int);
 int tcp_flush_queue(struct tcpcb *);
 
 #ifdef INET6
@@ -3077,17 +3077,17 @@ tcp_newreno_partialack(struct tcpcb *tp, struct tcphdr *th)
 }
 
 int
-tcp_mss_adv(struct mbuf *m, int af)
+tcp_mss_adv(struct rtentry *rt, int af)
 {
 	struct ifnet *ifp;
 	int iphlen, mss, mssdflt;
 
 	mssdflt = atomic_load_int(&tcp_mssdflt);
 
-	if (m == NULL || (m->m_flags & M_PKTHDR) == 0)
+	if (rt == NULL)
 		return mssdflt;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 		return mssdflt;
 
@@ -3106,9 +3106,7 @@ tcp_mss_adv(struct mbuf *m, int af)
 	mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	if_put(ifp);
 
-	if (mss < mssdflt)
-		return mssdflt;
-	return mss;
+	return imax(mss, mssdflt);
 }
 
 /*
@@ -3814,6 +3812,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	struct mbuf *ipopts;
+	struct rtentry *rt = NULL;
 
 	NET_ASSERT_LOCKED();
 
@@ -3908,12 +3907,30 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	memcpy(&sc->sc_src, src, src->sa_len);
 	memcpy(&sc->sc_dst, dst, dst->sa_len);
 	sc->sc_rtableid = sotoinpcb(so)->inp_rtableid;
+	switch (sc->sc_src.sa.sa_family) {
+	case AF_INET:
+		if (sc->sc_src.sin.sin_addr.s_addr != INADDR_ANY) {
+			rt = route_mpath(&sc->sc_route,
+			    &sc->sc_src.sin.sin_addr,
+			    &sc->sc_dst.sin.sin_addr, sc->sc_rtableid);
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (!IN6_IS_ADDR_UNSPECIFIED(&sc->sc_src.sin6.sin6_addr)) {
+			rt = route6_mpath(&sc->sc_route,
+			    &sc->sc_src.sin6.sin6_addr,
+			    &sc->sc_dst.sin6.sin6_addr, sc->sc_rtableid);
+		}
+		break;
+#endif
+	}
 	sc->sc_ipopts = ipopts;
 	sc->sc_irs = th->th_seq;
 
 	sc->sc_iss = issp ? *issp : arc4random();
 	sc->sc_peermaxseg = oi->maxseg;
-	sc->sc_ourmaxseg = tcp_mss_adv(m, sc->sc_src.sa.sa_family);
+	sc->sc_ourmaxseg = tcp_mss_adv(rt, sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
 	sc->sc_timestamp = tb.ts_recent;
 	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
