@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.84 2021/10/11 10:55:30 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.85 2025/02/10 08:14:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -157,7 +157,7 @@ cmd_if_shell_callback(struct job *job)
 	if (cmdlist == NULL) {
 		if (cdata->item == NULL) {
 			*error = toupper((u_char)*error);
-			status_message_set(c, -1, 1, 0, "%s", error);
+			status_message_set(c, -1, 1, 0, 0, "%s", error);
 		} else
 			cmdq_error(cdata->item, "%s", error);
 		free(error);

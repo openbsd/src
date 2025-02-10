@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.86 2024/05/14 07:33:01 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.87 2025/02/10 08:14:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -204,7 +204,7 @@ cmd_run_shell_timer(__unused int fd, __unused short events, void* arg)
 	if (cmdlist == NULL) {
 		if (cdata->item == NULL) {
 			*error = toupper((u_char)*error);
-			status_message_set(c, -1, 1, 0, "%s", error);
+			status_message_set(c, -1, 1, 0, 0, "%s", error);
 		} else
 			cmdq_error(cdata->item, "%s", error);
 		free(error);

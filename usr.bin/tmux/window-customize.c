@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.15 2024/10/04 19:16:13 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.16 2025/02/10 08:14:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1000,7 +1000,7 @@ window_customize_set_option_callback(struct client *c, void *itemdata,
 
 fail:
 	*cause = toupper((u_char)*cause);
-	status_message_set(c, -1, 1, 0, "%s", cause);
+	status_message_set(c, -1, 1, 0, 0, "%s", cause);
 	free(cause);
 	return (0);
 }
@@ -1203,7 +1203,7 @@ window_customize_set_command_callback(struct client *c, void *itemdata,
 
 fail:
 	*error = toupper((u_char)*error);
-	status_message_set(c, -1, 1, 0, "%s", error);
+	status_message_set(c, -1, 1, 0, 0, "%s", error);
 	free(error);
 	return (0);
 }

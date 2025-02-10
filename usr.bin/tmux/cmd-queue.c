@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.118 2024/11/22 12:58:05 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.119 2025/02/10 08:14:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -893,7 +893,7 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 		c->retval = 1;
 	} else {
 		*msg = toupper((u_char) *msg);
-		status_message_set(c, -1, 1, 0, "%s", msg);
+		status_message_set(c, -1, 1, 0, 0, "%s", msg);
 	}
 
 	free(msg);

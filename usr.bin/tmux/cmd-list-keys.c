@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.68 2025/01/27 09:16:05 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.69 2025/02/10 08:14:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -114,8 +114,8 @@ cmd_list_keys_print_notes(struct cmdq_item *item, struct args *args,
 			note = xstrdup(bd->note);
 		tmp = utf8_padcstr(key, keywidth + 1);
 		if (args_has(args, '1') && tc != NULL) {
-			status_message_set(tc, -1, 1, 0, "%s%s%s", prefix, tmp,
-			    note);
+			status_message_set(tc, -1, 1, 0, 0, "%s%s%s", prefix,
+			    tmp, note);
 		} else
 			cmdq_print(item, "%s%s%s", prefix, tmp, note);
 		free(tmp);
@@ -298,8 +298,8 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			free(cp);
 
 			if (args_has(args, '1') && tc != NULL) {
-				status_message_set(tc, -1, 1, 0, "bind-key %s",
-				    tmp);
+				status_message_set(tc, -1, 1, 0, 0,
+				    "bind-key %s", tmp);
 			} else
 				cmdq_print(item, "bind-key %s", tmp);
 			free(key);

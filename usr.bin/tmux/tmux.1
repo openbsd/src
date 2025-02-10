@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.980 2025/01/01 15:17:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.981 2025/02/10 08:14:32 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2025 $
+.Dd $Mdocdate: February 10 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6742,7 +6742,7 @@ The following keys are available in menus:
 .El
 .Tg display
 .It Xo Ic display-message
-.Op Fl aIlNpv
+.Op Fl aCIlNpv
 .Op Fl c Ar target-client
 .Op Fl d Ar delay
 .Op Fl t Ar target-pane
@@ -6764,6 +6764,9 @@ is not given, the
 option is used; a delay of zero waits for a key press.
 .Ql N
 ignores key presses and closes only after the delay expires.
+If
+.Fl C
+given, the pane will continue to be updated while the message is displayed.
 If
 .Fl l
 is given,
