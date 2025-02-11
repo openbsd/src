@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.511 2025/02/10 14:42:13 job Exp $ */
+/*	$OpenBSD: session.c,v 1.512 2025/02/11 14:29:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2867,7 +2867,7 @@ capa_neg_calc(struct peer *p)
 	    p->capa.peer.grestart.grnotification) != 0;
 
 	/* RFC 8950 extended nexthop encoding: both sides need to agree */
-	memset(p->capa.neg.add_path, 0, sizeof(p->capa.neg.add_path));
+	memset(p->capa.neg.ext_nh, 0, sizeof(p->capa.neg.ext_nh));
 	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.mp[i] == 0)
 			continue;
