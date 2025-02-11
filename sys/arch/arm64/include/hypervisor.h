@@ -1,4 +1,4 @@
-/* $OpenBSD: hypervisor.h,v 1.4 2024/03/16 20:46:28 kettenis Exp $ */
+/* $OpenBSD: hypervisor.h,v 1.5 2025/02/11 22:27:09 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * All rights reserved.
@@ -39,7 +39,7 @@
  * Architecture feature trap register
  */
 #define	CPTR_RES0	0x7fefc800
-#define	CPTR_RES1	0x000033ff
+#define	CPTR_RES1	0x000032ff
 #define	CPTR_TFP	0x00000400
 #define	CPTR_TTA	0x00100000
 #define	CPTR_TCPAC	0x80000000

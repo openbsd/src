@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.1 2022/01/01 18:52:37 kettenis Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.2 2025/02/11 22:27:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,6 +20,7 @@
 
 void fpu_save(struct proc *);
 void fpu_load(struct proc *);
+void sve_load(struct proc *);
 void fpu_drop(void);
 
 void fpu_kernel_enter(void);

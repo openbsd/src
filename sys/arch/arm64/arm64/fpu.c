@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.2 2024/07/26 00:23:57 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.3 2025/02/11 22:27:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -21,8 +21,10 @@
 #include <sys/user.h>
 
 #include <machine/armreg.h>
+#include <machine/fpu.h>
 
-__attribute__((target("+fp")))
+void	sve_save(struct proc *p);
+
 void
 fpu_save(struct proc *p)
 {
@@ -35,8 +37,14 @@ fpu_save(struct proc *p)
 		return;
 	KASSERT((cpacr & CPACR_FPEN_MASK) == CPACR_FPEN_TRAP_NONE);
 
+	if ((cpacr & CPACR_ZEN_MASK) == CPACR_ZEN_TRAP_NONE) {
+		sve_save(p);
+		return;
+	}
+
 #define STRQx(x) \
-    __asm volatile ("str q" #x ", [%0, %1]" :: "r"(fp->fp_reg), "i"(x * 16))
+    __asm volatile (".arch armv8-a+fp; str q" #x ", [%0, %1]" :: \
+	"r"(fp->fp_reg), "i"(x * 16))
 
 	STRQx(0);
 	STRQx(1);
@@ -75,7 +83,6 @@ fpu_save(struct proc *p)
 	fp->fp_cr = READ_SPECIALREG(fpcr);
 }
 
-__attribute__((target("+fp")))
 void
 fpu_load(struct proc *p)
 {
@@ -85,6 +92,7 @@ fpu_load(struct proc *p)
 
 	cpacr = READ_SPECIALREG(cpacr_el1);
 	KASSERT((cpacr & CPACR_FPEN_MASK) == CPACR_FPEN_TRAP_ALL1);
+	KASSERT((cpacr & CPACR_ZEN_MASK) == CPACR_ZEN_TRAP_ALL1);
 
 	if ((pcb->pcb_flags & PCB_FPU) == 0) {
 		memset(fp, 0, sizeof(*fp));
@@ -98,7 +106,8 @@ fpu_load(struct proc *p)
 	__asm volatile ("isb");
 
 #define LDRQx(x) \
-    __asm volatile ("ldr q" #x ", [%0, %1]" :: "r"(fp->fp_reg), "i"(x * 16))
+    __asm volatile (".arch armv8-a+fp; ldr q" #x ", [%0, %1]" :: \
+	"r"(fp->fp_reg), "i"(x * 16))
 
 	LDRQx(0);
 	LDRQx(1);
@@ -142,10 +151,10 @@ fpu_drop(void)
 {
 	uint64_t cpacr;
 
-	/* Disable FPU. */
+	/* Disable FPU and SVE. */
 	cpacr = READ_SPECIALREG(cpacr_el1);
-	cpacr &= ~CPACR_FPEN_MASK;
-	cpacr |= CPACR_FPEN_TRAP_ALL1;
+	cpacr &= ~(CPACR_FPEN_MASK | CPACR_ZEN_MASK);
+	cpacr |= CPACR_FPEN_TRAP_ALL1 | CPACR_ZEN_TRAP_ALL1;
 	WRITE_SPECIALREG(cpacr_el1, cpacr);
 
 	/*
@@ -165,8 +174,8 @@ fpu_kernel_enter(void)
 
 	/* Enable FPU (kernel only). */
 	cpacr = READ_SPECIALREG(cpacr_el1);
-	cpacr &= ~CPACR_FPEN_MASK;
-	cpacr |= CPACR_FPEN_TRAP_EL0;
+	cpacr &= ~(CPACR_FPEN_MASK | CPACR_ZEN_MASK);
+	cpacr |= CPACR_FPEN_TRAP_EL0 | CPACR_ZEN_TRAP_ALL1;
 	WRITE_SPECIALREG(cpacr_el1, cpacr);
 	__asm volatile ("isb");
 }
@@ -178,12 +187,189 @@ fpu_kernel_exit(void)
 
 	/* Disable FPU. */
 	cpacr = READ_SPECIALREG(cpacr_el1);
-	cpacr &= ~CPACR_FPEN_MASK;
-	cpacr |= CPACR_FPEN_TRAP_ALL1;
+	cpacr &= ~(CPACR_FPEN_MASK | CPACR_ZEN_MASK);
+	cpacr |= CPACR_FPEN_TRAP_ALL1 | CPACR_ZEN_TRAP_ALL1;
 	WRITE_SPECIALREG(cpacr_el1, cpacr);
 
 	/*
 	 * No ISB instruction needed here, as returning to EL0 is a
 	 * context synchronization event.
 	 */
+}
+
+void
+sve_save(struct proc *p)
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct fpreg *fp = &pcb->pcb_fpstate;
+	uint64_t cpacr;
+
+	cpacr = READ_SPECIALREG(cpacr_el1);
+	if ((cpacr & CPACR_ZEN_MASK) == CPACR_ZEN_TRAP_ALL1)
+		return;
+	KASSERT((cpacr & CPACR_FPEN_MASK) == CPACR_FPEN_TRAP_NONE);
+	KASSERT((cpacr & CPACR_ZEN_MASK) == CPACR_ZEN_TRAP_NONE);
+
+#define STRZx(x) \
+    __asm volatile (".arch armv8-a+sve; str z" #x ", [%0, %1, mul vl]" :: \
+        "r"(fp->fp_reg), "i"(x))
+#define STRPx(x) \
+    __asm volatile (".arch armv8-a+sve; str p" #x ", [%0, %1, mul vl]" :: \
+	"r"(pcb->pcb_sve_p), "i"(x))
+#define STRFFR() \
+    __asm volatile (".arch armv8-a+sve; rdffr p0.b; str p0, [%0]" :: \
+	"r"(&pcb->pcb_sve_ffr));
+
+	STRZx(0);
+	STRZx(1);
+	STRZx(2);
+	STRZx(3);
+	STRZx(4);
+	STRZx(5);
+	STRZx(6);
+	STRZx(7);
+	STRZx(8);
+	STRZx(9);
+	STRZx(10);
+	STRZx(11);
+	STRZx(12);
+	STRZx(13);
+	STRZx(14);
+	STRZx(15);
+	STRZx(16);
+	STRZx(17);
+	STRZx(18);
+	STRZx(19);
+	STRZx(20);
+	STRZx(21);
+	STRZx(22);
+	STRZx(23);
+	STRZx(24);
+	STRZx(25);
+	STRZx(26);
+	STRZx(27);
+	STRZx(28);
+	STRZx(29);
+	STRZx(30);
+	STRZx(31);
+
+	STRPx(0);
+	STRPx(1);
+	STRPx(2);
+	STRPx(3);
+	STRPx(4);
+	STRPx(5);
+	STRPx(6);
+	STRPx(7);
+	STRPx(8);
+	STRPx(9);
+	STRPx(10);
+	STRPx(11);
+	STRPx(12);
+	STRPx(13);
+	STRPx(14);
+	STRPx(15);
+
+	STRFFR();
+
+	fp->fp_sr = READ_SPECIALREG(fpsr);
+	fp->fp_cr = READ_SPECIALREG(fpcr);
+}
+
+void
+sve_load(struct proc *p)
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct fpreg *fp = &pcb->pcb_fpstate;
+	int fpu_enabled = 0;
+	uint64_t cpacr;
+
+	cpacr = READ_SPECIALREG(cpacr_el1);
+	KASSERT((cpacr & CPACR_ZEN_MASK) == CPACR_ZEN_TRAP_ALL1);
+
+	if ((cpacr & CPACR_FPEN_MASK) == CPACR_FPEN_TRAP_NONE)
+		fpu_enabled = 1;
+
+	if ((pcb->pcb_flags & PCB_FPU) == 0) {
+		memset(fp, 0, sizeof(*fp));
+		pcb->pcb_flags |= PCB_FPU;
+	}
+	if ((pcb->pcb_flags & PCB_SVE) == 0) {
+		memset(pcb->pcb_sve_p, 0, sizeof(pcb->pcb_sve_p));
+		pcb->pcb_sve_ffr = 0;
+		pcb->pcb_flags |= PCB_SVE;
+	}
+
+	/* Enable FPU and SVE. */
+	cpacr &= ~(CPACR_FPEN_MASK | CPACR_ZEN_MASK);
+	cpacr |= CPACR_FPEN_TRAP_NONE | CPACR_ZEN_TRAP_NONE;
+	WRITE_SPECIALREG(cpacr_el1, cpacr);
+	__asm volatile ("isb");
+
+#define LDRZx(x) \
+    __asm volatile (".arch armv8-a+sve; ldr z" #x ", [%0, %1, mul vl]" :: \
+	"r"(fp->fp_reg), "i"(x))
+#define LDRPx(x) \
+    __asm volatile (".arch armv8-a+sve; ldr p" #x ", [%0, %1, mul vl]" :: \
+	"r"(pcb->pcb_sve_p), "i"(x))
+#define LDRFFR() \
+    __asm volatile (".arch armv8-a+sve; ldr p0, [%0]; wrffr p0.b" :: \
+	"r"(&pcb->pcb_sve_ffr));
+
+	LDRFFR();
+
+	LDRPx(0);
+	LDRPx(1);
+	LDRPx(2);
+	LDRPx(3);
+	LDRPx(4);
+	LDRPx(5);
+	LDRPx(6);
+	LDRPx(7);
+	LDRPx(8);
+	LDRPx(9);
+	LDRPx(10);
+	LDRPx(11);
+	LDRPx(12);
+	LDRPx(13);
+	LDRPx(14);
+	LDRPx(15);
+
+	if (!fpu_enabled) {
+		LDRZx(0);
+		LDRZx(1);
+		LDRZx(2);
+		LDRZx(3);
+		LDRZx(4);
+		LDRZx(5);
+		LDRZx(6);
+		LDRZx(7);
+		LDRZx(8);
+		LDRZx(9);
+		LDRZx(10);
+		LDRZx(11);
+		LDRZx(12);
+		LDRZx(13);
+		LDRZx(14);
+		LDRZx(15);
+		LDRZx(16);
+		LDRZx(17);
+		LDRZx(18);
+		LDRZx(19);
+		LDRZx(20);
+		LDRZx(21);
+		LDRZx(22);
+		LDRZx(23);
+		LDRZx(24);
+		LDRZx(25);
+		LDRZx(26);
+		LDRZx(27);
+		LDRZx(28);
+		LDRZx(29);
+		LDRZx(30);
+		LDRZx(31);
+
+		WRITE_SPECIALREG(fpsr, fp->fp_sr);
+		WRITE_SPECIALREG(fpcr, fp->fp_cr);
+	}
 }
