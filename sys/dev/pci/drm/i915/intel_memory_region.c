@@ -390,12 +390,27 @@ int intel_memory_regions_hw_probe(struct drm_i915_private *i915)
 		region_size = resource_size(&mem->region) >> 20;
 		io_size = resource_size(&mem->io) >> 20;
 
+#ifdef __linux__
 		if (resource_size(&mem->io))
 			drm_dbg(&i915->drm, "Memory region(%d): %s: %llu MiB %pR, io: %llu MiB %pR\n",
 				mem->id, mem->name, region_size, &mem->region, io_size, &mem->io);
 		else
 			drm_dbg(&i915->drm, "Memory region(%d): %s: %llu MiB %pR, io: n/a\n",
 				mem->id, mem->name, region_size, &mem->region);
+#else
+		if (resource_size(&mem->io)) {
+			drm_dbg(&i915->drm, "Memory region(%d): %s: %llu MiB "
+				"[0x%lx-0x%lx], io: %llu MiB [0x%lx-0x%lx]\n",
+				mem->id, mem->name, region_size,
+				mem->region.start, mem->region.end,
+				io_size, mem->io.start, mem->io.end);
+		} else {
+			drm_dbg(&i915->drm, "Memory region(%d): %s: %llu MiB "
+				"[0x%lx-0x%lx], io: n/a\n",
+				mem->id, mem->name, region_size,
+				mem->region.start, mem->region.end);
+		}
+#endif
 	}
 
 	return 0;
