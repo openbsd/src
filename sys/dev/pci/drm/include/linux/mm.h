@@ -89,7 +89,7 @@ get_order(size_t size)
 	return flsl((size - 1) >> PAGE_SHIFT);
 }
 
-static inline int
+static inline long
 totalram_pages(void)
 {
 	return uvmexp.npages;
