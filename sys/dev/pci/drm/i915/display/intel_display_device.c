@@ -1482,6 +1482,7 @@ void intel_display_device_probe(struct drm_i915_private *i915)
 	i915->display.drm = &i915->drm;
 
 	intel_display_params_copy(&i915->display.params);
+	i915->display.params.enable_psr = 0;
 
 	if (has_no_display(pdev)) {
 		drm_dbg_kms(&i915->drm, "Device doesn't have display\n");
