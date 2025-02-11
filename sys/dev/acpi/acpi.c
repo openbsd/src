@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.441 2025/02/10 11:41:19 miod Exp $ */
+/* $OpenBSD: acpi.c,v 1.442 2025/02/11 12:07:26 miod Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2969,17 +2969,22 @@ acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
     size_t devlen)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct aml_value	 res;
+	struct aml_value	 res, *cid;
 	const char		*dev;
 
 	/* NB aml_eisaid returns a static buffer, this must come first */
 	if (aml_evalname(acpi_softc, node->parent, "_CID", 0, NULL, &res) == 0) {
+		if (res.type == AML_OBJTYPE_PACKAGE && res.length >= 1) {
+			cid = res.v_package[0];
+		} else {
+			cid = &res;
+		}
 		switch (res.type) {
 		case AML_OBJTYPE_STRING:
-			dev = res.v_string;
+			dev = cid->v_string;
 			break;
 		case AML_OBJTYPE_INTEGER:
-			dev = aml_eisaid(aml_val2int(&res));
+			dev = aml_eisaid(aml_val2int(cid));
 			break;
 		default:
 			dev = "unknown";
