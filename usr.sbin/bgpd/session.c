@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.512 2025/02/11 14:29:05 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.513 2025/02/11 19:28:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,7 @@ struct ibuf	*session_newmsg(enum msg_type, uint16_t);
 void	session_sendmsg(struct ibuf *, struct peer *, enum msg_type);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
-void	session_update(uint32_t, struct ibuf *);
+void	session_update(struct peer *, struct ibuf *);
 void	session_notification(struct peer *, uint8_t, uint8_t, struct ibuf *);
 void	session_notification_data(struct peer *, uint8_t, uint8_t, void *,
 	    size_t);
@@ -1700,16 +1700,10 @@ session_keepalive(struct peer *p)
 }
 
 void
-session_update(uint32_t peerid, struct ibuf *ibuf)
+session_update(struct peer *p, struct ibuf *ibuf)
 {
-	struct peer	*p;
 	struct ibuf	*buf;
 	size_t		 len, maxsize = MAX_PKTSIZE;
-
-	if ((p = getpeerbyid(conf, peerid)) == NULL) {
-		log_warnx("%s: no such peer: id=%u", __func__, peerid);
-		return;
-	}
 
 	if (p->state != STATE_ESTABLISHED)
 		return;
@@ -3125,7 +3119,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
 			if ((p = getpeerbyid(nconf, peerid)) == NULL) {
-				log_warnx("no such peer: id=%u", peerid);
+				log_warnx("%s: no such peer: id=%u",
+				    "IMSG_RECONF_PEER_AUTH", peerid);
 				break;
 			}
 			if (pfkey_recv_conf(p, &imsg) == -1)
@@ -3344,16 +3339,22 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("%s: no such peer: id=%u",
+				    "IMSG_UPDATE", peerid);
+				break;
+			}
 			if (imsg_get_ibuf(&imsg, &ibuf) == -1)
 				log_warn("RDE sent invalid update");
 			else
-				session_update(peerid, &ibuf);
+				session_update(p, &ibuf);
 			break;
 		case IMSG_UPDATE_ERR:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
 			if ((p = getpeerbyid(conf, peerid)) == NULL) {
-				log_warnx("no such peer: id=%u", peerid);
+				log_warnx("%s: no such peer: id=%u",
+				    "IMSG_UPDATE_ERR", peerid);
 				break;
 			}
 			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
@@ -3391,12 +3392,13 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_REFRESH:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("route refresh request not from RDE");
-			if (imsg_get_data(&imsg, &rr, sizeof(rr)) == -1) {
-				log_warnx("RDE sent invalid refresh msg");
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("%s: no such peer: id=%u",
+				    "IMSG_REFRESH", peerid);
 				break;
 			}
-			if ((p = getpeerbyid(conf, peerid)) == NULL) {
-				log_warnx("no such peer: id=%u", peerid);
+			if (imsg_get_data(&imsg, &rr, sizeof(rr)) == -1) {
+				log_warnx("RDE sent invalid refresh msg");
 				break;
 			}
 			if (rr.aid < AID_MIN || rr.aid >= AID_MAX)
@@ -3406,12 +3408,13 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_SESSION_RESTARTED:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("session restart not from RDE");
-			if (imsg_get_data(&imsg, &aid, sizeof(aid)) == -1) {
-				log_warnx("RDE sent invalid restart msg");
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("%s: no such peer: id=%u",
+				    "IMSG_SESSION_RESTARTED", peerid);
 				break;
 			}
-			if ((p = getpeerbyid(conf, peerid)) == NULL) {
-				log_warnx("no such peer: id=%u", peerid);
+			if (imsg_get_data(&imsg, &aid, sizeof(aid)) == -1) {
+				log_warnx("RDE sent invalid restart msg");
 				break;
 			}
 			if (aid < AID_MIN || aid >= AID_MAX)
