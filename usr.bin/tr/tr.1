@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.25 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: tr.1,v 1.26 2025/02/11 20:43:46 jmc Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: February 11 2025 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -80,15 +80,15 @@ The
 .Fl d
 option causes characters to be deleted from the input.
 .It Fl s
-The
+After all deletion and translation is completed,
+the
 .Fl s
-option squeezes multiple occurrences of the characters listed in the last
-operand (either
+option squeezes multiple consecutive occurrences of the characters
+listed in the last operand (either
 .Ar string1
 or
 .Ar string2 )
-in the input into a single instance of the character.
-This occurs after all deletion and translation is completed.
+into a single instance of the character.
 .El
 .Pp
 In the first synopsis form, the characters in
