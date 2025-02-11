@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.442 2025/02/11 12:07:26 miod Exp $ */
+/* $OpenBSD: acpi.c,v 1.443 2025/02/11 16:22:37 miod Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2979,7 +2979,7 @@ acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
 		} else {
 			cid = &res;
 		}
-		switch (res.type) {
+		switch (cid->type) {
 		case AML_OBJTYPE_STRING:
 			dev = cid->v_string;
 			break;
