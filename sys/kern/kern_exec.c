@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.260 2025/01/25 19:21:40 claudio Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.261 2025/02/11 14:58:11 anton Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -572,10 +572,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 
 	if (pr->ps_flags & PS_EXECPLEDGE) {
+		p->p_pledge = pr->ps_execpledge;
 		pr->ps_pledge = pr->ps_execpledge;
 		atomic_setbits_int(&pr->ps_flags, PS_PLEDGE);
 	} else {
 		atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
+		p->p_pledge = 0;
 		pr->ps_pledge = 0;
 		/* XXX XXX XXX XXX */
 		/* Clear our unveil paths out so the child
