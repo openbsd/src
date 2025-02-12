@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.462 2025/01/14 18:37:51 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.463 2025/02/12 21:41:53 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1499,7 +1499,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		if (so == NULL) {
 			so = (struct socket *)fp->f_data;
 			/* if so is passed as parameter it is already locked */
-			solock(so);
+			solock_shared(so);
 			locked = 1;
 		}
 
@@ -1523,7 +1523,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->so_splicelen = -1;
 		if (so->so_pcb == NULL) {
 			if (locked)
-				sounlock(so);
+				sounlock_shared(so);
 			break;
 		}
 		switch (kf->so_family) {
@@ -1599,7 +1599,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		    }
 		}
 		if (locked)
-			sounlock(so);
+			sounlock_shared(so);
 		break;
 	    }
 
