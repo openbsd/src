@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.280 2024/12/03 13:46:53 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.281 2025/02/12 19:33:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,7 @@ __dead void	usage(void);
 int		main(int, char *[]);
 pid_t		start_child(enum bgpd_process, char *, int, int, int);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
-int		reconfigure(char *, struct bgpd_config *);
+int		reconfigure(const char *, struct bgpd_config *);
 int		send_config(struct bgpd_config *);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	struct connect_elm	*ce;
 	time_t			 timeout;
 	pid_t			 se_pid = 0, rde_pid = 0, rtr_pid = 0, pid;
-	char			*conffile;
+	const char		*conffile;
 	char			*saved_argv0;
 	u_int			 pfd_elms = 0, npfd, i;
 	int			 debug = 0;
@@ -572,7 +572,7 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 }
 
 int
-reconfigure(char *conffile, struct bgpd_config *conf)
+reconfigure(const char *conffile, struct bgpd_config *conf)
 {
 	struct bgpd_config	*new_conf;
 

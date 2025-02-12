@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.479 2025/02/04 18:16:56 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.480 2025/02/12 19:33:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4099,7 +4099,8 @@ init_config(struct bgpd_config *c)
 }
 
 struct bgpd_config *
-parse_config(char *filename, struct peer_head *ph, struct rtr_config_head *rh)
+parse_config(const char *filename, struct peer_head *ph,
+    struct rtr_config_head *rh)
 {
 	struct sym		*sym, *next;
 	struct rde_rib		*rr;
