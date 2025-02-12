@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.39 2022/04/14 19:47:10 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.40 2025/02/12 20:18:31 bluhm Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <machine/i82093var.h>
 #include <machine/atomic.h>
 #include <machine/specialreg.h>
+#include <machine/segments.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -165,16 +166,16 @@ db_ktrap(int type, int code, db_regs_t *regs)
 void
 db_sysregs_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	int64_t idtr, gdtr;
+	struct region_descriptor idtr, gdtr;
 	uint64_t cr;
 	uint16_t ldtr, tr;
 	uint64_t gsb;
 
 	__asm__ volatile("sidt %0" : "=m" (idtr));
-	db_printf("idtr:   0x%08llx/%04llx\n", idtr >> 16, idtr & 0xffff);
+	db_printf("idtr:   0x%08llx/%04x\n", idtr.rd_base, idtr.rd_limit);
 
 	__asm__ volatile("sgdt %0" : "=m" (gdtr));
-	db_printf("gdtr:   0x%08llx/%04llx\n", gdtr >> 16, gdtr & 0xffff);
+	db_printf("gdtr:   0x%08llx/%04x\n", gdtr.rd_base, gdtr.rd_limit);
 
 	__asm__ volatile("sldt %0" : "=g" (ldtr));
 	db_printf("ldtr:   0x%04x\n", ldtr);
@@ -409,8 +410,8 @@ const struct db_command db_machine_command_table[] = {
 	{ "startcpu",	db_startproc_cmd,	0,	0 },
 	{ "stopcpu",	db_stopproc_cmd,	0,	0 },
 	{ "ddbcpu",	db_ddbproc_cmd,		0,	0 },
-	{ "sysregs",	db_sysregs_cmd,		0,	0 },
 #endif
+	{ "sysregs",	db_sysregs_cmd,		0,	0 },
 #if NACPI > 0
 	{ "acpi",	NULL,			0,	db_acpi_cmds },
 #endif /* NACPI > 0 */
