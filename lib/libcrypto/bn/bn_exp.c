@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.56 2025/01/22 12:53:16 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.57 2025/02/12 21:21:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -964,7 +964,7 @@ err:
 }
 
 int
-BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+BN_mod_exp_reciprocal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
     BN_CTX *ctx)
 {
 	int i, j, bits, wstart, wend, window, wvalue;
@@ -1137,7 +1137,7 @@ BN_mod_exp_internal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m
 		} else
 			ret = BN_mod_exp_mont_ct(r, a,p, m,ctx, NULL);
 	} else	{
-		ret = BN_mod_exp_recp(r, a,p, m, ctx);
+		ret = BN_mod_exp_reciprocal(r, a,p, m, ctx);
 	}
 
 	return (ret);

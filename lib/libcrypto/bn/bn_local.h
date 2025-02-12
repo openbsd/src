@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.48 2025/01/22 10:12:01 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.49 2025/02/12 21:21:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -279,7 +279,7 @@ int	BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
     BN_RECP_CTX *recp, BN_CTX *ctx);
 int	BN_mod_sqr_reciprocal(BIGNUM *r, const BIGNUM *x, BN_RECP_CTX *recp,
     BN_CTX *ctx);
-int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+int	BN_mod_exp_reciprocal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx);
 
 /* Explicitly const time / non-const time versions for internal use */
