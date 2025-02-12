@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.40 2023/10/19 13:38:12 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.41 2025/02/12 21:22:15 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -59,7 +59,7 @@ static const struct mod_exp_test {
 	INIT_MOD_EXP_FN(BN_mod_exp),
 	INIT_MOD_EXP_FN(BN_mod_exp_ct),
 	INIT_MOD_EXP_FN(BN_mod_exp_nonct),
-	INIT_MOD_EXP_FN(BN_mod_exp_recp),
+	INIT_MOD_EXP_FN(BN_mod_exp_reciprocal),
 	INIT_MOD_EXP_FN(BN_mod_exp_simple),
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont),
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_ct),

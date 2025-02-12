@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.22 2025/01/22 13:02:14 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.23 2025/02/12 21:22:15 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,7 +91,7 @@ int test_rshift1(BIO *bp, BN_CTX *ctx);
 int test_rshift(BIO *bp, BN_CTX *ctx);
 int test_div(BIO *bp, BN_CTX *ctx);
 int test_div_word(BIO *bp, BN_CTX *ctx);
-int test_div_recp(BIO *bp, BN_CTX *ctx);
+int test_div_reciprocal(BIO *bp, BN_CTX *ctx);
 int test_mul(BIO *bp, BN_CTX *ctx);
 int test_sqr(BIO *bp, BN_CTX *ctx);
 int test_mont(BIO *bp, BN_CTX *ctx);
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 	(void)BIO_flush(out);
 
 	message(out, "BN_div_reciprocal");
-	if (!test_div_recp(out, ctx))
+	if (!test_div_reciprocal(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
@@ -561,7 +561,7 @@ test_div_word(BIO *bp, BN_CTX *ctx)
 }
 
 int
-test_div_recp(BIO *bp, BN_CTX *ctx)
+test_div_reciprocal(BIO *bp, BN_CTX *ctx)
 {
 	BN_RECP_CTX *recp = NULL;
 	BIGNUM *a, *b, *c, *d, *e;
@@ -1501,7 +1501,7 @@ test_kron(BIO *bp, BN_CTX *ctx)
 		/* r := a^t mod b */
 		BN_set_negative(b, 0);
 
-		if (!BN_mod_exp_recp(r, a, t, b, ctx))
+		if (!BN_mod_exp_reciprocal(r, a, t, b, ctx))
 			goto err;
 		BN_set_negative(b, 1);
 
