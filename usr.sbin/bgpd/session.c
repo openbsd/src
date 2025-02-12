@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.513 2025/02/11 19:28:45 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.514 2025/02/12 13:10:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3312,13 +3312,19 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_TIMER:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("ctl kroute request not from parent");
-			control_imsg_relay(&imsg, NULL);
+			if (control_imsg_relay(&imsg, NULL) == -1)
+				log_warn("control_imsg_relay");
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			if (idx != PFD_PIPE_ROUTE_CTL)
 				fatalx("ctl rib request not from RDE");
-			p = getpeerbyid(conf, peerid);
-			control_imsg_relay(&imsg, p);
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("%s: no such peer: id=%u",
+				    "IMSG_CTL_SHOW_NEIGHBOR", peerid);
+				break;
+			}
+			if (control_imsg_relay(&imsg, p) == -1)
+				log_warn("control_imsg_relay");
 			break;
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
@@ -3330,11 +3336,13 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_SET:
 			if (idx != PFD_PIPE_ROUTE_CTL)
 				fatalx("ctl rib request not from RDE");
-			control_imsg_relay(&imsg, NULL);
+			if (control_imsg_relay(&imsg, NULL) == -1)
+				log_warn("control_imsg_relay");
 			break;
 		case IMSG_CTL_END:
 		case IMSG_CTL_RESULT:
-			control_imsg_relay(&imsg, NULL);
+			if (control_imsg_relay(&imsg, NULL) == -1)
+				log_warn("control_imsg_relay");
 			break;
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_ROUTE)

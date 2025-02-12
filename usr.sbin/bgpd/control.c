@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.132 2024/12/02 15:03:17 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.133 2025/02/12 13:10:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,6 +544,7 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 	type = imsg_get_type(imsg);
 	pid = imsg_get_pid(imsg);
 
+	/* not an error if the connection got closed */
 	if ((c = control_connbypid(pid)) == NULL)
 		return (0);
 
@@ -553,14 +554,12 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 		struct peer peer;
 
 		if (p == NULL) {
-			log_warnx("%s: no such peer: id=%u", __func__,
-			    imsg_get_id(imsg));
-			return (0);
+			errno = EINVAL;
+			return (-1);
 		}
-		if (imsg_get_data(imsg, &stats, sizeof(stats)) == -1) {
-			log_warnx("%s: imsg_get_data", __func__);
-			return (0);
-		}
+		if (imsg_get_data(imsg, &stats, sizeof(stats)) == -1)
+			return (-1);
+
 		peer = *p;
 		explicit_bzero(&peer.auth_conf, sizeof(peer.auth_conf));
 		peer.auth_conf.method = p->auth_conf.method;
@@ -590,7 +589,7 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 			c->throttled = 1;
 	}
 
-	return (imsg_forward(&c->imsgbuf, imsg));
+	return imsg_forward(&c->imsgbuf, imsg);
 }
 
 void
