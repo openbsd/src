@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.372 2025/01/29 14:57:19 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.373 2025/02/12 14:11:26 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -966,6 +966,14 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	    sizeof(permissions), NULL);
 	if (error)
 		return (error);
+
+	/*
+	 * System calls in other threads may sleep between unveil
+	 * datastructure inspections -- this is the simplest way to
+	 * provide consistancy
+	 */
+	single_thread_set(p, SINGLE_UNWIND);
+
 	pathname = pool_get(&namei_pool, PR_WAITOK);
 	error = copyinstr(SCARG(uap, path), pathname, MAXPATHLEN, &pathlen);
 	if (error)
@@ -1031,6 +1039,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 end:
 	pool_put(&namei_pool, pathname);
 
+	single_thread_clear(p);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.322 2025/02/10 16:45:46 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.323 2025/02/12 14:11:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -515,11 +515,15 @@ fail:
 	if (unveil_cleanup) {
 		/*
 		 * Kill off unveil and drop unveil vnode refs if we no
-		 * longer are holding any path-accessing pledge
+		 * longer are holding any path-accessing pledge. This
+		 * must be done single-threaded, because another thread
+		 * may be in a system call sleeping in namei().
 		 */
+		single_thread_set(p, SINGLE_UNWIND);
 		KERNEL_LOCK();
 		unveil_destroy(pr);
 		KERNEL_UNLOCK();
+		single_thread_clear(p);
 	}
 	return (error);
 }
