@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.651 2025/02/04 18:16:56 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.652 2025/02/12 16:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,9 +243,8 @@ rde_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_ROA], ibuf_rtr);
 
 		i = PFD_PIPE_COUNT;
-		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
-			xmctx = LIST_NEXT(mctx, entry);
 
+		LIST_FOREACH_SAFE(mctx, &rde_mrts, entry, xmctx) {
 			if (i >= pfd_elms)
 				fatalx("poll pfd too small");
 			if (msgbuf_queuelen(mctx->mrt.wbuf) > 0) {
@@ -301,7 +300,7 @@ rde_main(int debug, int verbose)
 			rde_dispatch_imsg_rtr(ibuf_rtr);
 
 		for (j = PFD_PIPE_COUNT, mctx = LIST_FIRST(&rde_mrts);
-		    j < i && mctx != 0; j++) {
+		    j < i && mctx != NULL; j++) {
 			if (pfd[j].fd == mctx->mrt.fd &&
 			    pfd[j].revents & POLLOUT)
 				mrt_write(&mctx->mrt);

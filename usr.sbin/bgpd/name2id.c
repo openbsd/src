@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.12 2022/06/16 15:30:12 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.13 2025/02/12 16:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -119,10 +119,11 @@ _name2id(struct n2id_labels *head, const char *name)
 	 * is empty, append a new entry at the end.
 	 */
 
-	if (!TAILQ_EMPTY(head))
-		for (p = TAILQ_FIRST(head); p != NULL &&
-		    p->id == new_id; p = TAILQ_NEXT(p, entry))
-			new_id = p->id + 1;
+	TAILQ_FOREACH(p, head, entry) {
+		if (p->id != new_id)
+			break;
+		new_id++;
+	}
 
 	if (new_id > IDVAL_MAX)
 		return (0);
@@ -167,8 +168,7 @@ _unref(struct n2id_labels *head, uint16_t id)
 	if (id == 0)
 		return;
 
-	for (p = TAILQ_FIRST(head); p != NULL; p = next) {
-		next = TAILQ_NEXT(p, entry);
+	TAILQ_FOREACH_SAFE(p, head, entry, next) {
 		if (id == p->id) {
 			if (--p->ref == 0) {
 				TAILQ_REMOVE(head, p, entry);

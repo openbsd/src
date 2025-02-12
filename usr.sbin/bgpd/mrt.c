@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.124 2025/01/31 20:07:18 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.125 2025/02/12 16:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1185,8 +1185,7 @@ mrt_reconfigure(struct mrt_head *mrt)
 	time_t		 now;
 
 	now = time(NULL);
-	for (m = LIST_FIRST(mrt); m != NULL; m = xm) {
-		xm = LIST_NEXT(m, entry);
+	LIST_FOREACH_SAFE(m, mrt, entry, xm) {
 		if (m->state == MRT_STATE_OPEN ||
 		    m->state == MRT_STATE_REOPEN) {
 			if (mrt_open(m, now) == -1)

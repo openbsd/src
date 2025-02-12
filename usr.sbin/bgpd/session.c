@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.514 2025/02/12 13:10:13 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.515 2025/02/12 16:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -295,8 +295,7 @@ session_main(int debug, int verbose)
 		}
 
 		mrt_cnt = 0;
-		for (m = LIST_FIRST(&mrthead); m != NULL; m = xm) {
-			xm = LIST_NEXT(m, entry);
+		LIST_FOREACH_SAFE(m, &mrthead, entry, xm) {
 			if (m->state == MRT_STATE_REMOVE) {
 				mrt_clean(m);
 				LIST_REMOVE(m, entry);
