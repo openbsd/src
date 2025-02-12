@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.164 2025/01/09 16:47:24 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.165 2025/02/12 21:28:11 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ struct inpcb *
 void	 in_pcbnotifyall(struct inpcbtable *, const struct sockaddr_in *,
 	    u_int, int, void (*)(struct inpcb *, int));
 void	 in_pcbrehash(struct inpcb *);
-void	 in_rtchange(struct inpcb *, int);
+void	 in_pcbrtchange(struct inpcb *, int);
 void	 in_setpeeraddr(struct inpcb *, struct mbuf *);
 void	 in_setsockaddr(struct inpcb *, struct mbuf *);
 int	 in_sockaddr(struct socket *, struct mbuf *);

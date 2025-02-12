@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.311 2025/02/05 10:15:10 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.312 2025/02/12 21:28:10 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -810,6 +810,8 @@ in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
 	rdomain = rtable_l2(rtable);
 	mtx_enter(&table->inpt_mtx);
 	while ((inp = in_pcb_iterator(table, inp, &iter)) != NULL) {
+		struct socket *so;
+
 		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 
 		if (inp->inp_faddr.s_addr != dst->sin_addr.s_addr ||
@@ -817,7 +819,10 @@ in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
 			continue;
 		}
 		mtx_leave(&table->inpt_mtx);
-		(*notify)(inp, errno);
+		so = in_pcbsolock_ref(inp);
+		if (so != NULL)
+			(*notify)(inp, errno);
+		in_pcbsounlock_rele(inp, so);
 		mtx_enter(&table->inpt_mtx);
 	}
 	mtx_leave(&table->inpt_mtx);
@@ -866,8 +871,10 @@ in_losing(struct inpcb *inp)
  * and allocate a (hopefully) better one.
  */
 void
-in_rtchange(struct inpcb *inp, int errno)
+in_pcbrtchange(struct inpcb *inp, int errno)
 {
+	soassertlocked(inp->inp_socket);
+
 	if (inp->inp_route.ro_rt) {
 		rtfree(inp->inp_route.ro_rt);
 		inp->inp_route.ro_rt = NULL;

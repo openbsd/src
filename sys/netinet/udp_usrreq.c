@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.331 2025/02/06 13:40:58 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.332 2025/02/12 21:28:11 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -748,7 +748,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	if (PRC_IS_REDIRECT(cmd))
-		notify = in_rtchange, d = NULL;
+		notify = in_pcbrtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
 	else if (cmd == PRC_MSGSIZE)
@@ -880,7 +880,6 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	struct ip *ip = v;
 	struct udphdr *uhp;
 	struct in_addr faddr;
-	struct inpcb *inp;
 	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
 
@@ -897,14 +896,17 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		return;
 	errno = inetctlerrmap[cmd];
 	if (PRC_IS_REDIRECT(cmd))
-		notify = in_rtchange, ip = 0;
+		notify = in_pcbrtchange, ip = NULL;
 	else if (cmd == PRC_HOSTDEAD)
-		ip = 0;
+		ip = NULL;
 	else if (errno == 0)
 		return;
-	if (ip) {
-		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 
+	if (ip) {
+		struct inpcb *inp;
+		struct socket *so = NULL;
+
+		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 #ifdef IPSEC
 		/* PMTU discovery for udpencap */
 		if (cmd == PRC_MSGSIZE && ip_mtudisc && udpencap_enable &&
@@ -917,7 +919,10 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport,
 		    rdomain);
 		if (inp != NULL)
+			so = in_pcbsolock_ref(inp);
+		if (so != NULL)
 			notify(inp, errno);
+		in_pcbsounlock_rele(inp, so);
 		in_pcbunref(inp);
 	} else
 		in_pcbnotifyall(&udbtable, satosin(sa), rdomain, errno, notify);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.82 2025/01/16 11:59:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.83 2025/02/12 21:28:11 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -214,17 +214,19 @@ tcp_timer_rexmt(void *arg)
 	    SEQ_LT(tp->t_pmtud_th_seq, (int)(tp->snd_una + tp->t_maxseg))) {
 		struct sockaddr_in sin;
 		struct icmp icmp;
+		u_int rtableid;
 
 		/* TF_PMTUD_PEND is set in tcp_ctlinput() which is IPv4 only */
 		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 		tp->t_flags &= ~TF_PMTUD_PEND;
+
+		rtableid = inp->inp_rtableid;
 
 		/* XXX create fake icmp message with relevant entries */
 		icmp.icmp_nextmtu = tp->t_pmtud_nextmtu;
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
 		icmp.icmp_ip.ip_dst = inp->inp_faddr;
-		icmp_mtudisc(&icmp, inp->inp_rtableid);
 
 		/*
 		 * Notify all connections to the same peer about
@@ -234,9 +236,16 @@ tcp_timer_rexmt(void *arg)
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		sin.sin_addr = inp->inp_faddr;
-		in_pcbnotifyall(&tcbtable, &sin, inp->inp_rtableid, EMSGSIZE,
+
+		in_pcbsounlock_rele(inp, so);
+		in_pcbunref(inp);
+
+		icmp_mtudisc(&icmp, rtableid);
+		in_pcbnotifyall(&tcbtable, &sin, rtableid, EMSGSIZE,
 		    tcp_mtudisc);
-		goto out;
+
+		NET_UNLOCK_SHARED();
+		return;
 	}
 
 	tcp_timer_freesack(tp);
@@ -303,7 +312,7 @@ tcp_timer_rexmt(void *arg)
 			/* Disable path MTU discovery */
 			if ((rt->rt_locks & RTV_MTU) == 0) {
 				rt->rt_locks |= RTV_MTU;
-				in_rtchange(inp, 0);
+				in_pcbrtchange(inp, 0);
 			}
 
 			rtfree(rt);
