@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.177 2025/02/06 13:39:31 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.178 2025/02/13 14:44:33 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 
 	return (0);
 bad2:
-	sbrelease(so, &so->so_snd);
+	sbrelease(&so->so_snd);
 bad:
 	mtx_leave(&so->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
@@ -692,7 +692,7 @@ sbchecklowmem(void)
  * Free mbufs held by a socket, and reserved mbuf space.
  */
 void
-sbrelease(struct socket *so, struct sockbuf *sb)
+sbrelease(struct sockbuf *sb)
 {
 
 	sbflush(sb);

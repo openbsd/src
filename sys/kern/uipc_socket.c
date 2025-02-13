@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.372 2025/02/06 13:40:57 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.373 2025/02/13 14:44:33 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ sorele(struct socket *so)
 	klist_free(&so->so_snd.sb_klist);
 
 	mtx_enter(&so->so_snd.sb_mtx);
-	sbrelease(so, &so->so_snd);
+	sbrelease(&so->so_snd);
 	mtx_leave(&so->so_snd.sb_mtx);
 
 	if (so->so_proto->pr_flags & PR_RIGHTS &&
