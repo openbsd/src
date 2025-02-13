@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.42 2025/01/25 13:15:21 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.43 2025/02/13 11:19:49 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1217,33 +1217,20 @@ static int
 ec_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
-	BN_MONT_CTX *mont = NULL;
-	int ret = 0;
+	BN_MONT_CTX_free(group->mont_ctx);
+	if ((group->mont_ctx = BN_MONT_CTX_create(p, ctx)) == NULL)
+		goto err;
 
+	if (!ec_group_set_curve(group, p, a, b, ctx))
+		goto err;
+
+	return 1;
+
+ err:
 	BN_MONT_CTX_free(group->mont_ctx);
 	group->mont_ctx = NULL;
 
-	if ((mont = BN_MONT_CTX_new()) == NULL)
-		goto err;
-	if (!BN_MONT_CTX_set(mont, p, ctx)) {
-		ECerror(ERR_R_BN_LIB);
-		goto err;
-	}
-	group->mont_ctx = mont;
-	mont = NULL;
-
-	if (!ec_group_set_curve(group, p, a, b, ctx)) {
-		BN_MONT_CTX_free(group->mont_ctx);
-		group->mont_ctx = NULL;
-		goto err;
-	}
-
-	ret = 1;
-
- err:
-	BN_MONT_CTX_free(mont);
-
-	return ret;
+	return 0;
 }
 
 static int
