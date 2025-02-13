@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.284 2025/01/31 11:44:47 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.285 2025/02/13 21:01:34 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1288,6 +1288,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
 	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
 		m_freem(m);
+		rtfree(rt);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -1357,6 +1358,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		}
 
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
+		rtfree(rt);
 		return (0);
 	}
 
@@ -1394,10 +1396,12 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 
 	if (solicit)
 		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, &saddr6, 0);
+	rtfree(rt);
 	return (EAGAIN);
 
 bad:
 	m_freem(m);
+	rtfree(rt);
 	return (EINVAL);
 }
 

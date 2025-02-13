@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.379 2025/01/30 14:40:50 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.380 2025/02/13 21:01:34 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1343,9 +1343,11 @@ route_cleargateway(struct rtentry *rt, void *arg, unsigned int rtableid)
 {
 	struct rtentry *nhrt = arg;
 
+	rw_enter_read(&rt->rt_lock);
 	if (ISSET(rt->rt_flags, RTF_GATEWAY) && rt->rt_gwroute == nhrt &&
 	    !ISSET(rt->rt_locks, RTV_MTU))
 		atomic_store_int(&rt->rt_mtu, 0);
+	rw_exit_read(&rt->rt_lock);
 
 	return (0);
 }
