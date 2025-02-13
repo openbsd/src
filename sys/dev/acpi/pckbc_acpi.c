@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_acpi.c,v 1.1 2025/02/10 11:41:19 miod Exp $	*/
+/*	$OpenBSD: pckbc_acpi.c,v 1.2 2025/02/13 19:54:44 miod Exp $	*/
 /*
  * Copyright (c) 2024, 2025, Miodrag Vallat.
  *
@@ -175,19 +175,6 @@ pckbc_acpi_match_kbd(struct device *parent, void *match, void *aux)
 			return 0;	/* interrupt, where art thou? */
 	}
 
-	if (rv == 0 && (aaa->aaa_nirq == 0 || (cf->cf_flags & 0x0001) != 0))
-		rv = acpi_matchhids(aaa,
-		    pckbc_acpi_cids_kbd + nitems(pckbc_acpi_cids_kbd) - 2,
-		    cf->cf_driver->cd_name);
-	if (rv == 0)
-		return 0;
-	/* perform the expensive checks last */
-	if (aaa->aaa_nirq == 0) {
-		pckbc_acpi_crs_walk(parent, aaa->aaa_node, &crsdata,
-		    pckbc_acpi_getgpioirqcount);
-		if (crsdata.nints == 0)
-			return 0;
-	}
 	return rv;
 }
 
