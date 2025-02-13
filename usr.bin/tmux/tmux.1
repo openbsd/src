@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.981 2025/02/10 08:14:32 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.982 2025/02/13 16:31:25 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2025 $
+.Dd $Mdocdate: February 13 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2328,6 +2328,15 @@ repeats the last search and
 .Ql search-reverse
 does the same but reverses the direction (forward becomes backward and backward
 becomes forward).
+.Pp
+The default incremental search key bindings,
+.Ql C-r
+and
+.Ql C-s ,
+are designed to emulate
+.Xr emacs 1 .
+When first pressed they allow a new search term to be entered; if pressed with
+an empty search term they repeat the previously used search term.
 .Pp
 The
 .Ql next-prompt
@@ -6766,7 +6775,7 @@ option is used; a delay of zero waits for a key press.
 ignores key presses and closes only after the delay expires.
 If
 .Fl C
-given, the pane will continue to be updated while the message is displayed.
+is given, the pane will continue to be updated while the message is displayed.
 If
 .Fl l
 is given,
