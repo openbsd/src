@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.11 2023/08/03 18:53:55 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.12 2025/02/13 11:10:01 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -426,10 +426,7 @@ bn_miller_rabin(int *is_pseudoprime, const BIGNUM *n, BN_CTX *ctx,
 	 * Montgomery setup for n.
 	 */
 
-	if ((mctx = BN_MONT_CTX_new()) == NULL)
-		goto err;
-
-	if (!BN_MONT_CTX_set(mctx, n, ctx))
+	if ((mctx = BN_MONT_CTX_create(n, ctx)) == NULL)
 		goto err;
 
 	/*
