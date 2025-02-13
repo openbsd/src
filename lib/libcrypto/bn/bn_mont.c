@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.64 2025/02/13 11:04:20 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.65 2025/02/13 11:09:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -293,9 +293,7 @@ BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
 	if (mctx != NULL)
 		goto done;
 
-	if ((mctx = BN_MONT_CTX_new()) == NULL)
-		goto err;
-	if (!BN_MONT_CTX_set(mctx, mod, ctx))
+	if ((mctx = BN_MONT_CTX_create(mod, ctx)) == NULL)
 		goto err;
 
 	CRYPTO_w_lock(lock);
