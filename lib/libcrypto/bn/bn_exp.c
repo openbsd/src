@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.57 2025/02/12 21:21:34 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.58 2025/02/13 11:15:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -425,18 +425,10 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	BN_CTX_start(ctx);
 
-	/*
-	 * Allocate a Montgomery context if it was not supplied by the caller.
-	 * If this is not done, things will break in the montgomery part.
-	 */
-	if (in_mont != NULL)
-		mont = in_mont;
-	else {
-		if ((mont = BN_MONT_CTX_new()) == NULL)
-			goto err;
-		if (!BN_MONT_CTX_set(mont, m, ctx))
-			goto err;
-	}
+	if ((mont = in_mont) == NULL)
+		mont = BN_MONT_CTX_create(m, ctx);
+	if (mont == NULL)
+		goto err;
 
 	/* Get the window size to use with size of p. */
 	window = BN_window_bits_for_ctime_exponent_size(bits);
@@ -636,14 +628,16 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	/* Convert the final result from montgomery to standard format */
 	if (!BN_from_montgomery(rr, &tmp, mont, ctx))
 		goto err;
+
 	ret = 1;
 
-err:
-	if ((in_mont == NULL) && (mont != NULL))
+ err:
+	if (mont != in_mont)
 		BN_MONT_CTX_free(mont);
-	freezero(powerbufFree, powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
 	BN_CTX_end(ctx);
-	return (ret);
+	freezero(powerbufFree, powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
+
+	return ret;
 }
 LCRYPTO_ALIAS(BN_mod_exp_mont_consttime);
 
@@ -688,17 +682,10 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 	if ((val[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* If this is not done, things will break in the montgomery
-	 * part */
-
-	if (in_mont != NULL)
-		mont = in_mont;
-	else {
-		if ((mont = BN_MONT_CTX_new()) == NULL)
-			goto err;
-		if (!BN_MONT_CTX_set(mont, m, ctx))
-			goto err;
-	}
+	if ((mont = in_mont) == NULL)
+		mont = BN_MONT_CTX_create(m, ctx);
+	if (mont == NULL)
+		goto err;
 
 	if (!BN_nnmod(val[0], a,m, ctx))
 		goto err;
@@ -783,13 +770,15 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 	}
 	if (!BN_from_montgomery(rr, r,mont, ctx))
 		goto err;
+
 	ret = 1;
 
-err:
-	if ((in_mont == NULL) && (mont != NULL))
+ err:
+	if (mont != in_mont)
 		BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
 
 int
@@ -879,14 +868,10 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (in_mont != NULL)
-		mont = in_mont;
-	else {
-		if ((mont = BN_MONT_CTX_new()) == NULL)
-			goto err;
-		if (!BN_MONT_CTX_set(mont, m, ctx))
-			goto err;
-	}
+	if ((mont = in_mont) == NULL)
+		mont = BN_MONT_CTX_create(m, ctx);
+	if (mont == NULL)
+		goto err;
 
 	r_is_one = 1; /* except for Montgomery factor */
 
@@ -954,13 +939,15 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 		if (!BN_from_montgomery(rr, r, mont, ctx))
 			goto err;
 	}
+
 	ret = 1;
 
-err:
-	if ((in_mont == NULL) && (mont != NULL))
+ err:
+	if (mont != in_mont)
 		BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
 
 int
@@ -1203,14 +1190,10 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	if ((val2[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (in_mont != NULL)
-		mont = in_mont;
-	else {
-		if ((mont = BN_MONT_CTX_new()) == NULL)
-			goto err;
-		if (!BN_MONT_CTX_set(mont, m, ctx))
-			goto err;
-	}
+	if ((mont = in_mont) == NULL)
+		mont = BN_MONT_CTX_create(m, ctx);
+	if (mont == NULL)
+		goto err;
 
 	window1 = BN_window_bits_for_exponent_size(bits1);
 	window2 = BN_window_bits_for_exponent_size(bits2);
@@ -1335,11 +1318,13 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	}
 	if (!BN_from_montgomery(rr, r,mont, ctx))
 		goto err;
+
 	ret = 1;
 
-err:
-	if ((in_mont == NULL) && (mont != NULL))
+ err:
+	if (mont != in_mont)
 		BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
