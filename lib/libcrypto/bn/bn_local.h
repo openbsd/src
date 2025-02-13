@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.49 2025/02/12 21:21:34 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.50 2025/02/13 11:04:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -270,6 +270,8 @@ int bn_rand_in_range(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_e
 int bn_rand_interval(BIGNUM *rnd, BN_ULONG lower_word, const BIGNUM *upper_exc);
 
 void	BN_init(BIGNUM *);
+
+BN_MONT_CTX *BN_MONT_CTX_create(const BIGNUM *bn, BN_CTX *ctx);
 
 BN_RECP_CTX *BN_RECP_CTX_create(const BIGNUM *N);
 void BN_RECP_CTX_free(BN_RECP_CTX *recp);
