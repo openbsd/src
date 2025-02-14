@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.246 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.247 2025/02/14 13:14:13 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -675,7 +675,11 @@ int	tcp_signature_tdb_output(struct mbuf *, struct tdb *, int, int);
 int	checkreplaywindow(struct tdb *, u_int64_t, u_int32_t, u_int32_t *, int);
 
 /* Packet processing */
-int	ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
+#define IPSP_DF_INHERIT		-1
+#define IPSP_DF_OFF		 0
+#define IPSP_DF_ON		 1
+
+int	ipsp_process_packet(struct mbuf *, struct tdb *, int, int, int);
 int	ipsp_process_done(struct mbuf *, struct tdb *);
 int	ipsp_spd_lookup(struct mbuf *, int, int, int, struct tdb *,
 	    const struct ipsec_level *, struct tdb **, struct ipsec_ids *);

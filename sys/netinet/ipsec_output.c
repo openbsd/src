@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.99 2024/12/27 10:15:09 mvs Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.100 2025/02/14 13:14:13 dlg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -71,7 +71,8 @@ int	udpencap_port = 4500;	/* triggers decapsulation */
  * place.
  */
 int
-ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
+ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready,
+    int setdf)
 {
 	int hlen, off, error;
 #ifdef INET6
@@ -80,7 +81,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	int dstopt = 0;
 #endif
 
-	int setdf = 0;
 	struct ip *ip;
 #ifdef INET6
 	struct ip6_hdr *ip6;
@@ -190,7 +190,11 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 				 * This is not a bridge packet, remember if we
 				 * had IP_DF.
 				 */
-				setdf = ip->ip_off & htons(IP_DF);
+				if (setdf == IPSP_DF_INHERIT) {
+					setdf =
+					    ISSET(ip->ip_off, htons(IP_DF)) ?
+					     IPSP_DF_ON : IPSP_DF_OFF;
+				}
 			}
 
 #ifdef INET6
@@ -257,7 +261,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			if (error)
 				goto drop;
 
-			if (tdb->tdb_dst.sa.sa_family == AF_INET && setdf) {
+			if (tdb->tdb_dst.sa.sa_family == AF_INET &&
+			    setdf == IPSP_DF_ON) {
 				if (m->m_len < sizeof(struct ip))
 					if ((m = m_pullup(m,
 					    sizeof(struct ip))) == NULL) {
@@ -516,7 +521,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	if (tdbo != NULL) {
 		KERNEL_ASSERT_LOCKED();
 		error = ipsp_process_packet(m, tdbo,
-		    tdb->tdb_dst.sa.sa_family, 0);
+		    tdb->tdb_dst.sa.sa_family, 0, IPSP_DF_INHERIT);
 		tdb_unref(tdbo);
 		return error;
 	}

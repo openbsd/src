@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.372 2024/09/01 03:09:00 jsg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.373 2025/02/14 13:14:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1646,7 +1646,8 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 				    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
 			} else {
 				KERNEL_LOCK();
-				error = ipsp_process_packet(m, tdb, af, 0);
+				error = ipsp_process_packet(m, tdb, af, 0,
+				    IPSP_DF_INHERIT);
 				KERNEL_UNLOCK();
 			}
 			tdb_unref(tdb);
