@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2024/08/23 12:56:26 anton Exp $ */
+/*	$OpenBSD: util.c,v 1.16 2025/02/14 06:25:00 anton Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -46,6 +46,9 @@
 
 #define _KERNEL
 #include <sys/refcnt.h>
+
+#include <stdint.h>
+#include <sys/rwlock.h>
 #undef _KERNEL
 
 #include "srp_compat.h"
