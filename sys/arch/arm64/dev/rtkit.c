@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.17 2024/10/29 21:19:25 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.18 2025/02/14 18:42:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -468,7 +468,7 @@ rtkit_handle_crashlog_buffer(void *arg)
 	bus_size_t size = state->crashlog_size;
 
 	if (addr) {
-		paddr_t pa = addr;
+		paddr_t pa = addr | PMAP_NOCACHE;
 		vaddr_t va;
 
 		if (rk && rk->rk_logmap) {
@@ -482,8 +482,7 @@ rtkit_handle_crashlog_buffer(void *arg)
 		va = (vaddr_t)state->crashlog;
 
 		while (size-- > 0) {
-			pmap_kenter_cache(va, pa, PROT_READ,
-			    PMAP_CACHE_CI);
+			pmap_kenter_pa(va, pa, PROT_READ);
 			va += PAGE_SIZE;
 			pa += PAGE_SIZE;
 		}

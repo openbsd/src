@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldcp.c,v 1.3 2024/08/18 10:50:22 kettenis Exp $	*/
+/*	$OpenBSD: apldcp.c,v 1.4 2025/02/14 18:42:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -131,45 +131,51 @@ apple_rtkit_logmap(void *cookie, bus_addr_t addr)
 	struct apple_rtkit *rtk = cookie;
 	int idx, len, node;
 	uint32_t *phandles;
-	uint32_t iommu_addresses[5];
+	uint32_t iommu_addrs[5];
+	bus_addr_t trunc_addr;
 	bus_addr_t start;
 	bus_size_t size;
 	uint64_t reg[2];
 
-	len = OF_getproplen(rtk->pdev->node, "memory-region");
-	idx = OF_getindex(rtk->pdev->node, "dcp_data", "memory-region-names");
-	if (idx < 0 || idx >= len / sizeof(uint32_t))
-		return addr;
+	/* XXX some machines have truncated DVAs in "iommu-addresses" */
+	trunc_addr = addr & 0xffffffff;
 
+	len = OF_getproplen(rtk->pdev->node, "memory-region");
 	phandles = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
 	OF_getpropintarray(rtk->pdev->node, "memory-region",
 	    phandles, len);
-	node = OF_getnodebyphandle(phandles[idx]);
+
+	for (idx = 0; idx < len / sizeof(uint32_t); idx++) {
+		node = OF_getnodebyphandle(phandles[idx]);
+		if (node == 0)
+			continue;
+
+		if (!OF_is_compatible(node, "apple,asc-mem"))
+			continue;
+
+		if (OF_getpropint64array(node, "reg", reg,
+		    sizeof(reg)) != sizeof(reg))
+			continue;
+
+		if (OF_getpropintarray(node, "iommu-addresses", iommu_addrs,
+		    sizeof(iommu_addrs)) < sizeof(iommu_addrs))
+			continue;
+		start = (uint64_t)iommu_addrs[1] << 32 | iommu_addrs[2];
+		size = (uint64_t)iommu_addrs[3] << 32 | iommu_addrs[4];
+
+		if (addr >= start && addr < start + size) {
+			free(phandles, M_TEMP, len);
+			return (reg[0] + (addr - start)) | PMAP_NOCACHE;
+		}
+
+		if (trunc_addr >= start && trunc_addr < start + size) {
+			free(phandles, M_TEMP, len);
+			return (reg[0] + (trunc_addr - start)) | PMAP_NOCACHE;
+		}
+	}
+
 	free(phandles, M_TEMP, len);
-
-	if (node == 0)
-		return addr;
-
-	if (!OF_is_compatible(node, "apple,asc-mem"))
-		return addr;
-
-	if (OF_getpropint64array(node, "reg", reg, sizeof(reg)) != sizeof(reg))
-		return addr;
-
-	if (OF_getpropintarray(node, "iommu-addresses", iommu_addresses,
-	    sizeof(iommu_addresses)) < sizeof(iommu_addresses))
-		return addr;
-	start = (uint64_t)iommu_addresses[1] << 32 | iommu_addresses[2];
-	size = (uint64_t)iommu_addresses[3] << 32 | iommu_addresses[4];
-	if (addr >= start && addr < start + size)
-		return reg[0] + (addr - start);
-
-	/* XXX some machines have truncated DVAs in "iommu-addresses" */
-	addr &= 0xffffffff;
-	if (addr >= start && addr < start + size)
-		return reg[0] + (addr - start);
-
-	return (paddr_t)-1;
+	return addr | PMAP_NOCACHE;
 }
 
 void

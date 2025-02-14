@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.28 2024/11/04 09:33:16 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.29 2025/02/14 18:42:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -21,6 +21,8 @@
 #include <sys/proc.h>
 #include <sys/sensors.h>
 #include <sys/signalvar.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/apmvar.h>
 #include <machine/bus.h>
@@ -124,6 +126,7 @@ struct aplsmc_softc {
 	void			*sc_ih;
 
 	struct rtkit_state	*sc_rs;
+	struct rtkit		sc_rk;
 	uint8_t			sc_msgid;
 	uint64_t		sc_data;
 
@@ -188,6 +191,7 @@ struct cfdriver aplsmc_cd = {
 	NULL, "aplsmc", DV_DULL
 };
 
+paddr_t	aplsmc_logmap(void *, bus_addr_t);
 void	aplsmc_callback(void *, uint64_t);
 int	aplsmc_send_cmd(struct aplsmc_softc *, uint16_t, uint32_t, uint16_t);
 int	aplsmc_wait_cmd(struct aplsmc_softc *sc);
@@ -240,7 +244,11 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_rs = rtkit_init(faa->fa_node, NULL, RK_WAKEUP, NULL);
+	sc->sc_rk.rk_cookie = sc;
+	sc->sc_rk.rk_dmat = faa->fa_dmat;
+	sc->sc_rk.rk_logmap = aplsmc_logmap;
+
+	sc->sc_rs = rtkit_init(faa->fa_node, NULL, RK_WAKEUP, &sc->sc_rk);
 	if (sc->sc_rs == NULL) {
 		printf(": can't map mailbox channel\n");
 		return;
@@ -381,6 +389,12 @@ aplsmc_activate(struct device *self, int act)
 #endif
 
 	return 0;
+}
+
+paddr_t
+aplsmc_logmap(void *cookie, bus_addr_t addr)
+{
+	return addr | PMAP_DEVICE;
 }
 
 void
