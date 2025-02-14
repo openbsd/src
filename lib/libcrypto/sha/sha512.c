@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.42 2024/06/01 07:36:16 tb Exp $ */
+/* $OpenBSD: sha512.c,v 1.43 2025/02/14 12:01:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -69,11 +69,10 @@
 /* Ensure that SHA_LONG64 and uint64_t are equivalent. */
 CTASSERT(sizeof(SHA_LONG64) == sizeof(uint64_t));
 
-#ifdef SHA512_ASM
 void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
-#endif
+void sha512_block_generic(SHA512_CTX *ctx, const void *in, size_t num);
 
-#ifndef SHA512_ASM
+#ifndef HAVE_SHA512_BLOCK_GENERIC
 static const SHA_LONG64 K512[80] = {
 	U64(0x428a2f98d728ae22), U64(0x7137449123ef65cd),
 	U64(0xb5c0fbcfec4d3b2f), U64(0xe9b5dba58189dbbc),
@@ -182,8 +181,8 @@ sha512_round(SHA_LONG64 *a, SHA_LONG64 *b, SHA_LONG64 *c, SHA_LONG64 *d,
 	*a = T1 + T2;
 }
 
-static void
-sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
+void
+sha512_block_generic(SHA512_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
 	const SHA_LONG64 *in64;
@@ -304,8 +303,15 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 		ctx->h[7] += h;
 	}
 }
+#endif
 
-#endif /* SHA512_ASM */
+#ifndef HAVE_SHA512_BLOCK_DATA_ORDER
+void
+sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
+{
+	sha512_block_generic(ctx, _in, num);
+}
+#endif
 
 int
 SHA384_Init(SHA512_CTX *c)

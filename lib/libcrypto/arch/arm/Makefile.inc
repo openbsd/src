@@ -12,11 +12,8 @@ SSLASM+= bn armv4-mont
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-armv4
 # sha
-CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-armv4-large
-CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha256-armv4
-CFLAGS+= -DSHA512_ASM
 SSLASM+= sha sha512-armv4
 
 .for dir f in ${SSLASM}

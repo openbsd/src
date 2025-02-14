@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.26 2024/10/18 14:44:02 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.27 2025/02/14 12:01:58 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -28,11 +28,8 @@ SSLASM+= modes ghash-x86
 # rc4
 SSLASM+= rc4 rc4-586
 # sha
-CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-586
-CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha256-586
-CFLAGS+= -DSHA512_ASM
 SSLASM+= sha sha512-586
 
 .for dir f in ${SSLASM}

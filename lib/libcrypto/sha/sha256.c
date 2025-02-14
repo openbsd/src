@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.32 2024/06/01 07:36:16 tb Exp $ */
+/* $OpenBSD: sha256.c,v 1.33 2025/02/14 12:01:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -68,11 +68,10 @@
 /* Ensure that SHA_LONG and uint32_t are equivalent. */
 CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
-#ifdef SHA256_ASM
 void sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num);
-#endif
+void sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num);
 
-#ifndef SHA256_ASM
+#ifndef HAVE_SHA256_BLOCK_GENERIC
 static const SHA_LONG K256[64] = {
 	0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL,
 	0x3956c25bUL, 0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL,
@@ -155,8 +154,8 @@ sha256_round(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
 	*a = T1 + T2;
 }
 
-static void
-sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
+void
+sha256_block_generic(SHA256_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
 	const SHA_LONG *in32;
@@ -277,7 +276,15 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
 		ctx->h[7] += h;
 	}
 }
-#endif /* SHA256_ASM */
+#endif
+
+#ifndef HAVE_SHA256_BLOCK_DATA_ORDER
+void
+sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
+{
+	sha256_block_generic(ctx, _in, num);
+}
+#endif
 
 int
 SHA224_Init(SHA256_CTX *c)

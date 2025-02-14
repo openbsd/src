@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.15 2024/06/01 07:36:16 tb Exp $ */
+/* $OpenBSD: sha1.c,v 1.16 2025/02/14 12:01:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,11 +71,10 @@
 /* Ensure that SHA_LONG and uint32_t are equivalent sizes. */
 CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
-#ifdef SHA1_ASM
 void sha1_block_data_order(SHA_CTX *ctx, const void *p, size_t num);
-#endif
+void sha1_block_generic(SHA_CTX *ctx, const void *p, size_t num);
 
-#ifndef SHA1_ASM
+#ifndef HAVE_SHA1_BLOCK_GENERIC
 static inline SHA_LONG
 Ch(SHA_LONG x, SHA_LONG y, SHA_LONG z)
 {
@@ -164,8 +163,8 @@ sha1_round4(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
 	*a = T;
 }
 
-static void
-sha1_block_data_order(SHA_CTX *ctx, const void *_in, size_t num)
+void
+sha1_block_generic(SHA_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
 	const SHA_LONG *in32;
@@ -379,6 +378,14 @@ sha1_block_data_order(SHA_CTX *ctx, const void *_in, size_t num)
 		ctx->h3 += d;
 		ctx->h4 += e;
 	}
+}
+#endif
+
+#ifndef HAVE_SHA1_BLOCK_DATA_ORDER
+void
+sha1_block_data_order(SHA_CTX *ctx, const void *_in, size_t num)
+{
+	sha1_block_generic(ctx, _in, num);
 }
 #endif
 

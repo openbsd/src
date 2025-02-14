@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.14 2024/03/29 07:24:09 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.15 2025/02/14 12:01:58 jsing Exp $
 
 # alpha-specific libcrypto build rules
 
@@ -9,7 +9,6 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-alpha
 # sha
-CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-alpha
 
 .for dir f in ${SSLASM}

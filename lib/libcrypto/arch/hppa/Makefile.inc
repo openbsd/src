@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.25 2024/08/11 13:02:39 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.26 2025/02/14 12:01:58 jsing Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -12,9 +12,7 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV2W
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-parisc ghash-parisc
 # sha
-CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-parisc sha1-parisc
-CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha512-parisc sha256-parisc
 
 .for dir src dst in ${SSLASM}
