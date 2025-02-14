@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.210 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: audio.c,v 1.211 2025/02/14 13:29:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -231,6 +231,9 @@ struct mutex audio_lock = MUTEX_INITIALIZER(IPL_AUDIO);
  * mixerctl setting is record.enable=sysctl
  */
 int audio_record_enable = 0;	/* [a] */
+#if NWSKBD > 0
+int audio_kbdcontrol_enable = 1;	/* [a] */
+#endif
 
 #ifdef AUDIO_DEBUG
 /*

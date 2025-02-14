@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.122 2025/01/26 08:50:02 jsg Exp $ */
+/* $OpenBSD: wskbd.c,v 1.123 2025/02/14 13:29:00 ratchov Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -333,6 +333,7 @@ static struct wskbd_internal wskbd_console_data;
 void	wskbd_update_layout(struct wskbd_internal *, kbd_t);
 
 #if NAUDIO > 0
+extern int audio_kbdcontrol_enable;
 extern int wskbd_set_mixervolume_dev(void *, long, long);
 #endif
 
@@ -1817,13 +1818,16 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		switch (ksym) {
 #if NAUDIO > 0
 		case KS_AudioMute:
-			wskbd_set_mixervolume_dev(sc->sc_audiocookie, 0, 1);
+			if (atomic_load_int(&audio_kbdcontrol_enable) == 1)
+				wskbd_set_mixervolume_dev(sc->sc_audiocookie, 0, 1);
 			return (0);
 		case KS_AudioLower:
-			wskbd_set_mixervolume_dev(sc->sc_audiocookie, -1, 1);
+			if (atomic_load_int(&audio_kbdcontrol_enable) == 1)
+				wskbd_set_mixervolume_dev(sc->sc_audiocookie, -1, 1);
 			return (0);
 		case KS_AudioRaise:
-			wskbd_set_mixervolume_dev(sc->sc_audiocookie, 1, 1);
+			if (atomic_load_int(&audio_kbdcontrol_enable) == 1)
+				wskbd_set_mixervolume_dev(sc->sc_audiocookie, 1, 1);
 			return (0);
 #endif
 		default:

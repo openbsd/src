@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.463 2025/02/12 21:41:53 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.464 2025/02/14 13:29:00 ratchov Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@
 #include "pf.h"
 #include "ucom.h"
 #include "video.h"
+#include "wskbd.h"
 
 /*
  * Locks used to protect data:
@@ -134,6 +135,7 @@ extern fixpt_t ccpu;
 extern long numvnodes;
 extern int allowdt;
 extern int audio_record_enable;
+extern int audio_kbdcontrol_enable;
 extern int video_record_enable;
 extern int autoconf_serial;
 
@@ -2825,13 +2827,24 @@ int
 sysctl_audio(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
+	int *intptr;
+
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	if (name[0] != KERN_AUDIO_RECORD)
+	switch (name[0]) {
+	case KERN_AUDIO_RECORD:
+		intptr = &audio_record_enable;
+		break;
+#if NWSKBD > 0
+	case KERN_AUDIO_KBDCONTROL:
+		intptr = &audio_kbdcontrol_enable;
+		break;
+#endif
+	default:
 		return (ENOENT);
-
-	return (sysctl_int(oldp, oldlenp, newp, newlen, &audio_record_enable));
+	}
+	return (sysctl_int(oldp, oldlenp, newp, newlen, intptr));
 }
 #endif
 
