@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.178 2025/02/13 14:44:33 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.179 2025/02/15 21:49:28 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -505,8 +505,7 @@ sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
 void
 sbmtxassertlocked(struct sockbuf *sb)
 {
-	if (splassert_ctl > 0 && mtx_owned(&sb->sb_mtx) == 0)
-		splassert_fail(0, RW_WRITE, __func__);
+	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
 }
 
 /*
