@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.237 2025/02/06 13:15:50 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.238 2025/02/15 09:05:15 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2031,15 +2031,27 @@ uvideo_vs_close(struct uvideo_softc *sc)
 		sc->sc_vs_cur->pipeh = NULL;
 	}
 
-	/*
-	 * Some devices need time to shutdown before we switch back to
-	 * the default interface (0).  Not doing so can leave the device
-	 * back in a undefined condition.
-	 */
-	usbd_delay_ms(sc->sc_udev, 100);
+	if (sc->sc_vs_cur->bulk_endpoint) {
+		/*
+		 * UVC doesn't specify how to notify a bulk-based device
+		 * when the video stream is stopped. Both, Linux and
+		 * Windows send a CLEAR_FEATURE(HALT) request to the
+		 * video streaming bulk endpoint.
+		 */
+		if (usbd_clear_endpoint_feature(sc->sc_udev,
+		    sc->sc_vs_cur->endpoint, UF_ENDPOINT_HALT))
+			printf("%s: clear endpoints failed!\n", __func__);
+	} else {
+		/*
+		 * Some devices need time to shutdown before we switch back to
+		 * the default interface (0).  Not doing so can leave the device
+		 * back in a undefined condition.
+		 */
+		usbd_delay_ms(sc->sc_udev, 100);
 
-	/* switch back to default interface (turns off cam LED) */
-	(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
+		/* switch back to default interface (turns off cam LED) */
+		(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
+	}
 }
 
 usbd_status
