@@ -307,6 +307,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 		ri->ri_bpos = 0;
 		break;
 	}
+	intel_fbdev_invalidate(ifbdev);
 }
 	return 0;
 
