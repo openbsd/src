@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.5 2024/05/22 16:24:59 martijn Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.6 2025/02/16 13:07:08 kevlo Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -2215,7 +2215,7 @@ mwx_mcu_alloc_msg(size_t len)
 	struct mbuf *m;
 
 	/* Allocate mbuf with enough space */
-	m = m_gethdr(MT_DATA, M_DONTWAIT);
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
 	if (len + headspace > MHLEN) {
