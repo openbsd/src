@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.30 2025/02/02 08:28:14 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.31 2025/02/16 10:11:37 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -153,6 +153,15 @@
 #define AQ_INTR_MASK_REG			0x2060	/* intr mask set */
 #define AQ_INTR_MASK_CLR_REG			0x2070	/* intr mask clear */
 #define AQ_INTR_AUTOMASK_REG			0x2090
+
+#define AQ_SMB_PROVISIONING_REG			0x0604
+#define AQ_SMB_TX_DATA_REG			0x0608
+#define AQ_SMB_BUS_REG				0x0744
+#define  AQ_SMB_BUS_XFER_COMPLETE		(1 << 1)
+#define  AQ_SMB_BUS_REPEAT_DETECT		(1 << 2)
+#define  AQ_SMB_BUS_BUSY			(1 << 7)
+#define  AQ_SMB_BUS_RX_ACK			(1 << 8)
+#define AQ_SMB_RX_DATA_REG			0x0748
 
 /* AQ_INTR_IRQ_MAP_TXRX_REG 0x2100-0x2140 */
 #define AQ_INTR_IRQ_MAP_TXRX_REG(i)		(0x2100 + ((i) / 2) * 4)
@@ -783,6 +792,12 @@ enum aq_link_fc {
         AQ_FC_ALL = (AQ_FC_RX | AQ_FC_TX)
 };
 
+#define AQ_SMB_START_TRANSMIT		0x5001
+#define AQ_SMB_START_READ_TRANSMIT	0x5101
+#define AQ_SMB_STOP_TRANSMIT		0x3001
+#define AQ_SMB_REPEAT_TRANSMIT		0x1001
+#define AQ_SMB_REPEAT_NACK_TRANSMIT	0x1011
+
 struct aq_dmamem {
 	bus_dmamap_t		aqm_map;
 	bus_dma_segment_t	aqm_seg;
@@ -1139,6 +1154,7 @@ void	aq_start(struct ifqueue *);
 void	aq_ifmedia_status(struct ifnet *, struct ifmediareq *);
 int	aq_ifmedia_change(struct ifnet *);
 void	aq_update_link_status(struct aq_softc *);
+int	aq_get_sffpage(struct aq_softc *, struct if_sffpage *);
 
 int	aq1_fw_reboot(struct aq_softc *);
 int	aq1_fw_read_version(struct aq_softc *);
@@ -3841,6 +3857,13 @@ aq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = aq_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 
+	case SIOCGIFSFFPAGE:
+		if (sc->sc_media_type == AQ_MEDIA_TYPE_FIBRE)
+			error = aq_get_sffpage(sc, (struct if_sffpage *)data);
+		else
+			error = ENXIO;
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
@@ -3931,6 +3954,87 @@ aq_iff(struct aq_softc *sc)
 		AQ_WRITE_REG_BIT(sc, RPF_MCAST_FILTER_REG(0),
 		    RPF_MCAST_FILTER_EN, 0);
 	}
+}
+
+int
+aq_smb_bus_wait_result(struct aq_softc *sc, int ack)
+{
+	int error;
+
+	WAIT_FOR(
+	    (AQ_READ_REG(sc, AQ_SMB_BUS_REG) & AQ_SMB_BUS_XFER_COMPLETE) != 0,
+	    100, 10000, &error);
+	if (error != 0)
+		return error;
+	if ((AQ_READ_REG(sc, AQ_SMB_BUS_REG) & AQ_SMB_BUS_RX_ACK) != ack)
+		return EIO;
+	return 0;
+}
+
+int
+aq_get_sffpage(struct aq_softc *sc, struct if_sffpage *sff)
+{
+	int error;
+	int i;
+
+	WAIT_FOR((AQ_READ_REG(sc, AQ_SMB_BUS_REG) & AQ_SMB_BUS_BUSY) == 0,
+	    10, 1000, &error);
+	if (error != 0) {
+		printf("%s: AQ_SMB_BUS_BUSY timeout\n", DEVNAME(sc));
+		return error;
+	}
+
+	AQ_WRITE_REG(sc, AQ_SMB_TX_DATA_REG, sff->sff_addr);
+	AQ_WRITE_REG(sc, AQ_SMB_PROVISIONING_REG, AQ_SMB_START_TRANSMIT);
+	error = aq_smb_bus_wait_result(sc, 0);
+	if (error != 0) {
+		printf("%s: AQ_SMB_START_TRANSMIT timeout\n", DEVNAME(sc));
+		goto out;
+	}
+
+	AQ_WRITE_REG(sc, AQ_SMB_TX_DATA_REG, 0);
+	AQ_WRITE_REG(sc, AQ_SMB_PROVISIONING_REG, AQ_SMB_REPEAT_TRANSMIT);
+	error = aq_smb_bus_wait_result(sc, 0);
+	if (error != 0) {
+		printf("%s: AQ_SMB_REPEAT_TRANSMIT timeout\n", DEVNAME(sc));
+		goto out;
+	}
+
+	AQ_WRITE_REG(sc, AQ_SMB_TX_DATA_REG, sff->sff_addr | 1);
+	AQ_WRITE_REG(sc, AQ_SMB_PROVISIONING_REG, AQ_SMB_START_READ_TRANSMIT);
+	error = aq_smb_bus_wait_result(sc, 0);
+	if (error != 0) {
+		printf("%s: AQ_SMB_START_READ_TRANSMIT timeout\n", DEVNAME(sc));
+		goto out;
+	}
+	if ((AQ_READ_REG(sc, AQ_SMB_BUS_REG) & AQ_SMB_BUS_REPEAT_DETECT) == 0) {
+		error = EIO;
+		goto out;
+	}
+
+	for (i = 0; i < sizeof(sff->sff_data)-1; i++) {
+		AQ_WRITE_REG(sc, AQ_SMB_PROVISIONING_REG,
+		    AQ_SMB_REPEAT_TRANSMIT);
+		error = aq_smb_bus_wait_result(sc, 0);
+		if (error != 0) {
+			printf("%s: AQ_SMB_REPEAT_TRANSMIT %d timeout\n",
+			    DEVNAME(sc), i);
+			goto out;
+		}
+
+		sff->sff_data[i] = AQ_READ_REG(sc, AQ_SMB_RX_DATA_REG);
+	}
+
+	AQ_WRITE_REG(sc, AQ_SMB_PROVISIONING_REG, AQ_SMB_REPEAT_NACK_TRANSMIT);
+	error = aq_smb_bus_wait_result(sc, AQ_SMB_BUS_RX_ACK);
+	if (error != 0) {
+		printf("%s: AQ_SMB_REPEAT_NACK_TRANSMIT failed\n", DEVNAME(sc));
+	}
+	sff->sff_data[i] = AQ_READ_REG(sc, AQ_SMB_RX_DATA_REG);
+
+ out:
+	AQ_WRITE_REG(sc, AQ_SMB_PROVISIONING_REG, AQ_SMB_STOP_TRANSMIT);
+	return error;
 }
 
 int
