@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.155 2025/01/30 14:40:50 mvs Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.156 2025/02/16 16:05:07 bluhm Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -281,9 +281,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = htons(0);
-		solock(so);
+		solock_shared(so);
 		error = sobind(so, nam, &proc0);
-		sounlock(so);
+		sounlock_shared(so);
 		if (error)
 			goto bad;
 
@@ -305,7 +305,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			goto bad;
 		}
 	} else {
-		solock(so);
+		solock_shared(so);
 		error = soconnect(so, nmp->nm_nam);
 		if (error)
 			goto bad_locked;
@@ -330,7 +330,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			so->so_error = 0;
 			goto bad_locked;
 		}
-		sounlock(so);
+		sounlock_shared(so);
 	}
 	/*
 	 * Always set receive timeout to detect server crash and reconnect.
@@ -367,7 +367,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	} else {
 		panic("%s: nm_sotype %d", __func__, nmp->nm_sotype);
 	}
-	solock(so);
+	solock_shared(so);
 	error = soreserve(so, sndreserve, rcvreserve);
 	if (error)
 		goto bad_locked;
@@ -377,7 +377,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	mtx_enter(&so->so_snd.sb_mtx);
 	so->so_snd.sb_flags |= SB_NOINTR;
 	mtx_leave(&so->so_snd.sb_mtx);
-	sounlock(so);
+	sounlock_shared(so);
 
 	m_freem(mopt);
 	m_freem(nam);
@@ -390,7 +390,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	return (0);
 
 bad_locked:
-	sounlock(so);
+	sounlock_shared(so);
 bad:
 
 	m_freem(mopt);

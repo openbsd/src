@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.39 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.40 2025/02/16 16:05:07 bluhm Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -276,9 +276,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(0);
-	solock(so);
+	solock_shared(so);
 	error = sobind(so, m, &proc0);
-	sounlock(so);
+	sounlock_shared(so);
 	m_freem(m);
 	if (error) {
 		printf("bind failed\n");
