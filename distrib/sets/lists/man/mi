@@ -2431,6 +2431,7 @@
 ./usr/share/man/man5/npppd.conf.5
 ./usr/share/man/man5/nsd.conf.5
 ./usr/share/man/man5/ntpd.conf.5
+./usr/share/man/man5/opam-module.5
 ./usr/share/man/man5/openssl.cnf.5
 ./usr/share/man/man5/ospf6d.conf.5
 ./usr/share/man/man5/ospfd.conf.5
