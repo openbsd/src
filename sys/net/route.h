@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.212 2025/02/13 21:01:34 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.213 2025/02/16 11:39:28 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  *	N	net lock
  *	X	exclusive net lock, or shared net lock + kernel lock
  *	R	art (rtable) lock
- *	r	per route entry lock
  *	L	arp/nd6/etc lock for updates, net lock for reads
  *	T	rttimer_mtx		route timer lists
  */
@@ -115,7 +114,6 @@ struct rttimer;
  */
 
 struct rtentry {
-	struct rwlock	 rt_lock;
 	struct sockaddr	*rt_dest;	/* [I] destination */
 	SRPL_ENTRY(rtentry) rt_next;	/* [R] next mpath entry to our dst */
 	struct sockaddr	*rt_gateway;	/* [X] gateway address */
@@ -123,8 +121,8 @@ struct rtentry {
 	caddr_t		 rt_llinfo;	/* [L] pointer to link level info or
 					   an MPLS structure */
 	union {
-		struct rtentry	*_nh;	/* [r] rtentry for rt_gateway */
-		unsigned int	 _ref;	/* [r] # gateway rtentry refs */
+		struct rtentry	*_nh;	/* [X] rtentry for rt_gateway */
+		unsigned int	 _ref;	/* [X] # gateway rtentry refs */
 	} RT_gw;
 #define rt_gwroute	 RT_gw._nh
 #define rt_cachecnt	 RT_gw._ref

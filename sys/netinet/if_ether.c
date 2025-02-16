@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.269 2025/02/13 21:01:34 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.270 2025/02/16 11:39:28 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct arpcom *ac = (struct arpcom *)ifp;
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	char addr[INET_ADDRSTRLEN];
 	time_t uptime;
 	int refresh = 0, reject = 0;
@@ -357,7 +357,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
 	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
 		m_freem(m);
-		rtfree(rt);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -405,7 +404,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			    &satosin(dst)->sin_addr.s_addr,
 			    ac->ac_enaddr);
 		}
-		rtfree(rt);
 		return (0);
 	}
 
@@ -474,12 +472,10 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (refresh)
 		arprequest(ifp, &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
 		    &satosin(dst)->sin_addr.s_addr, ac->ac_enaddr);
-	rtfree(rt);
 	return (EAGAIN);
 
 bad:
 	m_freem(m);
-	rtfree(rt);
 	return (EINVAL);
 }
 

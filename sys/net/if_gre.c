@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.180 2025/02/13 21:01:34 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.181 2025/02/16 11:39:28 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1633,7 +1633,7 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 {
 	struct mgre_softc *sc = ifp->if_softc;
 	struct sockaddr *gate;
-	struct rtentry *rt = NULL;
+	struct rtentry *rt;
 	struct m_tag *mtag;
 	int error = 0;
 	sa_family_t af;
@@ -1730,8 +1730,7 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 	m = gre_l3_encap_dst(&sc->sc_tunnel, addr, m, dest->sa_family);
 	if (m == NULL) {
 		ifp->if_oerrors++;
-		error = ENOBUFS;
-		goto out;
+		return (ENOBUFS);
 	}
 
 	m->m_pkthdr.ph_family = dest->sa_family;
@@ -1739,13 +1738,10 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 	error = if_enqueue(ifp, m);
 	if (error)
 		ifp->if_oerrors++;
-out:
-	rtfree(rt);
 	return (error);
 
 drop:
 	m_freem(m);
-	rtfree(rt);
 	return (error);
 }
 
