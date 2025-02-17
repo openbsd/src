@@ -252,8 +252,6 @@ static int shmem_get_pages(struct drm_i915_gem_object *obj)
 #endif
 	unsigned int max_segment = i915_sg_segment_size(i915->drm.dev);
 	struct sg_table *st;
-	struct sgt_iter sgt_iter;
-	struct vm_page *page;
 	int ret;
 
 	/*
@@ -288,10 +286,9 @@ rebuild_st:
 		 */
 		if (max_segment > PAGE_SIZE) {
 #ifdef __linux__
-			for_each_sgt_page(page, sgt_iter, st)
-				put_page(page);
+			shmem_sg_free_table(st, mapping, false, false);
 #else
-			uvm_obj_unwire(obj->base.uao, 0, obj->base.size);
+			shmem_sg_free_table(st, NULL, false, false, obj);
 #endif
 			sg_free_table(st);
 			kfree(st);
