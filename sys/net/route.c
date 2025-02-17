@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.440 2025/02/16 11:39:28 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.441 2025/02/17 20:31:25 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -324,7 +324,8 @@ rtisvalid(struct rtentry *rt)
 		return (0);
 
 	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
-		KASSERT(rt->rt_gwroute != NULL);
+		if (rt->rt_gwroute == NULL)
+			return (0);
 		KASSERT(!ISSET(rt->rt_gwroute->rt_flags, RTF_GATEWAY));
 		if (!ISSET(rt->rt_gwroute->rt_flags, RTF_UP))
 			return (0);
@@ -1163,7 +1164,7 @@ struct rtentry *
 rt_getll(struct rtentry *rt)
 {
 	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
-		KASSERT(rt->rt_gwroute != NULL);
+	 	/* We may return NULL here. */
 		return (rt->rt_gwroute);
 	}
 

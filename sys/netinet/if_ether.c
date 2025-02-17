@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.270 2025/02/16 11:39:28 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.271 2025/02/17 20:31:25 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -354,8 +354,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	uptime = getuptime();
 	rt = rt_getll(rt0);
 
-	if (ISSET(rt->rt_flags, RTF_REJECT) &&
-	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
+	if (rt == NULL || (ISSET(rt->rt_flags, RTF_REJECT) &&
+	    (rt->rt_expire == 0 || rt->rt_expire > uptime))) {
 		m_freem(m);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}

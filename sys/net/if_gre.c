@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.181 2025/02/16 11:39:28 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.182 2025/02/17 20:31:25 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1671,7 +1671,7 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 	rt = rt_getll(rt0);
 
 	/* check rt_expire? */
-	if (ISSET(rt->rt_flags, RTF_REJECT)) {
+	if (rt == NULL || ISSET(rt->rt_flags, RTF_REJECT)) {
 		error = (rt == rt0) ? EHOSTDOWN : EHOSTUNREACH;
 		goto drop;
 	}

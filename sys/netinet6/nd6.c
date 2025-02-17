@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.286 2025/02/16 11:39:28 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.287 2025/02/17 20:31:25 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1285,8 +1285,8 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	uptime = getuptime();
 	rt = rt_getll(rt0);
 
-	if (ISSET(rt->rt_flags, RTF_REJECT) &&
-	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
+	if (rt == NULL || (ISSET(rt->rt_flags, RTF_REJECT) &&
+	    (rt->rt_expire == 0 || rt->rt_expire > uptime))) {
 		m_freem(m);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
