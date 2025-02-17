@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.46 2024/11/07 16:02:29 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.47 2025/02/17 13:28:26 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -301,6 +301,7 @@ stacktrace_save_utrace(struct stacktrace *st)
 	KASSERT(INKERNEL(frame));
 	f = *frame;
 
+	curcpu()->ci_inatomic++;
 	while (st->st_count < STACKTRACE_MAX) {
 		if (f.f_retaddr != 0 && !INKERNEL(f.f_retaddr))
 			st->st_pc[st->st_count++] = f.f_retaddr;
@@ -321,6 +322,7 @@ stacktrace_save_utrace(struct stacktrace *st)
 		if (copyin(frame, &f, sizeof(f)) != 0)
 			break;
 	}
+	curcpu()->ci_inatomic--;
 }
 
 vaddr_t
