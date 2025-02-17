@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.152 2025/01/30 14:40:50 mvs Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.153 2025/02/17 12:46:02 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1072,6 +1072,10 @@ send:
 #if NPF > 0
 	pf_mbuf_link_inpcb(m, tp->t_inpcb);
 #endif
+#if NSTOEPLITZ > 0
+	m->m_pkthdr.ph_flowid = tp->t_inpcb->inp_flowid;
+	SET(m->m_pkthdr.csum_flags, M_FLOWID);
+#endif
 
 	switch (tp->pf) {
 	case 0:	/*default to PF_INET*/
@@ -1089,10 +1093,6 @@ send:
 				ip->ip_tos |= IPTOS_ECN_ECT0;
 #endif
 		}
-#if NSTOEPLITZ > 0
-		m->m_pkthdr.ph_flowid = tp->t_inpcb->inp_flowid;
-		SET(m->m_pkthdr.csum_flags, M_FLOWID);
-#endif
 		error = ip_output(m, tp->t_inpcb->inp_options,
 		    &tp->t_inpcb->inp_route,
 		    (ip_mtudisc ? IP_MTUDISC : 0), NULL,
