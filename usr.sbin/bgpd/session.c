@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.515 2025/02/12 16:49:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.516 2025/02/17 16:41:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,7 @@
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
-void	init_peer(struct peer *);
+void	init_peer(struct peer *, struct bgpd_config *);
 void	start_timer_holdtime(struct peer *);
 void	start_timer_sendholdtime(struct peer *);
 void	start_timer_keepalive(struct peer *);
@@ -257,7 +257,7 @@ session_main(int debug, int verbose)
 			RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
 				/* new peer that needs init? */
 				if (p->state == STATE_NONE)
-					init_peer(p);
+					init_peer(p, conf);
 
 				/* deletion due? */
 				if (p->reconf_action == RECONF_DELETE) {
@@ -571,7 +571,7 @@ session_main(int debug, int verbose)
 }
 
 void
-init_peer(struct peer *p)
+init_peer(struct peer *p, struct bgpd_config *c)
 {
 	TAILQ_INIT(&p->timers);
 	p->fd = -1;
@@ -586,6 +586,12 @@ init_peer(struct peer *p)
 		    p->conf.if_depend, sizeof(p->conf.if_depend));
 	else
 		p->depend_ok = 1;
+
+	/* apply holdtime and min_holdtime settings */
+	if (p->conf.holdtime == 0)
+		p->conf.holdtime = c->holdtime;
+	if (p->conf.min_holdtime == 0)
+		p->conf.min_holdtime = c->min_holdtime;
 
 	peer_cnt++;
 
@@ -1509,7 +1515,6 @@ session_open(struct peer *p)
 {
 	struct ibuf		*buf, *opb;
 	size_t			 len, optparamlen;
-	uint16_t		 holdtime;
 	uint8_t			 i;
 	int			 errs = 0, extlen = 0;
 	int			 mpcapa = 0;
@@ -1641,14 +1646,9 @@ session_open(struct peer *p)
 		return;
 	}
 
-	if (p->conf.holdtime)
-		holdtime = p->conf.holdtime;
-	else
-		holdtime = conf->holdtime;
-
 	errs += ibuf_add_n8(buf, 4);
 	errs += ibuf_add_n16(buf, p->conf.local_short_as);
-	errs += ibuf_add_n16(buf, holdtime);
+	errs += ibuf_add_n16(buf, p->conf.holdtime);
 	/* is already in network byte order */
 	errs += ibuf_add_n32(buf, conf->bgpid);
 	errs += ibuf_add_n8(buf, optparamlen);
@@ -2231,7 +2231,7 @@ parse_open(struct peer *peer, struct ibuf *msg)
 {
 	uint8_t		 version, rversion;
 	uint16_t	 short_as;
-	uint16_t	 holdtime, myholdtime;
+	uint16_t	 holdtime;
 	uint32_t	 as, bgpid;
 	uint8_t		 optparamlen;
 
@@ -2264,7 +2264,7 @@ parse_open(struct peer *peer, struct ibuf *msg)
 		return (-1);
 	}
 
-	if (holdtime && holdtime < peer->conf.min_holdtime) {
+	if (holdtime != 0 && holdtime < peer->conf.min_holdtime) {
 		log_peer_warnx(&peer->conf,
 		    "peer requests unacceptable holdtime %u", holdtime);
 		session_notification(peer, ERR_OPEN, ERR_OPEN_HOLDTIME, NULL);
@@ -2272,13 +2272,10 @@ parse_open(struct peer *peer, struct ibuf *msg)
 		return (-1);
 	}
 
-	myholdtime = peer->conf.holdtime;
-	if (!myholdtime)
-		myholdtime = conf->holdtime;
-	if (holdtime < myholdtime)
+	if (holdtime < peer->conf.holdtime)
 		peer->holdtime = holdtime;
 	else
-		peer->holdtime = myholdtime;
+		peer->holdtime = peer->conf.holdtime;
 
 	/* check bgpid for validity - just disallow 0 */
 	if (bgpid == 0) {
@@ -3545,7 +3542,7 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 		newpeer->reconf_action = RECONF_KEEP;
 		newpeer->rpending = 0;
 		newpeer->wbuf = NULL;
-		init_peer(newpeer);
+		init_peer(newpeer, c);
 		/* start delete timer, it is stopped when session goes up. */
 		timer_set(&newpeer->timers, Timer_SessionDown,
 		    INTERVAL_SESSION_DOWN);
@@ -3829,6 +3826,12 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		free(np);
 
 		p->reconf_action = RECONF_KEEP;
+
+		/* reapply holdtime and min_holdtime settings */
+		if (p->conf.holdtime == 0)
+			p->conf.holdtime = conf->holdtime;
+		if (p->conf.min_holdtime == 0)
+			p->conf.min_holdtime = conf->min_holdtime;
 
 		/* had demotion, is demoted, demote removed? */
 		if (p->demoted && !p->conf.demote_group[0])
