@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.261 2025/02/11 14:58:11 anton Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.262 2025/02/17 10:07:10 claudio Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -556,6 +556,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pr->ps_flags & PS_PPWAIT) {
 		atomic_clearbits_int(&pr->ps_flags, PS_PPWAIT);
 		atomic_clearbits_int(&pr->ps_pptr->ps_flags, PS_ISPWAIT);
+		atomic_setbits_int(&pr->ps_pptr->ps_flags, PS_WAITEVENT);
 		wakeup(pr->ps_pptr);
 	}
 

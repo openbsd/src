@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.361 2025/02/09 12:14:13 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.362 2025/02/17 10:07:10 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1269,8 +1269,10 @@ out:
 	}
 
 	SCHED_UNLOCK();
-	if (wakeparent)
+	if (wakeparent) {
+		atomic_setbits_int(&pr->ps_pptr->ps_flags, PS_WAITEVENT);
 		wakeup(pr->ps_pptr);
+	}
 }
 
 /* fill the signal context which should be used by postsig() and issignal() */
@@ -1675,6 +1677,7 @@ proc_stop_sweep(void *v)
 
 		if ((pr->ps_pptr->ps_sigacts->ps_sigflags & SAS_NOCLDSTOP) == 0)
 			prsignal(pr->ps_pptr, SIGCHLD);
+		atomic_setbits_int(&pr->ps_pptr->ps_flags, PS_WAITEVENT);
 		wakeup(pr->ps_pptr);
 	}
 }

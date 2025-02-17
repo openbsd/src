@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.240 2024/12/17 14:45:00 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.241 2025/02/17 10:07:10 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -148,6 +148,8 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 			atomic_clearbits_int(&pr->ps_flags, PS_PPWAIT);
 			atomic_clearbits_int(&pr->ps_pptr->ps_flags,
 			    PS_ISPWAIT);
+			atomic_setbits_int(&pr->ps_pptr->ps_flags,
+			    PS_WAITEVENT);
 			wakeup(pr->ps_pptr);
 		}
 
@@ -358,6 +360,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		if (pr->ps_flags & PS_NOZOMBIE) {
 			struct process *ppr = pr->ps_pptr;
 			process_reparent(pr, initprocess);
+			atomic_setbits_int(&ppr->ps_flags, PS_WAITEVENT);
 			wakeup(ppr);
 		}
 		mtx_leave(&pr->ps_mtx);
@@ -486,6 +489,8 @@ reaper(void *arg)
 			if (pr->ps_flags & PS_ZOMBIE) {
 				/* Post SIGCHLD and wake up parent. */
 				prsignal(pr->ps_pptr, SIGCHLD);
+				atomic_setbits_int(&pr->ps_pptr->ps_flags,
+				    PS_WAITEVENT);
 				wakeup(pr->ps_pptr);
 			} else {
 				/* No one will wait for us, just zap it. */
@@ -508,6 +513,7 @@ dowait6(struct proc *q, idtype_t idtype, id_t id, int *statusp, int options,
 		memset(info, 0, sizeof(*info));
 
 loop:
+	atomic_clearbits_int(&q->p_p->ps_flags, PS_WAITEVENT);
 	nfound = 0;
 	LIST_FOREACH(pr, &q->p_p->ps_children, ps_sibling) {
 		if ((pr->ps_flags & PS_NOZOMBIE) ||
@@ -638,7 +644,9 @@ loop:
 		*retval = 0;
 		return (0);
 	}
-	if ((error = tsleep_nsec(q->p_p, PWAIT | PCATCH, "wait", INFSLP)) != 0)
+	sleep_setup(q->p_p, PWAIT | PCATCH, "wait");
+	if ((error = sleep_finish(0,
+	    !ISSET(atomic_load_int(&q->p_p->ps_flags), PS_WAITEVENT))) != 0)
 		return (error);
 	goto loop;
 }
@@ -746,6 +754,7 @@ proc_finish_wait(struct proc *waiter, struct process *pr)
 		process_reparent(pr, tr);
 		mtx_leave(&pr->ps_mtx);
 		prsignal(tr, SIGCHLD);
+		atomic_setbits_int(&tr->ps_flags, PS_WAITEVENT);
 		wakeup(tr);
 	} else {
 		mtx_leave(&pr->ps_mtx);
