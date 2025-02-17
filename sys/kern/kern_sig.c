@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.362 2025/02/17 10:07:10 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.363 2025/02/17 15:45:55 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1500,7 +1500,11 @@ proc_trap(struct proc *p, int signum)
 	struct process *pr = p->p_p;
 
 	single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
+
+	mtx_enter(&pr->ps_mtx);
 	pr->ps_xsig = signum;
+	pr->ps_trapped = p;
+	mtx_leave(&pr->ps_mtx);
 
 	SCHED_LOCK();
 	atomic_setbits_int(&pr->ps_flags, PS_TRAPPED);
@@ -1509,8 +1513,12 @@ proc_trap(struct proc *p, int signum)
 	    PS_WAITED | PS_STOPPED | PS_TRAPPED);
 	SCHED_UNLOCK();
 
+	mtx_enter(&pr->ps_mtx);
 	signum = pr->ps_xsig;
 	pr->ps_xsig = 0;
+	pr->ps_trapped = NULL;
+	mtx_leave(&pr->ps_mtx);
+
 	if ((p->p_flag & P_TRACESINGLE) == 0)
 		single_thread_clear(p);
 	atomic_clearbits_int(&p->p_flag, P_TRACESINGLE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.381 2025/02/17 10:07:10 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.382 2025/02/17 15:45:55 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -190,6 +190,7 @@ struct process {
 	int	ps_siglist;		/* Signals pending for the process. */
 
 	struct	proc *ps_single;	/* [m] Thread for single-threading. */
+	struct	proc *ps_trapped;	/* [m] Thread trapped for ptrace. */
 	u_int	ps_singlecnt;		/* [m] Number of threads to suspend. */
 	u_int	ps_exitcnt;		/* [m] Number of threads in exit1. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.105 2024/12/15 18:25:12 mvs Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.106 2025/02/17 15:45:55 claudio Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -330,12 +330,11 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 	case PT_ATTACH:
 	case PT_DETACH:
 		/* Find the process we're supposed to be operating on. */
-		if ((tr = prfind(pid)) == NULL) {
+		if (pid > THREAD_PID_OFFSET) {
 			error = ESRCH;
 			goto fail;
 		}
-		t = TAILQ_FIRST(&tr->ps_threads);
-		break;
+		/* FALLTHROUGH */
 
 	/* calls that accept a PID or a thread ID */
 	case PT_CONTINUE:
@@ -466,16 +465,6 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 * from where it stopped."
 		 */
 
-		if (pid < THREAD_PID_OFFSET && tr->ps_single)
-			t = tr->ps_single;
-		else if (t == tr->ps_single)
-			atomic_setbits_int(&t->p_flag, P_TRACESINGLE);
-		else {
-			error = EINVAL;
-			goto fail;
-		}
-			
-
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1)
 			if ((error = process_set_pc(t, addr)) != 0)
@@ -504,9 +493,6 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 * from where it stopped."
 		 */
 
-		if (pid < THREAD_PID_OFFSET && tr->ps_single)
-			t = tr->ps_single;
-
 #ifdef PT_STEP
 		/*
 		 * Stop single stepping.
@@ -525,25 +511,33 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
 
 		/* Finally, deliver the requested signal (or none). */
-		if (t->p_stat == SSTOP) {
-			tr->ps_xsig = data;
+		mtx_enter(&tr->ps_mtx);
+		if (tr->ps_trapped == t) {
 			SCHED_LOCK();
+			if (pid >= THREAD_PID_OFFSET)
+				atomic_setbits_int(&t->p_flag,
+				    P_TRACESINGLE);
+			tr->ps_xsig = data;
 			unsleep(t);
 			setrunnable(t);
 			SCHED_UNLOCK();
-		} else {
+			mtx_leave(&tr->ps_mtx);
+		} else if (pid < THREAD_PID_OFFSET) {
+			mtx_leave(&tr->ps_mtx);
 			if (data != 0)
-				psignal(t, data);
+				ptsignal(t, data, SPROCESS);
+		} else {
+			mtx_leave(&tr->ps_mtx);
+			/* can not signal a single thread */
+			error = EINVAL;
+			goto fail;
 		}
 		break;
 
 	case PT_KILL:
-		if (pid < THREAD_PID_OFFSET && tr->ps_single)
-			t = tr->ps_single;
-
 		/* just send the process a KILL signal. */
 		data = SIGKILL;
-		goto sendsig;	/* in PT_CONTINUE, above. */
+		goto sendsig;	/* in PT_DETACH, above. */
 
 	case PT_ATTACH:
 		/*
@@ -625,9 +619,13 @@ ptrace_kstate(struct proc *p, int req, pid_t pid, void *addr)
 		tr->ps_ptmask = pe->pe_set_event;
 		break;
 	case PT_GET_PROCESS_STATE:
-		if (tr->ps_single)
-			tr->ps_ptstat->pe_tid =
-			    tr->ps_single->p_tid + THREAD_PID_OFFSET;
+		mtx_enter(&tr->ps_mtx);
+		if (tr->ps_trapped != NULL)
+			tr->ps_ptstat->pe_tid = tr->ps_trapped->p_tid +
+			    THREAD_PID_OFFSET;
+		else
+			tr->ps_ptstat->pe_tid = 0;
+		mtx_leave(&tr->ps_mtx);
 		memcpy(addr, tr->ps_ptstat, sizeof *tr->ps_ptstat);
 		break;
 	default:
@@ -812,21 +810,28 @@ ptrace_ustate(struct proc *p, int req, pid_t pid, void *addr, int data,
 static inline struct process *
 process_tprfind(pid_t tpid, struct proc **tp)
 {
-	if (tpid > THREAD_PID_OFFSET) {
-		struct proc *t = tfind(tpid - THREAD_PID_OFFSET);
+	struct process *tr;
+	struct proc *t;
 
+	if (tpid > THREAD_PID_OFFSET) {
+		t = tfind(tpid - THREAD_PID_OFFSET);
 		if (t == NULL)
 			return NULL;
-		*tp = t;
-		return t->p_p;
+		tr = t->p_p;
 	} else {
-		struct process *tr = prfind(tpid);
-
+		tr = prfind(tpid);
 		if (tr == NULL)
 			return NULL;
-		*tp = TAILQ_FIRST(&tr->ps_threads);
-		return tr;
+		mtx_enter(&tr->ps_mtx);
+		if (tr->ps_trapped != NULL)
+			t = tr->ps_trapped;
+		else
+			t = TAILQ_FIRST(&tr->ps_threads);
+		mtx_leave(&tr->ps_mtx);
 	}
+
+	*tp = t;
+	return tr;
 }
 
 
