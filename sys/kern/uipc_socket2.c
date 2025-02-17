@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.179 2025/02/15 21:49:28 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.180 2025/02/17 08:56:33 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -613,14 +613,14 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	mtx_enter(&so->so_snd.sb_mtx);
-	if (sbreserve(so, &so->so_snd, sndcc))
+	if (sbreserve(&so->so_snd, sndcc))
 		goto bad;
 	so->so_snd.sb_wat = sndcc;
 	if (so->so_snd.sb_lowat == 0)
 		so->so_snd.sb_lowat = MCLBYTES;
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
-	if (sbreserve(so, &so->so_rcv, rcvcc))
+	if (sbreserve(&so->so_rcv, rcvcc))
 		goto bad2;
 	so->so_rcv.sb_wat = rcvcc;
 	if (so->so_rcv.sb_lowat == 0)
@@ -643,7 +643,7 @@ bad:
  * if buffering efficiency is near the normal case.
  */
 int
-sbreserve(struct socket *so, struct sockbuf *sb, u_long cc)
+sbreserve(struct sockbuf *sb, u_long cc)
 {
 	sbmtxassertlocked(sb);
 

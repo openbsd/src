@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.430 2025/02/10 15:06:57 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.431 2025/02/17 08:56:33 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3020,7 +3020,7 @@ tcp_mss_update(struct tcpcb *tp)
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
-		(void)sbreserve(so, &so->so_snd, bufsize);
+		(void)sbreserve(&so->so_snd, bufsize);
 		mtx_leave(&so->so_snd.sb_mtx);
 	}
 
@@ -3030,7 +3030,7 @@ tcp_mss_update(struct tcpcb *tp)
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
-		(void)sbreserve(so, &so->so_rcv, bufsize);
+		(void)sbreserve(&so->so_rcv, bufsize);
 	}
 	mtx_leave(&so->so_rcv.sb_mtx);
 }

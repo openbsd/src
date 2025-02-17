@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.151 2025/02/17 08:39:50 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.152 2025/02/17 08:56:33 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -238,7 +238,7 @@ void	sbflush(struct sockbuf *);
 void	sbrelease(struct sockbuf *);
 int	sbcheckreserve(u_long, u_long);
 int	sbchecklowmem(void);
-int	sbreserve(struct socket *, struct sockbuf *, u_long);
+int	sbreserve(struct sockbuf *, u_long);
 int	sbwait(struct sockbuf *);
 void	soinit(void);
 void	soabort(struct socket *);

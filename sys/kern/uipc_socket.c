@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.373 2025/02/13 14:44:33 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.374 2025/02/17 08:56:33 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1996,7 +1996,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 					break;
 				}
 				if (sbcheckreserve(cnt, sb->sb_wat) ||
-				    sbreserve(so, sb, cnt)) {
+				    sbreserve(sb, cnt)) {
 					error = ENOBUFS;
 					break;
 				}
