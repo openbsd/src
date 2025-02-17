@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2025/02/03 17:59:40 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 2025/02/17 22:31:53 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -719,8 +719,14 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	_pmap_kenter_pa(va, pa, prot, prot,
-	    (pa & PMAP_NOCACHE) ? PMAP_CACHE_CI : PMAP_CACHE_WB);
+        int cache = PMAP_CACHE_WB;
+
+        if (pa & PMAP_NOCACHE)
+                cache = PMAP_CACHE_CI;
+        if (pa & PMAP_DEVICE)
+                cache = PMAP_CACHE_DEV;
+
+	_pmap_kenter_pa(va, pa, prot, prot, cache);
 }
 
 void
