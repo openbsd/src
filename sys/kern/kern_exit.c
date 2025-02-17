@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.241 2025/02/17 10:07:10 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.242 2025/02/17 10:16:05 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -516,13 +516,16 @@ loop:
 	atomic_clearbits_int(&q->p_p->ps_flags, PS_WAITEVENT);
 	nfound = 0;
 	LIST_FOREACH(pr, &q->p_p->ps_children, ps_sibling) {
+		mtx_enter(&pr->ps_mtx);
 		if ((pr->ps_flags & PS_NOZOMBIE) ||
 		    (idtype == P_PID && id != pr->ps_pid) ||
-		    (idtype == P_PGID && id != pr->ps_pgid))
+		    (idtype == P_PGID && id != pr->ps_pgid)) {
+			mtx_leave(&pr->ps_mtx);
 			continue;
-
+		}
 		nfound++;
 		if ((options & WEXITED) && (pr->ps_flags & PS_ZOMBIE)) {
+			mtx_leave(&pr->ps_mtx);
 			*retval = pr->ps_pid;
 			if (info != NULL) {
 				info->si_pid = pr->ps_pid;
@@ -552,6 +555,7 @@ loop:
 		if ((options & WTRAPPED) && (pr->ps_flags & PS_TRACED) &&
 		    (pr->ps_flags & PS_WAITED) == 0 &&
 		    (pr->ps_flags & PS_TRAPPED)) {
+			mtx_leave(&pr->ps_mtx);
 			if (single_thread_wait(pr, 0))
 				goto loop;
 
@@ -577,6 +581,7 @@ loop:
 		    (pr->ps_flags & PS_WAITED) == 0 &&
 		    (pr->ps_flags & PS_STOPPED) &&
 		    (pr->ps_flags & PS_TRAPPED) == 0) {
+			mtx_leave(&pr->ps_mtx);
 			if ((options & WNOWAIT) == 0)
 				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 
@@ -596,6 +601,7 @@ loop:
 			return (0);
 		}
 		if ((options & WCONTINUED) && (pr->ps_flags & PS_CONTINUED)) {
+			mtx_leave(&pr->ps_mtx);
 			if ((options & WNOWAIT) == 0)
 				atomic_clearbits_int(&pr->ps_flags,
 				    PS_CONTINUED);
@@ -615,6 +621,7 @@ loop:
 				memset(rusage, 0, sizeof(*rusage));
 			return (0);
 		}
+		mtx_leave(&pr->ps_mtx);
 	}
 	/*
 	 * Look in the orphans list too, to allow the parent to
