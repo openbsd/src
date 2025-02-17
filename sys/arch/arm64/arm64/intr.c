@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.29 2024/08/04 12:01:18 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.30 2025/02/17 21:08:40 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -237,10 +237,10 @@ arm_intr_prereg_disestablish_fdt(void *cookie)
 	struct intr_prereg *ip = cookie;
 	struct interrupt_controller *ic = ip->ip_ic;
 
-	if (ip->ip_ic != NULL && ip->ip_ih != NULL)
+	if (ic != NULL && ip->ip_ih != NULL)
 		ic->ic_disestablish(ip->ip_ih);
 
-	if (ip->ip_ic != NULL)
+	if (ic != NULL)
 		LIST_REMOVE(ip, ip_list);
 
 	free(ip, M_DEVBUF, sizeof(*ip));
@@ -252,8 +252,20 @@ arm_intr_prereg_barrier_fdt(void *cookie)
 	struct intr_prereg *ip = cookie;
 	struct interrupt_controller *ic = ip->ip_ic;
 
-	if (ip->ip_ic != NULL && ip->ip_ih != NULL)
+	if (ic != NULL && ip->ip_ih != NULL)
 		ic->ic_barrier(ip->ip_ih);
+}
+
+void
+arm_intr_prereg_set_wakeup_fdt(void *cookie)
+{
+	struct intr_prereg *ip = cookie;
+	struct interrupt_controller *ic = ip->ip_ic;
+
+	if (ic != NULL && ip->ip_ih != NULL && ic->ic_set_wakeup)
+		ic->ic_set_wakeup(ip->ip_ih);
+
+	ip->ip_level |= IPL_WAKEUP;
 }
 
 void
@@ -269,6 +281,7 @@ arm_intr_init_fdt_recurse(int node)
 		ic->ic_establish = arm_intr_prereg_establish_fdt;
 		ic->ic_disestablish = arm_intr_prereg_disestablish_fdt;
 		ic->ic_barrier = arm_intr_prereg_barrier_fdt;
+		ic->ic_set_wakeup = arm_intr_prereg_set_wakeup_fdt;
 		arm_intr_register_fdt(ic);
 	}
 
