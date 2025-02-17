@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.480 2025/02/12 19:33:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.481 2025/02/17 14:45:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4146,12 +4146,12 @@ parse_config(const char *filename, struct peer_head *ph,
 
 	/* check that we dont try to announce our own routes */
 	TAILQ_FOREACH(n, netconf, entry)
-	    if (n->net.priority == conf->fib_priority) {
-		    errors++;
-		    logit(LOG_CRIT, "network priority %d == fib-priority "
-			"%d is not allowed.",
-			n->net.priority, conf->fib_priority);
-	    }
+		if (n->net.priority == conf->fib_priority) {
+			errors++;
+			logit(LOG_CRIT, "network priority %d == fib-priority "
+			    "%d is not allowed.",
+			    n->net.priority, conf->fib_priority);
+		}
 
 	/* Free macros and check which have not been used. */
 	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
