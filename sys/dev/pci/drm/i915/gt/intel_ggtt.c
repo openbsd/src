@@ -1235,6 +1235,7 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 {
 	struct drm_i915_private *i915 = ggtt->vm.i915;
+	struct intel_uncore *uncore = ggtt->vm.gt->uncore;
 	struct pci_dev *pdev = i915->drm.pdev;
 	phys_addr_t phys_addr;
 	bus_addr_t addr;
@@ -1251,7 +1252,13 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 		return ret;
 
 	GEM_WARN_ON(len != gen6_gttmmadr_size(i915));
-	phys_addr = addr + gen6_gttadr_offset(i915);
+
+	if (i915_direct_stolen_access(i915)) {
+		drm_dbg(&i915->drm, "Using direct GSM access\n");
+		phys_addr = intel_uncore_read64(uncore, GEN6_GSMBASE) & GEN11_BDSM_MASK;
+	} else {
+		phys_addr = addr + gen6_gttadr_offset(i915);
+	}
 
 	if (needs_wc_ggtt_mapping(i915))
 		flags = BUS_SPACE_MAP_PREFETCHABLE;
@@ -1340,8 +1347,8 @@ static int gen8_gmch_probe(struct i915_ggtt *ggtt)
 		    &base, &sz, NULL);
 		if (err)
 			return err;
-		ggtt->gmadr.start = base;
-		ggtt->mappable_end = sz;
+		ggtt->gmadr = DEFINE_RES_MEM(base, sz);
+		ggtt->mappable_end = resource_size(&ggtt->gmadr);
 #endif
 	}
 
@@ -1531,8 +1538,8 @@ static int gen6_gmch_probe(struct i915_ggtt *ggtt)
 	    &base, &sz, NULL);
 	if (err)
 		return err;
-	ggtt->gmadr.start = base;
-	ggtt->mappable_end = sz;
+	ggtt->gmadr = DEFINE_RES_MEM(base, sz);
+	ggtt->mappable_end = resource_size(&ggtt->gmadr);
 #endif
 
 	/*
