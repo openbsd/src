@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.373 2025/02/12 14:11:26 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.374 2025/02/17 13:10:27 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -894,8 +894,10 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		bp = &cwdbuf[cwdlen - 1];
 		*bp = '\0';
 
+		KERNEL_LOCK();
 		error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, cwdbuf,
 		    cwdlen/2, GETCWD_CHECK_ACCESS, p);
+		KERNEL_UNLOCK();
 
 		if (error) {
 			free(cwdbuf, M_TEMP, cwdlen);
@@ -919,12 +921,16 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 
 	nd.ni_pledge = PLEDGE_RPATH;
 	nd.ni_unveil = UNVEIL_READ;
-	if ((error = namei(&nd)) != 0)
+	KERNEL_LOCK();
+	if ((error = namei(&nd)) != 0) {
+		KERNEL_UNLOCK();
 		goto end;
+	}
 
 	/* release reference from namei */
 	if (nd.ni_vp)
 		vrele(nd.ni_vp);
+	KERNEL_UNLOCK();
 
 	error = copyoutstr(nd.ni_cnd.cn_rpbuf, SCARG(uap, resolved),
 	    MAXPATHLEN, NULL);

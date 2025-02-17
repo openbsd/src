@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.268 2025/01/29 14:58:28 mpi Exp $
+;	$OpenBSD: syscalls.master,v 1.269 2025/02/17 13:10:27 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -240,7 +240,7 @@
 113	UNIMPL		fktrace
 114	STD 		{ int sys_unveil(const char *path, \
 			    const char *permissions); }
-115	STD		{ int sys___realpath(const char *pathname, \
+115	STD NOLOCK	{ int sys___realpath(const char *pathname, \
 			    char *resolved); }
 116	STD NOLOCK	{ int sys_recvmmsg(int s, struct mmsghdr *mmsg, \
 			    unsigned int vlen, int flags, \
