@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.10 2023/07/28 09:31:21 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.11 2025/02/17 09:25:45 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -274,8 +274,8 @@ ECDH_compute_key(void *out, size_t out_len, const EC_POINT *pub_key,
 LCRYPTO_ALIAS(ECDH_compute_key);
 
 int
-ECDH_size(const EC_KEY *d)
+ECDH_size(const EC_KEY *eckey)
 {
-	return (EC_GROUP_get_degree(EC_KEY_get0_group(d)) + 7) / 8;
+	return BN_num_bytes(eckey->group->p);
 }
 LCRYPTO_ALIAS(ECDH_size);
