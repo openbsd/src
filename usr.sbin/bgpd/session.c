@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.516 2025/02/17 16:41:59 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.517 2025/02/18 16:02:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -885,8 +885,6 @@ void
 change_state(struct peer *peer, enum session_state state,
     enum session_events event)
 {
-	struct mrt	*mrt;
-
 	switch (state) {
 	case STATE_IDLE:
 		/* carp demotion first. new peers handled in init_peer */
@@ -1000,14 +998,9 @@ change_state(struct peer *peer, enum session_state state,
 	}
 
 	log_statechange(peer, state, event);
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (!(mrt->type == MRT_ALL_IN || mrt->type == MRT_ALL_OUT))
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == peer->conf.id || (mrt->group_id != 0 &&
-		    mrt->group_id == peer->conf.groupid))
-			mrt_dump_state(mrt, peer->state, state, peer);
-	}
+
+	session_mrt_dump_state(peer, peer->state, state);
+
 	peer->prev_state = peer->state;
 	peer->state = state;
 }
@@ -1448,17 +1441,7 @@ session_newmsg(enum msg_type msgtype, uint16_t len)
 void
 session_sendmsg(struct ibuf *msg, struct peer *p, enum msg_type msgtype)
 {
-	struct mrt		*mrt;
-
-	LIST_FOREACH(mrt, &mrthead, entry) {
-		if (!(mrt->type == MRT_ALL_OUT || (msgtype == BGP_UPDATE &&
-		    mrt->type == MRT_UPDATE_OUT)))
-			continue;
-		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
-		    mrt->group_id == p->conf.groupid))
-			mrt_dump_bgp_msg(mrt, msg, p, msgtype);
-	}
+	session_mrt_dump_bgp_msg(p, msg, msgtype, DIR_OUT);
 
 	ibuf_close(p->wbuf, msg);
 	if (!p->throttled && msgbuf_queuelen(p->wbuf) > SESS_MSG_HIGH_MARK) {
@@ -2063,7 +2046,6 @@ void
 session_process_msg(struct peer *p)
 {
 	struct ibuf	*msg;
-	struct mrt	*mrt;
 	int		processed = 0;
 	uint8_t		msgtype;
 
@@ -2086,17 +2068,7 @@ session_process_msg(struct peer *p)
 		}
 		ibuf_rewind(msg);
 
-		/* dump to MRT as soon as we have a full packet */
-		LIST_FOREACH(mrt, &mrthead, entry) {
-			if (!(mrt->type == MRT_ALL_IN ||
-			    (msgtype == BGP_UPDATE &&
-			    mrt->type == MRT_UPDATE_IN)))
-				continue;
-			if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
-			    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
-			    mrt->group_id == p->conf.groupid))
-				mrt_dump_bgp_msg(mrt, msg, p, msgtype);
-		}
+		session_mrt_dump_bgp_msg(p, msg, msgtype, DIR_IN);
 
 		ibuf_skip(msg, MSGSIZE_HEADER);
 
@@ -3027,6 +2999,47 @@ capa_neg_calc(struct peer *p)
 	session_notification(p, ERR_OPEN, ERR_OPEN_CAPA, ebuf);
 	ibuf_free(ebuf);
 	return (-1);
+}
+
+void
+session_mrt_dump_state(struct peer *p, enum session_state oldstate,
+    enum session_state newstate)
+{
+	struct mrt		*mrt;
+
+	LIST_FOREACH(mrt, &mrthead, entry) {
+		if (mrt->type != MRT_ALL_IN && mrt->type != MRT_ALL_OUT)
+			continue;
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
+		    mrt->group_id == p->conf.groupid))
+			mrt_dump_state(mrt, oldstate, newstate, p);
+	}
+}
+
+void
+session_mrt_dump_bgp_msg(struct peer *p, struct ibuf *msg,
+     enum msg_type msgtype, enum directions dir)
+{
+	struct mrt		*mrt;
+
+	LIST_FOREACH(mrt, &mrthead, entry) {
+		if (dir == DIR_IN) {
+			if (mrt->type != MRT_ALL_IN &&
+			    (mrt->type != MRT_UPDATE_IN ||
+			    msgtype != BGP_UPDATE))
+				continue;
+		} else {
+			if (mrt->type != MRT_ALL_OUT &&
+			    (mrt->type != MRT_UPDATE_OUT ||
+			    msgtype != BGP_UPDATE))
+				continue;
+		}
+		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
+		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
+		    mrt->group_id == p->conf.groupid))
+			mrt_dump_bgp_msg(mrt, msg, p, msgtype);
+	}
 }
 
 void
