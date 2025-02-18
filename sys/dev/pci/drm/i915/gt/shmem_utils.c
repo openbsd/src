@@ -195,6 +195,7 @@ uao_create_from_data(const char *name, void *data, size_t len)
 struct uvm_object *
 uao_create_from_object(struct drm_i915_gem_object *obj)
 {
+	enum i915_map_type map_type;
 	struct uvm_object *uao;
 	void *ptr;
 
@@ -203,8 +204,8 @@ uao_create_from_object(struct drm_i915_gem_object *obj)
 		return obj->base.uao;
 	}
 
-	ptr = i915_gem_object_pin_map_unlocked(obj, i915_gem_object_is_lmem(obj) ?
-						I915_MAP_WC : I915_MAP_WB);
+	map_type = i915_gem_object_is_lmem(obj) ? I915_MAP_WC : I915_MAP_WB;
+	ptr = i915_gem_object_pin_map_unlocked(obj, map_type);
 	if (IS_ERR(ptr))
 		return ERR_CAST(ptr);
 
