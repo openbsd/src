@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.24 2025/01/05 16:07:08 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.25 2025/02/18 06:31:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -221,10 +221,8 @@ pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	}
 
 	eckey = dctx->co_key ? dctx->co_key : ctx->pkey->pkey.ec;
-	if (!key) {
-		const EC_GROUP *group;
-		group = EC_KEY_get0_group(eckey);
-		*keylen = (EC_GROUP_get_degree(group) + 7) / 8;
+	if (key == NULL) {
+		*keylen = BN_num_bytes(eckey->group->p);
 		return 1;
 	}
 	pubkey = EC_KEY_get0_public_key(ctx->peerkey->pkey.ec);
