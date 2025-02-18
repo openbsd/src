@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.3 2025/02/11 22:27:09 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.4 2025/02/18 09:18:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -22,6 +22,13 @@
 
 #include <machine/armreg.h>
 #include <machine/fpu.h>
+
+/*
+ * Fool the compiler into accessing these registers without enabling
+ * FP code generation.  OpenBSD assumes the CPU has FP support.
+ */
+#define fpcr		s3_3_c4_c4_0
+#define fpsr		s3_3_c4_c4_1
 
 void	sve_save(struct proc *p);
 
