@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.25 2022/02/21 16:08:36 kn Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.26 2025/02/19 11:10:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -233,10 +233,11 @@ uvm_obj_free(struct uvm_object *uobj)
  	 */
 	RBT_FOREACH(pg, uvm_objtree, &uobj->memt) {
 		/*
-		 * clear PG_TABLED so we don't do work to remove
-		 * this pg from the uobj we are throwing away
+		 * clear PG_TABLED and `uobject' so we don't do work to
+		 * remove this pg from the uobj we are throwing away.
 		 */
 		atomic_clearbits_int(&pg->pg_flags, PG_TABLED);
+		pg->uobject = NULL;
 		uvm_lock_pageq();
 		uvm_pageclean(pg);
 		uvm_unlock_pageq();

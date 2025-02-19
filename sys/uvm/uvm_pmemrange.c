@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.76 2024/11/08 15:54:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.77 2025/02/19 11:10:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -1226,8 +1226,8 @@ out:
 		}
 		atomic_clearbits_int(&found->pg_flags, PG_ZERO|PQ_FREE);
 
-		found->uobject = NULL;
-		found->uanon = NULL;
+		KASSERT(found->uobject == NULL);
+		KASSERT(found->uanon == NULL);
 		found->pg_version++;
 
 		/*
@@ -1303,6 +1303,9 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 	struct vm_page *firstpg = pg;
 
 	for (i = 0; i < count; i++) {
+		KASSERT(pg->uobject == NULL);
+		KASSERT(pg->uanon == NULL);
+
 		KASSERT(atop(VM_PAGE_TO_PHYS(&pg[i])) ==
 		    atop(VM_PAGE_TO_PHYS(pg)) + i);
 
@@ -1350,6 +1353,9 @@ uvm_pmr_freepageq(struct pglist *pgl)
 	psize_t plen;
 
 	TAILQ_FOREACH(pg, pgl, pageq) {
+		KASSERT(pg->uobject == NULL);
+		KASSERT(pg->uanon == NULL);
+
 		if (!((pg->pg_flags & PQ_FREE) == 0 &&
 		    VALID_FLAGS(pg->pg_flags))) {
 			printf("Flags: 0x%x, will panic now.\n",
