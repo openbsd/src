@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2095 2025/01/08 02:12:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.2096 2025/02/19 02:15:33 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1359,6 +1359,7 @@ product ATI PPB_1		0x1478	PCIE
 product ATI PPB_2		0x1479	PCIE
 product ATI MENDOCINO		0x1506	Mendocino
 product ATI STRIX_POINT		0x150e	Strix Point
+product ATI STRIX_HALO		0x1586	Strix Halo
 product ATI PHOENIX_1		0x15bf	Phoenix
 product ATI PHOENIX_2		0x15c8	Phoenix
 product ATI PICASSO		0x15d8	Picasso
@@ -2181,6 +2182,7 @@ product ATI BEIGE_GOBY_4	0x7423	Navi 24
 product ATI BEIGE_GOBY_5	0x7424	Navi 24
 product ATI BEIGE_GOBY_6	0x743f	Navi 24
 product ATI NAVI31_2		0x7448	Navi 31
+product ATI NAVI31_5		0x7449	Navi 31
 product ATI NAVI31_4		0x744a	Navi 31
 product ATI NAVI31_1		0x744c	Navi 31
 product ATI NAVI31_3		0x745e	Navi 31

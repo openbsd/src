@@ -215,6 +215,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 
 	/* GC 11.0.0, DCN 3.2.0, dGPU, "Navi 31" */
 	{0x1002, 0x7448 },	/* Radeon Pro W7900 */
+	{0x1002, 0x7449 },	/* Radeon Pro W7800 48GB */
 	{0x1002, 0x744a },	/* Radeon Pro W7900 Dual Slot */
 	{0x1002, 0x744c },	/* Radeon RX 7900 XT/XTX/GRE, 7900M */
 	{0x1002, 0x745e },	/* Radeon Pro W7800 */
@@ -247,7 +248,9 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 300, "Strix Point" */
 	{0x1002, 0x150e },	/* Radeon 880M / 890M */
 
-	/* GC 11.5.1, DCN 3.5.1, APU */
+	/* GC 11.5.1, DCN 3.5.1, APU, Ryzen AI Max 300, "Strix Halo" */
+	{0x1002, 0x1586 },	/* Radeon 8050S / 8060S */
+
 	/* GC 11.5.2, DCN 3.5.1, APU */
 
 	/* GC 12.0.0, DCN 4.0.1, dGPU */
