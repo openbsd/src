@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.71 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.72 2025/02/19 11:07:47 mpi Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -85,28 +85,31 @@
  *	and offset to which this page belongs (for pageout),
  *	and sundry status bits.
  *
- *	Fields in this structure are possibly locked by the lock on the page
- *	queues (P).
+ * Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	a	atomic operations
+ *	Q	uvm.pageqlock
+ *	F	uvm.fpageqlock
+ *	o	owner lock (uobject->vmobjlock or uanon->an_lock)
  */
 
 TAILQ_HEAD(pglist, vm_page);
 
 struct vm_page {
-	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
-						 * queue or free list (P) */
-	RBT_ENTRY(vm_page)	objt;		/* object tree */
+	TAILQ_ENTRY(vm_page)	pageq;		/* [Q] LRU or free page queue */
+	RBT_ENTRY(vm_page)	objt;		/* [o] object tree */
 
-	struct vm_anon		*uanon;		/* anon (P) */
-	struct uvm_object	*uobject;	/* object (P) */
-	voff_t			offset;		/* offset into object (P) */
+	struct vm_anon		*uanon;		/* [o] anon */
+	struct uvm_object	*uobject;	/* [o] object */
+	voff_t			offset;		/* [o] offset into object */
 
-	u_int			pg_flags;	/* object flags [P] */
+	uint32_t		pg_flags;	/* [a] object flags */
 
-	u_int			pg_version;	/* version count */
-	u_int			wire_count;	/* wired down map refs [P] */
+	uint32_t		pg_version;	/* version count */
+	uint32_t		wire_count;	/* [o] wired down map refs */
 
-	paddr_t			phys_addr;	/* physical address of page */
-	psize_t			fpgsz;		/* free page range size */
+	paddr_t			phys_addr;	/* [I] physical address */
+	psize_t			fpgsz;		/* [F] free page range size */
 
 	struct vm_page_md	mdpage;		/* pmap-specific data */
 
@@ -287,9 +290,9 @@ int		vm_physseg_find(paddr_t, int *);
 
 #define	UVM_PAGEZERO_TARGET	(uvmexp.free / 8)
 
-#define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+#define VM_PAGE_TO_PHYS(pg)	((pg)->phys_addr)
 
-#define VM_PAGE_IS_FREE(entry)  ((entry)->pg_flags & PQ_FREE)
+#define VM_PAGE_IS_FREE(pg)  ((pg)->pg_flags & PQ_FREE)
 
 #define	PADDR_IS_DMA_REACHABLE(paddr)	\
 	(dma_constraint.ucr_low <= paddr && dma_constraint.ucr_high > paddr)
