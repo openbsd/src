@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2096 2025/02/19 02:15:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2097 2025/02/19 10:38:14 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3434,6 +3434,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
 	    "AR5211Ref",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KRACKAN_POINT,
+	    "Krackan Point",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KAVERI_1,

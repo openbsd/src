@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2096 2025/02/19 02:15:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2097 2025/02/19 10:38:14 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1332,6 +1332,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR5211_LEGACY	0xff12		/* AR5211Ref */
 
 /* ATI Technologies */
+#define	PCI_PRODUCT_ATI_KRACKAN_POINT	0x1114		/* Krackan Point */
 #define	PCI_PRODUCT_ATI_KAVERI_1	0x1304		/* Kaveri */
 #define	PCI_PRODUCT_ATI_KAVERI_2	0x1305		/* Kaveri */
 #define	PCI_PRODUCT_ATI_KAVERI_3	0x1306		/* Kaveri */
