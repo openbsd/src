@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2096 2025/02/19 02:15:33 jsg Exp $
+$OpenBSD: pcidevs,v 1.2097 2025/02/19 10:38:14 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1327,6 +1327,7 @@ product ATHEROS AR5211_FPGA11B	0xf11b	AR5211Ref
 product ATHEROS AR5211_LEGACY	0xff12	AR5211Ref
 
 /* ATI Technologies */
+product ATI KRACKAN_POINT	0x1114	Krackan Point
 product ATI KAVERI_1		0x1304	Kaveri
 product ATI KAVERI_2		0x1305	Kaveri
 product ATI KAVERI_3		0x1306	Kaveri
