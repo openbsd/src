@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.774 2025/02/06 13:13:25 kirill Exp $
+$OpenBSD: usbdevs,v 1.775 2025/02/19 08:44:56 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -475,6 +475,7 @@ vendor FALCOM		0x0f94	Falcom Wireless Communications
 vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
 vendor LARSENBRUSGAARD	0x0fd8	Larsen and Brusgaard
+vendor ELGATO		0x0fd9	Elgato
 vendor OREGONSCI	0x0fde	Oregon Scientific
 vendor UNKNOWN4		0x0fe6	Unknown Vendor
 vendor DVICO		0x0fe9	DViCO
@@ -692,7 +693,6 @@ vendor DATAAPEX		0xdaae	DataApex
 vendor EVOLUTION	0xdeee	Evolution Robotics
 vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
-vendor ELGATO		0x0fd9	Elgato
 
 /*
  * List of known products.  Grouped by vendor.
@@ -1785,9 +1785,6 @@ product EICON DIVA852		0x4905	Diva 852 ISDN TA
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
 
-/* Elgato products */
-product ELGATO HD60		0x006a	Game Capture HD60 S+
-
 /* Elan Microelectronics products */
 product ELAN BARCODE		0x0001	Barcode Scanner
 
@@ -1817,6 +1814,9 @@ product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
 
 /* Elektor Electronics products */
 product ELEKTOR FT323R		0x0005	FT323R
+
+/* Elgato products */
+product ELGATO HD60		0x006a	Game Capture HD60 S+
 
 /* Elsa products */
 product ELSA MODEM1		0x2265	ELSA
@@ -3185,12 +3185,12 @@ product MICROSOFT INETPRO	0x001c	Internet Keyboard Pro
 product MICROSOFT TBEXPLORER	0x0024	Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO2	0x002b	Internet Keyboard Pro
-product MICROSOFT PIXARTMOUSE	0x00cb	Optical Mouse
 product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT 700WX		0x0079	Palm 700WX
 product MICROSOFT MN110		0x007a	10/100 Ethernet
 product MICROSOFT WLINTELLIMOUSE 0x008c	Wireless Optical IntelliMouse
 product MICROSOFT WLNOTEBOOK	0x00b9	Wireless Optical Mouse (Model 1023)
+product MICROSOFT PIXARTMOUSE	0x00cb	Optical Mouse
 product MICROSOFT WLNOTEBOOK3	0x00d2	Wireless Optical Mouse 3000 (Model 1049)
 product MICROSOFT WLNOTEBOOK2	0x00e1	Wireless Optical Mouse 3000 (Model 1056)
 product MICROSOFT XBOX360_CONTROLLER 0x028e XBOX 360 Controller
