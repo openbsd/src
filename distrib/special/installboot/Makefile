@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2022/08/31 18:46:06 miod Exp $
+#	$OpenBSD: Makefile,v 1.19 2025/02/19 21:36:02 kettenis Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -41,12 +41,20 @@ SRCS += sparc64_softraid.c
 SRCS += stubs.c
 .endif
 
+.if ${MACHINE} == "amd64" || ${MACHINE} == "arm64"
+CFLAGS += -DEFIBOOTMGR
+.endif
+
 .if !empty(CFLAGS:M-DBOOTSTRAP)
 SRCS += bootstrap.c
 .endif
 
 .if !empty(CFLAGS:M-DSOFTRAID)
 SRCS += softraid.c
+.endif
+
+.if !empty(CFLAGS:M-DEFIBOOTMGR)
+SRCS += efi_bootmgr.c
 .endif
 
 .include <bsd.prog.mk>

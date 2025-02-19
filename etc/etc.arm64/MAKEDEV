@@ -217,7 +217,7 @@ U=`unt $i`
 case $i in
 ramdisk)
 	R std bpf wd0 sd0 tty00 tty01 rd0 bio diskmap
-	R cd0 ttyC0 wskbd0 wskbd1 wskbd2 random
+	R cd0 ttyC0 wskbd0 wskbd1 wskbd2 random efi
 	;;
 
 std)

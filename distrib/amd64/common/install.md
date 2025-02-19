@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.63 2025/02/14 08:08:05 kn Exp $
+#	$OpenBSD: install.md,v 1.64 2025/02/19 21:36:02 kettenis Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ grep -q -e '^efifb0 at mainbus0' -e '^acpi0 at bios0: ACPI [5-9]\.' \
     /var/run/dmesg.boot && MDEFI=y
 
 md_installboot() {
-	if ! installboot -r /mnt ${1}; then
+	if ! installboot -cr /mnt ${1}; then
 		echo "\nFailed to install bootblocks."
 		echo "You will not be able to boot OpenBSD from ${1}."
 		exit

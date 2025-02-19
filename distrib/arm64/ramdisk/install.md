@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.50 2024/05/12 19:47:14 kn Exp $
+#	$OpenBSD: install.md,v 1.51 2025/02/19 21:36:02 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ md_installboot() {
 	raspberrypi,*)		_plat=rpi;;
 	esac
 
-	if ! installboot -r /mnt $_disk; then
+	if ! installboot -cr /mnt $_disk; then
 		echo "\nFailed to install bootblocks."
 		echo "You will not be able to boot OpenBSD from $_disk."
 		exit
