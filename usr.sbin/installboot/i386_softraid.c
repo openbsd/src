@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.21 2022/11/07 15:56:09 kn Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.22 2025/02/19 21:30:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -44,10 +44,12 @@ sr_install_bootblk(int devfd, int vol, int disk)
 {
 	struct bioc_disk bd;
 	struct disklabel dl;
+	struct gpt_partition gp;
 	struct partition *pp;
 	uint32_t poffset;
 	char *dev;
-	char part, efipart;
+	char part;
+	int gpart, efipart;
 	int diskfd;
 
 	diskfd = sr_open_chunk(devfd, vol, disk, &bd, &dev, &part);
@@ -64,9 +66,9 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
 
-	efipart = findgptefisys(diskfd, &dl);
+	efipart = findgptefisys(diskfd, &dl, &gpart, &gp);
 	if (efipart != -1) {
-		write_filesystem(&dl, (char)efipart);
+		write_filesystem(&dl, (char)efipart, gpart, &gp);
 		return;
 	}
 

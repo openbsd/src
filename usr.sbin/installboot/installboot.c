@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.16 2022/11/08 12:08:53 kn Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.17 2025/02/19 21:30:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include "installboot.h"
 
+int	config;
 int	nowrite;
 int	prepare;
 int	stages;
@@ -38,7 +39,7 @@ char	*stage2;
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage:\t%1$s [-nv] [-r root] disk [stage1%2$s]\n"
+	fprintf(stderr, "usage:\t%1$s [-cnv] [-r root] disk [stage1%2$s]\n"
 	    "\t%1$s [-nv] -p disk\n",
 	    getprogname(), (stages >= 2) ? " [stage2]" : "");
 
@@ -53,8 +54,11 @@ main(int argc, char **argv)
 
 	md_init();
 
-	while ((opt = getopt(argc, argv, "npr:v")) != -1) {
+	while ((opt = getopt(argc, argv, "cnpr:v")) != -1) {
 		switch (opt) {
+		case 'c':
+			config = 1;
+			break;
 		case 'n':
 			nowrite = 1;
 			break;
