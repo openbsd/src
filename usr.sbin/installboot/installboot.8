@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.6 2022/08/19 08:27:48 kn Exp $
+.\"	$OpenBSD: installboot.8,v 1.7 2025/02/19 21:40:38 kettenis Exp $
 .\"
 .\" Copyright (c) 2013, 2014 Joel Sing
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2022 $
+.Dd $Mdocdate: February 19 2025 $
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd install bootstrap on a disk
 .Sh SYNOPSIS
 .Nm installboot
-.Op Fl nv
+.Op Fl cnv
 .Op Fl r Ar root
 .Ar disk
 .Op Ar stage1 Op Ar stage2
@@ -41,6 +41,10 @@ the beginning of the disk.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl c
+Set up the machine to boot from the specified disk by default.
+This is only implemented for amd64 and arm64 machines with UEFI
+firmware and GPT partition tables.
 .It Fl n
 Perform a dry run - do not actually write to the disk.
 .It Fl p
