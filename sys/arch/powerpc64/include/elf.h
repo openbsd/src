@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.h,v 1.2 2024/07/21 16:49:26 jca Exp $	*/
+/*	$OpenBSD: elf.h,v 1.3 2025/02/19 18:25:03 jca Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -60,5 +60,7 @@ extern unsigned long hwcap2;
 #define	PPC_FEATURE2_DARN	0x00200000
 #define	PPC_FEATURE2_SCV	0x00100000
 #define	PPC_FEATURE2_HTM_NOSUSPEND	0x00080000
+#define	PPC_FEATURE2_ARCH_3_1	0x00040000
+#define	PPC_FEATURE2_MMA	0x00020000
 
 #endif /* !_MACHINE_ELF_H_ */
