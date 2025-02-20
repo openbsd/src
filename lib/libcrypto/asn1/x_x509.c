@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.39 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: x_x509.c,v 1.40 2025/02/20 20:30:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,7 +182,6 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	switch (operation) {
 
 	case ASN1_OP_NEW_POST:
-		ret->valid = 0;
 		ret->name = NULL;
 		ret->ex_flags = 0;
 		ret->ex_pathlen = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.34 2025/01/26 20:01:58 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.35 2025/02/20 20:30:12 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -184,7 +184,6 @@ struct x509_st {
 	X509_CINF *cert_info;
 	X509_ALGOR *sig_alg;
 	ASN1_BIT_STRING *signature;
-	int valid;
 	int references;
 	char *name;
 	CRYPTO_EX_DATA ex_data;
