@@ -1012,11 +1012,7 @@ static void dmc_load_work_fn(struct work_struct *work)
 	const char *fallback_path;
 	int err;
 
-#ifdef __linux__
 	err = request_firmware(&fw, dmc->fw_path, i915->drm.dev);
-#else
-	err = request_firmware(&fw, dmc->fw_path, NULL);
-#endif
 
 	if (err == -ENOENT && !dmc_firmware_param(i915)) {
 		fallback_path = dmc_fallback_path(i915);
