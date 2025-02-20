@@ -38,9 +38,6 @@
 
 #include "vga.h"
 
-struct inteldrm_softc;
-#define drm_i915_private inteldrm_softc
-
 #include "display/intel_display_limits.h"
 #include "display/intel_display_core.h"
 
@@ -203,7 +200,7 @@ struct i915_selftest_stash {
 };
 
 
-struct inteldrm_softc {
+struct drm_i915_private {
 #ifdef __OpenBSD__
 	struct device sc_dev;
 	bus_dma_tag_t dmat;

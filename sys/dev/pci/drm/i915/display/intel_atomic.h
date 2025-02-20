@@ -8,8 +8,6 @@
 
 #include <linux/types.h>
 
-#define drm_i915_private inteldrm_softc
-
 struct drm_atomic_state;
 struct drm_connector;
 struct drm_connector_state;

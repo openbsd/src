@@ -11,7 +11,6 @@
 #include <linux/bits.h>
 
 enum icl_port_dpll_id;
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct intel_atomic_state;
 struct intel_c10pll_state;

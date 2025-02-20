@@ -11,7 +11,6 @@
 #include "intel_display_limits.h"
 
 enum pipe;
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct drm_crtc;
 

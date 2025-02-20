@@ -30,7 +30,6 @@
 
 #include "i915_active_types.h"
 
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 
 enum fb_op_origin {

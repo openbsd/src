@@ -6,7 +6,6 @@
 #ifndef __ICL_DSI_H__
 #define __ICL_DSI_H__
 
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct intel_bios_encoder_data;
 struct intel_crtc_state;

@@ -37,8 +37,6 @@
 #include <asm/hypervisor.h>
 #endif
 
-#define drm_i915_private inteldrm_softc
-
 struct drm_i915_private;
 struct timeout;
 

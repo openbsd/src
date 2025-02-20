@@ -9,7 +9,6 @@
 #include <linux/types.h>
 #include <linux/limits.h>
 
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 
 unsigned long i915_fence_context_timeout(const struct drm_i915_private *i915,

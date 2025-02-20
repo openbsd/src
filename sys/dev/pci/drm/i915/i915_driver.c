@@ -746,7 +746,7 @@ i915_driver_create(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 #endif
 
-void inteldrm_init_backlight(struct inteldrm_softc *);
+void inteldrm_init_backlight(struct drm_i915_private *);
 
 /**
  * i915_driver_probe - setup chip and create an initial config
@@ -1925,7 +1925,7 @@ struct wsdisplay_accessops inteldrm_accessops = {
 int
 inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct backlight_device *bd = dev_priv->backlight;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsdisplay_fbinfo *wdf;
@@ -1992,7 +1992,7 @@ int
 inteldrm_alloc_screen(void *v, const struct wsscreen_descr *type,
     void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	return rasops_alloc_screen(ri, cookiep, curxp, curyp, attrp);
@@ -2001,7 +2001,7 @@ inteldrm_alloc_screen(void *v, const struct wsscreen_descr *type,
 void
 inteldrm_free_screen(void *v, void *cookie)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	return rasops_free_screen(ri, cookie);
@@ -2011,7 +2011,7 @@ int
 inteldrm_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	if (cookie == ri->ri_active)
@@ -2033,7 +2033,7 @@ inteldrm_show_screen(void *v, void *cookie, int waitok,
 void
 inteldrm_doswitch(void *v)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct drm_device *dev = &dev_priv->drm;
 	struct rasops_info *ri = &dev_priv->ro;
 
@@ -2047,7 +2047,7 @@ inteldrm_doswitch(void *v)
 void
 inteldrm_enter_ddb(void *v, void *cookie)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct drm_device *dev = &dev_priv->drm;
 	struct rasops_info *ri = &dev_priv->ro;
 
@@ -2061,7 +2061,7 @@ inteldrm_enter_ddb(void *v, void *cookie)
 int
 inteldrm_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	return rasops_getchar(ri, row, col, cell);
@@ -2070,7 +2070,7 @@ inteldrm_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
 int
 inteldrm_load_font(void *v, void *cookie, struct wsdisplay_font *font)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	return rasops_load_font(ri, cookie, font);
@@ -2079,7 +2079,7 @@ inteldrm_load_font(void *v, void *cookie, struct wsdisplay_font *font)
 int
 inteldrm_list_font(void *v, struct wsdisplay_font *font)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	return rasops_list_font(ri, font);
@@ -2088,7 +2088,7 @@ inteldrm_list_font(void *v, struct wsdisplay_font *font)
 void
 inteldrm_burner(void *v, u_int on, u_int flags)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 
 	task_del(systq, &dev_priv->burner_task);
 
@@ -2111,7 +2111,7 @@ inteldrm_burner(void *v, u_int on, u_int flags)
 void
 inteldrm_burner_cb(void *arg1)
 {
-	struct inteldrm_softc *dev_priv = arg1;
+	struct drm_i915_private *dev_priv = arg1;
 	struct drm_device *dev = &dev_priv->drm;
 	struct drm_fb_helper *helper = dev->fb_helper;
 
@@ -2147,7 +2147,7 @@ const struct backlight_ops inteldrm_backlight_ops = {
 void
 inteldrm_scrollback(void *v, void *cookie, int lines)
 {
-	struct inteldrm_softc *dev_priv = v;
+	struct drm_i915_private *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
 	rasops_scrollback(ri, cookie, lines);
@@ -2160,7 +2160,7 @@ int	inteldrm_activate(struct device *, int);
 void	inteldrm_attachhook(struct device *);
 
 const struct cfattach inteldrm_ca = {
-	sizeof(struct inteldrm_softc), inteldrm_match, inteldrm_attach,
+	sizeof(struct drm_i915_private), inteldrm_match, inteldrm_attach,
 	inteldrm_detach, inteldrm_activate
 };
 
@@ -2198,12 +2198,12 @@ inteldrm_match(struct device *parent, void *match, void *aux)
 }
 
 int drm_gem_init(struct drm_device *);
-void intel_init_stolen_res(struct inteldrm_softc *);
+void intel_init_stolen_res(struct drm_i915_private *);
 
 void
 inteldrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
+	struct drm_i915_private *dev_priv = (struct drm_i915_private *)self;
 	struct drm_device *dev;
 	struct pci_attach_args *pa = aux;
 	const struct pci_device_id *id;
@@ -2360,7 +2360,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-inteldrm_forcedetach(struct inteldrm_softc *dev_priv)
+inteldrm_forcedetach(struct drm_i915_private *dev_priv)
 {
 #ifdef notyet
 	struct pci_softc *psc = (struct pci_softc *)dev_priv->sc_dev.dv_parent;
@@ -2386,7 +2386,7 @@ extern int __init i915_init(void);
 void
 inteldrm_attachhook(struct device *self)
 {
-	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
+	struct drm_i915_private *dev_priv = (struct drm_i915_private *)self;
 	struct rasops_info *ri = &dev_priv->ro;
 	struct wsemuldisplaydev_attach_args aa;
 	const struct pci_device_id *id = dev_priv->id;
@@ -2468,7 +2468,7 @@ inteldrm_detach(struct device *self, int flags)
 int
 inteldrm_activate(struct device *self, int act)
 {
-	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
+	struct drm_i915_private *dev_priv = (struct drm_i915_private *)self;
 	struct drm_device *dev = &dev_priv->drm;
 	int rv = 0;
 
@@ -2510,7 +2510,7 @@ inteldrm_activate(struct device *self, int act)
 }
 
 void
-inteldrm_native_backlight(struct inteldrm_softc *dev_priv)
+inteldrm_native_backlight(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = &dev_priv->drm;
 	struct drm_connector_list_iter conn_iter;
@@ -2555,7 +2555,7 @@ inteldrm_native_backlight(struct inteldrm_softc *dev_priv)
 }
 
 void
-inteldrm_firmware_backlight(struct inteldrm_softc *dev_priv,
+inteldrm_firmware_backlight(struct drm_i915_private *dev_priv,
     struct wsdisplay_param *dp)
 {
 	struct drm_device *dev = &dev_priv->drm;
@@ -2596,7 +2596,7 @@ inteldrm_firmware_backlight(struct inteldrm_softc *dev_priv,
 }
 
 void
-inteldrm_init_backlight(struct inteldrm_softc *dev_priv)
+inteldrm_init_backlight(struct drm_i915_private *dev_priv)
 {
 	struct wsdisplay_param dp;
 
@@ -2610,7 +2610,7 @@ inteldrm_init_backlight(struct inteldrm_softc *dev_priv)
 int
 inteldrm_intr(void *arg)
 {
-	struct inteldrm_softc *dev_priv = arg;
+	struct drm_i915_private *dev_priv = arg;
 
 	if (dev_priv->irq_handler)
 		return dev_priv->irq_handler(0, dev_priv);

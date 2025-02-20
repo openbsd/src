@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.98 2024/10/10 03:36:10 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.99 2025/02/20 02:04:42 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -227,7 +227,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_i810_softc		*isc = (struct agp_i810_softc *)self;
 	struct agp_gatt 		*gatt;
 	struct pci_attach_args		*pa = aux, bpa;
-	struct inteldrm_softc		*psc = (struct inteldrm_softc *)parent;
+	struct drm_i915_private		*psc = (struct drm_i915_private *)parent;
 	bus_addr_t			 mmaddr, gmaddr, tmp;
 	bus_size_t			 gtt_off = 0;
 	pcireg_t			 memtype, reg;

@@ -12,7 +12,6 @@
 enum i9xx_plane_id;
 enum pipe;
 struct drm_display_mode;
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct intel_atomic_state;
 struct intel_crtc;

@@ -9,7 +9,7 @@
 struct resource intel_graphics_stolen_res = DEFINE_RES_MEM(0, 0);
 
 bus_addr_t
-gen3_stolen_base(struct inteldrm_softc *dev_priv)
+gen3_stolen_base(struct drm_i915_private *dev_priv)
 {
 	uint32_t bsm = pci_conf_read(dev_priv->pc, dev_priv->tag,
 	    INTEL_BSM);
@@ -17,7 +17,7 @@ gen3_stolen_base(struct inteldrm_softc *dev_priv)
 }
 
 bus_addr_t
-gen11_stolen_base(struct inteldrm_softc *dev_priv)
+gen11_stolen_base(struct drm_i915_private *dev_priv)
 {
 	uint64_t bsm = pci_conf_read(dev_priv->pc, dev_priv->tag,
 	    INTEL_GEN11_BSM_DW0);
@@ -28,7 +28,7 @@ gen11_stolen_base(struct inteldrm_softc *dev_priv)
 }
 
 bus_size_t
-i830_stolen_size(struct inteldrm_softc *dev_priv)
+i830_stolen_size(struct drm_i915_private *dev_priv)
 {
 	uint16_t gmch_ctl, gms;
 
@@ -49,7 +49,7 @@ i830_stolen_size(struct inteldrm_softc *dev_priv)
 }
 
 bus_size_t
-gen3_stolen_size(struct inteldrm_softc *dev_priv)
+gen3_stolen_size(struct drm_i915_private *dev_priv)
 {
 	uint16_t gmch_ctl, gms;
 
@@ -90,7 +90,7 @@ gen3_stolen_size(struct inteldrm_softc *dev_priv)
 }
 
 bus_size_t
-gen6_stolen_size(struct inteldrm_softc *dev_priv)
+gen6_stolen_size(struct drm_i915_private *dev_priv)
 {
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 	uint16_t gmch_ctl, gms;
@@ -102,7 +102,7 @@ gen6_stolen_size(struct inteldrm_softc *dev_priv)
 }
 
 bus_size_t
-chv_stolen_size(struct inteldrm_softc *dev_priv)
+chv_stolen_size(struct drm_i915_private *dev_priv)
 {
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 	uint16_t gmch_ctl, gms;
@@ -119,7 +119,7 @@ chv_stolen_size(struct inteldrm_softc *dev_priv)
 }
 
 bus_size_t
-gen8_stolen_size(struct inteldrm_softc *dev_priv)
+gen8_stolen_size(struct drm_i915_private *dev_priv)
 {
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 	uint16_t gmch_ctl, gms;
@@ -131,7 +131,7 @@ gen8_stolen_size(struct inteldrm_softc *dev_priv)
 }
 
 bus_size_t
-gen9_stolen_size(struct inteldrm_softc *dev_priv)
+gen9_stolen_size(struct drm_i915_private *dev_priv)
 {
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 	uint16_t gmch_ctl, gms;
@@ -145,7 +145,7 @@ gen9_stolen_size(struct inteldrm_softc *dev_priv)
 }
 
 void
-intel_init_stolen_res(struct inteldrm_softc *dev_priv)
+intel_init_stolen_res(struct drm_i915_private *dev_priv)
 {
 	bus_addr_t stolen_base = 0;
 	bus_size_t stolen_size = 0;

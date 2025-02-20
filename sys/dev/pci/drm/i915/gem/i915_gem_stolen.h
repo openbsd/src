@@ -8,7 +8,6 @@
 
 #include <linux/types.h>
 
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct drm_mm_node;
 struct drm_i915_gem_object;

@@ -9,7 +9,6 @@
 #include <linux/types.h>
 
 struct drm_device;
-#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct intel_fbdev;
 struct intel_framebuffer;

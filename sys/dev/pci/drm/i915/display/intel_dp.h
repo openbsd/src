@@ -8,8 +8,6 @@
 
 #include <linux/types.h>
 
-#define drm_i915_private inteldrm_softc
-
 enum intel_output_format;
 enum pipe;
 enum port;

@@ -12,8 +12,6 @@
 #include <drm/drm_mm.h>
 #include <uapi/drm/i915_drm.h>
 
-#define drm_i915_private inteldrm_softc
-
 struct drm_i915_private;
 struct drm_i915_gem_object;
 struct drm_printer;
