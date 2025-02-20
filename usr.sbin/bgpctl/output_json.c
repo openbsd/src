@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.50 2024/12/13 19:22:01 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.51 2025/02/20 19:48:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -140,9 +140,9 @@ json_neighbor_stats(struct peer *p)
 {
 	json_do_object("stats", 0);
 	json_do_string("last_read", fmt_monotime(p->stats.last_read));
-	json_do_int("last_read_sec", get_monotime(p->stats.last_read));
+	json_do_int("last_read_sec", get_rel_monotime(p->stats.last_read));
 	json_do_string("last_write", fmt_monotime(p->stats.last_write));
-	json_do_int("last_write_sec", get_monotime(p->stats.last_write));
+	json_do_int("last_write_sec", get_rel_monotime(p->stats.last_write));
 
 	json_do_object("prefixes", 1);
 	json_do_uint("sent", p->stats.prefix_out_cnt);
@@ -332,7 +332,7 @@ json_neighbor(struct peer *p, struct parse_result *res)
 	}
 	json_do_string("state", statenames[p->state]);
 	json_do_string("last_updown", fmt_monotime(p->stats.last_updown));
-	json_do_int("last_updown_sec", get_monotime(p->stats.last_updown));
+	json_do_int("last_updown_sec", get_rel_monotime(p->stats.last_updown));
 
 	switch (res->action) {
 	case SHOW:
@@ -359,7 +359,7 @@ json_timer(struct ctl_timer *t)
 
 	json_do_object("timer", 1);
 	json_do_string("name", timernames[t->type]);
-	json_do_int("due", t->val);
+	json_do_int("due", -get_rel_monotime(t->val));
 	json_do_end();
 }
 
@@ -862,8 +862,8 @@ json_rib(struct ctl_show_rib *r, struct ibuf *asbuf, struct parse_result *res)
 	json_do_uint("localpref", r->local_pref);
 	json_do_uint("weight", r->weight);
 	json_do_int("dmetric", r->dmetric);
-	json_do_string("last_update", fmt_timeframe(r->age));
-	json_do_int("last_update_sec", r->age);
+	json_do_string("last_update", fmt_monotime(r->lastchange));
+	json_do_int("last_update_sec", get_rel_monotime(r->lastchange));
 
 	/* keep the object open for communities and attributes */
 }
@@ -942,7 +942,7 @@ json_rib_set(struct ctl_show_set *set)
 	json_do_string("name", set->name);
 	json_do_string("type", fmt_set_type(set));
 	json_do_string("last_change", fmt_monotime(set->lastchange));
-	json_do_int("last_change_sec", get_monotime(set->lastchange));
+	json_do_int("last_change_sec", get_rel_monotime(set->lastchange));
 	if (set->type == ASNUM_SET || set->type == ASPA_SET) {
 		json_do_uint("num_ASnum", set->as_cnt);
 	} else {

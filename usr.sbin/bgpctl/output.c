@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.59 2025/01/29 13:14:41 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.60 2025/02/20 19:48:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -314,7 +314,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 		printf(" with shutdown reason \"%s\"",
 		    log_reason(p->conf.reason));
 	}
-	if (p->stats.last_updown != 0)
+	if (monotime_valid(p->stats.last_updown))
 		printf(", %s for %s",
 		    p->state == STATE_ESTABLISHED ? "up" : "down",
 		    fmt_monotime(p->stats.last_updown));
@@ -467,10 +467,10 @@ show_timer(struct ctl_timer *t)
 {
 	printf("  %-20s ", timernames[t->type]);
 
-	if (t->val <= 0)
-		printf("%-20s\n", "due");
+	if (get_rel_monotime(t->val) >= 0)
+		printf("%s\n", "due");
 	else
-		printf("due in %-13s\n", fmt_timeframe(t->val));
+		printf("%s\n", fmt_monotime(t->val));
 }
 
 static void
@@ -1033,7 +1033,7 @@ show_rib_detail(struct ctl_show_rib *r, struct ibuf *asbuf, int flag0)
 	    fmt_flags(r->flags, 0));
 
 	printf("%c    Last update: %s ago%c", EOL0(flag0),
-	    fmt_timeframe(r->age), EOL0(flag0));
+	    fmt_monotime(r->lastchange), EOL0(flag0));
 }
 
 static void
@@ -1113,7 +1113,7 @@ show_rib_set(struct ctl_show_set *set)
 		snprintf(buf, sizeof(buf), "%7zu %7zu %6s",
 		    set->v4_cnt, set->v6_cnt, "-");
 
-	printf("%-6s %-34s %s %11s\n", fmt_set_type(set), set->name,
+	printf("%-6s %-34s %s %12s\n", fmt_set_type(set), set->name,
 	    buf, fmt_monotime(set->lastchange));
 }
 

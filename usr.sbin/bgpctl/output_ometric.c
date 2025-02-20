@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.13 2024/01/23 15:55:20 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.14 2025/02/20 19:48:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -193,14 +193,14 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	ometric_set_state(peer_state, statenames[p->state], ol);
 	ometric_set_int(peer_state_raw, p->state, ol);
 
-	ometric_set_int(peer_last_change, get_monotime(p->stats.last_updown),
-	    ol);
+	ometric_set_int(peer_last_change,
+	    get_rel_monotime(p->stats.last_updown), ol);
 
 	if (p->state == STATE_ESTABLISHED) {
 		ometric_set_int(peer_last_read,
-		    get_monotime(p->stats.last_read), ol);
+		    get_rel_monotime(p->stats.last_read), ol);
 		ometric_set_int(peer_last_write,
-		    get_monotime(p->stats.last_write), ol);
+		    get_rel_monotime(p->stats.last_write), ol);
 	}
 
 	ometric_set_int(peer_prefixes_transmit, p->stats.prefix_out_cnt, ol);

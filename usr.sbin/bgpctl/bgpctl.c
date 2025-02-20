@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.315 2025/01/31 20:07:53 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.316 2025/02/20 19:48:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -588,17 +588,14 @@ show(struct imsg *imsg, struct parse_result *res)
 }
 
 time_t
-get_monotime(time_t t)
+get_rel_monotime(monotime_t t)
 {
-	struct timespec ts;
+	monotime_t now;
 
-	if (t == 0)
-		return -1;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-		err(1, "clock_gettime");
-	if (t > ts.tv_sec)	/* time in the future is not possible */
-		t = ts.tv_sec;
-	return (ts.tv_sec - t);
+	if (!monotime_valid(t))
+		return 0;
+	now = getmonotime();
+	return monotime_to_sec(monotime_sub(now, t));
 }
 
 char *
@@ -649,15 +646,18 @@ fmt_auth_method(enum auth_method method)
 
 #define TF_LEN	16
 
-const char *
+static const char *
 fmt_timeframe(time_t t)
 {
-	static char	 buf[TF_LEN];
-	unsigned int	 sec, min, hrs, day;
-	unsigned long long	 week;
+	static char		buf[TF_LEN];
+	unsigned long long	week;
+	unsigned int		sec, min, hrs, day;
+	const char		*due = "";
 
-	if (t < 0)
-		t = 0;
+	if (t < 0) {
+		due = "due in ";
+		t = -t;
+	}
 	week = t;
 
 	sec = week % 60;
@@ -670,25 +670,29 @@ fmt_timeframe(time_t t)
 	week /= 7;
 
 	if (week >= 1000)
-		snprintf(buf, TF_LEN, "%02lluw", week);
+		snprintf(buf, sizeof(buf), "%s%02lluw", due, week);
 	else if (week > 0)
-		snprintf(buf, TF_LEN, "%02lluw%01ud%02uh", week, day, hrs);
+		snprintf(buf, sizeof(buf), "%s%02lluw%01ud%02uh",
+		    due, week, day, hrs);
 	else if (day > 0)
-		snprintf(buf, TF_LEN, "%01ud%02uh%02um", day, hrs, min);
+		snprintf(buf, sizeof(buf), "%s%01ud%02uh%02um",
+		    due, day, hrs, min);
 	else
-		snprintf(buf, TF_LEN, "%02u:%02u:%02u", hrs, min, sec);
+		snprintf(buf, sizeof(buf), "%s%02u:%02u:%02u",
+		    due, hrs, min, sec);
 
 	return (buf);
 }
 
 const char *
-fmt_monotime(time_t t)
+fmt_monotime(monotime_t mt)
 {
-	t = get_monotime(t);
+	time_t t;
 
-	if (t == -1)
+	if (!monotime_valid(mt))
 		return ("Never");
 
+	t = get_rel_monotime(mt);
 	return (fmt_timeframe(t));
 }
 
@@ -1229,20 +1233,17 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	struct ctl_show_rib_request	*req = arg;
 	struct mrt_rib_entry		*mre;
 	struct ibuf			 ibuf;
-	time_t				 now;
 	uint16_t			 i, j;
 
 	memset(&res, 0, sizeof(res));
 	res.flags = req->flags;
-	now = time(NULL);
 
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.prefix = mr->prefix;
 		ctl.prefixlen = mr->prefixlen;
-		if (mre->originated <= now)
-			ctl.age = now - mre->originated;
+		ctl.lastchange = time_to_monotime(mre->originated);
 		ctl.true_nexthop = mre->nexthop;
 		ctl.exit_nexthop = mre->nexthop;
 		ctl.origin = mre->origin;
@@ -1314,21 +1315,18 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	struct ctl_show_rib_request	*req = arg;
 	struct mrt_rib_entry		*mre;
 	struct ibuf			*msg;
-	time_t				 now;
 	uint16_t			 i, j;
 
 	/* can't announce more than one path so ignore add-path */
 	if (mr->add_path)
 		return;
 
-	now = time(NULL);
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.prefix = mr->prefix;
 		ctl.prefixlen = mr->prefixlen;
-		if (mre->originated <= now)
-			ctl.age = now - mre->originated;
+		ctl.lastchange = time_to_monotime(mre->originated);
 		ctl.true_nexthop = mre->nexthop;
 		ctl.exit_nexthop = mre->nexthop;
 		ctl.origin = mre->origin;
