@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.50 2025/02/10 14:42:13 job Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.51 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1310,7 +1310,7 @@ rtr_check_events(struct pollfd *pfds, size_t npfds)
 {
 	struct rtr_session *rs;
 	struct timer *t;
-	time_t now;
+	monotime_t now;
 	size_t i = 0;
 
 	for (i = 0; i < npfds; i++) {
@@ -1362,22 +1362,25 @@ rtr_count(void)
 }
 
 size_t
-rtr_poll_events(struct pollfd *pfds, size_t npfds, time_t *timeout)
+rtr_poll_events(struct pollfd *pfds, size_t npfds, monotime_t *timeout)
 {
 	struct rtr_session *rs;
-	time_t now = getmonotime();
+	monotime_t now = getmonotime();
 	size_t i = 0;
 
 	TAILQ_FOREACH(rs, &rtrs, entry) {
-		time_t nextaction;
+		monotime_t nextaction;
 		struct pollfd *pfd = pfds + i++;
 
 		if (i > npfds)
 			fatalx("%s: too many sessions for pollfd", __func__);
 
-		if ((nextaction = timer_nextduein(&rs->timers, now)) != -1 &&
-		    nextaction < *timeout)
-			*timeout = nextaction;
+		nextaction = timer_nextduein(&rs->timers);
+		if (monotime_valid(nextaction)) {
+			monotime_sub(nextaction, now);
+			if (monotime_cmp(nextaction, *timeout) < 0)
+				*timeout = nextaction;
+		}
 
 		if (rs->state == RTR_STATE_CLOSED) {
 			pfd->fd = -1;
@@ -1546,7 +1549,7 @@ rtr_show(struct rtr_session *rs, pid_t pid)
 	struct ctl_show_rtr msg;
 	struct ctl_timer ct;
 	u_int i;
-	time_t d;
+	monotime_t d;
 
 	memset(&msg, 0, sizeof(msg));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.517 2025/02/18 16:02:20 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.518 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,9 @@
 #define PFD_SOCK_CTL		3
 #define PFD_SOCK_RCTL		4
 #define PFD_LISTENERS_START	5
+
+#define MAX_TIMEOUT		240
+#define PAUSEACCEPT_TIMEOUT	1
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
@@ -111,7 +114,7 @@ int			 csock = -1, rcsock = -1;
 u_int			 peer_cnt;
 
 struct mrt_head		 mrthead;
-time_t			 pauseaccept;
+monotime_t		 pauseaccept;
 
 static const uint8_t	 marker[MSGSIZE_HEADER_MARKER] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -192,7 +195,6 @@ setup_listeners(u_int *la_cnt)
 void
 session_main(int debug, int verbose)
 {
-	int			 timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
 	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
@@ -203,7 +205,7 @@ session_main(int debug, int verbose)
 	struct pollfd		*pfd = NULL;
 	struct listen_addr	*la;
 	void			*newp;
-	time_t			 now;
+	monotime_t		 now, timeout;
 	short			 events;
 
 	log_init(debug, LOG_DAEMON);
@@ -338,7 +340,7 @@ session_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
 		set_pollfd(&pfd[PFD_PIPE_ROUTE_CTL], ibuf_rde_ctl);
 
-		if (pauseaccept == 0) {
+		if (!monotime_valid(pauseaccept)) {
 			pfd[PFD_SOCK_CTL].fd = csock;
 			pfd[PFD_SOCK_CTL].events = POLLIN;
 			pfd[PFD_SOCK_RCTL].fd = rcsock;
@@ -350,7 +352,7 @@ session_main(int debug, int verbose)
 
 		i = PFD_LISTENERS_START;
 		TAILQ_FOREACH(la, conf->listen_addrs, entry) {
-			if (pauseaccept == 0) {
+			if (!monotime_valid(pauseaccept)) {
 				pfd[i].fd = la->fd;
 				pfd[i].events = POLLIN;
 			} else
@@ -358,11 +360,11 @@ session_main(int debug, int verbose)
 			i++;
 		}
 		idx_listeners = i;
-		timeout = 240;	/* loop every 240s at least */
+		timeout = monotime_from_sec(MAX_TIMEOUT);
 
 		now = getmonotime();
 		RB_FOREACH(p, peer_head, &conf->peers) {
-			time_t	nextaction;
+			monotime_t nextaction;
 			struct timer *pt;
 
 			/* check timers */
@@ -420,9 +422,12 @@ session_main(int debug, int verbose)
 					fatalx("King Bula lost in time");
 				}
 			}
-			if ((nextaction = timer_nextduein(&p->timers,
-			    now)) != -1 && nextaction < timeout)
-				timeout = nextaction;
+			nextaction = timer_nextduein(&p->timers);
+			if (monotime_valid(nextaction)) {
+				nextaction = monotime_sub(nextaction, now);
+				if (monotime_cmp(nextaction, timeout) < 0)
+					timeout = nextaction;
+			}
 
 			/* are we waiting for a write? */
 			events = POLLIN;
@@ -431,7 +436,7 @@ session_main(int debug, int verbose)
 				events |= POLLOUT;
 			/* is there still work to do? */
 			if (p->rpending)
-				timeout = 0;
+				timeout = monotime_clear();
 
 			/* poll events */
 			if (p->fd != -1 && events != 0) {
@@ -459,11 +464,12 @@ session_main(int debug, int verbose)
 		if (i > pfd_elms)
 			fatalx("poll pfd overflow");
 
-		if (pauseaccept && timeout > 1)
-			timeout = 1;
-		if (timeout < 0)
-			timeout = 0;
-		if (poll(pfd, i, timeout * 1000) == -1) {
+		if (monotime_valid(pauseaccept) && monotime_cmp(timeout,
+		    monotime_from_sec(PAUSEACCEPT_TIMEOUT)) > 0)
+			timeout = monotime_from_sec(PAUSEACCEPT_TIMEOUT);
+		if (!monotime_valid(timeout))
+			timeout = monotime_clear();
+		if (poll(pfd, i, monotime_to_msec(timeout)) == -1) {
 			if (errno == EINTR)
 				continue;
 			fatal("poll error");
@@ -473,8 +479,10 @@ session_main(int debug, int verbose)
 		 * If we previously saw fd exhaustion, we stop accept()
 		 * for 1 second to throttle the accept() loop.
 		 */
-		if (pauseaccept && getmonotime() > pauseaccept + 1)
-			pauseaccept = 0;
+		if (monotime_valid(pauseaccept) &&
+		    monotime_cmp(getmonotime(), monotime_add(pauseaccept,
+		    monotime_from_sec(PAUSEACCEPT_TIMEOUT))) > 0)
+			pauseaccept = monotime_clear();
 
 		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1) {
 			log_warnx("SE: Lost connection to parent");
@@ -876,7 +884,7 @@ session_close_connection(struct peer *peer)
 {
 	if (peer->fd != -1) {
 		close(peer->fd);
-		pauseaccept = 0;
+		pauseaccept = monotime_clear();
 	}
 	peer->fd = -1;
 }

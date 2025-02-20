@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.281 2025/02/12 19:33:20 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.282 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,7 +118,7 @@ usage(void)
 #define PFD_SOCK_ROUTE		3
 #define PFD_SOCK_PFKEY		4
 #define PFD_CONNECT_START	5
-#define MAX_TIMEOUT		3600
+#define MAX_TIMEOUT		(3600 * 1000)
 
 int	 cmd_opts;
 
@@ -359,7 +359,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 		if (timeout < 0 || timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
-		if (poll(pfd, npfd, timeout * 1000) == -1) {
+		if (poll(pfd, npfd, timeout) == -1) {
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;

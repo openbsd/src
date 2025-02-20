@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.39 2023/04/17 08:02:21 claudio Exp $
+#	$OpenBSD: Makefile,v 1.40 2025/02/20 19:47:31 claudio Exp $
 
 PROG=	bgpd
-SRCS=	bgpd.c session.c log.c logmsg.c parse.y config.c \
+SRCS=	bgpd.c session.c log.c logmsg.c parse.y config.c monotime.c \
 	rde.c rde_rib.c rde_decide.c rde_prefix.c mrt.c kroute.c control.c \
 	pfkey.c rde_update.c rde_attr.c rde_community.c printconf.c \
 	rde_filter.c rde_sets.c rde_aspa.c rde_trie.c pftable.c name2id.c \

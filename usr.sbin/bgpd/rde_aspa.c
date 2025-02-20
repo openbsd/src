@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.5 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.6 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -51,7 +51,7 @@ struct rde_aspa {
 	size_t			  maxdata;
 	size_t			  curdata;
 	uint32_t		  curset;
-	time_t			  lastchange;
+	monotime_t		  lastchange;
 };
 
 struct aspa_state {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.313 2025/01/27 15:22:11 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.314 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -89,7 +89,7 @@ struct rde_peer {
 	struct prefix_tree		 updates[AID_MAX];
 	struct prefix_tree		 withdraws[AID_MAX];
 	struct filter_head		*out_rules;
-	time_t				 staletime[AID_MAX];
+	monotime_t			 staletime[AID_MAX];
 	uint32_t			 remote_bgpid;
 	uint32_t			 path_id_tx;
 	unsigned int			 local_if_scope;
@@ -279,7 +279,7 @@ struct prefix {
 	struct rde_community		*communities;
 	struct rde_peer			*peer;
 	struct nexthop			*nexthop;	/* may be NULL */
-	time_t				 lastchange;
+	monotime_t			 lastchange;
 	uint32_t			 path_id;
 	uint32_t			 path_id_tx;
 	uint16_t			 flags;
@@ -373,7 +373,7 @@ void		 rde_generate_updates(struct rib_entry *, struct prefix *,
 void		 peer_up(struct rde_peer *, struct session_up *);
 void		 peer_down(struct rde_peer *);
 void		 peer_delete(struct rde_peer *);
-void		 peer_flush(struct rde_peer *, uint8_t, time_t);
+void		 peer_flush(struct rde_peer *, uint8_t, monotime_t);
 void		 peer_stale(struct rde_peer *, uint8_t, int);
 void		 peer_blast(struct rde_peer *, uint8_t);
 void		 peer_dump(struct rde_peer *, uint8_t);

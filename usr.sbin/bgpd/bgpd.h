@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.514 2025/02/12 19:33:20 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.515 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,8 +30,9 @@
 #include <poll.h>
 #include <stdarg.h>
 #include <stdint.h>
-
 #include <imsg.h>
+
+#include "monotime.h" 
 
 #define	BGP_VERSION			4
 #define	RTR_MAX_VERSION			2
@@ -281,7 +282,7 @@ struct rde_prefixset {
 	char				name[SET_NAME_LEN];
 	struct trie_head		th;
 	SIMPLEQ_ENTRY(rde_prefixset)	entry;
-	time_t				lastchange;
+	monotime_t			lastchange;
 	int				dirty;
 };
 SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
@@ -896,7 +897,7 @@ struct ctl_show_nexthop {
 
 struct ctl_show_set {
 	char			name[SET_NAME_LEN];
-	time_t			lastchange;
+	monotime_t		lastchange;
 	size_t			v4_cnt;
 	size_t			v6_cnt;
 	size_t			as_cnt;
@@ -935,7 +936,7 @@ struct ctl_show_rib {
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	remote_addr;
 	char			descr[PEER_DESCR_LEN];
-	time_t			age;
+	monotime_t		lastchange;
 	uint32_t		remote_id;
 	uint32_t		path_id;
 	uint32_t		local_pref;
@@ -1331,7 +1332,7 @@ struct as_set {
 	char				 name[SET_NAME_LEN];
 	SIMPLEQ_ENTRY(as_set)		 entry;
 	struct set_table		*set;
-	time_t				 lastchange;
+	monotime_t			 lastchange;
 	int				 dirty;
 };
 
@@ -1590,9 +1591,6 @@ int	trie_roa_check(struct trie_head *, struct bgpd_addr *, uint8_t,
 	    uint32_t);
 void	trie_dump(struct trie_head *);
 int	trie_equal(struct trie_head *, struct trie_head *);
-
-/* timer.c */
-time_t			 getmonotime(void);
 
 /* util.c */
 char		*ibuf_get_string(struct ibuf *, size_t);

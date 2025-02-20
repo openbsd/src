@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.103 2024/08/14 19:09:51 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.104 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -232,10 +232,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	 * evaluation is enabled.
 	 */
 	if (rde_decisionflags() & BGPD_FLAG_DECISION_ROUTEAGE) {
-		if (p1->lastchange < p2->lastchange) /* p1 is older */
+		switch (monotime_cmp(p1->lastchange, p2->lastchange)) {
+		case -1:	/* p1 is older */
 			return rv;
-		if (p1->lastchange > p2->lastchange)
+		case 1:		/* p2 is older */
 			return -rv;
+		}
 	}
 
 	/* 10. lowest BGP Id wins, use ORIGINATOR_ID if present */

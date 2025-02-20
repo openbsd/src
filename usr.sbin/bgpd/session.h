@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.186 2025/02/18 16:02:20 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.187 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -144,9 +144,9 @@ struct peer_stats {
 	unsigned long long	 prefix_sent_update;
 	unsigned long long	 prefix_sent_withdraw;
 	unsigned long long	 prefix_sent_eor;
-	time_t			 last_updown;
-	time_t			 last_read;
-	time_t			 last_write;
+	monotime_t		 last_updown;
+	monotime_t		 last_read;
+	monotime_t		 last_write;
 	uint32_t		 msg_queue_len;
 	uint32_t		 prefix_cnt;
 	uint32_t		 prefix_out_cnt;
@@ -189,7 +189,7 @@ enum Timer {
 struct timer {
 	TAILQ_ENTRY(timer)	entry;
 	enum Timer		type;
-	time_t			val;
+	monotime_t		val;
 };
 
 TAILQ_HEAD(timer_head, timer);
@@ -233,11 +233,11 @@ struct peer {
 	uint8_t			 rdesession;
 };
 
-extern time_t		 pauseaccept;
+extern monotime_t		 pauseaccept;
 
 struct ctl_timer {
 	enum Timer	type;
-	time_t		val;
+	monotime_t	val;
 };
 
 /* carp.c */
@@ -301,7 +301,7 @@ void	rde_main(int, int);
 struct rtr_session;
 size_t			 rtr_count(void);
 void			 rtr_check_events(struct pollfd *, size_t);
-size_t			 rtr_poll_events(struct pollfd *, size_t, time_t *);
+size_t			 rtr_poll_events(struct pollfd *, size_t, monotime_t *);
 struct rtr_session	*rtr_new(uint32_t, struct rtr_config_msg *);
 struct rtr_session	*rtr_get(uint32_t);
 void			 rtr_free(struct rtr_session *);
@@ -346,9 +346,9 @@ struct bgpd_addr *session_localaddr(struct peer *);
 
 /* timer.c */
 struct timer	*timer_get(struct timer_head *, enum Timer);
-struct timer	*timer_nextisdue(struct timer_head *, time_t);
-time_t		 timer_nextduein(struct timer_head *, time_t);
-int		 timer_running(struct timer_head *, enum Timer, time_t *);
+struct timer	*timer_nextisdue(struct timer_head *, monotime_t);
+monotime_t	 timer_nextduein(struct timer_head *);
+int		 timer_running(struct timer_head *, enum Timer, monotime_t *);
 void		 timer_set(struct timer_head *, enum Timer, u_int);
 void		 timer_stop(struct timer_head *, enum Timer);
 void		 timer_remove(struct timer_head *, enum Timer);

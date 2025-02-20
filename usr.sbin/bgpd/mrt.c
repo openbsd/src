@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.125 2025/02/12 16:49:56 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.126 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -415,8 +415,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	if (ibuf_add_n16(h2buf, 1) == -1)		/* status */
 		goto fail;
 	/* originated timestamp */
-	if (ibuf_add_n32(h2buf, time(NULL) - (getmonotime() -
-	    p->lastchange)) == -1)
+	if (ibuf_add_n32(h2buf, monotime_to_time(p->lastchange)) == -1)
 		goto fail;
 
 	n = prefix_nexthop(p);
@@ -577,8 +576,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	if (ibuf_add_n8(hbuf, 1) == -1)		/* state */
 		goto fail;
 	/* originated timestamp */
-	if (ibuf_add_n32(hbuf, time(NULL) - (getmonotime() -
-	    p->lastchange)) == -1)
+	if (ibuf_add_n32(hbuf, monotime_to_time(p->lastchange)) == -1)
 		goto fail;
 	switch (p->pt->aid) {
 	case AID_INET:
@@ -653,8 +651,7 @@ mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
 		if (ibuf_add_n16(buf, prefix_peer(p)->mrt_idx) == -1)
 			goto fail;
 		/* originated timestamp */
-		if (ibuf_add_n32(buf, time(NULL) - (getmonotime() -
-		    p->lastchange)) == -1)
+		if (ibuf_add_n32(buf, monotime_to_time(p->lastchange)) == -1)
 			goto fail;
 
 		/* RFC8050: path-id if add-path is used */
@@ -976,7 +973,7 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, uint16_t type,
 
 	if (ibuf_add_n32(*bp, len) == -1)
 		goto fail;
-	/* millisecond field use by the _ET format */
+	/* microsecond field use by the _ET format */
 	if (ibuf_add_n32(*bp, time.tv_nsec / 1000) == -1)
 		goto fail;
 

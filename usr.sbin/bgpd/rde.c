@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.652 2025/02/12 16:49:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.653 2025/02/20 19:47:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -467,7 +467,7 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 				peer_flush(peer, aid, peer->staletime[aid]);
 				break;
 			case IMSG_SESSION_RESTARTED:
-				if (peer->staletime[aid])
+				if (monotime_valid(peer->staletime[aid]))
 					peer_flush(peer, aid,
 					    peer->staletime[aid]);
 				break;
@@ -1369,7 +1369,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 			break;
 		case ROUTE_REFRESH_END_RR:
 			if ((peer->recv_eor & (1 << rr.aid)) != 0 &&
-			    peer->staletime[rr.aid])
+			    monotime_valid(peer->staletime[rr.aid]))
 				peer_flush(peer, rr.aid,
 				    peer->staletime[rr.aid]);
 			else
@@ -2822,14 +2822,14 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	struct rib_entry	*re;
 	struct prefix		*xp;
 	struct rde_peer		*peer;
-	time_t			 staletime;
+	monotime_t		 staletime;
 	size_t			 aslen;
 	uint8_t			 l;
 
 	nexthop = prefix_nexthop(p);
 	peer = prefix_peer(p);
 	memset(&rib, 0, sizeof(rib));
-	rib.age = getmonotime() - p->lastchange;
+	rib.lastchange = p->lastchange;
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
 	rib.weight = asp->weight;
@@ -2890,7 +2890,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	else if (asp->flags & F_ATTR_PARSE_ERR)
 		rib.flags |= F_PREF_INVALID;
 	staletime = peer->staletime[p->pt->aid];
-	if (staletime && p->lastchange <= staletime)
+	if (monotime_valid(staletime) &&
+	    monotime_cmp(p->lastchange, staletime) <= 0)
 		rib.flags |= F_PREF_STALE;
 	if (!adjout) {
 		if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_RECV)) {
