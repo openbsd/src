@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.120 2025/02/07 03:03:08 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.121 2025/02/21 03:34:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1586,7 +1586,7 @@ backlight_enable(struct backlight_device *bd)
 	if (bd == NULL)
 		return 0;
 
-	bd->props.power = FB_BLANK_UNBLANK;
+	bd->props.power = BACKLIGHT_POWER_ON;
 
 	return bd->ops->update_status(bd);
 }
@@ -1597,7 +1597,7 @@ backlight_disable(struct backlight_device *bd)
 	if (bd == NULL)
 		return 0;
 
-	bd->props.power = FB_BLANK_POWERDOWN;
+	bd->props.power = BACKLIGHT_POWER_OFF;
 
 	return bd->ops->update_status(bd);
 }
