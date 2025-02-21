@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.51 2021/12/07 14:00:33 robert Exp $	*/
+/*	$OpenBSD: io.c,v 1.52 2025/02/21 19:04:34 kirill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -49,6 +49,9 @@
 
 #include "pathnames.h"
 #include "calendar.h"
+
+
+char *recipient = NULL;
 
 
 struct iovec header[] = {
@@ -121,6 +124,11 @@ cal(void)
 			bodun++;
 			free(prefix);
 			if ((prefix = strdup(buf + 6)) == NULL)
+				err(1, NULL);
+			continue;
+		} else if (strncmp(buf, "RECIPIENT_EMAIL=", 16) == 0) {
+			free(recipient);
+			if ((recipient = strdup(buf + 16)) == NULL)
 				err(1, NULL);
 			continue;
 		}
@@ -408,7 +416,7 @@ closecal(FILE *fp)
 		}
 		(void)close(pdes[1]);
 		execl(_PATH_SENDMAIL, "sendmail", "-i", "-t", "-F",
-		    "\"Reminder Service\"", (char *)NULL);
+		    "\"Reminder Service\"", recipient, (char *)NULL);
 		warn(_PATH_SENDMAIL);
 		_exit(1);
 	}

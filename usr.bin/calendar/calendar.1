@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.44 2019/01/29 22:28:30 tedu Exp $
+.\"	$OpenBSD: calendar.1,v 1.45 2025/02/21 19:04:34 kirill Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: January 29 2019 $
+.Dd $Mdocdate: February 21 2025 $
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -106,6 +106,10 @@ styles are currently supported.
 Use
 .Dq CALENDAR=
 to return to the default (Gregorian).
+.Pp
+The
+.Dq RECIPIENT_EMAIL
+variable can be used to specify recipient of daily mails.
 .Pp
 To enforce special date calculation mode for Cyrillic calendars
 you should specify
