@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.76 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.77 2025/02/21 18:16:45 sthen Exp $
 
 LIB=	curses
 
@@ -73,11 +73,12 @@ MAN=	curs_add_wch.3 curs_add_wchstr.3 curs_addch.3 curs_addchstr.3 \
 GENERATED= codes.c comp_captab.c comp_userdefs.c expanded.c fallback.c \
 	init_keytry.h keys.list lib_gen.c lib_keyname.c make_hash make_keys \
 	names.c unctrl.c
+PC_FILES= ncurses.pc
 
 CAPLIST	= ${.CURDIR}/Caps
 USE_BIG_STRINGS	= 1
 
-CLEANFILES+= ${GENERATED} make_hash.d make_keys.d
+CLEANFILES+= ${GENERATED} ${PC_FILES} make_hash.d make_keys.d
 
 BUILDFIRST = ${GENERATED}
 
@@ -143,10 +144,19 @@ codes.c: ${.CURDIR}/tinfo/MKcodes.awk
 unctrl.c: ${.CURDIR}/base/MKunctrl.awk
 	echo | ${AWK} -f ${.CURDIR}/base/MKunctrl.awk bigstrings=1 > ${.TARGET}
 
+all: ${PC_FILES}
+
+${PC_FILES}: ${.CURDIR}/../libcurses/curses.h ${.CURDIR}/../libcurses/ncurses_cfg.h
+	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
+
 .include <bsd.own.mk>
 
 # Link libtermlib, libtermcap to libcurses so we don't break people's Makefiles
 afterinstall:
+.for p in ${PC_FILES}
+	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
+	    -m ${SHAREMODE} ${.OBJDIR}/$p ${DESTDIR}/usr/lib/pkgconfig/
+.endfor
 	-cd ${DESTDIR}${LIBDIR}; \
 	for i in ${_LIBS}; do \
 	    ln -f $$i `echo $$i | sed 's/curses/termlib/'`; \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2023/10/17 09:52:10 nicm Exp $
+# $OpenBSD: Makefile,v 1.18 2025/02/21 18:16:45 sthen Exp $
 
 LIB=	form
 SRCS=	fld_arg.c fld_attr.c fld_current.c fld_def.c fld_dup.c \
@@ -18,6 +18,8 @@ MAN=	form.3 form_cursor.3 form_data.3 form_driver.3 form_field.3 \
 	form_hook.3 form_new.3 form_new_page.3 form_opts.3 form_page.3 \
 	form_post.3 form_requestname.3 form_userptr.3 form_variables.3 \
 	form_win.3
+PC_FILES= form.pc
+CLEANFILES+= ${PC_FILES}
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \
@@ -25,9 +27,18 @@ includes:
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
 
+all: ${PC_FILES}
+
+${PC_FILES}: ${.CURDIR}/../libcurses/curses.h ${.CURDIR}/../libcurses/ncurses_cfg.h
+	/bin/sh ${.CURDIR}/generate_pkgconfig.sh -c ${.CURDIR} -o ${.OBJDIR}
+
 .include <bsd.own.mk>
 
 afterinstall:
+.for p in ${PC_FILES}
+	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
+	    -m ${SHAREMODE} ${.OBJDIR}/$p ${DESTDIR}/usr/lib/pkgconfig/
+.endfor
 	-cd ${DESTDIR}${LIBDIR}; \
 	for i in ${_LIBS}; do \
 	    ln -f $$i `echo $$i | sed 's/form/formw/'`; \
