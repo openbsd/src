@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.441 2025/02/17 20:31:25 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.442 2025/02/21 22:21:20 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -976,7 +976,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (EINVAL);
 		if ((rt->rt_flags & RTF_CLONING) == 0)
 			return (EINVAL);
-		KASSERT(rt->rt_ifa->ifa_ifp != NULL);
 		info->rti_ifa = rt->rt_ifa;
 		info->rti_flags = rt->rt_flags | (RTF_CLONED|RTF_HOST);
 		info->rti_flags &= ~(RTF_CLONING|RTF_CONNECTED|RTF_STATIC);
@@ -988,6 +987,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 	case RTM_ADD:
 		if (info->rti_ifa == NULL)
 			return (EINVAL);
+		KASSERT(info->rti_ifa->ifa_ifp != NULL);
 		ifa = info->rti_ifa;
 		ifp = ifa->ifa_ifp;
 		if (prio == 0)
