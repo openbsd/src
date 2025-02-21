@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.40 2025/02/20 20:30:12 tb Exp $ */
+/* $OpenBSD: x_x509.c,v 1.41 2025/02/21 05:44:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,7 +182,6 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	switch (operation) {
 
 	case ASN1_OP_NEW_POST:
-		ret->name = NULL;
 		ret->ex_flags = 0;
 		ret->ex_pathlen = -1;
 		ret->skid = NULL;
@@ -194,11 +193,6 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		ret->rfc3779_asid = NULL;
 #endif
 		CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
-		break;
-
-	case ASN1_OP_D2I_POST:
-		free(ret->name);
-		ret->name = X509_NAME_oneline(ret->cert_info->subject, NULL, 0);
 		break;
 
 	case ASN1_OP_FREE_POST:
@@ -213,8 +207,6 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
 		ASIdentifiers_free(ret->rfc3779_asid);
 #endif
-		free(ret->name);
-		ret->name = NULL;
 		break;
 	}
 
