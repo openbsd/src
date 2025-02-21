@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/04/17 08:02:55 claudio Exp $
+# $OpenBSD: Makefile,v 1.12 2025/02/21 06:10:59 anton Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/bgpd
 
@@ -17,9 +17,11 @@ CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../../../../usr.sbin/bgpd
 LDADD= -lutil
 DPADD+= ${LIBUTIL}
 
-SRCS_rde_sets_test=	rde_sets_test.c rde_sets.c timer.c log.c
+SRCS_rde_aspa_test=	rde_aspa_test.c monotime.c
 
-SRCS_rde_trie_test=	rde_trie_test.c rde_trie.c util.c rde_sets.c timer.c log.c
+SRCS_rde_sets_test=	rde_sets_test.c rde_sets.c timer.c log.c monotime.c
+
+SRCS_rde_trie_test=	rde_trie_test.c rde_trie.c util.c rde_sets.c timer.c log.c monotime.c
 run-regress-rde_trie_test:
 	# cannot run without parameter
 

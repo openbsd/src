@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa_test.c,v 1.5 2023/08/16 08:29:41 claudio Exp $ */
+/*	$OpenBSD: rde_aspa_test.c,v 1.6 2025/02/21 06:10:59 anton Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -647,10 +647,4 @@ print_state(struct aspa_state *a, struct aspa_state *b)
 		printf(" ndown_u %d != %d", a->ndown_u, b->ndown_u);
 	if (a->ndown_np != b->ndown_np)
 		printf(" ndown_np %d != %d", a->ndown_np, b->ndown_np);
-}
-
-time_t
-getmonotime(void)
-{
-	return time(NULL);
 }
