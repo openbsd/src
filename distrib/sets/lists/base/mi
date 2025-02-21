@@ -790,11 +790,15 @@
 ./usr/lib/locate/src.db
 ./usr/lib/pkgconfig
 ./usr/lib/pkgconfig/expat.pc
+./usr/lib/pkgconfig/form.pc
 ./usr/lib/pkgconfig/fuse.pc
 ./usr/lib/pkgconfig/libcrypto.pc
 ./usr/lib/pkgconfig/libelf.pc
 ./usr/lib/pkgconfig/libssl.pc
+./usr/lib/pkgconfig/menu.pc
+./usr/lib/pkgconfig/ncurses.pc
 ./usr/lib/pkgconfig/openssl.pc
+./usr/lib/pkgconfig/panel.pc
 ./usr/lib/pkgconfig/sndio.pc
 ./usr/lib/pkgconfig/zlib.pc
 ./usr/lib/rcrt0.o
