@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.56 2025/02/03 08:58:52 mvs Exp $ */
+/*	$OpenBSD: ifq.c,v 1.57 2025/02/21 06:20:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -355,8 +355,7 @@ ifq_destroy(struct ifqueue *ifq)
 #endif
 
 	NET_ASSERT_UNLOCKED();
-	if (!task_del(ifq->ifq_softnet, &ifq->ifq_bundle))
-		taskq_barrier(ifq->ifq_softnet);
+	taskq_del_barrier(ifq->ifq_softnet, &ifq->ifq_bundle);
 
 	/* don't need to lock because this is the last use of the ifq */
 
@@ -701,8 +700,7 @@ ifiq_destroy(struct ifiqueue *ifiq)
 #endif
 
 	NET_ASSERT_UNLOCKED();
-	if (!task_del(ifiq->ifiq_softnet, &ifiq->ifiq_task))
-		taskq_barrier(ifiq->ifiq_softnet);
+	taskq_del_barrier(ifiq->ifiq_softnet, &ifiq->ifiq_task);
 
 	/* don't need to lock because this is the last use of the ifiq */
 	ml_purge(&ifiq->ifiq_ml);

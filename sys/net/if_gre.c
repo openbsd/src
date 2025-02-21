@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.182 2025/02/17 20:31:25 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.183 2025/02/21 06:20:12 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -3483,8 +3483,7 @@ nvgre_down(struct nvgre_softc *sc)
 
 	NET_UNLOCK();
 	ifq_barrier(&ifp->if_snd);
-	if (!task_del(softnet, &sc->sc_send_task))
-		taskq_barrier(softnet);
+	taskq_del_barrier(softnet, &sc->sc_send_task);
 	NET_LOCK();
 
 	mq_purge(&sc->sc_send_list);
