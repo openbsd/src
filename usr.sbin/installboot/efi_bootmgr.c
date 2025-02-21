@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_bootmgr.c,v 1.1 2025/02/19 21:30:46 kettenis Exp $	*/
+/*	$OpenBSD: efi_bootmgr.c,v 1.2 2025/02/21 20:41:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -250,7 +250,7 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 			var.datasize = optlen;
 			error = ioctl(fd, EFIIOC_VAR_SET, &var);
 			if (error) {
-				if (errno == EPERM)
+				if (errno == EPERM || errno == ENOSYS)
 					return;
 				err(1, "EFIIOC_VAR_SET: Boot%04X", idx);
 			}
@@ -299,7 +299,7 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 	if (!nowrite) {
 		error = ioctl(fd, EFIIOC_VAR_SET, &var);
 		if (error) {
-			if (errno == EPERM)
+			if (errno == EPERM || errno == ENOSYS)
 				return;
 			err(1, "EFIIOC_VAR_SET: BootOrder");
 		}
