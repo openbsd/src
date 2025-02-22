@@ -268,7 +268,7 @@ lwres_printb64len(const char *p0)
 	u_int8_t *p;
 	u_int16_t l;
 	char *dbuf, *b64buf;
-	int i;
+	int i, b64len;
 
 	p = (u_int8_t *)p0;
 	if (p + 2 > (u_int8_t *)snapend)
@@ -277,11 +277,12 @@ lwres_printb64len(const char *p0)
 	if (p + 2 + l > (u_int8_t *)snapend)
 		goto trunc;
 
-	dbuf = malloc(l + 1);
+	dbuf = malloc(l);
 	if (!dbuf)
 	  return -1;
 
-	b64buf = malloc((l + 2) * 4 / 3);
+	b64len = (l + 2) / 3 * 4 + 1;
+	b64buf = malloc(b64len);
 	if (!b64buf)
 	  {
 	    free(dbuf);
@@ -289,14 +290,16 @@ lwres_printb64len(const char *p0)
 	  }
 
 	memcpy(dbuf, p, l);
-	*(dbuf + l) = (char)0;
 
-	i = b64_ntop (dbuf, l, b64buf, (l + 2) * 4 / 3);
-	b64buf[i] = (char)0;
-	printf ("%s", b64buf);
+	i = b64_ntop (dbuf, l, b64buf, b64len);
+	if (i != -1)
+		printf ("%s", b64buf);
 
 	free (dbuf);
 	free (b64buf);
+
+	if (i == -1)
+		return -1;
 
 	return l + 2;
 
