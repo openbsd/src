@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_installboot.c,v 1.13 2025/02/19 21:30:46 kettenis Exp $	*/
+/*	$OpenBSD: efi_installboot.c,v 1.14 2025/02/22 21:19:22 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -355,7 +355,7 @@ write_filesystem(struct disklabel *dl, char part, int gpart,
 	}
 
 #ifdef EFIBOOTMGR
-	if (config)
+	if (config && gp)
 		efi_bootmgr_setup(gpart, gp, "\\EFI\\OPENBSD\\" BOOTEFI_DST);
 #endif
 
