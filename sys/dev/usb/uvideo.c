@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.238 2025/02/15 09:05:15 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.239 2025/02/23 08:28:57 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2617,9 +2617,13 @@ void
 uvideo_dump_desc_vc_header(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
+	int i;
+	uByte *baInterfaceNr;
 	struct usb_video_header_desc *d;
 
 	d = (struct usb_video_header_desc *)(uint8_t *)desc;
+
+	baInterfaceNr = (uByte *)(d + 1);
 
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
@@ -2628,6 +2632,8 @@ uvideo_dump_desc_vc_header(struct uvideo_softc *sc,
 	printf("wTotalLength=%d\n", UGETW(d->wTotalLength));
 	printf("dwClockFrequency=%d\n", UGETDW(d->dwClockFrequency));
 	printf("bInCollection=0x%02x\n", d->bInCollection);
+	for (i = 0; i < d->bInCollection; i++)
+		printf("baInterfaceNr[%d]=0x%02x\n", i, baInterfaceNr[i]);
 }
 
 void
