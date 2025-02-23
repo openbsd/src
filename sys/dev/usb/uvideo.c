@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.239 2025/02/23 08:28:57 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.240 2025/02/23 14:12:15 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -138,6 +138,7 @@ usbd_status	uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 usbd_status	uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 usbd_status	uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *,
 		    const usb_descriptor_t *);
+uint32_t	uvideo_vc_parse_max_packet_size(usb_endpoint_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_alt(struct uvideo_softc *, int, int, int);
 usbd_status	uvideo_vs_set_alt(struct uvideo_softc *,
 		    struct usbd_interface *, int);
@@ -1235,6 +1236,19 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 	return (USBD_NORMAL_COMPLETION);
 }
 
+uint32_t
+uvideo_vc_parse_max_packet_size(usb_endpoint_descriptor_t *ed)
+{
+	uint32_t psize;
+
+	/* XXX: get USB 3.0 speed from wBytesPerInterval */
+
+	psize = UGETW(ed->wMaxPacketSize);
+	psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
+
+	return psize;
+}
+
 usbd_status
 uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numalts)
 {
@@ -1245,6 +1259,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 	usb_endpoint_descriptor_t *ed;
 	uint8_t ep_dir, ep_type;
 	int bulk_endpoint;
+	uint32_t psize;
 
 	vs = &sc->sc_vs_coll[vs_nr];
 
@@ -1306,13 +1321,14 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 		if (bulk_endpoint && !vs->bulk_endpoint)
 			goto next;
 
+		psize = uvideo_vc_parse_max_packet_size(ed);
 		/* save endpoint with largest bandwidth */
-		if (UGETW(ed->wMaxPacketSize) > vs->psize) {
+		if (psize > vs->psize) {
 			vs->ifaceh = &sc->sc_udev->ifaces[iface];
 			vs->endpoint = ed->bEndpointAddress;
 			vs->numalts = numalts;
 			vs->curalt = id->bAlternateSetting;
-			vs->psize = UGETW(ed->wMaxPacketSize);
+			vs->psize = psize;
 			vs->iface = iface;
 			vs->bulk_endpoint = bulk_endpoint;
 		}
@@ -1383,8 +1399,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 			goto next;
 
 		/* save endpoint with requested bandwidth */
-		psize = UGETW(ed->wMaxPacketSize);
-		psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
+		psize = uvideo_vc_parse_max_packet_size(ed);
 		if (psize >= max_packet_size)
 			diff = psize - max_packet_size;
 		else
