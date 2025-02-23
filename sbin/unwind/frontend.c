@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.90 2024/11/24 11:33:34 kirill Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.91 2025/02/23 07:54:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -942,9 +942,9 @@ synthesize_dns64_answer(struct pending_query *pq)
 
 	synth_rinfo = construct_reply_info_base(pq->region, rinfo->flags,
 	    rinfo->qdcount, rinfo->ttl, rinfo->prefetch_ttl,
-	    rinfo->serve_expired_ttl, rinfo->an_numrrsets,
-	    rinfo->ns_numrrsets, rinfo->ar_numrrsets, rinfo->rrset_count,
-	    rinfo->security, rinfo->reason_bogus);
+	    rinfo->serve_expired_ttl, rinfo->serve_expired_norec_ttl,
+	    rinfo->an_numrrsets, rinfo->ns_numrrsets, rinfo->ar_numrrsets,
+	    rinfo->rrset_count, rinfo->security, rinfo->reason_bogus);
 
 	if (!synth_rinfo)
 		goto srvfail;
