@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.404 2025/02/14 13:14:13 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.405 2025/02/24 20:16:14 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -88,7 +88,8 @@ int ip_output_ipsec_lookup(struct mbuf *m, int hlen,
     const struct ipsec_level *seclevel, struct tdb **, int ipsecflowinfo);
 void ip_output_ipsec_pmtu_update(struct tdb *, struct route *, struct in_addr,
     int);
-int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
+int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, u_int,
+    int);
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -110,9 +111,7 @@ ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
 	struct sockaddr_in *dst;
 	struct tdb *tdb = NULL;
 	u_long mtu;
-#if NPF > 0
 	u_int orig_rtableid;
-#endif
 
 	NET_ASSERT_LOCKED();
 
@@ -147,8 +146,8 @@ ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
 		goto bad;
 	}
 
-#if NPF > 0
 	orig_rtableid = m->m_pkthdr.ph_rtableid;
+#if NPF > 0
 reroute:
 #endif
 
@@ -393,7 +392,7 @@ sendit:
 	 */
 	if (tdb != NULL) {
 		/* Callee frees mbuf */
-		error = ip_output_ipsec_send(tdb, m, ro,
+		error = ip_output_ipsec_send(tdb, m, ro, orig_rtableid,
 		    (flags & IP_FORWARDING) ? 1 : 0);
 		goto done;
 	}
@@ -569,6 +568,7 @@ ip_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 		atomic_store_int(&rt->rt_mtu, tdb->tdb_mtu);
 		if (ro != NULL && ro->ro_rt != NULL) {
 			rtfree(ro->ro_rt);
+			ro->ro_tableid = rtableid;
 			ro->ro_rt = rtalloc(&ro->ro_dstsa, RT_RESOLVE,
 			    rtableid);
 		}
@@ -578,14 +578,15 @@ ip_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 }
 
 int
-ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
+ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
+    u_int rtableid, int fwd)
 {
 	struct mbuf_list ml;
 	struct ifnet *encif = NULL;
 	struct ip *ip;
 	struct in_addr dst;
 	u_int len;
-	int error, rtableid, tso = 0;
+	int error, tso = 0;
 
 #if NPF > 0
 	/*
@@ -618,7 +619,6 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 
 	/* Check if we are allowed to fragment */
 	dst = ip->ip_dst;
-	rtableid = m->m_pkthdr.ph_rtableid;
 	if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
 	    len > tdb->tdb_mtu && tdb->tdb_mtutimeout > gettime()) {
 		ip_output_ipsec_pmtu_update(tdb, ro, dst, rtableid);

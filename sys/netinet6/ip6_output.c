@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.295 2025/02/14 13:14:13 dlg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.296 2025/02/24 20:16:14 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
 	struct sockaddr_in6 *dst;
 	int error = 0;
 	u_long mtu;
+	u_int orig_rtableid;
 	int dontfrag;
 	u_int16_t src_scope, dst_scope;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
@@ -384,6 +385,7 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
 	/*
 	 * Route packet.
 	 */
+	orig_rtableid = m->m_pkthdr.ph_rtableid;
 #if NPF > 0
 reroute:
 #endif
@@ -436,7 +438,7 @@ reroute:
 		 * packet just because ip6_dst is different from what tdb has.
 		 * XXX
 		 */
-		error = ip6_output_ipsec_send(tdb, m, ro,
+		error = ip6_output_ipsec_send(tdb, m, ro, orig_rtableid,
 		    exthdrs.ip6e_rthdr ? 1 : 0, 0);
 		goto done;
 	}
@@ -2815,6 +2817,7 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 		atomic_store_int(&rt->rt_mtu, tdb->tdb_mtu);
 		if (ro != NULL && ro->ro_rt != NULL) {
 			rtfree(ro->ro_rt);
+			ro->ro_tableid = rtableid;
 			ro->ro_rt = rtalloc(&ro->ro_dstsa, RT_RESOLVE,
 			    rtableid);
 		}
@@ -2826,14 +2829,14 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 
 int
 ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
-    int tunalready, int fwd)
+    u_int rtableid, int tunalready, int fwd)
 {
 	struct mbuf_list ml;
 	struct ifnet *encif = NULL;
 	struct ip6_hdr *ip6;
 	struct in6_addr dst;
 	u_int len;
-	int error, ifidx, rtableid, tso = 0;
+	int error, ifidx, tso = 0;
 
 #if NPF > 0
 	/*
@@ -2867,7 +2870,6 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	/* Check if we are allowed to fragment */
 	dst = ip6->ip6_dst;
 	ifidx = m->m_pkthdr.ph_ifidx;
-	rtableid = m->m_pkthdr.ph_rtableid;
 	if (ip_mtudisc && tdb->tdb_mtu &&
 	    len > tdb->tdb_mtu && tdb->tdb_mtutimeout > gettime()) {
 		int transportmode;

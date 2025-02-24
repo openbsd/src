@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.121 2024/11/21 20:15:44 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.122 2025/02/24 20:16:14 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ struct tdb;
 int	ip6_output_ipsec_lookup(struct mbuf *, const struct ipsec_level *,
 	    struct tdb **);
 int	ip6_output_ipsec_send(struct tdb *, struct mbuf *, struct route *,
-	    int, int);
+	    u_int, int, int);
 #endif /* IPSEC */
 
 #endif /* _KERNEL */
