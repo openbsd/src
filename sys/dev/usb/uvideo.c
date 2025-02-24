@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.240 2025/02/23 14:12:15 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.241 2025/02/24 12:43:29 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2572,6 +2572,12 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("|\n");
 				uvideo_dump_desc_colorformat(sc, desc);
 				break;
+			default:
+				printf("bDescriptorSubtype=0x%02x",
+				    desc->bDescriptorSubtype);
+				printf(" (unknown)\n");
+				break;
+
 			}
 
 			break;
