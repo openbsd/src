@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.195 2025/02/24 15:43:55 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.196 2025/02/24 18:07:50 tb Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 	npins = SCARG(uap, npins);
 	if (npins < 1 || npins > SYS_MAXSYSCALL)
 		return (E2BIG);
-	pins = malloc(npins * sizeof(u_int), M_PINSYSCALL, M_WAITOK|M_ZERO);
+	pins = mallocarray(npins, sizeof(u_int), M_PINSYSCALL, M_WAITOK|M_ZERO);
 	if (pins == NULL)
 		return (ENOMEM);
 	error = copyin(SCARG(uap, pins), pins, npins * sizeof(u_int));
