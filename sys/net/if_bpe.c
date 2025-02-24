@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.22 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.23 2025/02/24 09:40:01 jan Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -305,6 +305,7 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct bpe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifbrparam *bparam = (struct ifbrparam *)data;
+	struct ifnet *ifp0;
 	int error = 0;
 
 	switch (cmd) {
@@ -317,6 +318,13 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = bpe_down(sc);
+		}
+		break;
+
+	case SIOCSIFXFLAGS:
+		if ((ifp0 = if_get(sc->sc_key.k_if)) != NULL) {
+			ifsetlro(ifp0, ISSET(ifr->ifr_flags, IFXF_LRO));
+			if_put(ifp0);
 		}
 		break;
 

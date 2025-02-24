@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.90 2025/01/24 10:29:43 yasuoka Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.91 2025/02/24 09:40:01 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1370,6 +1370,19 @@ vmxnet3_reset(struct vmxnet3_softc *sc)
 	WRITE_CMD(sc, VMXNET3_CMD_RESET);
 }
 
+void
+vmxnet4_set_features(struct vmxnet3_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	/* TCP Large Receive Offload */
+	if (ISSET(ifp->if_xflags, IFXF_LRO))
+		SET(sc->sc_ds->upt_features, UPT1_F_LRO);
+	else
+		CLR(sc->sc_ds->upt_features, UPT1_F_LRO);
+	WRITE_CMD(sc, VMXNET3_CMD_SET_FEATURE);
+}
+
 int
 vmxnet3_init(struct vmxnet3_softc *sc)
 {
@@ -1403,12 +1416,7 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 		return EIO;
 	}
 
-	/* TCP Large Receive Offload */
-	if (ISSET(ifp->if_xflags, IFXF_LRO))
-		SET(sc->sc_ds->upt_features, UPT1_F_LRO);
-	else
-		CLR(sc->sc_ds->upt_features, UPT1_F_LRO);
-	WRITE_CMD(sc, VMXNET3_CMD_SET_FEATURE);
+	vmxnet4_set_features(sc);
 
 	/* Program promiscuous mode and multicast filters. */
 	vmxnet3_iff(sc);
@@ -1474,6 +1482,17 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				vmxnet3_stop(ifp);
+		}
+		break;
+	case SIOCSIFXFLAGS:
+		if (ISSET(ifr->ifr_flags, IFXF_LRO) !=
+		    ISSET(ifp->if_xflags, IFXF_LRO)) {
+			if (ISSET(ifr->ifr_flags, IFXF_LRO))
+				SET(ifp->if_xflags, IFXF_LRO);
+			else
+				CLR(ifp->if_xflags, IFXF_LRO);
+
+			vmxnet4_set_features(sc);
 		}
 		break;
 	case SIOCSIFMEDIA:

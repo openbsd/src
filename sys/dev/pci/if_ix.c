@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.218 2024/10/04 05:22:10 yasuoka Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.219 2025/02/24 09:40:01 jan Exp $	*/
 
 /******************************************************************************
 
@@ -547,6 +547,19 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ixgbe_stop(sc);
+		}
+		break;
+
+	case SIOCSIFXFLAGS:
+		if (ISSET(ifr->ifr_flags, IFXF_LRO) !=
+		    ISSET(ifp->if_xflags, IFXF_LRO)) {
+			if (ISSET(ifr->ifr_flags, IFXF_LRO))
+				SET(ifp->if_xflags, IFXF_LRO);
+			else
+				CLR(ifp->if_xflags, IFXF_LRO);
+
+			if (ifp->if_flags & IFF_UP)
+				ixgbe_init(sc);
 		}
 		break;
 

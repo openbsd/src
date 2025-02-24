@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.69 2025/01/30 07:48:50 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.70 2025/02/24 09:40:01 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -352,6 +352,7 @@ int	vio_set_rx_filter(struct vio_softc *);
 void	vio_iff(struct vio_softc *);
 int	vio_media_change(struct ifnet *);
 void	vio_media_status(struct ifnet *, struct ifmediareq *);
+void	vio_set_offloads(struct ifnet *);
 int	vio_ctrleof(struct virtqueue *);
 int	vio_ctrl_start(struct vio_softc *, uint8_t, uint8_t, int, int *);
 int	vio_ctrl_submit(struct vio_softc *, int);
@@ -953,6 +954,28 @@ vio_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		imr->ifm_status |= IFM_ACTIVE|IFM_FDX;
 }
 
+void
+vio_set_offloads(struct ifnet *ifp)
+{
+	struct vio_softc	*sc = ifp->if_softc;
+	struct virtio_softc	*vsc = sc->sc_virtio;
+	uint64_t		 features = 0;
+
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS)) {
+		if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
+			SET(features, VIRTIO_NET_F_GUEST_CSUM);
+
+		if (ISSET(ifp->if_xflags, IFXF_LRO)) {
+			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4))
+				SET(features, VIRTIO_NET_F_GUEST_TSO4);
+			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))
+				SET(features, VIRTIO_NET_F_GUEST_TSO6);
+		}
+
+		vio_ctrl_guest_offloads(sc, features);
+	}
+}
+
 /*
  * Interface functions for ifnet
  */
@@ -960,7 +983,6 @@ int
 vio_init(struct ifnet *ifp)
 {
 	struct vio_softc *sc = ifp->if_softc;
-	struct virtio_softc *vsc = sc->sc_virtio;
 	int qidx;
 
 	vio_stop(ifp, 0);
@@ -977,22 +999,7 @@ vio_init(struct ifnet *ifp)
 	}
 	vio_iff(sc);
 	vio_link_state(ifp);
-
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS)) {
-		uint64_t features = 0;
-
-		if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
-			SET(features, VIRTIO_NET_F_GUEST_CSUM);
-
-		if (ISSET(ifp->if_xflags, IFXF_LRO)) {
-			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4))
-				SET(features, VIRTIO_NET_F_GUEST_TSO4);
-			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))
-				SET(features, VIRTIO_NET_F_GUEST_TSO6);
-		}
-
-		vio_ctrl_guest_offloads(sc, features);
-	}
+	vio_set_offloads(ifp);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 
@@ -1312,6 +1319,17 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				vio_stop(ifp, 1);
+		}
+		break;
+	case SIOCSIFXFLAGS:
+		if (ISSET(ifr->ifr_flags, IFXF_LRO) !=
+		    ISSET(ifp->if_xflags, IFXF_LRO)) {
+			if (ISSET(ifr->ifr_flags, IFXF_LRO))
+				SET(ifp->if_xflags, IFXF_LRO);
+			else
+				CLR(ifp->if_xflags, IFXF_LRO);
+
+			vio_set_offloads(ifp);
 		}
 		break;
 	case SIOCGIFMEDIA:

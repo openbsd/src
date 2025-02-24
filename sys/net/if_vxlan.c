@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.100 2024/10/31 11:41:31 mvs Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.101 2025/02/24 09:40:01 jan Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -729,6 +729,7 @@ vxlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct vxlan_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifbrparam *bparam = (struct ifbrparam *)data;
+	struct ifnet *ifp0;
 	int error = 0;
 
 	switch (cmd) {
@@ -743,6 +744,13 @@ vxlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = vxlan_down(sc);
+		}
+		break;
+
+	case SIOCSIFXFLAGS:
+		if ((ifp0 = if_get(sc->sc_if_index0)) != NULL) {
+			ifsetlro(ifp0, ISSET(ifr->ifr_flags, IFXF_LRO));
+			if_put(ifp0);
 		}
 		break;
 

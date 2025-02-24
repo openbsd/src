@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.219 2024/06/09 16:25:28 jan Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.220 2025/02/24 09:40:01 jan Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -698,6 +698,13 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = vlan_down(sc);
+		}
+		break;
+
+	case SIOCSIFXFLAGS:
+		if ((ifp0 = if_get(sc->sc_ifidx0)) != NULL) {
+			ifsetlro(ifp0, ISSET(ifr->ifr_flags, IFXF_LRO));
+			if_put(ifp0);
 		}
 		break;
 

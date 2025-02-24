@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.47 2024/12/18 01:56:05 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.48 2025/02/24 09:40:01 jan Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -856,6 +856,7 @@ aggr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct aggr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct aggr_port *p;
 	int error = 0;
 
 	if (sc->sc_dead)
@@ -875,6 +876,11 @@ aggr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = aggr_down(sc);
 		}
+		break;
+
+	case SIOCSIFXFLAGS:
+		TAILQ_FOREACH(p, &sc->sc_ports, p_entry)
+			ifsetlro(p->p_ifp0, ISSET(ifr->ifr_flags, IFXF_LRO));
 		break;
 
 	case SIOCSIFLLADDR:

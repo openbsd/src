@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.365 2024/12/19 22:10:35 mvs Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.366 2025/02/24 09:40:01 jan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2042,6 +2042,13 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		} else if (vhe->state == INIT && (ifr->ifr_flags & IFF_UP)) {
 			sc->sc_if.if_flags |= IFF_UP;
 			carp_setrun_all(sc, 0);
+		}
+		break;
+
+	case SIOCSIFXFLAGS:
+		if ((ifp0 = if_get(sc->sc_carpdevidx)) != NULL) {
+			ifsetlro(ifp0, ISSET(ifr->ifr_flags, IFXF_LRO));
+			if_put(ifp0);
 		}
 		break;
 

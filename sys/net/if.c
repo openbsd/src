@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.726 2025/02/03 08:58:52 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.727 2025/02/24 09:40:01 jan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3353,28 +3353,25 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 int
 ifsetlro(struct ifnet *ifp, int on)
 {
-	struct ifreq ifrq;
 	int error = 0;
 	int s = splnet();
-	struct if_parent parent;
+	struct ifreq ifr;
 
-	memset(&parent, 0, sizeof(parent));
-	if ((*ifp->if_ioctl)(ifp, SIOCGIFPARENT, (caddr_t)&parent) != -1) {
-		struct ifnet *ifp0 = if_unit(parent.ifp_parent);
+	NET_ASSERT_LOCKED();	/* for ioctl */
+	KERNEL_ASSERT_LOCKED();	/* for if_flags */
 
-		if (ifp0 != NULL) {
-			ifsetlro(ifp0, on);
-			if_put(ifp0);
-		}
-	}
+	memset(&ifr, 0, sizeof ifr);
+	if (on)
+		SET(ifr.ifr_flags, IFXF_LRO);
+
+	error = ((*ifp->if_ioctl)(ifp, SIOCSIFXFLAGS, (caddr_t)&ifr));
+	if (error == 0)
+		goto out;
 
 	if (!ISSET(ifp->if_capabilities, IFCAP_LRO)) {
 		error = ENOTSUP;
 		goto out;
 	}
-
-	NET_ASSERT_LOCKED();	/* for ioctl */
-	KERNEL_ASSERT_LOCKED();	/* for if_flags */
 
 	if (on && !ISSET(ifp->if_xflags, IFXF_LRO)) {
 		if (ifp->if_type == IFT_ETHER && ether_brport_isset(ifp)) {
@@ -3384,21 +3381,7 @@ ifsetlro(struct ifnet *ifp, int on)
 		SET(ifp->if_xflags, IFXF_LRO);
 	} else if (!on && ISSET(ifp->if_xflags, IFXF_LRO))
 		CLR(ifp->if_xflags, IFXF_LRO);
-	else
-		goto out;
 
-	/* restart interface */
-	if (ISSET(ifp->if_flags, IFF_UP)) {
-		/* go down for a moment... */
-		CLR(ifp->if_flags, IFF_UP);
-		ifrq.ifr_flags = ifp->if_flags;
-		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
-
-		/* ... and up again */
-		SET(ifp->if_flags, IFF_UP);
-		ifrq.ifr_flags = ifp->if_flags;
-		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
-	}
  out:
 	splx(s);
 

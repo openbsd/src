@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.154 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.155 2025/02/24 09:40:01 jan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -846,6 +846,12 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		error = ENETRESET;
 		break;
+
+	case SIOCSIFXFLAGS:
+		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+			ifsetlro(tp->tp_if, ISSET(ifr->ifr_flags, IFXF_LRO));
+		break;
+
 	case SIOCADDMULTI:
 		error = trunk_ether_addmulti(tr, ifr);
 		break;
