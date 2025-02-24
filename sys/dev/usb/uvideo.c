@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.241 2025/02/24 12:43:29 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.242 2025/02/24 21:24:54 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3386,13 +3386,13 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 
 	/* allocate the total mmap buffer */	
 	buf_size = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
-	if (buf_size >= SIZE_MAX / UVIDEO_MAX_BUFFERS) {
+	buf_size_total = sc->sc_mmap_count * buf_size;
+	buf_size_total = round_page(buf_size_total); /* page align buffer */
+	if (buf_size_total > MALLOC_MAX) {
 		printf("%s: video frame size too large!\n", DEVNAME(sc));
 		sc->sc_mmap_count = 0;
 		return (EINVAL);
 	}
-	buf_size_total = sc->sc_mmap_count * buf_size;
-	buf_size_total = round_page(buf_size_total); /* page align buffer */
 	sc->sc_mmap_buffer = malloc(buf_size_total, M_USBDEV, M_NOWAIT);
 	if (sc->sc_mmap_buffer == NULL) {
 		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));
