@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.45 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: x_crl.c,v 1.46 2025/02/24 20:07:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,10 +327,8 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		break;
 
 	case ASN1_OP_FREE_POST:
-		if (crl->akid)
-			AUTHORITY_KEYID_free(crl->akid);
-		if (crl->idp)
-			ISSUING_DIST_POINT_free(crl->idp);
+		AUTHORITY_KEYID_free(crl->akid);
+		ISSUING_DIST_POINT_free(crl->idp);
 		ASN1_INTEGER_free(crl->crl_number);
 		ASN1_INTEGER_free(crl->base_crl_number);
 		sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
