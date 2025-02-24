@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.194 2025/02/24 15:42:35 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.195 2025/02/24 15:43:55 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -627,8 +627,6 @@ sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);	/* disallow wrap-around. */
 	if (base < map->min_offset || base+len > map->max_offset)
 		return (EINVAL);
-
-	/* XXX MP unlock */
 
 	npins = SCARG(uap, npins);
 	if (npins < 1 || npins > SYS_MAXSYSCALL)
