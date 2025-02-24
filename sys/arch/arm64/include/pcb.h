@@ -1,4 +1,4 @@
-/* $OpenBSD: pcb.h,v 1.7 2025/02/11 22:27:09 kettenis Exp $ */
+/* $OpenBSD: pcb.h,v 1.8 2025/02/24 13:18:01 jsg Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -38,7 +38,7 @@ struct pcb {
 	caddr_t		pcb_onfault;	/* On fault handler */
 	struct fpreg	pcb_fpstate;	/* Floating Point state */
 	__uint16_t	pcb_sve_p[16];	/* SVE predicate registers */
-	__uint16_t	pcb_sve_ffr;	/* SVE first fault reguster */
+	__uint16_t	pcb_sve_ffr;	/* SVE first fault register */
 
 	void		*pcb_tcb;
 };
