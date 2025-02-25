@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.11 2025/01/23 11:05:26 mpi Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.12 2025/02/25 11:29:17 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -78,7 +78,7 @@ struct uvmline uvmline[] = {
 	  &uvmexp.fltrelck, &last_uvmexp.fltrelck, "fltrelck" },
 	{ &uvmexp.zeropages, &last_uvmexp.zeropages, "zeropages",
 	  &uvmexp.pageins, &last_uvmexp.pageins, "pageins",
-	  &uvmexp.fltrelckok, &last_uvmexp.fltrelckok, "fltrelckok" },
+	  &uvmexp.fltnorelck, &last_uvmexp.fltnorelck, "fltnorelck" },
 	{ &uvmexp.percpucaches, &last_uvmexp.percpucaches, "percpucaches",
 	  &uvmexp.pgswapin, &last_uvmexp.pgswapin, "pgswapin",
 	  &uvmexp.fltanget, &last_uvmexp.fltanget, "fltanget" },
@@ -117,10 +117,10 @@ struct uvmline uvmline[] = {
 	  &uvmexp.flt_przero, &last_uvmexp.flt_przero, "flt_przero" },
 	{ &uvmexp.pcpmiss, &last_uvmexp.pcpmiss, "pcpmiss",
 	  &uvmexp.pdswout, &last_uvmexp.pdswout, "pdswout",
-	  NULL, NULL, NULL },
+	  &uvmexp.fltup, &last_uvmexp.fltup, "fltup" },
 	{ NULL, NULL, NULL,
 	  &uvmexp.pdfreed, &last_uvmexp.pdfreed, "pdfreed",
-	  NULL, NULL, NULL },
+	  &uvmexp.fltnoup, &last_uvmexp.fltnoup, "fltnoup" },
 	{ NULL, NULL, NULL,
 	  &uvmexp.pdscans, &last_uvmexp.pdscans, "pdscans",
 	  NULL, NULL, NULL },

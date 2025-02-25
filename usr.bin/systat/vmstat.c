@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.96 2022/12/28 20:49:05 cheloha Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.97 2025/02/25 11:29:17 mpi Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -264,7 +264,7 @@ labelkre(void)
 	mvprintw(VMSTATROW + 2, VMSTATCOL + 10, "fksvm");
 	mvprintw(VMSTATROW + 3, VMSTATCOL + 10, "pwait");
 	mvprintw(VMSTATROW + 4, VMSTATCOL + 10, "relck");
-	mvprintw(VMSTATROW + 5, VMSTATCOL + 10, "rlkok");
+	mvprintw(VMSTATROW + 5, VMSTATCOL + 10, "norlk");
 	mvprintw(VMSTATROW + 6, VMSTATCOL + 10, "noram");
 	mvprintw(VMSTATROW + 7, VMSTATCOL + 10, "ndcpy");
 	mvprintw(VMSTATROW + 8, VMSTATCOL + 10, "fltcp");
@@ -407,7 +407,7 @@ showkre(void)
 	PUTRATE(uvmexp.forks_sharevm, VMSTATROW + 2, VMSTATCOL + 3, 6);
 	PUTRATE(uvmexp.fltpgwait, VMSTATROW + 3, VMSTATCOL + 4, 5);
 	PUTRATE(uvmexp.fltrelck, VMSTATROW + 4, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.fltrelckok, VMSTATROW + 5, VMSTATCOL + 3, 6);
+	PUTRATE(uvmexp.fltnorelck, VMSTATROW + 5, VMSTATCOL + 3, 6);
 	PUTRATE(uvmexp.fltnoram, VMSTATROW + 6, VMSTATCOL + 3, 6);
 	PUTRATE(uvmexp.fltamcopy, VMSTATROW + 7, VMSTATCOL + 3, 6);
 	PUTRATE(uvmexp.flt_prcopy, VMSTATROW + 8, VMSTATCOL + 3, 6);

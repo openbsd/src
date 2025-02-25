@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.124 2025/01/23 11:05:26 mpi Exp $
+.\"	$OpenBSD: systat.1,v 1.125 2025/02/25 11:29:17 mpi Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 23 2025 $
+.Dd $Mdocdate: February 25 2025 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -650,9 +650,13 @@ fault had to wait on a page
 .It fltpgrele
 fault found a released page
 .It fltrelck
-fault relock called
-.It fltrelckok
 fault relock was a success
+.It fltnorelck
+fault relock failed
+.It fltup
+fault upgrade was a success
+.It fltnoup
+fault upgrade failed
 .It fltanget
 fault got anon page
 .It fltanretry

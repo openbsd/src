@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.163 2025/01/29 15:22:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.164 2025/02/25 11:29:17 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1268,8 +1268,10 @@ uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	flt->lower_lock_type = RW_WRITE;
 	if (rw_enter(uobj->vmobjlock, RW_UPGRADE|RW_NOSLEEP)) {
 		uvmfault_unlockall(ufi, amap, uobj);
+		counters_inc(uvmexp_counters, flt_noup);
 		return ERESTART;
 	}
+	counters_inc(uvmexp_counters, flt_up);
 	KASSERT(flt->lower_lock_type == rw_status(uobj->vmobjlock));
 	return 0;
 }
@@ -1910,8 +1912,6 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 		return TRUE;
 	}
 
-	counters_inc(uvmexp_counters, flt_relck);
-
 	/*
 	 * relock map.   fail if version mismatch (in which case nothing
 	 * gets locked).
@@ -1919,9 +1919,10 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 	vm_map_lock_read(ufi->map);
 	if (ufi->mapv != ufi->map->timestamp) {
 		vm_map_unlock_read(ufi->map);
+		counters_inc(uvmexp_counters, flt_norelck);
 		return FALSE;
 	}
 
-	counters_inc(uvmexp_counters, flt_relckok);
+	counters_inc(uvmexp_counters, flt_relck);
 	return TRUE;		/* got it! */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.16 2024/11/25 13:06:25 mpi Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.17 2025/02/25 11:29:17 mpi Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -120,8 +120,8 @@ struct uvmexp {
 	int fltnoamap;	/* [p] # of times fault was out of amap chunks */
 	int fltpgwait;	/* [p] # of times fault had to wait on a page */
 	int fltpgrele;	/* [p] # of times fault found a released page */
-	int fltrelck;	/* [p] # of times fault relock called */
-	int fltrelckok;	/* [p] # of times fault relock is a success */
+	int fltrelck;	/* [p] # of times fault relock is a success */
+	int fltnorelck;	/* [p] # of times fault relock failed */
 	int fltanget;	/* [p] # of times fault gets anon page */
 	int fltanretry;	/* [p] # of times fault retrys an anon get */
 	int fltamcopy;	/* [p] # of times fault clears "needs copy" */
@@ -134,6 +134,8 @@ struct uvmexp {
 	int flt_obj;	/* [p] # of times fault is on object page (2a) */
 	int flt_prcopy;	/* [p] # of times fault promotes with copy (2b) */
 	int flt_przero;	/* [p] # of times fault promotes with zerofill (2b) */
+	int fltup;	/* [p] # of times fault upgrade is a success */
+	int fltnoup;	/* [p] # of times fault upgrade failed */
 
 	/* daemon counters */
 	int pdwoke;	/* [F] # of times daemon woke up */
@@ -148,8 +150,7 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
-	int unused11;	/* formerly pdreanon */
-	int unused12;	/* formerly pdrevnode */
+
 	int unused13;	/* formerly pdrevtext */
 
 	int fpswtch;	/* FPU context switches */
@@ -178,8 +179,8 @@ enum uvm_exp_counters {
 	flt_noamap,	/* number of times fault was out of amap chunks */
 	flt_pgwait,	/* number of times fault had to wait on a page */
 	flt_pgrele,	/* number of times fault found a released page */
-	flt_relck,	/* number of times fault relock called */
-	flt_relckok,	/* number of times fault relock is a success */
+	flt_relck,	/* number of times fault relock is a success */
+	flt_norelck,	/* number of times fault relock failed */
 	flt_anget,	/* number of times fault gets anon page */
 	flt_anretry,	/* number of times fault retrys an anon get */
 	flt_amcopy,	/* number of times fault clears "needs copy" */
@@ -192,6 +193,8 @@ enum uvm_exp_counters {
 	flt_obj,	/* number of times fault is on object page (2a) */
 	flt_prcopy,	/* number of times fault promotes with copy (2b) */
 	flt_przero,	/* number of times fault promotes with zerofill (2b) */
+	flt_up,		/* number of times fault upgrade is a success */
+	flt_noup,	/* number of times fault upgrade failed */
 
 	exp_ncounters
 };
