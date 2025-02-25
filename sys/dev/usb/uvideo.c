@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.243 2025/02/25 22:10:39 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.244 2025/02/25 22:13:44 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2244,6 +2244,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	struct usb_video_stream_header *sh;
 	int sample_len;
+	usbd_status ret = USBD_NORMAL_COMPLETION;
 
 	if (frame_size < UVIDEO_SH_MIN_LEN)
 		/* frame too small to contain a valid stream header */
@@ -2327,7 +2328,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 			/* mmap */
 			if (uvideo_mmap_queue(sc, fb->buf, fb->offset,
 				    fb->error))
-				return (USBD_NOMEM);
+				ret = USBD_NOMEM;
 		} else if (fb->error) {
 			DPRINTF(1, "%s: %s: error frame, skipped!\n",
 			    DEVNAME(sc), __func__);
@@ -2341,7 +2342,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		fb->error = 0;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return (ret);
 }
 
 /*
@@ -2366,6 +2367,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	int sample_len, header = 0;
+	usbd_status ret = USBD_NORMAL_COMPLETION;
 	uint8_t magic[] = {
 	    0x11, 0x22, 0x33, 0x44,
 	    0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xfa, 0xce };
@@ -2384,7 +2386,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 		if (sc->sc_mmap_flag) {
 			/* mmap */
 			if (uvideo_mmap_queue(sc, fb->buf, fb->offset, 0))
-				return (USBD_NOMEM);
+				ret = USBD_NOMEM;
 		} else {
 			/* read */
 			uvideo_read(sc, fb->buf, fb->offset);
@@ -2399,7 +2401,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 		}
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return (ret);
 }
 
 int
@@ -2416,7 +2418,7 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 			break;
 	}
 	if (i == sc->sc_mmap_count) {
-		DPRINTF(1, "%s: %s: mmap queue is full!",
+		DPRINTF(1, "%s: %s: mmap queue is full!\n",
 		    DEVNAME(sc), __func__);
 		return ENOMEM;
 	}
