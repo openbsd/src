@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.242 2025/02/24 21:24:54 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.243 2025/02/25 22:10:39 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2426,7 +2426,12 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 	sc->sc_mmap[i].v4l2_buf.bytesused = len;
 
 	/* timestamp it */
-	getmicrotime(&sc->sc_mmap[i].v4l2_buf.timestamp);
+	getmicrouptime(&sc->sc_mmap[i].v4l2_buf.timestamp);
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_TSTAMP_SRC_EOF;
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMECODE;
 
 	/* forward error bit */
 	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_ERROR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.22 2025/01/15 20:34:50 kirill Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.23 2025/02/25 22:10:39 kirill Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -1378,7 +1378,12 @@ utvfu_mmap_queue(struct utvfu_softc *sc, uint8_t *buf, int len)
 	sc->sc_mmap[i].v4l2_buf.bytesused = len;
 
 	/* timestamp it */
-	getmicrotime(&sc->sc_mmap[i].v4l2_buf.timestamp);
+	getmicrouptime(&sc->sc_mmap[i].v4l2_buf.timestamp);
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_TSTAMP_SRC_EOF;
+	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMECODE;
 
 	/* appropriately set/clear flags */
 	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_QUEUED;
