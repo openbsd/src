@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.236 2025/01/03 10:14:32 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.237 2025/02/25 15:55:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -696,7 +696,8 @@ struct mft	*mft_parse(X509 **, const char *, int, const unsigned char *,
 struct mft	*mft_read(struct ibuf *);
 int		 mft_compare_issued(const struct mft *, const struct mft *);
 int		 mft_compare_seqnum(const struct mft *, const struct mft *);
-int		 mft_seqnum_gap_present(const struct mft *, const struct mft *);
+int		 mft_seqnum_gap_present(const struct mft *, const struct mft *,
+		    BN_CTX *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);

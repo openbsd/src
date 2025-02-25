@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.121 2024/12/24 10:03:59 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.122 2025/02/25 15:55:26 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -35,7 +35,6 @@
 #include "extern.h"
 
 extern ASN1_OBJECT	*mft_oid;
-BN_CTX			*bn_ctx;
 
 /*
  * Types and templates for the Manifest eContent, RFC 6486, section 4.2.
@@ -641,7 +640,7 @@ mft_compare_seqnum(const struct mft *a, const struct mft *b)
  * Return 1 if a gap is detected.
  */
 int
-mft_seqnum_gap_present(const struct mft *a, const struct mft *b)
+mft_seqnum_gap_present(const struct mft *a, const struct mft *b, BN_CTX *bn_ctx)
 {
 	BIGNUM *diff, *seqnum_a, *seqnum_b;
 	int ret = 0;

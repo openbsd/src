@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.148 2024/11/21 13:32:27 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.149 2025/02/25 15:55:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,9 +40,6 @@
 
 extern int certid;
 
-extern BN_CTX		*bn_ctx;
-
-static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
@@ -165,7 +162,7 @@ parse_filepath(unsigned int repoid, const char *path, const char *file,
  */
 static struct roa *
 proc_parser_roa(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp)
+    const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct roa		*roa;
 	X509			*x509 = NULL;
@@ -207,7 +204,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
  */
 static struct spl *
 proc_parser_spl(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp)
+    const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct spl		*spl;
 	X509			*x509 = NULL;
@@ -349,7 +346,8 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
  */
 static struct mft *
 proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
-    char **crlfile, struct mft *cached_mft, const char **errstr)
+    char **crlfile, struct mft *cached_mft, const char **errstr,
+    X509_STORE_CTX *ctx, BN_CTX *bn_ctx)
 {
 	struct mft	*mft;
 	X509		*x509;
@@ -456,7 +454,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	}
 
 	if (seqnum_cmp > 0) {
-		if (mft_seqnum_gap_present(mft, cached_mft)) {
+		if (mft_seqnum_gap_present(mft, cached_mft, bn_ctx)) {
 			mft->seqnum_gap = 1;
 			warnx("%s: seqnum gap detected #%s -> #%s", file,
 			    cached_mft->seqnum, mft->seqnum);
@@ -480,7 +478,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
  */
 static char *
 proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
-    time_t *crlmtime)
+    time_t *crlmtime, X509_STORE_CTX *ctx, BN_CTX *bn_ctx)
 {
 	struct mft	*mft1 = NULL, *mft2 = NULL;
 	struct crl	*crl, *crl1 = NULL, *crl2 = NULL;
@@ -492,13 +490,14 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	*crlmtime = 0;
 
 	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
-	mft2 = proc_parser_mft_pre(entp, file2, &crl2, &crl2file, NULL, &err2);
+	mft2 = proc_parser_mft_pre(entp, file2, &crl2, &crl2file, NULL,
+	    &err2, ctx, bn_ctx);
 
 	if (!noop) {
 		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
 		    DIR_TEMP);
 		mft1 = proc_parser_mft_pre(entp, file1, &crl1, &crl1file, mft2,
-		    &err1);
+		    &err1, ctx, bn_ctx);
 	}
 
 	if (proc_parser_mft_check(file1, mft1)) {
@@ -558,7 +557,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
  */
 static struct cert *
 proc_parser_cert(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp)
+    const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct cert	*cert;
 	struct crl	*crl;
@@ -707,7 +706,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
  */
 static struct gbr *
 proc_parser_gbr(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp)
+    const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct gbr	*gbr;
 	X509		*x509 = NULL;
@@ -746,7 +745,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
  */
 static struct aspa *
 proc_parser_aspa(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp)
+    const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct aspa	*aspa;
 	X509		*x509 = NULL;
@@ -787,7 +786,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
  */
 static struct tak *
 proc_parser_tak(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp)
+    const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct tak	*tak;
 	X509		*x509 = NULL;
@@ -849,7 +848,8 @@ parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
  * Process an entity and respond to parent process.
  */
 static void
-parse_entity(struct entityq *q, struct msgbuf *msgq)
+parse_entity(struct entityq *q, struct msgbuf *msgq, X509_STORE_CTX *ctx,
+    BN_CTX *bn_ctx)
 {
 	struct entity	*entp;
 	struct tal	*tal;
@@ -905,7 +905,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 				file = proc_parser_root_cert(entp, &cert);
 			} else {
 				file = parse_load_file(entp, &f, &flen);
-				cert = proc_parser_cert(file, f, flen, entp);
+				cert = proc_parser_cert(file, f, flen, entp,
+				    ctx);
 			}
 			io_str_buffer(b, file);
 			if (cert != NULL)
@@ -924,7 +925,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			 */
 			break;
 		case RTYPE_MFT:
-			file = proc_parser_mft(entp, &mft, &crlfile, &crlmtime);
+			file = proc_parser_mft(entp, &mft, &crlfile, &crlmtime,
+			    ctx, bn_ctx);
 			io_str_buffer(b, file);
 			if (mft != NULL)
 				mtime = mft->signtime;
@@ -958,7 +960,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_ROA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			roa = proc_parser_roa(file, f, flen, entp);
+			roa = proc_parser_roa(file, f, flen, entp, ctx);
 			if (roa != NULL)
 				mtime = roa->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -971,7 +973,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_GBR:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			gbr = proc_parser_gbr(file, f, flen, entp);
+			gbr = proc_parser_gbr(file, f, flen, entp, ctx);
 			if (gbr != NULL)
 				mtime = gbr->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -980,7 +982,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_ASPA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			aspa = proc_parser_aspa(file, f, flen, entp);
+			aspa = proc_parser_aspa(file, f, flen, entp, ctx);
 			if (aspa != NULL)
 				mtime = aspa->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -993,7 +995,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_TAK:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			tak = proc_parser_tak(file, f, flen, entp);
+			tak = proc_parser_tak(file, f, flen, entp, ctx);
 			if (tak != NULL)
 				mtime = tak->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -1003,7 +1005,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
 			if (experimental) {
-				spl = proc_parser_spl(file, f, flen, entp);
+				spl = proc_parser_spl(file, f, flen, entp, ctx);
 				if (spl != NULL)
 					mtime = spl->signtime;
 			} else {
@@ -1046,8 +1048,10 @@ void
 proc_parser(int fd)
 {
 	struct entityq	 q;
-	struct msgbuf	*msgq;
 	struct pollfd	 pfd;
+	X509_STORE_CTX	*ctx;
+	BN_CTX		*bn_ctx;
+	struct msgbuf	*msgq;
 	struct entity	*entp;
 	struct ibuf	*b, *inbuf = NULL;
 
@@ -1120,7 +1124,7 @@ proc_parser(int fd)
 			}
 		}
 
-		parse_entity(&q, msgq);
+		parse_entity(&q, msgq, ctx, bn_ctx);
 	}
 
 	while ((entp = TAILQ_FIRST(&q)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.57 2024/12/16 13:53:37 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.58 2025/02/25 15:55:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,8 +40,6 @@
 
 #include "extern.h"
 #include "json.h"
-
-extern BN_CTX		*bn_ctx;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -743,8 +741,6 @@ proc_filemode(int fd)
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");
-	if ((bn_ctx = BN_CTX_new()) == NULL)
-		err(1, "BN_CTX_new");
 
 	TAILQ_INIT(&q);
 
@@ -810,7 +806,6 @@ proc_filemode(int fd)
 	crl_tree_free(&crlt);
 
 	X509_STORE_CTX_free(ctx);
-	BN_CTX_free(bn_ctx);
 
 	ibuf_free(inbuf);
 
