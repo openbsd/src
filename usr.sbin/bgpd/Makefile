@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2025/02/25 19:51:16 claudio Exp $
+#	$OpenBSD: Makefile,v 1.42 2025/02/26 15:49:56 claudio Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c
@@ -31,6 +31,7 @@ SRCS+=	rde_update.c
 SRCS+=	rtr.c
 SRCS+=	rtr_proto.c
 SRCS+=	session.c
+SRCS+=	session_bgp.c
 SRCS+=	timer.c
 SRCS+=	util.c
 

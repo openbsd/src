@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.188 2025/02/26 10:26:51 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.189 2025/02/26 15:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -329,11 +329,16 @@ void	rtr_recalc(void);
 RB_PROTOTYPE(peer_head, peer, entry, peer_compare);
 
 void		 session_main(int, int);
-void		 bgp_fsm(struct peer *, enum session_events, struct ibuf *);
 int		 session_neighbor_rrefresh(struct peer *p);
+void		 get_alternate_addr(struct bgpd_addr *, struct bgpd_addr *,
+		    struct bgpd_addr *, unsigned int *);
 struct peer	*getpeerbydesc(struct bgpd_config *, const char *);
 struct peer	*getpeerbyip(struct bgpd_config *, struct sockaddr *);
 struct peer	*getpeerbyid(struct bgpd_config *, uint32_t);
+int		 session_handle_update(struct peer *, struct ibuf *);
+int		 session_handle_rrefresh(struct peer *, struct route_refresh *);
+int		 session_graceful_restart(struct peer *);
+int		 session_graceful_flush(struct peer *, uint8_t, const char *);
 void		 session_mrt_dump_state(struct peer *, enum session_state,
 		    enum session_state);
 void		 session_mrt_dump_bgp_msg(struct peer *, struct ibuf *,
@@ -342,8 +347,31 @@ int		 peer_matched(struct peer *, struct ctl_neighbor *);
 int		 imsg_ctl_parent(struct imsg *);
 int		 imsg_ctl_rde(struct imsg *);
 int		 imsg_ctl_rde_msg(int, uint32_t, pid_t);
+int		 session_connect(struct peer *);
+void		 session_close(struct peer *);
+void		 session_up(struct peer *);
+void		 session_down(struct peer *);
+void		 session_demote(struct peer *, int);
+void		 session_md5_reload(struct peer *);
 void		 session_stop(struct peer *, uint8_t, const char *);
 struct bgpd_addr *session_localaddr(struct peer *);
+
+/* session_bgp.c */
+void	session_open(struct peer *);
+void	session_keepalive(struct peer *);
+void	session_update(struct peer *, struct ibuf *);
+void	session_notification(struct peer *, uint8_t, uint8_t, struct ibuf *);
+void	session_notification_data(struct peer *, uint8_t, uint8_t, void *,
+	    size_t);
+void	session_rrefresh(struct peer *, uint8_t, uint8_t);
+int	session_dispatch_msg(struct pollfd *, struct peer *);
+void	session_process_msg(struct peer *);
+
+struct ibuf	*parse_header(struct ibuf *, void *, int *);
+
+void	start_timer_sendholdtime(struct peer *);
+void	bgp_fsm(struct peer *, enum session_events, struct ibuf *);
+void    change_state(struct peer *, enum session_state, enum session_events);
 
 /* timer.c */
 struct timer	*timer_get(struct timer_head *, enum Timer);
