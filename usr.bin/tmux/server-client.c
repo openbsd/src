@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.425 2025/02/20 13:32:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.426 2025/02/26 08:55:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2247,13 +2247,13 @@ out:
 static int
 server_client_is_bracket_paste(struct client *c, key_code key)
 {
-	if (key == KEYC_PASTE_START) {
+	if ((key & KEYC_MASK_KEY) == KEYC_PASTE_START) {
 		c->flags |= CLIENT_BRACKETPASTING;
 		log_debug("%s: bracket paste on", c->name);
 		return (0);
 	}
 
-	if (key == KEYC_PASTE_END) {
+	if ((key & KEYC_MASK_KEY) == KEYC_PASTE_END) {
 		c->flags &= ~CLIENT_BRACKETPASTING;
 		log_debug("%s: bracket paste off", c->name);
 		return (0);

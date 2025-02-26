@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1252 2025/02/20 13:39:58 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1253 2025/02/26 08:55:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -167,7 +167,8 @@ struct winlink;
 
 /* Is this a paste key? */
 #define KEYC_IS_PASTE(key) \
-	((key) == KEYC_PASTE_START || (key) == KEYC_PASTE_END)
+	(((key) & KEYC_MASK_KEY) == KEYC_PASTE_START || \
+	 ((key) & KEYC_MASK_KEY) == KEYC_PASTE_END)
 
 /* Multiple click timeout. */
 #define KEYC_CLICK_TIMEOUT 300
