@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.163 2024/08/26 07:30:46 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.164 2025/02/26 07:47:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -267,8 +267,13 @@ client_main(struct event_base *base, int argc, char **argv, uint64_t flags,
 			if (cmd_list_any_have(pr->cmdlist, CMD_STARTSERVER))
 				flags |= CLIENT_STARTSERVER;
 			cmd_list_free(pr->cmdlist);
-		} else
+		} else {
+			fprintf(stderr, "%s\n", pr->error);
+			args_free_values(values, argc);
+			free(values);
 			free(pr->error);
+			return 1;
+		}
 		args_free_values(values, argc);
 		free(values);
 	}
