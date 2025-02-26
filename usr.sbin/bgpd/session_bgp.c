@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.2 2025/02/26 16:39:18 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.3 2025/02/26 19:31:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -1079,13 +1079,13 @@ parse_open(struct peer *peer, struct ibuf *msg)
 	return (0);
 }
 
-static int
+static void
 parse_update(struct peer *peer, struct ibuf *msg)
 {
-	return session_handle_update(peer, msg);
+	session_handle_update(peer, msg);
 }
 
-static int
+static void
 parse_rrefresh(struct peer *peer, struct ibuf *msg)
 {
 	struct route_refresh rr;
@@ -1114,7 +1114,7 @@ parse_rrefresh(struct peer *peer, struct ibuf *msg)
 				session_notification_data(peer, ERR_HEADER,
 				    ERR_HDR_LEN, &datalen, sizeof(datalen));
 				bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-				return (-1);
+				return;
 			}
 			peer->stats.refresh_rcvd_req++;
 			break;
@@ -1129,7 +1129,7 @@ parse_rrefresh(struct peer *peer, struct ibuf *msg)
 				session_notification(peer, ERR_RREFRESH,
 				    ERR_RR_INV_LEN, msg);
 				bgp_fsm(peer, EVNT_CON_FATAL, NULL);
-				return (-1);
+				return;
 			}
 			if (subtype == ROUTE_REFRESH_BEGIN_RR)
 				peer->stats.refresh_rcvd_borr++;
@@ -1139,7 +1139,7 @@ parse_rrefresh(struct peer *peer, struct ibuf *msg)
 		default:
 			log_peer_warnx(&peer->conf, "peer sent bad refresh, "
 			    "bad subtype %d", subtype);
-			return (0);
+			return;
 		}
 	} else {
 		/* force subtype to default */
@@ -1151,18 +1151,18 @@ parse_rrefresh(struct peer *peer, struct ibuf *msg)
 	if (afi2aid(afi, safi, &aid) == -1) {
 		log_peer_warnx(&peer->conf, "peer sent bad refresh, "
 		    "invalid afi/safi pair");
-		return (0);
+		return;
 	}
 
 	if (!peer->capa.neg.refresh && !peer->capa.neg.enhanced_rr) {
 		log_peer_warnx(&peer->conf, "peer sent unexpected refresh");
-		return (0);
+		return;
 	}
 
 	rr.aid = aid;
 	rr.subtype = subtype;
 
-	return session_handle_rrefresh(peer, &rr);
+	session_handle_rrefresh(peer, &rr);
 }
 
 static void
@@ -1757,10 +1757,7 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 			break;
 		case EVNT_RCVD_UPDATE:
 			start_timer_holdtime(peer);
-			if (parse_update(peer, msg))
-				change_state(peer, STATE_IDLE, event);
-			else
-				start_timer_holdtime(peer);
+			parse_update(peer, msg);
 			break;
 		case EVNT_RCVD_NOTIFICATION:
 			parse_notification(peer, msg);

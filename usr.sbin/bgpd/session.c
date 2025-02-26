@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.523 2025/02/26 16:39:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.524 2025/02/26 19:31:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1016,19 +1016,17 @@ get_alternate_addr(struct bgpd_addr *local, struct bgpd_addr *remote,
 	freeifaddrs(ifap);
 }
 
-int
+void
 session_handle_update(struct peer *peer, struct ibuf *msg)
 {
 	/* pass the message verbatim to the rde. */
 	imsg_rde(IMSG_UPDATE, peer->conf.id, ibuf_data(msg), ibuf_size(msg));
-	return (0);
 }
 
-int
+void
 session_handle_rrefresh(struct peer *peer, struct route_refresh *rr)
 {
 	imsg_rde(IMSG_REFRESH, peer->conf.id, rr, sizeof(*rr));
-	return (0);
 }
 
 void
