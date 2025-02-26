@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.244 2025/02/25 22:13:44 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.245 2025/02/26 20:50:46 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -131,6 +131,8 @@ usbd_status	uvideo_vs_parse_desc(struct uvideo_softc *,
 usbd_status	uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format(struct uvideo_softc *);
+usbd_status	uvideo_vs_parse_desc_colorformat(struct uvideo_softc *,
+		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
@@ -419,6 +421,35 @@ const struct uvideo_map_fmts {
 	{ UVIDEO_FORMAT_GUID_GR16, V4L2_PIX_FMT_SGRBG16 },
 	{ UVIDEO_FORMAT_GUID_INVZ, V4L2_PIX_FMT_Z16 },
 	{ UVIDEO_FORMAT_GUID_INVI, V4L2_PIX_FMT_Y10 },
+};
+
+const enum v4l2_colorspace uvideo_color_primaries[] = {
+	V4L2_COLORSPACE_SRGB,		/* Unspecified */
+	V4L2_COLORSPACE_SRGB,
+	V4L2_COLORSPACE_470_SYSTEM_M,
+	V4L2_COLORSPACE_470_SYSTEM_BG,
+	V4L2_COLORSPACE_SMPTE170M,
+	V4L2_COLORSPACE_SMPTE240M,
+};
+
+const enum v4l2_xfer_func uvideo_xfer_characteristics[] = {
+	V4L2_XFER_FUNC_DEFAULT,		/* Unspecified */
+	V4L2_XFER_FUNC_709,
+	V4L2_XFER_FUNC_709,		/* Substitution for BT.470-2 M */
+	V4L2_XFER_FUNC_709,		/* Substitution for BT.470-2 B, G */
+	V4L2_XFER_FUNC_709,		/* Substitution for SMPTE 170M */
+	V4L2_XFER_FUNC_SMPTE240M,
+	V4L2_XFER_FUNC_NONE,
+	V4L2_XFER_FUNC_SRGB,
+};
+
+const enum v4l2_ycbcr_encoding uvideo_matrix_coefficients[] = {
+	V4L2_YCBCR_ENC_DEFAULT,		/* Unspecified */
+	V4L2_YCBCR_ENC_709,
+	V4L2_YCBCR_ENC_601,		/* Substitution for FCC */
+	V4L2_YCBCR_ENC_601,		/* Substitution for BT.470-2 B, G */
+	V4L2_YCBCR_ENC_601,
+	V4L2_YCBCR_ENC_SMPTE240M,
 };
 
 int
@@ -1011,6 +1042,12 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 		}
 
 		switch (desc->bDescriptorSubtype) {
+		case UDESCSUB_VS_COLORFORMAT:
+			if (desc->bLength == 6) {
+				(void)uvideo_vs_parse_desc_colorformat(
+				    sc, desc);
+			}
+			break;
 		case UDESCSUB_VS_FORMAT_MJPEG:
 			if (desc->bLength == 11) {
 				(void)uvideo_vs_parse_desc_format_mjpeg(
@@ -1036,6 +1073,42 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 	}
 	DPRINTF(1, "%s: number of total format descriptors=%d\n",
 	    DEVNAME(sc), sc->sc_fmtgrp_num);
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+uvideo_vs_parse_desc_colorformat(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	int fmtidx;
+	struct usb_video_colorformat_desc *d;
+
+	d = (struct usb_video_colorformat_desc *)(uint8_t *)desc;
+
+	fmtidx = sc->sc_fmtgrp_idx - 1;
+	if (fmtidx < 0 || sc->sc_fmtgrp[fmtidx].has_colorformat)
+		return (USBD_INVAL);
+
+	if (d->bColorPrimaries < nitems(uvideo_color_primaries))
+		sc->sc_fmtgrp[fmtidx].colorspace =
+		    uvideo_color_primaries[d->bColorPrimaries];
+	else
+		sc->sc_fmtgrp[fmtidx].colorspace = V4L2_COLORSPACE_SRGB;
+
+	if (d->bTransferCharacteristics < nitems(uvideo_xfer_characteristics))
+		sc->sc_fmtgrp[fmtidx].xfer_func =
+		    uvideo_xfer_characteristics[d->bTransferCharacteristics];
+	else
+		sc->sc_fmtgrp[fmtidx].xfer_func = V4L2_XFER_FUNC_DEFAULT;
+
+	if (d->bMatrixCoefficients < nitems(uvideo_matrix_coefficients))
+		sc->sc_fmtgrp[fmtidx].ycbcr_enc =
+		    uvideo_matrix_coefficients[d->bMatrixCoefficients];
+	else
+		sc->sc_fmtgrp[fmtidx].ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
+
+	sc->sc_fmtgrp[fmtidx].has_colorformat = 1;
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -3279,6 +3352,17 @@ uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 	fmt->fmt.pix.width = UGETW(sc->sc_fmtgrp_cur->frame_cur->wWidth);
 	fmt->fmt.pix.height = UGETW(sc->sc_fmtgrp_cur->frame_cur->wHeight);
 	fmt->fmt.pix.sizeimage = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
+
+	if (sc->sc_fmtgrp_cur->has_colorformat) {
+		fmt->fmt.pix.colorspace = sc->sc_fmtgrp_cur->colorspace;
+		fmt->fmt.pix.xfer_func = sc->sc_fmtgrp_cur->xfer_func;
+		fmt->fmt.pix.ycbcr_enc = sc->sc_fmtgrp_cur->ycbcr_enc;
+
+		DPRINTF(1, "%s: %s: use color format"
+		    " colorspace=%d, xfer_func=%d, ycbcr_enc=%d\n",
+		    DEVNAME(sc), __func__, fmt->fmt.pix.colorspace,
+		    fmt->fmt.pix.xfer_func, fmt->fmt.pix.ycbcr_enc);
+	}
 
 	DPRINTF(1, "%s: %s: current width=%d, height=%d\n",
 	    DEVNAME(sc), __func__, fmt->fmt.pix.width, fmt->fmt.pix.height);
