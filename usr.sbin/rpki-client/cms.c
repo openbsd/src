@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.50 2024/11/27 15:19:26 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.51 2025/02/26 08:57:36 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -47,10 +47,9 @@ cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
 	}
 
 	/*
-	 * Extract and duplicate the eContent.
-	 * The CMS framework offers us no other way of easily managing
-	 * this information; and since we're going to d2i it anyway,
-	 * simply pass it as the desired underlying types.
+	 * The eContent in os is owned by the cms object and it has to outlive
+	 * it for further processing by the signedObject handlers. Since there
+	 * is no convenient API for this purpose, duplicate it by hand.
 	 */
 	if ((*res = malloc((*os)->length)) == NULL)
 		err(1, NULL);
