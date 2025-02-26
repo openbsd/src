@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.522 2025/02/26 15:49:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.523 2025/02/26 16:39:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -62,10 +62,9 @@ int	setup_listeners(u_int *);
 void	init_peer(struct peer *, struct bgpd_config *);
 int	session_setup_socket(struct peer *);
 void	session_accept(int);
-int	session_graceful_restart(struct peer *);
-int	session_graceful_stop(struct peer *);
+void	session_graceful_stop(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
-int	imsg_rde(int, uint32_t, void *, uint16_t);
+void	imsg_rde(int, uint32_t, void *, uint16_t);
 void	merge_peers(struct bgpd_config *, struct bgpd_config *);
 
 void	session_template_clone(struct peer *, struct sockaddr *,
@@ -235,9 +234,8 @@ session_main(int debug, int verbose)
 					    NULL);
 					timer_remove_all(&p->timers);
 					tcp_md5_del_listener(conf, p);
-					if (imsg_rde(IMSG_SESSION_DELETE,
-					    p->conf.id, NULL, 0) == -1)
-						fatalx("imsg_compose error");
+					imsg_rde(IMSG_SESSION_DELETE,
+					    p->conf.id, NULL, 0);
 					msgbuf_free(p->wbuf);
 					RB_REMOVE(peer_head, &conf->peers, p);
 					log_peer_warnx(&p->conf, "removed");
@@ -373,9 +371,8 @@ session_main(int debug, int verbose)
 					timer_stop(&p->timers,
 					    Timer_SessionDown);
 
-					if (imsg_rde(IMSG_SESSION_DELETE,
-					    p->conf.id, NULL, 0) == -1)
-						fatalx("imsg_compose error");
+					imsg_rde(IMSG_SESSION_DELETE,
+					    p->conf.id, NULL, 0);
 					p->rdesession = 0;
 
 					/* finally delete this cloned peer */
@@ -397,21 +394,13 @@ session_main(int debug, int verbose)
 			/* check if peer needs throttling or not */
 			if (!p->throttled &&
 			    msgbuf_queuelen(p->wbuf) > SESS_MSG_HIGH_MARK) {
-				if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) ==
-				    -1)
-					log_peer_warn(&p->conf,
-					    "imsg_compose XOFF");
-				else
-					p->throttled = 1;
+				imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0);
+				p->throttled = 1;
 			}
 			if (p->throttled &&
 			    msgbuf_queuelen(p->wbuf) < SESS_MSG_LOW_MARK) {
-				if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) ==
-				    -1)
-					log_peer_warn(&p->conf,
-					    "imsg_compose XON");
-				else
-					p->throttled = 0;
+				imsg_rde(IMSG_XON, p->conf.id, NULL, 0);
+				p->throttled = 0;
 			}
 
 			/* are we waiting for a write? */
@@ -1030,26 +1019,19 @@ get_alternate_addr(struct bgpd_addr *local, struct bgpd_addr *remote,
 int
 session_handle_update(struct peer *peer, struct ibuf *msg)
 {
-	/*
-	 * we pass the message verbatim to the rde.
-	 * in case of errors the whole session is reset with a
-	 * notification anyway, we only need to know the peer
-	 */
-	if (imsg_rde(IMSG_UPDATE, peer->conf.id, ibuf_data(msg),
-	    ibuf_size(msg)) == -1)
-		return (-1);
+	/* pass the message verbatim to the rde. */
+	imsg_rde(IMSG_UPDATE, peer->conf.id, ibuf_data(msg), ibuf_size(msg));
 	return (0);
 }
 
 int
 session_handle_rrefresh(struct peer *peer, struct route_refresh *rr)
 {
-	if (imsg_rde(IMSG_REFRESH, peer->conf.id, rr, sizeof(*rr)) == -1)
-		return (-1);
+	imsg_rde(IMSG_REFRESH, peer->conf.id, rr, sizeof(*rr));
 	return (0);
 }
 
-int
+void
 session_graceful_restart(struct peer *p)
 {
 	uint8_t	i;
@@ -1065,26 +1047,23 @@ session_graceful_restart(struct peer *p)
 
 	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.grestart.flags[i] & CAPA_GR_PRESENT) {
-			if (imsg_rde(IMSG_SESSION_STALE, p->conf.id,
-			    &i, sizeof(i)) == -1)
-				return -1;
+			imsg_rde(IMSG_SESSION_STALE, p->conf.id,
+			    &i, sizeof(i));
 			log_peer_warnx(&p->conf,
 			    "graceful restart of %s, keeping routes",
 			    aid2str(i));
 			p->capa.neg.grestart.flags[i] |= CAPA_GR_RESTARTING;
 		} else if (p->capa.neg.mp[i]) {
-			if (imsg_rde(IMSG_SESSION_NOGRACE, p->conf.id,
-			    &i, sizeof(i)) == -1)
-				return -1;
+			imsg_rde(IMSG_SESSION_NOGRACE, p->conf.id,
+			    &i, sizeof(i));
 			log_peer_warnx(&p->conf,
 			    "graceful restart of %s, flushing routes",
 			    aid2str(i));
 		}
 	}
-	return 0;
 }
 
-int
+void
 session_graceful_stop(struct peer *p)
 {
 	uint8_t	i;
@@ -1096,21 +1075,17 @@ session_graceful_stop(struct peer *p)
 		 * session went down or when the new open message was parsed.
 		 */
 		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
-			if (session_graceful_flush(p, i, "time-out") == -1)
-				return -1;
+			session_graceful_flush(p, i, "time-out");
 		p->capa.neg.grestart.flags[i] &= ~CAPA_GR_RESTARTING;
 	}
-	return 0;
 }
 
-int
+void
 session_graceful_flush(struct peer *p, uint8_t aid, const char *why)
 {
 	log_peer_warnx(&p->conf, "graceful restart of %s, %s, flushing",
 	    aid2str(aid), why);
-	if (imsg_rde(IMSG_SESSION_FLUSH, p->conf.id, &aid, sizeof(aid)) == -1)
-		return -1;
-	return 0;
+	imsg_rde(IMSG_SESSION_FLUSH, p->conf.id, &aid, sizeof(aid));
 }
 
 void
@@ -1593,10 +1568,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				timer_stop(&p->timers, Timer_RestartTimeout);
 
 				/* signal back to RDE to cleanup stale routes */
-				if (imsg_rde(IMSG_SESSION_RESTARTED,
-				    peerid, &aid, sizeof(aid)) == -1)
-					fatal("imsg_compose: "
-					    "IMSG_SESSION_RESTARTED");
+				imsg_rde(IMSG_SESSION_RESTARTED,
+				    peerid, &aid, sizeof(aid));
 			}
 			break;
 		default:
@@ -1769,8 +1742,7 @@ session_down(struct peer *peer)
 	 */
 	if (ibuf_rde == NULL)
 		return;
-	if (imsg_rde(IMSG_SESSION_DOWN, peer->conf.id, NULL, 0) == -1)
-		fatalx("imsg_compose error");
+	imsg_rde(IMSG_SESSION_DOWN, peer->conf.id, NULL, 0);
 }
 
 void
@@ -1789,9 +1761,8 @@ session_up(struct peer *p)
 
 	if (!p->rdesession) {
 		/* inform rde about new peer */
-		if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
-		    &p->conf, sizeof(p->conf)) == -1)
-			fatalx("imsg_compose error");
+		imsg_rde(IMSG_SESSION_ADD, p->conf.id,
+		    &p->conf, sizeof(p->conf));
 		p->rdesession = 1;
 	}
 
@@ -1809,8 +1780,7 @@ session_up(struct peer *p)
 	sup.short_as = p->short_as;
 	memcpy(&sup.capa, &p->capa.neg, sizeof(sup.capa));
 	p->stats.last_updown = getmonotime();
-	if (imsg_rde(IMSG_SESSION_UP, p->conf.id, &sup, sizeof(sup)) == -1)
-		fatalx("imsg_compose error");
+	imsg_rde(IMSG_SESSION_UP, p->conf.id, &sup, sizeof(sup));
 }
 
 int
@@ -1844,13 +1814,13 @@ imsg_ctl_rde_msg(int type, uint32_t peerid, pid_t pid)
 	return imsg_compose(ibuf_rde_ctl, type, peerid, pid, -1, NULL, 0);
 }
 
-int
+void
 imsg_rde(int type, uint32_t peerid, void *data, uint16_t datalen)
 {
 	if (ibuf_rde == NULL)
-		return (0);
-
-	return imsg_compose(ibuf_rde, type, peerid, 0, -1, data, datalen);
+		return;
+	if (imsg_compose(ibuf_rde, type, peerid, 0, -1, data, datalen) == -1)
+		fatal("imsg_compose");
 }
 
 void
@@ -1863,7 +1833,7 @@ session_demote(struct peer *p, int level)
 	msg.level = level;
 	if (imsg_compose(ibuf_main, IMSG_DEMOTE, p->conf.id, 0, -1,
 	    &msg, sizeof(msg)) == -1)
-		fatalx("imsg_compose error");
+		fatal("imsg_compose");
 
 	p->demoted += level;
 }
@@ -1983,11 +1953,9 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		 * If the session is established or the SessionDown timer is
 		 * running sync with the RDE
 		 */
-		if (p->rdesession) {
-			if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
-			    &p->conf, sizeof(struct peer_config)) == -1)
-				fatalx("imsg_compose error");
-		}
+		if (p->rdesession)
+			imsg_rde(IMSG_SESSION_ADD, p->conf.id,
+			    &p->conf, sizeof(struct peer_config));
 
 		/* apply the config to all clones of a template */
 		if (p->conf.template) {
@@ -1998,18 +1966,15 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 				session_template_clone(xp, NULL, xp->conf.id,
 				    xp->conf.remote_as);
 
-				if (p->rdesession) {
-					if (imsg_rde(IMSG_SESSION_ADD,
+				if (p->rdesession)
+					imsg_rde(IMSG_SESSION_ADD,
 					    xp->conf.id, &xp->conf,
-					    sizeof(xp->conf)) == -1)
-						fatalx("imsg_compose error");
-				}
+					    sizeof(xp->conf));
 			}
 		}
 	}
 
-	if (imsg_rde(IMSG_RECONF_DRAIN, 0, NULL, 0) == -1)
-		fatalx("imsg_compose error");
+	imsg_rde(IMSG_RECONF_DRAIN, 0, NULL, 0);
 
 	/* pfkeys of new peers already loaded by the parent process */
 	RB_FOREACH_SAFE(np, peer_head, &nc->peers, next) {

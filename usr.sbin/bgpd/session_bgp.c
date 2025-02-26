@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.1 2025/02/26 15:49:56 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.2 2025/02/26 16:39:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -1342,9 +1342,7 @@ capa_neg_calc(struct peer *p)
 				p->capa.neg.grestart.flags[i] |=
 				    CAPA_GR_RESTARTING;
 			} else {
-				if (session_graceful_flush(p, i,
-				    "not restarted") == -1)
-					return (-1);
+				session_graceful_flush(p, i, "not restarted");
 			}
 		}
 	}
