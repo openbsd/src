@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.518 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.519 2025/02/26 09:33:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -97,10 +97,9 @@ int	imsg_rde(int, uint32_t, void *, uint16_t);
 void	session_demote(struct peer *, int);
 void	merge_peers(struct bgpd_config *, struct bgpd_config *);
 
-int		 la_cmp(struct listen_addr *, struct listen_addr *);
-void		 session_template_clone(struct peer *, struct sockaddr *,
-		    uint32_t, uint32_t);
-int		 session_match_mask(struct peer *, struct bgpd_addr *);
+void	session_template_clone(struct peer *, struct sockaddr *,
+	    uint32_t, uint32_t);
+int	session_match_mask(struct peer *, struct bgpd_addr *);
 
 static struct bgpd_config	*conf, *nconf;
 static struct imsgbuf		*ibuf_rde;
@@ -3050,6 +3049,41 @@ session_mrt_dump_bgp_msg(struct peer *p, struct ibuf *msg,
 	}
 }
 
+static int
+la_cmp(struct listen_addr *a, struct listen_addr *b)
+{
+	struct sockaddr_in	*in_a, *in_b;
+	struct sockaddr_in6	*in6_a, *in6_b;
+
+	if (a->sa.ss_family != b->sa.ss_family)
+		return (1);
+
+	switch (a->sa.ss_family) {
+	case AF_INET:
+		in_a = (struct sockaddr_in *)&a->sa;
+		in_b = (struct sockaddr_in *)&b->sa;
+		if (in_a->sin_addr.s_addr != in_b->sin_addr.s_addr)
+			return (1);
+		if (in_a->sin_port != in_b->sin_port)
+			return (1);
+		break;
+	case AF_INET6:
+		in6_a = (struct sockaddr_in6 *)&a->sa;
+		in6_b = (struct sockaddr_in6 *)&b->sa;
+		if (memcmp(&in6_a->sin6_addr, &in6_b->sin6_addr,
+		    sizeof(struct in6_addr)))
+			return (1);
+		if (in6_a->sin6_port != in6_b->sin6_port)
+			return (1);
+		break;
+	default:
+		fatal("king bula sez: unknown address family");
+		/* NOTREACHED */
+	}
+
+	return (0);
+}
+
 void
 session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 {
@@ -3465,41 +3499,6 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		}
 		imsg_free(&imsg);
 	}
-}
-
-int
-la_cmp(struct listen_addr *a, struct listen_addr *b)
-{
-	struct sockaddr_in	*in_a, *in_b;
-	struct sockaddr_in6	*in6_a, *in6_b;
-
-	if (a->sa.ss_family != b->sa.ss_family)
-		return (1);
-
-	switch (a->sa.ss_family) {
-	case AF_INET:
-		in_a = (struct sockaddr_in *)&a->sa;
-		in_b = (struct sockaddr_in *)&b->sa;
-		if (in_a->sin_addr.s_addr != in_b->sin_addr.s_addr)
-			return (1);
-		if (in_a->sin_port != in_b->sin_port)
-			return (1);
-		break;
-	case AF_INET6:
-		in6_a = (struct sockaddr_in6 *)&a->sa;
-		in6_b = (struct sockaddr_in6 *)&b->sa;
-		if (memcmp(&in6_a->sin6_addr, &in6_b->sin6_addr,
-		    sizeof(struct in6_addr)))
-			return (1);
-		if (in6_a->sin6_port != in6_b->sin6_port)
-			return (1);
-		break;
-	default:
-		fatal("king bula sez: unknown address family");
-		/* NOTREACHED */
-	}
-
-	return (0);
 }
 
 struct peer *
