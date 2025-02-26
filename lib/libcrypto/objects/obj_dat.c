@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.92 2025/02/26 09:49:54 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.93 2025/02/26 09:52:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,7 +100,7 @@ added_obj_hash(const ADDED_OBJ *ca)
 	a = ca->obj;
 	switch (ca->type) {
 	case ADDED_DATA:
-		ret = a->length << 20L;
+		ret = (unsigned long)a->length << 20L;
 		p = (unsigned char *)a->data;
 		for (i = 0; i < a->length; i++)
 			ret ^= p[i] << ((i * 3) % 24);
