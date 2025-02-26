@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.520 2025/02/26 10:26:51 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.521 2025/02/26 12:53:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -426,6 +426,26 @@ session_main(int debug, int verbose)
 				nextaction = monotime_sub(nextaction, now);
 				if (monotime_cmp(nextaction, timeout) < 0)
 					timeout = nextaction;
+			}
+
+			/* check if peer needs throttling or not */
+			if (!p->throttled &&
+			    msgbuf_queuelen(p->wbuf) > SESS_MSG_HIGH_MARK) {
+				if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) ==
+				    -1)
+					log_peer_warn(&p->conf,
+					    "imsg_compose XOFF");
+				else
+					p->throttled = 1;
+			}
+			if (p->throttled &&
+			    msgbuf_queuelen(p->wbuf) < SESS_MSG_LOW_MARK) {
+				if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) ==
+				    -1)
+					log_peer_warn(&p->conf,
+					    "imsg_compose XON");
+				else
+					p->throttled = 0;
 			}
 
 			/* are we waiting for a write? */
@@ -1454,12 +1474,6 @@ session_sendmsg(struct ibuf *msg, struct peer *p, enum msg_type msgtype)
 	session_mrt_dump_bgp_msg(p, msg, msgtype, DIR_OUT);
 
 	ibuf_close(p->wbuf, msg);
-	if (!p->throttled && msgbuf_queuelen(p->wbuf) > SESS_MSG_HIGH_MARK) {
-		if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) == -1)
-			log_peer_warn(&p->conf, "imsg_compose XOFF");
-		else
-			p->throttled = 1;
-	}
 }
 
 /*
@@ -2022,13 +2036,6 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		}
 		p->stats.last_write = getmonotime();
 		start_timer_sendholdtime(p);
-		if (p->throttled &&
-		    msgbuf_queuelen(p->wbuf) < SESS_MSG_LOW_MARK) {
-			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
-				log_peer_warn(&p->conf, "imsg_compose XON");
-			else
-				p->throttled = 0;
-		}
 		if (!(pfd->revents & POLLIN))
 			return (1);
 	}
