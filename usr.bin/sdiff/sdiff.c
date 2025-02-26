@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.39 2021/10/24 21:24:17 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.40 2025/02/26 12:44:51 stsp Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -448,6 +448,27 @@ prompt(const char *s1, const char *s2)
 			;
 
 		switch (*p) {
+		case 'b':
+			/* Skip `b'. */
+			++p;
+
+			/* Choose both columns in either order. */
+			if (*p == 'l' || *p == '1') {
+				if (s1 != NULL)
+					fprintf(outfp, "%s\n", s1);
+				if (s2 != NULL)
+					fprintf(outfp, "%s\n", s2);
+			} else if (*p == 'r' || *p == '2') {
+				if (s2 != NULL)
+					fprintf(outfp, "%s\n", s2);
+				if (s1 != NULL)
+					fprintf(outfp, "%s\n", s1);
+			} else
+				goto USAGE;
+
+			/* End of command parsing. */
+			break;
+
 		case 'e':
 			/* Skip `e'. */
 			++p;
@@ -1046,6 +1067,8 @@ int_usage(void)
 	    "er:\tedit right diff\n"
 	    "l | 1:\tchoose left diff\n"
 	    "r | 2:\tchoose right diff\n"
+	    "bl|b1:\tchoose both, left diff first\n"
+	    "br|b2:\tchoose both, right diff first\n"
 	    "s:\tsilent mode--don't print identical lines\n"
 	    "v:\tverbose mode--print identical lines\n"
 	    "q:\tquit");

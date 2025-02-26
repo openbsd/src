@@ -1,9 +1,9 @@
-.\" $OpenBSD: sdiff.1,v 1.20 2022/07/25 02:25:55 jsg Exp $
+.\" $OpenBSD: sdiff.1,v 1.21 2025/02/26 12:44:51 stsp Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: July 25 2022 $
+.Dd $Mdocdate: February 26 2025 $
 .Dt SDIFF 1
 .Os
 .Sh NAME
@@ -60,6 +60,10 @@ The commands are as follows:
 Choose left set of diffs.
 .It Cm r | 2
 Choose right set of diffs.
+.It Cm b l | b 1
+Choose both, left set of diffs first.
+.It Cm b r | b 2
+Choose both, right set of diffs first.
 .It Cm s
 Silent mode \(en identical lines are not printed.
 .It Cm v
