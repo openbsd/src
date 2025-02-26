@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.91 2024/07/14 14:32:45 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.92 2025/02/26 09:49:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,7 +118,7 @@ added_obj_hash(const ADDED_OBJ *ca)
 		return 0;
 	}
 	ret &= 0x3fffffffL;
-	ret |= ca->type << 30L;
+	ret |= (unsigned long)ca->type << 30L;
 	return (ret);
 }
 static IMPLEMENT_LHASH_HASH_FN(added_obj, ADDED_OBJ)
