@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.24 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.25 2025/02/26 06:18:56 otto Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -208,6 +208,10 @@ retry:
 		if (stslash.st_dev == stblock.st_rdev)
 			hot++;
 		raw = rawname(newname);
+		if (raw == NULL) {
+			printf("Can't get raw name of %s\n", newname);
+			return (origname);
+		}
 		if (stat(raw, &stchar) == -1) {
 			xperror(raw);
 			printf("Can't stat %s\n", raw);

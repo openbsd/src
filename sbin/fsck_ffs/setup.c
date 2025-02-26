@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.70 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: setup.c,v 1.71 2025/02/26 06:18:56 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -620,8 +620,10 @@ calcsb(char *dev, int devfd, struct fs *fs, struct disklabel *lp,
 		return (0);
 	}
 	cp--;
-	if (lp == NULL)
+	if (lp == NULL) {
 		pfatal("%s: CANNOT READ DISKLABEL\n", dev);
+		return (0);
+	}
 	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else
@@ -661,7 +663,7 @@ getdisklabel(char *s, int fd)
 	if (ioctl(fd, DIOCGDINFO, (char *)&lab) == -1) {
 		if (s == NULL)
 			return (NULL);
-		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
+		pwarn("ioctl (CGDINFO): %s\n", strerror(errno));
 		errexit("%s: can't read disk label\n", s);
 	}
 	return (&lab);
