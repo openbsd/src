@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.983 2025/02/20 13:39:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.984 2025/02/26 07:50:36 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 20 2025 $
+.Dd $Mdocdate: February 26 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5866,6 +5866,12 @@ will substitute
 with
 .Ql bar/
 throughout.
+.Pp
+Multiple modifiers may be separated with a semicolon (;) as in
+.Ql #{T;=10:status-left} ,
+which limits the resulting
+.Xr strftime 3 -expanded
+string to at most 10 characters.
 .Pp
 In addition, the last line of a shell command's output may be inserted using
 .Ql #() .
