@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.107 2025/01/02 10:34:45 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.108 2025/02/26 09:02:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,7 +54,13 @@ static struct input_key_entry input_key_defaults[] = {
 	{ .key = KEYC_PASTE_START,
 	  .data = "\033[200~"
 	},
+	{ .key = KEYC_PASTE_START|KEYC_IMPLIED_META,
+	  .data = "\033[200~"
+	},
 	{ .key = KEYC_PASTE_END,
+	  .data = "\033[201~"
+	},
+	{ .key = KEYC_PASTE_END|KEYC_IMPLIED_META,
 	  .data = "\033[201~"
 	},
 
