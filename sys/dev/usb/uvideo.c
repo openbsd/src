@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.245 2025/02/26 20:50:46 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.246 2025/02/26 21:03:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -101,7 +101,7 @@ struct uvideo_softc {
 	void					 (*sc_uplayer_intr)(void *);
 
 	const struct uvideo_devs		*sc_quirk;
-	usbd_status				(*sc_decode_stream_header)
+	void					(*sc_decode_stream_header)
 						    (struct uvideo_softc *,
 						    uint8_t *, int);
 };
@@ -167,11 +167,11 @@ void		uvideo_vs_start_isoc_ixfer(struct uvideo_softc *,
 		    struct uvideo_isoc_xfer *);
 void		uvideo_vs_cb(struct usbd_xfer *, void *,
 		    usbd_status);
-usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
+void		uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
-usbd_status	uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
+void		uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
 		    uint8_t *, int);
-int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int, int);
+void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 usbd_status	uvideo_usb_control(struct uvideo_softc *, uint8_t, uint8_t,
 		    uint16_t, uint8_t *, size_t);
@@ -2222,8 +2222,7 @@ uvideo_vs_start_bulk_thread(void *arg)
 
 		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), size);
 
-		(void)sc->sc_decode_stream_header(sc,
-		    sc->sc_vs_cur->bxfer.buf, size);
+		sc->sc_decode_stream_header(sc, sc->sc_vs_cur->bxfer.buf, size);
 	}
 	usbd_ref_decr(sc->sc_udev);
 
@@ -2278,7 +2277,6 @@ uvideo_vs_cb(struct usbd_xfer *xfer, void *priv,
 	struct uvideo_softc *sc = ixfer->sc;
 	int len, i, frame_size;
 	uint8_t *frame;
-	usbd_status error;
 
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -2301,27 +2299,24 @@ uvideo_vs_cb(struct usbd_xfer *xfer, void *priv,
 			/* frame is empty */
 			continue;
 
-		error = sc->sc_decode_stream_header(sc, frame, frame_size);
-		if (error == USBD_CANCELLED)
-			break;
+		sc->sc_decode_stream_header(sc, frame, frame_size);
 	}
 
 skip:	/* setup new transfer */
 	uvideo_vs_start_isoc_ixfer(sc, ixfer);
 }
 
-usbd_status
+void
 uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
     int frame_size)
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	struct usb_video_stream_header *sh;
 	int sample_len;
-	usbd_status ret = USBD_NORMAL_COMPLETION;
 
 	if (frame_size < UVIDEO_SH_MIN_LEN)
 		/* frame too small to contain a valid stream header */
-		return (USBD_INVAL);
+		return;
 
 	sh = (struct usb_video_stream_header *)frame;
 
@@ -2329,7 +2324,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 	if (sh->bLength > frame_size || sh->bLength < UVIDEO_SH_MIN_LEN)
 		/* invalid header size */
-		return (USBD_INVAL);
+		return;
 
 	DPRINTF(2, "%s: frame_size = %d\n", DEVNAME(sc), frame_size);
 
@@ -2399,9 +2394,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 #endif
 		if (sc->sc_mmap_flag) {
 			/* mmap */
-			if (uvideo_mmap_queue(sc, fb->buf, fb->offset,
-				    fb->error))
-				ret = USBD_NOMEM;
+			uvideo_mmap_queue(sc, fb->buf, fb->offset, fb->error);
 		} else if (fb->error) {
 			DPRINTF(1, "%s: %s: error frame, skipped!\n",
 			    DEVNAME(sc), __func__);
@@ -2414,8 +2407,6 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		fb->fid = 0;
 		fb->error = 0;
 	}
-
-	return (ret);
 }
 
 /*
@@ -2434,13 +2425,12 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
  * Sometimes the stream header is prefixed by a unknown byte.  Therefore
  * we check for the magic value on two offsets.
  */
-usbd_status
+void
 uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
     int frame_size)
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	int sample_len, header = 0;
-	usbd_status ret = USBD_NORMAL_COMPLETION;
 	uint8_t magic[] = {
 	    0x11, 0x22, 0x33, 0x44,
 	    0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xfa, 0xce };
@@ -2452,14 +2442,13 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 
 	if (header && fb->fid == 0) {
 		fb->fid = 1;
-		return (USBD_NORMAL_COMPLETION);
+		return;
 	}
 
 	if (header) {
 		if (sc->sc_mmap_flag) {
 			/* mmap */
-			if (uvideo_mmap_queue(sc, fb->buf, fb->offset, 0))
-				ret = USBD_NOMEM;
+			uvideo_mmap_queue(sc, fb->buf, fb->offset, 0);
 		} else {
 			/* read */
 			uvideo_read(sc, fb->buf, fb->offset);
@@ -2473,11 +2462,9 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 			fb->offset += sample_len;
 		}
 	}
-
-	return (ret);
 }
 
-int
+void
 uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 {
 	int i;
@@ -2493,7 +2480,7 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 	if (i == sc->sc_mmap_count) {
 		DPRINTF(1, "%s: %s: mmap queue is full!\n",
 		    DEVNAME(sc), __func__);
-		return ENOMEM;
+		return;
 	}
 
 	/* copy frame to mmap buffer and report length */
@@ -2527,8 +2514,6 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 	 * ready to dequeue.
 	 */
 	sc->sc_uplayer_intr(sc->sc_uplayer_arg);
-
-	return 0;
 }
 
 void
