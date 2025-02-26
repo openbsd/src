@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.14 2024/05/29 17:23:05 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.15 2025/02/26 09:57:39 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -531,7 +531,7 @@ asn1_object_i2d_errors(void)
 
 	if ((ret = i2d_ASN1_OBJECT(aobj, NULL)) > 0) {
 		fprintf(stderr, "FAIL: i2d_ASN1_OBJECT() succeeded on undefined "
-		    "object\n");
+		    "object: returned %d, want <= 0\n", ret);
 		goto failed;
 	}
 
