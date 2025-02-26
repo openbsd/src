@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.519 2025/02/26 09:33:37 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.520 2025/02/26 10:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -599,6 +599,9 @@ init_peer(struct peer *p, struct bgpd_config *c)
 		p->conf.holdtime = c->holdtime;
 	if (p->conf.min_holdtime == 0)
 		p->conf.min_holdtime = c->min_holdtime;
+	if (p->conf.connectretry == 0)
+		p->conf.connectretry = c->connectretry;
+	p->local_bgpid = c->bgpid;
 
 	peer_cnt++;
 
@@ -643,7 +646,7 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 			} else {
 				change_state(peer, STATE_CONNECT, event);
 				timer_set(&peer->timers, Timer_ConnectRetry,
-				    conf->connectretry);
+				    peer->conf.connectretry);
 				session_connect(peer);
 			}
 			peer->passive = 0;
@@ -671,13 +674,13 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 			break;
 		case EVNT_CON_OPENFAIL:
 			timer_set(&peer->timers, Timer_ConnectRetry,
-			    conf->connectretry);
+			    peer->conf.connectretry);
 			session_close_connection(peer);
 			change_state(peer, STATE_ACTIVE, event);
 			break;
 		case EVNT_TIMER_CONNRETRY:
 			timer_set(&peer->timers, Timer_ConnectRetry,
-			    conf->connectretry);
+			    peer->conf.connectretry);
 			session_connect(peer);
 			break;
 		default:
@@ -700,7 +703,7 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 			break;
 		case EVNT_CON_OPENFAIL:
 			timer_set(&peer->timers, Timer_ConnectRetry,
-			    conf->connectretry);
+			    peer->conf.connectretry);
 			session_close_connection(peer);
 			change_state(peer, STATE_ACTIVE, event);
 			break;
@@ -726,7 +729,7 @@ bgp_fsm(struct peer *peer, enum session_events event, struct ibuf *msg)
 		case EVNT_CON_CLOSED:
 			session_close_connection(peer);
 			timer_set(&peer->timers, Timer_ConnectRetry,
-			    conf->connectretry);
+			    peer->conf.connectretry);
 			change_state(peer, STATE_ACTIVE, event);
 			break;
 		case EVNT_CON_FATAL:
@@ -1640,7 +1643,7 @@ session_open(struct peer *p)
 	errs += ibuf_add_n16(buf, p->conf.local_short_as);
 	errs += ibuf_add_n16(buf, p->conf.holdtime);
 	/* is already in network byte order */
-	errs += ibuf_add_n32(buf, conf->bgpid);
+	errs += ibuf_add_n32(buf, p->local_bgpid);
 	errs += ibuf_add_n8(buf, optparamlen);
 
 	if (extlen) {
@@ -2369,9 +2372,9 @@ parse_open(struct peer *peer, struct ibuf *msg)
 	}
 
 	/* on iBGP sessions check for bgpid collision */
-	if (!peer->conf.ebgp && peer->remote_bgpid == conf->bgpid) {
+	if (!peer->conf.ebgp && peer->remote_bgpid == peer->local_bgpid) {
 		struct in_addr ina;
-		ina.s_addr = htonl(bgpid);
+		ina.s_addr = htonl(peer->remote_bgpid);
 		log_peer_warnx(&peer->conf, "peer BGPID %s conflicts with ours",
 		    inet_ntoa(ina));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_BGPID, NULL);
@@ -3849,9 +3852,13 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 
 		/* reapply holdtime and min_holdtime settings */
 		if (p->conf.holdtime == 0)
-			p->conf.holdtime = conf->holdtime;
+			p->conf.holdtime = nc->holdtime;
 		if (p->conf.min_holdtime == 0)
-			p->conf.min_holdtime = conf->min_holdtime;
+			p->conf.min_holdtime = nc->min_holdtime;
+		if (p->conf.connectretry == 0)
+			p->conf.connectretry = nc->connectretry;
+		p->local_bgpid = nc->bgpid;
+
 
 		/* had demotion, is demoted, demote removed? */
 		if (p->demoted && !p->conf.demote_group[0])

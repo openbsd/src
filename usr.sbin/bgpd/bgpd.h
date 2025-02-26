@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.515 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.516 2025/02/26 10:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -507,6 +507,7 @@ struct peer_config {
 	uint16_t		 max_out_prefix_restart;
 	uint16_t		 holdtime;
 	uint16_t		 min_holdtime;
+	uint16_t		 connectretry;
 	uint16_t		 staletime;
 	uint16_t		 local_short_as;
 	uint16_t		 remote_port;
