@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/01/17 07:57:22 anton Exp $
+# $OpenBSD: Makefile,v 1.8 2025/02/27 08:06:03 anton Exp $
 
 # The following ports must be installed:
 #
@@ -116,22 +116,5 @@ run-ckoff-2-long:
 	# use checksum at offset 2, packet is 5 bytes long
 	${SUDO} ./rip6cksum -c 2 -r 5 -s 5 -w -- \
 	    ${PYTHON}sendrecv.py -c 2 -s 5
-
-# XXX expected failures caused by the upgrade to scapy 2.4.5.
-REGRESS_EXPECTED_FAILURES+=run-bad-cksum
-REGRESS_EXPECTED_FAILURES+=run-ckoff-0
-REGRESS_EXPECTED_FAILURES+=run-ckoff-0-empty
-REGRESS_EXPECTED_FAILURES+=run-ckoff-0-exact
-REGRESS_EXPECTED_FAILURES+=run-ckoff-0-long
-REGRESS_EXPECTED_FAILURES+=run-ckoff-0-short
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2-empty
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2-exact
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2-long
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2-short-1
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2-short-2
-REGRESS_EXPECTED_FAILURES+=run-ckoff-2-short-3
-REGRESS_EXPECTED_FAILURES+=run-disable-cksum
-REGRESS_EXPECTED_FAILURES+=run-no-cksum
 
 .include <bsd.regress.mk>
