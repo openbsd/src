@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.3 2025/02/26 19:31:31 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.4 2025/02/27 13:35:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -31,25 +31,16 @@
 #include "session.h"
 #include "log.h"
 
-static void	start_timer_holdtime(struct peer *);
-static void	start_timer_keepalive(struct peer *);
-struct ibuf	*session_newmsg(enum msg_type, uint16_t);
-void	session_sendmsg(struct ibuf *, struct peer *, enum msg_type);
-void	session_open(struct peer *);
-void	session_keepalive(struct peer *);
-void	session_update(struct peer *, struct ibuf *);
-void	session_notification(struct peer *, uint8_t, uint8_t, struct ibuf *);
-void	session_notification_data(struct peer *, uint8_t, uint8_t, void *,
-	    size_t);
-void	session_rrefresh(struct peer *, uint8_t, uint8_t);
-int	capa_neg_calc(struct peer *);
+static void		 start_timer_holdtime(struct peer *);
+static void		 start_timer_keepalive(struct peer *);
+static int		 capa_neg_calc(struct peer *);
 
 static const uint8_t	 marker[MSGSIZE_HEADER_MARKER] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
-struct ibuf *
+static struct ibuf *
 session_newmsg(enum msg_type msgtype, uint16_t len)
 {
 	struct ibuf		*buf;
@@ -70,7 +61,7 @@ session_newmsg(enum msg_type msgtype, uint16_t len)
 	return (buf);
 }
 
-void
+static void
 session_sendmsg(struct ibuf *msg, struct peer *p, enum msg_type msgtype)
 {
 	session_mrt_dump_bgp_msg(p, msg, msgtype, DIR_OUT);
@@ -1285,7 +1276,7 @@ session_process_msg(struct peer *p)
 	}
 }
 
-int
+static int
 capa_neg_calc(struct peer *p)
 {
 	struct ibuf *ebuf;
