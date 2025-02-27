@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.131 2023/05/18 18:29:28 millert Exp $ */
+/* $OpenBSD: user.c,v 1.132 2025/02/27 01:32:55 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1763,8 +1763,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	}
 	fclose(master);
 	close(ptmpfd);
-	free(pw_tmp);
-	free(shell_tmp);
 	if (up != NULL && strcmp(login_name, newlogin) == 0)
 		rval = pw_mkdb(login_name, 0);
 	else
@@ -1782,6 +1780,8 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		syslog(LOG_INFO, "user information modified: name=%s, new name=%s, uid=%u, gid=%u, home=%s, shell=%s",
 			login_name, newlogin, pwp->pw_uid, pwp->pw_gid, pwp->pw_dir, pwp->pw_shell);
 	}
+	free(pw_tmp);
+	free(shell_tmp);
 	return 1;
 }
 
