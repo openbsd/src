@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.47 2025/02/27 20:12:25 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.48 2025/02/27 20:13:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,7 +110,7 @@ X509_REVOKED_cmp(const X509_REVOKED * const *a, const X509_REVOKED * const *b)
  * reordering of the revoked field.
  */
 static int
-crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+crl_info_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
 	X509_CRL_INFO *a = (X509_CRL_INFO *)*pval;
 
@@ -130,7 +130,7 @@ crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 
 static const ASN1_AUX X509_CRL_INFO_aux = {
 	.flags = ASN1_AFLG_ENCODING,
-	.asn1_cb = crl_inf_cb,
+	.asn1_cb = crl_info_cb,
 	.enc_offset = offsetof(X509_CRL_INFO, enc),
 };
 static const ASN1_TEMPLATE X509_CRL_INFO_seq_tt[] = {
