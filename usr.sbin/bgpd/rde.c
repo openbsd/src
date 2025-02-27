@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.653 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.654 2025/02/27 14:03:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1326,7 +1326,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 		peer_imsg_flush(peer);
 		return;
 	}
-		
+
 	if (!peer_imsg_pop(peer, &imsg))
 		return;
 

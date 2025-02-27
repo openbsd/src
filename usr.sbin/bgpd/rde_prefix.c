@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.57 2025/02/04 18:16:56 denis Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.58 2025/02/27 14:03:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -689,7 +689,7 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 				goto fail;
 			if (ibuf_add_n8(tmp, pevpn->prefixlen) == -1)
 				goto fail;
-			switch(pevpn->vpnaid) {
+			switch (pevpn->vpnaid) {
 			case AID_UNSPEC:
 				/* See rfc7432 section 7.2 */
 				break;
@@ -708,7 +708,7 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 			}
 			if (ibuf_add(tmp, pevpn->labelstack,
 			    pevpn->labellen) == -1)
-			       goto fail;
+				goto fail;
 			break;
 		case EVPN_ROUTE_TYPE_3:
 			plen = sizeof(pevpn->rd) * 8;
@@ -719,10 +719,10 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
 				goto fail;
 			if (ibuf_add_h64(tmp, pevpn->rd) == -1 ||
 			    ibuf_add_h32(tmp, pevpn->ethtag) == -1)
-			       goto fail;
+				goto fail;
 			if (ibuf_add_n8(tmp, pevpn->prefixlen) == -1)
 				goto fail;
-			switch(pevpn->vpnaid) {
+			switch (pevpn->vpnaid) {
 			case AID_INET:
 				if (ibuf_add(tmp, &pevpn->prefix4,
 				    sizeof(pevpn->prefix4)) == -1)

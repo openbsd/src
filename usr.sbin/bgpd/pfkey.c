@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.71 2024/10/02 09:45:29 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.72 2025/02/27 14:03:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -767,7 +767,7 @@ fail_flow:
 }
 
 int
-pfkey_establish(struct auth_state *as, struct auth_config *auth, 
+pfkey_establish(struct auth_state *as, struct auth_config *auth,
     const struct bgpd_addr *local_addr, const struct bgpd_addr *remote_addr)
 {
 	switch (auth->method) {

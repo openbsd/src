@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.516 2025/02/26 10:26:51 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.517 2025/02/27 14:03:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include <imsg.h>
 
-#include "monotime.h" 
+#include "monotime.h"
 
 #define	BGP_VERSION			4
 #define	RTR_MAX_VERSION			2
