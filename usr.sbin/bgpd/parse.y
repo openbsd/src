@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.481 2025/02/17 14:45:00 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.482 2025/02/27 14:15:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -338,7 +338,7 @@ as4number	: STRING			{
 			char		*dot;
 			uint32_t	 uvalh = 0, uval;
 
-			if ((dot = strchr($1,'.')) != NULL) {
+			if ((dot = strchr($1, '.')) != NULL) {
 				*dot++ = '\0';
 				uvalh = strtonum($1, 0, USHRT_MAX, &errstr);
 				if (errstr) {
@@ -380,7 +380,7 @@ as4number_any	: STRING			{
 			char		*dot;
 			uint32_t	 uvalh = 0, uval;
 
-			if ((dot = strchr($1,'.')) != NULL) {
+			if ((dot = strchr($1, '.')) != NULL) {
 				*dot++ = '\0';
 				uvalh = strtonum($1, 0, USHRT_MAX, &errstr);
 				if (errstr) {
@@ -1435,7 +1435,7 @@ icmp_item	: icmptype			{
 		}
 		;
 
-icmptype        : STRING {
+icmptype	: STRING {
 			int type;
 
 			if ((type = geticmptypebyname($1, curflow->aid)) ==
@@ -2830,7 +2830,8 @@ filter_elm	: filter_prefix_h	{
 				free($2);
 				YYERROR;
 			}
-			if (parsecommunity(&fmopts.m.community[i], $1, $2) == -1) {
+			if (parsecommunity(&fmopts.m.community[i], $1, $2) ==
+			    -1) {
 				free($2);
 				YYERROR;
 			}
@@ -2967,7 +2968,8 @@ filter_elm	: filter_prefix_h	{
 				free($2);
 				YYERROR;
 			}
-			if ($3.op == OP_RANGE && ps->sflags & PREFIXSET_FLAG_OPS) {
+			if ($3.op == OP_RANGE &&
+			    ps->sflags & PREFIXSET_FLAG_OPS) {
 				yyerror("prefix-set %s contains prefixlen "
 				    "operators and cannot be used with an "
 				    "or-longer filter", $2);
@@ -3934,7 +3936,7 @@ top:
 	}
 
 #define allowed_to_end_number(x) \
-	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}' || x == '=')
+	(isspace(x) || x == ')' || x == ',' || x == '/' || x == '}' || x == '=')
 
 	if (c == '-' || isdigit(c)) {
 		do {
@@ -4980,7 +4982,7 @@ expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
 						return (-1);
 					}
 
-					memcpy(r, rule, sizeof(struct filter_rule));
+					memcpy(r, rule, sizeof(*r));
 					memcpy(&r->match, match,
 					    sizeof(struct filter_match));
 					filterset_copy(set, &r->set);
@@ -4991,10 +4993,11 @@ expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
 
 					if (p != NULL)
 						memcpy(&r->peer, &p->p,
-						    sizeof(struct filter_peers));
+						    sizeof(r->peer));
 
 					if (prefix != NULL)
-						memcpy(&r->match.prefix, &prefix->p,
+						memcpy(&r->match.prefix,
+						    &prefix->p,
 						    sizeof(r->match.prefix));
 
 					if (a != NULL)
