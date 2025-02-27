@@ -3631,6 +3631,8 @@ amdgpu_init_backlight(struct amdgpu_device *adev)
 
 	if (bd == NULL)
 		return;
+
+	backlight_force_update(bd, 0);
 		
 	drm_connector_list_iter_begin(dev, &conn_iter);
 	drm_for_each_connector_iter(connector, &conn_iter) {
