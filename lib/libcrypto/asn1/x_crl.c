@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.46 2025/02/24 20:07:14 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.47 2025/02/27 20:12:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,8 +68,6 @@
 #include "asn1_local.h"
 #include "x509_local.h"
 
-static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
-    const X509_REVOKED * const *b);
 static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
 
 static const ASN1_TEMPLATE X509_REVOKED_seq_tt[] = {
@@ -100,6 +98,12 @@ const ASN1_ITEM X509_REVOKED_it = {
 	.sname = "X509_REVOKED",
 };
 LCRYPTO_ALIAS(X509_REVOKED_it);
+
+static int
+X509_REVOKED_cmp(const X509_REVOKED * const *a, const X509_REVOKED * const *b)
+{
+	return ASN1_INTEGER_cmp((*a)->serialNumber, (*b)->serialNumber);
+}
 
 /* The X509_CRL_INFO structure needs a bit of customisation.
  * Since we cache the original encoding the signature wont be affected by
@@ -515,12 +519,6 @@ X509_CRL_dup(X509_CRL *x)
 	return ASN1_item_dup(&X509_CRL_it, x);
 }
 LCRYPTO_ALIAS(X509_CRL_dup);
-
-static int
-X509_REVOKED_cmp(const X509_REVOKED * const *a, const X509_REVOKED * const *b)
-{
-	return(ASN1_INTEGER_cmp((*a)->serialNumber, (*b)->serialNumber));
-}
 
 int
 X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
