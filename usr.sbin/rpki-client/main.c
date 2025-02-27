@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.278 2025/01/03 10:14:32 job Exp $ */
+/*	$OpenBSD: main.c,v 1.279 2025/02/27 14:23:02 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1240,7 +1240,7 @@ main(int argc, char *argv[])
 	    NULL)
 		err(1, NULL);
 	if ((rrdpq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
-	   NULL)
+	    NULL)
 		err(1, NULL);
 
 	/*

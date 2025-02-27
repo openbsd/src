@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.71 2024/12/19 13:23:38 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.72 2025/02/27 14:23:02 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -693,7 +693,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 			state->serial = strtonum(line, 1, LLONG_MAX, &errstr);
 			if (errstr) {
 				warnx("%s: state file: serial is %s: %s",
-				   rr->basedir, errstr, line);
+				    rr->basedir, errstr, line);
 				goto reset;
 			}
 			break;
