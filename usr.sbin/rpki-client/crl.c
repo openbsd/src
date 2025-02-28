@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.43 2024/09/12 10:33:25 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.44 2025/02/28 13:46:09 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -296,7 +296,7 @@ crlcmp(struct crl *a, struct crl *b)
 RB_GENERATE_STATIC(crl_tree, crl, entry, crlcmp);
 
 /*
- * Find a CRL based on the auth SKI value.
+ * Find a CRL based on the auth SKI value and manifest path.
  */
 struct crl *
 crl_get(struct crl_tree *crlt, const struct auth *a)
