@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.64 2025/02/07 03:03:08 jsg Exp $
+# $OpenBSD: files.drm,v 1.65 2025/02/28 00:18:28 jsg Exp $
 
 #file	dev/pci/drm/aperture.c			drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -1011,6 +1011,7 @@ file	dev/pci/drm/amd/display/dc/clk_mgr/dcn32/dcn32_clk_mgr.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn32/dcn32_clk_mgr_smu_msg.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn35/dcn35_clk_mgr.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn35/dcn35_smu.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/clk_mgr/dcn35/dcn351_clk_mgr.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn401/dcn401_clk_mgr.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn401/dcn401_clk_mgr_smu_msg.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/core/amdgpu_dc.c		amdgpu
