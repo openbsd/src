@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.196 2025/02/24 18:07:50 tb Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.197 2025/02/28 06:26:18 jsg Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -607,11 +607,10 @@ sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct process *pr = p->p_p;
 	struct vm_map *map = &p->p_vmspace->vm_map;
-	int npins, error = 0, i;
+	int npins, error = 0, i, map_flags;
 	vaddr_t base;
 	size_t len;
 	u_int *pins;
-	u_int8_t map_flags;
 
 	/* Only allow libc syscall pinning once per process */
 	mtx_enter(&pr->ps_vmspace->vm_map.flags_lock);
