@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.247 2025/03/01 12:30:19 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.248 2025/03/01 14:44:09 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -141,7 +141,8 @@ usbd_status	uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 usbd_status	uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 usbd_status	uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-uint32_t	uvideo_vc_parse_max_packet_size(usb_endpoint_descriptor_t *);
+uint32_t	uvideo_vc_parse_max_packet_size(struct uvideo_softc *,
+		    usb_endpoint_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_alt(struct uvideo_softc *, int, int, int);
 usbd_status	uvideo_vs_set_alt(struct uvideo_softc *,
 		    struct usbd_interface *, int);
@@ -194,6 +195,8 @@ void		uvideo_dump_desc_input(struct uvideo_softc *,
 void		uvideo_dump_desc_output(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_endpoint(struct uvideo_softc *,
+		    const usb_descriptor_t *);
+void		uvideo_dump_desc_endpoint_ss_comp(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_iface_assoc(struct uvideo_softc *,
 		    const usb_descriptor_t *);
@@ -1312,12 +1315,39 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 }
 
 uint32_t
-uvideo_vc_parse_max_packet_size(usb_endpoint_descriptor_t *ed)
+uvideo_vc_parse_max_packet_size(struct uvideo_softc *sc,
+    usb_endpoint_descriptor_t *ed)
 {
 	uint32_t psize;
+	struct usbd_desc_iter iter;
+	const usb_descriptor_t *desc;
+	usb_endpoint_ss_comp_descriptor_t *esscd;
 
-	/* XXX: get USB 3.0 speed from wBytesPerInterval */
+	/*
+	 * USB 3.0 Section 9.6.7 states that wBytesPerInterval is only
+	 * valid for periodic endpoints (isochronous and interrupt).
+	 */
+	if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
+		goto skip_ss_comp;
 
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	while ((desc = usbd_desc_iter_next(&iter))) {
+		if (desc == (const usb_descriptor_t *)ed) {
+			desc = usbd_desc_iter_next(&iter);
+			break;
+		}
+	}
+
+	if (desc && sc->sc_udev->speed >= USB_SPEED_SUPER &&
+	    desc->bDescriptorType == UDESC_ENDPOINT_SS_COMP) {
+		esscd = (usb_endpoint_ss_comp_descriptor_t *)desc;
+		psize = UGETW(esscd->wBytesPerInterval);
+		DPRINTF(1, "%s: wBytesPerInterval=%d\n",
+		    DEVNAME(sc), psize);
+		return psize;
+	}
+
+skip_ss_comp:
 	psize = UGETW(ed->wMaxPacketSize);
 	psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
 
@@ -1396,7 +1426,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 		if (bulk_endpoint && !vs->bulk_endpoint)
 			goto next;
 
-		psize = uvideo_vc_parse_max_packet_size(ed);
+		psize = uvideo_vc_parse_max_packet_size(sc, ed);
 		/* save endpoint with largest bandwidth */
 		if (psize > vs->psize) {
 			vs->ifaceh = &sc->sc_udev->ifaces[iface];
@@ -1474,7 +1504,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 			goto next;
 
 		/* save endpoint with requested bandwidth */
-		psize = uvideo_vc_parse_max_packet_size(ed);
+		psize = uvideo_vc_parse_max_packet_size(sc, ed);
 		if (psize >= max_packet_size)
 			diff = psize - max_packet_size;
 		else
@@ -2700,6 +2730,11 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			printf("|\n");
 			uvideo_dump_desc_endpoint(sc, desc);
 			break;
+		case UDESC_ENDPOINT_SS_COMP:
+			printf(" (UDESC_ENDPOINT_SS_COMP)\n");
+			printf("|\n");
+			uvideo_dump_desc_endpoint_ss_comp(sc, desc);
+			break;
 		case UDESC_INTERFACE:
 			printf(" (UDESC_INTERFACE)\n");
 			printf("|\n");
@@ -2835,6 +2870,21 @@ uvideo_dump_desc_endpoint(struct uvideo_softc *sc,
 		printf(" (UE_INTERRUPT)\n");
 	printf("wMaxPacketSize=%d\n", UGETW(d->wMaxPacketSize));
 	printf("bInterval=0x%02x\n", d->bInterval);
+}
+
+void
+uvideo_dump_desc_endpoint_ss_comp(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	usb_endpoint_ss_comp_descriptor_t *d;
+
+	d = (usb_endpoint_ss_comp_descriptor_t *)(uint8_t *)desc;
+
+	printf("bLength=%d\n", d->bLength);
+	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
+	printf("bMaxBurst=0x%02x\n", d->bMaxBurst);
+	printf("bmAttributes=0x%02x\n", d->bmAttributes);
+	printf("wBytesPerInterval=%d\n", UGETW(d->wBytesPerInterval));
 }
 
 void
