@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.51 2025/02/11 22:27:09 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.52 2025/03/01 07:42:09 miod Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -291,6 +291,7 @@ do_el1h_sync(struct trapframe *frame)
 	far = READ_SPECIALREG(far_el1);
 
 	intr_enable();
+	uvmexp.traps++;
 
 	/*
 	 * Sanity check we are in an exception er can handle. The IL bit
@@ -361,6 +362,7 @@ do_el0_sync(struct trapframe *frame)
 	far = READ_SPECIALREG(far_el1);
 
 	intr_enable();
+	uvmexp.traps++;
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 	refreshcreds(p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2024/08/06 09:07:15 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2025/03/01 07:42:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -66,6 +68,7 @@ riscv_cpu_intr(void *frame)
 {
 	struct cpu_info	*ci = curcpu();
 
+	uvmexp.intrs++;
 	ci->ci_idepth++;
 	(*riscv_intr_dispatch)(frame);
 	ci->ci_idepth--;

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.30 2025/02/17 21:08:40 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.31 2025/03/01 07:42:09 miod Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -19,6 +19,8 @@
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/clock_subr.h>
 #include <machine/cpu.h>
@@ -74,6 +76,7 @@ arm_cpu_irq(void *frame)
 {
 	struct cpu_info	*ci = curcpu();
 
+	uvmexp.intrs++;
 	ci->ci_idepth++;
 	(*arm_irq_dispatch)(frame);
 	ci->ci_idepth--;
@@ -86,6 +89,7 @@ arm_cpu_fiq(void *frame)
 {
 	struct cpu_info	*ci = curcpu();
 
+	uvmexp.intrs++;
 	ci->ci_idepth++;
 	(*arm_fiq_dispatch)(frame);
 	ci->ci_idepth--;

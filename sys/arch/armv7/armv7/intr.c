@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.23 2024/08/05 13:55:34 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.24 2025/03/01 07:42:09 miod Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <arm/cpufunc.h>
 #include <machine/cpu.h>
@@ -62,6 +64,7 @@ void (*arm_intr_dispatch)(void *) = arm_dflt_intr;
 void
 arm_intr(void *frame)
 {
+	uvmexp.intrs++;
 	/* XXX - change this to have irq_dispatch use function pointer */
 	(*arm_intr_dispatch)(frame);
 }
