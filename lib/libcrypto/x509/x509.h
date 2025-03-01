@@ -1,25 +1,25 @@
-/* $OpenBSD: x509.h,v 1.119 2024/08/31 10:49:35 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.120 2025/03/01 11:31:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -57,7 +57,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECDH support in OpenSSL originally developed by 
+ * ECDH support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
@@ -179,7 +179,7 @@ DECLARE_STACK_OF(X509)
 #define	X509_FLAG_NO_AUX		(1L << 10)
 #define	X509_FLAG_NO_ATTRIBUTES		(1L << 11)
 
-/* Flags specific to X509_NAME_print_ex() */	
+/* Flags specific to X509_NAME_print_ex() */
 
 /* The field separator information */
 
@@ -527,7 +527,7 @@ DSA *		d2i_DSA_PUBKEY(DSA **a,const unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_EC
 int		i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp);
-EC_KEY 		*d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp,
+EC_KEY		*d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp,
 			long length);
 #endif
 
@@ -676,31 +676,31 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	void *data, EVP_PKEY *pkey, const EVP_MD *type);
 int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 		X509_ALGOR *algor1, X509_ALGOR *algor2,
-	     	ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx);
+		ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx);
 #endif
 
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
 void		X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **issuerUID,
 		    const ASN1_BIT_STRING **subjectUID);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
-int 		X509_set_version(X509 *x, long version);
+int		X509_set_version(X509 *x, long version);
 long		X509_get_version(const X509 *x);
-int 		X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
+int		X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *	X509_get_serialNumber(X509 *x);
 const ASN1_INTEGER *X509_get0_serialNumber(const X509 *x);
-int 		X509_set_issuer_name(X509 *x, X509_NAME *name);
+int		X509_set_issuer_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_issuer_name(const X509 *a);
-int 		X509_set_subject_name(X509 *x, X509_NAME *name);
+int		X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_subject_name(const X509 *a);
-int 		X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
-int 		X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
-int 		X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
-int 		X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
+int		X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
+int		X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
+int		X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
+int		X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
 const ASN1_TIME *X509_get0_notBefore(const X509 *x);
 ASN1_TIME *X509_getm_notBefore(const X509 *x);
 const ASN1_TIME *X509_get0_notAfter(const X509 *x);
 ASN1_TIME *X509_getm_notAfter(const X509 *x);
-int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
+int		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
 EVP_PKEY *	X509_get0_pubkey(const X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
@@ -799,21 +799,21 @@ int		X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag, unsigned long
 int		X509_REQ_print(BIO *bp,X509_REQ *req);
 #endif
 
-int 		X509_NAME_entry_count(const X509_NAME *name);
-int 		X509_NAME_get_text_by_NID(X509_NAME *name, int nid,
+int		X509_NAME_entry_count(const X509_NAME *name);
+int		X509_NAME_get_text_by_NID(X509_NAME *name, int nid,
 			char *buf,int len);
 int		X509_NAME_get_text_by_OBJ(X509_NAME *name,
 			const ASN1_OBJECT *obj, char *buf,int len);
 
 /* NOTE: you should be passing -1, not 0 as lastpos.  The functions that use
  * lastpos, search after that position on. */
-int 		X509_NAME_get_index_by_NID(const X509_NAME *name, int nid,
+int		X509_NAME_get_index_by_NID(const X509_NAME *name, int nid,
 			int lastpos);
-int 		X509_NAME_get_index_by_OBJ(const X509_NAME *name,
+int		X509_NAME_get_index_by_OBJ(const X509_NAME *name,
 			const ASN1_OBJECT *obj, int lastpos);
 X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
-int 		X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne,
+int		X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne,
 			int loc, int set);
 int X509_NAME_add_entry_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj,
     int type, const unsigned char *bytes, int len, int loc, int set);
@@ -828,9 +828,9 @@ int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 			const ASN1_OBJECT *obj, int type,
 			const unsigned char *bytes, int len);
-int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
+int		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
 			const ASN1_OBJECT *obj);
-int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
+int		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 			const unsigned char *bytes, int len);
 ASN1_OBJECT *	X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
 ASN1_STRING *	X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne);
