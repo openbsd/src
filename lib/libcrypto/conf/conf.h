@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.27 2024/08/31 09:54:31 tb Exp $ */
+/* $OpenBSD: conf.h,v 1.28 2025/03/01 10:11:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,9 +106,6 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 
 void OPENSSL_config(const char *config_name);
 void OPENSSL_no_config(void);
-
-/* New conf code.  The semantics are different from the functions above.
-   If that wasn't the case, the above functions would have been replaced */
 
 struct conf_st {
 	const CONF_METHOD *meth;
