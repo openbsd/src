@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.135 2024/10/08 19:42:31 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.136 2025/03/01 14:43:03 kirill Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1355,6 +1355,7 @@ static inline uint32_t
 xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 {
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
+	usb_endpoint_ss_comp_descriptor_t *esscd = pipe->endpoint->esscd;
 	uint32_t mep, atl, mps = UGETW(ed->wMaxPacketSize);
 
 	switch (UE_GET_XFERTYPE(ed->bmAttributes)) {
@@ -1364,8 +1365,10 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 		break;
 	case UE_INTERRUPT:
 	case UE_ISOCHRONOUS:
-		if (pipe->device->speed == USB_SPEED_SUPER) {
-			/*  XXX Read the companion descriptor */
+		if (esscd && pipe->device->speed >= USB_SPEED_SUPER) {
+			mep = UGETW(esscd->wBytesPerInterval);
+			atl = mep;
+			break;
 		}
 
 		mep = (UE_GET_TRANS(mps) + 1) * UE_GET_SIZE(mps);
@@ -1441,6 +1444,7 @@ uint32_t
 xhci_pipe_maxburst(struct usbd_pipe *pipe)
 {
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
+	usb_endpoint_ss_comp_descriptor_t *esscd = pipe->endpoint->esscd;
 	uint32_t mps = UGETW(ed->wMaxPacketSize);
 	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	uint32_t maxb = 0;
@@ -1451,7 +1455,9 @@ xhci_pipe_maxburst(struct usbd_pipe *pipe)
 			maxb = UE_GET_TRANS(mps);
 		break;
 	case USB_SPEED_SUPER:
-		/*  XXX Read the companion descriptor */
+		if (esscd &&
+		    (xfertype == UE_ISOCHRONOUS || xfertype == UE_INTERRUPT))
+			maxb = esscd->bMaxBurst;
 	default:
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.163 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.164 2025/03/01 14:43:03 kirill Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -514,7 +514,8 @@ int
 usbd_parse_idesc(struct usbd_device *dev, struct usbd_interface *ifc)
 {
 #define ed ((usb_endpoint_descriptor_t *)p)
-	char *p, *end;
+#define essd ((usb_endpoint_ss_comp_descriptor_t *)pp)
+	char *p, *pp, *end;
 	int i;
 
 	p = (char *)ifc->idesc + ifc->idesc->bLength;
@@ -533,6 +534,11 @@ usbd_parse_idesc(struct usbd_device *dev, struct usbd_interface *ifc)
 
 		if (p >= end)
 			return (-1);
+
+		pp = p + ed->bLength;
+		if (pp >= end || essd->bLength == 0 ||
+		    essd->bDescriptorType != UDESC_ENDPOINT_SS_COMP)
+			pp = NULL;
 
 		if (dev->speed == USB_SPEED_HIGH) {
 			unsigned int mps;
@@ -557,6 +563,7 @@ usbd_parse_idesc(struct usbd_device *dev, struct usbd_interface *ifc)
 		}
 
 		ifc->endpoints[i].edesc = ed;
+		ifc->endpoints[i].esscd = essd;
 		ifc->endpoints[i].refcnt = 0;
 		ifc->endpoints[i].savedtoggle = 0;
 		p += ed->bLength;
@@ -564,6 +571,7 @@ usbd_parse_idesc(struct usbd_device *dev, struct usbd_interface *ifc)
 
 	return (0);
 #undef ed
+#undef essd
 }
 
 void
