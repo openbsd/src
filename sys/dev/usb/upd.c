@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.33 2024/12/01 09:05:05 landry Exp $ */
+/*	$OpenBSD: upd.c,v 1.34 2025/03/02 08:18:12 landry Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -428,6 +428,20 @@ upd_sensor_update(struct upd_softc *sc, struct upd_sensor *sensor,
 	}
 
 	hdata = hid_get_data(buf, len, &sensor->hitem.loc);
+	switch (HID_GET_USAGE(sensor->hitem.usage)) {
+	case HUB_RUNTIMETO_EMPTY:
+		/*
+		 * If the value is reported as a 4-byte item,
+		 * assume the lowest 8 bits of the value are
+		 * extra, unnecessary, precision, and discard
+		 * them.
+		 * This happens to match what sysutils/nut
+		 * reports.
+		 */
+		if (len == 4)
+			hdata = hdata >> 8;
+		break;
+	}
 	if (sensor->ksensor.type == SENSOR_INDICATOR)
 		sensor->ksensor.value = hdata ? 1 : 0;
 	else
