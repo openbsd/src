@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.196 2024/06/07 13:15:25 jsg Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.197 2025/03/02 21:28:32 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -338,7 +338,8 @@ esp_zeroize(struct tdb *tdbp)
  * ESP input processing, called (eventually) through the protocol switch.
  */
 int
-esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
+esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
+    struct netstack *ns)
 {
 	const struct auth_hash *esph = tdb->tdb_authalgxform;
 	const struct enc_xform *espx = tdb->tdb_encalgxform;
@@ -672,7 +673,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	return ipsec_common_input_cb(mp, tdb, skip, protoff);
+	return ipsec_common_input_cb(mp, tdb, skip, protoff, ns);
 
  drop:
 	m_freemp(mp);

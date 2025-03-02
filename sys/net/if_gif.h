@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.h,v 1.18 2018/02/10 08:12:01 dlg Exp $	*/
+/*	$OpenBSD: if_gif.h,v 1.19 2025/03/02 21:28:31 bluhm Exp $	*/
 /*	$KAME: if_gif.h,v 1.17 2000/09/11 11:36:41 sumikawa Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #ifndef _NET_IF_GIF_H_
 #define _NET_IF_GIF_H_
 
-int in_gif_input(struct mbuf **, int *, int, int);
-int in6_gif_input(struct mbuf **, int *, int, int);
+int in_gif_input(struct mbuf **, int *, int, int, struct netstack *);
+int in6_gif_input(struct mbuf **, int *, int, int, struct netstack *);
 
 #endif /* _NET_IF_GIF_H_ */

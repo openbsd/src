@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.101 2025/02/24 09:40:01 jan Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.102 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -173,8 +173,8 @@ static int	vxlan_addmulti(struct vxlan_softc *, struct ifnet *);
 static void	vxlan_delmulti(struct vxlan_softc *);
 
 static struct mbuf *
-		vxlan_input(void *, struct mbuf *,
-		    struct ip *, struct ip6_hdr *, void *, int);
+		vxlan_input(void *, struct mbuf *, struct ip *,
+		    struct ip6_hdr *, void *, int, struct netstack *);
 
 static int	vxlan_set_rdomain(struct vxlan_softc *, const struct ifreq *);
 static int	vxlan_get_rdomain(struct vxlan_softc *, struct ifreq *);
@@ -602,7 +602,7 @@ vxlan_send(void *arg)
 
 static struct mbuf *
 vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
-    void *uhp, int hlen)
+    void *uhp, int hlen, struct netstack *ns)
 {
 	struct vxlan_tep *vt = arg;
 	union vxlan_addr addr;
@@ -711,7 +711,7 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 		break;
         }
 
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, ns);
 rele:
 	vxlan_rele(sc);
 	return (NULL);

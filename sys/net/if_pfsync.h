@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.63 2024/10/12 23:10:07 jsg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.64 2025/03/02 21:28:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -308,7 +308,8 @@ enum pfsync_counters {
 #define PFSYNC_S_PFSYNC	0xd2
 #define PFSYNC_S_DEAD	0xde
 
-int			pfsync_input4(struct mbuf **, int *, int, int);
+int			pfsync_input4(struct mbuf **, int *, int, int,
+			    struct netstack *);
 int			pfsync_sysctl(int *, u_int,  void *, size_t *,
 			    void *, size_t);
 

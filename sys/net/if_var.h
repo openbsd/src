@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.135 2025/01/24 09:19:07 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.136 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/timeout.h>
 
 #include <net/ifq.h>
+#include <net/route.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -89,6 +90,10 @@ struct rtentry;
 struct ifnet;
 struct task;
 struct cpumem;
+
+struct netstack {
+	struct route	ns_route;
+};
 
 /*
  * Structure describing a `cloning' interface.
@@ -191,7 +196,7 @@ struct ifnet {				/* and the entries */
 	struct	task if_linkstatetask;	/* [I] task to do route updates */
 
 	/* procedure handles */
-	void	(*if_input)(struct ifnet *, struct mbuf *);
+	void	(*if_input)(struct ifnet *, struct mbuf *, struct netstack *);
 	int	(*if_bpf_mtap)(caddr_t, const struct mbuf *, u_int);
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);	/* output routine (enqueue) */
@@ -330,9 +335,10 @@ void	if_start(struct ifnet *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
 int	if_enqueue_ifq(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
-void	if_vinput(struct ifnet *, struct mbuf *);
-void	if_input_process(struct ifnet *, struct mbuf_list *);
-int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t);
+void	if_vinput(struct ifnet *, struct mbuf *, struct netstack *);
+void	if_input_process(struct ifnet *, struct mbuf_list *, unsigned int);
+int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t,
+	    struct netstack *);
 int	if_output_ml(struct ifnet *, struct mbuf_list *,
 	    struct sockaddr *, struct rtentry *);
 int	if_output_mq(struct ifnet *, struct mbuf_queue *, unsigned int *,
@@ -342,7 +348,7 @@ int	if_output_tso(struct ifnet *, struct mbuf **, struct sockaddr *,
 int	if_output_local(struct ifnet *, struct mbuf *, sa_family_t);
 void	if_rtrequest_dummy(struct ifnet *, int, struct rtentry *);
 void	p2p_rtrequest(struct ifnet *, int, struct rtentry *);
-void	p2p_input(struct ifnet *, struct mbuf *);
+void	p2p_input(struct ifnet *, struct mbuf *, struct netstack *);
 int	p2p_bpf_mtap(caddr_t, const struct mbuf *, u_int);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *, u_int);

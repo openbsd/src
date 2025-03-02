@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.16 2021/03/10 10:21:48 jsg Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.17 2025/03/02 21:28:31 bluhm Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -115,7 +115,7 @@ struct mobip_h {
 
 #ifdef _KERNEL
 int	gre_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	gre_input(struct mbuf **, int *, int, int);
-int	gre_input6(struct mbuf **, int *, int, int);
+int	gre_input(struct mbuf **, int *, int, int, struct netstack *);
+int	gre_input6(struct mbuf **, int *, int, int, struct netstack *);
 #endif
 #endif /* _NET_IF_GRE_H_ */

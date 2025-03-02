@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.403 2025/01/03 21:27:40 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.404 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ static struct mbuf_queue	ipsendraw_mq;
 
 extern struct niqueue		arpinq;
 
-int	ip_ours(struct mbuf **, int *, int, int);
+int	ip_ours(struct mbuf **, int *, int, int, struct netstack *);
 int	ip_ours_enqueue(struct mbuf **mp, int *offp, int nxt);
 int	ip_dooptions(struct mbuf *, struct ifnet *, int);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct route *, int);
@@ -246,7 +246,7 @@ ip_init(void)
  * NET_LOCK_SHARED() and the transport layer needing it exclusively.
  */
 int
-ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
+ip_ours(struct mbuf **mp, int *offp, int nxt, int af, struct netstack *ns)
 {
 	nxt = ip_fragcheck(mp, offp);
 	if (nxt == IPPROTO_DONE)
@@ -256,7 +256,7 @@ ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 	if (af != AF_UNSPEC)
 		return nxt;
 
-	nxt = ip_deliver(mp, offp, nxt, AF_INET, 1);
+	nxt = ip_deliver(mp, offp, nxt, AF_INET, 1, ns);
 	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
 
@@ -325,7 +325,7 @@ ipintr(void)
 			nxt = ip->ip_p;
 		}
 
-		nxt = ip_deliver(&m, &off, nxt, AF_INET, 0);
+		nxt = ip_deliver(&m, &off, nxt, AF_INET, 0, NULL);
 		KASSERT(nxt == IPPROTO_DONE);
 	}
 }
@@ -336,12 +336,12 @@ ipintr(void)
  * Checksum and byte swap header.  Process options. Forward or deliver.
  */
 void
-ipv4_input(struct ifnet *ifp, struct mbuf *m)
+ipv4_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	int off, nxt;
 
 	off = 0;
-	nxt = ip_input_if(&m, &off, IPPROTO_IPV4, AF_UNSPEC, ifp);
+	nxt = ip_input_if(&m, &off, IPPROTO_IPV4, AF_UNSPEC, ifp, ns);
 	KASSERT(nxt == IPPROTO_DONE);
 }
 
@@ -439,9 +439,10 @@ bad:
 }
 
 int
-ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
+ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
+    struct netstack *ns)
 {
-	struct route ro;
+	struct route iproute, *ro = NULL;
 	struct mbuf *m;
 	struct ip *ip;
 	int hlen;
@@ -452,7 +453,6 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	KASSERT(*offp == 0);
 
-	ro.ro_rt = NULL;
 	ipstat_inc(ips_total);
 	m = *mp = ipv4_check(ifp, *mp);
 	if (m == NULL)
@@ -508,15 +508,21 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 	    ip->ip_dst.s_addr == INADDR_ANY) {
-		nxt = ip_ours(mp, offp, nxt, af);
+		nxt = ip_ours(mp, offp, nxt, af, ns);
 		goto out;
 	}
 
-	switch(in_ouraddr(m, ifp, &ro, flags)) {
+	if (ns == NULL) {
+		ro = &iproute;
+		ro->ro_rt = NULL;
+	} else {
+		ro = &ns->ns_route;
+	}
+	switch(in_ouraddr(m, ifp, ro, flags)) {
 	case 2:
 		goto bad;
 	case 1:
-		nxt = ip_ours(mp, offp, nxt, af);
+		nxt = ip_ours(mp, offp, nxt, af, ns);
 		goto out;
 	}
 
@@ -565,7 +571,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 			 * host belongs to their destination groups.
 			 */
 			if (ip->ip_p == IPPROTO_IGMP) {
-				nxt = ip_ours(mp, offp, nxt, af);
+				nxt = ip_ours(mp, offp, nxt, af, ns);
 				goto out;
 			}
 			ipstat_inc(ips_forward);
@@ -581,7 +587,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 				ipstat_inc(ips_cantforward);
 			goto bad;
 		}
-		nxt = ip_ours(mp, offp, nxt, af);
+		nxt = ip_ours(mp, offp, nxt, af, ns);
 		goto out;
 	}
 
@@ -614,15 +620,17 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 #endif /* IPSEC */
 
-	ip_forward(m, ifp, &ro, flags);
+	ip_forward(m, ifp, ro, flags);
 	*mp = NULL;
-	rtfree(ro.ro_rt);
+	if (ro == &iproute)
+		rtfree(ro->ro_rt);
 	return IPPROTO_DONE;
  bad:
 	nxt = IPPROTO_DONE;
 	m_freemp(mp);
  out:
-	rtfree(ro.ro_rt);
+	if (ro == &iproute)
+		rtfree(ro->ro_rt);
 	return nxt;
 }
 
@@ -743,7 +751,8 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 #endif
 
 int
-ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared)
+ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared,
+    struct netstack *ns)
 {
 #ifdef INET6
 	int nest = 0;
@@ -825,7 +834,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared)
 			naf = af;
 			break;
 		}
-		nxt = (*psw->pr_input)(mp, offp, nxt, af);
+		nxt = (*psw->pr_input)(mp, offp, nxt, af, ns);
 		af = naf;
 	}
 	return nxt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.34 2025/01/25 02:06:40 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.35 2025/03/02 21:28:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -175,10 +175,10 @@ void			 pipex_init(void);
 
 struct pipex_session	*pipex_pppoe_lookup_session(struct mbuf *);
 struct mbuf		*pipex_pppoe_input(struct mbuf *,
-			    struct pipex_session *);
+			    struct pipex_session *, struct netstack *);
 struct pipex_session	*pipex_pptp_lookup_session(struct mbuf *);
 struct mbuf		*pipex_pptp_input(struct mbuf *,
-			    struct pipex_session *);
+			    struct pipex_session *, struct netstack *);
 struct pipex_session	*pipex_pptp_userland_lookup_session_ipv4(struct mbuf *,
 			    struct in_addr);
 struct pipex_session	*pipex_pptp_userland_lookup_session_ipv6(struct mbuf *,
@@ -190,7 +190,8 @@ struct mbuf		*pipex_pptp_userland_output(struct mbuf *,
 struct pipex_session	*pipex_l2tp_lookup_session(struct mbuf *, int,
 			    struct sockaddr *);
 struct mbuf		*pipex_l2tp_input(struct mbuf *, int off,
-			    struct pipex_session *, uint32_t);
+			    struct pipex_session *, uint32_t,
+			    struct netstack *);
 struct pipex_session	*pipex_l2tp_userland_lookup_session_ipv4(struct mbuf *,
 			    struct in_addr);
 struct pipex_session	*pipex_l2tp_userland_lookup_session_ipv6(struct mbuf *,

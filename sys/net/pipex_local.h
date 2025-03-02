@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.53 2024/07/26 15:51:09 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.54 2025/03/02 21:28:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -426,16 +426,19 @@ struct pipex_session  *pipex_lookup_by_ip_address_locked (struct in_addr);
 struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
 struct pipex_session  *pipex_lookup_by_session_id_locked (int, int);
 struct pipex_session  *pipex_lookup_by_session_id (int, int);
-void                  pipex_ip_output (struct mbuf *, struct pipex_session *);
-void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);
-int                   pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
-void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
-void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
-#ifdef INET6
-void                  pipex_ip6_input (struct mbuf *, struct pipex_session *);
-#endif
+void                  pipex_ip_output(struct mbuf *, struct pipex_session *);
+void                  pipex_ppp_output(struct mbuf *, struct pipex_session *,
+			int);
+int                   pipex_ppp_proto(struct mbuf *, struct pipex_session *,
+			int, int *);
+void                  pipex_ppp_input(struct mbuf *, struct pipex_session *,
+			int, struct netstack *);
+void                  pipex_ip_input(struct mbuf *, struct pipex_session *,
+			struct netstack *);
+void                  pipex_ip6_input(struct mbuf *, struct pipex_session *,
+			struct netstack *);
 struct mbuf           *pipex_common_input(struct pipex_session *,
-                          struct mbuf *, int, int, int);
+                          struct mbuf *, int, int, int, struct netstack *);
 
 #ifdef PIPEX_PPPOE
 void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);

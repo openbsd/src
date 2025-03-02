@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.66 2024/05/13 01:15:53 jsg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.67 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -614,7 +614,7 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	/* packet has not been processed by PF yet. */
 	KASSERT(m->m_pkthdr.pf.statekey == NULL);
 
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, NULL);
 	return;
 drop:
 	m_freem(m);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.99 2025/01/23 12:51:51 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.100 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -168,7 +168,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 			error = ENETDOWN;
 			goto fail;
 		}
-		ipv4_input(ifp, m);
+		ipv4_input(ifp, m, NULL);
 		if_put(ifp);
 	} else {
 		m->m_pkthdr.ph_rtableid = inp->inp_rtableid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.48 2025/02/24 09:40:01 jan Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.49 2025/03/02 21:28:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -352,7 +352,7 @@ struct aggr_port {
 	uint32_t		 p_mtu;
 
 	int (*p_ioctl)(struct ifnet *, u_long, caddr_t);
-	void (*p_input)(struct ifnet *, struct mbuf *);
+	void (*p_input)(struct ifnet *, struct mbuf *, struct netstack *);
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 
@@ -745,7 +745,7 @@ aggr_start(struct ifqueue *ifq)
 }
 
 static inline struct mbuf *
-aggr_input_control(struct aggr_port *p, struct mbuf *m)
+aggr_input_control(struct aggr_port *p, struct mbuf *m, struct netstack *ns)
 {
 	struct ether_header *eh;
 	int hlen = sizeof(*eh);
@@ -808,7 +808,7 @@ aggr_input_control(struct aggr_port *p, struct mbuf *m)
 		case 0x0: /* Nearest Customer Bridge */
 		case 0x3: /* Non-TPMR Bridge */
 		case 0xe: /* Nearest Bridge */
-			p->p_input(p->p_ifp0, m);
+			p->p_input(p->p_ifp0, m, ns);
 			return (NULL);
 		default:
 			break;
@@ -823,7 +823,7 @@ drop:
 }
 
 static void
-aggr_input(struct ifnet *ifp0, struct mbuf *m)
+aggr_input(struct ifnet *ifp0, struct mbuf *m, struct netstack *ns)
 {
 	struct arpcom *ac0 = (struct arpcom *)ifp0;
 	struct aggr_port *p = ac0->ac_trunkport;
@@ -833,7 +833,7 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m)
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		goto drop;
 
-	m = aggr_input_control(p, m);
+	m = aggr_input_control(p, m, ns);
 	if (m == NULL)
 		return;
 
@@ -843,7 +843,7 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m)
 	if (!ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
 		m->m_pkthdr.ph_flowid = ifp0->if_index ^ sc->sc_mix;
 
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, ns);
 
 	return;
 

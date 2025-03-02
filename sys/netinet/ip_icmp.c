@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.198 2025/01/03 21:27:40 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.199 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -140,7 +140,8 @@ const struct sysctl_bounded_args icmpctl_vars[] =  {
 
 void icmp_mtudisc_timeout(struct rtentry *, u_int);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
-int icmp_input_if(struct ifnet *, struct mbuf **, int *, int, int);
+int icmp_input_if(struct ifnet *, struct mbuf **, int *, int, int,
+    struct netstack *);
 int icmp_sysctl_icmpstat(void *, size_t *, void *);
 
 void
@@ -310,7 +311,7 @@ icmp_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
  * Process a received ICMP message.
  */
 int
-icmp_input(struct mbuf **mp, int *offp, int proto, int af)
+icmp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 {
 	struct ifnet *ifp;
 
@@ -320,13 +321,14 @@ icmp_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
-	proto = icmp_input_if(ifp, mp, offp, proto, af);
+	proto = icmp_input_if(ifp, mp, offp, proto, af, ns);
 	if_put(ifp);
 	return proto;
 }
 
 int
-icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
+icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
+    int af, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	int hlen = *offp;
@@ -673,7 +675,7 @@ reflect:
 	}
 
 raw:
-	return rip_input(mp, offp, proto, af);
+	return rip_input(mp, offp, proto, af, ns);
 
 freeit:
 	m_freem(m);

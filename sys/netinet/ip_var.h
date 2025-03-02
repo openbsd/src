@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.120 2024/07/12 19:50:35 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.121 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -262,12 +262,13 @@ void	 ip_stripoptions(struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	    struct mbuf *);
-int	 ip_input_if(struct mbuf **, int *, int, int, struct ifnet *);
-int	 ip_deliver(struct mbuf **, int *, int, int, int);
+int	 ip_input_if(struct mbuf **, int *, int, int, struct ifnet *,
+	    struct netstack *);
+int	 ip_deliver(struct mbuf **, int *, int, int, int, struct netstack *);
 void	 ip_forward(struct mbuf *, struct ifnet *, struct route *, int);
 int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	 rip_init(void);
-int	 rip_input(struct mbuf **, int *, int, int);
+int	 rip_input(struct mbuf **, int *, int, int, struct netstack *);
 int	 rip_output(struct mbuf *, struct socket *, struct sockaddr *,
 	    struct mbuf *);
 struct mbuf *

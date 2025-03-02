@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.105 2024/08/22 10:58:31 mvs Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.106 2025/03/02 21:28:32 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -106,7 +106,7 @@ ipip_init(void)
  * Really only a wrapper for ipip_input_if(), for use with pr_input.
  */
 int
-ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
+ipip_input(struct mbuf **mp, int *offp, int nxt, int af, struct netstack *ns)
 {
 	struct ifnet *ifp;
 	int ipip_allow_local = atomic_load_int(&ipip_allow);
@@ -124,7 +124,7 @@ ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
 		m_freemp(mp);
 		return IPPROTO_DONE;
 	}
-	nxt = ipip_input_if(mp, offp, nxt, af, ipip_allow_local, ifp);
+	nxt = ipip_input_if(mp, offp, nxt, af, ipip_allow_local, ifp, ns);
 	if_put(ifp);
 
 	return nxt;
@@ -140,7 +140,7 @@ ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
 
 int
 ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf, int allow,
-    struct ifnet *ifp)
+    struct ifnet *ifp, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct sockaddr_in *sin;
@@ -326,10 +326,10 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf, int allow,
 
 	switch (proto) {
 	case IPPROTO_IPV4:
-		return ip_input_if(mp, offp, proto, oaf, ifp);
+		return ip_input_if(mp, offp, proto, oaf, ifp, ns);
 #ifdef INET6
 	case IPPROTO_IPV6:
-		return ip6_input_if(mp, offp, proto, oaf, ifp);
+		return ip6_input_if(mp, offp, proto, oaf, ifp, ns);
 #endif
 	}
  bad:
@@ -564,7 +564,8 @@ ipe4_zeroize(struct tdb *tdbp)
 }
 
 int
-ipe4_input(struct mbuf **mp, struct tdb *tdb, int hlen, int proto)
+ipe4_input(struct mbuf **mp, struct tdb *tdb, int hlen, int proto,
+    struct netstack *ns)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("%s: should never be called\n", __func__);

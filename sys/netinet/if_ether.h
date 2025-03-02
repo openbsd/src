@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.93 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.94 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ do {									\
 
 struct ether_brport {
 	struct mbuf	*(*eb_input)(struct ifnet *, struct mbuf *,
-			   uint64_t, void *);
+			   uint64_t, void *, struct netstack *);
 	void		(*eb_port_take)(void *);
 	void		(*eb_port_rele)(void *);
 	void		  *eb_port;
@@ -257,13 +257,13 @@ extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 extern unsigned int revarp_ifidx;
 #endif /* NFSCLIENT */
 
-void	revarpinput(struct ifnet *, struct mbuf *);
+void	revarpinput(struct ifnet *, struct mbuf *, struct netstack *);
 void	revarprequest(struct ifnet *);
 int	revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 int	revarpwhoami(struct in_addr *, struct ifnet *);
 
 void	arpinit(void);
-void	arpinput(struct ifnet *, struct mbuf *);
+void	arpinput(struct ifnet *, struct mbuf *, struct netstack *);
 void	arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
 void	arpwhohas(struct arpcom *, struct in_addr *);
 int	arpproxy(struct in_addr, unsigned int);
@@ -278,7 +278,7 @@ int	ether_multiaddr(struct sockaddr *, u_int8_t *, u_int8_t *);
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
-void	ether_input(struct ifnet *, struct mbuf *);
+void	ether_input(struct ifnet *, struct mbuf *, struct netstack *);
 int	ether_resolve(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *, struct ether_header *);
 struct mbuf *

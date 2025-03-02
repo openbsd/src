@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.118 2024/02/28 16:08:34 denis Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.119 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1410,7 +1410,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		m->m_data += PPP_HDRLEN;
 		m->m_len -= PPP_HDRLEN;
 
-		ipv4_input(ifp, m);
+		ipv4_input(ifp, m, NULL);
 		rv = 1;
 		break;
 #ifdef INET6
@@ -1428,7 +1428,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		m->m_data += PPP_HDRLEN;
 		m->m_len -= PPP_HDRLEN;
 
-		ipv6_input(ifp, m);
+		ipv6_input(ifp, m, NULL);
 		rv = 1;
 		break;
 #endif

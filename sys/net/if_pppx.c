@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.133 2024/12/30 02:46:00 guenther Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.134 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -401,11 +401,11 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	switch (proto) {
 	case AF_INET:
-		ipv4_input(&pxi->pxi_if, top);
+		ipv4_input(&pxi->pxi_if, top, NULL);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ipv6_input(&pxi->pxi_if, top);
+		ipv6_input(&pxi->pxi_if, top, NULL);
 		break;
 #endif
 	default:
@@ -1193,11 +1193,11 @@ pppacwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	switch (proto) {
 	case AF_INET:
-		ipv4_input(ifp, m);
+		ipv4_input(ifp, m, NULL);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ipv6_input(ifp, m);
+		ipv6_input(ifp, m, NULL);
 		break;
 #endif
 	default:

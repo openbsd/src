@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.158 2025/02/03 09:44:30 yasuoka Exp $ */
+/*	$OpenBSD: pipex.c,v 1.159 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -935,7 +935,8 @@ drop:
 }
 
 void
-pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
+pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted,
+    struct netstack *ns)
 {
 	int proto, hlen = 0;
 	struct mbuf *n;
@@ -999,7 +1000,7 @@ again:
 			 * is required, discard it.
 			 */
 			goto drop;
-		pipex_ip_input(m0, session);
+		pipex_ip_input(m0, session, ns);
 		return;
 #ifdef INET6
 	case PPP_IPV6:
@@ -1009,7 +1010,7 @@ again:
 			 * is required, discard it.
 			 */
 			goto drop;
-		pipex_ip6_input(m0, session);
+		pipex_ip6_input(m0, session, ns);
 		return;
 #endif
 	default:
@@ -1028,7 +1029,8 @@ drop:
 }
 
 void
-pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
+pipex_ip_input(struct mbuf *m0, struct pipex_session *session,
+    struct netstack *ns)
 {
 	struct ifnet *ifp;
 	struct ip *ip;
@@ -1093,7 +1095,7 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
 	counters_pkt(session->stat_counters, pxc_ipackets, pxc_ibytes, len);
-	ipv4_input(ifp, m0);
+	ipv4_input(ifp, m0, ns);
 
 	if_put(ifp);
 
@@ -1105,7 +1107,8 @@ drop:
 
 #ifdef INET6
 void
-pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
+pipex_ip6_input(struct mbuf *m0, struct pipex_session *session,
+    struct netstack *ns)
 {
 	struct ifnet *ifp;
 	int len;
@@ -1141,7 +1144,7 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
 	counters_pkt(session->stat_counters, pxc_ipackets, pxc_ibytes, len);
-	ipv6_input(ifp, m0);
+	ipv6_input(ifp, m0, ns);
 
 	if_put(ifp);
 
@@ -1154,7 +1157,7 @@ drop:
 
 struct mbuf *
 pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
-    int plen, int locked)
+    int plen, int locked, struct netstack *ns)
 {
 	int proto, ppphlen;
 	u_char code;
@@ -1208,7 +1211,7 @@ pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
 			m_adj(m0, plen - m0->m_pkthdr.len);
 	}
 
-	pipex_ppp_input(m0, session, 0);
+	pipex_ppp_input(m0, session, 0, ns);
 
 	return (NULL);
 
@@ -1306,7 +1309,8 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 }
 
 struct mbuf *
-pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
+pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session,
+    struct netstack *ns)
 {
 	int hlen;
 	struct pipex_pppoe_header pppoe;
@@ -1319,7 +1323,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	    sizeof(struct pipex_pppoe_header), &pppoe);
 
 	hlen = sizeof(struct ether_header) + sizeof(struct pipex_pppoe_header);
-	m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length), 0);
+	m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length), 0, ns);
 	if (m0 == NULL)
 		return (NULL);
 	m_freem(m0);
@@ -1536,7 +1540,8 @@ not_ours:
 }
 
 struct mbuf *
-pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
+pipex_pptp_input(struct mbuf *m0, struct pipex_session *session,
+    struct netstack *ns)
 {
 	int hlen, has_seq, has_ack, nseq;
 	const char *reason = "";
@@ -1631,7 +1636,7 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 	 */
 	if (!rewind)
 		session->proto.pptp.rcv_gap += nseq;
-	m0 = pipex_common_input(session, m0, hlen, ntohs(gre->len), 1);
+	m0 = pipex_common_input(session, m0, hlen, ntohs(gre->len), 1, ns);
 	if (m0 == NULL) {
 		/*
 		 * pipex_common_input() releases lock if the
@@ -2056,7 +2061,7 @@ not_ours:
 
 struct mbuf *
 pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
-    uint32_t ipsecflowinfo)
+    uint32_t ipsecflowinfo, struct netstack *nst)
 {
 	struct pipex_l2tp_session *l2tp_session;
 	int length = 0, offset = 0, hlen, nseq;
@@ -2142,7 +2147,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 	 */
 	if (!rewind)
 		session->proto.l2tp.nr_gap += nseq;
-	m0 = pipex_common_input(session, m0, hlen, length, 1);
+	m0 = pipex_common_input(session, m0, hlen, length, 1, nst);
 	if (m0 == NULL) {
 		/*
 		 * pipex_common_input() releases lock if the

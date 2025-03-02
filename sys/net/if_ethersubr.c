@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.296 2025/01/15 06:15:44 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.297 2025/03/02 21:28:31 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			/* XXX Should we input an unencrypted IPsec packet? */
 			mcopy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 			if (mcopy != NULL)
-				if_input_local(ifp, mcopy, af);
+				if_input_local(ifp, mcopy, af, NULL);
 		}
 		break;
 #ifdef INET6
@@ -399,10 +399,10 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
  * to ether_input().
  */
 void
-ether_input(struct ifnet *ifp, struct mbuf *m)
+ether_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	struct ether_header *eh;
-	void (*input)(struct ifnet *, struct mbuf *);
+	void (*input)(struct ifnet *, struct mbuf *, struct netstack *);
 	u_int16_t etype;
 	struct arpcom *ac;
 	const struct ether_brport *eb;
@@ -429,7 +429,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	if (ISSET(m->m_flags, M_VLANTAG) ||
 	    etype == ETHERTYPE_VLAN || etype == ETHERTYPE_QINQ) {
 #if NVLAN > 0
-		m = vlan_input(ifp, m, &sdelim);
+		m = vlan_input(ifp, m, &sdelim, ns);
 		if (m == NULL)
 			return;
 #else
@@ -455,7 +455,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		eb->eb_port_take(eb->eb_port);
 	smr_read_leave();
 	if (eb != NULL) {
-		m = (*eb->eb_input)(ifp, m, dst, eb->eb_port);
+		m = (*eb->eb_input)(ifp, m, dst, eb->eb_port, ns);
 		eb->eb_port_rele(eb->eb_port);
 		if (m == NULL) {
 			return;
@@ -487,7 +487,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 */
 		if (ifp->if_type != IFT_CARP &&
 		    !SRPL_EMPTY_LOCKED(&ifp->if_carp)) {
-			m = carp_input(ifp, m, dst);
+			m = carp_input(ifp, m, dst, ns);
 			if (m == NULL)
 				return;
 
@@ -559,7 +559,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			struct pipex_session *session;
 
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
-				pipex_pppoe_input(m, session);
+				pipex_pppoe_input(m, session, ns);
 				pipex_rele_session(session);
 				return;
 			}
@@ -569,7 +569,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			if (mq_enqueue(&pppoediscinq, m) == 0)
 				schednetisr(NETISR_PPPOE);
 		} else {
-			m = pppoe_vinput(ifp, m);
+			m = pppoe_vinput(ifp, m, ns);
 			if (m != NULL && mq_enqueue(&pppoeinq, m) == 0)
 				schednetisr(NETISR_PPPOE);
 		}
@@ -583,7 +583,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #if NBPE > 0
 	case ETHERTYPE_PBB:
-		bpe_input(ifp, m);
+		bpe_input(ifp, m, ns);
 		return;
 #endif
 	default:
@@ -594,7 +594,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	m_adj(m, sizeof(*eh));
-	(*input)(ifp, m);
+	(*input)(ifp, m, ns);
 	return;
 dropanyway:
 	m_freem(m);

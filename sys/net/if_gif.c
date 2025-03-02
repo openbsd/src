@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.138 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.139 2025/03/02 21:28:31 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int	gif_set_tunnel(struct gif_softc *, struct if_laddrreq *);
 int	gif_get_tunnel(struct gif_softc *, struct if_laddrreq *);
 int	gif_del_tunnel(struct gif_softc *);
 int	gif_input(struct gif_tunnel *, struct mbuf **, int *, int, int,
-	    uint8_t);
+	    uint8_t, struct netstack *);
 
 /*
  * gif global variable definitions
@@ -715,7 +715,8 @@ gif_del_tunnel(struct gif_softc *sc)
 }
 
 int
-in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
+in_gif_input(struct mbuf **mp, int *offp, int proto, int af,
+    struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct gif_tunnel key;
@@ -728,16 +729,17 @@ in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 	key.t_src4 = ip->ip_dst;
 	key.t_dst4 = ip->ip_src;
 
-	rv = gif_input(&key, mp, offp, proto, af, ip->ip_tos);
+	rv = gif_input(&key, mp, offp, proto, af, ip->ip_tos, ns);
 	if (rv == -1)
-		rv = ipip_input(mp, offp, proto, af);
+		rv = ipip_input(mp, offp, proto, af, ns);
 
 	return (rv);
 }
 
 #ifdef INET6
 int
-in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
+in6_gif_input(struct mbuf **mp, int *offp, int proto, int af,
+    struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct gif_tunnel key;
@@ -753,9 +755,9 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	flow = ntohl(ip6->ip6_flow);
 
-	rv = gif_input(&key, mp, offp, proto, af, flow >> 20);
+	rv = gif_input(&key, mp, offp, proto, af, flow >> 20, ns);
 	if (rv == -1)
-		rv = ipip_input(mp, offp, proto, af);
+		rv = ipip_input(mp, offp, proto, af, ns);
 
 	return (rv);
 }
@@ -783,7 +785,7 @@ gif_find(const struct gif_tunnel *key)
 
 int
 gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
-    int af, uint8_t otos)
+    int af, uint8_t otos, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;
@@ -889,7 +891,7 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	}
 
 	*mp = NULL;
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, ns);
 	return (IPPROTO_DONE);
 
  drop:

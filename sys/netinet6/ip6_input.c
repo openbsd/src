@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.267 2024/11/21 20:15:44 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.268 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ struct cpumem *ip6counters;
 
 uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
 
-int ip6_ours(struct mbuf **, int *, int, int, int);
+int ip6_ours(struct mbuf **, int *, int, int, int, struct netstack *);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf **, int *, int *, int);
 int ip6_hopopts_input(struct mbuf **, int *, u_int32_t *, u_int32_t *);
@@ -172,7 +172,8 @@ ip6_init(void)
  * NET_LOCK_SHARED() and the transport layer needing it exclusively.
  */
 int
-ip6_ours(struct mbuf **mp, int *offp, int nxt, int af, int flags)
+ip6_ours(struct mbuf **mp, int *offp, int nxt, int af, int flags,
+    struct netstack *ns)
 {
 	/* ip6_hbhchcheck() may be run before, then off and nxt are set */
 	if (*offp == 0) {
@@ -185,7 +186,7 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af, int flags)
 	if (af != AF_UNSPEC)
 		return nxt;
 
-	nxt = ip_deliver(mp, offp, nxt, AF_INET6, 1);
+	nxt = ip_deliver(mp, offp, nxt, AF_INET6, 1, ns);
 	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
 
@@ -253,18 +254,18 @@ ip6intr(void)
 			off = sizeof(struct ip6_hdr);
 			nxt = ip6->ip6_nxt;
 		}
-		nxt = ip_deliver(&m, &off, nxt, AF_INET6, 0);
+		nxt = ip_deliver(&m, &off, nxt, AF_INET6, 0, NULL);
 		KASSERT(nxt == IPPROTO_DONE);
 	}
 }
 
 void
-ipv6_input(struct ifnet *ifp, struct mbuf *m)
+ipv6_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	int off, nxt;
 
 	off = 0;
-	nxt = ip6_input_if(&m, &off, IPPROTO_IPV6, AF_UNSPEC, ifp);
+	nxt = ip6_input_if(&m, &off, IPPROTO_IPV6, AF_UNSPEC, ifp, ns);
 	KASSERT(nxt == IPPROTO_DONE);
 }
 
@@ -360,9 +361,10 @@ bad:
 }
 
 int
-ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
+ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
+    struct netstack *ns)
 {
-	struct route ro;
+	struct route iproute, *ro = NULL;
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
 	struct rtentry *rt;
@@ -375,7 +377,6 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	KASSERT(*offp == 0);
 
-	ro.ro_rt = NULL;
 	ip6stat_inc(ip6s_total);
 	m = *mp = ipv6_check(ifp, *mp);
 	if (m == NULL)
@@ -461,7 +462,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 #if NPF > 0
 	if (pf_ouraddr(m) == 1) {
-		nxt = ip6_ours(mp, offp, nxt, af, flags);
+		nxt = ip6_ours(mp, offp, nxt, af, flags, ns);
 		goto out;
 	}
 #endif
@@ -513,7 +514,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 			if (ours) {
 				if (af == AF_UNSPEC)
 					nxt = ip6_ours(mp, offp, nxt, af,
-					    flags);
+					    flags, ns);
 				goto out;
 			}
 			goto bad;
@@ -525,7 +526,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 				ip6stat_inc(ip6s_cantforward);
 			goto bad;
 		}
-		nxt = ip6_ours(mp, offp, nxt, af, flags);
+		nxt = ip6_ours(mp, offp, nxt, af, flags, ns);
 		goto out;
 	}
 
@@ -533,7 +534,13 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	/*
 	 *  Unicast check
 	 */
-	rt = route6_mpath(&ro, &ip6->ip6_dst, &ip6->ip6_src,
+	if (ns == NULL) {
+		ro = &iproute;
+		ro->ro_rt = NULL;
+	} else {
+		ro = &ns->ns_route;
+	}
+	rt = route6_mpath(ro, &ip6->ip6_dst, &ip6->ip6_src,
 	    m->m_pkthdr.ph_rtableid);
 
 	/*
@@ -585,7 +592,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 			goto bad;
 		} else {
-			nxt = ip6_ours(mp, offp, nxt, af, flags);
+			nxt = ip6_ours(mp, offp, nxt, af, flags, ns);
 			goto out;
 		}
 	}
@@ -611,7 +618,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	if (ours) {
 		if (af == AF_UNSPEC)
-			nxt = ip6_ours(mp, offp, nxt, af, flags);
+			nxt = ip6_ours(mp, offp, nxt, af, flags, ns);
 		goto out;
 	}
 
@@ -631,15 +638,17 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 #endif /* IPSEC */
 
-	ip6_forward(m, &ro, flags);
+	ip6_forward(m, ro, flags);
 	*mp = NULL;
-	rtfree(ro.ro_rt);
+	if (ro == &iproute)
+		rtfree(ro->ro_rt);
 	return IPPROTO_DONE;
  bad:
 	nxt = IPPROTO_DONE;
 	m_freemp(mp);
  out:
-	rtfree(ro.ro_rt);
+	if (ro == &iproute)
+		rtfree(ro->ro_rt);
 	return nxt;
 }
 

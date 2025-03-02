@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.79 2023/05/13 13:35:18 bluhm Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.80 2025/03/02 21:28:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,7 @@ struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 void		 mpls_input_local(struct rtentry *, struct mbuf *);
 
 void
-mpls_input(struct ifnet *ifp, struct mbuf *m)
+mpls_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	struct sockaddr_mpls *smpls;
 	struct sockaddr_mpls sa_mpls;
@@ -126,7 +126,7 @@ do_v4:
 					if (m == NULL)
 						return;
 				}
-				ipv4_input(ifp, m);
+				ipv4_input(ifp, m, ns);
 				return;
 #ifdef INET6
 			case MPLS_LABEL_IPV6NULL:
@@ -136,7 +136,7 @@ do_v6:
 					if (m == NULL)
 						return;
 				}
-				ipv6_input(ifp, m);
+				ipv6_input(ifp, m, ns);
 				return;
 #endif	/* INET6 */
 			case MPLS_LABEL_IMPLNULL:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.208 2025/02/12 21:28:11 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.209 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1021,7 +1021,7 @@ tcp_signature_tdb_zeroize(struct tdb *tdbp)
 
 int
 tcp_signature_tdb_input(struct mbuf **mp, struct tdb *tdbp, int skip,
-    int protoff)
+    int protoff, struct netstack *sn)
 {
 	m_freemp(mp);
 	return (IPPROTO_DONE);

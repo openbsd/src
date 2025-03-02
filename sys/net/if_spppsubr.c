@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.195 2025/01/15 06:15:44 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.196 2025/03/02 21:28:32 bluhm Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -533,7 +533,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			if (sp->state[IDX_IPCP] == STATE_OPENED) {
 				sp->pp_last_activity = tv.tv_sec;
 				if (ifp->if_flags & IFF_UP) {
-					ipv4_input(ifp, m);
+					ipv4_input(ifp, m, NULL);
 					return;
 				}
 			}
@@ -548,7 +548,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 				sp->pp_last_activity = tv.tv_sec;
 				if (ifp->if_flags & IFF_UP) {
-					ipv6_input(ifp, m);
+					ipv6_input(ifp, m, NULL);
 					return;
 				}
 			}

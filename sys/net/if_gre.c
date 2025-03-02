@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.183 2025/02/21 06:20:12 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.184 2025/03/02 21:28:31 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -295,7 +295,7 @@ static int	gre_down(struct gre_softc *);
 static void	gre_link_state(struct ifnet *, unsigned int);
 
 static int	gre_input_key(struct mbuf **, int *, int, int, uint8_t,
-		    struct gre_tunnel *);
+		    struct gre_tunnel *, struct netstack *);
 
 static struct mbuf *
 		gre_ipv4_patch(const struct gre_tunnel *, struct mbuf *,
@@ -389,7 +389,7 @@ static int	egre_up(struct egre_softc *);
 static int	egre_down(struct egre_softc *);
 
 static int	egre_input(const struct gre_tunnel *, struct mbuf *, int,
-		    uint8_t);
+		    uint8_t, struct netstack *);
 struct if_clone egre_cloner =
     IF_CLONE_INITIALIZER("egre", egre_clone_create, egre_clone_destroy);
 
@@ -450,7 +450,7 @@ static void	nvgre_link_change(void *);
 static void	nvgre_detach(void *);
 
 static int	nvgre_input(const struct gre_tunnel *, struct mbuf *, int,
-		    uint8_t);
+		    uint8_t, struct netstack *);
 static void	nvgre_send(void *);
 
 static int	nvgre_add_addr(struct nvgre_softc *, const struct ifbareq *);
@@ -527,7 +527,7 @@ static struct mbuf *
 
 static struct mbuf *
 		eoip_input(struct gre_tunnel *, struct mbuf *,
-		    const struct gre_header *, uint8_t, int);
+		    const struct gre_header *, uint8_t, int, struct netstack *);
 struct if_clone eoip_cloner =
     IF_CLONE_INITIALIZER("eoip", eoip_clone_create, eoip_clone_destroy);
 
@@ -890,7 +890,7 @@ eoip_clone_destroy(struct ifnet *ifp)
 }
 
 int
-gre_input(struct mbuf **mp, int *offp, int type, int af)
+gre_input(struct mbuf **mp, int *offp, int type, int af, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct gre_tunnel key;
@@ -904,15 +904,15 @@ gre_input(struct mbuf **mp, int *offp, int type, int af)
 	key.t_src4 = ip->ip_dst;
 	key.t_dst4 = ip->ip_src;
 
-	if (gre_input_key(mp, offp, type, af, ip->ip_tos, &key) == -1)
-		return (rip_input(mp, offp, type, af));
+	if (gre_input_key(mp, offp, type, af, ip->ip_tos, &key, ns) == -1)
+		return (rip_input(mp, offp, type, af, ns));
 
 	return (IPPROTO_DONE);
 }
 
 #ifdef INET6
 int
-gre_input6(struct mbuf **mp, int *offp, int type, int af)
+gre_input6(struct mbuf **mp, int *offp, int type, int af, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct gre_tunnel key;
@@ -929,8 +929,8 @@ gre_input6(struct mbuf **mp, int *offp, int type, int af)
 
 	flow = bemtoh32(&ip6->ip6_flow);
 
-	if (gre_input_key(mp, offp, type, af, flow >> 20, &key) == -1)
-		return (rip6_input(mp, offp, type, af));
+	if (gre_input_key(mp, offp, type, af, flow >> 20, &key, ns) == -1)
+		return (rip6_input(mp, offp, type, af, ns));
 
 	return (IPPROTO_DONE);
 }
@@ -969,7 +969,7 @@ mgre_find(const struct gre_tunnel *key)
 
 static struct mbuf *
 gre_input_1(struct gre_tunnel *key, struct mbuf *m,
-    const struct gre_header *gh, uint8_t otos, int iphlen)
+    const struct gre_header *gh, uint8_t otos, int iphlen, struct netstack *ns)
 {
 	switch (gh->gre_proto) {
 	case htons(ETHERTYPE_PPP):
@@ -981,7 +981,7 @@ gre_input_1(struct gre_tunnel *key, struct mbuf *m,
 			if (session != NULL) {
 				struct mbuf *m0;
 
-				m0 = pipex_pptp_input(m, session);
+				m0 = pipex_pptp_input(m, session, ns);
 				pipex_rele_session(session);
 
 				if (m0 == NULL)
@@ -991,7 +991,7 @@ gre_input_1(struct gre_tunnel *key, struct mbuf *m,
 #endif
 		break;
 	case htons(GRE_EOIP):
-		return (eoip_input(key, m, gh, otos, iphlen));
+		return (eoip_input(key, m, gh, otos, iphlen, ns));
 		break;
 	}
 
@@ -1000,7 +1000,7 @@ gre_input_1(struct gre_tunnel *key, struct mbuf *m,
 
 static int
 gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
-    struct gre_tunnel *key)
+    struct gre_tunnel *key, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp, hlen, rxprio;
@@ -1036,7 +1036,7 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		break;
 
 	case htons(GRE_VERS_1):
-		m = gre_input_1(key, m, gh, otos, iphlen);
+		m = gre_input_1(key, m, gh, otos, iphlen, ns);
 		if (m == NULL)
 			return (IPPROTO_DONE);
 		/* FALLTHROUGH */
@@ -1067,8 +1067,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		key->t_key_mask = GRE_KEY_NONE;
 
 	if (gh->gre_proto == htons(ETHERTYPE_TRANSETHER)) {
-		if (egre_input(key, m, hlen, otos) == -1 &&
-		    nvgre_input(key, m, hlen, otos) == -1)
+		if (egre_input(key, m, hlen, otos, ns) == -1 &&
+		    nvgre_input(key, m, hlen, otos, ns) == -1)
 			goto decline;
 
 		return (IPPROTO_DONE);
@@ -1181,7 +1181,7 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 	m->m_flags |= mcast;
 
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, ns);
 	return (IPPROTO_DONE);
 decline:
 	*mp = m;
@@ -1288,7 +1288,8 @@ gre_mpls_patch(const struct gre_tunnel *tunnel, struct mbuf *m,
 } while (0)
 
 static int
-egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen, uint8_t otos)
+egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
+    uint8_t otos, struct netstack *ns)
 {
 	struct egre_softc *sc;
 
@@ -1312,7 +1313,7 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen, uint8_t otos)
 
 	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
-	if_vinput(&sc->sc_ac.ac_if, m);
+	if_vinput(&sc->sc_ac.ac_if, m, ns);
 
 	return (0);
 }
@@ -1355,7 +1356,7 @@ nvgre_ucast_find(const struct gre_tunnel *key)
 
 static int
 nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
-    uint8_t otos)
+    uint8_t otos, struct netstack *ns)
 {
 	struct nvgre_softc *sc;
 	struct ether_header *eh;
@@ -1384,7 +1385,7 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
 
 	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
-	if_vinput(&sc->sc_ac.ac_if, m);
+	if_vinput(&sc->sc_ac.ac_if, m, ns);
 
 	return (0);
 }
@@ -3983,7 +3984,7 @@ eoip_keepalive_recv(struct eoip_softc *sc)
 
 static struct mbuf *
 eoip_input(struct gre_tunnel *key, struct mbuf *m,
-    const struct gre_header *gh, uint8_t otos, int iphlen)
+    const struct gre_header *gh, uint8_t otos, int iphlen, struct netstack *ns)
 {
 	struct eoip_softc *sc;
 	struct gre_h_key_eoip *eoiph;
@@ -4032,7 +4033,7 @@ eoip_input(struct gre_tunnel *key, struct mbuf *m,
 
 	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
-	if_vinput(&sc->sc_ac.ac_if, m);
+	if_vinput(&sc->sc_ac.ac_if, m, ns);
 
 	return (NULL);
 

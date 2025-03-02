@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.40 2025/01/25 14:51:34 mvs Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.41 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -368,7 +368,7 @@ void	wg_index_drop(void *, uint32_t);
 
 struct mbuf *
 	wg_input(void *, struct mbuf *, struct ip *, struct ip6_hdr *, void *,
-	    int);
+	    int, struct netstack *);
 int	wg_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	wg_ioctl_set(struct wg_softc *, struct wg_data_io *);
@@ -1867,10 +1867,10 @@ wg_deliver_in(void *_peer)
 
 		NET_LOCK();
 		if (m->m_pkthdr.ph_family == AF_INET)
-			ipv4_input(&sc->sc_if, m);
+			ipv4_input(&sc->sc_if, m, NULL);
 #ifdef INET6
 		else if (m->m_pkthdr.ph_family == AF_INET6)
-			ipv6_input(&sc->sc_if, m);
+			ipv6_input(&sc->sc_if, m, NULL);
 #endif
 		else
 			panic("invalid ph_family");
@@ -2080,7 +2080,7 @@ wg_index_drop(void *_sc, uint32_t key0)
 
 struct mbuf *
 wg_input(void *_sc, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
-    void *_uh, int hlen)
+    void *_uh, int hlen, struct netstack *ns)
 {
 	struct wg_pkt_data	*data;
 	struct noise_remote	*remote;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.250 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.251 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ int	tun_dev_write(dev_t, struct uio *, int, int);
 int	tun_dev_kqfilter(dev_t, struct knote *);
 
 int	tun_ioctl(struct ifnet *, u_long, caddr_t);
-void	tun_input(struct ifnet *, struct mbuf *);
+void	tun_input(struct ifnet *, struct mbuf *, struct netstack *);
 int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	tun_enqueue(struct ifnet *, struct mbuf *);
@@ -1041,7 +1041,7 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 	}
 
 	NET_LOCK();
-	if_vinput(ifp, m0);
+	if_vinput(ifp, m0, NULL);
 	NET_UNLOCK();
 
 	tun_put(sc);
@@ -1055,7 +1055,7 @@ put:
 }
 
 void
-tun_input(struct ifnet *ifp, struct mbuf *m0)
+tun_input(struct ifnet *ifp, struct mbuf *m0, struct netstack *ns)
 {
 	uint32_t		af;
 
@@ -1067,16 +1067,16 @@ tun_input(struct ifnet *ifp, struct mbuf *m0)
 
 	switch (ntohl(af)) {
 	case AF_INET:
-		ipv4_input(ifp, m0);
+		ipv4_input(ifp, m0, ns);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ipv6_input(ifp, m0);
+		ipv6_input(ifp, m0, ns);
 		break;
 #endif
 #ifdef MPLS
 	case AF_MPLS:
-		mpls_input(ifp, m0);
+		mpls_input(ifp, m0, ns);
 		break;
 #endif
 	default:

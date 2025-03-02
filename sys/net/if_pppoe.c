@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.85 2025/01/15 06:15:44 dlg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.86 2025/03/02 21:28:32 bluhm Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -727,7 +727,7 @@ pppoe_disc_input(struct mbuf *m)
 }
 
 struct mbuf *
-pppoe_vinput(struct ifnet *ifp0, struct mbuf *m)
+pppoe_vinput(struct ifnet *ifp0, struct mbuf *m, struct netstack *ns)
 {
 	struct pppoe_softc *sc;
 	struct ifnet *ifp;
@@ -816,7 +816,7 @@ pppoe_vinput(struct ifnet *ifp0, struct mbuf *m)
 		sc->sc_sppp.pp_last_activity = now;
 
 	m->m_pkthdr.ph_family = af;
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, ns);
 done:
 	m = NULL;
 put:

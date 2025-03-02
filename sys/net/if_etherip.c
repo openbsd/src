@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.56 2024/08/20 07:47:25 mvs Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.57 2025/03/02 21:28:31 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -121,7 +121,8 @@ int etherip_del_tunnel(struct etherip_softc *);
 int etherip_up(struct etherip_softc *);
 int etherip_down(struct etherip_softc *);
 struct etherip_softc *etherip_find(const struct etherip_tunnel *);
-int etherip_input(struct etherip_tunnel *, struct mbuf *, uint8_t, int);
+int etherip_input(struct etherip_tunnel *, struct mbuf *, uint8_t, int,
+    struct netstack *);
 
 struct if_clone	etherip_cloner = IF_CLONE_INITIALIZER("etherip",
     etherip_clone_create, etherip_clone_destroy);
@@ -589,7 +590,8 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 }
 
 int
-ip_etherip_input(struct mbuf **mp, int *offp, int type, int af)
+ip_etherip_input(struct mbuf **mp, int *offp, int type, int af,
+    struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct etherip_tunnel key;
@@ -601,7 +603,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int type, int af)
 	key.t_src4 = ip->ip_dst;
 	key.t_dst4 = ip->ip_src;
 
-	return (etherip_input(&key, m, ip->ip_tos, *offp));
+	return (etherip_input(&key, m, ip->ip_tos, *offp, ns));
 }
 
 struct etherip_softc *
@@ -626,7 +628,7 @@ etherip_find(const struct etherip_tunnel *key)
 
 int
 etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
-    int hlen)
+    int hlen, struct netstack *ns)
 {
 	struct etherip_softc *sc;
 	struct ifnet *ifp;
@@ -693,7 +695,7 @@ etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
 	pf_pkt_addr_changed(m);
 #endif
 
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, ns);
 	return IPPROTO_DONE;
 
 drop:
@@ -768,7 +770,8 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 }
 
 int
-ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
+ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af,
+    struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	struct etherip_tunnel key;
@@ -783,7 +786,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	flow = bemtoh32(&ip6->ip6_flow);
 
-	return (etherip_input(&key, m, flow >> 20, *offp));
+	return (etherip_input(&key, m, flow >> 20, *offp, ns));
 }
 #endif /* INET6 */
 

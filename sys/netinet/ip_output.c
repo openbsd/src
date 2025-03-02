@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.405 2025/02/24 20:16:14 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.406 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1763,7 +1763,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
 		 * than the interface's MTU.  Can this possibly matter?
 		 */
 		in_hdr_cksum_out(copym, NULL);
-		if_input_local(ifp, copym, dst->sin_family);
+		if_input_local(ifp, copym, dst->sin_family, NULL);
 	}
 }
 

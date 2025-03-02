@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.366 2025/02/24 09:40:01 jan Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.367 2025/03/02 21:28:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -434,7 +434,8 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 }
 
 int
-carp_proto_input(struct mbuf **mp, int *offp, int proto, int af)
+carp_proto_input(struct mbuf **mp, int *offp, int proto, int af,
+    struct netstack *ns)
 {
 	struct ifnet *ifp;
 
@@ -538,7 +539,8 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 
 #ifdef INET6
 int
-carp6_proto_input(struct mbuf **mp, int *offp, int proto, int af)
+carp6_proto_input(struct mbuf **mp, int *offp, int proto, int af,
+    struct netstack *ns)
 {
 	struct ifnet *ifp;
 
@@ -1404,7 +1406,8 @@ carp_vhe_match(struct carp_softc *sc, uint64_t dst)
 }
 
 struct mbuf *
-carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst)
+carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst,
+    struct netstack *ns)
 {
 	struct srpl *cif;
 	struct carp_softc *sc;
@@ -1458,14 +1461,14 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst)
 			if (m0 == NULL)
 				continue;
 
-			if_vinput(&sc->sc_if, m0);
+			if_vinput(&sc->sc_if, m0, ns);
 		}
 		SRPL_LEAVE(&sr);
 
 		return (m);
 	}
 
-	if_vinput(&sc->sc_if, m);
+	if_vinput(&sc->sc_if, m, ns);
 out:
 	SRPL_LEAVE(&sr);
 

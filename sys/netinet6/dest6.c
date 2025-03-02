@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.20 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.21 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -49,7 +49,8 @@
  * Destination options header processing.
  */
 int
-dest6_input(struct mbuf **mp, int *offp, int proto, int af)
+dest6_input(struct mbuf **mp, int *offp, int proto, int af,
+    struct netstack *ns)
 {
 	int off = *offp, dstoptlen, optlen;
 	struct ip6_dest *dstopts;

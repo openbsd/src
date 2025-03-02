@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bpe.h,v 1.1 2018/12/20 23:00:55 dlg Exp $ */
+/* $OpenBSD: if_bpe.h,v 1.2 2025/03/02 21:28:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -20,7 +20,7 @@
 #define _NET_IF_BPE_H
 
 #ifdef _KERNEL
-void	bpe_input(struct ifnet *, struct mbuf *);
+void	bpe_input(struct ifnet *, struct mbuf *, struct netstack *);
 #endif
 
 #endif /* _NET_IF_GRE_H_ */

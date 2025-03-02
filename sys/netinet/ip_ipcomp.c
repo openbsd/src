@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.92 2022/05/03 09:18:11 claudio Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.93 2025/03/02 21:28:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -131,7 +131,8 @@ ipcomp_zeroize(struct tdb *tdbp)
  * ipcomp_input() gets called to uncompress an input packet
  */
 int
-ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
+ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff,
+    struct netstack *ns)
 {
 	const struct comp_algo *ipcompx = tdb->tdb_compalgxform;
 	struct mbuf *m = *mp;
@@ -289,7 +290,7 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	m_copyback(m, protoff, sizeof(u_int8_t), &nproto, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	return ipsec_common_input_cb(mp, tdb, skip, protoff);
+	return ipsec_common_input_cb(mp, tdb, skip, protoff, ns);
 
  drop:
 	m_freemp(mp);

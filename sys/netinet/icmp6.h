@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.54 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.55 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -592,7 +592,8 @@ struct	in6_multi;
 void		 icmp6_init(void);
 struct mbuf	*icmp6_do_error(struct mbuf *, int, int, int);
 void		 icmp6_error(struct mbuf *, int, int, int);
-int		 icmp6_input(struct mbuf **, int *, int, int);
+int		 icmp6_input(struct mbuf **, int *, int, int,
+		    struct netstack *);
 void		 icmp6_fasttimo(void);
 int		 icmp6_reflect(struct mbuf **, size_t, struct sockaddr *);
 void		 icmp6_redirect_input(struct mbuf *, int);

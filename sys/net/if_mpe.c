@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.105 2024/01/01 18:47:02 mvs Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.106 2025/03/02 21:28:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -545,7 +545,7 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 	}
 
-	if_vinput(ifp, m);
+	if_vinput(ifp, m, NULL);
 	return;
 drop:
 	m_freem(m);

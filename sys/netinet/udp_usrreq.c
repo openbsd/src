@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.333 2025/02/17 12:46:02 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.334 2025/03/02 21:28:32 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ struct	cpumem *udpcounters;
 
 void	udp_sbappend(struct inpcb *, struct mbuf *, struct ip *,
 	    struct ip6_hdr *, int, struct udphdr *, struct sockaddr *,
-	    u_int32_t);
+	    u_int32_t, struct netstack *);
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_notify(struct inpcb *, int);
 int	udp_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
@@ -192,7 +192,7 @@ udp_init(void)
 }
 
 int
-udp_input(struct mbuf **mp, int *offp, int proto, int af)
+udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp;
@@ -340,7 +340,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			protoff = af == AF_INET ? offsetof(struct ip, ip_p) :
 			    offsetof(struct ip6_hdr, ip6_nxt);
 			return ipsec_common_input(mp, skip, protoff,
-			    af, IPPROTO_ESP, 1);
+			    af, IPPROTO_ESP, 1, ns);
 		}
 	}
 #endif /* IPSEC */
@@ -473,7 +473,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 				if (n != NULL) {
 					udp_sbappend(last, n, ip, ip6, iphlen,
-					    uh, &srcsa.sa, 0);
+					    uh, &srcsa.sa, 0, ns);
 				}
 				in_pcbunref(last);
 
@@ -508,7 +508,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			return IPPROTO_DONE;
 		}
 
-		udp_sbappend(last, m, ip, ip6, iphlen, uh, &srcsa.sa, 0);
+		udp_sbappend(last, m, ip, ip6, iphlen, uh, &srcsa.sa, 0, ns);
 		in_pcbunref(last);
 
 		return IPPROTO_DONE;
@@ -624,7 +624,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		if ((session = pipex_l2tp_lookup_session(m, off, &srcsa.sa))
 		    != NULL) {
 			m = *mp = pipex_l2tp_input(m, off, session,
-			    ipsecflowinfo);
+			    ipsecflowinfo, ns);
 			pipex_rele_session(session);
 			if (m == NULL) {
 				in_pcbunref(inp);
@@ -634,7 +634,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 #endif
 
-	udp_sbappend(inp, m, ip, ip6, iphlen, uh, &srcsa.sa, ipsecflowinfo);
+	udp_sbappend(inp, m, ip, ip6, iphlen, uh, &srcsa.sa, ipsecflowinfo, ns);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 bad:
@@ -646,7 +646,8 @@ bad:
 void
 udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
     struct ip6_hdr *ip6, int hlen, struct udphdr *uh,
-    struct sockaddr *srcaddr, u_int32_t ipsecflowinfo)
+    struct sockaddr *srcaddr, u_int32_t ipsecflowinfo,
+    struct netstack *ns)
 {
 	struct socket *so = inp->inp_socket;
 	struct mbuf *opts = NULL;
@@ -655,7 +656,7 @@ udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
 
 	if (inp->inp_upcall != NULL) {
 		m = (*inp->inp_upcall)(inp->inp_upcall_arg, m,
-		    ip, ip6, uh, hlen);
+		    ip, ip6, uh, hlen, ns);
 		if (m == NULL)
 			return;
 	}

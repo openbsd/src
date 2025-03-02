@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.727 2025/02/24 09:40:01 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.728 2025/03/02 21:28:31 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -177,6 +177,9 @@ void	ifa_print_all(void);
 
 void	if_qstart_compat(struct ifqueue *);
 
+struct softnet *
+	net_sn(unsigned int);
+
 /*
  * interface index map
  *
@@ -241,19 +244,18 @@ struct rwlock if_tmplist_lock = RWLOCK_INITIALIZER("iftmplk");
 struct mutex if_hooks_mtx = MUTEX_INITIALIZER(IPL_NONE);
 void	if_hooks_run(struct task_list *);
 
-int	ifq_congestion;
-
-int		 netisr;
+int		ifq_congestion;
+int		netisr;
 
 struct softnet {
 	char		 sn_name[16];
 	struct taskq	*sn_taskq;
-};
-
-#define	NET_TASKQ	4
+	struct netstack	 sn_netstack;
+} __aligned(64);
+#define NET_TASKQ	4
 struct softnet	softnets[NET_TASKQ];
 
-struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
+struct task	if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
 /*
  * Serialize socket operations to ensure no new sleeping points
@@ -778,7 +780,8 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 }
 
 int
-if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
+if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
+    struct netstack *ns)
 {
 	int keepflags, keepcksum;
 	uint16_t keepmss;
@@ -848,16 +851,16 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	case AF_INET:
 		if (ISSET(keepcksum, M_IPV4_CSUM_OUT))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-		ipv4_input(ifp, m);
+		ipv4_input(ifp, m, ns);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ipv6_input(ifp, m);
+		ipv6_input(ifp, m, ns);
 		break;
 #endif /* INET6 */
 #ifdef MPLS
 	case AF_MPLS:
-		mpls_input(ifp, m);
+		mpls_input(ifp, m, ns);
 		break;
 #endif /* MPLS */
 	default:
@@ -979,9 +982,10 @@ if_output_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 }
 
 void
-if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
+if_input_process(struct ifnet *ifp, struct mbuf_list *ml, unsigned int idx)
 {
 	struct mbuf *m;
+	struct softnet *sn;
 
 	if (ml_empty(ml))
 		return;
@@ -996,14 +1000,16 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 	 * read only or MP safe.  Usually they hold the exclusive net lock.
 	 */
 
+	sn = net_sn(idx);
+
 	NET_LOCK_SHARED();
 	while ((m = ml_dequeue(ml)) != NULL)
-		(*ifp->if_input)(ifp, m);
+		(*ifp->if_input)(ifp, m, &sn->sn_netstack);
 	NET_UNLOCK_SHARED();
 }
 
 void
-if_vinput(struct ifnet *ifp, struct mbuf *m)
+if_vinput(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 #if NBPFILTER > 0
 	caddr_t if_bpf;
@@ -1030,7 +1036,7 @@ if_vinput(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	if (__predict_true(!ISSET(ifp->if_xflags, IFXF_MONITOR)))
-		(*ifp->if_input)(ifp, m);
+		(*ifp->if_input)(ifp, m, ns);
 	else
 		m_freem(m);
 }
@@ -1677,9 +1683,9 @@ p2p_bpf_mtap(caddr_t if_bpf, const struct mbuf *m, u_int dir)
 }
 
 void
-p2p_input(struct ifnet *ifp, struct mbuf *m)
+p2p_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
-	void (*input)(struct ifnet *, struct mbuf *);
+	void (*input)(struct ifnet *, struct mbuf *, struct netstack *);
 
 	switch (m->m_pkthdr.ph_family) {
 	case AF_INET:
@@ -1700,7 +1706,7 @@ p2p_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	(*input)(ifp, m);
+	(*input)(ifp, m, ns);
 }
 
 /*
@@ -3655,18 +3661,21 @@ unhandled_af(int af)
 	panic("unhandled af %d", af);
 }
 
-struct taskq *
-net_tq(unsigned int ifindex)
+struct softnet *
+net_sn(unsigned int ifindex)
 {
-	struct softnet *sn;
 	static int nettaskqs;
 
 	if (nettaskqs == 0)
 		nettaskqs = min(NET_TASKQ, ncpus);
 
-	sn = &softnets[ifindex % nettaskqs];
+	return (&softnets[ifindex % nettaskqs]);
+}
 
-	return (sn->sn_taskq);
+struct taskq *
+net_tq(unsigned int ifindex)
+{
+	return (net_sn(ifindex)->sn_taskq);
 }
 
 void
