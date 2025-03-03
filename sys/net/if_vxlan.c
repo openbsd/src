@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.102 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.103 2025/03/03 22:25:58 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -514,16 +514,19 @@ vxlan_send_ipv4(struct vxlan_softc *sc, struct mbuf_list *ml)
 	struct mbuf *m;
 	uint64_t oerrors = 0;
 
+	if (ml_empty(ml))
+		return (0);
+
+	memset(&imo, 0, sizeof(struct ip_moptions));
 	imo.imo_ifidx = sc->sc_if_index0;
 	imo.imo_ttl = sc->sc_ttl;
-	imo.imo_loop = 0;
 
-	NET_LOCK();
+	NET_LOCK_SHARED();
 	while ((m = ml_dequeue(ml)) != NULL) {
 		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) != 0)
 			oerrors++;
 	}
-	NET_UNLOCK();
+	NET_UNLOCK_SHARED();
 
 	return (oerrors);
 }
@@ -536,16 +539,19 @@ vxlan_send_ipv6(struct vxlan_softc *sc, struct mbuf_list *ml)
 	struct mbuf *m;
 	uint64_t oerrors = 0;
 
+	if (ml_empty(ml))
+		return (0);
+
+	memset(&im6o, 0, sizeof(struct ip6_moptions));
 	im6o.im6o_ifidx = sc->sc_if_index0;
 	im6o.im6o_hlim = sc->sc_ttl;
-	im6o.im6o_loop = 0;
 
-	NET_LOCK();
+	NET_LOCK_SHARED();
 	while ((m = ml_dequeue(ml)) != NULL) {
 		if (ip6_output(m, NULL, NULL, 0, &im6o, NULL) != 0)
 			oerrors++;
 	}
-	NET_UNLOCK();
+	NET_UNLOCK_SHARED();
 
 	return (oerrors);
 }
@@ -940,10 +946,10 @@ vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
 	if (error != 0)
 		goto free;
 
-	solock(so);
+	solock_shared(so);
 	sotoinpcb(so)->inp_upcall = vxlan_input;
 	sotoinpcb(so)->inp_upcall_arg = vt;
-	sounlock(so);
+	sounlock_shared(so);
 
 	m_inithdr(&m);
 	m.m_len = sizeof(vt->vt_rdomain);
@@ -980,9 +986,9 @@ vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
 		unhandled_af(vt->vt_af);
 	}
 
-	solock(so);
+	solock_shared(so);
 	error = sobind(so, &m, curproc);
-	sounlock(so);
+	sounlock_shared(so);
 	if (error != 0)
 		goto close;
 
