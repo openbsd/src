@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_bootmgr.c,v 1.2 2025/02/21 20:41:50 kettenis Exp $	*/
+/*	$OpenBSD: efi_bootmgr.c,v 1.3 2025/03/03 13:52:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -174,7 +174,8 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 		if (error) {
 			if (errno == ENOENT)
 				break;
-			err(1, "EFIIOC_VAR_NEXT");
+			warn("EFIIOC_VAR_NEXT");
+			return;
 		}
 		if (memcmp(&var.vendor, &guid, sizeof(guid)) != 0)
 			continue;
@@ -192,8 +193,10 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 		var.data = data;
 		var.datasize = sizeof(data);
 		error = ioctl(fd, EFIIOC_VAR_GET, &var);
-		if (error)
-			err(1, "EFIIOC_VAR_GET: Boot%04X", idx);
+		if (error) {
+			warn("EFIIOC_VAR_GET: Boot%04X", idx);
+			return;
+		}
 		if (var.datasize != optlen)
 			continue;
 		if (memcmp(data, opt, optlen) != 0)
@@ -232,7 +235,8 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 			if (error) {
 				if (errno == ENOENT)
 					break;
-				err(1, "EFIIOC_VAR_GET: Boot%04X", idx);
+				warn("EFIIOC_VAR_GET: Boot%04X", idx);
+				return;
 			}
 		}
 		if (idx >= 65536)
@@ -250,9 +254,9 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 			var.datasize = optlen;
 			error = ioctl(fd, EFIIOC_VAR_SET, &var);
 			if (error) {
-				if (errno == EPERM || errno == ENOSYS)
-					return;
-				err(1, "EFIIOC_VAR_SET: Boot%04X", idx);
+				if (errno != EPERM && errno != ENOSYS)
+					warn("EFIIOC_VAR_SET: Boot%04X", idx);
+				return;
 			}
 		}
 	}
@@ -268,10 +272,11 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 	var.datasize = sizeof(data);
 	error = ioctl(fd, EFIIOC_VAR_GET, &var);
 	if (error) {
-		if (errno == ENOENT)
-			var.datasize = 0;
-		else
-			err(1, "EFIIOC_VAR_GET: BootOrder");
+		if (errno != ENOENT) {
+			warn("EFIIOC_VAR_GET: BootOrder");
+			return;
+		}
+		var.datasize = 0;
 	}
 
 	found = 0;
@@ -299,9 +304,9 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 	if (!nowrite) {
 		error = ioctl(fd, EFIIOC_VAR_SET, &var);
 		if (error) {
-			if (errno == EPERM || errno == ENOSYS)
-				return;
-			err(1, "EFIIOC_VAR_SET: BootOrder");
+			if (errno != EPERM && errno != ENOSYS)
+				warn("EFIIOC_VAR_SET: BootOrder");
+			return;
 		}
 	}
 }
