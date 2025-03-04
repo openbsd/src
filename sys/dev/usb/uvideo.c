@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.248 2025/03/01 14:44:09 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.249 2025/03/04 22:59:01 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2557,7 +2557,6 @@ uvideo_mmap_queue(struct uvideo_softc *sc, int len, int err)
 	sc->sc_mmap_cur->v4l2_buf.flags |= V4L2_BUF_FLAG_DONE;
 	sc->sc_mmap_cur->v4l2_buf.flags &= ~V4L2_BUF_FLAG_QUEUED;
 	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, sc->sc_mmap_cur, q_frames);
-	sc->sc_mmap_cur = NULL;
 	DPRINTF(2, "%s: %s: frame queued\n", DEVNAME(sc), __func__);
 
 	wakeup(sc);
