@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.h,v 1.1 2023/08/07 01:57:33 dlg Exp $ */
+/*	$OpenBSD: if_sec.h,v 1.2 2025/03/04 15:11:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -29,7 +29,7 @@ struct tdb;
 
 struct sec_softc	*sec_get(unsigned int);
 void			 sec_input(struct sec_softc * , int, int,
-			     struct mbuf *);
+			     struct mbuf *, struct netstack *);
 void			 sec_put(struct sec_softc *);
 
 /*

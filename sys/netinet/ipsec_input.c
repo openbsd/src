@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.208 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.209 2025/03/04 15:11:30 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -564,7 +564,7 @@ ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip,
 			if (sc == NULL)
 				goto baddone;
 
-			sec_input(sc, af, prot, m);
+			sec_input(sc, af, prot, m, ns);
 			sec_put(sc);
 			return IPPROTO_DONE;
 		}

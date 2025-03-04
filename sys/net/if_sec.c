@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.13 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.14 2025/03/04 15:11:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -43,6 +43,7 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
+#include <net/if_sec.h>
 #include <net/if_types.h>
 #include <net/toeplitz.h>
 
