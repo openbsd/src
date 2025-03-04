@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.58 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: ifq.c,v 1.59 2025/03/04 01:13:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -663,6 +663,7 @@ void
 ifiq_init(struct ifiqueue *ifiq, struct ifnet *ifp, unsigned int idx)
 {
 	ifiq->ifiq_if = ifp;
+	ifiq->ifiq_bpfp = NULL;
 	ifiq->ifiq_softnet = net_tq(idx);
 	ifiq->ifiq_softc = NULL;
 
@@ -719,7 +720,7 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	uint64_t fdrops = 0;
 	unsigned int len;
 #if NBPFILTER > 0
-	caddr_t if_bpf;
+	caddr_t *ifiq_bpfp, ifiq_bpf = NULL, if_bpf;
 #endif
 
 	if (ml_empty(ml))
@@ -733,14 +734,24 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	packets = ml_len(ml);
 
 #if NBPFILTER > 0
-	if_bpf = ifp->if_bpf;
-	if (if_bpf) {
+	ifiq_bpfp = READ_ONCE(ifiq->ifiq_bpfp);
+	if (ifiq_bpfp != NULL)
+		ifiq_bpf = READ_ONCE(*ifiq_bpfp);
+	if_bpf = READ_ONCE(ifp->if_bpf);
+	if (ifiq_bpf || if_bpf) {
 		struct mbuf_list ml0 = *ml;
 
 		ml_init(ml);
 
 		while ((m = ml_dequeue(&ml0)) != NULL) {
-			if ((*ifp->if_bpf_mtap)(if_bpf, m, BPF_DIRECTION_IN)) {
+			int drop = 0;
+			if (ifiq_bpf &&
+			    (*ifp->if_bpf_mtap)(ifiq_bpf, m, BPF_DIRECTION_IN))
+				drop = 1;
+			if (if_bpf &&
+			    (*ifp->if_bpf_mtap)(if_bpf, m, BPF_DIRECTION_IN))
+				drop = 1;
+			if (drop) {
 				m_freem(m);
 				fdrops++;
 			} else

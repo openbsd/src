@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.43 2025/02/03 08:58:52 mvs Exp $ */
+/*	$OpenBSD: ifq.h,v 1.44 2025/03/04 01:13:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,7 @@ struct ifqueue {
 
 struct ifiqueue {
 	struct ifnet		*ifiq_if;
+	caddr_t			*ifiq_bpfp;
 	struct taskq		*ifiq_softnet;
 	union {
 		void			*_ifiq_softc;
