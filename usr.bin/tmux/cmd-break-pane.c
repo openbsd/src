@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.61 2023/01/17 06:50:55 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.62 2025/03/04 08:45:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -99,7 +99,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	w = wp->window = window_create(w->sx, w->sy, w->xpixel, w->ypixel);
 	options_set_parent(wp->options, w->options);
-	wp->flags |= PANE_STYLECHANGED;
+	wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 	TAILQ_INSERT_HEAD(&w->panes, wp, entry);
 	w->active = wp;
 	w->latest = tc;

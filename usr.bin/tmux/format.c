@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.324 2024/11/25 08:34:01 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.325 2025/03/04 08:45:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1544,6 +1544,23 @@ format_cb_client_written(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for client_theme. */
+static void *
+format_cb_client_theme(struct format_tree *ft)
+{
+	if (ft->c != NULL) {
+		switch (ft->c->theme) {
+		case THEME_DARK:
+			return (xstrdup("dark"));
+		case THEME_LIGHT:
+			return (xstrdup("light"));
+		case THEME_UNKNOWN:
+			return (NULL);
+		}
+	}
+	return (NULL);
+}
+
 /* Callback for config_files. */
 static void *
 format_cb_config_files(__unused struct format_tree *ft)
@@ -2876,6 +2893,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "client_termtype", FORMAT_TABLE_STRING,
 	  format_cb_client_termtype
+	},
+	{ "client_theme", FORMAT_TABLE_STRING,
+	  format_cb_client_theme
 	},
 	{ "client_tty", FORMAT_TABLE_STRING,
 	  format_cb_client_tty

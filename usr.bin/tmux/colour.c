@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.28 2024/09/29 20:05:42 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.29 2025/03/04 08:45:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -180,6 +180,46 @@ colour_tostring(int c)
 		return ("brightwhite");
 	}
 	return ("invalid");
+}
+
+/* Convert background colour to theme. */
+enum client_theme
+colour_totheme(int c)
+{
+	int	r, g, b, brightness;
+
+	if (c == -1)
+		return (THEME_UNKNOWN);
+
+	if (c & COLOUR_FLAG_RGB) {
+		r = (c >> 16) & 0xff;
+		g = (c >> 8) & 0xff;
+		b = (c >> 0) & 0xff;
+
+		brightness = r + g + b;
+		if (brightness > 382)
+			return (THEME_LIGHT);
+		return (THEME_DARK);
+	}
+
+	if (c & COLOUR_FLAG_256)
+		return (colour_totheme(colour_256toRGB(c)));
+
+	switch (c) {
+	case 0:
+	case 90:
+		return (THEME_DARK);
+	case 7:
+	case 97:
+		return (THEME_LIGHT);
+	default:
+		if (c >= 0 && c <= 7)
+			return (colour_totheme(colour_256toRGB(c)));
+		if (c >= 90 && c <= 97)
+			return (colour_totheme(colour_256toRGB(8 + c - 90)));
+		break;
+	}
+	return (THEME_UNKNOWN);
 }
 
 /* Convert colour from string. */

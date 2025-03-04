@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.74 2025/01/01 15:17:36 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.75 2025/03/04 08:45:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1165,7 +1165,7 @@ options_push_changes(const char *name)
 	if (strcmp(name, "window-style") == 0 ||
 	    strcmp(name, "window-active-style") == 0) {
 		RB_FOREACH(wp, window_pane_tree, &all_window_panes)
-			wp->flags |= PANE_STYLECHANGED;
+			wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 	}
 	if (strcmp(name, "pane-colours") == 0) {
 		RB_FOREACH(wp, window_pane_tree, &all_window_panes)
