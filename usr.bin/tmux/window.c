@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.300 2025/02/26 07:39:50 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.301 2025/03/04 08:03:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1759,6 +1759,8 @@ window_set_fill_character(struct window *w)
 		ud = utf8_fromcstr(value);
 		if (ud != NULL && ud[0].width == 1)
 			w->fill_character = ud;
+		else
+			free(ud);
 	}
 }
 
