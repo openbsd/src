@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.146 2025/02/08 10:12:00 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.147 2025/03/04 08:43:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -705,9 +705,6 @@ x509_vfy_get_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 int
 x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 {
-#ifdef OPENSSL_NO_CHAIN_VERIFY
-	return 1;
-#else
 	int i, ok = 0, must_be_ca, plen = 0;
 	X509 *x;
 	int (*cb)(int xok, X509_STORE_CTX *xctx);
@@ -798,11 +795,11 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 			plen++;
 		must_be_ca = 1;
 	}
+
 	ok = 1;
 
-end:
+ end:
 	return ok;
-#endif
 }
 
 static int
