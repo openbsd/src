@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.18 2023/04/12 09:55:22 jsg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.19 2025/03/04 01:33:42 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,11 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 12 2023 $
+.Dd $Mdocdate: March 4 2025 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
 .Nm bpfattach ,
+.Nm bpfxattach ,
 .Nm bpfdetach ,
 .Nm bpfsattach ,
 .Nm bpfsdetach ,
@@ -36,6 +37,14 @@
 .Ft void
 .Fo bpfattach
 .Fa "caddr_t *bpfp"
+.Fa "struct ifnet *ifp"
+.Fa "u_int dlt"
+.Fa "u_int hdrlen"
+.Fc
+.Ft void *
+.Fo bpfxattach
+.Fa "caddr_t *bpfp"
+.Fa "const char *name"
 .Fa "struct ifnet *ifp"
 .Fa "u_int dlt"
 .Fa "u_int hdrlen"
@@ -112,6 +121,19 @@ may be called multiple times against the same network interface to
 provide different data link-layer types for filtering.
 .Fa hdrlen
 indicates the length of the link header for the data link-layer type.
+.Pp
+.Fn bpfxattach
+allocates and configures a BPF interface for use with the network interface
+.Fa ifp ,
+but with a BPF interface name provided by the
+.Fa name
+argument instead of the name of the network interface.
+The
+.Fa bpfp ,
+.Fa dlt ,
+.Fa hdrlen
+arguments work like those in
+.Fn bpfattach .
 .Pp
 .Fn bpfdetach
 removes and frees all the BPF interfaces that were configured for
@@ -230,6 +252,7 @@ of length
 will be prefixed to the buffer for filter evaluation.
 .Sh CONTEXT
 .Fn bpfattach ,
+.Fn bpfxattach ,
 .Fn bpfdetach ,
 .Fn bpfsattach ,
 and
@@ -252,7 +275,9 @@ can be called from process context, or from an interrupt context at or below
 .Dv IPL_NET .
 .Sh RETURN VALUES
 .Fn bpfsattach
-returns a reference to the BPF interface it allocates.
+and
+.Fn bpfxattach
+return a reference to the BPF interface they allocate.
 .Pp
 .Fn bpf_filter
 and
