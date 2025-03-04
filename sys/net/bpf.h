@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.73 2024/08/15 12:20:20 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.74 2025/03/04 01:01:25 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -327,6 +327,7 @@ int	 bpf_tap_hdr(caddr_t, const void *, u_int, const void *, u_int, u_int);
 void	 bpfattach(caddr_t *, struct ifnet *, u_int, u_int);
 void	 bpfdetach(struct ifnet *);
 void	*bpfsattach(caddr_t *, const char *, u_int, u_int);
+void	*bpfxattach(caddr_t *, const char *, struct ifnet *, u_int, u_int);
 void	 bpfsdetach(void *);
 void	 bpfilterattach(int);
 

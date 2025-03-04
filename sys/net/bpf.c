@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.231 2025/02/05 18:29:17 mvs Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.232 2025/03/04 01:01:25 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1749,13 +1749,22 @@ bpfsattach(caddr_t *bpfp, const char *name, u_int dlt, u_int hdrlen)
 	return (bp);
 }
 
-void
-bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
+void *
+bpfxattach(caddr_t *driverp, const char *name, struct ifnet *ifp,
+    u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
-	bp = bpfsattach(driverp, ifp->if_xname, dlt, hdrlen);
+	bp = bpfsattach(driverp, name, dlt, hdrlen);
 	bp->bif_ifp = ifp;
+
+	return (bp);
+}
+
+void
+bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
+{
+	bpfxattach(driverp, ifp->if_xname, ifp, dlt, hdrlen);
 }
 
 /* Detach an interface from its attached bpf device.  */
