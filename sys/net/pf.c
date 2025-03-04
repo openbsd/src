@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1207 2024/12/26 10:15:27 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1208 2025/03/04 11:52:44 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5925,10 +5925,6 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 					    pd, &pd2, &nk->addr[sidx],
 					    &nk->addr[didx], pd->af, nk->af))
 						return (PF_DROP);
-					if (nk->af == AF_INET)
-						pd->proto = IPPROTO_ICMP;
-					else
-						pd->proto = IPPROTO_ICMPV6;
 					pd->m->m_pkthdr.ph_rtableid =
 					    nk->rdomain;
 					pd->destchg = 1;
@@ -5936,6 +5932,20 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 					    &nk->addr[pd2.sidx], nk->af);
 					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
+					if (nk->af == AF_INET) {
+						pd->proto = IPPROTO_ICMP;
+					} else {
+						pd->proto = IPPROTO_ICMPV6;
+						/*
+						 * IPv4 becomes IPv6 so we must
+						 * copy IPv4 src addr to least
+						 * 32bits in IPv6 address to
+						 * keep traceroute/icmp
+						 * working.
+						 */
+						pd->nsaddr.addr32[3] =
+						    pd->src->addr32[0];
+					}
 					pd->naf = nk->af;
 
 					pf_patch_16(pd,
@@ -6045,10 +6055,6 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 					    pd, &pd2, &nk->addr[sidx],
 					    &nk->addr[didx], pd->af, nk->af))
 						return (PF_DROP);
-					if (nk->af == AF_INET)
-						pd->proto = IPPROTO_ICMP;
-					else
-						pd->proto = IPPROTO_ICMPV6;
 					pd->m->m_pkthdr.ph_rtableid =
 					    nk->rdomain;
 					pd->destchg = 1;
@@ -6056,6 +6062,20 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 					    &nk->addr[pd2.sidx], nk->af);
 					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
+					if (nk->af == AF_INET) {
+						pd->proto = IPPROTO_ICMP;
+					} else {
+						pd->proto = IPPROTO_ICMPV6;
+						/*
+						 * IPv4 becomes IPv6 so we must
+						 * copy IPv4 src addr to least
+						 * 32bits in IPv6 address to
+						 * keep traceroute/icmp
+						 * working.
+						 */
+						pd->nsaddr.addr32[3] =
+						    pd->src->addr32[0];
+					}
 					pd->naf = nk->af;
 
 					pf_patch_16(pd,
@@ -6186,6 +6206,14 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **stp,
 					    &nk->addr[pd2.sidx], nk->af);
 					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
+					/*
+					 * IPv4 becomes IPv6 so we must copy
+					 * IPv4 src addr to least 32bits in
+					 * IPv6 address to keep traceroute
+					 * working.
+					 */
+					pd->nsaddr.addr32[3] =
+					    pd->src->addr32[0];
 					pd->naf = nk->af;
 					return (PF_AFRT);
 				}
