@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_bootmgr.c,v 1.3 2025/03/03 13:52:23 kettenis Exp $	*/
+/*	$OpenBSD: efi_bootmgr.c,v 1.4 2025/03/04 20:40:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -75,6 +75,14 @@ typedef struct _FILEPATH_DEVICE_PATH {
 	EFI_DEVICE_PATH			Header;
 	CHAR16				PathName[1];
 } __packed FILEPATH_DEVICE_PATH;
+
+/*
+ * Variable Attributes
+ */
+
+#define EFI_VARIABLE_NON_VOLATILE	0x00000001
+#define EFI_VARIABLE_BOOTSERVICE_ACCESS	0x00000002
+#define EFI_VARIABLE_RUNTIME_ACCESS	0x00000004
 
 /*
  * Load Options
@@ -252,6 +260,9 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 			var.namesize = 18;
 			var.data = opt;
 			var.datasize = optlen;
+			var.attrib = EFI_VARIABLE_NON_VOLATILE |
+			    EFI_VARIABLE_BOOTSERVICE_ACCESS |
+			    EFI_VARIABLE_RUNTIME_ACCESS;
 			error = ioctl(fd, EFIIOC_VAR_SET, &var);
 			if (error) {
 				if (errno != EPERM && errno != ENOSYS)
@@ -302,6 +313,9 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 	}
 
 	if (!nowrite) {
+		var.attrib = EFI_VARIABLE_NON_VOLATILE |
+		    EFI_VARIABLE_BOOTSERVICE_ACCESS |
+		    EFI_VARIABLE_RUNTIME_ACCESS;
 		error = ioctl(fd, EFIIOC_VAR_SET, &var);
 		if (error) {
 			if (errno != EPERM && errno != ENOSYS)
