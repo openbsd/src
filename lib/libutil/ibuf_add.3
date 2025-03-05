@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.6 2024/11/26 13:57:31 claudio Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.7 2025/03/05 11:01:12 tb Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2024 $
+.Dd $Mdocdate: March 5 2025 $
 .Dt IBUF_ADD 3
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@
 .Ft int
 .Fn ibuf_truncate "struct ibuf *buf" "size_t len"
 .Ft int
-.Fn ibuf_write "struct msgbuf *msgbuf"
+.Fn ibuf_write "int fd" "struct msgbuf *msgbuf"
 .Ft void
 .Fn msgbuf_clear "struct msgbuf *msgbuf"
 .Ft void
@@ -188,9 +188,9 @@
 .Ft uint32_t
 .Fn msgbuf_queuelen "struct msgbuf *msgbuf"
 .Ft int
-.Fn msgbuf_read "struct msgbuf *msgbuf"
+.Fn msgbuf_read "int fd" "struct msgbuf *msgbuf"
 .Ft int
-.Fn msgbuf_write "struct msgbuf *msgbuf"
+.Fn msgbuf_write "int fd" "struct msgbuf *msgbuf"
 .Sh DESCRIPTION
 The ibuf API defines functions to manipulate buffers, used for example to
 construct imsgs with
