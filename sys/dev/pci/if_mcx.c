@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.118 2024/12/20 03:31:09 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.119 2025/03/05 06:44:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2317,6 +2317,9 @@ struct mcx_rx {
 struct mcx_tx {
 	struct mcx_softc	*tx_softc;
 	struct ifqueue		*tx_ifq;
+#if NBPFILTER > 0
+	caddr_t			*tx_bpfp;
+#endif
 
 	int			 tx_uar;
 	int			 tx_sqn;
@@ -2339,6 +2342,9 @@ struct mcx_queues {
 	struct mcx_tx		 q_tx;
 	struct mcx_cq		 q_cq;
 	struct mcx_eq		 q_eq;
+#if NBPFILTER > 0
+	caddr_t			 q_bpf;
+#endif
 #if NKSTAT > 0
 	struct kstat		*q_kstat;
 #endif
@@ -3021,6 +3027,14 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc), i);
 			goto intrdisestablish;
 		}
+
+#if NBPFILTER > 0
+		bpfxattach(&q->q_bpf, q->q_name,
+		    ifp, DLT_EN10MB, ETHER_HDR_LEN);
+
+		ifiq->ifiq_bpfp = &q->q_bpf;
+		tx->tx_bpfp = &q->q_bpf;
+#endif
 	}
 
 	timeout_set(&sc->sc_calibrate, mcx_calibrate, sc);
@@ -7808,6 +7822,9 @@ mcx_start(struct ifqueue *ifq)
 	uint32_t csum;
 	size_t bf_base;
 	int i, seg, nseg;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
 	bf_base = (tx->tx_uar * MCX_PAGE_SIZE) + MCX_UAR_BF;
 
@@ -7880,10 +7897,19 @@ mcx_start(struct ifqueue *ifq)
 		bf = (uint64_t *)sqe;
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_hdr(ifp->if_bpf,
+		if_bpf = *tx->tx_bpfp;
+		if (if_bpf) {
+			bpf_mtap_hdr(if_bpf,
 			    (caddr_t)sqe->sqe_inline_headers,
 			    MCX_SQ_INLINE_SIZE, m, BPF_DIRECTION_OUT);
+		}
+
+		if_bpf = ifp->if_bpf;
+		if (if_bpf) {
+			bpf_mtap_hdr(if_bpf,
+			    (caddr_t)sqe->sqe_inline_headers,
+			    MCX_SQ_INLINE_SIZE, m, BPF_DIRECTION_OUT);
+		}
 #endif
 		map = ms->ms_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
