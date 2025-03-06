@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.13 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.14 2025/03/06 07:17:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -468,7 +468,6 @@ r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value)
 				goto err;
 			}
 			pol = policy_section(ctx, polsect, ia5org);
-			X509V3_section_free(ctx, polsect);
 			if (!pol)
 				goto err;
 		} else {
@@ -551,7 +550,6 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 				goto err;
 			}
 			qual = notice_section(ctx, unot, ia5org);
-			X509V3_section_free(ctx, unot);
 			if (qual == NULL)
 				goto err;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.36 2025/02/21 05:44:28 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.37 2025/03/06 07:17:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -454,7 +454,6 @@ int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
 
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section);
-void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 
 const X509V3_EXT_METHOD *x509v3_ext_method_authority_key_identifier(void);
 const X509V3_EXT_METHOD *x509v3_ext_method_basic_constraints(void);

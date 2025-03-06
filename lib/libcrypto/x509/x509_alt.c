@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.17 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.18 2025/03/06 07:17:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -794,7 +794,6 @@ do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 	if (!ret)
 		X509_NAME_free(nm);
 	gen->d.dirn = nm;
-	X509V3_section_free(ctx, sk);
 
 	return ret;
 }

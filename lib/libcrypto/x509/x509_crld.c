@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_crld.c,v 1.7 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_crld.c,v 1.8 2025/03/06 07:17:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -133,9 +133,7 @@ gnames_from_sectname(X509V3_CTX *ctx, char *sect)
 		return NULL;
 	}
 	gens = v2i_GENERAL_NAMES(NULL, ctx, gnsect);
-	if (*sect == '@')
-		X509V3_section_free(ctx, gnsect);
-	else
+	if (*sect != '@')
 		sk_CONF_VALUE_pop_free(gnsect, X509V3_conf_free);
 	return gens;
 }
@@ -164,7 +162,6 @@ set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx, CONF_VALUE *cnf)
 			return -1;
 		}
 		ret = X509V3_NAME_from_section(nm, dnsect, MBSTRING_ASC);
-		X509V3_section_free(ctx, dnsect);
 		rnm = nm->entries;
 		nm->entries = NULL;
 		X509_NAME_free(nm);
@@ -337,7 +334,6 @@ v2i_crld(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			if (!dpsect)
 				goto err;
 			point = crldp_from_section(ctx, dpsect);
-			X509V3_section_free(ctx, dpsect);
 			if (!point)
 				goto err;
 			if (!sk_DIST_POINT_push(crld, point)) {

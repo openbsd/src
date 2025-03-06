@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.27 2024/08/31 10:04:50 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.28 2025/03/06 07:17:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -412,12 +412,6 @@ X509V3_get_section(X509V3_CTX *ctx, const char *section)
 		return NULL;
 	}
 	return NCONF_get_section(ctx->db, section);
-}
-
-void
-X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section)
-{
-	return;
 }
 
 void
