@@ -252,7 +252,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x150e },	/* Radeon 880M / 890M */
 
 	/* GC 11.5.1, DCN 3.5.1, APU, Ryzen AI Max 300 "Strix Halo" */
-	{0x1002, 0x1586 },	/* Radeon 8050S / 8060S */
+	{0x1002, 0x1586 },	/* Radeon 8040S / 8050S / 8060S */
 
 	/* GC 11.5.2, DCN 3.5.1, APU, Ryzen AI 300 "Krackan Point" */
 	{0x1002, 0x1114 },	/* Radeon 840M / 860M */
