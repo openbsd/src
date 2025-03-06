@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.180 2025/02/17 08:56:33 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.181 2025/03/06 10:31:09 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -803,7 +803,7 @@ sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 		 */
 		do {
 			if (n->m_flags & M_EOR) {
-				sbappendrecord(so, sb, m); /* XXXXXX!!!! */
+				sbappendrecord(sb, m); /* XXXXXX!!!! */
 				return;
 			}
 		} while (n->m_next && (n = n->m_next));
@@ -868,7 +868,7 @@ sbcheck(struct socket *so, struct sockbuf *sb)
  * begins a new record.
  */
 void
-sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
+sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 {
 	struct mbuf *m;
 
