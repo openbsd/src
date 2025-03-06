@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitops.h,v 1.6 2025/02/07 03:03:31 jsg Exp $	*/
+/*	$OpenBSD: bitops.h,v 1.7 2025/03/06 02:50:20 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -41,8 +41,8 @@
 #define __ffs64(x)		__builtin_ctzll(x)
 #define ffz(x)			__ffs(~(x))
 
-static inline uint8_t
-hweight8(uint32_t x)
+static inline unsigned int
+hweight8(unsigned int x)
 {
 	x = (x & 0x55) + ((x & 0xaa) >> 1);
 	x = (x & 0x33) + ((x & 0xcc) >> 2);
@@ -50,8 +50,8 @@ hweight8(uint32_t x)
 	return (x);
 }
 
-static inline uint16_t
-hweight16(uint32_t x)
+static inline unsigned int
+hweight16(unsigned int x)
 {
 	x = (x & 0x5555) + ((x & 0xaaaa) >> 1);
 	x = (x & 0x3333) + ((x & 0xcccc) >> 2);
@@ -60,8 +60,8 @@ hweight16(uint32_t x)
 	return (x);
 }
 
-static inline uint32_t
-hweight32(uint32_t x)
+static inline unsigned int
+hweight32(unsigned int x)
 {
 	x = (x & 0x55555555) + ((x & 0xaaaaaaaa) >> 1);
 	x = (x & 0x33333333) + ((x & 0xcccccccc) >> 2);
@@ -71,7 +71,7 @@ hweight32(uint32_t x)
 	return x;
 }
 
-static inline uint32_t
+static inline unsigned long
 hweight64(uint64_t x)
 {
 	x = (x & 0x5555555555555555ULL) + ((x & 0xaaaaaaaaaaaaaaaaULL) >> 1);
