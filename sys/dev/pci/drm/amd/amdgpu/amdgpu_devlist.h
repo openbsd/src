@@ -258,6 +258,9 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x1114 },	/* Radeon 840M / 860M */
 
 	/* GC 11.5.3, DCN 3.6.0?, APU */
+
 	/* GC 12.0.0, DCN 4.0.1, dGPU */
-	/* GC 12.0.1, DCN 4.0.1, dGPU */
+
+	/* GC 12.0.1, DCN 4.0.1, dGPU, "Navi 48" */
+	{0x1002, 0x7550 },	/* Radeon RX 9070, 9070 XT */
 };
