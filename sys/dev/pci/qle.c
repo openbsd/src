@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.66 2024/09/04 07:54:52 mglocker Exp $ */
+/*	$OpenBSD: qle.c,v 1.67 2025/03/06 09:56:45 kevlo Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2703,6 +2703,8 @@ qle_load_firmware_chunks(struct qle_softc *sc, const u_int32_t *fw)
 	int res = 0;
 
 	mem = qle_dmamem_alloc(sc, 65536);
+	if (mem == NULL)
+		return ENOMEM;
 	for (;;) {
 		if (qle_load_fwchunk(sc, mem, fw)) {
 			res = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.69 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: qla.c,v 1.70 2025/03/06 09:56:45 kevlo Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -2360,6 +2360,8 @@ qla_load_firmware_2300(struct qla_softc *sc)
 	int rv;
 
 	mem = qla_dmamem_alloc(sc, 65536);
+	if (mem == NULL)
+		return ENOMEM;
 	rv = qla_load_fwchunk_2300(sc, mem, fw, QLA_2300_CODE_ORG);
 	qla_dmamem_free(sc, mem);
 
