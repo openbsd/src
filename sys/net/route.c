@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.442 2025/02/21 22:21:20 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.443 2025/03/06 23:09:02 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -567,15 +567,6 @@ rt_setgwroute(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 			atomic_cas_uint(&rt->rt_mtu, mtu, nhmtu);
 	}
 
-	/*
-	 * To avoid reference counting problems when writing link-layer
-	 * addresses in an outgoing packet, we ensure that the lifetime
-	 * of a cached entry is greater than the bigger lifetime of the
-	 * gateway entries it is pointed by.
-	 */
-	nhrt->rt_flags |= RTF_CACHED;
-	nhrt->rt_cachecnt++;
-
 	/* commit */
 	rt_putgwroute(rt, nhrt);
 
@@ -595,17 +586,30 @@ rt_putgwroute(struct rtentry *rt, struct rtentry *nhrt)
 	if (!ISSET(rt->rt_flags, RTF_GATEWAY))
 		return;
 
-	/* this is protected as per [X] in route.h */
+	/*
+	 * To avoid reference counting problems when writing link-layer
+	 * addresses in an outgoing packet, we ensure that the lifetime
+	 * of a cached entry is greater than the bigger lifetime of the
+	 * gateway entries it is pointed by.
+	 */
+	if (nhrt != NULL) {
+		mtx_enter(&nhrt->rt_mtx);
+		SET(nhrt->rt_flags, RTF_CACHED);
+		nhrt->rt_cachecnt++;
+		mtx_leave(&nhrt->rt_mtx);
+	}
+
 	onhrt = rt->rt_gwroute;
 	rt->rt_gwroute = nhrt;
 
 	if (onhrt != NULL) {
+		mtx_enter(&onhrt->rt_mtx);
 		KASSERT(onhrt->rt_cachecnt > 0);
 		KASSERT(ISSET(onhrt->rt_flags, RTF_CACHED));
-
-		--onhrt->rt_cachecnt;
+		onhrt->rt_cachecnt--;
 		if (onhrt->rt_cachecnt == 0)
 			CLR(onhrt->rt_flags, RTF_CACHED);
+		mtx_leave(&onhrt->rt_mtx);
 
 		rtfree(onhrt);
 	}
@@ -1004,6 +1008,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (ENOBUFS);
 		}
 
+		mtx_init_flags(&rt->rt_mtx, IPL_SOFTNET, "rtentry", 0);
 		refcnt_init_trace(&rt->rt_refcnt, DT_REFCNT_IDX_RTENTRY);
 		rt->rt_flags = info->rti_flags | RTF_UP;
 		rt->rt_priority = prio;	/* init routing priority */
