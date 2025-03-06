@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.181 2025/03/06 10:31:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.182 2025/03/06 13:35:34 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -785,7 +785,7 @@ do {									\
  * discarded and mbufs are compacted where possible.
  */
 void
-sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
+sbappend(struct sockbuf *sb, struct mbuf *m)
 {
 	struct mbuf *n;
 

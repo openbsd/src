@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.216 2025/03/06 10:31:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.217 2025/03/06 13:35:34 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -557,7 +557,7 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	} else if (so->so_type == SOCK_SEQPACKET)
 		sbappendrecord(&so2->so_rcv, m);
 	else
-		sbappend(so2, &so2->so_rcv, m);
+		sbappend(&so2->so_rcv, m);
 	so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
 	so->so_snd.sb_cc = so2->so_rcv.sb_cc;
 	if (so2->so_rcv.sb_cc > 0)
