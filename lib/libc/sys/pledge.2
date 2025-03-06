@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.70 2024/09/17 12:53:15 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.71 2025/03/06 06:39:57 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2024 $
+.Dd $Mdocdate: March 6 2025 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -234,77 +234,29 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr write 2 ,
 .Xr writev 2
 .It Cm rpath
-A number of system calls are allowed if they only cause
-read-only effects on the filesystem, or expose filenames to programs:
-.Pp
-.Xr chdir 2 ,
-.Xr getcwd 3 ,
-.Xr getdents 2 ,
-.Xr openat 2 ,
-.Xr fstatat 2 ,
-.Xr faccessat 2 ,
-.Xr readlinkat 2 ,
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr fchmod 2 ,
-.Xr fchmodat 2 ,
-.Xr chflags 2 ,
-.Xr chflagsat 2 ,
-.Xr chown 2 ,
-.Xr fchown 2 ,
-.Xr fchownat 2 ,
-.Xr fstat 2 ,
-.Xr getfsstat 2
+A number of system calls are allowed which allow path traversal,
+reading
+.Va struct stat ,
+and opening files for read.
 .It Cm wpath
-A number of system calls are allowed and may cause
-write-effects on the filesystem:
-.Pp
-.Xr getcwd 3 ,
-.Xr openat 2 ,
-.Xr fstatat 2 ,
-.Xr faccessat 2 ,
-.Xr readlinkat 2 ,
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr fchmod 2 ,
-.Xr fchmodat 2 ,
-.Xr chflags 2 ,
-.Xr chflagsat 2 ,
-.Xr chown 2 ,
-.Xr fchown 2 ,
-.Xr fchownat 2 ,
-.Xr fstat 2
+Similar to
+.Cm rpath ,
+but files can be opened for write.
 .It Cm cpath
-A number of system calls and sub-modes are allowed, which may
-create new files or directories in the filesystem:
-.Pp
-.Xr rename 2 ,
-.Xr renameat 2 ,
-.Xr link 2 ,
-.Xr linkat 2 ,
-.Xr symlink 2 ,
-.Xr symlinkat 2 ,
-.Xr unlink 2 ,
-.Xr unlinkat 2 ,
-.Xr mkdir 2 ,
-.Xr mkdirat 2 ,
-.Xr rmdir 2
+Similar to
+.Cm wpath ,
+but files can also be created.
 .It Cm dpath
-A number of system calls are allowed to create special files:
+Similar to
+.Cm cpath ,
+but special files can be created using:
 .Pp
 .Xr mkfifo 2 ,
 .Xr mknod 2
 .It Cm tmppath
 A number of system calls are allowed to do operations in the
 .Pa /tmp
-directory, including create, read, or write:
-.Pp
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr chflags 2 ,
-.Xr chown 2 ,
-.Xr unlink 2 ,
-.Xr fstat 2
+directory, including create, read, or write.
 .It Cm inet
 The following system calls are allowed to operate in the
 .Dv AF_INET
