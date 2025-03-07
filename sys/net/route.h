@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.214 2025/03/06 23:09:02 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.215 2025/03/07 10:18:15 asou Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ struct rt_metrics {
 #define	RTM_RTTUNIT	1000000	/* units for rtt, rttvar, as units per sec */
 #define	RTTTOPRHZ(r)	((r) / (RTM_RTTUNIT / PR_SLOWHZ))
 
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #include <net/rtable.h>
 
