@@ -1,6 +1,6 @@
-/*	$OpenBSD: crypto_arch.h,v 1.3 2025/03/07 14:21:22 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64.c,v 1.1 2025/03/07 14:21:22 jsing Exp $ */
 /*
- * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,26 +15,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdint.h>
+#include <openssl/sha.h>
 
-#ifndef HEADER_CRYPTO_ARCH_H
-#define HEADER_CRYPTO_ARCH_H
+#include "crypto_arch.h"
 
-#define HAVE_CRYPTO_CPU_CAPS_INIT
+void sha256_block_ce(SHA256_CTX *ctx, const void *in, size_t num);
+void sha256_block_generic(SHA256_CTX *ctx, const void *in, size_t num);
 
-#ifndef __ASSEMBLER__
-extern uint64_t crypto_cpu_caps_aarch64;
-#endif
+void
+sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
+{
+	if ((crypto_cpu_caps_aarch64 & CRYPTO_CPU_CAPS_AARCH64_SHA2) != 0) {
+		sha256_block_ce(ctx, in, num);
+		return;
+	}
 
-#define CRYPTO_CPU_CAPS_AARCH64_AES	(1ULL << 0)
-#define CRYPTO_CPU_CAPS_AARCH64_PMULL	(1ULL << 1)
-#define CRYPTO_CPU_CAPS_AARCH64_SHA1	(1ULL << 2)
-#define CRYPTO_CPU_CAPS_AARCH64_SHA2	(1ULL << 3)
-#define CRYPTO_CPU_CAPS_AARCH64_SHA512	(1ULL << 4)
-#define CRYPTO_CPU_CAPS_AARCH64_SHA3	(1ULL << 5)
-
-#ifndef OPENSSL_NO_ASM
-#define HAVE_SHA256_BLOCK_DATA_ORDER
-#endif
-
-#endif
+	sha256_block_generic(ctx, in, num);
+}
