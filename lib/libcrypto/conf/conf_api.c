@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.22 2025/03/07 10:51:47 tb Exp $ */
+/* $OpenBSD: conf_api.c,v 1.23 2025/03/07 10:54:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,17 +247,15 @@ CONF_VALUE *
 _CONF_new_section(CONF *conf, const char *section)
 {
 	STACK_OF(CONF_VALUE) *sk = NULL;
-	int ok = 0, i;
+	int ok = 0;
 	CONF_VALUE *v = NULL, *vv;
 
 	if ((sk = sk_CONF_VALUE_new_null()) == NULL)
 		goto err;
 	if ((v = calloc(1, sizeof(*v))) == NULL)
 		goto err;
-	i = strlen(section) + 1;
-	if ((v->section = malloc(i)) == NULL)
+	if ((v->section = strdup(section)) == NULL)
 		goto err;
-	memcpy(v->section, section, i);
 	v->value = (char *)sk;
 
 	vv = lh_CONF_VALUE_insert(conf->data, v);
