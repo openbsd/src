@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.24 2025/03/07 10:57:29 tb Exp $ */
+/* $OpenBSD: conf_api.c,v 1.25 2025/03/07 11:01:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,11 +259,15 @@ _CONF_new_section(CONF *conf, const char *section)
 
 	vv = lh_CONF_VALUE_insert(conf->data, v);
 	OPENSSL_assert(vv == NULL);
+	if (lh_CONF_VALUE_error(conf->data))
+		goto err;
 
 	return v;
 
  err:
 	sk_CONF_VALUE_free(sk);
+	if (v != NULL)
+		free(v->section);
 	free(v);
 
 	return NULL;
