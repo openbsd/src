@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_set_mem_functions.3,v 1.1 2025/03/08 17:12:55 tb Exp $
+.\"	$OpenBSD: CRYPTO_set_mem_functions.3,v 1.2 2025/03/08 17:17:09 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -15,10 +15,9 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: March 8 2025 $
-.Dt CRYPTO_GET_MEM_FUNCTIONS 3
+.Dt CRYPTO_SET_MEM_FUNCTIONS 3
 .Os
 .Sh NAME
-.Nm CRYPTO_get_mem_functions ,
 .Nm CRYPTO_set_mem_functions ,
 .Nm CRYPTO_mem_ctrl ,
 .Nm CRYPTO_mem_leaks ,
@@ -27,17 +26,11 @@
 .Nd legacy OpenSSL memory allocation control
 .Sh SYNOPSIS
 .In openssl/crypto.h
-.Ft void
-.Fo CRYPTO_get_mem_functions
-.Fa "void *(**m)(size_t)"
-.Fa "void *(**r)(void *, size_t)"
-.Fa "void (**f)(void *)"
-.Fc
 .Ft int
 .Fo CRYPTO_set_mem_functions
-.Fa "void *(*m)(size_t)"
-.Fa "void *(*r)(void *, size_t)"
-.Fa "void (*f)(void *)"
+.Fa "void *(*m)(size_t, const char *, int)"
+.Fa "void *(*r)(void *, size_t, const char *, int)"
+.Fa "void (*f)(void *, const char *, int)"
 .Fc
 .Ft int
 .Fo CRYPTO_mem_ctrl
@@ -67,15 +60,6 @@
 Do not use any of the interfaces documented here.
 They are provided purely for compatibility with legacy application code.
 .Pp
-.Fn CRYPTO_get_mem_functions
-assigns pointers to the C library functions
-.Xr malloc 3 ,
-.Xr realloc 3 ,
-and
-.Xr free 3
-to those of its arguments that are not
-.Dv NULL .
-.Pp
 .Fn CRYPTO_set_mem_functions ,
 .Fn CRYPTO_mem_ctrl ,
 .Fn CRYPTO_mem_leaks ,
@@ -104,8 +88,6 @@ always return -1.
 and
 .Fn CRYPTO_mem_leaks_fp
 first appeared in SSLeay 0.6.4.
-.Fn CRYPTO_get_mem_functions
-and
 .Fn CRYPTO_set_mem_functions
 first appeared in SSLeay 0.6.5.
 .Fn CRYPTO_mem_leaks_cb
