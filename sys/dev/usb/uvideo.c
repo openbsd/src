@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.249 2025/03/04 22:59:01 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.250 2025/03/08 08:27:32 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2170,7 +2170,8 @@ uvideo_vs_close(struct uvideo_softc *sc)
 		usbd_delay_ms(sc->sc_udev, 100);
 
 		/* switch back to default interface (turns off cam LED) */
-		(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
+		if (!usbd_is_dying(sc->sc_udev))
+			(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
 	}
 }
 
