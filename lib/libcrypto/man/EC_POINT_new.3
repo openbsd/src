@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.15 2025/03/08 16:38:13 tb Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.16 2025/03/08 16:51:34 tb Exp $
 .\" full merge up to: OpenSSL 50db8163 Jul 30 16:56:41 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -63,8 +63,6 @@
 .Nm EC_POINT_set_affine_coordinates_GFp ,
 .Nm EC_POINT_get_affine_coordinates ,
 .Nm EC_POINT_get_affine_coordinates_GFp ,
-.Nm EC_POINT_set_Jprojective_coordinates_GFp ,
-.Nm EC_POINT_get_Jprojective_coordinates_GFp ,
 .Nm EC_POINT_set_compressed_coordinates ,
 .Nm EC_POINT_set_compressed_coordinates_GFp ,
 .Nm EC_POINT_point2oct ,
@@ -138,24 +136,6 @@
 .Fa "const EC_POINT *p"
 .Fa "BIGNUM *x"
 .Fa "BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_set_Jprojective_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "const BIGNUM *y"
-.Fa "const BIGNUM *z"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_get_Jprojective_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "const EC_POINT *p"
-.Fa "BIGNUM *x"
-.Fa "BIGNUM *y"
-.Fa "BIGNUM *z"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
@@ -320,34 +300,6 @@ and the function
 is a deprecated synonym for
 .Fn EC_POINT_get_affine_coordinates .
 .Pp
-As well as the affine coordinates, a point can alternatively be
-described in terms of its Jacobian projective coordinates.
-Jacobian projective coordinates are expressed as three values
-.Fa x ,
-.Fa y ,
-and
-.Fa z .
-Working in this coordinate system provides more efficient point
-multiplication operations.
-A mapping exists between Jacobian projective coordinates and affine
-coordinates.
-A Jacobian projective coordinate
-.Pq Fa x , y , z
-can be written as an affine coordinate as
-.Pp
-.Dl (x/(z^2), y/(z^3)) .
-.Pp
-Conversion to Jacobian projective from affine coordinates is simple.
-The coordinate
-.Pq Fa x , y
-is mapped to
-.Pq Fa x , y , No 1 .
-To set or get the projective coordinates use
-.Fn EC_POINT_set_Jprojective_coordinates_GFp
-and
-.Fn EC_POINT_get_Jprojective_coordinates_GFp ,
-respectively.
-.Pp
 Points can also be described in terms of their compressed coordinates.
 For a point
 .Pq Fa x , y ,
@@ -438,8 +390,6 @@ on error.
 The following functions return 1 on success or 0 on error:
 .Fn EC_POINT_copy ,
 .Fn EC_POINT_set_to_infinity ,
-.Fn EC_POINT_set_Jprojective_coordinates_GFp ,
-.Fn EC_POINT_get_Jprojective_coordinates_GFp ,
 .Fn EC_POINT_set_affine_coordinates ,
 .Fn EC_POINT_set_affine_coordinates_GFp ,
 .Fn EC_POINT_get_affine_coordinates ,
@@ -499,8 +449,6 @@ on error.
 .Fn EC_POINT_set_to_infinity ,
 .Fn EC_POINT_set_affine_coordinates_GFp ,
 .Fn EC_POINT_get_affine_coordinates_GFp ,
-.Fn EC_POINT_set_Jprojective_coordinates_GFp ,
-.Fn EC_POINT_get_Jprojective_coordinates_GFp ,
 .Fn EC_POINT_set_compressed_coordinates_GFp ,
 .Fn EC_POINT_point2oct ,
 and
