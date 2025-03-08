@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.16 2025/03/08 16:51:34 tb Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.17 2025/03/08 17:04:07 tb Exp $
 .\" full merge up to: OpenSSL 50db8163 Jul 30 16:56:41 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -57,7 +57,6 @@
 .Nm EC_POINT_clear_free ,
 .Nm EC_POINT_copy ,
 .Nm EC_POINT_dup ,
-.Nm EC_POINT_method_of ,
 .Nm EC_POINT_set_to_infinity ,
 .Nm EC_POINT_set_affine_coordinates ,
 .Nm EC_POINT_set_affine_coordinates_GFp ,
@@ -96,10 +95,6 @@
 .Fo EC_POINT_dup
 .Fa "const EC_POINT *src"
 .Fa "const EC_GROUP *group"
-.Fc
-.Ft const EC_METHOD *
-.Fo EC_POINT_method_of
-.Fa "const EC_POINT *point"
 .Fc
 .Ft int
 .Fo EC_POINT_set_to_infinity
@@ -255,12 +250,6 @@ to the newly created
 .Vt EC_POINT
 object.
 .Pp
-.Fn EC_POINT_method_of
-obtains the
-.Vt EC_METHOD
-associated with
-.Fa point .
-.Pp
 A valid point on a curve is the special point at infinity.
 A point is set to be at infinity by calling
 .Fn EC_POINT_set_to_infinity .
@@ -399,12 +388,6 @@ The following functions return 1 on success or 0 on error:
 and
 .Fn EC_POINT_oct2point .
 .Pp
-.Fn EC_POINT_method_of
-returns the
-.Vt EC_METHOD
-associated with the supplied
-.Vt EC_POINT .
-.Pp
 .Fn EC_POINT_point2oct
 returns the length of the required buffer, or 0 on error.
 .Pp
@@ -445,7 +428,6 @@ on error.
 .Fn EC_POINT_free ,
 .Fn EC_POINT_clear_free ,
 .Fn EC_POINT_copy ,
-.Fn EC_POINT_method_of ,
 .Fn EC_POINT_set_to_infinity ,
 .Fn EC_POINT_set_affine_coordinates_GFp ,
 .Fn EC_POINT_get_affine_coordinates_GFp ,
