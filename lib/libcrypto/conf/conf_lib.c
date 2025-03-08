@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.24 2024/08/31 09:50:52 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.25 2025/03/08 09:35:53 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -131,6 +131,8 @@ LCRYPTO_ALIAS(NCONF_load_bio);
 STACK_OF(CONF_VALUE) *
 NCONF_get_section(const CONF *conf, const char *section)
 {
+	CONF_VALUE *v;
+
 	if (conf == NULL) {
 		CONFerror(CONF_R_NO_CONF);
 		return NULL;
@@ -141,7 +143,10 @@ NCONF_get_section(const CONF *conf, const char *section)
 		return NULL;
 	}
 
-	return _CONF_get_section_values(conf, section);
+	if ((v = _CONF_get_section(conf, section)) == NULL)
+		return NULL;
+
+	return (STACK_OF(CONF_VALUE) *)v->value;
 }
 LCRYPTO_ALIAS(NCONF_get_section);
 

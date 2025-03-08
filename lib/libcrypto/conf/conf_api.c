@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.25 2025/03/07 11:01:12 tb Exp $ */
+/* $OpenBSD: conf_api.c,v 1.26 2025/03/08 09:35:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,19 +89,6 @@ _CONF_get_section(const CONF *conf, const char *section)
 	vv.section = (char *)section;
 	v = lh_CONF_VALUE_retrieve(conf->data, &vv);
 	return (v);
-}
-
-/* Up until OpenSSL 0.9.5a, this was CONF_get_section */
-STACK_OF(CONF_VALUE) *
-_CONF_get_section_values(const CONF *conf, const char *section)
-{
-	CONF_VALUE *v;
-
-	v = _CONF_get_section(conf, section);
-	if (v != NULL)
-		return ((STACK_OF(CONF_VALUE) *)v->value);
-	else
-		return (NULL);
 }
 
 int

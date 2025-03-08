@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_local.h,v 1.9 2024/10/18 11:12:10 tb Exp $ */
+/* $OpenBSD: conf_local.h,v 1.10 2025/03/08 09:35:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,8 +88,6 @@ void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
 
 CONF_VALUE *_CONF_new_section(CONF *conf, const char *section);
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section);
-STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
-    const char *section);
 
 int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value);
 char *_CONF_get_string(const CONF *conf, const char *section,
