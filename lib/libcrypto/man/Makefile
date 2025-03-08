@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.306 2025/03/08 16:38:13 tb Exp $
+# $OpenBSD: Makefile,v 1.307 2025/03/08 17:12:55 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -105,10 +105,10 @@ MAN=	\
 	CMS_verify_receipt.3 \
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
-	CRYPTO_get_mem_functions.3 \
 	CRYPTO_lock.3 \
 	CRYPTO_memcmp.3 \
 	CRYPTO_set_ex_data.3 \
+	CRYPTO_set_mem_functions.3 \
 	ChaCha.3 \
 	DES_set_key.3 \
 	DH_generate_key.3 \
