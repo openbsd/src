@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_copy.3,v 1.15 2025/03/08 16:38:13 tb Exp $
+.\" $OpenBSD: EC_GROUP_copy.3,v 1.16 2025/03/08 16:40:59 tb Exp $
 .\" full merge up to: OpenSSL d900a015 Oct 8 14:40:42 2015 +0200
 .\" selective merge up to: OpenSSL 24c23e1f Aug 22 10:51:25 2019 +0530
 .\"
@@ -57,7 +57,6 @@
 .Sh NAME
 .Nm EC_GROUP_copy ,
 .Nm EC_GROUP_dup ,
-.Nm EC_GROUP_method_of ,
 .Nm EC_GROUP_set_generator ,
 .Nm EC_GROUP_get0_generator ,
 .Nm EC_GROUP_get_order ,
@@ -89,10 +88,6 @@
 .Ft EC_GROUP *
 .Fo EC_GROUP_dup
 .Fa "const EC_GROUP *src"
-.Fc
-.Ft const EC_METHOD *
-.Fo EC_GROUP_method_of
-.Fa "const EC_GROUP *group"
 .Fc
 .Ft int
 .Fo EC_GROUP_set_generator
@@ -212,12 +207,6 @@ object and copies the content from
 to the newly created
 .Vt EC_GROUP
 object.
-.Pp
-.Fn EC_GROUP_method_of
-obtains the
-.Vt EC_METHOD
-of
-.Fa group .
 .Pp
 .Fn EC_GROUP_set_generator
 sets curve parameters that must be agreed by all participants using
@@ -399,13 +388,6 @@ returns a pointer to the duplicated curve or
 .Dv NULL
 on error.
 .Pp
-.Fn EC_GROUP_method_of
-returns the
-.Vt EC_METHOD
-implementation in use for the given curve or
-.Dv NULL
-on error.
-.Pp
 .Fn EC_GROUP_get0_generator
 returns the generator for the given curve or
 .Dv NULL
@@ -478,7 +460,6 @@ always returns 0.
 .Xr EC_POINT_new 3
 .Sh HISTORY
 .Fn EC_GROUP_copy ,
-.Fn EC_GROUP_method_of ,
 .Fn EC_GROUP_set_generator ,
 .Fn EC_GROUP_get0_generator ,
 .Fn EC_GROUP_get_order ,
