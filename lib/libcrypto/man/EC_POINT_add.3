@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_POINT_add.3,v 1.13 2025/03/08 16:38:13 tb Exp $
+.\"	$OpenBSD: EC_POINT_add.3,v 1.14 2025/03/08 16:44:41 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -61,9 +61,7 @@
 .Nm EC_POINT_make_affine ,
 .Nm EC_POINTs_make_affine ,
 .Nm EC_POINTs_mul ,
-.Nm EC_POINT_mul ,
-.Nm EC_GROUP_precompute_mult ,
-.Nm EC_GROUP_have_precompute_mult
+.Nm EC_POINT_mul
 .Nd perform mathematical operations and tests on EC_POINT objects
 .Sh SYNOPSIS
 .In openssl/ec.h
@@ -138,15 +136,6 @@
 .Fa "const EC_POINT *q"
 .Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_GROUP_precompute_mult
-.Fa "EC_GROUP *group"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_GROUP_have_precompute_mult
-.Fa "const EC_GROUP *group"
 .Fc
 .Sh DESCRIPTION
 These functions operate on
@@ -248,13 +237,6 @@ the value
 .Fa n
 may be
 .Dv NULL .
-.Pp
-The function
-.Fn EC_GROUP_precompute_mult
-stores multiples of the generator for faster point multiplication,
-whilst
-.Fn EC_GROUP_have_precompute_mult
-tests whether precomputation has already been done.
 See
 .Xr EC_GROUP_copy 3
 for information about the generator.
@@ -266,9 +248,8 @@ The following functions return 1 on success or 0 on error:
 .Fn EC_POINT_make_affine ,
 .Fn EC_POINTs_make_affine ,
 .Fn EC_POINT_mul ,
-.Fn EC_POINTs_mul ,
 and
-.Fn EC_GROUP_precompute_mult .
+.Fn EC_POINTs_mul ,
 .Pp
 .Fn EC_POINT_is_at_infinity
 returns 1 if the point is at infinity or 0 otherwise.
@@ -278,9 +259,6 @@ returns 1 if the point is on the curve, 0 if not, or -1 on error.
 .Pp
 .Fn EC_POINT_cmp
 returns 1 if the points are not equal, 0 if they are, or -1 on error.
-.Pp
-.Fn EC_GROUP_have_precompute_mult
-returns 1 if a precomputation has been done or 0 if not.
 .Sh SEE ALSO
 .Xr d2i_ECPKParameters 3 ,
 .Xr EC_GROUP_copy 3 ,
@@ -297,12 +275,7 @@ returns 1 if a precomputation has been done or 0 if not.
 .Fn EC_POINT_make_affine ,
 .Fn EC_POINTs_make_affine ,
 .Fn EC_POINTs_mul ,
-.Fn EC_POINT_mul ,
 and
-.Fn EC_GROUP_precompute_mult
+.Fn EC_POINT_mul
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
-.Pp
-.Fn EC_GROUP_have_precompute_mult
-first appeared in OpenSSL 0.9.8 and has been available since
-.Ox 4.5 .
