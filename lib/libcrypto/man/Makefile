@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.305 2024/12/27 15:30:17 schwarze Exp $
+# $OpenBSD: Makefile,v 1.306 2025/03/08 16:38:13 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -133,7 +133,6 @@ MAN=	\
 	DSA_size.3 \
 	ECDH_compute_key.3 \
 	ECDSA_SIG_new.3 \
-	EC_GFp_simple_method.3 \
 	EC_GROUP_copy.3 \
 	EC_GROUP_new.3 \
 	EC_KEY_METHOD_new.3 \
