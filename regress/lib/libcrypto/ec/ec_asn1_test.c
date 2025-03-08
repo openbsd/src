@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.31 2024/12/24 18:32:31 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.32 2025/03/08 20:09:35 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -23,6 +23,10 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
+
+#include "ec_local.h"
+
+EC_GROUP *EC_GROUP_new(const EC_METHOD *);
 
 /* set to 0 if/when we are going to enforce 0 <= a,b < p. */
 #define NEGATIVE_CURVE_COEFFICIENTS_ALLOWED	1
@@ -328,12 +332,6 @@ ec_group_roundtrip_curve(const EC_GROUP *group, const char *descr, int nid)
 		goto err;
 	}
 
-	if (EC_GROUP_method_of(group) == EC_GFp_mont_method()) {
-		if (EC_GROUP_cmp(group, new_group, NULL) != 0) {
-			fprintf(stderr, "FAIL: %s %d groups mismatch\n", descr, nid);
-			goto err;
-		}
-	}
 	if (EC_GROUP_get_asn1_flag(group) != EC_GROUP_get_asn1_flag(new_group)) {
 		fprintf(stderr, "FAIL: %s %d asn1_flag %x != %x\n", descr, nid,
 		    EC_GROUP_get_asn1_flag(group),
