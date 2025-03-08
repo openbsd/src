@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.15 2025/03/08 16:55:53 tb Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.16 2025/03/08 17:02:59 tb Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -20,7 +20,6 @@
 .Sh NAME
 .Nm X509_OBJECT_get_type ,
 .Nm X509_OBJECT_new ,
-.Nm X509_OBJECT_free_contents ,
 .Nm X509_OBJECT_free ,
 .Nm X509_OBJECT_get0_X509 ,
 .Nm X509_OBJECT_get0_X509_CRL ,
@@ -37,10 +36,6 @@
 .Ft X509_OBJECT *
 .Fo X509_OBJECT_new
 .Fa void
-.Fc
-.Ft void
-.Fo X509_OBJECT_free_contents
-.Fa "X509_OBJECT *obj"
 .Fc
 .Ft void
 .Fo X509_OBJECT_free
@@ -102,7 +97,7 @@ If
 contains an
 .Vt X509
 certificate,
-.Fn X509_OBJECT_free_contents
+.Fn X509_OBJECT_free
 calls
 .Xr X509_free 3
 on that inner object.
@@ -113,16 +108,8 @@ contains an
 certificate revocation list, it calls
 .Xr X509_CRL_free 3
 on that inner list.
-Otherwise, no action occurs.
-.Fn X509_OBJECT_free_contents
-does not free
-.Fa obj
-itself.
-.Pp
 .Fn X509_OBJECT_free
-calls
-.Fn X509_OBJECT_free_contents
-and then frees the storage used for the
+then frees the storage used for the
 .Fa obj
 itself.
 .Pp
@@ -244,10 +231,6 @@ or no match is found.
 .Xr X509_STORE_load_locations 3 ,
 .Xr X509_STORE_new 3
 .Sh HISTORY
-.Fn X509_OBJECT_free_contents
-first appeared in SSLeay 0.8.0 and have been available since
-.Ox 2.4 .
-.Pp
 .Fn X509_OBJECT_idx_by_subject ,
 .Fn X509_OBJECT_retrieve_by_subject ,
 and
