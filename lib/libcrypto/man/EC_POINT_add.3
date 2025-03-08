@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_POINT_add.3,v 1.14 2025/03/08 16:44:41 tb Exp $
+.\"	$OpenBSD: EC_POINT_add.3,v 1.15 2025/03/08 16:48:22 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -59,8 +59,6 @@
 .Nm EC_POINT_is_on_curve ,
 .Nm EC_POINT_cmp ,
 .Nm EC_POINT_make_affine ,
-.Nm EC_POINTs_make_affine ,
-.Nm EC_POINTs_mul ,
 .Nm EC_POINT_mul
 .Nd perform mathematical operations and tests on EC_POINT objects
 .Sh SYNOPSIS
@@ -109,23 +107,6 @@
 .Fo EC_POINT_make_affine
 .Fa "const EC_GROUP *group"
 .Fa "EC_POINT *point"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINTs_make_affine
-.Fa "const EC_GROUP *group"
-.Fa "size_t num"
-.Fa "EC_POINT *points[]"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINTs_mul
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *r"
-.Fa "const BIGNUM *n"
-.Fa "size_t num"
-.Fa "const EC_POINT *p[]"
-.Fa "const BIGNUM *m[]"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
@@ -180,21 +161,6 @@ tests whether the supplied point is on the curve or not.
 compares the two supplied points and tests whether or not they are
 equal.
 .Pp
-The functions
-.Fn EC_POINT_make_affine
-and
-.Fn EC_POINTs_make_affine
-force the internal representation of the
-.Vt EC_POINT Ns s
-into the affine coordinate system.
-In the case of
-.Fn EC_POINTs_make_affine ,
-the value
-.Fa num
-provides the number of points in the array
-.Fa points
-to be forced.
-.Pp
 .Fn EC_POINT_mul
 calculates the value
 .Pp
@@ -210,33 +176,6 @@ in which case the result is just
 .Pp
 .Dl q * m.
 .Pp
-.Fn EC_POINTs_mul
-only supports the values 0 and 1 for
-.Fa num .
-If it is 1, then
-.Fn EC_POINTs_mul
-calculates the value
-.Pp
-.Dl generator * n + q[0] * m[0].
-.Pp
-If
-.Fa num
-is 0 then
-.Fa q
-and
-.Fa m
-must be
-.Dv NULL ,
-and the result is just
-.Pp
-.Dl generator * n .
-.Pp
-As for
-.Fn EC_POINT_mul ,
-the value
-.Fa n
-may be
-.Dv NULL .
 See
 .Xr EC_GROUP_copy 3
 for information about the generator.
@@ -246,10 +185,8 @@ The following functions return 1 on success or 0 on error:
 .Fn EC_POINT_dbl ,
 .Fn EC_POINT_invert ,
 .Fn EC_POINT_make_affine ,
-.Fn EC_POINTs_make_affine ,
-.Fn EC_POINT_mul ,
 and
-.Fn EC_POINTs_mul ,
+.Fn EC_POINT_mul
 .Pp
 .Fn EC_POINT_is_at_infinity
 returns 1 if the point is at infinity or 0 otherwise.
@@ -273,8 +210,6 @@ returns 1 if the points are not equal, 0 if they are, or -1 on error.
 .Fn EC_POINT_is_on_curve ,
 .Fn EC_POINT_cmp ,
 .Fn EC_POINT_make_affine ,
-.Fn EC_POINTs_make_affine ,
-.Fn EC_POINTs_mul ,
 and
 .Fn EC_POINT_mul
 first appeared in OpenSSL 0.9.7 and have been available since
