@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.14 2022/01/15 23:38:50 jsg Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.15 2025/03/08 16:55:53 tb Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: March 8 2025 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
 .Nm X509_OBJECT_get_type ,
 .Nm X509_OBJECT_new ,
-.Nm X509_OBJECT_up_ref_count ,
 .Nm X509_OBJECT_free_contents ,
 .Nm X509_OBJECT_free ,
 .Nm X509_OBJECT_get0_X509 ,
@@ -38,10 +37,6 @@
 .Ft X509_OBJECT *
 .Fo X509_OBJECT_new
 .Fa void
-.Fc
-.Ft int
-.Fo X509_OBJECT_up_ref_count
-.Fa "X509_OBJECT *obj"
 .Fc
 .Ft void
 .Fo X509_OBJECT_free_contents
@@ -101,17 +96,6 @@ It sets the object type to
 .Dv X509_LU_NONE
 and the pointer to the certificate or CRL to
 .Dv NULL .
-.Pp
-If
-.Fa obj
-contains an
-.Vt X509
-certificate or an
-.Vt X509_CRL
-certificate revocation list,
-.Fn X509_OBJECT_up_ref_count
-increments the reference count of that inner object by 1.
-Otherwise, no action occurs.
 .Pp
 If
 .Fa obj
@@ -184,9 +168,6 @@ contains a certificate,
 if it contains a certificate revocation list, or
 .Dv X509_LU_NONE
 if it contains neither.
-.Pp
-.Fn X509_OBJECT_up_ref_count
-returns 1 on success and 0 on failure.
 .Pp
 .Fn X509_OBJECT_new
 returns the new object or
@@ -263,8 +244,6 @@ or no match is found.
 .Xr X509_STORE_load_locations 3 ,
 .Xr X509_STORE_new 3
 .Sh HISTORY
-.Fn X509_OBJECT_up_ref_count
-and
 .Fn X509_OBJECT_free_contents
 first appeared in SSLeay 0.8.0 and have been available since
 .Ox 2.4 .
