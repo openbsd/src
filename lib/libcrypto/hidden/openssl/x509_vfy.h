@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.9 2024/03/02 10:57:03 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.10 2025/03/09 15:20:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -32,7 +32,6 @@ LCRYPTO_USED(X509_OBJECT_free);
 LCRYPTO_USED(X509_OBJECT_idx_by_subject);
 LCRYPTO_USED(X509_OBJECT_retrieve_by_subject);
 LCRYPTO_USED(X509_OBJECT_retrieve_match);
-LCRYPTO_USED(X509_OBJECT_up_ref_count);
 LCRYPTO_USED(X509_OBJECT_get_type);
 LCRYPTO_USED(X509_OBJECT_get0_X509);
 LCRYPTO_USED(X509_OBJECT_get0_X509_CRL);

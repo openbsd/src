@@ -2487,7 +2487,6 @@ X509_OBJECT_idx_by_subject
 X509_OBJECT_new
 X509_OBJECT_retrieve_by_subject
 X509_OBJECT_retrieve_match
-X509_OBJECT_up_ref_count
 X509_PKEY_free
 X509_PKEY_new
 X509_PUBKEY_free
