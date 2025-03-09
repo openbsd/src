@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_openssl.c,v 1.28 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: ui_openssl.c,v 1.29 2025/03/09 15:25:53 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) and others
  * for the OpenSSL project 2001.
  */
@@ -153,7 +153,7 @@ static int echo_console(UI *ui);
 static int noecho_console(UI *ui);
 static int close_console(UI *ui);
 
-static UI_METHOD ui_openssl = {
+static const UI_METHOD ui_openssl = {
 	.name = "OpenSSL default user interface",
 	.ui_open_session = open_console,
 	.ui_write_string = write_string,
@@ -162,7 +162,7 @@ static UI_METHOD ui_openssl = {
 };
 
 /* The method with all the built-in thingies */
-UI_METHOD *
+const UI_METHOD *
 UI_OpenSSL(void)
 {
 	return &ui_openssl;

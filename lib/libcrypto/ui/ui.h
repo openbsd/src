@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.19 2024/08/31 10:28:03 tb Exp $ */
+/* $OpenBSD: ui.h,v 1.20 2025/03/09 15:25:53 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -253,7 +253,7 @@ const UI_METHOD *UI_get_method(UI *ui);
 const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth);
 
 /* The method with all the built-in thingies */
-UI_METHOD *UI_OpenSSL(void);
+const UI_METHOD *UI_OpenSSL(void);
 
 const UI_METHOD *UI_null(void);
 
