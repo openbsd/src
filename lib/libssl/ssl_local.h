@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.26 2025/01/18 12:20:37 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.27 2025/03/09 15:12:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1443,8 +1443,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     unsigned int mac_secret_length);
 int SSL_state_func_code(int _state);
 
-#define SSLerror(s, r) SSL_error_internal(s, r, __FILE__, __LINE__)
-#define SSLerrorx(r) ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),__FILE__,__LINE__)
+#define SSLerror(s, r) SSL_error_internal(s, r, OPENSSL_FILE, OPENSSL_LINE)
+#define SSLerrorx(r) ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
 void SSL_error_internal(const SSL *s, int r, char *f, int l);
 
 #ifndef OPENSSL_NO_SRTP

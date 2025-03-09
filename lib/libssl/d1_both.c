@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.84 2022/12/26 07:31:44 jmc Exp $ */
+/* $OpenBSD: d1_both.c,v 1.85 2025/03/09 15:12:18 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -868,7 +868,7 @@ dtls1_read_failed(SSL *s, int code)
 	if (code > 0) {
 #ifdef DEBUG
 		fprintf(stderr, "invalid state reached %s:%d",
-		    __FILE__, __LINE__);
+		    OPENSSL_FILE, OPENSSL_LINE);
 #endif
 		return 1;
 	}

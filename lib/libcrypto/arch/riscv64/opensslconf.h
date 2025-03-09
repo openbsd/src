@@ -7,6 +7,16 @@
 
 #undef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
+#ifndef OPENSSL_FILE
+#ifdef OPENSSL_NO_FILENAMES
+#define OPENSSL_FILE ""
+#define OPENSSL_LINE 0
+#else
+#define OPENSSL_FILE __FILE__
+#define OPENSSL_LINE __LINE__
+#endif
+#endif
+
 #if defined(HEADER_IDEA_H) && !defined(IDEA_INT)
 #define IDEA_INT unsigned int
 #endif

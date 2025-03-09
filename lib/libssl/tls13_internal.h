@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.104 2024/09/09 03:32:29 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.105 2025/03/09 15:12:18 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -425,10 +425,10 @@ int tls13_error_setx(struct tls13_error *error, int code, int subcode,
     const char *file, int line, const char *fmt, ...);
 
 #define tls13_set_error(ctx, code, subcode, fmt, ...) \
-	tls13_error_set(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
+	tls13_error_set(&(ctx)->error, (code), (subcode), OPENSSL_FILE, OPENSSL_LINE, \
 	    (fmt), __VA_ARGS__)
 #define tls13_set_errorx(ctx, code, subcode, fmt, ...) \
-	tls13_error_setx(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
+	tls13_error_setx(&(ctx)->error, (code), (subcode), OPENSSL_FILE, OPENSSL_LINE, \
 	    (fmt), __VA_ARGS__)
 
 int tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
