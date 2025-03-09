@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12_local.h,v 1.5 2024/03/02 10:15:16 tb Exp $ */
+/* $OpenBSD: pkcs12_local.h,v 1.6 2025/03/09 15:45:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -151,9 +151,6 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     int nid1, int nid2);
 
 int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
-    int saltlen, int id, int iter, int n, unsigned char *out,
-    const EVP_MD *md_type);
-int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n, unsigned char *out,
     const EVP_MD *md_type);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.35 2024/03/02 10:15:16 tb Exp $ */
+/* $OpenBSD: p12_key.c,v 1.36 2025/03/09 15:45:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -194,3 +194,4 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 
 	return ret;
 }
+LCRYPTO_ALIAS(PKCS12_key_gen_uni);

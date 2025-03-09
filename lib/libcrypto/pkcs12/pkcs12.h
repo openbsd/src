@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.28 2024/03/02 10:15:16 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.29 2025/03/09 15:45:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -182,6 +182,9 @@ STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
 
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
+int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
+    int saltlen, int id, int iter, int n, unsigned char *out,
+    const EVP_MD *md_type);
 int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen);
 int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
     unsigned char *salt, int saltlen, int iter,

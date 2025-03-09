@@ -1788,6 +1788,7 @@ PKCS12_free
 PKCS12_get0_mac
 PKCS12_get_friendlyname
 PKCS12_it
+PKCS12_key_gen_uni
 PKCS12_mac_present
 PKCS12_new
 PKCS12_newpass
