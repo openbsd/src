@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.65 2025/01/25 13:15:21 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.66 2025/03/09 15:33:35 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -79,7 +79,7 @@
 
 __BEGIN_HIDDEN_DECLS
 
-struct ec_method_st {
+typedef struct ec_method_st {
 	int (*group_set_curve)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a,
 	    const BIGNUM *b, BN_CTX *);
 	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a,
@@ -124,7 +124,7 @@ struct ec_method_st {
 	    BN_CTX *);
 	int (*field_decode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 	    BN_CTX *);
-} /* EC_METHOD */;
+} EC_METHOD;
 
 struct ec_group_st {
 	const EC_METHOD *meth;
@@ -169,6 +169,9 @@ struct ec_point_st {
 	BIGNUM *Z;
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;
+
+const EC_METHOD *EC_GFp_simple_method(void);
+const EC_METHOD *EC_GFp_mont_method(void);
 
 /* Compute r = generator * m + point * n in non-constant time. */
 int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,

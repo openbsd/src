@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.7 2024/10/22 15:54:33 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.8 2025/03/09 15:33:35 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -25,14 +25,9 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(EC_GFp_simple_method);
-LCRYPTO_USED(EC_GFp_mont_method);
-LCRYPTO_USED(EC_GROUP_new);
 LCRYPTO_USED(EC_GROUP_free);
 LCRYPTO_USED(EC_GROUP_copy);
 LCRYPTO_USED(EC_GROUP_dup);
-LCRYPTO_USED(EC_GROUP_method_of);
-LCRYPTO_USED(EC_METHOD_get_field_type);
 LCRYPTO_USED(EC_GROUP_set_generator);
 LCRYPTO_USED(EC_GROUP_get0_generator);
 LCRYPTO_USED(EC_GROUP_get_order);
@@ -62,7 +57,6 @@ LCRYPTO_USED(EC_POINT_new);
 LCRYPTO_USED(EC_POINT_free);
 LCRYPTO_USED(EC_POINT_copy);
 LCRYPTO_USED(EC_POINT_dup);
-LCRYPTO_USED(EC_POINT_method_of);
 LCRYPTO_USED(EC_POINT_set_to_infinity);
 LCRYPTO_USED(EC_POINT_set_affine_coordinates);
 LCRYPTO_USED(EC_POINT_get_affine_coordinates);

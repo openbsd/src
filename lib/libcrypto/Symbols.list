@@ -861,8 +861,6 @@ ECPKParameters_print_fp
 ECParameters_dup
 ECParameters_print
 ECParameters_print_fp
-EC_GFp_mont_method
-EC_GFp_simple_method
 EC_GROUP_check
 EC_GROUP_check_discriminant
 EC_GROUP_clear_free
@@ -883,8 +881,6 @@ EC_GROUP_get_order
 EC_GROUP_get_point_conversion_form
 EC_GROUP_get_seed_len
 EC_GROUP_have_precompute_mult
-EC_GROUP_method_of
-EC_GROUP_new
 EC_GROUP_new_by_curve_name
 EC_GROUP_new_curve_GFp
 EC_GROUP_order_bits
@@ -942,7 +938,6 @@ EC_KEY_set_private_key
 EC_KEY_set_public_key
 EC_KEY_set_public_key_affine_coordinates
 EC_KEY_up_ref
-EC_METHOD_get_field_type
 EC_POINT_add
 EC_POINT_bn2point
 EC_POINT_clear_free
@@ -959,7 +954,6 @@ EC_POINT_invert
 EC_POINT_is_at_infinity
 EC_POINT_is_on_curve
 EC_POINT_make_affine
-EC_POINT_method_of
 EC_POINT_mul
 EC_POINT_new
 EC_POINT_oct2point
