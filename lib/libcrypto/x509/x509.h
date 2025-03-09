@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.120 2025/03/01 11:31:28 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.121 2025/03/09 15:17:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -788,7 +788,6 @@ int		X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
 		    unsigned long flags);
 
 #ifndef OPENSSL_NO_BIO
-int		X509_NAME_print(BIO *bp, const X509_NAME *name, int obase);
 int		X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
 		    unsigned long flags);
 int		X509_print_ex(BIO *bp,X509 *x, unsigned long nmflag, unsigned long cflag);

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.36 2025/02/08 03:41:36 tb Exp $ */
+/* $OpenBSD: a_strex.c,v 1.37 2025/03/09 15:17:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -590,7 +590,7 @@ x509_name_entry_include(const X509_NAME_ENTRY *ne)
 	return 0;
 }
 
-int
+static int
 X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
 {
 	CBB cbb;
@@ -640,7 +640,6 @@ X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
 
 	return ret;
 }
-LCRYPTO_ALIAS(X509_NAME_print);
 
 /* Wrappers round the main functions */
 

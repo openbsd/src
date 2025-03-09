@@ -2476,7 +2476,6 @@ X509_NAME_hash_old
 X509_NAME_it
 X509_NAME_new
 X509_NAME_oneline
-X509_NAME_print
 X509_NAME_print_ex
 X509_NAME_print_ex_fp
 X509_NAME_set
