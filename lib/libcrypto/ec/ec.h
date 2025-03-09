@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.51 2025/03/09 15:35:40 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.52 2025/03/09 15:37:31 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -214,8 +214,6 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
     size_t num, const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
 int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
     const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
-int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
-int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 
 int EC_GROUP_get_basis_type(const EC_GROUP *);
 

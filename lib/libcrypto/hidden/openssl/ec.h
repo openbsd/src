@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.9 2025/03/09 15:35:40 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.10 2025/03/09 15:37:31 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -76,8 +76,6 @@ LCRYPTO_USED(EC_POINT_make_affine);
 LCRYPTO_USED(EC_POINTs_make_affine);
 LCRYPTO_USED(EC_POINTs_mul);
 LCRYPTO_USED(EC_POINT_mul);
-LCRYPTO_USED(EC_GROUP_precompute_mult);
-LCRYPTO_USED(EC_GROUP_have_precompute_mult);
 LCRYPTO_USED(EC_GROUP_get_basis_type);
 LCRYPTO_USED(d2i_ECPKParameters);
 LCRYPTO_USED(i2d_ECPKParameters);

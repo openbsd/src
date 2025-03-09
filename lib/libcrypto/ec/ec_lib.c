@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.118 2025/03/09 15:35:40 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.119 2025/03/09 15:37:31 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1403,19 +1403,3 @@ EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	return 0;
 }
 LCRYPTO_ALIAS(EC_POINTs_mul);
-
-int
-EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx_in)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_GROUP_precompute_mult);
-
-int
-EC_GROUP_have_precompute_mult(const EC_GROUP *group)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_GROUP_have_precompute_mult);

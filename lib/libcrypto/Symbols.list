@@ -879,11 +879,9 @@ EC_GROUP_get_degree
 EC_GROUP_get_order
 EC_GROUP_get_point_conversion_form
 EC_GROUP_get_seed_len
-EC_GROUP_have_precompute_mult
 EC_GROUP_new_by_curve_name
 EC_GROUP_new_curve_GFp
 EC_GROUP_order_bits
-EC_GROUP_precompute_mult
 EC_GROUP_set_asn1_flag
 EC_GROUP_set_curve
 EC_GROUP_set_curve_GFp
