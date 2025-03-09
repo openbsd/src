@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.46 2025/01/12 00:18:15 schwarze Exp $
+# $OpenBSD: security,v 1.47 2025/03/09 20:10:17 phessler Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -602,7 +602,7 @@ sub find_special_files {
 		$file->{group}   = (getgrgid $gid)[0] // $gid;
 		$file->{size}    = $size;
 		@$file{qw(wday mon day time year)} =
-		    split ' ', localtime $mtime;
+		    split ' ', gmtime $mtime;
 	}}, @fs);
 
 	nag $uudecode_is_setuid, 'Uudecode is setuid.';
