@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.53 2025/03/09 15:39:39 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.54 2025/03/09 15:42:19 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -204,10 +204,6 @@ int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
     BN_CTX *ctx);
 
 int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
-int EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
-    BN_CTX *ctx);
-int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
-    size_t num, const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
 int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
     const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
 

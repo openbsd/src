@@ -961,8 +961,6 @@ EC_POINT_set_affine_coordinates_GFp
 EC_POINT_set_compressed_coordinates
 EC_POINT_set_compressed_coordinates_GFp
 EC_POINT_set_to_infinity
-EC_POINTs_make_affine
-EC_POINTs_mul
 EC_curve_nid2nist
 EC_curve_nist2nid
 EC_get_builtin_curves

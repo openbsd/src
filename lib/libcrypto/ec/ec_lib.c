@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.120 2025/03/09 15:39:39 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.121 2025/03/09 15:42:19 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1362,26 +1362,3 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 	return ret;
 }
 LCRYPTO_ALIAS(EC_POINT_mul);
-
-/*
- * XXX - remove everything below in the next bump
- */
-
-int
-EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
-    BN_CTX *ctx_in)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINTs_make_affine);
-
-int
-EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-    size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
-    BN_CTX *ctx_in)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINTs_mul);
