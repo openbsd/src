@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.53 2024/12/24 18:33:24 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.54 2025/03/09 17:53:11 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1084,7 +1084,7 @@ static const struct ec_curve {
 } ec_curve_list[] = {
 	/* secg curves */
 	{
-		.comment = "SECG curve over a 224 bit prime field",
+		.comment = "SECG curve secp224k1",
 		.nid = NID_secp224k1,
 		.param_len = sizeof(_EC_SECG_PRIME_224K1.p),
 		.p = _EC_SECG_PRIME_224K1.p,
@@ -1096,7 +1096,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "NIST/SECG curve over a 224 bit prime field",
+		.comment = "NIST/SECG curve secp224r1",
 		.nid = NID_secp224r1,
 		.seed_len = sizeof(_EC_NIST_PRIME_224.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_224.p),
@@ -1110,7 +1110,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "SECG curve over a 256 bit prime field",
+		.comment = "SECG curve secp256k1",
 		.nid = NID_secp256k1,
 		.param_len = sizeof(_EC_SECG_PRIME_256K1.p),
 		.p = _EC_SECG_PRIME_256K1.p,
@@ -1123,7 +1123,7 @@ static const struct ec_curve {
 	},
 	/* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
 	{
-		.comment = "NIST/SECG curve over a 384 bit prime field",
+		.comment = "NIST/SECG curve secp384r1",
 		.nid = NID_secp384r1,
 		.seed_len = sizeof(_EC_NIST_PRIME_384.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_384.p),
@@ -1137,7 +1137,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "NIST/SECG curve over a 521 bit prime field",
+		.comment = "NIST/SECG curve secp521r1",
 		.nid = NID_secp521r1,
 		.seed_len = sizeof(_EC_NIST_PRIME_521.seed),
 		.param_len = sizeof(_EC_NIST_PRIME_521.p),
@@ -1152,7 +1152,7 @@ static const struct ec_curve {
 	},
 	/* X9.62 curves */
 	{
-		.comment = "X9.62 curve over a 239 bit prime field",
+		.comment = "X9.62 curve prime239v1",
 		.nid = NID_X9_62_prime239v1,
 		.seed_len = sizeof(_EC_X9_62_PRIME_239V1.seed),
 		.param_len = sizeof(_EC_X9_62_PRIME_239V1.p),
@@ -1166,7 +1166,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "X9.62 curve over a 239 bit prime field",
+		.comment = "X9.62 curve prime239v2",
 		.nid = NID_X9_62_prime239v2,
 		.seed_len = sizeof(_EC_X9_62_PRIME_239V2.seed),
 		.param_len = sizeof(_EC_X9_62_PRIME_239V2.p),
@@ -1180,7 +1180,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "X9.62 curve over a 239 bit prime field",
+		.comment = "X9.62 curve prime239v3",
 		.nid = NID_X9_62_prime239v3,
 		.seed_len = sizeof(_EC_X9_62_PRIME_239V3.seed),
 		.param_len = sizeof(_EC_X9_62_PRIME_239V3.p),
@@ -1194,7 +1194,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "X9.62/SECG curve over a 256 bit prime field",
+		.comment = "X9.62/SECG curve prime256v1",
 		.nid = NID_X9_62_prime256v1,
 		.seed_len = sizeof(_EC_X9_62_PRIME_256V1.seed),
 		.param_len = sizeof(_EC_X9_62_PRIME_256V1.p),
@@ -1209,7 +1209,7 @@ static const struct ec_curve {
 	},
 	/* RFC 5639 curves */
 	{
-		.comment = "RFC 5639 curve over a 224 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP224r1",
 		.nid = NID_brainpoolP224r1,
 		.param_len = sizeof(_EC_brainpoolP224r1.p),
 		.p = _EC_brainpoolP224r1.p,
@@ -1221,7 +1221,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 224 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP224r2",
 		.nid = NID_brainpoolP224t1,
 		.param_len = sizeof(_EC_brainpoolP224t1.p),
 		.p = _EC_brainpoolP224t1.p,
@@ -1233,7 +1233,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 256 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP256r1",
 		.nid = NID_brainpoolP256r1,
 		.param_len = sizeof(_EC_brainpoolP256r1.p),
 		.p = _EC_brainpoolP256r1.p,
@@ -1245,7 +1245,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 256 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP256t1",
 		.nid = NID_brainpoolP256t1,
 		.param_len = sizeof(_EC_brainpoolP256t1.p),
 		.p = _EC_brainpoolP256t1.p,
@@ -1257,7 +1257,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 320 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP320r1",
 		.nid = NID_brainpoolP320r1,
 		.param_len = sizeof(_EC_brainpoolP320r1.p),
 		.p = _EC_brainpoolP320r1.p,
@@ -1269,7 +1269,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 320 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP320t1",
 		.nid = NID_brainpoolP320t1,
 		.param_len = sizeof(_EC_brainpoolP320t1.p),
 		.p = _EC_brainpoolP320t1.p,
@@ -1281,7 +1281,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 384 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP384r1",
 		.nid = NID_brainpoolP384r1,
 		.param_len = sizeof(_EC_brainpoolP384r1.p),
 		.p = _EC_brainpoolP384r1.p,
@@ -1293,7 +1293,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 384 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP384t1",
 		.nid = NID_brainpoolP384t1,
 		.param_len = sizeof(_EC_brainpoolP384t1.p),
 		.p = _EC_brainpoolP384t1.p,
@@ -1305,7 +1305,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 512 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP512r1",
 		.nid = NID_brainpoolP512r1,
 		.param_len = sizeof(_EC_brainpoolP512r1.p),
 		.p = _EC_brainpoolP512r1.p,
@@ -1317,7 +1317,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve over a 512 bit prime field",
+		.comment = "RFC 5639 curve brainpoolP512t1",
 		.nid = NID_brainpoolP512t1,
 		.param_len = sizeof(_EC_brainpoolP512t1.p),
 		.p = _EC_brainpoolP512t1.p,
@@ -1330,7 +1330,7 @@ static const struct ec_curve {
 	},
 	/* ANSSI */
 	{
-		.comment = "FRP256v1",
+		.comment = "ANSSI curve FRP256v1",
 		.nid = NID_FRP256v1,
 		.param_len = sizeof(_EC_FRP256v1.p),
 		.p = _EC_FRP256v1.p,
