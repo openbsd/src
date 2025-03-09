@@ -865,7 +865,6 @@ EC_GROUP_check
 EC_GROUP_check_discriminant
 EC_GROUP_clear_free
 EC_GROUP_cmp
-EC_GROUP_copy
 EC_GROUP_dup
 EC_GROUP_free
 EC_GROUP_get0_generator

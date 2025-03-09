@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.8 2025/03/09 15:33:35 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.9 2025/03/09 15:35:40 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -26,7 +26,6 @@
 #include "crypto_namespace.h"
 
 LCRYPTO_USED(EC_GROUP_free);
-LCRYPTO_USED(EC_GROUP_copy);
 LCRYPTO_USED(EC_GROUP_dup);
 LCRYPTO_USED(EC_GROUP_set_generator);
 LCRYPTO_USED(EC_GROUP_get0_generator);

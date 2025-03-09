@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.50 2025/03/09 15:33:35 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.51 2025/03/09 15:35:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -101,7 +101,6 @@ typedef struct ec_point_st EC_POINT;
 void EC_GROUP_free(EC_GROUP *group);
 void EC_GROUP_clear_free(EC_GROUP *group);
 
-int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
 EC_GROUP *EC_GROUP_dup(const EC_GROUP *src);
 
 int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
