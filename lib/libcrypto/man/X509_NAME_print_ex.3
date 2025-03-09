@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_print_ex.3,v 1.15 2025/03/09 14:02:46 tb Exp $
+.\" $OpenBSD: X509_NAME_print_ex.3,v 1.16 2025/03/09 14:18:24 tb Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -121,7 +121,7 @@ bytes will be written, including the ending NUL, and
 is returned.
 .Pp
 .Fn X509_NAME_oneline
-is a legacy functions which produce a non-standard output form.
+is a legacy function which produces a non-standard output form.
 It doesn't handle multi-character fields and has various quirks
 and inconsistencies.
 Its use is strongly discouraged in new applications.
