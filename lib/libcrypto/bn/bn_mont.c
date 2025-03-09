@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.65 2025/02/13 11:09:51 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.66 2025/03/09 15:22:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,7 +172,7 @@ BN_MONT_CTX_create(const BIGNUM *bn, BN_CTX *bn_ctx)
 }
 
 BN_MONT_CTX *
-BN_MONT_CTX_copy(BN_MONT_CTX *dst, BN_MONT_CTX *src)
+BN_MONT_CTX_copy(BN_MONT_CTX *dst, const BN_MONT_CTX *src)
 {
 	if (dst == src)
 		return dst;

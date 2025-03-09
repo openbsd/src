@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.79 2025/01/06 13:15:08 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.80 2025/03/09 15:22:40 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -430,7 +430,7 @@ int BN_from_montgomery(BIGNUM *r, const BIGNUM *a,
     BN_MONT_CTX *mont, BN_CTX *ctx);
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx);
-BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from);
+BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, const BN_MONT_CTX *from);
 BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
     const BIGNUM *mod, BN_CTX *ctx);
 
