@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.165 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.166 2025/03/09 15:53:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1058,7 +1058,7 @@ ssl3_get_client_hello(SSL *s)
 	}
 
 	if (!s->hit && s->tls_session_secret_cb != NULL) {
-		SSL_CIPHER *pref_cipher = NULL;
+		const SSL_CIPHER *pref_cipher = NULL;
 		int master_key_length = sizeof(s->session->master_key);
 
 		if (!s->tls_session_secret_cb(s,

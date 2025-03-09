@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.245 2024/10/23 01:57:19 jsg Exp $ */
+/* $OpenBSD: ssl.h,v 1.246 2025/03/09 15:53:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -364,7 +364,7 @@ DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data,
     int len, void *arg);
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
-    STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
+    STACK_OF(SSL_CIPHER) *peer_ciphers, const SSL_CIPHER **cipher, void *arg);
 
 /* Allow initial connection to servers that don't support RI */
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L

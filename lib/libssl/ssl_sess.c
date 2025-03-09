@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.128 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.129 2025/03/09 15:53:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1057,7 +1057,7 @@ LSSL_ALIAS(SSL_CTX_get_timeout);
 int
 SSL_set_session_secret_cb(SSL *s, int (*tls_session_secret_cb)(SSL *s,
     void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers,
-    SSL_CIPHER **cipher, void *arg), void *arg)
+    const SSL_CIPHER **cipher, void *arg), void *arg)
 {
 	if (s == NULL)
 		return (0);

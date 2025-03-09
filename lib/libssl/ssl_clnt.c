@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.168 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.169 2025/03/09 15:53:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -926,7 +926,7 @@ ssl3_get_server_hello(SSL *s)
 	 * pre-shared secret.
 	 */
 	if (s->tls_session_secret_cb != NULL) {
-		SSL_CIPHER *pref_cipher = NULL;
+		const SSL_CIPHER *pref_cipher = NULL;
 		int master_key_length = sizeof(s->session->master_key);
 
 		if (!s->tls_session_secret_cb(s,
