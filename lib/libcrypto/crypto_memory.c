@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_memory.c,v 1.3 2024/11/06 04:18:42 tb Exp $ */
+/* $OpenBSD: crypto_memory.c,v 1.4 2025/03/09 15:29:56 tb Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -29,20 +29,13 @@ OPENSSL_cleanse(void *ptr, size_t len)
 LCRYPTO_ALIAS(OPENSSL_cleanse);
 
 int
-CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
-    void (*f)(void *))
+CRYPTO_set_mem_functions(void *(*m)(size_t, const char *, int),
+    void *(*r)(void *, size_t, const char *, int),
+    void (*f)(void *, const char *, int))
 {
 	return 0;
 }
 LCRYPTO_ALIAS(CRYPTO_set_mem_functions);
-
-int
-CRYPTO_set_mem_ex_functions(void *(*m)(size_t, const char *, int),
-    void *(*r)(void *, size_t, const char *, int), void (*f)(void *))
-{
-	return 0;
-}
-LCRYPTO_ALIAS(CRYPTO_set_mem_ex_functions);
 
 void *
 CRYPTO_malloc(size_t num, const char *file, int line)

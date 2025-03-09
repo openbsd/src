@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.78 2025/03/09 15:12:18 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.79 2025/03/09 15:29:56 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -349,11 +349,9 @@ struct CRYPTO_dynlock_value *(*CRYPTO_get_dynlock_create_callback(void))(const c
 void (*CRYPTO_get_dynlock_lock_callback(void))(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line);
 void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l, const char *file, int line);
 
-/* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
- * call the latter last if you need different functions */
-int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t), void (*f)(void *));
-int CRYPTO_set_mem_ex_functions(void *(*m)(size_t, const char *, int),
-    void *(*r)(void *, size_t, const char *, int), void (*f)(void *));
+int CRYPTO_set_mem_functions(void *(*m)(size_t, const char *, int),
+    void *(*r)(void *, size_t, const char *, int),
+    void (*f)(void *, const char *, int));
 
 void *CRYPTO_malloc(size_t num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);

@@ -665,7 +665,6 @@ CRYPTO_set_dynlock_lock_callback
 CRYPTO_set_ex_data
 CRYPTO_set_id_callback
 CRYPTO_set_locking_callback
-CRYPTO_set_mem_ex_functions
 CRYPTO_set_mem_functions
 CRYPTO_strdup
 CRYPTO_thread_id
