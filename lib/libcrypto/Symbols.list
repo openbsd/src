@@ -943,7 +943,6 @@ EC_POINT_copy
 EC_POINT_dbl
 EC_POINT_dup
 EC_POINT_free
-EC_POINT_get_Jprojective_coordinates_GFp
 EC_POINT_get_affine_coordinates
 EC_POINT_get_affine_coordinates_GFp
 EC_POINT_hex2point
@@ -957,7 +956,6 @@ EC_POINT_oct2point
 EC_POINT_point2bn
 EC_POINT_point2hex
 EC_POINT_point2oct
-EC_POINT_set_Jprojective_coordinates_GFp
 EC_POINT_set_affine_coordinates
 EC_POINT_set_affine_coordinates_GFp
 EC_POINT_set_compressed_coordinates

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.119 2025/03/09 15:37:31 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.120 2025/03/09 15:39:39 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1366,24 +1366,6 @@ LCRYPTO_ALIAS(EC_POINT_mul);
 /*
  * XXX - remove everything below in the next bump
  */
-
-int
-EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINT_set_Jprojective_coordinates_GFp);
-
-int
-EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
-    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
-{
-	ECerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
 
 int
 EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
