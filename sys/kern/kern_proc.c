@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.101 2024/10/22 11:54:04 claudio Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.102 2025/03/10 09:28:56 claudio Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ proc_printit(struct proc *p, const char *modif,
 	    p->p_runpri, p->p_usrpri, p->p_slppri, p->p_p->ps_nice);
 	(*pr)("    wchan=%p, wmesg=%s, ps_single=%p scnt=%d ecnt=%d\n",
 	    p->p_wchan, (p->p_wchan && p->p_wmesg) ?  p->p_wmesg : "",
-	    p->p_p->ps_single, p->p_p->ps_singlecnt, p->p_p->ps_exitcnt);
+	    p->p_p->ps_single, p->p_p->ps_suspendcnt, p->p_p->ps_exitcnt);
 	(*pr)("    forw=%p, list=%p,%p\n",
 	    TAILQ_NEXT(p, p_runq), p->p_list.le_next, p->p_list.le_prev);
 	(*pr)("    process=%p user=%p, vmspace=%p\n",

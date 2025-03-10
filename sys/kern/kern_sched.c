@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.103 2024/11/24 13:05:14 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.104 2025/03/10 09:28:56 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -277,7 +277,7 @@ setrunqueue(struct cpu_info *ci, struct proc *p, uint8_t prio)
 	KASSERT(ci != NULL);
 	SCHED_ASSERT_LOCKED();
 	KASSERT(p->p_wchan == NULL);
-	KASSERT(!ISSET(p->p_flag, P_WSLEEP));
+	KASSERT(!ISSET(p->p_flag, P_INSCHED));
 
 	p->p_cpu = ci;
 	p->p_stat = SRUN;
@@ -368,7 +368,7 @@ again:
 	} 
 
 	KASSERT(p->p_wchan == NULL);
-	KASSERT(!ISSET(p->p_flag, P_WSLEEP));
+	KASSERT(!ISSET(p->p_flag, P_INSCHED));
 	return (p);
 }
 

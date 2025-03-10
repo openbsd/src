@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.121 2025/02/21 03:34:10 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.122 2025/03/10 09:28:56 claudio Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -122,7 +122,7 @@ __set_current_state(int state)
 	SCHED_LOCK();
 	unsleep(p);
 	p->p_stat = SONPROC;
-	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
+	atomic_clearbits_int(&p->p_flag, P_INSCHED);
 	SCHED_UNLOCK();
 }
 

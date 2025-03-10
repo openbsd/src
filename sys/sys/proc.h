@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.382 2025/02/17 15:45:55 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.383 2025/03/10 09:28:57 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -191,7 +191,7 @@ struct process {
 
 	struct	proc *ps_single;	/* [m] Thread for single-threading. */
 	struct	proc *ps_trapped;	/* [m] Thread trapped for ptrace. */
-	u_int	ps_singlecnt;		/* [m] Number of threads to suspend. */
+	u_int	ps_suspendcnt;		/* [m] Number of threads to suspend. */
 	u_int	ps_exitcnt;		/* [m] Number of threads in exit1. */
 
 	int	ps_traceflag;		/* Kernel trace points. */
@@ -437,7 +437,7 @@ struct proc {
 #define	P_ALRMPEND	0x00000004	/* SIGVTALRM needs to be posted */
 #define	P_SIGSUSPEND	0x00000008	/* Need to restore before-suspend mask*/
 #define	P_CANTSLEEP	0x00000010	/* insomniac thread */
-#define	P_WSLEEP	0x00000020	/* Working on going to sleep. */
+#define	P_INSCHED	0x00000020	/* Switching scheduler state. */
 #define	P_SINTR		0x00000080	/* Sleep is interruptible. */
 #define	P_SYSTEM	0x00000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x00000400	/* Timing out during sleep. */
@@ -451,7 +451,7 @@ struct proc {
 
 #define	P_BITS \
     ("\20" "\01INKTR" "\02PROFPEND" "\03ALRMPEND" "\04SIGSUSPEND" \
-     "\05CANTSLEEP" "\06WSLEEP" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
+     "\05CANTSLEEP" "\06INSCHED" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
      "\015TRACESINGLE" "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" \
      "\033THREAD" "\034SUSPSIG" "\037CPUPEG")
 
@@ -599,13 +599,13 @@ refreshcreds(struct proc *p)
 #define	SINGLE_MASK	0x0f
 /* extra flags for single_thread_set */
 #define	SINGLE_DEEP	0x10	/* call is in deep */
-#define	SINGLE_NOWAIT	0x20	/* do not wait for other threads to stop */
 
 int	single_thread_set(struct proc *, int);
-int	single_thread_wait(struct process *, int);
 void	single_thread_clear(struct proc *);
 
 int	proc_suspend_check(struct proc *, int);
+void	process_suspend_signal(struct process *);
+void	process_stop(struct process *, int, int);
 
 void	child_return(void *);
 

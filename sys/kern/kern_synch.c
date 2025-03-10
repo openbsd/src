@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.219 2025/02/05 12:21:27 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.220 2025/03/10 09:28:56 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -63,8 +63,6 @@
 #endif
 
 int	sleep_signal_check(struct proc *, int);
-
-extern void proc_stop(struct proc *p, int);
 
 /*
  * We're only looking at 7 bits of the address; everything is
@@ -353,7 +351,7 @@ sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 	p->p_wmesg = wmesg;
 	p->p_slptime = 0;
 	p->p_slppri = prio & PRIMASK;
-	atomic_setbits_int(&p->p_flag, P_WSLEEP);
+	atomic_setbits_int(&p->p_flag, P_INSCHED);
 	TAILQ_INSERT_TAIL(&slpque[LOOKUP(ident)], p, p_runq);
 	if (prio & PCATCH)
 		atomic_setbits_int(&p->p_flag, P_SINTR);
@@ -399,7 +397,7 @@ sleep_finish(int timo, int do_sleep)
 		unsleep(p);
 	if (p->p_stat == SSTOP)
 		do_sleep = 1;
-	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
+	atomic_clearbits_int(&p->p_flag, P_INSCHED);
 
 	if (do_sleep) {
 		KASSERT(p->p_stat == SSLEEP || p->p_stat == SSTOP);
@@ -458,6 +456,7 @@ sleep_finish(int timo, int do_sleep)
 int
 sleep_signal_check(struct proc *p, int after_sleep)
 {
+	struct process *pr = p->p_p;
 	struct sigctx ctx;
 	int err, sig;
 
@@ -467,24 +466,38 @@ sleep_signal_check(struct proc *p, int after_sleep)
 
 		/* requested to stop */
 		if (!after_sleep) {
-			mtx_enter(&p->p_p->ps_mtx);
-			if (--p->p_p->ps_singlecnt == 0)
-				wakeup(&p->p_p->ps_singlecnt);
-			mtx_leave(&p->p_p->ps_mtx);
+			mtx_enter(&pr->ps_mtx);
+			process_suspend_signal(pr);
 
 			SCHED_LOCK();
 			p->p_stat = SSTOP;
 			SCHED_UNLOCK();
+			mtx_leave(&pr->ps_mtx);
 		}
 	}
 
 	if ((sig = cursig(p, &ctx, 1)) != 0) {
 		if (ctx.sig_stop) {
 			if (!after_sleep) {
-				p->p_p->ps_xsig = sig;
+				mtx_enter(&pr->ps_mtx);
+				pr->ps_xsig = sig;
+				/*
+				 * This is for stop signals delivered before
+				 * sleep_setup() was called. We need to do the
+				 * full dance here before going to sleep.
+				 */
+				atomic_clearbits_int(&p->p_siglist,
+				    sigmask(sig));
+				atomic_setbits_int(&pr->ps_flags, PS_STOPPING);
 				SCHED_LOCK();
-				proc_stop(p, 0);
+				process_stop(pr, P_SUSPSIG, SINGLE_SUSPEND);
 				SCHED_UNLOCK();
+				atomic_setbits_int(&p->p_flag, P_SUSPSIG);
+				process_suspend_signal(pr);
+				SCHED_LOCK();
+				p->p_stat = SSTOP;
+				SCHED_UNLOCK();
+				mtx_leave(&pr->ps_mtx);
 			}
 		} else if (ctx.sig_intr && !ctx.sig_ignore)
 			return EINTR;

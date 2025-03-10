@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.242 2025/02/17 10:16:05 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.243 2025/03/10 09:28:56 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -164,13 +164,11 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	pr->ps_exitcnt++;
 
 	/*
-	 * if somebody else wants to take us to single threaded mode,
-	 * count ourselves out.
+	 * if somebody else wants to take us to single threaded mode
+	 * or stop us, count ourselves out.
 	 */
-	if (pr->ps_single) {
-		if (--pr->ps_singlecnt == 0)
-			wakeup(&pr->ps_singlecnt);
-	}
+	if (pr->ps_single != NULL || ISSET(pr->ps_flags, PS_STOPPING))
+		process_suspend_signal(pr);
 
 	/* proc is off ps_threads list so update accounting of process now */
 	tuagg_add_runtime();
@@ -525,7 +523,6 @@ loop:
 		}
 		nfound++;
 		if ((options & WEXITED) && (pr->ps_flags & PS_ZOMBIE)) {
-			mtx_leave(&pr->ps_mtx);
 			*retval = pr->ps_pid;
 			if (info != NULL) {
 				info->si_pid = pr->ps_pid;
@@ -548,17 +545,15 @@ loop:
 				    pr->ps_xsig);
 			if (rusage != NULL)
 				memcpy(rusage, pr->ps_ru, sizeof(*rusage));
+			mtx_leave(&pr->ps_mtx);
 			if ((options & WNOWAIT) == 0)
 				proc_finish_wait(q, pr);
 			return (0);
 		}
 		if ((options & WTRAPPED) && (pr->ps_flags & PS_TRACED) &&
 		    (pr->ps_flags & PS_WAITED) == 0 &&
+		    (pr->ps_flags & PS_STOPPED) &&
 		    (pr->ps_flags & PS_TRAPPED)) {
-			mtx_leave(&pr->ps_mtx);
-			if (single_thread_wait(pr, 0))
-				goto loop;
-
 			if ((options & WNOWAIT) == 0)
 				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 
@@ -573,6 +568,7 @@ loop:
 
 			if (statusp != NULL)
 				*statusp = W_STOPCODE(pr->ps_xsig);
+			mtx_leave(&pr->ps_mtx);
 			if (rusage != NULL)
 				memset(rusage, 0, sizeof(*rusage));
 			return (0);
@@ -581,7 +577,6 @@ loop:
 		    (pr->ps_flags & PS_WAITED) == 0 &&
 		    (pr->ps_flags & PS_STOPPED) &&
 		    (pr->ps_flags & PS_TRAPPED) == 0) {
-			mtx_leave(&pr->ps_mtx);
 			if ((options & WNOWAIT) == 0)
 				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 
@@ -596,12 +591,12 @@ loop:
 
 			if (statusp != NULL)
 				*statusp = W_STOPCODE(pr->ps_xsig);
+			mtx_leave(&pr->ps_mtx);
 			if (rusage != NULL)
 				memset(rusage, 0, sizeof(*rusage));
 			return (0);
 		}
 		if ((options & WCONTINUED) && (pr->ps_flags & PS_CONTINUED)) {
-			mtx_leave(&pr->ps_mtx);
 			if ((options & WNOWAIT) == 0)
 				atomic_clearbits_int(&pr->ps_flags,
 				    PS_CONTINUED);
@@ -615,6 +610,7 @@ loop:
 				info->si_status = SIGCONT;
 			}
 
+			mtx_leave(&pr->ps_mtx);
 			if (statusp != NULL)
 				*statusp = _WCONTINUED;
 			if (rusage != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.57 2024/11/04 22:41:50 claudio Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.58 2025/03/10 09:28:57 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ struct	sigacts {
 #define	sigcantmask	(sigmask(SIGKILL) | sigmask(SIGSTOP))
 
 #ifdef _KERNEL
-enum signal_type { SPROCESS, STHREAD, SPROPAGATED };
+enum signal_type { SPROCESS, STHREAD };
 
 struct sigio_ref;
 
