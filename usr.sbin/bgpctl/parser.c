@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.137 2024/08/22 08:17:54 florian Exp $ */
+/*	$OpenBSD: parser.c,v 1.138 2025/03/10 14:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <endian.h>
 #include <err.h>

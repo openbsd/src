@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.316 2025/02/20 19:48:14 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.317 2025/03/10 14:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
 
 #include <endian.h>
 #include <err.h>

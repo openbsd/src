@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.51 2025/02/20 19:48:14 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.52 2025/03/10 14:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -15,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <endian.h>
 #include <err.h>
