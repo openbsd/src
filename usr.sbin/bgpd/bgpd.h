@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.517 2025/02/27 14:03:32 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.518 2025/03/10 14:11:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,12 +23,9 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <net/if.h>
 #include <netinet/if_ether.h>
 
-#include <poll.h>
-#include <stdarg.h>
 #include <stdint.h>
 #include <imsg.h>
 
@@ -1452,6 +1449,7 @@ struct mrt_config {
 
 /* prototypes */
 /* bgpd.c */
+struct pollfd;
 void		 send_nexthop_update(struct kroute_nexthop *);
 void		 send_imsg_session(int, pid_t, void *, uint16_t);
 int		 send_network(int, struct network_config *,

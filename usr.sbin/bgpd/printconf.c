@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.181 2025/01/27 15:22:11 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.182 2025/03/10 14:11:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,6 +17,9 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <limits.h>
 #include <stdio.h>

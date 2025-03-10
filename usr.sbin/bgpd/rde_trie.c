@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.17 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.18 2025/03/10 14:11:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -16,10 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
-#include <sys/queue.h>
-
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
