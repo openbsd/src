@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.250 2025/03/08 08:27:32 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.251 2025/03/10 07:38:12 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2136,6 +2136,9 @@ skip_set_alt:
 void
 uvideo_vs_close(struct uvideo_softc *sc)
 {
+	if (usbd_is_dying(sc->sc_udev))
+		return;
+
 	if (sc->sc_vs_cur->bulk_running == 1) {
 		sc->sc_vs_cur->bulk_running = 0;
 
