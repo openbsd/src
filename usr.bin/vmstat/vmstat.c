@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.158 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.159 2025/03/10 19:52:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -542,7 +542,7 @@ dosum(void)
 	/* daemon counters */
 	(void)printf("%11u number of times the pagedaemon woke up\n",
 		     uvmexp.pdwoke);
-	(void)printf("%11u revolutions of the clock hand\n", uvmexp.pdrevs);
+	(void)printf("%11u number of times the pagedaemon scanned for free pages\n", uvmexp.pdrevs);
 	(void)printf("%11u pages freed by pagedaemon\n", uvmexp.pdfreed);
 	(void)printf("%11u pages scanned by pagedaemon\n", uvmexp.pdscans);
 	(void)printf("%11u pages reactivated by pagedaemon\n", uvmexp.pdreact);

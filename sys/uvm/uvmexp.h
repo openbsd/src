@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.18 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.19 2025/03/10 19:52:57 miod Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -139,7 +139,7 @@ struct uvmexp {
 
 	/* daemon counters */
 	int pdwoke;	/* [F] # of times daemon woke up */
-	int pdrevs;	/* number of times daemon rev'd clock hand */
+	int pdrevs;	/* number of times daemon scanned for free pages */
 	int pdswout;	/* number of times daemon called for swapout */
 	int pdfreed;	/* number of pages daemon freed since boot */
 	int pdscans;	/* number of pages daemon scanned since boot */
