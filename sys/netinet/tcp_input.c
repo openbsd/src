@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.433 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.434 2025/03/10 15:11:46 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ tcp_flush_queue(struct tcpcb *tp)
 			m_freem(q->tcpqe_m);
 		else {
 			mtx_enter(&so->so_rcv.sb_mtx);
-			sbappendstream(so, &so->so_rcv, q->tcpqe_m);
+			sbappendstream(&so->so_rcv, q->tcpqe_m);
 			mtx_leave(&so->so_rcv.sb_mtx);
 		}
 		pool_put(&tcpqe_pool, q);
@@ -1060,7 +1060,7 @@ findpcb:
 					tp->rfbuf_cnt += tlen;
 				m_adj(m, iphlen + off);
 				mtx_enter(&so->so_rcv.sb_mtx);
-				sbappendstream(so, &so->so_rcv, m);
+				sbappendstream(&so->so_rcv, m);
 				mtx_leave(&so->so_rcv.sb_mtx);
 			}
 			tp->t_flags |= TF_BLOCKOUTPUT;
@@ -1974,7 +1974,7 @@ dodata:							/* XXX */
 			else {
 				m_adj(m, hdroptlen);
 				mtx_enter(&so->so_rcv.sb_mtx);
-				sbappendstream(so, &so->so_rcv, m);
+				sbappendstream(&so->so_rcv, m);
 				mtx_leave(&so->so_rcv.sb_mtx);
 			}
 			tp->t_flags |= TF_BLOCKOUTPUT;

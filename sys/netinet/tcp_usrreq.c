@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.244 2025/02/17 08:56:33 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.245 2025/03/10 15:11:46 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -852,7 +852,7 @@ tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		ostate = tp->t_state;
 
 	mtx_enter(&so->so_snd.sb_mtx);
-	sbappendstream(so, &so->so_snd, m);
+	sbappendstream(&so->so_snd, m);
 	mtx_leave(&so->so_snd.sb_mtx);
 	m = NULL;
 
@@ -984,7 +984,7 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	 * Otherwise, snd_up should be one lower.
 	 */
 	mtx_enter(&so->so_snd.sb_mtx);
-	sbappendstream(so, &so->so_snd, m);
+	sbappendstream(&so->so_snd, m);
 	mtx_leave(&so->so_snd.sb_mtx);
 	m = NULL;
 	tp->snd_up = tp->snd_una + so->so_snd.sb_cc;

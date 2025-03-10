@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.182 2025/03/06 13:35:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.183 2025/03/10 15:11:46 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -824,7 +824,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
  * in the socket buffer, that is, a stream protocol (such as TCP).
  */
 void
-sbappendstream(struct socket *so, struct sockbuf *sb, struct mbuf *m)
+sbappendstream(struct sockbuf *sb, struct mbuf *m)
 {
 	sbmtxassertlocked(sb);
 	KDASSERT(m->m_nextpkt == NULL);
