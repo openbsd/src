@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.173 2024/11/07 09:04:55 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.174 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -395,10 +395,8 @@ uvm_swap_freepages(struct vm_page **pps, int npages)
 		return;
 	}
 
-	uvm_lock_pageq();
 	for (i = 0; i < npages; i++)
 		uvm_pagefree(pps[i]);
-	uvm_unlock_pageq();
 
 }
 

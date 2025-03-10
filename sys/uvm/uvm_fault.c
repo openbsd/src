@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.164 2025/02/25 11:29:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.165 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -417,9 +417,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				 * cannot be mapped and thus no need to
 				 * pmap_page_protect() it.
 				 */
-				uvm_lock_pageq();
 				uvm_pagefree(pg);
-				uvm_unlock_pageq();
 
 				if (locked) {
 					uvmfault_unlockall(ufi, NULL, NULL);

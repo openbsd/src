@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.115 2024/12/27 12:04:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.116 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -839,9 +839,7 @@ uao_detach(struct uvm_object *uobj)
 			continue;
 		}
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
-		uvm_lock_pageq();
 		uvm_pagefree(pg);
-		uvm_unlock_pageq();
 	}
 
 	/*
@@ -957,10 +955,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			 * because we need to update swap accounting anyway.
 			 */
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
-			uvm_lock_pageq();
 			uvm_pagefree(pg);
-			uvm_unlock_pageq();
-
 			continue;
 		default:
 			panic("uao_flush: weird flags");
@@ -1179,9 +1174,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				atomic_clearbits_int(&ptmp->pg_flags,
 				    PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
-				uvm_lock_pageq();
 				uvm_pagefree(ptmp);
-				uvm_unlock_pageq();
 				rw_exit(uobj->vmobjlock);
 
 				return rv;

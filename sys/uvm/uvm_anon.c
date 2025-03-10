@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.61 2024/12/27 12:04:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.62 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -106,14 +106,10 @@ uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 			 * clean page, and put it on pglist
 			 * for later freeing.
 			 */
-			uvm_lock_pageq();
 			uvm_pageclean(pg);
-			uvm_unlock_pageq();
 			TAILQ_INSERT_HEAD(pgl, pg, pageq);
 		} else {
-			uvm_lock_pageq();	/* lock out pagedaemon */
 			uvm_pagefree(pg);	/* bye bye */
-			uvm_unlock_pageq();	/* free the daemon */
 		}
 	} else {
 		if (anon->an_swslot != 0 && anon->an_swslot != SWSLOT_BAD) {
@@ -249,10 +245,8 @@ uvm_anon_release(struct vm_anon *anon)
 	KASSERT(pg->uanon == anon);
 	KASSERT(anon->an_ref == 0);
 
-	uvm_lock_pageq();
 	pmap_page_protect(pg, PROT_NONE);
 	uvm_pagefree(pg);
-	uvm_unlock_pageq();
 	KASSERT(anon->an_page == NULL);
 	lock = anon->an_lock;
 	uvm_anon_dropswap(anon);

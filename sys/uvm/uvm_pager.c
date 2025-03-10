@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.93 2024/11/25 12:51:00 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.94 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -761,7 +761,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, boolean_t write,
 		anon_disposed = (pg->pg_flags & PG_RELEASED) != 0;
 		KASSERT(!anon_disposed || pg->uobject != NULL ||
 		    pg->uanon->an_ref == 0);
-		uvm_lock_pageq();
 
 		/*
 		 * if this was a successful write,
@@ -777,11 +776,9 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, boolean_t write,
 		 * unlock everything for this page now.
 		 */
 		if (pg->uobject == NULL && anon_disposed) {
-			uvm_unlock_pageq();
 			uvm_anon_release(pg->uanon);
 		} else {
 			uvm_page_unbusy(&pg, 1);
-			uvm_unlock_pageq();
 			rw_exit(slock);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.155 2024/11/01 20:26:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.156 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -270,9 +270,7 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t startva, vaddr_t endva)
 		slot = uao_dropswap(uobj, curoff >> PAGE_SHIFT);
 
 		if (pp != NULL) {
-			uvm_lock_pageq();
 			uvm_pagefree(pp);
-			uvm_unlock_pageq();
 		} else if (slot != 0) {
 			swpgonlydelta++;
 		}

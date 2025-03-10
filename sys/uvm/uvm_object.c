@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.26 2025/02/19 11:10:54 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.27 2025/03/10 14:13:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -238,9 +238,7 @@ uvm_obj_free(struct uvm_object *uobj)
 		 */
 		atomic_clearbits_int(&pg->pg_flags, PG_TABLED);
 		pg->uobject = NULL;
-		uvm_lock_pageq();
 		uvm_pageclean(pg);
-		uvm_unlock_pageq();
 		TAILQ_INSERT_TAIL(&pgl, pg, pageq);
  	}
 	uvm_pglistfree(&pgl);

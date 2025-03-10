@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.134 2025/01/25 08:55:52 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.135 2025/03/10 14:13:58 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -596,6 +596,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 				/* zap all mappings with pmap_page_protect... */
 				pmap_page_protect(p, PROT_NONE);
+				/* dequeue first to prevent lock recursion */
+				uvm_pagedequeue(p);
 				uvm_pagefree(p);
 				freed++;
 
@@ -853,6 +855,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				anon = NULL;
 				uvm_lock_pageq();
 				nextpg = TAILQ_NEXT(p, pageq);
+				/* dequeue first to prevent lock recursion */
+				uvm_pagedequeue(p);
 				/* free released page */
 				uvm_pagefree(p);
 			} else {	/* page was not released during I/O */
@@ -1055,7 +1059,6 @@ uvmpd_drop(struct pglist *pglst)
 			struct uvm_object * uobj = p->uobject;
 
 			rw_enter(uobj->vmobjlock, RW_WRITE);
-			uvm_lock_pageq();
 			/*
 			 * we now have the page queues locked.
 			 * the page is not busy.   if the page is clean we
@@ -1071,7 +1074,6 @@ uvmpd_drop(struct pglist *pglst)
 				pmap_page_protect(p, PROT_NONE);
 				uvm_pagefree(p);
 			}
-			uvm_unlock_pageq();
 			rw_exit(uobj->vmobjlock);
 		}
 	}
