@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.54 2025/03/09 15:42:19 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.55 2025/03/10 08:38:11 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -78,10 +78,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#elif defined(__SUNPRO_C)
-# if __SUNPRO_C >= 0x520
-# pragma error_messages (off,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
-# endif
 #endif
 
 #ifndef OPENSSL_ECC_MAX_FIELD_BITS
@@ -370,14 +366,6 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 	const ECDSA_SIG *sig, EC_KEY *eckey));
 
 EC_KEY *ECParameters_dup(EC_KEY *key);
-
-#ifndef __cplusplus
-#if defined(__SUNPRO_C)
-#  if __SUNPRO_C >= 0x520
-# pragma error_messages (default,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
-#  endif
-# endif
-#endif
 
 #define EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
