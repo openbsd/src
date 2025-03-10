@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.249 2025/01/27 15:22:11 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.250 2025/03/10 07:56:45 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2025 $
+.Dd $Mdocdate: March 10 2025 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -983,11 +983,18 @@ The neighbor properties are as follows:
 .Pq Ic none Ns | Ns Ic unicast Ns | Ns Ic vpn Ns | Ns Ic flowspec
 .Op Ic enforce
 .Xc
+.It Xo
+.Ic announce
+.Ic EVPN
+.Op Ic enforce
+.Xc
 For the given address family, control which
 .Em subsequent address families
 are announced during the capabilities negotiation.
 Only routes for that address family and subsequent address families will be
 announced and processed.
+.Ic EVPN
+does not require a subsequent address family.
 .Pp
 At the moment, only
 .Ic none ,
