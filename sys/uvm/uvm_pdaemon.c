@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.135 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.136 2025/03/10 18:54:38 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -453,6 +453,29 @@ uvmpd_match_constraint(struct vm_page *p,
 	return 0;
 }
 
+struct vm_page *
+uvmpd_iterator(struct pglist *pglst, struct vm_page *p, struct vm_page *iter)
+{
+	struct vm_page *nextpg = NULL;
+
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+
+	/* p is null to signal final swap i/o. */
+	if (p == NULL)
+		return NULL;
+
+	do {
+		nextpg = TAILQ_NEXT(iter, pageq);
+	} while (nextpg && (nextpg->pg_flags & PQ_ITER));
+
+	if (nextpg) {
+		TAILQ_REMOVE(pglst, iter, pageq);
+		TAILQ_INSERT_AFTER(pglst, nextpg, iter, pageq);
+	}
+
+	return nextpg;
+}
+
 /*
  * uvmpd_scan_inactive: scan an inactive list for pages to clean or free.
  *
@@ -467,7 +490,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 {
 	struct pglist *pglst = &uvm.page_inactive;
 	int result, freed = 0;
-	struct vm_page *p, *nextpg;
+	struct vm_page *p, iter = { .pg_flags = PQ_ITER };
 	struct uvm_object *uobj;
 	struct vm_page *pps[SWCLUSTPAGES], **ppsp;
 	int npages;
@@ -501,7 +524,12 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			break;
 	}
 
-	for (; p != NULL || swslot != 0; p = nextpg) {
+	if (p == NULL)
+		return 0;
+
+	/* Insert iterator. */
+	TAILQ_INSERT_AFTER(pglst, p, &iter, pageq);
+	for (; p != NULL || swslot != 0; p = uvmpd_iterator(pglst, p, &iter)) {
 		/*
 		 * note that p can be NULL iff we have traversed the whole
 		 * list and need to do one final swap-backed clustered pageout.
@@ -522,7 +550,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 				/* set p to null to signal final swap i/o */
 				p = NULL;
-				nextpg = NULL;
 			}
 		}
 		if (p) {	/* if (we have a new page to consider) */
@@ -530,7 +557,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			 * we are below target and have a new page to consider.
 			 */
 			uvmexp.pdscans++;
-			nextpg = TAILQ_NEXT(p, pageq);
 
 			/*
 			 * If we are not short on memory and only interested
@@ -774,26 +800,11 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 		 * async I/O is in progress and the async I/O done routine
 		 * will clean up after us.   in this case we move on to the
 		 * next page.
-		 *
-		 * there is a very remote chance that the pending async i/o can
-		 * finish _before_ we get here.   if that happens, our page "p"
-		 * may no longer be on the inactive queue.   so we verify this
-		 * when determining the next page (starting over at the head if
-		 * we've lost our inactive page).
 		 */
-
 		if (result == VM_PAGER_PEND) {
 			atomic_add_int(&uvmexp.paging, npages);
 			uvm_lock_pageq();
 			uvmexp.pdpending++;
-			if (p) {
-				if (p->pg_flags & PQ_INACTIVE)
-					nextpg = TAILQ_NEXT(p, pageq);
-				else
-					nextpg = TAILQ_FIRST(pglst);
-			} else {
-				nextpg = NULL;
-			}
 			continue;
 		}
 
@@ -854,14 +865,12 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				pmap_page_protect(p, PROT_NONE);
 				anon = NULL;
 				uvm_lock_pageq();
-				nextpg = TAILQ_NEXT(p, pageq);
 				/* dequeue first to prevent lock recursion */
 				uvm_pagedequeue(p);
 				/* free released page */
 				uvm_pagefree(p);
 			} else {	/* page was not released during I/O */
 				uvm_lock_pageq();
-				nextpg = TAILQ_NEXT(p, pageq);
 				if (result != VM_PAGER_OK) {
 					/* pageout was a failure... */
 					if (result != VM_PAGER_AGAIN)
@@ -875,26 +884,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 					    PG_CLEAN);
 				}
 			}
-
-			/*
-			 * drop object lock (if there is an object left).   do
-			 * a safety check of nextpg to make sure it is on the
-			 * inactive queue (it should be since PG_BUSY pages on
-			 * the inactive queue can't be re-queued [note: not
-			 * true for active queue]).
-			 */
 			rw_exit(slock);
-
-			if (nextpg && (nextpg->pg_flags & PQ_INACTIVE) == 0) {
-				nextpg = TAILQ_FIRST(pglst);	/* reload! */
-			}
 		} else {
-			/*
-			 * if p is null in this loop, make sure it stays null
-			 * in the next loop.
-			 */
-			nextpg = NULL;
-
 			/*
 			 * lock page queues here just so they're always locked
 			 * at the end of the loop.
@@ -902,6 +893,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			uvm_lock_pageq();
 		}
 	}
+	TAILQ_REMOVE(pglst, &iter, pageq);
 
 	return freed;
 }

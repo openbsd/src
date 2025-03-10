@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.72 2025/02/19 11:07:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.73 2025/03/10 18:54:38 mpi Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -147,13 +147,12 @@ struct vm_page {
 #define PG_RDONLY	0x00000080	/* page must be mapped read-only */
 #define PG_ZERO		0x00000100	/* page is pre-zero'd */
 #define PG_DEV		0x00000200	/* page is in device space, lay off */
-
-#define PG_PAGER1	0x00001000	/* pager-specific flag */
 #define PG_MASK		0x0000ffff
 
 #define PQ_FREE		0x00010000	/* page is on free list */
 #define PQ_INACTIVE	0x00020000	/* page is in inactive list */
 #define PQ_ACTIVE	0x00040000	/* page is in active list */
+#define PQ_ITER		0x00080000	/* page is an iterator marker */
 #define PQ_ANON		0x00100000	/* page is part of an anon, rather
 					   than an uvm_object */
 #define PQ_AOBJ		0x00200000	/* page is part of an anonymous
