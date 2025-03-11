@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.334 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.335 2025/03/11 15:29:36 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -159,8 +159,8 @@ const struct pr_usrreqs udp6_usrreqs = {
 
 const struct sysctl_bounded_args udpctl_vars[] = {
 	{ UDPCTL_CHECKSUM, &udpcksum, 0, 1 },
-	{ UDPCTL_RECVSPACE, &udp_recvspace, 0, INT_MAX },
-	{ UDPCTL_SENDSPACE, &udp_sendspace, 0, INT_MAX },
+	{ UDPCTL_RECVSPACE, &udp_recvspace, 0, SB_MAX },
+	{ UDPCTL_SENDSPACE, &udp_sendspace, 0, SB_MAX },
 };
 
 struct	inpcbtable udbtable;

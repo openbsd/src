@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.99 2025/03/02 21:28:32 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.100 2025/03/11 15:29:36 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -66,8 +66,8 @@ u_int   divert6_recvspace = DIVERT_RECVSPACE;	/* [a] */
 #endif
 
 const struct sysctl_bounded_args divert6ctl_vars[] = {
-	{ DIVERT6CTL_RECVSPACE, &divert6_recvspace, 0, INT_MAX },
-	{ DIVERT6CTL_SENDSPACE, &divert6_sendspace, 0, INT_MAX },
+	{ DIVERT6CTL_RECVSPACE, &divert6_recvspace, 0, SB_MAX },
+	{ DIVERT6CTL_SENDSPACE, &divert6_sendspace, 0, SB_MAX },
 };
 
 const struct pr_usrreqs divert6_usrreqs = {
