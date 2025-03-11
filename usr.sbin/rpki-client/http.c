@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.92 2024/11/21 13:32:27 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.93 2025/03/11 14:53:03 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1007,7 +1007,7 @@ static enum res
 http_connect(struct http_connection *conn)
 {
 	const char *cause = NULL;
-	struct addrinfo *res;
+	struct addrinfo *res = NULL;
 
 	assert(conn->fd == -1);
 	conn->state = STATE_CONNECT;
