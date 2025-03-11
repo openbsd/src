@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.335 2025/03/11 15:29:36 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.336 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -700,7 +700,7 @@ udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
 	m_adj(m, hlen);
 
 	mtx_enter(&so->so_rcv.sb_mtx);
-	if (sbappendaddr(so, &so->so_rcv, srcaddr, m, opts) == 0) {
+	if (sbappendaddr(&so->so_rcv, srcaddr, m, opts) == 0) {
 		mtx_leave(&so->so_rcv.sb_mtx);
 		udpstat_inc(udps_fullsock);
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.297 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.298 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -2104,7 +2104,7 @@ ether_frm_recv(struct socket *so, struct mbuf *m0,
 	}
 
 	mtx_enter(&so->so_rcv.sb_mtx);
-	ok = sbappendaddr(so, &so->so_rcv, (struct sockaddr *)sfrm, m, cmsgs);
+	ok = sbappendaddr(&so->so_rcv, (struct sockaddr *)sfrm, m, cmsgs);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	if (!ok) {

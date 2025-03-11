@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.143 2024/07/04 12:50:08 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.144 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -830,7 +830,7 @@ socket6_send(struct socket *so, struct mbuf *mm, struct sockaddr_in6 *src)
 		int ret;
 
 		mtx_enter(&so->so_rcv.sb_mtx);
-		ret = sbappendaddr(so, &so->so_rcv, sin6tosa(src), mm, NULL);
+		ret = sbappendaddr(&so->so_rcv, sin6tosa(src), mm, NULL);
 		mtx_leave(&so->so_rcv.sb_mtx);
 
 		if (ret != 0) {

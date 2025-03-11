@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.263 2024/12/27 10:15:09 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.264 2025/03/11 15:31:03 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -452,7 +452,7 @@ pfkey_sendup(struct pkpcb *kp, struct mbuf *m0, int more)
 		m = m0;
 
 	mtx_enter(&so->so_rcv.sb_mtx);
-	ret = sbappendaddr(so, &so->so_rcv, &pfkey_addr, m, NULL);
+	ret = sbappendaddr(&so->so_rcv, &pfkey_addr, m, NULL);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	if (ret == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.381 2025/02/16 11:39:28 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.382 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -483,8 +483,7 @@ rtm_senddesync(struct socket *so)
 		int ret;
 
 		mtx_enter(&so->so_rcv.sb_mtx);
-		ret = sbappendaddr(so, &so->so_rcv, &route_src,
-		    desync_mbuf, NULL);
+		ret = sbappendaddr(&so->so_rcv, &route_src, desync_mbuf, NULL);
 		mtx_leave(&so->so_rcv.sb_mtx);
 
 		if (ret != 0) {
@@ -604,7 +603,7 @@ rtm_sendup(struct socket *so, struct mbuf *m0)
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	if (sbspace_locked(&so->so_rcv) < (2 * MSIZE) ||
-	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0)
+	    sbappendaddr(&so->so_rcv, &route_src, m, NULL) == 0)
 		send_desync = 1;
 	mtx_leave(&so->so_rcv.sb_mtx);
 

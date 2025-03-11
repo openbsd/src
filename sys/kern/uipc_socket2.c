@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.183 2025/03/10 15:11:46 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.184 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -901,8 +901,8 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
  * Returns 0 if no space in sockbuf or insufficient mbufs.
  */
 int
-sbappendaddr(struct socket *so, struct sockbuf *sb, const struct sockaddr *asa,
-    struct mbuf *m0, struct mbuf *control)
+sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
+    struct mbuf *control)
 {
 	struct mbuf *m, *n, *nlast;
 	int space = asa->sa_len;

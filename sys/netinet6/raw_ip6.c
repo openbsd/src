@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.189 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.190 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ rip6_sbappend(struct inpcb *inp, struct mbuf *m, struct ip6_hdr *ip6, int hlen,
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	if (!ISSET(inp->inp_socket->so_rcv.sb_state, SS_CANTRCVMORE))
-		ret = sbappendaddr(so, &so->so_rcv, sin6tosa(rip6src), m, opts);
+		ret = sbappendaddr(&so->so_rcv, sin6tosa(rip6src), m, opts);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	if (ret == 0) {

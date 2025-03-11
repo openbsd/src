@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.165 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.166 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ rip_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
 
 	mtx_enter(&so->so_rcv.sb_mtx);
 	if (!ISSET(inp->inp_socket->so_rcv.sb_state, SS_CANTRCVMORE))
-		ret = sbappendaddr(so, &so->so_rcv, sintosa(ripsrc), m, opts);
+		ret = sbappendaddr(&so->so_rcv, sintosa(ripsrc), m, opts);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	if (ret == 0) {

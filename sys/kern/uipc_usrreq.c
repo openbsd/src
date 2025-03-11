@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.217 2025/03/06 13:35:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.218 2025/03/11 15:31:03 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ uipc_dgram_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		from = &sun_noname;
 
 	mtx_enter(&so2->so_rcv.sb_mtx);
-	if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
+	if (sbappendaddr(&so2->so_rcv, from, m, control)) {
 		dowakeup = 1;
 		m = NULL;
 		control = NULL;
