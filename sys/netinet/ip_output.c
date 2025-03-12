@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.406 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.407 2025/03/12 01:44:27 yasuoka Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -348,8 +348,6 @@ reroute:
 		 */
 		if (ip->ip_ttl == 0 || (ifp->if_flags & IFF_LOOPBACK) != 0)
 			goto bad;
-
-		goto sendit;
 	}
 
 	/*
@@ -377,7 +375,6 @@ reroute:
 	} else
 		m->m_flags &= ~M_BCAST;
 
-sendit:
 	/*
 	 * If we're doing Path MTU discovery, we need to set DF unless
 	 * the route's MTU is locked.
