@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.45 2024/03/29 04:50:11 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.46 2025/03/12 04:56:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -735,9 +735,7 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_lookup);
 void
 X509_VERIFY_PARAM_table_cleanup(void)
 {
-	if (param_table)
-		sk_X509_VERIFY_PARAM_pop_free(param_table,
-		    X509_VERIFY_PARAM_free);
+	sk_X509_VERIFY_PARAM_pop_free(param_table, X509_VERIFY_PARAM_free);
 	param_table = NULL;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_table_cleanup);
