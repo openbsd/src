@@ -1,4 +1,4 @@
-/* $OpenBSD: renegotiation_test.c,v 1.2 2025/02/01 14:13:17 jsing Exp $ */
+/* $OpenBSD: renegotiation_test.c,v 1.3 2025/03/12 14:07:35 jsing Exp $ */
 /*
  * Copyright (c) 2020,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -289,6 +289,61 @@ static const struct tls_reneg_test tls_reneg_tests[] = {
 		.ssl_server_options = SSL_OP_NO_CLIENT_RENEGOTIATION,
 		.renegotiate_client = 1,
 		.want_client_alert = SSL3_AL_FATAL << 8 | SSL_AD_NO_RENEGOTIATION,
+	},
+	{
+		.desc = "TLSv1.2 - Client renegotiation not permitted, client "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_server_options = SSL_OP_NO_RENEGOTIATION,
+		.renegotiate_client = 1,
+		.want_client_alert = SSL3_AL_FATAL << 8 | SSL_AD_NO_RENEGOTIATION,
+	},
+	{
+		.desc = "TLSv1.2 - Server renegotiation not permitted, server "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_client_options = SSL_OP_NO_RENEGOTIATION,
+		.renegotiate_server = 1,
+		.client_ignored = 1,
+		.want_server_alert = SSL3_AL_WARNING << 8 | SSL_AD_NO_RENEGOTIATION,
+	},
+	{
+		.desc = "TLSv1.2 - Client renegotiation permitted, client "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_server_options = SSL_OP_NO_RENEGOTIATION |
+		    SSL_OP_ALLOW_CLIENT_RENEGOTIATION,
+		.renegotiate_client = 1,
+	},
+	{
+		.desc = "TLSv1.2 - Client renegotiation permitted, server "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_server_options = SSL_OP_ALLOW_CLIENT_RENEGOTIATION,
+		.renegotiate_server = 1,
+	},
+	{
+		.desc = "TLSv1.2 - Client renegotiation permitted, client "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_server_options = SSL_OP_ALLOW_CLIENT_RENEGOTIATION,
+		.renegotiate_client = 1,
+	},
+	{
+		.desc = "TLSv1.2 - Client renegotiation disabled, client "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_client_options = SSL_OP_NO_RENEGOTIATION,
+		.renegotiate_client = 1,
+		.want_failure = 1,
+	},
+	{
+		.desc = "TLSv1.2 - Server renegotiation disabled, server "
+		    "initiated renegotiation",
+		.ssl_max_proto_version = TLS1_2_VERSION,
+		.ssl_server_options = SSL_OP_NO_RENEGOTIATION,
+		.renegotiate_server = 1,
+		.want_failure = 1,
 	},
 	{
 		.desc = "TLSv1.3 - No renegotiation supported, no renegotiation",
