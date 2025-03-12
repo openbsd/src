@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.1 2025/03/07 14:21:22 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.2 2025/03/12 12:53:33 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -82,7 +82,7 @@
 	sha256_message_schedule_update(m0, m1, m2, m3)			\
 	sha256_round(h0, h1, m0, k)
 
-.cpu	generic+sha2
+.arch	armv8-a+sha2
 
 .text
 
