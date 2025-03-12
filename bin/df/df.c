@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.61 2023/01/01 16:31:20 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.62 2025/03/12 16:01:31 job Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %7llu %7llu %5d%% ", used, sfsp->f_ffree,
+		(void)printf(" %8llu %8llu %4d%% ", used, sfsp->f_ffree,
 		   percent(used, inodes));
 	} else
 		(void)printf("  ");
@@ -363,7 +363,7 @@ bsdprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 			     maxwidth, maxwidth, "Filesystem", header);
 	}
 	if (iflag)
-		(void)printf(" iused   ifree  %%iused");
+		(void)printf("  iused    ifree %%iused");
 	(void)printf("  Mounted on\n");
 
 
