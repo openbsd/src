@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.68 2024/07/22 14:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.69 2025/03/12 14:03:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -900,6 +900,12 @@ ssl3_read_handshake_unexpected(SSL *s)
 		tls_buffer_free(s->s3->handshake_fragment);
 		s->s3->handshake_fragment = NULL;
 
+		if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0) {
+			ssl3_send_alert(s, SSL3_AL_WARNING,
+			    SSL_AD_NO_RENEGOTIATION);
+			return 1;
+		}
+
 		/*
 		 * It should be impossible to hit this, but keep the safety
 		 * harness for now...
@@ -947,7 +953,9 @@ ssl3_read_handshake_unexpected(SSL *s)
 			return -1;
 		}
 
-		if ((s->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0) {
+		if ((s->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0 ||
+		    ((s->options & SSL_OP_NO_RENEGOTIATION) != 0 &&
+		    (s->options & SSL_OP_ALLOW_CLIENT_RENEGOTIATION) == 0)) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_NO_RENEGOTIATION);
 			return -1;

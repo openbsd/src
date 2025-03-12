@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.246 2025/03/09 15:53:36 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.247 2025/03/12 14:03:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -389,6 +389,10 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* Disallow client initiated renegotiation. */
 #define SSL_OP_NO_CLIENT_RENEGOTIATION			0x00020000L
+/* Disallow client and server initiated renegotiation. */
+#define SSL_OP_NO_RENEGOTIATION				0x00040000L
+/* Allow client initiated renegotiation. */
+#define SSL_OP_ALLOW_CLIENT_RENEGOTIATION		0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set on servers to choose the cipher according to the server's

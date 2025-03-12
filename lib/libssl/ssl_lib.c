@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.330 2024/09/22 14:59:48 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.331 2025/03/12 14:03:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1308,6 +1308,11 @@ LSSL_ALIAS(SSL_shutdown);
 int
 SSL_renegotiate(SSL *s)
 {
+	if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0) {
+		SSLerror(s, SSL_R_NO_RENEGOTIATION);
+		return 0;
+	}
+
 	if (s->renegotiate == 0)
 		s->renegotiate = 1;
 
@@ -1320,6 +1325,11 @@ LSSL_ALIAS(SSL_renegotiate);
 int
 SSL_renegotiate_abbreviated(SSL *s)
 {
+	if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0) {
+		SSLerror(s, SSL_R_NO_RENEGOTIATION);
+		return 0;
+	}
+
 	if (s->renegotiate == 0)
 		s->renegotiate = 1;
 

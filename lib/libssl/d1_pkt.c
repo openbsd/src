@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.129 2024/07/20 04:04:23 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.130 2025/03/12 14:03:55 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -592,6 +592,12 @@ dtls1_read_handshake_unexpected(SSL *s)
 		tls_content_clear(s->s3->rcontent);
 		s->s3->rrec.length = 0;
 
+		if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0) {
+			ssl3_send_alert(s, SSL3_AL_WARNING,
+			    SSL_AD_NO_RENEGOTIATION);
+			return 1;
+		}
+
 		/*
 		 * It should be impossible to hit this, but keep the safety
 		 * harness for now...
@@ -644,7 +650,9 @@ dtls1_read_handshake_unexpected(SSL *s)
 			return -1;
 		}
 
-		if ((s->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0) {
+		if ((s->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0 ||
+		    ((s->options & SSL_OP_NO_RENEGOTIATION) != 0 &&
+		    (s->options & SSL_OP_ALLOW_CLIENT_RENEGOTIATION) == 0)) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_NO_RENEGOTIATION);
 			return -1;
