@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.149 2025/02/25 15:55:26 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.150 2025/03/12 07:42:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -691,7 +691,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 		cert_free(cert1);
 		free(file1);
 
-		if (cert2 != 0) {
+		if (cert2 != NULL) {
 			cert2->talid = entp->talid;
 			auth_insert(file2, &auths, cert2, NULL);
 		}
