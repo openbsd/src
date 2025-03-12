@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.218 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.219 2025/03/12 14:08:31 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	mtx_enter(&so2->so_rcv.sb_mtx);
 	mtx_enter(&so->so_snd.sb_mtx);
 	if (control) {
-		if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
+		if (sbappendcontrol(&so2->so_rcv, m, control)) {
 			control = NULL;
 		} else {
 			mtx_leave(&so->so_snd.sb_mtx);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.184 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.185 2025/03/12 14:08:31 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -950,8 +950,7 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 }
 
 int
-sbappendcontrol(struct socket *so, struct sockbuf *sb, struct mbuf *m0,
-    struct mbuf *control)
+sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 {
 	struct mbuf *m, *mlast, *n;
 	int eor = 0, space = 0;
