@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal-stress.c,v 1.2 2021/09/20 16:39:40 claudio Exp $	*/
+/*	$OpenBSD: signal-stress.c,v 1.3 2025/03/12 06:46:35 claudio Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2004 Public Domain.
  */
@@ -153,7 +153,7 @@ main()
 	/*
 	 * The signal game is running, now insert noise in the process.
 	 */
-	for (i = 0; i < nprocs; i++) {
+	for (i = 0; i < 10 * nprocs; i++) {
 		pid_t pid = pids[arc4random_uniform(nprocs)];
 		kill(pid, SIGSTOP);
 		wait_stopped(pid);
