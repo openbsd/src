@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.404 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.405 2025/03/12 23:27:17 yasuoka Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -506,19 +506,13 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 		goto bad;
 	}
 
-	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
-	    ip->ip_dst.s_addr == INADDR_ANY) {
-		nxt = ip_ours(mp, offp, nxt, af, ns);
-		goto out;
-	}
-
 	if (ns == NULL) {
 		ro = &iproute;
 		ro->ro_rt = NULL;
 	} else {
 		ro = &ns->ns_route;
 	}
-	switch(in_ouraddr(m, ifp, ro, flags)) {
+	switch (in_ouraddr(m, ifp, ro, flags)) {
 	case 2:
 		goto bad;
 	case 1:
@@ -864,6 +858,12 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 #endif
 
 	ip = mtod(m, struct ip *);
+
+	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
+	    ip->ip_dst.s_addr == INADDR_ANY) {
+		m->m_flags |= M_BCAST;
+		return (1);
+	}
 
 	rt = route_mpath(ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
 	if (rt != NULL) {
