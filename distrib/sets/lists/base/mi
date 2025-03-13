@@ -783,10 +783,10 @@
 ./usr/lib/librpcsvc.so.3.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.7.3
-./usr/lib/libssl.so.59.0
+./usr/lib/libssl.so.59.1
 ./usr/lib/libtermcap.so.15.0
 ./usr/lib/libtermlib.so.15.0
-./usr/lib/libtls.so.32.0
+./usr/lib/libtls.so.32.1
 ./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.20.0
 ./usr/lib/libz.so.7.1
