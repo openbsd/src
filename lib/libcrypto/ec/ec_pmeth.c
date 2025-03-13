@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.25 2025/02/18 06:31:10 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.26 2025/03/13 10:39:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -234,7 +234,7 @@ pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 
 	outlen = *keylen;
 
-	ret = ECDH_compute_key(key, outlen, pubkey, eckey, 0);
+	ret = ECDH_compute_key(key, outlen, pubkey, eckey, NULL);
 	if (ret <= 0)
 		return 0;
 
