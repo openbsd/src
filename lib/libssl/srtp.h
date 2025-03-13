@@ -1,4 +1,4 @@
-/* $OpenBSD: srtp.h,v 1.7 2021/06/11 15:28:13 landry Exp $ */
+/* $OpenBSD: srtp.h,v 1.8 2025/03/13 10:26:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,8 @@
 
 #ifndef HEADER_D1_SRTP_H
 #define HEADER_D1_SRTP_H
+
+#include <openssl/ssl.h>
 
 #ifdef  __cplusplus
 extern "C" {
