@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.59 2024/10/08 19:40:00 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.60 2025/03/13 13:24:04 bluhm Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -391,6 +391,9 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	bus_size_t plen, sgsize, mapsize;
 	int first = 1;
 	int i, seg = 0;
+	int page, off;
+	vaddr_t pgva, vaddr;
+	int use_bounce_buffer = cpu_sev_guestmode || FORCE_BOUNCE_BUFFER;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -401,6 +404,10 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	if (nsegs > map->_dm_segcnt || size > map->_dm_size)
 		return (EINVAL);
 
+	page = 0;
+	pgva = -1;
+	vaddr = -1;
+
 	mapsize = size;
 	bmask  = ~(map->_dm_boundary - 1);
 
@@ -409,6 +416,16 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 		plen = MIN(segs[i].ds_len, size);
 
 		while (plen > 0) {
+			if (use_bounce_buffer) {
+				if (page >= map->_dm_npages)
+					return (EFBIG);
+
+				off = paddr & PAGE_MASK;
+				vaddr = PMAP_DIRECT_MAP(paddr);
+				pgva = map->_dm_pgva + (page << PGSHIFT) + off;
+				page++;
+			}
+
 			/*
 			 * Compute the segment size, and adjust counts.
 			 */
@@ -437,6 +454,8 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 			if (first) {
 				map->dm_segs[seg].ds_addr = paddr;
 				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_va = vaddr;
+				map->dm_segs[seg]._ds_bounce_va = pgva;
 				first = 0;
 			} else {
 				if (paddr == lastaddr &&
@@ -444,13 +463,18 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 				     map->_dm_maxsegsz &&
 				    (map->_dm_boundary == 0 ||
 				     (map->dm_segs[seg].ds_addr & bmask) ==
-				     (paddr & bmask)))
+				     (paddr & bmask)) &&
+				    (!use_bounce_buffer ||
+				     (map->dm_segs[seg]._ds_va +
+				     map->dm_segs[seg].ds_len) == vaddr)) {
 					map->dm_segs[seg].ds_len += sgsize;
-				else {
+				} else {
 					if (++seg >= map->_dm_segcnt)
 						return (EINVAL);
 					map->dm_segs[seg].ds_addr = paddr;
 					map->dm_segs[seg].ds_len = sgsize;
+					map->dm_segs[seg]._ds_va = vaddr;
+					map->dm_segs[seg]._ds_bounce_va = pgva;
 				}
 			}
 
