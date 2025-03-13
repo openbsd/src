@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.390 2024/11/21 13:26:49 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.391 2025/03/13 17:49:37 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -790,19 +790,6 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		sa->sa_msgid_current = msg->msg_msgid;
 	}
 
-	if (sa_address(sa, &sa->sa_peer, (struct sockaddr *)&msg->msg_peer)
-	    == -1 ||
-	    sa_address(sa, &sa->sa_local, (struct sockaddr *)&msg->msg_local)
-	    == -1) {
-		ikestat_inc(env, ikes_msg_rcvd_dropped);
-		return;
-	}
-
-	sa->sa_fd = msg->msg_fd;
-
-	log_debug("%s: updated SA to peer %s local %s", __func__,
-	    print_addr(&sa->sa_peer.addr), print_addr(&sa->sa_local.addr));
-
 done:
 	if (initiator)
 		ikev2_init_recv(env, msg, hdr);
@@ -1217,6 +1204,17 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		log_debug("%s: failed to parse message", __func__);
 		return;
 	}
+
+	if (sa_address(sa, &sa->sa_peer, (struct sockaddr *)&msg->msg_peer)
+	    == -1 ||
+	    sa_address(sa, &sa->sa_local, (struct sockaddr *)&msg->msg_local)
+	    == -1) {
+		ikestat_inc(env, ikes_msg_rcvd_dropped);
+		return;
+	}
+	sa->sa_fd = msg->msg_fd;
+	log_debug("%s: updated SA to peer %s local %s", __func__,
+	    print_addr(&sa->sa_peer.addr), print_addr(&sa->sa_local.addr));
 
 	if (sa->sa_fragments.frag_count != 0)
 		return;
@@ -2989,6 +2987,17 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 
 	if ((sa = msg->msg_sa) == NULL)
 		return;
+
+	if (sa_address(sa, &sa->sa_peer, (struct sockaddr *)&msg->msg_peer)
+	    == -1 ||
+	    sa_address(sa, &sa->sa_local, (struct sockaddr *)&msg->msg_local)
+	    == -1) {
+		ikestat_inc(env, ikes_msg_rcvd_dropped);
+		return;
+	}
+	sa->sa_fd = msg->msg_fd;
+	log_debug("%s: updated SA to peer %s local %s", __func__,
+	    print_addr(&sa->sa_peer.addr), print_addr(&sa->sa_local.addr));
 
 	if (sa->sa_fragments.frag_count != 0)
 		return;
