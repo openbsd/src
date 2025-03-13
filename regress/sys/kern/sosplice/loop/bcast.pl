@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: bcast.pl,v 1.1 2021/01/09 15:39:37 bluhm Exp $
+#	$OpenBSD: bcast.pl,v 1.2 2025/03/13 10:05:14 yasuoka Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -59,6 +59,8 @@ my $cs = IO::Socket::IP->new(
     Proto		=> "udp",
     Type		=> SOCK_DGRAM,
 ) or die "Connect socket failed: $@";
+$cs->setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+  or die "Set socket option SO_BROADCAST failed: $!";
 print "connect to host '$host' service '$service'\n" if $verbose;
 
 my $as = $ls;
