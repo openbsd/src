@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_X509_NAME.3,v 1.17 2021/12/11 17:25:10 jmc Exp $
+.\" $OpenBSD: d2i_X509_NAME.3,v 1.18 2025/03/14 21:32:15 tb Exp $
 .\" checked up to:
 .\" OpenSSL crypto/d2i_X509_NAME 4692340e Jun 7 15:49:08 2016 -0400 and
 .\" OpenSSL man3/X509_NAME_get0_der 99d63d46 Oct 26 13:56:48 2016 -0400
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2021 $
+.Dd $Mdocdate: March 14 2025 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Ft X509_NAME *
 .Fo d2i_X509_NAME
 .Fa "X509_NAME **val_out"
-.Fa "unsigned char **der_in"
+.Fa "const unsigned char **der_in"
 .Fa "long length"
 .Fc
 .Ft int
@@ -64,7 +64,7 @@
 .Ft X509_NAME_ENTRY *
 .Fo d2i_X509_NAME_ENTRY
 .Fa "X509_NAME_ENTRY **val_out"
-.Fa "unsigned char **der_in"
+.Fa "const unsigned char **der_in"
 .Fa "long length"
 .Fc
 .Ft int

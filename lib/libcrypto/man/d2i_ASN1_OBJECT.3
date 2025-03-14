@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.14 2023/08/09 17:27:26 schwarze Exp $
+.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.15 2025/03/14 21:32:15 tb Exp $
 .\"
 .\" Copyright (c) 2017, 2022, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2023 $
+.Dd $Mdocdate: March 14 2025 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Ft ASN1_OBJECT *
 .Fo d2i_ASN1_OBJECT
 .Fa "ASN1_OBJECT **val_out"
-.Fa "unsigned char **der_in"
+.Fa "const unsigned char **der_in"
 .Fa "long length"
 .Fc
 .Ft int
