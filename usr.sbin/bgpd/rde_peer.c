@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.47 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.48 2025/03/14 12:39:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -523,14 +523,18 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 static void
 peer_blast_upcall(struct prefix *p, void *ptr)
 {
+	struct rde_peer		*peer;
+
 	if (p->flags & PREFIX_FLAG_DEAD) {
 		/* ignore dead prefixes, they will go away soon */
 	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
+		peer = prefix_peer(p);
 		/* put entries on the update queue if not already on a queue */
 		p->flags |= PREFIX_FLAG_UPDATE;
-		if (RB_INSERT(prefix_tree, &prefix_peer(p)->updates[p->pt->aid],
+		if (RB_INSERT(prefix_tree, &peer->updates[p->pt->aid],
 		    p) != NULL)
 			fatalx("%s: RB tree invariant violated", __func__);
+		peer->stats.pending_update++;
 	}
 }
 

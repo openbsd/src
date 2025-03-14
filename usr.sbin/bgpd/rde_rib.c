@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.267 2025/01/14 12:24:23 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.268 2025/03/14 12:39:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1430,7 +1430,11 @@ prefix_adjout_flush_pending(struct rde_peer *peer)
 		RB_FOREACH_SAFE(p, prefix_tree, &peer->updates[aid], np) {
 			p->flags &= ~PREFIX_FLAG_UPDATE;
 			RB_REMOVE(prefix_tree, &peer->updates[aid], p);
-			peer->stats.pending_update--;
+			if (p->flags & PREFIX_FLAG_EOR) {
+				prefix_adjout_destroy(p);
+			} else {
+				peer->stats.pending_update--;
+			}
 		}
 	}
 }
