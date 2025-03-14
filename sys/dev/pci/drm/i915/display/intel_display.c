@@ -1502,14 +1502,6 @@ static void intel_encoders_update_pipe(struct intel_atomic_state *state,
 	}
 }
 
-static void intel_disable_primary_plane(const struct intel_crtc_state *crtc_state)
-{
-	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
-	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
-
-	plane->disable_arm(plane, crtc_state);
-}
-
 static void ilk_configure_cpu_transcoder(const struct intel_crtc_state *crtc_state)
 {
 	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
@@ -1575,11 +1567,7 @@ static void ilk_crtc_enable(struct intel_atomic_state *state,
 	 * On ILK+ LUT must be loaded before the pipe is running but with
 	 * clocks enabled
 	 */
-	intel_color_load_luts(new_crtc_state);
-	intel_color_commit_noarm(new_crtc_state);
-	intel_color_commit_arm(new_crtc_state);
-	/* update DSPCNTR to configure gamma for pipe bottom color */
-	intel_disable_primary_plane(new_crtc_state);
+	intel_color_modeset(new_crtc_state);
 
 	intel_initial_watermarks(state, crtc);
 	intel_enable_transcoder(new_crtc_state);
@@ -1741,12 +1729,7 @@ static void hsw_crtc_enable(struct intel_atomic_state *state,
 		 * On ILK+ LUT must be loaded before the pipe is running but with
 		 * clocks enabled
 		 */
-		intel_color_load_luts(pipe_crtc_state);
-		intel_color_commit_noarm(pipe_crtc_state);
-		intel_color_commit_arm(pipe_crtc_state);
-		/* update DSPCNTR to configure gamma/csc for pipe bottom color */
-		if (DISPLAY_VER(dev_priv) < 9)
-			intel_disable_primary_plane(pipe_crtc_state);
+		intel_color_modeset(pipe_crtc_state);
 
 		hsw_set_linetime_wm(pipe_crtc_state);
 
@@ -2147,11 +2130,7 @@ static void valleyview_crtc_enable(struct intel_atomic_state *state,
 
 	i9xx_pfit_enable(new_crtc_state);
 
-	intel_color_load_luts(new_crtc_state);
-	intel_color_commit_noarm(new_crtc_state);
-	intel_color_commit_arm(new_crtc_state);
-	/* update DSPCNTR to configure gamma for pipe bottom color */
-	intel_disable_primary_plane(new_crtc_state);
+	intel_color_modeset(new_crtc_state);
 
 	intel_initial_watermarks(state, crtc);
 	intel_enable_transcoder(new_crtc_state);
@@ -2187,11 +2166,7 @@ static void i9xx_crtc_enable(struct intel_atomic_state *state,
 
 	i9xx_pfit_enable(new_crtc_state);
 
-	intel_color_load_luts(new_crtc_state);
-	intel_color_commit_noarm(new_crtc_state);
-	intel_color_commit_arm(new_crtc_state);
-	/* update DSPCNTR to configure gamma for pipe bottom color */
-	intel_disable_primary_plane(new_crtc_state);
+	intel_color_modeset(new_crtc_state);
 
 	if (!intel_initial_watermarks(state, crtc))
 		intel_update_watermarks(dev_priv);
