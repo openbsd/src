@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.65 2025/02/28 00:18:28 jsg Exp $
+# $OpenBSD: files.drm,v 1.66 2025/03/14 03:32:33 jsg Exp $
 
 #file	dev/pci/drm/aperture.c			drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -31,6 +31,7 @@ file	dev/pci/drm/drm_encoder_slave.c		drm
 file	dev/pci/drm/drm_exec.c			drm
 file	dev/pci/drm/drm_fb_dma_helper.c		drm
 file	dev/pci/drm/drm_fb_helper.c		drm
+file	dev/pci/drm/drm_fbdev_client.c		drm
 file	dev/pci/drm/drm_fbdev_dma.c		drm
 #file	dev/pci/drm/drm_fbdev_shmem.c		drm
 file	dev/pci/drm/drm_fbdev_ttm.c		drm
