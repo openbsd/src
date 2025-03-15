@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_X509_CRL.3,v 1.9 2024/03/06 02:34:14 tb Exp $
+.\" $OpenBSD: d2i_X509_CRL.3,v 1.10 2025/03/15 15:17:41 tb Exp $
 .\"
 .\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2024 $
+.Dd $Mdocdate: March 15 2025 $
 .Dt D2I_X509_CRL 3
 .Os
 .Sh NAME
@@ -45,22 +45,22 @@
 .Ft X509_CRL *
 .Fo d2i_X509_CRL_bio
 .Fa "BIO *in_bio"
-.Fa "X509_CRL **der_out"
+.Fa "X509_CRL **val_out"
 .Fc
 .Ft X509_CRL *
 .Fo d2i_X509_CRL_fp
 .Fa "FILE *in_fp"
-.Fa "X509_CRL **der_out"
+.Fa "X509_CRL **val_out"
 .Fc
 .Ft int
 .Fo i2d_X509_CRL_bio
 .Fa "BIO *out_bio"
-.Fa "X509_CRL *der_in"
+.Fa "X509_CRL *val_in"
 .Fc
 .Ft int
 .Fo i2d_X509_CRL_fp
 .Fa "FILE *out_fp"
-.Fa "X509_CRL *der_in"
+.Fa "X509_CRL *val_in"
 .Fc
 .Ft X509_CRL_INFO *
 .Fo d2i_X509_CRL_INFO
