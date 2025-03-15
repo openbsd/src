@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.65 2022/03/31 17:27:27 naddy Exp $
+.\"	$OpenBSD: sort.1,v 1.66 2025/03/15 18:20:04 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: March 15 2025 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -121,7 +121,8 @@ if
 is not defined.
 .It Fl u , Fl Fl unique
 Unique: suppress all but one in each set of lines having equal keys.
-This option implies a stable sort (see below).
+This option implies
+.Fl s .
 If used with
 .Fl C
 or
@@ -148,24 +149,25 @@ Consider only blank spaces and alphanumeric characters in comparisons.
 Consider all lowercase characters that have uppercase
 equivalents to be the same for purposes of comparison.
 .It Fl g , Fl Fl general-numeric-sort , Fl Fl sort Ns = Ns Cm general-numeric
-Sort by general numerical value.
+Use an initial numeric string as the key and sort numerically.
 As opposed to
 .Fl n ,
-this option handles general floating points.
+this option handles general floating point numbers.
 It has a more
 permissive format than that allowed by
 .Fl n
 but it has a significant performance drawback.
 .It Fl h , Fl Fl human-numeric-sort , Fl Fl sort Ns = Ns Cm human-numeric
-Sort by numerical value, but take into account the SI suffix,
-if present.
+Use an initial numeric string with an optional SI suffix as the key.
 Sorts first by numeric sign (negative, zero, or
 positive); then by SI suffix (either empty, or `k' or `K', or one
 of `MGTPEZY', in that order); and finally by numeric value.
 The SI suffix must immediately follow the number.
 For example, '12345K' sorts before '1M', because M is "larger" than K.
 This sort option is useful for sorting the output of a single invocation
-of 'df' command with
+of a
+.Xr df 1
+command with
 .Fl h
 or
 .Fl H
@@ -176,9 +178,9 @@ Ignore all non-printable characters.
 Sort by month abbreviations.
 Unknown strings are considered smaller than valid month names.
 .It Fl n , Fl Fl numeric-sort , Fl Fl sort Ns = Ns Cm numeric
-An initial numeric string, consisting of optional blank space, optional
-minus sign, and zero or more digits (including decimal point)
-is sorted by arithmetic value.
+Use an initial numeric string as the key, consisting of optional
+blank space, an optional minus sign, and zero or more digits including
+an optional decimal point, and sort numerically.
 Leading blank characters are ignored.
 .It Fl R , Fl Fl random-sort , Fl Fl sort Ns = Ns Cm random
 Sort lines in random order.
