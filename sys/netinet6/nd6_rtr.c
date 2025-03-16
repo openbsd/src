@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.171 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.172 2025/03/16 23:45:06 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -204,8 +204,10 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt,
 			    &sa_mask);
+			KERNEL_LOCK();
 			error = rtrequest_delete(&info, RTP_ANY, ifp, NULL,
 			    ifp->if_rdomain);
+			KERNEL_UNLOCK();
 			if (error == 0)
 				error = EAGAIN;
 		}
