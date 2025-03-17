@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.369 2025/02/20 13:39:58 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.370 2025/03/17 20:33:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4263,6 +4263,8 @@ window_copy_match_at_cursor(struct window_copy_mode_data *data)
 			buf = xrealloc(buf, len + 2);
 			buf[len] = '\t';
 			len++;
+		} else if (gc.flags & GRID_FLAG_PADDING) {
+			/* nothing to do */
 		} else {
 			buf = xrealloc(buf, len + gc.data.size + 1);
 			memcpy(buf + len, gc.data.data, gc.data.size);
