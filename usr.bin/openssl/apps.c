@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.70 2025/01/03 09:14:42 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.71 2025/03/17 15:55:09 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1420,6 +1420,7 @@ save_index(const char *file, const char *suffix, CA_DB *db)
 	return 1;
 
  err:
+	BIO_free(out);
 	return 0;
 }
 
