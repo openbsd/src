@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.58 2025/03/18 12:48:11 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.59 2025/03/18 12:53:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -981,8 +981,8 @@ PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	X509_STORE_CTX_cleanup(ctx);
 
 	return PKCS7_signatureVerify(bio, p7, si, x509);
+
 err:
-	
 	return ret;
 }
 LCRYPTO_ALIAS(PKCS7_dataVerify);
