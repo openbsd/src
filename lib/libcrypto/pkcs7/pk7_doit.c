@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.57 2024/11/30 10:01:31 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.58 2025/03/18 12:48:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1067,8 +1067,10 @@ PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si, X509 *x509)
 			ret = -1;
 			goto err;
 		}
-		if (!EVP_VerifyUpdate(&mdc_tmp, abuf, alen))
+		if (!EVP_VerifyUpdate(&mdc_tmp, abuf, alen)) {
+			free(abuf);
 			goto err;
+		}
 
 		free(abuf);
 	}
