@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.226 2024/11/08 13:18:29 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.227 2025/03/18 22:12:12 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1957,7 +1957,7 @@ pmap_page_remove_86(struct vm_page *pg)
 				PG_FRAME), VM_PAGE_TO_PHYS(pve->pv_ptp));
 			panic("pmap_page_remove_86: mapped managed page has "
 				"invalid pv_ptp field");
-}
+		}
 #endif
 		opte = i386_atomic_testset_ul(&ptes[atop(pve->pv_va)], 0);
 

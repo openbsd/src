@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.75 2024/11/16 10:09:08 mpi Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.76 2025/03/18 22:12:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1384,7 +1384,7 @@ pmap_page_remove_pae(struct vm_page *pg)
 				PG_FRAME), VM_PAGE_TO_PHYS(pve->pv_ptp));
 			panic("pmap_page_remove_pae: mapped managed page has "
 				"invalid pv_ptp field");
-}
+		}
 #endif
 		opte = i386_atomic_testset_uq(&ptes[atop(pve->pv_va)], 0);
 
