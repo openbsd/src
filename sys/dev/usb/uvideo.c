@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.252 2025/03/12 14:08:51 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.253 2025/03/18 13:38:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -68,6 +68,7 @@ struct uvideo_softc {
 	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
 	uint8_t					*sc_mmap_buffer;
 	size_t					 sc_mmap_buffer_size;
+	int					 sc_mmap_buffer_idx;
 	q_mmap					 sc_mmap_q;
 	int					 sc_mmap_count;
 	int					 sc_mmap_flag;
@@ -172,6 +173,7 @@ void		uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int);
 void		uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
 		    uint8_t *, int);
+int		uvideo_get_buf(struct uvideo_softc *);
 void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 usbd_status	uvideo_usb_control(struct uvideo_softc *, uint8_t, uint8_t,
@@ -2498,6 +2500,30 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 	}
 }
 
+int
+uvideo_get_buf(struct uvideo_softc *sc)
+{
+	int i, idx = sc->sc_mmap_buffer_idx;
+
+	/* find a buffer which is ready for queueing */
+	for (i = 0; i < sc->sc_mmap_count; i++) {
+		if (sc->sc_mmap[sc->sc_mmap_buffer_idx].v4l2_buf.flags &
+		    V4L2_BUF_FLAG_QUEUED) {
+			idx = sc->sc_mmap_buffer_idx;
+			if (++sc->sc_mmap_buffer_idx == sc->sc_mmap_count)
+				sc->sc_mmap_buffer_idx = 0;
+			break;
+		}
+		if (++sc->sc_mmap_buffer_idx == sc->sc_mmap_count)
+			sc->sc_mmap_buffer_idx = 0;
+	}
+
+	if (i == sc->sc_mmap_count)
+		return -1;
+
+	return idx;
+}
+
 void
 uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 {
@@ -2507,11 +2533,8 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
 		panic("%s: mmap buffers not allocated", __func__);
 
 	/* find a buffer which is ready for queueing */
-	for (i = 0; i < sc->sc_mmap_count; i++) {
-		if (sc->sc_mmap[i].v4l2_buf.flags & V4L2_BUF_FLAG_QUEUED)
-			break;
-	}
-	if (i == sc->sc_mmap_count) {
+	i = uvideo_get_buf(sc);
+	if (i == -1) {
 		DPRINTF(1, "%s: %s: mmap queue is full!\n",
 		    DEVNAME(sc), __func__);
 		return;
@@ -3552,6 +3575,8 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 		    sc->sc_mmap[i].v4l2_buf.m.offset,
 		    sc->sc_mmap[i].v4l2_buf.length);
 	}
+
+	sc->sc_mmap_buffer_idx = 0;
 
 	/* tell how many buffers we have really allocated */
 	rb->count = sc->sc_mmap_count;
