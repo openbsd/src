@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.50 2025/03/19 16:30:44 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.51 2025/03/19 16:31:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -703,7 +703,8 @@ X509_VERIFY_PARAM_get0(int id)
 		return NULL;
 
 	if (id < num)
-		return default_table + id;
+		return &default_table[id];
+
 	return sk_X509_VERIFY_PARAM_value(param_table, id - num);
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_get0);
