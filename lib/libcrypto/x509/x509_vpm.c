@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.53 2025/03/19 16:33:59 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.54 2025/03/19 16:35:11 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -720,6 +720,7 @@ X509_VERIFY_PARAM_lookup(const char *name)
 	size_t i;
 	int idx;
 
+	memset(&param, 0, sizeof(param));
 	param.name = (char *)name;
 	if ((idx = sk_X509_VERIFY_PARAM_find(param_table, &param)) != -1)
 		return sk_X509_VERIFY_PARAM_value(param_table, idx);
