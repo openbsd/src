@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.375 2025/03/17 22:56:28 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.376 2025/03/19 14:00:44 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -431,17 +431,16 @@ discard:
 		struct socket *soback;
 
 		sounlock(so);
-		mtx_enter(&so->so_snd.sb_mtx);
 		/*
 		 * Concurrent sounsplice() locks `sb_mtx' mutexes on
 		 * both `so_snd' and `so_rcv' before unsplice sockets.
 		 */
-		if ((soback = so->so_sp->ssp_soback) == NULL) {
-			mtx_leave(&so->so_snd.sb_mtx);
-			goto notsplicedback;
-		}
-		soref(soback);
+		mtx_enter(&so->so_snd.sb_mtx);
+		soback = soref(so->so_sp->ssp_soback);
 		mtx_leave(&so->so_snd.sb_mtx);
+
+		if (soback == NULL)
+			goto notsplicedback;
 
 		/*
 		 * `so' can be only unspliced, and never spliced again.
