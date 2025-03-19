@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.37 2025/03/09 15:17:22 tb Exp $ */
+/* $OpenBSD: a_strex.c,v 1.38 2025/03/19 11:18:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -565,31 +565,6 @@ do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n, int indent,
 	return outlen;
 }
 
-/* NID with SN of 1-2 letters, which X509_NAME_print() historically included. */
-static int
-x509_name_entry_include(const X509_NAME_ENTRY *ne)
-{
-	int nid;
-
-	if ((nid = OBJ_obj2nid(ne->object)) == NID_undef)
-		return 0;
-
-	switch (nid) {
-	case NID_commonName:
-	case NID_surname:
-	case NID_countryName:
-	case NID_localityName:
-	case NID_stateOrProvinceName:
-	case NID_organizationName:
-	case NID_organizationalUnitName:
-	case NID_givenName:
-	case NID_domainComponent: /* XXX - doesn't really belong here */
-		return 1;
-	}
-
-	return 0;
-}
-
 static int
 X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
 {
@@ -606,9 +581,6 @@ X509_NAME_print(BIO *bio, const X509_NAME *name, int obase)
 
 	for (i = 0; i < sk_X509_NAME_ENTRY_num(name->entries); i++) {
 		ne = sk_X509_NAME_ENTRY_value(name->entries, i);
-
-		if (!x509_name_entry_include(ne))
-			continue;
 
 		if (started) {
 			if (!CBB_add_u8(&cbb, ','))
