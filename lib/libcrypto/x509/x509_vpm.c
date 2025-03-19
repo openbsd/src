@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.47 2025/03/12 04:58:04 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.48 2025/03/19 16:26:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -698,6 +698,10 @@ const X509_VERIFY_PARAM *
 X509_VERIFY_PARAM_get0(int id)
 {
 	int num = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
+
+	if (id < 0)
+		return NULL;
+
 	if (id < num)
 		return default_table + id;
 	return sk_X509_VERIFY_PARAM_value(param_table, id - num);
