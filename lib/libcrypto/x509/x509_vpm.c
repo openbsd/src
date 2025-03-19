@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.49 2025/03/19 16:29:37 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.50 2025/03/19 16:30:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -723,10 +723,10 @@ X509_VERIFY_PARAM_lookup(const char *name)
 
 	limit = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
 	for (i = 0; i < limit; i++) {
-		if (strcmp(default_table[i].name, name) == 0) {
+		if (strcmp(default_table[i].name, name) == 0)
 			return &default_table[i];
-		}
 	}
+
 	return NULL;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_lookup);
