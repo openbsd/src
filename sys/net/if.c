@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.728 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.729 2025/03/19 23:29:49 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3359,9 +3359,8 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 int
 ifsetlro(struct ifnet *ifp, int on)
 {
-	int error = 0;
-	int s = splnet();
 	struct ifreq ifr;
+	int error, s = splnet();
 
 	NET_ASSERT_LOCKED();	/* for ioctl */
 	KERNEL_ASSERT_LOCKED();	/* for if_flags */
@@ -3373,6 +3372,7 @@ ifsetlro(struct ifnet *ifp, int on)
 	error = ((*ifp->if_ioctl)(ifp, SIOCSIFXFLAGS, (caddr_t)&ifr));
 	if (error == 0)
 		goto out;
+	error = 0;
 
 	if (!ISSET(ifp->if_capabilities, IFCAP_LRO)) {
 		error = ENOTSUP;
