@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_name_test.c,v 1.1 2025/03/15 06:37:49 tb Exp $ */
+/*	$OpenBSD: x509_name_test.c,v 1.2 2025/03/19 11:19:17 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -22,8 +22,6 @@
 
 #include <openssl/x509.h>
 
-#define fixed 0
-
 static const struct x509_name_legacy {
 	const char	*compat;
 	const char	*oneline;
@@ -35,13 +33,8 @@ static const struct x509_name_legacy {
 		    "C=HU, "
 		    "L=Budapest, "
 		    "O=Microsec Ltd., "
-		    "CN=Microsec e-Szigno Root CA 2009"
-#if fixed
-		    ", "
+		    "CN=Microsec e-Szigno Root CA 2009, "
 		    "emailAddress=info@e-szigno.hu",
-#else
-		    "",
-#endif
 		.oneline =
 		    "/C=HU"
 		    "/L=Budapest"
@@ -72,9 +65,7 @@ static const struct x509_name_legacy {
 
 	{
 		.compat =
-#if fixed
 		    "serialNumber=G63287510, "
-#endif
 		    "C=ES, "
 		    "O=ANF Autoridad de Certificacion, "
 		    "OU=ANF CA Raiz, "
@@ -147,9 +138,7 @@ static const struct x509_name_legacy {
 		    "C=HU, "
 		    "L=Budapest, "
 		    "O=Microsec Ltd., "
-#if fixed
 		    "2.5.4.97=VATHU-23584497, "
-#endif
 		    "CN=e-Szigno Root CA 2017",
 		.oneline =
 		    "/C=HU"
@@ -183,9 +172,7 @@ static const struct x509_name_legacy {
 		    "C=ES, "
 		    "O=FNMT-RCM, "
 		    "OU=Ceres, "
-#if fixed
 		    "2.5.4.97=VATES-Q2826004J, "
-#endif
 		    "CN=AC RAIZ FNMT-RCM SERVIDORES SEGUROS",
 		.oneline =
 		    "/C=ES"
