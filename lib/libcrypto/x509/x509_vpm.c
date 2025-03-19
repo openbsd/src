@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.51 2025/03/19 16:31:47 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.52 2025/03/19 16:33:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -654,6 +654,8 @@ static const X509_VERIFY_PARAM default_table[] = {
 	}
 };
 
+#define N_DEFAULT_VERIFY_PARAMS (sizeof(default_table) / sizeof(default_table[0]))
+
 static STACK_OF(X509_VERIFY_PARAM) *param_table = NULL;
 
 static int
@@ -687,9 +689,11 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_add0_table);
 int
 X509_VERIFY_PARAM_get_count(void)
 {
-	int num = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
+	int num = N_DEFAULT_VERIFY_PARAMS;
+
 	if (param_table != NULL)
 		num += sk_X509_VERIFY_PARAM_num(param_table);
+
 	return num;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_get_count);
@@ -697,7 +701,7 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_get_count);
 const X509_VERIFY_PARAM *
 X509_VERIFY_PARAM_get0(int id)
 {
-	int num = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
+	int num = N_DEFAULT_VERIFY_PARAMS;
 
 	if (id < 0)
 		return NULL;
@@ -713,7 +717,7 @@ const X509_VERIFY_PARAM *
 X509_VERIFY_PARAM_lookup(const char *name)
 {
 	X509_VERIFY_PARAM pm;
-	unsigned int i, limit;
+	size_t i;
 
 	pm.name = (char *)name;
 	if (param_table) {
@@ -722,8 +726,7 @@ X509_VERIFY_PARAM_lookup(const char *name)
 			return sk_X509_VERIFY_PARAM_value(param_table, idx);
 	}
 
-	limit = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
-	for (i = 0; i < limit; i++) {
+	for (i = 0; i < N_DEFAULT_VERIFY_PARAMS; i++) {
 		if (strcmp(default_table[i].name, name) == 0)
 			return &default_table[i];
 	}
