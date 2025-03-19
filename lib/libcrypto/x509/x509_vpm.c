@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.54 2025/03/19 16:35:11 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.55 2025/03/19 17:11:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -113,7 +113,7 @@ sk_OPENSSL_STRING_deep_copy(const STACK_OF(OPENSSL_STRING) *sk)
 }
 
 static int
-x509_param_set_hosts_internal(X509_VERIFY_PARAM *vpm, int mode,
+x509_param_set_hosts_internal(X509_VERIFY_PARAM *param, int mode,
     const char *name, size_t namelen)
 {
 	char *copy;
@@ -126,9 +126,9 @@ x509_param_set_hosts_internal(X509_VERIFY_PARAM *vpm, int mode,
 	if (name && memchr(name, '\0', namelen))
 		return 0;
 
-	if (mode == SET_HOST && vpm->hosts) {
-		sk_OPENSSL_STRING_pop_free(vpm->hosts, str_free);
-		vpm->hosts = NULL;
+	if (mode == SET_HOST && param->hosts) {
+		sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
+		param->hosts = NULL;
 	}
 	if (name == NULL || namelen == 0)
 		return 1;
@@ -136,17 +136,17 @@ x509_param_set_hosts_internal(X509_VERIFY_PARAM *vpm, int mode,
 	if (copy == NULL)
 		return 0;
 
-	if (vpm->hosts == NULL &&
-	    (vpm->hosts = sk_OPENSSL_STRING_new_null()) == NULL) {
+	if (param->hosts == NULL &&
+	   (param->hosts = sk_OPENSSL_STRING_new_null()) == NULL) {
 		free(copy);
 		return 0;
 	}
 
-	if (!sk_OPENSSL_STRING_push(vpm->hosts, copy)) {
+	if (!sk_OPENSSL_STRING_push(param->hosts, copy)) {
 		free(copy);
-		if (sk_OPENSSL_STRING_num(vpm->hosts) == 0) {
-			sk_OPENSSL_STRING_free(vpm->hosts);
-			vpm->hosts = NULL;
+		if (sk_OPENSSL_STRING_num(param->hosts) == 0) {
+			sk_OPENSSL_STRING_free(param->hosts);
+			param->hosts = NULL;
 		}
 		return 0;
 	}
