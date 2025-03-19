@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.52 2025/03/19 16:33:24 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.53 2025/03/19 16:33:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -716,15 +716,13 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_get0);
 const X509_VERIFY_PARAM *
 X509_VERIFY_PARAM_lookup(const char *name)
 {
-	X509_VERIFY_PARAM pm;
+	X509_VERIFY_PARAM param;
 	size_t i;
+	int idx;
 
-	pm.name = (char *)name;
-	if (param_table) {
-		size_t idx;
-		if ((idx = sk_X509_VERIFY_PARAM_find(param_table, &pm)) != -1)
-			return sk_X509_VERIFY_PARAM_value(param_table, idx);
-	}
+	param.name = (char *)name;
+	if ((idx = sk_X509_VERIFY_PARAM_find(param_table, &param)) != -1)
+		return sk_X509_VERIFY_PARAM_value(param_table, idx);
 
 	for (i = 0; i < N_DEFAULT_VERIFY_PARAMS; i++) {
 		if (strcmp(default_table[i].name, name) == 0)
