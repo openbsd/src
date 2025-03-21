@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.253 2025/03/18 13:38:15 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.254 2025/03/21 13:34:41 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -465,7 +465,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 
 	DPRINTF(1, "%s: uvideo_open: sc=%p\n", DEVNAME(sc), sc);
 
-	if (usbd_is_dying(sc->sc_udev))
+	if (usbd_is_dying(sc->sc_udev) || sc->sc_vs_cur == NULL)
 		return (EIO);
 
 	/* pointers to upper video layer */
@@ -486,6 +486,9 @@ uvideo_close(void *addr)
 	struct uvideo_softc *sc = addr;
 
 	DPRINTF(1, "%s: uvideo_close: sc=%p\n", DEVNAME(sc), sc);
+
+	if (sc->sc_vs_cur == NULL)
+		return (EIO);
 
 #ifdef UVIDEO_DUMP
 	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
@@ -685,13 +688,10 @@ uvideo_detach(struct device *self, int flags)
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	int rv = 0;
 
-	/* Wait for outstanding requests to complete */
-	usbd_delay_ms(sc->sc_udev, UVIDEO_NFRAMES_MAX);
-
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
 
-	uvideo_vs_free_frame(sc);
+	uvideo_close(sc);
 
 	return (rv);
 }
@@ -2136,9 +2136,6 @@ skip_set_alt:
 void
 uvideo_vs_close(struct uvideo_softc *sc)
 {
-	if (usbd_is_dying(sc->sc_udev))
-		return;
-
 	if (sc->sc_vs_cur->bulk_running == 1) {
 		sc->sc_vs_cur->bulk_running = 0;
 
@@ -2153,6 +2150,10 @@ uvideo_vs_close(struct uvideo_softc *sc)
 		usbd_close_pipe(sc->sc_vs_cur->pipeh);
 		sc->sc_vs_cur->pipeh = NULL;
 	}
+
+	/* No need to mess with HW if the device is gone. */
+	if (usbd_is_dying(sc->sc_udev))
+		return;
 
 	if (sc->sc_vs_cur->bulk_endpoint) {
 		/*
@@ -2173,8 +2174,7 @@ uvideo_vs_close(struct uvideo_softc *sc)
 		usbd_delay_ms(sc->sc_udev, 100);
 
 		/* switch back to default interface (turns off cam LED) */
-		if (!usbd_is_dying(sc->sc_udev))
-			(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
+		(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
 	}
 }
 
@@ -2282,9 +2282,6 @@ uvideo_vs_start_isoc_ixfer(struct uvideo_softc *sc,
 	usbd_status error;
 
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
-
-	if (usbd_is_dying(sc->sc_udev))
-		return;
 
 	for (i = 0; i < sc->sc_nframes; i++)
 		ixfer->size[i] = sc->sc_vs_cur->psize;
