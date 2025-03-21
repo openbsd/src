@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.16 2025/02/10 08:14:32 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.17 2025/03/21 13:36:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -891,8 +891,8 @@ window_customize_init(struct window_mode_entry *wme, struct cmd_find_state *fs,
 
 	data->data = mode_tree_start(wp, args, window_customize_build,
 	    window_customize_draw, NULL, window_customize_menu,
-	    window_customize_height, NULL, data, window_customize_menu_items,
-	    NULL, 0, &s);
+	    window_customize_height, NULL, NULL, data,
+	    window_customize_menu_items, NULL, 0, &s);
 	mode_tree_zoom(data->data, args);
 
 	mode_tree_build(data->data);
