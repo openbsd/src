@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.254 2025/03/21 13:34:41 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.255 2025/03/21 22:47:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -72,9 +72,6 @@ struct uvideo_softc {
 	q_mmap					 sc_mmap_q;
 	int					 sc_mmap_count;
 	int					 sc_mmap_flag;
-
-	struct vnode				*sc_vp;
-	struct usb_task				 sc_task_write;
 
 	int					 sc_nframes;
 	struct usb_video_probe_commit		 sc_desc_probe;
@@ -219,8 +216,6 @@ void		uvideo_dump_desc_processing(struct uvideo_softc *,
 void		uvideo_dump_desc_extension(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_hexdump(void *, int, int);
-int		uvideo_debug_file_open(struct uvideo_softc *);
-void		uvideo_debug_file_write_frame(void *);
 #endif
 
 /*
@@ -490,9 +485,6 @@ uvideo_close(void *addr)
 	if (sc->sc_vs_cur == NULL)
 		return (EIO);
 
-#ifdef UVIDEO_DUMP
-	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
-#endif
 	/* close video stream pipe */
 	uvideo_vs_close(sc);
 
@@ -2200,12 +2192,7 @@ uvideo_vs_init(struct uvideo_softc *sc)
 	error = uvideo_vs_alloc_frame(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (USBD_INVAL);
-#ifdef UVIDEO_DUMP
-	if (uvideo_debug_file_open(sc) != 0)
-		return (USBD_INVAL);
-	usb_init_task(&sc->sc_task_write, uvideo_debug_file_write_frame, sc,
-	    USB_TASK_TYPE_GENERIC);
-#endif
+
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -2420,11 +2407,6 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 			fb->error = 1;
 		}
 
-#ifdef UVIDEO_DUMP
-		/* do the file write in process context */
-		usb_rem_task(sc->sc_udev, &sc->sc_task_write);
-		usb_add_task(sc->sc_udev, &sc->sc_task_write);
-#endif
 		if (sc->sc_mmap_flag) {
 			/* mmap */
 			uvideo_mmap_queue(sc, fb->buf, fb->offset, fb->error);
@@ -3126,55 +3108,6 @@ uvideo_hexdump(void *buf, int len, int quiet)
 		printf("%02x", (int)*((u_char *)buf + i));
 	}
 	printf("\n");
-}
-
-int
-uvideo_debug_file_open(struct uvideo_softc *sc)
-{
-	struct proc *p = curproc;
-	struct nameidata nd;
-	char name[] = "/tmp/uvideo.mjpeg";
-	int error;
-
-	NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
-	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
-	if (error) {
-		DPRINTF(1, "%s: %s: can't create debug file %s!\n",
-		    DEVNAME(sc), __func__, name);
-		return (error);
-	}
-
-	sc->sc_vp = nd.ni_vp;
-	VOP_UNLOCK(sc->sc_vp);
-	if (nd.ni_vp->v_type != VREG) {
-		vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
-		return (EIO);
-	}
-
-	DPRINTF(1, "%s: %s: created debug file %s\n",
-	    DEVNAME(sc), __func__, name);
-
-	return (0);
-}
-
-void
-uvideo_debug_file_write_frame(void *arg)
-{
-	struct uvideo_softc *sc = arg;
-	struct uvideo_frame_buffer *sb = &sc->sc_frame_buffer;
-	struct proc *p = curproc;
-	int error;
-
-	if (sc->sc_vp == NULL) {
-		printf("%s: %s: no file open!\n", DEVNAME(sc), __func__);
-		return;
-	}
-
-	error = vn_rdwr(UIO_WRITE, sc->sc_vp, sb->buf, sb->offset, (off_t)0,
-	    UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred, NULL, p);
-
-	if (error)
-		DPRINTF(1, "vn_rdwr error!\n");
 }
 #endif
 
