@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.518 2025/03/10 14:11:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.519 2025/03/21 01:06:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1592,7 +1592,6 @@ void	trie_dump(struct trie_head *);
 int	trie_equal(struct trie_head *, struct trie_head *);
 
 /* util.c */
-char		*ibuf_get_string(struct ibuf *, size_t);
 const char	*log_addr(const struct bgpd_addr *);
 const char	*log_evpnaddr(const struct bgpd_addr *, struct sockaddr *,
 		    socklen_t);
