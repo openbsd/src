@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.326 2025/03/21 13:26:39 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.327 2025/03/21 14:04:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1173,6 +1173,12 @@ format_cb_mouse_hyperlink(struct format_tree *ft)
 		return (NULL);
 	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
 		return (NULL);
+
+	if (!TAILQ_EMPTY(&wp->modes)) {
+		if (window_pane_mode(wp) != WINDOW_PANE_NO_MODE)
+			return (window_copy_get_hyperlink(wp, x, y));
+		return (NULL);
+	}
 	gd = wp->base.grid;
 	return (format_grid_hyperlink(gd, x, gd->hsize + y, wp->screen));
 }
