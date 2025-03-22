@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.43 2022/03/14 15:07:24 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.44 2025/03/22 07:24:08 kevlo Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -237,6 +237,7 @@ struct ieee80211_wpapsk {
 #define IEEE80211_WPA_AKM_8021X		0x02
 #define IEEE80211_WPA_AKM_SHA256_PSK	0x04
 #define IEEE80211_WPA_AKM_SHA256_8021X	0x08
+#define IEEE80211_WPA_AKM_SAE		0x10
 
 struct ieee80211_wpaparams {
 	char	i_name[IFNAMSIZ];		/* if_name, e.g. "wi0" */

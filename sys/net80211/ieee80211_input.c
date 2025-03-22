@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.254 2024/05/23 11:19:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.255 2025/03/22 07:24:08 kevlo Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -1429,6 +1429,8 @@ ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 			return IEEE80211_AKM_SHA256_8021X;
 		case 6:	/* PSK with SHA256 KDF */
 			return IEEE80211_AKM_SHA256_PSK;
+		case 8:	/* SAE */
+			return IEEE80211_AKM_SAE;
 		}
 	}
 	return IEEE80211_AKM_NONE;	/* ignore unknown AKMs */
