@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.273 2025/01/23 13:40:26 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.274 2025/03/22 18:14:37 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3819,7 +3819,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	struct aml_scope *mscope, *iscope;
 	uint8_t *start, *end;
 	const char *ch;
-	int64_t ival;
+	int64_t ival, rem;
 	struct timespec ts;
 
 	my_ret = NULL;
@@ -4036,12 +4036,11 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 			my_ret = aml_seterror(scope, "Divide by Zero!");
 			break;
 		}
-		ival = aml_evalexpr(opargs[0]->v_integer,
+		rem = aml_evalexpr(opargs[0]->v_integer,
 		    opargs[1]->v_integer, AMLOP_MOD);
-		aml_store(scope, opargs[2], ival, NULL);
-
 		ival = aml_evalexpr(opargs[0]->v_integer,
 		    opargs[1]->v_integer, AMLOP_DIVIDE);
+		aml_store(scope, opargs[2], rem, NULL);
 		aml_store(scope, opargs[3], ival, NULL);
 		break;
 	case AMLOP_NOT:
