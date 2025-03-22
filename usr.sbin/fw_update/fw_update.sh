@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.63 2025/03/22 00:33:34 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.64 2025/03/22 19:51:29 jmc Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -508,7 +508,7 @@ set_fw_paths() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-adFlnv] [-p path] [driver | file ...]"
+	echo "usage: ${0##*/} [-adFlnv] [-D path] [-p path] [driver | file ...]"
 	exit 1
 }
 
