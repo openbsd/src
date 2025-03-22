@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.62 2024/11/24 21:27:04 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.63 2025/03/22 00:33:34 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -23,16 +23,9 @@ CFILE=SHA256.sig
 DESTDIR=${DESTDIR:-}
 FWPATTERNS="${DESTDIR}/usr/share/misc/firmware_patterns"
 
-VNAME=${VNAME:-$(sysctl -n kern.osrelease)}
-VERSION=${VERSION:-"${VNAME%.*}${VNAME#*.}"}
-
-HTTP_FWDIR="$VNAME"
-VTYPE=$( sed -n "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p" \
-    /var/run/dmesg.boot | sed '$!d' )
-[ "$VTYPE" = -current ] && HTTP_FWDIR=snapshots
-
-FWURL=http://firmware.openbsd.org/firmware/${HTTP_FWDIR}
-FWPUB_KEY=${DESTDIR}/etc/signify/openbsd-${VERSION}-fw.pub
+unset DMESG
+unset FWURL
+unset FWPUB_KEY
 
 DRYRUN=false
 integer VERBOSE=0
@@ -251,7 +244,7 @@ devices_in_dmesg() {
 '
 
 	# The dmesg can contain multiple boots, only look in the last one
-	_dmesgtail="$( echo ; sed -n 'H;/^OpenBSD/h;${g;p;}' /var/run/dmesg.boot )"
+	_dmesgtail="$( echo ; sed -n 'H;/^OpenBSD/h;${g;p;}' "$DMESG" )"
 
 	grep -v '^[[:space:]]*#' "$FWPATTERNS" |
 	    while read -r _d _m; do
@@ -489,6 +482,31 @@ unregister_firmware() {
 	return 1
 }
 
+set_fw_paths() {
+	local _version="${VNAME:-}" _fwdir
+	unset VNAME
+
+	if [ ! "$_version" ]; then
+		_version=$(sed -nE \
+		    '/^OpenBSD ([0-9]+\.[0-9][^ ]*) .*/{s//\1/;h;};${g;p;}' \
+		    "$DMESG")
+	
+		# If VNAME was set in the environment instead of the DMESG,
+		# looking in the DMESG for "current" is wrong.
+		# Setting VNAME is undocumented anyway.
+		[ "${_version#*-}" = current ] && _fwdir=snapshots
+
+		_version=${_version%-*}
+	fi
+	
+	[ "${FWURL:-}" ] ||
+	     FWURL=http://firmware.openbsd.org/firmware/${_fwdir:-$_version}
+
+	# TODO: Would it be better to use the untrusted comment in CFILE?
+	_version=${_version%.*}${_version#*.}
+	FWPUB_KEY=${DESTDIR}/etc/signify/openbsd-${_version}-fw.pub
+}
+
 usage() {
 	echo "usage: ${0##*/} [-adFlnv] [-p path] [driver | file ...]"
 	exit 1
@@ -496,11 +514,14 @@ usage() {
 
 ALL=false
 LIST=false
-while getopts :adFlnp:v name
+DMESG=/var/run/dmesg.boot
+
+while getopts :adD:Flnp:v name
 do
 	case "$name" in
 	a) ALL=true ;;
 	d) DELETE=true ;;
+	D) DMESG="$OPTARG" ;;
 	F) INSTALL=false ;;
 	l) LIST=true ;;
 	n) DRYRUN=true ;;
@@ -524,15 +545,6 @@ shift $((OPTIND - 1))
 # Progress bars, not spinner When VERBOSE > 1
 ((VERBOSE > 1)) && ENABLE_SPINNER=false
 
-if [[ $FWURL != @(ftp|http?(s))://* ]]; then
-	FWURL="${FWURL#file:}"
-	! [ -d "$FWURL" ] &&
-	    warn "The path must be a URL or an existing directory" &&
-	    exit 1
-	DOWNLOAD=false
-	FWURL="file:$FWURL"
-fi
-
 if [ -x /usr/bin/id ] && [ "$(/usr/bin/id -u)" != 0 ]; then
 	if ! "$INSTALL" || "$LIST"; then
 		# When we aren't in the installer,
@@ -542,6 +554,29 @@ if [ -x /usr/bin/id ] && [ "$(/usr/bin/id -u)" != 0 ]; then
 		warn "need root privileges"
 		exit 1
 	fi
+fi
+
+if [ "${FWURL:-}" ] && ! "$INSTALL" ; then
+	warn "Cannot use -F and -p"
+	usage
+fi
+
+if [ ! -s "$DMESG" ]; then
+	warn "${0##*/}: $DMESG: No such file or directory"
+	exit 1
+fi
+
+set_fw_paths
+
+if [[ $FWURL != @(ftp|http?(s))://* ]]; then
+	FWURL="${FWURL#file:}"
+	! [ -d "$FWURL" ] &&
+	    warn "The path must be a URL or an existing directory" &&
+	    exit 1
+
+	DOWNLOAD=false
+	LOCALSRC="$FWURL"
+	FWURL="file:$FWURL"
 fi
 
 set -sA devices -- "$@"
@@ -629,7 +664,7 @@ if "$DELETE"; then
 	exit
 fi
 
-! "$INSTALL" && ! "$LIST" && LOCALSRC="${LOCALSRC:-.}"
+! "$INSTALL" && ! "$LIST" && ! "$DRYRUN" && LOCALSRC="${LOCALSRC:-.}"
 
 if [ ! "$LOCALSRC" ]; then
 	LOCALSRC="$( tmpdir "${DESTDIR}/tmp/${0##*/}" )"

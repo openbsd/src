@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.8,v 1.6 2024/11/09 02:19:48 afresh1 Exp $
+.\" $OpenBSD: fw_update.8,v 1.7 2025/03/22 00:33:34 afresh1 Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2024 $
+.Dd $Mdocdate: March 22 2025 $
 .Dt FW_UPDATE 8
 .Os
 .Sh NAME
@@ -57,6 +57,14 @@ a driver.
 If used in conjunction with
 .Fl a ,
 delete firmware for all drivers.
+.It Fl D Ar path
+Use the
+.Xr dmesg 8
+output from
+.Ar path
+rather than
+.Pa /var/run/dmesg.boot
+to determine which firmware are needed.
 .It Fl F
 Download SHA256.sig and firmware .tgz to the current directory.
 .It Fl l
