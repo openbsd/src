@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.34 2021/06/22 20:16:36 jmc Exp $
+ *	$OpenBSD: locate.c,v 1.35 2025/03/23 01:53:49 jsg Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -97,8 +97,6 @@ u_int counter;          /* counter for matches [-c] */
 
 void    usage(void);
 void    statistic(FILE *, char *);
-void    fastfind(FILE *, char *, char *);
-void    fastfind_icase(FILE *, char *, char *);
 void    fastfind_mmap(char *, caddr_t, int, char *);
 void    fastfind_mmap_icase(char *, caddr_t, int, char *);
 void	search_mmap(char *, char **);
