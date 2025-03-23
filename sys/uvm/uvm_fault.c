@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.165 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.166 2025/03/23 17:22:04 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1737,15 +1737,11 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 		 * find the map entry for the current address.
 		 */
 		KASSERT(va >= entry->start);
-		while (entry && va >= entry->end) {
+		while (va >= entry->end) {
 			next = RBT_NEXT(uvm_map_addr, entry);
+			KASSERT(next != NULL && next->start <= entry->end);
 			entry = next;
 		}
-
-		if (entry == NULL)
-			return;
-		if (va < entry->start)
-			continue;
 
 		/*
 		 * lock it.
@@ -1776,7 +1772,7 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 	}
 
 	if (oentry != NULL) {
-		uvm_map_unlock_entry(oentry);
+		uvm_map_unlock_entry(entry);
 	}
 }
 
