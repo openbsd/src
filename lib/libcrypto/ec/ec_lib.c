@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.121 2025/03/09 15:42:19 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.122 2025/03/24 12:49:13 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1316,6 +1316,11 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 	if (group->meth->mul_single_ct == NULL ||
 	    group->meth->mul_double_nonct == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		goto err;
+	}
+
+	if (g_scalar != NULL && group->generator == NULL) {
+		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
 
