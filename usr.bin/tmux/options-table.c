@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.189 2025/03/04 08:45:04 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.190 2025/03/24 20:01:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -284,6 +284,13 @@ const struct options_table_entry options_table[] = {
 	  .choices = options_table_cursor_style_list,
 	  .default_num = 0,
 	  .text = "Style of the cursor."
+	},
+
+	{ .name = "default-client-command",
+	  .type = OPTIONS_TABLE_COMMAND,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_str = "new-session",
+	  .text = "Default command to run when tmux is run without a command."
 	},
 
 	{ .name = "default-terminal",

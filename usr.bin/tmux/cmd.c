@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.177 2025/01/27 09:16:05 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.178 2025/03/24 20:01:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -637,7 +637,7 @@ cmd_list_free(struct cmd_list *cmdlist)
 
 /* Copy a command list, expanding %s in arguments. */
 struct cmd_list *
-cmd_list_copy(struct cmd_list *cmdlist, int argc, char **argv)
+cmd_list_copy(const struct cmd_list *cmdlist, int argc, char **argv)
 {
 	struct cmd	*cmd;
 	struct cmd_list	*new_cmdlist;
@@ -668,7 +668,7 @@ cmd_list_copy(struct cmd_list *cmdlist, int argc, char **argv)
 
 /* Get a command list as a string. */
 char *
-cmd_list_print(struct cmd_list *cmdlist, int escaped)
+cmd_list_print(const struct cmd_list *cmdlist, int escaped)
 {
 	struct cmd	*cmd, *next;
 	char		*buf, *this;
