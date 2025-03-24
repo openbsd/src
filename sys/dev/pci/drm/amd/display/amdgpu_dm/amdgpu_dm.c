@@ -4823,7 +4823,14 @@ amdgpu_dm_register_backlight_device(struct amdgpu_dm_connector *aconnector)
 	}
 
 	amdgpu_acpi_get_backlight_caps(&caps);
+#ifdef notyet
 	if (caps.caps_valid) {
+#else
+	/*
+	 * ATIF levels can be too low, on t495 ac: 100 (39%), dc: 32 (12%)
+	 */
+	if (0) {
+#endif
 		if (power_supply_is_system_supplied() > 0)
 			props.brightness = caps.ac_level;
 		else
