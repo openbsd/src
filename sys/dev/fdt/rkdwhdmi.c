@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.8 2024/08/21 11:24:12 jsg Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.9 2025/03/24 11:26:59 jmatthew Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -130,7 +130,7 @@ rkdwhdmi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pinctrl_byname(sc->sc_node, "default");
+	pinctrl_byname(faa->fa_node, "default");
 
 	clock_enable(faa->fa_node, "iahb");
 	clock_enable(faa->fa_node, "isfr");
