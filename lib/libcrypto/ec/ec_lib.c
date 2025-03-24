@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.122 2025/03/24 12:49:13 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.123 2025/03/24 13:07:04 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1333,8 +1333,8 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 		 * secret. This is why we ignore if BN_FLG_CONSTTIME is actually
 		 * set and we always call the constant time version.
 		 */
-		ret = group->meth->mul_single_ct(group, r, g_scalar,
-		    group->generator, ctx);
+		ret = group->meth->mul_single_ct(group, r,
+		    g_scalar, group->generator, ctx);
 	} else if (g_scalar == NULL && point != NULL && p_scalar != NULL) {
 		/*
 		 * In this case we want to compute p_scalar * GenericPoint:
@@ -1352,8 +1352,8 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 		 * this codepath is reached most prominently by ECDSA signature
 		 * verification. So we call the non-ct version.
 		 */
-		ret = group->meth->mul_double_nonct(group, r, g_scalar,
-		    p_scalar, point, ctx);
+		ret = group->meth->mul_double_nonct(group, r,
+		    g_scalar, group->generator, p_scalar, point, ctx);
 	} else {
 		/* Anything else is an error. */
 		ECerror(ERR_R_EC_LIB);

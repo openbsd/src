@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.57 2025/01/11 13:58:31 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.58 2025/03/24 13:07:04 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -259,7 +259,7 @@ ec_wnaf_free(struct ec_wnaf *wnaf)
  */
 
 static struct ec_wnaf *
-ec_wnaf_new(const EC_GROUP *group, const EC_POINT *point, const BIGNUM *bn,
+ec_wnaf_new(const EC_GROUP *group, const BIGNUM *scalar, const EC_POINT *point,
     BN_CTX *ctx)
 {
 	struct ec_wnaf *wnaf;
@@ -267,15 +267,15 @@ ec_wnaf_new(const EC_GROUP *group, const EC_POINT *point, const BIGNUM *bn,
 	if ((wnaf = calloc(1, sizeof(*wnaf))) == NULL)
 		goto err;
 
-	wnaf->num_digits = BN_num_bits(bn) + 1;
+	wnaf->num_digits = BN_num_bits(scalar) + 1;
 	if ((wnaf->digits = calloc(wnaf->num_digits,
 	    sizeof(*wnaf->digits))) == NULL)
 		goto err;
 
-	if (!ec_compute_wnaf(bn, wnaf->digits, wnaf->num_digits))
+	if (!ec_compute_wnaf(scalar, wnaf->digits, wnaf->num_digits))
 		goto err;
 
-	wnaf->num_multiples = 1ULL << (ec_window_bits(bn) - 1);
+	wnaf->num_multiples = 1ULL << (ec_window_bits(scalar) - 1);
 	if ((wnaf->multiples = calloc(wnaf->num_multiples,
 	    sizeof(*wnaf->multiples))) == NULL)
 		goto err;
@@ -313,38 +313,34 @@ ec_wnaf_multiple(struct ec_wnaf *wnaf, signed char digit)
 }
 
 /*
- * Compute r = generator * m + point * n in non-constant time.
+ * Compute r = scalar1 * point1 + scalar2 * point2 in non-constant time.
  */
 
 int
-ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
-    const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx)
+ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
+    const EC_POINT *point1, const BIGNUM *scalar2, const EC_POINT *point2,
+    BN_CTX *ctx)
 {
 	struct ec_wnaf *wnaf[2] = { NULL, NULL };
-	const EC_POINT *generator;
 	size_t i;
 	int k;
 	int r_is_inverted = 0;
 	size_t num_digits;
 	int ret = 0;
 
-	if (m == NULL || n == NULL) {
+	if (scalar1 == NULL || scalar2 == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if (group->meth != r->meth || group->meth != point->meth) {
+	if (group->meth != r->meth || group->meth != point1->meth ||
+	    group->meth != point2->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
 
-	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
-		ECerror(EC_R_UNDEFINED_GENERATOR);
+	if ((wnaf[0] = ec_wnaf_new(group, scalar1, point1, ctx)) == NULL)
 		goto err;
-	}
-
-	if ((wnaf[0] = ec_wnaf_new(group, generator, m, ctx)) == NULL)
-		goto err;
-	if ((wnaf[1] = ec_wnaf_new(group, point, n, ctx)) == NULL)
+	if ((wnaf[1] = ec_wnaf_new(group, scalar2, point2, ctx)) == NULL)
 		goto err;
 
 	if (!ec_normalize_points(group, wnaf[0], wnaf[1], ctx))
@@ -357,8 +353,8 @@ ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
 	/*
 	 * Set r to the neutral element. Scan through the wNAF representations
 	 * of m and n, starting at the most significant digit. Double r and for
-	 * each wNAF digit of m add the digit times the generator, and for each
-	 * wNAF digit of n add the digit times the point, adjusting the signs
+	 * each wNAF digit of scalar1 add the digit times point1, and for each
+	 * wNAF digit of scalar2 add the digit times point2, adjusting the signs
 	 * as appropriate.
 	 */
 

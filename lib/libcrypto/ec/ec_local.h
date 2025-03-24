@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.66 2025/03/09 15:33:35 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.67 2025/03/24 13:07:04 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -106,8 +106,8 @@ typedef struct ec_method_st {
 	int (*mul_single_ct)(const EC_GROUP *group, EC_POINT *r,
 	    const BIGNUM *scalar, const EC_POINT *point, BN_CTX *);
 	int (*mul_double_nonct)(const EC_GROUP *group, EC_POINT *r,
-	    const BIGNUM *g_scalar, const BIGNUM *p_scalar,
-	    const EC_POINT *point, BN_CTX *);
+	    const BIGNUM *scalar1, const EC_POINT *point1,
+	    const BIGNUM *scalar2, const EC_POINT *point2, BN_CTX *);
 
 	/*
 	 * These can be used by 'add' and 'dbl' so that the same implementations
@@ -173,9 +173,10 @@ struct ec_point_st {
 const EC_METHOD *EC_GFp_simple_method(void);
 const EC_METHOD *EC_GFp_mont_method(void);
 
-/* Compute r = generator * m + point * n in non-constant time. */
-int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *m,
-    const EC_POINT *point, const BIGNUM *n, BN_CTX *ctx);
+/* Compute r = scalar1 * point1 + scalar2 * point2 in non-constant time. */
+int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
+    const EC_POINT *point1, const BIGNUM *scalar2, const EC_POINT *point2,
+    BN_CTX *ctx);
 
 int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
 

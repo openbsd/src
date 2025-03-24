@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.44 2025/03/09 15:33:35 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.45 2025/03/24 13:07:04 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1194,10 +1194,11 @@ ec_mul_single_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 }
 
 static int
-ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
-    const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *ctx)
+ec_mul_double_nonct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
+    const EC_POINT *point1, const BIGNUM *scalar2, const EC_POINT *point2,
+    BN_CTX *ctx)
 {
-	return ec_wnaf_mul(group, r, g_scalar, point, p_scalar, ctx);
+	return ec_wnaf_mul(group, r, scalar1, point1, scalar2, point2, ctx);
 }
 
 static int
