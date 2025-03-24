@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.327 2025/03/21 14:04:26 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.328 2025/03/24 20:17:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -5428,9 +5428,14 @@ format_grid_hyperlink(struct grid *gd, u_int x, u_int y, struct screen* s)
 	const char		*uri;
 	struct grid_cell	 gc;
 
-	grid_get_cell(gd, x, y, &gc);
-	if (gc.flags & GRID_FLAG_PADDING)
-		return (NULL);
+	for (;;) {
+		grid_get_cell(gd, x, y, &gc);
+		if (~gc.flags & GRID_FLAG_PADDING)
+			break;
+		if (x == 0)
+			return (NULL);
+		x--;
+	}
 	if (s->hyperlinks == NULL || gc.link == 0)
 		return (NULL);
 	if (!hyperlinks_get(s->hyperlinks, gc.link, &uri, NULL, NULL))
