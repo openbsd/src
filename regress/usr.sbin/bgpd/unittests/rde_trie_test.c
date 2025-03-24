@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.14 2024/02/14 07:56:23 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.15 2025/03/24 10:10:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <err.h>
 #include <limits.h>
