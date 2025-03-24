@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.22 2024/08/15 06:27:24 guenther Exp $	*/
+/*	$OpenBSD: test.c,v 1.23 2025/03/24 20:15:08 millert Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ newerf(const char *f1, const char *f2)
 
 	return (stat(f1, &b1) == 0 &&
 	    stat(f2, &b2) == 0 &&
-	    b1.st_mtime > b2.st_mtime);
+	    timespeccmp(&b1.st_mtim, &b2.st_mtim, >));
 }
 
 static int
@@ -556,7 +556,7 @@ olderf(const char *f1, const char *f2)
 
 	return (stat(f1, &b1) == 0 &&
 	    stat(f2, &b2) == 0 &&
-	    b1.st_mtime < b2.st_mtime);
+	    timespeccmp(&b1.st_mtim, &b2.st_mtim, <));
 }
 
 static int
