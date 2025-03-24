@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.443 2025/02/11 16:22:37 miod Exp $ */
+/* $OpenBSD: acpi.c,v 1.444 2025/03/24 09:53:20 jan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3237,7 +3237,9 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		return (0);
 
 	sta = acpi_getsta(sc, node->parent);
-	if ((sta & (STA_PRESENT | STA_ENABLED)) != (STA_PRESENT | STA_ENABLED))
+	if ((sta & STA_PRESENT) == 0 && (sta & STA_DEV_OK) == 0)
+		return (1);
+	if ((sta & STA_ENABLED) == 0)
 		return (0);
 
 	if (aml_evalinteger(sc, node->parent, "_CCA", 0, NULL, &cca))
