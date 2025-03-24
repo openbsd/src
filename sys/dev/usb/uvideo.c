@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.255 2025/03/21 22:47:08 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.256 2025/03/24 18:56:34 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -66,6 +66,7 @@ struct uvideo_softc {
 	struct uvideo_frame_buffer		 sc_frame_buffer;
 
 	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
+	struct uvideo_mmap			*sc_mmap_cur;
 	uint8_t					*sc_mmap_buffer;
 	size_t					 sc_mmap_buffer_size;
 	int					 sc_mmap_buffer_idx;
@@ -101,7 +102,7 @@ struct uvideo_softc {
 	const struct uvideo_devs		*sc_quirk;
 	void					(*sc_decode_stream_header)
 						    (struct uvideo_softc *,
-						    uint8_t *, int);
+						    uint8_t *, int, uint8_t *);
 };
 
 int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
@@ -167,11 +168,11 @@ void		uvideo_vs_start_isoc_ixfer(struct uvideo_softc *,
 void		uvideo_vs_cb(struct usbd_xfer *, void *,
 		    usbd_status);
 void		uvideo_vs_decode_stream_header(struct uvideo_softc *,
-		    uint8_t *, int);
+		    uint8_t *, int, uint8_t *);
 void		uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
-		    uint8_t *, int);
-int		uvideo_get_buf(struct uvideo_softc *);
-void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int, int);
+		    uint8_t *, int, uint8_t *);
+uint8_t *	uvideo_mmap_getbuf(struct uvideo_softc *);
+void		uvideo_mmap_queue(struct uvideo_softc *, int, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 usbd_status	uvideo_usb_control(struct uvideo_softc *, uint8_t, uint8_t,
 		    uint16_t, uint8_t *, size_t);
@@ -2219,6 +2220,7 @@ uvideo_vs_start_bulk_thread(void *arg)
 	struct uvideo_softc *sc = arg;
 	usbd_status error;
 	int size;
+	uint8_t *buf;
 
 	usbd_ref_incr(sc->sc_udev);
 	while (sc->sc_vs_cur->bulk_running) {
@@ -2245,7 +2247,14 @@ uvideo_vs_start_bulk_thread(void *arg)
 
 		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), size);
 
-		sc->sc_decode_stream_header(sc, sc->sc_vs_cur->bxfer.buf, size);
+		if (sc->sc_mmap_flag) {
+			if ((buf = uvideo_mmap_getbuf(sc)) == NULL)
+				continue;
+		} else
+			buf = sc->sc_frame_buffer.buf;
+
+		sc->sc_decode_stream_header(sc, sc->sc_vs_cur->bxfer.buf, size,
+		    buf);
 	}
 	usbd_ref_decr(sc->sc_udev);
 
@@ -2296,7 +2305,7 @@ uvideo_vs_cb(struct usbd_xfer *xfer, void *priv,
 	struct uvideo_isoc_xfer *ixfer = priv;
 	struct uvideo_softc *sc = ixfer->sc;
 	int len, i, frame_size;
-	uint8_t *frame;
+	uint8_t *frame, *buf;
 
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
 
@@ -2319,7 +2328,13 @@ uvideo_vs_cb(struct usbd_xfer *xfer, void *priv,
 			/* frame is empty */
 			continue;
 
-		sc->sc_decode_stream_header(sc, frame, frame_size);
+		if (sc->sc_mmap_flag) {
+			if ((buf = uvideo_mmap_getbuf(sc)) == NULL)
+				goto skip;
+		} else
+			buf = sc->sc_frame_buffer.buf;
+
+		sc->sc_decode_stream_header(sc, frame, frame_size, buf);
 	}
 
 skip:	/* setup new transfer */
@@ -2328,7 +2343,7 @@ skip:	/* setup new transfer */
 
 void
 uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
-    int frame_size)
+    int frame_size, uint8_t *buf)
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	struct usb_video_stream_header *sh;
@@ -2391,7 +2406,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 		fb->error = 1;
 	}
 	if (sample_len > 0) {
-		bcopy(frame + sh->bLength, fb->buf + fb->offset, sample_len);
+		bcopy(frame + sh->bLength, buf + fb->offset, sample_len);
 		fb->offset += sample_len;
 	}
 
@@ -2409,7 +2424,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 		if (sc->sc_mmap_flag) {
 			/* mmap */
-			uvideo_mmap_queue(sc, fb->buf, fb->offset, fb->error);
+			uvideo_mmap_queue(sc, fb->offset, fb->error);
 		} else if (fb->error) {
 			DPRINTF(1, "%s: %s: error frame, skipped!\n",
 			    DEVNAME(sc), __func__);
@@ -2442,7 +2457,7 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
  */
 void
 uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
-    int frame_size)
+    int frame_size, uint8_t *buf)
 {
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 	int sample_len, header = 0;
@@ -2463,7 +2478,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 	if (header) {
 		if (sc->sc_mmap_flag) {
 			/* mmap */
-			uvideo_mmap_queue(sc, fb->buf, fb->offset, 0);
+			uvideo_mmap_queue(sc, fb->offset, 0);
 		} else {
 			/* read */
 			uvideo_read(sc, fb->buf, fb->offset);
@@ -2473,16 +2488,26 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 		/* save sample */
 		sample_len = frame_size;
 		if ((fb->offset + sample_len) <= fb->buf_size) {
-			bcopy(frame, fb->buf + fb->offset, sample_len);
+			bcopy(frame, buf + fb->offset, sample_len);
 			fb->offset += sample_len;
 		}
 	}
 }
 
-int
-uvideo_get_buf(struct uvideo_softc *sc)
+uint8_t *
+uvideo_mmap_getbuf(struct uvideo_softc *sc)
 {
 	int i, idx = sc->sc_mmap_buffer_idx;
+
+	/*
+	 * Section 2.4.3.2 explicitly allows multiple frames per one
+	 * transfer and multiple transfers per one frame.
+	 */
+	if (sc->sc_mmap_cur != NULL)
+		return sc->sc_mmap_cur->buf;
+
+	if (sc->sc_mmap_count == 0 || sc->sc_mmap_buffer == NULL)
+		panic("%s: mmap buffers not allocated", __func__);
 
 	/* find a buffer which is ready for queueing */
 	for (i = 0; i < sc->sc_mmap_count; i++) {
@@ -2497,51 +2522,45 @@ uvideo_get_buf(struct uvideo_softc *sc)
 			sc->sc_mmap_buffer_idx = 0;
 	}
 
-	if (i == sc->sc_mmap_count)
-		return -1;
+	if (i == sc->sc_mmap_count) {
+		DPRINTF(1, "%s: %s: mmap queue is full!\n",
+		    DEVNAME(sc), __func__);
+		return NULL;
+	}
 
-	return idx;
+	sc->sc_mmap_cur = &sc->sc_mmap[idx];
+
+	return sc->sc_mmap_cur->buf;
 }
 
 void
-uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len, int err)
+uvideo_mmap_queue(struct uvideo_softc *sc, int len, int err)
 {
-	int i;
+	if (sc->sc_mmap_cur == NULL)
+		panic("uvideo_mmap_queue: NULL pointer!");
 
-	if (sc->sc_mmap_count == 0 || sc->sc_mmap_buffer == NULL)
-		panic("%s: mmap buffers not allocated", __func__);
-
-	/* find a buffer which is ready for queueing */
-	i = uvideo_get_buf(sc);
-	if (i == -1) {
-		DPRINTF(1, "%s: %s: mmap queue is full!\n",
-		    DEVNAME(sc), __func__);
-		return;
-	}
-
-	/* copy frame to mmap buffer and report length */
-	bcopy(buf, sc->sc_mmap[i].buf, len);
-	sc->sc_mmap[i].v4l2_buf.bytesused = len;
+	/* report frame length */
+	sc->sc_mmap_cur->v4l2_buf.bytesused = len;
 
 	/* timestamp it */
-	getmicrouptime(&sc->sc_mmap[i].v4l2_buf.timestamp);
-	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
-	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
-	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
-	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_TSTAMP_SRC_EOF;
-	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMECODE;
+	getmicrouptime(&sc->sc_mmap_cur->v4l2_buf.timestamp);
+	sc->sc_mmap_cur->v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+	sc->sc_mmap_cur->v4l2_buf.flags |= V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	sc->sc_mmap_cur->v4l2_buf.flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+	sc->sc_mmap_cur->v4l2_buf.flags |= V4L2_BUF_FLAG_TSTAMP_SRC_EOF;
+	sc->sc_mmap_cur->v4l2_buf.flags &= ~V4L2_BUF_FLAG_TIMECODE;
 
 	/* forward error bit */
-	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_ERROR;
+	sc->sc_mmap_cur->v4l2_buf.flags &= ~V4L2_BUF_FLAG_ERROR;
 	if (err)
-		sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_ERROR;
+		sc->sc_mmap_cur->v4l2_buf.flags |= V4L2_BUF_FLAG_ERROR;
 
 	/* queue it */
-	sc->sc_mmap[i].v4l2_buf.flags |= V4L2_BUF_FLAG_DONE;
-	sc->sc_mmap[i].v4l2_buf.flags &= ~V4L2_BUF_FLAG_QUEUED;
-	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, &sc->sc_mmap[i], q_frames);
-	DPRINTF(2, "%s: %s: frame queued on index %d\n",
-	    DEVNAME(sc), __func__, i);
+	sc->sc_mmap_cur->v4l2_buf.flags |= V4L2_BUF_FLAG_DONE;
+	sc->sc_mmap_cur->v4l2_buf.flags &= ~V4L2_BUF_FLAG_QUEUED;
+	SIMPLEQ_INSERT_TAIL(&sc->sc_mmap_q, sc->sc_mmap_cur, q_frames);
+	sc->sc_mmap_cur = NULL;
+	DPRINTF(2, "%s: %s: frame queued\n", DEVNAME(sc), __func__);
 
 	wakeup(sc);
 
@@ -3507,6 +3526,7 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	}
 
 	sc->sc_mmap_buffer_idx = 0;
+	sc->sc_mmap_cur = NULL;
 
 	/* tell how many buffers we have really allocated */
 	rb->count = sc->sc_mmap_count;
