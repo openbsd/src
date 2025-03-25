@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.292 2025/02/14 04:56:26 hastings Exp $
+# $OpenBSD: GENERIC,v 1.293 2025/03/25 05:23:44 hastings Exp $
 #
 # GENERIC machine description file
 #
@@ -275,6 +275,8 @@ hitemp*		at fdt?
 # MediaTek SoCs
 mtintc*		at fdt?
 mtrng*		at fdt?
+mtxhci*		at fdt?
+usb*		at mtxhci?
 
 # Marvell SoCs
 mvclock*	at fdt? early 1

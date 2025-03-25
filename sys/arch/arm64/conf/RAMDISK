@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.221 2025/02/14 04:56:26 hastings Exp $
+# $OpenBSD: RAMDISK,v 1.222 2025/03/25 05:23:45 hastings Exp $
 
 machine		arm64
 maxusers	4
@@ -207,6 +207,8 @@ hireset*	at fdt? early 1
 # MediaTek SoCs
 mtintc*		at fdt?
 mtrng*		at fdt?
+mtxhci*		at fdt?
+usb*		at mtxhci?
 
 # Marvell SoCs
 mvclock*	at fdt? early 1
