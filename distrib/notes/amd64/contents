@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.39 2023/03/16 18:04:07 miod Exp $
+dnl	$OpenBSD: contents,v 1.40 2025/03/25 08:17:46 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -52,18 +52,18 @@ dnl useful for the installation.
 
 DistributionDescription(eight)
 
-OpenBSDbase(381961299,653079703)
+OpenBSDbase(506889369,823138072)
 
-OpenBSDcomp(76843566,278129205)
+OpenBSDcomp(83693168,302262378)
 
-OpenBSDgame(2811209,6499518)
+OpenBSDgame(2812558,6490195)
 
-OpenBSDman(8020025,30950177)
+OpenBSDman(8462280,31764259)
 
-OpenBSDxbase(58216771,188937459)
+OpenBSDxbase(62162426,206826285)
 
-OpenBSDxfont(23519149,35818896)
+OpenBSDxfont(23573685,35814089)
 
-OpenBSDxserv(15203438,41244846)
+OpenBSDxserv(20555795,61560730)
 
-OpenBSDxshare(4694017,24958258)
+OpenBSDxshare(4664002,23911493)
