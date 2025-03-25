@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.18 2024/01/11 19:16:26 miod Exp $ */
+/* $OpenBSD: syscall.c,v 1.19 2025/03/25 17:40:03 tedu Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -32,7 +32,6 @@ svc_handler(trapframe_t *frame)
 	struct proc *p = curproc;
 	const struct sysent *callp;
 	int code, error = ENOSYS;
-	u_int nargs;
 	register_t *args, rval[2];
 
 	uvmexp.syscalls++;
@@ -49,7 +48,6 @@ svc_handler(trapframe_t *frame)
 		goto bad;
 
 	callp = sysent + code;
-	nargs = callp->sy_narg;
 	args = &frame->tf_x[0];
 
 	rval[0] = 0;
