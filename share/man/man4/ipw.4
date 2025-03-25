@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipw.4,v 1.51 2022/01/05 17:39:24 jmc Exp $
+.\" $OpenBSD: ipw.4,v 1.52 2025/03/25 19:57:54 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 5 2022 $
+.Dd $Mdocdate: March 25 2025 $
 .Dt IPW 4
 .Os
 .Sh NAME
@@ -71,7 +71,9 @@ The
 driver can be configured to use
 Wired Equivalent Privacy (WEP) or
 Wi-Fi Protected Access (WPA1 and WPA2).
-WPA2 is the current encryption standard for wireless networks.
+WPA2 is currently the most secure encryption standard for wireless networks
+supported by
+.Ox .
 It is strongly recommended that neither WEP nor WPA1
 are used as the sole mechanism to secure wireless communication,
 due to serious weaknesses.
