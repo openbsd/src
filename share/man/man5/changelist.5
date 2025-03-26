@@ -1,4 +1,4 @@
-.\"	$OpenBSD: changelist.5,v 1.10 2024/05/28 05:09:19 jmc Exp $
+.\"	$OpenBSD: changelist.5,v 1.11 2025/03/26 09:51:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2024 $
+.Dd $Mdocdate: March 26 2025 $
 .Dt CHANGELIST 5
 .Os
 .Sh NAME
@@ -24,19 +24,14 @@
 The
 .Pa /etc/changelist
 file is a simple text file containing the names of files to be backed up
-and checked for modification by the system security script,
-.Xr security 8 .
-It is checked daily by the
-.Pa /etc/daily
-script.
-See
+and checked
 .Xr daily 8
-for further details.
+by the system
+.Xr security 8
+script.
 .Pp
-Each line of the file contains the name of a file,
-specified by its absolute pathname,
-one per line.
-By default, configuration files in
+Each line of the file contains the absolute pathname of one file.
+By default, several configuration files in
 .Pa /etc ,
 .Pa /root ,
 and
@@ -78,13 +73,13 @@ in the following format:
 .Pp
 Files in
 .Pa /etc/changelist
-beginning with a
+prefixed by a
 .Sq +
-character
-.Pq generally non-text files
-are stored as
+character are stored as
 .Xr sha256 1
 checksums.
+During installation, that prefix is used for non-text files
+and for files that may contain secrets.
 Results are mailed in the following format:
 .Bd -unfilled -offset indent
 ======
