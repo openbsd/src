@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.94 2025/02/27 14:03:32 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.95 2025/03/26 15:29:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,6 @@
 
 #include "bgpd.h"
 #include "rde.h"
-#include "log.h"
 
 const char *
 log_addr(const struct bgpd_addr *addr)
