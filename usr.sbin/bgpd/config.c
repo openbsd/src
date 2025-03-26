@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.115 2025/03/10 14:11:38 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.116 2025/03/26 15:28:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -25,7 +25,6 @@
 #include <netdb.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
