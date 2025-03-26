@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.220 2024/10/07 07:35:40 kevlo Exp $
+.\"	$OpenBSD: usb.4,v 1.221 2025/03/26 23:39:00 hastings Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 7 2024 $
+.Dd $Mdocdate: March 26 2025 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -36,12 +36,20 @@
 .Nm uhub
 .Nd introduction to Universal Serial Bus support
 .Sh SYNOPSIS
+.Cd "# arm specific"
+.Cd "mtxhci* at fdt?"
+.Cd "usb*    at mtxhci?"
+.Pp
 .Cd "# octeon specific"
 .Cd "dwctwo0 at iobus? irq 56"
+.Pp
 .Cd "# all architectures"
 .Cd "ehci*   at cardbus?"
 .Cd "ohci*   at cardbus?"
 .Cd "uhci*   at cardbus?"
+.Cd "ehci*   at fdt?"
+.Cd "ohci*   at fdt?"
+.Cd "xhci*   at fdt?"
 .Cd "ehci*   at pci?"
 .Cd "ohci*   at pci?"
 .Cd "uhci*   at pci?"
