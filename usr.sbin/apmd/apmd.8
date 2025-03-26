@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.55 2022/05/28 16:07:54 jmc Exp $
+.\"	$OpenBSD: apmd.8,v 1.56 2025/03/26 23:48:23 jca Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 28 2022 $
+.Dd $Mdocdate: March 26 2025 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -65,12 +65,29 @@ fetches the current status and reports it via
 with logging facility
 .Dv LOG_DAEMON .
 .Pp
+.Nm
+can change the system performance policy at startup when called
+with the
+.Fl A ,
+.Fl H
+or
+.Fl L
+options, and during runtime when requested by
+.Xr apm 8 .
+.Nm
+does not support specifying an alternate performance policy to be used
+when the system is running on battery.
+See the
+.Va hw.perfpolicy
+setting documented in
+.Xr sysctl 2 .
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
 Start
 .Nm
-in automatic performance adjustment mode (the default).
+in automatic performance adjustment mode.
 .It Fl a
 BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
