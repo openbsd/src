@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.28 2024/12/17 05:32:31 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.29 2025/03/26 13:57:35 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -27389,6 +27389,34 @@ ice_attach_hook(struct device *self)
 
 	ice_get_and_print_bus_info(sc);
 #endif
+
+	/*
+	 * At this point we are committed to attaching the driver.
+	 * Network stack needs to be wired up before ice_update_link_status()
+	 * calls if_link_state_change().
+	 */
+	ifp->if_softc = sc;
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_ioctl = ice_ioctl;
+	ifp->if_qstart = ice_start;
+	ifp->if_watchdog = ice_watchdog;
+	ifp->if_hardmtu = ice_hardmtu(hw);
+
+	ifq_init_maxlen(&ifp->if_snd, ICE_DEFAULT_DESC_COUNT);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+	if_attach_queues(ifp, sc->sc_nqueues);
+	if_attach_iqueues(ifp, sc->sc_nqueues);
+
 	ice_set_link_management_mode(sc);
 
 	ice_init_saved_phy_cfg(sc);
@@ -27426,28 +27454,6 @@ ice_attach_hook(struct device *self)
 	if (ice_test_state(&sc->state, ICE_STATE_LINK_ACTIVE_ON_DOWN) &&
 		 !ice_test_state(&sc->state, ICE_STATE_NO_MEDIA))
 		ice_set_state(&sc->state, ICE_STATE_FIRST_INIT_LINK);
-
-	ifp->if_softc = sc;
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
-	ifp->if_ioctl = ice_ioctl;
-	ifp->if_qstart = ice_start;
-	ifp->if_watchdog = ice_watchdog;
-	ifp->if_hardmtu = ice_hardmtu(hw);
-
-	ifq_init_maxlen(&ifp->if_snd, ICE_DEFAULT_DESC_COUNT);
-
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
-
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-	if_attach_queues(ifp, sc->sc_nqueues);
-	if_attach_iqueues(ifp, sc->sc_nqueues);
 
 	/* Setup the MAC address */
 	err = if_setlladdr(ifp, hw->port_info->mac.perm_addr);
