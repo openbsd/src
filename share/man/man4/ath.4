@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.69 2025/03/25 19:57:54 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.70 2025/03/27 10:21:53 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: March 25 2025 $
+.Dd $Mdocdate: March 27 2025 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -137,11 +137,6 @@ WPA-Enterprise networks require use of the wpa_supplicant package.
 AR5211 and AR5212 support the AES, TKIP, and Michael cryptographic
 operations required for WPA in hardware but at this time the driver
 does not support them.
-.Pp
-In BSS mode,
-the driver supports powersave mode,
-which can be enabled via
-.Xr ifconfig 8 .
 .Pp
 The
 .Nm

@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.44 2025/03/25 19:57:54 jmc Exp $
+.\" $OpenBSD: athn.4,v 1.45 2025/03/27 10:21:53 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2025 $
+.Dd $Mdocdate: March 27 2025 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -167,10 +167,6 @@ CCMP cipher.
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
 .Pp
-In BSS mode,
-the driver supports powersave mode,
-which can be enabled via
-.Xr ifconfig 8 .
 In Host AP mode,
 the driver is compatible with clients using powersave, except on AR7010
 and AR9287 USB devices.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.48 2022/03/31 17:27:21 naddy Exp $
+.\"	$OpenBSD: rtw.4,v 1.49 2025/03/27 10:21:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: March 27 2025 $
 .Dt RTW 4
 .Os
 .Sh NAME
@@ -70,11 +70,6 @@ It is strongly recommended that WEP
 not be used as the sole mechanism
 to secure wireless communication,
 due to serious weaknesses in it.
-.Pp
-In BSS mode,
-the driver supports powersave mode,
-which can be enabled via
-.Xr ifconfig 8 .
 .Pp
 The
 .Nm
