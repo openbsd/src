@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.66 2025/03/15 18:20:04 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.67 2025/03/27 11:43:58 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 15 2025 $
+.Dd $Mdocdate: March 27 2025 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -196,14 +196,31 @@ the same random hash function is used for all of them.
 .It Fl r , Fl Fl reverse
 Sort in reverse order.
 .It Fl V , Fl Fl version-sort
-Sort version numbers.
-The input lines are treated as file names in form
-PREFIX VERSION SUFFIX, where SUFFIX matches the regular expression
-"(\.([A-Za-z~][A-Za-z0-9~]*)?)*".
-The files are compared by their prefixes and versions (leading
-zeros are ignored in version numbers, see example below).
-If an input string does not match the pattern, then it is compared
-using the byte compare function.
+This option is intended to sort strings that contain version numbers
+but it can be used for other purposes as well, for example to sort
+IPv4 addresses in dotted quad notation.
+.Pp
+When comparing two strings, both strings are split into substrings
+such that the first and every odd-numbered substring
+consist of non-digit characters only,
+while every even-numbered substring consists of digits only.
+These substrings are compared in turn from left to right
+until a difference is found.
+The first substring can be empty; all others cannot.
+.Pp
+Non-digit substrings are compared alphabetically, with upper case
+letters sorting before lower case letters, letters sorting before
+non-letters, and non-letters sorting in
+.Xr ascii 7
+order.
+Substrings consisting of digits are compared as integer numbers.
+.Pp
+At the end of each string, zero or more suffixes that start with a dot,
+consist only of letters, digits, and tilde characters, and do not
+start with a digit are ignored, equivalent to the regular expression
+"(\e.([A-Za-z~][A-Za-z0-9~]*)?)*".
+This is intended for ignoring filename suffixes such as
+.Dq .tar.bz2 .
 .Pp
 For example:
 .Bd -literal -offset indent
