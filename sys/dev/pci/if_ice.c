@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.29 2025/03/26 13:57:35 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.30 2025/03/27 12:50:07 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13374,11 +13374,73 @@ ice_flush_txq_interrupts(struct ice_vsi *vsi)
 	}
 }
 
+void
+ice_txq_clean(struct ice_softc *sc, struct ice_tx_queue *txq)
+{
+	struct ice_tx_map *txm;
+	bus_dmamap_t map;
+	unsigned int i;
+
+	for (i = 0; i < txq->desc_count; i++) {
+		txm = &txq->tx_map[i];
+
+		if (txm->txm_m == NULL)
+			continue;
+
+		map = txm->txm_map;
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, map);
+
+		m_freem(txm->txm_m);
+		txm->txm_m = NULL;
+		txm->txm_eop = -1;
+	}
+
+	txq->txq_cons = txq->txq_prod = 0;
+}
+
+void
+ice_rxq_clean(struct ice_softc *sc, struct ice_rx_queue *rxq)
+{
+	struct ice_rx_map *rxm;
+	bus_dmamap_t map;
+	unsigned int i;
+
+	timeout_del_barrier(&rxq->rxq_refill);
+
+	for (i = 0; i < rxq->desc_count; i++) {
+		rxm = &rxq->rx_map[i];
+
+		if (rxm->rxm_m == NULL)
+			continue;
+
+		map = rxm->rxm_map;
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, map);
+
+		m_freem(rxm->rxm_m);
+		rxm->rxm_m = NULL;
+	}
+
+	if_rxr_init(&rxq->rxq_acct, ICE_MIN_DESC_COUNT, rxq->desc_count - 1);
+
+	m_freem(rxq->rxq_m_head);
+	rxq->rxq_m_head = NULL;
+	rxq->rxq_m_tail = &rxq->rxq_m_head;
+
+	rxq->rxq_prod = rxq->rxq_cons = 0;
+}
+
 int
 ice_down(struct ice_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ice_hw *hw = &sc->hw;
+	struct ice_vsi *vsi = &sc->pf_vsi;
+	struct ice_tx_queue *txq;
+	struct ice_rx_queue *rxq;
 	int i;
 
 	rw_enter_write(&sc->sc_cfg_lock);
@@ -13443,6 +13505,11 @@ ice_down(struct ice_softc *sc)
 		device_printf(sc->dev, "The subinterface also comes down and up after reset\n");
 	}
 #endif
+
+	for (i = 0, txq = vsi->tx_queues; i < vsi->num_tx_queues; i++, txq++)
+		ice_txq_clean(sc, txq);
+	for (i = 0, rxq = vsi->rx_queues; i < vsi->num_rx_queues; i++, rxq++)
+		ice_rxq_clean(sc, rxq);
 
 	rw_exit_write(&sc->sc_cfg_lock);
 	NET_LOCK();
