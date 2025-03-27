@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.2 2024/07/10 10:53:55 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.3 2025/03/27 10:19:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 3mdeb <contact@3mdeb.com>
  *
@@ -54,6 +54,9 @@ efiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct efi_softc *sc = efi_cd.cd_devs[0];
 	int error;
+
+	if (sc->sc_rs == NULL || sc->sc_pm == NULL)
+		return ENOTTY;
 
 	switch (cmd) {
 	case EFIIOC_GET_TABLE:
