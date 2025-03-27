@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.72 2025/02/27 14:23:02 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.73 2025/03/27 19:30:49 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -63,6 +63,7 @@ struct rrdprepo {
 	unsigned int		 id;
 	enum repo_state		 state;
 	time_t			 last_reset;
+	time_t			 mtime;
 };
 static SLIST_HEAD(, rrdprepo)	rrdprepos = SLIST_HEAD_INITIALIZER(rrdprepos);
 
@@ -662,6 +663,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 	size_t i, len = 0;
 	ssize_t n;
 	time_t now, weeks;
+	struct stat st;
 
 	now = time(NULL);
 
@@ -676,7 +678,10 @@ rrdp_session_parse(struct rrdprepo *rr)
 		rr->last_reset = now;
 		return state;
 	}
+	if (fstat(fd, &st) != 0)
+		errx(1, "fstat %s", file);
 	free(file);
+	rr->mtime = st.st_mtim.tv_sec;
 	f = fdopen(fd, "r");
 	if (f == NULL)
 		err(1, "fdopen");
@@ -806,6 +811,8 @@ rrdp_session_save(unsigned int id, struct rrdp_session *state)
 		warn("%s: rename %s to %s", rr->basedir, temp, file);
 		unlink(temp);
 	}
+
+	rr->mtime = time(NULL);
 
 	free(temp);
 	free(file);
@@ -1090,6 +1097,10 @@ rrdp_finish(unsigned int id, int ok)
 
 	if (ok) {
 		logx("%s: loaded from network", rr->notifyuri);
+		if (time(NULL) - rr->mtime > 24 * 60 * 60) {
+			warnx("%s: notification file not modified since %s",
+			    rr->notifyuri, time2str(rr->mtime));
+		}
 		stats.rrdp_repos++;
 		rr->state = REPO_DONE;
 	} else {
