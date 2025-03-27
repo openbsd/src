@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.62 2025/03/27 12:37:07 jca Exp $
+.\"	$OpenBSD: sysctl.2,v 1.63 2025/03/27 18:09:55 jca Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -388,6 +388,9 @@ or
 .Dq high .
 If the policy contains a comma, the second part specifies an alternative
 policy used while the system is running on battery.
+The
+.Nm
+API only exports the currently applicable policy.
 .\" XXX keep in sync with apmd(8)
 The default setting is
 .Dq high,auto .
