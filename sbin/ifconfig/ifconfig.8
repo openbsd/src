@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.401 2025/01/06 17:49:29 denis Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.402 2025/03/27 15:15:46 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: January 6 2025 $
+.Dd $Mdocdate: March 27 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1207,9 +1207,10 @@ enable WEP encryption using that
 .Ar key .
 .It Cm powersave
 Enable 802.11 power saving mode.
-Power saving is disabled by default.
-See driver specific manual pages
-to see details of the implementation relevant to that device.
+This option is generally only relevant to older devices where power
+saving is disabled by default.
+On modern hardware, drivers will ask the firmware to automatically
+enable any applicable power-saving features.
 .\" XXX
 .\" Undocumented because optional sleep period
 .\" only configurable on legacy an(4) and atw(4) devices.
