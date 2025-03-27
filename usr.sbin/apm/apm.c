@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.43 2022/11/09 18:48:11 mbuhl Exp $	*/
+/*	$OpenBSD: apm.c,v 1.44 2025/03/27 18:07:52 jca Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -161,11 +161,19 @@ main(int argc, char *argv[])
 	enum apm_action action = NONE;
 	struct apm_command command;
 	struct apm_reply reply;
+	int perfpol_mib[] = { CTL_HW, HW_PERFPOLICY };
+	char perfpol[32];
+	size_t perfpol_sz = sizeof(perfpol);
 	int cpuspeed_mib[] = { CTL_HW, HW_CPUSPEED }, cpuspeed;
 	size_t cpuspeed_sz = sizeof(cpuspeed);
 
 	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) == -1)
 		cpuspeed = 0;
+
+	if (sysctl(perfpol_mib, 2, perfpol, &perfpol_sz, NULL, 0) == -1) {
+		perfpol[0] = '\0';
+		warn("cannot read hw.perfpolicy");
+	}
 
 	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzZf:")) != -1) {
 		switch (ch) {
@@ -272,8 +280,14 @@ main(int argc, char *argv[])
 	bzero(&reply, sizeof reply);
 	reply.batterystate.battery_state = APM_BATT_UNKNOWN;
 	reply.batterystate.ac_state = APM_AC_UNKNOWN;
-	reply.perfmode = PERF_MANUAL;
 	reply.cpuspeed = cpuspeed;
+	if (strcmp(perfpol, "manual") == 0 ||
+	    strcmp(perfpol, "high") == 0)
+		reply.perfmode = PERF_MANUAL;
+	else if (strcmp(perfpol, "auto") == 0)
+		reply.perfmode = PERF_AUTO;
+	else
+		reply.perfmode = PERF_NONE;
 
 	switch (action) {
 	case SETPERF_LOW:
