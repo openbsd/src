@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.56 2025/03/26 23:48:23 jca Exp $
+.\"	$OpenBSD: apmd.8,v 1.57 2025/03/27 12:37:07 jca Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2025 $
+.Dd $Mdocdate: March 27 2025 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -74,6 +74,9 @@ or
 .Fl L
 options, and during runtime when requested by
 .Xr apm 8 .
+.\" XXX keep in sync with hw.perfpolicy in sysctl(2)
+The default performance policy is "high" when connected to line current,
+and "auto" when running on battery.
 .Nm
 does not support specifying an alternate performance policy to be used
 when the system is running on battery.
