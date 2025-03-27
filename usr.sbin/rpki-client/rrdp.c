@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.39 2024/11/21 13:32:27 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.40 2025/03/27 19:27:59 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -319,7 +319,7 @@ rrdp_finished(struct rrdp *s)
 				logx("%s: repository not modified (%s#%lld)",
 				    s->local, s->repository->session_id,
 				    s->repository->serial);
-				rrdp_state_send(s);
+				/* no need to update state file */
 				rrdp_free(s);
 				rrdp_done(id, 1);
 				break;
