@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.58 2025/03/27 12:38:01 jca Exp $
+.\"	$OpenBSD: apmd.8,v 1.59 2025/03/27 18:31:38 jmc Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -47,6 +47,24 @@ monitors the advanced power management device,
 acting on signaled events and upon user requests as sent by the
 .Xr apm 8
 program.
+.Pp
+On
+.Ox ,
+power management is handled by the kernel,
+and the default policy can be set using the
+.Va hw.perfpolicy
+.Xr sysctl 2 .
+If
+.Nm
+is not running,
+.Xr apm 8
+is still able to query the
+.Xr apm 4
+driver for a limited amount of information,
+but
+.Nm
+provides more advanced functionality,
+such as the ability to switch performance modes.
 .Pp
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
