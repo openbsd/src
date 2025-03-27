@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.775 2025/02/19 08:44:56 jsg Exp $
+$OpenBSD: usbdevs,v 1.776 2025/03/27 14:10:31 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1006,7 +1006,7 @@ product APPLE WELLSPRING9_JIS	0x0274	Keyboard/Trackpad
 product APPLE WELLSPRING8_ANSI	0x0290	Keyboard/Trackpad
 product APPLE WELLSPRING8_ISO	0x0291	Keyboard/Trackpad
 product APPLE WELLSPRING8_JIS	0x0292	Keyboard/Trackpad
-product APPLE OPTMOUSE		0x0302	Optical mouse
+product APPLE OPTMOUSE		0x0302	Optical Mouse
 product APPLE WELLSPRINGM1_J293	0x0341	Keyboard/Trackpad	
 product APPLE BLUETOOTH_HCI	0x1000	HID-proxy
 product APPLE SPEAKERS		0x1101	Speakers
@@ -1553,6 +1553,7 @@ product DAVICOM WK668		0x0668	HenTong WK-668
 product DAVICOM DM9601		0x9601	DM9601
 
 /* Dell products */
+product DELL PIXARTMOUSE	0x301a	Optical Mouse
 product DELL AXIM		0x4005	Axim X51v
 product DELL BC02		0x8000	Bluetooth
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
@@ -2682,6 +2683,7 @@ product LENOVO RTL8153B_3	0x309b	RTL8153B
 product LENOVO RTL8153B_4	0x309c	RTL8153B
 product LENOVO RTL8153B_5	0x309d	RTL8153B
 product LENOVO OPTUSBMOUSE	0x600e	Optical Mouse
+product LENOVO PIXARTMOUSE	0x6019	Optical Mouse
 product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 product LENOVO RTL8153_1	0x7205	RTL8153
 product LENOVO ONELINK		0x720a	OneLink
