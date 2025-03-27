@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.22 2025/01/03 10:32:21 job Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.23 2025/03/27 05:03:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -22,7 +22,8 @@
 
 int
 output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct vsp_tree *vsps, struct stats *st)
+    struct vap_tree *vaps, struct vsp_tree *vsps, struct nca_tree *ncas,
+    struct stats *st)
 {
 	struct vrp	*v;
 	struct vap	*vap;

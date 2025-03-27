@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-csv.c,v 1.14 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: output-csv.c,v 1.15 2025/03/27 05:03:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -21,7 +21,8 @@
 
 int
 output_csv(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct vsp_tree *vsps, struct stats *st)
+    struct vap_tree *vaps, struct vsp_tree *vsps, struct nca_tree *ncas,
+    struct stats *st)
 {
 	struct vrp	*v;
 

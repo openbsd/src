@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.150 2025/03/12 07:42:39 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.151 2025/03/27 05:03:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -585,6 +585,13 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 
 	cert->talid = a->cert->talid;
 
+	cert->path = parse_filepath(entp->repoid, entp->path, entp->file,
+	    DIR_VALID);
+	if (cert->path == NULL) {
+		warnx("%s: failed to create file path", file);
+		goto out;
+	}
+
 	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		if (!constraints_validate(file, cert))
 			goto out;
@@ -677,6 +684,9 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 	}
 
 	if ((cmp = proc_parser_ta_cmp(cert1, cert2)) > 0) {
+		if ((cert1->path = strdup(file2)) == NULL)
+			err(1, NULL);
+
 		cert_free(cert2);
 		free(file2);
 
@@ -693,6 +703,8 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 
 		if (cert2 != NULL) {
 			cert2->talid = entp->talid;
+			if ((cert2->path = strdup(file2)) == NULL)
+				err(1, NULL);
 			auth_insert(file2, &auths, cert2, NULL);
 		}
 

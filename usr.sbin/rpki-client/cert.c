@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.156 2025/03/21 18:44:15 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.157 2025/03/27 05:03:09 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1149,6 +1149,7 @@ cert_free(struct cert *p)
 
 	free(p->crl);
 	free(p->repo);
+	free(p->path);
 	free(p->mft);
 	free(p->notify);
 	free(p->ips);
@@ -1179,6 +1180,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_simple_buffer(b, p->ips, p->num_ips * sizeof(p->ips[0]));
 	io_simple_buffer(b, p->ases, p->num_ases * sizeof(p->ases[0]));
 
+	io_str_buffer(b, p->path);
 	io_str_buffer(b, p->mft);
 	io_str_buffer(b, p->notify);
 	io_str_buffer(b, p->repo);
@@ -1222,6 +1224,7 @@ cert_read(struct ibuf *b)
 		io_read_buf(b, p->ases, p->num_ases * sizeof(p->ases[0]));
 	}
 
+	io_read_str(b, &p->path);
 	io_read_str(b, &p->mft);
 	io_read_str(b, &p->notify);
 	io_read_str(b, &p->repo);
@@ -1387,3 +1390,55 @@ brkcmp(struct brk *a, struct brk *b)
 }
 
 RB_GENERATE(brk_tree, brk, entry, brkcmp);
+
+/*
+ * Add each CA cert into the non-functional CA tree.
+ */
+void
+cert_insert_nca(struct nca_tree *tree, const struct cert *cert)
+{
+	struct nonfunc_ca *nca;
+
+	if ((nca = calloc(1, sizeof(*nca))) == NULL)
+		err(1, NULL);
+	if ((nca->location = strdup(cert->path)) == NULL)
+		err(1, NULL);
+	if ((nca->carepo = strdup(cert->repo)) == NULL)
+		err(1, NULL);
+	if ((nca->mfturi = strdup(cert->mft)) == NULL)
+		err(1, NULL);
+	if ((nca->ski = strdup(cert->ski)) == NULL)
+		err(1, NULL);
+	nca->certid = cert->certid;
+	nca->talid = cert->talid;
+
+	if (RB_INSERT(nca_tree, tree, nca) != NULL)
+		errx(1, "non-functional CA tree corrupted");
+}
+
+void
+cert_remove_nca(struct nca_tree *tree, int cid)
+{
+	struct nonfunc_ca *found, needle = { .certid = cid };
+
+	if ((found = RB_FIND(nca_tree, tree, &needle)) != NULL) {
+		RB_REMOVE(nca_tree, tree, found);
+		free(found->location);
+		free(found->carepo);
+		free(found->mfturi);
+		free(found->ski);
+		free(found);
+	}
+}
+
+static inline int
+ncacmp(const struct nonfunc_ca *a, const struct nonfunc_ca *b)
+{
+	if (a->certid < b->certid)
+		return -1;
+	if (a->certid > b->certid)
+		return 1;
+	return 0;
+}
+
+RB_GENERATE(nca_tree, nonfunc_ca, entry, ncacmp);

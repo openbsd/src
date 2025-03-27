@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.237 2025/02/25 15:55:26 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.238 2025/03/27 05:03:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -129,6 +129,7 @@ struct cert {
 	int		 talid; /* cert is covered by which TAL */
 	int		 certid;
 	unsigned int	 repoid; /* repository of this cert file */
+	char		*path; /* filename without .rrdp and .rsync prefix */
 	char		*repo; /* CA repository (rsync:// uri) */
 	char		*mft; /* manifest (rsync:// uri) */
 	char		*notify; /* RRDP notify (https:// uri) */
@@ -143,6 +144,27 @@ struct cert {
 	time_t		 notafter; /* cert's Not After */
 	time_t		 expires; /* when the signature path expires */
 };
+
+/*
+ * Non-functional CA tree element.
+ * Initially all CA and TA certs are added to this tree.
+ * They are removed once they are the issuer of a valid mft.
+ */
+struct nonfunc_ca {
+	RB_ENTRY(nonfunc_ca)	 entry;
+	char			*location;
+	char			*carepo;
+	char			*mfturi;
+	char			*ski;
+	int			 certid;
+	int			 talid;
+};
+
+/*
+ * Tree of nonfunc CAs, sorted by certid.
+ */
+RB_HEAD(nca_tree, nonfunc_ca);
+RB_PROTOTYPE(nca_tree, nonfunc_ca, entry, ncacmp);
 
 /*
  * The TAL file conforms to RFC 7730.
@@ -687,6 +709,8 @@ struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
+void		 cert_insert_nca(struct nca_tree *, const struct cert *);
+void		 cert_remove_nca(struct nca_tree *, int);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
@@ -966,18 +990,24 @@ extern int	 outformats;
 #define FORMAT_OMETRIC	0x10
 
 int		 outputfiles(struct vrp_tree *v, struct brk_tree *b,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+		    struct stats *);
 int		 outputheader(FILE *, struct stats *);
 int		 output_bgpd(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+		    struct stats *);
 int		 output_bird(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+		    struct stats *);
 int		 output_csv(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+		    struct stats *);
 int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+		    struct stats *);
 int		 output_ometric(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+		    struct stats *);
 
 void		 logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));

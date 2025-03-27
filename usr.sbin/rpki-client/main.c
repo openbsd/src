@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.279 2025/02/27 14:23:02 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.280 2025/03/27 05:03:09 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -488,7 +488,7 @@ queue_add_from_tal(struct tal *tal)
  * Add a manifest (MFT) found in an X509 certificate, RFC 6487.
  */
 static void
-queue_add_from_cert(const struct cert *cert)
+queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 {
 	struct repo		*repo;
 	struct fqdnlistentry	*le;
@@ -549,6 +549,7 @@ queue_add_from_cert(const struct cert *cert)
 			err(1, NULL);
 	}
 
+	cert_insert_nca(ncas, cert);
 	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
 	    cert->talid, cert->certid, NULL);
 }
@@ -562,7 +563,7 @@ queue_add_from_cert(const struct cert *cert)
 static void
 entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
     struct brk_tree *brktree, struct vap_tree *vaptree,
-    struct vsp_tree *vsptree)
+    struct vsp_tree *vsptree, struct nca_tree *ncatree)
 {
 	enum rtype	 type;
 	struct tal	*tal;
@@ -619,7 +620,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		switch (cert->purpose) {
 		case CERT_PURPOSE_TA:
 		case CERT_PURPOSE_CA:
-			queue_add_from_cert(cert);
+			queue_add_from_cert(cert, ncatree);
 			break;
 		case CERT_PURPOSE_BGPSEC_ROUTER:
 			cert_insert_brks(brktree, cert);
@@ -641,6 +642,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
+		cert_remove_nca(ncatree, mft->certid);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -987,6 +989,7 @@ main(int argc, char *argv[])
 	struct vsp_tree	 vsps = RB_INITIALIZER(&vsps);
 	struct brk_tree	 brks = RB_INITIALIZER(&brks);
 	struct vap_tree	 vaps = RB_INITIALIZER(&vaps);
+	struct nca_tree	 ncas = RB_INITIALIZER(&ncas);
 	struct rusage	 ru;
 	struct timespec	 start_time, now_time;
 
@@ -1403,7 +1406,7 @@ main(int argc, char *argv[])
 			}
 			while ((b = io_buf_get(queues[0])) != NULL) {
 				entity_process(b, &stats, &vrps, &brks, &vaps,
-				    &vsps);
+				    &vsps, &ncas);
 				ibuf_free(b);
 			}
 		}
@@ -1496,7 +1499,7 @@ main(int argc, char *argv[])
 	}
 	repo_stats_collect(sum_repostats, &stats.repo_stats);
 
-	if (outputfiles(&vrps, &brks, &vaps, &vsps, &stats))
+	if (outputfiles(&vrps, &brks, &vaps, &vsps, &ncas, &stats))
 		rc = 1;
 
 	printf("Processing time %lld seconds "
