@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.327 2025/01/02 10:07:18 dlg Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.328 2025/03/27 23:30:54 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1844,7 +1844,7 @@ vfs_syncwait(struct proc *p, int verbose)
 			 */
 			if (bp->b_flags & B_DELWRI) {
 				s = splbio();
-				bremfree(bp);
+				bufcache_take(bp);
 				buf_acquire(bp);
 				splx(s);
 				nbusy++;
@@ -2025,7 +2025,7 @@ loop:
 				}
 				break;
 			}
-			bremfree(bp);
+			bufcache_take(bp);
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
@@ -2078,7 +2078,7 @@ loop:
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("vflushbuf: not dirty");
-		bremfree(bp);
+		bufcache_take(bp);
 		buf_acquire(bp);
 		splx(s);
 		/*

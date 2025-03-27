@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.102 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.103 2025/03/27 23:30:54 tedu Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ loop:
 		if (skipmeta && bp->b_lblkno < 0)
 			continue;
 
-		bremfree(bp);
+		bufcache_take(bp);
 		buf_acquire(bp);
 		bp->b_flags |= B_SCANNED;
 		splx(s);

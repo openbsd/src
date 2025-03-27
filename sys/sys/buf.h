@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.114 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.115 2025/03/27 23:30:54 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -252,7 +252,6 @@ int bread(struct vnode *, daddr_t, int, struct buf **);
 int breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
     struct buf **);
 void	brelse(struct buf *);
-#define bremfree bufcache_take
 void	bufinit(void);
 void	buf_dirty(struct buf *);
 void    buf_undirty(struct buf *);
