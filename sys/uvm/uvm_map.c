@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.338 2025/01/29 15:25:31 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.339 2025/03/27 16:29:28 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2744,7 +2744,7 @@ vmspace_validate(struct vm_map *map)
 		imin = imax = iter->start;
 
 		if (UVM_ET_ISHOLE(iter) || iter->object.uvm_obj != NULL ||
-		    iter->protection != PROT_NONE)
+		    iter->protection == PROT_NONE)
 			continue;
 
 		/*
