@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.57 2025/03/27 12:37:07 jca Exp $
+.\"	$OpenBSD: apmd.8,v 1.58 2025/03/27 12:38:01 jca Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -77,13 +77,6 @@ options, and during runtime when requested by
 .\" XXX keep in sync with hw.perfpolicy in sysctl(2)
 The default performance policy is "high" when connected to line current,
 and "auto" when running on battery.
-.Nm
-does not support specifying an alternate performance policy to be used
-when the system is running on battery.
-See the
-.Va hw.perfpolicy
-setting documented in
-.Xr sysctl 2 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -226,3 +219,11 @@ command first appeared in
 .Ox
 support was added in
 .Ox 1.2 .
+.Sh CAVEATS
+.Nm
+does not support specifying an alternate performance policy to be used
+when the system is running on battery.
+See the
+.Va hw.perfpolicy
+setting documented in
+.Xr sysctl 2 .
