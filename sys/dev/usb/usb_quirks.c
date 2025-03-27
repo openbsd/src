@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.80 2024/10/07 13:27:13 sthen Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.81 2025/03/27 14:12:38 sthen Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -158,7 +158,11 @@ const struct usbd_quirk_entry {
 	ANY,	{ UQ_ALWAYS_OPEN }},
  { USB_VENDOR_CHICONY, USB_PRODUCT_CHICONY_OPTMOUSE,
 	ANY,	{ UQ_ALWAYS_OPEN }},
+ { USB_VENDOR_DELL, USB_PRODUCT_DELL_PIXARTMOUSE,
+	ANY,	{ UQ_ALWAYS_OPEN }},
  { USB_VENDOR_HAILUCK, USB_PRODUCT_HAILUCK_KEYBOARD,
+	ANY,	{ UQ_ALWAYS_OPEN }},
+ { USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_PIXARTMOUSE,
 	ANY,	{ UQ_ALWAYS_OPEN }},
  { USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_OPTUSBMOUSE,
 	ANY,	{ UQ_ALWAYS_OPEN }},
