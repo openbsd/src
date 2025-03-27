@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.339 2025/03/27 16:29:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.340 2025/03/27 16:31:12 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2460,16 +2460,6 @@ uvm_map_teardown(struct vm_map *map)
 
 	vm_map_lock(map);
 
-	/* Remove address selectors. */
-	uvm_addr_destroy(map->uaddr_exe);
-	map->uaddr_exe = NULL;
-	for (i = 0; i < nitems(map->uaddr_any); i++) {
-		uvm_addr_destroy(map->uaddr_any[i]);
-		map->uaddr_any[i] = NULL;
-	}
-	uvm_addr_destroy(map->uaddr_brk_stack);
-	map->uaddr_brk_stack = NULL;
-
 	/*
 	 * Remove entries.
 	 *
@@ -2502,6 +2492,16 @@ uvm_map_teardown(struct vm_map *map)
 	}
 
 	vm_map_unlock(map);
+
+	/* Remove address selectors. */
+	uvm_addr_destroy(map->uaddr_exe);
+	map->uaddr_exe = NULL;
+	for (i = 0; i < nitems(map->uaddr_any); i++) {
+		uvm_addr_destroy(map->uaddr_any[i]);
+		map->uaddr_any[i] = NULL;
+	}
+	uvm_addr_destroy(map->uaddr_brk_stack);
+	map->uaddr_brk_stack = NULL;
 
 #ifdef VMMAP_DEBUG
 	numt = numq = 0;
