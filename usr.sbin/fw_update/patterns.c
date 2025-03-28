@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.16 2024/10/30 00:04:46 bluhm Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.17 2025/03/28 15:04:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -103,6 +103,7 @@ main(void)
 	printf("%s\n", "athn");
 	printf("%s\n", "bwfm");
 	printf("%s\n", "bwi");
+	printf("%s\n", "ice");
 	printf("%s\n", "intel");
 	printf("%s\n", "intel ^cpu0:*Intel");
 	printf("%s\n", "inteldrm");
