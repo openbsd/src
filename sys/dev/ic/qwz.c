@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.18 2024/12/23 00:12:44 patrick Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.19 2025/03/28 07:23:48 kevlo Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6637,7 +6637,6 @@ err_free_req:
 int
 qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, enum ath12k_qmi_bdf_type type)
 {
-	u_char *data = NULL;
 	const u_char *boardfw;
 	size_t len = 0, boardfw_len;
 	uint32_t fw_size;
@@ -6675,7 +6674,6 @@ qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, enum ath12k_qmi_bdf_type type)
 	}
 
 out:
-	free(data, M_DEVBUF, len);
 	if (ret == 0)
 		DPRINTF("%s: BDF download sequence completed\n", __func__);
 
