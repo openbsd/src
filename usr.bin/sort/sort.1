@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.67 2025/03/27 11:43:58 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.68 2025/03/28 14:35:50 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 27 2025 $
+.Dd $Mdocdate: March 28 2025 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -201,8 +201,8 @@ but it can be used for other purposes as well, for example to sort
 IPv4 addresses in dotted quad notation.
 .Pp
 When comparing two strings, both strings are split into substrings
-such that the first and every odd-numbered substring
-consist of non-digit characters only,
+such that the first and every other odd-numbered substring
+consists of non-digit characters only,
 while every even-numbered substring consists of digits only.
 These substrings are compared in turn from left to right
 until a difference is found.
@@ -222,7 +222,10 @@ start with a digit are ignored, equivalent to the regular expression
 This is intended for ignoring filename suffixes such as
 .Dq .tar.bz2 .
 .Pp
-For example:
+In the following example, the first substring is
+.Qq sort\-
+and the other odd-numbered substrings are all
+.Qq \&. :
 .Bd -literal -offset indent
 $ ls sort* | sort -V
 sort-1.022.tgz
