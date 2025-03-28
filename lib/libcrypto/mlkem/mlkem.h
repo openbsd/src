@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.h,v 1.4 2024/12/19 23:52:26 tb Exp $ */
+/*	$OpenBSD: mlkem.h,v 1.5 2025/03/28 12:17:16 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  *
@@ -78,8 +78,8 @@ struct MLKEM768_private_key {
 /*
  * MLKEM_generate_key generates a random public/private key pair, writes the
  * encoded public key to |out_encoded_public_key| and sets |out_private_key| to
- * the private key. If |optional_out_seed| us not NULL then te seed used to
- * generate te private key is written to it.
+ * the private key. If |optional_out_seed| is not NULL then the seed used to
+ * generate the private key is written to it.
  */
 void MLKEM768_generate_key(
     uint8_t out_encoded_public_key[MLKEM768_PUBLIC_KEY_BYTES],
