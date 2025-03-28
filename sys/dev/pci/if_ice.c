@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.31 2025/03/28 10:30:57 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.32 2025/03/28 16:13:54 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13912,7 +13912,7 @@ ice_get_phy_type_low(struct ice_softc *sc, uint64_t phy_type_low)
 		return IFM_100G_DR;
 #endif
 	default:
-		printf("%s: unhandled low PHY type 0x%llx\n",
+		DPRINTF("%s: unhandled low PHY type 0x%llx\n",
 		    sc->sc_dev.dv_xname, phy_type_low);
 		return IFM_INST_ANY;
 	}
@@ -13944,7 +13944,7 @@ ice_get_phy_type_high(struct ice_softc *sc, uint64_t phy_type_high)
 		return IFM_100G_AUI2;
 #endif
 	default:
-		printf("%s: unhandled high PHY type 0x%llx\n",
+		DPRINTF("%s: unhandled high PHY type 0x%llx\n",
 		    sc->sc_dev.dv_xname, phy_type_high);
 		return IFM_INST_ANY;
 	}
@@ -13974,10 +13974,14 @@ ice_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		media = ice_get_phy_type_low(sc, li->phy_type_low);
 		if (media != IFM_INST_ANY)
 			ifmr->ifm_active |= media;
+		else
+			ifmr->ifm_active |= IFM_ETHER;
 	} else if (li->phy_type_high) {
 		media = ice_get_phy_type_high(sc, li->phy_type_high);
 		if (media != IFM_INST_ANY)
 			ifmr->ifm_active |= media;
+		else
+			ifmr->ifm_active |= IFM_ETHER;
 	}
 
 	/* Report flow control status as well */
