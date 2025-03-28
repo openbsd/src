@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.23 2024/10/04 07:46:33 kevlo Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.24 2025/03/28 13:55:27 kevlo Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -123,6 +123,8 @@
 #define TCSR_SOC_HW_VERSION		0x0224
 #define TCSR_SOC_HW_VERSION_MAJOR_MASK	GENMASK(11, 8)
 #define TCSR_SOC_HW_VERSION_MINOR_MASK	GENMASK(7, 0)
+
+#define TCSR_SOC_HW_SUB_VER		0x1910010
 
 /*
  * pci.h
@@ -601,6 +603,17 @@ const struct qwx_msi_config qwx_msi_config[] = {
 		},
 		.hw_rev = ATH11K_HW_WCN6750_HW10,
 	},
+	{
+		.total_vectors = 32,
+		.total_users = 4,
+		.users = (struct qwx_msi_user[]) {
+			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
+			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
+			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
+			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
+		},
+		.hw_rev = ATH11K_HW_QCA2066_HW21,
+	},
 };
 
 int
@@ -742,7 +755,7 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct qwx_softc *sc = &psc->sc_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	uint32_t soc_hw_version_major, soc_hw_version_minor;
+	uint32_t soc_hw_version_major, soc_hw_version_minor, sub_version;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
@@ -918,7 +931,18 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 				break;
 			case 0x10:
 			case 0x11:
-				sc->sc_hw_rev = ATH11K_HW_WCN6855_HW21;
+				sub_version =
+				    qwx_pcic_read32(sc, TCSR_SOC_HW_SUB_VER);
+				switch (sub_version) {
+				case 0x1019a0e1:
+				case 0x1019b0e1:
+				case 0x1019c0e1:
+				case 0x1019d0e1:
+					sc->sc_hw_rev = ATH11K_HW_QCA2066_HW21;
+					break;
+				default:
+					sc->sc_hw_rev = ATH11K_HW_WCN6855_HW21;
+				}
 				break;
 			default:
 				goto unsupported_wcn6855_soc;

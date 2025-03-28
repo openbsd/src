@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.8 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.9 2025/03/28 13:55:27 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -56,6 +56,8 @@ enum ath11k_hw_rev {
 	ATH11K_HW_WCN6855_HW20,
 	ATH11K_HW_WCN6855_HW21,
 	ATH11K_HW_WCN6750_HW10,
+	ATH11K_HW_IPQ5018_HW10,
+	ATH11K_HW_QCA2066_HW21,
 };
 
 enum ath11k_firmware_mode {
