@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.11 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.12 2025/03/28 23:17:00 hastings Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -86,6 +86,8 @@ int		mtw_match(struct device *, void *, void *);
 void		mtw_attach(struct device *, struct device *, void *);
 int		mtw_detach(struct device *, int);
 void		mtw_attachhook(struct device *);
+int		mtw_open_pipes(struct mtw_softc *);
+void		mtw_close_pipes(struct mtw_softc *);
 int		mtw_alloc_rx_ring(struct mtw_softc *, int);
 void		mtw_free_rx_ring(struct mtw_softc *, int);
 int		mtw_alloc_tx_ring(struct mtw_softc *, int);
@@ -335,6 +337,7 @@ mtw_detach(struct device *self, int flags)
 		mtw_free_tx_ring(sc, qid);
 	mtw_free_rx_ring(sc, 0);
 	mtw_free_rx_ring(sc, 1);
+	mtw_close_pipes(sc);
 
 	splx(s);
 	return 0;
@@ -352,6 +355,13 @@ mtw_attachhook(struct device *self)
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
+	/* open all bulk pipes */
+	if ((error = mtw_open_pipes(sc)) != 0) {
+		printf("%s: could not open pipes\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	/* enable WLAN core */
 	if ((error = mtw_wlan_enable(sc, 1)) != 0) {
 		printf("%s: could not enable WLAN core\n",
@@ -365,6 +375,14 @@ mtw_attachhook(struct device *self)
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
+
+	/* init MCU Tx ring */
+	if ((error = mtw_alloc_mcu_ring(sc)) != 0)
+		goto fail;
+
+	/* init MCU Rx ring */
+	if ((error = mtw_alloc_rx_ring(sc, 1)) != 0)
+		goto fail;
 
 	mtw_usb_dma_read(sc, &tmp);
 	mtw_usb_dma_write(sc, tmp | (MTW_USB_RX_EN | MTW_USB_TX_EN));
@@ -456,14 +474,57 @@ fail:
 }
 
 int
+mtw_open_pipes(struct mtw_softc *sc)
+{
+	struct mtw_tx_ring *txq;
+	struct mtw_rx_ring *rxq;
+	int i, error;
+
+	for (i = 0; i < MTW_TXQ_COUNT; i++) {
+		txq = &sc->txq[i];
+
+		if ((error = usbd_open_pipe(sc->sc_iface, txq->pipe_no, 0,
+		    &txq->pipeh)) != 0)
+			return error;
+	}
+
+	for (i = 0; i < MTW_RXQ_COUNT; i++) {
+		rxq = &sc->rxq[i];
+
+		if ((error = usbd_open_pipe(sc->sc_iface, rxq->pipe_no, 0,
+		    &rxq->pipeh)) != 0)
+			return error;
+	}
+	return 0;
+}
+
+void
+mtw_close_pipes(struct mtw_softc *sc)
+{
+	struct mtw_tx_ring *txq;
+	struct mtw_rx_ring *rxq;
+	int i;
+
+	for (i = 0; i < MTW_TXQ_COUNT; i++) {
+		txq = &sc->txq[i];
+
+		usbd_close_pipe(txq->pipeh);
+		txq->pipeh = NULL;
+	}
+
+	for (i = 0; i < MTW_RXQ_COUNT; i++) {
+		rxq = &sc->rxq[i];
+
+		usbd_close_pipe(rxq->pipeh);
+		rxq->pipeh = NULL;
+	}
+}
+
+int
 mtw_alloc_rx_ring(struct mtw_softc *sc, int qid)
 {
 	struct mtw_rx_ring *rxq = &sc->rxq[qid];
-	int i, error;
-
-	if ((error = usbd_open_pipe(sc->sc_iface, rxq->pipe_no, 0,
-	    &rxq->pipeh)) != 0)
-		goto fail;
+	int i, error = 0;
 
 	for (i = 0; i < MTW_RX_RING_COUNT; i++) {
 		struct mtw_rx_data *data = &rxq->data[i];
@@ -492,10 +553,8 @@ mtw_free_rx_ring(struct mtw_softc *sc, int qid)
 	struct mtw_rx_ring *rxq = &sc->rxq[qid];
 	int i;
 
-	if (rxq->pipeh != NULL) {
-		usbd_close_pipe(rxq->pipeh);
-		rxq->pipeh = NULL;
-	}
+	usbd_abort_pipe(rxq->pipeh);
+
 	for (i = 0; i < MTW_RX_RING_COUNT; i++) {
 		if (rxq->data[i].xfer != NULL)
 			usbd_free_xfer(rxq->data[i].xfer);
@@ -507,16 +566,12 @@ int
 mtw_alloc_tx_ring(struct mtw_softc *sc, int qid)
 {
 	struct mtw_tx_ring *txq = &sc->txq[qid];
-	int i, error;
+	int i, error = 0;
 	uint16_t txwisize;
 
 	txwisize = sizeof(struct mtw_txwi);
 
 	txq->cur = txq->queued = 0;
-
-	if ((error = usbd_open_pipe(sc->sc_iface, txq->pipe_no, 0,
-	    &txq->pipeh)) != 0)
-		goto fail;
 
 	for (i = 0; i < MTW_TX_RING_COUNT; i++) {
 		struct mtw_tx_data *data = &txq->data[i];
@@ -550,10 +605,8 @@ mtw_free_tx_ring(struct mtw_softc *sc, int qid)
 	struct mtw_tx_ring *txq = &sc->txq[qid];
 	int i;
 
-	if (txq->pipeh != NULL) {
-		usbd_close_pipe(txq->pipeh);
-		txq->pipeh = NULL;
-	}
+	usbd_abort_pipe(txq->pipeh);
+
 	for (i = 0; i < MTW_TX_RING_COUNT; i++) {
 		if (txq->data[i].xfer != NULL)
 			usbd_free_xfer(txq->data[i].xfer);
@@ -693,11 +746,6 @@ mtw_load_microcode(struct mtw_softc *sc)
 	if (tmp == MTW_MCU_READY)
 		return 0;
 
-	/* open MCU pipe */
-	if ((error = usbd_open_pipe(sc->sc_iface, sc->txq[MTW_TXQ_MCU].pipe_no,
-	    0, &sc->txq[MTW_TXQ_MCU].pipeh)) != 0)
-		return error;
-
 	if (sc->asic_ver == 0x7612) {
 		fwname = "mtw-mt7662u_rom_patch";
 
@@ -809,8 +857,6 @@ mtw_load_microcode(struct mtw_softc *sc)
 	    le16toh(hdr->build_ver), le16toh(hdr->fw_ver)));
 fail:
 	free(ucode, M_DEVBUF, size);
-	usbd_close_pipe(sc->txq[MTW_TXQ_MCU].pipeh);
-	sc->txq[MTW_TXQ_MCU].pipeh = NULL;
 	return error;
 }
 
@@ -3078,10 +3124,6 @@ mtw_init(struct ifnet *ifp)
 	if ((error = mtw_alloc_rx_ring(sc, 0)) != 0)
 		goto fail;
 
-	/* init MCU Tx ring */
-	if ((error = mtw_alloc_mcu_ring(sc)) != 0)
-		goto fail;
-
 	/* init host command ring */
 	sc->cmdq.cur = sc->cmdq.next = sc->cmdq.queued = 0;
 
@@ -3349,7 +3391,6 @@ mtw_stop(struct ifnet *ifp, int disable)
 
 	/* free Tx and Rx rings */
 	sc->qfullmsk = 0;
-	mtw_free_mcu_ring(sc);
 	for (qid = 0; qid < MTW_TXQ_COUNT; qid++)
 		mtw_free_tx_ring(sc, qid);
 	mtw_free_rx_ring(sc, 0);
