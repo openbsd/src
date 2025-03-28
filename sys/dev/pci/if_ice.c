@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.30 2025/03/27 12:50:07 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.31 2025/03/28 10:30:57 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13572,7 +13572,7 @@ ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
 
 #if NVLAN > 0
 	if (ISSET(m0->m_flags, M_VLANTAG)) {
-		uint64_t vtag = m0->m_pkthdr.ether_vtag;
+		uint64_t vtag = htole16(m0->m_pkthdr.ether_vtag);
 		offload |= (ICE_TX_DESC_CMD_IL2TAG1 << ICE_TXD_QW1_CMD_S) |
 		    (vtag << ICE_TXD_QW1_L2TAG1_S);
 	}
