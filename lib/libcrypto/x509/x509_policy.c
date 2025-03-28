@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.30 2025/03/28 12:34:19 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.31 2025/03/28 13:11:57 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -498,7 +498,7 @@ delete_if_mapped(X509_POLICY_NODE *node, void *data)
  * with P1 in |parent_policies|.
  *
  * This is equivalent to the |X509_POLICY_LEVEL| that would result if the next
- * certificates contained anyPolicy. |process_certificate_policies| will filter
+ * certificate contained anyPolicy. |process_certificate_policies| will filter
  * this result down to compute the actual level.
  */
 static X509_POLICY_LEVEL *
