@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.188 2025/03/17 20:43:29 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.189 2025/03/28 17:15:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1061,8 +1061,8 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 		return (-1);
 
 	/* Copy to the buffer. */
-	memcpy(tmp, buf + 2, end);
-	tmp[end] = '\0';
+	memcpy(tmp, buf + 2, end - 2);
+	tmp[end - 2] = '\0';
 
 	/* Try to parse either form of key. */
 	if (buf[end] == '~') {
