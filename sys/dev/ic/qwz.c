@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.19 2025/03/28 07:23:48 kevlo Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.20 2025/03/29 22:34:59 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6638,7 +6638,7 @@ int
 qwz_qmi_load_bdf_qmi(struct qwz_softc *sc, enum ath12k_qmi_bdf_type type)
 {
 	const u_char *boardfw;
-	size_t len = 0, boardfw_len;
+	size_t boardfw_len;
 	uint32_t fw_size;
 	int ret = 0;
 
