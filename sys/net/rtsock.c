@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.382 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.383 2025/03/29 06:33:28 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -629,6 +629,9 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 #ifdef BFD
 	struct sockaddr_bfd	 sa_bfd;
 #endif
+#ifdef MPLS
+	struct sockaddr_mpls	 sa_mpls;
+#endif
 	struct ifnet		*ifp = NULL;
 	int			 len;
 
@@ -646,8 +649,6 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 #endif
 #ifdef MPLS
 	if (rt->rt_flags & RTF_MPLS) {
-		struct sockaddr_mpls	 sa_mpls;
-
 		bzero(&sa_mpls, sizeof(sa_mpls));
 		sa_mpls.smpls_family = AF_MPLS;
 		sa_mpls.smpls_len = sizeof(sa_mpls);
@@ -1966,6 +1967,9 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 #ifdef BFD
 	struct sockaddr_bfd	 sa_bfd;
 #endif
+#ifdef MPLS
+	struct sockaddr_mpls	 sa_mpls;
+#endif
 	struct sockaddr_rtlabel	 sa_rl;
 	struct sockaddr_in6	 sa_mask;
 
@@ -2008,8 +2012,6 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 #endif
 #ifdef MPLS
 	if (rt->rt_flags & RTF_MPLS) {
-		struct sockaddr_mpls	 sa_mpls;
-
 		bzero(&sa_mpls, sizeof(sa_mpls));
 		sa_mpls.smpls_family = AF_MPLS;
 		sa_mpls.smpls_len = sizeof(sa_mpls);
