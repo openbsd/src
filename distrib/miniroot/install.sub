@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1267 2025/02/08 01:11:55 kn Exp $
+#	$OpenBSD: install.sub,v 1.1268 2025/03/29 14:26:41 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -253,7 +253,7 @@ lease_value() {
 	done
 }
 
-# Extract one boot's worth of dmesg.
+# Extract the latest boot's worth of dmesg.
 dmesgtail() {
 	dmesg | sed -n 'H;/^OpenBSD/h;${g;p;}'
 }
@@ -290,9 +290,9 @@ make_dev() {
 	[[ -z $(cd /dev && sh MAKEDEV "$@" 2>&1) ]]
 }
 
-# Sort and print information from dmesg.boot using sed expression $1.
+# Sort and print the current boot's information using sed expression $1.
 scan_dmesg() {
-	bsort $(sed -n "$1" /var/run/dmesg.boot)
+	bsort $(sed -n "$1" $DMESGBOOT)
 }
 
 # Extract device names from hw.disknames matching sed expression $1.
@@ -3594,6 +3594,10 @@ done
 cd /
 umount -af >/dev/null 2>&1
 
+# Save the current boot's dmesg.
+DMESGBOOT=/var/run/dmesg.boot
+dmesgtail >$DMESGBOOT
+
 # Include machine-dependent functions and definitions.
 #
 # The following functions must be provided:
@@ -3646,9 +3650,6 @@ V4_AUTOCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
 
-# Save one boot's worth of dmesg.
-dmesgtail >/var/run/dmesg.boot
-
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
 HTTP_SETDIR=$SETDIR
@@ -3664,7 +3665,7 @@ else
 	HTTP_PROTO=http
 fi
 
-# Scan /var/run/dmesg.boot for console device.
+# Scan for console device.
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 [[ -n $CONSOLE ]] && CSPEED=$(stty speed </dev/console)
 

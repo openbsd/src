@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.65 2025/02/21 15:37:25 kn Exp $
+#	$OpenBSD: install.md,v 1.66 2025/03/29 14:26:41 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,8 +37,8 @@ MDXDM=y
 NCPU=$(sysctl -n hw.ncpufound)
 
 # Two reasons to prefer GPT instead of MBR
-dmesg | grep -q -e '^efifb0 at mainbus0' -e '^acpi0 at bios0: ACPI [5-9]\.' &&
-    MDEFI=y
+grep -q -e '^efifb0 at mainbus0' -e '^acpi0 at bios0: ACPI [5-9]\.' \
+    $DMESGBOOT && MDEFI=y
 
 md_installboot() {
 	if ! installboot -cr /mnt ${1}; then
