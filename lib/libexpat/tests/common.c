@@ -319,9 +319,10 @@ portable_strndup(const char *s, size_t n) {
 
   errno = 0;
 
-  memcpy(buffer, s, n);
-
-  buffer[n] = '\0';
+  char *d;
+  for (d = buffer; n > 0 && *s != '\0'; n--)
+	*d++ = *s++;
+  *d = '\0';
 
   return buffer;
 }
