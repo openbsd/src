@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.47 2025/03/09 20:10:17 phessler Exp $
+# $OpenBSD: security,v 1.48 2025/03/31 17:35:28 schwarze Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -75,7 +75,9 @@ sub check_passwd {
 	my $filename = '/etc/master.passwd';
 	$check_title = "Checking the $filename file:";
 	nag !(open my $fh, '<', $filename), "open: $filename: $!" and return;
-	my (%logins, %uids);
+	my (%logins, %uids, %skip);
+	%skip = map { $_ => 1 } split ' ', $ENV{PASSWDSKIP}
+	    if $ENV{PASSWDSKIP};
 	while (my $line = <$fh>) {
 		chomp $line;
 		nag $line !~ /\S/,
@@ -96,8 +98,7 @@ sub check_passwd {
 		}
 		nag length $name > 31,
 		    "Login $name has more than 31 characters.";
-		nag $pwd eq '' && !($name eq 'anoncvs' &&
-				    $shell =~ /\/anoncvssh$/),
+		nag $pwd eq '' && !$skip{"$name:$shell"},
 		    "Login $name has no password.";
 		if ($pwd ne '' &&
 		    $pwd ne 'skey' &&

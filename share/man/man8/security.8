@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.27 2024/12/24 17:08:50 krw Exp $
+.\" $OpenBSD: security.8,v 1.28 2025/03/31 17:35:28 schwarze Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: December 24 2024 $
+.Dd $Mdocdate: March 31 2025 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -113,7 +113,18 @@ script is to point out some obvious holes to the system administrator.
 The following variables can be set in
 .Pa /etc/daily.local :
 .Pp
-.Bl -tag -width "SUIDSKIP" -compact
+.Bl -tag -width "PASSWDSKIP" -compact
+.It Ev PASSWDSKIP
+A whitespace-separated list of
+.Ar name : Ns Ar shell
+pairs allowed to have empty passwords.
+For example, a machine running both CVS and gotd for anonymous access
+might set:
+.Bd -literal -offset indent
+PASSWDSKIP="anoncvs:/usr/local/bin/anoncvssh
+            anonymous:/usr/local/bin/gotsh"
+.Ed
+.Pp
 .It Ev SUIDSKIP
 A whitespace-separated list of absolute paths to be skipped
 in setuid/setgid file checks and in device special file checks.
