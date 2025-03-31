@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.73 2025/03/27 19:30:49 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.74 2025/03/31 08:59:02 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -681,7 +681,7 @@ rrdp_session_parse(struct rrdprepo *rr)
 	if (fstat(fd, &st) != 0)
 		errx(1, "fstat %s", file);
 	free(file);
-	rr->mtime = st.st_mtim.tv_sec;
+	rr->mtime = st.st_mtime;
 	f = fdopen(fd, "r");
 	if (f == NULL)
 		err(1, "fdopen");
