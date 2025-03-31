@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.12 2025/03/31 14:43:00 sf Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.13 2025/03/31 15:40:22 sf Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -136,7 +136,7 @@ pvclock_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_time == NULL)
 		goto err;
 
-	pa = page->phys_addr;
+	pa = VM_PAGE_TO_PHYS(page);
 	pmap_kenter_pa((vaddr_t)sc->sc_time, pa | PMAP_NOCRYPT,
 		PROT_READ | PROT_WRITE);
 	memset(sc->sc_time, 0, PAGE_SIZE);
