@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.11 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.12 2025/03/31 14:43:00 sf Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,10 @@
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>
+
+#ifndef PMAP_NOCRYPT
+#define	PMAP_NOCRYPT	0
+#endif
 
 uint pvclock_lastcount;
 
@@ -123,17 +127,19 @@ pvclock_attach(struct device *parent, struct device *self, void *aux)
 	paddr_t			 	 pa;
 	uint32_t			 version;
 	uint8_t				 flags;
+	struct vm_page			*page;
 
-	if ((sc->sc_time = km_alloc(PAGE_SIZE,
-	    &kv_any, &kp_zero, &kd_nowait)) == NULL) {
-		printf(": time page allocation failed\n");
-		return;
-	}
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_time, &pa)) {
-		printf(": time page PA extraction failed\n");
-		km_free(sc->sc_time, PAGE_SIZE, &kv_any, &kp_zero);
-		return;
-	}
+	page = uvm_pagealloc(NULL, 0, NULL, 0);
+	if (page == NULL)
+		goto err;
+	sc->sc_time = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
+	if (sc->sc_time == NULL)
+		goto err;
+
+	pa = page->phys_addr;
+	pmap_kenter_pa((vaddr_t)sc->sc_time, pa | PMAP_NOCRYPT,
+		PROT_READ | PROT_WRITE);
+	memset(sc->sc_time, 0, PAGE_SIZE);
 
 	wrmsr(KVM_MSR_SYSTEM_TIME, pa | PVCLOCK_SYSTEM_TIME_ENABLE);
 	sc->sc_paddr = pa;
@@ -163,6 +169,11 @@ pvclock_attach(struct device *parent, struct device *self, void *aux)
 	tc_init(sc->sc_tc);
 
 	printf("\n");
+	return;
+err:
+	if (page)
+		uvm_pagefree(page);
+	printf(": time page allocation failed\n");
 }
 
 int
