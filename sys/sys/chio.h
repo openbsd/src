@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.h,v 1.8 2021/08/31 05:29:55 robert Exp $	*/
+/*	$OpenBSD: chio.h,v 1.9 2025/03/31 08:39:38 jsg Exp $	*/
 /*	$NetBSD: chio.h,v 1.8 1996/04/03 00:25:21 thorpej Exp $	*/
 
 /*
@@ -166,10 +166,6 @@ struct changer_element_status_request {
 #define CESTATUS_BITS	\
 	"\20\6INEAB\5EXENAB\4ACCESS\3EXCEPT\2IMPEXP\1FULL"
 
-/*
- * XXX we have to renumber this since it chashes w/ the
- * cdio ioctls, O* interface goes away right after 3.3
- */
 #define CHIOMOVE	_IOW('c', 0x41, struct changer_move)
 #define CHIOEXCHANGE	_IOW('c', 0x42, struct changer_exchange)
 #define CHIOPOSITION	_IOW('c', 0x43, struct changer_position)
