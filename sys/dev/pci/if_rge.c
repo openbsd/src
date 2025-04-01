@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.35 2024/08/31 16:23:09 deraadt Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.36 2025/04/01 09:12:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023, 2024
@@ -2762,7 +2762,7 @@ rge_kstat_read(struct kstat *ks)
 	struct rge_softc *sc = ks->ks_softc;
 	struct rge_kstat_softc *rge_ks_sc = ks->ks_ptr;
 	bus_dmamap_t map;
-	uint64_t cmd;
+	bus_addr_t addr;
 	uint32_t reg;
 	uint8_t command;
 	int tmo;
@@ -2772,15 +2772,19 @@ rge_kstat_read(struct kstat *ks)
 		return (ENETDOWN);
 
 	map = rge_ks_sc->rge_ks_sc_map;
-	cmd = map->dm_segs[0].ds_addr | RGE_DTCCR_CMD;
+	addr = map->dm_segs[0].ds_addr;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	RGE_WRITE_4(sc, RGE_DTCCR_HI, cmd >> 32);
-	bus_space_barrier(sc->rge_btag, sc->rge_bhandle, RGE_DTCCR_HI, 8,
+	RGE_WRITE_4(sc, RGE_DTCCR_HI, RGE_ADDR_HI(addr));
+	bus_space_barrier(sc->rge_btag, sc->rge_bhandle, RGE_DTCCR_HI, 4,
 	    BUS_SPACE_BARRIER_WRITE);
-	RGE_WRITE_4(sc, RGE_DTCCR_LO, cmd);
+	RGE_READ_1(sc, RGE_CMD);
+	RGE_WRITE_4(sc, RGE_DTCCR_LO, RGE_ADDR_LO(addr));
+	bus_space_barrier(sc->rge_btag, sc->rge_bhandle, RGE_DTCCR_LO, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+	RGE_WRITE_4(sc, RGE_DTCCR_LO, RGE_ADDR_LO(addr) | RGE_DTCCR_CMD);
 	bus_space_barrier(sc->rge_btag, sc->rge_bhandle, RGE_DTCCR_LO, 4,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
