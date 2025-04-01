@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: attr.sh,v 1.2 2025/03/24 12:24:19 claudio Exp $
+#	$OpenBSD: attr.sh,v 1.3 2025/04/01 05:09:10 anton Exp $
 
 set -e
 
@@ -29,10 +29,7 @@ error_notify() {
 	ifconfig lo${RDOMAIN1} destroy || true
 	ifconfig lo${RDOMAIN2} destroy || true
 	if [ $1 -ne 0 ]; then
-		echo FAILED
 		exit 1
-	else
-		echo SUCCESS
 	fi
 }
 
