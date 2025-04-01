@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.34 2025/04/01 08:34:09 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.35 2025/04/01 08:35:31 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -11787,10 +11787,12 @@ ice_if_promisc_set(struct ice_softc *sc)
 	
 	ice_set_default_promisc_mask(promisc_mask);
 
-	if (multi_enable)
-		return (EOPNOTSUPP);
+	if (multi_enable && !promisc_enable) {
+		ice_clear_bit(ICE_PROMISC_UCAST_TX, promisc_mask);
+		ice_clear_bit(ICE_PROMISC_UCAST_RX, promisc_mask);
+	}
 
-	if (promisc_enable) {
+	if (promisc_enable || multi_enable) {
 		status = ice_set_vsi_promisc(hw, sc->pf_vsi.idx,
 					     promisc_mask, 0);
 		if (status && status != ICE_ERR_ALREADY_EXISTS) {
@@ -13521,6 +13523,7 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ice_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
+	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
 	int s, error = 0;
 
 	s = splnet();
@@ -13544,6 +13547,45 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, cmd);
+		break;
+	case SIOCADDMULTI:
+		error = ether_addmulti(ifr, &sc->sc_ac);
+		if (error == ENETRESET) {
+			struct ice_vsi *vsi = &sc->pf_vsi;
+
+			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+			if (error)
+				break;
+
+			error = ice_add_vsi_mac_filter(vsi, addrlo);
+			if (error)
+				break;
+
+			if (sc->sc_ac.ac_multirangecnt > 0) {
+				SET(ifp->if_flags, IFF_ALLMULTI);
+				error = ENETRESET;
+			}
+		}
+		break;
+	case SIOCDELMULTI:
+		error = ether_delmulti(ifr, &sc->sc_ac);
+		if (error == ENETRESET) {
+			struct ice_vsi *vsi = &sc->pf_vsi;
+
+			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+			if (error)
+				break;
+
+			error = ice_remove_vsi_mac_filter(vsi, addrlo);
+			if (error)
+				break;
+
+			if (ISSET(ifp->if_flags, IFF_ALLMULTI) &&
+			    sc->sc_ac.ac_multirangecnt == 0) {
+				CLR(ifp->if_flags, IFF_ALLMULTI);
+				error = ENETRESET;
+			}
+		}
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
