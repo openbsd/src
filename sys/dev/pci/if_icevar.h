@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icevar.h,v 1.5 2024/11/26 17:34:00 stsp Exp $	*/
+/*	$OpenBSD: if_icevar.h,v 1.6 2025/04/01 08:32:16 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -2306,6 +2306,8 @@ struct ice_prot_ext_tbl_entry {
 	uint8_t offs[sizeof(union ice_prot_hdr)];
 };
 
+#define ICE_FV_OFFSET_INVAL	0x1FF
+
 /* Extraction Sequence (Field Vector) Table */
 struct ice_fv_word {
 	uint8_t prot_id;
@@ -2318,6 +2320,40 @@ struct ice_fv_word {
 struct ice_fv {
 	struct ice_fv_word ew[ICE_MAX_FV_WORDS];
 };
+
+/* Packet Type (PTYPE) values */
+#define ICE_PTYPE_MAC_PAY		1
+#define ICE_PTYPE_IPV4FRAG_PAY		22
+#define ICE_PTYPE_IPV4_PAY		23
+#define ICE_PTYPE_IPV4_UDP_PAY		24
+#define ICE_PTYPE_IPV4_TCP_PAY		26
+#define ICE_PTYPE_IPV4_SCTP_PAY		27
+#define ICE_PTYPE_IPV4_ICMP_PAY		28
+#define ICE_PTYPE_IPV6FRAG_PAY		88
+#define ICE_PTYPE_IPV6_PAY		89
+#define ICE_PTYPE_IPV6_UDP_PAY		90
+#define ICE_PTYPE_IPV6_TCP_PAY		92
+#define ICE_PTYPE_IPV6_SCTP_PAY		93
+#define ICE_PTYPE_IPV6_ICMP_PAY		94
+
+struct ice_meta_sect {
+	struct ice_pkg_ver ver;
+#define ICE_META_SECT_NAME_SIZE	28
+	char name[ICE_META_SECT_NAME_SIZE];
+	uint32_t track_id;
+};
+
+/* Packet Type Groups (PTG) - Inner Most fields (IM) */
+#define ICE_PTG_IM_IPV4_TCP		16
+#define ICE_PTG_IM_IPV4_UDP		17
+#define ICE_PTG_IM_IPV4_SCTP		18
+#define ICE_PTG_IM_IPV4_PAY		20
+#define ICE_PTG_IM_IPV4_OTHER		21
+#define ICE_PTG_IM_IPV6_TCP		32
+#define ICE_PTG_IM_IPV6_UDP		33
+#define ICE_PTG_IM_IPV6_SCTP		34
+#define ICE_PTG_IM_IPV6_OTHER		37
+#define ICE_PTG_IM_L2_OTHER		67
 
 /* Extractions to be looked up for a given recipe */
 struct ice_prot_lkup_ext {
@@ -3069,6 +3105,123 @@ enum ice_ddp_state {
 	ICE_DDP_PKG_ERR					= -14,
 };
 
+/* Package and segment headers and tables */
+struct ice_pkg_hdr {
+	struct ice_pkg_ver pkg_format_ver;
+	uint32_t seg_count;
+	uint32_t seg_offset[STRUCT_HACK_VAR_LEN];
+};
+
+/* Package signing algorithm types */
+#define SEGMENT_SIGN_TYPE_INVALID	0x00000000
+#define SEGMENT_SIGN_TYPE_RSA2K		0x00000001
+#define SEGMENT_SIGN_TYPE_RSA3K		0x00000002
+#define SEGMENT_SIGN_TYPE_RSA3K_SBB	0x00000003 /* Secure Boot Block */
+#define SEGMENT_SIGN_TYPE_RSA3K_E825	0x00000005
+
+/* generic segment */
+struct ice_generic_seg_hdr {
+#define	SEGMENT_TYPE_INVALID	0x00000000
+#define SEGMENT_TYPE_METADATA	0x00000001
+#define SEGMENT_TYPE_ICE_E810	0x00000010
+#define SEGMENT_TYPE_SIGNING	0x00001001
+#define SEGMENT_TYPE_ICE_RUN_TIME_CFG 0x00000020
+	uint32_t seg_type;
+	struct ice_pkg_ver seg_format_ver;
+	uint32_t seg_size;
+	char seg_id[ICE_PKG_NAME_SIZE];
+};
+
+/* ice specific segment */
+
+union ice_device_id {
+	struct {
+		uint16_t device_id;
+		uint16_t vendor_id;
+	} dev_vend_id;
+	uint32_t id;
+};
+
+struct ice_device_id_entry {
+	union ice_device_id device;
+	union ice_device_id sub_device;
+};
+
+struct ice_seg {
+	struct ice_generic_seg_hdr hdr;
+	uint32_t device_table_count;
+	struct ice_device_id_entry device_table[STRUCT_HACK_VAR_LEN];
+};
+
+struct ice_nvm_table {
+	uint32_t table_count;
+	uint32_t vers[STRUCT_HACK_VAR_LEN];
+};
+
+struct ice_buf {
+#define ICE_PKG_BUF_SIZE	4096
+	uint8_t buf[ICE_PKG_BUF_SIZE];
+};
+
+struct ice_buf_table {
+	uint32_t buf_count;
+	struct ice_buf buf_array[STRUCT_HACK_VAR_LEN];
+};
+
+struct ice_run_time_cfg_seg {
+	struct ice_generic_seg_hdr hdr;
+	uint8_t rsvd[8];
+	struct ice_buf_table buf_table;
+};
+
+/* global metadata specific segment */
+struct ice_global_metadata_seg {
+	struct ice_generic_seg_hdr hdr;
+	struct ice_pkg_ver pkg_ver;
+	uint32_t rsvd;
+	char pkg_name[ICE_PKG_NAME_SIZE];
+};
+
+#define ICE_MIN_S_OFF		12
+#define ICE_MAX_S_OFF		4095
+#define ICE_MIN_S_SZ		1
+#define ICE_MAX_S_SZ		4084
+
+struct ice_sign_seg {
+	struct ice_generic_seg_hdr hdr;
+	uint32_t seg_id;
+	uint32_t sign_type;
+	uint32_t signed_seg_idx;
+	uint32_t signed_buf_start;
+	uint32_t signed_buf_count;
+#define ICE_SIGN_SEG_RESERVED_COUNT	44
+	uint8_t reserved[ICE_SIGN_SEG_RESERVED_COUNT];
+	struct ice_buf_table buf_tbl;
+};
+
+/* section information */
+struct ice_section_entry {
+	uint32_t type;
+	uint16_t offset;
+	uint16_t size;
+};
+
+#define ICE_MIN_S_COUNT		1
+#define ICE_MAX_S_COUNT		511
+#define ICE_MIN_S_DATA_END	12
+#define ICE_MAX_S_DATA_END	4096
+
+#define ICE_METADATA_BUF	0x80000000
+
+struct ice_buf_hdr {
+	uint16_t section_count;
+	uint16_t data_end;
+	struct ice_section_entry section_entry[STRUCT_HACK_VAR_LEN];
+};
+
+#define ICE_MAX_ENTRIES_IN_BUF(hd_sz, ent_sz) ((ICE_PKG_BUF_SIZE - \
+	ice_struct_size((struct ice_buf_hdr *)0, section_entry, 1) - (hd_sz)) /\
+	(ent_sz))
 
 /* ice package section IDs */
 #define ICE_SID_METADATA		1
@@ -3215,6 +3368,171 @@ enum ice_block {
 	ICE_BLK_COUNT
 };
 
+enum ice_sect {
+	ICE_XLT0 = 0,
+	ICE_XLT_KB,
+	ICE_XLT1,
+	ICE_XLT2,
+	ICE_PROF_TCAM,
+	ICE_PROF_REDIR,
+	ICE_VEC_TBL,
+	ICE_CDID_KB,
+	ICE_CDID_REDIR,
+	ICE_SECT_COUNT
+};
+
+/* package buffer building */
+
+struct ice_buf_build {
+	struct ice_buf buf;
+	uint16_t reserved_section_table_entries;
+};
+
+struct ice_pkg_enum {
+	struct ice_buf_table *buf_table;
+	uint32_t buf_idx;
+
+	uint32_t type;
+	struct ice_buf_hdr *buf;
+	uint32_t sect_idx;
+	void *sect;
+	uint32_t sect_type;
+
+	uint32_t entry_idx;
+	void *(*handler)(uint32_t sect_type, void *section, uint32_t index,
+	    uint32_t *offset);
+};
+
+struct ice_flex_fields {
+	union {
+		struct {
+			uint8_t src_ip;
+			uint8_t dst_ip;
+			uint8_t flow_label;	/* valid for IPv6 only */
+		} ip_fields;
+
+		struct {
+			uint8_t src_prt;
+			uint8_t dst_prt;
+		} tcp_udp_fields;
+
+		struct {
+			uint8_t src_ip;
+			uint8_t dst_ip;
+			uint8_t src_prt;
+			uint8_t dst_prt;
+		} ip_tcp_udp_fields;
+
+		struct {
+			uint8_t src_prt;
+			uint8_t dst_prt;
+			uint8_t flow_label;	/* valid for IPv6 only */
+			uint8_t spi;
+		} ip_esp_fields;
+
+		struct {
+			uint32_t offset;
+			uint32_t length;
+		} off_len;
+	} fields;
+};
+
+#define ICE_XLT1_DFLT_GRP	0
+#define ICE_XLT1_TABLE_SIZE	1024
+
+/* package labels */
+struct ice_label {
+	uint16_t value;
+#define ICE_PKG_LABEL_SIZE	64
+	char name[ICE_PKG_LABEL_SIZE];
+};
+
+struct ice_label_section {
+	uint16_t count;
+	struct ice_label label[STRUCT_HACK_VAR_LEN];
+};
+
+#define ICE_MAX_LABELS_IN_BUF ICE_MAX_ENTRIES_IN_BUF( \
+	ice_struct_size((struct ice_label_section *)0, label, 1) - \
+	sizeof(struct ice_label), sizeof(struct ice_label))
+
+struct ice_sw_fv_section {
+	uint16_t count;
+	uint16_t base_offset;
+	struct ice_fv fv[STRUCT_HACK_VAR_LEN];
+};
+
+
+#pragma pack(1)
+/* The BOOST TCAM stores the match packet header in reverse order, meaning
+ * the fields are reversed; in addition, this means that the normally big endian
+ * fields of the packet are now little endian.
+ */
+struct ice_boost_key_value {
+#define ICE_BOOST_REMAINING_HV_KEY     15
+	uint8_t remaining_hv_key[ICE_BOOST_REMAINING_HV_KEY];
+	union {
+		struct {
+			uint16_t hv_dst_port_key;
+			uint16_t hv_src_port_key;
+		} /* udp_tunnel */;
+		struct {
+			uint16_t hv_vlan_id_key;
+			uint16_t hv_etype_key;
+		} vlan;
+	};
+	uint8_t tcam_search_key;
+};
+#pragma pack()
+
+struct ice_boost_key {
+	struct ice_boost_key_value key;
+	struct ice_boost_key_value key2;
+};
+
+/* package Boost TCAM entry */
+struct ice_boost_tcam_entry {
+	uint16_t addr;
+	uint16_t reserved;
+	/* break up the 40 bytes of key into different fields */
+	struct ice_boost_key key;
+	uint8_t boost_hit_index_group;
+	/* The following contains bitfields which are not on byte boundaries.
+	 * These fields are currently unused by driver software.
+	 */
+#define ICE_BOOST_BIT_FIELDS		43
+	uint8_t bit_fields[ICE_BOOST_BIT_FIELDS];
+};
+
+struct ice_boost_tcam_section {
+	uint16_t count;
+	uint16_t reserved;
+	struct ice_boost_tcam_entry tcam[STRUCT_HACK_VAR_LEN];
+};
+
+#define ICE_MAX_BST_TCAMS_IN_BUF ICE_MAX_ENTRIES_IN_BUF( \
+	ice_struct_size((struct ice_boost_tcam_section *)0, tcam, 1) - \
+	sizeof(struct ice_boost_tcam_entry), \
+	sizeof(struct ice_boost_tcam_entry))
+
+struct ice_xlt1_section {
+	uint16_t count;
+	uint16_t offset;
+	uint8_t value[STRUCT_HACK_VAR_LEN];
+};
+
+struct ice_xlt2_section {
+	uint16_t count;
+	uint16_t offset;
+	uint16_t value[STRUCT_HACK_VAR_LEN];
+};
+
+struct ice_prof_redir_section {
+	uint16_t count;
+	uint16_t offset;
+	uint8_t redir_value[STRUCT_HACK_VAR_LEN];
+};
+
 /* Tunnel enabling */
 
 enum ice_tunnel_type {
@@ -3250,6 +3568,12 @@ struct ice_tunnel_table {
 	struct ice_tunnel_entry tbl[ICE_TUNNEL_MAX_ENTRIES];
 	uint16_t count;
 };
+
+
+/* To support tunneling entries by PF, the package will append the PF number to
+ * the label; for example TNL_VXLAN_PF0, TNL_VXLAN_PF1, TNL_VXLAN_PF2, etc.
+ */
+#define ICE_TNL_PRE	"TNL_"
 
 struct ice_pkg_es {
 	uint16_t count;
@@ -3656,7 +3980,7 @@ struct ice_hw {
 	/* Driver's package ver - (from the Ice Metadata section) */
 	struct ice_pkg_ver pkg_ver;
 	uint8_t pkg_name[ICE_PKG_NAME_SIZE];
-#if 0
+
 	/* Driver's Ice segment format version and id (from the Ice seg) */
 	struct ice_pkg_ver ice_seg_fmt_ver;
 	uint8_t ice_seg_id[ICE_SEG_ID_SIZE];
@@ -3666,12 +3990,12 @@ struct ice_hw {
 
 	/* Pointer to allocated copy of pkg memory */
 	uint8_t *pkg_copy;
-	u32 pkg_size;
+	uint32_t pkg_size;
 
 	/* tunneling info */
 	struct ice_lock tnl_lock;
 	struct ice_tunnel_table tnl;
-#endif
+
 	/* HW block tables */
 	struct ice_blk_info blk[ICE_BLK_COUNT];
 #if 0
@@ -3685,8 +4009,9 @@ struct ice_hw {
 #if 0
 	uint16_t vsi_owning_pf_lut; /* SW IDX of VSI that acquired PF RSS LUT */
 	struct ice_mbx_snapshot mbx_snapshot;
+#endif
 	uint8_t dvm_ena;
-
+#if 0
 	bool subscribable_recipes_supported;
 #endif
 };
