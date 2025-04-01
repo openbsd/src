@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.33 2025/04/01 08:32:16 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.34 2025/04/01 08:34:09 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -14112,6 +14112,31 @@ ice_is_fw_health_report_supported(struct ice_hw *hw)
 }
 
 /**
+ * ice_disable_unsupported_features - Disable features not enabled by OS
+ * @bitmap: the feature bitmap
+ *
+ * Check for OS support of various driver features. Clear the feature bit for
+ * any feature which is not enabled by the OS. This should be called early
+ * during driver attach after setting up the feature bitmap.
+ */
+static inline void
+ice_disable_unsupported_features(ice_bitmap_t *bitmap)
+{
+	/* Not supported by FreeBSD driver. */
+	ice_clear_bit(ICE_FEATURE_SRIOV, bitmap);
+
+	/* Not applicable to OpenBSD. */
+	ice_clear_bit(ICE_FEATURE_NETMAP, bitmap);
+	ice_clear_bit(ICE_FEATURE_RDMA, bitmap);
+
+	/* Features not (yet?) supported by the OpenBSD driver. */
+	ice_clear_bit(ICE_FEATURE_DCB, bitmap);
+	ice_clear_bit(ICE_FEATURE_RSS, bitmap);
+	ice_clear_bit(ICE_FEATURE_TEMP_SENSOR, bitmap);
+	ice_clear_bit(ICE_FEATURE_TX_BALANCE, bitmap);
+}
+
+/**
  * ice_init_device_features - Init device driver features
  * @sc: driver softc structure
  *
@@ -14154,14 +14179,13 @@ ice_init_device_features(struct ice_softc *sc)
 		else
 			ice_fwlog_unregister(hw);
 	}
-#if 0
 	/* Disable capabilities not supported by the OS */
 	ice_disable_unsupported_features(sc->feat_cap);
 
 	/* RSS is always enabled for iflib */
 	if (ice_is_bit_set(sc->feat_cap, ICE_FEATURE_RSS))
 		ice_set_bit(ICE_FEATURE_RSS, sc->feat_en);
-
+#if 0
 	/* Disable features based on sysctl settings */
 	if (!ice_tx_balance_en)
 		ice_clear_bit(ICE_FEATURE_TX_BALANCE, sc->feat_cap);
@@ -17509,17 +17533,18 @@ void
 ice_setup_scctx(struct ice_softc *sc)
 {
 	struct ice_hw *hw = &sc->hw;
-	bool safe_mode, recovery_mode;
+	bool safe_mode, recovery_mode, have_rss;
 	int i;
 
 	safe_mode = ice_is_bit_set(sc->feat_en, ICE_FEATURE_SAFE_MODE);
 	recovery_mode = ice_test_state(&sc->state, ICE_STATE_RECOVERY_MODE);
+	have_rss = ice_is_bit_set(sc->feat_en, ICE_FEATURE_RSS);
 
 	/*
 	 * If the driver loads in Safe mode or Recovery mode, limit iflib to
 	 * a single queue pair.
 	 */
-	if (safe_mode || recovery_mode) {
+	if (safe_mode || recovery_mode || !have_rss) {
 		sc->isc_ntxqsets = sc->isc_nrxqsets = 1;
 		sc->isc_ntxqsets_max = 1;
 		sc->isc_nrxqsets_max = 1;
@@ -29460,8 +29485,7 @@ ice_attach_hook(struct device *self)
 		goto deinit_hw;
 	}
 	sc->sc_nmsix = nmsix;
-	nqueues_max = MIN(hw->func_caps.common_cap.num_rxq,
-	    hw->func_caps.common_cap.num_txq);
+	nqueues_max = MIN(sc->isc_nrxqsets_max, sc->isc_ntxqsets_max);
 	sc->sc_intrmap = intrmap_create(&sc->sc_dev, sc->sc_nmsix - 1,
 	    nqueues_max, INTRMAP_POWEROF2);
 	nqueues = intrmap_count(sc->sc_intrmap);
@@ -29473,7 +29497,7 @@ ice_attach_hook(struct device *self)
 	    sc->sc_nqueues, sc->sc_nqueues > 1 ? "s" : "");
 
 	/* Initialize the Tx queue manager */
-	err = ice_resmgr_init(&sc->tx_qmgr, hw->func_caps.common_cap.num_txq);
+	err = ice_resmgr_init(&sc->tx_qmgr, sc->sc_nqueues);
 	if (err) {
 		printf("%s: Unable to initialize Tx queue manager: err %d\n",
 		    sc->sc_dev.dv_xname, err);
@@ -29481,7 +29505,7 @@ ice_attach_hook(struct device *self)
 	}
 
 	/* Initialize the Rx queue manager */
-	err = ice_resmgr_init(&sc->rx_qmgr, hw->func_caps.common_cap.num_rxq);
+	err = ice_resmgr_init(&sc->rx_qmgr, sc->sc_nqueues);
 	if (err) {
 		printf("%s: Unable to initialize Rx queue manager: %d\n",
 		    sc->sc_dev.dv_xname, err);
