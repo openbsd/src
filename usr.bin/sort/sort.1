@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.68 2025/03/28 14:35:50 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.69 2025/04/01 00:18:28 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 28 2025 $
+.Dd $Mdocdate: April 1 2025 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility sorts text and binary files by lines.
+utility sorts the lines of text or binary files.
 A line is a record separated from the subsequent record by a
 newline (default) or NUL
 .Ql \e0
@@ -61,12 +61,12 @@ option
 .Pc .
 A record can contain any printable or unprintable characters.
 Comparisons are based on one or more sort keys extracted from
-each line of input, and are performed lexicographically,
-according to the specified command-line options
-that can tune the actual sorting behavior.
-By default, if keys are not given,
+each line according to the specified command line options.
+By default,
 .Nm
-uses entire lines for comparison.
+uses entire lines for comparison and sorts in
+.Xr ascii 7
+order.
 .Pp
 If no
 .Ar file
