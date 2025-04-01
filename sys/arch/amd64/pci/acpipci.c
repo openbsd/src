@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.9 2024/10/10 05:51:23 jsg Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.10 2025/04/01 08:43:33 sf Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -152,7 +152,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_parse_resource(&res, acpipci_parse_resources, sc);
 
-	if (sc->sc_acpi->sc_major < 5) {
+	if (sc->sc_acpi->sc_major < 5 && (cpu_ecxfeature & CPUIDECX_HV) == 0) {
 		extent_destroy(sc->sc_ioex);
 		extent_destroy(sc->sc_memex);
 
