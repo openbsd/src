@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.21 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.22 2025/04/02 09:42:57 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -102,10 +103,11 @@ parse_takey(const char *fn, const TAKey *takey)
 
 		for (i = 0; i < res->num_comments; i++) {
 			comment = sk_ASN1_UTF8STRING_value(takey->comments, i);
-			res->comments[i] = strndup(comment->data,
-			    comment->length);
+			res->comments[i] = calloc(comment->length + 1, 4);
 			if (res->comments[i] == NULL)
 				err(1, NULL);
+			(void)strvisx(res->comments[i], comment->data,
+			    comment->length, VIS_SAFE);
 		}
 	}
 
