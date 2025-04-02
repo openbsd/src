@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.303 2025/03/11 08:14:26 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.304 2025/04/02 09:12:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1877,10 +1877,14 @@ window_pane_get_fg_control_client(struct window_pane *wp)
 enum client_theme
 window_pane_get_theme(struct window_pane *wp)
 {
-	struct window		*w = wp->window;
+	struct window		*w;
 	struct client		*loop;
 	enum client_theme	 theme;
 	int			 found_light = 0, found_dark = 0;
+
+	if (wp == NULL)
+		return (THEME_UNKNOWN);
+	w = wp->window;
 
 	/*
 	 * Derive theme from pane background color, if it's not the default

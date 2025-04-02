@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.57 2025/01/12 14:36:28 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.58 2025/04/02 09:12:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -531,7 +531,7 @@ popup_key_cb(struct client *c, void *data, struct key_event *event)
 		    (border == LEFT || border == TOP))
 		    goto menu;
 		if (((m->b & MOUSE_MASK_MODIFIERS) == MOUSE_MASK_META) ||
-		    border != NONE) {
+		    (border != NONE && !MOUSE_DRAG(m->lb))) {
 			if (!MOUSE_DRAG(m->b))
 				goto out;
 			if (MOUSE_BUTTONS(m->lb) == MOUSE_BUTTON_1)
