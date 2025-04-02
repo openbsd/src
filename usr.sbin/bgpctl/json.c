@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.c,v 1.10 2023/06/22 09:07:04 claudio Exp $ */
+/*	$OpenBSD: json.c,v 1.11 2025/04/02 09:15:04 tb Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -256,8 +256,9 @@ json_do_string(const char *name, const char *v)
 			break;
 		default:
 			if (iscntrl(c))
-				errx(1, "bad control character in string");
-			eb = putc(c, jsonfh) == EOF;
+				eb = fprintf(jsonfh, "\\u00%02x", c) < 0;
+			else
+				eb = putc(c, jsonfh) == EOF;
 			break;
 		}
 	}
