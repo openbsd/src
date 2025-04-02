@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1258 2025/03/24 20:01:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1259 2025/04/02 09:31:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3306,6 +3306,7 @@ struct mode_tree_item *mode_tree_add(struct mode_tree_data *,
 	     const char *, int);
 void	 mode_tree_draw_as_parent(struct mode_tree_item *);
 void	 mode_tree_no_tag(struct mode_tree_item *);
+void	 mode_tree_align(struct mode_tree_item *, int);
 void	 mode_tree_remove(struct mode_tree_data *, struct mode_tree_item *);
 void	 mode_tree_draw(struct mode_tree_data *);
 int	 mode_tree_key(struct mode_tree_data *, struct client *, key_code *,
