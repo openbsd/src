@@ -20,6 +20,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/frame.h>
@@ -226,6 +228,10 @@ ghcb_sync_out(struct trapframe *frame, const struct ghcb_extra_regs *regs,
 		ghcb->v_sw_exitinfo1 = regs->exitinfo1;
 	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_EXITINFO2))
 		ghcb->v_sw_exitinfo2 = regs->exitinfo2;
+	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_SCRATCH)) {
+		ghcb->v_sw_scratch = regs->scratch;
+		*(uint64_t *)ghcb->v_sharedbuf = regs->scratch2; /* XXX mask */
+	}
 }
 
 /*
@@ -235,7 +241,7 @@ ghcb_sync_out(struct trapframe *frame, const struct ghcb_extra_regs *regs,
  * Used by guest only.
  */
 void
-ghcb_sync_in(struct trapframe *frame, struct ghcb_sa *ghcb,
+ghcb_sync_in(struct trapframe *frame, uint64_t *val64, struct ghcb_sa *ghcb,
     struct ghcb_sync *gsin)
 {
 	if (ghcb_valbm_isset(gsin->valid_bitmap, GHCB_RAX)) {
@@ -254,6 +260,8 @@ ghcb_sync_in(struct trapframe *frame, struct ghcb_sa *ghcb,
 		frame->tf_rdx &= ~ghcb_sz_clear_masks[gsin->sz_d];
 		frame->tf_rdx |= (ghcb->v_rdx & ghcb_sz_masks[gsin->sz_d]);
 	}
+	if (val64)	/* XXX size */
+		*val64 = *(uint64_t *)ghcb->v_sharedbuf;
 
 	ghcb_clear(ghcb);
 }
@@ -328,7 +336,7 @@ _ghcb_io_rw(unsigned int port, int valsz, uint64_t *val, int read)
 	}
 
 	if (read)
-		ghcb_sync_in(&frame, ghcb, &syncin);
+		ghcb_sync_in(&frame, NULL, ghcb, &syncin);
 
 	intr_restore(s);
 
@@ -396,4 +404,175 @@ ghcb_io_write_4(unsigned int port, uint32_t v)
 
 	if (_ghcb_io_rw(port, GHCB_SZ32, &val, 0))
 		panic("_ghcb_io_rw() failed");
+}
+
+/*
+ * _ghcb_mem_rw
+ *
+ * Paravirtualize MMIO by directly calling vmgexit().  Allows to
+ * avoid #VC trap on MMIO.
+ */
+static int
+_ghcb_mem_rw(uint64_t addr, int valsz, uint64_t *val, int read)
+{
+	uint64_t		 value;
+	size_t			 size;
+	paddr_t			 paddr;
+	struct ghcb_sync	 syncout, syncin;
+	struct ghcb_sa		*ghcb;
+	struct ghcb_extra_regs	 ghcb_regs;
+	struct trapframe	 frame;	/* XXX not needed */
+	unsigned long		 s;
+
+	if (val == NULL)
+		return (1);
+
+	memset(&syncout, 0, sizeof(syncout));
+	memset(&syncin, 0, sizeof(syncin));
+	memset(&ghcb_regs, 0, sizeof(ghcb_regs));
+	memset(&frame, 0, sizeof(frame));
+
+	switch (valsz) {
+	case GHCB_SZ8:
+		size = sizeof(uint8_t);
+		break;
+	case GHCB_SZ16:
+		size = sizeof(uint16_t);
+		break;
+	case GHCB_SZ32:
+		size = sizeof(uint32_t);
+		break;
+	case GHCB_SZ64:
+		size = sizeof(uint64_t);
+		break;
+	default:
+		return (1);
+	}
+
+	if (!pmap_extract(pmap_kernel(), addr, &paddr))
+		return (1);
+
+	if (read) {
+		ghcb_regs.exitcode = SEV_VMGEXIT_MMIO_READ;
+		ghcb_regs.exitinfo1 = paddr;
+		ghcb_regs.exitinfo2 = size;
+		ghcb_regs.scratch = ghcb_paddr + offsetof(struct ghcb_sa,
+		    v_sharedbuf);
+	} else {
+		ghcb_regs.exitcode = SEV_VMGEXIT_MMIO_WRITE;
+		ghcb_regs.exitinfo1 = paddr;
+		ghcb_regs.exitinfo2 = size;
+		ghcb_regs.scratch = ghcb_paddr + offsetof(struct ghcb_sa,
+		    v_sharedbuf);
+		ghcb_regs.scratch2 = *val;	/* XXX mask */
+	}
+
+	ghcb_sync_val(GHCB_SW_EXITCODE, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO1, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO2, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_SCRATCH, GHCB_SZ64, &syncout);
+
+	s = intr_disable();
+
+	ghcb = (struct ghcb_sa *)ghcb_vaddr;
+	ghcb_sync_out(&frame, &ghcb_regs, ghcb, &syncout);
+
+	vmgexit();
+
+	if (ghcb_verify_bm(ghcb->valid_bitmap, syncin.valid_bitmap)) {
+		ghcb_clear(ghcb);
+		panic("invalid hypervisor response");
+	}
+
+	if (read)
+		ghcb_sync_in(&frame, &value, ghcb, &syncin);
+
+	intr_restore(s);
+
+	if (read && val)
+		*val = value;
+
+	return (0);
+}
+
+uint8_t
+ghcb_mem_read_1(uint64_t addr)
+{
+	uint64_t val;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ8, &val, 1))
+		panic("_ghcb_mem_rw() failed");
+
+	return ((uint8_t)val);
+}
+
+
+uint16_t
+ghcb_mem_read_2(uint64_t addr)
+{
+	uint64_t val;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ16, &val, 1))
+		panic("_ghcb_mem_rw() failed");
+
+	return ((uint16_t)val);
+}
+
+uint32_t
+ghcb_mem_read_4(uint64_t addr)
+{
+	uint64_t val;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ32, &val, 1))
+		panic("_ghcb_mem_rw() failed");
+
+	return ((uint32_t)val);
+}
+
+uint64_t
+ghcb_mem_read_8(uint64_t addr)
+{
+	uint64_t val;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ64, &val, 1))
+		panic("_ghcb_mem_rw() failed");
+
+	return (val);
+}
+
+void
+ghcb_mem_write_1(uint64_t addr, uint8_t v)
+{
+	uint64_t val = (uint64_t)v;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ8, &val, 0))
+		panic("_ghcb_mem_rw() failed");
+}
+
+
+void
+ghcb_mem_write_2(uint64_t addr, uint16_t v)
+{
+	uint64_t val = (uint64_t)v;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ16, &val, 0))
+		panic("_ghcb_mem_rw() failed");
+}
+
+void
+ghcb_mem_write_4(uint64_t addr, uint32_t v)
+{
+	uint64_t val = (uint64_t)v;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ32, &val, 0))
+		panic("_ghcb_mem_rw() failed");
+}
+
+void
+ghcb_mem_write_8(uint64_t addr, uint64_t v)
+{
+	uint64_t val = v;
+
+	if (_ghcb_mem_rw(addr, GHCB_SZ64, &val, 0))
+		panic("_ghcb_mem_rw() failed");
 }

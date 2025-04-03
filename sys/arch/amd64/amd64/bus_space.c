@@ -1049,36 +1049,52 @@ x86_bus_space_io_mmap(bus_addr_t addr, off_t off, int prot, int flags)
 void
 x86_bus_space_mem_write_1(bus_space_handle_t h, bus_size_t o, u_int8_t v)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+		ghcb_mem_write_1(h + o, v);
+		return;
+	}
 	*(volatile u_int8_t *)(h + o) = v;
 }
 
 void
 x86_bus_space_mem_write_2(bus_space_handle_t h, bus_size_t o, u_int16_t v)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+		ghcb_mem_write_2(h + o, v);
+		return;
+	}
 	*(volatile u_int16_t *)(h + o) = v;
 }
 
 u_int8_t
 x86_bus_space_mem_read_1(bus_space_handle_t h, bus_size_t o)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_mem_read_1(h + o));
 	return (*(volatile u_int8_t *)(h + o));
 }
 
 u_int16_t
 x86_bus_space_mem_read_2(bus_space_handle_t h, bus_size_t o)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_mem_read_2(h + o));
 	return (*(volatile u_int16_t *)(h + o));
 }
 
 u_int32_t
 x86_bus_space_mem_read_4(bus_space_handle_t h, bus_size_t o)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_mem_read_4(h + o));
 	return (*(volatile u_int32_t *)(h + o));
 }
 
 u_int64_t
 x86_bus_space_mem_read_8(bus_space_handle_t h, bus_size_t o)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_mem_read_8(h + o));
 	return (*(volatile u_int64_t *)(h + o));
 }
 
@@ -1213,12 +1229,20 @@ x86_bus_space_mem_read_region_8(bus_space_handle_t h,
 void
 x86_bus_space_mem_write_4(bus_space_handle_t h, bus_size_t o, u_int32_t v)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+		ghcb_mem_write_4(h + o, v);
+		return;
+	}
 	*(volatile u_int32_t *)(h + o) = v;
 }
 
 void
 x86_bus_space_mem_write_8(bus_space_handle_t h, bus_size_t o, u_int64_t v)
 {
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+		ghcb_mem_write_8(h + o, v);
+		return;
+	}
 	*(volatile u_int64_t *)(h + o) = v;
 }
 

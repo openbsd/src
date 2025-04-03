@@ -389,7 +389,7 @@ vctrap(struct trapframe *frame, int user)
 	}
 
 	/* Sync in from GHCB */
-	ghcb_sync_in(frame, ghcb, &syncin);
+	ghcb_sync_in(frame, NULL, ghcb, &syncin);
 
 	return 1;
 }
