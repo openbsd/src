@@ -104,6 +104,16 @@ static int ioapic_vecbase;
 
 void ioapic_set_id(struct ioapic_softc *);
 
+u_int32_t	ioapic_read_ul(struct ioapic_softc *, int);
+void		ioapic_write_ul(struct ioapic_softc *, int, u_int32_t);
+u_int32_t	ioapic_read_ghcb_ul(struct ioapic_softc *,int);
+void		ioapic_write_ghcb_ul(struct ioapic_softc *,int, u_int32_t);
+
+u_int32_t	(*ioapic_readreg)(struct ioapic_softc *, int)	=
+		    &ioapic_read_ul;
+void		(*ioapic_writereg)(struct ioapic_softc *, int, u_int32_t) =
+		    &ioapic_write_ul;
+
 static __inline u_long
 ioapic_lock(struct ioapic_softc *sc)
 {
@@ -128,7 +138,7 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 /*
  * Register read/write routines.
  */
-static __inline u_int32_t
+u_int32_t
 ioapic_read_ul(struct ioapic_softc *sc,int regid)
 {
 	u_int32_t val;
@@ -139,11 +149,25 @@ ioapic_read_ul(struct ioapic_softc *sc,int regid)
 	return (val);
 }
 
-static __inline void
+void
 ioapic_write_ul(struct ioapic_softc *sc,int regid, u_int32_t val)
 {
 	*(sc->sc_reg) = regid;
 	*(sc->sc_data) = val;
+}
+
+u_int32_t
+ioapic_read_ghcb_ul(struct ioapic_softc *sc,int regid)
+{
+	ghcb_mem_write_4((uint64_t)sc->sc_reg, regid);
+	return (ghcb_mem_read_4((uint64_t)sc->sc_data));
+}
+
+void
+ioapic_write_ghcb_ul(struct ioapic_softc *sc,int regid, u_int32_t val)
+{
+	ghcb_mem_write_4((uint64_t)sc->sc_reg, regid);
+	ghcb_mem_write_4((uint64_t)sc->sc_data, val);
 }
 
 static __inline u_int32_t
@@ -153,7 +177,7 @@ ioapic_read(struct ioapic_softc *sc, int regid)
 	u_long flags;
 
 	flags = ioapic_lock(sc);
-	val = ioapic_read_ul(sc, regid);
+	val = ioapic_readreg(sc, regid);
 	ioapic_unlock(sc, flags);
 	return val;
 }
@@ -164,7 +188,7 @@ ioapic_write(struct ioapic_softc *sc,int regid, int val)
 	u_long flags;
 
 	flags = ioapic_lock(sc);
-	ioapic_write_ul(sc, regid, val);
+	ioapic_writereg(sc, regid, val);
 	ioapic_unlock(sc, flags);
 }
 
@@ -308,6 +332,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pic.pic_delroute = ioapic_delroute;
 	sc->sc_pic.pic_edge_stubs = ioapic_edge_stubs;
 	sc->sc_pic.pic_level_stubs = ioapic_level_stubs;
+
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+		ioapic_readreg = &ioapic_read_ghcb_ul;
+		ioapic_writereg = &ioapic_write_ghcb_ul;
+	}
 
 	ver_sz = ioapic_read(sc, IOAPIC_VER);
 	sc->sc_apic_vers = (ver_sz & IOAPIC_VER_MASK) >> IOAPIC_VER_SHIFT;
