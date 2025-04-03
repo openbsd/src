@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.371 2025/03/21 14:04:26 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.372 2025/04/03 11:51:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -869,9 +869,9 @@ window_copy_get_word(struct window_pane *wp, u_int x, u_int y)
 {
 	struct window_mode_entry	*wme = TAILQ_FIRST(&wp->modes);
 	struct window_copy_mode_data	*data = wme->data;
-	struct grid			*gd = data->screen.grid;
+	struct grid			*gd = data->backing->grid;
 
-	return (format_grid_word(gd, x, gd->hsize + y));
+	return (format_grid_word(gd, x, gd->hsize + y - data->oy));
 }
 
 char *
