@@ -305,7 +305,6 @@ int
 vctrap(struct trapframe *frame, int user)
 {
 	uint8_t		*rip = (uint8_t *)(frame->tf_rip);
-	uint64_t	 port;
 	struct ghcb_sync syncout, syncin;
 	struct ghcb_sa	*ghcb;
 	struct ghcb_extra_regs	ghcb_regs;
@@ -365,75 +364,6 @@ vctrap(struct trapframe *frame, int user)
 		} else
 			panic("failed to decode MSR");
 		frame->tf_rip += 2;
-		break;
-	    }
-	case SVM_VMEXIT_IOIO: {
-		if (user)
-			return 0;	/* not allowed from userspace */
-		switch (*rip) {
-		case 0x66: {
-			switch (*(rip + 1)) {
-			case 0xef:	/* out %ax,(%dx) */
-				ghcb_sync_val(GHCB_RAX, GHCB_SZ16, &syncout);
-				port = frame->tf_rdx & 0xffff;
-				ghcb_regs.exitinfo1 = (port << 16) |
-				    (1ULL << 5);
-				frame->tf_rip += 2;
-				break;
-			case 0xed:	/* in (%dx),%ax */
-				ghcb_sync_val(GHCB_RAX, GHCB_SZ16, &syncin);
-				port = frame->tf_rdx & 0xffff;
-				ghcb_regs.exitinfo1 = (port << 16) |
-				    (1ULL << 5) | (1ULL << 0);
-				frame->tf_rip += 2;
-				break;
-			default:
-				panic("failed to decode prefixed IOIO");
-			}
-			break;
-		    }
-		case 0xe4:	/* in $port,%al */
-			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncin);
-			port = *(rip + 1) & 0xff;
-			ghcb_regs.exitinfo1 = (port << 16) | (1ULL << 4) |
-			    (1ULL << 0);
-			frame->tf_rip += 2;
-			break;
-		case 0xe6:	/* outb %al,$port */
-			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncout);
-			port = *(rip + 1) & 0xff;
-			ghcb_regs.exitinfo1 = (port << 16) | (1ULL << 4);
-			frame->tf_rip += 2;
-			break;
-		case 0xec:	/* in (%dx),%al */
-			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncin);
-			port = frame->tf_rdx & 0xffff;
-			ghcb_regs.exitinfo1 = (port << 16) | (1ULL << 4) |
-			    (1ULL << 0);
-			frame->tf_rip += 1;
-			break;
-		case 0xed:	/* in (%dx),%eax */
-			ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncin);
-			port = frame->tf_rdx & 0xffff;
-			ghcb_regs.exitinfo1 = (port << 16) | (1ULL << 6) |
-			    (1ULL << 0);
-			frame->tf_rip += 1;
-			break;
-		case 0xee:	/* out %al,(%dx) */
-			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncout);
-			port = frame->tf_rdx & 0xffff;
-			ghcb_regs.exitinfo1 = (port << 16) | (1ULL << 4);
-			frame->tf_rip += 1;
-			break;
-		case 0xef:	/* out %eax,(%dx) */
-			ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
-			port = frame->tf_rdx & 0xffff;
-			ghcb_regs.exitinfo1 = (port << 16) | (1ULL << 6);
-			frame->tf_rip += 1;
-			break;
-		default:
-			panic("failed to decode IOIO");
-		}
 		break;
 	    }
 	default:
