@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.39 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.40 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -259,12 +259,13 @@ outputheader(FILE *out, struct stats *st)
 	    "# Processing time %lld seconds (%llds user, %llds system)\n"
 	    "# Route Origin Authorizations: %u (%u failed parse, %u invalid)\n"
 	    "# BGPsec Router Certificates: %u\n"
-	    "# Certificates: %u (%u invalid)\n",
+	    "# Certificates: %u (%u invalid, %u non-functional)\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->repo_tal_stats.roas, st->repo_tal_stats.roas_fail,
 	    st->repo_tal_stats.roas_invalid, st->repo_tal_stats.brks,
-	    st->repo_tal_stats.certs, st->repo_tal_stats.certs_fail) < 0)
+	    st->repo_tal_stats.certs, st->repo_tal_stats.certs_fail,
+	    st->repo_tal_stats.certs_nonfunc) < 0)
 		return -1;
 
 	if (fprintf(out,

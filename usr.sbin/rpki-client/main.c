@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.280 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.281 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -549,7 +549,7 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
 			err(1, NULL);
 	}
 
-	cert_insert_nca(ncas, cert);
+	cert_insert_nca(ncas, cert, repo);
 	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
 	    cert->talid, cert->certid, NULL);
 }
@@ -642,7 +642,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		cert_remove_nca(ncatree, mft->certid);
+		cert_remove_nca(ncatree, mft->certid, rp);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -770,6 +770,7 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->mfts_gap += in->mfts_gap;
 	out->certs += in->certs;
 	out->certs_fail += in->certs_fail;
+	out->certs_nonfunc += in->certs_nonfunc;
 	out->roas += in->roas;
 	out->roas_fail += in->roas_fail;
 	out->roas_invalid += in->roas_invalid;
@@ -1523,8 +1524,9 @@ main(int argc, char *argv[])
 		    stats.repo_tal_stats.spls_invalid);
 	}
 	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
-	printf("Certificates: %u (%u invalid)\n",
-	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail);
+	printf("Certificates: %u (%u invalid, %u non-functional)\n",
+	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail,
+	    stats.repo_tal_stats.certs_nonfunc);
 	printf("Trust Anchor Locators: %u (%u invalid)\n",
 	    stats.tals, talsz - stats.tals);
 	printf("Manifests: %u (%u failed parse, %u seqnum gaps)\n",

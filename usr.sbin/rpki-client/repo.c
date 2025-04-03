@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.74 2025/03/31 08:59:02 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.75 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1515,6 +1515,10 @@ repo_stat_inc(struct repo *rp, int talid, enum rtype type, enum stype subtype)
 			rp->stats[talid].certs++;
 		if (subtype == STYPE_FAIL)
 			rp->stats[talid].certs_fail++;
+		if (subtype == STYPE_NONFUNC)
+			rp->stats[talid].certs_nonfunc++;
+		if (subtype == STYPE_FUNC)
+			rp->stats[talid].certs_nonfunc--;
 		if (subtype == STYPE_BGPSEC) {
 			rp->stats[talid].certs--;
 			rp->stats[talid].brks++;

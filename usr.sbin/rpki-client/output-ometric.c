@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.13 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.14 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -42,6 +42,8 @@ set_common_stats(const struct repotalstats *in, struct ometric *metric,
 	    OKV("type", "state"), OKV("cert", "valid"), ol);
 	ometric_set_int_with_labels(metric, in->certs_fail,
 	    OKV("type", "state"), OKV("cert", "failed parse"), ol);
+	ometric_set_int_with_labels(metric, in->certs_nonfunc,
+	    OKV("type", "state"), OKV("cert", "non-functional"), ol);
 
 	ometric_set_int_with_labels(metric, in->mfts,
 	    OKV("type", "state"), OKV("manifest", "valid"), ol);

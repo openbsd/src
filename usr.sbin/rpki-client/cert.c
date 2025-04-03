@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.157 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.158 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1395,7 +1395,7 @@ RB_GENERATE(brk_tree, brk, entry, brkcmp);
  * Add each CA cert into the non-functional CA tree.
  */
 void
-cert_insert_nca(struct nca_tree *tree, const struct cert *cert)
+cert_insert_nca(struct nca_tree *tree, const struct cert *cert, struct repo *rp)
 {
 	struct nonfunc_ca *nca;
 
@@ -1414,15 +1414,17 @@ cert_insert_nca(struct nca_tree *tree, const struct cert *cert)
 
 	if (RB_INSERT(nca_tree, tree, nca) != NULL)
 		errx(1, "non-functional CA tree corrupted");
+	repo_stat_inc(rp, nca->talid, RTYPE_CER, STYPE_NONFUNC);
 }
 
 void
-cert_remove_nca(struct nca_tree *tree, int cid)
+cert_remove_nca(struct nca_tree *tree, int cid, struct repo *rp)
 {
 	struct nonfunc_ca *found, needle = { .certid = cid };
 
 	if ((found = RB_FIND(nca_tree, tree, &needle)) != NULL) {
 		RB_REMOVE(nca_tree, tree, found);
+		repo_stat_inc(rp, found->talid, RTYPE_CER, STYPE_FUNC);
 		free(found->location);
 		free(found->carepo);
 		free(found->mfturi);

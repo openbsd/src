@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.52 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.53 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -58,6 +58,7 @@ outputheader_json(struct stats *st)
 	json_do_int("bgpsec_pubkeys", st->repo_tal_stats.brks);
 	json_do_int("certificates", st->repo_tal_stats.certs);
 	json_do_int("invalidcertificates", st->repo_tal_stats.certs_fail);
+	json_do_int("nonfunctionalcas", st->repo_tal_stats.certs_nonfunc);
 	json_do_int("taks", st->repo_tal_stats.taks);
 	json_do_int("tals", st->tals);
 	json_do_int("invalidtals", talsz - st->tals);

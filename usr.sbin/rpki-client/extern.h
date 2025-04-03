@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.238 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.239 2025/04/03 14:29:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -610,6 +610,8 @@ enum stype {
 	STYPE_PROVIDERS,
 	STYPE_OVERFLOW,
 	STYPE_SEQNUM_GAP,
+	STYPE_FUNC,
+	STYPE_NONFUNC,
 };
 
 struct repo;
@@ -623,6 +625,7 @@ RB_HEAD(filepath_tree, filepath);
 struct repotalstats {
 	uint32_t	 certs; /* certificates */
 	uint32_t	 certs_fail; /* invalid certificate */
+	uint32_t	 certs_nonfunc; /* non-functional CA certificates */
 	uint32_t	 mfts; /* total number of manifests */
 	uint32_t	 mfts_gap; /* manifests with sequence gaps */
 	uint32_t	 mfts_fail; /* failing syntactic parse */
@@ -709,8 +712,9 @@ struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
-void		 cert_insert_nca(struct nca_tree *, const struct cert *);
-void		 cert_remove_nca(struct nca_tree *, int);
+void		 cert_insert_nca(struct nca_tree *, const struct cert *,
+		    struct repo *);
+void		 cert_remove_nca(struct nca_tree *, int, struct repo *);
 
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
