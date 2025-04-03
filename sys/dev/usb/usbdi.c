@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.111 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.112 2025/04/03 11:02:44 kirill Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -749,13 +749,13 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	if (polling)
 		pipe->running = 0;
 
-#ifdef DIAGNOSTIC
 	if (xfer->actlen > xfer->length) {
+#ifdef DIAGNOSTIC
 		printf("%s: actlen > len %u > %u\n", __func__, xfer->actlen,
 		    xfer->length);
+#endif
 		xfer->actlen = xfer->length;
 	}
-#endif
 
 	if (usbd_xfer_isread(xfer) && xfer->actlen != 0 &&
 	    (xfer->flags & USBD_NO_COPY) == 0)
