@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.102 2024/10/30 18:02:45 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.103 2025/04/04 12:48:32 stsp Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2728,6 +2728,8 @@ ixl_txr_clean(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 		m_freem(txm->txm_m);
 		txm->txm_m = NULL;
 	}
+
+	ifq_clr_oactive(txr->txr_ifq);
 }
 
 static int
