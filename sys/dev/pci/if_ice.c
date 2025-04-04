@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.36 2025/04/04 12:46:35 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.37 2025/04/04 12:50:07 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -11159,6 +11159,52 @@ ice_configure_all_rxq_interrupts(struct ice_vsi *vsi)
 }
 
 /**
+ * ice_configure_txq_interrupt - Configure HW Tx queue for an MSI-X interrupt
+ * @hw: ice hw structure
+ * @txqid: Tx queue index in PF space
+ * @vector: MSI-X vector index in PF/VF space
+ * @itr_idx: ITR index to use for interrupt
+ *
+ * @remark ice_flush() may need to be called after this
+ */
+void
+ice_configure_txq_interrupt(struct ice_hw *hw, uint16_t txqid, uint16_t vector,
+    uint8_t itr_idx)
+{
+	uint32_t val;
+
+	KASSERT(itr_idx <= ICE_ITR_NONE);
+
+	val = (QINT_TQCTL_CAUSE_ENA_M |
+	       (itr_idx << QINT_TQCTL_ITR_INDX_S) |
+	       (vector << QINT_TQCTL_MSIX_INDX_S));
+	ICE_WRITE(hw, QINT_TQCTL(txqid), val);
+}
+
+/**
+ * ice_configure_all_txq_interrupts - Configure HW Tx queues for MSI-X interrupts
+ * @vsi: the VSI to configure
+ *
+ * Called when setting up MSI-X interrupts to configure the Tx hardware queues.
+ */
+void
+ice_configure_all_txq_interrupts(struct ice_vsi *vsi)
+{
+	struct ice_hw *hw = &vsi->sc->hw;
+	int i;
+
+	for (i = 0; i < vsi->num_tx_queues; i++) {
+		struct ice_tx_queue *txq = &vsi->tx_queues[i];
+		int v = txq->irqv->iv_qid + 1;
+
+		ice_configure_txq_interrupt(hw, vsi->tx_qmap[txq->me], v,
+		    ICE_TX_ITR);
+	}
+
+	ice_flush(hw);
+}
+
+/**
  * ice_itr_to_reg - Convert an ITR setting into its register equivalent
  * @hw: The device HW structure
  * @itr_setting: the ITR setting to convert
@@ -13058,6 +13104,8 @@ ice_up(struct ice_softc *sc)
 
 	ice_configure_all_rxq_interrupts(&sc->pf_vsi);
 	ice_configure_rx_itr(&sc->pf_vsi);
+
+	ice_configure_all_txq_interrupts(&sc->pf_vsi);
 
 	/* Configure promiscuous mode */
 	ice_if_promisc_set(sc);
