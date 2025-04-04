@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.35 2025/04/01 08:35:31 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.36 2025/04/04 12:46:35 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13400,6 +13400,8 @@ ice_txq_clean(struct ice_softc *sc, struct ice_tx_queue *txq)
 	}
 
 	txq->txq_cons = txq->txq_prod = 0;
+
+	ifq_clr_oactive(txq->txq_ifq);
 }
 
 void
