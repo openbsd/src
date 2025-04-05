@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.44 2025/03/27 18:07:52 jca Exp $	*/
+/*	$OpenBSD: apm.c,v 1.45 2025/04/05 12:53:45 jca Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -170,10 +170,8 @@ main(int argc, char *argv[])
 	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) == -1)
 		cpuspeed = 0;
 
-	if (sysctl(perfpol_mib, 2, perfpol, &perfpol_sz, NULL, 0) == -1) {
+	if (sysctl(perfpol_mib, 2, perfpol, &perfpol_sz, NULL, 0) == -1)
 		perfpol[0] = '\0';
-		warn("cannot read hw.perfpolicy");
-	}
 
 	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzZf:")) != -1) {
 		switch (ch) {
