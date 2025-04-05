@@ -1,4 +1,4 @@
-.\" $OpenBSD: sysctl.conf.5,v 1.14 2020/02/10 13:18:20 schwarze Exp $
+.\" $OpenBSD: sysctl.conf.5,v 1.15 2025/04/05 16:56:29 kn Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: April 5 2025 $
 .Dt SYSCTL.CONF 5
 .Os
 .Sh NAME
@@ -22,18 +22,17 @@
 .Nd sysctl variables to set at system startup
 .Sh DESCRIPTION
 .Nm
-contains a list of
-.Xr sysctl 8
-variable assignments that is read at system startup by
-.Xr rc 8
-early on in the boot sequence.
-.Pp
-The file is made up of
+is made up of
 .Xr sysctl 8
 variable assignments
 .Pq Ar variable Ns = Ns Ar value
 with comments designated by a hash mark
 .Pq Sq # .
+.Pp
+.Pa /etc/sysctl.conf
+is read at system startup by
+.Xr rc 8
+early on in the boot sequence.
 .Sh FILES
 .Bl -tag -width /etc/examples/sysctl.conf -compact
 .It Pa /etc/sysctl.conf
