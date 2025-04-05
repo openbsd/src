@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.216 2024/09/10 05:33:32 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.217 2025/04/05 14:09:06 kn Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: September 10 2024 $
+.Dd $Mdocdate: April 5 2025 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Sh SYNOPSIS
 .Nm sysctl
 .Op Fl Aanq
+.Op Fl f Ar file
 .Op Ar name Ns Oo = Ns Ar value Oc Ar ...
 .Sh DESCRIPTION
 The
@@ -68,6 +69,14 @@ flag; for the table values, the name of the utility to retrieve them is given.
 List all the currently available string or integer values.
 This is the default, if no parameters are given to
 .Nm .
+.It Fl f Ar file
+Process
+.Ar name Ns Op = Ns Ar value
+arguments from
+.Ar file
+in
+.Xr sysctl.conf 5
+format.
 .It Fl n
 Suppress printing of the field name, only output the field value.
 Useful for setting shell variables.
@@ -86,6 +95,9 @@ or attempt to set it to
 Multiple
 .Ar name Ns Op = Ns Ar value
 arguments may be given.
+If given,
+.Fl f Ar file
+is processed first.
 .El
 .Pp
 The information available from
