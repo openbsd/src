@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.55 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.56 2025/04/06 00:37:07 jsg Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -206,8 +206,7 @@ struct cfdriver ie_cd = {
  * generic i82596 probe routine
  */
 int
-i82596_probe(sc)
-	struct ie_softc *sc;
+i82596_probe(struct ie_softc *sc)
 {
 	int i;
 
@@ -328,8 +327,7 @@ i82596_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr,
  * transmit has been started on it.
  */
 void
-i82596_watchdog(ifp)
-	struct ifnet *ifp;
+i82596_watchdog(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 
@@ -340,8 +338,7 @@ i82596_watchdog(ifp)
 }
 
 int
-i82596_cmd_wait(sc)
-	struct ie_softc *sc;
+i82596_cmd_wait(struct ie_softc *sc)
 {
 	/* spin on i82596 command acknowledge; wait at most 0.9 (!) seconds */
 	int i, off;
@@ -382,12 +379,8 @@ i82596_cmd_wait(sc)
  * We may have to wait for the command's acceptance later though.
  */
 int
-i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
-	struct ie_softc *sc;
-	int cmd;
-	int iecmdbuf;
-	int mask;
-	int async;
+i82596_start_cmd(struct ie_softc *sc, int cmd, int iecmdbuf, int mask,
+    int async)
 {
 	int i, off;
 
@@ -484,8 +477,7 @@ i82596_rx_errors(struct ie_softc *sc, int fn, int status)
  * i82596 interrupt entry point.
  */
 int
-i82596_intr(v)
-	void *v;
+i82596_intr(void *v)
 {
 	register struct ie_softc *sc = v;
 	register u_int status;
@@ -560,9 +552,7 @@ reset:
  * Process a received-frame interrupt.
  */
 int
-i82596_rint(sc, scbstatus)
-	struct	ie_softc *sc;
-	int	scbstatus;
+i82596_rint(struct ie_softc *sc, int scbstatus)
 {
 	static int timesthru = 1024;
 	register int i, status, off;
@@ -715,9 +705,7 @@ i82596_rint(sc, scbstatus)
  * of the real work is done by i82596_start().
  */
 int
-i82596_tint(sc, scbstatus)
-	struct ie_softc *sc;
-	int	scbstatus;
+i82596_tint(struct ie_softc *sc, int scbstatus)
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register int off, status;
@@ -806,11 +794,8 @@ i82596_tint(sc, scbstatus)
  * Get a range of receive buffer descriptors that represent one packet.
  */
 int
-i82596_get_rbd_list(sc, start, end, pktlen)
-	struct ie_softc *sc;
-	u_int16_t	*start;
-	u_int16_t	*end;
-	int		*pktlen;
+i82596_get_rbd_list(struct ie_softc *sc, u_int16_t *start, u_int16_t *end,
+    int *pktlen)
 {
 	int	off, rbbase = sc->rbds;
 	int	rbindex, count = 0;
@@ -854,10 +839,7 @@ i82596_get_rbd_list(sc, start, end, pktlen)
  * Release a range of receive buffer descriptors after we've copied the packet.
  */
 void
-i82596_release_rbd_list(sc, start, end)
-	struct ie_softc *sc;
-	u_int16_t	start;
-	u_int16_t	end;
+i82596_release_rbd_list(struct ie_softc *sc, u_int16_t start, u_int16_t end)
 {
 	register int	off, rbbase = sc->rbds;
 	register int	rbindex = start;
@@ -892,8 +874,7 @@ i82596_release_rbd_list(sc, start, end)
  * and 0 otherwise.
  */
 int
-i82596_drop_frames(sc)
-	struct ie_softc *sc;
+i82596_drop_frames(struct ie_softc *sc)
 {
 	u_int16_t bstart, bend;
 	int pktlen;
@@ -914,8 +895,7 @@ i82596_drop_frames(sc)
  * The Receive Unit is expected to be NOT RUNNING.
  */
 int
-i82596_chk_rx_ring(sc)
-	struct ie_softc *sc;
+i82596_chk_rx_ring(struct ie_softc *sc)
 {
 	int n, off, val;
 
@@ -1074,9 +1054,7 @@ bad:
  * never ARP for trailers anyway.
  */
 int
-i82596_readframe(sc, num)
-	struct ie_softc *sc;
-	int num;		/* frame number to read */
+i82596_readframe(struct ie_softc *sc, int num)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
@@ -1118,8 +1096,7 @@ i82596_readframe(sc, num)
  * command to the chip to be executed.
  */
 void
-i82596_xmit(sc)
-	struct ie_softc *sc;
+i82596_xmit(struct ie_softc *sc)
 {
 	int off, cur, prev;
 
@@ -1199,8 +1176,7 @@ i82596_xmit(sc)
  * Start transmission on an interface.
  */
 void
-i82596_start(ifp)
-	struct ifnet *ifp;
+i82596_start(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1304,8 +1280,7 @@ i82596_start(ifp)
  * Use only if SCP and ISCP represent offsets into shared ram space.
  */
 int
-i82596_proberam(sc)
-	struct ie_softc *sc;
+i82596_proberam(struct ie_softc *sc)
 {
 	int result, off;
 
@@ -1338,9 +1313,7 @@ i82596_proberam(sc)
 }
 
 void
-i82596_reset(sc, hard)
-	struct ie_softc *sc;
-	int hard;
+i82596_reset(struct ie_softc *sc, int hard)
 {
 	int s = splnet();
 
@@ -1384,10 +1357,7 @@ i82596_reset(sc, hard)
 }
 
 void
-i82596_simple_command(sc, cmd, cmdbuf)
-	struct ie_softc *sc;
-	int cmd;
-	int cmdbuf;
+i82596_simple_command(struct ie_softc *sc, int cmd, int cmdbuf)
 {
 	/* Setup a simple command */
 	sc->ie_bus_write16(sc, IE_CMD_COMMON_STATUS(cmdbuf), 0);
@@ -1402,9 +1372,7 @@ i82596_simple_command(sc, cmd, cmdbuf)
  * Run the time-domain reflectometer.
  */
 void
-ie_run_tdr(sc, cmd)
-	struct ie_softc *sc;
-	int cmd;
+ie_run_tdr(struct ie_softc *sc, int cmd)
 {
 	int result, clocks;
 
@@ -1453,8 +1421,7 @@ ie_run_tdr(sc, cmd)
  *
  */
 void
-i82596_setup_bufs(sc)
-	struct ie_softc *sc;
+i82596_setup_bufs(struct ie_softc *sc)
 {
 	int n, r, ptr = sc->buf_area;	/* memory pool */
 	int cl = 32;
@@ -1611,10 +1578,7 @@ i82596_setup_bufs(sc)
 }
 
 int
-ie_cfg_setup(sc, cmd, promiscuous, manchester)
-	struct ie_softc *sc;
-	int cmd;
-	int promiscuous, manchester;
+ie_cfg_setup(struct ie_softc *sc, int cmd, int promiscuous, int manchester)
 {
 	int cmdresult, status;
 
@@ -1654,9 +1618,7 @@ ie_cfg_setup(sc, cmd, promiscuous, manchester)
 }
 
 int
-ie_ia_setup(sc, cmdbuf)
-	struct ie_softc *sc;
-	int cmdbuf;
+ie_ia_setup(struct ie_softc *sc, int cmdbuf)
 {
 	int cmdresult, status;
 
@@ -1688,9 +1650,7 @@ ie_ia_setup(sc, cmdbuf)
  * Called at splnet().
  */
 int
-ie_mc_setup(sc, cmdbuf)
-	struct ie_softc *sc;
-	int cmdbuf;
+ie_mc_setup(struct ie_softc *sc, int cmdbuf)
 {
 	int cmdresult, status;
 
@@ -1734,8 +1694,7 @@ ie_mc_setup(sc, cmdbuf)
  * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
 int
-i82596_init(sc)
-	struct ie_softc *sc;
+i82596_init(struct ie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int cmd;
@@ -1794,8 +1753,7 @@ i82596_init(sc)
  * Start the RU and possibly the CU unit
  */
 void
-i82596_start_transceiver(sc)
-	struct ie_softc *sc;
+i82596_start_transceiver(struct ie_softc *sc)
 {
 
 	/*
@@ -1832,8 +1790,7 @@ i82596_start_transceiver(sc)
 }
 
 void
-i82596_stop(sc)
-	struct ie_softc *sc;
+i82596_stop(struct ie_softc *sc)
 {
 
 	if (i82596_start_cmd(sc, IE_RUC_SUSPEND | IE_CUC_SUSPEND, 0, 0, 0))
@@ -1842,10 +1799,7 @@ i82596_stop(sc)
 }
 
 int
-i82596_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+i82596_ioctl(register struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1912,8 +1866,7 @@ i82596_ioctl(ifp, cmd, data)
 }
 
 void
-ie_mc_reset(sc)
-	struct ie_softc *sc;
+ie_mc_reset(struct ie_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
@@ -1966,8 +1919,7 @@ ie_mc_reset(sc)
  * Media change callback.
  */
 int
-i82596_mediachange(ifp)
-        struct ifnet *ifp;
+i82596_mediachange(struct ifnet *ifp)
 {
         struct ie_softc *sc = ifp->if_softc;
 
@@ -1980,9 +1932,7 @@ i82596_mediachange(ifp)
  * Media status callback.
  */
 void
-i82596_mediastatus(ifp, ifmr)
-        struct ifnet *ifp;
-        struct ifmediareq *ifmr;
+i82596_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
         struct ie_softc *sc = ifp->if_softc;
 
@@ -1992,9 +1942,7 @@ i82596_mediastatus(ifp, ifmr)
 
 #ifdef I82596_DEBUG
 void
-print_rbd(sc, n)
-	struct ie_softc *sc;
-	int n;
+print_rbd(struct ie_softc *sc, int n)
 {
 
 	printf("RBD at %08x:\n  status %b, next %04x, buffer %lx\n"
