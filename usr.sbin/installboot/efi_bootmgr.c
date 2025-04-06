@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_bootmgr.c,v 1.4 2025/03/04 20:40:48 kettenis Exp $	*/
+/*	$OpenBSD: efi_bootmgr.c,v 1.5 2025/04/06 10:42:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -273,8 +273,8 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 	}
 
 	/*
-	 * Adjust the BootOrder variable such that our load option
-	 * comes first.
+	 * Add our load option to the BootOrder variable if necessary.
+	 * Prepend it such that it becomes the default.
 	 */
 	var.name = u"BootOrder";
 	var.namesize = 20;
@@ -297,10 +297,7 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 			break;
 		} 
 	}
-	if (found) {
-		memmove(&data[2], &data[0], i);
-		*(uint16_t *)&data[0] = idx;
-	} else {
+	if (!found) {
 		/*
 		 * If there are more than 256 load options, simply
 		 * give up.
