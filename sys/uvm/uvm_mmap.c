@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.197 2025/02/28 06:26:18 jsg Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.198 2025/04/06 20:20:11 kettenis Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -611,6 +611,10 @@ sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 	vaddr_t base;
 	size_t len;
 	u_int *pins;
+
+	/* Must be called before any threads are created */
+	if (P_HASSIBLING(p))
+		return (EPERM);
 
 	/* Only allow libc syscall pinning once per process */
 	mtx_enter(&pr->ps_vmspace->vm_map.flags_lock);
