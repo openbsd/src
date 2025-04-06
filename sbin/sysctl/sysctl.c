@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.263 2025/04/05 14:09:06 kn Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.264 2025/04/06 17:36:22 kn Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -291,13 +291,12 @@ main(int argc, char *argv[])
 	if (conffile != NULL) {
 		FILE *fp;
 		char *line = NULL, *lp;
-		ssize_t sz = 0;
-		size_t len;
+		size_t sz = 0;
 
 		if ((fp = fopen(conffile, "r")) == NULL)
 			err(1, "fopen");
 
-		while ((len = getline(&line, &sz, fp)) != -1) {
+		while (getline(&line, &sz, fp) != -1) {
 			lp = line + strspn(line, " \t");
 			line[strcspn(line, " \t\n#")] = '\0';
 
