@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1268 2025/03/29 14:26:41 kn Exp $
+#	$OpenBSD: install.sub,v 1.1269 2025/04/06 11:54:36 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1925,7 +1925,7 @@ install_http() {
 			HTTP_SERVER=${1%%/*}
 			# Repeat loop to get user to confirm server address.
 			;;
-		?(http?(s)://)+([A-Za-z0-9:.\[\]_-]))
+		?(http?(s)://)+([A-Za-z0-9:.\[\]%_-]))
 			case $resp in
 			https://*)	_tls=force _http_proto=https;;
 			http://*)	_tls=no    _http_proto=http;;
