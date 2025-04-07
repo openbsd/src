@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.579 2025/04/05 14:12:37 kn Exp $
+#	$OpenBSD: rc,v 1.580 2025/04/07 14:49:26 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -49,7 +49,7 @@ update_limit() {
 
 # Apply sysctl.conf(5) settings.
 sysctl_conf() {
-	sysctl -f /etc/sysctl.conf
+	[[ -s /etc/sysctl.conf ]] && sysctl -f /etc/sysctl.conf
 	update_limit -p maxproc   $(sysctl -n kern.maxproc)
 	update_limit -n openfiles $(sysctl -n kern.maxfiles)
 }
