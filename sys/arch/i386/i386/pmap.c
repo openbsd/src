@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.227 2025/03/18 22:12:12 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.228 2025/04/07 17:37:31 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1510,8 +1510,6 @@ pmap_switch(struct proc *o, struct proc *p)
 	if (opmap == pmap) {
 		if (pmap != pmap_kernel())
 			nlazy_cr3_hit++;
-	} else if (o != NULL && pmap == pmap_kernel()) {
-		nlazy_cr3++;
 	} else {
 		self->ci_curpmap = pmap;
 		lcr3(pmap->pm_pdirpa);
