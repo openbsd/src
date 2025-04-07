@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.79 2024/10/22 12:51:56 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.80 2025/04/07 15:43:00 gkoehler Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ extern struct cpu_info cpu_info[PPC_MAXPROCS];
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth != 0)
+#define	CLKF_INTR(frame)	((frame)->depth > 1)
 
 extern int ppc_cpuidle;
 extern int ppc_proc_is_64b;
