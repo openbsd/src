@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiobl.c,v 1.3 2023/01/03 10:59:00 tobhe Exp $	*/
+/*	$OpenBSD: gpiobl.c,v 1.4 2025/04/07 12:26:06 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Tobias Heider <tobhe@openbsd.org>
  *
@@ -72,7 +72,7 @@ gpiobl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gpiobl_softc *sc = (struct gpiobl_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	size_t len;
+	int len;
 
 	len = OF_getproplen(faa->fa_node, "gpios");
 	if (len <= 0)
