@@ -261,8 +261,12 @@ lmtp_engine(int fd_read, struct session *session)
 		    (line[3] != ' ' && line[3] != '-'))
 			errx(EX_TEMPFAIL, "LMTP server sent an invalid line");
 
-		if (line[0] != (phase == PHASE_DATA ? '3' : '2'))
-			errx(EX_TEMPFAIL, "LMTP server error: %s", line);
+		if (line[0] != (phase == PHASE_DATA ? '3' : '2')) {
+			int code = EX_TEMPFAIL;
+			if (line[0] != '4')
+				code = EX_UNAVAILABLE;
+			errx(code, "LMTP server error: %s", line);
+		}
 		
 		if (line[3] == '-')
 			continue;
