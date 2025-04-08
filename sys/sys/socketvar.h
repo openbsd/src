@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.157 2025/03/12 14:08:31 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.158 2025/04/08 15:31:22 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -61,10 +61,6 @@ TAILQ_HEAD(soqhead, socket);
  *	br	sblock() of so_rcv buffer
  *	bs	sblock() od so_snd buffer
  *	s	solock()
- */
-
-/*
- * XXXSMP: tcp(4) sockets rely on exclusive solock() for all the cases.
  */
 
 /*
