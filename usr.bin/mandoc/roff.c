@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.276 2025/01/06 18:48:13 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.277 2025/04/08 14:02:53 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2468,7 +2468,8 @@ roff_getnum(const char *v, int *pos, int *res, char unit, int skipspace)
 		myres *= 240.0;
 		break;
 	case 'c':
-		myres *= 240.0 / 2.54;
+		myres *= 24000.0;
+		myres /= 254.0;
 		break;
 	case 'v':
 	case 'P':
@@ -2479,12 +2480,14 @@ roff_getnum(const char *v, int *pos, int *res, char unit, int skipspace)
 		myres *= 24.0;
 		break;
 	case 'p':
-		myres *= 40.0 / 12.0;
+		myres *= 40.0;
+		myres /= 12.0;
 		break;
 	case 'u':
 		break;
 	case 'M':
-		myres *= 24.0 / 100.0;
+		myres *= 24.0;
+		myres /= 100.0;
 		break;
 	default:
 		break;
