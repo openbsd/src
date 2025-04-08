@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.75 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.76 2025/04/08 09:28:25 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -930,6 +930,7 @@ rrdp_clear(unsigned int id)
 
 	/* remove rrdp repository contents */
 	remove_contents(rr->basedir);
+	rr->state = REPO_LOADING;
 }
 
 /*
