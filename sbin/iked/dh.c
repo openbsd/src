@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.33 2023/07/28 07:31:38 claudio Exp $	*/
+/*	$OpenBSD: dh.c,v 1.34 2025/04/09 07:10:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -670,9 +670,9 @@ ec_raw2point(struct dh_group *group, uint8_t *buf, size_t len)
 {
 	const EC_GROUP	*ecgroup = NULL;
 	EC_POINT	*point = NULL;
+	EC_POINT	*ret = NULL;
 	BN_CTX		*bnctx = NULL;
 	BIGNUM		*x = NULL, *y = NULL;
-	int		 ret = -1;
 	size_t		 eclen;
 	size_t		 xlen, ylen;
 
@@ -700,10 +700,12 @@ ec_raw2point(struct dh_group *group, uint8_t *buf, size_t len)
 	if (!EC_POINT_set_affine_coordinates(ecgroup, point, x, y, bnctx))
 		goto done;
 
-	ret = 0;
+	/* success */
+	ret = point;
+	point = NULL;	/* owned by caller */
+
  done:
-	if (ret != 0 && point != NULL)
-		EC_POINT_clear_free(point);
+	EC_POINT_clear_free(point);
 	/* Make sure to erase sensitive data */
 	if (x != NULL)
 		BN_clear(x);
@@ -712,7 +714,7 @@ ec_raw2point(struct dh_group *group, uint8_t *buf, size_t len)
 	BN_CTX_end(bnctx);
 	BN_CTX_free(bnctx);
 
-	return (point);
+	return (ret);
 }
 
 int
