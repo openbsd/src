@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.34 2022/06/09 09:12:55 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.35 2025/04/09 07:03:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,7 +35,7 @@ const struct cmd_entry cmd_set_buffer_entry = {
 
 	.args = { "ab:t:n:w", 0, 1, NULL },
 	.usage = "[-aw] " CMD_BUFFER_USAGE " [-n new-buffer-name] "
-	         CMD_TARGET_CLIENT_USAGE " data",
+	         CMD_TARGET_CLIENT_USAGE " [data]",
 
 	.flags = CMD_AFTERHOOK|CMD_CLIENT_TFLAG|CMD_CLIENT_CANFAIL,
 	.exec = cmd_set_buffer_exec

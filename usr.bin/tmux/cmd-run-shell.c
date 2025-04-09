@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.87 2025/02/10 08:14:32 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.88 2025/04/09 07:03:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_run_shell_entry = {
 	.name = "run-shell",
 	.alias = "run",
 
-	.args = { "bd:Ct:c:", 0, 2, cmd_run_shell_args_parse },
+	.args = { "bd:Ct:c:", 0, 1, cmd_run_shell_args_parse },
 	.usage = "[-bC] [-c start-directory] [-d delay] " CMD_TARGET_PANE_USAGE
 	         " [shell-command]",
 

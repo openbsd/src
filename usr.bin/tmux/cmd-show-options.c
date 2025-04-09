@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.69 2022/02/14 09:10:48 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.70 2025/04/09 07:03:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -66,7 +66,7 @@ const struct cmd_entry cmd_show_hooks_entry = {
 	.alias = NULL,
 
 	.args = { "gpt:w", 0, 1, NULL },
-	.usage = "[-gpw] " CMD_TARGET_PANE_USAGE,
+	.usage = "[-gpw] " CMD_TARGET_PANE_USAGE " [hook]",
 
 	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },
 

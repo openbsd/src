@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.146 2022/07/06 08:40:52 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.147 2025/04/09 07:03:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_new_session_entry = {
 	.usage = "[-AdDEPX] [-c start-directory] [-e environment] [-F format] "
 		 "[-f flags] [-n window-name] [-s session-name] "
 		 CMD_TARGET_SESSION_USAGE " [-x width] [-y height] "
-		 "[shell-command]",
+		 "[shell-command [argument ...]]",
 
 	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 

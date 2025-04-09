@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.38 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.39 2025/04/09 07:03:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_respawn_pane_entry = {
 
 	.args = { "c:e:kt:", 0, -1, NULL },
 	.usage = "[-k] [-c start-directory] [-e environment] "
-		 CMD_TARGET_PANE_USAGE " [shell-command]",
+		 CMD_TARGET_PANE_USAGE " [shell-command [argument ...]]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
