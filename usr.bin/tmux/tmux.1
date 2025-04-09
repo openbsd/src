@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.988 2025/04/09 06:27:43 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.989 2025/04/09 06:51:31 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -5578,7 +5578,8 @@ for example
 .Ql #{session_name} .
 The possible variables are listed in the table below, or the name of a
 .Nm
-option may be used for an option's value.
+option may be used for an option's value, or the name of an environment
+variable.
 Some variables have a shorter alias such as
 .Ql #S ;
 .Ql ##
