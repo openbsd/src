@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.67 2024/04/15 08:19:55 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.68 2025/04/09 06:27:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_command_prompt_entry = {
 
 	.args = { "1bFkiI:Np:t:T:", 0, 1, cmd_command_prompt_args_parse },
 	.usage = "[-1bFkiN] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE
-		 " [-T type] [template]",
+		 " [-T prompt-type] [template]",
 
 	.flags = CMD_CLIENT_TFLAG,
 	.exec = cmd_command_prompt_exec

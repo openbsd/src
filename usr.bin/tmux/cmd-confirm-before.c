@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.56 2024/11/26 15:51:48 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.57 2025/04/09 06:27:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -42,7 +42,7 @@ const struct cmd_entry cmd_confirm_before_entry = {
 	.alias = "confirm",
 
 	.args = { "bc:p:t:y", 1, 1, cmd_confirm_before_args_parse },
-	.usage = "[-by] [-c confirm_key] [-p prompt] " CMD_TARGET_CLIENT_USAGE
+	.usage = "[-by] [-c confirm-key] [-p prompt] " CMD_TARGET_CLIENT_USAGE
 		 " command",
 
 	.flags = CMD_CLIENT_TFLAG,

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.28 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.29 2025/04/09 06:27:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_show_environment_entry = {
 	.alias = "showenv",
 
 	.args = { "hgst:", 0, 1, NULL },
-	.usage = "[-hgs] " CMD_TARGET_SESSION_USAGE " [name]",
+	.usage = "[-hgs] " CMD_TARGET_SESSION_USAGE " [variable]",
 
 	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
