@@ -332,6 +332,16 @@ vctrap(struct trapframe *frame, int user)
 	case SVM_VMEXIT_CPUID:
 		ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
 		ghcb_sync_val(GHCB_RCX, GHCB_SZ32, &syncout);
+
+		/*
+		 * For Extended State Enumeration we have to forward
+		 * XCRO and XSS.
+		 */
+		if ((uint32_t)frame->tf_rax == 0xd) {
+			ghcb_sync_val(GHCB_XSS, GHCB_SZ64, &syncout);
+			ghcb_sync_val(GHCB_XCR0, GHCB_SZ64, &syncout);
+		}
+
 		ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncin);
 		ghcb_sync_val(GHCB_RBX, GHCB_SZ32, &syncin);
 		ghcb_sync_val(GHCB_RCX, GHCB_SZ32, &syncin);
