@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.39 2025/04/08 07:36:02 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.40 2025/04/10 07:06:44 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -28552,7 +28552,7 @@ ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 	struct ice_tx_desc *ring, *txd;
 	struct ice_tx_map *txm;
 	bus_dmamap_t map;
-	unsigned int cons, prod, last;
+	unsigned int cons, prod, last, free;
 	unsigned int mask;
 	uint64_t dtype;
 	int done = 0;
@@ -28562,6 +28562,11 @@ ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 
 	if (cons == prod)
 		return (0);
+
+	free = cons;
+	if (free <= prod)
+		free += txq->desc_count;
+	free -= prod;
 
 	bus_dmamap_sync(sc->sc_dmat, ICE_DMA_MAP(&txq->tx_desc_mem),
 	    0, ICE_DMA_LEN(&txq->tx_desc_mem), BUS_DMASYNC_POSTREAD);
@@ -28604,6 +28609,15 @@ ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 
 	if (ifq_is_oactive(ifq))
 		ifq_restart(ifq);
+	else if (free <= ICE_MIN_DESC_COUNT + 1) {
+		/* XXX sometimes ring was OACTIVE but is_oactive() is false */
+		free = cons;
+		if (free <= prod)
+			free += txq->desc_count;
+		free -= prod;
+		if (free > ICE_MIN_DESC_COUNT + 1)
+			ifq_restart(ifq);
+	}
 
 	return (done);
 }
