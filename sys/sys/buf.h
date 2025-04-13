@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.115 2025/03/27 23:30:54 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.116 2025/04/13 09:52:43 jsg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -164,9 +164,6 @@ struct bufcache {
 	struct bufqueue coldqueue;
 	struct bufqueue warmqueue;
 };
-
-/* Device driver compatibility definitions. */
-#define	b_active b_bcount		/* Driver queue head: drive active. */
 
 /*
  * These flags are kept in b_flags.
