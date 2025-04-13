@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_test_file.c,v 1.3 2024/12/27 11:17:48 tb Exp $ */
+/*	$OpenBSD: parse_test_file.c,v 1.4 2025/04/13 09:14:56 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -47,6 +47,8 @@ static void
 line_data_clear(struct line_data *ld)
 {
 	freezero(ld->data, ld->data_len);
+	/* The dereference isn't enough for silly old gcc 14. */
+	assert(ld != NULL);
 	explicit_bzero(ld, sizeof(*ld));
 }
 
