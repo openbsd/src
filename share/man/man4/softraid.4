@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.55 2024/04/25 07:21:43 stsp Exp $
+.\"	$OpenBSD: softraid.4,v 1.56 2025/04/13 13:17:31 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2024 $
+.Dd $Mdocdate: April 13 2025 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -79,7 +79,9 @@ Unlike traditional RAID 1,
 .Nm
 supports the use of more than two chunks in a RAID 1 setup.
 .It RAID 5
-A striping discipline with
+A
+.Em striping
+discipline with
 .Em floating parity
 across all chunks.
 It stripes data across chunks and provides parity to prevent data loss of
@@ -119,9 +121,9 @@ in the boot storage area of the
 .Nm
 volume.
 All chunks in the volume will then be bootable.
-Boot support is currently limited to the CRYPTO, RAID 1 disciplines
-on the amd64, arm64, i386, riscv64 and sparc64 platforms.
-amd64, arm64, riscv64 and sparc64 also have boot support for the RAID 1C discipline.
+Boot support is currently limited to the CRYPTO, RAID 1, and RAID 1C disciplines
+on the amd64, arm64, riscv64 and sparc64 platforms.
+Boot support on i386 is limited to CRYPTO and RAID 1.
 On sparc64, bootable chunks must be RAID partitions using the letter
 .Sq a .
 At the
@@ -236,6 +238,7 @@ boot> boot sr0a:/bsd
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr bioctl 8 ,
+.Xr boot 8 ,
 .Xr boot_sparc64 8 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
@@ -258,7 +261,7 @@ There is no point in wasting a lot of time syncing random data.
 The RAID 5 discipline does not initialize parity upon creation, instead parity
 is only updated upon write.
 .Pp
-Stacking disciplines (CRYPTO on top of RAID 1, for example) is not
+Stacking disciplines (CRYPTO on top of RAID 5, for example) is not
 supported at this time.
 .Pp
 Currently there is no automated mechanism to recover from failed disks.
