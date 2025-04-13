@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.14 2016/03/15 19:50:48 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.15 2025/04/13 15:42:59 florian Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -62,7 +62,6 @@ static void		dumptime(const struct tm *tmp);
 static time_t		hunt(char *name, time_t lot, time_t	hit);
 static void		setabsolutes(void);
 static void		show(char *zone, time_t t, int v);
-static const char 	*tformat(void);
 static time_t		yeartot(long y);
 static void		usage(void);
 
@@ -358,7 +357,7 @@ show(char *zone, time_t t, int v)
 	if (v) {
 		tmp = gmtime(&t);
 		if (tmp == NULL) {
-			printf(tformat(), t);
+			printf("%lld", t);
 		} else {
 			dumptime(tmp);
 			printf(" UTC");
@@ -392,17 +391,6 @@ abbr(struct tm *tmp)
 		return &nada;
 	result = tzname[tmp->tm_isdst];
 	return (result == NULL) ? &nada : result;
-}
-
-/*
-** The code below can fail on certain theoretical systems;
-** it works on all known real-world systems as of 2004-12-30.
-*/
-
-static const char *
-tformat(void)
-{
-	return "%lld";
 }
 
 static void
