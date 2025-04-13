@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.140 2024/10/31 22:14:04 kn Exp $
+#	$OpenBSD: changelist,v 1.141 2025/04/13 20:04:02 kn Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -163,6 +163,7 @@
 /root/.shosts
 /root/.ssh/authorized_keys
 /root/.ssh/authorized_keys2
+/upgrade.site
 /var/cron/at.allow
 /var/cron/at.deny
 /var/cron/cron.allow
