@@ -6649,6 +6649,7 @@ S_pmtrans(pTHX_ OP *o, OP *expr, OP *repl)
                  * same time.  But otherwise one crosses before the other */
                 if (t_cp < 256 && r_cp_end > 255 && r_cp != t_cp) {
                     can_force_utf8 = TRUE;
+                    max_expansion = MAX(2, max_expansion);
                 }
             }
 
