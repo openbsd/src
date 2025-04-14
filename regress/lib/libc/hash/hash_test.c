@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_test.c,v 1.1.1.1 2025/04/14 17:32:05 tb Exp $ */
+/*	$OpenBSD: hash_test.c,v 1.2 2025/04/14 18:33:56 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -25,8 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define ALL_HASHES_ALLOW_NULL 0
-
 #define MAX_DIGEST_LENGTH SHA512_DIGEST_LENGTH
 
 struct hash_test_case {
@@ -48,14 +46,12 @@ enum {
 
 /* RFC 1321, Appendix A.5 */
 static const struct hash_test_case md5_tests[] = {
-#if ALL_HASHES_ALLOW_NULL
 	{
 		.out = {
 			0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04,
 			0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e,
 		},
 	},
-#endif
 	{
 		.in = "",
 		.out = {
@@ -131,7 +127,6 @@ md5_final(void *digest, void *ctx)
 
 /* https://homes.esat.kuleuven.be/~bosselae/ripemd160.html */
 static const struct hash_test_case rmd160_tests[] = {
-#if ALL_HASHES_ALLOW_NULL
 	{
 		.out = {
 			0x9c, 0x11, 0x85, 0xa5, 0xc5, 0xe9, 0xfc, 0x54,
@@ -139,7 +134,6 @@ static const struct hash_test_case rmd160_tests[] = {
 			0xb2, 0x25, 0x8d, 0x31,
 		},
 	},
-#endif
 	{
 		.in = "",
 		.out = {
@@ -231,7 +225,6 @@ rmd160_final(void *digest, void *ctx)
 
 /* RFC 3174 - Appendix A (plus two zero-length tests) */
 static const struct hash_test_case sha1_tests[] = {
-#if ALL_HASHES_ALLOW_NULL
 	{
 		.out = {
 			0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d,
@@ -239,7 +232,6 @@ static const struct hash_test_case sha1_tests[] = {
 			0xaf, 0xd8, 0x07, 0x09,
 		},
 	},
-#endif
 	{
 		.in = "",
 		.out = {
