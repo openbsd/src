@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.524 2025/02/26 19:31:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.525 2025/04/14 14:52:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -323,9 +323,9 @@ session_main(int debug, int verbose)
 			i++;
 		}
 		idx_listeners = i;
-		timeout = monotime_from_sec(MAX_TIMEOUT);
-
 		now = getmonotime();
+		timeout = monotime_add(now, monotime_from_sec(MAX_TIMEOUT));
+
 		RB_FOREACH(p, peer_head, &conf->peers) {
 			monotime_t nextaction;
 			struct timer *pt;
@@ -386,7 +386,6 @@ session_main(int debug, int verbose)
 			}
 			nextaction = timer_nextduein(&p->timers);
 			if (monotime_valid(nextaction)) {
-				nextaction = monotime_sub(nextaction, now);
 				if (monotime_cmp(nextaction, timeout) < 0)
 					timeout = nextaction;
 			}
@@ -438,11 +437,14 @@ session_main(int debug, int verbose)
 		if (i > pfd_elms)
 			fatalx("poll pfd overflow");
 
-		if (monotime_valid(pauseaccept) && monotime_cmp(timeout,
-		    monotime_from_sec(PAUSEACCEPT_TIMEOUT)) > 0)
-			timeout = monotime_from_sec(PAUSEACCEPT_TIMEOUT);
+		if (monotime_valid(pauseaccept) &&
+		    monotime_cmp(timeout, pauseaccept) > 0)
+			timeout = pauseaccept;
+
+		timeout = monotime_sub(timeout, getmonotime());
 		if (!monotime_valid(timeout))
 			timeout = monotime_clear();
+
 		if (poll(pfd, i, monotime_to_msec(timeout)) == -1) {
 			if (errno == EINTR)
 				continue;
@@ -454,8 +456,7 @@ session_main(int debug, int verbose)
 		 * for 1 second to throttle the accept() loop.
 		 */
 		if (monotime_valid(pauseaccept) &&
-		    monotime_cmp(getmonotime(), monotime_add(pauseaccept,
-		    monotime_from_sec(PAUSEACCEPT_TIMEOUT))) > 0)
+		    monotime_cmp(getmonotime(), pauseaccept) > 0)
 			pauseaccept = monotime_clear();
 
 		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1) {
@@ -691,7 +692,8 @@ session_accept(int listenfd)
 	    (struct sockaddr *)&cliaddr, &len,
 	    SOCK_CLOEXEC | SOCK_NONBLOCK)) == -1) {
 		if (errno == ENFILE || errno == EMFILE)
-			pauseaccept = getmonotime();
+			pauseaccept = monotime_add(getmonotime(),
+			    monotime_from_sec(PAUSEACCEPT_TIMEOUT));
 		else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
 			log_warn("accept");
