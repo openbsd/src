@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.61 2025/02/25 09:49:33 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.62 2025/04/14 08:39:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,7 +104,6 @@
 #define ENV_POLICY      	"policy"
 #define ENV_EXTENSIONS      	"x509_extensions"
 #define ENV_CRLEXT      	"crl_extensions"
-#define ENV_MSIE_HACK		"msie_hack"
 #define ENV_NAMEOPT		"name_opt"
 #define ENV_CERTOPT		"cert_opt"
 #define ENV_EXTCOPY		"copy_extensions"
@@ -181,7 +180,6 @@ static struct {
 	int keyform;
 	char *md;
 	int multirdn;
-	int msie_hack;
 	int notext;
 	char *outdir;
 	char *outfile;
@@ -449,11 +447,6 @@ static const struct option ca_options[] = {
 		.desc = "Message digest to use",
 		.type = OPTION_ARG,
 		.opt.arg = &cfg.md,
-	},
-	{
-		.name = "msie_hack",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.msie_hack,
 	},
 	{
 		.name = "multivalue-rdn",
@@ -827,11 +820,6 @@ ca_main(int argc, char **argv)
 		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
 		cfg.preserve = 1;
-	f = NCONF_get_string(conf, BASE_SECTION, ENV_MSIE_HACK);
-	if (f == NULL)
-		ERR_clear_error();
-	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
-		cfg.msie_hack = 1;
 
 	f = NCONF_get_string(conf, cfg.section, ENV_NAMEOPT);
 
@@ -1681,7 +1669,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	X509_NAME_ENTRY *ne;
 	X509_NAME_ENTRY *tne, *push;
 	EVP_PKEY *pktmp;
-	int ok = -1, i, j, last, nid;
+	int ok = -1, i, j, last;
 	const char *p;
 	CONF_VALUE *cv;
 	OPENSSL_STRING row[DB_NUMBER];
@@ -1723,23 +1711,6 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		if (obj == NULL)
 			goto err;
 
-		if (cfg.msie_hack) {
-			/* assume all type should be strings */
-			nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne));
-			if (nid == NID_undef)
-				goto err;
-
-			if (str->type == V_ASN1_UNIVERSALSTRING)
-				ASN1_UNIVERSALSTRING_to_string(str);
-
-			if ((str->type == V_ASN1_IA5STRING) &&
-			    (nid != NID_pkcs9_emailAddress))
-				str->type = V_ASN1_T61STRING;
-
-			if ((nid == NID_pkcs9_emailAddress) &&
-			    (str->type == V_ASN1_PRINTABLESTRING))
-				str->type = V_ASN1_IA5STRING;
-		}
 		/* If no EMAIL is wanted in the subject */
 		if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) && (!email_dn))
 			continue;
