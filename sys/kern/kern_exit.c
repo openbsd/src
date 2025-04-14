@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.243 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.244 2025/04/14 09:15:24 visa Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -825,6 +825,9 @@ process_reparent(struct process *child, struct process *parent)
 	MUTEX_ASSERT_LOCKED(&child->ps_mtx);
 	child->ps_pptr = parent;
 	child->ps_ppid = parent->ps_pid;
+
+	WITNESS_SETCHILD(&child->ps_mtx.mtx_lock_obj,
+	    &parent->ps_mtx.mtx_lock_obj);
 }
 
 void

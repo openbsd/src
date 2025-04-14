@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.269 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.270 2025/04/14 09:15:24 visa Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/atomic.h>
 #include <sys/unistd.h>
 #include <sys/tracepoint.h>
+#include <sys/witness.h>
 
 #include <sys/syscallargs.h>
 
@@ -236,6 +237,9 @@ process_new(struct proc *p, struct process *parent, int flags)
 	/* post-copy fixups */
 	pr->ps_pptr = parent;
 	pr->ps_ppid = parent->ps_pid;
+
+	WITNESS_SETCHILD(&pr->ps_mtx.mtx_lock_obj,
+	    &parent->ps_mtx.mtx_lock_obj);
 
 	/* bump references to the text vnode (for sysctl) */
 	pr->ps_textvp = parent->ps_textvp;
