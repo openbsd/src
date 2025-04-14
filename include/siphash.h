@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: siphash.h,v 1.4 2022/12/27 07:44:56 jmc Exp $
+ * $OpenBSD: siphash.h,v 1.5 2025/04/14 08:28:24 claudio Exp $
  */
 
 /*
@@ -46,6 +46,9 @@
 
 #ifndef _SIPHASH_H_
 #define _SIPHASH_H_
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define SIPHASH_BLOCK_LENGTH	 8
 #define SIPHASH_KEY_LENGTH	16
