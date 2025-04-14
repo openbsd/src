@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.654 2025/02/27 14:03:32 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.655 2025/04/14 12:09:51 tb Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2692,7 +2692,7 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 			/* switch over to new AGGREGATOR */
 			attr_free(a, oaggr);
 			if (attr_optadd(a, ATTR_OPTIONAL | ATTR_TRANSITIVE,
-			    ATTR_AGGREGATOR, naggr->data, naggr->len))
+			    ATTR_AGGREGATOR, naggr->data, naggr->len) == -1)
 				fatalx("attr_optadd failed but impossible");
 		}
 	}
