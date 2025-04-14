@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.12 2020/10/13 04:42:28 guenther Exp $	*/
+/*	$OpenBSD: md5.c,v 1.13 2025/04/14 18:32:24 claudio Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -66,6 +66,10 @@ void
 MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
 {
 	size_t have, need;
+
+	/* Calling with no data is valid (we do nothing) */
+	if (len == 0)
+		return;
 
 	/* Check how many bytes we already have and how many more we need. */
 	have = (size_t)((ctx->count >> 3) & (MD5_BLOCK_LENGTH - 1));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.27 2019/06/07 22:56:36 dtucker Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.28 2025/04/14 18:32:24 claudio Exp $	*/
 
 /*
  * SHA-1 in C
@@ -126,6 +126,10 @@ void
 SHA1Update(SHA1_CTX *context, const u_int8_t *data, size_t len)
 {
 	size_t i, j;
+
+	/* Calling with no data is valid (we do nothing) */
+	if (len == 0)
+		return;
 
 	j = (size_t)((context->count >> 3) & 63);
 	context->count += ((u_int64_t)len << 3);

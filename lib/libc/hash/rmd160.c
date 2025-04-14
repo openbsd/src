@@ -105,6 +105,10 @@ RMD160Update(RMD160_CTX *ctx, const u_int8_t *input, size_t len)
 {
 	size_t have, off, need;
 
+	/* Calling with no data is valid (we do nothing) */
+	if (len == 0)
+		return;
+
 	have = (ctx->count / 8) % RMD160_BLOCK_LENGTH;
 	need = RMD160_BLOCK_LENGTH - have;
 	ctx->count += 8 * len;
