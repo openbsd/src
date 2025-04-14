@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.51 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.52 2025/04/14 14:50:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1365,7 +1365,6 @@ size_t
 rtr_poll_events(struct pollfd *pfds, size_t npfds, monotime_t *timeout)
 {
 	struct rtr_session *rs;
-	monotime_t now = getmonotime();
 	size_t i = 0;
 
 	TAILQ_FOREACH(rs, &rtrs, entry) {
@@ -1377,7 +1376,6 @@ rtr_poll_events(struct pollfd *pfds, size_t npfds, monotime_t *timeout)
 
 		nextaction = timer_nextduein(&rs->timers);
 		if (monotime_valid(nextaction)) {
-			monotime_sub(nextaction, now);
 			if (monotime_cmp(nextaction, *timeout) < 0)
 				*timeout = nextaction;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.30 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.31 2025/04/14 14:50:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -245,7 +245,6 @@ rtr_main(int debug, int verbose)
 		timeout = timer_nextduein(&expire_timer);
 		if (!monotime_valid(timeout))
 			fatalx("roa-set expire timer no longer running");
-		timeout = monotime_sub(timeout, getmonotime());
 
 		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 
@@ -254,6 +253,10 @@ rtr_main(int debug, int verbose)
 
 		i = PFD_PIPE_COUNT;
 		i += rtr_poll_events(pfd + i, pfd_elms - i, &timeout);
+
+		timeout = monotime_sub(timeout, getmonotime());
+		if (!monotime_valid(timeout))
+			timeout = monotime_clear();
 
 		if (poll(pfd, i, monotime_to_msec(timeout)) == -1) {
 			if (errno == EINTR)
