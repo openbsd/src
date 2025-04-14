@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.135 2024/09/10 09:38:45 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.136 2025/04/14 11:46:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -190,6 +190,8 @@ attr_diff(struct attr *oa, struct attr *ob)
 		return (1);
 	if (oa->len < ob->len)
 		return (-1);
+	if (oa->len == 0)
+		return (0);
 	r = memcmp(oa->data, ob->data, oa->len);
 	if (r > 0)
 		return (1);
