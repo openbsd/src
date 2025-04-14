@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.162 2025/01/19 10:24:17 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.163 2025/04/14 08:40:10 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: January 19 2025 $
+.Dd $Mdocdate: April 14 2025 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -325,7 +325,6 @@ into a nested structure.
 .Op Fl keyfile Ar file
 .Op Fl keyform Cm pem | der
 .Op Fl md Ar alg
-.Op Fl msie_hack
 .Op Fl multivalue-rdn
 .Op Fl name Ar section
 .Op Fl noemailDN
@@ -422,17 +421,6 @@ Possible values include
 and
 .Ar sha1 .
 This option also applies to CRLs.
-.It Fl msie_hack
-This is a legacy option to make
-.Nm ca
-work with very old versions of the IE certificate enrollment control
-.Qq certenr3 .
-It used UniversalStrings for almost everything.
-Since the old control has various security bugs,
-its use is strongly discouraged.
-The newer control
-.Qq Xenroll
-does not need this option.
 .It Fl multivalue-rdn
 This option causes the
 .Fl subj
@@ -629,11 +617,9 @@ specified using
 .Cm default_ca
 or
 .Fl name .
-The options
+The
 .Cm preserve
-and
-.Cm msie_hack
-are read directly from the
+option is read directly from the
 .Cm ca
 section.
 .Pp
@@ -746,9 +732,6 @@ simply set this to
 .Qq no .
 If not present, the default is to allow for the EMAIL field in the
 certificate's DN.
-.It Cm msie_hack
-The same as
-.Fl msie_hack .
 .It Cm name_opt , cert_opt
 These options allow the format used to display the certificate details
 when asking the user to confirm signing.
