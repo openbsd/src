@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.542 2024/12/26 10:15:27 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.543 2025/04/14 20:02:34 sf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1863,20 +1863,21 @@ struct mbuf *		 pf_build_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
-			    u_int16_t, u_int, u_int);
+			    u_int16_t, u_int, u_int, u_short *);
 void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
-			    u_int16_t, u_int);
+			    u_int16_t, u_int, u_short *);
 void			 pf_syncookies_init(void);
 int			 pf_syncookies_setmode(u_int8_t);
 int			 pf_syncookies_setwats(u_int32_t, u_int32_t);
 int			 pf_syncookies_getwats(struct pfioc_synflwats *);
 int			 pf_synflood_check(struct pf_pdesc *);
-void			 pf_syncookie_send(struct pf_pdesc *);
+void			 pf_syncookie_send(struct pf_pdesc *, u_short *);
 u_int8_t		 pf_syncookie_validate(struct pf_pdesc *);
-struct mbuf *		 pf_syncookie_recreate_syn(struct pf_pdesc *);
+struct mbuf *		 pf_syncookie_recreate_syn(struct pf_pdesc *,
+			    u_short *);
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_H_ */

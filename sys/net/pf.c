@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1208 2025/03/04 11:52:44 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1209 2025/04/14 20:02:34 sf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1793,7 +1793,7 @@ pf_remove_state(struct pf_state *st)
 		    st->key[PF_SK_WIRE]->port[0],
 		    st->src.seqhi, st->src.seqlo + 1,
 		    TH_RST|TH_ACK, 0, 0, 0, 1, st->tag,
-		    st->key[PF_SK_WIRE]->rdomain);
+		    st->key[PF_SK_WIRE]->rdomain, NULL);
 	}
 	if (st->key[PF_SK_STACK]->proto == IPPROTO_TCP)
 		pf_set_protostate(st, PF_PEER_BOTH, TCPS_CLOSED);
@@ -3267,7 +3267,7 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    u_int16_t rtag, u_int sack, u_int rdom)
+    u_int16_t rtag, u_int sack, u_int rdom, u_short *reason)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -3300,8 +3300,10 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
 
 	/* create outgoing mbuf */
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
-	if (m == NULL)
+	if (m == NULL) {
+		REASON_SET(reason, PFRES_MEMORY);
 		return (NULL);
+	}
 	if (tag)
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	m->m_pkthdr.pf.tag = rtag;
@@ -3380,12 +3382,12 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    u_int16_t rtag, u_int rdom)
+    u_int16_t rtag, u_int rdom, u_short *reason)
 {
 	struct mbuf	*m;
 
 	if ((m = pf_build_tcp(r, af, saddr, daddr, sport, dport, seq, ack,
-	    flags, win, mss, ttl, tag, rtag, 0, rdom)) == NULL)
+	    flags, win, mss, ttl, tag, rtag, 0, rdom, reason)) == NULL)
 		return;
 
 	switch (af) {
@@ -3402,7 +3404,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 
 static void
 pf_send_challenge_ack(struct pf_pdesc *pd, struct pf_state *st,
-    struct pf_state_peer *src, struct pf_state_peer *dst)
+    struct pf_state_peer *src, struct pf_state_peer *dst, u_short *reason)
 {
 	/*
 	 * We are sending challenge ACK as a response to SYN packet, which
@@ -3416,7 +3418,7 @@ pf_send_challenge_ack(struct pf_pdesc *pd, struct pf_state *st,
 	pf_send_tcp(st->rule.ptr, pd->af, pd->dst, pd->src,
 	    pd->hdr.tcp.th_dport, pd->hdr.tcp.th_sport, dst->seqlo,
 	    src->seqlo, TH_ACK, 0, 0, st->rule.ptr->return_ttl, 1, 0,
-	    pd->rdomain);
+	    pd->rdomain, reason);
 }
 
 void
@@ -4478,7 +4480,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				    pd->src, ctx.th->th_dport,
 				    ctx.th->th_sport, ntohl(ctx.th->th_ack),
 				    ack, TH_RST|TH_ACK, 0, 0, r->return_ttl,
-				    1, 0, pd->rdomain);
+				    1, 0, pd->rdomain, &ctx.reason);
 			}
 		} else if ((pd->proto != IPPROTO_ICMP ||
 		    ICMP_INFOTYPE(ctx.icmptype)) && pd->af == AF_INET &&
@@ -4779,7 +4781,8 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		st->src.mss = mss;
 		pf_send_tcp(r, pd->af, pd->dst, pd->src, th->th_dport,
 		    th->th_sport, st->src.seqhi, ntohl(th->th_seq) + 1,
-		    TH_SYN|TH_ACK, 0, st->src.mss, 0, 1, 0, pd->rdomain);
+		    TH_SYN|TH_ACK, 0, st->src.mss, 0, 1, 0, pd->rdomain,
+		    &reason);
 		REASON_SET(&reason, PFRES_SYNPROXY);
 		return (PF_SYNPROXY_DROP);
 	}
@@ -5173,7 +5176,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason,
 				    th->th_sport, ntohl(th->th_ack), 0,
 				    TH_RST, 0, 0,
 				    (*stp)->rule.ptr->return_ttl, 1, 0,
-				    pd->rdomain);
+				    pd->rdomain, reason);
 			src->seqlo = 0;
 			src->seqhi = 1;
 			src->max_win = 1;
@@ -5311,7 +5314,7 @@ pf_synproxy(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason)
 			    pd->src, th->th_dport, th->th_sport,
 			    (*stp)->src.seqhi, ntohl(th->th_seq) + 1,
 			    TH_SYN|TH_ACK, 0, (*stp)->src.mss, 0, 1,
-			    0, pd->rdomain);
+			    0, pd->rdomain, reason);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		} else if ((th->th_flags & (TH_ACK|TH_RST|TH_FIN)) != TH_ACK ||
@@ -5345,7 +5348,7 @@ pf_synproxy(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason)
 			    sk->port[pd->sidx], sk->port[pd->didx],
 			    (*stp)->dst.seqhi, 0, TH_SYN, 0,
 			    (*stp)->src.mss, 0, 0, (*stp)->tag,
-			    sk->rdomain);
+			    sk->rdomain, reason);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
@@ -5360,13 +5363,13 @@ pf_synproxy(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason)
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
 			    TH_ACK, (*stp)->src.max_win, 0, 0, 0,
-			    (*stp)->tag, pd->rdomain);
+			    (*stp)->tag, pd->rdomain, reason);
 			pf_send_tcp((*stp)->rule.ptr, pd->af,
 			    &sk->addr[pd->sidx], &sk->addr[pd->didx],
 			    sk->port[pd->sidx], sk->port[pd->didx],
 			    (*stp)->src.seqhi + 1, (*stp)->src.seqlo + 1,
 			    TH_ACK, (*stp)->dst.max_win, 0, 0, 1,
-			    0, sk->rdomain);
+			    0, sk->rdomain, reason);
 			(*stp)->src.seqdiff = (*stp)->dst.seqhi -
 			    (*stp)->src.seqlo;
 			(*stp)->dst.seqdiff = (*stp)->src.seqhi -
@@ -5437,7 +5440,8 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason)
 				 * ACK enables all parties (firewall and peers)
 				 * to get in sync again.
 				 */
-				pf_send_challenge_ack(pd, *stp, src, dst);
+				pf_send_challenge_ack(pd, *stp, src, dst,
+				    reason);
 				return (PF_DROP);
 			}
 		}
@@ -7761,7 +7765,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			    pf_synflood_check(&pd)) {
 				PF_LOCK();
 				have_pf_lock = 1;
-				pf_syncookie_send(&pd);
+				pf_syncookie_send(&pd, &reason);
 				action = PF_DROP;
 				break;
 			}
@@ -7792,7 +7796,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		    st->dst.state >= TCPS_FIN_WAIT_2)) &&
 		    (pd.hdr.tcp.th_flags & (TH_SYN|TH_ACK|TH_RST)) == TH_ACK &&
 		    pf_syncookie_validate(&pd)) {
-			struct mbuf	*msyn = pf_syncookie_recreate_syn(&pd);
+			struct mbuf	*msyn;
+			msyn = pf_syncookie_recreate_syn(&pd, &reason);
 			if (msyn) {
 				action = pf_test(af, fwdir, ifp, &msyn);
 				m_freem(msyn);
