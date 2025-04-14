@@ -1,4 +1,4 @@
-/*	$OpenBSD: _lock.h,v 1.5 2024/06/03 12:46:59 claudio Exp $	*/
+/*	$OpenBSD: _lock.h,v 1.6 2025/04/14 09:14:51 visa Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -45,6 +45,10 @@
 #define	LO_CLASSMASK	0x0f000000	/* Class index bitmask. */
 #define	LO_NOPROFILE	0x10000000	/* Don't profile this lock */
 #define	LO_NEW		0x20000000	/* Don't check for double-init */
+#define	LO_HASPARENT	0x40000000	/* If set, non-NULL lo_relative
+					 * points to parent lock.
+					 * If clear, non-NULL lo_relative
+					 * points to child lock. */
 
 #define	LO_CLASSSHIFT		24
 
@@ -59,6 +63,7 @@ struct lock_object {
 	const struct lock_type	*lo_type;
 	const char		*lo_name;	/* Individual lock name. */
 	struct witness		*lo_witness;	/* Data for witness. */
+	struct lock_object	*lo_relative;	/* Parent or child lock. */
 	unsigned int		 lo_flags;
 };
 

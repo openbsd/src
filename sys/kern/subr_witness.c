@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.54 2024/09/25 18:24:13 bluhm Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.55 2025/04/14 09:14:51 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -333,6 +333,8 @@ static struct lock_instance	*find_instance(struct lock_list_entry *list,
 static int	isitmychild(struct witness *parent, struct witness *child);
 static int	isitmydescendant(struct witness *parent, struct witness *child);
 static void	itismychild(struct witness *parent, struct witness *child);
+static int	islockmychild(struct lock_object *parent,
+		    struct lock_object *child);
 #ifdef DDB
 static void	db_witness_add_fullgraph(struct witness *parent);
 static void	witness_ddb_compute_levels(void);
@@ -593,6 +595,8 @@ witness_init(struct lock_object *lock, const struct lock_type *type)
 			    __func__);
 	} else
 		lock->lo_witness = enroll(type, lock->lo_name, class);
+
+	lock->lo_relative = NULL;
 }
 
 static inline int
@@ -909,6 +913,7 @@ witness_checkorder(struct lock_object *lock, int flags,
 	if (w1 == w) {
 		i = w->w_index;
 		if (!(lock->lo_flags & LO_DUPOK) && !(flags & LOP_DUPOK) &&
+		    !islockmychild(plock->li_lock, lock) &&
 		    !(w_rmatrix[i][i] & WITNESS_REVERSAL)) {
 			w_rmatrix[i][i] |= WITNESS_REVERSAL;
 			w->w_reversed = 1;
@@ -1349,6 +1354,37 @@ out:
 	splx(s);
 }
 
+/*
+ * Set the permitted parent/child relation for the given lock.
+ * This allows the nesting of two locks that are of the same type.
+ *
+ * Once a lock relation has been set, the caller is not allowed
+ * to change the type (parent/child), as doing so is indicative of a bug.
+ *
+ * This function is allowed only when the caller has exclusive access
+ * to @lock.
+ */
+void
+witness_setrelative(struct lock_object *lock, struct lock_object *relative,
+    int is_parent)
+{
+	if (witness_watch < 0 || panicstr != NULL || db_active)
+		return;
+
+	mtx_enter(&w_mtx);
+	if (is_parent) {
+		KASSERT(lock->lo_relative == NULL ||
+		    (lock->lo_flags & LO_HASPARENT));
+		lock->lo_flags |= LO_HASPARENT;
+	} else {
+		KASSERT(lock->lo_relative == NULL ||
+		    !(lock->lo_flags & LO_HASPARENT));
+		lock->lo_flags &= ~LO_HASPARENT;
+	}
+	lock->lo_relative = relative;
+	mtx_leave(&w_mtx);
+}
+
 void
 witness_thread_exit(struct proc *p)
 {
@@ -1677,6 +1713,21 @@ isitmydescendant(struct witness *ancestor, struct witness *descendant)
 
 	return (_isitmyx(ancestor, descendant, WITNESS_ANCESTOR_MASK,
 	    __func__));
+}
+
+/*
+ * Checks if the @parent/@child relation is allowed.
+ */
+static int
+islockmychild(struct lock_object *parent, struct lock_object *child)
+{
+	if (!(parent->lo_flags & LO_HASPARENT) &&
+	    parent->lo_relative == child)
+		return (1);
+	if ((child->lo_flags & LO_HASPARENT) &&
+	    child->lo_relative == parent)
+		return (1);
+	return (0);
 }
 
 static struct witness *
