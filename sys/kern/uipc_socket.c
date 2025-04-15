@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.376 2025/03/19 14:00:44 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.377 2025/04/15 12:14:06 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1143,8 +1143,11 @@ dontblock:
 				moff += len;
 				orig_resid = 0;
 			} else {
-				if (mp)
+				if (mp) {
+					mtx_leave(&so->so_rcv.sb_mtx);
 					*mp = m_copym(m, 0, len, M_WAIT);
+					mtx_enter(&so->so_rcv.sb_mtx);
+				}
 				m->m_data += len;
 				m->m_len -= len;
 				so->so_rcv.sb_cc -= len;
@@ -1692,7 +1695,15 @@ somove(struct socket *so, int wait)
 				len -= size;
 				break;
 			}
+			if (wait == M_WAIT) {
+				mtx_leave(&sosp->so_snd.sb_mtx);
+				mtx_leave(&so->so_rcv.sb_mtx);
+			}
 			*mp = m_copym(so->so_rcv.sb_mb, 0, size, wait);
+			if (wait == M_WAIT) {
+				mtx_enter(&so->so_rcv.sb_mtx);
+				mtx_enter(&sosp->so_snd.sb_mtx);
+			}
 			if (*mp == NULL) {
 				len -= size;
 				break;
