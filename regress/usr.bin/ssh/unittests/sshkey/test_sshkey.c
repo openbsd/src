@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_sshkey.c,v 1.26 2025/04/15 04:00:42 djm Exp $ */
+/* 	$OpenBSD: test_sshkey.c,v 1.27 2025/04/15 05:00:13 djm Exp $ */
 /*
  * Regress test for sshkey.h key management API
  *
@@ -630,7 +630,9 @@ sshkey_benchmarks(void)
 	signature_benchmark("RSA-2048/SHA1", KEY_RSA, 2048, "ssh-rsa", 0);
 	signature_benchmark("RSA-2048/SHA256", KEY_RSA, 2048, "rsa-sha2-256", 0);
 	signature_benchmark("RSA-2048/SHA512", KEY_RSA, 2048, "rsa-sha2-512", 0);
+#ifdef WITH_DSA
 	signature_benchmark("DSA-1024", KEY_DSA, 1024, NULL, 0);
+#endif
 	signature_benchmark("ECDSA-256", KEY_ECDSA, 256, NULL, 0);
 	signature_benchmark("ECDSA-384", KEY_ECDSA, 384, NULL, 0);
 	signature_benchmark("ECDSA-521", KEY_ECDSA, 521, NULL, 0);
