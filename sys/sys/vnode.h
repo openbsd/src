@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.176 2024/11/05 06:03:20 jsg Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.177 2025/04/15 05:51:51 jsg Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -617,7 +617,6 @@ int	vop_generic_badop(void *);
 int	vop_generic_bmap(void *);
 int	vop_generic_bwrite(void *);
 int	vop_generic_revoke(void *);
-int	vop_generic_kqfilter(void *);
 int	vop_generic_lookup(void *);
 
 /* vfs_vnops.c */

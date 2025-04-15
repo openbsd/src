@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.51 2022/04/27 14:52:25 claudio Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.52 2025/04/15 05:51:51 jsg Exp $  */
 
 /*
  * Portions of this code are:
@@ -42,11 +42,7 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
-#include <sys/event.h>
 #include <sys/specdev.h>
-
-int filt_generic_readwrite(struct knote *, long);
-void filt_generic_detach(struct knote *);
 
 /*
  * Eliminate all activity associated with the requested vnode
@@ -167,31 +163,6 @@ vop_generic_abortop(void *v)
 	return (0);
 }
 
-const struct filterops generic_filtops = {
-	.f_flags	= FILTEROP_ISFD,
-	.f_attach	= NULL,
-	.f_detach	= filt_generic_detach,
-	.f_event	= filt_generic_readwrite,
-};
-
-int
-vop_generic_kqfilter(void *v)
-{
-	struct vop_kqfilter_args *ap = v;
-	struct knote *kn = ap->a_kn;
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &generic_filtops;
-		break;
-	default:
-		return (EINVAL);
-	}
-
-	return (0);
-}
-
 /* Trivial lookup routine that always fails. */
 int
 vop_generic_lookup(void *v)
@@ -200,26 +171,4 @@ vop_generic_lookup(void *v)
 
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
-}
-
-void
-filt_generic_detach(struct knote *kn)
-{
-}
-
-int
-filt_generic_readwrite(struct knote *kn, long hint)
-{
-	/*
-	 * filesystem is gone, so set the EOF flag and schedule 
-	 * the knote for deletion.
-	 */
-	if (hint == NOTE_REVOKE) {
-		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
-		return (1);
-	}
-
-        kn->kn_data = 0;
-
-        return (1);
 }
