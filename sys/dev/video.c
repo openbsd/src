@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.60 2025/03/21 13:27:37 kirill Exp $	*/
+/*	$OpenBSD: video.c,v 1.61 2025/04/15 06:44:37 kirill Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -181,9 +181,15 @@ videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
+	if (!sc->sc_open) {
+		error = ENXIO;
+		goto done;
+	}
+
 	error = video_stop(sc);
 	sc->sc_open = 0;
 
+done:
 	device_unref(&sc->dev);
 	return (error);
 }
