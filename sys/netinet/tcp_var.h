@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.186 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.187 2025/04/16 17:17:06 jan Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -720,6 +720,7 @@ void	 tcp_init(void);
 int	 tcp_input(struct mbuf **, int *, int, int, struct netstack *);
 int	 tcp_mss(struct tcpcb *, int);
 void	 tcp_mss_update(struct tcpcb *);
+void	 tcp_softlro_enqueue(struct ifnet *, struct mbuf_list *, struct mbuf *);
 u_int	 tcp_hdrsz(struct tcpcb *);
 void	 tcp_mtudisc(struct inpcb *, int);
 void	 tcp_mtudisc_increase(struct inpcb *, int);

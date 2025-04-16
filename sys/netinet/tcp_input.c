@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.435 2025/04/16 12:51:11 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.436 2025/04/16 17:17:06 jan Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <net/if_var.h>
 #include <net/route.h>
 
+#include <netinet/if_ether.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
@@ -4243,4 +4244,256 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now,
 	}
 	in_pcbunref(inp);
 	return (error);
+}
+
+int
+tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
+{
+	struct ether_extracted	 head;
+	struct ether_extracted	 tail;
+	struct mbuf		*m;
+	unsigned int		 hdrlen;
+	unsigned int		 cnt = 0;
+
+	/*
+	 * Check if head and tail are mergeable
+	 */
+
+	ether_extract_headers(mhead, &head);
+	ether_extract_headers(mtail, &tail);
+
+	/* Don't merge packets inside and outside of VLANs */
+	if (head.evh && tail.evh) {
+		/* Don't merge packets of different VLANs */
+		if (EVL_VLANOFTAG(head.evh->evl_tag) !=
+		    EVL_VLANOFTAG(tail.evh->evl_tag))
+			return 0;
+
+		/* Don't merge packets of different priorities */
+		if (EVL_PRIOFTAG(head.evh->evl_tag) !=
+		    EVL_PRIOFTAG(tail.evh->evl_tag))
+			return 0;
+	} else if (head.evh || tail.evh)
+		return 0;
+
+	/* Check IP header. */
+	if (head.ip4 && tail.ip4) {
+		/* Don't merge packets with invalid header checksum. */
+		if (!ISSET(mhead->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK) ||
+		    !ISSET(mtail->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK))
+			return 0;
+
+		/* Check IPv4 addresses. */
+		if (head.ip4->ip_src.s_addr != tail.ip4->ip_src.s_addr ||
+		    head.ip4->ip_dst.s_addr != tail.ip4->ip_dst.s_addr)
+			return 0;
+
+		/* Don't merge IPv4 fragments. */
+		if (ISSET(head.ip4->ip_off, htons(IP_OFFMASK | IP_MF)) ||
+		    ISSET(tail.ip4->ip_off, htons(IP_OFFMASK | IP_MF)))
+			return 0;
+
+		/* Check max. IPv4 length. */
+		if (head.iplen + tail.iplen > IP_MAXPACKET)
+			return 0;
+
+		/* Don't merge IPv4 packets with option headers. */
+		if (head.iphlen != sizeof(struct ip) ||
+		    tail.iphlen != sizeof(struct ip))
+			return 0;
+
+		/* Don't non-TCP packets. */
+		if (head.ip4->ip_p != IPPROTO_TCP ||
+		    tail.ip4->ip_p != IPPROTO_TCP)
+			return 0;
+	} else if (head.ip6 && tail.ip6) {
+		/* Check IPv6 addresses. */
+		if (!IN6_ARE_ADDR_EQUAL(&head.ip6->ip6_src, &tail.ip6->ip6_src) ||
+		    !IN6_ARE_ADDR_EQUAL(&head.ip6->ip6_dst, &tail.ip6->ip6_dst))
+			return 0;
+
+		/* Check max. IPv6 length. */
+		if ((head.iplen - head.iphlen) +
+		    (tail.iplen - tail.iphlen) > IPV6_MAXPACKET)
+			return 0;
+
+		/* Don't merge IPv6 packets with option headers nor non-TCP. */
+		if (head.ip6->ip6_nxt != IPPROTO_TCP ||
+		    tail.ip6->ip6_nxt != IPPROTO_TCP)
+			return 0;
+	} else {
+		return 0;
+	}
+
+	/* Check TCP header. */
+	if (!head.tcp || !tail.tcp)
+		return 0;
+
+	/* Check TCP ports. */
+	if (head.tcp->th_sport != tail.tcp->th_sport ||
+	    head.tcp->th_dport != tail.tcp->th_dport)
+		return 0;
+
+	/* Don't merge empty segments. */
+	if (head.paylen == 0 || tail.paylen == 0)
+		return 0;
+
+	/* Check for continues segments. */
+	if (ntohl(head.tcp->th_seq) + head.paylen != ntohl(tail.tcp->th_seq))
+		return 0;
+
+	/* Just ACK and PUSH TCP flags are allowed. */
+	if (ISSET(head.tcp->th_flags, ~(TH_ACK|TH_PUSH)) ||
+	    ISSET(tail.tcp->th_flags, ~(TH_ACK|TH_PUSH)))
+		return 0;
+
+	/* TCP ACK flag has to be set. */
+	if (!ISSET(head.tcp->th_flags, TH_ACK) ||
+	    !ISSET(tail.tcp->th_flags, TH_ACK))
+		return 0;
+
+	/* Ignore segments with different TCP options. */
+	if (head.tcphlen - sizeof(struct tcphdr) !=
+	    tail.tcphlen - sizeof(struct tcphdr))
+		return 0;
+
+	/* Check for TCP options */
+	if (head.tcphlen > sizeof(struct tcphdr)) {
+		char *hopt = (char *)(head.tcp) + sizeof(struct tcphdr);
+		char *topt = (char *)(tail.tcp) + sizeof(struct tcphdr);
+		int optsize = head.tcphlen - sizeof(struct tcphdr);
+		int optlen;
+
+		for (; optsize > 0; optsize -= optlen) {
+			/* Ignore segments with different TCP options. */
+			if (hopt[0] != topt[0] || hopt[1] != topt[1])
+				return 0;
+
+			/* Get option length */
+			optlen = hopt[1];
+			if (hopt[0] == TCPOPT_NOP)
+				optlen = 1;
+			else if (optlen < 2 || optlen > optsize)
+				return 0;	/* Illegal length */
+
+			if (hopt[0] != TCPOPT_NOP &&
+			    hopt[0] != TCPOPT_TIMESTAMP)
+				return 0;	/* Unsupported TCP option */
+
+			hopt += optlen;
+			topt += optlen;
+		}
+	}
+
+	/* Limit mbuf chain len to avoid m_defrag calls on forwarding. */
+	for (m = mhead; m != NULL; m = m->m_next)
+		if (cnt++ >= 8)
+			return 0;
+	for (m = mtail; m != NULL; m = m->m_next)
+		if (cnt++ >= 8)
+			return 0;
+
+	/*
+	 * Prepare concatenation of head and tail.
+	 */
+
+	/* Adjust IP header. */
+	if (head.ip4) {
+		head.ip4->ip_len = htons(head.iplen + tail.paylen);
+	} else if (head.ip6) {
+		head.ip6->ip6_plen =
+		    htons(head.iplen - head.iphlen + tail.paylen);
+	}
+
+	/* Combine TCP flags from head and tail. */
+	if (ISSET(tail.tcp->th_flags, TH_PUSH))
+		SET(head.tcp->th_flags, TH_PUSH);
+
+	/* Adjust TCP header. */
+	head.tcp->th_win = tail.tcp->th_win;
+	head.tcp->th_ack = tail.tcp->th_ack;
+
+	/* Calculate header length of tail packet. */
+	hdrlen = sizeof(*tail.eh);
+	if (tail.evh)
+		hdrlen = sizeof(*tail.evh);
+	hdrlen += tail.iphlen;
+	hdrlen += tail.tcphlen;
+
+	/* Skip protocol headers in tail. */
+	m_adj(mtail, hdrlen);
+	CLR(mtail->m_flags, M_PKTHDR);
+
+	/* Concatenate */
+	for (m = mhead; m->m_next;)
+		m = m->m_next;
+	m->m_next = mtail;
+	mhead->m_pkthdr.len += tail.paylen;
+
+	/* Flag mbuf as TSO packet with MSS. */
+	if (!ISSET(mhead->m_pkthdr.csum_flags, M_TCP_TSO)) {
+		/* Set CSUM_OUT flags in case of forwarding. */
+		SET(mhead->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
+		head.tcp->th_sum = 0;
+		if (head.ip4) {
+			SET(mhead->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT);
+			head.ip4->ip_sum = 0;
+		}
+
+		SET(mhead->m_pkthdr.csum_flags, M_TCP_TSO);
+		mhead->m_pkthdr.ph_mss = head.paylen;
+		tcpstat_inc(tcps_inswlro);
+		tcpstat_inc(tcps_inpktlro);	/* count head */
+	}
+	mhead->m_pkthdr.ph_mss = MAX(mhead->m_pkthdr.ph_mss, tail.paylen);
+	tcpstat_inc(tcps_inpktlro);	/* count tail */
+
+	return 1;
+}
+
+void
+tcp_softlro_enqueue(struct ifnet *ifp, struct mbuf_list *ml, struct mbuf *mtail)
+{
+	struct mbuf *mhead;
+
+	if (!ISSET(ifp->if_xflags, IFXF_LRO))
+		goto out;
+
+	/* Don't merge packets with invalid header checksum. */
+	if (!ISSET(mtail->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
+		goto out;
+
+	for (mhead = ml->ml_head; mhead != NULL; mhead = mhead->m_nextpkt) {
+		/* Don't merge packets with invalid header checksum. */
+		if (!ISSET(mhead->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
+			continue;
+
+		/* Use RSS hash to skip packets of different connections. */
+		if (ISSET(mhead->m_pkthdr.csum_flags, M_FLOWID) &&
+		    ISSET(mtail->m_pkthdr.csum_flags, M_FLOWID) &&
+		    mhead->m_pkthdr.ph_flowid != mtail->m_pkthdr.ph_flowid)
+			continue;
+
+		/* Don't merge packets inside and outside of VLANs */
+		if (ISSET(mhead->m_flags, M_VLANTAG) !=
+		    ISSET(mtail->m_flags, M_VLANTAG))
+			continue;
+
+		if (ISSET(mhead->m_flags, M_VLANTAG)) {
+			/* Don't merge packets of different VLANs */
+			if (EVL_VLANOFTAG(mhead->m_pkthdr.ether_vtag) !=
+			    EVL_VLANOFTAG(mtail->m_pkthdr.ether_vtag))
+				continue;
+
+			/* Don't merge packets of different priorities */
+			if (EVL_PRIOFTAG(mhead->m_pkthdr.ether_vtag) !=
+			    EVL_PRIOFTAG(mtail->m_pkthdr.ether_vtag))
+				continue;
+		}
+
+		if (tcp_softlro(mhead, mtail))
+			return;
+	}
+ out:
+	ml_enqueue(ml, mtail);
 }

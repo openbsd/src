@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.103 2025/04/04 12:48:32 stsp Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.104 2025/04/16 17:17:06 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -883,6 +883,8 @@ struct ixl_rx_wb_desc_16 {
 
 #define IXL_RX_DESC_PTYPE_SHIFT		30
 #define IXL_RX_DESC_PTYPE_MASK		(0xffULL << IXL_RX_DESC_PTYPE_SHIFT)
+#define IXL_RX_DESC_PTYPE_MAC_IPV4_TCP	26
+#define IXL_RX_DESC_PTYPE_MAC_IPV6_TCP	92
 
 #define IXL_RX_DESC_PLEN_SHIFT		38
 #define IXL_RX_DESC_PLEN_MASK		(0x3fffULL << IXL_RX_DESC_PLEN_SHIFT)
@@ -1975,6 +1977,12 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
+
+	ifp->if_capabilities |= IFCAP_LRO;
+#if notyet
+	/* for now tcplro at ixl(4) is default off */
+	ifp->if_xflags |= IFXF_LRO;
+#endif
 
 	ifmedia_init(&sc->sc_media, 0, ixl_media_change, ixl_media_status);
 
@@ -3257,9 +3265,11 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	struct ixl_rx_map *rxm;
 	bus_dmamap_t map;
 	unsigned int cons, prod;
+	struct mbuf_list mltcp = MBUF_LIST_INITIALIZER();
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint64_t word;
+	unsigned int ptype;
 	unsigned int len;
 	unsigned int mask;
 	int done = 0;
@@ -3296,6 +3306,8 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 		m = rxm->rxm_m;
 		rxm->rxm_m = NULL;
 
+		ptype = (word & IXL_RX_DESC_PTYPE_MASK)
+		    >> IXL_RX_DESC_PTYPE_SHIFT;
 		len = (word & IXL_RX_DESC_PLEN_MASK) >> IXL_RX_DESC_PLEN_SHIFT;
 		m->m_len = len;
 		m->m_pkthdr.len = 0;
@@ -3326,7 +3338,13 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 #endif
 
 				ixl_rx_checksum(m, word);
-				ml_enqueue(&ml, m);
+
+				if (ISSET(ifp->if_xflags, IFXF_LRO) &&
+				    (ptype == IXL_RX_DESC_PTYPE_MAC_IPV4_TCP ||
+				     ptype == IXL_RX_DESC_PTYPE_MAC_IPV6_TCP))
+					tcp_softlro_enqueue(ifp, &mltcp, m);
+				else
+					ml_enqueue(&ml, m);
 			} else {
 				ifp->if_ierrors++; /* XXX */
 				m_freem(m);
@@ -3343,8 +3361,14 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	} while (cons != prod);
 
 	if (done) {
+		int livelocked = 0;
+
 		rxr->rxr_cons = cons;
+		if (ifiq_input(ifiq, &mltcp))
+			livelocked = 1;
 		if (ifiq_input(ifiq, &ml))
+			livelocked = 1;
+		if (livelocked)
 			if_rxr_livelocked(&rxr->rxr_acct);
 		ixl_rxfill(sc, rxr);
 	}
