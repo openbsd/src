@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.42 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.43 2025/04/16 09:16:48 mpi Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -194,4 +194,6 @@ void
 uvm_init_percpu(void)
 {
 	uvmexp_counters = counters_alloc_ncpus(uvmexp_counters, exp_ncounters);
+
+	uvm_anon_init_percpu();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.62 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.63 2025/04/16 09:16:48 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -48,6 +48,14 @@ uvm_anon_init(void)
 	pool_init(&uvm_anon_pool, sizeof(struct vm_anon), 0, IPL_MPFLOOR,
 	    PR_WAITOK, "anonpl", NULL);
 	pool_sethiwat(&uvm_anon_pool, uvmexp.free / 16);
+}
+
+void
+uvm_anon_init_percpu(void)
+{
+#ifdef MULTIPROCESSOR
+	pool_cache_init(&uvm_anon_pool);
+#endif
 }
 
 /*

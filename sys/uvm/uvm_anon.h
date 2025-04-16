@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.22 2021/01/19 13:21:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.23 2025/04/16 09:16:48 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -47,6 +47,14 @@ struct vm_anon {
 	 * Drum swap slot # (if != 0) [if we hold an_page, PG_BUSY]
 	 */
 	int an_swslot;
+
+#if defined(MULTIPROCESSOR) && defined(__LP64__)
+	/*
+	 * The per-CPU pool caching code requires pool item to be
+	 * at least the size of struct pool_cache_item.
+	 */
+	long unused;
+#endif
 };
 
 /*
@@ -84,6 +92,7 @@ void		 uvm_anfree_list(struct vm_anon *, struct pglist *);
 void		 uvm_anon_release(struct vm_anon *);
 void		 uvm_anwait(void);
 void		 uvm_anon_init(void);
+void		 uvm_anon_init_percpu(void);
 void		 uvm_anon_dropswap(struct vm_anon *);
 boolean_t	 uvm_anon_pagein(struct vm_amap *, struct vm_anon *);
 
