@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.33 2024/09/30 12:32:26 claudio Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.34 2025/04/17 12:01:26 jsg Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -99,16 +99,15 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	if (ttyvp == NULL)
 		return (EIO);
-	if (cmd == TIOCSCTTY)		/* XXX */
+	switch (cmd) {
+	case TIOCSCTTY:			/* XXX */
 		return (EINVAL);
-	if (cmd == TIOCNOTTY) {
+	case TIOCNOTTY:
 		if (!SESS_LEADER(p->p_p)) {
 			atomic_clearbits_int(&p->p_p->ps_flags, PS_CONTROLT);
 			return (0);
 		} else
 			return (EINVAL);
-	}
-	switch (cmd) {
 	case TIOCSETVERAUTH:
 		if ((error = suser(p)))
 			return error;
