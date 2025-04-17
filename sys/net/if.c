@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.729 2025/03/19 23:29:49 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.730 2025/04/17 17:23:17 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -824,9 +824,7 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
 		    ISSET(ifp->if_capabilities, IFCAP_TSOv4)) ||
 		    (af == AF_INET6 &&
 		    ISSET(ifp->if_capabilities, IFCAP_TSOv6)))) {
-			tcpstat_inc(tcps_inswlro);
-			tcpstat_add(tcps_inpktlro,
-			    (m->m_pkthdr.len + ifp->if_mtu - 1) / ifp->if_mtu);
+			tcpstat_inc(tcps_inhwlro);
 		} else {
 			tcpstat_inc(tcps_inbadlro);
 			m_freem(m);

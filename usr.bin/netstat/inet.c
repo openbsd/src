@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.183 2024/08/12 06:22:36 florian Exp $	*/
+/*	$OpenBSD: inet.c,v 1.184 2025/04/17 17:23:17 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -408,10 +408,13 @@ tcp_stats(char *name)
 	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
 	p(tcps_sndctrl, "\t\t%u control packet%s\n");
 	p(tcps_outswcsum, "\t\t%u packet%s software-checksummed\n");
-	p(tcps_outswtso, "\t\t%u output TSO packet%s software chopped\n");
-	p(tcps_outhwtso, "\t\t%u output TSO packet%s hardware processed\n");
-	p(tcps_outpkttso, "\t\t%u output TSO packet%s generated\n");
-	p(tcps_outbadtso, "\t\t%u output TSO packet%s dropped\n");
+	p(tcps_outswtso,
+	    "\t\t%u output TSO large packet%s chopped in software\n");
+	p(tcps_outhwtso,
+	    "\t\t%u output TSO large packet%s to device\n");
+	p(tcps_outpkttso,
+	    "\t\t%u output TSO generated packet%s sent to network\n");
+	p(tcps_outbadtso, "\t\t%u bad TSO packet%s dropped\n");
 	p(tcps_rcvtotal, "\t%u packet%s received\n");
 	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %llu byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
@@ -440,11 +443,12 @@ tcp_stats(char *name)
 	p(tcps_rcvbadsig, "\t\t%u bad/missing md5 checksum%s\n");
 	p(tcps_rcvgoodsig, "\t\t%llu good md5 checksum%s\n");
 	p(tcps_inswlro,
-	    "\t\t%u input LRO packet%s passed through pseudo device\n");
-	p(tcps_inhwlro, "\t\t%u input LRO generated packet%s from hardware\n");
+	    "\t\t%u input LRO generated packet%s glued in software\n");
+	p(tcps_inhwlro,
+	    "\t\t%u input LRO generated packet%s from device\n");
 	p(tcps_inpktlro,
-	    "\t\t%u input LRO coalesced packet%s by network device\n");
-	p(tcps_inbadlro, "\t\t%u input bad LRO packet%s dropped\n");
+	    "\t\t%u input LRO small packet%s received from network\n");
+	p(tcps_inbadlro, "\t\t%u bad LRO packet%s dropped\n");
 	p(tcps_connattempt, "\t%u connection request%s\n");
 	p(tcps_accepts, "\t%u connection accept%s\n");
 	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
