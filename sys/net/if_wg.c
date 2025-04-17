@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.41 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.42 2025/04/17 12:42:50 tb Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1601,7 +1601,7 @@ wg_encap(struct wg_softc *sc, struct mbuf *m)
 
 	/*
 	 * Copy the flow hash from the inner packet to the outer packet, so
-	 * that fq_codel can property separate streams, rather than falling
+	 * that fq_codel can properly separate streams, rather than falling
 	 * back to random buckets.
 	 */
 	mc->m_pkthdr.ph_flowid = m->m_pkthdr.ph_flowid;
