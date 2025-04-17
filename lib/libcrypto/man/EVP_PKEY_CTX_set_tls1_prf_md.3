@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_set_tls1_prf_md.3,v 1.2 2024/07/10 10:22:03 tb Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_set_tls1_prf_md.3,v 1.3 2025/04/17 14:58:09 tb Exp $
 .\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file was written by Dr Stephen Henson <steve@openssl.org>,
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 10 2024 $
+.Dd $Mdocdate: April 17 2025 $
 .Dt EVP_PKEY_CTX_SET_TLS1_PRF_MD 3
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ It has no associated private key and only implements key derivation using
 sets the message digest associated with the TLS PRF.
 .Xr EVP_md5_sha1 3
 is treated as a special case which uses the PRF algorithm using both
-MD5 and SHA1 as used in TLS 1.0 and 1.1.
+MD5 and SHA-1 as used in TLS 1.0 and 1.1.
 .Pp
 .Fn EVP_PKEY_CTX_set_tls1_prf_secret
 sets the secret value of the TLS PRF to

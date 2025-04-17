@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_signature.3,v 1.9 2024/08/28 07:18:55 tb Exp $
+.\" $OpenBSD: X509_get0_signature.3,v 1.10 2025/04/17 14:58:09 tb Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/X509_get0_signature 2f7a2520 Apr 25 17:28:08 2017 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2024 $
+.Dd $Mdocdate: April 17 2025 $
 .Dt X509_GET0_SIGNATURE 3
 .Os
 .Sh NAME
@@ -212,11 +212,11 @@ For a supported EdDSA algorithm (in LibreSSL this is Ed25519)
 this flag is always set.
 For an RSASSA-PSS PSS algorithm this flag is set if
 the parameters are DER encoded,
-the digest algorithm is one of SHA256, SHA384, or SHA512,
+the digest algorithm is one of SHA-256, SHA-384, or SHA-512,
 the same digest algorithm is used in the mask generation function,
 and the salt length is equal to the digest algorithm's output length.
 For all other signature algorithms this flag is set if the digest
-algorithm is one of SHA1, SHA256, SHA384, or SHA512.
+algorithm is one of SHA-1, SHA-256, SHA-384, or SHA-512.
 .El
 .Pp
 .Fn X509_get_signature_info
@@ -276,5 +276,5 @@ refer to the information available from the certificate signature
 (such as the signing digest).
 In some cases the actual security of the signature is smaller
 because the signing key is less secure.
-For example in a certificate signed using SHA512
+For example in a certificate signed using SHA-512
 and a 1024-bit RSA key.

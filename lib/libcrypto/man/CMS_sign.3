@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_sign.3,v 1.11 2024/04/18 16:50:22 tb Exp $
+.\" $OpenBSD: CMS_sign.3,v 1.12 2025/04/17 14:58:09 tb Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2024 $
+.Dd $Mdocdate: April 17 2025 $
 .Dt CMS_SIGN 3
 .Os
 .Sh NAME
@@ -176,7 +176,7 @@ added before finalization.
 .Pp
 If a signer is specified, it will use the default digest for the signing
 algorithm.
-This is SHA1 for both RSA and DSA keys.
+This is SHA-1 for both RSA and DSA keys.
 .Pp
 If
 .Fa signcert
