@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwz.c,v 1.20 2025/03/29 22:34:59 kirill Exp $	*/
+/*	$OpenBSD: qwz.c,v 1.21 2025/04/17 09:51:55 kirill Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6493,7 +6493,7 @@ qwz_core_fetch_bdf(struct qwz_softc *sc, const u_char **boardfw,
 		return 0;
 
 	DPRINTF("%s: failed to fetch board data for %s from %s\n",
-	    sc->sc_dev.dv_xname, boardname, path);
+	    sc->sc_dev.dv_xname, boardname, ATH12K_BOARD_API2_FILE);
 	return ret;
 }
 
@@ -6539,7 +6539,7 @@ qwz_core_fetch_regdb(struct qwz_softc *sc, const u_char **boardfw,
 		return 0;
 
 	DPRINTF("%s: failed to fetch regdb data for %s from %s\n",
-	    sc->sc_dev.dv_xname, boardname, path);
+	    sc->sc_dev.dv_xname, boardname, ATH12K_BOARD_API2_FILE);
 	return ret;
 }
 
