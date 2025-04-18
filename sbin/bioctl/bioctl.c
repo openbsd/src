@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.158 2024/07/15 05:36:08 jmc Exp $ */
+/* $OpenBSD: bioctl.c,v 1.159 2025/04/18 20:58:06 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -562,7 +562,8 @@ bio_inq(char *name)
 				snprintf(volname, sizeof volname, "    %3u",
 				    bd.bd_diskid);
 
-			if (bv.bv_level == 'C' && bd.bd_size == 0)
+			if ((bv.bv_level == 'C' || bv.bv_level == 0x1C) &&
+			    bd.bd_size == 0)
 				snprintf(size, sizeof size, "%14s", "key disk");
 			else if (human)
 				fmt_scaled(bd.bd_size, size);
