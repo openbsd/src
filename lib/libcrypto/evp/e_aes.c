@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.60 2025/04/18 13:19:39 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.61 2025/04/18 13:25:03 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -333,24 +333,22 @@ aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
 
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
-	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE) &&
-	    !enc) {
-			ret = AES_set_decrypt_key(key, ctx->key_len * 8,
-			    &dat->ks);
-			dat->block = (block128_f)AES_decrypt;
-			dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-			    (cbc128_f)AES_cbc_encrypt : NULL;
-		} else {
-			ret = AES_set_encrypt_key(key, ctx->key_len * 8,
-			    &dat->ks);
-			dat->block = (block128_f)AES_encrypt;
-			dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-			    (cbc128_f)AES_cbc_encrypt : NULL;
+
+	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE) && !enc) {
+		ret = AES_set_decrypt_key(key, ctx->key_len * 8, &dat->ks);
+		dat->block = (block128_f)AES_decrypt;
+		dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
+		    (cbc128_f)AES_cbc_encrypt : NULL;
+	} else {
+		ret = AES_set_encrypt_key(key, ctx->key_len * 8, &dat->ks);
+		dat->block = (block128_f)AES_encrypt;
+		dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
+		    (cbc128_f)AES_cbc_encrypt : NULL;
 #ifdef AES_CTR_ASM
-			if (mode == EVP_CIPH_CTR_MODE)
-				dat->stream.ctr = (ctr128_f)AES_ctr32_encrypt;
+		if (mode == EVP_CIPH_CTR_MODE)
+			dat->stream.ctr = (ctr128_f)AES_ctr32_encrypt;
 #endif
-		}
+	}
 
 	if (ret < 0) {
 		EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
