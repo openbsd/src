@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.16 2024/11/23 15:38:12 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.17 2025/04/18 07:19:48 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -26,11 +26,10 @@
 #include <endian.h>
 #include <string.h>
 
+#include "crypto_internal.h"
 #include "sha3_internal.h"
 
 #define KECCAKF_ROUNDS 24
-
-#define ROTL64(x, y) (((x) << (y)) | ((x) >> (64 - (y))))
 
 static const uint64_t sha3_keccakf_rndc[24] = {
 	0x0000000000000001, 0x0000000000008082, 0x800000000000808a,
@@ -67,7 +66,7 @@ sha3_keccakf(uint64_t st[25])
 			bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
 
 		for (i = 0; i < 5; i++) {
-			t = bc[(i + 4) % 5] ^ ROTL64(bc[(i + 1) % 5], 1);
+			t = bc[(i + 4) % 5] ^ crypto_rol_u64(bc[(i + 1) % 5], 1);
 			for (j = 0; j < 25; j += 5)
 				st[j + i] ^= t;
 		}
@@ -77,7 +76,7 @@ sha3_keccakf(uint64_t st[25])
 		for (i = 0; i < 24; i++) {
 			j = sha3_keccakf_piln[i];
 			bc[0] = st[j];
-			st[j] = ROTL64(t, sha3_keccakf_rotc[i]);
+			st[j] = crypto_rol_u64(t, sha3_keccakf_rotc[i]);
 			t = bc[0];
 		}
 
