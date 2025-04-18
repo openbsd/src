@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.247 2025/03/12 14:03:55 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.248 2025/04/18 07:34:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,9 +231,9 @@ extern "C" {
 #define SSL_TXT_kRSA		"kRSA"
 #define SSL_TXT_kDHr		"kDHr" /* no such ciphersuites supported! */
 #define SSL_TXT_kDHd		"kDHd" /* no such ciphersuites supported! */
-#define SSL_TXT_kDH 		"kDH"  /* no such ciphersuites supported! */
+#define SSL_TXT_kDH		"kDH"  /* no such ciphersuites supported! */
 #define SSL_TXT_kEDH		"kEDH"
-#define SSL_TXT_kKRB5     	"kKRB5"
+#define SSL_TXT_kKRB5		"kKRB5"
 #define SSL_TXT_kECDHr		"kECDHr"
 #define SSL_TXT_kECDHe		"kECDHe"
 #define SSL_TXT_kECDH		"kECDH"
@@ -245,7 +245,7 @@ extern "C" {
 #define	SSL_TXT_aDSS		"aDSS"
 #define	SSL_TXT_aDH		"aDH" /* no such ciphersuites supported! */
 #define	SSL_TXT_aECDH		"aECDH"
-#define SSL_TXT_aKRB5     	"aKRB5"
+#define SSL_TXT_aKRB5		"aKRB5"
 #define SSL_TXT_aECDSA		"aECDSA"
 #define SSL_TXT_aPSK            "aPSK"
 
@@ -260,7 +260,7 @@ extern "C" {
 #define SSL_TXT_EECDH		"EECDH" /* previous name for ECDHE */
 #define SSL_TXT_AECDH		"AECDH"
 #define SSL_TXT_ECDSA		"ECDSA"
-#define SSL_TXT_KRB5      	"KRB5"
+#define SSL_TXT_KRB5		"KRB5"
 #define SSL_TXT_PSK             "PSK"
 #define SSL_TXT_SRP		"SRP"
 
@@ -1117,7 +1117,7 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 int	SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 const char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(const SSL_CIPHER *c);
-unsigned long 	SSL_CIPHER_get_id(const SSL_CIPHER *c);
+unsigned long	SSL_CIPHER_get_id(const SSL_CIPHER *c);
 uint16_t SSL_CIPHER_get_value(const SSL_CIPHER *c);
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
@@ -1272,16 +1272,16 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 SSL *SSL_new(SSL_CTX *ctx);
 void	SSL_free(SSL *ssl);
 int	SSL_up_ref(SSL *ssl);
-int 	SSL_accept(SSL *ssl);
-int 	SSL_connect(SSL *ssl);
+int	SSL_accept(SSL *ssl);
+int	SSL_connect(SSL *ssl);
 int	SSL_is_dtls(const SSL *s);
 int	SSL_is_server(const SSL *s);
-int 	SSL_read(SSL *ssl, void *buf, int num);
-int 	SSL_peek(SSL *ssl, void *buf, int num);
-int 	SSL_write(SSL *ssl, const void *buf, int num);
-int 	SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_read);
-int 	SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_peeked);
-int 	SSL_write_ex(SSL *ssl, const void *buf, size_t num, size_t *bytes_written);
+int	SSL_read(SSL *ssl, void *buf, int num);
+int	SSL_peek(SSL *ssl, void *buf, int num);
+int	SSL_write(SSL *ssl, const void *buf, int num);
+int	SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_read);
+int	SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_peeked);
+int	SSL_write_ex(SSL *ssl, const void *buf, size_t num, size_t *bytes_written);
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx);

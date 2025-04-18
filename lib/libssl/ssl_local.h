@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.27 2025/03/09 15:12:18 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.28 2025/04/18 07:34:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,7 +203,7 @@ __BEGIN_HIDDEN_DECLS
 /* Bits for algorithm_auth (server authentication) */
 #define SSL_aRSA		0x00000001L /* RSA auth */
 #define SSL_aNULL		0x00000004L /* no auth (i.e. use ADH or AECDH) */
-#define SSL_aECDSA              0x00000040L /* ECDSA auth*/
+#define SSL_aECDSA		0x00000040L /* ECDSA auth*/
 #define SSL_aTLS1_3		0x00000400L /* TLSv1.3 authentication */
 
 /* Bits for algorithm_enc (symmetric encryption) */
@@ -396,7 +396,7 @@ struct ssl_method_st {
  *	PSK_identity_hint [ 7 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
  *	PSK_identity [ 8 ] EXPLICIT OCTET STRING,  -- optional PSK identity
  *	Ticket_lifetime_hint [9] EXPLICIT INTEGER, -- server's lifetime hint for session ticket
- *	Ticket [10]             EXPLICIT OCTET STRING, -- session ticket (clients only)
+ *	Ticket [10]		EXPLICIT OCTET STRING, -- session ticket (clients only)
  *	Compression_meth [11]   EXPLICIT OCTET STRING, -- optional compression method
  *	SRP_username [ 12 ] EXPLICIT OCTET STRING -- optional SRP username
  * }
@@ -1054,7 +1054,7 @@ struct ssl_st {
 
 	int renegotiate;/* 1 if we are renegotiating.
 			 * 2 if we are a server and are inside a handshake
-	                 * (i.e. not just sending a HelloRequest) */
+			 * (i.e. not just sending a HelloRequest) */
 
 	int rstate;	/* where we are when reading */
 
@@ -1078,7 +1078,7 @@ typedef struct ssl3_record_internal_st {
 
 typedef struct ssl3_buffer_internal_st {
 	unsigned char *buf;	/* at least SSL3_RT_MAX_PACKET_SIZE bytes,
-	                         * see ssl3_setup_buffers() */
+				 * see ssl3_setup_buffers() */
 	size_t len;		/* buffer size */
 	int offset;		/* where to 'copy from' */
 	int left;		/* how many bytes left */
