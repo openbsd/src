@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.28 2025/04/18 07:34:01 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.29 2025/04/18 08:07:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -289,12 +289,8 @@ __BEGIN_HIDDEN_DECLS
  * SSL_aDSS <- DSA_SIGN
  */
 
-/* From ECC-TLS draft, used in encoding the curve type in
- * ECParameters
- */
-#define EXPLICIT_PRIME_CURVE_TYPE  1
-#define EXPLICIT_CHAR2_CURVE_TYPE  2
-#define NAMED_CURVE_TYPE           3
+/* From RFC 4492, section 5.4. Only named curves are supported. */
+#define NAMED_CURVE_TYPE	3
 
 typedef struct ssl_cert_pkey_st {
 	X509 *x509;
