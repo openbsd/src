@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.17 2025/04/18 07:19:48 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.18 2025/04/18 07:23:53 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -53,7 +53,7 @@ static const int sha3_keccakf_piln[24] = {
 static void
 sha3_keccakf(uint64_t st[25])
 {
-	uint64_t t, bc[5];
+	uint64_t t0, t1, bc[5];
 	int i, j, r;
 
 	for (i = 0; i < 25; i++)
@@ -66,18 +66,18 @@ sha3_keccakf(uint64_t st[25])
 			bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
 
 		for (i = 0; i < 5; i++) {
-			t = bc[(i + 4) % 5] ^ crypto_rol_u64(bc[(i + 1) % 5], 1);
+			t0 = bc[(i + 4) % 5] ^ crypto_rol_u64(bc[(i + 1) % 5], 1);
 			for (j = 0; j < 25; j += 5)
-				st[j + i] ^= t;
+				st[j + i] ^= t0;
 		}
 
 		/* Rho Pi */
-		t = st[1];
+		t0 = st[1];
 		for (i = 0; i < 24; i++) {
 			j = sha3_keccakf_piln[i];
-			bc[0] = st[j];
-			st[j] = crypto_rol_u64(t, sha3_keccakf_rotc[i]);
-			t = bc[0];
+			t1 = st[j];
+			st[j] = crypto_rol_u64(t0, sha3_keccakf_rotc[i]);
+			t0 = t1;
 		}
 
 		/* Chi */
