@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.15 2023/04/25 19:32:19 tb Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.16 2025/04/18 07:36:11 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -66,16 +66,16 @@ typedef struct sha3_ctx_st {
 	size_t mdlen;
 } sha3_ctx;
 
-int sha3_init(sha3_ctx *c, int mdlen);
-int sha3_update(sha3_ctx *c, const void *data, size_t len);
-int sha3_final(void *md, sha3_ctx *c);
+int sha3_init(sha3_ctx *ctx, int mdlen);
+int sha3_update(sha3_ctx *ctx, const void *data, size_t len);
+int sha3_final(void *md, sha3_ctx *ctx);
 
 /* SHAKE128 and SHAKE256 extensible-output functions. */
-#define shake128_init(c) sha3_init(c, 16)
-#define shake256_init(c) sha3_init(c, 32)
+#define shake128_init(ctx) sha3_init((ctx), 16)
+#define shake256_init(ctx) sha3_init((ctx), 32)
 #define shake_update sha3_update
 
-void shake_xof(sha3_ctx *c);
-void shake_out(sha3_ctx *c, void *out, size_t len);
+void shake_xof(sha3_ctx *ctx);
+void shake_out(sha3_ctx *ctx, void *out, size_t len);
 
 #endif
