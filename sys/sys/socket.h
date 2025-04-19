@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.106 2024/12/15 11:00:05 dlg Exp $	*/
+/*	$OpenBSD: socket.h,v 1.107 2025/04/19 04:12:36 jsg Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 #define	SO_RCVTIMEO	0x1006		/* receive timeout */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
-#define	SO_NETPROC	0x1020		/* multiplex; network processing */
 #define	SO_RTABLE	0x1021		/* routing table to be used */
 #define	SO_PEERCRED	0x1022		/* get connect-time credentials */
 #define	SO_SPLICE	0x1023		/* splice data to other socket */
