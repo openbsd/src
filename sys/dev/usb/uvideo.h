@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.64 2025/02/26 20:50:46 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.65 2025/04/19 19:35:32 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -540,6 +540,7 @@ struct uvideo_frame_buffer {
 	int		 sample;
 	uint8_t		 fid;
 	uint8_t		 error;
+	uint8_t		 mmap_q_full;
 	int		 offset;
 	int		 buf_size;
 	uint8_t		*buf;
