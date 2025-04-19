@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.163 2025/04/14 08:40:10 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.164 2025/04/19 17:20:24 kn Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: April 14 2025 $
+.Dd $Mdocdate: April 19 2025 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6148,7 +6148,7 @@ either using a list of comma-separated options or by specifying
 .Fl nameopt
 multiple times.
 The default behaviour is to use the
-.Cm oneline
+.Cm compat
 format.
 The options,
 which can be preceded by a dash to turn them off,
@@ -6230,7 +6230,7 @@ A one line format which is more readable than
 .Cm RFC2253 .
 Equivalent to
 .Cm esc_2253 , esc_ctrl , esc_msb , utf8 ,
-.Cm dump_nostr , dump_der , use_quote , sep_comma_plus_spc ,
+.Cm dump_nostr , dump_der , use_quote , sep_comma_plus_space ,
 .Cm space_eq ,
 and
 .Cm sname .
