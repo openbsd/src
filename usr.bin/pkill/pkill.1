@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.25 2020/11/14 14:06:42 otto Exp $
+.\"	$OpenBSD: pkill.1,v 1.26 2025/04/20 14:05:47 schwarze Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2020 $
+.Dd $Mdocdate: April 20 2025 $
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -166,8 +166,9 @@ Require an exact match of the process name, or argument list if
 is given.
 The default is to match any substring.
 .It Fl Ar signal
-A non-negative decimal number or symbolic signal name specifying the signal
-to be sent instead of the default TERM.
+A non-negative decimal number or one of the symbolic names listed in
+.Xr sigaction 2
+specifying the signal to be sent instead of the default TERM.
 This option is valid only when given as the first argument to
 .Nm pkill .
 .El
