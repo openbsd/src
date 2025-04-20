@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.25 2024/11/13 21:00:57 tb Exp $ */
+/* $OpenBSD: aes_core.c,v 1.26 2025/04/20 09:17:53 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -633,16 +633,11 @@ static const u32 rcon[] = {
 };
 #endif
 
-#ifdef HAVE_AES_SET_ENCRYPT_KEY_INTERNAL
-int aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
-    AES_KEY *key);
-
-#else
-
+#ifndef HAVE_AES_SET_ENCRYPT_KEY_INTERNAL
 /*
  * Expand the cipher key into the encryption key schedule.
  */
-static inline int
+int
 aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
     AES_KEY *key)
 {
@@ -742,22 +737,11 @@ aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
 }
 #endif
 
-int
-AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
-{
-	return aes_set_encrypt_key_internal(userKey, bits, key);
-}
-LCRYPTO_ALIAS(AES_set_encrypt_key);
-
-#ifdef HAVE_AES_SET_DECRYPT_KEY_INTERNAL
-int aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
-    AES_KEY *key);
-
-#else
+#ifndef HAVE_AES_SET_DECRYPT_KEY_INTERNAL
 /*
  * Expand the cipher key into the decryption key schedule.
  */
-static inline int
+int
 aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
     AES_KEY *key)
 {
@@ -815,22 +799,11 @@ aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
 }
 #endif
 
-int
-AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
-{
-	return aes_set_decrypt_key_internal(userKey, bits, key);
-}
-LCRYPTO_ALIAS(AES_set_decrypt_key);
-
-#ifdef HAVE_AES_ENCRYPT_INTERNAL
-void aes_encrypt_internal(const unsigned char *in, unsigned char *out,
-    const AES_KEY *key);
-
-#else
+#ifndef HAVE_AES_ENCRYPT_INTERNAL
 /*
  * Encrypt a single block - in and out can overlap.
  */
-static inline void
+void
 aes_encrypt_internal(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
@@ -1018,22 +991,11 @@ aes_encrypt_internal(const unsigned char *in, unsigned char *out,
 }
 #endif
 
-void
-AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
-{
-	aes_encrypt_internal(in, out, key);
-}
-LCRYPTO_ALIAS(AES_encrypt);
-
-#ifdef HAVE_AES_DECRYPT_INTERNAL
-void aes_decrypt_internal(const unsigned char *in, unsigned char *out,
-    const AES_KEY *key);
-
-#else
+#ifndef HAVE_AES_DECRYPT_INTERNAL
 /*
  * Decrypt a single block - in and out can overlap.
  */
-static inline void
+void
 aes_decrypt_internal(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
@@ -1220,10 +1182,3 @@ aes_decrypt_internal(const unsigned char *in, unsigned char *out,
 	crypto_store_htobe32(&out[3 * 4], s3);
 }
 #endif
-
-void
-AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
-{
-	aes_decrypt_internal(in, out, key);
-}
-LCRYPTO_ALIAS(AES_decrypt);

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.4 2024/08/11 13:02:39 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.5 2025/04/20 09:17:53 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -46,7 +46,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
  */
 
 #include <string.h>
@@ -60,6 +59,43 @@
 static const unsigned char aes_wrap_default_iv[] = {
 	0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,
 };
+
+int aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key);
+int aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key);
+void aes_encrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key);
+void aes_decrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key);
+
+int
+AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
+{
+	return aes_set_encrypt_key_internal(userKey, bits, key);
+}
+LCRYPTO_ALIAS(AES_set_encrypt_key);
+
+int
+AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
+{
+	return aes_set_decrypt_key_internal(userKey, bits, key);
+}
+LCRYPTO_ALIAS(AES_set_decrypt_key);
+
+void
+AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
+{
+	aes_encrypt_internal(in, out, key);
+}
+LCRYPTO_ALIAS(AES_encrypt);
+
+void
+AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
+{
+	aes_decrypt_internal(in, out, key);
+}
+LCRYPTO_ALIAS(AES_decrypt);
 
 #ifdef HAVE_AES_CBC_ENCRYPT_INTERNAL
 void aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
