@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.40 2020/02/09 00:21:01 jsg Exp $
+.\"	$OpenBSD: kill.1,v 1.41 2025/04/20 18:55:24 schwarze Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)kill.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: February 9 2020 $
+.Dd $Mdocdate: April 20 2025 $
 .Dt KILL 1
 .Os
 .Sh NAME
@@ -59,9 +59,9 @@ utility sends a signal to the process(es) specified
 by the
 .Ar pid
 operand(s).
-If no signal is specified,
-.Dv SIGTERM
-is used.
+If no signal is specified, the
+.Cm TERM
+signal is used.
 .Pp
 Only the superuser may send signals to other users' processes.
 .Pp
@@ -83,11 +83,11 @@ If no operand is given, display the names of all the signals.
 .It Fl s Ar signal_name
 A symbolic signal name specifying the signal to be sent instead of the
 default
-.Dv SIGTERM .
+.Cm TERM .
 .It Fl Ar signal_name
 A symbolic signal name specifying the signal to be sent instead of the
 default
-.Dv SIGTERM .
+.Cm TERM .
 .It Fl Ar signal_number
 A non-negative decimal integer specifying the signal to be sent instead
 of the default
@@ -108,21 +108,14 @@ Send the signal to all processes within the specified process group.
 .Pp
 Some of the more commonly used signals:
 .Pp
-.Bl -tag -width Ds -compact -offset indent
-.It 1
-HUP (hang up)
-.It 2
-INT (interrupt)
-.It 3
-QUIT (quit)
-.It 6
-ABRT (abort)
-.It 9
-KILL (non-catchable, non-ignorable kill)
-.It 14
-ALRM (alarm clock)
-.It 15
-TERM (software termination signal)
+.Bl -column MM MMMM -compact -offset indent
+.It 1  Ta Cm HUP  Ta Pq hang up
+.It 2  Ta Cm INT  Ta Pq interrupt
+.It 3  Ta Cm QUIT Ta Pq quit
+.It 6  Ta Cm ABRT Ta Pq abort
+.It 9  Ta Cm KILL Ta Pq non-catchable, non-ignorable kill
+.It 14 Ta Cm ALRM Ta Pq alarm clock
+.It 15 Ta Cm TERM Ta Pq software termination signal
 .El
 .Pp
 For a more complete list, consult the
@@ -130,9 +123,11 @@ For a more complete list, consult the
 manual page.
 .Pp
 A signal number of 0
-.Pq Li kill \-0 pid
-checks the validity of a certain PID, to see if it exists.
-An exit code of 0 means that the specified process exists.
+.Pq Nm kill Fl 0 Ar pid
+does not send a signal, but only checks the validity of a certain PID.
+It succeeds if
+.Ar pid
+exists or raises an error otherwise.
 .Sh EXIT STATUS
 .Ex -std kill
 .Sh EXAMPLES
