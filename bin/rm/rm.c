@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.44 2022/08/16 13:52:41 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.45 2025/04/20 13:47:54 kn Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -156,8 +156,7 @@ rm_tree(char **argv)
 		switch (p->fts_info) {
 		case FTS_DNR:
 			if (!fflag || p->fts_errno != ENOENT) {
-				warnx("%s: %s",
-				    p->fts_path, strerror(p->fts_errno));
+				warnc(p->fts_errno, "%s", p->fts_path);
 				eval = 1;
 			}
 			continue;
@@ -171,8 +170,7 @@ rm_tree(char **argv)
 			if (!needstat)
 				break;
 			if (!fflag || p->fts_errno != ENOENT) {
-				warnx("%s: %s",
-				    p->fts_path, strerror(p->fts_errno));
+				warnc(p->fts_errno, "%s", p->fts_path);
 				eval = 1;
 			}
 			continue;
