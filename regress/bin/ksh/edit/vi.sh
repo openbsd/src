@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.9 2021/09/02 07:14:15 jasper Exp $
+# $OpenBSD: vi.sh,v 1.10 2025/04/21 20:06:15 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -123,6 +123,11 @@ testseq "abcde\0033hDh2P" " # abcde\b\b  \b\b\b\bdedebc\b\b\b"
 # p: Paste after current position.
 testseq "abcd\0033hDhp" " # abcd\b\b  \b\b\b\bacdb\b\b"
 testseq "abcd\0033hDh2p" " # abcd\b\b  \b\b\b\bacdcdb\b\b"
+testseq "A\0033xa\0303\0200\0033px" " # A\b \b\0303\0200\b\0303\0200A\b \b\b"
+testseq "\0302\0251\0033xaA\0033px" \
+	" # \0302\0251\b  \b\bA\bA\0302\0251\b  \b\b\b" 
+testseq "\0302\0251\0033xa\0303\0200\0033px" \
+	" # \0302\0251\b  \b\b\0303\0200\b\0303\0200\0302\0251\b  \b\b\b"
 
 # R: Replace.
 testseq "abcd\00332h2Rx\0033" " # abcd\b\b\bxx\b"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.60 2021/03/12 02:10:25 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.61 2025/04/21 20:06:15 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -834,12 +834,14 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case 'p':
 			modified = 1; hnum = hlast;
-			if (es->linelen != 0)
-				es->cursor++;
+			while (es->cursor < es->linelen)
+				if (!isu8cont(es->cbuf[++es->cursor]))
+					break;
 			while (putbuf(ybuf, yanklen, 0) == 0 && --argcnt > 0)
 				;
-			if (es->cursor != 0)
-				es->cursor--;
+			while (es->cursor > 0)
+				if (!isu8cont(es->cbuf[--es->cursor]))
+					break;
 			if (argcnt != 0)
 				return -1;
 			break;
