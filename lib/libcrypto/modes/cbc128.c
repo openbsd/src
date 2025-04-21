@@ -1,4 +1,4 @@
-/* $OpenBSD: cbc128.c,v 1.9 2025/04/21 15:54:32 jsing Exp $ */
+/* $OpenBSD: cbc128.c,v 1.10 2025/04/21 16:01:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -54,12 +54,6 @@
 #include <openssl/crypto.h>
 
 #include "modes_local.h"
-
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
 
 #undef STRICT_ALIGNMENT
 #ifdef __STRICT_ALIGNMENT

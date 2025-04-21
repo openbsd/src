@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.13 2025/04/21 15:54:32 jsing Exp $ */
+/* $OpenBSD: xts128.c,v 1.14 2025/04/21 16:01:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -54,12 +54,6 @@
 #include <openssl/crypto.h>
 
 #include "modes_local.h"
-
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
 
 int
 CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],

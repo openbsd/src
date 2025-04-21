@@ -1,4 +1,4 @@
-/* $OpenBSD: ofb128.c,v 1.8 2025/04/21 15:54:32 jsing Exp $ */
+/* $OpenBSD: ofb128.c,v 1.9 2025/04/21 16:01:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -54,12 +54,6 @@
 #include <openssl/crypto.h>
 
 #include "modes_local.h"
-
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
 
 /* The input and output encrypted as though 128bit ofb mode is being
  * used.  The extra state information to record how much of the

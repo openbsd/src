@@ -1,4 +1,4 @@
-/* $OpenBSD: ccm128.c,v 1.9 2025/04/21 15:54:32 jsing Exp $ */
+/* $OpenBSD: ccm128.c,v 1.10 2025/04/21 16:01:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -53,12 +53,6 @@
 #include <openssl/crypto.h>
 
 #include "modes_local.h"
-
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
 
 /* First you setup M and L parameters and pass the key schedule.
  * This is called once per session setup... */

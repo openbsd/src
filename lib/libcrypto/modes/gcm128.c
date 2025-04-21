@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.27 2024/09/06 09:57:32 tb Exp $ */
+/* $OpenBSD: gcm128.c,v 1.28 2025/04/21 16:01:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -56,12 +56,6 @@
 
 #include "crypto_internal.h"
 #include "modes_local.h"
-
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
 
 #if defined(BSWAP4) && defined(__STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */
