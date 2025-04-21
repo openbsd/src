@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.12 2023/07/08 14:56:54 beck Exp $ */
+/* $OpenBSD: xts128.c,v 1.13 2025/04/21 15:54:32 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -48,11 +48,12 @@
  * ====================================================================
  */
 
-#include <openssl/crypto.h>
-#include "modes_local.h"
-
 #include <endian.h>
 #include <string.h>
+
+#include <openssl/crypto.h>
+
+#include "modes_local.h"
 
 #ifndef MODES_DEBUG
 # ifndef NDEBUG
