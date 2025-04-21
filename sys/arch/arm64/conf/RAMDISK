@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.222 2025/03/25 05:23:45 hastings Exp $
+# $OpenBSD: RAMDISK,v 1.223 2025/04/21 21:11:04 mglocker Exp $
 
 machine		arm64
 maxusers	4
@@ -268,6 +268,7 @@ qcipcc*		at fdt?
 qcmtx*		at fdt? early 1
 qcpas*		at fdt?
 qcpdc*		at fdt?
+qcscm*		at acpi?
 qcscm*		at fdt?
 qcsmem*		at fdt?
 qcsmptp*	at fdt?
