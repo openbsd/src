@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.436 2025/04/16 17:17:06 jan Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.437 2025/04/21 09:54:53 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4452,7 +4452,7 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 }
 
 void
-tcp_softlro_enqueue(struct ifnet *ifp, struct mbuf_list *ml, struct mbuf *mtail)
+tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 {
 	struct mbuf *mhead;
 

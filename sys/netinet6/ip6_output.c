@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.297 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.298 2025/04/21 09:54:53 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2899,7 +2899,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	m->m_flags &= ~(M_BCAST | M_MCAST);
 
 	if (tso) {
-		error = tcp_chopper(m, &ml, encif, len);
+		error = tcp_softtso_chop(&ml, m, encif, len);
 		if (error)
 			goto done;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.407 2025/03/12 01:44:27 yasuoka Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.408 2025/04/21 09:54:53 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -634,7 +634,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	m->m_flags &= ~(M_MCAST | M_BCAST);
 
 	if (tso) {
-		error = tcp_chopper(m, &ml, encif, len);
+		error = tcp_softtso_chop(&ml, m, encif, len);
 		if (error)
 			goto done;
 	} else {
