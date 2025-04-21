@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.340 2025/03/27 16:31:12 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.341 2025/04/21 14:46:18 dv Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4211,7 +4211,7 @@ uvm_map_immutable(struct vm_map *map, vaddr_t start, vaddr_t end, int imut)
 	error = 0;
 out:
 	vm_map_unlock(map);
-	return (0);
+	return (error);
 }
 
 /*
