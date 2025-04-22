@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.151 2024/11/12 09:32:56 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.152 2025/04/22 12:31:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -197,11 +197,12 @@ key_bindings_add(const char *name, key_code key, const char *note, int repeat,
 	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
 	if (cmdlist == NULL) {
 		if (bd != NULL) {
-			free((void *)bd->note);
-			if (note != NULL)
+			if (note != NULL) {
+				free((void *)bd->note);
 				bd->note = xstrdup(note);
-			else
-				bd->note = NULL;
+			}
+			if (repeat)
+				bd->flags |= KEY_BINDING_REPEAT;
 		}
 		return;
 	}
