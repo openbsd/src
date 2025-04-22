@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.437 2025/04/21 09:54:53 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.438 2025/04/22 19:59:55 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4246,6 +4246,42 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now,
 	return (error);
 }
 
+static int
+tcp_softlro_check(struct mbuf *m, struct ether_extracted *ext)
+{
+	/* Don't merge packets with invalid TCP checksum. */
+	if (!ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
+		return 0;
+
+	if (ext->ip4) {
+		/* Don't merge packets with invalid IP header checksum. */
+		if (!ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK))
+			return 0;
+
+		/* Don't merge IPv4 packets with IP options. */
+		if (ext->iphlen != sizeof(struct ip))
+			return 0;
+	}
+
+	/* Check TCP protocol and header. */
+	if (!ext->tcp)
+		return 0;
+
+	/* Don't merge empty segments. */
+	if (ext->paylen == 0)
+		return 0;
+
+	/* Just ACK and PUSH TCP flags are allowed. */
+	if (ISSET(ext->tcp->th_flags, TH_ACK|TH_PUSH) != ext->tcp->th_flags)
+		return 0;
+
+	/* TCP ACK flag has to be set. */
+	if (!ISSET(ext->tcp->th_flags, TH_ACK))
+		return 0;
+
+	return 1;
+}
+
 int
 tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 {
@@ -4278,33 +4314,13 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 
 	/* Check IP header. */
 	if (head.ip4 && tail.ip4) {
-		/* Don't merge packets with invalid header checksum. */
-		if (!ISSET(mhead->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK) ||
-		    !ISSET(mtail->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK))
-			return 0;
-
 		/* Check IPv4 addresses. */
 		if (head.ip4->ip_src.s_addr != tail.ip4->ip_src.s_addr ||
 		    head.ip4->ip_dst.s_addr != tail.ip4->ip_dst.s_addr)
 			return 0;
 
-		/* Don't merge IPv4 fragments. */
-		if (ISSET(head.ip4->ip_off, htons(IP_OFFMASK | IP_MF)) ||
-		    ISSET(tail.ip4->ip_off, htons(IP_OFFMASK | IP_MF)))
-			return 0;
-
 		/* Check max. IPv4 length. */
 		if (head.iplen + tail.iplen > IP_MAXPACKET)
-			return 0;
-
-		/* Don't merge IPv4 packets with option headers. */
-		if (head.iphlen != sizeof(struct ip) ||
-		    tail.iphlen != sizeof(struct ip))
-			return 0;
-
-		/* Don't non-TCP packets. */
-		if (head.ip4->ip_p != IPPROTO_TCP ||
-		    tail.ip4->ip_p != IPPROTO_TCP)
 			return 0;
 	} else if (head.ip6 && tail.ip6) {
 		/* Check IPv6 addresses. */
@@ -4316,18 +4332,9 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 		if ((head.iplen - head.iphlen) +
 		    (tail.iplen - tail.iphlen) > IPV6_MAXPACKET)
 			return 0;
-
-		/* Don't merge IPv6 packets with option headers nor non-TCP. */
-		if (head.ip6->ip6_nxt != IPPROTO_TCP ||
-		    tail.ip6->ip6_nxt != IPPROTO_TCP)
-			return 0;
 	} else {
 		return 0;
 	}
-
-	/* Check TCP header. */
-	if (!head.tcp || !tail.tcp)
-		return 0;
 
 	/* Check TCP ports. */
 	if (head.tcp->th_sport != tail.tcp->th_sport ||
@@ -4340,16 +4347,6 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 
 	/* Check for continues segments. */
 	if (ntohl(head.tcp->th_seq) + head.paylen != ntohl(tail.tcp->th_seq))
-		return 0;
-
-	/* Just ACK and PUSH TCP flags are allowed. */
-	if (ISSET(head.tcp->th_flags, ~(TH_ACK|TH_PUSH)) ||
-	    ISSET(tail.tcp->th_flags, ~(TH_ACK|TH_PUSH)))
-		return 0;
-
-	/* TCP ACK flag has to be set. */
-	if (!ISSET(head.tcp->th_flags, TH_ACK) ||
-	    !ISSET(tail.tcp->th_flags, TH_ACK))
 		return 0;
 
 	/* Ignore segments with different TCP options. */
@@ -4454,19 +4451,23 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 void
 tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 {
+	struct ether_extracted	 tail;
 	struct mbuf *mhead;
 
 	if (!ISSET(ifp->if_xflags, IFXF_LRO))
 		goto out;
 
-	/* Don't merge packets with invalid header checksum. */
-	if (!ISSET(mtail->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
-		goto out;
+        ether_extract_headers(mtail, &tail);
+        if (!tcp_softlro_check(mtail, &tail)) {
+                mtail->m_pkthdr.ph_mss = 0;
+                goto out;
+        }
+        mtail->m_pkthdr.ph_mss = tail.paylen;
 
 	for (mhead = ml->ml_head; mhead != NULL; mhead = mhead->m_nextpkt) {
-		/* Don't merge packets with invalid header checksum. */
-		if (!ISSET(mhead->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
-			continue;
+                /* This packet has been checked and was not mergable before. */
+                if (mhead->m_pkthdr.ph_mss == 0)
+                        continue;
 
 		/* Use RSS hash to skip packets of different connections. */
 		if (ISSET(mhead->m_pkthdr.csum_flags, M_FLOWID) &&
