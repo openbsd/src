@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_local.h,v 1.2 2023/07/08 14:55:36 beck Exp $ */
+/* $OpenBSD: modes_local.h,v 1.3 2025/04/22 14:03:05 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -59,10 +59,8 @@ typedef unsigned char u8;
 
 #if defined(BSWAP4) && !defined(__STRICT_ALIGNMENT)
 #define GETU32(p)	BSWAP4(*(const u32 *)(p))
-#define PUTU32(p,v)	*(u32 *)(p) = BSWAP4(v)
 #else
 #define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
-#define PUTU32(p,v)	((p)[0]=(u8)((v)>>24),(p)[1]=(u8)((v)>>16),(p)[2]=(u8)((v)>>8),(p)[3]=(u8)(v))
 #endif
 
 /* GCM definitions */
