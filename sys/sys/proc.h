@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.383 2025/03/10 09:28:57 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.384 2025/04/22 04:53:50 jsg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -426,7 +426,6 @@ struct proc {
 #define	SDEAD	6		/* Thread is almost gone */
 #define	SONPROC	7		/* Thread is currently on a CPU. */
 
-#define	P_ZOMBIE(p)	((p)->p_stat == SDEAD)
 #define	P_HASSIBLING(p)	((p)->p_p->ps_threadcnt > 1)
 
 /*
