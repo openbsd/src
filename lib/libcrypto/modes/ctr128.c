@@ -1,4 +1,4 @@
-/* $OpenBSD: ctr128.c,v 1.15 2025/04/22 14:01:07 jsing Exp $ */
+/* $OpenBSD: ctr128.c,v 1.16 2025/04/22 14:08:24 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -49,7 +49,6 @@
  *
  */
 
-#include <assert.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
@@ -118,12 +117,10 @@ CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
     unsigned char ivec[16], unsigned char ecount_buf[16],
     unsigned int *num, block128_f block)
 {
-	unsigned int n;
+	unsigned int n = *num;
 	size_t l = 0;
 
-	assert(*num < 16);
-
-	n = *num;
+	OPENSSL_assert(n < 16);
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16 % sizeof(size_t) == 0)
@@ -201,11 +198,10 @@ CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
     unsigned char ivec[16], unsigned char ecount_buf[16],
     unsigned int *num, ctr128_f func)
 {
-	unsigned int n, ctr32;
+	unsigned int n = *num;
+	unsigned int ctr32;
 
-	assert(*num < 16);
-
-	n = *num;
+	OPENSSL_assert(n < 16);
 
 	while (n && len) {
 		*(out++) = *(in++) ^ ecount_buf[n];
