@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.28 2025/04/21 16:01:18 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.29 2025/04/22 14:09:20 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -47,8 +47,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
-
-#define OPENSSL_FIPSAPI
 
 #include <string.h>
 
