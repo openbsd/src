@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.44 2025/03/04 08:45:04 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.45 2025/04/22 12:36:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -132,9 +132,12 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 		window_pane_stack_remove(&dst_w->last_panes, dst_wp);
 		colour_palette_from_option(&src_wp->palette, src_wp->options);
 		colour_palette_from_option(&dst_wp->palette, dst_wp->options);
+		layout_fix_panes(src_w, NULL);
+		server_redraw_window(src_w);
 	}
-	server_redraw_window(src_w);
+	layout_fix_panes(dst_w, NULL);
 	server_redraw_window(dst_w);
+
 	notify_window("window-layout-changed", src_w);
 	if (src_w != dst_w)
 		notify_window("window-layout-changed", dst_w);
