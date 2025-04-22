@@ -1,4 +1,4 @@
-/* $OpenBSD: ctr128.c,v 1.14 2025/04/21 16:01:18 jsing Exp $ */
+/* $OpenBSD: ctr128.c,v 1.15 2025/04/22 14:01:07 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -54,6 +54,7 @@
 
 #include <openssl/crypto.h>
 
+#include "crypto_internal.h"
 #include "modes_local.h"
 
 /* NOTE: the IV/counter CTR mode is big-endian.  The code itself
@@ -212,7 +213,8 @@ CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 		n = (n + 1) % 16;
 	}
 
-	ctr32 = GETU32(ivec + 12);
+	ctr32 = crypto_load_be32toh(&ivec[12]);
+
 	while (len >= 16) {
 		size_t blocks = len/16;
 		/*
@@ -236,7 +238,7 @@ CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 		}
 		(*func)(in, out, blocks, key, ivec);
 		/* (*ctr) does not update ivec, caller does: */
-		PUTU32(ivec + 12, ctr32);
+		crypto_store_htobe32(&ivec[12], ctr32);
 		/* ... overflow was detected, propagate carry. */
 		if (ctr32 == 0)
 			ctr96_inc(ivec);
@@ -249,7 +251,7 @@ CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 		memset(ecount_buf, 0, 16);
 		(*func)(ecount_buf, ecount_buf, 1, key, ivec);
 		++ctr32;
-		PUTU32(ivec + 12, ctr32);
+		crypto_store_htobe32(&ivec[12], ctr32);
 		if (ctr32 == 0)
 			ctr96_inc(ivec);
 		while (len--) {
