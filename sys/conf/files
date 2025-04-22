@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.742 2024/12/15 11:00:05 dlg Exp $
+#	$OpenBSD: files,v 1.743 2025/04/22 05:31:49 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -110,6 +110,9 @@ define	edid
 file	dev/videomode/edid.c		edid
 file    dev/videomode/vesagtf.c         edid
 file    dev/videomode/videomode.c       edid
+
+# ACPI / FDT qualcomm devices
+device qcscm
 
 # Attribute for devices that read/write an IEEE 802.3u MII bus using the
 # bit-bang method.

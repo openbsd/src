@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.207 2025/03/25 04:17:52 hastings Exp $
+#	$OpenBSD: files.fdt,v 1.208 2025/04/22 05:31:50 deraadt Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -729,7 +729,7 @@ attach	qcpas at fdt
 file	dev/fdt/qcpas.c			qcpas
 
 # Qualcomm SCM
-device	qcscm
+#device	qcscm	# XXX in sys/conf/files, because shared between ACPI and FDT 
 attach	qcscm at fdt
 file	dev/fdt/qcscm.c			qcscm
 
