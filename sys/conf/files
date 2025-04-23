@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.743 2025/04/22 05:31:49 deraadt Exp $
+#	$OpenBSD: files,v 1.744 2025/04/23 15:07:00 visa Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -739,6 +739,7 @@ file kern/kern_intrmap.c		intrmap
 file kern/kern_sensors.c
 file kern/kern_sig.c
 file kern/kern_smr.c
+file kern/kern_softintr.c
 file kern/kern_subr.c
 file kern/kern_sysctl.c
 file kern/kern_synch.c
