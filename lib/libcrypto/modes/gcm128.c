@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.29 2025/04/22 14:09:20 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.30 2025/04/23 10:58:48 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -1060,8 +1060,8 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 				ctx->Yi.d[3] = htobe32(ctr);
 
 				for (i = 0; i < 16/sizeof(size_t); ++i) {
-					size_t c = in[i];
-					out[i] = c ^ ctx->EKi.t[i];
+					size_t c = in_t[i];
+					out_t[i] = c ^ ctx->EKi.t[i];
 					ctx->Xi.t[i] ^= c;
 				}
 				GCM_MUL(ctx, Xi);
