@@ -1,4 +1,4 @@
-/* $OpenBSD: ofb128.c,v 1.9 2025/04/21 16:01:18 jsing Exp $ */
+/* $OpenBSD: ofb128.c,v 1.10 2025/04/23 10:09:08 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -70,7 +70,6 @@ CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 
 	n = *num;
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16 % sizeof(size_t) == 0)
 		do { /* always true actually */
 			while (n && len) {
@@ -105,7 +104,6 @@ CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 			return;
 		} while (0);
 	/* the rest would be commonly eliminated by x86* compiler */
-#endif
 	while (l < len) {
 		if (n == 0) {
 			(*block)(ivec, ivec, key);

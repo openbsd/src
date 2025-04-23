@@ -1,4 +1,4 @@
-/* $OpenBSD: ctr128.c,v 1.16 2025/04/22 14:08:24 jsing Exp $ */
+/* $OpenBSD: ctr128.c,v 1.17 2025/04/23 10:09:08 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -76,7 +76,6 @@ ctr128_inc(unsigned char *counter)
 	} while (n);
 }
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
 static void
 ctr128_inc_aligned(unsigned char *counter)
 {
@@ -96,7 +95,6 @@ ctr128_inc_aligned(unsigned char *counter)
 	} while (n);
 #endif
 }
-#endif
 
 /* The input encrypted as though 128bit counter mode is being
  * used.  The extra state information to record how much of the
@@ -122,7 +120,6 @@ CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
 	OPENSSL_assert(n < 16);
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16 % sizeof(size_t) == 0)
 		do { /* always true actually */
 			while (n && len) {
@@ -160,7 +157,6 @@ CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 			return;
 		} while (0);
 	/* the rest would be commonly eliminated by x86* compiler */
-#endif
 	while (l < len) {
 		if (n == 0) {
 			(*block)(ivec, ecount_buf, key);
