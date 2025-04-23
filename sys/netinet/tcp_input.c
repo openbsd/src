@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.439 2025/04/22 22:34:27 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.440 2025/04/23 17:52:12 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4283,10 +4283,9 @@ tcp_softlro_check(struct mbuf *m, struct ether_extracted *ext)
 }
 
 int
-tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
+tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
+    struct mbuf *mtail, struct ether_extracted *tail)
 {
-	struct ether_extracted	 head;
-	struct ether_extracted	 tail;
 	struct mbuf		*m;
 	unsigned int		 hdrlen;
 	unsigned int		 cnt = 0;
@@ -4295,70 +4294,66 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 	 * Check if head and tail are mergeable
 	 */
 
-	ether_extract_headers(mhead, &head);
-	ether_extract_headers(mtail, &tail);
-
 	/* Don't merge packets inside and outside of VLANs */
-	if (head.evh && tail.evh) {
+	if (head->evh && tail->evh) {
 		/* Don't merge packets of different VLANs */
-		if (EVL_VLANOFTAG(head.evh->evl_tag) !=
-		    EVL_VLANOFTAG(tail.evh->evl_tag))
+		if (EVL_VLANOFTAG(head->evh->evl_tag) !=
+		    EVL_VLANOFTAG(tail->evh->evl_tag))
 			return 0;
 
 		/* Don't merge packets of different priorities */
-		if (EVL_PRIOFTAG(head.evh->evl_tag) !=
-		    EVL_PRIOFTAG(tail.evh->evl_tag))
+		if (EVL_PRIOFTAG(head->evh->evl_tag) !=
+		    EVL_PRIOFTAG(tail->evh->evl_tag))
 			return 0;
-	} else if (head.evh || tail.evh)
+	} else if (head->evh || tail->evh)
+		return 0;
+
+	/* Check TCP ports. */
+	if (head->tcp->th_sport != tail->tcp->th_sport ||
+	    head->tcp->th_dport != tail->tcp->th_dport)
 		return 0;
 
 	/* Check IP header. */
-	if (head.ip4 && tail.ip4) {
+	if (head->ip4 && tail->ip4) {
 		/* Check IPv4 addresses. */
-		if (head.ip4->ip_src.s_addr != tail.ip4->ip_src.s_addr ||
-		    head.ip4->ip_dst.s_addr != tail.ip4->ip_dst.s_addr)
+		if (head->ip4->ip_src.s_addr != tail->ip4->ip_src.s_addr ||
+		    head->ip4->ip_dst.s_addr != tail->ip4->ip_dst.s_addr)
 			return 0;
 
 		/* Check max. IPv4 length. */
-		if (head.iplen + tail.iplen > IP_MAXPACKET)
+		if (head->iplen + tail->iplen > IP_MAXPACKET)
 			return 0;
-	} else if (head.ip6 && tail.ip6) {
+	} else if (head->ip6 && tail->ip6) {
 		/* Check IPv6 addresses. */
-		if (!IN6_ARE_ADDR_EQUAL(&head.ip6->ip6_src, &tail.ip6->ip6_src) ||
-		    !IN6_ARE_ADDR_EQUAL(&head.ip6->ip6_dst, &tail.ip6->ip6_dst))
+		if (!IN6_ARE_ADDR_EQUAL(&head->ip6->ip6_src,
+		    &tail->ip6->ip6_src) ||
+		    !IN6_ARE_ADDR_EQUAL(&head->ip6->ip6_dst,
+		    &tail->ip6->ip6_dst))
 			return 0;
 
 		/* Check max. IPv6 length. */
-		if ((head.iplen - head.iphlen) +
-		    (tail.iplen - tail.iphlen) > IPV6_MAXPACKET)
+		if ((head->iplen - head->iphlen) +
+		    (tail->iplen - tail->iphlen) > IPV6_MAXPACKET)
 			return 0;
 	} else {
+		/* Address family does not match. */
 		return 0;
 	}
 
-	/* Check TCP ports. */
-	if (head.tcp->th_sport != tail.tcp->th_sport ||
-	    head.tcp->th_dport != tail.tcp->th_dport)
-		return 0;
-
-	/* Don't merge empty segments. */
-	if (head.paylen == 0 || tail.paylen == 0)
-		return 0;
-
 	/* Check for continues segments. */
-	if (ntohl(head.tcp->th_seq) + head.paylen != ntohl(tail.tcp->th_seq))
+	if (ntohl(head->tcp->th_seq) + head->paylen != ntohl(tail->tcp->th_seq))
 		return 0;
 
 	/* Ignore segments with different TCP options. */
-	if (head.tcphlen - sizeof(struct tcphdr) !=
-	    tail.tcphlen - sizeof(struct tcphdr))
+	if (head->tcphlen - sizeof(struct tcphdr) !=
+	    tail->tcphlen - sizeof(struct tcphdr))
 		return 0;
 
 	/* Check for TCP options */
-	if (head.tcphlen > sizeof(struct tcphdr)) {
-		char *hopt = (char *)(head.tcp) + sizeof(struct tcphdr);
-		char *topt = (char *)(tail.tcp) + sizeof(struct tcphdr);
-		int optsize = head.tcphlen - sizeof(struct tcphdr);
+	if (head->tcphlen > sizeof(struct tcphdr)) {
+		char *hopt = (char *)(head->tcp) + sizeof(struct tcphdr);
+		char *topt = (char *)(tail->tcp) + sizeof(struct tcphdr);
+		int optsize = head->tcphlen - sizeof(struct tcphdr);
 		int optlen;
 
 		for (; optsize > 0; optsize -= optlen) {
@@ -4395,27 +4390,27 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 	 */
 
 	/* Adjust IP header. */
-	if (head.ip4) {
-		head.ip4->ip_len = htons(head.iplen + tail.paylen);
-	} else if (head.ip6) {
-		head.ip6->ip6_plen =
-		    htons(head.iplen - head.iphlen + tail.paylen);
+	if (head->ip4) {
+		head->ip4->ip_len = htons(head->iplen + tail->paylen);
+	} else if (head->ip6) {
+		head->ip6->ip6_plen =
+		    htons(head->iplen - head->iphlen + tail->paylen);
 	}
 
 	/* Combine TCP flags from head and tail. */
-	if (ISSET(tail.tcp->th_flags, TH_PUSH))
-		SET(head.tcp->th_flags, TH_PUSH);
+	if (ISSET(tail->tcp->th_flags, TH_PUSH))
+		SET(head->tcp->th_flags, TH_PUSH);
 
 	/* Adjust TCP header. */
-	head.tcp->th_win = tail.tcp->th_win;
-	head.tcp->th_ack = tail.tcp->th_ack;
+	head->tcp->th_win = tail->tcp->th_win;
+	head->tcp->th_ack = tail->tcp->th_ack;
 
 	/* Calculate header length of tail packet. */
-	hdrlen = sizeof(*tail.eh);
-	if (tail.evh)
-		hdrlen = sizeof(*tail.evh);
-	hdrlen += tail.iphlen;
-	hdrlen += tail.tcphlen;
+	hdrlen = sizeof(*tail->eh);
+	if (tail->evh)
+		hdrlen = sizeof(*tail->evh);
+	hdrlen += tail->iphlen;
+	hdrlen += tail->tcphlen;
 
 	/* Skip protocol headers in tail. */
 	m_adj(mtail, hdrlen);
@@ -4425,24 +4420,24 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 	for (m = mhead; m->m_next;)
 		m = m->m_next;
 	m->m_next = mtail;
-	mhead->m_pkthdr.len += tail.paylen;
+	mhead->m_pkthdr.len += tail->paylen;
 
 	/* Flag mbuf as TSO packet with MSS. */
 	if (!ISSET(mhead->m_pkthdr.csum_flags, M_TCP_TSO)) {
 		/* Set CSUM_OUT flags in case of forwarding. */
 		SET(mhead->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
-		head.tcp->th_sum = 0;
-		if (head.ip4) {
+		head->tcp->th_sum = 0;
+		if (head->ip4) {
 			SET(mhead->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT);
-			head.ip4->ip_sum = 0;
+			head->ip4->ip_sum = 0;
 		}
 
 		SET(mhead->m_pkthdr.csum_flags, M_TCP_TSO);
-		mhead->m_pkthdr.ph_mss = head.paylen;
+		mhead->m_pkthdr.ph_mss = head->paylen;
 		tcpstat_inc(tcps_inswlro);
 		tcpstat_inc(tcps_inpktlro);	/* count head */
 	}
-	mhead->m_pkthdr.ph_mss = MAX(mhead->m_pkthdr.ph_mss, tail.paylen);
+	mhead->m_pkthdr.ph_mss = MAX(mhead->m_pkthdr.ph_mss, tail->paylen);
 	tcpstat_inc(tcps_inpktlro);	/* count tail */
 
 	return 1;
@@ -4451,7 +4446,7 @@ tcp_softlro(struct mbuf *mhead, struct mbuf *mtail)
 void
 tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 {
-	struct ether_extracted	 tail;
+	struct ether_extracted head, tail;
 	struct mbuf *mhead;
 
 	if (!ISSET(ifp->if_xflags, IFXF_LRO))
@@ -4492,7 +4487,8 @@ tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 				continue;
 		}
 
-		if (tcp_softlro(mhead, mtail))
+		ether_extract_headers(mhead, &head);
+		if (tcp_softlro(mhead, &head, mtail, &tail))
 			return;
 	}
  out:
