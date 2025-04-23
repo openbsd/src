@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.30 2025/04/23 10:58:48 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.31 2025/04/23 14:12:38 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -545,35 +545,21 @@ void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 static void
 gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
 {
-	u128 V, Z = { 0,0 };
-	long X;
+	u128 V, Z = { 0, 0 };
+	u64 X;
 	int i, j;
-	const long *xi = (const long *)Xi;
 
 	V.hi = H[0];	/* H is in host byte order, no byte swapping */
 	V.lo = H[1];
 
-	for (j = 0; j < 16/sizeof(long); ++j) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-#if SIZE_MAX == 0xffffffffffffffff
-#ifdef BSWAP8
-		X = (long)(BSWAP8(xi[j]));
-#else
-		const u8 *p = (const u8 *)(xi + j);
-		X = (long)((u64)GETU32(p) << 32|GETU32(p + 4));
-#endif
-#else
-		const u8 *p = (const u8 *)(xi + j);
-		X = (long)GETU32(p);
-#endif
-#else /* BIG_ENDIAN */
-		X = xi[j];
-#endif
+	for (j = 0; j < 2; j++) {
+		X = be64toh(Xi[j]);
 
-		for (i = 0; i < 8*sizeof(long); ++i, X <<= 1) {
-			u64 M = (u64)(X >> (8*sizeof(long) - 1));
+		for (i = 0; i < 64; i++) {
+			u64 M = 0 - (X >> 63);
 			Z.hi ^= V.hi & M;
 			Z.lo ^= V.lo & M;
+			X <<= 1;
 
 			REDUCE1BIT(V);
 		}
