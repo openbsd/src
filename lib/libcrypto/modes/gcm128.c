@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.31 2025/04/23 14:12:38 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.32 2025/04/23 14:15:19 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -54,12 +54,6 @@
 
 #include "crypto_internal.h"
 #include "modes_local.h"
-
-#if defined(BSWAP4) && defined(__STRICT_ALIGNMENT)
-/* redefine, because alignment is ensured */
-#undef	GETU32
-#define	GETU32(p)	BSWAP4(*(const u32 *)(p))
-#endif
 
 #define	PACK(s)		((size_t)(s)<<(sizeof(size_t)*8-16))
 #define REDUCE1BIT(V)							\

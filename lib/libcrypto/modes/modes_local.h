@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_local.h,v 1.3 2025/04/22 14:03:05 jsing Exp $ */
+/* $OpenBSD: modes_local.h,v 1.4 2025/04/23 14:15:19 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -26,42 +26,6 @@ typedef unsigned long long u64;
 
 typedef unsigned int u32;
 typedef unsigned char u8;
-
-#if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#if defined(__GNUC__) && __GNUC__>=2
-# if defined(__x86_64) || defined(__x86_64__)
-#  define BSWAP8(x) ({	u64 ret=(x);					\
-			asm ("bswapq %0"				\
-			: "+r"(ret));	ret;		})
-#  define BSWAP4(x) ({	u32 ret=(x);					\
-			asm ("bswapl %0"				\
-			: "+r"(ret));	ret;		})
-# elif (defined(__i386) || defined(__i386__))
-#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);			\
-			asm ("bswapl %0; bswapl %1"			\
-			: "+r"(hi),"+r"(lo));				\
-			(u64)hi<<32|lo;			})
-#  define BSWAP4(x) ({	u32 ret=(x);					\
-			asm ("bswapl %0"				\
-			: "+r"(ret));	ret;		})
-# elif (defined(__arm__) || defined(__arm)) && !defined(__STRICT_ALIGNMENT)
-#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);			\
-			asm ("rev %0,%0; rev %1,%1"			\
-			: "+r"(hi),"+r"(lo));				\
-			(u64)hi<<32|lo;			})
-#  define BSWAP4(x) ({	u32 ret;					\
-			asm ("rev %0,%1"				\
-			: "=r"(ret) : "r"((u32)(x)));			\
-			ret;				})
-# endif
-#endif
-#endif
-
-#if defined(BSWAP4) && !defined(__STRICT_ALIGNMENT)
-#define GETU32(p)	BSWAP4(*(const u32 *)(p))
-#else
-#define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
-#endif
 
 /* GCM definitions */
 
