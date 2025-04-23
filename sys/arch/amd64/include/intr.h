@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.34 2024/05/26 13:37:31 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.35 2025/04/23 15:08:05 visa Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -33,6 +33,9 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
+#define __USE_MI_SOFTINTR
+
+#include <sys/softintr.h>
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
@@ -109,6 +112,7 @@ extern void Xspllower(int);
 int splraise(int);
 int spllower(int);
 void softintr(int);
+void dosoftint(int);
 
 /*
  * Convert spl level to local APIC level
@@ -220,53 +224,5 @@ extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
 #endif
 
 #endif /* !_LOCORE */
-
-/*
- * Generic software interrupt support.
- */
-
-#define	X86_SOFTINTR_SOFTCLOCK		0
-#define	X86_SOFTINTR_SOFTNET		1
-#define	X86_SOFTINTR_SOFTTTY		2
-#define	X86_NSOFTINTR			3
-
-#ifndef _LOCORE
-#include <sys/queue.h>
-
-struct x86_soft_intrhand {
-	TAILQ_ENTRY(x86_soft_intrhand)
-		sih_q;
-	struct x86_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct x86_soft_intr {
-	TAILQ_HEAD(, x86_soft_intrhand)
-			softintr_q;
-	int		softintr_ssir;
-	struct mutex	softintr_lock;
-};
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(int);
-
-#define	softintr_schedule(arg)						\
-do {									\
-	struct x86_soft_intrhand *__sih = (arg);			\
-	struct x86_soft_intr *__si = __sih->sih_intrhead;		\
-									\
-	mtx_enter(&__si->softintr_lock);				\
-	if (__sih->sih_pending == 0) {					\
-		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
-		__sih->sih_pending = 1;					\
-		softintr(__si->softintr_ssir);				\
-	}								\
-	mtx_leave(&__si->softintr_lock);				\
-} while (/*CONSTCOND*/ 0)
-#endif /* _LOCORE */
 
 #endif /* !_MACHINE_INTR_H_ */

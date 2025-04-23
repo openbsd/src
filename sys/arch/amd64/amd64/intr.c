@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.61 2024/06/25 12:02:48 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.62 2025/04/23 15:08:05 visa Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -71,6 +71,12 @@ struct pic softintr_pic = {
 	NULL,
 	NULL,
 	NULL,
+};
+
+const int softintr_to_ssir[NSOFTINTR] = {
+	SIR_CLOCK,
+	SIR_NET,
+	SIR_TTY,
 };
 
 int intr_suspended;
@@ -809,14 +815,27 @@ spllower(int nlevel)
  * Software interrupt registration
  *
  * We hand-code this to ensure that it's atomic.
- *
- * XXX always scheduled on the current CPU.
  */
 void
-softintr(int sir)
+softintr(int si_level)
 {
 	struct cpu_info *ci = curcpu();
+	int sir = softintr_to_ssir[si_level];
 
 	__asm volatile("lock; orq %1, %0" :
 	    "=m"(ci->ci_ipending) : "ir" (1UL << sir));
+}
+
+void
+dosoftint(int si_level)
+{
+	struct cpu_info *ci = curcpu();
+	int floor;
+
+	floor = ci->ci_handled_intr_level;
+	ci->ci_handled_intr_level = ci->ci_ilevel;
+
+	softintr_dispatch(si_level);
+
+	ci->ci_handled_intr_level = floor;
 }

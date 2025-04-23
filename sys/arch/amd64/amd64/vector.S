@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.99 2024/11/10 03:02:43 jsg Exp $	*/
+/*	$OpenBSD: vector.S,v 1.100 2025/04/23 15:08:05 visa Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -1328,8 +1328,8 @@ KIDTVEC(softtty)
 	movl	$IPL_SOFTTTY, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
-	movl	$X86_SOFTINTR_SOFTTTY,%edi
-	call	softintr_dispatch
+	movl	$SOFTINTR_TTY,%edi
+	call	dosoftint
 	movq	$0,-8(%rsp)
 	decl	CPUVAR(IDEPTH)
 	CODEPATCH_START
@@ -1342,8 +1342,8 @@ KIDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
-	movl	$X86_SOFTINTR_SOFTNET,%edi
-	call	softintr_dispatch
+	movl	$SOFTINTR_NET,%edi
+	call	dosoftint
 	movq	$0,-8(%rsp)
 	decl	CPUVAR(IDEPTH)
 	CODEPATCH_START
@@ -1356,8 +1356,8 @@ KIDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
-	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
-	call	softintr_dispatch
+	movl	$SOFTINTR_CLOCK,%edi
+	call	dosoftint
 	movq	$0,-8(%rsp)
 	decl	CPUVAR(IDEPTH)
 	CODEPATCH_START
