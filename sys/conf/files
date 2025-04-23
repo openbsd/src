@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.744 2025/04/23 15:07:00 visa Exp $
+#	$OpenBSD: files,v 1.745 2025/04/23 21:40:22 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -110,9 +110,6 @@ define	edid
 file	dev/videomode/edid.c		edid
 file    dev/videomode/vesagtf.c         edid
 file    dev/videomode/videomode.c       edid
-
-# ACPI / FDT qualcomm devices
-device qcscm
 
 # Attribute for devices that read/write an IEEE 802.3u MII bus using the
 # bit-bang method.
@@ -560,6 +557,9 @@ device	qcgpio
 
 # Qualcomm I2C controller
 device	qciic: i2cbus
+
+# Qualcomm Secure Channel Manager
+device	qcscm
 
 # UFS HC
 device	ufshci: scsi
