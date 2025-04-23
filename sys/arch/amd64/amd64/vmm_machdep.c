@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.41 2024/11/27 10:09:51 mpi Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.42 2025/04/23 21:54:12 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -138,6 +138,7 @@ void vmx_setmsrbw(struct vcpu *, uint32_t);
 void vmx_setmsrbrw(struct vcpu *, uint32_t);
 void svm_set_clean(struct vcpu *, uint32_t);
 void svm_set_dirty(struct vcpu *, uint32_t);
+int svm_get_vmsa_pa(uint32_t, uint32_t, uint64_t *);
 
 int vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size);
 void vmm_init_pvclock(struct vcpu *, paddr_t);
@@ -2849,8 +2850,31 @@ vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 	    (uint64_t)vcpu->vc_svm_ioio_va,
 	    (uint64_t)vcpu->vc_svm_ioio_pa);
 
-	/* Shall we enable SEV? */
+	/* Shall we enable SEV/SEV-ES? */
 	vcpu->vc_sev = vcp->vcp_sev;
+	vcpu->vc_seves = vcp->vcp_seves;
+
+	if (vcpu->vc_seves) {
+		/* Allocate VM save area VA */
+		vcpu->vc_svm_vmsa_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page,
+		   &kp_zero, &kd_waitok);
+
+		if (!vcpu->vc_svm_vmsa_va) {
+			ret = ENOMEM;
+			goto exit;
+		}
+
+		/* Compute VM save area PA */
+		if (!pmap_extract(pmap_kernel(), vcpu->vc_svm_vmsa_va,
+		    &vcpu->vc_svm_vmsa_pa)) {
+			ret = ENOMEM;
+			goto exit;
+		}
+
+		DPRINTF("%s: VMSA va @ 0x%llx, pa @ 0x%llx\n", __func__,
+		    (uint64_t)vcpu->vc_svm_vmsa_va,
+		    (uint64_t)vcpu->vc_svm_vmsa_pa);
+	}
 
 	/* Inform vmd(8) about ASID and C bit position. */
 	vcp->vcp_poscbit = amd64_pos_cbit;
@@ -2956,6 +2980,11 @@ vcpu_deinit_svm(struct vcpu *vcpu)
 		km_free((void *)vcpu->vc_svm_hsa_va, PAGE_SIZE, &kv_page,
 		    &kp_zero);
 		vcpu->vc_svm_hsa_va = 0;
+	}
+	if (vcpu->vc_svm_vmsa_va) {
+		km_free((void *)vcpu->vc_svm_vmsa_va, PAGE_SIZE, &kv_page,
+		    &kp_zero);
+		vcpu->vc_svm_vmsa_va = 0;
 	}
 	if (vcpu->vc_svm_ioio_va) {
 		km_free((void *)vcpu->vc_svm_ioio_va, 3 * PAGE_SIZE, &kv_any,
@@ -6777,6 +6806,36 @@ vcpu_state_decode(u_int state)
 	case VCPU_STATE_UNKNOWN: return "unknown";
 	default: return "invalid";
 	}
+}
+
+/*
+ * svm_get_vmsa_pa
+ *
+ * Return physical address of VMSA for specified VCPU.
+ */
+int
+svm_get_vmsa_pa(uint32_t vmid, uint32_t vcpuid, uint64_t *vmsapa)
+{
+	struct vm	*vm;
+	struct vcpu	*vcpu;
+	int		 error, ret = 0;
+
+	error = vm_find(vmid, &vm);
+	if (error)
+		return (error);
+
+	vcpu = vm_find_vcpu(vm, vcpuid);
+	if (vcpu == NULL || !vcpu->vc_seves) {
+		ret = ENOENT;
+		goto out;
+	}
+
+	if (vmsapa)
+		*vmsapa = vcpu->vc_svm_vmsa_pa;
+
+out:
+	refcnt_rele_wake(&vm->vm_refcnt);
+	return (ret);
 }
 
 #ifdef VMM_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.109 2024/10/22 21:50:02 jsg Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.110 2025/04/23 21:54:12 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -668,6 +668,8 @@ struct vmcb {
 			uint64_t	v_pad5;			/* 0E8h-0EFh */
 			uint64_t	v_avic_logical_table;	/* 0F0h */
 			uint64_t	v_avic_phys;		/* 0F8h */
+			uint64_t	v_pad12;		/* 100h */
+			uint64_t	v_vmsa_pa;		/* 108h */
 
 		};
 		uint8_t			vmcb_control[0x400];
@@ -721,6 +723,128 @@ struct vmcb {
 		};
 		uint8_t				vmcb_layout[PAGE_SIZE - 0x400];
 	};
+};
+
+struct vmsa {
+		struct vmcb_segment	v_es;		/* 000h */
+		struct vmcb_segment	v_cs;		/* 010h */
+		struct vmcb_segment	v_ss;		/* 020h */
+		struct vmcb_segment	v_ds;		/* 030h */
+		struct vmcb_segment	v_fs;		/* 040h */
+		struct vmcb_segment	v_gs;		/* 050h */
+		struct vmcb_segment	v_gdtr;		/* 060h */
+		struct vmcb_segment	v_ldtr;		/* 070h */
+		struct vmcb_segment	v_idtr;		/* 080h */
+		struct vmcb_segment	v_tr;		/* 090h */
+		uint64_t		v_pl0_ssp;	/* 0A0h */
+		uint64_t		v_pl1_ssp;	/* 0A8h */
+		uint64_t		v_pl2_ssp;	/* 0B0h */
+		uint64_t		v_pl3_ssp;	/* 0B8h */
+		uint64_t		v_u_cet;	/* 0C0h */
+		uint8_t			v_pad1[0x2];	/* 0C8h-0C9h */
+		uint8_t			v_vmpl;		/* 0CAh */
+		uint8_t			v_cpl;		/* 0CBh */
+		uint8_t			v_pad2[0x4];	/* 0CCh-0CFh */
+		uint64_t		v_efer;		/* 0D0h */
+		uint8_t			v_pad3[0x68];	/* 0D8h-13Fh */
+		uint64_t		v_xss;		/* 140h */
+		uint64_t		v_cr4;		/* 148h */
+		uint64_t		v_cr3;		/* 150h */
+		uint64_t		v_cr0;		/* 158h */
+		uint64_t		v_dr7;		/* 160h */
+		uint64_t		v_dr6;		/* 168h */
+		uint64_t		v_rflags;	/* 170h */
+		uint64_t		v_rip;		/* 178h */
+		uint64_t		v_dr0;		/* 180h */
+		uint64_t		v_dr1;		/* 188h */
+		uint64_t		v_dr2;		/* 190h */
+		uint64_t		v_dr3;		/* 198h */
+		uint64_t		v_dr0_addr_msk;	/* 1A0h */
+		uint64_t		v_dr1_addr_msk;	/* 1A8h */
+		uint64_t		v_dr2_addr_msk; /* 1B0h */
+		uint64_t		v_dr3_addr_msk; /* 1B8h */
+		uint8_t			v_pad4[0x18];	/* 1C0h-1D7h */
+		uint64_t		v_rsp;		/* 1D8h */
+		uint64_t		v_s_cet;	/* 1E0h */
+		uint64_t		v_ssp;		/* 1E8h */
+		uint64_t		v_isst_addr;	/* 1F0h */
+		uint64_t		v_rax;		/* 1F8h */
+		uint64_t		v_star;		/* 200h */
+		uint64_t		v_lstar;	/* 208h */
+		uint64_t		v_cstar;	/* 210h */
+		uint64_t		v_sfmask;	/* 218h */
+		uint64_t		v_kgsbase;	/* 220h */
+		uint64_t		v_sysenter_cs;	/* 228h */
+		uint64_t		v_sysenter_esp;	/* 230h */
+		uint64_t		v_sysenter_eip;	/* 238h */
+		uint64_t		v_cr2;		/* 240h */
+		uint8_t			v_pad5[0x20];	/* 248h-267h */
+		uint64_t		v_g_pat;	/* 268h */
+		uint64_t		v_dbgctl;	/* 270h */
+		uint64_t		v_br_from;	/* 278h */
+		uint64_t		v_br_to;	/* 280h */
+		uint64_t		v_lastexcpfrom;	/* 288h */
+		uint64_t		v_lastexcpto;	/* 290h */
+		uint8_t			v_pad6[0x48];	/* 298h-2DFh */
+		uint8_t			v_pad7[0x8];	/* 2E0h-2E7h */
+		uint32_t		v_pkru;		/* 2E8h */
+		uint32_t		v_tsc_aux;	/* 2ECh */
+		uint64_t		v_gst_tsc_scale;/* 2F0h */
+		uint64_t		v_gst_tsc_off;	/* 2F8h */
+		uint64_t		v_reg_prot_nce;	/* 300h */
+		uint64_t		v_rcx;		/* 308h */
+		uint64_t		v_rdx;		/* 310h */
+		uint64_t		v_rbx;		/* 318h */
+		uint64_t		v_pad8;		/* 320h */
+		uint64_t		v_rbp;		/* 328h */
+		uint64_t		v_rsi;		/* 330h */
+		uint64_t		v_rdi;		/* 338h */
+		uint64_t		v_r8;		/* 340h */
+		uint64_t		v_r9;		/* 348h */
+		uint64_t		v_r10;		/* 350h */
+		uint64_t		v_r11;		/* 358h */
+		uint64_t		v_r12;		/* 360h */
+		uint64_t		v_r13;		/* 368h */
+		uint64_t		v_r14;		/* 370h */
+		uint64_t		v_r15;		/* 378h */
+		uint8_t			v_pad9[0x10];	/* 380h-38Fh */
+		uint64_t		v_gst_exitinfo1;/* 390h */
+		uint64_t		v_gst_exitinfo2;/* 398h */
+		uint64_t		v_gst_exitiinfo;/* 3A0h */
+		uint64_t		v_gst_nrip;	/* 3A8h */
+		uint64_t		v_sev_features;	/* 3B0h */
+		uint64_t		v_intr_ctrl;	/* 3B8h */
+		uint64_t		v_gst_exitcode;	/* 3C0h */
+		uint64_t		v_virtual_tom;	/* 3C8h */
+		uint64_t		v_tlb_id;	/* 3D0h */
+		uint64_t		v_pcup_id;	/* 3D8h */
+		uint64_t		v_eventinj;	/* 3E0h */
+		uint64_t		v_xcr0;		/* 3E8h */
+		uint8_t			v_pad10[0x10];	/* 3F0h-3FFh */
+		uint64_t		v_x87_dp;	/* 400h */
+		uint32_t		v_mxcsr;	/* 408h */
+		uint16_t		v_x87_ftw;	/* 40Ch */
+		uint16_t		v_x87_fsw;	/* 40Eh */
+		uint16_t		v_x87_fcw;	/* 410h */
+		uint16_t		v_x87_fop;	/* 412h */
+		uint16_t		v_x87_ds;	/* 414h */
+		uint16_t		v_x87_cs;	/* 416h */
+		uint64_t		v_x87_rip;	/* 418h */
+		uint8_t			v_fp_x87[0x50];	/* 420h-46Fh */
+		uint8_t			v_fp_xmm[0x100];/* 470h-56Fh */
+		uint8_t			v_fp_ymm[0x100];/* 570h-66fh */
+		uint8_t			v_lbr_st[0x100];/* 670h-76Fh */
+		uint64_t		v_lbr_select;	/* 770h */
+		uint64_t		v_ibs_fetch_ctl;/* 778h */
+		uint64_t		v_ibs_fetch_la;	/* 780h */
+		uint64_t		v_ibs_op_ctl;	/* 788h */
+		uint64_t		v_ibs_op_rip;	/* 790h */
+		uint64_t		v_ibs_op_data;	/* 798h */
+		uint64_t		v_ibs_op_data2;	/* 7A0h */
+		uint64_t		v_ibs_op_data3;	/* 7A8h */
+		uint64_t		v_ibs_dc_la;	/* 7B0h */
+		uint64_t		v_ibstgt_rip;	/* 7B8h */
+		uint64_t		v_ic_ibs_xtd_ct;/* 7C0h */
 };
 
 struct vmcs {
@@ -876,9 +1000,12 @@ struct vcpu {
 	/* SVM only (all requiring [v]) */
 	vaddr_t vc_svm_hsa_va;
 	paddr_t vc_svm_hsa_pa;
+	vaddr_t vc_svm_vmsa_va;
+	paddr_t vc_svm_vmsa_pa;
 	vaddr_t vc_svm_ioio_va;
 	paddr_t vc_svm_ioio_pa;
 	int vc_sev;				/* [I] */
+	int vc_seves;				/* [I] */
 };
 
 SLIST_HEAD(vcpu_head, vcpu);
@@ -911,6 +1038,7 @@ int	vcpu_init(struct vcpu *, struct vm_create_params *);
 void	vcpu_deinit(struct vcpu *);
 int	vm_rwregs(struct vm_rwregs_params *, int);
 int	vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
+int	svm_get_vmsa_pa(uint32_t, uint32_t, uint64_t *);
 
 #endif /* _KERNEL */
 
