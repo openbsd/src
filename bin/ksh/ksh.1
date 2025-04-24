@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.221 2024/09/25 06:13:01 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.222 2025/04/24 12:25:02 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 25 2024 $
+.Dd $Mdocdate: April 24 2025 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -528,6 +528,13 @@ stripped; any space within a pattern must be quoted.
 Both the word and the
 patterns are subject to parameter, command, and arithmetic substitution, as
 well as tilde substitution.
+The initial
+.Sq (\&
+is optional,
+as is the terminating
+.Sq ;;
+for the final
+.Ar list .
 For historical reasons, open and close braces may be used instead of
 .Cm in
 and
