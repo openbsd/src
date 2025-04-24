@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.193 2025/01/30 17:00:31 martijn Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.194 2025/04/24 20:32:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -409,11 +409,15 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_DEMOTE:
 		IMSG_SIZE_CHECK(imsg, &demote);
 		memcpy(&demote, imsg->data, sizeof(demote));
+		demote.group[sizeof(demote.group) - 1] = '\0';
 		carp_demote_set(demote.group, demote.level);
 		break;
 	case IMSG_RTMSG:
 		IMSG_SIZE_CHECK(imsg, &crt);
 		memcpy(&crt, imsg->data, sizeof(crt));
+		crt.host.name[sizeof(crt.host.name) - 1] = '\0';
+		crt.rt.name[sizeof(crt.rt.name) - 1] = '\0';
+		crt.rt.label[sizeof(crt.rt.label) - 1] = '\0';
 		pfe_route(env, &crt);
 		break;
 	case IMSG_CTL_RESET:
@@ -454,6 +458,8 @@ parent_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_SCRIPT:
 		IMSG_SIZE_CHECK(imsg, &scr);
 		bcopy(imsg->data, &scr, sizeof(scr));
+		scr.name[sizeof(scr.name) - 1] = '\0';
+		scr.path[sizeof(scr.path) - 1] = '\0';
 		scr.retval = script_exec(env, &scr);
 		proc_compose(ps, PROC_HCE, IMSG_SCRIPT, &scr, sizeof(scr));
 		break;
