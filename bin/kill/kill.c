@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.14 2017/03/29 22:40:15 millert Exp $	*/
+/*	$OpenBSD: kill.c,v 1.15 2025/04/24 14:15:29 schwarze Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -174,12 +174,8 @@ printsignals(FILE *fp)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-s signal_name] pid ...\n",
-	    __progname);
+	(void)fprintf(stderr, "usage: %s [-signal_number | -signal_name |"
+	    " -s signal_name] pid ...\n", __progname);
 	(void)fprintf(stderr, "       %s -l [exit_status]\n", __progname);
-	(void)fprintf(stderr, "       %s -signal_name pid ...\n",
-	    __progname);
-	(void)fprintf(stderr, "       %s -signal_number pid ...\n",
-	    __progname);
 	exit(1);
 }
