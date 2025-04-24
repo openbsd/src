@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.33 2023/07/10 09:24:53 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.34 2025/04/24 08:55:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -231,8 +231,9 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	if (sc->cwd != NULL) {
 		cwd = format_single(item, sc->cwd, c, target->s, NULL, NULL);
 		if (*cwd != '/') {
-			xasprintf(&new_cwd, "%s/%s", server_client_get_cwd(c,
-			    target->s), cwd);
+			xasprintf(&new_cwd, "%s%s%s",
+			    server_client_get_cwd(c, target->s),
+			    *cwd != '\0' ? "/" : "", cwd);
 			free(cwd);
 			cwd = new_cwd;
 		}
