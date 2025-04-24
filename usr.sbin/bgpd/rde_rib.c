@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.268 2025/03/14 12:39:55 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.269 2025/04/24 20:17:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -222,7 +222,9 @@ rib_find(char *name)
 		return RIB_LOC_START;
 
 	for (id = 0; id < rib_size; id++) {
-		if (ribs[id] != NULL && !strcmp(ribs[id]->name, name))
+		/* cannot trust name to be properly terminated */
+		if (ribs[id] != NULL &&
+		    !strncmp(ribs[id]->name, name, sizeof(ribs[id]->name)))
 			return id;
 	}
 
