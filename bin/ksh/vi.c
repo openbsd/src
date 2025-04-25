@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.61 2025/04/21 20:06:15 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.62 2025/04/25 18:28:33 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -695,7 +695,6 @@ vi_cmd(int argcnt, const char *cmd)
 {
 	int		ncursor;
 	int		cur, c1, c2, c3 = 0;
-	int		any;
 	struct edstate	*t;
 
 	if (argcnt == 0 && !is_zerocount(*cmd))
@@ -848,11 +847,11 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case 'P':
 			modified = 1; hnum = hlast;
-			any = 0;
 			while (putbuf(ybuf, yanklen, 0) == 0 && --argcnt > 0)
-				any = 1;
-			if (any && es->cursor != 0)
-				es->cursor--;
+				continue;
+			while (es->cursor > 0)
+				if (!isu8cont(es->cbuf[--es->cursor]))
+					break;
 			if (argcnt != 0)
 				return -1;
 			break;

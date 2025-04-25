@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.10 2025/04/21 20:06:15 schwarze Exp $
+# $OpenBSD: vi.sh,v 1.11 2025/04/25 18:28:33 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -117,8 +117,14 @@ testseq "abc\003302l~" " # abc\b\b\babC\b"
 testseq "abc\00330 rx" " # abc\b\b\bax\b"
 
 # P: Paste at current position.
-testseq "abcde\0033hDhP" " # abcde\b\b  \b\b\b\bdebc\b\b"
+testseq "abcde\0033hDhP" " # abcde\b\b  \b\b\b\bdebc\b\b\b"
 testseq "abcde\0033hDh2P" " # abcde\b\b  \b\b\b\bdedebc\b\b\b"
+testseq "A\0033xa\0303\0200\00332Px" \
+	" # A\b \b\0303\0200\bAA\0303\0200\b\b\0303\0200 \b\b"
+testseq "\0302\0251\0033xaA\0033Px" \
+	" # \0302\0251\b  \b\bA\b\0302\0251A\b\bA  \b\b\b"
+testseq "\0302\0251\0033xa\0303\0200\0033Px" \
+ " # \0302\0251\b  \b\b\0303\0200\b\0302\0251\0303\0200\b\b\0303\0200  \b\b\b"
 
 # p: Paste after current position.
 testseq "abcd\0033hDhp" " # abcd\b\b  \b\b\b\bacdb\b\b"
