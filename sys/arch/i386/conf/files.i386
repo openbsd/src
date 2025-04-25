@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.251 2024/11/04 22:08:03 jsg Exp $
+#	$OpenBSD: files.i386,v 1.252 2025/04/25 12:47:37 mvs Exp $
 #
 # new style config file for i386 architecture
 #
@@ -42,7 +42,6 @@ file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
-file	arch/i386/i386/softintr.c
 file	arch/i386/i386/dkcsum.c		bios
 file	dev/cninit.c
 file	arch/i386/i386/mptramp.s	multiprocessor

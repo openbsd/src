@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.674 2024/07/29 18:43:11 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.675 2025/04/25 12:47:37 mvs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -155,6 +155,12 @@ extern struct proc *npxproc;
 #else
 #define DPRINTF(x...)
 #endif	/* MACHDEP_DEBUG */
+
+const int softintr_to_ssir[NSOFTINTR] = {
+	SIR_CLOCK,
+	SIR_NET,
+	SIR_TTY,
+};
 
 void	replacesmap(void);
 int     intr_handler(struct intrframe *, struct intrhand *);
@@ -3899,9 +3905,10 @@ int	intr_shared_edge;
  * We hand-code this to ensure that it's atomic.
  */
 void
-softintr(int sir)
+softintr(int si_level)
 {
 	struct cpu_info *ci = curcpu();
+	int sir = softintr_to_ssir[si_level];
 
 	__asm volatile("orl %1, %0" :
 	    "=m" (ci->ci_ipending) : "ir" (1 << sir));
