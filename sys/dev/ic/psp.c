@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.15 2024/11/20 13:36:55 bluhm Exp $ */
+/*	$OpenBSD: psp.c,v 1.16 2025/04/25 19:10:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -29,6 +29,7 @@
 
 #include <uvm/uvm_extern.h>
 #include <crypto/xform.h>
+#include <machine/vmmvar.h>
 
 #include <dev/ic/ccpvar.h>
 #include <dev/ic/pspvar.h>
@@ -538,6 +539,32 @@ out:
 }
 
 int
+psp_launch_update_vmsa(struct psp_softc *sc,
+    struct psp_launch_update_vmsa *uluv)
+{
+	struct psp_launch_update_vmsa	*luvmsa;
+	int				 error;
+
+	luvmsa = (struct psp_launch_update_vmsa *)sc->sc_cmd_kva;
+	bzero(luvmsa, sizeof(*luvmsa));
+
+	luvmsa->handle = uluv->handle;
+	luvmsa->paddr = uluv->paddr;
+	luvmsa->length = PAGE_SIZE;
+
+	/* Drain caches before we encrypt the VMSA. */
+	wbinvd_on_all_cpus_acked();
+
+	error = ccp_docmd(sc, PSP_CMD_LAUNCH_UPDATE_VMSA,
+	    sc->sc_cmd_map->dm_segs[0].ds_addr);
+
+	if (error != 0)
+		return (EIO);
+
+	return (0);
+}
+
+int
 psp_launch_measure(struct psp_softc *sc, struct psp_launch_measure *ulm)
 {
 	struct psp_launch_measure	*lm;
@@ -629,6 +656,26 @@ psp_activate(struct psp_softc *sc, struct psp_activate *uact)
 
 	error = ccp_docmd(sc, PSP_CMD_ACTIVATE,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
+
+	return (error);
+}
+
+int
+psp_encrypt_state(struct psp_softc *sc, struct psp_encrypt_state *ues)
+{
+	struct psp_launch_update_vmsa	luvmsa;
+	uint64_t			vmsa_paddr;
+	int				error;
+
+	error = svm_get_vmsa_pa(ues->vmid, ues->vcpuid, &vmsa_paddr);
+	if (error != 0)
+		return (error);
+
+	bzero(&luvmsa, sizeof(luvmsa));
+	luvmsa.handle = ues->handle;
+	luvmsa.paddr = vmsa_paddr;
+
+	error = psp_launch_update_vmsa(sc, &luvmsa);
 
 	return (error);
 }
@@ -838,6 +885,9 @@ pspioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = psp_snp_get_pstatus(sc,
 		    (struct psp_snp_platform_status *)data);
 		break;
+	case PSP_IOC_ENCRYPT_STATE:
+		error = psp_encrypt_state(sc, (struct psp_encrypt_state *)data);
+		break;
 	default:
 		error = ENOTTY;
 		break;
@@ -862,6 +912,7 @@ pledge_ioctl_psp(struct proc *p, long com)
 	case PSP_IOC_LAUNCH_MEASURE:
 	case PSP_IOC_LAUNCH_FINISH:
 	case PSP_IOC_ACTIVATE:
+	case PSP_IOC_ENCRYPT_STATE:
 	case PSP_IOC_GUEST_SHUTDOWN:
 		return (0);
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.6 2024/11/05 13:28:35 bluhm Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.7 2025/04/25 19:10:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -86,6 +86,7 @@
 #define PSP_CMD_GUESTSTATUS		0x23
 #define PSP_CMD_LAUNCH_START		0x30
 #define PSP_CMD_LAUNCH_UPDATE_DATA	0x31
+#define PSP_CMD_LAUNCH_UPDATE_VMSA	0x32
 #define PSP_CMD_LAUNCH_MEASURE		0x33
 #define PSP_CMD_LAUNCH_FINISH		0x35
 #define PSP_CMD_ATTESTATION		0x36
@@ -131,6 +132,22 @@ struct psp_launch_update_data {
 	uint32_t		reserved;
 	uint64_t		paddr;
 	uint32_t		length;
+} __packed;
+
+struct psp_launch_update_vmsa {
+	/* Input parameters for PSP_CMD_LAUNCH_UPDATE_VMSA */
+	uint32_t		handle;
+	uint32_t		reserved;
+	uint64_t		paddr;
+	uint32_t		length;
+} __packed;
+
+struct psp_encrypt_state {
+	/* Input parameters state encryption */
+	uint32_t		handle;
+	uint32_t		asid;
+	uint32_t		vmid;
+	uint32_t		vcpuid;
 } __packed;
 
 struct psp_measure {
@@ -258,6 +275,7 @@ struct psp_snp_platform_status {
 #define PSP_IOC_SNP_GET_PSTATUS	_IOR('P', 11, struct psp_snp_platform_status)
 #define PSP_IOC_INIT		_IO('P', 12)
 #define PSP_IOC_SHUTDOWN	_IO('P', 13)
+#define PSP_IOC_ENCRYPT_STATE	_IOW('P', 254, struct psp_encrypt_state)
 #define PSP_IOC_GUEST_SHUTDOWN	_IOW('P', 255, struct psp_guest_shutdown)
 
 #ifdef _KERNEL
