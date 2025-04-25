@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.23 2024/10/14 10:08:13 jsg Exp $ */
+/*	$OpenBSD: intr.h,v 1.24 2025/04/25 12:48:48 mvs Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -78,8 +78,14 @@
 #define	IST_EDGE_RISING		5
 #define	IST_EDGE_BOTH		6
 
+#define __USE_MI_SOFTINTR
+
+#include <sys/softintr.h>
+
 #ifndef _LOCORE
 #include <sys/queue.h>
+
+void	softintr(int);
 
 int	splraise(int);
 int	spllower(int);
@@ -134,8 +140,6 @@ void	 intr_disable_wakeup(void);
 
 void	 arm_init_smask(void); /* XXX */
 extern uint32_t arm_smask[NIPL];
-
-#include <machine/softintr.h>
 
 /* XXX - this is probably the wrong location for this */
 void arm_clock_register(void (*)(void), void (*)(u_int), void (*)(int),
