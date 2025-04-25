@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.19 2024/11/21 13:43:10 claudio Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.20 2025/04/25 00:06:52 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -148,6 +148,10 @@ main(int argc, char *argv[])
 					syslog(LOG_ERR, "Short message");
 					break;
 				}
+				if (args->userlen < 1 || args->passlen < 1) {
+					syslog(LOG_ERR, "Broken message");
+					break;
+				}
 				user = (char *)(args + 1);
 				user[args->userlen - 1] = '\0';
 				pass = user + args->userlen;
@@ -183,6 +187,10 @@ main(int argc, char *argv[])
 				    sizeof(struct auth_groupcheck_args) +
 				    args->userlen + args->grouplen) {
 					syslog(LOG_ERR, "Short message");
+					break;
+				}
+				if (args->userlen < 1 || args->grouplen < 1) {
+					syslog(LOG_ERR, "Broken message");
 					break;
 				}
 				user = (char *)(args + 1);
