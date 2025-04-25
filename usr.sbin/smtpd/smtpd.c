@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.354 2024/11/21 13:22:21 claudio Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.355 2025/04/25 06:46:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -162,6 +162,8 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_LKA_OPEN_FORWARD:
 		CHECK_IMSG_DATA_SIZE(imsg, sizeof *fwreq);
 		fwreq = imsg->data;
+		fwreq->directory[sizeof(fwreq->directory) - 1] = '\0';
+		fwreq->user[sizeof(fwreq->user) - 1] = '\0';
 		fd = parent_forward_open(fwreq->user, fwreq->directory,
 		    fwreq->uid, fwreq->gid);
 		fwreq->status = 0;
