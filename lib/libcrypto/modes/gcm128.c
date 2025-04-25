@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.33 2025/04/25 08:19:22 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.34 2025/04/25 08:26:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -332,7 +332,6 @@ gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 	Xi[1] = htobe64(Z.lo);
 }
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
 /*
  * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
  * details... Compiler-generated code doesn't seem to give any
@@ -488,7 +487,6 @@ gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
 		Xi[1] = htobe64(Z.lo);
 	} while (inp += 16, len -= 16);
 }
-#endif
 #else
 void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
@@ -496,13 +494,11 @@ void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #endif
 
 #define GCM_MUL(ctx,Xi)   gcm_gmult_4bit(ctx->Xi.u,ctx->Htable)
-#if defined(GHASH_ASM) || !defined(OPENSSL_SMALL_FOOTPRINT)
 #define GHASH(ctx,in,len) gcm_ghash_4bit((ctx)->Xi.u,(ctx)->Htable,in,len)
 /* GHASH_CHUNK is "stride parameter" missioned to mitigate cache
  * trashing effect. In other words idea is to hash data while it's
  * still in L1 cache after encryption pass... */
 #define GHASH_CHUNK       (3*1024)
-#endif
 
 #else	/* TABLE_BITS */
 
@@ -792,7 +788,6 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16 % sizeof(size_t) == 0)
 		do {	/* always true actually */
 			if (n) {
@@ -888,7 +883,6 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			ctx->mres = n;
 			return 0;
 		} while (0);
-#endif
 	for (i = 0; i < len; ++i) {
 		if (n == 0) {
 			(*block)(ctx->Yi.c, ctx->EKi.c, key);
@@ -938,7 +932,6 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16 % sizeof(size_t) == 0)
 		do {	/* always true actually */
 			if (n) {
@@ -1036,7 +1029,6 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 			ctx->mres = n;
 			return 0;
 		} while (0);
-#endif
 	for (i = 0; i < len; ++i) {
 		u8 c;
 		if (n == 0) {
@@ -1101,7 +1093,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 			return 0;
 		}
 	}
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+
 	while (len >= GHASH_CHUNK) {
 		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
 		ctr += GHASH_CHUNK/16;
@@ -1111,7 +1103,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		in += GHASH_CHUNK;
 		len -= GHASH_CHUNK;
 	}
-#endif
+
 	if ((i = (len & (size_t)-16))) {
 		size_t j = i/16;
 
@@ -1193,7 +1185,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 			return 0;
 		}
 	}
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+
 	while (len >= GHASH_CHUNK) {
 		GHASH(ctx, in, GHASH_CHUNK);
 		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
@@ -1203,7 +1195,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		in += GHASH_CHUNK;
 		len -= GHASH_CHUNK;
 	}
-#endif
+
 	if ((i = (len & (size_t)-16))) {
 		size_t j = i/16;
 
