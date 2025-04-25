@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_KEY_METHOD_new.3,v 1.4 2024/07/21 08:36:43 tb Exp $
+.\" $OpenBSD: EC_KEY_METHOD_new.3,v 1.5 2025/04/25 19:57:12 tb Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2024 $
+.Dd $Mdocdate: April 25 2025 $
 .Dt EC_KEY_METHOD_NEW 3
 .Os
 .Sh NAME
@@ -312,7 +312,16 @@ returns 1 for success or 0 for failure.
 returns the EC_KEY implementation used by the given
 .Fa key .
 .Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr EC_GROUP_check 3 ,
+.Xr EC_GROUP_get_curve_name 3 ,
+.Xr EC_GROUP_new_by_curve_name 3 ,
+.Xr EC_GROUP_new_curve_GFp 3 ,
 .Xr EC_KEY_new 3 ,
+.Xr EC_POINT_add 3 ,
+.Xr EC_POINT_get_affine_coordinates 3 ,
+.Xr EC_POINT_new 3 ,
+.Xr EC_POINT_point2oct 3 ,
 .Xr ECDSA_sign 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 1.1.0

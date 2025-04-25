@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.307 2025/03/08 17:12:55 tb Exp $
+# $OpenBSD: Makefile,v 1.308 2025/04/25 19:57:12 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -133,12 +133,16 @@ MAN=	\
 	DSA_size.3 \
 	ECDH_compute_key.3 \
 	ECDSA_SIG_new.3 \
-	EC_GROUP_copy.3 \
-	EC_GROUP_new.3 \
+	EC_GROUP_check.3 \
+	EC_GROUP_get_curve_name.3 \
+	EC_GROUP_new_by_curve_name.3 \
+	EC_GROUP_new_curve_GFp.3 \
 	EC_KEY_METHOD_new.3 \
 	EC_KEY_new.3 \
 	EC_POINT_add.3 \
+	EC_POINT_get_affine_coordinates.3 \
 	EC_POINT_new.3 \
+	EC_POINT_point2oct.3 \
 	ENGINE_new.3 \
 	ERR.3 \
 	ERR_GET_LIB.3 \

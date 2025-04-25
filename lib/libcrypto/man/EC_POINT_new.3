@@ -1,54 +1,20 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.17 2025/03/08 17:04:07 tb Exp $
-.\" full merge up to: OpenSSL 50db8163 Jul 30 16:56:41 2018 +0100
+.\" $OpenBSD: EC_POINT_new.3,v 1.18 2025/04/25 19:57:12 tb Exp $
 .\"
-.\" This file was written by Matt Caswell <matt@openssl.org>.
-.\" Copyright (c) 2013, 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in
-.\"    the documentation and/or other materials provided with the
-.\"    distribution.
-.\"
-.\" 3. All advertising materials mentioning features or use of this
-.\"    software must display the following acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-.\"
-.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-.\"    endorse or promote products derived from this software without
-.\"    prior written permission. For written permission, please contact
-.\"    openssl-core@openssl.org.
-.\"
-.\" 5. Products derived from this software may not be called "OpenSSL"
-.\"    nor may "OpenSSL" appear in their names without prior written
-.\"    permission of the OpenSSL Project.
-.\"
-.\" 6. Redistributions of any form whatsoever must retain the following
-.\"    acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-.\" OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"
-.Dd $Mdocdate: March 8 2025 $
+.Dd $Mdocdate: April 25 2025 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -56,163 +22,56 @@
 .Nm EC_POINT_free ,
 .Nm EC_POINT_clear_free ,
 .Nm EC_POINT_copy ,
-.Nm EC_POINT_dup ,
-.Nm EC_POINT_set_to_infinity ,
-.Nm EC_POINT_set_affine_coordinates ,
-.Nm EC_POINT_set_affine_coordinates_GFp ,
-.Nm EC_POINT_get_affine_coordinates ,
-.Nm EC_POINT_get_affine_coordinates_GFp ,
-.Nm EC_POINT_set_compressed_coordinates ,
-.Nm EC_POINT_set_compressed_coordinates_GFp ,
-.Nm EC_POINT_point2oct ,
-.Nm EC_POINT_oct2point ,
-.Nm EC_POINT_point2bn ,
-.Nm EC_POINT_bn2point ,
-.Nm EC_POINT_point2hex ,
-.Nm EC_POINT_hex2point
-.Nd create, destroy, and manipulate EC_POINT objects
+.Nm EC_POINT_dup
+.Nd allocate, free and copy elliptic curve points
 .Sh SYNOPSIS
 .In openssl/ec.h
-.In openssl/bn.h
-.Ft EC_POINT *
+.Pp
+.Ft "EC_POINT *"
 .Fo EC_POINT_new
 .Fa "const EC_GROUP *group"
 .Fc
-.Ft void
+.Ft "void"
 .Fo EC_POINT_free
 .Fa "EC_POINT *point"
 .Fc
-.Ft void
+.Ft "void"
 .Fo EC_POINT_clear_free
 .Fa "EC_POINT *point"
 .Fc
-.Ft int
+.Ft "int"
 .Fo EC_POINT_copy
 .Fa "EC_POINT *dst"
 .Fa "const EC_POINT *src"
 .Fc
-.Ft EC_POINT *
+.Ft "EC_POINT *"
 .Fo EC_POINT_dup
-.Fa "const EC_POINT *src"
+.Fa "const EC_POINT *point"
 .Fa "const EC_GROUP *group"
-.Fc
-.Ft int
-.Fo EC_POINT_set_to_infinity
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *point"
-.Fc
-.Ft int
-.Fo EC_POINT_set_affine_coordinates
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "const BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_set_affine_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "const BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_get_affine_coordinates
-.Fa "const EC_GROUP *group"
-.Fa "const EC_POINT *p"
-.Fa "BIGNUM *x"
-.Fa "BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_get_affine_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "const EC_POINT *p"
-.Fa "BIGNUM *x"
-.Fa "BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_set_compressed_coordinates
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "int y_bit"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_set_compressed_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "int y_bit"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft size_t
-.Fo EC_POINT_point2oct
-.Fa "const EC_GROUP *group"
-.Fa "const EC_POINT *p"
-.Fa "point_conversion_form_t form"
-.Fa "unsigned char *buf"
-.Fa "size_t len"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_oct2point
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const unsigned char *buf"
-.Fa "size_t len"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft BIGNUM *
-.Fo EC_POINT_point2bn
-.Fa "const EC_GROUP *"
-.Fa "const EC_POINT *"
-.Fa "point_conversion_form_t form"
-.Fa "BIGNUM *"
-.Fa "BN_CTX *"
-.Fc
-.Ft EC_POINT *
-.Fo EC_POINT_bn2point
-.Fa "const EC_GROUP *"
-.Fa "const BIGNUM *"
-.Fa "EC_POINT *"
-.Fa "BN_CTX *"
-.Fc
-.Ft char *
-.Fo EC_POINT_point2hex
-.Fa "const EC_GROUP *"
-.Fa "const EC_POINT *"
-.Fa "point_conversion_form_t form"
-.Fa "BN_CTX *"
-.Fc
-.Ft EC_POINT *
-.Fo EC_POINT_hex2point
-.Fa "const EC_GROUP *"
-.Fa "const char *"
-.Fa "EC_POINT *"
-.Fa "BN_CTX *"
 .Fc
 .Sh DESCRIPTION
 An
 .Vt EC_POINT
-represents a point on a curve.
-A curve is represented by an
-.Vt EC_GROUP
-object created by the functions described in
-.Xr EC_GROUP_new 3 .
+object holds a point on the elliptic curve represented by an
+.Vt EC_GROUP .
+The details of the internal representation depend on the group
+and should never be an application's concern since the EC library
+has API to set a point's coordinates,
+.Xr EC_POINT_set_affine_coordinates 3 .
 .Pp
-A new point is constructed by calling the function
 .Fn EC_POINT_new
-and providing the
-.Fa group
-object that the point relates to.
+allocates and initializes an
+.Vt EC_POINT
+object to be used with the
+.Fa group .
+Before explicitly setting its coordinates, the returned
+.Vt EC_POINT
+is invalid.
 .Pp
 .Fn EC_POINT_free
-frees the memory associated with the
-.Vt EC_POINT .
+frees
+.Fa point
+and all memory associated with it.
 If
 .Fa point
 is a
@@ -220,236 +79,129 @@ is a
 pointer, no action occurs.
 .Pp
 .Fn EC_POINT_clear_free
-destroys any sensitive data held within the
-.Vt EC_POINT
-and then frees its memory.
-If
+is intended to destroy sensitive data held in
 .Fa point
-is a
-.Dv NULL
-pointer, no action occurs.
+in addition to freeing all memory associated with it.
+Since elliptic curve points usually hold public data, this
+is rarely needed.
+In LibreSSL,
+.Fn EC_POINT_free
+and
+.Fn EC_POINT_clear_free
+behave identically.
 .Pp
 .Fn EC_POINT_copy
-copies the point
+copies the internal representation of
 .Fa src
 into
 .Fa dst .
+If
+.Fa src
+and
+.Fa dst
+are identical, no action occurs.
 Both
 .Fa src
 and
 .Fa dst
-must use the same
-.Vt EC_METHOD .
+should be the result of
+.Fn EC_POINT_new
+with the same
+.Fa group
+argument, although
+.Fn EC_POINT_copy
+cannot check that.
 .Pp
 .Fn EC_POINT_dup
-creates a new
-.Vt EC_POINT
-object and copies the content from
-.Fa src
-to the newly created
-.Vt EC_POINT
-object.
-.Pp
-A valid point on a curve is the special point at infinity.
-A point is set to be at infinity by calling
-.Fn EC_POINT_set_to_infinity .
-.Pp
-The affine coordinates for a point describe a point in terms of its
-.Fa x
-and
-.Fa y
-position.
-The function
-.Fn EC_POINT_set_affine_coordinates
-sets the
-.Fa x
-and
-.Fa y
-coordinates for the point
-.Fa p
-defined over the curve given in
-.Fa group .
-The function
-.Fn EC_POINT_get_affine_coordinates
-sets
-.Fa x
-and
-.Fa y ,
-either of which may be
-.Dv NULL ,
-to the corresponding coordinates of
-.Fa p .
-.Pp
-The functions
-.Fn EC_POINT_set_affine_coordinates_GFp
-is a deprecated synonym for
-.Fn EC_POINT_set_affine_coordinates
-and the function
-.Fn EC_POINT_get_affine_coordinates_GFp
-is a deprecated synonym for
-.Fn EC_POINT_get_affine_coordinates .
-.Pp
-Points can also be described in terms of their compressed coordinates.
-For a point
-.Pq Fa x , y ,
-for any given value for
-.Fa x
-such that the point is on the curve, there will only ever be two
-possible values for
-.Fa y .
-Therefore, a point can be set using the
-.Fn EC_POINT_set_compressed_coordinates
-function where
-.Fa x
-is the x coordinate and
-.Fa y_bit
-is a value 0 or 1 to identify which of the two possible values for y
-should be used.
-.Pp
-The functions
-.Fn EC_POINT_set_compressed_coordinates_GFp
-is a deprecated synonym for
-.Fn EC_POINT_set_compressed_coordinates .
-.Pp
-In addition
-.Vt EC_POINT Ns s
-can be converted to and from various external representations.
-Supported representations are octet strings,
-.Vt BIGNUM Ns s ,
-and hexadecimal.
-The format of the external representation is described by the
-point_conversion_form.
-See
-.Xr EC_GROUP_copy 3
-for a description of point_conversion_form.
-Octet strings are stored in a buffer along with an associated buffer
-length.
-A point held in a
-.Vt BIGNUM
-is calculated by converting the point to an octet string and then
-converting that octet string into a
-.Vt BIGNUM
-integer.
-Points in hexadecimal format are stored in a NUL terminated character
-string where each character is one of the printable values 0-9 or A-F
-(or a-f).
-.Pp
-The functions
-.Fn EC_POINT_point2oct ,
-.Fn EC_POINT_oct2point ,
-.Fn EC_POINT_point2bn ,
-.Fn EC_POINT_bn2point ,
-.Fn EC_POINT_point2hex ,
-and
-.Fn EC_POINT_hex2point
-convert from and to
-.Vt EC_POINT Ns s
-for the formats octet string,
-.Vt BIGNUM ,
-and hexadecimal, respectively.
-.Pp
-The function
-.Fn EC_POINT_point2oct
-must be supplied with a
-.Fa buf
-long enough to store the octet string.
-The return value provides the number of octets stored.
-Calling the function with a
-.Dv NULL
-.Fa buf
-will not perform the conversion but will still return the required
-buffer length.
-.Pp
-The function
-.Fn EC_POINT_point2hex
-will allocate sufficient memory to store the hexadecimal string.
-It is the caller's responsibility to free this memory with a subsequent
-call to
-.Xr free 3 .
+creates a deep copy of
+.Fa point
+by combining
+.Fn EC_POINT_new
+with
+.Fn EC_GROUP_copy .
 .Sh RETURN VALUES
 .Fn EC_POINT_new
-and
-.Fn EC_POINT_dup
-return the newly allocated
+returns a newly allocated
 .Vt EC_POINT
 or
 .Dv NULL
-on error.
+on memory allocation failure.
 .Pp
-The following functions return 1 on success or 0 on error:
-.Fn EC_POINT_copy ,
-.Fn EC_POINT_set_to_infinity ,
-.Fn EC_POINT_set_affine_coordinates ,
-.Fn EC_POINT_set_affine_coordinates_GFp ,
-.Fn EC_POINT_get_affine_coordinates ,
-.Fn EC_POINT_get_affine_coordinates_GFp ,
-.Fn EC_POINT_set_compressed_coordinates ,
-.Fn EC_POINT_set_compressed_coordinates_GFp ,
-and
-.Fn EC_POINT_oct2point .
+.Fn EC_POINT_copy
+returns 1 on success or 0 on error.
+Error conditions include memory allocation failure and that
+.Fa dst
+is incompatible with the group on which
+.Fa src
+is defined.
 .Pp
-.Fn EC_POINT_point2oct
-returns the length of the required buffer, or 0 on error.
-.Pp
-.Fn EC_POINT_point2bn
-returns the pointer to the
-.Vt BIGNUM
-supplied or
-.Dv NULL
-on error.
-.Pp
-.Fn EC_POINT_bn2point
-returns the pointer to the
+.Fn EC_POINT_dup
+returns a newly allocated
 .Vt EC_POINT
-supplied or
+or
 .Dv NULL
-on error.
-.Pp
-.Fn EC_POINT_point2hex
-returns a pointer to the hex string or
-.Dv NULL
-on error.
-.Pp
-.Fn EC_POINT_hex2point
-returns the pointer to the
-.Vt EC_POINT
-supplied or
-.Dv NULL
-on error.
+on failure.
+Error conditions include memory allocation failure or that
+.Fa group
+is incompatible with
+.Fa src .
 .Sh SEE ALSO
+.Xr BN_CTX_new 3 ,
+.Xr BN_is_zero 3 ,
+.Xr crypto 3 ,
 .Xr d2i_ECPKParameters 3 ,
-.Xr EC_GROUP_copy 3 ,
-.Xr EC_GROUP_new 3 ,
+.Xr EC_GROUP_check 3 ,
+.Xr EC_GROUP_get_curve_name 3 ,
+.Xr EC_GROUP_new_by_curve_name 3 ,
+.Xr EC_GROUP_new_curve_GFp 3 ,
+.Xr EC_KEY_METHOD_new 3 ,
 .Xr EC_KEY_new 3 ,
 .Xr EC_POINT_add 3 ,
-.Xr ECDH_compute_key 3
+.Xr EC_POINT_get_affine_coordinates 3 ,
+.Xr EC_POINT_point2oct 3 ,
+.Xr ECDH_compute_key 3 ,
+.Xr ECDSA_SIG_new 3
 .Sh HISTORY
 .Fn EC_POINT_new ,
 .Fn EC_POINT_free ,
 .Fn EC_POINT_clear_free ,
-.Fn EC_POINT_copy ,
-.Fn EC_POINT_set_to_infinity ,
-.Fn EC_POINT_set_affine_coordinates_GFp ,
-.Fn EC_POINT_get_affine_coordinates_GFp ,
-.Fn EC_POINT_set_compressed_coordinates_GFp ,
-.Fn EC_POINT_point2oct ,
 and
-.Fn EC_POINT_oct2point
+.Fn EC_POINT_copy
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
 .Pp
-.Fn EC_POINT_dup ,
-.Fn EC_POINT_point2bn ,
-.Fn EC_POINT_bn2point ,
-.Fn EC_POINT_point2hex ,
-and
-.Fn EC_POINT_hex2point
-first appeared in OpenSSL 0.9.8 and have been available since
+.Fn EC_POINT_dup
+first appeared in OpenSSL 0.9.8 and has been available since
 .Ox 4.5 .
+.Sh BUGS
+A fundamental flaw in the OpenSSL API toolkit is that
+.Fn *_new
+functions usually create invalid objects that are tricky to
+turn into valid objects.
+A fundamental flaw in the EC library is that
+.Vt EC_POINT
+objects do not hold a reference to the group they live on
+despite the fact that
+.Fn EC_POINT_new
+has a
+.Fa group
+argument.
+This is difficult to fix because
+.Vt EC_GROUP
+objects are not reference counted and
+because of const qualifiers in the API.
+This is the root cause for various contortions in the EC library
+and API.
+This has security implications because not
+only does the library not know whether an
+.Fa EC_POINT
+object represents a valid point,
+even if it did know that it would not know on what curve.
 .Pp
-.Fn EC_POINT_set_affine_coordinates ,
-.Fn EC_POINT_get_affine_coordinates ,
+The signature of
+.Fn EC_GROUP_dup
+is bizarre and the order of
+.Fa point
 and
-.Fn EC_POINT_set_compressed_coordinates
-first appeared in OpenSSL 1.1.1 and have been available since
-.Ox 7.0 .
+.Fa group
+is inconsistent with the rest of the EC API.
