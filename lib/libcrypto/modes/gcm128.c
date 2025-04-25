@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.34 2025/04/25 08:26:57 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.35 2025/04/25 12:08:53 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -1093,7 +1093,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 			return 0;
 		}
 	}
-
+#if defined(GHASH) && defined(GHASH_CHUNK)
 	while (len >= GHASH_CHUNK) {
 		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
 		ctr += GHASH_CHUNK/16;
@@ -1103,7 +1103,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		in += GHASH_CHUNK;
 		len -= GHASH_CHUNK;
 	}
-
+#endif
 	if ((i = (len & (size_t)-16))) {
 		size_t j = i/16;
 
@@ -1185,7 +1185,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 			return 0;
 		}
 	}
-
+#if defined(GHASH) && defined(GHASH_CHUNK)
 	while (len >= GHASH_CHUNK) {
 		GHASH(ctx, in, GHASH_CHUNK);
 		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
@@ -1195,7 +1195,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		in += GHASH_CHUNK;
 		len -= GHASH_CHUNK;
 	}
-
+#endif
 	if ((i = (len & (size_t)-16))) {
 		size_t j = i/16;
 
