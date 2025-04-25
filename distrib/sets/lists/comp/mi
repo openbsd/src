@@ -1388,6 +1388,7 @@
 ./usr/include/sys/socket.h
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
+./usr/include/sys/softintr.h
 ./usr/include/sys/specdev.h
 ./usr/include/sys/srp.h
 ./usr/include/sys/stacktrace.h
