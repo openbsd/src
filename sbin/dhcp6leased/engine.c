@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.31 2024/12/24 17:40:06 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.32 2025/04/26 18:00:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -873,7 +873,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 			goto out;
 		}
 
-		if (lease_time < pd->vltime)
+		if (lease_time == 0 || lease_time > pd->vltime)
 			lease_time = pd->vltime;
 
 		log_debug("%s: pltime: %u, vltime: %u, prefix: %s/%u",
@@ -928,9 +928,14 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		iface->serverid_len = serverid_len;
 		memcpy(iface->serverid, serverid, SERVERID_SIZE);
 
-		/* XXX handle t1 = 0 or t2 = 0 */
-		iface->t1 = t1;
-		iface->t2 = t2;
+		if (t1 == 0)
+			iface->t1 = lease_time / 2;
+		else
+			iface->t1 = t1;
+		if (t2 == 0)
+		    iface->t2 = lease_time - (lease_time / 8);
+		else
+			iface->t2 = t2;
 		iface->lease_time = lease_time;
 		clock_gettime(CLOCK_MONOTONIC, &iface->request_time);
 		state_transition(iface, IF_BOUND);
