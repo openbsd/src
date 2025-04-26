@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.73 2025/04/26 19:54:24 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.74 2025/04/26 19:57:16 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12976,7 +12976,6 @@ qwx_wmi_event_scan_start_failed(struct qwx_softc *sc)
 		    qwx_scan_state_str(sc->scan.state), sc->scan.state);
 		break;
 	case ATH11K_SCAN_STARTING:
-		wakeup(&sc->scan.state);
 		qwx_mac_scan_finish(sc);
 		break;
 	}
@@ -23573,9 +23572,8 @@ qwx_mac_scan_finish(struct qwx_softc *sc)
 		timeout_del(&sc->scan.timeout);
 		if (!sc->scan.is_roc)
 			ieee80211_end_scan(ifp);
-#if 0
-		complete_all(&ar->scan.completed);
-#endif
+
+		wakeup(&sc->scan.state);
 		break;
 	}
 }
