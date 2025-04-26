@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2025/02/10 18:09:10 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2025/04/26 18:05:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -148,8 +148,6 @@ optnl		: '\n' optnl		/* zero or more newlines */
 		| /*empty*/
 		;
 
-nl		: '\n' optnl		/* one or more newlines */
-		;
 conf_main	: REQUEST RAPID COMMIT {
 			conf->rapid_commit = 1;
 		}
