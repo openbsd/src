@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.72 2025/04/26 19:52:56 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.73 2025/04/26 19:54:24 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -159,6 +159,8 @@ int qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *, struct qwx_vif *,
     struct ieee80211_node *, struct ieee80211_key *, int);
 void qwx_setkey_clear(struct qwx_softc *);
 void qwx_vif_free_all(struct qwx_softc *);
+void qwx_dp_stop_shadow_timers(struct qwx_softc *);
+void qwx_ce_stop_shadow_timers(struct qwx_softc *);
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
@@ -322,6 +324,8 @@ qwx_stop(struct ifnet *ifp)
 	rw_assert_wrlock(&sc->ioctl_rwl);
 
 	timeout_del(&sc->mon_reap_timer);
+	qwx_dp_stop_shadow_timers(sc);
+	qwx_ce_stop_shadow_timers(sc);
 
 	/* Disallow new tasks. */
 	set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
