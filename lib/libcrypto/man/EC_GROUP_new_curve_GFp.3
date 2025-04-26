@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.1 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.2 2025/04/26 07:07:29 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: April 26 2025 $
 .Dt EC_GROUP_NEW_CURVE_GFP 3
 .Os
 .Sh NAME
@@ -359,6 +359,7 @@ returns 1 on success and 0 on memory allocation failure, or if
 or
 .Fa cofactor
 are larger than Hasse's theorem allows.
+.Pp
 .Fn EC_GROUP_get0_generator
 returns an internal pointer to the
 .Fa generator
@@ -369,20 +370,22 @@ if none was set on
 .Pp
 .Fn EC_GROUP_get_order
 returns 1 on success or 0 on memory allocation failure or if the
-.Fa group Ns 's
-order is set to
-.Fa zero .
+.Fa order
+is zero.
+.Pp
+.Fn EC_GROUP_get_cofactor
+returns 1 on success or 0 on memory allocation failure or if the
+.Fa cofactor
+is zero.
 .Pp
 .Fn EC_GROUP_get_degree ,
-.Fn EC_GROUP_order_bits ,
 and
-.Fn EC_GROUP_get_cofactor
+.Fn EC_GROUP_order_bits
 return the number of bits in the
 .Fa group Ns 's
 .Fa p ,
-.Fa order ,
 and
-.Fa cofactor ,
+.Fa order ,
 respectively.
 .Sh SEE ALSO
 .Xr BN_new 3 ,
