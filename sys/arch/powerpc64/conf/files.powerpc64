@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.28 2024/01/01 18:25:50 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.29 2025/04/26 11:10:28 visa Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -26,7 +26,6 @@ file	arch/powerpc64/powerpc64/machdep.c
 file	arch/powerpc64/powerpc64/mem.c
 file	arch/powerpc64/powerpc64/pmap.c
 file	arch/powerpc64/powerpc64/process_machdep.c
-file	arch/powerpc64/powerpc64/softintr.c
 file	arch/powerpc64/powerpc64/syncicache.c
 file	arch/powerpc64/powerpc64/syscall.c
 file	arch/powerpc64/powerpc64/sys_machdep.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.15 2025/01/12 21:54:07 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.16 2025/04/26 11:10:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -19,13 +19,15 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
+#define __USE_MI_SOFTINTR
+
 #include <sys/queue.h>
+#include <sys/softintr.h>
 
 struct cpu_info;
 struct trapframe;
 
 #define IPL_NONE	0
-#define IPL_SOFT	1
 #define IPL_SOFTCLOCK	2
 #define IPL_SOFTNET	3
 #define IPL_SOFTTTY	4
@@ -50,6 +52,8 @@ struct trapframe;
 int	splraise(int);
 int	spllower(int);
 void	splx(int);
+
+void	softintr(int);
 
 #define spl0()		spllower(IPL_NONE)
 #define splsoftclock()	splraise(IPL_SOFTCLOCK)
@@ -105,8 +109,6 @@ extern void *(*_intr_establish)(uint32_t, int, int, struct cpu_info *,
 	    int (*)(void *), void *, const char *);
 extern void (*_intr_send_ipi)(void *);
 extern void (*_setipl)(int);
-
-#include <machine/softintr.h>
 
 struct interrupt_controller {
 	int	ic_node;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2025/01/12 21:54:07 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2025/04/26 11:10:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -74,14 +74,12 @@ intr_init(void)
 
 	for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
 		intr_smask[i] = 0;
-		if (i < IPL_SOFT)
-			intr_smask[i] |= SI_TO_IRQBIT(SIR_SOFT);
 		if (i < IPL_SOFTCLOCK)
-			intr_smask[i] |= SI_TO_IRQBIT(SIR_CLOCK);
+			intr_smask[i] |= SI_TO_IRQBIT(SOFTINTR_CLOCK);
 		if (i < IPL_SOFTNET)
-			intr_smask[i] |= SI_TO_IRQBIT(SIR_NET);
+			intr_smask[i] |= SI_TO_IRQBIT(SOFTINTR_NET);
 		if (i < IPL_SOFTTTY)
-			intr_smask[i] |= SI_TO_IRQBIT(SIR_TTY);
+			intr_smask[i] |= SI_TO_IRQBIT(SOFTINTR_TTY);
 	}
 }
 
@@ -103,10 +101,9 @@ intr_do_pending(int new)
 	}
 
 	do {
-		DO_SOFTINT(SIR_TTY, IPL_SOFTTTY);
-		DO_SOFTINT(SIR_NET, IPL_SOFTNET);
-		DO_SOFTINT(SIR_CLOCK, IPL_SOFTCLOCK);
-		DO_SOFTINT(SIR_SOFT, IPL_SOFT);
+		DO_SOFTINT(SOFTINTR_TTY, IPL_SOFTTTY);
+		DO_SOFTINT(SOFTINTR_NET, IPL_SOFTNET);
+		DO_SOFTINT(SOFTINTR_CLOCK, IPL_SOFTCLOCK);
 	} while (ci->ci_ipending & intr_smask[new]);
 
 	intr_restore(msr);
@@ -149,6 +146,12 @@ splx(int new)
 
 	if (ci->ci_cpl != new)
 		(*_setipl)(new);
+}
+
+void
+softintr(int si)
+{
+	curcpu()->ci_ipending |= SI_TO_IRQBIT(si);
 }
 
 #ifdef DIAGNOSTIC
