@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_get_curve_name.3,v 1.1 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_GROUP_get_curve_name.3,v 1.2 2025/04/26 05:31:27 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: April 26 2025 $
 .Dt EC_GROUP_GET_CURVE_NAME 3
 .Os
 .Sh NAME
@@ -77,13 +77,14 @@ typedef enum {
 .Fo EC_GROUP_get_point_conversion_form
 .Fa "const EC_GROUP *group"
 .Fc
-.Fo void
-.Ft EC_GROUP_set_point_conversion_form
+.Ft void
+.Fo EC_GROUP_set_point_conversion_form
 .Fa "EC_GROUP *group"
 .Fa "point_conversion_form_t form"
 .Fc
 .Pp
 Deprecated:
+.Pp
 .Ft int
 .Fo EC_GROUP_get_basis_type
 .Fa "const EC_GROUP *group"
