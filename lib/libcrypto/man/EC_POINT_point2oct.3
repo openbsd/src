@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_point2oct.3,v 1.1 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_POINT_point2oct.3,v 1.2 2025/04/26 09:03:03 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: April 26 2025 $
 .Dt EC_POINT_POINT2OCT 3
 .Os
 .Sh NAME
@@ -307,7 +307,7 @@ on error.
 The returned
 .Vt BIGNUM
 is either
-.Fa in_bn
+.Fa bn
 or a newly allocated one which must be freed by the caller.
 Error conditions include those of
 .Fn EC_POINT_point2oct ,
@@ -325,7 +325,7 @@ on error.
 The returned
 .Vt EC_POINT
 is either
-.Fa in_point
+.Fa point
 or a newly allocated one which must be freed by the caller.
 Error conditions include those of
 .Xr BN_bn2bin 3 ,
@@ -352,7 +352,7 @@ on error.
 The returned
 .Vt EC_POINT
 is either
-.Fa in_point
+.Fa point
 or a newly allocated one which must be freed by the caller.
 Error conditions are those of
 .Xr BN_hex2bn 3 ,
