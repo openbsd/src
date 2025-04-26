@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.107 2024/06/04 18:13:23 landry Exp $
+# $OpenBSD: services,v 1.108 2025/04/26 06:40:10 dlg Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -190,6 +190,7 @@ pptp		1723/tcp			# Point-to-Point Tunneling Protocol
 pptp		1723/udp			# Point-to-Point Tunneling Protocol
 radius		1812/udp			# radius authentication
 radacct		1813/udp	radius-acct	# radius accounting
+mqtt		1883/tcp			# Message Queuing Telemetry Transport Protocol
 ssdp		1900/tcp			# SSDP
 ssdp		1900/udp			# SSDP
 nfsd		2049/udp	nfs		# NFS server
@@ -275,6 +276,7 @@ afs3-rmtsys	7009/tcp			# AFS remote cache manager service
 afs3-rmtsys	7009/udp			# AFS remote cache manager service
 puppet		8140/tcp			# Puppet master service
 matrix-fed	8448/tcp			# Matrix Federation Protocol
+secure-mqtt	8883/tcp			# Secure MQTT
 ub-dns-control	8953/tcp			# unbound dns nameserver control
 git		9418/tcp			# git pack transfer service
 git		9418/udp			# git pack transfer service
