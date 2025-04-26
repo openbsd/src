@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.74 2025/04/26 19:57:16 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.75 2025/04/26 19:59:46 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -338,12 +338,12 @@ qwx_stop(struct ifnet *ifp)
 
 	qwx_setkey_clear(sc);
 
-	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
-
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
 	/*
 	 * Manually run the newstate task's code for switching to INIT state.
@@ -845,6 +845,10 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct qwx_softc *sc = ifp->if_softc;
+
+	/* We may get triggered by received frames during qwx_stop(). */
+	if (!(ifp->if_flags & IFF_RUNNING))
+		return 0;
 
 	/*
 	 * Prevent attempts to transition towards the same state, unless
