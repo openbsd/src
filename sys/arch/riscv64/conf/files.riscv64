@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.29 2024/01/27 12:05:40 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.30 2025/04/26 11:01:55 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -29,7 +29,6 @@ file	arch/riscv64/riscv64/mem.c
 file	arch/riscv64/riscv64/process_machdep.c
 file	arch/riscv64/riscv64/vm_machdep.c
 file	arch/riscv64/riscv64/sig_machdep.c
-file	arch/riscv64/riscv64/softintr.c
 file	arch/riscv64/riscv64/support.S
 file	arch/riscv64/riscv64/syscall.c
 file	arch/riscv64/riscv64/pagezero.S
