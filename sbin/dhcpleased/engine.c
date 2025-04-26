@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.56 2025/02/07 21:56:04 bluhm Exp $	*/
+/*	$OpenBSD: engine.c,v 1.57 2025/04/26 17:58:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1736,6 +1736,7 @@ send_deconfigure_interface(struct dhcpleased_iface *iface)
 
 	log_lease(iface, 1);
 
+	memset(&imsg, 0, sizeof(imsg));
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
 	imsg.addr = iface->requested_ip;
