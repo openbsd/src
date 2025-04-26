@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.69 2025/03/28 13:55:27 kevlo Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.70 2025/04/26 19:45:06 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15454,6 +15454,16 @@ config_refill_ring:
 }
 
 void
+qwx_dp_mon_link_free(struct qwx_softc *sc)
+{
+	struct qwx_pdev_dp *dp = &sc->pdev_dp;
+	struct qwx_mon_data *pmon = &dp->mon_data;
+
+	qwx_dp_link_desc_cleanup(sc, pmon->link_desc_banks,
+	    HAL_RXDMA_MONITOR_DESC, &dp->rxdma_mon_desc_ring);
+}
+
+void
 qwx_dp_pdev_free(struct qwx_softc *sc)
 {
 	int i;
@@ -15462,6 +15472,8 @@ qwx_dp_pdev_free(struct qwx_softc *sc)
 
 	for (i = 0; i < sc->num_radios; i++)
 		qwx_dp_rx_pdev_free(sc, i);
+	
+	qwx_dp_mon_link_free(sc);
 }
 
 int
