@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.79 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.80 2025/04/26 17:50:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -530,6 +530,9 @@ main_dispatch_engine(int fd, short event, void *bula)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 			if ((2 + rdns.rdns_count * sizeof(struct in6_addr)) >
 			    sizeof(struct sockaddr_rtdns))
+				fatalx("%s: rdns_count too big: %d", __func__,
+				    rdns.rdns_count);
+			if (rdns.rdns_count > MAX_RDNS_COUNT)
 				fatalx("%s: rdns_count too big: %d", __func__,
 				    rdns.rdns_count);
 
