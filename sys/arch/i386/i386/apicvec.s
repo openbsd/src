@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.37 2025/04/25 12:47:37 mvs Exp $ */
+/* $OpenBSD: apicvec.s,v 1.38 2025/04/26 13:59:31 mvs Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -175,7 +175,7 @@ KIDTVEC(intrsoftclock)
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-	pushl	$SOFTINTR_CLOCK
+	pushl	$SOFTINTR_SOFTCLOCK
 	call	softintr_dispatch
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
@@ -190,7 +190,7 @@ KIDTVEC(intrsoftnet)
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-	pushl	$SOFTINTR_NET
+	pushl	$SOFTINTR_SOFTNET
 	call	softintr_dispatch
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
@@ -206,7 +206,7 @@ KIDTVEC(intrsofttty)
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-	pushl	$SOFTINTR_TTY
+	pushl	$SOFTINTR_SOFTTTY
 	call	softintr_dispatch
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
