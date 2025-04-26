@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.71 2025/04/26 19:49:43 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.72 2025/04/26 19:52:56 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -341,8 +341,24 @@ qwx_stop(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
 
-	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
-	sc->ns_nstate = IEEE80211_S_INIT;
+	/*
+	 * Manually run the newstate task's code for switching to INIT state.
+	 * This reconfigures firmware state to stop scanning, or disassociate
+	 * from our current AP, and/or stop the VIF, etc.
+	 */
+	if (ic->ic_state != IEEE80211_S_INIT) {
+		sc->ns_nstate = IEEE80211_S_INIT;
+		sc->ns_arg = -1; /* do not send management frames */
+		refcnt_init(&sc->task_refs);
+		refcnt_take(&sc->task_refs);
+		qwx_newstate_task(sc);
+		if (ic->ic_state != IEEE80211_S_INIT) { /* task code failed */
+			task_del(systq, &sc->init_task);
+			sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
+		}
+		refcnt_finalize(&sc->task_refs, "qwxstop");
+	}
+
 	sc->scan.state = ATH11K_SCAN_IDLE;
 	sc->vdev_id_11d_scan = QWX_11D_INVALID_VDEV_ID;
 	sc->pdevs_active = 0;
@@ -899,6 +915,9 @@ qwx_newstate_task(void *arg)
 			}
 			/* FALLTHROUGH */
 		case IEEE80211_S_SCAN:
+			if (nstate < IEEE80211_S_SCAN)
+				qwx_scan_abort(sc);
+			break;
 		case IEEE80211_S_INIT:
 			break;
 		}
@@ -954,7 +973,8 @@ out:
 			task_add(systq, &sc->init_task);
 		else
 			sc->sc_newstate(ic, nstate, sc->ns_arg);
-	}
+	} else if (err == 0)
+		sc->sc_newstate(ic, nstate, sc->ns_arg);
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
 }
