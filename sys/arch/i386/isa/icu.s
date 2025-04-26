@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.38 2025/04/26 13:59:31 mvs Exp $	*/
+/*	$OpenBSD: icu.s,v 1.39 2025/04/26 17:49:55 kettenis Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ KIDTVEC(softtty)
 	movl	$IPL_SOFTTTY,%eax
 	movl	%eax,CPL
 	sti
-	pushl	$SOFTINTR_SOFTTTY
+	pushl	$SOFTINTR_TTY
 	call	softintr_dispatch
 	addl	$4,%esp
 	jmp	*%esi
@@ -128,7 +128,7 @@ KIDTVEC(softnet)
 	movl	$IPL_SOFTNET,%eax
 	movl	%eax,CPL
 	sti
-	pushl	$SOFTINTR_SOFTNET
+	pushl	$SOFTINTR_NET
 	call	softintr_dispatch
 	addl	$4,%esp
 	jmp	*%esi
@@ -138,7 +138,7 @@ KIDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK,%eax
 	movl	%eax,CPL
 	sti
-	pushl	$SOFTINTR_SOFTCLOCK
+	pushl	$SOFTINTR_CLOCK
 	call	softintr_dispatch
 	addl	$4,%esp
 	jmp	*%esi
