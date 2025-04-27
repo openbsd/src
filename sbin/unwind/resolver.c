@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.173 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.174 2025/04/27 16:21:26 florian Exp $	*/
 
 
 /*
@@ -539,6 +539,9 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				break;
 			}
 			memcpy(query_imsg, imsg.data, sizeof(*query_imsg));
+			if (query_imsg->qname[NI_MAXHOST - 1] != '\0')
+				fatalx("%s: IMSG_QUERY invalid", __func__);
+
 			setup_query(query_imsg);
 			break;
 		case IMSG_CTL_STATUS:

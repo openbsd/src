@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.91 2025/02/23 07:54:39 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.92 2025/04/27 16:21:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -749,6 +749,8 @@ handle_query(struct pending_query *pq)
 	char			 dname[LDNS_MAX_DOMAINLEN + 1];
 	char			 qclass_buf[16];
 	char			 qtype_buf[16];
+
+	memset(&query_imsg, 0, sizeof (query_imsg));
 
 	if (log_getverbose() & OPT_VERBOSE2 && (str =
 	    sldns_wire2str_pkt(sldns_buffer_begin(pq->qbuf),
