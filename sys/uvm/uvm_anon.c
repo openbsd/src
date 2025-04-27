@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.63 2025/04/16 09:16:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.64 2025/04/27 08:37:47 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -185,6 +185,8 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 		 * anon was freed.
 		 */
 		return FALSE;
+	case ENOLCK:
+		/* Should not be possible. */
 	default:
 #ifdef DIAGNOSTIC
 		panic("anon_pagein: uvmfault_anonget -> %d", rv);

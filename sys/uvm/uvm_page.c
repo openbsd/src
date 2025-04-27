@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.182 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.183 2025/04/27 08:37:47 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1366,7 +1366,9 @@ uvm_page_owner_locked_p(struct vm_page *pg, boolean_t exclusive)
 		    : rw_lock_held(pg->uobject->vmobjlock);
 	}
 	if (pg->uanon != NULL) {
-		return rw_write_held(pg->uanon->an_lock);
+		return exclusive
+		    ? rw_write_held(pg->uanon->an_lock)
+		    : rw_lock_held(pg->uanon->an_lock);
 	}
 	return 1;
 }

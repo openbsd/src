@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.166 2025/03/23 17:22:04 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.167 2025/04/27 08:37:47 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -277,6 +277,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
     struct vm_anon *anon)
 {
 	struct vm_page *pg;
+	int lock_type;
 	int error;
 
 	KASSERT(rw_lock_held(anon->an_lock));
@@ -305,6 +306,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		/*
 		 * Is page resident?  Make sure it is not busy/released.
 		 */
+		lock_type = rw_status(anon->an_lock);
 		if (pg) {
 			KASSERT(pg->pg_flags & PQ_ANON);
 			KASSERT(pg->uanon == anon);
@@ -326,8 +328,13 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			uvm_pagewait(pg, anon->an_lock, "anonget");
 		} else {
 			/*
-			 * No page, therefore allocate one.
+			 * No page, therefore allocate one.  A write lock is
+			 * required for this.  If the caller didn't supply
+			 * one, fail now and have them retry.
 			 */
+			if (lock_type == RW_READ) {
+				return ENOLCK;
+			}
 			pg = uvm_pagealloc(NULL, 0, anon, 0);
 			if (pg == NULL) {
 				/* Out of memory.  Wait a little. */
@@ -498,6 +505,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	if (uobjpage != PGO_DONTCARE)
 		uobj = uobjpage->uobject;
 
+	KASSERT(rw_write_held(amap->am_lock));
 	KASSERT(uobj == NULL || rw_lock_held(uobj->vmobjlock));
 
 	anon = uvm_analloc();
@@ -609,6 +617,7 @@ struct uvm_faultctx {
 	boolean_t wired;
 	paddr_t pa_flags;
 	boolean_t promote;
+	int upper_lock_type;
 	int lower_lock_type;
 };
 
@@ -654,8 +663,10 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	flt.narrow = FALSE;		/* assume normal fault for now */
 	flt.wired = FALSE;		/* assume non-wired fault for now */
 #if notyet
+	flt.upper_lock_type = RW_READ;
 	flt.lower_lock_type = RW_READ;	/* shared lock for now */
 #else
+	flt.upper_lock_type = RW_WRITE;
 	flt.lower_lock_type = RW_WRITE;	/* exclusive lock for now */
 #endif
 
@@ -840,7 +851,13 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * if we've got an amap then lock it and extract current anons.
 	 */
 	if (amap) {
-		amap_lock(amap, RW_WRITE);
+		if ((flt->access_type & PROT_WRITE) != 0) {
+			/*
+			 * assume we're about to COW.
+			 */
+			flt->upper_lock_type = RW_WRITE;
+		}
+		amap_lock(amap, flt->upper_lock_type);
 		amap_lookups(&ufi->entry->aref,
 		    flt->startva - ufi->entry->start, *ranons, flt->npages);
 	} else {
@@ -892,6 +909,36 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 }
 
 /*
+ * uvm_fault_upper_upgrade: upgrade upper lock, reader -> writer
+ */
+static inline int
+uvm_fault_upper_upgrade(struct uvm_faultctx *flt, struct vm_amap *amap)
+{
+	KASSERT(flt->upper_lock_type == rw_status(amap->am_lock));
+
+	/*
+	 * fast path.
+	 */
+	if (flt->upper_lock_type == RW_WRITE) {
+		return 0;
+	}
+
+	/*
+	 * otherwise try for the upgrade.  if we don't get it, unlock
+	 * everything, restart the fault and next time around get a writer
+	 * lock.
+	 */
+	flt->upper_lock_type = RW_WRITE;
+	if (rw_enter(amap->am_lock, RW_UPGRADE|RW_NOSLEEP)) {
+		counters_inc(uvmexp_counters, flt_noup);
+		return ERESTART;
+	}
+	counters_inc(uvmexp_counters, flt_up);
+	KASSERT(flt->upper_lock_type == rw_status(amap->am_lock));
+	return 0;
+}
+
+/*
  * uvm_fault_upper_lookup: look up existing h/w mapping and amap.
  *
  * iterate range of interest:
@@ -914,9 +961,8 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 	paddr_t pa;
 	int lcv, entered = 0;
 
-	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL ||
-	    rw_write_held(amap->am_lock));
+	    rw_status(amap->am_lock) == flt->upper_lock_type);
 
 	/*
 	 * map in the backpages and frontpages we found in the amap in hopes
@@ -998,8 +1044,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page *pg = NULL;
 	int error, ret;
 
-	/* locked: maps(read), amap, anon */
-	KASSERT(rw_write_held(amap->am_lock));
+	KASSERT(rw_status(amap->am_lock) == flt->upper_lock_type);
 	KASSERT(anon->an_lock == amap->am_lock);
 
 	/*
@@ -1012,6 +1057,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * if it succeeds, locks are still valid and locked.
 	 * also, if it is OK, then the anon's page is on the queues.
 	 */
+retry:
 	error = uvmfault_anonget(ufi, amap, anon);
 	switch (error) {
 	case 0:
@@ -1020,11 +1066,21 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	case ERESTART:
 		return ERESTART;
 
+	case ENOLCK:
+		/* it needs a write lock: retry */
+		error = uvm_fault_upper_upgrade(flt, amap);
+		if (error != 0) {
+			uvmfault_unlockall(ufi, amap, NULL);
+			return error;
+		}
+		KASSERT(rw_write_held(amap->am_lock));
+		goto retry;
+
 	default:
 		return error;
 	}
 
-	KASSERT(rw_write_held(amap->am_lock));
+	KASSERT(rw_status(amap->am_lock) == flt->upper_lock_type);
 	KASSERT(anon->an_lock == amap->am_lock);
 
 	/*
@@ -1039,9 +1095,13 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 *
 	 * if we are out of anon VM we wait for RAM to become available.
 	 */
-
 	if ((flt->access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
 		/* promoting requires a write lock. */
+		error = uvm_fault_upper_upgrade(flt, amap);
+		if (error != 0) {
+			uvmfault_unlockall(ufi, amap, NULL);
+			return error;
+		}
 		KASSERT(rw_write_held(amap->am_lock));
 
 		counters_inc(uvmexp_counters, flt_acow);
@@ -1064,6 +1124,14 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		KASSERT(oanon->an_ref > 1);
 		oanon->an_ref--;
 
+		/*
+		 * note: oanon is still locked, as is the new anon.  we
+		 * need to check for this later when we unlock oanon; if
+		 * oanon != anon, we'll have to unlock anon, too.
+		 */
+		KASSERT(anon->an_lock == amap->am_lock);
+		KASSERT(oanon->an_lock == amap->am_lock);
+
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_PMAP_MPSAFE_ENTER_COW)
 		/*
 		 * If there are multiple threads, either uvm or the
@@ -1078,12 +1146,6 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			flt->access_type &= ~PROT_WRITE;
 		}
 #endif
-
-		/*
-		 * note: anon is _not_ locked, but we have the sole references
-		 * to in from amap.
-		 * thus, no one can get at it until we are done with it.
-		 */
 	} else {
 		counters_inc(uvmexp_counters, flt_anon);
 		oanon = anon;
@@ -1246,10 +1308,8 @@ uvm_fault_lower_lookup(
  * uvm_fault_lower_upgrade: upgrade lower lock, reader -> writer
  */
 static inline int
-uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-    struct vm_amap *amap, struct uvm_object *uobj)
+uvm_fault_lower_upgrade(struct uvm_faultctx *flt, struct uvm_object *uobj)
 {
-	KASSERT(uobj != NULL);
 	KASSERT(flt->lower_lock_type == rw_status(uobj->vmobjlock));
 
 	/*
@@ -1265,7 +1325,6 @@ uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 	flt->lower_lock_type = RW_WRITE;
 	if (rw_enter(uobj->vmobjlock, RW_UPGRADE|RW_NOSLEEP)) {
-		uvmfault_unlockall(ufi, amap, uobj);
 		counters_inc(uvmexp_counters, flt_noup);
 		return ERESTART;
 	}
@@ -1319,11 +1378,8 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * made it BUSY.
 	 */
 
-	/*
-	 * locked:
-	 */
 	KASSERT(amap == NULL ||
-	    rw_write_held(amap->am_lock));
+	    rw_status(amap->am_lock) == flt->upper_lock_type);
 	KASSERT(uobj == NULL ||
 	    rw_status(uobj->vmobjlock) == flt->lower_lock_type);
 
@@ -1392,6 +1448,11 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		KASSERT(amap != NULL);
 
 		/* promoting requires a write lock. */
+		error = uvm_fault_upper_upgrade(flt, amap);
+		if (error != 0) {
+			uvmfault_unlockall(ufi, amap, uobj);
+			return error;
+		}
 	        KASSERT(rw_write_held(amap->am_lock));
 	        KASSERT(uobj == NULL ||
 	            rw_status(uobj->vmobjlock) == flt->lower_lock_type);
@@ -1468,7 +1529,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * Note: pg is either the uobjpage or the new page in the new anon.
 	 */
 	KASSERT(amap == NULL ||
-	    rw_write_held(amap->am_lock));
+	    rw_status(amap->am_lock) == flt->upper_lock_type);
 	KASSERT(uobj == NULL ||
 	    rw_status(uobj->vmobjlock) == flt->lower_lock_type);
 	KASSERT(anon == NULL || anon->an_lock == amap->am_lock);
@@ -1572,9 +1633,11 @@ uvm_fault_lower_io(
 	advice = ufi->entry->advice;
 
 	/* Upgrade to a write lock if needed. */
-	error = uvm_fault_lower_upgrade(ufi, flt, amap, uobj);
-	if (error != 0)
+	error = uvm_fault_lower_upgrade(flt, uobj);
+	if (error != 0) {
+		uvmfault_unlockall(ufi, amap, uobj);
 		return error;
+	}
 	uvmfault_unlockall(ufi, amap, NULL);
 
 	/* update rusage counters */
@@ -1610,7 +1673,7 @@ uvm_fault_lower_io(
 	/* re-verify the state of the world.  */
 	locked = uvmfault_relock(ufi);
 	if (locked && amap != NULL)
-		amap_lock(amap, RW_WRITE);
+		amap_lock(amap, flt->upper_lock_type);
 
 	/* might be changed */
 	if (pg != PGO_DONTCARE) {
