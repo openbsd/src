@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.374 2025/02/17 13:10:27 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.375 2025/04/27 00:58:55 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -60,8 +60,6 @@
 #include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
-
-extern int suid_clear;
 
 static int change_dir(struct nameidata *, struct proc *);
 
@@ -2486,9 +2484,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 	else {
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
-		if ((uid != -1 || gid != -1) &&
-		    !vnoperm(vp) &&
-		    (suser(p) || atomic_load_int(&suid_clear))) {
+		if ((uid != -1 || gid != -1) && !vnoperm(vp)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2539,9 +2535,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	else {
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
-		if ((uid != -1 || gid != -1) &&
-		    !vnoperm(vp) &&
-		    (suser(p) || atomic_load_int(&suid_clear))) {
+		if ((uid != -1 || gid != -1) && !vnoperm(vp)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2589,9 +2583,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 	else {
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
-		if ((uid != -1 || gid != -1) &&
-		    !vnoperm(vp) &&
-		    (suser(p) || atomic_load_int(&suid_clear))) {
+		if ((uid != -1 || gid != -1) && !vnoperm(vp)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;

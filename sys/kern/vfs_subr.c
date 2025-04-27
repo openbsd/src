@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.328 2025/03/27 23:30:54 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.329 2025/04/27 00:58:55 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ int	vttoif_tab[9] = {
 };
 
 int prtactive = 0;	/* 1 => print out reclaim of active vnodes */
-int suid_clear = 1;	/* [a] 1 => clear SUID / SGID on owner change */
 
 /*
  * Insq/Remq for the vnode usage lists.
@@ -1874,46 +1873,6 @@ vfs_syncwait(struct proc *p, int verbose)
 	}
 
 	return nbusy;
-}
-
-/*
- * posix file system related system variables.
- */
-int
-fs_posix_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case FS_POSIX_SETUID:
-		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
-		    &suid_clear));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
-}
-
-/*
- * file system related system variables.
- */
-int
-fs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-	sysctlfn *fn;
-
-	switch (name[0]) {
-	case FS_POSIX:
-		fn = fs_posix_sysctl;
-		break;
-	default:
-		return (EOPNOTSUPP);
-	}
-	return (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, p);
 }
 
 
