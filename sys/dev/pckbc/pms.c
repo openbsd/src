@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.99 2024/08/18 15:09:49 deraadt Exp $ */
+/* $OpenBSD: pms.c,v 1.100 2025/04/27 01:18:25 deraadt Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -781,7 +781,7 @@ pmsactivate(struct device *self, int act)
 	int rv;
 
 	switch (act) {
-	case DVACT_SUSPEND:
+	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 		if (sc->sc_state == PMS_STATE_ENABLED)
 			pms_change_state(sc, PMS_STATE_SUSPENDED,
