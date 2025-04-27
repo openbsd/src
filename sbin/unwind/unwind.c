@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.75 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.76 2025/04/27 16:21:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -920,6 +920,12 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 			fatal(NULL);
 		memcpy(uw_forwarder, imsg->data, sizeof(struct
 		    uw_forwarder));
+		if (uw_forwarder->ip[sizeof(uw_forwarder->ip) - 1] != '\0')
+			fatalx("%s: invalid uw_forwarder", __func__);
+		if (uw_forwarder->auth_name[
+		    sizeof(uw_forwarder->auth_name) - 1] != '\0')
+			fatalx("%s: invalid uw_forwarder", __func__);
+
 		TAILQ_INSERT_TAIL(&nconf->uw_forwarder_list,
 		    uw_forwarder, entry);
 		break;
@@ -933,6 +939,12 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 			fatal(NULL);
 		memcpy(uw_forwarder, imsg->data, sizeof(struct
 		    uw_forwarder));
+		if (uw_forwarder->ip[sizeof(uw_forwarder->ip) - 1] != '\0')
+			fatalx("%s: invalid uw_forwarder", __func__);
+		if (uw_forwarder->auth_name[
+		    sizeof(uw_forwarder->auth_name) - 1] != '\0')
+			fatalx("%s: invalid uw_forwarder", __func__);
+
 		TAILQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
 		    uw_forwarder, entry);
 		break;
@@ -946,6 +958,10 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 			fatal(NULL);
 		memcpy(force_entry, imsg->data, sizeof(struct
 		    force_tree_entry));
+		if (force_entry->domain[
+		    sizeof(force_entry->domain) - 1] != '\0')
+			fatalx("%s: invalid force_entry", __func__);
+
 		if (RB_INSERT(force_tree, &nconf->force, force_entry) != NULL) {
 			free(force_entry);
 			fatalx("%s: IMSG_RECONF_FORCE duplicate entry",

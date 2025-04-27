@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2021/10/22 15:03:28 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2025/04/27 16:21:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -353,7 +353,7 @@ force_list:	force_list optnl STRING {
 			size_t				 len;
 
 			len = strlen($3);
-			e = malloc(sizeof(*e));
+			e = calloc(1, sizeof(*e));
 			if (e == NULL)
 				err(1, NULL);
 			if (strlcpy(e->domain, $3, sizeof(e->domain)) >=
