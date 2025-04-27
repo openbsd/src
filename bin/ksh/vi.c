@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.62 2025/04/25 18:28:33 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.63 2025/04/27 17:06:58 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -865,8 +865,6 @@ vi_cmd(int argcnt, const char *cmd)
 		case 'D':
 			yank_range(es->cursor, es->linelen);
 			del_range(es->cursor, es->linelen);
-			if (es->cursor != 0)
-				es->cursor--;
 			break;
 
 		case 'g':

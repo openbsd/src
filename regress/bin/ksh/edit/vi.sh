@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.11 2025/04/25 18:28:33 schwarze Exp $
+# $OpenBSD: vi.sh,v 1.12 2025/04/27 17:06:58 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -72,6 +72,8 @@ testseq "one 2.0\0033BD" " # one 2.0\b\b\b   \b\b\b\b"
 testseq "one ab.cd\0033bDa.\00332bD" \
 	" # one ab.cd\b\b  \b\b\b..\b\b\b\b    \b\b\b\b\b"
 testseq "one two\0033bCrep" " # one two\b\b\b   \b\b\brep"
+testseq "\0302\0251\0303\0200a\0033DP" \
+	" # \0302\0251\0303\0200a\b \b\ba\0303\0200\b\b"
 
 # c: Change region.
 testseq "one two\0033cbrep" " # one two\b\b\bo  \b\b\bro\beo\bpo\b"
