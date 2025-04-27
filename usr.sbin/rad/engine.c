@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.28 2024/11/21 13:38:15 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.29 2025/04/27 16:23:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -354,6 +354,10 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(ra_iface_conf, imsg.data,
 			    sizeof(struct ra_iface_conf));
+			if (ra_iface_conf->name[IF_NAMESIZE - 1] != '\0')
+				fatalx("%s: IMSG_RECONF_RA_IFACE invalid name",
+				    __func__);
+
 			ra_iface_conf->autoprefix = NULL;
 			SIMPLEQ_INIT(&ra_iface_conf->ra_prefix_list);
 			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_rdnss_list);
@@ -412,6 +416,10 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(ra_dnssl_conf, imsg.data, sizeof(struct
 			    ra_dnssl_conf));
+			if (ra_dnssl_conf->search[MAX_SEARCH - 1] != '\0')
+				fatalx("%s: IMSG_RECONF_RA_DNSSL invalid "
+				    "search list", __func__);
+
 			SIMPLEQ_INSERT_TAIL(&ra_options->ra_dnssl_list,
 			    ra_dnssl_conf, entry);
 			break;
