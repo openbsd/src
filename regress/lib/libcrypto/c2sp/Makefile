@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2024/10/28 16:27:14 tb Exp $
+# $OpenBSD: Makefile,v 1.5 2025/04/27 08:51:24 tb Exp $
 
 C2SP_TESTVECTORS = /usr/local/share/c2sp-testvectors/
 
@@ -18,7 +18,7 @@ cctv: cctv.go
 OSSL_LIB =	/usr/local/lib/eopenssl
 OSSL_INC =	/usr/local/include/eopenssl
 
-. for V in 11 32 33 34
+. for V in 33 34 35
 .  if exists(/usr/local/bin/eopenssl$V)
 PROGS +=	cctv-openssl$V
 SRCS_cctv-openssl$V =
