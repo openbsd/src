@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.59 2025/04/02 09:27:16 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.60 2025/04/27 20:28:51 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -116,7 +116,7 @@ tal_print(const struct tal *p)
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "tal");
 		json_do_string("name", p->descr);
-		json_do_string("ski", pretty_key_id(ski));
+		json_do_string("ski", ski);
 		json_do_array("trust_anchor_locations");
 		for (i = 0; i < p->num_uris; i++)
 			json_do_string("tal", p->uri[i]);
@@ -287,9 +287,9 @@ cert_print(const struct cert *p)
 			json_do_string("type", "router_key");
 		else
 			json_do_string("type", "ca_cert");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		if (p->aki != NULL)
-			json_do_string("aki", pretty_key_id(p->aki));
+			json_do_string("aki", p->aki);
 		x509_print(p->x509);
 		if (p->aia != NULL)
 			json_do_string("aia", p->aia);
@@ -385,7 +385,7 @@ crl_print(const struct crl *p)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "crl");
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 	} else
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 
@@ -454,9 +454,9 @@ mft_print(const X509 *x, const struct mft *p)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "manifest");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		json_do_string("sia", p->sia);
 		json_do_string("manifest_number", p->seqnum);
@@ -514,9 +514,9 @@ roa_print(const X509 *x, const struct roa *p)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "roa");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		json_do_string("sia", p->sia);
 		if (p->signtime != 0)
@@ -570,9 +570,9 @@ spl_print(const X509 *x, const struct spl *s)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "spl");
-		json_do_string("ski", pretty_key_id(s->ski));
+		json_do_string("ski", s->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(s->aki));
+		json_do_string("aki", s->aki);
 		json_do_string("aia", s->aia);
 		json_do_string("sia", s->sia);
 		if (s->signtime != 0)
@@ -621,9 +621,9 @@ gbr_print(const X509 *x, const struct gbr *p)
 {
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "gbr");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		json_do_string("sia", p->sia);
 		if (p->signtime != 0)
@@ -657,9 +657,9 @@ rsc_print(const X509 *x, const struct rsc *p)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "rsc");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		if (p->signtime != 0)
 			json_do_int("signing_time", p->signtime);
@@ -725,9 +725,9 @@ aspa_print(const X509 *x, const struct aspa *p)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "aspa");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		json_do_string("sia", p->sia);
 		if (p->signtime != 0)
@@ -814,9 +814,9 @@ tak_print(const X509 *x, const struct tak *p)
 {
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "tak");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		json_do_string("sia", p->sia);
 		if (p->signtime != 0)
@@ -858,9 +858,9 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "geofeed");
-		json_do_string("ski", pretty_key_id(p->ski));
+		json_do_string("ski", p->ski);
 		x509_print(x);
-		json_do_string("aki", pretty_key_id(p->aki));
+		json_do_string("aki", p->aki);
 		json_do_string("aia", p->aia);
 		if (p->signtime != 0)
 			json_do_int("signing_time", p->signtime);
