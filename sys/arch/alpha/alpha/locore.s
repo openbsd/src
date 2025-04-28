@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.56 2024/10/10 19:33:05 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.57 2025/04/28 13:27:20 visa Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -258,7 +258,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 5:	ldiq	a0, ALPHA_PSL_IPL_SOFT
 	call_pal PAL_OSF1_swpipl
 	mov	v0, s2				/* remember old IPL */
-	CALL(softintr_dispatch)
+	CALL(dosoftint)
 
 	/* SIR handled; restore IPL and check again */
 	mov	s2, a0

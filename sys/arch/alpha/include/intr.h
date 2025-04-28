@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.50 2024/05/17 20:07:33 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.51 2025/04/28 13:27:20 visa Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -61,9 +61,10 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
+#define __USE_MI_SOFTINTR
+
 #include <sys/evcount.h>
-#include <sys/mutex.h>
-#include <sys/queue.h>
+#include <sys/softintr.h>
 #include <machine/atomic.h>
 
 /*
@@ -121,9 +122,9 @@ struct scbvec {
 #define	IPL_HIGH	ALPHA_PSL_IPL_HIGH
 
 #define	IPL_SOFTSERIAL	0	/* serial software interrupts */
+#define	IPL_SOFTTTY	IPL_SOFTSERIAL
 #define	IPL_SOFTCLOCK	1	/* clock software interrupts */
 #define	IPL_SOFTNET	2	/* network software interrupts */
-#define	IPL_SOFT	3	/* other software interrupts */
 
 #define	IPL_MPFLOOR	IPL_AUDIO
 
@@ -134,12 +135,6 @@ struct scbvec {
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-#define SI_SOFT		0
-#define SI_SOFTCLOCK	1
-#define SI_SOFTNET	2
-#define SI_SOFTSERIAL	3
-#define	SI_NSOFT	4
 
 #ifdef	_KERNEL
 
@@ -252,29 +247,9 @@ extern int	intr_shared_edge;
  */
 extern unsigned long ssir;
 
-#define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
+#define	softintr(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
-struct alpha_soft_intrhand {
-	TAILQ_ENTRY(alpha_soft_intrhand)
-		sih_q;
-	struct alpha_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct alpha_soft_intr {
-	TAILQ_HEAD(, alpha_soft_intrhand)
-		softintr_q;
-	struct mutex softintr_mtx;
-	unsigned long softintr_siq;
-};
-
-void	 softintr_disestablish(void *);
-void	 softintr_dispatch(void);
-void	*softintr_establish(int, void (*)(void *), void *);
-void	 softintr_init(void);
-void	 softintr_schedule(void *);
+void	dosoftint(void);
 
 struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,

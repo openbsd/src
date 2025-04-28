@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.42 2024/10/25 08:08:24 mpi Exp $ */
+/* $OpenBSD: interrupt.c,v 1.43 2025/04/28 13:27:20 visa Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -422,37 +422,14 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 #endif	/* NAPECS > 0 || NCIA > 0 || NLCA > 0 || NTCASIC > 0 */
 
-struct alpha_soft_intr alpha_soft_intrs[SI_NSOFT];
-
 /*
- * softintr_init:
- *
- *	Initialize the software interrupt system.
- */
-void
-softintr_init()
-{
-	struct alpha_soft_intr *asi;
-	int i;
-
-	for (i = 0; i < SI_NSOFT; i++) {
-		asi = &alpha_soft_intrs[i];
-		TAILQ_INIT(&asi->softintr_q);
-		mtx_init(&asi->softintr_mtx, IPL_HIGH);
-		asi->softintr_siq = i;
-	}
-}
-
-/*
- * softintr_dispatch:
+ * dosoftint:
  *
  *	Process pending software interrupts.
  */
 void
-softintr_dispatch()
+dosoftint()
 {
-	struct alpha_soft_intr *asi;
-	struct alpha_soft_intrhand *sih;
 	u_int64_t n, i;
 
 #if defined(MULTIPROCESSOR)
@@ -460,124 +437,17 @@ softintr_dispatch()
 #endif
 
 	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
-		for (i = 0; i < SI_NSOFT; i++) {
+		for (i = 0; i < NSOFTINTR; i++) {
 			if ((n & (1 << i)) == 0)
 				continue;
-	
-			asi = &alpha_soft_intrs[i];
 
-			for (;;) {
-				mtx_enter(&asi->softintr_mtx);
-
-				sih = TAILQ_FIRST(&asi->softintr_q);
-				if (sih == NULL) {
-					mtx_leave(&asi->softintr_mtx);
-					break;
-				}
-				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-				sih->sih_pending = 0;
-
-				atomic_add_int(&uvmexp.softs, 1);
-
-				mtx_leave(&asi->softintr_mtx);
-
-				(*sih->sih_fn)(sih->sih_arg);
-			}
+			softintr_dispatch(i);
 		}
 	}
 
 #if defined(MULTIPROCESSOR)
 	__mp_unlock(&kernel_lock);
 #endif
-}
-
-static int
-ipl2si(int ipl)
-{
-	int si;
-
-	switch (ipl) {
-	case IPL_TTY:			/* XXX */
-	case IPL_SOFTSERIAL:
-		si = SI_SOFTSERIAL;
-		break;
-	case IPL_SOFTNET:
-		si = SI_SOFTNET;
-		break;
-	case IPL_SOFTCLOCK:
-		si = SI_SOFTCLOCK;
-		break;
-	case IPL_SOFT:
-		si = SI_SOFT;
-		break;
-	default:
-		panic("ipl2si: %d", ipl);
-	}
-	return si;
-}
-
-/*
- * softintr_establish:		[interface]
- *
- *	Register a software interrupt handler.
- */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct alpha_soft_intr *asi;
-	struct alpha_soft_intrhand *sih;
-	int si;
-
-	si = ipl2si(ipl);
-	asi = &alpha_soft_intrs[si];
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = asi;
-		sih->sih_fn = func;
-		sih->sih_arg = arg;
-		sih->sih_pending = 0;
-	}
-	return (sih);
-}
-
-/*
- * softintr_disestablish:	[interface]
- *
- *	Unregister a software interrupt handler.
- */
-void
-softintr_disestablish(void *arg)
-{
-	struct alpha_soft_intrhand *sih = arg;
-	struct alpha_soft_intr *asi = sih->sih_intrhead;
-
-	mtx_enter(&asi->softintr_mtx);
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-	}
-	mtx_leave(&asi->softintr_mtx);
-
-	free(sih, M_DEVBUF, sizeof *sih);
-}
-
-/*
- * Schedule a software interrupt.
-*/
-void
-softintr_schedule(void *arg)
-{
-	struct alpha_soft_intrhand *sih = arg;
-	struct alpha_soft_intr *si = sih->sih_intrhead;
-
-	mtx_enter(&si->softintr_mtx);
-	if (sih->sih_pending == 0) {
-		TAILQ_INSERT_TAIL(&si->softintr_q, sih, sih_q);
-		sih->sih_pending = 1;
-		setsoft(si->softintr_siq);
-	}
-	mtx_leave(&si->softintr_mtx);
 }
 
 void

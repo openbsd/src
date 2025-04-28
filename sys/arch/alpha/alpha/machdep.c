@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.203 2023/04/11 00:45:06 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.204 2025/04/28 13:27:20 visa Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1716,7 +1716,7 @@ spl0()
 
 	if (ssir) {
 		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
-		softintr_dispatch();
+		dosoftint();
 	}
 
 	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
