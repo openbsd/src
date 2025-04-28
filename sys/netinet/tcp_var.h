@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.188 2025/04/21 09:54:53 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.189 2025/04/28 21:12:35 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ struct tcp_opt_info {
  *	I	immutable after creation
  *	N	net lock
  *	S	syn_cache_mtx		tcp syn cache global mutex
+ *	s	so_lock			socket lock of listen socket
  */
 
 extern struct mutex syn_cache_mtx;
@@ -247,11 +248,11 @@ struct syn_cache {
 	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* [S] link on bucket list */
 	struct refcnt sc_refcnt;		/* ref count list and timer */
 	struct timeout sc_timer;		/* rexmt timer */
-	struct route sc_route;			/* [N] cached route */
+	struct route sc_route;			/* [s] cached route */
 	long sc_win;				/* [I] advertised window */
 	struct syn_cache_head *sc_buckethead;	/* [S] our bucket index */
 	struct syn_cache_set *sc_set;		/* [S] our syn cache set */
-	u_int64_t sc_timestamp;		/* [N] timestamp from SYN */
+	u_int64_t sc_timestamp;		/* [s] timestamp from SYN */
 	u_int32_t sc_hash;		/* [S] */
 	u_int32_t sc_modulate;		/* [I] our timestamp modulator */
 	union syn_cache_sa sc_src;	/* [I] */
@@ -272,7 +273,7 @@ struct syn_cache {
 #define SCF_ECN_PERMIT	0x0040U		/* permit ecn */
 #define SCF_SIGNATURE	0x0080U		/* enforce tcp signatures */
 
-	struct mbuf *sc_ipopts;			/* [N] IP options */
+	struct mbuf *sc_ipopts;			/* [s] IP options */
 	u_int16_t sc_peermaxseg;		/* [I] */
 	u_int16_t sc_ourmaxseg;			/* [I] */
 	u_int     sc_request_r_scale	: 4,	/* [I] */
