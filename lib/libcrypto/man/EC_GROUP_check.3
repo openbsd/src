@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_check.3,v 1.1 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_GROUP_check.3,v 1.2 2025/04/28 17:42:42 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: April 28 2025 $
 .Dt EC_GROUP_CHECK 3
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@ Deprecated:
 These functions are deprecated.
 Only standardized curves built into the library should be used, see
 .Xr EC_GROUP_new_by_curve_name 3 .
-For builtin curves far more thorough checks than the minimal checks
-performed by these functions have been performed.
+Builtin curves went through far more thorough checking than
+the minimal, incomplete tests performed by these functions.
 .Pp
 These functions have an optional
 .Fa ctx
