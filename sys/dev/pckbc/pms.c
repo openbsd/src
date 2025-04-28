@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.100 2025/04/27 01:18:25 deraadt Exp $ */
+/* $OpenBSD: pms.c,v 1.101 2025/04/28 13:35:39 deraadt Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -787,7 +787,7 @@ pmsactivate(struct device *self, int act)
 			pms_change_state(sc, PMS_STATE_SUSPENDED,
 			    PMS_DEV_IGNORE);
 		break;
-	case DVACT_RESUME:
+	case DVACT_WAKEUP:
 		if (sc->sc_state == PMS_STATE_SUSPENDED)
 			pms_change_state(sc, PMS_STATE_ENABLED,
 			    PMS_DEV_IGNORE);
