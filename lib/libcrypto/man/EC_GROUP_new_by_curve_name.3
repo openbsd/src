@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_new_by_curve_name.3,v 1.1 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_GROUP_new_by_curve_name.3,v 1.2 2025/04/28 17:41:55 tb Exp $
 .\"
 .\" Copyright (c) 2024, 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: April 28 2025 $
 .Dt EC_GROUP_NEW_BY_CURVE_NAME 3
 .Os
 .Sh NAME
@@ -224,7 +224,7 @@ main(void)
 	EC_builtin_curve *curves;
 	size_t ncurves, i;
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio", NULL) == \-1)
 		err(1, "pledge");
 
 	ncurves = EC_get_builtin_curves(NULL, 0);
