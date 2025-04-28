@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.42 2025/04/23 21:54:12 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.43 2025/04/28 16:18:25 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -36,6 +36,7 @@
 #include <machine/pmap.h>
 #include <machine/biosvar.h>
 #include <machine/segments.h>
+#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/vmmvar.h>
 
@@ -124,7 +125,9 @@ int svm_fault_page(struct vcpu *, paddr_t);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
 int svm_handle_np_fault(struct vcpu *);
+int vmm_alloc_vpid_vcpu(uint16_t *, struct vcpu *);
 int vmm_alloc_vpid(uint16_t *);
+int vmm_alloc_asid(uint16_t *, struct vcpu *);
 void vmm_free_vpid(uint16_t);
 const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
@@ -2766,7 +2769,7 @@ vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 	int ret = 0;
 
 	/* Allocate an ASID early to avoid km_alloc if we're out of ASIDs. */
-	if (vmm_alloc_vpid(&vcpu->vc_vpid))
+	if (vmm_alloc_asid(&vcpu->vc_vpid, vcpu))
 		return (ENOMEM);
 
 	/* Allocate VMCB VA */
@@ -6354,27 +6357,32 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 }
 
 /*
- * vmm_alloc_vpid
+ * vmm_alloc_vpid_vcpu
  *
  * Sets the memory location pointed to by "vpid" to the next available VPID
- * or ASID.
+ * or ASID. For SEV-ES consider minimum ASID value for non-ES enabled guests.
  *
  * Parameters:
  *  vpid: Pointer to location to receive the next VPID/ASID
+ *  vcpu: Pointer to VCPU data structure
  *
  * Return Values:
  *  0: The operation completed successfully
  *  ENOMEM: No VPIDs/ASIDs were available. Content of 'vpid' is unchanged.
  */
 int
-vmm_alloc_vpid(uint16_t *vpid)
+vmm_alloc_vpid_vcpu(uint16_t *vpid, struct vcpu *vcpu)
 {
-	uint16_t i;
+	uint16_t i, minasid;
 	uint8_t idx, bit;
 	struct vmm_softc *sc = vmm_softc;
 
 	rw_enter_write(&vmm_softc->vpid_lock);
-	for (i = 1; i <= sc->max_vpid; i++) {
+	if (vcpu == NULL || vcpu->vc_seves)
+		minasid = 1;
+	else
+		minasid = amd64_min_noes_asid;
+	for (i = minasid; i <= sc->max_vpid; i++) {
 		idx = i / 8;
 		bit = i - (idx * 8);
 
@@ -6394,6 +6402,18 @@ vmm_alloc_vpid(uint16_t *vpid)
 
 	rw_exit_write(&vmm_softc->vpid_lock);
 	return ENOMEM;
+}
+
+int
+vmm_alloc_vpid(uint16_t *vpid)
+{
+	return vmm_alloc_vpid_vcpu(vpid, NULL);
+}
+
+int
+vmm_alloc_asid(uint16_t *asid, struct vcpu *vcpu)
+{
+	return vmm_alloc_vpid_vcpu(asid, vcpu);
 }
 
 /*

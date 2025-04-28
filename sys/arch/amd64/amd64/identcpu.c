@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.148 2024/10/07 20:30:17 dv Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.149 2025/04/28 16:18:25 bluhm Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ int cpuspeed;
 
 int amd64_has_xcrypt;
 int amd64_pos_cbit;	/* C bit position for SEV */
+int amd64_min_noes_asid;
 int has_rdrand;
 int has_rdseed;
 
@@ -710,6 +711,7 @@ identifycpu(struct cpu_info *ci)
 		    'd', CPUID_MEMBER(ci_feature_amdsev_edx),
 		    CPUID_AMDSEV_EDX_BITS);
 		amd64_pos_cbit = (ci->ci_feature_amdsev_ebx & 0x3f);
+		amd64_min_noes_asid = (ci->ci_feature_amdsev_edx);
 	}
 
 	printf("\n");
