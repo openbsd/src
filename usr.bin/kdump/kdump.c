@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.164 2024/06/29 11:32:35 jsg Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.165 2025/04/29 08:16:56 tb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1019,7 +1019,6 @@ skip:
 static struct ctlname topname[] = CTL_NAMES;
 static struct ctlname kernname[] = CTL_KERN_NAMES;
 static struct ctlname vmname[] = CTL_VM_NAMES;
-static struct ctlname fsname[] = CTL_FS_NAMES;
 static struct ctlname netname[] = CTL_NET_NAMES;
 static struct ctlname hwname[] = CTL_HW_NAMES;
 static struct ctlname debugname[CTL_DEBUG_MAXID];
@@ -1073,9 +1072,6 @@ kresolvsysctl(int depth, const int *top)
 			break;
 		case CTL_VM:
 			SETNAME(vmname);
-			break;
-		case CTL_FS:
-			SETNAME(fsname);
 			break;
 		case CTL_NET:
 			SETNAME(netname);
