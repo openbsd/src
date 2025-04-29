@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.43 2025/04/28 16:18:25 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.44 2025/04/29 13:21:52 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6378,7 +6378,7 @@ vmm_alloc_vpid_vcpu(uint16_t *vpid, struct vcpu *vcpu)
 	struct vmm_softc *sc = vmm_softc;
 
 	rw_enter_write(&vmm_softc->vpid_lock);
-	if (vcpu == NULL || vcpu->vc_seves)
+	if (vcpu == NULL || vcpu->vc_seves || amd64_min_noes_asid == 0)
 		minasid = 1;
 	else
 		minasid = amd64_min_noes_asid;
