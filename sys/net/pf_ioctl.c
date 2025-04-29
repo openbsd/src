@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.418 2024/07/18 14:46:28 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.419 2025/04/29 13:12:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -195,9 +195,9 @@ pfattach(int num)
 	    IPL_SOFTNET, 0, "pfsrctr", NULL);
 	pool_init(&pf_sn_item_pl, sizeof(struct pf_sn_item), 0,
 	    IPL_SOFTNET, 0, "pfsnitem", NULL);
-	pool_init(&pf_state_pl, sizeof(struct pf_state), 0,
+	pool_init(&pf_state_pl, sizeof(struct pf_state), CACHELINESIZE,
 	    IPL_SOFTNET, 0, "pfstate", NULL);
-	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0,
+	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), CACHELINESIZE,
 	    IPL_SOFTNET, 0, "pfstkey", NULL);
 	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0,
 	    IPL_SOFTNET, 0, "pfstitem", NULL);
