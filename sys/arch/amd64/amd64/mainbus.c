@@ -74,6 +74,7 @@
 #endif
 
 void	replacemds(void);
+void	replaceinout(void);
 
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -155,6 +156,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	extern void			(*setperf_setup)(struct cpu_info *);
 
 	printf("\n");
+
+	/* Paravirtualize in/out */
+	replaceinout();
 
 #if NEFIFB > 0
 	efifb_cnremap();

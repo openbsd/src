@@ -95,21 +95,55 @@ extern void i8259_default_setup(void);
 #else /* ICU_SPECIAL_MASK_MODE */
 
 #ifndef	AUTO_EOI_1
-#define	i8259_asm_ack1(num) \
+#define	i8259_asm_ack1_no_pv(num) \
 	movb	$(0x60|(num%8)),%al	/* specific EOI */		;\
 	outb	%al,$IO_ICU1
+
+#define	i8259_asm_ack1(num) \
+	CODEPATCH_START							;\
+	cld								;\
+	movb	$(0x60|(num%8)),%al	/* specific EOI */		;\
+	xorq	%rsi,%rsi						;\
+	movb	%al,%sil						;\
+	movq	$IO_ICU1,%rdi						;\
+	call	ghcb_io_write_1						;\
+	movq	$0,-8(%rsp)						;\
+	jmp	99f							;\
+	CODEPATCH_END(CPTAG_I8259_PV)					;\
+	i8259_asm_ack1_no_pv(num)					;\
+	99:
 #else
 #define	i8259_asm_ack1(num)
 #endif
 
 #ifndef AUTO_EOI_2
-#define	i8259_asm_ack2(num) \
+#define	i8259_asm_ack2_no_pv(num) \
 	movb	$(0x60|(num%8)),%al	/* specific EOI */		;\
 	outb	%al,$IO_ICU2		/* do the second ICU first */	;\
 	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
 	outb	%al,$IO_ICU1
+
+#define	i8259_asm_ack2(num) \
+	CODEPATCH_START							;\
+	cld								;\
+	movb	$(0x60|(num%8)),%al	/* specific EOI */		;\
+	xorq	%rsi,%rsi						;\
+	movb	%al,%sil						;\
+	movq	$IO_ICU2,%rdi		/* do the second ICU first */	;\
+	call	ghcb_io_write_1						;\
+	movq	$0,-8(%rsp)						;\
+	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
+	xorq	%rsi,%rsi						;\
+	movb	%al,%sil						;\
+	movq	$IO_ICU1,%rdi						;\
+	call	ghcb_io_write_1						;\
+	movq	$0,-8(%rsp)						;\
+	jmp	99f							;\
+	CODEPATCH_END(CPTAG_I8259_PV)					;\
+	i8259_asm_ack2_no_pv(num)					;\
+	99:
 #else
-#define	i8259_asm_ack2(num)
+#define	i8259_asm_ack2_no_pv(num)
 #endif
 
 #ifdef PIC_MASKDELAY
@@ -120,18 +154,51 @@ extern void i8259_default_setup(void);
 
 #ifdef ICU_HARDWARE_MASK
 
-#define	i8259_asm_mask(num) \
+#define	i8259_asm_mask_no_pv(num) \
 	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
 	orb	$IRQ_BIT(num),%al					;\
 	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
 	MASKDELAY							;\
 	outb	%al,$(ICUADDR+1)
-#define	i8259_asm_unmask(num) \
+
+#define	i8259_asm_mask(num) \
+	CODEPATCH_START							;\
+	cld								;\
+	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
+	orb	$IRQ_BIT(num),%al					;\
+	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
+	xorq	%rsi,%rsi						;\
+	movb	%al,%sil						;\
+	movq	$(ICUADDR+1),%rdi					;\
+	call	ghcb_io_write_1						;\
+	movq	$0,-8(%rsp)						;\
+	jmp	99f							;\
+	CODEPATCH_END(CPTAG_I8259_PV)					;\
+	i8259_asm_mask_no_pv(num)					;\
+	99:
+
+#define	i8259_asm_unmask_no_pv(num) \
 	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
 	andb	$~IRQ_BIT(num),%al					;\
 	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
 	MASKDELAY							;\
 	outb	%al,$(ICUADDR+1)
+
+#define	i8259_asm_unmask(num) \
+	CODEPATCH_START							;\
+	cld								;\
+	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
+	andb	$~IRQ_BIT(num),%al					;\
+	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
+	xorq	%rsi,%rsi						;\
+	movb	%al,%sil						;\
+	movq	$(ICUADDR+1),%rdi					;\
+	call	ghcb_io_write_1						;\
+	movq	$0,-8(%rsp)						;\
+	jmp	99f							;\
+	CODEPATCH_END(CPTAG_I8259_PV)					;\
+	i8259_asm_unmask_no_pv(num)					;\
+	99:
 
 #else /* ICU_HARDWARE_MASK */
 

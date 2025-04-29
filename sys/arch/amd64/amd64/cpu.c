@@ -146,6 +146,7 @@ struct cpu_softc {
 void	replacesmap(void);
 void	replacemeltdown(void);
 void	replacemds(void);
+void	replaceinout(void);
 
 extern long _stac;
 extern long _clac;
@@ -431,6 +432,24 @@ notintel:
 		codepatch_nop(CPTAG_MDS_VMM);
 		splx(s);
 	}
+}
+
+void
+replaceinout(void)
+{
+	static int	replacedone = 0;
+	unsigned long	s;
+
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return;
+
+	if (replacedone)
+		return;
+	replacedone = 1;
+
+	s = intr_disable();
+	codepatch_nop(CPTAG_I8259_PV);
+	intr_restore(s);
 }
 
 #ifdef MULTIPROCESSOR

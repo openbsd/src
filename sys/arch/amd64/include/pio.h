@@ -33,6 +33,11 @@
 #ifndef _MACHINE_PIO_H_
 #define _MACHINE_PIO_H_
 
+#include <sys/param.h>
+
+#include <machine/cpu.h>
+#include <machine/ghcb.h>
+
 /*
  * Functions to provide access to x86 programmed I/O instructions.
  *
@@ -61,6 +66,10 @@ static __inline u_int8_t
 __inbc(unsigned port)
 {
 	u_int8_t data;
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_read_1(port));
+#endif
 	__asm volatile("inb %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
@@ -69,6 +78,10 @@ static __inline u_int8_t
 __inb(unsigned port)
 {
 	u_int8_t data;
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_read_1(port));
+#endif
 	__asm volatile("inb %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
@@ -91,6 +104,10 @@ static __inline u_int16_t
 __inwc(unsigned port)
 {
 	u_int16_t data;
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_read_2(port));
+#endif
 	__asm volatile("inw %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
@@ -99,6 +116,10 @@ static __inline u_int16_t
 __inw(unsigned port)
 {
 	u_int16_t data;
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_read_2(port));
+#endif
 	__asm volatile("inw %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
@@ -121,6 +142,10 @@ static __inline u_int32_t
 __inlc(unsigned port)
 {
 	u_int32_t data;
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_read_4(port));
+#endif
 	__asm volatile("inl %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
@@ -129,6 +154,10 @@ static __inline u_int32_t
 __inl(unsigned port)
 {
 	u_int32_t data;
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_read_4(port));
+#endif
 	__asm volatile("inl %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
@@ -151,12 +180,20 @@ insl(unsigned port, void *addr, int cnt)
 static __inline void
 __outbc(unsigned port, u_int8_t data)
 {
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_write_1(port, data));
+#endif
 	__asm volatile("outb %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outb(unsigned port, u_int8_t data)
 {
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_write_1(port, data));
+#endif
 	__asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
@@ -177,12 +214,20 @@ outsb(unsigned port, const void *addr, int cnt)
 static __inline void
 __outwc(unsigned port, u_int16_t data)
 {
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_write_2(port, data));
+#endif
 	__asm volatile("outw %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outw(unsigned port, u_int16_t data)
 {
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_write_2(port, data));
+#endif
 	__asm volatile("outw %0,%w1" : : "a" (data), "d" (port));
 }
 
@@ -203,12 +248,20 @@ outsw(unsigned port, const void *addr, int cnt)
 static __inline void
 __outlc(unsigned port, u_int32_t data)
 {
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_write_4(port, data));
+#endif
 	__asm volatile("outl %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outl(unsigned port, u_int32_t data)
 {
+#ifdef _KERNEL
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		return (ghcb_io_write_4(port, data));
+#endif
 	__asm volatile("outl %0,%w1" : : "a" (data), "d" (port));
 }
 

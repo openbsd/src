@@ -70,6 +70,7 @@ void codepatch_disable(void);
 #define CPTAG_RETPOLINE_R11		15
 #define CPTAG_RETPOLINE_R13		16
 #define CPTAG_IBPB_NOP			17
+#define CPTAG_I8259_PV			18
 
 /*
  * stac/clac SMAP instructions have lfence like semantics.  Let's

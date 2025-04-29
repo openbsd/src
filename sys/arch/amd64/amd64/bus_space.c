@@ -39,6 +39,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/ghcb.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
