@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.167 2025/04/27 08:37:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.168 2025/04/29 09:05:54 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -369,7 +369,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 */
 		locked = uvmfault_relock(ufi);
 		if (locked || we_own) {
-			rw_enter(anon->an_lock, RW_WRITE);
+			rw_enter(anon->an_lock, lock_type);
 		}
 
 		/*
