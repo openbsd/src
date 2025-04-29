@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.8,v 1.24 2024/08/01 14:44:34 jmc Exp $
+.\"	$OpenBSD: chown.8,v 1.25 2025/04/29 17:44:00 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: August 1 2024 $
+.Dd $Mdocdate: April 29 2025 $
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -128,11 +128,6 @@ By default,
 clears the set-user-ID and set-group-ID bits on the file
 to prevent accidental or mischievous creation of
 set-user-ID and set-group-ID programs.
-This behaviour can be overridden by setting the
-.Xr sysctl 8
-variable
-.Va fs.posix.setuid
-to zero.
 .Pp
 Only the superuser is permitted to change the owner of a file.
 .Sh EXIT STATUS
