@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.440 2025/04/23 17:52:12 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.441 2025/04/29 14:53:22 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4453,6 +4453,18 @@ tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 		goto out;
 
 	ether_extract_headers(mtail, &tail);
+
+	if (tail.tcp) {
+		int tcpdatalen;
+
+		/* Remove possible ethernet padding at the end. */
+		tcpdatalen = tail.iplen - tail.iphlen - tail.tcphlen;
+		if (tcpdatalen < tail.paylen ) {
+			m_adj(mtail, tcpdatalen - tail.paylen);
+			tail.paylen = tcpdatalen;
+		}
+	}
+
 	if (!tcp_softlro_check(mtail, &tail)) {
 		mtail->m_pkthdr.ph_mss = 0;
 		goto out;
