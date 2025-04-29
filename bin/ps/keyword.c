@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.54 2025/03/24 21:43:40 tedu Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.55 2025/04/29 03:45:27 tedu Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ VAR var[] = {
 	/* XXX */
 	{"rgroup", "RGROUP", NULL, LJUST, rgname, USERLEN},
 	{"rlink", "RLINK", NULL, 0, pvar, 8, 0, POFF(p_back), UINT64, "llx"},
-	{"rss", "RSS", NULL, 0, p_rssize, 6},
+	{"rss", "RSS", NULL, 0, p_rssize, 5},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize, 4},
 	{"rtable", "RTABLE", NULL, 0, pvar, 0, 0, POFF(p_rtableid), INT32, "d"},
@@ -187,7 +187,7 @@ VAR var[] = {
 	{"user", "USER", NULL, LJUST, euname, USERLEN},
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},
-	{"vsz", "VSZ", NULL, 0, vsize, 6},
+	{"vsz", "VSZ", NULL, 0, vsize, 5},
 	{"wchan", "WCHAN", NULL, LJUST, wchan, WCHANLEN},
 	{"xstat", "XSTAT", NULL, 0, pvar, 4, 0, POFF(p_xstat), UINT16, "x"},
 	{""},
