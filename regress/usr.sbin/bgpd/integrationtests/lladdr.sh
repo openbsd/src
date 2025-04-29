@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: lladdr.sh,v 1.3 2024/10/28 12:11:05 claudio Exp $
+#	$OpenBSD: lladdr.sh,v 1.4 2025/04/29 18:35:51 claudio Exp $
 
 set -e
 
@@ -92,13 +92,13 @@ sleep 2
 
 route -T11 exec bgpctl show rib | tee lladdr.rdomain1.out
 route -T11 exec bgpctl show fib | grep -v 'link#' | tee -a lladdr.rdomain1.out
-route -T11 get 2001:db8:2::/48 | grep -v "if address" | tee -a lladdr.rdomain1.out
-route -T11 get 2001:db8:12::/48 | grep -v "if address" | tee -a lladdr.rdomain1.out
+route -T11 -n get 2001:db8:2::/48 | grep -v "if address" | tee -a lladdr.rdomain1.out
+route -T11 -n get 2001:db8:12::/48 | grep -v "if address" | tee -a lladdr.rdomain1.out
 
 route -T12 exec bgpctl show rib | tee lladdr.rdomain2.out
 route -T12 exec bgpctl show fib | grep -v 'link#' | tee -a lladdr.rdomain2.out
-route -T12 get 2001:db8:1::/48 | grep -v "if address" | tee -a lladdr.rdomain2.out
-route -T12 get 2001:db8:11::/48 | grep -v "if address" | tee -a lladdr.rdomain2.out
+route -T12 -n get 2001:db8:1::/48 | grep -v "if address" | tee -a lladdr.rdomain2.out
+route -T12 -n get 2001:db8:11::/48 | grep -v "if address" | tee -a lladdr.rdomain2.out
 
 sleep .2
 diff -u ${BGPDCONFIGDIR}/lladdr.rdomain1.ok lladdr.rdomain1.out

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: l3vpn.sh,v 1.7 2025/04/01 11:36:40 claudio Exp $
+#	$OpenBSD: l3vpn.sh,v 1.8 2025/04/29 18:35:51 claudio Exp $
 
 set -e
 
@@ -98,7 +98,7 @@ echo Check initial networks
 route -T ${RDOMAIN1} exec bgpctl show
 route -T ${RDOMAIN1} exec bgpctl show rib
 route -T ${RDOMAIN1} exec bgpctl show fib table 13
-route -T ${RDOMAIN3} show
+route -T ${RDOMAIN3} -n show
 route -T ${RDOMAIN3} -n get 192.168.44/24 > /dev/null
 route -T ${RDOMAIN4} -n get 192.168.42/24 > /dev/null
 route -T ${RDOMAIN3} -n get -inet6 2001:db8:42:44::/64 > /dev/null
