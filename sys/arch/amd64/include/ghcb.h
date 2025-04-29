@@ -129,6 +129,13 @@ void	ghcb_sync_out(struct trapframe *, const struct ghcb_extra_regs *,
 	    struct ghcb_sa *, struct ghcb_sync *);
 void	ghcb_sync_in(struct trapframe *, struct ghcb_sa *, struct ghcb_sync *);
 
+uint8_t		ghcb_io_read_1(unsigned int);
+uint16_t	ghcb_io_read_2(unsigned int);
+uint32_t	ghcb_io_read_4(unsigned int);
+void		ghcb_io_write_1(unsigned int, uint8_t);
+void		ghcb_io_write_2(unsigned int, uint16_t);
+void		ghcb_io_write_4(unsigned int, uint32_t);
+
 #endif /* !_LOCORE */
 
 #endif /* !_MACHINE_GHCB_H_ */
