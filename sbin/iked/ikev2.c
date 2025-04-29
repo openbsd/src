@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.391 2025/03/13 17:49:37 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.392 2025/04/29 13:40:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1614,6 +1614,8 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 		return (0);
 	}
 
+	bzero(&peerid, sizeof(peerid));
+
 	/* New encrypted message buffer */
 	if ((e = ibuf_static()) == NULL)
 		goto done;
@@ -1630,7 +1632,6 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	len = ibuf_size(id->id_buf);
 
 	if (pol->pol_peerid.id_type) {
-		bzero(&peerid, sizeof(peerid));
 		if (ikev2_policy2id(&pol->pol_peerid, &peerid, 0) != 0) {
 			log_debug("%s: failed to get remote id", __func__);
 			goto done;
@@ -1737,6 +1738,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 
  done:
 	ibuf_free(e);
+	ibuf_free(peerid.id_buf);
 
 	return (ret);
 }
