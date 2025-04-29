@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.264 2025/04/06 17:36:22 kn Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.265 2025/04/29 02:24:32 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,6 @@
 struct ctlname topname[] = CTL_NAMES;
 struct ctlname kernname[] = CTL_KERN_NAMES;
 struct ctlname vmname[] = CTL_VM_NAMES;
-struct ctlname fsname[] = CTL_FS_NAMES;
 struct ctlname netname[] = CTL_NET_NAMES;
 struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
@@ -147,7 +146,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_UNSPEC */
 	{ kernname, KERN_MAXID },	/* CTL_KERN */
 	{ vmname, VM_MAXID },		/* CTL_VM */
-	{ fsname, FS_MAXID },		/* CTL_FS */
+	{ 0, 0 },			/* was CTL_FS */
 	{ netname, NET_MAXID },		/* CTL_NET */
 	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
 	{ hwname, HW_MAXID },		/* CTL_HW */
@@ -808,12 +807,6 @@ parse(char *string, int flags)
 #endif
 		break;
 
-	case CTL_FS:
-		len = sysctl_fs(string, &bufp, mib, flags, &type);
-		if (len >= 0)
-			break;
-		return;
-
 	case CTL_VFS:
 		if (mib[1])
 			len = sysctl_vfs(string, &bufp, mib, flags, &type);
@@ -1429,28 +1422,6 @@ sysctl_vfs(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[1] = vfs_typenums[mib[1]];
 	mib[2] = indx;
 	*typep = lp->list[indx].ctl_type;
-	return (3);
-}
-
-struct ctlname posixname[] = CTL_FS_POSIX_NAMES;
-struct list fslist = { posixname, FS_POSIX_MAXID };
-
-/*
- * handle file system requests
- */
-int
-sysctl_fs(char *string, char **bufpp, int mib[], int flags, int *typep)
-{
-	int indx;
-
-	if (*bufpp == NULL) {
-		listall(string, &fslist);
-		return (-1);
-	}
-	if ((indx = findname(string, "third", bufpp, &fslist)) == -1)
-		return (-1);
-	mib[2] = indx;
-	*typep = fslist.list[indx].ctl_type;
 	return (3);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.241 2025/02/14 13:29:00 ratchov Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.242 2025/04/29 02:24:32 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct ctlname {
 #define	CTL_UNSPEC	0		/* unused */
 #define	CTL_KERN	1		/* "high kernel": proc, limits */
 #define	CTL_VM		2		/* virtual memory */
-#define	CTL_FS		3		/* file system, mount type is next */
+/* gap for CTL_FS	3		*/
 #define	CTL_NET		4		/* network, see socket.h */
 #define	CTL_DEBUG	5		/* debugging parameters */
 #define	CTL_HW		6		/* generic cpu/io */
@@ -89,7 +89,7 @@ struct ctlname {
 	{ 0, 0 }, \
 	{ "kern", CTLTYPE_NODE }, \
 	{ "vm", CTLTYPE_NODE }, \
-	{ "fs", CTLTYPE_NODE }, \
+	{ "gap", 0 }, \
 	{ "net", CTLTYPE_NODE }, \
 	{ "debug", CTLTYPE_NODE }, \
 	{ "hw", CTLTYPE_NODE }, \
@@ -893,28 +893,6 @@ struct kinfo_file {
 #define CTL_KERN_CLOCKINTR_NAMES { \
 	{ 0, 0 }, \
 	{ "stats", CTLTYPE_STRUCT }, \
-}
-
-/*
- * CTL_FS identifiers
- */
-#define	FS_POSIX	1		/* POSIX flags */
-#define	FS_MAXID	2
-
-#define	CTL_FS_NAMES { \
-	{ 0, 0 }, \
-	{ "posix", CTLTYPE_NODE }, \
-}
-
-/*
- * CTL_FS identifiers
- */
-#define	FS_POSIX_SETUID	1		/* int: always clear SGID/SUID bit when owner change */
-#define	FS_POSIX_MAXID	2
-
-#define	CTL_FS_POSIX_NAMES { \
-	{ 0, 0 }, \
-	{ "setuid", CTLTYPE_INT }, \
 }
 
 /*
