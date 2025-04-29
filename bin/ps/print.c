@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.89 2024/04/28 16:43:15 florian Exp $	*/
+/*	$OpenBSD: print.c,v 1.90 2025/04/29 03:48:10 tedu Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -239,7 +239,7 @@ logname(const struct pinfo *pi, VARENT *ve)
 		(void)printf("%-*s", v->width, "-");
 }
 
-#define pgtok(a)	(((unsigned long long)(a)*getpagesize())/1024)
+#define pgtok(a)	(((unsigned long long)(a)*pagesize)/1024)
 
 void
 printstate(const struct pinfo *pi, VARENT *ve)
@@ -625,18 +625,6 @@ vsize(const struct pinfo *pi, VARENT *ve)
 	v = ve->var;
 	(void)printf("%*llu", v->width,
 	    pgtok(kp->p_vm_dsize + kp->p_vm_ssize + kp->p_vm_tsize));
-}
-
-void
-rssize(const struct pinfo *pi, VARENT *ve)
-{
-	const struct kinfo_proc *kp = pi->ki;
-	VAR *v;
-
-	v = ve->var;
-	/* XXX don't have info about shared */
-	(void)printf("%*llu", v->width, (kp->p_flag & P_SYSTEM) ? 0 :
-	    pgtok(kp->p_vm_rssize));
 }
 
 void

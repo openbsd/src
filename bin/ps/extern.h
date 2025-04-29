@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.24 2022/09/01 21:15:54 job Exp $	*/
+/*	$OpenBSD: extern.h,v 1.25 2025/04/29 03:48:10 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@ struct var;
 struct varent;
 
 extern fixpt_t ccpu;
-extern int eval, fscale, nlistread, maxslp;
+extern int eval, fscale, nlistread, maxslp, pagesize;
 extern u_int mempages;
 extern int sumrusage, termwidth, totwidth, kvm_sysctl_only, needheader;
 extern VAR var[];
@@ -68,7 +68,6 @@ void	 printheader(void);
 void	 pvar(const struct pinfo *, VARENT *);
 void	 pnice(const struct pinfo *, VARENT *);
 void	 rgname(const struct pinfo *, VARENT *);
-void	 rssize(const struct pinfo *, VARENT *);
 void	 runame(const struct pinfo *, VARENT *);
 void	 showkey(void);
 void	 started(const struct pinfo *, VARENT *);

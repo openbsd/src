@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.55 2025/04/29 03:45:27 tedu Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.56 2025/04/29 03:48:10 tedu Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -153,8 +153,6 @@ VAR var[] = {
 	{"rgroup", "RGROUP", NULL, LJUST, rgname, USERLEN},
 	{"rlink", "RLINK", NULL, 0, pvar, 8, 0, POFF(p_back), UINT64, "llx"},
 	{"rss", "RSS", NULL, 0, p_rssize, 5},
-	{"rssize", "", "rsz"},
-	{"rsz", "RSZ", NULL, 0, rssize, 4},
 	{"rtable", "RTABLE", NULL, 0, pvar, 0, 0, POFF(p_rtableid), INT32, "d"},
 	UID("ruid", "RUID", pvar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
