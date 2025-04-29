@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.189 2025/04/28 21:12:35 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.190 2025/04/29 20:31:42 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -265,7 +265,6 @@ struct syn_cache {
 	u_int sc_rxtshift;		/* [S] for computing backoff */
 	u_int sc_dynflags;		/* [S] flags accessed with mutex */
 #define SCF_UNREACH	0x0001U		/* we've had an unreach error */
-#define SCF_DEAD	0x0002U		/* this entry to be released */
 
 	u_short sc_fixflags;		/* [I] set during initialization */
 #define SCF_TIMESTAMP	0x0010U		/* peer will do timestamps */
