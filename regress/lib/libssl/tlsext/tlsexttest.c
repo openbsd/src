@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.92 2024/09/11 15:04:16 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.93 2025/04/30 13:44:54 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -4542,12 +4542,10 @@ test_tlsext_valid_hostnames(void)
 #define N_TLSEXT_RANDOMIZATION_TESTS 1000
 
 static int
-test_tlsext_check_extension_order(SSL *ssl)
+test_tlsext_check_psk_is_last_extension(SSL *ssl)
 {
 	const struct tls_extension *ext;
 	uint16_t type;
-	size_t alpn_idx, sni_idx;
-	size_t i;
 
 	if (ssl->tlsext_build_order_len == 0) {
 		FAIL("Unexpected zero build order length");
@@ -4557,34 +4555,6 @@ test_tlsext_check_extension_order(SSL *ssl)
 	ext = ssl->tlsext_build_order[ssl->tlsext_build_order_len - 1];
 	if ((type = tls_extension_type(ext)) != TLSEXT_TYPE_psk) {
 		FAIL("last extension is %u, want %u\n", type, TLSEXT_TYPE_psk);
-		return 1;
-	}
-
-	if (ssl->server)
-		return 0;
-
-	alpn_idx = sni_idx = ssl->tlsext_build_order_len;
-	for (i = 0; i < ssl->tlsext_build_order_len; i++) {
-		ext = ssl->tlsext_build_order[i];
-		if (tls_extension_type(ext) == TLSEXT_TYPE_alpn)
-			alpn_idx = i;
-		if (tls_extension_type(ext) == TLSEXT_TYPE_server_name)
-			sni_idx = i;
-	}
-
-	if (alpn_idx == ssl->tlsext_build_order_len) {
-		FAIL("could not find alpn extension\n");
-		return 1;
-	}
-
-	if (sni_idx == ssl->tlsext_build_order_len) {
-		FAIL("could not find alpn extension\n");
-		return 1;
-	}
-
-	if (sni_idx >= alpn_idx) {
-		FAIL("sni does not precede alpn: %zu >= %zu\n",
-		    sni_idx, alpn_idx);
 		return 1;
 	}
 
@@ -4600,7 +4570,7 @@ test_tlsext_randomized_extensions(SSL *ssl)
 	for (i = 0; i < N_TLSEXT_RANDOMIZATION_TESTS; i++) {
 		if (!tlsext_randomize_build_order(ssl))
 			errx(1, "failed to randomize extensions");
-		failed |= test_tlsext_check_extension_order(ssl);
+		failed |= test_tlsext_check_psk_is_last_extension(ssl);
 	}
 
 	return failed;
