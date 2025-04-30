@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.8 2025/04/23 21:54:12 bluhm Exp $ */
+/* $OpenBSD: vmm.h,v 1.9 2025/04/30 09:40:37 bluhm Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -227,6 +227,12 @@ struct vmm_softc {
 	uint16_t		max_vpid;	/* [I] */
 	uint8_t			vpids[512];	/* [p] bitmap of VPID/ASIDs */
 };
+
+extern struct vmm_softc *vmm_softc;
+extern struct pool vm_pool;
+extern struct pool vcpu_pool;
+extern struct cfdriver vmm_cd;
+extern const struct cfattach vmm_ca;
 
 int vmm_probe(struct device *, void *, void *);
 int vmm_activate(struct device *, int);
