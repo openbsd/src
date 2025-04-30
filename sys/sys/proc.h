@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.384 2025/04/22 04:53:50 jsg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.385 2025/04/30 00:45:08 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -440,6 +440,7 @@ struct proc {
 #define	P_SINTR		0x00000080	/* Sleep is interruptible. */
 #define	P_SYSTEM	0x00000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x00000400	/* Timing out during sleep. */
+#define	P_TIMEOUTRAN	0x00000800	/* Timeout handler has finished. */
 #define	P_TRACESINGLE	0x00001000	/* Ptrace: keep single threaded. */
 #define	P_WEXIT		0x00002000	/* Working on exiting. */
 #define	P_OWEUPC	0x00008000	/* Owe proc an addupc() at next ast. */
@@ -451,6 +452,7 @@ struct proc {
 #define	P_BITS \
     ("\20" "\01INKTR" "\02PROFPEND" "\03ALRMPEND" "\04SIGSUSPEND" \
      "\05CANTSLEEP" "\06INSCHED" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
+     "\014TIMEOUTRAN" \
      "\015TRACESINGLE" "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" \
      "\033THREAD" "\034SUSPSIG" "\037CPUPEG")
 
