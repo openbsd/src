@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.139 2023/08/08 10:31:03 dlg Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.140 2025/04/30 03:53:21 tb Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: August 8 2023 $
+.Dd $Mdocdate: April 30 2025 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ is either BLF, 3DES, CAST, AES, AES-128, AES-192 or AES-256
 is either MD5, SHA, or SHA2-{256,384,512}
 .It Ar group
 is either GRP1, GRP2, GRP5, GRP14, GRP15, GRP16, GRP17, GRP18,
-GRP19, GRP20, GRP21, GRP25, GRP26, GRP27, GRP28, GRP29 or GRP30.
+GRP19, GRP20, GRP21, GRP26, GRP27, GRP28, GRP29 or GRP30.
 .El
 .Pp
 For Quick Mode:
@@ -130,7 +130,7 @@ or NULL
 is either MD5, SHA, RIPEMD, or SHA2-{256,384,512}
 .It Ar group
 is either GRP1, GRP2, GRP5, GRP14, GRP15, GRP16, GRP17, GRP18,
-GRP19, GRP20, GRP21, GRP25, GRP26, GRP27, GRP28, GRP29 or GRP30.
+GRP19, GRP20, GRP21, GRP26, GRP27, GRP28, GRP29 or GRP30.
 .El
 .Pp
 For example, AES-SHA2-256 means: AES encryption, SHA2-256 hash, and
@@ -141,7 +141,7 @@ Similarly, QM-ESP-3DES-SHA-PFS-SUITE means: ESP protocol, 3DES encryption,
 SHA hash, and use Perfect Forward Secrecy.
 .Pp
 Unless explicitly stated with -GRP1, 2, 5, 14, 15, 16, 17, 18, 19, 20, 21,
-25, 26, 27, 28, 29 or 30, transforms and PFS suites use DH group 2.
+26, 27, 28, 29 or 30, transforms and PFS suites use DH group 2.
 There are currently no predefined ESP+AH Quick Mode suites.
 .Pp
 The predefinitions include some default values for the special

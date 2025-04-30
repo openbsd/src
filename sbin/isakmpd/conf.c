@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.107 2017/10/27 08:29:32 mpi Exp $	 */
+/* $OpenBSD: conf.c,v 1.108 2025/04/30 03:53:21 tb Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -484,11 +484,11 @@ conf_load_defaults(int tr)
 	char	*dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
 		    "MODP_1536", "MODP_2048", "MODP_3072", "MODP_4096",
 		    "MODP_6144", "MODP_8192",
-		    "ECP_256", "ECP_384", "ECP_521", "ECP_192", "ECP_224",
+		    "ECP_256", "ECP_384", "ECP_521", "ECP_224",
 		    "BP_224", "BP_256", "BP_384", "BP_512", 0};
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
 		    "-GRP15", "-GRP16", "-GRP17", "-GRP18", "-GRP19", "-GRP20",
-		    "-GRP21", "-GRP25", "-GRP26", "-GRP27", "-GRP28", "-GRP29",
+		    "-GRP21", "-GRP26", "-GRP27", "-GRP28", "-GRP29",
 		    "-GRP30", 0};
 	char	*qm_enc[] = {"3DES", "CAST", "BLOWFISH", "AES",
 		    "AES", "AES", "AES", "AES_CTR", "AES_CTR", "AES_CTR",

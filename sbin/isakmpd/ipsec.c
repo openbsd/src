@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.154 2023/12/20 00:34:13 tobhe Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.155 2025/04/30 03:53:21 tb Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1298,7 +1298,7 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			    dv > IKE_GROUP_DESC_MODP_1536) &&
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
 			    dv > IKE_GROUP_DESC_ECP_521) &&
-			    (dv < IKE_GROUP_DESC_ECP_192 ||
+			    (dv < IKE_GROUP_DESC_ECP_224 ||
 			    dv > IKE_GROUP_DESC_BP_512);
 		case IKE_ATTR_GROUP_TYPE:
 			return 1;
@@ -1342,7 +1342,7 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			    dv > IKE_GROUP_DESC_MODP_1536) &&
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
 			    dv > IKE_GROUP_DESC_ECP_521) &&
-			    (dv < IKE_GROUP_DESC_ECP_192 ||
+			    (dv < IKE_GROUP_DESC_ECP_224 ||
 			    dv > IKE_GROUP_DESC_BP_512);
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
 			return dv != IPSEC_ENCAP_TUNNEL &&
