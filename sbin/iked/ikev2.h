@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.35 2023/06/28 14:10:24 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.36 2025/04/30 03:51:42 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -244,7 +244,6 @@ extern struct iked_constmap ikev2_xformauth_map[];
 #define IKEV2_XFORMDH_ECP_256		19	/* RFC5114 */
 #define IKEV2_XFORMDH_ECP_384		20	/* RFC5114 */
 #define IKEV2_XFORMDH_ECP_521		21	/* RFC5114 */
-#define IKEV2_XFORMDH_ECP_192		25	/* RFC5114 */
 #define IKEV2_XFORMDH_ECP_224		26	/* RFC5114 */
 #define IKEV2_XFORMDH_BRAINPOOL_P224R1	27	/* RFC6954 */
 #define IKEV2_XFORMDH_BRAINPOOL_P256R1	28	/* RFC6954 */

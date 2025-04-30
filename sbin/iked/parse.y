@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.148 2024/11/04 02:44:28 dlg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.149 2025/04/30 03:51:42 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -270,8 +270,6 @@ const struct ipsec_xf groupxfs[] = {
 	{ "grp20",		IKEV2_XFORMDH_ECP_384 },
 	{ "ecp521",		IKEV2_XFORMDH_ECP_521 },
 	{ "grp21",		IKEV2_XFORMDH_ECP_521 },
-	{ "ecp192",		IKEV2_XFORMDH_ECP_192 },
-	{ "grp25",		IKEV2_XFORMDH_ECP_192 },
 	{ "ecp224",		IKEV2_XFORMDH_ECP_224 },
 	{ "grp26",		IKEV2_XFORMDH_ECP_224 },
 	{ "brainpool224",	IKEV2_XFORMDH_BRAINPOOL_P224R1 },
