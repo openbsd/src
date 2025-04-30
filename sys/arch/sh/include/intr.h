@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2016/01/15 18:53:26 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2025/04/30 12:30:54 visa Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -32,10 +32,11 @@
 
 #ifdef	_KERNEL
 
+#define __USE_MI_SOFTINTR
+
 #include <sys/device.h>
 #include <sys/evcount.h>
-#include <sys/mutex.h>
-#include <sys/queue.h>
+#include <sys/softintr.h>
 #include <sh/psl.h>
 
 /* Interrupt sharing types. */
@@ -49,17 +50,10 @@
 #define	_IPL_NSOFT	4
 
 #define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1
 #define	IPL_SOFTCLOCK	2	/* timeouts */
 #define	IPL_SOFTNET	3	/* protocol stacks */
 #define	IPL_SOFTSERIAL	4	/* serial */
-
-#define	IPL_SOFTNAMES {							\
-	"misc",								\
-	"clock",							\
-	"net",								\
-	"serial",							\
-}
+#define	IPL_SOFTTTY	IPL_SOFTSERIAL
 
 struct intc_intrhand {
 	int	(*ih_func)(void *);
@@ -91,29 +85,7 @@ void intc_intr(int, int, int);
 
 void intpri_intr_priority(int evtcode, int level);
 
-/*
- * software simulated interrupt
- */
-struct sh_soft_intrhand {
-	TAILQ_ENTRY(sh_soft_intrhand) sih_q;
-	struct sh_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct sh_soft_intr {
-	TAILQ_HEAD(, sh_soft_intrhand)
-			softintr_q;
-	unsigned long	softintr_ipl;
-	struct mutex	softintr_lock;
-};
-
-void	 softintr_disestablish(void *);
-void	 softintr_dispatch(int);
-void	*softintr_establish(int, void (*)(void *), void *);
-void	 softintr_init(void);
-void	 softintr_schedule(void *);
+void softintr(int);
 
 #endif	/* _KERNEL */
 
