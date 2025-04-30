@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.73 2024/05/28 09:27:54 claudio Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.74 2025/04/30 12:35:37 visa Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -327,14 +327,21 @@ dosoftint(int sir)
 	__mp_lock(&kernel_lock);
 #endif
 
-	for (q = SI_NQUEUES - 1, mask = 1 << (SI_NQUEUES - 1); mask != 0;
-	    q--, mask >>= 1)
+	for (q = NSOFTINTR - 1; q >= 0; q--) {
+		mask = 1 << q;
 		if (mask & sir)
 			softintr_dispatch(q);
+	}
 
 #ifdef MULTIPROCESSOR
 	__mp_unlock(&kernel_lock);
 #endif
+}
+
+void
+softintr(int si)
+{
+	atomic_setbits_int(&softpending, 1 << si);
 }
 
 int

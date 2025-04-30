@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2018/08/20 15:02:07 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.15 2025/04/30 12:35:37 visa Exp $	*/
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
@@ -64,11 +64,18 @@
 #define _M88K_INTR_H_
 
 #ifdef _KERNEL
+
+#define __USE_MI_SOFTINTR
+
+#include <sys/softintr.h>
+
 #ifndef _LOCORE
 int	getipl(void);
 int	setipl(int level);
 int	splraise(int);
 int	spl0(void);
+
+void	softintr(int);
 
 /* SPL asserts */
 #ifdef DIAGNOSTIC
@@ -105,50 +112,9 @@ void splassert_check(int, const char *);
 
 #define splx(x)			((x) ? setipl((x)) : spl0())
 
-/*
- * Generic software interrupt support for all m88k platforms.
- */
-
-#ifndef _LOCORE
-
-#define	IPL_SOFT		0
 #define	IPL_SOFTCLOCK		1
 #define	IPL_SOFTNET		2
 #define	IPL_SOFTTTY		3
-
-#define	SI_SOFT			0	/* for IPL_SOFT */
-#define	SI_SOFTCLOCK		1	/* for IPL_SOFTCLOCK */
-#define	SI_SOFTNET		2	/* for IPL_SOFTNET */
-#define	SI_SOFTTTY		3	/* for IPL_SOFTTTY */
-
-#define	SI_NQUEUES		4
-
-#include <machine/mutex.h>
-#include <sys/queue.h>
-
-struct soft_intrhand {
-	TAILQ_ENTRY(soft_intrhand) sih_list;
-	void (*sih_func)(void *);
-	void *sih_arg;
-	struct soft_intrq *sih_siq;
-	int sih_pending;
-};
-
-struct soft_intrq {
-	TAILQ_HEAD(, soft_intrhand) siq_list;
-	int siq_si;
-	struct mutex siq_mtx;
-};
-
-void	 softintr_disestablish(void *);
-void	 softintr_dispatch(int);
-void	*softintr_establish(int, void (*)(void *), void *);
-void	 softintr_init(void);
-void	 softintr_schedule(void *);
-
-extern int softpending;
-
-#endif	/* _LOCORE */
 
 #endif /* _KERNEL */
 #endif /* _M88K_INTR_H_ */
