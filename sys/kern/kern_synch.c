@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.220 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.221 2025/04/30 00:26:02 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -422,14 +422,39 @@ sleep_finish(int timo, int do_sleep)
 	 */
 	atomic_clearbits_int(&p->p_flag, P_SINTR);
 
-	if (timo != 0) {
-		if (p->p_flag & P_TIMEOUT) {
+	/*
+	 * There are three situations to handle when cancelling the
+	 * p_sleep_to timeout:
+	 *
+	 * 1. The timeout has not fired yet
+	 * 2. The timeout is running
+	 * 3. The timeout has run
+	 *
+	 * If timeout_del succeeds then the timeout won't run and
+	 * situation 1 is dealt with.
+	 *
+	 * If timeout_del does not remove the timeout, then we're
+	 * handling 2 or 3, but it won't tell us which one. Instead,
+	 * the P_TIMEOUTRAN flag is used to figure out when we move
+	 * from 2 to 3. endtsleep() (the p_sleep_to handler) sets the
+	 * flag when it's finished running, so we spin waiting for
+	 * it.
+	 *
+	 * We spin instead of sleeping because endtsleep() takes
+	 * the sched lock to do all it's work. If we wanted to go
+	 * to sleep to wait for endtsleep to run, we'd also have to
+	 * take the sched lock, so we'd be spinning against it anyway.
+	 */
+	if (timo != 0 && !timeout_del(&p->p_sleep_to)) {
+		int flag;
+
+		/* Wait for endtsleep timeout to finish running */
+		while (!ISSET(flag = atomic_load_int(&p->p_flag), P_TIMEOUTRAN))
+			CPU_BUSY_CYCLE();
+		atomic_clearbits_int(&p->p_flag, P_TIMEOUT | P_TIMEOUTRAN);
+
+		if (ISSET(flag, P_TIMEOUT))
 			error1 = EWOULDBLOCK;
-		} else {
-			/* This can sleep. It must not use timeouts. */
-			timeout_del_barrier(&p->p_sleep_to);
-		}
-		atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
 	}
 
 	/*
@@ -546,6 +571,9 @@ endtsleep(void *arg)
 	SCHED_LOCK();
 	wakeup_proc(p, P_TIMEOUT);
 	SCHED_UNLOCK();
+
+	atomic_setbits_int(&p->p_flag, P_TIMEOUTRAN);
+	/* do not alter the proc after this point */
 }
 
 /*
