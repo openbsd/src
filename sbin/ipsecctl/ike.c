@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.84 2023/08/07 04:10:08 dlg Exp $	*/
+/*	$OpenBSD: ike.c,v 1.85 2025/04/30 03:54:09 tb Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -367,9 +367,6 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 		case GROUPXF_21:
 			group_desc = "ECP_521";
 			break;
-		case GROUPXF_25:
-			group_desc = "ECP_192";
-			break;
 		case GROUPXF_26:
 			group_desc = "ECP_224";
 			break;
@@ -559,9 +556,6 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 			break;
 		case GROUPXF_21:
 			group_desc = "ECP_521";
-			break;
-		case GROUPXF_25:
-			group_desc = "ECP_192";
 			break;
 		case GROUPXF_26:
 			group_desc = "ECP_224";

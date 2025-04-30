@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.77 2023/10/09 15:32:14 tobhe Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.78 2025/04/30 03:54:09 tb Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -78,7 +78,7 @@ enum {
 enum {
 	GROUPXF_UNKNOWN, GROUPXF_NONE, GROUPXF_1, GROUPXF_2, GROUPXF_5,
 	GROUPXF_14, GROUPXF_15, GROUPXF_16, GROUPXF_17, GROUPXF_18,
-	GROUPXF_19, GROUPXF_20, GROUPXF_21, GROUPXF_25, GROUPXF_26,
+	GROUPXF_19, GROUPXF_20, GROUPXF_21, GROUPXF_26,
 	GROUPXF_27, GROUPXF_28, GROUPXF_29, GROUPXF_30
 };
 enum {

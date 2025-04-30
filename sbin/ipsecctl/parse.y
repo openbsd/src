@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.183 2023/08/07 04:10:08 dlg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.184 2025/04/30 03:54:09 tb Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -156,8 +156,6 @@ const struct ipsec_xf groupxfs[] = {
 	{ "grp20",		GROUPXF_20,		384,	0 },
 	{ "ecp521",		GROUPXF_21,		521,	0 },
 	{ "grp21",		GROUPXF_21,		521,	0 },
-	{ "ecp192",		GROUPXF_25,		192,	0 },
-	{ "grp25",		GROUPXF_25,		192,	0 },
 	{ "ecp224",		GROUPXF_26,		224,	0 },
 	{ "grp26",		GROUPXF_26,		224,	0 },
 	{ "bp224",		GROUPXF_27,		224,	0 },
