@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.28 2024/07/14 14:32:45 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.29 2025/05/01 00:35:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,11 +115,11 @@ expand(_LHASH *lh)
 #endif
 		if ((hash % nni) != p) { /* move it */
 			*n1 = (*n1)->next;
-			np->next= *n2;
+			np->next = *n2;
 			*n2 = np;
 		} else
 			n1 = &((*n1)->next);
-		np= *n1;
+		np = *n1;
 	}
 
 	if ((lh->p) >= lh->pmax) {
@@ -305,7 +305,7 @@ lh_delete(_LHASH *lh, const void *data)
 	if (*rn == NULL) {
 		return (NULL);
 	} else {
-		nn= *rn;
+		nn = *rn;
 		*rn = nn->next;
 		ret = nn->data;
 		free(nn);
