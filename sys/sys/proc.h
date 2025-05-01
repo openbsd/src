@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.385 2025/04/30 00:45:08 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.386 2025/05/01 01:16:42 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -567,7 +567,7 @@ void	procinit(void);
 void	setpriority(struct proc *, uint32_t, uint8_t);
 void	setrunnable(struct proc *);
 void	endtsleep(void *);
-int	wakeup_proc(struct proc *, int);
+int	wakeup_proc(struct proc *);
 void	unsleep(struct proc *);
 void	reaper(void *);
 __dead void exit1(struct proc *, int, int, int);

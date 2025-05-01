@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.221 2025/04/30 00:26:02 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.222 2025/05/01 01:16:42 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -533,8 +533,12 @@ sleep_signal_check(struct proc *p, int after_sleep)
 	return 0;
 }
 
+/*
+ * If process hasn't been awakened (wchan non-zero), undo the sleep.
+ * If proc is stopped, just unsleep so it will remain stopped.
+ */
 int
-wakeup_proc(struct proc *p, int flags)
+wakeup_proc(struct proc *p)
 {
 	int awakened = 0;
 
@@ -542,8 +546,6 @@ wakeup_proc(struct proc *p, int flags)
 
 	if (p->p_wchan != NULL) {
 		awakened = 1;
-		if (flags)
-			atomic_setbits_int(&p->p_flag, flags);
 #ifdef DIAGNOSTIC
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
 			panic("thread %d p_stat is %d", p->p_tid, p->p_stat);
@@ -558,22 +560,30 @@ wakeup_proc(struct proc *p, int flags)
 
 
 /*
- * Implement timeout for tsleep.
- * If process hasn't been awakened (wchan non-zero),
- * set timeout flag and undo the sleep.  If proc
- * is stopped, just unsleep so it will remain stopped.
+ * This is the timeout handler that wakes up procs that only want
+ * to sleep for a period of time rather than forever (until they get
+ * a wakeup from somewhere else). It is only scheduled and used by
+ * sleep_finish(), which coordinates with this handler via the P_TIMEOUT
+ * and P_TIMEOUTRAN flags.
  */
 void
 endtsleep(void *arg)
 {
 	struct proc *p = arg;
+	int awakened;
+	int flags;
 
 	SCHED_LOCK();
-	wakeup_proc(p, P_TIMEOUT);
+	awakened = wakeup_proc(p);
 	SCHED_UNLOCK();
 
-	atomic_setbits_int(&p->p_flag, P_TIMEOUTRAN);
-	/* do not alter the proc after this point */
+	flags = P_TIMEOUTRAN;
+	if (awakened)
+		SET(flags, P_TIMEOUT);
+
+	/* Let sleep_finish() proceed. */
+	atomic_setbits_int(&p->p_flag, flags);
+	/* Do not alter the proc after this point. */
 }
 
 /*
@@ -865,7 +875,7 @@ tslp_wakeups(struct tslpqueue *tslpq)
 	TAILQ_FOREACH_SAFE(entry, tslpq, tslp_link, nentry) {
 		p = entry->tslp_p;
 		entry->tslp_p = NULL;
-		wakeup_proc(p, 0);
+		wakeup_proc(p);
 	}
 	SCHED_UNLOCK();
 }
