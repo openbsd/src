@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_point2oct.3,v 1.2 2025/04/26 09:03:03 tb Exp $
+.\" $OpenBSD: EC_POINT_point2oct.3,v 1.3 2025/05/01 07:27:11 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2025 $
+.Dd $Mdocdate: May 1 2025 $
 .Dt EC_POINT_POINT2OCT 3
 .Os
 .Sh NAME
@@ -95,7 +95,9 @@ object.
 It is either the point at infinity or it has a representation
 (x, y) in standard affine coordinates,
 in which case it satisfies the curve's Weierstrass equation
+.Pp
 .Dl y^2 = x^3 + ax + b
+.Pp
 in the prime field of size p.
 Thus, y is a square root of x^3 + ax + b.
 Since p > 3 is odd, p - y is another square root

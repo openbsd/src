@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.2 2025/04/26 07:07:29 tb Exp $
+.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.3 2025/05/01 07:27:11 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2025 $
+.Dd $Mdocdate: May 1 2025 $
 .Dt EC_GROUP_NEW_CURVE_GFP 3
 .Os
 .Sh NAME
@@ -125,7 +125,9 @@ elliptic curves in Weierstrass form.
 These curves are defined over the prime field of order
 .Fa p
 via the Weierstrass equation
+.Pp
 .Dl y^2 = x^3 + ax + b
+.Pp
 where
 .Fa a
 and
@@ -143,7 +145,9 @@ the product of
 and another integer called the
 .Fa cofactor .
 Hasse's theorem is the inequality
+.Pp
 .Dl | Ns Fa order No * Fa cofactor No - (p + 1)| <= 2 sqrt(p)
+.Pp
 which implies an upper bound on
 .Fa order
 in terms of
@@ -445,7 +449,7 @@ have been available since
 Too many.
 The API is unergonomic and the design is very poor even by
 OpenSSL's standards.
-Naming is inconsistent, especially in regards to the _GFp suffix
+Naming is inconsistent, especially in regard to the _GFp suffix
 and the _get_ infix.
 Function signatures are inconsistent.
 In particular, functions that should have a
