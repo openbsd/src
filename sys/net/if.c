@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.730 2025/04/17 17:23:17 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.731 2025/05/01 11:19:46 phessler Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3286,26 +3286,28 @@ if_group_egress_build(void)
 	sa_in.sin_len = sizeof(sa_in);
 	sa_in.sin_family = AF_INET;
 	rt = rtable_lookup(0, sintosa(&sa_in), sintosa(&sa_in), NULL, RTP_ANY);
-	while (rt != NULL) {
+	for (; rt != NULL; rt = rtable_iterate(rt)) {
+		if (ISSET(rt->rt_flags, RTF_REJECT | RTF_BLACKHOLE))
+			continue;
 		ifp = if_get(rt->rt_ifidx);
 		if (ifp != NULL) {
 			if_addgroup(ifp, IFG_EGRESS);
 			if_put(ifp);
 		}
-		rt = rtable_iterate(rt);
 	}
 
 #ifdef INET6
 	bcopy(&sa6_any, &sa_in6, sizeof(sa_in6));
 	rt = rtable_lookup(0, sin6tosa(&sa_in6), sin6tosa(&sa_in6), NULL,
 	    RTP_ANY);
-	while (rt != NULL) {
+	for (; rt != NULL; rt = rtable_iterate(rt)) {
+		if (ISSET(rt->rt_flags, RTF_REJECT | RTF_BLACKHOLE))
+			continue;
 		ifp = if_get(rt->rt_ifidx);
 		if (ifp != NULL) {
 			if_addgroup(ifp, IFG_EGRESS);
 			if_put(ifp);
 		}
-		rt = rtable_iterate(rt);
 	}
 #endif /* INET6 */
 
