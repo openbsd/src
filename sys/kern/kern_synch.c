@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.222 2025/05/01 01:16:42 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.223 2025/05/01 06:58:21 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -369,7 +369,7 @@ sleep_finish(int timo, int do_sleep)
 	catch = p->p_flag & P_SINTR;
 
 	if (timo != 0) {
-		KASSERT((p->p_flag & P_TIMEOUT) == 0);
+		KASSERT(!ISSET(p->p_flag, P_TIMEOUT|P_TIMEOUTRAN));
 		timeout_add(&p->p_sleep_to, timo);
 	}
 
