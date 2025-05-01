@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.91 2024/11/24 22:19:59 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.92 2025/05/01 12:28:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -170,6 +170,12 @@
 #define RK3399_PMUCRU_PPLL_CON(i)	(0x0000 + (i) * 4)
 #define RK3399_PMUCRU_CLKSEL_CON(i)	(0x0080 + (i) * 4)
 
+/* RK3528 registers */
+#define RK3528_CRU_PLL_CON(i)		(0x0000 + (i) * 4)
+#define RK3528_CRU_CLKSEL_CON(i)	(0x0300 + (i) * 4)
+#define RK3528_CRU_GATE_CON(i)		(0x0800 + (i) * 4)
+#define RK3528_CRU_SOFTRST_CON(i)	(0x0a00 + (i) * 4)
+
 /* RK3568 registers */
 #define RK3568_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
 #define RK3568_CRU_DPLL_CON(i)		(0x0020 + (i) * 4)
@@ -299,6 +305,13 @@ int	rk3399_pmu_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_pmu_enable(void *, uint32_t *, int);
 void	rk3399_pmu_reset(void *, uint32_t *, int);
 
+void	rk3528_init(struct rkclock_softc *);
+uint32_t rk3528_get_frequency(void *, uint32_t *);
+int	rk3528_set_frequency(void *, uint32_t *, uint32_t);
+int	rk3528_set_parent(void *, uint32_t *, uint32_t *);
+void	rk3528_enable(void *, uint32_t *, int);
+void	rk3528_reset(void *, uint32_t *, int);
+
 void	rk3568_init(struct rkclock_softc *);
 uint32_t rk3568_get_frequency(void *, uint32_t *);
 int	rk3568_set_frequency(void *, uint32_t *, uint32_t);
@@ -360,6 +373,12 @@ const struct rkclock_compat rkclock_compat[] = {
 		rk3399_pmu_enable, rk3399_pmu_get_frequency,
 		rk3399_pmu_set_frequency, NULL,
 		rk3399_pmu_reset
+	},
+	{
+		"rockchip,rk3528-cru", NULL, 1, rk3528_init,
+		rk3528_enable, rk3528_get_frequency,
+		rk3528_set_frequency, rk3528_set_parent,
+		rk3528_reset
 	},
 	{
 		"rockchip,rk3568-cru", "CRU", 1, rk3568_init,
@@ -3138,6 +3157,175 @@ rk3399_pmu_reset(void *cookie, uint32_t *cells, int on)
 	uint32_t idx = cells[0];
 
 	printf("%s: 0x%08x\n", __func__, idx);
+}
+
+/* 
+ * Rockchip RK3528 
+ */
+
+const struct rkclock rk3528_clocks[] = {
+	{
+		RK3528_CLK_MATRIX_50M_SRC, RK3528_CRU_CLKSEL_CON(0),
+		0, DIV(6, 2),
+		{ RK3528_PLL_CPLL }
+	},
+	{
+		RK3528_CLK_MATRIX_100M_SRC, RK3528_CRU_CLKSEL_CON(0),
+		0, DIV(11, 7),
+		{ RK3528_PLL_CPLL }
+	},
+	{
+		RK3528_CLK_MATRIX_200M_SRC, RK3528_CRU_CLKSEL_CON(1),
+		0, DIV(9, 5),
+		{ RK3528_PLL_GPLL }
+	},
+	{
+		RK3528_CLK_PWM0, RK3528_CRU_CLKSEL_CON(44),
+		SEL(7, 6), 0,
+		{ RK3528_CLK_MATRIX_100M_SRC, RK3528_CLK_MATRIX_50M_SRC,
+		  RK3528_XIN24M }
+	},
+	{
+		RK3528_CLK_PWM1, RK3528_CRU_CLKSEL_CON(44),
+		SEL(9, 8), 0,
+		{ RK3528_CLK_MATRIX_100M_SRC, RK3528_CLK_MATRIX_50M_SRC,
+		  RK3528_XIN24M }
+	},
+	{
+		RK3528_CCLK_SRC_EMMC, RK3528_CRU_CLKSEL_CON(62),
+		SEL(7, 6), DIV(5, 0),
+		{ RK3528_PLL_GPLL, RK3528_PLL_CPLL, RK3528_XIN24M }
+	},
+	{
+		RK3528_BCLK_EMMC, RK3528_CRU_CLKSEL_CON(62),
+		SEL(9, 8), 0,
+		{ RK3528_CLK_MATRIX_200M_SRC, RK3528_CLK_MATRIX_100M_SRC,
+		  RK3528_CLK_MATRIX_50M_SRC, RK3528_XIN24M }
+	},
+	{
+		RK3528_TCLK_EMMC, 0, 0, 0,
+		{ RK3528_XIN24M }
+	},
+	{
+		RK3528_CLK_I2C1, RK3528_CRU_CLKSEL_CON(79),
+		SEL(10, 9), 0,
+		{ RK3528_CLK_MATRIX_200M_SRC, RK3528_CLK_MATRIX_100M_SRC,
+		  RK3528_CLK_MATRIX_50M_SRC, RK3528_XIN24M }
+	},
+	{
+		RK3528_CCLK_SRC_SDMMC0, RK3528_CRU_CLKSEL_CON(85),
+		SEL(7, 6), DIV(5, 0),
+		{ RK3528_PLL_GPLL, RK3528_PLL_CPLL, RK3528_XIN24M }
+	},
+	{
+		/* Sentinel */
+	}
+};
+
+void
+rk3528_init(struct rkclock_softc *sc)
+{
+	int i;
+
+	/* The code below assumes all clocks are enabled.  Check this!. */
+	for (i = 0; i <= 46; i++) {
+		if (HREAD4(sc, RK3528_CRU_GATE_CON(i)) != 0x00000000) {
+			printf("CRU_GATE_CON%d: 0x%08x\n", i,
+			    HREAD4(sc, RK3528_CRU_GATE_CON(i)));
+		}
+	}
+
+	sc->sc_clocks = rk3528_clocks;
+}
+
+uint32_t
+rk3528_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3528_PLL_CPLL:
+		return rk3328_get_pll(sc, RK3528_CRU_PLL_CON(8));
+	case RK3528_PLL_GPLL:
+		return rk3328_get_pll(sc, RK3528_CRU_PLL_CON(24));
+	case RK3528_XIN24M:
+		return 24000000;
+	default:
+		break;
+	}
+
+	return rkclock_get_frequency(sc, idx);
+}
+
+int
+rk3528_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	return rkclock_set_frequency(sc, idx, freq);
+}
+
+int
+rk3528_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
+{
+	struct rkclock_softc *sc = cookie;
+
+	return rkclock_set_parent(sc, cells[0], pcells[1]);
+}
+
+void
+rk3528_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	/* All clocks are enabled upon hardware reset. */
+	if (!on) {
+		printf("%s: 0x%08x\n", __func__, idx);
+		return;
+	}
+}
+
+void
+rk3528_reset(void *cookie, uint32_t *cells, int on)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t bit, mask, reg;
+
+	switch (idx) {
+	case RK3528_SRST_C_EMMC:
+		reg = RK3528_CRU_SOFTRST_CON(25);
+		bit = 15;
+		break;
+	case RK3528_SRST_H_EMMC:
+		reg = RK3528_CRU_SOFTRST_CON(26);
+		bit = 0;
+		break;
+	case RK3528_SRST_A_EMMC:
+		reg = RK3528_CRU_SOFTRST_CON(26);
+		bit = 1;
+		break;
+	case RK3528_SRST_B_EMMC:
+		reg = RK3528_CRU_SOFTRST_CON(26);
+		bit = 2;
+		break;
+	case RK3528_SRST_T_EMMC:
+		reg = RK3528_CRU_SOFTRST_CON(26);
+		bit = 3;
+		break;
+	case RK3528_SRST_H_SDMMC0:
+		reg = RK3528_CRU_SOFTRST_CON(42);
+		bit = 9;
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		return;
+	}
+
+	mask = (1 << bit);
+	HWRITE4(sc, reg, mask << 16 | (on ? mask : 0));
 }
 
 /* 
