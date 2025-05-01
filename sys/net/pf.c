@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1209 2025/04/14 20:02:34 sf Exp $ */
+/*	$OpenBSD: pf.c,v 1.1210 2025/05/01 01:10:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7910,15 +7910,20 @@ done:
 
 	if (action == PF_PASS && qid)
 		pd.m->m_pkthdr.pf.qid = qid;
-	if (pd.dir == PF_IN && st && st->key[PF_SK_STACK])
-		pf_mbuf_link_state_key(pd.m, st->key[PF_SK_STACK]);
-	if (pd.dir == PF_OUT && st && st->key[PF_SK_STACK])
-		pf_state_key_link_inpcb(st->key[PF_SK_STACK],
-		    pd.m->m_pkthdr.pf.inp);
+	if (st != NULL) {
+		struct mbuf *m = pd.m;
+		struct inpcb *inp = m->m_pkthdr.pf.inp;
 
-	if (st != NULL && !ISSET(pd.m->m_pkthdr.csum_flags, M_FLOWID)) {
-		pd.m->m_pkthdr.ph_flowid = st->key[PF_SK_WIRE]->hash;
-		SET(pd.m->m_pkthdr.csum_flags, M_FLOWID);
+		if (pd.dir == PF_IN) {
+			KASSERT(inp == NULL);
+			pf_mbuf_link_state_key(m, st->key[PF_SK_STACK]);
+		} else if (pd.dir == PF_OUT)
+			pf_state_key_link_inpcb(st->key[PF_SK_STACK], inp);
+
+		if (!ISSET(m->m_pkthdr.csum_flags, M_FLOWID)) {
+			m->m_pkthdr.ph_flowid = st->key[PF_SK_WIRE]->hash;
+			SET(m->m_pkthdr.csum_flags, M_FLOWID);
+		}
 	}
 
 	/*
