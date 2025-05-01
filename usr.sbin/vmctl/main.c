@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2024/11/21 13:39:34 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.85 2025/05/01 15:05:05 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -863,7 +863,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			if (res->isopath)
 				errx(1, "iso image specified multiple times");
 			if (realpath(optarg, path) == NULL)
-				err(1, "invalid iso image path");
+				err(1, "invalid iso image path: %s", optarg);
 			if ((res->isopath = strdup(path)) == NULL)
 				errx(1, "strdup");
 			break;
@@ -886,7 +886,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 		case 'd':
 			type = parse_disktype(optarg, &s);
 			if (realpath(s, path) == NULL)
-				err(1, "invalid disk path");
+				err(1, "invalid disk path: %s", s);
 			if (parse_disk(res, path, type) != 0)
 				errx(1, "invalid disk: %s", optarg);
 			break;
