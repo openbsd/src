@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.101 2025/01/13 03:21:10 mvs Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.102 2025/05/01 01:43:10 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -782,12 +782,36 @@ softclock_create_thread(void *arg)
 #endif
 }
 
+static void
+softclock_thread_run(struct circq *todo)
+{
+	struct timeout *to;
+
+	for (;;) {
+		/*
+		 * Avoid holding both timeout_mutex and SCHED_LOCK
+		 * at the same time.
+		 */
+		sleep_setup(todo, PSWP, "tmoslp");
+		sleep_finish(0, CIRCQ_EMPTY(todo));
+
+		mtx_enter(&timeout_mutex);
+		tostat.tos_thread_wakeups++;
+		while (!CIRCQ_EMPTY(todo)) {
+			to = timeout_from_circq(CIRCQ_FIRST(todo));
+			CIRCQ_REMOVE(&to->to_list);
+			timeout_run(to);
+			tostat.tos_run_thread++;
+		}
+		mtx_leave(&timeout_mutex);
+	}
+}
+
 void
 softclock_thread(void *arg)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	struct timeout *to;
 	int s;
 
 	KERNEL_ASSERT_LOCKED();
@@ -801,18 +825,7 @@ softclock_thread(void *arg)
 	sched_peg_curproc(ci);
 
 	s = splsoftclock();
-	mtx_enter(&timeout_mutex);
-	for (;;) {
-		while (!CIRCQ_EMPTY(&timeout_proc)) {
-			to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc));
-			CIRCQ_REMOVE(&to->to_list);
-			timeout_run(to);
-			tostat.tos_run_thread++;
-		}
-		tostat.tos_thread_wakeups++;
-		msleep_nsec(&timeout_proc, &timeout_mutex, PSWP, "tmoslp",
-		    INFSLP);
-	}
+	softclock_thread_run(&timeout_proc);
 	splx(s);
 }
 
@@ -820,23 +833,10 @@ softclock_thread(void *arg)
 void
 softclock_thread_mp(void *arg)
 {
-	struct timeout *to;
-
 	KERNEL_ASSERT_LOCKED();
 	KERNEL_UNLOCK();
 
-	mtx_enter(&timeout_mutex);
-	for (;;) {
-		while (!CIRCQ_EMPTY(&timeout_proc_mp)) {
-			to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc_mp));
-			CIRCQ_REMOVE(&to->to_list);
-			timeout_run(to);
-			tostat.tos_run_thread++;
-		}
-		tostat.tos_thread_wakeups++;
-		msleep_nsec(&timeout_proc_mp, &timeout_mutex, PSWP, "tmoslp",
-		    INFSLP);
-	}
+	softclock_thread_run(&timeout_proc_mp);
 }
 #endif /* MULTIPROCESSOR */
 
