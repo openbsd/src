@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.41 2024/03/24 19:51:47 millert Exp $
+.\"	$OpenBSD: whois.1,v 1.42 2025/05/01 10:18:51 sthen Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: March 24 2024 $
+.Dd $Mdocdate: May 1 2025 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl AadgIilmPQRrS
+.Op Fl AadgIilmQRrS
 .Oo
 .Fl c Ar country-code | Fl h Ar host
 .Oc
@@ -162,10 +162,6 @@ Use the Route Arbiter Database
 database.
 It contains route policy specifications for a large
 number of operators' networks.
-.It Fl P
-Use the PeeringDB database of AS numbers.
-It contains details about presence at internet peering points
-for many network operators.
 .It Fl p Ar port
 Connect to the whois server on
 .Ar port .
