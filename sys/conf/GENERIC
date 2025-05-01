@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.301 2025/04/14 01:41:34 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.302 2025/05/01 00:32:38 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -114,5 +114,7 @@ pseudo-device	wg		# WireGuard
 pseudo-device	bio	1	# ioctl multiplexing device
 
 pseudo-device	fuse		# fuse device
+
+pseudo-device	af_frame	# (Ethernet) frame sockets
 
 option		BOOT_CONFIG	# add support for boot -c
