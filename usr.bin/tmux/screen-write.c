@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.232 2024/11/16 16:49:50 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.233 2025/05/01 07:12:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2010,9 +2010,11 @@ screen_write_combine(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	 */
 	if (utf8_is_zwj(ud))
 		zero_width = 1;
-	else if (utf8_is_vs(ud))
-		zero_width = force_wide = 1;
-	else if (ud->width == 0)
+	else if (utf8_is_vs(ud)) {
+		zero_width = 1;
+		if (options_get_number(global_options, "variation-selector-always-wide"))
+			force_wide = 1;
+	} else if (ud->width == 0)
 		zero_width = 1;
 
 	/* Cannot combine empty character or at left. */

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.996 2025/04/25 11:39:39 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.997 2025/05/01 07:12:00 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: May 1 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4392,6 +4392,11 @@ For example:
 set -s user-keys[0] "\ee[5;30012\[ti]"
 bind User0 resize-pane -L 3
 .Ed
+.It Xo Ic variation-selector-always-wide
+.Op Ic on | off
+.Xc
+Always treat Unicode variation selector 16 as marking a wide character.
+This is a feature of some terminals as part of their Unicode 14 support.
 .El
 .Pp
 Available session options are:
