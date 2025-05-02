@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.87 2024/10/29 03:17:10 jsg Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.88 2025/05/02 10:14:46 jsg Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 #define	DISKLABELDEV(dev) \
     (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
-#define DISKMAGIC	((u_int32_t)0x82564557)	/* The disk magic number */
+#define DISKMAGIC	0x82564557U	/* The disk magic number */
 
 #define MAXDISKSIZE	0x7fffffffffffLL	/* 47 bits of reach */
 

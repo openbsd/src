@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioccom.h,v 1.5 2013/03/22 21:22:05 deraadt Exp $	*/
+/*	$OpenBSD: ioccom.h,v 1.6 2025/05/02 10:14:46 jsg Exp $	*/
 /*	$NetBSD: ioccom.h,v 1.4 1994/10/30 21:49:56 cgd Exp $	*/
 
 /*-
@@ -47,15 +47,15 @@
 
 #define	IOCPARM_MAX	PAGE_SIZE	/* max size of ioctl args */
 				/* no parameters */
-#define	IOC_VOID	(unsigned long)0x20000000
+#define	IOC_VOID	0x20000000UL
 				/* copy parameters out */
-#define	IOC_OUT		(unsigned long)0x40000000
+#define	IOC_OUT		0x40000000UL
 				/* copy parameters in */
-#define	IOC_IN		(unsigned long)0x80000000
+#define	IOC_IN		0x80000000UL
 				/* copy parameters in and out */
 #define	IOC_INOUT	(IOC_IN|IOC_OUT)
 				/* mask for IN/OUT/VOID */
-#define	IOC_DIRMASK	(unsigned long)0xe0000000
+#define	IOC_DIRMASK	0xe0000000UL
 
 #define	_IOC(inout,group,num,len) \
 	(inout | ((len & IOCPARM_MASK) << 16) | ((group) << 8) | (num))
