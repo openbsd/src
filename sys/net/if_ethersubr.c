@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.299 2025/05/02 03:38:05 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.300 2025/05/02 09:57:36 jsg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1729,8 +1729,10 @@ ether_frm_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	}
 
 	m = m_prepend(m, ETHER_ALIGN + sizeof(*eh), M_NOWAIT);
-	if (m == NULL)
+	if (m == NULL) {
+		error = ENOBUFS;
 		goto drop;
+	}
 	m_adj(m, ETHER_ALIGN);
 
 	if (txprio != IF_HDRPRIO_PACKET)
