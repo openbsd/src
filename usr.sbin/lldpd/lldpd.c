@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.1 2025/05/02 06:12:53 dlg Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.2 2025/05/02 09:56:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -62,7 +62,7 @@
 
 int rdaemon(int);
 
-#define LLDPD_USER		"_lldp"
+#define LLDPD_USER		"_lldpd"
 
 #define CMSG_FOREACH(_cmsg, _msgp) \
 	for ((_cmsg) = CMSG_FIRSTHDR((_msgp)); \
