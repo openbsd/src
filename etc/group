@@ -83,5 +83,6 @@ _slaacd:*:115:
 _dhcp6leased:*:116:
 dialer:*:117:
 _shutdown:*:118:
+_lldpd:*:119:
 nogroup:*:32766:
 nobody:*:32767:

@@ -63,4 +63,5 @@ _sndiop:*:110:110::0:0:sndio privileged user:/var/empty:/sbin/nologin
 _syspatch:*:112:112::0:0:syspatch unprivileged user:/var/empty:/sbin/nologin
 _slaacd:*:115:115::0:0:SLAAC Daemon:/var/empty:/sbin/nologin
 _dhcp6leased:*:116:116::0:0:DHCP6Lease Daemon:/var/empty:/sbin/nologin
+_lldpd:*:119:119::0:0:LLDP Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
