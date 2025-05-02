@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.168 2024/10/02 09:14:08 tb Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.169 2025/05/02 11:05:54 sthen Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 2 2024 $
+.Dd $Mdocdate: May 2 2025 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -104,12 +104,14 @@ The
 .Ar pkg-name ...
 specified on the command line are new packages that may require updating
 dependencies first.
-It is recommended to keep all packages in-synch
+It is recommended to update all packages
 with
 .Fl u
-whenever possible, but
+before installing a new package, but
 .Fl U
-can be much faster.
+can be much faster (at the risk of possibly leaving an inconsistent
+set of packages).
+Mainly for use with -current snapshots.
 .It
 Replace existing packages with explicit other versions, using option
 .Fl r .
@@ -685,7 +687,9 @@ Dependencies from the old packages are adjusted to point to the correct new
 package.
 .El
 .Pp
-To update packages in -u mode,
+To update packages in
+.Fl u
+mode,
 .Nm
 performs the following steps.
 .Bl -enum
