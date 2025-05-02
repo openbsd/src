@@ -1,4 +1,4 @@
-.\" $OpenBSD: lldpd.8,v 1.3 2025/05/02 10:58:51 jsg Exp $
+.\" $OpenBSD: lldpd.8,v 1.4 2025/05/02 11:51:00 jsg Exp $
 .\"
 .\" Copyright (c) 2025 David Gwynne <dlg@openbsd.org>
 .\"
@@ -30,12 +30,11 @@ The
 daemon receives
 Link Layer Discovery Protocol
 .Pq LLDP
-messages on Ethernet interfaces in the system and stores them for
-display by
+messages on Ethernet interfaces and stores them for display by
 .Xr lldp 8 .
 .Pp
-LLDP is a link layer protocol that allows network devices to advertise
-and discover neighbour identity and capability with neighbour devices.
+LLDP is a link layer protocol for advertising and discovering identity
+and capability.
 .Pp
 The options are as follows:
 .Bl -tag -width "-f fileXXX"
