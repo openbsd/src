@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.37 2024/10/18 05:52:32 miod Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.38 2025/05/02 10:44:20 claudio Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -443,6 +443,9 @@ VOP_READDIR(struct vnode *vp, struct uio *uio, struct ucred *cred,
 	a.a_eofflag = eofflag;
 
 	ASSERT_VP_ISLOCKED(vp);
+
+	if (vp->v_type != VDIR)
+		return (ENOTDIR);
 
 	if (vp->v_op->vop_readdir == NULL)
 		return (EOPNOTSUPP);
