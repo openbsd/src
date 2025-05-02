@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.298 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.299 2025/05/02 03:38:05 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1830,7 +1830,7 @@ ether_frm_group(struct socket *so, int optname, struct mbuf *m)
 
 	soassertlocked(so);
 
-	if (m->m_len != sizeof(*fmr))
+	if (m == NULL || m->m_len != sizeof(*fmr))
 		return (EINVAL);
 
 	fmr = mtod(m, struct frame_mreq *);
@@ -1953,7 +1953,7 @@ ether_frm_setopt(struct ether_pcb *ep, int optname, struct mbuf *m)
 	if (!ISSET(ETHER_PCB_OPTS, optm))
 		return (ENOPROTOOPT);
 
-	if (m->m_len != sizeof(opt))
+	if (m == NULL || m->m_len != sizeof(opt))
 		return (EINVAL);
 
 	opt = *mtod(m, int *);
@@ -1981,7 +1981,7 @@ ether_frm_setsockopt(struct socket *so, int optname, struct mbuf *m)
 		error = ether_frm_group(so, optname, m);
 		break;
 	case FRAME_SENDPRIO:
-		if (m->m_len != sizeof(v)) {
+		if (m == NULL || m->m_len != sizeof(v)) {
 			error = EINVAL;
 			break;
 		}
