@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.168 2025/04/29 09:05:54 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.169 2025/05/02 10:19:09 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -771,6 +771,7 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		/*  don't look for neighborhood * pages on "wire" fault */
 		flt->narrow = TRUE;
 		/* wiring pages requires a write lock. */
+		flt->upper_lock_type = RW_WRITE;
 		flt->lower_lock_type = RW_WRITE;
 	}
 
