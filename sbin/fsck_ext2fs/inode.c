@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.32 2025/01/30 17:08:10 martijn Exp $	*/
+/*	$OpenBSD: inode.c,v 1.33 2025/05/02 13:36:55 martijn Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 	if (mode == IFBLK || mode == IFCHR || mode == IFIFO ||
 	    (mode == IFLNK && (inosize(dp) < EXT2_MAXSYMLINKLEN)))
 		return (KEEPON);
-	memcpy(&dino, dp, EXT2_DINODE_SIZE(&sblock));
+	memcpy(&dino, dp, MIN(EXT2_DINODE_SIZE(&sblock), sizeof(dino)));
 	ndb = howmany(inosize(&dino), sblock.e2fs_bsize);
 	for (ap = &dino.e2di_blocks[0]; ap < &dino.e2di_blocks[NDADDR];
 																ap++,ndb--) {
