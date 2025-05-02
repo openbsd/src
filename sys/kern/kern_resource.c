@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.93 2024/11/10 06:45:36 jsg Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.94 2025/05/02 05:04:38 dlg Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -395,6 +395,9 @@ tuagg_sumup(struct tusage *tu, const struct tusage *from)
 	tu->tu_uticks += tmp.tu_uticks;
 	tu->tu_sticks += tmp.tu_sticks;
 	tu->tu_iticks += tmp.tu_iticks;
+	tu->tu_ixrss += tmp.tu_ixrss;
+	tu->tu_idrss += tmp.tu_idrss;
+	tu->tu_isrss += tmp.tu_isrss;
 	timespecadd(&tu->tu_runtime, &tmp.tu_runtime, &tu->tu_runtime);
 }
 
@@ -440,6 +443,7 @@ tuagg_add_process(struct process *pr, struct proc *p)
 	/* Now reset CPU time usage for the thread. */
 	timespecclear(&p->p_tu.tu_runtime);
 	p->p_tu.tu_uticks = p->p_tu.tu_sticks = p->p_tu.tu_iticks = 0;
+	p->p_tu.tu_ixrss = p->p_tu.tu_idrss = p->p_tu.tu_isrss = 0;
 }
 
 void
@@ -567,6 +571,10 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 		}
 
 		calcru(&tu, &rup->ru_utime, &rup->ru_stime, NULL);
+
+		rup->ru_ixrss = tu.tu_ixrss;
+		rup->ru_idrss = tu.tu_idrss;
+		rup->ru_isrss = tu.tu_isrss;
 		break;
 
 	case RUSAGE_THREAD:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.386 2025/05/01 01:16:42 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.387 2025/05/02 05:04:38 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -95,11 +95,20 @@ struct	pgrp {
  * generation counter. Code should use tu_enter() and tu_leave() for this.
  * The process ps_tu structure is locked by the ps_mtx.
  */
+#define TU_UTICKS	0		/* Statclock hits in user mode. */
+#define TU_STICKS	1		/* Statclock hits in system mode. */
+#define TU_ITICKS	2		/* Statclock hits processing intr. */
+#define TU_TICKS_COUNT	3
+
 struct tusage {
 	uint64_t	tu_gen;		/* generation counter */
-	uint64_t	tu_uticks;	/* Statclock hits in user mode. */
-	uint64_t	tu_sticks;	/* Statclock hits in system mode. */
-	uint64_t	tu_iticks;	/* Statclock hits processing intr. */
+	uint64_t	tu_ticks[TU_TICKS_COUNT];
+#define tu_uticks	tu_ticks[TU_UTICKS]
+#define tu_sticks	tu_ticks[TU_STICKS]
+#define tu_iticks	tu_ticks[TU_ITICKS]
+	uint64_t	tu_ixrss;
+	uint64_t	tu_idrss;
+	uint64_t	tu_isrss;
 	struct	timespec tu_runtime;	/* Realtime. */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.244 2025/04/14 09:15:24 visa Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.245 2025/05/02 05:04:38 dlg Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -346,6 +346,9 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 * and calculate the total times.
 		 */
 		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
+		rup->ru_ixrss = pr->ps_tu.tu_ixrss;
+		rup->ru_idrss = pr->ps_tu.tu_idrss;
+		rup->ru_isrss = pr->ps_tu.tu_isrss;
 		ruadd(rup, &pr->ps_cru);
 
 		/*
