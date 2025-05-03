@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.168 2022/06/29 08:39:49 job Exp $
+#	$OpenBSD: Makefile,v 1.169 2025/05/03 15:13:53 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	midicat mixerctl mkdep mklocale mktemp nc netstat \
 	newsyslog \
 	nfsstat nice nm nl nohup openssl pagesize passwd paste patch pctr \
-	pkg-config pkill \
+	pkgconf pkill \
 	pr printenv printf quota radioctl rcs rdist rdistd \
 	readlink realpath renice rev rpcgen rpcinfo rs rsync rup rusers rwall \
 	sdiff seq script sed sendbug shar showmount signify skey \
