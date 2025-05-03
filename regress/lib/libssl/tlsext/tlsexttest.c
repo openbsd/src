@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.93 2025/04/30 13:44:54 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.94 2025/05/03 08:37:28 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3738,6 +3738,11 @@ test_tlsext_keyshare_client(void)
 	}
 	if (ssl->s3->hs.key_share == NULL) {
 		FAIL("Did not select a key share");
+		goto done;
+	}
+	if (tls_key_share_group(ssl->s3->hs.key_share) != 29) {
+		FAIL("wrong key share group: got %d, expected 29\n",
+		     tls_key_share_group(ssl->s3->hs.key_share));
 		goto done;
 	}
 
