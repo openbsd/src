@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2024/11/11 03:58:26 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.27 2025/05/03 16:48:56 fcambus Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6/H616
@@ -47,6 +47,8 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Raspberry Pi 4
 		Raspberry Pi 400
 		Raspberry Pi Compute Module 4
+	Cix CD8180
+		Radxa Orion O6
 	Marvell ARMADA 3K
 		Turris MOX
 		Marvell ESPRESSObin
@@ -63,7 +65,12 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Lenovo ThinkPad X13s Gen 1
 		Microsoft Windows Dev Kit 2023
 	Qualcomm Snapdragon X Elite (X1E80100)
-		HP OmniBook X14
+		ASUS Vivobook S 15
+		HONOR MagicBook Art 14 Snapdragon
+		HP OmniBook X 14
+		Lenovo Yoga Slim 7x
+		Lenovo Thinkpad T14s Gen 6
+		Samsung Galaxy Book4 Edge
 	Rockchip RK3328/RK3399(pro)
 		Pine64 ROCK64
 		Pine64 ROCKPro64
