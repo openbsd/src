@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.7 2025/01/03 08:19:24 tb Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.8 2025/05/03 08:39:33 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -792,6 +792,8 @@ struct public_key {
 	matrix m;
 };
 
+CTASSERT(sizeof(struct MLKEM768_public_key) == sizeof(struct public_key));
+
 static struct public_key *
 public_key_768_from_external(const struct MLKEM768_public_key *external)
 {
@@ -803,6 +805,8 @@ struct private_key {
 	vector s;
 	uint8_t fo_failure_secret[32];
 };
+
+CTASSERT(sizeof(struct MLKEM768_private_key) == sizeof(struct private_key));
 
 static struct private_key *
 private_key_768_from_external(const struct MLKEM768_private_key *external)
