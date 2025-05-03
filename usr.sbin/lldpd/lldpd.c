@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.3 2025/05/02 23:50:18 djm Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.4 2025/05/03 00:17:00 djm Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -231,6 +231,7 @@ main(int argc, char *argv[])
 	if (geteuid() != 0)
 		errx(1, "need root privileges");
 
+	closefrom(STDERR_FILENO + 1);
 	pw = getpwnam(LLDPD_USER);
 	if (pw == NULL)
 		errx(1, "no %s user", LLDPD_USER);
@@ -245,8 +246,6 @@ main(int argc, char *argv[])
 	rtsock_open(lldpd);
 	ensock_open(lldpd);
 	ctlsock_open(lldpd);
-
-	printf("debug = %d\n", debug);
 
 	if (chroot(pw->pw_dir) == -1)
 		err(1, "chroot %s", pw->pw_dir);
@@ -1247,7 +1246,7 @@ getall(struct lldpd *lldpd)
 			continue;
 		}
 
-		printf("%s index %u\n", ifa->ifa_name, sdl->sdl_index);
+		ldebug("%s index %u", ifa->ifa_name, sdl->sdl_index);
 
 		ifp = malloc(sizeof(*ifp));
 		if (ifp == NULL) {
