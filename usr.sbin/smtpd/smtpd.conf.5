@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.272 2024/07/26 06:24:52 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.273 2025/05/03 09:21:16 sobrado Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 26 2024 $
+.Dd $Mdocdate: May 3 2025 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -944,12 +944,13 @@ When resolving the local part of a local email address, ignore the ASCII
 and all characters following it.
 The default is
 .Ql + .
-.It Ic srs Cm key Ar secret
+.It Ic srs Cm key Oo Cm backup Oc Ar secret
 Set the secret key to use for SRS,
 the Sender Rewriting Scheme.
-.It Ic srs Cm key backup Ar secret
-Set a backup secret key to use as a fallback for SRS.
-This can be used to implement SRS key rotation.
+The
+.Cm backup
+option can be specified to set a secret key to use as a fallback for SRS;
+this can be used to implement SRS key rotation.
 .It Ic srs Cm ttl Ar delay
 Set the time-to-live delay for SRS envelopes.
 After this delay,
