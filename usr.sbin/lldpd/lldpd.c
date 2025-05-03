@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.4 2025/05/03 00:17:00 djm Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.5 2025/05/03 05:26:23 jmc Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -189,7 +189,7 @@ extern char *__progname;
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-d] [-s /path/to/ctl.sock]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-s socket]\n", __progname);
 	exit(1);
 }
 

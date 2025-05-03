@@ -1,4 +1,4 @@
-.\" $OpenBSD: lldpd.8,v 1.4 2025/05/02 11:51:00 jsg Exp $
+.\" $OpenBSD: lldpd.8,v 1.5 2025/05/03 05:26:23 jmc Exp $
 .\"
 .\" Copyright (c) 2025 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2025 $
+.Dd $Mdocdate: May 3 2025 $
 .Dt LLDPD 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
-.Op Fl s Ar /path/to/ctl.sock
+.Op Fl s Ar socket
 .Sh DESCRIPTION
 The
 .Nm
@@ -43,15 +43,13 @@ Do not daemonize.
 If this option is specified,
 .Nm
 will run in the foreground and log to stderr.
-.It Fl s Ar path
-Specify the filesystem
-.Ar path
-used for the control socket.
-The control socket is used by
-.Xr lldp 8
-to communicate with the
+.It Fl s Ar socket
+Use
+.Ar socket
+to communicate with
 .Nm
-daemon.
+instead of the default,
+.Pa /var/run/lldp.sock .
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/lldp.sock" -compact
