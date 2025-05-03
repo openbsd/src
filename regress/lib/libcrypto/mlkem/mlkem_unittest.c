@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.6 2024/12/26 12:35:25 tb Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.7 2025/05/03 08:34:55 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -161,16 +161,22 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 	tmp_buf = NULL;
 
 	ctx->encap(ctx->ciphertext, shared_secret1, ctx->pub);
-	ctx->decap(shared_secret2, ctx->ciphertext, ctx->ciphertext_len,
-	    ctx->priv);
+	if (!ctx->decap(shared_secret2, ctx->ciphertext, ctx->ciphertext_len,
+	    ctx->priv)) {
+		warnx("decap() failed using priv");
+		failed |= 1;
+	}
 	if (compare_data(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
 	    "shared secrets with priv") != 0) {
 		warnx("compare_data");
 		failed |= 1;
 	}
 
-	ctx->decap(shared_secret2, ctx->ciphertext, ctx->ciphertext_len,
-	    ctx->priv2);
+	if (!ctx->decap(shared_secret2, ctx->ciphertext, ctx->ciphertext_len,
+	    ctx->priv2)) {
+		warnx("decap() failed using priv2");
+		failed |= 1;
+	}
 	if (compare_data(shared_secret1, shared_secret2, MLKEM_SHARED_SECRET_BYTES,
 	    "shared secrets with priv2") != 0) {
 		warnx("compare_data");
