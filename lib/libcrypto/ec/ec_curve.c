@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.54 2025/03/09 17:53:11 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.55 2025/05/03 10:15:50 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1221,7 +1221,7 @@ static const struct ec_curve {
 		.cofactor = 1,
 	},
 	{
-		.comment = "RFC 5639 curve brainpoolP224r2",
+		.comment = "RFC 5639 curve brainpoolP224t1",
 		.nid = NID_brainpoolP224t1,
 		.param_len = sizeof(_EC_brainpoolP224t1.p),
 		.p = _EC_brainpoolP224t1.p,
