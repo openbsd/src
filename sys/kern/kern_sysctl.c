@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.465 2025/04/27 00:58:55 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.466 2025/05/04 13:42:07 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -586,6 +586,19 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (ENXIO);
 		return (sysctl_rdint(oldp, oldlenp, newp, mp->msg_bufs));
 	}
+	case KERN_POOL_DEBUG: {
+		extern int pool_debug;
+		int oldval, newval;
+
+		oldval = newval = atomic_load_int(&pool_debug);
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
+		if (error == 0 && oldval != newval &&
+		    oldval == atomic_cas_uint(&pool_debug, oldval, newval))
+			pool_reclaim_all();
+
+		return (error);
+	}
 	case KERN_TIMEOUT_STATS:
 		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
 	case KERN_OSREV:
@@ -636,7 +649,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	int error, stackgap;
 	dev_t dev;
-	extern int pool_debug;
 
 	switch (name[0]) {
 	case KERN_SECURELVL:
@@ -747,15 +759,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		else
 			dev = NODEV;
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
-	case KERN_POOL_DEBUG: {
-		int old_pool_debug = pool_debug;
-
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &pool_debug);
-		if (error == 0 && pool_debug != old_pool_debug)
-			pool_reclaim_all();
-		return (error);
-	}
 #if NPF > 0
 	case KERN_PFSTATUS:
 		return (pf_sysctl(oldp, oldlenp, newp, newlen));
