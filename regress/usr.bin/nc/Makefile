@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2023/11/10 06:15:50 anton Exp $
+#	$OpenBSD: Makefile,v 1.15 2025/05/04 05:31:11 anton Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -228,8 +228,8 @@ run-tcp-sleep:
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	# netcat waits for the other side to terminate, check it is sleeping
 	${RUNNING_WAIT}
-	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v -l 127'
-	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*[IS].* -v -l 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*[IS].* -v 127'
 
 # TCP keep
 
@@ -609,8 +609,8 @@ run-tls-sleep: 127.0.0.1.crt
 	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
 	# netcat waits for the other side to terminate, check it is sleeping
 	${RUNNING_WAIT}
-	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v -l 127'
-	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*[IS].* -v -l 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*[IS].* -v 127'
 
 # TLS keep
 
@@ -766,8 +766,8 @@ run-udp-sleep:
 	grep 'Connection received on 127.0.0.1 ' server.err
 	# netcat waits for the other side to terminate, check it is sleeping
 	${RUNNING_WAIT}
-	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v -l 127'
-	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -n 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*[IS].* -v -l 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*[IS].* -n 127'
 
 ### UNIX ####
 
