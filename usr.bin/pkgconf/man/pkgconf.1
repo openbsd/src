@@ -16,7 +16,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Ar options
-.Op Ar list of modules
+.Ar module ...
 .Sh DESCRIPTION
 .Nm
 is a program which helps to configure compiler and linker flags for
@@ -30,9 +30,29 @@ Display the supported pkg-config version and exit.
 .It Fl -atleast-pkgconfig-version Ns = Ns Ar VERSION
 Exit with error if we do not support the requested pkg-config version.
 .It Fl -errors-to-stdout
-Print all errors on the main output stream instead of the error output stream.
+Print all error, warning, and debugging messages to standard output
+instead of to standard error output.
+.It Fl -print-errors
+Print some messages about fatal errors to standard error output
+that would otherwise be omitted.
+This option is implied by many other options, but not by all.
+It can be overridden with
+.Fl -silence-errors .
 .It Fl -silence-errors
-Do not display any errors at all.
+Do not print any error, warning, or debugging messages at all.
+Overrides all of
+.Fl -debug ,
+.Fl -errors-to-stdout ,
+and
+.Fl -print-errors .
+.It Fl -debug
+Print some non-fatal warning messages to standard error output
+that would otherwise silently be ignored.
+If
+.Nm
+was compiled without defining the preprocessor macro
+.Dv PKGCONF_LITE ,
+this option also prints many debugging messages to standard error output.
 .It Fl -list-all
 Walk all directories listed in the
 .Va PKG_CONFIG_PATH
@@ -118,19 +138,21 @@ of a solution.
 .Sh QUERY-SPECIFIC OPTIONS
 .Bl -tag -width indent
 .It Fl -cflags , Fl -cflags-only-I , Fl -cflags-only-other
-Display either all CFLAGS, only
-.Fl I
-CFLAGS or only CFLAGS that are not
-.Fl I .
+Print all compiler flags required to compile against the
+.Cm module ,
+or only the include path
+.Pq Fl I
+flags, or only the compiler flags that are not include path flags,
+respectively.
 .It Fl -libs , Fl -libs-only-L , Fl -libs-only-l , Fl -libs-only-other
-Display either all linker flags, only
-.Fl L
-linker flags, only
-.Fl l
-linker flags or only linker flags that are not
-.Fl L
-or
-.Fl l .
+Print all linker flags required to link against the
+.Cm module ,
+or only the library path
+.Pq Fl L
+flags, or only the library
+.Pq Fl l
+flags, or only the linker flags that are neither library path
+nor library flags, respectively.
 .It Fl -keep-system-cflags , Fl -keep-system-libs
 Keep CFLAGS or linker flag fragments that would be filtered due to being
 included by default in the compiler.
