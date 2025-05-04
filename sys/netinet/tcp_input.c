@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.442 2025/04/29 20:31:42 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.443 2025/05/04 23:05:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3542,7 +3542,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct socket *listenso;
 	struct inpcb *inp, *listeninp;
 	struct tcpcb *tp = NULL;
-	struct mbuf *am;
 	u_int rtableid;
 
 	NET_ASSERT_LOCKED();
@@ -3629,24 +3628,14 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		rtableid = divert->rdomain;
 	}
 #endif
-	in_pcbset_laddr(inp, dst, rtableid);
+	if (in_pcbset_addr(inp, src, dst, rtableid))
+		goto resetandabort;
 
 	/*
 	 * Give the new socket our cached route reference.
 	 */
 	inp->inp_route = sc->sc_route;		/* struct assignment */
 	sc->sc_route.ro_rt = NULL;
-
-	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL)
-		goto resetandabort;
-	am->m_len = src->sa_len;
-	memcpy(mtod(am, caddr_t), src, src->sa_len);
-	if (in_pcbconnect(inp, am)) {
-		(void) m_free(am);
-		goto resetandabort;
-	}
-	(void) m_free(am);
 
 	tp->t_flags = intotcpcb(listeninp)->t_flags & (TF_NOPUSH|TF_NODELAY);
 	if (sc->sc_request_r_scale != 15) {

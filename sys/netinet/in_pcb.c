@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.312 2025/02/12 21:28:10 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.313 2025/05/04 23:05:17 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1330,33 +1330,50 @@ in_pcbset_rtableid(struct inpcb *inp, u_int rtableid)
 	return (0);
 }
 
-void
-in_pcbset_laddr(struct inpcb *inp, const struct sockaddr *sa, u_int rtableid)
+int
+in_pcbset_addr(struct inpcb *inp, const struct sockaddr *fsa,
+    const struct sockaddr *lsa, u_int rtableid)
 {
 	struct inpcbtable *table = inp->inp_table;
+	const struct sockaddr_in *fsin, *lsin;
+	struct inpcb *t;
 
-	mtx_enter(&table->inpt_mtx);
-	inp->inp_rtableid = rtableid;
 #ifdef INET6
 	if (ISSET(inp->inp_flags, INP_IPV6)) {
-		const struct sockaddr_in6 *sin6;
-
-		KASSERT(sa->sa_family == AF_INET6);
-		sin6 = satosin6_const(sa);
-		inp->inp_lport = sin6->sin6_port;
-		inp->inp_laddr6 = sin6->sin6_addr;
-	} else
-#endif
-	{
-		const struct sockaddr_in *sin;
-
-		KASSERT(sa->sa_family == AF_INET);
-		sin = satosin_const(sa);
-		inp->inp_lport = sin->sin_port;
-		inp->inp_laddr = sin->sin_addr;
+		KASSERT(fsa->sa_family == AF_INET6);
+		KASSERT(lsa->sa_family == AF_INET6);
+		return in6_pcbset_addr(inp, satosin6_const(fsa),
+		    satosin6_const(lsa), rtableid);
 	}
+#endif
+	KASSERT(fsa->sa_family == AF_INET);
+	KASSERT(lsa->sa_family == AF_INET);
+	fsin = satosin_const(fsa);
+	lsin = satosin_const(lsa);
+
+	mtx_enter(&table->inpt_mtx);
+
+	t = in_pcblookup_lock(inp->inp_table, fsin->sin_addr, fsin->sin_port,
+	    lsin->sin_addr, lsin->sin_port, rtableid, IN_PCBLOCK_HOLD);
+	if (t != NULL) {
+		mtx_leave(&table->inpt_mtx);
+		return (EADDRINUSE);
+	}
+
+	inp->inp_rtableid = rtableid;
+	inp->inp_laddr = lsin->sin_addr;
+	inp->inp_lport = lsin->sin_port;
+	inp->inp_faddr = fsin->sin_addr;
+	inp->inp_fport = fsin->sin_port;
 	in_pcbrehash(inp);
+
 	mtx_leave(&table->inpt_mtx);
+
+#if NSTOEPLITZ > 0
+	inp->inp_flowid = stoeplitz_ip4port(inp->inp_faddr.s_addr,
+	    inp->inp_laddr.s_addr, inp->inp_fport, inp->inp_lport);
+#endif
+	return (0);
 }
 
 void

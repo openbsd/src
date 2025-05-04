@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.166 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.167 2025/05/04 23:05:17 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -323,8 +323,8 @@ struct inpcb *
 void	 in_pcb_iterator_abort(struct inpcbtable *, struct inpcb *,
 	    struct inpcb_iterator *);
 struct inpcb *
-	 in_pcblookup(struct inpcbtable *, struct in_addr,
-			       u_int, struct in_addr, u_int, u_int);
+	 in_pcblookup(struct inpcbtable *, struct in_addr, u_int,
+	    struct in_addr, u_int, u_int);
 struct inpcb *
 	 in_pcblookup_listen(struct inpcbtable *, struct in_addr, u_int,
 	    struct mbuf *, u_int);
@@ -373,7 +373,10 @@ void	in6_pcbnotify(struct inpcbtable *, const struct sockaddr_in6 *,
 	void (*)(struct inpcb *, int));
 int	in6_selecthlim(const struct inpcb *);
 int	in_pcbset_rtableid(struct inpcb *, u_int);
-void	in_pcbset_laddr(struct inpcb *, const struct sockaddr *, u_int);
+int	in_pcbset_addr(struct inpcb *, const struct sockaddr *,
+	    const struct sockaddr *, u_int);
+int	in6_pcbset_addr(struct inpcb *, const struct sockaddr_in6 *,
+	    const struct sockaddr_in6 *, u_int);
 void	in_pcbunset_faddr(struct inpcb *);
 void	in_pcbunset_laddr(struct inpcb *);
 
