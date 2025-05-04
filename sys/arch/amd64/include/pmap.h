@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.91 2024/11/08 01:57:34 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.92 2025/05/04 19:48:31 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -486,19 +486,8 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 }
 
 /*
- * various address inlines
- *
- *  vtopte: return a pointer to the PTE mapping a VA, works only for
- *  user and PT addresses
- *
  *  kvtopte: return a pointer to the PTE mapping a kernel VA
  */
-
-static inline pt_entry_t *
-vtopte(vaddr_t va)
-{
-	return (PTE_BASE + pl1_i(va));
-}
 
 static inline pt_entry_t *
 kvtopte(vaddr_t va)
