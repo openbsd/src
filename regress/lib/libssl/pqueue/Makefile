@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2016/11/04 19:45:12 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2025/05/04 11:04:02 tb Exp $
 
 PROG=	pq_test
 SRC=	${.CURDIR}/../../../../lib/libssl
@@ -8,10 +8,5 @@ LDADD=	${SSL_INT} -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
-
-REGRESS_TARGETS= regress-pq_test
-
-regress-pq_test: ${PROG}
-	${.OBJDIR}/pq_test | cmp -s ${.CURDIR}/expected.txt /dev/stdin
 
 .include <bsd.regress.mk>
