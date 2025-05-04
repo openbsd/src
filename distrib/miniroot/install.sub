@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1269 2025/04/06 11:54:36 kn Exp $
+#	$OpenBSD: install.sub,v 1.1270 2025/05/04 12:32:41 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -262,7 +262,7 @@ dmesgtail() {
 # Device related functions
 # ------------------------------------------------------------------------------
 
-# Show device name, info, NAA and size for the provided list of disk devices.
+# Show device name, info, NAA and size in gigabytes for the provided disks.
 # Create device nodes as needed and cleanup afterwards.
 diskinfo() {
 	local _d _i _n _s
@@ -2429,12 +2429,22 @@ is_rootdisk() {
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
-	local _default=$(get_dkdevs_root) _dkdev
+	local _rootdisks=$(get_dkdevs_root) _dkdev
 	local _q="Which disk is the root disk? ('?' for details)"
+
+	
+	if [[ $MODE == install ]]; then
+		# Prefer disks bigger than 1G as small ones tend to be install
+		# media, softraid(4) key disks or tiny USB sticks or SD cards.
+		for _dkdev in $_rootdisks; do
+			diskinfo $_dkdev | grep -q '(0\..*G)$' &&
+				_rootdisks="$(rmel "$_dkdev" $_rootdisks) $_dkdev"
+		done
+	fi
 
 	while :; do
 		echo "Available disks are: $(get_dkdevs_root | sed 's/^$/none/')."
-		_ask "$_q" $_default || continue
+		_ask "$_q" $_rootdisks || continue
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
@@ -2445,7 +2455,7 @@ get_rootinfo() {
 				[[ $MODE == install ]] && break
 				is_rootdisk "$_dkdev" && break
 				echo "$resp is not a valid root disk."
-				_default="$(rmel "$_dkdev" $_default) $_dkdev"
+				_rootdisks="$(rmel "$_dkdev" $_rootdisks) $_dkdev"
 			else
 				echo "no such disk"
 			fi
