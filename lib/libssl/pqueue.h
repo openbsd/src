@@ -1,4 +1,4 @@
-/* $OpenBSD: pqueue.h,v 1.6 2025/05/04 10:47:46 tb Exp $ */
+/* $OpenBSD: pqueue.h,v 1.7 2025/05/04 10:53:38 tb Exp $ */
 
 /*
  * DTLS implementation written by Nagendra Modadugu
@@ -82,7 +82,7 @@ void   pqueue_free(pqueue pq);
 pitem *pqueue_insert(pqueue pq, pitem *item);
 pitem *pqueue_peek(pqueue pq);
 pitem *pqueue_pop(pqueue pq);
-pitem *pqueue_find(pqueue pq, unsigned char *prio64be);
+pitem *pqueue_find(pqueue pq, const unsigned char *prio64be);
 pitem *pqueue_iterator(pqueue pq);
 pitem *pqueue_next(piterator *iter);
 

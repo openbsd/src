@@ -1,4 +1,4 @@
-/* $OpenBSD: pqueue.c,v 1.6 2025/05/04 10:47:02 tb Exp $ */
+/* $OpenBSD: pqueue.c,v 1.7 2025/05/04 10:53:38 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -154,7 +154,7 @@ pqueue_pop(pqueue_s *pq)
 }
 
 pitem *
-pqueue_find(pqueue_s *pq, unsigned char *prio64be)
+pqueue_find(pqueue_s *pq, const unsigned char *prio64be)
 {
 	pitem *next;
 
