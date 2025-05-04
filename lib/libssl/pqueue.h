@@ -1,4 +1,4 @@
-/* $OpenBSD: pqueue.h,v 1.4 2016/11/04 18:28:58 guenther Exp $ */
+/* $OpenBSD: pqueue.h,v 1.5 2025/05/04 10:47:02 tb Exp $ */
 
 /*
  * DTLS implementation written by Nagendra Modadugu
@@ -73,7 +73,7 @@ typedef struct _pitem {
 
 typedef struct _pitem *piterator;
 
-pitem *pitem_new(unsigned char *prio64be, void *data);
+pitem *pitem_new(const unsigned char *prio64be, void *data);
 void   pitem_free(pitem *item);
 
 pqueue pqueue_new(void);

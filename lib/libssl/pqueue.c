@@ -1,4 +1,4 @@
-/* $OpenBSD: pqueue.c,v 1.5 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: pqueue.c,v 1.6 2025/05/04 10:47:02 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -68,7 +68,7 @@ typedef struct _pqueue {
 } pqueue_s;
 
 pitem *
-pitem_new(unsigned char *prio64be, void *data)
+pitem_new(const unsigned char *prio64be, void *data)
 {
 	pitem *item = malloc(sizeof(pitem));
 
