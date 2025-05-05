@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.97 2025/01/16 12:48:45 kn Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.98 2025/05/05 13:25:22 claudio Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -440,6 +440,7 @@ privchild(int sock)
 					break;
 				}
 				path = imsg.data;
+				memset(&resp, 0, sizeof(resp));
 				if (getfh(path, &resp.gr_fh) == -1)
 					resp.gr_error = errno;
 				else
