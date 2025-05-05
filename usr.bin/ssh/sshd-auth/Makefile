@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2024/10/14 01:57:50 djm Exp $
+#	$OpenBSD: Makefile,v 1.2 2025/05/05 02:48:06 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,7 +7,7 @@ SRCS=	sshd-auth.c auth2-methods.c \
 	serverloop.c auth.c auth2.c auth-options.c session.c auth2-chall.c \
 	groupaccess.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c auth2-pubkeyfile.c \
-	monitor_wrap.c \
+	monitor_wrap.c misc-agent.c \
 	sftp-server.c sftp-common.c sftp-realpath.c
 SRCS+=	authfd.c compat.c dns.c fatal.c hostfile.c readpass.c utf8.c uidswap.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
