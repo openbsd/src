@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.18 2025/02/07 03:03:08 jsg Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.19 2025/05/05 02:25:53 tedu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -201,10 +201,13 @@ kexec_subr.o: ${_machdir}/dev/kexec_subr.S assym.h
 hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
+reconfig:
+	[[ -f /etc/bsd.re-config ]] && config -e -c /etc/bsd.re-config -f bsd
+
 newinstall:
 	install -F -m 700 bsd /bsd && sha256 -h /var/db/kernel.SHA256 /bsd
 
-install: update-link hardlink-obsd newinstall
+install: update-link hardlink-obsd reconfig newinstall
 
 # pull in the dependency information
 .ifnmake clean

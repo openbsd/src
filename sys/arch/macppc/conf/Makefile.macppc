@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.107 2024/01/28 00:40:22 deraadt Exp $
+#	$OpenBSD: Makefile.macppc,v 1.108 2025/05/05 02:25:53 tedu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -163,10 +163,13 @@ mutex.o: assym.h
 hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
+reconfig:
+	[[ -f /etc/bsd.re-config ]] && config -e -c /etc/bsd.re-config -f bsd
+
 newinstall:
 	install -F -m 700 bsd /bsd && sha256 -h /var/db/kernel.SHA256 /bsd
 
-install: update-link hardlink-obsd newinstall
+install: update-link hardlink-obsd reconfig newinstall
 
 # pull in the dependency information
 .ifnmake clean
