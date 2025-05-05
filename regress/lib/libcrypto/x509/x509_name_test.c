@@ -1,7 +1,9 @@
-/*	$OpenBSD: x509_name_test.c,v 1.2 2025/03/19 11:19:17 tb Exp $ */
+/*	$OpenBSD: x509_name_test.c,v 1.3 2025/05/05 06:33:34 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2025 Kenjiro Nakayama <nakayamakenjiro@gmail.com>
+ * Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -288,12 +290,131 @@ x509_name_compat_test(void)
 	return failed;
 }
 
+static const struct x509_name_entry_test {
+	const char *field;
+	const char *value;
+	int loc;
+	int set;
+	const char *expected_str;
+	const int expected_set[4];
+	const int expected_count;
+} entry_tests[] = {
+	{
+		.field = "ST",
+		.value = "BaWue",
+		.loc = -1,
+		.set = 0,
+		.expected_str = "ST=BaWue",
+		.expected_set = { 0 },
+		.expected_count = 1,
+	},
+	{
+		.field = "O",
+		.value = "KIT",
+		.loc = -1,
+		.set = 0,
+		.expected_str = "ST=BaWue, O=KIT",
+		.expected_set = { 0, 1 },
+		.expected_count = 2,
+	},
+	{
+		.field = "L",
+		.value = "Karlsruhe",
+		.loc = 1,
+		.set = 0,
+		.expected_str = "ST=BaWue, L=Karlsruhe, O=KIT",
+		.expected_set = { 0, 1, 2 },
+		.expected_count = 3,
+	},
+	{
+		.field = "C",
+		.value = "DE",
+		.loc = 0,
+		.set = 1,
+		.expected_str = "C=DE + ST=BaWue, L=Karlsruhe, O=KIT",
+		.expected_set = { 0, 0, 1, 2 },
+		.expected_count = 4,
+	},
+};
+
+#define N_ENTRY_TESTS (sizeof(entry_tests) / sizeof(entry_tests[0]))
+
+static int
+verify_x509_name_output(X509_NAME *name, const struct x509_name_entry_test *tc)
+{
+	BIO *bio;
+	char *got;
+	long got_len;
+	int loc, ret;
+	int failed = 1;
+
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		goto fail;
+
+	if ((ret = X509_NAME_print_ex(bio, name, 0, XN_FLAG_SEP_CPLUS_SPC)) == -1)
+		goto fail;
+
+	if ((got_len = BIO_get_mem_data(bio, &got)) < 0)
+		goto fail;
+
+	if (ret != got_len || strlen(tc->expected_str) != (size_t)ret)
+		goto fail;
+
+	if (strncmp(tc->expected_str, got, got_len) != 0)
+		goto fail;
+
+	if (X509_NAME_entry_count(name) != tc->expected_count)
+		goto fail;
+
+	for (loc = 0; loc < X509_NAME_entry_count(name); loc++) {
+		X509_NAME_ENTRY *e = X509_NAME_get_entry(name, loc);
+		if (e == NULL || X509_NAME_ENTRY_set(e) != tc->expected_set[loc])
+			goto fail;
+	}
+
+	failed = 0;
+
+ fail:
+	BIO_free(bio);
+
+	return failed;
+}
+
+static int
+x509_name_add_entry_test(void)
+{
+	X509_NAME *name;
+	int failed = 1;
+
+	if ((name = X509_NAME_new()) == NULL)
+		goto done;
+
+	for (size_t i = 0; i < N_ENTRY_TESTS; i++) {
+		const struct x509_name_entry_test *t = &entry_tests[i];
+
+		if (!X509_NAME_add_entry_by_txt(name, t->field, MBSTRING_ASC,
+		    (const unsigned char *)t->value, -1, t->loc, t->set))
+			goto done;
+
+		if (verify_x509_name_output(name, t))
+			goto done;
+	}
+
+	failed = 0;
+
+ done:
+	X509_NAME_free(name);
+
+	return failed;
+}
+
 int
 main(void)
 {
 	int failed = 0;
 
 	failed |= x509_name_compat_test();
+	failed |= x509_name_add_entry_test();
 
 	return failed;
 }

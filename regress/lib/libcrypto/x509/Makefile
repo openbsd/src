@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.24 2025/03/15 06:37:49 tb Exp $
+#	$OpenBSD: Makefile,v 1.25 2025/05/05 06:33:34 tb Exp $
 
-PROGS =	constraints verify x509attribute x509name x509req_ext callback
+PROGS =	constraints verify x509attribute x509req_ext callback
 PROGS += expirecallback callbackfailures x509_asn1 x509_extensions_test
 PROGS += x509_name_test
 LDADD =	-lcrypto
@@ -16,7 +16,7 @@ CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
 SUBDIR += bettertls policy rfc3779
 
-CLEANFILES +=	x509name.result callback.out
+CLEANFILES +=	callback.out
 
 .if make(clean) || make(cleandir)
 . if ${.OBJDIR} != ${.CURDIR}
@@ -28,10 +28,6 @@ CLEANFILES +=	x509name.result callback.out
 run-regress-verify: verify
 	perl ${.CURDIR}/make-dir-roots.pl ${.CURDIR}/../certs .
 	./verify ${.CURDIR}/../certs
-
-run-regress-x509name: x509name
-	./x509name > x509name.result
-	diff -u ${.CURDIR}/x509name.expected x509name.result
 
 run-regress-callback: callback
 	./callback ${.CURDIR}/../certs
