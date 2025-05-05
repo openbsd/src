@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.119 2025/05/05 03:16:52 tedu Exp $
+#	$OpenBSD: Makefile.alpha,v 1.120 2025/05/05 20:43:32 tedu Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -144,7 +144,7 @@ hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
 reconfig:
-	[[ -f /etc/bsd.re-config ]] && config -e -c /etc/bsd.re-config -f bsd || true
+	[[ ! -f /etc/bsd.re-config ]] || config -e -c /etc/bsd.re-config -f bsd
 
 newinstall:
 	install -F -m 700 bsd /bsd && sha256 -h /var/db/kernel.SHA256 /bsd
