@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.106 2024/09/04 07:54:51 mglocker Exp $	*/
+/*	$OpenBSD: trap.c,v 1.107 2025/05/05 23:02:39 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -465,6 +465,8 @@ trap_print(struct trapframe *frame, int type)
 	    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 	printf("gsbase %p  kgsbase %p\n",
 	    (void *)rdmsr(MSR_GSBASE), (void *)rdmsr(MSR_KERNELGSBASE));
+	if (type == T_TRCTRAP)
+		printf("dr6 %llx dr7 %llx\n", rdr6(), rdr7());
 }
 
 

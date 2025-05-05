@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.26 2024/10/04 21:15:52 bluhm Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.27 2025/05/05 23:02:39 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -193,7 +193,12 @@ bi_size_ok:
 	pushl	$PSL_MBO
 	popfl
 
+	/* Reset debug control registers */
 	xorl	%eax,%eax
+	movl	%eax,%dr6
+	movl	%eax,%dr7
+
+	/* %eax still zero from above */
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
 	movl	$RELOC(cpu_vendor),%ebp

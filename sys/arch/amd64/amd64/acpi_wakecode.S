@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.50 2024/02/25 22:33:09 guenther Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.51 2025/05/05 23:02:39 guenther Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -323,6 +323,11 @@ _ACPI_TRMP_LABEL(.Lacpi_long_mode_trampoline)
 	movq	.Lacpi_saved_gdt+2, %rax
 	andb	$0xF9, 5(%rax,%rcx)
 	ltr	%cx
+
+	/* Reset debug control registers */
+	xorl	%eax,%eax
+	movq	%rax,%dr6
+	movq	%rax,%dr7
 
 	pushq	.Lacpi_saved_fl
 	popfq

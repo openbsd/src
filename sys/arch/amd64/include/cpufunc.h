@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.43 2024/11/08 12:08:22 bluhm Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.44 2025/05/05 23:02:39 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -157,6 +157,25 @@ rcr4(void)
 	u_int64_t val64;
 	__asm volatile("movq %%cr4,%0" : "=r" (val64));
 	return (u_int) val64;
+}
+
+/*
+ * DR6 and DR7 debug registers
+ */
+static inline uint64_t
+rdr6(void)
+{
+	u_int64_t val;
+	__asm volatile("movq %%dr6,%0" : "=r" (val));
+	return val;
+}
+
+static inline uint64_t
+rdr7(void)
+{
+	u_int64_t val;
+	__asm volatile("movq %%dr7,%0" : "=r" (val));
+	return val;
 }
 
 static __inline void
