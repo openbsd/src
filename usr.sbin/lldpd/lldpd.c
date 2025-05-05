@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.5 2025/05/03 05:26:23 jmc Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.6 2025/05/05 03:27:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -545,15 +545,15 @@ ensock_open(struct lldpd *lldpd)
 
 	s = socket(AF_FRAME, SOCK_DGRAM | SOCK_NONBLOCK, IFT_ETHER);
 	if (s == -1)
-		err(1, "Ethernet socket");
+		err(1, "AF_FRAME socket");
 
 	opt = 1;
 	if (setsockopt(s, IFT_ETHER, FRAME_RECVDSTADDR,
 	    &opt, sizeof(opt)) == -1)
-		err(1, "Ethernet setsockopt recv dstaddr");
+		err(1, "AF_FRAME setsockopt enable recv dstaddr");
 
 	if (bind(s, (struct sockaddr *)&sfrm, sizeof(sfrm)) == -1)
-		err(1, "Ethernet bind lldp");
+		err(1, "AF_FRAME bind lldp");
 
 	event_set(&lldpd->en_ev, s, 0, NULL, NULL);
 }
