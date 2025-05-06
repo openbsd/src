@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.h,v 1.66 2025/04/02 04:28:03 tb Exp $ */
+/* $OpenBSD: sshkey.h,v 1.67 2025/05/06 05:40:56 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -30,9 +30,6 @@
 
 #ifdef WITH_OPENSSL
 #include <openssl/rsa.h>
-#ifdef WITH_DSA
-#include <openssl/dsa.h>
-#endif
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
@@ -40,7 +37,6 @@
 #else /* OPENSSL */
 #define BIGNUM		void
 #define RSA		void
-#define DSA		void
 #define EC_KEY		void
 #define EC_GROUP	void
 #define EC_POINT	void
@@ -56,11 +52,9 @@ struct sshbuf;
 /* Key types */
 enum sshkey_types {
 	KEY_RSA,
-	KEY_DSA,
 	KEY_ECDSA,
 	KEY_ED25519,
 	KEY_RSA_CERT,
-	KEY_DSA_CERT,
 	KEY_ECDSA_CERT,
 	KEY_ED25519_CERT,
 	KEY_XMSS,
@@ -123,8 +117,6 @@ struct sshkey_cert {
 struct sshkey {
 	int	 type;
 	int	 flags;
-	/* KEY_DSA */
-	DSA	*dsa;
 	/* KEY_ECDSA and KEY_ECDSA_SK */
 	int	 ecdsa_nid;	/* NID of curve */
 	/* libcrypto-backed keys */
@@ -347,7 +339,6 @@ int	check_rsa_length(const RSA *rsa); /* XXX remove */
 
 #ifndef WITH_OPENSSL
 #undef RSA
-#undef DSA
 #undef EC_KEY
 #undef EC_GROUP
 #undef EC_POINT
