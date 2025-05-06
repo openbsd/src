@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.466 2025/05/04 13:42:07 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.467 2025/05/06 18:34:26 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -574,10 +574,52 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &mbs, sizeof(mbs)));
 	}
-	case KERN_MSGBUFSIZE:
-	case KERN_CONSBUFSIZE: {
-		struct msgbuf *mp;
-		mp = (name[0] == KERN_MSGBUFSIZE) ? msgbufp : consbufp;
+	case KERN_CONSBUF:
+		if ((error = suser(p)))
+			return (error);
+		/* FALLTHROUGH */
+	case KERN_MSGBUF: {
+		extern struct mutex log_mtx;
+		const size_t hlen = offsetof(struct msgbuf, msg_bufc);
+		struct msgbuf ump, *mp = (name[0] == KERN_MSGBUF) ?
+		    msgbufp : consbufp;
+
+		/*
+		 * deal with cases where the message buffer has
+		 * become corrupted.
+		 */
+		if (!mp || mp->msg_magic != MSG_MAGIC)
+			return (ENXIO);
+		if (newp)
+			return (EPERM);
+		if (oldp) {
+			if ((hlen + mp->msg_bufs) > *oldlenp)
+				return (ENOMEM);
+		} else 
+			return (0);
+
+		memset(&ump, 0, sizeof(ump));
+		mtx_enter(&log_mtx);
+		ump.msg_magic = mp->msg_magic;
+		ump.msg_bufs = mp->msg_bufs;
+		ump.msg_bufx = mp->msg_bufx;
+		ump.msg_bufr = mp->msg_bufr;
+		ump.msg_bufd = mp->msg_bufd;
+		mtx_leave(&log_mtx);
+
+		/* copy header... */
+		if ((error = copyout(&ump, oldp, hlen)))
+			return (error);
+		/* ...and the data. */
+		error = copyout(mp->msg_bufc, oldp + hlen, mp->msg_bufs);
+
+		return (error);
+	}
+	case KERN_CONSBUFSIZE:
+	case KERN_MSGBUFSIZE: {
+		struct msgbuf *mp = (name[0] == KERN_MSGBUFSIZE) ?
+		    msgbufp : consbufp;
+
 		/*
 		 * deal with cases where the message buffer has
 		 * become corrupted.
@@ -668,22 +710,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (newp && !error)
 			domainnamelen = newlen;
 		return (error);
-	case KERN_CONSBUF:
-		if ((error = suser(p)))
-			return (error);
-		/* FALLTHROUGH */
-	case KERN_MSGBUF: {
-		struct msgbuf *mp;
-		mp = (name[0] == KERN_MSGBUF) ? msgbufp : consbufp;
-		/*
-		 * deal with cases where the message buffer has
-		 * become corrupted.
-		 */
-		if (!mp || mp->msg_magic != MSG_MAGIC)
-			return (ENXIO);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, mp,
-		    mp->msg_bufs + offsetof(struct msgbuf, msg_bufc)));
-	}
 	case KERN_CPTIME:
 	{
 		CPU_INFO_ITERATOR cii;
