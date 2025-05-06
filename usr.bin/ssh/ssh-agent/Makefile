@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2025/05/05 02:48:06 djm Exp $
+#	$OpenBSD: Makefile,v 1.42 2025/05/06 15:15:05 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -27,7 +27,7 @@ install.sh: Makefile
 	echo "set -o errexit" > $@
 	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
 	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
-	echo "./${PROG} /usr/bin/true" >> $@
+	echo "./${PROG} -T /usr/bin/true" >> $@
 	echo "install -c -s -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${PROG} " \
 	    "${BINDIR}/${PROG}" >> $@
 
