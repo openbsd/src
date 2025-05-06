@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.2 2025/05/06 05:25:55 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.3 2025/05/06 06:04:58 jmc Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -171,7 +171,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-v] [-s socket] [-i ifname]\n",
+	fprintf(stderr, "usage: %s [-v] [-i interface] [-s socket]\n",
 	    __progname);
 
 	exit(1);
