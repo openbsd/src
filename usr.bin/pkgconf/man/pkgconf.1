@@ -29,7 +29,11 @@ The
 are as follows:
 .Bl -tag -width indent
 .It Fl -atleast-pkgconfig-version Ns = Ns Ar VERSION
-Exit with error if we do not support the requested pkg-config version.
+Exit with error if the requested
+.Ar VERSION
+number is greater than the version number of the
+.Nm
+program.
 .It Fl -atleast-version Ns = Ns Ar VERSION
 Exit with error if a module's version is less than the specified version.
 .It Fl -cflags , Fl -cflags-only-I , Fl -cflags-only-other
@@ -80,8 +84,13 @@ instead of to standard error output.
 .It Fl -exact-version Ns = Ns Ar VERSION
 Exit with error if a module's version is not exactly the specified version.
 .It Fl -exists
-Exit with a non-zero result if the dependency resolver was unable to find all of
-the requested modules.
+Exit with a non-zero exit status
+if the dependency resolver is unable to find all of the requested
+.Ar module Ns s .
+This option is active by default and cannot be disabled.
+However, various other options cause
+.Nm
+to exit and report success or failure before all arguments have been inspected.
 .It Fl -fragment-filter Ns = Ns Ar TYPES
 Filter the fragment lists for the specified types.
 .It Fl -ignore-conflicts
@@ -140,15 +149,43 @@ This option is implied by many other options, but not by all.
 It can be overridden with
 .Fl -silence-errors .
 .It Fl -print-provides
-Print all relevant
-.Sq Provides
-entries for a module to the output channel.
+For each specified
+.Ar module ,
+print one line to standard output containing the
+.Ic Name
+property, an equal sign
+.Pq Sq = ,
+and the
+.Ic Version
+property.
+If the
+.Ar module
+contains one or more
+.Ic Provides
+properties, print additional lines in dependency list format, one name
+per line, each name optionally followed by an operator and a version.
+This option implies
+.Fl -maximum-traverse-depth Ns =1
+and overrides and disables all
+.Fl -cflags
+and
+.Fl -libs
+flags.
 .It Fl -print-requires , Fl -print-requires-private
-Print the modules included in either the
-.Va Requires
-field or the
-.Va Requires.private
-field.
+For each specified
+.Ar module ,
+print the
+.Ic Requires
+or
+.Ic Requires.private
+properties, respectively, in dependency list format to standard output.
+Both of these options imply
+.Fl -maximum-traverse-depth Ns =1
+and override and disable all
+.Fl -cflags
+and
+.Fl -libs
+flags.
 .It Fl -print-variables
 Print all seen variables for a module to the output channel.
 .It Fl -pure
@@ -188,7 +225,10 @@ files for correctness.
 Print the value of
 .Va VARNAME .
 .It Fl -version
-Display the supported pkg-config version and exit.
+Print the version number of the
+.Nm
+program to standard output and exit.
+Most other options and all command line arguments are ignored.
 .It Fl -with-path Ns = Ns Ar PATH
 Adds a new module search path to pkgconf's dependency resolver.
 Paths added in this way are given preference before other paths.
@@ -241,6 +281,8 @@ If set, follow the sysroot prefixing rules that freedesktop.org pkg-config uses.
 .It Va DESTDIR
 If set to PKG_CONFIG_SYSROOT_DIR, assume that PKG_CONFIG_FDO_SYSROOT_RULES is set.
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 Displaying the CFLAGS of a package:
 .Dl $ pkgconf --cflags foo
