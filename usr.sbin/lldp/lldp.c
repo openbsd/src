@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.3 2025/05/06 06:04:58 jmc Exp $ */
+/* $OpenBSD: lldp.c,v 1.4 2025/05/06 08:41:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -80,7 +80,7 @@ enum lldp_tlv_idx {
 };
 
 struct lldp_tlv {
-	uint8_t			 type;
+	uint32_t		 type;	/* big enough for org tlv type too */
 	const char		*name;
 
 	void (*toscratch)(const void *, size_t, int);
@@ -828,23 +828,122 @@ abytes:
 }
 
 static void
+lldp_port_vlan_id(const void *bytes, size_t len, int flags)
+{
+	uint16_t pvid;
+
+	if (len < sizeof(pvid)) {
+		fprintf(scratch, "too short (%zu bytes)", len);
+		return;
+	}
+
+	pvid = pdu_u16(bytes);
+	if (pvid == 0)
+		fprintf(scratch, "-");
+	else
+		fprintf(scratch, "%u", pvid);
+}
+
+static void
+lldp_u16_to_scratch(const void *bytes, size_t len, int flags)
+{
+	uint16_t u16;
+
+	if (len < sizeof(u16)) {
+		fprintf(scratch, "too short (%zu bytes)", len);
+		return;
+	}
+
+	u16 = pdu_u16(bytes);
+	fprintf(scratch, "%u", u16);
+}
+
+#define OUI(_a, _b, _c) ((_a) << 24 | (_b) << 16 | (_c) << 8)
+
+#define OUI_802_1	OUI(0x00, 0x80, 0xc2)
+#define OUI_802_3	OUI(0x00, 0x12, 0x0f)
+#define OUI_DELL	OUI(0xf8, 0xb1, 0x56)
+
+static const struct lldp_tlv lldp_org_tlvs[] = {
+	/* IEEE 802.1 */
+	{
+		.type		= OUI_802_1 | 1,
+		.name		= "Port VLAN ID",
+		.toscratch	= lldp_port_vlan_id,
+	},
+
+	/* IEEE 802.3 */
+	{
+		.type		= OUI_802_3 | 4,
+		.name		= "Max Frame Size",
+		.toscratch	= lldp_u16_to_scratch,
+	},
+
+	/* Dell */
+	{
+		.type		= OUI_DELL | 21,
+		.name		= "Dell Service Tag",
+		.toscratch	= lldp_string_to_scratch,
+	},
+	{
+		.type		= OUI_DELL | 22,
+		.name		= "Dell Product Base",
+		.toscratch	= lldp_string_to_scratch,
+	},
+	{
+		.type		= OUI_DELL | 23,
+		.name		= "Dell Product Serial Number",
+		.toscratch	= lldp_string_to_scratch,
+	},
+	{
+		.type		= OUI_DELL | 24,
+		.name		= "Dell Product Part Number",
+		.toscratch	= lldp_string_to_scratch,
+	},
+};
+
+static const struct lldp_tlv *
+lldp_org_tlv_lookup(uint32_t type)
+{
+	size_t i;
+
+	for (i = 0; i < nitems(lldp_org_tlvs); i++) {
+		const struct lldp_tlv *tlv = &lldp_org_tlvs[i];
+		if (tlv->type == type)
+			return (tlv);
+	}
+
+	return (NULL);
+}
+
+static void
 lldp_org_to_scratch(const void *base, size_t len, int flags)
 {
 	const uint8_t *buf;
+	uint32_t type;
+	const struct lldp_tlv *tlv;
+	void (*toscratch)(const void *, size_t, int) = lldp_bytes_to_scratch;
 
-	if (len < 4) {
+	if (len < sizeof(type)) {
 		fprintf(scratch, "[|org]");
 		return;
 	}
 
 	buf = base;
-	fprintf(scratch, "%02X-%02X-%02X subtype %u: ",
-	    buf[0], buf[1], buf[2], buf[3]);
+	type = pdu_u32(buf);
+	tlv = lldp_org_tlv_lookup(type);
+	if (tlv == NULL) {
+		fprintf(scratch, "%02X-%02X-%02X subtype %u: ",
+		    buf[0], buf[1], buf[2], buf[3]);
+	} else {
+		fprintf(scratch, "%s: ", tlv->name);
+		toscratch = tlv->toscratch;
+	}
 
 	buf += 4;
 	len -= 4;
 
-	lldp_bytes_to_scratch(buf, len, flags);
+	toscratch(buf, len, flags);
 }
 
 static int
