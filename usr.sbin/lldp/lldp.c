@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.6 2025/05/06 23:48:47 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.7 2025/05/06 23:55:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -935,6 +935,13 @@ lldp_802_3_mac_phy(const void *bytes, size_t len, int flags)
 		return;
 	}
 
+	/*
+	 * IEEE 802.3 says this field is ifMauAutoNegCapAdvertisedBits from
+	 * RFC 4836, which says IANA allocates these bits now.
+	 *
+	 * There's 16 bits here and way more than 16 types of Ethernet media
+	 * now, so not sure if this is actually useful.
+	 */
 	autoneg = pdu_u16(buf);
 	fprintf(scratch, "MAUAutoNegCap: 0x%04x, ", autoneg);
 	buf += sizeof(autoneg);
@@ -945,6 +952,10 @@ lldp_802_3_mac_phy(const void *bytes, size_t len, int flags)
 		return;
 	}
 
+	/*
+	 * IEEE 802.3 says this field is dot3MauType from RFC 4836,
+	 * which says IANA allocates these bits now.
+	 */
 	mautype = pdu_u16(buf);
 	fprintf(scratch, "MAU type: %u", mautype);
 }
