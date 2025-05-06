@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.1 2025/05/02 06:15:59 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.2 2025/05/06 05:25:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 
 #include "pdu.h"
 #include "lldpctl.h"
@@ -170,7 +171,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-v] [-i ifname]\n", __progname);
+	fprintf(stderr, "usage: %s [-v] [-s socket] [-i ifname]\n",
+	    __progname);
 
 	exit(1);
 }
@@ -179,10 +181,10 @@ int
 main(int argc, char *argv[])
 {
 	const char *ifname = NULL;
+	const char *sockname = LLDP_CTL_PATH;
 	int verbose = 0;
 	struct sockaddr_un sun = {
 		.sun_family = AF_UNIX,
-		.sun_path = LLDP_CTL_PATH,
 	};
 	int ch;
 	int s;
@@ -191,10 +193,13 @@ main(int argc, char *argv[])
 	if (scratch == NULL)
 		err(1, "fmemopen scratch");
 
-	while ((ch = getopt(argc, argv, "i:v")) != -1) {
+	while ((ch = getopt(argc, argv, "i:s:v")) != -1) {
 		switch (ch) {
 		case 'i':
 			ifname = optarg;
+			break;
+		case 's':
+			sockname = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -204,6 +209,10 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
+	if (strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path))
+		errc(1, ENAMETOOLONG, "socket name");
 
 	s = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 	if (s == -1)
