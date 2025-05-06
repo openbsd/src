@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.100 2023/07/02 13:33:10 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.101 2025/05/06 18:36:20 tb Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -319,6 +319,7 @@ sub log($self, @p)
 
 sub run_quirks($state, $sub)
 {
+	return if !$state->{uptodate_quirks};
 	if (!exists $state->{quirks}) {
 		eval {
 			use lib ('/usr/local/libdata/perl5/site_perl');

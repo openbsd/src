@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.51 2023/10/09 07:12:22 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.52 2025/05/06 18:36:20 tb Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -357,6 +357,8 @@ sub process_set($self, $set, $state)
 
 sub main($self, $state)
 {
+	# we're only removing packages, so we're not even going to update quirks
+	$state->{uptodate_quirks} = 1;
 	if ($state->{exclude}) {
 		my $names = {};
 		for my $l (@{$state->{setlist}}) {

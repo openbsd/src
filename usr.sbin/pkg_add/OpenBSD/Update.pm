@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.171 2023/10/07 09:10:03 espie Exp $
+# $OpenBSD: Update.pm,v 1.172 2025/05/06 18:36:20 tb Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -96,17 +96,15 @@ sub process_handle($self, $set, $h, $state)
 		return 0;
 	}
 
-	if (!$set->{quirks}) {
-		my $base = 0;
-		$state->run_quirks(
-		    sub($quirks) {
-			$base = $quirks->is_base_system($h, $state);
-		    });
-		if ($base) {
-			$h->{update_found} = OpenBSD::Handle->system;
-			$set->{updates}++;
-			return 1;
-		}
+	my $base = 0;
+	$state->run_quirks(
+	    sub($quirks) {
+		$base = $quirks->is_base_system($h, $state);
+	    });
+	if ($base) {
+		$h->{update_found} = OpenBSD::Handle->system;
+		$set->{updates}++;
+		return 1;
 	}
 
 	my $plist = OpenBSD::PackingList->from_installation($pkgname,
@@ -133,12 +131,10 @@ sub process_handle($self, $set, $h, $state)
 	}
 	push(@search, OpenBSD::Search::Stem->split($sname));
 
-	if (!$set->{quirks}) {
-		$state->run_quirks(
-		    sub($quirks) {
-			$quirks->tweak_search(\@search, $h, $state);
-		    });
-	}
+	$state->run_quirks(
+	    sub($quirks) {
+		$quirks->tweak_search(\@search, $h, $state);
+	    });
 	my $oldfound = 0;
 	my @skipped_locs = ();
 

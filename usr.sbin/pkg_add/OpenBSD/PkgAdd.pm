@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.151 2024/12/02 22:32:57 sthen Exp $
+# $OpenBSD: PkgAdd.pm,v 1.152 2025/05/06 18:36:20 tb Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -303,7 +303,6 @@ sub check_security($set, $state, $plist, $h)
 {
 	return if $checked->{$plist->fullpkgpath};
 	$checked->{$plist->fullpkgpath} = 1;
-	return if $set->{quirks};
 	my ($error, $bad);
 	$state->run_quirks(
 		sub($quirks) {
@@ -962,6 +961,9 @@ sub process_set($self, $set, $state)
 
 	if ($set->newer == 0 && $set->older_to_do == 0) {
 		$state->tracker->uptodate($set);
+		if ($set->{quirks}) {
+			$state->{uptodate_quirks} = 1;
+		}
 		return ();
 	}
 
@@ -1064,6 +1066,9 @@ sub process_set($self, $set, $state)
 		for my $p ($set->newer_names) {
 			$self->may_grab_debug_for($p, 0, $state);
 		}
+	}
+	if ($set->{quirks}) {
+		$state->{uptodate_quirks} = 1;
 	}
 	return ();
 }
