@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_fuzz.c,v 1.14 2024/01/11 01:45:58 djm Exp $ */
+/* 	$OpenBSD: test_fuzz.c,v 1.15 2025/05/06 06:05:48 djm Exp $ */
 /*
  * Fuzz tests for key parsing
  *
@@ -17,7 +17,6 @@
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include <openssl/objects.h>
 
 #include "test_helper.h"
@@ -152,51 +151,6 @@ sshkey_fuzz_tests(void)
 	fuzz_cleanup(fuzz);
 	TEST_DONE();
 
-#ifdef WITH_DSA
-	TEST_START("fuzz DSA private");
-	buf = load_file("dsa_1");
-	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
-	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
-	sshkey_free(k1);
-	sshbuf_free(buf);
-	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
-	TEST_ONERROR(onerror, fuzz);
-	for(i = 0; !fuzz_done(fuzz); i++, fuzz_next(fuzz)) {
-		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
-		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
-			sshkey_free(k1);
-		sshbuf_reset(fuzzed);
-		if (test_is_fast() && i >= NUM_FAST_BASE64_TESTS)
-			break;
-	}
-	sshbuf_free(fuzzed);
-	fuzz_cleanup(fuzz);
-	TEST_DONE();
-
-	TEST_START("fuzz DSA new-format private");
-	buf = load_file("dsa_n");
-	fuzz = fuzz_begin(FUZZ_BASE64, sshbuf_mutable_ptr(buf),
-	    sshbuf_len(buf));
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
-	sshkey_free(k1);
-	sshbuf_free(buf);
-	ASSERT_PTR_NE(fuzzed = sshbuf_new(), NULL);
-	TEST_ONERROR(onerror, fuzz);
-	for(i = 0; !fuzz_done(fuzz); i++, fuzz_next(fuzz)) {
-		r = sshbuf_put(fuzzed, fuzz_ptr(fuzz), fuzz_len(fuzz));
-		ASSERT_INT_EQ(r, 0);
-		if (sshkey_parse_private_fileblob(fuzzed, "", &k1, NULL) == 0)
-			sshkey_free(k1);
-		sshbuf_reset(fuzzed);
-		if (test_is_fast() && i >= NUM_FAST_BASE64_TESTS)
-			break;
-	}
-	sshbuf_free(fuzzed);
-	fuzz_cleanup(fuzz);
-	TEST_DONE();
-#endif
 
 	TEST_START("fuzz ECDSA private");
 	buf = load_file("ecdsa_1");
@@ -278,21 +232,6 @@ sshkey_fuzz_tests(void)
 	sshkey_free(k1);
 	TEST_DONE();
 
-#ifdef WITH_DSA
-	TEST_START("fuzz DSA public");
-	buf = load_file("dsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
-	sshbuf_free(buf);
-	public_fuzz(k1);
-	sshkey_free(k1);
-	TEST_DONE();
-
-	TEST_START("fuzz DSA cert");
-	ASSERT_INT_EQ(sshkey_load_cert(test_data_file("dsa_1"), &k1), 0);
-	public_fuzz(k1);
-	sshkey_free(k1);
-	TEST_DONE();
-#endif
 
 	TEST_START("fuzz ECDSA public");
 	buf = load_file("ecdsa_1");
@@ -346,15 +285,6 @@ sshkey_fuzz_tests(void)
 	sshkey_free(k1);
 	TEST_DONE();
 
-#ifdef WITH_DSA
-	TEST_START("fuzz DSA sig");
-	buf = load_file("dsa_1");
-	ASSERT_INT_EQ(sshkey_parse_private_fileblob(buf, "", &k1, NULL), 0);
-	sshbuf_free(buf);
-	sig_fuzz(k1, NULL);
-	sshkey_free(k1);
-	TEST_DONE();
-#endif
 
 	TEST_START("fuzz ECDSA sig");
 	buf = load_file("ecdsa_1");

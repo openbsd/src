@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_kex.c,v 1.10 2025/04/15 04:00:42 djm Exp $ */
+/* 	$OpenBSD: test_kex.c,v 1.11 2025/05/06 06:05:48 djm Exp $ */
 /*
  * Regress test KEX
  *
@@ -209,9 +209,6 @@ do_kex(char *kex)
 	}
 
 	do_kex_with_key(kex, NULL, NULL, NULL, KEY_RSA, 2048);
- #ifdef WITH_DSA
-	do_kex_with_key(kex, NULL, NULL, NULL, KEY_DSA, 1024);
- #endif
 	do_kex_with_key(kex, NULL, NULL, NULL, KEY_ECDSA, 256);
 	do_kex_with_key(kex, NULL, NULL, NULL, KEY_ED25519, 256);
 }
