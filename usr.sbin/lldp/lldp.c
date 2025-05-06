@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.5 2025/05/06 09:44:39 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.6 2025/05/06 23:48:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -906,6 +906,49 @@ lldp_link_aggregation(const void *bytes, size_t len, int flags)
 	fprintf(scratch, ", Port ID: %u", portid);
 }
 
+#define LLDP_802_3_MAC_PHY_STATUS_AUTONEG_SUPPORT	(1 << 0)
+#define LLDP_802_3_MAC_PHY_STATUS_AUTONEG_STATUS	(1 << 1)
+
+static void
+lldp_802_3_mac_phy(const void *bytes, size_t len, int flags)
+{
+	const uint8_t *buf = bytes;
+	uint8_t status;
+	uint16_t autoneg, mautype;
+
+	if (len < sizeof(status)) {
+		fprintf(scratch, "too short (%zu bytes)", len);
+		return;
+	}
+
+	status = buf[0];
+	if (ISSET(status, LLDP_802_3_MAC_PHY_STATUS_AUTONEG_SUPPORT)) {
+		fprintf(scratch, "Auto-negotiation: %s, ",
+		    ISSET(status, LLDP_802_3_MAC_PHY_STATUS_AUTONEG_STATUS) ?
+		    "enabled" : "disabled");
+	}
+	buf += sizeof(status);
+	len -= sizeof(status);
+
+	if (len < sizeof(autoneg)) {
+		fprintf(scratch, "autoneg too short (%zu bytes)", len);
+		return;
+	}
+
+	autoneg = pdu_u16(buf);
+	fprintf(scratch, "MAUAutoNegCap: 0x%04x, ", autoneg);
+	buf += sizeof(autoneg);
+	len -= sizeof(autoneg);
+
+	if (len < sizeof(mautype)) {
+		fprintf(scratch, ", mautype too short (%zu bytes)", len);
+		return;
+	}
+
+	mautype = pdu_u16(buf);
+	fprintf(scratch, "MAU type: %u", mautype);
+}
+
 static void
 lldp_u16_to_scratch(const void *bytes, size_t len, int flags)
 {
@@ -930,21 +973,26 @@ static const struct lldp_tlv lldp_org_tlvs[] = {
 	/* IEEE 802.1 */
 	{
 		.type		= OUI_802_1 | 1,
-		.name		= "Port VLAN ID",
+		.name		= "802.1 Port VLAN ID",
 		.toscratch	= lldp_port_vlan_id,
 	},
 
 	/* IEEE 802.1 */
 	{
 		.type		= OUI_802_1 | 7,
-		.name		= "Link Aggregation",
+		.name		= "802.1 Link Aggregation",
 		.toscratch	= lldp_link_aggregation,
 	},
 
 	/* IEEE 802.3 */
 	{
+		.type		= OUI_802_3 | 1,
+		.name		= "802.3 MAC/PHY",
+		.toscratch	= lldp_802_3_mac_phy,
+	},
+	{
 		.type		= OUI_802_3 | 4,
-		.name		= "Max Frame Size",
+		.name		= "802.3 Max Frame Size",
 		.toscratch	= lldp_u16_to_scratch,
 	},
 
@@ -1002,7 +1050,7 @@ lldp_org_to_scratch(const void *base, size_t len, int flags)
 	type = pdu_u32(buf);
 	tlv = lldp_org_tlv_lookup(type);
 	if (tlv == NULL) {
-		fprintf(scratch, "%02X-%02X-%02X subtype %u: ",
+		fprintf(scratch, "Org %02X-%02X-%02X subtype %u: ",
 		    buf[0], buf[1], buf[2], buf[3]);
 	} else {
 		fprintf(scratch, "%s: ", tlv->name);
