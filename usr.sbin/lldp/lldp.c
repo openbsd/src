@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.4 2025/05/06 08:41:55 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.5 2025/05/06 09:44:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -844,6 +844,68 @@ lldp_port_vlan_id(const void *bytes, size_t len, int flags)
 		fprintf(scratch, "%u", pvid);
 }
 
+/*
+ * from 802.1AX 2020 Annex F.2 Link Aggregation TLV
+ */
+
+#define LLDP_AGGR_CAPABILITY		(1 << 0)
+#define LLDP_AGGR_STATUS		(1 << 1)
+#define LLDP_AGGR_PORT_TYPE_MASK	(3 << 2)
+#define LLDP_AGGR_PORT_TYPE_NONE	(0 << 2)
+#define LLDP_AGGR_PORT_TYPE_AGGREGATION		(1 << 2)
+#define LLDP_AGGR_PORT_TYPE_AGGREGATOR		(2 << 2)
+#define LLDP_AGGR_PORT_TYPE_AGGREGATOR_1PORT	(3 << 2)
+
+static void
+lldp_link_aggregation(const void *bytes, size_t len, int flags)
+{
+	const uint8_t *buf = bytes;
+	uint8_t status;
+	uint32_t portid;
+
+	if (len < sizeof(status)) {
+		fprintf(scratch, "too short (%zu bytes)", len);
+		return;
+	}
+
+	status = buf[0];
+	fprintf(scratch, "Capability: %s",
+	    ISSET(status, LLDP_AGGR_CAPABILITY) ? "enabled" : "disabled");
+	if (!ISSET(status, LLDP_AGGR_CAPABILITY))
+		return;
+
+	fprintf(scratch, ", Status: %s",
+	    ISSET(status, LLDP_AGGR_STATUS) ? "active" : "inactive");
+
+	switch (status & LLDP_AGGR_PORT_TYPE_MASK) {
+	case LLDP_AGGR_PORT_TYPE_NONE:
+		break;
+	case LLDP_AGGR_PORT_TYPE_AGGREGATION:
+		fprintf(scratch, ", Aggregation Port");
+		break;
+	case LLDP_AGGR_PORT_TYPE_AGGREGATOR:
+		fprintf(scratch, ", Aggregator");
+		return; /* portid isn't meaningful */
+	case LLDP_AGGR_PORT_TYPE_AGGREGATOR_1PORT:
+		fprintf(scratch, ", Aggregator with 1 Aggregation Port");
+		return; /* portid isn't meaningful */
+	}
+
+	if (!ISSET(status, LLDP_AGGR_STATUS))
+		return;
+
+	buf += sizeof(status);
+	len -= sizeof(status);
+
+	if (len < sizeof(portid)) {
+		fprintf(scratch, ", portid too short (%zu bytes)", len);
+		return;
+	}
+
+	portid = pdu_u32(buf);
+	fprintf(scratch, ", Port ID: %u", portid);
+}
+
 static void
 lldp_u16_to_scratch(const void *bytes, size_t len, int flags)
 {
@@ -870,6 +932,13 @@ static const struct lldp_tlv lldp_org_tlvs[] = {
 		.type		= OUI_802_1 | 1,
 		.name		= "Port VLAN ID",
 		.toscratch	= lldp_port_vlan_id,
+	},
+
+	/* IEEE 802.1 */
+	{
+		.type		= OUI_802_1 | 7,
+		.name		= "Link Aggregation",
+		.toscratch	= lldp_link_aggregation,
 	},
 
 	/* IEEE 802.3 */
