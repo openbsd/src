@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpflogd.8,v 1.4 2025/05/07 03:10:42 dlg Exp $
+.\"	$OpenBSD: bpflogd.8,v 1.5 2025/05/07 05:38:35 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Nd Berkely Packet Filter logging daemon
 .Sh SYNOPSIS
 .Nm bpflogd
-.Op Fl dpP
+.Op Fl dPp
 .Op Fl F Ar filterfile
 .Op Fl s Ar snaplen
 .Op Fl u Ar user
@@ -59,8 +59,8 @@ When starting up,
 drops privileges before opening its log file.
 After receiving a
 .Dv SIGHUP
-signal it will write any pending packets to the log file, closes it,
-and then opens it again,
+signal it will write any pending packets to the log file, close it,
+and then open it again,
 permitting
 .Xr newsyslog 8
 to rotate logfiles automatically.
@@ -85,11 +85,11 @@ Specifies the interface to capture packets on using
 .Xr bpf 4 .
 This can be specified multiple times to capture packets from multiple
 interfaces, but all the interfaces must support the same datalink type.
+.It Fl P
+Put the interfaces into promiscuous mode.
 .It Fl p
 Do not put the interfaces into promiscuous mode.
 This is the default.
-.It Fl P
-Put the interfaces into promiscuous mode.
 .It Fl s Ar snaplen
 Capture at most the first
 .Ar snaplen
@@ -120,7 +120,7 @@ Specify a filter expression for matching packets as per
 .Pp
 A filter expression may only be specified by a file with
 .Ar -F
-or as arguments on the command line, specifying both is unsupported.
+or as arguments on the command line; specifying both is unsupported.
 If a filter is not provided then all packets are captured.
 .Sh SEE ALSO
 .Xr pcap_open_live 3 ,
