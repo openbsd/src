@@ -104,9 +104,10 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dpP] [-F expression] [-s snaplen] "
-	    "[-w delay] [-y datalinktype]" "\n"
-	    "\t" "-f filename -i interface [expression]\n", __progname);
+	fprintf(stderr, "usage: %s [-dpP] [-F filterfile] [-s snaplen] "
+	    "[-u user] [-w delay]\n"
+	    "\t" "[-y datalinktype] -f filename -i interface [expression]\n",
+	    __progname);
 
 	exit(1);
 }
