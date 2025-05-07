@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.7 2025/05/06 23:55:10 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.8 2025/05/07 05:58:19 djm Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -222,6 +222,8 @@ main(int argc, char *argv[])
 		err(1, "%s connect", sun.sun_path);
 
 	lldpctl_req_msaps(s, ifname);
+
+	pledge("stdio", NULL);
 
 	if (!verbose) {
 		printf("%-8s %-24s %-24s %s\n", "IFACE",
