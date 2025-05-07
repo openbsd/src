@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.387 2025/05/02 05:04:38 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.388 2025/05/07 00:39:09 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -125,8 +125,6 @@ struct tusage {
  * run-time information needed by threads.
  */
 #ifdef __need_process
-struct futex;
-LIST_HEAD(futex_list, futex);
 struct proc;
 struct tslpentry;
 TAILQ_HEAD(tslpqueue, tslpentry);
@@ -187,7 +185,6 @@ struct process {
 	struct	vmspace *ps_vmspace;	/* Address space */
 	pid_t	ps_pid;			/* [I] Process identifier. */
 
-	struct	futex_list ps_ftlist;	/* futexes attached to this process */
 	struct	tslpqueue ps_tslpqueue;	/* [p] queue of threads in thrsleep */
 	struct	rwlock	ps_lock;	/* per-process rwlock */
 	struct  mutex	ps_mtx;		/* per-process mutex */
@@ -352,9 +349,6 @@ struct proc {
 
 	struct	process *p_p;		/* [I] The process of this thread. */
 	TAILQ_ENTRY(proc) p_thr_link;	/* [K|m] Threads in a process linkage. */
-
-	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
-	struct	futex	*p_futex;	/* Current sleeping futex. */
 
 	/* substructures: */
 	struct	filedesc *p_fd;		/* copy of p_p->ps_fd */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: futex.h,v 1.2 2018/06/03 15:09:26 kettenis Exp $ */
+/*	$OpenBSD: futex.h,v 1.3 2025/05/07 00:39:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -28,11 +28,15 @@ int futex(volatile uint32_t *, int, int, const struct timespec *,
 __END_DECLS
 #endif /* ! _KERNEL */
 
+#define	FUTEX_OP_MASK		0x007f
+
 #define	FUTEX_WAIT		1
 #define	FUTEX_WAKE		2
 #define	FUTEX_REQUEUE		3
 
-#define	FUTEX_PRIVATE_FLAG	128
+#define	FUTEX_FLAG_MASK		0xff80
+
+#define	FUTEX_PRIVATE_FLAG	0x0080
 
 #define	FUTEX_WAIT_PRIVATE	(FUTEX_WAIT | FUTEX_PRIVATE_FLAG)
 #define	FUTEX_WAKE_PRIVATE	(FUTEX_WAKE | FUTEX_PRIVATE_FLAG)
