@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpflogd.8,v 1.3 2025/05/07 01:59:46 dlg Exp $
+.\"	$OpenBSD: bpflogd.8,v 1.4 2025/05/07 03:10:42 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -54,15 +54,17 @@ These logs can be reviewed later using the
 option of
 .Xr tcpdump 8 .
 .Pp
+When starting up,
 .Nm
-closes and then re-opens the log file when it receives
-.Dv SIGHUP ,
+drops privileges before opening its log file.
+After receiving a
+.Dv SIGHUP
+signal it will write any pending packets to the log file, closes it,
+and then opens it again,
 permitting
 .Xr newsyslog 8
 to rotate logfiles automatically.
-.Pp
-If the log file contains data when starting or a
-.Dv SIGHUP ,
+If the log file contains data after being opened,
 the PCAP header is checked before new logs are appended to the existing file.
 .Pp
 The options are as follows:
@@ -120,14 +122,6 @@ A filter expression may only be specified by a file with
 .Ar -F
 or as arguments on the command line, specifying both is unsupported.
 If a filter is not provided then all packets are captured.
-.Pp
-When starting up,
-.Nm
-drops privileges before opening its log file.
-After receiving a
-.Dv SIGHUP
-signal it will write any pending packets to the log file, closes it,
-and then opens it again.
 .Sh SEE ALSO
 .Xr pcap_open_live 3 ,
 .Xr pcap-filter 5 ,
