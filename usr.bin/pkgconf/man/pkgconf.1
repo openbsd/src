@@ -7,11 +7,11 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd November 15, 2016
-.Dt PKGCONF 1
+.Dd $Mdocdate: May 7 2025 $
+.Dt PKG-CONFIG 1
 .Os
 .Sh NAME
-.Nm pkgconf
+.Nm pkg-config
 .Nd a system for configuring build dependency information
 .Sh SYNOPSIS
 .Nm
@@ -285,7 +285,7 @@ If set to PKG_CONFIG_SYSROOT_DIR, assume that PKG_CONFIG_FDO_SYSROOT_RULES is se
 .Ex -std
 .Sh EXAMPLES
 Displaying the CFLAGS of a package:
-.Dl $ pkgconf --cflags foo
+.Dl $ pkg-config --cflags foo
 .Dl -fPIC -I/usr/include/foo
 .Sh SEE ALSO
 .Xr pc 5 ,
