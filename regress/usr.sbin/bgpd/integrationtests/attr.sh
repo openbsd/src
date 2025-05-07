@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: attr.sh,v 1.3 2025/04/01 05:09:10 anton Exp $
+#	$OpenBSD: attr.sh,v 1.4 2025/05/07 14:08:45 anton Exp $
 
 set -e
 
@@ -93,7 +93,7 @@ sleep 1
 echo start exabgp
 run_exabgp attr exabgp.attr.conf > exabgp.attr.out 2>&1 &
 
-sleep 6
+sleep 10
 
 echo test RFC 7606 attribute handling
 route -T ${RDOMAIN1} exec bgpctl sh rib in | tee attr.out
