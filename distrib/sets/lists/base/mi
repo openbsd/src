@@ -2802,6 +2802,7 @@
 ./usr/sbin/bgpctl
 ./usr/sbin/bgpd
 ./usr/sbin/bgplgd
+./usr/sbin/bpflogd
 ./usr/sbin/btrace
 ./usr/sbin/chat
 ./usr/sbin/chgrp
@@ -2845,6 +2846,8 @@
 ./usr/sbin/ldapd
 ./usr/sbin/ldpctl
 ./usr/sbin/ldpd
+./usr/sbin/lldp
+./usr/sbin/lldpd
 ./usr/sbin/lpc
 ./usr/sbin/lpd
 ./usr/sbin/mailwrapper

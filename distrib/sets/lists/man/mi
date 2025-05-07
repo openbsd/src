@@ -2561,6 +2561,7 @@
 ./usr/share/man/man8/bgplgsh.8
 ./usr/share/man/man8/bioctl.8
 ./usr/share/man/man8/boot_config.8
+./usr/share/man/man8/bpflogd.8
 ./usr/share/man/man8/btrace.8
 ./usr/share/man/man8/bulk.8
 ./usr/share/man/man8/chat.8
@@ -2654,6 +2655,8 @@
 ./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/ldpctl.8
 ./usr/share/man/man8/ldpd.8
+./usr/share/man/man8/lldp.8
+./usr/share/man/man8/lldpd.8
 ./usr/share/man/man8/locate.mklocatedb.8
 ./usr/share/man/man8/locate.updatedb.8
 ./usr/share/man/man8/login_chpass.8
