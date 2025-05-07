@@ -34,8 +34,8 @@ CPPFLAGS += -DSYSTEM_LIBDIR=\"${SYSTEM_LIBDIR}\"
 CPPFLAGS += -DSYSTEM_INCLUDEDIR=\"${SYSTEM_INCLUDEDIR}\" 
 CPPFLAGS += -DPKG_DEFAULT_PATH=\"${PKG_DEFAULT_PATH}\"
 
-pkg-config.1:	
-	sed -e 's/pkgconf/pkg-config/' <${.CURDIR}/man/pkgconf.1 >$@
+pkg-config.1:	man/pkgconf.1
+	cp ${.CURDIR}/man/pkgconf.1 $@
 
 CLEANFILES = pkg-config.1
 
