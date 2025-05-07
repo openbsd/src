@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.6 2025/05/05 03:27:04 dlg Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.7 2025/05/07 06:40:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -16,10 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/un.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <sys/queue.h>
