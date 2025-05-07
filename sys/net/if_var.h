@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.136 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.137 2025/05/07 14:10:19 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,9 @@ struct task;
 struct cpumem;
 
 struct netstack {
-	struct route	ns_route;
+	struct route		ns_route;
+	struct mbuf_list	ns_tcp_ml;
+	struct mbuf_list	ns_tcp6_ml;
 };
 
 /*

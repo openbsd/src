@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.443 2025/05/04 23:05:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.444 2025/05/07 14:10:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -101,9 +101,6 @@
 #include <net/pfvar.h>
 #endif
 
-int tcp_mss_adv(struct rtentry *, int);
-int tcp_flush_queue(struct tcpcb *);
-
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
@@ -178,6 +175,9 @@ do { \
 	if_put(ifp); \
 } while (0)
 
+int	 tcp_input_solocked(struct mbuf **, int *, int, int, struct socket **);
+int	 tcp_mss_adv(struct rtentry *, int);
+int	 tcp_flush_queue(struct tcpcb *);
 void	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
 void	 tcp_newreno_partialack(struct tcpcb *, struct tcphdr *);
 
@@ -348,12 +348,53 @@ tcp_flush_queue(struct tcpcb *tp)
 	return (flags);
 }
 
+int
+tcp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
+{
+	if (ns == NULL)
+		return tcp_input_solocked(mp, offp, proto, af, NULL);
+	(*mp)->m_pkthdr.ph_cookie = (void *)(long)(*offp);
+	switch (af) {
+	case AF_INET:
+		ml_enqueue(&ns->ns_tcp_ml, *mp);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ml_enqueue(&ns->ns_tcp6_ml, *mp);
+		break;
+#endif
+	default:
+		m_freemp(mp);
+	}
+	*mp = NULL;
+	return IPPROTO_DONE;
+}
+
+void
+tcp_input_mlist(struct mbuf_list *ml, int af)
+{
+	struct socket *so = NULL;
+	struct mbuf *m;
+
+	while ((m = ml_dequeue(ml)) != NULL) {
+		int off, nxt;
+
+		off = (long)m->m_pkthdr.ph_cookie;
+		m->m_pkthdr.ph_cookie = NULL;
+		nxt = tcp_input_solocked(&m, &off, IPPROTO_TCP, af, &so);
+		KASSERT(nxt == IPPROTO_DONE);
+	}
+
+	in_pcbsounlock_rele(NULL, so);
+}
+
 /*
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
  */
 int
-tcp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
+tcp_input_solocked(struct mbuf **mp, int *offp, int proto, int af,
+    struct socket **solocked)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp;
@@ -604,7 +645,21 @@ findpcb:
 		tcpstat_inc(tcps_noport);
 		goto dropwithreset_ratelim;
 	}
-	so = in_pcbsolock_ref(inp);
+	/*
+	 * Avoid needless lock and unlock operation when handling multiple
+	 * TCP packets from the same stream consecutively.
+	 */
+	if (solocked != NULL && *solocked != NULL &&
+	    sotoinpcb(*solocked) == inp) {
+		so = *solocked;
+		*solocked = NULL;
+	} else {
+		if (solocked != NULL && *solocked != NULL) {
+			in_pcbsounlock_rele(NULL, *solocked);
+			*solocked = NULL;
+		}
+		so = in_pcbsolock_ref(inp);
+	}
 	if (so == NULL) {
 		tcpstat_inc(tcps_noport);
 		goto dropwithreset_ratelim;
@@ -847,7 +902,10 @@ findpcb:
 					tcpstat_inc(tcps_dropsyn);
 					goto drop;
 				}
-				in_pcbsounlock_rele(inp, so);
+				if (solocked != NULL)
+					*solocked = so;
+				else
+					in_pcbsounlock_rele(inp, so);
 				in_pcbunref(inp);
 				return IPPROTO_DONE;
 			}
@@ -1023,7 +1081,10 @@ findpcb:
 				if (so->so_snd.sb_cc ||
 				    tp->t_flags & TF_NEEDOUTPUT)
 					(void) tcp_output(tp);
-				in_pcbsounlock_rele(inp, so);
+				if (solocked != NULL)
+					*solocked = so;
+				else
+					in_pcbsounlock_rele(inp, so);
 				in_pcbunref(inp);
 				return IPPROTO_DONE;
 			}
@@ -1074,7 +1135,10 @@ findpcb:
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 				(void) tcp_output(tp);
-			in_pcbsounlock_rele(inp, so);
+			if (solocked != NULL)
+				*solocked = so;
+			else
+				in_pcbsounlock_rele(inp, so);
 			in_pcbunref(inp);
 			return IPPROTO_DONE;
 		}
@@ -2074,7 +2138,10 @@ dodata:							/* XXX */
 	 */
 	if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 		(void) tcp_output(tp);
-	in_pcbsounlock_rele(inp, so);
+	if (solocked != NULL)
+		*solocked = so;
+	else
+		in_pcbsounlock_rele(inp, so);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
@@ -2104,7 +2171,10 @@ dropafterack:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
-	in_pcbsounlock_rele(inp, so);
+	if (solocked != NULL)
+		*solocked = so;
+	else
+		in_pcbsounlock_rele(inp, so);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
