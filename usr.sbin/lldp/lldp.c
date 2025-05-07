@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.8 2025/05/07 05:58:19 djm Exp $ */
+/* $OpenBSD: lldp.c,v 1.9 2025/05/07 06:18:22 djm Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -221,9 +221,9 @@ main(int argc, char *argv[])
 	if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "%s connect", sun.sun_path);
 
-	lldpctl_req_msaps(s, ifname);
-
 	pledge("stdio", NULL);
+
+	lldpctl_req_msaps(s, ifname);
 
 	if (!verbose) {
 		printf("%-8s %-24s %-24s %s\n", "IFACE",
