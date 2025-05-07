@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.732 2025/05/07 14:10:19 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.733 2025/05/07 23:27:19 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -785,6 +785,7 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
 {
 	int keepflags, keepcksum;
 	uint16_t keepmss;
+	uint16_t keepflowid;
 
 #if NBPFILTER > 0
 	/*
@@ -809,12 +810,14 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
 	 */
 	keepcksum = m->m_pkthdr.csum_flags & (M_IPV4_CSUM_OUT |
 	    M_TCP_CSUM_OUT | M_UDP_CSUM_OUT | M_ICMP_CSUM_OUT |
-	    M_TCP_TSO);
+	    M_TCP_TSO | M_FLOWID);
 	keepmss = m->m_pkthdr.ph_mss;
+	keepflowid = m->m_pkthdr.ph_flowid;
 	m_resethdr(m);
 	m->m_flags |= M_LOOP | keepflags;
 	m->m_pkthdr.csum_flags = keepcksum;
 	m->m_pkthdr.ph_mss = keepmss;
+	m->m_pkthdr.ph_flowid = keepflowid;
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
