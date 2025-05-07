@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.116 2024/02/26 06:49:38 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.117 2025/05/07 03:11:14 dlg Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: February 26 2024 $
+.Dd $Mdocdate: May 7 2025 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -1983,7 +1983,8 @@ sees the packet.
 .Xr pcap-filter 5 ,
 .Xr pf.os 5 ,
 .Xr protocols 5 ,
-.Xr services 5
+.Xr services 5 ,
+.Xr bpflogd 8
 .Sh STANDARDS
 .Rs
 .%D September 1981
