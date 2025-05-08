@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.27 2024/09/18 17:05:50 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.28 2025/05/08 21:14:18 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -109,7 +109,7 @@ static void	convert(long val, char *buf);
 static void	convert64(zic_t val, char *buf);
 static void	dolink(const char *fromfield, const char *tofield);
 static void	doabbr(char *abbr, size_t size, struct zone const *zp,
-	    const char *letters, int isdst, int doquotes);
+	    const char *letters, zic_t stdoff, int doquotes);
 static void	eat(const char *name, int num);
 static void	eats(const char *name, int num, const char *rname, int rnum);
 static long	eitol(int i);
@@ -1687,7 +1687,7 @@ abbroffset(char *buf, zic_t offset)
 
 static void
 doabbr(char *abbr, size_t size, struct zone const *zp, const char *letters,
-    int isdst, int doquotes)
+    zic_t stdoff, int doquotes)
 {
 	char	*cp, *slashp;
 	size_t	len;
@@ -1697,11 +1697,11 @@ doabbr(char *abbr, size_t size, struct zone const *zp, const char *letters,
 	if (slashp == NULL) {
 		char letterbuf[PERCENT_Z_LEN_BOUND + 1];
 		if (zp->z_format_specifier == 'z')
-			letters = abbroffset(letterbuf, -zp->z_gmtoff);
+			letters = abbroffset(letterbuf, zp->z_gmtoff + stdoff);
 		else if (letters == NULL)
 			letters = "%s";
 		snprintf(abbr, size, format, letters);
-	} else if (isdst) {
+	} else if (stdoff != 0) {
 		strlcpy(abbr, slashp + 1, size);
 	} else {
 		if (slashp - format + 1 < size)
@@ -1875,7 +1875,7 @@ stringzone(char *result, size_t size, const struct zone *zpfirst, int zonecount)
 	if (stdrp == NULL && (zp->z_nrules != 0 || zp->z_stdoff != 0))
 		return;
 	abbrvar = (stdrp == NULL) ? "" : stdrp->r_abbrvar;
-	doabbr(result, size, zp, abbrvar, FALSE, TRUE);
+	doabbr(result, size, zp, abbrvar, 0, TRUE);
 	ep = end(result, size);
 	if (stringoffset(ep, size - (ep - result), -zp->z_gmtoff) != 0) {
 		result[0] = '\0';
@@ -1884,7 +1884,8 @@ stringzone(char *result, size_t size, const struct zone *zpfirst, int zonecount)
 	if (dstrp == NULL)
 		return;
 	ep = end(result, size);
-	doabbr(ep, size - (ep - result), zp, dstrp->r_abbrvar, TRUE, TRUE);
+	doabbr(ep, size - (ep - result), zp, dstrp->r_abbrvar, dstrp->r_stdoff,
+	    TRUE);
 	if (dstrp->r_stdoff != SECSPERMIN * MINSPERHOUR) {
 		ep = end(result, size);
 		if (stringoffset(ep, size - (ep - result),
@@ -2011,7 +2012,7 @@ outzone(const struct zone *zpfirst, int zonecount)
 		if (zp->z_nrules == 0) {
 			stdoff = zp->z_stdoff;
 			doabbr(startbuf, max_abbr_len + 1, zp, NULL,
-			    stdoff != 0, FALSE);
+			    stdoff, FALSE);
 			type = addtype(oadd(zp->z_gmtoff, stdoff),
 				startbuf, stdoff != 0, startttisstd,
 				startttisgmt);
@@ -2096,7 +2097,7 @@ outzone(const struct zone *zpfirst, int zonecount)
 						    max_abbr_len + 1,
 						    zp,
 						    rp->r_abbrvar,
-						    rp->r_stdoff != 0,
+						    rp->r_stdoff,
 						    FALSE);
 						continue;
 					}
@@ -2107,14 +2108,14 @@ outzone(const struct zone *zpfirst, int zonecount)
 						    max_abbr_len + 1,
 						    zp,
 						    rp->r_abbrvar,
-						    rp->r_stdoff != 0,
+						    rp->r_stdoff,
 						    FALSE);
 					}
 				}
 				eats(zp->z_filename, zp->z_linenum,
 				    rp->r_filename, rp->r_linenum);
 				doabbr(ab, max_abbr_len + 1, zp,
-				    rp->r_abbrvar, rp->r_stdoff != 0, FALSE);
+				    rp->r_abbrvar, rp->r_stdoff, FALSE);
 				offset = oadd(zp->z_gmtoff, rp->r_stdoff);
 				type = addtype(offset, ab, rp->r_stdoff != 0,
 				    rp->r_todisstd, rp->r_todisgmt);
