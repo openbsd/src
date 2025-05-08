@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.47 2023/03/08 04:43:13 guenther Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.48 2025/05/08 16:44:58 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -353,9 +353,13 @@ cpustats(void)
 		t += cur.cp_time[state];
 	if (!t)
 		t = 1.0;
-	/* States are generally never 100% and can use %3.0f. */
-	for (state = 0; state < CPUSTATES; ++state)
-		printf("%3.0f", 100. * cur.cp_time[state] / t);
+	/* Cap states at 99 to preserve column width and separation. */
+	for (state = 0; state < CPUSTATES; ++state) {
+		double v = 100. * cur.cp_time[state] / t;
+		if (v > 99)
+			v = 99;
+		printf(" %2.0f", v);
+	}
 }
 
 static void
