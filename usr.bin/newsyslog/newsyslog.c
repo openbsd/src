@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.115 2024/10/30 09:16:24 jan Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.116 2025/05/08 15:30:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -190,10 +190,6 @@ main(int argc, char **argv)
 
 	TAILQ_INIT(&config);
 	TAILQ_INIT(&runlist);
-
-	/* Keep passwd and group files open for faster lookups. */
-	setpassent(1);
-	setgroupent(1);
 
 	ret = parse_file(&config, &listlen);
 	if (argc == 0)
