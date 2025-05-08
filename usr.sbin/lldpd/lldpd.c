@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.7 2025/05/07 06:40:18 dlg Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.8 2025/05/08 05:24:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -257,9 +257,6 @@ main(int argc, char *argv[])
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		errx(1, "can't drop privileges");
-
-	pw = NULL;
-	endpwent();
 
 	lldpd->s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (lldpd->s == -1)

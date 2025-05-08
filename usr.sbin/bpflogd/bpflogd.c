@@ -380,8 +380,6 @@ main(int argc, char *argv[])
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		errx(1, "can't drop privileges");
 
-	endpwent();
-
 	if (unveil(bd->bd_fname, "rwc") == -1)
 		err(1, "unveil %s", bd->bd_fname);
 
