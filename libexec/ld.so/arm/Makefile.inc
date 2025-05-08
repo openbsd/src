@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2022/05/24 17:15:22 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2025/05/08 13:57:23 deraadt Exp $
 
 CFLAGS += -fpic -msoft-float
 AFLAGS += -D_STANDALONE
@@ -7,6 +7,7 @@ CPPFLAGS += -I${.CURDIR}/../../lib/libc/arch/arm -I${.CURDIR}/../../lib/libc/arc
 SRCS+= divsi3.S
 LIBCSRCDIR=${.CURDIR}/../../lib/libc
 .PATH: ${LIBCSRCDIR}/arch/arm/gen
+STACK_PROTECTOR=
 
 # Suppress DWARF2 warnings
 DEBUG?= -gdwarf-4

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.49 2022/01/08 06:49:41 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.50 2025/05/08 13:57:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,7 +35,7 @@
 #define KEYSTREAM_ONLY
 #include "chacha_private.h"
 
-#ifndef _RET_PROTECTOR
+#ifdef STACK_PROTECTOR
 /*
  * Stack protector dummies.
  * Ideally, a scheme to compile these stubs from libc should be used, but
@@ -62,7 +62,7 @@ __stack_smash_handler(char func[], int damaged)
 	_dl_sendsyslog(message, _dl_strlen(message), LOG_CONS);
 	_dl_diedie();
 }
-#endif /* _RET_PROTECTOR */
+#endif /* STACK_PROTECTOR */
 
 char *
 _dl_strdup(const char *orig)

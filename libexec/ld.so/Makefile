@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2024/04/05 13:51:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.89 2025/05/08 13:57:20 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -27,10 +27,16 @@ SRCS+=	path.c util.c sod.c strsep.c strtol.c dir.c library_subr.c
 SRCS+=	dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
 SRCS+=	malloc.c reallocarray.c tib.c ffs.c
 
+.include "${.CURDIR}/${MACHINE_CPU}/Makefile.inc"
+
 syscall=close exit fstat getdents getentropy getthrid issetugid kbind \
 	mimmutable mmap mprotect munmap open pledge \
-	pinsyscalls read __realpath sendsyslog __set_tcb sysctl thrkill \
+	pinsyscalls read __realpath __set_tcb sysctl thrkill \
 	utrace write
+.ifdef STACK_PROTECTOR
+syscall+=sendsyslog
+CFLAGS+=-DSTACK_PROTECTOR
+.endif
 
 .if (${MACHINE_ARCH} == "i386")
 syscall+=mquery
@@ -49,7 +55,6 @@ dl_${_i}.o: SYS.h
 	    ${.TARGET:R}.d -o ${.TARGET}
 .endfor
 
-.include "${.CURDIR}/${MACHINE_CPU}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_CPU}
 
 .ifdef LD_SCRIPT
