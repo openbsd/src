@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.234 2024/05/09 08:35:03 florian Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.235 2025/05/08 15:22:49 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -387,7 +387,6 @@ main(int argc, char *argv[])
 		    FTPD_PRIVSEP_USER);
 		exit(1);
 	}
-	endpwent();
 
 	if (daemon_mode) {
 		int *fds, fd;

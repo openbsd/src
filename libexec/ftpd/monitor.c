@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.31 2023/03/08 04:43:05 guenther Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.32 2025/05/08 15:22:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -187,7 +187,6 @@ monitor_init(void)
 		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 			fatalx("setresuid failed");
 
-		endpwent();
 		close(fd_slave);
 		return (1);
 	}
