@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.444 2025/05/07 14:10:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.445 2025/05/08 20:22:56 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4335,6 +4335,19 @@ tcp_softlro_check(struct mbuf *m, struct ether_extracted *ext)
 	if (!ISSET(ext->tcp->th_flags, TH_ACK))
 		return 0;
 
+	/* Either no TCP options or timestamp as in RFC 1323 appendix A. */
+	if (ext->tcphlen > sizeof(struct tcphdr)) {
+		int optlen = ext->tcphlen - sizeof(struct tcphdr);
+		uint8_t *optp = (uint8_t *)(ext->tcp + 1);
+
+		/* Same logic as in TCP input quick retrieval. */
+		if ((optlen != TCPOLEN_TSTAMP_APPA &&
+		    (optlen <= TCPOLEN_TSTAMP_APPA ||
+		    optp[TCPOLEN_TSTAMP_APPA] != TCPOPT_EOL)) ||
+		    ((uint32_t *)optp)[0] != htonl(TCPOPT_TSTAMP_HDR))
+			return 0;
+	}
+
 	return 1;
 }
 
@@ -4401,36 +4414,18 @@ tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
 		return 0;
 
 	/* Ignore segments with different TCP options. */
-	if (head->tcphlen - sizeof(struct tcphdr) !=
-	    tail->tcphlen - sizeof(struct tcphdr))
+	if (head->tcphlen != tail->tcphlen)
 		return 0;
 
-	/* Check for TCP options */
+	/* TCP timestamp options must match, type and length already checked. */
 	if (head->tcphlen > sizeof(struct tcphdr)) {
-		char *hopt = (char *)(head->tcp) + sizeof(struct tcphdr);
-		char *topt = (char *)(tail->tcp) + sizeof(struct tcphdr);
-		int optsize = head->tcphlen - sizeof(struct tcphdr);
-		int optlen;
+		uint32_t *hoptp = (uint32_t *)(head->tcp + 1);
+		uint32_t *toptp = (uint32_t *)(tail->tcp + 1);
 
-		for (; optsize > 0; optsize -= optlen) {
-			/* Ignore segments with different TCP options. */
-			if (hopt[0] != topt[0] || hopt[1] != topt[1])
-				return 0;
-
-			/* Get option length */
-			optlen = hopt[1];
-			if (hopt[0] == TCPOPT_NOP)
-				optlen = 1;
-			else if (optlen < 2 || optlen > optsize)
-				return 0;	/* Illegal length */
-
-			if (hopt[0] != TCPOPT_NOP &&
-			    hopt[0] != TCPOPT_TIMESTAMP)
-				return 0;	/* Unsupported TCP option */
-
-			hopt += optlen;
-			topt += optlen;
-		}
+		/* Tail timestamps must be more recent. */
+		if (TSTMP_LT(ntohl(hoptp[1]), ntohl(toptp[1])) ||
+		    TSTMP_LT(ntohl(hoptp[2]), ntohl(toptp[2])))
+			return 0;
 	}
 
 	/* Limit mbuf chain len to avoid m_defrag calls on forwarding. */
@@ -4460,6 +4455,15 @@ tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
 	/* Adjust TCP header. */
 	head->tcp->th_win = tail->tcp->th_win;
 	head->tcp->th_ack = tail->tcp->th_ack;
+
+	/* Use more recent timestamps from tail. */
+	if (head->tcphlen > sizeof(struct tcphdr)) {
+		uint32_t *hoptp = (uint32_t *)(head->tcp + 1);
+		uint32_t *toptp = (uint32_t *)(tail->tcp + 1);
+
+		hoptp[1] = toptp[1];
+		hoptp[2] = toptp[2];
+	}
 
 	/* Calculate header length of tail packet. */
 	hdrlen = sizeof(*tail->eh);
