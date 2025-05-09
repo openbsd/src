@@ -1055,6 +1055,12 @@ main(int argc, char *argv[])
 		.flags = PKGCONF_PKG_PROPF_STATIC | PKGCONF_PKG_PROPF_VIRTUAL,
 	};
 
+	if (pkgconf_pledge("stdio rpath wpath cpath", NULL) == -1)
+	{
+		fprintf(stderr, "pkgconf: pledge failed: %s\n", strerror(errno));
+		return EXIT_FAILURE;
+	}
+
 	want_flags = 0;
 
 #ifdef _WIN32

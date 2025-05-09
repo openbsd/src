@@ -1,5 +1,5 @@
-/*	$OpenBSD: bsdstubs.c,v 1.1.1.1 2025/05/03 15:09:38 tb Exp $	*/
-/*	$OpenBSD: bsdstubs.c,v 1.1.1.1 2025/05/03 15:09:38 tb Exp $	*/
+/*	$OpenBSD: bsdstubs.c,v 1.2 2025/05/09 06:07:51 tb Exp $	*/
+/*	$OpenBSD: bsdstubs.c,v 1.2 2025/05/09 06:07:51 tb Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <libpkgconf/bsdstubs.h>
 #include <libpkgconf/config.h>
@@ -121,6 +122,28 @@ strndup(const char *src, size_t len)
 }
 #endif
 
+#if !HAVE_DECL_PLEDGE
+static inline int
+pledge(const char *promises, const char *execpromises)
+{
+	(void) promises;
+	(void) execpromises;
+
+	return 0;
+}
+#endif
+
+#if !HAVE_DECL_UNVEIL
+static inline int
+unveil(const char *path, const char *permissions)
+{
+	(void) path;
+	(void) permissions;
+
+	return 0;
+}
+#endif
+
 size_t
 pkgconf_strlcpy(char *dst, const char *src, size_t siz)
 {
@@ -157,4 +180,16 @@ void *
 pkgconf_reallocarray(void *ptr, size_t m, size_t n)
 {
 	return reallocarray(ptr, m, n);
+}
+
+int
+pkgconf_pledge(const char *promises, const char *execpromises)
+{
+	return pledge(promises, execpromises);
+}
+
+int
+pkgconf_unveil(const char *path, const char *permissions)
+{
+	return unveil(path, permissions);
 }
