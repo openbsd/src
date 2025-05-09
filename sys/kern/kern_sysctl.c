@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.467 2025/05/06 18:34:26 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.468 2025/05/09 14:53:22 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -598,8 +598,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		} else 
 			return (0);
 
-		memset(&ump, 0, sizeof(ump));
 		mtx_enter(&log_mtx);
+		memset(&ump, 0, sizeof(ump));
 		ump.msg_magic = mp->msg_magic;
 		ump.msg_bufs = mp->msg_bufs;
 		ump.msg_bufx = mp->msg_bufx;
