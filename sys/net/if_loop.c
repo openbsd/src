@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.100 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.101 2025/05/09 03:13:51 dlg Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -192,6 +192,8 @@ loop_clone_create(struct if_clone *ifc, int unit)
 		rtable_l2set(0, 0, ifp->if_index);
 	} else
 		if_attach(ifp);
+	if_attach_queues(ifp, net_sn_count());
+	if_attach_iqueues(ifp, net_sn_count());
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
