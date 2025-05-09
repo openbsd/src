@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.218 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if.h,v 1.219 2025/05/09 03:12:36 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -563,6 +563,7 @@ int	if_setlladdr(struct ifnet *, const uint8_t *);
 struct taskq *
 	net_tq(unsigned int);
 void	net_tq_barriers(const char *);
+int	net_sn_count(void);
 
 #endif /* _KERNEL */
 

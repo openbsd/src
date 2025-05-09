@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.733 2025/05/07 23:27:19 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.734 2025/05/09 03:12:36 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3675,15 +3675,21 @@ unhandled_af(int af)
 	panic("unhandled af %d", af);
 }
 
+int
+net_sn_count(void)
+{
+	static int nsoftnets;
+
+	if (nsoftnets == 0)
+		nsoftnets = min(NET_TASKQ, ncpus);
+
+	return (nsoftnets);
+}
+
 struct softnet *
 net_sn(unsigned int ifindex)
 {
-	static int nettaskqs;
-
-	if (nettaskqs == 0)
-		nettaskqs = min(NET_TASKQ, ncpus);
-
-	return (&softnets[ifindex % nettaskqs]);
+	return (&softnets[ifindex % net_sn_count()]);
 }
 
 struct taskq *
