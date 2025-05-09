@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.26 2019/09/02 12:48:44 bluhm Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.27 2025/05/09 14:46:36 jan Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -192,6 +192,10 @@ mrt_stats(void)
 	}
 
 	printf("multicast routing:\n");
+	printf("\t%lu multicast forwarding cache lookup%s\n",
+	    mrtstat.mrts_mfc_lookups, plural(mrtstat.mrts_mfc_lookups));
+	printf("\t%lu multicast forwarding cache miss%s\n",
+	    mrtstat.mrts_mfc_misses, plurales(mrtstat.mrts_mfc_misses));
 	printf("\t%lu datagram%s with no route for origin\n",
 	    mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));
 	printf("\t%lu upcall%s made to mrouted\n",
