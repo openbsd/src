@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.57 2025/04/26 17:58:02 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.58 2025/05/09 19:17:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1100,19 +1100,19 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			rem -= dho_len;
 			break;
 		case DHO_DHCP_CLIENT_IDENTIFIER:
-			/* the server is supposed to echo this back to us */
+			/*
+			 * The server is supposed to echo this back to us
+			 * (RFC6841), but of course they don't.
+			 */
 #ifndef SMALL
 			if (iface_conf != NULL && iface_conf->c_id_len > 0) {
 				if (dho_len != iface_conf->c_id[1]) {
 					log_warnx("wrong "
 					    "DHO_DHCP_CLIENT_IDENTIFIER");
-					return;
-				}
-				if (memcmp(p, &iface_conf->c_id[2], dho_len) !=
-				    0) {
+				} else if (memcmp(p, &iface_conf->c_id[2],
+				    dho_len) != 0) {
 					log_warnx("wrong "
 					    "DHO_DHCP_CLIENT_IDENTIFIER");
-					return;
 				}
 			} else
 #endif /* SMALL */
@@ -1122,13 +1122,11 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 				if (*p != HTYPE_ETHER) {
 					log_warnx("DHO_DHCP_CLIENT_IDENTIFIER: "
 					    "wrong type");
-					return;
 				}
 				if (memcmp(p + 1, &iface->hw_address,
 				    sizeof(iface->hw_address)) != 0) {
 					log_warnx("wrong "
 					    "DHO_DHCP_CLIENT_IDENTIFIER");
-					return;
 				}
 			}
 			p += dho_len;
