@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.26 2024/08/31 18:39:25 tb Exp $ */
+/* $OpenBSD: ocsp.c,v 1.27 2025/05/09 12:50:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -194,18 +194,18 @@ x509v3_add_value(const char *name, const char *value,
 	int ret = 0;
 
 	if ((conf_value = calloc(1, sizeof(*conf_value))) == NULL) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
+		perror("calloc");
 		goto err;
 	}
 	if (name != NULL) {
 		if ((conf_value->name = strdup(name)) == NULL) {
-			X509V3error(ERR_R_MALLOC_FAILURE);
+			perror("strdup");
 			goto err;
 		}
 	}
 	if (value != NULL) {
 		if ((conf_value->value = strdup(value)) == NULL) {
-			X509V3error(ERR_R_MALLOC_FAILURE);
+			perror("strdup");
 			goto err;
 		}
 	}
@@ -213,12 +213,12 @@ x509v3_add_value(const char *name, const char *value,
 	if ((extlist = *out_extlist) == NULL)
 		extlist = sk_CONF_VALUE_new_null();
 	if (extlist == NULL) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
+		perror("sk_CONF_VALUE_new_null");
 		goto err;
 	}
 
 	if (!sk_CONF_VALUE_push(extlist, conf_value)) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
+		perror("sk_CONF_VALUE_push");
 		goto err;
 	}
 	conf_value = NULL;
