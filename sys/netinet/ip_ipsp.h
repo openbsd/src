@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.248 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.249 2025/05/09 19:53:41 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -573,9 +573,30 @@ extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */
 #define IPSEC_FIRSTUSE			IPCTL_IPSEC_FIRSTUSE		/* 24 */
 #define IPSEC_MAXID	25
 
-extern char ipsec_def_enc[];
-extern char ipsec_def_auth[];
-extern char ipsec_def_comp[];
+enum {
+	IPSEC_ENC_AES,
+	IPSEC_ENC_AESCTR,
+	IPSEC_ENC_3DES,
+	IPSEC_ENC_BLOWFISH,
+	IPSEC_ENC_CAST128,
+};
+
+enum {
+	IPSEC_AUTH_HMAC_SHA1,
+	IPSEC_AUTH_HMAC_RIPEMD160,
+	IPSEC_AUTH_MD5,
+	IPSEC_AUTH_SHA2_256,
+	IPSEC_AUTH_SHA2_384,
+	IPSEC_AUTH_SHA2_512,
+};
+
+enum {
+	IPSEC_COMP_DEFLATE,
+};
+
+extern int ipsec_def_enc;
+extern int ipsec_def_auth;
+extern int ipsec_def_comp;
 
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 
