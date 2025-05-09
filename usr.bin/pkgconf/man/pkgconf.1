@@ -7,7 +7,7 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd $Mdocdate: May 7 2025 $
+.Dd $Mdocdate: May 9 2025 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -84,7 +84,13 @@ Print the requested values as variable declarations in a similar format as the
 .Xr env 1
 command.
 .It Fl -env-only
-Learn about pkgconf's configuration strictly from environmental variables.
+Initialize the module search path from
+.Fl -with-path
+and
+.Ev PKG_CONFIG_PATH
+only, ignoring
+.Ev PKG_CONFIG_LIBDIR
+and the compiled-in default directories.
 .It Fl -errors-to-stdout
 Print all error, warning, and debugging messages to standard output
 instead of to standard error output.
@@ -122,10 +128,17 @@ flags, or only the library
 flags, or only the linker flags that are neither library path
 nor library flags, respectively.
 .It Fl -list-all
-Walk all directories listed in the
-.Ev PKG_CONFIG_PATH
-environmental variable and display information on packages which have registered
-information there.
+Walk the module search path in the order of descending priority.
+For each
+.Xr pc 5
+file found, print one line to standard output,
+containing the basename of the file without the extension, the
+.Ic Name
+property, a dash
+.Pq Sq \- ,
+and the
+.Ic Description
+property.
 .It Fl -max-version Ns = Ns Ar version
 Exit with error if the version number of each
 .Ar module
@@ -276,12 +289,13 @@ Print the version number of the
 program to standard output and exit.
 Most other options and all command line arguments are ignored.
 .It Fl -with-path Ns = Ns Ar path
-Add a new module search
+Prepend the directory
 .Ar path
-to
-.Nm Ap s
-dependency resolver.
-Paths added in this way are given preference before other paths.
+to the module search path,
+giving it priority over all other directories including those from
+.Ev PKG_CONFIG_PATH
+and
+.Ev PKG_CONFIG_LIBDIR .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width indent
@@ -299,18 +313,39 @@ If set, disables the path relocation feature.
 .It Ev PKG_CONFIG_FDO_SYSROOT_RULES
 If set, follow the sysroot prefixing rules that freedesktop.org pkg-config uses.
 .It Ev PKG_CONFIG_LIBDIR
-List of primary directories where
-.Sq .pc
+A colon-separated list of low-priority directories where
+.Xr pc 5
 files are looked up.
+The module search path is constructed by appending this list to
+.Ev PKG_CONFIG_PATH ,
+which enjoys higher priority.
+If
+.Ev PKG_CONFIG_LIBDIR
+is not defined, the default list compiled into the
+.Nm
+program from the
+.Dv PKG_DEFAULT_PATH
+preprocessor macro is appended instead.
+If
+.Ev PKG_CONFIG_LIBDIR
+is defined but empty, nothing is appended.
 .It Ev PKG_CONFIG_LOG
 .Sq logfile
 which is used for dumping audit information concerning installed module versions.
 .It Ev PKG_CONFIG_MSVC_SYNTAX
 If set, uses MSVC syntax for fragments.
 .It Ev PKG_CONFIG_PATH
-List of secondary directories where
-.Sq .pc
+A colon-separated list of high-priority directories where
+.Xr pc 5
 files are looked up.
+The module search path is constructed
+by prepending the directory specified with
+.Fl -with-path ,
+if any, and unless
+.Fl -env-only
+is specified, by appending either
+.Ev PKG_CONFIG_LIBDIR
+or the compiled-in default directories with lower priority.
 .It Ev PKG_CONFIG_PURE_DEPGRAPH
 If set, enables the same behaviour as the
 .Fl -pure
