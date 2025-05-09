@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.33 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.34 2025/05/09 14:43:47 jan Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -167,14 +167,35 @@ struct mrtstat {
 	u_long	mrts_upq_sockfull;	/* upcalls dropped - socket full */
 };
 
-
 #ifdef _KERNEL
+
+enum mrtstat_counters {
+	mrts_mfc_lookups,
+	mrts_mfc_misses,
+	mrts_upcalls,
+	mrts_no_route,
+	mrts_bad_tunnel,
+	mrts_cant_tunnel,
+	mrts_wrong_if,
+	mrts_upq_ovflw,
+	mrts_cache_cleanups,
+	mrts_drop_sel,
+	mrts_q_overflow,
+	mrts_pkt2large,
+	mrts_upq_sockfull,
+	mrts_ncounters
+};
+
+extern struct cpumem *mrtcounters;
+
+static inline void
+mrtstat_inc(enum mrtstat_counters c)
+{
+	counters_inc(mrtcounters, c);
+}
 
 /* How frequent should we look for expired entries (in seconds). */
 #define MCAST_EXPIRE_FREQUENCY		30
-
-extern struct rttimer_queue ip_mrouterq;
-void mfc_expire_route(struct rtentry *, u_int);
 
 extern int ip_mrtproto;
 
@@ -228,8 +249,10 @@ struct igmpmsg {
 
 int	ip_mrouter_set(struct socket *, int, struct mbuf *);
 int	ip_mrouter_get(struct socket *, int, struct mbuf *);
+void	mrt_init(void);
 int	mrt_ioctl(struct socket *, u_long, caddr_t);
 int	mrt_sysctl_vif(void *, size_t *);
+int	mrt_sysctl_mrtstat(void *, size_t *, void *);
 int	mrt_sysctl_mfc(void *, size_t *);
 int	ip_mrouter_done(struct socket *);
 void	vif_delete(struct ifnet *);

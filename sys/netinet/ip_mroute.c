@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.144 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.145 2025/05/09 14:43:47 jan Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <sys/protosw.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -100,7 +101,7 @@ struct rttimer_queue ip_mrouterq;
 uint64_t	 mrt_count[RT_TABLEID_MAX + 1];
 int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
-struct mrtstat	mrtstat;
+struct cpumem *mrtcounters;
 
 struct rtentry	*mfc_find(struct ifnet *, struct in_addr *,
     struct in_addr *, unsigned int);
@@ -113,6 +114,7 @@ int get_version(struct mbuf *);
 int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct socket *, struct mbuf *);
 void update_mfc_params(struct mfcctl2 *, int, unsigned int);
+void mfc_expire_route(struct rtentry *, u_int);
 int mfc_add(struct mfcctl2 *, struct in_addr *, struct in_addr *,
     int, unsigned int, int);
 int add_mfc(struct socket *, struct mbuf *);
@@ -140,8 +142,8 @@ static u_int32_t mrt_api_config = 0;
 /*
  * Find a route for a given origin IP address and Multicast group address
  * Type of service parameter to be added in the future!!!
- * Statistics are updated by the caller if needed
- * (mrtstat.mrts_mfc_lookups and mrtstat.mrts_mfc_misses)
+ * Statistics are updated by the caller if needed (mrts_mfc_lookups and
+ * mrts_mfc_misses)
  */
 struct rtentry *
 mfc_find(struct ifnet *ifp, struct in_addr *origin, struct in_addr *group,
@@ -247,6 +249,15 @@ ip_mrouter_get(struct socket *so, int optname, struct mbuf *m)
 	}
 
 	return (error);
+}
+
+void
+mrt_init(void)
+{
+	mrtcounters = counters_alloc(mrts_ncounters);
+
+	rt_timer_queue_init(&ip_mrouterq, MCAST_EXPIRE_FREQUENCY,
+	    &mfc_expire_route);
 }
 
 /*
@@ -460,6 +471,38 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	if_put(ifp);
 
 	return (0);
+}
+
+int
+mrt_sysctl_mrtstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	uint64_t counters[mrts_ncounters];
+	struct mrtstat mrtstat;
+	int i = 0;
+
+#define ASSIGN(field)	do { mrtstat.field = counters[i++]; } while (0)
+
+	memset(&mrtstat, 0, sizeof mrtstat);
+	counters_read(mrtcounters, counters, nitems(counters), NULL);
+
+	ASSIGN(mrts_mfc_lookups);
+	ASSIGN(mrts_mfc_misses);
+	ASSIGN(mrts_upcalls);
+	ASSIGN(mrts_no_route);
+	ASSIGN(mrts_bad_tunnel);
+	ASSIGN(mrts_cant_tunnel);
+	ASSIGN(mrts_wrong_if);
+	ASSIGN(mrts_upq_ovflw);
+	ASSIGN(mrts_cache_cleanups);
+	ASSIGN(mrts_drop_sel);
+	ASSIGN(mrts_q_overflow);
+	ASSIGN(mrts_pkt2large);
+	ASSIGN(mrts_upq_sockfull);
+
+#undef ASSIGN
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &mrtstat, sizeof(mrtstat)));
 }
 
 int
@@ -1116,7 +1159,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 	/*
 	 * Determine forwarding vifs from the forwarding cache table
 	 */
-	++mrtstat.mrts_mfc_lookups;
+	mrtstat_inc(mrts_mfc_lookups);
 	rt = mfc_find(NULL, &ip->ip_src, &ip->ip_dst, rtableid);
 
 	/* Entry exists, so forward if necessary */
@@ -1129,8 +1172,8 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 		 */
 		int hlen = ip->ip_hl << 2;
 
-		++mrtstat.mrts_mfc_misses;
-		mrtstat.mrts_no_route++;
+		mrtstat_inc(mrts_mfc_misses);
+		mrtstat_inc(mrts_no_route);
 
 		{
 			struct igmpmsg *im;
@@ -1161,13 +1204,13 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 			im->im_mbz = 0;
 			im->im_vif = v->v_id;
 
-			mrtstat.mrts_upcalls++;
+			mrtstat_inc(mrts_upcalls);
 
 			sin.sin_addr = ip->ip_src;
 			if (socket_send(ip_mrouter[rtableid], mm, &sin) < 0) {
 				log(LOG_WARNING, "ip_mforward: ip_mrouter "
 				    "socket queue full\n");
-				++mrtstat.mrts_upq_sockfull;
+				mrtstat_inc(mrts_upq_sockfull);
 				return (ENOBUFS);
 			}
 
@@ -1203,7 +1246,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt, int flags)
 	 */
 	if (mfc->mfc_parent != v->v_id) {
 		/* came in the wrong interface */
-		++mrtstat.mrts_wrong_if;
+		mrtstat_inc(mrts_wrong_if);
 		mfc->mfc_wrong_if++;
 		rtfree(rt);
 		return (0);

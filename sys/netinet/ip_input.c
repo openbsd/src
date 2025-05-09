@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.405 2025/03/12 23:27:17 yasuoka Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.406 2025/05/09 14:43:47 jan Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -235,8 +235,7 @@ ip_init(void)
 	ipsec_init();
 #endif
 #ifdef MROUTING
-	rt_timer_queue_init(&ip_mrouterq, MCAST_EXPIRE_FREQUENCY,
-	    &mfc_expire_route);
+	mrt_init();
 #endif
 }
 
@@ -1790,8 +1789,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ip_sysctl_ipstat(oldp, oldlenp, newp));
 #ifdef MROUTING
 	case IPCTL_MRTSTATS:
-		return (sysctl_rdstruct(oldp, oldlenp, newp,
-		    &mrtstat, sizeof(mrtstat)));
+		return (mrt_sysctl_mrtstat(oldp, oldlenp, newp));
 	case IPCTL_MRTMFC:
 		if (newp)
 			return (EPERM);
