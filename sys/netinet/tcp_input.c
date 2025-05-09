@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.445 2025/05/08 20:22:56 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.446 2025/05/09 17:40:08 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4323,7 +4323,7 @@ tcp_softlro_check(struct mbuf *m, struct ether_extracted *ext)
 	if (!ext->tcp)
 		return 0;
 
-	/* Don't merge empty segments. */
+	/* Don't merge empty TCP segments. */
 	if (ext->paylen == 0)
 		return 0;
 
@@ -4351,18 +4351,9 @@ tcp_softlro_check(struct mbuf *m, struct ether_extracted *ext)
 	return 1;
 }
 
-int
-tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
-    struct mbuf *mtail, struct ether_extracted *tail)
+static int
+tcp_softlro_compare(struct ether_extracted *head, struct ether_extracted *tail)
 {
-	struct mbuf		*m;
-	unsigned int		 hdrlen;
-	unsigned int		 cnt = 0;
-
-	/*
-	 * Check if head and tail are mergeable
-	 */
-
 	/* Don't merge packets inside and outside of VLANs */
 	if (head->evh && tail->evh) {
 		/* Don't merge packets of different VLANs */
@@ -4409,7 +4400,7 @@ tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
 		return 0;
 	}
 
-	/* Check for continues segments. */
+	/* Check for contiguous segments. */
 	if (ntohl(head->tcp->th_seq) + head->paylen != ntohl(tail->tcp->th_seq))
 		return 0;
 
@@ -4428,19 +4419,17 @@ tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
 			return 0;
 	}
 
-	/* Limit mbuf chain len to avoid m_defrag calls on forwarding. */
-	for (m = mhead; m != NULL; m = m->m_next)
-		if (cnt++ >= 8)
-			return 0;
-	for (m = mtail; m != NULL; m = m->m_next)
-		if (cnt++ >= 8)
-			return 0;
+	return 1;
+}
 
-	/*
-	 * Prepare concatenation of head and tail.
-	 */
+static void
+tcp_softlro_concat(struct mbuf *mhead, struct ether_extracted *head,
+    struct mbuf *mtail, struct ether_extracted *tail)
+{
+	struct mbuf *m;
+	unsigned int hdrlen;
 
-	/* Adjust IP header. */
+	/* Adjust IP header length. */
 	if (head->ip4) {
 		head->ip4->ip_len = htons(head->iplen + tail->paylen);
 	} else if (head->ip6) {
@@ -4477,8 +4466,8 @@ tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
 	CLR(mtail->m_flags, M_PKTHDR);
 
 	/* Concatenate */
-	for (m = mhead; m->m_next;)
-		m = m->m_next;
+	for (m = mhead; m->m_next != NULL; m = m->m_next)
+		;
 	m->m_next = mtail;
 	mhead->m_pkthdr.len += tail->paylen;
 
@@ -4499,18 +4488,19 @@ tcp_softlro(struct mbuf *mhead, struct ether_extracted *head,
 	}
 	mhead->m_pkthdr.ph_mss = MAX(mhead->m_pkthdr.ph_mss, tail->paylen);
 	tcpstat_inc(tcps_inpktlro);	/* count tail */
-
-	return 1;
 }
 
 void
 tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 {
 	struct ether_extracted head, tail;
-	struct mbuf *mhead;
+	struct mbuf *m, *mhead;
+	unsigned int headcnt, tailcnt;
 
 	if (!ISSET(ifp->if_xflags, IFXF_LRO))
-		goto out;
+		goto dontmerge;
+
+	mtail->m_pkthdr.ph_mss = 0;
 
 	ether_extract_headers(mtail, &tail);
 
@@ -4525,10 +4515,15 @@ tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 		}
 	}
 
-	if (!tcp_softlro_check(mtail, &tail)) {
-		mtail->m_pkthdr.ph_mss = 0;
-		goto out;
+	if (!tcp_softlro_check(mtail, &tail))
+		goto dontmerge;
+
+	tailcnt = 0;
+	for (m = mtail; m != NULL; m = m->m_next) {
+		if (tailcnt++ >= 8)
+			goto dontmerge;
 	}
+
 	mtail->m_pkthdr.ph_mss = tail.paylen;
 
 	for (mhead = ml->ml_head; mhead != NULL; mhead = mhead->m_nextpkt) {
@@ -4560,9 +4555,19 @@ tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 		}
 
 		ether_extract_headers(mhead, &head);
-		if (tcp_softlro(mhead, &head, mtail, &tail))
-			return;
+		if (!tcp_softlro_compare(&head, &tail))
+			continue;
+
+		/* Limit mbuf chain to avoid m_defrag calls when forwarding. */
+		headcnt = tailcnt;
+		for (m = mhead; m != NULL; m = m->m_next) {
+			if (headcnt++ >= 8)
+				goto dontmerge;
+		}
+
+		tcp_softlro_concat(mhead, &head, mtail, &tail);
+		return;
 	}
- out:
+ dontmerge:
 	ml_enqueue(ml, mtail);
 }
