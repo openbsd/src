@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_dump.3,v 1.4 2022/12/20 15:34:03 schwarze Exp $
+.\" $OpenBSD: BIO_dump.3,v 1.5 2025/05/09 13:24:37 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,17 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 20 2022 $
+.Dd $Mdocdate: May 9 2025 $
 .Dt BIO_DUMP 3
 .Os
 .Sh NAME
 .Nm BIO_dump ,
-.Nm BIO_dump_indent ,
-.Nm BIO_dump_fp ,
-.Nm BIO_dump_indent_fp
-.\" intentionally undocumented because nothing uses these two functions:
-.\" .Nm BIO_dump_cb
-.\" .Nm BIO_dump_indent_cb
+.Nm BIO_dump_indent
 .Nd hexadecimal printout of arbitrary byte arrays
 .Sh SYNOPSIS
 .In openssl/bio.h
@@ -37,19 +32,6 @@
 .Ft int
 .Fo BIO_dump_indent
 .Fa "BIO *b"
-.Fa "const char *s"
-.Fa "int len"
-.Fa "int indent"
-.Fc
-.Ft int
-.Fo BIO_dump_fp
-.Fa "FILE *fp"
-.Fa "const char *s"
-.Fa "int len"
-.Fc
-.Ft int
-.Fo BIO_dump_indent_fp
-.Fa "FILE *fp"
 .Fa "const char *s"
 .Fa "int len"
 .Fa "int indent"
@@ -92,14 +74,6 @@ If
 .Fa indent
 is 7 or more, the number of data columns is reduced such that the
 total width of the output does not exceed 79 characters per line.
-.Pp
-.Fn BIO_dump_fp
-and
-.Fn BIO_dump_indent_fp
-are similar except that
-.Xr fwrite 3
-is used instead of
-.Xr BIO_write 3 .
 .Sh RETURN VALUES
 On success these functions return the total number of bytes written by
 .Xr BIO_write 3
@@ -120,9 +94,3 @@ first appeared in SSLeay 0.6.5 and has been available since
 .Fn BIO_dump_indent
 first appeared in OpenSSL 0.9.6 and has been available since
 .Ox 2.9 .
-.Pp
-.Fn BIO_dump_fp
-and
-.Fn BIO_dump_indent_fp
-first appeared in OpenSSL 0.9.8 and have been available since
-.Ox 4.5 .
