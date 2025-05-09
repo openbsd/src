@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.67 2022/06/26 18:48:10 op Exp $	*/
+/*	$OpenBSD: grep.c,v 1.68 2025/05/09 00:50:29 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -125,9 +125,9 @@ usage(void)
 }
 
 #ifdef NOZ
-static const char optstr[] = "0123456789A:B:CEFGHILRUVabce:f:hilm:noqrsuvwxy";
+static const char optstr[] = "+0123456789A:B:CEFGHILRUVabce:f:hilm:noqrsuvwxy";
 #else
-static const char optstr[] = "0123456789A:B:CEFGHILRUVZabce:f:hilm:noqrsuvwxy";
+static const char optstr[] = "+0123456789A:B:CEFGHILRUVZabce:f:hilm:noqrsuvwxy";
 #endif
 
 static const struct option long_options[] =
