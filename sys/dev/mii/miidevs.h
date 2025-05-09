@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.138 2024/07/27 03:26:12 deraadt Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.139 2025/05/09 13:51:21 jcs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.134 2024/07/27 03:26:04 deraadt Exp 
+ *	OpenBSD: miidevs,v 1.135 2025/05/09 13:51:03 jcs Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -438,6 +438,8 @@
 /* Realtek */
 #define	MII_MODEL_xxREALTEK_RTL8251	0x0000
 #define	MII_STR_xxREALTEK_RTL8251	"RTL8251"
+#define	MII_MODEL_xxREALTEK_RTL8201F	0x0001
+#define	MII_STR_xxREALTEK_RTL8201F	"RTL8201F"
 #define	MII_MODEL_xxREALTEK_RTL8211FVD	0x0007
 #define	MII_STR_xxREALTEK_RTL8211FVD	"RTL8211F-VD"
 #define	MII_MODEL_xxREALTEK_RTL8201E	0x0008
