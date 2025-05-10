@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.10 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.11 2025/05/10 09:54:17 visa Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -38,139 +38,17 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/mutex.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/intr.h>
-
-struct soft_intrq soft_intrq[SI_NQUEUES];
-
-/*
- * Initialize the software interrupt system.
- */
-void
-softintr_init(void)
-{
-	struct soft_intrq *siq;
-	int i;
-
-	for (i = 0; i < SI_NQUEUES; i++) {
-		siq = &soft_intrq[i];
-		TAILQ_INIT(&siq->siq_list);
-		siq->siq_si = i;
-		mtx_init(&siq->siq_mtx, IPL_HIGH);
-	}
-}
-
-/*
- * Process pending software interrupts on the specified queue.
- *
- * NOTE: We must already be at the correct interrupt priority level.
- */
-void
-softintr_dispatch(int si)
-{
-	struct soft_intrq *siq = &soft_intrq[si];
-	struct soft_intrhand *sih;
-
-	for (;;) {
-		mtx_enter(&siq->siq_mtx);
-		sih = TAILQ_FIRST(&siq->siq_list);
-		if (sih == NULL) {
-			mtx_leave(&siq->siq_mtx);
-			break;
-		}
-
-		TAILQ_REMOVE(&siq->siq_list, sih, sih_list);
-		sih->sih_pending = 0;
-
-		uvmexp.softs++;
-
-		mtx_leave(&siq->siq_mtx);
-
-		(*sih->sih_func)(sih->sih_arg);
-	}
-}
-
-/*
- * Register a software interrupt handler.
- */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct soft_intrhand *sih;
-	int si;
-
-	switch (ipl) {
-#if 0
-	case IPL_SOFT:
-		si = SI_SOFT;
-		break;
-#endif
-	case IPL_SOFTCLOCK:
-		si = SI_SOFTCLOCK;
-		break;
-	case IPL_SOFTNET:
-		si = SI_SOFTNET;
-		break;
-	case IPL_TTY:			/* XXX until MI code is fixed */
-	case IPL_SOFTTTY:
-		si = SI_SOFTTTY;
-		break;
-	default:
-		printf("softintr_establish: unknown soft IPL %d\n", ipl);
-		return NULL;
-	}
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-	if (__predict_true(sih != NULL)) {
-		sih->sih_func = func;
-		sih->sih_arg = arg;
-		sih->sih_siq = &soft_intrq[si];
-		sih->sih_pending = 0;
-	}
-	return (sih);
-}
-
-/*
- * Unregister a software interrupt handler.
- */
-void
-softintr_disestablish(void *arg)
-{
-	struct soft_intrhand *sih = arg;
-	struct soft_intrq *siq = sih->sih_siq;
-
-	mtx_enter(&siq->siq_mtx);
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&siq->siq_list, sih, sih_list);
-		sih->sih_pending = 0;
-	}
-	mtx_leave(&siq->siq_mtx);
-
-	free(sih, M_DEVBUF, sizeof *sih);
-}
 
 /*
  * Schedule a software interrupt.
  */
 void
-softintr_schedule(void *arg)
+softintr(int si)
 {
-	struct soft_intrhand *sih = (struct soft_intrhand *)arg;
-	struct soft_intrq *siq = sih->sih_siq;
-	struct cpu_info *ci = curcpu();
-
-	mtx_enter(&siq->siq_mtx);
-	if (sih->sih_pending == 0) {
-		TAILQ_INSERT_TAIL(&siq->siq_list, sih, sih_list);
-		sih->sih_pending = 1;
-		atomic_setbits_int(&ci->ci_ipending, SI_TO_IRQBIT(siq->siq_si));
-	}
-	mtx_leave(&siq->siq_mtx);
+	atomic_setbits_int(&curcpu()->ci_ipending, SI_TO_IRQBIT(si));
 }
 
 void
@@ -185,7 +63,7 @@ dosoftint(int pcpl)
 	while ((sir = (ci->ci_ipending & ppc_smask[pcpl])) != 0) {
 		atomic_clearbits_int(&ci->ci_ipending, sir);
 
-		for (q = SI_NQUEUES - 1; q >= 0; q--) {
+		for (q = NSOFTINTR - 1; q >= 0; q--) {
 			mask = SI_TO_IRQBIT(q);
 			if (sir & mask)
 				softintr_dispatch(q);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2024/10/24 17:37:06 gkoehler Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2025/05/10 09:54:17 visa Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -55,11 +55,11 @@ ppc_smask_init()
         for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
                 ppc_smask[i] = 0;
                 if (i < IPL_SOFTCLOCK)
-                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFTCLOCK);
+                        ppc_smask[i] |= SI_TO_IRQBIT(SOFTINTR_CLOCK);
                 if (i < IPL_SOFTNET)
-                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFTNET);
+                        ppc_smask[i] |= SI_TO_IRQBIT(SOFTINTR_NET);
                 if (i < IPL_SOFTTTY)
-                        ppc_smask[i] |= SI_TO_IRQBIT(SI_SOFTTTY);
+                        ppc_smask[i] |= SI_TO_IRQBIT(SOFTINTR_TTY);
         }
 }
 

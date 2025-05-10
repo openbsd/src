@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.56 2018/08/20 15:02:07 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.57 2025/05/10 09:54:17 visa Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -36,7 +36,6 @@
 #define _POWERPC_INTR_H_
 
 #define	IPL_NONE	0
-#define	IPL_SOFT	1
 #define	IPL_SOFTCLOCK	2
 #define	IPL_SOFTNET	3
 #define	IPL_SOFTTTY	4
@@ -57,6 +56,10 @@
 #define	IST_PULSE	1
 #define	IST_EDGE	2
 #define	IST_LEVEL	3
+
+#define __USE_MI_SOFTINTR
+
+#include <sys/softintr.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
@@ -124,35 +127,7 @@ void splassert_check(int, const char *);
 
 #define	SI_TO_IRQBIT(x) (1 << (x))
 
-#define	SI_SOFTCLOCK		0	/* for IPL_SOFTCLOCK */
-#define	SI_SOFTNET		1	/* for IPL_SOFTNET */
-#define	SI_SOFTTTY		2	/* for IPL_SOFTSERIAL */
-
-#define	SI_NQUEUES		3
-
-#include <sys/mutex.h>
-#include <sys/queue.h>
-
-struct soft_intrhand {
-	TAILQ_ENTRY(soft_intrhand) sih_list;
-	void	(*sih_func)(void *);
-	void	*sih_arg;
-	struct soft_intrq *sih_siq;
-	int	sih_pending;
-};
-
-struct soft_intrq {
-	TAILQ_HEAD(, soft_intrhand) siq_list;
-	int siq_si;
-	struct mutex siq_mtx;
-};
-
-void	softintr_disestablish(void *);
-void	softintr_dispatch(int);
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_init(void);
-
-void	softintr_schedule(void *);
+void	softintr(int);
 void	dosoftint(int);
 
 #define	splhigh()	splraise(IPL_HIGH)
