@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.219 2024/11/05 18:58:59 miod Exp $	*/
+/*	$OpenBSD: re.c,v 1.220 2025/05/10 11:08:26 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2480,7 +2480,7 @@ re_kstat_read(struct kstat *ks)
 	struct rl_softc *sc = ks->ks_softc;
 	struct re_kstat_softc *re_ks_sc = ks->ks_ptr;
 	bus_dmamap_t map;
-	uint64_t cmd;
+	bus_addr_t addr;
 	uint32_t reg;
 	uint8_t command;
 	int tmo;
@@ -2490,15 +2490,19 @@ re_kstat_read(struct kstat *ks)
 		return (ENETDOWN);
 
 	map = re_ks_sc->re_ks_sc_map;
-	cmd = map->dm_segs[0].ds_addr | RE_DTCCR_CMD;
+	addr = map->dm_segs[0].ds_addr;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	CSR_WRITE_4(sc, RE_DTCCR_HI, cmd >> 32);
-	bus_space_barrier(sc->rl_btag, sc->rl_bhandle, RE_DTCCR_HI, 8,
+	CSR_WRITE_4(sc, RE_DTCCR_HI, RL_ADDR_HI(addr));
+	bus_space_barrier(sc->rl_btag, sc->rl_bhandle, RE_DTCCR_HI, 4,
 	    BUS_SPACE_BARRIER_WRITE);
-	CSR_WRITE_4(sc, RE_DTCCR_LO, cmd);
+	CSR_READ_1(sc, RL_COMMAND);
+	CSR_WRITE_4(sc, RE_DTCCR_LO, RL_ADDR_LO(addr));
+	bus_space_barrier(sc->rl_btag, sc->rl_bhandle, RE_DTCCR_LO, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+	CSR_WRITE_4(sc, RE_DTCCR_LO, RL_ADDR_LO(addr) | RE_DTCCR_CMD);
 	bus_space_barrier(sc->rl_btag, sc->rl_bhandle, RE_DTCCR_LO, 4,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
