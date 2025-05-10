@@ -1,4 +1,4 @@
-/*	$OpenBSD: err_local.h,v 1.4 2025/05/10 06:35:22 tb Exp $ */
+/*	$OpenBSD: err_local.h,v 1.5 2025/05/10 06:45:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,31 +120,31 @@ void ERR_load_const_strings(const ERR_STRING_DATA *str);
 
 #define ERR_PUT_ERROR(l, r) ERR_PUT_error((l), 0xfff, (r), OPENSSL_FILE, OPENSSL_LINE)
 
-#define SYSerror(r)	ERR_PUT_ERROR(ERR_LIB_SYS, (r))
-#define BNerror(r)	ERR_PUT_ERROR(ERR_LIB_BN, (r))
-#define RSAerror(r)	ERR_PUT_ERROR(ERR_LIB_RSA, (r))
-#define DHerror(r)	ERR_PUT_ERROR(ERR_LIB_DH, (r))
-#define EVPerror(r)	ERR_PUT_ERROR(ERR_LIB_EVP, (r))
-#define BUFerror(r)	ERR_PUT_ERROR(ERR_LIB_BUF, (r))
-#define OBJerror(r)	ERR_PUT_ERROR(ERR_LIB_OBJ, (r))
-#define PEMerror(r)	ERR_PUT_ERROR(ERR_LIB_PEM, (r))
-#define DSAerror(r)	ERR_PUT_ERROR(ERR_LIB_DSA, (r))
-#define X509error(r)	ERR_PUT_ERROR(ERR_LIB_X509, (r))
 #define ASN1error(r)	ERR_PUT_ERROR(ERR_LIB_ASN1, (r))
+#define BIOerror(r)	ERR_PUT_ERROR(ERR_LIB_BIO, (r))
+#define BNerror(r)	ERR_PUT_ERROR(ERR_LIB_BN, (r))
+#define BUFerror(r)	ERR_PUT_ERROR(ERR_LIB_BUF, (r))
+#define CMSerror(r)	ERR_PUT_ERROR(ERR_LIB_CMS, (r))
 #define CONFerror(r)	ERR_PUT_ERROR(ERR_LIB_CONF, (r))
 #define CRYPTOerror(r)	ERR_PUT_ERROR(ERR_LIB_CRYPTO, (r))
-#define ECerror(r)	ERR_PUT_ERROR(ERR_LIB_EC, (r))
-#define BIOerror(r)	ERR_PUT_ERROR(ERR_LIB_BIO, (r))
-#define PKCS7error(r)	ERR_PUT_ERROR(ERR_LIB_PKCS7, (r))
-#define X509V3error(r)	ERR_PUT_ERROR(ERR_LIB_X509V3, (r))
-#define PKCS12error(r)	ERR_PUT_ERROR(ERR_LIB_PKCS12, (r))
-#define RANDerror(r)	ERR_PUT_ERROR(ERR_LIB_RAND, (r))
-#define OCSPerror(r)	ERR_PUT_ERROR(ERR_LIB_OCSP, (r))
-#define UIerror(r)	ERR_PUT_ERROR(ERR_LIB_UI, (r))
-#define CMSerror(r)	ERR_PUT_ERROR(ERR_LIB_CMS, (r))
-#define TSerror(r)	ERR_PUT_ERROR(ERR_LIB_TS, (r))
 #define CTerror(r)	ERR_PUT_ERROR(ERR_LIB_CT, (r))
+#define DHerror(r)	ERR_PUT_ERROR(ERR_LIB_DH, (r))
+#define DSAerror(r)	ERR_PUT_ERROR(ERR_LIB_DSA, (r))
+#define ECerror(r)	ERR_PUT_ERROR(ERR_LIB_EC, (r))
+#define EVPerror(r)	ERR_PUT_ERROR(ERR_LIB_EVP, (r))
 #define KDFerror(r)	ERR_PUT_ERROR(ERR_LIB_KDF, (r))
+#define OBJerror(r)	ERR_PUT_ERROR(ERR_LIB_OBJ, (r))
+#define OCSPerror(r)	ERR_PUT_ERROR(ERR_LIB_OCSP, (r))
+#define PEMerror(r)	ERR_PUT_ERROR(ERR_LIB_PEM, (r))
+#define PKCS12error(r)	ERR_PUT_ERROR(ERR_LIB_PKCS12, (r))
+#define PKCS7error(r)	ERR_PUT_ERROR(ERR_LIB_PKCS7, (r))
+#define RANDerror(r)	ERR_PUT_ERROR(ERR_LIB_RAND, (r))
+#define RSAerror(r)	ERR_PUT_ERROR(ERR_LIB_RSA, (r))
+#define SYSerror(r)	ERR_PUT_ERROR(ERR_LIB_SYS, (r))
+#define TSerror(r)	ERR_PUT_ERROR(ERR_LIB_TS, (r))
+#define UIerror(r)	ERR_PUT_ERROR(ERR_LIB_UI, (r))
+#define X509V3error(r)	ERR_PUT_ERROR(ERR_LIB_X509V3, (r))
+#define X509error(r)	ERR_PUT_ERROR(ERR_LIB_X509, (r))
 
 __END_HIDDEN_DECLS
 
