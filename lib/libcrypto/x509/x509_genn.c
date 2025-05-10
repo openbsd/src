@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_genn.c,v 1.7 2024/07/08 14:47:44 beck Exp $ */
+/* $OpenBSD: x509_genn.c,v 1.8 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,6 +62,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+
+#include "err_local.h"
 
 static const ASN1_TEMPLATE OTHERNAME_seq_tt[] = {
 	{

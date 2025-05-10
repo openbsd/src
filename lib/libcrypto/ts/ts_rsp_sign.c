@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.35 2024/03/26 00:39:22 beck Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.36 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -60,11 +60,11 @@
 
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/pkcs7.h>
 #include <openssl/ts.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "ts_local.h"
 #include "x509_local.h"

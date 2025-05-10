@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.48 2024/03/27 01:49:31 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.49 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,6 @@
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
-#include <openssl/err.h>
 
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
@@ -73,6 +72,7 @@
 
 #include "dh_local.h"
 #include "dsa_local.h"
+#include "err_local.h"
 
 static const DSA_METHOD *default_DSA_method = NULL;
 

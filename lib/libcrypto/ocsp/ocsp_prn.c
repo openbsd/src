@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_prn.c,v 1.11 2024/08/28 06:18:44 tb Exp $ */
+/* $OpenBSD: ocsp_prn.c,v 1.12 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -62,7 +62,6 @@
  */
 
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>

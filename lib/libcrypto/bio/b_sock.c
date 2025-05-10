@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.71 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.72 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -32,7 +32,8 @@
 
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
+
+#include "err_local.h"
 
 int
 BIO_get_host_ip(const char *str, unsigned char *ip)

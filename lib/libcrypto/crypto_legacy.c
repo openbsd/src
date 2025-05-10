@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_legacy.c,v 1.6 2024/11/06 04:18:42 tb Exp $ */
+/* $OpenBSD: crypto_legacy.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -123,10 +123,10 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 
 #include "crypto_internal.h"
 #include "crypto_local.h"
+#include "err_local.h"
 #include "x86_arch.h"
 
 /* Machine independent capabilities. */

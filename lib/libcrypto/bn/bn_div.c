@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.41 2024/04/10 14:58:06 beck Exp $ */
+/* $OpenBSD: bn_div.c,v 1.42 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,11 +62,11 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 
 #include "bn_arch.h"
 #include "bn_local.h"
 #include "bn_internal.h"
+#include "err_local.h"
 
 BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
 

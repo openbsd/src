@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_vfy.c,v 1.6 2022/01/06 14:34:40 jsing Exp $ */
+/*	$OpenBSD: ct_vfy.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -60,11 +60,11 @@
 #include <string.h>
 
 #include <openssl/ct.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
 #include "ct_local.h"
+#include "err_local.h"
 
 typedef enum sct_signature_type_t {
 	SIGNATURE_TYPE_NOT_SET = -1,

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.26 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_add.c,v 1.27 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,11 +60,10 @@
 #include <limits.h>
 #include <stdio.h>
 
-#include <openssl/err.h>
-
 #include "bn_arch.h"
 #include "bn_local.h"
 #include "bn_internal.h"
+#include "err_local.h"
 
 /*
  * bn_add_words() computes (carry:r[i]) = a[i] + b[i] + carry, where a and b

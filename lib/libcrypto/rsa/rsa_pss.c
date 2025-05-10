@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.19 2024/03/26 05:26:27 joshua Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.20 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -61,11 +61,11 @@
 #include <string.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "rsa_local.h"
 

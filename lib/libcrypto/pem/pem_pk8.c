@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pk8.c,v 1.14 2023/07/07 13:40:44 beck Exp $ */
+/* $OpenBSD: pem_pk8.c,v 1.15 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,12 +60,12 @@
 #include <string.h>
 
 #include <openssl/buffer.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
+
+#include "err_local.h"
 
 static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid,
     const EVP_CIPHER *enc, char *kstr, int klen, pem_password_cb *cb, void *u);

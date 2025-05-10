@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_chk.c,v 1.18 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_chk.c,v 1.19 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -49,10 +49,10 @@
  */
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/rsa.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 #include "rsa_local.h"
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.11 2025/02/17 09:25:45 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.12 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -73,10 +73,10 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "ec_local.h"
+#include "err_local.h"
 
 /*
  * Key derivation function from X9.63/SECG.

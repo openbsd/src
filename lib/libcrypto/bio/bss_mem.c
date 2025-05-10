@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.22 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,10 +62,10 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/buffer.h>
 
 #include "bio_local.h"
+#include "err_local.h"
 
 struct bio_mem {
 	BUF_MEM *buf;

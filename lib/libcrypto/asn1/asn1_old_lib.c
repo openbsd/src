@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old_lib.c,v 1.6 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: asn1_old_lib.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,9 +61,9 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 static void asn1_put_length(unsigned char **pp, int length);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.51 2025/01/25 10:34:36 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.52 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -66,11 +66,11 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/ec.h>
-#include <openssl/err.h>
 
 #include "bn_local.h"
 #include "ec_local.h"
 #include "ecdsa_local.h"
+#include "err_local.h"
 
 EC_KEY *
 EC_KEY_new(void)

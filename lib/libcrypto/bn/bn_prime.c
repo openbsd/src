@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.34 2023/07/20 06:26:27 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.35 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,9 +112,8 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <openssl/err.h>
-
 #include "bn_local.h"
+#include "err_local.h"
 
 /* The quick sieve algorithm approach to weeding out primes is
  * Philip Zimmermann's, as implemented in PGP.  I have had a read of

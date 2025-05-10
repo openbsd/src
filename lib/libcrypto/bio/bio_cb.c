@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_cb.c,v 1.19 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: bio_cb.c,v 1.20 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/bio.h>
 
 #include "bio_local.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.23 2024/11/08 14:18:44 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.24 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,11 +65,11 @@
 
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 
 #include "bn_local.h"
 #include "bytestring.h"
 #include "crypto_internal.h"
+#include "err_local.h"
 
 static int bn_dec2bn_cbs(BIGNUM **bnp, CBS *cbs);
 static int bn_hex2bn_cbs(BIGNUM **bnp, CBS *cbs);

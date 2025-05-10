@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.48 2025/02/27 20:13:41 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.49 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,11 +61,11 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "x509_local.h"
 
 static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);

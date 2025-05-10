@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.30 2024/11/29 15:59:57 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.31 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,6 @@
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
-#include <openssl/err.h>
 
 #include "bn_local.h"
 #include "dh_local.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8e.c,v 1.13 2024/03/02 10:15:16 tb Exp $ */
+/* $OpenBSD: p12_p8e.c,v 1.14 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
 #include "pkcs12_local.h"
 #include "x509_local.h"
 

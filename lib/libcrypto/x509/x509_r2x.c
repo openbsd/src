@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_r2x.c,v 1.17 2023/04/25 09:46:36 job Exp $ */
+/* $OpenBSD: x509_r2x.c,v 1.18 2025/05/10 05:54:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,11 +61,11 @@
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 X509 *

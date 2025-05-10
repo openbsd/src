@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.43 2024/07/12 18:15:10 beck Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.44 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -61,7 +61,6 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 

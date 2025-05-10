@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.111 2025/03/13 10:31:12 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.112 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -66,12 +66,12 @@
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
 #include "asn1_local.h"
 #include "ec_local.h"
+#include "err_local.h"
 
 int
 EC_GROUP_get_basis_type(const EC_GROUP *group)

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.56 2024/05/11 06:43:50 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.57 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,11 +63,11 @@
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
-#include <openssl/err.h>
 #include <openssl/sha.h>
 
 #include "bn_local.h"
 #include "dsa_local.h"
+#include "err_local.h"
 
 /*
  * Since DSA parameters are entirely arbitrary and checking them to be

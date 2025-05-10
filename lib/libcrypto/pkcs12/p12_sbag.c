@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_sbag.c,v 1.9 2024/03/24 06:48:03 tb Exp $ */
+/* $OpenBSD: p12_sbag.c,v 1.10 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999-2018.
@@ -59,9 +59,9 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
 #include "pkcs12_local.h"
 #include "x509_local.h"
 

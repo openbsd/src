@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pk1.c,v 1.17 2024/03/30 04:34:17 jsing Exp $ */
+/* $OpenBSD: rsa_pk1.c,v 1.18 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,10 +61,10 @@
 #include <string.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/rsa.h>
 
 #include "bytestring.h"
+#include "err_local.h"
 
 int
 RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,

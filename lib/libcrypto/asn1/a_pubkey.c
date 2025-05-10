@@ -1,4 +1,4 @@
-/* $OpenBSD: a_pubkey.c,v 1.7 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: a_pubkey.c,v 1.8 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,6 @@
 
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
@@ -76,6 +75,7 @@
 #include <openssl/rsa.h>
 #endif
 
+#include "err_local.h"
 #include "evp_local.h"
 
 EVP_PKEY *

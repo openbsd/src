@@ -1,4 +1,4 @@
-/* $OpenBSD: x509spki.c,v 1.16 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509spki.c,v 1.17 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,8 +60,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/x509.h>
+
+#include "err_local.h"
 
 int
 NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)

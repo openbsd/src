@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_prn.c,v 1.10 2023/07/08 14:28:15 beck Exp $ */
+/* $OpenBSD: dsa_prn.c,v 1.11 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -59,8 +59,9 @@
 #include <stdio.h>
 
 #include <openssl/dsa.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
+
+#include "err_local.h"
 
 int
 DSA_print_fp(FILE *fp, const DSA *x, int off)

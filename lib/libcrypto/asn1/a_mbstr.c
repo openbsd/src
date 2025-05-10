@@ -1,4 +1,4 @@
-/* $OpenBSD: a_mbstr.c,v 1.27 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_mbstr.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,9 +61,9 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 static int traverse_string(const unsigned char *p, int len, int inform,
     int (*rfunc)(unsigned long value, void *in), void *arg);

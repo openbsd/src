@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.26 2024/03/02 10:15:16 tb Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.27 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -59,9 +59,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 /* Encrypt/Decrypt a buffer based on password and algor, result in a

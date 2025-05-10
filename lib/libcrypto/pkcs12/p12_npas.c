@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.27 2024/01/25 15:33:35 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,9 +60,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/pem.h>
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
 #include "pkcs12_local.h"
 #include "x509_local.h"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.14 2025/01/05 16:07:08 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.15 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -64,10 +64,10 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
 #include "ec_local.h"
+#include "err_local.h"
 
 /*
  * Internal handling of the point conversion octet

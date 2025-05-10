@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ia5.c,v 1.2 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_ia5.c,v 1.3 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,8 +61,9 @@
 
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+#include "err_local.h"
 
 static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
 static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,

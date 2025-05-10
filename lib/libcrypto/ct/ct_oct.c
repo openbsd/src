@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_oct.c,v 1.9 2023/07/08 07:22:58 beck Exp $ */
+/*	$OpenBSD: ct_oct.c,v 1.10 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -67,10 +67,10 @@
 #include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/ct.h>
-#include <openssl/err.h>
 
 #include "bytestring.h"
 #include "ct_local.h"
+#include "err_local.h"
 
 int
 o2i_SCT_signature(SCT *sct, CBS *cbs)

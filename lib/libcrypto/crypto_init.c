@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.22 2024/10/17 14:27:57 jsing Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -22,12 +22,12 @@
 
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 
 #include "crypto_internal.h"
+#include "err_local.h"
 #include "x509_issuer_cache.h"
 
 int OpenSSL_config(const char *);

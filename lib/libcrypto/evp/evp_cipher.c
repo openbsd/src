@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.23 2024/04/10 15:00:38 beck Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.24 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,10 +115,10 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 
 int

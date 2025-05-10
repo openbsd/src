@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_fn.c,v 1.11 2024/04/12 09:41:39 tb Exp $ */
+/* $OpenBSD: pmeth_fn.c,v 1.12 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -59,10 +59,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 #define M_check_autoarg(ctx, arg, arglen, err) \

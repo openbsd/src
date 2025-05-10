@@ -1,4 +1,4 @@
-/* $OpenBSD: x_info.c,v 1.22 2024/12/11 10:28:03 tb Exp $ */
+/* $OpenBSD: x_info.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,8 +59,9 @@
 #include <stdio.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/x509.h>
+
+#include "err_local.h"
 
 X509_INFO *
 X509_INFO_new(void)

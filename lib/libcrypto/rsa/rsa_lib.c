@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.50 2024/03/27 01:22:30 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.51 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,12 +62,12 @@
 
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/rsa.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "rsa_local.h"
 

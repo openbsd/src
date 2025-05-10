@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct.c,v 1.10 2023/07/22 17:02:49 tb Exp $ */
+/*	$OpenBSD: ct_sct.c,v 1.11 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com), Stephen Henson (steve@openssl.org)
  * and Adam Eijdenberg (adam.eijdenberg@gmail.com) for the OpenSSL project 2016.
@@ -67,11 +67,11 @@
 
 #include <openssl/asn1.h>
 #include <openssl/ct.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "ct_local.h"
+#include "err_local.h"
 
 SCT *
 SCT_new(void)

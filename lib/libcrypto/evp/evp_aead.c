@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_aead.c,v 1.11 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: evp_aead.c,v 1.12 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -19,8 +19,8 @@
 #include <string.h>
 
 #include <openssl/evp.h>
-#include <openssl/err.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 size_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_meth.c,v 1.7 2023/07/08 12:26:45 beck Exp $	*/
+/*	$OpenBSD: rsa_meth.c,v 1.8 2025/05/10 05:54:38 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/rsa.h>
 
 #include "rsa_local.h"

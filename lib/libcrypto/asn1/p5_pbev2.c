@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.35 2024/03/26 07:03:10 tb Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.36 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -61,9 +61,9 @@
 #include <string.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

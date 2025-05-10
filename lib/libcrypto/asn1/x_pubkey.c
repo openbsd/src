@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.37 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.38 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/x509.h>
 
 #ifndef OPENSSL_NO_DSA
@@ -72,6 +71,7 @@
 #endif
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

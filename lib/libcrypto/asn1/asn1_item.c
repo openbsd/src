@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.21 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.22 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,11 +112,11 @@
 #include <limits.h>
 
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

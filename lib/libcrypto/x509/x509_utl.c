@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.26 2025/01/26 13:51:41 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.27 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -64,11 +64,11 @@
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 #include "bytestring.h"
 #include "conf_local.h"
+#include "err_local.h"
 
 /*
  * Match reference identifiers starting with "." to any sub-domain. This

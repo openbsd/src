@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.21 2023/07/08 15:29:03 beck Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.22 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,10 @@
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
-#include <openssl/err.h>
 
 #include "bn_local.h"
 #include "dh_local.h"
+#include "err_local.h"
 
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
 	    BN_GENCB *cb);

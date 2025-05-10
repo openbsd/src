@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.28 2024/02/18 15:45:42 tb Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -66,7 +66,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/pem.h>
 
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
@@ -75,6 +74,7 @@
 
 #include "bn_local.h"
 #include "dsa_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "rsa_local.h"
 

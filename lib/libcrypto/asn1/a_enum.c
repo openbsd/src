@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.30 2024/07/08 14:52:31 beck Exp $ */
+/* $OpenBSD: a_enum.c,v 1.31 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,10 +63,10 @@
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
 #include "bytestring.h"
+#include "err_local.h"
 
 /*
  * Code for ENUMERATED type: identical to INTEGER apart from a different tag.

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.36 2025/03/09 15:45:52 tb Exp $ */
+/* $OpenBSD: p12_key.c,v 1.37 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,9 +60,9 @@
 #include <string.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "pkcs12_local.h"
 

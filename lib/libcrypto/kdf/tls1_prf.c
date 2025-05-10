@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls1_prf.c,v 1.40 2024/07/10 06:53:27 tb Exp $ */
+/*	$OpenBSD: tls1_prf.c,v 1.41 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2016.
@@ -61,10 +61,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 #define TLS1_PRF_MAXBUF 1024

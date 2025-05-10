@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_legacy.c,v 1.6 2024/04/09 13:52:41 beck Exp $ */
+/*	$OpenBSD: p_legacy.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,10 +59,10 @@
 #include <stdlib.h>
 
 #include <openssl/evp.h>
-#include <openssl/err.h>
 
 #include <openssl/rsa.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 int

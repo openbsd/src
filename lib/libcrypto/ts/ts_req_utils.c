@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_req_utils.c,v 1.9 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: ts_req_utils.c,v 1.10 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "ts_local.h"
 
 int

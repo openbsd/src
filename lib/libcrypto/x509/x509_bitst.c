@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_bitst.c,v 1.8 2024/08/31 10:23:13 tb Exp $ */
+/* $OpenBSD: x509_bitst.c,v 1.9 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,9 +60,9 @@
 #include <string.h>
 
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 static const BIT_STRING_BITNAME ns_cert_type_table[] = {

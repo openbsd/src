@@ -1,4 +1,4 @@
-/* $OpenBSD: hkdf.c,v 1.11 2024/03/25 13:09:13 jsing Exp $ */
+/* $OpenBSD: hkdf.c,v 1.12 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -19,10 +19,10 @@
 
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/hmac.h>
 
 #include "bytestring.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "hmac_local.h"
 

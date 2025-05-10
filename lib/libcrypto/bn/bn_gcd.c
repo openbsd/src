@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.29 2024/04/10 14:58:06 beck Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.30 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,9 +109,8 @@
  *
  */
 
-#include <openssl/err.h>
-
 #include "bn_local.h"
+#include "err_local.h"
 
 static BIGNUM *
 euclid(BIGNUM *a, BIGNUM *b)

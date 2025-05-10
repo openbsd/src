@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.123 2025/03/24 13:07:04 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.124 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -68,12 +68,12 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/opensslv.h>
 
 #include "bn_local.h"
 #include "ec_local.h"
+#include "err_local.h"
 
 EC_GROUP *
 EC_GROUP_new(const EC_METHOD *meth)

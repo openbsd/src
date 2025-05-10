@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.26 2024/08/22 12:22:42 tb Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.27 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "pkcs12_local.h"
 #include "x509_local.h"

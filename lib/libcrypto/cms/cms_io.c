@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.21 2024/03/30 01:53:05 joshua Exp $ */
+/* $OpenBSD: cms_io.c,v 1.22 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -54,12 +54,12 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
-#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
 #include "cms_local.h"
+#include "err_local.h"
 
 int
 CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)

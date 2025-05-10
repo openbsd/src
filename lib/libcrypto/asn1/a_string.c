@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.17 2023/08/15 18:05:15 tb Exp $ */
+/* $OpenBSD: a_string.c,v 1.18 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,9 +61,9 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 ASN1_STRING *
 ASN1_STRING_new(void)

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.61 2025/04/18 13:25:03 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.62 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,9 +59,9 @@
 
 #ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "modes_local.h"
 

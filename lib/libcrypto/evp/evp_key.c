@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.36 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: evp_key.c,v 1.37 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,12 +59,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/ui.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 /* should be init to zeros. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_verify_ctx.c,v 1.14 2023/07/07 07:25:21 beck Exp $ */
+/* $OpenBSD: ts_verify_ctx.c,v 1.15 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */
@@ -58,10 +58,10 @@
 
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 
+#include "err_local.h"
 #include "ts_local.h"
 
 TS_VERIFY_CTX *

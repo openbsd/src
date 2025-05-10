@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.35 2023/05/29 11:54:50 beck Exp $ */
+/* $OpenBSD: x509name.c,v 1.36 2025/05/10 05:54:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,13 +60,13 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 
 #include "bytestring.h"
+#include "err_local.h"
 #include "x509_local.h"
 
 int

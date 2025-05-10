@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.31 2024/03/02 08:54:02 tb Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.32 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,7 +62,6 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 
 /*

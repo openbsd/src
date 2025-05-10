@@ -1,4 +1,4 @@
-/* $OpenBSD: t_crl.c,v 1.26 2024/05/03 02:52:00 tb Exp $ */
+/* $OpenBSD: t_crl.c,v 1.27 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,11 +61,11 @@
 
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 int

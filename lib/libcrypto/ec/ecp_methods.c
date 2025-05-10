@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.45 2025/03/24 13:07:04 jsing Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.46 2025/05/10 05:54:38 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -66,11 +66,11 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 
 #include "bn_local.h"
 #include "ec_local.h"
+#include "err_local.h"
 
 /*
  * Most method functions in this file are designed to work with non-trivial

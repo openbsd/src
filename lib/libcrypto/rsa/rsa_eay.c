@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.65 2023/08/09 12:09:06 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.66 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,10 +115,10 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/rsa.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 #include "rsa_local.h"
 
 static int

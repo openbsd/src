@@ -1,4 +1,4 @@
-/* $OpenBSD: p_sign.c,v 1.22 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: p_sign.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,6 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>

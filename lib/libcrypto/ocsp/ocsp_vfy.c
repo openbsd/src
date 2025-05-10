@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.24 2024/07/12 18:15:10 beck Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.25 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -57,9 +57,9 @@
  */
 
 #include <openssl/ocsp.h>
-#include <openssl/err.h>
 #include <string.h>
 
+#include "err_local.h"
 #include "ocsp_local.h"
 #include "x509_local.h"
 

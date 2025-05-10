@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.27 2023/11/28 09:29:20 jsg Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -60,10 +60,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/ocsp.h>
-#include <openssl/err.h>
 #include <openssl/buffer.h>
+
+#include "err_local.h"
 
 /* Stateful OCSP request code, supporting non-blocking I/O */
 

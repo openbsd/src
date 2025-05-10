@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_prn.c,v 1.10 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_prn.c,v 1.11 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -58,9 +58,10 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
+
+#include "err_local.h"
 
 int
 RSA_print_fp(FILE *fp, const RSA *x, int off)

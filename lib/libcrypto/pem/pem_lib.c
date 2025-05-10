@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.56 2024/02/18 15:44:10 tb Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.57 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
@@ -76,6 +75,7 @@
 #endif
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 
 #define MIN_LENGTH	4

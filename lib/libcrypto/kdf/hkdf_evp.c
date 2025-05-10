@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.20 2023/06/26 08:57:17 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.21 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -50,12 +50,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/err.h>
-#include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/hkdf.h>
 #include <openssl/kdf.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 #define HKDF_MAXBUF 1024

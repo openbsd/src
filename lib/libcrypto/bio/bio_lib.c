@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.54 2024/07/09 06:14:59 beck Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.55 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,10 +62,10 @@
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/stack.h>
 
 #include "bio_local.h"
+#include "err_local.h"
 
 /*
  * Helper function to work out whether to call the new style callback or the old

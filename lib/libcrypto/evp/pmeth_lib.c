@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.42 2025/01/20 12:57:28 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.43 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -63,12 +63,12 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 
 extern const EVP_PKEY_METHOD cmac_pkey_meth;

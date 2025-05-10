@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_x931.c,v 1.12 2023/05/05 12:19:37 tb Exp $ */
+/* $OpenBSD: rsa_x931.c,v 1.13 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -60,9 +60,10 @@
 #include <string.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
+
+#include "err_local.h"
 
 int
 RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *from,

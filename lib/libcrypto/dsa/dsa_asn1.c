@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.33 2024/07/08 17:11:05 beck Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.34 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -63,9 +63,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
-#include <openssl/err.h>
 
 #include "dsa_local.h"
+#include "err_local.h"
 
 /* Override the default new methods */
 static int

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.37 2025/01/05 15:39:12 tb Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.38 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,12 +60,12 @@
 #include <string.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "rsa_local.h"
 #include "x509_local.h"
 

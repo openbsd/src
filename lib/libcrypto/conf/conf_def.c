@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.44 2024/08/31 09:46:17 tb Exp $ */
+/* $OpenBSD: conf_def.c,v 1.45 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,12 +63,12 @@
 
 #include <openssl/buffer.h>
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/stack.h>
 
 #include "conf_def.h"
 #include "conf_local.h"
+#include "err_local.h"
 
 #define MAX_CONF_VALUE_LENGTH 65536
 

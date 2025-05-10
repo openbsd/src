@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.37 2024/12/20 20:05:29 schwarze Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.38 2025/05/10 05:54:38 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -26,12 +26,12 @@
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/chacha.h>
 #include <openssl/poly1305.h>
 
 #include "bytestring.h"
+#include "err_local.h"
 #include "evp_local.h"
 
 #define POLY1305_TAG_LEN 16

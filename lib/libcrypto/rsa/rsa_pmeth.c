@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.43 2025/01/17 15:39:19 tb Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.44 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -65,13 +65,13 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "rsa_local.h"
 

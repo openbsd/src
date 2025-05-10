@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_lib.c,v 1.19 2023/08/17 09:13:01 tb Exp $ */
+/* $OpenBSD: obj_lib.c,v 1.20 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,12 +59,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/buffer.h>
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 ASN1_OBJECT *
 OBJ_dup(const ASN1_OBJECT *o)

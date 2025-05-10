@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.31 2024/01/14 18:40:24 tb Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.32 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -58,13 +58,13 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/cms.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "cms_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

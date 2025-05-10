@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.20 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.21 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -59,9 +59,9 @@
 
 #ifndef OPENSSL_NO_CAMELLIA
 #include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/camellia.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 /* Camellia subkey Structure */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct_ctx.c,v 1.6 2022/06/30 11:14:47 tb Exp $ */
+/*	$OpenBSD: ct_sct_ctx.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -64,11 +64,11 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "ct_local.h"
+#include "err_local.h"
 
 SCT_CTX *
 SCT_CTX_new(void)

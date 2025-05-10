@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old.c,v 1.6 2024/04/10 14:55:12 beck Exp $ */
+/* $OpenBSD: asn1_old.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,9 +61,9 @@
 
 #include <openssl/asn1.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 #ifndef NO_OLD_ASN1
 

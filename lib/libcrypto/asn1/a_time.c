@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.38 2024/07/08 14:52:31 beck Exp $ */
+/* $OpenBSD: a_time.c,v 1.39 2025/05/10 05:54:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -65,7 +65,6 @@
 #include <time.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 
 #include "asn1_local.h"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pcons.c,v 1.6 2024/08/31 10:03:03 tb Exp $ */
+/* $OpenBSD: x509_pcons.c,v 1.7 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -62,9 +62,9 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 static STACK_OF(CONF_VALUE) *

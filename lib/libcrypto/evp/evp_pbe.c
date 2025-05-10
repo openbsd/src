@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.50 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.51 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,13 +60,13 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/objects.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "hmac_local.h"
 #include "pkcs12_local.h"

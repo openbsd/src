@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.24 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.25 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,10 +59,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "err_local.h"
 
 X509_PKEY *
 X509_PKEY_new(void)

@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.51 2025/02/08 03:41:36 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.52 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,13 +65,13 @@
 
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

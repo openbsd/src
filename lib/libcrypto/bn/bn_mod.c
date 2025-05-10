@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.22 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -111,9 +111,8 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/err.h>
-
 #include "bn_local.h"
+#include "err_local.h"
 
 int
 BN_mod_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.27 2023/07/07 13:40:44 beck Exp $ */
+/* $OpenBSD: pem_info.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
@@ -75,6 +74,7 @@
 #include <openssl/rsa.h>
 #endif
 
+#include "err_local.h"
 #include "evp_local.h"
 
 STACK_OF(X509_INFO) *

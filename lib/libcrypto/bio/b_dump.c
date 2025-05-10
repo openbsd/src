@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.30 2024/03/02 09:21:24 tb Exp $ */
+/* $OpenBSD: b_dump.c,v 1.31 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,6 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/err.h>
 
 #include "bytestring.h"
 

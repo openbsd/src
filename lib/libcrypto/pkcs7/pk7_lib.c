@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.30 2024/12/06 07:10:20 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.31 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

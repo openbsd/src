@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.58 2025/02/13 11:15:09 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.59 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,10 +112,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/err.h>
-
 #include "bn_local.h"
 #include "constant_time.h"
+#include "err_local.h"
 
 /* maximum precomputation table size for *variable* sliding windows */
 #define TABLE_SIZE	32

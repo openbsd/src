@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.147 2025/03/04 08:43:25 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.148 2025/05/10 05:54:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +67,6 @@
 #include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
@@ -75,6 +74,7 @@
 #include <openssl/x509v3.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "x509_internal.h"
 #include "x509_issuer_cache.h"
 #include "x509_local.h"

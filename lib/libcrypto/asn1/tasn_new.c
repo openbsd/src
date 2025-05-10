@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.25 2023/07/28 10:00:10 tb Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.26 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -60,11 +60,11 @@
 #include <stddef.h>
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
-#include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <string.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 static int asn1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);

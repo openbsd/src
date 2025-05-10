@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.38 2024/03/24 06:48:03 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.39 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,10 +64,10 @@
 
 #ifndef OPENSSL_NO_HMAC
 
-#include <openssl/err.h>
 #include <openssl/hmac.h>
 #include <openssl/pkcs12.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "hmac_local.h"
 #include "pkcs12_local.h"

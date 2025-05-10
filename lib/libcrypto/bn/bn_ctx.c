@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_ctx.c,v 1.22 2023/07/08 12:21:58 beck Exp $ */
+/*	$OpenBSD: bn_ctx.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -19,9 +19,9 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h>
-#include <openssl/err.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 
 #define BN_CTX_INITIAL_LEN	8
 

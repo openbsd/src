@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ocsp.c,v 1.4 2024/12/24 09:14:33 schwarze Exp $ */
+/* $OpenBSD: x509_ocsp.c,v 1.5 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,10 +65,10 @@
 
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "ocsp_local.h"
 
 /* OCSP extensions and a couple of CRL entry extensions

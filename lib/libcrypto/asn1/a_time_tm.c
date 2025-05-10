@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.42 2024/05/03 18:33:27 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.43 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -22,10 +22,10 @@
 #include <time.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 
-#include "bytestring.h"
 #include "asn1_local.h"
+#include "bytestring.h"
+#include "err_local.h"
 
 #define RFC5280 0
 #define GENTIME_LENGTH 15

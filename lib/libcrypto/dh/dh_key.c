@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.42 2024/05/09 20:43:36 tb Exp $ */
+/* $OpenBSD: dh_key.c,v 1.43 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,10 @@
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
-#include <openssl/err.h>
 
 #include "bn_local.h"
 #include "dh_local.h"
+#include "err_local.h"
 
 static int
 generate_key(DH *dh)

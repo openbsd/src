@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.58 2025/03/24 13:07:04 jsing Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.59 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -67,9 +67,9 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 
 #include "ec_local.h"
+#include "err_local.h"
 
 /* Holds the wNAF digits of bn and the corresponding odd multiples of point. */
 struct ec_wnaf {

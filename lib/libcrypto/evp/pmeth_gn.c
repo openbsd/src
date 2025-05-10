@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.21 2024/08/31 09:14:21 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.22 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -60,12 +60,12 @@
 #include <stdlib.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
 #include "asn1_local.h"
 #include "bn_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 
 int

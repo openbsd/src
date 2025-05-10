@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.28 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: buffer.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,8 @@
 #include <string.h>
 
 #include <openssl/buffer.h>
-#include <openssl/err.h>
+
+#include "err_local.h"
 
 /*
  * LIMIT_BEFORE_EXPANSION is the maximum n such that (n + 3) / 3 * 4 < 2**31.

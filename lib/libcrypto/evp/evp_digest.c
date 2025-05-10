@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.14 2024/04/10 15:00:38 beck Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.15 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,10 +114,10 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 
 int

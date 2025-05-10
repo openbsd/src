@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.27 2024/03/02 09:04:07 tb Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,7 +61,6 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 

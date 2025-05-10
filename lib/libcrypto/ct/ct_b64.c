@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_b64.c,v 1.7 2023/07/08 07:22:58 beck Exp $ */
+/*	$OpenBSD: ct_b64.c,v 1.8 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -61,11 +61,11 @@
 #include <string.h>
 
 #include <openssl/ct.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "bytestring.h"
 #include "ct_local.h"
+#include "err_local.h"
 
 /*
  * Decodes the base64 string |in| into |out|.

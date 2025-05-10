@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.27 2025/03/06 07:25:01 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -59,11 +59,11 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 #include "asn1_local.h"
 #include "conf_local.h"
+#include "err_local.h"
 #include "x509_local.h"
 
 #define ASN1_GEN_FLAG		0x10000

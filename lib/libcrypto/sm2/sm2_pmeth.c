@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_pmeth.c,v 1.2 2022/11/26 16:08:54 tb Exp $ */
+/*	$OpenBSD: sm2_pmeth.c,v 1.3 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -22,9 +22,9 @@
 #include <openssl/sm2.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include "err_local.h"
 #include "evp_local.h"
 #include "sm2_local.h"
 

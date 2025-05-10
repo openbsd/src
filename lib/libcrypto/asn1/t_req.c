@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.28 2024/05/03 02:52:00 tb Exp $ */
+/* $OpenBSD: t_req.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,6 @@
 
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -74,6 +73,7 @@
 #include <openssl/rsa.h>
 #endif
 
+#include "err_local.h"
 #include "x509_local.h"
 
 int

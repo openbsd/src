@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_policy.c,v 1.6 2023/07/08 07:22:58 beck Exp $ */
+/*	$OpenBSD: ct_policy.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Implementations of Certificate Transparency SCT policies.
  * Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
@@ -56,11 +56,12 @@
 # error "CT is disabled"
 #endif
 
-#include <openssl/ct.h>
-#include <openssl/err.h>
 #include <time.h>
 
+#include <openssl/ct.h>
+
 #include "ct_local.h"
+#include "err_local.h"
 
 /*
  * Number of seconds in the future that an SCT timestamp can be, by default,

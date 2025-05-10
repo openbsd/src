@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.28 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,9 +61,9 @@
 #include <string.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 /* PKCS#5 password based encryption structure */

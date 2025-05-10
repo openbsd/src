@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.39 2024/03/26 05:37:28 joshua Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.40 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -74,12 +74,12 @@
 #include <string.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
 #include "constant_time.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "rsa_local.h"
 

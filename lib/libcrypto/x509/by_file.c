@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.31 2024/08/31 10:19:17 tb Exp $ */
+/* $OpenBSD: by_file.c,v 1.32 2025/05/10 05:54:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,10 +62,10 @@
 #include <unistd.h>
 
 #include <openssl/buffer.h>
-#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,

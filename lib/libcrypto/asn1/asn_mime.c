@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.35 2025/01/17 05:02:18 tb Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.36 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -59,10 +59,10 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 #include "evp_local.h"
 
 /* Generalised MIME like utilities for streaming ASN1. Although many

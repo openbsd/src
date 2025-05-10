@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.17 2024/11/01 18:34:06 tb Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.18 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -57,10 +57,10 @@
 
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "cms_local.h"
+#include "err_local.h"
 
 /* Key Agreement Recipient Info (KARI) routines */
 

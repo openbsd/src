@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.15 2024/02/19 15:37:44 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.16 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -59,10 +59,11 @@
 #include <stdio.h>
 
 #include <openssl/asn1.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
+
+#include "err_local.h"
 
 int
 PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)

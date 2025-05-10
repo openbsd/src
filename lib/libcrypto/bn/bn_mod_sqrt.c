@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.3 2023/08/03 18:53:55 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.4 2025/05/10 05:54:38 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -16,9 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <openssl/err.h>
-
 #include "bn_local.h"
+#include "err_local.h"
 
 /*
  * Tonelli-Shanks according to H. Cohen "A Course in Computational Algebraic

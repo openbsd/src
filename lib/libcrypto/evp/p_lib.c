@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.61 2024/08/22 12:24:24 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.62 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,7 +111,6 @@
 #include <openssl/bio.h>
 #include <openssl/cmac.h>
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
@@ -129,6 +128,7 @@
 #include <openssl/rsa.h>
 #endif
 
+#include "err_local.h"
 #include "evp_local.h"
 
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;

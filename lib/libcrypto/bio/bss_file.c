@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_file.c,v 1.35 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: bss_file.c,v 1.36 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,9 +88,9 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/err.h>
 
 #include "bio_local.h"
+#include "err_local.h"
 
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);

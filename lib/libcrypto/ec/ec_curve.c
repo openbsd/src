@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.57 2025/05/04 05:10:14 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.58 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -78,10 +78,10 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 
 #include "ec_local.h"
+#include "err_local.h"
 
 static const struct {
 	uint8_t seed[20];

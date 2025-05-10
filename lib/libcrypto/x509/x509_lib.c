@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.24 2024/07/13 15:08:58 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.25 2025/05/10 05:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,9 +60,9 @@
 #include <stdio.h>
 
 #include <openssl/conf.h>
-#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 const X509V3_EXT_METHOD *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_crypt.c,v 1.3 2024/02/09 07:43:52 tb Exp $ */
+/*	$OpenBSD: sm2_crypt.c,v 1.4 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -22,10 +22,10 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/sm2.h>
 
+#include "err_local.h"
 #include "sm2_local.h"
 
 typedef struct SM2_Ciphertext_st SM2_Ciphertext;

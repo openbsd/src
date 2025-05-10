@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.67 2025/03/09 15:20:20 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.68 2025/05/10 05:54:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,11 +59,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "x509_local.h"
 
 static int X509_OBJECT_up_ref_count(X509_OBJECT *a);

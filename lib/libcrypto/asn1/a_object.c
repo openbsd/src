@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.55 2024/07/08 14:52:31 beck Exp $ */
+/* $OpenBSD: a_object.c,v 1.56 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,11 +62,11 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 
 #include "asn1_local.h"
+#include "err_local.h"
 
 const ASN1_ITEM ASN1_OBJECT_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_sign.c,v 1.4 2023/07/05 17:36:19 tb Exp $ */
+/*	$OpenBSD: sm2_sign.c,v 1.5 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -21,10 +21,10 @@
 
 #include <openssl/sm2.h>
 #include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/bn.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 #include "sm2_local.h"
 
 static BIGNUM *

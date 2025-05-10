@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.14 2024/08/28 07:15:04 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.15 2025/05/10 05:54:38 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -20,13 +20,13 @@
 #include <openssl/cms.h>
 #include <openssl/curve25519.h>
 #include <openssl/ec.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
 #include "bytestring.h"
 #include "curve25519_internal.h"
+#include "err_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 

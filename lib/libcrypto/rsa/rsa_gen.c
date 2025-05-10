@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.30 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.31 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +60,10 @@
 #include <time.h>
 
 #include <openssl/bn.h>
-#include <openssl/err.h>
 #include <openssl/rsa.h>
 
 #include "bn_local.h"
+#include "err_local.h"
 #include "rsa_local.h"
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);

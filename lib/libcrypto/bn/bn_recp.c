@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.33 2025/02/04 20:22:20 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.34 2025/05/10 05:54:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,9 +58,8 @@
 
 #include <stdio.h>
 
-#include <openssl/err.h>
-
 #include "bn_local.h"
+#include "err_local.h"
 
 struct bn_recp_ctx_st {
 	BIGNUM *N;	/* the divisor */

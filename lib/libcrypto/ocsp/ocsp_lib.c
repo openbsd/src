@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.28 2024/08/28 06:27:19 tb Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -67,13 +67,13 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/asn1t.h>
-#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "err_local.h"
 #include "ocsp_local.h"
 #include "x509_local.h"
 

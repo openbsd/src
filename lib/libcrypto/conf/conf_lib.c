@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.25 2025/03/08 09:35:53 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.26 2025/05/10 05:54:38 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/conf.h>
 #include <openssl/lhash.h>
 
 #include "conf_local.h"
+#include "err_local.h"
 
 static const CONF_METHOD *default_CONF_method = NULL;
 
