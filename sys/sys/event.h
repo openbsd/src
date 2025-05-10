@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.73 2024/08/06 08:44:54 claudio Exp $	*/
+/*	$OpenBSD: event.h,v 1.74 2025/05/10 09:44:39 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -40,8 +40,9 @@
 #define EVFILT_TIMER		(-7)	/* timers */
 #define EVFILT_DEVICE		(-8)	/* devices */
 #define EVFILT_EXCEPT		(-9)	/* exceptional conditions */
+#define EVFILT_USER		(-10)	/* user event */
 
-#define EVFILT_SYSCOUNT		9
+#define EVFILT_SYSCOUNT		10
 
 #define EV_SET(kevp, a, b, c, d, e, f) do {	\
 	struct kevent *__kevp = (kevp);		\
@@ -128,6 +129,19 @@ struct kevent {
 #define NOTE_USECONDS	0x00000002		/* data is microseconds */
 #define NOTE_NSECONDS	0x00000003		/* data is nanoseconds */
 #define NOTE_ABSTIME	0x00000010		/* timeout is absolute */
+
+/*
+ * data/hint flags for EVFILT_USER, shared with userspace
+ */
+#define NOTE_FFNOP	0x00000000		/* ignore input fflags */
+#define NOTE_FFAND	0x40000000		/* AND fflags */
+#define NOTE_FFOR	0x80000000		/* OR fflags */
+#define NOTE_FFCOPY	0xc0000000		/* copy fflags */
+
+#define NOTE_FFCTRLMASK	0xc0000000		/* masks for operations */
+#define NOTE_FFLAGSMASK	0x00ffffff
+
+#define NOTE_TRIGGER	0x01000000		/* trigger the event */
 
 /*
  * This is currently visible to userland to work around broken
@@ -244,6 +258,7 @@ struct knote {
 	union {
 		struct		file *p_fp;	/* file data pointer */
 		struct		process *p_process;	/* process pointer */
+		int		p_useract;	/* user event active */
 	} kn_ptr;
 	const struct		filterops *kn_fop;
 	void			*kn_hook;	/* [o] */

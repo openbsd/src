@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.32 2023/08/20 15:19:34 visa Exp $
+#	$OpenBSD: Makefile,v 1.33 2025/05/10 09:44:39 visa Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
 SRCS=	kqueue-pipe.c kqueue-fork.c main.c kqueue-process.c kqueue-random.c \
 	kqueue-pty.c kqueue-tun.c kqueue-signal.c kqueue-fdpass.c \
-	kqueue-exec.c kqueue-flock.c kqueue-timer.c kqueue-regress.c
+	kqueue-exec.c kqueue-flock.c kqueue-timer.c kqueue-regress.c \
+	kqueue-user.c
 LDADD=	-levent -lutil
 DPADD=	${LIBEVENT} ${LIBUTIL}
 
@@ -52,6 +53,8 @@ kq-regress-5: ${PROG}
 	./${PROG} -R5
 kq-regress-6: ${PROG}
 	./${PROG} -R6
+kq-user: ${PROG}
+	./${PROG} -u
 
 TESTS+=	kq-exec
 TESTS+=	kq-fdpass
@@ -73,6 +76,7 @@ TESTS+=	kq-reset-timer
 TESTS+=	kq-signal
 TESTS+=	kq-timer
 TESTS+=	kq-tun
+TESTS+=	kq-user
 
 REGRESS_TARGETS=${TESTS}
 REGRESS_ROOT_TARGETS=kq-pty-1

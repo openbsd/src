@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.46 2022/05/12 13:33:09 mvs Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.47 2025/05/10 09:44:39 visa Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ struct filedesc {
 	LIST_HEAD(, kqueue) fd_kqlist;	/* [f] kqueues attached to this
 					 *     filedesc */
 	int fd_flags;			/* [a] flags on this filedesc */
+	u_int fd_nuserevents;		/* [a] number of kqueue user events */
 };
 
 /*

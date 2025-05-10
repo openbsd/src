@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2023/08/20 15:19:34 visa Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2025/05/10 09:44:39 visa Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -17,7 +17,7 @@ main(int argc, char **argv)
 	int n, ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "efFiIjlpPrR:stT:")) != -1) {
+	while ((c = getopt(argc, argv, "efFiIjlpPrR:stT:u")) != -1) {
 		switch (c) {
 		case 'e':
 			ret |= do_exec(argv[0]);
@@ -63,8 +63,11 @@ main(int argc, char **argv)
 			n = strtonum(optarg, 1, INT_MAX, NULL);
 			ret |= do_pty(n);
 			break;
+		case 'u':
+			ret |= do_user();
+			break;
 		default:
-			fprintf(stderr, "usage: %s -[fFiIlpPrstT] [-R n]\n",
+			fprintf(stderr, "usage: %s -[fFiIlpPrstTu] [-R n]\n",
 			    __progname);
 			exit(1);
 		}

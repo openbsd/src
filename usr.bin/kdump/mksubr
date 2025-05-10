@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.40 2023/08/13 08:29:28 visa Exp $
+# $OpenBSD: mksubr,v 1.41 2025/05/10 09:44:39 visa Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -582,6 +582,27 @@ cat <<_EOF_
 		}
 		or = 1;
 		if_print_or(fflags, NOTE_ABSTIME, or);
+		break;
+	case EVFILT_USER:
+		if (fflags & NOTE_FFCTRLMASK) {
+			switch (fflags & NOTE_FFCTRLMASK) {
+			case NOTE_FFAND:
+				printf("NOTE_FFAND");
+				break;
+			case NOTE_FFOR:
+				printf("NOTE_FFOR");
+				break;
+			case NOTE_FFCOPY:
+				printf("NOTE_FFCOPY");
+				break;
+			}
+			or = 1;
+		}
+		if_print_or(fflags, NOTE_TRIGGER, or);
+		if (fflags & NOTE_FFLAGSMASK) {
+			printf("%s%#x", or ? "|" : "",
+			    fflags & NOTE_FFLAGSMASK);
+		}
 		break;
 	}
 	printf(">");

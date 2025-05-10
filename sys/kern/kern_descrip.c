@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.210 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.211 2025/05/10 09:44:39 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
@@ -1201,6 +1202,7 @@ fdfree(struct proc *p)
 		vrele(fdp->fd_cdir);
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
+	KASSERT(atomic_load_int(&fdp->fd_nuserevents) == 0);
 	pool_put(&fdesc_pool, fdp);
 }
 

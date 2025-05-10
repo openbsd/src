@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.51 2023/08/20 19:52:40 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.52 2025/05/10 09:44:39 visa Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: August 20 2023 $
+.Dd $Mdocdate: May 10 2025 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -561,6 +561,44 @@ e.g. an HDMI cable has been plugged in to a port.
 On return,
 .Fa fflags
 contains the events which triggered the filter.
+.It Dv EVFILT_USER
+Establishes a user event identified by
+.Va ident
+which is not associated with any kernel mechanism but is triggered by
+user level code.
+The lower 24 bits of the
+.Va fflags
+may be used for user defined flags and manipulated using the following:
+.Bl -tag -width XXNOTE_FFLAGSMASK
+.It Dv NOTE_FFNOP
+Ignore the input
+.Va fflags .
+.It Dv NOTE_FFAND
+Bitwise AND
+.Va fflags .
+.It Dv NOTE_FFOR
+Bitwise OR
+.Va fflags .
+.It Dv NOTE_FFCOPY
+Copy
+.Va fflags .
+.It Dv NOTE_FFCTRLMASK
+Control mask for
+.Va fflags .
+.It Dv NOTE_FFLAGSMASK
+User defined flag mask for
+.Va fflags .
+.El
+.Pp
+A user event is triggered for output with the following:
+.Bl -tag -width XXNOTE_FFLAGSMASK
+.It Dv NOTE_TRIGGER
+Cause the event to be triggered.
+.El
+.Pp
+On return,
+.Va fflags
+contains the user defined flags in the lower 24 bits.
 .El
 .Sh RETURN VALUES
 .Fn kqueue

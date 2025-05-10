@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.7 2023/08/20 15:19:34 visa Exp $	*/
+/*	$OpenBSD: main.h,v 1.8 2025/05/10 09:44:39 visa Exp $	*/
 /*
  *	Written by Alexaner Bluhm <bluhm@openbsd.org> 2016 Public Domain
  */
@@ -29,3 +29,4 @@ int do_reset_timer(void);
 int do_signal(void);
 int do_timer(void);
 int do_tun(void);
+int do_user(void);
