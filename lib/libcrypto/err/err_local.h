@@ -1,4 +1,4 @@
-/*	$OpenBSD: err_local.h,v 1.1 2024/06/24 06:43:22 tb Exp $ */
+/*	$OpenBSD: err_local.h,v 1.2 2025/05/10 06:03:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,42 @@
 __BEGIN_HIDDEN_DECLS
 
 void ERR_load_const_strings(const ERR_STRING_DATA *str);
+
+#define SYSerror(r)	ERR_PUT_error(ERR_LIB_SYS,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define BNerror(r)	ERR_PUT_error(ERR_LIB_BN,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define RSAerror(r)	ERR_PUT_error(ERR_LIB_RSA,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define DHerror(r)	ERR_PUT_error(ERR_LIB_DH,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define EVPerror(r)	ERR_PUT_error(ERR_LIB_EVP,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define BUFerror(r)	ERR_PUT_error(ERR_LIB_BUF,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define OBJerror(r)	ERR_PUT_error(ERR_LIB_OBJ,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define PEMerror(r)	ERR_PUT_error(ERR_LIB_PEM,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define DSAerror(r)	ERR_PUT_error(ERR_LIB_DSA,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define X509error(r)	ERR_PUT_error(ERR_LIB_X509,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define ASN1error(r)	ERR_PUT_error(ERR_LIB_ASN1,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define CONFerror(r)	ERR_PUT_error(ERR_LIB_CONF,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define CRYPTOerror(r)	ERR_PUT_error(ERR_LIB_CRYPTO,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define ECerror(r)	ERR_PUT_error(ERR_LIB_EC,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define BIOerror(r)	ERR_PUT_error(ERR_LIB_BIO,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define PKCS7error(r)	ERR_PUT_error(ERR_LIB_PKCS7,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define X509V3error(r)	ERR_PUT_error(ERR_LIB_X509V3,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define PKCS12error(r)	ERR_PUT_error(ERR_LIB_PKCS12,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define RANDerror(r)	ERR_PUT_error(ERR_LIB_RAND,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define DSOerror(r)	ERR_PUT_error(ERR_LIB_DSO,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define ENGINEerror(r)	ERR_PUT_error(ERR_LIB_ENGINE,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define OCSPerror(r)	ERR_PUT_error(ERR_LIB_OCSP,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define UIerror(r)	ERR_PUT_error(ERR_LIB_UI,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define COMPerror(r)	ERR_PUT_error(ERR_LIB_COMP,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define ECDSAerror(r)	ERR_PUT_error(ERR_LIB_ECDSA,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define ECDHerror(r)	ERR_PUT_error(ERR_LIB_ECDH,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define STOREerror(r)	ERR_PUT_error(ERR_LIB_STORE,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define FIPSerror(r)	ERR_PUT_error(ERR_LIB_FIPS,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define CMSerror(r)	ERR_PUT_error(ERR_LIB_CMS,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define TSerror(r)	ERR_PUT_error(ERR_LIB_TS,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define HMACerror(r)	ERR_PUT_error(ERR_LIB_HMAC,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define JPAKEerror(r)	ERR_PUT_error(ERR_LIB_JPAKE,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define GOSTerror(r)	ERR_PUT_error(ERR_LIB_GOST,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define CTerror(r)	ERR_PUT_error(ERR_LIB_CT,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
+#define KDFerror(r)	ERR_PUT_error(ERR_LIB_KDF,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 __END_HIDDEN_DECLS
 
