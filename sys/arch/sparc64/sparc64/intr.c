@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.68 2024/11/08 08:44:07 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.69 2025/05/10 11:06:36 visa Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -284,6 +284,8 @@ void *
 softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct intrhand *ih;
+
+	level &= ~IPL_MPSAFE;
 
 	if (level == IPL_TTY)
 		level = IPL_SOFTTTY;
