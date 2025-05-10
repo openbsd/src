@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2019/09/05 05:31:38 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.19 2025/05/10 10:01:03 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -28,6 +28,10 @@
 
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
+
+#define __USE_MI_SOFTINTR
+
+#include <sys/softintr.h>
 
 /*
  * The interrupt level ipl is a logical level; per-platform interrupt
@@ -75,41 +79,9 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#define	SINTBIT(q)	(q)
-#define	SINTMASK(q)	(1 << SINTBIT(q))
-
-/* Soft interrupt masks. */
-
-#define	SI_SOFTCLOCK	0	/* for IPL_SOFTCLOCK */
-#define	SI_SOFTNET	1	/* for IPL_SOFTNET */
-#define	SI_SOFTTTY	2	/* for IPL_SOFTTTY */
-
-#define	SI_NQUEUES	3
-
 #ifndef _LOCORE
 
-#include <sys/mutex.h>
-#include <sys/queue.h>
-
-struct soft_intrhand {
-	TAILQ_ENTRY(soft_intrhand) sih_list;
-	void	(*sih_func)(void *);
-	void	*sih_arg;
-	struct soft_intrq *sih_siq;
-	int	sih_pending;
-};
-
-struct soft_intrq {
-	TAILQ_HEAD(, soft_intrhand) siq_list;
-	int siq_si;
-	struct mutex siq_mtx;
-};
-
-void	 softintr_disestablish(void *);
-void	 softintr_dispatch(int);
-void	*softintr_establish(int, void (*)(void *), void *);
-void	 softintr_init(void);
-void	 softintr_schedule(void *);
+void	 softintr(int);
 
 #define splbio()	splraise(IPL_BIO)
 #define splnet()	splraise(IPL_NET)
