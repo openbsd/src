@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2023/08/30 17:40:08 kn Exp $
+#	$OpenBSD: Makefile,v 1.10 2025/05/10 06:10:01 anton Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
@@ -35,16 +35,16 @@ REGRESS_ROOT_TARGETS =		${SUCCESS_TESTS}
 scripted-create-volume:
 	printf '%s\n' '${OLDPW}' | \
 		${SUDO} ${BIOCTL} -s -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
-		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
+		grep -o 'sd[0-9]*$$' 1>${VOLDEVFILE}
 
 scripted-recreate-volume: detach-volume
 	printf '%s\n' '${OLDPW}' | \
 		${SUDO} ${BIOCTL} -s -Cforce -r${NROUNDS} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
-		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
+		grep -o 'sd[0-9]*$$' 1>${VOLDEVFILE}
 
 reopen-volume-with-passfile: detach-volume
 	${SUDO} ${BIOCTL} -p${PASSFILE} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
-		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
+		grep -o 'sd[0-9]*$$' 1>${VOLDEVFILE}
 
 scripted-change-passphrase:
 	printf '%s\n%s\n' '${OLDPW}' '${NEWPW}' | \
