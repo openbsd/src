@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.38 2021/04/30 13:20:14 visa Exp $
+#	$OpenBSD: files.armv7,v 1.39 2025/05/10 10:11:02 visa Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -16,7 +16,6 @@ file	arch/armv7/armv7/intr.c
 
 # CPU support and integrated peripherals
 file	arch/arm/arm/irq_dispatch.S
-file	arch/arm/arm/softintr.c
 
 # Generic MD files
 file	arch/armv7/armv7/armv7.c

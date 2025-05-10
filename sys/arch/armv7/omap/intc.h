@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.8 2024/04/29 12:46:22 jsg Exp $ */
+/*	$OpenBSD: intc.h,v 1.9 2025/05/10 10:11:02 visa Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,9 +23,7 @@
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
-#include <arm/softintr.h>
 
-#define SI_TO_IRQBIT(si)  (1U<<(si))
 void intc_setipl(int new);
 void intc_splx(int new);
 int intc_splraise(int ipl);

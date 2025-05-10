@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.15 2024/10/14 10:08:13 jsg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.16 2025/05/10 10:11:02 visa Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1	/* soft interrupts */
 #define	IPL_SOFTCLOCK	2	/* soft clock interrupts */
 #define	IPL_SOFTNET	3	/* soft network interrupts */
 #define	IPL_SOFTTTY	4	/* soft terminal interrupts */
@@ -76,6 +75,10 @@
 #define	IST_EDGE_FALLING	IST_EDGE
 #define	IST_EDGE_RISING		5
 #define	IST_EDGE_BOTH		6
+
+#define __USE_MI_SOFTINTR
+
+#include <sys/softintr.h>
 
 #ifndef _LOCORE
 #include <sys/queue.h>
@@ -114,7 +117,6 @@ extern struct arm_intr_func arm_intr_func;
 #define splx(cpl)		(arm_intr_func.x(cpl))
 
 #define	splhigh()	splraise(IPL_HIGH)
-#define	splsoft()	splraise(IPL_SOFT)
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
 #define	splbio()	splraise(IPL_BIO)
@@ -135,9 +137,7 @@ void arm_init_smask(void); /* XXX */
 extern uint32_t arm_smask[NIPL];
 void arm_setsoftintr(int si);
 
-#define _setsoftintr arm_setsoftintr
-
-#include <arm/softintr.h>
+#define softintr arm_setsoftintr
 
 void *arm_intr_establish(int irqno, int level, int (*func)(void *),
     void *cookie, char *name);

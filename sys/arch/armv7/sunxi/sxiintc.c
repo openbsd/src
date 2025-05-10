@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.12 2024/04/29 12:33:17 jsg Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.13 2025/05/10 10:11:02 visa Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -37,7 +37,7 @@
 int	sxiintcdebug = 10;
 char *ipl_strtbl[NIPL] = {
 	"IPL_NONE",
-	"IPL_SOFT",
+	"IPL_SOFT",		/* unused */
 	"IPL_SOFTCLOCK",
 	"IPL_SOFTNET",
 	"IPL_SOFTTTY",

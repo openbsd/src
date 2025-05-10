@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.h,v 1.4 2024/04/29 12:33:17 jsg Exp $ */
+/*	$OpenBSD: sxiintc.h,v 1.5 2025/05/10 10:11:02 visa Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,9 +23,7 @@
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
-#include <arm/softintr.h>
 
-#define SI_TO_IRQBIT(si)  (1U<<(si))
 void sxiintc_setipl(int);
 void sxiintc_splx(int);
 int sxiintc_splraise(int);
