@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.29 2025/03/09 15:45:52 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.30 2025/05/10 19:01:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,7 +77,7 @@ extern "C" {
 
 #define PKCS12_MAC_KEY_LENGTH 20
 
-#define PKCS12_SALT_LEN	8
+#define PKCS12_SALT_LEN	16
 
 /* Uncomment out next line for unicode password and names, otherwise ASCII */
 
