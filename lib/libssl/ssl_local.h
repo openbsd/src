@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.32 2025/05/10 05:49:56 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.33 2025/05/10 06:04:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1442,9 +1442,7 @@ int SSL_state_func_code(int _state);
 void SSL_error_internal(const SSL *s, int r, const char *f, int l);
 #define SSLerror(s, r)	SSL_error_internal(s, r, OPENSSL_FILE, OPENSSL_LINE)
 #define SSLerrorx(r)	ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
-#ifndef SYSerror	/* XXX - remove #ifdef after error churn */
 #define SYSerror(r)	ERR_PUT_error(ERR_LIB_SYS,(0xfff),(r),OPENSSL_FILE,OPENSSL_LINE)
-#endif
 
 #ifndef OPENSSL_NO_SRTP
 
