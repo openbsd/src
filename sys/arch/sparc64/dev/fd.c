@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.53 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.54 2025/05/11 19:41:05 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -521,7 +521,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 		return (-1);
 	}
 
-	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
+	fdc->sc_sicookie = softintr_establish_raw(IPL_BIO, fdcswintr, fdc);
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
@@ -1134,14 +1134,14 @@ fdchwintr(void *arg)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softintr_schedule_raw(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_RESULT:
 		if (fdcresult(fdc) == -1)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softintr_schedule_raw(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_DMA:
 		/* Proceed with pseudo-DMA below */
@@ -1149,7 +1149,7 @@ fdchwintr(void *arg)
 	default:
 		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);
 		fdc->sc_istatus = FDC_ISTATUS_SPURIOUS;
-		softintr_schedule(fdc->sc_sicookie);
+		softintr_schedule_raw(fdc->sc_sicookie);
 		return (1);
 	}
 
@@ -1168,7 +1168,7 @@ fdchwintr(void *arg)
 		if ((msr & NE7_NDM) == 0) {
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-			softintr_schedule(fdc->sc_sicookie);
+			softintr_schedule_raw(fdc->sc_sicookie);
 #ifdef FD_DEBUG
 			if (fdc_debug > 1)
 				printf("fdc: overrun: msr = %x, tc = %d\n",
@@ -1190,7 +1190,7 @@ fdchwintr(void *arg)
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
 			fdcresult(fdc);
-			softintr_schedule(fdc->sc_sicookie);
+			softintr_schedule_raw(fdc->sc_sicookie);
 			break;
 		}
 	}

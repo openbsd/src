@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2024/03/29 21:29:34 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.26 2025/05/11 19:41:05 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -109,6 +109,10 @@ void	 intr_barrier(void *);
 void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_disestablish(void *);
 void	 softintr_schedule(void *);
+
+void	*softintr_establish_raw(int, void (*)(void *), void *);
+#define	softintr_disestablish_raw(ih)	softintr_disestablish(ih)
+#define	softintr_schedule_raw(ih)	softintr_schedule(ih)
 
 void	send_softint(int, struct intrhand *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.69 2025/05/10 11:06:36 visa Exp $	*/
+/*	$OpenBSD: intr.c,v 1.70 2025/05/11 19:41:05 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -289,6 +289,14 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
 
 	if (level == IPL_TTY)
 		level = IPL_SOFTTTY;
+
+	return softintr_establish_raw(level, fun, arg);
+}
+
+void *
+softintr_establish_raw(int level, void (*fun)(void *), void *arg)
+{
+	struct intrhand *ih;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK | M_ZERO);
 	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
