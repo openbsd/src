@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.38 2024/01/17 08:28:15 claudio Exp $ */
+/*	$OpenBSD: ldape.c,v 1.39 2025/05/11 15:30:43 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -105,8 +105,7 @@ send_ldap_extended_response(struct conn *conn, int msgid, unsigned int type,
 
 	return;
 fail:
-	if (root)
-		ober_free_elements(root);
+	ober_free_elements(root);
 }
 
 int
@@ -180,10 +179,8 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 	return LDAP_REFERRAL;
 
 fail:
-	if (root != NULL)
-		ober_free_elements(root);
-	if (ref_root != NULL)
-		ober_free_elements(ref_root);
+	ober_free_elements(root);
+	ober_free_elements(ref_root);
 	request_free(req);
 	return LDAP_REFERRAL;
 }

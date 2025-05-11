@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.24 2021/12/20 13:26:11 claudio Exp $ */
+/*	$OpenBSD: modify.c,v 1.25 2025/05/11 15:30:43 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -226,8 +226,7 @@ ldap_add(struct request *req)
 	return ldap_respond(req, rc);
 
 fail:
-	if (set != NULL)
-		ober_free_elements(set);
+	ober_free_elements(set);
 	namespace_abort(ns);
 	return ldap_respond(req, LDAP_OTHER);
 }
@@ -384,8 +383,7 @@ ldap_modify(struct request *req)
 		rc = LDAP_OTHER;
 
 done:
-	if (vals != NULL)
-		ober_free_elements(vals);
+	ober_free_elements(vals);
 	namespace_abort(ns);
 	return ldap_respond(req, rc);
 }
