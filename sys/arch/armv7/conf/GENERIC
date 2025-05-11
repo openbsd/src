@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.145 2025/03/25 05:23:59 hastings Exp $
+#	$OpenBSD: GENERIC,v 1.146 2025/05/11 02:17:20 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -214,6 +214,7 @@ mvtemp*		at fdt?
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
+rkusbphy*	at fdt? early 1
 rkgpio*		at fdt?
 rkiic*		at fdt?
 iic*		at rkiic?

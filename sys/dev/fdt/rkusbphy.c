@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkusbphy.c,v 1.7 2025/05/02 13:35:59 kettenis Exp $ */
+/*	$OpenBSD: rkusbphy.c,v 1.8 2025/05/11 02:17:19 jcs Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -59,6 +59,30 @@ struct rkusbphy_regs {
 struct rkusbphy_chip {
 	bus_addr_t			 c_base_addr;
 	const struct rkusbphy_regs	*c_regs;
+};
+
+/*
+ * RK3128 has one USB2PHY.
+ */
+
+static const struct rkusbphy_regs rkusbphy_rk3128_usb_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0x0190,	15,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0x017c,	0,	0x1ff,	0 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0x0194,	0,	0x1ff,	0 },
+	},
+};
+
+static const struct rkusbphy_chip rkusbphy_rk3128[] = {
+	{
+		.c_base_addr = 0x17c,
+		.c_regs = &rkusbphy_rk3128_usb_regs,
+	},
 };
 
 /*
@@ -258,6 +282,7 @@ struct rkusbphy_id {
 #define RKUSBPHY_ID(_n, _c) { _n, _c, nitems(_c) }
 
 static const struct rkusbphy_id rkusbphy_ids[] = {
+	RKUSBPHY_ID("rockchip,rk3128-usb2phy", rkusbphy_rk3128),
 	RKUSBPHY_ID("rockchip,rk3399-usb2phy", rkusbphy_rk3399),
 	RKUSBPHY_ID("rockchip,rk3528-usb2phy", rkusbphy_rk3528),
 	RKUSBPHY_ID("rockchip,rk3568-usb2phy", rkusbphy_rk3568),
