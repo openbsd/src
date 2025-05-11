@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.202 2025/05/10 09:44:39 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.203 2025/05/11 20:03:08 mvs Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -132,6 +132,7 @@ void	filt_sigdetach(struct knote *kn);
 int	filt_signal(struct knote *kn, long hint);
 int	filt_fileattach(struct knote *kn);
 void	filt_timerexpire(void *knx);
+void	filt_dotimerexpire(struct knote *kn);
 int	filt_timerattach(struct knote *kn);
 void	filt_timerdetach(struct knote *kn);
 int	filt_timermodify(struct kevent *kev, struct knote *kn);
@@ -177,7 +178,7 @@ const struct filterops file_filtops = {
 };
 
 const struct filterops timer_filtops = {
-	.f_flags	= 0,
+	.f_flags	= FILTEROP_MPSAFE,
 	.f_attach	= filt_timerattach,
 	.f_detach	= filt_timerdetach,
 	.f_event	= NULL,
@@ -194,12 +195,19 @@ const struct filterops user_filtops = {
 	.f_process	= filt_userprocess,
 };
 
+/*
+ * Locking:
+ *	I	immutable after creation
+ *	a	atomic operations
+ *	t	ft_mtx
+ */
+
 struct	pool knote_pool;
 struct	pool kqueue_pool;
 struct	mutex kqueue_klist_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
 struct	rwlock kqueue_ps_list_lock = RWLOCK_INITIALIZER("kqpsl");
-int kq_ntimeouts = 0;
-int kq_timeoutmax = (4 * 1024);
+int kq_ntimeouts = 0;			/* [a] */
+int kq_timeoutmax = (4 * 1024);		/* [I] */
 unsigned int kq_usereventsmax = 1024;	/* per process */
 
 #define KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
@@ -614,50 +622,74 @@ filt_timervalidate(int sfflags, int64_t sdata, struct timespec *ts)
 	return (0);
 }
 
+struct filt_timer {
+	struct mutex	ft_mtx;
+	struct timeout	ft_to;		/* [t] */
+	int		ft_reschedule;	/* [t] */
+};
+
 static void
 filt_timeradd(struct knote *kn, struct timespec *ts)
 {
 	struct timespec expiry, now;
-	struct timeout *to = kn->kn_hook;
+	struct filt_timer *ft = kn->kn_hook;
 	int tticks;
+
+	MUTEX_ASSERT_LOCKED(&ft->ft_mtx);
+
+	ft->ft_reschedule = ((kn->kn_flags & EV_ONESHOT) == 0 &&
+	    (kn->kn_sfflags & NOTE_ABSTIME) == 0);
 
 	if (kn->kn_sfflags & NOTE_ABSTIME) {
 		nanotime(&now);
 		if (timespeccmp(ts, &now, >)) {
 			timespecsub(ts, &now, &expiry);
 			/* XXX timeout_abs_ts with CLOCK_REALTIME */
-			timeout_add(to, tstohz(&expiry));
+			timeout_add(&ft->ft_to, tstohz(&expiry));
 		} else {
 			/* Expire immediately. */
-			filt_timerexpire(kn);
+			filt_dotimerexpire(kn);
 		}
 		return;
 	}
 
 	tticks = tstohz(ts);
 	/* Remove extra tick from tstohz() if timeout has fired before. */
-	if (timeout_triggered(to))
+	if (timeout_triggered(&ft->ft_to))
 		tticks--;
-	timeout_add(to, (tticks > 0) ? tticks : 1);
+	timeout_add(&ft->ft_to, (tticks > 0) ? tticks : 1);
+}
+
+void
+filt_dotimerexpire(struct knote *kn)
+{
+	struct timespec ts;
+	struct filt_timer *ft = kn->kn_hook;
+	struct kqueue *kq = kn->kn_kq;
+
+	MUTEX_ASSERT_LOCKED(&ft->ft_mtx);
+
+	kn->kn_data++;
+
+	mtx_enter(&kq->kq_lock);
+	knote_activate(kn);
+	mtx_leave(&kq->kq_lock);
+
+	if (ft->ft_reschedule) {
+		(void)filt_timervalidate(kn->kn_sfflags, kn->kn_sdata, &ts);
+		filt_timeradd(kn, &ts);
+	}
 }
 
 void
 filt_timerexpire(void *knx)
 {
-	struct timespec ts;
 	struct knote *kn = knx;
-	struct kqueue *kq = kn->kn_kq;
+	struct filt_timer *ft = kn->kn_hook;
 
-	kn->kn_data++;
-	mtx_enter(&kq->kq_lock);
-	knote_activate(kn);
-	mtx_leave(&kq->kq_lock);
-
-	if ((kn->kn_flags & EV_ONESHOT) == 0 &&
-	    (kn->kn_sfflags & NOTE_ABSTIME) == 0) {
-		(void)filt_timervalidate(kn->kn_sfflags, kn->kn_sdata, &ts);
-		filt_timeradd(kn, &ts);
-	}
+	mtx_enter(&ft->ft_mtx);
+	filt_dotimerexpire(kn);
+	mtx_leave(&ft->ft_mtx);
 }
 
 /*
@@ -667,23 +699,29 @@ int
 filt_timerattach(struct knote *kn)
 {
 	struct timespec ts;
-	struct timeout *to;
+	struct filt_timer *ft;
 	int error;
 
 	error = filt_timervalidate(kn->kn_sfflags, kn->kn_sdata, &ts);
 	if (error != 0)
 		return (error);
 
-	if (kq_ntimeouts > kq_timeoutmax)
+	if (atomic_inc_int_nv(&kq_ntimeouts) > kq_timeoutmax) {
+		atomic_dec_int(&kq_ntimeouts);
 		return (ENOMEM);
-	kq_ntimeouts++;
+	}
 
 	if ((kn->kn_sfflags & NOTE_ABSTIME) == 0)
 		kn->kn_flags |= EV_CLEAR;	/* automatically set */
-	to = malloc(sizeof(*to), M_KEVENT, M_WAITOK);
-	timeout_set(to, filt_timerexpire, kn);
-	kn->kn_hook = to;
+
+	ft = malloc(sizeof(*ft), M_KEVENT, M_WAITOK);
+	mtx_init(&ft->ft_mtx, IPL_SOFTCLOCK);
+	timeout_set(&ft->ft_to, filt_timerexpire, kn);
+	kn->kn_hook = ft;
+
+	mtx_enter(&ft->ft_mtx);
 	filt_timeradd(kn, &ts);
+	mtx_leave(&ft->ft_mtx);
 
 	return (0);
 }
@@ -691,12 +729,15 @@ filt_timerattach(struct knote *kn)
 void
 filt_timerdetach(struct knote *kn)
 {
-	struct timeout *to;
+	struct filt_timer *ft = kn->kn_hook;
 
-	to = (struct timeout *)kn->kn_hook;
-	timeout_del_barrier(to);
-	free(to, M_KEVENT, sizeof(*to));
-	kq_ntimeouts--;
+	mtx_enter(&ft->ft_mtx);
+	ft->ft_reschedule = 0;
+	mtx_leave(&ft->ft_mtx);
+
+	timeout_del_barrier(&ft->ft_to);
+	free(ft, M_KEVENT, sizeof(*ft));
+	atomic_dec_int(&kq_ntimeouts);
 }
 
 int
@@ -704,7 +745,7 @@ filt_timermodify(struct kevent *kev, struct knote *kn)
 {
 	struct timespec ts;
 	struct kqueue *kq = kn->kn_kq;
-	struct timeout *to = kn->kn_hook;
+	struct filt_timer *ft = kn->kn_hook;
 	int error;
 
 	error = filt_timervalidate(kev->fflags, kev->data, &ts);
@@ -715,9 +756,13 @@ filt_timermodify(struct kevent *kev, struct knote *kn)
 	}
 
 	/* Reset the timer. Any pending events are discarded. */
+	mtx_enter(&ft->ft_mtx);
+	ft->ft_reschedule = 0;
+	mtx_leave(&ft->ft_mtx);
 
-	timeout_del_barrier(to);
+	timeout_del_barrier(&ft->ft_to);
 
+	mtx_enter(&ft->ft_mtx);
 	mtx_enter(&kq->kq_lock);
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
@@ -727,8 +772,9 @@ filt_timermodify(struct kevent *kev, struct knote *kn)
 	kn->kn_data = 0;
 	knote_assign(kev, kn);
 	/* Reinit timeout to invoke tick adjustment again. */
-	timeout_set(to, filt_timerexpire, kn);
+	timeout_set(&ft->ft_to, filt_timerexpire, kn);
 	filt_timeradd(kn, &ts);
+	mtx_leave(&ft->ft_mtx);
 
 	return (0);
 }
@@ -736,13 +782,14 @@ filt_timermodify(struct kevent *kev, struct knote *kn)
 int
 filt_timerprocess(struct knote *kn, struct kevent *kev)
 {
-	int active, s;
+	struct filt_timer *ft = kn->kn_hook;
+	int active;
 
-	s = splsoftclock();
+	mtx_enter(&ft->ft_mtx);
 	active = (kn->kn_data != 0);
 	if (active)
 		knote_submit(kn, kev);
-	splx(s);
+	mtx_leave(&ft->ft_mtx);
 
 	return (active);
 }
