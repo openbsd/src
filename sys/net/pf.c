@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1210 2025/05/01 01:10:08 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1211 2025/05/11 21:19:09 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -382,7 +382,7 @@ pf_set_protostate(struct pf_state *st, int which, u_int8_t newstate)
 	    !(TCPS_HAVEESTABLISHED(st->src.state) ||
 	    st->src.state == TCPS_CLOSED) &&
 	    (TCPS_HAVEESTABLISHED(newstate) || newstate == TCPS_CLOSED))
-		pf_status.states_halfopen--;
+		atomic_dec_int(&pf_status.states_halfopen);
 
 	st->src.state = newstate;
 }
@@ -4680,7 +4680,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		pf_set_protostate(st, PF_PEER_SRC, TCPS_SYN_SENT);
 		pf_set_protostate(st, PF_PEER_DST, TCPS_CLOSED);
 		st->timeout = PFTM_TCP_FIRST_PACKET;
-		pf_status.states_halfopen++;
+		atomic_inc_int(&pf_status.states_halfopen);
 		break;
 	case IPPROTO_UDP:
 		pf_set_protostate(st, PF_PEER_SRC, PFUDPS_SINGLE);
