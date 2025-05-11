@@ -7,7 +7,7 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd $Mdocdate: May 9 2025 $
+.Dd $Mdocdate: May 11 2025 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -28,6 +28,11 @@ The
 .Ar options
 are as follows:
 .Bl -tag -width indent
+.It Fl -about
+Print the version number, the Copyright notice, and the license of the
+.Nm
+program to standard output and exit.
+Most other options and all command line arguments are ignored.
 .It Fl -atleast-pkgconfig-version Ns = Ns Ar version
 Exit with error if the requested
 .Ar version
@@ -139,6 +144,29 @@ property, a dash
 and the
 .Ic Description
 property.
+.It Fl -list-package-names
+Perform the same search as
+.Fl -list-all ,
+but only print the basename of each
+.Xr pc 5
+file without the extension, not the module name and the description.
+.It Fl -log-file Ns = Ns Ar file
+Set the name of the output
+.Ar file
+where information about selected modules is logged,
+both about those selected by arguments and as dependencies.
+For each selected module, one line is printed to standard output,
+containing the basename of the
+.Xr pc 5
+file without the extension, optionally an operator and version number
+describing the desired range of versions, and either the actual version
+number in square brackets or the string
+.Qq NOT-FOUND .
+If this option is not provided, the name of the output file
+is instead taken from the
+.Ev PKG_CONFIG_LOG
+environment variable, and if that is not provided either,
+this kind of logging is disabled.
 .It Fl -max-version Ns = Ns Ar version
 Exit with error if the version number of each
 .Ar module
@@ -248,6 +276,10 @@ This is mainly used by the testsuite to provide a guaranteed interface
 to the system's path relocation backend.
 .It Fl -shared
 Compute a simple dependency graph that is only suitable for shared linking.
+.It Fl -short-errors
+When printing error messages about modules that are not found
+or conflict with each other, avoid printing additional, verbose
+instructions explaining potential methods for solving the problem.
 .It Fl -silence-errors
 Do not print any error, warning, or debugging messages at all.
 Overrides all of
@@ -330,8 +362,11 @@ If
 .Ev PKG_CONFIG_LIBDIR
 is defined but empty, nothing is appended.
 .It Ev PKG_CONFIG_LOG
-.Sq logfile
-which is used for dumping audit information concerning installed module versions.
+If set, log information about selected modules
+to the file with the name stored in this variable.
+For more details, see the
+.Fl -log-file
+command line option, which overrides this variable.
 .It Ev PKG_CONFIG_MSVC_SYNTAX
 If set, uses MSVC syntax for fragments.
 .It Ev PKG_CONFIG_PATH
