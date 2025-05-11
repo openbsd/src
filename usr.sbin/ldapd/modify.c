@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.25 2025/05/11 15:30:43 tb Exp $ */
+/*	$OpenBSD: modify.c,v 1.26 2025/05/11 15:38:48 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -36,7 +36,7 @@ ldap_delete(struct request *req)
 	struct namespace	*ns;
 	struct referrals	*refs;
 	struct cursor		*cursor;
-	struct ber_element	*entry, *elm, *a;
+	struct ber_element	*entry = NULL, *elm, *a;
 	int			 rc = LDAP_OTHER;
 
 	++stats.req_mod;
@@ -114,6 +114,7 @@ ldap_delete(struct request *req)
 		rc = LDAP_SUCCESS;
 
 done:
+	ober_free_elements(entry);
 	btree_cursor_close(cursor);
 	btval_reset(&key);
 	namespace_abort(ns);
@@ -384,6 +385,7 @@ ldap_modify(struct request *req)
 
 done:
 	ober_free_elements(vals);
+	ober_free_elements(entry);
 	namespace_abort(ns);
 	return ldap_respond(req, rc);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.15 2022/06/29 09:10:13 martijn Exp $ */
+/*	$OpenBSD: auth.c,v 1.16 2025/05/11 15:38:48 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -301,7 +301,7 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 	char			*password;
 	char			*user_password;
 	struct namespace	*ns;
-	struct ber_element	*elm = NULL, *pw = NULL;
+	struct ber_element	*entry = NULL, *elm = NULL, *pw = NULL;
 
 	if (*binddn == '\0') {
 		free(req->conn->binddn);		/* anonymous bind */
@@ -337,15 +337,15 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		    NULL, LDAP_SCOPE_BASE))
 			return LDAP_INSUFFICIENT_ACCESS;
 
-		elm = namespace_get(ns, binddn);
-		if (elm == NULL && errno == ESTALE) {
+		entry = namespace_get(ns, binddn);
+		if (entry == NULL && errno == ESTALE) {
 			if (namespace_queue_request(ns, req) != 0)
 				return LDAP_BUSY;
 			return -1;	/* Database is being reopened. */
 		}
 
-		if (elm != NULL)
-			pw = ldap_get_attribute(elm, "userPassword");
+		if (entry != NULL)
+			pw = ldap_get_attribute(entry, "userPassword");
 		if (pw != NULL) {
 			for (elm = pw->be_next->be_sub; elm;
 			    elm = elm->be_next) {
@@ -356,6 +356,7 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 					break;
 			}
 		}
+		ober_free_elements(entry);
 	}
 
 	free(req->conn->binddn);
