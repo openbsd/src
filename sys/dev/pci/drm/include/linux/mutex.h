@@ -47,4 +47,15 @@ mutex_trylock_recursive(struct rwlock *rwl)
 
 int atomic_dec_and_mutex_lock(volatile int *, struct rwlock *);
 
+static inline void
+mutex_cleanup(struct rwlock **p)
+{
+	mutex_unlock(*p);
+}
+
+#define _guard(rwl) \
+	mutex_lock(rwl); \
+	struct rwlock *_guard_p __cleanup(mutex_cleanup) = rwl
+#define guard(type) _guard
+
 #endif
