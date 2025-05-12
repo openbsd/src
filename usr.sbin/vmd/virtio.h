@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.53 2025/01/08 15:46:10 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.54 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -390,5 +390,9 @@ int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 void vioscsi_update_qs(struct vioscsi_dev *);
 void vioscsi_update_qa(struct vioscsi_dev *);
 int vioscsi_notifyq(struct vioscsi_dev *);
+
+/* imsg handling */
+void	viodev_msg_read(struct imsg *, struct viodev_msg *);
+void	vionet_hostmac_read(struct imsg *, struct vionet_dev *);
 
 #endif /* _VIRTIO_H_ */

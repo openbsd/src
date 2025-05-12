@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.22 2024/11/21 13:39:34 claudio Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.23 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -902,6 +902,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	struct imsg	 	 imsg;
 	ssize_t			 n = 0;
 	int			 verbose;
+	uint32_t		 type;
 
 	if (dev == NULL)
 		fatalx("%s: missing vionet pointer", __func__);
@@ -937,11 +938,10 @@ dev_dispatch_vm(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+		switch (type) {
 		case IMSG_DEVOP_HOSTMAC:
-			IMSG_SIZE_CHECK(&imsg, vionet->hostmac);
-			memcpy(vionet->hostmac, imsg.data,
-			    sizeof(vionet->hostmac));
+			vionet_hostmac_read(&imsg, vionet);
 			log_debug("%s: set hostmac", __func__);
 			break;
 		case IMSG_VMDOP_PAUSE_VM:
@@ -954,8 +954,8 @@ dev_dispatch_vm(int fd, short event, void *arg)
 				vm_pipe_send(&pipe_rx, VIRTIO_THREAD_START);
 			break;
 		case IMSG_CTL_VERBOSE:
-			IMSG_SIZE_CHECK(&imsg, &verbose);
-			memcpy(&verbose, imsg.data, sizeof(verbose));
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)))
+				fatal("%s", __func__);
 			log_setverbose(verbose);
 			break;
 		}
@@ -1011,8 +1011,7 @@ handle_sync_io(int fd, short event, void *arg)
 			break;
 
 		/* Unpack our message. They ALL should be dev messeges! */
-		IMSG_SIZE_CHECK(&imsg, &msg);
-		memcpy(&msg, imsg.data, sizeof(msg));
+		viodev_msg_read(&imsg, &msg);
 		imsg_free(&imsg);
 
 		switch (msg.type) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_agentx.c,v 1.3 2024/09/26 01:45:13 jsg Exp $ */
+/*	$OpenBSD: vm_agentx.c,v 1.4 2025/05/12 17:17:42 dv Exp $ */
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -141,8 +141,10 @@ vm_agentx_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	static int error = 0;
 	size_t i, j, index;
 	enum agentx_request_type rtype;
+	uint32_t type;
 
-	switch (imsg->hdr.type) {
+	type = imsg_get_type(imsg);
+	switch (type) {
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 		if (error)
 			break;
@@ -157,7 +159,7 @@ vm_agentx_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			virlen += 10;
 			vir = tvir;
 		}
-                memcpy(&(vir[nvir++]), imsg->data, sizeof(vir[nvir]));
+		vmop_info_result_read(imsg, &(vir[nvir++]));
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
 		vmcollecting = 0;

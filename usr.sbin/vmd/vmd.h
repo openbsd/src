@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.132 2025/01/08 15:46:10 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.133 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -268,15 +268,6 @@ struct vm_dump_header {
 	    vmh_cpuids[VM_DUMP_HEADER_CPUID_COUNT];
 } __packed;
 
-struct vmboot_params {
-	off_t			 vbp_partoff;
-	char			 vbp_device[PATH_MAX];
-	char			 vbp_image[PATH_MAX];
-	unsigned int		 vbp_type;
-	void			*vbp_arg;
-	char			*vbp_buf;
-};
-
 struct vmd_if {
 	char			*vif_name;
 	char			*vif_switch;
@@ -478,11 +469,20 @@ int	 vm_opentty(struct vmd_vm *);
 void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);
 struct vmd_switch *switch_getbyname(const char *);
-char	*get_string(uint8_t *, size_t);
 uint32_t prefixlen2mask(uint8_t);
 void	 prefixlen2mask6(u_int8_t, struct in6_addr *);
 void	 getmonotime(struct timeval *);
 int	 close_fd(int);
+
+void	 vmop_result_read(struct imsg *, struct vmop_result *);
+void	 vmop_info_result_read(struct imsg *, struct vmop_info_result *);
+void	 vmop_id_read(struct imsg *, struct vmop_id *);
+void	 vmop_ifreq_read(struct imsg *, struct vmop_ifreq *);
+void	 vmop_addr_req_read(struct imsg *, struct vmop_addr_req *);
+void	 vmop_addr_result_read(struct imsg *, struct vmop_addr_result *);
+void	 vmop_owner_read(struct imsg *, struct vmop_owner *);
+void	 vmop_create_params_read(struct imsg *, struct vmop_create_params *);
+void	 vmop_config_read(struct imsg *, struct vmd_config *);
 
 /* priv.c */
 void	 priv(struct privsep *, struct privsep_proc *);
@@ -557,7 +557,6 @@ void	 config_purge(struct vmd *, unsigned int);
 int	 config_setconfig(struct vmd *);
 int	 config_getconfig(struct vmd *, struct imsg *);
 int	 config_setreset(struct vmd *, unsigned int);
-int	 config_getreset(struct vmd *, struct imsg *);
 int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t, uid_t);
 int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);

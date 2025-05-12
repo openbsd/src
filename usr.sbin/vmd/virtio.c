@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.123 2025/01/08 15:46:10 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.124 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1445,8 +1445,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		}
 		ret = 0;
 
-		IMSG_SIZE_CHECK(&imsg, &msg);
-		memcpy(&msg, imsg.data, sizeof(msg));
+		viodev_msg_read(&imsg, &msg);
 		imsg_free(&imsg);
 
 		if (msg.type != VIODEV_MSG_READY) {
@@ -1570,6 +1569,7 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 	struct imsg		 imsg;
 	struct viodev_msg	 msg;
 	ssize_t			 n = 0;
+	uint32_t		 type;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -1602,15 +1602,14 @@ virtio_dispatch_dev(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+		switch (type) {
 		case IMSG_DEVOP_MSG:
-			IMSG_SIZE_CHECK(&imsg, &msg);
-			memcpy(&msg, imsg.data, sizeof(msg));
+			viodev_msg_read(&imsg, &msg);
 			handle_dev_msg(&msg, dev);
 			break;
 		default:
-			log_warnx("%s: got non devop imsg %d", __func__,
-			    imsg.hdr.type);
+			log_warnx("%s: got non devop imsg %d", __func__, type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -1717,8 +1716,7 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			log_warn("%s: imsgbuf_read (n=%d)", __func__, ret);
 			return (-1);
 		}
-		IMSG_SIZE_CHECK(&imsg, &msg);
-		memcpy(&msg, imsg.data, sizeof(msg));
+		viodev_msg_read(&imsg, &msg);
 		imsg_free(&imsg);
 
 		if (msg.type == VIODEV_MSG_IO_READ && msg.data_valid) {
@@ -1811,4 +1809,18 @@ virtio_dev_closefds(struct virtio_dev *dev)
 	dev->sync_fd = -1;
 
 	return (0);
+}
+
+void
+viodev_msg_read(struct imsg *imsg, struct viodev_msg *msg)
+{
+	if (imsg_get_data(imsg, msg, sizeof(*msg)))
+		fatal("%s", __func__);
+}
+
+void
+vionet_hostmac_read(struct imsg *imsg, struct vionet_dev *dev)
+{
+	if (imsg_get_data(imsg, dev->hostmac, sizeof(dev->hostmac)))
+		fatal("%s", __func__);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.25 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.26 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -45,12 +45,6 @@ struct imsgev {
 	void			*data;
 	short			 events;
 };
-
-#define IMSG_SIZE_CHECK(imsg, p) do {					\
-	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))				\
-		fatalx("bad length imsg received (%s)",	#p);		\
-} while (0)
-#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
 
 /* control socket */
 struct control_sock {
@@ -160,22 +154,23 @@ void	 proc_run(struct privsep *, struct privsep_proc *,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
 void	 imsg_event_add2(struct imsgev *, struct event_base *);
-int	 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
-	    pid_t, int, void *, uint16_t);
-int	 imsg_compose_event2(struct imsgev *, uint16_t, uint32_t,
+int	 imsg_compose_event(struct imsgev *, uint32_t, uint32_t,
+	    pid_t, int, void *, size_t);
+int	 imsg_compose_event2(struct imsgev *, uint32_t, uint32_t,
     	    pid_t, int, void *, uint16_t, struct event_base *);
-int	 imsg_composev_event(struct imsgev *, uint16_t, uint32_t,
+int	 imsg_composev_event(struct imsgev *, uint32_t, uint32_t,
 	    pid_t, int, const struct iovec *, int);
+void	 imsg_forward_event(struct imsgev *, struct imsg *);
 int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
-	    uint16_t, uint32_t, int, void *, uint16_t);
+	    uint32_t, uint32_t, int, void *, size_t);
 int	 proc_compose(struct privsep *, enum privsep_procid,
-	    uint16_t, void *data, uint16_t);
+	    uint32_t, void *data, size_t);
 int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
-	    uint16_t, uint32_t, int, const struct iovec *, int);
+	    uint32_t, uint32_t, int, const struct iovec *, int);
 int	 proc_composev(struct privsep *, enum privsep_procid,
-	    uint16_t, const struct iovec *, int);
+	    uint32_t, const struct iovec *, int);
 int	 proc_forward_imsg(struct privsep *, struct imsg *,
-	    enum privsep_procid, int);
+	    enum privsep_procid, uint32_t);
 struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *
@@ -211,5 +206,11 @@ __dead void fatal(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 __dead void fatalx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
+
+/* imsg unmarshalling used in proc.c and elsewhere. */
+int 		 imsg_int_read(struct imsg *);
+unsigned int	 imsg_uint_read(struct imsg *);
+char		*imsg_string_read(struct imsg *, size_t max);
+void		 privsep_fd_read(struct imsg *, struct privsep_fd *);
 
 #endif /* _PROC_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.21 2024/11/27 22:32:14 kirill Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.22 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -435,6 +435,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	struct imsg	 	 imsg;
 	ssize_t			 n = 0;
 	int			 verbose;
+	uint32_t		 type;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -467,7 +468,8 @@ dev_dispatch_vm(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+		switch (type) {
 		case IMSG_VMDOP_PAUSE_VM:
 			log_debug("%s: pausing", __func__);
 			break;
@@ -475,13 +477,11 @@ dev_dispatch_vm(int fd, short event, void *arg)
 			log_debug("%s: unpausing", __func__);
 			break;
 		case IMSG_CTL_VERBOSE:
-			IMSG_SIZE_CHECK(&imsg, &verbose);
-			memcpy(&verbose, imsg.data, sizeof(verbose));
+			verbose = imsg_int_read(&imsg);
 			log_setverbose(verbose);
 			break;
 		default:
-			log_warnx("%s: unhandled imsg type %d", __func__,
-			    imsg.hdr.type);
+			log_warnx("%s: unhandled imsg type %d", __func__, type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -536,8 +536,7 @@ handle_sync_io(int fd, short event, void *arg)
 			break;
 
 		/* Unpack our message. They ALL should be dev messeges! */
-		IMSG_SIZE_CHECK(&imsg, &msg);
-		memcpy(&msg, imsg.data, sizeof(msg));
+		viodev_msg_read(&imsg, &msg);
 		imsg_free(&imsg);
 
 		switch (msg.type) {

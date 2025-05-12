@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.49 2024/11/21 13:39:34 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.50 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -83,9 +83,14 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ctl_notify	*notify = NULL, *notify_next;
 	struct privsep		*ps = p->p_ps;
 	struct vmop_result	 vmr;
+	uint32_t		 peer_id, type;
 	int			 waiting = 0;
+	unsigned int		 mode;
 
-	switch (imsg->hdr.type) {
+	peer_id = imsg_get_id(imsg);
+	type = imsg_get_type(imsg);
+
+	switch (type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
 	case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 	case IMSG_VMDOP_SEND_VM_RESPONSE:
@@ -95,26 +100,23 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_FAIL:
 	case IMSG_CTL_OK:
 		/* Provide basic response back to a specific control client */
-		if ((c = control_connbyfd(imsg->hdr.peerid)) == NULL) {
+		if ((c = control_connbyfd(peer_id)) == NULL) {
 			log_warnx("%s: lost control connection: fd %d",
-			    __func__, imsg->hdr.peerid);
+			    __func__, peer_id);
 			return (0);
 		}
-		imsg_compose_event(&c->iev, imsg->hdr.type,
-		    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
+		imsg_forward_event(&c->iev, imsg);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
-		IMSG_SIZE_CHECK(imsg, &vmr);
-		memcpy(&vmr, imsg->data, sizeof(vmr));
-
-		if ((c = control_connbyfd(imsg->hdr.peerid)) == NULL) {
+		vmop_result_read(imsg, &vmr);
+		if ((c = control_connbyfd(peer_id)) == NULL) {
 			log_warnx("%s: lost control connection: fd %d",
-			    __func__, imsg->hdr.peerid);
+			    __func__, peer_id);
 			return (0);
 		}
 
 		TAILQ_FOREACH(notify, &ctl_notify_q, entry) {
-			if (notify->ctl_fd == (int) imsg->hdr.peerid) {
+			if (notify->ctl_fd == (int) peer_id) {
 				/*
 				 * Update if waiting by vm name. This is only
 				 * supported when stopping a single vm. If
@@ -130,8 +132,8 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 		/* An error needs to be relayed to the client immediately */
 		if (!waiting || vmr.vmr_result) {
-			imsg_compose_event(&c->iev, imsg->hdr.type,
-			    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
+			imsg_compose_event(&c->iev, type, 0, 0, -1, &vmr,
+			    sizeof(vmr));
 
 			if (notify) {
 				TAILQ_REMOVE(&ctl_notify_q, notify, entry);
@@ -141,16 +143,15 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		/* Notify any waiting clients that a VM terminated */
-		IMSG_SIZE_CHECK(imsg, &vmr);
-		memcpy(&vmr, imsg->data, sizeof(vmr));
+		vmop_result_read(imsg, &vmr);
 
 		TAILQ_FOREACH_SAFE(notify, &ctl_notify_q, entry, notify_next) {
 			if (notify->ctl_vmid != vmr.vmr_id)
 				continue;
 			if ((c = control_connbyfd(notify->ctl_fd)) != NULL) {
 				/* Forward to the vmctl(8) client */
-				imsg_compose_event(&c->iev, imsg->hdr.type,
-				    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
+				imsg_compose_event(&c->iev, type, 0, 0, -1,
+				    &vmr, sizeof(vmr));
 				TAILQ_REMOVE(&ctl_notify_q, notify, entry);
 				free(notify);
 			}
@@ -161,7 +162,8 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 		proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(ps->ps_env, imsg);
+		mode = imsg_uint_read(imsg);
+		config_purge(ps->ps_env, mode);
 		break;
 	default:
 		return (-1);
@@ -252,8 +254,7 @@ control_listen(struct control_sock *cs)
 		return (-1);
 	}
 
-	event_set(&cs->cs_ev, cs->cs_fd, EV_READ,
-	    control_accept, cs);
+	event_set(&cs->cs_ev, cs->cs_fd, EV_READ, control_accept, cs);
 	event_add(&cs->cs_ev, NULL);
 	evtimer_set(&cs->cs_evt, control_accept, cs);
 
@@ -380,6 +381,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct vmop_id			 vid;
 	struct ctl_notify		*notify;
 	int				 n, v, wait = 0, ret = 0;
+	uint32_t			 peer_id = fd, type;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("%s: fd %d: not found", __func__, fd);
@@ -408,7 +410,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+
+		switch (type) {
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		case IMSG_VMDOP_WAIT_VM_REQUEST:
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
@@ -419,41 +423,37 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		default:
 			if (c->peercred.uid != 0) {
 				log_warnx("denied request %d from uid %d",
-				    imsg.hdr.type, c->peercred.uid);
+				    type, c->peercred.uid);
 				ret = EPERM;
 				goto fail;
 			}
 			break;
 		}
 
-		switch (imsg.hdr.type) {
+		switch (type) {
 		case IMSG_CTL_VERBOSE:
-			if (IMSG_DATA_SIZE(&imsg) < sizeof(v))
-				goto fail;
-			memcpy(&v, imsg.data, sizeof(v));
+			v = imsg_int_read(&imsg);
 			log_setverbose(v);
-
-			/* FALLTHROUGH */
+			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			    peer_id, -1, &v, sizeof(v)))
+				goto fail;
+			break;
 		case IMSG_VMDOP_RECEIVE_VM_REQUEST:
 		case IMSG_VMDOP_SEND_VM_REQUEST:
+		case IMSG_CTL_RESET:
 		case IMSG_VMDOP_LOAD:
 		case IMSG_VMDOP_RELOAD:
-		case IMSG_CTL_RESET:
-			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, imsg_get_fd(&imsg),
-			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1)
+			if (proc_forward_imsg(ps, &imsg, PROC_PARENT, peer_id))
 				goto fail;
 			break;
 		case IMSG_VMDOP_START_VM_REQUEST:
-			if (IMSG_DATA_SIZE(&imsg) < sizeof(vmc))
-				goto fail;
-			memcpy(&vmc, imsg.data, sizeof(vmc));
+			vmop_create_params_read(&imsg, &vmc);
 			vmc.vmc_owner.uid = c->peercred.uid;
 			vmc.vmc_owner.gid = -1;
 
-			/* imsg.fd may contain kernel image fd. */
-			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, imsg_get_fd(&imsg), &vmc,
+			/* imsg passed fd may contain kernel image fd. */
+			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			    peer_id, imsg_get_fd(&imsg), &vmc,
 			    sizeof(vmc)) == -1) {
 				control_close(fd, cs);
 				return;
@@ -463,9 +463,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			wait = 1;
 			/* FALLTHROUGH */
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
-				goto fail;
-			memcpy(&vid, imsg.data, sizeof(vid));
+			vmop_id_read(&imsg, &vid);
 			vid.vid_uid = c->peercred.uid;
 
 			if (wait || vid.vid_flags & VMOP_WAIT) {
@@ -480,8 +478,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				    __func__, fd);
 			}
 
-			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, -1, &vid, sizeof(vid)) == -1) {
+			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			    peer_id, -1, &vid, sizeof(vid))) {
 				log_debug("%s: proc_compose_imsg failed",
 				    __func__);
 				control_close(fd, cs);
@@ -489,32 +487,25 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
-			if (IMSG_DATA_SIZE(&imsg) != 0)
-				goto fail;
-			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, -1, NULL, 0) == -1) {
+			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			    peer_id, -1, NULL, 0)) {
 				control_close(fd, cs);
 				return;
 			}
 			break;
 		case IMSG_VMDOP_PAUSE_VM:
 		case IMSG_VMDOP_UNPAUSE_VM:
-			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
-				goto fail;
-			memcpy(&vid, imsg.data, sizeof(vid));
+			vmop_id_read(&imsg, &vid);
 			vid.vid_uid = c->peercred.uid;
-			log_debug("%s id: %d, name: %s, uid: %d",
-			    __func__, vid.vid_id, vid.vid_name,
-			    vid.vid_uid);
+			log_debug("%s id: %d, name: %s, uid: %d", __func__,
+			    vid.vid_id, vid.vid_name, vid.vid_uid);
 
-			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, imsg_get_fd(&imsg),
-			    &vid, sizeof(vid)) == -1)
+			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			    peer_id, imsg_get_fd(&imsg), &vid, sizeof(vid)))
 				goto fail;
 			break;
 		default:
-			log_debug("%s: error handling imsg %d",
-			    __func__, imsg.hdr.type);
+			log_debug("%s: error handling imsg %d", __func__, type);
 			control_close(fd, cs);
 			break;
 		}
@@ -527,8 +518,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
  fail:
 	if (ret == 0)
 		ret = EINVAL;
-	imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
-	    0, 0, -1, &ret, sizeof(ret));
+	imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1, &ret, sizeof(ret));
 	imsgbuf_flush(&c->iev.ibuf);
 	control_close(fd, cs);
 }

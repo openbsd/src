@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.27 2024/11/24 10:44:59 kn Exp $	*/
+/*	$OpenBSD: priv.c,v 1.28 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -87,8 +87,13 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_addr_result	 varesult;
 	char			 type[IF_NAMESIZE];
 	int			 ifd;
+	uint32_t		 imsg_type, peer_id;
+	unsigned int		 mode;
 
-	switch (imsg->hdr.type) {
+	imsg_type = imsg_get_type(imsg);
+	peer_id = imsg_get_id(imsg);
+
+	switch (imsg_type) {
 	case IMSG_VMDOP_PRIV_IFDESCR:
 	case IMSG_VMDOP_PRIV_IFRDOMAIN:
 	case IMSG_VMDOP_PRIV_IFEXISTS:
@@ -98,8 +103,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_PRIV_IFGROUP:
 	case IMSG_VMDOP_PRIV_IFADDR:
 	case IMSG_VMDOP_PRIV_IFADDR6:
-		IMSG_SIZE_CHECK(imsg, &vfr);
-		memcpy(&vfr, imsg->data, sizeof(vfr));
+		vmop_ifreq_read(imsg, &vfr);
 
 		/* We should not get malicious requests from the parent */
 		if (priv_getiftype(vfr.vfr_name, type, NULL) == -1 ||
@@ -115,7 +119,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (-1);
 	}
 
-	switch (imsg->hdr.type) {
+	switch (imsg_type) {
 	case IMSG_VMDOP_PRIV_IFDESCR:
 		/* Set the interface description */
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
@@ -158,7 +162,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_warn("SIOCGIFFLAGS");
 			break;
 		}
-		if (imsg->hdr.type == IMSG_VMDOP_PRIV_IFUP)
+		if (imsg_type == IMSG_VMDOP_PRIV_IFUP)
 			ifr.ifr_flags |= IFF_UP;
 		else
 			ifr.ifr_flags &= ~IFF_UP;
@@ -225,8 +229,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_warn("SIOCAIFADDR_IN6");
 		break;
 	case IMSG_VMDOP_PRIV_GET_ADDR:
-		IMSG_SIZE_CHECK(imsg, &vareq);
-		memcpy(&vareq, imsg->data, sizeof(vareq));
+		vmop_addr_req_read(imsg, &vareq);
 
 		varesult.var_vmid = vareq.var_vmid;
 		varesult.var_nic_idx = vareq.var_nic_idx;
@@ -237,7 +240,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_warn("SIOCGIFADDR");
 		else
 			proc_compose_imsg(ps, PROC_PARENT, -1,
-			    IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE, imsg->hdr.peerid,
+			    IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE, peer_id,
 			    -1, &varesult, sizeof(varesult));
 		close(ifd);
 		break;
@@ -245,7 +248,8 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		config_getconfig(env, imsg);
 		break;
 	case IMSG_CTL_RESET:
-		config_getreset(env, imsg);
+		mode = imsg_uint_read(imsg);
+		config_purge(env, mode);
 		break;
 	default:
 		return (-1);

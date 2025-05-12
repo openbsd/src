@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.110 2024/11/21 13:25:30 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.111 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -343,6 +343,8 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 	struct imsgev		*iev = &vm->vm_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
+	uint32_t		 id, type;
+	pid_t			 pid;
 	ssize_t			 n;
 	int			 verbose;
 
@@ -367,16 +369,17 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
+		type = imsg_get_type(&imsg);
+		id = imsg_get_id(&imsg);
+		pid = imsg_get_pid(&imsg);
 #if DEBUG > 1
-		log_debug("%s: got imsg %d from %s",
-		    __func__, imsg.hdr.type,
+		log_debug("%s: got imsg %d from %s", __func__, type,
 		    vm->vm_params.vmc_params.vcp_name);
 #endif
 
-		switch (imsg.hdr.type) {
+		switch (type) {
 		case IMSG_CTL_VERBOSE:
-			IMSG_SIZE_CHECK(&imsg, &verbose);
-			memcpy(&verbose, imsg.data, sizeof(verbose));
+			verbose = imsg_int_read(&imsg);
 			log_setverbose(verbose);
 			virtio_broadcast_imsg(vm, IMSG_CTL_VERBOSE, &verbose,
 			    sizeof(verbose));
@@ -394,8 +397,7 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			vmr.vmr_id = vm->vm_vmid;
 			pause_vm(vm);
 			imsg_compose_event(&vm->vm_iev,
-			    IMSG_VMDOP_PAUSE_VM_RESPONSE,
-			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
+			    IMSG_VMDOP_PAUSE_VM_RESPONSE, id, pid, -1, &vmr,
 			    sizeof(vmr));
 			break;
 		case IMSG_VMDOP_UNPAUSE_VM:
@@ -403,16 +405,14 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			vmr.vmr_id = vm->vm_vmid;
 			unpause_vm(vm);
 			imsg_compose_event(&vm->vm_iev,
-			    IMSG_VMDOP_UNPAUSE_VM_RESPONSE,
-			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
+			    IMSG_VMDOP_UNPAUSE_VM_RESPONSE, id, pid, -1, &vmr,
 			    sizeof(vmr));
 			break;
 		case IMSG_VMDOP_SEND_VM_REQUEST:
 			vmr.vmr_id = vm->vm_vmid;
 			vmr.vmr_result = send_vm(imsg_get_fd(&imsg), vm);
 			imsg_compose_event(&vm->vm_iev,
-			    IMSG_VMDOP_SEND_VM_RESPONSE,
-			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
+			    IMSG_VMDOP_SEND_VM_RESPONSE, id, pid, -1, &vmr,
 			    sizeof(vmr));
 			if (!vmr.vmr_result) {
 				imsgbuf_flush(&current_vm->vm_iev.ibuf);
@@ -420,9 +420,7 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE:
-			IMSG_SIZE_CHECK(&imsg, &var);
-			memcpy(&var, imsg.data, sizeof(var));
-
+			vmop_addr_result_read(&imsg, &var);
 			log_debug("%s: received tap addr %s for nic %d",
 			    vm->vm_params.vmc_params.vcp_name,
 			    ether_ntoa((void *)var.var_addr), var.var_nic_idx);
@@ -430,9 +428,8 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			vionet_set_hostmac(vm, var.var_nic_idx, var.var_addr);
 			break;
 		default:
-			fatalx("%s: got invalid imsg %d from %s",
-			    __func__, imsg.hdr.type,
-			    vm->vm_params.vmc_params.vcp_name);
+			fatalx("%s: got invalid imsg %d from %s", __func__,
+			    type, vm->vm_params.vmc_params.vcp_name);
 		}
 		imsg_free(&imsg);
 	}

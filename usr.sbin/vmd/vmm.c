@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.130 2024/11/21 13:39:34 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.131 2025/05/12 17:17:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -102,11 +102,17 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_result	 vmr;
 	struct vmop_create_params vmc;
 	struct vmop_addr_result  var;
-	uint32_t		 id = 0, peerid = imsg->hdr.peerid;
-	pid_t			 pid = 0;
+	uint32_t		 id = 0, vm_id, type;
+	pid_t			 pid, vm_pid = 0;
 	unsigned int		 mode, flags;
 
-	switch (imsg->hdr.type) {
+	pid = imsg_get_pid(imsg);
+	type = imsg_get_type(imsg);
+
+	/* Parent uses peer id to communicate vm id. */
+	vm_id = imsg_get_id(imsg);
+
+	switch (type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
 		res = config_getvm(ps, imsg);
 		if (res == -1) {
@@ -136,15 +142,14 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_START_VM_END:
-		res = vmm_start_vm(imsg, &id, &pid);
+		res = vmm_start_vm(imsg, &id, &vm_pid);
 		/* Check if the ID can be mapped correctly */
 		if (res == 0 && (id = vm_id2vmid(id, NULL)) == 0)
 			res = ENOENT;
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vid);
-		memcpy(&vid, imsg->data, sizeof(vid));
+		vmop_id_read(imsg, &vid);
 		id = vid.vid_id;
 		flags = vid.vid_flags;
 
@@ -205,58 +210,48 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		config_getconfig(env, imsg);
 		break;
 	case IMSG_CTL_RESET:
-		IMSG_SIZE_CHECK(imsg, &mode);
-		memcpy(&mode, imsg->data, sizeof(mode));
-
+		mode = imsg_uint_read(imsg);
 		if (mode & CONFIG_VMS) {
 			/* Terminate and remove all VMs */
 			vmm_shutdown();
 			mode &= ~CONFIG_VMS;
 		}
-
-		config_getreset(env, imsg);
+		config_purge(env, mode);
 		break;
 	case IMSG_CTL_VERBOSE:
-		IMSG_SIZE_CHECK(imsg, &verbose);
-		memcpy(&verbose, imsg->data, sizeof(verbose));
+		verbose = imsg_int_read(imsg);
 		log_setverbose(verbose);
 		env->vmd_verbose = verbose;
 		/* Forward message to each VM process */
 		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-			imsg_compose_event(&vm->vm_iev,
-			    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
-			    -1, &verbose, sizeof(verbose));
+			imsg_compose_event(&vm->vm_iev, type, -1, pid, -1,
+			    &verbose, sizeof(verbose));
 		}
 		break;
 	case IMSG_VMDOP_PAUSE_VM:
-		IMSG_SIZE_CHECK(imsg, &vid);
-		memcpy(&vid, imsg->data, sizeof(vid));
+		vmop_id_read(imsg, &vid);
 		id = vid.vid_id;
 		if ((vm = vm_getbyvmid(id)) == NULL) {
 			res = ENOENT;
 			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
 			break;
 		}
-		imsg_compose_event(&vm->vm_iev,
-		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		imsg_compose_event(&vm->vm_iev, type, -1, pid,
 		    imsg_get_fd(imsg), &vid, sizeof(vid));
 		break;
 	case IMSG_VMDOP_UNPAUSE_VM:
-		IMSG_SIZE_CHECK(imsg, &vid);
-		memcpy(&vid, imsg->data, sizeof(vid));
+		vmop_id_read(imsg, &vid);
 		id = vid.vid_id;
 		if ((vm = vm_getbyvmid(id)) == NULL) {
 			res = ENOENT;
 			cmd = IMSG_VMDOP_UNPAUSE_VM_RESPONSE;
 			break;
 		}
-		imsg_compose_event(&vm->vm_iev,
-		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		imsg_compose_event(&vm->vm_iev, type, -1, pid,
 		    imsg_get_fd(imsg), &vid, sizeof(vid));
 		break;
 	case IMSG_VMDOP_SEND_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vid);
-		memcpy(&vid, imsg->data, sizeof(vid));
+		vmop_id_read(imsg, &vid);
 		id = vid.vid_id;
 		if ((vm = vm_getbyvmid(id)) == NULL) {
 			res = ENOENT;
@@ -264,15 +259,12 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
 		}
-		imsg_compose_event(&vm->vm_iev,
-		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		imsg_compose_event(&vm->vm_iev, type, -1, pid,
 		    imsg_get_fd(imsg), &vid, sizeof(vid));
 		break;
 	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vmc);
-		memcpy(&vmc, imsg->data, sizeof(vmc));
-		if (vm_register(ps, &vmc, &vm,
-		    imsg->hdr.peerid, vmc.vmc_owner.uid) != 0) {
+		vmop_create_params_read(imsg, &vmc);
+		if (vm_register(ps, &vmc, &vm, vm_id, vmc.vmc_owner.uid) != 0) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
@@ -282,7 +274,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		vm->vm_state |= VM_STATE_PAUSED;
 		break;
 	case IMSG_VMDOP_RECEIVE_VM_END:
-		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
+		if ((vm = vm_getbyvmid(vm_id)) == NULL) {
 			res = ENOENT;
 			close(imsg_get_fd(imsg));	/* XXX */
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -296,15 +288,13 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE:
-		IMSG_SIZE_CHECK(imsg, &var);
-		memcpy(&var, imsg->data, sizeof(var));
+		vmop_addr_result_read(imsg, &var);
 		if ((vm = vm_getbyvmid(var.var_vmid)) == NULL) {
 			res = ENOENT;
 			break;
 		}
 		/* Forward hardware address details to the guest vm */
-		imsg_compose_event(&vm->vm_iev,
-		    imsg->hdr.type, imsg->hdr.peerid, imsg->hdr.pid,
+		imsg_compose_event(&vm->vm_iev, type, -1, pid,
 		    imsg_get_fd(imsg), &var, sizeof(var));
 		break;
 	case IMSG_VMDOP_RECEIVE_VMM_FD:
@@ -330,14 +320,14 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_RESPONSE:
 		if (res != 0) {
 			/* Remove local reference if it exists */
-			if ((vm = vm_getbyvmid(imsg->hdr.peerid)) != NULL) {
+			if ((vm = vm_getbyvmid(vm_id)) != NULL) {
 				log_debug("%s: removing vm, START_VM_RESPONSE",
 				    __func__);
 				vm_remove(vm, __func__);
 			}
 		}
 		if (id == 0)
-			id = imsg->hdr.peerid;
+			id = vm_id;
 		/* FALLTHROUGH */
 	case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 	case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
@@ -345,14 +335,14 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memset(&vmr, 0, sizeof(vmr));
 		vmr.vmr_result = res;
 		vmr.vmr_id = id;
-		vmr.vmr_pid = pid;
-		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd,
-		    peerid, -1, &vmr, sizeof(vmr)) == -1)
+		vmr.vmr_pid = vm_pid;
+		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd, vm_id, -1, &vmr,
+		    sizeof(vmr)) == -1)
 			return (-1);
 		break;
 	default:
-		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd,
-		    peerid, -1, &res, sizeof(res)) == -1)
+		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd, vm_id, -1, &res,
+		    sizeof(res)) == -1)
 			return (-1);
 		break;
 	}
@@ -491,12 +481,12 @@ void
 vmm_dispatch_vm(int fd, short event, void *arg)
 {
 	struct vmd_vm		*vm = arg;
-	struct vmop_result	 vmr;
 	struct imsgev		*iev = &vm->vm_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 	unsigned int		 i;
+	uint32_t		 type;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -525,11 +515,8 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		DPRINTF("%s: got imsg %d from %s",
-		    __func__, imsg.hdr.type,
-		    vm->vm_params.vmc_params.vcp_name);
-
-		switch (imsg.hdr.type) {
+		type = imsg_get_type(&imsg);
+		switch (type) {
 		case IMSG_VMDOP_VM_SHUTDOWN:
 			vm->vm_state |= VM_STATE_SHUTDOWN;
 			break;
@@ -537,7 +524,6 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			vm->vm_state &= ~VM_STATE_SHUTDOWN;
 			break;
 		case IMSG_VMDOP_SEND_VM_RESPONSE:
-			IMSG_SIZE_CHECK(&imsg, &vmr);
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 			for (i = 0; i < nitems(procs); i++) {
@@ -550,9 +536,8 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			break;
 
 		default:
-			fatalx("%s: got invalid imsg %d from %s",
-			    __func__, imsg.hdr.type,
-			    vm->vm_params.vmc_params.vcp_name);
+			fatalx("%s: got invalid imsg %d from %s", __func__,
+			    type, vm->vm_params.vmc_params.vcp_name);
 		}
 		imsg_free(&imsg);
 	}
@@ -650,8 +635,10 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	int			 fds[2];
 	pid_t			 vm_pid;
 	size_t			 i, j, sz;
+	uint32_t		 peer_id;
 
-	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
+	peer_id = imsg_get_id(imsg);
+	if ((vm = vm_getbyvmid(peer_id)) == NULL) {
 		log_warnx("%s: can't find vm", __func__);
 		return (ENOENT);
 	}
@@ -833,6 +820,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 	struct vm_info_result *info;
 	struct vm_terminate_params vtp;
 	struct vmop_info_result vir;
+	uint32_t peer_id;
 
 	/*
 	 * We issue the VMM_IOC_INFO ioctl twice, once with an input
@@ -883,8 +871,10 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 		}
 		memcpy(&vir.vir_info, &info[i], sizeof(vir.vir_info));
 		vir.vir_info.vir_id = vm_id2vmid(info[i].vir_id, NULL);
+		peer_id = imsg_get_id(imsg);
+
 		if (proc_compose_imsg(ps, PROC_PARENT, -1,
-		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
+		    IMSG_VMDOP_GET_INFO_VM_DATA, peer_id, -1,
 		    &vir, sizeof(vir)) == -1) {
 			ret = EIO;
 			break;
