@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.336 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.337 2025/05/12 17:21:21 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -174,7 +174,6 @@ void	udp_sbappend(struct inpcb *, struct mbuf *, struct ip *,
 	    u_int32_t, struct netstack *);
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_notify(struct inpcb *, int);
-int	udp_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 int	udp_sysctl_udpstat(void *, size_t *, void *);
 
 #ifndef	UDB_INITIAL_HASH_SIZE
@@ -1278,16 +1277,37 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case UDPCTL_BADDYNAMIC:
-	case UDPCTL_ROOTONLY: {
-		size_t savelen = *oldlenp;
+	case UDPCTL_ROOTONLY:
+		if (newp && (int)atomic_load_int(&securelevel) > 0)
+			return (EPERM);
+		/* FALLTHROUGH */
+	case UDPCTL_BADDYNAMIC: {
+		struct baddynamicports *ports = (name[0] == UDPCTL_ROOTONLY ?
+		    &rootonlyports : &baddynamicports);
+		const size_t bufitems = DP_MAPSIZE;
+		const size_t buflen = bufitems * sizeof(uint32_t);
+		size_t i;
+		uint32_t *buf;
 		int error;
 
-		if ((error = sysctl_vslock(oldp, savelen)))
-			return (error);
-		error = udp_sysctl_locked(name, namelen, oldp, oldlenp,
-		    newp, newlen);
-		sysctl_vsunlock(oldp, savelen);
+		buf = malloc(buflen, M_SYSCTL, M_WAITOK | M_ZERO);
+
+		NET_LOCK_SHARED();
+		for (i = 0; i < bufitems; ++i)
+			buf[i] = ports->udp[i];
+		NET_UNLOCK_SHARED();
+
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    buf, buflen);
+
+		if (error == 0 && newp) {
+			NET_LOCK();
+			for (i = 0; i < bufitems; ++i)
+				ports->udp[i] = buf[i];
+			NET_UNLOCK();
+		}
+
+		free(buf, M_SYSCTL, buflen);
 
 		return (error);
 	}
@@ -1302,33 +1322,6 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
-}
-
-int
-udp_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	int error = ENOPROTOOPT;
-
-	switch (name[0]) {
-	case UDPCTL_BADDYNAMIC:
-		NET_LOCK();
-		error = sysctl_struct(oldp, oldlenp, newp, newlen,
-		    baddynamicports.udp, sizeof(baddynamicports.udp));
-		NET_UNLOCK();
-		break;
-
-	case UDPCTL_ROOTONLY:
-		if (newp && securelevel > 0)
-			return (EPERM);
-		NET_LOCK();
-		error = sysctl_struct(oldp, oldlenp, newp, newlen,
-		    rootonlyports.udp, sizeof(rootonlyports.udp));
-		NET_UNLOCK();
-		break;
-	}
-
-	return (error);
 }
 
 int
