@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptvar.h,v 1.4 2013/06/12 19:07:40 deraadt Exp $ */
+/*	$OpenBSD: lptvar.h,v 1.5 2025/05/12 08:16:00 tedu Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct lpt_softc {
 	struct timeout sc_wakeup_tmo;
 
 	size_t sc_count;
-	struct buf *sc_inbuf;
+	void *sc_inbuf;
 	u_int8_t *sc_cp;
 	int sc_spinmax;
 	bus_space_tag_t sc_iot;	/* bus tag */

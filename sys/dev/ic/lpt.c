@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.15 2020/01/15 16:43:13 cheloha Exp $ */
+/*	$OpenBSD: lpt.c,v 1.16 2025/05/12 08:16:00 tedu Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/uio.h>
 #include <sys/device.h>
@@ -216,7 +216,7 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 	sc->sc_control = control;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, control);
 
-	sc->sc_inbuf = geteblk(LPT_BSIZE);
+	sc->sc_inbuf = malloc(LPT_BSIZE, M_DEVBUF, M_WAITOK);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 
@@ -280,7 +280,7 @@ lptclose(dev_t dev, int flag, int mode, struct proc *p)
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-	brelse(sc->sc_inbuf);
+	free(sc->sc_inbuf, M_DEVBUF, LPT_BSIZE);
 
 	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
 	return 0;
@@ -370,7 +370,8 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
 	int error = 0;
 
 	while ((n = ulmin(LPT_BSIZE, uio->uio_resid)) != 0) {
-		error = uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
+		sc->sc_cp = sc->sc_inbuf;
+		error = uiomove(sc->sc_cp, n, uio);
 		if (error != 0)
 			return error;
 		sc->sc_count = n;
