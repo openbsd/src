@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.64 2025/03/22 19:51:29 jmc Exp $
+#	$OpenBSD: fw_update.sh,v 1.65 2025/05/12 23:48:12 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -431,7 +431,7 @@ remove_files() {
 }
 
 delete_firmware() {
-	local _cwd _pkg="$1" _pkgdir="${DESTDIR}/var/db/pkg"
+	local _cwd _pkg="$1" _pkgdir="${DESTDIR}/var/db/pkg" _remove _l
 
 	# TODO: Check hash for files before deleting
 	((VERBOSE > 2)) && echo -n "Uninstall $_pkg ..."
@@ -445,13 +445,13 @@ delete_firmware() {
 
 	set -A _remove -- "${_cwd}/+CONTENTS" "${_cwd}"
 
-	while read -r _c _g; do
-		case $_c in
-		@cwd) _cwd="${DESTDIR}$_g"
+	while read -r _l; do
+		case "$_l" in
+		@cwd\ *) _cwd="${DESTDIR}${_l##@cwd+( )}"
 		  ;;
 		@*) continue
 		  ;;
-		*) set -A _remove -- "$_cwd/$_c" "${_remove[@]}"
+		*) set -A _remove -- "$_cwd/$_l" "${_remove[@]}"
 		  ;;
 		esac
 	done < "${_pkgdir}/${_pkg}/+CONTENTS"
