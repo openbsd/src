@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.406 2025/05/09 14:43:47 jan Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.407 2025/05/12 05:07:17 jsg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1724,9 +1724,6 @@ int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-#ifdef MROUTING
-	extern struct mrtstat mrtstat;
-#endif
 	int oldval, error;
 
 	/* Almost all sysctl names at this level are terminal. */
