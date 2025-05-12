@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.70 2025/05/11 19:41:05 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.71 2025/05/12 04:49:19 jsg Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -283,8 +283,6 @@ intr_barrier(void *cookie)
 void *
 softintr_establish(int level, void (*fun)(void *), void *arg)
 {
-	struct intrhand *ih;
-
 	level &= ~IPL_MPSAFE;
 
 	if (level == IPL_TTY)
