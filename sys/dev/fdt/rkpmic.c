@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.18 2024/11/23 21:24:03 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.19 2025/05/12 01:18:35 jcs Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -340,6 +340,32 @@ const struct rkpmic_regdata rk817_regdata[] = {
 	{ }
 };
 
+/*
+ * Used by RK818 for BUCK4
+ *   0-18:	1.8V-3.6V, step=100mV
+ */
+const struct rkpmic_vsel_range rk818_vsel_range1[] = {
+	{ 1800000, 100000, 0, 18 },
+	{}
+};
+
+const struct rkpmic_regdata rk818_regdata[] = {
+	{ "DCDC_REG1", 0x2f, 0x3f, 0, 0, rk808_vsel_range1 },
+	{ "DCDC_REG2", 0x33, 0x3f, 0, 0, rk808_vsel_range1 },
+	{ "DCDC_REG3", 0, 0, 0, 0, rk808_vsel_range1 },
+	{ "DCDC_REG4", 0x38, 0x1f, 0, 0, rk818_vsel_range1 },
+	{ "LDO_REG1", 0x3b, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG2", 0x3d, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG3", 0x3f, 0x1f, 0, 0, rk808_vsel_range5 },
+	{ "LDO_REG4", 0x41, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG5", 0x43, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG6", 0x45, 0x1f, 0, 0, rk808_vsel_range5 },
+	{ "LDO_REG7", 0x47, 0x1f, 0, 0, rk808_vsel_range5 },
+	{ "LDO_REG8", 0x49, 0x1f, 0, 0, rk808_vsel_range2 },
+	{ "LDO_REG9", 0x54, 0x1f, 0, 0, rk808_vsel_range2 },
+	{ }
+};
+
 struct rkpmic_softc {
 	struct device sc_dev;
 	int sc_node;
@@ -407,7 +433,8 @@ rkpmic_i2c_match(struct device *parent, void *match, void *aux)
 	return (strcmp(ia->ia_name, "rockchip,rk805") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk808") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk809") == 0 ||
-	    strcmp(ia->ia_name, "rockchip,rk817") == 0);
+	    strcmp(ia->ia_name, "rockchip,rk817") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk818") == 0);
 }
 
 void
@@ -486,6 +513,13 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dev_ctrl_reg = RK809_PMIC_SYS_CFG3;
 		sc->sc_dev_off_val = RK809_PMIC_SYS_CFG3_DEV_OFF;
 		sc->sc_regdata = rk809_regdata;
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk818")) {
+		chip = "RK818";
+		sc->sc_rtc_ctrl_reg = RK808_RTC_CTRL;
+		sc->sc_rtc_status_reg = RK808_RTC_STATUS;
+		sc->sc_dev_ctrl_reg = RK808_DEVCTRL;
+		sc->sc_dev_off_val = RK808_DEVCTRL_DEV_OFF_RST;
+		sc->sc_regdata = rk818_regdata;
 	} else {
 		chip = "RK817";
 		sc->sc_rtc_ctrl_reg = RK809_RTC_CTRL;
