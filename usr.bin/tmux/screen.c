@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.88 2024/11/15 09:01:16 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.89 2025/05/12 09:17:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -572,7 +572,10 @@ screen_select_cell(struct screen *s, struct grid_cell *dst,
 		return;
 
 	memcpy(dst, &s->sel->cell, sizeof *dst);
-
+	if (COLOUR_DEFAULT(dst->fg))
+		dst->fg = src->fg;
+	if (COLOUR_DEFAULT(dst->bg))
+		dst->bg = src->bg;
 	utf8_copy(&dst->data, &src->data);
 	dst->attr = dst->attr & ~GRID_ATTR_CHARSET;
 	dst->attr |= src->attr & GRID_ATTR_CHARSET;
