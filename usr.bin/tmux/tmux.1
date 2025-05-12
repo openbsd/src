@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.997 2025/05/01 07:12:00 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.998 2025/05/12 10:16:42 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 1 2025 $
+.Dd $Mdocdate: May 12 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -7281,7 +7281,7 @@ Lock each client individually by running the command specified by the
 option.
 .Tg run
 .It Xo Ic run-shell
-.Op Fl bC
+.Op Fl bCE
 .Op Fl c Ar start-directory
 .Op Fl d Ar delay
 .Op Fl t Ar target-pane
@@ -7309,6 +7309,8 @@ the command is run in the background.
 waits for
 .Ar delay
 seconds before starting the command.
+.Fl E
+redirects the command's stderr to stdout instead of ignoring it.
 If
 .Fl c
 is given, the current working directory is set to

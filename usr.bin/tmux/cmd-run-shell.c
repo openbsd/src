@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.88 2025/04/09 07:03:04 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.89 2025/05/12 10:16:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -44,8 +44,8 @@ const struct cmd_entry cmd_run_shell_entry = {
 	.name = "run-shell",
 	.alias = "run",
 
-	.args = { "bd:Ct:c:", 0, 1, cmd_run_shell_args_parse },
-	.usage = "[-bC] [-c start-directory] [-d delay] " CMD_TARGET_PANE_USAGE
+	.args = { "bd:Ct:Es:c:", 0, 1, cmd_run_shell_args_parse },
+	.usage = "[-bCE] [-c start-directory] [-d delay] " CMD_TARGET_PANE_USAGE
 	         " [shell-command]",
 
 	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },
@@ -157,6 +157,9 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->cwd = xstrdup(args_get(args, 'c'));
 	else
 		cdata->cwd = xstrdup(server_client_get_cwd(c, s));
+
+	if (args_has(args, 'E'))
+		cdata->flags |= JOB_SHOWSTDERR;
 
 	cdata->s = s;
 	if (s != NULL)

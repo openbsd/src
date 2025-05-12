@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.70 2025/03/28 17:03:49 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.71 2025/05/12 10:16:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,7 +79,7 @@ job_run(const char *cmd, int argc, char **argv, struct environ *e,
 	struct job	 *job;
 	struct environ	 *env;
 	pid_t		  pid;
-	int		  nullfd, out[2], master;
+	int		  nullfd, out[2], master, do_close = 1;
 	const char	 *home, *shell;
 	sigset_t	  set, oldset;
 	struct winsize	  ws;
@@ -152,19 +152,26 @@ job_run(const char *cmd, int argc, char **argv, struct environ *e,
 		if (~flags & JOB_PTY) {
 			if (dup2(out[1], STDIN_FILENO) == -1)
 				fatal("dup2 failed");
+			do_close = do_close && out[1] != STDIN_FILENO;
 			if (dup2(out[1], STDOUT_FILENO) == -1)
 				fatal("dup2 failed");
-			if (out[1] != STDIN_FILENO && out[1] != STDOUT_FILENO)
+			do_close = do_close && out[1] != STDOUT_FILENO;
+			if (flags & JOB_SHOWSTDERR) {
+				if (dup2(out[1], STDERR_FILENO) == -1)
+					fatal("dup2 failed");
+				do_close = do_close && out[1] != STDERR_FILENO;
+			} else {
+				nullfd = open(_PATH_DEVNULL, O_RDWR);
+				if (nullfd == -1)
+					fatal("open failed");
+				if (dup2(nullfd, STDERR_FILENO) == -1)
+					fatal("dup2 failed");
+				if (nullfd != STDERR_FILENO)
+					close(nullfd);
+			}
+			if (do_close)
 				close(out[1]);
 			close(out[0]);
-
-			nullfd = open(_PATH_DEVNULL, O_RDWR);
-			if (nullfd == -1)
-				fatal("open failed");
-			if (dup2(nullfd, STDERR_FILENO) == -1)
-				fatal("dup2 failed");
-			if (nullfd != STDERR_FILENO)
-				close(nullfd);
 		}
 		closefrom(STDERR_FILENO + 1);
 
