@@ -298,7 +298,7 @@ es256_pk_to_EVP_PKEY(const es256_pk_t *k)
 	}
 
 	if ((q = EC_POINT_new(g)) == NULL ||
-	    EC_POINT_set_affine_coordinates_GFp(g, q, x, y, bnctx) == 0 ||
+	    EC_POINT_set_affine_coordinates(g, q, x, y, bnctx) == 0 ||
 	    EC_KEY_set_public_key(ec, q) == 0) {
 		fido_log_debug("%s: EC_KEY_set_public_key", __func__);
 		goto fail;
@@ -363,10 +363,10 @@ es256_pk_from_EC_KEY(es256_pk_t *pk, const EC_KEY *ec)
 		goto fail;
 	}
 
-	if (EC_POINT_get_affine_coordinates_GFp(g, q, x, y, bnctx) == 0 ||
+	if (EC_POINT_get_affine_coordinates(g, q, x, y, bnctx) == 0 ||
 	    (nx = BN_num_bytes(x)) < 0 || (size_t)nx > sizeof(pk->x) ||
 	    (ny = BN_num_bytes(y)) < 0 || (size_t)ny > sizeof(pk->y)) {
-		fido_log_debug("%s: EC_POINT_get_affine_coordinates_GFp",
+		fido_log_debug("%s: EC_POINT_get_affine_coordinates",
 		    __func__);
 		goto fail;
 	}
