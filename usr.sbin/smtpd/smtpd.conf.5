@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.273 2025/05/03 09:21:16 sobrado Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.274 2025/05/12 20:58:27 sobrado Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 3 2025 $
+.Dd $Mdocdate: May 12 2025 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -613,32 +613,28 @@ Specify that session may address any local domain.
 This is the default, and may be omitted.
 .It Xo
 .Op Ic \&!
-.Cm for domain
+.Cm for domain Oo Cm regex Oc
 .Ar domain | Pf < Ar domain Ns >
 .Xc
 Specify that session may address the string or list table
 .Ar domain .
+The
+.Cm regex
+keyword is required if
+.Ar domain
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
-.Cm for domain regex
-.Ar domain | Pf < Ar domain Ns >
-.Xc
-Specify that session may address the regex or regex table
-.Ar domain .
-.It Xo
-.Op Ic \&!
-.Cm for rcpt-to
+.Cm for rcpt-to Oo Cm regex Oc
 .Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that session may address the string or list table
 .Ar recipient .
-.It Xo
-.Op Ic \&!
-.Cm for rcpt-to regex
-.Ar recipient | Pf < Ar recipient Ns >
-.Xc
-Specify that session may address the regex or regex table
-.Ar recipient .
+The
+.Cm regex
+keyword is required if
+.Ar recipient
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
 .Cm from any
@@ -652,20 +648,17 @@ Specify that session may originate from any authenticated user,
 no matter the source IP address.
 .It Xo
 .Op Ic \&!
-.Cm from auth
+.Cm from auth Oo Cm regex Oc
 .Ar user | Pf < Ar user Ns >
 .Xc
 Specify that session may originate from authenticated user or user list
 .Ar user ,
 no matter the source IP address.
-.It Xo
-.Op Ic \&!
-.Cm from auth regex
-.Ar user | Pf < Ar user Ns >
-.Xc
-Specify that session may originate from authenticated regex or regex list
-.Ar user ,
-no matter the source IP address.
+The
+.Cm regex
+keyword is required if
+.Ar user
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
 .Cm from local
@@ -675,20 +668,17 @@ or from the local enqueuer.
 This is the default, and may be omitted.
 .It Xo
 .Op Ic \&!
-.Cm from mail-from
+.Cm from mail-from Oo Cm regex Oc
 .Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that session may originate from sender or sender list
 .Ar sender ,
 no matter the source IP address.
-.It Xo
-.Op Ic \&!
-.Cm from mail-from regex
-.Ar sender | Pf < Ar sender Ns >
-.Xc
-Specify that session may originate from regex or regex list
-.Ar sender ,
-no matter the source IP address.
+The
+.Cm regex
+keyword is required if
+.Ar sender
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
 .Cm from rdns
@@ -697,20 +687,17 @@ Specify that session may only originate from an IP address that
 resolves to a reverse DNS.
 .It Xo
 .Op Ic \&!
-.Cm from rdns
+.Cm from rdns Oo Cm regex Oc
 .Ar hostname | Pf < Ar hostname Ns >
 .Xc
 Specify that session may only originate from an IP address that
 resolves to a reverse DNS matching string or list string
 .Ar hostname .
-.It Xo
-.Op Ic \&!
-.Cm from rdns regex
-.Ar hostname | Pf < Ar hostname Ns >
-.Xc
-Specify that session may only originate from an IP address that
-resolves to a reverse DNS matching regex or list regex
-.Ar hostname .
+The
+.Cm regex
+keyword is required if
+.Ar hostname
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
 .Cm from socket
@@ -718,20 +705,17 @@ resolves to a reverse DNS matching regex or list regex
 Specify that session may only originate from the local enqueuer.
 .It Xo
 .Op Ic \&!
-.Cm from src
+.Cm from src Oo Cm regex Oc
 .Ar address | Pf < Ar address Ns >
 .Xc
 Specify that session may only originate from string or list table
 .Ar address
 which can be a specific address or a subnet expressed in CIDR-notation.
-.It Xo
-.Op Ic \&!
-.Cm from src regex
-.Ar address | Pf < Ar address Ns >
-.Xc
-Specify that session may only originate from regex or regex table
+The
+.Cm regex
+keyword is required if
 .Ar address
-which can be a specific address or a subnet expressed in CIDR-notation.
+is a regular expression or table of regular expressions.
 .El
 .Pp
 In addition, the following transaction options may be matched:
@@ -743,73 +727,63 @@ In addition, the following transaction options may be matched:
 Matches transactions which have been authenticated.
 .It Xo
 .Op Ic \&!
-.Cm auth
+.Cm auth Oo Cm regex Oc
 .Ar username | Pf < Ar username Ns >
 .Xc
 Matches transactions which have been authenticated for user or user list
 .Ar username .
+The
+.Cm regex
+keyword is required if
+.Ar username
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
-.Cm auth regex
-.Ar username | Pf < Ar username Ns >
-.Xc
-Matches transactions which have been authenticated for regex or regex list
-.Ar username .
-.It Xo
-.Op Ic \&!
-.Cm helo
+.Cm helo Oo Cm regex Oc
 .Ar helo-name | Pf < Ar helo-name Ns >
 .Xc
 Specify that session's HELO / EHLO should match the string or list table
 .Ar helo-name .
+The
+.Cm regex
+keyword is required if
+.Ar helo-name
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
-.Cm helo regex
-.Ar helo-name | Pf < Ar helo-name Ns >
-.Xc
-Specify that session's HELO / EHLO should match the regex or regex table
-.Ar helo-name .
-.It Xo
-.Op Ic \&!
-.Cm mail-from
+.Cm mail-from Oo Cm regex Oc
 .Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that transaction's MAIL FROM should match the string or list table
 .Ar sender .
+The
+.Cm regex
+keyword is required if
+.Ar sender
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
-.Cm mail-from regex
-.Ar sender | Pf < Ar sender Ns >
-.Xc
-Specify that transaction's MAIL FROM should match the regex or regex table
-.Ar sender .
-.It Xo
-.Op Ic \&!
-.Cm rcpt-to
+.Cm rcpt-to Oo Cm regex Oc
 .Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that transaction's RCPT TO should match the string or list table
 .Ar recipient .
+The
+.Cm regex
+keyword is required if
+.Ar recipient
+is a regular expression or table of regular expressions.
 .It Xo
 .Op Ic \&!
-.Cm rcpt-to regex
-.Ar recipient | Pf < Ar recipient Ns >
-.Xc
-Specify that transaction's RCPT TO should match the regex or regex table
-.Ar recipient .
-.It Xo
-.Op Ic \&!
-.Cm tag Ar tag
+.Cm tag Oo Cm regex Oc Ar tag
 .Xc
 Matches transactions tagged with the given
 .Ar tag .
-.It Xo
-.Op Ic \&!
-.Cm tag regex Ar tag
-.Xc
-Matches transactions tagged with the given
+The
+.Cm regex
+keyword is required if
 .Ar tag
-regex.
+is a regular expression.
 .It Xo
 .Op Ic \&!
 .Cm tls
