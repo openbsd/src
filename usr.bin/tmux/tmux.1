@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.998 2025/05/12 10:16:42 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.999 2025/05/12 10:26:19 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -5833,6 +5833,12 @@ expands to the length of the variable and
 .Ql w
 to its width when displayed, for example
 .Ql #{n:window_name} .
+.Ql R
+repeats the first argument by a number of times given by the second argument,
+so
+.Ql #{R:a,3}
+will result in
+.Ql aaa .
 .Pp
 Prefixing a time variable with
 .Ql t:\&
