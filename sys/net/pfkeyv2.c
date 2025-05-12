@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.265 2025/05/09 19:53:41 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.266 2025/05/12 17:20:09 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2159,11 +2159,27 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	int i, j, registered;
 
 #ifdef IPSEC
-	int ipsec_def_enc_local, ipsec_def_comp_local, ipsec_def_auth_local;
+	int def_enc_local, def_comp_local, def_auth_local;
+	int soft_allocations_local, exp_allocations_local;
+	int soft_bytes_local, exp_bytes_local;
+	int soft_timeout_local, exp_timeout_local;
+	int soft_first_use_local, exp_first_use_local;
 
-	ipsec_def_enc_local = atomic_load_int(&ipsec_def_enc);
-	ipsec_def_comp_local = atomic_load_int(&ipsec_def_comp);
-	ipsec_def_auth_local = atomic_load_int(&ipsec_def_auth);
+	def_enc_local = atomic_load_int(&ipsec_def_enc);
+	def_comp_local = atomic_load_int(&ipsec_def_comp);
+	def_auth_local = atomic_load_int(&ipsec_def_auth);
+
+	soft_allocations_local = atomic_load_int(&ipsec_soft_allocations);
+	exp_allocations_local = atomic_load_int(&ipsec_exp_allocations);
+
+	soft_bytes_local = atomic_load_int(&ipsec_soft_bytes);
+	exp_bytes_local = atomic_load_int(&ipsec_exp_bytes);
+
+	soft_timeout_local = atomic_load_int(&ipsec_soft_timeout);
+	exp_timeout_local = atomic_load_int(&ipsec_exp_timeout);
+
+	soft_first_use_local = atomic_load_int(&ipsec_soft_first_use);
+	exp_first_use_local = atomic_load_int(&ipsec_exp_first_use);
 #endif
 
 	mtx_enter(&pfkeyv2_mtx);
@@ -2256,7 +2272,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 		if (ipo->ipo_sproto == IPPROTO_ESP) {
 			/* Set the encryption algorithm */
-			switch(ipsec_def_enc_local) {
+			switch(def_enc_local) {
 			case IPSEC_ENC_AES:
 				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_AES;
 				sadb_comb->sadb_comb_encrypt_minbits = 128;
@@ -2288,7 +2304,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			}
 		} else if (ipo->ipo_sproto == IPPROTO_IPCOMP) {
 			/* Set the compression algorithm */
-			switch(ipsec_def_comp_local) {
+			switch(def_comp_local) {
 			case IPSEC_COMP_DEFLATE:
 				sadb_comb->sadb_comb_encrypt =
 				    SADB_X_CALG_DEFLATE;
@@ -2299,7 +2315,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		}
 
 		/* Set the authentication algorithm */
-		switch(ipsec_def_auth_local) {
+		switch(def_auth_local) {
 		case IPSEC_AUTH_HMAC_SHA1:
 			sadb_comb->sadb_comb_auth = SADB_AALG_SHA1HMAC;
 			sadb_comb->sadb_comb_auth_minbits = 160;
@@ -2332,17 +2348,17 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			break;
 		}
 
-		sadb_comb->sadb_comb_soft_allocations = ipsec_soft_allocations;
-		sadb_comb->sadb_comb_hard_allocations = ipsec_exp_allocations;
+		sadb_comb->sadb_comb_soft_allocations = soft_allocations_local;
+		sadb_comb->sadb_comb_hard_allocations = exp_allocations_local;
 
-		sadb_comb->sadb_comb_soft_bytes = ipsec_soft_bytes;
-		sadb_comb->sadb_comb_hard_bytes = ipsec_exp_bytes;
+		sadb_comb->sadb_comb_soft_bytes = soft_bytes_local;
+		sadb_comb->sadb_comb_hard_bytes = exp_bytes_local;
 
-		sadb_comb->sadb_comb_soft_addtime = ipsec_soft_timeout;
-		sadb_comb->sadb_comb_hard_addtime = ipsec_exp_timeout;
+		sadb_comb->sadb_comb_soft_addtime = soft_timeout_local;
+		sadb_comb->sadb_comb_hard_addtime = exp_timeout_local;
 
-		sadb_comb->sadb_comb_soft_usetime = ipsec_soft_first_use;
-		sadb_comb->sadb_comb_hard_usetime = ipsec_exp_first_use;
+		sadb_comb->sadb_comb_soft_usetime = soft_first_use_local;
+		sadb_comb->sadb_comb_hard_usetime = exp_first_use_local;
 #endif
 		sadb_comb++;
 	}
