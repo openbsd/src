@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1260 2025/05/12 10:16:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1261 2025/05/12 10:34:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1990,6 +1990,7 @@ struct client {
 	struct event		 message_timer;
 
 	char			*prompt_string;
+	struct format_tree	*prompt_formats;
 	struct utf8_data	*prompt_buffer;
 	char			*prompt_last;
 	size_t			 prompt_index;
