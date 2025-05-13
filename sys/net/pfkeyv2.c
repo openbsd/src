@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.266 2025/05/12 17:20:09 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.267 2025/05/13 09:16:33 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2159,11 +2159,14 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	int i, j, registered;
 
 #ifdef IPSEC
+	int require_pfs_local;
 	int def_enc_local, def_comp_local, def_auth_local;
 	int soft_allocations_local, exp_allocations_local;
 	int soft_bytes_local, exp_bytes_local;
 	int soft_timeout_local, exp_timeout_local;
 	int soft_first_use_local, exp_first_use_local;
+
+	require_pfs_local = atomic_load_int(&ipsec_require_pfs);
 
 	def_enc_local = atomic_load_int(&ipsec_def_enc);
 	def_comp_local = atomic_load_int(&ipsec_def_comp);
@@ -2267,7 +2270,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	for (j = 0; j < sa_prop->sadb_prop_num; j++) {
 		sadb_comb->sadb_comb_flags = 0;
 #ifdef IPSEC
-		if (ipsec_require_pfs)
+		if (require_pfs_local)
 			sadb_comb->sadb_comb_flags |= SADB_SAFLAGS_PFS;
 
 		if (ipo->ipo_sproto == IPPROTO_ESP) {
