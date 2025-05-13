@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.402 2025/03/27 15:15:46 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.403 2025/05/13 13:41:08 kirill Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 27 2025 $
+.Dd $Mdocdate: May 13 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -245,7 +245,9 @@ interfaces are members of the
 .Dq pppx
 interface group.
 .It
-The interfaces the default routes point to are members of the
+The interfaces from the default
+.Xr rdomain 4
+to which default routes point to are members of the
 .Dq egress
 interface group.
 .It
