@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.h,v 1.5 2024/03/26 00:53:51 dlg Exp $ */
+/* $OpenBSD: kstat.h,v 1.6 2025/05/13 21:20:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -134,6 +134,7 @@ struct kstat_kv {
 #include <sys/tree.h>
 
 struct kstat_lock_ops;
+struct rwlock;
 
 struct kstat {
 	uint64_t		  ks_id;
