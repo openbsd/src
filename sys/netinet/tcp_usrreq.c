@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.245 2025/03/10 15:11:46 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.246 2025/05/13 09:17:41 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1419,22 +1419,40 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case TCPCTL_BADDYNAMIC:
-		NET_LOCK();
-		error = sysctl_struct(oldp, oldlenp, newp, newlen,
-		    baddynamicports.tcp, sizeof(baddynamicports.tcp));
-		NET_UNLOCK();
-		return (error);
-
 	case TCPCTL_ROOTONLY:
-		if (newp && securelevel > 0)
+		if (newp && (int)atomic_load_int(&securelevel) > 0)
 			return (EPERM);
-		NET_LOCK();
-		error = sysctl_struct(oldp, oldlenp, newp, newlen,
-		    rootonlyports.tcp, sizeof(rootonlyports.tcp));
-		NET_UNLOCK();
-		return (error);
+		/* FALLTHROUGH */
+	case TCPCTL_BADDYNAMIC: {
+		struct baddynamicports *ports = (name[0] == TCPCTL_ROOTONLY ?
+		    &rootonlyports : &baddynamicports);
+		const size_t bufitems = DP_MAPSIZE;
+		const size_t buflen = bufitems * sizeof(uint32_t);
+		size_t i;
+		uint32_t *buf;
+		int error;
 
+		buf = malloc(buflen, M_SYSCTL, M_WAITOK | M_ZERO);
+
+		NET_LOCK_SHARED();
+		for (i = 0; i < bufitems; ++i)
+			buf[i] = ports->tcp[i];
+		NET_UNLOCK_SHARED();
+
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    buf, buflen);
+
+		if (error == 0 && newp) {
+			NET_LOCK();
+			for (i = 0; i < bufitems; ++i)
+				ports->tcp[i] = buf[i];
+			NET_UNLOCK();
+		}
+
+		free(buf, M_SYSCTL, buflen);
+
+		return (error);
+	}
 	case TCPCTL_IDENT:
 		return tcp_ident(oldp, oldlenp, newp, newlen, 0);
 
