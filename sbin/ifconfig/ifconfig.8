@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.403 2025/05/13 13:41:08 kirill Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.404 2025/05/13 15:11:54 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -227,37 +227,33 @@ existing (egress, carp, etc.) or user-defined groups.
 .Pp
 Some interfaces belong to specific groups by default:
 .Pp
-.Bl -dash -width Ds -compact
-.It
-All interfaces are members of the
-.Dq all
-interface group.
-.It
-Cloned interfaces are members of their interface family group.
-For example, a PPP interface such as
-.Dq ppp0
-is a member of the
-.Dq ppp
-interface family group.
-.It
-.Xr pppx 4
-interfaces are members of the
-.Dq pppx
-interface group.
-.It
-The interfaces from the default
+.Bl -tag -width netboot -compact
+.It Cm all
+All interfaces.
+.It Cm egress
+Any interfaces in the default
 .Xr rdomain 4
-to which default routes point to are members of the
-.Dq egress
-interface group.
-.It
-IEEE 802.11 wireless interfaces are members of the
-.Dq wlan
-interface group.
-.It
-Any interfaces used for network booting are members of the
-.Dq netboot
-interface group.
+to which default routes point to.
+.It Cm netboot
+Any interfaces used for network booting, e.g. via
+.Xr pxeboot 8 .
+.It Cm pppx
+All
+.Xr pppx 4
+interfaces.
+.It Cm wlan
+All IEEE 802.11 wireless interfaces, e.g.\&
+.Xr athn 4
+or
+.Xr iwx 4 .
+.It Ar driver
+Every cloned interface is in the respective driver group, e.g.\&
+.Dq tun0
+in
+.Cm tun .
+Use
+.Fl C
+to list all possible driver groups.
 .El
 .It Cm -group Ar group-name
 Remove the interface from the given group.
