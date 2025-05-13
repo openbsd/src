@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.16 2025/02/05 11:10:19 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.17 2025/05/13 15:49:42 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 5 2025 $
+.Dd $Mdocdate: May 13 2025 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -105,17 +105,11 @@ If the port provides a
 .Pa pyproject.toml
 file, check the "build-backend" line in the [build-system] section.
 .Nm
-currently supports flit, flit_core, hatchling, hatch-vcs, jupyter_packaging,
-maturin, pbr, pdm, poetry-core, setuptools, setuptools-rust, and setuptools_scm.
-If no
-.Pa pyproject.toml
-is provided then it most likely uses setuptools.
-Setting
-.Ev MODPY_PYBUILD
-adds the backend to
-.Ev MODPY_BUILD_DEPENDS ,
-and sets
-.Ev MODPY_PYTEST .
+currently supports
+flit, flit_core, flit_scm, hatchling, hatch-vcs,
+jupyter_packaging, maturin, mesonpy,
+pbr, pdm, poetry-core, setuptools, setuptools_scm, and
+setuptools-rust.
 In cases where an uncommon backend is used, or where the build backend is
 distributed with the software itself,
 .Ev MODPY_PYBUILD
@@ -123,6 +117,19 @@ can be set to
 .Sq other
 to use the PEP 517 build mechanism without adding a dependency
 for a backend.
+If no
+.Pa pyproject.toml
+is provided then it most likely uses setuptools.
+.Nm
+performs some checks and warns about some incorrect
+.Ev MODPY_PYBUILD
+settings after fake-install.
+Setting
+.Ev MODPY_PYBUILD
+adds the backend to
+.Ev MODPY_BUILD_DEPENDS ,
+and sets
+.Ev MODPY_PYTEST .
 .Pp
 Some checks are done to warn during "make fake" if
 .Ev MODPY_PYBUILD
