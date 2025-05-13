@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.44 2024/07/30 05:57:31 guenther Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.45 2025/05/13 15:16:43 millert Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -94,17 +94,29 @@
  * GCC >= 2.5 uses the __attribute__((attrs)) style.  All of these
  * work for GNU C++ (modulo a slight glitch in the C++ grammar in
  * the distribution version of 2.5.5).
+ *
+ * GCC defines a pure function as depending only on its arguments and
+ * global variables.  Typical examples are strlen and sqrt.
  */
 
 #if !__GNUC_PREREQ__(2, 5) && !defined(__PCC__)
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
-#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-#define	__dead		__volatile
-#define	__pure		__const
 #endif
-#else
+
+#if __GNUC_PREREQ__(2, 5)
 #define __dead		__attribute__((__noreturn__))
-#define __pure		__attribute__((__const__))
+#elif defined(__GNUC__)
+#define	__dead		__volatile
+#else
+#define	__dead		/* delete */
+#endif
+
+#if __GNUC_PREREQ__(2, 96)
+#define	__pure		__attribute__((__pure__))
+#elif defined(__GNUC__)
+#define	__pure		__const
+#else
+#define	__pure		/* delete */
 #endif
 
 #if __GNUC_PREREQ__(2, 7)
