@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.109 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.110 2025/05/13 00:09:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -310,8 +310,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	timeout_del(&sc->sc_tmo_tmpl);
 
 	pflow_flush(sc);
-	task_del(net_tq(ifp->if_index), &sc->sc_outputtask);
-	taskq_barrier(net_tq(ifp->if_index));
+	taskq_del_barrier(net_tq(ifp->if_index), &sc->sc_outputtask);
 	mq_purge(&sc->sc_outputqueue);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
