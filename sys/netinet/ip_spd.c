@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.120 2024/04/17 20:48:51 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.121 2025/05/13 20:06:10 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -888,7 +888,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	mtx_enter(&ipsec_acquire_mtx);
 #ifdef IPSEC
-	if (timeout_add_sec(&ipa->ipa_timeout, ipsec_expire_acquire) == 1)
+	if (timeout_add_sec(&ipa->ipa_timeout,
+	    atomic_load_int(&ipsec_expire_acquire)) == 1)
 		refcnt_take(&ipa->ipa_refcnt);
 #endif
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);

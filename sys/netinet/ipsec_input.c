@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.213 2025/05/13 17:27:53 mvs Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.214 2025/05/13 20:06:10 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -116,7 +116,7 @@ int ipsec_soft_timeout = IPSEC_DEFAULT_SOFT_TIMEOUT;		/* [a] */
 int ipsec_exp_timeout = IPSEC_DEFAULT_EXP_TIMEOUT;		/* [a] */
 int ipsec_soft_first_use = IPSEC_DEFAULT_SOFT_FIRST_USE;	/* [a] */
 int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;		/* [a] */
-int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
+int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;	/* [a] */
 
 int esp_enable = 1;
 int ah_enable = 1;		/* [a] */
@@ -174,10 +174,10 @@ int ipsec_def_comp = IPSEC_COMP_DEFLATE;	/* [a] */
 
 const struct sysctl_bounded_args ipsecctl_vars_locked[] = {
 	{ IPSEC_ENCDEBUG, &encdebug, 0, 1 },
-	{ IPSEC_EXPIRE_ACQUIRE, &ipsec_expire_acquire, 0, INT_MAX },
 };
 
 const struct sysctl_bounded_args ipsecctl_vars[] = {
+	{ IPSEC_EXPIRE_ACQUIRE, &ipsec_expire_acquire, 0, INT_MAX },
 	{ IPSEC_EMBRYONIC_SA_TIMEOUT, &ipsec_keep_invalid, 0, INT_MAX },
 	{ IPSEC_REQUIRE_PFS, &ipsec_require_pfs, 0, 1 },
 	{ IPSEC_SOFT_ALLOCATIONS, &ipsec_soft_allocations, 0, INT_MAX },
@@ -649,7 +649,6 @@ ipsec_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_IPSEC_STATS:
 		return (ipsec_sysctl_ipsecstat(oldp, oldlenp, newp));
 	case IPSEC_ENCDEBUG:
-	case IPSEC_EXPIRE_ACQUIRE:
 		NET_LOCK();
 		error = sysctl_bounded_arr(ipsecctl_vars_locked,
 		    nitems(ipsecctl_vars_locked), name, namelen,
