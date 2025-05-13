@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.10 2022/10/05 05:40:16 jmc Exp $
+.\"   $OpenBSD: tftpd.8,v 1.11 2025/05/13 07:59:57 kn Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
 .\"
-.Dd $Mdocdate: October 5 2022 $
+.Dd $Mdocdate: May 13 2025 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -102,8 +102,10 @@ This option implies
 Do not daemonize.
 If this option is specified,
 .Nm
-will run in the foreground and log
-the client IP, type of request, and filename to stderr.
+will run in the foreground and log to stderr instead of
+.Xr syslog 3 .
+This implies
+.Fl v .
 .It Fl i
 Look up the requested path in the subdirectory named after the
 client's IP address.
