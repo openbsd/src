@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.14 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.15 2025/05/14 15:51:58 schwarze Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -66,43 +67,40 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	for (errors = 0; *argv; argv++) {
-		char *p;
-
-		/* Delete trailing slashes, per POSIX. */
-		p = *argv + strlen(*argv);
-		while (--p > *argv && *p == '/')
-			continue;
-		*++p = '\0';
-
+	for (errors = 0; *argv != NULL; argv++) {
 		if (rmdir(*argv) == -1) {
 			warn("%s", *argv);
 			errors = 1;
 		} else if (pflag)
 			errors |= rm_path(*argv);
 	}
-
-	return (errors);
+	return errors;
 }
 
+/*
+ * Iteratively remove each pathname component, except the
+ * last one, because that one was already removed in main().
+ */
 int
 rm_path(char *path)
 {
 	char *p;
 
-	while ((p = strrchr(path, '/')) != NULL) {
-		/* Delete trailing slashes. */
-		while (--p > path && *p == '/')
-			continue;
-		*++p = '\0';
+	assert(*path != '\0');
+	p = strchr(path, '\0');
+	while (--p > path && *p == '/')
+		continue;
 
-		if (rmdir(path) == -1) {
-			warn("%s", path);
-			return (1);
+	for (; p > path; p--) {
+		if (p[0] == '/' && p[-1] != '/') {
+			p[0] = '\0';
+			if (rmdir(path) == -1) {
+				warn("%s", path);
+				return 1;
+			}
 		}
 	}
-
-	return (0);
+	return 0;
 }
 
 static void __dead
