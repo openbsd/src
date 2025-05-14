@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.279 2025/05/13 17:27:53 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.280 2025/05/14 14:32:15 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -83,7 +83,7 @@ void tdb_hashstats(void);
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
-		if (encdebug)						\
+		if (atomic_load_int(&encdebug))				\
 			printf("%s: " fmt "\n", __func__, ## args);	\
 	} while (0)
 #else

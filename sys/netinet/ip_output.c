@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.408 2025/04/21 09:54:53 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.409 2025/05/14 14:32:15 mvs Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
-		if (encdebug)						\
+		if (atomic_load_int(&encdebug)				\
 			printf("%s: " fmt "\n", __func__, ## args);	\
 	} while (0)
 #else

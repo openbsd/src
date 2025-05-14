@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.100 2025/02/14 13:14:13 dlg Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.101 2025/05/14 14:32:15 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -54,7 +54,7 @@
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
-		if (encdebug)						\
+		if (atomic_load_int(&encdebug))				\
 			printf("%s: " fmt "\n", __func__, ## args);	\
 	} while (0)
 #else

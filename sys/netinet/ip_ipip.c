@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.106 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.107 2025/05/14 14:32:15 mvs Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -80,7 +80,7 @@
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
-		if (encdebug)						\
+		if (atomic_load_int(&encdebug))				\
 			printf("%s: " fmt "\n", __func__, ## args);	\
 	} while (0)
 #else

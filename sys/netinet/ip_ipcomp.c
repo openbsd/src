@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.93 2025/03/02 21:28:32 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.94 2025/05/14 14:32:15 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -59,7 +59,7 @@
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
-		if (encdebug)						\
+		if (atomic_load_int(&encdebug))				\
 			printf("%s: " fmt "\n", __func__, ## args);	\
 	} while (0)
 #else
