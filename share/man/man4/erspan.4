@@ -1,4 +1,4 @@
-.\" $OpenBSD: erspan.4,v 1.1 2025/05/14 01:56:58 dlg Exp $
+.\" $OpenBSD: erspan.4,v 1.2 2025/05/14 04:28:46 jsg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ ERSPAN Type II header.
 .It Dv SIOCDVNETID Fa "struct ifreq *"
 Clear the virtual as the Session ID in the ERSPAN Type II header.
 If the Session ID and tunnel destination address are unspecified, the
-initerface will accept packet with any Session ID.
+interface will accept packets with any Session ID.
 .It Dv SIOCSLIFPHYRTABLE Fa "struct ifreq *"
 Set the routing table the tunnel traffic operates in.
 The routing table may only be configured while the interface is down.
