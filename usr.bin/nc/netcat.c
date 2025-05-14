@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.229 2024/11/02 17:19:27 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.230 2025/05/14 08:56:41 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1692,6 +1692,8 @@ process_tls_opt(char *s, int *flags)
 					errx(1, "invalid tls value `%s'", s);
 				*t->value = v;
 			} else {
+				if (v != NULL)
+					errx(1, "invalid tls value `%s'", s);
 				*flags |= t->flag;
 			}
 			return 1;
