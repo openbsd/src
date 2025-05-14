@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.185 2025/05/14 01:54:12 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.186 2025/05/14 02:00:18 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -5054,6 +5054,8 @@ erspan_input(struct gre_tunnel *key, struct mbuf *m, int iphlen,
 
 		if_vinput(&sc->sc_ac.ac_if, m, ns);
 	} else {
+		counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes,
+		    m->m_pkthdr.len - hlen);
 #if NBPFILTER > 0
 		if_bpf = ifp->if_bpf;
 		if (if_bpf) {
