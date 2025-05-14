@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.184 2025/03/02 21:28:31 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.185 2025/05/14 01:54:12 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -152,7 +152,9 @@ struct gre_h_wccp {
 	uint8_t			pri_bucket;
 } __packed __aligned(4);
 
-#define GRE_WCCP 0x883e
+#define GRE_WCCP		0x883e
+#define GRE_ERSPAN		0x88be /* also ERSPAN Type II */
+#define GRE_ERSPAN_III		0x22eb
 
 #define GRE_HDRLEN (sizeof(struct ip) + sizeof(struct gre_header))
 
@@ -535,6 +537,75 @@ struct if_clone eoip_cloner =
 struct eoip_tree eoip_tree = RBT_INITIALIZER();
 
 /*
+ * ERSPAN support
+ */
+
+struct gre_h_erspan {
+	uint32_t		hdr;
+#define ERSPAN_II_VER_SHIFT		28
+#define ERSPAN_II_VER_MASK		0xf
+#define ERSPAN_II_VER			0x1
+#define ERSPAN_II_VLAN_SHIFT		16
+#define ERSPAN_II_VLAN_MASK		0xfff
+#define ERSPAN_II_COS_SHIFT		13
+#define ERSPAN_II_COS_MASK		0x7
+#define ERSPAN_II_EN_SHIFT		11 /* Encapsulation type */
+#define ERSPAN_II_EN_MASK		0x3
+#define ERSPAN_II_EN_NONE		0x0
+#define ERSPAN_II_EN_ISL		0x1
+#define ERSPAN_II_EN_VLAN		0x2
+#define ERSPAN_II_EN_PRESERVED		0x3
+#define ERSPAN_II_EN_PRESERVED		0x3
+#define ERSPAN_II_T			(0x1 << 10)
+#define ERSPAN_II_SESSION_ID_SHIFT	0
+#define ERSPAN_II_SESSION_ID_MASK	0x3ff /* 10 bits */
+	uint32_t		index;
+#define ERSPAN_II_INDEX_SHIFT		0
+#define ERSPAN_II_INDEX_MASK		0xfffff /* 20 bits */
+};
+
+struct erspan_softc {
+	struct gre_tunnel	sc_tunnel; /* must be first */
+	int			sc_session_id;
+	RBT_ENTRY(erspan_softc)	sc_entry;
+
+	struct arpcom		sc_ac;
+	uint32_t		sc_seq;
+	caddr_t			sc_bpf;
+};
+
+RBT_HEAD(erspan_tree, erspan_softc);
+
+static inline int
+		erspan_cmp(const struct erspan_softc *,
+		    const struct erspan_softc *);
+
+RBT_PROTOTYPE(erspan_tree, erspan_softc, sc_entry, erspan_cmp);
+
+static int	erspan_clone_create(struct if_clone *, int);
+static int	erspan_clone_destroy(struct ifnet *);
+
+static void	erspan_start(struct ifnet *);
+static int	erspan_ioctl(struct ifnet *, u_long, caddr_t);
+
+static int	erspan_up(struct erspan_softc *);
+static int	erspan_down(struct erspan_softc *);
+
+static struct mbuf *
+		erspan_encap(struct erspan_softc *, struct mbuf *, uint8_t,
+		    uint32_t);
+
+static struct mbuf *
+		erspan_input(struct gre_tunnel *, struct mbuf *, int,
+		    const struct gre_header *, uint8_t, struct netstack *);
+
+struct if_clone erspan_cloner =
+    IF_CLONE_INITIALIZER("erspan", erspan_clone_create, erspan_clone_destroy);
+
+/* protected by NET_LOCK */
+struct erspan_tree erspan_tree = RBT_INITIALIZER();
+
+/*
  * It is not easy to calculate the right value for a GRE MTU.
  * We leave this task to the admin and use the same default that
  * other vendors use.
@@ -561,6 +632,7 @@ greattach(int n)
 	if_clone_attach(&egre_cloner);
 	if_clone_attach(&nvgre_cloner);
 	if_clone_attach(&eoip_cloner);
+	if_clone_attach(&erspan_cloner);
 }
 
 static int
@@ -889,6 +961,7 @@ eoip_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
+
 int
 gre_input(struct mbuf **mp, int *offp, int type, int af, struct netstack *ns)
 {
@@ -1041,6 +1114,18 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 			return (IPPROTO_DONE);
 		/* FALLTHROUGH */
 	default:
+		goto decline;
+	}
+
+	/*
+	 * ERSPAN I uses no bits in the header, and II uses sequence numbers.
+	 * handle them before limiting what flags we support. 
+	 */
+	if (gh->gre_proto == htons(GRE_ERSPAN)) {
+		m = erspan_input(key, m, iphlen, gh, otos, ns);
+		if (m == NULL)
+			return (IPPROTO_DONE);
+
 		goto decline;
 	}
 
@@ -4237,10 +4322,8 @@ RBT_GENERATE(nvgre_ucast_tree, nvgre_softc, sc_uentry, nvgre_cmp_ucast);
 RBT_GENERATE(nvgre_mcast_tree, nvgre_softc, sc_mentry, nvgre_cmp_mcast_sc);
 
 static inline int
-eoip_cmp(const struct eoip_softc *ea, const struct eoip_softc *eb)
+gre_tunnel_key_cmp(const struct gre_tunnel *a, const struct gre_tunnel *b)
 {
-	const struct gre_tunnel *a = &ea->sc_tunnel;
-	const struct gre_tunnel *b = &eb->sc_tunnel;
 	int rv;
 
 	if (a->t_key > b->t_key)
@@ -4269,6 +4352,13 @@ eoip_cmp(const struct eoip_softc *ea, const struct eoip_softc *eb)
 		return (rv);
 
 	return (0);
+
+}
+
+static inline int
+eoip_cmp(const struct eoip_softc *ea, const struct eoip_softc *eb)
+{
+	return (gre_tunnel_key_cmp(&ea->sc_tunnel, &eb->sc_tunnel));
 }
 
 RBT_GENERATE(eoip_tree, eoip_softc, sc_entry, eoip_cmp);
@@ -4342,3 +4432,652 @@ nvgre_eb_port_sa(void *arg, struct sockaddr_storage *ss, void *port)
 		unhandled_af(sc->sc_tunnel.t_af);
 	}
 }
+
+/*
+ * ERSPAN
+ */
+
+static int
+erspan_clone_create(struct if_clone *ifc, int unit)
+{
+	struct erspan_softc *sc;
+	struct ifnet *ifp;
+
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	ifp = &sc->sc_ac.ac_if;
+
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
+	    ifc->ifc_name, unit);
+
+	ifp->if_softc = sc;
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
+	ifp->if_ioctl = erspan_ioctl;
+	ifp->if_start = erspan_start;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MONITOR;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#if 0 && NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+	ether_fakeaddr(ifp);
+
+	sc->sc_tunnel.t_key = ~0;
+	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_txhprio = IF_HDRPRIO_PACKET; /* XXX */
+	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PAYLOAD;
+	sc->sc_tunnel.t_df = htons(0);
+
+	if_counters_alloc(ifp);
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+#if NBPFILTER > 0
+	/* attach after Ethernet */
+	bpfattach(&sc->sc_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+#endif
+
+	return (0);
+}
+
+static int
+erspan_clone_destroy(struct ifnet *ifp)
+{
+	struct erspan_softc *sc = ifp->if_softc;
+
+	NET_LOCK();
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		erspan_down(sc);
+	NET_UNLOCK();
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	free(sc, M_DEVBUF, sizeof(*sc));
+
+	return (0);
+}
+
+static int
+erspan_set_tunnel(struct erspan_softc *sc, struct if_laddrreq *req)
+{
+	struct gre_tunnel *tunnel = &sc->sc_tunnel;
+	struct sockaddr *addr = (struct sockaddr *)&req->addr;
+	struct sockaddr *dstaddr = (struct sockaddr *)&req->dstaddr;
+	struct sockaddr_in *src4;
+#ifdef INET6
+	struct sockaddr_in6 *src6;
+	int error;
+#endif
+	uint32_t mask = 0;
+
+	/* validate */
+	switch (addr->sa_family) {
+	case AF_INET:
+		if (addr->sa_len != sizeof(*src4))
+			return (EINVAL);
+
+		src4 = (struct sockaddr_in *)addr;
+		if (in_nullhost(src4->sin_addr) ||
+		    IN_MULTICAST(src4->sin_addr.s_addr))
+			return (EINVAL);
+
+		if (dstaddr->sa_family == AF_UNSPEC)
+			tunnel->t_dst4.s_addr = INADDR_ANY;
+		else if (dstaddr->sa_family != AF_INET)
+			return (EINVAL);
+		else {
+			struct sockaddr_in *daddr4 = satosin(dstaddr);
+			if (in_nullhost(daddr4->sin_addr) ||
+			    IN_MULTICAST(daddr4->sin_addr.s_addr))
+				return (EINVAL);
+			
+			tunnel->t_dst4 = daddr4->sin_addr;
+			mask = 1;
+		}
+		tunnel->t_src4 = src4->sin_addr;
+
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (addr->sa_len != sizeof(*src6))
+			return (EINVAL);
+
+		src6 = (struct sockaddr_in6 *)addr;
+		if (IN6_IS_ADDR_UNSPECIFIED(&src6->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&src6->sin6_addr))
+			return (EINVAL);
+
+		error = in6_embedscope(&tunnel->t_src6, src6, NULL, NULL);
+		if (error != 0)
+			return (error);
+
+		if (dstaddr->sa_family == AF_UNSPEC)
+			memset(&tunnel->t_dst6, 0, sizeof(tunnel->t_dst6));
+		else if (dstaddr->sa_family != AF_INET6)
+			return (EINVAL);
+		else {
+			struct sockaddr_in6 *dst6 = satosin6(dstaddr);
+			if (IN6_IS_ADDR_UNSPECIFIED(&dst6->sin6_addr) ||
+			    IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
+				return (EINVAL);
+
+			if (src6->sin6_scope_id != dst6->sin6_scope_id)
+				return (EINVAL);
+
+			error = in6_embedscope(&tunnel->t_dst6, dst6,
+			    NULL, NULL);
+			if (error != 0)
+				return (error);
+			mask = 1;
+		}
+
+		error = in6_embedscope(&tunnel->t_src6, src6, NULL, NULL);
+		if (error != 0)
+			return (error);
+
+		break;
+#endif
+	default:
+		return (EAFNOSUPPORT);
+	}
+
+	/* commit */
+	tunnel->t_af = addr->sa_family;
+	tunnel->t_key_mask = mask; /* set if dstaddr set */
+
+	return (0);
+}
+
+static int
+erspan_get_tunnel(struct erspan_softc *sc, struct if_laddrreq *req)
+{
+	struct gre_tunnel *tunnel = &sc->sc_tunnel;
+	struct sockaddr *dstaddr = (struct sockaddr *)&req->dstaddr;
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
+
+	switch (tunnel->t_af) {
+	case AF_UNSPEC:
+		return (EADDRNOTAVAIL);
+	case AF_INET:
+		sin = (struct sockaddr_in *)&req->addr;
+		memset(sin, 0, sizeof(*sin));
+		sin->sin_family = AF_INET;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_addr = tunnel->t_src4;
+
+		if (!tunnel->t_key_mask)
+			goto unspec;
+
+		sin = (struct sockaddr_in *)dstaddr;
+		memset(sin, 0, sizeof(*sin));
+		sin->sin_family = AF_INET;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_addr = tunnel->t_dst4;
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&req->addr;
+		memset(sin6, 0, sizeof(*sin6));
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_len = sizeof(*sin6);
+		in6_recoverscope(sin6, &tunnel->t_src6);
+
+		if (!tunnel->t_key_mask)
+			goto unspec;
+
+		sin6 = (struct sockaddr_in6 *)dstaddr;
+		memset(sin6, 0, sizeof(*sin6));
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_len = sizeof(*sin6);
+		in6_recoverscope(sin6, &tunnel->t_dst6);
+		break;
+#endif
+	default:
+		unhandled_af(tunnel->t_af);
+	}
+
+	return (0);
+
+unspec:
+	dstaddr->sa_len = 2;
+	dstaddr->sa_family = AF_UNSPEC;
+
+	return (0);
+}
+
+static int
+erspan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct erspan_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int error = 0;
+
+	switch(cmd) {
+	case SIOCSIFADDR:
+		break;
+	case SIOCSIFFLAGS:
+		if (ISSET(ifp->if_flags, IFF_UP)) {
+			if (!ISSET(ifp->if_flags, IFF_RUNNING))
+				error = erspan_up(sc);
+			else
+				error = 0;
+		} else {
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				error = erspan_down(sc);
+		}
+		break;
+
+	case SIOCSVNETID:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		if (ifr->ifr_vnetid < 0 ||
+		    ifr->ifr_vnetid > ERSPAN_II_SESSION_ID_MASK)
+			return (EINVAL);
+
+		sc->sc_tunnel.t_key = ifr->ifr_vnetid; /* for cmp */
+		break;
+	case SIOCGVNETID:
+		if (sc->sc_tunnel.t_key == ~0)
+			return (EADDRNOTAVAIL);
+		ifr->ifr_vnetid = sc->sc_tunnel.t_key;
+		break;
+	case SIOCDVNETID:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+		sc->sc_tunnel.t_key = ~0;
+		break;
+
+	case SIOCSLIFPHYADDR:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+
+		error = erspan_set_tunnel(sc, (struct if_laddrreq *)data);
+		break;
+	case SIOCGLIFPHYADDR:
+		error = erspan_get_tunnel(sc, (struct if_laddrreq *)data);
+		break;
+	case SIOCDIFPHYADDR:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+
+		/* commit */
+		sc->sc_tunnel.t_af = AF_UNSPEC;
+		sc->sc_tunnel.t_key_mask = 0; /* dstaddr is not set */
+		break;
+
+	case SIOCSLIFPHYRTABLE:
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			error = EBUSY;
+			break;
+		}
+
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
+		    !rtable_exists(ifr->ifr_rdomainid)) {
+			error = EINVAL;
+			break;
+		}
+		sc->sc_tunnel.t_rtableid = ifr->ifr_rdomainid;
+		break;
+	case SIOCGLIFPHYRTABLE:
+		ifr->ifr_rdomainid = sc->sc_tunnel.t_rtableid;
+		break;
+
+	case SIOCSLIFPHYTTL:
+		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
+			error = EINVAL;
+			break;
+		}
+
+		/* commit */
+		sc->sc_tunnel.t_ttl = (uint8_t)ifr->ifr_ttl;
+		break;
+	case SIOCGLIFPHYTTL:
+		ifr->ifr_ttl = (int)sc->sc_tunnel.t_ttl;
+		break;
+
+	case SIOCSLIFPHYDF:
+		/* commit */
+		sc->sc_tunnel.t_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = sc->sc_tunnel.t_df ? 1 : 0;
+		break;
+
+	case SIOCSTXHPRIO:
+		error = if_txhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_rxhprio;
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+
+	default:
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
+		break;
+	}
+
+	if (error == ENETRESET) {
+		/* no hardware to program */
+		error = 0;
+	}
+
+	return (error);
+}
+
+static int
+erspan_up(struct erspan_softc *sc)
+{
+	struct gre_tunnel *tunnel = &sc->sc_tunnel;
+
+	if (tunnel->t_af == AF_UNSPEC)
+		return (EDESTADDRREQ);
+	if (tunnel->t_key == ~0 && tunnel->t_key_mask) {
+		/* wildcard session id and t_dst is not set */
+		return (EDESTADDRREQ);
+	}
+
+	NET_ASSERT_LOCKED();
+
+	if (RBT_INSERT(erspan_tree, &erspan_tree, sc) != NULL)
+		return (EADDRINUSE);
+
+	SET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING);
+
+	return (0);
+}
+
+static int
+erspan_down(struct erspan_softc *sc)
+{
+	NET_ASSERT_LOCKED();
+	CLR(sc->sc_ac.ac_if.if_flags, IFF_RUNNING);
+
+	RBT_REMOVE(erspan_tree, &erspan_tree, sc);
+
+	return (0);
+}
+
+static void
+erspan_start(struct ifnet *ifp)
+{
+	struct erspan_softc *sc = ifp->if_softc;
+	struct mbuf *m0, *m;
+	uint32_t session_id = sc->sc_tunnel.t_key;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+
+	if (!atomic_load_int(&gre_allow) ||
+	    !sc->sc_tunnel.t_key_mask || /* dstaddr is not set */
+	    session_id == ~0) {
+		ifq_purge(&ifp->if_snd);
+		return;
+	}
+
+	while ((m0 = ifq_dequeue(&ifp->if_snd)) != NULL) {
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap_ether(if_bpf, m0, BPF_DIRECTION_OUT);
+#endif
+
+		/* force prepend mbuf because of alignment problems */
+		m = m_get(M_DONTWAIT, m0->m_type);
+		if (m == NULL) {
+			m_freem(m0);
+			continue;
+		}
+
+		M_MOVE_PKTHDR(m, m0);
+		m->m_next = m0;
+
+		m_align(m, 0);
+		m->m_len = 0;
+
+		m = erspan_encap(sc, m, gre_l2_tos(&sc->sc_tunnel, m),
+		    session_id);
+		if (m == NULL) {
+			ifp->if_oerrors++;
+			continue;
+		}
+#if NBPFILTER > 0
+		if_bpf = sc->sc_bpf;
+		if (if_bpf) {
+			bpf_mtap_af(if_bpf, sc->sc_tunnel.t_af, m,
+			    BPF_DIRECTION_OUT);
+		}
+#endif
+		if (gre_ip_output(&sc->sc_tunnel, m) != 0) {
+			ifp->if_oerrors++;
+			continue;
+		}
+	}
+}
+
+static struct mbuf *
+erspan_encap(struct erspan_softc *sc, struct mbuf *m, uint8_t tos,
+    uint32_t session_id)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct gre_header *gh;
+	struct gre_h_seq *seqh;
+	struct gre_h_erspan *erspanh;
+	uint32_t hdr;
+
+	m = m_prepend(m, sizeof(*gh) + sizeof(*seqh) + sizeof(*erspanh),
+	    M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	gh = mtod(m, struct gre_header *);
+	gh->gre_flags = htons(GRE_VERS_0 | GRE_SP);
+	gh->gre_proto = htons(GRE_ERSPAN);
+
+	seqh = (struct gre_h_seq *)(gh + 1);
+	htobem32(&seqh->gre_seq, sc->sc_seq++);
+
+	hdr = session_id << ERSPAN_II_SESSION_ID_SHIFT;
+	hdr |= m->m_pkthdr.pf.prio << ERSPAN_II_COS_SHIFT;
+#if 0 && NVLAN > 0
+	if (ISSET(m->m_flags, M_VLANTAG)) {
+		hdr |= ERSPAN_II_EN_VLAN << ERSPAN_II_EN_SHIFT;
+		hdr |= (m->m_pkthdr.ether_vlan & ERSPAN_II_VLAN_MASK) <<
+		    ERSPAN_II_VLAN_SHIFT;
+		CLR(m->m_flags, M_VLANTAG);
+	} /* else?? */
+#endif
+	hdr |= ERSPAN_II_VER << ERSPAN_II_VER_SHIFT;
+
+	erspanh = (struct gre_h_erspan *)(seqh + 1);
+	htobem32(&erspanh->hdr, hdr);
+	htobem32(&erspanh->index, ISSET(ifp->if_flags, IFF_LINK0) ?
+	    m->m_pkthdr.ph_ifidx : 0);
+
+	return (gre_encap_ip(&sc->sc_tunnel, m, sc->sc_tunnel.t_ttl, tos));
+}
+
+static struct mbuf *
+erspan_input(struct gre_tunnel *key, struct mbuf *m, int iphlen,
+    const struct gre_header *gh, uint8_t otos, struct netstack *ns)
+{
+	struct erspan_softc *sc;
+	struct ifnet *ifp;
+	struct gre_h_seq *seqh;
+	struct gre_h_erspan *erspanh;
+	uint32_t hdr;
+	int hlen;
+	caddr_t buf;
+	int input = 1;
+	int rxprio;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+
+	/* ERSPAN Type II */
+	if (gh->gre_flags != htons(GRE_SP | GRE_VERS_0))
+		goto decline;
+
+	hlen = iphlen + sizeof(*gh) + sizeof(*seqh) + sizeof(*erspanh);
+	if (m->m_pkthdr.len < hlen)
+		goto decline;
+
+	m = m_pullup(m, hlen);
+	if (m == NULL)
+		return (NULL);
+
+	buf = mtod(m, caddr_t);
+	gh = (struct gre_header *)(buf + iphlen);
+	seqh = (struct gre_h_seq *)(gh + 1);
+	erspanh = (struct gre_h_erspan *)(seqh + 1);
+
+	hdr = bemtoh32(&erspanh->hdr);
+
+	key->t_key = (hdr >> ERSPAN_II_SESSION_ID_SHIFT) &
+	    ERSPAN_II_SESSION_ID_MASK;
+
+	NET_ASSERT_LOCKED();
+	sc = RBT_FIND(erspan_tree, &erspan_tree,
+	    (const struct erspan_softc *)key);
+	if (sc == NULL) {
+		/* try for a wildcard listener */
+		struct gre_tunnel wkey = {
+			.t_af = key->t_af,
+			.t_rtableid = key->t_rtableid,
+			.t_src = key->t_src,
+			.t_key = key->t_key,
+		};
+
+		input = 0;
+		sc = RBT_FIND(erspan_tree, &erspan_tree,
+		    (const struct erspan_softc *)&wkey);
+		if (sc == NULL) {
+			/* last resort is a wildcard listener without a key */
+			wkey.t_key = ~0;
+			sc = RBT_FIND(erspan_tree, &erspan_tree,
+			    (const struct erspan_softc *)&wkey);
+			if (sc == NULL) {
+				goto decline;
+			}
+		}
+	}
+
+	/* it's ours now */
+	ifp = &sc->sc_ac.ac_if;
+
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf) {
+		if (bpf_mtap_af(if_bpf, key->t_af, m, BPF_DIRECTION_IN))
+			input = 0;
+	}
+#endif
+
+#if 0
+	/*
+	 * this appears to be metadata from the switch rather than
+	 * an offload for the payload.
+	 */
+	switch ((hdr >> ERSPAN_II_EN_SHIFT) & ERSPAN_II_EN_MASK) {
+	case ERSPAN_II_EN_ISL: /* this is cheeky */
+	case ERSPAN_II_EN_VLAN:
+#if NVLAN > 0
+		m->m_pkthdr.ether_vtag = (hdr >> ERSPAN_II_VLAN_SHIFT) &
+		    ERSPAN_II_VLAN_MASK;
+		m->m_pkthdr.ether_vtag |= ((hdr >> ERSPAN_II_COS_SHIFT) &
+		    ERSPAN_II_COS_MASK) << 13;
+                m->m_flags |= M_VLANTAG;
+#else
+		input = 0;
+#endif
+		break;
+	default:
+		break;
+	}
+#endif
+
+	rxprio = sc->sc_tunnel.t_rxhprio;
+	switch (rxprio) {
+	case IF_HDRPRIO_PACKET:
+		/* nop */
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(otos);
+		break;
+	case IF_HDRPRIO_PAYLOAD:
+		m->m_pkthdr.pf.prio = (hdr >> ERSPAN_II_COS_SHIFT) &
+		    ERSPAN_II_COS_MASK;
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxprio;
+		break;
+	}
+
+	if (hdr & ERSPAN_II_T)
+		input = 0;
+
+	if (input) {
+		m = gre_ether_align(m, hlen);
+		if (m == NULL)
+			return (NULL);
+
+		CLR(m->m_flags, M_MCAST|M_BCAST);
+
+		if_vinput(&sc->sc_ac.ac_if, m, ns);
+	} else {
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf) {
+			m_adj(m, hlen);
+			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN);
+		}
+#endif
+
+		goto drop;
+	}
+
+	return (NULL);
+
+decline:
+	return (m);
+drop:
+	m_freem(m);
+	return (NULL);
+}
+
+static inline int
+erspan_cmp(const struct erspan_softc *ea, const struct erspan_softc *eb)
+{
+	return (gre_tunnel_key_cmp(&ea->sc_tunnel, &eb->sc_tunnel));
+}
+
+RBT_GENERATE(erspan_tree, erspan_softc, sc_entry, erspan_cmp);
