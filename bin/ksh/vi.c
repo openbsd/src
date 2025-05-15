@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.63 2025/04/27 17:06:58 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.64 2025/05/15 17:07:13 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -1869,7 +1869,7 @@ display(char *wb1, char *wb2, int leftside)
 					}
 				} else {
 					*twb1++ = ch;
-					if (!isu8cont(ch))
+					if (col == 0 || !isu8cont(ch))
 						col++;
 				}
 			}
@@ -1908,8 +1908,9 @@ display(char *wb1, char *wb2, int leftside)
 			 * the previous byte was the last one written.
 			 */
 
-			if (col > 0 && isu8cont(*twb1)) {
-				col--;
+			if (isu8cont(*twb1)) {
+				if (col > pwidth)
+					col--;
 				if (lastb >= 0 && twb1 == wb1 + lastb + 1)
 					cur_col = col;
 				else while (twb1 > wb1 && isu8cont(*twb1)) {
@@ -1933,7 +1934,7 @@ display(char *wb1, char *wb2, int leftside)
 			}
 			lastb = *twb1 & 0x80 ? twb1 - wb1 : -1;
 			cur_col++;
-		} else if (isu8cont(*twb1))
+		} else if (twb1 > wb1 && isu8cont(*twb1))
 			continue;
 
 		/*
