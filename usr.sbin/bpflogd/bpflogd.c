@@ -1,4 +1,4 @@
-/* */
+/*	$OpenBSD: bpflogd.c,v 1.5 2025/05/15 12:49:05 kn Exp $	*/
 
 /*
  * Copyright (c) 2025 The University of Queensland
@@ -382,6 +382,8 @@ main(int argc, char *argv[])
 
 	if (unveil(bd->bd_fname, "rwc") == -1)
 		err(1, "unveil %s", bd->bd_fname);
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	bd->bd_fd = bpflog_open(bd);
 	if (bd->bd_fd == -1) {

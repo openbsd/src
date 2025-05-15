@@ -1,3 +1,4 @@
+/*	$OpenBSD: log.c,v 1.2 2025/05/15 12:49:05 kn Exp $	*/
 
 /*
  * Copyright (c) 2008 David Gwynne <loki@animata.net>
