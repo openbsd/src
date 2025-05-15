@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.86 2025/03/02 21:28:32 bluhm Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.87 2025/05/15 10:16:40 semarie Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -160,6 +160,7 @@ static void pppoe_abort_connect(struct pppoe_softc *);
 static int  pppoe_ioctl(struct ifnet *, unsigned long, caddr_t);
 static void pppoe_tls(struct sppp *);
 static void pppoe_tlf(struct sppp *);
+static int  pppoe_enqueue(struct ifnet *, struct mbuf *);
 static void pppoe_start(struct ifnet *);
 
 /* internal timeout handling */
@@ -248,6 +249,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_if.if_input = p2p_input;
 	sc->sc_sppp.pp_if.if_bpf_mtap = p2p_bpf_mtap;
 	sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
+	sc->sc_sppp.pp_if.if_enqueue = pppoe_enqueue;
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
 	sc->sc_sppp.pp_if.if_rtrequest = p2p_rtrequest;
 	sc->sc_sppp.pp_if.if_xflags = IFXF_CLONED;
@@ -1541,13 +1543,55 @@ pppoe_tlf(struct sppp *sp)
 	timeout_add_msec(&sc->sc_timeout, 20);
 }
 
+int
+pppoe_transmit(struct pppoe_softc *sc, struct mbuf *m)
+{
+	size_t len;
+	uint8_t *p;
+
+	len = m->m_pkthdr.len;
+	M_PREPEND(m, PPPOE_HEADERLEN, M_DONTWAIT);
+	if (m == NULL)
+		return (ENOBUFS);
+
+	p = mtod(m, u_int8_t *);
+	PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
+
+#if NBPFILTER > 0
+	if (sc->sc_sppp.pp_if.if_bpf)
+		bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+	return (pppoe_output(sc, m));
+}
+
+int
+pppoe_enqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	struct pppoe_softc *sc;
+	int error;
+
+	if (!ifq_is_priq(&ifp->if_snd))
+		return (if_enqueue_ifq(ifp, m));
+
+	sc = ifp->if_softc;
+	if (sc->sc_state < PPPOE_STATE_SESSION) {
+		m_freem(m);
+		return (ENETDOWN);
+	}
+
+	error = pppoe_transmit(sc, m);
+	if (error != 0)
+		counters_inc(ifp->if_counters, ifc_oerrors);
+
+	return (error);
+}
+
 static void
 pppoe_start(struct ifnet *ifp)
 {
 	struct pppoe_softc *sc = (void *)ifp;
 	struct mbuf *m;
-	size_t len;
-	u_int8_t *p;
 
 	if (sppp_isempty(ifp))
 		return;
@@ -1558,21 +1602,6 @@ pppoe_start(struct ifnet *ifp)
 		return;
 	}
 
-	while ((m = sppp_dequeue(ifp)) != NULL) {
-		len = m->m_pkthdr.len;
-		M_PREPEND(m, PPPOE_HEADERLEN, M_DONTWAIT);
-		if (m == NULL) {
-			ifp->if_oerrors++;
-			continue;
-		}
-		p = mtod(m, u_int8_t *);
-		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
-
-#if NBPFILTER > 0
-		if (sc->sc_bpf)
-			bpf_mtap(sc->sc_bpf, m, BPF_DIRECTION_OUT);
-#endif
-
-		pppoe_output(sc, m);
-	}
+	while ((m = sppp_dequeue(ifp)) != NULL)
+		pppoe_transmit(sc, m);
 }
