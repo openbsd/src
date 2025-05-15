@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.203 2025/05/11 20:03:08 mvs Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.204 2025/05/15 19:56:08 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -206,8 +206,6 @@ struct	pool knote_pool;
 struct	pool kqueue_pool;
 struct	mutex kqueue_klist_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
 struct	rwlock kqueue_ps_list_lock = RWLOCK_INITIALIZER("kqpsl");
-int kq_ntimeouts = 0;			/* [a] */
-int kq_timeoutmax = (4 * 1024);		/* [I] */
 unsigned int kq_usereventsmax = 1024;	/* per process */
 
 #define KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
@@ -698,16 +696,19 @@ filt_timerexpire(void *knx)
 int
 filt_timerattach(struct knote *kn)
 {
+	struct filedesc *fdp = kn->kn_kq->kq_fdp;
 	struct timespec ts;
 	struct filt_timer *ft;
+	u_int nuserevents;
 	int error;
 
 	error = filt_timervalidate(kn->kn_sfflags, kn->kn_sdata, &ts);
 	if (error != 0)
 		return (error);
 
-	if (atomic_inc_int_nv(&kq_ntimeouts) > kq_timeoutmax) {
-		atomic_dec_int(&kq_ntimeouts);
+	nuserevents = atomic_inc_int_nv(&fdp->fd_nuserevents);
+	if (nuserevents > atomic_load_int(&kq_usereventsmax)) {
+		atomic_dec_int(&fdp->fd_nuserevents);
 		return (ENOMEM);
 	}
 
@@ -729,6 +730,7 @@ filt_timerattach(struct knote *kn)
 void
 filt_timerdetach(struct knote *kn)
 {
+	struct filedesc *fdp = kn->kn_kq->kq_fdp;
 	struct filt_timer *ft = kn->kn_hook;
 
 	mtx_enter(&ft->ft_mtx);
@@ -737,7 +739,7 @@ filt_timerdetach(struct knote *kn)
 
 	timeout_del_barrier(&ft->ft_to);
 	free(ft, M_KEVENT, sizeof(*ft));
-	atomic_dec_int(&kq_ntimeouts);
+	atomic_dec_int(&fdp->fd_nuserevents);
 }
 
 int
