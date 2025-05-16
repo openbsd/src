@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.61 2023/01/11 03:28:42 visa Exp $
+#	$OpenBSD: GENERIC,v 1.62 2025/05/16 16:35:12 kirill Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -215,3 +215,4 @@ owtemp* 	at onewire?	# Temperature
 owctr*		at onewire?	# Counter device
 
 pseudo-device	openprom
+pseudo-device	dt
