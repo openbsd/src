@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcm128test.c,v 1.7 2022/09/05 21:06:31 tb Exp $	*/
+/*	$OpenBSD: gcm128test.c,v 1.8 2025/05/16 14:03:49 jsing Exp $	*/
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -56,11 +56,6 @@
 
 #include <openssl/aes.h>
 #include <openssl/modes.h>
-
-/* XXX - something like this should be in the public headers. */
-struct gcm128_context {
-	uint64_t opaque[64];
-};
 
 struct gcm128_test {
 	const uint8_t K[128];
@@ -856,7 +851,7 @@ struct gcm128_test gcm128_tests[] = {
 static int
 do_gcm128_test(int test_no, struct gcm128_test *tv)
 {
-	GCM128_CONTEXT ctx;
+	GCM128_CONTEXT *ctx;
 	AES_KEY key;
 	uint8_t *out = NULL;
 	size_t out_len;
@@ -873,13 +868,16 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 
 	if (out_len != 0)
 		memset(out, 0, out_len);
-	CRYPTO_gcm128_init(&ctx, &key, (block128_f)AES_encrypt);
-	CRYPTO_gcm128_setiv(&ctx, tv->IV, tv->IV_len);
+
+	if ((ctx = CRYPTO_gcm128_new(&key, (block128_f)AES_encrypt)) == NULL)
+		err(1, "CRYPTO_gcm128_new");
+
+	CRYPTO_gcm128_setiv(ctx, tv->IV, tv->IV_len);
 	if (tv->A_len > 0)
-		CRYPTO_gcm128_aad(&ctx, tv->A, tv->A_len);
+		CRYPTO_gcm128_aad(ctx, tv->A, tv->A_len);
 	if (tv->P_len > 0)
-		CRYPTO_gcm128_encrypt(&ctx, tv->P, out, out_len);
-	if (CRYPTO_gcm128_finish(&ctx, tv->T, 16)) {
+		CRYPTO_gcm128_encrypt(ctx, tv->P, out, out_len);
+	if (CRYPTO_gcm128_finish(ctx, tv->T, 16)) {
 		fprintf(stderr, "TEST %d: CRYPTO_gcm128_finish failed\n",
 		    test_no);
 		goto fail;
@@ -891,12 +889,12 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 
 	if (out_len != 0)
 		memset(out, 0, out_len);
-	CRYPTO_gcm128_setiv(&ctx, tv->IV, tv->IV_len);
+	CRYPTO_gcm128_setiv(ctx, tv->IV, tv->IV_len);
 	if (tv->A_len > 0)
-		CRYPTO_gcm128_aad(&ctx, tv->A, tv->A_len);
+		CRYPTO_gcm128_aad(ctx, tv->A, tv->A_len);
 	if (tv->C_len > 0)
-		CRYPTO_gcm128_decrypt(&ctx, tv->C, out, out_len);
-	if (CRYPTO_gcm128_finish(&ctx, tv->T, 16)) {
+		CRYPTO_gcm128_decrypt(ctx, tv->C, out, out_len);
+	if (CRYPTO_gcm128_finish(ctx, tv->T, 16)) {
 		fprintf(stderr, "TEST %d: CRYPTO_gcm128_finish failed\n",
 		    test_no);
 		goto fail;
@@ -909,6 +907,8 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 	ret = 0;
 
 fail:
+	CRYPTO_gcm128_release(ctx);
+
 	free(out);
 	return (ret);
 }
