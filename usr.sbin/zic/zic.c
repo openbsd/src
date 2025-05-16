@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.28 2025/05/08 21:14:18 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.29 2025/05/16 13:53:41 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -105,15 +105,8 @@ static int	addtype(long gmtoff, const char *abbr, int isdst,
 static void	leapadd(zic_t t, int positive, int rolling, int count);
 static void	adjleap(void);
 static void	associate(void);
-static void	convert(long val, char *buf);
-static void	convert64(zic_t val, char *buf);
 static void	dolink(const char *fromfield, const char *tofield);
-static void	doabbr(char *abbr, size_t size, struct zone const *zp,
-	    const char *letters, zic_t stdoff, int doquotes);
-static void	eat(const char *name, int num);
-static void	eats(const char *name, int num, const char *rname, int rnum);
 static long	eitol(int i);
-static void	error(const char *message);
 static char	**getfields(char *buf);
 static long	gethms(const char *string, const char *errstrng, int signable);
 static void	infile(const char *filename);
@@ -123,29 +116,16 @@ static void	inrule(char **fields, int nfields);
 static int	inzcont(char **fields, int nfields);
 static int	inzone(char **fields, int nfields);
 static int	inzsub(char **fields, int nfields, int iscont);
-static int	is32(zic_t x);
-static int	itsabbr(const char *abbr, const char *word);
 static int	itsdir(const char *name);
 static int	mkdirs(char *filename);
 static void	newabbr(const char *abbr);
 static long	oadd(long t1, long t2);
 static void	outzone(const struct zone *zp, int ntzones);
-static void	puttzcode(long code, FILE *fp);
-static void	puttzcode64(zic_t code, FILE *fp);
-static int	rcomp(const void *leftp, const void *rightp);
 static zic_t	rpytime(const struct rule *rp, int wantedy);
 static void	rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 	    const char *typep, const char *monthp,
 	    const char *dayp, const char *timep);
-static int	stringoffset(char *result, size_t size, long offset);
-static int	stringrule(char *result, size_t size, const struct rule *rp,
-	    long dstoff, long gmtoff);
-static void	stringzone(char *result, size_t size,
-	    const struct zone *zp, int ntzones);
-static void	setboundaries(void);
 static zic_t	tadd(zic_t t1, long t2);
-static void	usage(void);
-static void	writezone(const char *name, const char *string);
 
 extern char	*__progname;
 
@@ -162,9 +142,9 @@ static int		leapmaxyear;
 static int		linenum;
 static int		max_abbrvar_len = PERCENT_Z_LEN_BOUND;
 static int		max_format_len;
-static zic_t		max_time;
+static const zic_t	max_time = INT_FAST64_MAX;
 static int		max_year;
-static zic_t		min_time;
+static const zic_t	min_time = INT_FAST64_MIN;
 static int		min_year;
 static int		noise;
 static const char	*rfilename;
@@ -369,7 +349,7 @@ static char		roll[TZ_MAX_LEAPS];
 ** Memory allocation.
 */
 
-static void *
+static __pure void *
 memcheck(void *ptr)
 {
 	if (ptr == NULL)
@@ -552,8 +532,6 @@ main(int argc, char **argv)
 	if (directory == NULL)
 		directory = TZDIR;
 
-	setboundaries();
-
 	if (optind < argc && leapsec != NULL) {
 		infile(leapsec);
 		adjleap();
@@ -634,19 +612,6 @@ dolink(const char *fromfield, const char *tofield)
 	}
 	free(fromname);
 	free(toname);
-}
-
-#define TIME_T_BITS_IN_FILE	64
-
-static void
-setboundaries(void)
-{
-	int	i;
-
-	min_time = -1;
-	for (i = 0; i < TIME_T_BITS_IN_FILE - 1; ++i)
-		min_time *= 2;
-	max_time = -(min_time + 1);
 }
 
 static int
@@ -1306,7 +1271,7 @@ rulesub(struct rule * const rp, const char * const loyearp,
 }
 
 static void
-convert(long val, char *buf)
+convert(long val, unsigned char *buf)
 {
 	int	i;
 	int	shift;
@@ -1316,7 +1281,7 @@ convert(long val, char *buf)
 }
 
 static void
-convert64(zic_t val, char *buf)
+convert64(zic_t val, unsigned char *buf)
 {
 	int	i;
 	int	shift;
@@ -1749,7 +1714,7 @@ stringoffset(char *result, size_t size, long offset)
 	minutes = offset % MINSPERHOUR;
 	offset /= MINSPERHOUR;
 	hours = offset;
-	if (hours >= HOURSPERDAY) {
+	if (hours > HOURSPERDAY) {
 		result[0] = '\0';
 		return -1;
 	}
@@ -1859,7 +1824,9 @@ stringzone(char *result, size_t size, const struct zone *zpfirst, int zonecount)
 			rp = &zp->z_rules[i];
 			if (stdrp == NULL || rp->r_hiyear > stdrp->r_hiyear ||
 				(rp->r_hiyear == stdrp->r_hiyear &&
-				rp->r_month > stdrp->r_month))
+				(rp->r_month > stdrp->r_month ||
+				(rp->r_month == stdrp->r_month &&
+				rp->r_dayofmonth > stdrp->r_dayofmonth))))
 					stdrp = rp;
 		}
 		if (stdrp != NULL && stdrp->r_stdoff != 0)
@@ -2287,7 +2254,7 @@ adjleap(void)
 }
 
 /* this function is not strncasecmp */
-static int
+static __pure int
 itsabbr(const char *sabbr, const char *sword)
 {
 	const unsigned char *abbr = sabbr;
@@ -2304,7 +2271,7 @@ itsabbr(const char *sabbr, const char *sword)
 	return TRUE;
 }
 
-static const struct lookup *
+static __pure const struct lookup *
 byword(const char *word, const struct lookup *table)
 {
 	const struct lookup	*foundlp;
@@ -2373,33 +2340,28 @@ getfields(char *cp)
 	return array;
 }
 
-static long
+static __pure long
 oadd(long t1, long t2)
 {
-	long	t = t1 + t2;
-
-	if ((t2 > 0 && t <= t1) || (t2 < 0 && t >= t1)) {
+	if (t1 < 0 ? t2 < LONG_MIN - t1 : LONG_MAX - t1 < t2) {
 		error("time overflow");
 		exit(EXIT_FAILURE);
 	}
-	return t;
+	return t1 + t2;
 }
 
-static zic_t
+static __pure zic_t
 tadd(zic_t t1, long t2)
 {
-	zic_t	t;
-
 	if (t1 == max_time && t2 > 0)
 		return max_time;
 	if (t1 == min_time && t2 < 0)
 		return min_time;
-	t = t1 + t2;
-	if ((t2 > 0 && t <= t1) || (t2 < 0 && t >= t1)) {
+	if (t1 < 0 ? t2 < min_time - t1 : max_time - t1 < t2) {
 		error("time overflow");
 		exit(EXIT_FAILURE);
 	}
-	return t;
+	return t1 + t2;
 }
 
 /*
@@ -2489,21 +2451,21 @@ newabbr(const char *string)
 
 	if (strcmp(string, GRANDPARENTED) != 0) {
 		const char *	cp;
-		char *		wp;
+		const char *	mp;
 
 		cp = string;
-		wp = NULL;
+		mp = NULL;
 		while (isascii((unsigned char)*cp) &&
 		    (isalnum((unsigned char)*cp) || *cp == '-' || *cp == '+'))
 			++cp;
 		if (noise && cp - string > 3)
-			wp = "time zone abbreviation has more than 3 characters";
+			mp = "time zone abbreviation has more than 3 characters";
 		if (cp - string > ZIC_MAX_ABBR_LEN_WO_WARN)
-			wp = "time zone abbreviation has too many characters";
+			mp = "time zone abbreviation has too many characters";
 		if (*cp != '\0')
-			wp = "time zone abbreviation differs from POSIX standard";
-		if (wp != NULL) {
-			wp = ecpyalloc(wp);
+			mp = "time zone abbreviation differs from POSIX standard";
+		if (mp != NULL) {
+			char *wp = ecpyalloc(mp);
 			wp = ecatalloc(wp, " (");
 			wp = ecatalloc(wp, string);
 			wp = ecatalloc(wp, ")");
@@ -2556,7 +2518,7 @@ mkdirs(char *argname)
 	return 0;
 }
 
-static long
+static __pure long
 eitol(int i)
 {
 	long	l = i;
