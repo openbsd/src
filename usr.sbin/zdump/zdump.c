@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.15 2025/04/13 15:42:59 florian Exp $ */
+/*	$OpenBSD: zdump.c,v 1.16 2025/05/16 13:51:04 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -11,6 +11,7 @@
 */
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -50,19 +51,18 @@ extern char	**environ;
 extern char	*tzname[2];
 extern char 	*__progname;
 
-time_t		absolute_min_time;
-time_t		absolute_max_time;
-size_t		longest;
-int		warned;
+static const time_t	absolute_min_time = LLONG_MIN;
+static const time_t	absolute_max_time = LLONG_MAX;
+static size_t		longest;
+static int		warned;
 
 static char 		*abbr(struct tm *tmp);
 static void		abbrok(const char *abbrp, const char *zone);
-static long		delta(struct tm *newp, struct tm *oldp);
+static __pure long	delta(struct tm *newp, struct tm *oldp);
 static void		dumptime(const struct tm *tmp);
-static time_t		hunt(char *name, time_t lot, time_t	hit);
-static void		setabsolutes(void);
+static time_t		hunt(char *name, time_t lot, time_t hit);
 static void		show(char *zone, time_t t, int v);
-static time_t		yeartot(long y);
+static __pure time_t	yeartot(long y);
 static void		usage(void);
 
 static void
@@ -151,7 +151,6 @@ main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 		}
-		setabsolutes();
 		cutlotime = yeartot(cutloyear);
 		cuthitime = yeartot(cuthiyear);
 	}
@@ -234,23 +233,6 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	return 0;
-}
-
-static void
-setabsolutes(void)
-{
-	time_t t = 0, t1 = 1;
-
-	while (t < t1) {
-		t = t1;
-		t1 = 2 * t1 + 1;
-	}
-
-	absolute_max_time = t;
-	t = -t;
-	absolute_min_time = t - 1;
-	if (t < absolute_min_time)
-		absolute_min_time = t;
 }
 
 static time_t
