@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.67 2024/08/21 10:35:12 florian Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.68 2025/05/16 02:51:01 kn Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pledge("stdio route", NULL) == -1)
-		fatalx("pledge");
+		fatal("pledge");
 
 	dispatch();
 	/* not reached */

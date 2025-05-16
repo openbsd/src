@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay6.c,v 1.4 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: dhcrelay6.c,v 1.5 2025/05/16 02:51:01 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Rafael Zalamena <rzalamena@openbsd.org>
@@ -270,7 +270,7 @@ main(int argc, char *argv[])
 	log_setverbose(debug);
 
 	if (pledge("inet stdio route", NULL) == -1)
-		fatalx("pledge");
+		fatal("pledge");
 
 	dispatch();
 	/* not reached */
