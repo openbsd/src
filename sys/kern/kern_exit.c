@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.245 2025/05/02 05:04:38 dlg Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.246 2025/05/16 13:40:30 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
         /*
 	 * Remove proc from pidhash chain and allproc so looking
 	 * it up won't work.  We will put the proc on the
-	 * deadproc list later (using the p_hash member), and
+	 * deadproc list later (using the p_runq member), and
 	 * wake up the reaper when we do.  If this is the last
 	 * thread of a process that isn't PS_NOZOMBIE, we'll put
 	 * the process on the zombprocess list below.
@@ -396,21 +396,21 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 }
 
 /*
- * Locking of this proclist is special; it's accessed in a
+ * Locking of this prochead is special; it's accessed in a
  * critical section of process exit, and thus locking it can't
  * modify interrupt state.  We use a simple spin lock for this
- * proclist.  We use the p_hash member to linkup to deadproc.
+ * prochead.  We use the p_runq member to linkup to deadproc.
  */
 struct mutex deadproc_mutex =
     MUTEX_INITIALIZER_FLAGS(IPL_NONE, "deadproc", MTX_NOWITNESS);
-struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
+struct prochead deadproc = TAILQ_HEAD_INITIALIZER(deadproc);
 
 /*
  * We are called from sched_idle() once it is safe to schedule the
  * dead process's resources to be freed. So this is not allowed to sleep.
  *
  * We lock the deadproc list, place the proc on that list (using
- * the p_hash member), and wake up the reaper.
+ * the p_runq member), and wake up the reaper.
  */
 void
 exit2(struct proc *p)
@@ -421,7 +421,7 @@ exit2(struct proc *p)
 	mtx_leave(&p->p_p->ps_mtx);
 
 	mtx_enter(&deadproc_mutex);
-	LIST_INSERT_HEAD(&deadproc, p, p_hash);
+	TAILQ_INSERT_TAIL(&deadproc, p, p_runq);
 	mtx_leave(&deadproc_mutex);
 
 	wakeup(&deadproc);
@@ -451,12 +451,12 @@ reaper(void *arg)
 
 	for (;;) {
 		mtx_enter(&deadproc_mutex);
-		while ((p = LIST_FIRST(&deadproc)) == NULL)
+		while ((p = TAILQ_FIRST(&deadproc)) == NULL)
 			msleep_nsec(&deadproc, &deadproc_mutex, PVM, "reaper",
 			    INFSLP);
 
 		/* Remove us from the deadproc list. */
-		LIST_REMOVE(p, p_hash);
+		TAILQ_REMOVE(&deadproc, p, p_runq);
 		mtx_leave(&deadproc_mutex);
 
 		WITNESS_THREAD_EXIT(p);

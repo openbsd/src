@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.104 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.105 2025/05/16 13:40:30 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -95,7 +95,7 @@ sched_init_cpu(struct cpu_info *ci)
 
 	kthread_create_deferred(sched_kthreads_create, ci);
 
-	LIST_INIT(&spc->spc_deadproc);
+	TAILQ_INIT(&spc->spc_deadproc);
 	SIMPLEQ_INIT(&spc->spc_deferred);
 
 	/*
@@ -167,8 +167,8 @@ sched_idle(void *v)
 			mi_switch();
 			SCHED_UNLOCK();
 
-			while ((dead = LIST_FIRST(&spc->spc_deadproc))) {
-				LIST_REMOVE(dead, p_hash);
+			while ((dead = TAILQ_FIRST(&spc->spc_deadproc))) {
+				TAILQ_REMOVE(&spc->spc_deadproc, dead, p_runq);
 				exit2(dead);
 			}
 		}
@@ -206,15 +206,13 @@ sched_idle(void *v)
  * stack torn from under us before we manage to switch to another proc.
  * Therefore we have a per-cpu list of dead processes where we put this
  * proc and have idle clean up that list and move it to the reaper list.
- * All this will be unnecessary once we can bind the reaper this cpu
- * and not risk having it switch to another in case it sleeps.
  */
 void
 sched_exit(struct proc *p)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 
-	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
+	TAILQ_INSERT_TAIL(&spc->spc_deadproc, p, p_runq);
 
 	tuagg_add_runtime();
 
