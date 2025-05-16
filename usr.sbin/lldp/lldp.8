@@ -1,4 +1,4 @@
-.\" $OpenBSD: lldp.8,v 1.3 2025/05/06 06:04:58 jmc Exp $
+.\" $OpenBSD: lldp.8,v 1.4 2025/05/16 04:26:43 kn Exp $
 .\"
 .\" Copyright (c) 2025 David Gwynne<dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2025 $
+.Dd $Mdocdate: May 16 2025 $
 .Dt LLDP 8
 .Os
 .Sh NAME
@@ -41,9 +41,7 @@ Limit the LLDP entries to those received on the specified
 Use
 .Ar socket
 to communicate with
-.Xr lldpd 8
-instead of the default
-.Pa /var/run/lldp.sock .
+.Xr lldpd 8 .
 .It Fl v
 Increase the verbosity of output.
 .El

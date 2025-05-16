@@ -1,4 +1,4 @@
-.\" $OpenBSD: lldpd.8,v 1.5 2025/05/03 05:26:23 jmc Exp $
+.\" $OpenBSD: lldpd.8,v 1.6 2025/05/16 04:26:43 kn Exp $
 .\"
 .\" Copyright (c) 2025 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2025 $
+.Dd $Mdocdate: May 16 2025 $
 .Dt LLDPD 8
 .Os
 .Sh NAME
@@ -47,16 +47,14 @@ will run in the foreground and log to stderr.
 Use
 .Ar socket
 to communicate with
-.Nm
-instead of the default,
-.Pa /var/run/lldp.sock .
+.Xr lldp 8 .
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/lldp.sock" -compact
 .It Pa /var/run/lldp.sock
-Default
+default
 .Nm
-control socket path.
+control socket
 .El
 .Sh SEE ALSO
 .\" Xr frame 4 ,
