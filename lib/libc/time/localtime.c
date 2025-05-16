@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.67 2024/08/18 02:20:29 guenther Exp $ */
+/*	$OpenBSD: localtime.c,v 1.68 2025/05/16 13:54:31 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -129,8 +129,8 @@ struct rule {
 static long		detzcode(const char * codep);
 static time_t		detzcode64(const char * codep);
 static int		differ_by_repeat(time_t t1, time_t t0);
-static const char *	getzname(const char * strp);
-static const char *	getqzname(const char * strp, const int delim);
+static const char * __pure getzname(const char * strp);
+static const char * __pure getqzname(const char * strp, const int delim);
 static const char *	getnum(const char * strp, int * nump, int min,
 				int max);
 static const char *	getsecs(const char * strp, long * secsp);
@@ -142,7 +142,7 @@ static struct tm *	gmtsub(const time_t * timep, long offset,
 static struct tm *	localsub(const time_t * timep, long offset,
 				struct tm * tmp);
 static int		increment_overflow(int * number, int delta);
-static int		leaps_thru_end_of(int y);
+static int __pure	leaps_thru_end_of(int y);
 static int		long_increment_overflow(long * number, int delta);
 static int		long_normalize_overflow(long * tensptr,
 				int * unitsptr, int base);
@@ -165,7 +165,7 @@ static struct tm *	timesub(const time_t * timep, long offset,
 				const struct state * sp, struct tm * tmp);
 static int		tmcomp(const struct tm * atmp,
 				const struct tm * btmp);
-static time_t		transtime(time_t janfirst, int year,
+static time_t __pure	transtime(time_t janfirst, int year,
 				const struct rule * rulep, long offset);
 static int		typesequiv(const struct state * sp, int a, int b);
 static int		tzload(const char * name, struct state * sp,
@@ -257,6 +257,11 @@ settzname(void)
 	/*
 	** And to get the latest zone names into tzname. . .
 	*/
+	for (i = 0; i < sp->typecnt; ++i) {
+		const struct ttinfo *ttisp = &sp->ttis[i];
+
+		tzname[ttisp->tt_isdst] = &sp->chars[ttisp->tt_abbrind];
+	}
 	for (i = 0; i < sp->timecnt; ++i) {
 		const struct ttinfo *ttisp = &sp->ttis[sp->types[i]];
 
@@ -472,15 +477,15 @@ tzload(const char *name, struct state *sp, int doextend)
 		** signed time_t system but using a data file with
 		** unsigned values (or vice versa).
 		*/
-		for (i = 0; i < sp->timecnt - 2; ++i)
+		for (i = 0; i < sp->timecnt - 2; ++i) {
 			if (sp->ats[i] > sp->ats[i + 1]) {
-				++i;
 				/*
 				** Ignore the end (easy).
 				*/
-				sp->timecnt = i;
+				sp->timecnt = i + 1;
 				break;
 			}
+		}
 		/*
 		** If this is an old file, we're done.
 		*/
