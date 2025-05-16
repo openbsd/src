@@ -1,4 +1,4 @@
-/*	$OpenBSD: lldpd.c,v 1.8 2025/05/08 05:24:57 dlg Exp $ */
+/*	$OpenBSD: lldpd.c,v 1.9 2025/05/16 04:04:41 kn Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -268,7 +268,8 @@ main(int argc, char *argv[])
 	if (!debug && rdaemon(devnull) == -1)
 		err(1, "unable to daemonize");
 
-	pledge("unix stdio", NULL);
+	if (pledge("stdio unix", NULL) == -1)
+		err(1, "pledge");
 
 	event_init();
 
