@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay6.8,v 1.4 2023/03/02 17:09:54 jmc Exp $
+.\"	$OpenBSD: dhcrelay6.8,v 1.5 2025/05/16 03:49:38 kn Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: May 16 2025 $
 .Dt DHCRELAY6 8
 .Os
 .Sh NAME
@@ -116,12 +116,9 @@ Enable and add the specified Relay Agent
 .Ar remote-id
 to identify this relay segment.
 .It Fl v
-Debug mode.
-This option will make
-.Nm
-run in the foreground, log to
-.Em stderr
-and show verbose messages.
+Show verbose messages.
+Implies
+.Fl d .
 .El
 .Sh EXAMPLES
 Relay multicast packets in the current network to a unicast address
