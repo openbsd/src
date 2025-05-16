@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpflogd.c,v 1.5 2025/05/15 12:49:05 kn Exp $	*/
+/*	$OpenBSD: bpflogd.c,v 1.6 2025/05/16 05:47:30 kn Exp $	*/
 
 /*
  * Copyright (c) 2025 The University of Queensland
@@ -106,7 +106,7 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-dPp] [-F filterfile] [-s snaplen] "
 	    "[-u user] [-w waitms]\n"
-	    "\t" "[-y datalinktype] -f filename -i interface [expression]\n",
+	    "\t" "[-y datalinktype] -f filename -i interface [expression ...]\n",
 	    __progname);
 
 	exit(1);

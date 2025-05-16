@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.117 2025/05/07 03:11:14 dlg Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.118 2025/05/16 05:47:30 kn Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 7 2025 $
+.Dd $Mdocdate: May 16 2025 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Op Fl T Ar type
 .Op Fl w Ar file
 .Op Fl y Ar datalinktype
-.Op Ar expression
+.Op Ar expression ...
 .Sh DESCRIPTION
 .Nm
 prints out the headers of packets on a network interface that match the boolean

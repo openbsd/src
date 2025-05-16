@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpflogd.8,v 1.6 2025/05/07 05:42:43 jsg Exp $
+.\"	$OpenBSD: bpflogd.8,v 1.7 2025/05/16 05:47:30 kn Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 7 2025 $
+.Dd $Mdocdate: May 16 2025 $
 .Dt BPFLOGD 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Op Fl y Ar datalinktype
 .Fl f Ar filename
 .Fl i Ar interface
-.Op Ar expression
+.Op Ar expression ...
 .Sh DESCRIPTION
 .Nm
 is a daemon which captures packets using

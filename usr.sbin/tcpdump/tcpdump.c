@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.99 2023/03/03 13:03:29 claudio Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.100 2025/05/16 05:47:30 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -688,6 +688,6 @@ usage(void)
 	(void)fprintf(stderr,
 "\t       [-E [espalg:]espkey] [-F file] [-i interface] [-r file]\n");
 	(void)fprintf(stderr,
-"\t       [-s snaplen] [-T type] [-w file] [-y datalinktype] [expression]\n");
+"\t       [-s snaplen] [-T type] [-w file] [-y datalinktype] [expression ...]\n");
 	exit(1);
 }

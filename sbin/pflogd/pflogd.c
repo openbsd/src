@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.66 2023/11/17 12:10:23 claudio Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.67 2025/05/16 05:47:30 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -153,7 +153,7 @@ usage(void)
 {
 	fprintf(stderr, "usage: pflogd [-Dx] [-d delay] [-f filename]");
 	fprintf(stderr, " [-i interface] [-s snaplen]\n");
-	fprintf(stderr, "              [expression]\n");
+	fprintf(stderr, "              [expression ...]\n");
 	exit(1);
 }
 
