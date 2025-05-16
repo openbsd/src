@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.33 2020/07/16 20:08:12 millert Exp $ */
+/*	$OpenBSD: strftime.c,v 1.34 2025/05/16 14:24:39 millert Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -287,7 +287,7 @@ label:
 					tm = *t;
 					mkt = mktime(&tm);
 					(void) snprintf(buf, sizeof buf,
-					    "%ld", (long) mkt);
+					    "%lld", mkt);
 					pt = _add(buf, pt, ptlim);
 				}
 				continue;
