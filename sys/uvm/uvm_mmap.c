@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.198 2025/04/06 20:20:11 kettenis Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.199 2025/05/16 13:54:34 mpi Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -821,6 +821,7 @@ sys_mlock(struct proc *p, void *v, register_t *retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
+	vm_map_t map = &p->p_vmspace->vm_map;
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	int error;
@@ -838,7 +839,7 @@ sys_mlock(struct proc *p, void *v, register_t *retval)
 		return EAGAIN;
 
 #ifdef pmap_wired_count
-	if (size + ptoa(pmap_wired_count(vm_map_pmap(&p->p_vmspace->vm_map))) >
+	if (size + ptoa(pmap_wired_count(vm_map_pmap(map))) >
 			lim_cur(RLIMIT_MEMLOCK))
 		return EAGAIN;
 #else
@@ -846,8 +847,9 @@ sys_mlock(struct proc *p, void *v, register_t *retval)
 		return error;
 #endif
 
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
-	    0);
+	vm_map_lock(map);
+	error = uvm_map_pageable(map, addr, addr+size, FALSE);
+	vm_map_unlock(map);
 	return error == 0 ? 0 : ENOMEM;
 }
 
@@ -862,6 +864,7 @@ sys_munlock(struct proc *p, void *v, register_t *retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
+	vm_map_t map = &p->p_vmspace->vm_map;
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	int error;
@@ -880,8 +883,9 @@ sys_munlock(struct proc *p, void *v, register_t *retval)
 		return error;
 #endif
 
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
-	    0);
+	vm_map_lock(map);
+	error = uvm_map_pageable(map, addr, addr+size, TRUE);
+	vm_map_unlock(map);
 	return error == 0 ? 0 : ENOMEM;
 }
 
@@ -962,12 +966,9 @@ uvm_mmaplock(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			KERNEL_UNLOCK();
 			return error;
 		}
-		/*
-		 * uvm_map_pageable() always returns the map
-		 * unlocked.
-		 */
-		error = uvm_map_pageable(map, *addr, *addr + size,
-		    FALSE, UVM_LK_ENTER);
+
+		error = uvm_map_pageable(map, *addr, *addr + size, FALSE);
+		vm_map_unlock(map);
 		if (error != 0) {
 			/* unmap the region! */
 			uvm_unmap(map, *addr, *addr + size);

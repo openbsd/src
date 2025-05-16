@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.88 2025/03/21 13:19:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.89 2025/05/16 13:54:34 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -108,13 +108,17 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
 	struct vm_map *map = &p->p_vmspace->vm_map;
 	vaddr_t start, end;
+	int error;
 
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
 	if (end <= start)
 		return (EINVAL);
 
-	return uvm_map_pageable(map, start, end, FALSE, 0);
+	vm_map_lock(map);
+	error = uvm_map_pageable(map, start, end, FALSE);
+	vm_map_unlock(map);
+	return error;
 }
 
 /*
@@ -132,7 +136,9 @@ uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 	end = round_page((vaddr_t)addr + len);
 	KASSERT(end > start);
 
-	uvm_map_pageable(map, start, end, TRUE, 0);
+	vm_map_lock(map);
+	uvm_map_pageable(map, start, end, TRUE);
+	vm_map_unlock(map);
 }
 
 /*

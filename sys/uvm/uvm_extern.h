@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.180 2024/11/19 06:18:26 jsg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.181 2025/05/16 13:54:34 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -151,12 +151,6 @@ typedef int		vm_prot_t;
 #define UVM_PLA_FAILOK		0x0010	/* caller can handle failure */
 #define UVM_PLA_NOWAKE		0x0020	/* don't wake page daemon on failure */
 #define UVM_PLA_USERESERVE	0x0040	/* can allocate from kernel reserve */
-
-/*
- * lockflags that control the locking behavior of various functions.
- */
-#define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
-#define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
 
 /*
  * flags to uvm_page_physload.
@@ -388,7 +382,7 @@ int			uvm_map(vm_map_t, vaddr_t *, vsize_t,
 			    struct uvm_object *, voff_t, vsize_t, unsigned int);
 int			uvm_mapanon(vm_map_t, vaddr_t *, vsize_t, vsize_t, unsigned int);
 int			uvm_map_pageable(vm_map_t, vaddr_t, 
-			    vaddr_t, boolean_t, int);
+			    vaddr_t, boolean_t);
 int			uvm_map_pageable_all(vm_map_t, int, vsize_t);
 boolean_t		uvm_map_checkprot(vm_map_t, vaddr_t,
 			    vaddr_t, vm_prot_t);
