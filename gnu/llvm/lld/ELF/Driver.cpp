@@ -1405,8 +1405,12 @@ static void readConfigs(opt::InputArgList &args) {
     config->mllvmOpts.emplace_back(arg->getValue());
   }
 
+  config->threadCount = parallel::strategy.compute_thread_count();
+
   // --threads= takes a positive integer and provides the default value for
-  // --thinlto-jobs=.
+  // --thinlto-jobs=. If unspecified, cap the number of threads since
+  // overhead outweighs optimization for used parallel algorithms for the
+  // non-LTO parts.
   if (auto *arg = args.getLastArg(OPT_threads)) {
     StringRef v(arg->getValue());
     unsigned threads = 0;
@@ -1415,10 +1419,12 @@ static void readConfigs(opt::InputArgList &args) {
             arg->getValue() + "'");
     parallel::strategy = hardware_concurrency(threads);
     config->thinLTOJobs = v;
+  } else if (config->threadCount > 4) {
+    log("set maximum concurrency to 4, specify --threads= to change");
+    parallel::strategy = hardware_concurrency(4);
   }
   if (auto *arg = args.getLastArg(OPT_thinlto_jobs_eq))
     config->thinLTOJobs = arg->getValue();
-  config->threadCount = parallel::strategy.compute_thread_count();
 
   if (config->ltoo > 3)
     error("invalid optimization level for LTO: " + Twine(config->ltoo));
