@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.92 2025/05/01 12:28:40 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.93 2025/05/17 13:29:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -171,10 +171,11 @@
 #define RK3399_PMUCRU_CLKSEL_CON(i)	(0x0080 + (i) * 4)
 
 /* RK3528 registers */
-#define RK3528_CRU_PLL_CON(i)		(0x0000 + (i) * 4)
-#define RK3528_CRU_CLKSEL_CON(i)	(0x0300 + (i) * 4)
-#define RK3528_CRU_GATE_CON(i)		(0x0800 + (i) * 4)
-#define RK3528_CRU_SOFTRST_CON(i)	(0x0a00 + (i) * 4)
+#define RK3528_CRU_PLL_CON(i)		(0x00000 + (i) * 4)
+#define RK3528_CRU_CLKSEL_CON(i)	(0x00300 + (i) * 4)
+#define RK3528_CRU_GATE_CON(i)		(0x00800 + (i) * 4)
+#define RK3528_CRU_SOFTRST_CON(i)	(0x00a00 + (i) * 4)
+#define RK3528_PCIE_CRU_PLL_CON(i)	(0x20000 + (i) * 4)
 
 /* RK3568 registers */
 #define RK3568_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
@@ -3192,6 +3193,11 @@ const struct rkclock rk3528_clocks[] = {
 		  RK3528_XIN24M }
 	},
 	{
+		RK3528_CLK_PPLL_125M_MATRIX, RK3528_CRU_CLKSEL_CON(60),
+		0, DIV(14, 10),
+		{ RK3528_PLL_PPLL }
+	},
+	{
 		RK3528_CCLK_SRC_EMMC, RK3528_CRU_CLKSEL_CON(62),
 		SEL(7, 6), DIV(5, 0),
 		{ RK3528_PLL_GPLL, RK3528_PLL_CPLL, RK3528_XIN24M }
@@ -3205,6 +3211,10 @@ const struct rkclock rk3528_clocks[] = {
 	{
 		RK3528_TCLK_EMMC, 0, 0, 0,
 		{ RK3528_XIN24M }
+	},
+	{
+		RK3528_CLK_GMAC1_SRC_VPU, 0, 0, 0,
+		{ RK3528_CLK_PPLL_125M_MATRIX }
 	},
 	{
 		RK3528_CLK_I2C1, RK3528_CRU_CLKSEL_CON(79),
@@ -3249,6 +3259,8 @@ rk3528_get_frequency(void *cookie, uint32_t *cells)
 		return rk3328_get_pll(sc, RK3528_CRU_PLL_CON(8));
 	case RK3528_PLL_GPLL:
 		return rk3328_get_pll(sc, RK3528_CRU_PLL_CON(24));
+	case RK3528_PLL_PPLL:
+		return rk3328_get_pll(sc, RK3528_PCIE_CRU_PLL_CON(32));
 	case RK3528_XIN24M:
 		return 24000000;
 	default:
@@ -3314,6 +3326,10 @@ rk3528_reset(void *cookie, uint32_t *cells, int on)
 	case RK3528_SRST_T_EMMC:
 		reg = RK3528_CRU_SOFTRST_CON(26);
 		bit = 3;
+		break;
+	case RK3528_SRST_A_MAC:
+		reg = RK3528_CRU_SOFTRST_CON(28);
+		bit = 5;
 		break;
 	case RK3528_SRST_H_SDMMC0:
 		reg = RK3528_CRU_SOFTRST_CON(42);
