@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.23 2023/10/06 16:41:02 millert Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.24 2025/05/17 07:46:49 tobias Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -1059,7 +1059,7 @@ error:
 	goto finish;
 
 overflow:
-	errno = ENOMEM;
+	errno = EOVERFLOW;
 	ret = -1;
 
 finish:
@@ -1450,7 +1450,7 @@ done:
 	goto finish;
 
 overflow:
-	errno = ENOMEM;
+	errno = EOVERFLOW;
 	ret = -1;
 
 finish:
