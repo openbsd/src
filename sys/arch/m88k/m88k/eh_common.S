@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.66 2024/06/05 19:22:04 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.67 2025/05/17 08:28:14 aoyama Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -666,7 +666,7 @@ GLOBAL(reset_handler)
 #endif	/* M88100 */
 
 /*
- * This is part of baddadr (below).
+ * This is part of badaddr (below).
  */
 #ifdef M88100
 ASLOCAL(m88100_ignore_data_exception)
@@ -700,7 +700,7 @@ ASLOCAL(m88100_ignore_data_exception)
 
 #ifdef M88110
 /*
- * This is part of baddadr (below).
+ * This is part of badaddr (below).
  */
 ASLOCAL(m88110_ignore_data_exception)
 	/*
