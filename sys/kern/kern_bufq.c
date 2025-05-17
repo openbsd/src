@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.35 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.36 2025/05/17 10:13:40 jsg Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -35,7 +35,6 @@ struct bufq_impl {
 
 	void		 (*impl_queue)(void *, struct buf *);
 	struct buf	*(*impl_dequeue)(void *);
-	void		 (*impl_requeue)(void *, struct buf *);
 	int		 (*impl_peek)(void *);
 };
 
@@ -43,14 +42,12 @@ void		*bufq_fifo_create(void);
 void		 bufq_fifo_destroy(void *);
 void		 bufq_fifo_queue(void *, struct buf *);
 struct buf	*bufq_fifo_dequeue(void *);
-void		 bufq_fifo_requeue(void *, struct buf *);
 int		 bufq_fifo_peek(void *);
 
 void		*bufq_nscan_create(void);
 void		 bufq_nscan_destroy(void *);
 void		 bufq_nscan_queue(void *, struct buf *);
 struct buf	*bufq_nscan_dequeue(void *);
-void		 bufq_nscan_requeue(void *, struct buf *);
 int		 bufq_nscan_peek(void *);
 
 const struct bufq_impl bufq_impls[BUFQ_HOWMANY] = {
@@ -59,7 +56,6 @@ const struct bufq_impl bufq_impls[BUFQ_HOWMANY] = {
 		bufq_fifo_destroy,
 		bufq_fifo_queue,
 		bufq_fifo_dequeue,
-		bufq_fifo_requeue,
 		bufq_fifo_peek
 	},
 	{
@@ -67,7 +63,6 @@ const struct bufq_impl bufq_impls[BUFQ_HOWMANY] = {
 		bufq_nscan_destroy,
 		bufq_nscan_queue,
 		bufq_nscan_dequeue,
-		bufq_nscan_requeue,
 		bufq_nscan_peek
 	}
 };
@@ -116,47 +111,6 @@ bufq_init(struct bufq *bq, int type)
 	return (0);
 }
 
-int
-bufq_switch(struct bufq *bq, int type)
-{
-	void		*data;
-	void		*odata;
-	int		otype;
-	struct buf	*bp;
-	int		ret;
-
-	mtx_enter(&bq->bufq_mtx);
-	ret = (bq->bufq_type == type);
-	mtx_leave(&bq->bufq_mtx);
-	if (ret)
-		return (0);
-
-	data = bufq_impls[type].impl_create();
-	if (data == NULL)
-		return (ENOMEM);
-
-	mtx_enter(&bq->bufq_mtx);
-	if (bq->bufq_type != type) { /* might have changed during create */
-		odata = bq->bufq_data;
-		otype = bq->bufq_type;
-
-		while ((bp = bufq_impls[otype].impl_dequeue(odata)) != NULL)
-			bufq_impls[type].impl_queue(data, bp);
-
-		bq->bufq_data = data;
-		bq->bufq_type = type;
-		bq->bufq_impl = &bufq_impls[type];
-	} else {
-		otype = type;
-		odata = data;
-	}
-	mtx_leave(&bq->bufq_mtx);
-
-	bufq_impls[otype].impl_destroy(odata);
-
-	return (0);
-}
-
 void
 bufq_destroy(struct bufq *bq)
 {
@@ -199,14 +153,6 @@ bufq_dequeue(struct bufq *bq)
 	mtx_leave(&bq->bufq_mtx);
 
 	return (bp);
-}
-
-void
-bufq_requeue(struct bufq *bq, struct buf *bp)
-{
-	mtx_enter(&bq->bufq_mtx);
-	bq->bufq_impl->impl_requeue(bq->bufq_data, bp);
-	mtx_leave(&bq->bufq_mtx);
 }
 
 int
@@ -354,14 +300,6 @@ bufq_fifo_dequeue(void *data)
 	return (bp);
 }
 
-void
-bufq_fifo_requeue(void *data, struct buf *bp)
-{
-	struct bufq_fifo_head	*head = data;
-
-	SIMPLEQ_INSERT_HEAD(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
-}
-
 int
 bufq_fifo_peek(void *data)
 {
@@ -489,14 +427,6 @@ bufq_nscan_dequeue(void *vdata)
 		SIMPLEQ_REMOVE_HEAD(sorted, dsentries);
 
 	return (bp);
-}
-
-void
-bufq_nscan_requeue(void *vdata, struct buf *bp)
-{
-	struct bufq_nscan_data *data = vdata;
-
-	SIMPLEQ_INSERT_HEAD(&data->fifo, bp, dsentries);
 }
 
 int

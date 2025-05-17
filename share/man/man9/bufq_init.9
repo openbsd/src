@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bufq_init.9,v 1.6 2015/12/25 20:50:57 bentley Exp $
+.\"	$OpenBSD: bufq_init.9,v 1.7 2025/05/17 10:13:40 jsg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,16 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2015 $
+.Dd $Mdocdate: May 17 2025 $
 .Dt BUFQ_INIT 9
 .Os
 .Sh NAME
 .Nm bufq_init ,
-.Nm bufq_switch ,
 .Nm bufq_destroy ,
 .Nm bufq_queue ,
 .Nm bufq_dequeue ,
-.Nm bufq_requeue ,
 .Nm bufq_peek ,
 .Nm bufq_drain
 .\" .Nm bufq_wait ,
@@ -35,16 +33,12 @@
 .In sys/buf.h
 .Ft int
 .Fn bufq_init "struct bufq *bufq" "int type"
-.Ft int
-.Fn bufq_switch "struct bufq *bufq" "int type"
 .Ft void
 .Fn bufq_destroy "struct bufq *bufq"
 .Ft void
 .Fn bufq_queue "struct bufq *bufq" "struct buf *bp"
 .Ft struct buf *
 .Fn bufq_dequeue "struct bufq *bufq"
-.Ft void
-.Fn bufq_requeue "struct bufq *bufq" "struct buf *bp"
 .Ft int
 .Fn bufq_peek "struct bufq *bufq"
 .Ft void
@@ -65,18 +59,10 @@ by the
 .Fa type
 argument.
 .Pp
-.Fn bufq_switch
-can be used to change the scheduler currently used by
-.Fa bufq
-to the algorithm specified by
-.Fa type .
-.Pp
 The
 .Fa type
 argument to
 .Fn bufq_init
-and
-.Fn bufq_switch
 can be one of the following scheduling algorithms:
 .Pp
 .Bl -tag -offset indent -width BUFQ_DEFAULT -compact
@@ -106,12 +92,6 @@ is used to get the next buf the
 has scheduled to be serviced by a disk.
 The buf will be removed from the queue.
 .Pp
-.Fn bufq_requeue
-can be used to return a previously dequeued buf specified by
-.Fa bp
-to the head of the queue of
-.Fa bufq .
-.Pp
 .Fn bufq_peek
 allows the caller to determine if there are more bufs queued on
 .Fa bufq
@@ -126,23 +106,19 @@ marks them as failed with an
 error, and returns them to the block layer via
 .Xr biodone 9 .
 .Sh CONTEXT
-.Fn bufq_init ,
-.Fn bufq_switch ,
+.Fn bufq_init
 and
 .Fn bufq_destroy
 can be called during autoconf, or from process context.
 .Pp
 .Nm bufq_queue ,
 .Nm bufq_dequeue ,
-.Nm bufq_requeue ,
 .Nm bufq_peek ,
 and
 .Nm bufq_drain
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn bufq_init
-and
-.Fn bufq_switch
 will return 0 on success, or an error code as per
 .Xr errno 2 .
 .Pp

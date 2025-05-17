@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.116 2025/04/13 09:52:43 jsg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.117 2025/05/17 10:13:40 jsg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -84,12 +84,10 @@ struct bufq {
 };
 
 int		 bufq_init(struct bufq *, int);
-int		 bufq_switch(struct bufq *, int);
 void		 bufq_destroy(struct bufq *);
 
 void		 bufq_queue(struct bufq *, struct buf *);
 struct buf	*bufq_dequeue(struct bufq *);
-void		 bufq_requeue(struct bufq *, struct buf *);
 int		 bufq_peek(struct bufq *);
 void		 bufq_drain(struct bufq *);
 
