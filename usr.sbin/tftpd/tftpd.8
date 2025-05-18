@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.11 2025/05/13 07:59:57 kn Exp $
+.\"   $OpenBSD: tftpd.8,v 1.12 2025/05/18 07:01:41 kn Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
 .\"
-.Dd $Mdocdate: May 13 2025 $
+.Dd $Mdocdate: May 18 2025 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -44,8 +44,9 @@
 .Ar directory
 .Sh DESCRIPTION
 .Nm
-is a server which implements the
-Trivial File Transfer Protocol.
+serves
+.Ar directory
+contents via the Trivial File Transfer Protocol.
 .Pp
 The use of
 .Xr tftp 1
@@ -66,11 +67,6 @@ to include
 all users on all hosts that can be reached through the network;
 this may not be appropriate on all systems, and its implications
 should be considered before enabling TFTP service.
-.Pp
-The server must be started as root, but will chroot to the
-.Ar directory
-specified on the command line and drop privileges to the _tftpd user.
-.Pp
 .Nm tftpd
 always provides random data at the path
 .Pa /etc/random.seed ,
@@ -79,6 +75,9 @@ and therefore this path will be ignored inside the
 .Ox
 network bootloaders access this path to harvest entropy during
 kernel load.
+.Pp
+.Nm
+needs to start as root and drops privileges to the _tftpd user.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -147,13 +146,6 @@ This option cannot be combined with
 Log the client IP, type of request, and filename.
 .It Fl w
 Allow files to be written to.
-.It Ar directory
-.Xr chroot 2
-to
-.Ar directory
-on startup;
-the remote host is not expected to pass the directory
-as part of the file name to transfer.
 .El
 .Sh SEE ALSO
 .Xr tftp 1 ,
