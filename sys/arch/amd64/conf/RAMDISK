@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.88 2025/02/10 11:41:19 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.89 2025/05/18 05:28:47 jsg Exp $
 
 machine		amd64
 maxusers	4
@@ -97,15 +97,15 @@ re*		at pci?			# Realtek 8169/8169S/8110S
 em*		at pci?			# Intel Pro/1000 ethernet
 bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
 
-inphy*		at mii?			# Intel 82555 PHYs
-iophy*		at mii?			# Intel 82553 PHYs
-lxtphy*		at mii?			# Level1 LXT970 PHYs
-nsphy*		at mii?			# NS and compatible PHYs
-nsphyter*	at mii?			# NS and compatible PHYs
+#inphy*		at mii?			# Intel 82555 PHYs
+#iophy*		at mii?			# Intel 82553 PHYs
+#lxtphy*	at mii?			# Level1 LXT970 PHYs
+#nsphy*		at mii?			# NS and compatible PHYs
+#nsphyter*	at mii?			# NS and compatible PHYs
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 brgphy*		at mii?			# Broadcom Gigabit PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
-ciphy*		at mii?			# Cicada CS8201 10/100/1000 copper PHY
+#ciphy*		at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?			# "unknown" PHYs
 
 pseudo-device	loop 1
