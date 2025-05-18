@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.300 2025/05/02 09:57:36 jsg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.301 2025/05/18 04:18:42 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1341,6 +1341,8 @@ ether_frm_valid_etype(uint16_t etype)
 	switch (etype) {
 	case ETHERTYPE_LLDP:
 	case ETHERTYPE_EAPOL:
+	case ETHERTYPE_PTP:
+	case ETHERTYPE_CFM:
 		return (1);
 	}
 
