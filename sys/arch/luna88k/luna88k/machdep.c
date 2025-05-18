@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.144 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.145 2025/05/18 02:12:58 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1026,7 +1026,7 @@ luna88k_bootstrap()
 	avail_end = last_addr;
 
 #ifdef DEBUG
-	printf("LUNA-88K boot: memory from 0x%x to 0x%x\n",
+	printf("LUNA-88K boot: memory from 0x%lx to 0x%lx\n",
 	    avail_start, avail_end);
 #endif
 
