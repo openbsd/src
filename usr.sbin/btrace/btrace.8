@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btrace.8,v 1.9 2023/09/15 10:56:46 claudio Exp $
+.\"	$OpenBSD: btrace.8,v 1.10 2025/05/18 20:09:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2023 $
+.Dd $Mdocdate: May 18 2025 $
 .Dt BTRACE 8
 .Os
 .Sh NAME
@@ -23,8 +23,8 @@
 .Sh SYNOPSIS
 .Nm btrace
 .Op Fl lnv
-.Op Fl e Ar program | Ar file
-.Op Fl p Ar file
+.Op Fl p Ar elffile
+.Ar programfile | Fl e Ar program
 .Op Ar argument ...
 .Sh DESCRIPTION
 The
@@ -33,24 +33,32 @@ utility provides an interface to inspect the internals of the system and
 programs.
 It interprets the
 .Xr bt 5
-program in
-.Ar file
-and communicates with the dynamic tracer device using the interface described in
+program read from the
+.Ar programfile ,
+passing the optional
+.Ar arguments
+to it, and communicates with the dynamic tracer device
+using the interface described in
 .Xr dt 4 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl e Ar program
-Execute
+Execute the
+.Ar program
+specified as the option argument instead of reading a program from a file.
+In this case, all non-option
+.Ar arguments
+are passed through to the
 .Ar program .
 .It Fl l
 List all available probes.
 .It Fl n
 No action.
 Parse the program and then exit.
-.It Fl p Ar file
-Load symbols from
-.Ar file
+.It Fl p Ar elffile
+Load symbols from the
+.Ar elffile
 to convert
 .Va ustack
 addresses into function names.
