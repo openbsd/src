@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.18 2023/04/13 23:02:12 dlg Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.19 2025/05/18 04:07:05 dlg Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -307,6 +307,7 @@
 #define	ETHERTYPE_802_EX2	0x88B6	/* IEEE Std 802 - Local Experimental */
 #define	ETHERTYPE_MACSEC	0x88e5	/* 802.1AE MACsec */
 #define	ETHERTYPE_PBB		0x88e7	/* 802.1Q Provider Backbone Bridging */
+#define	ETHERTYPE_CFM		0x8902	/* 802.1ag Connectivity Fault Management */
 #define	ETHERTYPE_NSH		0x894F	/* Network Service Header (RFC8300) */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
