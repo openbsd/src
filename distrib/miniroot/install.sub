@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1270 2025/05/04 12:32:41 kn Exp $
+#	$OpenBSD: install.sub,v 1.1271 2025/05/18 09:54:48 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2932,12 +2932,17 @@ encr_pwd() {
 	fi
 }
 
-# Store entropy for the next boot.
+# Create future seeds for the bootloader and rc(8).
 store_random() {
-	dd if=/dev/random of=/mnt/var/db/host.random bs=65536 count=1 \
-		status=none
-	dd if=/dev/random of=/mnt/etc/random.seed bs=512 count=1 status=none
-	chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
+	local _bootseed=/mnt/etc/random.seed _hostseed=/mnt/var/db/host.random
+
+	dd if=/dev/random of=$_bootseed bs=512   count=1 status=none
+	dd if=/dev/random of=$_hostseed bs=65536 count=1 status=none
+
+	# Removal of the sticky bit indicates the file has fresh contents for
+	# use by a subsequent bootloader (who sets the sticky bit to prevent
+	# content reuse).
+	chmod u=rw-t,go= $_bootseed $_hostseed
 }
 
 # Final steps common for installs and upgrades.
@@ -3068,7 +3073,7 @@ __EOT
 		fi
 	fi
 
-	# Store entropy for the next boot.
+	# Update seed files.
 	store_random
 
 	# Pat on the back.

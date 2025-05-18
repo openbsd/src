@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.580 2025/04/07 14:49:26 deraadt Exp $
+#	$OpenBSD: rc,v 1.581 2025/05/18 09:54:48 kn Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -72,14 +72,20 @@ wsconsctl_conf() {
 	done
 }
 
-# Push the old seed into the kernel, create a future seed  and create a seed
-# file for the boot-loader.
-random_seed() {
-	dd if=/var/db/host.random of=/dev/random bs=65536 count=1 status=none
-	chmod 600 /var/db/host.random
-	dd if=/dev/random of=/var/db/host.random bs=65536 count=1 status=none
-	dd if=/dev/random of=/etc/random.seed bs=512 count=1 status=none
-	chmod 600 /etc/random.seed
+# Push the old seed into the kernel and create future seeds for the bootloader,
+# the installer and rc(8).
+store_random() {
+	local _bootseed=/etc/random.seed _hostseed=/var/db/host.random
+
+	dd if=$_hostseed of=/dev/random bs=65536 count=1 status=none
+
+	dd if=/dev/random of=$_bootseed bs=512   count=1 status=none
+	dd if=/dev/random of=$_hostseed bs=65536 count=1 status=none
+
+	# Removal of the sticky bit indicates the file has fresh contents for
+	# use by a subsequent bootloader (who sets the sticky bit to prevent
+	# content reuse).
+	chmod u=rw-t,go= $_bootseed $_hostseed
 }
 
 # Populate net.inet.(tcp|udp).baddynamic with the contents of /etc/services so
@@ -351,12 +357,8 @@ _rc_parse_conf
 # - execute the rc.d scripts specified by $pkg_scripts in reverse order
 # - bring carp interfaces down gracefully
 if [[ $1 == shutdown ]]; then
-	if echo 2>/dev/null >>/var/db/host.random ||
-	    echo 2>/dev/null >>/etc/random.seed; then
-		random_seed
-	else
-		echo warning: cannot write random seed to disk
-	fi
+	store_random 2>/dev/null ||
+		echo 'warning: cannot write random seed to disk'
 
 	# If we are in secure level 0, assume single user mode.
 	if (($(sysctl -n kern.securelevel) == 0)); then
@@ -490,7 +492,7 @@ sh /etc/netstart
 
 start_daemon unwind >/dev/null 2>&1
 
-random_seed
+store_random
 
 wait_reorder_libs
 
