@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.145 2025/05/09 14:43:47 jan Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.146 2025/05/18 03:18:36 jan Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -103,8 +103,7 @@ int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
 struct cpumem *mrtcounters;
 
-struct rtentry	*mfc_find(struct ifnet *, struct in_addr *,
-    struct in_addr *, unsigned int);
+struct rtentry	*mfc_find(struct ifnet *, struct in_addr *, unsigned int);
 int get_sg_cnt(unsigned int, struct sioc_sg_req *);
 int get_vif_cnt(unsigned int, struct sioc_vif_req *);
 int mrt_rtwalk_mfcsysctl(struct rtentry *, void *, unsigned int);
@@ -140,14 +139,13 @@ static const u_int32_t mrt_api_support = (MRT_MFC_FLAGS_DISABLE_WRONGVIF |
 static u_int32_t mrt_api_config = 0;
 
 /*
- * Find a route for a given origin IP address and Multicast group address
+ * Find a route for a given Multicast group address.
  * Type of service parameter to be added in the future!!!
  * Statistics are updated by the caller if needed (mrts_mfc_lookups and
  * mrts_mfc_misses)
  */
 struct rtentry *
-mfc_find(struct ifnet *ifp, struct in_addr *origin, struct in_addr *group,
-    unsigned int rtableid)
+mfc_find(struct ifnet *ifp, struct in_addr *group, unsigned int rtableid)
 {
 	struct rtentry		*rt;
 	struct sockaddr_in	 msin;
@@ -308,7 +306,7 @@ get_sg_cnt(unsigned int rtableid, struct sioc_sg_req *req)
 	struct rtentry *rt;
 	struct mfc *mfc;
 
-	rt = mfc_find(NULL, &req->src, &req->grp, rtableid);
+	rt = mfc_find(NULL, &req->grp, rtableid);
 	if (rt == NULL) {
 		req->pktcnt = req->bytecnt = req->wrong_if = 0xffffffff;
 		return (EADDRNOTAVAIL);
@@ -923,8 +921,7 @@ update_mfc_params(struct mfcctl2 *mfccp, int wait, unsigned int rtableid)
 		if ((ifp = if_lookupbyvif(i, rtableid)) == NULL)
 			continue;
 
-		rt = mfc_find(ifp, &mfccp->mfcc_origin,
-		    &mfccp->mfcc_mcastgrp, rtableid);
+		rt = mfc_find(ifp, &mfccp->mfcc_mcastgrp, rtableid);
 
 		/* vif not configured or removed. */
 		if (mfccp->mfcc_ttls[i] == 0) {
@@ -978,8 +975,7 @@ update_mfc_params(struct mfcctl2 *mfccp, int wait, unsigned int rtableid)
 	}
 
 	/* We already have a route, nothing to do here. */
-	if ((rt = mfc_find(ifp, &mfccp->mfcc_origin,
-	    &mfccp->mfcc_mcastgrp, rtableid)) != NULL) {
+	if ((rt = mfc_find(ifp, &mfccp->mfcc_mcastgrp, rtableid)) != NULL) {
 		rtfree(rt);
 		return;
 	}
@@ -1080,8 +1076,7 @@ del_mfc(struct socket *so, struct mbuf *m)
 	DPRINTF("origin %#08X group %#08X rtableid %d",
 	    mfcctl2.mfcc_origin.s_addr, mfcctl2.mfcc_mcastgrp.s_addr, rtableid);
 
-	while ((rt = mfc_find(NULL, &mfcctl2.mfcc_origin,
-	    &mfcctl2.mfcc_mcastgrp, rtableid)) != NULL) {
+	while ((rt = mfc_find(NULL, &mfcctl2.mfcc_mcastgrp, rtableid)) != NULL) {
 		mrt_mcast_del(rt, rtableid);
 		rtfree(rt);
 	}
@@ -1160,7 +1155,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp, int flags)
 	 * Determine forwarding vifs from the forwarding cache table
 	 */
 	mrtstat_inc(mrts_mfc_lookups);
-	rt = mfc_find(NULL, &ip->ip_src, &ip->ip_dst, rtableid);
+	rt = mfc_find(NULL, &ip->ip_dst, rtableid);
 
 	/* Entry exists, so forward if necessary */
 	if (rt != NULL) {
@@ -1376,7 +1371,7 @@ rt_mcast_add(struct ifnet *ifp, struct sockaddr *origin, struct sockaddr *group)
 
 	mrt_count[rtableid]++;
 
-	return (mfc_find(ifp, NULL, &satosin(group)->sin_addr, rtableid));
+	return (mfc_find(ifp, &satosin(group)->sin_addr, rtableid));
 }
 
 void
