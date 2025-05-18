@@ -1,8 +1,9 @@
-#	$OpenBSD: BOOT,v 1.13 2023/01/11 03:28:42 visa Exp $
+#	$OpenBSD: BOOT,v 1.14 2025/05/18 11:47:35 visa Exp $
 
 machine		octeon mips64
 maxusers	4
 
+option		BOOT_KERNEL
 option		BOOT_QUIET
 
 option		SMALL_KERNEL

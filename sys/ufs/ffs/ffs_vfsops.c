@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.198 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.199 2025/05/18 11:47:35 visa Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1394,7 +1394,9 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, INFSLP);
 	fs->fs_fmod = 0;
+#ifndef BOOT_KERNEL
 	fs->fs_time = gettime();
+#endif
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 	/* Restore compatibility to old file systems.		   XXX */
 	dfs = (struct fs *)bp->b_data;				/* XXX */

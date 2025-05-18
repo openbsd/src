@@ -1,8 +1,9 @@
-# $OpenBSD: BOOT,v 1.9 2022/01/08 05:40:19 visa Exp $
+# $OpenBSD: BOOT,v 1.10 2025/05/18 11:47:35 visa Exp $
 
 machine		powerpc64
 maxusers	4
 
+option		BOOT_KERNEL
 option		BOOT_QUIET
 
 option		SMALL_KERNEL
