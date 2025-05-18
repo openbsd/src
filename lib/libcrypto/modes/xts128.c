@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.14 2025/04/21 16:01:18 jsing Exp $ */
+/* $OpenBSD: xts128.c,v 1.15 2025/05/18 09:05:59 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -61,9 +61,9 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
     size_t len, int enc)
 {
 	union {
-		u64 u[2];
-		u32 d[4];
-		u8 c[16];
+		uint64_t u[2];
+		uint32_t d[4];
+		uint8_t c[16];
 	} tweak, scratch;
 	unsigned int i;
 
@@ -83,8 +83,8 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		scratch.u[0] ^= tweak.u[0];
 		scratch.u[1] ^= tweak.u[1];
 #else
-		scratch.u[0] = ((u64 *)inp)[0] ^ tweak.u[0];
-		scratch.u[1] = ((u64 *)inp)[1] ^ tweak.u[1];
+		scratch.u[0] = ((uint64_t *)inp)[0] ^ tweak.u[0];
+		scratch.u[1] = ((uint64_t *)inp)[1] ^ tweak.u[1];
 #endif
 		(*ctx->block1)(scratch.c, scratch.c, ctx->key1);
 #ifdef __STRICT_ALIGNMENT
@@ -92,8 +92,8 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		scratch.u[1] ^= tweak.u[1];
 		memcpy(out, scratch.c, 16);
 #else
-		((u64 *)out)[0] = scratch.u[0] ^= tweak.u[0];
-		((u64 *)out)[1] = scratch.u[1] ^= tweak.u[1];
+		((uint64_t *)out)[0] = scratch.u[0] ^= tweak.u[0];
+		((uint64_t *)out)[1] = scratch.u[1] ^= tweak.u[1];
 #endif
 		inp += 16;
 		out += 16;
@@ -115,15 +115,15 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		for (c = 0, i = 0; i < 16; ++i) {
 			/*+ substitutes for |, because c is 1 bit */
 			c += ((size_t)tweak.c[i]) << 1;
-			tweak.c[i] = (u8)c;
+			tweak.c[i] = (uint8_t)c;
 			c = c >> 8;
 		}
-		tweak.c[0] ^= (u8)(0x87 & (0 - c));
+		tweak.c[0] ^= (uint8_t)(0x87 & (0 - c));
 #endif
 	}
 	if (enc) {
 		for (i = 0; i < len; ++i) {
-			u8 ch = inp[i];
+			uint8_t ch = inp[i];
 			out[i] = scratch.c[i];
 			scratch.c[i] = ch;
 		}
@@ -135,8 +135,8 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		memcpy(out - 16, scratch.c, 16);
 	} else {
 		union {
-			u64 u[2];
-			u8 c[16];
+			uint64_t u[2];
+			uint8_t c[16];
 		} tweak1;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -152,25 +152,25 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		for (c = 0, i = 0; i < 16; ++i) {
 			/*+ substitutes for |, because c is 1 bit */
 			c += ((size_t)tweak.c[i]) << 1;
-			tweak1.c[i] = (u8)c;
+			tweak1.c[i] = (uint8_t)c;
 			c = c >> 8;
 		}
-		tweak1.c[0] ^= (u8)(0x87 & (0 - c));
+		tweak1.c[0] ^= (uint8_t)(0x87 & (0 - c));
 #endif
 #ifdef __STRICT_ALIGNMENT
 		memcpy(scratch.c, inp, 16);
 		scratch.u[0] ^= tweak1.u[0];
 		scratch.u[1] ^= tweak1.u[1];
 #else
-		scratch.u[0] = ((u64 *)inp)[0] ^ tweak1.u[0];
-		scratch.u[1] = ((u64 *)inp)[1] ^ tweak1.u[1];
+		scratch.u[0] = ((uint64_t *)inp)[0] ^ tweak1.u[0];
+		scratch.u[1] = ((uint64_t *)inp)[1] ^ tweak1.u[1];
 #endif
 		(*ctx->block1)(scratch.c, scratch.c, ctx->key1);
 		scratch.u[0] ^= tweak1.u[0];
 		scratch.u[1] ^= tweak1.u[1];
 
 		for (i = 0; i < len; ++i) {
-			u8 ch = inp[16 + i];
+			uint8_t ch = inp[16 + i];
 			out[16 + i] = scratch.c[i];
 			scratch.c[i] = ch;
 		}
@@ -182,8 +182,8 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		scratch.u[1] ^= tweak.u[1];
 		memcpy(out, scratch.c, 16);
 #else
-		((u64 *)out)[0] = scratch.u[0] ^ tweak.u[0];
-		((u64 *)out)[1] = scratch.u[1] ^ tweak.u[1];
+		((uint64_t *)out)[0] = scratch.u[0] ^ tweak.u[0];
+		((uint64_t *)out)[1] = scratch.u[1] ^ tweak.u[1];
 #endif
 	}
 

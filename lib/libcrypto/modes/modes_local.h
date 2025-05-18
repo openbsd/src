@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_local.h,v 1.5 2025/05/17 14:43:17 jsing Exp $ */
+/* $OpenBSD: modes_local.h,v 1.6 2025/05/18 09:05:59 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -15,37 +15,30 @@
 __BEGIN_HIDDEN_DECLS
 
 #if defined(_LP64)
-typedef long i64;
-typedef unsigned long u64;
 #define U64(C) C##UL
 #else
-typedef long long i64;
-typedef unsigned long long u64;
 #define U64(C) C##ULL
 #endif
-
-typedef unsigned int u32;
-typedef unsigned char u8;
 
 /* GCM definitions */
 
 typedef struct {
-	u64 hi, lo;
+	uint64_t hi, lo;
 } u128;
 
 struct gcm128_context {
 	/* Following 6 names follow names in GCM specification */
 	union {
-		u64 u[2];
-		u32 d[4];
-		u8 c[16];
+		uint64_t u[2];
+		uint32_t d[4];
+		uint8_t c[16];
 		size_t t[16/sizeof(size_t)];
 	} Yi, EKi, EK0, len, Xi, H;
 	/* Relative position of Xi, H and pre-computed Htable is used
 	 * in some assembler modules, i.e. don't change the order! */
 	u128 Htable[16];
-	void (*gmult)(u64 Xi[2], const u128 Htable[16]);
-	void (*ghash)(u64 Xi[2], const u128 Htable[16], const u8 *inp,
+	void (*gmult)(uint64_t Xi[2], const u128 Htable[16]);
+	void (*ghash)(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
 	    size_t len);
 	unsigned int mres, ares;
 	block128_f block;
@@ -59,10 +52,10 @@ struct xts128_context {
 
 struct ccm128_context {
 	union {
-		u64 u[2];
-		u8 c[16];
+		uint64_t u[2];
+		uint8_t c[16];
 	} nonce, cmac;
-	u64 blocks;
+	uint64_t blocks;
 	block128_f block;
 	void *key;
 };

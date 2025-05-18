@@ -1,4 +1,4 @@
-/* $OpenBSD: ctr128.c,v 1.17 2025/04/23 10:09:08 jsing Exp $ */
+/* $OpenBSD: ctr128.c,v 1.18 2025/05/18 09:05:59 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -63,8 +63,8 @@
 static void
 ctr128_inc(unsigned char *counter)
 {
-	u32 n = 16;
-	u8  c;
+	uint32_t n = 16;
+	uint8_t  c;
 
 	do {
 		--n;
@@ -175,8 +175,8 @@ LCRYPTO_ALIAS(CRYPTO_ctr128_encrypt);
 static void
 ctr96_inc(unsigned char *counter)
 {
-	u32 n = 12;
-	u8  c;
+	uint32_t n = 12;
+	uint8_t  c;
 
 	do {
 		--n;
@@ -223,7 +223,7 @@ CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 		 * overflow, which is then handled by limiting the
 		 * amount of blocks to the exact overflow point...
 		 */
-		ctr32 += (u32)blocks;
+		ctr32 += (uint32_t)blocks;
 		if (ctr32 < blocks) {
 			blocks -= ctr32;
 			ctr32 = 0;

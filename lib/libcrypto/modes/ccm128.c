@@ -1,4 +1,4 @@
-/* $OpenBSD: ccm128.c,v 1.10 2025/04/21 16:01:18 jsing Exp $ */
+/* $OpenBSD: ccm128.c,v 1.11 2025/05/18 09:05:59 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -61,7 +61,7 @@ CRYPTO_ccm128_init(CCM128_CONTEXT *ctx,
     unsigned int M, unsigned int L, void *key, block128_f block)
 {
 	memset(ctx->nonce.c, 0, sizeof(ctx->nonce.c));
-	ctx->nonce.c[0] = ((u8)(L - 1) & 7) | (u8)(((M - 2)/2) & 7) << 3;
+	ctx->nonce.c[0] = ((uint8_t)(L - 1) & 7) | (uint8_t)(((M - 2)/2) & 7) << 3;
 	ctx->blocks = 0;
 	ctx->block = block;
 	ctx->key = key;
@@ -81,17 +81,17 @@ CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
 		return -1;		/* nonce is too short */
 
 	if (sizeof(mlen) == 8 && L >= 3) {
-		ctx->nonce.c[8] = (u8)(mlen >> (56 % (sizeof(mlen)*8)));
-		ctx->nonce.c[9] = (u8)(mlen >> (48 % (sizeof(mlen)*8)));
-		ctx->nonce.c[10] = (u8)(mlen >> (40 % (sizeof(mlen)*8)));
-		ctx->nonce.c[11] = (u8)(mlen >> (32 % (sizeof(mlen)*8)));
+		ctx->nonce.c[8] = (uint8_t)(mlen >> (56 % (sizeof(mlen)*8)));
+		ctx->nonce.c[9] = (uint8_t)(mlen >> (48 % (sizeof(mlen)*8)));
+		ctx->nonce.c[10] = (uint8_t)(mlen >> (40 % (sizeof(mlen)*8)));
+		ctx->nonce.c[11] = (uint8_t)(mlen >> (32 % (sizeof(mlen)*8)));
 	} else
 		ctx->nonce.u[1] = 0;
 
-	ctx->nonce.c[12] = (u8)(mlen >> 24);
-	ctx->nonce.c[13] = (u8)(mlen >> 16);
-	ctx->nonce.c[14] = (u8)(mlen >> 8);
-	ctx->nonce.c[15] = (u8)mlen;
+	ctx->nonce.c[12] = (uint8_t)(mlen >> 24);
+	ctx->nonce.c[13] = (uint8_t)(mlen >> 16);
+	ctx->nonce.c[14] = (uint8_t)(mlen >> 8);
+	ctx->nonce.c[15] = (uint8_t)mlen;
 
 	ctx->nonce.c[0] &= ~0x40;	/* clear Adata flag */
 	memcpy(&ctx->nonce.c[1], nonce, 14 - L);
@@ -116,29 +116,29 @@ CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
 	    ctx->blocks++;
 
 	if (alen < (0x10000 - 0x100)) {
-		ctx->cmac.c[0] ^= (u8)(alen >> 8);
-		ctx->cmac.c[1] ^= (u8)alen;
+		ctx->cmac.c[0] ^= (uint8_t)(alen >> 8);
+		ctx->cmac.c[1] ^= (uint8_t)alen;
 		i = 2;
 	} else if (sizeof(alen) == 8 &&
 	    alen >= (size_t)1 << (32 % (sizeof(alen)*8))) {
 		ctx->cmac.c[0] ^= 0xFF;
 		ctx->cmac.c[1] ^= 0xFF;
-		ctx->cmac.c[2] ^= (u8)(alen >> (56 % (sizeof(alen)*8)));
-		ctx->cmac.c[3] ^= (u8)(alen >> (48 % (sizeof(alen)*8)));
-		ctx->cmac.c[4] ^= (u8)(alen >> (40 % (sizeof(alen)*8)));
-		ctx->cmac.c[5] ^= (u8)(alen >> (32 % (sizeof(alen)*8)));
-		ctx->cmac.c[6] ^= (u8)(alen >> 24);
-		ctx->cmac.c[7] ^= (u8)(alen >> 16);
-		ctx->cmac.c[8] ^= (u8)(alen >> 8);
-		ctx->cmac.c[9] ^= (u8)alen;
+		ctx->cmac.c[2] ^= (uint8_t)(alen >> (56 % (sizeof(alen)*8)));
+		ctx->cmac.c[3] ^= (uint8_t)(alen >> (48 % (sizeof(alen)*8)));
+		ctx->cmac.c[4] ^= (uint8_t)(alen >> (40 % (sizeof(alen)*8)));
+		ctx->cmac.c[5] ^= (uint8_t)(alen >> (32 % (sizeof(alen)*8)));
+		ctx->cmac.c[6] ^= (uint8_t)(alen >> 24);
+		ctx->cmac.c[7] ^= (uint8_t)(alen >> 16);
+		ctx->cmac.c[8] ^= (uint8_t)(alen >> 8);
+		ctx->cmac.c[9] ^= (uint8_t)alen;
 		i = 10;
 	} else {
 		ctx->cmac.c[0] ^= 0xFF;
 		ctx->cmac.c[1] ^= 0xFE;
-		ctx->cmac.c[2] ^= (u8)(alen >> 24);
-		ctx->cmac.c[3] ^= (u8)(alen >> 16);
-		ctx->cmac.c[4] ^= (u8)(alen >> 8);
-		ctx->cmac.c[5] ^= (u8)alen;
+		ctx->cmac.c[2] ^= (uint8_t)(alen >> 24);
+		ctx->cmac.c[3] ^= (uint8_t)(alen >> 16);
+		ctx->cmac.c[4] ^= (uint8_t)(alen >> 8);
+		ctx->cmac.c[5] ^= (uint8_t)alen;
 		i = 6;
 	}
 
@@ -160,7 +160,7 @@ static void
 ctr64_inc(unsigned char *counter)
 {
 	unsigned int n = 8;
-	u8 c;
+	uint8_t c;
 
 	counter += 8;
 	do {
@@ -184,8 +184,8 @@ CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 	block128_f	 block = ctx->block;
 	void		*key = ctx->key;
 	union {
-		u64 u[2];
-		u8 c[16];
+		uint64_t u[2];
+		uint8_t c[16];
 	} scratch;
 
 	if (!(flags0 & 0x40))
@@ -211,16 +211,16 @@ CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 	while (len >= 16) {
 #ifdef __STRICT_ALIGNMENT
 		union {
-			u64 u[2];
-			u8 c[16];
+			uint64_t u[2];
+			uint8_t c[16];
 		} temp;
 
 		memcpy(temp.c, inp, 16);
 		ctx->cmac.u[0] ^= temp.u[0];
 		ctx->cmac.u[1] ^= temp.u[1];
 #else
-		ctx->cmac.u[0] ^= ((u64 *)inp)[0];
-		ctx->cmac.u[1] ^= ((u64 *)inp)[1];
+		ctx->cmac.u[0] ^= ((uint64_t *)inp)[0];
+		ctx->cmac.u[1] ^= ((uint64_t *)inp)[1];
 #endif
 		(*block)(ctx->cmac.c, ctx->cmac.c, key);
 		(*block)(ctx->nonce.c, scratch.c, key);
@@ -230,8 +230,8 @@ CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 		temp.u[1] ^= scratch.u[1];
 		memcpy(out, temp.c, 16);
 #else
-		((u64 *)out)[0] = scratch.u[0] ^ ((u64 *)inp)[0];
-		((u64 *)out)[1] = scratch.u[1] ^ ((u64 *)inp)[1];
+		((uint64_t *)out)[0] = scratch.u[0] ^ ((u64 *)inp)[0];
+		((uint64_t *)out)[1] = scratch.u[1] ^ ((u64 *)inp)[1];
 #endif
 		inp += 16;
 		out += 16;
@@ -271,8 +271,8 @@ CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	block128_f	 block = ctx->block;
 	void		*key = ctx->key;
 	union {
-		u64 u[2];
-		u8 c[16];
+		uint64_t u[2];
+		uint8_t c[16];
 	} scratch;
 
 	if (!(flags0 & 0x40))
@@ -293,8 +293,8 @@ CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	while (len >= 16) {
 #ifdef __STRICT_ALIGNMENT
 		union {
-			u64 u[2];
-			u8 c[16];
+			uint64_t u[2];
+			uint8_t c[16];
 		} temp;
 #endif
 		(*block)(ctx->nonce.c, scratch.c, key);
@@ -305,10 +305,10 @@ CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 		ctx->cmac.u[1] ^= (scratch.u[1] ^= temp.u[1]);
 		memcpy(out, scratch.c, 16);
 #else
-		ctx->cmac.u[0] ^= (((u64 *)out)[0] = scratch.u[0] ^
-		    ((u64 *)inp)[0]);
-		ctx->cmac.u[1] ^= (((u64 *)out)[1] = scratch.u[1] ^
-		    ((u64 *)inp)[1]);
+		ctx->cmac.u[0] ^= (((uint64_t *)out)[0] = scratch.u[0] ^
+		    ((uint64_t *)inp)[0]);
+		ctx->cmac.u[1] ^= (((uint64_t *)out)[1] = scratch.u[1] ^
+		    ((uint64_t *)inp)[1]);
 #endif
 		(*block)(ctx->cmac.c, ctx->cmac.c, key);
 
@@ -363,8 +363,8 @@ CRYPTO_ccm128_encrypt_ccm64(CCM128_CONTEXT *ctx,
 	block128_f	 block = ctx->block;
 	void		*key = ctx->key;
 	union {
-		u64 u[2];
-		u8 c[16];
+		uint64_t u[2];
+		uint8_t c[16];
 	} scratch;
 
 	if (!(flags0 & 0x40))
@@ -430,8 +430,8 @@ CRYPTO_ccm128_decrypt_ccm64(CCM128_CONTEXT *ctx,
 	block128_f	 block = ctx->block;
 	void		*key = ctx->key;
 	union {
-		u64 u[2];
-		u8 c[16];
+		uint64_t u[2];
+		uint8_t c[16];
 	} scratch;
 
 	if (!(flags0 & 0x40))
