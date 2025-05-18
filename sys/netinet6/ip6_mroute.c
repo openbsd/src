@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.144 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.145 2025/05/18 23:27:29 jan Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -143,10 +143,8 @@ int del_m6if(struct socket *, mifi_t *);
 int add_m6fc(struct socket *, struct mf6cctl *);
 int del_m6fc(struct socket *, struct mf6cctl *);
 struct ifnet *mrt6_iflookupbymif(mifi_t, unsigned int);
-struct rtentry *mf6c_find(struct ifnet *, struct in6_addr *,
-    struct in6_addr *, unsigned int);
-struct rtentry *mrt6_mcast_add(struct ifnet *, struct sockaddr *,
-    struct sockaddr *);
+struct rtentry *mf6c_find(struct ifnet *, struct in6_addr *, unsigned int);
+struct rtentry *mrt6_mcast_add(struct ifnet *, struct sockaddr *);
 void mrt6_mcast_del(struct rtentry *, unsigned int);
 
 /*
@@ -250,8 +248,7 @@ get_sg6_cnt(struct sioc_sg_req6 *req, unsigned int rtableid)
 	struct rtentry *rt;
 	struct mf6c *mf6c;
 
-	rt = mf6c_find(NULL, &req->src.sin6_addr, &req->grp.sin6_addr,
-	    rtableid);
+	rt = mf6c_find(NULL, &req->grp.sin6_addr, rtableid);
 	if (rt == NULL) {
 		req->pktcnt = req->bytecnt = req->wrong_if = 0xffffffff;
 		return EADDRNOTAVAIL;
@@ -637,7 +634,7 @@ mf6c_add_route(struct ifnet *ifp, struct sockaddr *origin,
 	char bsrc[INET6_ADDRSTRLEN], bdst[INET6_ADDRSTRLEN];
 #endif /* MCAST_DEBUG */
 
-	rt = mrt6_mcast_add(ifp, origin, group);
+	rt = mrt6_mcast_add(ifp, group);
 	if (rt == NULL)
 		return ENOENT;
 
@@ -690,8 +687,7 @@ mf6c_update(struct mf6cctl *mf6cc, int wait, unsigned int rtableid)
 		if ((ifp = mrt6_iflookupbymif(mifi, rtableid)) == NULL)
 			continue;
 
-		rt = mf6c_find(ifp, &mf6cc->mf6cc_origin.sin6_addr,
-		    &mf6cc->mf6cc_mcastgrp.sin6_addr, rtableid);
+		rt = mf6c_find(ifp, &mf6cc->mf6cc_mcastgrp.sin6_addr, rtableid);
 
 		/* mif not configured or removed. */
 		if (!IF_ISSET(mifi, &mf6cc->mf6cc_ifset)) {
@@ -750,8 +746,8 @@ mf6c_update(struct mf6cctl *mf6cc, int wait, unsigned int rtableid)
 	}
 
 	/* We already have a route, nothing to do here. */
-	if ((rt = mf6c_find(ifp, &mf6cc->mf6cc_origin.sin6_addr,
-	    &mf6cc->mf6cc_mcastgrp.sin6_addr, rtableid)) != NULL) {
+	if ((rt = mf6c_find(ifp, &mf6cc->mf6cc_mcastgrp.sin6_addr,
+	    rtableid)) != NULL) {
 		rtfree(rt);
 		return;
 	}
@@ -814,8 +810,8 @@ del_m6fc(struct socket *so, struct mf6cctl *mfccp)
 
 	NET_ASSERT_LOCKED();
 
-	while ((rt = mf6c_find(NULL, &mfccp->mf6cc_origin.sin6_addr,
-	    &mfccp->mf6cc_mcastgrp.sin6_addr, rtableid)) != NULL) {
+	while ((rt = mf6c_find(NULL, &mfccp->mf6cc_mcastgrp.sin6_addr,
+	    rtableid)) != NULL) {
 		mrt6_mcast_del(rt, rtableid);
 		rtfree(rt);
 	}
@@ -898,7 +894,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 	/*
 	 * Determine forwarding mifs from the forwarding cache table
 	 */
-	rt = mf6c_find(NULL, &ip6->ip6_src, &ip6->ip6_dst, rtableid);
+	rt = mf6c_find(NULL, &ip6->ip6_dst, rtableid);
 
 	/* Entry exists, so forward if necessary */
 	if (rt) {
@@ -1183,8 +1179,7 @@ mrt6_iflookupbymif(mifi_t mifi, unsigned int rtableid)
 }
 
 struct rtentry *
-mf6c_find(struct ifnet *ifp, struct in6_addr *origin, struct in6_addr *group,
-    unsigned int rtableid)
+mf6c_find(struct ifnet *ifp, struct in6_addr *group, unsigned int rtableid)
 {
 	struct rtentry *rt;
 	struct sockaddr_in6 msin6;
@@ -1214,8 +1209,7 @@ mf6c_find(struct ifnet *ifp, struct in6_addr *origin, struct in6_addr *group,
 }
 
 struct rtentry *
-mrt6_mcast_add(struct ifnet *ifp, struct sockaddr *origin,
-    struct sockaddr *group)
+mrt6_mcast_add(struct ifnet *ifp, struct sockaddr *group)
 {
 	struct ifaddr *ifa;
 	int rv;
@@ -1237,7 +1231,7 @@ mrt6_mcast_add(struct ifnet *ifp, struct sockaddr *origin,
 		return NULL;
 	}
 
-	return mf6c_find(ifp, NULL, &satosin6(group)->sin6_addr, rtableid);
+	return mf6c_find(ifp, &satosin6(group)->sin6_addr, rtableid);
 }
 
 void
