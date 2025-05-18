@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.37 2025/05/17 14:43:17 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.38 2025/05/18 07:13:48 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -56,24 +56,13 @@
 #include "modes_local.h"
 
 #define	PACK(s)		((size_t)(s)<<(sizeof(size_t)*8-16))
-#define REDUCE1BIT(V)							\
-	do {								\
-		if (sizeof(size_t)==8) {				\
-			u64 T = U64(0xe100000000000000) & (0-(V.lo&1));	\
-			V.lo  = (V.hi<<63)|(V.lo>>1);			\
-			V.hi  = (V.hi>>1 )^T;				\
-		} else {						\
-			u32 T = 0xe1000000U & (0-(u32)(V.lo&1));	\
-			V.lo  = (V.hi<<63)|(V.lo>>1);			\
-			V.hi  = (V.hi>>1 )^((u64)T<<32);		\
-		}							\
-	} while(0)
 
 static void
 gcm_init_4bit(u128 Htable[16], u64 H[2])
 {
 	u128 V;
-	int  i;
+	u64 T;
+	int i;
 
 	Htable[0].hi = 0;
 	Htable[0].lo = 0;
@@ -81,7 +70,9 @@ gcm_init_4bit(u128 Htable[16], u64 H[2])
 	V.lo = H[1];
 
 	for (Htable[8] = V, i = 4; i > 0; i >>= 1) {
-		REDUCE1BIT(V);
+		T = U64(0xe100000000000000) & (0 - (V.lo & 1));
+		V.lo = (V.hi << 63) | (V.lo >> 1);
+		V.hi = (V.hi >> 1 ) ^ T;
 		Htable[i] = V;
 	}
 
