@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.64 2025/05/15 17:07:13 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.65 2025/05/18 21:18:27 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -2006,10 +2006,15 @@ ed_mov_opt(int col, char *wb)
 
 	/* Advance the cursor. */
 
-	for (ci = pwidth; ci < col || isu8cont(*wb);
-	     ci = newcol((unsigned char)*wb++, ci))
-		if (ci > cur_col || (ci == cur_col && !isu8cont(*wb)))
+	ci = pwidth;
+	while (ci < col || (ci > pwidth && isu8cont(*wb))) {
+		ci = newcol((unsigned char)*wb, ci);
+		if (ci == pwidth)
+			ci++;
+		if (ci > cur_col)
 			x_putc(*wb);
+		wb++;
+	}
 	cur_col = ci;
 }
 
