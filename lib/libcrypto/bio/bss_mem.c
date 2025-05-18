@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.24 2025/05/18 06:38:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -283,7 +283,9 @@ mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	case BIO_CTRL_INFO:
 		if (ptr != NULL) {
 			pptr = (void **)ptr;
-			*pptr = bio_mem_read_ptr(bm);
+			*pptr = NULL;
+			if (bm->buf->max > 0)
+				*pptr = bio_mem_read_ptr(bm);
 		}
 		ret = (long)bio_mem_pending(bm);
 		break;
