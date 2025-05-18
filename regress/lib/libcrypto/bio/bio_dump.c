@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_dump.c,v 1.4 2024/02/09 12:48:32 tb Exp $ */
+/*	$OpenBSD: bio_dump.c,v 1.5 2025/05/18 06:41:51 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  *
@@ -809,7 +809,7 @@ bio_dump_test(const struct bio_dump_testcase *tc)
 		    tc->indent, ret, got_len, strlen(tc->output));
 		goto err;
 	}
-	if (strncmp(tc->output, got, got_len) != 0) {
+	if (got_len > 0 && strncmp(tc->output, got, got_len) != 0) {
 		fprintf(stderr, "%d: mismatch\n", tc->indent);
 		goto err;
 	}
