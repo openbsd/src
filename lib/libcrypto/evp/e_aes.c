@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.62 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.63 2025/05/18 09:47:38 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -69,7 +69,6 @@ typedef struct {
 	AES_KEY ks;
 	block128_f block;
 	union {
-		cbc128_f cbc;
 		ctr128_f ctr;
 	} stream;
 } EVP_AES_KEY;
@@ -175,24 +174,21 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	int ret, mode;
 	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
 
+	dat->stream.ctr = NULL;
+
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
+
 	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE) &&
 	    !enc) {
 		ret = aesni_set_decrypt_key(key, ctx->key_len * 8,
 		    ctx->cipher_data);
 		dat->block = (block128_f)aesni_decrypt;
-		dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-		    (cbc128_f)aesni_cbc_encrypt : NULL;
 	} else {
 		ret = aesni_set_encrypt_key(key, ctx->key_len * 8,
 		    ctx->cipher_data);
 		dat->block = (block128_f)aesni_encrypt;
-		if (mode == EVP_CIPH_CBC_MODE)
-			dat->stream.cbc = (cbc128_f)aesni_cbc_encrypt;
-		else if (mode == EVP_CIPH_CTR_MODE)
+		if (mode == EVP_CIPH_CTR_MODE)
 			dat->stream.ctr = (ctr128_f)aesni_ctr32_encrypt_blocks;
-		else
-			dat->stream.cbc = NULL;
 	}
 
 	if (ret < 0) {
@@ -332,18 +328,16 @@ aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	int ret, mode;
 	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
 
+	dat->stream.ctr = NULL;
+
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 
 	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE) && !enc) {
 		ret = AES_set_decrypt_key(key, ctx->key_len * 8, &dat->ks);
 		dat->block = (block128_f)AES_decrypt;
-		dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-		    (cbc128_f)AES_cbc_encrypt : NULL;
 	} else {
 		ret = AES_set_encrypt_key(key, ctx->key_len * 8, &dat->ks);
 		dat->block = (block128_f)AES_encrypt;
-		dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-		    (cbc128_f)AES_cbc_encrypt : NULL;
 #ifdef AES_CTR_ASM
 		if (mode == EVP_CIPH_CTR_MODE)
 			dat->stream.ctr = (ctr128_f)AES_ctr32_encrypt;
@@ -359,20 +353,33 @@ aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 }
 
 static int
+aes_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int encrypt)
+{
+	EVP_AES_KEY *eak = ctx->cipher_data;
+
+	if (encrypt) {
+		if (AES_set_encrypt_key(key, ctx->key_len * 8, &eak->ks) < 0) {
+			EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
+			return 0;
+		}
+	} else {
+		if (AES_set_decrypt_key(key, ctx->key_len * 8, &eak->ks) < 0) {
+			EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int
 aes_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
+	EVP_AES_KEY *eak = ctx->cipher_data;
 
-	if (dat->stream.cbc)
-		(*dat->stream.cbc)(in, out, len, &dat->ks, ctx->iv,
-		    ctx->encrypt);
-	else if (ctx->encrypt)
-		CRYPTO_cbc128_encrypt(in, out, len, &dat->ks, ctx->iv,
-		    dat->block);
-	else
-		CRYPTO_cbc128_decrypt(in, out, len, &dat->ks, ctx->iv,
-		    dat->block);
+	AES_cbc_encrypt(in, out, len, &eak->ks, ctx->iv, ctx->encrypt);
 
 	return 1;
 }
@@ -490,7 +497,7 @@ static const EVP_CIPHER aes_128_cbc = {
 	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
-	.init = aes_init_key,
+	.init = aes_cbc_init_key,
 	.do_cipher = aes_cbc_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
@@ -736,7 +743,7 @@ static const EVP_CIPHER aes_192_cbc = {
 	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
-	.init = aes_init_key,
+	.init = aes_cbc_init_key,
 	.do_cipher = aes_cbc_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
@@ -982,7 +989,7 @@ static const EVP_CIPHER aes_256_cbc = {
 	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
-	.init = aes_init_key,
+	.init = aes_cbc_init_key,
 	.do_cipher = aes_cbc_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
