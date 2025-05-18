@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.18 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.19 2025/05/18 20:44:30 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: May 18 2025 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -178,7 +178,7 @@ A fundamental flaw in the OpenSSL API toolkit is that
 .Fn *_new
 functions usually create invalid objects that are tricky to
 turn into valid objects.
-A fundamental flaw in the EC library is that
+One specific flaw in the EC library internals is that
 .Vt EC_POINT
 objects do not hold a reference to the group they live on
 despite the fact that
@@ -191,12 +191,12 @@ This is difficult to fix because
 objects are not reference counted and
 because of const qualifiers in the API.
 This is the root cause for various contortions in the EC library
-and API.
-This has security implications because not
+and API and
+there are security implications because not
 only does the library not know whether an
 .Fa EC_POINT
 object represents a valid point,
-even if it did know that it would not know on what curve.
+even if it did know that it would still not know on what curve.
 .Pp
 The signature of
 .Fn EC_GROUP_dup
