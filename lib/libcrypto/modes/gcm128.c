@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.38 2025/05/18 07:13:48 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.39 2025/05/18 07:26:09 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -55,8 +55,6 @@
 #include "crypto_internal.h"
 #include "modes_local.h"
 
-#define	PACK(s)		((size_t)(s)<<(sizeof(size_t)*8-16))
-
 static void
 gcm_init_4bit(u128 Htable[16], u64 H[2])
 {
@@ -109,11 +107,10 @@ gcm_init_4bit(u128 Htable[16], u64 H[2])
 }
 
 #ifndef GHASH_ASM
-static const size_t rem_4bit[16] = {
-	PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
-	PACK(0x7080), PACK(0x6CA0), PACK(0x48C0), PACK(0x54E0),
-	PACK(0xE100), PACK(0xFD20), PACK(0xD940), PACK(0xC560),
-	PACK(0x9180), PACK(0x8DA0), PACK(0xA9C0), PACK(0xB5E0) };
+static const uint16_t rem_4bit[16] = {
+	0x0000, 0x1c20, 0x3840, 0x2460, 0x7080, 0x6ca0, 0x48c0, 0x54e0,
+	0xe100, 0xfd20, 0xd940, 0xc560, 0x9180, 0x8da0, 0xa9c0, 0xb5e0,
+};
 
 static void
 gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
@@ -133,11 +130,7 @@ gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 		rem = (size_t)Z.lo & 0xf;
 		Z.lo = (Z.hi << 60)|(Z.lo >> 4);
 		Z.hi = (Z.hi >> 4);
-#if SIZE_MAX == 0xffffffffffffffff
-		Z.hi ^= rem_4bit[rem];
-#else
-		Z.hi ^= (u64)rem_4bit[rem] << 32;
-#endif
+		Z.hi ^= (u64)rem_4bit[rem] << 48;
 		Z.hi ^= Htable[nhi].hi;
 		Z.lo ^= Htable[nhi].lo;
 
@@ -151,11 +144,7 @@ gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 		rem = (size_t)Z.lo & 0xf;
 		Z.lo = (Z.hi << 60)|(Z.lo >> 4);
 		Z.hi = (Z.hi >> 4);
-#if SIZE_MAX == 0xffffffffffffffff
-		Z.hi ^= rem_4bit[rem];
-#else
-		Z.hi ^= (u64)rem_4bit[rem] << 32;
-#endif
+		Z.hi ^= (u64)rem_4bit[rem] << 48;
 		Z.hi ^= Htable[nlo].hi;
 		Z.lo ^= Htable[nlo].lo;
 	}
@@ -194,11 +183,7 @@ gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
 			rem = (size_t)Z.lo & 0xf;
 			Z.lo = (Z.hi << 60)|(Z.lo >> 4);
 			Z.hi = (Z.hi >> 4);
-#if SIZE_MAX == 0xffffffffffffffff
-			Z.hi ^= rem_4bit[rem];
-#else
-			Z.hi ^= (u64)rem_4bit[rem] << 32;
-#endif
+			Z.hi ^= (u64)rem_4bit[rem] << 48;
 			Z.hi ^= Htable[nhi].hi;
 			Z.lo ^= Htable[nhi].lo;
 
@@ -213,11 +198,7 @@ gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
 			rem = (size_t)Z.lo & 0xf;
 			Z.lo = (Z.hi << 60)|(Z.lo >> 4);
 			Z.hi = (Z.hi >> 4);
-#if SIZE_MAX == 0xffffffffffffffff
-			Z.hi ^= rem_4bit[rem];
-#else
-			Z.hi ^= (u64)rem_4bit[rem] << 32;
-#endif
+			Z.hi ^= (u64)rem_4bit[rem] << 48;
 			Z.hi ^= Htable[nlo].hi;
 			Z.lo ^= Htable[nlo].lo;
 		}
