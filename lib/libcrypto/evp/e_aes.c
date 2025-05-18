@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.63 2025/05/18 09:47:38 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.64 2025/05/18 11:07:45 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -107,11 +107,6 @@ typedef struct {
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
 
-#ifdef AES_CTR_ASM
-void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-    size_t blocks, const AES_KEY *key,
-    const unsigned char ivec[AES_BLOCK_SIZE]);
-#endif
 #ifdef AES_XTS_ASM
 void AES_xts_encrypt(const char *inp, char *out, size_t len,
     const AES_KEY *key1, const AES_KEY *key2, const unsigned char iv[16]);
@@ -338,10 +333,6 @@ aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	} else {
 		ret = AES_set_encrypt_key(key, ctx->key_len * 8, &dat->ks);
 		dat->block = (block128_f)AES_encrypt;
-#ifdef AES_CTR_ASM
-		if (mode == EVP_CIPH_CTR_MODE)
-			dat->stream.ctr = (ctr128_f)AES_ctr32_encrypt;
-#endif
 	}
 
 	if (ret < 0) {
@@ -1398,11 +1389,7 @@ aes_gcm_set_key(AES_KEY *aes_key, GCM128_CONTEXT *gcm_ctx,
 {
 	AES_set_encrypt_key(key, key_len * 8, aes_key);
 	CRYPTO_gcm128_init(gcm_ctx, aes_key, (block128_f)AES_encrypt);
-#ifdef AES_CTR_ASM
-	return (ctr128_f)AES_ctr32_encrypt;
-#else
 	return NULL;
-#endif
 }
 
 static int
