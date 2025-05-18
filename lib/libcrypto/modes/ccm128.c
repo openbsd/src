@@ -1,4 +1,4 @@
-/* $OpenBSD: ccm128.c,v 1.11 2025/05/18 09:05:59 jsing Exp $ */
+/* $OpenBSD: ccm128.c,v 1.12 2025/05/18 09:21:29 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -230,8 +230,8 @@ CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 		temp.u[1] ^= scratch.u[1];
 		memcpy(out, temp.c, 16);
 #else
-		((uint64_t *)out)[0] = scratch.u[0] ^ ((u64 *)inp)[0];
-		((uint64_t *)out)[1] = scratch.u[1] ^ ((u64 *)inp)[1];
+		((uint64_t *)out)[0] = scratch.u[0] ^ ((uint64_t *)inp)[0];
+		((uint64_t *)out)[1] = scratch.u[1] ^ ((uint64_t *)inp)[1];
 #endif
 		inp += 16;
 		out += 16;
