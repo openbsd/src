@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.64 2025/05/18 11:07:45 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.65 2025/05/18 11:11:12 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -68,9 +68,6 @@
 typedef struct {
 	AES_KEY ks;
 	block128_f block;
-	union {
-		ctr128_f ctr;
-	} stream;
 } EVP_AES_KEY;
 
 typedef struct {
@@ -169,8 +166,6 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	int ret, mode;
 	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
 
-	dat->stream.ctr = NULL;
-
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 
 	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE) &&
@@ -182,8 +177,6 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		ret = aesni_set_encrypt_key(key, ctx->key_len * 8,
 		    ctx->cipher_data);
 		dat->block = (block128_f)aesni_encrypt;
-		if (mode == EVP_CIPH_CTR_MODE)
-			dat->stream.ctr = (ctr128_f)aesni_ctr32_encrypt_blocks;
 	}
 
 	if (ret < 0) {
@@ -200,6 +193,21 @@ aesni_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	aesni_cbc_encrypt(in, out, len, ctx->cipher_data, ctx->iv,
 	    ctx->encrypt);
+
+	return 1;
+}
+
+static int
+aesni_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t len)
+{
+	EVP_AES_KEY *eak = ctx->cipher_data;
+	unsigned int num = ctx->num;
+
+	CRYPTO_ctr128_encrypt_ctr32(in, out, len, &eak->ks, ctx->iv, ctx->buf,
+	    &num, aesni_ctr32_encrypt_blocks);
+
+	ctx->num = (size_t)num;
 
 	return 1;
 }
@@ -313,7 +321,6 @@ aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	}
 	return 1;
 }
-
 #endif
 
 static int
@@ -322,8 +329,6 @@ aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	int ret, mode;
 	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
-
-	dat->stream.ctr = NULL;
 
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 
@@ -455,19 +460,15 @@ static int
 aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
+	EVP_AES_KEY *eak = ctx->cipher_data;
 	unsigned int num = ctx->num;
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
 
-	if (dat->stream.ctr)
-		CRYPTO_ctr128_encrypt_ctr32(in, out, len, &dat->ks,
-		    ctx->iv, ctx->buf, &num, dat->stream.ctr);
-	else
-		CRYPTO_ctr128_encrypt(in, out, len, &dat->ks,
-		    ctx->iv, ctx->buf, &num, dat->block);
+	AES_ctr128_encrypt(in, out, len, &eak->ks, ctx->iv, ctx->buf, &num);
+
 	ctx->num = (size_t)num;
+
 	return 1;
 }
-
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_cbc = {
@@ -687,7 +688,7 @@ static const EVP_CIPHER aesni_128_ctr = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_ctr_cipher,
+	.do_cipher = aesni_ctr_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -933,7 +934,7 @@ static const EVP_CIPHER aesni_192_ctr = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_ctr_cipher,
+	.do_cipher = aesni_ctr_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1179,7 +1180,7 @@ static const EVP_CIPHER aesni_256_ctr = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_ctr_cipher,
+	.do_cipher = aesni_ctr_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
