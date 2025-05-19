@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.9 2025/05/19 06:47:40 beck Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.10 2025/05/19 07:40:17 beck Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -1085,10 +1085,11 @@ mlkem_parse_public_key_no_hash(struct public_key *pub, CBS *in)
 {
 	CBS t_bytes;
 
-	if (!CBS_get_bytes(in, &t_bytes, kEncodedVectorSize) ||
-	    !vector_decode(&pub->t, CBS_data(&t_bytes), kLog2Prime)) {
+	if (!CBS_get_bytes(in, &t_bytes, kEncodedVectorSize))
 		return 0;
-	}
+	if (!vector_decode(&pub->t, CBS_data(&t_bytes), kLog2Prime))
+		return 0;
+
 	memcpy(pub->rho, CBS_data(in), sizeof(pub->rho));
 	if (!CBS_skip(in, sizeof(pub->rho)))
 		return 0;
@@ -1104,10 +1105,11 @@ MLKEM768_parse_public_key(struct MLKEM768_public_key *public_key,
 	CBS cbs;
 
 	CBS_init(&cbs, input, input_len);
-	if (!mlkem_parse_public_key_no_hash(pub, &cbs) ||
-	    CBS_len(&cbs) != 0) {
+	if (!mlkem_parse_public_key_no_hash(pub, &cbs))
 		return 0;
-	}
+	if (CBS_len(&cbs) != 0)
+		return 0;
+
 	hash_h(pub->public_key_hash, input, input_len);
 
 	return 1;
@@ -1126,13 +1128,15 @@ MLKEM768_marshal_private_key(CBB *out,
 		return 0;
 	}
 	vector_encode(s_output, &priv->s, kLog2Prime);
-	if (!mlkem_marshal_public_key(out, &priv->pub) ||
-	    !CBB_add_bytes(out, priv->pub.public_key_hash,
-	    sizeof(priv->pub.public_key_hash)) ||
-	    !CBB_add_bytes(out, priv->fo_failure_secret,
-	    sizeof(priv->fo_failure_secret))) {
+	if (!mlkem_marshal_public_key(out, &priv->pub))
 		return 0;
-	}
+	if (!CBB_add_bytes(out, priv->pub.public_key_hash,
+	    sizeof(priv->pub.public_key_hash)))
+		return 0;
+	if (!CBB_add_bytes(out, priv->fo_failure_secret,
+	    sizeof(priv->fo_failure_secret)))
+		return 0;
+
 	return 1;
 }
 
@@ -1146,11 +1150,13 @@ MLKEM768_parse_private_key(struct MLKEM768_private_key *out_private_key,
 
 	CBS_init(&cbs, input, input_len);
 
-	if (!CBS_get_bytes(&cbs, &s_bytes, kEncodedVectorSize) ||
-	    !vector_decode(&priv->s, CBS_data(&s_bytes), kLog2Prime) ||
-	    !mlkem_parse_public_key_no_hash(&priv->pub, &cbs)) {
+	if (!CBS_get_bytes(&cbs, &s_bytes, kEncodedVectorSize))
 		return 0;
-	}
+	if (!vector_decode(&priv->s, CBS_data(&s_bytes), kLog2Prime))
+		return 0;
+	if (!mlkem_parse_public_key_no_hash(&priv->pub, &cbs))
+		return 0;
+
 	memcpy(priv->pub.public_key_hash, CBS_data(&cbs),
 	    sizeof(priv->pub.public_key_hash));
 	if (!CBS_skip(&cbs, sizeof(priv->pub.public_key_hash)))
