@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.27 2024/12/28 08:58:13 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.28 2025/05/19 15:51:50 caspar Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2024 $
+.Dd $Mdocdate: May 19 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -116,6 +116,7 @@ The default is 1800 seconds.
 .It Ic other configuration Pq Ic yes Ns | Ns Ic no
 If set to yes, hosts should consult DHCPv6 for additional configuration
 like NTP servers or DNS name servers.
+The default is no.
 .It Ic router lifetime Ar seconds
 The number of seconds this router is a valid default router after receiving
 a router advertisement message.
