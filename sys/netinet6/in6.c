@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.268 2025/05/19 06:36:06 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.269 2025/05/19 06:36:48 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -901,20 +901,8 @@ in6_purgeaddr(struct ifaddr *ifa)
 	 */
 	if ((ifp->if_flags & IFF_POINTOPOINT) && (ia6->ia_flags & IFA_ROUTE) &&
 	    ia6->ia_dstaddr.sin6_len != 0) {
-		int e;
-
-		e = rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
-		    ifp->if_rdomain);
-		if (e != 0) {
-			char addr[INET6_ADDRSTRLEN];
-			log(LOG_ERR, "in6_purgeaddr: failed to remove "
-			    "a route to the p2p destination: %s on %s, "
-			    "errno=%d\n",
-			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-				addr, sizeof(addr)),
-			    ifp->if_xname, e);
-			/* proceed anyway... */
-		} else
+		if (rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
+		    ifp->if_rdomain) == 0)
 			ia6->ia_flags &= ~IFA_ROUTE;
 	}
 
