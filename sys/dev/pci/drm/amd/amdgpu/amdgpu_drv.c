@@ -3138,6 +3138,8 @@ MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL and additional rights");
 #endif /* __linux__ */
 
+#include <ddb/db_var.h>
+
 #include <drm/drm_drv.h>
 #include <drm/drm_utils.h>
 #include <drm/drm_fb_helper.h>
@@ -3876,6 +3878,11 @@ amdgpu_activate(struct device *self, int act)
 
 	if (dev->dev == NULL || amdgpu_fatal_error || adev->shutdown)
 		return (0);
+
+#ifdef DDB
+	if (db_suspend)
+		return config_suspend(dev->dev, act);
+#endif
 
 	switch (act) {
 	case DVACT_QUIESCE:

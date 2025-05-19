@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.32 2024/09/21 19:06:06 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.33 2025/05/19 21:48:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -27,6 +27,8 @@
 
 #include <machine/apmvar.h>
 
+#include <ddb/db_var.h>
+
 int
 sleep_showstate(void *v, int sleepmode)
 {
@@ -41,6 +43,10 @@ sleep_showstate(void *v, int sleepmode)
 		if (lid_action == -1)
 			sc->sc_state = ACPI_STATE_S0;
 		fallback_state = ACPI_STATE_S0; /* No S3, use S0 */
+#endif
+#ifdef DDB
+		if (db_suspend)
+			sc->sc_state = ACPI_STATE_S0;
 #endif
 		break;
 	case SLEEP_HIBERNATE:

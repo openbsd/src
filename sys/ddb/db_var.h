@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.14 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_var.h,v 1.15 2025/05/19 21:48:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -44,7 +44,8 @@
 #define DBCTL_LOG	7
 #define DBCTL_TRIGGER	8
 #define DBCTL_PROFILE	9
-#define DBCTL_MAXID	10
+#define DBCTL_SUSPEND	10
+#define DBCTL_MAXID	11
 
 #define	CTL_DDB_NAMES { \
 	{ NULL, 0 }, \
@@ -57,6 +58,7 @@
 	{ "log", CTLTYPE_INT }, \
 	{ "trigger", CTLTYPE_INT }, \
 	{ "profile", CTLTYPE_INT }, \
+	{ "suspend", CTLTYPE_INT }, \
 }
 
 #ifdef	_KERNEL
@@ -68,6 +70,7 @@ extern int	db_panic;
 extern int	db_console;
 extern int	db_log;
 extern int	db_profile;
+extern int	db_suspend;
 
 int	ddb_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 	    struct proc *);

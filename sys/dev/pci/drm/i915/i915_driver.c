@@ -1827,6 +1827,8 @@ static const struct drm_driver i915_drm_driver = {
 
 #ifdef __OpenBSD__
 
+#include <ddb/db_var.h>
+
 #include <drm/drm_device.h> /* for agp */
 #include <drm/drm_utils.h>
 #include <drm/drm_fb_helper.h>
@@ -2482,6 +2484,11 @@ inteldrm_activate(struct device *self, int act)
 	 */
 	if (dev_priv->display.wq.modeset == NULL)
 		return 0;
+
+#ifdef DDB
+	if (db_suspend)
+		return config_suspend(dev->dev, act);
+#endif
 
 	switch (act) {
 	case DVACT_QUIESCE:

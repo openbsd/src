@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.22 2021/01/09 20:58:12 gnezdo Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.23 2025/05/19 21:48:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -35,6 +35,7 @@
 
 int	db_log = 1;
 int	db_profile;			/* Allow dynamic profiling */
+int	db_suspend;
 
 const struct sysctl_bounded_args ddb_vars[] = {
 	{ DBCTL_RADIX, &db_radix, 8, 16 },
@@ -42,6 +43,7 @@ const struct sysctl_bounded_args ddb_vars[] = {
 	{ DBCTL_TABSTOP, &db_tab_stop_width, 1, 16 },
 	{ DBCTL_MAXLINE, &db_max_line, 0, INT_MAX },
 	{ DBCTL_LOG, &db_log, 0, 1 },
+	{ DBCTL_SUSPEND, &db_suspend, 0, 1 },
 };
 
 int
