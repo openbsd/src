@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2025/04/26 11:01:55 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2025/05/19 02:13:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -75,13 +75,6 @@
 #define	IST_EDGE_FALLING	IST_EDGE
 #define	IST_EDGE_RISING		5
 #define	IST_EDGE_BOTH		6
-
-/* RISCV interrupt mcause, from freebsd */
-#define	RISCV_NIRQ		1024
-
-#ifndef	NIRQ
-#define	NIRQ			RISCV_NIRQ
-#endif
 
 enum {
 	IRQ_SOFTWARE_USER,
