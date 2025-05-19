@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.110 2025/04/23 21:54:12 bluhm Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.111 2025/05/19 08:36:36 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -623,8 +623,11 @@ struct vmcb_segment {
 	uint64_t			vs_base;		/* 008h */
 };
 
-#define SVM_ENABLE_NP	(1ULL << 0)
-#define SVM_ENABLE_SEV	(1ULL << 1)
+#define SVM_ENABLE_NP		(1ULL << 0)
+#define SVM_ENABLE_SEV		(1ULL << 1)
+#define SVM_SEVES_ENABLE	(1ULL << 2)
+
+#define SVM_LBRVIRT_ENABLE	(1ULL << 0)
 
 struct vmcb {
 	union {

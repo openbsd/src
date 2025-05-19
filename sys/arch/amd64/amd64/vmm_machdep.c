@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.45 2025/04/30 09:40:37 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.46 2025/05/19 08:36:36 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -81,6 +81,7 @@ int vcpu_writeregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_vmx(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reset_regs_svm(struct vcpu *, struct vcpu_reg_state *);
+int vcpu_svm_init_vmsa(struct vcpu *, struct vcpu_reg_state *);
 int vcpu_reload_vmcs_vmx(struct vcpu *);
 int vcpu_init(struct vcpu *, struct vm_create_params *);
 int vcpu_init_vmx(struct vcpu *);
@@ -96,6 +97,7 @@ int vmx_get_exit_info(uint64_t *, uint64_t *);
 int vmx_load_pdptes(struct vcpu *);
 int vmx_handle_exit(struct vcpu *);
 int svm_handle_exit(struct vcpu *);
+int svm_handle_efercr(struct vcpu *, uint64_t);
 int svm_handle_msr(struct vcpu *);
 int vmm_handle_xsetbv(struct vcpu *, uint64_t *);
 int vmx_handle_xsetbv(struct vcpu *);
@@ -1583,6 +1585,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * External NMI exiting (SVM_INTERCEPT_NMI)
 	 * CPUID instruction (SVM_INTERCEPT_CPUID)
 	 * HLT instruction (SVM_INTERCEPT_HLT)
+	 * INVLPGA instruction (SVM_INTERCEPT_INVLPGA)
 	 * I/O instructions (SVM_INTERCEPT_INOUT)
 	 * MSR access (SVM_INTERCEPT_MSR)
 	 * shutdown events (SVM_INTERCEPT_SHUTDOWN)
@@ -1612,8 +1615,16 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    SVM_INTERCEPT_MWAIT_UNCOND | SVM_INTERCEPT_MONITOR |
 	    SVM_INTERCEPT_MWAIT_COND | SVM_INTERCEPT_RDTSCP;
 
-	if (xsave_mask)
+	/* With SEV-ES we cannot force access XCR0, thus no intercept */
+	if (xsave_mask && !vcpu->vc_seves)
 		vmcb->v_intercept2 |= SVM_INTERCEPT_XSETBV;
+
+	if (vcpu->vc_seves) {
+		/* With SEV-ES also intercept post EFER and CR[04] writes */
+		vmcb->v_intercept2 |= SVM_INTERCEPT_EFER_WRITE;
+		vmcb->v_intercept2 |= SVM_INTERCEPT_CR0_WRITE_POST;
+		vmcb->v_intercept2 |= SVM_INTERCEPT_CR4_WRITE_POST;
+	}
 
 	/* Setup I/O bitmap */
 	memset((uint8_t *)vcpu->vc_svm_ioio_va, 0xFF, 3 * PAGE_SIZE);
@@ -1634,8 +1645,26 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	svm_setmsrbrw(vcpu, MSR_GSBASE);
 	svm_setmsrbrw(vcpu, MSR_KERNELGSBASE);
 
-	/* EFER is R/O so we can ensure the guest always has SVME */
-	svm_setmsrbr(vcpu, MSR_EFER);
+	/* allow reading SEV status */
+	svm_setmsrbrw(vcpu, MSR_SEV_STATUS);
+
+	if (vcpu->vc_seves) {
+		/* Allow read/write GHCB guest physical address */
+		svm_setmsrbrw(vcpu, MSR_SEV_GHCB);
+
+		/* Allow reading MSR_XSS; for CPUID Extended State Enum. */
+		svm_setmsrbr(vcpu, MSR_XSS);
+
+		/*
+		 * With SEV-ES SVME can't be modified by the guest;
+		 * host can only intercept post-write (see
+		 * SVM_INTERCEPT_EFER_WRITE above).
+		 */
+		svm_setmsrbrw(vcpu, MSR_EFER);
+	} else {
+		/* EFER is R/O so we can ensure the guest always has SVME */
+		svm_setmsrbr(vcpu, MSR_EFER);
+	}
 
 	/* allow reading TSC */
 	svm_setmsrbr(vcpu, MSR_TSC);
@@ -1667,17 +1696,76 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (vcpu->vc_sev)
 		vmcb->v_np_enable |= SVM_ENABLE_SEV;
 
+	/* SEV-ES */
+	if (vcpu->vc_seves) {
+		vmcb->v_np_enable |= SVM_SEVES_ENABLE;
+		vmcb->v_lbr_virt_enable |= SVM_LBRVIRT_ENABLE;
+
+		/* Set VMSA. */
+		vmcb->v_vmsa_pa = vcpu->vc_svm_vmsa_pa;
+	}
+
 	/* Enable SVME in EFER (must always be set) */
 	vmcb->v_efer |= EFER_SVME;
 
-	ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs);
+	if ((ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs)) != 0)
+		return ret;
 
 	/* xcr0 power on default sets bit 0 (x87 state) */
 	vcpu->vc_gueststate.vg_xcr0 = XFEATURE_X87 & xsave_mask;
 
 	vcpu->vc_parent->vm_map->pmap->eptp = 0;
 
+	ret = vcpu_svm_init_vmsa(vcpu, vrs);
+
 	return ret;
+}
+
+/*
+ * vcpu_svm_init_vmsa
+ *
+ * Initialize VMSA with initial VCPU state.
+ */
+int
+vcpu_svm_init_vmsa(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
+{
+	uint64_t	*gprs = vrs->vrs_gprs;
+	struct vmcb	*vmcb = (struct vmcb *)vcpu->vc_control_va;
+	struct vmsa	*vmsa;
+
+	if (!vcpu->vc_seves)
+		return 0;
+
+	vmsa = (struct vmsa *)vcpu->vc_svm_vmsa_va;
+	memcpy(vmsa, &vmcb->vmcb_layout, sizeof(vmcb->vmcb_layout));
+
+	vmsa->v_rax = gprs[VCPU_REGS_RAX];
+	vmsa->v_rbx = gprs[VCPU_REGS_RBX];
+	vmsa->v_rcx = gprs[VCPU_REGS_RCX];
+	vmsa->v_rdx = gprs[VCPU_REGS_RDX];
+	vmsa->v_rsp = gprs[VCPU_REGS_RSP];
+	vmsa->v_rbp = gprs[VCPU_REGS_RBP];
+	vmsa->v_rsi = gprs[VCPU_REGS_RSI];
+	vmsa->v_rdi = gprs[VCPU_REGS_RDI];
+
+	vmsa->v_r8 = gprs[VCPU_REGS_R8];
+	vmsa->v_r9 = gprs[VCPU_REGS_R9];
+	vmsa->v_r10 = gprs[VCPU_REGS_R10];
+	vmsa->v_r11 = gprs[VCPU_REGS_R11];
+	vmsa->v_r12 = gprs[VCPU_REGS_R12];
+	vmsa->v_r13 = gprs[VCPU_REGS_R13];
+	vmsa->v_r14 = gprs[VCPU_REGS_R14];
+	vmsa->v_r15 = gprs[VCPU_REGS_R15];
+
+	vmsa->v_rip = gprs[VCPU_REGS_RIP];
+
+	vmsa->v_xcr0 = vcpu->vc_gueststate.vg_xcr0;
+
+	/* initialize FPU */
+	vmsa->v_x87_fcw = __INITIAL_NPXCW__;
+	vmsa->v_mxcsr = __INITIAL_MXCSR__;
+
+	return 0;
 }
 
 /*
@@ -2759,6 +2847,10 @@ vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 {
 	int ret = 0;
 
+	/* Shall we enable SEV/SEV-ES? */
+	vcpu->vc_sev = vcp->vcp_sev;
+	vcpu->vc_seves = vcp->vcp_seves;
+
 	/* Allocate an ASID early to avoid km_alloc if we're out of ASIDs. */
 	if (vmm_alloc_asid(&vcpu->vc_vpid, vcpu))
 		return (ENOMEM);
@@ -2843,10 +2935,6 @@ vcpu_init_svm(struct vcpu *vcpu, struct vm_create_params *vcp)
 	DPRINTF("%s: IOIO va @ 0x%llx, pa @ 0x%llx\n", __func__,
 	    (uint64_t)vcpu->vc_svm_ioio_va,
 	    (uint64_t)vcpu->vc_svm_ioio_pa);
-
-	/* Shall we enable SEV/SEV-ES? */
-	vcpu->vc_sev = vcp->vcp_sev;
-	vcpu->vc_seves = vcp->vcp_seves;
 
 	if (vcpu->vc_seves) {
 		/* Allocate VM save area VA */
@@ -4221,6 +4309,12 @@ svm_handle_exit(struct vcpu *vcpu)
 		ret = vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
+	case SVM_VMEXIT_EFER_WRITE_TRAP:
+	case SVM_VMEXIT_CR0_WRITE_TRAP:
+	case SVM_VMEXIT_CR4_WRITE_TRAP:
+		ret = svm_handle_efercr(vcpu, exit_reason);
+		update_rip = 0;
+		break;
 	default:
 		DPRINTF("%s: unhandled exit 0x%llx (pa=0x%llx)\n", __func__,
 		    exit_reason, (uint64_t)vcpu->vc_control_pa);
@@ -4244,6 +4338,35 @@ svm_handle_exit(struct vcpu *vcpu)
 	svm_set_dirty(vcpu, SVM_CLEANBITS_CR);
 
 	return (ret);
+}
+
+/*
+ * svm_handle_efercr
+ *
+ * With SEV-ES the hypervisor can not intercept and modify writes
+ * to CR and EFER.  However, a post write intercept notifies about
+ * the new state of these registers.
+ */
+int
+svm_handle_efercr(struct vcpu *vcpu, uint64_t exit_reason)
+{
+	struct vmcb	*vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	switch (exit_reason) {
+	case SVM_VMEXIT_EFER_WRITE_TRAP:
+		vmcb->v_efer = vmcb->v_exitinfo1;
+		break;
+	case SVM_VMEXIT_CR0_WRITE_TRAP:
+		vmcb->v_cr0 = vmcb->v_exitinfo1;
+		break;
+	case SVM_VMEXIT_CR4_WRITE_TRAP:
+		vmcb->v_cr4 = vmcb->v_exitinfo1;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
 }
 
 /*
