@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.153 2024/07/14 18:53:39 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.154 2025/05/19 06:40:18 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	int tlladdr;
 	struct nd_opts ndopts;
 	struct sockaddr_dl *proxydl = NULL;
-	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
@@ -127,15 +126,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	ip6 = mtod(m, struct ip6_hdr *); /* adjust pointer for safety */
 	taddr6 = nd_ns->nd_ns_target;
 
-	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-		    "nd6_ns_input: invalid hlim (%d) from %s to %s on %s\n",
-		    ip6->ip6_hlim,
-		    inet_ntop(AF_INET6, &ip6->ip6_src, addr, sizeof(addr)),
-		    inet_ntop(AF_INET6, &ip6->ip6_dst, addr0, sizeof(addr0)),
-		    ifp->if_xname));
+	if (ip6->ip6_hlim != 255)
 		goto bad;
-	}
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&saddr6)) {
 		/* dst has to be solicited node multicast address. */
@@ -145,35 +137,25 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		    daddr6.s6_addr32[2] == __IPV6_ADDR_INT32_ONE &&
 		    daddr6.s6_addr8[12] == 0xff) {
 			; /*good*/
-		} else {
-			nd6log((LOG_INFO, "nd6_ns_input: bad DAD packet "
-			    "(wrong ip6 dst)\n"));
+		} else
 			goto bad;
-		}
 	} else {
 		/*
 		 * Make sure the source address is from a neighbor's address.
 		 */
-		if (!nd6_isneighbor(ifp, &saddr6)) {
-			nd6log((LOG_INFO, "nd6_ns_input: "
-			    "NS packet from non-neighbor\n"));
+		if (!nd6_isneighbor(ifp, &saddr6))
 			goto bad;
-		}
 	}
 
 
-	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
-		nd6log((LOG_INFO, "nd6_ns_input: bad NS target (multicast)\n"));
+	if (IN6_IS_ADDR_MULTICAST(&taddr6))
 		goto bad;
-	}
 
 	if (IN6_IS_SCOPE_EMBED(&taddr6))
 		taddr6.s6_addr16[1] = htons(ifp->if_index);
 
 	icmp6len -= sizeof(*nd_ns);
 	if (nd6_options(nd_ns + 1, icmp6len, &ndopts) < 0) {
-		nd6log((LOG_INFO,
-		    "nd6_ns_input: invalid ND option, ignored\n"));
 		/* nd6_options have incremented stats */
 		goto freeit;
 	}
@@ -183,11 +165,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
 	}
 
-	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && lladdr) {
-		nd6log((LOG_INFO, "nd6_ns_input: bad DAD packet "
-		    "(link-layer address option)\n"));
+	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && lladdr)
 		goto bad;
-	}
 
 	/*
 	 * Attaching target link-layer address to the NA?
@@ -264,15 +243,12 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (ifatoia6(ifa)->ia6_flags & IN6_IFF_DUPLICATED)
 		goto freeit;
 
-	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO, "nd6_ns_input: lladdrlen mismatch for %s "
-		    "(if %d, NS packet %d)\n",
-		    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr)),
-		    ifp->if_addrlen, lladdrlen - 2));
+	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen)
 		goto bad;
-	}
 
 	if (IN6_ARE_ADDR_EQUAL(&myaddr6, &saddr6)) {
+		char addr[INET6_ADDRSTRLEN];
+
 		log(LOG_INFO, "nd6_ns_input: duplicate IP6 address %s\n",
 		    inet_ntop(AF_INET6, &saddr6, addr, sizeof(addr)));
 		goto freeit;
@@ -335,12 +311,6 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	nd6log((LOG_ERR, "nd6_ns_input: src=%s\n",
-	    inet_ntop(AF_INET6, &saddr6, addr, sizeof(addr))));
-	nd6log((LOG_ERR, "nd6_ns_input: dst=%s\n",
-	    inet_ntop(AF_INET6, &daddr6, addr, sizeof(addr))));
-	nd6log((LOG_ERR, "nd6_ns_input: tgt=%s\n",
-	    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr))));
 	icmp6stat_inc(icp6s_badns);
 	m_freem(m);
 	if_put(ifp);
