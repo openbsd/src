@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.267 2024/06/07 09:48:19 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.268 2025/05/19 06:36:06 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -553,7 +553,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
 	struct rtentry *rt;
-	char addr[INET6_ADDRSTRLEN];
 
 	NET_ASSERT_LOCKED();
 
@@ -629,18 +628,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	lt = &ifra->ifra_lifetime;
 	if (lt->ia6t_pltime > lt->ia6t_vltime)
 		return (EINVAL);
-	if (lt->ia6t_vltime == 0) {
-		/*
-		 * the following log might be noisy, but this is a typical
-		 * configuration mistake or a tool's bug.
-		 */
-		nd6log((LOG_INFO, "%s: valid lifetime is 0 for %s\n", __func__,
-		    inet_ntop(AF_INET6, &ifra->ifra_addr.sin6_addr,
-		    addr, sizeof(addr))));
-
-		if (ia6 == NULL)
-			return (0); /* there's nothing to do */
-	}
+	if (lt->ia6t_vltime == 0 && ia6 == NULL)
+		return (0); /* there's nothing to do */
 
 	/*
 	 * If this is a new address, allocate a new ifaddr and link it
@@ -699,16 +688,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia6->ia_dstaddr.sin6_addr)) {
 		struct ifaddr *ifa = &ia6->ia_ifa;
 
-		if ((ia6->ia_flags & IFA_ROUTE) != 0 &&
-		    rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
-		     ifp->if_rdomain) != 0) {
-			nd6log((LOG_ERR, "%s: failed to remove a route "
-			    "to the old destination: %s\n", __func__,
-			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-			    addr, sizeof(addr))));
-			/* proceed anyway... */
-		} else
-			ia6->ia_flags &= ~IFA_ROUTE;
+		if ((ia6->ia_flags & IFA_ROUTE) != 0)
+			if (rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
+			    ifp->if_rdomain) == 0)
+				ia6->ia_flags &= ~IFA_ROUTE;
 		ia6->ia_dstaddr = dst6;
 	}
 
