@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.269 2025/05/19 04:54:04 jan Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.270 2025/05/19 06:38:33 florian Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -579,18 +579,9 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.
 		 */
-		if ((ia6->ia6_flags & (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED))) {
-			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
-
-			inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src));
-			inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst));
-			/* address is not ready, so discard the packet. */
-			nd6log((LOG_INFO,
-			    "%s: packet to an unready address %s->%s\n",
-			    __func__, src, dst));
-
+		if ((ia6->ia6_flags & (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)))
 			goto bad;
-		} else {
+		else {
 			nxt = ip6_ours(mp, offp, nxt, af, flags, ns);
 			goto out;
 		}
