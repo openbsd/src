@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.65 2025/05/18 11:11:12 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.66 2025/05/19 01:49:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -193,6 +193,57 @@ aesni_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	aesni_cbc_encrypt(in, out, len, ctx->cipher_data, ctx->iv,
 	    ctx->encrypt);
+
+	return 1;
+}
+
+static int
+aesni_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t len)
+{
+	EVP_AES_KEY *eak = ctx->cipher_data;
+
+	CRYPTO_cfb128_encrypt(in, out, len, &eak->ks, ctx->iv, &ctx->num,
+	    ctx->encrypt, (block128_f)aesni_encrypt);
+
+	return 1;
+}
+
+static int
+aesni_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t len)
+{
+	EVP_AES_KEY *eak = ctx->cipher_data;
+
+	CRYPTO_cfb128_8_encrypt(in, out, len, &eak->ks, ctx->iv, &ctx->num,
+	    ctx->encrypt, (block128_f)aesni_encrypt);
+
+	return 1;
+}
+
+static int
+aesni_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t len)
+{
+	EVP_AES_KEY *eak = ctx->cipher_data;
+
+	if ((ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) != 0) {
+		CRYPTO_cfb128_1_encrypt(in, out, len, &eak->ks, ctx->iv,
+		    &ctx->num, ctx->encrypt, (block128_f)aesni_encrypt);
+		return 1;
+	}
+
+	while (len >= MAXBITCHUNK) {
+		CRYPTO_cfb128_1_encrypt(in, out, MAXBITCHUNK * 8, &eak->ks,
+		    ctx->iv, &ctx->num, ctx->encrypt, (block128_f)aesni_encrypt);
+		len -= MAXBITCHUNK;
+		in += MAXBITCHUNK;
+		out += MAXBITCHUNK;
+	}
+	if (len > 0) {
+		CRYPTO_cfb128_1_encrypt(in, out, len * 8, &eak->ks,
+		    ctx->iv, &ctx->num, ctx->encrypt, (block128_f)aesni_encrypt);
+	}
 
 	return 1;
 }
@@ -412,10 +463,11 @@ static int
 aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
+	EVP_AES_KEY *eak = ctx->cipher_data;
 
-	CRYPTO_cfb128_encrypt(in, out, len, &dat->ks, ctx->iv, &ctx->num,
-	    ctx->encrypt, dat->block);
+	AES_cfb128_encrypt(in, out, len, &eak->ks, ctx->iv, &ctx->num,
+	    ctx->encrypt);
+
 	return 1;
 }
 
@@ -423,10 +475,11 @@ static int
 aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
+	EVP_AES_KEY *eak = ctx->cipher_data;
 
-	CRYPTO_cfb128_8_encrypt(in, out, len, &dat->ks, ctx->iv, &ctx->num,
-	    ctx->encrypt, dat->block);
+	AES_cfb8_encrypt(in, out, len, &eak->ks, ctx->iv, &ctx->num,
+	    ctx->encrypt);
+
 	return 1;
 }
 
@@ -434,24 +487,25 @@ static int
 aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
+	EVP_AES_KEY *eak = ctx->cipher_data;
 
-	if (ctx->flags&EVP_CIPH_FLAG_LENGTH_BITS) {
-		CRYPTO_cfb128_1_encrypt(in, out, len, &dat->ks, ctx->iv,
-		    &ctx->num, ctx->encrypt, dat->block);
+	if ((ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) != 0) {
+		AES_cfb1_encrypt(in, out, len, &eak->ks, ctx->iv, &ctx->num,
+		    ctx->encrypt);
 		return 1;
 	}
 
 	while (len >= MAXBITCHUNK) {
-		CRYPTO_cfb128_1_encrypt(in, out, MAXBITCHUNK*8, &dat->ks,
-		    ctx->iv, &ctx->num, ctx->encrypt, dat->block);
+		AES_cfb1_encrypt(in, out, MAXBITCHUNK * 8, &eak->ks, ctx->iv,
+		    &ctx->num, ctx->encrypt);
 		len -= MAXBITCHUNK;
 		in += MAXBITCHUNK;
 		out += MAXBITCHUNK;
 	}
-	if (len)
-		CRYPTO_cfb128_1_encrypt(in, out, len*8, &dat->ks,
-		    ctx->iv, &ctx->num, ctx->encrypt, dat->block);
+	if (len > 0) {
+		AES_cfb1_encrypt(in, out, len * 8, &eak->ks, ctx->iv, &ctx->num,
+		    ctx->encrypt);
+	}
 
 	return 1;
 }
@@ -583,7 +637,7 @@ static const EVP_CIPHER aesni_128_cfb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb_cipher,
+	.do_cipher = aesni_cfb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -618,7 +672,7 @@ static const EVP_CIPHER aesni_128_cfb1 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb1_cipher,
+	.do_cipher = aesni_cfb1_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -653,7 +707,7 @@ static const EVP_CIPHER aesni_128_cfb8 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb8_cipher,
+	.do_cipher = aesni_cfb8_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -829,7 +883,7 @@ static const EVP_CIPHER aesni_192_cfb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb_cipher,
+	.do_cipher = aesni_cfb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -864,7 +918,7 @@ static const EVP_CIPHER aesni_192_cfb1 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb1_cipher,
+	.do_cipher = aesni_cfb1_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -899,7 +953,7 @@ static const EVP_CIPHER aesni_192_cfb8 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb8_cipher,
+	.do_cipher = aesni_cfb8_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1075,7 +1129,7 @@ static const EVP_CIPHER aesni_256_cfb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb_cipher,
+	.do_cipher = aesni_cfb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1110,7 +1164,7 @@ static const EVP_CIPHER aesni_256_cfb1 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb1_cipher,
+	.do_cipher = aesni_cfb1_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1145,7 +1199,7 @@ static const EVP_CIPHER aesni_256_cfb8 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aes_cfb8_cipher,
+	.do_cipher = aesni_cfb8_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
