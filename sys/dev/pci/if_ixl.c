@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.105 2025/04/21 09:54:53 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.106 2025/05/19 02:27:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3339,11 +3339,13 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 				ixl_rx_checksum(m, word);
 
+#ifndef SMALL_KERNEL
 				if (ISSET(ifp->if_xflags, IFXF_LRO) &&
 				    (ptype == IXL_RX_DESC_PTYPE_MAC_IPV4_TCP ||
 				     ptype == IXL_RX_DESC_PTYPE_MAC_IPV6_TCP))
 					tcp_softlro_glue(&mltcp, m, ifp);
 				else
+#endif
 					ml_enqueue(&ml, m);
 			} else {
 				ifp->if_ierrors++; /* XXX */
