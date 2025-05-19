@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.260 2025/05/19 06:46:24 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.261 2025/05/19 06:46:58 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1044,13 +1044,8 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) <= MHLEN);
 
 	/* too short to reflect */
-	if (off < sizeof(struct ip6_hdr)) {
-		nd6log((LOG_DEBUG,
-		    "sanity fail: off=%lx, sizeof(ip6)=%lx in %s:%d\n",
-		    (u_long)off, (u_long)sizeof(struct ip6_hdr),
-		    __FILE__, __LINE__));
+	if (off < sizeof(struct ip6_hdr))
 		goto bad;
-	}
 
 	if (m->m_pkthdr.ph_loopcnt++ >= M_MAXLOOP) {
 		m_freemp(mp);
@@ -1143,12 +1138,6 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 		 */
 		rt = rtalloc(sa, RT_RESOLVE, rtableid);
 		if (!rtisvalid(rt)) {
-			char addr[INET6_ADDRSTRLEN];
-
-			nd6log((LOG_DEBUG,
-			    "%s: source can't be determined: dst=%s\n",
-			    __func__, inet_ntop(AF_INET6, &sa6_src.sin6_addr,
-			    addr, sizeof(addr))));
 			rtfree(rt);
 			goto bad;
 		}
