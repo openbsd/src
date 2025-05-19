@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.6 2025/05/19 04:01:07 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.7 2025/05/19 04:32:51 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -189,6 +189,18 @@ AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
 		AES_decrypt(in, out, key);
 }
 LCRYPTO_ALIAS(AES_ecb_encrypt);
+
+void
+aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, int encrypt)
+{
+	while (len >= AES_BLOCK_SIZE) {
+		AES_ecb_encrypt(in, out, key, encrypt);
+		in += AES_BLOCK_SIZE;
+		out += AES_BLOCK_SIZE;
+		len -= AES_BLOCK_SIZE;
+	}
+}
 
 void
 AES_ofb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.67 2025/05/19 03:55:09 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.68 2025/05/19 04:32:52 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,6 @@
 
 typedef struct {
 	AES_KEY ks;
-	block128_f block;
 } EVP_AES_KEY;
 
 typedef struct {
@@ -103,6 +102,9 @@ typedef struct {
 } EVP_AES_CCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
+
+void aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, int encrypt);
 
 #ifdef AES_XTS_ASM
 void AES_xts_encrypt(const char *inp, char *out, size_t len,
@@ -164,7 +166,6 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
 	int ret, mode;
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
 
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 
@@ -172,11 +173,9 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	    !enc) {
 		ret = aesni_set_decrypt_key(key, ctx->key_len * 8,
 		    ctx->cipher_data);
-		dat->block = (block128_f)aesni_decrypt;
 	} else {
 		ret = aesni_set_encrypt_key(key, ctx->key_len * 8,
 		    ctx->cipher_data);
-		dat->block = (block128_f)aesni_encrypt;
 	}
 
 	if (ret < 0) {
@@ -267,9 +266,7 @@ static int
 aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
-	size_t	bl = ctx->cipher->block_size;
-
-	if (len < bl)
+	if (len < ctx->cipher->block_size)
 		return 1;
 
 	aesni_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
@@ -390,20 +387,9 @@ static int
 aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	int ret, mode;
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
+	EVP_AES_KEY *eak = ctx->cipher_data;
 
-	mode = ctx->cipher->flags & EVP_CIPH_MODE;
-
-	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE) && !enc) {
-		ret = AES_set_decrypt_key(key, ctx->key_len * 8, &dat->ks);
-		dat->block = (block128_f)AES_decrypt;
-	} else {
-		ret = AES_set_encrypt_key(key, ctx->key_len * 8, &dat->ks);
-		dat->block = (block128_f)AES_encrypt;
-	}
-
-	if (ret < 0) {
+	if (AES_set_encrypt_key(key, ctx->key_len * 8, &eak->ks) < 0) {
 		EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
@@ -444,18 +430,33 @@ aes_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 }
 
 static int
+aes_ecb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int encrypt)
+{
+	EVP_AES_KEY *eak = ctx->cipher_data;
+
+	if (encrypt) {
+		if (AES_set_encrypt_key(key, ctx->key_len * 8, &eak->ks) < 0) {
+			EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
+			return 0;
+		}
+	} else {
+		if (AES_set_decrypt_key(key, ctx->key_len * 8, &eak->ks) < 0) {
+			EVPerror(EVP_R_AES_KEY_SETUP_FAILED);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int
 aes_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
-	size_t	bl = ctx->cipher->block_size;
-	size_t	i;
-	EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
+	EVP_AES_KEY *eak = ctx->cipher_data;
 
-	if (len < bl)
-		return 1;
-
-	for (i = 0, len -= bl; i <= len; i += bl)
-		(*dat->block)(in + i, out + i, &dat->ks);
+	aes_ecb_encrypt_internal(in, out, len, &eak->ks, ctx->encrypt);
 
 	return 1;
 }
@@ -590,7 +591,7 @@ static const EVP_CIPHER aes_128_ecb = {
 	.key_len = 16,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
-	.init = aes_init_key,
+	.init = aes_ecb_init_key,
 	.do_cipher = aes_ecb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
@@ -836,7 +837,7 @@ static const EVP_CIPHER aes_192_ecb = {
 	.key_len = 24,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
-	.init = aes_init_key,
+	.init = aes_ecb_init_key,
 	.do_cipher = aes_ecb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
@@ -1082,7 +1083,7 @@ static const EVP_CIPHER aes_256_ecb = {
 	.key_len = 32,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
-	.init = aes_init_key,
+	.init = aes_ecb_init_key,
 	.do_cipher = aes_ecb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
