@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.27 2023/09/06 05:00:37 jsg Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.28 2025/05/19 19:58:58 tedu Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -1322,6 +1322,8 @@ again:
 				return 1;
 			goto again;
 		}
+		if (cmd.cmd[0] == '#')
+			goto again;
 		for (i = 0; cmd_table[i].cmd != NULL; i++)
 			if (strstr(cmd_table[i].cmd, cmd.cmd) ==
 			    cmd_table[i].cmd)
