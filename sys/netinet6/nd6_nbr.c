@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.155 2025/05/19 06:40:59 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.156 2025/05/19 06:41:31 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -530,7 +530,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct rtentry *rt = NULL;
 	struct sockaddr_dl *sdl;
 	struct nd_opts ndopts;
-	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
 	NET_ASSERT_LOCKED_EXCLUSIVE();
 
@@ -538,15 +537,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ifp == NULL)
 		goto freeit;
 
-	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-		    "nd6_na_input: invalid hlim (%d) from %s to %s on %s\n",
-		    ip6->ip6_hlim,
-		    inet_ntop(AF_INET6, &ip6->ip6_src, addr, sizeof(addr)),
-		    inet_ntop(AF_INET6, &ip6->ip6_dst, addr0, sizeof(addr0)),
-		    ifp->if_xname));
+	if (ip6->ip6_hlim != 255)
 		goto bad;
-	}
 
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
@@ -563,31 +555,19 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (IN6_IS_SCOPE_EMBED(&taddr6))
 		taddr6.s6_addr16[1] = htons(ifp->if_index);
 
-	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
-		nd6log((LOG_ERR,
-		    "nd6_na_input: invalid target address %s\n",
-		    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr))));
+	if (IN6_IS_ADDR_MULTICAST(&taddr6))
 		goto bad;
-	}
-	if (is_solicited && IN6_IS_ADDR_MULTICAST(&daddr6)) {
-		nd6log((LOG_ERR,
-		    "nd6_na_input: a solicited adv is multicasted\n"));
+	if (is_solicited && IN6_IS_ADDR_MULTICAST(&daddr6))
 		goto bad;
-	}
 
 	icmp6len -= sizeof(*nd_na);
 	if (nd6_options(nd_na + 1, icmp6len, &ndopts) < 0) {
-		nd6log((LOG_INFO,
-		    "nd6_na_input: invalid ND option, ignored\n"));
 		/* nd6_options have incremented stats */
 		goto freeit;
 	}
 
-	if (IN6_IS_ADDR_MULTICAST(&daddr6) && !ndopts.nd_opts_tgt_lladdr) {
-		nd6log((LOG_INFO,
-		    "nd6_na_input: multicast adv without TLLA\n"));
+	if (IN6_IS_ADDR_MULTICAST(&daddr6) && !ndopts.nd_opts_tgt_lladdr)
 		goto bad;
-	}
 
 	if (ndopts.nd_opts_tgt_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
@@ -620,6 +600,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
 	if (ifa) {
+		char addr[INET6_ADDRSTRLEN];
+
 #if NCARP > 0
 		/*
 		 * Ignore NAs silently for carp addresses if we're not
@@ -634,13 +616,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 	}
 
-	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO, "nd6_na_input: lladdrlen mismatch for %s "
-		    "(if %d, NA packet %d)\n",
-		    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr)),
-		    ifp->if_addrlen, lladdrlen - 2));
+	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen)
 		goto bad;
-	}
 
 	/* Check if we already have this neighbor in our cache. */
 	rt = nd6_lookup(&taddr6, 0, ifp, ifp->if_rdomain);
@@ -770,6 +747,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * Update link-local address, if any.
 			 */
 			if (llchange) {
+				char addr[INET6_ADDRSTRLEN];
+
 				log(LOG_INFO, "ndp info overwritten for %s "
 				    "by %s on %s\n",
 				    inet_ntop(AF_INET6, &taddr6,
