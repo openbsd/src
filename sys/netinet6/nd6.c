@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.288 2025/05/19 06:43:28 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.289 2025/05/19 06:44:10 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -567,13 +567,6 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
 	    (ifp != NULL && rt->rt_ifidx != ifp->if_index)) {
-		if (create) {
-			char addr[INET6_ADDRSTRLEN];
-			nd6log((LOG_DEBUG, "%s: failed to lookup %s (if=%s)\n",
-			    __func__,
-			    inet_ntop(AF_INET6, addr6, addr, sizeof(addr)),
-			    ifp ? ifp->if_xname : "unspec"));
-		}
 		rtfree(rt);
 		return (NULL);
 	}
