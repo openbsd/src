@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.268 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.269 2025/05/19 04:54:04 jan Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -161,8 +161,7 @@ ip6_init(void)
 
 	ip6counters = counters_alloc(ip6s_ncounters);
 #ifdef MROUTING
-	rt_timer_queue_init(&ip6_mrouterq, MCAST_EXPIRE_TIMEOUT,
-	    &mf6c_expire_route);
+	mrt6_init();
 #endif
 }
 
@@ -1522,9 +1521,6 @@ int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-#ifdef MROUTING
-	extern struct mrt6stat mrt6stat;
-#endif
 	int oldval, error;
 
 	/* Almost all sysctl names at this level are terminal. */
@@ -1536,13 +1532,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ip6_sysctl_ip6stat(oldp, oldlenp, newp));
 #ifdef MROUTING
 	case IPV6CTL_MRTSTATS:
-		if (newp != NULL)
-			return (EPERM);
-		NET_LOCK();
-		error = sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &mrt6stat, sizeof(mrt6stat));
-		NET_UNLOCK();
-		return (error);
+		return mrt6_sysctl_mrt6stat(oldp, oldlenp, newp);
 	case IPV6CTL_MRTMIF:
 		if (newp)
 			return (EPERM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.145 2025/05/18 23:27:29 jan Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.146 2025/05/19 04:54:04 jan Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -133,7 +133,7 @@ struct socket  *ip6_mrouter[RT_TABLEID_MAX + 1];
 struct rttimer_queue ip6_mrouterq;
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto;    /* for netstat only */
-struct mrt6stat	mrt6stat;
+struct cpumem *mrt6counters;
 
 int get_sg6_cnt(struct sioc_sg_req6 *, unsigned int);
 int get_mif6_cnt(struct sioc_mif_req6 *, unsigned int);
@@ -142,6 +142,7 @@ int add_m6if(struct socket *, struct mif6ctl *);
 int del_m6if(struct socket *, mifi_t *);
 int add_m6fc(struct socket *, struct mf6cctl *);
 int del_m6fc(struct socket *, struct mf6cctl *);
+void mf6c_expire_route(struct rtentry *, u_int);
 struct ifnet *mrt6_iflookupbymif(mifi_t, unsigned int);
 struct rtentry *mf6c_find(struct ifnet *, struct in6_addr *, unsigned int);
 struct rtentry *mrt6_mcast_add(struct ifnet *, struct sockaddr *);
@@ -201,6 +202,15 @@ ip6_mrouter_get(int cmd, struct socket *so, struct mbuf *m)
 	default:
 		return EOPNOTSUPP;
 	}
+}
+
+void
+mrt6_init(void)
+{
+	mrt6counters = counters_alloc(mrt6s_ncounters);
+
+	rt_timer_queue_init(&ip6_mrouterq, MCAST_EXPIRE_TIMEOUT,
+	    &mf6c_expire_route);
 }
 
 /*
@@ -407,6 +417,38 @@ mrt6_rtwalk_mf6csysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	if_put(ifp);
 
 	return 0;
+}
+
+int
+mrt6_sysctl_mrt6stat(void *oldp, size_t *oldlenp, void *newp)
+{
+	uint64_t counters[mrt6s_ncounters];
+	struct mrt6stat mrt6stat;
+	int i = 0;
+
+#define ASSIGN(field)  do { mrt6stat.field = counters[i++]; } while (0)
+
+	memset(&mrt6stat, 0, sizeof mrt6stat);
+	counters_read(mrt6counters, counters, nitems(counters), NULL);
+
+	ASSIGN(mrt6s_mfc_lookups);
+	ASSIGN(mrt6s_mfc_misses);
+	ASSIGN(mrt6s_upcalls);
+	ASSIGN(mrt6s_no_route);
+	ASSIGN(mrt6s_bad_tunnel);
+	ASSIGN(mrt6s_cant_tunnel);
+	ASSIGN(mrt6s_wrong_if);
+	ASSIGN(mrt6s_upq_ovflw);
+	ASSIGN(mrt6s_cache_cleanups);
+	ASSIGN(mrt6s_drop_sel);
+	ASSIGN(mrt6s_q_overflow);
+	ASSIGN(mrt6s_pkt2large);
+	ASSIGN(mrt6s_upq_sockfull);
+
+#undef ASSIGN
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &mrt6stat, sizeof(mrt6stat)));
 }
 
 int
@@ -906,7 +948,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 		 * send message to routing daemon
 		 */
 
-		mrt6stat.mrt6s_no_route++;
+		mrt6stat_inc(mrt6s_no_route);
 
 		{
 			struct mrt6msg *im;
@@ -947,11 +989,11 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 			    &sin6) < 0) {
 				log(LOG_WARNING, "ip6_mforward: ip6_mrouter "
 				    "socket queue full\n");
-				mrt6stat.mrt6s_upq_sockfull++;
+				mrt6stat_inc(mrt6s_upq_sockfull);
 				return ENOBUFS;
 			}
 
-			mrt6stat.mrt6s_upcalls++;
+			mrt6stat_inc(mrt6s_upcalls);
 
 			mf6c_add(NULL, &ip6->ip6_src, &ip6->ip6_dst,
 			    mifp->m6_mifi, rtableid, M_NOWAIT);
@@ -1012,7 +1054,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 	 */
 	if (mifp->m6_mifi != mf6c->mf6c_parent) {
 		/* came in the wrong interface */
-		mrt6stat.mrt6s_wrong_if++;
+		mrt6stat_inc(mrt6s_wrong_if);
 		mf6c->mf6c_wrong_if++;
 		rtfree(rt);
 		return 0;

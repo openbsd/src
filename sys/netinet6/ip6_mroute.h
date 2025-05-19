@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.24 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.25 2025/05/19 04:54:04 jan Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -191,11 +191,34 @@ struct sioc_mif_req6 {
 };
 
 #if defined(_KERNEL)
+
+enum mrt6stat_counters {
+	mrt6s_mfc_lookups,
+	mrt6s_mfc_misses,
+	mrt6s_upcalls,
+	mrt6s_no_route,
+	mrt6s_bad_tunnel,
+	mrt6s_cant_tunnel,
+	mrt6s_wrong_if,
+	mrt6s_upq_ovflw,
+	mrt6s_cache_cleanups,
+	mrt6s_drop_sel,
+	mrt6s_q_overflow,
+	mrt6s_pkt2large,
+	mrt6s_upq_sockfull,
+	mrt6s_ncounters
+};
+
+extern struct cpumem *mrt6counters;
+
+static inline void
+mrt6stat_inc(enum mrt6stat_counters c)
+{
+	counters_inc(mrt6counters, c);
+}
+
 /* How frequent should we look for expired entries (in seconds). */
 #define	MCAST_EXPIRE_TIMEOUT	30
-
-extern struct rttimer_queue ip6_mrouterq;
-void	mf6c_expire_route(struct rtentry *, u_int);
 
 /*
  * The kernel's multicast-interface structure.
@@ -232,8 +255,10 @@ int	ip6_mrouter_set(int, struct socket *, struct mbuf *);
 int	ip6_mrouter_get(int, struct socket *, struct mbuf *);
 int	ip6_mrouter_done(struct socket *);
 void	ip6_mrouter_detach(struct ifnet *);
+void	mrt6_init(void);
 int	mrt6_ioctl(struct socket *, u_long, caddr_t);
 int	mrt6_sysctl_mif(void *, size_t *);
+int	mrt6_sysctl_mrt6stat(void *, size_t *, void *);
 int	mrt6_sysctl_mfc(void *, size_t *);
 #endif /* _KERNEL */
 
