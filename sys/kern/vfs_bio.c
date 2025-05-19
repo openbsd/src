@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.214 2024/11/05 17:28:31 mpi Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.215 2025/05/19 10:10:13 jsg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ int needbuffer;
 void bufcache_init(void);
 void bufcache_adjust(void);
 struct buf *bufcache_gethighcleanbuf(void);
-struct buf *bufcache_getdmacleanbuf(void);
 
 /*
  * Buffer pool for I/O buffers.
@@ -1648,16 +1647,6 @@ bufcache_gethighcleanbuf(void)
 		return NULL;
 	return bufcache_getcleanbuf_range(DMA_CACHE + 1, NUM_CACHES - 1, 0);
 }
-
-
-struct buf *
-bufcache_getdmacleanbuf(void)
-{
-	if (fliphigh)
-		return bufcache_getcleanbuf_range(DMA_CACHE, DMA_CACHE, 0);
-	return bufcache_getcleanbuf_range(DMA_CACHE, NUM_CACHES - 1, 0);
-}
-
 
 struct buf *
 bufcache_getdirtybuf(void)
