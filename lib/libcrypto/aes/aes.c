@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.5 2025/04/20 09:17:53 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.6 2025/05/19 04:01:07 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -97,6 +97,18 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 }
 LCRYPTO_ALIAS(AES_decrypt);
 
+void
+aes_encrypt_block128(const unsigned char *in, unsigned char *out, const void *key)
+{
+	aes_encrypt_internal(in, out, key);
+}
+
+void
+aes_decrypt_block128(const unsigned char *in, unsigned char *out, const void *key)
+{
+	aes_decrypt_internal(in, out, key);
+}
+
 #ifdef HAVE_AES_CBC_ENCRYPT_INTERNAL
 void aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
@@ -108,10 +120,10 @@ aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
 {
 	if (enc)
 		CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
-		    (block128_f)AES_encrypt);
+		    aes_encrypt_block128);
 	else
 		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
-		    (block128_f)AES_decrypt);
+		    aes_decrypt_block128);
 }
 #endif
 
@@ -134,7 +146,7 @@ AES_cfb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,
     const AES_KEY *key, unsigned char *ivec, int *num, const int enc)
 {
 	CRYPTO_cfb128_encrypt(in, out, length, key, ivec, num, enc,
-	    (block128_f)AES_encrypt);
+	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_cfb128_encrypt);
 
@@ -144,7 +156,7 @@ AES_cfb1_encrypt(const unsigned char *in, unsigned char *out, size_t length,
     const AES_KEY *key, unsigned char *ivec, int *num, const int enc)
 {
 	CRYPTO_cfb128_1_encrypt(in, out, length, key, ivec, num, enc,
-	    (block128_f)AES_encrypt);
+	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_cfb1_encrypt);
 
@@ -153,7 +165,7 @@ AES_cfb8_encrypt(const unsigned char *in, unsigned char *out, size_t length,
     const AES_KEY *key, unsigned char *ivec, int *num, const int enc)
 {
 	CRYPTO_cfb128_8_encrypt(in, out, length, key, ivec, num, enc,
-	    (block128_f)AES_encrypt);
+	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_cfb8_encrypt);
 
@@ -163,7 +175,7 @@ AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
     unsigned char ecount_buf[AES_BLOCK_SIZE], unsigned int *num)
 {
 	CRYPTO_ctr128_encrypt(in, out, length, key, ivec, ecount_buf, num,
-	    (block128_f)AES_encrypt);
+	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_ctr128_encrypt);
 
@@ -183,7 +195,7 @@ AES_ofb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,
     const AES_KEY *key, unsigned char *ivec, int *num)
 {
 	CRYPTO_ofb128_encrypt(in, out, length, key, ivec, num,
-	    (block128_f)AES_encrypt);
+	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_ofb128_encrypt);
 
