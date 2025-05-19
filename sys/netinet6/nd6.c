@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.287 2025/02/17 20:31:25 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.288 2025/05/19 06:43:28 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -194,17 +194,11 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 
 		switch (nd_opt->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
-			if (ndopts->nd_opts_src_lladdr != NULL)
-				nd6log((LOG_INFO, "duplicated ND6 option found "
-				    "(type=%d)\n", nd_opt->nd_opt_type));
-			else
+			if (ndopts->nd_opts_src_lladdr == NULL)
 				ndopts->nd_opts_src_lladdr = nd_opt;
 			break;
 		case ND_OPT_TARGET_LINKADDR:
-			if (ndopts->nd_opts_tgt_lladdr != NULL)
-				nd6log((LOG_INFO, "duplicated ND6 option found "
-				    "(type=%d)\n", nd_opt->nd_opt_type));
-			else
+			if (ndopts->nd_opts_tgt_lladdr == NULL)
 				ndopts->nd_opts_tgt_lladdr = nd_opt;
 			break;
 		case ND_OPT_MTU:
@@ -219,16 +213,12 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 			 * Unknown options must be silently ignored,
 			 * to accommodate future extension to the protocol.
 			 */
-			nd6log((LOG_DEBUG,
-			    "nd6_options: unsupported option %d - "
-			    "option ignored\n", nd_opt->nd_opt_type));
 			break;
 		}
 
 		i++;
 		if (i > nd6_maxndopt) {
 			icmp6stat_inc(icp6s_nd_toomanyopt);
-			nd6log((LOG_INFO, "too many loop in nd opt\n"));
 			break;
 		}
 	}
