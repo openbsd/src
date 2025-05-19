@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.261 2025/05/19 06:46:58 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.262 2025/05/19 06:48:16 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -131,8 +131,6 @@ struct rttimer_queue icmp6_redirect_timeout_q;
 
 void	icmp6_errcount(int, int);
 int	icmp6_ratelimit(const struct in6_addr *, const int, const int);
-const char *icmp6_redirect_diag(struct in6_addr *, struct in6_addr *,
-	    struct in6_addr *);
 int	icmp6_notify_error(struct mbuf *, int, int, int);
 void	icmp6_mtudisc_timeout(struct rtentry *, u_int);
 
@@ -1178,22 +1176,6 @@ icmp6_fasttimo(void)
 	mld6_fasttimeo();
 }
 
-const char *
-icmp6_redirect_diag(struct in6_addr *src6, struct in6_addr *dst6,
-    struct in6_addr *tgt6)
-{
-	static char buf[1024]; /* XXX */
-	char src[INET6_ADDRSTRLEN];
-	char dst[INET6_ADDRSTRLEN];
-	char tgt[INET6_ADDRSTRLEN];
-
-	snprintf(buf, sizeof(buf), "(src=%s dst=%s tgt=%s)",
-		 inet_ntop(AF_INET6, src6, src, sizeof(src)),
-		 inet_ntop(AF_INET6, dst6, dst, sizeof(dst)),
-		 inet_ntop(AF_INET6, tgt6, tgt, sizeof(tgt)));
-	return buf;
-}
-
 void
 icmp6_redirect_input(struct mbuf *m, int off)
 {
@@ -1211,7 +1193,6 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	struct in6_addr redtgt6;
 	struct in6_addr reddst6;
 	struct nd_opts ndopts;
-	char addr[INET6_ADDRSTRLEN];
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
@@ -1238,28 +1219,13 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		reddst6.s6_addr16[1] = htons(ifp->if_index);
 
 	/* validation */
-	if (!IN6_IS_ADDR_LINKLOCAL(&src6)) {
-		nd6log((LOG_ERR,
-			"ICMP6 redirect sent from %s rejected; "
-			"must be from linklocal\n",
-			inet_ntop(AF_INET6, &src6, addr, sizeof(addr))));
+	if (!IN6_IS_ADDR_LINKLOCAL(&src6))
 		goto bad;
-	}
-	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-			"ICMP6 redirect sent from %s rejected; "
-			"hlim=%d (must be 255)\n",
-			inet_ntop(AF_INET6, &src6, addr, sizeof(addr)),
-			ip6->ip6_hlim));
+	if (ip6->ip6_hlim != 255)
 		goto bad;
-	}
-	if (IN6_IS_ADDR_MULTICAST(&reddst6)) {
-		nd6log((LOG_ERR,
-			"ICMP6 redirect rejected; "
-			"redirect dst must be unicast: %s\n",
-			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
+	if (IN6_IS_ADDR_MULTICAST(&reddst6))
 		goto bad;
-	}
+
     {
 	/* ip6->ip6_src must be equal to gw for icmp6->icmp6_reddst */
 	struct sockaddr_in6 sin6;
@@ -1273,32 +1239,17 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	if (rt) {
 		if (rt->rt_gateway == NULL ||
 		    rt->rt_gateway->sa_family != AF_INET6) {
-			nd6log((LOG_ERR,
-			    "ICMP6 redirect rejected; no route "
-			    "with inet6 gateway found for redirect dst: %s\n",
-			    icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
 			rtfree(rt);
 			goto bad;
 		}
 
 		gw6 = &(satosin6(rt->rt_gateway)->sin6_addr);
 		if (bcmp(&src6, gw6, sizeof(struct in6_addr)) != 0) {
-			nd6log((LOG_ERR,
-				"ICMP6 redirect rejected; "
-				"not equal to gw-for-src=%s (must be same): "
-				"%s\n",
-				inet_ntop(AF_INET6, gw6, addr, sizeof(addr)),
-				icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
 			rtfree(rt);
 			goto bad;
 		}
-	} else {
-		nd6log((LOG_ERR,
-			"ICMP6 redirect rejected; "
-			"no route found for redirect dst: %s\n",
-			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
+	} else
 		goto bad;
-	}
 	rtfree(rt);
 	rt = NULL;
     }
@@ -1308,38 +1259,23 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		is_router = 1;	/* router case */
 	if (bcmp(&redtgt6, &reddst6, sizeof(redtgt6)) == 0)
 		is_onlink = 1;	/* on-link destination case */
-	if (!is_router && !is_onlink) {
-		nd6log((LOG_ERR,
-			"ICMP6 redirect rejected; "
-			"neither router case nor onlink case: %s\n",
-			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
+	if (!is_router && !is_onlink)
 		goto bad;
-	}
+
 	/* validation passed */
 
 	icmp6len -= sizeof(*nd_rd);
-	if (nd6_options(nd_rd + 1, icmp6len, &ndopts) < 0) {
-		nd6log((LOG_INFO, "icmp6_redirect_input: "
-			"invalid ND option, rejected: %s\n",
-			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
+	if (nd6_options(nd_rd + 1, icmp6len, &ndopts) < 0)
 		/* nd6_options have incremented stats */
 		goto freeit;
-	}
 
 	if (ndopts.nd_opts_tgt_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
 	}
 
-	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO,
-			"icmp6_redirect_input: lladdrlen mismatch for %s "
-			"(if %d, icmp6 packet %d): %s\n",
-			inet_ntop(AF_INET6, &redtgt6, addr, sizeof(addr)),
-			ifp->if_addrlen, lladdrlen - 2,
-			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
+	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen)
 		goto bad;
-	}
 
 	/* RFC 2461 8.3 */
 	nd6_cache_lladdr(ifp, &redtgt6, lladdr, lladdrlen, ND_REDIRECT,
