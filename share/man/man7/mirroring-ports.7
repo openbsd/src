@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.28 2020/08/27 09:29:16 fcambus Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.29 2025/05/19 10:16:17 sthen Exp $
 .\"
 .\" Copyright (c) 2000,2012 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2020 $
+.Dd $Mdocdate: May 19 2025 $
 .Dt MIRRORING-PORTS 7
 .Os
 .Sh NAME
@@ -128,15 +128,15 @@ However, a more robust approach is also needed, so that ports users can
 depend on distfiles mirrors to carry what they need irrespective of those
 synchronization issues.
 The
-.Pa ${DISTFILES}/by-cipher/sha256
+.Pa ${DISTFILES}/by_cipher/sha256
 directory provides more persistent access to the distfiles,
 indexed through the actual checksums that the files should match.
 Provided mirroring is run sufficiently often,
 two versions of the same distfile with respective checksums cksum1 and cksum2
 will be available under the names
-.Pa ${DISTFILES}/sha256/c1/cksum1/distfile
+.Pa ${DISTFILES}/by_cipher/sha256/c1/cksum1/distfile
 and
-.Pa ${DISTFILES}/sha256/c2/cksum2/distfile .
+.Pa ${DISTFILES}/by_cipher/sha256/c2/cksum2/distfile .
 .Pp
 If
 .Ev REFETCH
