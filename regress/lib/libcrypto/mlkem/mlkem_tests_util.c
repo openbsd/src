@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.c,v 1.5 2024/12/26 00:04:24 tb Exp $ */
+/*	$OpenBSD: mlkem_tests_util.c,v 1.6 2025/05/19 06:47:40 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -83,25 +83,10 @@ mlkem768_encode_private_key(const void *private_key, uint8_t **out_buf,
 }
 
 int
-mlkem768_encode_public_key(const void *public_key, uint8_t **out_buf,
+mlkem768_marshal_public_key(const void *public_key, uint8_t **out_buf,
     size_t *out_len)
 {
-	CBB cbb;
-	int ret = 0;
-
-	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM768_marshal_public_key(&cbb, public_key))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return ret;
+	return MLKEM768_marshal_public_key(out_buf, out_len, public_key);
 }
 
 int
@@ -127,25 +112,10 @@ mlkem1024_encode_private_key(const void *private_key, uint8_t **out_buf,
 }
 
 int
-mlkem1024_encode_public_key(const void *public_key, uint8_t **out_buf,
+mlkem1024_marshal_public_key(const void *public_key, uint8_t **out_buf,
     size_t *out_len)
 {
-	CBB cbb;
-	int ret = 0;
-
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM1024_marshal_public_key(&cbb, public_key))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return ret;
+	return MLKEM1024_marshal_public_key(out_buf, out_len, public_key);
 }
 
 int
@@ -173,32 +143,36 @@ mlkem768_encap_external_entropy(uint8_t *out_ciphertext,
 	    public_key, entropy);
 }
 
-void
+int
 mlkem768_generate_key(uint8_t *out_encoded_public_key,
     uint8_t optional_out_seed[MLKEM_SEED_BYTES], void *out_private_key)
 {
-	MLKEM768_generate_key(out_encoded_public_key, optional_out_seed,
+	return MLKEM768_generate_key(out_encoded_public_key, optional_out_seed,
 	    out_private_key);
 }
 
-void
+int
 mlkem768_generate_key_external_entropy(uint8_t *out_encoded_public_key,
     void *out_private_key, const uint8_t entropy[MLKEM_SEED_BYTES])
 {
-	MLKEM768_generate_key_external_entropy(out_encoded_public_key,
+	return MLKEM768_generate_key_external_entropy(out_encoded_public_key,
 	    out_private_key, entropy);
 }
 
 int
-mlkem768_parse_private_key(void *out_private_key, CBS *private_key_cbs)
+mlkem768_parse_private_key(void *out_private_key, const uint8_t *private_key,
+    size_t private_key_len)
 {
-	return MLKEM768_parse_private_key(out_private_key, private_key_cbs);
+	return MLKEM768_parse_private_key(out_private_key, private_key,
+	    private_key_len);
 }
 
 int
-mlkem768_parse_public_key(void *out_public_key, CBS *public_key_cbs)
+mlkem768_parse_public_key(void *out_public_key, const uint8_t *public_key,
+    size_t public_key_len)
 {
-	return MLKEM768_parse_public_key(out_public_key, public_key_cbs);
+	return MLKEM768_parse_public_key(out_public_key, public_key,
+	    public_key_len);
 }
 
 void
@@ -232,26 +206,28 @@ mlkem1024_encap_external_entropy(uint8_t *out_ciphertext,
 	    public_key, entropy);
 }
 
-void
+int
 mlkem1024_generate_key(uint8_t *out_encoded_public_key,
     uint8_t optional_out_seed[MLKEM_SEED_BYTES], void *out_private_key)
 {
-	MLKEM1024_generate_key(out_encoded_public_key, optional_out_seed,
+	return MLKEM1024_generate_key(out_encoded_public_key, optional_out_seed,
 	    out_private_key);
 }
 
-void
+int
 mlkem1024_generate_key_external_entropy(uint8_t *out_encoded_public_key,
     void *out_private_key, const uint8_t entropy[MLKEM_SEED_BYTES])
 {
-	MLKEM1024_generate_key_external_entropy(out_encoded_public_key,
+	return MLKEM1024_generate_key_external_entropy(out_encoded_public_key,
 	    out_private_key, entropy);
 }
 
 int
-mlkem1024_parse_private_key(void *out_private_key, CBS *private_key_cbs)
+mlkem1024_parse_private_key(void *out_private_key, const uint8_t *private_key,
+    size_t private_key_len)
 {
-	return MLKEM1024_parse_private_key(out_private_key, private_key_cbs);
+	return MLKEM1024_parse_private_key(out_private_key, private_key,
+	    private_key_len);
 }
 
 void
@@ -261,7 +237,9 @@ mlkem1024_public_from_private(void *out_public_key, const void *private_key)
 }
 
 int
-mlkem1024_parse_public_key(void *out_public_key, CBS *public_key_cbs)
+mlkem1024_parse_public_key(void *out_public_key, const uint8_t *public_key,
+    size_t public_key_len)
 {
-	return MLKEM1024_parse_public_key(out_public_key, public_key_cbs);
+	return MLKEM1024_parse_public_key(out_public_key, public_key,
+	    public_key_len);
 }

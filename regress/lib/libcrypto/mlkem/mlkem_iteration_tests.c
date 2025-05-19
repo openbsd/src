@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_iteration_tests.c,v 1.2 2024/12/26 07:26:45 tb Exp $ */
+/*	$OpenBSD: mlkem_iteration_tests.c,v 1.3 2025/05/19 06:47:40 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -116,8 +116,10 @@ MlkemIterativeTest(struct iteration_ctx *ctx)
 		}
 
 		/* generate ek as encoded_public_key */
-		ctx->generate_key_external_entropy(ctx->encoded_public_key,
-		    ctx->priv, seed);
+		if (!ctx->generate_key_external_entropy(ctx->encoded_public_key,
+		    ctx->priv, seed)) {
+			errx(1, "generate_key_external_entropy");
+		}
 		ctx->public_from_private(ctx->pub, ctx->priv);
 
 		/* hash in ek */

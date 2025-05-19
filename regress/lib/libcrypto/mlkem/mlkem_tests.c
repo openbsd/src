@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.3 2025/05/03 08:34:07 tb Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.4 2025/05/19 06:47:40 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -112,7 +112,8 @@ MlkemDecapFileTest(struct decap_ctx *decap)
 	parse_get_cbs(p, DECAP_PRIVATE_KEY, &private_key);
 	parse_get_int(p, DECAP_RESULT, &should_fail);
 
-	if (!decap->parse_private_key(decap->private_key, &private_key)) {
+	if (!decap->parse_private_key(decap->private_key,
+	    CBS_data(&private_key), CBS_len(&private_key))) {
 		if ((failed = !should_fail))
 			parse_info(p, "parse private key");
 		goto err;
@@ -207,7 +208,8 @@ MlkemNistDecapFileTest(struct decap_ctx *decap)
 	    MLKEM_SHARED_SECRET_BYTES, CBS_len(&k)))
 		goto err;
 
-	if (!decap->parse_private_key(decap->private_key, &dk)) {
+	if (!decap->parse_private_key(decap->private_key, CBS_data(&dk),
+	    CBS_len(&dk))) {
 		parse_info(p, "parse private key");
 		goto err;
 	}
@@ -360,7 +362,8 @@ MlkemEncapFileTest(struct encap_ctx *encap)
 	parse_get_cbs(p, ENCAP_SHARED_SECRET, &shared_secret);
 	parse_get_int(p, ENCAP_RESULT, &should_fail);
 
-	if (!encap->parse_public_key(encap->public_key, &public_key)) {
+	if (!encap->parse_public_key(encap->public_key, CBS_data(&public_key),
+	    CBS_len(&public_key))) {
 		if ((failed = !should_fail))
 			parse_info(p, "parse public key");
 		goto err;

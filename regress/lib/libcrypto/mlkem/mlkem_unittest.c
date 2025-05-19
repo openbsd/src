@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.7 2025/05/03 08:34:55 tb Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.8 2025/05/19 06:47:40 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -42,7 +42,7 @@ struct unittest_ctx {
 	mlkem_parse_private_key_fn parse_private_key;
 	mlkem_parse_public_key_fn parse_public_key;
 	mlkem_encode_private_key_fn encode_private_key;
-	mlkem_encode_public_key_fn encode_public_key;
+	mlkem_marshal_public_key_fn marshal_public_key;
 	mlkem_public_from_private_fn public_from_private;
 };
 
@@ -54,36 +54,32 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 	uint8_t first_two_bytes[2];
 	uint8_t *encoded_private_key = NULL, *tmp_buf = NULL;
 	size_t encoded_private_key_len, tmp_buf_len;
-	CBS cbs;
 	int failed = 0;
 
-	ctx->generate_key(ctx->encoded_public_key, NULL, ctx->priv);
+	if (!ctx->generate_key(ctx->encoded_public_key, NULL, ctx->priv)) {
+		warnx("generate_key failed");
+		failed |= 1;
+	}
 
 	memcpy(first_two_bytes, ctx->encoded_public_key, sizeof(first_two_bytes));
 	memset(ctx->encoded_public_key, 0xff, sizeof(first_two_bytes));
 
-	CBS_init(&cbs, ctx->encoded_public_key, ctx->encoded_public_key_len);
-
 	/* Parsing should fail because the first coefficient is >= kPrime. */
-	if (ctx->parse_public_key(ctx->pub, &cbs)) {
+	if (ctx->parse_public_key(ctx->pub, ctx->encoded_public_key,
+	    ctx->encoded_public_key_len)) {
 		warnx("parse_public_key should have failed");
 		failed |= 1;
 	}
 
 	memcpy(ctx->encoded_public_key, first_two_bytes, sizeof(first_two_bytes));
-	CBS_init(&cbs, ctx->encoded_public_key, ctx->encoded_public_key_len);
-	if (!ctx->parse_public_key(ctx->pub, &cbs)) {
+	if (!ctx->parse_public_key(ctx->pub, ctx->encoded_public_key,
+	    ctx->encoded_public_key_len)) {
 		warnx("MLKEM768_parse_public_key");
 		failed |= 1;
 	}
 
-	if (CBS_len(&cbs) != 0u) {
-		warnx("CBS_len must be 0");
-		failed |= 1;
-	}
-
-	if (!ctx->encode_public_key(ctx->pub, &tmp_buf, &tmp_buf_len)) {
-		warnx("encode_public_key");
+	if (!ctx->marshal_public_key(ctx->pub, &tmp_buf, &tmp_buf_len)) {
+		warnx("marshal_public_key");
 		failed |= 1;
 	}
 	if (ctx->encoded_public_key_len != tmp_buf_len) {
@@ -100,8 +96,8 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 	tmp_buf = NULL;
 
 	ctx->public_from_private(ctx->pub2, ctx->priv);
-	if (!ctx->encode_public_key(ctx->pub2, &tmp_buf, &tmp_buf_len)) {
-		warnx("encode_public_key");
+	if (!ctx->marshal_public_key(ctx->pub2, &tmp_buf, &tmp_buf_len)) {
+		warnx("marshal_public_key");
 		failed |= 1;
 	}
 	if (ctx->encoded_public_key_len != tmp_buf_len) {
@@ -125,18 +121,18 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 
 	memcpy(first_two_bytes, encoded_private_key, sizeof(first_two_bytes));
 	memset(encoded_private_key, 0xff, sizeof(first_two_bytes));
-	CBS_init(&cbs, encoded_private_key, encoded_private_key_len);
 
 	/*  Parsing should fail because the first coefficient is >= kPrime. */
-	if (ctx->parse_private_key(ctx->priv2, &cbs)) {
+	if (ctx->parse_private_key(ctx->priv2, encoded_private_key,
+	    encoded_private_key_len)) {
 		warnx("MLKEM768_parse_private_key should have failed");
 		failed |= 1;
 	}
 
 	memcpy(encoded_private_key, first_two_bytes, sizeof(first_two_bytes));
-	CBS_init(&cbs, encoded_private_key, encoded_private_key_len);
 
-	if (!ctx->parse_private_key(ctx->priv2, &cbs)) {
+	if (!ctx->parse_private_key(ctx->priv2, encoded_private_key,
+	    encoded_private_key_len)) {
 		warnx("MLKEM768_parse_private_key");
 		failed |= 1;
 	}
@@ -210,7 +206,7 @@ mlkem768_unittest(void)
 		.parse_private_key = mlkem768_parse_private_key,
 		.parse_public_key = mlkem768_parse_public_key,
 		.encode_private_key = mlkem768_encode_private_key,
-		.encode_public_key = mlkem768_encode_public_key,
+		.marshal_public_key = mlkem768_marshal_public_key,
 		.public_from_private = mlkem768_public_from_private,
 	};
 
@@ -239,7 +235,7 @@ mlkem1024_unittest(void)
 		.parse_private_key = mlkem1024_parse_private_key,
 		.parse_public_key = mlkem1024_parse_public_key,
 		.encode_private_key = mlkem1024_encode_private_key,
-		.encode_public_key = mlkem1024_encode_public_key,
+		.marshal_public_key = mlkem1024_marshal_public_key,
 		.public_from_private = mlkem1024_public_from_private,
 	};
 
