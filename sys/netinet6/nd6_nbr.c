@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.157 2025/05/19 06:42:13 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.158 2025/05/19 06:42:53 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1059,9 +1059,6 @@ nd6_dad_start(struct ifaddr *ifa)
 	TAILQ_INSERT_TAIL(&dadq, dp, dad_list);
 	ip6_dad_pending++;
 
-	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
-	    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr, addr, sizeof(addr))));
-
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
 	 * Note that we must delay the first transmission, if this is the
@@ -1137,9 +1134,6 @@ nd6_dad_timer(void *xifa)
 
 	/* timeouted with IFF_{RUNNING,UP} check */
 	if (dp->dad_ns_tcount > dad_maxtry) {
-		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
-			ifa->ifa_ifp->if_xname));
-
 		nd6_dad_destroy(dp);
 		goto done;
 	}
@@ -1165,12 +1159,6 @@ nd6_dad_timer(void *xifa)
 			ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
 			rtm_addr(RTM_CHGADDRATTR, ifa);
-
-			nd6log((LOG_DEBUG,
-			    "%s: DAD complete for %s - no duplicates found\n",
-			    ifa->ifa_ifp->if_xname,
-			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-				addr, sizeof(addr))));
 
 			daddr6 = in6addr_linklocal_allrouters;
 			daddr6.s6_addr16[1] = htons(ifp->if_index);
