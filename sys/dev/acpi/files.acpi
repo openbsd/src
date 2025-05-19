@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.73 2025/04/21 21:11:04 mglocker Exp $
+#	$OpenBSD: files.acpi,v 1.74 2025/05/19 19:15:19 tedu Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -293,6 +293,11 @@ file	dev/acpi/iosf_acpi.c		iosf_acpi
 device	intelpmc
 attach	intelpmc at acpi
 file	dev/acpi/intelpmc.c		intelpmc
+
+# Windows Management Instrumentation (WMI)
+device	acpiwmi
+attach	acpiwmi at acpi
+file	dev/acpi/acpiwmi.c		acpiwmi
 
 # PS/2 Keyboard Controller
 attach	pckbc at acpi with pckbc_acpi
