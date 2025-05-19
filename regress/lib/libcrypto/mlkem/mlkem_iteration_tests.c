@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_iteration_tests.c,v 1.3 2025/05/19 06:47:40 beck Exp $ */
+/*	$OpenBSD: mlkem_iteration_tests.c,v 1.4 2025/05/19 07:53:00 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -185,7 +185,7 @@ main(void)
 		.priv = &priv768,
 		.pub = &pub768,
 		.encap_external_entropy = mlkem768_encap_external_entropy,
-		.encode_private_key = mlkem768_encode_private_key,
+		.encode_private_key = mlkem768_marshal_private_key,
 		.generate_key_external_entropy =
 		    mlkem768_generate_key_external_entropy,
 		.public_from_private = mlkem768_public_from_private,

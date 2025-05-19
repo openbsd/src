@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.8 2025/05/19 06:47:40 beck Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.9 2025/05/19 07:53:00 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -205,7 +205,7 @@ mlkem768_unittest(void)
 		.generate_key = mlkem768_generate_key,
 		.parse_private_key = mlkem768_parse_private_key,
 		.parse_public_key = mlkem768_parse_public_key,
-		.encode_private_key = mlkem768_encode_private_key,
+		.encode_private_key = mlkem768_marshal_private_key,
 		.marshal_public_key = mlkem768_marshal_public_key,
 		.public_from_private = mlkem768_public_from_private,
 	};

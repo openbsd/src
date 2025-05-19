@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_internal.h,v 1.5 2025/05/19 06:47:40 beck Exp $ */
+/*	$OpenBSD: mlkem_internal.h,v 1.6 2025/05/19 07:53:00 beck Exp $ */
 /*
  * Copyright (c) 2023, Google Inc.
  *
@@ -57,8 +57,8 @@ int MLKEM768_generate_key_external_entropy(
  * format for ML-KEM private keys. It returns one on success or zero on
  * allocation error.
  */
-int MLKEM768_marshal_private_key(CBB *out,
-    const struct MLKEM768_private_key *private_key);
+int MLKEM768_marshal_private_key(const struct MLKEM768_private_key *private_key,
+    uint8_t **out_private_key, size_t *out_private_key_len);
 
 /*
  * MLKEM_encap_external_entropy behaves like |MLKEM_encap|, but uses

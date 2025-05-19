@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.h,v 1.5 2025/05/19 06:47:40 beck Exp $ */
+/*	$OpenBSD: mlkem_tests_util.h,v 1.6 2025/05/19 07:53:00 beck Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -30,7 +30,7 @@
 int compare_data(const uint8_t *want, const uint8_t *got, size_t len,
     const char *msg);
 
-int mlkem768_encode_private_key(const void *priv, uint8_t **out_buf,
+int mlkem768_marshal_private_key(const void *priv, uint8_t **out_buf,
     size_t *out_len);
 int mlkem768_marshal_public_key(const void *pub, uint8_t **out_buf,
     size_t *out_len);

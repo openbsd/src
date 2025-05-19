@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.4 2025/05/19 06:47:40 beck Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.5 2025/05/19 07:53:00 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -662,7 +662,7 @@ mlkem_keygen_tests(const char *fn, size_t size, enum test_type test_type)
 		.generate_key_external_entropy =
 		    mlkem768_generate_key_external_entropy,
 		.encode_private_key =
-		    mlkem768_encode_private_key,
+		    mlkem768_marshal_private_key,
 	};
 	struct MLKEM1024_private_key private_key1024;
 	uint8_t encoded_public_key1024[MLKEM1024_PUBLIC_KEY_BYTES];
