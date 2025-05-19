@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.257 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.258 2025/05/19 06:45:14 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -325,10 +325,8 @@ icmp6_do_error(struct mbuf *m, int type, int code, int param)
 	M_PREPEND(m, preplen, M_DONTWAIT);
 	if (m && m->m_len < preplen)
 		m = m_pullup(m, preplen);
-	if (m == NULL) {
-		nd6log((LOG_DEBUG, "ENOBUFS in icmp6_error %d\n", __LINE__));
+	if (m == NULL)
 		return (NULL);
-	}
 
 	nip6 = mtod(m, struct ip6_hdr *);
 	nip6->ip6_src  = oip6->ip6_src;
