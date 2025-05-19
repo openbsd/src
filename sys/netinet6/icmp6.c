@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.258 2025/05/19 06:45:14 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.259 2025/05/19 06:45:49 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -394,7 +394,6 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 	int off = *offp;
 	int icmp6len = m->m_pkthdr.len - off;
 	int code, sum, noff;
-	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
 	/*
 	 * Locate icmp6 structure in mbuf, and check
@@ -418,10 +417,6 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 	code = icmp6->icmp6_code;
 
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
-		nd6log((LOG_ERR,
-		    "ICMP6 checksum error(%d|%x) %s\n",
-		    icmp6->icmp6_type, sum,
-		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src))));
 		icmp6stat_inc(icp6s_checksum);
 		goto freeit;
 	}
@@ -722,12 +717,6 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 		break;
 
 	default:
-		nd6log((LOG_DEBUG,
-		    "icmp6_input: unknown type %d(src=%s, dst=%s, ifid=%u)\n",
-		    icmp6->icmp6_type,
-		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
-		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
-		    m->m_pkthdr.ph_ifidx));
 		if (icmp6->icmp6_type < ICMP6_ECHO_REQUEST) {
 			/* ICMPv6 error: MUST deliver it by spec... */
 			code = PRC_NCMDS;
