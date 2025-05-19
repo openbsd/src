@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.16 2025/05/16 13:51:04 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.17 2025/05/19 20:38:53 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -63,7 +63,7 @@ static void		dumptime(const struct tm *tmp);
 static time_t		hunt(char *name, time_t lot, time_t hit);
 static void		show(char *zone, time_t t, int v);
 static __pure time_t	yeartot(long y);
-static void		usage(void);
+static __dead void	usage(void);
 
 static void
 abbrok(const char * const abbrp, const char * const zone)
@@ -95,19 +95,19 @@ abbrok(const char * const abbrp, const char * const zone)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-v] [-c [loyear,]hiyear] zonename ...\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-Vv] [-c [loyear,]hiyear] "
+	    "[-t [lotime,]hitime] zonename ...\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
 int
 main(int argc, char *argv[])
 {
-	int		i, c, vflag = 0;
+	int		ch, i, Vflag = 0, vflag = 0;
 	char		*cutarg = NULL;
-	long		cutloyear = ZDUMP_LO_YEAR;
-	long		cuthiyear = ZDUMP_HI_YEAR;
-	time_t		cutlotime = 0, cuthitime = 0;
+	char		*cuttimes = NULL;
+	time_t		cutlotime = absolute_min_time;
+	time_t		cuthitime = absolute_max_time;
 	time_t		now, t, newt;
 	struct tm	tm, newtm, *tmp, *newtmp;
 	char		**fakeenv;
@@ -117,27 +117,37 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((c = getopt(argc, argv, "c:v")) == 'c' || c == 'v') {
-		switch (c) {
-		case 'v':
-			vflag = 1;
-			break;
+	while ((ch = getopt(argc, argv, "c:t:Vv")) != -1) {
+		switch (ch) {
 		case 'c':
 			cutarg = optarg;
 			break;
+		case 't':
+			cuttimes = optarg;
+			break;
+		case 'V':
+			Vflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
+			break;
 		default:
 			usage();
-			break;
 		}
 	}
-	if (c != -1 ||
-	    (optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 1 && strcmp(argv[0], "=") == 0)
 		usage();
-	}
-	if (vflag) {
+
+	if (vflag || Vflag) {
+		char dummy;
+		long cutloyear = ZDUMP_LO_YEAR;
+		long cuthiyear = ZDUMP_HI_YEAR;
+
 		if (cutarg != NULL) {
-			long	lo, hi;
-			char	dummy;
+			long lo, hi;
 
 			if (sscanf(cutarg, "%ld%c", &hi, &dummy) == 1) {
 				cuthiyear = hi;
@@ -151,12 +161,43 @@ main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 		}
-		cutlotime = yeartot(cutloyear);
-		cuthitime = yeartot(cuthiyear);
+		if (cutarg != NULL || cuttimes == NULL) {
+			cutlotime = yeartot(cutloyear);
+			cuthitime = yeartot(cuthiyear);
+		}
+		if (cuttimes != NULL) {
+			long long lo, hi;
+
+			if (sscanf(cuttimes, "%lld%c", &hi, &dummy) == 1) {
+				cutlotime = yeartot(cutloyear);
+				if (hi < cuthitime) {
+					if (hi < absolute_min_time)
+						hi = absolute_min_time;
+					cuthitime = hi;
+				}
+			} else if (sscanf(cuttimes, "%lld,%lld%c",
+					  &lo, &hi, &dummy) == 2) {
+				if (cutlotime < lo) {
+					if (absolute_max_time < lo)
+						lo = absolute_max_time;
+					cutlotime = lo;
+				}
+				if (hi < cuthitime) {
+					if (hi < absolute_min_time)
+						hi = absolute_min_time;
+					cuthitime = hi;
+				}
+			} else {
+				(void) fprintf(stderr,
+					"%s: wild -t argument %s\n",
+					__progname, cuttimes);
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 	time(&now);
 	longest = 0;
-	for (i = optind; i < argc; ++i)
+	for (i = 0; i < argc; ++i)
 		if (strlen(argv[i]) > longest)
 			longest = strlen(argv[i]);
 
@@ -179,19 +220,21 @@ main(int argc, char *argv[])
 		fakeenv[to] = NULL;
 		environ = fakeenv;
 	}
-	for (i = optind; i < argc; ++i) {
+	for (i = 0; i < argc; ++i) {
 		char	buf[MAX_STRING_LENGTH];
 
 		strlcpy(&fakeenv[0][3], argv[i], longest + 1);
-		if (!vflag) {
+		if (!(vflag | Vflag)) {
 			show(argv[i], now, FALSE);
 			continue;
 		}
 		warned = FALSE;
 		t = absolute_min_time;
-		show(argv[i], t, TRUE);
-		t += SECSPERHOUR * HOURSPERDAY;
-		show(argv[i], t, TRUE);
+		if (!Vflag) {
+			show(argv[i], t, TRUE);
+			t += SECSPERHOUR * HOURSPERDAY;
+			show(argv[i], t, TRUE);
+		}
 		if (t < cutlotime)
 			t = cutlotime;
 		tmp = localtime(&t);
@@ -221,11 +264,13 @@ main(int argc, char *argv[])
 			tm = newtm;
 			tmp = newtmp;
 		}
-		t = absolute_max_time;
-		t -= SECSPERHOUR * HOURSPERDAY;
-		show(argv[i], t, TRUE);
-		t += SECSPERHOUR * HOURSPERDAY;
-		show(argv[i], t, TRUE);
+		if (!Vflag) {
+			t = absolute_max_time;
+			t -= SECSPERHOUR * HOURSPERDAY;
+			show(argv[i], t, TRUE);
+			t += SECSPERHOUR * HOURSPERDAY;
+			show(argv[i], t, TRUE);
+		}
 	}
 	if (fflush(stdout) || ferror(stdout)) {
 		fprintf(stderr, "%s: ", __progname);
