@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.172 2025/03/16 23:45:06 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.173 2025/05/19 06:39:19 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -75,21 +75,13 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 	int lladdrlen = 0;
 	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 	struct nd_opts ndopts;
-	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
 	KASSERT(icmp6_type == ND_ROUTER_SOLICIT || icmp6_type ==
 	    ND_ROUTER_ADVERT);
 
 	/* Sanity checks */
-	if (ip6->ip6_hlim != 255) {
-		nd6log((LOG_ERR,
-		    "%s: invalid hlim (%d) from %s to %s on %u\n",
-		    __func__, ip6->ip6_hlim,
-		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
-		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
-		    m->m_pkthdr.ph_ifidx));
+	if (ip6->ip6_hlim != 255)
 		goto bad;
-	}
 
 	switch (icmp6_type) {
 	case ND_ROUTER_SOLICIT:
@@ -109,19 +101,13 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 
 		icmp6len -= sizeof(*nd_rs);
 		if (nd6_options(nd_rs + 1, icmp6len, &ndopts) < 0) {
-			nd6log((LOG_INFO,
-			    "%s: invalid ND option, ignored\n", __func__));
 			/* nd6_options have incremented stats */
 			goto freeit;
 		}
 		break;
 	case ND_ROUTER_ADVERT:
-		if (!IN6_IS_ADDR_LINKLOCAL(&saddr6)) {
-			nd6log((LOG_ERR,
-			    "%s: src %s is not link-local\n", __func__,
-			    inet_ntop(AF_INET6, &saddr6, src, sizeof(src))));
+		if (!IN6_IS_ADDR_LINKLOCAL(&saddr6))
 			goto bad;
-		}
 
 		IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off,
 		    icmp6len);
@@ -132,8 +118,6 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 
 		icmp6len -= sizeof(*nd_ra);
 		if (nd6_options(nd_ra + 1, icmp6len, &ndopts) < 0) {
-			nd6log((LOG_INFO,
-			    "%s: invalid ND option, ignored\n", __func__));
 			/* nd6_options have incremented stats */
 			goto freeit;
 		}
@@ -150,10 +134,6 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 		goto freeit;
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log((LOG_INFO,
-		    "%s: lladdrlen mismatch for %s (if %d, RA/RS packet %d)\n",
-		     __func__, inet_ntop(AF_INET6, &saddr6, src, sizeof(src)),
-		    ifp->if_addrlen, lladdrlen - 2));
 		if_put(ifp);
 		goto bad;
 	}
