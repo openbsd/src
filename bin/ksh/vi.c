@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.65 2025/05/18 21:18:27 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.66 2025/05/19 14:27:38 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -1235,7 +1235,8 @@ domove(int argcnt, const char *cmd, int sub)
 		if (!sub && es->cursor + 1 >= es->linelen)
 			return -1;
 		for (ncursor = es->cursor; ncursor < es->linelen; ncursor++)
-			if (!isu8cont(es->cbuf[ncursor]))
+			if (ncursor == es->cursor ||
+			    !isu8cont(es->cbuf[ncursor]))
 				if (argcnt-- == 0)
 					break;
 		break;
