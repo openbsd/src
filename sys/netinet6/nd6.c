@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.289 2025/05/19 06:44:10 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.290 2025/05/19 06:44:38 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -893,14 +893,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			llsol.s6_addr8[12] = 0xff;
 
 			KERNEL_LOCK();
-			if (in6_addmulti(&llsol, ifp, &error)) {
-				char addr[INET6_ADDRSTRLEN];
-				nd6log((LOG_ERR, "%s: failed to join "
-				    "%s (errno=%d)\n", ifp->if_xname,
-				    inet_ntop(AF_INET6, &llsol,
-					addr, sizeof(addr)),
-				    error));
-			}
+			in6_addmulti(&llsol, ifp, &error);
 			KERNEL_UNLOCK();
 		}
 		break;
