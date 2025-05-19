@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.156 2025/05/19 06:41:31 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.157 2025/05/19 06:42:13 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -904,11 +904,6 @@ nd6_na_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	 */
 	rt = rtalloc(sin6tosa(&dst_sa), RT_RESOLVE, ifp->if_rdomain);
 	if (!rtisvalid(rt)) {
-		char addr[INET6_ADDRSTRLEN];
-
-		nd6log((LOG_DEBUG, "%s: source can't be determined: dst=%s\n",
-		    __func__, inet_ntop(AF_INET6, &dst_sa.sin6_addr, addr,
-		    sizeof(addr))));
 		rtfree(rt);
 		goto bad;
 	}
