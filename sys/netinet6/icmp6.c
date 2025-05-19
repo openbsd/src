@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.263 2025/05/19 06:50:00 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.264 2025/05/19 07:34:21 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1236,20 +1236,19 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	memcpy(&sin6.sin6_addr, &reddst6, sizeof(reddst6));
 	rt = rtalloc(sin6tosa(&sin6), 0, m->m_pkthdr.ph_rtableid);
-	if (rt) {
-		if (rt->rt_gateway == NULL ||
-		    rt->rt_gateway->sa_family != AF_INET6) {
-			rtfree(rt);
-			goto bad;
-		}
-
-		gw6 = &(satosin6(rt->rt_gateway)->sin6_addr);
-		if (bcmp(&src6, gw6, sizeof(struct in6_addr)) != 0) {
-			rtfree(rt);
-			goto bad;
-		}
-	} else
+	if (!rt)
 		goto bad;
+
+	if (rt->rt_gateway == NULL || rt->rt_gateway->sa_family != AF_INET6) {
+		rtfree(rt);
+		goto bad;
+	}
+
+	gw6 = &(satosin6(rt->rt_gateway)->sin6_addr);
+	if (bcmp(&src6, gw6, sizeof(struct in6_addr)) != 0) {
+		rtfree(rt);
+		goto bad;
+	}
 	rtfree(rt);
 	rt = NULL;
     }
