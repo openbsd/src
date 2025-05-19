@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.259 2025/05/19 06:45:49 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.260 2025/05/19 06:46:24 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -900,9 +900,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		    &icmp6dst.sin6_addr);
 		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst,
 		    NULL, NULL)) {
-			/* should be impossible */
-			nd6log((LOG_DEBUG,
-			    "icmp6_notify_error: in6_embedscope failed\n"));
+			/* interface went away */
 			goto freeit;
 		}
 
@@ -918,9 +916,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		    &icmp6src.sin6_addr);
 		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src,
 		    NULL, NULL)) {
-			/* should be impossible */
-			nd6log((LOG_DEBUG,
-			    "icmp6_notify_error: in6_embedscope failed\n"));
+			/* interface went away */
 			goto freeit;
 		}
 		icmp6src.sin6_flowinfo =
