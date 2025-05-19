@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.101 2024/10/17 05:37:54 jsg Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.102 2025/05/19 06:50:00 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -110,9 +110,6 @@ extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_maxnudhint;
 extern int nd6_gctimer;
-extern int nd6_debug;
-
-#define nd6log(x)	do { if (nd6_debug) log x; } while (0)
 
 struct nd_opts {
 	struct nd_opt_hdr *nd_opts_src_lladdr;

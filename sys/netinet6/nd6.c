@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.290 2025/05/19 06:44:38 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.291 2025/05/19 06:50:00 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -86,12 +86,6 @@ int	nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
 
 int nd6_maxnudhint = 0;	/* max # of subsequent upper layer hints */
-
-#ifdef ND6_DEBUG
-int nd6_debug = 1;
-#else
-int nd6_debug = 0;
-#endif
 
 /* llinfo_nd6 live time, rt_llinfo and RTF_LLINFO are protected by nd6_mtx */
 struct mutex nd6_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);

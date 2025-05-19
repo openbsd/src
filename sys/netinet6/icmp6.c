@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.262 2025/05/19 06:48:16 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.263 2025/05/19 06:50:00 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1775,7 +1775,6 @@ const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ND6_MAXNUDHINT, &nd6_maxnudhint, 0, INT_MAX },
 	{ ICMPV6CTL_MTUDISC_HIWAT, &icmp6_mtudisc_hiwat, -1, INT_MAX },
 	{ ICMPV6CTL_MTUDISC_LOWAT, &icmp6_mtudisc_lowat, -1, INT_MAX },
-	{ ICMPV6CTL_ND6_DEBUG, &nd6_debug, 0, 1 },
 };
 
 int
