@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.12 2025/04/27 17:06:58 schwarze Exp $
+# $OpenBSD: vi.sh,v 1.13 2025/05/19 14:36:03 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -56,6 +56,10 @@ testseq "one two\0027rep" " # one two\b\b\b   \b\b\brep"
 # 0: Move to column 0.
 testseq "one\00330A two" " # one\b\b\bone two"
 testseq "one\003302A two\0033" " # one\b\b\bone two two\b"
+testseq "\0200abcdef\00330lrxll" " # \0200abcdef\b\r # \0200x\bxb"
+testseq "\0270\0202A\00330i\0340\0033" " # \0270\0202A\b\b\0340\0270\0202A\b\b"
+testseq "\0200abcdef\00330ix\0033" \
+	" # \0200abcdef\b\r # x\0200abcdef\r # x\0200\b"
 
 # a: Append.
 # .: Redo.
