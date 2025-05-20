@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.10 2025/05/20 08:24:16 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.11 2025/05/20 08:29:18 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -66,7 +66,6 @@ highlight_mode_t highlight_mode = HIGHLIGHT_NONE;
 highlight_mode_t last_highlight_mode = HIGHLIGHT_CHAR;
 
 int start_line = 0, start_column = 0;	/* display offset coordinates */
-int decimal_point = -1;		/* position of decimal point.  */
 
 int pause_status = 0;		/* pause status */
 time_t lastupdate;		/* last updated time */
