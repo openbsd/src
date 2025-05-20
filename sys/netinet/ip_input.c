@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.407 2025/05/12 05:07:17 jsg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.408 2025/05/20 18:40:09 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ int	ip_forwarding = 0;			/* [a] */
 int	ipmforwarding = 0;
 int	ipmultipath = 0;
 int	ip_sendredirects = 1;			/* [a] */
-int	ip_dosourceroute = 0;
+int	ip_dosourceroute = 0;			/* [a] */
 int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
@@ -1241,7 +1241,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp, int flags)
 		 */
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
-			if (!ip_dosourceroute) {
+			if (atomic_load_int(&ip_dosourceroute) == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
 				goto bad;
@@ -1463,7 +1463,7 @@ ip_srcroute(struct mbuf *m0)
 	struct ip_srcrt *isr;
 	struct m_tag *mtag;
 
-	if (!ip_dosourceroute)
+	if (atomic_load_int(&ip_dosourceroute) == 0)
 		return (NULL);
 
 	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE, NULL);
@@ -1733,11 +1733,8 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case IPCTL_SOURCEROUTE:
-		NET_LOCK();
-		error = sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
-		    &ip_dosourceroute);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &ip_dosourceroute));
 	case IPCTL_MTUDISC:
 		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtudisc);
