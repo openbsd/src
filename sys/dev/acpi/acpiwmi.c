@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiwmi.c,v 1.1 2025/05/19 19:15:19 tedu Exp $ */
+/*	$OpenBSD: acpiwmi.c,v 1.2 2025/05/20 01:18:16 robert Exp $ */
 /*
  * Copyright (c) 2025 Ted Unangst <tedu@openbsd.org>
  *
@@ -28,6 +28,14 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
+/* #define ACPIWMI_DEBUG */
+
+#ifdef ACPIWMI_DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
+
 struct acpiwmi_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -48,12 +56,11 @@ struct wmihandler {
 
 int  acpiwmi_match(struct device *, void *, void *);
 void acpiwmi_attach(struct device *, struct device *, void *);
-int  acpiwmi_activate(struct device *, int);
 int  acpiwmi_notify(struct aml_node *, int, void *);
 
 const struct cfattach acpiwmi_ca = {
 	sizeof (struct acpiwmi_softc), acpiwmi_match, acpiwmi_attach,
-	NULL, acpiwmi_activate
+	NULL, NULL
 };
 
 struct cfdriver acpiwmi_cd = {
@@ -86,9 +93,9 @@ struct guidinfo {
 #define WMI_EVENT_MASK	0xffff
 
 #define WMI_EXPENSIVE	1
-#define WMI_METHOD		2
-#define WMI_STRING		4
-#define WMI_EVENT		8
+#define WMI_METHOD	2
+#define WMI_STRING	4
+#define WMI_EVENT	8
 
 #ifdef ACPIWMI_DEBUG
 static char *
@@ -168,10 +175,10 @@ acpiwmi_attach(struct device *parent, struct device *self, void *aux)
 	for (int i = 0; i < num; i++) {
 #ifdef ACPIWMI_DEBUG
 		char buf[64];
-		printf("method: %s\n", guid_string(guids[i].guid, buf));
+		DPRINTF(("method: %s\n", guid_string(guids[i].guid, buf)));
 #endif
 		for (int j = 0; j < 1; j++) {
-			if (memcmp(guids[i].guid, targets[j].guid, 16) == 0)
+			if (memcmp(guids[i].guid, targets[j].guid, GUID_SIZE) == 0)
 				wmi_asus_init(sc, &guids[i]);
 		}
 	}
@@ -193,19 +200,19 @@ acpiwmi_notify(struct aml_node *node, int note, void *arg)
 	input.type = AML_OBJTYPE_INTEGER;
 	input.v_integer = note; /* ??? */
 	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_WED", 1, &input, &res) == -1) {
-		printf("trouble eval wed\n");
+		printf("%s: failed to evaulate _WED\n", DEVNAME(sc));
 		return 0;
 	}
+
+	if (res.type != AML_OBJTYPE_INTEGER) {
+		aml_freevalue(&res);
+		return 0;
+	}
+
 	code = res.v_integer & WMI_EVENT_MASK;
 	aml_freevalue(&res);
 	SLIST_FOREACH(wh, &sc->sc_handlers, w_next)
 		wh->w_event(wh, code);
-	return 0;
-}
-
-int
-acpiwmi_activate(struct device *self, int act)
-{
 
 	return 0;
 }
@@ -218,7 +225,7 @@ wmi_eval_method(struct wmihandler *wh, int32_t instance, uint32_t methodid,
 	struct aml_value params[3], res;
 	struct acpiwmi_softc *sc = wh->w_sc;
 	int rv;
-	
+
 	memset(&params, 0, sizeof(params));
 	params[0].type = AML_OBJTYPE_INTEGER;
 	params[0].v_integer = instance;
@@ -259,7 +266,9 @@ struct wmiasus {
 
 #define ASUS_EVENT_AC_OFF		0x57
 #define ASUS_EVENT_AC_ON		0x58
-#define ASUS_EVENT_KBDLIGHT		0xc7
+#define ASUS_EVENT_KBDLIGHT_UP		0xc4
+#define ASUS_EVENT_KBDLIGHT_DOWN	0xc5
+#define ASUS_EVENT_KBDLIGHT_TOGGLE	0xc7
 #define ASUS_EVENT_FNLOCK		0x4e
 #define ASUS_EVENT_PERF			0x9d
 #define ASUS_EVENT_MIC			124
@@ -282,6 +291,7 @@ asus_toggle(struct wmiasus *wh, int devid, int *val)
 
 	switch (devid) {
 	case ASUS_DEV_KBDLIGHT:
+		maxval = 3;
 		mask = 0x80;
 		break;
 	case ASUS_DEV_PERF:
@@ -341,7 +351,9 @@ wmi_asus_event(struct wmihandler *wmi, int code)
 	case ASUS_EVENT_AC_OFF:
 	case ASUS_EVENT_AC_ON:
 		break;
-	case ASUS_EVENT_KBDLIGHT:
+	case ASUS_EVENT_KBDLIGHT_UP:
+	case ASUS_EVENT_KBDLIGHT_DOWN:
+	case ASUS_EVENT_KBDLIGHT_TOGGLE:
 		asus_toggle(wh, ASUS_DEV_KBDLIGHT, &wh->w_kbdlight);
 		break;
 	case ASUS_EVENT_FNLOCK:
@@ -349,10 +361,10 @@ wmi_asus_event(struct wmihandler *wmi, int code)
 		break;
 	case ASUS_EVENT_PERF:
 		asus_toggle(wh, wh->w_perfid, &wh->w_perf);
-		printf("toggle perf %d\n", wh->w_perf);
+		DPRINTF(("toggle perf %d\n", wh->w_perf));
 		break;
 	default:
-		printf("asus button %d\n", code);
+		DPRINTF(("asus button %d\n", code));
 		break;
 	}
 	return 0;
