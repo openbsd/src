@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem1024.c,v 1.9 2025/05/19 07:40:17 beck Exp $ */
+/* $OpenBSD: mlkem1024.c,v 1.10 2025/05/20 00:33:40 beck Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -612,6 +612,19 @@ vector_encode(uint8_t *out, const vector *a, int bits)
 	}
 }
 
+/* Encodes an entire vector as above, but adding it to a CBB */
+static int
+vector_encode_cbb(CBB *cbb, const vector *a, int bits)
+{
+	uint8_t *encoded_vector;
+
+	if (!CBB_add_space(cbb, &encoded_vector, kEncodedVectorSize))
+		return 0;
+	vector_encode(encoded_vector, a, bits);
+
+	return 1;
+}
+
 /*
  * scalar_decode parses |DEGREE * bits| bits from |in| into |DEGREE| values in
  * |out|. It returns one on success and zero if any parsed value is >=
@@ -851,16 +864,9 @@ LCRYPTO_ALIAS(MLKEM1024_private_key_from_seed);
 static int
 mlkem_marshal_public_key(CBB *out, const struct public_key *pub)
 {
-	uint8_t *vector_output;
-
-	if (!CBB_add_space(out, &vector_output, kEncodedVectorSize)) {
+	if (!vector_encode_cbb(out, &pub->t, kLog2Prime))
 		return 0;
-	}
-	vector_encode(vector_output, &pub->t, kLog2Prime);
-	if (!CBB_add_bytes(out, pub->rho, sizeof(pub->rho))) {
-		return 0;
-	}
-	return 1;
+	return CBB_add_bytes(out, pub->rho, sizeof(pub->rho));
 }
 
 int
@@ -1120,27 +1126,37 @@ MLKEM1024_parse_public_key(struct MLKEM1024_public_key *public_key,
 LCRYPTO_ALIAS(MLKEM1024_parse_public_key);
 
 int
-MLKEM1024_marshal_private_key(CBB *out,
-    const struct MLKEM1024_private_key *private_key)
+MLKEM1024_marshal_private_key(const struct MLKEM1024_private_key *private_key,
+    uint8_t **out_private_key, size_t *out_private_key_len)
 {
 	const struct private_key *const priv = private_key_1024_from_external(
 	    private_key);
-	uint8_t *s_output;
+	CBB cbb;
+	int ret = 0;
 
-	if (!CBB_add_space(out, &s_output, kEncodedVectorSize)) {
-		return 0;
-	}
-	vector_encode(s_output, &priv->s, kLog2Prime);
-	if (!mlkem_marshal_public_key(out, &priv->pub))
-		return 0;
-	if (!CBB_add_bytes(out, priv->pub.public_key_hash,
+	if (!CBB_init(&cbb, MLKEM1024_PRIVATE_KEY_BYTES))
+		goto err;
+
+	if (!vector_encode_cbb(&cbb, &priv->s, kLog2Prime))
+		goto err;
+	if (!mlkem_marshal_public_key(&cbb, &priv->pub))
+		goto err;
+	if (!CBB_add_bytes(&cbb, priv->pub.public_key_hash,
 	    sizeof(priv->pub.public_key_hash)))
-		return 0;
-	if (!CBB_add_bytes(out, priv->fo_failure_secret,
+		goto err;
+	if (!CBB_add_bytes(&cbb, priv->fo_failure_secret,
 	    sizeof(priv->fo_failure_secret)))
-		return 0;
+		goto err;
 
-	return 1;
+	if (!CBB_finish(&cbb, out_private_key, out_private_key_len))
+		goto err;
+
+	ret = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return ret;
 }
 
 int

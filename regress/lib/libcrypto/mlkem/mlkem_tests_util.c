@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.c,v 1.7 2025/05/19 07:53:00 beck Exp $ */
+/*	$OpenBSD: mlkem_tests_util.c,v 1.8 2025/05/20 00:33:41 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -75,25 +75,10 @@ mlkem768_marshal_public_key(const void *public_key, uint8_t **out_buf,
 }
 
 int
-mlkem1024_encode_private_key(const void *private_key, uint8_t **out_buf,
+mlkem1024_marshal_private_key(const void *private_key, uint8_t **out_buf,
     size_t *out_len)
 {
-	CBB cbb;
-	int ret = 0;
-
-	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
-		goto err;
-	if (!MLKEM1024_marshal_private_key(&cbb, private_key))
-		goto err;
-	if (!CBB_finish(&cbb, out_buf, out_len))
-		goto err;
-
-	ret = 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return ret;
+	return MLKEM1024_marshal_private_key(private_key, out_buf, out_len);
 }
 
 int

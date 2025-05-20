@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.h,v 1.6 2025/05/19 07:53:00 beck Exp $ */
+/*	$OpenBSD: mlkem_tests_util.h,v 1.7 2025/05/20 00:33:41 beck Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -34,7 +34,7 @@ int mlkem768_marshal_private_key(const void *priv, uint8_t **out_buf,
     size_t *out_len);
 int mlkem768_marshal_public_key(const void *pub, uint8_t **out_buf,
     size_t *out_len);
-int mlkem1024_encode_private_key(const void *priv, uint8_t **out_buf,
+int mlkem1024_marshal_private_key(const void *priv, uint8_t **out_buf,
     size_t *out_len);
 int mlkem1024_marshal_public_key(const void *pub, uint8_t **out_buf,
     size_t *out_len);
@@ -69,7 +69,7 @@ int mlkem1024_parse_private_key(void *priv, const uint8_t *in, size_t in_len);
 int mlkem1024_parse_public_key(void *pub, const uint8_t *in, size_t in_len);
 void mlkem1024_public_from_private(void *out_public_key, const void *private_key);
 
-typedef int (*mlkem_encode_private_key_fn)(const void *, uint8_t **, size_t *);
+typedef int (*mlkem_marshal_private_key_fn)(const void *, uint8_t **, size_t *);
 typedef int (*mlkem_marshal_public_key_fn)(const void *, uint8_t **, size_t *);
 typedef int (*mlkem_decap_fn)(uint8_t [MLKEM_SHARED_SECRET_BYTES],
     const uint8_t *, size_t, const void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.5 2025/05/19 07:53:00 beck Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.6 2025/05/20 00:33:41 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -444,7 +444,7 @@ struct keygen_ctx {
 	size_t public_key_len;
 
 	mlkem_generate_key_external_entropy_fn generate_key_external_entropy;
-	mlkem_encode_private_key_fn encode_private_key;
+	mlkem_marshal_private_key_fn marshal_private_key;
 };
 
 enum keygen_states {
@@ -515,7 +515,7 @@ MlkemKeygenFileTest(struct keygen_ctx *keygen)
 
 	keygen->generate_key_external_entropy(keygen->encoded_public_key,
 	    keygen->private_key, CBS_data(&seed));
-	if (!keygen->encode_private_key(keygen->private_key,
+	if (!keygen->marshal_private_key(keygen->private_key,
 	    &encoded_private_key, &encoded_private_key_len)) {
 		parse_info(p, "encode private key");
 		goto err;
@@ -614,7 +614,7 @@ MlkemNistKeygenFileTest(struct keygen_ctx *keygen)
 
 	keygen->generate_key_external_entropy(keygen->encoded_public_key,
 	    keygen->private_key, seed);
-	if (!keygen->encode_private_key(keygen->private_key,
+	if (!keygen->marshal_private_key(keygen->private_key,
 	    &encoded_private_key, &encoded_private_key_len)) {
 		parse_info(p, "encode private key");
 		goto err;
@@ -661,7 +661,7 @@ mlkem_keygen_tests(const char *fn, size_t size, enum test_type test_type)
 
 		.generate_key_external_entropy =
 		    mlkem768_generate_key_external_entropy,
-		.encode_private_key =
+		.marshal_private_key =
 		    mlkem768_marshal_private_key,
 	};
 	struct MLKEM1024_private_key private_key1024;
@@ -675,8 +675,8 @@ mlkem_keygen_tests(const char *fn, size_t size, enum test_type test_type)
 
 		.generate_key_external_entropy =
 		    mlkem1024_generate_key_external_entropy,
-		.encode_private_key =
-		    mlkem1024_encode_private_key,
+		.marshal_private_key =
+		    mlkem1024_marshal_private_key,
 	};
 
 	if (size == 768 && test_type == TEST_TYPE_NORMAL)

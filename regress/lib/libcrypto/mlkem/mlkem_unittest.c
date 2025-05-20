@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.9 2025/05/19 07:53:00 beck Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.10 2025/05/20 00:33:41 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -41,7 +41,7 @@ struct unittest_ctx {
 	mlkem_generate_key_fn generate_key;
 	mlkem_parse_private_key_fn parse_private_key;
 	mlkem_parse_public_key_fn parse_public_key;
-	mlkem_encode_private_key_fn encode_private_key;
+	mlkem_marshal_private_key_fn marshal_private_key;
 	mlkem_marshal_public_key_fn marshal_public_key;
 	mlkem_public_from_private_fn public_from_private;
 };
@@ -113,7 +113,7 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 	free(tmp_buf);
 	tmp_buf = NULL;
 
-	if (!ctx->encode_private_key(ctx->priv, &encoded_private_key,
+	if (!ctx->marshal_private_key(ctx->priv, &encoded_private_key,
 	    &encoded_private_key_len)) {
 		warnx("mlkem768_encode_private_key");
 		failed |= 1;
@@ -137,7 +137,7 @@ MlKemUnitTest(struct unittest_ctx *ctx)
 		failed |= 1;
 	}
 
-	if (!ctx->encode_private_key(ctx->priv2, &tmp_buf, &tmp_buf_len)) {
+	if (!ctx->marshal_private_key(ctx->priv2, &tmp_buf, &tmp_buf_len)) {
 		warnx("encode_private_key");
 		failed |= 1;
 	}
@@ -205,7 +205,7 @@ mlkem768_unittest(void)
 		.generate_key = mlkem768_generate_key,
 		.parse_private_key = mlkem768_parse_private_key,
 		.parse_public_key = mlkem768_parse_public_key,
-		.encode_private_key = mlkem768_marshal_private_key,
+		.marshal_private_key = mlkem768_marshal_private_key,
 		.marshal_public_key = mlkem768_marshal_public_key,
 		.public_from_private = mlkem768_public_from_private,
 	};
@@ -234,7 +234,7 @@ mlkem1024_unittest(void)
 		.generate_key = mlkem1024_generate_key,
 		.parse_private_key = mlkem1024_parse_private_key,
 		.parse_public_key = mlkem1024_parse_public_key,
-		.encode_private_key = mlkem1024_encode_private_key,
+		.marshal_private_key = mlkem1024_marshal_private_key,
 		.marshal_public_key = mlkem1024_marshal_public_key,
 		.public_from_private = mlkem1024_public_from_private,
 	};
