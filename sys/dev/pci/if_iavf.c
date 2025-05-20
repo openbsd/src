@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.18 2024/11/27 02:40:53 yasuoka Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.19 2025/05/20 09:43:31 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -76,11 +76,16 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #include <netinet/udp.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#define IAVF_MAX_DMA_SEG_SIZE		((16 * 1024) - 1)
 
 #define I40E_MASK(mask, shift)		((mask) << (shift))
 #define I40E_AQ_LARGE_BUF		512
@@ -387,6 +392,10 @@ struct iavf_tx_desc {
 #define IAVF_TX_DESC_BSIZE_MAX		0x3fffULL
 #define IAVF_TX_DESC_BSIZE_MASK		\
 	(IAVF_TX_DESC_BSIZE_MAX << IAVF_TX_DESC_BSIZE_SHIFT)
+
+#define IAVF_TX_CTX_DESC_CMD_TSO	0x10
+#define IAVF_TX_CTX_DESC_TLEN_SHIFT	30
+#define IAVF_TX_CTX_DESC_MSS_SHIFT	50
 
 #define IAVF_TX_DESC_L2TAG1_SHIFT	48
 #define IAVF_TX_DESC_L2TAG1_MASK	(0xffff << IAVF_TX_DESC_L2TAG1_SHIFT)
@@ -899,6 +908,7 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
+	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 
 	ifmedia_init(&sc->sc_media, 0, iavf_media_change, iavf_media_status);
 
@@ -1565,7 +1575,7 @@ iavf_txr_alloc(struct iavf_softc *sc, unsigned int qid)
 		txm = &maps[i];
 
 		if (bus_dmamap_create(sc->sc_dmat,
-		    IAVF_HARDMTU, IAVF_TX_PKT_DESCS, IAVF_HARDMTU, 0,
+		    MAXMCLBYTES, IAVF_TX_PKT_DESCS, IAVF_MAX_DMA_SEG_SIZE, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &txm->txm_map) != 0)
 			goto uncreate;
@@ -1661,7 +1671,7 @@ iavf_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 }
 
 static uint64_t
-iavf_tx_offload(struct mbuf *m)
+iavf_tx_offload(struct mbuf *m, struct iavf_tx_ring *txr, unsigned int prod)
 {
 	struct ether_extracted ext;
 	uint64_t hlen;
@@ -1676,7 +1686,7 @@ iavf_tx_offload(struct mbuf *m)
 #endif
 
 	if (!ISSET(m->m_pkthdr.csum_flags,
-	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
+	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT|M_TCP_TSO))
 		return (offload);
 
 	ether_extract_headers(m, &ext);
@@ -1706,6 +1716,36 @@ iavf_tx_offload(struct mbuf *m)
 		offload |= IAVF_TX_DESC_CMD_L4T_EOFT_UDP;
 		offload |= (uint64_t)(sizeof(*ext.udp) >> 2)
 		    << IAVF_TX_DESC_L4LEN_SHIFT;
+	}
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+		if (ext.tcp && m->m_pkthdr.ph_mss > 0) {
+			struct iavf_tx_desc *ring, *txd;
+			uint64_t cmd = 0, paylen, outlen;
+
+			hlen += ext.tcphlen;
+
+			/*
+			 * The MSS should not be set to a lower value than 64
+			 * or larger than 9668 bytes.
+			 */
+			outlen = MIN(9668, MAX(64, m->m_pkthdr.ph_mss));
+			paylen = m->m_pkthdr.len - ETHER_HDR_LEN - hlen;
+			ring = IAVF_DMA_KVA(&txr->txr_mem);
+			txd = &ring[prod];
+
+			cmd |= IAVF_TX_DESC_DTYPE_CONTEXT;
+			cmd |= IAVF_TX_CTX_DESC_CMD_TSO;
+			cmd |= paylen << IAVF_TX_CTX_DESC_TLEN_SHIFT;
+			cmd |= outlen << IAVF_TX_CTX_DESC_MSS_SHIFT;
+
+			htolem64(&txd->addr, 0);
+			htolem64(&txd->cmd, cmd);
+
+			tcpstat_add(tcps_outpkttso,
+			    (paylen + outlen - 1) / outlen);
+		} else
+			tcpstat_inc(tcps_outbadtso);
 	}
 
 	return offload;
@@ -1748,7 +1788,8 @@ iavf_start(struct ifqueue *ifq)
 	mask = sc->sc_tx_ring_ndescs - 1;
 
 	for (;;) {
-		if (free <= IAVF_TX_PKT_DESCS) {
+		/* We need one extra descriptor for TSO packets. */
+		if (free <= (IAVF_TX_PKT_DESCS + 1)) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -1757,10 +1798,16 @@ iavf_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		offload = iavf_tx_offload(m);
+		offload = iavf_tx_offload(m, txr, prod);
 
 		txm = &txr->txr_maps[prod];
 		map = txm->txm_map;
+
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			prod++;
+			prod &= mask;
+			free--;
+		}
 
 		if (iavf_load_mbuf(sc->sc_dmat, map, m) != 0) {
 			ifq->ifq_errors++;
