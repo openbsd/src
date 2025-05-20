@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.92 2025/05/04 19:48:31 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.93 2025/05/20 12:46:52 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -429,12 +429,6 @@ void	pmap_flush_cache(vaddr_t, vsize_t);
 /*
  * inline functions
  */
-
-static inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing

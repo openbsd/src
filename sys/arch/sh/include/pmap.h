@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.21 2023/12/11 22:12:53 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.22 2025/05/20 12:46:52 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -68,12 +68,6 @@ void pmap_bootstrap(void);
 #define	pmap_update(pmap)		do { /* nothing */ } while (0)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-
-static __inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
 
 /*
  * Avoid virtual cache aliases on SH4 CPUs
