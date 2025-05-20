@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.40 2025/05/18 09:05:59 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.41 2025/05/20 18:21:34 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -428,6 +428,8 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 	}
 # else
 	gcm_init_4bit(ctx->Htable, ctx->H.u);
+	ctx->gmult = gcm_gmult_4bit;
+	ctx->ghash = gcm_ghash_4bit;
 # endif
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_init);
