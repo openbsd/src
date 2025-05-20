@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.111 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.112 2025/05/20 13:51:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -49,7 +49,6 @@ static void vm_dispatch_vmm(int, short, void *);
 static void *event_thread(void *);
 static void *vcpu_run_loop(void *);
 static int vmm_create_vm(struct vmd_vm *);
-static int alloc_guest_mem(struct vmd_vm *);
 static int send_vm(int, struct vmd_vm *);
 static int dump_vmr(int , struct vm_mem_range *);
 static int dump_mem(int, struct vmd_vm *);
@@ -201,7 +200,8 @@ start_vm(struct vmd_vm *vm, int fd)
 	if (!(vm->vm_state & VM_STATE_RECEIVED))
 		create_memory_map(vcp);
 
-	ret = alloc_guest_mem(vm);
+	/* Create the vm in vmm(4). */
+	ret = vmm_create_vm(vm);
 	if (ret) {
 		struct rlimit lim;
 		char buf[FMT_SCALED_STRSIZE];
@@ -209,15 +209,11 @@ start_vm(struct vmd_vm *vm, int fd)
 			if (fmt_scaled(lim.rlim_cur, buf) == 0)
 				fatalx("could not allocate guest memory (data "
 				    "limit is %s)", buf);
+		} else {
+			errno = ret;
+			log_warn("could not create vm");
 		}
-		errno = ret;
-		log_warn("could not allocate guest memory");
-		return (ret);
-	}
 
-	/* We've allocated guest memory, so now create the vm in vmm(4). */
-	ret = vmm_create_vm(vm);
-	if (ret) {
 		/* Let the vmm process know we failed by sending a 0 vm id. */
 		vcp->vcp_id = 0;
 		atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id));
@@ -750,62 +746,6 @@ vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
 		return (errno);
 
 	return (0);
-}
-
-/*
- * alloc_guest_mem
- *
- * Allocates memory for the guest.
- * Instead of doing a single allocation with one mmap(), we allocate memory
- * separately for every range for the following reasons:
- * - ASLR for the individual ranges
- * - to reduce memory consumption in the UVM subsystem: if vmm(4) had to
- *   map the single mmap'd userspace memory to the individual guest physical
- *   memory ranges, the underlying amap of the single mmap'd range would have
- *   to allocate per-page reference counters. The reason is that the
- *   individual guest physical ranges would reference the single mmap'd region
- *   only partially. However, if every guest physical range has its own
- *   corresponding mmap'd userspace allocation, there are no partial
- *   references: every guest physical range fully references an mmap'd
- *   range => no per-page reference counters have to be allocated.
- *
- * Return values:
- *  0: success
- *  !0: failure - errno indicating the source of the failure
- */
-int
-alloc_guest_mem(struct vmd_vm *vm)
-{
-	void *p;
-	int ret = 0;
-	size_t i, j;
-	struct vm_create_params *vcp = &vm->vm_params.vmc_params;
-	struct vm_mem_range *vmr;
-
-	for (i = 0; i < vcp->vcp_nmemranges; i++) {
-		vmr = &vcp->vcp_memranges[i];
-
-		/*
-		 * We only need R/W as userland. vmm(4) will use R/W/X in its
-		 * mapping.
-		 *
-		 * We must use MAP_SHARED so emulated devices will be able
-		 * to generate shared mappings.
-		 */
-		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
-		    MAP_ANON | MAP_CONCEAL | MAP_SHARED, -1, 0);
-		if (p == MAP_FAILED) {
-			ret = errno;
-			for (j = 0; j < i; j++) {
-				vmr = &vcp->vcp_memranges[j];
-				munmap((void *)vmr->vmr_va, vmr->vmr_size);
-			}
-			return (ret);
-		}
-		vmr->vmr_va = (vaddr_t)p;
-	}
-
-	return (ret);
 }
 
 /*
@@ -1381,86 +1321,34 @@ vm_pipe_recv(struct vm_dev_pipe *p)
 }
 
 /*
- * Re-map the guest address space using vmm(4)'s VMM_IOC_SHARE
+ * Re-map the guest address space using vmm(4)'s VMM_IOC_SHAREMEM
  *
- * Returns 0 on success, non-zero in event of failure.
+ * Returns 0 on success or an errno in event of failure.
  */
 int
 remap_guest_mem(struct vmd_vm *vm, int vmm_fd)
 {
-	struct vm_create_params	*vcp;
-	struct vm_mem_range	*vmr;
+	size_t i;
+	struct vm_create_params	*vcp = &vm->vm_params.vmc_params;
 	struct vm_sharemem_params vsp;
-	size_t			 i, j;
-	void			*p = NULL;
-	int			 ret;
 
 	if (vm == NULL)
-		return (1);
+		return (EINVAL);
 
-	vcp = &vm->vm_params.vmc_params;
-
-	/*
-	 * Initialize our VM shared memory request using our original
-	 * creation parameters. We'll overwrite the va's after mmap(2).
-	 */
+	/* Initialize using our original creation parameters. */
 	memset(&vsp, 0, sizeof(vsp));
 	vsp.vsp_nmemranges = vcp->vcp_nmemranges;
 	vsp.vsp_vm_id = vcp->vcp_id;
 	memcpy(&vsp.vsp_memranges, &vcp->vcp_memranges,
 	    sizeof(vsp.vsp_memranges));
 
-	/*
-	 * Use mmap(2) to identify virtual address space for our mappings.
-	 */
-	for (i = 0; i < VMM_MAX_MEM_RANGES; i++) {
-		if (i < vsp.vsp_nmemranges) {
-			vmr = &vsp.vsp_memranges[i];
-
-			/* Ignore any MMIO ranges. */
-			if (vmr->vmr_type == VM_MEM_MMIO) {
-				vmr->vmr_va = 0;
-				vcp->vcp_memranges[i].vmr_va = 0;
-				continue;
-			}
-
-			/* Make initial mappings for the memrange. */
-			p = mmap(NULL, vmr->vmr_size, PROT_READ, MAP_ANON, -1,
-			    0);
-			if (p == MAP_FAILED) {
-				ret = errno;
-				log_warn("%s: mmap", __func__);
-				for (j = 0; j < i; j++) {
-					vmr = &vcp->vcp_memranges[j];
-					munmap((void *)vmr->vmr_va,
-					    vmr->vmr_size);
-				}
-				return (ret);
-			}
-			vmr->vmr_va = (vaddr_t)p;
-			vcp->vcp_memranges[i].vmr_va = vmr->vmr_va;
-		}
-	}
-
-	/*
-	 * munmap(2) now that we have va's and ranges that don't overlap. vmm
-	 * will use the va's and sizes to recreate the mappings for us.
-	 */
-	for (i = 0; i < vsp.vsp_nmemranges; i++) {
-		vmr = &vsp.vsp_memranges[i];
-		if (vmr->vmr_type == VM_MEM_MMIO)
-			continue;
-		if (munmap((void*)vmr->vmr_va, vmr->vmr_size) == -1)
-			fatal("%s: munmap", __func__);
-	}
-
-	/*
-	 * Ask vmm to enter the shared mappings for us. They'll point
-	 * to the same host physical memory, but will have a randomized
-	 * virtual address for the calling process.
-	 */
+	/* Ask vmm(4) to enter a shared mapping to guest memory. */
 	if (ioctl(vmm_fd, VMM_IOC_SHAREMEM, &vsp) == -1)
 		return (errno);
+
+	/* Update with the location of the new mappings. */
+	for (i = 0; i < vsp.vsp_nmemranges; i++)
+		vcp->vcp_memranges[i].vmr_va = vsp.vsp_va[i];
 
 	return (0);
 }

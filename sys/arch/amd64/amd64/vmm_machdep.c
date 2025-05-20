@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.48 2025/05/20 08:35:37 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.49 2025/05/20 13:51:27 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -119,6 +119,7 @@ int vmm_inject_db(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_misc_enable_msr(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
+vaddr_t vmm_translate_gpa(struct vm *, paddr_t);
 int vmx_get_guest_faulttype(void);
 int svm_get_guest_faulttype(struct vmcb *);
 int vmx_get_exit_qualification(uint64_t *);
@@ -903,53 +904,18 @@ vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
 int
 vm_impl_init(struct vm *vm, struct proc *p)
 {
-	int i, mode, ret;
-	vaddr_t mingpa, maxgpa;
-	struct vm_mem_range *vmr;
-
 	/* If not EPT or RVI, nothing to do here */
 	switch (vmm_softc->mode) {
 	case VMM_MODE_EPT:
-		mode = PMAP_TYPE_EPT;
+		pmap_convert(vm->vm_pmap, PMAP_TYPE_EPT);
 		break;
 	case VMM_MODE_RVI:
-		mode = PMAP_TYPE_RVI;
+		pmap_convert(vm->vm_pmap, PMAP_TYPE_RVI);
 		break;
 	default:
 		printf("%s: invalid vmm mode %d\n", __func__, vmm_softc->mode);
 		return (EINVAL);
 	}
-
-	vmr = &vm->vm_memranges[0];
-	mingpa = vmr->vmr_gpa;
-	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
-	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
-
-	/*
-	 * uvmspace_alloc (currently) always returns a valid vmspace
-	 */
-	vm->vm_vmspace = uvmspace_alloc(mingpa, maxgpa, TRUE, FALSE);
-	vm->vm_map = &vm->vm_vmspace->vm_map;
-
-	/* Map the new map with an anon */
-	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
-	for (i = 0; i < vm->vm_nmemranges; i++) {
-		vmr = &vm->vm_memranges[i];
-		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
-		    PROT_READ | PROT_WRITE | PROT_EXEC,
-		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
-		if (ret) {
-			printf("%s: uvm_share failed (%d)\n", __func__, ret);
-			/* uvmspace_free calls pmap_destroy for us */
-			KERNEL_LOCK();
-			uvmspace_free(vm->vm_vmspace);
-			vm->vm_vmspace = NULL;
-			KERNEL_UNLOCK();
-			return (ENOMEM);
-		}
-	}
-
-	pmap_convert(vm->vm_map->pmap, mode);
 
 	return (0);
 }
@@ -1691,7 +1657,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* NPT */
 	vmcb->v_np_enable = SVM_ENABLE_NP;
-	vmcb->v_n_cr3 = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
+	vmcb->v_n_cr3 = vcpu->vc_parent->vm_pmap->pm_pdirpa;
 
 	/* SEV */
 	if (vcpu->vc_sev)
@@ -1715,7 +1681,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* xcr0 power on default sets bit 0 (x87 state) */
 	vcpu->vc_gueststate.vg_xcr0 = XFEATURE_X87 & xsave_mask;
 
-	vcpu->vc_parent->vm_map->pmap->eptp = 0;
+	vcpu->vc_parent->vm_pmap->eptp = 0;
 
 	ret = vcpu_svm_init_vmsa(vcpu, vrs);
 
@@ -2685,7 +2651,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* Configure EPT Pointer */
-	eptp = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
+	eptp = vcpu->vc_parent->vm_pmap->pm_pdirpa;
 	msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
 	if (msr & IA32_EPT_VPID_CAP_PAGE_WALK_4) {
 		/* Page walk length 4 supported */
@@ -2709,7 +2675,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		goto exit;
 	}
 
-	vcpu->vc_parent->vm_map->pmap->eptp = eptp;
+	vcpu->vc_parent->vm_pmap->eptp = eptp;
 
 	/* Host CR0 */
 	cr0 = rcr0() & ~CR0_TS;
@@ -3602,7 +3568,7 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
 
 		DPRINTF("%s: read pte level %d @ GPA 0x%llx\n", __func__,
 		    level, pte_paddr);
-		if (!pmap_extract(vcpu->vc_parent->vm_map->pmap, pte_paddr,
+		if (!pmap_extract(vcpu->vc_parent->vm_pmap, pte_paddr,
 		    &hpa)) {
 			DPRINTF("%s: cannot extract HPA for GPA 0x%llx\n",
 			    __func__, pte_paddr);
@@ -3783,11 +3749,11 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 			/* We're now using this vcpu's EPT pmap on this cpu. */
 			atomic_swap_ptr(&ci->ci_ept_pmap,
-			    vcpu->vc_parent->vm_map->pmap);
+			    vcpu->vc_parent->vm_pmap);
 
 			/* Invalidate EPT cache. */
 			vid_ept.vid_reserved = 0;
-			vid_ept.vid_eptp = vcpu->vc_parent->vm_map->pmap->eptp;
+			vid_ept.vid_eptp = vcpu->vc_parent->vm_pmap->eptp;
 			if (invept(ci->ci_vmm_cap.vcc_vmx.vmx_invept_mode,
 			    &vid_ept)) {
 				printf("%s: invept\n", __func__);
@@ -4625,6 +4591,29 @@ vmm_get_guest_memtype(struct vm *vm, paddr_t gpa)
 	return (VMM_MEM_TYPE_UNKNOWN);
 }
 
+vaddr_t
+vmm_translate_gpa(struct vm *vm, paddr_t gpa)
+{
+	int i = 0;
+	vaddr_t hva = 0;
+	struct vm_mem_range *vmr = NULL;
+
+	/*
+	 * Translate GPA -> userland HVA in proc p. Find the memory range
+	 * and use it to translate to the HVA.
+	 */
+	for (i = 0; i < vm->vm_nmemranges; i++) {
+		vmr = &vm->vm_memranges[i];
+		if (gpa >= vmr->vmr_gpa && gpa < vmr->vmr_gpa + vmr->vmr_size) {
+			hva = vmr->vmr_va + (gpa - vmr->vmr_gpa);
+			break;
+		}
+	}
+
+	return (hva);
+}
+
+
 /*
  * vmx_get_exit_qualification
  *
@@ -4706,14 +4695,44 @@ svm_get_guest_faulttype(struct vmcb *vmcb)
 int
 svm_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
-	paddr_t pa = trunc_page(gpa);
-	int ret;
+	struct proc *p = curproc;
+	paddr_t hpa, pa = trunc_page(gpa);
+	vaddr_t hva;
+	int ret = 1;
 
-	ret = uvm_fault_wire(vcpu->vc_parent->vm_map, pa, pa + PAGE_SIZE,
-	    PROT_READ | PROT_WRITE | PROT_EXEC);
-	if (ret)
-		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
-		    __func__, ret, (uint64_t)gpa, vcpu->vc_gueststate.vg_rip);
+	hva = vmm_translate_gpa(vcpu->vc_parent, pa);
+	if (hva == 0) {
+		printf("%s: unable to translate gpa 0x%llx\n", __func__,
+		    (uint64_t)pa);
+		return (EINVAL);
+	}
+
+	/* If we don't already have a backing page... */
+	if (!pmap_extract(p->p_vmspace->vm_map.pmap, hva, &hpa)) {
+		/* ...fault a RW page into the p's address space... */
+		ret = uvm_fault_wire(&p->p_vmspace->vm_map, hva,
+		    hva + PAGE_SIZE, PROT_READ | PROT_WRITE);
+		if (ret) {
+			printf("%s: uvm_fault failed %d hva=0x%llx\n", __func__,
+			    ret, (uint64_t)hva);
+			return (ret);
+		}
+
+		/* ...and then get the mapping. */
+		if (!pmap_extract(p->p_vmspace->vm_map.pmap, hva, &hpa)) {
+			printf("%s: failed to extract hpa for hva 0x%llx\n",
+			    __func__, (uint64_t)hva);
+			return (EINVAL);
+		}
+	}
+
+	/* Now we insert a RWX mapping into the guest's RVI pmap. */
+	ret = pmap_enter(vcpu->vc_parent->vm_pmap, pa, hpa,
+	    PROT_READ | PROT_WRITE | PROT_EXEC, 0);
+	if (ret) {
+		printf("%s: pmap_enter failed pa=0x%llx, hpa=0x%llx\n",
+		    __func__, (uint64_t)pa, (uint64_t)hpa);
+	}
 
 	return (ret);
 }
@@ -4781,8 +4800,10 @@ svm_handle_np_fault(struct vcpu *vcpu)
 int
 vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
+	struct proc *p = curproc;
 	int fault_type, ret;
-	paddr_t pa = trunc_page(gpa);
+	paddr_t hpa, pa = trunc_page(gpa);
+	vaddr_t hva;
 
 	fault_type = vmx_get_guest_faulttype();
 	switch (fault_type) {
@@ -4797,18 +4818,44 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 		break;
 	}
 
-	/* We may sleep during uvm_fault_wire(), so reload VMCS. */
-	vcpu->vc_last_pcpu = curcpu();
-	ret = uvm_fault_wire(vcpu->vc_parent->vm_map, pa, pa + PAGE_SIZE,
-	    PROT_READ | PROT_WRITE | PROT_EXEC);
-	if (vcpu_reload_vmcs_vmx(vcpu)) {
-		printf("%s: failed to reload vmcs\n", __func__);
+	hva = vmm_translate_gpa(vcpu->vc_parent, pa);
+	if (hva == 0) {
+		printf("%s: unable to translate gpa 0x%llx\n", __func__,
+		    (uint64_t)pa);
 		return (EINVAL);
 	}
 
-	if (ret)
-		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
-		    __func__, ret, (uint64_t)gpa, vcpu->vc_gueststate.vg_rip);
+	/* If we don't already have a backing page... */
+	if (!pmap_extract(p->p_vmspace->vm_map.pmap, hva, &hpa)) {
+		/* ...fault a RW page into the p's address space... */
+		vcpu->vc_last_pcpu = curcpu(); /* uvm_fault may sleep. */
+		ret = uvm_fault_wire(&p->p_vmspace->vm_map, hva,
+		    hva + PAGE_SIZE, PROT_READ | PROT_WRITE);
+		if (ret) {
+			printf("%s: uvm_fault failed %d hva=0x%llx\n", __func__,
+			    ret, (uint64_t)hva);
+			return (ret);
+		}
+		if (vcpu_reload_vmcs_vmx(vcpu)) {
+			printf("%s: failed to reload vmcs\n", __func__);
+			return (EINVAL);
+		}
+
+		/* ...and then get the mapping. */
+		if (!pmap_extract(p->p_vmspace->vm_map.pmap, hva, &hpa)) {
+			printf("%s: failed to extract hpa for hva 0x%llx\n",
+			    __func__, (uint64_t)hva);
+			return (EINVAL);
+		}
+	}
+
+	/* Now we insert a RWX mapping into the guest's EPT pmap. */
+	ret = pmap_enter(vcpu->vc_parent->vm_pmap, pa, hpa,
+	    PROT_READ | PROT_WRITE | PROT_EXEC, 0);
+	if (ret) {
+		printf("%s: pmap_enter failed pa=0x%llx, hpa=0x%llx\n",
+		    __func__, (uint64_t)pa, (uint64_t)hpa);
+	}
 
 	return (ret);
 }
@@ -5094,7 +5141,7 @@ vmx_load_pdptes(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	if (!pmap_extract(vcpu->vc_parent->vm_map->pmap, (vaddr_t)cr3,
+	if (!pmap_extract(vcpu->vc_parent->vm_pmap, (vaddr_t)cr3,
 	    (paddr_t *)&cr3_host_phys)) {
 		DPRINTF("%s: nonmapped guest CR3, setting PDPTEs to 0\n",
 		    __func__);
@@ -6645,7 +6692,7 @@ vmm_update_pvclock(struct vcpu *vcpu)
 
 	if (vcpu->vc_pvclock_system_gpa & PVCLOCK_SYSTEM_TIME_ENABLE) {
 		pvclock_gpa = vcpu->vc_pvclock_system_gpa & 0xFFFFFFFFFFFFFFF0;
-		if (!pmap_extract(vm->vm_map->pmap, pvclock_gpa, &pvclock_hpa))
+		if (!pmap_extract(vm->vm_pmap, pvclock_gpa, &pvclock_hpa))
 			return (EINVAL);
 		pvclock_ti = (void*) PMAP_DIRECT_MAP(pvclock_hpa);
 
