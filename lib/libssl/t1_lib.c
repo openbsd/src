@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.204 2025/01/18 14:17:05 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.205 2025/05/20 05:39:08 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,6 +151,7 @@ tls1_clear(SSL *s)
 }
 
 struct supported_group {
+	uint16_t group_id;
 	int nid;
 	int bits;
 };
@@ -160,119 +161,148 @@ struct supported_group {
  * https://www.iana.org/assignments/tls-parameters/#tls-parameters-8
  */
 static const struct supported_group nid_list[] = {
-	[1] = {
+	{
+		.group_id = 1,
 		.nid = NID_sect163k1,
 		.bits = 80,
 	},
-	[2] = {
+	{
+		.group_id = 2,
 		.nid = NID_sect163r1,
 		.bits = 80,
 	},
-	[3] = {
+	{
+		.group_id = 3,
 		.nid = NID_sect163r2,
 		.bits = 80,
 	},
-	[4] = {
+	{
+		.group_id = 4,
 		.nid = NID_sect193r1,
 		.bits = 80,
 	},
-	[5] = {
+	{
+		.group_id = 5,
 		.nid = NID_sect193r2,
 		.bits = 80,
 	},
-	[6] = {
+	{
+		.group_id = 6,
 		.nid = NID_sect233k1,
 		.bits = 112,
 	},
-	[7] = {
+	{
+		.group_id = 7,
 		.nid = NID_sect233r1,
 		.bits = 112,
 	},
-	[8] = {
+	{
+		.group_id = 8,
 		.nid = NID_sect239k1,
 		.bits = 112,
 	},
-	[9] = {
+	{
+		.group_id = 9,
 		.nid = NID_sect283k1,
 		.bits = 128,
 	},
-	[10] = {
+	{
+		.group_id = 10,
 		.nid = NID_sect283r1,
 		.bits = 128,
 	},
-	[11] = {
+	{
+		.group_id = 11,
 		.nid = NID_sect409k1,
 		.bits = 192,
 	},
-	[12] = {
+	{
+		.group_id = 12,
 		.nid = NID_sect409r1,
 		.bits = 192,
 	},
-	[13] = {
+	{
+		.group_id = 13,
 		.nid = NID_sect571k1,
 		.bits = 256,
 	},
-	[14] = {
+	{
+		.group_id = 14,
 		.nid = NID_sect571r1,
 		.bits = 256,
 	},
-	[15] = {
+	{
+		.group_id = 15,
 		.nid = NID_secp160k1,
 		.bits = 80,
 	},
-	[16] = {
+	{
+		.group_id = 16,
 		.nid = NID_secp160r1,
 		.bits = 80,
 	},
-	[17] = {
+	{
+		.group_id = 17,
 		.nid = NID_secp160r2,
 		.bits = 80,
 	},
-	[18] = {
+	{
+		.group_id = 18,
 		.nid = NID_secp192k1,
 		.bits = 80,
 	},
-	[19] = {
+	{
+		.group_id = 19,
 		.nid = NID_X9_62_prime192v1,	/* aka secp192r1 */
 		.bits = 80,
 	},
-	[20] = {
+	{
+		.group_id = 20,
 		.nid = NID_secp224k1,
 		.bits = 112,
 	},
-	[21] = {
+	{
+		.group_id = 21,
 		.nid = NID_secp224r1,
 		.bits = 112,
 	},
-	[22] = {
+	{
+		.group_id = 22,
 		.nid = NID_secp256k1,
 		.bits = 128,
 	},
-	[23] = {
+	{
+		.group_id = 23,
 		.nid = NID_X9_62_prime256v1,	/* aka secp256r1 */
 		.bits = 128,
 	},
-	[24] = {
+	{
+		.group_id = 24,
 		.nid = NID_secp384r1,
 		.bits = 192,
 	},
-	[25] = {
+	{
+		.group_id = 25,
 		.nid = NID_secp521r1,
 		.bits = 256,
 	},
-	[26] = {
+	{
+		.group_id = 26,
 		.nid = NID_brainpoolP256r1,
 		.bits = 128,
 	},
-	[27] = {
+	{
+		.group_id = 27,
 		.nid = NID_brainpoolP384r1,
 		.bits = 192,
 	},
-	[28] = {
+	{
+		.group_id = 28,
 		.nid = NID_brainpoolP512r1,
 		.bits = 256,
 	},
-	[29] = {
+	{
+		.group_id = 29,
 		.nid = NID_X25519,
 		.bits = 128,
 	},
@@ -339,18 +369,41 @@ static const uint16_t ecgroups_server_default[] = {
 	24,			/* secp384r1 (24) */
 };
 
+static const struct supported_group *
+tls1_supported_group_by_id(uint16_t group_id)
+{
+	int i;
+
+	for (i = 0; i < NID_LIST_LEN; i++) {
+		if (group_id == nid_list[i].group_id)
+			return &nid_list[i];
+	}
+
+	return NULL;
+}
+
+static const struct supported_group *
+tls1_supported_group_by_nid(int nid)
+{
+	int i;
+
+	for (i = 0; i < NID_LIST_LEN; i++) {
+		if (nid == nid_list[i].nid)
+			return &nid_list[i];
+	}
+
+	return NULL;
+}
+
 int
 tls1_ec_group_id2nid(uint16_t group_id, int *out_nid)
 {
-	int nid;
+	const struct supported_group *sg;
 
-	if (group_id >= NID_LIST_LEN)
+	if ((sg = tls1_supported_group_by_id(group_id)) == NULL)
 		return 0;
 
-	if ((nid = nid_list[group_id].nid) == 0)
-		return 0;
-
-	*out_nid = nid;
+	*out_nid = sg->nid;
 
 	return 1;
 }
@@ -358,15 +411,12 @@ tls1_ec_group_id2nid(uint16_t group_id, int *out_nid)
 int
 tls1_ec_group_id2bits(uint16_t group_id, int *out_bits)
 {
-	int bits;
+	const struct supported_group *sg;
 
-	if (group_id >= NID_LIST_LEN)
+	if ((sg = tls1_supported_group_by_id(group_id)) == NULL)
 		return 0;
 
-	if ((bits = nid_list[group_id].bits) == 0)
-		return 0;
-
-	*out_bits = bits;
+	*out_bits = sg->bits;
 
 	return 1;
 }
@@ -374,19 +424,15 @@ tls1_ec_group_id2bits(uint16_t group_id, int *out_bits)
 int
 tls1_ec_nid2group_id(int nid, uint16_t *out_group_id)
 {
-	uint16_t group_id;
+	const struct supported_group *sg;
 
-	if (nid == 0)
+	if ((sg = tls1_supported_group_by_nid(nid)) == NULL)
 		return 0;
 
-	for (group_id = 0; group_id < NID_LIST_LEN; group_id++) {
-		if (nid_list[group_id].nid == nid) {
-			*out_group_id = group_id;
-			return 1;
-		}
-	}
+	*out_group_id = sg->group_id;
 
-	return 0;
+	return 1;
+
 }
 
 /*
