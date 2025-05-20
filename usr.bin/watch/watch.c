@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.13 2025/05/20 12:25:00 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.14 2025/05/20 12:30:20 florian Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 #include <wchar.h>
@@ -138,7 +137,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			exit(EX_USAGE);
+			exit(1);
 		}
 	argc -= optind;
 	argv += optind;
@@ -148,11 +147,11 @@ main(int argc, char *argv[])
 	 */
 	if (argc <= 0) {
 		usage();
-		exit(EX_USAGE);
+		exit(1);
 	}
 
 	if ((cmdv = calloc(argc + 1, sizeof(char *))) == NULL)
-		err(EX_OSERR, "calloc");
+		err(1, "calloc");
 
 	cmdstr = "";
 	for (i = 0; i < argc; i++) {
@@ -166,7 +165,7 @@ main(int argc, char *argv[])
 				s = realloc(cmdstr, cmdsiz);
 			}
 			if (s == NULL)
-				err(EX_OSERR, "malloc");
+				err(1, "malloc");
 			cmdstr = s;
 		}
 		if (i != 0)
@@ -409,10 +408,10 @@ read_result(BUFFER *buf)
 	memset(buf, 0, sizeof(*buf));
 
 	if (pipe(fds) == -1)
-		err(EX_OSERR, "pipe()");
+		err(1, "pipe()");
 
 	if ((pipe_pid = vfork()) == -1)
-		err(EX_OSERR, "vfork()");
+		err(1, "vfork()");
 	else if (pipe_pid == 0) {
 		close(fds[0]);
 		if (fds[1] != STDOUT_FILENO) {
@@ -426,12 +425,12 @@ read_result(BUFFER *buf)
 
 		/* use warn(3) + _exit(2) not to call exit(3) */
 		warn("exec(%s)", cmdstr);
-		_exit(EX_OSERR);
+		_exit(1);
 
 		/* NOTREACHED */
 	}
 	if ((fp = fdopen(fds[0], "r")) == NULL)
-		err(EX_OSERR, "fdopen()");
+		err(1, "fdopen()");
 	close(fds[1]);
 
 	/* Read command output and convert tab to spaces * */
