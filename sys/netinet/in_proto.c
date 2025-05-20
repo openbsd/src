@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.122 2025/04/26 13:58:08 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.123 2025/05/20 18:41:06 mvs Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ const struct protosw inetsw[] = {
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_TCP,
   .pr_flags	= PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS|PR_SPLICE|
-		    PR_MPINPUT,
+		    PR_MPINPUT|PR_MPSYSCTL,
   .pr_input	= tcp_input,
   .pr_ctlinput	= tcp_ctlinput,
   .pr_ctloutput	= tcp_ctloutput,

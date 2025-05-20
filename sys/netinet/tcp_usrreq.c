@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.246 2025/05/13 09:17:41 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.247 2025/05/20 18:41:06 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1460,29 +1460,38 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return tcp_ident(oldp, oldlenp, newp, newlen, 1);
 
 	case TCPCTL_REASS_LIMIT:
-		NET_LOCK();
-		nval = tcp_reass_limit;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
-		if (!error && nval != tcp_reass_limit) {
-			error = pool_sethardlimit(&tcpqe_pool, nval, NULL, 0);
-			if (!error)
-				tcp_reass_limit = nval;
-		}
-		NET_UNLOCK();
-		return (error);
+	case TCPCTL_SACKHOLE_LIMIT: {
+		struct pool *pool;
+		int *var;
 
-	case TCPCTL_SACKHOLE_LIMIT:
-		NET_LOCK();
-		nval = tcp_sackhole_limit;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
-		if (!error && nval != tcp_sackhole_limit) {
-			error = pool_sethardlimit(&sackhl_pool, nval, NULL, 0);
-			if (!error)
-				tcp_sackhole_limit = nval;
+		if (name[0] == TCPCTL_REASS_LIMIT) {
+			pool = &tcpqe_pool;
+			var = &tcp_reass_limit;
+		} else {
+			pool = &sackhl_pool;
+			var = &tcp_sackhole_limit;
 		}
-		NET_UNLOCK();
-		return (error);
 
+		oval = nval = atomic_load_int(var);
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
+
+		if (error == 0 && oval != nval) {
+			extern struct rwlock sysctl_lock;
+
+			error = rw_enter(&sysctl_lock, RW_WRITE | RW_INTR);
+			if (error)
+				return (error);
+			if (nval != atomic_load_int(var)) {
+				error = pool_sethardlimit(pool, nval,
+				    NULL, 0);
+				if (error == 0)
+					atomic_store_int(var, nval);
+			}
+			rw_exit(&sysctl_lock);
+		}
+
+		return (error);
+	}
 	case TCPCTL_STATS:
 		return (tcp_sysctl_tcpstat(oldp, oldlenp, newp));
 

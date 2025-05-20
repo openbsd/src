@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.237 2025/01/04 09:26:01 mvs Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.238 2025/05/20 18:41:06 mvs Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1096,6 +1096,8 @@ pool_sethardlimit(struct pool *pp, u_int n, const char *warnmsg, int ratecap)
 {
 	int error = 0;
 
+	pl_enter(pp, &pp->pr_lock);
+
 	if (n < pp->pr_nout) {
 		error = EINVAL;
 		goto done;
@@ -1106,8 +1108,9 @@ pool_sethardlimit(struct pool *pp, u_int n, const char *warnmsg, int ratecap)
 	pp->pr_hardlimit_ratecap.tv_sec = ratecap;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
-
 done:
+	pl_leave(pp, &pp->pr_lock);
+
 	return (error);
 }
 
