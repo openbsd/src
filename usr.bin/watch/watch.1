@@ -1,0 +1,204 @@
+.\"
+.\" Copyright (c) 2000, 2001, 2014, 2016 Internet Initiative Japan Inc.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The following requests are required for all man pages.
+.\"
+.Dd April 18, 2013
+.Dt IWATCH 1
+.Os
+.Sh NAME
+.Nm iwatch
+.Nd watch the command output with interval timer
+.Sh SYNOPSIS
+.Nm
+.Op Fl rewpx
+.Op Fl i Ar interval
+.Op Fl s Ar start_line
+.Op Fl c Ar start_column
+.Ar command Op Ar argument ...
+.Sh DESCRIPTION
+.Nm
+displays the output of a
+.Ar command
+with
+.Ar argument
+and update the output with a specified number of
+.Ar interval .
+The changes of outputs can be highlighted by changing attributes and color of
+the text and background (see
+.Sx STYLE
+section).
+Note that shell escaping needed at the command and arguments since they
+are given to
+.Ic sh -c .
+.Fl x
+option changes this behaviour.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl r
+Highlight the changed character.
+.It Fl e
+Highlight the changed line.
+.It Fl w
+Highlight the changed word.
+.It Fl p
+Start with pausing the update.
+.It Fl x
+Pass the
+.Ar command
+and
+.Ar arguments
+to
+.Xr exec 2
+as it is.
+In default behaviour,
+shell escaping is required at the
+.Ar command
+and
+.Ar argument
+because
+.Nm
+uses
+.Ic sh -c
+for handing them.
+Use this option not to do unnecessary shell escaping.
+.It Fl i Ar interval
+Set the initial interval second of the periodical update to
+.Ar interval .
+This value must be positive and may be valid for the sixth decimal place.
+The default is 2 seconds.
+.It Fl s Ar start_line
+Set the line number on the output where
+.Nm
+is to start display.
+.It Fl c Ar start_column
+Set the column number on the output where
+.Nm
+is to start display.
+.El
+.Pp
+Certain characters cause immediate action by
+.Nm .
+These are:
+.Bl -tag -width Fl
+.It Ic k \*(Ba Ic -
+Scroll up 1 line.
+.It Ic j \*(Ba Aq Ic RETURN
+Scroll down 1 line.
+.It Ic l
+Scroll right 1 column.
+.It Ic h
+Scroll left 1 column.
+.It Ic u \*(Ba Ic ^U
+Scroll up half of the screen size.
+.It Ic d \*(Ba Ic ^D
+Scroll down half of the screen size.
+.It Ic L
+Scroll right half of the screen size.
+.It Ic H
+Scroll left half of the screen size.
+.It Ic b \*(Ba Ic ^B
+Scroll up one of the screen size.
+.It Ic f \*(Ba Ic F
+Scroll down one of the screen size.
+.It Ic >
+Scroll right one of the screen size.
+.It Ic <
+Scroll left one of the screen size.
+.It Ic [
+Scroll right 8 columns.
+.It Ic ]
+Scroll left 8 columns.
+.It Ic g
+Goto the top or the prefix nubmer of lines on the output.
+Enter the value before press this character.
+This value must be positive.
+.It Aq Ic SPACE
+Update the buffer by executing the command.
+.It Ic ^L
+Refresh the screen without executing the command.
+.It Ic r
+Toggle highlighting the changing characters.
+.It Ic e
+Toggle highlighting the changing lines.
+.It Ic w
+Toggle highlighting the changing words.
+.It Ic t
+Toggle current highlighting mode.
+.It Ic i
+Set the interval to the prefix number seconds.
+Enter the value before press this character.
+This value must be positive and may be valid for the sixth decimal place.
+.It Ic p
+Toggle the pausing of update output.
+.It Ic ?
+Show help message.
+.It Ic q
+Quit the program.
+.El
+.Sh STYLE
+.Nm
+can change attributes and color to the part of output to highlight which is
+different from the previous output.
+This can be done by setting an environmental variable named
+.Ev IWATCH_STYLE .
+This is given as a comma-separated list to be specified.
+The default on startup is 'reverse'.
+.Pp
+The Attributes can be picked up from multiple ones, but the color must be
+selected from one or none.
+In attributes, there are ones prefixed with 'no'.
+These make the attributes turned off.
+.Pp
+For example, this may be 'yellow,dim,underline'.
+Below the lists of attributes and color you can specify:
+.Pp
+The attributes are picked up from:
+.Ic underline ,
+.Ic reverse ,
+.Ic dim ,
+.Ic bold ,
+.Ic nounderline ,
+.Ic noreverse ,
+.Ic nodim ,
+.Ic nobold .
+.Pp
+The color is one of:
+.Ic black ,
+.Ic red ,
+.Ic green ,
+.Ic yellow ,
+.Ic blue ,
+.Ic magenta ,
+.Ic cyan ,
+.Ic white .
+.Sh ENVIRONMENT
+.Bl -tag -width IWATCH_STYLE
+.It Ev IWATCH_STYLE
+Set attributes and color to the updated output (See
+.Sx STYLE
+Section).
+.El
+.Sh SEE ALSO
+.Xr sh 1
+.Xr exec 2
+.Sh HISTORY
+The
+.Nm
+program is slightly derived from
+.Nm watch
+command come with BSD/OS 3.1 by BSDI, Inc.,
+which originally came from some free distribution.
