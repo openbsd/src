@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.46 2025/05/19 08:36:36 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.47 2025/05/20 01:10:42 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -98,6 +98,7 @@ int vmx_load_pdptes(struct vcpu *);
 int vmx_handle_exit(struct vcpu *);
 int svm_handle_exit(struct vcpu *);
 int svm_handle_efercr(struct vcpu *, uint64_t);
+int svm_get_iflag(struct vcpu *, uint64_t);
 int svm_handle_msr(struct vcpu *);
 int vmm_handle_xsetbv(struct vcpu *, uint64_t *);
 int vmx_handle_xsetbv(struct vcpu *);
@@ -4149,7 +4150,7 @@ svm_handle_hlt(struct vcpu *vcpu)
 	/* All HLT insns are 1 byte */
 	vcpu->vc_gueststate.vg_rip += 1;
 
-	if (!(rflags & PSL_I)) {
+	if (!svm_get_iflag(vcpu, rflags)) {
 		DPRINTF("%s: guest halted with interrupts disabled\n",
 		    __func__);
 		return (EIO);
@@ -4245,7 +4246,7 @@ svm_handle_exit(struct vcpu *vcpu)
 
 	switch (exit_reason) {
 	case SVM_VMEXIT_VINTR:
-		if (!(rflags & PSL_I)) {
+		if (!svm_get_iflag(vcpu, rflags)) {
 			DPRINTF("%s: impossible interrupt window exit "
 			    "config\n", __func__);
 			ret = EINVAL;
@@ -4367,6 +4368,23 @@ svm_handle_efercr(struct vcpu *vcpu, uint64_t exit_reason)
 	}
 
 	return (0);
+}
+
+/*
+ * svm_get_iflag
+ *
+ * With SEV-ES the hypervisor has no access to the flags register.
+ * Only the the state of the PSL_I is proivded by v_intr_shadow in
+ * the VMCB.
+ */
+int
+svm_get_iflag(struct vcpu *vcpu, uint64_t rflags)
+{
+	struct vmcb		*vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	if (vcpu->vc_seves)
+		return (vmcb->v_intr_shadow & SMV_GUEST_INTR_MASK);
+	return (rflags & PSL_I);
 }
 
 /*
@@ -6421,7 +6439,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 */
 			ret = svm_handle_exit(vcpu);
 
-			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
+			if (svm_get_iflag(vcpu, vcpu->vc_gueststate.vg_rflags))
 				vcpu->vc_irqready = 1;
 			else
 				vcpu->vc_irqready = 0;
