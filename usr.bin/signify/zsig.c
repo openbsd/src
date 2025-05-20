@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.19 2023/04/29 10:08:18 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.20 2025/05/20 01:03:56 tedu Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -274,7 +274,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	    "key=%s\n"
 	    "algorithm=SHA512/256\n"
 	    "blocksize=%zu\n\n",
-	    date, seckeyfile, bufsize);
+	    date, check_keyname_compliance(NULL, seckeyfile), bufsize);
 	p = strchr(msg, 0);
 
 	while (1) {

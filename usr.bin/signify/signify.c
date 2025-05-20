@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.136 2022/08/26 00:24:56 kn Exp $ */
+/* $OpenBSD: signify.c,v 1.137 2025/05/20 01:03:56 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -347,7 +347,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	    sizeof(pubkey), O_EXCL, 0666);
 }
 
-static const char *
+const char *
 check_keyname_compliance(const char *pubkeyfile, const char *seckeyfile)
 {
 	const char *pos;
