@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.146 2025/05/19 04:54:04 jan Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.147 2025/05/20 05:50:18 jan Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -936,6 +936,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 	/*
 	 * Determine forwarding mifs from the forwarding cache table
 	 */
+	mrt6stat_inc(mrt6s_mfc_lookups);
 	rt = mf6c_find(NULL, &ip6->ip6_dst, rtableid);
 
 	/* Entry exists, so forward if necessary */
@@ -948,6 +949,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 		 * send message to routing daemon
 		 */
 
+		mrt6stat_inc(mrt6s_mfc_misses);
 		mrt6stat_inc(mrt6s_no_route);
 
 		{
