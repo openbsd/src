@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1271 2025/05/18 09:54:48 kn Exp $
+#	$OpenBSD: install.sub,v 1.1272 2025/05/20 02:00:14 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2806,27 +2806,28 @@ feed_random() {
 # selects from that location. Repeat as many times as the user needs to get all
 # desired sets.
 install_sets() {
-	local _cddevs=$(get_cddevs) _d _im _locs="disk http" _src
+	# Default to method recorded last time, if any.
+	local _cddevs=$(get_cddevs) _d=$CGI_METHOD _im _locs=disk _src
 
-	echo
+	# Offer network methods if there are physical interfaces.
+        if [[ -n $(get_ifs) ]]; then
+		_locs="$_locs http"
 
-	# Set default location to method recorded last time.
-	_d=$CGI_METHOD
+		# Offer NFS if the ramdisk supports it.
+		[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 
-	# Set default location to HTTP in case we netbooted.
-	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
+		# Prefer HTTP to any existing default if installurl(5) exists.
+		[[ -s /mnt/etc/installurl ]] && _d=http
 
-	# Set default location to HTTP if installurl(5) exists.
-	[[ -s /mnt/etc/installurl ]] && _d=http
+		# Default to HTTP, whether netbooted or not.
+		: ${_d:=http}
+	fi
 
-	# Set default location to the first cdrom device if any are found.
+        # Default to CD, assuming it is installXY.iso containing sets.
 	[[ -n $_cddevs ]] && : ${_d:=cd0}
 
-	# Add NFS to set locations if the boot kernel supports it.
-	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
-
-	# In case none of the above applied, set HTTP as default location.
-	: ${_d:=http}
+	# Without network or CD, only disk is valid and available.
+	: ${_d:=disk}
 
 	# If the default location set so far is not one of the cdrom devices or
 	# is not in the list of valid locations, set a sane default.
@@ -2836,7 +2837,7 @@ install_sets() {
 		done
 	fi
 
-	echo "Let's $MODE the sets!"
+	echo "\nLet's $MODE the sets!"
 	while :; do
 		# Get list of cdroms again in case one just got plugged in.
 		_cddevs=$(get_cddevs)
