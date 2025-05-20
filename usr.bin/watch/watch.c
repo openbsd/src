@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.11 2025/05/20 08:29:18 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.12 2025/05/20 09:35:36 kn Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -40,9 +40,6 @@
 #define MAXLINE 300
 #define MAXCOLUMN 180
 
-#define NUM_FRAQ_DIGITS_USEC	6	/* number of fractal digits for usec */
-#define MAX_FRAQ_DIGITS		3	/* max number of fractal digits */
-
 typedef enum {
 	HIGHLIGHT_NONE,
 	HIGHLIGHT_CHAR,
@@ -60,7 +57,13 @@ typedef enum {
 /*
  * Global symbols
  */
-struct timeval	 opt_interval = { DEFAULT_INTERVAL, 0 };
+struct {
+	struct timeval	tv;
+	double		d;
+} opt_interval = {
+	.tv = { DEFAULT_INTERVAL, 0 },
+	.d = DEFAULT_INTERVAL
+};
 
 highlight_mode_t highlight_mode = HIGHLIGHT_NONE;
 highlight_mode_t last_highlight_mode = HIGHLIGHT_CHAR;
@@ -83,7 +86,6 @@ typedef wchar_t BUFFER[MAXLINE][MAXCOLUMN + 1];
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define ctrl(c)		((c) & 037)
-int main(int, char *[]);
 void command_loop(void);
 int display(BUFFER *, BUFFER *, highlight_mode_t);
 void read_result(BUFFER *);
@@ -95,11 +97,26 @@ void quit(void);
 void usage(void);
 
 int
+set_interval(const char *str)
+{
+	double	 intvl;
+	char	*endp;
+
+	intvl = strtod(str, &endp);
+	if (intvl < 0 || intvl > 1000000 || *endp != '\0')
+		return -1;
+
+	opt_interval.d = intvl;
+	opt_interval.tv.tv_sec = (int)intvl;
+	opt_interval.tv.tv_usec = (u_long)(intvl * 1000000UL) % 1000000UL;
+	return 0;
+}
+
+int
 main(int argc, char *argv[])
 {
 	int i, ch, cmdsiz = 0;
-	char *e, *s, *endp;
-	double intvl;
+	char *s;
 
 	while ((ch = getopt(argc, argv, "ers:wx")) != -1)
 		switch (ch) {
@@ -107,14 +124,8 @@ main(int argc, char *argv[])
 			highlight_mode = HIGHLIGHT_CHAR;
 			break;
 		case 's':
-			intvl = strtod(optarg, &endp);
-			if (intvl >= 0 && intvl <= 1000000 && *endp == '\0') {
-				opt_interval.tv_sec = (int)intvl;
-				opt_interval.tv_usec =
-				    (u_long)(intvl * 1000000UL) % 1000000UL;
-				break;
-			} else
-				errx(1, "-n: bad interval value: %s", optarg);
+			if (set_interval(optarg) == -1)
+				errx(1, "bad interval: %s", optarg);
 			break;
 		case 'w':
 			highlight_mode = HIGHLIGHT_WORD;
@@ -215,7 +226,7 @@ redraw:
 		display(cur, prev, highlight_mode);
 
 input:
-		to = opt_interval;
+		to = opt_interval.tv;
 		FD_ZERO(&readfds);
 		FD_SET(fileno(stdin), &readfds);
 		nfds = select(1, &readfds, NULL, NULL,
@@ -255,7 +266,7 @@ input:
 int
 display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 {
-	int	 i, val, screen_x, screen_y, cw, line, rl;
+	int	 i, screen_x, screen_y, cw, line, rl;
 	char	*ct;
 
 	erase();
@@ -267,17 +278,8 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 		printw("\"%s\" ", cmdstr);
 	if (pause_status)
 		printw("--PAUSE--");
-	else if (opt_interval.tv_sec == 1 && opt_interval.tv_usec == 0)
-		printw("on every second");
-	else if (opt_interval.tv_usec == 0)
-		printw("on every %d seconds", (int)opt_interval.tv_sec);
-	else {
-		for (i = NUM_FRAQ_DIGITS_USEC, val = opt_interval.tv_usec;
-		    val % 10 == 0; val /= 10)
-			i--;
-		printw("on every %d.%0*d seconds",
-		    (int)opt_interval.tv_sec, i, val);
-	}
+	else
+		printw("every %.4gs", opt_interval.d);
 
 	ct = ctime(&lastupdate);
 	ct[24] = '\0';
@@ -447,8 +449,7 @@ read_result(BUFFER *buf)
 kbd_result_t
 kbd_command(int ch)
 {
-	char buf[10], *endp;
-	double intvl;
+	char buf[10];
 
 	switch (ch) {
 
@@ -507,15 +508,10 @@ kbd_command(int ch)
 		getnstr(buf, sizeof(buf));
 		noecho();
 
-		intvl = strtod(buf, &endp);
-		if (intvl >= 0 && intvl <= 1000000 && *endp == '\0') {
-			opt_interval.tv_sec = (int)intvl;
-			opt_interval.tv_usec =
-			    (u_long)(intvl * 1000000UL) % 1000000UL;
-		} else {
+		if (set_interval(buf) == -1) {
 			move(1, 0);
 			standout();
-			printw("Interval should be a non-negative number");
+			printw("Bad interval: %s", buf);
 			standend();
 			refresh();
 			return (RSLT_ERROR);
