@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.269 2025/05/19 06:36:48 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.270 2025/05/20 05:51:43 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1194,7 +1194,7 @@ in6ifa_ifpwithaddr(struct ifnet *ifp, struct in6_addr *addr)
  * Get a scope of the address. Node-local, link-local, site-local or global.
  */
 int
-in6_addrscope(struct in6_addr *addr)
+in6_addrscope(const struct in6_addr *addr)
 {
 	int scope;
 
@@ -1249,7 +1249,7 @@ in6_addrscope(struct in6_addr *addr)
 }
 
 int
-in6_addr2scopeid(unsigned int ifidx, struct in6_addr *addr)
+in6_addr2scopeid(unsigned int ifidx, const struct in6_addr *addr)
 {
 	int scope = in6_addrscope(addr);
 
@@ -1272,7 +1272,7 @@ in6_addr2scopeid(unsigned int ifidx, struct in6_addr *addr)
  * hard coding...
  */
 int
-in6_matchlen(struct in6_addr *src, struct in6_addr *dst)
+in6_matchlen(const struct in6_addr *src, const struct in6_addr *dst)
 {
 	int match = 0;
 	u_char *s = (u_char *)src, *d = (u_char *)dst;
@@ -1317,7 +1317,7 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
  * return the best address out of the same scope
  */
 struct in6_ifaddr *
-in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain,
+in6_ifawithscope(struct ifnet *oifp, const struct in6_addr *dst, u_int rdomain,
     struct rtentry *rt)
 {
 	int dst_scope =	in6_addrscope(dst), src_scope, best_scope = 0;

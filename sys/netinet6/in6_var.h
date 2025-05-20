@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.80 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.81 2025/05/20 05:51:43 bluhm Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -364,8 +364,8 @@ void	in6_purgeaddr(struct ifaddr *);
 int	in6if_do_dad(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);
 struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *, struct in6_addr *);
-int	in6_addr2scopeid(unsigned int, struct in6_addr *);
-int	in6_matchlen(struct in6_addr *, struct in6_addr *);
+int	in6_addr2scopeid(unsigned int, const struct in6_addr *);
+int	in6_matchlen(const struct in6_addr *, const struct in6_addr *);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 #endif /* _KERNEL */
 
