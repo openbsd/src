@@ -36,10 +36,7 @@ with
 .Ar argument
 and update the output with a specified number of
 .Ar interval .
-The changes of outputs can be highlighted by changing attributes and color of
-the text and background (see
-.Sx STYLE
-section).
+The changes of outputs can be highlighted.
 Note that shell escaping needed at the command and arguments since they
 are given to
 .Ic sh -c .
@@ -148,49 +145,6 @@ Toggle the pausing of update output.
 Show help message.
 .It Ic q
 Quit the program.
-.El
-.Sh STYLE
-.Nm
-can change attributes and color to the part of output to highlight which is
-different from the previous output.
-This can be done by setting an environmental variable named
-.Ev IWATCH_STYLE .
-This is given as a comma-separated list to be specified.
-The default on startup is 'reverse'.
-.Pp
-The Attributes can be picked up from multiple ones, but the color must be
-selected from one or none.
-In attributes, there are ones prefixed with 'no'.
-These make the attributes turned off.
-.Pp
-For example, this may be 'yellow,dim,underline'.
-Below the lists of attributes and color you can specify:
-.Pp
-The attributes are picked up from:
-.Ic underline ,
-.Ic reverse ,
-.Ic dim ,
-.Ic bold ,
-.Ic nounderline ,
-.Ic noreverse ,
-.Ic nodim ,
-.Ic nobold .
-.Pp
-The color is one of:
-.Ic black ,
-.Ic red ,
-.Ic green ,
-.Ic yellow ,
-.Ic blue ,
-.Ic magenta ,
-.Ic cyan ,
-.Ic white .
-.Sh ENVIRONMENT
-.Bl -tag -width IWATCH_STYLE
-.It Ev IWATCH_STYLE
-Set attributes and color to the updated output (See
-.Sx STYLE
-Section).
 .El
 .Sh SEE ALSO
 .Xr sh 1
