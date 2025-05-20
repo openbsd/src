@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.125 2025/04/26 13:58:08 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.126 2025/05/20 00:37:17 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_FRAGMENT,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPINPUT,
   .pr_input	= frag6_input
 },
 #ifdef IPSEC
