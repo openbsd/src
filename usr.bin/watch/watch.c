@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.8 2025/05/20 07:03:39 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.9 2025/05/20 07:40:08 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -172,6 +172,17 @@ main(int argc, char *argv[])
 	}
 	cmdv[i++] = NULL;
 
+	initscr();
+
+	if (unveil(xflag ? cmdv[0] : _PATH_BSHELL, "x") == -1)
+		err(1, "unveil");
+
+	if (pledge("stdio rpath tty proc exec", NULL) == -1)
+		err(1, "pledge");
+
+	noecho();
+	crmode();
+
 	/*
 	 * Initialize signal
 	 */
@@ -179,16 +190,6 @@ main(int argc, char *argv[])
 	(void) signal(SIGTERM, on_signal);
 	(void) signal(SIGHUP, on_signal);
 
-	/*
-	 * Initialize curses environment
-	 */
-	initscr();
-	noecho();
-	crmode();
-
-	/*
-	 * Enter main processing loop and never come back here
-	 */
 	command_loop();
 
 	/* NOTREACHED */
