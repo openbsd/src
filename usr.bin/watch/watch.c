@@ -81,12 +81,8 @@ static int	  style = A_REVERSE;
 
 typedef wchar_t BUFFER[MAXLINE][MAXCOLUMN + 1];
 
-#ifndef MAX
-#define MAX(x, y)	((x) > (y) ? (x) : (y))
-#endif
-#ifndef MIN
-#define MIN(x, y)	((x) < (y) ? (x) : (y))
-#endif
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define ctrl(c)		((c) & 037)
 int main(int, char *[]);
@@ -610,29 +606,29 @@ kbd_command(int ch)
 	case '\n':
 	case '+':
 	case 'j':
-		start_line = MIN(start_line + 1, MAXLINE - 1);
+		start_line = MINIMUM(start_line + 1, MAXLINE - 1);
 		break;
 	case '-':
 	case 'k':
-		start_line = MAX(start_line - 1, 0);
+		start_line = MAXIMUM(start_line - 1, 0);
 		break;
 	case 'd':
 	case 'D':
 	case ctrl('d'):
-		start_line = MIN(start_line + ((LINES - 2) / 2), MAXLINE - 1);
+		start_line = MINIMUM(start_line + ((LINES - 2) / 2), MAXLINE - 1);
 		break;
 	case 'u':
 	case 'U':
 	case ctrl('u'):
-		start_line = MAX(start_line - ((LINES - 2) / 2), 0);
+		start_line = MAXIMUM(start_line - ((LINES - 2) / 2), 0);
 		break;
 	case 'f':
 	case ctrl('f'):
-		start_line = MIN(start_line + (LINES - 2), MAXLINE - 1);
+		start_line = MINIMUM(start_line + (LINES - 2), MAXLINE - 1);
 		break;
 	case 'b':
 	case ctrl('b'):
-		start_line = MAX(start_line - (LINES - 2), 0);
+		start_line = MAXIMUM(start_line - (LINES - 2), 0);
 		break;
 	case 'g':
 		if (prefix < MAXLINE)
@@ -644,34 +640,34 @@ kbd_command(int ch)
 		 * horizontal motion
 		 */
 	case 'l':
-		start_column = MIN(start_column + 1, MAXCOLUMN - 1);
+		start_column = MINIMUM(start_column + 1, MAXCOLUMN - 1);
 		break;
 	case ctrl('l'):
 		clear();
 		break;
 	case 'h':
-		start_column = MAX(start_column - 1, 0);
+		start_column = MAXIMUM(start_column - 1, 0);
 		break;
 	case 'L':
-		start_column = MIN(start_column + ((COLS - 2) / 2),
+		start_column = MINIMUM(start_column + ((COLS - 2) / 2),
 		    MAXCOLUMN - 1);
 		break;
 	case 'H':
-		start_column = MAX(start_column - ((COLS - 2) / 2), 0);
+		start_column = MAXIMUM(start_column - ((COLS - 2) / 2), 0);
 		break;
 	case ']':
 	case '\t':
-		start_column = MIN(start_column + 8, MAXCOLUMN - 1);
+		start_column = MINIMUM(start_column + 8, MAXCOLUMN - 1);
 		break;
 	case '[':
 	case '\b':
-		start_column = MAX(start_column - 8, 0);
+		start_column = MAXIMUM(start_column - 8, 0);
 		break;
 	case '>':
-		start_column = MIN(start_column + (COLS - 2), MAXCOLUMN - 1);
+		start_column = MINIMUM(start_column + (COLS - 2), MAXCOLUMN - 1);
 		break;
 	case '<':
-		start_column = MAX(start_column - (COLS - 2), 0);
+		start_column = MAXIMUM(start_column - (COLS - 2), 0);
 		break;
 	case '{':
 		start_column = 0;
@@ -776,12 +772,12 @@ untabify(wchar_t *buf, int maxlen)
 			p++;
 		} else {
 			spaces = tabstop - (width % tabstop);
-			len = MIN(maxcnt - (p + spaces - buf),
+			len = MINIMUM(maxcnt - (p + spaces - buf),
 			    (int)wcslen(p + 1) + 1);
 			if (len > 0)
 				memmove(p + spaces, p + 1,
 				    len * sizeof(wchar_t));
-			len = MIN(spaces, maxcnt - 1 - (p - buf));
+			len = MINIMUM(spaces, maxcnt - 1 - (p - buf));
 			for (i = 0; i < len; i++)
 				p[i] = L' ';
 			p += len;
