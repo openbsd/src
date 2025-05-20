@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiwmi.c,v 1.3 2025/05/20 01:22:39 tedu Exp $ */
+/*	$OpenBSD: acpiwmi.c,v 1.4 2025/05/20 02:06:54 robert Exp $ */
 /*
  * Copyright (c) 2025 Ted Unangst <tedu@openbsd.org>
  *
@@ -250,6 +250,8 @@ struct wmiasus {
 	int					w_perfid;
 };
 
+#define ASUS_DSTS_PRESENCE	0x00010000
+
 #define ASUS_METHOD_INIT	0x54494E49
 #define ASUS_METHOD_DGET	0x53545344
 #define ASUS_METHOD_DSET	0x53564544
@@ -263,6 +265,8 @@ struct wmiasus {
 #define ASUS_DEV_FNLOCK		0x00100023
 #define ASUS_DEV_CAMLED		0x00060079
 #define ASUS_DEV_MICLED		0x00040017
+
+#define ASUS_FNLOCK_BIOS_DISABLED	0x1
 
 #define ASUS_EVENT_AC_OFF		0x57
 #define ASUS_EVENT_AC_ON		0x58
@@ -338,7 +342,14 @@ wmi_asus_init(struct acpiwmi_softc *sc, struct guidinfo *ginfo)
 		wh->w_perfid = ASUS_DEV_PERF_2;
 	// turn on by default
 	asus_toggle(wh, ASUS_DEV_KBDLIGHT, &wh->w_kbdlight);
-	asus_toggle(wh, ASUS_DEV_FNLOCK, &wh->w_fnlock);
+
+	/* turn on FnLock by default if available */
+	res = asus_dev_get(wh, ASUS_DEV_FNLOCK);
+	if ((res & ASUS_DSTS_PRESENCE) &&
+	    !(res & ASUS_FNLOCK_BIOS_DISABLED)) {
+		asus_toggle(wh, ASUS_DEV_FNLOCK, &wh->w_fnlock);
+	}
+
 	return 0;
 }
 
