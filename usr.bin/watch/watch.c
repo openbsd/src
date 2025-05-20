@@ -90,7 +90,7 @@ void command_loop(void);
 int display(BUFFER *, BUFFER *, reverse_mode_t);
 void read_result(BUFFER *);
 kbd_result_t kbd_command(int);
-void showhelp(void);
+void show_help(void);
 void untabify(wchar_t *, int);
 void on_signal(int);
 void quit(void);
@@ -505,7 +505,7 @@ kbd_command(int ch)
 	switch (ch) {
 
 	case '?':
-		showhelp();
+		show_help();
 		refresh();
 		return (RSLT_REDRAW);
 
@@ -690,73 +690,52 @@ kbd_command(int ch)
 	return (RSLT_REDRAW);
 }
 
-const char *helpmsg[] = {
-	" Scroll:                                         ",
-	"            1-char    half-win  full-win  8-char ",
-	"   UP       k, -      u, ^u     b, ^b            ",
-	"   DOWN     j, RET    d, ^d     f, ^f            ",
-	"   RIGHT    l         L         >         ]      ",
-	"   LEFT     h         H         <         [      ",
-	"                                                 ",
-	"   g        goto top or prefix number line       ",
-	"                                                 ",
-	" Others:                                         ",
-	"   space    update buffer                        ",
-	"   ctrl-l   refresh screen                       ",
-	"   0..9     prefix number argument               ",
-	"   r        reverse character                    ",
-	"   e        reverse entire line                  ",
-	"   w        reverse word                         ",
-	"   t        toggle reverse mode                  ",
-	"   i        set interval for prefix number       ",
-	"   p        pause and restart                    ",
-	"   ?        show this message                    ",
-	"   q        quit                                 ",
-	(char *) 0,
-};
-
 void
-showhelp(void)
+show_help(void)
 {
-	size_t length = 0;
-	int lines;
-	int x, y;
-	int i;
-	const char *cp;
-	WINDOW *helpwin;
-	const char *cont_msg = " Hit any key to continue ";
+	int ch;
+	ssize_t len;
 
-	for (lines = 0; (cp = helpmsg[lines]) != (char *) 0; lines++)
-		if (strlen(cp) > length)
-			length = strlen(cp);
+	clear();
+	nl();
 
-	x = ((COLS - length - 2) + 1) / 2;
-	y = ((LINES - lines - 2) + 1) / 2;
+	printw("These commands are available:\n"
+	    "\n"
+	    "Movement:\n"
+	    "1-char    half-win  full-win  8-char\n"
+	    "UP       k, -      u, ^u     b, ^b\n"
+	    "DOWN     j, RET    d, ^d     f, ^f\n"
+	    "RIGHT    l         L         >         ]\n"
+	    "LEFT     h         H         <         [\n"
+	    "\n"
+	    "g        goto top or prefix number line\n"
+	    "\n"
+	    "Others:\n"
+	    "space    update buffer\n"
+	    "ctrl-l   refresh screen\n"
+	    "0..9     prefix number argument\n"
+	    "r        reverse character\n"
+	    "e        reverse entire line\n"
+	    "w        reverse word\n"
+	    "t        toggle reverse mode\n"
+	    "i        set interval for prefix number\n"
+	    "p        pause and restart\n"
+	    "?        show this message\n"
+	    "q        quit\n\n");
 
-	if (x < 0 || y < 0) {
-		fprintf(stderr, "\007");
-		return;
+	standout();
+	printw("Hit any key to continue.");
+	standend();
+	refresh();
+
+	while (1) {
+		len = read(STDIN_FILENO, &ch, 1);
+		if (len == -1 && errno == EINTR)
+			continue;
+		if (len == 0)
+			exit(1);
+		break;
 	}
-	helpwin = newwin(lines + 2, length + 2, y, x);
-
-	wclear(helpwin);
-	box(helpwin, '|', '-');
-
-	for (i = 0; i < lines; i++) {
-		wmove(helpwin, i + 1, 1);
-		waddstr(helpwin, helpmsg[i]);
-	}
-
-	wmove(helpwin, lines + 1, length + 1 - strlen(cont_msg));
-	wstandout(helpwin);
-	waddstr(helpwin, cont_msg);
-	wstandend(helpwin);
-
-	wrefresh(helpwin);
-	(void) wgetch(helpwin);
-	werase(helpwin);
-	wrefresh(helpwin);
-	delwin(helpwin);
 }
 
 void
