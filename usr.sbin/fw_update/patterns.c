@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.17 2025/03/28 15:04:30 stsp Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.18 2025/05/20 09:28:05 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -96,8 +96,8 @@ main(void)
 	printf("%s\n", "amdgpu ^vendor \"ATI\", unknown product*class display");
 	printf("%s\n", "amdsev ^\"AMD*Crypto\"");
 	printf("%s\n", "amdsev ^\"AMD*PSP\"");
-	printf("%s\n", "amdsev ccp");
-	printf("%s\n", "amdsev psp");
+	printf("%s\n", "amdsev ^ccp0");
+	printf("%s\n", "amdsev ^psp0");
 	printf("%s\n", "apple-boot ^cpu0*Apple");
 	printf("%s\n", "arm64-qcom-dtb ^qcgpio0");
 	printf("%s\n", "athn");
