@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.15 2025/05/20 12:32:48 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.16 2025/05/20 12:42:24 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -272,14 +272,16 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 	erase();
 
 	move(0, 0);
-	if ((int)strlen(cmdstr) > COLS - 47)
-		printw("\"%-.*s..\" ", COLS - 49, cmdstr);
-	else
-		printw("\"%s\" ", cmdstr);
+
 	if (pause_status)
-		printw("--PAUSE--");
+		printw("--PAUSED--");
 	else
-		printw("every %.4gs", opt_interval.d);
+		printw("Every %.4gs: ", opt_interval.d);
+
+	if ((int)strlen(cmdstr) > COLS - 47)
+		printw("%-.*s...", COLS - 49, cmdstr);
+	else
+		printw("%s", cmdstr);
 
 	ct = ctime(&lastupdate);
 	ct[24] = '\0';
