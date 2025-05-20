@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.25 2021/12/05 22:36:19 deraadt Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.26 2025/05/20 00:08:28 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -97,16 +97,9 @@ mroute6pr(void)
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &mrtproto, &len, NULL, 0) == -1) {
-		if (errno != ENOPROTOOPT)
+		if (errno != EOPNOTSUPP)
 			warn("mroute");
-		return;
-	}
-	switch (mrtproto) {
-	case 0:
-		break;
-	default:
-		printf("IPv6 multicast routing protocol %u, unknown\n",
-		    mrtproto);
+		printf("no IPv6 multicast routing compiled into this system\n");
 		return;
 	}
 
@@ -190,32 +183,14 @@ void
 mrt6_stats(void)
 {
 	struct mrt6stat mrt6stat;
-	u_int mrt6proto;
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
-	int mib2[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTSTATS };
-	size_t len = sizeof(int);
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTSTATS };
+	size_t len = sizeof(mrt6stat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &mrt6proto, &len, NULL, 0) == -1) {
-		if (errno != ENOPROTOOPT)
-			warn("mroute");
-		return;
-	}
-	switch (mrt6proto) {
-	case 0:
-		printf("no IPv6 multicast routing compiled into this system\n");
-		return;
-	default:
-		printf("IPv6 multicast routing protocol %u, unknown\n",
-		    mrt6proto);
-		return;
-	}
-
-	len = sizeof(mrt6stat);
-	if (sysctl(mib2, sizeof(mib2) / sizeof(mib2[0]),
 	    &mrt6stat, &len, NULL, 0) == -1) {
-		if (errno != ENOPROTOOPT)
-			warn("mroute");
+		if (errno != EOPNOTSUPP)
+			warn("mroute6");
+		printf("no IPv6 multicast routing compiled into this system\n");
 		return;
 	}
 
