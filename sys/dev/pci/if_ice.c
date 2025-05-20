@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.40 2025/04/10 07:06:44 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.41 2025/05/20 09:12:03 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -28426,10 +28426,94 @@ ice_intr0(void *xsc)
 #define ICE_RX_FLEX_NIC(desc, field) \
 	(((struct ice_32b_rx_flex_desc_nic *)desc)->field)
 
+/**
+ * ice_rx_checksum - verify hardware checksum is valid or not
+ * @status0: descriptor status data
+ * @ptype: packet type
+ *
+ * Determine whether the hardware indicated that the Rx checksum is valid. If
+ * so, update the checksum flags and data, informing the stack of the status
+ * of the checksum so that it does not spend time verifying it manually.
+ */
 void
-ice_rx_checksum(struct mbuf *m, uint16_t status0)
+ice_rx_checksum(struct mbuf *m, uint16_t status0, uint16_t ptype)
 {
-	/* TODO */
+	const uint16_t l3_error = (BIT(ICE_RX_FLEX_DESC_STATUS0_XSUM_IPE_S) |
+	    BIT(ICE_RX_FLEX_DESC_STATUS0_XSUM_EIPE_S));
+	const uint16_t l4_error = (BIT(ICE_RX_FLEX_DESC_STATUS0_XSUM_L4E_S) |
+	    BIT(ICE_RX_FLEX_DESC_STATUS0_XSUM_EUDPE_S));
+	const uint16_t xsum_errors = (l3_error | l4_error |
+	    BIT(ICE_RX_FLEX_DESC_STATUS0_IPV6EXADD_S));
+	struct ice_rx_ptype_decoded decoded;
+	int is_ipv4, is_ipv6;
+
+	/* No L3 or L4 checksum was calculated */
+	if (!(status0 & BIT(ICE_RX_FLEX_DESC_STATUS0_L3L4P_S)))
+		return;
+
+	decoded = ice_decode_rx_desc_ptype(ptype);
+
+	if (!(decoded.known && decoded.outer_ip))
+		return;
+
+	is_ipv4 = (decoded.outer_ip == ICE_RX_PTYPE_OUTER_IP) &&
+	    (decoded.outer_ip_ver == ICE_RX_PTYPE_OUTER_IPV4);
+	is_ipv6 = (decoded.outer_ip == ICE_RX_PTYPE_OUTER_IP) &&
+	    (decoded.outer_ip_ver == ICE_RX_PTYPE_OUTER_IPV6);
+
+	/* No checksum errors were reported */
+	if (!(status0 & xsum_errors)) {
+		if (is_ipv4)
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+		switch (decoded.inner_prot) {
+		case ICE_RX_PTYPE_INNER_PROT_TCP:
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+			break;
+		case ICE_RX_PTYPE_INNER_PROT_UDP:
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
+			break;
+		default:
+			break;
+		}
+
+		return;
+	}
+
+	/*
+	 * Certain IPv6 extension headers impact the validity of L4 checksums.
+	 * If one of these headers exist, hardware will set the IPV6EXADD bit
+	 * in the descriptor. If the bit is set then pretend like hardware
+	 * didn't checksum this packet.
+	 */
+	if (is_ipv6 && (status0 & BIT(ICE_RX_FLEX_DESC_STATUS0_IPV6EXADD_S)))
+		return;
+
+	/*
+	 * At this point, status0 must have at least one of the l3_error or
+	 * l4_error bits set.
+	 */
+	if (status0 & l3_error) {
+		if (is_ipv4)
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_BAD;
+
+		/* don't bother reporting L4 errors if we got an L3 error */
+		return;
+	} else if (is_ipv4)
+		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+	if (status0 & l4_error) {
+		switch (decoded.inner_prot) {
+		case ICE_RX_PTYPE_INNER_PROT_TCP:
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
+			break;
+		case ICE_RX_PTYPE_INNER_PROT_UDP:
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 int
@@ -28443,7 +28527,7 @@ ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
 	unsigned int cons, prod;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
-	uint16_t status0;
+	uint16_t status0, ptype;
 	unsigned int eop;
 	unsigned int len;
 	unsigned int mask;
@@ -28519,7 +28603,11 @@ ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
 				m->m_pkthdr.csum_flags |= M_FLOWID;
 			}
 
-			ice_rx_checksum(m, status0);
+			/* Get packet type and set checksum flags */
+			ptype = le16toh(cur->wb.ptype_flex_flags0) &
+				ICE_RX_FLEX_DESC_PTYPE_M;
+			ice_rx_checksum(m, status0, ptype);
+
 			ml_enqueue(&ml, m);
 
 			rxq->rxq_m_head = NULL;
