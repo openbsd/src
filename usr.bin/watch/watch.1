@@ -1,4 +1,4 @@
-.\"	$OpenBSD: watch.1,v 1.8 2025/05/20 12:25:00 job Exp $
+.\"	$OpenBSD: watch.1,v 1.9 2025/05/20 12:32:48 job Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2014, 2016 Internet Initiative Japan Inc.
 .\"
@@ -22,7 +22,7 @@
 .Nd periodically execute a command and display its output
 .Sh SYNOPSIS
 .Nm
-.Op Fl erwx
+.Op Fl clwx
 .Op Fl s Ar seconds 
 .Ar command Op Ar arg ...
 .Sh DESCRIPTION
@@ -34,16 +34,16 @@ Differences between successive runs can be highlighted.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl r
-Highlight the changed character.
-.It Fl e
-Highlight the changed line.
+.It Fl c
+Highlight changed characters.
+.It Fl l
+Highlight changed lines.
 .It Fl s Ar seconds
 Set the interval between updates to
 .Ar seconds .
 The default is 1 second.
 .It Fl w
-Highlight the changed word.
+Highlight changed words.
 .It Fl x
 Pass
 .Ar command

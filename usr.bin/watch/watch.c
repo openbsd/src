@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.14 2025/05/20 12:30:20 florian Exp $ */
+/*	$OpenBSD: watch.c,v 1.15 2025/05/20 12:32:48 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -687,6 +687,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-erw] [-s seconds] command [arg ...]\n",
+	fprintf(stderr, "usage: %s [-clwx] [-s seconds] command [arg ...]\n",
 	    __progname);
 }
