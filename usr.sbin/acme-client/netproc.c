@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.37 2024/10/10 09:39:35 florian Exp $ */
+/*	$Id: netproc.c,v 1.38 2025/05/20 00:46:50 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -673,7 +673,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
     int revocate, struct authority_c *authority,
     const char *const *alts, size_t altsz)
 {
-	int		 rc = 0;
+	int		 rc = 0, retries = 0;
 	size_t		 i;
 	char		*cert = NULL, *thumb = NULL, *error = NULL;
 	struct conn	 c;
@@ -863,6 +863,9 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 			if (!docert(&c, order.finalize, cert))
 				goto out;
 			break;
+		case ORDER_PROCESSING:
+			/* we'll just retry */
+			break;
 		default:
 			warnx("unhandled status: %d", order.status);
 			goto out;
@@ -871,8 +874,19 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 			goto out;
 
 		dodbg("order.status %d", order.status);
-		if (order.status == ORDER_PENDING)
+		switch (order.status) {
+		case ORDER_PENDING:
+		case ORDER_PROCESSING:
+			if (retries++ > RETRY_MAX) {
+				warnx("too many retries");
+				goto out;
+			}
 			sleep(RETRY_DELAY);
+			break;
+		default:
+			retries = 0; /* state changed, we made progress */
+			break;
+		}
 	}
 
 	if (order.status != ORDER_VALID) {
