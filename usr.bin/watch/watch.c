@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.12 2025/05/20 09:35:36 kn Exp $ */
+/*	$OpenBSD: watch.c,v 1.13 2025/05/20 12:25:00 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -118,10 +118,13 @@ main(int argc, char *argv[])
 	int i, ch, cmdsiz = 0;
 	char *s;
 
-	while ((ch = getopt(argc, argv, "ers:wx")) != -1)
+	while ((ch = getopt(argc, argv, "cls:wx")) != -1)
 		switch (ch) {
-		case 'r':
+		case 'c':
 			highlight_mode = HIGHLIGHT_CHAR;
+			break;
+		case 'l':
+			highlight_mode = HIGHLIGHT_LINE;
 			break;
 		case 's':
 			if (set_interval(optarg) == -1)
@@ -129,9 +132,6 @@ main(int argc, char *argv[])
 			break;
 		case 'w':
 			highlight_mode = HIGHLIGHT_WORD;
-			break;
-		case 'e':
-			highlight_mode = HIGHLIGHT_LINE;
 			break;
 		case 'x':
 			xflag = 1;
@@ -185,6 +185,7 @@ main(int argc, char *argv[])
 
 	noecho();
 	crmode();
+	keypad(stdscr, TRUE);
 
 	/*
 	 * Initialize signal
@@ -454,48 +455,94 @@ kbd_command(int ch)
 	switch (ch) {
 
 	case '?':
+	case 'h':
 		show_help();
 		refresh();
 		return (RSLT_REDRAW);
 
-	case ' ':
+	case ' ': /* Execute the command again. */
 		return (RSLT_UPDATE);
 
-		/*
-		 * Pause switch
-		 */
-	case 'p':
-		if ((pause_status = !pause_status) != 0)
-			return (RSLT_REDRAW);
-		else
-			return (RSLT_UPDATE);
-
-	case 't':
-		if (highlight_mode != HIGHLIGHT_NONE) {
-			last_highlight_mode = highlight_mode;
-			highlight_mode = HIGHLIGHT_NONE;
-		} else {
-			highlight_mode = last_highlight_mode;
-		}
+	/*
+	 * XXX: redrawing with Control-l often is needed when the command
+	 * emitted things to stderr. The program ought to interleave stdout
+	 * and stderr.
+	 */
+	case ctrl('l'):
+		clear();
 		break;
-	case 'r':
+
+	case KEY_DOWN:
+	case 'j':
+		start_line = MINIMUM(start_line + 1, MAXLINE - 1);
+		break;
+	
+	case KEY_LEFT:
+	case '[':
+		start_column = MAXIMUM(start_column - 1, 0);
+		break;
+
+	case KEY_NPAGE:
+		start_line = MINIMUM(start_line + (LINES - 2), MAXLINE - 1);
+		break;
+
+	case KEY_PPAGE:
+		start_line = MAXIMUM(start_line - (LINES - 2), 0);
+		break;
+
+	case KEY_RIGHT:
+	case ']':
+		start_column = MINIMUM(start_column + 1, MAXCOLUMN - 1);
+		break;
+
+	case KEY_UP:
+	case 'k':
+		start_line = MAXIMUM(start_line - 1, 0);
+		break;
+
+	case 'G': /* jump to bottom not yet implemented */
+		break;
+
+	case 'H':
+		start_column = MAXIMUM(start_column - ((COLS - 2) / 2), 0);
+		break;
+
+	case 'J':
+		start_line = MINIMUM(start_line + ((LINES - 2) / 2), MAXLINE - 1);
+		break;
+
+	case 'K':
+		start_line = MAXIMUM(start_line - ((LINES - 2) / 2), 0);
+		break;
+
+	case 'L':
+		start_column = MINIMUM(start_column + ((COLS - 2) / 2),
+		    MAXCOLUMN - 1);
+		break;
+
+	case 'c':
 		if (highlight_mode == HIGHLIGHT_CHAR)
 			highlight_mode = HIGHLIGHT_NONE;
 		else
 			highlight_mode = HIGHLIGHT_CHAR;
 		break;
-	case 'w':
-		if (highlight_mode == HIGHLIGHT_WORD)
-			highlight_mode = HIGHLIGHT_NONE;
-		else
-			highlight_mode = HIGHLIGHT_WORD;
+
+	case 'g':
+		start_line = 0;
 		break;
-	case 'e':
+
+	case 'l':
 		if (highlight_mode == HIGHLIGHT_LINE)
 			highlight_mode = HIGHLIGHT_NONE;
 		else
 			highlight_mode = HIGHLIGHT_LINE;
 		break;
+
+	case 'p':
+		if ((pause_status = !pause_status) != 0)
+			return (RSLT_REDRAW);
+		else
+			return (RSLT_UPDATE);
 
 	case 's':
 		move(1, 0);
@@ -519,79 +566,23 @@ kbd_command(int ch)
 
 		return (RSLT_REDRAW);
 
-	case '\n':
-	case '+':
-	case 'j':
-		start_line = MINIMUM(start_line + 1, MAXLINE - 1);
-		break;
-	case '-':
-	case 'k':
-		start_line = MAXIMUM(start_line - 1, 0);
-		break;
-	case 'd':
-	case 'D':
-	case ctrl('d'):
-		start_line = MINIMUM(start_line + ((LINES - 2) / 2), MAXLINE - 1);
-		break;
-	case 'u':
-	case 'U':
-	case ctrl('u'):
-		start_line = MAXIMUM(start_line - ((LINES - 2) / 2), 0);
-		break;
-	case 'f':
-	case ctrl('f'):
-		start_line = MINIMUM(start_line + (LINES - 2), MAXLINE - 1);
-		break;
-	case 'b':
-	case ctrl('b'):
-		start_line = MAXIMUM(start_line - (LINES - 2), 0);
-		break;
-	case 'g':
-		start_line = 0;
+	case 't':
+		if (highlight_mode != HIGHLIGHT_NONE) {
+			last_highlight_mode = highlight_mode;
+			highlight_mode = HIGHLIGHT_NONE;
+		} else {
+			highlight_mode = last_highlight_mode;
+		}
 		break;
 
-		/*
-		 * horizontal motion
-		 */
-	case 'l':
-		start_column = MINIMUM(start_column + 1, MAXCOLUMN - 1);
-		break;
-	case ctrl('l'):
-		clear();
-		break;
-	case 'h':
-		start_column = MAXIMUM(start_column - 1, 0);
-		break;
-	case 'L':
-		start_column = MINIMUM(start_column + ((COLS - 2) / 2),
-		    MAXCOLUMN - 1);
-		break;
-	case 'H':
-		start_column = MAXIMUM(start_column - ((COLS - 2) / 2), 0);
-		break;
-	case ']':
-	case '\t':
-		start_column = MINIMUM(start_column + 8, MAXCOLUMN - 1);
-		break;
-	case '[':
-	case '\b':
-		start_column = MAXIMUM(start_column - 8, 0);
-		break;
-	case '>':
-		start_column = MINIMUM(start_column + (COLS - 2), MAXCOLUMN - 1);
-		break;
-	case '<':
-		start_column = MAXIMUM(start_column - (COLS - 2), 0);
-		break;
-	case '{':
-		start_column = 0;
+	case 'w':
+		if (highlight_mode == HIGHLIGHT_WORD)
+			highlight_mode = HIGHLIGHT_NONE;
+		else
+			highlight_mode = HIGHLIGHT_WORD;
 		break;
 
-		/*
-		 * quit
-		 */
 	case 'q':
-	case 'Q':
 		quit();
 		break;
 
@@ -615,25 +606,23 @@ show_help(void)
 	printw("These commands are available:\n"
 	    "\n"
 	    "Movement:\n"
-	    "1-char    half-win  full-win  8-char\n"
-	    "UP       k, -      u, ^u     b, ^b\n"
-	    "DOWN     j, RET    d, ^d     f, ^f\n"
-	    "RIGHT    l         L         >         ]\n"
-	    "LEFT     h         H         <         [\n"
-	    "\n"
-	    "g        go to top\n"
-	    "\n"
-	    "Others:\n"
-	    "space    update buffer\n"
-	    "ctrl-l   refresh screen\n"
-	    "r        highlight changed characters\n"
-	    "e        highlight changed lines\n"
-	    "w        highlight changed words\n"
-	    "t        toggle higlighting mode\n"
-	    "n        change update interval\n"
-	    "p        pause and restart\n"
-	    "?        show this message\n"
-	    "q        quit\n\n");
+	    "j | k          - scroll down/up one line\n"
+	    "[ | ]          - scroll left/right one column\n"
+	    "(arrow keys)   - scroll left/down/up/right one line or column\n"
+	    "H | J | K | L  - scroll left/down/up/right half a screen\n"
+	    "(Page Down)    - scroll down a screenful\n"
+	    "(Page Up)      - scroll up a screenful\n"
+	    "g              - go to top\n\n"
+	    "Other:\n"
+	    "(Space)        - run command again\n"
+	    "c              - highlight changed characters\n"
+	    "l              - highlight changed lines\n"
+	    "w              - highlight changed words\n"
+	    "t              - toggle highlight mode on/off\n"
+	    "p              - toggle pause / resume\n"
+	    "s              - change the update interval\n"
+	    "h | ?          - show this message\n"
+	    "q              - quit\n\n");
 
 	standout();
 	printw("Hit any key to continue.");
