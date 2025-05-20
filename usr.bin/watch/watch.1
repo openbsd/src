@@ -1,3 +1,4 @@
+.\"	$OpenBSD: watch.1,v 1.4 2025/05/20 07:02:28 job Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2014, 2016 Internet Initiative Japan Inc.
 .\"
@@ -13,33 +14,23 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" The following requests are required for all man pages.
-.\"
-.Dd April 18, 2013
-.Dt IWATCH 1
+.Dd $Mdocdate: May 20 2025 $
+.Dt WATCH 1
 .Os
 .Sh NAME
-.Nm iwatch
-.Nd watch the command output with interval timer
+.Nm watch
+.Nd periodically execute a command and display its output
 .Sh SYNOPSIS
 .Nm
 .Op Fl rewpx
 .Op Fl i Ar interval
-.Ar command Op Ar argument ...
+.Ar command Op Ar arg ...
 .Sh DESCRIPTION
+The
 .Nm
-displays the output of a
-.Ar command
-with
-.Ar argument
-and update the output with a specified number of
-.Ar interval .
-The changes of outputs can be highlighted.
-Note that shell escaping needed at the command and arguments since they
-are given to
-.Ic sh -c .
-.Fl x
-option changes this behaviour.
+utility periodically executes and displays the output of
+.Ar command .
+Differences between successive runs can be highlighted.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -52,24 +43,13 @@ Highlight the changed word.
 .It Fl p
 Start with pausing the update.
 .It Fl x
-Pass the
+Pass
 .Ar command
-and
-.Ar arguments
 to
-.Xr exec 2
-as it is.
-In default behaviour,
-shell escaping is required at the
-.Ar command
-and
-.Ar argument
-because
-.Nm
-uses
-.Ic sh -c
-for handing them.
-Use this option not to do unnecessary shell escaping.
+.Xr execl 3
+instead of
+.Ic sh -c ,
+for different quoting and shell escaping behaviour.
 .It Fl i Ar interval
 Set the initial interval second of the periodical update to
 .Ar interval .
@@ -137,12 +117,11 @@ Show help message.
 Quit the program.
 .El
 .Sh SEE ALSO
-.Xr sh 1
-.Xr exec 2
+.Xr sh 1 ,
+.Xr execl 3
 .Sh HISTORY
-The
 .Nm
-program is slightly derived from
-.Nm watch
-command come with BSD/OS 3.1 by BSDI, Inc.,
-which originally came from some free distribution.
+was first published in 1991 and has been available since
+.Ox 7.8 .
+.Sh AUTHORS
+Takuya Sato, Kazumasa Utashiro, YASUOKA Masahiko, and Job Snijders.
