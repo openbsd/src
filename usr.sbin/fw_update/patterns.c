@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.18 2025/05/20 09:28:05 bluhm Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.19 2025/05/20 10:30:41 tobhe Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -120,7 +120,8 @@ main(void)
 	printf("%s\n", "otus");
 	printf("%s\n", "pgt");
 	printf("%s\n", "qcpas");
-	printf("%s\n", "qcpas ^ppb0*\"Qualcomm ^cpu0*\"Qualcomm");
+	printf("%s\n", "qcpas ^ppb0*\"Qualcomm");
+	printf("%s\n", "qcpas ^cpu0*\"Qualcomm");
 	printf("%s\n", "qwx");
 	printf("%s\n", "qwz");
 	printf("%s\n", "radeondrm");
