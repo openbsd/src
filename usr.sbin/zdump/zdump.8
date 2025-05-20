@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zdump.8,v 1.5 2025/05/19 20:38:53 millert Exp $
-.Dd $Mdocdate: May 19 2025 $
+.\"	$OpenBSD: zdump.8,v 1.6 2025/05/20 20:11:19 jmc Exp $
+.Dd $Mdocdate: May 20 2025 $
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -10,11 +10,11 @@
 .Op Fl Vv
 .Oo
 .Fl c
-.Oo Ar loyear , Oc Ar hiyear
+.Oo Ar loyear , Oc Ns Ar hiyear
 .Oc
 .Oo
 .Fl t
-.Oo Ar lotime , Oc Ar hitime
+.Oo Ar lotime , Oc Ns Ar hitime
 .Oc
 .Ar zonename ...
 .Sh DESCRIPTION
@@ -27,14 +27,14 @@ These options are available:
 .Bl -tag -width Ds
 .It Xo
 .Fl c
-.Oo Ar loyear , Oc Ar hiyear
+.Oo Ar loyear , Oc Ns Ar hiyear
 .Xc
 Cut off verbose output near the start of the given year(s).
 By default,
 the program cuts off verbose output near the start of the years \-500 and 2500.
 .It Xo
 .Fl t
-.Oo Ar lotime , Oc Ar hitime
+.Oo Ar lotime , Oc Ns Ar hitime
 .Xc
 Cut off verbose output at the start of the given time(s),
 given in seconds since 1970-01-01 00:00:00 UTC.
