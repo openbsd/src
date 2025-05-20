@@ -25,8 +25,6 @@
 .Nm
 .Op Fl rewpx
 .Op Fl i Ar interval
-.Op Fl s Ar start_line
-.Op Fl c Ar start_column
 .Ar command Op Ar argument ...
 .Sh DESCRIPTION
 .Nm
@@ -77,14 +75,6 @@ Set the initial interval second of the periodical update to
 .Ar interval .
 This value must be positive and may be valid for the sixth decimal place.
 The default is 2 seconds.
-.It Fl s Ar start_line
-Set the line number on the output where
-.Nm
-is to start display.
-.It Fl c Ar start_column
-Set the column number on the output where
-.Nm
-is to start display.
 .El
 .Pp
 Certain characters cause immediate action by

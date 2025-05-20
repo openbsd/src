@@ -132,12 +132,6 @@ main(int argc, char *argv[])
 		case 'p':
 			pause_status = 1;
 			break;
-		case 's':
-			start_line = atoi(optarg);
-			break;
-		case 'c':
-			start_column = atoi(optarg);
-			break;
 		case 'x':
 			xflag = 1;
 			break;
@@ -768,9 +762,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: %s [-rewp] [-i interval] [-s start_line] "
-		    "[-c start_column]\n"
-	    "       %*s command [arg ...]\n",
-	    __progname, (int) strlen(__progname), " ");
+	fprintf(stderr, "usage: %s [-rewp] [-i interval] command [arg ...]\n",
+	    __progname);
 }
