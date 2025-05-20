@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiwmi.c,v 1.2 2025/05/20 01:18:16 robert Exp $ */
+/*	$OpenBSD: acpiwmi.c,v 1.3 2025/05/20 01:22:39 tedu Exp $ */
 /*
  * Copyright (c) 2025 Ted Unangst <tedu@openbsd.org>
  *
@@ -179,7 +179,7 @@ acpiwmi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		for (int j = 0; j < 1; j++) {
 			if (memcmp(guids[i].guid, targets[j].guid, GUID_SIZE) == 0)
-				wmi_asus_init(sc, &guids[i]);
+				targets[j].init(sc, &guids[i]);
 		}
 	}
 	aml_freevalue(&res);
