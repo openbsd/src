@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.19 2025/05/20 09:43:31 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.20 2025/05/20 10:02:32 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2363,6 +2363,7 @@ iavf_process_vc_event(struct iavf_softc *sc, struct iavf_aq_desc *desc,
 		link = LINK_STATE_DOWN;
 		if (event->link_status) {
 			link = LINK_STATE_UP;
+			sc->sc_media_active |= IFM_FDX;
 			sc->sc_media_status |= IFM_ACTIVE;
 
 			ifp->if_baudrate = 0;
