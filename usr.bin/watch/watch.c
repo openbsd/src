@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.7 2025/05/20 06:26:56 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.8 2025/05/20 07:03:39 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	/*
 	 * Command line option handling
 	 */
-	while ((ch = getopt(argc, argv, "+i:rewps:c:x")) != -1)
+	while ((ch = getopt(argc, argv, "i:rewx")) != -1)
 		switch (ch) {
 		case 'i':
 			intvl = strtod(optarg, &e);
@@ -129,9 +129,6 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			highlight_mode = HIGHLIGHT_LINE;
-			break;
-		case 'p':
-			pause_status = 1;
 			break;
 		case 'x':
 			xflag = 1;
