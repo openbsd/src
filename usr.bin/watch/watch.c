@@ -44,11 +44,11 @@
 #define MAX_FRAQ_DIGITS		3	/* max number of fractal digits */
 
 typedef enum {
-	REVERSE_NONE,
-	REVERSE_CHAR,
-	REVERSE_WORD,
-	REVERSE_LINE
-}    reverse_mode_t;
+	HIGHLIGHT_NONE,
+	HIGHLIGHT_CHAR,
+	HIGHLIGHT_WORD,
+	HIGHLIGHT_LINE
+}    highlight_mode_t;
 
 typedef enum {
 	RSLT_UPDATE,
@@ -61,9 +61,10 @@ typedef enum {
  * Global symbols
  */
 struct timeval	 opt_interval = { DEFAULT_INTERVAL, 0 };
-reverse_mode_t
-reverse_mode = REVERSE_NONE,		/* reverse mode */
-last_reverse_mode = REVERSE_CHAR;	/* remember previous reverse mode */
+
+highlight_mode_t highlight_mode = HIGHLIGHT_NONE;
+highlight_mode_t last_highlight_mode = HIGHLIGHT_CHAR;
+
 int start_line = 0, start_column = 0;	/* display offset coordinates */
 int prefix = -1;		/* command prefix argument */
 int decimal_point = -1;		/* position of decimal point.  */
@@ -77,7 +78,6 @@ int xflag = 0;
 
 static char	 *cmdstr;
 static char	**cmdv;
-static int	  style = A_REVERSE;
 
 typedef wchar_t BUFFER[MAXLINE][MAXCOLUMN + 1];
 
@@ -87,7 +87,7 @@ typedef wchar_t BUFFER[MAXLINE][MAXCOLUMN + 1];
 #define ctrl(c)		((c) & 037)
 int main(int, char *[]);
 void command_loop(void);
-int display(BUFFER *, BUFFER *, reverse_mode_t);
+int display(BUFFER *, BUFFER *, highlight_mode_t);
 void read_result(BUFFER *);
 kbd_result_t kbd_command(int);
 void show_help(void);
@@ -95,7 +95,6 @@ void untabify(wchar_t *, int);
 void on_signal(int);
 void quit(void);
 void usage(void);
-void set_attr(void);
 
 int
 main(int argc, char *argv[])
@@ -122,13 +121,13 @@ main(int argc, char *argv[])
 			    (intvl * 1000000UL) % 1000000UL;
 			break;
 		case 'r':
-			reverse_mode = REVERSE_CHAR;
+			highlight_mode = HIGHLIGHT_CHAR;
 			break;
 		case 'w':
-			reverse_mode = REVERSE_WORD;
+			highlight_mode = HIGHLIGHT_WORD;
 			break;
 		case 'e':
-			reverse_mode = REVERSE_LINE;
+			highlight_mode = HIGHLIGHT_LINE;
 			break;
 		case 'p':
 			pause_status = 1;
@@ -228,7 +227,7 @@ command_loop(void)
 		read_result(cur);
 
 redraw:
-		display(cur, prev, reverse_mode);
+		display(cur, prev, highlight_mode);
 
 input:
 		to = opt_interval;
@@ -269,7 +268,7 @@ input:
 }
 
 int
-display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
+display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 {
 	int	 i, val, screen_x, screen_y, cw, line, rl;
 	char	*ct;
@@ -300,21 +299,6 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 	move(0, COLS - strlen(ct));
 	addstr(ct);
 
-#define MODELINE(HOTKEY,SWITCH,MODE)				\
-	do {							\
-		printw(HOTKEY);					\
-		if (reverse == SWITCH) attron(style);		\
-		printw(MODE);					\
-		if (reverse == SWITCH) attrset(A_NORMAL);	\
-	} while (0/* CONSTCOND */)
-
-	move(1, COLS - 47);
-	printw("Reverse mode:");
-	MODELINE(" [w]", REVERSE_WORD, "word");
-	MODELINE(" [e]", REVERSE_LINE, "line");
-	MODELINE(" [r]", REVERSE_CHAR, "char");
-	printw(" [t]toggle");
-
 	move(1, 1);
 	if (prefix >= 0) {
 		if (decimal_point > 0) {
@@ -335,7 +319,7 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 		printw("(%d, %d)", start_line, start_column);
 
 	if (!prev || (cur == prev))
-		reverse = REVERSE_NONE;
+		hm = HIGHLIGHT_NONE;
 
 	for (line = start_line, screen_y = 2;
 	    screen_y < LINES && line < MAXLINE && (*cur)[line][0];
@@ -352,10 +336,10 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 		for (pp = prev_line, cw = 0; cw < start_column; pp++)
 			cw += WCWIDTH(*pp);
 
-		switch (reverse) {
-		case REVERSE_LINE:
+		switch (hm) {
+		case HIGHLIGHT_LINE:
 			if (wcscmp(cur_line, prev_line)) {
-				attron(style);
+				standout();
 				rl = 1;
 				for (i = 0; i < screen_x; i++) {
 					move(screen_y, i);
@@ -364,7 +348,7 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 			}
 			/* FALLTHROUGH */
 
-		case REVERSE_NONE:
+		case HIGHLIGHT_NONE:
 			move(screen_y, screen_x);
 			while (screen_x < COLS) {
 				if (*p && *p != L'\n') {
@@ -380,11 +364,11 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 				} else
 					break;
 			}
-			attrset(A_NORMAL);
+			standend();
 			break;
 
-		case REVERSE_WORD:
-		case REVERSE_CHAR:
+		case HIGHLIGHT_WORD:
+		case HIGHLIGHT_CHAR:
 			move(screen_y, screen_x);
 			while (*p && screen_x < COLS) {
 				cw = wcwidth(*p);
@@ -397,17 +381,11 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 					continue;
 				}
 				/*
-				 * This method to reverse by word unit is not
-				 * very fancy but it was easy to implement.  If
-				 * you are urged to rewrite this algorithm, it
-				 * is right thing and don't hesitate to do so!
-				 */
-				/*
-				 * If the word reverse option is specified and
+				 * If the word highlight option is specified and
 				 * the current character is not a space, track
 				 * back to the beginning of the word.
 				 */
-				if (reverse == REVERSE_WORD && !iswspace(*p)) {
+				if (hm == HIGHLIGHT_WORD && !iswspace(*p)) {
 					while (cur_line + start_column < p &&
 					    !iswspace(*(p - 1))) {
 						p--;
@@ -416,7 +394,7 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 					}
 					move(screen_y, screen_x);
 				}
-				attron(style);
+				standout();
 
 				/* Print character itself.  */
 				cw = wcwidth(*p);
@@ -425,12 +403,12 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 				screen_x += cw;
 
 				/*
-				 * If the word reverse option is specified, and
+				 * If the word highlight option is specified, and
 				 * the current character is not a space, print
 				 * the whole word which includes current
 				 * character.
 				 */
-				if (reverse == REVERSE_WORD) {
+				if (hm == HIGHLIGHT_WORD) {
 					while (*p && !iswspace(*p) &&
 					    screen_x < COLS) {
 						cw = wcwidth(*p);
@@ -439,7 +417,7 @@ display(BUFFER * cur, BUFFER * prev, reverse_mode_t reverse)
 						screen_x += cw;
 					}
 				}
-				attrset(A_NORMAL);
+				standend();
 			}
 			break;
 		}
@@ -555,28 +533,31 @@ kbd_command(int ch)
 		else
 			return (RSLT_UPDATE);
 
-		/*
-		 * Reverse control
-		 */
 	case 't':
-		if (reverse_mode != REVERSE_NONE) {
-			last_reverse_mode = reverse_mode;
-			reverse_mode = REVERSE_NONE;
+		if (highlight_mode != HIGHLIGHT_NONE) {
+			last_highlight_mode = highlight_mode;
+			highlight_mode = HIGHLIGHT_NONE;
 		} else {
-			reverse_mode = last_reverse_mode;
+			highlight_mode = last_highlight_mode;
 		}
 		break;
 	case 'r':
-		reverse_mode = (reverse_mode == REVERSE_CHAR) ? REVERSE_NONE
-		    : REVERSE_CHAR;
+		if (highlight_mode == HIGHLIGHT_CHAR)
+			highlight_mode = HIGHLIGHT_NONE;
+		else
+			highlight_mode = HIGHLIGHT_CHAR;
 		break;
 	case 'w':
-		reverse_mode = (reverse_mode == REVERSE_WORD) ? REVERSE_NONE
-		    : REVERSE_WORD;
+		if (highlight_mode == HIGHLIGHT_WORD)
+			highlight_mode = HIGHLIGHT_NONE;
+		else
+			highlight_mode = HIGHLIGHT_WORD;
 		break;
 	case 'e':
-		reverse_mode = (reverse_mode == REVERSE_LINE) ? REVERSE_NONE
-		    : REVERSE_LINE;
+		if (highlight_mode == HIGHLIGHT_LINE)
+			highlight_mode = HIGHLIGHT_NONE;
+		else
+			highlight_mode = HIGHLIGHT_LINE;
 		break;
 
 		/*
@@ -714,10 +695,10 @@ show_help(void)
 	    "space    update buffer\n"
 	    "ctrl-l   refresh screen\n"
 	    "0..9     prefix number argument\n"
-	    "r        reverse character\n"
-	    "e        reverse entire line\n"
-	    "w        reverse word\n"
-	    "t        toggle reverse mode\n"
+	    "r        highlight changed characters\n"
+	    "e        highlight changed lines\n"
+	    "w        highlight changed words\n"
+	    "t        toggle higlighting mode\n"
 	    "i        set interval for prefix number\n"
 	    "p        pause and restart\n"
 	    "?        show this message\n"
