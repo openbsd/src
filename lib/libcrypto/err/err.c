@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.75 2024/11/02 12:46:36 tb Exp $ */
+/* $OpenBSD: err.c,v 1.76 2025/05/20 09:25:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -484,33 +484,27 @@ err_build_SYS_str_reasons(void)
 {
 	/* malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
+	const char *errstr;
 	int save_errno;
 	int i;
 
 	/* strerror(3) will set errno to EINVAL when i is an unknown errno. */
 	save_errno = errno;
-	for (i = 1; i <= NUM_SYS_STR_REASONS; i++) {
-		ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
+	for (i = 0; i < NUM_SYS_STR_REASONS; i++) {
+		ERR_STRING_DATA *str = &SYS_str_reasons[i];
 
-		str->error = (unsigned long)i;
-		if (str->string == NULL) {
-			char (*dest)[LEN_SYS_STR_REASON] =
-			    &(strerror_tab[i - 1]);
-			const char *src = strerror(i);
-			if (src != NULL) {
-				strlcpy(*dest, src, sizeof *dest);
-				str->string = *dest;
-			}
+		str->error = i + 1;
+		str->string = "unknown";
+
+		if ((errstr = strerror((int)str->error)) != NULL) {
+			strlcpy(strerror_tab[i], errstr, sizeof(strerror_tab[i]));
+			str->string = strerror_tab[i];
 		}
-		if (str->string == NULL)
-			str->string = "unknown";
 	}
 	errno = save_errno;
 
-	/*
-	 * Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL},
-	 * as required by ERR_load_strings.
-	 */
+	SYS_str_reasons[NUM_SYS_STR_REASONS].error = 0;
+	SYS_str_reasons[NUM_SYS_STR_REASONS].string = NULL;
 }
 #endif
 
