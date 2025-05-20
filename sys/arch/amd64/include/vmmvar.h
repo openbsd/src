@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.112 2025/05/20 01:10:42 bluhm Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.113 2025/05/20 08:35:37 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -852,6 +852,13 @@ struct vmsa {
 		uint64_t		v_ic_ibs_xtd_ct;/* 7C0h */
 };
 
+/*
+ * With SEV-ES the host save area (HSA) has the same layout as the
+ * VMSA.  However, it has the offset 0x400 into the HSA page.
+ * See AMD APM Vol 2, Appendix B.
+ */
+#define SVM_HSA_OFFSET			0x400
+
 struct vmcs {
 	uint32_t	vmcs_revision;
 };
@@ -1028,6 +1035,7 @@ int	invept(uint64_t, struct vmx_invept_descriptor *);
 int	vmx_enter_guest(paddr_t *, struct vcpu_gueststate *, int, uint8_t);
 int	svm_enter_guest(uint64_t, struct vcpu_gueststate *,
     struct region_descriptor *);
+int	svm_seves_enter_guest(uint64_t, vaddr_t, struct region_descriptor *);
 void	start_vmm_on_cpu(struct cpu_info *);
 void	stop_vmm_on_cpu(struct cpu_info *);
 void	vmclear_on_cpu(struct cpu_info *);

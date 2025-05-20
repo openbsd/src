@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.47 2025/05/20 01:10:42 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.48 2025/05/20 08:35:37 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6399,8 +6399,13 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		KASSERT(vmcb->v_intercept1 & SVM_INTERCEPT_INTR);
 		wrmsr(MSR_AMD_VM_HSAVE_PA, vcpu->vc_svm_hsa_pa);
 
-		ret = svm_enter_guest(vcpu->vc_control_pa,
-		    &vcpu->vc_gueststate, &gdt);
+		if (vcpu->vc_seves) {
+			ret = svm_seves_enter_guest(vcpu->vc_control_pa,
+			    vcpu->vc_svm_hsa_va + SVM_HSA_OFFSET, &gdt);
+		} else {
+			ret = svm_enter_guest(vcpu->vc_control_pa,
+			    &vcpu->vc_gueststate, &gdt);
+		}
 
 		/* Restore host PKRU state. */
 		if (vmm_softc->sc_md.pkru_enabled) {

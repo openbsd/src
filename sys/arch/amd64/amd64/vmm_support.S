@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.28 2024/07/09 11:15:58 deraadt Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.29 2025/05/20 08:35:37 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -42,6 +42,7 @@
 	.global vmx_enter_guest
 	.global vmm_dispatch_intr
 	.global svm_enter_guest
+	.global svm_seves_enter_guest
 
 	.text
 	.code64
@@ -662,3 +663,163 @@ restore_host_svm:
 	ret
 	lfence
 END(svm_enter_guest)
+
+/*
+ * When using SEV-ES we have to save some of the host registers to
+ * the host state save area (HSA).  According to the AMD Programmer's
+ * Manual Volume 2 Appendix B the HSA has the same layout as the guest
+ * save area (VMSA) except that it starts at offset 0x400 in the HSA
+ * page.
+ */
+ENTRY(svm_seves_enter_guest)
+	RETGUARD_SETUP(svm_seves_enter_guest, r11)
+	clgi
+	movq	%rdi, %r8
+	pushfq
+
+	pushq	%rdx	/* gdt pointer */
+
+	/*
+	 * Save (possibly) lazy-switched selectors
+	 */
+	strw	%ax
+	pushw	%ax
+	movw	%es, %ax
+	pushw	%ax
+	movw	%ds, %ax
+	pushw	%ax
+	movw	%ss, %ax
+	pushw	%ax
+
+	movq	$MSR_FSBASE, %rcx
+	rdmsr
+	pushq	%rax
+	pushq	%rdx
+	pushw	%fs
+	movq	$MSR_GSBASE, %rcx
+	rdmsr
+	pushq	%rax
+	pushq	%rdx
+	pushw	%gs
+	movq	$MSR_KERNELGSBASE, %rcx
+	rdmsr
+	pushq	%rax
+	pushq	%rdx
+
+	/*
+	 * Save various MSRs
+	 */
+	movq	$MSR_STAR, %rcx
+	rdmsr
+	pushq	%rax
+	pushq	%rdx
+
+	movq	$MSR_LSTAR, %rcx
+	rdmsr
+	pushq	%rax
+	pushq	%rdx
+
+	movq	$MSR_SFMASK, %rcx
+	rdmsr
+	pushq	%rax
+	pushq	%rdx
+
+	RETGUARD_PUSH(r11)
+
+	/*
+	 * Preserve callee-preserved registers as per AMD64 ABI in
+	 * HSA. Although all registers will be restored from HSA
+	 * on vmexit, these will not be saved on vmrun.
+	 */
+	movq	%r15, 0x378(%rsi)
+	movq	%r14, 0x370(%rsi)
+	movq	%r13, 0x368(%rsi)
+	movq	%r12, 0x360(%rsi)
+	movq	%rbp, 0x328(%rsi)
+	movq	%rbx, 0x318(%rsi)
+
+	movq	%r8, %rax	/* rax = vmcb pa */
+
+	vmrun	%rax
+
+	/* %rdi = 0 means we took an exit */
+	xorq	%rdi, %rdi
+
+	RETGUARD_POP(r11)
+
+	/*
+	 * Restore saved MSRs
+	 */
+	popq	%rdx
+	popq	%rax
+	movq	$MSR_SFMASK, %rcx
+	wrmsr
+
+	/* make sure guest doesn't bleed into host */
+	xorl	%edx, %edx
+	xorl	%eax, %eax
+	movq	$MSR_CSTAR, %rcx
+	wrmsr
+
+	popq	%rdx
+	popq	%rax
+	movq	$MSR_LSTAR, %rcx
+	wrmsr
+
+	popq	%rdx
+	popq	%rax
+	movq	$MSR_STAR, %rcx
+	wrmsr
+
+	/*
+	 * popw %gs will reset gsbase to 0, so preserve it
+	 * first. This is to accommodate possibly lazy-switched
+	 * selectors from above
+	 */
+	cli
+	popq	%rdx
+	popq	%rax
+	movq	$MSR_KERNELGSBASE, %rcx
+	wrmsr
+
+	popw	%gs
+	popq	%rdx
+	popq	%rax
+	movq	$MSR_GSBASE, %rcx
+	wrmsr
+
+	popw	%fs
+	popq	%rdx
+	popq	%rax
+	movq	$MSR_FSBASE, %rcx
+	wrmsr
+
+	popw	%ax
+	movw	%ax, %ss
+	popw	%ax
+	movw	%ax, %ds
+	popw	%ax
+	movw	%ax, %es
+
+	xorq	%rax, %rax
+	lldtw	%ax		/* Host LDT is always 0 */
+
+	popw	%ax		/* ax = saved TR */
+
+	popq	%rdx
+	addq	$0x2, %rdx
+	movq	(%rdx), %rdx
+
+	/* rdx = GDTR base addr */
+	andb	$0xF9, 5(%rdx, %rax)
+
+	ltrw	%ax
+
+	popfq
+
+	movq	%rdi, %rax
+
+	RETGUARD_CHECK(svm_seves_enter_guest, r11)
+	ret
+	lfence
+END(svm_seves_enter_guest)
