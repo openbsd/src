@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.9 2025/05/20 07:40:08 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.10 2025/05/20 08:24:16 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -36,10 +36,9 @@
 #include <wchar.h>
 #include <wctype.h>
 
-#define DEFAULT_INTERVAL 2
+#define DEFAULT_INTERVAL 1
 #define MAXLINE 300
 #define MAXCOLUMN 180
-#define MAX_COMMAND_LENGTH 128
 
 #define NUM_FRAQ_DIGITS_USEC	6	/* number of fractal digits for usec */
 #define MAX_FRAQ_DIGITS		3	/* max number of fractal digits */
@@ -67,7 +66,6 @@ highlight_mode_t highlight_mode = HIGHLIGHT_NONE;
 highlight_mode_t last_highlight_mode = HIGHLIGHT_CHAR;
 
 int start_line = 0, start_column = 0;	/* display offset coordinates */
-int prefix = -1;		/* command prefix argument */
 int decimal_point = -1;		/* position of decimal point.  */
 
 int pause_status = 0;		/* pause status */
@@ -100,29 +98,24 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int	 i, ch, cmdsiz = 0;
-	char	*e, *s;
-	double	 intvl;
+	int i, ch, cmdsiz = 0;
+	char *e, *s, *endp;
+	double intvl;
 
-	setlocale(LC_ALL, "");
-	/*
-	 * Command line option handling
-	 */
-	while ((ch = getopt(argc, argv, "i:rewx")) != -1)
+	while ((ch = getopt(argc, argv, "ers:wx")) != -1)
 		switch (ch) {
-		case 'i':
-			intvl = strtod(optarg, &e);
-			if (*optarg == '\0' || *e != '\0')
-				errx(EX_USAGE, "invalid interval: %s", optarg);
-			if (*optarg == '-')
-				errx(EX_USAGE, "interval must be positive: %s",
-					optarg);
-			opt_interval.tv_sec = (int)intvl;
-			opt_interval.tv_usec = (u_long)
-			    (intvl * 1000000UL) % 1000000UL;
-			break;
 		case 'r':
 			highlight_mode = HIGHLIGHT_CHAR;
+			break;
+		case 's':
+			intvl = strtod(optarg, &endp);
+			if (intvl >= 0 && intvl <= 1000000 && *endp == '\0') {
+				opt_interval.tv_sec = (int)intvl;
+				opt_interval.tv_usec =
+				    (u_long)(intvl * 1000000UL) % 1000000UL;
+				break;
+			} else
+				errx(1, "-n: bad interval value: %s", optarg);
 			break;
 		case 'w':
 			highlight_mode = HIGHLIGHT_WORD;
@@ -293,23 +286,6 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 	addstr(ct);
 
 	move(1, 1);
-	if (prefix >= 0) {
-		if (decimal_point > 0) {
-			int power10;
-
-			for (i = 0, power10 = 1; i < decimal_point; i++)
-				power10 *= 10;
-
-			printw("%d.%0*d", prefix / power10, decimal_point,
-			    prefix % power10);
-		} else if (decimal_point == 0)
-			printw("%d. ", prefix);
-		else
-			printw("%d ", prefix);
-	}
-
-	if (start_line != 0 || start_column != 0)
-		printw("(%d, %d)", start_line, start_column);
 
 	if (!prev || (cur == prev))
 		hm = HIGHLIGHT_NONE;
@@ -469,10 +445,12 @@ read_result(BUFFER *buf)
 	time(&lastupdate);
 }
 
-/* ch: command character */
 kbd_result_t
 kbd_command(int ch)
 {
+	char buf[10], *endp;
+	double intvl;
+
 	switch (ch) {
 
 	case '?':
@@ -480,40 +458,6 @@ kbd_command(int ch)
 		refresh();
 		return (RSLT_REDRAW);
 
-	case '\033':
-		prefix = -1;
-		return (RSLT_REDRAW);
-
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		if (prefix < 0) {
-			prefix = 0;
-			decimal_point = -1;
-		}
-		if (decimal_point >= MAX_FRAQ_DIGITS)
-			return (RSLT_REDRAW);
-
-		if (decimal_point >= 0)
-			decimal_point++;
-		prefix = prefix * 10 + (ch - '0');
-		return (RSLT_REDRAW);
-
-	case '.':
-		if (decimal_point < 0)
-			decimal_point = 0;
-		return (RSLT_REDRAW);
-
-		/*
-		 * Update buffer
-		 */
 	case ' ':
 		return (RSLT_UPDATE);
 
@@ -553,30 +497,33 @@ kbd_command(int ch)
 			highlight_mode = HIGHLIGHT_LINE;
 		break;
 
-		/*
-		 * Set interval
-		 */
-	case 'i':
-		if (prefix >= 0) {
-			int i, power10;
+	case 's':
+		move(1, 0);
 
-			for (power10 = 1, i = 0; i < decimal_point; i++)
-				power10 *= 10;
+		standout();
+		printw("New interval: ");
+		standend();
 
-			opt_interval.tv_sec = prefix / power10;
-			opt_interval.tv_usec = prefix % power10;
-			for (i = NUM_FRAQ_DIGITS_USEC; i < decimal_point; i++)
-				opt_interval.tv_usec /= 10;
-			for (i = decimal_point; i < NUM_FRAQ_DIGITS_USEC; i++)
-				opt_interval.tv_usec *= 10;
+		echo();
+		getnstr(buf, sizeof(buf));
+		noecho();
 
-			prefix = -1;
+		intvl = strtod(buf, &endp);
+		if (intvl >= 0 && intvl <= 1000000 && *endp == '\0') {
+			opt_interval.tv_sec = (int)intvl;
+			opt_interval.tv_usec =
+			    (u_long)(intvl * 1000000UL) % 1000000UL;
+		} else {
+			move(1, 0);
+			standout();
+			printw("Interval should be a non-negative number");
+			standend();
+			refresh();
+			return (RSLT_ERROR);
 		}
+
 		return (RSLT_REDRAW);
 
-		/*
-		 * Vertical motion
-		 */
 	case '\n':
 	case '+':
 	case 'j':
@@ -605,9 +552,7 @@ kbd_command(int ch)
 		start_line = MAXIMUM(start_line - (LINES - 2), 0);
 		break;
 	case 'g':
-		if (prefix < MAXLINE)
-			start_line = prefix;
-		prefix = -1;
+		start_line = 0;
 		break;
 
 		/*
@@ -660,7 +605,6 @@ kbd_command(int ch)
 
 	}
 
-	prefix = -1;
 	return (RSLT_REDRAW);
 }
 
@@ -682,17 +626,16 @@ show_help(void)
 	    "RIGHT    l         L         >         ]\n"
 	    "LEFT     h         H         <         [\n"
 	    "\n"
-	    "g        goto top or prefix number line\n"
+	    "g        go to top\n"
 	    "\n"
 	    "Others:\n"
 	    "space    update buffer\n"
 	    "ctrl-l   refresh screen\n"
-	    "0..9     prefix number argument\n"
 	    "r        highlight changed characters\n"
 	    "e        highlight changed lines\n"
 	    "w        highlight changed words\n"
 	    "t        toggle higlighting mode\n"
-	    "i        set interval for prefix number\n"
+	    "n        change update interval\n"
 	    "p        pause and restart\n"
 	    "?        show this message\n"
 	    "q        quit\n\n");
@@ -761,6 +704,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-rewp] [-i interval] command [arg ...]\n",
+	fprintf(stderr, "usage: %s [-erw] [-s seconds] command [arg ...]\n",
 	    __progname);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: watch.1,v 1.5 2025/05/20 07:03:39 job Exp $
+.\"	$OpenBSD: watch.1,v 1.6 2025/05/20 08:24:16 job Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2014, 2016 Internet Initiative Japan Inc.
 .\"
@@ -22,8 +22,8 @@
 .Nd periodically execute a command and display its output
 .Sh SYNOPSIS
 .Nm
-.Op Fl rewpx
-.Op Fl i Ar interval
+.Op Fl erwx
+.Op Fl s Ar seconds 
 .Ar command Op Ar arg ...
 .Sh DESCRIPTION
 The
@@ -38,6 +38,10 @@ The options are as follows:
 Highlight the changed character.
 .It Fl e
 Highlight the changed line.
+.It Fl s Ar seconds
+Set the interval between updates to
+.Ar seconds .
+The default is 1 second.
 .It Fl w
 Highlight the changed word.
 .It Fl x
@@ -103,10 +107,8 @@ Toggle highlighting the changing lines.
 Toggle highlighting the changing words.
 .It Ic t
 Toggle current highlighting mode.
-.It Ic i
-Set the interval to the prefix number seconds.
-Enter the value before press this character.
-This value must be positive and may be valid for the sixth decimal place.
+.It Ic s
+Change the update interval.
 .It Ic p
 Toggle the pausing of update output.
 .It Ic ?
