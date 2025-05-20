@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem768.c,v 1.11 2025/05/19 07:53:00 beck Exp $ */
+/* $OpenBSD: mlkem768.c,v 1.12 2025/05/20 00:30:38 beck Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -89,6 +89,7 @@ static const int kLog2Prime = 12;
 static const uint16_t kHalfPrime = (/*kPrime=*/3329 - 1) / 2;
 static const int kDU768 = 10;
 static const int kDV768 = 4;
+
 /*
  * kInverseDegree is 128^-1 mod 3329; 128 because kPrime does not have a 512th
  * root of unity.
@@ -911,6 +912,7 @@ MLKEM768_generate_key_external_entropy(
 	memcpy(priv->fo_failure_secret, entropy + 32, 32);
 
 	ret = 1;
+
  err:
 	CBB_cleanup(&cbb);
 
@@ -1075,6 +1077,7 @@ MLKEM768_marshal_public_key(uint8_t **output, size_t *output_len,
 		goto err;
 
 	ret = 1;
+
  err:
 	CBB_cleanup(&cbb);
 
