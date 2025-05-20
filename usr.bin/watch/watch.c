@@ -1,3 +1,4 @@
+/*	$OpenBSD: watch.c,v 1.7 2025/05/20 06:26:56 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
