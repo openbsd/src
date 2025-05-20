@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.17 2025/05/16 13:54:33 mpi Exp $ */
+/*	$OpenBSD: psp.c,v 1.18 2025/05/20 07:02:20 mpi Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -504,9 +504,7 @@ psp_launch_update_data(struct psp_softc *sc,
 	end = start + size;
 
 	/* Wire mapping. */
-	vm_map_lock(&p->p_vmspace->vm_map);
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, start, end, FALSE);
-	vm_map_unlock(&p->p_vmspace->vm_map);
+	error = uvm_map_pageable(&p->p_vmspace->vm_map, start, end, FALSE, 0);
 	if (error)
 		goto out;
 
@@ -535,9 +533,7 @@ out:
 	 * Unwire again.  Ignore new error.  Error has either been set,
 	 * or PSP command has already succeeded.
 	 */
-	vm_map_lock(&p->p_vmspace->vm_map);
-	(void) uvm_map_pageable(&p->p_vmspace->vm_map, start, end, TRUE);
-	vm_map_unlock(&p->p_vmspace->vm_map);
+	(void) uvm_map_pageable(&p->p_vmspace->vm_map, start, end, TRUE, 0);
 
 	return (error);
 }

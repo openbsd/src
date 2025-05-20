@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.342 2025/05/16 13:54:34 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.343 2025/05/20 07:02:20 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ void			 uvm_map_pageable_pgon(struct vm_map*,
 			    vaddr_t, vaddr_t);
 int			 uvm_map_pageable_wire(struct vm_map*,
 			    struct vm_map_entry*, struct vm_map_entry*,
-			    vaddr_t, vaddr_t);
+			    vaddr_t, vaddr_t, int);
 void			 uvm_map_setup_entries(struct vm_map*);
 void			 uvm_map_setup_md(struct vm_map*);
 void			 uvm_map_teardown(struct vm_map*);
@@ -2057,18 +2057,20 @@ uvm_map_pageable_pgon(struct vm_map *map, struct vm_map_entry *first,
 
 /*
  * Mark all entries from first until end (exclusive) as wired.
+ *
+ * Lockflags determines the lock state on return from this function.
+ * Lock must be exclusive on entry.
  */
 int
 uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
-    struct vm_map_entry *end, vaddr_t start_addr, vaddr_t end_addr)
+    struct vm_map_entry *end, vaddr_t start_addr, vaddr_t end_addr,
+    int lockflags)
 {
 	struct vm_map_entry *iter;
 #ifdef DIAGNOSTIC
 	unsigned int timestamp_save;
 #endif
 	int error;
-
-	vm_map_assert_wrlock(map);
 
 	/*
 	 * Wire pages in two passes:
@@ -2127,12 +2129,12 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	vm_map_lock(map);
 	vm_map_unbusy(map);
 
+	if (error) {
 #ifdef DIAGNOSTIC
-	if (timestamp_save != map->timestamp)
-		panic("stale map");
+		if (timestamp_save != map->timestamp)
+			panic("uvm_map_pageable_wire: stale map");
 #endif
 
-	if (error) {
 		/*
 		 * first is no longer needed to restart loops.
 		 * Use it as iterator to unmap successful mappings.
@@ -2160,20 +2162,37 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 
 			iter->wired_count--;
 		}
+
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
+		return error;
 	}
 
-	return error;
+
+	if ((lockflags & UVM_LK_EXIT) == 0) {
+		vm_map_unlock(map);
+	} else {
+#ifdef DIAGNOSTIC
+		if (timestamp_save != map->timestamp)
+			panic("uvm_map_pageable_wire: stale map");
+#endif
+	}
+	return 0;
 }
 
 /*
  * uvm_map_pageable: set pageability of a range in a map.
+ *
+ * Flags:
+ * UVM_LK_ENTER: map is already locked by caller
+ * UVM_LK_EXIT:  don't unlock map on exit
  *
  * The full range must be in use (entries may not have fspace != 0).
  * UVM_ET_HOLE counts as unmapped.
  */
 int
 uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
-    boolean_t new_pageable)
+    boolean_t new_pageable, int lockflags)
 {
 	struct vm_map_entry *first, *last, *tmp;
 	int error;
@@ -2191,7 +2210,8 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		return EINVAL; /* why? see second XXX below */
 
 	KASSERT(map->flags & VM_MAP_PAGEABLE);
-	vm_map_assert_wrlock(map);
+	if ((lockflags & UVM_LK_ENTER) == 0)
+		vm_map_lock(map);
 
 	/*
 	 * Find first entry.
@@ -2262,6 +2282,8 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		error = 0;
 
 out:
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 		return error;
 	} else {
 		/*
@@ -2281,7 +2303,8 @@ out:
 		} else
 			tmp = last;
 
-		return uvm_map_pageable_wire(map, first, tmp, start, end);
+		return uvm_map_pageable_wire(map, first, tmp, start, end,
+		    lockflags);
 	}
 }
 
@@ -2347,7 +2370,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 	 * uvm_map_pageable_wire will release lock
 	 */
 	return uvm_map_pageable_wire(map, RBT_MIN(uvm_map_addr, &map->addr),
-	    NULL, map->min_offset, map->max_offset);
+	    NULL, map->min_offset, map->max_offset, 0);
 }
 
 /*
@@ -3173,7 +3196,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		    old_prot == PROT_NONE &&
 		    new_prot != PROT_NONE) {
 			if (uvm_map_pageable(map, iter->start, iter->end,
-			    FALSE) != 0) {
+			    FALSE, UVM_LK_ENTER | UVM_LK_EXIT) != 0) {
 				/*
 				 * If locking the entry fails, remember the
 				 * error if it's the first one.  Note we
