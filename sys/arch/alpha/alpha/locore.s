@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.57 2025/04/28 13:27:20 visa Exp $ */
+/* $OpenBSD: locore.s,v 1.58 2025/05/21 09:06:58 mpi Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -653,7 +653,7 @@ LEAF(cpu_switchto, 2)
 	 * We don't deactivate if we came here from sched_exit
 	 * (old pmap no longer exists; vmspace has been freed).
 	 * oldproc will be NULL in this case.  We have actually
-	 * taken care of calling pmap_deactivate() in cpu_exit(),
+	 * taken care of calling pmap_deactivate() in exit1(),
 	 * before the vmspace went away.
 	 */
 	beq	s0, 2f

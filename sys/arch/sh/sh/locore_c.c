@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.14 2023/01/06 19:10:18 miod Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.15 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -156,9 +156,6 @@ cpu_exit(struct proc *p)
 {
 	if (p->p_md.md_flags & MDP_STEP)
 		_reg_write_2(SH_(BBRB), 0);
-
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 #ifndef P1_STACK

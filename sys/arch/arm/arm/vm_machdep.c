@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -130,9 +130,6 @@ cpu_exit(struct proc *p)
 	/* If we were using the FPU, forget about it. */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		vfp_discard(p);
-
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 struct kmem_va_mode kv_physwait = {

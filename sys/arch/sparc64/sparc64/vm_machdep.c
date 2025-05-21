@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.45 2024/03/29 21:27:53 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.46 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -269,13 +269,6 @@ fpusave_proc(struct proc *p, int save)
 #endif
 }
 
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call sched_exit() with the old proc
- * as an argument.  sched_exit() schedules the old vmspace and stack
- * to be freed, then selects a new process to run.
- */
 void
 cpu_exit(struct proc *p)
 {
@@ -284,9 +277,6 @@ cpu_exit(struct proc *p)
 		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate));
 		p->p_md.md_fpstate = NULL;
 	}
-
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.85 2022/10/25 15:15:38 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.86 2025/05/21 09:06:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -131,9 +131,6 @@ cpu_exit(struct proc *p)
 	fpu_proc_flush(p);
 
 	pool_put(&hppa_fppl, pcb->pcb_fpstate);
-
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 struct kmem_va_mode kv_physwait = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2025/01/31 20:49:25 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -112,17 +112,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	pcb->pcb_sp = (uint64_t)sf;
 }
 
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call sched_exit() with the old proc as an
- * argument.
- */
 void
 cpu_exit(struct proc *p)
 {
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 struct kmem_va_mode kv_physwait = {

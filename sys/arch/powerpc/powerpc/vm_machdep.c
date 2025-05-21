@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.55 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.56 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -130,10 +130,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 }
 
 /*
- * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- *
  * Since we don't have curproc anymore, we cannot sleep, and therefore
  * this is at least incorrect for the multiprocessor version.
  * Not sure whether we can get away with this in the single proc version.		XXX
@@ -157,9 +153,6 @@ cpu_exit(struct proc *p)
 	if (pcb->pcb_vr != NULL)
 		pool_put(&ppc_vecpl, pcb->pcb_vr);
 #endif /* ALTIVEC */
-	
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 struct kmem_va_mode kv_physwait = {

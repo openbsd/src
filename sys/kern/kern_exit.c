@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.246 2025/05/16 13:40:30 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.247 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -382,17 +382,22 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	 */
 
 	/*
-	 * Finally, call machine-dependent code to switch to a new
-	 * context (possibly the idle context).  Once we are no longer
-	 * using the dead process's vmspace and stack, exit2() will be
-	 * called to schedule those resources to be released by the
-	 * reaper thread.
-	 *
-	 * Note that cpu_exit() will end with a call equivalent to
-	 * cpu_switch(), finishing our execution (pun intended).
+	 * Finally, call machine-dependent code.
 	 */
 	cpu_exit(p);
-	panic("cpu_exit returned");
+
+	/*
+	 * Deactivate the exiting address space before the vmspace
+	 * is freed.  Note that we will continue to run on this
+	 * vmspace's context until the switch to idle in sched_exit().
+	 *
+	 * Once we are no longer using the dead process's vmspace and
+	 * stack, exit2() will be called to schedule those resources
+	 * to be released by the reaper thread.
+	 */
+	pmap_deactivate(p);
+	sched_exit(p);
+	panic("sched_exit returned");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.74 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.75 2025/05/21 09:06:58 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -103,9 +103,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	pcb->pcb_ebp = 0;
 }
 
-/*
- * cpu_exit is called as the last action during exit.
- */
 void
 cpu_exit(struct proc *p)
 {
@@ -114,7 +111,6 @@ cpu_exit(struct proc *p)
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		npxsave_proc(p, 0);
 #endif
-	sched_exit(p);
 }
 
 /*

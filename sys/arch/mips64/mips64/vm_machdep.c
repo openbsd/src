@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2022/05/22 16:54:17 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2025/05/21 09:06:58 mpi Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -125,9 +125,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	pcb->pcb_context.val[0] = (register_t)func;
 }
 
-/*
- * cpu_exit is called as the last action during exit.
- */
 void
 cpu_exit(struct proc *p)
 {
@@ -136,12 +133,10 @@ cpu_exit(struct proc *p)
 	if (ci->ci_fpuproc == p)
 		ci->ci_fpuproc = NULL;
 
-	pmap_deactivate(p);
 #if UPAGES == 1
 	/* restore p_addr for proper deallocation */
 	p->p_addr = (void *)p->p_md.md_uarea;
 #endif
-	sched_exit(p);
 }
 
 struct kmem_va_mode kv_physwait = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2024/06/05 19:22:04 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.31 2025/05/21 09:06:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -108,14 +108,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	mdpcb->pcb_pc = (u_int)proc_trampoline;
 }
 
-/*
- * cpu_exit is called as the last action during exit.
- */
 void
 cpu_exit(struct proc *p)
 {
-	pmap_deactivate(p);
-	sched_exit(p);
 }
 
 struct kmem_va_mode kv_physwait = {

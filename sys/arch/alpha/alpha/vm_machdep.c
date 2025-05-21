@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.53 2024/05/21 23:16:06 jsg Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.54 2025/05/21 09:06:58 mpi Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -45,25 +45,11 @@
 #include <machine/reg.h>
 
 
-/*
- * cpu_exit is called as the last action during exit.
- */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(struct proc *p)
 {
-
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
-
-	/*
-	 * Deactivate the exiting address space before the vmspace
-	 * is freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to idle in sched_exit().
-	 */
-	pmap_deactivate(p);
-	sched_exit(p);
-	/* NOTREACHED */
 }
 
 /*
