@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.49 2025/01/13 17:50:54 krw Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.50 2025/05/21 04:05:23 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -157,5 +157,7 @@ int	hibernate_write(union hibernate_info *, daddr_t, vaddr_t, size_t, int);
 void	hibernate_sort_ranges(union hibernate_info *);
 void	hibernate_suspend_bufcache(void);
 void	hibernate_resume_bufcache(void);
+
+void	preallocate_hibernate_memory(void);
 
 #endif /* _SYS_HIBERNATE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.15 2015/01/09 03:43:52 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.16 2025/05/21 04:05:22 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -39,3 +39,15 @@
 #define s4pde_4m(va) ((pt_entry_t *)HIBERNATE_PD_PAGE + atop_4m(va))
 #define s4pde_4k(va) ((pt_entry_t *)HIBERNATE_PD_PAGE + atop_4k(va))
 #define s4pte_4k(va) ((pt_entry_t *)HIBERNATE_PT_PAGE + atop_4k(va))
+
+/*
+ * Minimum amount of memory for hibernate support. This is used in early boot
+ * when deciding if we can preallocate the piglet. If the machine does not
+ * have at least HIBERNATE_MIN_MEMORY RAM, we won't support hibernate. This
+ * avoids late allocation issues due to fragmented memory and failure to
+ * hibernate. We need to be able to allocate 16MB contiguous memory, aligned
+ * to 2MB.
+ *
+ * The default minimum required memory is 512MB (1ULL << 29).
+ */
+#define HIBERNATE_MIN_MEMORY	(1ULL << 29)
