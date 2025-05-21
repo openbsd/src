@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.42 2024/12/04 09:37:33 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.43 2025/05/21 00:13:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -371,7 +371,8 @@ dtalloc(void)
 		return NULL;
 	}
 
-	sc->ds_si = softintr_establish(IPL_SOFTCLOCK, dt_deferred_wakeup, sc);
+	sc->ds_si = softintr_establish(IPL_SOFTCLOCK | IPL_MPSAFE,
+	    dt_deferred_wakeup, sc);
 	if (sc->ds_si == NULL) {
 		dtfree(sc);
 		return NULL;
