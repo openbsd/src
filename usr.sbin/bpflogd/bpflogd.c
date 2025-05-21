@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpflogd.c,v 1.6 2025/05/16 05:47:30 kn Exp $	*/
+/*	$OpenBSD: bpflogd.c,v 1.7 2025/05/21 04:50:38 kn Exp $	*/
 
 /*
  * Copyright (c) 2025 The University of Queensland
@@ -34,7 +34,6 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <paths.h>
 #include <signal.h>
 #include <pwd.h>
 #include <errno.h>
@@ -53,8 +52,6 @@
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
-
-int  rdaemon(int);
 
 #define BPFLOGD_USER "_pflogd"
 
@@ -130,7 +127,6 @@ main(int argc, char *argv[])
 	char *filter = NULL;
 	struct bpf_program bf;
 	struct bpf_insn insns[] = { { BPF_RET, 0, 0, -1 } };
-	int devnull = -1;
 	int debug = 0;
 	int promisc = 0;
 	int waitms = 1000;
@@ -369,21 +365,10 @@ main(int argc, char *argv[])
 	if (bf.bf_insns != insns)
 		pcap_freecode(&bf);
 
-	if (!debug) {
-		devnull = open(_PATH_DEVNULL, O_RDWR);
-		if (devnull == -1)
-			err(1, "%s", _PATH_DEVNULL);
-	}
-
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		errx(1, "can't drop privileges");
-
-	if (unveil(bd->bd_fname, "rwc") == -1)
-		err(1, "unveil %s", bd->bd_fname);
-	if (unveil(NULL, NULL) == -1)
-		err(1, "unveil");
 
 	bd->bd_fd = bpflog_open(bd);
 	if (bd->bd_fd == -1) {
@@ -394,11 +379,16 @@ main(int argc, char *argv[])
 	if (!debug) {
 		extern char *__progname;
 
-		if (rdaemon(devnull) == -1)
+		if (daemon(0, 0) == -1)
 			err(1, "unable to daemonize");
 
 		logger_syslog(__progname);
 	}
+
+	if (unveil(bd->bd_fname, "rwc") == -1)
+		lerr(1, "unveil %s", bd->bd_fname);
+	if (unveil(NULL, NULL) == -1)
+		lerr(1, "unveil");
 
 	event_init();
 
@@ -659,36 +649,4 @@ bpfif_read(int fd, short events, void *arg)
 	}
 
 	fsync(bd->bd_fd);
-}
-
-/* daemon(3) clone, intended to be used in a "r"estricted environment */
-int
-rdaemon(int devnull)
-{
-	if (devnull == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (fcntl(devnull, F_GETFL) == -1)
-		return (-1);
-
-	switch (fork()) {
-	case -1:
-		return (-1);
-	case 0:
-		break;
-	default:
-		_exit(0);
-	}
-
-	if (setsid() == -1)
-		return (-1);
-
-	(void)dup2(devnull, STDIN_FILENO);
-	(void)dup2(devnull, STDOUT_FILENO);
-	(void)dup2(devnull, STDERR_FILENO);
-	if (devnull > 2)
-		(void)close(devnull);
-
-	return (0);
 }
