@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.23 2025/05/21 08:32:10 florian Exp $ */
+/*	$OpenBSD: watch.c,v 1.24 2025/05/21 12:44:12 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -125,6 +125,8 @@ main(int argc, char *argv[])
 	size_t len, rem;
 	int i, ch;
 	char *p;
+
+	setlocale(LC_CTYPE, "");
 
 	while ((ch = getopt(argc, argv, "cls:wx")) != -1)
 		switch (ch) {
