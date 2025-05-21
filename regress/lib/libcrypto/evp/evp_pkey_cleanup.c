@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_pkey_cleanup.c,v 1.5 2024/02/29 20:02:00 tb Exp $ */
+/*	$OpenBSD: evp_pkey_cleanup.c,v 1.6 2025/05/21 03:53:20 kenjiro Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -38,6 +38,8 @@ int pkey_ids[] = {
 	EVP_PKEY_RSA,
 	EVP_PKEY_RSA_PSS,
 	EVP_PKEY_X25519,
+	EVP_PKEY_HKDF,
+	EVP_PKEY_TLS1_PRF,
 };
 
 static const size_t N_PKEY_IDS = sizeof(pkey_ids) / sizeof(pkey_ids[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.21 2025/05/10 05:54:38 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.22 2025/05/21 03:53:20 kenjiro Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -89,6 +89,9 @@ static void
 pkey_hkdf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	HKDF_PKEY_CTX *kctx = ctx->data;
+
+	if (kctx == NULL)
+		return;
 
 	freezero(kctx->salt, kctx->salt_len);
 	freezero(kctx->key, kctx->key_len);
