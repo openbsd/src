@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-user.c,v 1.1 2025/05/10 09:44:39 visa Exp $	*/
+/*	$OpenBSD: kqueue-user.c,v 1.2 2025/05/21 14:10:16 visa Exp $	*/
 
 /*
  * Copyright (c) 2022 Visa Hankala
@@ -44,25 +44,8 @@ do_user(void)
 	n = kevent(kq, NULL, 0, kev, 2, &ts);
 	ASSX(n == 0);
 
-	/*
-	 * Activate the event.
-	 * Fields `data' and `udata' do not get updated without EV_ADD.
-	 */
+	/* Activate the event. This updates `data' and `udata'. */
 	EV_SET(&kev[0], 1, EVFILT_USER, 0, NOTE_TRIGGER | NOTE_FFNOP,
-	    123, &dummy);
-	n = kevent(kq, kev, 1, NULL, 0, NULL);
-	ASSX(n == 0);
-
-	/* Check active events. */
-	n = kevent(kq, NULL, 0, kev, 2, &ts);
-	ASSX(n == 1);
-	ASSX(kev[0].ident == 1);
-	ASSX(kev[0].fflags == NOTE_FFLAGSMASK);
-	ASSX(kev[0].data == 0);
-	ASSX(kev[0].udata == NULL);
-
-	/* Activate the event. Update `data' and `udata'. */
-	EV_SET(&kev[0], 1, EVFILT_USER, EV_ADD, NOTE_TRIGGER | NOTE_FFNOP,
 	    123, &dummy);
 	n = kevent(kq, kev, 1, NULL, 0, NULL);
 	ASSX(n == 0);
@@ -122,8 +105,8 @@ do_user(void)
 	ASSX(n == 1);
 	ASSX(kev[0].ident == 2);
 	ASSX(kev[0].fflags == 0x11);
-	ASSX(kev[0].data == 42);
-	ASSX(kev[0].udata == &dummy);
+	ASSX(kev[0].data == 24);
+	ASSX(kev[0].udata == &dummy2);
 
 	n = kevent(kq, NULL, 0, kev, 2, &ts);
 	ASSX(n == 0);
@@ -132,9 +115,9 @@ do_user(void)
 	n = kevent(kq, kev, 1, kev, 2, &ts);
 	ASSX(n == 1);
 	ASSX(kev[0].ident == 2);
-	ASSX(kev[0].fflags == 0);
-	ASSX(kev[0].data == 0);
-	ASSX(kev[0].udata == &dummy);
+	ASSX(kev[0].fflags == 0x11);
+	ASSX(kev[0].data == 9);
+	ASSX(kev[0].udata == &dummy2);
 
 	EV_SET(&kev[0], 2, EVFILT_USER, EV_DELETE, 0, 0, NULL);
 	n = kevent(kq, kev, 1, kev, 2, &ts);
@@ -154,7 +137,7 @@ do_user(void)
 	ASSX(kev[0].ident == 1);
 	ASSX(kev[0].fflags == 0x0faaf0);
 	ASSX(kev[0].data == 0);
-	ASSX(kev[0].udata == &dummy);
+	ASSX(kev[0].udata == NULL);
 
 	/* Test event limit. */
 	for (i = 0;; i++) {

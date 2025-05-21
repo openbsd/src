@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.204 2025/05/15 19:56:08 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.205 2025/05/21 14:10:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -850,16 +850,12 @@ filt_usermodify(struct kevent *kev, struct knote *kn)
 		break;
 	}
 
-	if (kev->flags & EV_ADD) {
-		kn->kn_data = kev->data;
-		kn->kn_udata = kev->udata;
-	}
+	kn->kn_data = kev->data;
+	kn->kn_udata = kev->udata;
 
 	/* Allow clearing of an activated event. */
-	if (kev->flags & EV_CLEAR) {
+	if (kev->flags & EV_CLEAR)
 		kn->kn_ptr.p_useract = 0;
-		kn->kn_data = 0;
-	}
 
 	return (kn->kn_ptr.p_useract);
 }
@@ -872,11 +868,8 @@ filt_userprocess(struct knote *kn, struct kevent *kev)
 	active = kn->kn_ptr.p_useract;
 	if (active && kev != NULL) {
 		*kev = kn->kn_kevent;
-		if (kn->kn_flags & EV_CLEAR) {
+		if (kn->kn_flags & EV_CLEAR)
 			kn->kn_ptr.p_useract = 0;
-			kn->kn_fflags = 0;
-			kn->kn_data = 0;
-		}
 	}
 
 	return (active);
