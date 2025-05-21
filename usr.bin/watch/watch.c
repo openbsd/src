@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.17 2025/05/20 14:59:39 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.18 2025/05/21 01:06:24 florian Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -477,7 +477,7 @@ kbd_command(int ch)
 	case 'j':
 		start_line = MINIMUM(start_line + 1, MAXLINE - 1);
 		break;
-	
+
 	case KEY_LEFT:
 	case '[':
 		start_column = MAXIMUM(start_column - 1, 0);
