@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.17 2025/05/19 20:38:53 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.18 2025/05/21 01:27:29 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -11,6 +11,7 @@
 */
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,7 +35,7 @@
 #define TM_YEAR_BASE	1900
 #define DAYSPERNYEAR	365
 
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	(SECSPERHOUR * HOURSPERDAY)
 #define SECSPERNYEAR	(SECSPERDAY * DAYSPERNYEAR)
 #define SECSPERLYEAR	(SECSPERNYEAR + SECSPERDAY)
 
@@ -58,11 +59,11 @@ static int		warned;
 
 static char 		*abbr(struct tm *tmp);
 static void		abbrok(const char *abbrp, const char *zone);
-static __pure long	delta(struct tm *newp, struct tm *oldp);
+static __pure intmax_t	delta(struct tm *newp, struct tm *oldp);
 static void		dumptime(const struct tm *tmp);
 static time_t		hunt(char *name, time_t lot, time_t hit);
 static void		show(char *zone, time_t t, int v);
-static __pure time_t	yeartot(long y);
+static __pure time_t	yeartot(intmax_t y);
 static __dead void	usage(void);
 
 static void
@@ -143,15 +144,14 @@ main(int argc, char *argv[])
 
 	if (vflag || Vflag) {
 		char dummy;
-		long cutloyear = ZDUMP_LO_YEAR;
-		long cuthiyear = ZDUMP_HI_YEAR;
+		intmax_t cutloyear = ZDUMP_LO_YEAR;
+		intmax_t cuthiyear = ZDUMP_HI_YEAR;
+		intmax_t lo, hi;
 
 		if (cutarg != NULL) {
-			long lo, hi;
-
-			if (sscanf(cutarg, "%ld%c", &hi, &dummy) == 1) {
+			if (sscanf(cutarg, "%"SCNdMAX"%c", &hi, &dummy) == 1) {
 				cuthiyear = hi;
-			} else if (sscanf(cutarg, "%ld,%ld%c",
+			} else if (sscanf(cutarg, "%"SCNdMAX",%"SCNdMAX"%c",
 			    &lo, &hi, &dummy) == 2) {
 				cutloyear = lo;
 				cuthiyear = hi;
@@ -166,16 +166,14 @@ main(int argc, char *argv[])
 			cuthitime = yeartot(cuthiyear);
 		}
 		if (cuttimes != NULL) {
-			long long lo, hi;
-
-			if (sscanf(cuttimes, "%lld%c", &hi, &dummy) == 1) {
+			if (sscanf(cuttimes, "%"SCNdMAX"%c", &hi, &dummy) == 1) {
 				cutlotime = yeartot(cutloyear);
 				if (hi < cuthitime) {
 					if (hi < absolute_min_time)
 						hi = absolute_min_time;
 					cuthitime = hi;
 				}
-			} else if (sscanf(cuttimes, "%lld,%lld%c",
+			} else if (sscanf(cuttimes, "%"SCNdMAX",%"SCNdMAX"%c",
 					  &lo, &hi, &dummy) == 2) {
 				if (cutlotime < lo) {
 					if (absolute_max_time < lo)
@@ -281,10 +279,11 @@ main(int argc, char *argv[])
 }
 
 static time_t
-yeartot(const long y)
+yeartot(const intmax_t y)
 {
-	long	myy = EPOCH_YEAR, seconds;
-	time_t	t = 0;
+	intmax_t	myy = EPOCH_YEAR;
+	int_fast32_t	seconds;
+	time_t		t = 0;
 
 	while (myy != y) {
 		if (myy < y) {
@@ -312,7 +311,6 @@ static time_t
 hunt(char *name, time_t lot, time_t hit)
 {
 	time_t			t;
-	long			diff;
 	struct tm		lotm, *lotmp;
 	struct tm		tm, *tmp;
 	char			loab[MAX_STRING_LENGTH];
@@ -323,7 +321,7 @@ hunt(char *name, time_t lot, time_t hit)
 		strlcpy(loab, abbr(&lotm), sizeof loab);
 	}
 	for ( ; ; ) {
-		diff = (long) (hit - lot);
+		time_t diff = hit - lot;
 		if (diff < 2)
 			break;
 		t = lot;
@@ -354,11 +352,11 @@ hunt(char *name, time_t lot, time_t hit)
 ** Thanks to Paul Eggert for logic used in delta.
 */
 
-static long
+static intmax_t
 delta(struct tm *newp, struct tm *oldp)
 {
-	long	result;
-	int	tmy;
+	intmax_t	result;
+	int		tmy;
 
 	if (newp->tm_year < oldp->tm_year)
 		return -delta(oldp, newp);

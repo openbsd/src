@@ -1,4 +1,4 @@
-/*	$OpenBSD: tzfile.h,v 1.9 2012/09/13 11:14:20 millert Exp $	*/
+/*	$OpenBSD: tzfile.h,v 1.10 2025/05/21 01:27:29 millert Exp $	*/
 
 #ifndef TZFILE_H
 
@@ -124,7 +124,7 @@ struct tzhead {
 #define DAYSPERNYEAR	365
 #define DAYSPERLYEAR	366
 #define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	(SECSPERHOUR * HOURSPERDAY)
 #define MONSPERYEAR	12
 
 #define TM_SUNDAY	0
