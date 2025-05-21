@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.43 2025/05/21 11:37:07 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.44 2025/05/21 12:11:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -236,13 +236,6 @@ gcm_ghash(GCM128_CONTEXT *ctx, const uint8_t *in, size_t len)
 }
 #endif
 
-/*
- * GHASH_CHUNK is "stride parameter" missioned to mitigate cache
- * trashing effect. In other words idea is to hash data while it's
- * still in L1 cache after encryption pass...
- */
-#define GHASH_CHUNK       (3*1024)
-
 #if	defined(GHASH_ASM) &&						\
 	(defined(__i386)	|| defined(__i386__)	||		\
 	 defined(__x86_64)	|| defined(__x86_64__)	||		\
@@ -458,101 +451,7 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
-	if (16 % sizeof(size_t) == 0)
-		do {	/* always true actually */
-			if (n) {
-				while (n && len) {
-					ctx->Xi.c[n] ^= *(out++) = *(in++) ^
-					    ctx->EKi.c[n];
-					--len;
-					n = (n + 1) % 16;
-				}
-				if (n == 0)
-					gcm_mul(ctx, ctx->Xi.u);
-				else {
-					ctx->mres = n;
-					return 0;
-				}
-			}
-#ifdef __STRICT_ALIGNMENT
-			if (((size_t)in|(size_t)out) % sizeof(size_t) != 0)
-				break;
-#endif
-#if defined(GHASH_CHUNK)
-			while (len >= GHASH_CHUNK) {
-				size_t j = GHASH_CHUNK;
 
-				while (j) {
-					size_t *out_t = (size_t *)out;
-					const size_t *in_t = (const size_t *)in;
-
-					(*block)(ctx->Yi.c, ctx->EKi.c, key);
-					++ctr;
-					ctx->Yi.d[3] = htobe32(ctr);
-
-					for (i = 0; i < 16/sizeof(size_t); ++i)
-						out_t[i] = in_t[i] ^
-						    ctx->EKi.t[i];
-					out += 16;
-					in += 16;
-					j -= 16;
-				}
-				gcm_ghash(ctx, out - GHASH_CHUNK, GHASH_CHUNK);
-				len -= GHASH_CHUNK;
-			}
-			if ((i = (len & (size_t)-16))) {
-				size_t j = i;
-
-				while (len >= 16) {
-					size_t *out_t = (size_t *)out;
-					const size_t *in_t = (const size_t *)in;
-
-					(*block)(ctx->Yi.c, ctx->EKi.c, key);
-					++ctr;
-					ctx->Yi.d[3] = htobe32(ctr);
-
-					for (i = 0; i < 16/sizeof(size_t); ++i)
-						out_t[i] = in_t[i] ^
-						    ctx->EKi.t[i];
-					out += 16;
-					in += 16;
-					len -= 16;
-				}
-				gcm_ghash(ctx, out - j, j);
-			}
-#else
-			while (len >= 16) {
-				size_t *out_t = (size_t *)out;
-				const size_t *in_t = (const size_t *)in;
-
-				(*block)(ctx->Yi.c, ctx->EKi.c, key);
-				++ctr;
-				ctx->Yi.d[3] = htobe32(ctr);
-
-				for (i = 0; i < 16/sizeof(size_t); ++i)
-					ctx->Xi.t[i] ^=
-					    out_t[i] = in_t[i] ^ ctx->EKi.t[i];
-				gcm_mul(ctx, ctx->Xi.u);
-				out += 16;
-				in += 16;
-				len -= 16;
-			}
-#endif
-			if (len) {
-				(*block)(ctx->Yi.c, ctx->EKi.c, key);
-				++ctr;
-				ctx->Yi.d[3] = htobe32(ctr);
-
-				while (len--) {
-					ctx->Xi.c[n] ^= out[n] = in[n] ^
-					    ctx->EKi.c[n];
-					++n;
-				}
-			}
-
-			ctx->mres = n;
-			return 0;
-		} while (0);
 	for (i = 0; i < len; ++i) {
 		if (n == 0) {
 			(*block)(ctx->Yi.c, ctx->EKi.c, key);
@@ -594,103 +493,7 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
-	if (16 % sizeof(size_t) == 0)
-		do {	/* always true actually */
-			if (n) {
-				while (n && len) {
-					uint8_t c = *(in++);
-					*(out++) = c ^ ctx->EKi.c[n];
-					ctx->Xi.c[n] ^= c;
-					--len;
-					n = (n + 1) % 16;
-				}
-				if (n == 0)
-					gcm_mul(ctx, ctx->Xi.u);
-				else {
-					ctx->mres = n;
-					return 0;
-				}
-			}
-#ifdef __STRICT_ALIGNMENT
-			if (((size_t)in|(size_t)out) % sizeof(size_t) != 0)
-				break;
-#endif
-#if defined(GHASH_CHUNK)
-			while (len >= GHASH_CHUNK) {
-				size_t j = GHASH_CHUNK;
 
-				gcm_ghash(ctx, in, GHASH_CHUNK);
-				while (j) {
-					size_t *out_t = (size_t *)out;
-					const size_t *in_t = (const size_t *)in;
-
-					(*block)(ctx->Yi.c, ctx->EKi.c, key);
-					++ctr;
-					ctx->Yi.d[3] = htobe32(ctr);
-
-					for (i = 0; i < 16/sizeof(size_t); ++i)
-						out_t[i] = in_t[i] ^
-						    ctx->EKi.t[i];
-					out += 16;
-					in += 16;
-					j -= 16;
-				}
-				len -= GHASH_CHUNK;
-			}
-			if ((i = (len & (size_t)-16))) {
-				gcm_ghash(ctx, in, i);
-				while (len >= 16) {
-					size_t *out_t = (size_t *)out;
-					const size_t *in_t = (const size_t *)in;
-
-					(*block)(ctx->Yi.c, ctx->EKi.c, key);
-					++ctr;
-					ctx->Yi.d[3] = htobe32(ctr);
-
-					for (i = 0; i < 16/sizeof(size_t); ++i)
-						out_t[i] = in_t[i] ^
-						    ctx->EKi.t[i];
-					out += 16;
-					in += 16;
-					len -= 16;
-				}
-			}
-#else
-			while (len >= 16) {
-				size_t *out_t = (size_t *)out;
-				const size_t *in_t = (const size_t *)in;
-
-				(*block)(ctx->Yi.c, ctx->EKi.c, key);
-				++ctr;
-				ctx->Yi.d[3] = htobe32(ctr);
-
-				for (i = 0; i < 16/sizeof(size_t); ++i) {
-					size_t c = in_t[i];
-					out_t[i] = c ^ ctx->EKi.t[i];
-					ctx->Xi.t[i] ^= c;
-				}
-				gcm_mul(ctx, ctx->Xi.u);
-				out += 16;
-				in += 16;
-				len -= 16;
-			}
-#endif
-			if (len) {
-				(*block)(ctx->Yi.c, ctx->EKi.c, key);
-				++ctr;
-				ctx->Yi.d[3] = htobe32(ctr);
-
-				while (len--) {
-					uint8_t c = in[n];
-					ctx->Xi.c[n] ^= c;
-					out[n] = c ^ ctx->EKi.c[n];
-					++n;
-				}
-			}
-
-			ctx->mres = n;
-			return 0;
-		} while (0);
 	for (i = 0; i < len; ++i) {
 		uint8_t c;
 		if (n == 0) {
@@ -747,17 +550,6 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
 			return 0;
 		}
 	}
-#if defined(GHASH_CHUNK)
-	while (len >= GHASH_CHUNK) {
-		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
-		ctr += GHASH_CHUNK/16;
-		ctx->Yi.d[3] = htobe32(ctr);
-		gcm_ghash(ctx, out, GHASH_CHUNK);
-		out += GHASH_CHUNK;
-		in += GHASH_CHUNK;
-		len -= GHASH_CHUNK;
-	}
-#endif
 	if ((i = (len & (size_t)-16))) {
 		size_t j = i/16;
 
@@ -822,17 +614,6 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
 			return 0;
 		}
 	}
-#if defined(GHASH_CHUNK)
-	while (len >= GHASH_CHUNK) {
-		gcm_ghash(ctx, in, GHASH_CHUNK);
-		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
-		ctr += GHASH_CHUNK/16;
-		ctx->Yi.d[3] = htobe32(ctr);
-		out += GHASH_CHUNK;
-		in += GHASH_CHUNK;
-		len -= GHASH_CHUNK;
-	}
-#endif
 	if ((i = (len & (size_t)-16))) {
 		size_t j = i/16;
 
