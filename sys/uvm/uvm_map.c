@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.343 2025/05/20 07:02:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.344 2025/05/21 16:59:32 dv Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3419,108 +3419,6 @@ uvmspace_free(struct vmspace *vm)
 		uvm_map_teardown(&vm->vm_map);
 		pool_put(&uvm_vmspace_pool, vm);
 	}
-}
-
-/*
- * uvm_share: Map the address range [srcaddr, srcaddr + sz) in
- * srcmap to the address range [dstaddr, dstaddr + sz) in
- * dstmap.
- *
- * The whole address range in srcmap must be backed by an object
- * (no holes).
- *
- * If successful, the address ranges share memory and the destination
- * address range uses the protection flags in prot.
- *
- * This routine assumes that sz is a multiple of PAGE_SIZE and
- * that dstaddr and srcaddr are page-aligned.
- */
-int
-uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
-    struct vm_map *srcmap, vaddr_t srcaddr, vsize_t sz)
-{
-	int ret = 0;
-	vaddr_t unmap_end;
-	vaddr_t dstva;
-	vsize_t s_off, len, n = sz, remain;
-	struct vm_map_entry *first = NULL, *last = NULL;
-	struct vm_map_entry *src_entry, *psrc_entry = NULL;
-	struct uvm_map_deadq dead;
-
-	if (srcaddr >= srcmap->max_offset || sz > srcmap->max_offset - srcaddr)
-		return EINVAL;
-
-	TAILQ_INIT(&dead);
-	vm_map_lock(dstmap);
-	vm_map_lock_read(srcmap);
-
-	if (!uvm_map_isavail(dstmap, NULL, &first, &last, dstaddr, sz)) {
-		ret = ENOMEM;
-		goto exit_unlock;
-	}
-	if (!uvm_map_lookup_entry(srcmap, srcaddr, &src_entry)) {
-		ret = EINVAL;
-		goto exit_unlock;
-	}
-
-	dstva = dstaddr;
-	unmap_end = dstaddr;
-	for (; src_entry != NULL;
-	    psrc_entry = src_entry,
-	    src_entry = RBT_NEXT(uvm_map_addr, src_entry)) {
-		/* hole in address space, bail out */
-		if (psrc_entry != NULL && psrc_entry->end != src_entry->start)
-			break;
-		if (src_entry->start >= srcaddr + sz)
-			break;
-
-		if (UVM_ET_ISSUBMAP(src_entry))
-			panic("uvm_share: encountered a submap (illegal)");
-		if (!UVM_ET_ISCOPYONWRITE(src_entry) &&
-		    UVM_ET_ISNEEDSCOPY(src_entry))
-			panic("uvm_share: non-copy_on_write map entries "
-			    "marked needs_copy (illegal)");
-
-		/*
-		 * srcaddr > map entry start? means we are in the middle of a
-		 * map, so we calculate the offset to use in the source map.
-		 */
-		if (srcaddr > src_entry->start)
-			s_off = srcaddr - src_entry->start;
-		else if (srcaddr == src_entry->start)
-			s_off = 0;
-		else
-			panic("uvm_share: map entry start > srcaddr");
-
-		remain = src_entry->end - src_entry->start - s_off;
-
-		/* Determine how many bytes to share in this pass */
-		if (n < remain)
-			len = n;
-		else
-			len = remain;
-
-		if (uvm_mapent_share(dstmap, dstva, len, s_off, prot, prot,
-		    srcmap, src_entry, &dead) == NULL)
-			break;
-
-		n -= len;
-		dstva += len;
-		srcaddr += len;
-		unmap_end = dstva + len;
-		if (n == 0)
-			goto exit_unlock;
-	}
-
-	ret = EINVAL;
-	uvm_unmap_remove(dstmap, dstaddr, unmap_end, &dead, FALSE, TRUE, FALSE);
-
-exit_unlock:
-	vm_map_unlock_read(srcmap);
-	vm_map_unlock(dstmap);
-	uvm_unmap_detach(&dead, 0);
-
-	return ret;
 }
 
 /*
