@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.40 2025/05/21 03:15:40 kn Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.41 2025/05/21 09:42:21 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -780,11 +780,11 @@ main(int argc, char *argv[])
 
 	if (unveil("/", "") == -1) {
 		syslog(LOG_ERR, "unveil /: %s", strerror(errno));
-		exit_deamon();
+		exit_daemon();
 	}
 	if (unveil(NULL, NULL) == -1) {
 		syslog(LOG_ERR, "unveil: %s", strerror(errno));
-		exit_deamon();
+		exit_daemon();
 	}
 
 	event_init();
