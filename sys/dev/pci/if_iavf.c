@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.21 2025/05/21 12:45:27 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.22 2025/05/21 12:51:14 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -749,12 +749,6 @@ iavf_aq_dva(struct iavf_aq_desc *iaq, bus_addr_t addr)
 #endif
 	htolem32(&iaq->iaq_param[3], addr);
 }
-
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define HTOLE16(_x)	(uint16_t)(((_x) & 0xff) << 8 | ((_x) & 0xff00) >> 8)
-#else
-#define HTOLE16(_x)	(_x)
-#endif
 
 static const struct pci_matchid iavf_devices[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_VF },
