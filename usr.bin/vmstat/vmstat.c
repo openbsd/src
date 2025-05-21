@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.159 2025/03/10 19:52:57 miod Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.160 2025/05/21 03:04:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -854,25 +854,24 @@ domem(void)
 		printf("\n");
 	}
 
-	(void)printf(
-	   "\nMemory statistics by type                           Type  Kern\n");
-	(void)printf(
-"          Type InUse MemUse HighUse  Limit Requests Limit Size(s)\n");
+	(void)printf("\n"
+"Memory statistics by type                          Type  Kern\n"
+" Type          InUse MemUse HighUse Limit Requests Limit Size(s)\n");
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
 		if (ks->ks_calls == 0)
 			continue;
-		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u",
+		(void)printf(" %-13s%6ld%6ldK%7ldK%5ldM%9ld%6u",
 		    kmemnames[i] ? kmemnames[i] : "undefined",
 		    ks->ks_inuse, (ks->ks_memuse + 1023) / 1024,
 		    (ks->ks_maxused + 1023) / 1024,
-		    (ks->ks_limit + 1023) / 1024, ks->ks_calls,
+		    (ks->ks_limit + 1023) / 1024 / 1024, ks->ks_calls,
 		    ks->ks_limblocks);
 		first = 1;
 		for (j =  1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
 			if ((ks->ks_size & j) == 0)
 				continue;
 			if (first)
-				printf("  %d", j);
+				printf(" %d", j);
 			else
 				printf(",%d", j);
 			first = 0;
