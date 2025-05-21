@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.231 2025/05/21 08:41:35 djm Exp $ */
+/* $OpenBSD: netcat.c,v 1.232 2025/05/21 08:46:42 djm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1846,7 +1846,7 @@ help(void)
 	\t-v		Verbose\n\
 	\t-W recvlimit	Terminate after receiving a number of packets\n\
 	\t-w timeout	Timeout for connects and final net reads\n\
-	\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n\
+	\t-X proto	Proxy protocol: \"4\", \"4A\", \"5\" (SOCKS) or \"connect\"\n\
 	\t-x addr[:port]\tSpecify proxy address and port\n\
 	\t-Z		Peer certificate file\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
