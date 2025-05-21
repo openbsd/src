@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.75 2024/07/03 01:36:50 jsg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.76 2025/05/21 09:04:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -40,6 +40,21 @@ int __mp_lock_spinout = INT_MAX;
 
 #include <sys/mplock.h>
 struct __mp_lock kernel_lock;
+
+/*
+ * Min & max numbers of "busy cycles" to waste before trying again to
+ * acquire a contended lock using an atomic operation.
+ *
+ * The min number must be as small as possible to not introduce extra
+ * latency.  It also doesn't matter if the first steps of an exponential
+ * backoff are smalls.
+ *
+ * The max number is used to cap the exponential backoff.  It should
+ * be small enough to not waste too many cycles in %sys time and big
+ * enough to reduce (ideally avoid) cache line contention.
+ */
+#define CPU_MIN_BUSY_CYCLES	1
+#define CPU_MAX_BUSY_CYCLES	64
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here
@@ -228,9 +243,7 @@ void
 mtx_enter(struct mutex *mtx)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
-#ifdef MP_LOCKDEBUG
-	int nticks = __mp_lock_spinout;
-#endif
+	unsigned int i, ncycle = CPU_MIN_BUSY_CYCLES;
 
 	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
 	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
@@ -238,15 +251,11 @@ mtx_enter(struct mutex *mtx)
 	spc->spc_spinning++;
 	while (mtx_enter_try(mtx) == 0) {
 		do {
-			CPU_BUSY_CYCLE();
-#ifdef MP_LOCKDEBUG
-			if (--nticks == 0) {
-				db_printf("%s: %p lock spun out\n",
-				    __func__, mtx);
-				db_enter();
-				nticks = __mp_lock_spinout;
-			}
-#endif
+			/* Busy loop with exponential backoff. */
+			for (i = ncycle; i > 0; i--)
+				CPU_BUSY_CYCLE();
+			if (ncycle < CPU_MAX_BUSY_CYCLES)
+				ncycle += ncycle;
 		} while (mtx->mtx_owner != NULL);
 	}
 	spc->spc_spinning--;
@@ -265,20 +274,27 @@ mtx_enter_try(struct mutex *mtx)
 	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
 
-	owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
+	/*
+	 * Avoid unconditional atomic operation to prevent cache line
+	 * contention.
+	 */
+	owner = mtx->mtx_owner;
 #ifdef DIAGNOSTIC
 	if (__predict_false(owner == ci))
 		panic("mtx %p: locking against myself", mtx);
 #endif
 	if (owner == NULL) {
-		membar_enter_after_atomic();
-		if (mtx->mtx_wantipl != IPL_NONE)
-			mtx->mtx_oldipl = s;
+		owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
+		if (owner == NULL) {
+			membar_enter_after_atomic();
+			if (mtx->mtx_wantipl != IPL_NONE)
+				mtx->mtx_oldipl = s;
 #ifdef DIAGNOSTIC
-		ci->ci_mutex_level++;
+			ci->ci_mutex_level++;
 #endif
-		WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
-		return (1);
+			WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
+			return (1);
+		}
 	}
 
 	if (mtx->mtx_wantipl != IPL_NONE)
@@ -353,6 +369,7 @@ void
 db_mtx_enter(struct db_mutex *mtx)
 {
 	struct cpu_info *ci = curcpu(), *owner;
+	unsigned int i, ncycle = CPU_MIN_BUSY_CYCLES;
 	unsigned long s;
 
 #ifdef DIAGNOSTIC
@@ -361,12 +378,22 @@ db_mtx_enter(struct db_mutex *mtx)
 #endif
 
 	s = intr_disable();
-
 	for (;;) {
-		owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
-		if (owner == NULL)
-			break;
-		CPU_BUSY_CYCLE();
+		/*
+		 * Avoid unconditional atomic operation to prevent cache
+		 * line contention.
+		 */
+		owner = mtx->mtx_owner;
+		if (owner == NULL) {
+			owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
+			if (owner == NULL)
+				break;
+			/* Busy loop with exponential backoff. */
+			for (i = ncycle; i > 0; i--)
+				CPU_BUSY_CYCLE();
+			if (ncycle < CPU_MAX_BUSY_CYCLES)
+				ncycle += ncycle;
+		}
 	}
 	membar_enter_after_atomic();
 
