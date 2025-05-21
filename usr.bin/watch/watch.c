@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.21 2025/05/21 07:16:25 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.22 2025/05/21 07:37:11 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -65,7 +65,6 @@ struct {
 };
 
 highlight_mode_t highlight_mode = HIGHLIGHT_NONE;
-highlight_mode_t last_highlight_mode = HIGHLIGHT_CHAR;
 
 int start_line = 0, start_column = 0;	/* display offset coordinates */
 
@@ -579,15 +578,6 @@ kbd_command(int ch)
 
 		return (RSLT_REDRAW);
 
-	case 't':
-		if (highlight_mode != HIGHLIGHT_NONE) {
-			last_highlight_mode = highlight_mode;
-			highlight_mode = HIGHLIGHT_NONE;
-		} else {
-			highlight_mode = last_highlight_mode;
-		}
-		break;
-
 	case 'w':
 		if (highlight_mode == HIGHLIGHT_WORD)
 			highlight_mode = HIGHLIGHT_NONE;
@@ -631,7 +621,6 @@ show_help(void)
 	    "c              - highlight changed characters\n"
 	    "l              - highlight changed lines\n"
 	    "w              - highlight changed words\n"
-	    "t              - toggle highlight mode on/off\n"
 	    "p              - toggle pause / resume\n"
 	    "s              - change the update interval\n"
 	    "h | ?          - show this message\n"
