@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.10 2025/05/20 00:33:41 beck Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.11 2025/05/21 03:46:20 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -250,7 +250,7 @@ main(void)
 	/*
 	 * XXX - this is split into two helper functions since having a few
 	 * ML-KEM key blobs on the stack makes Emscripten's stack explode,
-	 * leading to inscrutable silent failures unles ASAN is enabled.
+	 * leading to inscrutable silent failures unless ASAN is enabled.
 	 * Go figure.
 	 */
 
