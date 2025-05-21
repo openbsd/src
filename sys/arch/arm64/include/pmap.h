@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.28 2025/02/03 17:59:40 jca Exp $ */
+/* $OpenBSD: pmap.h,v 1.29 2025/05/21 09:42:59 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -124,6 +124,7 @@ int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t);
 
 #define __HAVE_PMAP_MPSAFE_ENTER_COW
 #define __HAVE_PMAP_POPULATE
+#define __HAVE_PMAP_PURGE
 
 #endif /* _KERNEL && !_LOCORE */
 

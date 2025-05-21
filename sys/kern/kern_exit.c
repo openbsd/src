@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.247 2025/05/21 09:06:58 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.248 2025/05/21 09:42:59 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -241,6 +241,10 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 */
 		if (pr->ps_pptr->ps_sigacts->ps_sigflags & SAS_NOCLDWAIT)
 			atomic_setbits_int(&pr->ps_flags, PS_NOZOMBIE);
+
+#ifdef __HAVE_PMAP_PURGE
+		pmap_purge(p);
+#endif
 	}
 
 	p->p_fd = NULL;		/* zap the thread's copy */

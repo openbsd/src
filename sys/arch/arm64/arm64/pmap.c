@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.111 2025/02/14 18:36:04 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.112 2025/05/21 09:42:59 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1497,14 +1497,39 @@ pmap_deactivate(struct proc *p)
 
 	KASSERT(p == curproc);
 
+	if (pm->pm_active == 0)
+		return;
+
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 
-	if (atomic_dec_int_nv(&pm->pm_active) > 0)
-		return;
+	atomic_dec_int(&pm->pm_active);
+}
+
+void
+pmap_purge(struct proc *p)
+{
+	pmap_t pm = p->p_vmspace->vm_map.pmap;
+
+	KASSERT(p->p_p->ps_threadcnt == 0);
+	KASSERT(p == curproc);
+
+	/*
+	 * There is a theoretical chance that our sibling threads are
+	 * still making their way through the tail end of exit1().
+	 * Make absolutely sure they have made it past the point where
+	 * they disable their userland page tables.
+	 */
+	while (pm->pm_active != 1)
+		CPU_BUSY_CYCLE();
+
+	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
+	__asm volatile("isb");
 
 	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
 	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
+	pm->pm_pt0pa = pmap_kernel()->pm_pt0pa;
+	pm->pm_active = 0;
 }
 
 /*

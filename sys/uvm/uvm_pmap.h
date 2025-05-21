@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.35 2025/01/18 16:35:31 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.36 2025/05/21 09:42:59 kettenis Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -181,6 +181,10 @@ void		 pmap_virtual_space(vaddr_t *, vaddr_t *);
 
 #if defined(__HAVE_PMAP_POPULATE)
 void		pmap_populate(pmap_t, vaddr_t);
+#endif
+
+#if defined(__HAVE_PMAP_PURGE)
+void		pmap_purge(struct proc *);
 #endif
 
 /* nested pmaps are used in i386/amd64 vmm */
