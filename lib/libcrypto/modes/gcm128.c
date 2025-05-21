@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.42 2025/05/21 03:57:59 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.43 2025/05/21 11:37:07 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -435,9 +435,8 @@ CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad, size_t len)
 LCRYPTO_ALIAS(CRYPTO_gcm128_aad);
 
 int
-CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
-    const unsigned char *in, unsigned char *out,
-    size_t len)
+CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
+    unsigned char *out, size_t len)
 {
 	unsigned int n, ctr;
 	size_t i;
@@ -572,9 +571,8 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 LCRYPTO_ALIAS(CRYPTO_gcm128_encrypt);
 
 int
-CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
-    const unsigned char *in, unsigned char *out,
-    size_t len)
+CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
+    unsigned char *out, size_t len)
 {
 	unsigned int n, ctr;
 	size_t i;
@@ -714,9 +712,8 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 LCRYPTO_ALIAS(CRYPTO_gcm128_decrypt);
 
 int
-CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
-    const unsigned char *in, unsigned char *out,
-    size_t len, ctr128_f stream)
+CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
+    unsigned char *out, size_t len, ctr128_f stream)
 {
 	unsigned int n, ctr;
 	size_t i;
@@ -788,9 +785,8 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 LCRYPTO_ALIAS(CRYPTO_gcm128_encrypt_ctr32);
 
 int
-CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
-    const unsigned char *in, unsigned char *out,
-    size_t len, ctr128_f stream)
+CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
+    unsigned char *out, size_t len, ctr128_f stream)
 {
 	unsigned int n, ctr;
 	size_t i;
