@@ -7,7 +7,7 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd $Mdocdate: May 11 2025 $
+.Dd $Mdocdate: May 21 2025 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -52,9 +52,13 @@ or only the include path
 .Pq Fl I
 flags, or only the compiler flags that are not include path flags,
 respectively.
+These options imply
+.Fl -print-errors .
 .It Fl -debug
 Print some non-fatal warning messages to standard error output
 that would otherwise silently be ignored.
+This option also implies
+.Fl -print-errors .
 If
 .Nm
 was compiled without defining the preprocessor macro
@@ -132,6 +136,8 @@ flags, or only the library
 .Pq Fl l
 flags, or only the linker flags that are neither library path
 nor library flags, respectively.
+These options imply
+.Fl -print-errors .
 .It Fl -list-all
 Walk the module search path in the order of descending priority.
 For each
@@ -144,12 +150,16 @@ property, a dash
 and the
 .Ic Description
 property.
+This option implies
+.Fl -print-errors .
 .It Fl -list-package-names
 Perform the same search as
 .Fl -list-all ,
 but only print the basename of each
 .Xr pc 5
 file without the extension, not the module name and the description.
+This option implies
+.Fl -print-errors .
 .It Fl -log-file Ns = Ns Ar file
 Set the name of the output
 .Ar file
@@ -179,6 +189,17 @@ For example, a
 .Ar depth
 of 2 restricts the resolver from acting on child
 dependencies of modules added to the resolver's solution.
+This option is overridden by the
+.Ev PKG_CONFIG_MAXIMUM_TRAVERSE_DEPTH
+environment variable and by the options
+.Fl -modversion ,
+.Fl -path ,
+.Fl -print-provides ,
+.Fl -print-requires ,
+.Fl -print-requires-private ,
+.Fl -print-variables ,
+and
+.Fl -variable .
 .It Fl -modversion
 For each specified
 .Ar module ,
@@ -189,12 +210,24 @@ option is also specified, the name of the respective
 .Ar module
 and a colon is printed before each version number.
 This option implies
+.Fl -print-errors
+and
 .Fl -maximum-traverse-depth Ns =1
 and overrides and disables all
 .Fl -cflags
 and
 .Fl -libs
 flags.
+.It Fl -msvc-syntax
+Use MSVC syntax for
+.Fl -cflags ,
+.Fl -env ,
+and
+.Fl -libs
+output.
+This option is only available if the preprocessor macro
+.Dv PKGCONF_LITE
+was not defined during compilation.
 .It Fl -no-cache
 Skip caching packages when they are loaded into the internal resolver.
 This may result in an alternate dependency graph being computed.
@@ -264,18 +297,35 @@ and
 .Fl -libs
 flags.
 .It Fl -print-variables
-Print all seen variables for a module to the output channel.
+For the first
+.Ar module
+given on the command line, print the names of all seen variables
+to standard output, one per line.
+Any subsequent arguments are silently ignored.
+This option implies
+.Fl -print-errors
+and
+.Fl -maximum-traverse-depth Ns =1
+and overrides and disables all
+.Fl -cflags
+and
+.Fl -libs
+flags.
 .It Fl -pure
 Treats the computed dependency graph as if it were pure.
 This is mainly intended for use with the
 .Fl -static
-flag.
+flag and has no effect if
+.Fl -shared
+is also specified.
 .It Fl -relocate Ns = Ns Ar path
 Relocates a path using the pkgconf_path_relocate API.
 This is mainly used by the testsuite to provide a guaranteed interface
 to the system's path relocation backend.
 .It Fl -shared
 Compute a simple dependency graph that is only suitable for shared linking.
+This option overrides
+.Fl -static .
 .It Fl -short-errors
 When printing error messages about modules that are not found
 or conflict with each other, avoid printing additional, verbose
@@ -287,6 +337,9 @@ Overrides all of
 .Fl -errors-to-stdout ,
 and
 .Fl -print-errors .
+This option is overridden and disabled if the
+.Ev PKG_CONFIG_DEBUG_SPEW
+environment variable is set.
 .It Fl -simulate
 Simulates resolving a dependency graph based on the requested modules on the
 command line.
@@ -297,6 +350,8 @@ was not defined during compilation.
 .It Fl -static
 Compute a deeper dependency graph and use compiler/linker flags intended for
 static linking.
+This option is overridden by
+.Fl -shared .
 .It Fl -uninstalled
 Exit with a non-zero result if the dependency resolver uses an
 .Sq uninstalled
@@ -305,9 +360,24 @@ module as part of its solution.
 Validate specific
 .Sq .pc
 files for correctness.
+This option implies
+.Fl -print-errors
+and
+.Fl -errors-to-stdout .
 .It Fl -variable Ns = Ns Ar varname
-Print the value of
-.Ar varname .
+For the first
+.Ar module
+given on the command line, print the value of the variable with the name
+.Ar varname
+to standard output.
+Any subsequent arguments are silently ignored.
+This option implies
+.Fl -maximum-traverse-depth Ns =1
+and overrides and disables all
+.Fl -cflags
+and
+.Fl -libs
+flags.
 .It Fl -verbose
 This option only has an effect if
 .Fl -modversion
@@ -331,19 +401,51 @@ and
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width indent
+.It Ev CPATH
+First supplementary colon-separated list of include paths filtered out
+in the same way as
+.Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH .
+.It Ev CPLUS_INCLUDE_PATH
+Third supplementary colon-separated list of include paths filtered out
+in the same way as
+.Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH .
+.It Ev C_INCLUDE_PATH
+Second supplementary colon-separated list of include paths filtered out
+in the same way as
+.Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH .
 .It Ev DESTDIR
 If set to PKG_CONFIG_SYSROOT_DIR, assume that PKG_CONFIG_FDO_SYSROOT_RULES is set.
+.It Ev LIBRARY_PATH
+Supplementary colon-separated list of library paths filtered out
+in the same way as
+.Ev PKG_CONFIG_SYSTEM_LIBRARY_PATH .
+.It Ev OBJC_INCLUDE_PATH
+Fourth supplementary colon-separated list of include paths filtered out
+in the same way as
+.Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH .
 .It Ev PKG_CONFIG_DEBUG_SPEW
-If set, enables additional debug logging.
-The format of the debug log messages is implementation-specific.
+If set, override and disable the
+.Fl -silence-errors
+option.
 .It Ev PKG_CONFIG_DISABLE_UNINSTALLED
 If set, enables the same behaviour as the
 .Fl -no-uninstalled
 flag.
+.It Ev PKG_CONFIG_DONT_DEFINE_PREFIX
+If set, this variable has the same effect as the
+.Fl -dont-define-prefix
+option.
 .It Ev PKG_CONFIG_DONT_RELOCATE_PATHS
 If set, disables the path relocation feature.
 .It Ev PKG_CONFIG_FDO_SYSROOT_RULES
 If set, follow the sysroot prefixing rules that freedesktop.org pkg-config uses.
+.It Ev PKG_CONFIG_IGNORE_CONFLICTS
+If set, ignore
+.Ic Conflicts
+rules in modules.
+Has the same effect as the
+.Fl -ignore-conflicts
+option.
 .It Ev PKG_CONFIG_LIBDIR
 A colon-separated list of low-priority directories where
 .Xr pc 5
@@ -367,8 +469,24 @@ to the file with the name stored in this variable.
 For more details, see the
 .Fl -log-file
 command line option, which overrides this variable.
+.It Ev PKG_CONFIG_MAXIMUM_TRAVERSE_DEPTH
+Impose a limit on the allowed depth in the dependency graph.
+This variable overrides the
+.Fl -maximum-traverse-depth
+option, but is overriden by the other options mentioned there.
 .It Ev PKG_CONFIG_MSVC_SYNTAX
-If set, uses MSVC syntax for fragments.
+If set, use MSVC syntax for
+.Fl -cflags ,
+.Fl -env ,
+and
+.Fl -libs
+output.
+This variable has the same effect as the
+.Fl -msvc-syntax
+option.
+If the preprocessor macro
+.Dv PKGCONF_LITE
+was defined during compilation, this variable is ignored.
 .It Ev PKG_CONFIG_PATH
 A colon-separated list of high-priority directories where
 .Xr pc 5
@@ -385,21 +503,56 @@ or the compiled-in default directories with lower priority.
 If set, enables the same behaviour as the
 .Fl -pure
 flag.
+.It Ev PKG_CONFIG_RELOCATE_PATHS
+If set, this variable has the same effect as the
+.Fl -define-prefix
+option.
 .It Ev PKG_CONFIG_SYSROOT_DIR
 .Sq sysroot
 directory, will be prepended to every path defined in
 .Ev PKG_CONFIG_PATH .
 Useful for cross compilation.
 .It Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH
-List of paths that are considered system include paths by the toolchain.
-This is a pkgconf-specific extension.
+Colon-separated list of include paths that are filtered out
+and not printed by the
+.Fl -cflags
+and
+.Fl -cflags-only-I
+options because they are considered system include paths.
+If not defined, the default list compiled into the
+.Nm
+program from the
+.Dv SYSTEM_INCLUDEDIR
+preprocessor macro is used instead.
+This variable is a pkgconf-specific extension.
+Any directories listed in the environment variables
+.Ev CPATH ,
+.Ev C_INCLUDE_PATH ,
+.Ev CPLUS_INCLUDE_PATH ,
+and
+.Ev OBJC_INCLUDE_PATH
+are also filtered out.
 .It Ev PKG_CONFIG_SYSTEM_LIBRARY_PATH
-List of paths that are considered system library paths by the toolchain.
-This is a pkgconf-specific extension.
+Colon-separated list of library paths that are filtered out
+and not printed by the
+.Fl -libs
+and
+.Fl -libs-only-L
+options because they are considered system library paths.
+If not defined, the default list compiled into the
+.Nm
+program from the
+.Dv SYSTEM_LIBDIR
+preprocessor macro is used instead.
+This variable is a pkgconf-specific extension.
 .It Ev PKG_CONFIG_TOP_BUILD_DIR
-Provides an alternative setting for the
-.Sq pc_top_builddir
+The value of the
+.Va pc_top_builddir
 global variable.
+If this environment variable is not defined, the string
+.Qq $(top_builddir)
+is used as the value of
+.Va pc_top_builddir .
 .El
 .Sh EXIT STATUS
 .Ex -std
