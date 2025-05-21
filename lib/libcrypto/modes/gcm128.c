@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.44 2025/05/21 12:11:23 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.45 2025/05/21 12:12:42 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -332,6 +332,25 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 # endif
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_init);
+
+GCM128_CONTEXT *
+CRYPTO_gcm128_new(void *key, block128_f block)
+{
+	GCM128_CONTEXT *ret;
+
+	if ((ret = malloc(sizeof(GCM128_CONTEXT))))
+		CRYPTO_gcm128_init(ret, key, block);
+
+	return ret;
+}
+LCRYPTO_ALIAS(CRYPTO_gcm128_new);
+
+void
+CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
+{
+	freezero(ctx, sizeof(*ctx));
+}
+LCRYPTO_ALIAS(CRYPTO_gcm128_release);
 
 void
 CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv, size_t len)
@@ -674,22 +693,3 @@ CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
 	    len <= sizeof(ctx->Xi.c) ? len : sizeof(ctx->Xi.c));
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_tag);
-
-GCM128_CONTEXT *
-CRYPTO_gcm128_new(void *key, block128_f block)
-{
-	GCM128_CONTEXT *ret;
-
-	if ((ret = malloc(sizeof(GCM128_CONTEXT))))
-		CRYPTO_gcm128_init(ret, key, block);
-
-	return ret;
-}
-LCRYPTO_ALIAS(CRYPTO_gcm128_new);
-
-void
-CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
-{
-	freezero(ctx, sizeof(*ctx));
-}
-LCRYPTO_ALIAS(CRYPTO_gcm128_release);
