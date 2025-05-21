@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.238 2025/05/20 18:41:06 mvs Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.239 2025/05/21 09:33:48 mvs Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -424,11 +424,6 @@ pool_init(struct pool *pp, size_t size, u_int align, int ipl, int flags,
 	pp->pr_nitems = 0;
 	pp->pr_nout = 0;
 	pp->pr_hardlimit = UINT_MAX;
-	pp->pr_hardlimit_warning = NULL;
-	pp->pr_hardlimit_ratecap.tv_sec = 0;
-	pp->pr_hardlimit_ratecap.tv_usec = 0;
-	pp->pr_hardlimit_warning_last.tv_sec = 0;
-	pp->pr_hardlimit_warning_last.tv_usec = 0;
 	RBT_INIT(phtree, &pp->pr_phtree);
 
 	/*
@@ -1092,7 +1087,7 @@ pool_sethiwat(struct pool *pp, int n)
 }
 
 int
-pool_sethardlimit(struct pool *pp, u_int n, const char *warnmsg, int ratecap)
+pool_sethardlimit(struct pool *pp, u_int n)
 {
 	int error = 0;
 
@@ -1104,10 +1099,6 @@ pool_sethardlimit(struct pool *pp, u_int n, const char *warnmsg, int ratecap)
 	}
 
 	pp->pr_hardlimit = n;
-	pp->pr_hardlimit_warning = warnmsg;
-	pp->pr_hardlimit_ratecap.tv_sec = ratecap;
-	pp->pr_hardlimit_warning_last.tv_sec = 0;
-	pp->pr_hardlimit_warning_last.tv_usec = 0;
 done:
 	pl_leave(pp, &pp->pr_lock);
 

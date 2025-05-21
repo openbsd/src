@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.209 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.210 2025/05/21 09:33:49 mvs Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -154,10 +154,10 @@ tcp_init(void)
 	    "tcpcb", NULL);
 	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, IPL_SOFTNET, 0,
 	    "tcpqe", NULL);
-	pool_sethardlimit(&tcpqe_pool, tcp_reass_limit, NULL, 0);
+	pool_sethardlimit(&tcpqe_pool, tcp_reass_limit);
 	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, IPL_SOFTNET, 0,
 	    "sackhl", NULL);
-	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
+	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit);
 	in_pcbinit(&tcbtable, TCB_INITIAL_HASH_SIZE);
 #ifdef INET6
 	in_pcbinit(&tcb6table, TCB_INITIAL_HASH_SIZE);

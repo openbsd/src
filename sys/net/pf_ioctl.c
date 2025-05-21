@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.419 2025/04/29 13:12:51 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.420 2025/05/21 09:33:48 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -219,9 +219,9 @@ pfattach(int num)
 	pf_syncookies_init();
 
 	pool_sethardlimit(pf_pool_limits[PF_LIMIT_STATES].pp,
-	    pf_pool_limits[PF_LIMIT_STATES].limit, NULL, 0);
+	    pf_pool_limits[PF_LIMIT_STATES].limit);
 	pool_sethardlimit(pf_pool_limits[PF_LIMIT_ANCHORS].pp,
-	    pf_pool_limits[PF_LIMIT_ANCHORS].limit, NULL, 0);
+	    pf_pool_limits[PF_LIMIT_ANCHORS].limit);
 
 	if (physmem <= atop(100*1024*1024))
 		pf_pool_limits[PF_LIMIT_TABLE_ENTRIES].limit =
@@ -2773,7 +2773,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_pool_limits[i].limit_new !=
 			    pf_pool_limits[i].limit &&
 			    pool_sethardlimit(pf_pool_limits[i].pp,
-			    pf_pool_limits[i].limit_new, NULL, 0) != 0) {
+			    pf_pool_limits[i].limit_new) != 0) {
 				PF_UNLOCK();
 				NET_UNLOCK();
 				free(table, M_PF, sizeof(*table));

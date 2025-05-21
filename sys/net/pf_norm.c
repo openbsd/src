@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.234 2025/02/01 21:10:02 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.235 2025/05/21 09:33:48 mvs Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -168,7 +168,7 @@ pf_normalize_init(void)
 	    IPL_SOFTNET, 0, "pfstscr", NULL);
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
-	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
+	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT);
 
 	TAILQ_INIT(&pf_fragqueue);
 

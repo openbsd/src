@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.247 2025/05/20 18:41:06 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.248 2025/05/21 09:33:49 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1482,8 +1482,7 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			if (error)
 				return (error);
 			if (nval != atomic_load_int(var)) {
-				error = pool_sethardlimit(pool, nval,
-				    NULL, 0);
+				error = pool_sethardlimit(pool, nval);
 				if (error == 0)
 					atomic_store_int(var, nval);
 			}
