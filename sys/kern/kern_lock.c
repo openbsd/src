@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.76 2025/05/21 09:04:00 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.77 2025/05/21 18:41:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -36,11 +36,6 @@
 int __mp_lock_spinout = INT_MAX;
 #endif /* MP_LOCKDEBUG */
 
-#ifdef MULTIPROCESSOR
-
-#include <sys/mplock.h>
-struct __mp_lock kernel_lock;
-
 /*
  * Min & max numbers of "busy cycles" to waste before trying again to
  * acquire a contended lock using an atomic operation.
@@ -55,6 +50,11 @@ struct __mp_lock kernel_lock;
  */
 #define CPU_MIN_BUSY_CYCLES	1
 #define CPU_MAX_BUSY_CYCLES	64
+
+#ifdef MULTIPROCESSOR
+
+#include <sys/mplock.h>
+struct __mp_lock kernel_lock;
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here
