@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.444 2025/03/24 09:53:20 jan Exp $ */
+/* $OpenBSD: acpi.c,v 1.445 2025/05/21 04:10:21 jmatthew Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1202,6 +1202,7 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	if (wakeup_dev_ct > 0)
 		device_register_wakeup(&sc->sc_dev);
 #endif
+#endif /* SMALL_KERNEL */
 
 	/*
 	 * ACPI is enabled now -- attach timer
@@ -1216,7 +1217,6 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 		aaa.aaa_memt = sc->sc_memt;
 		config_found(&sc->sc_dev, &aaa, acpi_print);
 	}
-#endif /* SMALL_KERNEL */
 
 	/*
 	 * Attach table-defined devices
