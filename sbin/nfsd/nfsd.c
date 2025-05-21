@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.45 2025/01/16 12:46:03 kn Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.46 2025/05/21 03:15:40 kn Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 
 	/* Start by writing to both console and log. */
 	openlog("nfsd", LOG_PID | LOG_PERROR, LOG_DAEMON);
-	 
+
 	if (unveil("/", "") == -1) {
 		syslog(LOG_ERR, "unveil /: %s", strerror(errno));
 		return (1);

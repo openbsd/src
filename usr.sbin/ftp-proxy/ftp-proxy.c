@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.39 2021/10/24 21:24:18 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.40 2025/05/21 03:15:40 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -32,7 +32,6 @@
 #include <event.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -52,7 +51,6 @@
 #define NTOP_BUFS	3
 #define TCP_BACKLOG	10
 
-#define CHROOT_DIR	"/var/empty"
 #define NOPRIV_USER	"_ftp_proxy"
 
 /* pfctl standard NAT range. */
@@ -102,7 +100,6 @@ void	logmsg(int, const char *, ...);
 u_int16_t parse_port(int);
 u_int16_t pick_proxy_port(void);
 void	proxy_reply(int, struct sockaddr *, u_int16_t);
-int	rdaemon(int);
 void	server_error(struct bufferevent *, short, void *);
 int	server_parse(struct session *s);
 int	allow_data_connection(struct session *s);
@@ -270,8 +267,7 @@ drop_privs(void)
 		return (0);
 
 	tzset();
-	if (chroot(CHROOT_DIR) != 0 || chdir("/") != 0 ||
-	    setgroups(1, &pw->pw_gid) != 0 ||
+	if (setgroups(1, &pw->pw_gid) != 0 ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0 ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
 		return (0);
@@ -612,7 +608,7 @@ main(int argc, char *argv[])
 	struct rlimit rlp;
 	struct addrinfo hints, *res;
 	struct event ev_sighup, ev_sigint, ev_sigterm;
-	int ch, devnull, error, listenfd, on;
+	int ch, error, listenfd, on;
 	const char *errstr;
 
 	/* Defaults. */
@@ -633,7 +629,6 @@ main(int argc, char *argv[])
 	verbose		= 0;
 
 	/* Other initialization. */
-	devnull		= -1;
 	id_count	= 1;
 	session_count	= 0;
 
@@ -772,22 +767,25 @@ main(int argc, char *argv[])
 	/* Initialize pf. */
 	init_filter(qname, tagname, verbose);
 
-	if (daemonize) {
-		devnull = open(_PATH_DEVNULL, O_RDWR);
-		if (devnull == -1)
-			err(1, "open(%s)", _PATH_DEVNULL);
-	}
-
 	if (!drop_privs())
 		err(1, "cannot drop privileges");
 
 	if (daemonize) {
-		if (rdaemon(devnull) == -1)
+		if (daemon(0, 0) == -1)
 			err(1, "cannot daemonize");
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	}
 
 	/* Use logmsg for output from here on. */
+
+	if (unveil("/", "") == -1) {
+		syslog(LOG_ERR, "unveil /: %s", strerror(errno));
+		exit_deamon();
+	}
+	if (unveil(NULL, NULL) == -1) {
+		syslog(LOG_ERR, "unveil: %s", strerror(errno));
+		exit_deamon();
+	}
 
 	event_init();
 
@@ -1138,35 +1136,4 @@ usage(void)
 	    " [-p port] [-q queue] [-R address] [-T tag]\n"
             "                 [-t timeout]\n", __progname);
 	exit(1);
-}
-
-int
-rdaemon(int devnull)
-{
-	if (devnull == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (fcntl(devnull, F_GETFL) == -1)
-		return (-1);
-
-	switch (fork()) {
-	case -1:
-		return (-1);
-	case 0:
-		break;
-	default:
-		_exit(0);
-	}
-
-	if (setsid() == -1)
-		return (-1);
-
-	(void)dup2(devnull, STDIN_FILENO);
-	(void)dup2(devnull, STDOUT_FILENO);
-	(void)dup2(devnull, STDERR_FILENO);
-	if (devnull > 2)
-		(void)close(devnull);
-
-	return (0);
 }
