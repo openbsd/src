@@ -1298,6 +1298,7 @@
 ./usr/share/man/man4/acpitz.4
 ./usr/share/man/man4/acpivideo.4
 ./usr/share/man/man4/acpivout.4
+./usr/share/man/man4/acpiwmi.4
 ./usr/share/man/man4/acrtc.4
 ./usr/share/man/man4/acx.4
 ./usr/share/man/man4/adc.4
