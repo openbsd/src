@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.22 2025/05/21 07:37:11 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.23 2025/05/21 08:32:10 florian Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -19,11 +19,13 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 
 #include <curses.h>
 #include <err.h>
 #include <errno.h>
+#include <event.h>
 #include <locale.h>
 #include <paths.h>
 #include <signal.h>
@@ -79,21 +81,26 @@ static char	 *cmdstr;
 static size_t	  cmdlen;
 static char	**cmdv;
 
-typedef wchar_t BUFFER[MAXLINE][MAXCOLUMN + 1];
+typedef wchar_t	  BUFFER[MAXLINE][MAXCOLUMN + 1];
+BUFFER		  buf0, buf1;
+BUFFER		 *cur_buf, *prev_buf;
+struct event	  ev_timer;
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define ctrl(c)		((c) & 037)
-void command_loop(void);
 int display(BUFFER *, BUFFER *, highlight_mode_t);
 void read_result(BUFFER *);
 kbd_result_t kbd_command(int);
 void show_help(void);
 void untabify(wchar_t *, int);
-void on_signal(int);
+void on_signal(int, short, void *);
+void timer(int, short, void *);
+void input(int, short, void *);
 void quit(void);
 void usage(void);
+void swap_buffers(void);
 
 int
 set_interval(const char *str)
@@ -114,6 +121,7 @@ set_interval(const char *str)
 int
 main(int argc, char *argv[])
 {
+	struct event ev_sigint, ev_sighup, ev_sigterm, ev_sigwinch, ev_stdin;
 	size_t len, rem;
 	int i, ch;
 	char *p;
@@ -196,81 +204,33 @@ main(int argc, char *argv[])
 	crmode();
 	keypad(stdscr, TRUE);
 
+	event_init();
+
 	/*
 	 * Initialize signal
 	 */
-	(void) signal(SIGINT, on_signal);
-	(void) signal(SIGTERM, on_signal);
-	(void) signal(SIGHUP, on_signal);
+	signal_set(&ev_sigint, SIGINT, on_signal, NULL);
+	signal_set(&ev_sighup, SIGHUP, on_signal, NULL);
+	signal_set(&ev_sigterm, SIGTERM, on_signal, NULL);
+	signal_set(&ev_sigwinch, SIGWINCH, on_signal, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sighup, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigwinch, NULL);
 
-	command_loop();
+	event_set(&ev_stdin, STDIN_FILENO, EV_READ | EV_PERSIST, input, NULL);
+	event_add(&ev_stdin, NULL);
+	evtimer_set(&ev_timer, timer, NULL);
+	evtimer_add(&ev_timer, &opt_interval.tv);
+
+	cur_buf = &buf0; prev_buf = &buf1;
+	read_result(cur_buf);
+	display(cur_buf, prev_buf, highlight_mode);
+
+	event_dispatch();
 
 	/* NOTREACHED */
 	abort();
-}
-
-void
-command_loop(void)
-{
-	int		 i, nfds;
-	BUFFER		 buf0, buf1;
-	fd_set		 readfds;
-	struct timeval	 to;
-
-	for (i = 0; ; i++) {
-		BUFFER *cur, *prev;
-
-		if (i == 0) {
-			cur = prev = &buf0;
-		} else if (i % 2 == 0) {
-			cur = &buf0;
-			prev = &buf1;
-		} else {
-			cur = &buf1;
-			prev = &buf0;
-		}
-
-		read_result(cur);
-
-redraw:
-		display(cur, prev, highlight_mode);
-
-input:
-		to = opt_interval.tv;
-		FD_ZERO(&readfds);
-		FD_SET(fileno(stdin), &readfds);
-		nfds = select(1, &readfds, NULL, NULL,
-		    (pause_status)? NULL : &to);
-		if (nfds < 0)
-			switch (errno) {
-			case EINTR:
-				/*
-				 * ncurses has changed the window size with
-				 * SIGWINCH.  call doupdate() to use the
-				 * updated window size.
-				 */
-				doupdate();
-				goto redraw;
-			default:
-				perror("select");
-			}
-		else if (nfds > 0) {
-			int ch = getch();
-			kbd_result_t result = kbd_command(ch);
-
-			switch (result) {
-			case RSLT_UPDATE:	/* update buffer */
-				break;
-			case RSLT_REDRAW:	/* scroll with current buffer */
-				goto redraw;
-			case RSLT_NOTOUCH:	/* silently loop again */
-				goto input;
-			case RSLT_ERROR:	/* error */
-				fprintf(stderr, "\007");
-				goto input;
-			}
-		}
-	}
 }
 
 int
@@ -551,10 +511,13 @@ kbd_command(int ch)
 		break;
 
 	case 'p':
-		if ((pause_status = !pause_status) != 0)
+		if ((pause_status = !pause_status) != 0) {
+			evtimer_del(&ev_timer);
 			return (RSLT_REDRAW);
-		else
+		} else {
+			evtimer_add(&ev_timer, &opt_interval.tv);
 			return (RSLT_UPDATE);
+		}
 
 	case 's':
 		move(1, 0);
@@ -575,6 +538,7 @@ kbd_command(int ch)
 			refresh();
 			return (RSLT_ERROR);
 		}
+		evtimer_add(&ev_timer, &opt_interval.tv);
 
 		return (RSLT_REDRAW);
 
@@ -669,10 +633,65 @@ untabify(wchar_t *buf, int maxlen)
 	*p = L'\0';
 }
 
+void swap_buffers(void) {
+	BUFFER *t;
+	t = prev_buf;
+	prev_buf = cur_buf;
+	cur_buf = t;
+}
+
 void
-on_signal(int signum)
+on_signal(int sig, short event, void *arg)
 {
-	quit();
+	struct winsize ws;
+
+	switch(sig) {
+	case SIGWINCH:
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1)
+			resizeterm(ws.ws_row, ws.ws_col);
+		doupdate();
+		display(cur_buf, prev_buf, highlight_mode);
+		break;
+	default:
+		quit();
+	}
+}
+
+void
+timer(int sig, short event, void *arg)
+{
+	swap_buffers();
+	read_result(cur_buf);
+	display(cur_buf, prev_buf, highlight_mode);
+	if (!pause_status)
+		evtimer_add(&ev_timer, &opt_interval.tv);
+}
+
+void
+input(int sig, short event, void *arg)
+{
+	int ch;
+
+	ch = getch();
+
+	kbd_result_t result = kbd_command(ch);
+	switch (result) {
+	case RSLT_UPDATE:	/* update buffer */
+		swap_buffers();
+		read_result(cur_buf);
+		display(cur_buf, prev_buf, highlight_mode);
+		if (!pause_status)
+			evtimer_add(&ev_timer, &opt_interval.tv);
+		break;
+	case RSLT_REDRAW:	/* scroll with current buffer */
+		display(cur_buf, prev_buf, highlight_mode);
+		break;
+	case RSLT_NOTOUCH:	/* silently loop again */
+		break;
+	case RSLT_ERROR:	/* error */
+		fprintf(stderr, "\007");
+		break;
+	}
 }
 
 void
