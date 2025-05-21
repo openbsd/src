@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.32 2025/05/21 08:41:35 djm Exp $	*/
+/*	$OpenBSD: socks.c,v 1.33 2025/05/21 09:14:01 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -294,9 +294,11 @@ socks_connect(const char *host, const char *port,
 			errx(1, "connection failed, unsupported address type");
 		}
 	} else if (socksv == 4 || socksv == 44) {
-		/* This will exit on lookup failure */
-		decode_addrport(host, port, (struct sockaddr *)&addr,
-		    sizeof(addr), 1, 0);
+		if (socksv == 4) {
+			/* This will exit on lookup failure */
+			decode_addrport(host, port, (struct sockaddr *)&addr,
+			    sizeof(addr), 1, 0);
+		}
 
 		/* Version 4 */
 		buf[0] = SOCKS_V4;
