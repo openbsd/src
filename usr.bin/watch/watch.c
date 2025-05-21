@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.18 2025/05/21 01:06:24 florian Exp $ */
+/*	$OpenBSD: watch.c,v 1.19 2025/05/21 01:34:10 florian Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -681,7 +681,7 @@ quit(void)
 	refresh();
 	endwin();
 	free(cmdv);
-	exit(EXIT_SUCCESS);
+	exit(0);
 }
 
 void
