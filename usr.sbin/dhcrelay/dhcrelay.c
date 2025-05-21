@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.68 2025/05/16 02:51:01 kn Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.69 2025/05/21 05:05:33 kn Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -50,7 +50,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +63,6 @@
 #include "log.h"
 
 void	 usage(void);
-int	 rdaemon(int);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
 	    struct packet_ctx *);
 void	 l2relay(struct interface_info *, struct dhcp_packet *, int,
@@ -97,13 +95,11 @@ int			 rai_replace = 0;
 int
 main(int argc, char *argv[])
 {
-	int			 ch, devnull = -1, daemonize, opt, rdomain;
+	int			 ch, daemonize = 1, opt, rdomain;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
 	struct sockaddr_in	 laddr;
 	int			 optslen;
-
-	daemonize = 1;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 
@@ -211,12 +207,6 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	if (daemonize) {
-		devnull = open(_PATH_DEVNULL, O_RDWR);
-		if (devnull == -1)
-			fatal("open(%s)", _PATH_DEVNULL);
-	}
-
 	if (interfaces == NULL ||
 	    register_interface(interfaces->name, got_one, 0) == NULL)
 		fatalx("no interface given");
@@ -298,18 +288,14 @@ main(int argc, char *argv[])
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("user \"_dhcp\" not found");
-	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot");
-	if (chdir("/") == -1)
-		fatal("chdir(\"/\")");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
 	if (daemonize) {
-		if (rdaemon(devnull) == -1)
-			fatal("rdaemon");
+		if (daemon(0, 0) == -1)
+			fatal("daemon");
 
 		log_init(0, LOG_DAEMON);	/* stop logging to stderr */
 	}
@@ -446,37 +432,6 @@ usage(void)
 	    "-i interface\n\tdestination ...\n",
 	    __progname);
 	exit(1);
-}
-
-int
-rdaemon(int devnull)
-{
-	if (devnull == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (fcntl(devnull, F_GETFL) == -1)
-		return (-1);
-
-	switch (fork()) {
-	case -1:
-		return (-1);
-	case 0:
-		break;
-	default:
-		_exit(0);
-	}
-
-	if (setsid() == -1)
-		return (-1);
-
-	(void)dup2(devnull, STDIN_FILENO);
-	(void)dup2(devnull, STDOUT_FILENO);
-	(void)dup2(devnull, STDERR_FILENO);
-	if (devnull > 2)
-		(void)close(devnull);
-
-	return (0);
 }
 
 char *
