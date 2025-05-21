@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiwmi.c,v 1.4 2025/05/20 02:06:54 robert Exp $ */
+/*	$OpenBSD: acpiwmi.c,v 1.5 2025/05/21 02:18:29 robert Exp $ */
 /*
  * Copyright (c) 2025 Ted Unangst <tedu@openbsd.org>
  *
@@ -184,8 +184,10 @@ acpiwmi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aml_freevalue(&res);
 
-	aml_register_notify(sc->sc_node, aaa->aaa_dev,
-		acpiwmi_notify, sc, ACPIDEV_NOPOLL);
+	if (!SLIST_EMPTY(&sc->sc_handlers)) {
+		aml_register_notify(sc->sc_node, aaa->aaa_dev,
+			acpiwmi_notify, sc, ACPIDEV_NOPOLL);
+	}
 }
 
 int
