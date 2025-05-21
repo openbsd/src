@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.20 2025/05/21 04:41:33 florian Exp $ */
+/*	$OpenBSD: watch.c,v 1.21 2025/05/21 07:16:25 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -277,8 +277,8 @@ input:
 int
 display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 {
-	int	 i, screen_x, screen_y, cw, line, rl;
-	char	*ct;
+	int i, screen_x, screen_y, cw, line, rl;
+	static char buf[30];
 
 	erase();
 
@@ -294,10 +294,11 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 	else
 		printw("%s", cmdstr);
 
-	ct = ctime(&lastupdate);
-	ct[24] = '\0';
-	move(0, COLS - strlen(ct));
-	addstr(ct);
+	if (buf[0] == '\0')
+		gethostname(buf, sizeof(buf));
+
+	move(0, COLS - 8 - strlen(buf) - 1);
+	printw("%s %-8.8s", buf, &(ctime(&lastupdate)[11]));
 
 	move(1, 1);
 
