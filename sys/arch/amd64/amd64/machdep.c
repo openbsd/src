@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.298 2025/05/21 04:05:22 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.299 2025/05/21 04:11:57 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -140,7 +140,6 @@ extern int db_console;
 #ifdef HIBERNATE
 #include <machine/hibernate_var.h>
 #include <sys/hibernate.h>
-#include <machine/hibernate.h>
 #endif /* HIBERNATE */
 
 #include "ukbd.h"

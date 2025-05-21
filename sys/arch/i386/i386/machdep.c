@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.676 2025/05/21 04:05:22 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.677 2025/05/21 04:11:57 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -141,7 +141,6 @@ extern struct proc *npxproc;
 #ifdef HIBERNATE
 #include <machine/hibernate_var.h>
 #include <sys/hibernate.h>
-#include <machine/hibernate.h>
 #endif /* HIBERNATE */
 
 #include "ukbd.h"
