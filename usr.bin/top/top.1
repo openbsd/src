@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.82 2025/05/19 12:27:56 schwarze Exp $
+.\"	$OpenBSD: top.1,v 1.83 2025/05/21 02:41:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2025 $
+.Dd $Mdocdate: May 21 2025 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -432,27 +432,31 @@ This display is similar in spirit to
 but it is not exactly the same.
 The following fields are displayed:
 .Bl -tag -width USERNAME -offset indent
-.It PID
+.It Li PID
 The process ID.
-.It USERNAME
+.It Li USERNAME
 The name of the process's owner.
-.It TID
-The thread ID, used instead of USERNAME if
+.It Li TID
+The thread ID, used instead of
+.Li USERNAME
+if
 .Fl H
 is specified.
-.It UID
-Used instead of USERNAME if
+.It Li UID
+Used instead of
+.Li USERNAME
+if
 .Fl u
 is specified.
-.It PRI
+.It Li PRI
 The current priority of the process.
-.It NICE
+.It Li NICE
 The nice amount (in the range \-20 to 20).
-.It SIZE
+.It Li SIZE
 The total size of the process (the text, data, and stack segments).
-.It RES
+.It Li RES
 The current amount of resident memory.
-.It STATE
+.It Li STATE
 The current state (one of
 .Li start ,
 .Li run ,
@@ -465,19 +469,21 @@ or
 .Li onproc ) .
 On multiprocessor systems, this is followed by a slash and the CPU
 number on which the process is bound.
-.It WAIT
+.It Li WAIT
 A description of the wait channel the process is sleeping on if it's
 asleep.
-.It RTABLE
-The routing table, used instead of WAIT if
+.It Li RTABLE
+The routing table, used instead of
+.Li WAIT
+if
 .Fl t
 is specified.
-.It TIME
+.It Li TIME
 The number of system and user CPU seconds that the process has used.
-.It CPU
+.It Li CPU
 The raw percentage of CPU usage and the default field on which the
 display is sorted.
-.It COMMAND
+.It Li COMMAND
 The name (and arguments if
 .Fl C
 is specified) of the command that the process is currently running.
