@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem1024.c,v 1.10 2025/05/20 00:33:40 beck Exp $ */
+/* $OpenBSD: mlkem1024.c,v 1.11 2025/05/21 02:18:11 kenjiro Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, Bob Beck <beck@obtuse.com>
@@ -1068,7 +1068,7 @@ MLKEM1024_marshal_public_key(uint8_t **output, size_t *output_len,
 	int ret = 0;
 	CBB cbb;
 
-	if (!CBB_init(&cbb, MLKEM768_PUBLIC_KEY_BYTES))
+	if (!CBB_init(&cbb, MLKEM1024_PUBLIC_KEY_BYTES))
 		goto err;
 	if (!mlkem_marshal_public_key(&cbb,
 	    public_key_1024_from_external(public_key)))
