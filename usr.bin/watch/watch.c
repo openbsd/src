@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.19 2025/05/21 01:34:10 florian Exp $ */
+/*	$OpenBSD: watch.c,v 1.20 2025/05/21 04:41:33 florian Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -77,6 +77,7 @@ int xflag = 0;
 #define	WCWIDTH(_x)	((wcwidth((_x)) > 0)? wcwidth((_x)) : 1)
 
 static char	 *cmdstr;
+static size_t	  cmdlen;
 static char	**cmdv;
 
 typedef wchar_t BUFFER[MAXLINE][MAXCOLUMN + 1];
@@ -114,8 +115,9 @@ set_interval(const char *str)
 int
 main(int argc, char *argv[])
 {
-	int i, ch, cmdsiz = 0;
-	char *s;
+	size_t len, rem;
+	int i, ch;
+	char *p;
 
 	while ((ch = getopt(argc, argv, "cls:wx")) != -1)
 		switch (ch) {
@@ -153,24 +155,33 @@ main(int argc, char *argv[])
 	if ((cmdv = calloc(argc + 1, sizeof(char *))) == NULL)
 		err(1, "calloc");
 
-	cmdstr = "";
+	cmdlen = 0;
 	for (i = 0; i < argc; i++) {
 		cmdv[i] = argv[i];
-		while (strlen(cmdstr) + strlen(argv[i]) + 3 > cmdsiz) {
-			if (cmdsiz == 0) {
-				cmdsiz = 128;
-				s = calloc(cmdsiz, 1);
-			} else {
-				cmdsiz *= 2;
-				s = realloc(cmdstr, cmdsiz);
-			}
-			if (s == NULL)
-				err(1, "malloc");
-			cmdstr = s;
-		}
+		cmdlen += strlen(argv[i]);
 		if (i != 0)
-			strlcat(cmdstr, " ", cmdsiz);
-		strlcat(cmdstr, argv[i], cmdsiz);
+			cmdlen++;
+	}
+
+	if ((cmdstr = malloc(cmdlen + 1)) == NULL)
+		err(1, "malloc");
+
+	p = cmdstr;
+	rem = cmdlen + 1;
+
+	if ((len = strlcpy(p, argv[0], rem)) >= rem)
+		errx(1, "overflow");
+	rem -= len;
+	p += len;
+	for (i = 1; i < argc; i++) {
+		if ((len = strlcpy(p, " ", rem)) >= rem)
+			errx(1, "overflow");
+		rem -= len;
+		p += len;
+		if ((len = strlcpy(p, argv[i], rem)) >= rem)
+			errx(1, "overflow");
+		rem -= len;
+		p += len;
 	}
 	cmdv[i++] = NULL;
 
@@ -278,7 +289,7 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 	else
 		printw("Every %.4gs: ", opt_interval.d);
 
-	if ((int)strlen(cmdstr) > COLS - 47)
+	if (cmdlen > COLS - 47)
 		printw("%-.*s...", COLS - 49, cmdstr);
 	else
 		printw("%s", cmdstr);
