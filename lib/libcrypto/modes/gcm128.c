@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.45 2025/05/21 12:12:42 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.46 2025/05/22 12:33:36 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -679,7 +679,7 @@ CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
 	ctx->Xi.u[1] ^= ctx->EK0.u[1];
 
 	if (tag && len <= sizeof(ctx->Xi))
-		return memcmp(ctx->Xi.c, tag, len);
+		return timingsafe_memcmp(ctx->Xi.c, tag, len);
 	else
 		return -1;
 }
