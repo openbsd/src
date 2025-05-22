@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.46 2025/05/22 12:33:36 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.47 2025/05/22 12:44:14 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -336,12 +336,14 @@ LCRYPTO_ALIAS(CRYPTO_gcm128_init);
 GCM128_CONTEXT *
 CRYPTO_gcm128_new(void *key, block128_f block)
 {
-	GCM128_CONTEXT *ret;
+	GCM128_CONTEXT *ctx;
 
-	if ((ret = malloc(sizeof(GCM128_CONTEXT))))
-		CRYPTO_gcm128_init(ret, key, block);
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return NULL;
 
-	return ret;
+	CRYPTO_gcm128_init(ctx, key, block);
+
+	return ctx;
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_new);
 
@@ -403,45 +405,43 @@ LCRYPTO_ALIAS(CRYPTO_gcm128_setiv);
 int
 CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad, size_t len)
 {
-	size_t i;
 	unsigned int n;
-	uint64_t alen = ctx->len.u[0];
+	uint64_t alen;
+	size_t i;
 
-	if (ctx->len.u[1])
+	if (ctx->len.u[1] != 0)
 		return -2;
 
-	alen += len;
+	alen = ctx->len.u[0] + len;
 	if (alen > (U64(1) << 61) || (sizeof(len) == 8 && alen < len))
 		return -1;
 	ctx->len.u[0] = alen;
 
-	n = ctx->ares;
-	if (n) {
-		while (n && len) {
+	if ((n = ctx->ares) > 0) {
+		while (n > 0 && len > 0) {
 			ctx->Xi.c[n] ^= *(aad++);
-			--len;
 			n = (n + 1) % 16;
+			len--;
 		}
-		if (n == 0)
-			gcm_mul(ctx, ctx->Xi.u);
-		else {
+		if (n > 0) {
 			ctx->ares = n;
 			return 0;
 		}
+		gcm_mul(ctx, ctx->Xi.u);
 	}
 
-	if ((i = (len & (size_t)-16))) {
+	if ((i = (len & (size_t)-16)) > 0) {
 		gcm_ghash(ctx, aad, i);
 		aad += i;
 		len -= i;
 	}
-	if (len) {
+	if (len > 0) {
 		n = (unsigned int)len;
 		for (i = 0; i < len; ++i)
 			ctx->Xi.c[i] ^= aad[i];
 	}
-
 	ctx->ares = n;
+
 	return 0;
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_aad);
@@ -451,17 +451,15 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
     unsigned char *out, size_t len)
 {
 	unsigned int n, ctr;
+	uint64_t mlen;
 	size_t i;
-	uint64_t mlen = ctx->len.u[1];
-	block128_f block = ctx->block;
-	void *key = ctx->key;
 
-	mlen += len;
+	mlen = ctx->len.u[1] + len;
 	if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
 		return -1;
 	ctx->len.u[1] = mlen;
 
-	if (ctx->ares) {
+	if (ctx->ares > 0) {
 		/* First call to encrypt finalizes GHASH(AAD) */
 		gcm_mul(ctx, ctx->Xi.u);
 		ctx->ares = 0;
@@ -473,9 +471,8 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 
 	for (i = 0; i < len; ++i) {
 		if (n == 0) {
-			(*block)(ctx->Yi.c, ctx->EKi.c, key);
-			++ctr;
-			ctx->Yi.d[3] = htobe32(ctr);
+			ctx->block(ctx->Yi.c, ctx->EKi.c, ctx->key);
+			ctx->Yi.d[3] = htobe32(++ctr);
 		}
 		ctx->Xi.c[n] ^= out[i] = in[i] ^ ctx->EKi.c[n];
 		n = (n + 1) % 16;
@@ -484,6 +481,7 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 	}
 
 	ctx->mres = n;
+
 	return 0;
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_encrypt);
@@ -493,12 +491,11 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
     unsigned char *out, size_t len)
 {
 	unsigned int n, ctr;
+	uint64_t mlen;
+	uint8_t c;
 	size_t i;
-	uint64_t mlen = ctx->len.u[1];
-	block128_f block = ctx->block;
-	void *key = ctx->key;
 
-	mlen += len;
+	mlen = ctx->len.u[1] + len;
 	if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
 		return -1;
 	ctx->len.u[1] = mlen;
@@ -514,11 +511,9 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 	n = ctx->mres;
 
 	for (i = 0; i < len; ++i) {
-		uint8_t c;
 		if (n == 0) {
-			(*block)(ctx->Yi.c, ctx->EKi.c, key);
-			++ctr;
-			ctx->Yi.d[3] = htobe32(ctr);
+			ctx->block(ctx->Yi.c, ctx->EKi.c, ctx->key);
+			ctx->Yi.d[3] = htobe32(++ctr);
 		}
 		c = in[i];
 		out[i] = c ^ ctx->EKi.c[n];
@@ -529,6 +524,7 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 	}
 
 	ctx->mres = n;
+
 	return 0;
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_decrypt);
@@ -538,16 +534,15 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
     unsigned char *out, size_t len, ctr128_f stream)
 {
 	unsigned int n, ctr;
-	size_t i;
-	uint64_t mlen = ctx->len.u[1];
-	void *key = ctx->key;
+	uint64_t mlen;
+	size_t i, j;
 
-	mlen += len;
+	mlen = ctx->len.u[1] + len;
 	if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
 		return -1;
 	ctx->len.u[1] = mlen;
 
-	if (ctx->ares) {
+	if (ctx->ares > 0) {
 		/* First call to encrypt finalizes GHASH(AAD) */
 		gcm_mul(ctx, ctx->Xi.u);
 		ctx->ares = 0;
@@ -555,42 +550,39 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
 
 	ctr = be32toh(ctx->Yi.d[3]);
 
-	n = ctx->mres;
-	if (n) {
-		while (n && len) {
+	if ((n = ctx->mres) > 0) {
+		while (n > 0 && len > 0) {
 			ctx->Xi.c[n] ^= *(out++) = *(in++) ^ ctx->EKi.c[n];
-			--len;
 			n = (n + 1) % 16;
+			len--;
 		}
-		if (n == 0)
-			gcm_mul(ctx, ctx->Xi.u);
-		else {
+		if (n > 0) {
 			ctx->mres = n;
 			return 0;
 		}
+		gcm_mul(ctx, ctx->Xi.u);
 	}
-	if ((i = (len & (size_t)-16))) {
-		size_t j = i/16;
-
-		(*stream)(in, out, j, key, ctx->Yi.c);
+	if ((i = (len & (size_t)-16)) > 0) {
+		j = i / 16;
+		stream(in, out, j, ctx->key, ctx->Yi.c);
 		ctr += (unsigned int)j;
 		ctx->Yi.d[3] = htobe32(ctr);
-		in += i;
-		len -= i;
 		gcm_ghash(ctx, out, i);
+		in += i;
 		out += i;
+		len -= i;
 	}
-	if (len) {
-		(*ctx->block)(ctx->Yi.c, ctx->EKi.c, key);
-		++ctr;
-		ctx->Yi.d[3] = htobe32(ctr);
-		while (len--) {
+	if (len > 0) {
+		ctx->block(ctx->Yi.c, ctx->EKi.c, ctx->key);
+		ctx->Yi.d[3] = htobe32(++ctr);
+		while (len-- > 0) {
 			ctx->Xi.c[n] ^= out[n] = in[n] ^ ctx->EKi.c[n];
-			++n;
+			n++;
 		}
 	}
 
 	ctx->mres = n;
+
 	return 0;
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_encrypt_ctr32);
@@ -600,16 +592,16 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
     unsigned char *out, size_t len, ctr128_f stream)
 {
 	unsigned int n, ctr;
-	size_t i;
-	uint64_t mlen = ctx->len.u[1];
-	void *key = ctx->key;
+	uint64_t mlen;
+	size_t i, j;
+	uint8_t c;
 
-	mlen += len;
+	mlen = ctx->len.u[1] + len;
 	if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
 		return -1;
 	ctx->len.u[1] = mlen;
 
-	if (ctx->ares) {
+	if (ctx->ares > 0) {
 		/* First call to decrypt finalizes GHASH(AAD) */
 		gcm_mul(ctx, ctx->Xi.u);
 		ctx->ares = 0;
@@ -617,46 +609,43 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx, const unsigned char *in,
 
 	ctr = be32toh(ctx->Yi.d[3]);
 
-	n = ctx->mres;
-	if (n) {
-		while (n && len) {
-			uint8_t c = *(in++);
+	if ((n = ctx->mres) > 0) {
+		while (n > 0 && len > 0) {
+			c = *(in++);
 			*(out++) = c ^ ctx->EKi.c[n];
 			ctx->Xi.c[n] ^= c;
-			--len;
 			n = (n + 1) % 16;
+			len--;
 		}
-		if (n == 0)
-			gcm_mul(ctx, ctx->Xi.u);
-		else {
+		if (n > 0) {
 			ctx->mres = n;
 			return 0;
 		}
+		gcm_mul(ctx, ctx->Xi.u);
 	}
-	if ((i = (len & (size_t)-16))) {
-		size_t j = i/16;
-
+	if ((i = (len & (size_t)-16)) > 0) {
+		j = i / 16;
 		gcm_ghash(ctx, in, i);
-		(*stream)(in, out, j, key, ctx->Yi.c);
+		stream(in, out, j, ctx->key, ctx->Yi.c);
 		ctr += (unsigned int)j;
 		ctx->Yi.d[3] = htobe32(ctr);
-		out += i;
 		in += i;
+		out += i;
 		len -= i;
 	}
-	if (len) {
-		(*ctx->block)(ctx->Yi.c, ctx->EKi.c, key);
-		++ctr;
-		ctx->Yi.d[3] = htobe32(ctr);
-		while (len--) {
-			uint8_t c = in[n];
+	if (len > 0) {
+		ctx->block(ctx->Yi.c, ctx->EKi.c, ctx->key);
+		ctx->Yi.d[3] = htobe32(++ctr);
+		while (len-- > 0) {
+			c = in[n];
 			ctx->Xi.c[n] ^= c;
 			out[n] = c ^ ctx->EKi.c[n];
-			++n;
+			n++;
 		}
 	}
 
 	ctx->mres = n;
+
 	return 0;
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_decrypt_ctr32);
@@ -665,10 +654,12 @@ int
 CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     size_t len)
 {
-	uint64_t alen = ctx->len.u[0] << 3;
-	uint64_t clen = ctx->len.u[1] << 3;
+	uint64_t alen, clen;
 
-	if (ctx->mres || ctx->ares)
+	alen = ctx->len.u[0] << 3;
+	clen = ctx->len.u[1] << 3;
+
+	if (ctx->ares > 0 || ctx->mres > 0)
 		gcm_mul(ctx, ctx->Xi.u);
 
 	ctx->Xi.u[0] ^= htobe64(alen);
@@ -678,10 +669,10 @@ CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
 	ctx->Xi.u[0] ^= ctx->EK0.u[0];
 	ctx->Xi.u[1] ^= ctx->EK0.u[1];
 
-	if (tag && len <= sizeof(ctx->Xi))
-		return timingsafe_memcmp(ctx->Xi.c, tag, len);
-	else
+	if (tag == NULL || len > sizeof(ctx->Xi))
 		return -1;
+
+	return timingsafe_memcmp(ctx->Xi.c, tag, len);
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_finish);
 
@@ -689,7 +680,10 @@ void
 CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
 {
 	CRYPTO_gcm128_finish(ctx, NULL, 0);
-	memcpy(tag, ctx->Xi.c,
-	    len <= sizeof(ctx->Xi.c) ? len : sizeof(ctx->Xi.c));
+
+	if (len > sizeof(ctx->Xi.c))
+		len = sizeof(ctx->Xi.c);
+
+	memcpy(tag, ctx->Xi.c, len);
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_tag);
