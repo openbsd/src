@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.11 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.12 2025/05/22 04:24:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -74,11 +74,11 @@ udpsock_startup(struct in_addr bindaddr)
 	if (bind(sock, (struct sockaddr *)&sin4, sizeof(sin4)) != 0)
 		fatal("bind failed for udp");
 
-	add_protocol("udp", sock, udpsock_handler, (void *)(intptr_t)udpsock);
+	udpsock->sock = sock;
+
+	add_protocol("udp", sock, udpsock_handler, udpsock);
 	log_info("Listening on %s:%d/udp.", inet_ntoa(sin4.sin_addr),
 	    ntohs(server_port));
-
-	udpsock->sock = sock;
 }
 
 void
