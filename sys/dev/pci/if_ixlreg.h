@@ -1,4 +1,4 @@
-/* $OpenBSD: if_ixlreg.h,v 1.2 2017/11/28 23:40:52 dlg Exp $ */
+/* $OpenBSD: if_ixlreg.h,v 1.3 2025/05/22 06:41:20 jmatthew Exp $ */
 
 /******************************************************************************
 
@@ -5316,4 +5316,53 @@
 #define I40E_VFPE_WQEALLOC1_WQE_DESC_INDEX_MASK  I40E_MASK(0xFFF, I40E_VFPE_WQEALLOC1_WQE_DESC_INDEX_SHIFT)
 
 #endif /* X722_SUPPORT */
+
+/* Packet Classifier Types for filters */
+/* bits 0-28 are reserved for future use */
+#define IXL_PCT_NONF_IPV4_UDP_UCAST	(1ULL << 29)	/* 722 */
+#define IXL_PCT_NONF_IPV4_UDP_MCAST	(1ULL << 30)	/* 722 */
+#define IXL_PCT_NONF_IPV4_UDP		(1ULL << 31)
+#define IXL_PCT_NONF_IPV4_TCP_SYN_NOACK	(1ULL << 32)	/* 722 */
+#define IXL_PCT_NONF_IPV4_TCP		(1ULL << 33)
+#define IXL_PCT_NONF_IPV4_SCTP		(1ULL << 34)
+#define IXL_PCT_NONF_IPV4_OTHER		(1ULL << 35)
+#define IXL_PCT_FRAG_IPV4		(1ULL << 36)
+/* bits 37-38 are reserved for future use */
+#define IXL_PCT_NONF_IPV6_UDP_UCAST	(1ULL << 39)	/* 722 */
+#define IXL_PCT_NONF_IPV6_UDP_MCAST	(1ULL << 40)	/* 722 */
+#define IXL_PCT_NONF_IPV6_UDP		(1ULL << 41)
+#define IXL_PCT_NONF_IPV6_TCP_SYN_NOACK	(1ULL << 42)	/* 722 */
+#define IXL_PCT_NONF_IPV6_TCP		(1ULL << 43)
+#define IXL_PCT_NONF_IPV6_SCTP		(1ULL << 44)
+#define IXL_PCT_NONF_IPV6_OTHER		(1ULL << 45)
+#define IXL_PCT_FRAG_IPV6		(1ULL << 46)
+/* bit 47 is reserved for future use */
+#define IXL_PCT_FCOE_OX			(1ULL << 48)
+#define IXL_PCT_FCOE_RX			(1ULL << 49)
+#define IXL_PCT_FCOE_OTHER		(1ULL << 50)
+/* bits 51-62 are reserved for future use */
+#define IXL_PCT_L2_PAYLOAD		(1ULL << 63)
+
+#define IXL_RSS_HENA_BASE_DEFAULT		\
+	IXL_PCT_NONF_IPV4_UDP |			\
+	IXL_PCT_NONF_IPV4_TCP |			\
+	IXL_PCT_NONF_IPV4_SCTP |		\
+	IXL_PCT_NONF_IPV4_OTHER |		\
+	IXL_PCT_FRAG_IPV4 |			\
+	IXL_PCT_NONF_IPV6_UDP |			\
+	IXL_PCT_NONF_IPV6_TCP |			\
+	IXL_PCT_NONF_IPV6_SCTP |		\
+	IXL_PCT_NONF_IPV6_OTHER |		\
+	IXL_PCT_FRAG_IPV6 |			\
+	IXL_PCT_L2_PAYLOAD
+
+#define IXL_RSS_HENA_BASE_710		IXL_RSS_HENA_BASE_DEFAULT
+#define IXL_RSS_HENA_BASE_722		IXL_RSS_HENA_BASE_DEFAULT | \
+	IXL_PCT_NONF_IPV4_UDP_UCAST |		\
+	IXL_PCT_NONF_IPV4_UDP_MCAST |		\
+	IXL_PCT_NONF_IPV6_UDP_UCAST |		\
+	IXL_PCT_NONF_IPV6_UDP_MCAST |		\
+	IXL_PCT_NONF_IPV4_TCP_SYN_NOACK |	\
+	IXL_PCT_NONF_IPV6_TCP_SYN_NOACK
+
 #endif /* _I40E_REGISTER_H_ */
