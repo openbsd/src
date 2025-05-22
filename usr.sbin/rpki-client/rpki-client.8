@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.120 2025/01/17 00:20:15 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.121 2025/05/22 02:10:27 tb Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 17 2025 $
+.Dd $Mdocdate: May 22 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -209,7 +209,7 @@ All network synchronisation tasks are aborted after seven eights of
 .Em timeout .
 .It Fl t Ar tal
 Specify a
-.Em Trust Anchor Location Pq TAL
+.Em Trust Anchor Locator Pq TAL
 file to be used.
 This option can be used multiple times to load multiple TALs.
 By default
