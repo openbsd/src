@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.23 2024/10/12 03:54:18 tb Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.24 2025/05/22 08:25:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -438,72 +438,7 @@ LSSL_ALIAS(SSL_alert_type_string);
 const char *
 SSL_alert_desc_string(int value)
 {
-	switch (value & 0xff) {
-	case SSL_AD_CLOSE_NOTIFY:
-		return "CN";
-	case SSL_AD_UNEXPECTED_MESSAGE:
-		return "UM";
-	case SSL_AD_BAD_RECORD_MAC:
-		return "BM";
-	case SSL_AD_RECORD_OVERFLOW:
-		return "RO";
-	case SSL_AD_DECOMPRESSION_FAILURE:
-		return "DF";
-	case SSL_AD_HANDSHAKE_FAILURE:
-		return "HF";
-	case SSL_AD_BAD_CERTIFICATE:
-		return "BC";
-	case SSL_AD_UNSUPPORTED_CERTIFICATE:
-		return "UC";
-	case SSL_AD_CERTIFICATE_REVOKED:
-		return "CR";
-	case SSL_AD_CERTIFICATE_EXPIRED:
-		return "CE";
-	case SSL_AD_CERTIFICATE_UNKNOWN:
-		return "CU";
-	case SSL_AD_ILLEGAL_PARAMETER:
-		return "IP";
-	case SSL_AD_UNKNOWN_CA:
-		return "CA";
-	case SSL_AD_ACCESS_DENIED:
-		return "AD";
-	case SSL_AD_DECODE_ERROR:
-		return "DE";
-	case SSL_AD_DECRYPT_ERROR:
-		return "CY";
-	case SSL_AD_PROTOCOL_VERSION:
-		return "PV";
-	case SSL_AD_INSUFFICIENT_SECURITY:
-		return "IS";
-	case SSL_AD_INTERNAL_ERROR:
-		return "IE";
-	case SSL_AD_INAPPROPRIATE_FALLBACK:
-		return "IF";
-	case SSL_AD_USER_CANCELLED:
-		return "US";
-	case SSL_AD_NO_RENEGOTIATION:
-		return "NR";
-	case SSL_AD_MISSING_EXTENSION:
-		return "ME";
-	case SSL_AD_UNSUPPORTED_EXTENSION:
-		return "UE";
-	case SSL_AD_CERTIFICATE_UNOBTAINABLE:
-		return "CO";
-	case SSL_AD_UNRECOGNIZED_NAME:
-		return "UN";
-	case SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE:
-		return "BR";
-	case SSL_AD_BAD_CERTIFICATE_HASH_VALUE:
-		return "BH";
-	case SSL_AD_UNKNOWN_PSK_IDENTITY:
-		return "UP";
-	case SSL_AD_CERTIFICATE_REQUIRED:
-		return "CQ"; /* XXX */
-	case SSL_AD_NO_APPLICATION_PROTOCOL:
-		return "AP";
-	default:
-		return "UK";
-	}
+	return "!!";
 }
 LSSL_ALIAS(SSL_alert_desc_string);
 
