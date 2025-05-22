@@ -1,6 +1,6 @@
-/*	$OpenBSD: sha_test.c,v 1.6 2023/07/19 15:11:42 joshua Exp $ */
+/*	$OpenBSD: sha_test.c,v 1.7 2025/05/22 03:35:40 joshua Exp $ */
 /*
- * Copyright (c) 2022, 2023 Joshua Sing <joshua@hypera.dev>
+ * Copyright (c) 2022, 2023, 2025 Joshua Sing <joshua@joshuasing.dev>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 #include <string.h>
+
+#include "test.h"
 
 struct sha_test {
 	const int algorithm;
@@ -677,260 +679,240 @@ typedef unsigned char *(*sha_hash_func)(const unsigned char *, size_t,
     unsigned char *);
 
 static int
-sha_hash_from_algorithm(int algorithm, const char **out_label,
-    sha_hash_func *out_func, const EVP_MD **out_md, size_t *out_len)
+sha_hash_from_algorithm(int algorithm, sha_hash_func *out_func,
+    const EVP_MD **out_md)
 {
-	const char *label;
 	sha_hash_func sha_func;
 	const EVP_MD *md;
-	size_t len;
 
 	switch (algorithm) {
 	case NID_sha1:
-		label = SN_sha1;
 		sha_func = SHA1;
 		md = EVP_sha1();
-		len = SHA_DIGEST_LENGTH;
 		break;
 	case NID_sha224:
-		label = SN_sha224;
 		sha_func = SHA224;
 		md = EVP_sha224();
-		len = SHA224_DIGEST_LENGTH;
 		break;
 	case NID_sha256:
-		label = SN_sha256;
 		sha_func = SHA256;
 		md = EVP_sha256();
-		len = SHA256_DIGEST_LENGTH;
 		break;
 	case NID_sha384:
-		label = SN_sha384;
 		sha_func = SHA384;
 		md = EVP_sha384();
-		len = SHA384_DIGEST_LENGTH;
 		break;
 	case NID_sha512:
-		label = SN_sha512;
 		sha_func = SHA512;
 		md = EVP_sha512();
-		len = SHA512_DIGEST_LENGTH;
 		break;
 	case NID_sha3_224:
-		label = SN_sha3_224;
 		sha_func = NULL;
 		md = EVP_sha3_224();
-		len = 224 / 8;
 		break;
 	case NID_sha3_256:
-		label = SN_sha3_256;
 		sha_func = NULL;
 		md = EVP_sha3_256();
-		len = 256 / 8;
 		break;
 	case NID_sha3_384:
-		label = SN_sha3_384;
 		sha_func = NULL;
 		md = EVP_sha3_384();
-		len = 384 / 8;
 		break;
 	case NID_sha3_512:
-		label = SN_sha3_512;
 		sha_func = NULL;
 		md = EVP_sha3_512();
-		len = 512 / 8;
 		break;
 	default:
-		fprintf(stderr, "FAIL: unknown algorithm (%d)\n",
-		    algorithm);
 		return 0;
 	}
 
-	if (out_label != NULL)
-		*out_label = label;
 	if (out_func != NULL)
 		*out_func = sha_func;
 	if (out_md != NULL)
 		*out_md = md;
-	if (out_len != NULL)
-		*out_len = len;
 
 	return 1;
 }
 
-static int
-sha_test(void)
+static void
+test_sha_tv(struct test *t, const void *arg)
 {
+	const struct sha_test *st = arg;
 	sha_hash_func sha_func;
-	const struct sha_test *st;
 	EVP_MD_CTX *hash = NULL;
 	const EVP_MD *md;
 	uint8_t out[EVP_MAX_MD_SIZE];
 	size_t in_len, out_len;
-	size_t i;
-	const char *label;
-	int failed = 1;
 
 	if ((hash = EVP_MD_CTX_new()) == NULL) {
-		fprintf(stderr, "FAIL: EVP_MD_CTX_new() failed\n");
-		goto failed;
+		test_errorf(t, "EVP_MD_CTX_new()");
+		goto fail;
 	}
+
+	if (!sha_hash_from_algorithm(st->algorithm, &sha_func, &md))
+		goto fail;
+
+	out_len = EVP_MD_size(md);
+
+	/* Digest */
+	if (sha_func != NULL) {
+		memset(out, 0, sizeof(out));
+		sha_func(st->in, st->in_len, out);
+		if (memcmp(st->out, out, out_len) != 0) {
+			test_errorf(t, "SHA: digest output mismatch");
+			test_hexdiff(t, out, out_len, st->out);
+		}
+	}
+
+	/* EVP single-shot digest */
+	memset(out, 0, sizeof(out));
+	if (!EVP_Digest(st->in, st->in_len, out, NULL, md, NULL)) {
+		test_errorf(t, "EVP_Digest()");
+		goto fail;
+	}
+
+	if (memcmp(st->out, out, out_len) != 0) {
+		test_errorf(t, "EVP single-shot: output diget mismatch");
+		test_hexdiff(t, out, out_len, st->out);
+	}
+
+	/* EVP digest */
+	memset(out, 0, sizeof(out));
+	if (!EVP_DigestInit_ex(hash, md, NULL)) {
+		test_errorf(t, "EVP_DigestInit_ex() ");
+		goto fail;
+	}
+
+	in_len = st->in_len / 2;
+	if (!EVP_DigestUpdate(hash, st->in, in_len)) {
+		test_errorf(t, "EVP_DigestUpdate() first half");
+		goto fail;
+	}
+
+	if (!EVP_DigestUpdate(hash, st->in + in_len,
+	    st->in_len - in_len)) {
+		test_errorf(t, "EVP_DigestUpdate() second half");
+		goto fail;
+	}
+
+	if (!EVP_DigestFinal_ex(hash, out, NULL)) {
+		test_errorf(t, "EVP_DigestFinal_ex()");
+		goto fail;
+	}
+
+	if (memcmp(st->out, out, out_len) != 0) {
+		test_errorf(t, "EVP: digest output mismatch");
+		test_hexdiff(t, out, out_len, st->out);
+	}
+
+
+ fail:
+	EVP_MD_CTX_free(hash);
+}
+
+static void
+test_sha(struct test *t, const void *arg)
+{
+	const struct sha_test *st;
+	size_t i;
+	char *name;
 
 	for (i = 0; i < N_SHA_TESTS; i++) {
 		st = &sha_tests[i];
-		if (!sha_hash_from_algorithm(st->algorithm, &label, &sha_func,
-		    &md, &out_len))
-			goto failed;
-
-		/* Digest */
-		if (sha_func != NULL) {
-			memset(out, 0, sizeof(out));
-			sha_func(st->in, st->in_len, out);
-			if (memcmp(st->out, out, out_len) != 0) {
-				fprintf(stderr, "FAIL (%s:%zu): mismatch\n",
-				    label, i);
-				goto failed;
-			}
+		if (asprintf(&name, "%s: '%s'", OBJ_nid2sn(st->algorithm), st->in) == -1) {
+			test_errorf(t, "create test name failed");
+			return;
 		}
 
-		/* EVP single-shot digest */
-		memset(out, 0, sizeof(out));
-		if (!EVP_Digest(st->in, st->in_len, out, NULL, md, NULL)) {
-			fprintf(stderr, "FAIL (%s:%zu): EVP_Digest failed\n",
-			    label, i);
-			goto failed;
-		}
-
-		if (memcmp(st->out, out, out_len) != 0) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP single-shot mismatch\n",
-			    label, i);
-			goto failed;
-		}
-
-		/* EVP digest */
-		memset(out, 0, sizeof(out));
-		if (!EVP_DigestInit_ex(hash, md, NULL)) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP_DigestInit_ex failed\n",
-			    label, i);
-			goto failed;
-		}
-
-		in_len = st->in_len / 2;
-		if (!EVP_DigestUpdate(hash, st->in, in_len)) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP_DigestUpdate first half "
-			    "failed\n", label, i);
-			goto failed;
-		}
-
-		if (!EVP_DigestUpdate(hash, st->in + in_len,
-		    st->in_len - in_len)) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP_DigestUpdate second half "
-			    "failed\n", label, i);
-			goto failed;
-		}
-
-		if (!EVP_DigestFinal_ex(hash, out, NULL)) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP_DigestFinal_ex failed\n",
-			    label, i);
-			goto failed;
-		}
-
-		if (memcmp(st->out, out, out_len) != 0) {
-			fprintf(stderr, "FAIL (%s:%zu): EVP mismatch\n",
-			    label, i);
-			goto failed;
-		}
+		test_run(t, name, test_sha_tv, st);
+		free(name);
 	}
-
-	failed = 0;
-
- failed:
-	EVP_MD_CTX_free(hash);
-	return failed;
 }
 
-static int
-sha_repetition_test(void)
+static void
+test_sha_repetition_tv(struct test *t, const void *arg)
 {
-	const struct sha_repetition_test *st;
+	const struct sha_repetition_test *st = arg;
 	EVP_MD_CTX *hash = NULL;
 	const EVP_MD *md;
 	uint8_t buf[1024];
 	uint8_t out[EVP_MAX_MD_SIZE];
 	size_t out_len, part_len;
-	size_t i, j;
-	const char *label;
-	int failed = 1;
+	size_t i;
 
 	if ((hash = EVP_MD_CTX_new()) == NULL) {
-		fprintf(stderr, "FAIL: EVP_MD_CTX_new() failed\n");
-		goto failed;
+		test_errorf(t, "EVP_MD_CTX_new()");
+		goto fail;
 	}
+
+	if (!sha_hash_from_algorithm(st->algorithm, NULL, &md))
+		goto fail;
+
+	out_len = EVP_MD_size(md);
+
+	/* EVP digest */
+	if (!EVP_DigestInit_ex(hash, md, NULL)) {
+		test_errorf(t, "EVP_DigestInit_ex()");
+		goto fail;
+	}
+
+	memset(buf, st->in, sizeof(buf));
+
+	for (i = 0; i < st->in_repetitions;) {
+		part_len = arc4random_uniform(sizeof(buf));
+		if (part_len > st->in_repetitions - i)
+			part_len = st->in_repetitions - i;
+
+		if (!EVP_DigestUpdate(hash, buf, part_len)) {
+			test_errorf(t, "EVP_DigestUpdate()");
+			goto fail;
+		}
+
+		i += part_len;
+	}
+
+	if (!EVP_DigestFinal_ex(hash, out, NULL)) {
+		test_errorf(t, "EVP_DigestFinal_ex()");
+		goto fail;
+	}
+
+	if (memcmp(st->out, out, out_len) != 0) {
+		test_errorf(t, "EVP: digest output mismatch");
+		test_hexdiff(t, out, out_len, st->out);
+		goto fail;
+	}
+
+ fail:
+	EVP_MD_CTX_free(hash);
+}
+
+static void
+test_sha_repetition(struct test *t, const void *arg)
+{
+	const struct sha_repetition_test *st;
+	size_t i;
+	char *name;
 
 	for (i = 0; i < N_SHA_REPETITION_TESTS; i++) {
 		st = &sha_repetition_tests[i];
-		if (!sha_hash_from_algorithm(st->algorithm, &label, NULL, &md,
-		    &out_len))
-			goto failed;
-
-		/* EVP digest */
-		if (!EVP_DigestInit_ex(hash, md, NULL)) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP_DigestInit_ex failed\n",
-			    label, i);
-			goto failed;
+		if (asprintf(&name, "%s: '%hhu' x %zu", OBJ_nid2sn(st->algorithm),
+		    st->in, st->in_repetitions) == -1) {
+			test_errorf(t, "create test name failed");
+			return;
 		}
 
-		memset(buf, st->in, sizeof(buf));
-
-		for (j = 0; j < st->in_repetitions;) {
-			part_len = arc4random_uniform(sizeof(buf));
-			if (part_len > st->in_repetitions - j)
-				part_len = st->in_repetitions - j;
-
-			if (!EVP_DigestUpdate(hash, buf, part_len)) {
-				fprintf(stderr,
-				    "FAIL (%s:%zu): EVP_DigestUpdate failed\n",
-				    label, i);
-				goto failed;
-			}
-
-			j += part_len;
-		}
-
-		if (!EVP_DigestFinal_ex(hash, out, NULL)) {
-			fprintf(stderr,
-			    "FAIL (%s:%zu): EVP_DigestFinal_ex failed\n",
-			    label, i);
-			goto failed;
-		}
-
-		if (memcmp(st->out, out, out_len) != 0) {
-			fprintf(stderr, "FAIL (%s:%zu): EVP mismatch\n",
-			    label, i);
-			goto failed;
-		}
+		test_run(t, name, test_sha_repetition_tv, st);
+		free(name);
 	}
-
-	failed = 0;
-
- failed:
-	EVP_MD_CTX_free(hash);
-	return failed;
 }
 
 int
 main(int argc, char **argv)
 {
-	int failed = 0;
+	struct test *t = test_init();
 
-	failed |= sha_test();
-	failed |= sha_repetition_test();
+	test_run(t, "sha", test_sha, NULL);
+	test_run(t, "sha repetition", test_sha_repetition, NULL);
 
-	return failed;
+	return test_result(t);
 }
