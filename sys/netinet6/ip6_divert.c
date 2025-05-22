@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.101 2025/03/11 15:31:03 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.102 2025/05/22 03:09:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -265,8 +265,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	return;
 
  bad:
-	if (inp != NULL)
-		in_pcbunref(inp);
+	in_pcbunref(inp);
 	m_freem(m);
 }
 
