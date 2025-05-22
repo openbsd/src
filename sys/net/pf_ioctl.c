@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.420 2025/05/21 09:33:48 mvs Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.421 2025/05/22 06:34:03 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2140,8 +2140,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			goto fail;
 		}
 
-		pf_pool_limits[pl->index].limit_new = pl->limit;
-		pl->limit = pf_pool_limits[pl->index].limit;
+		error = pool_sethardlimit(pf_pool_limits[pl->index].pp,
+		    pl->limit);
+		if (error == 0) {
+			pf_pool_limits[pl->index].limit_new = pl->limit;
+			pf_pool_limits[pl->index].limit = pl->limit;
+		}
 		PF_UNLOCK();
 		break;
 	}
@@ -2702,21 +2706,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		NET_LOCK();
 		PF_LOCK();
 
-		/*
-		 * Checked already in DIOCSETLIMIT, but check again as the
-		 * situation might have changed.
-		 */
-		for (i = 0; i < PF_LIMIT_MAX; i++) {
-			if (((struct pool *)pf_pool_limits[i].pp)->pr_nout >
-			    pf_pool_limits[i].limit_new) {
-				PF_UNLOCK();
-				NET_UNLOCK();
-				free(table, M_PF, sizeof(*table));
-				free(ioe, M_PF, sizeof(*ioe));
-				error = EBUSY;
-				goto fail;
-			}
-		}
 		/* now do the commit - no errors should happen here */
 		for (i = 0; i < io->size; i++) {
 			PF_UNLOCK();
@@ -2768,20 +2757,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 				goto fail; /* really bad */
 			}
-		}
-		for (i = 0; i < PF_LIMIT_MAX; i++) {
-			if (pf_pool_limits[i].limit_new !=
-			    pf_pool_limits[i].limit &&
-			    pool_sethardlimit(pf_pool_limits[i].pp,
-			    pf_pool_limits[i].limit_new) != 0) {
-				PF_UNLOCK();
-				NET_UNLOCK();
-				free(table, M_PF, sizeof(*table));
-				free(ioe, M_PF, sizeof(*ioe));
-				error = EBUSY;
-				goto fail; /* really bad */
-			}
-			pf_pool_limits[i].limit = pf_pool_limits[i].limit_new;
 		}
 		for (i = 0; i < PFTM_MAX; i++) {
 			int old = pf_default_rule.timeout[i];

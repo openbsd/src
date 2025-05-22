@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.395 2024/07/14 19:51:08 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.396 2025/05/22 06:34:03 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,6 +93,8 @@ int	 pfctl_show_states(int, const char *, int, long);
 int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int, int);
 int	 pfctl_show_limits(int, int);
+void	 pfctl_read_limits(int);
+void	 pfctl_restore_limits(void);
 void	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_show_anchors(int, int, char *);
 int	 pfctl_ruleset_trans(struct pfctl *, char *, struct pf_anchor *);
@@ -162,6 +164,8 @@ static const struct {
 	{ "anchors",		PF_LIMIT_ANCHORS },
 	{ NULL,			0 }
 };
+
+static unsigned int	limit_curr[PF_LIMIT_MAX];
 
 struct pf_hint {
 	const char	*name;
@@ -1162,6 +1166,37 @@ pfctl_show_limits(int dev, int opts)
 	return (0);
 }
 
+void
+pfctl_read_limits(int dev)
+{
+	struct pfioc_limit pl;
+	int i;
+
+	for (i = 0; pf_limits[i].name; i++) {
+		pl.index = pf_limits[i].index;
+		if (ioctl(dev, DIOCGETLIMIT, &pl) == -1)
+			err(1, "DIOCGETLIMIT");
+		limit_curr[i] = pl.limit;
+	}
+}
+
+void
+pfctl_restore_limits(void)
+{
+	struct pfioc_limit pl;
+	int i;
+
+	if (dev == -1)
+		return;
+
+	for (i = 0; pf_limits[i].name; i++) {
+		pl.index = pf_limits[i].index;
+		pl.limit = limit_curr[i];
+		if (ioctl(dev, DIOCSETLIMIT, &pl) == -1)
+			warn("DIOCSETLIMIT (%s)", pf_limits[i].name);
+	}
+}
+
 /* callbacks for rule/nat/rdr/addr */
 void
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
@@ -1762,18 +1797,30 @@ pfctl_init_options(struct pfctl *pf)
 	pf->syncookieswat[0] = PF_SYNCOOKIES_LOWATPCT;
 	pf->syncookieswat[1] = PF_SYNCOOKIES_HIWATPCT;
 
+	/*
+	 * limit_curr is populated by pfctl_read_limits() after main() opens
+	 * /dev/pf.
+	 */
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MAXCLUSTERS;
 	size = sizeof(mcl);
 	if (sysctl(mib, 2, &mcl, &size, NULL, 0) == -1)
 		err(1, "sysctl");
-	pf->limit[PF_LIMIT_FRAGS] = mcl / 4;
+	pf->limit[PF_LIMIT_FRAGS] = (limit_curr[PF_LIMIT_FRAGS] == 0) ?
+	    mcl / 4 : limit_curr[PF_LIMIT_FRAGS];
 
-	pf->limit[PF_LIMIT_SRC_NODES] = PFSNODE_HIWAT;
-	pf->limit[PF_LIMIT_TABLES] = PFR_KTABLE_HIWAT;
-	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
-	pf->limit[PF_LIMIT_PKTDELAY_PKTS] = PF_PKTDELAY_MAXPKTS;
-	pf->limit[PF_LIMIT_ANCHORS] = PF_ANCHOR_HIWAT;
+	pf->limit[PF_LIMIT_SRC_NODES] = (limit_curr[PF_LIMIT_SRC_NODES] == 0) ?
+	    PFSNODE_HIWAT : limit_curr[PF_LIMIT_SRC_NODES];
+	pf->limit[PF_LIMIT_TABLES] = (limit_curr[PF_LIMIT_TABLES] == 0) ?
+	    PFR_KTABLE_HIWAT : limit_curr[PF_LIMIT_TABLES];
+	pf->limit[PF_LIMIT_TABLE_ENTRIES] =
+	    (limit_curr[PF_LIMIT_TABLE_ENTRIES] == 0) ?
+		PFR_KENTRY_HIWAT : limit_curr[PF_LIMIT_TABLE_ENTRIES];
+	pf->limit[PF_LIMIT_PKTDELAY_PKTS] =
+	    (limit_curr[PF_LIMIT_PKTDELAY_PKTS] == 0) ?
+		PF_PKTDELAY_MAXPKTS : limit_curr[PF_LIMIT_PKTDELAY_PKTS];
+	pf->limit[PF_LIMIT_ANCHORS] = (limit_curr[PF_LIMIT_ANCHORS] == 0) ?
+	    PF_ANCHOR_HIWAT : limit_curr[PF_LIMIT_ANCHORS];
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM64;
@@ -1877,6 +1924,9 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set limit %s %d\n", opt, limit);
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		pfctl_load_options(pf);
 
 	return (0);
 }
@@ -2730,10 +2780,13 @@ main(int argc, char *argv[])
 		dev = open(pf_device, mode);
 		if (dev == -1)
 			err(1, "%s", pf_device);
+		pfctl_read_limits(dev);
+		atexit(pfctl_restore_limits);
 	} else {
 		dev = open(pf_device, O_RDONLY);
 		if (dev >= 0)
 			opts |= PF_OPT_DUMMYACTION;
+		pfctl_read_limits(dev);
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
 		clearopt = showopt = debugopt = NULL;
@@ -2951,7 +3004,16 @@ main(int argc, char *argv[])
 	if (lfile != NULL)
 		pfctl_state_load(dev, lfile);
 
-	exit(exit_val);
+	/*
+	 * prevent pfctl_restore_limits() exit handler from restoring
+	 * pf(4) options settings on successful exit.
+	 */
+	if (exit_val == 0) {
+		close(dev);
+		dev = -1;
+	}
+
+	return exit_val;
 }
 #endif	/* REGRESS_NOMAIN */
 
