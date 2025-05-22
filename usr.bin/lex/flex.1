@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.46 2024/11/09 18:06:00 op Exp $
+.\"	$OpenBSD: flex.1,v 1.47 2025/05/22 07:31:18 bentley Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: November 9 2024 $
+.Dd $Mdocdate: May 22 2025 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -1376,7 +1376,7 @@ pointer.
 .Nm
 provides a mechanism for conditionally activating rules.
 Any rule whose pattern is prefixed with
-.Qq Aq sc
+.Qq <sc>
 will only be active when the scanner is in the start condition named
 .Qq sc .
 For example,
@@ -1457,17 +1457,13 @@ is equivalent to
 <INITIAL,example>bar    something_else();
 .Ed
 .Pp
-Without the
-.Aq INITIAL,example
-qualifier, the
+Without the <INITIAL,example> qualifier, the
 .Dq bar
 pattern in the second example wouldn't be active
 .Pq i.e., couldn't match
 when in start condition
 .Dq example .
-If we just used
-.Aq example
-to qualify
+If we just used <example> to qualify
 .Dq bar ,
 though, then it would only be active in
 .Dq example
@@ -1481,7 +1477,7 @@ start condition is an inclusive
 start condition.
 .Pp
 Also note that the special start-condition specifier
-.Sq Aq *
+.Sq <*>
 matches every start condition.
 Thus, the above example could also have been written:
 .Bd -literal -offset indent
@@ -1721,8 +1717,7 @@ A start condition scope is begun with:
 where
 .Dq SCs
 is a list of one or more start conditions.
-Inside the start condition scope, every rule automatically has the prefix
-.Aq SCs
+Inside the start condition scope, every rule automatically has the prefix <SCs>
 applied to it, until a
 .Sq }
 which matches the initial
@@ -1889,9 +1884,7 @@ macro returns a
 handle to the current buffer.
 .Pp
 Here is an example of using these features for writing a scanner
-which expands include files (the
-.Aq Aq EOF
-feature is discussed below):
+which expands include files (the <<EOF>> feature is discussed below):
 .Bd -literal -offset indent
 /*
  * the "incl" state is used for picking up the name
@@ -1999,7 +1992,7 @@ reflecting the size of the buffer.
 .El
 .Sh END-OF-FILE RULES
 The special rule
-.Qq Aq Aq EOF
+.Qq <<EOF>>
 indicates actions which are to be taken when an end-of-file is encountered and
 .Fn yywrap
 returns non-zero
@@ -2029,17 +2022,11 @@ Switching to a new buffer using
 as shown in the example above.
 .El
 .Pp
-.Aq Aq EOF
-rules may not be used with other patterns;
+<<EOF>> rules may not be used with other patterns;
 they may only be qualified with a list of start conditions.
-If an unqualified
-.Aq Aq EOF
-rule is given, it applies to all start conditions which do not already have
-.Aq Aq EOF
-actions.
-To specify an
-.Aq Aq EOF
-rule for only the initial start condition, use
+If an unqualified <<EOF>> rule is given, it applies to all start conditions
+which do not already have <<EOF>> actions.
+To specify an <<EOF>> rule for only the initial start condition, use
 .Pp
 .Dl <INITIAL><<EOF>>
 .Pp
@@ -3918,10 +3905,10 @@ or ends with
 then it is not expanded with parentheses, to allow these operators to appear in
 definitions without losing their special meanings.
 But the
-.Sq Aq s ,
+.Sq <s> ,
 .Sq / ,
 and
-.Aq Aq EOF
+.Sq <<EOF>>
 operators cannot be used in a
 .Nm
 definition.
