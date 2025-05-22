@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.20 2024/07/09 17:24:12 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.21 2025/05/22 00:13:47 kenjiro Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023, 2024 Theo Buehler <tb@openbsd.org>
@@ -802,6 +802,85 @@ kdf_compare_bytes(const char *label, const unsigned char *d1, int len1,
 }
 
 static int
+evp_kdf_hkdf_basic(void)
+{
+	EVP_PKEY_CTX *pctx;
+	unsigned char out[42];
+	size_t outlen = sizeof(out);
+	int failed = 1;
+
+	/* Test vector from RFC 5869, Appendix A.1. */
+	const unsigned char ikm[] = {
+		0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+		0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+		0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+		0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+		0x0b, 0x0b,
+	};
+	const unsigned char salt[] = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+		0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+		0x0c,
+	};
+	const unsigned char info[] = {
+		0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5,
+		0xf6, 0xf7, 0xf8, 0xf9,
+	};
+	const unsigned char expected[42] = {
+		0x3c, 0xb2, 0x5f, 0x25, 0xfa, 0xac, 0xd5, 0x7a,
+		0x90, 0x43, 0x4f, 0x64, 0xd0, 0x36, 0x2f, 0x2a,
+		0x2d, 0x2d, 0x0a, 0x90, 0xcf, 0x1a, 0x5a, 0x4c,
+		0x5d, 0xb0, 0x2d, 0x56, 0xec, 0xc4, 0xc5, 0xbf,
+		0x34, 0x00, 0x72, 0x08, 0xd5, 0xb8, 0x87, 0x18,
+		0x58, 0x65,
+	};
+
+	if ((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)) == NULL) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_new_id\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_derive_init(pctx) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_derive_init\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_set_hkdf_md(pctx, EVP_sha256()) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_set_hkdf_md\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt, sizeof(salt)) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_set1_hkdf_salt\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_set1_hkdf_key(pctx, ikm, sizeof(ikm)) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_set1_hkdf_key\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_CTX_add1_hkdf_info(pctx, info, sizeof(info)) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_CTX_add1_hkdf_info\n");
+		goto err;
+	}
+
+	if (EVP_PKEY_derive(pctx, out, &outlen) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_derive\n");
+		goto err;
+	}
+
+	if (!kdf_compare_bytes("HKDF test", out, outlen, expected, sizeof(expected)))
+		goto err;
+
+	failed = 0;
+
+ err:
+	EVP_PKEY_CTX_free(pctx);
+	return failed;
+}
+
+static int
 evp_kdf_tls1_prf_basic(void)
 {
 	EVP_PKEY_CTX *pctx;
@@ -1038,6 +1117,7 @@ main(int argc, char **argv)
 	failed |= obj_name_do_all_test();
 	failed |= evp_get_cipherbyname_test();
 	failed |= evp_get_digestbyname_test();
+	failed |= evp_kdf_hkdf_basic();
 	failed |= evp_kdf_tls1_prf_basic();
 	failed |= evp_kdf_tls1_prf();
 
