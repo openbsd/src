@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.219 2025/02/24 09:40:01 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.220 2025/05/22 10:50:10 jan Exp $	*/
 
 /******************************************************************************
 
@@ -775,8 +775,15 @@ ixgbe_init(void *arg)
 	ixgbe_init_hw(&sc->hw);
 	ixgbe_initialize_transmit_units(sc);
 
-	/* Use 2k clusters, even for jumbo frames */
-	sc->rx_mbuf_sz = MCLBYTES + ETHER_ALIGN;
+	/*
+	 * Use 4k clusters in LRO mode to avoid m_defrag calls in case of
+	 * socket splicing.  Or, use 2k clusters in non-LRO mode, even for
+	 * jumbo frames.
+	 */
+	if (ISSET(ifp->if_xflags, IFXF_LRO))
+		sc->rx_mbuf_sz = MCLBYTES * 2 - ETHER_ALIGN;
+	else
+		sc->rx_mbuf_sz = MCLBYTES + ETHER_ALIGN;
 
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(sc)) {
