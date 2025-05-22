@@ -1,6 +1,6 @@
-/*	$OpenBSD: md_test.c,v 1.3 2025/01/19 10:17:39 tb Exp $ */
+/*	$OpenBSD: md_test.c,v 1.4 2025/05/22 03:24:47 joshua Exp $ */
 /*
- * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
+ * Copyright (c) 2022, 2025 Joshua Sing <joshua@joshuasing.dev>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "test.h"
+
 struct md_test {
 	const int algorithm;
 	const uint8_t in[128];
@@ -30,7 +32,7 @@ struct md_test {
 };
 
 static const struct md_test md_tests[] = {
-	/* MD4 (RFC 1320 test vectors)  */
+	/* MD4 (RFC 1320 test vectors) */
 	{
 		.algorithm = NID_md4,
 		.in = "",
@@ -99,7 +101,7 @@ static const struct md_test md_tests[] = {
 		}
 	},
 
-	/* MD5 (RFC 1321 test vectors)  */
+	/* MD5 (RFC 1321 test vectors) */
 	{
 		.algorithm = NID_md5,
 		.in = "",
@@ -175,25 +177,21 @@ typedef unsigned char *(*md_hash_func)(const unsigned char *, size_t,
     unsigned char *);
 
 static int
-md_hash_from_algorithm(int algorithm, const char **out_label,
-    md_hash_func *out_func, const EVP_MD **out_md, size_t *out_len)
+md_hash_from_algorithm(int algorithm, md_hash_func *out_func,
+    const EVP_MD **out_md, size_t *out_len)
 {
 	switch (algorithm) {
 	case NID_md4:
-		*out_label = SN_md4;
 		*out_func = MD4;
 		*out_md = EVP_md4();
 		*out_len = MD4_DIGEST_LENGTH;
 		break;
 	case NID_md5:
-		*out_label = SN_md5;
 		*out_func = MD5;
 		*out_md = EVP_md5();
 		*out_len = MD5_DIGEST_LENGTH;
 		break;
 	default:
-		fprintf(stderr, "FAIL: unknown algorithm (%d)\n",
-			algorithm);
 		return 0;
 	}
 
@@ -201,108 +199,100 @@ md_hash_from_algorithm(int algorithm, const char **out_label,
 }
 
 static void
-hexdump(const unsigned char *buf, size_t len)
+test_md_tv(struct test *t, const void *arg)
 {
-	size_t i;
-
-	for (i = 1; i <= len; i++)
-		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
-
-	fprintf(stderr, "\n");
-}
-
-static int
-md_test(void)
-{
-	unsigned char *(*md_func)(const unsigned char *, size_t, unsigned char *);
-	const struct md_test *st;
-	EVP_MD_CTX *hash = NULL;
+	const struct md_test *st = arg;
+	md_hash_func md_func;
 	const EVP_MD *md;
+	EVP_MD_CTX *hash = NULL;
 	uint8_t out[EVP_MAX_MD_SIZE];
 	size_t in_len, out_len;
-	size_t i;
-	const char *label;
-	int failed = 1;
+
+	if (!md_hash_from_algorithm(st->algorithm, &md_func, &md, &out_len)) {
+		test_errorf(t, "md_hash_from_algorithm: unknown algorithm: %d",
+		    st->algorithm);
+		goto fail;
+	}
 
 	if ((hash = EVP_MD_CTX_new()) == NULL) {
-		fprintf(stderr, "FAIL: EVP_MD_CTX_new() failed\n");
-		goto failed;
+		test_errorf(t, "EVP_MD_CTX_new()");
+		goto fail;
 	}
+
+	/* Digest */
+	memset(out, 0, sizeof(out));
+	md_func(st->in, st->in_len, out);
+	if (memcmp(st->out, out, out_len) != 0) {
+		test_errorf(t, "MD: digest output mismatch");
+		test_hexdiff(t, out, out_len, st->out);
+	}
+
+	/* EVP single-shot digest */
+	memset(out, 0, sizeof(out));
+	if (!EVP_Digest(st->in, st->in_len, out, NULL, md, NULL)) {
+		test_errorf(t, "EVP_Digest()");
+		goto fail;
+	}
+	if (memcmp(st->out, out, out_len) != 0) {
+		test_errorf(t, "EVP_Digest: digest output mismatch");
+		test_hexdiff(t, out, out_len, st->out);
+	}
+
+	/* EVP digest */
+	memset(out, 0, sizeof(out));
+	if (!EVP_DigestInit_ex(hash, md, NULL)) {
+		test_errorf(t, "EVP_DigestInit_ex()");
+		goto fail;
+	}
+
+	in_len = st->in_len / 2;
+	if (!EVP_DigestUpdate(hash, st->in, in_len)) {
+		test_errorf(t, "EVP_DigestUpdate: first half failed");
+		goto fail;
+	}
+
+	if (!EVP_DigestUpdate(hash, st->in + in_len,
+		st->in_len - in_len)) {
+		test_errorf(t, "EVP_DigestUpdate: second half failed");
+		goto fail;
+	}
+
+	if (!EVP_DigestFinal_ex(hash, out, NULL)) {
+		test_errorf(t, "EVP_DigestFinal_ex()");
+		goto fail;
+	}
+
+	if (memcmp(st->out, out, out_len) != 0) {
+		test_errorf(t, "EVP: digest output mismatch");
+		test_hexdiff(t, out, out_len, st->out);
+	}
+
+
+ fail:
+	EVP_MD_CTX_free(hash);
+}
+
+static void
+test_md(struct test *t, const void *arg)
+{
+	const struct md_test *st;
+	size_t i;
+	char *name;
 
 	for (i = 0; i < N_MD_TESTS; i++) {
 		st = &md_tests[i];
-		if (!md_hash_from_algorithm(st->algorithm, &label, &md_func,
-		    &md, &out_len))
-			goto failed;
-
-		/* Digest */
-		memset(out, 0, sizeof(out));
-		md_func(st->in, st->in_len, out);
-		if (memcmp(st->out, out, out_len) != 0) {
-			fprintf(stderr, "FAIL (%s): mismatch\n", label);
-			goto failed;
+		if (asprintf(&name, "%s: '%s'", OBJ_nid2sn(st->algorithm), st->in) == -1) {
+			test_errorf(t, "create test name");
+			return;
 		}
 
-		/* EVP single-shot digest */
-		memset(out, 0, sizeof(out));
-		if (!EVP_Digest(st->in, st->in_len, out, NULL, md, NULL)) {
-			fprintf(stderr, "FAIL (%s): EVP_Digest failed\n",
-			    label);
-			goto failed;
-		}
-
-		if (memcmp(st->out, out, out_len) != 0) {
-			fprintf(stderr, "FAIL (%s): EVP single-shot mismatch\n",
-			    label);
-			goto failed;
-		}
-
-		/* EVP digest */
-		memset(out, 0, sizeof(out));
-		if (!EVP_DigestInit_ex(hash, md, NULL)) {
-			fprintf(stderr, "FAIL (%s): EVP_DigestInit_ex failed\n",
-			    label);
-			goto failed;
-		}
-
-		in_len = st->in_len / 2;
-		if (!EVP_DigestUpdate(hash, st->in, in_len)) {
-			fprintf(stderr,
-			    "FAIL (%s): EVP_DigestUpdate first half failed\n",
-			    label);
-			goto failed;
-		}
-
-		if (!EVP_DigestUpdate(hash, st->in + in_len,
-			st->in_len - in_len)) {
-			fprintf(stderr,
-			    "FAIL (%s): EVP_DigestUpdate second half failed\n",
-			    label);
-			goto failed;
-		}
-
-		if (!EVP_DigestFinal_ex(hash, out, NULL)) {
-			fprintf(stderr,
-			    "FAIL (%s): EVP_DigestFinal_ex failed\n",
-			    label);
-			goto failed;
-		}
-
-		if (memcmp(st->out, out, out_len) != 0) {
-			fprintf(stderr, "FAIL (%s): EVP mismatch\n", label);
-			goto failed;
-		}
+		test_run(t, name, test_md_tv, st);
+		free(name);
 	}
-
-	failed = 0;
-
- failed:
-	EVP_MD_CTX_free(hash);
-	return failed;
 }
 
-static int
-md5_large_test(void)
+static void
+test_md5_large(struct test *t, const void *arg)
 {
 	MD5_CTX ctx;
 	uint8_t in[1024];
@@ -310,12 +300,10 @@ md5_large_test(void)
 	unsigned int out_len;
 	size_t in_len;
 	size_t i;
-	const char *label;
 	uint8_t want[] = {
 		0xd8, 0xbc, 0xae, 0x13, 0xb5, 0x5a, 0xb0, 0xfc,
 		0x7f, 0x8a, 0xe1, 0x78, 0x27, 0x8d, 0x44, 0x1b,
 	};
-	int failed = 1;
 
 	memset(in, 'A', sizeof(in));
 	in_len = sizeof(in);
@@ -323,44 +311,34 @@ md5_large_test(void)
 	memset(out, 0, sizeof(out));
 	out_len = 16;
 
-	label = "md5";
-
 	MD5_Init(&ctx);
 
 	for (i = 0; i < (1<<29) + 1; i += in_len) {
 		if (!MD5_Update(&ctx, in, in_len)) {
-			fprintf(stderr, "FAIL (%s): MD5_Update failed\n", label);
-			goto failed;
+			test_errorf(t, "MD5_Update()");
+			return;
 		}
 	}
 	if (!MD5_Final(out, &ctx)) {
-		fprintf(stderr, "FAIL (%s): MD5_Final failed\n", label);
-		goto failed;
+		test_errorf(t, "MD5_Final()");
+		return;
 	}
 
 	if (memcmp(out, want, out_len) != 0) {
-		fprintf(stderr, "FAIL (%s): MD5 mismatch\n", label);
-		hexdump(out, out_len);
-		goto failed;
+		test_errorf(t, "MD5 digest output mismatch");
+		test_hexdump(t, out, out_len);
 	}
-	if (ctx.Nh != 0x1 || ctx.Nl != 0x2000) {
-		fprintf(stderr, "FAIL (%s): MD5 incorrect bit length\n", label);
-		goto failed;
-	}
-
-	failed = 0;
-
- failed:
-	return failed;
+	if (ctx.Nh != 0x1 || ctx.Nl != 0x2000)
+		test_errorf(t, "MD5 incorrect bit length");
 }
 
 int
 main(int argc, char **argv)
 {
-	int failed = 0;
+	struct test *t = test_init();
 
-	failed |= md_test();
-	failed |= md5_large_test();
+	test_run(t, "md", test_md, NULL);
+	test_run(t, "md5 large", test_md5_large, NULL);
 
-	return failed;
+	return test_result(t);
 }
