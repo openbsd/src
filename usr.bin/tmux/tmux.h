@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1262 2025/05/22 07:43:38 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1263 2025/05/22 08:01:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -662,7 +662,7 @@ typedef u_int utf8_char;
  * characters as well. It can't be more than 32 bytes without changes to how
  * characters are stored.
  */
-#define UTF8_SIZE 21
+#define UTF8_SIZE 32
 struct utf8_data {
 	u_char	data[UTF8_SIZE];
 
