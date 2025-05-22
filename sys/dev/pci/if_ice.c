@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.41 2025/05/20 09:12:03 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.42 2025/05/22 08:32:50 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -20179,7 +20179,7 @@ ice_free_vsi_qmaps(struct ice_vsi *vsi)
 		ice_resmgr_release_map(&sc->tx_qmgr, vsi->tx_qmap,
 		    vsi->num_tx_queues);
 		free(vsi->tx_qmap, M_DEVBUF,
-		    vsi->num_tx_queues * sizeof(uint16_t));
+		    sc->isc_ntxqsets_max * sizeof(uint16_t));
 		vsi->tx_qmap = NULL;
 	}
 
@@ -20187,7 +20187,7 @@ ice_free_vsi_qmaps(struct ice_vsi *vsi)
 		ice_resmgr_release_map(&sc->rx_qmgr, vsi->rx_qmap,
 		     vsi->num_rx_queues);
 		free(vsi->rx_qmap, M_DEVBUF,
-		    vsi->num_rx_queues * sizeof(uint16_t));
+		    sc->isc_nrxqsets_max * sizeof(uint16_t));
 		vsi->rx_qmap = NULL;
 	}
 }
