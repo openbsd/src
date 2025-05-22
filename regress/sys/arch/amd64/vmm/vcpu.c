@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.8 2024/08/23 12:56:26 anton Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.9 2025/05/22 15:00:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -118,18 +118,34 @@ main(int argc, char **argv)
 	vcp.vcp_memranges[UPPER_MEM].vmr_gpa = (4 * GIB)
 	    - vcp.vcp_memranges[UPPER_MEM].vmr_size;
 
-	/* Allocate and Initialize our guest memory. */
+	if (ioctl(fd, VMM_IOC_CREATE, &vcp) == -1)
+		err(1, "VMM_IOC_CREATE");
+	printf("created vm %d named \"%s\"\n", vcp.vcp_id, vcp.vcp_name);
+
+	/*
+	 * 2. Check we can create shared memory mappings.
+	 */
+	memset(&vsp, 0, sizeof(vsp));
+	vsp.vsp_nmemranges = vcp.vcp_nmemranges;
+	memcpy(&vsp.vsp_memranges, &vcp.vcp_memranges,
+	    sizeof(vsp.vsp_memranges));
+	vsp.vsp_vm_id = vcp.vcp_id;
+
+	/* Perform the shared mapping. */
+	if (ioctl(fd, VMM_IOC_SHAREMEM, &vsp) == -1)
+		err(1, "VMM_IOC_SHAREMEM");
+	printf("created shared memory mappings\n");
+
+	for (i = 0; i < vsp.vsp_nmemranges; i++)
+		vcp.vcp_memranges[i].vmr_va = vsp.vsp_va[i];
+
 	for (i = 0; i < vcp.vcp_nmemranges; i++) {
 		vmr = &vcp.vcp_memranges[i];
 		if (vmr->vmr_size % 2 != 0)
 			errx(1, "memory ranges must be multiple of 2");
 
-		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
-		    MAP_PRIVATE | MAP_ANON, -1, 0);
-		if (p == MAP_FAILED)
-			err(1, "mmap");
+		p = (void *)vmr->vmr_va;
 
-		vmr->vmr_va = (vaddr_t)p;
 		printf("created mapped region %zu: { gpa: 0x%08lx, size: %lu,"
 		    " hva: 0x%lx }\n", i, vmr->vmr_gpa, vmr->vmr_size,
 		    vmr->vmr_va);
@@ -160,40 +176,6 @@ main(int argc, char **argv)
 			memcpy(p, INS, sizeof(INS));
 		}
 	}
-
-	if (ioctl(fd, VMM_IOC_CREATE, &vcp) == -1)
-		err(1, "VMM_IOC_CREATE");
-	printf("created vm %d named \"%s\"\n", vcp.vcp_id, vcp.vcp_name);
-
-	/*
-	 * 2. Check we can create shared memory mappings.
-	 */
-	memset(&vsp, 0, sizeof(vsp));
-	vsp.vsp_nmemranges = vcp.vcp_nmemranges;
-	memcpy(&vsp.vsp_memranges, &vcp.vcp_memranges,
-	    sizeof(vsp.vsp_memranges));
-	vsp.vsp_vm_id = vcp.vcp_id;
-
-	/* Find some new va ranges... */
-	for (i = 0; i < vsp.vsp_nmemranges; i++) {
-		vmr = &vsp.vsp_memranges[i];
-		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
-		    MAP_PRIVATE | MAP_ANON, -1, 0);
-		if (p == MAP_FAILED)
-			err(1, "mmap");
-		vmr->vmr_va = (vaddr_t)p;
-	}
-
-	/* Release our mappings so vmm can replace them. */
-	for (i = 0; i < vsp.vsp_nmemranges; i++) {
-		vmr = &vsp.vsp_memranges[i];
-		munmap((void*)vmr->vmr_va, vmr->vmr_size);
-	}
-
-	/* Perform the shared mapping. */
-	if (ioctl(fd, VMM_IOC_SHAREMEM, &vsp) == -1)
-		err(1, "VMM_IOC_SHAREMEM");
-	printf("created shared memory mappings\n");
 
 	/* We should see our reset vector instructions in the new mappings. */
 	for (i = 0; i < vsp.vsp_nmemranges; i++) {
@@ -415,30 +397,6 @@ out:
 	close(fd);
 	free(info);
 	free(exit);
-
-	/* Unmap memory. */
-	for (i = 0; i < vcp.vcp_nmemranges; i++) {
-		vmr = &vcp.vcp_memranges[i];
-		if (vmr->vmr_va) {
-			if (munmap((void *)vmr->vmr_va, vmr->vmr_size)) {
-				warn("failed to unmap orginal region %zu @ hva "
-				    "0x%lx", i, vmr->vmr_va);
-				ret = 1;
-			} else
-				printf("unmapped origin region %zu @ hva "
-				    "0x%lx\n", i, vmr->vmr_va);
-		}
-		vmr = &vsp.vsp_memranges[i];
-		if (vmr->vmr_va) {
-			if (munmap((void *)vmr->vmr_va, vmr->vmr_size)) {
-				warn("failed to unmap shared region %zu @ hva "
-				    "0x%lx", i, vmr->vmr_va);
-				ret = 1;
-			} else
-				printf("unmapped shared region %zu @ hva "
-				    "0x%lx\n", i, vmr->vmr_va);
-		}
-	}
 
 	return (ret);
 }
