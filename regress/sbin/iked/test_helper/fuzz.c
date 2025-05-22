@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: fuzz.c,v 1.3 2025/05/22 04:34:18 bluhm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *

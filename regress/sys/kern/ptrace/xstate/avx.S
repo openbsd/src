@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: avx.S,v 1.2 2025/05/22 04:34:18 bluhm Exp $ */
 
 #include <machine/asm.h>
 

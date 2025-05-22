@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: test_helper.h,v 1.4 2025/05/22 04:34:18 bluhm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *

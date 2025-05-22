@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: xstate.c,v 1.2 2025/05/22 04:34:18 bluhm Exp $ */
 
 #include <sys/types.h>
 #include <sys/ptrace.h>

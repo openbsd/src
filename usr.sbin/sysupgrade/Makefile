@@ -1,4 +1,4 @@
-#	$OpenBSD $
+#	$OpenBSD: Makefile,v 1.2 2025/05/22 04:34:18 bluhm Exp $
 
 MAN=	sysupgrade.8
 

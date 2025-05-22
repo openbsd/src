@@ -1,4 +1,4 @@
-# $OpenBSDS$
+# $OpenBSD: nm1.ref,v 1.5 2025/05/22 04:34:18 bluhm Exp $
 # reference output, all lines containing OpenBSD are ignored
 cpuid_t(unsigned long)
 dev_t(int)
