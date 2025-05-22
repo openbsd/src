@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.59 2018/07/10 10:20:51 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.60 2025/05/22 01:40:21 kn Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 10 2018 $
+.Dd $Mdocdate: May 22 2025 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -97,9 +97,12 @@ Set
 .Ar pkg-destdir
 as the prefix to prepend to any object deleted.
 .It Fl c
-Delete extra configuration file, mentioned as
-.Dl @extra file
-in the packing-list.
+Delete extra configuration files, users and groups mentioned as
+.Cm @extra ,
+.Cm @newuser
+and
+.Cm @newgroup
+in the packing-list, respectively.
 .It Fl D Ar name Ns Op = Ns Ar value
 Force removal of the package.
 .Ar name

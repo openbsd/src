@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.169 2025/05/02 11:05:54 sthen Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.170 2025/05/22 01:40:21 kn Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 2 2025 $
+.Dd $Mdocdate: May 22 2025 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -311,7 +311,7 @@ as the prefix to prepend to any object extracted from the package.
 .It Fl c
 While replacing packages, delete extra configuration file in the old package,
 mentioned as
-.Dl @extra file
+.Cm @extra
 in the packing-list.
 .It Fl D Ar name Ns Op = Ns Ar value
 Force installation of the package.
