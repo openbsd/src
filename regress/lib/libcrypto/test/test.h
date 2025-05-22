@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.1 2025/05/21 08:57:13 joshua Exp $ */
+/*	$OpenBSD: test.h,v 1.2 2025/05/22 02:23:41 joshua Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -82,7 +82,9 @@ void test_logf_internal(struct test *_t, const char *_label, const char *_func,
  * stderr if the test fails.
  */
 #define test_logf(t, fmt, ...) \
-    test_logf_internal(t, NULL, __func__, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+    do { \
+	test_logf_internal(t, NULL, __func__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+    } while (0)
 
 /*
  * test_errorf prints an error message. It will also cause the test to fail.
@@ -93,8 +95,10 @@ void test_logf_internal(struct test *_t, const char *_label, const char *_func,
  * information about what is broken.
  */
 #define test_errorf(t, fmt, ...) \
-    test_logf_internal(t, "ERROR", __func__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-    test_fail(t)
+    do { \
+	test_logf_internal(t, "ERROR", __func__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
+	test_fail(t); \
+    } while (0)
 
 /*
  * test_skip marks the test as skipped. Once called, the test should return.
