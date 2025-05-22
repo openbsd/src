@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmi.c,v 1.2 2024/11/25 22:12:18 tobhe Exp $	*/
+/*	$OpenBSD: scmi.c,v 1.3 2025/05/22 03:04:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
@@ -73,6 +73,7 @@ struct scmi_shmem {
 /* Performance management messages */
 #define SCMI_PERF_DOMAIN_ATTRIBUTES		0x3
 #define SCMI_PERF_DESCRIBE_LEVELS		0x4
+#define SCMI_PERF_LEVEL_SET			0x7
 #define SCMI_PERF_LEVEL_GET			0x8
 
 struct scmi_resp_perf_describe_levels_40 {
@@ -479,12 +480,15 @@ scmi_clock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 
 /* Performance management */
 void	scmi_perf_descr_levels(struct scmi_softc *, int);
+int	scmi_perf_level_get(struct scmi_softc *, int);
+int	scmi_perf_level_set(struct scmi_softc *, int, int);
 void	scmi_perf_refresh_sensor(void *);
 
 void
 scmi_attach_perf(struct scmi_softc *sc, int node)
 {
 	volatile struct scmi_shmem *shmem = sc->sc_shmem_tx;
+	struct scmi_perf_domain *pd;
 	int32_t status;
 	uint32_t version;
 	int i;
@@ -548,6 +552,9 @@ scmi_attach_perf(struct scmi_softc *sc, int node)
 		sensor_attach(&sc->sc_perf_sensordev, &sc->sc_perf_fsensors[i]);
 		sc->sc_perf_psensors[i].type = SENSOR_WATTS;
 		sensor_attach(&sc->sc_perf_sensordev, &sc->sc_perf_psensors[i]);
+
+		pd = &sc->sc_perf_domains[i];
+		scmi_perf_level_set(sc, i, pd->pd_nlevels - 1);
 	}
 	sensordev_install(&sc->sc_perf_sensordev);
 	sensor_task_register(sc, scmi_perf_refresh_sensor, 1);
@@ -577,7 +584,7 @@ scmi_perf_descr_levels(struct scmi_softc *sc, int domain)
 		status = sc->sc_command(sc);
 		if (status != SCMI_SUCCESS) {
 			printf("%s: SCMI_PERF_DESCRIBE_LEVELS failed\n",
-			    sc->sc_dev.dv_xname);	
+			    sc->sc_dev.dv_xname);
 			return;
 		}
 
@@ -603,13 +610,50 @@ scmi_perf_descr_levels(struct scmi_softc *sc, int domain)
 	} while (pl->pl_nrem);
 }
 
+int
+scmi_perf_level_get(struct scmi_softc *sc, int domain)
+{
+	volatile struct scmi_shmem *shmem = sc->sc_shmem_tx;
+	int32_t status;
+
+	scmi_message_header(shmem, SCMI_PERF,
+	    SCMI_PERF_LEVEL_GET);
+	shmem->length = sizeof(uint32_t) * 2;
+	shmem->message_payload[0] = domain;
+	status = sc->sc_command(sc);
+	if (status != SCMI_SUCCESS) {
+		printf("%s: SCMI_PERF_LEVEL_GET failed\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+	return shmem->message_payload[1];
+}
+
+int
+scmi_perf_level_set(struct scmi_softc *sc, int domain, int level)
+{
+	volatile struct scmi_shmem *shmem = sc->sc_shmem_tx;
+	int32_t status;
+
+	scmi_message_header(shmem, SCMI_PERF,
+	    SCMI_PERF_LEVEL_SET);
+	shmem->length = sizeof(uint32_t) * 3;
+	shmem->message_payload[0] = domain;
+	shmem->message_payload[1] = level;
+	status = sc->sc_command(sc);
+	if (status != SCMI_SUCCESS) {
+		printf("%s: SCMI_PERF_LEVEL_SET failed\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+	return 0;
+}
+
 void
 scmi_perf_refresh_sensor(void *arg)
 {
 	struct scmi_softc *sc = arg;
-	volatile struct scmi_shmem *shmem = sc->sc_shmem_tx;
 	uint64_t power_cost;
-	int32_t status;
 	int level, i;
 
 	if (sc->sc_perf_domains == NULL)
@@ -619,19 +663,9 @@ scmi_perf_refresh_sensor(void *arg)
 		if (sc->sc_perf_domains[i].pd_levels == NULL)
 			return;
 
-		scmi_message_header(shmem, SCMI_PERF,
-		    SCMI_PERF_LEVEL_GET);
-		shmem->length = sizeof(uint32_t) * 2;
-		shmem->message_payload[0] = i;
-		status = sc->sc_command(sc);
-		if (status != SCMI_SUCCESS) {
-			printf("%s: SCMI_PERF_LEVEL_GET failed\n",
-			    sc->sc_dev.dv_xname);	
-			return;
-		}
-
-		level = shmem->message_payload[1];
-		if (sc->sc_perf_fsensors == NULL ||
+		level = scmi_perf_level_get(sc, i);
+		if (level == -1 ||
+		    sc->sc_perf_fsensors == NULL ||
 		    sc->sc_perf_psensors == NULL)
 			return;
 
