@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.215 2025/05/14 14:32:15 mvs Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.216 2025/05/22 03:12:33 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -653,7 +653,7 @@ int
 ipsec_sysctl_algorithm(int name, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	const struct ipsec_sysctl_algorithm *algs, *p; 
+	const struct ipsec_sysctl_algorithm *algs, *p;
 	int *var, oldval, error;
 	char buf[20];
 
