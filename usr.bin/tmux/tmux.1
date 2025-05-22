@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.999 2025/05/12 10:26:19 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1000 2025/05/22 07:43:38 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2025 $
+.Dd $Mdocdate: May 22 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6357,6 +6357,10 @@ will be available in the
 format variable.
 .Ql X
 must be at most 15 bytes in length.
+.It Ic set-default
+Set the current colours and attributes as the default, overwriting any previous
+default.
+The previous default cannot be restored.
 .El
 .Pp
 Examples are:

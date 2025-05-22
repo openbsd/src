@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1261 2025/05/12 10:34:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1262 2025/05/22 07:43:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -881,7 +881,8 @@ TAILQ_HEAD(style_ranges, style_range);
 enum style_default_type {
 	STYLE_DEFAULT_BASE,
 	STYLE_DEFAULT_PUSH,
-	STYLE_DEFAULT_POP
+	STYLE_DEFAULT_POP,
+	STYLE_DEFAULT_SET
 };
 
 /* Style option. */
