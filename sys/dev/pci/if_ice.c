@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.43 2025/05/23 08:57:49 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.44 2025/05/23 09:11:06 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -289,8 +289,6 @@ struct ice_softc {
 
 	/* isc_* fields inherited from FreeBSD iflib struct if_softc_ctx */
 	int isc_vectors;
-	int isc_nrxqsets;
-	int isc_ntxqsets;
 	int isc_msix_bar;
 	int isc_tx_nsegments;
 	int isc_ntxd[8];
@@ -17657,13 +17655,9 @@ ice_setup_scctx(struct ice_softc *sc)
 	 * a single queue pair.
 	 */
 	if (safe_mode || recovery_mode || !have_rss) {
-		sc->isc_ntxqsets = sc->isc_nrxqsets = 1;
 		sc->isc_ntxqsets_max = 1;
 		sc->isc_nrxqsets_max = 1;
 	} else {
-		sc->isc_ntxqsets = hw->func_caps.common_cap.rss_table_size;
-		sc->isc_nrxqsets = hw->func_caps.common_cap.rss_table_size;
-
 		sc->isc_ntxqsets_max = hw->func_caps.common_cap.num_txq;
 		sc->isc_nrxqsets_max = hw->func_caps.common_cap.num_rxq;
 	}
@@ -28752,7 +28746,7 @@ ice_intr_vector(void *ivp)
  * @sc: the device private softc
  *
  * @post on success this function must set the following scctx parameters:
- * isc_vectors, isc_nrxqsets, isc_ntxqsets, and isc_intr.
+ * isc_vectors.
  *
  * @returns zero on success or an error code on failure.
  */
@@ -28790,8 +28784,6 @@ ice_allocate_msix(struct ice_softc *sc)
 	}
 
 	sc->isc_vectors = sc->sc_nvectors;
-	sc->isc_nrxqsets = sc->sc_nqueues;
-	sc->isc_ntxqsets = sc->sc_nqueues;
 
 	return 0;
 
