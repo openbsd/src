@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.37 2022/03/13 23:27:54 cheloha Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.38 2025/05/23 00:40:45 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -22,7 +22,7 @@
 #include "xmalloc.h"
 #include "log.h"
 
-char *malloc_options = "S";
+const char * const malloc_options = "S";
 
 void *
 xmalloc(size_t size)
