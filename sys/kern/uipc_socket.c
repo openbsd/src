@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.377 2025/04/15 12:14:06 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.378 2025/05/23 23:41:46 dlg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1871,8 +1871,10 @@ somove(struct socket *so, int wait)
 
 		return (0);
 	}
-	if (timerisset(&so->so_idletv))
-		timeout_add_tv(&so->so_idleto, &so->so_idletv);
+	if (timerisset(&so->so_idletv)) {
+		timeout_add_nsec(&so->so_idleto,
+		    TIMEVAL_TO_NSEC(&so->so_idletv));
+	}
 	return (1);
 }
 #endif /* SOCKET_SPLICE */
