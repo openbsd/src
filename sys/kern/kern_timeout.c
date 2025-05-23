@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.103 2025/05/02 00:51:09 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.104 2025/05/23 23:56:14 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -366,16 +366,6 @@ timeout_add_ticks(struct timeout *to, uint64_t to_ticks, int notzero)
 		to_ticks = 1;
 
 	return timeout_add(to, (int)to_ticks);
-}
-
-int
-timeout_add_tv(struct timeout *to, const struct timeval *tv)
-{
-	uint64_t to_ticks;
-
-	to_ticks = (uint64_t)hz * tv->tv_sec + tv->tv_usec / tick;
-
-	return timeout_add_ticks(to, to_ticks, tv->tv_usec > 0);
 }
 
 int

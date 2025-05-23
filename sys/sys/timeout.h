@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.50 2024/08/11 00:49:34 dlg Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.51 2025/05/23 23:56:14 dlg Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -106,7 +106,6 @@ void timeout_set_flags(struct timeout *, void (*)(void *), void *, int, int);
 void timeout_set_proc(struct timeout *, void (*)(void *), void *);
 
 int timeout_add(struct timeout *, int);
-int timeout_add_tv(struct timeout *, const struct timeval *);
 int timeout_add_sec(struct timeout *, int);
 int timeout_add_msec(struct timeout *, uint64_t);
 int timeout_add_usec(struct timeout *, uint64_t);
