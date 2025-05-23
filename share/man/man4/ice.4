@@ -1,4 +1,4 @@
-.\" $OpenBSD: ice.4,v 1.3 2025/04/26 19:49:21 benno Exp $
+.\" $OpenBSD: ice.4,v 1.4 2025/05/23 09:53:15 stsp Exp $
 .\"
 .\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2025 $
+.Dd $Mdocdate: May 23 2025 $
 .Dt ICE 4
 .Os
 .Sh NAME
@@ -29,7 +29,8 @@ driver supports Intel 800 series controllers based on the
 Intel E810 Ethernet chipset.
 .Sh FILES
 Intel 800 series controllers contain basic firmware which allows the
-device to be used without any hardware offloading features enabled.
+device to be used with single Tx/Rx queues and without any hardware
+offloading features enabled.
 For full functionality, the device needs the following firmware file,
 which is loaded by the driver when the system boots:
 .Pp
@@ -69,9 +70,3 @@ driver was written by Intel and ported to
 .Ox
 by
 .An Stefan Sperling Aq Mt stsp@openbsd.org .
-.Sh CAVEATS
-The
-.Nm
-driver does not support any of the offloading capabilities offered by
-the device.
-Additional work is required before those features can be supported.
