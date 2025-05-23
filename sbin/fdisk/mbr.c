@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.124 2023/05/17 12:59:37 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.125 2025/05/23 00:20:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -161,6 +161,27 @@ MBR_print(const struct mbr *mbr, const char *units)
 
 	for (i = 0; i < nitems(mbr->mbr_prt); i++)
 		PRT_print_part(i, &mbr->mbr_prt[i], units);
+}
+
+int
+MBR_recover_partition(char *line, struct mbr *mbr)
+{
+	uint64_t		 bs, ns;
+	unsigned int		 pn, id;
+	unsigned char		 flag;
+
+	if (sscanf(line, "%c%u: %2X %*u %*u %*u - %*u %*u %*u " "[ %llu: %llu ]",
+	    &flag, &pn, &id, &bs, &ns) != 5)
+		return -1;
+	if (pn >= nitems(mbr->mbr_prt) || (flag != ' ' && flag != '*'))
+		return -1;
+
+	mbr->mbr_prt[pn].prt_bs = bs;
+	mbr->mbr_prt[pn].prt_ns = ns;
+	mbr->mbr_prt[pn].prt_flag = (flag == '*') ? DOSACTIVE : 0;
+	mbr->mbr_prt[pn].prt_id = id;
+
+	return 0;
 }
 
 int

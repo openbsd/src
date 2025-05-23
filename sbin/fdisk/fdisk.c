@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.146 2022/07/17 12:53:19 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.147 2025/05/23 00:20:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,6 +41,7 @@
 #define	INIT_GPTPARTITIONS	2
 #define	INIT_MBR		3
 #define	INIT_MBRBOOTCODE	4
+#define	INIT_RECOVER		5
 
 #define	_PATH_MBR		_PATH_BOOTDIR "mbr"
 
@@ -48,6 +49,10 @@ int			y_flag;
 
 void			parse_bootprt(const char *);
 void			get_default_dmbr(const char *);
+void			recover(const char *, struct mbr *, int);
+void			recover_disk_gpt(int);
+void			recover_file_gpt(FILE *, int);
+void			recover_file_mbr(FILE *, struct mbr *);
 
 static void
 usage(void)
@@ -58,6 +63,7 @@ usage(void)
 	    "[-evy] [-A | -g | -i | -u] [-b blocks[@offset[:type]]]\n"
 	    "\t[-l blocks | -c cylinders -h heads -s sectors] [-f file] "
 	    "disk\n", __progname);
+	fprintf(stderr, "       %s -R [-y] disk [file]\n", __progname);
 	exit(1);
 }
 
@@ -65,14 +71,14 @@ int
 main(int argc, char *argv[])
 {
 	struct mbr		 mbr;
-	const char		*mbrfile = NULL;
+	const char		*mbrfile = NULL, *recoverfile = NULL;
 	const char		*errstr;
 	int			 ch;
 	int			 e_flag = 0, init = 0;
 	int			 verbosity = TERSE;
 	int			 oflags = O_RDONLY;
 
-	while ((ch = getopt(argc, argv, "Ab:c:ef:gh:il:s:uvy")) != -1) {
+	while ((ch = getopt(argc, argv, "Ab:c:ef:gh:il:Rs:uvy")) != -1) {
 		switch(ch) {
 		case 'A':
 			init = INIT_GPTPARTITIONS;
@@ -115,6 +121,9 @@ main(int argc, char *argv[])
 				    BLOCKALIGNMENT, UINT32_MAX);
 			disk.dk_cylinders = disk.dk_heads = disk.dk_sectors = 0;
 			break;
+		case 'R':
+			init = INIT_RECOVER;
+			break;
 		case 's':
 			disk.dk_sectors = strtonum(optarg, 1, 63, &errstr);
 			if (errstr)
@@ -136,6 +145,11 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (init == INIT_RECOVER && argc == 2) {
+		recoverfile = argv[1];
+		argc = 1;	/* Leaving argv[0] holding the disk name. */
+	}
 
 	if (argc != 1)
 		usage();
@@ -161,11 +175,25 @@ main(int argc, char *argv[])
 	 * "stdio" to talk to the outside world.
 	 * "proc exec" for man page display.
 	 * "disklabel" for DIOCRLDINFO.
+	 * "rpath" for INIT_RECOVER
 	 */
-	if (pledge("stdio disklabel proc exec", NULL) == -1)
+	if (pledge("stdio disklabel proc exec rpath", NULL) == -1)
 		err(1, "pledge");
 
 	switch (init) {
+	case INIT_RECOVER:
+		recover(recoverfile, &mbr, verbosity);
+		if (gh.gh_sig == GPTSIGNATURE) {
+			if (ask_yn("Do you wish to write recovered GPT?"))
+				Xwrite(NULL, &gmbr);
+		} else if (mbr.mbr_signature == DOSMBR_SIGNATURE) {
+			if (ask_yn("Do you wish to write recovered MBR?"))
+				Xwrite(NULL, &mbr);
+		} else if (recoverfile == NULL) {
+			errx(1, "no GPT partitions found on %s", disk.dk_name);
+		} else
+			errx(1, "no partition info found in %s", recoverfile);
+		break;
 	case INIT_GPT:
 		if (GPT_init(GHANDGP))
 			errx(1, "-g could not create valid GPT");
@@ -283,4 +311,151 @@ get_default_dmbr(const char *mbrfile)
 		errx(1, "read('%s'): read %zd bytes of %zd", mbrfile, len, sz);
 
 	close(fd);
+}
+
+void
+recover_disk_gpt(int verbosity)
+{
+	unsigned int recovered, pn;
+
+	GPT_init(GHANDGP);
+	memset(&gp, 0, sizeof(gp));	/* Discard default OpenBSD partition. */
+
+	recovered = 0;
+	if (GPT_recover_partition(NULL, NULL, NULL) == -1)
+		goto done;
+
+	for (pn = 0, recovered = 0; pn < nitems(gp); pn++) {
+		if (gp[pn].gp_lba_start >= letoh64(gh.gh_lba_start))
+			recovered++;
+	}
+
+ done:
+	if (recovered == 0)
+		memset(&gh, 0, sizeof(gh));
+	else
+		GPT_print("s", verbosity);
+}
+
+void
+recover_file_mbr(FILE *fp, struct mbr *mbr)
+{
+	char			*line = NULL;
+	size_t			 linesize = 0;
+	unsigned int		 recovered = 0;
+
+	MBR_init(mbr);
+	memset(mbr->mbr_prt, 0, sizeof(mbr->mbr_prt));
+
+	while (getline(&line, &linesize, fp) != -1) {
+		if (linesize < 3)
+			continue;
+		if (line[0] != '*' && line[0] != ' ')
+			continue;
+		if (!isdigit((unsigned int)line[1]) || line[2] != ':')
+			continue;
+		if (MBR_recover_partition(line, mbr) == -1)
+			goto done;
+		recovered++;
+	}
+
+ done:
+	free(line);
+	if (recovered == 0)
+		memset(mbr, 0, sizeof(*mbr));
+	else
+		MBR_print(mbr, "s");
+}
+
+void
+recover_file_gpt(FILE *fp, int verbosity)
+{
+	char			 l1[128], l2[LINEBUFSZ], l3[LINEBUFSZ];
+	char			*start, *line = NULL;
+	size_t			 whitespace, linesize = 0;
+	unsigned int		 recovered = 0;
+	int			 digits;
+
+	GPT_init(GHANDGP);
+	memset(&gp, 0, sizeof(gp));	/* Discard default OpenBSD partition. */
+	l1[0] = l2[0] = l3[0] = '\0';
+
+	/*
+	 * Lines of interest begin with one of
+	 *
+	 * 1) '<1-3 digits>:', possible partition start (put in l1)
+	 * 2) '<8 hex digits>-', possible UUID line (put in l2)
+	 * 3) 'Attributes:', the attributes line of fdisk -v (put in l3)
+	 *
+	 * Other lines are ignored.
+	 *
+	 * Recovery stops at first parsing failure.
+	 */
+	for (;;) {
+		if (getline(&line, &linesize, fp) == -1) {
+			if (GPT_recover_partition(l1, l2, l3) != -1)
+				recovered++;
+			goto done;
+		}
+		whitespace = strspn(line, WHITESPACE);
+		if (whitespace >= linesize)
+			continue;
+		start = line + whitespace;
+
+		digits = strspn(start, "0123456789");
+		if (digits > 0 && digits < 4 && *(start+digits) == ':') {
+			if (strlen(l1)) {
+				if (GPT_recover_partition(l1, l2, l3) == -1)
+					goto done;
+				recovered++;
+			}
+			if (strlcpy(l1, start, sizeof(l1)) >= sizeof(l1))
+				goto done;
+			l2[0] = l3[0] = '\0';
+			continue;
+		}
+
+		digits = strspn(start, "0123456789abcdefABCDEF");
+		if (digits == 8 && *(start+digits) == '-') {
+			if (strlcpy(l2, start, sizeof(l2)) >= sizeof(l2))
+			    goto done;
+			continue;
+		}
+
+		if (strncmp(start, "Attributes:", 11) == 0) {
+			if (strlcpy(l3, start, sizeof(l3)) >= sizeof(l3))
+				goto done;
+			continue;
+		}
+	}
+
+ done:
+	free(line);
+	if (recovered == 0)
+		memset(&gh, 0, sizeof(gh));
+	else
+		GPT_print("s", verbosity);
+}
+
+void
+recover(const char *args, struct mbr *mbr, int verbosity)
+{
+	FILE			*fp;
+
+	if (args == NULL) {
+		recover_disk_gpt(verbosity);
+		return;
+	}
+
+	fp = fopen(args, "r");
+	if (fp == NULL)
+		err(1, "fopen(%s)", args);
+
+	recover_file_gpt(fp, verbosity);
+	if (gh.gh_sig != GPTSIGNATURE) {
+		rewind(fp);
+		recover_file_mbr(fp, mbr);
+	}
+
+	fclose(fp);
 }

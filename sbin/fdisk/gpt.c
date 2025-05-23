@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.95 2024/12/24 21:34:23 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.96 2025/05/23 00:20:02 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -304,6 +304,98 @@ get_partition_table(void)
  done:
 	free(legp);
 	return rslt;
+}
+
+int
+GPT_recover_partition(char *line1, char *line2, char *line3)
+{
+	char			 type[37], guid[37], name[37], name2[37];
+	struct uuid		 type_uuid, guid_uuid;
+	const char		*p;
+	uint64_t		 start, size, attrs, attrs2;
+	unsigned int		 pn;
+	int			 error, fields;
+	uint32_t		 status;
+
+	if (line1 == NULL) {
+		/* Try to recover from disk contents. */
+		error = get_header(GPTSECTOR);
+		if (error != 0 || get_partition_table() != 0)
+			error = get_header(DL_GETDSIZE(&dl) - 1);
+		if (error == 0)
+			error = get_partition_table();
+		return error;
+	}
+
+	fields = sscanf(line1, "%u: %36[^[] [%llu:%llu] 0x%llx %36[^\n]", &pn,
+	    type, &start, &size, &attrs, name);
+	switch (fields) {
+	case 4:
+		attrs = 0;
+		memset(name, 0, sizeof(name));
+		break;
+	case 5:
+		memset(name, 0, sizeof(name));
+		break;
+	case 6:
+		break;
+	default:
+		return -1;
+	}
+
+	fields = sscanf(line2, "%36s %36[^\n]", guid, name2);
+	switch (fields) {
+	case 0:
+	case EOF:
+		memset(guid, 0, sizeof(guid));
+		break;
+	case 1:
+		break;
+	case 2:
+		memcpy(name, name2, sizeof(name));
+		break;
+	}
+
+	fields = sscanf(line3, "Attributes: (0x%llx)", &attrs2);
+	switch (fields) {
+	case 0:
+	case EOF:
+		break;
+	case 1:
+		attrs = attrs2;
+		break;
+	}
+
+	if (pn >= nitems(gp) || start < letoh64(gh.gh_lba_start) || size == 0)
+		return -1;
+
+	uuid_from_string(type, &type_uuid, &status);
+	if (status != uuid_s_ok) {
+		p = PRT_desc_to_guid(type);
+		if (p)
+			uuid_from_string(p, &type_uuid, &status);
+		if (status != uuid_s_ok)
+			return -1;
+	}
+
+	uuid_from_string(guid, &guid_uuid, &status);
+	if (status != uuid_s_ok)
+		return -1;
+	if (uuid_is_nil(&guid_uuid, NULL)) {
+		uuid_create(&guid_uuid, &status);
+		if (status != uuid_s_ok)
+			return -1;
+	}
+
+	gp[pn].gp_type = type_uuid;
+	gp[pn].gp_guid = guid_uuid;
+	gp[pn].gp_lba_start = start;
+	gp[pn].gp_lba_end = start + size - 1;
+	gp[pn].gp_attrs = attrs;
+
+	string_to_name(pn, name);
+
+	return 0;
 }
 
 int
