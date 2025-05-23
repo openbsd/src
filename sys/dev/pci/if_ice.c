@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.45 2025/05/23 09:16:14 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.46 2025/05/23 11:50:21 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -288,33 +288,14 @@ struct ice_softc {
 	struct ice_resmgr os_imgr;
 
 	/* isc_* fields inherited from FreeBSD iflib struct if_softc_ctx */
-	int isc_vectors;
-	int isc_msix_bar;
 	int isc_tx_nsegments;
 	int isc_ntxd[8];
 	int isc_nrxd[8];
-	uint32_t isc_txqsizes[8];
-	uint32_t isc_rxqsizes[8];
-	uint8_t isc_txd_size[8];
-	uint8_t isc_rxd_size[8];
 	int isc_tx_tso_segments_max;
 	int isc_tx_tso_size_max;
 	int isc_tx_tso_segsize_max;
-	int isc_tx_csum_flags;
-	int isc_capabilities;
-	int isc_capenable;
-	int isc_rss_table_size;
-	int isc_rss_table_mask;
 	int isc_nrxqsets_max;
 	int isc_ntxqsets_max;
-	uint16_t isc_rxd_buf_size[8]; /* set at init time by driver, 0
-				         means use iflib-calculated size
-				         based on isc_max_frame_size */
-	uint16_t isc_max_frame_size; /* set at init time by driver */
-	uint16_t isc_min_frame_size; /* set at init time by driver, only used if
-					IFLIB_NEED_ETHER_PAD is set. */
-	uint32_t isc_pause_frames;   /* set by driver for iflib_timer to detect */
-	int isc_disable_msix;
 
 	/* Tx/Rx queue managers */
 	struct ice_resmgr tx_qmgr;
@@ -17661,19 +17642,10 @@ ice_setup_scctx(struct ice_softc *sc)
 		sc->isc_nrxqsets_max = hw->func_caps.common_cap.num_rxq;
 	}
 
-	sc->isc_txqsizes[0] = roundup(sc->isc_ntxd[0]
-	    * sizeof(struct ice_tx_desc), DBA_ALIGN);
-	sc->isc_rxqsizes[0] = roundup(sc->isc_nrxd[0]
-	    * sizeof(union ice_32b_rx_flex_desc), DBA_ALIGN);
-
 	sc->isc_tx_nsegments = ICE_MAX_TX_SEGS;
 	sc->isc_tx_tso_segments_max = ICE_MAX_TSO_SEGS;
 	sc->isc_tx_tso_size_max = ICE_TSO_SIZE;
 	sc->isc_tx_tso_segsize_max = ICE_MAX_DMA_SEG_SIZE;
-#if 0
-	sc->isc_msix_bar = pci_msix_table_bar(dev);
-#endif
-	sc->isc_rss_table_size = hw->func_caps.common_cap.rss_table_size;
 #if 0
 	/*
 	 * If the driver loads in recovery mode, disable Tx/Rx functionality
@@ -17683,22 +17655,6 @@ ice_setup_scctx(struct ice_softc *sc)
 	else
 		scctx->isc_txrx = &ice_txrx;
 #endif
-	/*
-	 * If the driver loads in Safe mode or Recovery mode, disable
-	 * advanced features including hardware offloads.
-	 */
-	if (safe_mode || recovery_mode) {
-		sc->isc_capenable = ICE_SAFE_CAPS;
-		sc->isc_tx_csum_flags = 0;
-	} else {
-		sc->isc_capenable = ICE_FULL_CAPS;
-#if 0
-		sc->isc_tx_csum_flags = ICE_CSUM_OFFLOAD;
-#endif
-	}
-
-	sc->isc_capabilities = sc->isc_capenable;
-
 	for (i = 0; i < nitems(sc->isc_ntxd); i++)
 		sc->isc_ntxd[i] = ICE_DEFAULT_DESC_COUNT;
 	for (i = 0; i < nitems(sc->isc_nrxd); i++)
@@ -29253,9 +29209,6 @@ ice_intr_vector(void *ivp)
  * ice_allocate_msix - Allocate MSI-X vectors for the interface
  * @sc: the device private softc
  *
- * @post on success this function must set the following scctx parameters:
- * isc_vectors.
- *
  * @returns zero on success or an error code on failure.
  */
 int
@@ -29290,8 +29243,6 @@ ice_allocate_msix(struct ice_softc *sc)
 			}
 		}
 	}
-
-	sc->isc_vectors = sc->sc_nvectors;
 
 	return 0;
 
