@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.13 2023/08/15 08:27:30 miod Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.14 2025/05/23 03:06:09 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -110,10 +110,12 @@
 #define	URE_USB_USB2PHY		0xb41e
 #define	URE_USB_SSPHYLINK1	0xb426
 #define	URE_USB_SSPHYLINK2	0xb428
+#define	URE_USB_L1_CTRL		0xb45e
 #define	URE_USB_U2P3_CTRL	0xb460
 #define	URE_USB_CSR_DUMMY1	0xb464
 #define	URE_USB_CSR_DUMMY2	0xb466
 #define	URE_USB_DEV_STAT	0xb808
+#define	URE_USB_U2P3_CTRL2	0xc2c0
 #define	URE_USB_CONNECT_TIMER	0xcbf8
 #define	URE_USB_MSC_TIMER	0xcbfc
 #define	URE_USB_BURST_SIZE	0xcfc0
@@ -142,10 +144,15 @@
 #define	URE_USB_U1U2_TIMER	0xd4da
 #define	URE_USB_FW_TASK		0xd4e8
 #define	URE_USB_RX_AGGR_NUM	0xd4ee
+#define	URE_USB_CMD_ADDR	0xd5d6
+#define	URE_USB_CMD_DATA	0xd5d8
+#define	URE_USB_CMD		0xd5dc
+#define	URE_USB_TGPHY_ADDR	0xd630
+#define	URE_USB_TGPHY_DATA	0xd632
+#define	URE_USB_TGPHY_CMD	0xd634
 #define	URE_USB_UPS_CTRL	0xd800
 #define	URE_USB_POWER_CUT	0xd80a
 #define	URE_USB_MISC_0		0xd81a
-#define	URE_USB_POWER_CUT	0xd80a
 #define	URE_USB_AFE_CTRL2	0xd824
 #define	URE_USB_UPS_FLAGS	0xd848
 #define	URE_USB_WDT11_CTRL	0xe43c
@@ -235,6 +242,7 @@
 /* URE_PLA_MTPS */
 #define	MTPS_DEFAULT		96
 #define	MTPS_JUMBO		192
+#define	MTPS_MAX		255
 
 /* URE_PLA_RSTTALLY */
 #define	URE_TALLY_RESET		0x0001
@@ -362,6 +370,7 @@
 #define URE_PHYSTATUS_100MBPS	0x0008
 #define URE_PHYSTATUS_1000MBPS	0x0010
 #define URE_PHYSTATUS_2500MBPS	0x0400
+#define URE_PHYSTATUS_5000MBPS	0x1000
 
 /* URE_PLA_CONFIG6 */
 #define	URE_LANWAKE_CLR_EN	0x01
@@ -447,6 +456,16 @@
 /* URE_USB_RX_AGGR_NUM */
 #define	URE_RX_AGGR_NUM_MASK	0x1ff
 
+/* URE_USB_CMD */
+#define URE_CMD_BMU		0x0000
+#define URE_CMD_BUSY		0x0001
+#define URE_CMD_WRITE		0x0002
+#define URE_CMD_IP		0x0004
+
+/* URE_USB_TGPHY_CMD */
+#define URE_TGPHY_CMD_BUSY	0x0001
+#define URE_TGPHY_CMD_WRITE	0x0002
+
 /* URE_USB_UPS_CTRL */
 #define	URE_POWER_CUT		0x0100
 
@@ -461,6 +480,9 @@
 /* URE_USB_U2P3_CTRL */
 #define	URE_U2P3_ENABLE		0x0001
 #define	URE_RX_DETECT8		0x0008
+
+/* URE_USB_U2P3_CTRL2 */
+#define URE_U2P3_CTRL2_ENABLE	0x20000000
 
 /* URE_USB_POWER_CUT */
 #define	URE_PWR_EN		0x0001
@@ -529,6 +551,7 @@
 #define	URE_CKADSEL_L		0x0100
 
 #define URE_ADV_2500TFDX	0x0080
+#define URE_ADV_5000TFDX	0x0100
 
 #define	URE_MCU_TYPE_PLA	0x0100
 #define	URE_MCU_TYPE_USB	0x0000
@@ -578,6 +601,30 @@ struct ure_txpkt {
 #define	URE_TXPKT_VLAN_TAG	(1 << 16)
 } __packed;
 
+struct ure_rxpkt_v2 {
+	uint32_t ure_pktlen;
+#define URE_RXPKT_V2_LEN_MASK	0xfffe0000
+#define URE_RXPKT_V2_VLAN_TAG	(1 << 3)
+	uint32_t ure_vlan;
+	uint32_t ure_csum;
+#define URE_RXPKT_V2_IPSUMBAD	(1 << 26)
+#define URE_RXPKT_V2_UDPSUMBAD	(1 << 25)
+#define URE_RXPKT_V2_TCPSUMBAD	(1 << 24)
+#define URE_RXPKT_V2_IPV6	(1 << 15)
+#define URE_RXPKT_V2_IPV4	(1 << 14)
+#define URE_RXPKT_V2_UDP	(1 << 11)
+#define URE_RXPKT_V2_TCP	(1 << 10)
+	uint32_t ure_rsvd0;
+} __packed;
+
+struct ure_txpkt_v2 {
+	uint32_t ure_cmdstat;
+	uint32_t ure_vlan;
+	uint32_t ure_pktlen;
+	uint32_t ure_signature;
+#define URE_TXPKT_SIGNATURE	0xa8000000
+} __packed;
+
 #define URE_ENDPT_RX		0
 #define URE_ENDPT_TX		1
 #define URE_ENDPT_MAX		2
@@ -586,10 +633,15 @@ struct ure_txpkt {
 #define	URE_RX_LIST_CNT		1
 #define	URE_TX_BUF_ALIGN	4
 #define	URE_RX_BUF_ALIGN	8
+#define	URE_8157_BUF_ALIGN	16
 
 #define	URE_TX_BUFSZ		16384
+#define	URE_8156_TX_BUFSZ	32768
 #define	URE_8152_RX_BUFSZ	16384
 #define	URE_8153_RX_BUFSZ	32768
+
+#define URE_CMD_TYPE_BMU	0
+#define URE_CMD_TYPE_IP		1
 
 struct ure_chain {
 	struct ure_softc	*uc_sc;
@@ -634,12 +686,18 @@ struct ure_softc {
 
 	int			ure_phyno;
 
+	uint16_t		(*ure_phy_read)(struct ure_softc *, uint16_t);
+	void			(*ure_phy_write)(struct ure_softc *, uint16_t,
+				    uint16_t);
+
 	u_int			ure_flags;
 #define	URE_FLAG_LINK		0x0001
-#define	URE_FLAG_8152		0x1000	/* RTL8152 */
-#define	URE_FLAG_8153B		0x2000	/* RTL8153B */
-#define	URE_FLAG_8156		0x4000	/* RTL8156 */
-#define	URE_FLAG_8156B		0x8000	/* RTL8156B */
+#define	URE_FLAG_8152		0x0010	/* RTL8152 */
+#define	URE_FLAG_8153B		0x0020	/* RTL8153B */
+#define	URE_FLAG_8156		0x0040	/* RTL8156 */
+#define	URE_FLAG_8156B		0x0080	/* RTL8156B */
+#define	URE_FLAG_8157		0x0100	/* RTL8157 */
+#define	URE_FLAG_CHIP_MASK	0x01f0
 
 	u_int			ure_chip;
 #define	URE_CHIP_VER_4C00	0x01
