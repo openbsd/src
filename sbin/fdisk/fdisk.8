@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.122 2025/05/23 00:20:02 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.123 2025/05/23 05:48:13 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -70,30 +70,6 @@ If the preserved EFI system partition has fewer blocks
 than the number requested with
 .Fl b ,
 the modified GPT is discarded.
-.It Fl R Ar disk Op Ar file
-Creates a GPT or MBR partition table based on the contents of
-.Ar file.
-.Ar file
-contains the output of
-.Nm Fl v
-(e.g. the fdisk* files in /var/backups) or
-compact GPT partition descriptions of the form
-.Pp
-.Dl <id>:<type>[<start>:<size>]<attributes><name>
-.Pp
-where a new partition UUID is always generated and <attibutes><name> is
-optional.
-For example
-.Pp
-.Dl 0: EFI Sys [64:66560] 0x0 EFI System Area
-.Pp
-If
-.Ar file
-is not provided,
-.Nm
-attempts to fully restore a GPT if either a primary or secondary
-GPT exists on
-.Ar disk .
 .It Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 Creates a partition table entry of the specified number of blocks, offset
 and type.
@@ -165,6 +141,30 @@ Treat
 as though it has a size of
 .Ar count
 blocks.
+.It Fl R Ar disk Op Ar file
+Creates a GPT or MBR partition table based on the contents of
+.Ar file .
+.Ar file
+contains the output of
+.Nm Fl v
+(e.g. the fdisk* files in /var/backups) or
+compact GPT partition descriptions of the form
+.Pp
+.Dl <id>:<type>[<start>:<size>]<attributes><name>
+.Pp
+where a new partition UUID is always generated and <attibutes><name> is
+optional.
+For example:
+.Pp
+.Dl 0: EFI Sys [64:66560] 0x0 EFI System Area
+.Pp
+If
+.Ar file
+is not provided,
+.Nm
+attempts to fully restore a GPT if either a primary or secondary
+GPT exists on
+.Ar disk .
 .It Fl u
 Updates the MBR bootcode.
 If a bootcode file is present (see
