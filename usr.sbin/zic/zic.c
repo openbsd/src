@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.30 2025/05/21 01:27:29 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.31 2025/05/23 14:33:23 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -1197,7 +1197,7 @@ rulesub(struct rule * const rp, const char * const loyearp,
 			break;
 		default:	/* "cannot happen" */
 			errx(1, "panic: Invalid l_value %d", lp->l_value);
-	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_loyear) != 1) {
+	} else if (sscanf(cp, scheck(cp, "%"SCNdZIC), &rp->r_loyear) != 1) {
 		error("invalid starting year");
 		return;
 	}
