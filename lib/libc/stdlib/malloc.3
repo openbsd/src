@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.142 2024/08/03 20:09:24 guenther Exp $
+.\"	$OpenBSD: malloc.3,v 1.143 2025/05/23 00:40:05 deraadt Exp $
 .\"
-.Dd $Mdocdate: August 3 2024 $
+.Dd $Mdocdate: May 23 2025 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -69,7 +69,8 @@
 .Fn malloc_conceal "size_t size"
 .Ft void *
 .Fn calloc_conceal "size_t nmemb" "size_t size"
-.Vt char *malloc_options ;
+.Vt const char * const
+.Va malloc_options ;
 .Sh DESCRIPTION
 The standard functions
 .Fn malloc ,
@@ -265,7 +266,7 @@ value of the
 .Xr sysctl 2 ,
 next checks the environment for a variable called
 .Ev MALLOC_OPTIONS ,
-and finally looks at the global variable
+and finally looks at the pre-initialized global variable
 .Va malloc_options
 in the program.
 Each is scanned for the flags documented below.

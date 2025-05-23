@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.297 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.298 2025/05/23 00:40:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -264,7 +264,8 @@ static union {
 		__attribute__((section(".openbsd.mutable")));
 #define mopts	malloc_readonly.mopts
 
-char		*malloc_options;	/* compile-time options */
+/* compile-time options */
+const char *const malloc_options __attribute__((weak));
 
 static __dead void wrterror(struct dir_info *d, char *msg, ...)
     __attribute__((__format__ (printf, 2, 3)));
@@ -501,7 +502,8 @@ omalloc_parseopt(char opt)
 static void
 omalloc_init(void)
 {
-	char *p, *q, b[16];
+	const char *p;
+	char *q, b[16];
 	int i, j;
 	const int mib[2] = { CTL_VM, VM_MALLOC_CONF };
 	size_t sb;
