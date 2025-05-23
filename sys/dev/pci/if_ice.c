@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.42 2025/05/22 08:32:50 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.43 2025/05/23 08:57:49 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -84,6 +84,7 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/udp.h>
 
 #define STRUCT_HACK_VAR_LEN
 
@@ -13683,18 +13684,31 @@ ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
 	hlen = ext.iphlen;
 
 	if (ext.ip4) {
-		/* TODO: ipv4 checksum offload */
-		offload |= ICE_TX_DESC_CMD_IIPT_IPV4 << ICE_TXD_QW1_CMD_S;
+		if (ISSET(m0->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT))
+			offload |= ICE_TX_DESC_CMD_IIPT_IPV4_CSUM <<
+			    ICE_TXD_QW1_CMD_S;
+		else
+			offload |= ICE_TX_DESC_CMD_IIPT_IPV4 <<
+			    ICE_TXD_QW1_CMD_S;
 	} else if (ext.ip6)
 		offload |= ICE_TX_DESC_CMD_IIPT_IPV6 << ICE_TXD_QW1_CMD_S;
+	else
+		return offload;
 
 	offload |= ((ETHER_HDR_LEN >> 1) << ICE_TX_DESC_LEN_MACLEN_S) <<
 	    ICE_TXD_QW1_OFFSET_S;
-	if (ext.ip4 || ext.ip6)
-		offload |= ((hlen >> 2) << ICE_TX_DESC_LEN_IPLEN_S) <<
-		    ICE_TXD_QW1_OFFSET_S;
+	offload |= ((hlen >> 2) << ICE_TX_DESC_LEN_IPLEN_S) <<
+	    ICE_TXD_QW1_OFFSET_S;
 
-	/* TODO: enable offloading features */
+	if (ext.tcp && ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
+		offload |= ICE_TX_DESC_CMD_L4T_EOFT_TCP << ICE_TXD_QW1_CMD_S;
+		offload |= ((uint64_t)(ext.tcphlen >> 2) <<
+		    ICE_TX_DESC_LEN_L4_LEN_S) << ICE_TXD_QW1_OFFSET_S;
+	} else if (ext.udp && ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
+		offload |= ICE_TX_DESC_CMD_L4T_EOFT_UDP << ICE_TXD_QW1_CMD_S;
+		offload |= ((uint64_t)(sizeof(*ext.udp) >> 2) <<
+		    ICE_TX_DESC_LEN_L4_LEN_S) << ICE_TXD_QW1_OFFSET_S;
+	}
 
 	return offload;
 }
@@ -29809,6 +29823,9 @@ ice_attach_hook(struct device *self)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
