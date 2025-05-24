@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.67 2025/03/24 13:07:04 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.68 2025/05/24 08:25:58 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -84,6 +84,9 @@ typedef struct ec_method_st {
 	    const BIGNUM *b, BN_CTX *);
 	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a,
 	    BIGNUM *b, BN_CTX *);
+
+	int (*point_set_to_infinity)(const EC_GROUP *, EC_POINT *);
+	int (*point_is_at_infinity)(const EC_GROUP *, const EC_POINT *);
 
 	int (*point_is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b,

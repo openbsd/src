@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.46 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.47 2025/05/24 08:25:58 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -177,6 +177,21 @@ ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 		return 0;
 
 	return 1;
+}
+
+static int
+ec_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
+{
+	BN_zero(point->Z);
+	point->Z_is_one = 0;
+
+	return 1;
+}
+
+static int
+ec_point_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
+{
+	return BN_is_zero(point->Z);
 }
 
 static int
@@ -1281,6 +1296,8 @@ ec_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 static const EC_METHOD ec_GFp_simple_method = {
 	.group_set_curve = ec_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
+	.point_set_to_infinity = ec_point_set_to_infinity,
+	.point_is_at_infinity = ec_point_is_at_infinity,
 	.point_is_on_curve = ec_point_is_on_curve,
 	.point_cmp = ec_point_cmp,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
@@ -1304,6 +1321,8 @@ EC_GFp_simple_method(void)
 static const EC_METHOD ec_GFp_mont_method = {
 	.group_set_curve = ec_mont_group_set_curve,
 	.group_get_curve = ec_group_get_curve,
+	.point_set_to_infinity = ec_point_set_to_infinity,
+	.point_is_at_infinity = ec_point_is_at_infinity,
 	.point_is_on_curve = ec_point_is_on_curve,
 	.point_cmp = ec_point_cmp,
 	.point_set_affine_coordinates = ec_point_set_affine_coordinates,
