@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.47 2025/05/22 12:44:14 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.48 2025/05/24 07:51:21 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -264,14 +264,6 @@ void gcm_gmult_4bit_x86(uint64_t Xi[2], const u128 Htable[16]);
 void gcm_ghash_4bit_x86(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
     size_t len);
 #  endif
-# elif defined(__arm__) || defined(__arm)
-#  include "arm_arch.h"
-#  if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
-#   define GHASH_ASM_ARM
-void gcm_gmult_neon(uint64_t Xi[2], const u128 Htable[16]);
-void gcm_ghash_neon(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
-    size_t len);
-#  endif
 # endif
 #endif
 
@@ -316,15 +308,6 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 	ctx->gmult = gcm_gmult_4bit;
 	ctx->ghash = gcm_ghash_4bit;
 #  endif
-# elif	defined(GHASH_ASM_ARM)
-	if (OPENSSL_armcap_P & ARMV7_NEON) {
-		ctx->gmult = gcm_gmult_neon;
-		ctx->ghash = gcm_ghash_neon;
-	} else {
-		gcm_init_4bit(ctx->Htable, ctx->H.u);
-		ctx->gmult = gcm_gmult_4bit;
-		ctx->ghash = gcm_ghash_4bit;
-	}
 # else
 	gcm_init_4bit(ctx->Htable, ctx->H.u);
 	ctx->gmult = gcm_gmult_4bit;
