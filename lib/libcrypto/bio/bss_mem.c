@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.25 2025/05/24 19:43:09 tb Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.26 2025/05/24 19:45:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,6 +162,12 @@ mem_new(BIO *bio)
 		free(bm);
 		return 0;
 	}
+	if (BUF_MEM_grow_clean(bm->buf, 64) != 64) {
+		BUF_MEM_free(bm->buf);
+		free(bm);
+		return 0;
+	}
+	bm->buf->length = 0;
 
 	bio->shutdown = 1;
 	bio->init = 1;
