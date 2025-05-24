@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.18 2025/01/02 12:31:44 tb Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.19 2025/05/24 02:35:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -224,8 +224,8 @@ pkcs8_main(int argc, char **argv)
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-	if ((cfg.pbe_nid == -1) && !cfg.cipher)
-		cfg.pbe_nid = NID_pbeWithMD5AndDES_CBC;
+	if (cfg.pbe_nid == -1 && cfg.cipher == NULL)
+		cfg.cipher = EVP_aes_256_cbc();
 
 	if (cfg.infile) {
 		if (!(in = BIO_new_file(cfg.infile, "rb"))) {
