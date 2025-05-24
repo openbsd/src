@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.23 2025/05/10 05:54:38 tb Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.24 2025/05/24 07:23:14 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -36,6 +36,13 @@ int OpenSSL_no_config(void);
 static pthread_once_t crypto_init_once = PTHREAD_ONCE_INIT;
 static pthread_t crypto_init_thread;
 static int crypto_init_cleaned_up;
+
+#ifndef HAVE_CRYPTO_CPU_CAPS_INIT
+void
+crypto_cpu_caps_init(void)
+{
+}
+#endif
 
 void
 OPENSSL_init(void)

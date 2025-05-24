@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_local.h,v 1.4 2024/11/05 10:11:58 tb Exp $ */
+/* $OpenBSD: crypto_local.h,v 1.5 2025/05/24 07:23:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,8 +74,6 @@ extern "C" {
 
 #define CTLOG_FILE		OPENSSLDIR "/ct_log_list.cnf"
 #define CTLOG_FILE_EVP		"CTLOG_FILE"
-
-void OPENSSL_cpuid_setup(void);
 
 #ifdef  __cplusplus
 }
