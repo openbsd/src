@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.18 2023/07/27 18:17:14 kettenis Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.19 2025/05/24 06:32:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -116,4 +116,23 @@ ___start(MD_START_ARGS)
 
 #ifdef MCRT0
 MD_EPROL_LABEL;
+#endif
+
+#ifdef MCRT0
+/*
+ * Contents:
+ *
+ *  long Name length
+ *  long Description length
+ *  long NT_OPENBSD_PROF (indicates binary is linked -pg)
+ *  "OpenBSD\0"
+ */
+
+__asm("	.section \".note.openbsd.ident\", \"a\"\n"
+"	.p2align 2\n"
+"	.long	8\n"
+"	.long	0\n"
+"	.long	2\n"
+"	.ascii \"OpenBSD\\0\"\n"
+"	.previous\n");
 #endif
