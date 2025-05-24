@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.41 2025/01/02 13:37:43 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.42 2025/05/24 02:03:02 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -942,28 +942,7 @@ speed_main(int argc, char **argv)
 	long rsa_count;
 	unsigned rsa_num;
 	unsigned char md[EVP_MAX_MD_SIZE];
-#ifndef OPENSSL_NO_MD4
-	unsigned char md4[MD4_DIGEST_LENGTH];
-#endif
-#ifndef OPENSSL_NO_MD5
-	unsigned char md5[MD5_DIGEST_LENGTH];
-	unsigned char hmac[MD5_DIGEST_LENGTH];
-#endif
-#ifndef OPENSSL_NO_SHA
-	unsigned char sha[SHA_DIGEST_LENGTH];
-#ifndef OPENSSL_NO_SHA256
-	unsigned char sha256[SHA256_DIGEST_LENGTH];
-#endif
-#ifndef OPENSSL_NO_SHA512
-	unsigned char sha512[SHA512_DIGEST_LENGTH];
-#endif
-#endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-	unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
-#endif
+
 #ifndef OPENSSL_NO_RC4
 	RC4_KEY rc4_ks;
 #endif
@@ -1636,7 +1615,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_MD4], c[D_MD4][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_MD4][j]); count++)
-				EVP_Digest(&(buf[0]), (unsigned long) lengths[j], &(md4[0]), NULL, EVP_md4(), NULL);
+				EVP_Digest(&(buf[0]), (unsigned long) lengths[j], md, NULL, EVP_md4(), NULL);
 			d = Time_F(STOP);
 			print_result(D_MD4, j, count, d);
 		}
@@ -1649,7 +1628,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_MD5], c[D_MD5][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_MD5][j]); count++)
-				EVP_Digest(&(buf[0]), (unsigned long) lengths[j], &(md5[0]), NULL, EVP_get_digestbyname("md5"), NULL);
+				EVP_Digest(&(buf[0]), (unsigned long) lengths[j], md, NULL, EVP_get_digestbyname("md5"), NULL);
 			d = Time_F(STOP);
 			print_result(D_MD5, j, count, d);
 		}
@@ -1680,7 +1659,7 @@ speed_main(int argc, char **argv)
 					HMAC_CTX_free(hctx);
 					goto end;
 				}
-				if (!HMAC_Final(hctx, &(hmac[0]), NULL)) {
+				if (!HMAC_Final(hctx, md, NULL)) {
 					HMAC_CTX_free(hctx);
 					goto end;
 				}
@@ -1697,7 +1676,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_SHA1], c[D_SHA1][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_SHA1][j]); count++)
-				EVP_Digest(buf, (unsigned long) lengths[j], &(sha[0]), NULL, EVP_sha1(), NULL);
+				EVP_Digest(buf, (unsigned long) lengths[j], md, NULL, EVP_sha1(), NULL);
 			d = Time_F(STOP);
 			print_result(D_SHA1, j, count, d);
 		}
@@ -1708,7 +1687,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_SHA256], c[D_SHA256][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_SHA256][j]); count++)
-				SHA256(buf, lengths[j], sha256);
+				SHA256(buf, lengths[j], md);
 			d = Time_F(STOP);
 			print_result(D_SHA256, j, count, d);
 		}
@@ -1721,7 +1700,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_SHA512], c[D_SHA512][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_SHA512][j]); count++)
-				SHA512(buf, lengths[j], sha512);
+				SHA512(buf, lengths[j], md);
 			d = Time_F(STOP);
 			print_result(D_SHA512, j, count, d);
 		}
@@ -1735,7 +1714,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_WHIRLPOOL], c[D_WHIRLPOOL][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_WHIRLPOOL][j]); count++)
-				WHIRLPOOL(buf, lengths[j], whirlpool);
+				WHIRLPOOL(buf, lengths[j], md);
 			d = Time_F(STOP);
 			print_result(D_WHIRLPOOL, j, count, d);
 		}
@@ -1748,7 +1727,7 @@ speed_main(int argc, char **argv)
 			print_message(names[D_RMD160], c[D_RMD160][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_RMD160][j]); count++)
-				EVP_Digest(buf, (unsigned long) lengths[j], &(rmd160[0]), NULL, EVP_ripemd160(), NULL);
+				EVP_Digest(buf, (unsigned long) lengths[j], md, NULL, EVP_ripemd160(), NULL);
 			d = Time_F(STOP);
 			print_result(D_RMD160, j, count, d);
 		}
