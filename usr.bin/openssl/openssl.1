@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.164 2025/04/19 17:20:24 kn Exp $
+.\" $OpenBSD: openssl.1,v 1.165 2025/05/24 04:05:18 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: April 19 2025 $
+.Dd $Mdocdate: May 24 2025 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3021,16 +3021,12 @@ which allow strong encryption algorithms like triple DES or 128-bit RC2.
 .El
 .It Fl v2 Ar alg
 Use PKCS#5 v2.0 algorithms.
-Supports algorithms such as 168-bit triple DES or 128-bit RC2,
-however not many implementations support PKCS#5 v2.0 yet
-(if using private keys with
-.Nm openssl
-this doesn't matter).
-.Pp
-.Ar alg
-is the encryption algorithm to use;
-valid values include des, des3, and rc2.
-It is recommended that des3 is used.
+These are block ciphers used in CBC mode.
+The default is AES-256-CBC.
+With the exception of AES, the choices available in RFC 8018
+are considered decrepit.
+They can be enabled with des, des3, and rc2
+(rc5 is no longer supported).
 .El
 .Tg pkcs12
 .Sh PKCS12
