@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.105 2025/05/24 00:11:08 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.106 2025/05/24 00:19:09 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -358,12 +358,10 @@ timeout_add(struct timeout *new, int to_ticks)
 }
 
 static inline int
-timeout_add_ticks(struct timeout *to, uint64_t to_ticks, int notzero)
+timeout_add_ticks(struct timeout *to, uint64_t to_ticks)
 {
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
-	else if (to_ticks == 0 && notzero)
-		to_ticks = 1;
 
 	return timeout_add(to, (int)to_ticks);
 }
@@ -377,7 +375,7 @@ timeout_add_sec(struct timeout *to, int secs)
 	/* secs is a 31bit int, so this can't overflow 64bits */
 	to_ticks = (uint64_t)hz * (uint64_t)secs;
 
-	return timeout_add_ticks(to, to_ticks, 1);
+	return timeout_add_ticks(to, to_ticks);
 }
 
 /*
@@ -408,7 +406,7 @@ timeout_add_usec(struct timeout *to, uint64_t usecs)
 
 	to_ticks = (usecs + (tick - 1)) / tick;
 
-	return timeout_add_ticks(to, to_ticks, usecs > 0);
+	return timeout_add_ticks(to, to_ticks);
 }
 
 int
@@ -421,7 +419,7 @@ timeout_add_nsec(struct timeout *to, uint64_t nsecs)
 
 	to_ticks = (nsecs + (tick_nsec - 1)) / tick_nsec;
 
-	return timeout_add_ticks(to, to_ticks, nsecs > 0);
+	return timeout_add_ticks(to, to_ticks);
 }
 
 int
