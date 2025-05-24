@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.36 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.37 2025/05/24 02:54:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -187,7 +187,7 @@ PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
     int saltlen)
 {
 	X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
-	int prf_nid = NID_hmacWithSHA1;
+	int prf_nid = NID_hmacWithSHA256;
 	int alg_nid, keylen;
 	EVP_CIPHER_CTX ctx;
 	unsigned char iv[EVP_MAX_IV_LENGTH];
