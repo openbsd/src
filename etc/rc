@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.581 2025/05/18 09:54:48 kn Exp $
+#	$OpenBSD: rc,v 1.582 2025/05/24 12:23:16 kn Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -79,7 +79,7 @@ store_random() {
 
 	dd if=$_hostseed of=/dev/random bs=65536 count=1 status=none
 
-	dd if=/dev/random of=$_bootseed bs=512   count=1 status=none
+	dd if=/dev/random of=$_bootseed bs=256   count=1 status=none
 	dd if=/dev/random of=$_hostseed bs=65536 count=1 status=none
 
 	# Removal of the sticky bit indicates the file has fresh contents for

@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.141 2025/04/13 20:04:02 kn Exp $
+#	$OpenBSD: changelist,v 1.142 2025/05/24 12:23:16 kn Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -11,6 +11,13 @@
 /etc/acme-client.conf
 /etc/adduser.conf
 /etc/adduser.message
+/etc/apm/hibernate
+/etc/apm/powerdown
+/etc/apm/powerup
+/etc/apm/resume
+/etc/apm/standby
+/etc/apm/suspend
+/etc/apm/warnlow
 /etc/bgpd.conf
 /etc/boot.conf
 /etc/bootparams
@@ -66,6 +73,7 @@
 /etc/login_ldap.conf
 /etc/mail.rc
 /etc/mail/aliases
++/etc/mail/secrets
 /etc/mail/smtpd.conf
 /etc/mail/spamd.conf
 /etc/mailer.conf
