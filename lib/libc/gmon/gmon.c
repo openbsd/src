@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.33 2022/07/26 04:07:13 cheloha Exp $ */
+/*	$OpenBSD: gmon.c,v 1.34 2025/05/24 06:53:19 deraadt Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,12 +51,20 @@ static int	s_scale;
 PROTO_NORMAL(moncontrol);
 PROTO_DEPRECATED(monstartup);
 
+/* XXX remove after May 2025 */
 void
 monstartup(u_long lowpc, u_long highpc)
 {
+	abort();
+}
+
+void
+_monstartup(u_long lowpc, u_long highpc)
+{
 	int o;
-	void *addr;
 	struct gmonparam *p = &_gmonparam;
+	char *profdir = NULL;
+	void *addr;
 
 	/*
 	 * round lowpc and highpc to multiples of the density we're using
@@ -75,11 +83,17 @@ monstartup(u_long lowpc, u_long highpc)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 
-	addr = mmap(NULL, p->kcountsize,  PROT_READ|PROT_WRITE,
+	p->outbuflen = sizeof(struct gmonhdr) + p->kcountsize +
+	    MAXARCS * sizeof(struct rawarc);
+
+	/* Create a contig output buffer */
+	addr = mmap(NULL, p->outbuflen,  PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (addr == MAP_FAILED)
 		goto mapfailed;
-	p->kcount = addr;
+	p->outbuf = addr;
+	p->kcount = (void *)((char *)addr + sizeof(struct gmonhdr));
+	p->rawarcs = (void *)((char *)addr + sizeof(struct gmonhdr) + p->kcountsize);
 
 	addr = mmap(NULL, p->fromssize,  PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
@@ -113,14 +127,20 @@ monstartup(u_long lowpc, u_long highpc)
 	} else
 		s_scale = SCALE_1_TO_1;
 
+	if (issetugid() == 0)
+		profdir = getenv("PROFDIR");
+	if (profdir)
+		p->dirfd = open(profdir, O_DIRECTORY, 0);
+	else
+		p->dirfd = -1;
+
 	moncontrol(1);
+
+	if (p->dirfd != -1)
+		close(p->dirfd);
 	return;
 
 mapfailed:
-	if (p->kcount != NULL) {
-		munmap(p->kcount, p->kcountsize);
-		p->kcount = NULL;
-	}
 	if (p->froms != NULL) {
 		munmap(p->froms, p->fromssize);
 		p->froms = NULL;
@@ -129,27 +149,20 @@ mapfailed:
 		munmap(p->tos, p->tossize);
 		p->tos = NULL;
 	}
-	ERR("monstartup: out of memory\n");
+	ERR("_monstartup: out of memory\n");
 }
-__strong_alias(_monstartup,monstartup);
 
 void
 _mcleanup(void)
 {
-	int fd;
-	int fromindex;
-	int endfrom;
+	int fromindex, endfrom, totarc = 0, toindex;
 	u_long frompc;
-	int toindex;
 	struct rawarc rawarc;
 	struct gmonparam *p = &_gmonparam;
-	struct gmonhdr gmonhdr, *hdr;
+	struct gmonhdr *hdr;
 	struct clockinfo clockinfo;
 	const int mib[2] = { CTL_KERN, KERN_CLOCKRATE };
 	size_t size;
-	char *profdir;
-	char *proffile;
-	char  buf[PATH_MAX];
 #ifdef DEBUG
 	int log, len;
 	char dbuf[200];
@@ -171,55 +184,6 @@ _mcleanup(void)
 
 	moncontrol(0);
 
-	if (issetugid() == 0 && (profdir = getenv("PROFDIR")) != NULL) {
-		char *s, *t, *limit;
-		pid_t pid;
-		long divisor;
-
-		/* If PROFDIR contains a null value, no profiling
-		   output is produced */
-		if (*profdir == '\0') {
-			return;
-		}
-
-		limit = buf + sizeof buf - 1 - 10 - 1 -
-		    strlen(__progname) - 1;
-		t = buf;
-		s = profdir;
-		while((*t = *s) != '\0' && t < limit) {
-			t++;
-			s++;
-		}
-		*t++ = '/';
-
-		/*
-		 * Copy and convert pid from a pid_t to a string.  For
-		 * best performance, divisor should be initialized to
-		 * the largest power of 10 less than PID_MAX.
-		 */
-		pid = getpid();
-		divisor=10000;
-		while (divisor > pid) divisor /= 10;	/* skip leading zeros */
-		do {
-			*t++ = (pid/divisor) + '0';
-			pid %= divisor;
-		} while (divisor /= 10);
-		*t++ = '.';
-
-		s = __progname;
-		while ((*t++ = *s++) != '\0')
-			;
-
-		proffile = buf;
-	} else {
-		proffile = "gmon.out";
-	}
-
-	fd = open(proffile , O_CREAT|O_TRUNC|O_WRONLY, 0664);
-	if (fd == -1) {
-		perror( proffile );
-		return;
-	}
 #ifdef DEBUG
 	log = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
 	if (log == -1) {
@@ -231,20 +195,17 @@ _mcleanup(void)
 	    p->kcount, p->kcountsize);
 	write(log, dbuf, strlen(dbuf));
 #endif
-	hdr = (struct gmonhdr *)&gmonhdr;
-	bzero(hdr, sizeof(*hdr));
+	hdr = (struct gmonhdr *)p->outbuf;
 	hdr->lpc = p->lowpc;
 	hdr->hpc = p->highpc;
-	hdr->ncnt = p->kcountsize + sizeof(gmonhdr);
+	hdr->ncnt = p->kcountsize + sizeof(*hdr);
 	hdr->version = GMONVERSION;
 	hdr->profrate = clockinfo.profhz;
-	write(fd, (char *)hdr, sizeof *hdr);
-	write(fd, p->kcount, p->kcountsize);
 	endfrom = p->fromssize / sizeof(*p->froms);
+
 	for (fromindex = 0; fromindex < endfrom; fromindex++) {
 		if (p->froms[fromindex] == 0)
 			continue;
-
 		frompc = p->lowpc;
 		frompc += fromindex * p->hashfraction * sizeof(*p->froms);
 		for (toindex = p->froms[fromindex]; toindex != 0;
@@ -259,24 +220,15 @@ _mcleanup(void)
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = p->tos[toindex].selfpc;
 			rawarc.raw_count = p->tos[toindex].count;
-			write(fd, &rawarc, sizeof rawarc);
+			memcpy(&p->rawarcs[totarc * sizeof(struct rawarc)],
+			    &rawarc, sizeof rawarc);
+			totarc++;
+			if (totarc >= MAXARCS)
+				goto donearcs;
 		}
 	}
-	close(fd);
-#ifdef notyet
-	if (p->kcount != NULL) {
-		munmap(p->kcount, p->kcountsize);
-		p->kcount = NULL;
-	}
-	if (p->froms != NULL) {
-		munmap(p->froms, p->fromssize);
-		p->froms = NULL;
-	}
-	if (p->tos != NULL) {
-		munmap(p->tos, p->tossize);
-		p->tos = NULL;
-	}
-#endif
+donearcs:
+	hdr->totarc = totarc * sizeof(struct rawarc);
 }
 
 /*
@@ -291,12 +243,12 @@ moncontrol(int mode)
 
 	if (mode) {
 		/* start */
-		profil((char *)p->kcount, p->kcountsize, p->lowpc,
-		    s_scale);
+		profil(p->outbuf, p->outbuflen, p->kcountsize, p->lowpc,
+		    s_scale, p->dirfd);
 		p->state = GMON_PROF_ON;
 	} else {
 		/* stop */
-		profil(NULL, 0, 0, 0);
+		profil(NULL, 0, 0, 0, 0, -1);
 		p->state = GMON_PROF_OFF;
 	}
 }
