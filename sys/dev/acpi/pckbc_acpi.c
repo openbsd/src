@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_acpi.c,v 1.2 2025/02/13 19:54:44 miod Exp $	*/
+/*	$OpenBSD: pckbc_acpi.c,v 1.3 2025/05/24 14:51:52 tedu Exp $	*/
 /*
  * Copyright (c) 2024, 2025, Miodrag Vallat.
  *
@@ -158,6 +158,8 @@ pckbc_acpi_match_kbd(struct device *parent, void *match, void *aux)
 	 * unless explicitly required by device flags.
 	 */
 	if (cf->cf_flags & 0x0001)
+		return rv;
+	if (acpi_legacy_free)
 		return rv;
 	if (aaa->aaa_nirq != 0) {
 		for (irq = 0; irq < aaa->aaa_nirq; irq++) {

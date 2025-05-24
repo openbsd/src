@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.445 2025/05/21 04:10:21 jmatthew Exp $ */
+/* $OpenBSD: acpi.c,v 1.446 2025/05/24 14:51:52 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -54,6 +54,7 @@ int	acpi_debug = 16;
 int	acpi_poll_enabled;
 int	acpi_hasprocfvs;
 int	acpi_haspci;
+int	acpi_legacy_free;
 
 struct pool acpiwqpool;
 
@@ -1143,6 +1144,9 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	/* Perform post-parsing fixups */
 	aml_postparse();
 
+	if (sc->sc_fadt->hdr_revision > 2 &&
+	    !ISSET(sc->sc_fadt->iapc_boot_arch, FADT_LEGACY_DEVICES))
+		acpi_legacy_free = 1;
 
 #ifndef SMALL_KERNEL
 	/* Find available sleeping states */

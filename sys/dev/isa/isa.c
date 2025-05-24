@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.50 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: isa.c,v 1.51 2025/05/24 14:51:52 tedu Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -67,6 +67,13 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 
+#ifdef __HAVE_ACPI
+#include "acpi.h"
+#include <dev/acpi/acpivar.h>
+#else
+#define NACPI 0
+#endif
+
 int isamatch(struct device *, void *, void *);
 void isaattach(struct device *, struct device *, void *);
 
@@ -89,9 +96,11 @@ isamatch(struct device *parent, void *match, void *aux)
 	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
 		return (0);
 
-	/* XXX check other indicators */
-
-        return (1);
+#if NACPI > 0
+	if (acpi_legacy_free)
+		return (0);
+#endif
+	return (1);
 }
 
 void
