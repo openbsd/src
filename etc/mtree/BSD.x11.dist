@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.58 2024/08/12 19:40:17 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.59 2025/05/24 02:46:02 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -132,6 +132,8 @@
                             ..
                         ..
                     ..
+                ..
+                gbm
                 ..
                 locate
                 ..
