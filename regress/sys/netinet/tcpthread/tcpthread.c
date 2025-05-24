@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpthread.c,v 1.4 2025/02/04 22:00:20 bluhm Exp $	*/
+/*	$OpenBSD: tcpthread.c,v 1.5 2025/05/24 03:44:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
@@ -49,7 +49,7 @@ unsigned int run_time = 10;
 unsigned int sock_num = 1;
 unsigned int connect_num = 1, accept_num = 1, send_num = 1, recv_num = 1,
     close_num = 1, splice_num = 0, unsplice_num = 0, drop_num = 0;
-int max_percent = 0, idle_percent = 0;
+unsigned int max_percent = 0, idle_percent = 0;
 volatile unsigned long max_count = 0, idle_count = 0;
 int *listen_socks, *splice_listen_socks;
 volatile int *connect_socks, *accept_socks,
@@ -70,7 +70,7 @@ usage(void)
 	    "    -c connect   threads connecting sockets, default %u\n"
 	    "    -D drop      threads dropping TCP connections, default %u\n"
 	    "    -I idle      percent with splice idle time, default %u\n"
-	    "    -M max       percent with splice max lenght, default %d\n"
+	    "    -M max       percent with splice max lenght, default %u\n"
 	    "    -n num       number of file descriptors, default %d\n"
 	    "    -o close     threads closing sockets, default %u\n"
 	    "    -r recv      threads receiving data, default %u\n"
@@ -85,7 +85,7 @@ usage(void)
 }
 
 static volatile int *
-random_socket(unsigned int *seed)
+random_socket(void)
 {
 	static volatile int **sockets[] = {
 	    &connect_socks,
@@ -93,11 +93,15 @@ random_socket(unsigned int *seed)
 	    &splice_accept_socks,
 	    &splice_connect_socks,
 	};
-	volatile int **socksp;
+	volatile int **socksp, *sockp;
+	unsigned int type, num;
 
-	socksp = sockets[(rand_r(seed) % ((splice_num > 0) ? 4 : 2))];
+	type = arc4random() % (splice_num > 0 ? 4 : 2);
+	num = arc4random() % sock_num;
+	socksp = sockets[type];
+	sockp = &(*socksp)[num];
 
-	return &(*socksp)[rand_r(seed) % sock_num];
+	return sockp;
 }
 
 static int
@@ -139,18 +143,17 @@ connect_routine(void *arg)
 	volatile int *run = arg;
 	unsigned long count = 0;
 	struct sockaddr *addr;
-	unsigned int seed;
+	unsigned int type, num;
 	unsigned int n;
 	int connected;
-
-	seed = arc4random();
 
 	while (*run) {
 		connected = 0;
 		for (n = 0; n < sock_num; n++) {
-			addr = &((splice_num > 0) ?
-			    splice_listen_addrs : listen_addrs)
-			    [rand_r(&seed) % sock_num].su_sa;
+			type = splice_num > 0;
+			num = arc4random() % sock_num;
+			addr = &(type ? splice_listen_addrs : listen_addrs)
+			    [num].su_sa;
 			if (!connect_socket(&connect_socks[n], addr))
 				continue;
 			connected = 1;
@@ -170,20 +173,20 @@ static int
 accept_socket(volatile int *acceptp, int *listens,
     struct tcp_ident_mapping *tim, union sockaddr_union *addrs)
 {
-	unsigned int i;
-	int sock;
 	struct sockaddr *sa;
 	socklen_t len;
+	unsigned int n;
+	int sock;
 
 	if (*acceptp != -1) {
 		/* still accepted, not closed */
 		return 0;
 	}
 	sock = -1;
-	for (i = 0; i < sock_num; i++) {
+	for (n = 0; n < sock_num; n++) {
 		sa = (struct sockaddr *)&tim->faddr;
 		len = sizeof(tim->faddr);
-		sock = accept4(listens[i], sa, &len, SOCK_NONBLOCK);
+		sock = accept4(listens[n], sa, &len, SOCK_NONBLOCK);
 		if (sock < 0) {
 			if (errno == EWOULDBLOCK) {
 				/* no connection to accept */
@@ -193,9 +196,9 @@ accept_socket(volatile int *acceptp, int *listens,
 				/* accepted socket was disconnected */
 				continue;
 			}
-			err(1, "%s: accept %d", __func__, listens[i]);
+			err(1, "%s: accept %d", __func__, listens[n]);
 		}
-		sa = &addrs[i].su_sa;
+		sa = &addrs[n].su_sa;
 		memcpy(&tim->laddr, sa, sa->sa_len);
 		break;
 	}
@@ -247,15 +250,12 @@ send_routine(void *arg)
 {
 	volatile int *run = arg;
 	unsigned long count = 0;
-	unsigned int seed;
 	char buf[1024];  /* 1 KB */
 	volatile int *sockp;
 	int sock;
 
-	seed = arc4random();
-
 	while (*run) {
-		sockp = random_socket(&seed);
+		sockp = random_socket();
 		sock = *sockp;
 		if (sock == -1)
 			continue;
@@ -284,16 +284,15 @@ recv_routine(void *arg)
 {
 	volatile int *run = arg;
 	unsigned long count = 0;
-	unsigned int seed;
+	unsigned int type, num;
 	char buf[10*1024];  /* 10 KB */
 	volatile int *sockp;
 	int sock;
 
-	seed = arc4random();
-
 	while (*run) {
-		sockp = &((rand_r(&seed) % 2) ? connect_socks : accept_socks)
-		    [rand_r(&seed) % sock_num];
+		type = arc4random() % 2;
+		num = arc4random() % sock_num;
+		sockp = &(type ? connect_socks : accept_socks)[num];
 		sock = *sockp;
 		if (sock == -1)
 			continue;
@@ -323,19 +322,16 @@ close_routine(void *arg)
 {
 	volatile int *run = arg;
 	unsigned long count = 0;
-	unsigned int seed;
 	volatile int *sockp;
 	int sock;
 
-	seed = arc4random();
-
 	while (*run) {
-		sockp = random_socket(&seed);
+		sockp = random_socket();
 		if (*sockp == -1)
 			continue;
 		sock = atomic_swap_uint(sockp, -1);
 		if (sock == -1) {
-			/* another thead has closed the socket, wait a bit */
+			/* another thread has closed the socket, wait a bit */
 			if (nanosleep(&time_1000ns, NULL) < 0)
 				err(1, "%s: nanosleep", __func__);
 			continue;
@@ -354,13 +350,11 @@ splice_routine(void *arg)
 	volatile int *run = arg;
 	unsigned long count = 0;
 	struct sockaddr *addr;
-	unsigned int seed;
+	unsigned int num, percent;
 	unsigned int n;
 	int sock;
 	struct splice accept_splice, connect_splice;
 	int spliced;
-
-	seed = arc4random();
 
 	while (*run) {
 		spliced = 0;
@@ -375,7 +369,8 @@ splice_routine(void *arg)
 				if (close(sock) < 0)
 					err(1, "%s: close %d", __func__, sock);
 			}
-			addr = &listen_addrs[rand_r(&seed) % sock_num].su_sa;
+			num = arc4random() % sock_num;
+			addr = &listen_addrs[num].su_sa;
 			if (!connect_socket(&splice_connect_socks[n], addr)) {
 				/* close the accepted socket */
 				sock = atomic_swap_uint(
@@ -392,11 +387,13 @@ splice_routine(void *arg)
 			memset(&connect_splice, 0, sizeof(connect_splice));
 			accept_splice.sp_fd = splice_accept_socks[n];
 			connect_splice.sp_fd = splice_connect_socks[n];
-			if ((rand_r(&seed) % 100) < max_percent) {
+			percent = arc4random() % 100;
+			if (percent < max_percent) {
 				accept_splice.sp_max = 1;
 				connect_splice.sp_max = 1;
 			}
-			if ((rand_r(&seed) % 100) < idle_percent) {
+			percent = arc4random() % 100;
+			if (percent < idle_percent) {
 				accept_splice.sp_idle = time_1us;
 				connect_splice.sp_idle = time_1us;
 			}
@@ -445,16 +442,15 @@ unsplice_routine(void *arg)
 {
 	volatile int *run = arg;
 	unsigned long count = 0;
-	unsigned int seed;
+	unsigned int type, num;
 	volatile int *sockp;
 	int sock;
 
-	seed = arc4random();
-
 	while (*run) {
-		sockp = &((rand_r(&seed) % 2) ?
-		    splice_accept_socks : splice_connect_socks)
-		    [rand_r(&seed) % sock_num];
+		type = arc4random() % 2;
+		num = arc4random() % sock_num;
+		sockp = &(type ? splice_accept_socks : splice_connect_socks)
+		    [num];
 		sock = *sockp;
 		if (sock == -1)
 			continue;
@@ -478,28 +474,27 @@ drop_routine(void *arg)
 	static const int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_DROP };
 	volatile int *run = arg;
 	unsigned long count = 0;
-	unsigned int seed, n;
+	unsigned int type, num;
 	volatile int *socks;
 	struct tcp_ident_mapping *tims;
 
-	seed = arc4random();
-
 	while (*run) {
-		if (splice_num > 0 && (rand_r(&seed) % 2)) {
+		type = splice_num > 0 ? (arc4random() % 2) : 0;
+		if (type) {
 			socks = splice_accept_socks;
 			tims = splice_accept_tims;
 		} else {
 			socks = accept_socks;
 			tims = accept_tims;
 		}
-		n = rand_r(&seed) % sock_num;
-		if (socks[n] == -1)
+		num = arc4random() % sock_num;
+		if (socks[num] == -1)
 			continue;
 		membar_consumer();
 		/* accept_tims is not MP safe, but only ESRCH may happen */
 		if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, NULL,
-		    &tims[n], sizeof(tims[0])) < 0) {
-			if (errno == ESRCH)
+		    &tims[num], sizeof(tims[0])) < 0) {
+			if (errno == ESRCH || errno == EAFNOSUPPORT)
 				continue;
 			err(1, "sysctl TCPCTL_DROP");
 		}
@@ -516,14 +511,11 @@ main(int argc, char *argv[])
 	    *close_thread, *splice_thread, *unsplice_thread, *drop_thread;
 	struct sockaddr *sa;
 	const char *errstr;
-	unsigned int seed;
 	int ch, run;
 	unsigned int n;
 	unsigned long connect_count, accept_count, send_count, recv_count,
 	    close_count, splice_count, unsplice_count, drop_count;
 	socklen_t len;
-
-	seed = arc4random();
 
 	while ((ch = getopt(argc, argv, "a:c:D:I:M:n:o:r:S:s:t:U:")) != -1) {
 		switch (ch) {
@@ -650,9 +642,11 @@ main(int argc, char *argv[])
 	}
 
 	for (n = 0; n < sock_num; n++) {
+		unsigned int family;
 		int af;
 
-		af = (rand_r(&seed) % 2) ? AF_INET : AF_INET6;
+		family = arc4random() % 2;
+		af = family ? AF_INET : AF_INET6;
 		listen_socks[n] = socket(af, SOCK_STREAM | SOCK_NONBLOCK,
 		    IPPROTO_TCP);
 		if (listen_socks[n] < 0)
@@ -671,7 +665,8 @@ main(int argc, char *argv[])
 			err(1, "listen");
 
 		if (splice_num > 0) {
-			af = (rand_r(&seed) % 2) ? AF_INET : AF_INET6;
+			family = arc4random() % 2;
+			af = family ? AF_INET : AF_INET6;
 			splice_listen_socks[n] = socket(af,
 			    SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 			if (splice_listen_socks[n] < 0)
