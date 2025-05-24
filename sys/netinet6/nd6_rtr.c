@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.173 2025/05/19 06:39:19 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.174 2025/05/24 12:27:24 bluhm Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
 			goto freeit;
 
-		IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off,
+		IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, &m, off,
 		    icmp6len);
 		if (nd_rs == NULL) {
 			icmp6stat_inc(icp6s_tooshort);
@@ -109,7 +109,7 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 		if (!IN6_IS_ADDR_LINKLOCAL(&saddr6))
 			goto bad;
 
-		IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off,
+		IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, &m, off,
 		    icmp6len);
 		if (nd_ra == NULL) {
 			icmp6stat_inc(icp6s_tooshort);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.264 2025/05/19 07:34:21 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.265 2025/05/24 12:27:23 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ icmp6_do_error(struct mbuf *m, int type, int code, int param)
 	if (off >= 0 && nxt == IPPROTO_ICMPV6) {
 		struct icmp6_hdr *icp;
 
-		IP6_EXTHDR_GET(icp, struct icmp6_hdr *, m, off,
+		IP6_EXTHDR_GET(icp, struct icmp6_hdr *, &m, off,
 			sizeof(*icp));
 		if (icp == NULL) {
 			icmp6stat_inc(icp6s_tooshort);
@@ -407,7 +407,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 	/*
 	 * calculate the checksum
 	 */
-	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
+	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, mp, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat_inc(icp6s_tooshort);
 		return IPPROTO_DONE;
@@ -588,7 +588,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af,
 			n->m_next = n0;
 		} else {
 	 deliverecho:
-			IP6_EXTHDR_GET(nicmp6, struct icmp6_hdr *, n, off,
+			IP6_EXTHDR_GET(nicmp6, struct icmp6_hdr *, &n, off,
 			    sizeof(*nicmp6));
 			noff = off;
 		}
@@ -762,7 +762,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		icmp6stat_inc(icp6s_tooshort);
 		goto freeit;
 	}
-	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off,
+	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, &m, off,
 		       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 	if (icmp6 == NULL) {
 		icmp6stat_inc(icp6s_tooshort);
@@ -791,7 +791,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
 			case IPPROTO_AH:
-				IP6_EXTHDR_GET(eh, struct ip6_ext *, m,
+				IP6_EXTHDR_GET(eh, struct ip6_ext *, &m,
 					       eoff, sizeof(*eh));
 				if (eh == NULL) {
 					icmp6stat_inc(icp6s_tooshort);
@@ -813,7 +813,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 				 * information that depends on the final
 				 * destination (e.g. path MTU).
 				 */
-				IP6_EXTHDR_GET(rth, struct ip6_rthdr *, m,
+				IP6_EXTHDR_GET(rth, struct ip6_rthdr *, &m,
 					       eoff, sizeof(*rth));
 				if (rth == NULL) {
 					icmp6stat_inc(icp6s_tooshort);
@@ -833,7 +833,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 					int hops;
 
 					IP6_EXTHDR_GET(rth0,
-						       struct ip6_rthdr0 *, m,
+						       struct ip6_rthdr0 *, &m,
 						       eoff, rthlen);
 					if (rth0 == NULL) {
 						icmp6stat_inc(icp6s_tooshort);
@@ -848,7 +848,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 				nxt = rth->ip6r_nxt;
 				break;
 			case IPPROTO_FRAGMENT:
-				IP6_EXTHDR_GET(fh, struct ip6_frag *, m,
+				IP6_EXTHDR_GET(fh, struct ip6_frag *, &m,
 					       eoff, sizeof(*fh));
 				if (fh == NULL) {
 					icmp6stat_inc(icp6s_tooshort);
@@ -879,7 +879,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			}
 		}
 	  notify:
-		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off,
+		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, &m, off,
 			       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 		if (icmp6 == NULL) {
 			icmp6stat_inc(icp6s_tooshort);
@@ -1204,7 +1204,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	if (!(ifp->if_xflags & IFXF_AUTOCONF6))
 		goto freeit;
 
-	IP6_EXTHDR_GET(nd_rd, struct nd_redirect *, m, off, icmp6len);
+	IP6_EXTHDR_GET(nd_rd, struct nd_redirect *, &m, off, icmp6len);
 	if (nd_rd == NULL) {
 		icmp6stat_inc(icp6s_tooshort);
 		if_put(ifp);

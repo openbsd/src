@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.190 2025/03/11 15:31:03 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.191 2025/05/24 12:27:24 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 	if (proto == IPPROTO_ICMPV6) {
 		struct icmp6_hdr *icmp6;
 
-		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, *offp,
+		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, mp, *offp,
 		    sizeof(*icmp6));
 		if (icmp6 == NULL)
 			return IPPROTO_DONE;

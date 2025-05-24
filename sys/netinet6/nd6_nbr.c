@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.158 2025/05/19 06:42:53 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.159 2025/05/24 12:27:23 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (ifp == NULL)
 		goto freeit;
 
-	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
+	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, &m, off, icmp6len);
 	if (nd_ns == NULL) {
 		icmp6stat_inc(icp6s_tooshort);
 		if_put(ifp);
@@ -540,7 +540,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ip6->ip6_hlim != 255)
 		goto bad;
 
-	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
+	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, &m, off, icmp6len);
 	if (nd_na == NULL) {
 		icmp6stat_inc(icp6s_tooshort);
 		if_put(ifp);

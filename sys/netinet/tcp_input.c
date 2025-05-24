@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.447 2025/05/19 02:27:57 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.448 2025/05/24 12:27:23 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ tcp_input_solocked(struct mbuf **mp, int *offp, int proto, int af,
 	 * Get IP and TCP header together in first mbuf.
 	 * Note: IP leaves IP header in first mbuf.
 	 */
-	IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, sizeof(*th));
+	IP6_EXTHDR_GET(th, struct tcphdr *, mp, iphlen, sizeof(*th));
 	if (!th) {
 		tcpstat_inc(tcps_rcvshort);
 		return IPPROTO_DONE;
@@ -532,7 +532,7 @@ tcp_input_solocked(struct mbuf **mp, int *offp, int proto, int af,
 	}
 	tlen -= off;
 	if (off > sizeof(struct tcphdr)) {
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, off);
+		IP6_EXTHDR_GET(th, struct tcphdr *, mp, iphlen, off);
 		if (!th) {
 			tcpstat_inc(tcps_rcvshort);
 			return IPPROTO_DONE;

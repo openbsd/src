@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.21 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.22 2025/05/24 12:27:23 bluhm Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -272,21 +272,21 @@ struct ip6_frag {
  * The pointer to the region will be returned to pointer variable "val",
  * with type "typ".
  */
-#define IP6_EXTHDR_GET(val, typ, m, off, len)				\
+#define IP6_EXTHDR_GET(val, typ, mp, off, len)				\
 do {									\
 	struct mbuf *t;							\
 	int tmp;							\
-	if ((m)->m_len >= (off) + (len))				\
-		(val) = (typ)(mtod((m), caddr_t) + (off));		\
+	if ((*(mp))->m_len >= (off) + (len))				\
+		(val) = (typ)(mtod((*(mp)), caddr_t) + (off));		\
 	else {								\
-		t = m_pulldown((m), (off), (len), &tmp);		\
+		t = m_pulldown((*(mp)), (off), (len), &tmp);		\
 		if (t) {						\
 			if (t->m_len < tmp + (len))			\
 				panic("m_pulldown malfunction");	\
 			(val) = (typ)(mtod(t, caddr_t) + tmp);		\
 		} else {						\
 			(val) = (typ)NULL;				\
-			(m) = NULL;					\
+			(*(mp)) = NULL;					\
 		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
