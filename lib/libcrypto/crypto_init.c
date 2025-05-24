@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.24 2025/05/24 07:23:14 jsing Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.25 2025/05/24 07:41:14 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -37,12 +37,25 @@ static pthread_once_t crypto_init_once = PTHREAD_ONCE_INIT;
 static pthread_t crypto_init_thread;
 static int crypto_init_cleaned_up;
 
+void openssl_init_crypto_constructor(void)  __attribute__((constructor));
+
 #ifndef HAVE_CRYPTO_CPU_CAPS_INIT
 void
 crypto_cpu_caps_init(void)
 {
 }
 #endif
+
+/*
+ * This function is invoked as a constructor when the library is loaded. The
+ * code run from here must not allocate memory or trigger signals. The only
+ * safe code is to read data and update global variables.
+ */
+void
+openssl_init_crypto_constructor(void)
+{
+	crypto_cpu_caps_init();
+}
 
 void
 OPENSSL_init(void)
@@ -54,8 +67,6 @@ static void
 OPENSSL_init_crypto_internal(void)
 {
 	crypto_init_thread = pthread_self();
-
-	crypto_cpu_caps_init();
 
 	ERR_load_crypto_strings();
 }
