@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.96 2025/05/23 00:20:02 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.97 2025/05/24 09:45:13 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -312,9 +312,10 @@ GPT_recover_partition(char *line1, char *line2, char *line3)
 	char			 type[37], guid[37], name[37], name2[37];
 	struct uuid		 type_uuid, guid_uuid;
 	const char		*p;
-	uint64_t		 start, size, attrs, attrs2;
+	uint64_t		 start, size, end, attrs, attrs2;
 	unsigned int		 pn;
 	int			 error, fields;
+	unsigned int		 i;
 	uint32_t		 status;
 
 	if (line1 == NULL) {
@@ -366,9 +367,6 @@ GPT_recover_partition(char *line1, char *line2, char *line3)
 		break;
 	}
 
-	if (pn >= nitems(gp) || start < letoh64(gh.gh_lba_start) || size == 0)
-		return -1;
-
 	uuid_from_string(type, &type_uuid, &status);
 	if (status != uuid_s_ok) {
 		p = PRT_desc_to_guid(type);
@@ -387,10 +385,30 @@ GPT_recover_partition(char *line1, char *line2, char *line3)
 			return -1;
 	}
 
+	end = start + size - 1;
+	if (pn >= nitems(gp) || start < gh.gh_lba_start ||
+	    end > gh.gh_lba_end || size == 0)
+		return -1;
+
+	/* Don't overwrite already recovered protected partitions! */
+	if (PRT_protected_uuid(&gp[pn].gp_type) ||
+	    (gp[pn].gp_attrs & GPTPARTATTR_REQUIRED))
+		return -1;
+
+	/* Don't overlap already recovered partitions. */
+	for (i = 0; i < gh.gh_part_num; i++) {
+		if (i == pn)
+			continue;
+		if (start >= gp[i].gp_lba_start && start <= gp[i].gp_lba_end)
+			return -1;
+		if (end >= gp[i].gp_lba_start && end <= gp[i].gp_lba_end)
+			return -1;
+	}
+
 	gp[pn].gp_type = type_uuid;
 	gp[pn].gp_guid = guid_uuid;
 	gp[pn].gp_lba_start = start;
-	gp[pn].gp_lba_end = start + size - 1;
+	gp[pn].gp_lba_end = end;
 	gp[pn].gp_attrs = attrs;
 
 	string_to_name(pn, name);
