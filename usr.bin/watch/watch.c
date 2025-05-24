@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.24 2025/05/21 12:44:12 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.25 2025/05/24 09:49:14 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -70,8 +70,10 @@ highlight_mode_t highlight_mode = HIGHLIGHT_NONE;
 
 int start_line = 0, start_column = 0;	/* display offset coordinates */
 
-int pause_status = 0;		/* pause status */
-time_t lastupdate;		/* last updated time */
+int pause_on_error = 0;
+int paused = 0;
+int last_exitcode = 0;
+time_t lastupdate;
 int xflag = 0;
 
 #define	addwch(_x)	addnwstr(&(_x), 1);
@@ -128,11 +130,14 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	while ((ch = getopt(argc, argv, "cls:wx")) != -1)
+	while ((ch = getopt(argc, argv, "cels:wx")) != -1)
 		switch (ch) {
 		case 'c':
 			highlight_mode = HIGHLIGHT_CHAR;
 			break;
+		case 'e':
+			pause_on_error = 1;
+			break; 
 		case 'l':
 			highlight_mode = HIGHLIGHT_LINE;
 			break;
@@ -245,7 +250,9 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 
 	move(0, 0);
 
-	if (pause_status)
+	if (pause_on_error && last_exitcode != 0)
+		printw("--PAUSED (EXIT CODE %i)-- ", last_exitcode);
+	else if (paused)
 		printw("--PAUSED-- ");
 	else
 		printw("Every %.4gs: ", opt_interval.d);
@@ -254,6 +261,9 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 		printw("%-.*s...", COLS - 49, cmdstr);
 	else
 		printw("%s", cmdstr);
+
+	if (pause_on_error)
+		printw(" (?)");
 
 	if (buf[0] == '\0')
 		gethostname(buf, sizeof(buf));
@@ -419,6 +429,11 @@ read_result(BUFFER *buf)
 
 	/* Remember update time */
 	time(&lastupdate);
+
+	if (WIFEXITED(st))
+		last_exitcode = WEXITSTATUS(st);
+	if (pause_on_error && last_exitcode)
+		paused = 1;
 }
 
 kbd_result_t
@@ -501,6 +516,13 @@ kbd_command(int ch)
 			highlight_mode = HIGHLIGHT_CHAR;
 		break;
 
+	case 'e':
+		if (pause_on_error == 1)
+			pause_on_error = 0;
+		else
+			pause_on_error = 1;
+		return (RSLT_REDRAW);
+
 	case 'g':
 		start_line = 0;
 		break;
@@ -513,10 +535,12 @@ kbd_command(int ch)
 		break;
 
 	case 'p':
-		if ((pause_status = !pause_status) != 0) {
+		if (paused == 1) {
+			paused = 0;
 			evtimer_del(&ev_timer);
 			return (RSLT_REDRAW);
 		} else {
+			paused = 1;
 			evtimer_add(&ev_timer, &opt_interval.tv);
 			return (RSLT_UPDATE);
 		}
@@ -584,6 +608,7 @@ show_help(void)
 	    "g              - go to top\n\n"
 	    "Other:\n"
 	    "(Space)        - run command again\n"
+	    "e              - pause on non-zero exit code\n"
 	    "c              - highlight changed characters\n"
 	    "l              - highlight changed lines\n"
 	    "w              - highlight changed words\n"
@@ -665,7 +690,7 @@ timer(int sig, short event, void *arg)
 	swap_buffers();
 	read_result(cur_buf);
 	display(cur_buf, prev_buf, highlight_mode);
-	if (!pause_status)
+	if (!paused)
 		evtimer_add(&ev_timer, &opt_interval.tv);
 }
 
@@ -682,7 +707,7 @@ input(int sig, short event, void *arg)
 		swap_buffers();
 		read_result(cur_buf);
 		display(cur_buf, prev_buf, highlight_mode);
-		if (!pause_status)
+		if (!paused)
 			evtimer_add(&ev_timer, &opt_interval.tv);
 		break;
 	case RSLT_REDRAW:	/* scroll with current buffer */
@@ -711,6 +736,6 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-clwx] [-s seconds] command [arg ...]\n",
+	fprintf(stderr, "usage: %s [-celwx] [-s seconds] command [arg ...]\n",
 	    __progname);
 }

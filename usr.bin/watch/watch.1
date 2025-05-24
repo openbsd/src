@@ -1,4 +1,4 @@
-.\"	$OpenBSD: watch.1,v 1.12 2025/05/21 07:37:11 job Exp $
+.\"	$OpenBSD: watch.1,v 1.13 2025/05/24 09:49:14 job Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2014, 2016 Internet Initiative Japan Inc.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 21 2025 $
+.Dd $Mdocdate: May 24 2025 $
 .Dt WATCH 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd periodically execute a command and display its output
 .Sh SYNOPSIS
 .Nm
-.Op Fl clwx
+.Op Fl celwx
 .Op Fl s Ar seconds
 .Ar command Op Ar arg ...
 .Sh DESCRIPTION
@@ -36,6 +36,10 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
 Highlight changed characters.
+.It Fl e
+Pause updating if
+.Ar command
+exits with a non-zero exit code.
 .It Fl l
 Highlight changed lines.
 .It Fl s Ar seconds
@@ -72,6 +76,8 @@ Scroll left by one column.
 Scroll right by one column.
 .It Ic c
 Highlight changed characters.
+.It Ic e
+Pause command executions if the command exits with a non-zero exit code.
 .It Ic g
 Scroll to top.
 .It Ic H
