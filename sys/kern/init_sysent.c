@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.286 2025/02/17 13:10:56 mpi Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.287 2025/05/24 06:49:16 deraadt Exp $	*/
 
 /*
  * System call switch table.
@@ -110,8 +110,8 @@ const struct sysent sysent[] = {
 	    sys_fstatat },			/* 42 = fstatat */
 	{ 0, 0, SY_NOLOCK | 0,
 	    sys_getegid },			/* 43 = getegid */
-	{ 4, s(struct sys_profil_args), 0,
-	    sys_profil },			/* 44 = profil */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 44 = unimplemented oprofil */
 #ifdef KTRACE
 	{ 4, s(struct sys_ktrace_args), 0,
 	    sys_ktrace },			/* 45 = ktrace */
@@ -387,8 +387,8 @@ const struct sysent sysent[] = {
 	    sys_nosys },			/* 173 = obsolete pad_pread */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 174 = obsolete pad_pwrite */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 175 = unimplemented ntp_gettime */
+	{ 6, s(struct sys_profil_args), 0,
+	    sys_profil },			/* 175 = profil */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 176 = unimplemented ntp_adjtime */
 	{ 0, 0, 0,

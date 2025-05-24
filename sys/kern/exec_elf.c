@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.191 2024/09/15 23:13:19 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.192 2025/05/24 06:49:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -97,7 +97,7 @@ int	elf_check_header(Elf_Ehdr *);
 int	elf_read_from(struct proc *, struct vnode *, u_long, void *, int);
 void	elf_load_psection(struct exec_vmcmd_set *, struct vnode *,
 	    Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
-int	elf_os_pt_note_name(Elf_Note *);
+int	elf_os_pt_note_name(Elf_Note *, int *);
 int	elf_os_pt_note(struct proc *, struct exec_package *, Elf_Ehdr *, int *);
 int	elf_read_pintable(struct proc *p, struct vnode *vp, Elf_Phdr *pp,
 	    u_int **pinp, int is_ldso, size_t len);
@@ -1036,7 +1036,7 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 }
 
 int
-elf_os_pt_note_name(Elf_Note *np)
+elf_os_pt_note_name(Elf_Note *np, int *typep)
 {
 	int i, j;
 
@@ -1052,8 +1052,10 @@ elf_os_pt_note_name(Elf_Note *np)
 		for (j = np->descsz; j < elfround(np->descsz); j++)
 			if (((char *)(np + 1))[j] != '\0')
 				continue;
-		if (strcmp((char *)(np + 1), elf_note_names[i].name) == 0)
+		if (strcmp((char *)(np + 1), elf_note_names[i].name) == 0) {
+			*typep = np->type;
 			return elf_note_names[i].id;
+		}
 	}
 	return (0);
 }
@@ -1098,6 +1100,7 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh, int *name
 
 		for (offset = 0; offset < ph->p_filesz; offset += total) {
 			Elf_Note *np2 = (Elf_Note *)((char *)np + offset);
+			int name, type;
 
 			if (offset + sizeof(Elf_Note) > ph->p_filesz)
 				break;
@@ -1105,7 +1108,11 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh, int *name
 			    elfround(np2->descsz);
 			if (offset + total > ph->p_filesz)
 				break;
-			names |= elf_os_pt_note_name(np2);
+			name = elf_os_pt_note_name(np2, &type);
+			if (name == ELF_NOTE_NAME_OPENBSD &&
+			    type == NT_OPENBSD_PROF)
+				epp->ep_flags |= EXEC_PROFILE;
+			names |= name;
 		}
 	}
 

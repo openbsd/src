@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.h,v 1.9 2022/01/11 23:59:55 jsg Exp $	*/
+/*	$OpenBSD: gmon.h,v 1.10 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: gmon.h,v 1.5 1996/04/09 20:55:30 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,8 @@ struct gmonhdr {
 	int	ncnt;		/* size of sample buffer (plus this header) */
 	int	version;	/* version number */
 	int	profrate;	/* profiling clock rate */
-	int	spare[3];	/* reserved */
+	int	totarc;		/* space used by arcs */
+	int	spare[2];	/* reserved */
 };
 #define GMONVERSION	0x00051879
 
@@ -136,6 +137,10 @@ struct gmonparam {
 	u_long		highpc;
 	u_long		textsize;
 	u_long		hashfraction;
+	void		*outbuf;
+	size_t		outbuflen;
+	void		*rawarcs;
+	int		dirfd;
 };
 
 /*
@@ -167,6 +172,7 @@ extern struct gmonparam _gmonparam;
 void	_mcleanup(void);
 void	_monstartup(u_long, u_long);
 void	moncontrol(int);
+/* XXX remove end of may 2025 */
 void	monstartup(u_long, u_long);
 __END_DECLS
 

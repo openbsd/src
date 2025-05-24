@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.106 2024/11/25 04:37:06 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.107 2025/05/24 06:49:16 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -661,6 +661,8 @@ typedef struct {
  * nicely aligned, and if you add elements, add them to the end and
  * bump the version.
  */
+
+#define NT_OPENBSD_PROF		2
 
 #define NT_OPENBSD_PROCINFO	10
 #define NT_OPENBSD_AUXV		11

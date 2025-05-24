@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.111 2024/08/02 22:14:54 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.112 2025/05/24 06:49:16 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -506,7 +506,7 @@ int	 issetugid(void);
 char	*mkdtemp(char *);
 int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
-int	 profil(char *, size_t, unsigned long, unsigned int)
+int	 profil(void *, size_t, size_t, unsigned long, unsigned int, int)
 		__attribute__ ((__bounded__(__string__,1,2)));
 int	 quotactl(const char *, int, int, char *);
 int	 rcmd(char **, int, const char *,

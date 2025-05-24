@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.271 2025/05/07 00:39:09 dlg Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.272 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -193,6 +193,8 @@ process_initialize(struct process *pr, struct proc *p)
 	crhold(pr->ps_ucred);
 	/* new thread and new process */
 	KASSERT(p->p_ucred->cr_refcnt.r_refs >= 2);
+
+	prof_fork(pr);
 
 	LIST_INIT(&pr->ps_children);
 	LIST_INIT(&pr->ps_orphans);

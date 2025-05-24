@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.388 2025/05/07 00:39:09 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.389 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -248,10 +248,14 @@ struct process {
 	char	ps_nice;		/* Process "nice" value. */
 
 	struct uprof {			/* profile arguments */
-		caddr_t	pr_base;	/* buffer base */
-		size_t  pr_size;	/* buffer size */
-		u_long	pr_off;		/* pc offset */
-		u_int   pr_scale;	/* pc scaling */
+		caddr_t	pr_base;		/* sample buffer base */
+		size_t  pr_size;		/* sample buffer size */
+		u_long	pr_off;			/* pc offset */
+		u_int   pr_scale;		/* pc scaling */
+		char	*pr_buf;		/* total memory buffer */
+		size_t	pr_buflen;		/* ... length */
+		struct	ucred *pr_ucred;	/* cred at first profil(2) call */
+		struct	vnode *pr_cdir;		/* cwd at first profil(2) call */
 	} ps_prof;
 
 	u_int32_t	ps_acflag;	/* Accounting flags. */
@@ -310,6 +314,7 @@ struct process {
 #define	PS_CHROOT	0x01000000	/* Process is chrooted */
 #define	PS_NOBTCFI	0x02000000	/* No Branch Target CFI */
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
+#define	PS_PROFILE	0x08000000	/* linked with -pg: allow profile(2) */
 #define	PS_WAITEVENT	0x10000000	/* wait(2) event pending */
 #define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
 #define	PS_STOPPED	0x40000000	/* Stopped process */

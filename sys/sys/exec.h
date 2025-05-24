@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.56 2024/11/02 10:02:23 jsg Exp $	*/
+/*	$OpenBSD: exec.h,v 1.57 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -141,6 +141,7 @@ struct exec_package {
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_WXNEEDED	0x0020		/* executable will violate W^X */
 #define	EXEC_NOBTCFI	0x0040		/* no branch target CFI */
+#define	EXEC_PROFILE	0x0080		/* profiled binary */
 
 #ifdef _KERNEL
 /*

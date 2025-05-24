@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.171 2024/05/28 12:50:23 jsg Exp $	*/
+/*	$OpenBSD: systm.h,v 1.172 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -251,6 +251,9 @@ void	cpu_startclock(void);
 void	startprofclock(struct process *);
 void	stopprofclock(struct process *);
 void	setstatclockrate(int);
+void	prof_fork(struct process *);
+void	prof_exec(struct process *);
+void	prof_write(struct proc *);
 
 void	start_periodic_resettodr(void);
 void	stop_periodic_resettodr(void);

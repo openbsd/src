@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.262 2025/02/17 10:07:10 claudio Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.263 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -441,6 +441,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 */
 	single_thread_set(p, SINGLE_EXIT);
 
+	/* Clear profiling state in new image */
+	prof_exec(pr);
+
 	/*
 	 * Prepare vmspace for remapping. Note that uvmspace_exec can replace
 	 * ps_vmspace!
@@ -551,6 +554,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		atomic_setbits_int(&p->p_p->ps_flags, PS_NOBTCFI);
 	else
 		atomic_clearbits_int(&p->p_p->ps_flags, PS_NOBTCFI);
+
+	if (pack.ep_flags & EXEC_PROFILE)
+		atomic_setbits_int(&p->p_p->ps_flags, PS_PROFILE);
+	else
+		atomic_clearbits_int(&p->p_p->ps_flags, PS_PROFILE);
 
 	atomic_setbits_int(&pr->ps_flags, PS_EXEC);
 	if (pr->ps_flags & PS_PPWAIT) {

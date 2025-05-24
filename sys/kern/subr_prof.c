@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.41 2024/01/24 19:23:38 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.42 2025/05/24 06:49:16 deraadt Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -36,19 +36,26 @@
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/clockintr.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
 #include <sys/pledge.h>
+#include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
+#include <sys/file.h>
+#include <sys/fcntl.h>
+#include <sys/filedesc.h>
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/user.h>
+#include <sys/gmon.h>
 
 uint64_t profclock_period;
 
 #if defined(GPROF) || defined(DDBPROF)
 #include <sys/malloc.h>
-#include <sys/gmon.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -268,18 +275,20 @@ int
 sys_profil(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_profil_args /* {
-		syscallarg(caddr_t) samples;
-		syscallarg(size_t) size;
+		syscallarg(void *) buf;
+		syscallarg(size_t) buflen;
+		syscallarg(size_t) samplesize;
 		syscallarg(u_long) offset;
 		syscallarg(u_int) scale;
+		syscallarg(int) dirfd;
 	} */ *uap = v;
 	struct process *pr = p->p_p;
 	struct uprof *upp;
-	int error, s;
+	int s;
 
-	error = pledge_profil(p, SCARG(uap, scale));
-	if (error)
-		return error;
+	/* Only binaries linked for profiling can do profil() */
+	if ((pr->ps_flags & PS_PROFILE) == 0)
+		return (EPERM);
 
 	if (SCARG(uap, scale) > (1 << 16))
 		return (EINVAL);
@@ -290,17 +299,174 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 	}
 	upp = &pr->ps_prof;
 
+	/* May not change to a new buffer */
+	if (upp->pr_buf &&
+	    (SCARG(uap, buf) != upp->pr_buf ||
+	    SCARG(uap, buflen) != upp->pr_buflen))
+		return (EALREADY);
+
+	/* First call determines where the output files will go */
+	if (upp->pr_cdir == NULL) {
+		struct vnode *dirvp;
+
+		upp->pr_ucred = crhold(p->p_ucred);
+		if (SCARG(uap, dirfd) != -1) {
+			struct filedesc *fdp = p->p_fd;
+			struct file *fp;
+
+			if ((fp = fd_getfile(fdp, SCARG(uap, dirfd))) == NULL)
+				return (EBADF);
+			dirvp = fp->f_data;
+			if (fp->f_type != DTYPE_VNODE || dirvp->v_type != VDIR) {
+				FRELE(fp, p);
+				return (ENOTDIR);
+			}
+		} else
+			dirvp = p->p_fd->fd_cdir;
+		upp->pr_cdir = dirvp;
+		vref(upp->pr_cdir);
+	}
+
+#if 0
+	if (upp->pr_buf == NULL) {
+		/* XXX In the future, consider forcing the buffer immutable */
+		struct sys_mimmutable_args ua;
+		SCARG(&ua, addr) = SCARG(uap, buf);
+		SCARG(&ua, len) = SCARG(uap, buflen);
+		(void) sys_mimmutable(p, &ua, retval);
+	}
+#endif
+
 	/* Block profile interrupts while changing state. */
 	s = splstatclock();
 	upp->pr_off = SCARG(uap, offset);
 	upp->pr_scale = SCARG(uap, scale);
-	upp->pr_base = (caddr_t)SCARG(uap, samples);
-	upp->pr_size = SCARG(uap, size);
+	upp->pr_base = (caddr_t)SCARG(uap, buf) + sizeof(struct gmonhdr);
+	upp->pr_size = SCARG(uap, samplesize);
+	upp->pr_buf = SCARG(uap, buf);
+	upp->pr_buflen = SCARG(uap, buflen);
 	startprofclock(pr);
 	splx(s);
 	need_resched(curcpu());
 
 	return (0);
+}
+
+void
+prof_fork(struct process *pr)
+{
+	struct uprof *upp = &pr->ps_prof;
+
+	if (upp->pr_cdir)
+		vref(upp->pr_cdir);
+	if (upp->pr_ucred)
+		crhold(upp->pr_ucred);
+}
+
+void
+prof_exec(struct process *pr)
+{
+	struct uprof *upp = &pr->ps_prof;
+
+	if (upp->pr_cdir)
+		vrele(upp->pr_cdir);
+	upp->pr_cdir = NULL;
+	if (upp->pr_ucred)
+		crfree(upp->pr_ucred);
+	upp->pr_ucred = NULL;
+	upp->pr_buf = NULL;
+}
+
+void
+prof_write(struct proc *p)
+{
+	struct process *pr = p->p_p;
+	struct uprof *upp = &pr->ps_prof;
+	struct filedesc *fdp = p->p_fd;
+	struct vnode *cdir = NULL, *old_cdir, *vp;
+	struct ucred *cred = NULL, *old_cred;
+	struct nameidata nd;
+	struct gmonhdr hdr;
+	struct vattr vattr;
+	int error;
+	size_t size;
+	char *name = NULL;
+
+	/* Is this process profiling? */
+	if (upp->pr_buf == NULL)
+		return;
+
+	cdir = upp->pr_cdir;
+	cred = upp->pr_ucred;
+
+	/* Process sets hrd.totarc to indicate space used by the arc tables */
+	error = copyin(upp->pr_buf, &hdr, sizeof hdr);
+	if (error)
+		goto out;
+	if (hdr.totarc <= 0)
+		goto out;
+	size = sizeof(hdr) + upp->pr_size + hdr.totarc;
+	if (size > upp->pr_buflen)
+		goto out;
+
+	name = pool_get(&namei_pool, PR_WAITOK);
+	if (snprintf(name, MAXPATHLEN, "gmon.%s.%d.out",
+	    pr->ps_comm, pr->ps_pid) >= MAXPATHLEN)
+		goto out;
+
+	/* Swap back to the original directory */
+	old_cdir = fdp->fd_cdir;
+	fdp->fd_cdir = cdir;
+	vrele(old_cdir);
+	cdir = NULL;	/* will be released as fdp->fd_cdir */
+
+	/* Swap back to the original cred */
+	old_cred = p->p_ucred;
+	p->p_ucred = crdup(cred);
+	crfree(old_cred);
+
+	NDINIT(&nd, 0, BYPASSUNVEIL | KERNELPATH, UIO_SYSSPACE, name, p);
+	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW | O_NONBLOCK,
+	    S_IRUSR | S_IWUSR);
+	if (error)
+		goto out;
+
+	/*
+	 * Don't dump to non-regular files, files with links, or files
+	 * owned by someone else.
+	 */
+	vp = nd.ni_vp;
+	if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0) {
+		VOP_UNLOCK(vp);
+		vn_close(vp, FWRITE, cred, p);
+		goto out;
+	}
+	if (vp->v_type != VREG || vattr.va_nlink != 1 ||
+	    vattr.va_mode & ((VREAD | VWRITE) >> 3 | (VREAD | VWRITE) >> 6) ||
+	    vattr.va_uid != cred->cr_uid) {
+		error = EACCES;
+		VOP_UNLOCK(vp);
+		vn_close(vp, FWRITE, cred, p);
+		goto out;
+	}
+	vattr_null(&vattr);
+	vattr.va_size = 0;
+	VOP_SETATTR(vp, &vattr, cred, p);
+
+	VOP_UNLOCK(vp);
+	vref(vp);
+	error = vn_close(vp, FWRITE, cred, p);
+	if (error == 0)
+		error = vn_rdwr(UIO_WRITE, vp, upp->pr_buf, size,
+		    0, UIO_USERSPACE, IO_UNIT, cred, NULL, p);
+	vrele(vp);
+out:
+	if (name)
+		pool_put(&namei_pool, name);
+	if (cred)
+		crfree(cred);
+	if (cdir)
+		vrele(cdir);
 }
 
 void
