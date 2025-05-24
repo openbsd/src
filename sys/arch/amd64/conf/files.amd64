@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.113 2025/04/23 15:08:05 visa Exp $
+#	$OpenBSD: files.amd64,v 1.114 2025/05/24 12:47:00 bluhm Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -28,6 +28,7 @@ file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/i8259.c
 file	arch/amd64/amd64/cacheinfo.c
+file	arch/amd64/amd64/ghcb.c
 file	arch/amd64/amd64/vector.S
 file	arch/amd64/amd64/copy.S
 file	arch/amd64/amd64/spl.S
