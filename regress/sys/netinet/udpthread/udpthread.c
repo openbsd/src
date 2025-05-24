@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpthread.c,v 1.1.1.1 2025/05/23 16:19:52 bluhm Exp $	*/
+/*	$OpenBSD: udpthread.c,v 1.2 2025/05/24 04:17:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
@@ -123,15 +123,28 @@ connect_socket(volatile int *connectp, struct sockaddr *addr)
 			/* socket has collected ICMP messages, retry */
 			continue;
 		}
-		if (errno == ETIMEDOUT) {
+		if (errno == ETIMEDOUT || errno == EPIPE) {
 			/* socket splicing kicked in and got idle timeout */
 			continue;
 		}
 		err(1, "%s: connect %d", __func__, sock);
 	}
 	/* send an empty UDP packet to trigger accept */
-	if (send(sock, "", 0, 0) < 0)
+	while (send(sock, "", 0, 0) < 0) {
+		if (errno == EWOULDBLOCK) {
+			/* some other thread is already sending */
+			break;
+		}
+		if (errno == ECONNREFUSED) {
+			/* socket has collected ICMP messages, retry */
+			continue;
+		}
+		if (errno == ETIMEDOUT || errno == EPIPE) {
+			/* socket splicing kicked in and got idle timeout */
+			continue;
+		}
 		err(1, "%s: send %d", __func__, sock);
+	}
 	if ((int)atomic_cas_uint(connectp, -1, sock) != -1) {
 		/* another thread has connect slot n */
 		if (close(sock) < 0)
@@ -202,7 +215,7 @@ bindconnect_socket(union sockaddr_union *laddr, union sockaddr_union *faddr)
 			/* socket has collected ICMP messages, retry */
 			continue;
 		}
-		if (errno == ETIMEDOUT) {
+		if (errno == ETIMEDOUT || errno == EPIPE) {
 			/* socket splicing kicked in and got idle timeout */
 			continue;
 		}
