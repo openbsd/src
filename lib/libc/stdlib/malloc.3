@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.143 2025/05/23 00:40:05 deraadt Exp $
+.\"	$OpenBSD: malloc.3,v 1.144 2025/05/24 12:47:11 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 23 2025 $
+.Dd $Mdocdate: May 24 2025 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -266,10 +266,18 @@ value of the
 .Xr sysctl 2 ,
 next checks the environment for a variable called
 .Ev MALLOC_OPTIONS ,
-and finally looks at the pre-initialized global variable
+and finally looks at the global variable
 .Va malloc_options
 in the program.
-Each is scanned for the flags documented below.
+Since
+.Fn malloc
+might already get called before the beginning of
+.Fn main ,
+either initialize
+.Va malloc_options
+to a string literal at file scope or do not declare it at all.
+.Pp
+Each of the three strings is scanned for the flags documented below.
 Unless otherwise noted uppercase means on, lowercase means off.
 During initialization, flags occurring later modify the behaviour
 that was requested by flags processed earlier.
