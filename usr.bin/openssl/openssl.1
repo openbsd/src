@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.165 2025/05/24 04:05:18 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.166 2025/05/24 12:52:01 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2973,9 +2973,6 @@ command processes private keys
 (both encrypted and unencrypted)
 in PKCS#8 format
 with a variety of PKCS#5 (v1.5 and v2.0) and PKCS#12 algorithms.
-The default encryption is only 56 bits;
-keys encrypted using PKCS#5 v2.0 algorithms and high iteration counts
-are more secure.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
