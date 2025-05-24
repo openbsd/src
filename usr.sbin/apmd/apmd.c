@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.112 2023/04/27 10:51:27 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.113 2025/05/24 02:56:41 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -65,6 +65,7 @@ void usage(void);
 int power_status(int fd, int force, struct apm_power_info *pinfo);
 int bind_socket(const char *sn);
 void handle_client(int sock_fd, int ctl_fd);
+void warnlow(void);
 int suspend(int ctl_fd);
 int stand_by(int ctl_fd);
 int hibernate(int ctl_fd);
@@ -100,8 +101,9 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-AadHLs] [-f devname] [-S sockname] [-t seconds] "
-		"[-Z percent] [-z percent]\n", __progname);
+	    "usage: %s [-AadHLs] [-f devname] [-S sockname] [-t seconds]"
+	    " [-w percent]\n"
+	    "\t[-Z percent] [-z percent]\n", __progname);
 	exit(1);
 }
 
@@ -333,6 +335,12 @@ fixrandom(void)
 	}
 }
 
+void
+warnlow(void)
+{
+	do_etc_file(_PATH_APM_ETC_WARNLOW);
+}
+
 int
 suspend(int ctl_fd)
 {
@@ -402,15 +410,16 @@ resumed(int ctl_fd)
 }
 
 #define TIMO (10*60)			/* 10 minutes */
-#define AUTOACTION_GRACE_PERIOD (60)	/* 1mn after resume */
+#define AUTOACTION_GRACE_PERIOD	(60)	/* 1 minute after resume */
+#define WARNING_GRACE_PERIOD	(2*60)	/* 2 minutes after last warning */
 
 int
 main(int argc, char *argv[])
 {
 	const char *fname = _PATH_APM_CTLDEV;
-	int ctl_fd, sock_fd, ch, suspends, standbys, hibernates, resumes;
+	int ctl_fd, sock_fd, ch, warnlows, suspends, standbys, hibernates, resumes;
 	int autoaction = 0, autoaction_inflight = 0;
-	int autolimit = 0;
+	int autolimit = 0, warnlimit = 0;
 	int statonly = 0;
 	int powerstatus = 0, powerbak = 0, powerchange = 0;
 	int noacsleep = 0;
@@ -423,7 +432,7 @@ main(int argc, char *argv[])
 	struct kevent ev[2];
 	int doperf = PERF_NONE;
 
-	while ((ch = getopt(argc, argv, "aACdHLsf:t:S:z:Z:")) != -1)
+	while ((ch = getopt(argc, argv, "aACdHLsf:t:S:w:z:Z:")) != -1)
 		switch(ch) {
 		case 'a':
 			noacsleep = 1;
@@ -464,6 +473,12 @@ main(int argc, char *argv[])
 				usage();
 			doperf = PERF_MANUAL;
 			setperfpolicy("high");
+			break;
+		case 'w':
+			warnlimit = strtonum(optarg, 1, 100, &errstr);
+			if (errstr != NULL)
+				errx(1, "battery percentage is %s: %s", errstr,
+				    optarg);
 			break;
 		case 'Z':
 			autoaction = AUTO_HIBERNATE;
@@ -553,7 +568,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		suspends = standbys = hibernates = resumes = 0;
+		warnlows = suspends = standbys = hibernates = resumes = 0;
 
 		if (rv == 0 && ctl_fd == -1) {
 			/* timeout and no way to query status */
@@ -629,6 +644,24 @@ main(int argc, char *argv[])
 					/* Block autoaction until next resume */
 					autoaction_inflight = 1;
 				}
+			} else if (!powerstatus && warnlimit > 0 &&
+			    warnlimit > (int)pinfo.battery_life) {
+				static struct timespec last_warn = {0, 0};
+				struct timespec graceperiod_w, now_w;
+
+				graceperiod_w = last_warn;
+				graceperiod_w.tv_sec += WARNING_GRACE_PERIOD;
+				clock_gettime(CLOCK_MONOTONIC, &now_w);
+
+				if (timespeccmp(&now_w, &graceperiod_w, >)) {
+					logmsg(LOG_NOTICE,
+					    "estimated battery life %d%%"
+					    " below configured limit %d%%",
+					    pinfo.battery_life, warnlimit);
+
+					last_warn = now_w;
+					warnlows++;
+				}
 			}
 			break;
 		default:
@@ -638,15 +671,16 @@ main(int argc, char *argv[])
 		if ((standbys || suspends) && noacsleep &&
 		    power_status(ctl_fd, 0, &pinfo))
 			logmsg(LOG_DEBUG, "no! sleep! till brooklyn!");
+		else if (warnlows)
+			warnlow();
 		else if (suspends)
 			suspend(ctl_fd);
 		else if (standbys)
 			stand_by(ctl_fd);
 		else if (hibernates)
 			hibernate(ctl_fd);
-		else if (resumes) {
+		else if (resumes)
 			resumed(ctl_fd);
-		}
 
 		if (powerchange) {
 			if (powerstatus)

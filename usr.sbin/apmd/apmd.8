@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.59 2025/03/27 18:31:38 jmc Exp $
+.\"	$OpenBSD: apmd.8,v 1.60 2025/05/24 02:56:41 kn Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2025 $
+.Dd $Mdocdate: May 24 2025 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl f Ar devname
 .Op Fl S Ar sockname
 .Op Fl t Ar seconds
+.Op Fl w Ar percent
 .Op Fl Z Ar percent
 .Op Fl z Ar percent
 .Sh DESCRIPTION
@@ -145,6 +146,12 @@ The polling rate defaults to
 once per 10 minutes, but may be specified using the
 .Fl t
 command-line flag.
+.It Fl w Ar percent
+Log warning and enable
+.Dq warnlow
+actions if no AC is connected and the
+estimated battery life is equal or below
+.Ar percent .
 .It Fl Z Ar percent
 Automatically hibernate the system if no AC is connected and the
 estimated battery life is equal or below
@@ -174,6 +181,7 @@ in the requested state after running the configuration script and
 flushing the buffer cache.
 .Pp
 Actions can be configured for the following transitions:
+warnlow,
 suspend,
 hibernate,
 standby,
@@ -181,6 +189,9 @@ resume,
 powerup,
 and
 powerdown.
+The warnlow action is run if
+.Fl w
+is used.
 The suspend, hibernate and standby actions are run prior to
 .Nm
 performing any other actions (such as disk syncs) and entering the new
@@ -195,6 +206,7 @@ status changed in the mean time).
 .It Pa /dev/apmctl
 Default device used to control the APM kernel driver.
 .Pp
+.It Pa /etc/apm/warnlow
 .It Pa /etc/apm/suspend
 .It Pa /etc/apm/hibernate
 .It Pa /etc/apm/standby
@@ -206,13 +218,14 @@ Each file must be an executable binary or shell script.
 A single program or script can be used to control all transitions
 by examining the name by which it was called,
 which is one of
-suspend,
-hibernate,
-standby,
-resume,
-powerup,
+.Dq warnlow ,
+.Dq suspend ,
+.Dq hibernate ,
+.Dq standby ,
+.Dq resume ,
+.Dq powerup ,
 or
-powerdown.
+.Dq powerdown .
 .Pp
 .It Pa /var/run/apmdev
 Default

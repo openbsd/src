@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.6 2012/03/26 20:17:45 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.7 2025/05/24 02:56:41 kn Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -32,6 +32,7 @@
 #define _PATH_APM_SOCKET	"/var/run/apmdev"
 #define _PATH_APM_CTLDEV	"/dev/apmctl"
 #define _PATH_APM_ETC_DIR	"/etc/apm"
+#define _PATH_APM_ETC_WARNLOW	_PATH_APM_ETC_DIR"/warnlow"
 #define _PATH_APM_ETC_SUSPEND	_PATH_APM_ETC_DIR"/suspend"
 #define _PATH_APM_ETC_STANDBY	_PATH_APM_ETC_DIR"/standby"
 #define _PATH_APM_ETC_HIBERNATE	_PATH_APM_ETC_DIR"/hibernate"
