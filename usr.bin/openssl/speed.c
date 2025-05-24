@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.43 2025/05/24 08:04:21 joshua Exp $ */
+/* $OpenBSD: speed.c,v 1.44 2025/05/24 09:25:38 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -911,12 +911,6 @@ static const unsigned char key32[] = {
 	0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56,
 };
 
-#ifndef OPENSSL_NO_AES
-#define MAX_BLOCK_SIZE 128
-#else
-#define MAX_BLOCK_SIZE 64
-#endif
-
 static void
 sig_done(int sig)
 {
@@ -981,7 +975,7 @@ speed_main(int argc, char **argv)
 	CAST_KEY cast_ks;
 #endif
 	unsigned char DES_iv[8];
-	unsigned char iv[2 * MAX_BLOCK_SIZE / 8];
+	unsigned char iv[2 * 16];
 #ifndef OPENSSL_NO_DES
 	static DES_cblock key = {0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0};
 	static DES_cblock key2 = {0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12};
