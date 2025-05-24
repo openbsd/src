@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.28 2025/05/19 15:51:50 caspar Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.29 2025/05/24 13:10:09 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2025 $
+.Dd $Mdocdate: May 24 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -59,16 +59,17 @@ Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
 Macro names may not be reserved words (for example,
-.Ic interface )
+.Ic interface ) .
 Macros are not expanded inside quotes.
 .Sh GLOBAL CONFIGURATION
 The global configuration section sets defaults for router advertisement
 messages.
 These can be overwritten in interface blocks.
 .Bl -tag -width Ds
-.It Ic default router Pq Ic yes Ns | Ns Ic no
+.It Ic default router Pq Cm yes Ns | Ns Cm no
 Act as a default router or not.
-The default is yes.
+The default is
+.Cm yes .
 .It Ic dns Brq Ar option ...
 .Ic dns
 options are as follows:
@@ -87,10 +88,13 @@ search list.
 .It Ic hop limit Ar hops
 Specify the diameter of the internet.
 The default is 0, meaning unspecified by this router.
-.It Ic managed address configuration Pq Ic yes Ns | Ns Ic no
-If set to yes, indicate that stateless address configuration prefixes are
+.It Ic managed address configuration Pq Cm yes Ns | Ns Cm no
+If set to
+.Cm yes ,
+indicate that stateless address configuration prefixes are
 not available and hosts should consult DHCPv6.
-The default is no.
+The default is
+.Cm no .
 .It Ic mtu Ar bytes
 The MTU option is used in Router Advertisement messages to ensure that all
 nodes on a link use the same MTU value in those cases where the link MTU
@@ -113,25 +117,30 @@ A value of zero indicates to not use the prefix anymore.
 The maximum is 65528 seconds.
 The default is 1800 seconds.
 .El
-.It Ic other configuration Pq Ic yes Ns | Ns Ic no
-If set to yes, hosts should consult DHCPv6 for additional configuration
+.It Ic other configuration Pq Cm yes Ns | Ns Cm no
+If set to
+.Cm yes ,
+hosts should consult DHCPv6 for additional configuration
 like NTP servers or DNS name servers.
-The default is no.
+The default is
+.Cm no .
 .It Ic router lifetime Ar seconds
 The number of seconds this router is a valid default router after receiving
 a router advertisement message.
 The default is 1800 seconds.
-.It Ic router preference Pq Ic high Ns | Ns Ic medium Ns | Ns Ic low
+.It Ic router preference Pq Cm high Ns | Ns Cm medium Ns | Ns Cm low
 Indicate whether to prefer this router over other default routers.
-The default is medium.
+The default is
+.Cm medium .
 .\" .It Ic reachable time Ar number
 .\" XXX
 .\" .It Ic retrans timer Ar number
 .\" XXX
-.It Ic source link-layer address Pq Ic yes Ns | Ns Ic no
+.It Ic source link-layer address Pq Cm yes Ns | Ns Cm no
 Add a source link-layer address option to router advertisement messages, to
 communicate the link-layer address of the sending interface.
-The default is yes.
+The default is
+.Cm yes .
 .El
 .Sh INTERFACES
 A list of interfaces or interface groups to send advertisements on:
@@ -155,12 +164,14 @@ is specified without a prefix length, its default is 64.
 .Ic prefix
 options are as follows:
 .Bl -tag -width Ds
-.It Ic autonomous address-configuration Pq Ic yes Ns | Ns Ic no
+.It Ic autonomous address-configuration Pq Cm yes Ns | Ns Cm no
 This prefix can be used to generate IPv6 addresses.
-The default is yes.
-.It Ic on-link Pq Ic yes Ns | Ns Ic no
+The default is
+.Cm yes .
+.It Ic on-link Pq Cm yes Ns | Ns Cm no
 This prefix is considered on-link.
-The default is yes.
+The default is
+.Cm yes .
 .It Ic preferred lifetime Ar seconds
 The preferred lifetime (pltime) in seconds for addresses generated from this
 prefix.
