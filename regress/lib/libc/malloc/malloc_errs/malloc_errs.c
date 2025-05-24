@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errs.c,v 1.5 2024/04/14 17:47:41 otto Exp $	*/
+/*	$OpenBSD: malloc_errs.c,v 1.6 2025/05/24 06:40:29 otto Exp $	*/
 /*
  * Copyright (c) 2023 Otto Moerbeek <otto@drijf.net>
  *
@@ -286,11 +286,10 @@ int main(int argc, char *argv[])
 	int i, status;
 	pid_t pid;
 	char num[10];
-	char options[10];
-	extern char* malloc_options;
+	char options[40];
+	char const *env[2];
 
-	if (argc == 3) {
-		malloc_options = argv[2];
+	if (argc == 2) {
 		/* prevent coredumps */
 		setrlimit(RLIMIT_CORE, &lim);
 		i = atoi(argv[1]);
@@ -303,9 +302,11 @@ int main(int argc, char *argv[])
 		pid = fork();
 		switch (pid) {
 		case 0:
-			snprintf(options, sizeof(options), "us%s", tests[i].flags);
+			snprintf(options, sizeof(options), "MALLOC_OPTIONS=us%s", tests[i].flags);
 			snprintf(num, sizeof(num), "%d", i);
-			execl(argv[0], argv[0], num, options, NULL);
+			env[0] = options;
+			env[1] = NULL;
+			execle(argv[0], argv[0], num, NULL, env);
 			err(1, "exec");
 		break;
 		case -1:
