@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_hp_methods.c,v 1.1 2025/05/25 05:19:26 jsing Exp $	*/
+/*	$OpenBSD: ecp_hp_methods.c,v 1.2 2025/05/25 05:43:33 jsing Exp $	*/
 /*
  * Copyright (c) 2024-2025 Joel Sing <jsing@openbsd.org>
  *
@@ -855,4 +855,3 @@ EC_GFp_homogeneous_projective_method(void)
 {
 	return &ec_GFp_homogeneous_projective_method;
 }
-LCRYPTO_ALIAS(EC_GFp_simple_method);
