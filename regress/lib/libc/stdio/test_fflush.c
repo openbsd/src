@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_fflush.c,v 1.1 2025/05/24 11:07:21 yasuoka Exp $	*/
+/*	$OpenBSD: test_fflush.c,v 1.2 2025/05/25 05:35:13 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2025 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -17,10 +17,12 @@
  */
 
 #include <assert.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 /* we use assert() */
 #undef	NDEBUG
@@ -34,6 +36,8 @@ void test_fflush_read1(void);
 void test_fflush_read2(void);
 void test_fflush_read3(void);
 void test_fflush_read4(void);
+void setupw(void);
+void test_fflush_read5(void);
 
 void
 setup(void)
@@ -212,14 +216,91 @@ test_fflush_read4(void)
 	assert(r == 0);
 }
 
+void
+setupw(void)
+{
+	FILE	*fp;
+
+	/* common setup */
+	unlink(TMPFILENAME);
+	fp = fopen(TMPFILENAME, "w+");
+	assert(fp != NULL);
+	/* Konnitiwa Sekai(in Kanji) */
+	fputws(L"\u3053\u3093\u306b\u3061\u308f \u4e16\u754c\n", fp);
+	fclose(fp);
+}
+
+/* fflush work with reading file and seekable + ungetwc */
+void
+test_fflush_read5(void)
+{
+	int	 r;
+	wchar_t	 buf[80];
+	FILE	*fp;
+
+	setupw();
+
+	fp = fopen(TMPFILENAME, "r");
+
+	assert(fp != NULL);
+	assert(fgetwc(fp) == L'\u3053');	/* Ko */
+	assert(fgetwc(fp) == L'\u3093');	/* N  */
+	assert(fgetwc(fp) == L'\u306b');	/* Ni */
+	assert(fgetwc(fp) == L'\u3061');	/* Ti */
+	assert(fgetwc(fp) == L'\u308f');	/* Wa */
+
+	/* push 263A(smile) back */
+	assert(ungetwc(L'\u263a', fp));
+
+	/* we support 1 push back wchar_t */
+	assert(fgetwc(fp) == L'\u263a');
+
+	/* can read reset of that */
+	fgetws(buf, sizeof(buf), fp);
+	assert(wcscmp(buf, L" \u4e16\u754c\n") == 0);
+
+	r = fclose(fp);
+	assert(r == 0);
+
+	/* do the same thing + fflush */
+	fp = fopen(TMPFILENAME, "r");
+
+	assert(fp != NULL);
+	assert(fgetwc(fp) == L'\u3053');	/* Ko */
+	assert(fgetwc(fp) == L'\u3093');	/* N  */
+	assert(fgetwc(fp) == L'\u306b');	/* Ni */
+	assert(fgetwc(fp) == L'\u3061');	/* Ti */
+	assert(fgetwc(fp) == L'\u308f');	/* Wa */
+
+	/* push 263A(smile) back */
+	assert(ungetwc(L'\u263a', fp));
+
+	/* we support 1 push back wchar_t */
+	assert(fgetwc(fp) == L'\u263a');
+
+	/* then fflush */
+	r = fflush(fp);
+	assert(r == 0);
+
+	/* fllush() clears the all pushed back chars */
+
+	/* can read rest of that */
+	fgetws(buf, sizeof(buf), fp);
+	assert(wcscmp(buf, L" \u4e16\u754c\n") == 0);
+	r = fclose(fp);
+	assert(r == 0);
+}
 int
 main(int argc, char *argv[])
 {
+	setlocale(LC_ALL, "C.UTF-8");
+
 	test_fflush_read0();
 	test_fflush_read1();
 	test_fflush_read2();
 	test_fflush_read3();
 	test_fflush_read4();
+	test_fflush_read5();
 
 	exit(0);
 }
