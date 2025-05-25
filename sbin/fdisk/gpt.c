@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.97 2025/05/24 09:45:13 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.98 2025/05/25 03:26:43 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -307,7 +307,7 @@ get_partition_table(void)
 }
 
 int
-GPT_recover_partition(char *line1, char *line2, char *line3)
+GPT_recover_partition(const char *line1, const char *line2, const char *line3)
 {
 	char			 type[37], guid[37], name[37], name2[37];
 	struct uuid		 type_uuid, guid_uuid;
