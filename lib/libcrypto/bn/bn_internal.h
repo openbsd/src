@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.15 2023/06/25 11:42:26 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.16 2025/05/25 04:30:55 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -25,6 +25,16 @@
 int bn_word_clz(BN_ULONG w);
 
 int bn_bitsize(const BIGNUM *bn);
+
+BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    int num);
+BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    int num);
+BN_ULONG bn_sub_words_borrow(const BN_ULONG *a, const BN_ULONG *b, size_t n);
+void bn_add_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    BN_ULONG mask, size_t n);
+void bn_sub_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    BN_ULONG mask, size_t n);
 
 #ifndef HAVE_BN_CT_NE_ZERO
 static inline int
