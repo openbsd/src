@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.35 2024/12/04 09:19:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.36 2025/05/25 01:52:00 gnezdo Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -112,12 +112,9 @@ boolean_t	amap_swap_off(int, int);
 
 /*
  * we currently provide an array-based amap implementation.  in this
- * implementation we provide the option of tracking split references
- * so that we don't lose track of references during partial unmaps
- * ... this is enabled with the "UVM_AMAP_PPREF" define.
+ * implementation we track split references so that we don't lose track of
+ * references during partial unmaps.
  */
-
-#define UVM_AMAP_PPREF		/* track partial references */
 
 /*
  * here is the definition of the vm_amap structure and helper structures for
@@ -138,9 +135,7 @@ struct vm_amap {
 	int am_flags;		/* flags */
 	int am_nslot;		/* # of slots currently in map */
 	int am_nused;		/* # of slots currently in use */
-#ifdef UVM_AMAP_PPREF
 	int *am_ppref;		/* per page reference count (if !NULL) */
-#endif
 	LIST_ENTRY(vm_amap) am_list;
 
 	union {
