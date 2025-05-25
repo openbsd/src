@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.7 2025/05/19 04:32:51 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.8 2025/05/25 06:27:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -52,6 +52,7 @@
 
 #include <openssl/aes.h>
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/modes.h>
 
 #include "crypto_arch.h"
@@ -201,6 +202,69 @@ aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
 		len -= AES_BLOCK_SIZE;
 	}
 }
+
+#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
+typedef struct {
+	unsigned long data[N_WORDS];
+} aes_block_t;
+
+void
+AES_ige_encrypt(const unsigned char *in, unsigned char *out, size_t length,
+    const AES_KEY *key, unsigned char *ivec, const int enc)
+{
+	aes_block_t tmp, tmp2;
+	aes_block_t iv;
+	aes_block_t iv2;
+	size_t n;
+	size_t len;
+
+	/* N.B. The IV for this mode is _twice_ the block size */
+
+	OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
+
+	len = length / AES_BLOCK_SIZE;
+
+	memcpy(iv.data, ivec, AES_BLOCK_SIZE);
+	memcpy(iv2.data, ivec + AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+
+	if (AES_ENCRYPT == enc) {
+		while (len) {
+			memcpy(tmp.data, in, AES_BLOCK_SIZE);
+			for (n = 0; n < N_WORDS; ++n)
+				tmp2.data[n] = tmp.data[n] ^ iv.data[n];
+			AES_encrypt((unsigned char *)tmp2.data,
+			    (unsigned char *)tmp2.data, key);
+			for (n = 0; n < N_WORDS; ++n)
+				tmp2.data[n] ^= iv2.data[n];
+			memcpy(out, tmp2.data, AES_BLOCK_SIZE);
+			iv = tmp2;
+			iv2 = tmp;
+			--len;
+			in += AES_BLOCK_SIZE;
+			out += AES_BLOCK_SIZE;
+		}
+	} else {
+		while (len) {
+			memcpy(tmp.data, in, AES_BLOCK_SIZE);
+			tmp2 = tmp;
+			for (n = 0; n < N_WORDS; ++n)
+				tmp.data[n] ^= iv2.data[n];
+			AES_decrypt((unsigned char *)tmp.data,
+			    (unsigned char *)tmp.data, key);
+			for (n = 0; n < N_WORDS; ++n)
+				tmp.data[n] ^= iv.data[n];
+			memcpy(out, tmp.data, AES_BLOCK_SIZE);
+			iv = tmp2;
+			iv2 = tmp;
+			--len;
+			in += AES_BLOCK_SIZE;
+			out += AES_BLOCK_SIZE;
+		}
+	}
+	memcpy(ivec, iv.data, AES_BLOCK_SIZE);
+	memcpy(ivec + AES_BLOCK_SIZE, iv2.data, AES_BLOCK_SIZE);
+}
+LCRYPTO_ALIAS(AES_ige_encrypt);
 
 void
 AES_ofb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,
