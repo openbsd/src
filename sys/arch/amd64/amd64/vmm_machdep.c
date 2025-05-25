@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.50 2025/05/25 03:22:56 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.51 2025/05/25 07:29:23 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4344,6 +4344,10 @@ svm_vmgexit_sync_host(struct vcpu *vcpu)
 
 	svm_sw_exitcode = ghcb->v_sw_exitcode;
 	switch (svm_sw_exitcode) {
+	case SVM_VMEXIT_CPUID:
+		ghcb_valbm_set(expected_bm, GHCB_RAX);
+		ghcb_valbm_set(expected_bm, GHCB_RCX);
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -4394,6 +4398,12 @@ svm_vmgexit_sync_guest(struct vcpu *vcpu)
 	valid_bm = ghcb->valid_bitmap;
 
 	switch (svm_sw_exitcode) {
+	case SVM_VMEXIT_CPUID:
+		ghcb_valbm_set(valid_bm, GHCB_RAX);
+		ghcb_valbm_set(valid_bm, GHCB_RBX);
+		ghcb_valbm_set(valid_bm, GHCB_RCX);
+		ghcb_valbm_set(valid_bm, GHCB_RDX);
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -4453,6 +4463,12 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 	/* Handle GHCB protocol */
 	syncout = 0;
 	switch (vmcb->v_exitcode) {
+	case SVM_VMEXIT_CPUID:
+		error = vmm_handle_cpuid(vcpu);
+		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
+		vcpu->vc_gueststate.vg_rax = vmcb->v_rax;
+		syncout = 1;
+		break;
 	default:
 		DPRINTF("%s: unknown exit 0x%llx\n", __func__,
 		    vmcb->v_exitcode);
