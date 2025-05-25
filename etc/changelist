@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.142 2025/05/24 12:23:16 kn Exp $
+#	$OpenBSD: changelist,v 1.143 2025/05/25 02:31:14 tb Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -73,7 +73,6 @@
 /etc/login_ldap.conf
 /etc/mail.rc
 /etc/mail/aliases
-+/etc/mail/secrets
 /etc/mail/smtpd.conf
 /etc/mail/spamd.conf
 /etc/mailer.conf
