@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.123 2025/05/23 05:48:13 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.124 2025/05/25 06:25:45 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2025 $
+.Dd $Mdocdate: May 25 2025 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -157,6 +157,9 @@ optional.
 For example:
 .Pp
 .Dl 0: EFI Sys [64:66560] 0x0 EFI System Area
+.Pp
+If <start> is 0 it is set to the first usable LBA of the largest
+chunk of free space.
 .Pp
 If
 .Ar file

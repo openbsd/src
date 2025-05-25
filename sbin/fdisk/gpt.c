@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.98 2025/05/25 03:26:43 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.99 2025/05/25 06:25:45 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -383,6 +383,13 @@ GPT_recover_partition(const char *line1, const char *line2, const char *line3)
 		uuid_create(&guid_uuid, &status);
 		if (status != uuid_s_ok)
 			return -1;
+	}
+
+	if (start == 0) {
+		if (lba_free(&start, NULL) == -1)
+			return -1;
+		if (start % BLOCKALIGNMENT)
+			start += (BLOCKALIGNMENT - start % BLOCKALIGNMENT);
 	}
 
 	end = start + size - 1;
