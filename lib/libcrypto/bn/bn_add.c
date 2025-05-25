@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.27 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bn_add.c,v 1.28 2025/05/25 04:16:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,7 +207,7 @@ bn_sub(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len, const BN_ULONG *b,
 	/* XXX - consider doing four at a time to match bn_sub_words. */
 	while (diff_len < 0) {
 		/* Compute r[0] = 0 - b[0] - borrow. */
-		bn_subw(0 - b[0], borrow, &borrow, &r[0]);
+		bn_subw_subw(0, b[0], borrow, &borrow, &r[0]);
 		diff_len++;
 		b++;
 		r++;
@@ -216,7 +216,7 @@ bn_sub(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len, const BN_ULONG *b,
 	/* XXX - consider doing four at a time to match bn_sub_words. */
 	while (diff_len > 0) {
 		/* Compute r[0] = a[0] - 0 - borrow. */
-		bn_subw(a[0], borrow, &borrow, &r[0]);
+		bn_subw_subw(a[0], 0, borrow, &borrow, &r[0]);
 		diff_len--;
 		a++;
 		r++;
