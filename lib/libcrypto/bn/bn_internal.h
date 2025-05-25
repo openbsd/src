@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.17 2025/05/25 04:53:05 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.18 2025/05/25 04:58:32 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -35,6 +35,16 @@ BN_ULONG bn_add_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     BN_ULONG mask, size_t n);
 BN_ULONG bn_sub_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     BN_ULONG mask, size_t n);
+void bn_mod_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    const BN_ULONG *m, size_t n);
+void bn_mod_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    const BN_ULONG *m, size_t n);
+void bn_mod_mul_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    const BN_ULONG *m, BN_ULONG *t, BN_ULONG m0, size_t n);
+
+void bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap,
+    const BN_ULONG *bp, const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0,
+    int n_len);
 
 #ifndef HAVE_BN_CT_NE_ZERO
 static inline int

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.66 2025/03/09 15:22:40 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.67 2025/05/25 04:58:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -417,7 +417,7 @@ bn_mod_mul_montgomery_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	return ret;
 }
 
-static void
+static inline void
 bn_montgomery_multiply_word(const BN_ULONG *ap, BN_ULONG b, const BN_ULONG *np,
     BN_ULONG *tp, BN_ULONG w, BN_ULONG *carry_a, BN_ULONG *carry_n, int n_len)
 {
@@ -452,7 +452,7 @@ bn_montgomery_multiply_word(const BN_ULONG *ap, BN_ULONG b, const BN_ULONG *np,
  * given word arrays. The caller must ensure that rp, ap, bp and np are all
  * n_len words in length, while tp must be n_len * 2 + 2 words in length.
  */
-static void
+void
 bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0, int n_len)
 {
