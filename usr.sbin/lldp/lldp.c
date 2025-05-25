@@ -1,4 +1,4 @@
-/* $OpenBSD: lldp.c,v 1.10 2025/05/07 06:40:18 dlg Exp $ */
+/* $OpenBSD: lldp.c,v 1.11 2025/05/25 08:57:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -976,10 +976,35 @@ lldp_u16_to_scratch(const void *bytes, size_t len, int flags)
 	fprintf(scratch, "%u", u16);
 }
 
+static void
+lldp_cisco_upoe(const void *bytes, size_t len, int flags)
+{
+	const uint8_t *buf = bytes;
+	uint8_t upoe;
+
+	if (len < sizeof(upoe)) {
+		fprintf(scratch, "too short (%zu bytes)", len);
+		return;
+	}
+
+	upoe = buf[0];
+	fprintf(scratch, "Supported: %s",
+	    (upoe & (1 << 0)) ? "yes" : "no");
+	fprintf(scratch, ", ALT-B Detection required: %s",
+	    (upoe & (1 << 1)) ? "yes" : "no");
+	fprintf(scratch, ", PD Request Spare Pair POE: %s",
+	    (upoe & (1 << 2)) ? "desired" : "not desired");
+	fprintf(scratch, ", PSE Spare Pair POE: %s",
+	    (upoe & (1 << 3)) ? "enabled" : "disabled");
+
+}
+
 #define OUI(_a, _b, _c) ((_a) << 24 | (_b) << 16 | (_c) << 8)
 
 #define OUI_802_1	OUI(0x00, 0x80, 0xc2)
 #define OUI_802_3	OUI(0x00, 0x12, 0x0f)
+#define OUI_DCBX	OUI(0x00, 0x01, 0x42)
+#define OUI_CISCO	OUI(0x00, 0x01, 0x42)
 #define OUI_DELL	OUI(0xf8, 0xb1, 0x56)
 
 static const struct lldp_tlv lldp_org_tlvs[] = {
@@ -1007,6 +1032,13 @@ static const struct lldp_tlv lldp_org_tlvs[] = {
 		.type		= OUI_802_3 | 4,
 		.name		= "802.3 Max Frame Size",
 		.toscratch	= lldp_u16_to_scratch,
+	},
+
+	/* Cisco */
+	{
+		.type		= OUI_CISCO | 1,
+		.name		= "Cisco UPOE",
+		.toscratch	= lldp_cisco_upoe,
 	},
 
 	/* Dell */
