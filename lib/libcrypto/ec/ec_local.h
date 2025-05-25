@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.68 2025/05/24 08:25:58 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.69 2025/05/25 05:19:26 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -76,6 +76,7 @@
 #include <openssl/objects.h>
 
 #include "bn_local.h"
+#include "ec_internal.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -158,6 +159,10 @@ struct ec_group_st {
 
 	/* Montgomery context used by EC_GFp_mont_method. */
 	BN_MONT_CTX *mont_ctx;
+
+	EC_FIELD_MODULUS fm;
+	EC_FIELD_ELEMENT fe_a;
+	EC_FIELD_ELEMENT fe_b;
 } /* EC_GROUP */;
 
 struct ec_point_st {
@@ -171,6 +176,10 @@ struct ec_point_st {
 	BIGNUM *Y;
 	BIGNUM *Z;
 	int Z_is_one; /* enable optimized point arithmetics for special case */
+
+	EC_FIELD_ELEMENT fe_x;
+	EC_FIELD_ELEMENT fe_y;
+	EC_FIELD_ELEMENT fe_z;
 } /* EC_POINT */;
 
 const EC_METHOD *EC_GFp_simple_method(void);
