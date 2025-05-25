@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.16 2025/05/25 04:30:55 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.17 2025/05/25 04:53:05 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -31,9 +31,9 @@ BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
 BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     int num);
 BN_ULONG bn_sub_words_borrow(const BN_ULONG *a, const BN_ULONG *b, size_t n);
-void bn_add_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+BN_ULONG bn_add_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     BN_ULONG mask, size_t n);
-void bn_sub_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+BN_ULONG bn_sub_words_masked(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     BN_ULONG mask, size_t n);
 
 #ifndef HAVE_BN_CT_NE_ZERO
