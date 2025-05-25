@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.49 2025/05/20 13:51:27 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.50 2025/05/25 03:22:56 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -38,6 +38,7 @@
 #include <machine/segments.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/ghcb.h>
 #include <machine/vmmvar.h>
 
 #include <dev/isa/isareg.h>
@@ -97,6 +98,9 @@ int vmx_get_exit_info(uint64_t *, uint64_t *);
 int vmx_load_pdptes(struct vcpu *);
 int vmx_handle_exit(struct vcpu *);
 int svm_handle_exit(struct vcpu *);
+int svm_vmgexit_sync_host(struct vcpu *);
+int svm_vmgexit_sync_guest(struct vcpu *);
+int svm_handle_vmgexit(struct vcpu *);
 int svm_handle_efercr(struct vcpu *, uint64_t);
 int svm_get_iflag(struct vcpu *, uint64_t);
 int svm_handle_msr(struct vcpu *);
@@ -4282,6 +4286,9 @@ svm_handle_exit(struct vcpu *vcpu)
 		ret = svm_handle_efercr(vcpu, exit_reason);
 		update_rip = 0;
 		break;
+	case SVM_VMEXIT_VMGEXIT:
+		ret = svm_handle_vmgexit(vcpu);
+		break;
 	default:
 		DPRINTF("%s: unhandled exit 0x%llx (pa=0x%llx)\n", __func__,
 		    exit_reason, (uint64_t)vcpu->vc_control_pa);
@@ -4305,6 +4312,158 @@ svm_handle_exit(struct vcpu *vcpu)
 	svm_set_dirty(vcpu, SVM_CLEANBITS_CR);
 
 	return (ret);
+}
+
+/*
+ * sync guest ghcb -> host vmcb/vcpu
+ */
+int
+svm_vmgexit_sync_host(struct vcpu *vcpu)
+{
+	struct vmcb		*vmcb = (struct vmcb *)vcpu->vc_control_va;
+	struct ghcb_sa		*ghcb;
+	uint64_t		 svm_sw_exitcode;
+	uint8_t			*valid_bm, expected_bm[0x10];
+
+	if (!vcpu->vc_seves)
+		return (0);
+
+	if (vcpu->vc_svm_ghcb_va == 0)
+		return (0);
+
+	ghcb = (struct ghcb_sa *)vcpu->vc_svm_ghcb_va;
+	if (!ghcb_valid(ghcb))
+		return (EINVAL);
+	valid_bm = ghcb->valid_bitmap;
+
+	/* Always required. */
+	memset(expected_bm, 0, sizeof(expected_bm));
+	ghcb_valbm_set(expected_bm, GHCB_SW_EXITCODE);
+	ghcb_valbm_set(expected_bm, GHCB_SW_EXITINFO1);
+	ghcb_valbm_set(expected_bm, GHCB_SW_EXITINFO2);
+
+	svm_sw_exitcode = ghcb->v_sw_exitcode;
+	switch (svm_sw_exitcode) {
+	default:
+		return (EINVAL);
+	}
+
+	if (ghcb_verify_bm(valid_bm, expected_bm) != 0)
+		return (EINVAL);
+
+	/* Always required */
+	vmcb->v_exitcode = vcpu->vc_gueststate.vg_exit_reason =
+	    ghcb->v_sw_exitcode;
+	vmcb->v_exitinfo1 = ghcb->v_sw_exitinfo1;
+	vmcb->v_exitinfo2 = ghcb->v_sw_exitinfo2;
+
+	if (ghcb_valbm_isset(expected_bm, GHCB_RAX))
+		vmcb->v_rax = vcpu->vc_gueststate.vg_rax = ghcb->v_rax;
+	if (ghcb_valbm_isset(expected_bm, GHCB_RBX))
+		vcpu->vc_gueststate.vg_rbx = ghcb->v_rbx;
+	if (ghcb_valbm_isset(expected_bm, GHCB_RCX))
+		vcpu->vc_gueststate.vg_rcx = ghcb->v_rcx;
+	if (ghcb_valbm_isset(expected_bm, GHCB_RDX))
+		vcpu->vc_gueststate.vg_rdx = ghcb->v_rdx;
+
+	return (0);
+}
+
+/*
+ * sync host vmcb/vcpu -> guest ghcb
+ */
+int
+svm_vmgexit_sync_guest(struct vcpu *vcpu)
+{
+	uint64_t		 svm_sw_exitcode;
+	uint64_t		 svm_sw_exitinfo1, svm_sw_exitinfo2;
+	uint8_t			*valid_bm;
+	struct ghcb_sa		*ghcb;
+
+	if (!vcpu->vc_seves)
+		return (0);
+
+	if (vcpu->vc_svm_ghcb_va == 0)
+		return (0);
+
+	ghcb = (struct ghcb_sa *)vcpu->vc_svm_ghcb_va;
+	svm_sw_exitcode = ghcb->v_sw_exitcode;
+	svm_sw_exitinfo1 = ghcb->v_sw_exitinfo1;
+	svm_sw_exitinfo2 = ghcb->v_sw_exitinfo2;
+	ghcb_clear(ghcb);
+	valid_bm = ghcb->valid_bitmap;
+
+	switch (svm_sw_exitcode) {
+	default:
+		return (EINVAL);
+	}
+
+	/* Always required */
+	svm_sw_exitinfo1 = 0;
+	svm_sw_exitinfo2 = 0;
+	ghcb_valbm_set(valid_bm, GHCB_SW_EXITINFO1);
+	ghcb_valbm_set(valid_bm, GHCB_SW_EXITINFO2);
+
+	if (ghcb_valbm_isset(valid_bm, GHCB_RAX))
+		ghcb->v_rax = vcpu->vc_gueststate.vg_rax;
+	if (ghcb_valbm_isset(valid_bm, GHCB_RBX))
+		ghcb->v_rbx = vcpu->vc_gueststate.vg_rbx;
+	if (ghcb_valbm_isset(valid_bm, GHCB_RCX))
+		ghcb->v_rcx = vcpu->vc_gueststate.vg_rcx;
+	if (ghcb_valbm_isset(valid_bm, GHCB_RDX))
+		ghcb->v_rdx = vcpu->vc_gueststate.vg_rdx;
+
+	if (ghcb_valbm_isset(valid_bm, GHCB_SW_EXITINFO1))
+		ghcb->v_sw_exitinfo1 = svm_sw_exitinfo1;
+	if (ghcb_valbm_isset(valid_bm, GHCB_SW_EXITINFO2))
+		ghcb->v_sw_exitinfo2 = svm_sw_exitinfo2;
+
+	return (0);
+}
+
+/*
+ * svm_handle_vmgexit
+ *
+ * Handle exits initiated by the guest due to #VC exceptions generated
+ * when SEV-ES is enabled.
+ */
+int
+svm_handle_vmgexit(struct vcpu *vcpu)
+{
+	struct vmcb		*vmcb = (struct vmcb *)vcpu->vc_control_va;
+	struct vm		*vm = vcpu->vc_parent;
+	struct ghcb_sa		*ghcb;
+	paddr_t			 ghcb_gpa, ghcb_hpa;
+	int			 syncout, error = 0;
+
+	if (vcpu->vc_svm_ghcb_va == 0) {
+		ghcb_gpa = vmcb->v_ghcb_gpa & PG_FRAME;
+		if (!pmap_extract(vm->vm_pmap, ghcb_gpa, &ghcb_hpa))
+			return (EINVAL);
+		vcpu->vc_svm_ghcb_va = (vaddr_t)PMAP_DIRECT_MAP(ghcb_hpa);
+	}
+
+	/* Verify GHCB and synchronize guest state information. */
+	ghcb = (struct ghcb_sa *)vcpu->vc_svm_ghcb_va;
+	if (svm_vmgexit_sync_host(vcpu)) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Handle GHCB protocol */
+	syncout = 0;
+	switch (vmcb->v_exitcode) {
+	default:
+		DPRINTF("%s: unknown exit 0x%llx\n", __func__,
+		    vmcb->v_exitcode);
+		error = EINVAL;
+	}
+
+	if (syncout)
+		error = svm_vmgexit_sync_guest(vcpu);
+
+out:
+	return (error);
 }
 
 /*
