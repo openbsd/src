@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.99 2025/05/25 06:25:45 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.100 2025/05/25 10:16:22 lucas Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -513,7 +513,7 @@ GPT_print(const char *units, const int verbosity)
 #endif	/* DEBUG */
 
 	size = units_size(units, DL_GETDSIZE(&dl), &ut);
-	printf("Disk: %s       Usable LBA: %llu to %llu [%.0f ",
+	printf("Disk: %s\tUsable LBA: %llu to %llu [%.0f ",
 	    disk.dk_name, gh.gh_lba_start, gh.gh_lba_end, size);
 	if (ut->ut_conversion == 0 && secsize != DEV_BSIZE)
 		printf("%d-byte ", secsize);

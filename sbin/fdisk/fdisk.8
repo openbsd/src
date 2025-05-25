@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.124 2025/05/25 06:25:45 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.125 2025/05/25 10:16:22 lucas Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -207,7 +207,7 @@ If
 has a GPT a terse version of its contents is printed:
 .Bd -literal -offset 1n
 # fdisk sd0
-Disk: sd0       Usable LBA: 64 to 500118128 [500118192 Sectors]
+Disk: sd0	Usable LBA: 64 to 500118128 [500118192 Sectors]
    #: type                                 [       start:         size ]
 ------------------------------------------------------------------------
    1: EFI Sys                              [          64:          960 ]
@@ -221,8 +221,8 @@ does not have a GPT, the first block of
 is printed as an MBR:
 .Bd -literal -offset 1n
 # fdisk sd0
-Disk: sd0      geometry: 121601/255/63 [1953525168 Sectors]
-Offset: 0      Signature: 0xAA55
+Disk: sd0	geometry: 121601/255/63 [1953525168 Sectors]
+Offset: 0	Signature: 0xAA55
            Starting       Ending      LBA Info:
  #: id     C  H  S -      C   H  S [     start:       size ]
 ------------------------------------------------------------------------
@@ -249,7 +249,7 @@ option causes more information to be printed:
 .Bd -literal -offset 1n
 # fdisk -v sd0
 Primary GPT:
-Disk: sd0       Usable LBA: 64 to 500118128 [500118192 Sectors]
+Disk: sd0	Usable LBA: 64 to 500118128 [500118192 Sectors]
 GUID: f0418899-4976-4604-a783-3ebe135a8f12
    #: type                                 [       start:         size ]
       guid                                 name
@@ -260,7 +260,7 @@ GUID: f0418899-4976-4604-a783-3ebe135a8f12
       cd356d77-8369-44b4-996e-79e8b9a47bfe OpenBSD Area
 
 Secondary GPT:
-Disk: sd0       Usable LBA: 64 to 500118128 [500118192 Sectors]
+Disk: sd0	Usable LBA: 64 to 500118128 [500118192 Sectors]
 GUID: f0418899-4976-4604-a783-3ebe135a8f12
    #: type                                 [       start:         size ]
       guid                                 name
@@ -271,8 +271,8 @@ GUID: f0418899-4976-4604-a783-3ebe135a8f12
       cd356d77-8369-44b4-996e-79e8b9a47bfe OpenBSD Area
 
 MBR:
-Disk: sd0       geometry: 31130/255/63 [500118192 Sectors]
-Offset: 0       Signature: 0xAA55
+Disk: sd0	geometry: 31130/255/63 [500118192 Sectors]
+Offset: 0	Signature: 0xAA55
             Starting         Ending         LBA Info:
  #: id      C   H   S -      C   H   S [       start:        size ]
 -------------------------------------------------------------------------------
