@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.44 2025/05/24 09:25:38 joshua Exp $ */
+/* $OpenBSD: speed.c,v 1.45 2025/05/25 04:54:41 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,9 +142,6 @@
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-#include <openssl/whrlpool.h>
-#endif
 
 #define BUFSIZE	(1024*8+64)
 volatile sig_atomic_t run;
@@ -160,7 +157,7 @@ pkey_print_message(const char *str, const char *str2,
 static void print_result(int alg, int run_no, int count, double time_used);
 static int do_multi(int multi);
 
-#define ALGOR_NUM	32
+#define ALGOR_NUM	31
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -174,7 +171,7 @@ static const char *names[ALGOR_NUM] = {
 	"rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
 	"aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
 	"camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
-	"evp", "sha256", "sha512", "whirlpool",
+	"evp", "sha256", "sha512",
 	"aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
 	"aes-128 gcm", "aes-256 gcm", "chacha20 poly1305",
 };
@@ -1014,14 +1011,13 @@ speed_main(int argc, char **argv)
 #define D_EVP		21
 #define D_SHA256	22
 #define D_SHA512	23
-#define D_WHIRLPOOL	24
-#define D_IGE_128_AES   25
-#define D_IGE_192_AES   26
-#define D_IGE_256_AES   27
-#define D_GHASH		28
-#define D_AES_128_GCM	29
-#define D_AES_256_GCM	30
-#define D_CHACHA20_POLY1305	31
+#define D_IGE_128_AES   24
+#define D_IGE_192_AES   25
+#define D_IGE_256_AES   26
+#define D_GHASH		27
+#define D_AES_128_GCM	28
+#define D_AES_256_GCM	29
+#define D_CHACHA20_POLY1305	30
 	double d = 0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
@@ -1240,11 +1236,6 @@ speed_main(int argc, char **argv)
 		else
 #endif
 #endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-		if (strcmp(*argv, "whirlpool") == 0)
-			doit[D_WHIRLPOOL] = 1;
-		else
-#endif
 #ifndef OPENSSL_NO_RIPEMD
 		if (strcmp(*argv, "ripemd") == 0)
 			doit[D_RMD160] = 1;
@@ -1427,16 +1418,12 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SHA512
 			BIO_printf(bio_err, "sha512   ");
 #endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-			BIO_printf(bio_err, "whirlpool");
-#endif
 #ifndef OPENSSL_NO_RIPEMD160
 			BIO_printf(bio_err, "rmd160");
 #endif
 #if !defined(OPENSSL_NO_MD2) || \
     !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
-    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160) || \
-    !defined(OPENSSL_NO_WHIRLPOOL)
+    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160)
 			BIO_printf(bio_err, "\n");
 #endif
 
@@ -1692,19 +1679,6 @@ speed_main(int argc, char **argv)
 		}
 	}
 #endif
-#endif
-
-#ifndef OPENSSL_NO_WHIRLPOOL
-	if (doit[D_WHIRLPOOL]) {
-		for (j = 0; j < SIZE_NUM; j++) {
-			print_message(names[D_WHIRLPOOL], c[D_WHIRLPOOL][j], lengths[j]);
-			Time_F(START);
-			for (count = 0, run = 1; COND(c[D_WHIRLPOOL][j]); count++)
-				WHIRLPOOL(buf, lengths[j], md);
-			d = Time_F(STOP);
-			print_result(D_WHIRLPOOL, j, count, d);
-		}
-	}
 #endif
 
 #ifndef OPENSSL_NO_RIPEMD

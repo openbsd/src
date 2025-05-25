@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.39 2025/01/02 13:10:03 tb Exp $ */
+/* $OpenBSD: openssl.c,v 1.40 2025/05/25 04:54:41 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,9 +234,6 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_SM3
 	{ FUNC_TYPE_MD, "sm3", dgst_main },
 	{ FUNC_TYPE_MD, "sm3WithRSAEncryption", dgst_main },
-#endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-	{ FUNC_TYPE_MD, "whirlpool", dgst_main },
 #endif
 
 	/* Ciphers. */
