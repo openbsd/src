@@ -1,7 +1,10 @@
-# $OpenBSD: Makefile,v 1.2 2025/05/25 00:20:54 yasuoka Exp $
+# $OpenBSD: Makefile,v 1.3 2025/05/25 05:32:45 yasuoka Exp $
 
 PROGS=		test_fflush
 CLEANFILES=	test_fflush.tmp
+
+PROGS+=		test_ungetwc
+CLEANFILES+=	test_ungetwc.tmp
 
 PROGS+=		test___freading
 CLEANFILES+=	test___freading.tmp
