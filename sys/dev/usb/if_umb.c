@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.59 2024/08/08 05:10:00 deraadt Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.60 2025/05/26 14:59:17 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1838,7 +1838,8 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 	sin = &ifra.ifra_mask;
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof (*sin);
-	in_len2mask(&sin->sin_addr, prefixlen);
+	in_len2mask(&sin->sin_addr,
+	    MIN(prefixlen, sizeof (struct in_addr) * 8));
 
 	rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
 	if (rv != 0) {
