@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.24 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.25 2025/05/26 12:58:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -944,7 +944,7 @@ EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
 LCRYPTO_ALIAS(EVP_CIPHER_CTX_flags);
 
 /*
- * Used by CMS and its predecessors. Only GOST and RC2 have a custom method.
+ * Used by CMS and its predecessors. Only RC2 has a custom method.
  */
 
 int
