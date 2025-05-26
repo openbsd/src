@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.396 2025/05/22 06:34:03 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.397 2025/05/26 20:55:30 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2784,9 +2784,10 @@ main(int argc, char *argv[])
 		atexit(pfctl_restore_limits);
 	} else {
 		dev = open(pf_device, O_RDONLY);
-		if (dev >= 0)
+		if (dev >= 0) {
 			opts |= PF_OPT_DUMMYACTION;
-		pfctl_read_limits(dev);
+			pfctl_read_limits(dev);
+		}
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
 		clearopt = showopt = debugopt = NULL;
