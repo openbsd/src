@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2099 2025/03/07 15:06:58 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.2100 2025/05/26 03:37:34 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6916,8 +6916,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MI300X",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI48,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI48_1,
 	    "Navi 48",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI48_2,
+	    "Navi 48",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_NAVI44,
+	    "Navi 44",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9000IGP,
