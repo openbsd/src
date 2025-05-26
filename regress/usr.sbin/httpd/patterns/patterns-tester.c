@@ -1,4 +1,4 @@
-/* $OpenBSD: patterns-tester.c,v 1.1 2015/06/23 18:03:09 semarie Exp $ */
+/* $OpenBSD: patterns-tester.c,v 1.2 2025/05/26 06:18:49 anton Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -21,8 +21,6 @@
 #include <string.h>
 
 #include "patterns.h"
-
-extern char *	malloc_options;
 
 static void read_string(char *, size_t);
 static void read_string_stop(void);
@@ -61,9 +59,6 @@ main(int argc, char *argv[])
 	const char *errstr = NULL;
 	int ret;
 	size_t i;
-
-	/* configure malloc */
-	malloc_options = "S";
 
 	/* read testcase */
 	if (argc != 3) {
