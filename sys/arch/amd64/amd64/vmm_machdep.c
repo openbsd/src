@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.52 2025/05/26 12:27:32 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.53 2025/05/27 08:13:42 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4348,6 +4348,14 @@ svm_vmgexit_sync_host(struct vcpu *vcpu)
 		ghcb_valbm_set(expected_bm, GHCB_RAX);
 		ghcb_valbm_set(expected_bm, GHCB_RCX);
 		break;
+	case SVM_VMEXIT_IOIO:
+		if (ghcb->v_sw_exitinfo1 & 0x1) {
+			/* IN instruction, no registers used */
+		} else {
+			/* OUT instruction */
+			ghcb_valbm_set(expected_bm, GHCB_RAX);
+		}
+		break;
 	case SVM_VMEXIT_MSR:
 		if (ghcb->v_sw_exitinfo1 == 1) {
 			/* WRMSR */
@@ -4415,9 +4423,17 @@ svm_vmgexit_sync_guest(struct vcpu *vcpu)
 		ghcb_valbm_set(valid_bm, GHCB_RCX);
 		ghcb_valbm_set(valid_bm, GHCB_RDX);
 		break;
+	case SVM_VMEXIT_IOIO:
+		if (svm_sw_exitinfo1 & 0x1) {
+			/* IN instruction */
+			ghcb_valbm_set(valid_bm, GHCB_RAX);
+		} else {
+			/* OUT instruction, nothing to return */
+		}
+		break;
 	case SVM_VMEXIT_MSR:
 		if (svm_sw_exitinfo1 == 1) {
-			/* WRMSR -- nothing to return */
+			/* WRMSR, nothing to return */
 		} else {
 			/* RDMSR */
 			ghcb_valbm_set(valid_bm, GHCB_RAX);
@@ -4488,6 +4504,10 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
 		vcpu->vc_gueststate.vg_rax = vmcb->v_rax;
 		syncout = 1;
+		break;
+	case SVM_VMEXIT_IOIO:
+		if (svm_handle_inout(vcpu) == 0)
+			error = EAGAIN;
 		break;
 	case SVM_VMEXIT_MSR:
 		error = svm_handle_msr(vcpu);
@@ -6515,6 +6535,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		vcpu->vc_gueststate.vg_rip =
 		    vcpu->vc_exit.vrs.vrs_gprs[VCPU_REGS_RIP];
 		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
+		if (svm_vmgexit_sync_guest(vcpu))
+			return (EINVAL);
 		break;
 	case SVM_VMEXIT_NPF:
 		ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_GPRS,
