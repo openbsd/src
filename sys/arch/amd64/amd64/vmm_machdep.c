@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.53 2025/05/27 08:13:42 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.54 2025/05/27 13:27:20 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1036,9 +1036,9 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 		gprs[VCPU_REGS_RIP] = vcpu->vc_gueststate.vg_rip;
 		if (vmread(VMCS_GUEST_IA32_RSP, &gprs[VCPU_REGS_RSP]))
 			goto errout;
-                if (vmread(VMCS_GUEST_IA32_RFLAGS, &gprs[VCPU_REGS_RFLAGS]))
+		if (vmread(VMCS_GUEST_IA32_RFLAGS, &gprs[VCPU_REGS_RFLAGS]))
 			goto errout;
-        }
+	}
 
 	if (regmask & VM_RWREGS_SREGS) {
 		for (i = 0; i < nitems(vmm_vmx_sreg_vmcs_fields); i++) {
@@ -1318,7 +1318,7 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 			goto errout;
 		if (vmwrite(VMCS_GUEST_IA32_RSP, gprs[VCPU_REGS_RSP]))
 			goto errout;
-                if (vmwrite(VMCS_GUEST_IA32_RFLAGS, gprs[VCPU_REGS_RFLAGS]))
+		if (vmwrite(VMCS_GUEST_IA32_RFLAGS, gprs[VCPU_REGS_RFLAGS]))
 			goto errout;
 	}
 
@@ -1655,9 +1655,9 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* PAT */
 	vmcb->v_g_pat = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
-            PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
-            PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WC) |
-            PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
+	    PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
+	    PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WC) |
+	    PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
 
 	/* NPT */
 	vmcb->v_np_enable = SVM_ENABLE_NP;
@@ -3221,7 +3221,7 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
 				 *
 				 * 2.c.iii - "If the relevant VMX capability
 				 * MSR reports that a control can be set to 0
-			 	 * or 1 and the control is not in the default1
+				 * or 1 and the control is not in the default1
 				 * class, set the control to 0."
 				 *
 				 * 2.c.iv - "If the relevant VMX capability
@@ -3966,7 +3966,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				    "exit\n", __func__);
 				ret = EINVAL;
 				break;
-                        }
+			}
 
 			/*
 			 * Handle the exit. This will alter "ret" to EAGAIN if
@@ -6273,7 +6273,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = 0;
 		*rdx = 0;
 		break;
-	case 0x04: 	/* Deterministic cache info */
+	case 0x04:	/* Deterministic cache info */
 		*rax = eax & VMM_CPUID4_CACHE_TOPOLOGY_MASK;
 		*rbx = ebx;
 		*rcx = ecx;
@@ -6409,7 +6409,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = 0;
 		*rdx = 0;
 		break;
-	case 0x80000001: 	/* Extended function info */
+	case 0x80000001:	/* Extended function info */
 		*rax = curcpu()->ci_efeature_eax;
 		*rbx = 0;	/* Reserved */
 		*rcx = curcpu()->ci_efeature_ecx & VMM_ECPUIDECX_MASK;
@@ -6483,7 +6483,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		/*
 		 * update %rax. the rest of the registers get updated in
 		 * svm_enter_guest
-	 	 */
+		 */
 		vmcb->v_rax = *rax;
 	}
 
@@ -6851,13 +6851,13 @@ vmm_free_vpid(uint16_t vpid)
  * Check if the given gpa is within guest memory space.
  *
  * Parameters:
- * 	vcpu: The virtual cpu we are running on.
- * 	gpa: The address to check.
- * 	obj_size: The size of the object assigned to gpa
+ *	vcpu: The virtual cpu we are running on.
+ *	gpa: The address to check.
+ *	obj_size: The size of the object assigned to gpa
  *
  * Return values:
- * 	1: gpa is within the memory ranges allocated for the vcpu
- * 	0: otherwise
+ *	1: gpa is within the memory ranges allocated for the vcpu
+ *	0: otherwise
  */
 int
 vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size)
@@ -6882,7 +6882,7 @@ vmm_init_pvclock(struct vcpu *vcpu, paddr_t gpa)
 {
 	paddr_t pvclock_gpa = gpa & 0xFFFFFFFFFFFFFFF0;
 	if (!vmm_gpa_is_valid(vcpu, pvclock_gpa,
-	        sizeof(struct pvclock_time_info))) {
+		sizeof(struct pvclock_time_info))) {
 		/* XXX: Kill guest? */
 		vmm_inject_gp(vcpu);
 		return;
@@ -7069,7 +7069,7 @@ svm_exit_reason_decode(uint32_t code)
 	case SVM_VMEXIT_CR13_WRITE: return "CR13 write";	/* 0x1D */
 	case SVM_VMEXIT_CR14_WRITE: return "CR14 write";	/* 0x1E */
 	case SVM_VMEXIT_CR15_WRITE: return "CR15 write";	/* 0x1F */
-	case SVM_VMEXIT_DR0_READ: return "DR0 read";	 	/* 0x20 */
+	case SVM_VMEXIT_DR0_READ: return "DR0 read";		/* 0x20 */
 	case SVM_VMEXIT_DR1_READ: return "DR1 read";		/* 0x21 */
 	case SVM_VMEXIT_DR2_READ: return "DR2 read";		/* 0x22 */
 	case SVM_VMEXIT_DR3_READ: return "DR3 read";		/* 0x23 */
