@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.105 2025/05/16 13:40:30 mpi Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.106 2025/05/27 14:55:58 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -147,12 +147,10 @@ sched_idle(void *v)
 	 * just go away for a while.
 	 */
 	SCHED_LOCK();
-	cpuset_add(&sched_idle_cpus, ci);
 	p->p_stat = SSLEEP;
 	p->p_cpu = ci;
 	atomic_setbits_int(&p->p_flag, P_CPUPEG);
 	mi_switch();
-	cpuset_del(&sched_idle_cpus, ci);
 	SCHED_UNLOCK();
 
 	KASSERT(ci == curcpu());
