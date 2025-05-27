@@ -1,4 +1,4 @@
-/* $OpenBSD: e_xcbc_d.c,v 1.18 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: e_xcbc_d.c,v 1.19 2025/05/27 03:58:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,13 +88,13 @@ static const EVP_CIPHER d_xcbc_cipher = {
 	.block_size = 8,
 	.key_len = 24,
 	.iv_len = 8,
-	.flags = EVP_CIPH_CBC_MODE,
+	.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = desx_cbc_init_key,
 	.do_cipher = desx_cbc_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DESX_CBC_KEY),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
 };
 

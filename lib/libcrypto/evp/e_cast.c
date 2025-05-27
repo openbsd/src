@@ -1,4 +1,4 @@
-/* $OpenBSD: e_cast.c,v 1.18 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: e_cast.c,v 1.19 2025/05/27 03:58:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,13 +162,14 @@ static const EVP_CIPHER cast5_cbc = {
 	.block_size = 8,
 	.key_len = CAST_KEY_LENGTH,
 	.iv_len = 8,
-	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CBC_MODE,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CBC_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = cast_init_key,
 	.do_cipher = cast5_cbc_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_CAST_KEY),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
 };
 
@@ -184,13 +185,14 @@ static const EVP_CIPHER cast5_cfb64 = {
 	.block_size = 1,
 	.key_len = CAST_KEY_LENGTH,
 	.iv_len = 8,
-	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CFB_MODE,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CFB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = cast_init_key,
 	.do_cipher = cast5_cfb64_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_CAST_KEY),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
 };
 
@@ -206,13 +208,14 @@ static const EVP_CIPHER cast5_ofb = {
 	.block_size = 1,
 	.key_len = CAST_KEY_LENGTH,
 	.iv_len = 8,
-	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_OFB_MODE,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_OFB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = cast_init_key,
 	.do_cipher = cast5_ofb_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_CAST_KEY),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
 };
 
@@ -228,13 +231,14 @@ static const EVP_CIPHER cast5_ecb = {
 	.block_size = 8,
 	.key_len = CAST_KEY_LENGTH,
 	.iv_len = 0,
-	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_ECB_MODE,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_ECB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = cast_init_key,
 	.do_cipher = cast5_ecb_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_CAST_KEY),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
 };
 

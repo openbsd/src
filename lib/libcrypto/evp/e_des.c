@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.24 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: e_des.c,v 1.25 2025/05/27 03:58:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,13 +226,14 @@ static const EVP_CIPHER des_cbc = {
 	.block_size = 8,
 	.key_len = 8,
 	.iv_len = 8,
-	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CBC_MODE,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CBC_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = des_init_key,
 	.do_cipher = des_cbc_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DES_key_schedule),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = des_ctrl,
 };
 
@@ -248,13 +249,14 @@ static const EVP_CIPHER des_cfb64 = {
 	.block_size = 1,
 	.key_len = 8,
 	.iv_len = 8,
-	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = des_init_key,
 	.do_cipher = des_cfb64_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DES_key_schedule),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = des_ctrl,
 };
 
@@ -270,13 +272,14 @@ static const EVP_CIPHER des_ofb = {
 	.block_size = 1,
 	.key_len = 8,
 	.iv_len = 8,
-	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_OFB_MODE,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_OFB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = des_init_key,
 	.do_cipher = des_ofb_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DES_key_schedule),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = des_ctrl,
 };
 
@@ -292,13 +295,14 @@ static const EVP_CIPHER des_ecb = {
 	.block_size = 8,
 	.key_len = 8,
 	.iv_len = 0,
-	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_ECB_MODE,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_ECB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = des_init_key,
 	.do_cipher = des_ecb_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DES_key_schedule),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = des_ctrl,
 };
 
@@ -314,13 +318,14 @@ static const EVP_CIPHER des_cfb1 = {
 	.block_size = 1,
 	.key_len = 8,
 	.iv_len = 8,
-	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = des_init_key,
 	.do_cipher = des_cfb1_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DES_key_schedule),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = des_ctrl,
 };
 
@@ -336,13 +341,14 @@ static const EVP_CIPHER des_cfb8 = {
 	.block_size = 1,
 	.key_len = 8,
 	.iv_len = 8,
-	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE |
+	    EVP_CIPH_FLAG_DEFAULT_ASN1,
 	.init = des_init_key,
 	.do_cipher = des_cfb8_cipher,
 	.cleanup = NULL,
 	.ctx_size = sizeof(DES_key_schedule),
-	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
-	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
 	.ctrl = des_ctrl,
 };
 
