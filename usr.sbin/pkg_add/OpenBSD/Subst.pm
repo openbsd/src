@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.26 2023/10/25 11:14:42 espie Exp $
+# $OpenBSD: Subst.pm,v 1.27 2025/05/27 03:42:59 tb Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -98,9 +98,9 @@ sub copy($self, $srcname, $destname)
 	return $dest;
 }
 
-sub has_fragment($self, $state, $def, $frag, $location)
+sub has_fragment($self, $state, $frag, $location)
 {
-	my $v = $self->value($def);
+	my $v = $self->value($frag);
 
 	if (!defined $v) {
 		$state->fatal("Unknown fragment #1 in #2", 

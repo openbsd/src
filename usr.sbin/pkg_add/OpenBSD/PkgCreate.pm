@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.197 2023/10/11 13:54:43 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.198 2025/05/27 03:42:59 tb Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1135,8 +1135,7 @@ our @ISA = qw(OpenBSD::AddCreateDelete);
 
 sub handle_fragment($self, $state, $old, $not, $frag, $location)
 {
-	my $def = $frag;
-	if ($state->{subst}->has_fragment($state, $def, $frag, $location)) {
+	if ($state->{subst}->has_fragment($state, $frag, $location)) {
 		return undef if defined $not;
 	} else {
 		return undef unless defined $not;
