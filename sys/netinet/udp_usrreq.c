@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.338 2025/05/24 12:27:23 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.339 2025/05/27 07:52:49 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -213,8 +213,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 
 	udpstat_inc(udps_ipackets);
 
-	IP6_EXTHDR_GET(uh, struct udphdr *, mp, iphlen, sizeof(struct udphdr));
-	if (!uh) {
+	uh = ip6_exthdr_get(mp, iphlen, sizeof(struct udphdr));
+	if (uh == NULL) {
 		udpstat_inc(udps_hdrops);
 		return IPPROTO_DONE;
 	}

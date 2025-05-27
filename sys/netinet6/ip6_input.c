@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.271 2025/05/24 12:27:23 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.272 2025/05/27 07:52:49 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -685,8 +685,8 @@ ip6_hbhchcheck(struct mbuf **mp, int *offp, int *oursp, int flags)
 				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
 			goto bad;
 		}
-		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, mp,
-		    sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
+		hbh = ip6_exthdr_get(mp, sizeof(struct ip6_hdr),
+		    sizeof(struct ip6_hbh));
 		if (hbh == NULL) {
 			ip6stat_inc(ip6s_tooshort);
 			goto bad;
@@ -814,15 +814,14 @@ ip6_hopopts_input(struct mbuf **mp, int *offp, u_int32_t *plenp,
 	struct ip6_hbh *hbh;
 
 	/* validation of the length of the header */
-	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, mp,
-		sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
+	hbh = ip6_exthdr_get(mp, sizeof(struct ip6_hdr),
+	    sizeof(struct ip6_hbh));
 	if (hbh == NULL) {
 		ip6stat_inc(ip6s_tooshort);
 		return -1;
 	}
 	hbhlen = (hbh->ip6h_len + 1) << 3;
-	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, mp, sizeof(struct ip6_hdr),
-		hbhlen);
+	hbh = ip6_exthdr_get(mp, sizeof(struct ip6_hdr), hbhlen);
 	if (hbh == NULL) {
 		ip6stat_inc(ip6s_tooshort);
 		return -1;

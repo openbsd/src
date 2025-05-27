@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6.c,v 1.24 2025/05/24 12:27:24 bluhm Exp $	*/
+/*	$OpenBSD: route6.c,v 1.25 2025/05/27 07:52:49 bluhm Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ route6_input(struct mbuf **mp, int *offp, int proto, int af,
 	int off = *offp, rhlen;
 
 	ip6 = mtod(*mp, struct ip6_hdr *);
-	IP6_EXTHDR_GET(rh, struct ip6_rthdr *, mp, off, sizeof(*rh));
+	rh = ip6_exthdr_get(mp, off, sizeof(*rh));
 	if (rh == NULL) {
 		ip6stat_inc(ip6s_tooshort);
 		return IPPROTO_DONE;

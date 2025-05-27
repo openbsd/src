@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.66 2025/05/24 12:27:23 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.67 2025/05/27 07:52:49 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ mld6_input(struct mbuf *m, int off)
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 
-	IP6_EXTHDR_GET(mldh, struct mld_hdr *, &m, off, sizeof(*mldh));
+	mldh = ip6_exthdr_get(&m, off, sizeof(*mldh));
 	if (mldh == NULL) {
 		icmp6stat_inc(icp6s_tooshort);
 		return;

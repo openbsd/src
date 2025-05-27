@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.91 2025/05/24 12:27:23 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.92 2025/05/27 07:52:49 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 	u_int8_t ecn, ecn0;
 
 	ip6 = mtod(*mp, struct ip6_hdr *);
-	IP6_EXTHDR_GET(ip6f, struct ip6_frag *, mp, offset, sizeof(*ip6f));
+	ip6f = ip6_exthdr_get(mp, offset, sizeof(*ip6f));
 	if (ip6f == NULL)
 		return IPPROTO_DONE;
 
@@ -451,8 +451,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 		int prvnxt = ip6_get_prevhdr(*mp, offset);
 		uint8_t *prvnxtp;
 
-		IP6_EXTHDR_GET(prvnxtp, uint8_t *, mp, prvnxt,
-		    sizeof(*prvnxtp));
+		prvnxtp = ip6_exthdr_get(mp, prvnxt, sizeof(*prvnxtp));
 		if (prvnxtp == NULL)
 			goto dropfrag;
 		*prvnxtp = nxt;

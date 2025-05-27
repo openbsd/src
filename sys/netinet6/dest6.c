@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.22 2025/05/24 12:27:23 bluhm Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.23 2025/05/27 07:52:49 bluhm Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -57,12 +57,12 @@ dest6_input(struct mbuf **mp, int *offp, int proto, int af,
 	u_int8_t *opt;
 
 	/* validation of the length of the header */
-	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, mp, off, sizeof(*dstopts));
+	dstopts = ip6_exthdr_get(mp, off, sizeof(*dstopts));
 	if (dstopts == NULL)
 		return IPPROTO_DONE;
 	dstoptlen = (dstopts->ip6d_len + 1) << 3;
 
-	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, mp, off, dstoptlen);
+	dstopts = ip6_exthdr_get(mp, off, dstoptlen);
 	if (dstopts == NULL)
 		return IPPROTO_DONE;
 	off += dstoptlen;
