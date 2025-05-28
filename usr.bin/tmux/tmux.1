@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1000 2025/05/22 07:43:38 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1001 2025/05/28 09:53:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 22 2025 $
+.Dd $Mdocdate: May 28 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5469,6 +5469,10 @@ Run when focus exits a client
 Run when a client is resized.
 .It client-session-changed
 Run when a client's attached session is changed.
+.It client-light-theme
+Run when a client switches to a light theme.
+.It client-dark-theme
+Run when a client switches to a dark theme.
 .It command-error
 Run when a command fails.
 .It pane-died
