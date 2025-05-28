@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.368 2025/05/23 23:39:30 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.369 2025/05/28 06:27:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1092,7 +1092,7 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		advbase = sc->sc_advbase;
 		advskew = vhe->advskew;
 		usec = (uint64_t)advbase * 1000000;
-		usec += advskew * 1000000 / 256;
+		usec += (uint64_t)advskew * 1000000 / 256;
 		if (usec == 0)
 			usec = 1000000 / 256;
 	}
@@ -1612,7 +1612,7 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 	}
 
 	usec = (uint64_t)sc->sc_advbase * 1000000;
-	usec += vhe->advskew * 1000000 / 256;
+	usec += (uint64_t)vhe->advskew * 1000000 / 256;
 	if (usec == 0)
 		usec = 1000000 / 256;
 
