@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_acpi.c,v 1.3 2025/05/24 14:51:52 tedu Exp $	*/
+/*	$OpenBSD: pckbc_acpi.c,v 1.4 2025/05/28 07:04:27 tedu Exp $	*/
 /*
  * Copyright (c) 2024, 2025, Miodrag Vallat.
  *
@@ -131,6 +131,8 @@ pckbc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 const char *pckbc_acpi_cids_kbd[] = {
 	"PNP0303",	/* IBM Enhanced Keyboard (101/102-key, PS/2 Mouse) */
+	"PNP030B",
+	"PNP0320",
 	NULL
 };
 
