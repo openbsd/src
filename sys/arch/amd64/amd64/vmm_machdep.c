@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.54 2025/05/27 13:27:20 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.55 2025/05/28 07:59:05 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4480,13 +4480,67 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 	struct vm		*vm = vcpu->vc_parent;
 	struct ghcb_sa		*ghcb;
 	paddr_t			 ghcb_gpa, ghcb_hpa;
+	uint32_t		 req, resp;
+	uint64_t		 result;
 	int			 syncout, error = 0;
 
-	if (vcpu->vc_svm_ghcb_va == 0) {
+	if (vcpu->vc_svm_ghcb_va == 0 && (vmcb->v_ghcb_gpa & ~PG_FRAME) == 0 &&
+	    (vmcb->v_ghcb_gpa & PG_FRAME) != 0) {
+		/*
+		 * Guest provides a valid guest physcial address
+		 * for GHCB and it is not set yet -> assign it.
+		 *
+		 * We only accept a GHCB once; we decline re-definition.
+		 */
 		ghcb_gpa = vmcb->v_ghcb_gpa & PG_FRAME;
 		if (!pmap_extract(vm->vm_pmap, ghcb_gpa, &ghcb_hpa))
 			return (EINVAL);
 		vcpu->vc_svm_ghcb_va = (vaddr_t)PMAP_DIRECT_MAP(ghcb_hpa);
+	} else if ((vmcb->v_ghcb_gpa & ~PG_FRAME) != 0) {
+		/*
+		 * Low bits in use, thus must be a MSR protocol
+		 * request.
+		 */
+		req = (vmcb->v_ghcb_gpa & 0xffffffff);
+
+		/* we only support cpuid */
+		if ((req & ~PG_FRAME) != MSR_PROTO_CPUID_REQ)
+			return (EINVAL);
+
+		/* Emulate CPUID */
+		vmcb->v_exitcode = SVM_VMEXIT_CPUID;
+		vmcb->v_rax = vmcb->v_ghcb_gpa >> 32;
+		vcpu->vc_gueststate.vg_rax = 0;
+		vcpu->vc_gueststate.vg_rbx = 0;
+		vcpu->vc_gueststate.vg_rcx = 0;
+		vcpu->vc_gueststate.vg_rdx = 0;
+		error = vmm_handle_cpuid(vcpu);
+		if (error)
+			goto out;
+
+		switch (req >> 30) {
+		case 0:	/* eax: emulate cpuid and return eax */
+			result = vmcb->v_rax;
+			break;
+		case 1:	/* return ebx */
+			result = vcpu->vc_gueststate.vg_rbx;
+			break;
+		case 2:	/* return ecx */
+			result = vcpu->vc_gueststate.vg_rcx;
+			break;
+		case 3:	/* return edx */
+			result = vcpu->vc_gueststate.vg_rdx;
+			break;
+		default:
+			DPRINTF("%s: unknown request 0x%x\n", __func__, req);
+			return (EINVAL);
+		}
+
+		/* build response */
+		resp = MSR_PROTO_CPUID_RESP | (req & 0xc0000000);
+		vmcb->v_ghcb_gpa = (result << 32) | resp;
+
+		return (0);
 	}
 
 	/* Verify GHCB and synchronize guest state information. */
