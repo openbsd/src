@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.55 2025/05/28 07:59:05 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.56 2025/05/28 11:08:25 bluhm Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4503,8 +4503,11 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 		 */
 		req = (vmcb->v_ghcb_gpa & 0xffffffff);
 
-		/* we only support cpuid */
-		if ((req & ~PG_FRAME) != MSR_PROTO_CPUID_REQ)
+		/* We only support cpuid and terminate. */
+		if ((req & ~PG_FRAME) == MSR_PROTO_TERMINATE) {
+			DPRINTF("%s: guest requests termination\n", __func__);
+			return (1);
+		} else if ((req & ~PG_FRAME) != MSR_PROTO_CPUID_REQ)
 			return (EINVAL);
 
 		/* Emulate CPUID */
