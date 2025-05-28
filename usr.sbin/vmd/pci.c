@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.35 2024/10/02 17:05:56 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.36 2025/05/28 16:27:48 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -256,53 +256,45 @@ pci_handle_address_reg(struct vm_run_params *vrp)
 uint8_t
 pci_handle_io(struct vm_run_params *vrp)
 {
-	int i, j, k, l;
+	int i, j;
 	uint16_t reg, b_hi, b_lo;
-	pci_iobar_fn_t fn;
+	pci_iobar_fn_t fn = NULL;
+	void *cookie = NULL;
+	uint8_t intr = 0xFF, irq = 0xFF, dir, sz;
 	struct vm_exit *vei = vrp->vrp_exit;
-	uint8_t intr, dir;
 
-	k = -1;
-	l = -1;
 	reg = vei->vei.vei_port;
 	dir = vei->vei.vei_dir;
-	intr = 0xFF;
+	sz = vei->vei.vei_size;
 
-	for (i = 0 ; i < pci.pci_dev_ct ; i++) {
+	for (i = 0 ; i < pci.pci_dev_ct; i++) {
 		for (j = 0 ; j < pci.pci_devices[i].pd_bar_ct; j++) {
 			b_lo = PCI_MAPREG_IO_ADDR(pci.pci_devices[i].pd_bar[j]);
 			b_hi = b_lo + VM_PCI_IO_BAR_SIZE;
 			if (reg >= b_lo && reg < b_hi) {
-				if (pci.pci_devices[i].pd_barfunc[j]) {
-					k = j;
-					l = i;
-				}
+				fn = pci.pci_devices[i].pd_barfunc[j];
+				reg = reg - b_lo;
+				cookie = pci.pci_devices[i].pd_bar_cookie[j];
+				irq = pci.pci_devices[i].pd_irq;
+				goto found;
 			}
 		}
 	}
-
-	if (k >= 0 && l >= 0) {
-		fn = (pci_iobar_fn_t)pci.pci_devices[l].pd_barfunc[k];
-		if (fn(vei->vei.vei_dir, reg -
-		    PCI_MAPREG_IO_ADDR(pci.pci_devices[l].pd_bar[k]),
-		    &vei->vei.vei_data, &intr,
-		    pci.pci_devices[l].pd_bar_cookie[k],
-		    vei->vei.vei_size)) {
-			log_warnx("%s: pci i/o access function failed",
-			    __progname);
-		}
-	} else {
+found:
+	if (fn == NULL) {
 		DPRINTF("%s: no pci i/o function for reg 0x%llx (dir=%d "
 		    "guest %%rip=0x%llx", __progname, (uint64_t)reg, dir,
 		    vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
 		/* Reads from undefined ports return 0xFF */
 		if (dir == VEI_DIR_IN)
 			set_return_data(vei, 0xFFFFFFFF);
+		return (0xFF);
 	}
 
-	if (intr != 0xFF) {
-		intr = pci.pci_devices[l].pd_irq;
-	}
+	if (fn(dir, reg, &vei->vei.vei_data, &intr, cookie, sz))
+		log_warnx("%s: pci i/o access function failed", __progname);
+	if (intr != 0xFF)
+		intr = irq;
 
 	return (intr);
 }
