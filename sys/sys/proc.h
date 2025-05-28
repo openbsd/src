@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.389 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.390 2025/05/28 03:27:44 jsg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -642,13 +642,10 @@ struct cpuset {
 
 void cpuset_init_cpu(struct cpu_info *);
 
-void cpuset_clear(struct cpuset *);
 void cpuset_add(struct cpuset *, struct cpu_info *);
 void cpuset_del(struct cpuset *, struct cpu_info *);
 int cpuset_isset(struct cpuset *, struct cpu_info *);
-void cpuset_add_all(struct cpuset *);
 void cpuset_copy(struct cpuset *, struct cpuset *);
-void cpuset_union(struct cpuset *, struct cpuset *, struct cpuset *);
 void cpuset_intersection(struct cpuset *t, struct cpuset *, struct cpuset *);
 void cpuset_complement(struct cpuset *, struct cpuset *, struct cpuset *);
 int cpuset_cardinality(struct cpuset *);
