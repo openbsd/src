@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.12 2024/10/02 17:05:56 dv Exp $	*/
+/*	$OpenBSD: pci.h,v 1.13 2025/05/28 16:24:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -90,7 +90,6 @@ struct pci {
 	uint64_t pci_next_io_bar;
 	uint8_t pci_next_pic_irq;
 	uint32_t pci_addr_reg;
-	uint32_t pci_data_reg;
 
 	struct pci_dev pci_devices[PCI_CONFIG_MAX_DEV];
 };
