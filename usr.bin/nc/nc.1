@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.99 2025/05/21 08:41:35 djm Exp $
+.\"     $OpenBSD: nc.1,v 1.100 2025/05/28 03:57:13 jsg Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 21 2025 $
+.Dd $Mdocdate: May 28 2025 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -349,7 +349,7 @@ If the protocol is not specified, SOCKS version 5 is used.
 Note that the SOCKS v.4 protocol is very limited and can only be used when
 the destination host can be resolved to an IPv4 address.
 The other protocols pass the destination as a string to be interpreted
-by the remote proxy and do not have this limitiation.
+by the remote proxy and do not have this limitation.
 .It Fl x Ar proxy_address Ns Op : Ns Ar port
 Connect to
 .Ar destination
