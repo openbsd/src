@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.108 2025/04/26 06:40:10 dlg Exp $
+# $OpenBSD: services,v 1.109 2025/05/29 13:56:43 deraadt Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -315,6 +315,7 @@ spamd		8025/tcp			# spamd(8)
 spamd-sync	8025/udp			# spamd(8) synchronisation
 spamd-cfg	8026/tcp			# spamd(8) configuration
 dhcpd-sync	8067/udp			# dhcpd(8) synchronisation
+jetdirect	9100/tcp			# raw printing
 hunt		26740/udp			# hunt(6)
 #
 # Appletalk
