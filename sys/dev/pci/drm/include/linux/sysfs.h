@@ -25,6 +25,7 @@ struct attribute_group {
 #define sysfs_remove_link(x, y)
 #define sysfs_create_group(x, y)	0
 #define sysfs_remove_group(x, y)
+#define sysfs_create_file(x, y)		0
 #define sysfs_remove_file(x, y)
 #define sysfs_create_bin_file(x, y)	0
 #define sysfs_remove_bin_file(x, y)
