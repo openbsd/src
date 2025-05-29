@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.36 2023/11/27 11:28:39 claudio Exp $ */
+/*	$OpenBSD: uploader.c,v 1.37 2025/05/29 17:03:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -751,11 +751,11 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 	}
 
 	/* check alternative locations for better match */
-	for (i = 0; sess->opts->basedir[i] != NULL; i++) {
-		const char *root = sess->opts->basedir[i];
+	for (i = 0; sess->opts->basedir_abs[i] != NULL; i++) {
+		const char *root = sess->opts->basedir_abs[i];
 		int dfd, x;
 
-		dfd = openat(p->rootfd, root, O_RDONLY | O_DIRECTORY);
+		dfd = open(root, O_RDONLY | O_DIRECTORY);
 		if (dfd == -1)
 			err(ERR_FILE_IO, "%s: openat", root);
 		x = check_file(dfd, f, &st, sess);
@@ -781,7 +781,7 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 	}
 	if (match != -1) {
 		/* copy match from basedir into root as a start point */
-		copy_file(p->rootfd, sess->opts->basedir[match], f);
+		copy_file(p->rootfd, sess->opts->basedir_abs[match], f);
 		if (fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW) ==
 		    -1) {
 			ERR("%s: fstatat", f->path);

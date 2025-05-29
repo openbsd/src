@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.49 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: extern.h,v 1.50 2025/05/29 17:03:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -159,6 +159,7 @@ struct	opts {
 	char		*port;			/* --port */
 	char		*address;		/* --address */
 	char		*basedir[MAX_BASEDIR];
+	char		*basedir_abs[MAX_BASEDIR];
 };
 
 enum rule_type {

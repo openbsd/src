@@ -1,4 +1,4 @@
-/*	$OpenBSD: receiver.c,v 1.33 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: receiver.c,v 1.34 2025/05/29 17:03:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -182,16 +182,12 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	struct upload	*ul = NULL;
 	mode_t		 oumask;
 
-	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
-		err(ERR_IPC, "pledge");
-
 	/*
 	 * Create the path for our destination directory, if we're not
 	 * in dry-run mode (which would otherwise crash w/the pledge).
 	 * This uses our current umask: we might set the permissions on
 	 * this directory in post_dir().
 	 */
-
 	if (!sess->opts->dry_run) {
 		if ((tofree = strdup(root)) == NULL)
 			err(ERR_NOMEM, NULL);
@@ -200,28 +196,17 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		free(tofree);
 	}
 
-	/*
-	 * Make our entire view of the file-system be limited to what's
-	 * in the root directory.
-	 * This prevents us from accidentally (or "under the influence")
-	 * writing into other parts of the file-system.
-	 */
-	if (sess->opts->basedir[0]) {
-		/*
-		 * XXX just unveil everything for read
-		 * Could unveil each basedir or maybe a common path
-		 * also the fact that relative path are relative to the
-		 * root does not help.
-		 */
-		if (unveil("/", "r") == -1)
-			err(ERR_IPC, "%s: unveil", root);
+	for (i = 0; sess->opts->basedir_abs[i]; i++) {
+		dfd = unveil(sess->opts->basedir_abs[i], "r");
+		if (dfd == -1)
+			err(ERR_IPC, "%s: unveil", sess->opts->basedir_abs[i]);
 	}
 
 	if (unveil(root, "rwc") == -1)
 		err(ERR_IPC, "%s: unveil", root);
 
-	if (unveil(NULL, NULL) == -1)
-		err(ERR_IPC, "unveil");
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw", NULL) == -1)
+		err(ERR_IPC, "pledge");
 
 	/* Client sends exclusions. */
 	if (!sess->opts->server)
