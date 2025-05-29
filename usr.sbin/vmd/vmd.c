@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.164 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.165 2025/05/29 12:33:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -309,15 +309,15 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		/* vm_create_params was read from an untrusted source. Scrub. */
 		vmc.vmc_params.vcp_name[sizeof(vmc.vmc_params.vcp_name) - 1] =
 		    '\0';
-		for (i = 0; i < sizeof(vmc.vmc_disks); i++)
+		for (i = 0; i < nitems(vmc.vmc_disks); i++)
 			vmc.vmc_disks[i][sizeof(vmc.vmc_disks[i]) - 1] = '\0';
-		for (i = 0; i < sizeof(vmc.vmc_ifnames); i++)
+		for (i = 0; i < nitems(vmc.vmc_ifnames); i++)
 			vmc.vmc_ifnames[i][sizeof(vmc.vmc_ifnames[i]) - 1]
 			    = '\0';
-		for (i = 0; i < sizeof(vmc.vmc_ifswitch); i++)
+		for (i = 0; i < nitems(vmc.vmc_ifswitch); i++)
 			vmc.vmc_ifswitch[i][sizeof(vmc.vmc_ifswitch[i]) - 1]
 			    = '\0';
-		for (i = 0; i < sizeof(vmc.vmc_ifgroup); i++)
+		for (i = 0; i < nitems(vmc.vmc_ifgroup); i++)
 			vmc.vmc_ifgroup[i][sizeof(vmc.vmc_ifgroup[i]) - 1]
 			    = '\0';
 		vmc.vmc_instance[sizeof(vmc.vmc_instance) - 1] = '\0';
