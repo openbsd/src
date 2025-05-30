@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.25 2025/05/24 09:49:14 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.26 2025/05/30 15:06:56 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -660,8 +660,11 @@ untabify(wchar_t *buf, int maxlen)
 	*p = L'\0';
 }
 
-void swap_buffers(void) {
+void
+swap_buffers(void)
+{
 	BUFFER *t;
+
 	t = prev_buf;
 	prev_buf = cur_buf;
 	cur_buf = t;
