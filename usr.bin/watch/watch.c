@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.26 2025/05/30 15:06:56 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.27 2025/05/30 15:14:56 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -130,14 +130,14 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	while ((ch = getopt(argc, argv, "cels:wx")) != -1)
+	while ((ch = getopt(argc, argv, "cels:wx")) != -1) {
 		switch (ch) {
 		case 'c':
 			highlight_mode = HIGHLIGHT_CHAR;
 			break;
 		case 'e':
 			pause_on_error = 1;
-			break; 
+			break;
 		case 'l':
 			highlight_mode = HIGHLIGHT_LINE;
 			break;
@@ -155,6 +155,8 @@ main(int argc, char *argv[])
 			usage();
 			exit(1);
 		}
+	}
+
 	argc -= optind;
 	argv += optind;
 
@@ -358,7 +360,7 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 				screen_x += cw;
 
 				/*
-				 * If the word highlight option is specified, and
+				 * If the word highlight option is specified and
 				 * the current character is not a space, print
 				 * the whole word which includes current
 				 * character.
@@ -497,7 +499,8 @@ kbd_command(int ch)
 		break;
 
 	case 'J':
-		start_line = MINIMUM(start_line + ((LINES - 2) / 2), MAXLINE - 1);
+		start_line = MINIMUM(start_line + ((LINES - 2) / 2),
+		    MAXLINE - 1);
 		break;
 
 	case 'K':
