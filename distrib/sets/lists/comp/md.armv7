@@ -43,7 +43,6 @@
 ./usr/include/arm/setjmp.h
 ./usr/include/arm/signal.h
 ./usr/include/arm/simplebusvar.h
-./usr/include/arm/softintr.h
 ./usr/include/arm/spinlock.h
 ./usr/include/arm/sysarch.h
 ./usr/include/arm/sysreg.h
