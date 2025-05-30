@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1211 2025/05/11 21:19:09 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1212 2025/05/30 13:08:07 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5037,8 +5037,12 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason,
 	    (ackskew <= (MAXACKWINDOW << sws)) &&
 	    /* Acking not more than one window forward */
 	    ((th->th_flags & TH_RST) == 0 || orig_seq == src->seqlo ||
-	    (orig_seq == src->seqlo + 1) || (orig_seq + 1 == src->seqlo))) {
+	    (orig_seq == src->seqlo + 1) || (orig_seq + 1 == src->seqlo) ||
 	    /* Require an exact/+1 sequence match on resets when possible */
+	    (SEQ_GEQ(orig_seq, src->seqlo - (dst->max_win << dws)) &&
+	    SEQ_LEQ(orig_seq, src->seqlo + 1) && ackskew == 0 &&
+	    (th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)))) {
+	    /* Allow resets to match sequence window if ack is perfect match */
 
 		if (dst->scrub || src->scrub) {
 			if (pf_normalize_tcp_stateful(pd, reason, *stp, src,
