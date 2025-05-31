@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.3 2025/05/31 08:25:04 tb Exp $ */
+/*	$OpenBSD: test.h,v 1.4 2025/05/31 11:37:18 tb Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -18,6 +18,7 @@
 #ifndef HEADER_TEST_H
 #define HEADER_TEST_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 struct test;
