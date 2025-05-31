@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.40 2025/05/12 17:23:41 dv Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.41 2025/05/31 00:38:56 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -113,11 +113,8 @@ void	 terminate_all(struct vmop_info_result *, size_t, unsigned int);
 __dead void
 	 vm_console(struct vmop_info_result *, size_t);
 
-/* XXX remove once vmctl is cleaned up of imsg shenanigans. */
-#define IMSG_SIZE_CHECK(imsg, p) do {					\
-	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))				\
-	fatalx("bad length imsg received (%s)", #p);			\
-} while (0)
-#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+int	 imsg_int_read(struct imsg *);
+void	 vmop_result_read(struct imsg *, struct vmop_result *);
+void	 vmop_info_result_read(struct imsg *, struct vmop_info_result *);
 
 #endif /* VMCTL_PARSER_H */

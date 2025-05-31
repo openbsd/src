@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.85 2025/05/01 15:05:05 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.86 2025/05/31 00:38:56 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -191,6 +191,7 @@ vmmaction(struct parse_result *res)
 	int			 n;
 	int			 ret, action;
 	unsigned int		 flags;
+	uint32_t		 type;
 
 	if (ctl_sock == -1) {
 		if (unveil(SOCKET_NAME, "w") == -1)
@@ -290,9 +291,10 @@ vmmaction(struct parse_result *res)
 			if (n == 0)
 				break;
 
-			if (imsg.hdr.type == IMSG_CTL_FAIL) {
-				if (IMSG_DATA_SIZE(&imsg) == sizeof(ret))
-					memcpy(&ret, imsg.data, sizeof(ret));
+			type = imsg_get_type(&imsg);
+			if (type == IMSG_CTL_FAIL) {
+				if (imsg_get_len(&imsg) == sizeof(ret))
+					ret = imsg_int_read(&imsg);
 				else
 					ret = 0;
 				if (ret != 0) {
