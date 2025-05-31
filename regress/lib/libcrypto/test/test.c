@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.3 2025/05/31 11:29:59 tb Exp $ */
+/*	$OpenBSD: test.c,v 1.4 2025/05/31 11:36:48 tb Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <err.h>
-#include <libgen.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
