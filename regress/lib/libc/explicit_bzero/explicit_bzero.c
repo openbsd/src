@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.9 2022/02/10 08:39:32 tb Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.10 2025/05/31 15:31:40 tb Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -28,7 +28,9 @@
 
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
+#ifndef __SANITIZE_ADDRESS__
 #define __SANITIZE_ADDRESS__
+#endif
 #endif
 #endif
 #ifdef __SANITIZE_ADDRESS__
