@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.205 2025/05/20 05:39:08 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.206 2025/05/31 15:17:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -432,7 +432,6 @@ tls1_ec_nid2group_id(int nid, uint16_t *out_group_id)
 	*out_group_id = sg->group_id;
 
 	return 1;
-
 }
 
 /*
