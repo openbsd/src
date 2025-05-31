@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.35 2025/05/31 14:06:26 deraadt Exp $ */
+/*	$OpenBSD: gmon.c,v 1.36 2025/05/31 14:17:09 deraadt Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,13 +58,17 @@ monstartup(u_long lowpc, u_long highpc)
 	abort();
 }
 
+#define PAGESIZE	(1UL << _MAX_PAGE_SHIFT)
+#define PAGEMASK	(PAGESIZE - 1)
+#define PAGEROUND(x)	(((x) + (PAGEMASK)) & ~PAGEMASK)
+
 void
 _monstartup(u_long lowpc, u_long highpc)
 {
 	int o;
 	struct gmonparam *p = &_gmonparam;
 	char *profdir = NULL;
-	void *addr;
+	char *a;
 
 	/*
 	 * round lowpc and highpc to multiples of the density we're using
@@ -86,27 +90,19 @@ _monstartup(u_long lowpc, u_long highpc)
 	p->outbuflen = sizeof(struct gmonhdr) + p->kcountsize +
 	    MAXARCS * sizeof(struct rawarc);
 
-	/* Create a contig output buffer */
-	addr = mmap(NULL, p->outbuflen,  PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (addr == MAP_FAILED)
-		goto mapfailed;
-	p->outbuf = addr;
-	p->kcount = (void *)((char *)addr + sizeof(struct gmonhdr));
-	p->rawarcs = (void *)((char *)addr + sizeof(struct gmonhdr) + p->kcountsize);
-
-	addr = mmap(NULL, p->fromssize,  PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (addr == MAP_FAILED)
-		goto mapfailed;
-	p->froms = addr;
-
-	addr = mmap(NULL, p->tossize,  PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (addr == MAP_FAILED)
-		goto mapfailed;
-	p->tos = addr;
-	p->tos[0].link = 0;
+	/* Create a contig output buffer, with froms/tos tables after */
+	a = mmap(NULL,
+	    PAGEROUND(p->outbuflen) + _ALIGN(p->fromssize) + _ALIGN(p->tossize),
+	    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+	if (a == MAP_FAILED) {
+		ERR("_monstartup: out of memory\n");
+		return;
+	}
+	p->outbuf = a;
+	p->kcount = (void *)(a + sizeof(struct gmonhdr));
+	p->rawarcs = (void *)(a + sizeof(struct gmonhdr) + p->kcountsize);
+	p->froms = (void *)(a + PAGEROUND(p->outbuflen));
+	p->tos = (void *)(a + PAGEROUND(p->outbuflen) + _ALIGN(p->fromssize));
 
 	o = p->highpc - p->lowpc;
 	if (p->kcountsize < o) {
@@ -138,18 +134,6 @@ _monstartup(u_long lowpc, u_long highpc)
 
 	if (p->dirfd != -1)
 		close(p->dirfd);
-	return;
-
-mapfailed:
-	if (p->froms != NULL) {
-		munmap(p->froms, p->fromssize);
-		p->froms = NULL;
-	}
-	if (p->tos != NULL) {
-		munmap(p->tos, p->tossize);
-		p->tos = NULL;
-	}
-	ERR("_monstartup: out of memory\n");
 }
 
 void
