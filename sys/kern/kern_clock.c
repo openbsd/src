@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.125 2025/05/02 05:04:38 dlg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.126 2025/05/31 12:40:33 dlg Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -270,6 +270,7 @@ statclock(struct clockrequest *cr, void *cf, void *arg)
 	struct process *pr;
 	int tu_tick = -1;
 	int cp_time;
+	unsigned int gen;
 
 	if (statclock_is_randomized) {
 		count = clockrequest_advance_random(cr, statclock_min,
@@ -322,7 +323,7 @@ statclock(struct clockrequest *cr, void *cf, void *arg)
 			struct vmspace *vm = p->p_vmspace;
 			struct tusage *tu = &p->p_tu;
 
-			tu_enter(tu);
+			gen = tu_enter(tu);
 			tu->tu_ticks[tu_tick] += count;
 
 			/* maxrss is handled by uvm */
@@ -334,7 +335,7 @@ statclock(struct clockrequest *cr, void *cf, void *arg)
 				tu->tu_isrss +=
 				    (vm->vm_ssize << (PAGE_SHIFT - 10)) * count;
 			}
-			tu_leave(tu);
+			tu_leave(tu, gen);
 		}
 
 		/*

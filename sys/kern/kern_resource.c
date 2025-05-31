@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.94 2025/05/02 05:04:38 dlg Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.95 2025/05/31 12:40:33 dlg Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ struct plimit	*lim_copy(struct plimit *);
 struct plimit	*lim_write_begin(void);
 void		 lim_write_commit(struct plimit *);
 
-void	tuagg_sumup(struct tusage *, const struct tusage *);
+void	tuagg_sumup(struct tusage *, struct tusage *);
 
 /*
  * Patchable maximum data and stack limits.
@@ -369,28 +369,15 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 
 /* Add the counts from *from to *tu, ensuring a consistent read of *from. */ 
 void
-tuagg_sumup(struct tusage *tu, const struct tusage *from)
+tuagg_sumup(struct tusage *tu, struct tusage *from)
 {
 	struct tusage	tmp;
-	uint64_t	enter, leave;
+	unsigned int	gen;
 
-	enter = from->tu_gen;
-	for (;;) {
-		/* the generation number is odd during an update */
-		while (enter & 1) {
-			CPU_BUSY_CYCLE();
-			enter = from->tu_gen;
-		}
-
-		membar_consumer();
+	pc_cons_enter(&from->tu_pcl, &gen);
+	do {
 		tmp = *from;
-		membar_consumer();
-		leave = from->tu_gen;
-
-		if (enter == leave)
-			break;
-		enter = leave;
-	}
+	} while (pc_cons_leave(&from->tu_pcl, &gen) != 0);
 
 	tu->tu_uticks += tmp.tu_uticks;
 	tu->tu_sticks += tmp.tu_sticks;
@@ -433,12 +420,14 @@ tuagg_get_process(struct tusage *tu, struct process *pr)
 void
 tuagg_add_process(struct process *pr, struct proc *p)
 {
+	unsigned int gen;
+
 	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
 	KASSERT(curproc == p || p->p_stat == SDEAD);
 
-	tu_enter(&pr->ps_tu);
+	gen = tu_enter(&pr->ps_tu);
 	tuagg_sumup(&pr->ps_tu, &p->p_tu);
-	tu_leave(&pr->ps_tu);
+	tu_leave(&pr->ps_tu, gen);
 
 	/* Now reset CPU time usage for the thread. */
 	timespecclear(&p->p_tu.tu_runtime);
@@ -452,6 +441,7 @@ tuagg_add_runtime(void)
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct proc *p = curproc;
 	struct timespec ts, delta;
+	unsigned int gen;
 
 	/*
 	 * Compute the amount of time during which the current
@@ -472,9 +462,9 @@ tuagg_add_runtime(void)
 	}
 	/* update spc_runtime */
 	spc->spc_runtime = ts;
-	tu_enter(&p->p_tu);
+	gen = tu_enter(&p->p_tu);
 	timespecadd(&p->p_tu.tu_runtime, &delta, &p->p_tu.tu_runtime);
-	tu_leave(&p->p_tu);
+	tu_leave(&p->p_tu, gen);
 }
 
 /*
