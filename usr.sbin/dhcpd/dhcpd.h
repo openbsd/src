@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.71 2025/05/31 01:42:22 dlg Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.72 2025/05/31 07:47:45 dlg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -287,6 +287,7 @@ struct protocol {
 	int fd;
 	void (*handler)(struct protocol *);
 	void *local;
+	int pfd; /* slot used in the pollfd array */
 };
 
 #define _PATH_DHCPD_CONF	"/etc/dhcpd.conf"

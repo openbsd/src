@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.46 2025/05/31 06:27:59 dlg Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.47 2025/05/31 07:47:45 dlg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -349,13 +349,17 @@ another:
 
 		/* Set up the descriptors to be polled. */
 		for (i = 0, l = protocols; l; l = l->next) {
-			struct interface_info *ip = l->local;
-
-			if (ip && (l->handler != got_one || !ip->dead)) {
-				fds[i].fd = l->fd;
-				fds[i].events = POLLIN;
-				++i;
+			if (l->handler == got_one) {
+				struct interface_info *ip = l->local;
+				if (ip->dead) {
+					l->pfd = -1;
+					continue;
+				}
 			}
+
+			fds[i].fd = l->fd;
+			fds[i].events = POLLIN;
+			l->pfd = i++;
 		}
 
 		if (i == 0)
@@ -378,17 +382,13 @@ another:
 		}
 		time(&cur_time);
 
-		for (i = 0, l = protocols; l; l = l->next) {
-			struct interface_info *ip = l->local;
+		for (l = protocols; l; l = l->next) {
+			i = l->pfd;
+			if (i == -1)
+				continue;
 
-			if ((fds[i].revents & (POLLIN | POLLHUP))) {
-				if (ip && (l->handler != got_one ||
-				    !ip->dead))
-					(*(l->handler))(l);
-				if (interfaces_invalidated)
-					break;
-			}
-			++i;
+			if (fds[i].revents & (POLLIN | POLLHUP))
+				(*(l->handler))(l);
 		}
 		if ((syncfd != -1) && (fds[i].revents & (POLLIN | POLLHUP)))
 			sync_recv();
