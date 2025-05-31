@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.66 2024/05/09 08:35:40 florian Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.67 2025/05/31 20:25:33 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -553,37 +553,19 @@ err2:			syslog(LOG_WARNING,
 char *
 find_dev(dev_t dev, int type)
 {
-	DIR *dfd;
-	struct dirent *dir;
-	struct stat sb;
-	char *dp, devname[PATH_MAX];
+	char *devpath, *name;
 
-	if ((dfd = opendir(_PATH_DEV)) == NULL) {
-		syslog(LOG_ERR, "%s: %s", _PATH_DEV, strerror(errno));
+	name = devname(dev, type);
+	if (strcmp(name, "??") == 0) {
+		syslog(LOG_ERR, "can't find device %u/%u",
+		    major(dev), minor(dev));
 		exit(1);
 	}
-	(void)strlcpy(devname, _PATH_DEV, sizeof devname);
-	while ((dir = readdir(dfd))) {
-		(void)strlcpy(devname + sizeof(_PATH_DEV) - 1, dir->d_name,
-		    sizeof devname - (sizeof(_PATH_DEV) - 1));
-		if (lstat(devname, &sb)) {
-			syslog(LOG_ERR, "%s: %s", devname, strerror(errno));
-			continue;
-		}
-		if ((sb.st_mode & S_IFMT) != type)
-			continue;
-		if (dev == sb.st_rdev) {
-			closedir(dfd);
-			if ((dp = strdup(devname)) == NULL) {
-				syslog(LOG_ERR, "%s", strerror(errno));
-				exit(1);
-			}
-			return (dp);
-		}
+	if (asprintf(&devpath, "%s%s", _PATH_DEV, name) == -1) {
+		syslog(LOG_ERR, "%s", strerror(errno));
+		exit(1);
 	}
-	closedir(dfd);
-	syslog(LOG_ERR, "can't find device %u/%u", major(dev), minor(dev));
-	exit(1);
+	return (devpath);
 }
 
 char *
