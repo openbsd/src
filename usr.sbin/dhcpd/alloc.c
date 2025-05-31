@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.15 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.16 2025/05/31 01:42:22 dlg Exp $	*/
 
 /* Memory allocation... */
 
@@ -55,30 +55,22 @@
 #include "dhcpd.h"
 #include "log.h"
 
-struct lease_state *free_lease_states;
-struct tree_cache *free_tree_caches;
-
 struct tree_cache *
 new_tree_cache(char *name)
 {
 	struct tree_cache *rval;
 
-	if (free_tree_caches) {
-		rval = free_tree_caches;
-		free_tree_caches = (struct tree_cache *)(rval->value);
-	} else {
-		rval = calloc(1, sizeof(struct tree_cache));
-		if (!rval)
-			fatalx("unable to allocate tree cache for %s.", name);
-	}
+	rval = calloc(1, sizeof(*rval));
+	if (rval == NULL)
+		fatalx("unable to allocate tree cache for %s.", name);
+
 	return (rval);
 }
 
 void
 free_tree_cache(struct tree_cache *ptr)
 {
-	ptr->value = (unsigned char *)free_tree_caches;
-	free_tree_caches = ptr;
+	free(ptr);
 }
 
 struct lease_state *
@@ -86,14 +78,9 @@ new_lease_state(char *name)
 {
 	struct lease_state *rval;
 
-	if (free_lease_states) {
-		rval = free_lease_states;
-		free_lease_states = free_lease_states->next;
-	} else {
-		rval = calloc(1, sizeof(struct lease_state));
-		if (!rval)
-			fatalx("unable to allocate lease state for %s.", name);
-	}
+	rval = calloc(1, sizeof(*rval));
+	if (rval == NULL)
+		fatalx("unable to allocate lease state for %s.", name);
 
 	return (rval);
 }
@@ -102,6 +89,5 @@ void
 free_lease_state(struct lease_state *ptr, char *name)
 {
 	free(ptr->prl);
-	ptr->next = free_lease_states;
-	free_lease_states = ptr;
+	free(ptr);
 }

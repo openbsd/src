@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.70 2025/02/07 21:48:26 bluhm Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.71 2025/05/31 01:42:22 dlg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -134,8 +134,6 @@ struct lease {
 };
 
 struct lease_state {
-	struct lease_state *next;
-
 	struct interface_info *ip;
 
 	time_t offered_expiry;
