@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.47 2025/05/31 07:47:45 dlg Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.48 2025/05/31 07:49:48 dlg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -329,7 +329,7 @@ another:
 			if (timeouts->when <= cur_time) {
 				struct dhcpd_timeout *t = timeouts;
 				timeouts = timeouts->next;
-				(*(t->func))(t->what);
+				t->func(t->what);
 				free(t);
 				goto another;
 			}
@@ -388,7 +388,7 @@ another:
 				continue;
 
 			if (fds[i].revents & (POLLIN | POLLHUP))
-				(*(l->handler))(l);
+				l->handler(l);
 		}
 		if ((syncfd != -1) && (fds[i].revents & (POLLIN | POLLHUP)))
 			sync_recv();
