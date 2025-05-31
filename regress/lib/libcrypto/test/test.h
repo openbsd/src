@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.2 2025/05/22 02:23:41 joshua Exp $ */
+/*	$OpenBSD: test.h,v 1.3 2025/05/31 08:25:04 tb Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -56,7 +56,7 @@ void test_fail(struct test *_t);
  *
  * This printf will write directly, without any additional formatting.
  */
-void test_printf(struct test *_t, const char *_fmt, ...);
+void test_printf(struct test *_t, const char *_fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
 
@@ -72,7 +72,7 @@ void test_printf(struct test *_t, const char *_fmt, ...);
  * This function should never be called directly.
  */
 void test_logf_internal(struct test *_t, const char *_label, const char *_func,
-    const char *_file, int _line, const char *_fmt, ...);
+    const char *_file, int _line, const char *_fmt, ...)
     __attribute__((__format__ (printf, 6, 7)))
     __attribute__((__nonnull__ (6)));
 
@@ -109,7 +109,7 @@ void test_skip(struct test *_t, const char *_reason);
  * test_skipf marks the test as skipped with a formatted reason. Once called,
  * the test should return.
  */
-void test_skipf(struct test *_t, const char *_fmt, ...);
+void test_skipf(struct test *_t, const char *_fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
 
