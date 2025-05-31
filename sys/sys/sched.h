@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.74 2025/05/16 13:40:30 mpi Exp $	*/
+/*	$OpenBSD: sched.h,v 1.75 2025/05/31 06:58:27 claudio Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -104,6 +104,7 @@ struct smr_entry;
 
 /*
  * Per-CPU scheduler state.
+ *	o	owned (modified only) by this CPU
  */
 struct schedstate_percpu {
 	struct proc *spc_idleproc;	/* idle proc for this cpu */
@@ -113,7 +114,6 @@ struct schedstate_percpu {
 	volatile int spc_schedflags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
-	u_char spc_curpriority;		/* usrpri of curproc */
 
 	struct clockintr spc_itimer;	/* [o] itimer_update handle */
 	struct clockintr spc_profclock;	/* [o] profclock handle */
@@ -131,6 +131,7 @@ struct schedstate_percpu {
 	u_char spc_smrexpedite;		/* if set, dispatch smr entries
 					 * without delay */
 	u_char spc_smrgp;		/* this CPU's view of grace period */
+	volatile u_char spc_curpriority; /* [o] usrpri of curproc */
 };
 
 /* spc_flags */

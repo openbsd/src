@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.364 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.365 2025/05/31 06:58:27 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1686,10 +1686,10 @@ proc_stop_finish(struct proc *p)
 	if (p->p_stat == SSTOP) {
 		p->p_ru.ru_nvcsw++;
 		mi_switch();
+	} else {
+		KASSERT(p->p_stat == SONPROC);
+		SCHED_UNLOCK();
 	}
-	KASSERT(p->p_stat == SONPROC);
-
-	SCHED_UNLOCK();
 	mtx_enter(&pr->ps_mtx);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.99 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.100 2025/05/31 06:58:27 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -317,7 +317,6 @@ yield(void)
 	setrunqueue(p->p_cpu, p, p->p_usrpri);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
-	SCHED_UNLOCK();
 }
 
 /*
@@ -335,7 +334,6 @@ preempt(void)
 	setrunqueue(p->p_cpu, p, p->p_usrpri);
 	p->p_ru.ru_nivcsw++;
 	mi_switch();
-	SCHED_UNLOCK();
 }
 
 void
@@ -440,7 +438,6 @@ mi_switch(void)
 	if (hold_count)
 		__mp_acquire_count(&kernel_lock, hold_count);
 #endif
-	SCHED_LOCK();
 }
 
 /*

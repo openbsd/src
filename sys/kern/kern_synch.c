@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.223 2025/05/01 06:58:21 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.224 2025/05/31 06:58:27 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -406,6 +406,7 @@ sleep_finish(int timo, int do_sleep)
 	} else {
 		KASSERT(p->p_stat == SONPROC || p->p_stat == SSLEEP);
 		p->p_stat = SONPROC;
+		SCHED_UNLOCK();
 	}
 
 #ifdef DIAGNOSTIC
@@ -414,7 +415,6 @@ sleep_finish(int timo, int do_sleep)
 #endif
 
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
-	SCHED_UNLOCK();
 
 	/*
 	 * Even though this belongs to the signal handling part of sleep,
@@ -672,7 +672,6 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	setrunqueue(p->p_cpu, p, newprio);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
-	SCHED_UNLOCK();
 
 	return (0);
 }
