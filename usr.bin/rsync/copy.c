@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.5 2025/05/29 17:03:43 deraadt Exp $ */
+/*	$OpenBSD: copy.c,v 1.6 2025/05/31 14:04:09 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  *
@@ -65,17 +65,17 @@ copy_internal(int fromfd, int tofd)
 }
 
 void
-copy_file(int rootfd, const char *basedir, const struct flist *f)
+copy_file(int rootfd, const char *basedir_abs, const struct flist *f)
 {
 	int fromfd, tofd, dfd;
 
-	dfd = open(basedir, O_RDONLY | O_DIRECTORY);
+	dfd = open(basedir_abs, O_RDONLY | O_DIRECTORY);
 	if (dfd == -1)
-		err(ERR_FILE_IO, "%s: open", basedir);
+		err(ERR_FILE_IO, "%s: open", basedir_abs);
 
 	fromfd = openat(dfd, f->path, O_RDONLY | O_NOFOLLOW);
 	if (fromfd == -1)
-		err(ERR_FILE_IO, "%s/%s: openat", basedir, f->path);
+		err(ERR_FILE_IO, "%s/%s: openat", basedir_abs, f->path);
 	close(dfd);
 
 	tofd = openat(rootfd, f->path,
