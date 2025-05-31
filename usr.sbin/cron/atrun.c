@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.54 2022/12/28 21:30:16 jmc Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.55 2025/05/31 14:31:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <millert@openbsd.org>
@@ -99,6 +99,8 @@ scan_atjobs(at_db **db, struct timespec *ts)
 
 	pending = 0;
 	while ((file = readdir(atdir)) != NULL) {
+		if (strcmp(file->d_name, "..") == 0)
+			continue;
 		if (fstatat(dfd, file->d_name, &sb, AT_SYMLINK_NOFOLLOW) != 0 ||
 		    !S_ISREG(sb.st_mode))
 			continue;
