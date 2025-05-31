@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.45 2023/09/02 10:18:45 kn Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.46 2025/05/31 06:27:59 dlg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -72,7 +72,6 @@ extern int syncfd;
 struct interface_info *interfaces;
 struct protocol *protocols;
 struct dhcpd_timeout *timeouts;
-static struct dhcpd_timeout *free_timeouts;
 static int interfaces_invalidated;
 
 static int interface_status(struct interface_info *ifinfo);
@@ -331,8 +330,7 @@ another:
 				struct dhcpd_timeout *t = timeouts;
 				timeouts = timeouts->next;
 				(*(t->func))(t->what);
-				t->next = free_timeouts;
-				free_timeouts = t;
+				free(t);
 				goto another;
 			}
 
@@ -543,18 +541,11 @@ add_timeout(time_t when, void (*where)(void *), void *what)
 	/* If we didn't supersede a timeout, allocate a timeout
 	   structure now. */
 	if (!q) {
-		if (free_timeouts) {
-			q = free_timeouts;
-			free_timeouts = q->next;
-			q->func = where;
-			q->what = what;
-		} else {
-			q = malloc(sizeof (struct dhcpd_timeout));
-			if (!q)
-				fatalx("Can't allocate timeout structure!");
-			q->func = where;
-			q->what = what;
-		}
+		q = malloc(sizeof (struct dhcpd_timeout));
+		if (!q)
+			fatalx("Can't allocate timeout structure!");
+		q->func = where;
+		q->what = what;
 	}
 
 	q->when = when;
@@ -595,15 +586,10 @@ cancel_timeout(void (*where)(void *), void *what)
 				t->next = q->next;
 			else
 				timeouts = q->next;
-			break;
+			free(q);
+			return;
 		}
 		t = q;
-	}
-
-	/* If we found the timeout, put it on the free list. */
-	if (q) {
-		q->next = free_timeouts;
-		free_timeouts = q;
 	}
 }
 
