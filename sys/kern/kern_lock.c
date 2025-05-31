@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.77 2025/05/21 18:41:41 claudio Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.78 2025/05/31 10:24:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -24,6 +24,7 @@
 #include <sys/atomic.h>
 #include <sys/witness.h>
 #include <sys/mutex.h>
+#include <sys/pclock.h>
 
 #include <ddb/db_output.h>
 
@@ -445,3 +446,102 @@ _mtx_init_flags(struct mutex *m, int ipl, const char *name, int flags,
 	_mtx_init(m, ipl);
 }
 #endif /* WITNESS */
+
+void
+pc_lock_init(struct pc_lock *pcl)
+{
+	pcl->pcl_gen = 0;
+}
+
+unsigned int
+pc_sprod_enter(struct pc_lock *pcl)
+{
+	unsigned int gen;
+
+	gen = pcl->pcl_gen;
+	pcl->pcl_gen = ++gen;
+	membar_producer();
+
+	return (gen);
+}
+
+void
+pc_sprod_leave(struct pc_lock *pcl, unsigned int gen)
+{
+	membar_producer();
+	pcl->pcl_gen = ++gen;
+}
+
+#ifdef MULTIPROCESSOR
+unsigned int
+pc_mprod_enter(struct pc_lock *pcl)
+{
+	unsigned int gen, ngen, ogen;
+
+	gen = pcl->pcl_gen;
+	for (;;) {
+		while (gen & 1) {
+			CPU_BUSY_CYCLE();
+			gen = pcl->pcl_gen;
+		}
+
+		ngen = 1 + gen;
+		ogen = atomic_cas_uint(&pcl->pcl_gen, gen, ngen);
+		if (gen == ogen)
+			break;
+
+		CPU_BUSY_CYCLE();
+		gen = ogen;
+	}
+
+	membar_enter_after_atomic();
+	return (ngen);
+}
+
+void
+pc_mprod_leave(struct pc_lock *pcl, unsigned int gen)
+{
+	membar_exit();
+	pcl->pcl_gen = ++gen;
+}
+#else /* MULTIPROCESSOR */
+unsigned int	pc_mprod_enter(struct pc_lock *)
+		    __attribute__((alias("pc_sprod_enter")));
+void		pc_mprod_leave(struct pc_lock *, unsigned int)
+		    __attribute__((alias("pc_sprod_leave")));
+#endif /* MULTIPROCESSOR */
+
+void
+pc_cons_enter(struct pc_lock *pcl, unsigned int *genp)
+{
+	unsigned int gen;
+
+	gen = pcl->pcl_gen;
+	while (gen & 1) {
+		CPU_BUSY_CYCLE();
+		gen = pcl->pcl_gen;
+	}
+
+	membar_consumer();
+	*genp = gen;
+}
+
+int
+pc_cons_leave(struct pc_lock *pcl, unsigned int *genp)
+{
+	unsigned int gen;
+
+	membar_consumer();
+
+	gen = pcl->pcl_gen;
+	if (gen & 1) {
+		do {
+			CPU_BUSY_CYCLE();
+			gen = pcl->pcl_gen;
+		} while (gen & 1);
+	} else if (gen == *genp)
+		return (0);
+
+	*genp = gen;
+	return (EBUSY);
+}
