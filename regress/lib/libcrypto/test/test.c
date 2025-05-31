@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.1 2025/05/21 08:57:13 joshua Exp $ */
+/*	$OpenBSD: test.c,v 1.2 2025/05/31 08:23:46 tb Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -46,7 +46,8 @@ test_new(struct test *pt, const char *name)
 			err(1, "strdup");
 	}
 
-	t->out = pt->out;
+	if (pt != NULL)
+		t->out = pt->out;
 	t->parent = pt;
 
 	return t;
