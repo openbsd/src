@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.27 2025/05/30 15:14:56 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.28 2025/05/31 08:26:26 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -153,20 +153,14 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			exit(1);
 		}
 	}
 
 	argc -= optind;
 	argv += optind;
 
-	/*
-	 * Build command string to give to popen
-	 */
-	if (argc <= 0) {
+	if (argc <= 0)
 		usage();
-		exit(1);
-	}
 
 	if ((cmdv = calloc(argc + 1, sizeof(char *))) == NULL)
 		err(1, "calloc");
@@ -740,8 +734,7 @@ quit(void)
 void
 usage(void)
 {
-	extern char *__progname;
-
 	fprintf(stderr, "usage: %s [-celwx] [-s seconds] command [arg ...]\n",
-	    __progname);
+	    getprogname());
+	exit(1);
 }
