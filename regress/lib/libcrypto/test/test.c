@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.2 2025/05/31 08:23:46 tb Exp $ */
+/*	$OpenBSD: test.c,v 1.3 2025/05/31 11:29:59 tb Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -74,6 +74,7 @@ test_init(void)
 		err(1, "mkstemp");
 
 	unlink(tmp_file);
+	free(tmp_file);
 	if ((t->out = fdopen(out_fd, "w+")) == NULL)
 		err(1, "fdopen");
 
