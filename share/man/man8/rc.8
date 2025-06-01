@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.8,v 1.47 2024/06/30 23:57:31 jsg Exp $
+.\"	$OpenBSD: rc.8,v 1.48 2025/06/01 07:36:05 kn Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: June 30 2024 $
+.Dd $Mdocdate: June 1 2025 $
 .Dt RC 8
 .Os
 .Sh NAME
@@ -198,6 +198,14 @@ Copy of
 saved by
 .Nm rc
 at boot time.
+.It Pa /etc/random.seed
+Random seed file read by the bootloader;
+updated at system startup and shutdown.
+.It Pa /var/db/host.random
+Random seed file read by
+.Nm rc
+and the installer on upgrades;
+updated at system startup and shutdown.
 .El
 .Sh SEE ALSO
 .Xr sysctl.conf 5 ,
