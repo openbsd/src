@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_hp_methods.c,v 1.2 2025/05/25 05:43:33 jsing Exp $	*/
+/*	$OpenBSD: ecp_hp_methods.c,v 1.3 2025/06/01 03:23:33 tb Exp $	*/
 /*
  * Copyright (c) 2024-2025 Joel Sing <jsing@openbsd.org>
  *
@@ -778,6 +778,9 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 	ret = 1;
 
  err:
+	BN_CTX_end(ctx);
+	free(prod_Z);
+
 	return ret;
 }
 #endif
