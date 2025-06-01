@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.355 2025/04/25 06:46:19 claudio Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.356 2025/06/01 08:47:51 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1207,43 +1207,52 @@ static void
 purge_task(void)
 {
 	struct passwd	*pw;
-	DIR		*d;
-	int		 n;
+	DIR		*dp;
+	struct dirent	*d;
+	int		 purge;
 	uid_t		 uid;
 	gid_t		 gid;
 
-	n = 0;
-	if ((d = opendir(PATH_SPOOL PATH_PURGE))) {
-		while (readdir(d) != NULL)
-			n++;
-		closedir(d);
-	} else
+	if ((dp = opendir(PATH_SPOOL PATH_PURGE)) == NULL) {
 		log_warn("warn: purge_task: opendir");
+		return;
+	}
 
-	if (n > 2) {
-		switch (purge_pid = fork()) {
-		case -1:
-			log_warn("warn: purge_task: fork");
-			break;
-		case 0:
-			if ((pw = getpwnam(SMTPD_QUEUE_USER)) == NULL)
-				fatalx("unknown user " SMTPD_QUEUE_USER);
-			if (chroot(PATH_SPOOL PATH_PURGE) == -1)
-				fatal("smtpd: chroot");
-			if (chdir("/") == -1)
-				fatal("smtpd: chdir");
-			uid = pw->pw_uid;
-			gid = pw->pw_gid;
-			if (setgroups(1, &gid) ||
-			    setresgid(gid, gid, gid) ||
-			    setresuid(uid, uid, uid))
-				fatal("smtpd: cannot drop privileges");
-			rmtree("/", 1);
-			_exit(0);
-			break;
-		default:
-			break;
-		}
+	purge = 0;
+	while ((d = readdir(dp)) != NULL) {
+		if (strcmp(d->d_name, ".") == 0 ||
+		    strcmp(d->d_name, "..") == 0)
+			continue;
+		purge = 1;
+		break;
+	}
+	closedir(dp);
+
+	if (!purge)
+		return;
+
+	switch (purge_pid = fork()) {
+	case -1:
+		log_warn("warn: purge_task: fork");
+		break;
+	case 0:
+		if ((pw = getpwnam(SMTPD_QUEUE_USER)) == NULL)
+			fatalx("unknown user " SMTPD_QUEUE_USER);
+		if (chroot(PATH_SPOOL PATH_PURGE) == -1)
+			fatal("smtpd: chroot");
+		if (chdir("/") == -1)
+			fatal("smtpd: chdir");
+		uid = pw->pw_uid;
+		gid = pw->pw_gid;
+		if (setgroups(1, &gid) ||
+		    setresgid(gid, gid, gid) ||
+		    setresuid(uid, uid, uid))
+			fatal("smtpd: cannot drop privileges");
+		rmtree("/", 1);
+		_exit(0);
+		break;
+	default:
+		break;
 	}
 }
 
