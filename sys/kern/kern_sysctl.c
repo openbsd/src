@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.468 2025/05/09 14:53:22 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.469 2025/06/01 03:43:48 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -171,6 +171,8 @@ int hw_sysctl_locked(int *, u_int, void *, size_t *,void *, size_t,
 	struct proc *);
 
 int (*cpu_cpuspeed)(int *);
+
+static void sysctl_ci_cp_time(struct cpu_info *, uint64_t *);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -720,11 +722,15 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		memset(cp_time, 0, sizeof(cp_time));
 
 		CPU_INFO_FOREACH(cii, ci) {
+			uint64_t ci_cp_time[CPUSTATES];
+
 			if (!cpu_is_online(ci))
 				continue;
+
 			n++;
+			sysctl_ci_cp_time(ci, ci_cp_time);
 			for (i = 0; i < CPUSTATES; i++)
-				cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
+				cp_time[i] += ci_cp_time[i];
 		}
 
 		for (i = 0; i < CPUSTATES; i++)
@@ -2822,12 +2828,27 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 }
 #endif	/* SMALL_KERNEL */
 
+static void
+sysctl_ci_cp_time(struct cpu_info *ci, uint64_t *cp_time)
+{
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	unsigned int gen;
+
+	pc_cons_enter(&spc->spc_cp_time_lock, &gen);
+	do {
+		int i;
+		for (i = 0; i < CPUSTATES; i++)
+			cp_time[i] = spc->spc_cp_time[i];
+	} while (pc_cons_leave(&spc->spc_cp_time_lock, &gen) != 0);
+}
+
 int
 sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+	uint64_t cp_time[CPUSTATES];
 	int found = 0;
 
 	if (namelen != 1)
@@ -2842,9 +2863,10 @@ sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if (!found)
 		return (ENOENT);
 
+	sysctl_ci_cp_time(ci, cp_time);
+
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
-	    &ci->ci_schedstate.spc_cp_time,
-	    sizeof(ci->ci_schedstate.spc_cp_time)));
+	    cp_time, sizeof(cp_time)));
 }
 
 #if NAUDIO > 0
@@ -2910,7 +2932,7 @@ sysctl_cpustats(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOENT);
 
 	memset(&cs, 0, sizeof cs);
-	memcpy(&cs.cs_time, &ci->ci_schedstate.spc_cp_time, sizeof(cs.cs_time));
+	sysctl_ci_cp_time(ci, cs.cs_time);
 	cs.cs_flags = 0;
 	if (cpu_is_online(ci))
 		cs.cs_flags |= CPUSTATS_ONLINE;

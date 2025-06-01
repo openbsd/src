@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.75 2025/05/31 06:58:27 claudio Exp $	*/
+/*	$OpenBSD: sched.h,v 1.76 2025/06/01 03:43:48 dlg Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -97,6 +97,7 @@ struct cpustats {
 
 #include <sys/clockintr.h>
 #include <sys/queue.h>
+#include <sys/pclock.h>
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
@@ -113,6 +114,7 @@ struct schedstate_percpu {
 	struct timespec spc_runtime;	/* time curproc started running */
 	volatile int spc_schedflags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
+	struct pc_lock spc_cp_time_lock;
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 
 	struct clockintr spc_itimer;	/* [o] itimer_update handle */

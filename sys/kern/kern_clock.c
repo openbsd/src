@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.126 2025/05/31 12:40:33 dlg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.127 2025/06/01 03:43:48 dlg Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -314,7 +314,9 @@ statclock(struct clockrequest *cr, void *cf, void *arg)
 			cp_time = CP_SPIN;
 	}
 
+	gen = pc_sprod_enter(&spc->spc_cp_time_lock);
 	spc->spc_cp_time[cp_time] += count;
+	pc_sprod_leave(&spc->spc_cp_time_lock, gen);
 
 	if (p != NULL) {
 		p->p_cpticks += count;

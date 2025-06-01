@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.100 2025/05/31 06:58:27 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.101 2025/06/01 03:43:48 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -582,6 +582,7 @@ setperf_auto(void *v)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	uint64_t idle, total, allidle = 0, alltotal = 0;
+	unsigned int gen;
 
 	if (!perfpolicy_dynamic())
 		return;
@@ -606,14 +607,23 @@ setperf_auto(void *v)
 			return;
 		}
 	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc;
+
 		if (!cpu_is_online(ci))
 			continue;
-		total = 0;
-		for (i = 0; i < CPUSTATES; i++) {
-			total += ci->ci_schedstate.spc_cp_time[i];
-		}
+
+		spc = &ci->ci_schedstate;
+		pc_cons_enter(&spc->spc_cp_time_lock, &gen);
+		do {
+			total = 0;
+			for (i = 0; i < CPUSTATES; i++) {
+				total += spc->spc_cp_time[i];
+			}
+			idle = spc->spc_cp_time[CP_IDLE];
+		} while (pc_cons_leave(&spc->spc_cp_time_lock, &gen) != 0);
+
 		total -= totalticks[j];
-		idle = ci->ci_schedstate.spc_cp_time[CP_IDLE] - idleticks[j];
+		idle -= idleticks[j];
 		if (idle < total / 3)
 			speedup = 1;
 		alltotal += total;
