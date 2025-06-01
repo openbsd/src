@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fmemopen.3,v 1.4 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: fmemopen.3,v 1.5 2025/06/01 08:40:54 op Exp $
 .\"	$NetBSD: fmemopen.3,v 1.5 2010/10/07 00:14:14 enami Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 1 2025 $
 .Dt FMEMOPEN 3
 .Os
 .Sh NAME
@@ -184,7 +184,8 @@ specified for the routine
 .Xr fflush 3 ,
 .Xr fopen 3 ,
 .Xr funopen 3 ,
-.Xr malloc 3
+.Xr malloc 3 ,
+.Xr open_memstream 3
 .Sh STANDARDS
 The function
 .Fn fmemopen
