@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: BaseState.pm,v 1.4 2023/08/30 12:04:09 espie Exp $
+# $OpenBSD: BaseState.pm,v 1.5 2025/06/01 00:45:39 bentley Exp $
 #
 # Copyright (c) 2007-2022 Marc Espie <espie@openbsd.org>
 #
@@ -272,6 +272,14 @@ sub copy($self, @p)
 		$self->say("copy(#1) failed: #2", join(',', @p), $!);
 	}
 	return $r;
+}
+
+sub change_user($self, $uid, $gid)
+{
+	$( = $gid;
+	$) = "$gid $gid";
+	$< = $uid;
+	$> = $uid;
 }
 
 1;

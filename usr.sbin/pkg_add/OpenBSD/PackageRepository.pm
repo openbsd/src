@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.177 2023/11/25 10:29:23 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.178 2025/06/01 00:45:39 bentley Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -765,10 +765,7 @@ sub drop_privileges_and_setup_env($self)
 	my ($uid, $gid, $user) = $self->fetch_id;
 	if (defined $uid) {
 		# we happen right before exec, so change id permanently
-		$( = $gid;
-		$) = "$gid $gid";
-		$< = $uid;
-		$> = $uid;
+		$self->{state}->change_user($uid, $gid);
 	}
 	# create sanitized env for ftp
 	my %newenv = (
