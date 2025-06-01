@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.166 2025/05/23 00:20:02 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.167 2025/06/01 20:14:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -1148,11 +1148,11 @@ PRT_menuid_to_guid(const int menuid)
 	return NULL;
 }
 
-const char	*
+const char *
 PRT_desc_to_guid(const char *desc)
 {
-	char buf[37];
-	unsigned int		 i;
+	char			buf[37];
+	unsigned int		i;
 
 	strlcpy(buf, desc, sizeof(buf));
 	for (i = strlen(buf); i > 0; i--) {
