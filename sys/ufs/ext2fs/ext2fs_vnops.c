@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.94 2024/05/13 11:17:41 semarie Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.95 2025/06/01 00:32:54 rsadowski Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -183,13 +183,8 @@ ext2fs_getattr(void *v)
 	vap->va_mtime.tv_nsec = 0;
 	vap->va_ctime.tv_sec = ip->i_e2fs_ctime;
 	vap->va_ctime.tv_nsec = 0;
-#ifdef EXT2FS_SYSTEM_FLAGS
 	vap->va_flags = (ip->i_e2fs_flags & EXT2_APPEND) ? SF_APPEND : 0;
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? SF_IMMUTABLE : 0;
-#else
-	vap->va_flags = (ip->i_e2fs_flags & EXT2_APPEND) ? UF_APPEND : 0;
-	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? UF_IMMUTABLE : 0;
-#endif
 	vap->va_gen = ip->i_e2fs_gen;
 	/* this doesn't belong here */
 	if (vp->v_type == VBLK)
@@ -232,7 +227,6 @@ ext2fs_setattr(void *v)
 		if (cred->cr_uid != ip->i_e2fs_uid &&
 			(error = suser_ucred(cred)))
 			return (error);
-#ifdef EXT2FS_SYSTEM_FLAGS
 		if (cred->cr_uid == 0) {
 			if ((ip->i_e2fs_flags &
 			    (EXT2_APPEND | EXT2_IMMUTABLE)) && securelevel > 0)
@@ -244,12 +238,6 @@ ext2fs_setattr(void *v)
 		} else {
 			return (EPERM);
 		}
-#else
-		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-		ip->i_e2fs_flags |=
-		    (vap->va_flags & UF_APPEND) ? EXT2_APPEND : 0 |
-		    (vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE: 0;
-#endif
 		ip->i_flag |= IN_CHANGE;
 		if (vap->va_flags & (IMMUTABLE | APPEND))
 			return (0);
