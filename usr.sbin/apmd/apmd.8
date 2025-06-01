@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.61 2025/06/01 07:36:05 kn Exp $
+.\"	$OpenBSD: apmd.8,v 1.62 2025/06/01 08:17:22 kn Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -181,14 +181,14 @@ in the requested state after running the configuration script and
 flushing the buffer cache.
 .Pp
 Actions can be configured for the following transitions:
-warnlow,
-suspend,
 hibernate,
-standby,
-resume,
+powerdown,
 powerup,
+resume,
+standby,
+suspend,
 and
-powerdown.
+warnlow.
 The warnlow action is run if
 .Fl w
 is used.
@@ -204,28 +204,20 @@ status changed in the mean time).
 .Sh FILES
 .Bl -tag -width "/etc/apm/powerdownXX" -compact
 .It Pa /dev/apmctl
-Default device used to control the APM kernel driver.
+Default device used to control
+.Xr apm 4 .
 .Pp
-.It Pa /etc/apm/warnlow
-.It Pa /etc/apm/suspend
 .It Pa /etc/apm/hibernate
-.It Pa /etc/apm/standby
-.It Pa /etc/apm/resume
-.It Pa /etc/apm/powerup
 .It Pa /etc/apm/powerdown
-These files contain the host's customized actions.
+.It Pa /etc/apm/powerup
+.It Pa /etc/apm/resume
+.It Pa /etc/apm/standby
+.It Pa /etc/apm/suspend
+.It Pa /etc/apm/warnlow
+Action hook files which, if present, must be executable.
 Each file must be an executable binary or shell script.
 A single program or script can be used to control all transitions
-by examining the name by which it was called,
-which is one of
-.Dq warnlow ,
-.Dq suspend ,
-.Dq hibernate ,
-.Dq standby ,
-.Dq resume ,
-.Dq powerup ,
-or
-.Dq powerdown .
+by examining the name by which it was called.
 .Pp
 .It Pa /etc/random.seed
 Random seed file read by the bootloader;
@@ -240,6 +232,19 @@ Default
 .Ux Ns -domain
 socket used for communication with
 .Xr apm 8 .
+.El
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Pa /etc/apm/suspend
+.Bd -literal -offset indent -compact
+# X11 screen lock
+pkill -USR1 xidle
+.Ed
+.It Pa /etc/apm/warnlow
+.Bd -literal -offset indent -compact
+# low battery notifications
+aucat -i /etc/apm/tired.wav
+.Ed
 .El
 .Sh SEE ALSO
 .Xr syslog 3 ,
