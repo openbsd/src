@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.30 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.31 2025/06/02 12:40:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -680,8 +680,10 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 					/* A >= 2*B, so D=2 or D=3 */
 					if (!BN_sub(M, A, T))
 						goto err;
-					if (!BN_add(D,T,B)) goto err; /* use D (:= 3*B) as temp */
-						if (BN_ucmp(A, D) < 0) {
+					/* use D (:= 3*B) as temp */
+					if (!BN_add(D, T, B))
+						goto err;
+					if (BN_ucmp(A, D) < 0) {
 						/* A < 3*B, so D=2 */
 						if (!BN_set_word(D, 2))
 							goto err;
