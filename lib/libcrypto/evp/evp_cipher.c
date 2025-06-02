@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.26 2025/05/27 03:58:12 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.27 2025/06/02 08:50:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -947,10 +947,16 @@ LCRYPTO_ALIAS(EVP_CIPHER_CTX_flags);
  * Used by CMS and its predecessors. Only RC2 has a custom method.
  */
 
-static int
-EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+int
+EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int iv_len;
+
+	if (ctx->cipher->get_asn1_parameters != NULL)
+		return ctx->cipher->get_asn1_parameters(ctx, type);
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) == 0)
+		return -1;
 
 	if (type == NULL)
 		return 0;
@@ -970,21 +976,15 @@ EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 }
 
 int
-EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	if (ctx->cipher->get_asn1_parameters != NULL)
-		return ctx->cipher->get_asn1_parameters(ctx, type);
-
-	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
-		return EVP_CIPHER_get_asn1_iv(ctx, type);
-
-	return -1;
-}
-
-static int
-EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int iv_len;
+
+	if (ctx->cipher->set_asn1_parameters != NULL)
+		return ctx->cipher->set_asn1_parameters(ctx, type);
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) == 0)
+		return -1;
 
 	if (type == NULL)
 		return 0;
@@ -996,18 +996,6 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 	}
 
 	return ASN1_TYPE_set_octetstring(type, ctx->oiv, iv_len);
-}
-
-int
-EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	if (ctx->cipher->set_asn1_parameters != NULL)
-		return ctx->cipher->set_asn1_parameters(ctx, type);
-
-	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
-		return EVP_CIPHER_set_asn1_iv(ctx, type);
-
-	return -1;
 }
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
