@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.88 2024/02/14 06:16:53 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.89 2025/06/02 18:49:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -103,7 +103,6 @@ vaddr_t virtual_end = VM_MAX_KERNEL_ADDRESS;
 #define CD_RMPG		0x00000100	/* pmap_remove_page */
 #define CD_EXP		0x00000200	/* pmap_expand */
 #define CD_ENT		0x00000400	/* pmap_enter / pmap_kenter_pa */
-#define CD_COL		0x00000800	/* pmap_collect */
 #define CD_CBIT		0x00001000	/* pmap_changebit */
 #define CD_TBIT		0x00002000	/* pmap_testbit */
 #define CD_USBIT	0x00004000	/* pmap_unsetbit */
@@ -945,46 +944,6 @@ pmap_reference(pmap_t pmap)
 }
 
 /*
- * [MI]
- * Attempt to regain memory by freeing disposable page tables.
- */
-void
-pmap_collect(pmap_t pmap)
-{
-	u_int u, v;
-	sdt_entry_t *sdt;
-	pt_entry_t *pte;
-	vaddr_t va;
-	paddr_t pa;
-	int s;
-
-	DPRINTF(CD_COL, ("pmap_collect(%p)\n", pmap));
-
-	s = splvm();
-	for (sdt = pmap->pm_stab, va = 0, u = SDT_ENTRIES; u != 0;
-	    sdt++, va += (1 << SDT_SHIFT), u--) {
-		if (!SDT_VALID(sdt))
-			continue;
-		pte = sdt_pte(sdt, 0);
-		for (v = PDT_ENTRIES; v != 0; pte++, v--)
-			if (pmap_pte_w(pte)) /* wired mappings can't go */
-				break;
-		if (v != 0)
-			continue;
-		/* found a suitable pte page to reclaim */
-		pmap_remove_range(pmap, va, va + (1 << SDT_SHIFT));
-
-		pa = *sdt & PG_FRAME;
-		*sdt = SG_NV;
-		pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_DFL);
-		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
-	}
-	splx(s);
-
-	DPRINTF(CD_COL, ("pmap_collect(%p) done\n", pmap));
-}
-
-/*
  * Virtual mapping/unmapping routines
  */
 
@@ -1419,8 +1378,7 @@ pmap_remove_page(struct vm_page *pg)
 		pmap_remove_pte(pmap, va, pte, pg, TRUE);
 		pvep = head;
 		/*
-		 * Do not free any empty page tables,
-		 * leave that for when VM calls pmap_collect().
+		 * Do not free any empty page tables.
 		 */
 	}
 	splx(s);

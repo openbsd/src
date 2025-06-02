@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.96 2024/11/08 13:18:29 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.97 2025/06/02 18:49:04 claudio Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -231,7 +231,6 @@ struct pmap *pmap_create(void);
 void pmap_destroy(struct pmap *);
 void pmap_reference(struct pmap *);
 void pmap_remove(struct pmap *, vaddr_t, vaddr_t);
-void pmap_collect(struct pmap *);
 void pmap_activate(struct proc *);
 void pmap_deactivate(struct proc *);
 void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);

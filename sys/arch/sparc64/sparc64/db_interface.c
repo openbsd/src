@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.66 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.67 2025/06/02 18:49:04 claudio Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -746,7 +746,6 @@ db_dump_pmap(struct pmap* pm)
 	/* print all valid pages in the kernel pmap */
 	long i, j, k, n;
 	paddr_t *pdir, *ptbl;
-	/* Almost the same as pmap_collect() */
 
 	n = 0;
 	for (i=0; i<STSZ; i++) {

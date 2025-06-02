@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.39 2024/11/07 05:24:43 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.40 2025/06/02 18:49:04 claudio Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 2001/04/22 23:19:30 thorpej Exp $	*/
 
 /*-
@@ -173,8 +173,6 @@ int	pmap_copyinsn(pmap_t, vaddr_t, uint32_t *);
 #define PMAP_CHECK_COPYIN	CPU_ISSUN4V
 
 #define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
-
-#define	__HAVE_PMAP_COLLECT
 
 /* SPARC specific? */
 int	pmap_dumpsize(void);

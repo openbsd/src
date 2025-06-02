@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.90 2025/05/20 07:02:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.91 2025/06/02 18:49:04 claudio Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -317,110 +317,6 @@ uvm_init_limits(struct plimit *limit0)
 	limit0->pl_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
 	limit0->pl_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
-
-#ifdef __HAVE_PMAP_COLLECT
-
-#ifdef DEBUG
-int	enableswap = 1;
-int	swapdebug = 0;
-#define	SDB_FOLLOW	1
-#define SDB_SWAPIN	2
-#define SDB_SWAPOUT	4
-#endif
-
-
-/*
- * swapout_threads: find threads that can be swapped
- *
- * - called by the pagedaemon
- * - try and swap at least one process
- * - processes that are sleeping or stopped for maxslp or more seconds
- *   are swapped... otherwise the longest-sleeping or stopped process
- *   is swapped, otherwise the longest resident process...
- */
-int
-uvm_swapout_threads(void)
-{
-	struct process *pr;
-	struct proc *p, *slpp;
-	struct process *outpr;
-	int free, outpri;
-	int didswap = 0;
-	extern int maxslp; 
-	/* XXXCDC: should move off to uvmexp. or uvm., also in uvm_meter */
-
-#ifdef DEBUG
-	if (!enableswap)
-		return;
-#endif
-
-	free = uvmexp.free;
-
-	/*
-	 * outpr/outpri  : stop/sleep process whose most active thread has
-	 *	the largest sleeptime < maxslp
-	 */
-	outpr = NULL;
-	outpri = 0;
-	LIST_FOREACH(pr, &allprocess, ps_list) {
-		if (pr->ps_flags & (PS_SYSTEM | PS_EXITING))
-			continue;
-
-		/*
-		 * slpp: the sleeping or stopped thread in pr with
-		 * the smallest p_slptime
-		 */
-		slpp = NULL;
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
-			switch (p->p_stat) {
-			case SRUN:
-			case SONPROC:
-				goto next_process;
-
-			case SSLEEP:
-			case SSTOP:
-				if (slpp == NULL ||
-				    slpp->p_slptime < p->p_slptime)
-					slpp = p;
-				continue;
-			}
-		}
-
-		if (slpp != NULL) {
-			if (slpp->p_slptime >= maxslp) {
-				pmap_collect(pr->ps_vmspace->vm_map.pmap);
-				didswap++;
-			} else if (slpp->p_slptime > outpri) {
-				outpr = pr;
-				outpri = slpp->p_slptime;
-			}
-		}
-next_process:	;
-	}
-
-	/*
-	 * If we didn't get rid of any real duds, toss out the next most
-	 * likely sleeping/stopped or running candidate.  We only do this
-	 * if we are real low on memory since we don't gain much by doing
-	 * it.
-	 */
-	if (didswap == 0 && free <= atop(round_page(USPACE)) && outpr != NULL) {
-#ifdef DEBUG
-		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procpr %p\n",
-			    outpr);
-#endif
-		pmap_collect(outpr->ps_vmspace->vm_map.pmap);
-	}
-
-	/*
-	 * XXX might return a non-0 value even if pmap_collect() didn't
-	 * free anything.
-	 */
-	return (uvmexp.free - free);
-}
-
-#endif	/* __HAVE_PMAP_COLLECT */
 
 /*
  * uvm_atopg: convert KVAs back to their page structures.

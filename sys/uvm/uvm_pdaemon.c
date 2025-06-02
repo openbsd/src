@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.136 2025/03/10 18:54:38 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.137 2025/06/02 18:49:04 claudio Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -912,20 +912,6 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage)
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	uvmexp.pdrevs++;		/* counter */
-
-
-#ifdef __HAVE_PMAP_COLLECT
-	/*
-	 * swap out some processes if we are below our free target.
-	 * we need to unlock the page queues for this.
-	 */
-	if (shortage > 0) {
-		uvmexp.pdswout++;
-		uvm_unlock_pageq();
-		shortage -= uvm_swapout_threads();
-		uvm_lock_pageq();
-	}
-#endif
 
 	/*
 	 * now we want to work on meeting our targets.   first we work on our

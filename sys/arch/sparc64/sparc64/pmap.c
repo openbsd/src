@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.122 2025/06/02 18:49:04 claudio Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1520,56 +1520,6 @@ pmap_release(struct pmap *pm)
 	pmap_free_page(tmp, pm);
 	mtx_leave(&pm->pm_mtx);
 	ctx_free(pm);
-}
-
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(struct pmap *pm)
-{
-	int i, j, k, n, m, s;
-	paddr_t *pdir, *ptbl;
-	/* This is a good place to scan the pmaps for page tables with
-	 * no valid mappings in them and free them. */
-	
-	/* NEVER GARBAGE COLLECT THE KERNEL PMAP */
-	if (pm == pmap_kernel())
-		return;
-
-	s = splvm();
-	for (i=0; i<STSZ; i++) {
-		if ((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
-			m = 0;
-			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
-					m++;
-					n = 0;
-					for (j=0; j<PTSZ; j++) {
-						int64_t data = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
-						if (data&TLB_V)
-							n++;
-					}
-					if (!n) {
-						/* Free the damn thing */
-						stxa((paddr_t)(u_long)&pdir[k], ASI_PHYS_CACHED, 0);
-						pmap_free_page((paddr_t)ptbl, pm);
-					}
-				}
-			}
-			if (!m) {
-				/* Free the damn thing */
-				stxa((paddr_t)(u_long)&pm->pm_segs[i], ASI_PHYS_CACHED, 0);
-				pmap_free_page((paddr_t)pdir, pm);
-			}
-		}
-	}
-	splx(s);
 }
 
 void

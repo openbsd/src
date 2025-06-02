@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.125 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.126 2025/06/02 18:49:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -580,61 +580,6 @@ pmap_destroy(pmap_t pmap)
 	}
 
 	pool_put(&pmap_pmap_pool, pmap);
-}
-
-void
-pmap_collect(pmap_t pmap)
-{
-	void *pmpg;
-	pt_entry_t **pde, *pte;
-	unsigned int i, j, k;
-	unsigned int m, n;
-
-	DPRINTF(PDB_FOLLOW, ("pmap_collect(%p)\n", pmap));
-
-	/* There is nothing to garbage collect in the kernel pmap. */
-	if (pmap == pmap_kernel())
-		return;
-
-	pmap_lock(pmap);
-
-	/*
-	 * When unlinking a directory page, the subsequent call to
-	 * pmap_shootdown_range() lets any parallel lockless directory
-	 * traversals end before the page gets freed.
-	 */
-
-	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
-		if ((pde = pmap->pm_segtab->seg_tab[i]) == NULL)
-			continue;
-		m = 0;
-		for (j = 0; j < NPDEPG; j++) {
-			if ((pte = pde[j]) == NULL)
-				continue;
-			n = 0;
-			for (k = 0; k < NPTEPG; k++) {
-				if (pte[k] & PG_V) {
-					n++;
-					break;
-				}
-			}
-			if (n == 0) {
-				pmpg = pde[j];
-				pde[j] = NULL;
-				pmap_shootdown_range(pmap, 0, 0, 0);
-				pool_put(&pmap_pg_pool, pmpg);
-			} else
-				m++;
-		}
-		if (m == 0) {
-			pmpg = pmap->pm_segtab->seg_tab[i];
-			pmap->pm_segtab->seg_tab[i] = NULL;
-			pmap_shootdown_range(pmap, 0, 0, 0);
-			pool_put(&pmap_pg_pool, pmpg);
-		}
-	}
-
-	pmap_unlock(pmap);
 }
 
 /*

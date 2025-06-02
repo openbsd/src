@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.31 2024/02/14 06:16:53 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.32 2025/06/02 18:49:04 claudio Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -83,7 +83,6 @@ vm_page_t pmap_unmap_direct(vaddr_t);
 
 #define	__HAVE_PMAP_DIRECT
 #define	PMAP_STEAL_MEMORY
-#define	__HAVE_PMAP_COLLECT
 
 #endif	/* _KERNEL */
 
