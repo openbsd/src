@@ -31,4 +31,12 @@ acpi_video_report_nolcd(void)
 {
 }
 
+enum acpi_backlight_type {
+	acpi_backlight_none = 0,
+	acpi_backlight_video,
+	acpi_backlight_native
+};
+
+enum acpi_backlight_type acpi_video_get_backlight_type(void);
+
 #endif

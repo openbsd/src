@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.123 2025/05/01 01:16:42 dlg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.124 2025/06/02 10:25:01 jmatthew Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -29,6 +29,10 @@
 #include <sys/fcntl.h>
 
 #include <dev/pci/ppbreg.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+
+#include <acpi/video.h>
 
 #include <linux/dma-buf.h>
 #include <linux/mod_devicetable.h>
@@ -1535,6 +1539,17 @@ int
 acpi_target_system_state(void)
 {
 	return acpi_softc->sc_state;
+}
+
+enum acpi_backlight_type
+acpi_video_get_backlight_type(void)
+{
+	struct wsdisplay_param dp;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (ws_get_param && ws_get_param(&dp) == 0)
+		return acpi_backlight_video;
+	return acpi_backlight_native;
 }
 
 #endif

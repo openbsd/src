@@ -491,13 +491,11 @@ static u32 asle_set_backlight(struct intel_display *display, u32 bclp)
 
 	drm_dbg(display->drm, "bclp = 0x%08x\n", bclp);
 
-#ifdef __linux__
 	if (acpi_video_get_backlight_type() == acpi_backlight_native) {
 		drm_dbg_kms(display->drm,
 			    "opregion backlight request ignored\n");
 		return 0;
 	}
-#endif
 
 	if (!(bclp & ASLE_BCLP_VALID))
 		return ASLC_BACKLIGHT_FAILED;
