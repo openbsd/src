@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.219 2025/05/05 16:32:22 schwarze Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.220 2025/06/02 20:57:36 schwarze Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1273,17 +1273,18 @@ auto_fetch(int argc, char *argv[], char *outfile)
 	/*
 	 * Loop through as long as there's files to fetch.
 	 */
-	username = pass = NULL;
-	for (rval = 0; (rval == 0) && (argpos < argc); free(url), argpos++) {
+	url = username = pass = NULL;
+	for (rval = 0; (rval == 0) && (argpos < argc); argpos++) {
 		if (strchr(argv[argpos], ':') == NULL) {
 			warnx("No colon in URL: %s", argv[argpos]);
 			rval = argpos + 1;
 			continue;
 		}
 
+		free(url);
 		free(username);
 		free(pass);
-		host = dir = file = portnum = username = pass = NULL;
+		url = username = pass = host = portnum = dir = file = NULL;
 
 		lastfile = (argv[argpos+1] == NULL);
 
@@ -1550,6 +1551,9 @@ bad_ftp_url:
 		if ((code / 100) != COMPLETE)
 			rval = argpos + 1;
 	}
+	free(url);
+	free(username);
+	free(pass);
 	if (connected && rval != -1)
 		disconnect(0, NULL);
 	return (rval);
