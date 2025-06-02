@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.102 2025/03/10 09:28:56 claudio Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.103 2025/06/02 12:29:50 claudio Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -585,7 +585,8 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 #ifdef MULTIPROCESSOR
-			if (__mp_lock_held(&kernel_lock, p->p_cpu))
+			if (p->p_cpu != NULL &&
+			    __mp_lock_held(&kernel_lock, p->p_cpu))
 				has_kernel_lock = 1;
 			else
 				has_kernel_lock = 0;
