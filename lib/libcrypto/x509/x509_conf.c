@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.30 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.31 2025/06/02 12:18:21 jsg Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -242,8 +242,9 @@ v3_check_critical(const char **value)
 	if ((strlen(p) < 9) || strncmp(p, "critical,", 9))
 		return 0;
 	p += 9;
-	while (isspace((unsigned char)*p)) p++;
-		*value = p;
+	while (isspace((unsigned char)*p))
+		p++;
+	*value = p;
 	return 1;
 }
 

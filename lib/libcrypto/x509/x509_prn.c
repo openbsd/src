@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_prn.c,v 1.6 2023/05/08 05:30:38 tb Exp $ */
+/* $OpenBSD: x509_prn.c,v 1.7 2025/06/02 12:18:22 jsg Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -87,8 +87,9 @@ X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
 	for (i = 0; i < sk_CONF_VALUE_num(val); i++) {
 		if (ml)
 			BIO_printf(out, "%*s", indent, "");
-		else if (i > 0) BIO_printf(out, ", ");
-			nval = sk_CONF_VALUE_value(val, i);
+		else if (i > 0)
+			BIO_printf(out, ", ");
+		nval = sk_CONF_VALUE_value(val, i);
 		if (!nval->name)
 			BIO_puts(out, nval->value);
 		else if (!nval->value)

@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.42 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.43 2025/06/02 12:18:21 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,7 +141,7 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			}
 			for (; *p != '\0'; p++) {
 				if ((*p == ':') || (*p == '/'))
-				break;
+					break;
 			}
 
 			i= *p;

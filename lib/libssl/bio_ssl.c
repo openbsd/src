@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.40 2023/07/19 13:34:33 tb Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.41 2025/06/02 12:18:22 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,9 +229,7 @@ ssl_write(BIO *b, const char *out, int outl)
 
 	BIO_clear_retry_flags(b);
 
-/*	ret=SSL_do_handshake(ssl);
-	if (ret > 0) */
-		ret = SSL_write(ssl, out, outl);
+	ret = SSL_write(ssl, out, outl);
 
 	switch (SSL_get_error(ssl, ret)) {
 	case SSL_ERROR_NONE:

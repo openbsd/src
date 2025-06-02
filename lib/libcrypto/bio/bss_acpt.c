@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.32 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.33 2025/06/02 12:18:21 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -261,11 +261,12 @@ again:
 		if (c->bio_chain != NULL) {
 			if ((dbio = BIO_dup_chain(c->bio_chain)) == NULL)
 				goto err;
-			if (!BIO_push(dbio, bio)) goto err;
-				bio = dbio;
+			if (!BIO_push(dbio, bio))
+				goto err;
+			bio = dbio;
 		}
-		if (BIO_push(b, bio)
-			== NULL) goto err;
+		if (BIO_push(b, bio) == NULL)
+			goto err;
 
 		c->state = ACPT_S_OK;
 		return (1);

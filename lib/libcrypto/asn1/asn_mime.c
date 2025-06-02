@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.36 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.37 2025/06/02 12:18:21 jsg Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -507,8 +507,9 @@ SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 			*bcont = sk_BIO_value(parts, 0);
 			BIO_free(asnin);
 			sk_BIO_free(parts);
-		} else sk_BIO_pop_free(parts, BIO_vfree);
-			return val;
+		} else
+			sk_BIO_pop_free(parts, BIO_vfree);
+		return val;
 	}
 
 	/* OK, if not multipart/signed try opaque signature */

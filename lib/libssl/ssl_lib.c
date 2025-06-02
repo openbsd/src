@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.331 2025/03/12 14:03:55 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.332 2025/06/02 12:18:22 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3008,8 +3008,9 @@ SSL_dup(SSL *s)
 
 	/* Dup the client_CA list */
 	if (s->client_CA != NULL) {
-		if ((sk = sk_X509_NAME_dup(s->client_CA)) == NULL) goto err;
-			ret->client_CA = sk;
+		if ((sk = sk_X509_NAME_dup(s->client_CA)) == NULL)
+			goto err;
+		ret->client_CA = sk;
 		for (i = 0; i < sk_X509_NAME_num(sk); i++) {
 			xn = sk_X509_NAME_value(sk, i);
 			if (sk_X509_NAME_set(sk, i,
