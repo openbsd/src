@@ -6,7 +6,12 @@
 #define CONFIG_BACKLIGHT_CLASS_DEVICE		1
 #define CONFIG_DRM_FBDEV_EMULATION		1
 #define CONFIG_DRM_CLIENT_SETUP			1
+
+#ifdef notyet
+/* causes Intel GuC init to fail with large fbs */
 #define CONFIG_FRAMEBUFFER_CONSOLE		1
+#endif
+
 #define CONFIG_DRM_PANEL			1
 #define CONFIG_DRM_I915_CAPTURE_ERROR		1
 #define CONFIG_DRM_AMD_DC			1
