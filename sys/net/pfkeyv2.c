@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.267 2025/05/13 09:16:33 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.268 2025/06/03 14:49:05 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1068,7 +1068,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 		break;
 
 	case SADB_SATYPE_ESP:
-		if (!esp_enable)
+		if (!atomic_load_int(&esp_enable))
 			return (EOPNOTSUPP);
 
 		*sproto = IPPROTO_ESP;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.101 2025/05/14 14:32:15 mvs Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.102 2025/06/03 14:49:05 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -91,7 +91,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready,
 #endif
 
 	/* Check that the transform is allowed by the administrator. */
-	if ((tdb->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
+	if ((tdb->tdb_sproto == IPPROTO_ESP && !atomic_load_int(&esp_enable)) ||
 	    (tdb->tdb_sproto == IPPROTO_AH && !atomic_load_int(&ah_enable)) ||
 	    (tdb->tdb_sproto == IPPROTO_IPCOMP &&
 	    !atomic_load_int(&ipcomp_enable))) {

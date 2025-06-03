@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.216 2025/05/22 03:12:33 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.217 2025/06/03 14:49:05 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -118,12 +118,15 @@ int ipsec_soft_first_use = IPSEC_DEFAULT_SOFT_FIRST_USE;	/* [a] */
 int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;		/* [a] */
 int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;	/* [a] */
 
-int esp_enable = 1;
+int esp_enable = 1;		/* [a] */
 int ah_enable = 1;		/* [a] */
 int ipcomp_enable = 0;		/* [a] */
 
 const struct sysctl_bounded_args espctl_vars[] = {
 	{ESPCTL_ENABLE, &esp_enable, 0, 1},
+};
+
+const struct sysctl_bounded_args espctl_vars_locked[] = {
 	{ESPCTL_UDPENCAP_ENABLE, &udpencap_enable, 0, 1},
 	{ESPCTL_UDPENCAP_PORT, &udpencap_port, 0, 65535},
 };
@@ -724,9 +727,13 @@ esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case ESPCTL_STATS:
 		return (esp_sysctl_espstat(oldp, oldlenp, newp));
+	case ESPCTL_ENABLE:
+		error = sysctl_bounded_arr(espctl_vars, nitems(espctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen);
 	default:
 		NET_LOCK();
-		error = sysctl_bounded_arr(espctl_vars, nitems(espctl_vars),
+		error = sysctl_bounded_arr(espctl_vars_locked,
+		    nitems(espctl_vars_locked),
 		    name, namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		return (error);
@@ -876,7 +883,7 @@ esp46_input(struct mbuf **mp, int *offp, int proto, int af,
 #if NPF > 0
 	    ((*mp)->m_pkthdr.pf.flags & PF_TAG_DIVERTED) ||
 #endif
-	    !esp_enable)
+	    !atomic_load_int(&esp_enable))
 		return ipsec_input_disabled(mp, offp, proto, af, ns);
 
 	protoff = ipsec_protoff(*mp, *offp, af);
