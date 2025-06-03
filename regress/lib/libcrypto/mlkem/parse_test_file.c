@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_test_file.c,v 1.5 2025/06/03 10:25:29 tb Exp $ */
+/*	$OpenBSD: parse_test_file.c,v 1.6 2025/06/03 10:29:37 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -736,7 +736,10 @@ parse_next_line(struct parse *p)
 static void
 parse_finish(struct parse *p)
 {
+	const struct test_parse *tctx = p->tctx;
+
 	parse_state_finish(&p->state);
+	tctx->finish(p->ctx);
 
 	free(p->buf);
 
