@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_test_file.c,v 1.4 2025/04/13 09:14:56 tb Exp $ */
+/*	$OpenBSD: parse_test_file.c,v 1.5 2025/06/03 10:25:29 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -646,7 +646,8 @@ parse_reinit(struct parse *p)
 	p->state.running_test_case = 0;
 	parse_line_data_clear(p);
 	tctx->finish(p->ctx);
-	tctx->init(p->ctx, p);
+	if (!tctx->init(p->ctx, p))
+		parse_errx(p, "init failed");
 }
 
 static int
@@ -708,7 +709,8 @@ parse_init(struct parse *p, const char *fn, const struct test_parse *tctx,
 	parse_state_init(&p->state, tctx->num_states, tctx->num_instructions);
 	p->tctx = tctx;
 	p->ctx = ctx;
-	tctx->init(ctx, p);
+	if (!tctx->init(p->ctx, p))
+		parse_errx(p, "init failed");
 }
 
 static int
