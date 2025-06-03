@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.8 2024/11/08 21:13:34 landry Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.9 2025/06/03 13:40:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -80,6 +80,7 @@ struct qcpas_softc {
 	uint32_t		sc_dtb_pas_id;
 	uint32_t		sc_lite_pas_id;
 	char			*sc_load_state;
+	int			sc_chg_ctrl;
 
 	struct qcpas_dmamem	*sc_metadata[2];
 
@@ -186,6 +187,7 @@ qcpas_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dtb_pas_id = 36;
 		sc->sc_lite_pas_id = 31;
 		sc->sc_load_state = "adsp";
+		sc->sc_chg_ctrl = 1;
 	}
 
 	qcpas_intr_establish(sc, 0, "wdog", qcpas_intr_wdog);
@@ -1200,12 +1202,16 @@ struct pmic_glink_hdr {
 #define BATTMGR_OPCODE_BAT_INFO			0x9
 #define BATTMGR_OPCODE_BAT_DISCHARGE_TIME	0xc
 #define BATTMGR_OPCODE_BAT_CHARGE_TIME		0xd
+#define BATTMGR_OPCODE_CHG_CTRL_LIMIT		0x48
 
 #define BATTMGR_NOTIF_BAT_PROPERTY		0x30
 #define BATTMGR_NOTIF_USB_PROPERTY		0x32
 #define BATTMGR_NOTIF_WLS_PROPERTY		0x34
 #define BATTMGR_NOTIF_BAT_STATUS		0x80
 #define BATTMGR_NOTIF_BAT_INFO			0x81
+#define BATTMGR_NOTIF_CHG_CTRL			0x83
+#define BATTMGR_NOTIF_CHG_CTRL_STOP		0x183
+#define BATTMGR_NOTIF_CHG_CTRL_START		0x583
 
 #define BATTMGR_CHEMISTRY_LEN			4
 #define BATTMGR_STRING_LEN			128
@@ -1264,6 +1270,14 @@ void	qcpas_pmic_rtr_bat_info(struct qcpas_softc *,
 void	qcpas_pmic_rtr_bat_status(struct qcpas_softc *,
 	    struct battmgr_bat_status *);
 
+extern int (*hw_battery_setchargestart)(int);
+extern int (*hw_battery_setchargestop)(int);
+extern int hw_battery_chargestart;
+extern int hw_battery_chargestop;
+
+int	qcpas_pmic_rtr_setchargestart(int);
+int	qcpas_pmic_rtr_setchargestop(int);
+
 void
 qcpas_pmic_rtr_battmgr_req_info(void *cookie)
 {
@@ -1295,6 +1309,27 @@ qcpas_pmic_rtr_battmgr_req_status(void *cookie)
 }
 
 #if NAPM > 0
+void
+qcpas_pmic_rtr_battmgr_charge_ctrl(void *cookie)
+{
+	struct {
+		struct pmic_glink_hdr hdr;
+		uint32_t enable;
+		uint32_t target_soc;
+		uint32_t delta_soc;
+	} msg;
+
+	msg.hdr.owner = PMIC_GLINK_OWNER_BATTMGR;
+	msg.hdr.type = PMIC_GLINK_TYPE_REQ_RESP;
+	msg.hdr.opcode = BATTMGR_OPCODE_CHG_CTRL_LIMIT;
+	msg.enable = 1;
+	msg.target_soc = hw_battery_chargestop;
+	msg.delta_soc = hw_battery_chargestop - hw_battery_chargestart;
+	qcpas_glink_send(cookie, &msg, sizeof(msg));
+}
+#endif
+
+#if NAPM > 0
 struct apm_power_info qcpas_pmic_rtr_apm_power_info;
 void *qcpas_pmic_rtr_apm_cookie;
 #endif
@@ -1303,6 +1338,7 @@ int
 qcpas_pmic_rtr_init(void *cookie)
 {
 #if NAPM > 0
+	struct qcpas_glink_channel *ch = cookie;
 	struct apm_power_info *info;
 
 	info = &qcpas_pmic_rtr_apm_power_info;
@@ -1313,6 +1349,13 @@ qcpas_pmic_rtr_init(void *cookie)
 
 	qcpas_pmic_rtr_apm_cookie = cookie;
 	apm_setinfohook(qcpas_pmic_rtr_apminfo);
+
+	if (ch->ch_sc->sc_chg_ctrl) {
+		hw_battery_chargestart = 95;
+		hw_battery_chargestop = 100;
+		hw_battery_setchargestart = qcpas_pmic_rtr_setchargestart;
+		hw_battery_setchargestop = qcpas_pmic_rtr_setchargestop;
+	}
 #endif
 #ifndef SMALL_KERNEL
 	sensor_task_register(cookie, qcpas_pmic_rtr_refresh, 5);
@@ -1355,6 +1398,10 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			case BATTMGR_NOTIF_BAT_PROPERTY:
 				qcpas_pmic_rtr_battmgr_req_status(cookie);
 				break;
+			case BATTMGR_NOTIF_CHG_CTRL:
+			case BATTMGR_NOTIF_CHG_CTRL_STOP:
+			case BATTMGR_NOTIF_CHG_CTRL_START:
+				break;
 			default:
 				printf("%s: unknown battmgr notification"
 				    " 0x%02x\n", __func__, notification);
@@ -1387,6 +1434,8 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 			free(bat, M_TEMP, sizeof(*bat));
 			break;
 		}
+		case BATTMGR_OPCODE_CHG_CTRL_LIMIT:
+			break;
 		default:
 			printf("%s: unknown battmgr opcode 0x%02x\n",
 			    __func__, hdr.opcode);
@@ -1549,3 +1598,27 @@ qcpas_pmic_rtr_bat_status(struct qcpas_softc *sc,
 	wakeup(&qcpas_pmic_rtr_apm_power_info);
 #endif
 }
+
+#if NAPM > 0
+int
+qcpas_pmic_rtr_setchargestart(int start)
+{
+	if (start < 50 || start > hw_battery_chargestop - 5)
+		return EINVAL;
+
+	hw_battery_chargestart = start;
+	qcpas_pmic_rtr_battmgr_charge_ctrl(qcpas_pmic_rtr_apm_cookie);
+	return 0;
+}
+
+int
+qcpas_pmic_rtr_setchargestop(int stop)
+{
+	if (stop < 55 || stop < hw_battery_chargestart + 5)
+		return EINVAL;
+
+	hw_battery_chargestop = stop;
+	qcpas_pmic_rtr_battmgr_charge_ctrl(qcpas_pmic_rtr_apm_cookie);
+	return 0;
+}
+#endif
