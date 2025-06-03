@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.472 2025/06/03 17:32:42 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.473 2025/06/03 20:46:31 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1576,7 +1576,8 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			if (so->so_type == SOCK_RAW)
 				kf->inp_proto = inpcb->inp_ip.ip_p;
 			if (so->so_proto->pr_protocol == IPPROTO_TCP) {
-				struct tcpcb *tcpcb = (void *)inpcb->inp_ppcb;
+				struct tcpcb *tcpcb = intotcpcb(inpcb);
+
 				kf->t_rcv_wnd = tcpcb->rcv_wnd;
 				kf->t_snd_wnd = tcpcb->snd_wnd;
 				kf->t_snd_cwnd = tcpcb->snd_cwnd;
@@ -1604,9 +1605,11 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			if (so->so_type == SOCK_RAW)
 				kf->inp_proto = inpcb->inp_ipv6.ip6_nxt;
 			if (so->so_proto->pr_protocol == IPPROTO_TCP) {
-				struct tcpcb *tcpcb = (void *)inpcb->inp_ppcb;
+				struct tcpcb *tcpcb = intotcpcb(inpcb);
+
 				kf->t_rcv_wnd = tcpcb->rcv_wnd;
 				kf->t_snd_wnd = tcpcb->snd_wnd;
+				kf->t_snd_cwnd = tcpcb->snd_cwnd;
 				kf->t_state = tcpcb->t_state;
 			}
 			break;
