@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.18 2023/09/22 01:10:43 jsg Exp $ */
+/* $OpenBSD: simplebus.c,v 1.19 2025/06/03 06:52:54 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,7 +26,6 @@
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/ofw_misc.h>
 
-#include <machine/fdt.h>
 #include <machine/simplebusvar.h>
 
 int simplebus_match(struct device *, void *, void *);
