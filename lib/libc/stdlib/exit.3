@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: exit.3,v 1.18 2024/08/30 03:44:48 guenther Exp $
+.\"	$OpenBSD: exit.3,v 1.19 2025/06/03 14:15:53 yasuoka Exp $
 .\"
-.Dd $Mdocdate: August 30 2024 $
+.Dd $Mdocdate: June 3 2025 $
 .Dt EXIT 3
 .Os
 .Sh NAME
@@ -54,9 +54,7 @@ Call the functions registered with the
 .Xr atexit 3
 function, in the reverse order of their registration.
 .It
-Flush all open output streams.
-.It
-Close all open streams.
+Flush and close all open streams.
 .It
 Unlink all files created with the
 .Xr tmpfile 3
@@ -79,6 +77,7 @@ function never returns.
 .Sh SEE ALSO
 .Xr _exit 2 ,
 .Xr atexit 3 ,
+.Xr fflush 3 ,
 .Xr intro 3 ,
 .Xr sysexits 3 ,
 .Xr tmpfile 3
@@ -86,7 +85,7 @@ function never returns.
 The
 .Fn exit
 function conforms to
-.St -isoC-99 .
+.St -p1003.1-2024 .
 .Sh HISTORY
 An
 .Fn exit

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fseek.c,v 1.16 2024/08/30 03:44:48 guenther Exp $ */
+/*	$OpenBSD: fseek.c,v 1.17 2025/06/03 14:15:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,8 @@ fseeko(FILE *fp, off_t offset, int whence)
 	/*
 	 * Can only optimise if:
 	 *	reading (and not reading-and-writing);
-	 *	not unbuffered; and
+	 *	not unbuffered;
+	 *	not immediately after an fflush(); and
 	 *	this is a `regular' Unix file (and hence seekfn==__sseek).
 	 * We must check __NBF first, because it is possible to have __NBF
 	 * and __SOPT both set.
@@ -124,6 +125,8 @@ fseeko(FILE *fp, off_t offset, int whence)
 	if (fp->_bf._base == NULL)
 		__smakebuf(fp);
 	if (fp->_flags & (__SWR | __SRW | __SNBF | __SNPT))
+		goto dumb;
+	if (fp->_r == 0 && (fp->_p == NULL || fp->_p == fp->_bf._base))
 		goto dumb;
 	if ((fp->_flags & __SOPT) == 0) {
 		if (seekfn != __sseek ||
@@ -228,7 +231,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	 * do it.  Allow the seek function to change fp->_bf._base.
 	 */
 dumb:
-	if (__sflush(fp) ||
+	if (((fp->_flags & __SWR) && __sflush(fp)) ||
 	    (*seekfn)(fp->_cookie, (fpos_t)offset, whence) == POS_ERR) {
 		FUNLOCKFILE(fp);
 		return (EOF);

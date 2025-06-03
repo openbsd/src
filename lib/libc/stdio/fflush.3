@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fflush.3,v 1.17 2024/08/30 03:44:48 guenther Exp $
+.\"	$OpenBSD: fflush.3,v 1.18 2025/06/03 14:15:53 yasuoka Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 30 2024 $
+.Dd $Mdocdate: June 3 2025 $
 .Dt FFLUSH 3
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@ or
 of a seekable file and it is not already at EOF then
 .Fn fflush
 sets the seek position of the file to the file position of the
-stream and discards any text pushed back via
+stream and discards any text pushed back by via
 .Xr ungetc 3
 or
 .Xr ungetwc 3 .
@@ -84,7 +84,9 @@ For input streams this discards any input read from the underlying object
 but not yet obtained via
 .Xr getc 3 ;
 this includes any text pushed back via
-.Xr ungetc 3 .
+.Xr ungetc 3
+or
+.Xr ungetwc 3 .
 .Sh RETURN VALUES
 Upon successful completion 0 is returned.
 Otherwise,
@@ -96,9 +98,7 @@ is set to indicate the error.
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa stream
-is not an open stream or, in the case of
-.Fn fflush ,
-not a stream open for writing.
+is not an open stream.
 .El
 .Pp
 The function
@@ -116,7 +116,7 @@ for any of the errors specified for the routine
 The
 .Fn fflush
 function conforms to
-.St -ansiC .
+.St -p1003.1-2024 .
 .Sh HISTORY
 A predecessor
 .Fn flush

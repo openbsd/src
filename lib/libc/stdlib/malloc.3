@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.145 2025/05/27 12:40:37 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.146 2025/06/03 14:15:53 yasuoka Exp $
 .\"
-.Dd $Mdocdate: May 27 2025 $
+.Dd $Mdocdate: June 3 2025 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -372,9 +372,18 @@ Use with
 to get a verbose dump of malloc's internal state.
 .It Cm X
 .Dq xmalloc .
-Rather than return failure to handle out-of-memory conditions gracefully,
+Rather than return failure,
 .Xr abort 3
 the program with a diagnostic message on stderr.
+It is the intention that this option be set at compile time by
+including in the source:
+.Bd -literal -offset indent
+extern char *malloc_options;
+malloc_options = "X";
+.Ed
+.Pp
+Note that this will cause code that is supposed to handle
+out-of-memory conditions gracefully to abort instead.
 .It Cm <
 .Dq Halve the cache size .
 Decrease the size of the free page cache by a factor of two.

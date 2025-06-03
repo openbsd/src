@@ -1,4 +1,4 @@
-.\"	$OpenBSD: profil.2,v 1.14 2025/05/28 04:00:56 jsg Exp $
+.\"	$OpenBSD: profil.2,v 1.15 2025/06/03 14:15:53 yasuoka Exp $
 .\"	$NetBSD: profil.2,v 1.3 1995/11/22 23:07:23 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)profil.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 28 2025 $
+.Dd $Mdocdate: June 3 2025 $
 .Dt PROFIL 2
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ Historically, profile information was written to the file by the C-run-time
 exit processing code using
 .Xr open 2 ,
 .Xr write 2 ,
-and such \(em which is incompatible with modern privilege separation practices
+and such \(em which is incompatible with modern privilege seperation practices
 like
 .Xr chroot 2 ,
 .Xr pledge 2 ,
