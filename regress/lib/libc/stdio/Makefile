@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2025/05/25 05:32:45 yasuoka Exp $
+# $OpenBSD: Makefile,v 1.4 2025/06/03 14:35:27 yasuoka Exp $
 
 PROGS=		test_fflush
 CLEANFILES=	test_fflush.tmp
@@ -25,8 +25,5 @@ PROGS+=		test___fseterr
 CLEANFILES+=	test___fseterr.tmp
 
 WARNINGS=	yes
-
-# until fflush comply POSIX-2008
-REGRESS_EXPECTED_FAILURES=	run-regress-test_fflush
 
 .include <bsd.regress.mk>

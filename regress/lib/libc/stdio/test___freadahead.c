@@ -1,4 +1,4 @@
-/*	$OpenBSD: test___freadahead.c,v 1.1 2025/05/25 00:20:54 yasuoka Exp $	*/
+/*	$OpenBSD: test___freadahead.c,v 1.2 2025/06/03 14:35:27 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2025 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -49,7 +49,7 @@ test___freadahead0(void)
 	s = __freadahead(fp);
 	assert(s == 10);
 	r = fflush(fp);
-#if 1
+#if 0
 	/* fflush() to reading file is not supported (yet) */
 	assert(errno == EBADF);
 #else
