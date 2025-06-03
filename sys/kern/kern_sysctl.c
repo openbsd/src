@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.469 2025/06/01 03:43:48 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.470 2025/06/03 14:23:09 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -403,6 +403,8 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	int error;
 
 	switch (top_name) {
+	case KERN_FILE:
+		return (sysctl_file(name, namelen, oldp, oldlenp, p));
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name, namelen, oldp, oldlenp,
 		    newp, newlen, p));
@@ -449,8 +451,6 @@ kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
 		     newp, newlen, oldp, oldlenp, p));
 	case KERN_PROC_VMMAP:
 		return (sysctl_proc_vmmap(name, namelen, oldp, oldlenp, p));
-	case KERN_FILE:
-		return (sysctl_file(name, namelen, oldp, oldlenp, p));
 #endif
 #if defined(GPROF) || defined(DDBPROF)
 	case KERN_PROF:
@@ -1782,8 +1782,11 @@ do {									\
 					if (af == AF_INET || af == AF_INET6)
 						skip = 1;
 				}
-				if (!skip)
+				if (!skip) {
+					KERNEL_LOCK();
 					FILLIT(fp, NULL, 0, NULL, NULL);
+					KERNEL_UNLOCK();
+				}
 			}
 		}
 		break;
@@ -1794,6 +1797,7 @@ do {									\
 			break;
 		}
 		matched = 0;
+		KERNEL_LOCK();
 		LIST_FOREACH(pr, &allprocess, ps_list) {
 			/*
 			 * skip system, exiting, embryonic and undead
@@ -1831,10 +1835,12 @@ do {									\
 			if (arg >= 0)
 				break;
 		}
+		KERNEL_UNLOCK();
 		if (!matched)
 			error = ESRCH;
 		break;
 	case KERN_FILE_BYUID:
+		KERNEL_LOCK();
 		LIST_FOREACH(pr, &allprocess, ps_list) {
 			/*
 			 * skip system, exiting, embryonic and undead
@@ -1865,6 +1871,7 @@ do {									\
 
 			refcnt_rele_wake(&pr->ps_refcnt);
 		}
+		KERNEL_UNLOCK();
 		break;
 	default:
 		error = EINVAL;
