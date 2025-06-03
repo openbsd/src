@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.71 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.72 2025/06/03 14:58:36 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1485,8 +1485,11 @@ rasops_doswitch(void *v)
 	if (scr->rs_crow != -1)
 		rasops_cursor(ri, 1, scr->rs_crow, scr->rs_ccol);
 
-	if (ri->ri_switchcb)
+	if (ri->ri_switchcb) {
 		(*ri->ri_switchcb)(ri->ri_switchcbarg, 0, 0);
+		ri->ri_switchcb = NULL;
+		ri->ri_switchcbarg = 0;
+	}
 }
 
 int
