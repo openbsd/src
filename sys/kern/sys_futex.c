@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.23 2025/05/07 00:39:09 dlg Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.24 2025/06/03 00:20:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -251,13 +251,12 @@ futex_wait(struct proc *p, uint32_t *uaddr, uint32_t val,
 {
 	struct futex f;
 	struct futex_slpque *fsq;
-	uint64_t to_ticks = 0;
+	uint64_t nsecs = INFSLP;
 	uint32_t cval;
 	int error;
 
 	if (timeout != NULL) {
 		struct timespec ts;
-		uint64_t nsecs;
 
 		if ((error = copyin(timeout, &ts, sizeof(ts))))
 			return error;
@@ -268,10 +267,9 @@ futex_wait(struct proc *p, uint32_t *uaddr, uint32_t val,
 		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
 			return EINVAL;
 
-		nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(&ts), MAXTSLP));
-		to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
-		if (to_ticks > INT_MAX)
-			to_ticks = INT_MAX;
+		nsecs = MIN(TIMESPEC_TO_NSEC(&ts), MAXTSLP);
+		if (nsecs == 0)
+			return ETIMEDOUT;
 	}
 
 	futex_addrs(p, &f, uaddr, flags);
@@ -301,7 +299,7 @@ futex_wait(struct proc *p, uint32_t *uaddr, uint32_t val,
 	}
 
 	sleep_setup(&f, PWAIT|PCATCH, "fsleep");
-	error = sleep_finish(to_ticks, f.ft_proc != NULL);
+	error = sleep_finish(nsecs, f.ft_proc != NULL);
 	/* Remove ourself if we haven't been awaken. */
 	if (error != 0 || f.ft_proc != NULL) {
 		if (futex_unwait(fsq, &f) == 0)

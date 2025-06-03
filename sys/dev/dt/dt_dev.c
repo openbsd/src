@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.43 2025/05/21 00:13:44 dlg Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.44 2025/06/03 00:20:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -252,7 +252,7 @@ dtread(dev_t dev, struct uio *uio, int flags)
 
 	while (!atomic_load_int(&sc->ds_evtcnt)) {
 		sleep_setup(sc, PWAIT | PCATCH, "dtread");
-		error = sleep_finish(0, !atomic_load_int(&sc->ds_evtcnt));
+		error = sleep_finish(INFSLP, !atomic_load_int(&sc->ds_evtcnt));
 		if (error == EINTR || error == ERESTART)
 			break;
 	}

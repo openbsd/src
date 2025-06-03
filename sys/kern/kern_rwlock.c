@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.56 2025/05/18 00:13:57 dlg Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.57 2025/06/03 00:20:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -27,10 +27,9 @@
 #include <sys/witness.h>
 
 #ifdef RWDIAG
-#include <sys/kernel.h> /* for hz */
-#define RW_SLEEP_TMO	10 * hz
+#define RW_SLEEP_TMO	10000000000ULL /* 10 seconds */
 #else
-#define RW_SLEEP_TMO	0
+#define RW_SLEEP_TMO	INFSLP
 #endif
 
 /*

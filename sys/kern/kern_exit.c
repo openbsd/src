@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.249 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.250 2025/06/03 00:20:31 dlg Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -661,7 +661,7 @@ loop:
 		return (0);
 	}
 	sleep_setup(q->p_p, PWAIT | PCATCH, "wait");
-	if ((error = sleep_finish(0,
+	if ((error = sleep_finish(INFSLP,
 	    !ISSET(atomic_load_int(&q->p_p->ps_flags), PS_WAITEVENT))) != 0)
 		return (error);
 	goto loop;

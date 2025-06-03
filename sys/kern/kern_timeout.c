@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.106 2025/05/24 00:19:09 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.107 2025/06/03 00:20:31 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -827,7 +827,7 @@ softclock_thread_run(struct timeout_ctx *tctx)
 		 * at the same time.
 		 */
 		sleep_setup(todo, PSWP, "tmoslp");
-		sleep_finish(0, CIRCQ_EMPTY(tctx->tctx_todo));
+		sleep_finish(INFSLP, CIRCQ_EMPTY(tctx->tctx_todo));
 
 		mtx_enter(&timeout_mutex);
 		tostat.tos_thread_wakeups++;

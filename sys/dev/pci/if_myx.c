@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.120 2024/05/24 06:02:56 jsg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.121 2025/06/03 00:20:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1395,7 +1395,7 @@ myx_down(struct myx_softc *sc)
 	while (sc->sc_state != MYX_S_OFF) {
 		sleep_setup(sts, PWAIT, "myxdown");
 		membar_consumer();
-		sleep_finish(0, sc->sc_state != MYX_S_OFF);
+		sleep_finish(INFSLP, sc->sc_state != MYX_S_OFF);
 	}
 
 	s = splnet();

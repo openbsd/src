@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.224 2025/05/31 06:58:27 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.225 2025/06/03 00:20:31 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -111,17 +111,18 @@ extern int safepri;
  * call should be interrupted by the signal (return EINTR).
  */
 int
-tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
+tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
+    uint64_t nsecs)
 {
 #ifdef MULTIPROCESSOR
 	int hold_count;
 #endif
 
 	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
-	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
+	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || nsecs != INFSLP);
 
 #ifdef MULTIPROCESSOR
-	KASSERT(ident == &nowake || timo || _kernel_lock_held());
+	KASSERT(ident == &nowake || nsecs != INFSLP || _kernel_lock_held());
 #endif
 
 #ifdef DDB
@@ -149,50 +150,21 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	}
 
 	sleep_setup(ident, priority, wmesg);
-	return sleep_finish(timo, 1);
+	return sleep_finish(nsecs, 1);
 }
 
 int
-tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
-    uint64_t nsecs)
+tsleep(const volatile void *ident, int priority, const char *wmesg,
+    int timo)
 {
-	uint64_t to_ticks;
+	uint64_t nsecs = INFSLP;
 
-	if (nsecs == INFSLP)
-		return tsleep(ident, priority, wmesg, 0);
-#ifdef DIAGNOSTIC
-	if (nsecs == 0) {
-		log(LOG_WARNING,
-		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
-		    __func__, curproc->p_p->ps_comm, curproc->p_p->ps_pid,
-		    wmesg);
-	}
-#endif
-	/*
-	 * We want to sleep at least nsecs nanoseconds worth of ticks.
-	 *
-	 *  - Clamp nsecs to prevent arithmetic overflow.
-	 *
-	 *  - Round nsecs up to account for any nanoseconds that do not
-	 *    divide evenly into tick_nsec, otherwise we'll lose them to
-	 *    integer division in the next step.  We add (tick_nsec - 1)
-	 *    to keep from introducing a spurious tick if there are no
-	 *    such nanoseconds, i.e. nsecs % tick_nsec == 0.
-	 *
-	 *  - Divide the rounded value to a count of ticks.  We divide
-	 *    by (tick_nsec + 1) to discard the extra tick introduced if,
-	 *    before rounding, nsecs % tick_nsec == 1.
-	 *
-	 *  - Finally, add a tick to the result.  We need to wait out
-	 *    the current tick before we can begin counting our interval,
-	 *    as we do not know how much time has elapsed since the
-	 *    current tick began.
-	 */
-	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
-	to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
-	if (to_ticks > INT_MAX)
-		to_ticks = INT_MAX;
-	return tsleep(ident, priority, wmesg, (int)to_ticks);
+	if (timo < 0)
+		panic("%s: negative timo %d", __func__, timo);
+	if (timo > 0)
+		nsecs = timo * tick_nsec;
+
+	return tsleep_nsec(ident, priority, wmesg, nsecs);
 }
 
 /*
@@ -200,8 +172,8 @@ tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
  * entered the sleep queue we drop the mutex. After sleeping we re-lock.
  */
 int
-msleep(const volatile void *ident, struct mutex *mtx, int priority,
-    const char *wmesg, int timo)
+msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
+    const char *wmesg, uint64_t nsecs)
 {
 	int error, spl;
 #ifdef MULTIPROCESSOR
@@ -209,7 +181,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 #endif
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
-	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
+	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || nsecs != INFSLP);
 	KASSERT(mtx != NULL);
 
 #ifdef DDB
@@ -244,7 +216,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 
 	mtx_leave(mtx);
 	/* signal may stop the process, release mutex before that */
-	error = sleep_finish(timo, 1);
+	error = sleep_finish(nsecs, 1);
 
 	if ((priority & PNORELOCK) == 0)
 		mtx_enter(mtx);
@@ -253,26 +225,17 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 }
 
 int
-msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
-    const char *wmesg, uint64_t nsecs)
+msleep(const volatile void *ident, struct mutex *mtx, int priority,
+    const char *wmesg, int timo)
 {
-	uint64_t to_ticks;
+	uint64_t nsecs = INFSLP;
 
-	if (nsecs == INFSLP)
-		return msleep(ident, mtx, priority, wmesg, 0);
-#ifdef DIAGNOSTIC
-	if (nsecs == 0) {
-		log(LOG_WARNING,
-		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
-		    __func__, curproc->p_p->ps_comm, curproc->p_p->ps_pid,
-		    wmesg);
-	}
-#endif
-	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
-	to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
-	if (to_ticks > INT_MAX)
-		to_ticks = INT_MAX;
-	return msleep(ident, mtx, priority, wmesg, (int)to_ticks);
+	if (timo < 0)
+		panic("%s: negative timo %d", __func__, timo);
+	if (timo > 0)
+		nsecs = timo * tick_nsec;
+
+	return msleep_nsec(ident, mtx, priority, wmesg, nsecs);
 }
 
 /*
@@ -280,13 +243,13 @@ msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
  * entered the sleep queue we drop the it. After sleeping we re-lock.
  */
 int
-rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
-    const char *wmesg, int timo)
+rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
+    const char *wmesg, uint64_t nsecs)
 {
 	int error, status;
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
-	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
+	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || nsecs != INFSLP);
 	KASSERT(ident != rwl);
 	rw_assert_anylock(rwl);
 	status = rw_status(rwl);
@@ -295,7 +258,7 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 
 	rw_exit(rwl);
 	/* signal may stop the process, release rwlock before that */
-	error = sleep_finish(timo, 1);
+	error = sleep_finish(nsecs, 1);
 
 	if ((priority & PNORELOCK) == 0)
 		rw_enter(rwl, status);
@@ -304,26 +267,17 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 }
 
 int
-rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
-    const char *wmesg, uint64_t nsecs)
+rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
+    const char *wmesg, int timo)
 {
-	uint64_t to_ticks;
+	uint64_t nsecs = INFSLP;
 
-	if (nsecs == INFSLP)
-		return rwsleep(ident, rwl, priority, wmesg, 0);
-#ifdef DIAGNOSTIC
-	if (nsecs == 0) {
-		log(LOG_WARNING,
-		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
-		    __func__, curproc->p_p->ps_comm, curproc->p_p->ps_pid,
-		    wmesg);
-	}
-#endif
-	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
-	to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
-	if (to_ticks > INT_MAX)
-		to_ticks = INT_MAX;
-	return 	rwsleep(ident, rwl, priority, wmesg, (int)to_ticks);
+	if (timo < 0)
+		panic("%s: negative timo %d", __func__, timo);
+	if (timo > 0)
+		nsecs = timo * tick_nsec;
+
+	return rwsleep_nsec(ident, rwl, priority, wmesg, nsecs);
 }
 
 void
@@ -361,18 +315,25 @@ sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 }
 
 int
-sleep_finish(int timo, int do_sleep)
+sleep_finish(uint64_t nsecs, int do_sleep)
 {
 	struct proc *p = curproc;
 	int catch, error = 0, error1 = 0;
 
-	catch = p->p_flag & P_SINTR;
+#ifdef DIAGNOSTIC
+	if (nsecs == 0) {
+		log(LOG_WARNING,
+		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
+		    __func__, p->p_p->ps_comm, p->p_p->ps_pid, p->p_wmesg);
+	}
+#endif
 
-	if (timo != 0) {
+	if (nsecs != INFSLP) {
 		KASSERT(!ISSET(p->p_flag, P_TIMEOUT|P_TIMEOUTRAN));
-		timeout_add(&p->p_sleep_to, timo);
+		timeout_add_nsec(&p->p_sleep_to, nsecs);
 	}
 
+	catch = p->p_flag & P_SINTR;
 	if (catch != 0) {
 		if ((error = sleep_signal_check(p, 0)) != 0) {
 			catch = 0;
@@ -445,7 +406,7 @@ sleep_finish(int timo, int do_sleep)
 	 * to sleep to wait for endtsleep to run, we'd also have to
 	 * take the sched lock, so we'd be spinning against it anyway.
 	 */
-	if (timo != 0 && !timeout_del(&p->p_sleep_to)) {
+	if (nsecs != INFSLP && !timeout_del(&p->p_sleep_to)) {
 		int flag;
 
 		/* Wait for endtsleep timeout to finish running */
@@ -752,14 +713,13 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 	void *lock = SCARG(uap, lock);
 	const uint32_t *abortp = SCARG(uap, abort);
 	clockid_t clock_id = SCARG(uap, clock_id);
-	uint64_t to_ticks = 0;
+	uint64_t nsecs = INFSLP;
 	int error = 0;
 
 	if (ident == 0)
 		return (EINVAL);
 	if (tsp != NULL) {
 		struct timespec now;
-		uint64_t nsecs;
 
 		if ((error = clock_gettime(p, clock_id, &now)))
 			return (error);
@@ -776,10 +736,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		}
 
 		timespecsub(tsp, &now, tsp);
-		nsecs = MIN(TIMESPEC_TO_NSEC(tsp), MAXTSLP);
-		to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
-		if (to_ticks > INT_MAX)
-			to_ticks = INT_MAX;
+		nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(tsp), MAXTSLP));
 	}
 
 	tsb = (ident == -1) ? &tsb_shared : thrsleep_bucket(ident);
@@ -809,7 +766,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 	}
 
 	sleep_setup(&entry, PWAIT|PCATCH, "thrsleep");
-	error = sleep_finish(to_ticks, entry.tslp_p != NULL);
+	error = sleep_finish(nsecs, entry.tslp_p != NULL);
 	if (error != 0 || entry.tslp_p != NULL) {
 		mtx_enter(&tsb->tsb_lock);
 		if (entry.tslp_p != NULL)
@@ -996,7 +953,7 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 	while (refs) {
 		sleep_setup(r, PWAIT, wmesg);
 		refs = atomic_load_int(&r->r_refs);
-		sleep_finish(0, refs);
+		sleep_finish(INFSLP, refs);
 	}
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs, 0);
 	/* Order subsequent loads and stores after refs == 0 load. */
@@ -1046,6 +1003,6 @@ cond_wait(struct cond *c, const char *wmesg)
 	while (wait) {
 		sleep_setup(c, PWAIT, wmesg);
 		wait = atomic_load_int(&c->c_wait);
-		sleep_finish(0, wait);
+		sleep_finish(INFSLP, wait);
 	}
 }

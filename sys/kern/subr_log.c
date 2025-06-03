@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.80 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.81 2025/06/03 00:20:31 dlg Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ logread(dev_t dev, struct uio *uio, int flag)
 		 * to keep log_mtx as a leaf lock.
 		 */
 		sleep_setup(mbp, LOG_RDPRI | PCATCH, "klog");
-		error = sleep_finish(0, logsoftc.sc_state & LOG_RDWAIT);
+		error = sleep_finish(INFSLP, logsoftc.sc_state & LOG_RDWAIT);
 		mtx_enter(&log_mtx);
 		if (error)
 			goto out;
