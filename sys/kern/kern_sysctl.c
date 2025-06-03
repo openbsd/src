@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.471 2025/06/03 16:51:26 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.472 2025/06/03 17:32:42 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -403,8 +403,10 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	int error;
 
 	switch (top_name) {
+#ifndef SMALL_KERNEL
 	case KERN_FILE:
 		return (sysctl_file(name, namelen, oldp, oldlenp, p));
+#endif
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name, namelen, oldp, oldlenp,
 		    newp, newlen, p));
