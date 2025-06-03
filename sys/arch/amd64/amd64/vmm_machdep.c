@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.56 2025/05/28 11:08:25 bluhm Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.57 2025/06/03 19:15:29 sf Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -154,6 +154,7 @@ int svm_get_vmsa_pa(uint32_t, uint32_t, uint64_t *);
 int vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size);
 void vmm_init_pvclock(struct vcpu *, paddr_t);
 int vmm_update_pvclock(struct vcpu *);
+void vmm_pv_wall_clock(struct vcpu *, paddr_t);
 int vmm_pat_is_valid(uint64_t);
 
 #ifdef MULTIPROCESSOR
@@ -193,6 +194,7 @@ extern uint64_t tsc_frequency;
 extern int tsc_is_invariant;
 
 const char *vmm_hv_signature = VMM_HV_SIGNATURE;
+const char *kvm_hv_signature = "KVMKVMKVM\0\0\0";
 
 const struct kmem_pa_mode vmm_kp_contig = {
 	.kp_constraint = &no_constraint,
@@ -6043,6 +6045,10 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		vmm_init_pvclock(vcpu,
 		    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
 		break;
+	case KVM_MSR_WALL_CLOCK:
+		vmm_pv_wall_clock(vcpu,
+		    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
+		break;
 #ifdef VMM_DEBUG
 	default:
 		/*
@@ -6102,6 +6108,10 @@ svm_handle_msr(struct vcpu *vcpu)
 			break;
 		case KVM_MSR_SYSTEM_TIME:
 			vmm_init_pvclock(vcpu,
+			    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
+			break;
+		case KVM_MSR_WALL_CLOCK:
+			vmm_pv_wall_clock(vcpu,
 			    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
 			break;
 		default:
@@ -6455,6 +6465,20 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	case 0x40000001:	/* KVM hypervisor features */
 		*rax = (1 << KVM_FEATURE_CLOCKSOURCE2) |
 		    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT);
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
+		break;
+	case 0x40000100:	/* Hypervisor information KVM */
+		*rax = 0x40000101;
+		*rbx = *((uint32_t *)&kvm_hv_signature[0]);
+		*rcx = *((uint32_t *)&kvm_hv_signature[4]);
+		*rdx = *((uint32_t *)&kvm_hv_signature[8]);
+		break;
+	case 0x40000101:	/* KVM hypervisor features */
+		*rax = (1 << KVM_FEATURE_CLOCKSOURCE2) |
+		    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT) |
+		    (1 << KVM_FEATURE_NOP_IO_DELAY);
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
@@ -6980,7 +7004,7 @@ vmm_update_pvclock(struct vcpu *vcpu)
 		    (++vcpu->vc_pvclock_version << 1) | 0x1;
 
 		pvclock_ti->ti_tsc_timestamp = rdtsc();
-		nanotime(&tv);
+		nanouptime(&tv);
 		pvclock_ti->ti_system_time =
 		    tv.tv_sec * 1000000000L + tv.tv_nsec;
 		pvclock_ti->ti_tsc_shift = 12;
@@ -6993,6 +7017,36 @@ vmm_update_pvclock(struct vcpu *vcpu)
 	}
 	return (0);
 }
+
+void
+vmm_pv_wall_clock(struct vcpu *vcpu, paddr_t gpa)
+{
+	struct pvclock_wall_clock *pvclock_wc;
+	struct timespec tv;
+	struct vm *vm = vcpu->vc_parent;
+	paddr_t hpa;
+
+	if (!vmm_gpa_is_valid(vcpu, gpa, sizeof(struct pvclock_wall_clock)))
+		goto err;
+
+	/* XXX: handle case when this struct goes over page boundaries */
+	if ((gpa & PAGE_MASK) + sizeof(struct pvclock_wall_clock) > PAGE_SIZE)
+		goto err;
+
+	if (!pmap_extract(vm->vm_pmap, gpa, &hpa))
+		goto err;
+	pvclock_wc = (void*) PMAP_DIRECT_MAP(hpa);
+	pvclock_wc->wc_version |= 0x1;
+	nanoboottime(&tv);
+	pvclock_wc->wc_sec = tv.tv_sec;
+	pvclock_wc->wc_nsec = tv.tv_nsec;
+	pvclock_wc->wc_version += 1;
+
+	return;
+err:
+	vmm_inject_gp(vcpu);
+}
+
 
 int
 vmm_pat_is_valid(uint64_t pat)
