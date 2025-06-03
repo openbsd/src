@@ -7,7 +7,7 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd $Mdocdate: May 29 2025 $
+.Dd $Mdocdate: June 3 2025 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -508,9 +508,12 @@ If set, this variable has the same effect as the
 .Fl -define-prefix
 option.
 .It Ev PKG_CONFIG_SYSROOT_DIR
+If set, this variable defines a
 .Sq sysroot
-directory, will be prepended to every path defined in
-.Ev PKG_CONFIG_PATH .
+directory, which will be prepended to every path variable
+beginning with the prefix variable in a given
+.Xr pc 5
+file.
 Useful for cross compilation.
 .It Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH
 Colon-separated list of include paths that are filtered out
