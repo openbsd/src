@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiokeys.c,v 1.5 2025/01/09 22:03:38 kettenis Exp $	*/
+/*	$OpenBSD: gpiokeys.c,v 1.6 2025/06/03 15:04:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -33,6 +33,13 @@
 
 #include <sys/sensors.h>
 
+#ifdef SUSPEND
+extern int cpu_suspended;
+#endif
+
+extern int lid_action;
+extern void (*simplefb_burn_hook)(u_int);
+
 #define	DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
 /*
@@ -57,6 +64,7 @@ struct gpiokeys_key {
 	SLIST_ENTRY(gpiokeys_key)	 key_next;
 	void				 (*key_func)(void *);
 	void				*key_ih;
+	int				 key_wakeup;
 };
 
 struct gpiokeys_softc {
@@ -136,6 +144,7 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 				sensor_attach(&sc->sc_sensordev,
 				    &key->key_sensor);
 				key->key_func = gpiokeys_update_key;
+				key->key_wakeup = 1;
 				have_sensors = 1;
 				break;
 			}
@@ -156,9 +165,16 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		if (OF_is_compatible(faa->fa_node, "gpio-keys")) {
-		    key->key_ih = gpio_controller_intr_establish(key->key_pin,
-			IPL_BIO, NULL, gpiokeys_intr, key, DEVNAME(sc));
+			int wakeup = key->key_wakeup ? IPL_WAKEUP : 0;
+			key->key_ih =
+			    gpio_controller_intr_establish(key->key_pin,
+				IPL_BIO | wakeup, NULL, gpiokeys_intr, key,
+				DEVNAME(sc));
 		}
+#ifdef SUSPEND
+		if (key->key_wakeup && key->key_ih)
+			device_register_wakeup(&sc->sc_dev);
+#endif
 		if (key->key_ih == NULL)
 			sensor_task_register(key, gpiokeys_update_key, 1);
 		else
@@ -188,11 +204,40 @@ gpiokeys_update_key(void *arg)
 	case GPIOKEYS_EV_SW:
 		switch (key->key_code) {
 		case GPIOKEYS_SW_LID:
+#ifdef SUSPEND
+			/*
+			 * If we're suspended and the lid is now open,
+			 * resume.  Otherwise, ignore the event and
+			 * stay suspended.
+			 */
+			if (cpu_suspended) {
+				if (!val)
+					cpu_suspended = 0;
+				return;
+			}
+#endif
+
 			/*
 			 * Match acpibtn(4), i.e. closed ThinkPad lid yields
 			 * hw.sensors.acpibtn1.indicator0=Off (lid open)
 			 */
 			key->key_sensor.value = !val;
+
+			switch (lid_action) {
+			case 0:
+				if (simplefb_burn_hook)
+					simplefb_burn_hook(!val);
+				break;
+			case 1:
+#ifdef SUSPEND
+				if (val)
+					request_sleep(SLEEP_SUSPEND);
+#endif
+				break;
+			case 2:
+				/* XXX: hibernate */
+				break;
+			}
 			break;
 		}
 		break;
