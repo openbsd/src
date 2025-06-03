@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.167 2025/06/01 20:14:07 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.168 2025/06/03 10:59:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -1151,27 +1151,19 @@ PRT_menuid_to_guid(const int menuid)
 const char *
 PRT_desc_to_guid(const char *desc)
 {
-	char			buf[37];
 	unsigned int		i;
-
-	strlcpy(buf, desc, sizeof(buf));
-	for (i = strlen(buf); i > 0; i--) {
-		if (buf[i - 1] != ' ')
-			break;
-		buf[i - 1] = '\0';
-	}
 
 	for (i = 0; i < nitems(gpt_types); i++) {
 		if (gpt_types[i].gt_desc == NULL)
 			continue;
-		if (strcasecmp(gpt_types[i].gt_desc, buf) == 0)
+		if (strcasecmp(gpt_types[i].gt_desc, desc) == 0)
 			return gpt_types[i].gt_guid;
-		if (strcasecmp(gpt_types[i].gt_guid, buf) == 0)
+		if (strcasecmp(gpt_types[i].gt_guid, desc) == 0)
 			return gpt_types[i].gt_guid;
 	}
 	for (i = 0; i < nitems(menu_items); i++) {
 		if (gpt_item(i) == 0 &&
-		    strcasecmp(menu_items[i].mi_name, buf) == 0)
+		    strcasecmp(menu_items[i].mi_name, desc) == 0)
 			return menu_items[i].mi_guid;
 	}
 
