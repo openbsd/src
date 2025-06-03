@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.265 2025/04/29 02:24:32 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.266 2025/06/03 09:57:57 jsg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -200,7 +200,6 @@ int sysctl_link(char *, char **, int *, int, int *);
 int sysctl_bpf(char *, char **, int *, int, int *);
 int sysctl_mpls(char *, char **, int *, int, int *);
 int sysctl_pipex(char *, char **, int *, int, int *);
-int sysctl_fs(char *, char **, int *, int, int *);
 static int sysctl_vfs(char *, char **, int[], int, int *);
 static int sysctl_vfsgen(char *, char **, int[], int, int *);
 int sysctl_bios(char *, char **, int *, int, int *);
