@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.68 2025/05/19 04:32:52 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.69 2025/06/03 08:42:15 kenjiro Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1557,7 +1557,7 @@ aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, EVP_GCM_TLS_TAG_LEN);
 
 		/* If tag mismatch wipe buffer */
-		if (memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN)) {
+		if (timingsafe_memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN) != 0) {
 			explicit_bzero(out, len);
 			goto err;
 		}
@@ -2072,7 +2072,7 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		    cctx->str) : !CRYPTO_ccm128_decrypt(ccm, in, out, len)) {
 			unsigned char tag[16];
 			if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
-				if (!memcmp(tag, ctx->buf, cctx->M))
+				if (timingsafe_memcmp(tag, ctx->buf, cctx->M) == 0)
 					rv = len;
 			}
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.8 2025/05/25 06:27:02 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.9 2025/06/03 08:42:15 kenjiro Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -341,7 +341,7 @@ AES_unwrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
 	}
 	if (!iv)
 		iv = aes_wrap_default_iv;
-	if (memcmp(A, iv, 8)) {
+	if (timingsafe_memcmp(A, iv, 8) != 0) {
 		explicit_bzero(out, inlen);
 		return 0;
 	}
