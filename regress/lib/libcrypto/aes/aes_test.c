@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_test.c,v 1.3 2023/09/28 08:21:43 tb Exp $ */
+/*	$OpenBSD: aes_test.c,v 1.4 2025/06/03 08:19:29 kenjiro Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -542,7 +542,10 @@ aes_ecb_test(size_t test_number, const char *label, int key_bits,
 
 	/* Encryption */
 	memset(out, 0, sizeof(out));
-	AES_set_encrypt_key(at->key, key_bits, &key);
+	if (AES_set_encrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_encrypt_key failed\n", label, test_number);
+		return 0;
+	}
 	AES_ecb_encrypt(at->in, out, &key, 1);
 
 	if (memcmp(at->out, out, at->out_len) != 0) {
@@ -553,7 +556,10 @@ aes_ecb_test(size_t test_number, const char *label, int key_bits,
 
 	/* Decryption */
 	memset(out, 0, sizeof(out));
-	AES_set_decrypt_key(at->key, key_bits, &key);
+	if (AES_set_decrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_decrypt_key failed\n", label, test_number);
+		return 0;
+	}
 	AES_ecb_encrypt(at->out, out, &key, 0);
 
 	if (memcmp(at->in, out, at->in_len) != 0) {
@@ -582,7 +588,10 @@ aes_cbc_test(size_t test_number, const char *label, int key_bits,
 	/* Encryption */
 	memset(out, 0, sizeof(out));
 	memcpy(iv, at->iv, at->iv_len);
-	AES_set_encrypt_key(at->key, key_bits, &key);
+	if (AES_set_encrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_encrypt_key failed\n", label, test_number);
+		return 0;
+	}
 	AES_cbc_encrypt(at->in, out, at->in_len, &key, iv, 1);
 
 	if (memcmp(at->out, out, at->out_len) != 0) {
@@ -594,8 +603,101 @@ aes_cbc_test(size_t test_number, const char *label, int key_bits,
 	/* Decryption */
 	memset(out, 0, sizeof(out));
 	memcpy(iv, at->iv, at->iv_len);
-	AES_set_decrypt_key(at->key, key_bits, &key);
+	if (AES_set_decrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_decrypt_key failed\n", label, test_number);
+		return 0;
+	}
 	AES_cbc_encrypt(at->out, out, at->out_len, &key, iv, 0);
+
+	if (memcmp(at->in, out, at->in_len) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): decryption mismatch\n",
+		    label, test_number);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+aes_cfb128_test(size_t test_number, const char *label, int key_bits,
+    const struct aes_test *at)
+{
+	AES_KEY key;
+	uint8_t out[64];
+	uint8_t iv[16];
+	int num = 0;
+
+	/* CFB mode has no padding */
+
+	/* Encryption */
+	memset(out, 0, sizeof(out));
+	memcpy(iv, at->iv, at->iv_len);
+	if (AES_set_encrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_encrypt_key failed\n", label, test_number);
+		return 0;
+	}
+	AES_cfb128_encrypt(at->in, out, at->in_len, &key, iv, &num, AES_ENCRYPT);
+
+	if (memcmp(at->out, out, at->out_len) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): encryption mismatch\n",
+		    label, test_number);
+		return 0;
+	}
+
+	/* Decryption */
+	memset(out, 0, sizeof(out));
+	memcpy(iv, at->iv, at->iv_len);
+	num = 0;
+	if (AES_set_encrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_encrypt_key failed\n", label, test_number);
+		return 0;
+	}
+	AES_cfb128_encrypt(at->out, out, at->out_len, &key, iv, &num, AES_DECRYPT);
+
+	if (memcmp(at->in, out, at->in_len) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): decryption mismatch\n",
+		    label, test_number);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+aes_ofb128_test(size_t test_number, const char *label, int key_bits,
+    const struct aes_test *at)
+{
+	AES_KEY key;
+	uint8_t out[64];
+	uint8_t iv[16];
+	int num = 0;
+
+	/* OFB mode has no padding */
+
+	/* Encryption */
+	memset(out, 0, sizeof(out));
+	memcpy(iv, at->iv, at->iv_len);
+	if (AES_set_encrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_encrypt_key failed\n", label, test_number);
+		return 0;
+	}
+	AES_ofb128_encrypt(at->in, out, at->in_len, &key, iv, &num);
+
+	if (memcmp(at->out, out, at->out_len) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): encryption mismatch\n",
+		    label, test_number);
+		return 0;
+	}
+
+	/* Decryption */
+	memset(out, 0, sizeof(out));
+	memcpy(iv, at->iv, at->iv_len);
+	num = 0;
+	if (AES_set_encrypt_key(at->key, key_bits, &key) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): AES_set_encrypt_key failed\n", label, test_number);
+		return 0;
+	}
+	AES_ofb128_encrypt(at->out, out, at->out_len, &key, iv, &num);
 
 	if (memcmp(at->in, out, at->in_len) != 0) {
 		fprintf(stderr, "FAIL (%s:%zu): decryption mismatch\n",
@@ -926,14 +1028,16 @@ aes_test(void)
 		case NID_aes_128_cfb128:
 		case NID_aes_192_cfb128:
 		case NID_aes_256_cfb128:
-			/* XXX - CFB128 non-EVP tests */
+			if (!aes_cfb128_test(i, label, key_bits, at))
+				goto failed;
 			break;
 
 		/* OFB128 */
 		case NID_aes_128_ofb128:
 		case NID_aes_192_ofb128:
 		case NID_aes_256_ofb128:
-			/* XXX - OFB128 non-EVP tests */
+			if (!aes_ofb128_test(i, label, key_bits, at))
+				goto failed;
 			break;
 
 		/* GCM */
@@ -947,7 +1051,7 @@ aes_test(void)
 		case NID_aes_128_ccm:
 		case NID_aes_192_ccm:
 		case NID_aes_256_ccm:
-			/* XXX - CCM non-EVP tests */
+			/* CCM is EVP-only */
 			break;
 
 		/* Unknown */
