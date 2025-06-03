@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.186 2025/05/14 02:00:18 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.187 2025/06/03 06:33:53 jsg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -554,7 +554,6 @@ struct gre_h_erspan {
 #define ERSPAN_II_EN_NONE		0x0
 #define ERSPAN_II_EN_ISL		0x1
 #define ERSPAN_II_EN_VLAN		0x2
-#define ERSPAN_II_EN_PRESERVED		0x3
 #define ERSPAN_II_EN_PRESERVED		0x3
 #define ERSPAN_II_T			(0x1 << 10)
 #define ERSPAN_II_SESSION_ID_SHIFT	0
