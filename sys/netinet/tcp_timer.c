@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.83 2025/02/12 21:28:11 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.84 2025/06/03 16:51:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ tcp_timer_enter(struct inpcb *inp, struct socket **so, struct tcpcb **tp,
 	KASSERT(timer < TCPT_NTIMERS);
 
 	NET_LOCK_SHARED();
-	*so = in_pcbsolock_ref(inp);
+	*so = in_pcbsolock(inp);
 	if (*so == NULL) {
 		*tp = NULL;
 		return -1;
@@ -109,7 +109,7 @@ tcp_timer_enter(struct inpcb *inp, struct socket **so, struct tcpcb **tp,
 static inline void
 tcp_timer_leave(struct inpcb *inp, struct socket *so)
 {
-	in_pcbsounlock_rele(inp, so);
+	in_pcbsounlock(inp, so);
 	NET_UNLOCK_SHARED();
 	in_pcbunref(inp);
 }
@@ -237,7 +237,7 @@ tcp_timer_rexmt(void *arg)
 		sin.sin_family = AF_INET;
 		sin.sin_addr = inp->inp_faddr;
 
-		in_pcbsounlock_rele(inp, so);
+		in_pcbsounlock(inp, so);
 		in_pcbunref(inp);
 
 		icmp_mtudisc(&icmp, rtableid);

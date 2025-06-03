@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.470 2025/06/03 14:23:09 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.471 2025/06/03 16:51:26 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1728,17 +1728,15 @@ do {									\
 	mtx_enter(&(table)->inpt_mtx);					\
 	while ((inp = in_pcb_iterator(table, inp, &iter)) != NULL) {	\
 		if (buflen >= elem_size && elem_count > 0) {		\
-			mtx_enter(&inp->inp_sofree_mtx);		\
-			so = soref(inp->inp_socket);			\
-			mtx_leave(&inp->inp_sofree_mtx);		\
+			mtx_leave(&(table)->inpt_mtx);			\
+			NET_LOCK_SHARED();				\
+			so = in_pcbsolock(inp);				\
 			if (so == NULL)					\
 				continue;				\
-			mtx_leave(&(table)->inpt_mtx);			\
-			solock_shared(so);				\
 			fill_file(kf, NULL, NULL, 0, NULL, NULL, p,	\
 			    so, show_pointers);				\
-			sounlock_shared(so);				\
-			sorele(so);					\
+			in_pcbsounlock(inp, so);			\
+			NET_UNLOCK_SHARED();				\
 			error = copyout(kf, dp, outsize);		\
 			mtx_enter(&(table)->inpt_mtx);			\
 			if (error) {					\

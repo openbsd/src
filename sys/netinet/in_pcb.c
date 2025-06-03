@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.314 2025/05/20 05:51:43 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.315 2025/06/03 16:51:26 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -236,8 +236,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table, int wait)
 	if (inp == NULL)
 		return (ENOBUFS);
 	inp->inp_table = table;
-	inp->inp_socket = so;
-	mtx_init(&inp->inp_sofree_mtx, IPL_SOFTNET);
+	inp->inp_socket = soref(so);
 	refcnt_init_trace(&inp->inp_refcnt, DT_REFCNT_IDX_INPCB);
 	inp->inp_seclevel.sl_auth = IPSEC_AUTH_LEVEL_DEFAULT;
 	inp->inp_seclevel.sl_esp_trans = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
@@ -584,10 +583,9 @@ in_pcbdetach(struct inpcb *inp)
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
 
+	soassertlocked(so);
+
 	so->so_pcb = NULL;
-	mtx_enter(&inp->inp_sofree_mtx);
-	inp->inp_socket = NULL;
-	mtx_leave(&inp->inp_sofree_mtx);
 	/*
 	 * As long as the NET_LOCK() is the default lock for Internet
 	 * sockets, do not release it to not introduce new sleeping
@@ -623,22 +621,17 @@ in_pcbdetach(struct inpcb *inp)
 }
 
 struct socket *
-in_pcbsolock_ref(struct inpcb *inp)
+in_pcbsolock(struct inpcb *inp)
 {
-	struct socket *so;
+	struct socket *so = inp->inp_socket;
 
 	NET_ASSERT_LOCKED();
 
-	mtx_enter(&inp->inp_sofree_mtx);
-	so = soref(inp->inp_socket);
-	mtx_leave(&inp->inp_sofree_mtx);
 	if (so == NULL)
 		return NULL;
 	rw_enter_write(&so->so_lock);
-	/* between mutex and rwlock inpcb could be detached */
 	if (so->so_pcb == NULL) {
 		rw_exit_write(&so->so_lock);
-		sorele(so);
 		return NULL;
 	}
 	KASSERT(inp->inp_socket == so && sotoinpcb(so) == inp);
@@ -646,12 +639,13 @@ in_pcbsolock_ref(struct inpcb *inp)
 }
 
 void
-in_pcbsounlock_rele(struct inpcb *inp, struct socket *so)
+in_pcbsounlock(struct inpcb *inp, struct socket *so)
 {
 	if (so == NULL)
 		return;
+	if (inp != NULL && so->so_pcb != NULL)
+		KASSERT(inp->inp_socket == so && sotoinpcb(so) == inp);
 	rw_exit_write(&so->so_lock);
-	sorele(so);
 }
 
 struct inpcb *
@@ -670,6 +664,7 @@ in_pcbunref(struct inpcb *inp)
 		return;
 	if (refcnt_rele(&inp->inp_refcnt) == 0)
 		return;
+	sorele(inp->inp_socket);
 	KASSERT((LIST_NEXT(inp, inp_hash) == NULL) ||
 	    (LIST_NEXT(inp, inp_hash) == _Q_INVALID));
 	KASSERT((LIST_NEXT(inp, inp_lhash) == NULL) ||
@@ -819,10 +814,10 @@ in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
 			continue;
 		}
 		mtx_leave(&table->inpt_mtx);
-		so = in_pcbsolock_ref(inp);
+		so = in_pcbsolock(inp);
 		if (so != NULL)
 			(*notify)(inp, errno);
-		in_pcbsounlock_rele(inp, so);
+		in_pcbsounlock(inp, so);
 		mtx_enter(&table->inpt_mtx);
 	}
 	mtx_leave(&table->inpt_mtx);

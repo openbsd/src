@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.449 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.450 2025/06/03 16:51:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ tcp_input_mlist(struct mbuf_list *ml, int af)
 		KASSERT(nxt == IPPROTO_DONE);
 	}
 
-	in_pcbsounlock_rele(NULL, so);
+	in_pcbsounlock(NULL, so);
 }
 
 /*
@@ -655,10 +655,10 @@ findpcb:
 		*solocked = NULL;
 	} else {
 		if (solocked != NULL && *solocked != NULL) {
-			in_pcbsounlock_rele(NULL, *solocked);
+			in_pcbsounlock(NULL, *solocked);
 			*solocked = NULL;
 		}
-		so = in_pcbsolock_ref(inp);
+		so = in_pcbsolock(inp);
 	}
 	if (so == NULL) {
 		tcpstat_inc(tcps_noport);
@@ -905,7 +905,7 @@ findpcb:
 				if (solocked != NULL)
 					*solocked = so;
 				else
-					in_pcbsounlock_rele(inp, so);
+					in_pcbsounlock(inp, so);
 				in_pcbunref(inp);
 				return IPPROTO_DONE;
 			}
@@ -1084,7 +1084,7 @@ findpcb:
 				if (solocked != NULL)
 					*solocked = so;
 				else
-					in_pcbsounlock_rele(inp, so);
+					in_pcbsounlock(inp, so);
 				in_pcbunref(inp);
 				return IPPROTO_DONE;
 			}
@@ -1138,7 +1138,7 @@ findpcb:
 			if (solocked != NULL)
 				*solocked = so;
 			else
-				in_pcbsounlock_rele(inp, so);
+				in_pcbsounlock(inp, so);
 			in_pcbunref(inp);
 			return IPPROTO_DONE;
 		}
@@ -1332,7 +1332,7 @@ trimthenstep6:
 			    ((arc4random() & 0x7fffffff) | 0x8000);
 			reuse = &iss;
 			tp = tcp_close(tp);
-			in_pcbsounlock_rele(inp, so);
+			in_pcbsounlock(inp, so);
 			so = NULL;
 			in_pcbunref(inp);
 			inp = NULL;
@@ -2141,7 +2141,7 @@ dodata:							/* XXX */
 	if (solocked != NULL)
 		*solocked = so;
 	else
-		in_pcbsounlock_rele(inp, so);
+		in_pcbsounlock(inp, so);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
@@ -2174,7 +2174,7 @@ dropafterack:
 	if (solocked != NULL)
 		*solocked = so;
 	else
-		in_pcbsounlock_rele(inp, so);
+		in_pcbsounlock(inp, so);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
@@ -2210,7 +2210,7 @@ dropwithreset:
 		    (tcp_seq)0, TH_RST|TH_ACK, m->m_pkthdr.ph_rtableid, now);
 	}
 	m_freem(m);
-	in_pcbsounlock_rele(inp, so);
+	in_pcbsounlock(inp, so);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
@@ -2222,7 +2222,7 @@ drop:
 		tcp_trace(TA_DROP, ostate, tp, otp, &saveti.caddr, 0, tlen);
 
 	m_freem(m);
-	in_pcbsounlock_rele(inp, so);
+	in_pcbsounlock(inp, so);
 	in_pcbunref(inp);
 	return IPPROTO_DONE;
 }
@@ -3490,7 +3490,7 @@ syn_cache_timer(void *arg)
 	mtx_leave(&syn_cache_mtx);
 
 	NET_LOCK_SHARED();
-	so = in_pcbsolock_ref(inp);
+	so = in_pcbsolock(inp);
 	if (so != NULL) {
 		now = tcp_now();
 #ifdef TCP_ECN
@@ -3499,7 +3499,7 @@ syn_cache_timer(void *arg)
 		(void) syn_cache_respond(sc, NULL, now, do_ecn);
 		tcpstat_inc(tcps_sc_retransmitted);
 	}
-	in_pcbsounlock_rele(inp, so);
+	in_pcbsounlock(inp, so);
 	NET_UNLOCK_SHARED();
 
 	in_pcbunref(inp);
@@ -3622,7 +3622,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	sc = syn_cache_lookup(src, dst, &scp, inp->inp_rtableid);
 	if (sc == NULL) {
 		mtx_leave(&syn_cache_mtx);
-		in_pcbsounlock_rele(inp, so);
+		in_pcbsounlock(inp, so);
 		return (NULL);
 	}
 
@@ -3636,7 +3636,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		refcnt_take(&sc->sc_refcnt);
 		mtx_leave(&syn_cache_mtx);
 		(void) syn_cache_respond(sc, m, now, do_ecn);
-		in_pcbsounlock_rele(inp, so);
+		in_pcbsounlock(inp, so);
 		syn_cache_put(sc);
 		return ((struct socket *)(-1));
 	}
@@ -3767,7 +3767,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tp->rcv_adv = tp->rcv_nxt + sc->sc_win;
 	tp->last_ack_sent = tp->rcv_nxt;
 
-	in_pcbsounlock_rele(listeninp, listenso);
+	in_pcbsounlock(listeninp, listenso);
 	tcpstat_inc(tcps_sc_completed);
 	syn_cache_put(sc);
 	return (so);
@@ -3779,8 +3779,8 @@ abort:
 	if (tp != NULL)
 		tp = tcp_drop(tp, ECONNABORTED);	/* destroys socket */
 	m_freem(m);
-	in_pcbsounlock_rele(inp, so);
-	in_pcbsounlock_rele(listeninp, listenso);
+	in_pcbsounlock(inp, so);
+	in_pcbsounlock(listeninp, listenso);
 	syn_cache_put(sc);
 	tcpstat_inc(tcps_sc_aborted);
 	return ((struct socket *)(-1));
