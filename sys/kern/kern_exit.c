@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.250 2025/06/03 00:20:31 dlg Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.251 2025/06/03 08:38:17 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -243,9 +243,22 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		if (pr->ps_pptr->ps_sigacts->ps_sigflags & SAS_NOCLDWAIT)
 			atomic_setbits_int(&pr->ps_flags, PS_NOZOMBIE);
 
-#ifdef __HAVE_PMAP_PURGE
-		pmap_purge(p);
+		/* Teardown the virtual address space. */
+		if ((p->p_flag & P_SYSTEM) == 0) {
+			/*
+			 * exit1() might be called with a lock count
+			 * greater than one and we want to ensure the
+			 * costly operation of tearing down the VM space
+			 * is performed unlocked.
+			 * It is safe to release them all since exit1()
+			 * will not return.
+			 */
+#ifdef MULTIPROCESSOR
+			__mp_release_all(&kernel_lock);
 #endif
+			uvm_purge();
+			KERNEL_LOCK();
+		}
 	}
 
 	p->p_fd = NULL;		/* zap the thread's copy */

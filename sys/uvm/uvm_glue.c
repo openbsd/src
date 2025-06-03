@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.91 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.92 2025/06/03 08:38:17 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -283,6 +283,25 @@ uvm_uarea_free(struct proc *p)
 {
 	km_free(p->p_addr, USPACE, &kv_uarea, &kp_zero);
 	p->p_addr = NULL;
+}
+
+/*
+ * uvm_purge: teardown a virtual address space.
+ *
+ * If multi-threaded, must be called by the last thread of a process.
+ */
+void
+uvm_purge(void)
+{
+	struct proc *p = curproc;
+	struct vmspace *vm = p->p_vmspace;
+
+	KERNEL_ASSERT_UNLOCKED();
+
+#ifdef __HAVE_PMAP_PURGE
+	pmap_purge(p);
+#endif
+	uvmspace_purge(vm);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.344 2025/05/21 16:59:32 dv Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.345 2025/06/03 08:38:17 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2491,6 +2491,24 @@ uvm_map_teardown(struct vm_map *map)
 		entry = TAILQ_NEXT(entry, dfree.deadq);
 	}
 
+#ifdef VMMAP_DEBUG
+	numt = numq = 0;
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr)
+		numt++;
+	TAILQ_FOREACH(entry, &dead_entries, dfree.deadq)
+		numq++;
+	KASSERT(numt == numq);
+	/*
+	 * Let VMMAP_DEBUG checks work on an empty map if uvm_map_teardown()
+	 * is called twice.
+	 */
+	map->size = 0;
+	map->min_offset = 0;
+	map->max_offset = 0;
+	map->flags &= ~VM_MAP_ISVMSPACE;
+#endif
+	/* reinit RB tree since the above removal leaves the tree corrupted. */
+	RBT_INIT(uvm_map_addr, &map->addr);
 	vm_map_unlock(map);
 
 	/* Remove address selectors. */
@@ -2503,18 +2521,7 @@ uvm_map_teardown(struct vm_map *map)
 	uvm_addr_destroy(map->uaddr_brk_stack);
 	map->uaddr_brk_stack = NULL;
 
-#ifdef VMMAP_DEBUG
-	numt = numq = 0;
-	RBT_FOREACH(entry, uvm_map_addr, &map->addr)
-		numt++;
-	TAILQ_FOREACH(entry, &dead_entries, dfree.deadq)
-		numq++;
-	KASSERT(numt == numq);
-#endif
 	uvm_unmap_detach(&dead_entries, 0);
-
-	pmap_destroy(map->pmap);
-	map->pmap = NULL;
 }
 
 /*
@@ -3395,6 +3402,24 @@ uvmspace_addref(struct vmspace *vm)
 	atomic_inc_int(&vm->vm_refcnt);
 }
 
+void
+uvmspace_purge(struct vmspace *vm)
+{
+#ifdef SYSVSHM
+	/* Get rid of any SYSV shared memory segments. */
+	if (vm->vm_shm != NULL) {
+		KERNEL_LOCK();
+		shmexit(vm);
+		KERNEL_UNLOCK();
+	}
+#endif
+	/*
+	 * Lock the map, to wait out all other references to it.  delete
+	 * all of the mappings and pages they hold.
+	 */
+	uvm_map_teardown(&vm->vm_map);
+}
+
 /*
  * uvmspace_free: free a vmspace data structure
  */
@@ -3403,20 +3428,15 @@ uvmspace_free(struct vmspace *vm)
 {
 	if (atomic_dec_int_nv(&vm->vm_refcnt) == 0) {
 		/*
-		 * lock the map, to wait out all other references to it.  delete
-		 * all of the mappings and pages they hold, then call the pmap
-		 * module to reclaim anything left.
+		 * Sanity check.  Kernel threads never end up here and
+		 * userland ones already tear down there VM space in
+		 * exit1().
 		 */
-#ifdef SYSVSHM
-		/* Get rid of any SYSV shared memory segments. */
-		if (vm->vm_shm != NULL) {
-			KERNEL_LOCK();
-			shmexit(vm);
-			KERNEL_UNLOCK();
-		}
-#endif
+		uvmspace_purge(vm);
 
-		uvm_map_teardown(&vm->vm_map);
+		pmap_destroy(vm->vm_map.pmap);
+		vm->vm_map.pmap = NULL;
+
 		pool_put(&uvm_vmspace_pool, vm);
 	}
 }
