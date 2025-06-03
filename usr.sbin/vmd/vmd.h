@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.133 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.134 2025/06/03 20:13:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -586,7 +586,7 @@ __dead void vioblk_main(int, int);
 int	 psp_get_pstate(uint16_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
 int	 psp_df_flush(void);
 int	 psp_get_gstate(uint32_t, uint32_t *, uint32_t *, uint8_t *);
-int	 psp_launch_start(uint32_t *);
+int	 psp_launch_start(uint32_t *, int);
 int	 psp_launch_update(uint32_t, vaddr_t, size_t);
 int	 psp_launch_measure(uint32_t);
 int	 psp_launch_finish(uint32_t);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.65 2024/09/16 22:30:01 bluhm Exp $
+.\" $OpenBSD: vm.conf.5,v 1.66 2025/06/03 20:13:42 bluhm Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 16 2024 $
+.Dd $Mdocdate: June 3 2025 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -324,11 +324,14 @@ If only
 is given,
 only the group is set.
 .It Ic sev
-Enables AMD Secure Encrypted Virtualization for guest.
+Enables AMD Secure Encrypted Virtualization (SEV) for the guest.
 .Xr vmd 8
 uses
 .Xr psp 4
 to configure the guest for SEV.
+.It Ic seves
+Enables AMD Encrypted State (SEV-ES) for the the guest.
+This implicitly enables SEV, too.
 .El
 .Sh VM INSTANCES
 It is possible to use configured or running VMs as a template for

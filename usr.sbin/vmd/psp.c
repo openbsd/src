@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.5 2024/11/06 23:04:45 bluhm Exp $	*/
+/*	$OpenBSD: psp.c,v 1.6 2025/06/03 20:13:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -118,7 +118,7 @@ psp_get_gstate(uint32_t handle, uint32_t *policy, uint32_t *asid,
  * Start the launch sequence of a guest.
  */
 int
-psp_launch_start(uint32_t *handle)
+psp_launch_start(uint32_t *handle, int seves)
 {
 	struct psp_launch_start ls;
 
@@ -127,6 +127,9 @@ psp_launch_start(uint32_t *handle)
 	/* Set guest policy. */
 	ls.policy = (GPOL_NODBG | GPOL_NOKS | GPOL_NOSEND | GPOL_DOMAIN |
 	    GPOL_SEV);
+	/* Add encrypted state. */
+	if (seves)
+		ls.policy |= GPOL_ES;
 
 	if (ioctl(env->vmd_psp_fd, PSP_IOC_LAUNCH_START, &ls) < 0) {
 		log_warn("%s: ioctl", __func__);

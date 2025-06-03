@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2025/06/03 20:13:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -123,7 +123,7 @@ typedef struct {
 %token	FORMAT GROUP
 %token	INET6 INSTANCE INTERFACE LLADDR LOCAL LOCKED MEMORY NET NIFS OWNER
 %token	PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP VM VMID STAGGERED START
-%token  PARALLEL DELAY SEV
+%token  PARALLEL DELAY SEV SEVES
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
@@ -138,6 +138,7 @@ typedef struct {
 %type	<v.string>	string
 %type	<v.string>	vm_instance
 %type	<v.number>	sev;
+%type	<v.number>	seves;
 
 %%
 
@@ -414,6 +415,9 @@ vm_opts		: disable			{
 		}
 		| sev				{
 			vcp->vcp_sev = 1;
+		}
+		| seves				{
+			vcp->vcp_sev = vcp->vcp_seves = 1;
 		}
 		| DISK string image_format	{
 			if (parse_disk($2, $3) != 0) {
@@ -761,6 +765,9 @@ disable		: ENABLE			{ $$ = 0; }
 sev		: SEV				{ $$ = 1; }
 		;
 
+seves		: SEVES				{ $$ = 1; }
+		;
+
 bootdevice	: CDROM				{ $$ = VMBOOTDEV_CDROM; }
 		| DISK				{ $$ = VMBOOTDEV_DISK; }
 		| NET				{ $$ = VMBOOTDEV_NET; }
@@ -846,6 +853,7 @@ lookup(char *s)
 		{ "prefix",		PREFIX },
 		{ "rdomain",		RDOMAIN },
 		{ "sev",		SEV },
+		{ "seves",		SEVES },
 		{ "size",		SIZE },
 		{ "socket",		SOCKET },
 		{ "staggered",		STAGGERED },

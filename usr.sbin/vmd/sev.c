@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.5 2024/11/06 22:06:16 bluhm Exp $	*/
+/*	$OpenBSD: sev.c,v 1.6 2025/06/03 20:13:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -58,7 +58,7 @@ sev_init(struct vmd_vm *vm)
 		return (-1);
 	}
 
-	if (psp_launch_start(&handle) < 0) {
+	if (psp_launch_start(&handle, vcp->vcp_seves) < 0) {
 		log_warnx("%s: launch failed", __func__);
 		return (-1);
 	}
