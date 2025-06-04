@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.19 2024/11/26 13:57:31 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.20 2025/06/04 09:00:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -22,7 +22,9 @@
 #ifndef _IMSG_H_
 #define _IMSG_H_
 
-#include <sys/types.h>
+#include <sys/queue.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define IBUF_READ_SIZE		65535
 #define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
