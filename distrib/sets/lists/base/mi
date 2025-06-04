@@ -788,7 +788,7 @@
 ./usr/lib/libtermlib.so.15.0
 ./usr/lib/libtls.so.32.1
 ./usr/lib/libusbhid.so.7.1
-./usr/lib/libutil.so.20.0
+./usr/lib/libutil.so.20.1
 ./usr/lib/libz.so.7.1
 ./usr/lib/locate
 ./usr/lib/locate/src.db
