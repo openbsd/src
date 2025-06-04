@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.3 2024/09/21 04:12:18 mlarkin Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.4 2025/06/04 12:04:33 tb Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -204,6 +204,22 @@ sev_activate(struct vmd_vm *vm, int vcpu_id)
 
 int
 sev_encrypt_memory(struct vmd_vm *vm)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return (-1);
+}
+
+int
+sev_encrypt_state(struct vmd_vm *vm, int vcpu_id)
+{
+	fatalx("%s: unimplemented", __func__);
+	/* NOTREACHED */
+	return (-1);
+}
+
+int
+sev_launch_finalize(struct vmd_vm *vm)
 {
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
