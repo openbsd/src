@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.239 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.240 2025/06/04 09:18:28 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -681,6 +681,7 @@ struct stats {
 
 struct ibuf;
 struct msgbuf;
+struct ibufqueue;
 
 /* global variables */
 extern int verbose;
@@ -853,7 +854,7 @@ int		 constraints_validate(const char *, const struct cert *);
 void		 entity_free(struct entity *);
 void		 entity_read_req(struct ibuf *, struct entity *);
 void		 entityq_flush(struct entityq *, struct repo *);
-void		 proc_parser(int) __attribute__((noreturn));
+void		 proc_parser(int, int) __attribute__((noreturn));
 void		 proc_filemode(int) __attribute__((noreturn));
 
 /* Rsync-specific. */
@@ -931,6 +932,7 @@ void		 io_simple_buffer(struct ibuf *, const void *, size_t);
 void		 io_buf_buffer(struct ibuf *, const void *, size_t);
 void		 io_str_buffer(struct ibuf *, const char *);
 void		 io_close_buffer(struct msgbuf *, struct ibuf *);
+void		 io_close_queue(struct ibufqueue *, struct ibuf *);
 void		 io_read_buf(struct ibuf *, void *, size_t);
 void		 io_read_str(struct ibuf *, char **);
 void		 io_read_buf_alloc(struct ibuf *, void **, size_t *);

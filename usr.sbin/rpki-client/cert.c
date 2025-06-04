@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.158 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.159 2025/06/04 09:18:28 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <err.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -35,6 +36,8 @@ extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 
 int certid = TALSZ_MAX;
+
+static pthread_rwlock_t	cert_lk = PTHREAD_RWLOCK_INITIALIZER;
 
 /*
  * Append an IP address structure to our list of results.
@@ -1266,13 +1269,16 @@ auth_tree_free(struct auth_tree *auths)
 struct auth *
 auth_find(struct auth_tree *auths, int id)
 {
-	struct auth a;
+	struct auth a, *f;
 	struct cert c;
 
 	c.certid = id;
 	a.cert = &c;
 
-	return RB_FIND(auth_tree, auths, &a);
+	pthread_rwlock_rdlock(&cert_lk);
+	f = RB_FIND(auth_tree, auths, &a);
+	pthread_rwlock_unlock(&cert_lk);
+	return f;
 }
 
 struct auth *
@@ -1285,6 +1291,7 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 	if (na == NULL)
 		err(1, NULL);
 
+	pthread_rwlock_wrlock(&cert_lk);
 	if (issuer == NULL) {
 		cert->certid = cert->talid;
 	} else {
@@ -1292,26 +1299,32 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 		if (certid > CERTID_MAX) {
 			if (certid == CERTID_MAX + 1)
 				warnx("%s: too many certificates in store", fn);
-			free(na);
-			return NULL;
+			goto fail;
 		}
 		na->depth = issuer->depth + 1;
 	}
 
 	if (na->depth >= MAX_CERT_DEPTH) {
 		warnx("%s: maximum certificate chain depth exhausted", fn);
-		free(na);
-		return NULL;
+		goto fail;
 	}
 
 	na->issuer = issuer;
 	na->cert = cert;
 	na->any_inherits = x509_any_inherits(cert->x509);
 
-	if (RB_INSERT(auth_tree, auths, na) != NULL)
+	if (RB_INSERT(auth_tree, auths, na) != NULL) {
+		pthread_rwlock_unlock(&cert_lk);
 		errx(1, "auth tree corrupted");
+	}
+	pthread_rwlock_unlock(&cert_lk);
 
 	return na;
+
+ fail:
+	pthread_rwlock_unlock(&cert_lk);
+	free(na);
+	return NULL;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.44 2025/02/28 13:46:09 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.45 2025/06/04 09:18:28 claudio Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,6 +17,7 @@
  */
 
 #include <err.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -24,6 +25,8 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
+
+static pthread_rwlock_t	 crl_lk = PTHREAD_RWLOCK_INITIALIZER;
 
 /*
  * Check CRL Number is present, non-critical and in [0, 2^159-1].
@@ -301,7 +304,7 @@ RB_GENERATE_STATIC(crl_tree, crl, entry, crlcmp);
 struct crl *
 crl_get(struct crl_tree *crlt, const struct auth *a)
 {
-	struct crl	find;
+	struct crl	find, *crl;
 
 	/* XXX - this should be removed, but filemode relies on it. */
 	if (a == NULL)
@@ -310,13 +313,22 @@ crl_get(struct crl_tree *crlt, const struct auth *a)
 	find.aki = a->cert->ski;
 	find.mftpath = a->cert->mft;
 
-	return RB_FIND(crl_tree, crlt, &find);
+	pthread_rwlock_rdlock(&crl_lk);
+	crl = RB_FIND(crl_tree, crlt, &find);
+	pthread_rwlock_unlock(&crl_lk);
+	return crl;
 }
 
 int
 crl_insert(struct crl_tree *crlt, struct crl *crl)
 {
-	return RB_INSERT(crl_tree, crlt, crl) == NULL;
+	int rv;
+
+	pthread_rwlock_wrlock(&crl_lk);
+	rv = RB_INSERT(crl_tree, crlt, crl) == NULL;
+	pthread_rwlock_unlock(&crl_lk);
+
+	return rv;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.151 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.152 2025/06/04 09:18:28 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -23,6 +23,8 @@
 #include <err.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
+#include <pthread_np.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +45,13 @@ extern int certid;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
+static struct entityq	 globalq = TAILQ_HEAD_INITIALIZER(globalq);
+static pthread_mutex_t	 globalq_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t	 globalq_cond  = PTHREAD_COND_INITIALIZER;
+static struct ibufqueue	*globalmsgq;
+static pthread_mutex_t	 globalmsgq_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t	 globalmsgq_cond  = PTHREAD_COND_INITIALIZER;
+
 struct parse_repo {
 	RB_ENTRY(parse_repo)	 entry;
 	char			*path;
@@ -51,6 +60,7 @@ struct parse_repo {
 };
 
 static RB_HEAD(repo_tree, parse_repo)	repos = RB_INITIALIZER(&repos);
+static pthread_rwlock_t	 		repos_lk = PTHREAD_RWLOCK_INITIALIZER;
 
 static inline int
 repocmp(struct parse_repo *a, struct parse_repo *b)
@@ -63,9 +73,12 @@ RB_GENERATE_STATIC(repo_tree, parse_repo, entry, repocmp);
 static struct parse_repo *
 repo_get(unsigned int id)
 {
-	struct parse_repo needle = { .id = id };
+	struct parse_repo needle = { .id = id }, *r;
 
-	return RB_FIND(repo_tree, &repos, &needle);
+	pthread_rwlock_rdlock(&repos_lk);
+	r = RB_FIND(repo_tree, &repos, &needle);
+	pthread_rwlock_unlock(&repos_lk);
+	return r;
 }
 
 static void
@@ -83,8 +96,10 @@ repo_add(unsigned int id, char *path, char *validpath)
 		if ((rp->validpath = strdup(validpath)) == NULL)
 			err(1, NULL);
 
+	pthread_rwlock_wrlock(&repos_lk);
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
+	pthread_rwlock_unlock(&repos_lk);
 }
 
 /*
@@ -600,8 +615,9 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	/*
 	 * Add validated CA certs to the RPKI auth tree.
 	 */
-	if (cert->purpose == CERT_PURPOSE_CA)
+	if (cert->purpose == CERT_PURPOSE_CA) {
 		auth_insert(file, &auths, cert, a);
+	}
 
 	return cert;
 
@@ -860,7 +876,7 @@ parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
  * Process an entity and respond to parent process.
  */
 static void
-parse_entity(struct entityq *q, struct msgbuf *msgq, X509_STORE_CTX *ctx,
+parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
     BN_CTX *bn_ctx)
 {
 	struct entity	*entp;
@@ -881,13 +897,6 @@ parse_entity(struct entityq *q, struct msgbuf *msgq, X509_STORE_CTX *ctx,
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
 		TAILQ_REMOVE(q, entp, entries);
-
-		/* handle RTYPE_REPO first */
-		if (entp->type == RTYPE_REPO) {
-			repo_add(entp->repoid, entp->path, entp->file);
-			entity_free(entp);
-			continue;
-		}
 
 		/* pass back at least type, repoid and filename */
 		b = io_new_buffer();
@@ -965,7 +974,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq, X509_STORE_CTX *ctx,
 				    sizeof(crlmtime));
 				free(crlfile);
 
-				io_close_buffer(msgq, b2);
+				io_close_queue(msgq, b2);
 			}
 			mft_free(mft);
 			break;
@@ -1044,9 +1053,113 @@ parse_entity(struct entityq *q, struct msgbuf *msgq, X509_STORE_CTX *ctx,
 
 		free(f);
 		free(file);
-		io_close_buffer(msgq, b);
+		io_close_queue(msgq, b);
 		entity_free(entp);
 	}
+
+}
+
+static void *
+parse_worker(void *arg)
+{
+	struct entityq q = TAILQ_HEAD_INITIALIZER(q);
+	struct entity *entp;
+	struct ibufqueue *myq;
+	X509_STORE_CTX *ctx;
+	BN_CTX *bn_ctx;
+	int n;
+
+	pthread_set_name_np(pthread_self(), "parser: worker");
+
+	if ((ctx = X509_STORE_CTX_new()) == NULL)
+		err(1, "X509_STORE_CTX_new");
+	if ((bn_ctx = BN_CTX_new()) == NULL)
+		err(1, "BN_CTX_new");
+	if ((myq = ibufq_new()) == NULL)
+		err(1, "ibufqueue_new");
+
+	for (;;) {
+		pthread_mutex_lock(&globalq_mtx);
+		if (TAILQ_EMPTY(&globalq))
+			pthread_cond_wait(&globalq_cond, &globalq_mtx);
+		n = 0;
+		while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
+			TAILQ_REMOVE(&globalq, entp, entries);
+			TAILQ_INSERT_TAIL(&q, entp, entries);
+			if (n++ > 16)
+				break;
+		}
+		pthread_mutex_unlock(&globalq_mtx);
+		if (n > 16)
+			pthread_cond_signal(&globalq_cond);
+
+		parse_entity(&q, myq, ctx, bn_ctx);
+
+		if (ibufq_queuelen(myq) > 0) {
+			pthread_mutex_lock(&globalmsgq_mtx);
+			ibufq_concat(globalmsgq, myq);
+			pthread_cond_signal(&globalmsgq_cond);
+			pthread_mutex_unlock(&globalmsgq_mtx);
+		}
+	}
+
+
+	X509_STORE_CTX_free(ctx);
+	BN_CTX_free(bn_ctx);
+	ibufq_free(myq);
+}
+
+static void *
+parse_writer(void *arg)
+{
+	struct msgbuf *myq;
+	struct pollfd pfd;
+
+	pthread_set_name_np(pthread_self(), "parser: writer");
+	if ((myq = msgbuf_new()) == NULL)
+		err(1, NULL);
+	pfd.fd = *(int *)arg;
+	for (;;) {
+		if (msgbuf_queuelen(myq) == 0) {
+			pthread_mutex_lock(&globalmsgq_mtx);
+			if (ibufq_queuelen(globalmsgq) == 0) {
+				pthread_cond_wait(&globalmsgq_cond, &globalmsgq_mtx);
+			} else {
+				/* enqueue messages to local msgbuf */
+				msgbuf_concat(myq, globalmsgq);
+			}
+			pthread_mutex_unlock(&globalmsgq_mtx);
+		}
+
+		if (msgbuf_queuelen(myq) > 0) {
+			pfd.events |= POLLOUT;
+
+			pfd.events |= POLLOUT;
+			if (poll(&pfd, 1, INFTIM) == -1) {
+				if (errno == EINTR)
+					continue;
+				err(1, "poll");
+			}
+			if ((pfd.revents & (POLLERR|POLLNVAL)))
+				errx(1, "poll: bad descriptor");
+
+			/* If the parent closes, return immediately. */
+			if ((pfd.revents & POLLHUP))
+				break;
+
+			if (pfd.revents & POLLOUT) {
+				if (msgbuf_write(pfd.fd, myq) == -1) {
+					if (errno == EPIPE)
+						errx(1, "write: "
+						    "connection closed");
+					else
+						err(1, "write");
+				}
+			}
+		}
+	}
+
+	return NULL;
 }
 
 /*
@@ -1057,15 +1170,15 @@ parse_entity(struct entityq *q, struct msgbuf *msgq, X509_STORE_CTX *ctx,
  * The process will exit cleanly only when fd is closed.
  */
 void
-proc_parser(int fd)
+proc_parser(int fd, int nthreads)
 {
-	struct entityq	 q;
+	struct entityq	 myq = TAILQ_HEAD_INITIALIZER(myq);
 	struct pollfd	 pfd;
-	X509_STORE_CTX	*ctx;
-	BN_CTX		*bn_ctx;
-	struct msgbuf	*msgq;
+	struct msgbuf	*inbufq;
 	struct entity	*entp;
-	struct ibuf	*b, *inbuf = NULL;
+	struct ibuf	*b;
+	pthread_t	 wthread, dummy;
+	int		 i;
 
 	/* Only allow access to the cache directory. */
 	if (unveil(".", "r") == -1)
@@ -1079,24 +1192,20 @@ proc_parser(int fd)
 	x509_init_oid();
 	constraints_parse();
 
-	if ((ctx = X509_STORE_CTX_new()) == NULL)
-		err(1, "X509_STORE_CTX_new");
-	if ((bn_ctx = BN_CTX_new()) == NULL)
-		err(1, "BN_CTX_new");
-
-	TAILQ_INIT(&q);
-
-	if ((msgq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
+	if ((globalmsgq = ibufq_new()) == NULL)
+		err(1, NULL);
+	if ((inbufq = msgbuf_new_reader(sizeof(size_t), io_parse_hdr, NULL)) ==
 	    NULL)
 		err(1, NULL);
 
-	pfd.fd = fd;
+	pthread_create(&wthread, NULL, &parse_writer, &fd);
+	for (i = 0; i < nthreads; i++)
+		pthread_create(&dummy, NULL, &parse_worker, NULL);
 
+	pthread_set_name_np(pthread_self(), "parser: reader");
+	pfd.fd = fd;
 	for (;;) {
 		pfd.events = POLLIN;
-		if (msgbuf_queuelen(msgq) > 0)
-			pfd.events |= POLLOUT;
-
 		if (poll(&pfd, 1, INFTIM) == -1) {
 			if (errno == EINTR)
 				continue;
@@ -1106,52 +1215,54 @@ proc_parser(int fd)
 			errx(1, "poll: bad descriptor");
 
 		/* If the parent closes, return immediately. */
-
 		if ((pfd.revents & POLLHUP))
 			break;
 
 		if ((pfd.revents & POLLIN)) {
-			switch (ibuf_read(fd, msgq)) {
+			switch (ibuf_read(fd, inbufq)) {
 			case -1:
 				err(1, "ibuf_read");
 			case 0:
 				errx(1, "ibuf_read: connection closed");
 			}
-			while ((b = io_buf_get(msgq)) != NULL) {
+			while ((b = io_buf_get(inbufq)) != NULL) {
 				entp = calloc(1, sizeof(struct entity));
 				if (entp == NULL)
 					err(1, NULL);
 				entity_read_req(b, entp);
-				TAILQ_INSERT_TAIL(&q, entp, entries);
 				ibuf_free(b);
+
+				/* handle RTYPE_REPO first */
+				if (entp->type == RTYPE_REPO) {
+					repo_add(entp->repoid, entp->path,
+					    entp->file);
+					entity_free(entp);
+					continue;
+				}
+
+				TAILQ_INSERT_TAIL(&myq, entp, entries);
+			}
+			if (!TAILQ_EMPTY(&myq)) {
+				pthread_mutex_lock(&globalq_mtx);
+				TAILQ_CONCAT(&globalq, &myq, entries);
+				pthread_mutex_unlock(&globalq_mtx);
+				pthread_cond_signal(&globalq_cond);
 			}
 		}
-
-		if (pfd.revents & POLLOUT) {
-			if (msgbuf_write(fd, msgq) == -1) {
-				if (errno == EPIPE)
-					errx(1, "write: connection closed");
-				else
-					err(1, "write");
-			}
-		}
-
-		parse_entity(&q, msgq, ctx, bn_ctx);
 	}
 
-	while ((entp = TAILQ_FIRST(&q)) != NULL) {
-		TAILQ_REMOVE(&q, entp, entries);
+	pthread_mutex_lock(&globalq_mtx);
+	while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
+		TAILQ_REMOVE(&globalq, entp, entries);
 		entity_free(entp);
 	}
+	pthread_mutex_unlock(&globalq_mtx);
 
 	auth_tree_free(&auths);
 	crl_tree_free(&crlt);
 
-	X509_STORE_CTX_free(ctx);
-	BN_CTX_free(bn_ctx);
-
-	msgbuf_free(msgq);
-	ibuf_free(inbuf);
+	msgbuf_free(inbufq);
+	ibufq_free(globalmsgq);
 
 	if (certid > CERTID_MAX)
 		errx(1, "processing incomplete: too many certificates");

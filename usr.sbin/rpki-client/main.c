@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.281 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.282 2025/06/04 09:18:28 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -977,6 +977,7 @@ main(int argc, char *argv[])
 {
 	int		 rc, c, i, st, hangup = 0;
 	int		 procfd, rsyncfd, httpfd, rrdpfd;
+	int		 nthreads = 1;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
@@ -1018,7 +1019,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	while ((c =
-	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmnoP:Rs:S:t:vVx")) != -1)
+	    getopt(argc, argv, "0Ab:Bcd:e:fH:jmnop:P:Rs:S:t:vVx")) != -1)
 		switch (c) {
 		case '0':
 			excludeas0 = 0;
@@ -1060,6 +1061,11 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			outformats |= FORMAT_OPENBGPD;
+			break;
+		case 'p':
+			nthreads = strtonum(optarg, 1, 128, &errs);
+			if (errs)
+				errx(1, "-p: %s", errs);
 			break;
 		case 'P':
 			evaluation_time = strtonum(optarg, X509_TIME_MIN + 1,
@@ -1154,7 +1160,7 @@ main(int argc, char *argv[])
 	procpid = process_start("parser", &procfd);
 	if (procpid == 0) {
 		if (!filemode)
-			proc_parser(procfd);
+			proc_parser(procfd, nthreads);
 		else
 			proc_filemode(procfd);
 	}
@@ -1559,9 +1565,9 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-0ABcjmnoRVvx] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-H fqdn] [-P epoch] [-S skiplist] [-s timeout]"
-	    " [-t tal]\n"
-	    "                   [outputdir]\n"
+	    "                   [-H fqdn] [-P epoch] [-p threads] [-S skiplist]"
+	    " [-s timeout]\n"
+	    "                   [-t tal] [outputdir]\n"
 	    "       rpki-client [-Vv] [-d cachedir] [-j] [-t tal] -f file ..."
 	    "\n");
 	return 1;

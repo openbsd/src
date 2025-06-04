@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2024/02/22 12:49:42 job Exp $
+#	$OpenBSD: Makefile,v 1.35 2025/06/04 09:18:28 claudio Exp $
 
 PROG=	rpki-client
 SRCS=	as.c aspa.c cert.c cms.c constraints.c crl.c encoding.c filemode.c \
@@ -11,6 +11,9 @@ MAN=	rpki-client.8
 
 LDADD+= -lexpat -ltls -lssl -lcrypto -lutil -lz
 DPADD+= ${LIBEXPAT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+
+LDADD+= -lpthread
+DPADD+= ${LIBPTHREAD}
 
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes

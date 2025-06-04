@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.121 2025/05/22 02:10:27 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.122 2025/06/04 09:18:28 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 22 2025 $
+.Dd $Mdocdate: June 4 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
 .Op Fl H Ar fqdn
+.Op Fl p Ar threads
 .Op Fl S Ar skiplist
 .Op Fl s Ar timeout
 .Op Fl t Ar tal
@@ -177,6 +178,11 @@ Specify the time for the evaluation in
 .Ar posix-seconds
 seconds from the unix epoch.
 This overrides the default of using the current system time.
+.It Fl p Ar threads
+Validate using the specified number of threads.
+The default is one.
+Has no effect in combination with
+.Fl f .
 .It Fl R
 Disable RRDP, synchronize only via RSYNC.
 .It Fl S Ar skiplist

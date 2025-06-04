@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.27 2024/11/26 13:59:09 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.28 2025/06/04 09:18:28 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -94,6 +94,21 @@ io_close_buffer(struct msgbuf *msgbuf, struct ibuf *b)
 		len |= IO_FD_MARK;
 	ibuf_set(b, 0, &len, sizeof(len));
 	ibuf_close(msgbuf, b);
+}
+
+/*
+ * Finish and enqueue a io buffer.
+ */
+void
+io_close_queue(struct ibufqueue *bufq, struct ibuf *b)
+{
+	size_t len;
+
+	len = ibuf_size(b);
+	if (ibuf_fd_avail(b))
+		len |= IO_FD_MARK;
+	ibuf_set(b, 0, &len, sizeof(len));
+	ibufq_push(bufq, b);
 }
 
 /*
