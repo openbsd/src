@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.175 2025/02/04 18:16:56 denis Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.176 2025/06/04 09:12:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1023,19 +1023,22 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
  * how may routes can be added. Return 0 on success -1 on error which
  * includes generating an empty withdraw message.
  */
-struct ibuf *
-up_dump_withdraws(struct rde_peer *peer, uint8_t aid)
+void
+up_dump_withdraws(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 {
 	struct ibuf *buf;
 	size_t off, pkgsize = MAX_PKTSIZE;
 	uint16_t afi, len;
 	uint8_t safi;
 
+	if ((buf = imsg_create(imsg, IMSG_UPDATE, peer->conf.id, 0, 64)) ==
+	    NULL)
+		goto fail;
+
+	/* enforce correct ibuf size */
 	if (peer_has_ext_msg(peer))
 		pkgsize = MAX_EXT_PKTSIZE;
-
-	if ((buf = ibuf_dynamic(4, pkgsize - MSGSIZE_HEADER)) == NULL)
-		goto fail;
+	imsg_set_maxsize(buf, pkgsize - MSGSIZE_HEADER);
 
 	/* reserve space for the withdrawn routes length field */
 	off = ibuf_size(buf);
@@ -1085,19 +1088,19 @@ up_dump_withdraws(struct rde_peer *peer, uint8_t aid)
 		}
 	}
 
-	return buf;
+	imsg_close(imsg, buf);
+	return;
 
  fail:
 	/* something went horribly wrong */
 	log_peer_warn(&peer->conf, "generating withdraw failed, peer desynced");
 	ibuf_free(buf);
-	return NULL;
 }
 
 /*
  * Withdraw a single prefix after an error.
  */
-static struct ibuf *
+static int
 up_dump_withdraw_one(struct rde_peer *peer, struct prefix *p, struct ibuf *buf)
 {
 	size_t off;
@@ -1106,64 +1109,58 @@ up_dump_withdraw_one(struct rde_peer *peer, struct prefix *p, struct ibuf *buf)
 	uint8_t safi;
 
 	/* reset the buffer and start fresh */
-	ibuf_truncate(buf, 0);
+	ibuf_truncate(buf, IMSG_HEADER_SIZE);
 
 	/* reserve space for the withdrawn routes length field */
 	off = ibuf_size(buf);
 	if (ibuf_add_zero(buf, sizeof(len)) == -1)
-		goto fail;
+		return -1;
 
 	if (p->pt->aid != AID_INET) {
 		/* reserve space for 2-byte path attribute length */
 		off = ibuf_size(buf);
 		if (ibuf_add_zero(buf, sizeof(len)) == -1)
-			goto fail;
+			return -1;
 
 		/* attribute header, defaulting to extended length one */
 		if (ibuf_add_n8(buf, ATTR_OPTIONAL | ATTR_EXTLEN) == -1)
-			goto fail;
+			return -1;
 		if (ibuf_add_n8(buf, ATTR_MP_UNREACH_NLRI) == -1)
-			goto fail;
+			return -1;
 		if (ibuf_add_zero(buf, sizeof(len)) == -1)
-			goto fail;
+			return -1;
 
 		/* afi & safi */
 		if (aid2afi(p->pt->aid, &afi, &safi))
 			fatalx("%s: bad AID", __func__);
 		if (ibuf_add_n16(buf, afi) == -1)
-			goto fail;
+			return -1;
 		if (ibuf_add_n8(buf, safi) == -1)
-			goto fail;
+			return -1;
 	}
 
 	has_ap = peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND);
 	if (pt_writebuf(buf, p->pt, 1, has_ap, p->path_id_tx) == -1)
-		goto fail;
+		return -1;
 
 	/* update length field (either withdrawn routes or attribute length) */
 	len = ibuf_size(buf) - off - sizeof(len);
 	if (ibuf_set_n16(buf, off, len) == -1)
-		goto fail;
+		return -1;
 
 	if (p->pt->aid != AID_INET) {
 		/* write MP_UNREACH_NLRI attribute length (always extended) */
 		len -= 4; /* skip attribute header */
 		if (ibuf_set_n16(buf, off + sizeof(len) + 2, len) == -1)
-			goto fail;
+			return -1;
 	} else {
 		/* no extra attributes so set attribute len to 0 */
 		if (ibuf_add_zero(buf, sizeof(len)) == -1) {
-			goto fail;
+			return -1;
 		}
 	}
 
-	return buf;
-
- fail:
-	/* something went horribly wrong */
-	log_peer_warn(&peer->conf, "generating withdraw failed, peer desynced");
-	ibuf_free(buf);
-	return NULL;
+	return 0;
 }
 
 /*
@@ -1172,8 +1169,8 @@ up_dump_withdraw_one(struct rde_peer *peer, struct prefix *p, struct ibuf *buf)
  * and then tries to add as many prefixes using these attributes.
  * Return 0 on success -1 on error which includes producing an empty message.
  */
-struct ibuf *
-up_dump_update(struct rde_peer *peer, uint8_t aid)
+void
+up_dump_update(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 {
 	struct ibuf *buf;
 	struct bgpd_addr addr;
@@ -1184,10 +1181,7 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
 	if (p == NULL)
-		return NULL;
-
-	if (peer_has_ext_msg(peer))
-		pkgsize = MAX_EXT_PKTSIZE;
+		return;
 
 	if (aid == AID_INET && peer_has_ext_nexthop(peer, AID_INET)) {
 		struct nexthop *nh = prefix_nexthop(p);
@@ -1195,8 +1189,14 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 			force_ip4mp = 1;
 	}
 
-	if ((buf = ibuf_dynamic(4, pkgsize - MSGSIZE_HEADER)) == NULL)
+	if ((buf = imsg_create(imsg, IMSG_UPDATE, peer->conf.id, 0, 64)) ==
+	    NULL)
 		goto fail;
+
+	/* enforce correct ibuf size */
+	if (peer_has_ext_msg(peer))
+		pkgsize = MAX_EXT_PKTSIZE;
+	imsg_set_maxsize(buf, pkgsize - MSGSIZE_HEADER);
 
 	/* withdrawn routes length field is 0 */
 	if (ibuf_add_zero(buf, sizeof(len)) == -1)
@@ -1236,7 +1236,8 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 			goto drop;
 	}
 
-	return buf;
+	imsg_close(imsg, buf);
+	return;
 
  drop:
 	/* Not enough space. Drop current prefix, it will never fit. */
@@ -1246,11 +1247,13 @@ up_dump_update(struct rde_peer *peer, uint8_t aid)
 	    "prefix %s/%d dropped", log_addr(&addr), p->pt->prefixlen);
 
 	up_prefix_free(&peer->updates[aid], p, peer, 0);
-	return up_dump_withdraw_one(peer, p, buf);
+	if (up_dump_withdraw_one(peer, p, buf) == -1)
+		goto fail;
+	imsg_close(imsg, buf);
+	return;
 
  fail:
 	/* something went horribly wrong */
 	log_peer_warn(&peer->conf, "generating update failed, peer desynced");
 	ibuf_free(buf);
-	return NULL;
 }

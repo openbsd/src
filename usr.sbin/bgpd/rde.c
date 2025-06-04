@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.655 2025/04/14 12:09:51 tb Exp $ */
+/*	$OpenBSD: rde.c,v 1.656 2025/06/04 09:12:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3473,7 +3473,6 @@ void
 rde_update_queue_runner(uint8_t aid)
 {
 	struct rde_peer		*peer;
-	struct ibuf		*buf;
 	int			 sent, max = RDE_RUNNER_ROUNDS;
 
 	/* first withdraws ... */
@@ -3489,12 +3488,7 @@ rde_update_queue_runner(uint8_t aid)
 			if (RB_EMPTY(&peer->withdraws[aid]))
 				continue;
 
-			if ((buf = up_dump_withdraws(peer, aid)) == NULL) {
-				continue;
-			}
-			if (imsg_compose_ibuf(ibuf_se, IMSG_UPDATE,
-			    peer->conf.id, 0, buf) == -1)
-				fatal("%s: imsg_create error", __func__);
+			up_dump_withdraws(ibuf_se, peer, aid);
 			sent++;
 		}
 		max -= sent;
@@ -3524,12 +3518,7 @@ rde_update_queue_runner(uint8_t aid)
 				continue;
 			}
 
-			if ((buf = up_dump_update(peer, aid)) == NULL) {
-				continue;
-			}
-			if (imsg_compose_ibuf(ibuf_se, IMSG_UPDATE,
-			    peer->conf.id, 0, buf) == -1)
-				fatal("%s: imsg_compose_ibuf error", __func__);
+			up_dump_update(ibuf_se, peer, aid);
 			sent++;
 		}
 		max -= sent;
