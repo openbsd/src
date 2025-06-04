@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.60 2024/08/21 09:19:55 florian Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.61 2025/06/04 21:16:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -204,8 +204,7 @@ main(int argc, char *argv[])
 			fatal("setrtable");
 
 	if (syncsend || syncrecv) {
-		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
-		if (syncfd == -1)
+		if (sync_init(sync_iface, sync_baddr, sync_port) == -1)
 			err(1, "sync init");
 	}
 

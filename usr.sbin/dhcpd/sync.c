@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.25 2024/08/24 08:35:24 sthen Exp $	*/
+/*	$OpenBSD: sync.c,v 1.26 2025/06/04 21:16:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -61,6 +61,7 @@ struct sync_host {
 };
 LIST_HEAD(synchosts, sync_host) sync_hosts = LIST_HEAD_INITIALIZER(sync_hosts);
 
+void	 sync_recv(struct protocol *);
 void	 sync_send(struct iovec *, int);
 
 int
@@ -223,6 +224,8 @@ sync_init(const char *iface, const char *baddr, u_short port)
 		    sendmcast ? "" : "receive ",
 		    ttl, inet_ntoa(sync_out.sin_addr), port);
 
+	add_protocol("sync", syncfd, sync_recv, NULL);
+
 	return (syncfd);
 
  fail:
@@ -231,7 +234,7 @@ sync_init(const char *iface, const char *baddr, u_short port)
 }
 
 void
-sync_recv(void)
+sync_recv(struct protocol *protocol)
 {
 	struct dhcp_synchdr *hdr;
 	struct sockaddr_in addr;
