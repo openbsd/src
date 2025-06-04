@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.12 2025/02/07 03:03:31 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.13 2025/06/04 13:00:50 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -109,6 +109,7 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 	do {								\
 		int __error, __wait;					\
 		unsigned long deadline;					\
+		uint64_t nsecs = jiffies_to_nsecs(__ret);		\
 									\
 		KASSERT(!cold);						\
 									\
@@ -117,7 +118,7 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 									\
 		__wait = !(condition);					\
 									\
-		__error = sleep_finish(__ret, __wait);			\
+		__error = sleep_finish(nsecs, __wait);	\
 		if ((timo) > 0)						\
 			__ret = deadline - jiffies;			\
 									\
@@ -173,7 +174,7 @@ do {						\
 		set_current_state(TASK_INTERRUPTIBLE);			\
 									\
 		mtx_leave(&(wqh).lock);					\
-		__error = sleep_finish(0, 1);				\
+		__error = sleep_finish(INFSLP, 1);			\
 		mtx_enter(&(wqh).lock);					\
 		if (__error == ERESTART || __error == EINTR) {		\
 			__error = -ERESTARTSYS;				\
@@ -238,7 +239,7 @@ do {						\
 		__wait = !(condition);					\
 									\
 		mtx_leave(&(mtx));					\
-		sleep_finish(0, __wait);				\
+		sleep_finish(INFSLP, __wait);				\
 		mtx_enter(&(mtx));					\
 	} while (!(condition));						\
 	finish_wait(&wqh, &__wq_entry);					\

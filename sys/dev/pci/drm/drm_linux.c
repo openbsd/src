@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.124 2025/06/02 10:25:01 jmatthew Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.125 2025/06/04 13:00:50 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -140,15 +140,15 @@ long
 schedule_timeout(long timeout)
 {
 	unsigned long deadline;
-	int timo = 0;
+	uint64_t nsecs = INFSLP;
 
 	KASSERT(!cold);
 
-	if (timeout != MAX_SCHEDULE_TIMEOUT)
-		timo = timeout;
-	if (timeout != MAX_SCHEDULE_TIMEOUT)
+	if (timeout != MAX_SCHEDULE_TIMEOUT) {
 		deadline = jiffies + timeout;
-	sleep_finish(timo, timeout > 0);
+		nsecs = jiffies_to_nsecs(timeout);
+	}
+	sleep_finish(nsecs, timeout > 0);
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		timeout = deadline - jiffies;
 
