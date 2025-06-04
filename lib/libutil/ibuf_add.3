@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.8 2025/06/04 09:00:44 claudio Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.9 2025/06/04 09:03:05 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -28,6 +28,7 @@
 .Nm ibuf_add_n32 ,
 .Nm ibuf_add_n64 ,
 .Nm ibuf_add_n8 ,
+.Nm ibuf_add_strbuf ,
 .Nm ibuf_add_zero ,
 .Nm ibuf_close ,
 .Nm ibuf_data ,
@@ -47,6 +48,7 @@
 .Nm ibuf_get_n32 ,
 .Nm ibuf_get_n64 ,
 .Nm ibuf_get_n8 ,
+.Nm ibuf_get_strbuf ,
 .Nm ibuf_get_string ,
 .Nm ibuf_left ,
 .Nm ibuf_open ,
@@ -62,6 +64,7 @@
 .Nm ibuf_set_n32 ,
 .Nm ibuf_set_n64 ,
 .Nm ibuf_set_n8 ,
+.Nm ibuf_set_maxsize ,
 .Nm ibuf_size ,
 .Nm ibuf_skip ,
 .Nm ibuf_truncate ,
@@ -96,6 +99,8 @@
 .Fn ibuf_add_n64 "struct ibuf *buf" "uint64_t value"
 .Ft int
 .Fn ibuf_add_n8 "struct ibuf *buf" "uint64_t value"
+.Ft int
+.Fn ibuf_add_strbuf "struct ibuf *buf" "const char *str" "size_t len"
 .Ft int
 .Fn ibuf_add_zero "struct ibuf *buf" "size_t len"
 .Ft void
@@ -134,6 +139,8 @@
 .Fn ibuf_get_n64 "struct ibuf *buf" "uint64_t *value"
 .Ft int
 .Fn ibuf_get_n8 "struct ibuf *buf" "uint8_t *value"
+.Ft int
+.Fn ibuf_get_strbuf "struct ibuf *buf" "char *str" "size_t len"
 .Ft "char *"
 .Fn ibuf_get_string "struct ibuf *buf" "size_t len"
 .Ft size_t
@@ -165,6 +172,8 @@
 .Fn ibuf_set_n64 "struct ibuf *buf" "size_t pos" "uint64_t value"
 .Ft int
 .Fn ibuf_set_n8 "struct ibuf *buf" "size_t pos" "uint64_t value"
+.Ft int
+.Fn ibuf_set_maxsize "struct ibuf *buf" "size_t max"
 .Ft size_t
 .Fn ibuf_size "const struct ibuf *buf"
 .Ft int
@@ -248,6 +257,13 @@ in network byte order.
 This function checks
 .Fa value
 to not overflow.
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_add_strbuf
+appends a fixed-size buffer containing a string,
+zero-padded to
+.Fa len ,
+which must be large enough to allow at least one NUL.
 0 is returned on success and \-1 on failure.
 .Pp
 .Fn ibuf_add_zero
@@ -374,6 +390,16 @@ from
 converting the value from network to host byte order.
 0 is returned on success and \-1 on failure.
 .Pp
+.Fn ibuf_get_strbuf
+copies
+.Fa len
+bytes from the buffer
+.Fa buf
+into
+.Fa str ,
+ensuring that it is NUL-terminated.
+0 is returned on success and \-1 on failure.
+.Pp
 .Fn ibuf_get_string
 consumes
 .Fa len
@@ -478,6 +504,13 @@ in network byte order.
 This function checks
 .Fa value
 to not overflow.
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_set_maxsize
+reduces the maximum payload of
+.Fa buf
+to
+.Fa max .
 0 is returned on success and \-1 on failure.
 .Pp
 .Fn ibuf_size

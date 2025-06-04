@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.31 2024/11/26 13:57:31 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.32 2025/06/04 09:03:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -238,6 +238,25 @@ ibuf_add_zero(struct ibuf *buf, size_t len)
 	return (0);
 }
 
+int
+ibuf_add_strbuf(struct ibuf *buf, const char *str, size_t len)
+{
+	char *b;
+	size_t n;
+
+	if ((b = ibuf_reserve(buf, len)) == NULL)
+		return (-1);
+
+	n = strlcpy(b, str, len);
+	if (n >= len) {
+		/* also covers the case where len == 0 */
+		errno = EOVERFLOW;
+		return (-1);
+	}
+	memset(b + n, 0, len - n);
+	return (0);
+}
+
 void *
 ibuf_seek(struct ibuf *buf, size_t pos, size_t len)
 {
@@ -339,6 +358,22 @@ int
 ibuf_set_h64(struct ibuf *buf, size_t pos, uint64_t value)
 {
 	return (ibuf_set(buf, pos, &value, sizeof(value)));
+}
+
+int
+ibuf_set_maxsize(struct ibuf *buf, size_t max)
+{
+	if (buf->fd == IBUF_FD_MARK_ON_STACK) {
+		/* can't fiddle with stack buffers */
+		errno = EINVAL;
+		return (-1);
+	}
+	if (max > buf->max) {
+		errno = ERANGE;
+		return (-1);
+	}
+	buf->max = max;
+	return (0);
 }
 
 void *
@@ -499,6 +534,24 @@ ibuf_get_string(struct ibuf *buf, size_t len)
 		return (NULL);
 	buf->rpos += len;
 	return (str);
+}
+
+int
+ibuf_get_strbuf(struct ibuf *buf, char *str, size_t len)
+{
+	if (len == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	if (ibuf_get(buf, str, len) == -1)
+		return -1;
+	if (str[len - 1] != '\0') {
+		str[len - 1] = '\0';
+		errno = EOVERFLOW;
+		return -1;
+	}
+	return 0;
 }
 
 int

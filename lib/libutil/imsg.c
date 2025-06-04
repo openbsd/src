@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.38 2024/11/29 04:35:13 tb Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.39 2025/06/04 09:03:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <errno.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -56,13 +57,18 @@ imsgbuf_allow_fdpass(struct imsgbuf *imsgbuf)
 }
 
 int
-imsgbuf_set_maxsize(struct imsgbuf *imsgbuf, uint32_t maxsize)
+imsgbuf_set_maxsize(struct imsgbuf *imsgbuf, uint32_t max)
 {
-	if (maxsize < IMSG_HEADER_SIZE || maxsize & IMSG_FD_MARK) {
+	if (max > UINT32_MAX - IMSG_HEADER_SIZE) {
+		errno = ERANGE;
+		return (-1);
+	}
+	max += IMSG_HEADER_SIZE;
+	if (max & IMSG_FD_MARK) {
 		errno = EINVAL;
 		return (-1);
 	}
-	imsgbuf->maxsize = maxsize;
+	imsgbuf->maxsize = max;
 	return (0);
 }
 
@@ -152,6 +158,18 @@ imsg_get_data(struct imsg *imsg, void *data, size_t len)
 		return (-1);
 	}
 	return ibuf_get(imsg->buf, data, len);
+}
+
+int
+imsg_get_buf(struct imsg *imsg, void *data, size_t len)
+{
+	return ibuf_get(imsg->buf, data, len);
+}
+
+int
+imsg_get_strbuf(struct imsg *imsg, char *str, size_t len)
+{
+	return ibuf_get_strbuf(imsg->buf, str, len);
 }
 
 int
@@ -347,6 +365,16 @@ void
 imsg_free(struct imsg *imsg)
 {
 	ibuf_free(imsg->buf);
+}
+
+int
+imsg_set_maxsize(struct ibuf *msg, size_t max)
+{
+	if (max > UINT32_MAX - IMSG_HEADER_SIZE) {
+		errno = ERANGE;
+		return (-1);
+	}
+	return ibuf_set_maxsize(msg, max + IMSG_HEADER_SIZE);
 }
 
 static struct ibuf *

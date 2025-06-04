@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.20 2025/06/04 09:00:44 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.21 2025/06/04 09:03:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -78,6 +78,7 @@ int		 ibuf_add_n64(struct ibuf *, uint64_t);
 int		 ibuf_add_h16(struct ibuf *, uint64_t);
 int		 ibuf_add_h32(struct ibuf *, uint64_t);
 int		 ibuf_add_h64(struct ibuf *, uint64_t);
+int		 ibuf_add_strbuf(struct ibuf *, const char *, size_t);
 void		*ibuf_reserve(struct ibuf *, size_t);
 void		*ibuf_seek(struct ibuf *, size_t, size_t);
 int		 ibuf_set(struct ibuf *, size_t, const void *, size_t);
@@ -88,6 +89,7 @@ int		 ibuf_set_n64(struct ibuf *, size_t, uint64_t);
 int		 ibuf_set_h16(struct ibuf *, size_t, uint64_t);
 int		 ibuf_set_h32(struct ibuf *, size_t, uint64_t);
 int		 ibuf_set_h64(struct ibuf *, size_t, uint64_t);
+int		 ibuf_set_maxsize(struct ibuf *, size_t);
 void		*ibuf_data(const struct ibuf *);
 size_t		 ibuf_size(const struct ibuf *);
 size_t		 ibuf_left(const struct ibuf *);
@@ -106,6 +108,7 @@ int		 ibuf_get_h16(struct ibuf *, uint16_t *);
 int		 ibuf_get_h32(struct ibuf *, uint32_t *);
 int		 ibuf_get_h64(struct ibuf *, uint64_t *);
 char		*ibuf_get_string(struct ibuf *, size_t);
+int		 ibuf_get_strbuf(struct ibuf *, char *, size_t);
 int		 ibuf_skip(struct ibuf *, size_t);
 void		 ibuf_free(struct ibuf *);
 int		 ibuf_fd_avail(struct ibuf *);
@@ -135,6 +138,8 @@ uint32_t imsgbuf_queuelen(struct imsgbuf *);
 ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_get_ibuf(struct imsg *, struct ibuf *);
 int	 imsg_get_data(struct imsg *, void *, size_t);
+int	 imsg_get_buf(struct imsg *, void *, size_t);
+int	 imsg_get_strbuf(struct imsg *, char *, size_t);
 int	 imsg_get_fd(struct imsg *);
 uint32_t imsg_get_id(struct imsg *);
 size_t	 imsg_get_len(struct imsg *);
@@ -151,5 +156,6 @@ struct ibuf *imsg_create(struct imsgbuf *, uint32_t, uint32_t, pid_t, size_t);
 int	 imsg_add(struct ibuf *, const void *, size_t);
 void	 imsg_close(struct imsgbuf *, struct ibuf *);
 void	 imsg_free(struct imsg *);
+int	 imsg_set_maxsize(struct ibuf *, size_t);
 
 #endif

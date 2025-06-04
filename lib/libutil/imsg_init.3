@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.42 2025/06/04 09:00:44 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.43 2025/06/04 09:03:05 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -95,7 +95,7 @@
 .Ft int
 .Fn imsgbuf_read "struct imsgbuf *imsgbuf"
 .Ft int
-.Fn imsgbuf_set_maxsize "struct imsgbuf *imsgbuf" "uint32_t maxsize"
+.Fn imsgbuf_set_maxsize "struct imsgbuf *imsgbuf" "uint32_t max"
 .Ft int
 .Fn imsgbuf_write "struct imsgbuf *imsgbuf"
 .In sys/uio.h
@@ -129,13 +129,9 @@ enables file descriptor passing in both directions for this
 .Fa imsgbuf .
 .Pp
 .Fn imsgbuf_set_maxsize
-changes the default maximum imsg size from
-.Dv MAX_IMSGSIZE
+changes the default maximum payload size
 to
-.Fa maxsize .
-.Fa maxsize
-must be bigger than
-.Dv IMSG_HEADER_SIZE .
+.Fa max .
 It returns 0 if successful and -1 on failure.
 .Pp
 The
@@ -231,6 +227,13 @@ It returns
 if it succeeds, otherwise
 .Fa msg
 is freed and \-1 is returned.
+.Pp
+.Fn imsg_set_maxsize
+reduces the maximum payload of
+.Fa msg
+to
+.Fa max .
+The routine returns 0 if it succeeds, \-1 otherwise.
 .Pp
 .Fn imsg_close
 completes creation of
