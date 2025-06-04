@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.473 2025/06/03 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.474 2025/06/04 13:06:51 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1736,8 +1736,10 @@ do {									\
 			mtx_leave(&(table)->inpt_mtx);			\
 			NET_LOCK_SHARED();				\
 			so = in_pcbsolock(inp);				\
-			if (so == NULL)					\
+			if (so == NULL)	{				\
+				mtx_enter(&(table)->inpt_mtx);		\
 				continue;				\
+			}						\
 			fill_file(kf, NULL, NULL, 0, NULL, NULL, p,	\
 			    so, show_pointers);				\
 			in_pcbsounlock(inp, so);			\
