@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.51 2024/03/26 08:54:48 joshua Exp $ */
+/* $OpenBSD: tls_server.c,v 1.52 2025/06/04 10:25:30 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -75,7 +75,7 @@ tls_server_alpn_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen,
 	    OPENSSL_NPN_NEGOTIATED)
 		return (SSL_TLSEXT_ERR_OK);
 
-	return (SSL_TLSEXT_ERR_NOACK);
+	return (SSL_TLSEXT_ERR_ALERT_FATAL);
 }
 
 static int
