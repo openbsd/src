@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.34 2025/06/04 09:06:21 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.35 2025/06/04 09:06:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -579,6 +579,8 @@ ibuf_skip(struct ibuf *buf, size_t len)
 void
 ibuf_free(struct ibuf *buf)
 {
+	int save_errno = errno;
+
 	if (buf == NULL)
 		return;
 	/* if buf lives on the stack abort before causing more harm */
@@ -588,6 +590,7 @@ ibuf_free(struct ibuf *buf)
 		close(buf->fd);
 	freezero(buf->buf, buf->size);
 	free(buf);
+	errno = save_errno;
 }
 
 int
