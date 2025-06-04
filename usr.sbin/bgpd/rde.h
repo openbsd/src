@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.314 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.315 2025/06/04 09:11:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -89,6 +89,7 @@ struct rde_peer {
 	struct prefix_tree		 updates[AID_MAX];
 	struct prefix_tree		 withdraws[AID_MAX];
 	struct filter_head		*out_rules;
+	struct ibufqueue		*ibufq;
 	monotime_t			 staletime[AID_MAX];
 	uint32_t			 remote_bgpid;
 	uint32_t			 path_id_tx;
