@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.112 2025/05/20 13:51:27 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.113 2025/06/04 08:21:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -893,6 +893,18 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 				log_warn("%s: writeregs failed", __func__);
 				return (ret);
 			}
+		}
+
+		if (sev_encrypt_state(current_vm, i)) {
+			log_warnx("%s: state encryption failed for VCPU "
+			    "%zu failed - exiting.", __progname, i);
+			return (EIO);
+		}
+
+		if (sev_launch_finalize(current_vm)) {
+			log_warnx("%s: encryption failed for VCPU "
+			    "%zu failed - exiting.", __progname, i);
+			return (EIO);
 		}
 
 		ret = pthread_cond_init(&vcpu_run_cond[i], NULL);

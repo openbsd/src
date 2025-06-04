@@ -1,7 +1,7 @@
-/*	$OpenBSD: psp.c,v 1.6 2025/06/03 20:13:42 bluhm Exp $	*/
+/*	$OpenBSD: psp.c,v 1.7 2025/06/04 08:21:29 bluhm Exp $	*/
 
 /*
- * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
+ * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -173,6 +173,27 @@ psp_launch_update(uint32_t handle, vaddr_t v, size_t len)
  * the PSP, the measurement is not really meaningful.  Thus we just
  * log it for now.
  */
+int
+psp_encrypt_state(uint32_t handle, uint32_t asid, uint32_t vmid,
+    uint32_t vcpuid)
+{
+	struct psp_encrypt_state es;
+
+	memset(&es, 0, sizeof(es));
+	es.handle = handle;
+	es.asid = asid;
+	es.vmid = vmid;
+	es.vcpuid = vcpuid;
+
+	if (ioctl(env->vmd_psp_fd, PSP_IOC_ENCRYPT_STATE, &es) < 0) {
+		log_warn("%s: ioctl", __func__);
+		return (-1);
+	}
+
+	return (0);
+}
+
+
 int
 psp_launch_measure(uint32_t handle)
 {

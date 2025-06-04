@@ -1,7 +1,7 @@
-/*	$OpenBSD: sev.c,v 1.6 2025/06/03 20:13:42 bluhm Exp $	*/
+/*	$OpenBSD: sev.c,v 1.7 2025/06/04 08:21:29 bluhm Exp $	*/
 
 /*
- * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
+ * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -148,7 +148,6 @@ sev_encrypt_memory(struct vmd_vm *vm)
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	struct vm_mem_range	*vmr;
 	size_t			 i;
-	uint8_t			 gstate;
 
 	if (!vcp->vcp_sev)
 		return (0);
@@ -166,23 +165,6 @@ sev_encrypt_memory(struct vmd_vm *vm)
 
 		log_debug("%s: encrypted %zu:0x%lx size 0x%lx", __func__, i,
 		    vmr->vmr_va, vmr->vmr_size);
-	}
-	if (psp_launch_measure(vm->vm_sev_handle)) {
-		log_warnx("%s: failed to launch measure", __func__);
-		return (-1);
-	}
-	if (psp_launch_finish(vm->vm_sev_handle)) {
-		log_warnx("%s: failed to launch finish", __func__);
-		return (-1);
-	}
-
-	if (psp_get_gstate(vm->vm_sev_handle, NULL, NULL, &gstate)) {
-		log_warnx("%s: failed to get guest state", __func__);
-		return (-1);
-	}
-	if (gstate != PSP_GSTATE_RUNNING) {
-		log_warnx("%s: invalid guest state: 0x%hx", __func__, gstate);
-		return (-1);
 	}
 
 	return (0);
@@ -221,6 +203,57 @@ sev_activate(struct vmd_vm *vm, int vcpu_id)
 	return (0);
 }
 
+
+int
+sev_encrypt_state(struct vmd_vm *vm, int vcpu_id)
+{
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct vm_create_params *vcp = &vmc->vmc_params;
+
+	if (!vcp->vcp_seves)
+		return (0);
+
+	if (psp_encrypt_state(vm->vm_sev_handle, vm->vm_sev_asid[vcpu_id],
+	    vcp->vcp_id, vcpu_id)) {
+		log_warnx("%s: failed to encrypt state: 0x%x 0x%x 0x%0x 0x%0x",
+		    __func__, vm->vm_sev_handle, vm->vm_sev_asid[vcpu_id],
+		    vm->vm_vmid, vcpu_id);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+sev_launch_finalize(struct vmd_vm *vm)
+{
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct vm_create_params *vcp = &vmc->vmc_params;
+	uint8_t		gstate;
+
+	if (!vcp->vcp_sev)
+		return (0);
+
+	if (psp_launch_measure(vm->vm_sev_handle)) {
+		log_warnx("%s: failed to launch measure", __func__);
+		return (-1);
+	}
+	if (psp_launch_finish(vm->vm_sev_handle)) {
+		log_warnx("%s: failed to launch finish", __func__);
+		return (-1);
+	}
+
+	if (psp_get_gstate(vm->vm_sev_handle, NULL, NULL, &gstate)) {
+		log_warnx("%s: failed to get guest state", __func__);
+		return (-1);
+	}
+	if (gstate != PSP_GSTATE_RUNNING) {
+		log_warnx("%s: invalid guest state: 0x%hx", __func__, gstate);
+		return (-1);
+	}
+
+	return (0);
+}
 
 /*
  * Deactivate and decommission a guest's SEV crypto state.

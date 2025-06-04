@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.134 2025/06/03 20:13:42 bluhm Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.135 2025/06/04 08:21:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -588,6 +588,7 @@ int	 psp_df_flush(void);
 int	 psp_get_gstate(uint32_t, uint32_t *, uint32_t *, uint8_t *);
 int	 psp_launch_start(uint32_t *, int);
 int	 psp_launch_update(uint32_t, vaddr_t, size_t);
+int	 psp_encrypt_state(uint32_t, uint32_t, uint32_t, uint32_t);
 int	 psp_launch_measure(uint32_t);
 int	 psp_launch_finish(uint32_t);
 int	 psp_activate(uint32_t, uint32_t);
@@ -599,6 +600,8 @@ int	sev_init(struct vmd_vm *);
 int	sev_register_encryption(vaddr_t, size_t);
 int	sev_encrypt_memory(struct vmd_vm *);
 int	sev_activate(struct vmd_vm *, int);
+int	sev_encrypt_state(struct vmd_vm *, int);
+int	sev_launch_finalize(struct vmd_vm *);
 int	sev_shutdown(struct vmd_vm *);
 
 #endif /* VMD_H */
