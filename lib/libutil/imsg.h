@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.21 2025/06/04 09:03:05 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.22 2025/06/04 09:04:52 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -40,6 +40,7 @@ struct ibuf {
 	int			 fd;
 };
 
+struct ibufqueue;
 struct msgbuf;
 
 struct imsgbuf {
@@ -119,12 +120,21 @@ struct msgbuf	*msgbuf_new_reader(size_t,
 		    struct ibuf *(*)(struct ibuf *, void *, int *), void *);
 void		 msgbuf_free(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
+void		 msgbuf_concat(struct msgbuf *, struct ibufqueue *);
 uint32_t	 msgbuf_queuelen(struct msgbuf *);
 int		 ibuf_write(int, struct msgbuf *);
 int		 msgbuf_write(int, struct msgbuf *);
 int		 ibuf_read(int, struct msgbuf *);
 int		 msgbuf_read(int, struct msgbuf *);
 struct ibuf	*msgbuf_get(struct msgbuf *);
+
+struct ibufqueue	*ibufq_new(void);
+void		 ibufq_free(struct ibufqueue *);
+struct ibuf	*ibufq_pop(struct ibufqueue *bufq);
+void		 ibufq_push(struct ibufqueue *, struct ibuf *);
+uint32_t	 ibufq_queuelen(struct ibufqueue *);
+void		 ibufq_concat(struct ibufqueue *, struct ibufqueue *);
+void		 ibufq_flush(struct ibufqueue *);
 
 /* imsg.c */
 int	 imsgbuf_init(struct imsgbuf *, int);

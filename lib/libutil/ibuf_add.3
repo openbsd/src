@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.9 2025/06/04 09:03:05 claudio Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.10 2025/06/04 09:04:52 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -70,13 +70,21 @@
 .Nm ibuf_truncate ,
 .Nm ibuf_write ,
 .Nm msgbuf_clear ,
+.Nm msgbuf_concat ,
 .Nm msgbuf_free ,
 .Nm msgbuf_get ,
 .Nm msgbuf_new ,
 .Nm msgbuf_new_reader ,
 .Nm msgbuf_queuelen ,
 .Nm msgbuf_read ,
-.Nm msgbuf_write
+.Nm msgbuf_write ,
+.Nm ibufq_concat ,
+.Nm ibufq_flush ,
+.Nm ibufq_free ,
+.Nm ibufq_new ,
+.Nm ibufq_pop ,
+.Nm ibufq_push ,
+.Nm ibufq_queuelen
 .Nd save buffer API for basic IO
 .Sh SYNOPSIS
 .In imsg.h
@@ -185,6 +193,8 @@
 .Ft void
 .Fn msgbuf_clear "struct msgbuf *msgbuf"
 .Ft void
+.Fn msgbuf_concat "struct msgbuf *msgbuf" "struct ibufqueue *from"
+.Ft void
 .Fn msgbuf_free "struct msgbuf *msgbuf"
 .Ft "struct ibuf *"
 .Fn msgbuf_get "struct msgbuf *msgbuf"
@@ -199,6 +209,20 @@
 .Fn msgbuf_read "int fd" "struct msgbuf *msgbuf"
 .Ft int
 .Fn msgbuf_write "int fd" "struct msgbuf *msgbuf"
+.Ft void
+.Fn ibufq_concat "struct ibufqueue *to" "struct ibufqueue *from"
+.Ft void
+.Fn ibufq_flush "struct ibufqueue *bufq"
+.Ft void
+.Fn ibufq_free "struct ibufqueue *bufq"
+.Ft "struct ibufqueue *"
+.Fn ibufq_new void
+.Ft "struct ibuf *"
+.Fn ibufq_pop "struct ibufqueue *bufq"
+.Ft void
+.Fn ibufq_push "struct ibufqueue *bufq" "struct ibuf *buf"
+.Ft uint32_t
+.Fn ibufq_queuelen "struct ibufqueue *bufq"
 .Sh DESCRIPTION
 The ibuf API defines functions to manipulate buffers, used for example to
 construct imsgs with
@@ -557,6 +581,14 @@ The application will then retry the operation at a later stage.
 .Fn msgbuf_clear
 empties a msgbuf, removing and discarding any queued buffers.
 .Pp
+.Fn msgbuf_concat
+moves all queued buffers from the ibufqueue
+.Fa from
+to the msgbuf.
+Afterwards the ibufqueue
+.Fa from
+is empty.
+.Pp
 .Fn msgbuf_free
 function frees the
 .Fa msgbuf
@@ -652,6 +684,37 @@ are treated as follows:
 will automatically retry the write operation while the other errors are
 ignored with a 0 return.
 The application will then retry the operation at a later stage.
+.Pp
+The ibufqueue API can be used to implement additional buffer queues.
+This can be useful in multithreaded applications to pass ibufs between
+different threads.
+.Pp
+.Fn ibufq_new
+allocates a new ibufqueue.
+On error NULL is returned.
+.Pp
+.Fn ibufq_free
+frees a previously allocated ibufqueue.
+All queued ibufs are flushed before.
+.Pp
+.Fn ibufq_flush
+frees any queued buffer.
+.Pp
+.Fn ibufq_push
+and
+.Fn ibufq_pop
+queue and dequeue ibufs onto the ibufqueue
+.Fa bufq .
+.Pp
+.Fn ibufq_queuelen
+returns the number of buffers enqueued on
+.Fa bufq .
+.Pp
+.Fn ibufq_concat
+moves all buffers from
+.Fa from
+to
+.Fa to .
 .Sh SEE ALSO
 .Xr socketpair 2 ,
 .Xr imsg_add 3 ,
