@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.4 2025/06/04 12:04:33 tb Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.5 2025/06/04 12:47:59 tb Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -224,4 +224,9 @@ sev_launch_finalize(struct vmd_vm *vm)
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
 	return (-1);
+}
+
+void
+psp_setup(void)
+{
 }
