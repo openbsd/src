@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.474 2025/06/04 13:06:51 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.475 2025/06/04 13:29:11 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -599,7 +599,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (oldp) {
 			if ((hlen + mp->msg_bufs) > *oldlenp)
 				return (ENOMEM);
-		} else 
+		} else
 			return (0);
 
 		mtx_enter(&log_mtx);
@@ -1145,7 +1145,7 @@ sysctl_int_lower(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
 		oldval = atomic_load_int(valp);
 
 		if ((error = copyout(&oldval, oldp, sizeof(int))))
-			return (error);	
+			return (error);
 	}
 
 	return (0);
@@ -1213,7 +1213,7 @@ sysctl_securelevel(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
 		oldval = atomic_load_int(&securelevel);
 
 		if ((error = copyout(&oldval, oldp, sizeof(int))))
-			return (error);	
+			return (error);
 	}
 
 	return (0);
