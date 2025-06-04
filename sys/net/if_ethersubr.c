@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.301 2025/05/18 04:18:42 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.302 2025/06/04 17:35:21 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1103,7 +1103,6 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 		return;
 	}
 	ext->eh = mtod(m0, struct ether_header *);
-	ether_type = ntohs(ext->eh->ether_type);
 	hlen = sizeof(*ext->eh);
 	if (ext->paylen < hlen) {
 		DPRINTF("paylen %u, ehlen %zu", ext->paylen, hlen);
@@ -1111,6 +1110,7 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 		return;
 	}
 	ext->paylen -= hlen;
+	ether_type = ntohs(ext->eh->ether_type);
 
 #if NVLAN > 0
 	if (ether_type == ETHERTYPE_VLAN) {
@@ -1120,7 +1120,6 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 			return;
 		}
 		ext->evh = mtod(m0, struct ether_vlan_header *);
-		ether_type = ntohs(ext->evh->evl_proto);
 		hlen = sizeof(*ext->evh);
 		if (sizeof(*ext->eh) + ext->paylen < hlen) {
 			DPRINTF("paylen %zu, evhlen %zu",
@@ -1129,6 +1128,7 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 			return;
 		}
 		ext->paylen = sizeof(*ext->eh) + ext->paylen - hlen;
+		ether_type = ntohs(ext->evh->evl_proto);
 	}
 #endif
 
