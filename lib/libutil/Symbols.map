@@ -92,10 +92,13 @@
 		imsg_get_pid;
 		imsg_get_strbuf;
 		imsg_get_type;
+		imsg_ibufq_pop;
+		imsg_ibufq_push;
 		imsg_set_maxsize;
 		imsgbuf_allow_fdpass;
 		imsgbuf_clear;
 		imsgbuf_flush;
+		imsgbuf_get;
 		imsgbuf_init;
 		imsgbuf_queuelen;
 		imsgbuf_read;
