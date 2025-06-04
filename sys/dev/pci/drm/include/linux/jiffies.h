@@ -30,7 +30,7 @@ jiffies_to_usecs(const unsigned long x)
 	return (((uint64_t)(x)) * 1000000 / hz);
 }
 
-static inline unsigned int
+static inline uint64_t
 jiffies_to_nsecs(const unsigned long x)
 {
 	return (((uint64_t)(x)) * 1000000000 / hz);
