@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.h,v 1.23 2024/01/01 18:52:09 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.h,v 1.24 2025/06/04 12:37:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,14 +19,6 @@
 #ifndef _IP6_DIVERT_H_
 #define _IP6_DIVERT_H_
 
-struct div6stat {
-	u_long	divs_ipackets;	/* total input packets */
-	u_long	divs_noport;	/* no socket on port */
-	u_long	divs_fullsock;	/* not delivered, input socket full */
-	u_long	divs_opackets;	/* total output packets */
-	u_long	divs_errors;	/* generic errors */
-};
-
 /*
  * Names for divert sysctl objects
  */
@@ -45,20 +37,12 @@ struct div6stat {
 #ifdef _KERNEL
 
 #include <sys/percpu.h>
-
-enum div6stat_counters {
-	div6s_ipackets,
-	div6s_noport,
-	div6s_fullsock,
-	div6s_opackets,
-	div6s_errors,
-	div6s_ncounters,
-};
+#include <netinet/ip_divert.h>
 
 extern struct cpumem *div6counters;
 
 static inline void
-div6stat_inc(enum div6stat_counters c)
+div6stat_inc(enum divstat_counters c)
 {
 	counters_inc(div6counters, c);
 }

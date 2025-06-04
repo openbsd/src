@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.57 2024/02/05 23:16:39 bluhm Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.58 2025/06/04 12:37:00 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,6 +43,7 @@
 #include <netinet/icmp6.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_divert.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/raw_ip6.h>
@@ -870,7 +871,7 @@ rip6_stats(char *name)
 void
 div6_stats(char *name)
 {
-	struct div6stat div6stat;
+	struct divstat div6stat;
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_DIVERT, DIVERT6CTL_STATS };
 	size_t len = sizeof(div6stat);
 
