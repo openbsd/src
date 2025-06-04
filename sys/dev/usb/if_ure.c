@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.36 2025/05/23 03:06:09 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.37 2025/06/04 00:06:17 jsg Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -371,13 +371,13 @@ ure_write_4(struct ure_softc *sc, uint16_t reg, uint16_t index, uint32_t val)
 	return (ure_write_mem(sc, reg, index | URE_BYTE_EN_DWORD, &temp, 4));
 }
 
-inline uint16_t
+static inline uint16_t
 ure_phy_read(struct ure_softc *sc, uint16_t addr)
 {
 	return sc->ure_phy_read(sc, addr);
 }
 
-inline void
+static inline void
 ure_phy_write(struct ure_softc *sc, uint16_t addr, uint16_t data)
 {
 	return sc->ure_phy_write(sc, addr, data);
