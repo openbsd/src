@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.39 2025/04/04 05:27:17 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.40 2025/06/05 04:26:42 anton Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -21,8 +21,8 @@ REGRESS_TARGETS += run-regress-$p
 .endfor
 
 CFLAGS+=	-I${.CURDIR}/.. -I${.CURDIR}/../../../../usr.sbin/rpki-client
-LDADD+=		-lcrypto -lutil
-DPADD+=		${LIBCRYPTO} ${LIBUTIL}
+LDADD+=		-lcrypto -lutil -lpthread
+DPADD+=		${LIBCRYPTO} ${LIBUTIL} ${LIBPTHREAD}
 
 CLEANFILES+=	*.out *.err *.txt
 
