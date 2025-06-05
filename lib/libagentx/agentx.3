@@ -1,4 +1,4 @@
-.\" $OpenBSD: agentx.3,v 1.10 2022/10/14 21:44:06 jmc Exp $
+.\" $OpenBSD: agentx.3,v 1.11 2025/06/05 18:43:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2022 $
+.Dd $Mdocdate: June 5 2025 $
 .Dt AGENTX 3
 .Os
 .Sh NAME
@@ -82,6 +82,7 @@
 .Nm agentx_varbind_set_index_ipaddress
 .Nd manage an interface to an agentx master
 .Sh SYNOPSIS
+.Lb libagentx
 .In agentx.h
 .Ft extern void
 .Fn (*agentx_log_fatal) "const char *fmt" ...
