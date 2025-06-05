@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.195 2024/11/07 17:24:42 bluhm Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.196 2025/06/05 09:29:54 claudio Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -453,7 +453,10 @@ struct cfdriver cpu_cd = {
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-struct cpu_info_full cpu_info_full_primary = { .cif_cpu = { .ci_self = &cpu_info_primary } };
+struct cpu_info_full cpu_info_full_primary = { .cif_cpu = {
+	.ci_self = &cpu_info_primary,
+	.ci_flags = CPUF_PRIMARY,
+} };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 

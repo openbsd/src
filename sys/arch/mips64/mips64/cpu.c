@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.84 2024/08/17 13:35:01 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.85 2025/06/05 09:29:54 claudio Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -42,7 +42,7 @@
 int	cpumatch(struct device *, void *, void *);
 void	cpuattach(struct device *, struct device *, void *);
 
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info_primary = { .ci_flags = CPUF_PRIMARY };
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *cpu_info_secondaries;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.49 2024/04/10 15:38:11 mpi Exp $ */
+/* $OpenBSD: cpu.c,v 1.50 2025/06/05 09:29:54 claudio Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info_primary = { .ci_flags = CPUF_PRIMARY };
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #if defined(MULTIPROCESSOR)

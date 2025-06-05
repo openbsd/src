@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.116 2024/08/08 07:02:38 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.117 2025/06/05 09:29:54 claudio Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -142,7 +142,10 @@ struct cpu_functions mp_cpu_funcs =
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-struct cpu_info_full cpu_info_full_primary = { .cif_cpu = { .ci_self = &cpu_info_primary } };
+struct cpu_info_full cpu_info_full_primary = { .cif_cpu = {
+	.ci_self = &cpu_info_primary,
+	.ci_flags = CPUF_PRIMARY,
+} };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
