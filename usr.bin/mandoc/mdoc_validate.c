@@ -1,6 +1,6 @@
-/* $OpenBSD: mdoc_validate.c,v 1.307 2024/09/20 02:00:46 jsg Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.308 2025/06/05 12:32:27 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
@@ -989,13 +989,35 @@ post_ex(POST_ARGS)
 static void
 post_lb(POST_ARGS)
 {
-	struct roff_node	*n;
+	struct roff_node	*n, *nch;
+	char			*cp;
 
 	post_delim_nb(mdoc);
 
 	n = mdoc->last;
-	assert(n->child->type == ROFFT_TEXT);
+	nch = n->child;
+	assert(nch->type == ROFFT_TEXT);
 	mdoc->next = ROFF_NEXT_CHILD;
+
+	if (n->sec == SEC_SYNOPSIS) {
+		roff_word_alloc(mdoc, n->line, n->pos, "/*");
+		mdoc->last->flags = NODE_NOSRC;
+		while (nch != NULL) {
+			roff_word_alloc(mdoc, n->line, n->pos, "-l");
+			mdoc->last->flags = NODE_DELIMO | NODE_NOSRC;
+			mdoc->last = nch;
+			assert(nch->type == ROFFT_TEXT);
+			cp = nch->string;
+ 			if (strncmp(cp, "lib", 3) == 0)
+				memmove(cp, cp + 3, strlen(cp) - 3 + 1);
+			nch = nch->next;
+		}
+		roff_word_alloc(mdoc, n->line, n->pos, "*/");
+		mdoc->last->flags = NODE_NOSRC;
+		mdoc->last = n;
+		return;
+	}
+
 	roff_word_alloc(mdoc, n->line, n->pos, "library");
 	mdoc->last->flags = NODE_NOSRC;
 	roff_word_alloc(mdoc, n->line, n->pos, "\\(lq");
