@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.49 2022/03/31 17:27:17 naddy Exp $
+.\"	$OpenBSD: editline.3,v 1.50 2025/06/05 18:57:01 schwarze Exp $
 .\"	$NetBSD: editline.3,v 1.88 2016/02/25 14:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 5 2025 $
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -73,6 +73,7 @@
 .Nm tok_wstr
 .Nd line editor, history and tokenization functions
 .Sh SYNOPSIS
+.Lb libedit libcurses
 .In histedit.h
 .Ft EditLine *
 .Fn el_init "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr"
@@ -158,14 +159,6 @@ The
 library provides generic line editing, history and tokenization functions,
 similar to those found in
 .Xr sh 1 .
-.Pp
-These functions are available in the
-.Nm libedit
-library (which needs the
-.Nm libcurses
-library).
-Programs should be linked with
-.Fl ledit lcurses .
 .Pp
 The
 .Nm
