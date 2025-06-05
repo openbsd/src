@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.55 2022/02/18 10:24:32 jsg Exp $
+.\" $OpenBSD: keynote.3,v 1.56 2025/06/05 18:59:11 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: June 5 2025 $
 .Dt KN_INIT 3
 .\" .TH KeyNote 3 local
 .Os
@@ -53,6 +53,7 @@
 .Nm kn_get_string
 .Nd a trust-management system library
 .Sh SYNOPSIS
+.Lb libkeynote libm libcrypto
 .In sys/types.h
 .In regex.h
 .In keynote.h
@@ -147,7 +148,6 @@ struct keynote_keylist {
 .Fn kn_free_key "struct keynote_deckey *"
 .Ft char *
 .Fn kn_get_string "char *"
-.Fd Link options: -lkeynote -lm -lcrypto
 .Sh DESCRIPTION
 For more details on
 .Nm keynote ,
