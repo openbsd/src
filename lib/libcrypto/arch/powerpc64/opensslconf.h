@@ -21,10 +21,6 @@
 #define IDEA_INT unsigned int
 #endif
 
-#if defined(HEADER_MD2_H) && !defined(MD2_INT)
-#define MD2_INT unsigned int
-#endif
-
 #if defined(HEADER_RC2_H) && !defined(RC2_INT)
 /* I need to put in a mod for the alpha - eay */
 #define RC2_INT unsigned int
