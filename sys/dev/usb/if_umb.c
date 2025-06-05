@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.60 2025/05/26 14:59:17 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.61 2025/06/05 08:22:25 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1433,10 +1433,9 @@ umb_getinfobuf(void *in, int inlen, uint32_t offs, uint32_t sz,
 {
 	offs = letoh32(offs);
 	sz = letoh32(sz);
-	if (inlen >= offs + sz) {
-		memset(out, 0, outlen);
+	memset(out, 0, outlen);
+	if ((uint64_t)inlen >= (uint64_t)offs + (uint64_t)sz)
 		memcpy(out, in + offs, MIN(sz, outlen));
-	}
 }
 
 static inline int
