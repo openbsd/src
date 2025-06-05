@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.23 2025/06/04 09:08:52 claudio Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.24 2025/06/05 08:55:07 tb Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #ifndef _IMSG_H_
 #define _IMSG_H_
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <stddef.h>
 #include <stdint.h>
