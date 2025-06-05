@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.152 2025/06/04 09:18:28 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.153 2025/06/05 06:20:28 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -24,7 +24,6 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
-#include <pthread_np.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1069,8 +1068,6 @@ parse_worker(void *arg)
 	BN_CTX *bn_ctx;
 	int n;
 
-	pthread_set_name_np(pthread_self(), "parser: worker");
-
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");
 	if ((bn_ctx = BN_CTX_new()) == NULL)
@@ -1115,7 +1112,6 @@ parse_writer(void *arg)
 	struct msgbuf *myq;
 	struct pollfd pfd;
 
-	pthread_set_name_np(pthread_self(), "parser: writer");
 	if ((myq = msgbuf_new()) == NULL)
 		err(1, NULL);
 	pfd.fd = *(int *)arg;
@@ -1202,7 +1198,6 @@ proc_parser(int fd, int nthreads)
 	for (i = 0; i < nthreads; i++)
 		pthread_create(&dummy, NULL, &parse_worker, NULL);
 
-	pthread_set_name_np(pthread_self(), "parser: reader");
 	pfd.fd = fd;
 	for (;;) {
 		pfd.events = POLLIN;
