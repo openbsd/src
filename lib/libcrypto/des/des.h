@@ -1,4 +1,4 @@
-/* $OpenBSD: des.h,v 1.23 2025/01/25 17:59:44 tb Exp $ */
+/* $OpenBSD: des.h,v 1.24 2025/06/05 06:37:26 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_NEW_DES_H
-#define HEADER_NEW_DES_H
+#ifndef HEADER_DES_H
+#define HEADER_DES_H
 
 #include <openssl/opensslconf.h>
 
