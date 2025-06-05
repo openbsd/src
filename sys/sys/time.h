@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.66 2023/10/17 00:04:02 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.67 2025/06/05 08:49:09 claudio Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -438,6 +438,14 @@ static inline uint64_t
 BINTIME_TO_NSEC(const struct bintime *bt)
 {
 	return bt->sec * 1000000000ULL + FRAC_TO_NSEC(bt->frac);
+}
+
+extern int tick_nsec;
+
+static inline uint64_t
+TICKS_TO_NSEC(uint64_t ticks)
+{
+	return ticks * tick_nsec;
 }
 
 #else /* !_KERNEL */

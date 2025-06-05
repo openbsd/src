@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.225 2025/06/03 00:20:31 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.226 2025/06/05 08:49:09 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg,
 	if (timo < 0)
 		panic("%s: negative timo %d", __func__, timo);
 	if (timo > 0)
-		nsecs = timo * tick_nsec;
+		nsecs = TICKS_TO_NSEC(timo);
 
 	return tsleep_nsec(ident, priority, wmesg, nsecs);
 }
@@ -233,7 +233,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	if (timo < 0)
 		panic("%s: negative timo %d", __func__, timo);
 	if (timo > 0)
-		nsecs = timo * tick_nsec;
+		nsecs = TICKS_TO_NSEC(timo);
 
 	return msleep_nsec(ident, mtx, priority, wmesg, nsecs);
 }
@@ -275,7 +275,7 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 	if (timo < 0)
 		panic("%s: negative timo %d", __func__, timo);
 	if (timo > 0)
-		nsecs = timo * tick_nsec;
+		nsecs = TICKS_TO_NSEC(timo);
 
 	return rwsleep_nsec(ident, rwl, priority, wmesg, nsecs);
 }
