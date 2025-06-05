@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.187 2025/06/03 06:33:53 jsg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.188 2025/06/05 04:30:49 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -571,6 +571,7 @@ struct erspan_softc {
 	struct arpcom		sc_ac;
 	uint32_t		sc_seq;
 	caddr_t			sc_bpf;
+	caddr_t			sc_bpf_raw;
 };
 
 RBT_HEAD(erspan_tree, erspan_softc);
@@ -4472,6 +4473,7 @@ erspan_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	/* attach after Ethernet */
 	bpfattach(&sc->sc_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+	bpfattach(&sc->sc_bpf_raw, ifp, DLT_RAW, 0);
 #endif
 
 	return (0);
@@ -4875,6 +4877,9 @@ erspan_start(struct ifnet *ifp)
 			bpf_mtap_af(if_bpf, sc->sc_tunnel.t_af, m,
 			    BPF_DIRECTION_OUT);
 		}
+		if_bpf = sc->sc_bpf_raw;
+		if (if_bpf)
+			bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		if (gre_ip_output(&sc->sc_tunnel, m) != 0) {
 			ifp->if_oerrors++;
@@ -4997,6 +5002,11 @@ erspan_input(struct gre_tunnel *key, struct mbuf *m, int iphlen,
 	if_bpf = sc->sc_bpf;
 	if (if_bpf) {
 		if (bpf_mtap_af(if_bpf, key->t_af, m, BPF_DIRECTION_IN))
+			input = 0;
+	}
+	if_bpf = sc->sc_bpf_raw;
+	if (if_bpf) {
+		if (bpf_mtap(if_bpf, m, BPF_DIRECTION_IN))
 			input = 0;
 	}
 #endif
