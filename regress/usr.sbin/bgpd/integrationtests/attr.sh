@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: attr.sh,v 1.4 2025/05/07 14:08:45 anton Exp $
+#	$OpenBSD: attr.sh,v 1.5 2025/06/05 18:30:10 claudio Exp $
 
 set -e
 
@@ -82,7 +82,6 @@ ifconfig ${PAIR2} alias ${PAIR2IP3}/32
 ifconfig ${PAIR1} patch ${PAIR2}
 ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
-[ -p attr.fifo ] || mkfifo attr.fifo
 
 echo run bgpd
 route -T ${RDOMAIN1} exec ${BGPD} \
