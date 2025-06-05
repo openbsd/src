@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.22 2024/10/23 01:57:19 jsg Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.23 2025/06/05 07:50:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,7 +82,7 @@ typedef struct pkcs7_issuer_and_serial_st {
 } PKCS7_ISSUER_AND_SERIAL;
 
 typedef struct pkcs7_signer_info_st {
-	ASN1_INTEGER 			*version;	/* version 1 */
+	ASN1_INTEGER			*version;	/* version 1 */
 	PKCS7_ISSUER_AND_SERIAL		*issuer_and_serial;
 	X509_ALGOR			*digest_alg;
 	STACK_OF(X509_ATTRIBUTE)	*auth_attr;	/* [ 0 ] */
@@ -145,7 +145,7 @@ typedef struct pkcs7_signedandenveloped_st {
 typedef struct pkcs7_digest_st {
 	ASN1_INTEGER			*version;	/* version 0 */
 	X509_ALGOR			*md;		/* md used */
-	struct pkcs7_st 		*contents;
+	struct pkcs7_st			*contents;
 	ASN1_OCTET_STRING		*digest;
 } PKCS7_DIGEST;
 
