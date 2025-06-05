@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.24 2025/06/03 00:20:31 dlg Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.25 2025/06/05 08:44:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -25,7 +25,6 @@
 #include <sys/time.h>
 #include <sys/rwlock.h>
 #include <sys/percpu.h> /* CACHELINESIZE */
-#include <sys/kernel.h> /* tick_nsec */
 #include <sys/futex.h>
 
 #ifdef KTRACE
