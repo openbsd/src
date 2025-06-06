@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: isduid.3,v 1.4 2022/03/31 17:27:18 naddy Exp $
+.\" 	$OpenBSD: isduid.3,v 1.5 2025/06/06 22:01:40 schwarze Exp $
 .\"
 .\" * Copyright (c) Joel Sing <jsing@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt ISDUID 3
 .Os
 .Sh NAME
 .Nm isduid
 .Nd disklabel UID test
 .Sh SYNOPSIS
+.Lb libutil
 .In util.h
 .Ft int
 .Fn isduid "char *duid" "int dflags"

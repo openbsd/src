@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcrypt_pbkdf.3,v 1.6 2014/11/25 03:37:12 tedu Exp $
+.\"	$OpenBSD: bcrypt_pbkdf.3,v 1.7 2025/06/06 22:01:39 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2014 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt BCRYPT_PBKDF 3
 .Os
 .Sh NAME
 .Nm bcrypt_pbkdf
 .Nd bcrypt password-based key derivation function
 .Sh SYNOPSIS
+.Lb libutil
 .In util.h
 .Ft int
 .Fn bcrypt_pbkdf "const char *pass" "size_t pass_len" "const uint8_t *salt" \

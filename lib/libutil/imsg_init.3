@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.44 2025/06/04 09:08:52 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.45 2025/06/06 22:01:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2025 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt IMSG_ADD 3
 .Os
 .Sh NAME
@@ -50,6 +50,7 @@
 .Nm imsgbuf_write
 .Nd IPC messaging functions
 .Sh SYNOPSIS
+.Lb libutil
 .In imsg.h
 .Fd #define IMSG_HEADER_SIZE sizeof(struct imsg_hdr)
 .Fd #define MAX_IMSGSIZE 16384
@@ -125,9 +126,6 @@ Each transmitted message is guaranteed to be presented to the receiving program
 whole.
 They are commonly used in privilege separated processes, where processes with
 different rights are required to cooperate.
-.Pp
-A program using these functions should be linked with
-.Em -lutil .
 .Pp
 .Fn imsgbuf_init
 initializes
