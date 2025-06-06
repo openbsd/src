@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.476 2025/06/06 12:58:57 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.477 2025/06/06 17:06:23 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1737,6 +1737,7 @@ do {									\
 			NET_LOCK_SHARED();				\
 			so = in_pcbsolock(inp);				\
 			if (so == NULL)	{				\
+				NET_UNLOCK_SHARED();			\
 				mtx_enter(&(table)->inpt_mtx);		\
 				continue;				\
 			}						\
